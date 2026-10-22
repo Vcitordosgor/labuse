@@ -2153,6 +2153,7 @@ export interface EtudeScenario {
     // ETUDE-V6-2 (Lot 3) — parking enterré : mode, places au −1, emprise du sous-sol, rampe au sol.
     mode?: 'aerien' | 'sous_sol'; places_sous_sol?: number; emprise_sous_sol_m2?: number; rampe_m2?: number
     sur_dalle_m2?: number   // surface au-dessus du sous-sol retranchée de la pleine terre
+    rampe_detail?: { rampe_profondeur_m: number; rampe_pente_pct: number; rampe_longueur_m: number; rampe_largeur_m: number } | null
   }
   surfaces_mesurees_m2: Record<string, number>
   emprise_sol_m2: number; pleine_terre_m2: number

@@ -410,9 +410,12 @@ def poser_sous_sol(scene: Scene, conv: Conventions, *, cible: int) -> int:
                           "m2_par_place": conv.m2_par_place_sous_sol}
         return 0
     emprise = round(cible * conv.m2_par_place_sous_sol, 1)
-    # rampe au sol RÉALISTE : largeur ≥ 3,5 m, pente ≤ rampe_pente_max_pct, longueur = hauteur du
-    # sous-sol / pente (ex. 3 m / 18 % ≈ 16,7 m) → emprise au sol en conséquence. Adossée à la voie.
-    rampe_m2 = 0.0
+    # rampe au sol RÉALISTE — calcul explicite : profondeur du sous-sol / pente max = longueur ;
+    # × largeur mini = surface. Ex. 3,00 m / 18 % = 16,7 m × 3,5 m = 58,3 m². On DESSINE ce qui tient
+    # le long de la voie (polygone clippé), mais on RAPPORTE la surface RÉELLE de la rampe (non clippée).
+    w = conv.rampe_largeur_m
+    longueur = conv.hauteur_sous_sol_m / (conv.rampe_pente_max_pct / 100.0)   # profondeur / pente
+    rampe_m2 = round(w * longueur, 1)                                         # surface réelle (non clippée)
     batis = [o.geom_local for o in scene.of("batiment_emprise")]
     bati = unary_union(batis) if batis else None
     free = scene.assiette_local.difference(bati) if bati is not None else scene.assiette_local
@@ -420,17 +423,16 @@ def poser_sous_sol(scene: Scene, conv: Conventions, *, cible: int) -> int:
         free = free.difference(scene.ppr_rouge_local)
     free = _valide(free)
     ax0, ay0, ax1, ay1 = scene.assiette_local.bounds
-    w = conv.rampe_largeur_m
-    longueur = conv.hauteur_sous_sol_m / (conv.rampe_pente_max_pct / 100.0)   # h / pente
     y0, y1 = (ay0, ay0 + longueur) if scene.voie_bas else (ay1 - longueur, ay1)  # adossée à la voie
     xc = (ax0 + ax1) / 2.0
     rampe = free.intersection(rect(xc - w / 2.0, y0, xc + w / 2.0, y1))
     rampe = _plus_grand(rampe) if not rampe.is_empty else rampe
     if isinstance(rampe, Polygon) and rampe.area > 1.0:
-        scene.ajouter(Objet("rampe", rampe))
-        rampe_m2 = round(rampe.area, 1)
+        scene.ajouter(Objet("rampe", rampe))                                 # dessin (clippé à l'espace libre)
     scene.sous_sol = {"places": cible, "emprise_m2": emprise, "rampe_m2": rampe_m2,
-                      "m2_par_place": conv.m2_par_place_sous_sol, "longueur_rampe_m": round(longueur, 1)}
+                      "m2_par_place": conv.m2_par_place_sous_sol,
+                      "rampe_profondeur_m": conv.hauteur_sous_sol_m, "rampe_pente_pct": conv.rampe_pente_max_pct,
+                      "rampe_longueur_m": round(longueur, 1), "rampe_largeur_m": w}
     return cible
 
 

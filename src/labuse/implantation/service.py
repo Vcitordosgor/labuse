@@ -30,15 +30,22 @@ from .controles import (A_CONFIRMER, ECHOUE, NON_APPLICABLE, NON_EFFECTUE, REUSS
 
 OBJECTIFS = {"equilibre", "plus_logements", "plus_surface", "plus_simple"}
 
-# ETUDE-V6-2 (Lot 3, correction §4) — obligations d'aménagement fréquentes au règlement (espaces verts,
-# marge plantée) que le PLU CALIBRÉ LABUSE ne modélise pas encore. Exemple cité par l'architecte sur
-# Étang-Salé UA. Servies comme « non vérifiées » : elles réduiraient la capacité si on les appliquait.
-_REGLES_NON_VERIFIEES = [
-    {"nom": "Espaces verts (hors stationnement)", "exemple": "UA Étang-Salé : 20 % de la parcelle en espaces verts, hors aires de stationnement",
-     "statut": "non vérifié", "note": "non modélisé par le PLU calibré LABUSE — à vérifier au règlement ; réduirait la capacité servie."},
-    {"nom": "Marge plantée périphérique", "exemple": "UA Étang-Salé : bande plantée de 2 m sur 75 % du linéaire, hors limites mitoyennes",
-     "statut": "non vérifié", "note": "non modélisé par le PLU calibré LABUSE — à vérifier au règlement ; réduirait la capacité servie."},
-]
+def _regles_non_verifiees(regles) -> list[dict]:
+    """ETUDE-V6-2 (Lot 3) — obligations d'aménagement (espaces verts, marge plantée) SEULEMENT si elles ne
+    sont PAS calibrées pour la zone : là où elles le sont (ex. UA Étang-Salé, correction §2), elles passent
+    par un contrôle VÉRIFIÉ et ne figurent plus ici."""
+    out = []
+    if not (getattr(regles, "espaces_verts", None) and regles.espaces_verts.validee):
+        out.append({"nom": "Espaces verts (hors stationnement)",
+                    "exemple": "ex. UA : part de la parcelle à végétaliser, hors aires de stationnement",
+                    "statut": "non vérifié",
+                    "note": "non calibré pour cette zone — à vérifier au règlement ; réduirait la capacité."})
+    if not (getattr(regles, "marge_plantee", None) and regles.marge_plantee.validee):
+        out.append({"nom": "Marge plantée périphérique",
+                    "exemple": "ex. UA : bande plantée en limite, sur une fraction du linéaire",
+                    "statut": "non vérifié",
+                    "note": "non calibré pour cette zone — à vérifier au règlement ; réduirait la capacité."})
+    return out
 TYPES_LOGEMENT = ("T1", "T2", "T3", "T4")  # ETUDE-V6 — le programme saisi va du T1 au T4
 _REFS = ["A", "B", "C"]
 
@@ -141,6 +148,10 @@ def _scenario_public(scenario, ref: str) -> dict:
             "places_sous_sol": cap.places_sous_sol,
             "emprise_sous_sol_m2": cap.emprise_sous_sol_m2,
             "rampe_m2": cap.rampe_m2,
+            # ETUDE-V6-2 (Lot 3, correction §3) — calcul de la rampe : profondeur / pente → longueur × largeur.
+            "rampe_detail": ({k: (scenario.scene.sous_sol or {}).get(k) for k in
+                              ("rampe_profondeur_m", "rampe_pente_pct", "rampe_longueur_m", "rampe_largeur_m")}
+                             if scenario.scene.sous_sol else None),
             # ETUDE-V6-2 (Lot 3, correction) — surface au-dessus du sous-sol RETRANCHÉE de la pleine terre.
             "sur_dalle_m2": cap.sur_dalle_m2,
         },
@@ -658,8 +669,7 @@ def etudier_payload(session, entree: dict) -> dict:
         "confrontation": confrontation,
         "stationnement_regimes": stationnement_regimes,
         "capacite_reduite": capacite_reduite,
-        # ETUDE-V6-2 (Lot 3, correction §4) — règles d'aménagement que le PLU CALIBRÉ LABUSE ne modélise
-        # PAS encore : si le règlement de la zone les impose (ex. UA Étang-Salé), elles ne sont PAS
-        # vérifiées ici et RÉDUIRAIENT la capacité servie. Signalées, jamais appliquées en douce.
-        "regles_non_verifiees": _REGLES_NON_VERIFIEES,
+        # ETUDE-V6-2 (Lot 3) — règles d'aménagement NON calibrées pour cette zone (là où elles le sont,
+        # ex. UA Étang-Salé, elles passent par un contrôle vérifié et ne figurent plus ici).
+        "regles_non_verifiees": _regles_non_verifiees(ref_scn.regles),
     }

@@ -89,6 +89,25 @@ zones:
           page_pdf: 21
           citation: Au moins 30% de la surface de la parcelle doit être perméable.
           statut: valide
+      # ETUDE-V6-2 (Lot 3, correction §2) — règles d'aménagement paysager UA citées par l'architecte,
+      # calibrées et appliquées (article UA 2.6, « traitement environnemental et paysager des espaces non bâtis »).
+      espaces_verts:
+        pct:
+          pct: 20.0
+          hors_stationnement: true
+          article: UA 2.6
+          page_pdf: 21
+          citation: "Les espaces verts (engazonnés) représentent au moins 20 % de la superficie du terrain, hors aires de stationnement ; 1 arbre pour 50 m² d'espaces verts."
+          statut: valide
+      marge_plantee:
+        bande:
+          largeur_m: 2.0
+          pct_lineaire: 75.0
+          hors_mitoyennete: true
+          article: UA 2.6
+          page_pdf: 21
+          citation: "Une marge plantée de 2,00 m est aménagée sur au moins 75 % du linéaire des limites de l'unité foncière, hors limites mitoyennes."
+          statut: valide
       mixite:
         seuil_m2: 1000
         seuil_type: surface_plancher

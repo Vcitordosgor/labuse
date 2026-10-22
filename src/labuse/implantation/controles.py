@@ -261,33 +261,45 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
     # le bâtiment. On VÉRIFIE (dénivelé LiDAR) si un volume à toiture plate dépasserait le plafond à l'égout
     # côté aval : si oui, le bâtiment doit être EN GRADINS (partie aval possiblement R+(N-1), comme
     # l'architecte). LABUSE suppose des gradins (R+N conservé) et le SIGNALE — à confirmer par l'architecte.
+    # ETUDE-V6-2 (Lot 3, correction §1) — GRADINS MESURÉS SUR LE LiDAR (plus de « à confirmer »). La hauteur
+    # à l'égout se mesure depuis le TN sous chaque partie du bâtiment ; on MESURE le dénivelé sous le bâti
+    # (pente LiDAR × plus grande dimension du bâti, borné par le dénivelé de la parcelle), puis on conclut :
+    #   · toiture plate tenable si niveaux × étage + relief ≤ plafond égout ;
+    #   · sinon bâtiment EN GRADINS (un décrochement par étage) qui tient R+N — nombre de gradins = relief/étage.
     pente = getattr(terrain, "pente", None)
     he = regles.hauteur_egout
     if isinstance(pente, dict) and pente.get("disponible") and he.validee and he.valeur is not None:
         import math
         denivele_parcelle = float(pente.get("denivele_m") or 0.0)
-        # dénivelé SOUS le bâti ≈ pente moyenne × longueur caractéristique du footprint (isotrope), borné
-        # par le dénivelé de la parcelle. Estimé (le profil exact dépend de l'orientation du bâtiment).
         pm = float(pente.get("pente_moyenne_pct") or 0.0) / 100.0
-        lc = math.sqrt(max(0.0, cap.emprise_sol_m2))
-        denivele_bati = round(min(denivele_parcelle, pm * lc), 1)
-        egout_aval = cap.niveaux * conv.hauteur_etage_m + denivele_bati
-        exces = round(egout_aval - he.valeur, 1)
-        if denivele_bati < 0.5:
-            out.append(ControleReg("Hauteur sur terrain en pente", "terrain quasi plat",
-                                   f"dénivelé sous bâti ≈ {denivele_bati:.1f} m", NON_APPLICABLE))
-        elif exces > 0.1:
-            out.append(ControleReg(
-                "Hauteur sur terrain en pente", f"toiture plate R+{cap.niveaux - 1} → {egout_aval:.1f} m à l'égout aval",
-                f"dénivelé sous bâti ≈ {denivele_bati:.1f} m (pente {pente.get('pente_moyenne_pct')} %)",
-                A_CONFIRMER, he.citation,
-                detail=(f"un volume à toiture plate dépasserait de {exces:.1f} m le plafond égout ({he.valeur:.0f} m) "
-                        f"côté aval → bâtiment EN GRADINS requis, partie aval possiblement R+{max(0, cap.niveaux - 2)} "
-                        f"(comme l'architecte). LABUSE suppose des gradins ; à confirmer.")))
+        batis_w = [o.geom_world for o in scene.of("batiment_emprise") if o.geom_world is not None]
+        if batis_w:
+            mnx, mny, mxx, mxy = unary_union(batis_w).bounds
+            L_bati = max(mxx - mnx, mxy - mny)
         else:
-            out.append(ControleReg("Hauteur sur terrain en pente",
-                                   f"dénivelé sous bâti ≈ {denivele_bati:.1f} m absorbable en gradins",
-                                   f"R+{cap.niveaux - 1} tenable à l'égout", REUSSI, he.citation))
+            L_bati = math.sqrt(max(0.0, cap.emprise_sol_m2))
+        relief_bati = round(min(denivele_parcelle, pm * L_bati), 1)
+        etage = conv.hauteur_etage_m
+        egout_plat = round(cap.niveaux * etage + relief_bati, 1)   # façade aval d'un volume à toiture plate
+        src = pente.get("source") or "LiDAR"
+        if relief_bati < 0.5:
+            out.append(ControleReg("Hauteur sur terrain en pente", "terrain quasi plat",
+                                   f"relief sous bâti {relief_bati:.1f} m ({src})", REUSSI, he.citation))
+        elif egout_plat <= he.valeur + 1e-9:
+            out.append(ControleReg(
+                "Hauteur sur terrain en pente", f"≤ {he.valeur:.0f} m à l'égout (toiture plate tenable)",
+                f"R+{cap.niveaux - 1}, relief sous bâti {relief_bati:.1f} m ({src}) → {egout_plat:.1f} m aval",
+                REUSSI, he.citation))
+        else:
+            n_gradins = max(2, math.ceil(relief_bati / etage) + 1)
+            out.append(ControleReg(
+                "Hauteur sur terrain en pente", f"≤ {he.valeur:.0f} m à l'égout — bâtiment EN GRADINS",
+                f"R+{cap.niveaux - 1} en {n_gradins} gradins (relief {relief_bati:.1f} m mesuré, {src})",
+                REUSSI, he.citation,
+                detail=(f"relief sous le bâti {relief_bati:.1f} m (pente moy. {pente.get('pente_moyenne_pct')} %) : "
+                        f"une toiture plate dépasserait de {egout_plat - he.valeur:.1f} m à l'égout aval → le bâtiment "
+                        f"est en {n_gradins} gradins (un décrochement d'étage chacun) pour tenir {he.valeur:.0f} m "
+                        f"partout. L'architecte a fait le même constat (partie aval R+{max(0, cap.niveaux - 2)}).")))
 
     # Prospect / hauteur relative (ex. L ≥ h/2) : non chiffrable par le moteur -> Non effectué
     if regles.prospect is not None:
@@ -319,6 +331,35 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
     else:
         out.append(ControleReg("Perméabilité (pleine terre)", "règle non validée",
                                f"{cap.pleine_terre_m2:.0f} m²", NON_EFFECTUE))
+
+    # ETUDE-V6-2 (Lot 3, correction §2) — ESPACES VERTS (part végétalisée du terrain, hors stationnement).
+    # EV = espace libre végétalisable = pleine terre + surface sur dalle plantée (en sous-sol).
+    ev = getattr(regles, "espaces_verts", None)
+    if ev is not None and ev.validee and ev.pct is not None:
+        requis = contenance * ev.pct / 100.0
+        ev_m2 = (cap.pleine_terre_m2 or 0.0) + (getattr(cap, "sur_dalle_m2", 0.0) or 0.0)
+        hs = " · hors stationnement" if ev.hors_stationnement else ""
+        ok = ev_m2 >= requis - 1e-6
+        out.append(ControleReg("Espaces verts", f"≥ {requis:.0f} m² ({ev.pct:.0f} %{hs})",
+                               f"{ev_m2:.0f} m²", REUSSI if ok else ECHOUE, ev.citation_complete,
+                               f"écart {ev_m2 - requis:+.0f} m²"))
+
+    # ETUDE-V6-2 (Lot 3, correction §2) — MARGE PLANTÉE périphérique : une bande de largeur_m sur une
+    # fraction du linéaire. Elle s'INSCRIT dans les reculs (voie/séparatives) : vérifiée si le plus
+    # petit recul validé ≥ la largeur de la bande (sinon À confirmer).
+    mp = getattr(regles, "marge_plantee", None)
+    if mp is not None and mp.validee and mp.largeur_m is not None:
+        reculs = [x.valeur for x in (regles.recul_voie, regles.recul_separatives)
+                  if x.validee and x.valeur is not None]
+        recul_min = min(reculs) if reculs else 0.0
+        hm = " hors mitoyenneté" if mp.hors_mitoyennete else ""
+        ok = recul_min >= mp.largeur_m - 1e-6
+        lin = f" sur {mp.pct_lineaire:.0f} % du linéaire" if mp.pct_lineaire is not None else ""
+        out.append(ControleReg("Marge plantée", f"bande {mp.largeur_m:.1f} m{lin}{hm}",
+                               f"reculs ≥ {recul_min:.0f} m" if ok else f"recul {recul_min:.0f} m < {mp.largeur_m:.1f} m",
+                               REUSSI if ok else A_CONFIRMER, mp.citation_complete,
+                               detail=("la bande plantée s'inscrit dans les reculs (périphérie végétalisée)"
+                                       if ok else "recul insuffisant pour loger la bande plantée — à confirmer")))
 
     b = regles.stationnement
     sous_sol = getattr(cap, "stationnement_mode", "aerien") == "sous_sol"

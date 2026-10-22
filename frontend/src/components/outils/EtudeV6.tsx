@@ -262,7 +262,8 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
                 <p className="text-[10.5px] text-txt-dim">{Object.entries(active.programme.par_type).map(([t, n]) => `${n}×${t}`).join(' · ')} · SDP {fmtDec(active.resume.sdp_m2)} m²</p>
                 {/* ETUDE-V6-2 (Lot 3) — parking enterré : places au −1, emprise du sous-sol, rampe au sol. */}
                 {active.stationnement?.mode === 'sous_sol' && (
-                  <p className="mt-1 text-[10.5px] text-txt"><b className="text-mint">Stationnement en sous-sol</b> : {fmtInt(active.stationnement.places_sous_sol ?? 0)} places au niveau −1 · emprise {fmtDec(active.stationnement.emprise_sous_sol_m2 ?? 0)} m² (≤ emprise réglementaire) · rampe {fmtDec(active.stationnement.rampe_m2 ?? 0)} m² au sol
+                  <p className="mt-1 text-[10.5px] text-txt"><b className="text-mint">Stationnement en sous-sol</b> : {fmtInt(active.stationnement.places_sous_sol ?? 0)} places au niveau −1 · emprise {fmtDec(active.stationnement.emprise_sous_sol_m2 ?? 0)} m² (≤ emprise réglementaire)
+                    {active.stationnement.rampe_detail && <> · rampe {fmtDec(active.stationnement.rampe_m2 ?? 0)} m² ({fmtDec(active.stationnement.rampe_detail.rampe_profondeur_m)} m / {fmtDec(active.stationnement.rampe_detail.rampe_pente_pct)} % = {fmtDec(active.stationnement.rampe_detail.rampe_longueur_m)} m × {fmtDec(active.stationnement.rampe_detail.rampe_largeur_m)} m)</>}
                     {(active.stationnement.sur_dalle_m2 ?? 0) > 0 && <> · {fmtDec(active.stationnement.sur_dalle_m2 ?? 0)} m² sur dalle retirés de la pleine terre</>}.</p>
                 )}
                 <div className="mt-1.5"><Badge ton={verdictTon(active.verdict)}>{active.verdict}</Badge></div>
