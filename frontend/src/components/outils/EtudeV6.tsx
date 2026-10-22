@@ -426,7 +426,8 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
           {step === 3 && <EtapeProgramme nb={nb} setNb={setNb} totalLogts={totalLogts} surfaceProg={surfaceProg} surfaceVar={surfaceVar} surfaceInt={surfaceInt} lotissement={projet === 'lotissement'}
             jauge={jauge} jaugeChargement={jaugeQ.isFetching} jaugeManquant={jaugeQ.data && !jaugeQ.data.estimable ? jaugeQ.data.manquant : null} />}
         </div>
-        <Recap sel={sel} v={v} projet={projet} totalLogts={totalLogts} surfaceProg={surfaceProg} surfaceVar={surfaceVar} />
+        <Recap sel={sel} v={v} projet={projet} totalLogts={totalLogts} surfaceProg={surfaceProg} surfaceVar={surfaceVar}
+          stationnement={projet && statio.data?.regimes?.general ? (statio.data.regimes.general.etat ?? 'règle PLU') : null} />
       </div>
 
       <PiedEtape
@@ -736,7 +737,8 @@ function EtapeParcelles({ sel, v, chargement, erreur, onAjouter, onRetirer }: {
       <EnTetePanneau n="01" titre="Choisissez votre terrain" sous="Une ou plusieurs parcelles (1 à 8). Elles doivent être contiguës pour constituer une même assiette foncière." />
       <label className="mb-1 block text-[9px] uppercase tracking-wide text-txt-dim">Référence de parcelle — adresse, IDU ou référence cadastrale</label>
       <div className="max-w-[560px]">
-        <ParcelInput dataAttr="etude-v6-parcelle" withCarte={false} onPick={onAjouter} placeholder="Adresse, IDU ou référence (ex. 97404000AW0099)" />
+        {/* ETUDE-V6-2 (Lot 5) — le champ est VIDÉ après chaque ajout (remontage via la clé) : prêt pour la suivante. */}
+        <ParcelInput key={sel.length} dataAttr="etude-v6-parcelle" withCarte={false} onPick={onAjouter} placeholder="Adresse, IDU ou référence (ex. 97404000AW0099)" />
       </div>
       <p className="mt-1.5 text-[10.5px] text-txt-dim">Aucune carte dans le formulaire : la sélection se fait par recherche.</p>
 
@@ -767,6 +769,18 @@ function EtapeParcelles({ sel, v, chargement, erreur, onAjouter, onRetirer }: {
                 <span>Surface réelle <b className="text-txt">{p.surface_reelle_m2 != null ? `${fmtDec(p.surface_reelle_m2)} m²` : '—'}</b></span>
                 {p.ecart_m2 != null && <span>Écart {p.ecart_m2 > 0 ? '+' : ''}{fmtDec(p.ecart_m2)} m²</span>}
               </div>
+              {/* ETUDE-V6-2 (Lot 5) — règles PLU SERVIES de la zone de cette parcelle, citées (article · page). */}
+              {p.regles_plu && p.regles_plu.length > 0 && (
+                <div data-regles-plu className="mt-1.5 flex flex-wrap gap-1.5">
+                  {p.regles_plu.map((r) => (
+                    <span key={r.nom} title={r.article ? `PLU art. ${r.article}${r.page_pdf != null ? ` · p. ${r.page_pdf}` : ''}` : undefined}
+                      className="rounded border border-line-2 bg-surface-2 px-1.5 py-0.5 text-[10px] text-txt-mut">
+                      {r.nom} <b className="text-txt">{fmtDec(r.valeur)}{r.unite === '%' ? ' %' : ` ${r.unite}`}</b>
+                      {r.article && <span className="ml-1 text-[8.5px] text-txt-dim">{r.article}</span>}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
 
@@ -991,32 +1005,35 @@ function EnTetePanneau({ n, titre, sous }: { n: string; titre: string; sous: str
 }
 
 // ── Récapitulatif ────────────────────────────────────────────────────────────────────────────────
-function Recap({ sel, v, projet, totalLogts, surfaceProg, surfaceVar }: {
+// ETUDE-V6-2 (Lot 5) — le récap affiche « — » tant qu'une donnée n'est pas choisie/saisie (jamais 0,
+// jamais « Non vérifié ») : un tiret dit « pas encore renseigné », pas « absent / problème ».
+function Recap({ sel, v, projet, totalLogts, surfaceProg, surfaceVar, stationnement }: {
   sel: string[]; v?: EtudeParcellesOut; projet: ProjetKey | null
-  totalLogts: number; surfaceProg: number; surfaceVar: number
+  totalLogts: number; surfaceProg: number; surfaceVar: number; stationnement: string | null
 }) {
   const surfaceTerrain = v?.union.surface_reelle_m2
-  const projetLabel = projet ? PROJETS.find((p) => p.key === projet)!.label : 'À choisir'
+  const projetLabel = projet ? PROJETS.find((p) => p.key === projet)!.label : '—'
   return (
     <aside className="flex h-fit flex-col gap-0 rounded-lg border border-line-2 bg-surface-2 p-3">
       <p className="text-[9px] font-semibold uppercase tracking-wide text-mint">Récapitulatif</p>
       <div className="mt-2 rounded-md border border-line-2 bg-surface-1 px-3 py-2.5">
         <p className="text-[10.5px] text-txt-dim">Terrain sélectionné</p>
-        <div className="font-display text-[26px] font-bold leading-none text-txt-hi">{surfaceTerrain != null ? fmtDec(surfaceTerrain) : '0'} <span className="text-[15px]">m²</span></div>
-        <p className="mt-0.5 text-[10.5px] text-txt-dim">{sel.length} parcelle{sel.length > 1 ? 's' : ''}</p>
+        <div className="font-display text-[26px] font-bold leading-none text-txt-hi">{surfaceTerrain != null ? fmtDec(surfaceTerrain) : '—'} {surfaceTerrain != null && <span className="text-[15px]">m²</span>}</div>
+        <p className="mt-0.5 text-[10.5px] text-txt-dim">{sel.length > 0 ? `${sel.length} parcelle${sel.length > 1 ? 's' : ''}` : '—'}</p>
       </div>
       <Ligne l="Projet" v={projetLabel} />
-      <Ligne l="Logements demandés" v={fmtInt(totalLogts)} />
-      <Ligne l="Surface du programme" v={`${fmtDec(surfaceProg)} m²`} sous={surfaceVar > 0 ? `dont ${fmtDec(surfaceVar)} m² varangues` : undefined} />
-      <Ligne l="Stationnement PLU" v="Non vérifié" ton="ambre" />
+      <Ligne l="Logements demandés" v={totalLogts > 0 ? fmtInt(totalLogts) : '—'} />
+      <Ligne l="Surface du programme" v={totalLogts > 0 ? `${fmtDec(surfaceProg)} m²` : '—'} sous={totalLogts > 0 && surfaceVar > 0 ? `dont ${fmtDec(surfaceVar)} m² varangues` : undefined} />
+      <Ligne l="Stationnement PLU" v={stationnement ?? '—'} />
     </aside>
   )
 }
 function Ligne({ l, v, sous, ton }: { l: string; v: string; sous?: string; ton?: 'ambre' }) {
+  const vide = v === '—'
   return (
     <div className="flex items-center justify-between border-t border-line-2 py-2">
       <div><span className="text-[11.5px] text-txt-mut">{l}</span>{sous && <p className="text-[9.5px] text-txt-dim">{sous}</p>}</div>
-      <b className={`text-[12px] ${ton === 'ambre' ? 'text-amber' : 'text-txt-hi'}`}>{v}</b>
+      <b className={`text-[12px] ${vide ? 'text-txt-dim' : ton === 'ambre' ? 'text-amber' : 'text-txt-hi'}`}>{v}</b>
     </div>
   )
 }
@@ -1026,30 +1043,22 @@ function PiedEtape({ step, peutContinuer1, peutAnalyser, enAnalyse, erreurAnalys
   step: 1 | 2 | 3; peutContinuer1: boolean; peutAnalyser: boolean; enAnalyse: boolean; erreurAnalyse: unknown
   onPrec: () => void; onSuiv: () => void; onAnalyser: () => void; projetChoisi: boolean
 }) {
-  const TITRES = ['', 'Une ou plusieurs parcelles', 'Une destination claire', 'Votre programme, votre choix']
-  const TEXTES = ['',
-    'Le regroupement est refusé si les parcelles sont séparées.',
-    'Le stationnement sera vérifié selon la commune, la zone et le régime juridique.',
-    'L\'analyse explique la réserve estimée ou le dépassement, sans annoncer une conformité non prouvée.']
+  // ETUDE-V6-2 (Lot 5) — plus de bandeau descriptif au bas des 3 étapes : SEULEMENT Retour / Continuer /
+  // Analyser. On garde le feedback FONCTIONNEL minimal (raison d'un blocage, « Calcul en cours », erreur).
   const suivBloque = step === 1 ? !peutContinuer1 : step === 2 ? !projetChoisi : false
   const raison = step === 1 && !peutContinuer1 ? 'Sélectionnez des parcelles contiguës pour continuer.'
     : step === 2 && !projetChoisi ? 'Choisissez un type de projet pour continuer.' : ''
   return (
-    <div className="mx-4 mb-4 mt-2 rounded-lg border border-line-2 bg-surface-2 px-4 py-3">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <b className="text-[12.5px] text-txt-hi">{TITRES[step]}</b>
-          <p className="text-[10.5px] text-txt-dim">{TEXTES[step]}</p>
-          {raison && <p className="mt-0.5 text-[10.5px] text-amber">{raison}</p>}
-          {/* ETUDE-V6-2 (Lot 3) — la borne moteur est passée à 60 s : on prévient que le calcul peut durer. */}
-          {enAnalyse && <p className="mt-0.5 text-[10.5px] text-txt-dim">Calcul en cours, jusqu'à une minute…</p>}
-          {!!erreurAnalyse && <p className="mt-0.5 text-[10.5px] text-coral">{(erreurAnalyse as Error).message}</p>}
-        </div>
-        <div className="flex items-center gap-2">
-          {step > 1 && <Bouton niveau="secondaire" onClick={onPrec}>← Retour</Bouton>}
-          {step < 3 && <Bouton niveau="primaire" onClick={onSuiv} disabled={suivBloque}>Continuer →</Bouton>}
-          {step === 3 && <Bouton niveau="primaire" onClick={onAnalyser} disabled={!peutAnalyser || enAnalyse}>{enAnalyse ? 'Calcul en cours…' : 'Analyser mon projet →'}</Bouton>}
-        </div>
+    <div className="mx-4 mb-4 mt-2 flex items-center justify-between gap-3 border-t border-line-2 pt-3">
+      <div className="min-h-[1em] text-[10.5px]">
+        {raison && <span className="text-amber">{raison}</span>}
+        {enAnalyse && <span className="text-txt-dim">Calcul en cours, jusqu'à une minute…</span>}
+        {!!erreurAnalyse && <span className="text-coral">{(erreurAnalyse as Error).message}</span>}
+      </div>
+      <div className="flex items-center gap-2">
+        {step > 1 && <Bouton niveau="secondaire" onClick={onPrec}>← Retour</Bouton>}
+        {step < 3 && <Bouton niveau="primaire" onClick={onSuiv} disabled={suivBloque}>Continuer →</Bouton>}
+        {step === 3 && <Bouton niveau="primaire" onClick={onAnalyser} disabled={!peutAnalyser || enAnalyse}>{enAnalyse ? 'Calcul en cours…' : 'Analyser mon projet →'}</Bouton>}
       </div>
     </div>
   )

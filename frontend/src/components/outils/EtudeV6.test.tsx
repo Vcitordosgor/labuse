@@ -12,6 +12,11 @@ const PARC = (idu: string, ref: string, zone: string, conten: number, reelle: nu
   contenance_cadastrale_m2: conten, surface_reelle_m2: reelle, ecart_m2: Math.round((reelle - conten) * 10) / 10,
   zone_plu: zone, zone_famille: 'U', qualite_geometrique: qualite, polsby_popper: qualite === 'irrégulière' ? 0.26 : 0.77,
   largeur_inscriptible_m: 20, disparue_le: null,
+  regles_plu: [
+    { nom: "Hauteur à l'égout", valeur: 12, unite: 'm', article: 'UA 2.5.2', page_pdf: 19 },
+    { nom: 'Emprise au sol (CES)', valeur: 70, unite: '%', article: 'UA 2.4', page_pdf: 18 },
+    { nom: 'Pleine terre', valeur: 30, unite: '%', article: 'UA 2.6', page_pdf: 21 },
+  ],
 })
 const OUT = (ok: boolean) => ({
   parcelles: [PARC('97404000AW0099', 'AW 99', 'UA', 501, 504.3), PARC('97404000AW0451', 'AW 451', 'UA', 586, 582.7, 'irrégulière')],
@@ -164,13 +169,15 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     expect((screen.getByRole('button', { name: /Continuer/ }) as HTMLButtonElement).disabled).toBe(true)
   })
 
-  it('étape 2 : aucun type présélectionné (récap « À choisir »)', async () => {
+  it('étape 2 : aucun type présélectionné (récap « — », Lot 5)', async () => {
     vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
     renderV6(['97404000AW0099', '97404000AW0451'])
     await waitFor(() => screen.getByText('AW 99'))
     fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
     await waitFor(() => expect(screen.getByText('Quel type de projet ?')).toBeTruthy())
-    expect(document.body.textContent).toContain('À choisir')  // récap : projet non choisi
+    // ETUDE-V6-2 (Lot 5) — récap : projet non choisi → « — » (plus « À choisir »)
+    const recap = [...document.querySelectorAll('aside')].find((a) => /Récapitulatif/.test(a.textContent || ''))
+    expect(recap?.textContent).toContain('—')
     expect(screen.getByText('Résidence étudiante')).toBeTruthy()
     expect(screen.getByText('Lotissement')).toBeTruthy()
   })
@@ -514,5 +521,35 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     fireEvent.click(screen.getByRole('button', { name: /Analyser mon projet/ }))
     const div = await waitFor(() => { const d = document.querySelector('[data-divergence]'); if (!d) throw new Error('no'); return d as HTMLElement })
     expect(div.textContent).toContain('divergent')
+  })
+
+  it('Lot 5 : étape 1 — règles PLU par parcelle (citées) ; champ vidé après ajout ; pas de bandeau bas de page', async () => {
+    vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
+    renderV6(['97404000AW0099', '97404000AW0451'])
+    await waitFor(() => screen.getByText('AW 99'))
+    // règles PLU servies par parcelle, citées
+    const regles = document.querySelectorAll('[data-regles-plu]')
+    expect(regles.length).toBe(2)
+    expect(regles[0].textContent).toContain("Hauteur à l'égout")
+    expect(regles[0].textContent).toContain('UA 2.4')      // CES cité
+    // le champ de recherche est vidé après ajout (remontage par clé) → value vide
+    const champ = document.querySelector('[data-etude-v6-parcelle]') as HTMLInputElement | null
+    if (champ) expect(champ.value).toBe('')
+    // plus de bandeau descriptif au bas de page
+    expect(document.body.textContent).not.toContain('Le regroupement est refusé')
+    expect(document.body.textContent).not.toContain("L'analyse explique la réserve")
+  })
+
+  it('Lot 5 : récap « — » tant que rien n\'est choisi (jamais 0 ni « Non vérifié »)', async () => {
+    vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
+    renderV6(['97404000AW0099', '97404000AW0451'])
+    await waitFor(() => screen.getByText('AW 99'))
+    const recap = [...document.querySelectorAll('aside')].find((a) => /Récapitulatif/.test(a.textContent || '')) as HTMLElement
+    expect(recap).toBeTruthy()
+    // projet / logements / surface / stationnement non renseignés → « — », jamais 0 ni « Non vérifié »
+    expect(recap.textContent).not.toContain('Non vérifié')
+    expect(recap.textContent).toContain('—')
+    // la ligne « Logements demandés » ne doit pas afficher 0
+    expect(recap.textContent).not.toMatch(/Logements demandés\s*0/)
   })
 })

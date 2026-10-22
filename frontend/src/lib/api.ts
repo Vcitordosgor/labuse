@@ -2341,6 +2341,8 @@ export interface EtudeParcelle {
   zone_plu: string | null; zone_famille: string | null
   qualite_geometrique: string; polsby_popper: number | null; largeur_inscriptible_m: number | null
   disparue_le: string | null
+  // ETUDE-V6-2 (Lot 5) — règles PLU servies de la zone de la parcelle (hauteur, CES, reculs, pleine terre…).
+  regles_plu?: Array<{ nom: string; valeur: number; unite: string; article: string | null; page_pdf: number | null }> | null
 }
 export interface EtudeParcellesOut {
   parcelles: EtudeParcelle[]

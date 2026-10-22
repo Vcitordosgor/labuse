@@ -145,6 +145,22 @@ def test_jauge_enveloppe_estimee(session_reelle):
 
 
 @pytest.mark.reel
+def test_regles_plu_par_parcelle(session_reelle):
+    """ETUDE-V6-2 (Lot 5) — l'étape 1 sert les règles PLU de la zone de CHAQUE parcelle, citées
+    (article). Étang-Salé UA : hauteur, CES, reculs, pleine terre + espaces verts / marge (calibrés §2)."""
+    from labuse.implantation.assiette import valider_parcelles
+    out = valider_parcelles(session_reelle, ["97404000AW0099"])
+    rp = out["parcelles"][0]["regles_plu"]
+    assert rp, "règles PLU attendues pour UA"
+    noms = {r["nom"] for r in rp}
+    assert "Emprise au sol (CES)" in noms and "Pleine terre" in noms
+    assert "Espaces verts" in noms and "Marge plantée" in noms   # calibrés Lot 3 §2
+    # chaque règle servie est chiffrée et citée
+    for r in rp:
+        assert r["valeur"] is not None and r["article"]
+
+
+@pytest.mark.reel
 def test_sous_sol_etude_rapide(session_reelle):
     """L'étude sous-sol reste rapide (pas de 2ᵉ recherche) — bornée bien en deçà de la nouvelle borne 60 s."""
     import time
