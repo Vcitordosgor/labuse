@@ -6,7 +6,8 @@
 // (« ce que le terrain accueille », variantes, facteurs limitants) est repris au Lot B ; ici, base servie.
 import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { postEtude, postEtudeParcelles, postEtudeStationnement, ETUDE_PDF_URL, etudePdfInit } from '../../lib/api'
+import { postEtude, postEtudeParcelles, postEtudeStationnement, postEtudeJauge, ETUDE_PDF_URL, etudePdfInit } from '../../lib/api'
+import type { EtudeJaugeOut } from '../../lib/api'
 import type { EtudeParcellesOut, EtudePayload, EtudeVariante, EtudeGrandeur, EtudeStationnementRegimes, EtudeLotissement, EtudeIn } from '../../lib/api'
 import { fmtInt, fmtDec } from '../../lib/format'
 import { Bouton } from '../ui/Bouton'
@@ -24,6 +25,17 @@ type TypeKey = (typeof TYPES)[number]
 const SURF: Record<TypeKey, { area: number; varangue: number }> = {
   T1: { area: 30, varangue: 6 }, T2: { area: 56, varangue: 9 },
   T3: { area: 70, varangue: 12 }, T4: { area: 80, varangue: 14 },
+}
+
+// ETUDE-V6-2 (Lot 4) — enveloppe ESTIMÉE (jauge étape 3) : (zone d'implantation − sol du stationnement
+// aérien) × niveaux (hauteur PLU) × coef plancher. `programme` = m² demandés. Renvoie null si non estimable.
+function enveloppeJauge(jd: EtudeJaugeOut | undefined, demande: Record<string, number>, surfaceDe: (t: string) => number) {
+  if (!jd || !jd.estimable) return null
+  const placesEst = Object.entries(demande).reduce((s, [t, n]) => s + n * (jd.places_par_type?.[t] ?? 1), 0)
+  const solStat = placesEst * (jd.m2_par_place_aerien ?? 18)
+  const enveloppe = Math.max(0, ((jd.zone_implantation_m2 ?? 0) - solStat) * (jd.niveaux ?? 0) * (jd.coef_plancher ?? 0))
+  const programme = Object.entries(demande).reduce((s, [t, n]) => s + n * surfaceDe(t), 0)
+  return { placesEst, solStat, enveloppe, programme, niveaux_label: jd.niveaux_label ?? '', zone_m2: jd.zone_implantation_m2 ?? 0, coef: jd.coef_plancher ?? 0 }
 }
 
 type ProjetKey = 'etudiante' | 'senior' | 'social' | 'lotissement'
@@ -110,6 +122,15 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
     staleTime: 60_000,
   })
 
+  // ETUDE-V6-2 (Lot 4) — enveloppe ESTIMÉE (jauge) : chargée dès l'étape 3 (rapide, sans moteur). Le
+  // collectif seul (le lotissement ne dessine pas de bâtiment). Reste en cache pour le résultat (divergence).
+  const jaugeQ = useQuery({
+    queryKey: ['etude-jauge', sel.join(','), projet],
+    queryFn: () => postEtudeJauge(sel, projet!),
+    enabled: step === 3 && !!projet && projet !== 'lotissement' && !!v?.contiguite.ok,
+    staleTime: 60_000,
+  })
+
   // Analyse (étape finale ET recalcul) : un seul appel moteur avec la config courante (hypothèses comprises).
   const analyse = useMutation({ mutationFn: (body?: EtudeIn) => postEtude(body ?? corpsBody()) })
   const recalculer = () => analyse.mutate(undefined)
@@ -128,6 +149,10 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
   const surfaceProg = TYPES.reduce((s, t) => s + nb[t] * SURF[t].area, 0)
   const surfaceVar = TYPES.reduce((s, t) => s + nb[t] * SURF[t].varangue, 0)
   const surfaceInt = surfaceProg - surfaceVar
+
+  // ETUDE-V6-2 (Lot 4) — enveloppe estimée vs programme saisi (surfaces par défaut, comme l'étape 3).
+  const demandeNb: Record<string, number> = Object.fromEntries(TYPES.filter((t) => nb[t] > 0).map((t) => [t, nb[t]]))
+  const jauge = enveloppeJauge(jaugeQ.data, demandeNb, (t) => SURF[t as TypeKey]?.area ?? 0)
 
   const contiguOk = sel.length > 0 && !!v?.contiguite.ok
   const peutContinuer1 = contiguOk && !valide.isFetching
@@ -175,6 +200,13 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
     const demProg = Object.entries(demMap).reduce((s, [t, n]) => s + n * surfA(t), 0)
     const demVar = Object.entries(demMap).reduce((s, [t, n]) => s + n * varA(t), 0)
     const demTotal = Object.values(demMap).reduce((s, n) => s + n, 0)
+    // ETUDE-V6-2 (Lot 4) — DIVERGENCE : si l'estimation rapide (jauge étape 3) et le calcul (capacité
+    // maximale SDP) s'écartent de plus de 20 %, le RÉSULTAT le dit (l'enveloppe estimée était optimiste/prudente).
+    const jaugeRes = enveloppeJauge(jaugeQ.data, demMap, surfA)
+    const capSdp = resultat.capacite_maximale?.sdp_m2 ?? 0
+    const divergence = (jaugeRes && capSdp > 0 && Math.abs(jaugeRes.enveloppe - capSdp) / capSdp > 0.2)
+      ? { estime: jaugeRes.enveloppe, calcule: capSdp, pct: Math.round((Math.abs(jaugeRes.enveloppe - capSdp) / capSdp) * 100) }
+      : null
     const bilanDe = (v: EtudeVariante): EtudeProgramme =>
       ({ ref: v.role_label, logements: v.resume.logements, par_type: v.programme.par_type, sdp_m2: v.resume.sdp_m2, shab_m2: v.programme.shab_estimee_m2 })
     return (
@@ -255,6 +287,10 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
                       : <>Votre demande de {fmtInt(resultat.confrontation.demande_logements)} logements <b className="text-amber">dépasse</b> ce maximum de {fmtInt(-resultat.confrontation.reserve_logements)}.</>}</p>
                   )}
                   <p className="mt-0.5 text-[9.5px] text-txt-dim">Maximum du terrain sous {resultat.capacite_maximale.repartition} — indépendant du <b>nombre</b> demandé (deux demandes de même répartition donnent le même maximum).</p>
+                  {/* ETUDE-V6-2 (Lot 4) — divergence estimation (jauge étape 3) ↔ calcul > 20 % : on le dit. */}
+                  {divergence && (
+                    <p data-divergence className="mt-1 text-[10.5px] text-amber">⚠ L'estimation rapide de l'étape 3 ({fmtDec(divergence.estime)} m² de SDP) et le calcul complet ({fmtDec(divergence.calcule)} m²) divergent de {divergence.pct} % : la jauge était {divergence.estime > divergence.calcule ? 'optimiste' : 'prudente'} — fiez-vous au calcul.</p>
+                  )}
                 </Recit>
               )}
               <Recit titre="Ce que le terrain accueille" ton={verdictTon(active.verdict)}>
@@ -387,7 +423,8 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
         <div className="rounded-lg border border-line-2 bg-surface-2 p-4">
           {step === 1 && <EtapeParcelles sel={sel} v={v} chargement={valide.isFetching} erreur={valide.error} onAjouter={ajouter} onRetirer={retirer} />}
           {step === 2 && <EtapeType projet={projet} onChoisir={setProjet} regimes={statio.data?.regimes} chargement={statio.isFetching} />}
-          {step === 3 && <EtapeProgramme nb={nb} setNb={setNb} totalLogts={totalLogts} surfaceProg={surfaceProg} surfaceVar={surfaceVar} surfaceInt={surfaceInt} lotissement={projet === 'lotissement'} />}
+          {step === 3 && <EtapeProgramme nb={nb} setNb={setNb} totalLogts={totalLogts} surfaceProg={surfaceProg} surfaceVar={surfaceVar} surfaceInt={surfaceInt} lotissement={projet === 'lotissement'}
+            jauge={jauge} jaugeChargement={jaugeQ.isFetching} jaugeManquant={jaugeQ.data && !jaugeQ.data.estimable ? jaugeQ.data.manquant : null} />}
         </div>
         <Recap sel={sel} v={v} projet={projet} totalLogts={totalLogts} surfaceProg={surfaceProg} surfaceVar={surfaceVar} />
       </div>
@@ -846,9 +883,10 @@ function StationnementRegle({ regimes, lotissement }: { regimes: EtudeStationnem
 }
 
 // ── Étape 3 — Programme ──────────────────────────────────────────────────────────────────────────
-function EtapeProgramme({ nb, setNb, totalLogts, surfaceProg, surfaceVar, surfaceInt, lotissement }: {
+function EtapeProgramme({ nb, setNb, totalLogts, surfaceProg, surfaceVar, surfaceInt, lotissement, jauge, jaugeChargement, jaugeManquant }: {
   nb: Record<TypeKey, number>; setNb: (f: (n: Record<TypeKey, number>) => Record<TypeKey, number>) => void
   totalLogts: number; surfaceProg: number; surfaceVar: number; surfaceInt: number; lotissement: boolean
+  jauge: ReturnType<typeof enveloppeJauge>; jaugeChargement: boolean; jaugeManquant: string[] | null
 }) {
   const set = (t: TypeKey, val: number) => setNb((n) => ({ ...n, [t]: Math.max(0, Math.min(200, val)) }))
   return (
@@ -888,7 +926,57 @@ function EtapeProgramme({ nb, setNb, totalLogts, surfaceProg, surfaceVar, surfac
           <p className="text-[10px] text-txt-dim">surface du programme</p>
         </div>
       </div>
+      {/* ETUDE-V6-2 (Lot 4) — JAUGE : enveloppe estimée (avant calcul) vs programme saisi. Rouge si
+          dépassement ; grise « non estimable » si une donnée manque. Étiquetée « estimé » (jamais un chiffre servi). */}
+      {!lotissement && totalLogts > 0 && (
+        <JaugeEnveloppe jauge={jauge} chargement={jaugeChargement} manquant={jaugeManquant} programme={surfaceProg} />
+      )}
       <p className="mt-2 text-[10px] text-txt-dim">Ces surfaces sont des hypothèses de programme (varangue comprise). La surface de plancher réglementaire (SDP) sera calculée séparément par le moteur — jamais confondue avec ces m².</p>
+    </div>
+  )
+}
+
+// ── Lot 4 — jauge d'enveloppe estimée (étape 3, avant le calcul) ───────────────────────────────────
+function JaugeEnveloppe({ jauge, chargement, manquant, programme }: {
+  jauge: ReturnType<typeof enveloppeJauge>; chargement: boolean; manquant: string[] | null; programme: number
+}) {
+  if (manquant && manquant.length > 0) {
+    return (
+      <div data-jauge="non-estimable" className="mt-3 rounded-md border border-line-2 bg-surface-1 px-3 py-2.5">
+        <div className="mb-1.5 flex items-center justify-between">
+          <b className="text-[11.5px] text-txt">Enveloppe constructible <span className="text-[9px] font-normal uppercase tracking-wide text-txt-dim">· estimé</span></b>
+          <span className="text-[10.5px] text-txt-mut">non estimable</span>
+        </div>
+        <div className="h-2 w-full rounded-full bg-line-2" />
+        <p className="mt-1 text-[10px] text-txt-dim">Donnée manquante : {manquant.join(' · ')}. L'enveloppe ne peut pas être estimée avant le calcul.</p>
+      </div>
+    )
+  }
+  if (!jauge) {
+    return (
+      <div data-jauge="chargement" className="mt-3 rounded-md border border-line-2 bg-surface-1 px-3 py-2.5">
+        <b className="text-[11.5px] text-txt">Enveloppe constructible <span className="text-[9px] font-normal uppercase tracking-wide text-txt-dim">· estimé</span></b>
+        <div className="mt-1.5 h-2 w-full animate-pulse rounded-full bg-line-2" />
+        <p className="mt-1 text-[10px] text-txt-dim">{chargement ? 'Estimation en cours…' : 'Enveloppe estimée dès que l\'assiette est prête.'}</p>
+      </div>
+    )
+  }
+  const depasse = programme > jauge.enveloppe
+  const pct = jauge.enveloppe > 0 ? Math.min(100, Math.round((programme / jauge.enveloppe) * 100)) : 0
+  return (
+    <div data-jauge={depasse ? 'depassement' : 'ok'} className={`mt-3 rounded-md border px-3 py-2.5 ${depasse ? 'border-coral/50 bg-coral/5' : 'border-line-2 bg-surface-1'}`}>
+      <div className="mb-1.5 flex items-center justify-between">
+        <b className="text-[11.5px] text-txt">Enveloppe constructible <span className="text-[9px] font-normal uppercase tracking-wide text-txt-dim">· estimé</span></b>
+        <span className="text-[10.5px] text-txt-mut">{fmtDec(programme)} / {fmtDec(jauge.enveloppe)} m² ({pct} %)</span>
+      </div>
+      <div className="h-2 w-full overflow-hidden rounded-full bg-line-2">
+        <div className={`h-full rounded-full ${depasse ? 'bg-coral' : 'bg-mint'}`} style={{ width: `${pct}%` }} />
+      </div>
+      {depasse ? (
+        <p className="mt-1.5 text-[10.5px] text-coral">⚠ Votre programme ({fmtDec(programme)} m²) dépasse l'enveloppe estimée ({fmtDec(jauge.enveloppe)} m²) de {fmtDec(programme - jauge.enveloppe)} m². Le terrain ne tiendra probablement pas tout — réduisez ou testez le sous-sol.</p>
+      ) : (
+        <p className="mt-1 text-[10px] text-txt-dim">Estimé : (zone {fmtDec(jauge.zone_m2)} m² − stationnement {fmtDec(jauge.solStat)} m²) × {jauge.niveaux_label} × coef {jauge.coef} = {fmtDec(jauge.enveloppe)} m². Le calcul complet affine ce chiffre.</p>
+      )}
     </div>
   )
 }

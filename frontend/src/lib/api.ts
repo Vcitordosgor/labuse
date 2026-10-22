@@ -2283,6 +2283,18 @@ export const postEtudeStationnement = (idus: string[], type_projet: string) =>
   j<EtudeStationnementOut>('/modules/etude/stationnement', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idus, type_projet }),
   })
+// ETUDE-V6-2 (Lot 4) — enveloppe ESTIMÉE à l'étape 3, avant le calcul complet (rapide, sans moteur).
+export interface EtudeJaugeOut {
+  estimable: boolean; commune?: string; zone?: string
+  zone_implantation_m2?: number; niveaux?: number; niveaux_label?: string
+  coef_plancher?: number; m2_par_place_aerien?: number; places_par_type?: Record<string, number>
+  hauteur_egout_m?: number | null; ces_pct?: number | null
+  manquant: string[]; etiquette: string; note?: string
+}
+export const postEtudeJauge = (idus: string[], type_projet: string) =>
+  j<EtudeJaugeOut>('/modules/etude/jauge', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idus, type_projet }),
+  })
 export interface EtudeGrandeur { valeur_m2: number | null; statut: string; detail: string }
 // Variante PRÉSENTE = tous les champs d'un scénario + rôle/verdict/grandeurs/écart. Une variante
 // ABSENTE (mandat §C) ne porte que role/role_label + absente=true + raison ; on garde les champs

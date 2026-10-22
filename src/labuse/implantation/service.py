@@ -406,6 +406,59 @@ def stationnement_payload(session, idus: list[str], type_projet: str) -> dict:
             "regimes": _stationnement_regimes(session, idus, type_projet, regles, terrain.insee)}
 
 
+# ------------------------------------------------------------------ ETUDE-V6-2 (Lot 4) : jauge d'enveloppe
+_M2_PAR_PLACE_AERIEN = 18.0   # place + quote-part d'allée/accès (observé sur les plans aériens, Estimé)
+
+
+def jauge_payload(session, idus: list[str], type_projet: str) -> dict:
+    """ETUDE-V6-2 (Lot 4, étape 3) — ENVELOPPE ESTIMÉE avant le calcul, SANS lancer le moteur (rapide :
+    même chargement que la règle de stationnement, sans LiDAR ni recherche). Fournit au client de quoi
+    calculer en direct : enveloppe ≈ (zone d'implantation − sol du stationnement) × niveaux (hauteur PLU)
+    × coef plancher. « estimable=false » si une donnée manque (zone ou hauteur) → jauge grise côté écran."""
+    idus = [str(i).strip() for i in (idus or []) if str(i).strip()]
+    if not idus:
+        raise ValueError("au moins une parcelle est requise")
+    if type_projet not in _TYPES_PROJET:
+        raise ValueError(f"type de projet inconnu : {type_projet}")
+    conv = charger_conventions()
+    try:
+        terrain, regles, _zone = moteur_mod._charger(session, idus, None, conv, avec_pente=False)
+    except ValueError:
+        raise
+    except Exception:  # noqa: BLE001 — assiette indisponible → jauge non estimable, jamais une erreur dure
+        logging.getLogger("labuse").exception("étude v6 : jauge indisponible")
+        return {"estimable": False, "manquant": ["assiette"], "etiquette": "estimé",
+                "note": "Assiette indisponible — enveloppe non estimable."}
+    manquant: list[str] = []
+    zone_m2 = round(terrain.aire_zone_m2 or 0.0, 1)
+    if zone_m2 < 1.0:
+        manquant.append("zone d'implantation (reculs / PPR)")
+    he = regles.hauteur_plafond
+    niveaux = int(he.valeur // conv.hauteur_etage_m) if (he.validee and he.valeur) else 0
+    if niveaux < 1:
+        manquant.append("hauteur réglementaire")
+    # places imposées par type (barème de la zone) — pour estimer le sol du stationnement aérien
+    b = regles.stationnement
+    places_par_type = {}
+    for t, m in conv.modules.items():
+        u = b.places_pour(pieces=m.pieces, sdp_m2=m.surface_m2, destination="collectif") if b.validee else None
+        places_par_type[t] = float(u) if u is not None else 1.0
+    return {
+        "estimable": bool(zone_m2 >= 1.0 and niveaux >= 1),
+        "commune": terrain.commune, "zone": regles.zone,
+        "zone_implantation_m2": zone_m2,
+        "niveaux": niveaux, "niveaux_label": f"R+{max(0, niveaux - 1)}",
+        "coef_plancher": conv.coef_plancher_habitable,
+        "m2_par_place_aerien": _M2_PAR_PLACE_AERIEN,
+        "places_par_type": places_par_type,
+        "hauteur_egout_m": (he.valeur if he.validee else None),
+        "ces_pct": (regles.emprise_ces.valeur if regles.emprise_ces.validee else None),
+        "manquant": manquant, "etiquette": "estimé",
+        "note": ("Estimation rapide avant calcul : (zone d'implantation − sol du stationnement aérien) "
+                 "× niveaux (hauteur PLU) × coef plancher. Le calcul complet affine ce chiffre."),
+    }
+
+
 # ------------------------------------------------------------------ ETUDE-V6 (Lot D) : lotissement
 def _lotissement_payload(session, idus: list[str], entree: dict) -> dict:
     """Plan de division servi pour le type « Lotissement ». Les T1–T4 saisis = hypothèses de

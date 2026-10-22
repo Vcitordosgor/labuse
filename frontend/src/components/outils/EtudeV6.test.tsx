@@ -119,19 +119,31 @@ const RESULTAT_CAP = {
       preuve: 'motif récurrent des candidats écartés', mesure: '48 candidats écartés', detail: 'impact en logements non chiffré' },
   ],
 }
+// ETUDE-V6-2 (Lot 4) — jauge d'enveloppe (étape 3). zone 1155 × R+3 × 0.8, moins stationnement aérien.
+const JAUGE = {
+  estimable: true, commune: "L'Étang-Salé", zone: 'UA', zone_implantation_m2: 1155.3,
+  niveaux: 4, niveaux_label: 'R+3', coef_plancher: 0.8, m2_par_place_aerien: 18.0,
+  places_par_type: { T1: 1, T2: 1, T3: 1.5, T4: 1.5 }, hauteur_egout_m: 12, ces_pct: 70,
+  manquant: [], etiquette: 'estimé', note: '…',
+}
+const JAUGE_NON_ESTIMABLE = { estimable: false, manquant: ['hauteur réglementaire'], etiquette: 'estimé' }
 vi.mock('../../lib/api', () => ({
   postEtudeParcelles: vi.fn(),
   postEtude: vi.fn(),
   postEtudeStationnement: vi.fn(),
+  postEtudeJauge: vi.fn(),
 }))
-import { postEtudeParcelles, postEtude, postEtudeStationnement } from '../../lib/api'
+import { postEtudeParcelles, postEtude, postEtudeStationnement, postEtudeJauge } from '../../lib/api'
 import { EtudeV6 } from './EtudeV6'
 
 const qc = () => new QueryClient({ defaultOptions: { queries: { retry: false } } })
 const renderV6 = (idus: string[]) => render(<QueryClientProvider client={qc()}><EtudeV6 initialIdus={idus} /></QueryClientProvider>)
 
 afterEach(() => vi.clearAllMocks())
-beforeEach(() => vi.mocked(postEtudeStationnement).mockResolvedValue(STATIO as any))
+beforeEach(() => {
+  vi.mocked(postEtudeStationnement).mockResolvedValue(STATIO as any)
+  vi.mocked(postEtudeJauge).mockResolvedValue(JAUGE as any)
+})
 
 describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
   it('étape 1 : affiche les faits par parcelle + l\'assiette contiguë, Continuer actif', async () => {
@@ -444,5 +456,63 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     expect(acc.textContent).toContain('1 200,0 m²')        // emprise enterrée (séparateur FR insécable)
     // en sous-sol, le CTA « Testez en sous-sol » ne s'affiche PAS (on y est déjà)
     expect(document.querySelector('[data-tester-sous-sol]')).toBeNull()
+  })
+
+  it('Lot 4 : jauge d\'enveloppe à l\'étape 3 (estimé) — OK sous l\'enveloppe, rouge au dépassement', async () => {
+    vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
+    renderV6(['97404000AW0099', '97404000AW0451'])
+    await waitFor(() => screen.getByText('AW 99'))
+    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
+    await waitFor(() => screen.getByText('Quel type de projet ?'))
+    fireEvent.click(screen.getByText('Logement social'))
+    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
+    await waitFor(() => screen.getByText('Combien de logements souhaitez-vous ?'))
+    // 23 T2 + 6 T3 : 1 708 m² ≤ enveloppe (≈ 1 854 m²) → OK (vert), étiqueté « estimé »
+    fireEvent.change(document.querySelector('[data-etude-count="T2"]') as HTMLInputElement, { target: { value: '23' } })
+    fireEvent.change(document.querySelector('[data-etude-count="T3"]') as HTMLInputElement, { target: { value: '6' } })
+    const jauge = await waitFor(() => { const j = document.querySelector('[data-jauge]'); if (!j || j.getAttribute('data-jauge') === 'chargement') throw new Error('no'); return j as HTMLElement })
+    expect(jauge.getAttribute('data-jauge')).toBe('ok')
+    expect(jauge.textContent).toContain('estimé')
+    expect(jauge.textContent).toContain('R+3')
+    // dépassement : 80 T2 → le stationnement aérien mange toute la zone → rouge
+    fireEvent.change(document.querySelector('[data-etude-count="T2"]') as HTMLInputElement, { target: { value: '80' } })
+    fireEvent.change(document.querySelector('[data-etude-count="T3"]') as HTMLInputElement, { target: { value: '0' } })
+    await waitFor(() => expect(document.querySelector('[data-jauge]')?.getAttribute('data-jauge')).toBe('depassement'))
+    expect(document.querySelector('[data-jauge]')?.textContent).toContain('dépasse')
+  })
+
+  it('Lot 4 : jauge « non estimable » (grise) si une donnée manque', async () => {
+    vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
+    vi.mocked(postEtudeJauge).mockResolvedValue(JAUGE_NON_ESTIMABLE as any)
+    renderV6(['97404000AW0099', '97404000AW0451'])
+    await waitFor(() => screen.getByText('AW 99'))
+    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
+    await waitFor(() => screen.getByText('Quel type de projet ?'))
+    fireEvent.click(screen.getByText('Logement social'))
+    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
+    await waitFor(() => screen.getByText('Combien de logements souhaitez-vous ?'))
+    fireEvent.change(document.querySelector('[data-etude-count="T2"]') as HTMLInputElement, { target: { value: '12' } })
+    const jauge = await waitFor(() => { const j = document.querySelector('[data-jauge="non-estimable"]'); if (!j) throw new Error('no'); return j as HTMLElement })
+    expect(jauge.textContent).toContain('non estimable')
+    expect(jauge.textContent).toContain('hauteur réglementaire')
+  })
+
+  it('Lot 4 : le résultat signale une divergence estimation ↔ calcul > 20 %', async () => {
+    vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
+    // jauge très optimiste (grande zone) → enveloppe ≫ capacité calculée (sdp 1680) → divergence > 20 %
+    vi.mocked(postEtudeJauge).mockResolvedValue({ ...JAUGE, zone_implantation_m2: 5000 } as any)
+    vi.mocked(postEtude).mockResolvedValue(RESULTAT_CAP as any)
+    renderV6(['97404000AW0099', '97404000AW0451'])
+    await waitFor(() => screen.getByText('AW 99'))
+    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
+    await waitFor(() => screen.getByText('Quel type de projet ?'))
+    fireEvent.click(screen.getByText('Logement social'))
+    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
+    await waitFor(() => screen.getByText('Combien de logements souhaitez-vous ?'))
+    fireEvent.change(document.querySelector('[data-etude-count="T2"]') as HTMLInputElement, { target: { value: '12' } })
+    await waitFor(() => document.querySelector('[data-jauge]'))   // jauge chargée (en cache pour le résultat)
+    fireEvent.click(screen.getByRole('button', { name: /Analyser mon projet/ }))
+    const div = await waitFor(() => { const d = document.querySelector('[data-divergence]'); if (!d) throw new Error('no'); return d as HTMLElement })
+    expect(div.textContent).toContain('divergent')
   })
 })

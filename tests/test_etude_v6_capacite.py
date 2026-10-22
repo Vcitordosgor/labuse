@@ -126,6 +126,25 @@ def test_sous_sol_libere_le_sol_et_ajoute_des_logements(session_reelle):
 
 
 @pytest.mark.reel
+def test_jauge_enveloppe_estimee(session_reelle):
+    """ETUDE-V6-2 (Lot 4) — enveloppe ESTIMÉE (étape 3), rapide et SANS moteur : zone d'implantation,
+    niveaux (hauteur PLU), coef plancher, places par type. Étang-Salé UA : estimable."""
+    import time
+    from labuse.implantation.service import jauge_payload
+    t = time.monotonic()
+    j = jauge_payload(session_reelle, _ETANG, "social")
+    assert time.monotonic() - t < 10.0          # rapide (pas de recherche)
+    assert j["estimable"] is True
+    assert j["zone_implantation_m2"] > 0
+    assert j["niveaux"] == 4 and j["niveaux_label"] == "R+3"   # UA 12 m à l'égout / 3 m
+    assert 0.5 <= j["coef_plancher"] <= 1.0
+    assert j["etiquette"] == "estimé"
+    assert j["manquant"] == []
+    # barème UA : T2 = 1 place, T3 = 1,5
+    assert j["places_par_type"]["T2"] == 1.0 and j["places_par_type"]["T3"] == 1.5
+
+
+@pytest.mark.reel
 def test_sous_sol_etude_rapide(session_reelle):
     """L'étude sous-sol reste rapide (pas de 2ᵉ recherche) — bornée bien en deçà de la nouvelle borne 60 s."""
     import time

@@ -2089,6 +2089,20 @@ def etude_stationnement(body: EtudeStationnementIn, db: Session = Depends(get_db
         raise HTTPException(400, str(exc))
 
 
+@router.post("/etude/jauge")
+def etude_jauge(body: EtudeStationnementIn, db: Session = Depends(get_db)) -> dict:
+    """ETUDE-V6-2 (Lot 4, étape 3) — enveloppe ESTIMÉE avant le calcul (zone d'implantation × niveaux ×
+    coef plancher, moins le sol du stationnement). Rapide (pas de moteur). ValueError → 400."""
+    from ..implantation.service import jauge_payload
+
+    for idu in (body.idus or []):
+        _check_idu(idu)
+    try:
+        return jauge_payload(db, body.idus, body.type_projet)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+
+
 @router.post("/etude")
 def etude_implantation(body: EtudeIn, db: Session = Depends(get_db)) -> dict:
     """IMPLANTATION-2 — UN SEUL appel sert l'écran « Étude de faisabilité ». UN SEUL moteur
