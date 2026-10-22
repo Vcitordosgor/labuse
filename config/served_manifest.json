@@ -1,16 +1,16 @@
 {
- "scoring_run": "q_v19",
+ "scoring_run": "q_v20",
  "cascade_run": "q_v19_sources",
- "mvt_run": "q_v19",
+ "mvt_run": "q_v20",
  "division_run": "q_v19",
- "residuel_run_seq": 16,
- "promoted_at": "2026-10-19T08:00:00+00:00",
- "par": "fix/rouges-restants — ré-épinglage cascade q_v19_sources (étage 0 du re-score q_v19 du 18/10, vérifié complet en base)",
+ "residuel_run_seq": 17,
+ "promoted_at": "2026-10-21T20:01:48.268480+00:00",
+ "par": "Vic — bascule q_v20 (RPG en U/AU)",
  "precedent": {
-  "scoring_run": "q_v18",
-  "mvt_run": "q_v18",
-  "division_run": "q_v18",
-  "residuel_run_seq": 16,
-  "cascade_run": "q_v18_sources"
+  "scoring_run": "q_v19",
+  "mvt_run": "q_v19",
+  "division_run": "q_v19",
+  "residuel_run_seq": 17,
+  "cascade_run": "q_v19_sources"
  }
 }
