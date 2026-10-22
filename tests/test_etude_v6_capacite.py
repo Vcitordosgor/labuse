@@ -176,6 +176,50 @@ def test_pdf_genere_meme_si_ne_tient_pas(session_reelle):
 
 
 @pytest.mark.reel
+def test_pdf_pas_de_nombre_ni_facteur_hors_ecran(session_reelle):
+    """ETUDE-V6-4 (item 13) — l'écran et le PDF disent EXACTEMENT la même chose : le PDF ne contient AUCUN
+    nombre ni facteur limitant absent du payload servi à l'écran (même study_id). On le prouve sur l'aérien
+    ET le sous-sol (le plus riche : niveau −1 dessiné, facteur limitant pente/hauteur, mixité)."""
+    from labuse.implantation.service import etudier_payload
+    from labuse.exports import etude_faisabilite as ef
+    for mode in ("aerien", "sous_sol"):
+        cfg = {"idus": _ETANG, "type_projet": "etudiante", "stationnement": mode,
+               "programme": {"mode": "saisi", "lignes": [{"type": "T2", "nombre": 23, "surface_m2": 56},
+                                                         {"type": "T3", "nombre": 6, "surface_m2": 70}]}}
+        p = etudier_payload(session_reelle, dict(cfg))
+        html = ef.rendu_etude(p, genere_le="22/10/2026")["html"]
+        # 1) AUCUN nombre imprimé hors du payload (verrou V5d/V5f étendu).
+        manquants = ef.nombres_hors_payload(p, html, genere_le="22/10/2026")
+        assert manquants == [], f"{mode} : nombres hors écran dans le PDF : {manquants}"
+        # 2) LE facteur limitant du PDF = celui du payload (source unique lue par l'écran ET le PDF).
+        fl = p.get("facteur_limitant")
+        if fl:
+            assert fl in html, f"{mode} : facteur limitant « {fl} » absent du PDF"
+        # 3) pas de nom technique (item 12).
+        for interdit in ("votre_programme", "IMPLANTATION-2", "version_conventions", "non simulé"):
+            assert interdit not in html, f"{mode} : « {interdit} » ne doit pas figurer dans le PDF"
+
+
+@pytest.mark.reel
+def test_sous_sol_plan_dessine_sur_geometrie(session_reelle):
+    """ETUDE-V6-4 (item 9) — le niveau −1 est DESSINÉ sur la vraie géométrie : le GeoJSON porte l'emprise
+    enterrée, l'allée et des places au niveau −1 (plus une grille générique) ; le nb de niveaux est servi."""
+    from labuse.implantation.service import etudier_payload
+    cfg = {"idus": _ETANG, "type_projet": "etudiante", "stationnement": "sous_sol",
+           "programme": {"mode": "saisi", "lignes": [{"type": "T2", "nombre": 23, "surface_m2": 56},
+                                                     {"type": "T3", "nombre": 6, "surface_m2": 70}]}}
+    p = etudier_payload(session_reelle, dict(cfg))
+    v = next(x for x in p["variantes"] if not x.get("absente"))
+    kinds = {f["properties"]["kind"] for f in v["geojson"]["features"]}
+    assert {"sous_sol_emprise", "place_ss", "allee_ss"} <= kinds       # objets du −1 dessinés
+    st = v["stationnement"]
+    assert st["mode"] == "sous_sol" and st["places_sous_sol"] > 0
+    assert st["places_sous_sol_par_niveau"] > 0 and st["niveaux_sous_sol"] >= 1
+    # cohérence : niveaux × places/niveau ≥ places demandées (plan de principe honnête)
+    assert st["niveaux_sous_sol"] * st["places_sous_sol_par_niveau"] >= st["places_sous_sol"]
+
+
+@pytest.mark.reel
 def test_sous_sol_etude_rapide(session_reelle):
     """L'étude sous-sol reste rapide (pas de 2ᵉ recherche) — bornée bien en deçà de la nouvelle borne 60 s."""
     import time

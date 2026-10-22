@@ -2154,6 +2154,8 @@ export interface EtudeScenario {
     mode?: 'aerien' | 'sous_sol'; places_sous_sol?: number; emprise_sous_sol_m2?: number; rampe_m2?: number
     sur_dalle_m2?: number   // surface au-dessus du sous-sol retranchée de la pleine terre
     rampe_detail?: { rampe_profondeur_m: number; rampe_pente_pct: number; rampe_longueur_m: number; rampe_largeur_m: number } | null
+    // ETUDE-V6-4 (item 9) — plan du niveau −1 dessiné : places par niveau enterré réel + niveaux nécessaires.
+    places_sous_sol_par_niveau?: number; niveaux_sous_sol?: number
   }
   surfaces_mesurees_m2: Record<string, number>
   emprise_sol_m2: number; pleine_terre_m2: number
@@ -2171,6 +2173,8 @@ export interface EtudeScenario {
 export interface EtudeRegle {
   nom: string; valeur: number | null; unite: string | null; validee: boolean
   article: string | null; page_pdf: number | null; citation: string | null; seuil_m2?: number | null
+  // ETUDE-V6-4 (item 3) — lien doc PLU officiel + millésime, portés sur chaque règle (« Lire l'article »).
+  source_url?: string | null; millesime?: string | null
 }
 export interface EtudePayload {
   moteur: { livrable: string; version_conventions: string; etiquette: string; crs_dessin: string; crs_carte: string }
@@ -2178,7 +2182,7 @@ export interface EtudePayload {
     idus: string[]; commune: string; insee: string; zone: string; type_projet: string
     objectif: string; programme_mode: 'propose' | 'saisi'; stationnement: string; terrain: string
   }
-  regles: { zone: string; insee: string; commune?: string | null; millesime?: string | null; lignes: EtudeRegle[] }
+  regles: { zone: string; insee: string; commune?: string | null; millesime?: string | null; source_url?: string | null; lignes: EtudeRegle[] }
   terrain: {
     contenance_totale_m2: number; aire_dessin_m2: number; zone_implantation_m2: number
     has_voie: boolean; note_limites: string | null; contraintes: Record<string, number>
@@ -2211,6 +2215,11 @@ export interface EtudePayload {
     facteur: string; impact_logements: number; limitant: boolean
     preuve: string; mesure: string; detail: string
   }>
+  // ETUDE-V6-4 (items 10/11/13) — LA phrase « ce qui limite », calculée côté serveur : l'écran et le PDF
+  // la lisent telle quelle, donc disent exactement les mêmes mots.
+  facteur_limitant?: string | null
+  // ETUDE-V6-4 (item 10) — en sous-sol, pourquoi la hauteur plafonne (une phrase), écran = PDF.
+  facteur_limitant_detail?: string | null
   confrontation?: {
     demande_logements: number; capacite_maximale_logements: number
     tient: boolean; reserve_logements: number
@@ -2268,6 +2277,7 @@ export interface EtudeStationnementRegimes {
     article: string | null; page_pdf: number | null; millesime: string | null
     citation: string | null; applique: boolean; etat: string
     regle_courte?: string | null   // ETUDE-V6-3 (item 3) — règle en clair pour le récap
+    source_url?: string | null     // ETUDE-V6-4 (item 3) — lien doc PLU officiel
   }
   plafond_national: {
     categorie: string; reference: string; ratio_plafond: number
@@ -2279,6 +2289,8 @@ export interface EtudeStationnementRegimes {
 export interface EtudeStationnementOut {
   commune: string; insee: string; zone: string; type_projet: string
   regimes: EtudeStationnementRegimes
+  // ETUDE-V6-4 (item 5) — mixité sociale servie dès l'étape 2. (item 3) — lien doc + millésime.
+  mixite?: { quota_pct: number | null; seuil_m2: number | null; article: string | null; page_pdf: number | null; citation: string | null; source_url?: string | null; millesime?: string | null } | null
 }
 export const postEtudeStationnement = (idus: string[], type_projet: string) =>
   j<EtudeStationnementOut>('/modules/etude/stationnement', {
@@ -2342,9 +2354,10 @@ export interface EtudeParcelle {
   zone_plu: string | null; zone_famille: string | null
   qualite_geometrique: string; polsby_popper: number | null; largeur_inscriptible_m: number | null
   disparue_le: string | null
-  // ETUDE-V6-2 (Lot 5) / V6-3 (item 2) — règles PLU servies de la zone de la parcelle, avec préfixe normalisé.
+  // ETUDE-V6-2 (Lot 5) / V6-3 (item 2) / V6-4 (item 3) — règles PLU de la zone, préfixe normalisé + extrait + lien.
   regles_plu?: Array<{ nom: string; valeur: number; unite: string; article: string | null; page_pdf: number | null
-    commune?: string | null; zone?: string | null; millesime?: string | null }> | null
+    commune?: string | null; zone?: string | null; millesime?: string | null
+    citation?: string | null; source_url?: string | null }> | null
 }
 export interface EtudeParcellesOut {
   parcelles: EtudeParcelle[]

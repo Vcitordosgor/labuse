@@ -428,12 +428,81 @@ def poser_sous_sol(scene: Scene, conv: Conventions, *, cible: int) -> int:
     rampe = free.intersection(rect(xc - w / 2.0, y0, xc + w / 2.0, y1))
     rampe = _plus_grand(rampe) if not rampe.is_empty else rampe
     if isinstance(rampe, Polygon) and rampe.area > 1.0:
-        scene.ajouter(Objet("rampe", rampe))                                 # dessin (clippé à l'espace libre)
+        scene.ajouter(Objet("rampe", rampe, niveau=-1))                       # dessin (clippé à l'espace libre)
+    # ETUDE-V6-4 (item 9) — on DESSINE le niveau −1 sur la géométrie réelle : contour de l'emprise enterrée
+    # dans l'assiette (le sous-sol PEUT passer sous le bâti), une allée centrale, les places numérotées. Les
+    # objets portent niveau=-1 et des kinds dédiés (`sous_sol_emprise`/`place_ss`/`allee_ss`) pour la couche −1.
+    emprise_poly, n_dessinees = _tracer_niveau_moins_un(scene, conv, cible, emprise, rampe)
+    # Un niveau enterré tient `n_dessinees` places sur l'emprise réelle ; loger `cible` places en demande
+    # plus qu'un niveau (ex. terrain étroit) ⇒ plusieurs niveaux de sous-sol (plan de principe = niveau −1).
+    par_niveau = n_dessinees if n_dessinees > 0 else cible
+    niveaux_ss = max(1, math.ceil(cible / par_niveau)) if par_niveau else 1
     scene.sous_sol = {"places": cible, "emprise_m2": emprise, "rampe_m2": rampe_m2,
                       "m2_par_place": conv.m2_par_place_sous_sol,
                       "rampe_profondeur_m": conv.hauteur_sous_sol_m, "rampe_pente_pct": conv.rampe_pente_max_pct,
-                      "rampe_longueur_m": round(longueur, 1), "rampe_largeur_m": w}
+                      "rampe_longueur_m": round(longueur, 1), "rampe_largeur_m": w,
+                      "places_par_niveau": par_niveau, "niveaux_sous_sol": niveaux_ss,
+                      "emprise_dessinee_m2": round(emprise_poly.area, 1) if emprise_poly is not None else 0.0}
     return cible
+
+
+def _tracer_niveau_moins_un(scene: Scene, conv: Conventions, cible: int, emprise_cible_m2: float,
+                            rampe: Optional[BaseGeometry]):
+    """ETUDE-V6-4 (item 9) — trace le plan du niveau −1 DANS l'assiette réelle : un rectangle d'emprise
+    enterrée adossé à la voie (là où débouche la rampe), bandes de places des deux côtés d'une allée
+    centrale, le tout clippé à l'assiette. Déterministe. Renvoie (emprise_polygone, nb_places_dessinées).
+    Le sous-sol passe sous le bâti (niveau différent) : on n'exclut donc QUE le PPR rouge, pas le bâti."""
+    assiette = scene.assiette_local
+    zone_interdite = scene.ppr_rouge_local if (scene.ppr_rouge_local is not None
+                                               and not scene.ppr_rouge_local.is_empty) else None
+    dispo = _valide(assiette.difference(zone_interdite)) if zone_interdite is not None else assiette
+    ax0, ay0, ax1, ay1 = assiette.bounds
+    pw, pl, aw = conv.place_largeur_m, conv.place_longueur_m, conv.allee_largeur_m
+    bande = 2 * pl + aw                                   # deux rangées + allée centrale
+    larg_dispo = ax1 - ax0
+    par_rangee = max(1, int(larg_dispo // pw))
+    # On provisionne assez de bandes pour loger la cible, SANS jamais dépasser la profondeur de l'assiette
+    # (l'emprise réelle, clippée au contour, décide ensuite combien de places tiennent vraiment).
+    besoin = max(1, math.ceil(cible / (2 * par_rangee)))
+    place_max = max(1, int((ay1 - ay0) // bande))
+    n_bandes = min(besoin, place_max)
+    prof = min(n_bandes * bande, (ay1 - ay0))            # jamais plus profond que l'assiette
+    # emprise adossée à la voie (côté y faible si voie_bas, sinon côté y fort)
+    if scene.voie_bas:
+        ey0, ey1 = ay0, ay0 + prof
+    else:
+        ey0, ey1 = ay1 - prof, ay1
+    emprise_rect = rect(ax0, ey0, ax1, ey1)
+    emprise_poly = _plus_grand(_valide(dispo.intersection(emprise_rect)))
+    if not isinstance(emprise_poly, Polygon) or emprise_poly.area < pw * pl:
+        return None, 0
+    scene.ajouter(Objet("sous_sol_emprise", emprise_poly, niveau=-1))
+
+    def dans(p: Polygon) -> bool:
+        return emprise_poly.covers(p.buffer(-1e-9))
+
+    # une allée par bande, places des deux côtés ; parcours ordonné (bande par bande, de la voie vers le fond)
+    n = 0
+    rey0, rey1 = emprise_poly.bounds[1], emprise_poly.bounds[3]
+    b = 0
+    while n < cible and b < n_bandes:
+        base = (rey0 + b * bande) if scene.voie_bas else (rey1 - (b + 1) * bande)
+        if base < rey0 - 1e-6 or base + bande > rey1 + 1e-6:
+            break
+        yc = base + pl + aw / 2.0                         # centre de l'allée de la bande
+        allee = _plus_grand(_valide(emprise_poly.intersection(rect(ax0, yc - aw / 2.0, ax1, yc + aw / 2.0))))
+        if isinstance(allee, Polygon) and allee.area > 1.0:
+            scene.ajouter(Objet("allee_ss", allee, niveau=-1))
+        for (yr0, yr1) in [(base, base + pl), (base + pl + aw, base + 2 * pl + aw)]:
+            x = ax0
+            while x + pw <= ax1 + 1e-9 and n < cible:
+                p = rect(x, yr0, x + pw, yr1)
+                x += pw
+                if dans(p):
+                    scene.ajouter(Objet("place_ss", p, niveau=-1, ref=str(n + 1)))
+                    n += 1
+        b += 1
+    return emprise_poly, n
 
 
 # ---------------------------------------------------------------- espaces libres

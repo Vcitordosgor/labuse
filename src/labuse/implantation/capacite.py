@@ -55,6 +55,10 @@ class Capacite:
     emprise_sous_sol_m2: float = 0.0
     rampe_m2: float = 0.0
     sur_dalle_m2: float = 0.0           # surface au-dessus du sous-sol (sur dalle) retranchée de la pleine terre
+    # ETUDE-V6-4 (item 9) — plan du niveau −1 DESSINÉ : places tenant sur UN niveau enterré réel + nombre de
+    # niveaux nécessaires pour loger toutes les places (terrain étroit ⇒ plusieurs niveaux).
+    places_sous_sol_par_niveau: int = 0
+    niveaux_sous_sol: int = 0
 
 
 def _sdp_logement(conv: Conventions, type_logement: str) -> float:
@@ -197,4 +201,6 @@ def calculer(scene: Scene, conv: Conventions, regles: ReglesZone, terrain=None) 
         emprise_sous_sol_m2=(ss["emprise_m2"] if mode_ss else 0.0),
         rampe_m2=(ss.get("rampe_m2", 0.0) if mode_ss else 0.0),   # surface RÉELLE de la rampe (non clippée)
         sur_dalle_m2=round(sur_dalle, 1),
+        places_sous_sol_par_niveau=(ss.get("places_par_niveau", 0) if mode_ss else 0),
+        niveaux_sous_sol=(ss.get("niveaux_sous_sol", 0) if mode_ss else 0),
     )

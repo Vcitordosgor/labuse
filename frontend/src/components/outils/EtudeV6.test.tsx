@@ -526,15 +526,23 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     expect(div.textContent).toContain('divergent')
   })
 
-  it('Lot 5 : étape 1 — règles PLU par parcelle (citées) ; champ vidé après ajout ; pas de bandeau bas de page', async () => {
+  it('Lot 5 / V6-4 item 2 : étape 1 — BANDEAU règles PLU par zone (pas de chips par parcelle) ; « Lire l\'article » ; champ vidé ; pas de bandeau bas de page', async () => {
     vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
     renderV6(['97404000AW0099', '97404000AW0451'])
     await waitFor(() => screen.getByText('AW 99'))
-    // règles PLU servies par parcelle, citées
-    const regles = document.querySelectorAll('[data-regles-plu]')
-    expect(regles.length).toBe(2)
-    expect(regles[0].textContent).toContain("Hauteur à l'égout")
-    expect(regles[0].textContent).toContain('UA 2.4')      // CES cité
+    // ETUDE-V6-4 (item 2) — les règles vivent dans UN bandeau par zone (vert, distinct), plus en chips par
+    // parcelle. Les deux parcelles sont en UA → un seul bandeau.
+    const bandeaux = document.querySelectorAll('[data-regles-assiette] section')
+    expect(bandeaux.length).toBe(1)
+    const b = bandeaux[0] as HTMLElement
+    expect(b.textContent).toContain('Règles du PLU')
+    expect(b.textContent).toContain('zone UA')
+    expect(b.textContent).toContain("Hauteur à l'égout")
+    expect(b.textContent).toContain('Emprise au sol')
+    // item 3 — « Lire l'article » présent sur les règles du bandeau
+    expect(b.querySelectorAll('[data-lire-article]').length).toBeGreaterThan(0)
+    // les cartes de parcelles ne répètent plus les règles
+    expect(document.querySelectorAll('[data-regles-plu]').length).toBe(0)
     // le champ de recherche est vidé après ajout (remontage par clé) → value vide
     const champ = document.querySelector('[data-etude-v6-parcelle]') as HTMLInputElement | null
     if (champ) expect(champ.value).toBe('')

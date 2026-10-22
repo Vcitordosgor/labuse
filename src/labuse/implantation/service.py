@@ -13,6 +13,7 @@ Aucun calcul ici n'échappe au moteur : les chiffres sont TIRÉS de la géométr
 from __future__ import annotations
 
 import logging
+import re
 from math import gcd
 from typing import Any, Optional
 
@@ -106,6 +107,53 @@ def _compte_controles(controles) -> dict:
             "non_applicable": c[NON_APPLICABLE], "a_confirmer": c[A_CONFIRMER]}
 
 
+def _facteur_limitant_phrase(facteurs_limitants: list, variante: Optional[dict]) -> Optional[str]:
+    """ETUDE-V6-4 (items 10/11/13) — LA phrase « ce qui limite », calculée UNE SEULE FOIS côté serveur
+    pour que l'écran et le PDF disent exactement les mêmes mots. Reprend la logique de l'écran :
+    1er facteur limitant, sinon la limite de capacité de la variante ; en sous-sol, si la hauteur limite
+    et que le terrain est en pente, on nomme la pente."""
+    f0 = facteurs_limitants[0] if facteurs_limitants else None
+    phrase = (f0 or {}).get("facteur") if f0 else None
+    if phrase is None and variante is not None:
+        phrase = variante.get("limite_capacite")
+    if variante is not None and (variante.get("stationnement") or {}).get("mode") == "sous_sol" \
+            and phrase and str(phrase).startswith("hauteur"):
+        m = _relief_pente(variante)
+        if m:
+            phrase = f"hauteur sur la pente (relief {m} m)"
+    return phrase
+
+
+def _relief_pente(variante: Optional[dict]) -> Optional[str]:
+    """Relief mesuré (m) du contrôle « Hauteur sur terrain en pente », ou None."""
+    if variante is None:
+        return None
+    pente = next((c for c in (variante.get("controles") or [])
+                  if c.get("nom") == "Hauteur sur terrain en pente"), None)
+    m = re.search(r"relief[^\d]*([\d.,]+)\s*m", (pente or {}).get("mesure") or "") if pente else None
+    return m.group(1) if m else None
+
+
+def _facteur_limitant_detail(facteur: Optional[str], variante: Optional[dict]) -> Optional[str]:
+    """ETUDE-V6-4 (item 10) — en sous-sol, si c'est la HAUTEUR qui plafonne, une phrase qui dit POURQUOI.
+    Notre modèle enterre le parking sans surélever le RDC : la hauteur ne limite donc pas À CAUSE du
+    sous-sol, mais parce que le terrain est en pente — le stationnement enterré a libéré le sol et c'est
+    alors le relief qui plafonne le nombre de niveaux. On l'écrit, à l'écran comme au PDF."""
+    if variante is None or (variante.get("stationnement") or {}).get("mode") != "sous_sol":
+        return None
+    if not (facteur and str(facteur).startswith("hauteur")):
+        return None
+    relief = _relief_pente(variante)
+    niv = variante.get("niveaux_label")
+    base = ("En sous-sol, le stationnement enterré libère le sol ; c'est alors le relief du terrain "
+            f"qui plafonne la hauteur")
+    if relief:
+        base += f" (dénivelé {relief} m)"
+    if niv:
+        base += f", d'où un bâtiment limité à {niv}"
+    return base + ". Le sous-sol est modélisé entièrement enterré, sans RDC surélevé."
+
+
 def _scenario_public(scenario, ref: str) -> dict:
     """Vue servie d'un scénario : résumé (3 chiffres clés), sections repliables, contrôles, GeoJSON."""
     cap = scenario.capacite
@@ -148,6 +196,9 @@ def _scenario_public(scenario, ref: str) -> dict:
             "places_sous_sol": cap.places_sous_sol,
             "emprise_sous_sol_m2": cap.emprise_sous_sol_m2,
             "rampe_m2": cap.rampe_m2,
+            # ETUDE-V6-4 (item 9) — plan du niveau −1 : places par niveau enterré réel + niveaux nécessaires.
+            "places_sous_sol_par_niveau": cap.places_sous_sol_par_niveau,
+            "niveaux_sous_sol": cap.niveaux_sous_sol,
             # ETUDE-V6-2 (Lot 3, correction §3) — calcul de la rampe : profondeur / pente → longueur × largeur.
             "rampe_detail": ({k: (scenario.scene.sous_sol or {}).get(k) for k in
                               ("rampe_profondeur_m", "rampe_pente_pct", "rampe_longueur_m", "rampe_largeur_m")}
@@ -257,6 +308,15 @@ def _regles_affichables(sd: dict) -> list[dict]:
     return out
 
 
+def _decore_regles(lignes: list[dict], source_url: Optional[str], millesime: Optional[str]) -> list[dict]:
+    """ETUDE-V6-4 (item 3) — chaque règle porte le lien du document PLU officiel et son millésime, pour que
+    « Lire l'article » affiche l'extrait exact (texte, article, page, millésime) avec le lien, partout."""
+    for l in lignes:
+        l.setdefault("source_url", source_url)
+        l.setdefault("millesime", millesime)
+    return lignes
+
+
 # ------------------------------------------------------------------ programme saisi → demande/répartition
 def _programme_vers_demande(programme: dict) -> tuple[dict[str, int], list[str], dict[str, float]]:
     """{'lignes':[{'type':'T2','nombre':12,'surface_m2':50}]} → (demande, répartition, surfaces).
@@ -360,6 +420,19 @@ def _plu_millesime(session, insee: str) -> Optional[str]:
         return None
 
 
+def _plu_source_url(session, insee: str) -> Optional[str]:
+    """ETUDE-V6-4 (item 3) — lien vers le document PLU officiel (téléchargement geopf). Même document pour
+    toute la commune ; pas d'ancre de page (archive .zip), la page figure dans le texte « p. N »."""
+    from sqlalchemy import text
+    try:
+        u = session.execute(text("SELECT source_url FROM plu_reglement_extrait "
+                                 "WHERE insee = :i AND source_url IS NOT NULL LIMIT 1"),
+                            {"i": insee}).scalar()
+        return str(u) if u else None
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def _regle_stationnement_courte(b) -> Optional[str]:
     """ETUDE-V6-3 (item 3) — la règle de stationnement en clair et courte. Par logement → « N place/logt » ;
     par typologie → « p pl. Tx–Ty » par tranche de pièces (Tn = n pièces principales)."""
@@ -397,6 +470,8 @@ def _stationnement_regimes(session, idus: list[str], type_projet: str, regles, i
         "mode": b.mode, "validee": b.validee,
         "ratio_par_logement": b.flat_places if b.mode == "par_logement" else None,
         "article": b.article, "page_pdf": b.page_pdf, "millesime": _plu_millesime(session, insee),
+        # ETUDE-V6-4 (item 3) — lien doc officiel pour « Lire l'article » dans le bloc stationnement.
+        "source_url": _plu_source_url(session, insee),
         "citation": b.citation, "applique": True,
         "etat": ("règle vérifiée" if b.validee else "document manquant — à confirmer"),
         # ETUDE-V6-3 (item 3) — la RÈGLE en clair (ex. « 1 pl. T1–T2 · 1,5 pl. T3–T4 ») pour le récap.
@@ -431,9 +506,16 @@ def stationnement_payload(session, idus: list[str], type_projet: str) -> dict:
         raise ValueError(f"type de projet inconnu : {type_projet}")
     conv = charger_conventions()
     terrain, regles, _zone = moteur_mod._charger(session, idus, None, conv, avec_pente=False)
+    mx = regles.mixite
     return {"commune": terrain.commune, "insee": terrain.insee, "zone": regles.zone,
             "type_projet": type_projet,
-            "regimes": _stationnement_regimes(session, idus, type_projet, regles, terrain.insee)}
+            "regimes": _stationnement_regimes(session, idus, type_projet, regles, terrain.insee),
+            # ETUDE-V6-4 (item 5) — mixité sociale servie dès l'étape 2 (comme dans le résultat et le PDF).
+            # (item 3) — lien doc officiel + millésime pour « Lire l'article » dès cette étape.
+            "mixite": ({"quota_pct": mx.quota_pct, "seuil_m2": mx.seuil_m2, "article": mx.article,
+                        "page_pdf": mx.page_pdf, "citation": mx.citation,
+                        "source_url": _plu_source_url(session, terrain.insee),
+                        "millesime": _plu_millesime(session, terrain.insee)} if mx.validee else None)}
 
 
 # ------------------------------------------------------------------ ETUDE-V6-2 (Lot 4) : jauge d'enveloppe
@@ -714,7 +796,11 @@ def etudier_payload(session, entree: dict) -> dict:
             "zone": ref_scn.regles.zone, "insee": ref_scn.regles.insee,
             # ETUDE-V6-3 (item 2) — toute règle affichée commence par « PLU de [commune] · zone [X] · … · millésime ».
             "commune": t.commune, "millesime": _plu_millesime(session, t.insee),
-            "lignes": _regles_affichables(sd0),
+            # ETUDE-V6-4 (item 3) — lien doc officiel + millésime portés sur CHAQUE règle (« Lire l'article »
+            # partout : étapes 1/2, stationnement, contrôles, annexe PDF).
+            "source_url": _plu_source_url(session, t.insee),
+            "lignes": _decore_regles(_regles_affichables(sd0),
+                                     _plu_source_url(session, t.insee), _plu_millesime(session, t.insee)),
         },
         "terrain": {
             "contenance_totale_m2": sd0["terrain"]["contenance_totale_m2"],
@@ -755,6 +841,13 @@ def etudier_payload(session, entree: dict) -> dict:
         "depassement": depassement,
         "capacite_maximale": capacite_maximale,
         "facteurs_limitants": facteurs_limitants,
+        # ETUDE-V6-4 (items 10/11/13) — LA phrase « ce qui limite », une seule fois : écran et PDF la lisent.
+        "facteur_limitant": _facteur_limitant_phrase(
+            facteurs_limitants, next((v for v in variantes_pub if not v.get("absente")), None)),
+        # ETUDE-V6-4 (item 10) — en sous-sol, si c'est la hauteur qui plafonne, POURQUOI, en une phrase.
+        "facteur_limitant_detail": _facteur_limitant_detail(
+            _facteur_limitant_phrase(facteurs_limitants, next((v for v in variantes_pub if not v.get("absente")), None)),
+            next((v for v in variantes_pub if not v.get("absente")), None)),
         "confrontation": confrontation,
         "stationnement_regimes": stationnement_regimes,
         "capacite_reduite": capacite_reduite,

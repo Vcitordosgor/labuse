@@ -8,7 +8,7 @@ import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { postEtude, postEtudeParcelles, postEtudeStationnement, postEtudeJauge, ETUDE_PDF_URL, etudePdfInit } from '../../lib/api'
 import type { EtudeJaugeOut } from '../../lib/api'
-import type { EtudeParcelle, EtudeParcellesOut, EtudePayload, EtudeVariante, EtudeGrandeur, EtudeStationnementRegimes, EtudeLotissement, EtudeIn } from '../../lib/api'
+import type { EtudeParcelle, EtudeParcellesOut, EtudePayload, EtudeVariante, EtudeGrandeur, EtudeStationnementRegimes, EtudeLotissement, EtudeIn, EtudeRegle } from '../../lib/api'
 import { fmtInt, fmtDec } from '../../lib/format'
 import { Bouton } from '../ui/Bouton'
 import { Badge } from '../ui/Badge'
@@ -107,11 +107,15 @@ export function EtudeV6({ initialIdus, onClose }: {
     hypotheses: hypBody(),
     ...over,
   })
-  // ETUDE-V6-3 (item 4) — pendant la génération du PDF, l'animation de chargement de l'app (points menthe).
+  // ETUDE-V6-3 (item 4) — animation de chargement dans le bouton pendant la génération.
+  // ETUDE-V6-4 (item 8) — jamais de PDF d'un état NON calculé : grisé tant qu'une hypothèse éditée n'est pas recalculée.
   const BoutonPdf = () => (
-    <Bouton niveau="secondaire" onClick={() => pdf.ouvrir(ETUDE_PDF_URL, 'etude-pdf', etudePdfInit(corpsBody()))} disabled={!!pdf.enCours}>
-      {pdf.enCours ? <span className="inline-flex items-center gap-1.5">Génération<Chargement variant="inline" accent="courant" delai={0} /></span> : 'Générer le PDF ↓'}
-    </Bouton>
+    <div className="flex flex-col gap-1">
+      <Bouton niveau="secondaire" onClick={() => pdf.ouvrir(ETUDE_PDF_URL, 'etude-pdf', etudePdfInit(corpsBody()))} disabled={!!pdf.enCours || dirty}>
+        {pdf.enCours ? <span className="inline-flex items-center gap-1.5">Génération<Chargement variant="inline" accent="courant" delai={0} /></span> : 'Générer le PDF ↓'}
+      </Bouton>
+      {dirty && <span data-pdf-perime className="text-[10px] text-amber">Recalculez pour mettre à jour l'étude.</span>}
+    </div>
   )
 
   // Étape 1 : validation de l'assiette (faits + contiguïté + sources). Rejouée à chaque changement de sel.
@@ -140,16 +144,24 @@ export function EtudeV6({ initialIdus, onClose }: {
     staleTime: 60_000,
   })
 
+  // ETUDE-V6-4 (item 8) — une hypothèse éditée mais PAS recalculée rend l'étude affichée périmée : on
+  // GRISE le PDF (« Recalculez pour mettre à jour l'étude ») tant que le recalcul n'est pas fait.
+  const [dirty, setDirty] = useState(false)
   // Analyse (étape finale ET recalcul) : un seul appel moteur avec la config courante (hypothèses comprises).
-  const analyse = useMutation({ mutationFn: (body?: EtudeIn) => postEtude(body ?? corpsBody()) })
+  const analyse = useMutation({ mutationFn: (body?: EtudeIn) => postEtude(body ?? corpsBody()),
+                                onSuccess: () => setDirty(false) })
   const recalculer = () => analyse.mutate(undefined)
-  // ETUDE-V6-2 (Lot 3) — « Testez en sous-sol » : bascule le mode ET relance en UN clic (on passe le corps
-  // explicitement, car setHyp est asynchrone). Calculé seulement à la demande → l'étude aérienne reste rapide.
+  const marquerModifie = () => setDirty(true)
+  // ETUDE-V6-2 (Lot 3) — « Testez en sous-sol » : bascule le mode ET relance en UN clic (setHyp est async).
   const testerSousSol = () => {
     setHyp((h) => ({ ...h, stationnement: 'sous_sol' }))
     analyse.mutate(corpsBody({ stationnement: 'sous_sol' }))
   }
-  const setModeStationnement = (m: 'aerien' | 'sous_sol') => setHyp((h) => ({ ...h, stationnement: m }))
+  // ETUDE-V6-4 (item 8) — changer Aérien/Sous-sol RELANCE le calcul automatiquement (pas de recalcul manuel).
+  const setModeStationnement = (m: 'aerien' | 'sous_sol') => {
+    setHyp((h) => ({ ...h, stationnement: m }))
+    analyse.mutate(corpsBody({ stationnement: m }))
+  }
   const resultat: EtudePayload | undefined = analyse.data
   // ETUDE-V6-3 (item 4) — animation de chargement de l'app (composant existant) pendant « Calcul en cours ».
   const loadingOverlay = analyse.isPending ? (
@@ -180,7 +192,7 @@ export function EtudeV6({ initialIdus, onClose }: {
   const editeurHyp = (collectif: boolean) => (
     <HypothesesEditor hyp={hyp} setHyp={setHyp} surfOf={surfOf} varOf={varOf} types={TYPES.filter((t) => nb[t] > 0)}
       collectif={collectif} onRecalculer={recalculer} enCours={analyse.isPending}
-      mode={hyp.stationnement} onMode={setModeStationnement} />
+      mode={hyp.stationnement} onMode={setModeStationnement} onModifie={marquerModifie} />
   )
   function ajouter(idu: string) { setSel((xs) => (xs.includes(idu) || xs.length >= 8 ? xs : [...xs, idu])) }
   function retirer(idu: string) { setSel((xs) => xs.filter((x) => x !== idu)) }
@@ -223,11 +235,9 @@ export function EtudeV6({ initialIdus, onClose }: {
     // message rouge disent la MÊME chose. En sous-sol, si c'est la pente, « hauteur sur la pente (relief X m) ».
     const facteurs = resultat.facteurs_limitants ?? []
     const sousSol = active?.stationnement?.mode === 'sous_sol'
-    const penteCtrl = active?.controles.find((c) => c.nom === 'Hauteur sur terrain en pente')
-    const reliefM = penteCtrl?.mesure?.match(/relief[^\d]*([\d.,]+)\s*m/)?.[1] ?? null
-    const f0 = facteurs[0]
-    let limitePhrase: string | null = f0?.facteur ?? active?.limite_capacite ?? null
-    if (sousSol && f0?.facteur.startsWith('hauteur') && reliefM) limitePhrase = `hauteur sur la pente (relief ${reliefM} m)`
+    // ETUDE-V6-4 (items 10/11/13) — LA phrase « ce qui limite » vient du serveur (source unique) : l'écran et
+    // le PDF disent exactement les mêmes mots. Repli local seulement si le serveur ne l'a pas renseignée.
+    const limitePhrase: string | null = resultat.facteur_limitant ?? facteurs[0]?.facteur ?? active?.limite_capacite ?? null
     // ETUDE-V6-3 (item 8) — bloc fusionné « Votre programme : N demandés · M tiennent · max K » ; UNE réserve.
     const confr = resultat.confrontation
     const kMax = resultat.capacite_maximale?.logements ?? active?.resume.logements ?? 0
@@ -268,9 +278,10 @@ export function EtudeV6({ initialIdus, onClose }: {
                   <p className="mt-0.5 text-[9.5px] text-txt-dim">tenus / demandés</p>
                 </div>
                 <div className="rounded-lg border border-line-2 bg-surface-2 p-3 transition-colors hover:border-mint/40">
+                  {/* ETUDE-V6-4 (item 6) — surface DU PROGRAMME (logements × surfaces T1–T4), JAMAIS la SDP. */}
                   <p className="text-[9px] uppercase tracking-wide text-txt-dim">Surface du programme tenue</p>
-                  <div className="font-display text-[22px] font-bold leading-none text-txt-hi">{fmtDec(active.resume.sdp_m2)} <span className="text-[13px]">m²</span></div>
-                  <p className="mt-0.5 text-[9.5px] text-txt-dim">SDP dessinée (plancher)</p>
+                  <div className="font-display text-[22px] font-bold leading-none text-txt-hi">{fmtDec(demProg)} <span className="text-[13px]">m²</span></div>
+                  <p className="mt-0.5 text-[9.5px] text-txt-dim">logements × surfaces (varangue comprise)</p>
                 </div>
               </div>
               {/* plan masse (item 10 : titre sans nom technique de variante) */}
@@ -281,17 +292,20 @@ export function EtudeV6({ initialIdus, onClose }: {
                 </div>
               )}
               {/* ETUDE-V6-3 (item 10) — sous-sol : cartouche + plan de principe du niveau −1 (places + rampe). */}
-              {sousSol && active.stationnement && <PlanSousSol st={active.stationnement} />}
-              {/* stationnement par destination : règle générale PLU + plafond L151-35 + capacité réduite */}
+              {sousSol && active.stationnement && <PlanSousSol st={active.stationnement} geojson={active.geojson} />}
+              {/* ETUDE-V6-4 (items 4/5) — stationnement 3 lignes + mixité (identique au PDF). */}
               {resultat.stationnement_regimes && (
-                <StationnementResultat regimes={resultat.stationnement_regimes} reduite={resultat.capacite_reduite}
-                  placesActive={active.resume.places} logtsActive={active.resume.logements}
-                  commune={resultat.entrees.commune} zone={resultat.regles.zone} />
+                <StationnementResultat regimes={resultat.stationnement_regimes}
+                  placesActive={active.resume.places} commune={resultat.entrees.commune} zone={resultat.regles.zone}
+                  mode={active.stationnement?.mode ?? 'aerien'}
+                  mixite={{ regle: resultat.regles.lignes.find((l) => /mixit/i.test(l.nom)) ?? null,
+                            applicable: active.programme.mixite_applicable, aides: active.programme.logements_aides_imposes,
+                            sdp_aidee: active.programme.sdp_aidee_imposee_m2 }} />
               )}
               {/* ETUDE-V6-3 (item 9) — détail des surfaces : sol restant, emprise mobilisable, SDP autorisée (+ rampe sous-sol). */}
               <DetailSurfaces v={active} />
               {/* contrôles — 5 états */}
-              <Controles v={active} commune={resultat.entrees.commune} zone={resultat.regles.zone} millesime={resultat.regles.millesime} />
+              <Controles v={active} commune={resultat.entrees.commune} zone={resultat.regles.zone} millesime={resultat.regles.millesime} lignes={resultat.regles.lignes} />
             </section>
 
             <aside className="flex flex-col gap-3">
@@ -327,6 +341,10 @@ export function EtudeV6({ initialIdus, onClose }: {
                 ) : (
                   <p className="text-[11.5px] text-txt">{limitePhrase ?? 'Aucun facteur limitant dominant identifié.'}</p>
                 )}
+                {/* ETUDE-V6-4 (item 10) — en sous-sol, pourquoi la hauteur plafonne (même phrase qu'au PDF). */}
+                {resultat.facteur_limitant_detail && (
+                  <p data-facteur-detail className="mt-1 text-[10.5px] text-txt-dim">{resultat.facteur_limitant_detail}</p>
+                )}
                 {active.controles.filter((c) => c.resultat === 'Échoué' || c.resultat === 'À confirmer').slice(0, 4).map((c) => (
                   <p key={c.nom} className="mt-0.5 text-[10px] text-txt-dim">• {c.nom} — <span className={c.resultat === 'Échoué' ? 'text-coral' : 'text-amber'}>{c.resultat}</span></p>
                 ))}
@@ -353,9 +371,7 @@ export function EtudeV6({ initialIdus, onClose }: {
               <div className="flex flex-wrap gap-2">
                 <BoutonPdf />
               </div>
-              {resultat.bilan_surfacique?.clos && (
-                <p className="text-[9.5px] text-txt-dim">Bilan surfacique clos (contenance = zone constructible {fmtDec(resultat.bilan_surfacique.zone_constructible_m2 ?? 0)} m² + hors-zone {fmtDec(resultat.bilan_surfacique.hors_zone_m2 ?? 0)} m²) · plan sans chevauchement · study_id {resultat.study_id}.</p>
-              )}
+              {/* ETUDE-V6-4 (item 1) — ligne « Bilan surfacique clos… study_id… » retirée. */}
               {pdf.erreur && <p className="text-[10px] text-coral">{pdf.erreur}</p>}
             </aside>
           </div>
@@ -378,12 +394,7 @@ export function EtudeV6({ initialIdus, onClose }: {
     <div className="relative flex min-h-full flex-col">
       {loadingOverlay}
       <Entete onClose={onClose} onReset={reset} resetLabel="↻ Recommencer" />
-      <div className="px-4 pt-4">
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-mint">Outil de pré-faisabilité</p>
-        <h1 className="mt-1 font-display text-[clamp(22px,3vw,34px)] font-bold leading-tight text-txt-hi">Votre projet. Les possibilités du terrain.</h1>
-        <p className="mt-1 max-w-[640px] text-[12.5px] text-txt-mut">Trois étapes pour définir votre opération. LABUSE confronte ensuite votre programme aux capacités et contraintes à étudier.</p>
-      </div>
-
+      {/* ETUDE-V6-4 (item 1) — hero « Votre projet… » retiré. */}
       <div className="grid grid-cols-1 gap-2 px-4 pt-4 sm:grid-cols-3">
         {ETAPES.map((e) => {
           const on = e.n === step
@@ -402,7 +413,7 @@ export function EtudeV6({ initialIdus, onClose }: {
       <div className="grid flex-1 gap-4 p-4 lg:grid-cols-[1fr_340px]">
         <div className="rounded-lg border border-line-2 bg-surface-2 p-4">
           {step === 1 && <EtapeParcelles sel={sel} v={v} chargement={valide.isFetching} erreur={valide.error} onAjouter={ajouter} onRetirer={retirer} />}
-          {step === 2 && <EtapeType projet={projet} onChoisir={setProjet} regimes={statio.data?.regimes} chargement={statio.isFetching} commune={statio.data?.commune} zone={statio.data?.zone} />}
+          {step === 2 && <EtapeType projet={projet} onChoisir={setProjet} regimes={statio.data?.regimes} chargement={statio.isFetching} commune={statio.data?.commune} zone={statio.data?.zone} mixite={statio.data?.mixite} />}
           {step === 3 && <EtapeProgramme nb={nb} setNb={setNb} totalLogts={totalLogts} surfaceProg={surfaceProg} surfaceVar={surfaceVar} surfaceInt={surfaceInt} lotissement={projet === 'lotissement'}
             jauge={jauge} jaugeChargement={jaugeQ.isFetching} jaugeManquant={jaugeQ.data && !jaugeQ.data.estimable ? jaugeQ.data.manquant : null} />}
         </div>
@@ -429,7 +440,7 @@ function Entete({ onClose, onReset, resetLabel }: { onClose?: () => void; onRese
     <header className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
       <div className="flex items-center gap-3">
         {onClose && <Bouton niveau="secondaire" onClick={onClose}>← Fermer</Bouton>}
-        <div><b className="block text-[14px] text-txt-hi">Étude de faisabilité</b><small className="text-[10.5px] text-txt-dim">Pré-faisabilité foncière · La Réunion</small></div>
+        <div><b className="block text-[14px] text-txt-hi">Étude de faisabilité</b></div>
       </div>
       <Bouton niveau="secondaire" onClick={onReset}>{resetLabel}</Bouton>
     </header>
@@ -482,29 +493,31 @@ function DetailSurfaces({ v }: { v: EtudeVariante }) {
 }
 
 // ETUDE-V6-3 (item 10) — plan de PRINCIPE du niveau −1 : places au sous-sol + rampe (schématique, non géo).
-function PlanSousSol({ st }: { st: NonNullable<EtudeVariante['stationnement']> }) {
+// ETUDE-V6-4 (item 9) — le plan du niveau −1 n'est PLUS une grille générique : on DESSINE les objets
+// enterrés sur la vraie géométrie (contour de l'emprise dans l'assiette, allée, places, rampe à sa vraie
+// position), en filtrant le GeoJSON du scénario sur niveau −1 + l'assiette pour le cadre. Même rendu que
+// le plan masse. Si le terrain n'accueille qu'une partie des places par niveau, on dit combien de niveaux.
+function PlanSousSol({ st, geojson }: { st: NonNullable<EtudeVariante['stationnement']>; geojson?: EtudeVariante['geojson'] | null }) {
   const n = st.places_sous_sol ?? 0
-  const cols = Math.max(1, Math.min(10, Math.ceil(Math.sqrt(n * 1.6))))
-  const rows = Math.max(1, Math.ceil(n / cols))
-  const pw = 18, ph = 30, gap = 3, pad = 10, rampH = 26
-  const w = pad * 2 + cols * pw + (cols - 1) * gap
-  const h = pad * 2 + rows * ph + (rows - 1) * gap + rampH
-  const cells = Array.from({ length: n }, (_, i) => ({ r: Math.floor(i / cols), c: i % cols }))
+  const parNiveau = st.places_sous_sol_par_niveau ?? 0
+  const niveaux = st.niveaux_sous_sol ?? 1
+  const kindsSS = new Set(['assiette', 'sous_sol_emprise', 'allee_ss', 'place_ss', 'rampe', 'voie'])
+  const fcSS = geojson
+    ? { type: 'FeatureCollection' as const, features: geojson.features.filter((f: { properties?: { kind?: string } | null }) => kindsSS.has(f.properties?.kind ?? '')) }
+    : null
   return (
     <div className="rounded-lg border border-mint/40 bg-mint-bg p-3">
       <p className="mb-1 text-[11px] font-semibold text-mint">Stationnement en sous-sol · niveau −1</p>
       <p className="mb-2 text-[10px] text-txt-mut">{fmtInt(n)} places · emprise {fmtDec(st.emprise_sous_sol_m2 ?? 0)} m² (≤ emprise réglementaire) · rampe {fmtDec(st.rampe_m2 ?? 0)} m²
         {st.rampe_detail && <> ({fmtDec(st.rampe_detail.rampe_profondeur_m)} m / {fmtDec(st.rampe_detail.rampe_pente_pct)} % = {fmtDec(st.rampe_detail.rampe_longueur_m)} m × {fmtDec(st.rampe_detail.rampe_largeur_m)} m)</>}
       </p>
-      <svg viewBox={`0 0 ${w} ${h}`} className="w-full max-w-[360px]" role="img" aria-label="Plan de principe du niveau −1">
-        <rect x="1" y="1" width={w - 2} height={h - 2} rx="4" className="fill-surface-1 stroke-line-2" />
-        {cells.map(({ r, c }, i) => (
-          <rect key={i} x={pad + c * (pw + gap)} y={pad + r * (ph + gap)} width={pw} height={ph} rx="2" className="fill-mint/25 stroke-mint/60" />
-        ))}
-        <rect x={w / 2 - 14} y={h - rampH - 2} width="28" height={rampH} rx="2" className="fill-amber/30 stroke-amber/70" />
-        <text x={w / 2} y={h - rampH / 2} textAnchor="middle" dominantBaseline="middle" className="fill-txt-dim" fontSize="7">rampe</text>
-      </svg>
-      <p className="mt-1 text-[9px] text-txt-dim">Plan de principe (schématique) — l'implantation exacte des places relève de l'architecte.</p>
+      {fcSS && fcSS.features.some((f: { properties?: { kind?: string } | null }) => f.properties?.kind === 'place_ss')
+        ? <PlanMasseSvg fc={fcSS} groupesCaches={[]} className="block h-auto w-full max-w-[420px] rounded-md" />
+        : <p className="text-[10px] text-txt-dim">Plan du niveau −1 indisponible pour ce scénario.</p>}
+      {niveaux > 1 && parNiveau > 0 && (
+        <p className="mt-1 text-[9.5px] text-amber">Le terrain loge {fmtInt(parNiveau)} places par niveau enterré : {fmtInt(n)} places demandent {fmtInt(niveaux)} niveaux de sous-sol (plan de principe du niveau −1 ci-dessus).</p>
+      )}
+      <p className="mt-1 text-[9px] text-txt-dim">Plan de principe dessiné sur la géométrie réelle — l'implantation exacte des places relève de l'architecte.</p>
     </div>
   )
 }
@@ -521,7 +534,25 @@ function Recit({ titre, ton, children }: { titre: string; ton?: 'vert' | 'ambre'
 }
 
 // ── Lot B — la liste des contrôles (5 états) ────────────────────────────────────────────────────
-function Controles({ v, commune, zone, millesime }: { v: EtudeVariante; commune?: string | null; zone?: string | null; millesime?: string | null }) {
+// ETUDE-V6-4 (item 3) — rattache un contrôle à SA règle PLU (qui porte article/page/citation/lien/millésime)
+// pour que « Lire l'article » apparaisse aussi sur les contrôles. Appariement par mot-clé du nom (stable).
+function regleDuControle(nom: string, lignes: EtudeRegle[]): EtudeRegle | null {
+  const n = nom.toLowerCase()
+  const clefs: Array<[RegExp, RegExp]> = [
+    [/emprise/, /emprise/],
+    [/hauteur/, /hauteur|égout/],
+    [/recul/, /recul/],
+    [/perméab|pleine terre/, /pleine terre|perméab/],
+    [/stationnement/, /stationnement/],
+    [/mixité/, /mixité/],
+  ]
+  for (const [cn, cr] of clefs) {
+    if (cn.test(n)) { const r = lignes.find((l) => cr.test((l.nom || '').toLowerCase())); if (r) return r }
+  }
+  return null
+}
+
+function Controles({ v, commune, zone, millesime, lignes }: { v: EtudeVariante; commune?: string | null; zone?: string | null; millesime?: string | null; lignes: EtudeRegle[] }) {
   const c = v.controles_compte
   // ETUDE-V6-3 (item 2) — citation normalisée : « PLU de [commune] · zone [X] · millésime · <citation sans "PLU "> ».
   const cite = (txt: string) => `${pluRef(commune, zone, null, millesime)} · ${txt.replace(/^PLU\s+/, '')}`
@@ -535,16 +566,20 @@ function Controles({ v, commune, zone, millesime }: { v: EtudeVariante; commune?
         <span className="text-[10px] text-txt-dim">{c.non_effectue} non effectués · {c.non_applicable} sans objet</span>
       </div>
       <div className="flex flex-col gap-1">
-        {v.controles.map((ct) => (
+        {v.controles.map((ct) => {
+          const r = regleDuControle(ct.nom, lignes)
+          return (
           <div key={ct.nom} className="flex items-start justify-between gap-2 border-t border-line-2 py-1">
             <div className="min-w-0">
               <span className="text-[11px] text-txt">{ct.nom}</span>
               <span className="ml-1.5 text-[10px] text-txt-dim">{ct.regle} · {ct.mesure}</span>
               {ct.citation && <span className="ml-1.5 text-[9.5px] text-txt-dim">— {cite(ct.citation)}</span>}
+              {r && <LireArticle r={{ article: r.article, page_pdf: r.page_pdf, millesime: r.millesime ?? millesime, citation: r.citation, source_url: r.source_url, commune, zone }} />}
             </div>
             <Badge ton={etatTon(ct.resultat)}>{ct.resultat}</Badge>
           </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
@@ -658,14 +693,15 @@ function LigneInfo({ l, v, sous }: { l: string; v: string; sous?: string }) {
 
 // ── Hypothèses modifiables (mandat) : surfaces T1–T4, varangues, + hypothèses moteur (collectif) ──
 type HypEtat = { surf: Record<TypeKey, string>; varangue: Record<TypeKey, string>; profondeur: string; coef: string; stationnement: 'aerien' | 'sous_sol' }
-function HypothesesEditor({ hyp, setHyp, surfOf, varOf, types, collectif, onRecalculer, enCours, mode, onMode }: {
+function HypothesesEditor({ hyp, setHyp, surfOf, varOf, types, collectif, onRecalculer, enCours, mode, onMode, onModifie }: {
   hyp: HypEtat; setHyp: (f: (h: HypEtat) => HypEtat) => void
   surfOf: (t: TypeKey) => number; varOf: (t: TypeKey) => number
   types: readonly TypeKey[]; collectif: boolean; onRecalculer: () => void; enCours: boolean
-  mode: 'aerien' | 'sous_sol'; onMode: (m: 'aerien' | 'sous_sol') => void
+  mode: 'aerien' | 'sous_sol'; onMode: (m: 'aerien' | 'sous_sol') => void; onModifie: () => void
 }) {
+  // ETUDE-V6-4 (item 8) — toute édition d'hypothèse marque l'étude « à recalculer » (grise le PDF).
   const champ = (val: string, ph: string, on: (v: string) => void) => (
-    <input type="number" min={0} inputMode="decimal" value={val} placeholder={ph} onChange={(e) => on(e.target.value)}
+    <input type="number" min={0} inputMode="decimal" value={val} placeholder={ph} onChange={(e) => { on(e.target.value); onModifie() }}
       className="w-16 rounded border border-line-2 bg-surface-2 px-1.5 py-0.5 text-center text-[11px] text-txt-hi" />
   )
   return (
@@ -704,7 +740,8 @@ function HypothesesEditor({ hyp, setHyp, surfOf, varOf, types, collectif, onReca
           </div>
         )}
         <div className="mt-1 flex items-center gap-2">
-          <Bouton niveau="primaire" onClick={onRecalculer} disabled={enCours}>{enCours ? 'Recalcul…' : 'Recalculer ↻'}</Bouton>
+          {/* ETUDE-V6-4 (item 7) — « Recalculer » sur une seule ligne, icône comprise (nowrap). */}
+          <Bouton niveau="primaire" onClick={onRecalculer} disabled={enCours} className="whitespace-nowrap">{enCours ? 'Recalcul…' : 'Recalculer ↻'}</Bouton>
           <span className="text-[9.5px] text-txt-dim">Le recalcul met à jour le résultat ET le PDF (même study_id).</span>
         </div>
       </div>
@@ -714,36 +751,37 @@ function HypothesesEditor({ hyp, setHyp, surfOf, varOf, types, collectif, onReca
 
 // ── Lot C — stationnement dans le résultat : règle générale (appliquée) + plafond L151-35 (à confirmer)
 //    + la capacité SOUS le régime réduit, jamais présentée comme acquise ───────────────────────────
-function StationnementResultat({ regimes, reduite, placesActive, logtsActive, commune, zone }: {
+// ETUDE-V6-4 (items 4/5) — stationnement en TROIS lignes sans ambiguïté (PLU exige · loi nationale plafonne ·
+// LABUSE a dessiné) + MIXITÉ sociale affichée. Identique mot pour mot au PDF.
+function StationnementResultat({ regimes, placesActive, commune, zone, mode, mixite }: {
   regimes: EtudeStationnementRegimes
-  reduite: EtudePayload['capacite_reduite']
-  placesActive: number; logtsActive: number; commune?: string | null; zone?: string | null
+  placesActive: number; commune?: string | null; zone?: string | null
+  mode: 'aerien' | 'sous_sol'
+  mixite?: { regle: EtudeRegle | null; applicable: boolean | null; aides: number | null; sdp_aidee: number | null } | null
 }) {
   const g = regimes.general, pf = regimes.plafond_national
+  const regleG = g.regle_courte ?? (g.ratio_par_logement != null ? `${fmtDec(g.ratio_par_logement)} place/logt` : 'un barème par typologie')
   return (
     <div data-stationnement-resultat className="rounded-lg border border-line-2 bg-surface-2 p-3">
       <b className="text-[11px] font-semibold text-txt">Stationnement</b>
-      <div className="mt-2 flex items-start justify-between gap-2 border-t border-line-2 py-1.5">
-        <div><span className="text-[11px] text-txt">Règle générale du PLU</span>
-          {/* ETUDE-V6-3 (items 2/3) — préfixe normalisé + règle en clair. */}
-          <span className="ml-1.5 text-[10px] text-txt-dim">{pluRef(commune, zone, g.article, g.millesime)} · {g.regle_courte ?? (g.ratio_par_logement != null ? `${fmtDec(g.ratio_par_logement)} pl./logt` : 'par typologie')} · {placesActive} places dessinées</span></div>
-        <Badge ton="vert">appliquée</Badge>
-      </div>
-      {pf && (
-        <div className="flex items-start justify-between gap-2 border-t border-line-2 py-1.5">
-          <div><span className="text-[11px] text-txt">Plafond {pf.reference} ({pf.categorie})</span>
-            <span className="ml-1.5 text-[10px] text-txt-dim">≤ {fmtDec(pf.ratio_plafond)} pl./logt · TCSP {pf.condition_tcsp_sous_800m ? `${fmtInt(pf.distance_tcsp_m ?? 0)} m ✓` : 'hors 800 m'} · catégorie à confirmer</span></div>
-          <Badge ton="ambre">{pf.statut}</Badge>
+      <ol className="mt-2 flex flex-col gap-1.5 text-[11px] text-txt">
+        <li className="flex items-start gap-1.5">
+          <span>Le PLU de <b>{commune}</b> (art. {g.article ?? '—'}) exige <b>{regleG}</b>.</span>
+          <LireArticle r={{ article: g.article, page_pdf: g.page_pdf, millesime: g.millesime, citation: g.citation, source_url: g.source_url, commune, zone }} />
+        </li>
+        {pf ? (
+          <li className="text-txt">La loi nationale (Code de l'urbanisme, art. <b>{pf.reference}</b>) plafonne à <b>{fmtDec(pf.ratio_plafond)} place/logt</b> si le projet est éligible — <span className="text-amber">à confirmer</span>.</li>
+        ) : (
+          <li className="text-txt-dim">Aucun plafond national L151-35 applicable à cette destination.</li>
+        )}
+        <li className="text-txt">LABUSE a dessiné <b>{fmtInt(placesActive)} places</b> {mode === 'sous_sol' ? 'au sous-sol (niveau −1)' : 'en aérien (au sol)'} selon la règle du PLU.</li>
+      </ol>
+      {mixite?.regle && (
+        <div data-mixite className="mt-2 border-t border-line-2 pt-2 text-[10.5px] text-txt">
+          <span><b>Mixité sociale</b> (art. {mixite.regle.article ?? '—'}) : {fmtDec(mixite.regle.valeur ?? 0)} % de logements aidés{mixite.regle.seuil_m2 != null ? ` au-delà de ${fmtDec(mixite.regle.seuil_m2)} m² de SDP` : ''}.</span>
+          <LireArticle r={{ article: mixite.regle.article, page_pdf: mixite.regle.page_pdf, millesime: mixite.regle.millesime, citation: mixite.regle.citation, source_url: mixite.regle.source_url, commune, zone }} />
+          <span className="ml-1 text-txt-dim">{mixite.applicable ? `Applicable : ${fmtInt(mixite.aides ?? 0)} logements aidés imposés.` : 'Non applicable (seuil non atteint).'}</span>
         </div>
-      )}
-      {reduite && reduite.statut === 'À confirmer' && reduite.logements != null && (
-        <div className="mt-1.5 rounded-md border border-amber/40 bg-amber-bg px-2.5 py-1.5">
-          <p className="text-[10.5px] text-txt"><b className="text-amber">Sous le régime réduit (à confirmer)</b> : {reduite.logements} logements tiendraient (vs {logtsActive} à la règle générale) — le stationnement cesserait d'être le facteur limitant.</p>
-          <p className="mt-0.5 text-[9.5px] text-txt-dim">{reduite.note}</p>
-        </div>
-      )}
-      {reduite && reduite.statut === 'sans effet' && (
-        <p className="mt-1.5 text-[9.5px] text-txt-dim">{reduite.note}</p>
       )}
     </div>
   )
@@ -774,7 +812,6 @@ function EtapeParcelles({ sel, v, chargement, erreur, onAjouter, onRetirer }: {
         {/* ETUDE-V6-2 (Lot 5) — le champ est VIDÉ après chaque ajout (remontage via la clé) : prêt pour la suivante. */}
         <ParcelInput key={sel.length} dataAttr="etude-v6-parcelle" withCarte={false} onPick={onAjouter} placeholder="Adresse, IDU ou référence (ex. 97404000AW0099)" />
       </div>
-      <p className="mt-1.5 text-[10.5px] text-txt-dim">Aucune carte dans le formulaire : la sélection se fait par recherche.</p>
 
       <div className="mt-3 flex items-center justify-between">
         <b className="text-[12px] text-txt">Parcelles sélectionnées</b>
@@ -807,18 +844,7 @@ function EtapeParcelles({ sel, v, chargement, erreur, onAjouter, onRetirer }: {
                 <span>Surface réelle <b className="text-txt">{p.surface_reelle_m2 != null ? `${fmtDec(p.surface_reelle_m2)} m²` : '—'}</b></span>
                 {p.ecart_m2 != null && <span>Écart {p.ecart_m2 > 0 ? '+' : ''}{fmtDec(p.ecart_m2)} m²</span>}
               </div>
-              {/* ETUDE-V6-2 (Lot 5) / V6-3 (item 2) — règles PLU de la zone de cette parcelle, préfixe normalisé. */}
-              {p.regles_plu && p.regles_plu.length > 0 && (
-                <div data-regles-plu className="mt-1.5 flex flex-wrap gap-1.5">
-                  {p.regles_plu.map((r) => (
-                    <span key={r.nom} title={pluRef(r.commune, r.zone, r.article, r.millesime) + (r.page_pdf != null ? ` · p. ${r.page_pdf}` : '')}
-                      className="rounded border border-line-2 bg-surface-2 px-1.5 py-0.5 text-[10px] text-txt-mut transition-colors hover:border-mint/60">
-                      {r.nom} <b className="text-txt">{fmtDec(r.valeur)}{r.unite === '%' ? ' %' : ` ${r.unite}`}</b>
-                      {r.article && <span className="ml-1 text-[8.5px] text-txt-dim">{r.article}</span>}
-                    </span>
-                  ))}
-                </div>
-              )}
+              {/* ETUDE-V6-4 (item 2) — les cartes de parcelles NE répètent PLUS les règles PLU (bandeau unique en tête). */}
             </div>
           ))}
 
@@ -854,23 +880,49 @@ function ReglesAssiette({ parcelles }: { parcelles: EtudeParcellesOut['parcelles
   }
   const items = [...groupes.values()].filter((g) => g.regles.length > 0)
   if (items.length === 0) return null
+  // ETUDE-V6-4 (item 2) — BANDEAU PLU distinct (pas une carte de parcelle) : accent vert, typo propre,
+  // « Règles du PLU de … · zone … ». Les cartes de parcelles ne répètent plus les règles.
   return (
     <div data-regles-assiette className="mt-3 flex flex-col gap-2">
       {items.map((g) => (
-        <div key={`${g.commune}|${g.zone}`} className="rounded-md border border-line-2 bg-surface-1 px-3 py-2">
-          <b className="text-[11px] text-txt-hi">{pluRef(g.commune, g.zone)} · {g.n} parcelle{g.n > 1 ? 's' : ''}</b>
-          <div className="mt-1.5 flex flex-wrap gap-1.5">
+        <section key={`${g.commune}|${g.zone}`} className="rounded-lg border-l-4 border-mint bg-mint-bg px-3.5 py-2.5">
+          <p className="text-[9px] font-semibold uppercase tracking-[0.08em] text-mint">Règles du PLU</p>
+          <b className="font-display text-[13px] text-txt-hi">de {g.commune} · zone {g.zone}</b>
+          <span className="ml-1.5 text-[10px] text-txt-mut">{g.n} parcelle{g.n > 1 ? 's' : ''}</span>
+          <div className="mt-2 flex flex-wrap gap-1.5">
             {g.regles.map((r) => (
-              <span key={r.nom} title={pluRef(r.commune, r.zone, r.article, r.millesime)}
-                className="rounded border border-line-2 bg-surface-2 px-1.5 py-0.5 text-[10px] text-txt-mut transition-colors hover:border-mint/60">
+              <span key={r.nom} className="inline-flex items-center gap-1 rounded border border-mint/40 bg-surface-1 px-1.5 py-0.5 text-[10px] text-txt-mut transition-colors hover:border-mint">
                 {r.nom} <b className="text-txt">{fmtDec(r.valeur)}{r.unite === '%' ? ' %' : ` ${r.unite}`}</b>
-                {r.article && <span className="ml-1 text-[8.5px] text-txt-dim">{r.article}</span>}
+                <LireArticle r={r} />
               </span>
             ))}
           </div>
-        </div>
+        </section>
       ))}
     </div>
+  )
+}
+
+// ETUDE-V6-4 (item 3) — « Lire l'article » : extrait VERBATIM du règlement (texte cité, article, page,
+// millésime) + lien vers le document PLU officiel à la bonne page quand il existe (source_url#page).
+function LireArticle({ r }: { r: { article?: string | null; page_pdf?: number | null; millesime?: string | null; citation?: string | null; source_url?: string | null; commune?: string | null; zone?: string | null } }) {
+  const [ouvert, setOuvert] = useState(false)
+  if (!r.article && !r.citation) return null
+  const lien = r.source_url ? (r.page_pdf != null ? `${r.source_url}#page=${r.page_pdf}` : r.source_url) : null
+  return (
+    <span className="relative inline-block">
+      <button type="button" data-lire-article onClick={() => setOuvert((o) => !o)}
+        className="text-[8.5px] text-mint underline decoration-dotted hover:decoration-solid">Lire l'article</button>
+      {ouvert && (
+        <span className="absolute left-0 top-[1.4em] z-30 block w-[280px] rounded-md border border-line-2 bg-surface-1 p-2.5 text-left shadow-lg">
+          <span className="block text-[9px] font-semibold uppercase tracking-wide text-mint">{pluRef(r.commune, r.zone, r.article, r.millesime)}{r.page_pdf != null ? ` · p. ${r.page_pdf}` : ''}</span>
+          {r.citation && <span className="mt-1 block text-[10px] italic text-txt">« {r.citation} »</span>}
+          {lien
+            ? <a href={lien} target="_blank" rel="noopener noreferrer" className="mt-1.5 block text-[9.5px] text-mint hover:underline">Ouvrir le règlement PLU officiel ↗</a>
+            : <span className="mt-1.5 block text-[9px] text-txt-dim">Document PLU officiel non disponible en lien direct.</span>}
+        </span>
+      )}
+    </span>
   )
 }
 
@@ -891,20 +943,17 @@ function Signaux({ v }: { v: EtudeParcellesOut }) {
 }
 
 function Sources({ v }: { v: EtudeParcellesOut }) {
-  const c = v.sources.cadastre, p = v.sources.plu
-  if (!c && !p) return null
-  return (
-    <p className="text-[9.5px] leading-snug text-txt-dim">
-      {c && <>Géométrie &amp; contenance : {c.source}{c.derniere_synchro ? ` · maj ${c.derniere_synchro}` : ''}. </>}
-      {p && <>Zone PLU : {p.source}.</>}
-    </p>
-  )
+  // ETUDE-V6-4 (item 1) — ligne « Géométrie & contenance : Cadastre… » retirée ; on garde la source PLU.
+  const p = v.sources.plu
+  if (!p) return null
+  return <p className="text-[9.5px] leading-snug text-txt-dim">Zone PLU : {p.source}.</p>
 }
 
 // ── Étape 2 — Type de projet ─────────────────────────────────────────────────────────────────────
-function EtapeType({ projet, onChoisir, regimes, chargement, commune, zone }: {
+function EtapeType({ projet, onChoisir, regimes, chargement, commune, zone, mixite }: {
   projet: ProjetKey | null; onChoisir: (k: ProjetKey) => void
   regimes?: EtudeStationnementRegimes; chargement: boolean; commune?: string | null; zone?: string | null
+  mixite?: { quota_pct: number | null; seuil_m2: number | null; article: string | null; page_pdf: number | null; citation: string | null; source_url?: string | null; millesime?: string | null } | null
 }) {
   return (
     <div>
@@ -923,6 +972,14 @@ function EtapeType({ projet, onChoisir, regimes, chargement, commune, zone }: {
       </div>
       {projet && chargement && <div className="mt-3"><Chargement /></div>}
       {projet && regimes && <StationnementRegle regimes={regimes} lotissement={projet === 'lotissement'} commune={commune} zone={zone} />}
+      {/* ETUDE-V6-4 (item 5) — mixité sociale dès l'étape 2 (comme résultat + PDF). */}
+      {projet && mixite && (
+        <div data-mixite-etape2 className="mt-2 rounded-md border border-line-2 bg-surface-1 px-3 py-2 text-[10.5px] text-txt">
+          <b className="text-[11px] text-txt">Mixité sociale</b>
+          <span className="ml-1.5">{fmtDec(mixite.quota_pct ?? 0)} % de logements aidés{mixite.seuil_m2 != null ? ` au-delà de ${fmtDec(mixite.seuil_m2)} m² de SDP` : ''}.</span>
+          <LireArticle r={{ article: mixite.article, page_pdf: mixite.page_pdf, millesime: mixite.millesime, citation: mixite.citation, source_url: mixite.source_url, commune, zone }} />
+        </div>
+      )}
     </div>
   )
 }
@@ -941,6 +998,8 @@ function StationnementRegle({ regimes, lotissement, commune, zone }: { regimes: 
         <p className="mt-1 text-[10px] text-txt-dim">{pluRef(commune, zone, g.article, g.millesime)}</p>
         <p className="mt-0.5 text-[11px] text-txt">{g.regle_courte ?? (g.ratio_par_logement != null ? `${fmtDec(g.ratio_par_logement)} place / logement` : 'barème par typologie')}</p>
         {g.citation && <p className="mt-0.5 text-[9.5px] text-txt-dim">« {g.citation} »</p>}
+        {/* ETUDE-V6-4 (item 3) — « Lire l'article » dès l'étape 2 (stationnement). */}
+        <LireArticle r={{ article: g.article, page_pdf: g.page_pdf, millesime: g.millesime, citation: g.citation, source_url: g.source_url, commune, zone }} />
       </div>
       {pf && (
         <div className="rounded-md border border-amber/40 bg-amber-bg px-3 py-2">

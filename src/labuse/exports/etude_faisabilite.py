@@ -36,10 +36,16 @@ _COUL = {
     "voie": (None, "#B45309"),
     "ppr_rouge": ("#DC2626", "#991B1B"),
     "ppr_bleue": ("#3B82F6", "#1D4ED8"),
+    # ETUDE-V6-4 (item 9) — niveau −1 dessiné : emprise enterrée, allée, places, rampe (mêmes clés qu'à l'écran).
+    "sous_sol_emprise": ("#E2E8F0", "#64748B"),
+    "place_ss": ("#FFFFFF", "#6B7280"),
+    "allee_ss": ("#D1D5DB", "#9CA3AF"),
+    "rampe": ("#FDE68A", "#B45309"),
 }
 #: ordre de dessin (z-order) : contexte terrain d'abord, objets du plan ensuite.
-_Z = ["parcelle", "assiette", "ppr_rouge", "ppr_bleue", "zone", "espace_libre", "allee",
-      "acces", "place", "batiment_emprise", "coursive", "noyau", "module", "voie"]
+_Z = ["parcelle", "assiette", "ppr_rouge", "ppr_bleue", "zone", "espace_libre",
+      "sous_sol_emprise", "allee", "allee_ss", "acces", "place", "place_ss", "rampe",
+      "batiment_emprise", "coursive", "noyau", "module", "voie"]
 
 # ── CSS scopé à l'Étude (le reste vient de theme.css) ─────────────────────────────────────────
 # N'invente aucun nouveau jeton couleur : réutilise les variables de theme.css. Ne porte QUE les
@@ -58,6 +64,10 @@ table.ef-scn th { font-weight: 600; font-size: 8pt; color: var(--muted); border-
 table.ef-scn td.num, table.ef-scn th.num { text-align: right; }
 table.ef-scn tr.retenu { background: var(--mint-bg); }
 .cite { display: block; font-size: 7.5pt; color: var(--muted); margin-top: 1pt; }
+.art { border-left: 2pt solid var(--mint); padding: 2pt 0 2pt 7pt; margin: 5pt 0; }
+.art-ref { font-size: 8pt; font-weight: 600; color: var(--mint-ink); }
+.art-cit { font-size: 8.5pt; font-style: italic; color: var(--ink); margin-top: 1pt; }
+.url { font-family: monospace; font-size: 7pt; word-break: break-all; color: var(--muted); }
 .st { display: inline-block; font-size: 7.5pt; padding: 2pt 5pt; border-radius: 2pt; white-space: nowrap; }
 .st.ok { color: var(--mint-ink); background: var(--mint-bg); border: 1px solid var(--mint); }
 .st.cp { color: var(--amber); background: var(--amber-bg); border: 1px solid var(--amber); }
@@ -130,6 +140,50 @@ def _scn_label(s: dict) -> str:
     Les scénarios Pareto gardent leur repère A/B/C ; une variante de rôle devient « retenu »."""
     r = str(s.get("ref", ""))
     return "retenu" if r in ("votre_programme", "optimisation", "alternative") else r
+
+
+def _refs_parcelles(payload: dict) -> str:
+    """ETUDE-V6-4 (item 12) — « AW 99, 451, 624, 625 » : section une fois, numéros groupés."""
+    idus = payload.get("entrees", {}).get("idus") or [p.get("idu", "") for p in payload.get("terrain", {}).get("parcelles", [])]
+    groupes: dict = {}
+    for idu in idus:
+        if len(idu) >= 11:
+            sec, num = idu[8:10], str(int(idu[10:])) if idu[10:].isdigit() else idu[10:]
+            groupes.setdefault(sec, []).append(num)
+    return " · ".join(f"{sec} {', '.join(nums)}" for sec, nums in groupes.items()) or "—"
+
+
+def _mode_label(mode: Optional[str]) -> str:
+    """ETUDE-V6-4 (item 12) — accents corrects : aerien → « aérien », sous_sol → « sous-sol »."""
+    return {"aerien": "aérien", "sous_sol": "sous-sol"}.get(mode or "aerien", "aérien")
+
+
+def _stationnement_3lignes(payload: dict, retenu: dict) -> str:
+    """ETUDE-V6-4 (items 4/5/11) — stationnement en TROIS lignes (identiques à l'écran, mêmes mots) + mixité."""
+    reg = payload.get("stationnement_regimes") or {}
+    g = reg.get("general") or {}
+    pf = reg.get("plafond_national")
+    commune = payload["entrees"].get("commune") or ""
+    mode = retenu.get("stationnement", {}).get("mode") or payload["entrees"].get("stationnement") or "aerien"
+    places = retenu.get("stationnement", {}).get("places")
+    regleg = g.get("regle_courte") or (f"{_dec(g.get('ratio_par_logement'))} place/logt" if g.get("ratio_par_logement") is not None else "un barème par typologie")
+    lieu = "au sous-sol (niveau −1)" if mode == "sous_sol" else "en aérien (au sol)"
+    lignes = [f"Le PLU de {esc(commune)} (art. {esc(g.get('article') or '—')}) exige {esc(regleg)}."]
+    if pf:
+        lignes.append(f"La loi nationale (Code de l'urbanisme, art. {esc(pf.get('reference') or 'L151-35')}) "
+                      f"plafonne à {_dec(pf.get('ratio_plafond'))} place/logt si le projet est éligible — à confirmer.")
+    lignes.append(f"LABUSE a dessiné {int(places) if places is not None else '—'} places {lieu} selon la règle du PLU.")
+    mix_html = ""
+    mx = next((l for l in payload["regles"].get("lignes", []) if "mixit" in (l.get("nom") or "").lower()), None)
+    if mx and mx.get("valeur") is not None:
+        aides = retenu.get("programme", {}).get("logements_aides_imposes")
+        appl = retenu.get("programme", {}).get("mixite_applicable")
+        etat = (f"Applicable : {int(aides)} logements aidés imposés." if appl and aides is not None
+                else "Non applicable (seuil non atteint).")
+        mix_html = (f'<p><b>Mixité sociale</b> (art. {esc(mx.get("article") or "—")}) : {_dec(mx.get("valeur"))} % '
+                    f'de logements aidés{" au-delà de " + _grp(mx.get("seuil_m2")) + " m² de SDP" if mx.get("seuil_m2") else ""}. {esc(etat)}</p>')
+    return ('<section><h2>Stationnement &amp; mixité</h2>'
+            + "".join(f'<p>{l}</p>' for l in lignes) + mix_html + '</section>')
 
 
 def _fourchette(payload: dict) -> Optional[tuple[int, int]]:
@@ -217,6 +271,9 @@ def _legende(kinds: list[str]) -> str:
         "acces": "Accès", "espace_libre": "Espaces libres", "voie": "Limite classée voie",
         "ppr_rouge": "PPR rouge (retirée)", "ppr_bleue": "PPR bleue (signalée)",
         "module": "Modules logements", "noyau": "Noyau",
+        # ETUDE-V6-4 (item 9) — niveau −1.
+        "sous_sol_emprise": "Emprise enterrée", "place_ss": "Places (−1)",
+        "allee_ss": "Allée (−1)", "rampe": "Rampe d'accès",
     }
     out = []
     for k in kinds:
@@ -262,7 +319,7 @@ _WARN = ("Pré-faisabilité automatisée : scénarios indicatifs d'implantation 
 def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> str:
     e = payload["entrees"]
     t = payload["terrain"]
-    refs = " · ".join(p.get("numero") or p.get("idu", "")[8:] for p in t.get("parcelles", []))
+    refs = _refs_parcelles(payload)
     fr = _fourchette(payload)
     scn = payload.get("scenarios") or []
     # verdict (fourchette des Exploitable ; un scénario « à compléter » cité à part, jamais « permet »)
@@ -313,7 +370,7 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
         cls = ' class="retenu"' if s["ref"] == retenu["ref"] else ""
         stc = _statut_classe(s["statut_etude"])
         rows.append(
-            f'<tr{cls}><td>{esc(_scn_label(s))}{" (retenu)" if s["ref"] == retenu["ref"] else ""}</td>'
+            f'<tr{cls}><td>{esc(_scn_label(s))}{" (retenu)" if s["ref"] == retenu["ref"] and _scn_label(s) != "retenu" else ""}</td>'
             f'<td>{esc(str(s.get("forme", "")).replace("_", " "))}</td>'
             f'<td class="num">{s["resume"]["logements"]}</td>'
             f'<td class="num">{esc(s.get("niveaux_label", ""))}</td>'
@@ -332,13 +389,19 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
     return (
         '<div class="cover">'
         f'<div class="kicker">LABUSE · Document n° {esc(numero)}</div>'
-        '<h1>Étude de faisabilité</h1>'
-        f'<p class="address">{esc(t.get("commune") or "")} — parcelles {esc(refs)}</p>'
+        f'<h1>Étude de faisabilité — {esc(t.get("commune") or "")} · parcelles {esc(_refs_parcelles(payload))}</h1>'
         f'<p class="idu">{_m2(t.get("contenance_totale_m2"))} · zone {esc(e.get("zone") or "")} · '
-        f'collectif · stationnement {esc(e.get("stationnement") or "aérien")}</p>'
+        f'collectif · stationnement {esc(_mode_label(retenu.get("stationnement", {}).get("mode") or e.get("stationnement")))}</p>'
         + _au_html
         + f'<div class="{vclass}">{esc(txt)}</div>'
-        '<div class="ef-status">'
+        # ETUDE-V6-4 (items 10/11/13) — LA phrase « ce qui limite », identique au bandeau de l'écran
+        # (champ serveur unique). Absente si rien ne limite (terrain sans contrainte dominante).
+        + (f'<p class="note"><b>Ce qui limite :</b> {esc(payload.get("facteur_limitant") or "")}.</p>'
+           if payload.get("facteur_limitant") else '')
+        # ETUDE-V6-4 (item 10) — en sous-sol, pourquoi la hauteur plafonne (même phrase qu'à l'écran).
+        + (f'<p class="note">{esc(payload.get("facteur_limitant_detail") or "")}</p>'
+           if payload.get("facteur_limitant_detail") else '')
+        + '<div class="ef-status">'
         f'<div><b>Contrôles automatisés (scénario {esc(_scn_label(retenu))})</b>'
         f'{cc["reussi"]} réussis · {cc["echoue"]} échoués · {cc["non_effectue"]} non effectués</div>'
         f'<div><b>Statut de l\'étude</b>{esc(_statut_court(retenu["statut_etude"]))} — '
@@ -480,15 +543,42 @@ def _p5_plan_masse(payload: dict, retenu: dict, *, titre: str = None) -> str:
         rows.append(f'<tr><td class="k">Accès</td><td>{esc(acces.get("note") or "sur la voie")}</td>'
                     f'<td class="n"><span class="chip d">Dérivé</span></td></tr>')
     h2 = titre or f"4. Plan masse du scénario {_scn_label(sc)}"
+    # ETUDE-V6-4 (items 9/11) — en sous-sol, les places ne sont PAS aériennes : on le dit, et on ajoute le
+    # plan du niveau −1 dessiné sur la vraie géométrie (emprise enterrée, allée, places, rampe).
+    st = sc.get("stationnement") or {}
+    sous_sol = (st.get("mode") == "sous_sol")
+    lieu_places = "au sous-sol (niveau −1)" if sous_sol else "aériennes"
     return (
         f'<section><h2>{esc(h2)}</h2>'
         f'<div class="verdict">Scénario {esc(_scn_label(sc))} — {esc(forme)} en {esc(sc.get("niveaux_label", ""))} : '
-        f'{sc["resume"]["logements"]} logements, {sc["stationnement"]["places"]} places aériennes.</div>'
+        f'{sc["resume"]["logements"]} logements, {st.get("places")} places {lieu_places}.</div>'
         + fig + _legende(["batiment_emprise", "place", "allee", "espace_libre", "acces", "zone"])
         + '<table class="kv"><tr><th>Élément</th><th>Valeur</th><th class="n">Nature</th></tr>'
         + "".join(rows) + "</table>"
         + '<p class="note">Chaque nombre de ce tableau = nombre d\'objets dans la géométrie '
-          '(verrou de test). Plan rendu depuis la géométrie servie.</p></section>')
+          '(verrou de test). Plan rendu depuis la géométrie servie.</p>'
+        + (_sous_sol_plan(sc) if sous_sol else '')
+        + '</section>')
+
+
+def _sous_sol_plan(sc: dict) -> str:
+    """ETUDE-V6-4 (item 9) — plan du niveau −1 DESSINÉ sur la vraie géométrie (contour de l'emprise enterrée
+    dans l'assiette, allée, places, rampe à leur vraie position) — identique à l'écran. Si le terrain ne loge
+    qu'une partie des places par niveau, on dit combien de niveaux de sous-sol sont nécessaires."""
+    st = sc.get("stationnement") or {}
+    fig = _svg_plan(sc["geojson"], ["assiette", "sous_sol_emprise", "allee_ss", "place_ss", "rampe", "voie"], h=360)
+    par_niv = st.get("places_sous_sol_par_niveau") or 0
+    niveaux = st.get("niveaux_sous_sol") or 1
+    note = ""
+    if niveaux > 1 and par_niv > 0:
+        note = (f'<p class="note">Le terrain loge {par_niv} places par niveau enterré : '
+                f'{st.get("places_sous_sol")} places demandent {niveaux} niveaux de sous-sol '
+                f'(plan de principe du niveau −1 ci-dessus).</p>')
+    return (
+        '<h3>Niveau −1 — stationnement en sous-sol</h3>'
+        f'<div class="verdict">Emprise enterrée {_m2(st.get("emprise_sous_sol_m2"))} (≤ emprise réglementaire), '
+        f'rampe {_m2(st.get("rampe_m2"))}. Plan de principe dessiné sur la géométrie réelle.</div>'
+        + fig + _legende(["sous_sol_emprise", "place_ss", "allee_ss", "rampe"]) + note)
 
 
 def _p_planche(payload: dict, retenu: dict) -> str:
@@ -545,17 +635,21 @@ def _p7_capacite(payload: dict, retenu: dict) -> str:
     pt = prog.get("par_type") or {}
     shab = prog.get("shab_par_type_m2") or {}
     surf = payload["hypotheses"].get("surfaces") or {}
+    # ETUDE-V6-4 (item 11) — montrer la varangue, comme à l'écran (30/56/70/80 + varangues).
+    varg = payload["hypotheses"].get("varangues") or {}
     prows = []
     for x in sorted(pt):
+        vcell = f'{_m2(surf.get(x))}' + (f' <span style="color:#6b7280;font-size:0.82em">dont {_m2(varg.get(x))} varangue</span>' if varg.get(x) else '')
         prows.append(f'<tr><td class="k">{esc(x)}</td><td class="num">{int(pt[x])}</td>'
-                     f'<td class="num">{_m2(surf.get(x))}</td><td class="num">{_m2(shab.get(x))}</td>'
+                     f'<td class="num">{vcell}</td><td class="num">{_m2(shab.get(x))}</td>'
                      f'<td class="n"><span class="chip e">Estimé</span></td></tr>')
     if prog.get("mixite_applicable") and prog.get("logements_aides_imposes") is not None:
         prows.append(f'<tr><td class="k">Dont logements aidés</td>'
                      f'<td class="num">{int(prog["logements_aides_imposes"])}</td>'
                      f'<td class="num" colspan="2">quota PLU appliqué au programme</td>'
                      f'<td class="n"><span class="chip s">Sourcé</span></td></tr>')
-    prog_src = ("Projet saisi par le client" if payload["entrees"].get("programme_mode") == "saisi"
+    # ETUDE-V6-4 (item 12) — phrase « Projet saisi par le client » corrigée (une seule fois, claire).
+    prog_src = ("Programme saisi par le client (ses lignes T1–T4)." if payload["entrees"].get("programme_mode") == "saisi"
                 else "Répartition proposée par le moteur pour l'objectif choisi.")
     # contrôles 4 états
     crows = []
@@ -573,7 +667,7 @@ def _p7_capacite(payload: dict, retenu: dict) -> str:
         'non effectués. Ce n\'est pas une validation réglementaire.</div>'
         '<table class="kv"><tr><th>Programme</th><th class="num">Nombre</th><th class="num">Surface moy.</th>'
         '<th class="num">SHAB estimée</th><th class="n">Nature</th></tr>' + "".join(prows) + "</table>"
-        + f'<p class="note">{esc(prog_src)} Programme saisi par le client : mêmes lignes en chip Projet.</p>'
+        + f'<p class="note">{esc(prog_src)}</p>'
         + '<table class="kv"><tr><th>Contrôle</th><th>Règle</th><th>Scénario</th><th class="n">Résultat</th>'
           '</tr>' + "".join(crows) + "</table>"
         + '<p class="note">Un contrôle « Échoué » retire le scénario des « Exploitable ». '
@@ -593,7 +687,9 @@ def _p8_hypotheses(payload: dict, retenu: dict, numero: str) -> str:
         ("Plancher → habitable", _dec(h.get('coef_plancher_habitable')), "circulations et noyaux hors habitable"),
         ("Place · allée", place_txt, "dimensions usuelles"),
         ("Hauteur de niveau", f"{_grp(h.get('hauteur_etage_m'))} m", "convention"),
-        ("Stationnement", "aérien seul", "pas de sous-sol dans cette version"),
+        # ETUDE-V6-4 (items 11/12) — le MODE réel (aérien / sous-sol), plus de « pas de sous-sol ».
+        ("Stationnement", _mode_label(retenu.get("stationnement", {}).get("mode") or payload["entrees"].get("stationnement")),
+         "au sol (aérien) ou au niveau −1 (sous-sol)"),
     ]
     hrows_html = "".join(f'<tr><td class="k">{esc(a)}</td><td>{b}</td><td>{esc(c)}</td></tr>'
                          for a, b, c in hrows)
@@ -601,7 +697,6 @@ def _p8_hypotheses(payload: dict, retenu: dict, numero: str) -> str:
         ("Distance entre constructions · locaux vélos et déchets", "règles non modélisées"),
         ("Prescriptions PPR bleue · servitudes signalées", "signalées, non interprétées"),
         ("Accès véhicule", "limite classée voie ; visibilité et autorisation non vérifiées"),
-        ("Sous-sol ou stationnement en ouvrage", "non simulé : la capacité peut être plus haute"),
         ("Sol, réseaux, arbres, vues, voisinage", "aucune donnée publique fiable à la parcelle"),
         ("Conception (plans, façades)", "métier de l'architecte"),
     ]
@@ -611,8 +706,8 @@ def _p8_hypotheses(payload: dict, retenu: dict, numero: str) -> str:
         (f"PLU — zone {esc(payload['regles'].get('zone') or '')}", "règlement, zonage, prescriptions publiés"),
         ("Cadastre DGFiP · PPR, servitudes (GPU, Géorisques)", "données publiques"),
         ("LiDAR HD IGN · BD TOPO", "terrain naturel, limites"),
-        (f"Moteur d'implantation — {esc(m.get('livrable') or '')}",
-         f"hypothèses « {esc(m.get('etiquette') or '')} » · conventions {esc(str(m.get('version_conventions') or ''))}"),
+        # ETUDE-V6-4 (item 12) — plus de nom technique (livrable IMPLANTATION-2, version conventions).
+        ("Moteur d'implantation LABUSE", f"hypothèses « {esc(m.get('etiquette') or 'Estimé')} », modifiables dans l'outil"),
     ]
     src_html = "".join(f'<tr><td class="k">{esc(a)}</td><td>{esc(b)}</td></tr>' for a, b in sources)
     return (
@@ -627,6 +722,38 @@ def _p8_hypotheses(payload: dict, retenu: dict, numero: str) -> str:
         '<h3>Sources</h3><table class="kv"><tr><th>Source</th><th>Nature</th></tr>' + src_html + "</table>"
         f'<p class="note">Entrées, configuration, version du moteur et des règles archivées avec le '
         f'document n° {esc(numero)} : le scénario se rejoue à l\'identique.</p></section>')
+
+
+def _annexe_reglement(payload: dict) -> str:
+    """ETUDE-V6-4 (item 3) — annexe « extraits du règlement » : pour chaque règle, l'extrait VERBATIM
+    (texte cité), l'article, la page et le millésime, avec le lien vers le document PLU officiel — les
+    mêmes éléments que « Lire l'article » à l'écran. Rien d'affiché qui ne soit dans le payload."""
+    r = payload["regles"]
+    lignes = [l for l in r.get("lignes", []) if l.get("citation")]
+    if not lignes:
+        return ""
+    mill = r.get("millesime")
+    doc_url = r.get("source_url")
+    blocs = []
+    for l in lignes:
+        art = l.get("article")
+        pg = l.get("page_pdf")
+        ref = " · ".join(x for x in (
+            f"art. {esc(str(art))}" if art else None,
+            f"p. {esc(str(pg))}" if pg is not None else None,
+            f"millésime {esc(str(l.get('millesime') or mill))}" if (l.get("millesime") or mill) else None,
+        ) if x)
+        blocs.append(
+            f'<div class="art"><div class="art-ref">{esc(l.get("nom") or "")}{(" — " + ref) if ref else ""}</div>'
+            f'<div class="art-cit">« {esc(l.get("citation"))} »</div></div>')
+    lien = (f'<p class="note">Document PLU officiel : <span class="url">{esc(doc_url)}</span></p>'
+            if doc_url else '<p class="note">Document PLU officiel non disponible en lien direct.</p>')
+    return (
+        '<div class="pb"></div>'
+        '<section><h2>Annexe — extraits du règlement</h2>'
+        f'<div class="verdict">PLU de {esc(r.get("commune") or "")} · zone {esc(r.get("zone") or "")}'
+        f'{(" · millésime " + esc(str(mill))) if mill else ""}. Chaque règle appliquée est citée mot pour mot.</div>'
+        + "".join(blocs) + lien + '</section>')
 
 
 def _annexe(payload: dict, retenu: dict) -> str:
@@ -653,7 +780,7 @@ def rendu_etude(payload: dict, *, genere_le: str, scenario_ref: Optional[str] = 
         raise ValueError(payload.get("message") or "aucun scénario : l'étude ne peut pas être rendue")
     idus = payload["entrees"].get("idus") or []
     numero = numero_etude(idus, genere_le)
-    refs = " · ".join(p.get("numero") or p.get("idu", "")[8:] for p in payload["terrain"].get("parcelles", []))
+    refs = _refs_parcelles(payload)
     cart = Cartouche(
         doc_title=f"LABUSE — Étude de faisabilité · {payload['terrain'].get('commune') or ''}",
         doc_ref=f"{refs} · {numero}",
@@ -664,12 +791,14 @@ def rendu_etude(payload: dict, *, genere_le: str, scenario_ref: Optional[str] = 
         + _p1_synthese(payload, retenu, numero, genere_le)
         + _p2_terrain(payload, retenu)
         + _p3_regles(payload, retenu)
+        + _stationnement_3lignes(payload, retenu)
         + _p4_enveloppe(payload, retenu)
         + _p5_plan_masse(payload, retenu)
         + _p_planche(payload, retenu)
         + _p6_distribution(payload, retenu)
         + _p7_capacite(payload, retenu)
         + _p8_hypotheses(payload, retenu, numero)
+        + _annexe_reglement(payload)
         + _annexe(payload, retenu))
     html = page_html("Étude de faisabilité", cart, corps)
     return {"html": html, "numero": numero, "retenu_ref": retenu["ref"]}

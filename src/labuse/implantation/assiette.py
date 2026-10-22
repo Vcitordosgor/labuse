@@ -98,11 +98,29 @@ def _plu_millesime_insee(session, insee: str) -> Optional[str]:
         return None
 
 
+def _extraits_plu(session, insee: str, zone: Optional[str]) -> dict:
+    """ETUDE-V6-4 (item 3) — map {article_ref → (source_url, page_pdf)} pour « Lire l'article » : le lien
+    vers le document PLU officiel à la bonne page (table plu_reglement_extrait, zone de l'assiette)."""
+    from sqlalchemy import text
+    out: dict = {}
+    try:
+        rows = session.execute(text(
+            "SELECT article_ref, source_url, page_pdf FROM plu_reglement_extrait "
+            "WHERE insee = :i AND (zone = :z OR zone IS NULL) AND article_ref IS NOT NULL"
+        ), {"i": insee, "z": zone}).fetchall()
+        for art, url, pg in rows:
+            if art and art not in out:
+                out[art] = {"source_url": url, "page_pdf": pg}
+    except Exception:  # noqa: BLE001
+        pass
+    return out
+
+
 def _regles_plu_resume(session, insee: str, commune: Optional[str], zone: Optional[str], cache: dict) -> Optional[list]:
-    """ETUDE-V6-2 (Lot 5) / V6-3 (item 2) — résumé des règles PLU SERVIES de la zone d'une parcelle
-    (hauteur, CES, reculs, pleine terre, + espaces verts / marge plantée si calibrés). Chaque ligne porte
-    commune · zone · article · millésime (préfixe normalisé affiché) et sa page. Seules les règles VALIDÉES
-    et chiffrées sont listées (jamais « non vérifié » servi comme une valeur). Caché par (insee, zone)."""
+    """ETUDE-V6-2 (Lot 5) / V6-3 (item 2) / V6-4 (item 3) — résumé des règles PLU SERVIES de la zone d'une
+    parcelle (hauteur, CES, reculs, pleine terre, + espaces verts / marge si calibrés). Chaque ligne porte
+    commune · zone · article · millésime + l'EXTRAIT verbatim (citation) et le lien officiel (source_url) pour
+    « Lire l'article ». Seules les règles VALIDÉES et chiffrées (jamais « non vérifié »). Caché par (insee, zone)."""
     if not zone:
         return None
     key = (insee, zone)
@@ -113,23 +131,26 @@ def _regles_plu_resume(session, insee: str, commune: Optional[str], zone: Option
         except Exception:  # noqa: BLE001
             rz = None
         millesime = _plu_millesime_insee(session, insee)
+        extraits = _extraits_plu(session, insee, zone)
         lignes = None
         if rz is not None:
-            def _ligne(nom, valeur, unite, article, page):
-                return {"nom": nom, "valeur": valeur, "unite": unite, "article": article, "page_pdf": page,
-                        "commune": commune, "zone": zone, "millesime": millesime}
+            def _ligne(nom, valeur, unite, article, page, citation):
+                ex = extraits.get(article or "") or {}
+                return {"nom": nom, "valeur": valeur, "unite": unite, "article": article,
+                        "page_pdf": page or ex.get("page_pdf"), "commune": commune, "zone": zone,
+                        "millesime": millesime, "citation": citation, "source_url": ex.get("source_url")}
             lignes = []
             for nom, r in (("Hauteur à l'égout", rz.hauteur_egout), ("Hauteur au faîtage", rz.hauteur_faitage),
                            ("Emprise au sol (CES)", rz.emprise_ces), ("Recul sur voie", rz.recul_voie),
                            ("Recul séparatives", rz.recul_separatives), ("Pleine terre", rz.pleine_terre)):
                 if r and r.validee and r.valeur is not None:
-                    lignes.append(_ligne(nom, r.valeur, r.unite, r.article, r.page_pdf))
+                    lignes.append(_ligne(nom, r.valeur, r.unite, r.article, r.page_pdf, r.citation))
             ev = getattr(rz, "espaces_verts", None)
             if ev and ev.validee and ev.pct is not None:
-                lignes.append(_ligne("Espaces verts", ev.pct, "%", ev.article, ev.page_pdf))
+                lignes.append(_ligne("Espaces verts", ev.pct, "%", ev.article, ev.page_pdf, ev.citation))
             mp = getattr(rz, "marge_plantee", None)
             if mp and mp.validee and mp.largeur_m is not None:
-                lignes.append(_ligne("Marge plantée", mp.largeur_m, "m", mp.article, mp.page_pdf))
+                lignes.append(_ligne("Marge plantée", mp.largeur_m, "m", mp.article, mp.page_pdf, mp.citation))
             lignes = lignes or None
         cache[key] = lignes
     return cache[key]
