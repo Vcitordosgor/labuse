@@ -112,40 +112,76 @@ def _retournement(net, origin, u, v, L, W, w, config, u_spine, v_demi):
     return [h for h in heads if not h.is_empty and h.area > 20.0]
 
 
+def _dims(lot_cible):
+    """Profondeur et façade VISÉES d'un lot (≈ lot_cible), indépendantes du nombre de voies — pour ne
+    jamais sur-découper en micro-lots quand on ajoute des voies."""
+    depth = min(LOT_PROFONDEUR_MAX_M, max(18.0, lot_cible / 18.0))
+    facade = max(14.0, min(26.0, lot_cible / depth))
+    return depth, facade
+
+
+def _peigne(origin, u, v, L, W, w, lot_cible, n, axe_u: bool):
+    """Réseau en PEIGNE : n voies parallèles couvrant toute la largeur, reliées par une épine centrale.
+    Chaque voie dessert deux rangées de lots À PROFONDEUR FIXE (≈ lot_cible). Renvoie (voirie, lots)."""
+    depth, facade = _dims(lot_cible)
+    span = W if axe_u else L
+    roads, lots = [], []
+    for k in range(n):
+        c = (k + 0.5) * span / n
+        if axe_u:
+            roads.append(_rect(origin, u, v, 0, L, c - w / 2, c + w / 2))
+            lots += _lots_u(origin, u, v, L, c, w, depth, facade)
+        else:
+            roads.append(_rect(origin, u, v, c - w / 2, c + w / 2, 0, W))
+            lots += _lots_v(origin, u, v, W, c, w, depth, facade)
+    if axe_u:                                           # épine de liaison → réseau connexe
+        roads.append(_rect(origin, u, v, (L - w) / 2, (L + w) / 2, 0, W))
+    else:
+        roads.append(_rect(origin, u, v, 0, L, (W - w) / 2, (W + w) / 2))
+    return unary_union(roads), lots
+
+
 def _pave_reseau(net: BaseGeometry, lot_cible: float, w: float):
-    """Pave l'assiette : on essaie I / T / croix et on garde le réseau qui donne le PLUS de lots ; on
-    ajoute l'aire de retournement des impasses. Renvoie (lots, voirie, config, impasse)."""
+    """Pave l'assiette : on essaie l'impasse simple ET des réseaux en peigne (voies parallèles couvrant
+    toute la largeur, + liaison), 1 à 3 voies, dans les deux orientations. On garde le tracé qui donne le
+    PLUS de lots — c'est ainsi qu'on couvre une parcelle large (pas seulement une bande centrale)."""
     origin, u, v, L, W = _frame(net)
     if L < 12 or W < w + 12:
         return [], None, "—", False
-    depth = max(12.0, min(LOT_PROFONDEUR_MAX_M, (W - w) / 2.0))
-    facade = max(12.0, min(28.0, lot_cible / depth))
-    u_spine = _rect(origin, u, v, 0, L, (W - w) / 2, (W + w) / 2)
-    v_spine = _rect(origin, u, v, (L - w) / 2, (L + w) / 2, 0, W)
-    v_demi = _rect(origin, u, v, (L - w) / 2, (L + w) / 2, (W + w) / 2, W)
-    lots_u = _lots_u(origin, u, v, L, W / 2, w, depth, facade)
-    lots_v = _lots_v(origin, u, v, W, L / 2, w, depth, facade)
-    configs = {
-        "I (impasse)": (u_spine, lots_u),
-        "T": (unary_union([u_spine, v_demi]), lots_u + lots_v),
-        "croix": (unary_union([u_spine, v_spine]), lots_u + lots_v),
-    }
+    configs = {}
+    depth, facade = _dims(lot_cible)
+    configs["voirie en impasse"] = (_rect(origin, u, v, 0, L, (W - w) / 2, (W + w) / 2),
+                                    _lots_u(origin, u, v, L, W / 2, w, depth, facade), True)
+    # nombre de voies parallèles pour couvrir la largeur (bande utile ≈ 2·profondeur + voie) :
+    bande = 2 * depth + w
+    n_u = max(1, min(4, round(W / bande)))
+    n_v = max(1, min(4, round(L / bande)))
+    for n in {n_u, max(1, n_u - 1), n_u + 1}:
+        road, lots = _peigne(origin, u, v, L, W, w, lot_cible, n, axe_u=True)
+        configs[f"réseau en peigne ({n} voies)"] = (road, lots, False)
+    for n in {n_v, max(1, n_v - 1)}:
+        road, lots = _peigne(origin, u, v, L, W, w, lot_cible, n, axe_u=False)
+        configs[f"réseau en peigne transversal ({n} voies)"] = (road, lots, False)
     best = None
-    for label, (road, cand) in configs.items():
+    for label, (road, cand, impasse) in configs.items():
         rn = road.intersection(net)
         if rn.is_empty:
             continue
         lots = _accepter(cand, rn, net)
         if best is None or len(lots) > len(best[1]):
-            best = (label, lots, rn)
+            best = (label, lots, rn, impasse)
     if best is None:
         return [], None, "—", False
-    label, lots, rn = best
-    heads = _retournement(net, origin, u, v, L, W, w, label, u_spine, v_demi)
+    label, lots, rn, impasse = best
+    heads = []
+    if impasse:
+        u_spine = _rect(origin, u, v, 0, L, (W - w) / 2, (W + w) / 2)
+        heads = _retournement(net, origin, u, v, L, W, w, "I", u_spine, u_spine)
     voirie = unary_union([rn] + heads) if heads else rn
-    if heads:                                 # un lot ne recouvre pas l'aire de retournement
+    if heads:
         lots = [g for g in lots if g.intersection(voirie).area < 0.15 * g.area]
-    return lots, voirie, label, bool(heads)
+    config_label = label + (" + aire de retournement" if heads else "")
+    return lots, voirie, config_label, bool(heads)
 
 
 def _ebc(session, idus: list[str], assiette: BaseGeometry) -> tuple[Optional[BaseGeometry], float]:
@@ -191,7 +227,7 @@ def etudier_lotissement(session, idus: list[str], *, lot_cible_m2: float = LOT_C
     if net.is_empty or net.area < 400:
         raise ValueError("assiette constructible trop petite pour un lotissement (après zone, PPR, EBC).")
 
-    lots, voirie, config, impasse = _pave_reseau(net, lot_cible_m2, voirie_largeur_m)
+    lots, voirie, voie_label, impasse = _pave_reseau(net, lot_cible_m2, voirie_largeur_m)
     aires = sorted(round(g.area, 1) for g in lots)
     nb = len(lots)
     voirie_m2 = round(voirie.area, 1) if voirie is not None else 0.0
@@ -219,8 +255,6 @@ def etudier_lotissement(session, idus: list[str], *, lot_cible_m2: float = LOT_C
     places_visiteurs = math.ceil(nb * 0.8)   # Estimé (non réglementé) — l'archi en pose ~0,8/lot
     regime = ("Permis d'aménager (lotissement de plus de 2 lots avec création de voirie/espaces communs) "
               "— à qualifier selon R.421-19 (voirie, équipements communs).")
-    voie_label = ({"I (impasse)": "voirie en impasse", "T": "réseau en T", "croix": "réseau en croix"}
-                  .get(config, config)) + (" + aire de retournement" if impasse else "")
 
     from sqlalchemy import text
     zone = session.execute(text("SELECT zone_lib FROM parcel_zone_plu WHERE idu = :i"),

@@ -20,12 +20,12 @@ Art. 11 dispositions générales), hauteur R+combles (UD 10), retrait 5 m (UD 8)
 
 | Poste | LABUSE | Architecte (OCEANIS) |
 |---|---|---|
-| Nombre de lots | **10** | **16** |
-| Surface moyenne | 421,3 m² | ~450 m² (lots 400–450) |
-| Surface minimale | 275,1 m² | 400 m² |
-| Voirie | **488,0 m²** · impasse + aire de retournement (largeur hypothèse 5 m + trottoir, pas de règle PLU) | principale 1 609,84 + secondaire 814,26 = **2 424 m²** |
-| Places | 20 (2/lot, UD 12) + 8 visiteurs (Estimé) | 32 (2/lot) + 13 visiteurs |
-| **Pleine terre** | **Réussi** : **6 872,6 m²** ≥ 4 442,8 exigés (40 %, UD 13) — jardins privatifs 2 528 + communs 4 344,6 | privatif 7 011,61 + commun 2 391,98 = 9 403 m² |
+| Nombre de lots | **15** | **16** |
+| Surface moyenne | 387,1 m² | ~450 m² (lots 400–450) |
+| Surface minimale | 251,0 m² | 400 m² |
+| Voirie | **1 323,4 m²** · **réseau en peigne (2 voies)** (largeur hypothèse 5 m + trottoir, pas de règle PLU) | principale 1 609,84 + secondaire 814,26 = **2 424 m²** (2 voies en croix) |
+| Places | 30 (2/lot, UD 12) + 12 visiteurs (Estimé) | 32 (2/lot) + 13 visiteurs |
+| **Pleine terre** | **Réussi** : **5 400,0 m²** ≥ 4 442,8 exigés (40 %, UD 13) — jardins privatifs 3 484 + communs 1 916 | privatif 7 011,61 + commun 2 391,98 = 9 403 m² |
 | EBC | **absent de la base LABUSE** (à vérifier — voir ci-dessous) | « EBC » hachuré au SE |
 | PPR rouge | **2 129,7 m² retiré** de l'assiette (R1+R2) | **non figuré** |
 | Règle PLU surface/largeur min de lot | **aucune** (loi ALUR) | — |
@@ -47,6 +47,28 @@ Art. 11 dispositions générales), hauteur R+combles (UD 10), retrait 5 m (UD 8)
 | Règle min-lot | aucune (ALUR) | — |
 | Régime | Permis d'aménager — à qualifier | — |
 
+## Pourquoi les 4 345 m² de communs d'AC0261, et la poussée du découpage
+**Diagnostic.** AC0261 n'est pas une bande : c'est une parcelle quasi **carrée — 136 m × 111 m** (mrr),
+compacité 0,60, Polsby-Popper 0,51 (irrégulière), **pente moyenne 18,6 % (max 48,5 %)**. Une **voirie
+centrale unique** avec lots de 24 m de profondeur des deux côtés ne dessert qu'une **bande de 53 m** ; la
+parcelle fait **111 m de large** → **~58 m non desservis** (29 m de chaque côté) = les 4 345 m² laissés en
+communs. Ce n'était donc PAS une contrainte réglementaire, mais une **limite de tracé** (une seule voie).
+
+**Poussée.** Le tiler essaie maintenant, en plus de l'impasse, des **réseaux en peigne** (plusieurs voies
+PARALLÈLES couvrant toute la largeur + une épine de liaison), 1 à 4 voies, dans les deux orientations, à
+**profondeur de lot fixe** (≈ 450 m², pour ne jamais sur-découper en micro-lots) ; il garde le tracé qui
+donne le plus de lots. AC0261 passe à **15 lots** (peigne 2 voies, communs 4 345 → 1 916) ; AC0264 reste
+**14** (l'impasse suffit, parcelle plus étroite).
+
+**Les 16 lots de l'architecte sont-ils impossibles ?** Non, pas par règle ni par aire : le plafond
+géométrique (net − voirie)/450 ≈ **17 lots**, et 16 × 450 + la voirie LABUSE (1 323) = **8 523 m² < net
+9 046 m²**. LABUSE en dessine **15** : l'écart au 16ᵉ est de la **densité de pavage déterministe** sur une
+forme irrégulière et **pentue** (18,6 %), pas un interdit. En revanche, le plan PRÉCIS de l'architecte — **2
+voies en croix, 2 424 m² de voirie** — réclame **7 200 + 2 424 = 9 624 m² > 9 046** : il ne tient que parce
+qu'il **empiète sur les 2 130 m² de PPR rouge SE que LABUSE exclut** (la zone que l'archi étiquette « EBC »).
+Autrement dit : **LABUSE vise le même ordre (15 ≈ 16) ; le lot manquant est celui que l'architecte pose sur
+l'aléa inondation/mouvement de terrain inconstructible.**
+
 ## Corrections (retours)
 1. **Pleine terre** : désormais jardins privatifs (lot × (1 − CES 40 %)) + espaces communs ; **contrôle
    Réussi/Échoué** chiffré, servi dans `controles[]` et affiché avec son badge. Les deux parcelles sont
@@ -65,10 +87,9 @@ Art. 11 dispositions générales), hauteur R+combles (UD 10), retrait 5 m (UD 8)
 
 ## Lecture
 - **AC0264 colle à l'architecte** : 14 lots = 14, stationnement 28 + 12 visiteurs = identique.
-- **AC0261 : LABUSE 10 vs archi 16.** Deux causes, honnêtes : (1) LABUSE **retire 2 130 m² de PPR rouge**
-  (R1+R2) que l'architecte n'a pas figurés ; (2) LABUSE dessine une **impasse** conservatrice (le réseau en
-  T/croix, essayé, ne fait pas mieux sur cette parcelle allongée) quand l'architecte conçoit un **réseau**
-  (2 424 m²) offrant plus de façade donc plus de lots. Le pavage LABUSE est **Estimé** ; l'archi a conçu un plan.
+- **AC0261 : LABUSE 15 vs archi 16** (après poussée du découpage, cf. section dédiée). Le lot manquant =
+  celui que l'architecte pose sur les **2 130 m² de PPR rouge** que LABUSE exclut (inondation/mouvement de
+  terrain) ; pas un interdit de LABUSE mais le refus de bâtir sur l'aléa. Le pavage LABUSE reste **Estimé**.
 - **Voirie / pleine terre non comparables ligne à ligne** : LABUSE compte la desserte centrale et le
   jardin des lots ; l'architecte compte un réseau complet + tous les espaces verts (privatifs + communs).
   Les deux sont honnêtes dans leur définition — à ne pas additionner entre modèles.
@@ -93,8 +114,8 @@ Art. 11 dispositions générales), hauteur R+combles (UD 10), retrait 5 m (UD 8)
   contrôle pleine terre). **pytest** : `test_etude_v6_lotissement` 3/3 + `test_etude_v6_stationnement` 3/3
   + implantation (1 échec `test_route_etude_*` **pré-existant**).
 - **chasse_docs 20·0 · chasse_donnees 23·0·2 SKIP**.
-- **Captures** `captures/lotD-ac261-lotissement-v2.png` (10 lots, impasse + retournement, PPR rouge exclu,
-  pleine terre Réussi) et `lotD-ac264-lotissement-v2.png` (14 lots).
+- **Captures** `captures/lotD-ac261-lotissement-v3.png` (15 lots, réseau en peigne 2 voies, PPR rouge exclu,
+  pleine terre Réussi) et `lotD-ac264-lotissement-v3.png` (14 lots).
 
 ## Reste
 - **Lot E** : PDF depuis le même study_id (verrou chiffres), carte Docs, bilan surfacique clos.
