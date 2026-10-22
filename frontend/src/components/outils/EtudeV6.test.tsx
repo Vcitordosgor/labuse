@@ -72,8 +72,12 @@ const RESULTAT_LOTISSEMENT = {
     net_constructible_m2: 9578, lot_cible_m2: 450,
     tableau_lots: { nombre: 14, surface_moyenne_m2: 435, surface_min_m2: 357, surface_max_m2: 450,
       surfaces_m2: Array.from({ length: 14 }, (_, i) => 400 + i), acces: 'sur voirie de desserte créée' },
-    voirie_m2: 831, voirie_largeur_m: 6,
-    pleine_terre: { exigee_pct: 40, exigee_m2: 3992, estimee_m2: 3657, article: 'UD 13' },
+    voirie_m2: 700, voirie_largeur_m: 5, voirie_config: 'voirie en impasse + aire de retournement',
+    voirie_largeur_source: 'Largeur hypothèse : aucune règle de voirie au PLU Ud — chaussée 5 m, trottoir à prévoir (Estimé).',
+    pleine_terre: { exigee_pct: 40, exigee_m2: 3992, estimee_m2: 5261, jardins_privatifs_m2: 3503,
+      communs_m2: 1758, ces_pct: 40, resultat: 'Réussi', article: 'UD 13' },
+    controles: [{ nom: 'Perméabilité (pleine terre)', regle: '≥ 3 992 m² (40 % · UD 13)',
+      mesure: '5 261 m² (jardins 3 503 + communs 1 758)', resultat: 'Réussi', citation: 'UD 13', detail: 'écart +1 269 m²' }],
     stationnement: { par_lot: 2, article: 'UD 12', total_lots: 28, visiteurs_estimes: 12, note: '…' },
     ebc: { m2: 0, statut: 'non trouvé dans les données LABUSE (à vérifier)' }, ppr_rouge_m2: 0,
     raccordements: [{ reseau: 'Électricité (ligne MT)', distance_m: 0, statut: 'adjacent' }],
@@ -232,6 +236,9 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     expect(screen.getByText('Régime procédural')).toBeTruthy()
     expect(document.body.textContent).toContain('aucune règle au PLU Ud')  // pas de superficie minimale (ALUR)
     expect(document.body.textContent).toContain('Permis d\'aménager')
+    expect(document.body.textContent).toContain('impasse + aire de retournement')  // voirie réaliste (Lot D corr.)
+    expect(screen.getByText('Perméabilité (pleine terre)')).toBeTruthy()           // contrôle pleine terre
+    expect(screen.getAllByText('Réussi').length).toBeGreaterThan(0)                // avec Réussi/Échoué
     // les T1–T4 saisis = hypothèse, jamais le nombre de lots
     expect(document.body.textContent).toContain('Logements futurs (hypothèse)')
   })

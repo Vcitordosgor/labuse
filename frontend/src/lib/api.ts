@@ -2212,8 +2212,12 @@ export interface EtudeLotissement {
     nombre: number; surface_moyenne_m2: number | null; surface_min_m2: number | null
     surface_max_m2: number | null; surfaces_m2: number[]; acces: string
   }
-  voirie_m2: number; voirie_largeur_m: number
-  pleine_terre: { exigee_pct: number; exigee_m2: number; estimee_m2: number; article: string }
+  voirie_m2: number; voirie_largeur_m: number; voirie_config: string; voirie_largeur_source: string
+  pleine_terre: {
+    exigee_pct: number; exigee_m2: number; estimee_m2: number; jardins_privatifs_m2: number
+    communs_m2: number; ces_pct: number; resultat: string; article: string
+  }
+  controles: Array<{ nom: string; regle: string; mesure: string; resultat: string; citation: string | null; detail: string | null }>
   stationnement: { par_lot: number; article: string; total_lots: number; visiteurs_estimes: number; note: string }
   ebc: { m2: number; statut: string }
   ppr_rouge_m2: number

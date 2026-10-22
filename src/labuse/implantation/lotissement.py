@@ -16,12 +16,16 @@ from typing import Optional
 from shapely.geometry import Polygon
 from shapely.geometry.base import BaseGeometry
 
+from shapely.geometry import Point
+from shapely.ops import unary_union
+
 from . import terrain as terrain_mod
 
 LOT_CIBLE_M2 = 450.0        # taille de lot visée (Estimé — pas de superficie minimale au PLU, loi ALUR)
-VOIRIE_LARGEUR_M = 6.0      # largeur de la voirie de desserte (Estimé)
+VOIRIE_LARGEUR_M = 5.0      # chaussée (hypothèse : aucune règle de voirie au PLU Ud ; trottoir à prévoir)
 LOT_PROFONDEUR_MAX_M = 24.0 # au-delà, on plafonne la profondeur et on élargit la façade
-GARDE_INTERIEUR = 0.60      # un lot n'est retenu que si ≥ 60 % de sa surface tombe dans l'assiette nette
+GARDE_INTERIEUR = 0.55      # un lot n'est retenu que si ≥ 55 % de sa surface tombe dans l'assiette nette
+TOURNE_FACTEUR = 2.2        # côté de l'aire de retournement (palette) = 2,2 × largeur de voirie
 
 
 def _frame(poly: BaseGeometry):
@@ -41,24 +45,107 @@ def _rect(origin, u, v, u0, u1, v0, v1) -> Polygon:
     return Polygon([(origin[0] + a * u[0] + b * v[0], origin[1] + a * u[1] + b * v[1]) for a, b in pts])
 
 
-def _pave(net: BaseGeometry, lot_cible: float, voirie_l: float):
-    """Pave l'assiette nette en lots de part et d'autre d'une voirie centrale. Renvoie (lots, voirie)."""
+def _pt(origin, u, v, a, b) -> Point:
+    return Point(origin[0] + a * u[0] + b * v[0], origin[1] + a * u[1] + b * v[1])
+
+
+def _lots_u(origin, u, v, L, vc, w, depth, facade):
+    """Lots de part et d'autre d'une voirie orientée selon u (à la cote v = vc)."""
+    out = []
+    for i in range(int(L // facade)):
+        for side in (1, -1):
+            v0 = vc + w / 2 if side > 0 else vc - w / 2 - depth
+            out.append(_rect(origin, u, v, i * facade, (i + 1) * facade, v0, v0 + depth))
+    return out
+
+
+def _lots_v(origin, u, v, W, uc, w, depth, facade):
+    """Lots de part et d'autre d'une voirie orientée selon v (à la cote u = uc)."""
+    out = []
+    for j in range(int(W // facade)):
+        for side in (1, -1):
+            u0 = uc + w / 2 if side > 0 else uc - w / 2 - depth
+            out.append(_rect(origin, u, v, u0, u0 + depth, j * facade, (j + 1) * facade))
+    return out
+
+
+def _accepter(candidats, road, net):
+    """Garde les lots dessinables : ≥ 55 % dans l'assiette, hors voirie, sans recouvrir un lot déjà retenu."""
+    out = []
+    for lot in candidats:
+        inter = lot.intersection(net)
+        if inter.is_empty or inter.area < GARDE_INTERIEUR * lot.area:
+            continue
+        if lot.intersection(road).area > 0.12 * lot.area:
+            continue
+        piece = inter if inter.geom_type == "Polygon" else max(inter.geoms, key=lambda g: g.area)
+        if piece.area < 120.0:
+            continue
+        if any(piece.intersection(g).area > 0.20 * piece.area for g in out):
+            continue
+        out.append(piece)
+    return out
+
+
+def _bout(road_net, origin, u, v, proj_u: bool, sens: int) -> Optional[Point]:
+    """Sommet extrême (dans l'assiette) d'un tronçon de voirie, selon l'axe u (proj_u) ou v, côté `sens`."""
+    if road_net.is_empty:
+        return None
+    axe = u if proj_u else v
+    geoms = road_net.geoms if road_net.geom_type == "MultiPolygon" else [road_net]
+    pts = [c for g in geoms for c in g.exterior.coords]
+    key = lambda c: sens * ((c[0] - origin[0]) * axe[0] + (c[1] - origin[1]) * axe[1])  # noqa: E731
+    best = max(pts, key=key)
+    return Point(best)
+
+
+def _retournement(net, origin, u, v, L, W, w, config, u_spine, v_demi):
+    """Aire de retournement (palette) au BOUT des voiries en impasse. Un réseau en croix débouche de
+    part et d'autre (pas d'impasse) ; une voirie en I ou en T se termine en cul-de-sac → palette."""
+    if config.startswith("croix"):
+        return []
+    cote = TOURNE_FACTEUR * w
+    bouts = [_bout(u_spine.intersection(net), origin, u, v, True, +1)]   # bout du tronçon principal
+    if config.startswith("T"):
+        bouts.append(_bout(v_demi.intersection(net), origin, u, v, False, +1))   # bout de la branche
+    heads = [p.buffer(cote / 2, cap_style=3).intersection(net) for p in bouts if p is not None]
+    return [h for h in heads if not h.is_empty and h.area > 20.0]
+
+
+def _pave_reseau(net: BaseGeometry, lot_cible: float, w: float):
+    """Pave l'assiette : on essaie I / T / croix et on garde le réseau qui donne le PLUS de lots ; on
+    ajoute l'aire de retournement des impasses. Renvoie (lots, voirie, config, impasse)."""
     origin, u, v, L, W = _frame(net)
-    if L < 10 or W < voirie_l + 10:
-        return [], None
-    prof = max(8.0, min(LOT_PROFONDEUR_MAX_M, (W - voirie_l) / 2.0))
-    facade = max(10.0, min(30.0, lot_cible / prof))
-    ncol = int(L // facade)
-    voirie = _rect(origin, u, v, 0, L, (W - voirie_l) / 2.0, (W + voirie_l) / 2.0).intersection(net)
-    lots = []
-    for i in range(ncol):
-        for cote in (0, 1):
-            v0 = (W + voirie_l) / 2.0 if cote else (W - voirie_l) / 2.0 - prof
-            lot = _rect(origin, u, v, i * facade, (i + 1) * facade, v0, v0 + prof)
-            inter = lot.intersection(net)
-            if not inter.is_empty and inter.area >= GARDE_INTERIEUR * lot.area:
-                lots.append(inter if inter.geom_type == "Polygon" else lot.intersection(net))
-    return [g for g in lots if g.area > 100.0], (voirie if voirie and not voirie.is_empty else None)
+    if L < 12 or W < w + 12:
+        return [], None, "—", False
+    depth = max(12.0, min(LOT_PROFONDEUR_MAX_M, (W - w) / 2.0))
+    facade = max(12.0, min(28.0, lot_cible / depth))
+    u_spine = _rect(origin, u, v, 0, L, (W - w) / 2, (W + w) / 2)
+    v_spine = _rect(origin, u, v, (L - w) / 2, (L + w) / 2, 0, W)
+    v_demi = _rect(origin, u, v, (L - w) / 2, (L + w) / 2, (W + w) / 2, W)
+    lots_u = _lots_u(origin, u, v, L, W / 2, w, depth, facade)
+    lots_v = _lots_v(origin, u, v, W, L / 2, w, depth, facade)
+    configs = {
+        "I (impasse)": (u_spine, lots_u),
+        "T": (unary_union([u_spine, v_demi]), lots_u + lots_v),
+        "croix": (unary_union([u_spine, v_spine]), lots_u + lots_v),
+    }
+    best = None
+    for label, (road, cand) in configs.items():
+        rn = road.intersection(net)
+        if rn.is_empty:
+            continue
+        lots = _accepter(cand, rn, net)
+        if best is None or len(lots) > len(best[1]):
+            best = (label, lots, rn)
+    if best is None:
+        return [], None, "—", False
+    label, lots, rn = best
+    heads = _retournement(net, origin, u, v, L, W, w, label, u_spine, v_demi)
+    voirie = unary_union([rn] + heads) if heads else rn
+    if heads:                                 # un lot ne recouvre pas l'aire de retournement
+        lots = [g for g in lots if g.intersection(voirie).area < 0.15 * g.area]
+    return lots, voirie, label, bool(heads)
 
 
 def _ebc(session, idus: list[str], assiette: BaseGeometry) -> tuple[Optional[BaseGeometry], float]:
@@ -93,7 +180,9 @@ def etudier_lotissement(session, idus: list[str], *, lot_cible_m2: float = LOT_C
                         voirie_largeur_m: float = VOIRIE_LARGEUR_M) -> dict:
     """Plan de division d'UNE assiette. Renvoie tableau des lots, voirie, pleine terre, stationnement,
     EBC, raccordements, régime et GeoJSON (assiette/voirie/lots/PPR/EBC). ValueError si assiette vide."""
-    terrain = terrain_mod.charger(session, idus, recul_voie_m=0.0, recul_separative_m=0.0, avec_pente=False)
+    from . import moteur as moteur_mod
+    from .conventions import charger as charger_conv
+    terrain, regles, _z = moteur_mod._charger(session, idus, None, charger_conv(), avec_pente=False)
     assiette = terrain.assiette
     net = terrain.zone_implantation if terrain.zone_implantation is not None else assiette
     ebc_geom, ebc_m2 = _ebc(session, idus, assiette)
@@ -102,18 +191,36 @@ def etudier_lotissement(session, idus: list[str], *, lot_cible_m2: float = LOT_C
     if net.is_empty or net.area < 400:
         raise ValueError("assiette constructible trop petite pour un lotissement (après zone, PPR, EBC).")
 
-    lots, voirie = _pave(net, lot_cible_m2, voirie_largeur_m)
+    lots, voirie, config, impasse = _pave_reseau(net, lot_cible_m2, voirie_largeur_m)
     aires = sorted(round(g.area, 1) for g in lots)
     nb = len(lots)
     voirie_m2 = round(voirie.area, 1) if voirie is not None else 0.0
-    # pleine terre : exigence Ud (40 %) + estimation (lots hors future emprise bâtie au CES 40 %).
     contenance = terrain.contenance_totale_m2
-    pleine_terre_estimee = round(sum(a for a in aires) * 0.60, 1)   # ~60 % du lot reste jardin (CES 40 %)
-    # stationnement des futures constructions : 2 places / logement (Ud 12). Visiteurs = convention (Estimé).
+
+    # CES et pleine terre LUS de la zone (défauts Ud documentés si la règle n'est pas servie).
+    ces_pct = regles.emprise_ces.valeur if regles.emprise_ces.validee and regles.emprise_ces.valeur else 40.0
+    pt_pct = regles.pleine_terre.valeur if regles.pleine_terre.validee and regles.pleine_terre.valeur else 40.0
+    pt_article = (regles.pleine_terre.article if regles.pleine_terre.validee else None) or "UD 13"
+    # PLEINE TERRE = jardins privatifs (lot − future emprise au CES de la zone) + espaces verts communs.
+    jardins_privatifs = round(sum(aires) * (1.0 - ces_pct / 100.0), 1)
+    communs = round(max(0.0, net.area - sum(aires) - voirie_m2), 1)
+    pt_totale = round(jardins_privatifs + communs, 1)
+    pt_requis = round(contenance * pt_pct / 100.0, 1)
+    pt_ok = pt_totale >= pt_requis
+    controle_pt = {
+        "nom": "Perméabilité (pleine terre)",
+        "regle": f"≥ {pt_requis:.0f} m² ({pt_pct:.0f} % de la contenance · {pt_article})",
+        "mesure": f"{pt_totale:.0f} m² (jardins privatifs {jardins_privatifs:.0f} + communs {communs:.0f})",
+        "resultat": "Réussi" if pt_ok else "Échoué",
+        "citation": pt_article, "detail": f"écart {pt_totale - pt_requis:+.0f} m²",
+    }
+
     places_lots = nb * 2
     places_visiteurs = math.ceil(nb * 0.8)   # Estimé (non réglementé) — l'archi en pose ~0,8/lot
     regime = ("Permis d'aménager (lotissement de plus de 2 lots avec création de voirie/espaces communs) "
               "— à qualifier selon R.421-19 (voirie, équipements communs).")
+    voie_label = ({"I (impasse)": "voirie en impasse", "T": "réseau en T", "croix": "réseau en croix"}
+                  .get(config, config)) + (" + aire de retournement" if impasse else "")
 
     from sqlalchemy import text
     zone = session.execute(text("SELECT zone_lib FROM parcel_zone_plu WHERE idu = :i"),
@@ -134,8 +241,13 @@ def etudier_lotissement(session, idus: list[str], *, lot_cible_m2: float = LOT_C
         },
         "voirie_m2": voirie_m2,
         "voirie_largeur_m": voirie_largeur_m,
-        "pleine_terre": {"exigee_pct": 40.0, "exigee_m2": round(contenance * 0.40, 1),
-                         "estimee_m2": pleine_terre_estimee, "article": "UD 13"},
+        "voirie_config": voie_label,
+        "voirie_largeur_source": ("Largeur hypothèse : aucune règle de voirie au PLU Ud — chaussée "
+                                  f"{voirie_largeur_m:.0f} m, trottoir à prévoir (Estimé)."),
+        "pleine_terre": {"exigee_pct": pt_pct, "exigee_m2": pt_requis, "estimee_m2": pt_totale,
+                         "jardins_privatifs_m2": jardins_privatifs, "communs_m2": communs,
+                         "ces_pct": ces_pct, "resultat": "Réussi" if pt_ok else "Échoué", "article": pt_article},
+        "controles": [controle_pt],
         "stationnement": {"par_lot": 2, "article": "UD 12 (renvoi dispositions générales Art. 11)",
                           "total_lots": places_lots, "visiteurs_estimes": places_visiteurs,
                           "note": "2 places / logement (PLU Ud) ; visiteurs = convention (Estimé, non réglementé)."},

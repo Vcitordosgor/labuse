@@ -381,8 +381,21 @@ function LotissementResultat({ lot, hypothese }: { lot: EtudeLotissement; hypoth
         </div>
         {lot.geojson && (
           <div className="rounded-lg border border-line-2 bg-surface-2 p-3">
-            <p className="mb-2 text-[11px] font-semibold text-txt">Plan de division — {tl.nombre} lots · voirie {fmtDec(lot.voirie_largeur_m)} m</p>
+            <p className="mb-2 text-[11px] font-semibold text-txt">Plan de division — {tl.nombre} lots · {lot.voirie_config}</p>
             <PlanMasseSvg fc={lot.geojson} groupesCaches={[]} />
+          </div>
+        )}
+        {/* contrôles (pleine terre : Réussi / Échoué avec chiffres) */}
+        {(lot.controles?.length ?? 0) > 0 && (
+          <div className="rounded-lg border border-line-2 bg-surface-2 p-3">
+            <b className="text-[11px] font-semibold text-txt">Contrôles réglementaires</b>
+            {(lot.controles ?? []).map((c) => (
+              <div key={c.nom} className="mt-1.5 flex items-start justify-between gap-2 border-t border-line-2 py-1.5">
+                <div className="min-w-0"><span className="text-[11px] text-txt">{c.nom}</span>
+                  <span className="ml-1.5 text-[10px] text-txt-dim">{c.regle} · {c.mesure}{c.detail ? ` · ${c.detail}` : ''}</span></div>
+                <Badge ton={etatTon(c.resultat)}>{c.resultat}</Badge>
+              </div>
+            ))}
           </div>
         )}
         {/* tableau des lots */}
@@ -401,8 +414,14 @@ function LotissementResultat({ lot, hypothese }: { lot: EtudeLotissement; hypoth
           <p className="text-[12px] text-txt-hi">{tl.nombre} lots · {fmtDec(tl.surface_moyenne_m2 ?? 0)} m² en moyenne ({fmtDec(tl.surface_min_m2 ?? 0)}–{fmtDec(tl.surface_max_m2 ?? 0)})</p>
           <p className="text-[10.5px] text-txt-dim">Assiette {fmtDec(lot.assiette_m2)} m² · net constructible {fmtDec(lot.net_constructible_m2)} m²{lot.ppr_rouge_m2 > 0 ? ` · PPR rouge ${fmtDec(lot.ppr_rouge_m2)} m² retiré` : ''}</p>
         </Recit>
-        <LigneInfo l="Voirie" v={`${fmtDec(lot.voirie_m2)} m² (desserte ${fmtDec(lot.voirie_largeur_m)} m)`} />
-        <LigneInfo l="Pleine terre" v={`exigée ${fmtDec(lot.pleine_terre.exigee_m2)} m² (${lot.pleine_terre.exigee_pct} % · ${lot.pleine_terre.article})`} sous={`estimée ${fmtDec(lot.pleine_terre.estimee_m2)} m²`} />
+        <LigneInfo l="Voirie" v={`${fmtDec(lot.voirie_m2)} m² · ${lot.voirie_config}`} sous={lot.voirie_largeur_source} />
+        <Recit titre="Pleine terre" ton={lot.pleine_terre.resultat === 'Réussi' ? 'vert' : 'rouge'}>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] text-txt">{fmtDec(lot.pleine_terre.estimee_m2)} m² vs {fmtDec(lot.pleine_terre.exigee_m2)} m² exigés ({lot.pleine_terre.exigee_pct} % · {lot.pleine_terre.article})</span>
+            <Badge ton={lot.pleine_terre.resultat === 'Réussi' ? 'vert' : 'rouge'}>{lot.pleine_terre.resultat}</Badge>
+          </div>
+          <p className="mt-0.5 text-[9.5px] text-txt-dim">jardins privatifs {fmtDec(lot.pleine_terre.jardins_privatifs_m2)} m² (lot − emprise au CES {lot.pleine_terre.ces_pct} %) + espaces communs {fmtDec(lot.pleine_terre.communs_m2)} m²</p>
+        </Recit>
         <LigneInfo l="Stationnement" v={`${lot.stationnement.total_lots} places (${lot.stationnement.par_lot}/lot · ${lot.stationnement.article})`} sous={`+ ${lot.stationnement.visiteurs_estimes} visiteurs (estimé)`} />
         <Recit titre="EBC" ton={lot.ebc.m2 > 0 ? 'ambre' : undefined}>
           <p className="text-[11px] text-txt">{lot.ebc.m2 > 0 ? `${fmtDec(lot.ebc.m2)} m² d'EBC` : lot.ebc.statut}</p>

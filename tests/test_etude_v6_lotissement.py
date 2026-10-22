@@ -41,6 +41,14 @@ def test_lotissement_une_parcelle_produit_des_lots(session_reelle):
     assert r["voirie_m2"] > 0 and r["geojson"]["features"]
     assert r["stationnement"]["par_lot"] == 2      # Ud 12 (2 places/logement)
     assert "Permis d'aménager" in r["regime_procedural"]
+    # voirie réaliste : largeur hypothèse (pas de règle PLU) + tracé nommé (impasse/T/croix)
+    assert "hypothèse" in r["voirie_largeur_source"].lower() and r["voirie_config"]
+    # pleine terre = jardins privatifs (lot − emprise au CES) + communs, contrôle Réussi/Échoué chiffré
+    pt = r["pleine_terre"]
+    assert pt["jardins_privatifs_m2"] > 0 and pt["communs_m2"] >= 0
+    assert pt["resultat"] in ("Réussi", "Échoué")
+    c = next(x for x in r["controles"] if x["nom"].startswith("Perméabilité"))
+    assert c["resultat"] in ("Réussi", "Échoué") and "m²" in c["mesure"]
 
 
 @pytest.mark.reel
