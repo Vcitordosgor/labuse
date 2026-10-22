@@ -2194,6 +2194,22 @@ export interface EtudePayload {
   verdict?: string
   variantes?: EtudeVariante[]
   depassement?: EtudeDepassement | null
+  // ETUDE-V6-2 (Lot 2) — capacité MAXIMALE stable (calculée une fois, répartition équilibrée, donc
+  // indépendante de la demande), la demande confrontée à ce maximum, et les facteurs limitants classés
+  // par impact (le stationnement prouvé par contrefactuel « sans places »).
+  capacite_maximale?: {
+    logements: number; par_type: Record<string, number>; sdp_m2: number
+    niveaux: number; niveaux_label: string; forme: string; places: number
+    surface_stationnement_m2: number; repartition: string; note: string
+  } | null
+  facteurs_limitants?: Array<{
+    facteur: string; impact_logements: number; limitant: boolean
+    preuve: string; mesure: string; detail: string
+  }>
+  confrontation?: {
+    demande_logements: number; capacite_maximale_logements: number
+    tient: boolean; reserve_logements: number
+  } | null
   // ETUDE-V6 (Lot C) — régimes de stationnement (règle générale PLU + plafond L151-35 à confirmer) et
   // capacité sous le régime réduit (si une destination L151-34 est choisie et le plafond s'applique).
   stationnement_regimes?: EtudeStationnementRegimes

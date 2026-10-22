@@ -13,8 +13,18 @@ Aucun calcul ici n'échappe au moteur : les chiffres sont TIRÉS de la géométr
 from __future__ import annotations
 
 import logging
+import time
 from math import gcd
 from typing import Any, Optional
+
+# ETUDE-V6-2 (Lot 2) — la route borne l'étude à 30 s. La capacité maximale ajoute UNE recherche
+# (équilibre) GROSSIÈRE et BORNÉE dans le temps : on lui passe une deadline = budget restant (30 s −
+# écoulé − réserve planche/sérialisation), plafonnée. Sur une assiette lourde (Saint-Denis + PPR) la
+# recherche se coupe proprement en ayant essayé les étages hauts d'abord → le maximum est quand même
+# trouvé, sans 503. En deçà de 3 s de budget, on saute (champ None, l'écran l'omet).
+_ETUDE_BUDGET_S = 30.0
+_PLANCHE_RESERVE_S = 6.0
+_CAP_MAX_MAX_S = 9.0
 
 from shapely.geometry import mapping
 
@@ -409,6 +419,7 @@ def _lotissement_payload(session, idus: list[str], entree: dict) -> dict:
 def etudier_payload(session, entree: dict) -> dict:
     """Payload d'étude servi par l'API. `entree` = {idus, type_projet, objectif, programme,
     stationnement, terrain, hypotheses}. Lève ValueError sur entrée invalide (→ 400 côté route)."""
+    _t0 = time.monotonic()
     idus = [str(i).strip() for i in (entree.get("idus") or []) if str(i).strip()]
     if not idus:
         raise ValueError("au moins une parcelle est requise")
@@ -474,6 +485,45 @@ def etudier_payload(session, entree: dict) -> dict:
                       else _variante_absente(role, raison))
                      for role, s, raison in variantes]
 
+    # ETUDE-V6-2 (Lot 2) — CAPACITÉ MAXIMALE stable (calculée UNE fois, répartition équilibrée, donc
+    # indépendante de la demande : deux demandes → même maximum) + FACTEURS LIMITANTS classés par impact,
+    # le stationnement prouvé par contrefactuel « sans places » (lu dans la même recherche). Calculée AVANT
+    # la planche (rendu coûteux) ; si la recherche principale a déjà été lourde (assiette + PPR, ex.
+    # Saint-Denis), on la SAUTE proprement (None/[], l'écran l'omet) pour tenir le budget de 30 s.
+    capacite_maximale = None
+    facteurs_limitants: list = []
+    confrontation = None
+    # budget restant pour la capacité maximale, en réservant la planche + la sérialisation (6 s) sous
+    # les 30 s de la route ; borné à ~9 s. En dessous de 3 s → on saute (pas le temps).
+    budget_cap = _ETUDE_BUDGET_S - (time.monotonic() - _t0) - _PLANCHE_RESERVE_S
+    if budget_cap >= 3.0:
+        deadline = time.monotonic() + min(budget_cap, _CAP_MAX_MAX_S)
+        try:
+            scn_max, _fais_max = moteur_mod.capacite_maximale(terrain, regles, conv, deadline=deadline)
+        except Exception:  # noqa: BLE001
+            logging.getLogger("labuse").exception("étude v6 : capacité maximale impossible")
+            scn_max = None
+        if scn_max is not None:
+            cmax = scn_max.capacite
+            capacite_maximale = {
+                "logements": cmax.logements, "par_type": cmax.par_type, "sdp_m2": cmax.sdp_m2,
+                "niveaux": scn_max.niveaux, "niveaux_label": f"R+{max(0, scn_max.niveaux - 1)}",
+                "forme": scn_max.forme, "places": cmax.places,
+                "surface_stationnement_m2": cmax.surface_stationnement_m2,
+                "repartition": "équilibrée (conventions)",
+                "note": ("Maximum réglementaire du terrain, calculé une fois et indépendant de la demande "
+                         "(répartition équilibrée). La demande est ensuite confrontée à ce maximum."),
+            }
+            facteurs_limitants = moteur_mod.facteurs_limitants(terrain, regles, conv, scn_max)
+            if demande:
+                dem_tot = sum(n for n in demande.values() if n > 0)
+                cap_tot = capacite_maximale["logements"]
+                confrontation = {"demande_logements": dem_tot, "capacite_maximale_logements": cap_tot,
+                                 "tient": dem_tot <= cap_tot, "reserve_logements": cap_tot - dem_tot}
+    else:
+        logging.getLogger("labuse").info(
+            "étude v6 : capacité maximale sautée (budget insuffisant, %.1f s restantes)", budget_cap)
+
     # IMPLANTATION-4 (planche plan masse) — UN SEUL SVG par scénario, le même à l'écran et dans le PDF,
     # DESSINÉ depuis la géométrie (contexte cadastre/bâti/voies + TN LiDAR chargé UNE fois pour l'assiette).
     # Robuste : toute panne de contexte/dessin laisse `planche_svg` vide (l'écran retombe sur le plan
@@ -524,8 +574,9 @@ def etudier_payload(session, entree: dict) -> dict:
     pf = stationnement_regimes["plafond_national"]
     # on ne lance le 2ᵉ passage (coûteux) QUE si le stationnement PLAFONNE réellement la capacité —
     # sinon le régime réduit ne change rien (et on l'écrit), et l'étude reste dans le budget de 30 s.
-    stat_limitante = any("stationnement" in (v.get("limite_capacite") or "").lower()
-                         for v in variantes_pub if not v.get("absente"))
+    # ETUDE-V6-2 (Lot 2) — « le stationnement limite » n'est affirmé que PROUVÉ (contrefactuel sans places).
+    stat_limitante = any(f.get("facteur", "").startswith("stationnement") and f.get("limitant")
+                         for f in facteurs_limitants)
     if pf and pf["applicable_si_eligible"] and demande and not stat_limitante:
         capacite_reduite = {"logements": None, "places": None, "ratio_par_logement": _PLAFOND_L15135,
                             "reference": "L151-35", "statut": "sans effet",
@@ -601,6 +652,9 @@ def etudier_payload(session, entree: dict) -> dict:
         "scenarios": scenarios_pub,
         "variantes": variantes_pub,
         "depassement": depassement,
+        "capacite_maximale": capacite_maximale,
+        "facteurs_limitants": facteurs_limitants,
+        "confrontation": confrontation,
         "stationnement_regimes": stationnement_regimes,
         "capacite_reduite": capacite_reduite,
     }

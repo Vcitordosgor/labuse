@@ -232,6 +232,20 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
                 <p className="text-[10.5px] text-txt-dim">dont {fmtDec(demVar)} m² de varangues · {fmtDec(demProg - demVar)} m² d'intérieur indicatif</p>
                 <p className="mt-1 text-[10.5px] text-txt-dim">{Object.entries(demMap).filter(([, n]) => n > 0).map(([t, n]) => `${n}×${t}`).join(' · ')}</p>
               </Recit>
+              {/* ETUDE-V6-2 (Lot 2) — capacité MAXIMALE du terrain, calculée une fois et STABLE (indépendante
+                  de la demande, répartition équilibrée) ; la demande y est ensuite confrontée. */}
+              {resultat.capacite_maximale && (
+                <Recit titre="Capacité maximale du terrain" ton={resultat.confrontation ? (resultat.confrontation.tient ? 'vert' : 'ambre') : undefined}>
+                  <p className="text-[12px] text-txt-hi">{fmtInt(resultat.capacite_maximale.logements)} logements · {resultat.capacite_maximale.niveaux_label} · {resultat.capacite_maximale.forme}</p>
+                  <p className="text-[10.5px] text-txt-dim">{Object.entries(resultat.capacite_maximale.par_type).map(([t, n]) => `${n}×${t}`).join(' · ')} · répartition {resultat.capacite_maximale.repartition}</p>
+                  {resultat.confrontation && (
+                    <p className="mt-1 text-[11px] text-txt">{resultat.confrontation.tient
+                      ? <>Votre demande de {fmtInt(resultat.confrontation.demande_logements)} logements <b className="text-mint">tient</b> (réserve {fmtInt(resultat.confrontation.reserve_logements)}).</>
+                      : <>Votre demande de {fmtInt(resultat.confrontation.demande_logements)} logements <b className="text-amber">dépasse</b> ce maximum de {fmtInt(-resultat.confrontation.reserve_logements)}.</>}</p>
+                  )}
+                  <p className="mt-0.5 text-[9.5px] text-txt-dim">Maximum calculé une fois, indépendant de la demande — deux demandes différentes sur cette assiette donnent le même maximum.</p>
+                </Recit>
+              )}
               <Recit titre="Ce que le terrain accueille" ton={verdictTon(active.verdict)}>
                 <p className="text-[12px] text-txt-hi">{fmtInt(active.resume.logements)} logements · {fmtInt(active.resume.places)} places · {active.niveaux_label}</p>
                 <p className="text-[10.5px] text-txt-dim">{Object.entries(active.programme.par_type).map(([t, n]) => `${n}×${t}`).join(' · ')} · SDP {fmtDec(active.resume.sdp_m2)} m²</p>
@@ -247,8 +261,26 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
                   <p className="mt-0.5 text-[9.5px] text-txt-dim">Chiffré depuis une variante dessinée (prouvé), non une règle de trois.</p>
                 </Recit>
               )}
+              {/* ETUDE-V6-2 (Lot 2) — ce qui limite, CLASSÉ par impact (logements perdus), le stationnement
+                  PROUVÉ par contrefactuel « sans places ». Repli sur l'ancienne ligne si le champ manque. */}
               <Recit titre="Ce qui limite">
-                <p className="text-[11.5px] text-txt">{active.limite_capacite ?? 'Aucun facteur limitant dominant identifié.'}</p>
+                {resultat.facteurs_limitants && resultat.facteurs_limitants.length > 0 ? (
+                  <ol className="flex flex-col gap-1.5">
+                    {resultat.facteurs_limitants.map((f, i) => (
+                      <li key={f.facteur} className="text-[11px]">
+                        <span className="text-txt">{i + 1}. {f.facteur}</span>
+                        {f.impact_logements > 0 ? (
+                          <span className={`ml-1.5 font-semibold ${f.limitant ? 'text-coral' : 'text-txt-mut'}`}>−{f.impact_logements} logement(s)</span>
+                        ) : (
+                          <span className="ml-1.5 text-txt-mut">impact non chiffré</span>
+                        )}
+                        <p className="text-[9.5px] text-txt-dim">{f.detail} <span className="italic">({f.preuve})</span></p>
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className="text-[11.5px] text-txt">{active.limite_capacite ?? 'Aucun facteur limitant dominant identifié.'}</p>
+                )}
                 {active.controles.filter((c) => c.resultat === 'Échoué' || c.resultat === 'À confirmer').slice(0, 4).map((c) => (
                   <p key={c.nom} className="mt-0.5 text-[10px] text-txt-dim">• {c.nom} — <span className={c.resultat === 'Échoué' ? 'text-coral' : 'text-amber'}>{c.resultat}</span></p>
                 ))}

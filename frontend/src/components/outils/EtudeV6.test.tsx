@@ -99,6 +99,26 @@ const RESULTAT_T1 = {
               VARIANTE('optimisation', 'Optimisation', 10, 'Exploitable sous hypothèses'),
               VARIANTE('alternative', 'Alternative', 10, 'Exploitable sous hypothèses')],
 }
+// ETUDE-V6-2 (Lot 2) — capacité maximale STABLE + facteurs limitants classés par impact (stationnement
+// prouvé par contrefactuel). La demande (12 T2) est confrontée au maximum (28).
+const RESULTAT_CAP = {
+  ...RESULTAT,
+  programme_saisi: { demande: { T2: 12 } },
+  capacite_maximale: {
+    logements: 28, par_type: { T2: 16, T3: 8, T4: 4 }, sdp_m2: 1680, niveaux: 4, niveaux_label: 'R+3',
+    forme: 'barre', places: 34, surface_stationnement_m2: 612, repartition: 'équilibrée (conventions)',
+    note: 'Maximum réglementaire du terrain, indépendant de la demande.',
+  },
+  confrontation: { demande_logements: 12, capacite_maximale_logements: 28, tient: true, reserve_logements: 16 },
+  facteurs_limitants: [
+    { facteur: 'stationnement aérien', impact_logements: 12, limitant: true, preuve: 'contrefactuel sans stationnement imposé',
+      mesure: '612 m² occupés sur 1746 m² d\'assiette', detail: 'sans stationnement imposé : 40 logements au maximum (vs 28 avec) → +12 logement(s)' },
+    { facteur: 'hauteur réglementaire', impact_logements: 7, limitant: true, preuve: 'estimé (un niveau de plus)',
+      mesure: 'R+3 atteint (plafond 12 m)', detail: 'un niveau de plus ajouterait ≈ 7 logements, interdit par la hauteur' },
+    { facteur: "largeur de la zone d'implantation après reculs", impact_logements: 0, limitant: false,
+      preuve: 'motif récurrent des candidats écartés', mesure: '48 candidats écartés', detail: 'impact en logements non chiffré' },
+  ],
+}
 vi.mock('../../lib/api', () => ({
   postEtudeParcelles: vi.fn(),
   postEtude: vi.fn(),
@@ -349,5 +369,31 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     // 10 × 30 = 300 (le 9 saisi ne FUIT pas → surtout pas 90)
     expect(document.body.textContent).toContain('300,0 m²')
     expect(document.body.textContent).not.toContain('90,0 m²')
+  })
+
+  it('Lot 2 : capacité maximale STABLE affichée + demande confrontée + facteurs classés par impact', async () => {
+    vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
+    vi.mocked(postEtude).mockResolvedValue(RESULTAT_CAP as any)
+    renderV6(['97404000AW0099', '97404000AW0451'])
+    await waitFor(() => screen.getByText('AW 99'))
+    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
+    await waitFor(() => screen.getByText('Quel type de projet ?'))
+    fireEvent.click(screen.getByText('Logement social'))
+    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
+    await waitFor(() => screen.getByText('Combien de logements souhaitez-vous ?'))
+    fireEvent.change(document.querySelector('[data-etude-count="T2"]') as HTMLInputElement, { target: { value: '12' } })
+    fireEvent.click(screen.getByRole('button', { name: /Analyser mon projet/ }))
+    // capacité maximale, stable + mention d'indépendance à la demande
+    const cap = await waitFor(() => { const c = document.querySelector('[data-recit="Capacité maximale du terrain"]'); if (!c) throw new Error('no'); return c as HTMLElement })
+    expect(cap.textContent).toContain('28 logements')
+    expect(cap.textContent).toContain('deux demandes différentes sur cette assiette donnent le même maximum')
+    expect(cap.textContent).toContain('tient')                       // 12 ≤ 28
+    // facteurs classés par impact, stationnement en tête, PROUVÉ par contrefactuel
+    const lim = document.querySelector('[data-recit="Ce qui limite"]') as HTMLElement
+    expect(lim.textContent).toContain('1. stationnement aérien')
+    expect(lim.textContent).toContain('−12 logement(s)')
+    expect(lim.textContent).toContain('sans stationnement imposé')
+    expect(lim.textContent).toContain('2. hauteur réglementaire')
+    expect(lim.textContent).toContain('impact non chiffré')          // largeur de zone, non affirmée limitante
   })
 })
