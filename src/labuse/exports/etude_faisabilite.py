@@ -657,6 +657,53 @@ def rendu_etude(payload: dict, *, genere_le: str, scenario_ref: Optional[str] = 
     return {"html": html, "numero": numero, "retenu_ref": retenu["ref"]}
 
 
+def rendu_lotissement(payload: dict, *, genere_le: str) -> dict:
+    """ETUDE-V6 (Lot E) — PDF du LOTISSEMENT depuis le MÊME payload que l'écran (même study_id, mêmes
+    chiffres : verrou `nombres_hors_payload`). Tableau des lots, voirie, pleine terre (contrôle), bilan
+    surfacique CLOS, stationnement, raccordements, régime. Ne rend que des nombres du payload."""
+    def fr(x):
+        return "—" if x is None else (f"{x:,.0f}".replace(",", " ") if abs(x) >= 1000 else
+                                      (f"{x:.0f}" if float(x).is_integer() else f"{x:.1f}".replace(".", ",")))
+    lot = payload["lotissement"]
+    idus = payload["entrees"].get("idus") or []
+    numero = payload.get("study_id") or numero_etude(idus, genere_le)
+    tl, pt, b, st = lot["tableau_lots"], lot["pleine_terre"], lot["bilan_surfacique"], lot["stationnement"]
+    commune, zone = lot.get("commune") or "", lot.get("zone") or ""
+    cart = Cartouche(
+        doc_title=f"LABUSE — Lotissement · {commune}",
+        doc_ref=f"{idus[0][8:] if idus else ''} · {numero}",
+        doc_foot=f"Lotissement · zone {zone} · Généré via LABUSE le {genere_le} · pré-faisabilité, non contractuel")
+    lignes = "".join(f"<tr><td>Lot {i}</td><td class='n'>{fr(s)} m²</td></tr>"
+                     for i, s in enumerate(tl["surfaces_m2"], 1))
+    racc = "".join(f"<tr><td>{r['reseau']}</td><td class='n'>{'non vérifié' if r['distance_m'] is None else fr(r['distance_m'])+' m'}</td></tr>"
+                   for r in lot["raccordements"])
+    corps = (
+        f"<style>{_STYLE}</style>"
+        f"<section class='page'><h1>Lotissement — {commune} · zone {zone}</h1>"
+        f"<p class='sub'>Division foncière indicative (pré-faisabilité). {lot['note']}</p>"
+        f"<div class='kpis'><div class='kpi'><b>{fr(tl['nombre'])}</b><span>lots</span></div>"
+        f"<div class='kpi'><b>{fr(tl['surface_moyenne_m2'])} m²</b><span>surface moyenne</span></div>"
+        f"<div class='kpi'><b>{fr(lot['voirie_m2'])} m²</b><span>voirie · {lot['voirie_config']}</span></div></div>"
+        f"<h2>Pleine terre — {pt['resultat']}</h2>"
+        f"<p>{fr(pt['estimee_m2'])} m² (jardins privatifs {fr(pt['jardins_privatifs_m2'])} + communs "
+        f"{fr(pt['communs_m2'])}) pour {fr(pt['exigee_m2'])} m² exigés ({fr(pt['exigee_pct'])} % · {pt['article']}).</p>"
+        f"<h2>Stationnement</h2><p>{fr(st['total_lots'])} places ({fr(st['par_lot'])}/lot · {st['article']}) "
+        f"+ {fr(st['visiteurs_estimes'])} visiteurs (estimé).</p>"
+        f"<h2>Bilan surfacique {'(clos)' if b['clos'] else '(à ajuster)'}</h2>"
+        f"<table class='t'><tr><td>Lots</td><td class='n'>{fr(b['lots_m2'])} m²</td></tr>"
+        f"<tr><td>Voirie</td><td class='n'>{fr(b['voirie_m2'])} m²</td></tr>"
+        f"<tr><td>Espaces communs</td><td class='n'>{fr(b['communs_m2'])} m²</td></tr>"
+        f"<tr><td>PPR rouge (retiré)</td><td class='n'>{fr(b['ppr_rouge_m2'])} m²</td></tr>"
+        f"<tr><td>Hors zone (A/N, marges)</td><td class='n'>{fr(b['hors_zone_m2'])} m²</td></tr>"
+        f"<tr class='tot'><td>Total = assiette</td><td class='n'>{fr(b['somme_m2'])} m² (écart {fr(b['ecart_m2'])})</td></tr></table>"
+        f"<h2>Raccordements</h2><table class='t'>{racc}</table>"
+        f"<p class='note'>{lot['min_lot_plu']['note']}</p>"
+        f"<p class='note'>{lot['regime_procedural']}</p></section>"
+        f"<section class='page'><h2>Tableau des lots</h2><table class='t'>{lignes}</table></section>")
+    html = page_html("Lotissement", cart, corps)
+    return {"html": html, "numero": numero, "retenu_ref": "lotissement"}
+
+
 # ── verrou « toute ligne du PDF est une ligne de l'outil » ────────────────────────────────────
 #: un nombre = groupes de 3 chiffres séparés par une espace de MILLIERS (« 1 746 »), OU un entier/décimal.
 #: Ne franchit pas une espace ordinaire autre qu'un groupe de 3 → deux cellules adjacentes (« AW 99 »

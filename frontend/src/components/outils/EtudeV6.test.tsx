@@ -83,8 +83,11 @@ const RESULTAT_LOTISSEMENT = {
     raccordements: [{ reseau: 'Électricité (ligne MT)', distance_m: 0, statut: 'adjacent' }],
     regime_procedural: "Permis d'aménager (lotissement de plus de 2 lots…) — à qualifier.",
     min_lot_plu: { existe: false, note: 'Zone Ud de Saint-Leu : aucune superficie/largeur minimale (loi ALUR).' },
+    bilan_surfacique: { assiette_m2: 9578, lots_m2: 5839, voirie_m2: 700, communs_m2: 1758, ppr_rouge_m2: 0,
+      ebc_m2: 0, hors_zone_m2: 1281, somme_m2: 9578, ecart_m2: 0, clos: true },
     geojson: { type: 'FeatureCollection', features: [] }, note: 'Pré-lotissement indicatif…',
   },
+  study_id: 'EF-abc123def456',
 }
 vi.mock('../../lib/api', () => ({
   postEtudeParcelles: vi.fn(),
@@ -237,6 +240,8 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     expect(document.body.textContent).toContain('aucune règle au PLU Ud')  // pas de superficie minimale (ALUR)
     expect(document.body.textContent).toContain('Permis d\'aménager')
     expect(document.body.textContent).toContain('impasse + aire de retournement')  // voirie réaliste (Lot D corr.)
+    expect(screen.getByText('Bilan surfacique')).toBeTruthy()                       // bilan clos (Lot E)
+    expect(screen.getByText('Générer le PDF ↓')).toBeTruthy()                       // PDF depuis la même étude (Lot E)
     expect(screen.getByText('Perméabilité (pleine terre)')).toBeTruthy()           // contrôle pleine terre
     expect(screen.getAllByText('Réussi').length).toBeGreaterThan(0)                // avec Réussi/Échoué
     // les T1–T4 saisis = hypothèse, jamais le nombre de lots

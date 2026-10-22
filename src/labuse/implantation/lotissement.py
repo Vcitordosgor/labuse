@@ -282,6 +282,16 @@ def etudier_lotissement(session, idus: list[str], *, lot_cible_m2: float = LOT_C
                          "jardins_privatifs_m2": jardins_privatifs, "communs_m2": communs,
                          "ces_pct": ces_pct, "resultat": "Réussi" if pt_ok else "Échoué", "article": pt_article},
         "controles": [controle_pt],
+        # BILAN SURFACIQUE CLOS (Lot E) : assiette = lots + voirie + communs + PPR rouge + EBC + hors-zone
+        # (part non U/AU + marges clippées), sans double comptabilisation. Clos par construction.
+        "bilan_surfacique": (lambda hz, som: {
+            "assiette_m2": round(assiette.area, 1), "lots_m2": round(sum(aires), 1), "voirie_m2": voirie_m2,
+            "communs_m2": communs, "ppr_rouge_m2": round(terrain.ppr_rouge_m2, 1), "ebc_m2": ebc_m2,
+            "hors_zone_m2": hz, "somme_m2": round(som, 1), "ecart_m2": round(som - assiette.area, 1),
+            "clos": abs(som - assiette.area) <= 0.02 * assiette.area,
+        })(round(max(0.0, assiette.area - net.area - terrain.ppr_rouge_m2 - ebc_m2), 1),
+           sum(aires) + voirie_m2 + communs + terrain.ppr_rouge_m2 + ebc_m2
+           + max(0.0, assiette.area - net.area - terrain.ppr_rouge_m2 - ebc_m2)),
         "stationnement": {"par_lot": 2, "article": "UD 12 (renvoi dispositions générales Art. 11)",
                           "total_lots": places_lots, "visiteurs_estimes": places_visiteurs,
                           "note": "2 places / logement (PLU Ud) ; visiteurs = convention (Estimé, non réglementé)."},

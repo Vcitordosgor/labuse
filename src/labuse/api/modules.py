@@ -2166,7 +2166,9 @@ def etude_pdf(body: EtudePdfIn, request: Request, db: Session = Depends(get_db))
     _attach_au_ouverture(db, payload, body.idus)   # vérif #2 — caveat AU dans le PDF comme à l'écran
     genere_le = today_reunion().strftime("%d/%m/%Y")
     try:
-        rendu = ef.rendu_etude(payload, genere_le=genere_le, scenario_ref=scenario_ref)
+        # ETUDE-V6 (Lot E) — le lotissement a son propre document (pas de scénario d'implantation).
+        rendu = (ef.rendu_lotissement(payload, genere_le=genere_le) if payload.get("lotissement")
+                 else ef.rendu_etude(payload, genere_le=genere_le, scenario_ref=scenario_ref))
     except ValueError as exc:
         # aucun scénario : le document n'a rien à montrer (400, jamais un PDF vide ni un faux chiffre).
         raise HTTPException(400, str(exc))

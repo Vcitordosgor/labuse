@@ -258,6 +258,42 @@ def _programme_vers_demande(programme: dict) -> tuple[dict[str, int], list[str],
     return demande, repartition, surfaces
 
 
+# ------------------------------------------------------------------ ETUDE-V6 (Lot E) : study_id + bilan
+def _study_id(entree: dict) -> str:
+    """Identifiant STABLE de l'étude : empreinte de la configuration (idus + type + programme +
+    hypothèses). Même config → même study_id → l'écran et le PDF portent le même identifiant et, le
+    PDF étant rendu de la MÊME donnée, les mêmes chiffres (verrou `nombres_hors_payload`)."""
+    import hashlib
+    import json
+    cle = {k: entree.get(k) for k in ("idus", "type_projet", "objectif", "programme", "hypotheses",
+                                      "stationnement", "terrain")}
+    brut = json.dumps(cle, sort_keys=True, ensure_ascii=False, default=str)
+    return "EF-" + hashlib.sha1(brut.encode("utf-8")).hexdigest()[:12]
+
+
+def _bilan_collectif(terrain_pub: dict, variante: Optional[dict]) -> dict:
+    """Bilan surfacique CLOS d'un collectif. Deux garanties distinctes, pas une somme fallacieuse des 4
+    grandeurs (qui sont volontairement séparées) : (1) la DÉCOMPOSITION DU TERRAIN est close — contenance
+    = zone constructible + hors-zone (A/N, reculs, PPR) ; (2) le PLAN tile l'assiette SANS CHEVAUCHEMENT
+    (contrôles géométriques verts) → aucune double comptabilisation."""
+    contenance = terrain_pub["contenance_totale_m2"]
+    zone = terrain_pub["zone_implantation_m2"]
+    hors = round(max(0.0, contenance - zone), 1)
+    decomp = abs((zone + hors) - contenance) <= 0.02 * max(1.0, contenance)
+    out = {"contenance_m2": contenance, "zone_constructible_m2": zone, "hors_zone_m2": hors,
+           "decomposition_close": decomp}
+    if variante:
+        out["emprise_batie_m2"] = round(variante["emprise_sol_m2"] or 0.0, 1)
+        out["stationnement_m2"] = round(variante["stationnement"]["surface_stationnement_m2"] or 0.0, 1)
+        out["pleine_terre_m2"] = round(variante["pleine_terre_m2"] or 0.0, 1)
+        geo = all(c.get("ok") for c in (variante.get("checks_geometriques") or []))
+        out["plan_sans_chevauchement"] = geo
+        out["clos"] = bool(decomp and geo)
+    else:
+        out["clos"] = bool(decomp)
+    return out
+
+
 # ------------------------------------------------------------------ ETUDE-V6 (Lot C) : stationnement
 _TYPES_PROJET = {"collectif", "etudiante", "senior", "social", "lotissement"}
 
@@ -360,6 +396,7 @@ def _lotissement_payload(session, idus: list[str], entree: dict) -> dict:
                     "type_projet": "lotissement", "objectif": "division", "programme_mode": "saisi" if demande else "propose",
                     "stationnement": "aerien", "terrain": "libere"},
         "type_projet": "lotissement",
+        "study_id": _study_id(entree),
         "lotissement": lot,
         "logements_hypothese": ({"demande": demande} if demande else None),
         "statut_global": "à compléter",
@@ -551,6 +588,9 @@ def etudier_payload(session, entree: dict) -> dict:
             "allee_largeur_m": conv.allee_largeur_m,
             "etiquette": conv.etiquette,
         },
+        "study_id": _study_id(entree),
+        "bilan_surfacique": _bilan_collectif(
+            sd0["terrain"], next((v for v in variantes_pub if not v.get("absente")), None)),
         "programme_saisi": ({"demande": demande} if demande else None),
         "statut_global": statut_global,
         "verdict": verdict,

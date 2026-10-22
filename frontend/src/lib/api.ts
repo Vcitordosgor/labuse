@@ -2204,6 +2204,12 @@ export interface EtudePayload {
   type_projet?: string
   lotissement?: EtudeLotissement
   logements_hypothese?: { demande: Record<string, number> } | null
+  // ETUDE-V6 (Lot E) — study_id stable (PDF = écran) + bilan surfacique clos (pas de double comptabilisation).
+  study_id?: string
+  bilan_surfacique?: {
+    contenance_m2: number; zone_constructible_m2?: number; hors_zone_m2?: number
+    decomposition_close?: boolean; plan_sans_chevauchement?: boolean; clos: boolean
+  }
 }
 export interface EtudeLotissement {
   commune: string; insee: string; zone: string | null
@@ -2224,6 +2230,10 @@ export interface EtudeLotissement {
   raccordements: Array<{ reseau: string; distance_m: number | null; statut: string }>
   regime_procedural: string
   min_lot_plu: { existe: boolean; note: string }
+  bilan_surfacique: {
+    assiette_m2: number; lots_m2: number; voirie_m2: number; communs_m2: number
+    ppr_rouge_m2: number; ebc_m2: number; hors_zone_m2: number; somme_m2: number; ecart_m2: number; clos: boolean
+  }
   geojson: GeoJSON.FeatureCollection
   note: string
 }

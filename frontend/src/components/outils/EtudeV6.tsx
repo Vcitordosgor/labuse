@@ -6,14 +6,15 @@
 // (« ce que le terrain accueille », variantes, facteurs limitants) est repris au Lot B ; ici, base servie.
 import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { postEtude, postEtudeParcelles, postEtudeStationnement } from '../../lib/api'
-import type { EtudeParcellesOut, EtudePayload, EtudeVariante, EtudeGrandeur, EtudeStationnementRegimes, EtudeLotissement } from '../../lib/api'
+import { postEtude, postEtudeParcelles, postEtudeStationnement, ETUDE_PDF_URL, etudePdfInit } from '../../lib/api'
+import type { EtudeParcellesOut, EtudePayload, EtudeVariante, EtudeGrandeur, EtudeStationnementRegimes, EtudeLotissement, EtudeIn } from '../../lib/api'
 import { fmtInt, fmtDec } from '../../lib/format'
 import { Bouton } from '../ui/Bouton'
 import { Badge } from '../ui/Badge'
 import { ParcelInput } from '../ParcelInput'
 import { Chargement } from '../Loading'
 import { PlanMasseSvg } from './PlanMasseSvg'
+import { useOuvrirDocument } from '../../lib/ouvrirDocument'
 import type { EtudeProgramme } from './M22Programme'
 
 // Hypothèses de programme (mandat V6) : surface totale par logement, varangue incluse → intérieur indicatif.
@@ -61,6 +62,17 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
   const [projet, setProjet] = useState<ProjetKey | null>(null)
   const [nb, setNb] = useState<Record<TypeKey, number>>({ T1: 0, T2: 0, T3: 0, T4: 0 })
   const [variantActive, setVariantActive] = useState<string>('votre_programme')
+  const pdf = useOuvrirDocument()
+  // Le PDF part de la MÊME config que l'écran (même study_id, mêmes chiffres : verrou serveur).
+  const corpsPdf = (): EtudeIn => ({
+    idus: sel, type_projet: projet ?? 'collectif',
+    programme: { mode: 'saisi', lignes: TYPES.filter((t) => nb[t] > 0).map((t) => ({ type: t, nombre: nb[t], surface_m2: SURF[t].area })) },
+  })
+  const BoutonPdf = () => (
+    <Bouton niveau="secondaire" onClick={() => pdf.ouvrir(ETUDE_PDF_URL, 'etude-pdf', etudePdfInit(corpsPdf()))} disabled={!!pdf.enCours}>
+      {pdf.enCours ? 'Génération…' : 'Générer le PDF ↓'}
+    </Bouton>
+  )
 
   // Étape 1 : validation de l'assiette (faits + contiguïté + sources). Rejouée à chaque changement de sel.
   const valide = useQuery({
@@ -112,7 +124,7 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
           <Badge ton="ambre">{resultat.verdict}</Badge>
           <span className="text-[11px] text-txt-dim">{resultat.entrees.commune} · zone {resultat.entrees.zone} · lotissement</span>
         </div>
-        <LotissementResultat lot={resultat.lotissement} hypothese={resultat.logements_hypothese} />
+        <LotissementResultat lot={resultat.lotissement} hypothese={resultat.logements_hypothese} boutonPdf={<BoutonPdf />} pdfErreur={pdf.erreur ?? undefined} studyId={resultat.study_id} />
         <p className="px-4 pb-4 text-[10px] leading-snug text-txt-dim">{resultat.lotissement.note}</p>
       </div>
     )
@@ -226,9 +238,14 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
                   )}
                 </Recit>
               )}
-              {onBilan && (
-                <Bouton niveau="secondaire" onClick={() => onBilan(bilanDe(active))}>Bilan de ce scénario →</Bouton>
+              <div className="flex flex-wrap gap-2">
+                <BoutonPdf />
+                {onBilan && <Bouton niveau="secondaire" onClick={() => onBilan(bilanDe(active))}>Bilan de ce scénario →</Bouton>}
+              </div>
+              {resultat.bilan_surfacique?.clos && (
+                <p className="text-[9.5px] text-txt-dim">Bilan surfacique clos (contenance = zone constructible {fmtDec(resultat.bilan_surfacique.zone_constructible_m2 ?? 0)} m² + hors-zone {fmtDec(resultat.bilan_surfacique.hors_zone_m2 ?? 0)} m²) · plan sans chevauchement · study_id {resultat.study_id}.</p>
               )}
+              {pdf.erreur && <p className="text-[10px] text-coral">{pdf.erreur}</p>}
             </aside>
           </div>
         )}
@@ -367,7 +384,10 @@ function Controles({ v }: { v: EtudeVariante }) {
 }
 
 // ── Lot D — résultat LOTISSEMENT : plan de division + tableau des lots + voirie/pleine terre/réseaux ──
-function LotissementResultat({ lot, hypothese }: { lot: EtudeLotissement; hypothese?: { demande: Record<string, number> } | null }) {
+function LotissementResultat({ lot, hypothese, boutonPdf, pdfErreur, studyId }: {
+  lot: EtudeLotissement; hypothese?: { demande: Record<string, number> } | null
+  boutonPdf?: React.ReactNode; pdfErreur?: string; studyId?: string
+}) {
   const tl = lot.tableau_lots
   const hyp = hypothese?.demande ?? {}
   return (
@@ -438,6 +458,16 @@ function LotissementResultat({ lot, hypothese }: { lot: EtudeLotissement; hypoth
         <Recit titre="Régime procédural" ton="ambre">
           <p className="text-[11px] text-txt">{lot.regime_procedural}</p>
         </Recit>
+        <Recit titre="Bilan surfacique" ton={lot.bilan_surfacique.clos ? 'vert' : 'ambre'}>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] text-txt">assiette {fmtDec(lot.bilan_surfacique.assiette_m2)} m² = lots + voirie + communs + PPR + hors-zone</span>
+            <Badge ton={lot.bilan_surfacique.clos ? 'vert' : 'ambre'}>{lot.bilan_surfacique.clos ? 'clos' : 'à ajuster'}</Badge>
+          </div>
+          <p className="mt-0.5 text-[9.5px] text-txt-dim">{fmtDec(lot.bilan_surfacique.lots_m2)} + {fmtDec(lot.bilan_surfacique.voirie_m2)} + {fmtDec(lot.bilan_surfacique.communs_m2)} + {fmtDec(lot.bilan_surfacique.ppr_rouge_m2)} + {fmtDec(lot.bilan_surfacique.hors_zone_m2)} = {fmtDec(lot.bilan_surfacique.somme_m2)} m² (écart {fmtDec(lot.bilan_surfacique.ecart_m2)}) — aucune double comptabilisation.</p>
+        </Recit>
+        {boutonPdf}
+        {pdfErreur && <p className="text-[10px] text-coral">{pdfErreur}</p>}
+        {studyId && <p className="text-[9px] text-txt-dim">study_id {studyId} — le PDF part de la même étude.</p>}
         {Object.keys(hyp).length > 0 && (
           <Recit titre="Logements futurs (hypothèse)">
             <p className="text-[11px] text-txt">{Object.entries(hyp).map(([t, n]) => `${n}×${t}`).join(' · ')}</p>
