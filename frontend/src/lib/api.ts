@@ -2150,6 +2150,8 @@ export interface EtudeScenario {
     m2_par_place: number | null; surface_stationnement_m2: number
     note: { allee_unique: boolean; deux_cotes: boolean; raison: string } | null
     acces: { distance_angle_m: number; note: string } | null
+    // ETUDE-V6-2 (Lot 3) — parking enterré : mode, places au −1, emprise du sous-sol, rampe au sol.
+    mode?: 'aerien' | 'sous_sol'; places_sous_sol?: number; emprise_sous_sol_m2?: number; rampe_m2?: number
   }
   surfaces_mesurees_m2: Record<string, number>
   emprise_sol_m2: number; pleine_terre_m2: number
@@ -2201,6 +2203,7 @@ export interface EtudePayload {
     logements: number; par_type: Record<string, number>; sdp_m2: number
     niveaux: number; niveaux_label: string; forme: string; places: number
     surface_stationnement_m2: number; repartition: string; note: string
+    stationnement_mode?: 'aerien' | 'sous_sol'
   } | null
   facteurs_limitants?: Array<{
     facteur: string; impact_logements: number; limitant: boolean
@@ -2303,9 +2306,14 @@ export interface EtudeIn {
   programme?: { mode: 'propose' | 'saisi'; lignes?: Array<{ type: string; nombre: number; surface_m2?: number }> } | null
   hypotheses?: { profondeur_m?: number; coef_plancher_habitable?: number; surfaces?: Record<string, number>; varangues?: Record<string, number> } | null
 }
+// ETUDE-V6-2 (Lot 3) — l'étude est bornée à 60 s côté serveur ; le fetch front abandonne à ~75 s
+// (aligné sur nginx/Caddy), simple garde-fou réseau : en pratique le serveur répond AVANT (résultat
+// ou message « Étude trop lourde »). Au-delà, l'abort remonte une erreur plutôt qu'un onglet figé.
+export const ETUDE_FETCH_TIMEOUT_MS = 75_000
 export const postEtude = (body: EtudeIn) =>
   j<EtudePayload>('/modules/etude', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    signal: AbortSignal.timeout(ETUDE_FETCH_TIMEOUT_MS),
   })
 
 // ETUDE-V6 (Lot A, étape 1) — valide l'assiette AVANT le moteur : faits par parcelle, union,
@@ -2343,6 +2351,7 @@ export interface EtudePdfIn extends EtudeIn { scenario_ref?: string | null; empr
 export const ETUDE_PDF_URL = '/modules/etude/pdf'
 export const etudePdfInit = (body: EtudePdfIn): RequestInit => ({
   method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  signal: AbortSignal.timeout(ETUDE_FETCH_TIMEOUT_MS),   // ETUDE-V6-2 (Lot 3) — même garde-fou que l'écran
 })
 
 // ── Projets (copilote-projet) — l'objet persistant de l'entretien de cadrage ──

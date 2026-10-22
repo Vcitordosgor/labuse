@@ -97,6 +97,7 @@ class Scene:
     objets: list[Objet] = field(default_factory=list)
     stationnement_note: Optional[dict] = None   # {allee_unique, cotes, deux_cotes, raison}
     ppr_rouge_local: Optional[BaseGeometry] = None   # PPR interdiction (local), interdite au stationnement
+    sous_sol: Optional[dict] = None   # ETUDE-V6-2 (Lot 3) — parking enterré : {places, emprise_m2, rampe_m2}
 
     def ajouter(self, o: Objet) -> None:
         self.objets.append(o)
@@ -398,11 +399,44 @@ def _acces_corridor(scene: Scene, conv: Conventions, allee_g: Polygon,
     return corridor
 
 
+# ---------------------------------------------------------------- stationnement en SOUS-SOL (Lot 3)
+def poser_sous_sol(scene: Scene, conv: Conventions, *, cible: int) -> int:
+    """ETUDE-V6-2 (Lot 3) — parking ENTERRÉ : aucune place aérienne ; on pose une RAMPE au sol (accès au
+    niveau −1) et on RECORD l'emprise du sous-sol (cible × m²/place usuels). L'emprise est confrontée à
+    l'emprise réglementaire par un contrôle (controles.py). Le sol reste libre pour le bâti et la pleine
+    terre → davantage de logements qu'en aérien. Renvoie le nombre de places logées au −1 (= cible)."""
+    if cible <= 0:
+        scene.sous_sol = {"places": 0, "emprise_m2": 0.0, "rampe_m2": 0.0,
+                          "m2_par_place": conv.m2_par_place_sous_sol}
+        return 0
+    emprise = round(cible * conv.m2_par_place_sous_sol, 1)
+    # rampe au sol : un rectangle (accès véhicule) adossé à la voie, dans l'espace libre (hors bâti/PPR).
+    rampe_m2 = 0.0
+    batis = [o.geom_local for o in scene.of("batiment_emprise")]
+    bati = unary_union(batis) if batis else None
+    free = scene.assiette_local.difference(bati) if bati is not None else scene.assiette_local
+    if scene.ppr_rouge_local is not None and not scene.ppr_rouge_local.is_empty:
+        free = free.difference(scene.ppr_rouge_local)
+    free = _valide(free)
+    ax0, ay0, ax1, ay1 = scene.assiette_local.bounds
+    w, d = conv.acces_largeur_m, max(6.0, conv.place_longueur_m)   # rampe ≈ 4 × 6 m
+    y0, y1 = (ay0, ay0 + d) if scene.voie_bas else (ay1 - d, ay1)  # adossée à la voie
+    xc = (ax0 + ax1) / 2.0
+    rampe = free.intersection(rect(xc - w / 2.0, y0, xc + w / 2.0, y1))
+    rampe = _plus_grand(rampe) if not rampe.is_empty else rampe
+    if isinstance(rampe, Polygon) and rampe.area > 1.0:
+        scene.ajouter(Objet("rampe", rampe))
+        rampe_m2 = round(rampe.area, 1)
+    scene.sous_sol = {"places": cible, "emprise_m2": emprise, "rampe_m2": rampe_m2,
+                      "m2_par_place": conv.m2_par_place_sous_sol}
+    return cible
+
+
 # ---------------------------------------------------------------- espaces libres
 def poser_espaces_libres(scene: Scene) -> None:
-    """Espaces libres = assiette − (bâti ∪ places ∪ allées ∪ accès). Mesuré, jamais annoncé."""
+    """Espaces libres = assiette − (bâti ∪ places ∪ allées ∪ accès ∪ rampe). Mesuré, jamais annoncé."""
     occupe = [o.geom_local for o in scene.objets
-              if o.kind in ("batiment_emprise", "place", "allee", "acces")]
+              if o.kind in ("batiment_emprise", "place", "allee", "acces", "rampe")]
     if not occupe:
         libres = scene.assiette_local
     else:

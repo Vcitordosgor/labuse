@@ -48,6 +48,12 @@ class Capacite:
     coursive_m2: float = 0.0           # plancher de coursive ouverte (TOUS niveaux), HORS SDP
     noyau_m2: float = 0.0              # plancher des noyaux (TOUS niveaux), DANS la SDP
     noyaux_par_batiment: dict = field(default_factory=dict)   # ref -> {m2_par_niveau, niveaux, m2_total}
+    # ETUDE-V6-2 (Lot 3) — stationnement en SOUS-SOL (niveau −1) : places enterrées + emprise du parking
+    # enterré (confrontée à l'emprise réglementaire) + rampe au sol. "aerien" par défaut.
+    stationnement_mode: str = "aerien"
+    places_sous_sol: int = 0
+    emprise_sous_sol_m2: float = 0.0
+    rampe_m2: float = 0.0
 
 
 def _sdp_logement(conv: Conventions, type_logement: str) -> float:
@@ -98,11 +104,16 @@ def calculer(scene: Scene, conv: Conventions, regles: ReglesZone, terrain=None) 
     places_m2 = aire("place")
     allees_m2 = aire("allee")
     acces_m2 = aire("acces")
+    rampe_m2 = aire("rampe")
     pleine_terre = aire("espace_libre")
     assiette = scene.assiette_local.area
-    reste = assiette - (bati + places_m2 + allees_m2 + acces_m2 + pleine_terre)
+    reste = assiette - (bati + places_m2 + allees_m2 + acces_m2 + rampe_m2 + pleine_terre)
     stat = places_m2 + allees_m2 + acces_m2
-    places = len(scene.of("place"))
+    # ETUDE-V6-2 (Lot 3) — sous-sol : les places sont au niveau −1 (aucun objet « place » au sol) ; on lit
+    # leur nombre et l'emprise enterrée dans scene.sous_sol. Le sol n'est PAS entamé par le parking.
+    ss = scene.sous_sol
+    mode_ss = bool(ss)
+    places = ss["places"] if mode_ss else len(scene.of("place"))
 
     places_imp, details = _places_imposees(scene, conv, regles)
 
@@ -172,4 +183,8 @@ def calculer(scene: Scene, conv: Conventions, regles: ReglesZone, terrain=None) 
         coursive_m2=round(coursive, 1),
         noyau_m2=round(sum(o.geom_local.area for o in scene.of("noyau")), 1),
         noyaux_par_batiment=noyaux_bat,
+        stationnement_mode=("sous_sol" if mode_ss else "aerien"),
+        places_sous_sol=(ss["places"] if mode_ss else 0),
+        emprise_sous_sol_m2=(ss["emprise_m2"] if mode_ss else 0.0),
+        rampe_m2=round(rampe_m2, 1),
     )

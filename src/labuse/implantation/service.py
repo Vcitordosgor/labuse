@@ -13,18 +13,8 @@ Aucun calcul ici n'échappe au moteur : les chiffres sont TIRÉS de la géométr
 from __future__ import annotations
 
 import logging
-import time
 from math import gcd
 from typing import Any, Optional
-
-# ETUDE-V6-2 (Lot 2) — la route borne l'étude à 30 s. La capacité maximale ajoute UNE recherche
-# (équilibre) GROSSIÈRE et BORNÉE dans le temps : on lui passe une deadline = budget restant (30 s −
-# écoulé − réserve planche/sérialisation), plafonnée. Sur une assiette lourde (Saint-Denis + PPR) la
-# recherche se coupe proprement en ayant essayé les étages hauts d'abord → le maximum est quand même
-# trouvé, sans 503. En deçà de 3 s de budget, on saute (champ None, l'écran l'omet).
-_ETUDE_BUDGET_S = 30.0
-_PLANCHE_RESERVE_S = 6.0
-_CAP_MAX_MAX_S = 9.0
 
 from shapely.geometry import mapping
 
@@ -136,6 +126,11 @@ def _scenario_public(scenario, ref: str) -> dict:
             "surface_stationnement_m2": cap.surface_stationnement_m2,
             "note": scenario.scene.stationnement_note,
             "acces": sd["scenario"].get("acces"),
+            # ETUDE-V6-2 (Lot 3) — parking enterré : mode, places au −1, emprise du sous-sol, rampe au sol.
+            "mode": cap.stationnement_mode,
+            "places_sous_sol": cap.places_sous_sol,
+            "emprise_sous_sol_m2": cap.emprise_sous_sol_m2,
+            "rampe_m2": cap.rampe_m2,
         },
         "surfaces_mesurees_m2": sd["tableau_capacite"]["surfaces_mesurees_m2"],
         "emprise_sol_m2": cap.emprise_sol_m2,
@@ -419,7 +414,6 @@ def _lotissement_payload(session, idus: list[str], entree: dict) -> dict:
 def etudier_payload(session, entree: dict) -> dict:
     """Payload d'étude servi par l'API. `entree` = {idus, type_projet, objectif, programme,
     stationnement, terrain, hypotheses}. Lève ValueError sur entrée invalide (→ 400 côté route)."""
-    _t0 = time.monotonic()
     idus = [str(i).strip() for i in (entree.get("idus") or []) if str(i).strip()]
     if not idus:
         raise ValueError("au moins une parcelle est requise")
@@ -467,9 +461,11 @@ def etudier_payload(session, entree: dict) -> dict:
             raise ValueError("programme saisi vide : indiquez au moins un type et un nombre")
 
     # ETUDE-V6 (Lot B) — UN SEUL passage de recherche → vue historique (scenarios) + 3 variantes mandat.
-    scenarios, variantes, depassement, message, terrain, regles, conv = moteur_mod.etudier_complet(
+    # ETUDE-V6-2 (Lot 3) — `stationnement` ∈ {aerien, sous_sol} pilote l'implantation du parking.
+    scenarios, variantes, depassement, message, terrain, regles, conv, scn_max = moteur_mod.etudier_complet(
         session=session, idus=idus, objectif=objectif, conv=conv,
         programme=demande or None, repartition=repartition, max_scenarios=3,
+        stationnement_mode=stationnement,
     )
 
     # entêtes partagés (terrain / règles / versions) — depuis le 1er scénario/variante PRÉSENT, sinon un
@@ -485,44 +481,34 @@ def etudier_payload(session, entree: dict) -> dict:
                       else _variante_absente(role, raison))
                      for role, s, raison in variantes]
 
-    # ETUDE-V6-2 (Lot 2) — CAPACITÉ MAXIMALE stable (calculée UNE fois, répartition équilibrée, donc
-    # indépendante de la demande : deux demandes → même maximum) + FACTEURS LIMITANTS classés par impact,
-    # le stationnement prouvé par contrefactuel « sans places » (lu dans la même recherche). Calculée AVANT
-    # la planche (rendu coûteux) ; si la recherche principale a déjà été lourde (assiette + PPR, ex.
-    # Saint-Denis), on la SAUTE proprement (None/[], l'écran l'omet) pour tenir le budget de 30 s.
+    # ETUDE-V6-2 (Lot 2/3) — CAPACITÉ MAXIMALE = le meilleur candidat FAISABLE de la MÊME recherche (via
+    # etudier_complet, répartition de la demande) : donc ≥ toute variante dessinée, et stable (deux demandes
+    # de même répartition → même maximum). Aucune 2ᵉ recherche → budget tenu (< 20 s, Saint-Denis compris).
+    # + FACTEURS LIMITANTS classés par impact, le stationnement prouvé par contrefactuel « sans places »
+    # (lu dans la trace de cette recherche). La demande est ensuite CONFRONTÉE à ce maximum.
     capacite_maximale = None
     facteurs_limitants: list = []
     confrontation = None
-    # budget restant pour la capacité maximale, en réservant la planche + la sérialisation (6 s) sous
-    # les 30 s de la route ; borné à ~9 s. En dessous de 3 s → on saute (pas le temps).
-    budget_cap = _ETUDE_BUDGET_S - (time.monotonic() - _t0) - _PLANCHE_RESERVE_S
-    if budget_cap >= 3.0:
-        deadline = time.monotonic() + min(budget_cap, _CAP_MAX_MAX_S)
-        try:
-            scn_max, _fais_max = moteur_mod.capacite_maximale(terrain, regles, conv, deadline=deadline)
-        except Exception:  # noqa: BLE001
-            logging.getLogger("labuse").exception("étude v6 : capacité maximale impossible")
-            scn_max = None
-        if scn_max is not None:
-            cmax = scn_max.capacite
-            capacite_maximale = {
-                "logements": cmax.logements, "par_type": cmax.par_type, "sdp_m2": cmax.sdp_m2,
-                "niveaux": scn_max.niveaux, "niveaux_label": f"R+{max(0, scn_max.niveaux - 1)}",
-                "forme": scn_max.forme, "places": cmax.places,
-                "surface_stationnement_m2": cmax.surface_stationnement_m2,
-                "repartition": "équilibrée (conventions)",
-                "note": ("Maximum réglementaire du terrain, calculé une fois et indépendant de la demande "
-                         "(répartition équilibrée). La demande est ensuite confrontée à ce maximum."),
-            }
-            facteurs_limitants = moteur_mod.facteurs_limitants(terrain, regles, conv, scn_max)
-            if demande:
-                dem_tot = sum(n for n in demande.values() if n > 0)
-                cap_tot = capacite_maximale["logements"]
-                confrontation = {"demande_logements": dem_tot, "capacite_maximale_logements": cap_tot,
-                                 "tient": dem_tot <= cap_tot, "reserve_logements": cap_tot - dem_tot}
-    else:
-        logging.getLogger("labuse").info(
-            "étude v6 : capacité maximale sautée (budget insuffisant, %.1f s restantes)", budget_cap)
+    if scn_max is not None:
+        cmax = scn_max.capacite
+        capacite_maximale = {
+            "logements": cmax.logements, "par_type": cmax.par_type, "sdp_m2": cmax.sdp_m2,
+            "niveaux": scn_max.niveaux, "niveaux_label": f"R+{max(0, scn_max.niveaux - 1)}",
+            "forme": scn_max.forme, "places": cmax.places,
+            "surface_stationnement_m2": cmax.surface_stationnement_m2,
+            "stationnement_mode": cmax.stationnement_mode,
+            "repartition": ("votre répartition" if demande else "répartition équilibrée (proposée)"),
+            "note": ("Maximum de logements que le terrain accueille sous cette répartition — indépendant "
+                     "du NOMBRE demandé (deux demandes de même répartition donnent le même maximum). "
+                     "La demande y est ensuite confrontée."),
+        }
+        facteurs_limitants = moteur_mod.facteurs_limitants(
+            terrain, regles, conv, scn_max, stationnement_mode=stationnement)
+        if demande:
+            dem_tot = sum(n for n in demande.values() if n > 0)
+            cap_tot = capacite_maximale["logements"]
+            confrontation = {"demande_logements": dem_tot, "capacite_maximale_logements": cap_tot,
+                             "tient": dem_tot <= cap_tot, "reserve_logements": cap_tot - dem_tot}
 
     # IMPLANTATION-4 (planche plan masse) — UN SEUL SVG par scénario, le même à l'écran et dans le PDF,
     # DESSINÉ depuis la géométrie (contexte cadastre/bâti/voies + TN LiDAR chargé UNE fois pour l'assiette).
@@ -577,6 +563,9 @@ def etudier_payload(session, entree: dict) -> dict:
     # ETUDE-V6-2 (Lot 2) — « le stationnement limite » n'est affirmé que PROUVÉ (contrefactuel sans places).
     stat_limitante = any(f.get("facteur", "").startswith("stationnement") and f.get("limitant")
                          for f in facteurs_limitants)
+    # ETUDE-V6-2 (Lot 3) — le plafond L151-35 est un régime AÉRIEN ; en sous-sol, il est sans objet.
+    if stationnement == "sous_sol":
+        pf = None
     if pf and pf["applicable_si_eligible"] and demande and not stat_limitante:
         capacite_reduite = {"logements": None, "places": None, "ratio_par_logement": _PLAFOND_L15135,
                             "reference": "L151-35", "statut": "sans effet",
@@ -584,7 +573,7 @@ def etudier_payload(session, entree: dict) -> dict:
                                     "ne changerait pas la capacité."}
     elif pf and pf["applicable_si_eligible"] and demande:
         try:
-            r_sc, r_var, r_dep, _m, _ter, _reg, _cv = moteur_mod.etudier_complet(
+            r_sc, r_var, r_dep, _m, _ter, _reg, _cv, _smax = moteur_mod.etudier_complet(
                 session=session, idus=idus, objectif=objectif, conv=conv,
                 programme=demande or None, repartition=repartition, max_scenarios=1,
                 stationnement_ratio=_PLAFOND_L15135)

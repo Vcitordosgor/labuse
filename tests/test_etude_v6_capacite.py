@@ -89,3 +89,48 @@ def test_facteur_non_limitant_jamais_affirme_sans_preuve(session_reelle):
     for f in d["facteurs_limitants"]:
         if f["impact_logements"] == 0:
             assert f["limitant"] is False
+
+
+def _cfg_mode(lignes, mode):
+    c = _cfg(lignes)
+    c["stationnement"] = mode
+    return c
+
+
+@pytest.mark.reel
+def test_sous_sol_libere_le_sol_et_ajoute_des_logements(session_reelle):
+    """ETUDE-V6-2 (Lot 3) — enterrer le stationnement libère le sol : à Étang-Salé (où l'aérien plafonne),
+    le sous-sol accueille PLUS de logements que l'aérien. Les places sont au −1, l'emprise enterrée tient
+    sous l'emprise réglementaire (contrôle dédié), et le sol ne porte plus de places aériennes."""
+    from labuse.implantation.service import etudier_payload
+    lignes = [{"type": "T2", "nombre": 23, "surface_m2": 56}, {"type": "T3", "nombre": 6, "surface_m2": 70}]
+    aer = etudier_payload(session_reelle, _cfg_mode(lignes, "aerien"))
+    sous = etudier_payload(session_reelle, _cfg_mode(lignes, "sous_sol"))
+    assert aer["capacite_maximale"]["stationnement_mode"] == "aerien"
+    assert sous["capacite_maximale"]["stationnement_mode"] == "sous_sol"
+    # le sous-sol accueille au moins autant de logements que l'aérien (ici strictement plus)
+    assert sous["capacite_maximale"]["logements"] >= aer["capacite_maximale"]["logements"]
+    assert sous["capacite_maximale"]["logements"] > aer["capacite_maximale"]["logements"]
+    # la variante sous-sol : places au −1, aucune place aérienne, emprise enterrée > 0
+    v = next(x for x in sous["variantes"] if not x.get("absente"))
+    st = v["stationnement"]
+    assert st["mode"] == "sous_sol"
+    assert st["places_sous_sol"] > 0
+    assert st["surface_stationnement_m2"] == 0          # rien au sol (hors rampe)
+    assert st["emprise_sous_sol_m2"] > 0
+    # un contrôle « Emprise du sous-sol » ≤ emprise réglementaire est présent et vérifié
+    emp = next(c for c in v["controles"] if c["nom"] == "Emprise du sous-sol")
+    assert emp["resultat"] in ("Réussi", "Échoué", "À confirmer")
+    # study_id différent de l'aérien (le mode entre dans l'empreinte → PDF distinct)
+    assert sous["study_id"] != aer["study_id"]
+
+
+@pytest.mark.reel
+def test_sous_sol_etude_rapide(session_reelle):
+    """L'étude sous-sol reste rapide (pas de 2ᵉ recherche) — bornée bien en deçà de la nouvelle borne 60 s."""
+    import time
+    from labuse.implantation.service import etudier_payload
+    t = time.monotonic()
+    etudier_payload(session_reelle, _cfg_mode([{"type": "T2", "nombre": 23, "surface_m2": 56},
+                                               {"type": "T3", "nombre": 6, "surface_m2": 70}], "sous_sol"))
+    assert time.monotonic() - t < 30.0

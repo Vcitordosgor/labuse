@@ -46,3 +46,4 @@ stationnement:
   place_largeur_m: 2.5
   allee_largeur_m: 5.0          # allée de desserte double sens
   acces_largeur_m: 4.0          # débouché sur la voie
+  m2_par_place_sous_sol: 25.0   # place en sous-sol, rampes + circulation comprises (Estimé) — ETUDE-V6-2 Lot 3

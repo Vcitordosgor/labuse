@@ -1995,11 +1995,16 @@ class EtudeIn(BaseModel):
     hypotheses: dict | None = None
 
 
-# CHASSE-DOCS-FIX-1 (E-04) — borne DURE de 30 s sur le moteur d'implantation : au-delà, le client
-# reçoit un message honnête (jamais un HTTP 000 / timeout silencieux). Le moteur n'est PAS optimisé ;
-# il tourne dans un thread avec SA PROPRE session (SQLAlchemy n'est pas thread-safe), et on ABANDONNE
-# l'attente à 30 s (le thread finit en arrière-plan, son résultat est ignoré).
-_ETUDE_TIMEOUT_S = 30
+# CHASSE-DOCS-FIX-1 (E-04) — borne DURE sur le moteur d'implantation : au-delà, le client reçoit un
+# message honnête (jamais un HTTP 000 / timeout silencieux). Le moteur n'est PAS optimisé ; il tourne
+# dans un thread avec SA PROPRE session (SQLAlchemy n'est pas thread-safe), et on ABANDONNE l'attente à
+# la borne (le thread finit en arrière-plan, son résultat est ignoré).
+# ETUDE-V6-2 (Lot 3) — borne portée de 30 à 60 s (le sous-sol + la capacité maximale peuvent demander
+# davantage sur une assiette lourde). Tout ce qui attend DERRIÈRE est aligné sur ~75 s (15 s de marge) :
+# nginx proxy_read/send_timeout (deploy/nginx/labuse.conf), uvicorn --timeout-keep-alive
+# (deploy/systemd/labuse.service) et le timeout du fetch front (frontend/src/lib/api.ts). Cf.
+# docs/deploiement/etude-v6-2-timeouts.md pour le geste de production (Vic).
+_ETUDE_TIMEOUT_S = 60
 _ETUDE_TROP_LOURDE = {
     "erreur": "etude_trop_lourde",
     "message": "Étude trop lourde pour cette parcelle, non générée. Essayez une assiette plus simple "

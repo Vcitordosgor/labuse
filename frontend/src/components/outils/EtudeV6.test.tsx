@@ -386,7 +386,7 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     // capacité maximale, stable + mention d'indépendance à la demande
     const cap = await waitFor(() => { const c = document.querySelector('[data-recit="Capacité maximale du terrain"]'); if (!c) throw new Error('no'); return c as HTMLElement })
     expect(cap.textContent).toContain('28 logements')
-    expect(cap.textContent).toContain('deux demandes différentes sur cette assiette donnent le même maximum')
+    expect(cap.textContent).toContain('deux demandes de même répartition donnent le même maximum')
     expect(cap.textContent).toContain('tient')                       // 12 ≤ 28
     // facteurs classés par impact, stationnement en tête, PROUVÉ par contrefactuel
     const lim = document.querySelector('[data-recit="Ce qui limite"]') as HTMLElement
@@ -395,5 +395,54 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     expect(lim.textContent).toContain('sans stationnement imposé')
     expect(lim.textContent).toContain('2. hauteur réglementaire')
     expect(lim.textContent).toContain('impact non chiffré')          // largeur de zone, non affirmée limitante
+  })
+
+  it('Lot 3 : « Testez en sous-sol » apparaît quand l\'aérien plafonne et relance en sous-sol', async () => {
+    vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
+    vi.mocked(postEtude).mockResolvedValue(RESULTAT_CAP as any)
+    renderV6(['97404000AW0099', '97404000AW0451'])
+    await waitFor(() => screen.getByText('AW 99'))
+    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
+    await waitFor(() => screen.getByText('Quel type de projet ?'))
+    fireEvent.click(screen.getByText('Logement social'))
+    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
+    await waitFor(() => screen.getByText('Combien de logements souhaitez-vous ?'))
+    fireEvent.change(document.querySelector('[data-etude-count="T2"]') as HTMLInputElement, { target: { value: '12' } })
+    fireEvent.click(screen.getByRole('button', { name: /Analyser mon projet/ }))
+    // le stationnement aérien plafonne (facteur limitant) → le CTA sous-sol s'affiche
+    const cta = await waitFor(() => { const b = document.querySelector('[data-tester-sous-sol]'); if (!b) throw new Error('no'); return b as HTMLButtonElement })
+    expect(cta.textContent).toContain('Testez en sous-sol')
+    vi.mocked(postEtude).mockClear()
+    fireEvent.click(cta)
+    // le clic relance l'étude EN SOUS-SOL (calcul à la demande, pas inline)
+    await waitFor(() => expect(vi.mocked(postEtude)).toHaveBeenCalledWith(expect.objectContaining({ stationnement: 'sous_sol' })))
+  })
+
+  it('Lot 3 : le résultat sous-sol affiche les places au −1, l\'emprise enterrée et la rampe', async () => {
+    const ssVar = { ...VARIANTE('votre_programme', 'Votre programme', 48, 'Exploitable sous hypothèses'),
+      stationnement: { places: 48, places_imposees: 48, details_places: {}, m2_par_place: null, surface_stationnement_m2: 0,
+        note: null, acces: null, mode: 'sous_sol', places_sous_sol: 48, emprise_sous_sol_m2: 1200, rampe_m2: 20 } }
+    const RES_SS = { ...RESULTAT, programme_saisi: { demande: { T2: 29 } }, variantes: [ssVar,
+      { ref: 'optimisation', role: 'optimisation', role_label: 'Optimisation', absente: true, raison: '—' },
+      { ref: 'alternative', role: 'alternative', role_label: 'Alternative', absente: true, raison: '—' }],
+      capacite_maximale: { logements: 48, par_type: { T2: 48 }, sdp_m2: 2688, niveaux: 4, niveaux_label: 'R+3', forme: 'barre',
+        places: 48, surface_stationnement_m2: 0, repartition: 'votre répartition', stationnement_mode: 'sous_sol', note: '…' } }
+    vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
+    vi.mocked(postEtude).mockResolvedValue(RES_SS as any)
+    renderV6(['97404000AW0099', '97404000AW0451'])
+    await waitFor(() => screen.getByText('AW 99'))
+    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
+    await waitFor(() => screen.getByText('Quel type de projet ?'))
+    fireEvent.click(screen.getByText('Logement social'))
+    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
+    await waitFor(() => screen.getByText('Combien de logements souhaitez-vous ?'))
+    fireEvent.change(document.querySelector('[data-etude-count="T2"]') as HTMLInputElement, { target: { value: '29' } })
+    fireEvent.click(screen.getByRole('button', { name: /Analyser mon projet/ }))
+    const acc = await waitFor(() => { const a = document.querySelector('[data-recit="Ce que le terrain accueille"]'); if (!a) throw new Error('no'); return a as HTMLElement })
+    expect(acc.textContent).toContain('Stationnement en sous-sol')
+    expect(acc.textContent).toContain('48 places au niveau −1')
+    expect(acc.textContent).toContain('1 200,0 m²')        // emprise enterrée (séparateur FR insécable)
+    // en sous-sol, le CTA « Testez en sous-sol » ne s'affiche PAS (on y est déjà)
+    expect(document.querySelector('[data-tester-sous-sol]')).toBeNull()
   })
 })

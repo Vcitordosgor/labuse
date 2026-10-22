@@ -59,7 +59,13 @@
 		file_server @front
 
 		# 4. API / tuiles / login / PDF / webhook Stripe → backend
-		reverse_proxy 127.0.0.1:8000
+		# ETUDE-V6-2 (Lot 3) — l'Étude de faisabilité est bornée à 60 s côté app ; le proxy laisse ~75 s
+		# (15 s de marge) pour ne jamais couper AVANT le message honnête de l'app. (Aligne la conf nginx.)
+		reverse_proxy 127.0.0.1:8000 {
+			transport http {
+				read_timeout 75s
+			}
+		}
 	}
 
 	header {

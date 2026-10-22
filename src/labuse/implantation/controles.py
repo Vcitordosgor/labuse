@@ -48,7 +48,9 @@ def _ground_tiles(scene: Scene):
     """Objets du PLAN DE SOL (niveau 0 pour le bâti) qui pavent l'assiette sans se chevaucher."""
     out = []
     for o in scene.objets:
-        if o.kind in ("place", "allee", "acces", "espace_libre"):
+        # ETUDE-V6-2 (Lot 3) — la rampe de sous-sol est un objet du PLAN DE SOL : elle PAVE l'assiette
+        # au même titre que l'accès aérien (sinon la somme des surfaces ne boucle pas).
+        if o.kind in ("place", "allee", "acces", "rampe", "espace_libre"):
             out.append(o)
         elif o.kind in ("module", "noyau", "coursive") and o.niveau == 0:
             out.append(o)
@@ -138,7 +140,11 @@ def verifier_geometrie(scene: Scene, terrain, conv: Conventions, cap: Capacite,
             dim_ok = False
     checks.append(CheckGeo("dimensions modules ≥ convention", dim_ok))
 
-    nb_ok = (cap.logements == len(modules)) and (cap.places == len(places))
+    # ETUDE-V6-2 (Lot 3) — en sous-sol, les places sont au niveau −1 (aucun objet « place » au sol) :
+    # on confronte alors le nombre annoncé au nombre logé au sous-sol, pas aux places dessinées.
+    places_dessinees = (getattr(cap, "places_sous_sol", 0)
+                        if getattr(cap, "stationnement_mode", "aerien") == "sous_sol" else len(places))
+    nb_ok = (cap.logements == len(modules)) and (cap.places == places_dessinees)
     checks.append(CheckGeo("nb annoncé = nb dessiné (logements, places)", nb_ok))
 
     # SDP mesurée = modules + noyaux (coursive ouverte HORS SDP, art. R111-22 c. urb. — LOT D)
@@ -282,15 +288,35 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
                                f"{cap.pleine_terre_m2:.0f} m²", NON_EFFECTUE))
 
     b = regles.stationnement
+    sous_sol = getattr(cap, "stationnement_mode", "aerien") == "sous_sol"
+    place_mot = "places au sous-sol" if sous_sol else "places dessinées"
     if b.validee and cap.places_imposees is not None:
         ok = cap.places >= cap.places_imposees
         out.append(ControleReg("Stationnement", f"≥ {cap.places_imposees} places (barème validé)",
-                               f"{cap.places} places dessinées", REUSSI if ok else ECHOUE,
+                               f"{cap.places} {place_mot}", REUSSI if ok else ECHOUE,
                                b.citation_complete, f"écart {cap.places - cap.places_imposees:+d}"))
     else:
         # ETUDE-V6 — barème manquant = ambiguïté (exigence non chiffrée) → À confirmer, pas « Non effectué ».
-        out.append(ControleReg("Stationnement", "barème non servi pour cette zone", f"{cap.places} places dessinées",
+        out.append(ControleReg("Stationnement", "barème non servi pour cette zone", f"{cap.places} {place_mot}",
                                A_CONFIRMER, detail="exigence de stationnement non chiffrée ici — à confirmer au règlement"))
+
+    # ETUDE-V6-2 (Lot 3) — en SOUS-SOL, l'emprise du parking enterré doit tenir sous l'EMPRISE
+    # RÉGLEMENTAIRE (CES × contenance) ; c'est ce contrôle (pas le comptage) qui plafonne la capacité.
+    if sous_sol:
+        rc = regles.emprise_ces
+        if rc.validee and rc.valeur is not None:
+            emp_max = contenance * rc.valeur / 100.0
+            ok = cap.emprise_sous_sol_m2 <= emp_max + 1e-6
+            out.append(ControleReg(
+                "Emprise du sous-sol", f"≤ {emp_max:.0f} m² (emprise réglementaire, CES {rc.valeur:.0f} %)",
+                f"{cap.emprise_sous_sol_m2:.0f} m² ({cap.places_sous_sol} places × {cap.emprise_sous_sol_m2 / cap.places_sous_sol:.0f} m²)"
+                if cap.places_sous_sol else f"{cap.emprise_sous_sol_m2:.0f} m²",
+                REUSSI if ok else ECHOUE, rc.citation_complete,
+                f"écart {emp_max - cap.emprise_sous_sol_m2:+.0f} m²"))
+        else:
+            out.append(ControleReg("Emprise du sous-sol", "CES non servi — emprise réglementaire non chiffrée",
+                                   f"{cap.emprise_sous_sol_m2:.0f} m²", A_CONFIRMER,
+                                   detail="emprise réglementaire du sous-sol à confirmer au règlement"))
 
     # Distance entre constructions (PLU-CALIBRAGE-10, ex-art. 8) : MESURÉE sur la géométrie et
     # confrontée à la règle de la zone. Convention des 4 états :

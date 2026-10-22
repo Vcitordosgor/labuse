@@ -10,7 +10,6 @@ Aucun réglage par terrain : la zone, les règles et les contraintes viennent de
 """
 from __future__ import annotations
 
-import time
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -20,7 +19,7 @@ from . import regles as regles_mod
 from . import terrain as terrain_mod
 from .conventions import Conventions, charger as charger_conventions
 from .geometrie import (Frame, Scene, poser_barre, poser_espaces_libres,
-                        poser_stationnement, scene_depuis)
+                        poser_sous_sol, poser_stationnement, scene_depuis)
 
 IDUS_ETANG_SALE = ["97404000AW0099", "97404000AW0451", "97404000AW0624", "97404000AW0625"]
 IDUS_SAINT_ANDRE = ["97409000AX0255", "97409000AX0256"]
@@ -28,10 +27,6 @@ IDUS_SAINT_DENIS = ["97411000DL0247", "97411000DL0248"]
 
 _NIVEAUX = [2, 3, 4, 5, 6]
 _FRACTIONS = [round(1.0 - 0.05 * k, 2) for k in range(0, 15)]   # 1.00 .. 0.30
-# ETUDE-V6-2 (Lot 2) — grille GROSSIÈRE pour les recherches de MAXIMUM (capacité maximale +
-# contrefactuel sans stationnement) : le maximum de logements est à grande fraction (barre la plus
-# longue), donc un balayage court suffit (max identique, ~2× plus rapide → budget 30 s tenu).
-_FRACTIONS_MAX = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5]
 _FORMES = ["barre", "deux_barres", "L"]
 
 
@@ -92,7 +87,8 @@ def _construire(forme: str, scene: Scene, conv: Conventions, *, niveaux: int, fr
     return 0
 
 
-def _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction, repartition=None):
+def _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction, repartition=None,
+             stationnement_mode="aerien"):
     # hauteur : nb de niveaux borné par la hauteur réglementaire (plafond / étage)
     r = regles.hauteur_plafond
     if r.validee and r.valeur is not None and niveaux * conv.hauteur_etage_m > r.valeur + 1e-9:
@@ -104,7 +100,12 @@ def _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction, repartition
         return None, Candidat(forme, niveaux, fraction, False, "—", 0, 0.0, 0, None, motif)
     cap0 = cap_mod.calculer(scene, conv, regles, terrain)
     cible = cap0.places_imposees or 0
-    poser_stationnement(scene, conv, cible=cible)
+    # ETUDE-V6-2 (Lot 3) — sous-sol : places au niveau −1 (le sol reste libre → plus de logements) ;
+    # aérien par défaut (places + allée + accès au sol).
+    if stationnement_mode == "sous_sol":
+        poser_sous_sol(scene, conv, cible=cible)
+    else:
+        poser_stationnement(scene, conv, cible=cible)
     poser_espaces_libres(scene)
     scene.finaliser_monde()
     cap = cap_mod.calculer(scene, conv, regles, terrain)
@@ -117,7 +118,8 @@ def _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction, repartition
     # places consomment — « Stationnement » (comptage) ET « Perméabilité (pleine terre) » (le parking
     # mange la pleine terre). Vérifié : ce drapeau reproduit EXACTEMENT un 2ᵉ passage « sans places »
     # (44 logts à Étang-Salé), sans recherche supplémentaire → budget 30 s tenu.
-    _hors_stat = {"Stationnement", "Perméabilité (pleine terre)"}
+    # (en sous-sol, le gabarit du parking se lit dans « Emprise du sous-sol » → on le lève aussi).
+    _hors_stat = {"Stationnement", "Perméabilité (pleine terre)", "Emprise du sous-sol"}
     sans_echec_hors_stat = not any(c.resultat == ctrl_mod.ECHOUE and c.nom not in _hors_stat
                                    for c in controles)
     faisable_sans_stat = geo_ok and sans_echec_hors_stat
@@ -193,33 +195,25 @@ def _charger(session, idus, zone, conv, avec_pente):
     return terrain, regles, zone
 
 
-def _rechercher(terrain, regles, conv, objectif, *, repartition=None, fractions=None,
-                deadline=None, niveaux_desc=False):
+def _rechercher(terrain, regles, conv, objectif, *, repartition=None, stationnement_mode="aerien"):
     """Parcourt la grille ORDONNÉE forme×niveaux×fraction et renvoie (ranked, candidats) :
     `ranked` = liste des candidats FAISABLES, triée par la clef d'objectif décroissante, chaque
-    item = (clef, paquet, forme, niveaux, fraction). `candidats` = la trace complète. `fractions`
-    permet une grille plus grossière pour les recherches de maximum (Lot 2). `deadline` (monotonic)
-    borne le temps de recherche (coupée proprement sur une assiette lourde) ; `niveaux_desc` essaie
-    les étages les plus hauts d'abord (→ le MAXIMUM de logements tôt, avant une éventuelle coupure)."""
+    item = (clef, paquet, forme, niveaux, fraction). `candidats` = la trace complète.
+    `stationnement_mode` ∈ {aerien, sous_sol} (Lot 3)."""
     frame = Frame.depuis(terrain.zone_implantation)
     candidats: list[Candidat] = []
     faisables: list = []
-    niveaux_ordre = sorted(_NIVEAUX, reverse=True) if niveaux_desc else _NIVEAUX
     for forme in _FORMES:
-        if deadline is not None and time.monotonic() > deadline:
-            break
-        for niveaux in niveaux_ordre:
-            for fraction in (fractions or _FRACTIONS):
+        for niveaux in _NIVEAUX:
+            for fraction in _FRACTIONS:
                 paquet, cand = _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction,
-                                        repartition=repartition)
+                                        repartition=repartition, stationnement_mode=stationnement_mode)
                 candidats.append(cand)
                 if paquet is None:
                     continue
                 _scene, cap, _ctrl, _chk, _geo, statut = paquet
                 clef = _clef(objectif, statut, cap, niveaux, forme, fraction)
                 faisables.append((clef, paquet, forme, niveaux, fraction))
-            if deadline is not None and time.monotonic() > deadline:
-                break
     faisables.sort(key=lambda it: it[0], reverse=True)
     return faisables, candidats
 
@@ -382,7 +376,7 @@ def etudier_complet(session=None, *, idus: Optional[list[str]] = None, zone: Opt
                     objectif: str = "equilibre", conv: Optional[Conventions] = None,
                     avec_pente: bool = True, programme: Optional[dict[str, int]] = None,
                     repartition: Optional[list[str]] = None, max_scenarios: int = 3,
-                    stationnement_ratio: Optional[float] = None):
+                    stationnement_ratio: Optional[float] = None, stationnement_mode: str = "aerien"):
     """ETUDE-V6 (Lot B) — UN SEUL passage de recherche, deux vues :
     `scenarios` = sémantique historique (Pareto des candidats couvrant la demande ; [] si la demande
     ne tient pas), et `variantes` = les 3 rôles du mandat (best-effort si dépassement). Renvoie
@@ -403,10 +397,11 @@ def etudier_complet(session=None, *, idus: Optional[list[str]] = None, zone: Opt
             page_pdf=None, citation=f"plafond {stationnement_ratio:g} place/logt sous condition d'éligibilité"))
     zi = terrain.zone_implantation
     if zi is None or zi.is_empty or terrain.aire_zone_m2 < 60:
-        return [], [], None, _message_impossible(terrain, regles, []), terrain, regles, conv
-    faisables, candidats = _rechercher(terrain, regles, conv, objectif, repartition=repartition)
+        return [], [], None, _message_impossible(terrain, regles, []), terrain, regles, conv, None
+    faisables, candidats = _rechercher(terrain, regles, conv, objectif, repartition=repartition,
+                                       stationnement_mode=stationnement_mode)
     if not faisables:
-        return [], [], None, _message_impossible(terrain, regles, candidats), terrain, regles, conv
+        return [], [], None, _message_impossible(terrain, regles, candidats), terrain, regles, conv, None
 
     message, depassement = None, None
     couvrants = faisables
@@ -427,7 +422,11 @@ def etudier_complet(session=None, *, idus: Optional[list[str]] = None, zone: Opt
                   _paquet_en_scenario(terrain, conv, regles, objectif, candidats, it) if it is not None else None,
                   reason)
                  for role, it, reason in _roles(base_var, programme)]
-    return scenarios, variantes, depassement, message, terrain, regles, conv
+    # ETUDE-V6-2 (Lot 2/3) — CAPACITÉ MAXIMALE = le candidat FAISABLE au plus grand nombre de logements
+    # de CETTE recherche (même répartition que la demande, donc ≥ toute variante dessinée, et stable :
+    # deux demandes de même répartition → même maximum). Aucune 2ᵉ recherche → budget tenu, < 20 s.
+    scn_max = _paquet_en_scenario(terrain, conv, regles, objectif, candidats, _best_faisable(faisables))
+    return scenarios, variantes, depassement, message, terrain, regles, conv, scn_max
 
 
 def limite_capacite(scenario, regles) -> Optional[str]:
@@ -482,22 +481,7 @@ def _best_faisable(faisables):
     return max(faisables, key=lambda it: (it[1][1].logements, -_n_batiments(it[1][0]), -it[3]))
 
 
-def capacite_maximale(terrain, regles, conv, *, repartition=None, deadline=None):
-    """ETUDE-V6-2 (Lot 2) — la capacité MAXIMALE du terrain, calculée UNE SEULE FOIS et
-    INDÉPENDAMMENT de la demande : c'est une propriété du terrain + des règles, sous la répartition
-    ÉQUILIBRÉE des conventions (jamais celle de la demande). Deux demandes différentes sur la même
-    assiette renvoient donc le MÊME maximum. `deadline` borne le temps (assiette lourde) en essayant
-    les étages hauts d'abord → le maximum est trouvé avant une coupure. Renvoie (scenario|None, faisables)."""
-    faisables, candidats = _rechercher(terrain, regles, conv, "plus_logements",
-                                       repartition=repartition, fractions=_FRACTIONS_MAX,
-                                       deadline=deadline, niveaux_desc=True)
-    it = _best_faisable(faisables)
-    if it is None:
-        return None, faisables
-    return _paquet_en_scenario(terrain, conv, regles, "plus_logements", candidats, it), faisables
-
-
-def facteurs_limitants(terrain, regles, conv, scenario_max) -> list[dict]:
+def facteurs_limitants(terrain, regles, conv, scenario_max, *, stationnement_mode="aerien") -> list[dict]:
     """ETUDE-V6-2 (Lot 2) — ce qui PLAFONNE la capacité, CLASSÉ par impact (logements perdus). Chaque
     impact est PROUVÉ par un contrefactuel ou chiffré depuis la trace ; un facteur sans impact mesuré
     n'est jamais présenté comme limitant. En particulier, on n'affirme « le stationnement limite » (ou
@@ -508,20 +492,24 @@ def facteurs_limitants(terrain, regles, conv, scenario_max) -> list[dict]:
     niv0 = scenario_max.niveaux
     cand = scenario_max.candidats or []
     facteurs: list[dict] = []
+    sous_sol = stationnement_mode == "sous_sol"
 
     # (1) STATIONNEMENT — contrefactuel « sans places » LU DANS LA MÊME recherche (pas de 2ᵉ passage,
-    # pour tenir le budget de 30 s même sur une assiette lourde) : le maximum de logements si l'on
-    # IGNORE le seul contrôle de stationnement. Si c'est > au maximum réel, le stationnement plafonne.
+    # pour tenir le budget même sur une assiette lourde) : le maximum de logements si l'on IGNORE le
+    # contrôle de stationnement (en sous-sol, l'emprise enterrée). Si c'est > au maximum réel, il plafonne.
     logts_sans = max((c.logements for c in cand if c.faisable_sans_stationnement), default=logts0)
     delta_stat = max(0, logts_sans - logts0)
-    stat_m2 = scenario_max.capacite.surface_stationnement_m2 or 0.0
+    cap = scenario_max.capacite
+    stat_m2 = (cap.emprise_sous_sol_m2 if sous_sol else cap.surface_stationnement_m2) or 0.0
     contenance = terrain.contenance_totale_m2 or 0.0
+    label = "stationnement en sous-sol" if sous_sol else "stationnement aérien"
+    occupe = ("emprise enterrée" if sous_sol else "occupés")
     facteurs.append({
-        "facteur": "stationnement aérien",
+        "facteur": label,
         "impact_logements": delta_stat,
         "limitant": delta_stat > 0,
         "preuve": "contrefactuel sans stationnement imposé",
-        "mesure": (f"{stat_m2:.0f} m² occupés sur {contenance:.0f} m² d'assiette"
+        "mesure": (f"{stat_m2:.0f} m² {occupe} sur {contenance:.0f} m² d'assiette"
                    if stat_m2 else "aucune place dessinée"),
         "detail": (f"sans stationnement imposé : {logts_sans} logements au maximum "
                    f"(vs {logts0} avec) → +{delta_stat} logement(s)" if delta_stat

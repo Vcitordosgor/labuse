@@ -64,8 +64,8 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
   const [variantActive, setVariantActive] = useState<string>('votre_programme')
   // Hypothèses modifiables (mandat) : surfaces T1–T4, varangues, et hypothèses MOTEUR (profondeur,
   // coef plancher). Vides = valeurs LABUSE par défaut. Édition dans le résultat → recalcul → même PDF.
-  const [hyp, setHyp] = useState<{ surf: Record<TypeKey, string>; varangue: Record<TypeKey, string>; profondeur: string; coef: string }>(
-    { surf: { T1: '', T2: '', T3: '', T4: '' }, varangue: { T1: '', T2: '', T3: '', T4: '' }, profondeur: '', coef: '' })
+  const [hyp, setHyp] = useState<{ surf: Record<TypeKey, string>; varangue: Record<TypeKey, string>; profondeur: string; coef: string; stationnement: 'aerien' | 'sous_sol' }>(
+    { surf: { T1: '', T2: '', T3: '', T4: '' }, varangue: { T1: '', T2: '', T3: '', T4: '' }, profondeur: '', coef: '', stationnement: 'aerien' })
   const pdf = useOuvrirDocument()
   const surfOf = (t: TypeKey) => { const x = parseFloat(hyp.surf[t]); return isNaN(x) ? SURF[t].area : x }
   const varOf = (t: TypeKey) => { const x = parseFloat(hyp.varangue[t]); return isNaN(x) ? SURF[t].varangue : Math.max(0, Math.min(surfOf(t), x)) }
@@ -79,10 +79,13 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
     return Object.keys(h).length ? h : undefined
   }
   // UNE seule config sert l'analyse ET le PDF (surfaces éditées via les lignes du programme → study_id).
-  const corpsBody = (): EtudeIn => ({
+  const corpsBody = (over?: Partial<EtudeIn>): EtudeIn => ({
     idus: sel, type_projet: projet ?? 'collectif',
+    // ETUDE-V6-2 (Lot 3) — le mode de stationnement (aérien par défaut / sous-sol) pilote l'implantation.
+    stationnement: hyp.stationnement,
     programme: { mode: 'saisi', lignes: TYPES.filter((t) => nb[t] > 0).map((t) => ({ type: t, nombre: nb[t], surface_m2: surfOf(t) })) },
     hypotheses: hypBody(),
+    ...over,
   })
   const BoutonPdf = () => (
     <Bouton niveau="secondaire" onClick={() => pdf.ouvrir(ETUDE_PDF_URL, 'etude-pdf', etudePdfInit(corpsBody()))} disabled={!!pdf.enCours}>
@@ -108,8 +111,15 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
   })
 
   // Analyse (étape finale ET recalcul) : un seul appel moteur avec la config courante (hypothèses comprises).
-  const analyse = useMutation({ mutationFn: () => postEtude(corpsBody()) })
-  const recalculer = () => analyse.mutate()
+  const analyse = useMutation({ mutationFn: (body?: EtudeIn) => postEtude(body ?? corpsBody()) })
+  const recalculer = () => analyse.mutate(undefined)
+  // ETUDE-V6-2 (Lot 3) — « Testez en sous-sol » : bascule le mode ET relance en UN clic (on passe le corps
+  // explicitement, car setHyp est asynchrone). Calculé seulement à la demande → l'étude aérienne reste rapide.
+  const testerSousSol = () => {
+    setHyp((h) => ({ ...h, stationnement: 'sous_sol' }))
+    analyse.mutate(corpsBody({ stationnement: 'sous_sol' }))
+  }
+  const setModeStationnement = (m: 'aerien' | 'sous_sol') => setHyp((h) => ({ ...h, stationnement: m }))
   const resultat: EtudePayload | undefined = analyse.data
 
   // ETUDE-V6-2 (Lot 1) — l'étape 3 et le récap lisent TOUJOURS les surfaces par défaut (SURF), source
@@ -124,12 +134,13 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
   const peutAnalyser = contiguOk && !!projet && totalLogts > 0
 
   function reset() { setStep(1); setSel([]); setProjet(null); setNb({ T1: 0, T2: 0, T3: 0, T4: 0 }); resetHyp(); analyse.reset() }
-  function resetHyp() { setHyp({ surf: { T1: '', T2: '', T3: '', T4: '' }, varangue: { T1: '', T2: '', T3: '', T4: '' }, profondeur: '', coef: '' }) }
+  function resetHyp() { setHyp({ surf: { T1: '', T2: '', T3: '', T4: '' }, varangue: { T1: '', T2: '', T3: '', T4: '' }, profondeur: '', coef: '', stationnement: 'aerien' }) }
   // « Modifier le programme » revient au formulaire ET réinitialise les hypothèses éditées (pas de fuite).
   function modifierProgramme() { resetHyp(); analyse.reset() }
   const editeurHyp = (collectif: boolean) => (
     <HypothesesEditor hyp={hyp} setHyp={setHyp} surfOf={surfOf} varOf={varOf} types={TYPES.filter((t) => nb[t] > 0)}
-      collectif={collectif} onRecalculer={recalculer} enCours={analyse.isPending} />
+      collectif={collectif} onRecalculer={recalculer} enCours={analyse.isPending}
+      mode={hyp.stationnement} onMode={setModeStationnement} />
   )
   function ajouter(idu: string) { setSel((xs) => (xs.includes(idu) || xs.length >= 8 ? xs : [...xs, idu])) }
   function retirer(idu: string) { setSel((xs) => xs.filter((x) => x !== idu)) }
@@ -243,12 +254,16 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
                       ? <>Votre demande de {fmtInt(resultat.confrontation.demande_logements)} logements <b className="text-mint">tient</b> (réserve {fmtInt(resultat.confrontation.reserve_logements)}).</>
                       : <>Votre demande de {fmtInt(resultat.confrontation.demande_logements)} logements <b className="text-amber">dépasse</b> ce maximum de {fmtInt(-resultat.confrontation.reserve_logements)}.</>}</p>
                   )}
-                  <p className="mt-0.5 text-[9.5px] text-txt-dim">Maximum calculé une fois, indépendant de la demande — deux demandes différentes sur cette assiette donnent le même maximum.</p>
+                  <p className="mt-0.5 text-[9.5px] text-txt-dim">Maximum du terrain sous {resultat.capacite_maximale.repartition} — indépendant du <b>nombre</b> demandé (deux demandes de même répartition donnent le même maximum).</p>
                 </Recit>
               )}
               <Recit titre="Ce que le terrain accueille" ton={verdictTon(active.verdict)}>
                 <p className="text-[12px] text-txt-hi">{fmtInt(active.resume.logements)} logements · {fmtInt(active.resume.places)} places · {active.niveaux_label}</p>
                 <p className="text-[10.5px] text-txt-dim">{Object.entries(active.programme.par_type).map(([t, n]) => `${n}×${t}`).join(' · ')} · SDP {fmtDec(active.resume.sdp_m2)} m²</p>
+                {/* ETUDE-V6-2 (Lot 3) — parking enterré : places au −1, emprise du sous-sol, rampe au sol. */}
+                {active.stationnement?.mode === 'sous_sol' && (
+                  <p className="mt-1 text-[10.5px] text-txt"><b className="text-mint">Stationnement en sous-sol</b> : {fmtInt(active.stationnement.places_sous_sol ?? 0)} places au niveau −1 · emprise {fmtDec(active.stationnement.emprise_sous_sol_m2 ?? 0)} m² (≤ emprise réglementaire) · rampe {fmtDec(active.stationnement.rampe_m2 ?? 0)} m² au sol.</p>
+                )}
                 <div className="mt-1.5"><Badge ton={verdictTon(active.verdict)}>{active.verdict}</Badge></div>
               </Recit>
               {active.ecart && (
@@ -284,6 +299,15 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
                 {active.controles.filter((c) => c.resultat === 'Échoué' || c.resultat === 'À confirmer').slice(0, 4).map((c) => (
                   <p key={c.nom} className="mt-0.5 text-[10px] text-txt-dim">• {c.nom} — <span className={c.resultat === 'Échoué' ? 'text-coral' : 'text-amber'}>{c.resultat}</span></p>
                 ))}
+                {/* ETUDE-V6-2 (Lot 3) — « Testez en sous-sol » quand le stationnement AÉRIEN plafonne : enterrer
+                    les places libère le sol. Calculé SEULEMENT au clic (l'étude aérienne reste rapide). */}
+                {(active.stationnement?.mode ?? 'aerien') === 'aerien'
+                  && resultat.facteurs_limitants?.some((f) => f.facteur.startsWith('stationnement') && f.limitant) && (
+                  <button type="button" data-tester-sous-sol onClick={testerSousSol} disabled={analyse.isPending}
+                    className="mt-2 rounded border border-mint bg-mint/10 px-2.5 py-1 text-[11px] font-semibold text-mint hover:bg-mint/20 disabled:opacity-50">
+                    {analyse.isPending ? 'Calcul en cours…' : 'Testez en sous-sol →'}
+                  </button>
+                )}
               </Recit>
               {alternative && alternative.role !== active.role && (
                 <Recit titre="Une alternative concrète">
@@ -362,7 +386,7 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
         enAnalyse={analyse.isPending} erreurAnalyse={analyse.error}
         onPrec={() => setStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3) : s))}
         onSuiv={() => setStep((s) => (s < 3 ? ((s + 1) as 1 | 2 | 3) : s))}
-        onAnalyser={() => analyse.mutate()}
+        onAnalyser={() => analyse.mutate(undefined)}
         projetChoisi={!!projet}
       />
     </div>
@@ -550,11 +574,12 @@ function LigneInfo({ l, v, sous }: { l: string; v: string; sous?: string }) {
 }
 
 // ── Hypothèses modifiables (mandat) : surfaces T1–T4, varangues, + hypothèses moteur (collectif) ──
-type HypEtat = { surf: Record<TypeKey, string>; varangue: Record<TypeKey, string>; profondeur: string; coef: string }
-function HypothesesEditor({ hyp, setHyp, surfOf, varOf, types, collectif, onRecalculer, enCours }: {
+type HypEtat = { surf: Record<TypeKey, string>; varangue: Record<TypeKey, string>; profondeur: string; coef: string; stationnement: 'aerien' | 'sous_sol' }
+function HypothesesEditor({ hyp, setHyp, surfOf, varOf, types, collectif, onRecalculer, enCours, mode, onMode }: {
   hyp: HypEtat; setHyp: (f: (h: HypEtat) => HypEtat) => void
   surfOf: (t: TypeKey) => number; varOf: (t: TypeKey) => number
   types: readonly TypeKey[]; collectif: boolean; onRecalculer: () => void; enCours: boolean
+  mode: 'aerien' | 'sous_sol'; onMode: (m: 'aerien' | 'sous_sol') => void
 }) {
   const champ = (val: string, ph: string, on: (v: string) => void) => (
     <input type="number" min={0} inputMode="decimal" value={val} placeholder={ph} onChange={(e) => on(e.target.value)}
@@ -578,6 +603,21 @@ function HypothesesEditor({ hyp, setHyp, surfOf, varOf, types, collectif, onReca
           <div className="mt-1 flex flex-wrap items-center gap-3 border-t border-line-2 pt-2 text-[10.5px] text-txt-mut">
             <label className="flex items-center gap-1.5">Profondeur bâtiment {champ(hyp.profondeur, '13', (v) => setHyp((h) => ({ ...h, profondeur: v })))} m</label>
             <label className="flex items-center gap-1.5">Coef. plancher→habitable {champ(hyp.coef, '0.8', (v) => setHyp((h) => ({ ...h, coef: v })))}</label>
+          </div>
+        )}
+        {/* ETUDE-V6-2 (Lot 3) — mode de stationnement : aérien (défaut) / sous-sol (places au −1, rampe au sol). */}
+        {collectif && (
+          <div className="mt-1 flex flex-wrap items-center gap-2 border-t border-line-2 pt-2 text-[10.5px] text-txt-mut">
+            <span>Stationnement</span>
+            <div className="inline-flex overflow-hidden rounded border border-line-2" role="group" aria-label="Mode de stationnement">
+              {(['aerien', 'sous_sol'] as const).map((m) => (
+                <button key={m} type="button" data-statio-mode={m} onClick={() => onMode(m)}
+                  className={`px-2 py-0.5 text-[10.5px] ${mode === m ? 'bg-mint font-semibold text-mint-on' : 'text-txt-mut hover:bg-surface-1'}`}>
+                  {m === 'aerien' ? 'Aérien' : 'Sous-sol'}
+                </button>
+              ))}
+            </div>
+            {mode === 'sous_sol' && <span className="text-[9.5px] text-txt-dim">Places au niveau −1, rampe au sol — l'emprise enterrée reste ≤ l'emprise réglementaire.</span>}
           </div>
         )}
         <div className="mt-1 flex items-center gap-2">
@@ -901,12 +941,14 @@ function PiedEtape({ step, peutContinuer1, peutAnalyser, enAnalyse, erreurAnalys
           <b className="text-[12.5px] text-txt-hi">{TITRES[step]}</b>
           <p className="text-[10.5px] text-txt-dim">{TEXTES[step]}</p>
           {raison && <p className="mt-0.5 text-[10.5px] text-amber">{raison}</p>}
+          {/* ETUDE-V6-2 (Lot 3) — la borne moteur est passée à 60 s : on prévient que le calcul peut durer. */}
+          {enAnalyse && <p className="mt-0.5 text-[10.5px] text-txt-dim">Calcul en cours, jusqu'à une minute…</p>}
           {!!erreurAnalyse && <p className="mt-0.5 text-[10.5px] text-coral">{(erreurAnalyse as Error).message}</p>}
         </div>
         <div className="flex items-center gap-2">
           {step > 1 && <Bouton niveau="secondaire" onClick={onPrec}>← Retour</Bouton>}
           {step < 3 && <Bouton niveau="primaire" onClick={onSuiv} disabled={suivBloque}>Continuer →</Bouton>}
-          {step === 3 && <Bouton niveau="primaire" onClick={onAnalyser} disabled={!peutAnalyser || enAnalyse}>{enAnalyse ? 'Analyse…' : 'Analyser mon projet →'}</Bouton>}
+          {step === 3 && <Bouton niveau="primaire" onClick={onAnalyser} disabled={!peutAnalyser || enAnalyse}>{enAnalyse ? 'Calcul en cours…' : 'Analyser mon projet →'}</Bouton>}
         </div>
       </div>
     </div>
