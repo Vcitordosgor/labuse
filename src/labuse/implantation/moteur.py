@@ -275,6 +275,98 @@ def _n_batiments(scene) -> int:
     return sum(1 for o in scene.objets if o.kind == "batiment_emprise")
 
 
+def _logts_it(it) -> int:
+    return it[1][1].logements
+
+
+def _depassement(faisables, programme: dict[str, int]) -> dict:
+    """La demande ne tient pas entièrement : combien de logements tiennent par type, lesquels manquent
+    (au MIEUX atteignable sur l'ensemble des candidats faisables). Jamais « impossible » sans ce chiffre."""
+    max_par_type: dict[str, int] = {}
+    for it in faisables:
+        for t, n in it[1][1].par_type.items():
+            max_par_type[t] = max(max_par_type.get(t, 0), n)
+    tiennent = {t: min(programme[t], max_par_type.get(t, 0)) for t in programme if programme[t] > 0}
+    manquent = {t: programme[t] - tiennent.get(t, 0) for t in programme if programme[t] - tiennent.get(t, 0) > 0}
+    return {
+        "demande": {t: n for t, n in programme.items() if n > 0},
+        "tiennent": tiennent,
+        "manquent": manquent,
+        "total_demande": sum(n for n in programme.values() if n > 0),
+        "total_tiennent": sum(tiennent.values()),
+    }
+
+
+def _roles(base: list, programme: Optional[dict[str, int]]) -> list[tuple[str, object]]:
+    """Choisit jusqu'à 3 variantes DISTINCTES (signature forme+niveaux) avec leur rôle mandat :
+    votre_programme (le plus serré qui tient la demande ; au mieux si dépassement), optimisation
+    (max logements), alternative (autre forme, sinon autres niveaux). Pas de 2ᵉ recherche."""
+    if not base:
+        return []
+    by_max = sorted(base, key=lambda it: (_logts_it(it), -_n_batiments(it[1][0]), -it[3]), reverse=True)
+    if programme:
+        couvr = [it for it in base if _contient(it[1][1], programme)]
+        votre = (sorted(couvr, key=lambda it: (_logts_it(it), _n_batiments(it[1][0]), it[3]))[0]
+                 if couvr else by_max[0])
+    else:
+        votre = base[0]
+    optim = by_max[0]
+    alt = (next((it for it in by_max if it[2] != votre[2]), None)
+           or next((it for it in by_max if (it[2], it[3]) != (votre[2], votre[3])), None))
+    out: list[tuple[str, object]] = []
+    seen: set = set()
+    for role, it in (("votre_programme", votre), ("optimisation", optim), ("alternative", alt)):
+        if it is None:
+            continue
+        sig = (it[2], it[3])
+        if sig in seen:
+            repl = next((x for x in by_max if (x[2], x[3]) not in seen), None)
+            if repl is None:
+                continue
+            it, sig = repl, (repl[2], repl[3])
+        seen.add(sig)
+        out.append((role, it))
+    return out
+
+
+def etudier_complet(session=None, *, idus: Optional[list[str]] = None, zone: Optional[str] = None,
+                    objectif: str = "equilibre", conv: Optional[Conventions] = None,
+                    avec_pente: bool = True, programme: Optional[dict[str, int]] = None,
+                    repartition: Optional[list[str]] = None, max_scenarios: int = 3):
+    """ETUDE-V6 (Lot B) — UN SEUL passage de recherche, deux vues :
+    `scenarios` = sémantique historique (Pareto des candidats couvrant la demande ; [] si la demande
+    ne tient pas), et `variantes` = les 3 rôles du mandat (best-effort si dépassement). Renvoie
+    (scenarios, variantes, depassement, message, terrain, regles, conv)."""
+    idus = idus or IDUS_ETANG_SALE
+    conv = conv or charger_conventions()
+    terrain, regles, _zone = _charger(session, idus, zone, conv, avec_pente)
+    zi = terrain.zone_implantation
+    if zi is None or zi.is_empty or terrain.aire_zone_m2 < 60:
+        return [], [], None, _message_impossible(terrain, regles, []), terrain, regles, conv
+    faisables, candidats = _rechercher(terrain, regles, conv, objectif, repartition=repartition)
+    if not faisables:
+        return [], [], None, _message_impossible(terrain, regles, candidats), terrain, regles, conv
+
+    message, depassement = None, None
+    couvrants = faisables
+    if programme:
+        couvrants = [it for it in faisables if _contient(it[1][1], programme)]
+
+    if programme and not couvrants:
+        message = _message_ne_tient_pas(faisables, programme, regles, conv)
+        depassement = _depassement(faisables, programme)
+        scenarios = []                       # vue historique : la demande ne tient pas
+        base_var = faisables                 # variantes : best-effort
+    else:
+        scenarios = [_paquet_en_scenario(terrain, conv, regles, objectif, candidats, it)
+                     for it in _pareto(couvrants)[:max_scenarios]]
+        base_var = couvrants
+
+    variantes = [(role, _paquet_en_scenario(terrain, conv, regles, objectif, candidats, it))
+                 for role, it in _roles(base_var, programme)]
+    return scenarios, variantes, depassement, message, terrain, regles, conv
+
+
 def limite_capacite(scenario, regles) -> Optional[str]:
     """IMPLANTATION-4 (recette Vic) — EN UNE LIGNE, ce qui PLAFONNE la capacité du scénario retenu
     (pourquoi pas plus de logements / pas plus haut). Lu dans la trace des candidats :

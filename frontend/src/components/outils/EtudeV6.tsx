@@ -7,13 +7,14 @@
 import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { postEtude, postEtudeParcelles } from '../../lib/api'
-import type { EtudeParcellesOut, EtudePayload } from '../../lib/api'
+import type { EtudeParcellesOut, EtudePayload, EtudeVariante, EtudeGrandeur } from '../../lib/api'
 import { fmtInt, fmtDec } from '../../lib/format'
 import { Bouton } from '../ui/Bouton'
 import { Badge } from '../ui/Badge'
 import { ParcelInput } from '../ParcelInput'
 import { Chargement } from '../Loading'
 import { PlanMasseSvg } from './PlanMasseSvg'
+import type { EtudeProgramme } from './M22Programme'
 
 // Hypothèses de programme (mandat V6) : surface totale par logement, varangue incluse → intérieur indicatif.
 // Jamais appelées SDP ni SHAB. Modifiables plus tard dans « Hypothèses » (Lot B).
@@ -43,23 +44,26 @@ const ETAPES = [
   { n: 3, titre: 'Votre programme', sous: 'T1, T2, T3, T4' },
 ] as const
 
-function statutCourt(s: string): string {
-  if (s.startsWith('exploitable')) return 'Exploitable sous hypothèses'
-  if (s === 'à compléter') return 'À compléter'
-  if (s === 'ne tient pas') return 'Ne tient pas'
-  return 'Simulation impossible'
-}
-function statutTon(s: string): 'vert' | 'ambre' | 'rouge' {
-  if (s.startsWith('exploitable')) return 'vert'
-  if (s === 'à compléter') return 'ambre'
+function verdictTon(v: string): 'vert' | 'ambre' | 'rouge' {
+  if (v.startsWith('Exploitable')) return 'vert'
+  if (v.startsWith('À compléter')) return 'ambre'
   return 'rouge'
 }
+function etatTon(r: string): 'vert' | 'ambre' | 'rouge' | 'neutre' {
+  if (r === 'Réussi') return 'vert'
+  if (r === 'Échoué') return 'rouge'
+  if (r === 'À confirmer') return 'ambre'
+  return 'neutre'  // Non effectué / Non applicable
+}
 
-export function EtudeV6({ initialIdus, onClose }: { initialIdus?: string[]; onClose?: () => void }) {
+export function EtudeV6({ initialIdus, onClose, onBilan }: {
+  initialIdus?: string[]; onClose?: () => void; onBilan?: (prog: EtudeProgramme) => void
+}) {
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [sel, setSel] = useState<string[]>(initialIdus ?? [])
   const [projet, setProjet] = useState<ProjetKey | null>(null)
   const [nb, setNb] = useState<Record<TypeKey, number>>({ T1: 0, T2: 0, T3: 0, T4: 0 })
+  const [variantActive, setVariantActive] = useState<string>('votre_programme')
 
   // Étape 1 : validation de l'assiette (faits + contiguïté + sources). Rejouée à chaque changement de sel.
   const valide = useQuery({
@@ -93,44 +97,110 @@ export function EtudeV6({ initialIdus, onClose }: { initialIdus?: string[]; onCl
   function ajouter(idu: string) { setSel((xs) => (xs.includes(idu) || xs.length >= 8 ? xs : [...xs, idu])) }
   function retirer(idu: string) { setSel((xs) => xs.filter((x) => x !== idu)) }
 
-  // ── RÉSULTAT (base Lot A — enrichi au Lot B) ──────────────────────────────────────────────────
+  // ── RÉSULTAT (Lot B) — le résultat qui explique : Votre demande → Ce que le terrain accueille →
+  //    L'écart → Ce qui limite → Alternative ; 4 grandeurs séparées ; 3 variantes ; 5 états ; verdict.
   if (resultat) {
-    const sc = resultat.scenarios[0]
+    const variantes = resultat.variantes ?? []
+    const active = variantes.find((v) => v.role === variantActive) ?? variantes[0]
+    const alternative = variantes.find((v) => v.role === 'alternative')
+    const dem = TYPES.filter((t) => nb[t] > 0)
+    const bilanDe = (v: EtudeVariante): EtudeProgramme =>
+      ({ ref: v.role_label, logements: v.resume.logements, par_type: v.programme.par_type, sdp_m2: v.resume.sdp_m2, shab_m2: v.programme.shab_estimee_m2 })
     return (
       <div className="flex min-h-full flex-col">
         <Entete onClose={onClose} onReset={() => { analyse.reset() }} resetLabel="← Modifier le programme" />
-        <div className="grid flex-1 gap-4 p-4 lg:grid-cols-[320px_1fr]">
-          <aside className="flex flex-col gap-3">
-            <div className="rounded-lg border border-line-2 bg-surface-2 p-3">
-              <div className="flex items-center justify-between">
-                <b className="text-[13px]">{sc ? `Scénario ${sc.ref} · ${sc.forme}` : 'Aucun scénario'}</b>
-                <Badge ton={statutTon(resultat.statut_global)}>{statutCourt(resultat.statut_global)}</Badge>
-              </div>
-              {sc && <p className="mt-1 text-[12px] text-txt-mut">{fmtInt(sc.resume.logements)} logements · {fmtInt(sc.resume.places)} places</p>}
-              {resultat.message && <p className="mt-2 text-[11px] text-amber">{resultat.message}</p>}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line-2 px-4 py-3">
+          <div className="flex items-center gap-3">
+            <span className="text-[12px] text-txt-dim">Verdict de l'étude</span>
+            <Badge ton={verdictTon(resultat.verdict ?? '')}>{resultat.verdict}</Badge>
+          </div>
+          {variantes.length > 0 && (
+            <div className="flex flex-wrap gap-1" role="tablist" aria-label="Variantes">
+              {variantes.map((v) => {
+                const on = v.role === active?.role
+                return (
+                  <button key={v.role} type="button" data-variante={v.role} onClick={() => setVariantActive(v.role)}
+                    className={`rounded border px-2.5 py-1 text-[11px] transition-colors duration-quick ${on ? 'border-mint bg-mint font-semibold text-mint-on' : 'border-line-2 text-txt-mut hover:border-mint/60'}`}>
+                    {v.role_label}
+                  </button>
+                )
+              })}
             </div>
-            <p className="text-[10.5px] leading-snug text-txt-dim">
-              Pré-faisabilité indicative, à faire confirmer par un architecte. Ni étude d'architecte, ni preuve de conformité.
-              Le détail « ce que le terrain accueille », les variantes et les facteurs limitants arrivent au lot suivant.
-            </p>
-          </aside>
-          <section className="flex flex-col gap-4">
-            {sc && (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <Chiffre v={fmtInt(sc.resume.logements)} l="logements" />
-                <Chiffre v={fmtInt(sc.resume.places)} l="places dessinées" />
-                <Chiffre v={`${fmtDec(sc.resume.sdp_m2)} m²`} l="SDP du scénario" />
-                <Chiffre v={`${fmtDec(resultat.terrain.contenance_totale_m2)} m²`} l="terrain" />
-              </div>
-            )}
-            {sc?.geojson && (
-              <div className="rounded-lg border border-line-2 bg-surface-2 p-3">
-                <p className="mb-2 text-[11px] font-semibold text-txt">Plan masse — scénario {sc.ref}</p>
-                <PlanMasseSvg fc={sc.geojson} svg={sc.planche_svg} groupesCaches={[]} />
-              </div>
-            )}
-          </section>
+          )}
         </div>
+
+        {resultat.depassement && <Depassement d={resultat.depassement} limite={active?.limite_capacite} />}
+
+        {active && (
+          <div className="grid flex-1 gap-4 p-4 lg:grid-cols-[1fr_360px]">
+            <section className="flex flex-col gap-4">
+              {/* 4 grandeurs séparées */}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <GrandeurCard l="Sol restant" g={active.grandeurs.sol_restant} />
+                <GrandeurCard l="Emprise mobilisable" g={active.grandeurs.emprise_mobilisable} />
+                <GrandeurCard l="SDP autorisée" g={active.grandeurs.sdp_autorisee} />
+                <GrandeurCard l="Programme envisageable" g={active.grandeurs.programme_envisageable} />
+              </div>
+              {/* plan masse de la variante active */}
+              {active.geojson && (
+                <div className="rounded-lg border border-line-2 bg-surface-2 p-3">
+                  <p className="mb-2 text-[11px] font-semibold text-txt">Plan masse — {active.role_label} · {active.forme} · {active.niveaux_label}</p>
+                  <PlanMasseSvg fc={active.geojson} svg={active.planche_svg} groupesCaches={[]} />
+                </div>
+              )}
+              {/* contrôles — 5 états */}
+              <Controles v={active} />
+            </section>
+
+            {/* Récit : demande → accueil → écart → limite → alternative */}
+            <aside className="flex flex-col gap-3">
+              <Recit titre="Votre demande">
+                <p className="text-[12px] text-txt">{fmtInt(totalLogts)} logements · {fmtDec(surfaceProg)} m² de programme</p>
+                <p className="text-[10.5px] text-txt-dim">dont {fmtDec(surfaceVar)} m² de varangues · {fmtDec(surfaceInt)} m² d'intérieur indicatif</p>
+                <p className="mt-1 text-[10.5px] text-txt-dim">{dem.map((t) => `${nb[t]}×${t}`).join(' · ')}</p>
+              </Recit>
+              <Recit titre="Ce que le terrain accueille" ton={verdictTon(active.verdict)}>
+                <p className="text-[12px] text-txt-hi">{fmtInt(active.resume.logements)} logements · {fmtInt(active.resume.places)} places · {active.niveaux_label}</p>
+                <p className="text-[10.5px] text-txt-dim">{Object.entries(active.programme.par_type).map(([t, n]) => `${n}×${t}`).join(' · ')} · SDP {fmtDec(active.resume.sdp_m2)} m²</p>
+                <div className="mt-1.5"><Badge ton={verdictTon(active.verdict)}>{active.verdict}</Badge></div>
+              </Recit>
+              {active.ecart && (
+                <Recit titre="L'écart" ton={active.ecart.reserve_logements >= 0 ? 'vert' : 'ambre'}>
+                  {active.ecart.reserve_logements >= 0 ? (
+                    <p className="text-[11.5px] text-txt">Vos {active.ecart.demande_total} logements tiennent. Réserve de <b>{active.ecart.reserve_logements}</b> logement(s) sur cette variante dessinée.</p>
+                  ) : (
+                    <p className="text-[11.5px] text-txt">{active.ecart.variante_total} des {active.ecart.demande_total} demandés tiennent sur cette variante.</p>
+                  )}
+                  <p className="mt-0.5 text-[9.5px] text-txt-dim">Chiffré depuis une variante dessinée (prouvé), non une règle de trois.</p>
+                </Recit>
+              )}
+              <Recit titre="Ce qui limite">
+                <p className="text-[11.5px] text-txt">{active.limite_capacite ?? 'Aucun facteur limitant dominant identifié.'}</p>
+                {active.controles.filter((c) => c.resultat === 'Échoué' || c.resultat === 'À confirmer').slice(0, 4).map((c) => (
+                  <p key={c.nom} className="mt-0.5 text-[10px] text-txt-dim">• {c.nom} — <span className={c.resultat === 'Échoué' ? 'text-coral' : 'text-amber'}>{c.resultat}</span></p>
+                ))}
+              </Recit>
+              {alternative && alternative.role !== active.role && (
+                <Recit titre="Une alternative concrète">
+                  <p className="text-[11.5px] text-txt">{alternative.forme} {alternative.niveaux_label} — {fmtInt(alternative.resume.logements)} logements.</p>
+                  <button type="button" onClick={() => setVariantActive('alternative')} className="mt-1 text-[11px] text-mint hover:underline">Voir l'alternative →</button>
+                </Recit>
+              )}
+              {onBilan && (
+                <Bouton niveau="secondaire" onClick={() => onBilan(bilanDe(active))}>Bilan de ce scénario →</Bouton>
+              )}
+            </aside>
+          </div>
+        )}
+
+        {!active && (
+          <div className="p-6 text-center">
+            <Badge ton="rouge">{resultat.verdict}</Badge>
+            <p className="mt-2 text-[12px] text-txt-mut">{resultat.message}</p>
+          </div>
+        )}
+
+        <p className="px-4 pb-4 text-[10px] leading-snug text-txt-dim">Pré-faisabilité indicative, à faire confirmer par un architecte. Ni étude d'architecte, ni preuve de conformité. Une place annoncée = une place dessinée.</p>
       </div>
     )
   }
@@ -195,11 +265,66 @@ function Entete({ onClose, onReset, resetLabel }: { onClose?: () => void; onRese
   )
 }
 
-function Chiffre({ v, l }: { v: string; l: string }) {
+// ── Lot B — une des 4 grandeurs (valeur + statut mesuré/dérivé/non vérifié) ──────────────────────
+function GrandeurCard({ l, g }: { l: string; g: EtudeGrandeur }) {
+  const val = g.valeur_m2 == null ? '—' : `${fmtDec(g.valeur_m2)} m²`
+  const ton = g.statut === 'mesuré' ? 'vert' : g.statut === 'dérivé' ? 'neutre' : 'ambre'
   return (
-    <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
-      <div className="font-display text-[24px] font-bold leading-none text-txt-hi">{v}</div>
+    <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5" title={g.detail}>
+      <div className="font-display text-[20px] font-bold leading-none text-txt-hi">{val}</div>
       <div className="mt-1 text-[10.5px] text-txt-dim">{l}</div>
+      <div className="mt-1"><Badge ton={ton}>{g.statut}</Badge></div>
+    </div>
+  )
+}
+
+// ── Lot B — une étape du récit du résultat ──────────────────────────────────────────────────────
+function Recit({ titre, ton, children }: { titre: string; ton?: 'vert' | 'ambre' | 'rouge'; children: React.ReactNode }) {
+  const bord = ton === 'vert' ? 'border-l-mint' : ton === 'ambre' ? 'border-l-amber' : ton === 'rouge' ? 'border-l-coral' : 'border-l-line-2'
+  return (
+    <div data-recit={titre} className={`rounded-md border border-line-2 ${bord} border-l-2 bg-surface-2 px-3 py-2`}>
+      <p className="text-[9px] font-semibold uppercase tracking-wide text-txt-dim">{titre}</p>
+      <div className="mt-1">{children}</div>
+    </div>
+  )
+}
+
+// ── Lot B — la liste des contrôles (5 états) ────────────────────────────────────────────────────
+function Controles({ v }: { v: EtudeVariante }) {
+  const c = v.controles_compte
+  return (
+    <div className="rounded-lg border border-line-2 bg-surface-2 p-3">
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <b className="text-[11px] font-semibold text-txt">Contrôles réglementaires</b>
+        <span className="text-[10px] text-mint">{c.reussi} réussis</span>
+        {c.echoue > 0 && <span className="text-[10px] text-coral">{c.echoue} échoués</span>}
+        {(c.a_confirmer ?? 0) > 0 && <span className="text-[10px] text-amber">{c.a_confirmer} à confirmer</span>}
+        <span className="text-[10px] text-txt-dim">{c.non_effectue} non effectués · {c.non_applicable} sans objet</span>
+      </div>
+      <div className="flex flex-col gap-1">
+        {v.controles.map((ct) => (
+          <div key={ct.nom} className="flex items-start justify-between gap-2 border-t border-line-2 py-1">
+            <div className="min-w-0">
+              <span className="text-[11px] text-txt">{ct.nom}</span>
+              <span className="ml-1.5 text-[10px] text-txt-dim">{ct.regle} · {ct.mesure}</span>
+              {ct.citation && <span className="ml-1.5 text-[9.5px] text-txt-dim">— {ct.citation}</span>}
+            </div>
+            <Badge ton={etatTon(ct.resultat)}>{ct.resultat}</Badge>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── Lot B — dépassement : combien tiennent, lesquels manquent, par quoi commencer ───────────────
+function Depassement({ d, limite }: { d: NonNullable<EtudePayload['depassement']>; limite?: string | null }) {
+  const manquent = Object.entries(d.manquent)
+  return (
+    <div className="mx-4 mt-3 rounded-md border border-amber/50 bg-amber-bg px-4 py-3">
+      <b className="text-[12px] text-amber">Votre programme dépasse les enveloppes testées — l'impossibilité n'est pas démontrée.</b>
+      <p className="mt-1 text-[11.5px] text-txt">{d.total_tiennent} des {d.total_demande} logements demandés sont dessinables. Manquent : {manquent.map(([t, n]) => `${n}×${t}`).join(' · ')}.</p>
+      {limite && <p className="mt-0.5 text-[10.5px] text-txt-mut">Par quoi commencer : {limite}. Réduisez la quantité ou changez l'implantation.</p>}
     </div>
   )
 }

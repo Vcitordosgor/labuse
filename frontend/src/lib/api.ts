@@ -2135,7 +2135,7 @@ export interface EtudeScenario {
   resume: { logements: number; places: number; sdp_m2: number }
   // recette Vic — en une ligne, ce qui plafonne la capacité (stationnement, prospect non chiffré…).
   limite_capacite?: string | null
-  controles_compte: { reussi: number; echoue: number; non_effectue: number; non_applicable: number }
+  controles_compte: { reussi: number; echoue: number; non_effectue: number; non_applicable: number; a_confirmer?: number }
   programme: {
     par_type: Record<string, number>; shab_par_type_m2: Record<string, number>
     shab_estimee_m2: number; ratio_shab_sdp: number | null
@@ -2186,6 +2186,29 @@ export interface EtudePayload {
   }
   programme_saisi: { demande: Record<string, number> } | null
   statut_global: string; message: string | null; scenarios: EtudeScenario[]
+  // ETUDE-V6 (Lot B) — le résultat qui explique : verdict global (3 libellés), 3 variantes mandat
+  // (votre programme / optimisation / alternative) et le dépassement (si la demande ne tient pas).
+  verdict?: string
+  variantes?: EtudeVariante[]
+  depassement?: EtudeDepassement | null
+}
+export interface EtudeGrandeur { valeur_m2: number | null; statut: string; detail: string }
+export interface EtudeVariante extends EtudeScenario {
+  role: 'votre_programme' | 'optimisation' | 'alternative'
+  role_label: string
+  verdict: string
+  grandeurs: {
+    sol_restant: EtudeGrandeur; emprise_mobilisable: EtudeGrandeur
+    sdp_autorisee: EtudeGrandeur; programme_envisageable: EtudeGrandeur
+  }
+  ecart: {
+    demande_total: number; variante_total: number; reserve_logements: number
+    par_type_demande: Record<string, number>; par_type_variante: Record<string, number>; prouve: boolean
+  } | null
+}
+export interface EtudeDepassement {
+  demande: Record<string, number>; tiennent: Record<string, number>; manquent: Record<string, number>
+  total_demande: number; total_tiennent: number
 }
 export interface EtudeIn {
   idus: string[]; type_projet?: string; objectif?: string; stationnement?: string; terrain?: string

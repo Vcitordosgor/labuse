@@ -26,6 +26,12 @@ REUSSI = "Réussi"
 ECHOUE = "Échoué"
 NON_EFFECTUE = "Non effectué"
 NON_APPLICABLE = "Non applicable"
+# ETUDE-V6 (Lot B) — 5ᵉ état : ambiguïté de DONNÉE ou de TEXTE (PPR présent non interprété, prospect
+# non chiffrable, servitude présente, barème manquant). ≠ « Non effectué » (non calculé, ex. locaux
+# vélos) et ≠ « Non applicable » (contrainte absente). « À confirmer » interdit un verdict « Exploitable ».
+A_CONFIRMER = "À confirmer"
+
+ETATS = (REUSSI, ECHOUE, NON_EFFECTUE, NON_APPLICABLE, A_CONFIRMER)
 
 _TOL_AIRE = 1e-6
 _TOL_CONTENU = 0.05
@@ -247,7 +253,7 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
     # Prospect / hauteur relative (ex. L ≥ h/2) : non chiffrable par le moteur -> Non effectué
     if regles.prospect is not None:
         out.append(ControleReg("Prospect (hauteur relative)", "non chiffrable par le moteur",
-                               "hauteur bornée par la seule règle absolue", NON_EFFECTUE,
+                               "hauteur bornée par la seule règle absolue", A_CONFIRMER,
                                citation=None,
                                detail=(regles.prospect.citation or "règle de prospect L ≥ h/2 — "
                                        "à vérifier par l'architecte")))
@@ -282,7 +288,9 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
                                f"{cap.places} places dessinées", REUSSI if ok else ECHOUE,
                                b.citation_complete, f"écart {cap.places - cap.places_imposees:+d}"))
     else:
-        out.append(ControleReg("Stationnement", "barème non validé", f"{cap.places} places dessinées", NON_EFFECTUE))
+        # ETUDE-V6 — barème manquant = ambiguïté (exigence non chiffrée) → À confirmer, pas « Non effectué ».
+        out.append(ControleReg("Stationnement", "barème non servi pour cette zone", f"{cap.places} places dessinées",
+                               A_CONFIRMER, detail="exigence de stationnement non chiffrée ici — à confirmer au règlement"))
 
     # Distance entre constructions (PLU-CALIBRAGE-10, ex-art. 8) : MESURÉE sur la géométrie et
     # confrontée à la règle de la zone. Convention des 4 états :
@@ -322,20 +330,22 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
 
     out.append(ControleReg("Locaux vélos · déchets", "non modélisés", "—", NON_EFFECTUE))
 
-    # PPR rouge (interdiction) : déduite de l'implantation
+    # PPR rouge (interdiction) : déduite de l'implantation, mais l'interdiction reste à CONFIRMER au
+    # règlement (on la retire par prudence, ce n'est pas une preuve de constructibilité du reste).
     if terrain.contraintes.get("ppr_rouge"):
-        out.append(ControleReg("PPR zone rouge (interdiction)", "inconstructible", f"{terrain.ppr_rouge_m2:.0f} m²",
-                               NON_EFFECTUE, detail="retirée de la zone d'implantation (hypothèse prudente)"))
+        out.append(ControleReg("PPR zone rouge (interdiction)", "retirée de la zone (prudence)",
+                               f"{terrain.ppr_rouge_m2:.0f} m²", A_CONFIRMER,
+                               detail="partie interdite retirée de l'implantation ; interdiction à confirmer au règlement PPR"))
     else:
         out.append(ControleReg("PPR zone rouge (interdiction)", "absente du terrain", "—", NON_APPLICABLE))
 
-    # PPR bleue (prescription) : signalée, non interprétée ; à compléter si elle touche le bâti
+    # PPR bleue (prescription) : signalée, non interprétée → à confirmer (prescriptions à lire).
     if terrain.contraintes.get("ppr_bleue"):
         touche = _ppr_bleue_touche_bati(scene, terrain)
         out.append(ControleReg("PPR zone bleue (prescription)", "signalée, non interprétée",
                                ("touche le bâti proposé" if touche else "ne touche pas le bâti"),
-                               NON_EFFECTUE, detail=("prescriptions à lire ; l'étude passe à compléter"
-                                                     if touche else "signalée")))
+                               A_CONFIRMER, detail=("prescriptions à lire : tant qu'elles ne le sont pas, l'étude "
+                                                    "n'est pas exploitable" if touche else "signalée, prescriptions à lire")))
     else:
         out.append(ControleReg("PPR zone bleue (prescription)", "absente du terrain", "—", NON_APPLICABLE))
 
@@ -343,7 +353,7 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
     autres = [k for k in ("emplacement_reserve", "ebc", "sup", "servitude") if terrain.contraintes.get(k)]
     if autres:
         out.append(ControleReg("ER / EBC / SUP / servitudes", "présente(s)", ", ".join(autres),
-                               NON_EFFECTUE, detail="non interprétées par ce moteur"))
+                               A_CONFIRMER, detail="servitude(s) présente(s) non interprétée(s) par ce moteur — à confirmer"))
     else:
         out.append(ControleReg("ER / EBC / SUP / servitudes", "absentes du terrain", "—", NON_APPLICABLE))
     return out
@@ -367,3 +377,36 @@ def statut_etude(controles: list[ControleReg], geo_ok: bool, *, scene: Scene, te
     if _ppr_bleue_touche_bati(scene, terrain):
         return "à compléter"
     return "exploitable en pré-faisabilité"
+
+
+# ETUDE-V6 (Lot B) — verdict GLOBAL de l'étude, dans les trois libellés du mandat. Distinct de
+# `statut_etude` (conservé pour l'écran historique). Règle clé : un PPR, un accès ou un stationnement
+# INDÉTERMINÉ (À confirmer) interdit « Exploitable » — trois contrôles verts ne suffisent pas.
+VERDICT_EXPLOITABLE = "Exploitable sous hypothèses"
+VERDICT_A_COMPLETER = "À compléter"
+VERDICT_IMPOSSIBLE = "Impossible pour cause établie"
+
+# contrôles dont l'état « À confirmer » est RÉDHIBITOIRE pour un verdict exploitable (mandat §4).
+_A_CONFIRMER_BLOQUANTS = frozenset({
+    "PPR zone rouge (interdiction)", "PPR zone bleue (prescription)",
+    "Stationnement", "Prospect (hauteur relative)", "ER / EBC / SUP / servitudes",
+})
+
+
+def verdict_global(controles: list[ControleReg], *, statut_base: str, terrain,
+                   cause_etablie: str | None = None) -> str:
+    """Traduit l'état de l'étude dans les 3 verdicts du mandat. `cause_etablie` (non None) force
+    « Impossible pour cause établie » (ex. assiette entièrement inconstructible, dépassement prouvé)."""
+    if cause_etablie:
+        return VERDICT_IMPOSSIBLE
+    if statut_base == "simulation impossible":
+        return VERDICT_IMPOSSIBLE
+    if any(c.resultat == ECHOUE for c in controles):
+        return VERDICT_A_COMPLETER
+    if any(c.resultat == A_CONFIRMER and c.nom in _A_CONFIRMER_BLOQUANTS for c in controles):
+        return VERDICT_A_COMPLETER
+    if not getattr(terrain, "has_voie", True):      # accès à la voie non établi
+        return VERDICT_A_COMPLETER
+    if statut_base != "exploitable en pré-faisabilité":
+        return VERDICT_A_COMPLETER
+    return VERDICT_EXPLOITABLE

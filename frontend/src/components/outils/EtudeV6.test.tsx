@@ -20,11 +20,29 @@ const OUT = (ok: boolean) => ({
   signaux: { communes_differentes: null, zones_differentes: null, ravine_traversante: null, proprietaires_presumes: null, proprietaires_statut: 'non vérifié' },
   sources: { cadastre: { source: 'Cadastre (API Carto PCI)', millesime: 'PCI', derniere_synchro: '2026-10-11' }, plu: { source: 'Urbanisme PLU/GPU (API Carto)', millesime: null, derniere_synchro: null } },
 })
+const GRAND = (v: number | null, statut: string) => ({ valeur_m2: v, statut, detail: '' })
+const VARIANTE = (role: string, label: string, logts: number, verdict: string) => ({
+  ref: role, role, role_label: label, forme: 'barre', niveaux: 4, niveaux_label: 'R+3',
+  statut_etude: 'exploitable en pré-faisabilité', verdict,
+  resume: { logements: logts, places: logts, sdp_m2: logts * 60 },
+  limite_capacite: 'la hauteur réglementaire',
+  controles_compte: { reussi: 5, echoue: 0, non_effectue: 1, non_applicable: 5, a_confirmer: 0 },
+  programme: { par_type: { T2: logts }, shab_par_type_m2: {}, shab_estimee_m2: logts * 45, ratio_shab_sdp: 0.6, mixite_applicable: false, logements_aides_imposes: 0, sdp_aidee_imposee_m2: 0 },
+  distribution_niveaux: [], stationnement: { places: logts, places_imposees: logts, details_places: {}, m2_par_place: 18, surface_stationnement_m2: 400, note: null, acces: null },
+  surfaces_mesurees_m2: {}, emprise_sol_m2: 500, pleine_terre_m2: 600,
+  grandeurs: { sol_restant: GRAND(800, 'mesuré'), emprise_mobilisable: GRAND(870, 'dérivé'), sdp_autorisee: GRAND(4888, 'dérivé'), programme_envisageable: GRAND(logts * 60, 'mesuré') },
+  ecart: { demande_total: 12, variante_total: logts, reserve_logements: logts - 12, par_type_demande: { T2: 12 }, par_type_variante: { T2: logts }, prouve: true },
+  controles: [{ nom: 'Emprise au sol', regle: '≤ 1 222 m²', mesure: '500 m²', resultat: 'Réussi', citation: 'PLU UA p.22', detail: null }],
+  checks_geometriques: [], geojson: { type: 'FeatureCollection', features: [] },
+})
 const RESULTAT = {
   moteur: {}, entrees: {}, regles: { zone: 'UA', insee: '97404', lignes: [] },
   terrain: { contenance_totale_m2: 1746 },
-  hypotheses: {}, programme_saisi: null, statut_global: 'exploitable en pré-faisabilité', message: null,
-  scenarios: [{ ref: 'A', forme: 'barre', resume: { logements: 40, places: 40, sdp_m2: 1360 }, programme: {}, controles: [], geojson: { type: 'FeatureCollection', features: [] } }],
+  hypotheses: {}, programme_saisi: null, statut_global: 'exploitable en pré-faisabilité',
+  verdict: 'Exploitable sous hypothèses', message: null, depassement: null,
+  scenarios: [], variantes: [VARIANTE('votre_programme', 'Votre programme', 20, 'Exploitable sous hypothèses'),
+                             VARIANTE('optimisation', 'Optimisation', 28, 'Exploitable sous hypothèses'),
+                             VARIANTE('alternative', 'Alternative', 27, 'Exploitable sous hypothèses')],
 }
 
 vi.mock('../../lib/api', () => ({
@@ -87,7 +105,7 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     expect(document.body.textContent).not.toContain('SDP du programme')
   })
 
-  it('analyse : « Analyser mon projet » appelle le moteur et affiche le résultat', async () => {
+  it('analyse : le résultat qui explique — verdict, 3 variantes, 4 grandeurs, récit', async () => {
     vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
     vi.mocked(postEtude).mockResolvedValue(RESULTAT as any)
     renderV6(['97404000AW0099', '97404000AW0451'])
@@ -99,12 +117,40 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     await waitFor(() => screen.getByText('Combien de logements souhaitez-vous ?'))
     fireEvent.change(document.querySelector('[data-etude-count="T2"]') as HTMLInputElement, { target: { value: '12' } })
     fireEvent.click(screen.getByRole('button', { name: /Analyser mon projet/ }))
-    await waitFor(() => expect(screen.getByText(/Scénario A/)).toBeTruthy())
-    expect(screen.getByText('Exploitable sous hypothèses')).toBeTruthy()
+    // verdict global + les 3 variantes + le récit
+    await waitFor(() => expect(screen.getByText('Verdict de l\'étude')).toBeTruthy())
+    expect(screen.getAllByText('Exploitable sous hypothèses').length).toBeGreaterThan(0)
+    expect(document.querySelector('[data-variante="votre_programme"]')).toBeTruthy()
+    expect(document.querySelector('[data-variante="optimisation"]')).toBeTruthy()
+    expect(document.querySelector('[data-variante="alternative"]')).toBeTruthy()
+    // les 4 grandeurs nommées séparément + le récit (demande → accueil → écart → limite)
+    expect(screen.getByText('Sol restant')).toBeTruthy()
+    expect(screen.getByText('SDP autorisée')).toBeTruthy()
+    expect(document.querySelector('[data-recit="Votre demande"]')).toBeTruthy()
+    expect(document.querySelector('[data-recit="Ce que le terrain accueille"]')).toBeTruthy()
+    expect(document.querySelector('[data-recit="Ce qui limite"]')).toBeTruthy()
     expect(vi.mocked(postEtude)).toHaveBeenCalledWith(expect.objectContaining({
-      idus: ['97404000AW0099', '97404000AW0451'],
-      type_projet: 'collectif',
+      idus: ['97404000AW0099', '97404000AW0451'], type_projet: 'collectif',
       programme: expect.objectContaining({ mode: 'saisi' }),
     }))
+  })
+
+  it('variantes : cliquer « Optimisation » change le plan masse actif', async () => {
+    vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
+    vi.mocked(postEtude).mockResolvedValue(RESULTAT as any)
+    renderV6(['97404000AW0099', '97404000AW0451'])
+    await waitFor(() => screen.getByText('AW 99'))
+    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
+    await waitFor(() => screen.getByText('Quel type de projet ?'))
+    fireEvent.click(screen.getByText('Résidence étudiante'))
+    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
+    await waitFor(() => screen.getByText('Combien de logements souhaitez-vous ?'))
+    fireEvent.change(document.querySelector('[data-etude-count="T2"]') as HTMLInputElement, { target: { value: '12' } })
+    fireEvent.click(screen.getByRole('button', { name: /Analyser mon projet/ }))
+    await waitFor(() => expect(document.querySelector('[data-variante="optimisation"]')).toBeTruthy())
+    // par défaut « votre programme » (20 logts) ; après clic « Optimisation » → 28 logts dans le récit
+    expect(document.querySelector('[data-recit="Ce que le terrain accueille"]')!.textContent).toContain('20 logements')
+    fireEvent.click(document.querySelector('[data-variante="optimisation"]') as HTMLElement)
+    expect(document.querySelector('[data-recit="Ce que le terrain accueille"]')!.textContent).toContain('28 logements')
   })
 })

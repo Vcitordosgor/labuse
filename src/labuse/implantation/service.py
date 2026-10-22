@@ -24,7 +24,8 @@ from . import moteur as moteur_mod
 from . import planche as planche_mod
 from . import rendu as rendu_mod
 from .conventions import avec_surcharges, charger as charger_conventions
-from .controles import ECHOUE, NON_APPLICABLE, NON_EFFECTUE, REUSSI
+from .controles import (A_CONFIRMER, ECHOUE, NON_APPLICABLE, NON_EFFECTUE, REUSSI,
+                        verdict_global)
 
 OBJECTIFS = {"equilibre", "plus_logements", "plus_surface", "plus_simple"}
 TYPES_LOGEMENT = ("T1", "T2", "T3", "T4")  # ETUDE-V6 — le programme saisi va du T1 au T4
@@ -79,12 +80,12 @@ def _geojson_scenario(scenario) -> dict:
 
 # ------------------------------------------------------------------ compteurs / résumés
 def _compte_controles(controles) -> dict:
-    c = {REUSSI: 0, ECHOUE: 0, NON_EFFECTUE: 0, NON_APPLICABLE: 0}
+    c = {REUSSI: 0, ECHOUE: 0, NON_EFFECTUE: 0, NON_APPLICABLE: 0, A_CONFIRMER: 0}
     for ct in controles:
         if ct.resultat in c:
             c[ct.resultat] += 1
-    return {"reussi": c[REUSSI], "echoue": c[ECHOUE],
-            "non_effectue": c[NON_EFFECTUE], "non_applicable": c[NON_APPLICABLE]}
+    return {"reussi": c[REUSSI], "echoue": c[ECHOUE], "non_effectue": c[NON_EFFECTUE],
+            "non_applicable": c[NON_APPLICABLE], "a_confirmer": c[A_CONFIRMER]}
 
 
 def _scenario_public(scenario, ref: str) -> dict:
@@ -132,6 +133,66 @@ def _scenario_public(scenario, ref: str) -> dict:
         "checks_geometriques": sd["controles_geometriques"],
         "geojson": _geojson_scenario(scenario),
     }
+
+
+# ------------------------------------------------------------------ ETUDE-V6 (Lot B) : variantes
+_ROLE_LABELS = {"votre_programme": "Votre programme", "optimisation": "Optimisation",
+                "alternative": "Alternative"}
+
+
+def _grandeurs(terrain, regles, conv, scenario) -> dict:
+    """Les QUATRE grandeurs du mandat, JAMAIS confondues : sol restant au sol, emprise encore
+    mobilisable, SDP autorisée (plafond réglementaire), m² de programme (plancher) envisageables.
+    Chacune porte un statut : mesuré (sur le dessin), dérivé (d'une règle), non vérifié (règle absente)."""
+    cap = scenario.capacite
+    contenance = terrain.contenance_totale_m2
+    emprise = cap.emprise_sol_m2 or 0.0
+    stat = cap.surface_stationnement_m2 or 0.0
+    sol_restant = max(0.0, contenance - emprise - stat)
+    out = {
+        "sol_restant": {"valeur_m2": round(sol_restant, 1), "statut": "mesuré",
+                        "detail": f"{contenance:.0f} m² − {emprise:.0f} bâti − {stat:.0f} stationnement"},
+    }
+    ces = regles.emprise_ces
+    if ces.validee and ces.valeur is not None:
+        emprise_max = contenance * ces.valeur / 100.0
+        out["emprise_mobilisable"] = {"valeur_m2": round(max(0.0, emprise_max - emprise), 1), "statut": "dérivé",
+                                      "detail": f"CES {ces.valeur:.0f} % = {emprise_max:.0f} m² max − {emprise:.0f} m² dessinés"}
+        h = regles.hauteur_plafond
+        if h.validee and h.valeur is not None and conv.hauteur_etage_m > 0:
+            niv_max = max(1, int(h.valeur // conv.hauteur_etage_m))
+            out["sdp_autorisee"] = {"valeur_m2": round(emprise_max * niv_max, 1), "statut": "dérivé",
+                                    "detail": f"{emprise_max:.0f} m² × R+{niv_max - 1} (plafond {h.valeur:.0f} m)"}
+        else:
+            out["sdp_autorisee"] = {"valeur_m2": None, "statut": "non vérifié", "detail": "hauteur non chiffrée"}
+    else:
+        out["emprise_mobilisable"] = {"valeur_m2": None, "statut": "non vérifié", "detail": "CES non servi"}
+        out["sdp_autorisee"] = {"valeur_m2": None, "statut": "non vérifié", "detail": "CES non servi"}
+    out["programme_envisageable"] = {"valeur_m2": round(cap.sdp_m2, 1), "statut": "mesuré",
+                                     "detail": "SDP (plancher) dessinée de la variante"}
+    return out
+
+
+def _variante_public(role: str, scenario, terrain, conv, regles, demande: dict) -> dict:
+    """Vue servie d'une variante : le scénario public + rôle (mandat), verdict global (3 libellés),
+    les 4 grandeurs, et l'écart CHIFFRÉ demande ↔ variante dessinée (donc prouvé)."""
+    pub = _scenario_public(scenario, role)
+    pub["role"] = role
+    pub["role_label"] = _ROLE_LABELS.get(role, role)
+    pub["verdict"] = verdict_global(scenario.controles, statut_base=scenario.statut, terrain=terrain)
+    pub["grandeurs"] = _grandeurs(terrain, regles, conv, scenario)
+    cap = scenario.capacite
+    if demande:
+        dem_tot = sum(n for n in demande.values() if n > 0)
+        pub["ecart"] = {
+            "demande_total": dem_tot, "variante_total": cap.logements,
+            "reserve_logements": cap.logements - dem_tot,
+            "par_type_demande": {t: n for t, n in demande.items() if n > 0},
+            "par_type_variante": cap.par_type, "prouve": True,
+        }
+    else:
+        pub["ecart"] = None
+    return pub
 
 
 # ------------------------------------------------------------------ règles citées (affichage)
@@ -228,25 +289,28 @@ def etudier_payload(session, entree: dict) -> dict:
         if not demande:
             raise ValueError("programme saisi vide : indiquez au moins un type et un nombre")
 
-    scenarios, message, terrain, regles, conv = moteur_mod.etudier_multi(
+    # ETUDE-V6 (Lot B) — UN SEUL passage de recherche → vue historique (scenarios) + 3 variantes mandat.
+    scenarios, variantes, depassement, message, terrain, regles, conv = moteur_mod.etudier_complet(
         session=session, idus=idus, objectif=objectif, conv=conv,
         programme=demande or None, repartition=repartition, max_scenarios=3,
     )
 
-    # entêtes partagés (terrain / règles / versions) — depuis le 1er scénario, sinon un scénario vide
-    # (même terrain/règles, scène vide) : aucune 2e recherche coûteuse.
-    ref_scn = scenarios[0] if scenarios else moteur_mod._scenario_vide(
-        terrain, conv, regles, objectif, [])
+    # entêtes partagés (terrain / règles / versions) — depuis le 1er scénario/variante, sinon un scénario
+    # vide (même terrain/règles, scène vide) : aucune 2e recherche coûteuse.
+    ref_scn = (scenarios[0] if scenarios else (variantes[0][1] if variantes else None)) \
+        or moteur_mod._scenario_vide(terrain, conv, regles, objectif, [])
     sd0 = rendu_mod.scenario_dict(ref_scn)
     t = ref_scn.terrain
 
     scenarios_pub = [_scenario_public(s, _REFS[i]) for i, s in enumerate(scenarios)]
+    variantes_pub = [_variante_public(role, s, terrain, conv, regles, demande) for role, s in variantes]
 
     # IMPLANTATION-4 (planche plan masse) — UN SEUL SVG par scénario, le même à l'écran et dans le PDF,
     # DESSINÉ depuis la géométrie (contexte cadastre/bâti/voies + TN LiDAR chargé UNE fois pour l'assiette).
     # Robuste : toute panne de contexte/dessin laisse `planche_svg` vide (l'écran retombe sur le plan
     # schématique) — l'étude est toujours servie.
-    if scenarios_pub:
+    paires = list(zip(scenarios_pub, scenarios)) + [(p, s) for p, (_r, s) in zip(variantes_pub, variantes)]
+    if paires:
         try:
             from labuse.tz import today_reunion
             genere_le = today_reunion().strftime("%d/%m/%Y")
@@ -259,7 +323,7 @@ def etudier_payload(session, entree: dict) -> dict:
                                                 voie_edges=t.voie_edges)
         except Exception:
             ctx = contexte_mod.Contexte()
-        for pub, scn in zip(scenarios_pub, scenarios):
+        for pub, scn in paires:
             try:
                 pub["planche_svg"] = planche_mod.planche_svg(
                     scn, ctx, ref=pub["ref"], genere_le=genere_le, numero=numero, entrees=ent_planche)
@@ -277,6 +341,15 @@ def etudier_payload(session, entree: dict) -> dict:
         statut_global = "ne tient pas"
     else:
         statut_global = "simulation impossible"
+
+    # ETUDE-V6 (Lot B) — verdict GLOBAL de l'étude (3 libellés mandat) : sur la variante « votre
+    # programme », sinon « impossible pour cause établie » si la demande ne tient pas / rien n'est faisable.
+    if variantes_pub:
+        verdict = variantes_pub[0]["verdict"]
+    elif demande:
+        verdict = "Impossible pour cause établie"
+    else:
+        verdict = "Impossible pour cause établie"
 
     return {
         "moteur": {"livrable": "IMPLANTATION-2",
@@ -318,6 +391,9 @@ def etudier_payload(session, entree: dict) -> dict:
         },
         "programme_saisi": ({"demande": demande} if demande else None),
         "statut_global": statut_global,
+        "verdict": verdict,
         "message": message,
         "scenarios": scenarios_pub,
+        "variantes": variantes_pub,
+        "depassement": depassement,
     }
