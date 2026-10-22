@@ -88,10 +88,21 @@ MSG_NON_CONTIGUES = (
 )
 
 
-def _regles_plu_resume(insee: str, zone: Optional[str], cache: dict) -> Optional[list]:
-    """ETUDE-V6-2 (Lot 5) — résumé des règles PLU SERVIES de la zone d'une parcelle (hauteur, CES, reculs,
-    pleine terre, + espaces verts / marge plantée si calibrés), chacune citée (article + page). Seules les
-    règles VALIDÉES et chiffrées sont listées (jamais « non vérifié » affiché comme une valeur). Caché par zone."""
+def _plu_millesime_insee(session, insee: str) -> Optional[str]:
+    from sqlalchemy import text
+    try:
+        m = session.execute(text("SELECT max(millesime) FROM plu_reglement_extrait WHERE insee = :i"),
+                            {"i": insee}).scalar()
+        return str(m) if m else None
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _regles_plu_resume(session, insee: str, commune: Optional[str], zone: Optional[str], cache: dict) -> Optional[list]:
+    """ETUDE-V6-2 (Lot 5) / V6-3 (item 2) — résumé des règles PLU SERVIES de la zone d'une parcelle
+    (hauteur, CES, reculs, pleine terre, + espaces verts / marge plantée si calibrés). Chaque ligne porte
+    commune · zone · article · millésime (préfixe normalisé affiché) et sa page. Seules les règles VALIDÉES
+    et chiffrées sont listées (jamais « non vérifié » servi comme une valeur). Caché par (insee, zone)."""
     if not zone:
         return None
     key = (insee, zone)
@@ -101,23 +112,24 @@ def _regles_plu_resume(insee: str, zone: Optional[str], cache: dict) -> Optional
             rz = regles_mod.charger(insee, zone)
         except Exception:  # noqa: BLE001
             rz = None
+        millesime = _plu_millesime_insee(session, insee)
         lignes = None
         if rz is not None:
+            def _ligne(nom, valeur, unite, article, page):
+                return {"nom": nom, "valeur": valeur, "unite": unite, "article": article, "page_pdf": page,
+                        "commune": commune, "zone": zone, "millesime": millesime}
             lignes = []
             for nom, r in (("Hauteur à l'égout", rz.hauteur_egout), ("Hauteur au faîtage", rz.hauteur_faitage),
                            ("Emprise au sol (CES)", rz.emprise_ces), ("Recul sur voie", rz.recul_voie),
                            ("Recul séparatives", rz.recul_separatives), ("Pleine terre", rz.pleine_terre)):
                 if r and r.validee and r.valeur is not None:
-                    lignes.append({"nom": nom, "valeur": r.valeur, "unite": r.unite,
-                                   "article": r.article, "page_pdf": r.page_pdf})
+                    lignes.append(_ligne(nom, r.valeur, r.unite, r.article, r.page_pdf))
             ev = getattr(rz, "espaces_verts", None)
             if ev and ev.validee and ev.pct is not None:
-                lignes.append({"nom": "Espaces verts", "valeur": ev.pct, "unite": "%",
-                               "article": ev.article, "page_pdf": ev.page_pdf})
+                lignes.append(_ligne("Espaces verts", ev.pct, "%", ev.article, ev.page_pdf))
             mp = getattr(rz, "marge_plantee", None)
             if mp and mp.validee and mp.largeur_m is not None:
-                lignes.append({"nom": "Marge plantée", "valeur": mp.largeur_m, "unite": "m",
-                               "article": mp.article, "page_pdf": mp.page_pdf})
+                lignes.append(_ligne("Marge plantée", mp.largeur_m, "m", mp.article, mp.page_pdf))
             lignes = lignes or None
         cache[key] = lignes
     return cache[key]
@@ -184,7 +196,7 @@ def valider_parcelles(session, idus: list[str], *, tol_m: float = TOL_CONTIGUITE
                                        if r["largeur_inscriptible_m"] is not None else None),
             "disparue_le": r["cadastre_disparue_le"].isoformat() if r["cadastre_disparue_le"] else None,
             # ETUDE-V6-2 (Lot 5) — règles PLU de la zone de CETTE parcelle (sourcées), dès l'étape 1.
-            "regles_plu": _regles_plu_resume(idu[:5], r["zone_lib"], regles_cache),
+            "regles_plu": _regles_plu_resume(session, idu[:5], r["commune"], r["zone_lib"], regles_cache),
         })
 
     # Union (métriques globales de l'assiette) — surface réelle vs aire cadastrale reportée.

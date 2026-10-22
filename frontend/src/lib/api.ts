@@ -2178,7 +2178,7 @@ export interface EtudePayload {
     idus: string[]; commune: string; insee: string; zone: string; type_projet: string
     objectif: string; programme_mode: 'propose' | 'saisi'; stationnement: string; terrain: string
   }
-  regles: { zone: string; insee: string; lignes: EtudeRegle[] }
+  regles: { zone: string; insee: string; commune?: string | null; millesime?: string | null; lignes: EtudeRegle[] }
   terrain: {
     contenance_totale_m2: number; aire_dessin_m2: number; zone_implantation_m2: number
     has_voie: boolean; note_limites: string | null; contraintes: Record<string, number>
@@ -2267,6 +2267,7 @@ export interface EtudeStationnementRegimes {
     mode: string; validee: boolean; ratio_par_logement: number | null
     article: string | null; page_pdf: number | null; millesime: string | null
     citation: string | null; applique: boolean; etat: string
+    regle_courte?: string | null   // ETUDE-V6-3 (item 3) — règle en clair pour le récap
   }
   plafond_national: {
     categorie: string; reference: string; ratio_plafond: number
@@ -2341,8 +2342,9 @@ export interface EtudeParcelle {
   zone_plu: string | null; zone_famille: string | null
   qualite_geometrique: string; polsby_popper: number | null; largeur_inscriptible_m: number | null
   disparue_le: string | null
-  // ETUDE-V6-2 (Lot 5) — règles PLU servies de la zone de la parcelle (hauteur, CES, reculs, pleine terre…).
-  regles_plu?: Array<{ nom: string; valeur: number; unite: string; article: string | null; page_pdf: number | null }> | null
+  // ETUDE-V6-2 (Lot 5) / V6-3 (item 2) — règles PLU servies de la zone de la parcelle, avec préfixe normalisé.
+  regles_plu?: Array<{ nom: string; valeur: number; unite: string; article: string | null; page_pdf: number | null
+    commune?: string | null; zone?: string | null; millesime?: string | null }> | null
 }
 export interface EtudeParcellesOut {
   parcelles: EtudeParcelle[]

@@ -360,6 +360,34 @@ def _plu_millesime(session, insee: str) -> Optional[str]:
         return None
 
 
+def _regle_stationnement_courte(b) -> Optional[str]:
+    """ETUDE-V6-3 (item 3) — la règle de stationnement en clair et courte. Par logement → « N place/logt » ;
+    par typologie → « p pl. Tx–Ty » par tranche de pièces (Tn = n pièces principales)."""
+    if not b.validee:
+        return None
+    def nb(x):
+        return f"{x:g}".replace(".", ",")
+    if b.mode == "par_logement" and b.flat_places is not None:
+        return f"{nb(b.flat_places)} place/logt"
+    parts = []
+    for lg in b.lignes:
+        if lg.destination and lg.destination != "collectif":
+            continue
+        pmin, pmax = lg.pieces_min, lg.pieces_max
+        if pmin and pmax and pmin != pmax:
+            lab = f"T{pmin}–T{pmax}"
+        elif pmin and pmax and pmin == pmax:
+            lab = f"T{pmin}"
+        elif pmin and not pmax:
+            lab = f"T{pmin}+"
+        elif pmax and not pmin:
+            lab = f"≤T{pmax}"
+        else:
+            lab = "logt"
+        parts.append(f"{nb(lg.places)} pl. {lab}")
+    return " · ".join(parts) if parts else None
+
+
 def _stationnement_regimes(session, idus: list[str], type_projet: str, regles, insee: str) -> dict:
     """Les deux régimes de stationnement du mandat : la RÈGLE GÉNÉRALE du PLU (appliquée, sourcée) et,
     pour une destination L151-34, le PLAFOND NATIONAL L151-35 « sous condition d'éligibilité » (À confirmer).
@@ -371,6 +399,8 @@ def _stationnement_regimes(session, idus: list[str], type_projet: str, regles, i
         "article": b.article, "page_pdf": b.page_pdf, "millesime": _plu_millesime(session, insee),
         "citation": b.citation, "applique": True,
         "etat": ("règle vérifiée" if b.validee else "document manquant — à confirmer"),
+        # ETUDE-V6-3 (item 3) — la RÈGLE en clair (ex. « 1 pl. T1–T2 · 1,5 pl. T3–T4 ») pour le récap.
+        "regle_courte": _regle_stationnement_courte(b),
     }
     cat = _L15134.get(type_projet)
     plafond = None
@@ -573,7 +603,8 @@ def etudier_payload(session, entree: dict) -> dict:
             "forme": scn_max.forme, "places": cmax.places,
             "surface_stationnement_m2": cmax.surface_stationnement_m2,
             "stationnement_mode": cmax.stationnement_mode,
-            "repartition": ("votre répartition" if demande else "répartition équilibrée (proposée)"),
+            # ETUDE-V6-3 (item 11) — libellé propre (l'écran préfixe « répartition … », pas de doublon).
+            "repartition": ("de votre demande" if demande else "équilibrée (proposée)"),
             "note": ("Maximum de logements que le terrain accueille sous cette répartition — indépendant "
                      "du NOMBRE demandé (deux demandes de même répartition donnent le même maximum). "
                      "La demande y est ensuite confrontée."),
@@ -605,14 +636,17 @@ def etudier_payload(session, entree: dict) -> dict:
         except Exception:
             ctx = contexte_mod.Contexte()
         for pub, scn in paires:
+            # ETUDE-V6-3 (item 10) — jamais de nom technique de rôle (« votre_programme ») sur la planche :
+            # un scénario Pareto garde A/B/C, une variante de rôle devient « retenu ».
+            ref_aff = pub["ref"] if pub["ref"] in _REFS else "retenu"
             try:
                 pub["planche_svg"] = planche_mod.planche_svg(
-                    scn, ctx, ref=pub["ref"], genere_le=genere_le, numero=numero, entrees=ent_planche)
+                    scn, ctx, ref=ref_aff, genere_le=genere_le, numero=numero, entrees=ent_planche)
             except Exception:
                 pub["planche_svg"] = ""
             try:
                 pub["coupe_svg"] = planche_mod.coupe_svg(
-                    scn, ctx, ref=pub["ref"], genere_le=genere_le, numero=numero, entrees=ent_planche)
+                    scn, ctx, ref=ref_aff, genere_le=genere_le, numero=numero, entrees=ent_planche)
             except Exception:
                 pub["coupe_svg"] = ""
 
@@ -678,6 +712,8 @@ def etudier_payload(session, entree: dict) -> dict:
         },
         "regles": {
             "zone": ref_scn.regles.zone, "insee": ref_scn.regles.insee,
+            # ETUDE-V6-3 (item 2) — toute règle affichée commence par « PLU de [commune] · zone [X] · … · millésime ».
+            "commune": t.commune, "millesime": _plu_millesime(session, t.insee),
             "lignes": _regles_affichables(sd0),
         },
         "terrain": {

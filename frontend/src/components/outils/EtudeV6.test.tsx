@@ -200,7 +200,7 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     expect(document.body.textContent).not.toContain('SDP du programme')
   })
 
-  it('analyse : le résultat qui explique — verdict, 3 variantes, 4 grandeurs, récit', async () => {
+  it('V6-3 (item 6/8) : résultat — un seul scénario, bloc fusionné « Votre programme », pas d\'onglets', async () => {
     vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
     vi.mocked(postEtude).mockResolvedValue(RESULTAT as any)
     renderV6(['97404000AW0099', '97404000AW0451'])
@@ -212,20 +212,22 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     await waitFor(() => screen.getByText('Combien de logements souhaitez-vous ?'))
     fireEvent.change(document.querySelector('[data-etude-count="T2"]') as HTMLInputElement, { target: { value: '12' } })
     fireEvent.click(screen.getByRole('button', { name: /Analyser mon projet/ }))
-    // verdict global + les 3 variantes + le récit
     await waitFor(() => expect(screen.getByText('Verdict de l\'étude')).toBeTruthy())
-    expect(screen.getAllByText('Exploitable sous hypothèses').length).toBeGreaterThan(0)
-    expect(document.querySelector('[data-variante="votre_programme"]')).toBeTruthy()
-    expect(document.querySelector('[data-variante="optimisation"]')).toBeTruthy()
-    expect(document.querySelector('[data-variante="alternative"]')).toBeTruthy()
-    // les 4 grandeurs nommées séparément + le récit (demande → accueil → écart → limite)
-    expect(screen.getByText('Sol restant')).toBeTruthy()
-    expect(screen.getByText('SDP autorisée')).toBeTruthy()
-    expect(document.querySelector('[data-recit="Votre demande"]')).toBeTruthy()
-    expect(document.querySelector('[data-recit="Ce que le terrain accueille"]')).toBeTruthy()
+    // item 6 : plus d'onglets Optimisation/Alternative, plus de bloc « alternative » ni bouton Bilan
+    expect(document.querySelectorAll('[data-variante]').length).toBe(0)
+    expect(document.body.textContent).not.toContain('Une alternative concrète')
+    expect(document.body.textContent).not.toContain('Bilan de ce scénario')
+    // item 8 : bloc fusionné « Votre programme : N demandés · M tiennent · maximum K »
+    const vp = document.querySelector('[data-recit="Votre programme"]')!
+    expect(vp.textContent).toContain('demandés')
+    expect(vp.textContent).toContain('tiennent')
+    expect(vp.textContent).toContain('maximum')
     expect(document.querySelector('[data-recit="Ce qui limite"]')).toBeTruthy()
+    // les anciens blocs séparés n'existent plus
+    expect(document.querySelector('[data-recit="Ce que le terrain accueille"]')).toBeNull()
+    expect(document.querySelector('[data-recit="L\'écart"]')).toBeNull()
     expect(vi.mocked(postEtude)).toHaveBeenCalledWith(expect.objectContaining({
-      idus: ['97404000AW0099', '97404000AW0451'], type_projet: 'social',  // Lot C : le vrai type est transmis
+      idus: ['97404000AW0099', '97404000AW0451'], type_projet: 'social',
       programme: expect.objectContaining({ mode: 'saisi' }),
     }))
   })
@@ -256,23 +258,23 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     })))
   })
 
-  it('variantes : cliquer « Optimisation » change le plan masse actif', async () => {
+  it('V6-3 (item 7) : UN SEUL facteur limitant — bandeau = « Ce qui limite » n°1', async () => {
     vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
-    vi.mocked(postEtude).mockResolvedValue(RESULTAT as any)
+    vi.mocked(postEtude).mockResolvedValue(RESULTAT_CAP as any)
     renderV6(['97404000AW0099', '97404000AW0451'])
     await waitFor(() => screen.getByText('AW 99'))
     fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
     await waitFor(() => screen.getByText('Quel type de projet ?'))
-    fireEvent.click(screen.getByText('Résidence étudiante'))
+    fireEvent.click(screen.getByText('Logement social'))
     fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
     await waitFor(() => screen.getByText('Combien de logements souhaitez-vous ?'))
     fireEvent.change(document.querySelector('[data-etude-count="T2"]') as HTMLInputElement, { target: { value: '12' } })
     fireEvent.click(screen.getByRole('button', { name: /Analyser mon projet/ }))
-    await waitFor(() => expect(document.querySelector('[data-variante="optimisation"]')).toBeTruthy())
-    // par défaut « votre programme » (20 logts) ; après clic « Optimisation » → 28 logts dans le récit
-    expect(document.querySelector('[data-recit="Ce que le terrain accueille"]')!.textContent).toContain('20 logements')
-    fireEvent.click(document.querySelector('[data-variante="optimisation"]') as HTMLElement)
-    expect(document.querySelector('[data-recit="Ce que le terrain accueille"]')!.textContent).toContain('28 logements')
+    await waitFor(() => screen.getByText('Verdict de l\'étude'))
+    // le bandeau du haut porte « ce qui limite : stationnement aérien » = le n°1 de « Ce qui limite »
+    expect(document.body.textContent).toContain('ce qui limite : stationnement aérien')
+    const li1 = document.querySelector('[data-recit="Ce qui limite"] li')!
+    expect(li1.textContent).toContain('1. stationnement aérien')
   })
 
   it('étape 2 (Lot C) : affiche la règle générale PLU + le plafond L151-35 « À confirmer »', async () => {
@@ -323,7 +325,7 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     expect(document.body.textContent).toContain('Logements futurs (hypothèse)')
   })
 
-  it('variante absente : l\'onglet reste et dit pourquoi (mandat §C)', async () => {
+  it('V6-3 (item 6) : optimisation/alternative absentes → un seul scénario affiché, aucun onglet', async () => {
     vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
     vi.mocked(postEtude).mockResolvedValue(RESULTAT_ALT_ABSENTE as any)
     renderV6(['97404000AW0099', '97404000AW0451'])
@@ -335,13 +337,11 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     await waitFor(() => screen.getByText('Combien de logements souhaitez-vous ?'))
     fireEvent.change(document.querySelector('[data-etude-count="T2"]') as HTMLInputElement, { target: { value: '12' } })
     fireEvent.click(screen.getByRole('button', { name: /Analyser mon projet/ }))
-    // l'onglet Alternative existe toujours
-    await waitFor(() => expect(document.querySelector('[data-variante="alternative"]')).toBeTruthy())
-    fireEvent.click(document.querySelector('[data-variante="alternative"]') as HTMLElement)
-    // et il affiche la raison de l'absence (pas un panneau vide)
-    const panneau = document.querySelector('[data-variante-absente="alternative"]')
-    expect(panneau).toBeTruthy()
-    expect(panneau!.textContent).toContain('Aucune autre forme ne fait mieux')
+    await waitFor(() => screen.getByText('Verdict de l\'étude'))
+    // aucun onglet, aucun panneau « non proposée » : seul « votre programme » est servi
+    expect(document.querySelectorAll('[data-variante]').length).toBe(0)
+    expect(document.body.textContent).not.toContain('non proposée')
+    expect(document.querySelector('[data-recit="Votre programme"]')).toBeTruthy()
   })
 
   it('Lot 1 : « Votre demande » lit les surfaces du payload (10×T1 = 300 / 60 varangues / 240 intérieur)', async () => {
@@ -356,11 +356,11 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     await waitFor(() => screen.getByText('Combien de logements souhaitez-vous ?'))
     fireEvent.change(document.querySelector('[data-etude-count="T1"]') as HTMLInputElement, { target: { value: '10' } })
     fireEvent.click(screen.getByRole('button', { name: /Analyser mon projet/ }))
-    const dem = await waitFor(() => { const d = document.querySelector('[data-recit="Votre demande"]'); if (!d) throw new Error('no'); return d as HTMLElement })
-    expect(dem.textContent).toContain('10 logements')
+    // V6-3 (item 8) — fusionné dans « Votre programme » : 10 demandés · 300 m² dont 60 varangues · 10×T1.
+    const dem = await waitFor(() => { const d = document.querySelector('[data-recit="Votre programme"]'); if (!d) throw new Error('no'); return d as HTMLElement })
+    expect(dem.textContent).toContain('10 demandés')
     expect(dem.textContent).toContain('300,0 m² de programme')
     expect(dem.textContent).toContain('60,0 m² de varangues')
-    expect(dem.textContent).toContain("240,0 m² d'intérieur")
     expect(dem.textContent).toContain('10×T1')
   })
 
@@ -402,11 +402,12 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     await waitFor(() => screen.getByText('Combien de logements souhaitez-vous ?'))
     fireEvent.change(document.querySelector('[data-etude-count="T2"]') as HTMLInputElement, { target: { value: '12' } })
     fireEvent.click(screen.getByRole('button', { name: /Analyser mon projet/ }))
-    // capacité maximale, stable + mention d'indépendance à la demande
-    const cap = await waitFor(() => { const c = document.querySelector('[data-recit="Capacité maximale du terrain"]'); if (!c) throw new Error('no'); return c as HTMLElement })
-    expect(cap.textContent).toContain('28 logements')
-    expect(cap.textContent).toContain('deux demandes de même répartition donnent le même maximum')
-    expect(cap.textContent).toContain('tient')                       // 12 ≤ 28
+    // V6-3 (item 8) — capacité maximale (28) FUSIONNÉE dans « Votre programme » : 12 demandés · max 28.
+    const cap = await waitFor(() => { const c = document.querySelector('[data-recit="Votre programme"]'); if (!c) throw new Error('no'); return c as HTMLElement })
+    expect(cap.textContent).toContain('maximum 28')
+    expect(cap.textContent).toContain('12 demandés')
+    expect(cap.textContent).toContain('Réserve')                     // 12 ≤ 28 → réserve 16
+    expect(cap.textContent).toContain('indépendant du nombre demandé')
     // facteurs classés par impact, stationnement en tête, PROUVÉ par contrefactuel
     const lim = document.querySelector('[data-recit="Ce qui limite"]') as HTMLElement
     expect(lim.textContent).toContain('1. stationnement aérien')
@@ -457,10 +458,12 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     await waitFor(() => screen.getByText('Combien de logements souhaitez-vous ?'))
     fireEvent.change(document.querySelector('[data-etude-count="T2"]') as HTMLInputElement, { target: { value: '29' } })
     fireEvent.click(screen.getByRole('button', { name: /Analyser mon projet/ }))
-    const acc = await waitFor(() => { const a = document.querySelector('[data-recit="Ce que le terrain accueille"]'); if (!a) throw new Error('no'); return a as HTMLElement })
-    expect(acc.textContent).toContain('Stationnement en sous-sol')
-    expect(acc.textContent).toContain('48 places au niveau −1')
-    expect(acc.textContent).toContain('1 200,0 m²')        // emprise enterrée (séparateur FR insécable)
+    // V6-3 (item 10) — le sous-sol : cartouche + plan de principe du niveau −1 (places + emprise).
+    await waitFor(() => screen.getByText("Verdict de l'étude"))
+    const corpsSS = (document.body.textContent||'').replace(/[\u202f\u00a0]/g,' ')
+    expect(corpsSS).toContain('niveau −1')
+    expect(corpsSS).toContain('48 places')
+    expect(corpsSS).toContain('1 200,0 m²')
     // en sous-sol, le CTA « Testez en sous-sol » ne s'affiche PAS (on y est déjà)
     expect(document.querySelector('[data-tester-sous-sol]')).toBeNull()
   })
@@ -478,7 +481,7 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     fireEvent.change(document.querySelector('[data-etude-count="T2"]') as HTMLInputElement, { target: { value: '23' } })
     fireEvent.change(document.querySelector('[data-etude-count="T3"]') as HTMLInputElement, { target: { value: '6' } })
     const jauge = await waitFor(() => { const j = document.querySelector('[data-jauge]'); if (!j || j.getAttribute('data-jauge') === 'chargement') throw new Error('no'); return j as HTMLElement })
-    expect(jauge.getAttribute('data-jauge')).toBe('ok')
+    expect(jauge.getAttribute('data-jauge')).toBe('limite')   // V6-3 (item 5) : 92 % → orange « à la limite »
     expect(jauge.textContent).toContain('estimé')
     expect(jauge.textContent).toContain('R+3')
     // dépassement : 80 T2 → le stationnement aérien mange toute la zone → rouge
