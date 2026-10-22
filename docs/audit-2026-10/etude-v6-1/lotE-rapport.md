@@ -32,9 +32,13 @@
 - **Règles et sources conservées** : chaque contrôle porte sa citation (article/page), l'étape 2 affiche la
   règle de stationnement (article + millésime), l'étape 1 les sources + millésimes. Le lotissement cite UD
   9/12/13 + L'ALUR pour l'absence de min-lot.
-- **Hypothèses modifiables** : le programme T1–T4 (surfaces hypothèses) est éditable à l'étape 3 (« Modifier
-  le programme »). ⚠ Les hypothèses MOTEUR (profondeur, coef plancher) ne sont pas ré-exposées en éditeur
-  dans EtudeV6 comme dans l'ancien M22 — suivi éventuel.
+- **Hypothèses modifiables (RÉTABLIES, exigence mandat)** : éditeur dans le RÉSULTAT (collectif ET
+  lotissement) — surfaces T1–T4, varangues, et hypothèses MOTEUR (profondeur bâtiment, coef plancher→
+  habitable, collectif seul). « Recalculer ↻ » rejoue `/modules/etude` avec la config éditée (surfaces via
+  les lignes du programme → le study_id les capture ; varangues/profondeur/coef via `hypotheses`). UNE seule
+  `corpsBody()` sert l'analyse ET le PDF → **le PDF suit le recalcul** (même study_id). Démo : édition
+  T2 56→62 m² + profondeur 13→12 m → study_id `EF-00463fe37ae6` → `EF-1e428cdb3499`, « votre programme »
+  20 → 18 logements (modules plus grands). Captures `lotE-hypotheses-avant` / `-apres-recalcul`.
 
 ## Vérifié
 - **tsc 0 · vitest 287/287** (EtudeV6 : bilan + bouton PDF). **pytest** : `test_etude_v6_bilan` **4/4**

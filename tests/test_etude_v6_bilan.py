@@ -49,6 +49,23 @@ def test_study_id_stable_et_deterministe(session_reelle):
 
 
 @pytest.mark.reel
+def test_hypotheses_modifiables_recalcul(session_reelle):
+    """Éditer les hypothèses (surfaces T1–T4 + profondeur/coef moteur) recalcule le résultat ET change le
+    study_id (donc le PDF suit). Les varangues saisies sont acceptées (le moteur travaille sur la surface)."""
+    from labuse.implantation.service import etudier_payload
+    base = _cfg(_ETANG, "collectif", [{"type": "T2", "nombre": 8, "surface_m2": 56}, {"type": "T3", "nombre": 4, "surface_m2": 70}])
+    edit = {**_cfg(_ETANG, "collectif", [{"type": "T2", "nombre": 8, "surface_m2": 62}, {"type": "T3", "nombre": 4, "surface_m2": 78}]),
+            "hypotheses": {"profondeur_m": 12.0, "coef_plancher_habitable": 0.82, "varangues": {"T2": 10}}}
+    a = etudier_payload(session_reelle, dict(base))
+    b = etudier_payload(session_reelle, dict(edit))
+    assert a["study_id"] != b["study_id"]                         # recalcul → nouvel identifiant
+    assert b["hypotheses"]["surfaces"]["T2"] == 62.0             # surface éditée servie
+    assert b["hypotheses"]["profondeur_m"] == 12.0 and b["hypotheses"]["coef_plancher_habitable"] == 0.82
+    # un module plus grand → la variante « votre programme » tient MOINS de logements (sanity)
+    assert b["variantes"][0]["resume"]["logements"] <= a["variantes"][0]["resume"]["logements"]
+
+
+@pytest.mark.reel
 def test_pdf_egal_ecran_collectif(session_reelle):
     """Verrou du mandat : tout nombre du PDF est un nombre du payload (donc de l'écran)."""
     from labuse.implantation.service import etudier_payload

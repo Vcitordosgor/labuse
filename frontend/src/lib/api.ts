@@ -2284,7 +2284,7 @@ export interface EtudeDepassement {
 export interface EtudeIn {
   idus: string[]; type_projet?: string; objectif?: string; stationnement?: string; terrain?: string
   programme?: { mode: 'propose' | 'saisi'; lignes?: Array<{ type: string; nombre: number; surface_m2?: number }> } | null
-  hypotheses?: { profondeur_m?: number; coef_plancher_habitable?: number; surfaces?: Record<string, number> } | null
+  hypotheses?: { profondeur_m?: number; coef_plancher_habitable?: number; surfaces?: Record<string, number>; varangues?: Record<string, number> } | null
 }
 export const postEtude = (body: EtudeIn) =>
   j<EtudePayload>('/modules/etude', {

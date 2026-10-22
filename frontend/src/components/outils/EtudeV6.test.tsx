@@ -181,6 +181,32 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     }))
   })
 
+  it('hypothèses modifiables : éditer une surface + Recalculer rappelle le moteur avec la valeur éditée', async () => {
+    vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
+    vi.mocked(postEtude).mockResolvedValue(RESULTAT as any)
+    renderV6(['97404000AW0099', '97404000AW0451'])
+    await waitFor(() => screen.getByText('AW 99'))
+    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
+    await waitFor(() => screen.getByText('Quel type de projet ?'))
+    fireEvent.click(screen.getByText('Logement social'))
+    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
+    await waitFor(() => screen.getByText('Combien de logements souhaitez-vous ?'))
+    fireEvent.change(document.querySelector('[data-etude-count="T2"]') as HTMLInputElement, { target: { value: '12' } })
+    fireEvent.click(screen.getByRole('button', { name: /Analyser mon projet/ }))
+    // l'éditeur d'hypothèses est dans le résultat
+    const hyp = await waitFor(() => { const h = document.querySelector('[data-hypotheses]'); if (!h) throw new Error('no hyp'); return h as HTMLElement })
+    expect(hyp.textContent).toContain('Hypothèses modifiables')
+    expect(hyp.textContent).toContain('Profondeur bâtiment')          // hypothèse moteur (collectif)
+    // on édite la surface du T2 (1er champ « Surface m² ») puis on recalcule
+    const champSurf = hyp.querySelectorAll('input[type="number"]')[0] as HTMLInputElement
+    fireEvent.change(champSurf, { target: { value: '62' } })
+    vi.mocked(postEtude).mockClear()
+    fireEvent.click(screen.getByRole('button', { name: /Recalculer/ }))
+    await waitFor(() => expect(vi.mocked(postEtude)).toHaveBeenCalledWith(expect.objectContaining({
+      programme: expect.objectContaining({ lignes: expect.arrayContaining([expect.objectContaining({ type: 'T2', surface_m2: 62 })]) }),
+    })))
+  })
+
   it('variantes : cliquer « Optimisation » change le plan masse actif', async () => {
     vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
     vi.mocked(postEtude).mockResolvedValue(RESULTAT as any)

@@ -62,14 +62,30 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
   const [projet, setProjet] = useState<ProjetKey | null>(null)
   const [nb, setNb] = useState<Record<TypeKey, number>>({ T1: 0, T2: 0, T3: 0, T4: 0 })
   const [variantActive, setVariantActive] = useState<string>('votre_programme')
+  // Hypothèses modifiables (mandat) : surfaces T1–T4, varangues, et hypothèses MOTEUR (profondeur,
+  // coef plancher). Vides = valeurs LABUSE par défaut. Édition dans le résultat → recalcul → même PDF.
+  const [hyp, setHyp] = useState<{ surf: Record<TypeKey, string>; varangue: Record<TypeKey, string>; profondeur: string; coef: string }>(
+    { surf: { T1: '', T2: '', T3: '', T4: '' }, varangue: { T1: '', T2: '', T3: '', T4: '' }, profondeur: '', coef: '' })
   const pdf = useOuvrirDocument()
-  // Le PDF part de la MÊME config que l'écran (même study_id, mêmes chiffres : verrou serveur).
-  const corpsPdf = (): EtudeIn => ({
+  const surfOf = (t: TypeKey) => { const x = parseFloat(hyp.surf[t]); return isNaN(x) ? SURF[t].area : x }
+  const varOf = (t: TypeKey) => { const x = parseFloat(hyp.varangue[t]); return isNaN(x) ? SURF[t].varangue : Math.max(0, Math.min(surfOf(t), x)) }
+  const hypBody = (): EtudeIn['hypotheses'] => {
+    const h: NonNullable<EtudeIn['hypotheses']> & { varangues?: Record<string, number> } = {}
+    const prof = parseFloat(hyp.profondeur); const coef = parseFloat(hyp.coef)
+    if (!isNaN(prof)) h.profondeur_m = prof
+    if (!isNaN(coef)) h.coef_plancher_habitable = coef
+    const varangues = Object.fromEntries(TYPES.filter((t) => hyp.varangue[t] !== '').map((t) => [t, varOf(t)]))
+    if (Object.keys(varangues).length) h.varangues = varangues
+    return Object.keys(h).length ? h : undefined
+  }
+  // UNE seule config sert l'analyse ET le PDF (surfaces éditées via les lignes du programme → study_id).
+  const corpsBody = (): EtudeIn => ({
     idus: sel, type_projet: projet ?? 'collectif',
-    programme: { mode: 'saisi', lignes: TYPES.filter((t) => nb[t] > 0).map((t) => ({ type: t, nombre: nb[t], surface_m2: SURF[t].area })) },
+    programme: { mode: 'saisi', lignes: TYPES.filter((t) => nb[t] > 0).map((t) => ({ type: t, nombre: nb[t], surface_m2: surfOf(t) })) },
+    hypotheses: hypBody(),
   })
   const BoutonPdf = () => (
-    <Bouton niveau="secondaire" onClick={() => pdf.ouvrir(ETUDE_PDF_URL, 'etude-pdf', etudePdfInit(corpsPdf()))} disabled={!!pdf.enCours}>
+    <Bouton niveau="secondaire" onClick={() => pdf.ouvrir(ETUDE_PDF_URL, 'etude-pdf', etudePdfInit(corpsBody()))} disabled={!!pdf.enCours}>
       {pdf.enCours ? 'Génération…' : 'Générer le PDF ↓'}
     </Bouton>
   )
@@ -91,26 +107,25 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
     staleTime: 60_000,
   })
 
-  // Analyse (étape finale) : un seul appel moteur, on bascule vers le résultat.
-  const analyse = useMutation({
-    mutationFn: () => postEtude({
-      idus: sel,
-      type_projet: projet ?? 'collectif',
-      programme: { mode: 'saisi', lignes: TYPES.filter((t) => nb[t] > 0).map((t) => ({ type: t, nombre: nb[t], surface_m2: SURF[t].area })) },
-    }),
-  })
+  // Analyse (étape finale ET recalcul) : un seul appel moteur avec la config courante (hypothèses comprises).
+  const analyse = useMutation({ mutationFn: () => postEtude(corpsBody()) })
+  const recalculer = () => analyse.mutate()
   const resultat: EtudePayload | undefined = analyse.data
 
   const totalLogts = TYPES.reduce((s, t) => s + nb[t], 0)
-  const surfaceProg = TYPES.reduce((s, t) => s + nb[t] * SURF[t].area, 0)
-  const surfaceVar = TYPES.reduce((s, t) => s + nb[t] * SURF[t].varangue, 0)
+  const surfaceProg = TYPES.reduce((s, t) => s + nb[t] * surfOf(t), 0)
+  const surfaceVar = TYPES.reduce((s, t) => s + nb[t] * varOf(t), 0)
   const surfaceInt = surfaceProg - surfaceVar
 
   const contiguOk = sel.length > 0 && !!v?.contiguite.ok
   const peutContinuer1 = contiguOk && !valide.isFetching
   const peutAnalyser = contiguOk && !!projet && totalLogts > 0
 
-  function reset() { setStep(1); setSel([]); setProjet(null); setNb({ T1: 0, T2: 0, T3: 0, T4: 0 }); analyse.reset() }
+  function reset() { setStep(1); setSel([]); setProjet(null); setNb({ T1: 0, T2: 0, T3: 0, T4: 0 }); setHyp({ surf: { T1: '', T2: '', T3: '', T4: '' }, varangue: { T1: '', T2: '', T3: '', T4: '' }, profondeur: '', coef: '' }); analyse.reset() }
+  const editeurHyp = (collectif: boolean) => (
+    <HypothesesEditor hyp={hyp} setHyp={setHyp} surfOf={surfOf} varOf={varOf} types={TYPES.filter((t) => nb[t] > 0)}
+      collectif={collectif} onRecalculer={recalculer} enCours={analyse.isPending} />
+  )
   function ajouter(idu: string) { setSel((xs) => (xs.includes(idu) || xs.length >= 8 ? xs : [...xs, idu])) }
   function retirer(idu: string) { setSel((xs) => xs.filter((x) => x !== idu)) }
 
@@ -124,7 +139,7 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
           <Badge ton="ambre">{resultat.verdict}</Badge>
           <span className="text-[11px] text-txt-dim">{resultat.entrees.commune} · zone {resultat.entrees.zone} · lotissement</span>
         </div>
-        <LotissementResultat lot={resultat.lotissement} hypothese={resultat.logements_hypothese} boutonPdf={<BoutonPdf />} pdfErreur={pdf.erreur ?? undefined} studyId={resultat.study_id} />
+        <LotissementResultat lot={resultat.lotissement} hypothese={resultat.logements_hypothese} boutonPdf={<BoutonPdf />} pdfErreur={pdf.erreur ?? undefined} studyId={resultat.study_id} editeur={editeurHyp(false)} />
         <p className="px-4 pb-4 text-[10px] leading-snug text-txt-dim">{resultat.lotissement.note}</p>
       </div>
     )
@@ -238,6 +253,7 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
                   )}
                 </Recit>
               )}
+              {editeurHyp(true)}
               <div className="flex flex-wrap gap-2">
                 <BoutonPdf />
                 {onBilan && <Bouton niveau="secondaire" onClick={() => onBilan(bilanDe(active))}>Bilan de ce scénario →</Bouton>}
@@ -384,9 +400,9 @@ function Controles({ v }: { v: EtudeVariante }) {
 }
 
 // ── Lot D — résultat LOTISSEMENT : plan de division + tableau des lots + voirie/pleine terre/réseaux ──
-function LotissementResultat({ lot, hypothese, boutonPdf, pdfErreur, studyId }: {
+function LotissementResultat({ lot, hypothese, boutonPdf, pdfErreur, studyId, editeur }: {
   lot: EtudeLotissement; hypothese?: { demande: Record<string, number> } | null
-  boutonPdf?: React.ReactNode; pdfErreur?: string; studyId?: string
+  boutonPdf?: React.ReactNode; pdfErreur?: string; studyId?: string; editeur?: React.ReactNode
 }) {
   const tl = lot.tableau_lots
   const hyp = hypothese?.demande ?? {}
@@ -465,6 +481,7 @@ function LotissementResultat({ lot, hypothese, boutonPdf, pdfErreur, studyId }: 
           </div>
           <p className="mt-0.5 text-[9.5px] text-txt-dim">{fmtDec(lot.bilan_surfacique.lots_m2)} + {fmtDec(lot.bilan_surfacique.voirie_m2)} + {fmtDec(lot.bilan_surfacique.communs_m2)} + {fmtDec(lot.bilan_surfacique.ppr_rouge_m2)} + {fmtDec(lot.bilan_surfacique.hors_zone_m2)} = {fmtDec(lot.bilan_surfacique.somme_m2)} m² (écart {fmtDec(lot.bilan_surfacique.ecart_m2)}) — aucune double comptabilisation.</p>
         </Recit>
+        {editeur}
         {boutonPdf}
         {pdfErreur && <p className="text-[10px] text-coral">{pdfErreur}</p>}
         {studyId && <p className="text-[9px] text-txt-dim">study_id {studyId} — le PDF part de la même étude.</p>}
@@ -485,6 +502,46 @@ function LigneInfo({ l, v, sous }: { l: string; v: string; sous?: string }) {
       <p className="text-[11px] text-txt">{v}</p>
       {sous && <p className="text-[9.5px] text-txt-dim">{sous}</p>}
     </div>
+  )
+}
+
+// ── Hypothèses modifiables (mandat) : surfaces T1–T4, varangues, + hypothèses moteur (collectif) ──
+type HypEtat = { surf: Record<TypeKey, string>; varangue: Record<TypeKey, string>; profondeur: string; coef: string }
+function HypothesesEditor({ hyp, setHyp, surfOf, varOf, types, collectif, onRecalculer, enCours }: {
+  hyp: HypEtat; setHyp: (f: (h: HypEtat) => HypEtat) => void
+  surfOf: (t: TypeKey) => number; varOf: (t: TypeKey) => number
+  types: readonly TypeKey[]; collectif: boolean; onRecalculer: () => void; enCours: boolean
+}) {
+  const champ = (val: string, ph: string, on: (v: string) => void) => (
+    <input type="number" min={0} inputMode="decimal" value={val} placeholder={ph} onChange={(e) => on(e.target.value)}
+      className="w-16 rounded border border-line-2 bg-surface-2 px-1.5 py-0.5 text-center text-[11px] text-txt-hi" />
+  )
+  return (
+    <details data-hypotheses className="rounded-lg border border-line-2 bg-surface-2 p-3" open>
+      <summary className="cursor-pointer text-[11px] font-semibold text-txt">Hypothèses modifiables <small className="font-normal text-txt-dim">(Estimé — recalcule l'étude)</small></summary>
+      <div className="mt-2 flex flex-col gap-1.5">
+        <div className="grid grid-cols-[2rem_1fr_1fr] items-center gap-2 text-[9px] uppercase tracking-wide text-txt-dim">
+          <span>Type</span><span>Surface m²</span><span>dont varangue m²</span>
+        </div>
+        {types.map((t) => (
+          <div key={t} className="grid grid-cols-[2rem_1fr_1fr] items-center gap-2">
+            <span className="font-mono text-[12px] text-txt-hi">{t}</span>
+            {champ(hyp.surf[t], `${surfOf(t)}`, (val) => setHyp((h) => ({ ...h, surf: { ...h.surf, [t]: val } })))}
+            {champ(hyp.varangue[t], `${varOf(t)}`, (val) => setHyp((h) => ({ ...h, varangue: { ...h.varangue, [t]: val } })))}
+          </div>
+        ))}
+        {collectif && (
+          <div className="mt-1 flex flex-wrap items-center gap-3 border-t border-line-2 pt-2 text-[10.5px] text-txt-mut">
+            <label className="flex items-center gap-1.5">Profondeur bâtiment {champ(hyp.profondeur, '13', (v) => setHyp((h) => ({ ...h, profondeur: v })))} m</label>
+            <label className="flex items-center gap-1.5">Coef. plancher→habitable {champ(hyp.coef, '0.8', (v) => setHyp((h) => ({ ...h, coef: v })))}</label>
+          </div>
+        )}
+        <div className="mt-1 flex items-center gap-2">
+          <Bouton niveau="primaire" onClick={onRecalculer} disabled={enCours}>{enCours ? 'Recalcul…' : 'Recalculer ↻'}</Bouton>
+          <span className="text-[9.5px] text-txt-dim">Le recalcul met à jour le résultat ET le PDF (même study_id).</span>
+        </div>
+      </div>
+    </details>
   )
 }
 
