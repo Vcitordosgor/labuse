@@ -108,16 +108,28 @@ def scenario_retenu(payload: dict, ref: Optional[str] = None) -> Optional[dict]:
     """Le scénario que le document met en avant : celui AFFICHÉ (ref transmise par l'outil) sinon le
     premier EXPLOITABLE, sinon le mieux classé (scenarios[0]). None si aucun scénario."""
     scn = payload.get("scenarios") or []
-    if not scn:
-        return None
-    if ref:
+    if scn:
+        if ref:
+            for s in scn:
+                if s.get("ref") == ref:
+                    return s
         for s in scn:
-            if s.get("ref") == ref:
+            if str(s.get("statut_etude", "")).startswith("exploitable"):
                 return s
-    for s in scn:
-        if str(s.get("statut_etude", "")).startswith("exploitable"):
-            return s
-    return scn[0]
+        return scn[0]
+    # ETUDE-V6-3 (item 12) — AUCUN scénario (la demande ne tient pas) : on retient la variante « votre
+    # programme » (best-effort) pour que le PDF se génère QUAND MÊME, le dépassement écrit dans le document.
+    for v in (payload.get("variantes") or []):
+        if not v.get("absente"):
+            return v
+    return None
+
+
+def _scn_label(s: dict) -> str:
+    """ETUDE-V6-3 (item 10) — libellé AFFICHABLE d'un scénario : jamais un nom technique (« votre_programme »).
+    Les scénarios Pareto gardent leur repère A/B/C ; une variante de rôle devient « retenu »."""
+    r = str(s.get("ref", ""))
+    return "retenu" if r in ("votre_programme", "optimisation", "alternative") else r
 
 
 def _fourchette(payload: dict) -> Optional[tuple[int, int]]:
@@ -267,6 +279,12 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
     else:
         txt = (payload.get("message")
                or "Aucun scénario exploitable sur ce terrain selon nos hypothèses — voir le détail.")
+        # ETUDE-V6-3 (item 12) — le document se génère MÊME si la demande ne tient pas : le dépassement
+        # est ÉCRIT (comme à l'écran), chiffré depuis le payload (jamais un PDF manquant).
+        dep = payload.get("depassement")
+        if dep:
+            txt += (f" Dépassement : {dep['total_demande']} logements demandés, "
+                    f"{dep['total_tiennent']} tiennent au mieux sur ce terrain.")
         vclass = "verdict warn"
     cc = retenu["controles_compte"]
     # tuiles de synthèse (chaque nombre vient du payload : contrôles, règles, programme, terrain)
@@ -284,18 +302,18 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
         ((f"{_grp(haut['valeur'])} {esc(str(haut.get('unite') or 'm'))}") if haut and haut.get("valeur") is not None else "—",
          esc(f"Hauteur ({haut['nom']})" if haut else "Hauteur")),
         (aides_txt, "Logements aidés imposés"),
-        (str(places_imp) if places_imp is not None else "—", f"Places imposées (scénario {retenu['ref']})"),
+        (str(places_imp) if places_imp is not None else "—", f"Places imposées (scénario {_scn_label(retenu)})"),
         (str(cc["non_effectue"]), "Contrôles non effectués"),
     ]
     tiles_html = "".join('<div class="tile"><div class="v">%s</div><div class="l">%s</div></div>'
                          % (v, l) for v, l in tiles)
-    # tableau des scénarios
+    # tableau des scénarios (si la demande ne tient pas, on montre AU MOINS le scénario retenu best-effort)
     rows = []
-    for s in scn:
+    for s in (scn or [retenu]):
         cls = ' class="retenu"' if s["ref"] == retenu["ref"] else ""
         stc = _statut_classe(s["statut_etude"])
         rows.append(
-            f'<tr{cls}><td>{esc(s["ref"])}{" (retenu)" if s["ref"] == retenu["ref"] else ""}</td>'
+            f'<tr{cls}><td>{esc(_scn_label(s))}{" (retenu)" if s["ref"] == retenu["ref"] else ""}</td>'
             f'<td>{esc(str(s.get("forme", "")).replace("_", " "))}</td>'
             f'<td class="num">{s["resume"]["logements"]}</td>'
             f'<td class="num">{esc(s.get("niveaux_label", ""))}</td>'
@@ -321,7 +339,7 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
         + _au_html
         + f'<div class="{vclass}">{esc(txt)}</div>'
         '<div class="ef-status">'
-        f'<div><b>Contrôles automatisés (scénario {esc(retenu["ref"])})</b>'
+        f'<div><b>Contrôles automatisés (scénario {esc(_scn_label(retenu))})</b>'
         f'{cc["reussi"]} réussis · {cc["echoue"]} échoués · {cc["non_effectue"]} non effectués</div>'
         f'<div><b>Statut de l\'étude</b>{esc(_statut_court(retenu["statut_etude"]))} — '
         'à faire confirmer par un architecte</div></div>'
@@ -461,10 +479,10 @@ def _p5_plan_masse(payload: dict, retenu: dict, *, titre: str = None) -> str:
     if acces:
         rows.append(f'<tr><td class="k">Accès</td><td>{esc(acces.get("note") or "sur la voie")}</td>'
                     f'<td class="n"><span class="chip d">Dérivé</span></td></tr>')
-    h2 = titre or f"4. Plan masse du scénario {sc['ref']}"
+    h2 = titre or f"4. Plan masse du scénario {_scn_label(sc)}"
     return (
         f'<section><h2>{esc(h2)}</h2>'
-        f'<div class="verdict">Scénario {esc(sc["ref"])} — {esc(forme)} en {esc(sc.get("niveaux_label", ""))} : '
+        f'<div class="verdict">Scénario {esc(_scn_label(sc))} — {esc(forme)} en {esc(sc.get("niveaux_label", ""))} : '
         f'{sc["resume"]["logements"]} logements, {sc["stationnement"]["places"]} places aériennes.</div>'
         + fig + _legende(["batiment_emprise", "place", "allee", "espace_libre", "acces", "zone"])
         + '<table class="kv"><tr><th>Élément</th><th>Valeur</th><th class="n">Nature</th></tr>'
@@ -550,7 +568,7 @@ def _p7_capacite(payload: dict, retenu: dict) -> str:
                      f'<td class="n"><span class="res {rc}">{esc(res)}</span></td></tr>')
     return (
         '<section><h2>6. Capacité et contrôles</h2>'
-        f'<div class="verdict">Scénario {esc(sc["ref"])} : {sc["controles_compte"]["reussi"]} contrôles '
+        f'<div class="verdict">Scénario {esc(_scn_label(sc))} : {sc["controles_compte"]["reussi"]} contrôles '
         f'réussis, {sc["controles_compte"]["echoue"]} échoués, {sc["controles_compte"]["non_effectue"]} '
         'non effectués. Ce n\'est pas une validation réglementaire.</div>'
         '<table class="kv"><tr><th>Programme</th><th class="num">Nombre</th><th class="num">Surface moy.</th>'
@@ -618,7 +636,7 @@ def _annexe(payload: dict, retenu: dict) -> str:
         return ""
     out = ['<div class="pb"></div>']
     for s in autres:
-        out.append(_p5_plan_masse(payload, s, titre=f"Annexe — plan masse du scénario {s['ref']}"))
+        out.append(_p5_plan_masse(payload, s, titre=f"Annexe — plan masse du scénario {_scn_label(s)}"))
     return "".join(out)
 
 
@@ -639,7 +657,7 @@ def rendu_etude(payload: dict, *, genere_le: str, scenario_ref: Optional[str] = 
     cart = Cartouche(
         doc_title=f"LABUSE — Étude de faisabilité · {payload['terrain'].get('commune') or ''}",
         doc_ref=f"{refs} · {numero}",
-        doc_foot=(f"Étude de faisabilité · {refs} · scénario {retenu['ref']} · "
+        doc_foot=(f"Étude de faisabilité · {refs} · scénario {_scn_label(retenu)} · "
                   f"Généré via LABUSE le {genere_le} · pré-faisabilité, non contractuel"))
     corps = (
         f"<style>{_STYLE}</style>"

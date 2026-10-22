@@ -161,6 +161,21 @@ def test_regles_plu_par_parcelle(session_reelle):
 
 
 @pytest.mark.reel
+def test_pdf_genere_meme_si_ne_tient_pas(session_reelle):
+    """ETUDE-V6-3 (item 12) — le PDF se génère TOUJOURS, même quand la demande ne tient pas : le
+    dépassement est écrit dans le document (comme à l'écran). Reproduit l'échec de Vic : 42 T1 aérien."""
+    from labuse.implantation.service import etudier_payload
+    from labuse.exports import etude_faisabilite as ef
+    cfg = {"idus": _ETANG, "type_projet": "etudiante", "stationnement": "aerien",
+           "programme": {"mode": "saisi", "lignes": [{"type": "T1", "nombre": 42, "surface_m2": 30}]}}
+    p = etudier_payload(session_reelle, dict(cfg))
+    assert p["statut_global"] == "ne tient pas" and not p["scenarios"]   # la demande ne tient pas
+    rendu = ef.rendu_etude(p, genere_le="22/10/2026")                    # ne lève PLUS de ValueError
+    assert rendu["html"] and "Dépassement" in rendu["html"]              # dépassement écrit
+    assert "votre_programme" not in rendu["html"]                         # item 10 : aucun nom technique
+
+
+@pytest.mark.reel
 def test_sous_sol_etude_rapide(session_reelle):
     """L'étude sous-sol reste rapide (pas de 2ᵉ recherche) — bornée bien en deçà de la nouvelle borne 60 s."""
     import time
