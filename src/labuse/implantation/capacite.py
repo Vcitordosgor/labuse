@@ -59,6 +59,8 @@ class Capacite:
     # niveaux nécessaires pour loger toutes les places (terrain étroit ⇒ plusieurs niveaux).
     places_sous_sol_par_niveau: int = 0
     niveaux_sous_sol: int = 0
+    places_niveau_moins1: int = 0
+    places_niveau_moins2: int = 0
 
 
 def _sdp_logement(conv: Conventions, type_logement: str) -> float:
@@ -203,4 +205,6 @@ def calculer(scene: Scene, conv: Conventions, regles: ReglesZone, terrain=None) 
         sur_dalle_m2=round(sur_dalle, 1),
         places_sous_sol_par_niveau=(ss.get("places_par_niveau", 0) if mode_ss else 0),
         niveaux_sous_sol=(ss.get("niveaux_sous_sol", 0) if mode_ss else 0),
+        places_niveau_moins1=(ss.get("places_niveau_moins1", 0) if mode_ss else 0),
+        places_niveau_moins2=(ss.get("places_niveau_moins2", 0) if mode_ss else 0),
     )

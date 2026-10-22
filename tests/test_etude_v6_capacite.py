@@ -99,30 +99,33 @@ def _cfg_mode(lignes, mode):
 
 @pytest.mark.reel
 def test_sous_sol_libere_le_sol_et_ajoute_des_logements(session_reelle):
-    """ETUDE-V6-2 (Lot 3) — enterrer le stationnement libère le sol : à Étang-Salé (où l'aérien plafonne),
-    le sous-sol accueille PLUS de logements que l'aérien. Les places sont au −1, l'emprise enterrée tient
-    sous l'emprise réglementaire (contrôle dédié), et le sol ne porte plus de places aériennes."""
+    """ETUDE-V6-2 (Lot 3) / V6-5 — enterrer le stationnement libère le sol. Le NOMBRE DE NIVEAUX est désormais
+    EXPLICITE et borne la capacité : un seul niveau enterré ne tient qu'un nombre fini de places (il peut donc
+    rester sous l'aérien quand ce niveau est petit) ; c'est en montant à 2 niveaux que le bénéfice « sol libéré »
+    dépasse l'aérien. Les places sont au −1, l'emprise enterrée ≤ emprise réglementaire, aucune place aérienne."""
     from labuse.implantation.service import etudier_payload
     lignes = [{"type": "T2", "nombre": 23, "surface_m2": 56}, {"type": "T3", "nombre": 6, "surface_m2": 70}]
     aer = etudier_payload(session_reelle, _cfg_mode(lignes, "aerien"))
-    sous = etudier_payload(session_reelle, _cfg_mode(lignes, "sous_sol"))
+    sous1 = etudier_payload(session_reelle, dict(_cfg_mode(lignes, "sous_sol"), niveaux_sous_sol=1))
+    sous2 = etudier_payload(session_reelle, dict(_cfg_mode(lignes, "sous_sol"), niveaux_sous_sol=2))
     assert aer["capacite_maximale"]["stationnement_mode"] == "aerien"
-    assert sous["capacite_maximale"]["stationnement_mode"] == "sous_sol"
-    # le sous-sol accueille au moins autant de logements que l'aérien (ici strictement plus)
-    assert sous["capacite_maximale"]["logements"] >= aer["capacite_maximale"]["logements"]
-    assert sous["capacite_maximale"]["logements"] > aer["capacite_maximale"]["logements"]
+    assert sous1["capacite_maximale"]["stationnement_mode"] == "sous_sol"
+    # V6-5 : 2 niveaux (capacité doublée) dépasse STRICTEMENT 1 niveau — le choix se propage à la capacité.
+    assert sous2["capacite_maximale"]["logements"] > sous1["capacite_maximale"]["logements"]
+    # et 2 niveaux atteint au moins l'aérien (le sol libéré finit par payer une fois la capacité suffisante).
+    assert sous2["capacite_maximale"]["logements"] >= aer["capacite_maximale"]["logements"]
     # la variante sous-sol : places au −1, aucune place aérienne, emprise enterrée > 0
-    v = next(x for x in sous["variantes"] if not x.get("absente"))
+    v = next(x for x in sous1["variantes"] if not x.get("absente"))
     st = v["stationnement"]
-    assert st["mode"] == "sous_sol"
+    assert st["mode"] == "sous_sol" and st["niveaux_sous_sol"] == 1
     assert st["places_sous_sol"] > 0
     assert st["surface_stationnement_m2"] == 0          # rien au sol (hors rampe)
     assert st["emprise_sous_sol_m2"] > 0
     # un contrôle « Emprise du sous-sol » ≤ emprise réglementaire est présent et vérifié
     emp = next(c for c in v["controles"] if c["nom"] == "Emprise du sous-sol")
     assert emp["resultat"] in ("Réussi", "Échoué", "À confirmer")
-    # study_id différent de l'aérien (le mode entre dans l'empreinte → PDF distinct)
-    assert sous["study_id"] != aer["study_id"]
+    # study_id : l'aérien, le sous-sol 1 niveau et 2 niveaux sont TROIS empreintes distinctes (PDF distincts).
+    assert len({aer["study_id"], sous1["study_id"], sous2["study_id"]}) == 3
 
 
 @pytest.mark.reel
@@ -217,6 +220,39 @@ def test_sous_sol_plan_dessine_sur_geometrie(session_reelle):
     assert st["places_sous_sol_par_niveau"] > 0 and st["niveaux_sous_sol"] >= 1
     # cohérence : niveaux × places/niveau ≥ places demandées (plan de principe honnête)
     assert st["niveaux_sous_sol"] * st["places_sous_sol_par_niveau"] >= st["places_sous_sol"]
+
+
+@pytest.mark.reel
+def test_niveaux_sous_sol_hypothese_explicite(session_reelle):
+    """ETUDE-V6-5 — le NOMBRE DE NIVEAUX de sous-sol est une hypothèse EXPLICITE (1 / 2) qui BORNE la
+    capacité : jamais un 2ᵉ niveau supposé sans être choisi. Recette Étang-Salé 23 T2 + 6 T3, sous-sol 1
+    niveau (face à l'architecte 29 logements, 31 places, 1 niveau) : le programme tient sur UN niveau, et
+    2 niveaux offrent STRICTEMENT plus de places que 1 niveau (le choix se propage à la capacité)."""
+    from labuse.implantation.service import etudier_payload
+    lignes = [{"type": "T2", "nombre": 23, "surface_m2": 56}, {"type": "T3", "nombre": 6, "surface_m2": 70}]
+
+    def etude(niv):
+        cfg = {"idus": _ETANG, "type_projet": "etudiante", "stationnement": "sous_sol",
+               "niveaux_sous_sol": niv, "programme": {"mode": "saisi", "lignes": lignes}}
+        p = etudier_payload(session_reelle, dict(cfg))
+        v = next(x for x in p["variantes"] if not x.get("absente"))
+        return p, v, v["stationnement"]
+
+    p1, v1, st1 = etude(1)
+    p2, v2, st2 = etude(2)
+    # 1 niveau : le choix est fidèlement servi, et le programme (29 demandés) TIENT sur un seul niveau.
+    assert st1["niveaux_sous_sol"] == 1 and st1["places_niveau_moins2"] == 0
+    assert (p1.get("confrontation") or {}).get("tient") is True
+    assert (p1.get("confrontation") or {}).get("demande_logements") == 29
+    # la capacité d'un niveau borne : places servies ≤ 1 × places/niveau.
+    assert st1["places_sous_sol"] <= st1["places_sous_sol_par_niveau"]
+    # 2 niveaux : explicitement choisi, le −2 reçoit des places et la capacité est STRICTEMENT plus grande.
+    assert st2["niveaux_sous_sol"] == 2
+    cap1 = (p1.get("capacite_maximale") or {}).get("logements") or v1["resume"]["logements"]
+    cap2 = (p2.get("capacite_maximale") or {}).get("logements") or v2["resume"]["logements"]
+    assert cap2 > cap1, f"2 niveaux ({cap2}) doit dépasser 1 niveau ({cap1})"
+    assert st2["places_niveau_moins2"] > 0 and {"place_ss"} <= {
+        f["properties"]["kind"] for f in v2["geojson"]["features"] if f["properties"].get("niveau") == -2}
 
 
 @pytest.mark.reel

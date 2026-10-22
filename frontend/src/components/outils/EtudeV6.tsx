@@ -84,8 +84,8 @@ export function EtudeV6({ initialIdus, onClose }: {
   const [nb, setNb] = useState<Record<TypeKey, number>>({ T1: 0, T2: 0, T3: 0, T4: 0 })
   // Hypothèses modifiables (mandat) : surfaces T1–T4, varangues, et hypothèses MOTEUR (profondeur,
   // coef plancher). Vides = valeurs LABUSE par défaut. Édition dans le résultat → recalcul → même PDF.
-  const [hyp, setHyp] = useState<{ surf: Record<TypeKey, string>; varangue: Record<TypeKey, string>; profondeur: string; coef: string; stationnement: 'aerien' | 'sous_sol' }>(
-    { surf: { T1: '', T2: '', T3: '', T4: '' }, varangue: { T1: '', T2: '', T3: '', T4: '' }, profondeur: '', coef: '', stationnement: 'aerien' })
+  const [hyp, setHyp] = useState<{ surf: Record<TypeKey, string>; varangue: Record<TypeKey, string>; profondeur: string; coef: string; stationnement: 'aerien' | 'sous_sol'; niveauxSousSol: 1 | 2 }>(
+    { surf: { T1: '', T2: '', T3: '', T4: '' }, varangue: { T1: '', T2: '', T3: '', T4: '' }, profondeur: '', coef: '', stationnement: 'aerien', niveauxSousSol: 1 })
   const pdf = useOuvrirDocument()
   const surfOf = (t: TypeKey) => { const x = parseFloat(hyp.surf[t]); return isNaN(x) ? SURF[t].area : x }
   const varOf = (t: TypeKey) => { const x = parseFloat(hyp.varangue[t]); return isNaN(x) ? SURF[t].varangue : Math.max(0, Math.min(surfOf(t), x)) }
@@ -102,7 +102,9 @@ export function EtudeV6({ initialIdus, onClose }: {
   const corpsBody = (over?: Partial<EtudeIn>): EtudeIn => ({
     idus: sel, type_projet: projet ?? 'collectif',
     // ETUDE-V6-2 (Lot 3) — le mode de stationnement (aérien par défaut / sous-sol) pilote l'implantation.
+    // ETUDE-V6-5 — en sous-sol, le NOMBRE DE NIVEAUX (1 ou 2) est explicite et borne la capacité.
     stationnement: hyp.stationnement,
+    niveaux_sous_sol: hyp.stationnement === 'sous_sol' ? hyp.niveauxSousSol : undefined,
     programme: { mode: 'saisi', lignes: TYPES.filter((t) => nb[t] > 0).map((t) => ({ type: t, nombre: nb[t], surface_m2: surfOf(t) })) },
     hypotheses: hypBody(),
     ...over,
@@ -152,15 +154,18 @@ export function EtudeV6({ initialIdus, onClose }: {
                                 onSuccess: () => setDirty(false) })
   const recalculer = () => analyse.mutate(undefined)
   const marquerModifie = () => setDirty(true)
-  // ETUDE-V6-2 (Lot 3) — « Testez en sous-sol » : bascule le mode ET relance en UN clic (setHyp est async).
+  // ETUDE-V6-2 (Lot 3) / V6-5 — « Testez en sous-sol » : bascule en sous-sol 1 NIVEAU (défaut) ET relance.
   const testerSousSol = () => {
-    setHyp((h) => ({ ...h, stationnement: 'sous_sol' }))
-    analyse.mutate(corpsBody({ stationnement: 'sous_sol' }))
+    setHyp((h) => ({ ...h, stationnement: 'sous_sol', niveauxSousSol: 1 }))
+    analyse.mutate(corpsBody({ stationnement: 'sous_sol', niveaux_sous_sol: 1 }))
   }
-  // ETUDE-V6-4 (item 8) — changer Aérien/Sous-sol RELANCE le calcul automatiquement (pas de recalcul manuel).
-  const setModeStationnement = (m: 'aerien' | 'sous_sol') => {
-    setHyp((h) => ({ ...h, stationnement: m }))
-    analyse.mutate(corpsBody({ stationnement: m }))
+  // ETUDE-V6-4 (item 8) / V6-5 — le stationnement a TROIS choix (Aérien / Sous-sol 1 niveau / Sous-sol 2
+  // niveaux) ; changer de choix RELANCE le calcul automatiquement. Défaut en passant au sous-sol : 1 niveau.
+  const setStationnementChoix = (choix: 'aerien' | 'sous_sol_1' | 'sous_sol_2') => {
+    const mode: 'aerien' | 'sous_sol' = choix === 'aerien' ? 'aerien' : 'sous_sol'
+    const niv: 1 | 2 = choix === 'sous_sol_2' ? 2 : 1
+    setHyp((h) => ({ ...h, stationnement: mode, niveauxSousSol: niv }))
+    analyse.mutate(corpsBody({ stationnement: mode, niveaux_sous_sol: mode === 'sous_sol' ? niv : undefined }))
   }
   const resultat: EtudePayload | undefined = analyse.data
   // ETUDE-V6-3 (item 4) — animation de chargement de l'app (composant existant) pendant « Calcul en cours ».
@@ -186,13 +191,14 @@ export function EtudeV6({ initialIdus, onClose }: {
   const peutAnalyser = contiguOk && !!projet && totalLogts > 0
 
   function reset() { setStep(1); setSel([]); setProjet(null); setNb({ T1: 0, T2: 0, T3: 0, T4: 0 }); resetHyp(); analyse.reset() }
-  function resetHyp() { setHyp({ surf: { T1: '', T2: '', T3: '', T4: '' }, varangue: { T1: '', T2: '', T3: '', T4: '' }, profondeur: '', coef: '', stationnement: 'aerien' }) }
+  function resetHyp() { setHyp({ surf: { T1: '', T2: '', T3: '', T4: '' }, varangue: { T1: '', T2: '', T3: '', T4: '' }, profondeur: '', coef: '', stationnement: 'aerien', niveauxSousSol: 1 }) }
   // « Modifier le programme » revient au formulaire ET réinitialise les hypothèses éditées (pas de fuite).
   function modifierProgramme() { resetHyp(); analyse.reset() }
   const editeurHyp = (collectif: boolean) => (
     <HypothesesEditor hyp={hyp} setHyp={setHyp} surfOf={surfOf} varOf={varOf} types={TYPES.filter((t) => nb[t] > 0)}
       collectif={collectif} onRecalculer={recalculer} enCours={analyse.isPending}
-      mode={hyp.stationnement} onMode={setModeStationnement} onModifie={marquerModifie} />
+      choix={hyp.stationnement === 'aerien' ? 'aerien' : (hyp.niveauxSousSol === 2 ? 'sous_sol_2' : 'sous_sol_1')}
+      onChoix={setStationnementChoix} onModifie={marquerModifie} />
   )
   function ajouter(idu: string) { setSel((xs) => (xs.includes(idu) || xs.length >= 8 ? xs : [...xs, idu])) }
   function retirer(idu: string) { setSel((xs) => xs.filter((x) => x !== idu)) }
@@ -297,7 +303,7 @@ export function EtudeV6({ initialIdus, onClose }: {
               {resultat.stationnement_regimes && (
                 <StationnementResultat regimes={resultat.stationnement_regimes}
                   placesActive={active.resume.places} commune={resultat.entrees.commune} zone={resultat.regles.zone}
-                  mode={active.stationnement?.mode ?? 'aerien'}
+                  mode={active.stationnement?.mode ?? 'aerien'} niveaux={active.stationnement?.niveaux_sous_sol ?? 1}
                   mixite={{ regle: resultat.regles.lignes.find((l) => /mixit/i.test(l.nom)) ?? null,
                             applicable: active.programme.mixite_applicable, aides: active.programme.logements_aides_imposes,
                             sdp_aidee: active.programme.sdp_aidee_imposee_m2 }} />
@@ -492,32 +498,42 @@ function DetailSurfaces({ v }: { v: EtudeVariante }) {
   )
 }
 
-// ETUDE-V6-3 (item 10) — plan de PRINCIPE du niveau −1 : places au sous-sol + rampe (schématique, non géo).
-// ETUDE-V6-4 (item 9) — le plan du niveau −1 n'est PLUS une grille générique : on DESSINE les objets
-// enterrés sur la vraie géométrie (contour de l'emprise dans l'assiette, allée, places, rampe à sa vraie
-// position), en filtrant le GeoJSON du scénario sur niveau −1 + l'assiette pour le cadre. Même rendu que
-// le plan masse. Si le terrain n'accueille qu'une partie des places par niveau, on dit combien de niveaux.
+// ETUDE-V6-4 (item 9) / V6-5 — plan du sous-sol DESSINÉ sur la vraie géométrie, UN plan PAR NIVEAU choisi
+// (−1, et −2 si 2 niveaux). Chaque plan filtre le GeoJSON sur son niveau (places/allée/emprise tagués) +
+// l'assiette pour le cadre. La capacité est bornée aux niveaux CHOISIS (jamais un 2ᵉ niveau supposé).
 function PlanSousSol({ st, geojson }: { st: NonNullable<EtudeVariante['stationnement']>; geojson?: EtudeVariante['geojson'] | null }) {
   const n = st.places_sous_sol ?? 0
   const parNiveau = st.places_sous_sol_par_niveau ?? 0
   const niveaux = st.niveaux_sous_sol ?? 1
-  const kindsSS = new Set(['assiette', 'sous_sol_emprise', 'allee_ss', 'place_ss', 'rampe', 'voie'])
-  const fcSS = geojson
-    ? { type: 'FeatureCollection' as const, features: geojson.features.filter((f: { properties?: { kind?: string } | null }) => kindsSS.has(f.properties?.kind ?? '')) }
-    : null
+  const n1 = st.places_niveau_moins1 ?? n
+  const n2 = st.places_niveau_moins2 ?? 0
+  // un plan par niveau : objets tagués niveau=-1 / -2, + l'assiette (et la rampe au −1) pour le cadre.
+  const planNiveau = (niv: -1 | -2, nPlaces: number) => {
+    if (!geojson || nPlaces <= 0) return null
+    const feats = geojson.features.filter((f: { properties?: { kind?: string; niveau?: number } | null }) => {
+      const k = f.properties?.kind ?? ''
+      if (k === 'assiette' || k === 'voie') return true
+      if (['sous_sol_emprise', 'allee_ss', 'place_ss', 'rampe'].includes(k)) return f.properties?.niveau === niv
+      return false
+    })
+    const fc = { type: 'FeatureCollection' as const, features: feats }
+    if (!feats.some((f: { properties?: { kind?: string } | null }) => f.properties?.kind === 'place_ss')) return null
+    return (
+      <div className="mt-1">
+        <p className="text-[10px] font-semibold text-mint">Niveau −{Math.abs(niv)} — {fmtInt(nPlaces)} places</p>
+        <PlanMasseSvg fc={fc} groupesCaches={[]} className="block h-auto w-full max-w-[420px] rounded-md" />
+      </div>
+    )
+  }
   return (
     <div className="rounded-lg border border-mint/40 bg-mint-bg p-3">
-      <p className="mb-1 text-[11px] font-semibold text-mint">Stationnement en sous-sol · niveau −1</p>
-      <p className="mb-2 text-[10px] text-txt-mut">{fmtInt(n)} places · emprise {fmtDec(st.emprise_sous_sol_m2 ?? 0)} m² (≤ emprise réglementaire) · rampe {fmtDec(st.rampe_m2 ?? 0)} m²
+      <p className="mb-1 text-[11px] font-semibold text-mint">Stationnement en sous-sol · {fmtInt(niveaux)} niveau{niveaux > 1 ? 'x' : ''}</p>
+      <p className="mb-2 text-[10px] text-txt-mut">{fmtInt(n)} places sur {fmtInt(niveaux)} niveau{niveaux > 1 ? 'x' : ''} ({fmtInt(parNiveau)} / niveau) · emprise {fmtDec(st.emprise_sous_sol_m2 ?? 0)} m² (≤ emprise réglementaire) · rampe {fmtDec(st.rampe_m2 ?? 0)} m²
         {st.rampe_detail && <> ({fmtDec(st.rampe_detail.rampe_profondeur_m)} m / {fmtDec(st.rampe_detail.rampe_pente_pct)} % = {fmtDec(st.rampe_detail.rampe_longueur_m)} m × {fmtDec(st.rampe_detail.rampe_largeur_m)} m)</>}
       </p>
-      {fcSS && fcSS.features.some((f: { properties?: { kind?: string } | null }) => f.properties?.kind === 'place_ss')
-        ? <PlanMasseSvg fc={fcSS} groupesCaches={[]} className="block h-auto w-full max-w-[420px] rounded-md" />
-        : <p className="text-[10px] text-txt-dim">Plan du niveau −1 indisponible pour ce scénario.</p>}
-      {niveaux > 1 && parNiveau > 0 && (
-        <p className="mt-1 text-[9.5px] text-amber">Le terrain loge {fmtInt(parNiveau)} places par niveau enterré : {fmtInt(n)} places demandent {fmtInt(niveaux)} niveaux de sous-sol (plan de principe du niveau −1 ci-dessus).</p>
-      )}
-      <p className="mt-1 text-[9px] text-txt-dim">Plan de principe dessiné sur la géométrie réelle — l'implantation exacte des places relève de l'architecte.</p>
+      {planNiveau(-1, n1)}
+      {niveaux >= 2 && planNiveau(-2, n2)}
+      <p className="mt-1 text-[9px] text-txt-dim">Plan de principe dessiné sur la géométrie réelle — {fmtInt(parNiveau)} places / niveau sur cette emprise. L'implantation exacte relève de l'architecte.</p>
     </div>
   )
 }
@@ -692,12 +708,13 @@ function LigneInfo({ l, v, sous }: { l: string; v: string; sous?: string }) {
 }
 
 // ── Hypothèses modifiables (mandat) : surfaces T1–T4, varangues, + hypothèses moteur (collectif) ──
-type HypEtat = { surf: Record<TypeKey, string>; varangue: Record<TypeKey, string>; profondeur: string; coef: string; stationnement: 'aerien' | 'sous_sol' }
-function HypothesesEditor({ hyp, setHyp, surfOf, varOf, types, collectif, onRecalculer, enCours, mode, onMode, onModifie }: {
+type HypEtat = { surf: Record<TypeKey, string>; varangue: Record<TypeKey, string>; profondeur: string; coef: string; stationnement: 'aerien' | 'sous_sol'; niveauxSousSol: 1 | 2 }
+type StatioChoix = 'aerien' | 'sous_sol_1' | 'sous_sol_2'
+function HypothesesEditor({ hyp, setHyp, surfOf, varOf, types, collectif, onRecalculer, enCours, choix, onChoix, onModifie }: {
   hyp: HypEtat; setHyp: (f: (h: HypEtat) => HypEtat) => void
   surfOf: (t: TypeKey) => number; varOf: (t: TypeKey) => number
   types: readonly TypeKey[]; collectif: boolean; onRecalculer: () => void; enCours: boolean
-  mode: 'aerien' | 'sous_sol'; onMode: (m: 'aerien' | 'sous_sol') => void; onModifie: () => void
+  choix: StatioChoix; onChoix: (c: StatioChoix) => void; onModifie: () => void
 }) {
   // ETUDE-V6-4 (item 8) — toute édition d'hypothèse marque l'étude « à recalculer » (grise le PDF).
   const champ = (val: string, ph: string, on: (v: string) => void) => (
@@ -724,19 +741,20 @@ function HypothesesEditor({ hyp, setHyp, surfOf, varOf, types, collectif, onReca
             <label className="flex items-center gap-1.5">Coef. plancher→habitable {champ(hyp.coef, '0.8', (v) => setHyp((h) => ({ ...h, coef: v })))}</label>
           </div>
         )}
-        {/* ETUDE-V6-2 (Lot 3) — mode de stationnement : aérien (défaut) / sous-sol (places au −1, rampe au sol). */}
+        {/* ETUDE-V6-2 (Lot 3) / V6-5 — stationnement : Aérien / Sous-sol 1 niveau (défaut) / Sous-sol 2 niveaux.
+            Le nombre de niveaux est EXPLICITE et borne la capacité (jamais un 2ᵉ niveau supposé non choisi). */}
         {collectif && (
           <div className="mt-1 flex flex-wrap items-center gap-2 border-t border-line-2 pt-2 text-[10.5px] text-txt-mut">
             <span>Stationnement</span>
             <div className="inline-flex overflow-hidden rounded border border-line-2" role="group" aria-label="Mode de stationnement">
-              {(['aerien', 'sous_sol'] as const).map((m) => (
-                <button key={m} type="button" data-statio-mode={m} onClick={() => onMode(m)}
-                  className={`px-2 py-0.5 text-[10.5px] ${mode === m ? 'bg-mint font-semibold text-mint-on' : 'text-txt-mut hover:bg-surface-1'}`}>
-                  {m === 'aerien' ? 'Aérien' : 'Sous-sol'}
+              {([['aerien', 'Aérien'], ['sous_sol_1', 'Sous-sol 1 niveau'], ['sous_sol_2', 'Sous-sol 2 niveaux']] as const).map(([c, lib]) => (
+                <button key={c} type="button" data-statio-mode={c} onClick={() => onChoix(c)}
+                  className={`px-2 py-0.5 text-[10.5px] ${choix === c ? 'bg-mint font-semibold text-mint-on' : 'text-txt-mut hover:bg-surface-1'}`}>
+                  {lib}
                 </button>
               ))}
             </div>
-            {mode === 'sous_sol' && <span className="text-[9.5px] text-txt-dim">Places au niveau −1, rampe au sol — l'emprise enterrée reste ≤ l'emprise réglementaire.</span>}
+            {choix !== 'aerien' && <span className="text-[9.5px] text-txt-dim">Places au niveau −1{choix === 'sous_sol_2' ? ' et −2' : ''}, rampe au sol — capacité bornée par les niveaux choisis.</span>}
           </div>
         )}
         <div className="mt-1 flex items-center gap-2">
@@ -753,12 +771,13 @@ function HypothesesEditor({ hyp, setHyp, surfOf, varOf, types, collectif, onReca
 //    + la capacité SOUS le régime réduit, jamais présentée comme acquise ───────────────────────────
 // ETUDE-V6-4 (items 4/5) — stationnement en TROIS lignes sans ambiguïté (PLU exige · loi nationale plafonne ·
 // LABUSE a dessiné) + MIXITÉ sociale affichée. Identique mot pour mot au PDF.
-function StationnementResultat({ regimes, placesActive, commune, zone, mode, mixite }: {
+function StationnementResultat({ regimes, placesActive, commune, zone, mode, niveaux, mixite }: {
   regimes: EtudeStationnementRegimes
   placesActive: number; commune?: string | null; zone?: string | null
-  mode: 'aerien' | 'sous_sol'
+  mode: 'aerien' | 'sous_sol'; niveaux?: number
   mixite?: { regle: EtudeRegle | null; applicable: boolean | null; aides: number | null; sdp_aidee: number | null } | null
 }) {
+  const lieu = mode === 'sous_sol' ? `au sous-sol (${(niveaux ?? 1) >= 2 ? 'niveaux −1 et −2' : 'niveau −1'})` : 'en aérien (au sol)'
   const g = regimes.general, pf = regimes.plafond_national
   const regleG = g.regle_courte ?? (g.ratio_par_logement != null ? `${fmtDec(g.ratio_par_logement)} place/logt` : 'un barème par typologie')
   return (
@@ -774,7 +793,7 @@ function StationnementResultat({ regimes, placesActive, commune, zone, mode, mix
         ) : (
           <li className="text-txt-dim">Aucun plafond national L151-35 applicable à cette destination.</li>
         )}
-        <li className="text-txt">LABUSE a dessiné <b>{fmtInt(placesActive)} places</b> {mode === 'sous_sol' ? 'au sous-sol (niveau −1)' : 'en aérien (au sol)'} selon la règle du PLU.</li>
+        <li className="text-txt">LABUSE a dessiné <b>{fmtInt(placesActive)} places</b> {lieu} selon la règle du PLU.</li>
       </ol>
       {mixite?.regle && (
         <div data-mixite className="mt-2 border-t border-line-2 pt-2 text-[10.5px] text-txt">

@@ -196,9 +196,12 @@ def _scenario_public(scenario, ref: str) -> dict:
             "places_sous_sol": cap.places_sous_sol,
             "emprise_sous_sol_m2": cap.emprise_sous_sol_m2,
             "rampe_m2": cap.rampe_m2,
-            # ETUDE-V6-4 (item 9) — plan du niveau −1 : places par niveau enterré réel + niveaux nécessaires.
+            # ETUDE-V6-4/5 (item 9) — plan du niveau −1 (et −2) : capacité d'un niveau + niveaux CHOISIS +
+            # répartition dessinée par niveau.
             "places_sous_sol_par_niveau": cap.places_sous_sol_par_niveau,
             "niveaux_sous_sol": cap.niveaux_sous_sol,
+            "places_niveau_moins1": cap.places_niveau_moins1,
+            "places_niveau_moins2": cap.places_niveau_moins2,
             # ETUDE-V6-2 (Lot 3, correction §3) — calcul de la rampe : profondeur / pente → longueur × largeur.
             "rampe_detail": ({k: (scenario.scene.sous_sol or {}).get(k) for k in
                               ("rampe_profondeur_m", "rampe_pente_pct", "rampe_longueur_m", "rampe_largeur_m")}
@@ -354,7 +357,7 @@ def _study_id(entree: dict) -> str:
     import hashlib
     import json
     cle = {k: entree.get(k) for k in ("idus", "type_projet", "objectif", "programme", "hypotheses",
-                                      "stationnement", "terrain")}
+                                      "stationnement", "niveaux_sous_sol", "terrain")}
     brut = json.dumps(cle, sort_keys=True, ensure_ascii=False, default=str)
     return "EF-" + hashlib.sha1(brut.encode("utf-8")).hexdigest()[:12]
 
@@ -619,6 +622,13 @@ def etudier_payload(session, entree: dict) -> dict:
         raise ValueError(f"type de projet inconnu : {type_projet}")
     stationnement = entree.get("stationnement") or "aerien"
     terrain_mode = entree.get("terrain") or "libere"
+    # ETUDE-V6-5 — le nombre de niveaux de sous-sol est une HYPOTHÈSE EXPLICITE (1 par défaut, 2 au choix) ;
+    # la capacité est bornée à niveaux × places/niveau — jamais un 2ᵉ niveau supposé sans être choisi.
+    niveaux_sous_sol = int(entree.get("niveaux_sous_sol") or 1)
+    if niveaux_sous_sol not in (1, 2):
+        niveaux_sous_sol = 1
+    if stationnement != "sous_sol":
+        niveaux_sous_sol = 1
 
     # ETUDE-V6 (Lot D) — le LOTISSEMENT n'est pas un collectif : on branche la division foncière de
     # l'assiette (division-or à la demande, pas le batch île) et on sert un plan de division, pas des
@@ -653,7 +663,7 @@ def etudier_payload(session, entree: dict) -> dict:
     scenarios, variantes, depassement, message, terrain, regles, conv, scn_max = moteur_mod.etudier_complet(
         session=session, idus=idus, objectif=objectif, conv=conv,
         programme=demande or None, repartition=repartition, max_scenarios=3,
-        stationnement_mode=stationnement,
+        stationnement_mode=stationnement, niveaux_sous_sol=niveaux_sous_sol,
     )
 
     # entêtes partagés (terrain / règles / versions) — depuis le 1er scénario/variante PRÉSENT, sinon un
@@ -791,6 +801,8 @@ def etudier_payload(session, entree: dict) -> dict:
             "type_projet": type_projet, "objectif": objectif,
             "programme_mode": "saisi" if demande else "propose",
             "stationnement": stationnement, "terrain": terrain_mode,
+            # ETUDE-V6-5 — niveau(x) de sous-sol CHOISI (1 par défaut ; sans objet en aérien).
+            "niveaux_sous_sol": (niveaux_sous_sol if stationnement == "sous_sol" else None),
         },
         "regles": {
             "zone": ref_scn.regles.zone, "insee": ref_scn.regles.insee,

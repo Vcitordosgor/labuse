@@ -439,9 +439,15 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
   })
 
   it('Lot 3 : le résultat sous-sol affiche les places au −1, l\'emprise enterrée et la rampe', async () => {
+    const geoSS = { type: 'FeatureCollection', features: [
+      { type: 'Feature', properties: { kind: 'assiette' }, geometry: { type: 'Polygon', coordinates: [[[55.3,-21.3],[55.3009,-21.3],[55.3009,-21.3009],[55.3,-21.3009],[55.3,-21.3]]] } },
+      { type: 'Feature', properties: { kind: 'place_ss', niveau: -1 }, geometry: { type: 'Polygon', coordinates: [[[55.3001,-21.3001],[55.30012,-21.3001],[55.30012,-21.30015],[55.3001,-21.30015],[55.3001,-21.3001]]] } },
+    ] }
     const ssVar = { ...VARIANTE('votre_programme', 'Votre programme', 48, 'Exploitable sous hypothèses'),
+      geojson: geoSS,
       stationnement: { places: 48, places_imposees: 48, details_places: {}, m2_par_place: null, surface_stationnement_m2: 0,
-        note: null, acces: null, mode: 'sous_sol', places_sous_sol: 48, emprise_sous_sol_m2: 1200, rampe_m2: 20 } }
+        note: null, acces: null, mode: 'sous_sol', places_sous_sol: 48, emprise_sous_sol_m2: 1200, rampe_m2: 20,
+        niveaux_sous_sol: 1, places_sous_sol_par_niveau: 48, places_niveau_moins1: 48, places_niveau_moins2: 0 } }
     const RES_SS = { ...RESULTAT, programme_saisi: { demande: { T2: 29 } }, variantes: [ssVar,
       { ref: 'optimisation', role: 'optimisation', role_label: 'Optimisation', absente: true, raison: '—' },
       { ref: 'alternative', role: 'alternative', role_label: 'Alternative', absente: true, raison: '—' }],
@@ -461,7 +467,8 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     // V6-3 (item 10) — le sous-sol : cartouche + plan de principe du niveau −1 (places + emprise).
     await waitFor(() => screen.getByText("Verdict de l'étude"))
     const corpsSS = (document.body.textContent||'').replace(/[\u202f\u00a0]/g,' ')
-    expect(corpsSS).toContain('niveau −1')
+    expect(corpsSS).toContain('Niveau −1')
+    expect(corpsSS).toContain('1 niveau')
     expect(corpsSS).toContain('48 places')
     expect(corpsSS).toContain('1 200,0 m²')
     // en sous-sol, le CTA « Testez en sous-sol » ne s'affiche PAS (on y est déjà)

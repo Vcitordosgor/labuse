@@ -88,7 +88,7 @@ def _construire(forme: str, scene: Scene, conv: Conventions, *, niveaux: int, fr
 
 
 def _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction, repartition=None,
-             stationnement_mode="aerien"):
+             stationnement_mode="aerien", niveaux_sous_sol=1):
     # hauteur : nb de niveaux borné par la hauteur réglementaire (plafond / étage)
     r = regles.hauteur_plafond
     if r.validee and r.valeur is not None and niveaux * conv.hauteur_etage_m > r.valeur + 1e-9:
@@ -103,7 +103,7 @@ def _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction, repartition
     # ETUDE-V6-2 (Lot 3) — sous-sol : places au niveau −1 (le sol reste libre → plus de logements) ;
     # aérien par défaut (places + allée + accès au sol).
     if stationnement_mode == "sous_sol":
-        poser_sous_sol(scene, conv, cible=cible)
+        poser_sous_sol(scene, conv, cible=cible, niveaux=niveaux_sous_sol)
     else:
         poser_stationnement(scene, conv, cible=cible)
     poser_espaces_libres(scene)
@@ -195,7 +195,8 @@ def _charger(session, idus, zone, conv, avec_pente):
     return terrain, regles, zone
 
 
-def _rechercher(terrain, regles, conv, objectif, *, repartition=None, stationnement_mode="aerien"):
+def _rechercher(terrain, regles, conv, objectif, *, repartition=None, stationnement_mode="aerien",
+                niveaux_sous_sol=1):
     """Parcourt la grille ORDONNÉE forme×niveaux×fraction et renvoie (ranked, candidats) :
     `ranked` = liste des candidats FAISABLES, triée par la clef d'objectif décroissante, chaque
     item = (clef, paquet, forme, niveaux, fraction). `candidats` = la trace complète.
@@ -207,7 +208,8 @@ def _rechercher(terrain, regles, conv, objectif, *, repartition=None, stationnem
         for niveaux in _NIVEAUX:
             for fraction in _FRACTIONS:
                 paquet, cand = _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction,
-                                        repartition=repartition, stationnement_mode=stationnement_mode)
+                                        repartition=repartition, stationnement_mode=stationnement_mode,
+                                        niveaux_sous_sol=niveaux_sous_sol)
                 candidats.append(cand)
                 if paquet is None:
                     continue
@@ -376,7 +378,8 @@ def etudier_complet(session=None, *, idus: Optional[list[str]] = None, zone: Opt
                     objectif: str = "equilibre", conv: Optional[Conventions] = None,
                     avec_pente: bool = True, programme: Optional[dict[str, int]] = None,
                     repartition: Optional[list[str]] = None, max_scenarios: int = 3,
-                    stationnement_ratio: Optional[float] = None, stationnement_mode: str = "aerien"):
+                    stationnement_ratio: Optional[float] = None, stationnement_mode: str = "aerien",
+                    niveaux_sous_sol: int = 1):
     """ETUDE-V6 (Lot B) — UN SEUL passage de recherche, deux vues :
     `scenarios` = sémantique historique (Pareto des candidats couvrant la demande ; [] si la demande
     ne tient pas), et `variantes` = les 3 rôles du mandat (best-effort si dépassement). Renvoie
@@ -399,7 +402,8 @@ def etudier_complet(session=None, *, idus: Optional[list[str]] = None, zone: Opt
     if zi is None or zi.is_empty or terrain.aire_zone_m2 < 60:
         return [], [], None, _message_impossible(terrain, regles, []), terrain, regles, conv, None
     faisables, candidats = _rechercher(terrain, regles, conv, objectif, repartition=repartition,
-                                       stationnement_mode=stationnement_mode)
+                                       stationnement_mode=stationnement_mode,
+                                       niveaux_sous_sol=niveaux_sous_sol)
     if not faisables:
         return [], [], None, _message_impossible(terrain, regles, candidats), terrain, regles, conv, None
 

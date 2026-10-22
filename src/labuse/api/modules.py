@@ -1990,6 +1990,8 @@ class EtudeIn(BaseModel):
     type_projet: str = Field("collectif")
     objectif: str = Field("equilibre")
     stationnement: str = Field("aerien")
+    # ETUDE-V6-5 — nombre de niveaux de sous-sol (hypothèse explicite : 1 par défaut, 2 au choix).
+    niveaux_sous_sol: int | None = None
     terrain: str = Field("libere")
     programme: dict | None = None
     hypotheses: dict | None = None
@@ -2141,7 +2143,7 @@ def _archiver_etude(db: Session, request: Request, body: dict, payload: dict,
     from .tenant import current_compte
     recette = {
         "config": {k: body.get(k) for k in ("idus", "type_projet", "objectif", "programme",
-                                             "hypotheses", "stationnement", "terrain", "scenario_ref")},
+                                             "hypotheses", "stationnement", "niveaux_sous_sol", "terrain", "scenario_ref")},
         "scenario_retenu": retenu_ref,
         "numero": numero,
         "moteur": payload.get("moteur"),

@@ -158,6 +158,15 @@ def _mode_label(mode: Optional[str]) -> str:
     return {"aerien": "aérien", "sous_sol": "sous-sol"}.get(mode or "aerien", "aérien")
 
 
+def _stationnement_label(retenu: dict, entrees: dict) -> str:
+    """ETUDE-V6-5 — libellé du stationnement avec le nombre de niveaux CHOISI (« sous-sol 1 niveau »)."""
+    mode = retenu.get("stationnement", {}).get("mode") or entrees.get("stationnement") or "aerien"
+    if mode != "sous_sol":
+        return "aérien"
+    niv = retenu.get("stationnement", {}).get("niveaux_sous_sol") or entrees.get("niveaux_sous_sol") or 1
+    return f"sous-sol {int(niv)} niveau" + ("x" if int(niv) > 1 else "")
+
+
 def _stationnement_3lignes(payload: dict, retenu: dict) -> str:
     """ETUDE-V6-4 (items 4/5/11) — stationnement en TROIS lignes (identiques à l'écran, mêmes mots) + mixité."""
     reg = payload.get("stationnement_regimes") or {}
@@ -166,8 +175,11 @@ def _stationnement_3lignes(payload: dict, retenu: dict) -> str:
     commune = payload["entrees"].get("commune") or ""
     mode = retenu.get("stationnement", {}).get("mode") or payload["entrees"].get("stationnement") or "aerien"
     places = retenu.get("stationnement", {}).get("places")
+    niveaux = retenu.get("stationnement", {}).get("niveaux_sous_sol") or 1
     regleg = g.get("regle_courte") or (f"{_dec(g.get('ratio_par_logement'))} place/logt" if g.get("ratio_par_logement") is not None else "un barème par typologie")
-    lieu = "au sous-sol (niveau −1)" if mode == "sous_sol" else "en aérien (au sol)"
+    # ETUDE-V6-5 — le lieu reflète le NOMBRE DE NIVEAUX choisi (−1, ou −1 et −2).
+    lieu = (f"au sous-sol ({'niveaux −1 et −2' if niveaux >= 2 else 'niveau −1'})" if mode == "sous_sol"
+            else "en aérien (au sol)")
     lignes = [f"Le PLU de {esc(commune)} (art. {esc(g.get('article') or '—')}) exige {esc(regleg)}."]
     if pf:
         lignes.append(f"La loi nationale (Code de l'urbanisme, art. {esc(pf.get('reference') or 'L151-35')}) "
@@ -391,7 +403,7 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
         f'<div class="kicker">LABUSE · Document n° {esc(numero)}</div>'
         f'<h1>Étude de faisabilité — {esc(t.get("commune") or "")} · parcelles {esc(_refs_parcelles(payload))}</h1>'
         f'<p class="idu">{_m2(t.get("contenance_totale_m2"))} · zone {esc(e.get("zone") or "")} · '
-        f'collectif · stationnement {esc(_mode_label(retenu.get("stationnement", {}).get("mode") or e.get("stationnement")))}</p>'
+        f'collectif · stationnement {esc(_stationnement_label(retenu, e))}</p>'
         + _au_html
         + f'<div class="{vclass}">{esc(txt)}</div>'
         # ETUDE-V6-4 (items 10/11/13) — LA phrase « ce qui limite », identique au bandeau de l'écran
@@ -561,24 +573,45 @@ def _p5_plan_masse(payload: dict, retenu: dict, *, titre: str = None) -> str:
         + '</section>')
 
 
+def _fc_niveau(fc: dict, niveau: int) -> dict:
+    """Sous-FeatureCollection pour UN niveau de sous-sol : l'assiette/voie (cadre) + les objets enterrés
+    (emprise/allée/places/rampe) tagués `niveau`. Permet un plan PAR niveau (−1 et −2 ne se chevauchent pas)."""
+    objets = {"sous_sol_emprise", "allee_ss", "place_ss", "rampe"}
+    feats = []
+    for f in (fc.get("features") or []):
+        p = f.get("properties") or {}
+        k = p.get("kind")
+        if k in ("assiette", "voie"):
+            feats.append(f)
+        elif k in objets and p.get("niveau") == niveau:
+            feats.append(f)
+    return {"type": "FeatureCollection", "features": feats}
+
+
 def _sous_sol_plan(sc: dict) -> str:
-    """ETUDE-V6-4 (item 9) — plan du niveau −1 DESSINÉ sur la vraie géométrie (contour de l'emprise enterrée
-    dans l'assiette, allée, places, rampe à leur vraie position) — identique à l'écran. Si le terrain ne loge
-    qu'une partie des places par niveau, on dit combien de niveaux de sous-sol sont nécessaires."""
+    """ETUDE-V6-4 (item 9) / V6-5 — UN plan PAR niveau de sous-sol choisi (−1, et −2 si 2 niveaux), DESSINÉ
+    sur la vraie géométrie (contour de l'emprise, allée, places, rampe). Identique à l'écran. La capacité est
+    bornée aux niveaux CHOISIS — jamais un 2ᵉ niveau supposé."""
     st = sc.get("stationnement") or {}
-    fig = _svg_plan(sc["geojson"], ["assiette", "sous_sol_emprise", "allee_ss", "place_ss", "rampe", "voie"], h=360)
     par_niv = st.get("places_sous_sol_par_niveau") or 0
     niveaux = st.get("niveaux_sous_sol") or 1
-    note = ""
-    if niveaux > 1 and par_niv > 0:
-        note = (f'<p class="note">Le terrain loge {par_niv} places par niveau enterré : '
-                f'{st.get("places_sous_sol")} places demandent {niveaux} niveaux de sous-sol '
-                f'(plan de principe du niveau −1 ci-dessus).</p>')
-    return (
-        '<h3>Niveau −1 — stationnement en sous-sol</h3>'
-        f'<div class="verdict">Emprise enterrée {_m2(st.get("emprise_sous_sol_m2"))} (≤ emprise réglementaire), '
-        f'rampe {_m2(st.get("rampe_m2"))}. Plan de principe dessiné sur la géométrie réelle.</div>'
-        + fig + _legende(["sous_sol_emprise", "place_ss", "allee_ss", "rampe"]) + note)
+    n1 = st.get("places_niveau_moins1") or 0
+    n2 = st.get("places_niveau_moins2") or 0
+    kinds = ["assiette", "sous_sol_emprise", "allee_ss", "place_ss", "rampe", "voie"]
+    blocs = [
+        f'<h3>Stationnement en sous-sol — {niveaux} niveau{"x" if niveaux > 1 else ""} '
+        f'({par_niv} places / niveau)</h3>',
+        f'<div class="verdict">{int(st.get("places_sous_sol") or 0)} places au total · emprise enterrée '
+        f'{_m2(st.get("emprise_sous_sol_m2"))} (≤ emprise réglementaire) · rampe {_m2(st.get("rampe_m2"))}. '
+        'Plan de principe dessiné sur la géométrie réelle.</div>',
+        f'<h4>Niveau −1 — {n1} places</h4>',
+        _svg_plan(_fc_niveau(sc["geojson"], -1), kinds, h=320),
+    ]
+    if niveaux >= 2 and n2 > 0:
+        blocs += [f'<h4>Niveau −2 — {n2} places</h4>',
+                  _svg_plan(_fc_niveau(sc["geojson"], -2), kinds, h=320)]
+    blocs.append(_legende(["sous_sol_emprise", "place_ss", "allee_ss", "rampe"]))
+    return "".join(blocs)
 
 
 def _p_planche(payload: dict, retenu: dict) -> str:
@@ -687,9 +720,9 @@ def _p8_hypotheses(payload: dict, retenu: dict, numero: str) -> str:
         ("Plancher → habitable", _dec(h.get('coef_plancher_habitable')), "circulations et noyaux hors habitable"),
         ("Place · allée", place_txt, "dimensions usuelles"),
         ("Hauteur de niveau", f"{_grp(h.get('hauteur_etage_m'))} m", "convention"),
-        # ETUDE-V6-4 (items 11/12) — le MODE réel (aérien / sous-sol), plus de « pas de sous-sol ».
-        ("Stationnement", _mode_label(retenu.get("stationnement", {}).get("mode") or payload["entrees"].get("stationnement")),
-         "au sol (aérien) ou au niveau −1 (sous-sol)"),
+        # ETUDE-V6-4/5 (items 11/12) — le MODE réel + le nombre de niveaux CHOISI (hypothèse explicite).
+        ("Stationnement", _stationnement_label(retenu, payload["entrees"]),
+         "aérien (au sol) ou sous-sol (niveaux choisis : −1, ou −1 et −2)"),
     ]
     hrows_html = "".join(f'<tr><td class="k">{esc(a)}</td><td>{b}</td><td>{esc(c)}</td></tr>'
                          for a, b, c in hrows)

@@ -2154,8 +2154,9 @@ export interface EtudeScenario {
     mode?: 'aerien' | 'sous_sol'; places_sous_sol?: number; emprise_sous_sol_m2?: number; rampe_m2?: number
     sur_dalle_m2?: number   // surface au-dessus du sous-sol retranchée de la pleine terre
     rampe_detail?: { rampe_profondeur_m: number; rampe_pente_pct: number; rampe_longueur_m: number; rampe_largeur_m: number } | null
-    // ETUDE-V6-4 (item 9) — plan du niveau −1 dessiné : places par niveau enterré réel + niveaux nécessaires.
+    // ETUDE-V6-4/5 — plan du niveau −1 (et −2) : capacité d'un niveau, niveaux CHOISIS, répartition dessinée.
     places_sous_sol_par_niveau?: number; niveaux_sous_sol?: number
+    places_niveau_moins1?: number; places_niveau_moins2?: number
   }
   surfaces_mesurees_m2: Record<string, number>
   emprise_sol_m2: number; pleine_terre_m2: number
@@ -2333,6 +2334,8 @@ export interface EtudeDepassement {
 }
 export interface EtudeIn {
   idus: string[]; type_projet?: string; objectif?: string; stationnement?: string; terrain?: string
+  // ETUDE-V6-5 — nombre de niveaux de sous-sol (1 par défaut, 2 au choix) ; sans objet en aérien.
+  niveaux_sous_sol?: number
   programme?: { mode: 'propose' | 'saisi'; lignes?: Array<{ type: string; nombre: number; surface_m2?: number }> } | null
   hypotheses?: { profondeur_m?: number; coef_plancher_habitable?: number; surfaces?: Record<string, number>; varangues?: Record<string, number> } | null
 }
