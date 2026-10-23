@@ -295,7 +295,53 @@ def _variante_public(role: str, scenario, terrain, conv, regles, demande: dict) 
     # ETUDE-V6-7 (item 4) — en SOUS-SOL, le sol libéré (plus de parking au sol) sert à bâtir plus : une phrase
     # dit comment il est utilisé, CHIFFRÉE si le bâtiment reste sous le plafond de hauteur (R+k < R+max).
     pub["sol_libere_note"] = _sol_libere_note(scenario, conv, regles)
+    # ETUDE-V6-7 (items 1-2) — « votre programme » dessine EXACTEMENT la demande du client quand elle tient
+    # (pas d'overshoot au maximum du terrain) : on rogne le plan à la demande → tenus = dessinés = demandés,
+    # une seule vérité (places, surface tenue, mixité recalculées sur la demande).
+    if role == "votre_programme" and demande:
+        _trim_variante_au_programme(pub, demande, conv, regles)
     return pub
+
+
+def _trim_variante_au_programme(pub: dict, demande: dict, conv, regles) -> None:
+    """Rogne la variante « votre programme » à la demande exacte SI le plan dessiné la couvre (chaque type
+    au moins au nombre demandé). Sinon on garde le plan réduit au prorata (la demande ne tient pas)."""
+    par = pub["programme"].get("par_type") or {}
+    dem = {t: int(n) for t, n in demande.items() if n > 0}
+    if not dem or any(par.get(t, 0) < n for t, n in dem.items()):
+        return                                                   # ne couvre pas → prorata déjà appliqué
+    tot = sum(dem.values())
+    import math as _m
+    b = regles.stationnement
+    total_pl = 0.0
+    for t, n in dem.items():
+        mod = conv.modules.get(t)
+        u = b.places_pour(pieces=mod.pieces, sdp_m2=mod.surface_m2, destination="collectif") if (mod and b.validee) else None
+        total_pl += n * (u if u is not None else 1.0)
+    places = b.arrondir(total_pl) if b.validee else int(_m.ceil(total_pl))
+    pub["programme"]["par_type"] = dict(dem)
+    pub["programme"]["surface_tenue_m2"] = round(sum(n * conv.modules[t].surface_m2 for t, n in dem.items()
+                                                     if t in conv.modules), 1)
+    if pub["programme"].get("mixite_applicable"):
+        pub["programme"]["logements_aides_imposes"] = _m.ceil(0.20 * tot)
+    pub["resume"]["logements"] = tot
+    pub["resume"]["places"] = places
+    pub["stationnement"]["places"] = places
+    pub["stationnement"]["places_imposees"] = places
+    # GeoJSON : ne garder que `dem[t]` modules de chaque type (le bâtiment est plus court, pas d'overshoot).
+    reste = dict(dem)
+    feats = []
+    for f in (pub.get("geojson") or {}).get("features", []):
+        pr = f.get("properties") or {}
+        if pr.get("kind") == "module":
+            t = pr.get("type_logement")
+            if t in reste and reste[t] > 0:
+                reste[t] -= 1
+                feats.append(f)
+        else:
+            feats.append(f)
+    if pub.get("geojson"):
+        pub["geojson"] = {"type": "FeatureCollection", "features": feats}
 
 
 def _sol_libere_note(scenario, conv, regles) -> Optional[str]:
