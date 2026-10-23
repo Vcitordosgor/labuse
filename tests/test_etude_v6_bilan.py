@@ -98,5 +98,6 @@ def test_bilan_surfacique_lotissement_clos_et_pdf(session_reelle):
     # le PDF lotissement se rend du MÊME payload (study_id stable) ; ses nombres (tableau des lots,
     # voirie, bilan) sortent tous du payload du lotissement (chiffres de l'écran).
     rendu = ef.rendu_lotissement(p, genere_le="22/10/2026")
-    assert rendu["html"] and rendu["numero"] == p["study_id"]
+    # ETUDE-V6-6 (item 10) — n° de document = EF-<8> dérivé du study_id (identique écran/cartouche).
+    assert rendu["html"] and rendu["numero"] == p["study_id"][:11] == ef._numero_document(p)
     assert f"{p['lotissement']['tableau_lots']['nombre']}" in rendu["html"]   # nb de lots repris du payload

@@ -49,6 +49,12 @@ function enveloppeJauge(jd: EtudeJaugeOut | undefined, demande: Record<string, n
 
 // ETUDE-V6-3 (item 2) — préfixe NORMALISÉ de toute règle PLU affichée : « PLU de [commune] · zone [X] ·
 // art. [n°] · millésime ». Chaque règle vient du PLU de la commune de l'assiette (regles.charger(insee)).
+// ETUDE-V6-6 (item 10) — n° de document affiché = EF-<8> (les 8 premiers caractères du study_id), identique
+// au cartouche du PDF (_numero_document côté serveur). Deux études différentes → deux numéros.
+function numDoc(studyId?: string | null): string {
+  return studyId && studyId.startsWith('EF-') && studyId.length >= 11 ? studyId.slice(0, 11) : (studyId ?? '')
+}
+
 function pluRef(commune?: string | null, zone?: string | null, article?: string | null, millesime?: string | null): string {
   return [commune ? `PLU de ${commune}` : 'PLU', zone ? `zone ${zone}` : null,
     article ? `art. ${article}` : null, millesime ? `millésime ${millesime}` : null].filter(Boolean).join(' · ')
@@ -130,6 +136,8 @@ export function EtudeV6({ initialIdus, onClose }: {
         {pdf.enCours ? <span className="inline-flex items-center gap-1.5">Génération<Chargement variant="inline" accent="courant" delai={0} /></span> : 'Générer le PDF ↓'}
       </Bouton>
       {dirty && <span data-pdf-perime className="text-[10px] text-amber">Recalculez pour mettre à jour l'étude.</span>}
+      {/* ETUDE-V6-6 (item 10) — N° de document EF-<8> dérivé du study_id, identique au cartouche du PDF. */}
+      {analyse.data?.study_id && <span data-num-doc className="text-[9px] text-txt-dim">N° de document {numDoc(analyse.data.study_id)} — le PDF part de la même étude.</span>}
     </div>
   )
 
@@ -733,7 +741,7 @@ function LotissementResultat({ lot, hypothese, boutonPdf, pdfErreur, studyId, ed
         {editeur}
         {boutonPdf}
         {pdfErreur && <p className="text-[10px] text-coral">{pdfErreur}</p>}
-        {studyId && <p className="text-[9px] text-txt-dim">study_id {studyId} — le PDF part de la même étude.</p>}
+        {studyId && <p data-num-doc className="text-[9px] text-txt-dim">N° de document {numDoc(studyId)} — le PDF part de la même étude.</p>}
         {Object.keys(hyp).length > 0 && (
           <Recit titre="Logements futurs (hypothèse)">
             <p className="text-[11px] text-txt">{Object.entries(hyp).map(([t, n]) => `${n}×${t}`).join(' · ')}</p>

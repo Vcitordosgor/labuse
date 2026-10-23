@@ -115,24 +115,28 @@ def _statut_classe(s: str) -> str:
 
 # ── choix du scénario retenu ────────────────────────────────────────────────────────────────
 def scenario_retenu(payload: dict, ref: Optional[str] = None) -> Optional[dict]:
-    """Le scénario que le document met en avant : celui AFFICHÉ (ref transmise par l'outil) sinon le
-    premier EXPLOITABLE, sinon le mieux classé (scenarios[0]). None si aucun scénario."""
+    """Le scénario que le document met en avant. ETUDE-V6-6 (item 9) — le PDF décrit L'ÉTUDE DU CLIENT :
+    on retient D'ABORD la variante « votre programme » (= le programme saisi, tel qu'affiché par défaut à
+    l'écran), pour que le document porte SES chiffres (N logements, niveaux, places), pas le maximum du
+    terrain (qui figure en second). `ref` transmise par l'outil = le scénario affiché, honorée en priorité."""
+    variantes = [v for v in (payload.get("variantes") or []) if not v.get("absente")]
     scn = payload.get("scenarios") or []
+    if ref:   # le scénario explicitement affiché par l'outil (variante OU Pareto)
+        for s in variantes + scn:
+            if s.get("ref") == ref:
+                return s
+    # par défaut : « votre programme » (la variante du client), comme l'écran.
+    vp = next((v for v in variantes if v.get("ref") == "votre_programme"), None)
+    if vp is not None:
+        return vp
+    # pas de demande saisie (programme proposé) : le mieux classé des scénarios Pareto.
     if scn:
-        if ref:
-            for s in scn:
-                if s.get("ref") == ref:
-                    return s
         for s in scn:
             if str(s.get("statut_etude", "")).startswith("exploitable"):
                 return s
         return scn[0]
-    # ETUDE-V6-3 (item 12) — AUCUN scénario (la demande ne tient pas) : on retient la variante « votre
-    # programme » (best-effort) pour que le PDF se génère QUAND MÊME, le dépassement écrit dans le document.
-    for v in (payload.get("variantes") or []):
-        if not v.get("absente"):
-            return v
-    return None
+    # ultime repli : la 1ʳᵉ variante présente (demande qui ne tient pas → PDF généré quand même).
+    return variantes[0] if variantes else None
 
 
 def _scn_label(s: dict) -> str:
@@ -156,6 +160,36 @@ def _refs_parcelles(payload: dict) -> str:
 def _mode_label(mode: Optional[str]) -> str:
     """ETUDE-V6-4 (item 12) — accents corrects : aerien → « aérien », sous_sol → « sous-sol »."""
     return {"aerien": "aérien", "sous_sol": "sous-sol"}.get(mode or "aerien", "aérien")
+
+
+_TYPE_PROJET_LABELS = {
+    "etudiante": "résidence étudiante", "senior": "résidence senior",
+    "social": "logement social", "collectif": "logement collectif", "lotissement": "lotissement",
+}
+
+
+def _type_projet_label(tp: Optional[str]) -> str:
+    """ETUDE-V6-6 (item 9) — le type de projet EN TOUTES LETTRES (jamais « collectif » nu)."""
+    return _TYPE_PROJET_LABELS.get(tp or "", "logement collectif")
+
+
+def _numero_document(payload: dict) -> str:
+    """ETUDE-V6-6 (item 10) — numéro de document = EF-<8 caractères> dérivé du study_id. Même étude →
+    même numéro (écran = cartouche) ; deux études différentes → deux numéros. Repli si study_id absent."""
+    sid = str(payload.get("study_id") or "")
+    if sid.startswith("EF-") and len(sid) >= 11:
+        return sid[:11]                       # « EF- » + 8 caractères
+    import hashlib
+    import json
+    brut = json.dumps(payload.get("entrees") or {}, sort_keys=True, ensure_ascii=False, default=str)
+    return "EF-" + hashlib.sha1(brut.encode("utf-8")).hexdigest()[:8]
+
+
+def _mix_str(demande: Optional[dict]) -> str:
+    """« 23 T2 · 6 T3 » depuis la demande saisie (dict type→nombre)."""
+    if not isinstance(demande, dict):
+        return ""
+    return " · ".join(f"{int(n)} {t}" for t, n in demande.items() if n)
 
 
 def _stationnement_label(retenu: dict, entrees: dict) -> str:
@@ -332,29 +366,39 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
     e = payload["entrees"]
     t = payload["terrain"]
     refs = _refs_parcelles(payload)
-    fr = _fourchette(payload)
     scn = payload.get("scenarios") or []
-    # verdict (fourchette des Exploitable ; un scénario « à compléter » cité à part, jamais « permet »)
-    if fr:
-        a, b = fr
-        txt = (f"Selon nos hypothèses d'implantation, ce terrain peut recevoir "
-               f"{'entre ' + str(a) + ' et ' + str(b) if a != b else str(a)} logements en collectif "
-               f"avec stationnement aérien.")
-        acomp = [s for s in scn if s.get("statut_etude") == "à compléter"]
-        if acomp:
-            m = max(int(s["resume"]["logements"]) for s in acomp)
-            txt += f" Un scénario à {m} logements reste à compléter."
-        vclass = "verdict"
+    # ETUDE-V6-6 (item 9) — le document décrit L'ÉTUDE DU CLIENT : SON programme d'abord (type en toutes
+    # lettres, N logements demandés, niveaux, places, mode de stationnement), le maximum du terrain ENSUITE.
+    type_lbl = _type_projet_label(e.get("type_projet"))
+    demande = (payload.get("programme_saisi") or {}).get("demande")
+    confr = payload.get("confrontation") or {}
+    dep = payload.get("depassement")
+    n_dem = confr.get("demande_logements") if confr else (sum(demande.values()) if isinstance(demande, dict) else None)
+    tenus = (n_dem if confr.get("tient") else (dep.get("total_tiennent") if dep else None)) if confr else None
+    kmax = (payload.get("capacite_maximale") or {}).get("logements")
+    niv_lbl = retenu.get("niveaux_label") or ""
+    places = retenu.get("stationnement", {}).get("places")
+    statio_lbl = _stationnement_label(retenu, e)
+    if n_dem is not None:
+        txt = (f"Votre projet — {type_lbl} : {n_dem} logements demandés"
+               + (f" ({_mix_str(demande)})" if _mix_str(demande) else "")
+               + f", stationnement {statio_lbl}.")
+        if confr.get("tient"):
+            txt += (f" Ils tiennent sur ce terrain" + (f" en {niv_lbl}" if niv_lbl else "")
+                    + (f" ({places} places)." if places is not None else "."))
+        elif dep:
+            txt += (f" Dépassement : au mieux {dep['total_tiennent']} des {dep['total_demande']} "
+                    "logements demandés tiennent sur ce terrain.")
+        vclass = "verdict" if confr.get("tient") else "verdict warn"
     else:
-        txt = (payload.get("message")
-               or "Aucun scénario exploitable sur ce terrain selon nos hypothèses — voir le détail.")
-        # ETUDE-V6-3 (item 12) — le document se génère MÊME si la demande ne tient pas : le dépassement
-        # est ÉCRIT (comme à l'écran), chiffré depuis le payload (jamais un PDF manquant).
-        dep = payload.get("depassement")
-        if dep:
-            txt += (f" Dépassement : {dep['total_demande']} logements demandés, "
-                    f"{dep['total_tiennent']} tiennent au mieux sur ce terrain.")
-        vclass = "verdict warn"
+        # programme proposé par LABUSE (pas de demande saisie) : le maximum du terrain fait foi.
+        txt = (f"{type_lbl.capitalize()} — maximum du terrain estimé : {kmax} logements"
+               + (f" en {niv_lbl}" if niv_lbl else "") + f", stationnement {statio_lbl}.") if kmax else (
+            payload.get("message") or "Aucun scénario exploitable sur ce terrain selon nos hypothèses.")
+        vclass = "verdict" if kmax else "verdict warn"
+    # Le maximum du terrain, EN SECOND (jamais « ce terrain permet » ; indépendant de la demande).
+    if kmax is not None and n_dem is not None:
+        txt += f" Maximum réglementaire du terrain : {kmax} logements."
     cc = retenu["controles_compte"]
     # tuiles de synthèse (chaque nombre vient du payload : contrôles, règles, programme, terrain)
     emp = next((c for c in retenu["controles"] if c["nom"] == "Emprise au sol"), None)
@@ -371,28 +415,34 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
         ((f"{_grp(haut['valeur'])} {esc(str(haut.get('unite') or 'm'))}") if haut and haut.get("valeur") is not None else "—",
          esc(f"Hauteur ({haut['nom']})" if haut else "Hauteur")),
         (aides_txt, "Logements aidés imposés"),
-        (str(places_imp) if places_imp is not None else "—", f"Places imposées (scénario {_scn_label(retenu)})"),
+        (str(places_imp) if places_imp is not None else "—", "Places imposées"),
         (str(cc["non_effectue"]), "Contrôles non effectués"),
     ]
     tiles_html = "".join('<div class="tile"><div class="v">%s</div><div class="l">%s</div></div>'
                          % (v, l) for v, l in tiles)
-    # tableau des scénarios (si la demande ne tient pas, on montre AU MOINS le scénario retenu best-effort)
-    rows = []
-    for s in (scn or [retenu]):
-        cls = ' class="retenu"' if s["ref"] == retenu["ref"] else ""
-        stc = _statut_classe(s["statut_etude"])
+    # ETUDE-V6-6 (item 9) — tableau sans « scénario A/B/C » ni « retenu » : VOTRE PROJET (le programme étudié)
+    # en premier, le MAXIMUM DU TERRAIN ensuite. Deux lignes lisibles par le client.
+    cmax = payload.get("capacite_maximale") or {}
+    stc = _statut_classe(retenu["statut_etude"])
+    rows = [
+        f'<tr class="retenu"><td><b>Votre projet</b></td>'
+        f'<td>{esc(str(retenu.get("forme", "")).replace("_", " "))}</td>'
+        f'<td class="num">{retenu["resume"]["logements"]}</td>'
+        f'<td class="num">{esc(retenu.get("niveaux_label", ""))}</td>'
+        f'<td class="num">{retenu["resume"]["places"]}</td>'
+        f'<td><span class="st {stc}">{esc(_statut_court(retenu["statut_etude"]))}</span></td></tr>']
+    if cmax.get("logements") is not None:
         rows.append(
-            f'<tr{cls}><td>{esc(_scn_label(s))}{" (retenu)" if s["ref"] == retenu["ref"] and _scn_label(s) != "retenu" else ""}</td>'
-            f'<td>{esc(str(s.get("forme", "")).replace("_", " "))}</td>'
-            f'<td class="num">{s["resume"]["logements"]}</td>'
-            f'<td class="num">{esc(s.get("niveaux_label", ""))}</td>'
-            f'<td class="num">{_grp(s["resume"]["sdp_m2"])}</td>'
-            f'<td class="num">{s["resume"]["places"]}</td>'
-            f'<td><span class="st {stc}">{esc(_statut_court(s["statut_etude"]))}</span></td></tr>')
+            f'<tr><td>Maximum du terrain</td>'
+            f'<td>{esc(str(cmax.get("forme", "")).replace("_", " "))}</td>'
+            f'<td class="num">{cmax["logements"]}</td>'
+            f'<td class="num">{esc(cmax.get("niveaux_label", ""))}</td>'
+            f'<td class="num">{cmax.get("places", "—")}</td>'
+            f'<td><span class="st">indépendant de la demande</span></td></tr>')
     scn_table = (
-        '<table class="ef-scn"><tr><th>Scénario</th><th>Forme</th><th class="num">Logements</th>'
-        '<th class="num">Niveaux</th><th class="num">SDP du scénario</th><th class="num">Places</th>'
-        '<th>Étude</th></tr>' + "".join(rows) + "</table>") if rows else ""
+        '<table class="ef-scn"><tr><th>&nbsp;</th><th>Forme</th><th class="num">Logements</th>'
+        '<th class="num">Niveaux</th><th class="num">Places</th>'
+        '<th>Étude</th></tr>' + "".join(rows) + "</table>")
     # CHASSE-DOCS-FIX-1 (vérif #2) — caveat d'ouverture AU (« ouverture sous conditions »), comme la
     # fiche §4 et Comparer : jamais une capacité servie nue sur une zone AU conditionnée.
     _au = payload.get("au_ouverture") if isinstance(payload, dict) else None
@@ -403,7 +453,7 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
         f'<div class="kicker">LABUSE · Document n° {esc(numero)}</div>'
         f'<h1>Étude de faisabilité — {esc(t.get("commune") or "")} · parcelles {esc(_refs_parcelles(payload))}</h1>'
         f'<p class="idu">{_m2(t.get("contenance_totale_m2"))} · zone {esc(e.get("zone") or "")} · '
-        f'collectif · stationnement {esc(_stationnement_label(retenu, e))}</p>'
+        f'{esc(_type_projet_label(e.get("type_projet")))} · stationnement {esc(_stationnement_label(retenu, e))}</p>'
         + _au_html
         + f'<div class="{vclass}">{esc(txt)}</div>'
         # ETUDE-V6-4 (items 10/11/13) — LA phrase « ce qui limite », identique au bandeau de l'écran
@@ -414,14 +464,14 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
         + (f'<p class="note">{esc(payload.get("facteur_limitant_detail") or "")}</p>'
            if payload.get("facteur_limitant_detail") else '')
         + '<div class="ef-status">'
-        f'<div><b>Contrôles automatisés (scénario {esc(_scn_label(retenu))})</b>'
+        f'<div><b>Contrôles automatisés de votre projet</b>'
         f'{cc["reussi"]} réussis · {cc["echoue"]} échoués · {cc["non_effectue"]} non effectués</div>'
         f'<div><b>Statut de l\'étude</b>{esc(_statut_court(retenu["statut_etude"]))} — '
         'à faire confirmer par un architecte</div></div>'
         + scn_table
-        + '<p class="note">Fourchette = scénarios « Exploitable » seulement. '
-          'Jamais « ce terrain permet N logements » ; ce document n\'affirme aucune conformité '
-          'réglementaire.</p>'
+        + '<p class="note">« Votre projet » = le programme que vous avez étudié ; « maximum du terrain » = '
+          'le plus grand programme possible, indépendant de votre demande. Ce document n\'affirme aucune '
+          'conformité réglementaire.</p>'
         + f'<div class="ef-synth">{tiles_html}</div>'
         + f'<div class="aside rose">{esc(_WARN)}</div>'
         '</div>')
@@ -554,7 +604,7 @@ def _p5_plan_masse(payload: dict, retenu: dict, *, titre: str = None) -> str:
     if acces:
         rows.append(f'<tr><td class="k">Accès</td><td>{esc(acces.get("note") or "sur la voie")}</td>'
                     f'<td class="n"><span class="chip d">Dérivé</span></td></tr>')
-    h2 = titre or f"4. Plan masse du scénario {_scn_label(sc)}"
+    h2 = titre or "4. Plan masse de votre projet"   # ETUDE-V6-6 (item 9) — plus de « scénario A/retenu »
     # ETUDE-V6-4 (items 9/11) — en sous-sol, les places ne sont PAS aériennes : on le dit, et on ajoute le
     # plan du niveau −1 dessiné sur la vraie géométrie (emprise enterrée, allée, places, rampe).
     st = sc.get("stationnement") or {}
@@ -796,7 +846,10 @@ def _annexe(payload: dict, retenu: dict) -> str:
         return ""
     out = ['<div class="pb"></div>']
     for s in autres:
-        out.append(_p5_plan_masse(payload, s, titre=f"Annexe — plan masse du scénario {_scn_label(s)}"))
+        # ETUDE-V6-6 (item 9) — « autre implantation possible » (forme · niveaux), jamais « scénario A ».
+        forme = str(s.get("forme", "")).replace("_", " ")
+        out.append(_p5_plan_masse(payload, s,
+                   titre=f"Annexe — autre implantation possible ({forme} · {s.get('niveaux_label', '')})"))
     return "".join(out)
 
 
@@ -812,12 +865,14 @@ def rendu_etude(payload: dict, *, genere_le: str, scenario_ref: Optional[str] = 
     if retenu is None:
         raise ValueError(payload.get("message") or "aucun scénario : l'étude ne peut pas être rendue")
     idus = payload["entrees"].get("idus") or []
-    numero = numero_etude(idus, genere_le)
+    # ETUDE-V6-6 (item 10) — numéro de document UNIQUE par étude, dérivé du study_id (EF-<8>), identique à
+    # l'écran et au cartouche ; deux études différentes = deux numéros (plus de n° daté).
+    numero = _numero_document(payload)
     refs = _refs_parcelles(payload)
     cart = Cartouche(
         doc_title=f"LABUSE — Étude de faisabilité · {payload['terrain'].get('commune') or ''}",
         doc_ref=f"{refs} · {numero}",
-        doc_foot=(f"Étude de faisabilité · {refs} · scénario {_scn_label(retenu)} · "
+        doc_foot=(f"Étude de faisabilité · {refs} · {_type_projet_label(payload['entrees'].get('type_projet'))} · "
                   f"Généré via LABUSE le {genere_le} · pré-faisabilité, non contractuel"))
     corps = (
         f"<style>{_STYLE}</style>"
@@ -846,7 +901,7 @@ def rendu_lotissement(payload: dict, *, genere_le: str) -> dict:
                                       (f"{x:.0f}" if float(x).is_integer() else f"{x:.1f}".replace(".", ",")))
     lot = payload["lotissement"]
     idus = payload["entrees"].get("idus") or []
-    numero = payload.get("study_id") or numero_etude(idus, genere_le)
+    numero = _numero_document(payload)
     tl, pt, b, st = lot["tableau_lots"], lot["pleine_terre"], lot["bilan_surfacique"], lot["stationnement"]
     commune, zone = lot.get("commune") or "", lot.get("zone") or ""
     cart = Cartouche(
@@ -954,6 +1009,7 @@ def nombres_hors_payload(payload: dict, html: str, *, genere_le: str = "") -> li
     # jetons de structure tolérés : pagination 1..9, date du jour, n° de document, codes EPSG, année.
     struct = {str(i) for i in range(0, 10)}                       # pagination + petits indices de texte
     struct |= set(_nombres(genere_le)) | set(_nombres(numero_etude(payload["entrees"].get("idus") or [], genere_le)))
+    struct |= set(_nombres(_numero_document(payload)))   # n° de document EF-<8> (chiffres tolérés)
     struct |= {"2975", "4326"}                                     # CRS cités dans le payload moteur de toute façon
     for p in payload["terrain"].get("parcelles", []):             # refs cadastrales (AW 99…)
         struct |= set(_nombres(p.get("numero") or ""))

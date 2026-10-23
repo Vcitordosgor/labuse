@@ -204,6 +204,54 @@ def test_pdf_pas_de_nombre_ni_facteur_hors_ecran(session_reelle):
 
 
 @pytest.mark.reel
+def test_pdf_decrit_le_programme_du_client(session_reelle):
+    """ETUDE-V6-6 (items 9/10/11) — le PDF décrit L'ÉTUDE DU CLIENT : son programme d'abord (N logements, type
+    en toutes lettres), le maximum du terrain ensuite ; numéro de document EF-<8> dérivé du study_id (identique
+    au payload) ; plus de « scénario A » / « retenu » / « collectif ». Garde PDF=écran : le n° de document, le
+    type de projet, les logements du programme et la mixité sont présents et cohérents avec le payload servi."""
+    from labuse.implantation.service import etudier_payload
+    from labuse.exports import etude_faisabilite as ef
+    cfg = {"idus": _ETANG, "type_projet": "social", "stationnement": "aerien",
+           "programme": {"mode": "saisi", "lignes": [{"type": "T1", "nombre": 30, "surface_m2": 30},
+                                                     {"type": "T2", "nombre": 10, "surface_m2": 56}]}}
+    p = etudier_payload(session_reelle, dict(cfg))
+    html = ef.rendu_etude(p, genere_le="23/10/2026")["html"]
+    # (10) numéro de document EF-<8> dérivé du study_id, présent à l'écran (study_id) ET au cartouche.
+    num = ef._numero_document(p)
+    assert num.startswith("EF-") and len(num) == 11 and num == p["study_id"][:11]
+    assert num in html
+    # (9) le programme du client : type en toutes lettres + ses logements demandés.
+    assert "logement social" in html                      # type en toutes lettres (jamais « collectif » nu)
+    assert "Votre projet" in html and "Maximum du terrain" in html
+    # plus de noms techniques de scénario.
+    for interdit in ("scénario A", "scénario B", "votre_programme", "(retenu)", "· collectif ·"):
+        assert interdit not in html, f"« {interdit} » ne doit pas figurer dans le PDF"
+    # (11) écran = PDF : le retenu du PDF est « votre programme » (ce que l'écran affiche par défaut).
+    retenu = ef.scenario_retenu(p)
+    assert retenu["ref"] == "votre_programme"
+    assert str(retenu["resume"]["logements"]) in html     # les logements du programme figurent
+    # mixité : lue de la MÊME variante à l'écran et au PDF (programme étudié).
+    assert retenu["programme"].get("mixite_applicable") in (True, False)
+    # (11) verrou : aucun nombre hors du payload.
+    assert ef.nombres_hors_payload(p, html, genere_le="23/10/2026") == []
+
+
+@pytest.mark.reel
+def test_numero_document_unique_par_etude(session_reelle):
+    """ETUDE-V6-6 (item 10) — deux études différentes = deux numéros de document ; la même config = le même."""
+    from labuse.implantation.service import etudier_payload
+    from labuse.exports import etude_faisabilite as ef
+    a = etudier_payload(session_reelle, {"idus": _ETANG, "type_projet": "etudiante", "stationnement": "aerien",
+                        "programme": {"mode": "saisi", "lignes": [{"type": "T1", "nombre": 30, "surface_m2": 30}]}})
+    b = etudier_payload(session_reelle, {"idus": _ETANG, "type_projet": "senior", "stationnement": "aerien",
+                        "programme": {"mode": "saisi", "lignes": [{"type": "T2", "nombre": 32, "surface_m2": 56}]}})
+    a2 = etudier_payload(session_reelle, {"idus": _ETANG, "type_projet": "etudiante", "stationnement": "aerien",
+                         "programme": {"mode": "saisi", "lignes": [{"type": "T1", "nombre": 30, "surface_m2": 30}]}})
+    assert ef._numero_document(a) != ef._numero_document(b)   # études différentes → numéros différents
+    assert ef._numero_document(a) == ef._numero_document(a2)   # même config → même numéro
+
+
+@pytest.mark.reel
 def test_sous_sol_plan_dessine_sur_geometrie(session_reelle):
     """ETUDE-V6-4 (item 9) — le niveau −1 est DESSINÉ sur la vraie géométrie : le GeoJSON porte l'emprise
     enterrée, l'allée et des places au niveau −1 (plus une grille générique) ; le nb de niveaux est servi."""
