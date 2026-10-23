@@ -2309,6 +2309,9 @@ export interface EtudeJaugeOut {
   zone_implantation_m2?: number; niveaux?: number; niveaux_label?: string
   coef_plancher?: number; m2_par_place_aerien?: number; places_par_type?: Record<string, number>
   hauteur_egout_m?: number | null; ces_pct?: number | null
+  // ETUDE-V6-7 (item 6) — bande de bâtiment (vraie forme) + capacité des places au −1 + disponibilité sous-sol.
+  bande_batiment_m2?: number; sous_sol_places_par_niveau?: number
+  sous_sol_dispo?: { disponible: boolean; raison: string }
   manquant: string[]; etiquette: string; note?: string
 }
 export const postEtudeJauge = (idus: string[], type_projet: string) =>

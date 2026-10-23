@@ -32,19 +32,28 @@ const SURF: Record<TypeKey, { area: number; varangue: number }> = {
 //   sous-sol N ≈ zone × niveaux × coef ÷ surf_moy          (le parking enterré ne consomme pas le sol)
 // surf_moy / places par logement = moyennes pondérées de la demande. 25 m² = emprise d'une place (circ.).
 const _M2_PLACE_JAUGE = 25
+// ETUDE-V6-7 (item 6) — numérateur = BANDE de bâtiment (vraie forme, servie par le moteur), pas toute la
+// zone ; en sous-sol, borné par la capacité des places au −1 (per-niveau servi) ÷ places par logement.
 function enveloppeJauge(jd: EtudeJaugeOut | undefined, demande: Record<string, number>, surfaceDe: (t: string) => number,
                         stationnement: 'aerien' | 'sous_sol' = 'aerien') {
   if (!jd || !jd.estimable) return null
   const total = Object.values(demande).reduce((s, n) => s + n, 0)
-  const zone = jd.zone_implantation_m2 ?? 0, niveaux = jd.niveaux ?? 0, coef = jd.coef_plancher ?? 0
+  const bande = jd.bande_batiment_m2 ?? jd.zone_implantation_m2 ?? 0
+  const niveaux = jd.niveaux ?? 0, coef = jd.coef_plancher ?? 0
   const surfMoy = total > 0 ? Object.entries(demande).reduce((s, [t, n]) => s + n * surfaceDe(t), 0) / total : 0
   const placesMoy = total > 0 ? Object.entries(demande).reduce((s, [t, n]) => s + n * (jd.places_par_type?.[t] ?? 1), 0) / total : 0
-  const num = zone * niveaux * coef
-  const solParLogt = stationnement === 'sous_sol' ? 0 : placesMoy * _M2_PLACE_JAUGE * niveaux * coef
-  const denom = surfMoy + solParLogt
-  const estime = denom > 0 ? Math.round(num / denom) : 0
+  const num = bande * niveaux * coef
+  let estime: number
+  if (stationnement === 'sous_sol') {
+    const bati = surfMoy > 0 ? num / surfMoy : 0                                   // sol libéré : bâtiment plus grand
+    const parking = placesMoy > 0 ? (jd.sous_sol_places_par_niveau ?? 0) / placesMoy : bati   // borné par le −1
+    estime = Math.round(Math.min(bati, parking))
+  } else {
+    const denom = surfMoy + placesMoy * _M2_PLACE_JAUGE * niveaux * coef
+    estime = denom > 0 ? Math.round(num / denom) : 0
+  }
   return { estime, demande: total, surfMoy, placesMoy, mode: stationnement,
-           niveaux_label: jd.niveaux_label ?? '', zone_m2: zone, coef }
+           niveaux_label: jd.niveaux_label ?? '', zone_m2: jd.zone_implantation_m2 ?? 0, coef }
 }
 
 // ETUDE-V6-3 (item 2) — préfixe NORMALISÉ de toute règle PLU affichée : « PLU de [commune] · zone [X] ·

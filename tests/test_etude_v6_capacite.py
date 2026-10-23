@@ -398,6 +398,45 @@ def test_sous_sol_disponibilite_servie(session_reelle):
     assert isinstance(ss["disponible"], bool) and ss["raison"]
 
 
+def _jauge_logements(jd, dem, surf, mode):
+    """Reproduit la jauge EN LOGEMENTS côté serveur (miroir de enveloppeJauge, ETUDE-V6-7 item 6) :
+    numérateur = BANDE de bâtiment (profondeur hyp × longueur de la zone) × niveaux × coef ; en sous-sol,
+    borné par la capacité des places au −1 (per-niveau servi) ÷ places/logement."""
+    tot = sum(dem.values());
+    if tot == 0:
+        return 0
+    surf_moy = sum(dem[t] * surf[t] for t in dem) / tot
+    places_moy = sum(dem[t] * (jd["places_par_type"].get(t, 1)) for t in dem) / tot
+    niv, coef = jd["niveaux"], jd["coef_plancher"]
+    bande = jd["bande_batiment_m2"]
+    if mode == "sous_sol":
+        bati = bande * niv * coef / surf_moy
+        parking = (jd.get("sous_sol_places_par_niveau") or 0) / places_moy if places_moy else bati
+        return round(min(bati, parking))
+    return round(bande * niv * coef / (surf_moy + places_moy * 25 * niv * coef))
+
+
+@pytest.mark.reel
+def test_jauge_logements_proche_du_calcul_mixte(session_reelle):
+    """ETUDE-V6-7 (item 6) — la jauge EN LOGEMENTS (vraie forme : bande de bâtiment dans la zone, pas toute
+    la zone ; en sous-sol bornée par les places du −1) tombe à ≤ 20 % du calcul, aérien ET sous-sol, avec le
+    programme mixte 39 T1 + 5 T2 + 9 T3 + 20 T4 sur Étang-Salé."""
+    from labuse.implantation.service import jauge_payload, etudier_payload
+    jd = jauge_payload(session_reelle, _ETANG, "etudiante")
+    assert jd["estimable"] and jd.get("bande_batiment_m2") and jd["bande_batiment_m2"] <= jd["zone_implantation_m2"]
+    dem = {"T1": 39, "T2": 5, "T3": 9, "T4": 20}
+    surf = {"T1": 30, "T2": 56, "T3": 70, "T4": 80}
+    lignes = [{"type": t, "nombre": n, "surface_m2": surf[t]} for t, n in dem.items()]
+    for mode in ("aerien", "sous_sol"):
+        cfg = {"idus": _ETANG, "type_projet": "etudiante", "stationnement": mode,
+               "programme": {"mode": "saisi", "lignes": lignes}}
+        if mode == "sous_sol":
+            cfg["niveaux_sous_sol"] = 1
+        calc = etudier_payload(session_reelle, dict(cfg))["capacite_maximale"]["logements"]
+        est = _jauge_logements(jd, dem, surf, mode)
+        assert calc > 0 and abs(est - calc) / calc <= 0.20, f"{mode} : jauge {est} vs calcul {calc}"
+
+
 @pytest.mark.reel
 def test_jauge_logements_proche_du_calcul(session_reelle):
     """ETUDE-V6-6 (item 5) — la jauge EN LOGEMENTS (estimée avant calcul depuis les ingrédients servis par

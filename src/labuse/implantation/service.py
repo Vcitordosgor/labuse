@@ -595,6 +595,25 @@ def jauge_payload(session, idus: list[str], type_projet: str) -> dict:
     zone_m2 = round(terrain.aire_zone_m2 or 0.0, 1)
     if zone_m2 < 1.0:
         manquant.append("zone d'implantation (reculs / PPR)")
+    # ETUDE-V6-7 (item 6) — la jauge compte la VRAIE FORME : une BANDE de bâtiment (profondeur hypothèse,
+    # des deux côtés d'une circulation) DANS la zone, pas toute la zone (une barre ne remplit pas une zone
+    # profonde). Et la capacité des places au −1 (packing géométrique réel) pour borner le sous-sol.
+    bande_m2 = zone_m2
+    per_niveau_ss = int(zone_m2 / conv.m2_par_place_sous_sol) if conv.m2_par_place_sous_sol else 0
+    try:
+        from .geometrie import Frame, scene_depuis, _footprint_sous_sol, _capacite_niveau
+        import shapely
+        mrr = shapely.minimum_rotated_rectangle(terrain.zone_implantation)
+        xs, ys = mrr.exterior.coords.xy
+        cotes = sorted({round(((xs[i + 1] - xs[i]) ** 2 + (ys[i + 1] - ys[i]) ** 2) ** 0.5, 2) for i in range(4)})
+        w_zone, l_zone = (cotes[0], cotes[-1]) if len(cotes) >= 2 else (zone_m2 ** 0.5, zone_m2 ** 0.5)
+        bande_prof = 2 * conv.profondeur_m + conv.retrait_inter_barre_m   # deux rangées + retrait entre barres
+        bande_m2 = round(min(zone_m2, l_zone * min(w_zone, bande_prof)), 1)
+        frame = Frame.depuis(terrain.zone_implantation)
+        scene = scene_depuis(terrain, frame)
+        per_niveau_ss = _capacite_niveau(_footprint_sous_sol(scene), conv) or per_niveau_ss
+    except Exception:  # noqa: BLE001 — la jauge reste robuste (repli sur la zone entière)
+        logging.getLogger("labuse").exception("étude v6 : bande/sous-sol de la jauge indisponibles")
     he = regles.hauteur_plafond
     niveaux = int(he.valeur // conv.hauteur_etage_m) if (he.validee and he.valeur) else 0
     if niveaux < 1:
@@ -612,6 +631,9 @@ def jauge_payload(session, idus: list[str], type_projet: str) -> dict:
         "niveaux": niveaux, "niveaux_label": f"R+{max(0, niveaux - 1)}",
         "coef_plancher": conv.coef_plancher_habitable,
         "m2_par_place_aerien": _M2_PAR_PLACE_AERIEN,
+        # ETUDE-V6-7 (item 6) — bande de bâtiment (vraie forme) + capacité des places au −1 (borne sous-sol).
+        "bande_batiment_m2": bande_m2,
+        "sous_sol_places_par_niveau": per_niveau_ss,
         "places_par_type": places_par_type,
         "hauteur_egout_m": (he.valeur if he.validee else None),
         "ces_pct": (regles.emprise_ces.valeur if regles.emprise_ces.validee else None),
