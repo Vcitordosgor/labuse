@@ -27,15 +27,24 @@ const SURF: Record<TypeKey, { area: number; varangue: number }> = {
   T3: { area: 70, varangue: 12 }, T4: { area: 80, varangue: 14 },
 }
 
-// ETUDE-V6-2 (Lot 4) — enveloppe ESTIMÉE (jauge étape 3) : (zone d'implantation − sol du stationnement
-// aérien) × niveaux (hauteur PLU) × coef plancher. `programme` = m² demandés. Renvoie null si non estimable.
-function enveloppeJauge(jd: EtudeJaugeOut | undefined, demande: Record<string, number>, surfaceDe: (t: string) => number) {
+// ETUDE-V6-6 (item 5) — JAUGE EN LOGEMENTS (plus jamais en SDP) estimée avant calcul :
+//   aérien   N ≈ zone × niveaux × coef ÷ (surf_moy + places/logt × 25 m² × niveaux × coef)
+//   sous-sol N ≈ zone × niveaux × coef ÷ surf_moy          (le parking enterré ne consomme pas le sol)
+// surf_moy / places par logement = moyennes pondérées de la demande. 25 m² = emprise d'une place (circ.).
+const _M2_PLACE_JAUGE = 25
+function enveloppeJauge(jd: EtudeJaugeOut | undefined, demande: Record<string, number>, surfaceDe: (t: string) => number,
+                        stationnement: 'aerien' | 'sous_sol' = 'aerien') {
   if (!jd || !jd.estimable) return null
-  const placesEst = Object.entries(demande).reduce((s, [t, n]) => s + n * (jd.places_par_type?.[t] ?? 1), 0)
-  const solStat = placesEst * (jd.m2_par_place_aerien ?? 18)
-  const enveloppe = Math.max(0, ((jd.zone_implantation_m2 ?? 0) - solStat) * (jd.niveaux ?? 0) * (jd.coef_plancher ?? 0))
-  const programme = Object.entries(demande).reduce((s, [t, n]) => s + n * surfaceDe(t), 0)
-  return { placesEst, solStat, enveloppe, programme, niveaux_label: jd.niveaux_label ?? '', zone_m2: jd.zone_implantation_m2 ?? 0, coef: jd.coef_plancher ?? 0 }
+  const total = Object.values(demande).reduce((s, n) => s + n, 0)
+  const zone = jd.zone_implantation_m2 ?? 0, niveaux = jd.niveaux ?? 0, coef = jd.coef_plancher ?? 0
+  const surfMoy = total > 0 ? Object.entries(demande).reduce((s, [t, n]) => s + n * surfaceDe(t), 0) / total : 0
+  const placesMoy = total > 0 ? Object.entries(demande).reduce((s, [t, n]) => s + n * (jd.places_par_type?.[t] ?? 1), 0) / total : 0
+  const num = zone * niveaux * coef
+  const solParLogt = stationnement === 'sous_sol' ? 0 : placesMoy * _M2_PLACE_JAUGE * niveaux * coef
+  const denom = surfMoy + solParLogt
+  const estime = denom > 0 ? Math.round(num / denom) : 0
+  return { estime, demande: total, surfMoy, placesMoy, mode: stationnement,
+           niveaux_label: jd.niveaux_label ?? '', zone_m2: zone, coef }
 }
 
 // ETUDE-V6-3 (item 2) — préfixe NORMALISÉ de toute règle PLU affichée : « PLU de [commune] · zone [X] ·
@@ -158,6 +167,10 @@ export function EtudeV6({ initialIdus, onClose }: {
                                 onSuccess: () => setDirty(false) })
   const recalculer = () => analyse.mutate(undefined)
   const marquerModifie = () => setDirty(true)
+  // ETUDE-V6-6 (item 4) — stationnement CHOISI dès l'étape 3 (avant Analyser) : met juste à jour l'hypothèse
+  // (pas de recalcul ; le choix part avec le programme et la jauge en tient compte).
+  const setStatioEtape3 = (choix: 'aerien' | 'sous_sol_1' | 'sous_sol_2') => setHyp((h) => ({
+    ...h, stationnement: choix === 'aerien' ? 'aerien' : 'sous_sol', niveauxSousSol: choix === 'sous_sol_2' ? 2 : 1 }))
   // ETUDE-V6-2 (Lot 3) / V6-5 — « Testez en sous-sol » : bascule en sous-sol 1 NIVEAU (défaut) ET relance.
   const testerSousSol = () => {
     setHyp((h) => ({ ...h, stationnement: 'sous_sol', niveauxSousSol: 1 }))
@@ -188,7 +201,8 @@ export function EtudeV6({ initialIdus, onClose }: {
 
   // ETUDE-V6-2 (Lot 4) — enveloppe estimée vs programme saisi (surfaces par défaut, comme l'étape 3).
   const demandeNb: Record<string, number> = Object.fromEntries(TYPES.filter((t) => nb[t] > 0).map((t) => [t, nb[t]]))
-  const jauge = enveloppeJauge(jaugeQ.data, demandeNb, (t) => SURF[t as TypeKey]?.area ?? 0)
+  // ETUDE-V6-6 (items 4/5) — la jauge tient compte du stationnement CHOISI à l'étape 3 (aérien par défaut).
+  const jauge = enveloppeJauge(jaugeQ.data, demandeNb, (t) => SURF[t as TypeKey]?.area ?? 0, hyp.stationnement)
 
   const contiguOk = sel.length > 0 && !!v?.contiguite.ok
   const peutContinuer1 = contiguOk && !valide.isFetching
@@ -240,10 +254,11 @@ export function EtudeV6({ initialIdus, onClose }: {
     const demProg = Object.entries(demMap).reduce((s, [t, n]) => s + n * surfA(t), 0)
     const demVar = Object.entries(demMap).reduce((s, [t, n]) => s + n * varA(t), 0)
     const demTotal = Object.values(demMap).reduce((s, n) => s + n, 0)
-    const jaugeRes = enveloppeJauge(jaugeQ.data, demMap, surfA)
-    const capSdp = resultat.capacite_maximale?.sdp_m2 ?? 0
-    const divergence = (jaugeRes && capSdp > 0 && Math.abs(jaugeRes.enveloppe - capSdp) / capSdp > 0.2)
-      ? { estime: jaugeRes.enveloppe, calcule: capSdp, pct: Math.round((Math.abs(jaugeRes.enveloppe - capSdp) / capSdp) * 100) }
+    // ETUDE-V6-6 (item 5) — jauge EN LOGEMENTS confrontée au calcul EN LOGEMENTS (plus de SDP).
+    const jaugeRes = enveloppeJauge(jaugeQ.data, demMap, surfA, active?.stationnement?.mode ?? 'aerien')
+    const capLog = resultat.capacite_maximale?.logements ?? 0
+    const divergence = (jaugeRes && capLog > 0 && Math.abs(jaugeRes.estime - capLog) / capLog > 0.2)
+      ? { estime: jaugeRes.estime, calcule: capLog, pct: Math.round((Math.abs(jaugeRes.estime - capLog) / capLog) * 100) }
       : null
     // ETUDE-V6-3 (item 7) — UN SEUL facteur limitant, calculé une fois : bandeau, « Ce qui limite » n°1 et
     // message rouge disent la MÊME chose. En sous-sol, si c'est la pente, « hauteur sur la pente (relief X m) ».
@@ -333,7 +348,7 @@ export function EtudeV6({ initialIdus, onClose }: {
                   : <p className="mt-1 text-[11px] text-txt">Dépassement de <b className="text-amber">{fmtInt(-reserve)}</b> logement(s) au-delà du maximum.</p>}
                 <p className="mt-0.5 text-[9.5px] text-txt-dim">Maximum réglementaire du terrain (répartition {repLabel}) · {resultat.capacite_maximale?.niveaux_label} — indépendant du nombre demandé.</p>
                 {divergence && (
-                  <p data-divergence className="mt-1 text-[10.5px] text-amber">⚠ L'estimation de l'étape 3 ({fmtDec(divergence.estime)} m² de SDP) et le calcul ({fmtDec(divergence.calcule)} m²) divergent de {divergence.pct} % : la jauge était {divergence.estime > divergence.calcule ? 'optimiste' : 'prudente'} — fiez-vous au calcul.</p>
+                  <p data-divergence className="mt-1 text-[10.5px] text-amber">⚠ L'estimation de l'étape 3 (≈ {fmtInt(divergence.estime)} logements) et le calcul ({fmtInt(divergence.calcule)} logements) divergent de {divergence.pct} % : la jauge était {divergence.estime > divergence.calcule ? 'optimiste' : 'prudente'} — fiez-vous au calcul.</p>
                 )}
               </Recit>
               {/* ETUDE-V6-3 (item 7) — ce qui limite : n°1 = LA phrase du bandeau/message (même facteur, une fois). */}
@@ -429,7 +444,8 @@ export function EtudeV6({ initialIdus, onClose }: {
           {step === 1 && <EtapeParcelles sel={sel} v={v} chargement={valide.isFetching} erreur={valide.error} onAjouter={ajouter} onRetirer={retirer} />}
           {step === 2 && <EtapeType projet={projet} onChoisir={setProjet} regimes={statio.data?.regimes} chargement={statio.isFetching} commune={statio.data?.commune} zone={statio.data?.zone} mixite={statio.data?.mixite} />}
           {step === 3 && <EtapeProgramme nb={nb} setNb={setNb} totalLogts={totalLogts} surfaceProg={surfaceProg} surfaceVar={surfaceVar} surfaceInt={surfaceInt} lotissement={projet === 'lotissement'}
-            jauge={jauge} jaugeChargement={jaugeQ.isFetching} jaugeManquant={jaugeQ.data && !jaugeQ.data.estimable ? jaugeQ.data.manquant : null} />}
+            jauge={jauge} jaugeChargement={jaugeQ.isFetching} jaugeManquant={jaugeQ.data && !jaugeQ.data.estimable ? jaugeQ.data.manquant : null}
+            statioChoix={hyp.stationnement === 'aerien' ? 'aerien' : (hyp.niveauxSousSol === 2 ? 'sous_sol_2' : 'sous_sol_1')} onStatioChoix={setStatioEtape3} />}
         </div>
         <Recap sel={sel} v={v} projet={projet} totalLogts={totalLogts} surfaceProg={surfaceProg} surfaceVar={surfaceVar}
           stationnement={projet && statio.data?.regimes?.general ? (statio.data.regimes.general.regle_courte ?? statio.data.regimes.general.etat ?? 'règle PLU') : null} />
@@ -1096,10 +1112,11 @@ function StationnementRegle({ regimes, lotissement, commune, zone }: { regimes: 
 }
 
 // ── Étape 3 — Programme ──────────────────────────────────────────────────────────────────────────
-function EtapeProgramme({ nb, setNb, totalLogts, surfaceProg, surfaceVar, surfaceInt, lotissement, jauge, jaugeChargement, jaugeManquant }: {
+function EtapeProgramme({ nb, setNb, totalLogts, surfaceProg, surfaceVar, surfaceInt, lotissement, jauge, jaugeChargement, jaugeManquant, statioChoix, onStatioChoix }: {
   nb: Record<TypeKey, number>; setNb: (f: (n: Record<TypeKey, number>) => Record<TypeKey, number>) => void
   totalLogts: number; surfaceProg: number; surfaceVar: number; surfaceInt: number; lotissement: boolean
   jauge: ReturnType<typeof enveloppeJauge>; jaugeChargement: boolean; jaugeManquant: string[] | null
+  statioChoix: StatioChoix; onStatioChoix: (c: StatioChoix) => void
 }) {
   const set = (t: TypeKey, val: number) => setNb((n) => ({ ...n, [t]: Math.max(0, Math.min(200, val)) }))
   return (
@@ -1139,62 +1156,78 @@ function EtapeProgramme({ nb, setNb, totalLogts, surfaceProg, surfaceVar, surfac
           <p className="text-[10px] text-txt-dim">surface du programme</p>
         </div>
       </div>
-      {/* ETUDE-V6-2 (Lot 4) — JAUGE : enveloppe estimée (avant calcul) vs programme saisi. Rouge si
-          dépassement ; grise « non estimable » si une donnée manque. Étiquetée « estimé » (jamais un chiffre servi). */}
-      {!lotissement && totalLogts > 0 && (
-        <JaugeEnveloppe jauge={jauge} chargement={jaugeChargement} manquant={jaugeManquant} programme={surfaceProg} />
+      {/* ETUDE-V6-6 (item 4) — STATIONNEMENT choisi dès l'étape 3, sous les logements (aérien par défaut).
+          Le choix part avec le programme et la jauge en tient compte (sous-sol = sol libre). */}
+      {!lotissement && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-line-2 bg-surface-1 px-3 py-2 text-[10.5px] text-txt-mut">
+          <span>Stationnement</span>
+          <div className="inline-flex overflow-hidden rounded border border-line-2" role="group" aria-label="Mode de stationnement">
+            {([['aerien', 'Aérien'], ['sous_sol_1', 'Sous-sol 1 niveau'], ['sous_sol_2', 'Sous-sol 2 niveaux']] as const).map(([c, lib]) => (
+              <button key={c} type="button" data-statio-etape3={c} onClick={() => onStatioChoix(c)}
+                className={`px-2 py-0.5 text-[10.5px] ${statioChoix === c ? 'bg-mint font-semibold text-mint-on' : 'text-txt-mut hover:bg-surface-2'}`}>{lib}</button>
+            ))}
+          </div>
+          {statioChoix !== 'aerien' && <span className="text-[9.5px] text-txt-dim">Le parking enterré libère le sol — plus de logements possibles.</span>}
+        </div>
       )}
-      <p className="mt-2 text-[10px] text-txt-dim">Ces surfaces sont des hypothèses de programme (varangue comprise). La surface de plancher réglementaire (SDP) sera calculée séparément par le moteur — jamais confondue avec ces m².</p>
+      {/* ETUDE-V6-6 (item 5) — JAUGE EN LOGEMENTS : ≈ N estimés vs demande. Grise si donnée manquante. */}
+      {!lotissement && totalLogts > 0 && (
+        <JaugeEnveloppe jauge={jauge} chargement={jaugeChargement} manquant={jaugeManquant} demande={totalLogts} />
+      )}
+      <p className="mt-2 text-[10px] text-txt-dim">Ces surfaces sont des hypothèses de programme (varangue comprise). La capacité ci-dessus est une estimation en logements, affinée par le calcul complet.</p>
     </div>
   )
 }
 
-// ── Lot 4 — jauge d'enveloppe estimée (étape 3, avant le calcul) ───────────────────────────────────
-function JaugeEnveloppe({ jauge, chargement, manquant, programme }: {
-  jauge: ReturnType<typeof enveloppeJauge>; chargement: boolean; manquant: string[] | null; programme: number
+// ── ETUDE-V6-6 (item 5) — jauge EN LOGEMENTS (étape 3, avant le calcul) : « ≈ N logements estimés »,
+//    barre demande / estimation. Jamais le mot SDP. Tient compte du stationnement choisi (sous-sol = sol libre).
+function JaugeEnveloppe({ jauge, chargement, manquant, demande }: {
+  jauge: ReturnType<typeof enveloppeJauge>; chargement: boolean; manquant: string[] | null; demande: number
 }) {
   if (manquant && manquant.length > 0) {
     return (
       <div data-jauge="non-estimable" className="mt-3 rounded-md border border-line-2 bg-surface-1 px-3 py-2.5">
         <div className="mb-1.5 flex items-center justify-between">
-          <b className="text-[11.5px] text-txt">Enveloppe constructible <span className="text-[9px] font-normal uppercase tracking-wide text-txt-dim">· estimé</span></b>
+          <b className="text-[11.5px] text-txt">Capacité estimée <span className="text-[9px] font-normal uppercase tracking-wide text-txt-dim">· estimé</span></b>
           <span className="text-[10.5px] text-txt-mut">non estimable</span>
         </div>
         <div className="h-2 w-full rounded-full bg-line-2" />
-        <p className="mt-1 text-[10px] text-txt-dim">Donnée manquante : {manquant.join(' · ')}. L'enveloppe ne peut pas être estimée avant le calcul.</p>
+        <p className="mt-1 text-[10px] text-txt-dim">Donnée manquante : {manquant.join(' · ')}. La capacité ne peut pas être estimée avant le calcul.</p>
       </div>
     )
   }
   if (!jauge) {
     return (
       <div data-jauge="chargement" className="mt-3 rounded-md border border-line-2 bg-surface-1 px-3 py-2.5">
-        <b className="text-[11.5px] text-txt">Enveloppe constructible <span className="text-[9px] font-normal uppercase tracking-wide text-txt-dim">· estimé</span></b>
+        <b className="text-[11.5px] text-txt">Capacité estimée <span className="text-[9px] font-normal uppercase tracking-wide text-txt-dim">· estimé</span></b>
         <div className="mt-1.5 h-2 w-full animate-pulse rounded-full bg-line-2" />
-        <p className="mt-1 text-[10px] text-txt-dim">{chargement ? 'Estimation en cours…' : 'Enveloppe estimée dès que l\'assiette est prête.'}</p>
+        <p className="mt-1 text-[10px] text-txt-dim">{chargement ? 'Estimation en cours…' : 'Capacité estimée dès que l\'assiette est prête.'}</p>
       </div>
     )
   }
-  // ETUDE-V6-3 (item 5) — vert < 90 % · ORANGE 90–100 % (« à la limite, le calcul tranchera ») · rouge au-delà.
-  const ratio = jauge.enveloppe > 0 ? programme / jauge.enveloppe : (programme > 0 ? 2 : 0)
-  const etat = programme > jauge.enveloppe ? 'depassement' : ratio >= 0.9 ? 'limite' : 'ok'
+  // vert < 90 % · ORANGE 90–100 % (« à la limite, le calcul tranchera ») · rouge au-delà (demande > estimation).
+  const estime = jauge.estime
+  const ratio = estime > 0 ? demande / estime : (demande > 0 ? 2 : 0)
+  const etat = demande > estime ? 'depassement' : ratio >= 0.9 ? 'limite' : 'ok'
   const pct = Math.min(100, Math.round(ratio * 100))
   const barre = etat === 'depassement' ? 'bg-coral' : etat === 'limite' ? 'bg-amber' : 'bg-mint'
   const cadre = etat === 'depassement' ? 'border-coral/50 bg-coral/5' : etat === 'limite' ? 'border-amber/50 bg-amber-bg' : 'border-line-2 bg-surface-1'
+  const modeTxt = jauge.mode === 'sous_sol' ? 'sous-sol (sol libre)' : 'aérien'
   return (
     <div data-jauge={etat} className={`mt-3 rounded-md border px-3 py-2.5 ${cadre}`}>
       <div className="mb-1.5 flex items-center justify-between">
-        <b className="text-[11.5px] text-txt">Enveloppe constructible <span className="text-[9px] font-normal uppercase tracking-wide text-txt-dim">· estimé</span></b>
-        <span className="text-[10.5px] text-txt-mut">{fmtDec(programme)} / {fmtDec(jauge.enveloppe)} m² ({pct} %)</span>
+        <b className="text-[11.5px] text-txt">≈ {fmtInt(estime)} logements estimés <span className="text-[9px] font-normal uppercase tracking-wide text-txt-dim">· avant calcul · {modeTxt}</span></b>
+        <span className="text-[10.5px] text-txt-mut">{fmtInt(demande)} demandés / ≈ {fmtInt(estime)} estimés</span>
       </div>
       <div className="h-2 w-full overflow-hidden rounded-full bg-line-2">
         <div className={`h-full rounded-full ${barre}`} style={{ width: `${pct}%` }} />
       </div>
       {etat === 'depassement' ? (
-        <p className="mt-1.5 text-[10.5px] text-coral">⚠ Votre programme ({fmtDec(programme)} m²) dépasse l'enveloppe estimée ({fmtDec(jauge.enveloppe)} m²) de {fmtDec(programme - jauge.enveloppe)} m². Le terrain ne tiendra probablement pas tout — réduisez ou testez le sous-sol.</p>
+        <p className="mt-1.5 text-[10.5px] text-coral">⚠ Vous demandez {fmtInt(demande)} logements pour ≈ {fmtInt(estime)} estimés sur ce terrain. Il n'en tiendra probablement pas autant — réduisez, ou passez en sous-sol (le parking libère le sol).</p>
       ) : etat === 'limite' ? (
-        <p className="mt-1.5 text-[10.5px] text-amber">À la limite ({pct} % de l'enveloppe estimée) — le calcul tranchera. Estimé : (zone {fmtDec(jauge.zone_m2)} m² − stationnement {fmtDec(jauge.solStat)} m²) × {jauge.niveaux_label} × coef {jauge.coef}.</p>
+        <p className="mt-1.5 text-[10.5px] text-amber">À la limite ({pct} % de la capacité estimée {jauge.niveaux_label}) — le calcul tranchera.</p>
       ) : (
-        <p className="mt-1 text-[10px] text-txt-dim">Estimé : (zone {fmtDec(jauge.zone_m2)} m² − stationnement {fmtDec(jauge.solStat)} m²) × {jauge.niveaux_label} × coef {jauge.coef} = {fmtDec(jauge.enveloppe)} m². Le calcul complet affine ce chiffre.</p>
+        <p className="mt-1 text-[10px] text-txt-dim">Estimation {modeTxt} avant calcul (zone {fmtDec(jauge.zone_m2)} m² · {jauge.niveaux_label} · coef {jauge.coef}). Le calcul complet affine ce chiffre.</p>
       )}
     </div>
   )

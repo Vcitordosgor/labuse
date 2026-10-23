@@ -256,6 +256,23 @@ def test_niveaux_sous_sol_hypothese_explicite(session_reelle):
 
 
 @pytest.mark.reel
+def test_jauge_logements_proche_du_calcul(session_reelle):
+    """ETUDE-V6-6 (item 5) — la jauge EN LOGEMENTS (estimée avant calcul depuis les ingrédients servis par
+    `jauge_payload`) tombe à moins de 20 % du calcul complet. Témoin : Étang-Salé 30 T1 aérien (calcul 40)."""
+    from labuse.implantation.service import jauge_payload, etudier_payload
+    jd = jauge_payload(session_reelle, _ETANG, "etudiante")
+    assert jd["estimable"] and jd["zone_implantation_m2"] > 0 and jd["niveaux"] >= 1
+    zone, niv, coef = jd["zone_implantation_m2"], jd["niveaux"], jd["coef_plancher"]
+    surf_moy, places = 30.0, float(jd["places_par_type"].get("T1", 1.0))     # 30 T1
+    estime = round(zone * niv * coef / (surf_moy + places * 25 * niv * coef))  # formule aérienne (item 5)
+    calc = etudier_payload(session_reelle, {
+        "idus": _ETANG, "type_projet": "etudiante", "stationnement": "aerien",
+        "programme": {"mode": "saisi", "lignes": [{"type": "T1", "nombre": 30, "surface_m2": 30}]}})["capacite_maximale"]["logements"]
+    assert calc > 0
+    assert abs(estime - calc) / calc < 0.20, f"jauge {estime} vs calcul {calc}"
+
+
+@pytest.mark.reel
 def test_sous_sol_etude_rapide(session_reelle):
     """L'étude sous-sol reste rapide (pas de 2ᵉ recherche) — bornée bien en deçà de la nouvelle borne 60 s."""
     import time

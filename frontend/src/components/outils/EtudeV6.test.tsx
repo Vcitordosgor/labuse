@@ -478,7 +478,7 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     expect(document.querySelector('[data-tester-sous-sol]')).toBeNull()
   })
 
-  it('Lot 4 : jauge d\'enveloppe à l\'étape 3 (estimé) — OK sous l\'enveloppe, rouge au dépassement', async () => {
+  it('Lot 4 / V6-6 (item 5) : jauge EN LOGEMENTS à l\'étape 3 — ≈ N estimés, orange à la limite, rouge au dépassement', async () => {
     vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
     renderV6(['97404000AW0099', '97404000AW0451'])
     await waitFor(() => screen.getByText('AW 99'))
@@ -487,18 +487,19 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     fireEvent.click(screen.getByText('Logement social'))
     fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
     await waitFor(() => screen.getByText('Combien de logements souhaitez-vous ?'))
-    // 23 T2 + 6 T3 : 1 708 m² ≤ enveloppe (≈ 1 854 m²) → OK (vert), étiqueté « estimé »
-    fireEvent.change(document.querySelector('[data-etude-count="T2"]') as HTMLInputElement, { target: { value: '23' } })
-    fireEvent.change(document.querySelector('[data-etude-count="T3"]') as HTMLInputElement, { target: { value: '6' } })
+    // 26 T2 aérien ≈ 96 % de la capacité estimée (≈ 27 logements) → orange « à la limite », en LOGEMENTS.
+    fireEvent.change(document.querySelector('[data-etude-count="T2"]') as HTMLInputElement, { target: { value: '26' } })
     const jauge = await waitFor(() => { const j = document.querySelector('[data-jauge]'); if (!j || j.getAttribute('data-jauge') === 'chargement') throw new Error('no'); return j as HTMLElement })
-    expect(jauge.getAttribute('data-jauge')).toBe('limite')   // V6-3 (item 5) : 92 % → orange « à la limite »
-    expect(jauge.textContent).toContain('estimé')
+    expect(jauge.getAttribute('data-jauge')).toBe('limite')
+    expect(jauge.textContent).toContain('logements estimés')   // jauge en LOGEMENTS
+    expect(jauge.textContent).not.toContain('SDP')              // jamais le mot SDP
     expect(jauge.textContent).toContain('R+3')
-    // dépassement : 80 T2 → le stationnement aérien mange toute la zone → rouge
+    // dépassement : 80 T2 → bien au-delà de la capacité estimée → rouge
     fireEvent.change(document.querySelector('[data-etude-count="T2"]') as HTMLInputElement, { target: { value: '80' } })
-    fireEvent.change(document.querySelector('[data-etude-count="T3"]') as HTMLInputElement, { target: { value: '0' } })
     await waitFor(() => expect(document.querySelector('[data-jauge]')?.getAttribute('data-jauge')).toBe('depassement'))
-    expect(document.querySelector('[data-jauge]')?.textContent).toContain('dépasse')
+    expect(document.querySelector('[data-jauge]')?.textContent).toContain('demandez')
+    // ETUDE-V6-6 (item 4) — le choix de stationnement est présent à l'étape 3 (sous les logements).
+    expect(document.querySelector('[data-statio-etape3="sous_sol_1"]')).toBeTruthy()
   })
 
   it('Lot 4 : jauge « non estimable » (grise) si une donnée manque', async () => {
