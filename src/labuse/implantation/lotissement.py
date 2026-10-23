@@ -24,6 +24,8 @@ from . import terrain as terrain_mod
 LOT_CIBLE_M2 = 450.0        # taille de lot visée (Estimé — pas de superficie minimale au PLU, loi ALUR)
 VOIRIE_LARGEUR_M = 5.0      # chaussée (hypothèse : aucune règle de voirie au PLU Ud ; trottoir à prévoir)
 LOT_PROFONDEUR_MAX_M = 24.0 # au-delà, on plafonne la profondeur et on élargit la façade
+LOT_PROFONDEUR_MIN_M = 12.0 # en deçà, un lot n'est pas bâtissable (profondeur insuffisante)
+LOT_FACADE_MIN_M = 12.0     # façade minimale d'un lot sur voirie
 GARDE_INTERIEUR = 0.55      # un lot n'est retenu que si ≥ 55 % de sa surface tombe dans l'assiette nette
 TOURNE_FACTEUR = 2.2        # côté de l'aire de retournement (palette) = 2,2 × largeur de voirie
 
@@ -120,6 +122,27 @@ def _dims(lot_cible):
     return depth, facade
 
 
+def _voie_laterale(origin, u, v, L, W, w, lot_cible, recul, axe_u: bool):
+    """ETUDE-V6-6 (suite) — VOIE LATÉRALE le long d'une limite, lots d'UN SEUL côté. La profondeur des lots
+    = largeur restante de l'assiette APRÈS la voirie et le recul (jamais plus que LOT_PROFONDEUR_MAX). Utile
+    sur une parcelle ÉTROITE où un peigne (lots des deux côtés) ne tient pas. Renvoie (voirie, lots,
+    profondeur_disponible) ; lots=[] si la profondeur disponible est inférieure au minimum bâtissable."""
+    largeur = (W if axe_u else L)                       # dimension COURTE à partager : voirie + recul + lot
+    depth_dispo = largeur - w - recul
+    if depth_dispo < LOT_PROFONDEUR_MIN_M:
+        return None, [], round(depth_dispo, 1)
+    depth = min(LOT_PROFONDEUR_MAX_M, depth_dispo)
+    facade = max(LOT_FACADE_MIN_M, min(26.0, lot_cible / depth))
+    v0 = w + recul                                      # la voirie longe la limite (0..w), lot au-delà du recul
+    if axe_u:
+        road = _rect(origin, u, v, 0, L, 0, w)
+        lots = [_rect(origin, u, v, i * facade, (i + 1) * facade, v0, v0 + depth) for i in range(int(L // facade))]
+    else:
+        road = _rect(origin, u, v, 0, w, 0, W)
+        lots = [_rect(origin, u, v, v0, v0 + depth, j * facade, (j + 1) * facade) for j in range(int(W // facade))]
+    return road, lots, round(depth_dispo, 1)
+
+
 def _peigne(origin, u, v, L, W, w, lot_cible, n, axe_u: bool):
     """Réseau en PEIGNE : n voies parallèles couvrant toute la largeur, reliées par une épine centrale.
     Chaque voie dessert deux rangées de lots À PROFONDEUR FIXE (≈ lot_cible). Renvoie (voirie, lots)."""
@@ -141,13 +164,14 @@ def _peigne(origin, u, v, L, W, w, lot_cible, n, axe_u: bool):
     return unary_union(roads), lots
 
 
-def _pave_reseau(net: BaseGeometry, lot_cible: float, w: float):
-    """Pave l'assiette : on essaie l'impasse simple ET des réseaux en peigne (voies parallèles couvrant
-    toute la largeur, + liaison), 1 à 3 voies, dans les deux orientations. On garde le tracé qui donne le
-    PLUS de lots — c'est ainsi qu'on couvre une parcelle large (pas seulement une bande centrale)."""
+def _pave_reseau(net: BaseGeometry, lot_cible: float, w: float, recul: float = 0.0):
+    """Pave l'assiette : on essaie l'impasse simple, des réseaux en peigne (voies parallèles couvrant toute
+    la largeur, + liaison, 1 à 3 voies, deux orientations) ET une VOIE LATÉRALE le long d'une limite (lots
+    d'un seul côté — utile sur une parcelle étroite). On garde le tracé qui donne le PLUS de lots. Renvoie
+    (lots, voirie, label, impasse, profondeur_laterale_dispo) ; la dernière valeur sert à EXPLIQUER un 0 lot."""
     origin, u, v, L, W = _frame(net)
     if L < 12 or W < w + 12:
-        return [], None, "—", False
+        return [], None, "—", False, round(W - w - recul, 1)
     configs = {}
     depth, facade = _dims(lot_cible)
     configs["voirie en impasse"] = (_rect(origin, u, v, 0, L, (W - w) / 2, (W + w) / 2),
@@ -162,6 +186,16 @@ def _pave_reseau(net: BaseGeometry, lot_cible: float, w: float):
     for n in {n_v, max(1, n_v - 1)}:
         road, lots = _peigne(origin, u, v, L, W, w, lot_cible, n, axe_u=False)
         configs[f"réseau en peigne transversal ({n} voies)"] = (road, lots, False)
+    # VOIE LATÉRALE le long d'une limite (lots d'un seul côté) — deux orientations.
+    rl_u, ll_u, prof_u = _voie_laterale(origin, u, v, L, W, w, lot_cible, recul, axe_u=True)
+    rl_v, ll_v, prof_v = _voie_laterale(origin, u, v, L, W, w, lot_cible, recul, axe_u=False)
+    if rl_u is not None:
+        configs["voie latérale (lots d'un seul côté)"] = (rl_u, ll_u, False)
+    if rl_v is not None:
+        configs["voie latérale transversale (lots d'un seul côté)"] = (rl_v, ll_v, False)
+    # profondeur de la voie latérale NATURELLE (le long de la grande limite, lots dans la largeur restante) :
+    # c'est « largeur − voirie − recul ». C'est elle qui explique un refus sur une parcelle étroite.
+    prof_laterale = prof_u
     best = None
     for label, (road, cand, impasse) in configs.items():
         rn = road.intersection(net)
@@ -171,7 +205,7 @@ def _pave_reseau(net: BaseGeometry, lot_cible: float, w: float):
         if best is None or len(lots) > len(best[1]):
             best = (label, lots, rn, impasse)
     if best is None:
-        return [], None, "—", False
+        return [], None, "—", False, prof_laterale
     label, lots, rn, impasse = best
     heads = []
     if impasse:
@@ -181,7 +215,7 @@ def _pave_reseau(net: BaseGeometry, lot_cible: float, w: float):
     if heads:
         lots = [g for g in lots if g.intersection(voirie).area < 0.15 * g.area]
     config_label = label + (" + aire de retournement" if heads else "")
-    return lots, voirie, config_label, bool(heads)
+    return lots, voirie, config_label, bool(heads), prof_laterale
 
 
 def _ebc(session, idus: list[str], assiette: BaseGeometry) -> tuple[Optional[BaseGeometry], float]:
@@ -245,13 +279,19 @@ def etudier_lotissement(session, idus: list[str], *, lot_cible_m2: float = LOT_C
     stat_article = b.article if stat_servie else None
     stat_citation = b.citation if stat_servie else None
 
+    # recul des lots sur la limite opposée (côté non desservi) — sépare le lot de la limite. Sert aussi au
+    # calcul de la profondeur disponible pour une voie latérale (profondeur = largeur − voirie − recul).
+    recul_lat = float(regles.recul_separatives.valeur or 0.0) if regles.recul_separatives.validee else 3.0
+
     # ETUDE-V6-6 (item 2) — on ne lève JAMAIS : si l'assiette est trop petite, ou si aucun lot n'est
     # dessinable après la voirie, on renvoie un résultat qui DIT pourquoi et ce qui le permettrait.
     trop_petit = net.is_empty or net.area < 400
+    prof_laterale = None
     if trop_petit:
         lots, voirie, voie_label, impasse = [], None, "aucune (assiette trop petite)", False
     else:
-        lots, voirie, voie_label, impasse = _pave_reseau(net, lot_cible_m2, voirie_largeur_m)
+        lots, voirie, voie_label, impasse, prof_laterale = _pave_reseau(
+            net, lot_cible_m2, voirie_largeur_m, recul=recul_lat)
     aires = sorted(round(g.area, 1) for g in lots)
     nb = len(lots)
     voirie_m2 = round(voirie.area, 1) if voirie is not None else 0.0
@@ -261,6 +301,13 @@ def etudier_lotissement(session, idus: list[str], *, lot_cible_m2: float = LOT_C
         if trop_petit:
             raison = (f"Assiette constructible trop petite pour un lotissement : {net.area:.0f} m² nets "
                       f"(après zone, PPR, EBC) ne suffisent pas à des lots de {lot_cible_m2:.0f} m² plus une voirie.")
+        elif prof_laterale is not None and prof_laterale < LOT_PROFONDEUR_MIN_M:
+            # ETUDE-V6-6 (suite) — même avec une VOIE LATÉRALE (lots d'un seul côté), la profondeur
+            # disponible après voirie + recul est inférieure au minimum bâtissable : la VRAIE raison chiffrée.
+            raison = (f"Aucun lot n'est dessinable, même avec une voie latérale le long d'une limite : après "
+                      f"la voirie ({voirie_largeur_m:.0f} m) et le recul ({recul_lat:.0f} m), il ne reste que "
+                      f"{prof_laterale:.0f} m de profondeur — inférieur au minimum bâtissable d'un lot "
+                      f"({LOT_PROFONDEUR_MIN_M:.0f} m). L'assiette est trop étroite.")
         else:
             raison = (f"Aucun lot de {lot_cible_m2:.0f} m² n'est dessinable : après la voirie de desserte "
                       f"({voirie_m2:.0f} m²), il reste {apres_voirie:.0f} m² sur {net.area:.0f} m² nets — "

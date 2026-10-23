@@ -92,8 +92,10 @@ def test_regles_lotissement_lues_du_plu_par_zone(session_reelle):
 
 @pytest.mark.reel
 def test_zero_lot_jamais_muet(session_reelle):
-    """ETUDE-V6-6 (item 2) — si aucun lot n'est dessinable, le résultat DIT pourquoi + ce qui le permettrait
-    (jamais un 0 muet). Étang-Salé (assiette étroite) : 0 lot avec raison chiffrée et remède."""
+    """ETUDE-V6-6 (item 2 + voie latérale) — si aucun lot n'est dessinable, le résultat DIT pourquoi + ce qui
+    le permettrait (jamais un 0 muet). Étang-Salé (assiette étroite ≈ 17 m) : même avec une VOIE LATÉRALE
+    (lots d'un seul côté), la profondeur restante après voirie + recul est trop faible → raison chiffrée."""
+    import re
     from sqlalchemy import text
     if session_reelle.execute(text("SELECT count(*) FROM parcels WHERE idu = ANY(:i)"),
                               {"i": _ETANG}).scalar() != 4:
@@ -102,12 +104,13 @@ def test_zero_lot_jamais_muet(session_reelle):
     p = _lotissement_payload(session_reelle, _ETANG, {"idus": _ETANG, "type_projet": "lotissement"})
     lot = p["lotissement"]
     if lot["tableau_lots"]["nombre"] == 0:
-        assert lot["raison"] and ("m²" in lot["raison"])        # raison chiffrée
-        assert lot["remede"]                                     # ce qui le permettrait
-        assert p["message"] == lot["raison"]                     # remonte comme message de l'étude
+        assert lot["raison"] and re.search(r"\d+\s*m", lot["raison"])   # raison CHIFFRÉE (m² ou m)
+        assert "voie latérale" in lot["raison"]                          # la vraie raison (profondeur latérale)
+        assert lot["remede"]                                             # ce qui le permettrait
+        assert p["message"] == lot["raison"]                             # remonte comme message de l'étude
         assert p["verdict"] == "Aucun lot dessinable"
     else:
-        assert lot["tableau_lots"]["nombre"] >= 1                # sinon, quelques lots (acceptable aussi)
+        assert lot["tableau_lots"]["nombre"] >= 1                        # sinon : quelques lots (voie latérale)
 
 
 @pytest.mark.reel
