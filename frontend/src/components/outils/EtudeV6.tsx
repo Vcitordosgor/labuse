@@ -184,23 +184,10 @@ export function EtudeV6({ initialIdus, onClose }: {
                                 onSuccess: () => setDirty(false) })
   const recalculer = () => analyse.mutate(undefined)
   const marquerModifie = () => setDirty(true)
-  // ETUDE-V6-6 (item 4) — stationnement CHOISI dès l'étape 3 (avant Analyser) : met juste à jour l'hypothèse
-  // (pas de recalcul ; le choix part avec le programme et la jauge en tient compte).
-  const setStatioEtape3 = (choix: 'aerien' | 'sous_sol_1' | 'sous_sol_2') => setHyp((h) => ({
-    ...h, stationnement: choix === 'aerien' ? 'aerien' : 'sous_sol', niveauxSousSol: choix === 'sous_sol_2' ? 2 : 1 }))
-  // ETUDE-V6-2 (Lot 3) / V6-5 — « Testez en sous-sol » : bascule en sous-sol 1 NIVEAU (défaut) ET relance.
-  const testerSousSol = () => {
-    setHyp((h) => ({ ...h, stationnement: 'sous_sol', niveauxSousSol: 1 }))
-    analyse.mutate(corpsBody({ stationnement: 'sous_sol', niveaux_sous_sol: 1 }))
-  }
-  // ETUDE-V6-4 (item 8) / V6-5 — le stationnement a TROIS choix (Aérien / Sous-sol 1 niveau / Sous-sol 2
-  // niveaux) ; changer de choix RELANCE le calcul automatiquement. Défaut en passant au sous-sol : 1 niveau.
-  const setStationnementChoix = (choix: 'aerien' | 'sous_sol_1' | 'sous_sol_2') => {
-    const mode: 'aerien' | 'sous_sol' = choix === 'aerien' ? 'aerien' : 'sous_sol'
-    const niv: 1 | 2 = choix === 'sous_sol_2' ? 2 : 1
-    setHyp((h) => ({ ...h, stationnement: mode, niveauxSousSol: niv }))
-    analyse.mutate(corpsBody({ stationnement: mode, niveaux_sous_sol: mode === 'sous_sol' ? niv : undefined }))
-  }
+  // ETUDE-V6-7 (item 3) — stationnement CHOISI dès l'étape 3 : AÉRIEN ou SOUS-SOL (1 niveau ; plus de 2
+  // niveaux). Met juste à jour l'hypothèse (pas de recalcul ; le choix part avec le programme, la jauge suit).
+  const setStatioEtape3 = (choix: 'aerien' | 'sous_sol') => setHyp((h) => ({
+    ...h, stationnement: choix, niveauxSousSol: 1 }))
   const resultat: EtudePayload | undefined = analyse.data
   // ETUDE-V6-3 (item 4) — animation de chargement de l'app (composant existant) pendant « Calcul en cours ».
   const loadingOverlay = analyse.isPending ? (
@@ -229,12 +216,6 @@ export function EtudeV6({ initialIdus, onClose }: {
   function resetHyp() { setHyp({ surf: { T1: '', T2: '', T3: '', T4: '' }, varangue: { T1: '', T2: '', T3: '', T4: '' }, profondeur: '', coef: '', stationnement: 'aerien', niveauxSousSol: 1, lotCible: '', voirie: '' }) }
   // « Modifier le programme » revient au formulaire ET réinitialise les hypothèses éditées (pas de fuite).
   function modifierProgramme() { resetHyp(); analyse.reset() }
-  const editeurHyp = (collectif: boolean) => (
-    <HypothesesEditor hyp={hyp} setHyp={setHyp} surfOf={surfOf} varOf={varOf} types={TYPES.filter((t) => nb[t] > 0)}
-      collectif={collectif} onRecalculer={recalculer} enCours={analyse.isPending}
-      choix={hyp.stationnement === 'aerien' ? 'aerien' : (hyp.niveauxSousSol === 2 ? 'sous_sol_2' : 'sous_sol_1')}
-      onChoix={setStationnementChoix} onModifie={marquerModifie} />
-  )
   // ETUDE-V6-6 (item 3) — hypothèses du lotissement = taille de lot visée + largeur de voirie (pas T1–T4).
   const editeurLot = () => (
     <LotissementHypotheses hyp={hyp} setHyp={setHyp} onRecalculer={recalculer} enCours={analyse.isPending} onModifie={marquerModifie} />
@@ -397,13 +378,9 @@ export function EtudeV6({ initialIdus, onClose }: {
                 {active.controles.filter((c) => c.resultat === 'Échoué' || c.resultat === 'À confirmer').slice(0, 4).map((c) => (
                   <p key={c.nom} className="mt-0.5 text-[10px] text-txt-dim">• {c.nom} — <span className={c.resultat === 'Échoué' ? 'text-coral' : 'text-amber'}>{c.resultat}</span></p>
                 ))}
-                {(active.stationnement?.mode ?? 'aerien') === 'aerien'
-                  && facteurs.some((f) => f.facteur.startsWith('stationnement') && f.limitant) && (
-                  <button type="button" data-tester-sous-sol onClick={testerSousSol} disabled={analyse.isPending}
-                    className="mt-2 rounded border border-mint bg-mint/10 px-2.5 py-1 text-[11px] font-semibold text-mint transition-colors hover:bg-mint/20 disabled:opacity-50">
-                    {analyse.isPending ? 'Calcul en cours…' : 'Testez en sous-sol →'}
-                  </button>
-                )}
+                {/* ETUDE-V6-7 (item 7) — « Testez en sous-sol » retiré : on change le stationnement via « Modifier le programme ». */}
+                {/* ETUDE-V6-7 (item 4) — en sous-sol, comment le sol libéré est utilisé (phrase chiffrée). */}
+                {active.sol_libere_note && <p data-sol-libere className="mt-1 text-[10.5px] text-txt-dim">{active.sol_libere_note}</p>}
               </Recit>
               {/* ETUDE-V6-2 (Lot 3, correction §4) — règles d'aménagement NON modélisées par le PLU calibré
                   (ex. UA : espaces verts 20 %, marge plantée) : signalées « non vérifiées », jamais appliquées
@@ -415,7 +392,7 @@ export function EtudeV6({ initialIdus, onClose }: {
                   ))}
                 </Recit>
               )}
-              {editeurHyp(true)}
+              {/* ETUDE-V6-7 (item 7) — bloc « Hypothèses modifiables » retiré du résultat (change via « Modifier le programme »). */}
               {/* ETUDE-V6-3 (item 6) — plus de bouton « Bilan de ce scénario ». */}
               <div className="flex flex-wrap gap-2">
                 <BoutonPdf />
@@ -466,21 +443,24 @@ export function EtudeV6({ initialIdus, onClose }: {
           {step === 2 && <EtapeType projet={projet} onChoisir={setProjet} regimes={statio.data?.regimes} chargement={statio.isFetching} commune={statio.data?.commune} zone={statio.data?.zone} mixite={statio.data?.mixite} />}
           {step === 3 && <EtapeProgramme nb={nb} setNb={setNb} totalLogts={totalLogts} surfaceProg={surfaceProg} surfaceVar={surfaceVar} surfaceInt={surfaceInt} lotissement={projet === 'lotissement'}
             jauge={jauge} jaugeChargement={jaugeQ.isFetching} jaugeManquant={jaugeQ.data && !jaugeQ.data.estimable ? jaugeQ.data.manquant : null}
-            statioChoix={hyp.stationnement === 'aerien' ? 'aerien' : (hyp.niveauxSousSol === 2 ? 'sous_sol_2' : 'sous_sol_1')} onStatioChoix={setStatioEtape3} />}
+            statioChoix={hyp.stationnement} onStatioChoix={setStatioEtape3} sousSolDispo={jaugeQ.data?.sous_sol_dispo ?? null} />}
         </div>
-        <Recap sel={sel} v={v} projet={projet} totalLogts={totalLogts} surfaceProg={surfaceProg} surfaceVar={surfaceVar}
-          stationnement={projet && statio.data?.regimes?.general ? (statio.data.regimes.general.regle_courte ?? statio.data.regimes.general.etat ?? 'règle PLU') : null} />
+        {/* ETUDE-V6-7 (item 8) — récap + boutons Retour/Continuer/Analyser dans la COLONNE DE DROITE, sous
+            le récap, STICKY au défilement (sur les 3 étapes). */}
+        <div className="flex flex-col gap-4 self-start lg:sticky lg:top-4">
+          <Recap sel={sel} v={v} projet={projet} totalLogts={totalLogts} surfaceProg={surfaceProg} surfaceVar={surfaceVar}
+            stationnement={projet && statio.data?.regimes?.general ? (statio.data.regimes.general.regle_courte ?? statio.data.regimes.general.etat ?? 'règle PLU') : null} />
+          <PiedEtape
+            step={step}
+            peutContinuer1={peutContinuer1} peutAnalyser={peutAnalyser}
+            enAnalyse={analyse.isPending} erreurAnalyse={analyse.error}
+            onPrec={() => setStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3) : s))}
+            onSuiv={() => setStep((s) => (s < 3 ? ((s + 1) as 1 | 2 | 3) : s))}
+            onAnalyser={() => analyse.mutate(undefined)}
+            projetChoisi={!!projet}
+          />
+        </div>
       </div>
-
-      <PiedEtape
-        step={step}
-        peutContinuer1={peutContinuer1} peutAnalyser={peutAnalyser}
-        enAnalyse={analyse.isPending} erreurAnalyse={analyse.error}
-        onPrec={() => setStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3) : s))}
-        onSuiv={() => setStep((s) => (s < 3 ? ((s + 1) as 1 | 2 | 3) : s))}
-        onAnalyser={() => analyse.mutate(undefined)}
-        projetChoisi={!!projet}
-      />
     </div>
   )
 }
@@ -776,7 +756,6 @@ function LigneInfo({ l, v, sous }: { l: string; v: string; sous?: string }) {
 
 // ── Hypothèses modifiables (mandat) : surfaces T1–T4, varangues, + hypothèses moteur (collectif) ──
 type HypEtat = { surf: Record<TypeKey, string>; varangue: Record<TypeKey, string>; profondeur: string; coef: string; stationnement: 'aerien' | 'sous_sol'; niveauxSousSol: 1 | 2; lotCible: string; voirie: string }
-type StatioChoix = 'aerien' | 'sous_sol_1' | 'sous_sol_2'
 
 // ETUDE-V6-6 (item 3) — hypothèses du LOTISSEMENT : taille de lot visée + largeur de voirie (jamais T1–T4).
 function LotissementHypotheses({ hyp, setHyp, onRecalculer, enCours, onModifie }: {
@@ -800,63 +779,6 @@ function LotissementHypotheses({ hyp, setHyp, onRecalculer, enCours, onModifie }
     </details>
   )
 }
-function HypothesesEditor({ hyp, setHyp, surfOf, varOf, types, collectif, onRecalculer, enCours, choix, onChoix, onModifie }: {
-  hyp: HypEtat; setHyp: (f: (h: HypEtat) => HypEtat) => void
-  surfOf: (t: TypeKey) => number; varOf: (t: TypeKey) => number
-  types: readonly TypeKey[]; collectif: boolean; onRecalculer: () => void; enCours: boolean
-  choix: StatioChoix; onChoix: (c: StatioChoix) => void; onModifie: () => void
-}) {
-  // ETUDE-V6-4 (item 8) — toute édition d'hypothèse marque l'étude « à recalculer » (grise le PDF).
-  const champ = (val: string, ph: string, on: (v: string) => void) => (
-    <input type="number" min={0} inputMode="decimal" value={val} placeholder={ph} onChange={(e) => { on(e.target.value); onModifie() }}
-      className="w-16 rounded border border-line-2 bg-surface-2 px-1.5 py-0.5 text-center text-[11px] text-txt-hi" />
-  )
-  return (
-    <details data-hypotheses className="rounded-lg border border-line-2 bg-surface-2 p-3" open>
-      <summary className="cursor-pointer text-[11px] font-semibold text-txt">Hypothèses modifiables <small className="font-normal text-txt-dim">(Estimé — recalcule l'étude)</small></summary>
-      <div className="mt-2 flex flex-col gap-1.5">
-        <div className="grid grid-cols-[2rem_1fr_1fr] items-center gap-2 text-[9px] uppercase tracking-wide text-txt-dim">
-          <span>Type</span><span>Surface m²</span><span>dont varangue m²</span>
-        </div>
-        {types.map((t) => (
-          <div key={t} className="grid grid-cols-[2rem_1fr_1fr] items-center gap-2">
-            <span className="font-mono text-[12px] text-txt-hi">{t}</span>
-            {champ(hyp.surf[t], `${surfOf(t)}`, (val) => setHyp((h) => ({ ...h, surf: { ...h.surf, [t]: val } })))}
-            {champ(hyp.varangue[t], `${varOf(t)}`, (val) => setHyp((h) => ({ ...h, varangue: { ...h.varangue, [t]: val } })))}
-          </div>
-        ))}
-        {collectif && (
-          <div className="mt-1 flex flex-wrap items-center gap-3 border-t border-line-2 pt-2 text-[10.5px] text-txt-mut">
-            <label className="flex items-center gap-1.5">Profondeur bâtiment {champ(hyp.profondeur, '13', (v) => setHyp((h) => ({ ...h, profondeur: v })))} m</label>
-            <label className="flex items-center gap-1.5">Coef. plancher→habitable {champ(hyp.coef, '0.8', (v) => setHyp((h) => ({ ...h, coef: v })))}</label>
-          </div>
-        )}
-        {/* ETUDE-V6-2 (Lot 3) / V6-5 — stationnement : Aérien / Sous-sol 1 niveau (défaut) / Sous-sol 2 niveaux.
-            Le nombre de niveaux est EXPLICITE et borne la capacité (jamais un 2ᵉ niveau supposé non choisi). */}
-        {collectif && (
-          <div className="mt-1 flex flex-wrap items-center gap-2 border-t border-line-2 pt-2 text-[10.5px] text-txt-mut">
-            <span>Stationnement</span>
-            <div className="inline-flex overflow-hidden rounded border border-line-2" role="group" aria-label="Mode de stationnement">
-              {([['aerien', 'Aérien'], ['sous_sol_1', 'Sous-sol 1 niveau'], ['sous_sol_2', 'Sous-sol 2 niveaux']] as const).map(([c, lib]) => (
-                <button key={c} type="button" data-statio-mode={c} onClick={() => onChoix(c)}
-                  className={`px-2 py-0.5 text-[10.5px] ${choix === c ? 'bg-mint font-semibold text-mint-on' : 'text-txt-mut hover:bg-surface-1'}`}>
-                  {lib}
-                </button>
-              ))}
-            </div>
-            {choix !== 'aerien' && <span className="text-[9.5px] text-txt-dim">Places au niveau −1{choix === 'sous_sol_2' ? ' et −2' : ''}, rampe au sol — capacité bornée par les niveaux choisis.</span>}
-          </div>
-        )}
-        <div className="mt-1 flex items-center gap-2">
-          {/* ETUDE-V6-4 (item 7) — « Recalculer » sur une seule ligne, icône comprise (nowrap). */}
-          <Bouton niveau="primaire" onClick={onRecalculer} disabled={enCours} className="whitespace-nowrap">{enCours ? 'Recalcul…' : 'Recalculer ↻'}</Bouton>
-          <span className="text-[9.5px] text-txt-dim">Le recalcul met à jour le résultat ET le PDF (même study_id).</span>
-        </div>
-      </div>
-    </details>
-  )
-}
-
 // ── Lot C — stationnement dans le résultat : règle générale (appliquée) + plafond L151-35 (à confirmer)
 //    + la capacité SOUS le régime réduit, jamais présentée comme acquise ───────────────────────────
 // ETUDE-V6-4 (items 4/5) — stationnement en TROIS lignes sans ambiguïté (PLU exige · loi nationale plafonne ·
@@ -1128,12 +1050,14 @@ function StationnementRegle({ regimes, lotissement, commune, zone }: { regimes: 
 }
 
 // ── Étape 3 — Programme ──────────────────────────────────────────────────────────────────────────
-function EtapeProgramme({ nb, setNb, totalLogts, surfaceProg, surfaceVar, surfaceInt, lotissement, jauge, jaugeChargement, jaugeManquant, statioChoix, onStatioChoix }: {
+function EtapeProgramme({ nb, setNb, totalLogts, surfaceProg, surfaceVar, surfaceInt, lotissement, jauge, jaugeChargement, jaugeManquant, statioChoix, onStatioChoix, sousSolDispo }: {
   nb: Record<TypeKey, number>; setNb: (f: (n: Record<TypeKey, number>) => Record<TypeKey, number>) => void
   totalLogts: number; surfaceProg: number; surfaceVar: number; surfaceInt: number; lotissement: boolean
   jauge: ReturnType<typeof enveloppeJauge>; jaugeChargement: boolean; jaugeManquant: string[] | null
-  statioChoix: StatioChoix; onStatioChoix: (c: StatioChoix) => void
+  statioChoix: 'aerien' | 'sous_sol'; onStatioChoix: (c: 'aerien' | 'sous_sol') => void
+  sousSolDispo: { disponible: boolean; raison: string } | null
 }) {
+  const ssDispo = sousSolDispo?.disponible !== false   // disponible par défaut (tant que la jauge n'a pas répondu)
   const set = (t: TypeKey, val: number) => setNb((n) => ({ ...n, [t]: Math.max(0, Math.min(200, val)) }))
   return (
     <div>
@@ -1172,18 +1096,22 @@ function EtapeProgramme({ nb, setNb, totalLogts, surfaceProg, surfaceVar, surfac
           <p className="text-[10px] text-txt-dim">surface du programme</p>
         </div>
       </div>
-      {/* ETUDE-V6-6 (item 4) — STATIONNEMENT choisi dès l'étape 3, sous les logements (aérien par défaut).
-          Le choix part avec le programme et la jauge en tient compte (sous-sol = sol libre). */}
+      {/* ETUDE-V6-7 (items 3/4) — STATIONNEMENT choisi dès l'étape 3 : Aérien / Sous-sol 1 niveau (plus de
+          2 niveaux). L'option Sous-sol est GRISÉE avec sa raison si le terrain touche un PPR ou si le
+          règlement l'interdit ; sinon « à confirmer géotechnique/nappe ». */}
       {!lotissement && (
         <div className="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-line-2 bg-surface-1 px-3 py-2 text-[10.5px] text-txt-mut">
           <span>Stationnement</span>
           <div className="inline-flex overflow-hidden rounded border border-line-2" role="group" aria-label="Mode de stationnement">
-            {([['aerien', 'Aérien'], ['sous_sol_1', 'Sous-sol 1 niveau'], ['sous_sol_2', 'Sous-sol 2 niveaux']] as const).map(([c, lib]) => (
-              <button key={c} type="button" data-statio-etape3={c} onClick={() => onStatioChoix(c)}
-                className={`px-2 py-0.5 text-[10.5px] ${statioChoix === c ? 'bg-mint font-semibold text-mint-on' : 'text-txt-mut hover:bg-surface-2'}`}>{lib}</button>
+            {([['aerien', 'Aérien', true], ['sous_sol', 'Sous-sol 1 niveau', ssDispo]] as const).map(([c, lib, actif]) => (
+              <button key={c} type="button" data-statio-etape3={c} disabled={!actif}
+                onClick={() => actif && onStatioChoix(c)}
+                className={`px-2 py-0.5 text-[10.5px] ${statioChoix === c && actif ? 'bg-mint font-semibold text-mint-on' : actif ? 'text-txt-mut hover:bg-surface-2' : 'cursor-not-allowed text-txt-dim/50 line-through'}`}>{lib}</button>
             ))}
           </div>
-          {statioChoix !== 'aerien' && <span className="text-[9.5px] text-txt-dim">Le parking enterré libère le sol — plus de logements possibles.</span>}
+          {sousSolDispo && (
+            <span data-sous-sol-raison className={`text-[9.5px] ${ssDispo ? 'text-txt-dim' : 'text-amber'}`}>{sousSolDispo.raison}</span>
+          )}
         </div>
       )}
       {/* ETUDE-V6-6 (item 5) — JAUGE EN LOGEMENTS : ≈ N estimés vs demande. Grise si donnée manquante. */}
@@ -1302,11 +1230,11 @@ function PiedEtape({ step, peutContinuer1, peutAnalyser, enAnalyse, erreurAnalys
   const suivBloque = step === 1 ? !peutContinuer1 : step === 2 ? !projetChoisi : false
   const raison = step === 1 && !peutContinuer1 ? 'Sélectionnez des parcelles contiguës pour continuer.'
     : step === 2 && !projetChoisi ? 'Choisissez un type de projet pour continuer.' : ''
-  // ETUDE-V6-6 (item 8) — Retour / Continuer JUSTE sous le contenu, alignés à DROITE, SANS barre vide :
-  // le feedback (raison, calcul, erreur) n'apparaît QUE s'il a du contenu (plus de div vide réservant l'espace).
+  // ETUDE-V6-7 (item 8) — dans la colonne de droite (sous le récap, sticky) : feedback seulement s'il a du
+  // contenu ; boutons en bas de carte, pleine largeur de la colonne.
   const feedback = raison || enAnalyse || !!erreurAnalyse
   return (
-    <div className="mx-4 mb-4 mt-2 flex flex-col items-end gap-1.5 border-t border-line-2 pt-3">
+    <div className="flex flex-col gap-1.5 rounded-lg border border-line-2 bg-surface-2 p-3">
       {feedback && (
         <div className="text-[10.5px]">
           {raison && <span className="text-amber">{raison}</span>}

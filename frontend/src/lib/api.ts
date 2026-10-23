@@ -2328,6 +2328,8 @@ export interface EtudeVariante extends EtudeScenario {
   absente?: boolean
   raison?: string | null
   verdict: string
+  // ETUDE-V6-7 (item 4) — en sous-sol, comment le sol libéré est utilisé (phrase chiffrée).
+  sol_libere_note?: string | null
   grandeurs: {
     sol_restant: EtudeGrandeur; emprise_mobilisable: EtudeGrandeur
     sdp_autorisee: EtudeGrandeur; programme_envisageable: EtudeGrandeur

@@ -237,7 +237,7 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     }))
   })
 
-  it('hypothèses modifiables : éditer une surface + Recalculer rappelle le moteur avec la valeur éditée', async () => {
+  it('V6-7 (item 7) : le bloc « Hypothèses modifiables » et « Testez en sous-sol » sont RETIRÉS du résultat', async () => {
     vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
     vi.mocked(postEtude).mockResolvedValue(RESULTAT as any)
     renderV6(['97404000AW0099', '97404000AW0451'])
@@ -249,18 +249,10 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     await waitFor(() => screen.getByText('Combien de logements souhaitez-vous ?'))
     fireEvent.change(document.querySelector('[data-etude-count="T2"]') as HTMLInputElement, { target: { value: '12' } })
     fireEvent.click(screen.getByRole('button', { name: /Analyser mon projet/ }))
-    // l'éditeur d'hypothèses est dans le résultat
-    const hyp = await waitFor(() => { const h = document.querySelector('[data-hypotheses]'); if (!h) throw new Error('no hyp'); return h as HTMLElement })
-    expect(hyp.textContent).toContain('Hypothèses modifiables')
-    expect(hyp.textContent).toContain('Profondeur bâtiment')          // hypothèse moteur (collectif)
-    // on édite la surface du T2 (1er champ « Surface m² ») puis on recalcule
-    const champSurf = hyp.querySelectorAll('input[type="number"]')[0] as HTMLInputElement
-    fireEvent.change(champSurf, { target: { value: '62' } })
-    vi.mocked(postEtude).mockClear()
-    fireEvent.click(screen.getByRole('button', { name: /Recalculer/ }))
-    await waitFor(() => expect(vi.mocked(postEtude)).toHaveBeenCalledWith(expect.objectContaining({
-      programme: expect.objectContaining({ lignes: expect.arrayContaining([expect.objectContaining({ type: 'T2', surface_m2: 62 })]) }),
-    })))
+    await waitFor(() => screen.getByText("Verdict de l'étude"))
+    expect(document.querySelector('[data-hypotheses]')).toBeNull()          // plus d'éditeur d'hypothèses
+    expect(document.querySelector('[data-tester-sous-sol]')).toBeNull()     // plus de « Testez en sous-sol »
+    expect(document.body.textContent).not.toContain('Hypothèses modifiables')
   })
 
   it('V6-3 (item 7) : UN SEUL facteur limitant — bandeau = « Ce qui limite » n°1', async () => {
@@ -386,18 +378,13 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     await waitFor(() => screen.getByText('Combien de logements souhaitez-vous ?'))
     fireEvent.change(document.querySelector('[data-etude-count="T1"]') as HTMLInputElement, { target: { value: '10' } })
     fireEvent.click(screen.getByRole('button', { name: /Analyser mon projet/ }))
-    // dans le résultat, on bricole la surface T1 à 9 dans l'éditeur (sans recalculer)
-    const hyp = await waitFor(() => { const h = document.querySelector('[data-hypotheses]'); if (!h) throw new Error('no hyp'); return h as HTMLElement })
-    const champSurf = hyp.querySelectorAll('input[type="number"]')[0] as HTMLInputElement
-    fireEvent.change(champSurf, { target: { value: '9' } })
-    // puis « Modifier le programme » : on revient à l'étape 3, la saisie de l'éditeur est OUBLIÉE
+    await waitFor(() => screen.getByText("Verdict de l'étude"))
+    // ETUDE-V6-7 (item 7) — « Modifier le programme » revient à l'étape 3 avec les surfaces par défaut (T1 30).
     fireEvent.click(screen.getByRole('button', { name: /Modifier le programme/ }))
     await waitFor(() => screen.getByText('Combien de logements souhaitez-vous ?'))
     fireEvent.change(document.querySelector('[data-etude-count="T1"]') as HTMLInputElement, { target: { value: '10' } })
     await waitFor(() => expect(document.body.textContent).toContain('10 logements au programme'))
-    // 10 × 30 = 300 (le 9 saisi ne FUIT pas → surtout pas 90)
-    expect(document.body.textContent).toContain('300,0 m²')
-    expect(document.body.textContent).not.toContain('90,0 m²')
+    expect(document.body.textContent).toContain('300,0 m²')          // 10 × 30, surfaces par défaut
   })
 
   it('Lot 2 : capacité maximale STABLE affichée + demande confrontée + facteurs classés par impact', async () => {
@@ -425,27 +412,6 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     expect(lim.textContent).toContain('sans stationnement imposé')
     expect(lim.textContent).toContain('2. hauteur réglementaire')
     expect(lim.textContent).toContain('impact non chiffré')          // largeur de zone, non affirmée limitante
-  })
-
-  it('Lot 3 : « Testez en sous-sol » apparaît quand l\'aérien plafonne et relance en sous-sol', async () => {
-    vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
-    vi.mocked(postEtude).mockResolvedValue(RESULTAT_CAP as any)
-    renderV6(['97404000AW0099', '97404000AW0451'])
-    await waitFor(() => screen.getByText('AW 99'))
-    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
-    await waitFor(() => screen.getByText('Quel type de projet ?'))
-    fireEvent.click(screen.getByText('Logement social'))
-    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
-    await waitFor(() => screen.getByText('Combien de logements souhaitez-vous ?'))
-    fireEvent.change(document.querySelector('[data-etude-count="T2"]') as HTMLInputElement, { target: { value: '12' } })
-    fireEvent.click(screen.getByRole('button', { name: /Analyser mon projet/ }))
-    // le stationnement aérien plafonne (facteur limitant) → le CTA sous-sol s'affiche
-    const cta = await waitFor(() => { const b = document.querySelector('[data-tester-sous-sol]'); if (!b) throw new Error('no'); return b as HTMLButtonElement })
-    expect(cta.textContent).toContain('Testez en sous-sol')
-    vi.mocked(postEtude).mockClear()
-    fireEvent.click(cta)
-    // le clic relance l'étude EN SOUS-SOL (calcul à la demande, pas inline)
-    await waitFor(() => expect(vi.mocked(postEtude)).toHaveBeenCalledWith(expect.objectContaining({ stationnement: 'sous_sol' })))
   })
 
   it('Lot 3 : le résultat sous-sol affiche les places au −1, l\'emprise enterrée et la rampe', async () => {
@@ -506,7 +472,7 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     await waitFor(() => expect(document.querySelector('[data-jauge]')?.getAttribute('data-jauge')).toBe('depassement'))
     expect(document.querySelector('[data-jauge]')?.textContent).toContain('demandez')
     // ETUDE-V6-6 (item 4) — le choix de stationnement est présent à l'étape 3 (sous les logements).
-    expect(document.querySelector('[data-statio-etape3="sous_sol_1"]')).toBeTruthy()
+    expect(document.querySelector('[data-statio-etape3="sous_sol"]')).toBeTruthy()
   })
 
   it('Lot 4 : jauge « non estimable » (grise) si une donnée manque', async () => {
