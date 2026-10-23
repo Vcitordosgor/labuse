@@ -2143,6 +2143,8 @@ export interface EtudeScenario {
     shab_estimee_m2: number; ratio_shab_sdp: number | null
     mixite_applicable: boolean | null; logements_aides_imposes: number | null
     sdp_aidee_imposee_m2: number | null
+    // ETUDE-V6-7 (item 2) — surface tenue = Σ (logements DESSINÉS × surface) ; source unique écran/PDF.
+    surface_tenue_m2?: number | null
   }
   distribution_niveaux: Array<{ niveau: number; par_type: Record<string, number>; sdp_m2: number }>
   stationnement: {

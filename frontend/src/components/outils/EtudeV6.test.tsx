@@ -96,11 +96,16 @@ const RESULTAT_LOTISSEMENT = {
 }
 // ETUDE-V6-2 (Lot 1) — résultat 10×T1 : la demande (programme_saisi) + les surfaces/varangues servies
 // dans le payload. « Votre demande » DOIT lire ces surfaces payload (30/6), pas l'état de l'éditeur.
+// ETUDE-V6-7 (item 2) — la variante « votre programme » porte le PLAN DESSINÉ (par_type réel) et la surface
+// tenue servie ; l'écran lit CES valeurs (une seule vérité), plus la surface de la demande.
+const _VP_T1 = { ...VARIANTE('votre_programme', 'Votre programme', 10, 'Exploitable sous hypothèses'),
+  programme: { par_type: { T1: 10 }, shab_par_type_m2: {}, shab_estimee_m2: 450, ratio_shab_sdp: 0.6,
+    mixite_applicable: false, logements_aides_imposes: 0, sdp_aidee_imposee_m2: 0, surface_tenue_m2: 300 } }
 const RESULTAT_T1 = {
   ...RESULTAT,
   programme_saisi: { demande: { T1: 10 } },
   hypotheses: { surfaces: { T1: 30 }, varangues: { T1: 6 } },
-  variantes: [VARIANTE('votre_programme', 'Votre programme', 10, 'Exploitable sous hypothèses'),
+  variantes: [_VP_T1,
               VARIANTE('optimisation', 'Optimisation', 10, 'Exploitable sous hypothèses'),
               VARIANTE('alternative', 'Alternative', 10, 'Exploitable sous hypothèses')],
 }
@@ -347,7 +352,7 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     expect(document.querySelector('[data-recit="Votre programme"]')).toBeTruthy()
   })
 
-  it('Lot 1 : « Votre demande » lit les surfaces du payload (10×T1 = 300 / 60 varangues / 240 intérieur)', async () => {
+  it('Lot 1 / V6-7 item 2 : « Votre programme » décrit le PLAN DESSINÉ (10×T1) et la surface TENUE (300 m²)', async () => {
     vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
     vi.mocked(postEtude).mockResolvedValue(RESULTAT_T1 as any)
     renderV6(['97404000AW0099', '97404000AW0451'])
@@ -359,12 +364,14 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     await waitFor(() => screen.getByText('Combien de logements souhaitez-vous ?'))
     fireEvent.change(document.querySelector('[data-etude-count="T1"]') as HTMLInputElement, { target: { value: '10' } })
     fireEvent.click(screen.getByRole('button', { name: /Analyser mon projet/ }))
-    // V6-3 (item 8) — fusionné dans « Votre programme » : 10 demandés · 300 m² dont 60 varangues · 10×T1.
+    // V6-7 (item 2) — une seule vérité : le bloc décrit le plan DESSINÉ (10×T1) + surface TENUE (300 m²).
     const dem = await waitFor(() => { const d = document.querySelector('[data-recit="Votre programme"]'); if (!d) throw new Error('no'); return d as HTMLElement })
-    expect(dem.textContent).toContain('10 demandés')
-    expect(dem.textContent).toContain('300,0 m² de programme')
-    expect(dem.textContent).toContain('60,0 m² de varangues')
-    expect(dem.textContent).toContain('10×T1')
+    const txt = (dem.textContent || '').replace(/[  ]/g, ' ')
+    expect(txt).toContain('10 demandés')
+    expect(txt).toContain('Dessiné : 10×T1')
+    expect(txt).toContain('300,0 m² de programme tenu')
+    // la surface tenue apparaît aussi en grand chiffre (même valeur).
+    expect((document.body.textContent || '').replace(/[  ]/g, ' ')).toContain('300,0 m²')
   })
 
   it('Lot 1 : la surface éditée ne FUIT PAS — « Modifier le programme » rétablit les défauts (T1 30)', async () => {

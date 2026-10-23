@@ -612,7 +612,7 @@ def _p5_plan_masse(payload: dict, retenu: dict, *, titre: str = None) -> str:
     lieu_places = "au sous-sol (niveau −1)" if sous_sol else "aériennes"
     return (
         f'<section><h2>{esc(h2)}</h2>'
-        f'<div class="verdict">Scénario {esc(_scn_label(sc))} — {esc(forme)} en {esc(sc.get("niveaux_label", ""))} : '
+        f'<div class="verdict">{esc(forme).capitalize()} en {esc(sc.get("niveaux_label", ""))} : '
         f'{sc["resume"]["logements"]} logements, {st.get("places")} places {lieu_places}.</div>'
         + fig + _legende(["batiment_emprise", "place", "allee", "espace_libre", "acces", "zone"])
         + '<table class="kv"><tr><th>Élément</th><th>Valeur</th><th class="n">Nature</th></tr>'
@@ -731,6 +731,12 @@ def _p7_capacite(payload: dict, retenu: dict) -> str:
                      f'<td class="num">{int(prog["logements_aides_imposes"])}</td>'
                      f'<td class="num" colspan="2">quota PLU appliqué au programme</td>'
                      f'<td class="n"><span class="chip s">Sourcé</span></td></tr>')
+    # ETUDE-V6-7 (item 2) — SURFACE TENUE (Σ logements dessinés × surface) : la même valeur qu'à l'écran.
+    if prog.get("surface_tenue_m2") is not None:
+        prows.append(f'<tr><td class="k"><b>Surface tenue (programme dessiné)</b></td>'
+                     f'<td class="num">{int(sum(pt.values()))}</td>'
+                     f'<td class="num" colspan="2"><b>{_m2(prog["surface_tenue_m2"])}</b></td>'
+                     f'<td class="n"><span class="chip e">Estimé</span></td></tr>')
     # ETUDE-V6-4 (item 12) — phrase « Projet saisi par le client » corrigée (une seule fois, claire).
     prog_src = ("Programme saisi par le client (ses lignes T1–T4)." if payload["entrees"].get("programme_mode") == "saisi"
                 else "Répartition proposée par le moteur pour l'objectif choisi.")
@@ -745,7 +751,7 @@ def _p7_capacite(payload: dict, retenu: dict) -> str:
                      f'<td class="n"><span class="res {rc}">{esc(res)}</span></td></tr>')
     return (
         '<section><h2>6. Capacité et contrôles</h2>'
-        f'<div class="verdict">Scénario {esc(_scn_label(sc))} : {sc["controles_compte"]["reussi"]} contrôles '
+        f'<div class="verdict">Votre projet : {sc["controles_compte"]["reussi"]} contrôles '
         f'réussis, {sc["controles_compte"]["echoue"]} échoués, {sc["controles_compte"]["non_effectue"]} '
         'non effectués. Ce n\'est pas une validation réglementaire.</div>'
         '<table class="kv"><tr><th>Programme</th><th class="num">Nombre</th><th class="num">Surface moy.</th>'

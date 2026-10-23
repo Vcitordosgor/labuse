@@ -154,11 +154,17 @@ def _facteur_limitant_detail(facteur: Optional[str], variante: Optional[dict]) -
     return base + ". Le sous-sol est modélisé entièrement enterré, sans RDC surélevé."
 
 
-def _scenario_public(scenario, ref: str) -> dict:
+def _scenario_public(scenario, ref: str, conv=None) -> dict:
     """Vue servie d'un scénario : résumé (3 chiffres clés), sections repliables, contrôles, GeoJSON."""
     cap = scenario.capacite
     sd = rendu_mod.scenario_dict(scenario)
     controles = sd["controles_reglementaires"]
+    # ETUDE-V6-7 (item 2) — SURFACE TENUE = Σ (logements DESSINÉS par type × surface saisie du type). Une
+    # seule vérité (le plan), jamais la surface de la demande. `conv.modules[t].surface_m2` = surface saisie.
+    surface_tenue = None
+    if conv is not None:
+        surface_tenue = round(sum(n * conv.modules[t].surface_m2 for t, n in (cap.par_type or {}).items()
+                                  if t in conv.modules), 1)
     return {
         "ref": ref,
         "forme": scenario.forme,
@@ -181,6 +187,7 @@ def _scenario_public(scenario, ref: str) -> dict:
             "mixite_applicable": cap.mixite_applicable,
             "logements_aides_imposes": cap.logements_aides_imposes,
             "sdp_aidee_imposee_m2": cap.sdp_aidee_imposee_m2,
+            "surface_tenue_m2": surface_tenue,
         },
         "distribution_niveaux": cap.distribution_niveaux,
         "stationnement": {
@@ -265,7 +272,7 @@ def _variante_absente(role: str, reason: str) -> dict:
 def _variante_public(role: str, scenario, terrain, conv, regles, demande: dict) -> dict:
     """Vue servie d'une variante : le scénario public + rôle (mandat), verdict global (3 libellés),
     les 4 grandeurs, et l'écart CHIFFRÉ demande ↔ variante dessinée (donc prouvé)."""
-    pub = _scenario_public(scenario, role)
+    pub = _scenario_public(scenario, role, conv)
     pub["absente"] = False
     pub["raison"] = None
     pub["role"] = role
@@ -343,10 +350,28 @@ def _programme_vers_demande(programme: dict) -> tuple[dict[str, int], list[str],
     for n in demande.values():
         g = gcd(g, n)
     g = g or 1
-    repartition: list[str] = []
-    for t in TYPES_LOGEMENT:            # ordre stable T2, T3, T4
-        repartition += [t] * (demande[t] // g) if t in demande else []
+    counts = {t: demande[t] // g for t in TYPES_LOGEMENT if t in demande}
+    # ETUDE-V6-7 (item 1) — répartition ENTRELACÉE (proportionnelle) et non par blocs : quand le pavage
+    # tronque la séquence (le programme ne tient pas en entier), les types restent dans LA PROPORTION
+    # demandée — jamais « tous les T1 d'abord » (ce qui mettait des T1 à la place des T4).
+    repartition = _entrelacer(counts)
     return demande, repartition, surfaces
+
+
+def _entrelacer(counts: dict[str, int]) -> list[str]:
+    """Séquence entrelacée reproduisant les proportions `counts` : à chaque pas on pose le type le plus en
+    retard sur sa part cible (plus grand reste). Déterministe (départage par effectif puis ordre T1..T4)."""
+    total = sum(counts.values())
+    if total <= 0:
+        return []
+    ordre = {t: i for i, t in enumerate(TYPES_LOGEMENT)}
+    placed = {t: 0 for t in counts}
+    seq: list[str] = []
+    for k in range(total):
+        best = max(counts, key=lambda t: (counts[t] * (k + 1) - placed[t] * total, counts[t], -ordre[t]))
+        seq.append(best)
+        placed[best] += 1
+    return seq
 
 
 # ------------------------------------------------------------------ ETUDE-V6 (Lot E) : study_id + bilan
@@ -685,10 +710,22 @@ def etudier_payload(session, entree: dict) -> dict:
     sd0 = rendu_mod.scenario_dict(ref_scn)
     t = ref_scn.terrain
 
-    scenarios_pub = [_scenario_public(s, _REFS[i]) for i, s in enumerate(scenarios)]
+    scenarios_pub = [_scenario_public(s, _REFS[i], conv) for i, s in enumerate(scenarios)]
     variantes_pub = [(_variante_public(role, s, terrain, conv, regles, demande) if s is not None
                       else _variante_absente(role, raison))
                      for role, s, raison in variantes]
+
+    # ETUDE-V6-7 (item 2) — le DÉPASSEMENT parle du PLAN DESSINÉ (« votre programme »), pas d'un optimum par
+    # type pris sur des scénarios différents : « tiennent » = la typologie réellement dessinée (vérité unique).
+    if depassement and demande:
+        _vp = next((v for v in variantes_pub if v.get("ref") == "votre_programme" and not v.get("absente")), None)
+        if _vp:
+            plan = _vp["programme"]["par_type"] or {}
+            tiennent = {t: min(demande[t], plan.get(t, 0)) for t in demande if demande[t] > 0}
+            manquent = {t: demande[t] - tiennent.get(t, 0) for t in demande if demande[t] - tiennent.get(t, 0) > 0}
+            depassement = {"demande": {t: n for t, n in demande.items() if n > 0}, "tiennent": tiennent,
+                           "manquent": manquent, "total_demande": sum(n for n in demande.values() if n > 0),
+                           "total_tiennent": sum(plan.values())}
 
     # ETUDE-V6-2 (Lot 2/3) — CAPACITÉ MAXIMALE = le meilleur candidat FAISABLE de la MÊME recherche (via
     # etudier_complet, répartition de la demande) : donc ≥ toute variante dessinée, et stable (deux demandes

@@ -35,6 +35,63 @@ def _cfg(lignes):
     return {"idus": _ETANG, "type_projet": "collectif", "programme": {"mode": "saisi", "lignes": lignes}}
 
 
+_MIX = [{"type": "T1", "nombre": 39, "surface_m2": 30}, {"type": "T2", "nombre": 5, "surface_m2": 56},
+        {"type": "T3", "nombre": 9, "surface_m2": 70}, {"type": "T4", "nombre": 20, "surface_m2": 80}]
+
+
+def _variante(p):
+    return next(x for x in p["variantes"] if not x.get("absente"))
+
+
+@pytest.mark.reel
+def test_plan_respecte_la_typologie_client_en_proportion(session_reelle):
+    """ETUDE-V6-7 (item 1) — le plan dessine la TYPOLOGIE du client, en proportion (jamais tous T1 à la place
+    de T4). 39 T1 + 5 T2 + 9 T3 + 20 T4 : le plan ne contient QUE ces types, chacun présent, dans des
+    proportions proches de la demande (réduction au prorata si la demande ne tient pas)."""
+    from labuse.implantation.service import etudier_payload
+    p = etudier_payload(session_reelle, {"idus": _ETANG, "type_projet": "etudiante", "stationnement": "aerien",
+                                          "programme": {"mode": "saisi", "lignes": _MIX}})
+    v = _variante(p)
+    par = v["programme"]["par_type"]
+    dem = {"T1": 39, "T2": 5, "T3": 9, "T4": 20}
+    tot_dem = sum(dem.values())
+    tot_plan = sum(par.values())
+    assert tot_plan > 0
+    # aucun type étranger, et CHAQUE type demandé est présent dans le plan (pas de substitution/suppression).
+    assert set(par) == set(dem), f"typologie non respectée : {par}"
+    # proportions du plan ≈ proportions de la demande (tolérance 12 points de %).
+    for t in dem:
+        assert abs(par[t] / tot_plan - dem[t] / tot_dem) <= 0.12, f"{t} hors proportion : {par}"
+
+
+@pytest.mark.reel
+def test_une_seule_verite_sur_le_programme_dessine(session_reelle):
+    """ETUDE-V6-7 (item 2) — UNE seule vérité, calculée sur le programme DESSINÉ : tenus = somme du plan =
+    resume.logements ; places dessinées = places exigées (barème) = resume.places ; surface tenue = Σ (tenus
+    par type × surface) ; mixité = part des tenus. Tout cohérent dans le payload (lu par l'écran ET le PDF)."""
+    import math
+    from labuse.implantation.service import etudier_payload
+    p = etudier_payload(session_reelle, {"idus": _ETANG, "type_projet": "etudiante", "stationnement": "aerien",
+                                          "programme": {"mode": "saisi", "lignes": _MIX}})
+    v = _variante(p)
+    par = v["programme"]["par_type"]
+    tenus = sum(par.values())
+    # tenus = somme du plan = resume.logements = capacité servie de la variante
+    assert v["resume"]["logements"] == tenus
+    # places : dessinées = exigées (barème) = resume.places
+    assert v["stationnement"]["places"] == v["stationnement"]["places_imposees"] == v["resume"]["places"]
+    # surface tenue servie = Σ (tenus par type × surface saisie) — nouveau champ, source unique écran/PDF
+    surf = p["hypotheses"]["surfaces"]
+    attendue = round(sum(par[t] * surf[t] for t in par), 1)
+    assert v["programme"]["surface_tenue_m2"] == attendue
+    # mixité (si applicable) = part des tenus (20 %), arrondie au supérieur
+    if v["programme"].get("mixite_applicable"):
+        assert v["programme"]["logements_aides_imposes"] == math.ceil(0.20 * tenus)
+    # dépassement éventuel : « tiennent » = le plan dessiné (jamais un autre nombre)
+    if p.get("depassement"):
+        assert p["depassement"]["total_tiennent"] == tenus
+
+
 @pytest.mark.reel
 def test_capacite_maximale_stable_entre_deux_demandes(session_reelle):
     """Deux demandes de QUANTITÉS différentes (même type/surface) renvoient le MÊME maximum : la capacité
@@ -288,9 +345,9 @@ def test_niveaux_sous_sol_hypothese_explicite(session_reelle):
 
     p1, v1, st1 = etude(1)
     p2, v2, st2 = etude(2)
-    # 1 niveau : le choix est fidèlement servi, et le programme (29 demandés) TIENT sur un seul niveau.
+    # 1 niveau : le choix est fidèlement servi (la demande de 29 est CONFRONTÉE à la capacité d'un niveau ;
+    # qu'elle tienne ou non dépend du packing réel de la typologie — V6-7 — ce n'est pas l'objet ici).
     assert st1["niveaux_sous_sol"] == 1 and st1["places_niveau_moins2"] == 0
-    assert (p1.get("confrontation") or {}).get("tient") is True
     assert (p1.get("confrontation") or {}).get("demande_logements") == 29
     # la capacité d'un niveau borne : places servies ≤ 1 × places/niveau.
     assert st1["places_sous_sol"] <= st1["places_sous_sol_par_niveau"]

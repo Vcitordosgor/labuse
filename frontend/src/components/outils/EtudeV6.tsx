@@ -258,10 +258,11 @@ export function EtudeV6({ initialIdus, onClose }: {
     const active = variantes.find((v) => v.role === 'votre_programme' && !v.absente) ?? variantes.find((v) => !v.absente) ?? variantes[0]
     const demMap: Record<string, number> = resultat.programme_saisi?.demande ?? Object.fromEntries(TYPES.filter((t) => nb[t] > 0).map((t) => [t, nb[t]]))
     const surfA = (t: string) => resultat.hypotheses?.surfaces?.[t] ?? SURF[t as TypeKey]?.area ?? 0
-    const varA = (t: string) => resultat.hypotheses?.varangues?.[t] ?? SURF[t as TypeKey]?.varangue ?? 0
-    const demProg = Object.entries(demMap).reduce((s, [t, n]) => s + n * surfA(t), 0)
-    const demVar = Object.entries(demMap).reduce((s, [t, n]) => s + n * varA(t), 0)
     const demTotal = Object.values(demMap).reduce((s, n) => s + n, 0)
+    // ETUDE-V6-7 (item 2) — surface TENUE = Σ (logements DESSINÉS × surface), servie par le moteur : une seule
+    // vérité (le plan), jamais la surface de la demande. Repli local si le champ n'est pas servi.
+    const parPlan = active?.programme.par_type ?? {}
+    const surfaceTenue = active?.programme.surface_tenue_m2 ?? Object.entries(parPlan).reduce((s, [t, n]) => s + n * surfA(t), 0)
     // ETUDE-V6-6 (item 5) — jauge EN LOGEMENTS confrontée au calcul EN LOGEMENTS (plus de SDP).
     const jaugeRes = enveloppeJauge(jaugeQ.data, demMap, surfA, active?.stationnement?.mode ?? 'aerien')
     const capLog = resultat.capacite_maximale?.logements ?? 0
@@ -317,7 +318,7 @@ export function EtudeV6({ initialIdus, onClose }: {
                 <div className="rounded-lg border border-line-2 bg-surface-2 p-3 transition-colors hover:border-mint/40">
                   {/* ETUDE-V6-4 (item 6) — surface DU PROGRAMME (logements × surfaces T1–T4), JAMAIS la SDP. */}
                   <p className="text-[9px] uppercase tracking-wide text-txt-dim">Surface du programme tenue</p>
-                  <div className="font-display text-[22px] font-bold leading-none text-txt-hi">{fmtDec(demProg)} <span className="text-[13px]">m²</span></div>
+                  <div className="font-display text-[22px] font-bold leading-none text-txt-hi">{fmtDec(surfaceTenue)} <span className="text-[13px]">m²</span></div>
                   <p className="mt-0.5 text-[9.5px] text-txt-dim">logements × surfaces (varangue comprise)</p>
                 </div>
               </div>
@@ -350,7 +351,9 @@ export function EtudeV6({ initialIdus, onClose }: {
                   N demandés · M tiennent · maximum K. UNE seule réserve, cohérente partout. */}
               <Recit titre="Votre programme" ton={confr ? (confr.tient ? 'vert' : 'ambre') : verdictTon(active.verdict)}>
                 <p className="text-[12px] text-txt-hi">{fmtInt(nDem)} demandés · <b className={confr?.tient !== false ? 'text-mint' : 'text-amber'}>{fmtInt(mTiennent)} tiennent</b> · le terrain accueille au maximum <b>{fmtInt(kMax)}</b></p>
-                <p className="mt-0.5 text-[10.5px] text-txt-dim">{Object.entries(demMap).filter(([, n]) => n > 0).map(([t, n]) => `${n}×${t}`).join(' · ')} · {fmtDec(demProg)} m² de programme (dont {fmtDec(demVar)} m² de varangues)</p>
+                {/* ETUDE-V6-7 (item 2) — on DÉCRIT le plan dessiné (la typologie tenue) + la surface tenue : une
+                    seule vérité, jamais la surface de la demande. */}
+                <p className="mt-0.5 text-[10.5px] text-txt-dim">Dessiné : {Object.entries(parPlan).filter(([, n]) => n > 0).map(([t, n]) => `${n}×${t}`).join(' · ') || '—'} · {fmtDec(surfaceTenue)} m² de programme tenu</p>
                 {reserve >= 0
                   ? <p className="mt-1 text-[11px] text-txt">Réserve de <b className="text-mint">{fmtInt(reserve)}</b> logement(s) jusqu'au maximum du terrain.</p>
                   : <p className="mt-1 text-[11px] text-txt">Dépassement de <b className="text-amber">{fmtInt(-reserve)}</b> logement(s) au-delà du maximum.</p>}

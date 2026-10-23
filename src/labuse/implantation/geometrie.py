@@ -180,12 +180,46 @@ def _meilleure_bande(zone: Polygon, y_lo: float, y_haut: float, D: float, x0: fl
     return best[1] if best else None
 
 
-def _tiler_modules(conv: Conventions, x0: float, x1: float, repartition: list[str]
-                   ) -> tuple[list[tuple[float, float, str]], Optional[tuple[float, float]]]:
-    """Garnit [x0,x1] de modules (cycle `repartition`) avec autant de NOYAUX que nécessaire :
-    un noyau au début, puis un nouveau dès qu'on dépasse `max_logements_par_noyau` modules OU
-    `longueur_max_coursive_par_noyau_m` de coursive depuis le dernier noyau.
-    Renvoie (modules=[(xa,xb,type)], noyaux=[(xa,xb)]). Déterministe."""
+def _entrelacer_counts(counts: dict[str, int]) -> list[str]:
+    """Séquence entrelacée (proportionnelle) de `counts` : à chaque pas, le type le plus en retard sur sa
+    part cible (plus grand reste). Déterministe. Miroir de service._entrelacer (ici pour éviter un import
+    circulaire geometrie↔service)."""
+    total = sum(counts.values())
+    if total <= 0:
+        return []
+    placed = {t: 0 for t in counts}
+    seq: list[str] = []
+    for k in range(total):
+        best = max(counts, key=lambda t: (counts[t] * (k + 1) - placed[t] * total, counts[t], t))
+        seq.append(best)
+        placed[best] += 1
+    return seq
+
+
+def _repartir_prorata(proportions: dict[str, int], total: int) -> dict[str, int]:
+    """Répartit `total` modules entre les types AU PRORATA de `proportions` (plus forts restes), chaque type
+    demandé gardant au moins 1 tant que le total le permet — jamais un type effacé au profit d'un autre."""
+    base = sum(proportions.values()) or 1
+    brut = {t: proportions[t] * total / base for t in proportions}
+    alloc = {t: int(brut[t]) for t in proportions}
+    # garantir ≥ 1 par type demandé tant qu'il reste de la place (pas de type supprimé par l'arrondi bas)
+    for t in proportions:
+        if alloc[t] == 0 and sum(alloc.values()) < total:
+            alloc[t] = 1
+    reste = total - sum(alloc.values())
+    ordre = sorted(proportions, key=lambda t: (brut[t] - int(brut[t]), proportions[t], t), reverse=True)
+    i = 0
+    while reste > 0 and ordre:
+        alloc[ordre[i % len(ordre)]] += 1
+        reste -= 1
+        i += 1
+    return alloc
+
+
+def _tile_seq(conv: Conventions, x0: float, x1: float, seq: list[str], *, cycle: bool
+              ) -> tuple[list[tuple[float, float, str]], list[tuple[float, float]]]:
+    """Garnit [x0,x1] en suivant `seq` (+ noyaux). `cycle`=True répète la séquence pour REMPLIR la bande
+    (mesure de capacité) ; `cycle`=False la suit une seule fois (répartition exacte). Renvoie (modules, noyaux)."""
     nw = conv.largeur_noyau_m()
     kmax = conv.max_logements_par_noyau
     lmax = conv.longueur_max_coursive_par_noyau_m
@@ -203,12 +237,12 @@ def _tiler_modules(conv: Conventions, x0: float, x1: float, repartition: list[st
         depuis, coursive_depuis = 0, 0.0
         return True
 
-    if not pose_noyau():
+    if not seq or not pose_noyau():
         return [], []
-    while True:
-        t = repartition[i % len(repartition)]
+    while cycle or i < len(seq):
+        t = seq[i % len(seq)]
         w = conv.largeur_module(t)
-        if depuis >= kmax or coursive_depuis + w > lmax + 1e-9:   # noyau supplémentaire requis
+        if depuis >= kmax or coursive_depuis + w > lmax + 1e-9:
             if not pose_noyau():
                 break
         if cur + w > x1 + 1e-9:
@@ -218,12 +252,27 @@ def _tiler_modules(conv: Conventions, x0: float, x1: float, repartition: list[st
         depuis += 1
         coursive_depuis += w
         i += 1
-    if not modules:
-        return [], []
-    # retire un éventuel noyau terminal sans module après lui
-    if noyaux and noyaux[-1][0] >= max(m[1] for m in modules):
+    if noyaux and modules and noyaux[-1][0] >= max(m[1] for m in modules):
         noyaux.pop()
     return modules, noyaux
+
+
+def _tiler_modules(conv: Conventions, x0: float, x1: float, repartition: list[str]
+                   ) -> tuple[list[tuple[float, float, str]], Optional[tuple[float, float]]]:
+    """Garnit [x0,x1] en respectant la TYPOLOGIE de `repartition`, AU PRORATA (ETUDE-V6-7 item 1). Deux
+    passes : (1) on CYCLE la séquence entrelacée pour MESURER combien de modules tiennent (capacité N de la
+    bande) ; (2) on réalloue N au prorata des proportions demandées (chaque type présent) et on pave cette
+    répartition exacte — ainsi une troncature ne met jamais des T1 à la place des T4. Déterministe."""
+    from collections import Counter
+    if not repartition:
+        return [], []
+    mods1, _ = _tile_seq(conv, x0, x1, repartition, cycle=True)    # passe 1 : capacité de la bande
+    n = len(mods1)
+    if n == 0:
+        return [], []
+    alloc = _repartir_prorata(dict(Counter(repartition)), n)       # passe 2 : prorata sur la capacité
+    mods2, noy2 = _tile_seq(conv, x0, x1, _entrelacer_counts(alloc), cycle=False)
+    return (mods2, noy2) if mods2 else (mods1, [])
 
 
 def poser_barre(scene: Scene, conv: Conventions, *, x_start: float, x_end: float,
