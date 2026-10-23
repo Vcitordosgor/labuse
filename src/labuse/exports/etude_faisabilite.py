@@ -743,6 +743,9 @@ def _p7_capacite(payload: dict, retenu: dict) -> str:
     # ETUDE-V6-4 (item 12) — phrase « Projet saisi par le client » corrigée (une seule fois, claire).
     prog_src = ("Programme saisi par le client (ses lignes T1–T4)." if payload["entrees"].get("programme_mode") == "saisi"
                 else "Répartition proposée par le moteur pour l'objectif choisi.")
+    # ETUDE-V6-7 (suite) — si le plan dévie du prorata exact pour tenir dans les places du −1 : même phrase qu'à l'écran.
+    if sc.get("prorata_note"):
+        prog_src += " " + str(sc["prorata_note"])
     # contrôles 4 états
     crows = []
     for c in sc["controles"]:

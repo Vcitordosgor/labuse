@@ -371,6 +371,38 @@ def test_sous_sol_un_seul_niveau_et_double_rangee(session_reelle):
 
 
 @pytest.mark.reel
+def test_prorata_devie_pour_tenir_dans_les_places_explique(session_reelle):
+    """ETUDE-V6-7 (suite) — quand le plan dévie du prorata EXACT pour tenir dans les places du −1 (le
+    prorata exact exigerait plus de places que le sous-sol n'en offre), une PHRASE l'explique (types
+    remplacés + nombre de places). Sinon (pas de déviation ou non liée aux places) : pas de phrase.
+    Témoin : 39 T1 + 5 T2 + 9 T3 + 20 T4 sous-sol 1 niveau — prorata exact de 26 = 14/2/3/7 (31 places)
+    > 30 places du −1 → 14/4/2/6 (30 places), avec la phrase."""
+    import math
+    from labuse.implantation.service import etudier_payload
+    from labuse.implantation.geometrie import _repartir_prorata
+    p = etudier_payload(session_reelle, {"idus": _ETANG, "type_projet": "etudiante", "stationnement": "sous_sol",
+                                          "niveaux_sous_sol": 1, "programme": {"mode": "saisi", "lignes": _MIX}})
+    v = _variante(p)
+    drawn = v["programme"]["par_type"]
+    tenus = sum(drawn.values())
+    ideal = _repartir_prorata({"T1": 39, "T2": 5, "T3": 9, "T4": 20}, tenus)
+    bar = {"T1": 1, "T2": 1, "T3": 1.5, "T4": 1.5}
+    pl = lambda d: math.ceil(sum(d.get(t, 0) * bar[t] for t in bar))
+    cap = v["stationnement"]["places_sous_sol_par_niveau"]
+    if ideal != drawn and pl(ideal) > cap:          # déviation liée aux places
+        note = v.get("prorata_note")
+        assert note and "places du sous-sol" in note and str(cap) in note
+        assert pl(drawn) <= cap                      # le plan dessiné, lui, tient
+        # … et la MÊME phrase dans le PDF (écran = PDF), sans fuite de nombre hors payload.
+        from labuse.exports import etude_faisabilite as ef
+        html = ef.rendu_etude(p, genere_le="23/10/2026")["html"]
+        assert note in html, "la phrase du prorata doit figurer dans le PDF"
+        assert ef.nombres_hors_payload(p, html, genere_le="23/10/2026") == []
+    else:                                            # pas de déviation liée aux places → pas de phrase trompeuse
+        assert not v.get("prorata_note")
+
+
+@pytest.mark.reel
 def test_sous_sol_sol_libere_explique(session_reelle):
     """ETUDE-V6-7 (item 4) — en sous-sol, le sol libéré est utilisé (bâtiment plus grand) ; une phrase
     l'explique, CHIFFRÉE si le bâtiment reste sous le plafond de hauteur (R+2 au lieu de R+3)."""

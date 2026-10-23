@@ -2330,6 +2330,8 @@ export interface EtudeVariante extends EtudeScenario {
   verdict: string
   // ETUDE-V6-7 (item 4) — en sous-sol, comment le sol libéré est utilisé (phrase chiffrée).
   sol_libere_note?: string | null
+  // ETUDE-V6-7 (suite) — déviation du prorata exact pour tenir dans les places du −1 (phrase chiffrée).
+  prorata_note?: string | null
   grandeurs: {
     sol_restant: EtudeGrandeur; emprise_mobilisable: EtudeGrandeur
     sdp_autorisee: EtudeGrandeur; programme_envisageable: EtudeGrandeur

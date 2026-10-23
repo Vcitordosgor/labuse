@@ -381,6 +381,8 @@ export function EtudeV6({ initialIdus, onClose }: {
                 {/* ETUDE-V6-7 (item 7) — « Testez en sous-sol » retiré : on change le stationnement via « Modifier le programme ». */}
                 {/* ETUDE-V6-7 (item 4) — en sous-sol, comment le sol libéré est utilisé (phrase chiffrée). */}
                 {active.sol_libere_note && <p data-sol-libere className="mt-1 text-[10.5px] text-txt-dim">{active.sol_libere_note}</p>}
+                {/* ETUDE-V6-7 (suite) — déviation du prorata exact pour tenir dans les places du −1 : expliquée. */}
+                {active.prorata_note && <p data-prorata-note className="mt-1 text-[10.5px] text-txt-dim">{active.prorata_note}</p>}
               </Recit>
               {/* ETUDE-V6-2 (Lot 3, correction §4) — règles d'aménagement NON modélisées par le PLU calibré
                   (ex. UA : espaces verts 20 %, marge plantée) : signalées « non vérifiées », jamais appliquées

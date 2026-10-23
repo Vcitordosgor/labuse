@@ -295,6 +295,8 @@ def _variante_public(role: str, scenario, terrain, conv, regles, demande: dict) 
     # ETUDE-V6-7 (item 4) — en SOUS-SOL, le sol libéré (plus de parking au sol) sert à bâtir plus : une phrase
     # dit comment il est utilisé, CHIFFRÉE si le bâtiment reste sous le plafond de hauteur (R+k < R+max).
     pub["sol_libere_note"] = _sol_libere_note(scenario, conv, regles)
+    # ETUDE-V6-7 (suite) — si le plan dévie du PRORATA EXACT pour tenir dans les places du −1, on l'explique.
+    pub["prorata_note"] = _prorata_note(scenario, demande, conv, regles)
     # ETUDE-V6-7 (items 1-2) — « votre programme » dessine EXACTEMENT la demande du client quand elle tient
     # (pas d'overshoot au maximum du terrain) : on rogne le plan à la demande → tenus = dessinés = demandés,
     # une seule vérité (places, surface tenue, mixité recalculées sur la demande).
@@ -359,6 +361,50 @@ def _sol_libere_note(scenario, conv, regles) -> Optional[str]:
         return (base + f", mais le bâtiment s'arrête à R+{max(0, niv - 1)} sous le plafond R+{max(0, niv_max - 1)} "
                 f"— la hauteur réglementaire (ou le relief) borne la montée.")
     return base + f" au maximum réglementaire (R+{max(0, niv - 1)})."
+
+
+def _prorata_note(scenario, demande: dict, conv, regles) -> Optional[str]:
+    """Si le plan dessiné dévie du PRORATA EXACT de la demande POUR tenir dans les places du −1 (le prorata
+    exact exigerait plus de places que le sous-sol n'en offre), on l'explique en une phrase : types retirés
+    remplacés par des types plus sobres en places, pour tenir dans les N places du sous-sol. Sinon None."""
+    cap = scenario.capacite
+    if cap.stationnement_mode != "sous_sol" or not demande:
+        return None
+    drawn = {t: int(n) for t, n in (cap.par_type or {}).items() if n > 0}
+    tenus = sum(drawn.values())
+    if tenus <= 0:
+        return None
+    dem = {t: int(n) for t, n in demande.items() if n > 0}
+    from .geometrie import _repartir_prorata
+    ideal = _repartir_prorata(dem, tenus)                        # prorata exact (plus grand reste)
+    ideal = {t: n for t, n in ideal.items() if n > 0}
+    if ideal == drawn:
+        return None                                              # pas de déviation
+    import math as _m
+    b = regles.stationnement
+
+    def _places(d: dict) -> int:
+        tot = 0.0
+        for t, n in d.items():
+            mod = conv.modules.get(t)
+            u = b.places_pour(pieces=mod.pieces, sdp_m2=mod.surface_m2, destination="collectif") if (mod and b.validee) else None
+            tot += n * (u if u is not None else 1.0)
+        return b.arrondir(tot) if b.validee else int(_m.ceil(tot))
+
+    cap_niveau = cap.places_sous_sol_par_niveau or cap.places
+    if not cap_niveau or _places(ideal) <= cap_niveau:
+        return None                                              # déviation NON liée aux places → rien à expliquer
+
+    retires = {t: ideal.get(t, 0) - drawn.get(t, 0) for t in set(ideal) | set(drawn) if ideal.get(t, 0) > drawn.get(t, 0)}
+    ajoutes = {t: drawn.get(t, 0) - ideal.get(t, 0) for t in set(ideal) | set(drawn) if drawn.get(t, 0) > ideal.get(t, 0)}
+    if not retires or not ajoutes:
+        return None
+
+    def _fmt(d: dict) -> str:
+        return " et ".join(f"{n} {t}" for t, n in sorted(d.items()))
+
+    return (f"{_fmt(retires)} remplacé{'s' if sum(retires.values()) > 1 else ''} par {_fmt(ajoutes)} "
+            f"pour tenir dans les {cap_niveau} places du sous-sol.")
 
 
 # ------------------------------------------------------------------ règles citées (affichage)

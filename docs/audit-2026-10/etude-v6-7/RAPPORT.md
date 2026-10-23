@@ -18,6 +18,19 @@ Branche `feat/etude-v6`, **pas de merge**. Méthode : chaque règle est prouvée
 | 7 — « Hypothèses modifiables » + « Testez en sous-sol » retirés du résultat | `V6-7 (item 7) … RETIRÉS` | EtudeV6.test.tsx | ✅ |
 | 8 — Retour/Continuer/Analyser colonne droite, sticky | rendu (`lg:sticky`), vitest parcours inchangé | EtudeV6.test.tsx | ✅ |
 | 9 — « Lire l'article » → Géoportail de l'urbanisme (idurba) | `test_lire_article_lien_geoportail_urbanisme` | test_etude_v6_capacite.py | ✅ |
+| suite — déviation du prorata exact expliquée (écran + PDF) si c'est pour tenir dans les places du −1 | `test_prorata_devie_pour_tenir_dans_les_places_explique` | test_etude_v6_capacite.py | ✅ |
+
+### Suite (point de détail Vic) — prorata exact vs places du −1
+
+Sur 39 T1 + 5 T2 + 9 T3 + 20 T4 sous-sol 1 niveau, le prorata EXACT de 26 serait **14/2/3/7** — mais il
+exige **31 places**, alors que le −1 n'en offre que **30**. LABUSE dessine donc **14/4/2/6** (30 places) et
+l'explique en une phrase, identique à l'écran et dans le PDF :
+
+> « **1 T3 et 1 T4 remplacés par 2 T2 pour tenir dans les 30 places du sous-sol.** »
+
+`_prorata_note` (service.py) ne parle QUE si la déviation est due aux places (prorata-places > capacité
+du −1) ; sinon elle est muette (et le prorata exact est respecté). La phrase ne contient aucun nombre hors
+payload (`nombres_hors_payload == []`).
 
 Tests V6-5/V6-6 « 2 niveaux » réécrits au modèle 1-niveau ; `test_numero_deterministe`, `test_sous_sol_libere_le_sol`, jauge mocks recalibrés.
 
