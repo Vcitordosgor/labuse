@@ -2248,6 +2248,10 @@ export interface EtudePayload {
 }
 export interface EtudeLotissement {
   commune: string; insee: string; zone: string | null
+  // ETUDE-V6-6 (item 2) — 0 lot n'est jamais muet : raison + remède.
+  raison?: string | null; remede?: string | null
+  // ETUDE-V6-6 (item 1) — règles PLU servies de la zone, chacune sourcée.
+  regles_sourcees?: Array<{ nom: string; valeur: string; article: string | null; citation?: string | null; servie: boolean }>
   assiette_m2: number; contenance_m2: number; net_constructible_m2: number; lot_cible_m2: number
   tableau_lots: {
     nombre: number; surface_moyenne_m2: number | null; surface_min_m2: number | null
@@ -2256,10 +2260,10 @@ export interface EtudeLotissement {
   voirie_m2: number; voirie_largeur_m: number; voirie_config: string; voirie_largeur_source: string
   pleine_terre: {
     exigee_pct: number; exigee_m2: number; estimee_m2: number; jardins_privatifs_m2: number
-    communs_m2: number; ces_pct: number; resultat: string; article: string
+    communs_m2: number; ces_pct: number; resultat: string; article: string | null
   }
   controles: Array<{ nom: string; regle: string; mesure: string; resultat: string; citation: string | null; detail: string | null }>
-  stationnement: { par_lot: number; article: string; total_lots: number; visiteurs_estimes: number; note: string }
+  stationnement: { par_lot: number; article: string | null; servie?: boolean; total_lots: number; visiteurs_estimes: number; note: string }
   ebc: { m2: number; statut: string }
   ppr_rouge_m2: number
   raccordements: Array<{ reseau: string; distance_m: number | null; statut: string }>
@@ -2337,7 +2341,7 @@ export interface EtudeIn {
   // ETUDE-V6-5 — nombre de niveaux de sous-sol (1 par défaut, 2 au choix) ; sans objet en aérien.
   niveaux_sous_sol?: number
   programme?: { mode: 'propose' | 'saisi'; lignes?: Array<{ type: string; nombre: number; surface_m2?: number }> } | null
-  hypotheses?: { profondeur_m?: number; coef_plancher_habitable?: number; surfaces?: Record<string, number>; varangues?: Record<string, number> } | null
+  hypotheses?: { profondeur_m?: number; coef_plancher_habitable?: number; surfaces?: Record<string, number>; varangues?: Record<string, number>; lot_cible_m2?: number; voirie_largeur_m?: number } | null
 }
 // ETUDE-V6-2 (Lot 3) — l'étude est bornée à 60 s côté serveur ; le fetch front abandonne à ~75 s
 // (aligné sur nginx/Caddy), simple garde-fou réseau : en pratique le serveur répond AVANT (résultat

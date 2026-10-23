@@ -218,49 +218,94 @@ def etudier_lotissement(session, idus: list[str], *, lot_cible_m2: float = LOT_C
     EBC, raccordements, régime et GeoJSON (assiette/voirie/lots/PPR/EBC). ValueError si assiette vide."""
     from . import moteur as moteur_mod
     from .conventions import charger as charger_conv
-    terrain, regles, _z = moteur_mod._charger(session, idus, None, charger_conv(), avec_pente=False)
+    terrain, regles, zone = moteur_mod._charger(session, idus, None, charger_conv(), avec_pente=False)
     assiette = terrain.assiette
     net = terrain.zone_implantation if terrain.zone_implantation is not None else assiette
     ebc_geom, ebc_m2 = _ebc(session, idus, assiette)
     if ebc_geom is not None:
         net = net.difference(ebc_geom)
-    if net.is_empty or net.area < 400:
-        raise ValueError("assiette constructible trop petite pour un lotissement (après zone, PPR, EBC).")
+    commune = terrain.commune
+    contenance = terrain.contenance_totale_m2
 
-    lots, voirie, voie_label, impasse = _pave_reseau(net, lot_cible_m2, voirie_largeur_m)
+    # ETUDE-V6-6 (item 1) — règles LUES du PLU de la commune ET de la zone de l'assiette (jamais Saint-Leu
+    # Ud en dur). CES, pleine terre et stationnement par lot viennent de `regles` ; chacune porte sa source
+    # (article) ou est marquée « non servie » (hypothèse assumée), jamais une valeur fabriquée silencieuse.
+    ces_servie = regles.emprise_ces.validee and regles.emprise_ces.valeur
+    ces_pct = regles.emprise_ces.valeur if ces_servie else 40.0
+    pt_servie = regles.pleine_terre.validee and regles.pleine_terre.valeur
+    pt_pct = regles.pleine_terre.valeur if pt_servie else 40.0
+    pt_article = regles.pleine_terre.article if pt_servie else None
+    # stationnement par LOT = barème « logement individuel » de la zone (une maison par lot).
+    b = regles.stationnement
+    _pl = b.places_pour(pieces=4, sdp_m2=100, destination="individuel")
+    if _pl is None and b.mode == "par_logement":
+        _pl = b.flat_places
+    stat_servie = bool(b.validee and _pl is not None)
+    places_par_lot = float(_pl) if stat_servie else 2.0
+    stat_article = b.article if stat_servie else None
+    stat_citation = b.citation if stat_servie else None
+
+    # ETUDE-V6-6 (item 2) — on ne lève JAMAIS : si l'assiette est trop petite, ou si aucun lot n'est
+    # dessinable après la voirie, on renvoie un résultat qui DIT pourquoi et ce qui le permettrait.
+    trop_petit = net.is_empty or net.area < 400
+    if trop_petit:
+        lots, voirie, voie_label, impasse = [], None, "aucune (assiette trop petite)", False
+    else:
+        lots, voirie, voie_label, impasse = _pave_reseau(net, lot_cible_m2, voirie_largeur_m)
     aires = sorted(round(g.area, 1) for g in lots)
     nb = len(lots)
     voirie_m2 = round(voirie.area, 1) if voirie is not None else 0.0
-    contenance = terrain.contenance_totale_m2
-
-    # CES et pleine terre LUS de la zone (défauts Ud documentés si la règle n'est pas servie).
-    ces_pct = regles.emprise_ces.valeur if regles.emprise_ces.validee and regles.emprise_ces.valeur else 40.0
-    pt_pct = regles.pleine_terre.valeur if regles.pleine_terre.validee and regles.pleine_terre.valeur else 40.0
-    pt_article = (regles.pleine_terre.article if regles.pleine_terre.validee else None) or "UD 13"
+    raison = remede = None
+    if nb == 0:
+        apres_voirie = round(max(0.0, net.area - voirie_m2), 1)
+        if trop_petit:
+            raison = (f"Assiette constructible trop petite pour un lotissement : {net.area:.0f} m² nets "
+                      f"(après zone, PPR, EBC) ne suffisent pas à des lots de {lot_cible_m2:.0f} m² plus une voirie.")
+        else:
+            raison = (f"Aucun lot de {lot_cible_m2:.0f} m² n'est dessinable : après la voirie de desserte "
+                      f"({voirie_m2:.0f} m²), il reste {apres_voirie:.0f} m² sur {net.area:.0f} m² nets — "
+                      f"insuffisant pour la profondeur et la façade d'un lot à cette taille.")
+        remede = ("Réduisez la taille de lot visée (hypothèse modifiable), ou desservez les lots par un accès "
+                  "direct sur la voie existante plutôt qu'une voirie interne, ou étudiez une assiette plus grande.")
     # PLEINE TERRE = jardins privatifs (lot − future emprise au CES de la zone) + espaces verts communs.
     jardins_privatifs = round(sum(aires) * (1.0 - ces_pct / 100.0), 1)
     communs = round(max(0.0, net.area - sum(aires) - voirie_m2), 1)
     pt_totale = round(jardins_privatifs + communs, 1)
     pt_requis = round(contenance * pt_pct / 100.0, 1)
     pt_ok = pt_totale >= pt_requis
+    _pt_src = f"{pt_pct:.0f} % de la contenance" + (f" · {pt_article}" if pt_article else " · règle non servie (hypothèse)")
     controle_pt = {
         "nom": "Perméabilité (pleine terre)",
-        "regle": f"≥ {pt_requis:.0f} m² ({pt_pct:.0f} % de la contenance · {pt_article})",
+        "regle": f"≥ {pt_requis:.0f} m² ({_pt_src})",
         "mesure": f"{pt_totale:.0f} m² (jardins privatifs {jardins_privatifs:.0f} + communs {communs:.0f})",
         "resultat": "Réussi" if pt_ok else "Échoué",
         "citation": pt_article, "detail": f"écart {pt_totale - pt_requis:+.0f} m²",
     }
 
-    places_lots = nb * 2
+    # ETUDE-V6-6 (item 1) — stationnement par lot LU du PLU de la zone (maison individuelle).
+    places_lots = int(math.ceil(nb * places_par_lot))
     places_visiteurs = math.ceil(nb * 0.8)   # Estimé (non réglementé) — l'archi en pose ~0,8/lot
+    _stat_note = (f"{places_par_lot:g} place(s) / lot — barème « logement individuel » du PLU "
+                  f"(zone {zone}, art. {stat_article}). Visiteurs = convention (Estimé, non réglementé)."
+                  if stat_servie else
+                  f"{places_par_lot:g} place(s) / lot — HYPOTHÈSE (barème non servi pour la zone {zone}). "
+                  "Visiteurs = convention (Estimé, non réglementé).")
     regime = ("Permis d'aménager (lotissement de plus de 2 lots avec création de voirie/espaces communs) "
               "— à qualifier selon R.421-19 (voirie, équipements communs).")
 
-    from sqlalchemy import text
-    zone = session.execute(text("SELECT zone_lib FROM parcel_zone_plu WHERE idu = :i"),
-                           {"i": idus[0]}).scalar()
+    # ETUDE-V6-6 (item 1) — les règles SERVIES de la zone, chacune avec sa source (pour l'écran et le PDF).
+    regles_sourcees = [
+        {"nom": "Emprise au sol (CES)", "valeur": f"{ces_pct:.0f} %", "article": regles.emprise_ces.article,
+         "servie": bool(ces_servie)},
+        {"nom": "Pleine terre", "valeur": f"{pt_pct:.0f} %", "article": pt_article, "servie": bool(pt_servie)},
+        {"nom": "Stationnement / lot", "valeur": f"{places_par_lot:g} pl.", "article": stat_article,
+         "citation": stat_citation, "servie": stat_servie},
+    ]
     return {
-        "commune": terrain.commune, "insee": terrain.insee, "zone": zone,
+        "commune": commune, "insee": terrain.insee, "zone": zone,
+        # ETUDE-V6-6 (item 2) — raison + remède quand aucun lot n'est dessinable (jamais muet).
+        "raison": raison, "remede": remede,
+        "regles_sourcees": regles_sourcees,
         "assiette_m2": round(assiette.area, 1),
         "contenance_m2": contenance,
         "net_constructible_m2": round(net.area, 1),
@@ -276,8 +321,8 @@ def etudier_lotissement(session, idus: list[str], *, lot_cible_m2: float = LOT_C
         "voirie_m2": voirie_m2,
         "voirie_largeur_m": voirie_largeur_m,
         "voirie_config": voie_label,
-        "voirie_largeur_source": ("Largeur hypothèse : aucune règle de voirie au PLU Ud — chaussée "
-                                  f"{voirie_largeur_m:.0f} m, trottoir à prévoir (Estimé)."),
+        "voirie_largeur_source": ("Largeur = hypothèse (aucune largeur de voirie n'est servie au PLU pour "
+                                  f"cette zone) : chaussée {voirie_largeur_m:.0f} m, trottoir à prévoir (Estimé)."),
         "pleine_terre": {"exigee_pct": pt_pct, "exigee_m2": pt_requis, "estimee_m2": pt_totale,
                          "jardins_privatifs_m2": jardins_privatifs, "communs_m2": communs,
                          "ces_pct": ces_pct, "resultat": "Réussi" if pt_ok else "Échoué", "article": pt_article},
@@ -292,17 +337,19 @@ def etudier_lotissement(session, idus: list[str], *, lot_cible_m2: float = LOT_C
         })(round(max(0.0, assiette.area - net.area - terrain.ppr_rouge_m2 - ebc_m2), 1),
            sum(aires) + voirie_m2 + communs + terrain.ppr_rouge_m2 + ebc_m2
            + max(0.0, assiette.area - net.area - terrain.ppr_rouge_m2 - ebc_m2)),
-        "stationnement": {"par_lot": 2, "article": "UD 12 (renvoi dispositions générales Art. 11)",
+        "stationnement": {"par_lot": places_par_lot, "article": stat_article, "servie": stat_servie,
                           "total_lots": places_lots, "visiteurs_estimes": places_visiteurs,
-                          "note": "2 places / logement (PLU Ud) ; visiteurs = convention (Estimé, non réglementé)."},
+                          "note": _stat_note},
         "ebc": {"m2": ebc_m2, "statut": "présent" if ebc_m2 > 0 else "non trouvé dans les données LABUSE (à vérifier)"},
         "ppr_rouge_m2": terrain.ppr_rouge_m2,
         "raccordements": _raccordements(session, idus),
         "regime_procedural": regime,
+        # ETUDE-V6-6 (item 1) — superficie minimale de lot : non modélisée au PLU (l'article 5 « superficie
+        # minimale » a été supprimé par la loi ALUR de 2014) ; formulé pour la commune/zone courante.
         "min_lot_plu": {"existe": False,
-                        "note": "Zone Ud de Saint-Leu : aucune superficie/largeur minimale de lot au PLU "
-                                "(suppression des articles 5 par la loi ALUR, 2014). Le découpage est "
-                                "géométrique (Estimé), pas une règle opposable."},
+                        "note": f"Zone {zone} de {commune} : aucune superficie minimale de lot n'est servie "
+                                "au PLU (article 5 supprimé par la loi ALUR, 2014). Le découpage est géométrique "
+                                "(Estimé), pas une règle opposable."},
         "geojson": _geojson(terrain, net, voirie, lots, ebc_geom),
         "note": "Pré-lotissement indicatif (pavage déterministe le long d'une voirie). Ni plan de géomètre, "
                 "ni droit à diviser : le découpage réel dépend du projet, des accès et de l'instruction.",

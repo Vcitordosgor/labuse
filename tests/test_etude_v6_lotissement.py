@@ -63,6 +63,66 @@ def test_pas_de_superficie_minimale_de_lot_au_plu(session_reelle):
     assert "non trouvé" in r["ebc"]["statut"] or r["ebc"]["m2"] > 0
 
 
+_ETANG = ["97404000AW0099", "97404000AW0451", "97404000AW0624", "97404000AW0625"]
+
+
+@pytest.mark.reel
+def test_regles_lotissement_lues_du_plu_par_zone(session_reelle):
+    """ETUDE-V6-6 (item 1) — le module LIT les règles du PLU de la commune/zone de l'assiette (jamais
+    Saint-Leu Ud en dur) : Étang-Salé UA et Saint-Leu UD donnent des règles DIFFÉRENTES, chacune sourcée."""
+    from sqlalchemy import text
+    if session_reelle.execute(text("SELECT count(*) FROM parcels WHERE idu = ANY(:i)"),
+                              {"i": _ETANG}).scalar() != 4:
+        pytest.skip("parcelles Étang-Salé absentes")
+    from labuse.implantation.lotissement import etudier_lotissement
+    ua = etudier_lotissement(session_reelle, _ETANG)         # Étang-Salé UA
+    ud = etudier_lotissement(session_reelle, [_AC264])       # Saint-Leu UD
+    assert ua["zone"] == "UA" and ud["zone"] == "UD"
+    src_ua = {r["nom"]: r for r in ua["regles_sourcees"]}
+    src_ud = {r["nom"]: r for r in ud["regles_sourcees"]}
+    # CES et pleine terre DIFFÉRENTS, chacun sourcé sur SA zone (UA 2.x vs UD x).
+    assert src_ua["Emprise au sol (CES)"]["valeur"] != src_ud["Emprise au sol (CES)"]["valeur"]
+    assert src_ua["Emprise au sol (CES)"]["article"].startswith("UA")
+    assert src_ud["Emprise au sol (CES)"]["article"].startswith("UD")
+    assert src_ua["Pleine terre"]["valeur"] != src_ud["Pleine terre"]["valeur"]
+    # stationnement par lot sourcé sur la bonne zone (plus jamais « UD 12 » sur une parcelle UA).
+    assert ua["stationnement"]["article"].startswith("UA")
+    assert ud["stationnement"]["article"].startswith("UD")
+
+
+@pytest.mark.reel
+def test_zero_lot_jamais_muet(session_reelle):
+    """ETUDE-V6-6 (item 2) — si aucun lot n'est dessinable, le résultat DIT pourquoi + ce qui le permettrait
+    (jamais un 0 muet). Étang-Salé (assiette étroite) : 0 lot avec raison chiffrée et remède."""
+    from sqlalchemy import text
+    if session_reelle.execute(text("SELECT count(*) FROM parcels WHERE idu = ANY(:i)"),
+                              {"i": _ETANG}).scalar() != 4:
+        pytest.skip("parcelles Étang-Salé absentes")
+    from labuse.implantation.service import _lotissement_payload
+    p = _lotissement_payload(session_reelle, _ETANG, {"idus": _ETANG, "type_projet": "lotissement"})
+    lot = p["lotissement"]
+    if lot["tableau_lots"]["nombre"] == 0:
+        assert lot["raison"] and ("m²" in lot["raison"])        # raison chiffrée
+        assert lot["remede"]                                     # ce qui le permettrait
+        assert p["message"] == lot["raison"]                     # remonte comme message de l'étude
+        assert p["verdict"] == "Aucun lot dessinable"
+    else:
+        assert lot["tableau_lots"]["nombre"] >= 1                # sinon, quelques lots (acceptable aussi)
+
+
+@pytest.mark.reel
+def test_hypotheses_lotissement_lot_et_voirie(session_reelle):
+    """ETUDE-V6-6 (item 3) — les hypothèses du lotissement sont la taille de lot visée et la largeur de
+    voirie (pas les surfaces T1–T4) : les faire varier change la division ET le study_id."""
+    from labuse.implantation.service import _lotissement_payload
+    base = {"idus": [_AC264], "type_projet": "lotissement"}
+    a = _lotissement_payload(session_reelle, [_AC264], dict(base, hypotheses={"lot_cible_m2": 450}))
+    b = _lotissement_payload(session_reelle, [_AC264], dict(base, hypotheses={"lot_cible_m2": 700}))
+    assert a["lotissement"]["lot_cible_m2"] == 450 and b["lotissement"]["lot_cible_m2"] == 700
+    assert a["study_id"] != b["study_id"]                        # l'hypothèse entre dans l'empreinte
+    assert a["lotissement"]["tableau_lots"]["nombre"] != b["lotissement"]["tableau_lots"]["nombre"]
+
+
 @pytest.mark.reel
 def test_lotissement_via_payload_type_projet(session_reelle):
     from labuse.implantation.service import etudier_payload

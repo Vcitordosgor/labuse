@@ -84,8 +84,8 @@ export function EtudeV6({ initialIdus, onClose }: {
   const [nb, setNb] = useState<Record<TypeKey, number>>({ T1: 0, T2: 0, T3: 0, T4: 0 })
   // Hypothèses modifiables (mandat) : surfaces T1–T4, varangues, et hypothèses MOTEUR (profondeur,
   // coef plancher). Vides = valeurs LABUSE par défaut. Édition dans le résultat → recalcul → même PDF.
-  const [hyp, setHyp] = useState<{ surf: Record<TypeKey, string>; varangue: Record<TypeKey, string>; profondeur: string; coef: string; stationnement: 'aerien' | 'sous_sol'; niveauxSousSol: 1 | 2 }>(
-    { surf: { T1: '', T2: '', T3: '', T4: '' }, varangue: { T1: '', T2: '', T3: '', T4: '' }, profondeur: '', coef: '', stationnement: 'aerien', niveauxSousSol: 1 })
+  const [hyp, setHyp] = useState<{ surf: Record<TypeKey, string>; varangue: Record<TypeKey, string>; profondeur: string; coef: string; stationnement: 'aerien' | 'sous_sol'; niveauxSousSol: 1 | 2; lotCible: string; voirie: string }>(
+    { surf: { T1: '', T2: '', T3: '', T4: '' }, varangue: { T1: '', T2: '', T3: '', T4: '' }, profondeur: '', coef: '', stationnement: 'aerien', niveauxSousSol: 1, lotCible: '', voirie: '' })
   const pdf = useOuvrirDocument()
   const surfOf = (t: TypeKey) => { const x = parseFloat(hyp.surf[t]); return isNaN(x) ? SURF[t].area : x }
   const varOf = (t: TypeKey) => { const x = parseFloat(hyp.varangue[t]); return isNaN(x) ? SURF[t].varangue : Math.max(0, Math.min(surfOf(t), x)) }
@@ -96,6 +96,10 @@ export function EtudeV6({ initialIdus, onClose }: {
     if (!isNaN(coef)) h.coef_plancher_habitable = coef
     const varangues = Object.fromEntries(TYPES.filter((t) => hyp.varangue[t] !== '').map((t) => [t, varOf(t)]))
     if (Object.keys(varangues).length) h.varangues = varangues
+    // ETUDE-V6-6 (item 3) — hypothèses du LOTISSEMENT : taille de lot visée + largeur de voirie.
+    const lc = parseFloat(hyp.lotCible); const vl = parseFloat(hyp.voirie)
+    if (!isNaN(lc) && lc > 0) h.lot_cible_m2 = lc
+    if (!isNaN(vl) && vl > 0) h.voirie_largeur_m = vl
     return Object.keys(h).length ? h : undefined
   }
   // UNE seule config sert l'analyse ET le PDF (surfaces éditées via les lignes du programme → study_id).
@@ -191,7 +195,7 @@ export function EtudeV6({ initialIdus, onClose }: {
   const peutAnalyser = contiguOk && !!projet && totalLogts > 0
 
   function reset() { setStep(1); setSel([]); setProjet(null); setNb({ T1: 0, T2: 0, T3: 0, T4: 0 }); resetHyp(); analyse.reset() }
-  function resetHyp() { setHyp({ surf: { T1: '', T2: '', T3: '', T4: '' }, varangue: { T1: '', T2: '', T3: '', T4: '' }, profondeur: '', coef: '', stationnement: 'aerien', niveauxSousSol: 1 }) }
+  function resetHyp() { setHyp({ surf: { T1: '', T2: '', T3: '', T4: '' }, varangue: { T1: '', T2: '', T3: '', T4: '' }, profondeur: '', coef: '', stationnement: 'aerien', niveauxSousSol: 1, lotCible: '', voirie: '' }) }
   // « Modifier le programme » revient au formulaire ET réinitialise les hypothèses éditées (pas de fuite).
   function modifierProgramme() { resetHyp(); analyse.reset() }
   const editeurHyp = (collectif: boolean) => (
@@ -199,6 +203,10 @@ export function EtudeV6({ initialIdus, onClose }: {
       collectif={collectif} onRecalculer={recalculer} enCours={analyse.isPending}
       choix={hyp.stationnement === 'aerien' ? 'aerien' : (hyp.niveauxSousSol === 2 ? 'sous_sol_2' : 'sous_sol_1')}
       onChoix={setStationnementChoix} onModifie={marquerModifie} />
+  )
+  // ETUDE-V6-6 (item 3) — hypothèses du lotissement = taille de lot visée + largeur de voirie (pas T1–T4).
+  const editeurLot = () => (
+    <LotissementHypotheses hyp={hyp} setHyp={setHyp} onRecalculer={recalculer} enCours={analyse.isPending} onModifie={marquerModifie} />
   )
   function ajouter(idu: string) { setSel((xs) => (xs.includes(idu) || xs.length >= 8 ? xs : [...xs, idu])) }
   function retirer(idu: string) { setSel((xs) => xs.filter((x) => x !== idu)) }
@@ -214,7 +222,7 @@ export function EtudeV6({ initialIdus, onClose }: {
           <Badge ton="ambre">{resultat.verdict}</Badge>
           <span className="text-[11px] text-txt-dim">{resultat.entrees.commune} · zone {resultat.entrees.zone} · lotissement</span>
         </div>
-        <LotissementResultat lot={resultat.lotissement} hypothese={resultat.logements_hypothese} boutonPdf={<BoutonPdf />} pdfErreur={pdf.erreur ?? undefined} studyId={resultat.study_id} editeur={editeurHyp(false)} />
+        <LotissementResultat lot={resultat.lotissement} hypothese={resultat.logements_hypothese} boutonPdf={<BoutonPdf />} pdfErreur={pdf.erreur ?? undefined} studyId={resultat.study_id} editeur={editeurLot()} />
         <p className="px-4 pb-4 text-[10px] leading-snug text-txt-dim">{resultat.lotissement.note}</p>
       </div>
     )
@@ -611,13 +619,35 @@ function LotissementResultat({ lot, hypothese, boutonPdf, pdfErreur, studyId, ed
   return (
     <div className="grid flex-1 gap-4 p-4 lg:grid-cols-[1fr_360px]">
       <section className="flex flex-col gap-4">
+        {/* ETUDE-V6-6 (item 2) — 0 lot n'est jamais muet : la raison + ce qui le permettrait. */}
+        {tl.nombre === 0 && lot.raison && (
+          <div data-lot-raison className="rounded-lg border border-amber/50 bg-amber-bg px-4 py-3">
+            <b className="text-[12px] text-amber">Aucun lot dessinable</b>
+            <p className="mt-1 text-[11.5px] text-txt">{lot.raison}</p>
+            {lot.remede && <p className="mt-1 text-[11px] text-txt-dim"><b>Ce qui le permettrait :</b> {lot.remede}</p>}
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Chiffre v={fmtInt(tl.nombre)} l="lots" />
           <Chiffre v={`${fmtDec(tl.surface_moyenne_m2 ?? 0)} m²`} l="surface moyenne" />
           <Chiffre v={`${fmtDec(tl.surface_min_m2 ?? 0)} m²`} l="surface mini" />
           <Chiffre v={`${fmtDec(lot.voirie_m2)} m²`} l="voirie" />
         </div>
-        {lot.geojson && (
+        {/* ETUDE-V6-6 (item 1) — règles du PLU de la commune/zone, chacune sourcée (jamais Ud en dur). */}
+        {(lot.regles_sourcees?.length ?? 0) > 0 && (
+          <div data-lot-regles className="rounded-lg border-l-4 border-mint bg-mint-bg px-3.5 py-2.5">
+            <p className="text-[9px] font-semibold uppercase tracking-[0.08em] text-mint">Règles du PLU · {lot.commune} · zone {lot.zone}</p>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {(lot.regles_sourcees ?? []).map((r) => (
+                <span key={r.nom} className="inline-flex items-center gap-1 rounded border border-mint/40 bg-surface-1 px-1.5 py-0.5 text-[10px] text-txt-mut">
+                  {r.nom} <b className="text-txt">{r.valeur}</b>
+                  <span className="text-[9px] text-txt-dim">{r.servie ? `· ${r.article}` : '· non servie (hypothèse)'}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+        {lot.geojson && tl.nombre > 0 && (
           <div className="rounded-lg border border-line-2 bg-surface-2 p-3">
             <p className="mb-2 text-[11px] font-semibold text-txt">Plan de division — {tl.nombre} lots · {lot.voirie_config}</p>
             <PlanMasseSvg fc={lot.geojson} groupesCaches={[]} />
@@ -660,12 +690,12 @@ function LotissementResultat({ lot, hypothese, boutonPdf, pdfErreur, studyId, ed
           </div>
           <p className="mt-0.5 text-[9.5px] text-txt-dim">jardins privatifs {fmtDec(lot.pleine_terre.jardins_privatifs_m2)} m² (lot − emprise au CES {lot.pleine_terre.ces_pct} %) + espaces communs {fmtDec(lot.pleine_terre.communs_m2)} m²</p>
         </Recit>
-        <LigneInfo l="Stationnement" v={`${lot.stationnement.total_lots} places (${lot.stationnement.par_lot}/lot · ${lot.stationnement.article})`} sous={`+ ${lot.stationnement.visiteurs_estimes} visiteurs (estimé)`} />
+        <LigneInfo l="Stationnement" v={`${lot.stationnement.total_lots} places (${lot.stationnement.par_lot}/lot · ${lot.stationnement.article ?? 'hypothèse'})`} sous={`+ ${lot.stationnement.visiteurs_estimes} visiteurs (estimé)`} />
         <Recit titre="EBC" ton={lot.ebc.m2 > 0 ? 'ambre' : undefined}>
           <p className="text-[11px] text-txt">{lot.ebc.m2 > 0 ? `${fmtDec(lot.ebc.m2)} m² d'EBC` : lot.ebc.statut}</p>
         </Recit>
         <Recit titre="Surface minimale de lot (PLU)">
-          <p className="text-[11px] text-txt">{lot.min_lot_plu.existe ? 'règle présente' : 'aucune règle au PLU Ud'}</p>
+          <p className="text-[11px] text-txt">{lot.min_lot_plu.existe ? 'règle présente' : 'aucune superficie minimale servie'}</p>
           <p className="mt-0.5 text-[9.5px] text-txt-dim">{lot.min_lot_plu.note}</p>
         </Recit>
         <Recit titre="Raccordements">
@@ -708,8 +738,31 @@ function LigneInfo({ l, v, sous }: { l: string; v: string; sous?: string }) {
 }
 
 // ── Hypothèses modifiables (mandat) : surfaces T1–T4, varangues, + hypothèses moteur (collectif) ──
-type HypEtat = { surf: Record<TypeKey, string>; varangue: Record<TypeKey, string>; profondeur: string; coef: string; stationnement: 'aerien' | 'sous_sol'; niveauxSousSol: 1 | 2 }
+type HypEtat = { surf: Record<TypeKey, string>; varangue: Record<TypeKey, string>; profondeur: string; coef: string; stationnement: 'aerien' | 'sous_sol'; niveauxSousSol: 1 | 2; lotCible: string; voirie: string }
 type StatioChoix = 'aerien' | 'sous_sol_1' | 'sous_sol_2'
+
+// ETUDE-V6-6 (item 3) — hypothèses du LOTISSEMENT : taille de lot visée + largeur de voirie (jamais T1–T4).
+function LotissementHypotheses({ hyp, setHyp, onRecalculer, enCours, onModifie }: {
+  hyp: HypEtat; setHyp: (f: (h: HypEtat) => HypEtat) => void; onRecalculer: () => void; enCours: boolean; onModifie: () => void
+}) {
+  const champ = (val: string, ph: string, on: (v: string) => void) => (
+    <input type="number" min={0} inputMode="decimal" value={val} placeholder={ph} onChange={(e) => { on(e.target.value); onModifie() }}
+      className="w-20 rounded border border-line-2 bg-surface-2 px-1.5 py-0.5 text-center text-[11px] text-txt-hi" />
+  )
+  return (
+    <details data-hypotheses-lot className="rounded-lg border border-line-2 bg-surface-2 p-3" open>
+      <summary className="cursor-pointer text-[11px] font-semibold text-txt">Hypothèses du lotissement <small className="font-normal text-txt-dim">(Estimé — recalcule la division)</small></summary>
+      <div className="mt-2 flex flex-col gap-2 text-[10.5px] text-txt-mut">
+        <label className="flex items-center gap-2">Taille de lot visée {champ(hyp.lotCible, '450', (v) => setHyp((h) => ({ ...h, lotCible: v })))} m²</label>
+        <label className="flex items-center gap-2">Largeur de voirie {champ(hyp.voirie, '5', (v) => setHyp((h) => ({ ...h, voirie: v })))} m</label>
+        <div className="mt-1 flex items-center gap-2">
+          <Bouton niveau="primaire" onClick={onRecalculer} disabled={enCours} className="whitespace-nowrap">{enCours ? 'Recalcul…' : 'Recalculer ↻'}</Bouton>
+          <span className="text-[9.5px] text-txt-dim">Le recalcul met à jour la division ET le PDF (même study_id).</span>
+        </div>
+      </div>
+    </details>
+  )
+}
 function HypothesesEditor({ hyp, setHyp, surfOf, varOf, types, collectif, onRecalculer, enCours, choix, onChoix, onModifie }: {
   hyp: HypEtat; setHyp: (f: (h: HypEtat) => HypEtat) => void
   surfOf: (t: TypeKey) => number; varOf: (t: TypeKey) => number

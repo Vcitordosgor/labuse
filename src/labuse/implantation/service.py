@@ -584,7 +584,18 @@ def _lotissement_payload(session, idus: list[str], entree: dict) -> dict:
     demande = {}
     if isinstance(programme, dict) and programme.get("mode") == "saisi":
         demande, _rep, _surf = _programme_vers_demande(programme)
-    lot = etudier_lotissement(session, idus)
+    # ETUDE-V6-6 (item 3) — hypothèses du LOTISSEMENT : taille de lot visée + largeur de voirie (jamais les
+    # surfaces T1–T4). Lues de `entree.hypotheses` ; entrent dans le study_id (→ même PDF).
+    hyp = entree.get("hypotheses") or {}
+    from .lotissement import LOT_CIBLE_M2, VOIRIE_LARGEUR_M
+    lot_cible = hyp.get("lot_cible_m2")
+    voirie_l = hyp.get("voirie_largeur_m")
+    lot = etudier_lotissement(
+        session, idus,
+        lot_cible_m2=float(lot_cible) if isinstance(lot_cible, (int, float)) and lot_cible > 0 else LOT_CIBLE_M2,
+        voirie_largeur_m=float(voirie_l) if isinstance(voirie_l, (int, float)) and voirie_l > 0 else VOIRIE_LARGEUR_M)
+    # ETUDE-V6-6 (item 2) — 0 lot n'est jamais muet : la raison remonte comme message de l'étude.
+    nb = lot["tableau_lots"]["nombre"]
     return {
         "moteur": {"livrable": "ETUDE-V6-LOTISSEMENT", "version_conventions": "lotissement-1",
                    "etiquette": "Estimé", "crs_dessin": "EPSG:2975", "crs_carte": "EPSG:4326"},
@@ -595,9 +606,9 @@ def _lotissement_payload(session, idus: list[str], entree: dict) -> dict:
         "study_id": _study_id(entree),
         "lotissement": lot,
         "logements_hypothese": ({"demande": demande} if demande else None),
-        "statut_global": "à compléter",
-        "verdict": "À compléter",
-        "message": None,
+        "statut_global": "à compléter" if nb > 0 else "aucun lot",
+        "verdict": "À compléter" if nb > 0 else "Aucun lot dessinable",
+        "message": lot.get("raison"),
     }
 
 

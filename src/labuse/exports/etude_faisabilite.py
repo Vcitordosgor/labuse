@@ -857,17 +857,26 @@ def rendu_lotissement(payload: dict, *, genere_le: str) -> dict:
                      for i, s in enumerate(tl["surfaces_m2"], 1))
     racc = "".join(f"<tr><td>{r['reseau']}</td><td class='n'>{'non vérifié' if r['distance_m'] is None else fr(r['distance_m'])+' m'}</td></tr>"
                    for r in lot["raccordements"])
+    # ETUDE-V6-6 (item 1) — article de règle servie ou « règle non servie » ; (item 2) — raison si 0 lot.
+    pt_art = esc(pt["article"]) if pt.get("article") else "règle non servie (hypothèse)"
+    st_art = esc(st["article"]) if st.get("article") else "hypothèse (barème non servi)"
+    raison_html = ""
+    if tl["nombre"] == 0 and lot.get("raison"):
+        raison_html = (f"<div class='aside rose'><b>Aucun lot dessinable.</b> {esc(lot['raison'])}"
+                       + (f" <b>Ce qui le permettrait :</b> {esc(lot['remede'])}" if lot.get("remede") else "")
+                       + "</div>")
     corps = (
         f"<style>{_STYLE}</style>"
         f"<section class='page'><h1>Lotissement — {commune} · zone {zone}</h1>"
         f"<p class='sub'>Division foncière indicative (pré-faisabilité). {lot['note']}</p>"
-        f"<div class='kpis'><div class='kpi'><b>{fr(tl['nombre'])}</b><span>lots</span></div>"
+        + raison_html
+        + f"<div class='kpis'><div class='kpi'><b>{fr(tl['nombre'])}</b><span>lots</span></div>"
         f"<div class='kpi'><b>{fr(tl['surface_moyenne_m2'])} m²</b><span>surface moyenne</span></div>"
         f"<div class='kpi'><b>{fr(lot['voirie_m2'])} m²</b><span>voirie · {lot['voirie_config']}</span></div></div>"
         f"<h2>Pleine terre — {pt['resultat']}</h2>"
         f"<p>{fr(pt['estimee_m2'])} m² (jardins privatifs {fr(pt['jardins_privatifs_m2'])} + communs "
-        f"{fr(pt['communs_m2'])}) pour {fr(pt['exigee_m2'])} m² exigés ({fr(pt['exigee_pct'])} % · {pt['article']}).</p>"
-        f"<h2>Stationnement</h2><p>{fr(st['total_lots'])} places ({fr(st['par_lot'])}/lot · {st['article']}) "
+        f"{fr(pt['communs_m2'])}) pour {fr(pt['exigee_m2'])} m² exigés ({fr(pt['exigee_pct'])} % · {pt_art}).</p>"
+        f"<h2>Stationnement</h2><p>{fr(st['total_lots'])} places ({fr(st['par_lot'])}/lot · {st_art}) "
         f"+ {fr(st['visiteurs_estimes'])} visiteurs (estimé).</p>"
         f"<h2>Bilan surfacique {'(clos)' if b['clos'] else '(à ajuster)'}</h2>"
         f"<table class='t'><tr><td>Lots</td><td class='n'>{fr(b['lots_m2'])} m²</td></tr>"

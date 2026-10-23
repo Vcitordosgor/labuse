@@ -314,9 +314,12 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     expect(screen.getAllByText('14').length).toBeGreaterThan(0)
     expect(screen.getByText(/Plan de division/)).toBeTruthy()
     expect(screen.getByText('Régime procédural')).toBeTruthy()
-    expect(document.body.textContent).toContain('aucune règle au PLU Ud')  // pas de superficie minimale (ALUR)
+    expect(document.body.textContent).toContain('aucune superficie minimale servie')  // V6-6 : plus de « PLU Ud » en dur
     expect(document.body.textContent).toContain('Permis d\'aménager')
     expect(document.body.textContent).toContain('impasse + aire de retournement')  // voirie réaliste (Lot D corr.)
+    // ETUDE-V6-6 (item 3) — hypothèses du lotissement = taille de lot + voirie, PAS les T1–T4.
+    expect(document.body.textContent).toContain('Taille de lot visée')
+    expect(document.body.textContent).toContain('Largeur de voirie')
     expect(screen.getByText('Bilan surfacique')).toBeTruthy()                       // bilan clos (Lot E)
     expect(screen.getByText('Générer le PDF ↓')).toBeTruthy()                       // PDF depuis la même étude (Lot E)
     expect(screen.getByText('Perméabilité (pleine terre)')).toBeTruthy()           // contrôle pleine terre
