@@ -431,9 +431,10 @@ export function EtudeV6({ initialIdus, onClose }: {
           return (
             <button key={e.n} type="button" onClick={() => { if (e.n < step) setStep(e.n as 1 | 2 | 3) }}
               className={`flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-left transition-colors duration-quick ${
-                on ? 'border-mint bg-mint-bg' : fait ? 'border-line-2 hover:border-mint/50' : 'border-line-2 opacity-70'} ${e.n < step ? 'cursor-pointer' : 'cursor-default'}`}>
-              <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded text-[12px] font-bold ${on || fait ? 'bg-mint text-mint-on' : 'bg-surface-3 text-txt-dim'}`}>{e.n}</span>
-              <span><b className="block text-[12.5px] text-txt-hi">{e.titre}</b><small className="text-[10.5px] text-txt-dim">{e.sous}</small></span>
+                on ? 'border-mint bg-mint text-mint-on' : fait ? 'border-line-2 hover:border-mint/50' : 'border-line-2 opacity-70'} ${e.n < step ? 'cursor-pointer' : 'cursor-default'}`}>
+              {/* ETUDE-V6-6 (item 7) — étape sélectionnée = vert OPAQUE (fond plein, texte sombre), jamais translucide. */}
+              <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded text-[12px] font-bold ${on ? 'bg-mint-on/15 text-mint-on' : fait ? 'bg-mint text-mint-on' : 'bg-surface-3 text-txt-dim'}`}>{e.n}</span>
+              <span><b className={`block text-[12.5px] ${on ? 'text-mint-on' : 'text-txt-hi'}`}>{e.titre}</b><small className={`text-[10.5px] ${on ? 'text-mint-on/80' : 'text-txt-dim'}`}>{e.sous}</small></span>
             </button>
           )
         })}
@@ -949,7 +950,7 @@ function EtapeParcelles({ sel, v, chargement, erreur, onAjouter, onRetirer }: {
           </div>
 
           <Signaux v={v} />
-          <Sources v={v} />
+          {/* ETUDE-V6-6 (item 8) — ligne « Zone PLU : Urbanisme PLU/GPU (API Carto). » retirée de l'étape 1. */}
         </div>
       )}
     </div>
@@ -1030,12 +1031,6 @@ function Signaux({ v }: { v: EtudeParcellesOut }) {
   )
 }
 
-function Sources({ v }: { v: EtudeParcellesOut }) {
-  // ETUDE-V6-4 (item 1) — ligne « Géométrie & contenance : Cadastre… » retirée ; on garde la source PLU.
-  const p = v.sources.plu
-  if (!p) return null
-  return <p className="text-[9.5px] leading-snug text-txt-dim">Zone PLU : {p.source}.</p>
-}
 
 // ── Étape 2 — Type de projet ─────────────────────────────────────────────────────────────────────
 function EtapeType({ projet, onChoisir, regimes, chargement, commune, zone, mixite }: {
@@ -1051,9 +1046,10 @@ function EtapeType({ projet, onChoisir, regimes, chargement, commune, zone, mixi
           const on = pr.key === projet
           return (
             <button key={pr.key} type="button" data-etude-type={pr.key} onClick={() => onChoisir(pr.key)}
-              className={`rounded-lg border px-3.5 py-3 text-left transition-colors duration-quick ${on ? 'border-mint bg-mint-bg' : 'border-line-2 hover:border-mint/50'}`}>
-              <b className="block text-[13px] text-txt-hi">{pr.label}</b>
-              <small className="text-[11px] text-txt-dim">{pr.desc}</small>
+              className={`rounded-lg border px-3.5 py-3 text-left transition-colors duration-quick ${on ? 'border-mint bg-mint text-mint-on' : 'border-line-2 hover:border-mint/50'}`}>
+              {/* ETUDE-V6-6 (item 7) — carte de type sélectionnée = vert OPAQUE (fond plein, texte sombre). */}
+              <b className={`block text-[13px] ${on ? 'text-mint-on' : 'text-txt-hi'}`}>{pr.label}</b>
+              <small className={`text-[11px] ${on ? 'text-mint-on/80' : 'text-txt-dim'}`}>{pr.desc}</small>
             </button>
           )
         })}
@@ -1105,7 +1101,7 @@ function StationnementRegle({ regimes, lotissement, commune, zone }: { regimes: 
         </div>
       )}
       {lotissement && (
-        <p className="text-[10.5px] text-txt-mut">Lotissement : division foncière — les obligations de stationnement portent sur les futures constructions des lots (Lot D).</p>
+        <p className="text-[10.5px] text-txt-mut">Lotissement : division foncière — les obligations de stationnement portent sur les futures constructions des lots.</p>
       )}
     </div>
   )
@@ -1286,13 +1282,18 @@ function PiedEtape({ step, peutContinuer1, peutAnalyser, enAnalyse, erreurAnalys
   const suivBloque = step === 1 ? !peutContinuer1 : step === 2 ? !projetChoisi : false
   const raison = step === 1 && !peutContinuer1 ? 'Sélectionnez des parcelles contiguës pour continuer.'
     : step === 2 && !projetChoisi ? 'Choisissez un type de projet pour continuer.' : ''
+  // ETUDE-V6-6 (item 8) — Retour / Continuer JUSTE sous le contenu, alignés à DROITE, SANS barre vide :
+  // le feedback (raison, calcul, erreur) n'apparaît QUE s'il a du contenu (plus de div vide réservant l'espace).
+  const feedback = raison || enAnalyse || !!erreurAnalyse
   return (
-    <div className="mx-4 mb-4 mt-2 flex items-center justify-between gap-3 border-t border-line-2 pt-3">
-      <div className="min-h-[1em] text-[10.5px]">
-        {raison && <span className="text-amber">{raison}</span>}
-        {enAnalyse && <span className="text-txt-dim">Calcul en cours, jusqu'à une minute…</span>}
-        {!!erreurAnalyse && <span className="text-coral">{(erreurAnalyse as Error).message}</span>}
-      </div>
+    <div className="mx-4 mb-4 mt-2 flex flex-col items-end gap-1.5 border-t border-line-2 pt-3">
+      {feedback && (
+        <div className="text-[10.5px]">
+          {raison && <span className="text-amber">{raison}</span>}
+          {enAnalyse && <span className="text-txt-dim">Calcul en cours, jusqu'à une minute…</span>}
+          {!!erreurAnalyse && <span className="text-coral">{(erreurAnalyse as Error).message}</span>}
+        </div>
+      )}
       <div className="flex items-center gap-2">
         {step > 1 && <Bouton niveau="secondaire" onClick={onPrec}>← Retour</Bouton>}
         {step < 3 && <Bouton niveau="primaire" onClick={onSuiv} disabled={suivBloque}>Continuer →</Bouton>}
