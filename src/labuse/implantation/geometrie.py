@@ -491,7 +491,10 @@ def poser_sous_sol(scene: Scene, conv: Conventions, *, cible: int, niveaux: int 
     n2 = max(0, places - n1) if niveaux >= 2 else 0
     e1 = _dessiner_niveau(scene, footprint, conv, n_cible=n1, niveau=-1)
     e2 = _dessiner_niveau(scene, footprint, conv, n_cible=n2, niveau=-2) if n2 > 0 else 0.0
-    emprise = round(places * conv.m2_par_place_sous_sol, 1)
+    # ETUDE-V6-7 (item 3) — EMPRISE AFFICHÉE = EMPRISE DESSINÉE (le contour réellement tracé), jamais une
+    # formule abstraite places × m²/place. Repli sur la formule si rien n'a pu être dessiné.
+    dessinee = round(e1 + e2, 1)
+    emprise = dessinee if dessinee > 0 else round(places * conv.m2_par_place_sous_sol, 1)
     scene.sous_sol = {"places": places, "emprise_m2": emprise, "rampe_m2": rampe_m2,
                       "m2_par_place": conv.m2_par_place_sous_sol,
                       "rampe_profondeur_m": conv.hauteur_sous_sol_m, "rampe_pente_pct": conv.rampe_pente_max_pct,

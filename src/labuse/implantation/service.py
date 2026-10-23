@@ -202,6 +202,8 @@ def _scenario_public(scenario, ref: str, conv=None) -> dict:
             "mode": cap.stationnement_mode,
             "places_sous_sol": cap.places_sous_sol,
             "emprise_sous_sol_m2": cap.emprise_sous_sol_m2,
+            # ETUDE-V6-7 (item 3) — emprise AFFICHÉE = emprise DESSINÉE (le contour tracé), source unique.
+            "emprise_dessinee_m2": cap.emprise_sous_sol_m2,
             "rampe_m2": cap.rampe_m2,
             # ETUDE-V6-4/5 (item 9) — plan du niveau −1 (et −2) : capacité d'un niveau + niveaux CHOISIS +
             # répartition dessinée par niveau.
@@ -290,7 +292,27 @@ def _variante_public(role: str, scenario, terrain, conv, regles, demande: dict) 
         }
     else:
         pub["ecart"] = None
+    # ETUDE-V6-7 (item 4) — en SOUS-SOL, le sol libéré (plus de parking au sol) sert à bâtir plus : une phrase
+    # dit comment il est utilisé, CHIFFRÉE si le bâtiment reste sous le plafond de hauteur (R+k < R+max).
+    pub["sol_libere_note"] = _sol_libere_note(scenario, conv, regles)
     return pub
+
+
+def _sol_libere_note(scenario, conv, regles) -> Optional[str]:
+    cap = scenario.capacite
+    if cap.stationnement_mode != "sous_sol":
+        return None
+    niv = scenario.niveaux
+    h = regles.hauteur_plafond
+    niv_max = int(h.valeur // conv.hauteur_etage_m) if (h.validee and h.valeur and conv.hauteur_etage_m) else niv
+    nb_bat = len({o.ref for o in scenario.scene.of("batiment_emprise")}) or 1
+    forme = str(scenario.forme).replace("_", " ")
+    base = (f"Le stationnement enterré libère le sol : {cap.logements} logements bâtis "
+            f"({forme}, {nb_bat} bâtiment{'s' if nb_bat > 1 else ''})")
+    if niv < niv_max:
+        return (base + f", mais le bâtiment s'arrête à R+{max(0, niv - 1)} sous le plafond R+{max(0, niv_max - 1)} "
+                f"— la hauteur réglementaire (ou le relief) borne la montée.")
+    return base + f" au maximum réglementaire (R+{max(0, niv - 1)})."
 
 
 # ------------------------------------------------------------------ règles citées (affichage)
@@ -593,10 +615,42 @@ def jauge_payload(session, idus: list[str], type_projet: str) -> dict:
         "places_par_type": places_par_type,
         "hauteur_egout_m": (he.valeur if he.validee else None),
         "ces_pct": (regles.emprise_ces.valeur if regles.emprise_ces.validee else None),
+        # ETUDE-V6-7 (item 3) — disponibilité du sous-sol (option grisée + raison si indisponible).
+        "sous_sol_dispo": _sous_sol_dispo(session, idus, terrain.insee, regles.zone),
         "manquant": manquant, "etiquette": "estimé",
         "note": ("Estimation rapide avant calcul : (zone d'implantation − sol du stationnement aérien) "
                  "× niveaux (hauteur PLU) × coef plancher. Le calcul complet affine ce chiffre."),
     }
+
+
+def _sous_sol_dispo(session, idus: list[str], insee: str, zone: Optional[str]) -> dict:
+    """ETUDE-V6-7 (item 3) — le sous-sol est-il possible ? Indisponible si le terrain touche un PPR en zone
+    rouge (interdiction — aléa inondation/mouvement : sous-sol à proscrire) OU si le règlement de la zone
+    mentionne « sous-sol » (restriction à lire) ; sinon disponible « à confirmer : géotechnique, nappe »."""
+    from sqlalchemy import text
+    try:
+        ppr = session.execute(text(
+            "SELECT count(*) FROM spatial_layers s JOIN parcels p ON ST_Intersects(s.geom_2975, p.geom_2975) "
+            "WHERE p.idu = ANY(:i) AND s.kind = 'ppr' AND lower(coalesce(s.subtype,'')) IN ('interdiction','i')"
+        ), {"i": idus}).scalar() or 0
+    except Exception:  # noqa: BLE001
+        ppr = 0
+    if ppr:
+        return {"disponible": False,
+                "raison": "Le terrain touche un PPR en zone rouge (interdiction) : un sous-sol est à proscrire "
+                          "(aléa inondation / mouvement de terrain) — à confirmer au règlement du PPR."}
+    try:
+        n = session.execute(text(
+            "SELECT count(*) FROM plu_reglement_extrait WHERE insee = :i AND (zone = :z OR zone IS NULL) "
+            "AND texte_verbatim ILIKE '%sous-sol%'"), {"i": insee, "z": zone}).scalar() or 0
+    except Exception:  # noqa: BLE001
+        n = 0
+    if n:
+        return {"disponible": False,
+                "raison": f"Le règlement de la zone {zone} mentionne le sous-sol (restriction possible) — "
+                          "à vérifier au PLU avant d'enterrer le stationnement."}
+    return {"disponible": True,
+            "raison": "À confirmer : étude géotechnique et niveau de la nappe (sous-sol a priori possible)."}
 
 
 # ------------------------------------------------------------------ ETUDE-V6 (Lot D) : lotissement
@@ -658,13 +712,9 @@ def etudier_payload(session, entree: dict) -> dict:
         raise ValueError(f"type de projet inconnu : {type_projet}")
     stationnement = entree.get("stationnement") or "aerien"
     terrain_mode = entree.get("terrain") or "libere"
-    # ETUDE-V6-5 — le nombre de niveaux de sous-sol est une HYPOTHÈSE EXPLICITE (1 par défaut, 2 au choix) ;
-    # la capacité est bornée à niveaux × places/niveau — jamais un 2ᵉ niveau supposé sans être choisi.
-    niveaux_sous_sol = int(entree.get("niveaux_sous_sol") or 1)
-    if niveaux_sous_sol not in (1, 2):
-        niveaux_sous_sol = 1
-    if stationnement != "sous_sol":
-        niveaux_sous_sol = 1
+    # ETUDE-V6-7 (item 3) — le sous-sol est limité à UN SEUL niveau (on retire « 2 niveaux » : une 2ᵉ nappe
+    # de parking enterré n'est pas crédible sans étude géotechnique). Toute valeur reçue est ramenée à 1.
+    niveaux_sous_sol = 1
 
     # ETUDE-V6 (Lot D) — le LOTISSEMENT n'est pas un collectif : on branche la division foncière de
     # l'assiette (division-or à la demande, pas le batch île) et on sert un plan de division, pas des

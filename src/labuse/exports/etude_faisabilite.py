@@ -699,10 +699,13 @@ def _p6_distribution(payload: dict, retenu: dict) -> str:
     # dessiné depuis la géométrie (TN LiDAR, limites, bâtiment en coupe + niveaux, hauteurs). Repli : une
     # note seule si le dessin a échoué (jamais l'ancien schéma en dur, qui n'était pas tiré de la donnée).
     coupe_svg = retenu.get("coupe_svg") or ""
+    # ETUDE-V6-7 (item 5) — la note dit le MODE RÉEL (jamais « aérien » en sous-sol).
+    _mode_ss = (retenu.get("stationnement", {}).get("mode") == "sous_sol")
+    _statio_note = "le stationnement au niveau −1 (sous-sol)" if _mode_ss else "le stationnement aérien au sol"
     coupe = (
         ('<div class="ef-fig">' + coupe_svg + '</div>') if coupe_svg else ''
     ) + ('<p class="note">Coupe de principe : le volume bâti sous la règle de hauteur, le terrain '
-         'naturel (LiDAR), le stationnement aérien au sol. Esquisse indicative, pas une étude '
+         f'naturel (LiDAR), {_statio_note}. Esquisse indicative, pas une étude '
          "d'architecte.</p>")
     return (
         '<section><h2>5. Distribution et coupe</h2>'
@@ -776,9 +779,9 @@ def _p8_hypotheses(payload: dict, retenu: dict, numero: str) -> str:
         ("Plancher → habitable", _dec(h.get('coef_plancher_habitable')), "circulations et noyaux hors habitable"),
         ("Place · allée", place_txt, "dimensions usuelles"),
         ("Hauteur de niveau", f"{_grp(h.get('hauteur_etage_m'))} m", "convention"),
-        # ETUDE-V6-4/5 (items 11/12) — le MODE réel + le nombre de niveaux CHOISI (hypothèse explicite).
+        # ETUDE-V6-7 (item 5) — le MODE RÉEL seulement (jamais « aérien » dans une étude en sous-sol).
         ("Stationnement", _stationnement_label(retenu, payload["entrees"]),
-         "aérien (au sol) ou sous-sol (niveaux choisis : −1, ou −1 et −2)"),
+         "places au sol" if (retenu.get("stationnement", {}).get("mode") != "sous_sol") else "places au niveau −1"),
     ]
     hrows_html = "".join(f'<tr><td class="k">{esc(a)}</td><td>{b}</td><td>{esc(c)}</td></tr>'
                          for a, b, c in hrows)
