@@ -387,6 +387,20 @@ def test_sous_sol_sol_libere_explique(session_reelle):
 
 
 @pytest.mark.reel
+def test_lire_article_lien_geoportail_urbanisme(session_reelle):
+    """ETUDE-V6-7 (item 9) — « Lire l'article » pointe vers le règlement officiel sur le GÉOPORTAIL DE
+    L'URBANISME (geoportail-urbanisme.gouv.fr), construit depuis l'idurba du PLU calibré. Pour Étang-Salé
+    (idurba servi), chaque règle porte cette URL ; « non disponible en lien direct » seulement sans document."""
+    from labuse.implantation.service import etudier_payload, _plu_gpu_url
+    url = _plu_gpu_url(session_reelle, "97404")
+    assert url and "geoportail-urbanisme.gouv.fr" in url and "97404" in url
+    p = etudier_payload(session_reelle, {"idus": _ETANG, "type_projet": "etudiante", "stationnement": "aerien",
+                                          "programme": {"mode": "saisi", "lignes": _MIX}})
+    assert p["regles"]["source_url"] == url
+    assert all(l.get("source_url") == url for l in p["regles"]["lignes"])
+
+
+@pytest.mark.reel
 def test_sous_sol_disponibilite_servie(session_reelle):
     """ETUDE-V6-7 (item 3) — la disponibilité du sous-sol est SERVIE avec sa raison : indisponible si PPR
     inondation touche le terrain ou si le règlement de la zone mentionne « sous-sol » ; sinon « à confirmer :

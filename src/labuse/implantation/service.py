@@ -470,17 +470,24 @@ def _plu_millesime(session, insee: str) -> Optional[str]:
         return None
 
 
-def _plu_source_url(session, insee: str) -> Optional[str]:
-    """ETUDE-V6-4 (item 3) — lien vers le document PLU officiel (téléchargement geopf). Même document pour
-    toute la commune ; pas d'ancre de page (archive .zip), la page figure dans le texte « p. N »."""
+def _plu_gpu_url(session, insee: str) -> Optional[str]:
+    """ETUDE-V6-7 (item 9) — URL du règlement sur le GÉOPORTAIL DE L'URBANISME, construite depuis l'idurba
+    (identifiant du document d'urbanisme) du PLU calibré : page officielle de consultation du document. None
+    si aucun idurba (donc aucun document en ligne) → « non disponible en lien direct » côté écran."""
     from sqlalchemy import text
     try:
-        u = session.execute(text("SELECT source_url FROM plu_reglement_extrait "
-                                 "WHERE insee = :i AND source_url IS NOT NULL LIMIT 1"),
-                            {"i": insee}).scalar()
-        return str(u) if u else None
+        idurba = session.execute(text("SELECT idurba FROM plu_reglement_extrait "
+                                      "WHERE insee = :i AND idurba IS NOT NULL LIMIT 1"),
+                                 {"i": insee}).scalar()
     except Exception:  # noqa: BLE001
-        return None
+        idurba = None
+    return f"https://www.geoportail-urbanisme.gouv.fr/document/{idurba}" if idurba else None
+
+
+def _plu_source_url(session, insee: str) -> Optional[str]:
+    """ETUDE-V6-7 (item 9) — lien « Lire l'article » = le document sur le Géoportail de l'urbanisme (source
+    officielle), remplace l'ancien lien de téléchargement geopf. La page figure dans le texte « p. N »."""
+    return _plu_gpu_url(session, insee)
 
 
 def _regle_stationnement_courte(b) -> Optional[str]:
