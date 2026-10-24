@@ -297,53 +297,84 @@ def _variante_public(role: str, scenario, terrain, conv, regles, demande: dict) 
     pub["sol_libere_note"] = _sol_libere_note(scenario, conv, regles)
     # ETUDE-V6-7 (suite) — si le plan dévie du PRORATA EXACT pour tenir dans les places du −1, on l'explique.
     pub["prorata_note"] = _prorata_note(scenario, demande, conv, regles)
-    # ETUDE-V6-7 (items 1-2) — « votre programme » dessine EXACTEMENT la demande du client quand elle tient
-    # (pas d'overshoot au maximum du terrain) : on rogne le plan à la demande → tenus = dessinés = demandés,
-    # une seule vérité (places, surface tenue, mixité recalculées sur la demande).
-    if role == "votre_programme" and demande:
-        _trim_variante_au_programme(pub, demande, conv, regles)
     return pub
 
 
-def _trim_variante_au_programme(pub: dict, demande: dict, conv, regles) -> None:
-    """Rogne la variante « votre programme » à la demande exacte SI le plan dessiné la couvre (chaque type
-    au moins au nombre demandé). Sinon on garde le plan réduit au prorata (la demande ne tient pas)."""
-    par = pub["programme"].get("par_type") or {}
-    dem = {t: int(n) for t, n in demande.items() if n > 0}
-    if not dem or any(par.get(t, 0) < n for t, n in dem.items()):
-        return                                                   # ne couvre pas → prorata déjà appliqué
-    tot = sum(dem.values())
+def _barème_places(demande: dict, conv, regles) -> int:
+    """Places EXIGÉES par le barème PLU pour la demande (par type)."""
     import math as _m
     b = regles.stationnement
-    total_pl = 0.0
-    for t, n in dem.items():
+    total = 0.0
+    for t, n in demande.items():
+        if n <= 0:
+            continue
         mod = conv.modules.get(t)
         u = b.places_pour(pieces=mod.pieces, sdp_m2=mod.surface_m2, destination="collectif") if (mod and b.validee) else None
-        total_pl += n * (u if u is not None else 1.0)
-    places = b.arrondir(total_pl) if b.validee else int(_m.ceil(total_pl))
-    pub["programme"]["par_type"] = dict(dem)
-    pub["programme"]["surface_tenue_m2"] = round(sum(n * conv.modules[t].surface_m2 for t, n in dem.items()
-                                                     if t in conv.modules), 1)
-    if pub["programme"].get("mixite_applicable"):
-        pub["programme"]["logements_aides_imposes"] = _m.ceil(0.20 * tot)
-    pub["resume"]["logements"] = tot
-    pub["resume"]["places"] = places
-    pub["stationnement"]["places"] = places
-    pub["stationnement"]["places_imposees"] = places
-    # GeoJSON : ne garder que `dem[t]` modules de chaque type (le bâtiment est plus court, pas d'overshoot).
-    reste = dict(dem)
-    feats = []
-    for f in (pub.get("geojson") or {}).get("features", []):
-        pr = f.get("properties") or {}
-        if pr.get("kind") == "module":
-            t = pr.get("type_logement")
-            if t in reste and reste[t] > 0:
-                reste[t] -= 1
-                feats.append(f)
-        else:
-            feats.append(f)
-    if pub.get("geojson"):
-        pub["geojson"] = {"type": "FeatureCollection", "features": feats}
+        total += n * (u if u is not None else 1.0)
+    return b.arrondir(total) if b.validee else int(_m.ceil(total))
+
+
+def _appliquer_programme_au_scenario(scenario, demande: dict, conv, regles) -> bool:
+    """ETUDE-V6-8 (item 1) — UNE SEULE implantation : celle du programme du client. Quand le plan dessiné
+    COUVRE la demande (overshoot au maximum du terrain), on rogne le SCÉNARIO LUI-MÊME (sa géométrie), puis
+    on RECALCULE capacité + contrôles depuis le plan rogné. Ainsi plan masse, planche, répartition par
+    niveau, coupe, SDP, places, contrôles et SHAB viennent TOUS du même plan (plus de patch de façade sur
+    la vue servie). Renvoie True si le scénario a été rogné, False sinon (la demande ne couvre pas → prorata
+    déjà dessiné par le moteur)."""
+    from . import capacite as cap_mod
+    from . import controles as ctrl_mod
+    cap = scenario.capacite
+    par = cap.par_type or {}
+    dem = {t: int(n) for t, n in demande.items() if n > 0}
+    if not dem or any(par.get(t, 0) < n for t, n in dem.items()):
+        return False                                             # ne couvre pas → prorata déjà appliqué
+    # OVERSHOOT seulement : si le plan dessiné est DÉJÀ la demande exacte (aucun type en trop), on NE TOUCHE
+    # PAS à la géométrie (la redessiner perturberait un plan déjà propre). Rien à rogner → rien à faire.
+    if not (any(par.get(t, 0) > dem.get(t, 0) for t in par) or sum(par.values()) > sum(dem.values())):
+        return False
+    scene = scenario.scene
+    # 1) retirer les modules EN TROP, en vidant les niveaux les plus HAUTS d'abord (étage du haut partiel) ;
+    #    on garde `dem[t]` modules de chaque type, pris sur les niveaux les plus BAS (plan le plus compact).
+    from collections import defaultdict
+    par_type_mods: dict = defaultdict(list)
+    for o in scene.of("module"):
+        par_type_mods[o.type_logement].append(o)
+    a_retirer: set = set()
+    for t, lst in par_type_mods.items():
+        lst.sort(key=lambda o: (o.niveau or 0, round(o.geom_local.bounds[0], 2)))
+        for o in lst[dem.get(t, 0):]:
+            a_retirer.add(id(o))
+    scene.objets = [o for o in scene.objets if not (o.kind == "module" and id(o) in a_retirer)]
+    # 2) stationnement rogné à la demande (barème PLU) : aérien → on retire les places EN TROP ;
+    #    sous-sol → on redessine le niveau −1 à la cible (le sol reste libre, pleine terre en hausse).
+    places_cible = _barème_places(dem, conv, regles)
+    if cap.stationnement_mode == "sous_sol":
+        from .geometrie import poser_sous_sol
+        for k in ("rampe", "sous_sol_emprise", "allee_ss", "place_ss"):
+            scene.objets = [o for o in scene.objets if o.kind != k]
+        poser_sous_sol(scene, conv, cible=places_cible, niveaux=cap.niveaux_sous_sol or 1)
+    else:
+        # on REDESSINE proprement le stationnement aérien à la cible (allée coupée au droit des places,
+        # aucun tronçon mort — garanti par poser_stationnement) plutôt que de retirer des places une à une.
+        from .geometrie import poser_stationnement
+        for k in ("place", "allee", "acces"):
+            scene.objets = [o for o in scene.objets if o.kind != k]
+        poser_stationnement(scene, conv, cible=places_cible)
+    # 3) espaces libres RECALCULÉS sur le plan rogné (le sol libéré par les objets retirés redevient libre),
+    #    puis RECALCUL de tout depuis la MÊME géométrie.
+    from .geometrie import poser_espaces_libres
+    scene.objets = [o for o in scene.objets if o.kind != "espace_libre"]
+    poser_espaces_libres(scene)
+    scene.finaliser_monde()
+    newcap = cap_mod.calculer(scene, conv, regles, scenario.terrain)
+    scenario.capacite = newcap
+    scenario.checks_geo = ctrl_mod.verifier_geometrie(scene, scenario.terrain, conv, newcap, regles)
+    scenario.controles = ctrl_mod.controles_reglementaires(scene, scenario.terrain, conv, newcap, regles)
+    geo_ok = ctrl_mod.geometrie_valide(scenario.checks_geo)
+    scenario.statut = (ctrl_mod.statut_etude(scenario.controles, geo_ok, scene=scene,
+                                             terrain=scenario.terrain, regles=regles)
+                       if geo_ok else "simulation impossible")
+    return True
 
 
 def _sol_libere_note(scenario, conv, regles) -> Optional[str]:
@@ -516,7 +547,13 @@ def _bilan_collectif(terrain_pub: dict, variante: Optional[dict]) -> dict:
         out["emprise_batie_m2"] = round(variante["emprise_sol_m2"] or 0.0, 1)
         out["stationnement_m2"] = round(variante["stationnement"]["surface_stationnement_m2"] or 0.0, 1)
         out["pleine_terre_m2"] = round(variante["pleine_terre_m2"] or 0.0, 1)
-        geo = all(c.get("ok") for c in (variante.get("checks_geometriques") or []))
+        # « sans chevauchement » = AUCUNE double comptabilisation : pas de recouvrement entre objets ET la
+        # somme des surfaces mesurées = l'assiette. (Les autres contrôles géométriques — tidiness d'allée,
+        # largeur, dimensions — relèvent de la qualité du plan, pas du bilan surfacique.)
+        _cle_bilan = ("chevauchement", "somme des surfaces")
+        _pertinents = [c for c in (variante.get("checks_geometriques") or [])
+                       if any(k in (c.get("nom") or "") for k in _cle_bilan)]
+        geo = bool(_pertinents) and all(c.get("ok") for c in _pertinents)
         out["plan_sans_chevauchement"] = geo
         out["clos"] = bool(decomp and geo)
     else:
@@ -881,6 +918,15 @@ def etudier_payload(session, entree: dict) -> dict:
     sd0 = rendu_mod.scenario_dict(ref_scn)
     t = ref_scn.terrain
 
+    # ETUDE-V6-8 (item 1) — UNE SEULE implantation : on rogne le SCÉNARIO « votre programme » à la demande du
+    # client AVANT de construire la vue servie ET les planches/coupe, pour que TOUT (plan, répartition, coupe,
+    # SDP, places, contrôles, SHAB) vienne du même plan rogné. Le moteur a pu dessiner jusqu'au maximum du
+    # terrain ; ici on ramène à la demande exacte quand elle tient.
+    if demande:
+        for role, s, _raison in variantes:
+            if role == "votre_programme" and s is not None:
+                _appliquer_programme_au_scenario(s, demande, conv, regles)
+
     scenarios_pub = [_scenario_public(s, _REFS[i], conv) for i, s in enumerate(scenarios)]
     variantes_pub = [(_variante_public(role, s, terrain, conv, regles, demande) if s is not None
                       else _variante_absente(role, raison))
@@ -939,8 +985,13 @@ def etudier_payload(session, entree: dict) -> dict:
             genere_le = today_reunion().strftime("%d/%m/%Y")
         except Exception:
             genere_le = ""
-        numero = planche_mod.numero_etude(idus, genere_le)
-        ent_planche = {"commune": t.commune, "zone": ref_scn.regles.zone, "idus": idus}
+        # ETUDE-V6-8 (item 2) — UN SEUL n° de document partout : la planche et la coupe portent le MÊME
+        # numéro que la page 1 / le cartouche / le pied de page, dérivé du study_id (EF-<8>), pas un numéro
+        # daté distinct. L'écran et le PDF affichent donc l'unique « EF-… ».
+        _sid = _study_id(entree)
+        numero = _sid[:11] if _sid.startswith("EF-") else planche_mod.numero_etude(idus, genere_le)
+        ent_planche = {"commune": t.commune or entree.get("commune") or "",
+                       "zone": ref_scn.regles.zone, "idus": idus}
         try:
             ctx = contexte_mod.charger_contexte(session, t.assiette, idus, avec_tn=True,
                                                 voie_edges=t.voie_edges)

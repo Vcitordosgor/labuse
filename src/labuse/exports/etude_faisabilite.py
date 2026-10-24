@@ -450,8 +450,12 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
                 f'{esc(_au.get("motif") or "")}</p>' if _au else '')
     return (
         '<div class="cover">'
-        f'<div class="kicker">LABUSE · Document n° {esc(numero)}</div>'
-        f'<h1>Étude de faisabilité — {esc(t.get("commune") or "")} · parcelles {esc(_refs_parcelles(payload))}</h1>'
+        # ETUDE-V6-8 (item 2) — le n° reste en casse d'origine (`.kicker` met en majuscules : on le neutralise
+        # sur le numéro) pour qu'il n'existe qu'UN SEUL motif « EF-… » dans tout le PDF, égal à celui de l'écran.
+        f'<div class="kicker">LABUSE · Document n° '
+        f'<span style="text-transform:none">{esc(numero)}</span></div>'
+        f'<h1>Étude de faisabilité — {esc(t.get("commune") or e.get("commune") or "")} · '
+        f'parcelles {esc(_refs_parcelles(payload))}</h1>'
         f'<p class="idu">{_m2(t.get("contenance_totale_m2"))} · zone {esc(e.get("zone") or "")} · '
         f'{esc(_type_projet_label(e.get("type_projet")))} · stationnement {esc(_stationnement_label(retenu, e))}</p>'
         + _au_html
@@ -531,6 +535,15 @@ def _p3_regles(payload: dict, retenu: dict) -> str:
         chip = "s" if l.get("validee") else "d"
         rows.append(f'<tr><td class="k">{esc(l.get("nom") or "")}{_cite(l)}</td>'
                     f'<td>{vtxt}</td><td class="n"><span class="chip {chip}">{nat}</span></td></tr>')
+    # ETUDE-V6-8 (item 3) — la règle de STATIONNEMENT est RENSEIGNÉE dans le tableau des règles (pas
+    # seulement dans la section dédiée) : article + barème court du PLU, servis par le payload.
+    _g = (payload.get("stationnement_regimes") or {}).get("general") or {}
+    if _g.get("article") or _g.get("regle_courte") or _g.get("ratio_par_logement") is not None:
+        _sreg = _g.get("regle_courte") or (f"{_dec(_g.get('ratio_par_logement'))} place/logt"
+                                           if _g.get("ratio_par_logement") is not None else "barème par typologie")
+        _sart = f" · art. {esc(str(_g['article']))}" if _g.get("article") else ""
+        rows.append(f'<tr><td class="k">Stationnement{_sart}</td><td>{esc(_sreg)}</td>'
+                    f'<td class="n"><span class="chip s">Sourcé</span></td></tr>')
     # contraintes cartographiées (lignes absentes quand la contrainte ne touche pas le terrain)
     t = payload["terrain"]
     ct = t.get("contraintes") or {}
@@ -898,8 +911,9 @@ def rendu_etude(payload: dict, *, genere_le: str, scenario_ref: Optional[str] = 
         + _p6_distribution(payload, retenu)
         + _p7_capacite(payload, retenu)
         + _p8_hypotheses(payload, retenu, numero)
-        + _annexe_reglement(payload)
-        + _annexe(payload, retenu))
+        + _annexe_reglement(payload))
+    # ETUDE-V6-8 (item 1) — plus d'annexe « autre implantation possible » : le document ne porte QU'UNE
+    # implantation, celle du programme du client.
     html = page_html("Étude de faisabilité", cart, corps)
     return {"html": html, "numero": numero, "retenu_ref": retenu["ref"]}
 
