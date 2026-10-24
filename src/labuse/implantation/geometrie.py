@@ -507,18 +507,20 @@ def poser_sous_sol(scene: Scene, conv: Conventions, *, cible: int, niveaux: int 
 
 
 def _footprint_sous_sol(scene: Scene) -> Polygon:
-    """Empreinte où le sous-sol peut s'étendre : l'assiette (le sous-sol passe sous le bâti), moins le PPR
-    rouge (interdiction). Déterministe."""
-    assiette = scene.assiette_local
+    """ETUDE-V6-8 (item 4) — empreinte où le sous-sol peut s'étendre : la ZONE d'implantation (reculs déduits,
+    donc HORS marge plantée, qui est dans les reculs), moins le PPR rouge. Le sous-sol PEUT ainsi DÉBORDER du
+    bâtiment (la zone est plus grande que l'emprise bâtie), sans empiéter sur la marge plantée. La pleine terre
+    ≥ 30 % reste garantie par le contrôle « Perméabilité » (qui rend infaisable tout sous-sol qui la mange).
+    Déterministe."""
+    zone = scene.zone_local
     interdit = (scene.ppr_rouge_local if (scene.ppr_rouge_local is not None
                                           and not scene.ppr_rouge_local.is_empty) else None)
-    return _valide(assiette.difference(interdit)) if interdit is not None else assiette
+    return _valide(zone.difference(interdit)) if interdit is not None else zone
 
 
-def _pack_niveau(footprint: Polygon, conv: Conventions, n_cible: int):
-    """Pave UN niveau de parking : bandes « deux rangées + allée centrale » empilées en profondeur, places
-    des deux côtés, toutes CLIPPÉES à l'empreinte. Déterministe (parcours de grille ordonné). Renvoie
-    (places: list[Polygon], allees: list[Polygon]) jusqu'à `n_cible` places."""
+def _pack_dir(footprint: Polygon, conv: Conventions, n_cible: int):
+    """Pave UN niveau de parking dans UNE orientation : bandes « deux rangées + allée centrale » empilées
+    en profondeur (selon y), places des deux côtés, toutes CLIPPÉES à l'empreinte. Déterministe."""
     pw, pl, aw = conv.place_largeur_m, conv.place_longueur_m, conv.allee_largeur_m
     bande = 2 * pl + aw
     fx0, fy0, fx1, fy1 = footprint.bounds
@@ -548,6 +550,20 @@ def _pack_niveau(footprint: Polygon, conv: Conventions, n_cible: int):
             allees.append(allee)
         b += 1
     return places, allees
+
+
+def _pack_niveau(footprint: Polygon, conv: Conventions, n_cible: int):
+    """Pave UN niveau de parking en gardant la MEILLEURE des DEUX orientations de bandes (ETUDE-V6-8 item 4 :
+    le sous-sol DÉBORDE du bâtiment et occupe au mieux l'empreinte autorisée — bandes alignées sur le grand
+    côté quand c'est plus efficace). Déterministe. Renvoie (places, allees) jusqu'à `n_cible` places."""
+    a = _pack_dir(footprint, conv, n_cible)
+    # orientation à 90° : on tourne l'empreinte, on pave, puis on ramène places/allées dans le repère réel.
+    cx, cy = footprint.centroid.x, footprint.centroid.y
+    fr = rotate(footprint, 90, origin=(cx, cy))
+    pr, ar = _pack_dir(fr, conv, n_cible)
+    b = ([rotate(p, -90, origin=(cx, cy)) for p in pr],
+         [rotate(al, -90, origin=(cx, cy)) for al in ar])
+    return b if len(b[0]) > len(a[0]) else a
 
 
 def _capacite_niveau(footprint: Polygon, conv: Conventions) -> int:

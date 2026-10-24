@@ -349,6 +349,11 @@ def _tableau(terrain, cap) -> str:
         ("Places dessinées / imposées", f"{cap.places} / {cap.places_imposees if cap.places_imposees is not None else '—'}"),
         ("Logements", f"{cap.logements} · " + " · ".join(f"{t} ×{n}" for t, n in cap.par_type.items()) if cap.par_type else str(cap.logements)),
     ]
+    # ETUDE-V6-8 (item 4) — en sous-sol, l'emprise enterrée ET la RAMPE d'accès sont COMPTÉES dans le tableau
+    # des surfaces (la rampe n'est jamais 0 m² : il faut bien descendre au −1).
+    if getattr(cap, "stationnement_mode", "aerien") == "sous_sol":
+        lignes.insert(4, ("Emprise du sous-sol", m2_fr(getattr(cap, "emprise_sous_sol_m2", 0.0))))
+        lignes.insert(5, ("Rampe d’accès au sous-sol", m2_fr(getattr(cap, "rampe_m2", 0.0))))
     y = 326
     b = [_txt(COL_X, y, "SURFACES (mesurées sur le plan)", size=10, weight="700")]
     y += 16

@@ -375,8 +375,9 @@ def test_prorata_devie_pour_tenir_dans_les_places_explique(session_reelle):
     """ETUDE-V6-7 (suite) — quand le plan dévie du prorata EXACT pour tenir dans les places du −1 (le
     prorata exact exigerait plus de places que le sous-sol n'en offre), une PHRASE l'explique (types
     remplacés + nombre de places). Sinon (pas de déviation ou non liée aux places) : pas de phrase.
-    Témoin : 39 T1 + 5 T2 + 9 T3 + 20 T4 sous-sol 1 niveau — prorata exact de 26 = 14/2/3/7 (31 places)
-    > 30 places du −1 → 14/4/2/6 (30 places), avec la phrase."""
+    Test DYNAMIQUE : lit la capacité d'un niveau servie (qui a évolué en V6-8 : le sous-sol déborde du
+    bâtiment → plus de places/niveau) et vérifie la bonne branche (phrase SI et SEULEMENT SI la déviation
+    est due aux places). Témoin : 39 T1 + 5 T2 + 9 T3 + 20 T4 sous-sol 1 niveau."""
     import math
     from labuse.implantation.service import etudier_payload
     from labuse.implantation.geometrie import _repartir_prorata
