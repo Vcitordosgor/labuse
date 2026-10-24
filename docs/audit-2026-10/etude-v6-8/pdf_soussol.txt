@@ -126,10 +126,6 @@ mixité sociale                                        20 % · seuil 1 000 m²  
 PLU · art. UA 1.3 (1) · p. 17
 
 
-stationnement (barème)                                —                                                                                       Sourcé
-PLU · art. UA 2.7.3 · p. 22
-
-
 Stationnement · art. UA 2.7.3                         1 pl. T1–T2 · 1,5 pl. T3–T4 · 2 pl. T5+                                                 Sourcé
 
 
@@ -296,7 +292,7 @@ Stationnement en sous-sol — 1 niveau (39 places / niveau)
                                                                                                                                                                                                        Barre R+2 · stationnement sous-sol (niveau −1)
                                                                                                                                                                                                        PLU millésime en vigueur · LiDAR HD IGN · BD TOPO
                                                                                                                                                                                105
-                                                                                                                                                                                                       Généré le 24/10/2026 · EF-eb14911f
+                                                                                                                                                                                                       Généré le 25/10/2026 · EF-eb14911f
 
                                        540                                                                                                                                                             Esquisse indicative — pas une étude d’architecte
                                                             Sentier des Ananas
@@ -352,7 +348,7 @@ Total                                                           18              
                                                                                                                                                   Scénario retenu · R+2 · 3 niveaux × 3,00 m
                                                                                                                                                   TN LiDAR HD IGN · règles PLU servies
 
-                                        R+2                                                                                                       Généré le 24/10/2026 · EF-eb14911f
+                                        R+2                                                                                                       Généré le 25/10/2026 · EF-eb14911f
 
                                                                                                                                                   Esquisse indicative — pas une étude d’architecte
                                9,00 m

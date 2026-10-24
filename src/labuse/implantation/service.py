@@ -370,7 +370,13 @@ def _appliquer_programme_au_scenario(scenario, demande: dict, conv, regles) -> b
     scenario.capacite = newcap
     scenario.checks_geo = ctrl_mod.verifier_geometrie(scene, scenario.terrain, conv, newcap, regles)
     scenario.controles = ctrl_mod.controles_reglementaires(scene, scenario.terrain, conv, newcap, regles)
-    geo_ok = ctrl_mod.geometrie_valide(scenario.checks_geo)
+    # ETUDE-V6-8b (bug 1) — le STATUT est recalculé sur le plan rogné : « simulation impossible » ne vaut que
+    # si le plan est géométriquement INVALIDE (recouvrement ou surfaces ≠ assiette). Un bâtiment rogné garde
+    # un RDC pleine largeur → l'allée peut laisser un court tronçon mort (contrôle de propreté) : cela ne rend
+    # pas l'étude impossible. On ne force donc « impossible » que sur les contrôles d'INTÉGRITÉ.
+    _integrite = [c for c in scenario.checks_geo
+                  if any(k in c.nom for k in ("chevauchement", "somme des surfaces"))]
+    geo_ok = all(c.ok for c in _integrite) if _integrite else ctrl_mod.geometrie_valide(scenario.checks_geo)
     scenario.statut = (ctrl_mod.statut_etude(scenario.controles, geo_ok, scene=scene,
                                              terrain=scenario.terrain, regles=regles)
                        if geo_ok else "simulation impossible")

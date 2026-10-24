@@ -525,6 +525,10 @@ def _p3_regles(payload: dict, retenu: dict) -> str:
     r = payload["regles"]
     rows = []
     for l in r.get("lignes", []):
+        # ETUDE-V6-8b (bug 2) — on NE rend PAS la règle de stationnement « nue » (barème sans valeur unique →
+        # « — ») : une seule ligne de stationnement est rendue plus bas, avec son barème.
+        if "stationn" in (l.get("nom") or "").lower():
+            continue
         val = l.get("valeur")
         unite = l.get("unite") or ""
         vtxt = (f"{_grp(val)} {esc(str(unite))}" if isinstance(val, (int, float)) and not isinstance(val, bool)

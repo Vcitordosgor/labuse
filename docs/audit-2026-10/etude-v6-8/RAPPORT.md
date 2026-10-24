@@ -62,3 +62,52 @@ comptabilisation** (aucun recouvrement + somme des surfaces = assiette), ce que 
 | chasse_docs | **20 · 0 · 0** |
 | chasse_donnees (`--api :8830`) | **23 · 0 · 2** |
 | recette `scripts/etude_v6_8_recette.py` | **5 / 5 PASS** |
+
+---
+
+# ETUDE-V6-8b — deux bugs du PDF aérien 11/5/2/5
+
+Même branche, pas de merge. Les 2 PDF de recette sont régénérés.
+
+## Bug 1 — statut « Simulation impossible » alors que le projet tient
+Cause : les PDF de recette avaient été générés AVANT le recalcul des espaces libres du plan rogné ; sans lui,
+le contrôle « somme des surfaces = assiette » échouait → `geo_ok` faux → « simulation impossible ». Correctif :
+le statut n'est forcé « impossible » que si le plan est géométriquement INVALIDE (recouvrement / surfaces ≠
+assiette) — un tronçon d'allée mort (propreté) ne rend plus l'étude impossible. Test
+`test_item1b_statut_recalcule_pas_simulation_impossible`.
+
+## Bug 2 — double ligne de stationnement dans le tableau des règles
+Cause : une règle « stationnement (barème) » sans valeur (→ « — ») cohabitait avec la ligne barème ajoutée en
+V6-8. Correctif : la règle de stationnement « nue » n'est plus rendue ; une seule ligne de stationnement, avec
+son barème. Test `test_item2b_une_seule_ligne_stationnement_sans_tiret`.
+
+## Lignes brutes du PDF (pdftotext)
+
+### Aérien 11/5/2/5 — page 1 (statut)
+```
+   CONTRÔLES AUTOMATISÉS DE VOTRE PROJET                                        STATUT DE L'ÉTUDE
+   8 réussis · 0 échoués · 1 non effectués                                      Exploitable — à faire confirmer par un architecte
+ Votre projet                             barre                     23            R+2             27      Exploitable
+```
+### Aérien 11/5/2/5 — section 2 (tableau des règles, stationnement)
+```
+Stationnement · art. UA 2.7.3                         1 pl. T1–T2 · 1,5 pl. T3–T4 · 2 pl. T5+                                                 Sourcé
+```
+
+### Sous-sol 39/5/9/20 — page 1 (statut)
+```
+   CONTRÔLES AUTOMATISÉS DE VOTRE PROJET                                        STATUT DE L'ÉTUDE
+   9 réussis · 0 échoués · 1 non effectués                                      Exploitable — à faire confirmer par un architecte
+ Votre projet                          barre                       33             R+2             39      Exploitable
+```
+### Sous-sol 39/5/9/20 — section 2 (tableau des règles, stationnement)
+```
+Stationnement · art. UA 2.7.3                         1 pl. T1–T2 · 1,5 pl. T3–T4 · 2 pl. T5+                                                 Sourcé
+```
+
+(Aucune ligne de règle avec la valeur « — » ; une seule ligne « UA 2.7.3 » dans le tableau des règles.)
+
+## Gardes V6-8b
+tsc **0** · vitest **297/297** · pytest impl+etude_v6 **159 passed** (2 `test_route_*` pré-existants, env
+`labuse_test` vide) · chasse_docs **20·0·0** · chasse_donnees **23·0·2** · recette **5/5 PASS** + 7 tests PDF
+(dont `test_item1b_*` et `test_item2b_*`).

@@ -86,6 +86,38 @@ def test_item1_une_seule_implantation(session_reelle):
     assert "Logements" in txt
 
 
+def test_item1b_statut_recalcule_pas_simulation_impossible(session_reelle):
+    """Item 1b — le statut est recalculé sur le plan rogné : quand le plan tient la demande (tenus =
+    demandés) avec 0 contrôle échoué, le PDF ne dit JAMAIS « Simulation impossible »."""
+    from labuse.exports import etude_faisabilite as ef
+    pl = _payload(session_reelle, {"T1": 11, "T2": 5, "T3": 2, "T4": 5}, "aerien")
+    retenu = ef.scenario_retenu(pl)
+    tenus = sum((retenu["programme"].get("par_type") or {}).values())
+    demandes = sum(v for d in [{"T1": 11, "T2": 5, "T3": 2, "T4": 5}] for v in d.values())
+    echoues = retenu["controles_compte"]["echoue"]
+    assert tenus == demandes and echoues == 0                    # garde-fou du cas de recette
+    txt = _pdf_texte(pl)
+    assert "Simulation impossible" not in txt
+    assert re.search(r"[Ee]xploitable", txt)                     # statut positif attendu
+
+
+def test_item2b_une_seule_ligne_stationnement_sans_tiret(session_reelle):
+    """Item 2b — dans le tableau des règles (section 2) : AUCUNE ligne de règle avec la valeur « — », et UNE
+    SEULE ligne de stationnement portant son barème (article UA 2.7.3)."""
+    pl = _payload(session_reelle, {"T1": 11, "T2": 5, "T3": 2, "T4": 5}, "aerien")
+    txt = _pdf_texte(pl)
+    # le TABLEAU des règles (section 2) va de « 2. Règles » jusqu'à la section « Stationnement & mixité ».
+    apres_titre = txt.split("2. R", 1)[-1]
+    tableau = re.split(r"Stationnement\s*&\s*mixit", apres_titre)[0]
+    # une seule ligne de stationnement portant le barème (article UA 2.7.3) dans le tableau des règles.
+    assert tableau.count("UA 2.7.3") == 1, f"occurrences UA 2.7.3 dans le tableau = {tableau.count('UA 2.7.3')}"
+    # aucune ligne de règle avec la valeur « — » (plus de stationnement « nu »).
+    for ligne in tableau.splitlines():
+        cols = re.split(r"\s{2,}", ligne.strip())
+        if len(cols) >= 2 and cols[1].strip() == "—":
+            raise AssertionError(f"ligne de règle avec valeur « — » : {ligne!r}")
+
+
 def test_item2_un_seul_numero_de_document(session_reelle):
     """Item 2 — un seul n° de document partout (page 1, cartouche plan, cartouche coupe, pied de page,
     écran) : le PDF ne contient qu'UN motif EF-…, égal à celui de l'écran (study_id)."""
