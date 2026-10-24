@@ -1,0 +1,586 @@
+L A B U S E · D O C U M E N T N ° E F -7 2 c b 8 7 f 9
+
+
+Étude de faisabilité — L'Étang-Salé ·
+parcelles AW 99, 451, 624, 625
+1 746 m² · zone UA · résidence étudiante · stationnement aérien
+
+
+
+   Votre projet — résidence étudiante : 23 logements demandés (11 T1 · 5 T2 · 2 T3 ·
+   5 T4), stationnement aérien. Ils tiennent sur ce terrain en R+2 (27 places).
+   Maximum réglementaire du terrain : 32 logements.
+
+Ce qui limite : stationnement aérien.
+
+
+   CONTRÔLES AUTOMATISÉS DE VOTRE PROJET                                        STATUT DE L'ÉTUDE
+   8 réussis · 0 échoués · 1 non effectués                                      Simulation impossible — à faire confirmer par un
+                                                                                architecte
+
+
+                                          Forme             Logements         Niveaux         Places     Étude
+
+
+ Votre projet                             barre                     23            R+2             27      Simulation impossible
+
+
+ Maximum du terrain                       barre                     32            R+3             38      indépendant de la demande
+
+
+« Votre projet » = le programme que vous avez étudié ; « maximum du terrain » = le plus grand programme possible,
+indépendant de votre demande. Ce document n'affirme aucune conformité réglementaire.
+
+
+
+   1 746 m²                                              1 222 m²                                        12 m
+   Contenance cadastrale                                 Emprise au sol max                              Hauteur (hauteur à l'égout)
+
+
+
+
+   5                                                     27                                              1
+   Logements aidés imposés                               Places imposées                                 Contrôles non effectués
+
+
+
+   Pré-faisabilité automatisée : scénarios indicatifs d'implantation établis à partir des règles publiées du PLU et
+   des données publiques. Ce document n'est ni une étude d'architecte, ni une preuve de conformité, ni un
+   dossier de permis.
+
+
+
+
+Étude de faisabilité · AW 99, 451, 624, 625 · résidence étudiante · Généré via LABUSE le 24/10/2026 · pré-faisabilité, non contractuel   1 / 11
+     1. Le terrain
+
+     4 parcelle(s), 1 746 m² au cadastre.
+
+
+
+
+                                                                                                                                              N
+
+
+
+
+     Parcelles       Assiette        Limite classée voie
+
+Parcelle                                              Contenance                                                                     Nature
+
+451                                                   586 m²                                                                                  Sourcé
+
+
+624                                                   274 m²                                                                                  Sourcé
+
+
+625                                                   385 m²                                                                                  Sourcé
+
+
+99                                                    501 m²                                                                                  Sourcé
+
+
+Assiette fusionnée                                    1 746 m²
+
+
+Terrain                                               Valeur                                                                         Nature
+
+Pente moyenne                                         8%                                                                                 LiDAR HD
+
+
+Accès véhicule                                        visibilité à confirmer — à confirmer                                                ƒ Dérivé
+
+
+
+
+Étude de faisabilité · AW 99, 451, 624, 625 · résidence étudiante · Généré via LABUSE le 24/10/2026 · pré-faisabilité, non contractuel            2 / 11
+    2. Règles et contraintes
+
+    Zone UA du PLU. Chaque valeur est citée ; une règle non validée reste « non
+    effectuée », jamais tenue pour acquise.
+
+Règle                                                 Valeur                                                                         Nature
+
+recul sur voie                                        4m                                                                                      Sourcé
+PLU · art. UA 2.1 · p. 17
+
+
+recul sur limites séparatives                         3m                                                                                      Sourcé
+PLU · art. UA 2.2 · p. 17
+
+
+emprise au sol (CES)                                  70 %                                                                                    Sourcé
+PLU · art. UA 2.4 · p. 18
+
+
+hauteur à l'égout                                     12 m                                                                                    Sourcé
+PLU · art. UA 2.5.2 · p. 19
+
+
+hauteur au faîtage                                    15 m                                                                                    Sourcé
+PLU · art. UA 2.5.2 · p. 19
+
+
+pleine terre (perméabilité)                           30 %                                                                                    Sourcé
+PLU · art. UA 2.6 · p. 21
+
+
+mixité sociale                                        20 % · seuil 1 000 m²                                                                   Sourcé
+PLU · art. UA 1.3 (1) · p. 17
+
+
+stationnement (barème)                                —                                                                                       Sourcé
+PLU · art. UA 2.7.3 · p. 22
+
+
+Stationnement · art. UA 2.7.3                         1 pl. T1–T2 · 1,5 pl. T3–T4 · 2 pl. T5+                                                 Sourcé
+
+
+Aucune contrainte cartographiée ne touche le terrain.
+
+
+
+    Stationnement & mixité
+Le PLU de L'Étang-Salé (art. UA 2.7.3) exige 1 pl. T1–T2 · 1,5 pl. T3–T4 · 2 pl. T5+.
+
+La loi nationale (Code de l'urbanisme, art. L151-35) plafonne à 0,5 place/logt si le projet est éligible — à
+confirmer.
+
+LABUSE a dessiné 27 places en aérien (au sol) selon la règle du PLU.
+
+Mixité sociale (art. UA 1.3 (1)) : 20 % de logements aidés au-delà de 1 000 m² de SDP. Applicable : 5
+logements aidés imposés.
+
+
+
+    3. Enveloppe constructible
+
+    Zone d'implantation de 1 155 m² après reculs et contraintes. Ce plafond n'est pas
+    ce qu'on peut construire : c'est le scénario (plan masse) qui le dit.
+
+
+
+
+Étude de faisabilité · AW 99, 451, 624, 625 · résidence étudiante · Généré via LABUSE le 24/10/2026 · pré-faisabilité, non contractuel           3 / 11
+                                                                                                                                              N
+
+
+
+
+    Parcelles        Assiette        Zone d'implantation          PPR rouge (retirée)         PPR bleue (signalée)          Limite classée voie
+
+Surface                                               Valeur                                                                         Nature
+
+Terrain (contenance)                                  1 746 m²                                                                                Sourcé
+
+
+Zone d'implantation réglementaire                     1 155 m²                                                                            ƒ Dérivé
+
+
+Plafond d'emprise                                     ≤ 1222 m² (70 % de la contenance)                                                   ƒ Dérivé
+
+
+
+
+   4. Plan masse de votre projet
+
+   Barre en R+2 : 23 logements, 27 places aériennes.
+
+
+
+
+Étude de faisabilité · AW 99, 451, 624, 625 · résidence étudiante · Généré via LABUSE le 24/10/2026 · pré-faisabilité, non contractuel            4 / 11
+                                                                                                                                              N
+
+
+
+
+    Bâtiment proposé           Places        Allée         Espaces libres        Accès         Zone d'implantation
+
+Élément                                               Valeur                                                                         Nature
+
+Emprise des bâtiments                                 563 m²                                                                                  Estimé
+
+
+Places dessinées                                      27                                                                                      Estimé
+
+
+Espaces libres · dont pleine terre                    602 m²                                                                              ƒ Dérivé
+
+
+Accès                                                 visibilité à confirmer                                                              ƒ Dérivé
+
+
+Chaque nombre de ce tableau = nombre d'objets dans la géométrie (verrou de test). Plan rendu depuis la géométrie servie.
+
+
+
+
+Étude de faisabilité · AW 99, 451, 624, 625 · résidence étudiante · Généré via LABUSE le 24/10/2026 · pré-faisabilité, non contractuel            5 / 11
+                                                                                                                                                                                            101
+
+
+
+
+                                                                                                                                                                                                                          N         LÉGENDE
+
+                                                                                                                                                                                                                                         Limite des parcelles étudiées
+                                                                                                                                                                                                  452                         110
+                                                                                                                                                                                                                                         Zone d’implantation réglementaire
+                                                                   TN 40,0                                                                                                   TN 32,3
+                                                                                                                                                                                                                                         Bâtiment proposé
+                                                                                                                                                                             24
+                                                                                                                                                                                  , 49
+                                                                             636                                                                                                                                                         Place de stationnement 2,50 × 5,00
+                                                                                                                                                                                                                                         Allée, accès
+                                                                                                                                                                   1
+                                                                                                                                                                                                                                         Espaces libres, pleine terre
+                                                                                                                                                               2
+                                                                                                                                                                                                                                         Bâti voisin (BD TOPO)
+                                                                                                                                                         T1                                                                              PPR zone rouge (retirée)
+                                                          AW 625
+                                                                                                                                                                                                                                         PPR zone bleue (signalée)
+                                                                                                                                                    T4                           12
+                                                                                                                                                                             13
+                                                                                                                                                                            14
+                                                                                                                                              T2
+                                                                                                                                                                        15
+                                                                                                                                         T1                            16
+                                                                                                                                                                   17
+                                                                                                                                    T3
+                                                                                                                                                               18                                                   109
+                                                                                    ,18                                                                                                                                             SURFACES (mesurées sur le plan)
+                                                                                                                                                              19
+                                                                                   78                                          T1                                                                                                   Terrain (contenance)                                       1 746 m²
+                                                                                                                                                          20
+                                                                                                                                                                                                                                    Emprise bâtie                                         563 m² · 32 %
+                                                                                                                                                         21
+                                                                                                                          T4
+                                                                                                                                                                                                                                    SDP du scénario (R+2)                                      1 270 m²
+                                                                                                                                                    22
+                                                          AW 624                                                                                                                                                                    Stationnement + allée                                        517 m²
+                                                                                                                                                   23
+                                                                                                                                                                                                        104
+                                                          AW 451                                                                                                                                                                    Pleine terre                                                 602 m²
+                                                                                                                     T2                        24
+                                                                                                                                              25                                                                                    Places dessinées / imposées                                  27 / 27
+                                                                                                                T1                                                                    103                                           Logements                         23 · T1 ×11 · T4 ×5 · T2 ×5 · T3 ×2
+                                                                                                                                         26
+
+                                                                                                            3                        27
+
+                                                                                                        4
+                                                                                                    5
+                                                                                                6
+                                                                                            7
+                                                           AW 99                        8
+                                                                                    9
+
+373                                                                            10
+                                                                              11
+                                                                                                                                                                                                                                      LABUSE
+                                                                                                                                                                                                                                      Étude de faisabilité — plan masse
+                                                                                                                                                                                                                                      L'Étang-Salé · zone108
+                                                                                                                                                                                                                                                          UA
+                                                                   TN 39,1                                                                                                   TN 33,1                                                  Parcelles AW 99, 451, 624, 625
+                                                                                                                                                                                                                                      Barre R+2 · stationnement aérien
+                                                                                                                                                                                                                                      PLU millésime en vigueur · LiDAR HD IGN · BD TOPO
+                                                                                                                                                                                                              105
+                                                                                                                                                                                                                                      Généré le 24/10/2026 · EF-72cb87f9
+
+                                       540                                                                                                                                                                                            Esquisse indicative — pas une étude d’architecte
+                                                            Sentier des Ananas
+                   Échelle ≈ 1 : 250
+
+                   0              10         20 m
+                                                                        356
+
+                                                                                                                                          Avenue Raymond Barre
+
+      Planche — plan masse « façon architecte », dessinée depuis la géométrie du Allée de Montaignac
+                                                                                scénario   (contexte : cadastre et bâti voisins BD TOPO, voies nommées, TN LiDAR aux angles). Esquisse indicative — pas
+                                                                         355
+      une étude d'architecte.
+
+
+      Étude de faisabilité · AW 99, 451, 624, 625 · résidence étudiante · Généré via LABUSE le 24/10/2026 · pré-faisabilité, non contractuel                                                                                                                                                                6 / 11
+     5. Distribution et coupe
+
+     R+2 : la répartition des logements par niveau, chaque module dessiné = un
+     logement compté.
+
+Niveau                                                T1              T2               T3                  T4              SDP du scénario
+
+R+2                                                             3                  1               0                  1                                                                             266
+
+R+1                                                             4                 2                 1                2                                                                              502
+
+RDC                                                             4                 2                 1                2                                                                              502
+
+Total                                                          11                 5                2                 5                                                                             1 270
+
+
+
+
+             limite sur voie                                                           limite de fond
+                                                                                                                                               LÉGENDE
+
+                                                                                                                                                  Terrain naturel (LiDAR)
+                                                                                                                  hauteur au faîtage 15,00 m      Hauteur égout / faîtage (règle)
+                                                                                                                                                  Bâtiment en coupe
+                                                                                                                                                  Stationnement aérien
+
+                                                                                                                   hauteur à l’égout 12,00 m
+
+
+
+
+                                                                                                                                                LABUSE
+                                                                                                                                                Étude de faisabilité — coupe de principe
+                                                                                                                                                L'Étang-Salé · zone UA
+                                                                                                                                                Parcelles AW 99, 451, 624, 625
+                                                                                                                                                Scénario retenu · R+2 · 3 niveaux × 3,00 m
+                                                                                                                                                TN LiDAR HD IGN · règles PLU servies
+
+                                        R+2                                                                                                     Généré le 24/10/2026 · EF-72cb87f9
+
+                                                                                                                                                Esquisse indicative — pas une étude d’architecte
+                               9,00 m
+
+                                        R+1
+
+                                                                                                        39,3
+
+
+
+                                        RDC
+                                                      Terrain naturel (LiDAR)
+      35,4
+
+
+
+
+Coupe de principe : le volume bâti sous la règle de hauteur, le terrain naturel (LiDAR), le stationnement aérien au sol. Esquisse
+indicative, pas une étude d'architecte.
+
+
+
+     6. Capacité et contrôles
+
+     Votre projet : 8 contrôles réussis, 0 échoués, 1 non effectués. Ce n'est pas une
+     validation réglementaire.
+
+Programme                                             Nombre                    Surface moy.                                 SHAB estimée                                              Nature
+
+T1                                                                     11                                       30 m²                                           264 m²                             Estimé
+
+
+T2                                                                      5                                       56 m²                                           224 m²                             Estimé
+
+
+T3                                                                      2                                       70 m²                                             112 m²                           Estimé
+
+
+T4                                                                      5                                      80 m²                                            320 m²                             Estimé
+
+
+
+
+Étude de faisabilité · AW 99, 451, 624, 625 · résidence étudiante · Généré via LABUSE le 24/10/2026 · pré-faisabilité, non contractuel                                                               7 / 11
+Dont logements aidés                                             5                  quota PLU appliqué au programme                        Sourcé
+
+
+Surface tenue (programme dessiné)                              23                                                       1 150 m²           Estimé
+
+
+Programme saisi par le client (ses lignes T1–T4).
+
+Contrôle                                               Règle                                Scénario                                 Résultat
+
+Emprise au sol                                         ≤ 1222 m² (70 % de la                563 m²                                          Réussi
+PLU art. UA 2.4 · p. 18 — « Le pourcentage             contenance)
+maximal de l'emprise au sol cumulée de
+l'ensemble des constructions est fixé à 70%. »
+
+
+Hauteur                                                ≤ 12 m à l'égout                     R+2 ≈ 9 m                                       Réussi
+PLU art. UA 2.5.2 · p. 19 — « La hauteur maximale
+des constructions est limitée à: - 12,00m à
+l'égout du toit - 15,00 m au faîtage - 13,00m à
+l'acrotère en cas de toiture-terrasse. »
+
+
+Hauteur sur terrain en pente                           ≤ 12 m à l'égout —                   R+2 en 3 gradins (relief 3.6                    Réussi
+La hauteur maximale des constructions est              bâtiment EN GRADINS                  m mesuré, RGE ALTI 5 m
+limitée à: - 12,00m à l'égout du toit - 15,00 m au
+                                                                                            (IGN))
+faîtage - 13,00m à l'acrotère en cas de toiture-
+terrasse.
+
+
+Prospect (hauteur relative)                            pas de règle de prospect             —                                                   Non
+                                                                                                                                         applicable
+
+Reculs                                                 voie 4 m · séparatives 3 m           bâti dans la zone                               Réussi
+PLU art. UA 2.1 · p. 17 — « Les constructions                                               d'implantation
+doivent s'implanter en retrait de l'alignement,
+avec un recul minimum de 4,00 m par rapport à
+l'alignement. » ; PLU art. UA 2.2 · p. 17 — « Si une
+construction est implantée en retrait des limites
+séparatives d'une unité foncière, la marge
+d'isolement minimale doit être de 3,00m. »
+
+
+Perméabilité (pleine terre)                            ≥ 524 m² (30 % de la                 602 m²                                          Réussi
+PLU art. UA 2.6 · p. 21 — « Au moins 30% de la         contenance)
+surface de la parcelle doit être perméable. »
+
+
+Espaces verts                                          ≥ 349 m² (20 % · hors                602 m²                                          Réussi
+PLU art. UA 2.6 · p. 21 — « Les espaces verts          stationnement)
+(engazonnés) représentent au moins 20 % de la
+superficie du terrain, hors aires de
+stationnement ; 1 arbre pour 50 m² d'espaces
+verts. »
+
+
+Marge plantée                                          bande 2.0 m sur 75 % du              reculs ≥ 3 m                                    Réussi
+PLU art. UA 2.6 · p. 21 — « Une marge plantée de       linéaire hors mitoyenneté
+2,00 m est aménagée sur au moins 75 % du
+linéaire des limites de l'unité foncière, hors
+limites mitoyennes. »
+
+
+Stationnement                                          ≥ 27 places (barème                  27 places dessinées                             Réussi
+PLU art. UA 2.7.3 · p. 22 — « Logement individuel      validé)
+Par logement 2 / Logement collectif 1 et 2
+pièces 1 / 3 et 4 pièces 1,5 / 5 pièces et plus 2 »
+
+
+Distance entre constructions                           sans objet (un seul                  un seul bâtiment                                    Non
+                                                       bâtiment)                                                                         applicable
+
+
+
+
+Étude de faisabilité · AW 99, 451, 624, 625 · résidence étudiante · Généré via LABUSE le 24/10/2026 · pré-faisabilité, non contractuel          8 / 11
+Locaux vélos · déchets                                non modélisés                         —                                            Non effectué
+
+PPR zone rouge (interdiction)                         absente du terrain                    —                                                    Non
+                                                                                                                                           applicable
+
+PPR zone bleue (prescription)                         absente du terrain                    —                                                    Non
+                                                                                                                                           applicable
+
+ER / EBC / SUP / servitudes                           absentes du terrain                   —                                                    Non
+                                                                                                                                           applicable
+
+
+Un contrôle « Échoué » retire le scénario des « Exploitable ». « Non effectué » ne vaut jamais « Réussi ».
+
+
+
+   7. Hypothèses, limites, sources
+
+   Ce que l'étude suppose, ce qu'elle ne sait pas, d'où viennent les chiffres.
+
+
+Hypothèses (toutes « Estimé », modifiables dans l'outil)
+
+Hypothèse                                             Valeur                        Convention
+
+Profondeur de bâtiment                                13 m                          logements traversants, coursive extérieure
+
+Surface moyenne par type                              30 / 56 / 70 / 80 m²          modifiable
+
+Plancher → habitable                                  0,8                           circulations et noyaux hors habitable
+
+Place · allée                                         2,5 × 5 m · allée 5 m         dimensions usuelles
+
+Hauteur de niveau                                     3m                            convention
+
+Stationnement                                         aérien                        places au sol
+
+
+À faire confirmer par l'architecte
+
+Point                                                 Pourquoi
+
+Distance entre constructions · locaux règles non modélisées
+vélos et déchets
+
+Prescriptions PPR bleue · servitudes                  signalées, non interprétées
+signalées
+
+Accès véhicule                                        limite classée voie ; visibilité et autorisation non vérifiées
+
+Sol, réseaux, arbres, vues, voisinage                 aucune donnée publique fiable à la parcelle
+
+Conception (plans, façades)                           métier de l'architecte
+
+
+Sources
+
+Source                                                Nature
+
+PLU — zone UA                                         règlement, zonage, prescriptions publiés
+
+
+
+
+Étude de faisabilité · AW 99, 451, 624, 625 · résidence étudiante · Généré via LABUSE le 24/10/2026 · pré-faisabilité, non contractuel          9 / 11
+Cadastre DGFiP · PPR, servitudes (GPU, données publiques
+Géorisques)
+
+LiDAR HD IGN · BD TOPO                                terrain naturel, limites
+
+Moteur d'implantation LABUSE                          hypothèses « Estimé », modifiables dans l'outil
+
+Entrées, configuration, version du moteur et des règles archivées avec le document n° EF-72cb87f9 : le scénario se rejoue à
+l'identique.
+
+
+
+
+Étude de faisabilité · AW 99, 451, 624, 625 · résidence étudiante · Généré via LABUSE le 24/10/2026 · pré-faisabilité, non contractuel   10 / 11
+   Annexe — extraits du règlement
+
+   PLU de L'Étang-Salé · zone UA · millésime 2025-09-17. Chaque règle appliquée
+   est citée mot pour mot.
+
+  recul sur voie — art. UA 2.1 · p. 17 · millésime 2025-09-17
+  « Les constructions doivent s'implanter en retrait de l'alignement, avec un recul minimum de 4,00 m par rapport à
+  l'alignement. »
+
+  recul sur limites séparatives — art. UA 2.2 · p. 17 · millésime 2025-09-17
+  « Si une construction est implantée en retrait des limites séparatives d'une unité foncière, la marge d'isolement minimale
+  doit être de 3,00m. »
+
+  emprise au sol (CES) — art. UA 2.4 · p. 18 · millésime 2025-09-17
+  « Le pourcentage maximal de l'emprise au sol cumulée de l'ensemble des constructions est fixé à 70%. »
+
+  hauteur à l'égout — art. UA 2.5.2 · p. 19 · millésime 2025-09-17
+  « La hauteur maximale des constructions est limitée à: - 12,00m à l'égout du toit - 15,00 m au faîtage - 13,00m à
+  l'acrotère en cas de toiture-terrasse. »
+
+  hauteur au faîtage — art. UA 2.5.2 · p. 19 · millésime 2025-09-17
+  « La hauteur maximale des constructions est limitée à: - 12,00m à l'égout du toit - 15,00 m au faîtage - 13,00m à
+  l'acrotère en cas de toiture-terrasse. »
+
+  pleine terre (perméabilité) — art. UA 2.6 · p. 21 · millésime 2025-09-17
+  « Au moins 30% de la surface de la parcelle doit être perméable. »
+
+  mixité sociale — art. UA 1.3 (1) · p. 17 · millésime 2025-09-17
+  « « Tout projet visant à créer plus de 1 000 m² de surface de plancher destinée à l'habitation doit prévoir d'affecter au
+  logement aidé au moins 20% de la surface de plancher d'habitation prévue dans l'opération. » »
+
+  stationnement (barème) — art. UA 2.7.3 · p. 22 · millésime 2025-09-17
+  « Logement individuel Par logement 2 / Logement collectif 1 et 2 pièces 1 / 3 et 4 pièces 1,5 / 5 pièces et plus 2 »
+
+Document PLU officiel : https://www.geoportail-urbanisme.gouv.fr/document/97404_PLU_20250917
+
+
+
+
+Étude de faisabilité · AW 99, 451, 624, 625 · résidence étudiante · Généré via LABUSE le 24/10/2026 · pré-faisabilité, non contractuel   11 / 11
+
