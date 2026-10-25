@@ -19,7 +19,10 @@ const RAISON: Record<string, string> = {
   non_ingere: 'non ingéré',
 }
 
-export function PluAnnuaire() {
+// RECETTE-OUTILS-1 (T3 / point 1) — `onHub` ramène à la page des 2 voies (« Choix PLU »). Le retour
+// interne devient UN SEUL « Retour » hiérarchique : dans une commune → les 24 communes ; sur la liste
+// → le choix du chemin (onHub). Les anciens « ← Choix PLU » (wrapper Plu) + « ← Les 24 communes » fusionnent.
+export function PluAnnuaire({ onHub }: { onHub?: () => void } = {}) {
   const [q, setQ] = useState('')
   const [insee, setInsee] = useState('')                     // '' = les 24 communes ; sinon une commune
   const [zone, setZone] = useState('')                       // filtre zone (lien contextuel fiche → recherche)
@@ -51,12 +54,12 @@ export function PluAnnuaire() {
 
   return (
     <div data-plu-annuaire className="flex min-h-0 flex-1 flex-col gap-2 overflow-x-hidden overflow-y-auto">
+      {/* RECETTE-OUTILS-1 (point 1 / T3) — UN SEUL « Retour » hiérarchique, en tête : dans une commune
+          il revient aux 24 communes ; sur la liste il revient au choix du chemin (hub). */}
+      <Retour label="Retour" onClick={() => { if (insee) communesVue(); else onHub?.() }} />
       {/* ── ÉTAPE 1 — les 24 communes ─────────────────────────────────────────────── */}
       {!insee && (
         <>
-          <p className="px-0.5 text-[11.5px] leading-snug text-txt-mut">
-            Cliquez sur la commune dont vous voulez consulter le PLU.
-          </p>
           {/* CHASSE-APP-FIX-1 (pt 3) — squelette IMMÉDIAT pendant le chargement des 24 communes :
               avant, la liste était rendue sous `{communes.data && …}` seulement → zone BLANCHE tant que
               la réponse n'arrivait pas (constat chasse : PLU 37 s au 1er chargement, rien à l'écran). */}
@@ -117,11 +120,11 @@ export function PluAnnuaire() {
         </>
       )}
 
-      {/* fil de retour — dans une commune */}
+      {/* fil « dans une commune » — le Retour unique est en tête du panneau (point 1) ; ici ne reste
+          que le nom de la commune + le millésime/état. */}
       {insee && (
         <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-txt-mut">
-          <Retour data-plu-retour label="Les 24 communes" onClick={communesVue} />
-          <span>·</span><b className="text-txt">{nomInsee(insee) ?? insee}</b>
+          <b className="text-txt">{nomInsee(insee) ?? insee}</b>
           {servable
             ? <span className="font-mono text-[9px] text-mint/70">PLU du {cur?.millesime}</span>
             : <span className="font-mono text-[9px] text-cp-amber">{RAISON[cur?.statut ?? ''] ?? ''}</span>}
@@ -180,7 +183,7 @@ export function PluAnnuaire() {
                   commune longs. Reste l'exemple seul, qui tient toujours. */}
               <input data-plu-q value={q} onChange={(e) => setQ(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') run() }}
-                placeholder="ex. hauteur de clôture"
+                placeholder="ex. hauteur clôture / Ua"
                 className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none" />
               <Bouton niveau="secondaire" ton="vert" onClick={run} disabled={q.trim().length < 2 || m.isPending}
                 className="shrink-0 whitespace-nowrap">
