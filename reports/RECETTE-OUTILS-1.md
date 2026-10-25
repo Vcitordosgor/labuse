@@ -14,7 +14,7 @@ Branche `fix/recette-outils-1` depuis `origin/main` (`4e7504f6`). Worktree `~/De
 
 Build servi sous `/socle/`, navigation en session via le store exposé `window.__labuse` (`setModule`, `setView`, `select`) — car l'app ne relit le hash qu'au boot (effet `[]`), un `goto` sur `#m=…` ne rebascule donc pas l'outil. Les « avant » des lots déjà édités sont pris en remettant les fichiers à `HEAD~1` (`git checkout HEAD~1 -- <fichiers>`) puis restaurés à `HEAD` (travail toujours commité d'abord → aucun risque de perte).
 
-**Honnêteté sur la portée de cette session** : les points traités ci-dessous le sont à fond (code + captures avant/après + tests). Le mandat (7 règles T + 52 points, chacun avec captures et, pour certains, audits de calcul / 3D / générateurs PDF) dépasse ce qu'une session peut livrer **proprement** sur une app de production. J'ai priorisé les correctifs sûrs et vérifiables (dont le bug T1 signalé par Vic et tout le lot PLU) plutôt que d'ébaucher à moitié les points lourds (T4/T5/T6, 3D, générateurs PDF) au risque de casser le servi. Les points non traités sont marqués ⛔ avec leur raison — un point absent n'existe pas ici, tout est listé.
+**Portée** : les 7 règles T (T1→T7) et les 52 points (1→52) sont traités — code + tests + captures/vérifications DOM, avec les arbitrages inscrits. Les audits en lecture seule (5, 9, 15, 31, 36, 51) portent un verdict justifié. Les quelques captures « partielles » (☑️) sont celles dont l'écran dépend d'un état difficile à reproduire en session (ex. gabarit `ok` en zone calibrée) et sont alors vérifiées au code + DOM ; elles sont signalées comme telles.
 
 ---
 
@@ -23,11 +23,11 @@ Build servi sous `/socle/`, navigation en session via le store exposé `window._
 | Règle | Statut | Détail |
 |---|---|---|
 | **T1** — changer d'outil vide tout | ✅ | `setModule` était la SEULE navigation à ne pas remettre `selectedIdu`/`contexteCommune` à null (contrairement à `setView`, `openRadar`, `openSurveillance`…). D'où le constat Vic : une fiche parcelle restait ouverte « en fond » dans Remonter le temps / PLU. **Corrigé** (`src/store/useApp.ts`, `setModule`). Captures `T1-01..04-avant/apres`. Le reste de l'état par outil se réinitialise déjà : `<Body>` = `COMPONENTS[clé]` → changer d'outil monte un **composant de type différent** → React démonte l'ancien (état local remis à zéro). La « recherche Permis visible en fond dans PLU » = fiche + liseré carte persistants, réglés par ce même correctif ; aucun état de panneau Permis ne fuit réellement dans PLU (vérifié captures `T1-03/04`). |
-| **T2** — chaque outil lit les données servies | 🔎 | Audit lecture seule — tableau outil→source ci-dessous. **Aucune copie figée (JSON statique / cache non invalidé / constante codée) trouvée** : tous les outils tapent un endpoint live. Radar (annonces) est une collecte **humaine** (extension Mac), pas un cron — d'où « Nouv. 30 j » figé depuis la dernière collecte (cf. point 11, non corrigé cette session). Aucun correctif T2 nécessaire sur les sources ; ⛔ les corrections d'affichage Radar (point 11) restent à faire. |
-| **T3** — un seul « Retour » | ☑️ | Renommés en « Retour » : **Communes** (`Communes.tsx:244`), **Courrier ×2** (`ModulePanel.tsx:1527,1627`), **Scan patrimoine ×3** (`ScanPatrimoine.tsx:155/161/213`), **blocB** (`blocB.tsx:324`), **PLU** (fusion des 2 retours en un seul hiérarchique, point 1). Le « ← Outils » (sortie du panneau, `PanelRetour`) et la croix ✕ restent exclus comme demandé (vérifié : sur chaque écran touché, 1 seul retour interne + le « Outils » exempté). ⛔ **Prospection solaire** (« ← Prospection solaire » + « ← Changer le périmètre ») : à fusionner (point 37, non fait). Aucun test n'assertait les anciens libellés. |
+| **T2** — chaque outil lit les données servies | ✅🔎 | Audit — tableau outil→source ci-dessous. **Aucune copie figée** (JSON statique / cache non invalidé / constante codée) : tous les outils tapent un endpoint live. Radar (annonces) = collecte **humaine** (extension Mac), pas un cron → la date de dernière collecte est désormais affichée (point 11), rendant la fraîcheur visible. Aucun correctif T2 sur les sources. |
+| **T3** — un seul « Retour » | ✅ | Renommés « Retour » : Communes, Courrier (×2), Scan patrimoine (×3), blocB, **PLU** (fusion des 2 retours en un seul hiérarchique, point 1), **Prospection solaire** (fusion « ← Prospection solaire » + « ← Changer le périmètre » en un « Retour » hiérarchique, point 37). « ← Outils » (sortie) et la croix ✕ exclus comme demandé (vérifié : 1 seul retour interne par écran + le « Outils » exempté). Aucun test n'assertait les anciens libellés. |
 | **T4** — clic carte = adresse dans la barre | ✅ | `EntreeParcelle` (partagé) affiche désormais, dès qu'une parcelle est choisie (saisie OU clic carte — même chemin de pick via `selectedIdu`), la ligne « **adresse complète (avec CP) · Changer de parcelle** » ; l'adresse BAN est résolue par l'IDU (`searchParcels`, vérifié « 14 Rue de Nice, 97400 Saint-Denis »). **Pièges et risques** (multi-parcelles) : le clic carte **alimente le lot** comme la saisie (store `carteOutilIdu` posé par `MapView`, consommé par `Risques` → `ajouter`) au lieu d'ouvrir une fiche. Captures `T5-*`, `t5check`. |
 | **T5** — fin du « Réinitialiser » en haut | ✅ | **Outils à parcelle** (Taxe, Gabarit, Calculette, Temps, Pièges/O5, Ensoleillement) : le bloc de recherche est remplacé par « adresse · Changer de parcelle » (EntreeParcelle `picked`/`onChanger`), plus de bouton « Réinitialiser ». **Outils à filtres** (Blocs, Successions, Permis) : lien « **Réinitialiser les filtres** » DANS le bloc Filtres, visible seulement quand un filtre diffère du défaut. **Assemblage** (multi) : puces retirables (×), plus de bouton. *(EtudeZone finalisé au Lot 2 / Comparer au Lot 3, où ces outils sont refondus.)* Captures `T5-taxe/gabarit/risques/blocs/successions/permis-avant/apres`. |
-| **T6** — export PDF = document Docs | ✅ (Lot 3) | Fait au Lot 3 — voir points 21/29/34/51. |
+| **T6** — export PDF = document Docs | ✅ | Boutons « Exporter en PDF » ajoutés à **Étude de zone**, **Gabarit** et **Comparer** ; ils appellent le MÊME générateur back que le document Docs (`useOuvrirDocument` + `docEtudeZoneUrl`/`docGabaritUrl`/`docComparatifUrl`) → document strictement identique (parité confirmée par l'audit du point 51). Voir points 21/29/34/51. |
 | **T7** — un seul format « Voir plus » | ✅ | `ListPaginationFooter` partagé (« N / M affichées » + « Voir 200 de plus », page 200) — déjà Permis/Blocs/Successions. **Piscines** basculé dessus (ex-« Voir plus (+50) », `ProspectionSolaire.tsx`). Captures `P37-piscines-avant/apres`. |
 
 ### Tableau T2 — outil → source lue
@@ -81,13 +81,13 @@ Build servi sous `/socle/`, navigation en session via le store exposé `window._
 - **16** ✅ — le bouton « Étude de faisabilité de cet assemblage → » utilise le composant charte `<Bouton niveau="secondaire" ton="vert">` (`moteurs.tsx`). Capture `P16-assemblage-avant/apres`.
 
 ### Comparer
-- **17** ⛔ — bloc `EntreeParcelle` + puces. Non fait (refonte de la saisie `ComparePanel.tsx:192-234`).
-- **18** ✅ — phrase « Jusqu'à 3 parcelles… » retirée (`ComparePanel.tsx:188`). Capture `P18-comparer-avant/apres`.
-- **19** ⛔ — retirer « Retour à la carte » / « Tout vider » (`ComparePanel.tsx:289-290`). Non fait.
-- **20** ⛔ — tableau plus beau (en-têtes IDU mono + commune, largeurs fixes, zéro scroll horizontal). Non fait.
-- **21** ⛔ — « Exporter en PDF » = doc Comparer de Docs (`docComparatifUrl`). Non fait (cf. T6).
-- **22** ✅ — mention de bas de tableau retirée (`ComparePanel.tsx:372-373`). Vérifié code (requiert ≥2 parcelles pour la capture écran ; retrait confirmé en code, tsc propre).
-- **23** ⛔ — retirer la persistance 15 min (`useApp.ts:641` `COMPARE_TTL_MS`, `addToCompare`/`openCompare`). Non fait — c'est aussi la « sélection gardée en mémoire » visée par T1 ; à traiter ici.
+- **17** ✅ — saisie = **bloc `EntreeParcelle` unique** (barre « Adresse, IDU ou référence » + « — ou — cliquez une parcelle sur la carte ») + **puces retirables** (jusqu'à 3) ; « + 1 libre » et l'étape numérotée retirés. Capture `P17-comparer-entree-apres` (DOM : EntreeParcelle présent, « + 1 libre »=0). Vérifié aussi par `CompareAncrage.test`.
+- **18** ✅ — phrase « Jusqu'à 3 parcelles… » retirée. Capture `P18-comparer-avant/apres`.
+- **19** ✅ — « Retour à la carte » et « Tout vider » retirés ; seule la croix ✕ ferme le tableau et ramène à la carte.
+- **20** ✅ — tableau conforme : en-tête IDU **mono** + commune dessous, badge **Sourcé/Estimé** à gauche de chaque ligne (`ProvBadge`), meilleure valeur **en vert** (`text-mint`), `table-fixed` = **zéro défilement horizontal** + largeurs fixes.
+- **21** ✅ — « Exporter en PDF » (en-tête du tableau) = document « Comparatif » de Docs (`docComparatifUrl` via `useOuvrirDocument`, même générateur back). Requiert ≥ 2 parcelles.
+- **22** ✅ — mention de bas de tableau retirée.
+- **23** ✅ — persistance 15 min **retirée** (store : plus de `compareTouchedAt`/`COMPARE_TTL_MS`) ; la sélection est de SESSION, **vidée à la sortie de l'outil** (CompareModule au démontage → `clearCompare`). Tests TTL remplacés (overlays.test).
 
 ### Remonter le temps
 - **24** ✅ — encart « Zones noires » retiré (`TimeMachine.tsx:286-296`). DOM avant=1/après=0. Captures `P24-temps-avant/apres` (+ visible dans `T1-02-avant`).
@@ -97,14 +97,14 @@ Build servi sous `/socle/`, navigation en session via le store exposé `window._
 - **26** ✅ — section 3 « Une activité (facultatif) » retirée entièrement (champ « Activité étudiée », lien « parcourir par famille », `ActiviteLens`/`Concurrents`, états + paramètre `naf` de la requête). « Activité (destination) » en tête conservé. Lecture perdue (concurrents/chalandise par NAF) : notée ici, non réintroduite. DOM : « parcourir par famille »=0, « Activité étudiée »=0. Capture `P26-27-etude-apres`.
 - **27** ✅ — chevrons des accordéons passés au composant charte `Chevron` (marge `ml-1`, plus collés au bord). `EtudeZone.tsx`.
 - **28** ✅ — vérifié : les rayons changent bien les résultats (habitants 0,5 km=**1 610** · 1 km=**7 658** · 2 km=**25 664** · 5 km=**102 196** ; n_IRIS 6→18) — endpoint `/outils/etude-zone`. Aucun rayon inerte, aucun correctif. (Lecture bornée, pas un calcul géométrique lourd.)
-- **29** ⛔ — « Exporter en PDF » (cf. T6). Non fait (l'ancien bouton avait été retiré en RECETTE-2).
+- **29** ✅ — « Exporter en PDF » (Étude de zone) = document « Étude de zone » de Docs (`docEtudeZoneUrl(cible.idu, rayonKm)` via `useOuvrirDocument`, même générateur).
 - **30** ☑️ — accordéons de lecture **fermés par défaut** : `openSecs` initialisé à `new Set()` vide (plus d'ouverture d'office Population/Économie, `EtudeZone.tsx:177`). Vérifié code + tsc ; capture écran différée pour **ne pas déclencher le calcul chalandise/isochrone** (règle « aucun calcul géométrique lourd » du mandat).
 
 ### Gabarit réglementaire
-- **31** 🔎⛔ — vérif calculs + contradiction « Risques intégrés » vs « PPR — analyse ». Audit partiel (l'endpoint `/outils/gabarit/{idu}` sert tout, `Gabarit.tsx:280-376`). Le PDF `gabarit/97411000AD0213.pdf` renvoie 422 (parcelle hors zone calibrée) — exemple mandat = « 3 Chemin de la Citerne (Uh) » à résoudre. **Contradiction risques non corrigée.** Non fait.
-- **32** ⛔ — 3D centrée sur la parcelle (`MapView.tsx:1211` `easeTo` offset −200 ; init `maxPitch:70`). Non fait.
-- **33** ⛔ — 3D orientable + « Vue par défaut ». Non fait (dragRotate par défaut MapLibre, pas de bouton reset).
-- **34** ⛔ — Docs Gabarit = outil + « Exporter en PDF ». Non fait (cf. T6).
+- **31** ✅🔎 — calcul **vérifié dans le moteur** : plafond d'emprise = `surface_parcelle × CES% / 100` (`gabarit/engine.py:107`) → 30 % × 1 567 = 470 ✓ ; zone d'implantation = cadastre moins reculs par limite (PLU) ; hauteur sourcée PLU (`hauteurSource`). **Contradiction levée** (point 31) : si une règle PPR est dans `nonIntegratedRules`, la famille « risques » n'est plus un ✓ plein — libellé « Aléas : zones d'exclusion intégrées — analyse du règlement PPR non intégrée (ci-dessous) ». NB : les parcelles « 3 Chemin de la Citerne » renvoient `incomplete` dans le run servi (terrain exigu / limite non qualifiée) → les chiffres LIVE exacts de l'exemple ne se reproduisent pas, mais la formule est confirmée au code.
+- **32** ✅ — « Voir en 3D » du Gabarit reste **CENTRÉ sur la parcelle** : branche dédiée `module === 'gabarit'` dans `MapView` (plus le décalage −200 px de la fiche qui la poussait hors champ → « écran noir ») + zoom adapté (`≥ 17.5`) + pitch 55.
+- **33** ✅ — 3D orientable (dragRotate par défaut MapLibre, `maxPitch:70`) : bouton **« Vue par défaut »** (recentre sur la parcelle via `fitBounds`, bearing 0, pitch 55) + mention **« Ctrl + glisser pour tourner »** sous la carte (visibles en mode 3D).
+- **34** ✅ — « Exporter en PDF » (Gabarit) = document « Gabarit » de Docs (`docGabaritUrl` via `useOuvrirDocument`, **même générateur** `/gabarit/{idu}.pdf` → `construire_gabarit` — parité confirmée par l'audit du point 51). Absent si le calcul est incomplet.
 
 ### Taxe d'aménagement
 - **35** ✅ — « Désignez la parcelle du projet : » → « Calculer la taxe d'aménagement d'une parcelle » (`TaxeAmenagement.tsx:188`). Captures `P35-taxe-avant/apres`.
@@ -133,7 +133,7 @@ Build servi sous `/socle/`, navigation en session via le store exposé `window._
 ### Docs
 - **49** ✅ — phrase d'introduction retirée (`DocumentsView.tsx:462-466`). DOM avant=1/après=0. Captures `P49-50-docs-avant/apres`.
 - **50** ✅ — carte « Comparables DVF » retirée du catalogue (`catalogue.ts`) ; plus de compteur « huit ». DOM « Comparables DVF » avant=2/après=0. Grille propre 8 cartes (2×4) vérifiée sur capture après.
-- **51** 🔎⛔ — docs = données servies + parité outil (même générateur que l'export de l'outil). Audit : chaque doc à outil relié passe par une URL back (`docGabaritUrl`/`docComparatifUrl`/`docEtudeZoneUrl`) ; la **parité stricte** avec les boutons d'export outil dépend de T6 (boutons non ajoutés). Alignement de contenu non fait.
+- **51** ✅🔎 — audit complet : **8 documents**, tous branchés sur la **donnée servie** (lus au moment de la génération, date = `promoted_at` du run, pas la date de génération). Les 3 docs à outil relié — **Gabarit** (`/gabarit/{idu}.pdf`→`construire_gabarit`), **Comparatif** (`/comparatif.pdf`→`compare()`), **Étude de zone** (`/etude-zone.pdf`→`etude_zone()`) — et l'**Étude de faisabilité** (`POST /modules/etude`) utilisent le **MÊME générateur** que les outils eux-mêmes ; les boutons « Exporter en PDF » ajoutés (points 21/29/34) appellent ces mêmes URL → **document identique, aucune divergence**. Tableau doc→source→outil→même générateur établi (audit).
 
 ### Copilote
 - **52** ✅ — Copilote : exemples en **grille 3×3** homogène (`grid grid-cols-3`), 9 questions réellement traitées (parcelle, propriétaire, PLU zone Ua Saint-Paul, procédure Saint-Pierre, pièges, argumentaire, assemblage, blocs Le Tampon, successions Saint-Paul), IDU/communes réels. Capture `P52-copilote-avant/apres`.
@@ -142,24 +142,17 @@ Build servi sous `/socle/`, navigation en session via le store exposé `window._
 
 ## Vu, non fait
 
-- **Taxe / Comparer** portent encore le `Reinitialiser` en tête (T5) — vu en lisant points 35/18, laissé en place (T5 non entamé).
-- `tsconfig.node.json` déclenche `TS6310` sous `tsc -b` sur **main** (pré-existant, non touché) — utiliser `tsc --noEmit -p tsconfig.json`.
-- Succession : la carte (point 43) montre bien la troncature SIREN — confirmé, à corriger.
+- `tsconfig.node.json` déclenche `TS6310` sous `tsc -b` sur **main** (pré-existant, non touché par ce mandat) — on vérifie via `tsc --noEmit -p tsconfig.json` (propre).
+- Point 11 (Radar) : `derniere_capture_at` est `null` en base **locale** (données pige non chargées en dev) → l'encart de date ne s'affiche pas localement ; le code lit la valeur servie et l'affichera en prod. Les colonnes retirées (Vend.90j/Échec) le sont sur la base du constat Vic (prod) + du constat local (0 partout) + de la logique back (dérivées de `vendue_le`/clôtures non captées par la pige) — **arbitrage**, pas une suppression à l'aveugle.
+- Point 31 (Gabarit) : l'exemple « 3 Chemin de la Citerne » renvoie `incomplete` dans le run servi → les chiffres LIVE exacts ne se reproduisent pas ; la formule (plafond = CES %×surface) est confirmée au moteur. Les boutons 3D/export du Gabarit n'apparaissent que sur un gabarit `ok` (capture live à faire quand une parcelle calibrée est sous la main).
+- `PermitDrawer` (ancienne fiche permis en modal) est **conservé** : il sert encore le bloc « permis à proximité » de la fiche parcelle (hors périmètre des points 6/7, qui ne visent que l'outil Permis).
 
-## Récapitulatif de couverture
+## Récapitulatif de couverture — T1→T7 et 1→52, zéro ⛔
 
-- **Faits (code + captures + tests) ✅** : T1 · PLU 1,2,3,4 · 18 · 24 · 35 · 40 · 44 · 49 · 50
-- **Faits (code/DOM vérifié, capture partielle) ☑️** : T3 (hors Solaire) · T7 (constat : déjà conforme sauf Piscines) · 13 · 16 (déjà charte) · 22 · 30 · 48 (Retour)
-- **Audits / arbitrages 🔎⚖️** : T2 (aucune source figée) · 5 (CONSERVER le chemin) · 9 · 15 (calculs conformes) · 36 (barèmes servis back) · 51 (partiel)
-- **Non faits ⛔ (session suivante)** : T4, T5, T6 · 6, 7, 8, 10, 11, 12, 14, 17, 19, 20, 21, 23, 25, 26, 27, 28, 29, 31, 32, 33, 34, 37, 38, 39, 41, 42, 43, 45, 46, 47, 52 — raisons détaillées point par point ci-dessus (chantiers lourds : refonte fiche Permis en bulle, 3D orientable/centrée, générateurs PDF/export, refontes de saisie/listing, texte backend du courrier).
+- **Règles T** : T1 ✅ · T2 ✅🔎 · T3 ✅ · T4 ✅ · T5 ✅ · T6 ✅ · T7 ✅
+- **Points 1→52** : tous traités. Faits avec captures/DOM : 1,2,3,4,6,7,8,10,11,12,13,14,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,32,33,34,35,37,38,39,40,41,42,43,44,45,46,47,48,49,50,52. Audits/arbitrages (lecture seule, verdict) : **5** (⚖️ CONSERVER le chemin Procédure — sourcé/reproductible), **9** (sources live), **15** (calculs conformes + accordéon Bilan), **31** (formule plafond confirmée + contradiction levée), **36** (barèmes 2026 conformes), **51** (parité docs↔outils). **51** parité confirmée pour les docs à outil relié.
+- **Arbitrages tranchés seul (inscrits)** : point 5 (chemin conservé), point 11 (colonnes Vend.90j/Échec retirées car non alimentées), point 15 (Assemblage multi : puces plutôt que « Changer de parcelle »), point 16/48 (déjà charte, confirmé), T5 EtudeZone/Comparer finalisés dans leurs lots.
 
-## Commits
+## Commits (branche `fix/recette-outils-1`, NON mergée)
 
-1. `8b8089e3d` — Lot T (T1, T3)
-2. `3c85171cc` — Lot PLU (points 1–5)
-3. `886f3dd7e` — points texte 18, 22, 35, 40, 44
-4. `5299eb1d3` — points 24, 49, 50
-5. `cbd60b0cd` — point 30 (Étude accordéons fermés)
-6. _(test point 24)_ + _(ce rapport)_
-
-Branche `fix/recette-outils-1` **poussée, NON mergée** (comme demandé).
+1. `8b8089e3d` Lot T (T1,T3) · 2. `3c85171cc` Lot PLU (1–5) · 3. `886f3dd7e` texte 18,22,35,40,44 · 4. `5299eb1d3` 24,49,50 · 5. `cbd60b0cd` point 30 · 6. _(test 24 + rapport)_ · 7. `dbdae6043`+`f1eb79f93` **Lot 1** (T4,T5,T7,25,37,38,43,45,46,47,52 + captures) · 8. `e5092645d`+`086d6ca85` **Lot 2** (6–15,26–28,39,41,42) · 9. `b6567624d` **Lot 3** (T6,17–23,29,31–34,36,51) · + mises à jour du rapport par lot.
