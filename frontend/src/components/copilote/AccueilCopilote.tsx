@@ -20,21 +20,42 @@ const CAP_ICONS: Record<string, JSX.Element> = {
 }
 const CAP_ICON_FALLBACK = <path d="M12 2.5 14 9l6.5 2L14 13l-2 6.5L10 13l-6.5-2L10 9l2-6.5Z" strokeLinejoin="round" />
 
-// RECETTE-OUTILS-1 (point 52) — NEUF exemples, un par chemin que le Copilote sait traiter aujourd'hui
-// (parcelle · propriétaire · commune/PLU · procédure PLU · pièges · argumentaire · assemblage · blocs
-// fonciers · successions). IDU et communes réels (La Réunion). Rendus en grille 3×3 homogène ;
-// cliquer PRÉ-REMPLIT la barre (onChange + focus), ne lance pas.
-const EXEMPLES_R12 = [
-  'Dis-moi tout sur la parcelle 97415000CV1186',
-  'Combien de parcelles possède CBO Territoria ?',
-  'Quelles sont les règles du PLU en zone Ua à Saint-Paul ?',
-  'Y a-t-il une procédure PLU en cours à Saint-Pierre ?',
-  'Quels sont les pièges de la parcelle 97415000CV1186 ?',
-  'Prépare un argumentaire pour aborder ce propriétaire',
-  "Quel est le potentiel d'un assemblage autour de 97411000AD0213 ?",
-  "Montre les blocs fonciers d'un même propriétaire au Tampon",
-  'Quelles successions à venir à Saint-Paul ?',
+// RECETTE-OUTILS-2 (R24) — NEUF exemples en grille 3×3 (maquette « Copilote, exemples »), un par chemin
+// traité : parcelle · propriétaire · PLU · procédure · pièges · argumentaire · assemblage · blocs
+// fonciers · successions. Chacun porte SON icône de type. Cliquer PRÉ-REMPLIT la barre (onChange + focus).
+// Un seul texte change (R24) : « Quel est le potentiel d'un assemblage… » → « Quel potentiel pour… ».
+const EXEMPLES_R12: { t: string; ic: string }[] = [
+  { t: 'Dis-moi tout sur la parcelle 97415000CV1186', ic: 'parcelle' },
+  { t: 'Combien de parcelles possède CBO Territoria ?', ic: 'proprietaire' },
+  { t: 'Quelles sont les règles du PLU en zone Ua à Saint-Paul ?', ic: 'plu' },
+  { t: 'Y a-t-il une procédure PLU en cours à Saint-Pierre ?', ic: 'procedure' },
+  { t: 'Quels sont les pièges de la parcelle 97415000CV1186 ?', ic: 'pieges' },
+  { t: 'Prépare un argumentaire pour aborder ce propriétaire', ic: 'argumentaire' },
+  { t: 'Quel potentiel pour un assemblage autour de 97411000AD0213 ?', ic: 'assemblage' },
+  { t: "Montre les blocs fonciers d'un même propriétaire au Tampon", ic: 'blocs' },
+  { t: 'Quelles successions à venir à Saint-Paul ?', ic: 'successions' },
 ]
+
+// R24 — une icône par TYPE (24×24, stroke) : loupe · bâtiment · livre · horloge · triangle · bulle ·
+// blocs (4 carrés) · couches · sablier. Rendue 18 px dans un carré violet sombre de 32 px.
+const EX_ICONS: Record<string, ReactNode> = {
+  parcelle: <><circle cx="11" cy="11" r="7" /><path d="m16.5 16.5 4 4" /></>,
+  proprietaire: <><path d="M4 21V8l8-4 8 4v13" /><path d="M9 21v-6h6v6" /></>,
+  plu: <><path d="M5 4a1 1 0 0 1 1-1h13v15H6a1 1 0 0 0-1 1V4Z" /><path d="M6 15h13" /></>,
+  procedure: <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5v5l3.5 2" /></>,
+  pieges: <><path d="M12 3.5 2.5 20h19L12 3.5Z" /><path d="M12 10v4" /><path d="M12 17h.01" /></>,
+  argumentaire: <><path d="M4 5h16v11H9l-5 4V5Z" /></>,
+  assemblage: <><rect x="3.5" y="3.5" width="7" height="7" rx="1" /><rect x="13.5" y="3.5" width="7" height="7" rx="1" /><rect x="3.5" y="13.5" width="7" height="7" rx="1" /><rect x="13.5" y="13.5" width="7" height="7" rx="1" /></>,
+  blocs: <><path d="m12 3 9 5-9 5-9-5 9-5Z" /><path d="m3 13 9 5 9-5" /></>,
+  successions: <><path d="M6.5 3h11M6.5 21h11" /><path d="M7 3c0 4.5 10 5.5 10 9s-10 4.5-10 9" /><path d="M17 3c0 4.5-10 5.5-10 9s10 4.5 10 9" /></>,
+}
+
+// R24 — « les IDU en mono » : on isole les IDU (8 chiffres · 2 lettres · 4 chiffres) dans le texte et
+// on les rend en police mono, le reste en texte courant.
+function avecIduMono(t: string): ReactNode {
+  return t.split(/(\d{8}[A-Z]{2}\d{4})/).map((p, i) =>
+    /^\d{8}[A-Z]{2}\d{4}$/.test(p) ? <span key={i} className="font-mono">{p}</span> : <span key={i}>{p}</span>)
+}
 
 // RETOURS-11 A1 — `onExemple` (lancer un exemple) n'est plus utilisé : les exemples PRÉ-REMPLISSENT
 // la barre (via onChange). Le prop reste toléré dans le type pour ne pas casser l'appelant.
@@ -215,13 +236,19 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
       {!reponse && (
         <div data-accueil-exemples className="mb-8">
           <p className="mb-2.5 font-mono text-[10px] tracking-[.12em] text-cp-faint">EXEMPLES</p>
-          {/* RECETTE-OUTILS-1 (point 52) — grille 3×3 HOMOGÈNE (dernière rangée pleine) : 9 exemples, un
-              par chemin réellement traité. Colonnes égales, pilules centrées de même hauteur. */}
-          <div className="grid grid-cols-3 gap-2">
+          {/* RECETTE-OUTILS-2 (R24) — grille 3×3 de CARTES (maquette « Copilote, exemples »), plus de
+              pilules ovales multilignes : 3 colonnes égales, 12 px d'écart, 9 cartes. Chaque carte = 96 px
+              de haut, rayon 12, fond un peu plus clair que la page + contour fin, texte 15 px ALIGNÉ À
+              GAUCHE (2 lignes max), icône de type 32 px dans un carré violet sombre en haut à gauche,
+              IDU en mono. Cliquer PRÉ-REMPLIT la barre. */}
+          <div className="grid grid-cols-3 gap-3">
             {EXEMPLES_R12.map((ex) => (
-              <button key={ex} data-accueil-exemple onClick={() => { onChange(ex); ref.current?.focus() }}
-                className="hover-fill-ia flex items-center justify-center rounded-full border border-cp-line px-3 py-1.5 text-center text-[12px] text-cp-muted transition-colors duration-quick hover:border-transparent">
-                {ex}
+              <button key={ex.t} data-accueil-exemple data-ex-type={ex.ic} onClick={() => { onChange(ex.t); ref.current?.focus() }}
+                className="hover-fill-ia flex h-24 flex-col items-start gap-2 rounded-xl border border-cp-line bg-cp-card p-2.5 text-left transition-colors duration-quick hover:border-cp-ia/40">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cp-ia/15 text-cp-ia">
+                  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">{EX_ICONS[ex.ic] ?? CAP_ICON_FALLBACK}</svg>
+                </span>
+                <span className="line-clamp-2 text-[15px] leading-tight text-cp-txt">{avecIduMono(ex.t)}</span>
               </button>
             ))}
           </div>
