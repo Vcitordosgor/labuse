@@ -28,6 +28,13 @@ const C_BATI = '#9aa0a6'      // bâti existant — gris neutre (un FAIT context
 const SRC = 'gabarit-outil'
 const LAYERS = ['gabarit-zone', 'gabarit-contour', 'gabarit-retrait', 'gabarit-excl', 'gabarit-zone-3d',
                 'gabarit-bati', 'gabarit-bati-line', 'gabarit-bati-3d']
+// RECETTE-OUTILS-2 (R15) — le liseré blanc de sélection de la carte de base (`selection-line`/`-halo`,
+// posé depuis `getParcelGeojson`) est tracé depuis une AUTRE source que le gabarit (contour du moteur) :
+// les deux parcelles sont la même mais légèrement décalées → « double contour en pointillés décalé ».
+// On masque le liseré de base tant que le gabarit affiche SON contour (aligné à ses couches
+// zone/retrait/bâti, toutes issues du même moteur), rétabli au nettoyage. Mesure géométrique :
+// 0 % de bâti hors du contour moteur → le « bâti qui déborde » n'était QUE cet écart base/gabarit.
+const SEL_BASE = ['selection-line', 'selection-halo']
 
 type MapLike = {
   getSource: (id: string) => unknown
@@ -66,9 +73,12 @@ function useMapLayers(res: GabaritResult | undefined, terrain3d: boolean, batiVi
   useEffect(() => {
     const m = getMap()
     if (!m) return
+    const setBaseSel = (v: 'visible' | 'none') =>
+      SEL_BASE.forEach((id) => { try { const mm = m as unknown as { setLayoutProperty?: (i: string, p: string, x: string) => void }; if (m.getLayer(id)) mm.setLayoutProperty?.(id, 'visibility', v) } catch { /* noop */ } })
     const clear = () => {
       LAYERS.forEach((id) => { try { if (m.getLayer(id)) m.removeLayer(id) } catch { /* noop */ } })
       try { if (m.getSource(SRC)) m.removeSource(SRC) } catch { /* noop */ }
+      setBaseSel('visible')   // R15 — le gabarit ne dessine plus : rendre le liseré de base
     }
     clear()
     if (!res) return
@@ -119,6 +129,7 @@ function useMapLayers(res: GabaritResult | undefined, terrain3d: boolean, batiVi
     }
     m.addLayer({ id: 'gabarit-contour', type: 'line', source: SRC, filter: ['==', 'kind', 'contour'],
       paint: { 'line-color': C_CONTOUR, 'line-width': 1.5, 'line-dasharray': [2, 1] } })
+    setBaseSel('none')   // R15 — un seul contour (celui du gabarit, aligné à ses couches)
     // 3D : extrusion de la zone calculée (enveloppe réglementaire, vert) à la hauteur SOURCÉE. Le bâti
     // existant (gris) est extrudé À PART, à sa hauteur MESURÉE (LiDAR HD, à défaut BD TOPO) : où l'on
     // PEUT construire vs ce qui est DÉJÀ là. Deux couches distinctes, jamais confondues.
@@ -136,8 +147,21 @@ function useMapLayers(res: GabaritResult | undefined, terrain3d: boolean, batiVi
         paint: { 'fill-extrusion-color': C_BATI, 'fill-extrusion-opacity': 0.55,
                  'fill-extrusion-height': ['coalesce', ['get', 'hauteur_m'], 3], 'fill-extrusion-base': 0 } })
     }
+    // RECETTE-OUTILS-2 (R13) — le cadrage est le SEUL propriétaire de la caméra du Gabarit (MapView ne
+    // recentre plus en gabarit). En 3D on cadre AVEC l'inclinaison (pitch 55, bearing 0) — comme « Vue
+    // par défaut » — sinon un fitBounds à plat suivi du pitch poussait la parcelle hors champ (écran
+    // noir « très zoomé à côté »). En 2D, cadrage normal.
+    // RECETTE-OUTILS-2 (R13) — le Gabarit est SEUL propriétaire de la caméra (MapView ne recentre plus
+    // en gabarit, et pose un terrain PLAT). En 3D on cadre avec l'inclinaison (pitch 45, bearing 0),
+    // comme « Vue par défaut ». Terrain plat → le centroïde tombe au centre de l'écran, donc un seul
+    // fitBounds suffit (plus de course avec le chargement du relief, plus d'écran noir sur pente forte).
     const bb = bboxOf(res.contourGeoJSON ?? res.zoneImplantationGeoJSON ?? null)
-    if (bb) { try { m.fitBounds(bb, { padding: 80, duration: 600, maxZoom: 19 }) } catch { /* noop */ } }
+    if (bb) {
+      const opts = terrain3d
+        ? { padding: 70, bearing: 0, pitch: 45, duration: 600, maxZoom: 18 }
+        : { padding: 80, duration: 600, maxZoom: 19 }
+      try { m.fitBounds(bb, opts) } catch { /* noop */ }
+    }
     return clear
   }, [res, terrain3d, batiVisible])
 }
@@ -201,8 +225,9 @@ export function Gabarit() {
     const m = (window as unknown as { __labuse_map?: { fitBounds: (b: number[][], o?: unknown) => void; easeTo: (o: unknown) => void } }).__labuse_map
     if (!m) return
     const bb = bboxOf(res?.contourGeoJSON ?? res?.zoneImplantationGeoJSON ?? null)
-    if (bb) m.fitBounds(bb, { padding: 80, bearing: 0, pitch: 55, duration: 600, maxZoom: 19 })
-    else m.easeTo({ bearing: 0, pitch: 55, duration: 600 })
+    // R13 — même cadrage 3D que l'entrée (pitch 45, maxZoom 18) : cohérent et sûr sur pente forte.
+    if (bb) m.fitBounds(bb, { padding: 70, bearing: 0, pitch: 45, duration: 600, maxZoom: 18 })
+    else m.easeTo({ bearing: 0, pitch: 45, duration: 600 })
   }
 
   // RECETTE-OUTILS-1 (point 31) — lever la contradiction « ✓ Risques intégrés » vs « PPR — analyse »

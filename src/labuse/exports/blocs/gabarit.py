@@ -89,6 +89,19 @@ def rendu(valeurs, ctx=None) -> str:
     if _au:
         corps += verdict(esc(_au.get("libelle") or "Potentiel différé — ouverture de la zone requise"),
                          "warn")
+    # RECETTE-OUTILS-2 (R16) — page « Vue 3D » : axonométrie du MÊME volume que l'outil (enveloppe
+    # extrudée à la hauteur sourcée + bâti existant), rendue en SVG serveur (l'écran la fait en WebGL,
+    # non reproductible ici). Sol plat → légende « Volume indicatif — terrain supposé plat ». Absente si
+    # la hauteur n'est pas chiffrée (prospect) : pas de volume, comme l'outil dit « 3D indisponible ».
+    try:
+        from ...gabarit.plan_svg import gabarit_svg_3d
+        svg3d = gabarit_svg_3d(gr) if gr is not None else None
+    except Exception:  # noqa: BLE001 — la vue 3D est un plus, jamais un bloqueur du document
+        svg3d = None
+    if svg3d:
+        corps += ('<div class="vue3d" style="page-break-before:always">'
+                  '<h3>Vue 3D du gabarit</h3>'
+                  f'<div class="plan3d">{svg3d}</div></div>')
     corps += note("Gabarit réglementaire 2D, pré-faisabilité sur règlement public. Une étude par un "
                   "professionnel peut modifier ces valeurs.")
     corps += pied(valeurs, IDS)

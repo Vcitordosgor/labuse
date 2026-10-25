@@ -419,9 +419,13 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
         exclusions.append(Exclusion(id="sup", ruleId="SUP", type="sup",
                                     label="Servitude d'utilité publique déduite",
                                     geometry=json.loads(sup_gj[0]), source=sup_src))
+    # RECETTE-OUTILS-2 (R17) — les SUP sont TOUJOURS contrôlées (la requête ci-dessus tranche présence
+    # vs absence) : une absence VÉRIFIÉE est « intégrée » (vérifiée), pas « non modélisée ». Avant, le
+    # PDF/outil marquait les SUP « non modélisées » tout en écrivant « Aucune SUP sur la parcelle » —
+    # contradiction. Le statut est donc « integrated » dans les deux cas ; seul le détail diffère.
     applicable.append(ApplicableRule(
         id="SUP", label="Servitudes d'utilité publique", category="exclusion",
-        integrationStatus="integrated" if _sup_present else "not_integrated",
+        integrationStatus="integrated",
         detail=("assiette SUP déduite de la zone d'implantation" if _sup_present
                 else "Aucune SUP sur la parcelle"), source=sup_src))
 

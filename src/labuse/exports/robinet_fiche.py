@@ -803,13 +803,24 @@ def _gabarit(db, idu: str) -> dict:
             per[idu] = out
             return out
         cov = res.coverage
+        # RECETTE-OUTILS-2 (R17) — MÊME logique que l'outil (Gabarit.tsx) : si une règle PPR est NON
+        # intégrée, la famille « risques » n'est PAS « pleinement vérifiée ». Sinon le PDF écrivait
+        # « Vérifié : … risques » tout en listant « PPR — analyse » dans les règles non intégrées (le
+        # bloc rend nonIntegratedRules tel quel) → lecture contradictoire. On distingue les zones
+        # d'exclusion (géométriques, intégrées) de l'analyse du règlement PPR (non intégrée, ci-dessous).
+        ppr_non_integre = any(
+            ("PPR" in (r.label or "")) or ("PPR" in (getattr(getattr(r, "source", None), "document", "") or ""))
+            for r in (res.nonIntegratedRules or []))
         fam = [nom for ok, nom in ((cov and cov.reculs, "reculs"), (cov and cov.emprise, "emprise"),
-                                   (cov and cov.hauteur, "hauteur"), (cov and cov.risques, "risques")) if ok]
+                                   (cov and cov.hauteur, "hauteur"),
+                                   (cov and cov.risques and not ppr_non_integre, "risques")) if ok]
         # EXPORTS-FIX-1 A8 — plus de « 4 familles vérifiées sur 4 … non intégrée(s) » (jargon QA) :
         # on dit en clair ce qui est vérifié et ce qui n'est pas modélisé.
         txt = ("Vérifié : " + ", ".join(fam)) if fam else "Aucune règle vérifiée"
-        # « PPR — analyse » est not_integrated quand il n'y a pas de zone rouge : la famille risques est
-        # déjà comptée « vérifiée » → ne pas la relister comme non intégrée (lecture contradictoire).
+        if ppr_non_integre:
+            txt += " · Aléas : zones d'exclusion intégrées — analyse du règlement PPR non intégrée"
+        # Les AUTRES règles non modélisées restent nommées. PPR est déjà dit par la clause « Aléas »
+        # ci-dessus (quand concerné) → on ne le redouble pas ici.
         non_int = [r.label for r in (res.nonIntegratedRules or []) if r.label and r.id != "PPR"]
         if non_int:
             txt += " · non modélisé : " + ", ".join(non_int)

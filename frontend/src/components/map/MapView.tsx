@@ -429,6 +429,11 @@ export function MapView() {
   // et on l'AFFICHE (« 3D indisponible : … ») au lieu d'un écran vide. null = pas d'erreur 3D.
   const [erreur3d, setErreur3d] = useState<string | null>(null)
   const terrain3dCleanup = useRef<(() => void) | null>(null)
+  // RECETTE-OUTILS-2 (R14) — boussole 3D : le contrôle NATIF de maplibre (NavigationControl avec
+  // `visualizePitch`), restylé à la charte (CSS), monté SEULEMENT en 3D, démonté au retour 2D.
+  // Glisser la boussole tourne/incline ; clic = retour au nord ; +/− = zoom natif. « Vue par défaut »
+  // (panneau Gabarit) reste le recadrage complet.
+  const boussole3d = useRef<maplibregl.NavigationControl | null>(null)
   const measureRef = useRef(measure)
   measureRef.current = measure
   const labelMarker = useRef<maplibregl.Marker | null>(null)
@@ -1202,41 +1207,57 @@ export function MapView() {
         useApp.getState().setTerrain3d(false)
         return
       }
-      // Écoute les erreurs de la source de relief (tuiles DEM terrarium) tant que la 3D est active.
-      const onErr = (e: { sourceId?: string; error?: { message?: string } }) => {
-        if (e?.sourceId === 'dem' || /terrain|dem|elevation/i.test(String(e?.error?.message || ''))) {
-          console.error('[LABUSE 3D] tuile de relief en échec', e?.error || e)
-          setErreur3d('tuiles de relief indisponibles (réseau)')
+      // RECETTE-OUTILS-2 (R13) — le Gabarit affiche son volume sur un TERRAIN SUPPOSÉ PLAT (pas de
+      // relief DEM). Motif : une parcelle en pente/altitude (Saint-Paul U6b « 36 Rue des Jacarandas »,
+      // ~760 m) flottait HORS CHAMP une fois le relief posé — à pitch 45 son élévation projetait le
+      // centroïde ~300 px AU-DESSUS du canvas (« écran noir très zoomé à côté », point 32 non tenu). En
+      // plan plat, le centroïde se projette au centre EXACT de l'écran (vérifié : project→525/422 sur un
+      // canvas 1050×844) et le cadrage du Gabarit (fitBounds pitch 45) tient partout. Le bâti et
+      // l'enveloppe restent extrudés à leurs hauteurs réelles → c'est bien une vue 3D, et c'est la
+      // légende même du document (« Volume indicatif — terrain supposé plat »). Pas de DEM → pas d'écoute
+      // ni de garde-fou de chargement de relief.
+      const gabaritFlat = useApp.getState().module === 'gabarit'
+      if (gabaritFlat) {
+        try { m.setTerrain(null) } catch { /* noop */ }
+        terrain3dCleanup.current = () => { /* rien à nettoyer : pas de DEM en Gabarit */ }
+      } else {
+        // Écoute les erreurs de la source de relief (tuiles DEM terrarium) tant que la 3D est active.
+        const onErr = (e: { sourceId?: string; error?: { message?: string } }) => {
+          if (e?.sourceId === 'dem' || /terrain|dem|elevation/i.test(String(e?.error?.message || ''))) {
+            console.error('[LABUSE 3D] tuile de relief en échec', e?.error || e)
+            setErreur3d('tuiles de relief indisponibles (réseau)')
+          }
         }
-      }
-      m.on('error', onErr as never)
-      // Garde-fou timeout : si le relief n'est pas posé en 8 s (tuiles bloquées), on le dit.
-      const t3d = window.setTimeout(() => {
-        if (useApp.getState().terrain3d && !m.getTerrain()) {
-          console.error('[LABUSE 3D] relief non chargé après 8 s (timeout tuiles DEM)')
-          setErreur3d('relief trop lent à charger (délai dépassé)')
+        m.on('error', onErr as never)
+        // Garde-fou timeout : si le relief n'est pas posé en 8 s (tuiles bloquées), on le dit.
+        const t3d = window.setTimeout(() => {
+          if (useApp.getState().terrain3d && !m.getTerrain()) {
+            console.error('[LABUSE 3D] relief non chargé après 8 s (timeout tuiles DEM)')
+            setErreur3d('relief trop lent à charger (délai dépassé)')
+          }
+        }, 8000)
+        terrain3dCleanup.current = () => { m.off('error', onErr); window.clearTimeout(t3d) }
+        try {
+          m.setTerrain({ source: 'dem', exaggeration: 1.35 })
+        } catch (e) {
+          console.error('[LABUSE 3D] setTerrain a échoué', e)
+          setErreur3d('moteur de relief indisponible')
+          useApp.getState().setTerrain3d(false)
+          terrain3dCleanup.current?.(); terrain3dCleanup.current = null
+          return
         }
-      }, 8000)
-      terrain3dCleanup.current = () => { m.off('error', onErr); window.clearTimeout(t3d) }
-      try {
-        m.setTerrain({ source: 'dem', exaggeration: 1.35 })
-      } catch (e) {
-        console.error('[LABUSE 3D] setTerrain a échoué', e)
-        setErreur3d('moteur de relief indisponible')
-        useApp.getState().setTerrain3d(false)
-        terrain3dCleanup.current?.(); terrain3dCleanup.current = null
-        return
       }
       // RECETTE-PROD-1 (6b) — en entrant en 3D avec une fiche ouverte, RECENTRER sur la parcelle avec
       // le MÊME décalage que le vol 2D (−200 px pour la fiche de 400 px) : sinon le seul changement de
       // pitch la laisse « décalée vers la droite », sous le panneau. Sans fiche/centroïde : simple pitch.
       const centroid = selCentroidRef.current
       const ficheOuverte = useApp.getState().selectedIdu != null
-      if (centroid && useApp.getState().module === 'gabarit') {
-        // RECETTE-OUTILS-1 (point 32) — « Voir en 3D » du Gabarit : la carte reste CENTRÉE sur la parcelle
-        // (pas le décalage −200 px de la fiche, qui la poussait hors champ → « écran noir trop zoomé »),
-        // avec un zoom adapté et l'inclinaison appliquée.
-        m.easeTo({ center: centroid, zoom: Math.max(m.getZoom(), 17.5), pitch: Math.max(m.getPitch(), 55), duration: 800 })
+      if (useApp.getState().module === 'gabarit') {
+        // RECETTE-OUTILS-2 (R13) — le cadrage 3D du Gabarit est piloté par SON `fitBounds` (pitch 55,
+        // bearing 0 sur l'emprise de la parcelle), identique à « Vue par défaut ». On NE recentre PLUS
+        // ici : deux animations caméra concurrentes (easeTo centroïde + fitBounds sans pitch) se
+        // battaient → la parcelle finissait hors champ (point 32 non tenu, « écran noir à côté »).
+        // Un seul propriétaire de caméra = le fitBounds du Gabarit. MapView ne fait que poser le relief.
       } else if (centroid && ficheOuverte) {
         m.easeTo({ center: centroid, pitch: Math.max(m.getPitch(), 55), offset: [-200, 0], duration: 800 })
       } else if (m.getPitch() < 20) {
@@ -1244,15 +1265,28 @@ export function MapView() {
       }
       chargerBati()
       m.on('moveend', chargerBati)
+      // RECETTE-OUTILS-2 (R14) — monter la boussole native (si pas déjà là). Posée en BAS-GAUCHE : la
+      // fiche parcelle couvre le bas-droite et le bascule « Sombre / 3D » occupe le haut ; le bas-gauche
+      // de la carte (juste à droite du panneau Outils) est le coin dégagé. Restylée à la charte en CSS.
+      if (!boussole3d.current) {
+        boussole3d.current = new maplibregl.NavigationControl({ visualizePitch: true, showZoom: true, showCompass: true })
+        m.addControl(boussole3d.current, 'bottom-left')
+        try { m.getContainer().querySelector('.maplibregl-ctrl-bottom-left')?.classList.add('labuse-nav3d') } catch { /* noop */ }
+      }
     } else {
       m.setTerrain(null)
       m.easeTo({ pitch: 0, duration: 600 })
+      if (boussole3d.current) { try { m.removeControl(boussole3d.current) } catch { /* noop */ } boussole3d.current = null }
       if (m.getLayer('batiments-3d')) m.setLayoutProperty('batiments-3d', 'visibility', 'none')
       // CORRECTIFS-1 C1 — retour en 2D : on nettoie les écoutes 3D et le message d'erreur éventuel.
       setErreur3d(null)
       terrain3dCleanup.current?.(); terrain3dCleanup.current = null
     }
-    return () => { m.off('moveend', chargerBati); terrain3dCleanup.current?.(); terrain3dCleanup.current = null }
+    return () => {
+      m.off('moveend', chargerBati); terrain3dCleanup.current?.(); terrain3dCleanup.current = null
+      // R14 — démontage (sortie du composant) : ne JAMAIS laisser la boussole orpheline.
+      if (!useApp.getState().terrain3d && boussole3d.current) { try { m.removeControl(boussole3d.current) } catch { /* noop */ } boussole3d.current = null }
+    }
   }, [terrain3d, batiVisible])
 
   // ───────────────────────── couches / filtres / mode ─────────────────────────
