@@ -6,7 +6,6 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../../store/useApp'
 import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECETTE-1 F2
-import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
 import { Calculette } from '../fiche/Fiche'
 
 export function CalculetteFonciere() {
@@ -43,14 +42,14 @@ export function CalculetteFonciere() {
       {/* RECETTE-2 (T3) — Réinitialiser SEUL sur sa ligne (haut-droite) ; titre + explication EN DESSOUS,
           pleine largeur (plus côte à côte avec le bouton). Présent ssi une parcelle est désignée. */}
       <div className="flex flex-col gap-1.5">
-        {idu && <div className="flex justify-end"><Reinitialiser onReset={resetAll} /></div>}
+        {/* RECETTE-OUTILS-1 (T5) — « Réinitialiser » retiré au profit de « Changer de parcelle ». */}
         <div>
           <h2 className="font-display text-base font-bold text-txt-hi">Calculette foncière</h2>
           <p className="mt-0.5 text-[11.5px] text-txt-mut">La charge foncière supportable d'une parcelle, par bilan à rebours — mêmes hypothèses que le Bilan.</p>
         </div>
       </div>
       {/* RECETTE-1 (F2) — EntreeParcelle : adresse/IDU OU clic carte, l'une grise l'autre. */}
-      <EntreeParcelle source={source}
+      <EntreeParcelle source={source} picked={idu} onChanger={resetAll}
         onPick={(i, src) => { setSource(src); setIdu(i); focusParcelle(i, { fiche: true }) }} />
       {idu && <Calculette idu={idu} />}
     </div>

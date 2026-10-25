@@ -23,7 +23,7 @@ import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { Siren } from '../shared/Siren'
 import { Tip } from '../Tip'
-import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
+import { Bouton } from '../ui/Bouton'
 import { CommuneScope } from './ModulePanel'
 
 const fmtM2 = (v: number | null | undefined) => (v == null ? '—' : `${fmtInt(v)} m²`)
@@ -82,10 +82,15 @@ export function Successions() {
 
       {/* entrée : périmètre EXPLICITE (Toute l'île par défaut). RETOURS-15 C8 — le filtre « Résiduel
           minimum (SDP) » est retiré (le tri serveur reste résiduel décroissant). */}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-1">
         <div className="min-w-0 flex-1"><CommuneScope commune={commune} noteFiltre={false} onChange={(c) => setCommune(c)} /></div>
-        {/* RECETTE-1 (F3) — Réinitialiser dès qu'une commune est choisie. */}
-        {commune && <Reinitialiser onReset={resetAll} />}
+        {/* RECETTE-OUTILS-1 (T5) — « Réinitialiser les filtres » DANS le bloc filtre, visible seulement
+            quand le périmètre diffère du défaut (Toute l'île). Plus de « Réinitialiser » en tête. */}
+        {commune && (
+          <Bouton niveau="lien" ton="ambre" data-successions-reset-filtres onClick={resetAll} className="self-start">
+            Réinitialiser les filtres
+          </Bouton>
+        )}
       </div>
 
       {q.isLoading && <Squelette lignes={6} />}
@@ -139,9 +144,10 @@ function Carte({ it, onOpen }: { it: SuccessionItem; onOpen: () => void }) {
         <span className="shrink-0 text-txt-dim">{fmtM2(it.surface_m2)}</span>
         {it.zone && <><span className="text-txt-dim">·</span><span className="shrink-0 text-txt-dim">{it.zone}</span></>}
       </div>
-      <div className="mt-0.5 flex items-center gap-1.5 text-[10.5px]">
+      <div className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-[10.5px]">
         {/* PM nommée par construction (SIREN confirmé exigé) ; le repli particulier reste en ceinture */}
-        <span className="min-w-0 flex-1 truncate">
+        {/* RECETTE-OUTILS-1 (pt 43) — dénomination + SIREN jamais tronqués : repli sur une 2e ligne au besoin */}
+        <span className="min-w-0">
           {it.proprio.type === 'personne_morale'
             ? <span className="text-txt">
                 {it.proprio.denomination}{it.proprio.siren ? <> · <Siren value={it.proprio.siren} className="font-mono text-[10px] text-txt-dim" /></> : null}

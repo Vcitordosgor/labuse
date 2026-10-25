@@ -20,13 +20,20 @@ const CAP_ICONS: Record<string, JSX.Element> = {
 }
 const CAP_ICON_FALLBACK = <path d="M12 2.5 14 9l6.5 2L14 13l-2 6.5L10 13l-6.5-2L10 9l2-6.5Z" strokeLinejoin="round" />
 
-// RETOURS-9 (Q10.4) — trois exemples CLIQUABLES qui déclenchent les raccourcis RETOURS-8 R12
-// (fiche parcelle complète · patrimoine d'un promoteur · pièges d'une parcelle). Cliquer LANCE la
-// question telle quelle (onExemple), pas juste remplir la barre — ce sont des démonstrations.
+// RECETTE-OUTILS-1 (point 52) — NEUF exemples, un par chemin que le Copilote sait traiter aujourd'hui
+// (parcelle · propriétaire · commune/PLU · procédure PLU · pièges · argumentaire · assemblage · blocs
+// fonciers · successions). IDU et communes réels (La Réunion). Rendus en grille 3×3 homogène ;
+// cliquer PRÉ-REMPLIT la barre (onChange + focus), ne lance pas.
 const EXEMPLES_R12 = [
   'Dis-moi tout sur la parcelle 97415000CV1186',
   'Combien de parcelles possède CBO Territoria ?',
+  'Quelles sont les règles du PLU en zone Ua à Saint-Paul ?',
+  'Y a-t-il une procédure PLU en cours à Saint-Pierre ?',
   'Quels sont les pièges de la parcelle 97415000CV1186 ?',
+  'Prépare un argumentaire pour aborder ce propriétaire',
+  "Quel est le potentiel d'un assemblage autour de 97411000AD0213 ?",
+  "Montre les blocs fonciers d'un même propriétaire au Tampon",
+  'Quelles successions à venir à Saint-Paul ?',
 ]
 
 // RETOURS-11 A1 — `onExemple` (lancer un exemple) n'est plus utilisé : les exemples PRÉ-REMPLISSENT
@@ -208,12 +215,12 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
       {!reponse && (
         <div data-accueil-exemples className="mb-8">
           <p className="mb-2.5 font-mono text-[10px] tracking-[.12em] text-cp-faint">EXEMPLES</p>
-          <div className="flex flex-wrap gap-2">
-            {[...EXEMPLES_R12, ...(meta?.capacites ?? []).map((c) => c.exemple)]
-              .filter((e, i, a): e is string => !!e && a.indexOf(e) === i)
-              .map((ex) => (
+          {/* RECETTE-OUTILS-1 (point 52) — grille 3×3 HOMOGÈNE (dernière rangée pleine) : 9 exemples, un
+              par chemin réellement traité. Colonnes égales, pilules centrées de même hauteur. */}
+          <div className="grid grid-cols-3 gap-2">
+            {EXEMPLES_R12.map((ex) => (
               <button key={ex} data-accueil-exemple onClick={() => { onChange(ex); ref.current?.focus() }}
-                className="hover-fill-ia rounded-full border border-cp-line px-3 py-1.5 text-[12px] text-cp-muted transition-colors duration-quick hover:border-transparent">
+                className="hover-fill-ia flex items-center justify-center rounded-full border border-cp-line px-3 py-1.5 text-center text-[12px] text-cp-muted transition-colors duration-quick hover:border-transparent">
                 {ex}
               </button>
             ))}

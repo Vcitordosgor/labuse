@@ -24,7 +24,6 @@ import { CommuneScope, useModuleMap } from './ModulePanel'
 import { Bouton } from '../ui/Bouton'
 import { Case } from '../ui/Case'
 import { Chevron } from '../ui/Chevron'
-import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
 
 const fmtM2 = (v: number | null | undefined) => (v == null ? '—' : `${fmtInt(v)} m²`)
 
@@ -165,8 +164,8 @@ export function Blocs() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-      {/* RECETTE-1 (F3) — Réinitialiser en haut à droite dès qu'un filtre est posé ou le listing ouvert. */}
-      {dirty && <div className="flex justify-end"><Reinitialiser onReset={resetAll} /></div>}
+      {/* RECETTE-OUTILS-1 (T5) — plus de « Réinitialiser » en tête : le lien « Réinitialiser les filtres »
+          vit DANS le bloc Filtres (ci-dessous), visible seulement quand un filtre diffère du défaut. */}
       {/* bandeau client — ce que l'outil EST (et n'est pas) */}
       <div className="rounded-lg border px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut"
         style={{ borderColor: `${TOKENS.mint}4d`, background: `${TOKENS.mint}0f` }}>
@@ -219,6 +218,13 @@ export function Blocs() {
           <span className="cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
         </Tip>
       </div>
+      {/* RECETTE-OUTILS-1 (T5) — « Réinitialiser les filtres » DANS le bloc Filtres, visible seulement
+          quand un filtre diffère de sa valeur par défaut. */}
+      {dirty && (
+        <Bouton niveau="lien" ton="ambre" data-blocs-reset-filtres onClick={resetAll} className="self-start">
+          Réinitialiser les filtres
+        </Bouton>
+      )}
       </div>
       </details>
 

@@ -5,7 +5,6 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import { useApp } from '../../store/useApp'
 import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECETTE-1 F2
-import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
 import { Squelette } from '../Loading'
 import { EmptyState, ErrorState } from '../States'
 import { Tip } from '../Tip'
@@ -64,16 +63,14 @@ export function O5Servitudes() {
       {/* RETOURS-12 O3 — intro DESCRIPTIVE : ce que l'outil montre. L'aveu « ce que nos données ne
           couvrent pas » quitte l'accueil client ; la limite vit désormais dans « Méthode & limites »
           (replié, plus bas). */}
-      {/* RECETTE-2 (T3) — Réinitialiser SEUL sur sa ligne (haut-droite) ; l'intro vient EN DESSOUS,
-          pleine largeur (plus de bouton côte à côte avec le texte). Présent ssi une parcelle est désignée. */}
+      {/* RECETTE-OUTILS-1 (T5) — « Réinitialiser » retiré au profit de « Changer de parcelle ». */}
       <div className="flex flex-col gap-1.5">
-        {idu && <div className="flex justify-end"><Reinitialiser onReset={resetAll} /></div>}
         <Banner>Ce qui peut bloquer un projet sans se voir sur la carte : servitudes, sols, bruit,
           assainissement. Chaque servitude est nommée, datée et sourcée.</Banner>
       </div>
       {/* RECETTE-1 (F2) — EntreeParcelle : adresse/IDU (→ allerA : zoom + contour SANS ouvrir la fiche)
           OU clic carte (capté par l'effet selectedIdu : il analyse ET ouvre la fiche). */}
-      <EntreeParcelle source={source}
+      <EntreeParcelle source={source} picked={idu || null} onChanger={resetAll}
         onPick={(i, src) => { setSource(src); allerA(i) }} />
       {q.isLoading && <Squelette lignes={4} />}
       {q.isError && <ErrorState className="py-6" message="Servitudes indisponibles." retry={() => q.refetch()} />}

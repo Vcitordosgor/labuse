@@ -601,6 +601,11 @@ interface AppState {
   // refactore pas ce qui marche pendant qu'on ajoute).
   parcelPrefill: string | null
   setParcelPrefill: (s: string | null) => void
+  // RECETTE-OUTILS-1 (T4) — signal « une parcelle vient d'être cliquée sur la carte PENDANT qu'un outil
+  // multi-parcelles est actif » (ex. Pièges et risques). MapView l'écrit au lieu d'ouvrir une fiche ;
+  // l'outil le consomme (ajoute au lot, comme une saisie) puis le remet à null. One-shot.
+  carteOutilIdu: string | null
+  setCarteOutilIdu: (s: string | null) => void
   // DESTINATIONS-1 (X4.4) — Copilote (outil destination_zone) → Étude de zone préremplie (parcelle +
   // sous-destination R151-28). Même idiome consommé-puis-reset : EtudeZone lit AU MONTAGE, remet à null.
   etudeZonePrefill: { idu?: string | null; commune?: string | null; zone?: string | null; sous_destination: string } | null
@@ -1081,6 +1086,8 @@ export const useApp = create<AppState>((set, get) => ({
   setCourrierPrefillPiste: (courrierPrefillPiste) => set({ courrierPrefillPiste }),
   parcelPrefill: null,
   setParcelPrefill: (parcelPrefill) => set({ parcelPrefill }),
+  carteOutilIdu: null,
+  setCarteOutilIdu: (carteOutilIdu) => set({ carteOutilIdu }),
   etudeZonePrefill: null,
   setEtudeZonePrefill: (etudeZonePrefill) => set({ etudeZonePrefill }),
   communePrefill: null,

@@ -1008,6 +1008,9 @@ export function MapView() {
             st.addToCompare(idu)
             return
           }
+          // RECETTE-OUTILS-1 (T4) — Pièges et risques : le clic carte ALIMENTE le lot (comme la saisie)
+          // au lieu d'ouvrir une fiche. L'outil consomme `carteOutilIdu` puis le remet à null.
+          if (st.module === 'risques') { st.setCarteOutilIdu(idu); return }
           // M6.1 : couche zonage active → la zone PLU précise s'affiche AUSSI au clic
           // (popup éphémère, même gabarit que les équipements) — la fiche s'ouvre normalement
           if (st.layers.zonage_parcelle) {
@@ -1041,7 +1044,11 @@ export function MapView() {
         const hits = m.queryRenderedFeatures(e.point, { layers: ['parcels-fill', 'ile-fill'].filter((l) => !!m.getLayer(l)) })
         if (hits.length > 0) return   // le handler de calque a déjà ouvert la fiche
         parcelAt(e.lngLat.lng, e.lngLat.lat).then((r) => {
-          if (r.idu) select(r.idu)
+          if (!r.idu) return
+          // RECETTE-OUTILS-1 (T4) — même règle au clic « universel » (hors feature vectorielle) :
+          // Pièges et risques alimente le lot plutôt que d'ouvrir une fiche.
+          if (useApp.getState().module === 'risques') { useApp.getState().setCarteOutilIdu(r.idu); return }
+          select(r.idu)
         }).catch(() => undefined)
       })
 

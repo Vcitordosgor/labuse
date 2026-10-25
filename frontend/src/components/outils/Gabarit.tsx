@@ -5,7 +5,6 @@ import { fmtInt } from '../../lib/format'
 import { CAPACITE_MAX_MENTION_COURTE } from '../../lib/capaciteMax'
 import { useApp } from '../../store/useApp'
 import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECETTE-1 F2
-import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { Bouton } from '../ui/Bouton'
@@ -230,7 +229,8 @@ export function Gabarit() {
       {/* RECETTE-2 (T3) — Réinitialiser SEUL sur sa ligne (haut-droite) ; l'intro vient EN DESSOUS,
           pleine largeur (plus côte à côte). Présent ssi une parcelle est désignée. */}
       <div className="flex flex-col gap-1.5">
-        {target && <div className="flex justify-end"><Reinitialiser onReset={resetAll} /></div>}
+        {/* RECETTE-OUTILS-1 (T5) — « Réinitialiser » retiré ; le changement de parcelle passe par
+            « Changer de parcelle » (EntreeParcelle, picked). */}
         <p className="text-[11px] leading-snug text-txt-mut">
           Où et jusqu'où une construction peut s'implanter, selon les règles réglementaires
           <b className="text-txt"> intégrées et sourcées</b> dans LABUSE.
@@ -238,7 +238,7 @@ export function Gabarit() {
       </div>
 
       {/* RECETTE-1 (F2) — EntreeParcelle : adresse/IDU OU clic carte, l'une grise l'autre. */}
-      <EntreeParcelle source={source}
+      <EntreeParcelle source={source} picked={target} onChanger={resetAll}
         onPick={(i, src) => { setSource(src); setIdu(i); focusParcelle(i) }} />
 
       {/* RECETTE-2 (D11) — section « Choisissez une parcelle (barre ci-dessus ou clic sur la carte) »

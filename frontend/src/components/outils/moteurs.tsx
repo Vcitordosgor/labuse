@@ -14,7 +14,6 @@ import { Tip } from '../Tip'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'   // RETOURS-11 T6 — source unique des 24 communes
 import { trierCommunes } from '../../lib/communes'
 import { Bouton } from '../ui/Bouton'
-import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
 import { EntreeParcelle } from './EntreeParcelle'   // RECETTE-1 H5 — entrée parcelle (adresse OU clic carte)
 
 const fmt = fmtInt
@@ -162,7 +161,8 @@ export function M16() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [msel])
   // RECETTE-1 (H5, F3) — Réinitialiser : vide la liste + le résultat ; reste dans l'outil.
-  const resetAll = () => { setMsel([]); setMax8(false); run.reset() }
+  // RECETTE-OUTILS-1 (T5) — plus de bouton « Réinitialiser » ni de resetAll : la sélection se gère
+  // par les puces retirables (× sur chaque parcelle, ci-dessous).
   // M-ENTREE — porte fiche → Assemblage : la parcelle devient la 1ʳᵉ du lot (motif parcelPrefill
   // partagé, consommation-puis-reset) ; l'utilisateur agrège les autres au clic-carte / à l'omnibox.
   useEffect(() => {
@@ -202,10 +202,10 @@ export function M16() {
   return (
     // §1a — UN SEUL conteneur de défilement (wrapper ModulePanel = overflow-hidden).
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-0.5">
-      {/* RECETTE-2 (T3) — Réinitialiser SEUL sur sa ligne (haut-droite) ; l'intro vient EN DESSOUS,
-          pleine largeur (plus de bouton côte à côte avec le texte). Présent ssi une parcelle est posée. */}
+      {/* RECETTE-OUTILS-1 (T5) — plus de « Réinitialiser » en tête. Assemblage étant un outil MULTI-
+          parcelles, la sélection se gère par les puces retirables (× sur chaque parcelle, ci-dessous) ;
+          pas de ligne « Changer de parcelle » (qui ne vaut que pour une parcelle unique). */}
       <div className="flex flex-col gap-1.5">
-        {msel.length > 0 && <div className="flex justify-end"><Reinitialiser onReset={resetAll} /></div>}
         <Banner>Réunissez des parcelles voisines pour voir ce qu'elles valent ensemble : surface, droits à bâtir cumulés, logements possibles, charge foncière. Zoomez et cliquez les parcelles sur la carte (re-cliquez pour retirer), ou saisissez-les ci-dessous.</Banner>
       </div>
       {/* RECETTE-1 (H5, Vic) — ÉTAPE 1 « Choisir les parcelles » : EntreeParcelle (adresse OU clic carte)

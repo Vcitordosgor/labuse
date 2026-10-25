@@ -2,7 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useEffect, useMemo, useState } from 'react'
 import {
-  courrierPdf, getCommunes, getCourrierDemandes, getCourrierStatut, getFiche, modBailleur,
+  courrierPdf, getCommunes, getCourrierStatut, getFiche, modBailleur,
   modDueDiligence, modFantome, modParcellePermis, modPatrimoine, modPermis, modPermisCount,
   modPermisFiche, modPromesses, modPromessesCount, modVelocite, postCourrierDemande, postCourrierAdressage,
   postCourrierComposer,
@@ -10,7 +10,6 @@ import {
 import { AddressAutocomplete } from '../AddressAutocomplete'
 import { ParcelInput } from '../ParcelInput'
 import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECETTE-1 F2
-import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
 import { TEMPS_MILLESIMES } from '../map/basemaps'
 import { fmtInt, fmtM2 } from '../../lib/format'
 import { iduComplet, iduCourt, estIdu } from '../../lib/format'
@@ -813,11 +812,17 @@ export function M03() {
                     ? <>aucun point à afficher.</>
                     : <>cliquez les points sur la carte{nonLocTxt}.</>}
               </div>
-              {/* RECETTE-2 (T3/T7) — « Revenir à l'île » → « Réinitialiser » (libellé par défaut, composant
-                  partagé) ; seul sur sa ligne. L'effacement du champ adresse est traité en D2. */}
-              <div className="mt-1 flex justify-end">
-                <Reinitialiser onReset={() => { setParcelIdu(null); setSeg('tous') }} />
-              </div>
+              {/* RECETTE-OUTILS-1 (T5) — plus de « Réinitialiser » en bloc isolé : un lien
+                  « Réinitialiser les filtres » (dans le corps de l'outil), visible seulement quand un
+                  filtre diffère du défaut (parcelle focalisée OU état ≠ défaut). */}
+              {(parcelIdu || seg !== (moduleKey === 'promesses' ? 'mort' : 'tous')) && (
+                <div className="mt-1 flex justify-start">
+                  <Bouton niveau="lien" ton="ambre" data-permis-reset-filtres
+                    onClick={() => { setParcelIdu(null); setSeg(moduleKey === 'promesses' ? 'mort' : 'tous') }}>
+                    Réinitialiser les filtres
+                  </Bouton>
+                </div>
+              )}
             </>
           )
         })()}
@@ -1193,6 +1198,9 @@ export function M08() {
     const c = code.trim(); if (c.length < 10) return
     setIdu(c); setSource(src)
     setTempsPinIdu(c)   // épingle le contour de LA parcelle sur les deux fonds
+    // RECETTE-OUTILS-1 (point 25) — la parcelle désignée (saisie OU clic carte) OUVRE SA fiche parcelle
+    // (avant : seule l'épingle était posée → aucune fiche, ou la fiche fantôme d'un outil précédent).
+    useApp.getState().select(c)
     if (coords) { setFlyTo({ center: coords, zoom: 18 }); return }
     try { const f = await getFiche(c); if (f.coords) setFlyTo({ center: f.coords, zoom: 18 }) } catch { /* parcelle recentrée au mieux */ }
   }
@@ -1202,7 +1210,7 @@ export function M08() {
   }, [parcelPrefill])   // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => setTempsPinIdu(null), [])   // eslint-disable-line react-hooks/exhaustive-deps
   // RECETTE-1 (F3) — Réinitialiser : vide la parcelle épinglée + rend les deux entrées + remet l'année ancienne au défaut.
-  const resetAll = () => { setIdu(''); setSource(null); setTempsPinIdu(null); setCmpLeft('bm-ortho-1950') }
+  const resetAll = () => { setIdu(''); setSource(null); setTempsPinIdu(null); setCmpLeft('bm-ortho-1950'); useApp.getState().select(null) }
 
   // DA-FIX-2 Lot 2 (DA-004) — OMNIBOX PERMANENTE : le champ « désigner la parcelle » reste EN TÊTE,
   // même une fois la parcelle choisie (plus de bandeau + « changer » qui la masquaient). La frise des
@@ -1212,13 +1220,12 @@ export function M08() {
       <Banner>La <b>parcelle d'abord</b> : son IDU, une adresse, ou <b>cliquez-la sur la carte</b>. Puis
         choisissez l'année à revoir — l'« après » est toujours aujourd'hui.</Banner>
       <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
-        {/* RECETTE-2 (T3) — Réinitialiser SEUL sur sa ligne (haut-droite) ; le libellé vient EN DESSOUS. */}
+        {/* RECETTE-OUTILS-1 (T5) — « Réinitialiser » retiré au profit de « Changer de parcelle ». */}
         <div className="flex flex-col gap-1.5">
-          {idu && <div className="flex justify-end"><Reinitialiser onReset={resetAll} /></div>}
           <p className="label-caps text-[9.5px]">Quelle parcelle voir évoluer ?</p>
         </div>
         {/* RECETTE-1 (F2) — EntreeParcelle : adresse/IDU OU clic carte, l'une grise l'autre. */}
-        <EntreeParcelle source={source}
+        <EntreeParcelle source={source} picked={idu} onChanger={resetAll}
           onPick={(id, src) => void designer(id, src)} />
       </div>
       {!idu ? (
@@ -1393,7 +1400,8 @@ export function M09() {
   // OUTILS-FIX-4 D1/D2 — l'état du service (disponible/indisponible) et le plafond du jour (avec le reste)
   // sont lus À L'OUVERTURE, affichés avant toute saisie — plus seulement découverts au moment d'envoyer.
   const statut = useQuery({ queryKey: ['courrier-statut'], queryFn: getCourrierStatut, staleTime: 60_000 })
-  const demandes = useQuery({ queryKey: ['courrier-demandes'], queryFn: getCourrierDemandes, enabled: step === 3 })
+  // RECETTE-OUTILS-1 (point 47) — la requête « Vos demandes » (getCourrierDemandes) est retirée avec
+  // l'encart : les demandes se consultent depuis Projets → Mes courriers.
   // COURRIER-2 Lot 3 — le courrier est COMPOSÉ serveur (ouverture A→E sur les faits) ; l'étape ② est un
   // APERÇU (lecture seule) du 1ᵉʳ destinataire — même texte que le PDF. « Ne pas reformuler » (Vic).
   const apercu = useQuery({ queryKey: ['courrier-apercu', dest[0]?.idu], enabled: step === 2 && !!dest[0],
@@ -1448,7 +1456,7 @@ export function M09() {
       ) : statut.data ? (
         <div data-courrier-indispo className="flex items-start gap-1.5 rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-[11px] text-txt-mut">
           <span className="mt-[4px] h-1.5 w-1.5 shrink-0 rounded-full bg-txt-dim" />
-          <span>{statut.data.raison ?? "L'envoi postal n'est pas encore disponible — la demande est enregistrée."}</span>
+          <span>{statut.data.raison ?? "La demande est enregistrée — LABUSE procède à l'envoi."}</span>
         </div>
       ) : null}
       {/* stepper 3 étapes */}
@@ -1517,7 +1525,10 @@ export function M09() {
               </div>
               {apercu.data.verso.length > 0 && (
                 <details className="rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-[10.5px] text-txt-mut">
-                  <summary className="cursor-pointer text-txt-dim">Au dos — synthèse de la parcelle</summary>
+                  {/* RECETTE-OUTILS-1 (point 46) — doublon de titre retiré : le libellé du dépliant
+                      devient neutre (« Au dos ») ; le seul titre « Synthèse de la parcelle » est celui
+                      du verso lui-même (généré côté serveur). */}
+                  <summary className="cursor-pointer text-txt-dim">Au dos</summary>
                   <div className="mt-1 whitespace-pre-wrap">{apercu.data.verso.join('\n')}</div>
                 </details>
               )}
@@ -1594,7 +1605,7 @@ export function M09() {
                   CHASSE-APP-FIX-2 (point 1) — tant que le service est un bouchon, on ne reprend PAS la
                   prestation tarifée : la raison serveur dit que la demande est seulement enregistrée. */}
               {statut.data && !statut.data.disponible
-                ? ` ${statut.data.raison ?? "L'envoi postal n'est pas encore disponible — la demande est enregistrée."}`
+                ? ` ${statut.data.raison ?? "La demande est enregistrée — LABUSE procède à l'envoi."}`
                 : statut.data?.tarif_unitaire_eur != null
                 ? <> {demande.n} courrier{demande.n > 1 ? 's' : ''} × {fmtEur2(statut.data.tarif_unitaire_eur)} = <b className="text-txt-mut">{fmtEur2(statut.data.tarif_unitaire_eur * demande.n)} TTC</b> — impression, mise sous pli, affranchissement et suivi compris.</>
                 : ' LABUSE vous rappelle sous 24 h ouvrées avec le tarif — impression, mise sous pli, affranchissement et suivi compris.'}
@@ -1608,19 +1619,8 @@ export function M09() {
             {pdfBusy ? 'Génération…' : '⬇ Télécharger l’aperçu PDF (relecture)'}</Bouton>
           {pdfErr && <p data-courrier-pdf-err className="text-[10.5px] text-st-ecartee">{pdfErr}</p>}
 
-          {/* OUTILS-1 A4 — récap des demandes du client : N° + volume + communes, SANS état interne
-              (le suivi d'exécution reste chez LABUSE). La vue complète est « Projets → Mes courriers ». */}
-          {(demandes.data?.demandes.length ?? 0) > 0 && (
-            <div className="mt-1 flex flex-col gap-1">
-              <p className="label-caps text-[9px]">Vos demandes</p>
-              {demandes.data!.demandes.slice(0, 5).map((d) => (
-                <div key={d.id} className="flex items-baseline justify-between gap-2 text-[10.5px]">
-                  <span className="min-w-0 truncate text-txt-mut">n° {d.rang_compte ?? d.id} · {d.n} courrier{d.n > 1 ? 's' : ''}{d.communes ? ` · ${d.communes}` : ''}</span>
-                  <span className="shrink-0 font-mono text-[9.5px] text-txt-dim">{String(d.ts).slice(0, 10)}</span>
-                </div>
-              ))}
-            </div>
-          )}
+          {/* RECETTE-OUTILS-1 (point 47) — encart « Vos demandes » retiré du Courrier : les demandes se
+              voient depuis Projets (« Projets → Mes courriers »). */}
 
           {/* CHASSE-APP-FIX-2 (point 4 S) — le retour de l'étape 3 (Envoi) mène à l'étape PRÉCÉDENTE
               (2 · Relecture), plus directement à l'étape 1 : on peut reculer d'un pas. */}
@@ -1661,6 +1661,13 @@ export function M10() {
     setPaste('')
   }
   const retirer = (t: string) => setLot((l) => l.filter((x) => x !== t))
+  // RECETTE-OUTILS-1 (T4) — clic carte (MapView pose carteOutilIdu quand l'outil « risques » est actif)
+  // → on AJOUTE au lot, exactement comme une saisie, puis on consomme le signal.
+  const carteOutilIdu = useApp((s) => s.carteOutilIdu)
+  const setCarteOutilIdu = useApp((s) => s.setCarteOutilIdu)
+  useEffect(() => {
+    if (carteOutilIdu) { ajouter(carteOutilIdu); setCarteOutilIdu(null) }
+  }, [carteOutilIdu])   // eslint-disable-line react-hooks/exhaustive-deps
   const run = useMutation({ mutationFn: () => modDueDiligence(lot.join('\n')) })
   const d = run.data
   const iduxResolus = (d?.parcelles ?? []).map((p) => p.idu)
