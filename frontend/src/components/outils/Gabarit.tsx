@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { getGabarit, type GabaritResult, type GabGeom } from '../../lib/api'
+import { getGabarit, docGabaritUrl, type GabaritResult, type GabGeom } from '../../lib/api'
+import { useOuvrirDocument } from '../../lib/ouvrirDocument'   // RECETTE-OUTILS-1 (34) — export = doc Gabarit
 import { fmtInt } from '../../lib/format'
 import { CAPACITE_MAX_MENTION_COURTE } from '../../lib/capaciteMax'
 import { useApp } from '../../store/useApp'
@@ -192,7 +193,24 @@ export function Gabarit() {
   })
   const res = q.data
   useMapLayers(res, terrain3d, batiVisible)
+  // RECETTE-OUTILS-1 (point 34 / T6) — export PDF = le document « Gabarit » de Docs (même générateur).
+  const { ouvrir, enCours } = useOuvrirDocument()
+  // RECETTE-OUTILS-1 (point 33) — « Vue par défaut » : recentre sur la parcelle, orientation initiale
+  // (bearing 0, pitch 55), même cadrage que l'entrée en 3D.
+  const vueParDefaut = () => {
+    const m = (window as unknown as { __labuse_map?: { fitBounds: (b: number[][], o?: unknown) => void; easeTo: (o: unknown) => void } }).__labuse_map
+    if (!m) return
+    const bb = bboxOf(res?.contourGeoJSON ?? res?.zoneImplantationGeoJSON ?? null)
+    if (bb) m.fitBounds(bb, { padding: 80, bearing: 0, pitch: 55, duration: 600, maxZoom: 19 })
+    else m.easeTo({ bearing: 0, pitch: 55, duration: 600 })
+  }
 
+  // RECETTE-OUTILS-1 (point 31) — lever la contradiction « ✓ Risques intégrés » vs « PPR — analyse »
+  // listé parmi les règles NON intégrées : si une règle PPR est non intégrée, la famille « risques » ne
+  // doit plus s'afficher comme pleinement intégrée (✓). On distingue alors les zones d'exclusion
+  // (géométriques, appliquées) de l'analyse du règlement PPR (non intégrée, listée ci-dessous).
+  const pprNonIntegre = (res?.nonIntegratedRules ?? []).some(
+    (n) => /PPR/i.test(String(n.label ?? '')) || /PPR/i.test(String(n.source?.document ?? '')))
   const familles = res?.coverage
     ? [
         { k: 'reculs', ok: res.coverage.reculs, label: 'Reculs vérifiés' },
@@ -200,7 +218,10 @@ export function Gabarit() {
           label: res.hauteurStatus === 'not_integrated' ? 'Hauteur non intégrée (prospect L ≥ H)' : 'Hauteur vérifiée' },
         { k: 'emprise', ok: res.coverage.emprise,
           label: res.plafondEmpriseStatus === 'absent' ? 'Emprise vérifiée — sans plafond' : 'Emprise vérifiée' },
-        { k: 'risques', ok: res.coverage.risques, label: 'Risques intégrés' },
+        { k: 'risques', ok: res.coverage.risques && !pprNonIntegre,
+          label: pprNonIntegre
+            ? 'Aléas : zones d’exclusion intégrées — analyse du règlement PPR non intégrée (ci-dessous)'
+            : 'Risques intégrés' },
       ]
     : []
   const nbVerifiees = familles.filter((f) => f.ok).length
@@ -403,10 +424,30 @@ export function Gabarit() {
               qui déborde) était ÉCRASÉ par flex-shrink → hauteur 15 px au lieu des 32 px de la DA
               (« hors DA, mal aligné »). Avec shrink-0 il reprend sa hauteur de bouton standard,
               aligné à gauche comme les cartes au-dessus. */}
-          <Bouton niveau="secondaire" ton="vert" data-gabarit-3d
-            onClick={() => setTerrain3d(!terrain3d)} className="shrink-0 self-start">
-            {terrain3d ? 'Revenir en 2D' : 'Voir en 3D'}
-          </Bouton>
+          <div className="flex flex-wrap items-center gap-2">
+            <Bouton niveau="secondaire" ton="vert" data-gabarit-3d
+              onClick={() => setTerrain3d(!terrain3d)} className="shrink-0 self-start">
+              {terrain3d ? 'Revenir en 2D' : 'Voir en 3D'}
+            </Bouton>
+            {/* RECETTE-OUTILS-1 (point 33) — en 3D : bouton « Vue par défaut » (recentre sur la parcelle,
+                orientation initiale) + mention « Ctrl + glisser pour tourner ». */}
+            {terrain3d && (
+              <Bouton niveau="secondaire" ton="vert" data-gabarit-vue-defaut onClick={vueParDefaut} className="shrink-0 self-start">
+                Vue par défaut
+              </Bouton>
+            )}
+            {/* RECETTE-OUTILS-1 (point 34 / T6) — « Exporter en PDF » = document « Gabarit » de Docs
+                (même générateur back `/gabarit/{idu}.pdf`). Absent si le calcul est incomplet. */}
+            {target && res?.status === 'ok' && (
+              <Bouton niveau="secondaire" ton="vert" data-gabarit-export
+                disabled={enCours != null} onClick={() => ouvrir(docGabaritUrl(target), 'gabarit')} className="shrink-0 self-start">
+                Exporter en PDF
+              </Bouton>
+            )}
+          </div>
+          {terrain3d && (
+            <p className="text-[10px] text-txt-dim">Ctrl + glisser pour tourner / incliner la vue 3D.</p>
+          )}
         </>
       )}
     </div>

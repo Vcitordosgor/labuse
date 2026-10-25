@@ -437,9 +437,7 @@ interface AppState {
   compareIdus: string[]
   compareOpen: boolean
   // SOCLE (refonte 13 outils) — la sélection à comparer SURVIT à la sortie de l'outil (retour sans
-  // perte), mais pas éternellement : TTL 15 min. Horodatage du dernier ajout/retrait ; à la
-  // réouverture (openCompare) ou à un nouvel ajout, une sélection périmée est vidée avant de servir.
-  compareTouchedAt: number | null
+  // RECETTE-OUTILS-1 (point 23) — plus de persistance 15 min : sélection de session, vidée à la sortie.
   addToCompare: (idu: string) => void
   removeFromCompare: (idu: string) => void
   clearCompare: () => void
@@ -646,8 +644,6 @@ interface AppState {
 // plein écran. `ouvrirEtude` pose le drapeau APRÈS ce spread (il ne spread pas CLOSE_OVERLAYS) → pas
 // d'auto-fermeture.
 const CLOSE_OVERLAYS = { compareOpen: false, comparePicking: false, communesTableOpen: false, evolutionTableOpen: false, radarTableOpen: false, densifierTableOpen: false, sourceLine: null, outilRetour: [] as OutilRetour[], etudeIdus: null as string[] | null } as const
-// SOCLE — la sélection de comparaison est gardée 15 min après le dernier geste (retour sans perte).
-const COMPARE_TTL_MS = 15 * 60 * 1000
 
 export const useApp = create<AppState>((set, get) => ({
   tuyauActives: {},
@@ -906,38 +902,27 @@ export const useApp = create<AppState>((set, get) => ({
     radarEcran: 'veille-foncier', surveillancePorte: 'interne', outilsOpen: false, ...CLOSE_OVERLAYS }),
   compareIdus: [],
   compareOpen: false,
-  compareTouchedAt: null,
-  // SOCLE : un ajout sur une sélection PÉRIMÉE (> 15 min) repart de zéro plutôt que d'empiler sur du
-  // vieux — sinon « revenir sous 15 min » et « recommencer après » se mélangeraient. On restampe.
-  // COMPARAISON (refonte) : un ajout N'OUVRE PLUS le tableau — l'outil est ancré dans Outils, le
-  // panneau montre les chips et c'est le bouton « Comparer (n/3) » qui ouvre l'overlay. Le clic-carte
-  // (picking) ne fait qu'alimenter la sélection.
+  // RECETTE-OUTILS-1 (point 23 / T1) — plus de persistance 15 min : la sélection Comparer est de SESSION
+  // (en mémoire), vidée quand on quitte l'outil (CompareModule au démontage). Plus de `compareTouchedAt`,
+  // plus de TTL. Un ajout n'ouvre pas le tableau (bouton « Comparer (n/3) »), le clic-carte alimente.
   addToCompare: (idu) => set((s) => {
-    const frais = s.compareTouchedAt != null && Date.now() - s.compareTouchedAt <= COMPARE_TTL_MS
-    const base = frais ? s.compareIdus : []
-    const next = base.includes(idu) ? base : [...base, idu].slice(0, 3)
-    return { compareIdus: next, view: 'cartes', compareTouchedAt: Date.now() }
+    const next = s.compareIdus.includes(idu) ? s.compareIdus : [...s.compareIdus, idu].slice(0, 3)
+    return { compareIdus: next, view: 'cartes' }
   }),
-  removeFromCompare: (idu) => set((s) => { const r = s.compareIdus.filter((x) => x !== idu); return { compareIdus: r, compareOpen: r.length > 0 && s.compareOpen, compareTouchedAt: Date.now() } }),
+  removeFromCompare: (idu) => set((s) => { const r = s.compareIdus.filter((x) => x !== idu); return { compareIdus: r, compareOpen: r.length > 0 && s.compareOpen } }),
   // vider NE coupe PAS le picking : on reste dans l'outil, prêt à recliquer la carte.
-  clearCompare: () => set({ compareIdus: [], compareOpen: false, compareTouchedAt: null }),
+  clearCompare: () => set({ compareIdus: [], compareOpen: false }),
   setCompareOpen: (v) => set({ compareOpen: v }),   // le picking reste piloté par l'outil (CompareModule)
-  // COMPARAISON (refonte) : openCompare ouvre désormais l'OUTIL « comparer » (panneau gauche hôte),
-  // ancré dans Outils, carte active à droite — plus l'overlay direct. TTL 15 min appliqué à la
-  // sélection ; picking ON (le clic-carte ajoute). Le tableau, lui, s'ouvre via « Comparer (n/3) ».
-  openCompare: () => set((s) => {
-    const frais = s.compareTouchedAt != null && Date.now() - s.compareTouchedAt <= COMPARE_TTL_MS
-    const ids = frais ? s.compareIdus : []
-    return {
-      module: 'comparer', view: 'cartes', outilsOpen: false, selectedIdu: null,
-      moduleMap: { idus: [], extra: null }, moduleFiche: {},
-      parcours: null, openProjet: null, iaRestitution: null, surveillanceOpen: false,
-      ...CLOSE_OVERLAYS,                    // table Communes/Densifier fermées, compareOpen=false
-      comparePicking: true,                 // le panneau est là → clic-carte ajoute
-      compareIdus: ids,
-      compareTouchedAt: ids.length ? s.compareTouchedAt : null,
-    }
-  }),
+  // openCompare ouvre l'OUTIL « comparer » (panneau gauche hôte), ancré dans Outils, carte active à
+  // droite ; picking ON (le clic-carte ajoute). Le tableau s'ouvre via « Comparer (n/3) ».
+  openCompare: () => set((s) => ({
+    module: 'comparer', view: 'cartes', outilsOpen: false, selectedIdu: null,
+    moduleMap: { idus: [], extra: null }, moduleFiche: {},
+    parcours: null, openProjet: null, iaRestitution: null, surveillanceOpen: false,
+    ...CLOSE_OVERLAYS,                    // table Communes/Densifier fermées, compareOpen=false
+    comparePicking: true,                 // le panneau est là → clic-carte ajoute
+    compareIdus: s.compareIdus,
+  })),
   comparePicking: false,
   setComparePicking: (comparePicking) => set({ comparePicking }),
   communesTableOpen: false,

@@ -22,7 +22,8 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 
 import { ParcelInput } from '../ParcelInput'
 import { ListPaginationFooter, usePagination } from '../ListPagination'
-import { etudeZone, etudeZoneEntreprises, getMoteursConfig, parcelAt, type EtudeZoneInput } from '../../lib/api'
+import { docEtudeZoneUrl, etudeZone, etudeZoneEntreprises, getMoteursConfig, parcelAt, type EtudeZoneInput } from '../../lib/api'
+import { useOuvrirDocument } from '../../lib/ouvrirDocument'
 import type { EtudeZoneDestinations, EtudeZoneResult, ZoneEntreprises, ZoneFamille } from '../../lib/types'
 import { iduCourt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
@@ -66,6 +67,9 @@ export function EtudeZone() {
   const [porteZone] = useState<'chalandise' | 'particuliere'>('chalandise')
   const [cible, setCible] = useState<{ idu: string; label: string } | null>(null)
   const [rayonKm, setRayonKm] = useState(1)
+  // RECETTE-OUTILS-1 (point 29 / T6) — « Exporter en PDF » : MÊME document que la carte Docs « Étude de
+  // zone » (même générateur /etude-zone.pdf), via useOuvrirDocument (blob + erreurs FR + état d'attente).
+  const { ouvrir, enCours } = useOuvrirDocument()
   // CHASSE-DONNEES-FIX-1 (suite 2, E-77) — rayons SERVIS (config/moteurs.yaml), plus une liste en dur
   // divergente du back : on n'offre QUE les rayons que le back calcule en cercle (sinon il retombe sur
   // l'isochrone — un rayon affiché « 3 km » donnerait un périmètre ≠ cercle, cf. E-69).
@@ -222,7 +226,18 @@ export function EtudeZone() {
           {/* ÉTAPE 2 — LIRE LA ZONE, en 7 sections repliables (ETUDE-ZONE-2 Lot A). Chaque section
               porte sa ligne de source · millésime en bas ; Population + Économie ouvertes par défaut. */}
           <StepHead n={2} titre="Lire la zone" sous="population · économie · immobilier · foncier · contraintes · équipements · dynamique" />
-          <SectionTitle>{enTete}</SectionTitle>
+          <div className="flex items-start justify-between gap-2">
+            <SectionTitle>{enTete}</SectionTitle>
+            {/* RECETTE-OUTILS-1 (point 29 / T6) — export du MÊME PDF que la carte Docs « Étude de zone »
+                (docEtudeZoneUrl = /etude-zone.pdf) : un seul générateur, branché sur le run servi. */}
+            {cible && (
+              <Bouton niveau="secondaire" ton="vert" data-etude-export
+                disabled={enCours != null || !cible}
+                onClick={() => ouvrir(docEtudeZoneUrl(cible.idu, rayonKm), 'etude-zone')}>
+                Exporter en PDF
+              </Bouton>
+            )}
+          </div>
 
           {/* 1 · POPULATION */}
           <Section id="population" titre="Population" openSecs={openSecs} setOpenSecs={setOpenSecs}

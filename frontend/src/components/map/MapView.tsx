@@ -1233,7 +1233,12 @@ export function MapView() {
       // pitch la laisse « décalée vers la droite », sous le panneau. Sans fiche/centroïde : simple pitch.
       const centroid = selCentroidRef.current
       const ficheOuverte = useApp.getState().selectedIdu != null
-      if (centroid && ficheOuverte) {
+      if (centroid && useApp.getState().module === 'gabarit') {
+        // RECETTE-OUTILS-1 (point 32) — « Voir en 3D » du Gabarit : la carte reste CENTRÉE sur la parcelle
+        // (pas le décalage −200 px de la fiche, qui la poussait hors champ → « écran noir trop zoomé »),
+        // avec un zoom adapté et l'inclinaison appliquée.
+        m.easeTo({ center: centroid, zoom: Math.max(m.getZoom(), 17.5), pitch: Math.max(m.getPitch(), 55), duration: 800 })
+      } else if (centroid && ficheOuverte) {
         m.easeTo({ center: centroid, pitch: Math.max(m.getPitch(), 55), offset: [-200, 0], duration: 800 })
       } else if (m.getPitch() < 20) {
         m.easeTo({ pitch: 55, duration: 800 })

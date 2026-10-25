@@ -12,8 +12,9 @@ import { PERIM_POTENTIEL_COURT, PERIM_RESIDUEL_COURT, PERIM_SECTION_CADASTRALE }
 import { CAPACITE_MAX_MENTION_COURTE } from '../../lib/capaciteMax'
 import { bandeMeta, signalMeta } from '../../lib/status'   // COMPARER-2 §4 — bande + Signal (comme l'Analyse)
 import { useApp } from '../../store/useApp'
-import { ParcelInput } from '../ParcelInput'   // OUTILS-FIX-2 D1 — saisie clavier (IDU/adresse/réf courte)
-import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
+import { EntreeParcelle } from '../outils/EntreeParcelle'   // RECETTE-OUTILS-1 (point 17) — bloc de saisie unique
+import { useOuvrirDocument } from '../../lib/ouvrirDocument'   // RECETTE-OUTILS-1 (point 21) — export PDF = Docs
+import { docComparatifUrl } from '../../lib/api'
 import { Squelette } from '../Loading'
 import { EmptyState } from '../States'
 import { Bouton } from '../ui/Bouton'
@@ -178,89 +179,47 @@ export function CompareModule() {
     return () => { setComparePicking(false); setModuleMap({ idus: [], extra: null }) }
   }, [setComparePicking, setModuleMap])
   useEffect(() => { setModuleMap({ idus: compareIdus, extra: null }) }, [compareIdus, setModuleMap])
+  // RECETTE-OUTILS-1 (point 23 / T1) — quitter l'outil VIDE la sélection (plus de persistance 15 min).
+  useEffect(() => () => { clearCompare() }, [])   // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-      {/* RECETTE-2 (T3) — Réinitialiser SEUL sur sa ligne (haut-droite) ; l'intro vient EN DESSOUS,
-          pleine largeur (plus côte à côte). Présent ssi au moins une parcelle est choisie. */}
-      <div className="flex flex-col gap-1.5">
-        {n > 0 && <div className="flex justify-end"><Reinitialiser onReset={clearCompare} /></div>}
-        {/* RECETTE-OUTILS-1 (point 18) — phrase « Jusqu'à 3 parcelles… » retirée. */}
-      </div>
-
-      {/* ① cliquez les parcelles sur la carte + chips */}
-      <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
-        <div className="flex items-start gap-2">
-          <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-mint text-[9px] font-medium text-mint">1</span>
-          <div className="min-w-0 flex-1">
-            {/* RECETTE-2 (D5) — invite EXPLICITE et dynamique (« Cliquez la Nᵉ parcelle … ou saisissez-la »),
-                pas seulement le chip « + 1 libre ». */}
-            <p className="text-[11px] font-medium text-txt">{n >= 3
-              ? '3 parcelles sélectionnées'
-              : `Cliquez la ${n + 1}${n === 0 ? 'ʳᵉ' : 'ᵉ'} parcelle sur la carte ou saisissez-la`}</p>
-            <p className="text-[10px] text-txt-dim">la carte reste visible à droite — ou depuis une fiche → « Comparer »</p>
-            {/* OUTILS-FIX-2 D1 — saisie clavier (IDU / adresse / référence courte), même composant que partout ;
-                le clic-carte reste actif en parallèle. Limite 3 côté Comparer.
-                RECETTE-2 (D5) — key={n} : la barre se VIDE après chaque ajout (remontage) pour la suivante. */}
-            {n < 3 && (
-              <div className="mt-1.5">
-                <ParcelInput key={n} dataAttr="compare-idu" withCarte={false}
-                  placeholder="Adresse, IDU ou référence (BW0917)"
-                  onPick={(idu) => { if (!compareIdus.includes(idu)) addToCompare(idu) }} />
-              </div>
-            )}
-            <div className="mt-1.5 flex flex-wrap gap-1.5">
-              {compareIdus.map((i, k) => (
-                <span key={i} data-compare-chip className="flex items-center gap-1.5 rounded-lg border border-mint/50 bg-surface-2 px-2 py-1 font-mono text-[11px] text-txt">
-                  <b className="text-mint">{k + 1}</b>{iduCourt(i)}
-                  <button onClick={() => removeFromCompare(i)} className="text-txt-dim hover:text-st-ecartee" aria-label="Retirer">✕</button>
-                </span>
-              ))}
-              {Array.from({ length: Math.max(0, 3 - n) }).map((_, k) => (
-                <span key={`libre-${k}`} className="rounded-lg border border-dashed border-line-2 px-2 py-1 text-[11px] text-txt-dim">+ 1 libre</span>
-              ))}
-            </div>
-            {/* O9(e) — ajouter la parcelle courante (fiche ouverte) sans avoir à la re-cliquer sur la carte.
-                Visible seulement s'il y a une parcelle courante, qu'elle n'est pas déjà dans la liste, et qu'il reste une place. */}
-            {selectedIdu && !compareIdus.includes(selectedIdu) && n < 3 && (
-              <Bouton niveau="secondaire" ton="vert" data-compare-ajouter-courante onClick={() => addToCompare(selectedIdu)}
-                className="mt-1.5 flex w-full">
-                + Ajouter la parcelle courante ({iduCourt(selectedIdu)})
-              </Bouton>
-            )}
-            {/* RECETTE-1 (F3) — « tout vider » remplacé par le Réinitialiser unique en tête du panneau. */}
-          </div>
+      {/* RECETTE-OUTILS-1 (point 17 / T5) — bloc de saisie UNIQUE, comme les autres outils (barre
+          « Adresse, IDU ou référence » + « — ou — cliquez une parcelle sur la carte »). Jusqu'à 3
+          parcelles en puces retirables. Plus de « + 1 libre », plus d'étape numérotée, plus de
+          « Réinitialiser » en tête. */}
+      <p className="text-[11px] font-medium text-txt">Jusqu'à 3 parcelles — barre ou clic carte.</p>
+      {n < 3 && (
+        <EntreeParcelle source={null}
+          onPick={(idu) => { if (!compareIdus.includes(idu)) addToCompare(idu) }} />
+      )}
+      {n > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {compareIdus.map((i, k) => (
+            <span key={i} data-compare-chip className="flex items-center gap-1.5 rounded-lg border border-mint/50 bg-surface-2 px-2 py-1 font-mono text-[11px] text-txt">
+              <b className="text-mint">{k + 1}</b>{iduCourt(i)}
+              <button onClick={() => removeFromCompare(i)} className="text-txt-dim hover:text-st-ecartee" aria-label="Retirer">✕</button>
+            </span>
+          ))}
         </div>
-      </div>
-
-      {/* ② ouvrez le tableau */}
-      <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
-        <div className="flex items-center gap-2">
-          <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-mint text-[9px] font-medium text-mint">2</span>
-          <p className="text-[11px] font-medium text-txt">Ouvrez le tableau</p>
-        </div>
-        <Bouton niveau="primaire" ton="vert" data-compare-ouvrir onClick={() => setCompareOpen(true)} disabled={n < 1}
-          className="mt-1.5 w-full">
-          Comparer ({n}/3)
+      )}
+      {/* ajouter la parcelle courante (fiche ouverte) sans la re-cliquer sur la carte */}
+      {selectedIdu && !compareIdus.includes(selectedIdu) && n < 3 && (
+        <Bouton niveau="secondaire" ton="vert" data-compare-ajouter-courante onClick={() => addToCompare(selectedIdu)} className="w-full">
+          + Ajouter la parcelle courante ({iduCourt(selectedIdu)})
         </Bouton>
-      </div>
-
-      {/* ③ revenez à la carte */}
-      <div className="flex items-start gap-2 px-1 text-txt-dim">
-        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-line-2 text-[9px]">3</span>
-        <p className="text-[10.5px] leading-snug">Revenez à la carte — <b>✕ ou Échap</b> — votre sélection reste dans ce panneau.</p>
-      </div>
-
-      <div className="mt-auto rounded-lg bg-surface-2 px-3 py-2 text-[9.5px] leading-snug text-txt-dim">
-        En quittant l'outil, le tableau se ferme ; votre sélection est <b>gardée 15 min</b> si vous revenez.
-      </div>
+      )}
+      <Bouton niveau="primaire" ton="vert" data-compare-ouvrir onClick={() => setCompareOpen(true)} disabled={n < 1} className="w-full">
+        Comparer ({n}/3)
+      </Bouton>
     </div>
   )
 }
 
 // ── LE TABLEAU (surimpression plein écran) — contenu/colonnes INCHANGÉS (mandat point 4).
 export function ComparePanel() {
-  const { compareIdus, clearCompare, removeFromCompare, select, setCompareOpen } = useApp()
+  const { compareIdus, removeFromCompare, select, setCompareOpen } = useApp()
+  const { ouvrir, enCours } = useOuvrirDocument()   // RECETTE-OUTILS-1 (point 21) — export = doc Comparatif
   const q = useQuery({ queryKey: ['compare', compareIdus.join(',')], queryFn: () => getCompare(compareIdus), enabled: compareIdus.length > 0 })
   const parcels = q.data?.parcels ?? []
 
@@ -284,10 +243,15 @@ export function ComparePanel() {
         <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
           <p className="label-caps">Comparer les parcelles ({compareIdus.length}/3)</p>
           <div className="flex items-center gap-3 text-[11px]">
-            {/* OUTILS-FIX-3 Lot E — bouton ⬇ CSV retiré (aucun export CSV dans l'app pour l'instant). */}
-            {/* retour à la carte pour continuer le picking (le panneau + la sélection restent) */}
-            <Bouton niveau="lien" data-compare-carte onClick={() => setCompareOpen(false)}>◉ Retour à la carte</Bouton>
-            <Bouton niveau="lien" onClick={clearCompare}>Tout vider</Bouton>
+            {/* RECETTE-OUTILS-1 (point 21 / T6) — « Exporter en PDF » = le document « Comparatif » de Docs
+                (même générateur back `/comparatif.pdf`). Requiert ≥ 2 parcelles. */}
+            <Bouton niveau="secondaire" ton="vert" data-compare-export
+              disabled={enCours != null || compareIdus.length < 2}
+              onClick={() => ouvrir(docComparatifUrl(compareIdus), 'comparatif')}>
+              Exporter en PDF
+            </Bouton>
+            {/* RECETTE-OUTILS-1 (point 19) — « Retour à la carte » et « Tout vider » retirés : seule la
+                croix ferme le tableau (et ramène à la carte). */}
             <button onClick={() => setCompareOpen(false)} className="text-txt-mut hover:text-txt" aria-label="Fermer">✕</button>
           </div>
         </div>
