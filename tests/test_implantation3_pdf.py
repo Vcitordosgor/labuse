@@ -80,12 +80,14 @@ def test_huit_sections_et_jamais_conforme(session_reelle, nom, idus):
 
 @pytest.mark.parametrize("nom,idus", list(TEMOINS.items()))
 def test_numero_deterministe(session_reelle, nom, idus):
-    """Le n° de document est STABLE par assiette+date → le PDF se rejoue à l'identique."""
+    """ETUDE-V6-6 (item 10) — le n° de document est dérivé du study_id (EF-<8>), STABLE par ÉTUDE et
+    INDÉPENDANT de la date (deux dates → même numéro) ; identique à l'écran (study_id tronqué)."""
     from labuse.exports import etude_faisabilite as ef
     pl = _payload(session_reelle, idus)
     a = ef.rendu_etude(pl, genere_le="18/10/2026")["numero"]
-    b = ef.rendu_etude(pl, genere_le="18/10/2026")["numero"]
-    assert a == b and re.match(r"^EF-\d{8}-\d{4}$", a), f"{nom} — n° non déterministe : {a} / {b}"
+    b = ef.rendu_etude(pl, genere_le="23/10/2026")["numero"]   # autre date → MÊME numéro (study_id)
+    assert a == b and re.match(r"^EF-[0-9a-f]{8}$", a), f"{nom} — n° non déterministe : {a} / {b}"
+    assert a == (pl.get("study_id") or "")[:11]                # identique à l'écran
 
 
 @pytest.mark.skipif(not shutil.which("pdftotext"), reason="pdftotext (poppler) indisponible")

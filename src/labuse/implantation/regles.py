@@ -12,7 +12,7 @@ hauteur à l'égout sinon au faîtage.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Optional
 
 
@@ -168,6 +168,49 @@ class DistanceConstructions:
 
 
 @dataclass(frozen=True)
+class EspacesVerts:
+    """ETUDE-V6-2 (Lot 3, correction §2) — quota d'espaces verts (part de la parcelle à végétaliser),
+    éventuellement « hors stationnement »."""
+    validee: bool
+    pct: Optional[float] = None
+    hors_stationnement: bool = True
+    article: Optional[str] = None
+    page_pdf: Optional[int] = None
+    citation: Optional[str] = None
+
+    @property
+    def citation_complete(self) -> Optional[str]:
+        if not self.validee:
+            return None
+        t = [x for x in (f"PLU art. {self.article}" if self.article else None,
+                         f"p. {self.page_pdf}" if self.page_pdf is not None else None) if x]
+        tete = " · ".join(t)
+        return f"{tete} — « {self.citation} »" if self.citation else (tete or None)
+
+
+@dataclass(frozen=True)
+class MargePlantee:
+    """ETUDE-V6-2 (Lot 3, correction §2) — bande plantée en périphérie : largeur mini sur une fraction du
+    linéaire des limites, hors limites mitoyennes."""
+    validee: bool
+    largeur_m: Optional[float] = None
+    pct_lineaire: Optional[float] = None
+    hors_mitoyennete: bool = True
+    article: Optional[str] = None
+    page_pdf: Optional[int] = None
+    citation: Optional[str] = None
+
+    @property
+    def citation_complete(self) -> Optional[str]:
+        if not self.validee:
+            return None
+        t = [x for x in (f"PLU art. {self.article}" if self.article else None,
+                         f"p. {self.page_pdf}" if self.page_pdf is not None else None) if x]
+        tete = " · ".join(t)
+        return f"{tete} — « {self.citation} »" if self.citation else (tete or None)
+
+
+@dataclass(frozen=True)
 class ReglesZone:
     insee: str
     zone: str
@@ -181,6 +224,8 @@ class ReglesZone:
     stationnement: BaremeStationnement
     distance_constructions: DistanceConstructions
     prospect: Optional[Regle] = None   # règle de hauteur RELATIVE non chiffrable (ex. L ≥ h/2)
+    espaces_verts: "EspacesVerts" = field(default_factory=lambda: EspacesVerts(validee=False))
+    marge_plantee: "MargePlantee" = field(default_factory=lambda: MargePlantee(validee=False))
 
     @property
     def hauteur_plafond(self) -> Regle:
@@ -287,6 +332,20 @@ def charger(insee: str, zone: str) -> ReglesZone:
     retraits = reg.get("retraits") or {}
     pleine = reg.get("pleine_terre") or {}
     mix = reg.get("mixite") or {}
+    # ETUDE-V6-2 (Lot 3, correction §2) — espaces verts + marge plantée (servables si statut valide).
+    ev = ((reg.get("espaces_verts") or {}).get("pct")) or {}
+    ev_valide = ev.get("statut") == "valide" and isinstance(ev.get("pct"), (int, float))
+    espaces_verts = EspacesVerts(
+        validee=bool(ev_valide), pct=float(ev["pct"]) if ev_valide else None,
+        hors_stationnement=bool(ev.get("hors_stationnement", True)),
+        article=ev.get("article"), page_pdf=ev.get("page_pdf"), citation=ev.get("citation"))
+    mp = ((reg.get("marge_plantee") or {}).get("bande")) or {}
+    mp_valide = mp.get("statut") == "valide" and isinstance(mp.get("largeur_m"), (int, float))
+    marge_plantee = MargePlantee(
+        validee=bool(mp_valide), largeur_m=float(mp["largeur_m"]) if mp_valide else None,
+        pct_lineaire=float(mp["pct_lineaire"]) if (mp_valide and mp.get("pct_lineaire") is not None) else None,
+        hors_mitoyennete=bool(mp.get("hors_mitoyennete", True)),
+        article=mp.get("article"), page_pdf=mp.get("page_pdf"), citation=mp.get("citation"))
 
     mix_valide = mix.get("statut") == "valide"
     mixite = Mixite(
@@ -309,4 +368,6 @@ def charger(insee: str, zone: str) -> ReglesZone:
         stationnement=_bareme(reg.get("stationnement") or {}),
         distance_constructions=_distance_constructions(retraits),
         prospect=_detect_prospect(reg),
+        espaces_verts=espaces_verts,
+        marge_plantee=marge_plantee,
     )

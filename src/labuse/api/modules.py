@@ -1990,16 +1990,23 @@ class EtudeIn(BaseModel):
     type_projet: str = Field("collectif")
     objectif: str = Field("equilibre")
     stationnement: str = Field("aerien")
+    # ETUDE-V6-5 — nombre de niveaux de sous-sol (hypothèse explicite : 1 par défaut, 2 au choix).
+    niveaux_sous_sol: int | None = None
     terrain: str = Field("libere")
     programme: dict | None = None
     hypotheses: dict | None = None
 
 
-# CHASSE-DOCS-FIX-1 (E-04) — borne DURE de 30 s sur le moteur d'implantation : au-delà, le client
-# reçoit un message honnête (jamais un HTTP 000 / timeout silencieux). Le moteur n'est PAS optimisé ;
-# il tourne dans un thread avec SA PROPRE session (SQLAlchemy n'est pas thread-safe), et on ABANDONNE
-# l'attente à 30 s (le thread finit en arrière-plan, son résultat est ignoré).
-_ETUDE_TIMEOUT_S = 30
+# CHASSE-DOCS-FIX-1 (E-04) — borne DURE sur le moteur d'implantation : au-delà, le client reçoit un
+# message honnête (jamais un HTTP 000 / timeout silencieux). Le moteur n'est PAS optimisé ; il tourne
+# dans un thread avec SA PROPRE session (SQLAlchemy n'est pas thread-safe), et on ABANDONNE l'attente à
+# la borne (le thread finit en arrière-plan, son résultat est ignoré).
+# ETUDE-V6-2 (Lot 3) — borne portée de 30 à 60 s (le sous-sol + la capacité maximale peuvent demander
+# davantage sur une assiette lourde). Tout ce qui attend DERRIÈRE est aligné sur ~75 s (15 s de marge) :
+# nginx proxy_read/send_timeout (deploy/nginx/labuse.conf), uvicorn --timeout-keep-alive
+# (deploy/systemd/labuse.service) et le timeout du fetch front (frontend/src/lib/api.ts). Cf.
+# docs/deploiement/etude-v6-2-timeouts.md pour le geste de production (Vic).
+_ETUDE_TIMEOUT_S = 60
 _ETUDE_TROP_LOURDE = {
     "erreur": "etude_trop_lourde",
     "message": "Étude trop lourde pour cette parcelle, non générée. Essayez une assiette plus simple "
@@ -2037,6 +2044,65 @@ def _attach_au_ouverture(db: Session, payload: dict, idus) -> None:
         if au:                       # première parcelle AU marquée de l'assiette
             payload["au_ouverture"] = au
             return
+
+
+class EtudeParcellesIn(BaseModel):
+    # ETUDE-V6 (Lot A, étape 1) — valide l'assiette AVANT le moteur : faits par parcelle, union,
+    # contiguïté (graphe, frontière partagée > tolérance), signaux et sources. Rapide, pas d'implantation.
+    idus: list[str] = Field(default_factory=list)
+
+
+@router.post("/etude/parcelles")
+def etude_parcelles(body: EtudeParcellesIn, db: Session = Depends(get_db)) -> dict:
+    """ETUDE-V6 (étape 1) — valide 1 à 8 parcelles pour l'Étude de faisabilité : commune, référence,
+    contenance (surface de référence), surface réelle et écart, zone PLU, qualité géométrique ; union
+    (surface réelle, périmètre, aire cadastrale, écart) ; CONTIGUÏTÉ par graphe d'adjacence (frontière
+    partagée > 0,5 m — jamais un sommet, jamais les centroïdes ; réévaluée à chaque appel) ; signaux
+    (communes/zones/ravine, propriétaires présumés) ; sources + millésimes. Ne conclut jamais sur la
+    constructibilité. ValueError → 400 (référence introuvable / > 8), jamais un faux chiffre."""
+    from ..implantation.assiette import valider_parcelles
+
+    for idu in (body.idus or []):
+        _check_idu(idu)
+    try:
+        return valider_parcelles(db, body.idus)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+
+
+class EtudeStationnementIn(BaseModel):
+    # ETUDE-V6 (Lot C, étape 2) — la règle de stationnement applicable à l'assiette et à la destination.
+    idus: list[str] = Field(default_factory=list)
+    type_projet: str = Field("collectif")
+
+
+@router.post("/etude/stationnement")
+def etude_stationnement(body: EtudeStationnementIn, db: Session = Depends(get_db)) -> dict:
+    """ETUDE-V6 (étape 2) — règle de stationnement par (commune, zone, destination) : règle générale du
+    PLU (unité, article, millésime, état) + plafond national L151-35 « sous condition d'éligibilité »
+    pour les destinations L151-34. Sans moteur. ValueError → 400."""
+    from ..implantation.service import stationnement_payload
+
+    for idu in (body.idus or []):
+        _check_idu(idu)
+    try:
+        return stationnement_payload(db, body.idus, body.type_projet)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+
+
+@router.post("/etude/jauge")
+def etude_jauge(body: EtudeStationnementIn, db: Session = Depends(get_db)) -> dict:
+    """ETUDE-V6-2 (Lot 4, étape 3) — enveloppe ESTIMÉE avant le calcul (zone d'implantation × niveaux ×
+    coef plancher, moins le sol du stationnement). Rapide (pas de moteur). ValueError → 400."""
+    from ..implantation.service import jauge_payload
+
+    for idu in (body.idus or []):
+        _check_idu(idu)
+    try:
+        return jauge_payload(db, body.idus, body.type_projet)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
 
 
 @router.post("/etude")
@@ -2077,7 +2143,7 @@ def _archiver_etude(db: Session, request: Request, body: dict, payload: dict,
     from .tenant import current_compte
     recette = {
         "config": {k: body.get(k) for k in ("idus", "type_projet", "objectif", "programme",
-                                             "hypotheses", "stationnement", "terrain", "scenario_ref")},
+                                             "hypotheses", "stationnement", "niveaux_sous_sol", "terrain", "scenario_ref")},
         "scenario_retenu": retenu_ref,
         "numero": numero,
         "moteur": payload.get("moteur"),
@@ -2121,7 +2187,9 @@ def etude_pdf(body: EtudePdfIn, request: Request, db: Session = Depends(get_db))
     _attach_au_ouverture(db, payload, body.idus)   # vérif #2 — caveat AU dans le PDF comme à l'écran
     genere_le = today_reunion().strftime("%d/%m/%Y")
     try:
-        rendu = ef.rendu_etude(payload, genere_le=genere_le, scenario_ref=scenario_ref)
+        # ETUDE-V6 (Lot E) — le lotissement a son propre document (pas de scénario d'implantation).
+        rendu = (ef.rendu_lotissement(payload, genere_le=genere_le) if payload.get("lotissement")
+                 else ef.rendu_etude(payload, genere_le=genere_le, scenario_ref=scenario_ref))
     except ValueError as exc:
         # aucun scénario : le document n'a rien à montrer (400, jamais un PDF vide ni un faux chiffre).
         raise HTTPException(400, str(exc))

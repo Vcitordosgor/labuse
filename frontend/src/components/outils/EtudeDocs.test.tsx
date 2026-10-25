@@ -27,9 +27,20 @@ describe('LOT A — l\'Étude quitte les Outils', () => {
 })
 
 describe('LOT A — overlay Étude dans Docs', () => {
+  // ETUDE-V6 (Lot A) — l'overlay monte désormais le parcours 3 étapes (EtudeV6). L'étape 1 valide
+  // l'assiette par POST /modules/etude/parcelles → on sert une réponse valide à ce mock.
+  const PARCELLES_OUT = {
+    parcelles: [{ idu: '97404000AW0099', commune: "L'Étang-Salé", section: 'AW', numero: '99', reference: 'AW 99',
+      contenance_cadastrale_m2: 501, surface_reelle_m2: 504.3, ecart_m2: 3.3, zone_plu: 'UA', zone_famille: 'U',
+      qualite_geometrique: 'régulière', polsby_popper: 0.77, largeur_inscriptible_m: 20, disparue_le: null }],
+    union: { surface_reelle_m2: 504.3, perimetre_m: 90, aire_cadastrale_m2: 501, ecart_m2: 3.3, nb_parcelles: 1 },
+    contiguite: { ok: true, composantes: [['97404000AW0099']], aretes: [], tolerance_m: 0.5, message: null },
+    signaux: { communes_differentes: null, zones_differentes: null, ravine_traversante: null, proprietaires_presumes: null, proprietaires_statut: 'non vérifié' },
+    sources: { cadastre: { source: 'Cadastre (API Carto PCI)', millesime: 'PCI', derniere_synchro: '2026-10-11' } },
+  }
   beforeEach(() => { useApp.setState({ etudeIdus: null }); global.fetch = vi.fn(async (u: string) =>
-    (String(u).includes('/moteurs/config')
-      ? { ok: true, json: async () => ({ assemblage_max_ecran: 8 }) }
+    (String(u).includes('/modules/etude/parcelles')
+      ? { ok: true, json: async () => PARCELLES_OUT }
       : { ok: true, json: async () => ({}) }) as never) as unknown as typeof fetch })
   afterEach(() => { vi.restoreAllMocks(); useApp.setState({ etudeIdus: null }) })
 
@@ -49,16 +60,16 @@ describe('LOT A — overlay Étude dans Docs', () => {
     expect(useApp.getState().etudeIdus).toBeNull()
   })
 
-  it('fermé → ne rend rien ; ouvert → l\'écran d\'étude (titre + config, même composant M22)', async () => {
+  it('fermé → ne rend rien ; ouvert → le parcours 3 étapes (titre + étape 1 + assiette)', async () => {
     const { container, rerender } = renderEtude()
     expect(container.querySelector('[data-etude-ecran]')).toBeNull()   // etudeIdus null → rien
     useApp.getState().ouvrirEtude(['97404000AW0099'])
     rerender(<QueryClientProvider client={qc()}><EtudeEcran /></QueryClientProvider>)
     await waitFor(() => expect(container.querySelector('[data-etude-ecran]')).toBeTruthy())
     expect(container.textContent).toContain('Étude de faisabilité')
-    // l'assiette (initialIdus) amorce la sélection locale → la puce de parcelle + le bouton Générer
-    expect(container.querySelector('[data-etude-chip]')).toBeTruthy()
-    expect(container.querySelector('[data-etude-generer]')).toBeTruthy()
+    expect(container.textContent).toContain('Choisissez votre terrain')          // étape 1
+    // l'assiette (initialIdus) amorce la validation → la référence de la parcelle apparaît
+    await waitFor(() => expect(container.textContent).toContain('AW 99'))
   })
 
   it('« ← Fermer » referme l\'overlay', async () => {

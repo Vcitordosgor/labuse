@@ -2137,12 +2137,14 @@ export interface EtudeScenario {
   resume: { logements: number; places: number; sdp_m2: number }
   // recette Vic — en une ligne, ce qui plafonne la capacité (stationnement, prospect non chiffré…).
   limite_capacite?: string | null
-  controles_compte: { reussi: number; echoue: number; non_effectue: number; non_applicable: number }
+  controles_compte: { reussi: number; echoue: number; non_effectue: number; non_applicable: number; a_confirmer?: number }
   programme: {
     par_type: Record<string, number>; shab_par_type_m2: Record<string, number>
     shab_estimee_m2: number; ratio_shab_sdp: number | null
     mixite_applicable: boolean | null; logements_aides_imposes: number | null
     sdp_aidee_imposee_m2: number | null
+    // ETUDE-V6-7 (item 2) — surface tenue = Σ (logements DESSINÉS × surface) ; source unique écran/PDF.
+    surface_tenue_m2?: number | null
   }
   distribution_niveaux: Array<{ niveau: number; par_type: Record<string, number>; sdp_m2: number }>
   stationnement: {
@@ -2150,6 +2152,13 @@ export interface EtudeScenario {
     m2_par_place: number | null; surface_stationnement_m2: number
     note: { allee_unique: boolean; deux_cotes: boolean; raison: string } | null
     acces: { distance_angle_m: number; note: string } | null
+    // ETUDE-V6-2 (Lot 3) — parking enterré : mode, places au −1, emprise du sous-sol, rampe au sol.
+    mode?: 'aerien' | 'sous_sol'; places_sous_sol?: number; emprise_sous_sol_m2?: number; rampe_m2?: number
+    sur_dalle_m2?: number   // surface au-dessus du sous-sol retranchée de la pleine terre
+    rampe_detail?: { rampe_profondeur_m: number; rampe_pente_pct: number; rampe_longueur_m: number; rampe_largeur_m: number } | null
+    // ETUDE-V6-4/5 — plan du niveau −1 (et −2) : capacité d'un niveau, niveaux CHOISIS, répartition dessinée.
+    places_sous_sol_par_niveau?: number; niveaux_sous_sol?: number
+    places_niveau_moins1?: number; places_niveau_moins2?: number
   }
   surfaces_mesurees_m2: Record<string, number>
   emprise_sol_m2: number; pleine_terre_m2: number
@@ -2167,6 +2176,8 @@ export interface EtudeScenario {
 export interface EtudeRegle {
   nom: string; valeur: number | null; unite: string | null; validee: boolean
   article: string | null; page_pdf: number | null; citation: string | null; seuil_m2?: number | null
+  // ETUDE-V6-4 (item 3) — lien doc PLU officiel + millésime, portés sur chaque règle (« Lire l'article »).
+  source_url?: string | null; millesime?: string | null
 }
 export interface EtudePayload {
   moteur: { livrable: string; version_conventions: string; etiquette: string; crs_dessin: string; crs_carte: string }
@@ -2174,7 +2185,7 @@ export interface EtudePayload {
     idus: string[]; commune: string; insee: string; zone: string; type_projet: string
     objectif: string; programme_mode: 'propose' | 'saisi'; stationnement: string; terrain: string
   }
-  regles: { zone: string; insee: string; lignes: EtudeRegle[] }
+  regles: { zone: string; insee: string; commune?: string | null; millesime?: string | null; source_url?: string | null; lignes: EtudeRegle[] }
   terrain: {
     contenance_totale_m2: number; aire_dessin_m2: number; zone_implantation_m2: number
     has_voie: boolean; note_limites: string | null; contraintes: Record<string, number>
@@ -2183,20 +2194,203 @@ export interface EtudePayload {
   }
   hypotheses: {
     profondeur_m: number; coef_plancher_habitable: number; surfaces: Record<string, number>
+    varangues?: Record<string, number>
     largeur_coursive_m: number; hauteur_etage_m: number; place_m: [number, number]
     allee_largeur_m: number; etiquette: string
   }
   programme_saisi: { demande: Record<string, number> } | null
   statut_global: string; message: string | null; scenarios: EtudeScenario[]
+  // ETUDE-V6 (Lot B) — le résultat qui explique : verdict global (3 libellés), 3 variantes mandat
+  // (votre programme / optimisation / alternative) et le dépassement (si la demande ne tient pas).
+  verdict?: string
+  variantes?: EtudeVariante[]
+  depassement?: EtudeDepassement | null
+  // ETUDE-V6-2 (Lot 2) — capacité MAXIMALE stable (calculée une fois, répartition équilibrée, donc
+  // indépendante de la demande), la demande confrontée à ce maximum, et les facteurs limitants classés
+  // par impact (le stationnement prouvé par contrefactuel « sans places »).
+  capacite_maximale?: {
+    logements: number; par_type: Record<string, number>; sdp_m2: number
+    niveaux: number; niveaux_label: string; forme: string; places: number
+    surface_stationnement_m2: number; repartition: string; note: string
+    stationnement_mode?: 'aerien' | 'sous_sol'
+  } | null
+  facteurs_limitants?: Array<{
+    facteur: string; impact_logements: number; limitant: boolean
+    preuve: string; mesure: string; detail: string
+  }>
+  // ETUDE-V6-4 (items 10/11/13) — LA phrase « ce qui limite », calculée côté serveur : l'écran et le PDF
+  // la lisent telle quelle, donc disent exactement les mêmes mots.
+  facteur_limitant?: string | null
+  // ETUDE-V6-4 (item 10) — en sous-sol, pourquoi la hauteur plafonne (une phrase), écran = PDF.
+  facteur_limitant_detail?: string | null
+  confrontation?: {
+    demande_logements: number; capacite_maximale_logements: number
+    tient: boolean; reserve_logements: number
+  } | null
+  // ETUDE-V6-2 (Lot 3, correction §4) — règles d'aménagement non modélisées par le PLU calibré (ex. UA
+  // espaces verts 20 %, marge plantée) : signalées « non vérifiées », jamais appliquées en douce.
+  regles_non_verifiees?: Array<{ nom: string; exemple: string; statut: string; note: string }>
+  // ETUDE-V6 (Lot C) — régimes de stationnement (règle générale PLU + plafond L151-35 à confirmer) et
+  // capacité sous le régime réduit (si une destination L151-34 est choisie et le plafond s'applique).
+  stationnement_regimes?: EtudeStationnementRegimes
+  capacite_reduite?: {
+    logements: number | null; places: number | null; ratio_par_logement: number
+    reference: string; statut: string; note: string
+  } | null
+  // ETUDE-V6 (Lot D) — type « Lotissement » : plan de division (pas des scénarios d'implantation).
+  type_projet?: string
+  lotissement?: EtudeLotissement
+  logements_hypothese?: { demande: Record<string, number> } | null
+  // ETUDE-V6 (Lot E) — study_id stable (PDF = écran) + bilan surfacique clos (pas de double comptabilisation).
+  study_id?: string
+  bilan_surfacique?: {
+    contenance_m2: number; zone_constructible_m2?: number; hors_zone_m2?: number
+    decomposition_close?: boolean; plan_sans_chevauchement?: boolean; clos: boolean
+  }
+}
+export interface EtudeLotissement {
+  commune: string; insee: string; zone: string | null
+  // ETUDE-V6-6 (item 2) — 0 lot n'est jamais muet : raison + remède.
+  raison?: string | null; remede?: string | null
+  // ETUDE-V6-6 (item 1) — règles PLU servies de la zone, chacune sourcée.
+  regles_sourcees?: Array<{ nom: string; valeur: string; article: string | null; citation?: string | null; servie: boolean }>
+  assiette_m2: number; contenance_m2: number; net_constructible_m2: number; lot_cible_m2: number
+  tableau_lots: {
+    nombre: number; surface_moyenne_m2: number | null; surface_min_m2: number | null
+    surface_max_m2: number | null; surfaces_m2: number[]; acces: string
+  }
+  voirie_m2: number; voirie_largeur_m: number; voirie_config: string; voirie_largeur_source: string
+  pleine_terre: {
+    exigee_pct: number; exigee_m2: number; estimee_m2: number; jardins_privatifs_m2: number
+    communs_m2: number; ces_pct: number; resultat: string; article: string | null
+  }
+  controles: Array<{ nom: string; regle: string; mesure: string; resultat: string; citation: string | null; detail: string | null }>
+  stationnement: { par_lot: number; article: string | null; servie?: boolean; total_lots: number; visiteurs_estimes: number; note: string }
+  ebc: { m2: number; statut: string }
+  ppr_rouge_m2: number
+  raccordements: Array<{ reseau: string; distance_m: number | null; statut: string }>
+  regime_procedural: string
+  min_lot_plu: { existe: boolean; note: string }
+  bilan_surfacique: {
+    assiette_m2: number; lots_m2: number; voirie_m2: number; communs_m2: number
+    ppr_rouge_m2: number; ebc_m2: number; hors_zone_m2: number; somme_m2: number; ecart_m2: number; clos: boolean
+  }
+  geojson: GeoJSON.FeatureCollection
+  note: string
+}
+export interface EtudeStationnementRegimes {
+  general: {
+    mode: string; validee: boolean; ratio_par_logement: number | null
+    article: string | null; page_pdf: number | null; millesime: string | null
+    citation: string | null; applique: boolean; etat: string
+    regle_courte?: string | null   // ETUDE-V6-3 (item 3) — règle en clair pour le récap
+    source_url?: string | null     // ETUDE-V6-4 (item 3) — lien doc PLU officiel
+  }
+  plafond_national: {
+    categorie: string; reference: string; ratio_plafond: number
+    condition_tcsp_sous_800m: boolean; distance_tcsp_m: number | null
+    eligibilite_categorie: string; statut: string; applicable_si_eligible: boolean
+    citation: string; note: string
+  } | null
+}
+export interface EtudeStationnementOut {
+  commune: string; insee: string; zone: string; type_projet: string
+  regimes: EtudeStationnementRegimes
+  // ETUDE-V6-4 (item 5) — mixité sociale servie dès l'étape 2. (item 3) — lien doc + millésime.
+  mixite?: { quota_pct: number | null; seuil_m2: number | null; article: string | null; page_pdf: number | null; citation: string | null; source_url?: string | null; millesime?: string | null } | null
+}
+export const postEtudeStationnement = (idus: string[], type_projet: string) =>
+  j<EtudeStationnementOut>('/modules/etude/stationnement', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idus, type_projet }),
+  })
+// ETUDE-V6-2 (Lot 4) — enveloppe ESTIMÉE à l'étape 3, avant le calcul complet (rapide, sans moteur).
+export interface EtudeJaugeOut {
+  estimable: boolean; commune?: string; zone?: string
+  zone_implantation_m2?: number; niveaux?: number; niveaux_label?: string
+  coef_plancher?: number; m2_par_place_aerien?: number; places_par_type?: Record<string, number>
+  hauteur_egout_m?: number | null; ces_pct?: number | null
+  // ETUDE-V6-7 (item 6) — bande de bâtiment (vraie forme) + capacité des places au −1 + disponibilité sous-sol.
+  bande_batiment_m2?: number; sous_sol_places_par_niveau?: number
+  sous_sol_dispo?: { disponible: boolean; raison: string }
+  manquant: string[]; etiquette: string; note?: string
+}
+export const postEtudeJauge = (idus: string[], type_projet: string) =>
+  j<EtudeJaugeOut>('/modules/etude/jauge', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idus, type_projet }),
+  })
+export interface EtudeGrandeur { valeur_m2: number | null; statut: string; detail: string }
+// Variante PRÉSENTE = tous les champs d'un scénario + rôle/verdict/grandeurs/écart. Une variante
+// ABSENTE (mandat §C) ne porte que role/role_label + absente=true + raison ; on garde les champs
+// scénario typés (on NE les lit QU'APRÈS avoir vérifié `!absente`).
+export interface EtudeVariante extends EtudeScenario {
+  role: 'votre_programme' | 'optimisation' | 'alternative'
+  role_label: string
+  absente?: boolean
+  raison?: string | null
+  verdict: string
+  // ETUDE-V6-7 (item 4) — en sous-sol, comment le sol libéré est utilisé (phrase chiffrée).
+  sol_libere_note?: string | null
+  // ETUDE-V6-7 (suite) — déviation du prorata exact pour tenir dans les places du −1 (phrase chiffrée).
+  prorata_note?: string | null
+  grandeurs: {
+    sol_restant: EtudeGrandeur; emprise_mobilisable: EtudeGrandeur
+    sdp_autorisee: EtudeGrandeur; programme_envisageable: EtudeGrandeur
+  }
+  ecart: {
+    demande_total: number; variante_total: number; reserve_logements: number
+    par_type_demande: Record<string, number>; par_type_variante: Record<string, number>; prouve: boolean
+  } | null
+}
+export interface EtudeDepassement {
+  demande: Record<string, number>; tiennent: Record<string, number>; manquent: Record<string, number>
+  total_demande: number; total_tiennent: number
 }
 export interface EtudeIn {
   idus: string[]; type_projet?: string; objectif?: string; stationnement?: string; terrain?: string
+  // ETUDE-V6-5 — nombre de niveaux de sous-sol (1 par défaut, 2 au choix) ; sans objet en aérien.
+  niveaux_sous_sol?: number
   programme?: { mode: 'propose' | 'saisi'; lignes?: Array<{ type: string; nombre: number; surface_m2?: number }> } | null
-  hypotheses?: { profondeur_m?: number; coef_plancher_habitable?: number; surfaces?: Record<string, number> } | null
+  hypotheses?: { profondeur_m?: number; coef_plancher_habitable?: number; surfaces?: Record<string, number>; varangues?: Record<string, number>; lot_cible_m2?: number; voirie_largeur_m?: number } | null
 }
+// ETUDE-V6-2 (Lot 3) — l'étude est bornée à 60 s côté serveur ; le fetch front abandonne à ~75 s
+// (aligné sur nginx/Caddy), simple garde-fou réseau : en pratique le serveur répond AVANT (résultat
+// ou message « Étude trop lourde »). Au-delà, l'abort remonte une erreur plutôt qu'un onglet figé.
+export const ETUDE_FETCH_TIMEOUT_MS = 75_000
 export const postEtude = (body: EtudeIn) =>
   j<EtudePayload>('/modules/etude', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    signal: AbortSignal.timeout(ETUDE_FETCH_TIMEOUT_MS),
+  })
+
+// ETUDE-V6 (Lot A, étape 1) — valide l'assiette AVANT le moteur : faits par parcelle, union,
+// contiguïté (graphe, frontière partagée > 0,5 m), signaux et sources. Rapide, pas d'implantation.
+export interface EtudeParcelle {
+  idu: string; commune: string; section: string; numero: string; reference: string
+  contenance_cadastrale_m2: number | null; surface_reelle_m2: number | null; ecart_m2: number | null
+  zone_plu: string | null; zone_famille: string | null
+  qualite_geometrique: string; polsby_popper: number | null; largeur_inscriptible_m: number | null
+  disparue_le: string | null
+  // ETUDE-V6-2 (Lot 5) / V6-3 (item 2) / V6-4 (item 3) — règles PLU de la zone, préfixe normalisé + extrait + lien.
+  regles_plu?: Array<{ nom: string; valeur: number; unite: string; article: string | null; page_pdf: number | null
+    commune?: string | null; zone?: string | null; millesime?: string | null
+    citation?: string | null; source_url?: string | null }> | null
+}
+export interface EtudeParcellesOut {
+  parcelles: EtudeParcelle[]
+  union: {
+    surface_reelle_m2: number | null; perimetre_m: number | null
+    aire_cadastrale_m2: number; ecart_m2: number | null; nb_parcelles: number
+  }
+  contiguite: { ok: boolean; composantes: string[][]; aretes: [string, string, number][]; tolerance_m: number; message: string | null }
+  signaux: {
+    communes_differentes: string[] | null; zones_differentes: string[] | null
+    ravine_traversante: boolean | null; proprietaires_presumes: number | null; proprietaires_statut: string
+  }
+  sources: Record<string, { source: string; millesime: string | null; derniere_synchro: string | null }>
+}
+export const postEtudeParcelles = (idus: string[]) =>
+  j<EtudeParcellesOut>('/modules/etude/parcelles', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idus }),
   })
 
 // IMPLANTATION-3 — le document « Étude de faisabilité » (PDF). Généré par POST (la configuration
@@ -2207,6 +2401,7 @@ export interface EtudePdfIn extends EtudeIn { scenario_ref?: string | null; empr
 export const ETUDE_PDF_URL = '/modules/etude/pdf'
 export const etudePdfInit = (body: EtudePdfIn): RequestInit => ({
   method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  signal: AbortSignal.timeout(ETUDE_FETCH_TIMEOUT_MS),   // ETUDE-V6-2 (Lot 3) — même garde-fou que l'écran
 })
 
 // ── Projets (copilote-projet) — l'objet persistant de l'entretien de cadrage ──

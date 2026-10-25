@@ -27,11 +27,21 @@ const COUL: Record<string, [string | null, string]> = {
   voie: [null, '#B45309'],
   ppr_rouge: ['#DC2626', '#991B1B'],
   ppr_bleue: ['#3B82F6', '#1D4ED8'],
+  // ETUDE-V6 (Lot D) — lotissement : lot à bâtir (vert clair, liseré mint) et EBC (vert boisé translucide).
+  lot: ['#ECFDF3', '#15803D'],
+  ebc: ['#16A34A', '#166534'],
+  // ETUDE-V6-4 (item 9) — niveau −1 DESSINÉ : emprise enterrée (contour), places et allée du sous-sol,
+  // rampe d'accès. Dessinés sur la vraie géométrie, projetés comme le reste du plan.
+  sous_sol_emprise: ['#1E293B', '#64748B'],
+  place_ss: ['#0F1311', '#8A948E'],
+  allee_ss: ['#2E3631', '#3A423C'],
+  rampe: ['#78350F', '#F59E0B'],
 }
 // ordre de dessin (z-order) — contexte terrain d'abord, objets du plan ensuite (identique au PDF).
-const Z = ['parcelle', 'assiette', 'ppr_rouge', 'ppr_bleue', 'zone', 'espace_libre', 'allee',
-  'acces', 'place', 'batiment_emprise', 'coursive', 'noyau', 'module', 'voie']
-const TRANSLUCIDE = new Set(['zone', 'ppr_rouge', 'ppr_bleue', 'espace_libre'])
+const Z = ['parcelle', 'assiette', 'ppr_rouge', 'ppr_bleue', 'zone', 'espace_libre', 'ebc',
+  'sous_sol_emprise', 'allee', 'allee_ss', 'acces', 'place', 'place_ss', 'rampe', 'lot',
+  'batiment_emprise', 'coursive', 'noyau', 'module', 'voie']
+const TRANSLUCIDE = new Set(['zone', 'ppr_rouge', 'ppr_bleue', 'espace_libre', 'ebc', 'sous_sol_emprise'])
 
 function ringsOf(g: Geometry): number[][][] {
   if (g.type === 'Polygon') return g.coordinates as number[][][]
