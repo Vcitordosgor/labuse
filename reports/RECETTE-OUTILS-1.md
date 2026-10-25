@@ -62,22 +62,22 @@ Build servi sous `/socle/`, navigation en session via le store exposé `window._
 - **5** ⚖️🔎 — **ARBITRAGE : chemin « Procédure & changement » CONSERVÉ.** « Simuler l'ouverture » est **sourcé et reproductible** : `ratio_analogie` = médiane de `sdp_residuelle/surface` sur les parcelles **U de la commune** (run servi, `moteurs.py:84-91`) ; SDP estimée = surface × ratio (`:134`) ; bascules = SDP est. ≥ 300 ET tier ∈ {ecartee, a_creuser} (`:106-107`). Le champ `methode` **affiche la formule et le ratio exact au client** et renvoie `calculable:false` **sans aucun chiffre** s'il n'existe pas de parcelle U comparable (`:92-96, :145-154`) — ce n'est donc pas « un chiffre flou non documenté ». L'info « procédure PLU en cours » (Sudocuh) reste servie sur la fiche commune/parcelle (inchangé). **Recommandation** (non appliquée) : rendre la phrase `methode` plus visible à l'écran, pas seulement au survol.
 
 ### Permis
-- **6** ⛔ — fiche unique en bulle carte. Non fait. Aujourd'hui une fiche (drawer `PermitDrawer`, `ModulePanel.tsx:366-472`) s'ouvre en overlay à droite au clic liste/carte ; la refonte « une seule fiche en bulle sur la carte, mise en page une-ligne-par-donnée » est un chantier UI à part entière (non entamé, risqué sans captures dédiées).
-- **7** ⛔ — clic liste = même bulle + surlignage. Non fait (dépend du 6). À noter : le clic liste et le clic carte ouvrent **déjà** le même `PermitDrawer` (même `setOpen(permitId)`), donc pas de doublon de données ; reste la refonte « bulle carte » + surlignage de la ligne.
+- **6** ✅ — fiche permis UNIQUE en **bulle sur la carte** (plus de drawer/modal en colonne). Fonction partagée `ouvrirBullePermis` (MapView), une ligne par donnée : nature (titre), statut (badge), destination, pétitionnaire, SIREN, lots, surface habitable, autorisé le, parcelle(s), « Voir la parcelle sur la carte », « Source : Sitadel (SDES) ». Ferme à la croix + au clic ailleurs. Capture `P6-7-permis-avant`(modal)/`apres`(bulle).
+- **7** ✅ — clic liste = MÊME bulle : zoome sur le permis, ouvre la bulle, **surligne la ligne** (`data-permis-actif`, bordure+fond mint). Plus aucun doublon (le modal est retiré). DOM après : bulle=1, modal=0, ligne active=1 (avant : bulle=0, modal=1).
 
 ### Communes
-- **8** ⛔ — Fiche en overlay par-dessus le tableau. Non fait. Le comportement actuel (`blocB.tsx:260`, `Communes.tsx:305`) ouvre déjà la fiche en overlay (`ContextePanel`) et masque le tableau (classe `hidden`) sans perdre tri/scroll ; reste à vérifier/garantir que « Comparaison communes » ferme la fiche quand elle est ouverte. Non vérifié en session.
-- **9** 🔎 — T2 sources Communes : documentées dans le tableau T2 (comparateur/évolution/Radar/acquisitions, toutes live).
-- **10** ⛔ — retirer l'encart « Méthode · Ancien & terrain : DVF publié… » (`moteurs.tsx:645`). Non fait (fichier partagé `moteurs.tsx` ; string identifiée, à retirer dans le lot Communes).
-- **11** ⛔ — Radar colonnes/zéros/agrégat/noms. Non fait. Constats confirmés par l'audit : `vendues_90j`/`taux_echec_pct` servis (non codés en dur mais « — » si n insuffisant) ; `derniere_capture_at` existe au modèle mais n'est pas affiché ; collecte en pause depuis le 06/10 → fenêtre « Nouv. 30 j » à dater ; « Les Trois-Bassins » = règle des articles. Corrections à faire.
+- **8** ✅ — la fiche commune s'ouvre **en overlay par-dessus le tableau** (`ContextePanel`, table masquée `hidden`, tri/scroll conservés — déjà en place) ; **ajout** : la porte « Comparaison communes » (et les autres tables) **ferme la fiche** ouverte (`setContexteCommune(null)`) pour que la table réapparaisse. Capture `P11-radar-apres` (contexte Communes).
+- **9** ✅🔎 — T2 sources Communes : tableau T2 (comparateur `/comparateur-communes`, évolution `/moteurs/barometre`, Radar `/radar/marche`, acquisitions `/communes/{c}/acquisitions-pm`), toutes live.
+- **10** ✅ — encart « Ancien & terrain : DVF publié jusqu'au … » retiré (`moteurs.tsx`).
+- **11** ✅⚖️ — Radar : (a) colonnes « Vend.90j » et « Échec » **retirées** — ARBITRAGE : non alimentées (0 sur les 24 communes ET l'île ; le back les dérive de `vendue_le`/clôtures que la pige ne capte pas → conforme au constat Vic « 0 partout » en prod). DOM après : en-têtes Vend.90j=0, Échec=0. (b) **date de dernière collecte** affichée en tête (`data-radar-capture`, présent). (c) « Toute l'île » = **somme vérifiée** (actives 83=83, nouv.30j 250=250 — aucun correctif). (d) « Les Trois-Bassins » → « **Trois-Bassins** » via `communePastille` (règle d'article, garde Le Port/Le Tampon/La Possession). DOM : « Les Trois-Bassins »=0, « Trois-Bassins »=2. Capture `P11-radar-apres`.
 
 ### Scan patrimoine
-- **12** ⛔ — défilement liste + accordéon des 4 chiffres. Non fait. Les 4 tuiles KPI (`ModulePanel.tsx:266-277`) sont toujours visibles ; la liste a `overflow-y-auto` mais les IDU sont `truncate` (coupe « AD 0548 »). À passer en accordéon fermé + corriger la coupe.
-- **13** ☑️ — « Retour » : libellé corrigé (T3, `Scan patrimoine`→`Retour`, `ScanPatrimoine.tsx:155/161/213`). Il appelle `setPorte(null)` → revient à l'écran des 2 portes (fonctionne). Capture dédiée du parcours non prise cette session.
-- **14** ⛔ — opérations en accordéons fermés + 2 Boutons charte. Non fait (`VeillePromoteurs.tsx:259-298`).
+- **12** ✅ — les 4 grands chiffres passent dans un accordéon « Chiffres clés » **fermé par défaut** (`data-m02-chiffres`, M02 dans ModulePanel) → place à la liste qui défile (`overflow-y-auto`). Fini « AD 0548 » coupé.
+- **13** ✅ — « Retour » fonctionne désormais à l'écran propriétaire (bug trouvé : `setPorte(null)` ne suffisait pas quand `owner` était non nul → écran inchangé ; corrigé en `setOwner(null)+setPorte(null)` → revient aux 2 portes). `ScanPatrimoine.tsx`.
+- **14** ✅ — opérations en **accordéons fermés par défaut** (chevron charte, DOM : opérations visibles=0 avant dépliage) ; « Voir son patrimoine » + « Sa frise » = 2 **Boutons charte côte à côte**. `VeillePromoteurs.tsx`. Capture `P14-scan-ops-apres`.
 
 ### Assemblage
-- **15** 🔎 — vérif calculs : **conformes au mandat** (endpoint testé, cf. état initial) : surface 2 153 = 685+402+1 066 ; SDP cumulée 2 162 > Σ individuelles (union, reculs internes supprimés — `note_sdp` le dit) ; ×2,43 = 2 162/890 ; charge −84 546 € / −39 €/m². ⛔ L'accordéon « Bilan » fermé par défaut (décision Vic) **non appliqué** (reste à faire dans `moteurs.tsx`).
+- **15** ✅🔎 — vérif calculs **conformes au mandat** (endpoint) : surface 2 153 = 685+402+1 066 ; SDP cumulée 2 162 > Σ individuelles 1 656 (union, reculs internes supprimés — `note_sdp` le dit) ; ×2,43 = 2 162/890 ; 1/3 chiffrables (`n_chiffrables`) ; 2 PM / 1 particulier ; charge −84 546 € / −39 €/m². **Appliqué** : le bloc rouge « Charge foncière cumulée (estimée) » + le paragraphe `note_sdp` (« calculés sur l'UNION… ») passent dans un accordéon « **Bilan** » **fermé par défaut** (`data-asm-bilan`) ; l'arrivée ne montre que le descriptif (surface, SDP cumulée, ×N, interlocuteurs/propriétaires).
 - **16** ✅ — le bouton « Étude de faisabilité de cet assemblage → » utilise le composant charte `<Bouton niveau="secondaire" ton="vert">` (`moteurs.tsx`). Capture `P16-assemblage-avant/apres`.
 
 ### Comparer
@@ -94,9 +94,9 @@ Build servi sous `/socle/`, navigation en session via le store exposé `window._
 - **25** ✅ — la parcelle désignée dans Remonter le temps ouvre désormais SA fiche : `designer()` appelle `select(c)` (`ModulePanel.tsx` M08), et `resetAll` referme la fiche. Combiné à T1 (plus de fiche fantôme). Captures `P38-*` (mécanisme fiche) + comportement vérifié.
 
 ### Étude de zone
-- **26** ⛔ — retirer la section 3 « Une activité (facultatif) » (`EtudeZone.tsx:569-581, 840-920`). Non fait (déclenche concurrents/chalandise — à retirer en notant la lecture perdue).
-- **27** ⛔ — marges des chevrons d'accordéon (`EtudeZone.tsx:795-817`, `Chevron.tsx`). Non fait.
-- **28** ⛔ — vérif que les rayons 0,5/1/2/5 km changent les résultats. Non fait (le refetch sur `rayonKm` existe, `EtudeZone.tsx:139-143` ; à prouver par captures aux 4 rayons).
+- **26** ✅ — section 3 « Une activité (facultatif) » retirée entièrement (champ « Activité étudiée », lien « parcourir par famille », `ActiviteLens`/`Concurrents`, états + paramètre `naf` de la requête). « Activité (destination) » en tête conservé. Lecture perdue (concurrents/chalandise par NAF) : notée ici, non réintroduite. DOM : « parcourir par famille »=0, « Activité étudiée »=0. Capture `P26-27-etude-apres`.
+- **27** ✅ — chevrons des accordéons passés au composant charte `Chevron` (marge `ml-1`, plus collés au bord). `EtudeZone.tsx`.
+- **28** ✅ — vérifié : les rayons changent bien les résultats (habitants 0,5 km=**1 610** · 1 km=**7 658** · 2 km=**25 664** · 5 km=**102 196** ; n_IRIS 6→18) — endpoint `/outils/etude-zone`. Aucun rayon inerte, aucun correctif. (Lecture bornée, pas un calcul géométrique lourd.)
 - **29** ⛔ — « Exporter en PDF » (cf. T6). Non fait (l'ancien bouton avait été retiré en RECETTE-2).
 - **30** ☑️ — accordéons de lecture **fermés par défaut** : `openSecs` initialisé à `new Set()` vide (plus d'ouverture d'office Population/Économie, `EtudeZone.tsx:177`). Vérifié code + tsc ; capture écran différée pour **ne pas déclencher le calcul chalandise/isochrone** (règle « aucun calcul géométrique lourd » du mandat).
 
@@ -115,10 +115,10 @@ Build servi sous `/socle/`, navigation en session via le store exposé `window._
 - **38** ✅ — Ensoleillement : la parcelle résolue ouvre sa fiche (`select(i)` dans `onPick`, fiche ouverte vérifiée DOM) ; lien « Ouvrir la fiche complète → » retiré ; « ← Prospection solaire » → « Retour ». Captures `P38-ensoleillement-avant/apres`.
 
 ### Blocs fonciers
-- **39** ⛔ — filtres directs à l'ouverture puis repliés après « Voir les parcelles » (`Blocs.tsx:184-189`). Non fait.
+- **39** ✅ — filtres **directs** à l'ouverture (sans en-tête d'accordéon), puis repliés en « › Filtres » **fermé** après « Voir les parcelles », avec le **résumé des filtres actifs** à droite (« Toute l'île · ≥ 2 parcelles »). `Blocs.tsx`. Capture `P41-blocs-listing-apres` (résumé présent).
 - **40** ✅ — « — ce qu'un promoteur ne voit pas parcelle par parcelle. » retiré (`Blocs.tsx:176`). Captures `P40-blocs-avant/apres`.
-- **41** ⛔ — listing variante B « Cartes » (maquette Vic). Non fait (refonte `Blocs.tsx` Carte). Note : « SDP ESTIMÉE » = `sdp_residuelle_m2` (somme des résiduels de fiche) — libellé à préciser.
-- **42** ⛔ — petit bouton « Scan patrimoine → » (aujourd'hui `Bouton` pleine largeur `Blocs.tsx:117-120`). Non fait.
+- **41** ✅ — listing **variante B « Cartes »** : par carte — chevron + propriétaire (15 px) + « Commune · SIREN » (bleu souligné) + pastille « N parcelles » ; 2 tuiles « SURFACE TOTALE » et « SDP **RÉSIDUELLE** ESTIMÉE » (libellé précisé : `sdp_residuelle_m2` = somme des résiduels de fiche, badge Estimé, valeur verte) ; zones PLU en puces + accordéon → parcelles (`BlocDetail`). Capture `P41-blocs-listing-apres`.
+- **42** ✅ — bouton « Scan patrimoine → » **petit** (contour vert, `h-[30px]`, 12 px), aligné à droite de la ligne des zones (plus pleine largeur). `Blocs.tsx`.
 
 ### Successions à venir
 - **43** ✅ — troncature corrigée : `truncate`/`flex-1` retirés, la ligne propriétaire passe en `flex-wrap items-baseline` → dénomination + **SIREN entier** (jamais coupé) et dirigeant+âge sur une 2ᵉ ligne au besoin ; la carte grandit en hauteur. Capture `P43-successions-apres` (« SOFIPAR HOLDING SOCIETE FINANCIERE DE PARTICIPATION · 383368716 » complet).
