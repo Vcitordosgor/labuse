@@ -8,7 +8,7 @@ Branche `fix/recette-outils-1` depuis `origin/main` (`4e7504f6`). Worktree `~/De
 
 - Stack montée : API `:8820` saine (`/healthz` 200), Vite `:6020` OK (sert `/socle/`), proxy dev → API OK.
 - Données : `parcels` 431 236 lignes. `/parcels/search`, `/moteurs/assemblage` OK. L'assemblage AD0213/0214/0215 renvoie **exactement** les chiffres du mandat (surface 2 153, SDP cumulée 2 162, ×2,43/+143 %, charge −84 546 €/−39 €/m², `note_sdp` dit déjà « calculés sur l'UNION »).
-- Tests ciblés `main` (après mes correctifs) : **vitest `src/components/outils` + `src/store` = 91/91 ✅** · `tsc --noEmit` propre (hors warning de config pré-existant TS6310 sur `tsconfig.node.json`, présent sur main). Aucun fichier backend modifié.
+- Tests (après mes correctifs) : **vitest COMPLET = 277/277, 60 fichiers ✅** · `tsc --noEmit -p tsconfig.json` propre (hors warning de config pré-existant TS6310 sur `tsconfig.node.json`, présent sur main). Aucun fichier backend modifié → pytest non impacté (non relancé). Un seul test a dû être mis à jour (pas « réparé ») : `TempsMillesimes.test` assertait la légende « zones noires » supprimée au point 24.
 
 ## Méthode de capture
 
@@ -146,9 +146,20 @@ Build servi sous `/socle/`, navigation en session via le store exposé `window._
 - `tsconfig.node.json` déclenche `TS6310` sous `tsc -b` sur **main** (pré-existant, non touché) — utiliser `tsc --noEmit -p tsconfig.json`.
 - Succession : la carte (point 43) montre bien la troncature SIREN — confirmé, à corriger.
 
-## Commits (branche NON mergée, NON poussée au moment de l'écriture — voir fin)
+## Récapitulatif de couverture
+
+- **Faits (code + captures + tests) ✅** : T1 · PLU 1,2,3,4 · 18 · 24 · 35 · 40 · 44 · 49 · 50
+- **Faits (code/DOM vérifié, capture partielle) ☑️** : T3 (hors Solaire) · T7 (constat : déjà conforme sauf Piscines) · 13 · 16 (déjà charte) · 22 · 30 · 48 (Retour)
+- **Audits / arbitrages 🔎⚖️** : T2 (aucune source figée) · 5 (CONSERVER le chemin) · 9 · 15 (calculs conformes) · 36 (barèmes servis back) · 51 (partiel)
+- **Non faits ⛔ (session suivante)** : T4, T5, T6 · 6, 7, 8, 10, 11, 12, 14, 17, 19, 20, 21, 23, 25, 26, 27, 28, 29, 31, 32, 33, 34, 37, 38, 39, 41, 42, 43, 45, 46, 47, 52 — raisons détaillées point par point ci-dessus (chantiers lourds : refonte fiche Permis en bulle, 3D orientable/centrée, générateurs PDF/export, refontes de saisie/listing, texte backend du courrier).
+
+## Commits
 
 1. `8b8089e3d` — Lot T (T1, T3)
 2. `3c85171cc` — Lot PLU (points 1–5)
 3. `886f3dd7e` — points texte 18, 22, 35, 40, 44
 4. `5299eb1d3` — points 24, 49, 50
+5. `cbd60b0cd` — point 30 (Étude accordéons fermés)
+6. _(test point 24)_ + _(ce rapport)_
+
+Branche `fix/recette-outils-1` **poussée, NON mergée** (comme demandé).
