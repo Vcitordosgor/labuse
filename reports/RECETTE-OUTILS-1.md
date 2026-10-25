@@ -25,10 +25,10 @@ Build servi sous `/socle/`, navigation en session via le store exposé `window._
 | **T1** — changer d'outil vide tout | ✅ | `setModule` était la SEULE navigation à ne pas remettre `selectedIdu`/`contexteCommune` à null (contrairement à `setView`, `openRadar`, `openSurveillance`…). D'où le constat Vic : une fiche parcelle restait ouverte « en fond » dans Remonter le temps / PLU. **Corrigé** (`src/store/useApp.ts`, `setModule`). Captures `T1-01..04-avant/apres`. Le reste de l'état par outil se réinitialise déjà : `<Body>` = `COMPONENTS[clé]` → changer d'outil monte un **composant de type différent** → React démonte l'ancien (état local remis à zéro). La « recherche Permis visible en fond dans PLU » = fiche + liseré carte persistants, réglés par ce même correctif ; aucun état de panneau Permis ne fuit réellement dans PLU (vérifié captures `T1-03/04`). |
 | **T2** — chaque outil lit les données servies | 🔎 | Audit lecture seule — tableau outil→source ci-dessous. **Aucune copie figée (JSON statique / cache non invalidé / constante codée) trouvée** : tous les outils tapent un endpoint live. Radar (annonces) est une collecte **humaine** (extension Mac), pas un cron — d'où « Nouv. 30 j » figé depuis la dernière collecte (cf. point 11, non corrigé cette session). Aucun correctif T2 nécessaire sur les sources ; ⛔ les corrections d'affichage Radar (point 11) restent à faire. |
 | **T3** — un seul « Retour » | ☑️ | Renommés en « Retour » : **Communes** (`Communes.tsx:244`), **Courrier ×2** (`ModulePanel.tsx:1527,1627`), **Scan patrimoine ×3** (`ScanPatrimoine.tsx:155/161/213`), **blocB** (`blocB.tsx:324`), **PLU** (fusion des 2 retours en un seul hiérarchique, point 1). Le « ← Outils » (sortie du panneau, `PanelRetour`) et la croix ✕ restent exclus comme demandé (vérifié : sur chaque écran touché, 1 seul retour interne + le « Outils » exempté). ⛔ **Prospection solaire** (« ← Prospection solaire » + « ← Changer le périmètre ») : à fusionner (point 37, non fait). Aucun test n'assertait les anciens libellés. |
-| **T4** — clic carte = adresse dans la barre | ⛔ | Non fait. Aujourd'hui `EntreeParcelle` reçoit `onPick(idu,'carte')` via l'idiome `parcelPrefill`/`selectedIdu` mais n'écrit pas l'adresse complète dans le champ. Nécessite de câbler, dans chaque outil à barre, l'écriture de l'adresse BAN dans l'input au clic carte. Chantier transversal non entamé (risqué sans captures dédiées par outil). |
-| **T5** — fin du « Réinitialiser » en haut | ⛔ | Non fait. Le composant partagé `Reinitialiser.tsx` est encore rendu en tête de ~20 outils (dont Taxe `:186`, Comparer `:187`). Remplacement par le bloc « adresse · Changer de parcelle » (outils à parcelle) / « Réinitialiser les filtres » dans le bloc Filtres (outils à filtres) : chantier par outil, non entamé. |
-| **T6** — export PDF = document Docs | ⛔ | Non fait (infra présente). Les générateurs Docs sont des URL backend partageables (`docGabaritUrl`/`docComparatifUrl`/`docEtudeZoneUrl`, `api.ts:1230-1233`) → un bouton « Exporter en PDF » dans Étude de zone / Gabarit / Comparer n'aurait qu'à ouvrir la même URL. Boutons non ajoutés cette session (points 21/29/34). |
-| **T7** — un seul format « Voir plus » | ☑️ | Le composant partagé `ListPaginationFooter` (`src/components/ListPagination.tsx`) **est déjà** « N / M affichées » + « Voir N de plus » (page 200). Utilisé par Permis, Blocs, Successions (vu capture Successions : « 200 / 6 256 affichées · Voir 200 de plus »). ⛔ **Piscines** utilise encore « Voir plus (+50) » (par 50) → à basculer (point 37, non fait). |
+| **T4** — clic carte = adresse dans la barre | ✅ | `EntreeParcelle` (partagé) affiche désormais, dès qu'une parcelle est choisie (saisie OU clic carte — même chemin de pick via `selectedIdu`), la ligne « **adresse complète (avec CP) · Changer de parcelle** » ; l'adresse BAN est résolue par l'IDU (`searchParcels`, vérifié « 14 Rue de Nice, 97400 Saint-Denis »). **Pièges et risques** (multi-parcelles) : le clic carte **alimente le lot** comme la saisie (store `carteOutilIdu` posé par `MapView`, consommé par `Risques` → `ajouter`) au lieu d'ouvrir une fiche. Captures `T5-*`, `t5check`. |
+| **T5** — fin du « Réinitialiser » en haut | ✅ | **Outils à parcelle** (Taxe, Gabarit, Calculette, Temps, Pièges/O5, Ensoleillement) : le bloc de recherche est remplacé par « adresse · Changer de parcelle » (EntreeParcelle `picked`/`onChanger`), plus de bouton « Réinitialiser ». **Outils à filtres** (Blocs, Successions, Permis) : lien « **Réinitialiser les filtres** » DANS le bloc Filtres, visible seulement quand un filtre diffère du défaut. **Assemblage** (multi) : puces retirables (×), plus de bouton. *(EtudeZone finalisé au Lot 2 / Comparer au Lot 3, où ces outils sont refondus.)* Captures `T5-taxe/gabarit/risques/blocs/successions/permis-avant/apres`. |
+| **T6** — export PDF = document Docs | ✅ (Lot 3) | Fait au Lot 3 — voir points 21/29/34/51. |
+| **T7** — un seul format « Voir plus » | ✅ | `ListPaginationFooter` partagé (« N / M affichées » + « Voir 200 de plus », page 200) — déjà Permis/Blocs/Successions. **Piscines** basculé dessus (ex-« Voir plus (+50) », `ProspectionSolaire.tsx`). Captures `P37-piscines-avant/apres`. |
 
 ### Tableau T2 — outil → source lue
 
@@ -78,7 +78,7 @@ Build servi sous `/socle/`, navigation en session via le store exposé `window._
 
 ### Assemblage
 - **15** 🔎 — vérif calculs : **conformes au mandat** (endpoint testé, cf. état initial) : surface 2 153 = 685+402+1 066 ; SDP cumulée 2 162 > Σ individuelles (union, reculs internes supprimés — `note_sdp` le dit) ; ×2,43 = 2 162/890 ; charge −84 546 € / −39 €/m². ⛔ L'accordéon « Bilan » fermé par défaut (décision Vic) **non appliqué** (reste à faire dans `moteurs.tsx`).
-- **16** ☑️ — le bouton « Étude de faisabilité de cet assemblage → » utilise **déjà** le composant charte `<Bouton niveau="secondaire" ton="vert">` (`moteurs.tsx:345-348`) — vérifié par inspection. Si une variante off-DA a été vue par Vic, non reproduite ; à confirmer sur capture.
+- **16** ✅ — le bouton « Étude de faisabilité de cet assemblage → » utilise le composant charte `<Bouton niveau="secondaire" ton="vert">` (`moteurs.tsx`). Capture `P16-assemblage-avant/apres`.
 
 ### Comparer
 - **17** ⛔ — bloc `EntreeParcelle` + puces. Non fait (refonte de la saisie `ComparePanel.tsx:192-234`).
@@ -91,7 +91,7 @@ Build servi sous `/socle/`, navigation en session via le store exposé `window._
 
 ### Remonter le temps
 - **24** ✅ — encart « Zones noires » retiré (`TimeMachine.tsx:286-296`). DOM avant=1/après=0. Captures `P24-temps-avant/apres` (+ visible dans `T1-02-avant`).
-- **25** ⛔ — la parcelle doit ouvrir SA fiche. Non fait. Le correctif T1 ferme désormais la fiche d'un outil précédent en entrant dans Temps (plus de fiche fantôme) ; reste à faire ouvrir la fiche de la parcelle **désignée dans Temps** (aujourd'hui `setParcelPrefill` sans `select`).
+- **25** ✅ — la parcelle désignée dans Remonter le temps ouvre désormais SA fiche : `designer()` appelle `select(c)` (`ModulePanel.tsx` M08), et `resetAll` referme la fiche. Combiné à T1 (plus de fiche fantôme). Captures `P38-*` (mécanisme fiche) + comportement vérifié.
 
 ### Étude de zone
 - **26** ⛔ — retirer la section 3 « Une activité (facultatif) » (`EtudeZone.tsx:569-581, 840-920`). Non fait (déclenche concurrents/chalandise — à retirer en notant la lecture perdue).
@@ -111,8 +111,8 @@ Build servi sous `/socle/`, navigation en session via le store exposé `window._
 - **36** 🔎 — barèmes 2026. Confirmé que **tout vient du back** (`/outils/taxe-amenagement/config`, `taxe_amenagement.py`), pas de dur au front : valeur forfaitaire, piscine, PV sol, stationnement, éoliennes, taux dép. 2,5 %, archéologie 0,40 %, abattement 50 % / 100 premiers m² par logement, cases exonération (`TaxeAmenagement.tsx:231-284`). Vérification des **valeurs** contre service-public.gouv.fr non faite en session (réseau non sollicité) — valeurs laissées en place comme le prévoit le mandat si la source n'est pas accessible. Les totaux de l'exemple (400 × 892 = 356 800 ; total 19 624 ; archéo 1 427) sont cohérents avec les barèmes servis.
 
 ### Prospection solaire
-- **37** ⛔ — un seul « Retour » (fusion « ← Prospection solaire » + « ← Changer le périmètre ») + pied Piscines au format T7. Non fait (`ProspectionSolaire.tsx:79,194,236-243`).
-- **38** ⛔ — Ensoleillement ouvre la fiche + « Retour » ; retirer « Ouvrir la fiche complète → ». Non fait.
+- **37** ✅ — un seul « Retour » hiérarchique (BackBar label « Retour » ; sur le résultat Piscines il revient au choix du périmètre) — fusion de « ← Prospection solaire » + « ← Changer le périmètre » (retours internes 2→1, vérifié DOM). Pied Piscines → `ListPaginationFooter` (T7). Captures `P37-piscines-avant/apres`.
+- **38** ✅ — Ensoleillement : la parcelle résolue ouvre sa fiche (`select(i)` dans `onPick`, fiche ouverte vérifiée DOM) ; lien « Ouvrir la fiche complète → » retiré ; « ← Prospection solaire » → « Retour ». Captures `P38-ensoleillement-avant/apres`.
 
 ### Blocs fonciers
 - **39** ⛔ — filtres directs à l'ouverture puis repliés après « Voir les parcelles » (`Blocs.tsx:184-189`). Non fait.
@@ -121,14 +121,14 @@ Build servi sous `/socle/`, navigation en session via le store exposé `window._
 - **42** ⛔ — petit bouton « Scan patrimoine → » (aujourd'hui `Bouton` pleine largeur `Blocs.tsx:117-120`). Non fait.
 
 ### Successions à venir
-- **43** ⛔ — troncature/superposition des libellés propriétaire (`Successions.tsx:145-151`, `flex-1 truncate`). Non fait (constaté sur capture `P44-successions-avant` : « CALYPTUS · … », SIREN coupé). À passer sur 2 lignes + agrandir la carte.
+- **43** ✅ — troncature corrigée : `truncate`/`flex-1` retirés, la ligne propriétaire passe en `flex-wrap items-baseline` → dénomination + **SIREN entier** (jamais coupé) et dirigeant+âge sur une 2ᵉ ligne au besoin ; la carte grandit en hauteur. Capture `P43-successions-apres` (« SOFIPAR HOLDING SOCIETE FINANCIERE DE PARTICIPATION · 383368716 » complet).
 - **44** ✅ — « : un radar à 3-7 ans, pas une succession ouverte » retiré (fin après « SCI dormante », `Successions.tsx:76-78`). Captures `P44-successions-avant/apres`.
 
 ### Courrier
-- **45** ⛔ — retirer « L'envoi postal n'est pas encore disponible… » (`ModulePanel.tsx:1597`). Non fait (string identifiée).
-- **46** ⛔ — corrections texte du courrier (adresse BAN accentuée, accord « N mutations publiées », titre unique « Synthèse de la parcelle », « Cette synthèse vous est offerte… »). Non fait — générateur **backend** (`labuse/.../courrier`) ; le doublon « Au dos — synthèse de la parcelle » est front (`ModulePanel.tsx:1520`).
-- **47** ⛔ — retirer l'encart « Vos demandes » (`ModulePanel.tsx:1615-1623`). Non fait.
-- **48** ☑️⛔ — « ← Relecture » → « Retour » **fait** (T3, `ModulePanel.tsx:1627`). ⛔ Le bouton « Demander l'envoi à LABUSE » est **déjà** `<Bouton niveau="primaire" ton="vert">` (`:1584`) — vérifié ; s'il est « aplat vert hors DA » à l'écran, non reproduit (à confirmer capture).
+- **45** ✅ — ligne « L'envoi postal n'est pas encore disponible… » retirée : la raison servie par `/courrier/statut` (stub) devient « **La demande est enregistrée — LABUSE procède à l'envoi.** » (`api/courrier.py`) + fallbacks front alignés. Captures `P45-48-courrier-avant/apres` (DOM « pas encore disponible » 1→0). `test_courrier` mis à jour.
+- **46** ✅ — (a) accord réel « **1 mutation publiée** / **N mutations publiées** » (`courrier_compose.py`) ; (b) « Cette **étude** » → « Cette **synthèse** … , qui intervient … » (virgule ajoutée) ; (c) doublon de titre retiré : dépliant « **Au dos** », seul titre « Synthèse de la parcelle » dans le verso (capture `P46-courrier-apercu-apres` : doublon=0, « Au dos » neutre=1) ; (d) **adresse** servie **accentuée** depuis BAN (`parcel_adresse.ban_voie` — « Route du Tévelave », « Rue Francis Rivière ») **verbatim, sans invention** : « Rue de la Citoyennet**e** » n'a pas l'accent final dans la source servie (ni `parcel_adresse` ni `adresses`) → non inventé (règle respectée). Source adresse = BAN via `adresse_ban_parcelle`.
+- **47** ✅ — encart « Vos demandes » retiré (+ requête `getCourrierDemandes`). Capture `P47-48-courrier-envoi-apres` (DOM « Vos demandes »=0 à l'étape 3).
+- **48** ✅ — « Demander l'envoi à LABUSE » = `<Bouton niveau="primaire" ton="vert">` (charte, DOM `data-courrier-demander`=1 à l'étape 3) ; « ← Relecture » → « Retour » (T3).
 
 ### Docs
 - **49** ✅ — phrase d'introduction retirée (`DocumentsView.tsx:462-466`). DOM avant=1/après=0. Captures `P49-50-docs-avant/apres`.
@@ -136,7 +136,7 @@ Build servi sous `/socle/`, navigation en session via le store exposé `window._
 - **51** 🔎⛔ — docs = données servies + parité outil (même générateur que l'export de l'outil). Audit : chaque doc à outil relié passe par une URL back (`docGabaritUrl`/`docComparatifUrl`/`docEtudeZoneUrl`) ; la **parité stricte** avec les boutons d'export outil dépend de T6 (boutons non ajoutés). Alignement de contenu non fait.
 
 ### Copilote
-- **52** ⛔ — grille d'exemples homogène (`AccueilCopilote.tsx:205-222`, aujourd'hui 3 exemples en `flex-wrap` de pilules). Non fait (passer à une grille 2×4 ou 3×3 d'exemples réellement traités).
+- **52** ✅ — Copilote : exemples en **grille 3×3** homogène (`grid grid-cols-3`), 9 questions réellement traitées (parcelle, propriétaire, PLU zone Ua Saint-Paul, procédure Saint-Pierre, pièges, argumentaire, assemblage, blocs Le Tampon, successions Saint-Paul), IDU/communes réels. Capture `P52-copilote-avant/apres`.
 
 ---
 
