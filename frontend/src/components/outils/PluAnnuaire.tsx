@@ -19,10 +19,11 @@ const RAISON: Record<string, string> = {
   non_ingere: 'non ingéré',
 }
 
-// RECETTE-OUTILS-1 (T3 / point 1) — `onHub` ramène à la page des 2 voies (« Choix PLU »). Le retour
+// RECETTE-OUTILS-2 (R4) — `onHub` RETIRÉ (plus de hub PLU : l'Annuaire est la seule voie).
+// Historique — RECETTE-OUTILS-1 (T3 / point 1) : `onHub` ramenait à la page des 2 voies. Le retour
 // interne devient UN SEUL « Retour » hiérarchique : dans une commune → les 24 communes ; sur la liste
 // → le choix du chemin (onHub). Les anciens « ← Choix PLU » (wrapper Plu) + « ← Les 24 communes » fusionnent.
-export function PluAnnuaire({ onHub }: { onHub?: () => void } = {}) {
+export function PluAnnuaire() {
   const [q, setQ] = useState('')
   const [insee, setInsee] = useState('')                     // '' = les 24 communes ; sinon une commune
   const [zone, setZone] = useState('')                       // filtre zone (lien contextuel fiche → recherche)
@@ -54,9 +55,10 @@ export function PluAnnuaire({ onHub }: { onHub?: () => void } = {}) {
 
   return (
     <div data-plu-annuaire className="flex min-h-0 flex-1 flex-col gap-2 overflow-x-hidden overflow-y-auto">
-      {/* RECETTE-OUTILS-1 (point 1 / T3) — UN SEUL « Retour » hiérarchique, en tête : dans une commune
-          il revient aux 24 communes ; sur la liste il revient au choix du chemin (hub). */}
-      <Retour label="Retour" onClick={() => { if (insee) communesVue(); else onHub?.() }} />
+      {/* RECETTE-OUTILS-2 (R4) — l'Annuaire est désormais la SEULE voie PLU (plus de hub « Procédure »).
+          Le « Retour » interne n'apparaît donc que DANS une commune (→ les 24 communes) ; sur la liste
+          des 24, seul le « ← Outils » de l'en-tête ramène en arrière. (onHub conservé mais inutile.) */}
+      {insee && <Retour label="Retour" onClick={communesVue} />}
       {/* ── ÉTAPE 1 — les 24 communes ─────────────────────────────────────────────── */}
       {!insee && (
         <>

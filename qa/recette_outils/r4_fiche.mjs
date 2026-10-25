@@ -1,0 +1,10 @@
+import { launch, mk } from './lib.mjs'
+const { browser, page } = await launch()
+const t = mk(page)
+await t.go(''); await t.wait(900)
+await page.evaluate(() => window.__labuse.setContexteCommune('Saint-Leu')); await t.wait(2800)
+const proc = await page.getByText(/Procédure \(Sudocuh/).count()
+const procTxt = await page.getByText(/Procédure \(Sudocuh/).first().innerText().catch(()=>'(absent)')
+await t.shot('R4-fiche-commune-apres')
+console.log(JSON.stringify({ procedureSudocuh: proc, procTxt }))
+await browser.close()

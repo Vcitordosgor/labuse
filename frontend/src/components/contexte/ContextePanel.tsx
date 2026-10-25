@@ -305,7 +305,9 @@ export function ContextePanel() {
 
   return (
     <CommuneAccProvider key={commune}>
-    <aside data-contexte-panel className="absolute right-0 top-0 z-30 flex h-full w-[420px] flex-col border-l border-line bg-surface-1 shadow-elev-3">
+    {/* RECETTE-OUTILS-2 (R5 / point 8) — z-50 (au-dessus du tableau de comparaison z-40) : la fiche
+        commune s'ouvre PAR-DESSUS le tableau, qui reste monté et visible derrière (sa croix y ramène). */}
+    <aside data-contexte-panel className="absolute right-0 top-0 z-50 flex h-full w-[420px] flex-col border-l border-line bg-surface-1 shadow-elev-3">
       <div className="flex shrink-0 items-start justify-between border-b border-line px-5 py-3">
         <div className="min-w-0">
           <p className="label-caps text-txt-mut">Fiche commune</p>

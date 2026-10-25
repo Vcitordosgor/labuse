@@ -268,11 +268,12 @@ export function CommunesTablePanel() {
   // coin haut-droit du panneau ; cliquer l'ouvre/le referme (défaut : replié).
   const [legendeOuverte, setLegendeOuverte] = useState(false)
   if (module !== 'communes' || !communesTableOpen) return null
-  // Fiche ouverte : on MASQUE l'overlay (sans démonter O6Comparateur, pour garder son tri) afin que
-  // la fiche z-30 soit visible par-dessus la carte. Fermer la fiche la ramène intacte.
+  // RECETTE-OUTILS-2 (R5 / point 8) — fiche ouverte : le tableau RESTE MONTÉ ET VISIBLE derrière (plus
+  // de `hidden`), simplement rendu PASSIF (`pointer-events-none`) pour que le clic aille à la fiche
+  // (z-50, au-dessus) ; sa croix ferme la fiche et rend le tableau interactif, intact (tri/défilement).
   return (
     <div data-communes-table-panel
-      className={`absolute inset-0 z-40 flex items-center justify-center bg-black/50 p-6${contexteCommune ? ' hidden' : ''}`}
+      className={`absolute inset-0 z-40 flex items-center justify-center bg-black/50 p-6${contexteCommune ? ' pointer-events-none' : ''}`}
       onClick={() => setCommunesTableOpen(false)}>
       <div className="floating flex max-h-full w-full max-w-[1240px] flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-line px-4 py-2.5">

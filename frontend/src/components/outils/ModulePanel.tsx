@@ -1252,8 +1252,7 @@ export function M08() {
   // millésimes apparaît DESSOUS dès qu'une parcelle est désignée ; changer de parcelle = retaper.
   return (
     <>
-      <Banner>La <b>parcelle d'abord</b> : son IDU, une adresse, ou <b>cliquez-la sur la carte</b>. Puis
-        choisissez l'année à revoir — l'« après » est toujours aujourd'hui.</Banner>
+      {/* RECETTE-OUTILS-2 (R6) — encart « La parcelle d'abord… / choisissez l'année… » retiré. */}
       <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
         {/* RECETTE-OUTILS-1 (T5) — « Réinitialiser » retiré au profit de « Changer de parcelle ». */}
         <div className="flex flex-col gap-1.5">
@@ -1488,12 +1487,9 @@ export function M09() {
             <span data-courrier-plafond className="whitespace-nowrap text-txt-mut">Plafond du jour : <b className="tnum text-txt">{statut.data.reste_jour}</b>/{statut.data.plafond_jour} restant{(statut.data.reste_jour ?? 0) > 1 ? 's' : ''}</span>
           )}
         </div>
-      ) : statut.data ? (
-        <div data-courrier-indispo className="flex items-start gap-1.5 rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-[11px] text-txt-mut">
-          <span className="mt-[4px] h-1.5 w-1.5 shrink-0 rounded-full bg-txt-dim" />
-          <span>{statut.data.raison ?? "La demande est enregistrée — LABUSE procède à l'envoi."}</span>
-        </div>
       ) : null}
+      {/* RECETTE-OUTILS-2 (R7) — bandeau « La demande est enregistrée — LABUSE procède à l'envoi. »
+          retiré (l'envoi est fait à la main par LABUSE ; inutile d'afficher un statut de service). */}
       {/* stepper 3 étapes */}
       <div className="flex items-center gap-1 text-[10px]">
         {STEPS.map(([n, l], i) => (
@@ -1639,8 +1635,10 @@ export function M09() {
               {/* OUTILS-S2 Lot B — le MÊME montant qu'à l'étape 3 est repris ici.
                   CHASSE-APP-FIX-2 (point 1) — tant que le service est un bouchon, on ne reprend PAS la
                   prestation tarifée : la raison serveur dit que la demande est seulement enregistrée. */}
+              {/* RECETTE-OUTILS-2 (R7) — plus de « La demande est enregistrée — LABUSE procède à l'envoi. »
+                  (le « ✓ Demande transmise » + « Projets → Mes courriers » suffisent). */}
               {statut.data && !statut.data.disponible
-                ? ` ${statut.data.raison ?? "La demande est enregistrée — LABUSE procède à l'envoi."}`
+                ? ''
                 : statut.data?.tarif_unitaire_eur != null
                 ? <> {demande.n} courrier{demande.n > 1 ? 's' : ''} × {fmtEur2(statut.data.tarif_unitaire_eur)} = <b className="text-txt-mut">{fmtEur2(statut.data.tarif_unitaire_eur * demande.n)} TTC</b> — impression, mise sous pli, affranchissement et suivi compris.</>
                 : ' LABUSE vous rappelle sous 24 h ouvrées avec le tarif — impression, mise sous pli, affranchissement et suivi compris.'}
