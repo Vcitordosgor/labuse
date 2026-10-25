@@ -156,3 +156,17 @@ Build servi sous `/socle/`, navigation en session via le store exposé `window._
 ## Commits (branche `fix/recette-outils-1`, NON mergée)
 
 1. `8b8089e3d` Lot T (T1,T3) · 2. `3c85171cc` Lot PLU (1–5) · 3. `886f3dd7e` texte 18,22,35,40,44 · 4. `5299eb1d3` 24,49,50 · 5. `cbd60b0cd` point 30 · 6. _(test 24 + rapport)_ · 7. `dbdae6043`+`f1eb79f93` **Lot 1** (T4,T5,T7,25,37,38,43,45,46,47,52 + captures) · 8. `e5092645d`+`086d6ca85` **Lot 2** (6–15,26–28,39,41,42) · 9. `b6567624d` **Lot 3** (T6,17–23,29,31–34,36,51) · + mises à jour du rapport par lot.
+
+---
+
+# RECETTE-OUTILS-2 — reprise après la recette de Vic (25/10/2026 soir)
+
+Même branche `fix/recette-outils-1`. **Preuve = capture LIVE** (navigateur, parcelle à données complètes). Parcelles de référence : La Possession **97408000BL0020** (UAa, gabarit complet), Saint-Paul **97415000CM0008** (U6b, gabarit complet). État de départ : branche à jour avec origin (`e31c428f8`), hook vert au dernier push. Captures `reports/RECETTE-OUTILS-1/captures/R<n>-avant/apres.png`.
+
+> Leçon de la recette 1 : plusieurs points « vérifiés au code/DOM » n'étaient pas tenus. Ici chaque point visuel est prouvé par une capture LIVE + une assertion DOM mesurée dans un vrai navigateur.
+
+## Lot A — bugs transverses
+
+- **R1** ✅ — **clic carte réparé**. Cause : l'outil « risques » rendu est `Risques()` → `O5Servitudes` (UNE parcelle, via EntreeParcelle), PAS le lot `M10` (non câblé) où j'avais mis la dérivation `carteOutilIdu` en recette 1. La branche `module==='risques' → setCarteOutilIdu` de MapView interceptait le clic (rien ne consommait le signal) au lieu d'appeler `select(idu)` → « rien ne se passe ». **Retirée** (les 2 handlers MapView) : le clic suit la voie normale `select(idu)`, que O5Servitudes adopte par `selectedIdu`. **Temps** adopte aussi `select` (nouvel effet `selectedIdu` dans M08, en plus de son `parcelPrefill` via la carte TimeMachine). **Test LIVE clic canvas réel** (parcelle 97408000BL0020 au centre, clic du canvas) → « adresse · Changer de parcelle » + résultat dans : risques (**0→1**), taxe-amenagement (1), gabarit (1), ensoleillement (1), temps (**0→1**), comparer (1 puce), étude de zone (zone définie). **Test vitest ajouté** : `ClicCarte.test.tsx` (O5Servitudes adopte selectedIdu → bloc « Changer de parcelle »). Captures `R1-risques-avant/apres` + `R1-<outil>-apres`.
+- **R2** ✅ — **T1 complété**. Cause : `toggleOutils` (« ← Outils ») remettait `module:null` mais **pas** `selectedIdu` → la fiche/parcelle de l'outil précédent restait « en cache » dans le menu et réapparaissait. **Corrigé** (`toggleOutils` remet `selectedIdu:null`, comme `setModule`). Test LIVE (parcelle 97408000BL0020, « ← Outils » puis réouverture) sur temps, étude-zone, gabarit, risques : fiche dans le menu **1→0**, outil vide à la réouverture (0). Transition DIRECTE d'un outil à l'autre (gabarit→étude) : vide (0). Captures `R2-menu-avant/apres`.
+- **R3** ✅ — **boutons écrasés corrigés** (cause commune : `Bouton h-8` écrasé par flex-shrink dans une colonne qui déborde ; le « ← Outils » de l'en-tête, conteneur `shrink-0`, y échappait seul). Ajout de `shrink-0` au composant **`Retour`** (tous les « Retour » internes) et au **bouton Étude de faisabilité** (Assemblage). Mesure LIVE : « ← Outils » = 32 px ; PLU « Retour » **15→32 px** ; bouton Assemblage **15→32 px** — identiques à « ← Outils » (hauteur/contour/rayon/padding). Captures `R3-plu-retour-avant/apres`, `R3-assemblage-btn-avant/apres`. (R21 = cette même capture Assemblage.)

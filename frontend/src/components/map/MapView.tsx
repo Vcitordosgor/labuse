@@ -1027,9 +1027,10 @@ export function MapView() {
             st.addToCompare(idu)
             return
           }
-          // RECETTE-OUTILS-1 (T4) — Pièges et risques : le clic carte ALIMENTE le lot (comme la saisie)
-          // au lieu d'ouvrir une fiche. L'outil consomme `carteOutilIdu` puis le remet à null.
-          if (st.module === 'risques') { st.setCarteOutilIdu(idu); return }
+          // RECETTE-OUTILS-2 (R1) — l'outil « risques » rendu est O5Servitudes (UNE parcelle, via
+          // EntreeParcelle) : il adopte le clic carte par `selectedIdu` comme Taxe/Gabarit. L'ancienne
+          // dérivation vers `carteOutilIdu` (prévue pour le lot M10, NON câblé) cassait le clic carte
+          // (rien ne consommait le signal) → retirée. Le clic suit donc la voie normale `select(idu)`.
           // M6.1 : couche zonage active → la zone PLU précise s'affiche AUSSI au clic
           // (popup éphémère, même gabarit que les équipements) — la fiche s'ouvre normalement
           if (st.layers.zonage_parcelle) {
@@ -1064,9 +1065,7 @@ export function MapView() {
         if (hits.length > 0) return   // le handler de calque a déjà ouvert la fiche
         parcelAt(e.lngLat.lng, e.lngLat.lat).then((r) => {
           if (!r.idu) return
-          // RECETTE-OUTILS-1 (T4) — même règle au clic « universel » (hors feature vectorielle) :
-          // Pièges et risques alimente le lot plutôt que d'ouvrir une fiche.
-          if (useApp.getState().module === 'risques') { useApp.getState().setCarteOutilIdu(r.idu); return }
+          // RECETTE-OUTILS-2 (R1) — voie normale pour risques aussi (O5Servitudes adopte selectedIdu).
           select(r.idu)
         }).catch(() => undefined)
       })

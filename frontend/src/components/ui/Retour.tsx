@@ -9,9 +9,13 @@
 import type { ButtonHTMLAttributes } from 'react'
 import { Bouton } from './Bouton'
 
+// RECETTE-OUTILS-2 (R3) — `shrink-0` : dans le CORPS d'un outil (colonne flex qui déborde), le Bouton
+// h-8 était écrasé par flex-shrink (hauteur ~15 px, contour fin, hors DA) — le « ← Outils » de l'en-tête
+// (conteneur shrink-0) y échappait seul. Avec shrink-0, TOUS les « Retour » gardent la hauteur 32 px /
+// contour / rayon / padding de la charte.
 export function Retour({ label, onClick, className = '', ...rest }: { label: string; onClick: () => void; className?: string } & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'>) {
   return (
-    <Bouton niveau="secondaire" ton="vert" data-retour onClick={onClick} className={`self-start ${className}`.trim()} {...rest}>
+    <Bouton niveau="secondaire" ton="vert" data-retour onClick={onClick} className={`shrink-0 self-start ${className}`.trim()} {...rest}>
       <span aria-hidden="true">←</span> {label}
     </Bouton>
   )

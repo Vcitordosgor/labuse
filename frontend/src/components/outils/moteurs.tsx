@@ -352,8 +352,10 @@ export function M16() {
           {/* IMPLANTATION-4 (LOT A) — pont vers l'Étude de faisabilité : ouvre l'écran d'étude (Docs,
               overlay M22 + carte intégrée) avec l'assiette de l'assemblage. Le nombre de logements
               dessiné/contrôlé se lit DANS l'Étude (plus de fourchette de l'ancien moteur ici, LOT B). */}
+          {/* RECETTE-OUTILS-2 (R3) — `shrink-0` sur le Bouton : même crush flex que le Retour (hauteur
+              écrasée, hors DA) sur le dernier enfant d'une colonne qui déborde. */}
           {msel.length >= 1 && (
-            <Bouton niveau="secondaire" ton="vert" data-asm-etude className="w-full"
+            <Bouton niveau="secondaire" ton="vert" data-asm-etude className="w-full shrink-0"
               onClick={() => ouvrirEtude(msel)}>
               Étude de faisabilité de cet assemblage →
             </Bouton>

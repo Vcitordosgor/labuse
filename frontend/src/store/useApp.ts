@@ -774,9 +774,12 @@ export const useApp = create<AppState>((set, get) => ({
   // tiroir) — y fermer les overlays refermerait la comparaison qu'on vient d'ouvrir.
   // RETOURS-1 R8 (Vic) : `surveillanceOpen:false` sur la branche d'OUVERTURE — le panneau Veille
   // restait ouvert derrière le tiroir Outils (une seule catégorie du rail ouverte à la fois).
+  // RECETTE-OUTILS-2 (R2 / T1) — « ← Outils » (toggleOutils) VIDE aussi la parcelle : `selectedIdu`
+  // n'était pas remis à null, si bien que la fiche/parcelle de l'outil précédent restait « en cache »
+  // et réapparaissait. On la ferme, comme le fait déjà `setModule`.
   toggleOutils: () => set((s) => s.outilsOpen
     ? { outilsOpen: false }
-    : { outilsOpen: true, view: 'cartes', module: null,
+    : { outilsOpen: true, view: 'cartes', module: null, selectedIdu: null,
         contexteCommune: null, iaRestitution: null, parcours: null, openProjet: null,
         surveillanceOpen: false, ...CLOSE_OVERLAYS }),
   selectedIdu: null,

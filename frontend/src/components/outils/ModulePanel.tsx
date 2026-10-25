@@ -1215,6 +1215,7 @@ const TEMPS_KEYS = TEMPS_MILLESIMES.map((m) => m.key) as string[]
 // Exporté pour test (TEMPS — la frise des millésimes + l'épingle de la parcelle sont le cœur du mandat).
 export function M08() {
   const { cmpLeft, setCmpLeft, setCmpRight, parcelPrefill, setParcelPrefill, setFlyTo, setTempsPinIdu } = useApp()
+  const selectedIdu = useApp((s) => s.selectedIdu)   // RECETTE-OUTILS-2 (R1) — adopter le clic carte
   const [idu, setIdu] = useState('')
   // RECETTE-1 (F2) — quelle entrée a désigné la parcelle (grise l'autre dans EntreeParcelle).
   const [source, setSource] = useState<SourceParcelle>(null)
@@ -1233,10 +1234,15 @@ export function M08() {
     if (coords) { setFlyTo({ center: coords, zoom: 18 }); return }
     try { const f = await getFiche(c); if (f.coords) setFlyTo({ center: f.coords, zoom: 18 }) } catch { /* parcelle recentrée au mieux */ }
   }
-  // parcelPrefill (fiche « 1950 », clic carte via parcelAt, Copilote) → désigne la parcelle (source carte).
+  // parcelPrefill (fiche « 1950 », Copilote) → désigne la parcelle (source carte).
   useEffect(() => {
     if (parcelPrefill) { void designer(parcelPrefill, 'carte'); setParcelPrefill(null) }
   }, [parcelPrefill])   // eslint-disable-line react-hooks/exhaustive-deps
+  // RECETTE-OUTILS-2 (R1) — clic carte : MapView appelle `select(idu)` → on l'adopte comme les autres
+  // outils à parcelle (setIdu + épingle + fiche). Le garde `selectedIdu !== idu` évite toute boucle.
+  useEffect(() => {
+    if (selectedIdu && selectedIdu !== idu) void designer(selectedIdu, 'carte')
+  }, [selectedIdu])   // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => setTempsPinIdu(null), [])   // eslint-disable-line react-hooks/exhaustive-deps
   // RECETTE-1 (F3) — Réinitialiser : vide la parcelle épinglée + rend les deux entrées + remet l'année ancienne au défaut.
   const resetAll = () => { setIdu(''); setSource(null); setTempsPinIdu(null); setCmpLeft('bm-ortho-1950'); useApp.getState().select(null) }
