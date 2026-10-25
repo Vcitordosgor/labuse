@@ -73,7 +73,15 @@ def plan_ortho(geojson_str: str | None, cache_dir: Path, *, timeout_s: float = 1
     for t in m["tiles"]:
         try:
             raw = base64.b64decode(t["data_uri"].split(",", 1)[1])
-            img.paste(Image.open(io.BytesIO(raw)).convert("RGB"), (int(t["left"]), int(t["top"])))
+            tile = Image.open(io.BytesIO(raw)).convert("RGB")
+            # RECETTE-OUTILS-2 (R12) — hors couverture (pleine mer au large), l'ortho IGN ne rend PAS un
+            # 404 mais une tuile PUREMENT BLANCHE. Collée telle quelle, elle faisait le « carré blanc » en
+            # coin de carte. Une tuile quasi uniformément blanche = no-data : on ne la colle pas, le fond
+            # neutre sombre reste (comme pour une tuile absente). Un vrai cliché — même écume ou toits
+            # clairs — n'a jamais TOUS ses pixels ≥ 250, donc aucun risque d'effacer de la donnée réelle.
+            if tile.convert("L").getextrema()[0] >= 250:
+                continue
+            img.paste(tile, (int(t["left"]), int(t["top"])))
         except Exception:  # noqa: BLE001 — une tuile absente ne casse pas la mosaïque
             continue
 

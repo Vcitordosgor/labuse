@@ -3,7 +3,7 @@ milliers, virgule décimale), partagé par les blocs. De la mise en forme : aucu
 """
 from __future__ import annotations
 
-_FINE = " "      # espace fine insécable (séparateur de milliers)
+_FINE = " "      # espace insécable ordinaire U+00A0 (séparateur de milliers) : la fine insécable U+202F manque dans la police des PDF → « 3 887 » tombait « 3887 ». RECETTE-OUTILS-2 R12.
 
 
 def groupe(n: float | int, decimales: int = 0) -> str:

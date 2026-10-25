@@ -226,18 +226,9 @@ export function EtudeZone() {
           {/* ÉTAPE 2 — LIRE LA ZONE, en 7 sections repliables (ETUDE-ZONE-2 Lot A). Chaque section
               porte sa ligne de source · millésime en bas ; Population + Économie ouvertes par défaut. */}
           <StepHead n={2} titre="Lire la zone" sous="population · économie · immobilier · foncier · contraintes · équipements · dynamique" />
-          <div className="flex items-start justify-between gap-2">
-            <SectionTitle>{enTete}</SectionTitle>
-            {/* RECETTE-OUTILS-1 (point 29 / T6) — export du MÊME PDF que la carte Docs « Étude de zone »
-                (docEtudeZoneUrl = /etude-zone.pdf) : un seul générateur, branché sur le run servi. */}
-            {cible && (
-              <Bouton niveau="secondaire" ton="vert" data-etude-export
-                disabled={enCours != null || !cible}
-                onClick={() => ouvrir(docEtudeZoneUrl(cible.idu, rayonKm), 'etude-zone')}>
-                Exporter en PDF
-              </Bouton>
-            )}
-          </div>
+          {/* RECETTE-OUTILS-2 (R9) — « Exporter en PDF » déplacé APRÈS le dernier accordéon (Dynamique),
+              aligné à droite (voir plus bas). Ici, seul le titre de la zone. */}
+          <SectionTitle>{enTete}</SectionTitle>
 
           {/* 1 · POPULATION */}
           <Section id="population" titre="Population" openSecs={openSecs} setOpenSecs={setOpenSecs}
@@ -560,9 +551,18 @@ export function EtudeZone() {
           {/* RECETTE-OUTILS-1 (point 26) — section 3 « Une activité (facultatif) » RETIRÉE :
               plus de champ NAF, plus de parcours par familles, plus de lentille concurrents/chalandise. */}
 
-          {/* RECETTE-2 LOT C1 : le bouton « Exporter le PDF » est retiré.
-              RECETTE-1 H8.4 — l'ex-« Nouvelle étude » du bas est RETIRÉ : le Réinitialiser unique est
-              désormais EN HAUT À DROITE (en tête du panneau). */}
+          {/* RECETTE-OUTILS-2 (R9) — « Exporter en PDF » APRÈS le dernier accordéon (Dynamique), aligné
+              à droite, sur UNE seule ligne (whitespace-nowrap), même générateur que la carte Docs
+              « Étude de zone » (docEtudeZoneUrl = /etude-zone.pdf, run servi). */}
+          {cible && (
+            <div className="flex justify-end">
+              <Bouton niveau="secondaire" ton="vert" data-etude-export className="shrink-0 whitespace-nowrap"
+                disabled={enCours != null || !cible}
+                onClick={() => ouvrir(docEtudeZoneUrl(cible.idu, rayonKm), 'etude-zone')}>
+                Exporter en PDF
+              </Bouton>
+            </div>
+          )}
           {res.note && <p className="text-[9.5px] leading-snug text-txt-dim">{res.note}</p>}
         </div>
       )}
@@ -715,13 +715,13 @@ function Section({ id, titre, source, openSecs, setOpenSecs, children }: {
   const toggle = () => setOpenSecs((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n })
   return (
     <div data-zone-section={id} className="overflow-hidden rounded-lg border border-line-2 bg-surface-1">
+      {/* RECETTE-OUTILS-2 (R11) — MÊME en-tête d'accordéon que Gabarit (« Voir les règles appliquées »)
+          et Scan patrimoine (« Chiffres clés ») : le chevron de la charte (../ui/Chevron) À GAUCHE, avant
+          le titre, sur une barre `.hover-fill` ; fermé → pointe à droite (▶), ouvert → vers le bas (▼). */}
       <button data-zone-section-toggle={id} onClick={toggle} aria-expanded={open}
-        className="group flex w-full items-center justify-between gap-2 px-3 py-2 text-left transition-colors duration-quick hover:bg-surface-2">
-        <span className="text-[12px] font-semibold text-txt-hi">{titre}</span>
-        {/* RECETTE-OUTILS-1 (point 27) — le chevron collé au bord (glyphe ▸/▾ en dur) est remplacé par
-            LE chevron d'accordéon de la charte (../ui/Chevron), espacé comme ailleurs (gap sur la ligne
-            flex + marge interne du composant), plus flush contre le bord. */}
-        <Chevron open={open} className="ml-1" />
+        className="hover-fill group flex w-full items-center gap-1.5 rounded-lg px-3 py-2 text-left text-[12px] font-semibold text-txt-hi transition-colors duration-quick">
+        <Chevron open={open} />
+        <span>{titre}</span>
       </button>
       {open && (
         <div className="flex flex-col gap-2 border-t border-line-2 px-3 py-2.5">

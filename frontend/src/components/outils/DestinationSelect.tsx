@@ -16,9 +16,11 @@ export function DestinationSelect({ value, onChange, dataAttr }: {
   const d = ref.data
   return (
     <label className="block text-[11px] tracking-wide text-txt-dim">Activité (destination)
+      {/* RECETTE-OUTILS-2 (R10) — marge intérieure à DROITE (`pr-7`) : la flèche native du menu ne colle
+          plus au bord et ne chevauche plus le libellé sélectionné. */}
       <select data-destination-select={dataAttr ?? true} value={value ?? ''}
         onChange={(e) => onChange(e.target.value || null)}
-        className="mt-0.5 h-8 w-full rounded-md border border-line-2 bg-surface-1 px-2 text-[11.5px] text-txt focus:border-mint focus:outline-none">
+        className="mt-0.5 h-8 w-full rounded-md border border-line-2 bg-surface-1 pl-2 pr-7 text-[11.5px] text-txt focus:border-mint focus:outline-none">
         <option value="">— toutes (facultatif) —</option>
         {(d?.destinations ?? []).map((g) => (
           <optgroup key={g.slug} label={g.libelle}>
