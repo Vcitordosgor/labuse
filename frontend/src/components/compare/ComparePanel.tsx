@@ -185,7 +185,7 @@ export function CompareModule() {
           pleine largeur (plus côte à côte). Présent ssi au moins une parcelle est choisie. */}
       <div className="flex flex-col gap-1.5">
         {n > 0 && <div className="flex justify-end"><Reinitialiser onReset={clearCompare} /></div>}
-        <p className="text-[11px] text-txt-mut">Jusqu'à 3 parcelles, côte à côte, aux <b>mêmes points de calcul que la fiche</b>.</p>
+        {/* RECETTE-OUTILS-1 (point 18) — phrase « Jusqu'à 3 parcelles… » retirée. */}
       </div>
 
       {/* ① cliquez les parcelles sur la carte + chips */}
@@ -367,10 +367,8 @@ export function ComparePanel() {
               </tbody>
             </table>
           )}
-          {/* FIX-PRIX-ET-OPPORTUNITES (lot 3, de main) — mention GARDÉE (ex-ligne logements) : la SDP
-              maximale réglementaire affichée est un plafond ; les permis réels en utilisent ~½ (volet D). */}
-          <p className="mt-3 text-[10.5px] text-txt-dim">{CAPACITE_MAX_MENTION_COURTE}.</p>
-          <p className="mt-1 text-[10.5px] text-txt-dim">Chaque valeur vient du même point de calcul que la fiche (run servi). Ajoutez par la carte, ou depuis une fiche → « Comparer » — jusqu’à 3.</p>
+          {/* RECETTE-OUTILS-1 (point 22) — mention de bas de tableau retirée (plafond réglementaire /
+              « permis réels ~½ » + « Chaque valeur vient du même point de calcul… »). */}
         </div>
       </div>
     </div>

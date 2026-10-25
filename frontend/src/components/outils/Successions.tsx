@@ -74,8 +74,7 @@ export function Successions() {
       <div className="rounded-lg border px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut"
         style={{ borderColor: `${TOKENS.mint}4d`, background: `${TOKENS.mint}0f` }}>
         Les parcelles à potentiel dont le propriétaire <b className="text-txt">approche une succession</b> —
-        dirigeant âgé (≥ 70 ans) ou SCI dormante : un <b className="text-txt">radar à 3-7 ans</b>, pas une
-        succession ouverte.
+        dirigeant âgé (≥ 70 ans) ou SCI dormante.
         <Tip garder tip={methodeTip(meta?.maj, meta?.rne_sync)}>
           <span className="ml-1 cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
         </Tip>
