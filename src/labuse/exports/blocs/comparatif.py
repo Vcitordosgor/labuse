@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from ...faisabilite.residuel import fmt_taux_emprise
 from ..registre_fmt import groupe
-from ..rendu import chip_span, esc, note, section
+from ..rendu import chip_span, esc, section
 
 
 def _i(v):   # entier groupé (séparateur de milliers)
@@ -156,8 +156,8 @@ def rendu(rows) -> str:
             v = fn(r)
             cells += f"<td>{v if v is not None else '—'}</td>"
         body += f'<tr><td class="lbl">{esc(label)}{badge}</td>{cells}</tr>'
-    # FIX-PRIX-ET-OPPORTUNITES (lot 3) — SDP max / logements possibles = plafond réglementaire ; les
-    # permis réels en utilisent ~½ en médiane (volet D). Note mesurée sous le tableau.
-    from ...capacite_max import MENTION as _CAP
-    corps = f'<table class="cmp"><thead>{thead}</thead><tbody>{body}</tbody></table>' + note(_CAP)
+    # RECETTE-OUTILS-2 (R18) — la note de bas de page « Maximum réglementaire (gabarit) … (0,46 en
+    # surface, 0,40 en logements) » est RETIRÉE du Comparatif PDF, pour être identique à l'outil où elle
+    # a déjà été retirée (décision Vic). Le plafond réglementaire reste dit par la fiche / l'Étude.
+    corps = f'<table class="cmp"><thead>{thead}</thead><tbody>{body}</tbody></table>'
     return section("Comparatif", corps)
