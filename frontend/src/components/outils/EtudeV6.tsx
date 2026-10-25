@@ -255,8 +255,8 @@ export function EtudeV6({ initialIdus, onClose }: {
     const surfaceTenue = active?.programme.surface_tenue_m2 ?? Object.entries(parPlan).reduce((s, [t, n]) => s + n * surfA(t), 0)
     // ETUDE-V6-6 (item 5) — jauge EN LOGEMENTS confrontée au calcul EN LOGEMENTS (plus de SDP).
     const jaugeRes = enveloppeJauge(jaugeQ.data, demMap, surfA, active?.stationnement?.mode ?? 'aerien')
-    const capLog = resultat.capacite_maximale?.logements ?? 0
-    const divergence = (jaugeRes && capLog > 0 && Math.abs(jaugeRes.estime - capLog) / capLog > 0.2)
+    const capLog = resultat.capacite_maximale?.logements
+    const divergence = (jaugeRes && capLog != null && capLog > 0 && Math.abs(jaugeRes.estime - capLog) / capLog > 0.2)
       ? { estime: jaugeRes.estime, calcule: capLog, pct: Math.round((Math.abs(jaugeRes.estime - capLog) / capLog) * 100) }
       : null
     // ETUDE-V6-3 (item 7) — UN SEUL facteur limitant, calculé une fois : bandeau, « Ce qui limite » n°1 et
@@ -268,10 +268,10 @@ export function EtudeV6({ initialIdus, onClose }: {
     const limitePhrase: string | null = resultat.facteur_limitant ?? facteurs[0]?.facteur ?? active?.limite_capacite ?? null
     // ETUDE-V6-3 (item 8) — bloc fusionné « Votre programme : N demandés · M tiennent · max K » ; UNE réserve.
     const confr = resultat.confrontation
-    const kMax = resultat.capacite_maximale?.logements ?? active?.resume.logements ?? 0
+    const kMax = resultat.capacite_maximale?.logements ?? active?.resume.logements ?? null
     const nDem = confr?.demande_logements ?? demTotal
-    const mTiennent = confr?.tient ? nDem : (resultat.depassement?.total_tiennent ?? Math.min(nDem, kMax))
-    const reserve = kMax - nDem
+    const mTiennent = confr?.tient ? nDem : (resultat.depassement?.total_tiennent ?? (kMax == null ? nDem : Math.min(nDem, kMax)))
+    const reserve = kMax == null ? null : kMax - nDem
     const repLabel = resultat.capacite_maximale?.repartition ?? ''
     return (
       <div className="relative flex min-h-full flex-col">
@@ -344,9 +344,9 @@ export function EtudeV6({ initialIdus, onClose }: {
                 {/* ETUDE-V6-7 (item 2) — on DÉCRIT le plan dessiné (la typologie tenue) + la surface tenue : une
                     seule vérité, jamais la surface de la demande. */}
                 <p className="mt-0.5 text-[10.5px] text-txt-dim">Dessiné : {Object.entries(parPlan).filter(([, n]) => n > 0).map(([t, n]) => `${n}×${t}`).join(' · ') || '—'} · {fmtDec(surfaceTenue)} m² de programme tenu</p>
-                {reserve >= 0
+                {reserve != null && (reserve >= 0
                   ? <p className="mt-1 text-[11px] text-txt">Réserve de <b className="text-mint">{fmtInt(reserve)}</b> logement(s) jusqu'au maximum du terrain.</p>
-                  : <p className="mt-1 text-[11px] text-txt">Dépassement de <b className="text-amber">{fmtInt(-reserve)}</b> logement(s) au-delà du maximum.</p>}
+                  : <p className="mt-1 text-[11px] text-txt">Dépassement de <b className="text-amber">{fmtInt(-reserve)}</b> logement(s) au-delà du maximum.</p>)}
                 <p className="mt-0.5 text-[9.5px] text-txt-dim">Maximum réglementaire du terrain (répartition {repLabel}) · {resultat.capacite_maximale?.niveaux_label} — indépendant du nombre demandé.</p>
                 {divergence && (
                   <p data-divergence className="mt-1 text-[10.5px] text-amber">⚠ L'estimation de l'étape 3 (≈ {fmtInt(divergence.estime)} logements) et le calcul ({fmtInt(divergence.calcule)} logements) divergent de {divergence.pct} % : la jauge était {divergence.estime > divergence.calcule ? 'optimiste' : 'prudente'} — fiez-vous au calcul.</p>
@@ -517,7 +517,7 @@ function DetailSurfaces({ v }: { v: EtudeVariante }) {
         ))}
         {st?.mode === 'sous_sol' && (st.rampe_m2 ?? 0) > 0 && (
           <div className="flex items-center justify-between border-t border-line-2 py-1">
-            <span className="text-[10.5px] text-txt-mut">Rampe de sous-sol</span><b className="text-[11px] text-txt">{fmtDec(st.rampe_m2 ?? 0)} m²</b>
+            <span className="text-[10.5px] text-txt-mut">Rampe de sous-sol</span><b className="text-[11px] text-txt">{fmtDec(st.rampe_m2)} m²</b>
           </div>
         )}
       </div>
@@ -555,7 +555,7 @@ function PlanSousSol({ st, geojson }: { st: NonNullable<EtudeVariante['stationne
   return (
     <div className="rounded-lg border border-mint/40 bg-mint-bg p-3">
       <p className="mb-1 text-[11px] font-semibold text-mint">Stationnement en sous-sol · {fmtInt(niveaux)} niveau{niveaux > 1 ? 'x' : ''}</p>
-      <p className="mb-2 text-[10px] text-txt-mut">{fmtInt(n)} places sur {fmtInt(niveaux)} niveau{niveaux > 1 ? 'x' : ''} ({fmtInt(parNiveau)} / niveau) · emprise {fmtDec(st.emprise_sous_sol_m2 ?? 0)} m² (≤ emprise réglementaire) · rampe {fmtDec(st.rampe_m2 ?? 0)} m²
+      <p className="mb-2 text-[10px] text-txt-mut">{fmtInt(n)} places sur {fmtInt(niveaux)} niveau{niveaux > 1 ? 'x' : ''} ({fmtInt(parNiveau)} / niveau) · emprise {fmtDec(st.emprise_sous_sol_m2)} m² (≤ emprise réglementaire) · rampe {fmtDec(st.rampe_m2)} m²
         {st.rampe_detail && <> ({fmtDec(st.rampe_detail.rampe_profondeur_m)} m / {fmtDec(st.rampe_detail.rampe_pente_pct)} % = {fmtDec(st.rampe_detail.rampe_longueur_m)} m × {fmtDec(st.rampe_detail.rampe_largeur_m)} m)</>}
       </p>
       {planNiveau(-1, n1)}
@@ -648,8 +648,8 @@ function LotissementResultat({ lot, hypothese, boutonPdf, pdfErreur, studyId, ed
         )}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Chiffre v={fmtInt(tl.nombre)} l="lots" />
-          <Chiffre v={`${fmtDec(tl.surface_moyenne_m2 ?? 0)} m²`} l="surface moyenne" />
-          <Chiffre v={`${fmtDec(tl.surface_min_m2 ?? 0)} m²`} l="surface mini" />
+          <Chiffre v={`${fmtDec(tl.surface_moyenne_m2)} m²`} l="surface moyenne" />
+          <Chiffre v={`${fmtDec(tl.surface_min_m2)} m²`} l="surface mini" />
           <Chiffre v={`${fmtDec(lot.voirie_m2)} m²`} l="voirie" />
         </div>
         {/* ETUDE-V6-6 (item 1) — règles du PLU de la commune/zone, chacune sourcée (jamais Ud en dur). */}
@@ -698,7 +698,7 @@ function LotissementResultat({ lot, hypothese, boutonPdf, pdfErreur, studyId, ed
 
       <aside className="flex flex-col gap-3">
         <Recit titre="Division foncière">
-          <p className="text-[12px] text-txt-hi">{tl.nombre} lots · {fmtDec(tl.surface_moyenne_m2 ?? 0)} m² en moyenne ({fmtDec(tl.surface_min_m2 ?? 0)}–{fmtDec(tl.surface_max_m2 ?? 0)})</p>
+          <p className="text-[12px] text-txt-hi">{tl.nombre} lots · {fmtDec(tl.surface_moyenne_m2)} m² en moyenne ({fmtDec(tl.surface_min_m2)}–{fmtDec(tl.surface_max_m2)})</p>
           <p className="text-[10.5px] text-txt-dim">Assiette {fmtDec(lot.assiette_m2)} m² · net constructible {fmtDec(lot.net_constructible_m2)} m²{lot.ppr_rouge_m2 > 0 ? ` · PPR rouge ${fmtDec(lot.ppr_rouge_m2)} m² retiré` : ''}</p>
         </Recit>
         <LigneInfo l="Voirie" v={`${fmtDec(lot.voirie_m2)} m² · ${lot.voirie_config}`} sous={lot.voirie_largeur_source} />
@@ -811,9 +811,9 @@ function StationnementResultat({ regimes, placesActive, commune, zone, mode, niv
       </ol>
       {mixite?.regle && (
         <div data-mixite className="mt-2 border-t border-line-2 pt-2 text-[10.5px] text-txt">
-          <span><b>Mixité sociale</b> (art. {mixite.regle.article ?? '—'}) : {fmtDec(mixite.regle.valeur ?? 0)} % de logements aidés{mixite.regle.seuil_m2 != null ? ` au-delà de ${fmtDec(mixite.regle.seuil_m2)} m² de SDP` : ''}.</span>
+          <span><b>Mixité sociale</b> (art. {mixite.regle.article ?? '—'}) : {fmtDec(mixite.regle.valeur)} % de logements aidés{mixite.regle.seuil_m2 != null ? ` au-delà de ${fmtDec(mixite.regle.seuil_m2)} m² de SDP` : ''}.</span>
           <LireArticle r={{ article: mixite.regle.article, page_pdf: mixite.regle.page_pdf, millesime: mixite.regle.millesime, citation: mixite.regle.citation, source_url: mixite.regle.source_url, commune, zone }} />
-          <span className="ml-1 text-txt-dim">{mixite.applicable ? `Applicable : ${fmtInt(mixite.aides ?? 0)} logements aidés imposés.` : 'Non applicable (seuil non atteint).'}</span>
+          <span className="ml-1 text-txt-dim">{mixite.applicable ? `Applicable : ${fmtInt(mixite.aides)} logements aidés imposés.` : 'Non applicable (seuil non atteint).'}</span>
         </div>
       )}
     </div>
@@ -1004,7 +1004,7 @@ function EtapeType({ projet, onChoisir, regimes, chargement, commune, zone, mixi
       {projet && mixite && (
         <div data-mixite-etape2 className="mt-2 rounded-md border border-line-2 bg-surface-1 px-3 py-2 text-[10.5px] text-txt">
           <b className="text-[11px] text-txt">Mixité sociale</b>
-          <span className="ml-1.5">{fmtDec(mixite.quota_pct ?? 0)} % de logements aidés{mixite.seuil_m2 != null ? ` au-delà de ${fmtDec(mixite.seuil_m2)} m² de SDP` : ''}.</span>
+          <span className="ml-1.5">{fmtDec(mixite.quota_pct)} % de logements aidés{mixite.seuil_m2 != null ? ` au-delà de ${fmtDec(mixite.seuil_m2)} m² de SDP` : ''}.</span>
           <LireArticle r={{ article: mixite.article, page_pdf: mixite.page_pdf, millesime: mixite.millesime, citation: mixite.citation, source_url: mixite.source_url, commune, zone }} />
         </div>
       )}
