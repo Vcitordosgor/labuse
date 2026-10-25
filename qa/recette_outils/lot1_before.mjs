@@ -8,7 +8,7 @@ const navPick = async (key, name, waits=1600) => {
   await page.evaluate((k) => window.__labuse.setModule(k), key)
   await t.wait(600)
   await page.evaluate((i) => window.__labuse.select(i), IDU)
-  await t.wait(waits)
+  await t.wait(3500)
   await t.shotSel('aside', `${name}-${SUF}`)
 }
 const navOnly = async (key, name, waits=1600) => {

@@ -1,0 +1,11 @@
+import { launch, mk } from './lib.mjs'
+const { browser, page } = await launch()
+const t = mk(page)
+await t.go(''); await t.wait(700)
+await page.evaluate(() => window.__labuse.setModule('taxe-amenagement'))
+await t.wait(500)
+await page.evaluate(() => window.__labuse.select('97411000AD0213'))
+await t.wait(3500)
+const txt = await page.locator('[data-entree-parcelle-choisie]').first().innerText().catch(()=>'(absent)')
+console.log('CHOISIE:', JSON.stringify(txt))
+await browser.close()
