@@ -241,7 +241,7 @@ export function Communes() {
   }
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
-      <Retour data-communes-retour label="Communes" onClick={() => setVue('accueil')} />
+      <Retour data-communes-retour label="Retour" onClick={() => setVue('accueil')} />
       <AcquisitionsRecentes />
     </div>
   )

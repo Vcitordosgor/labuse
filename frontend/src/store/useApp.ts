@@ -985,7 +985,14 @@ export const useApp = create<AppState>((set, get) => ({
         ...CLOSE_OVERLAYS, filters: { ...s.filters, renouvellement: true, sdpMin: s.filters.sdpMin ?? 200 } }))
       return
     }
-    set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null, openProjet: null, iaRestitution: null, surveillanceOpen: false, zone: null, tool: null, focusIdu: null, ...CLOSE_OVERLAYS })
+    // RECETTE-OUTILS-1 (T1) — changer d'outil VIDE TOUT : `setModule` était la SEULE navigation qui ne
+    // remettait pas `selectedIdu`/`contexteCommune` à null (tous les autres — setView, openRadar,
+    // openSurveillance… — le font). D'où le constat Vic : une fiche parcelle d'un outil précédent restait
+    // ouverte (et son liseré « en fond ») dans Remonter le temps / PLU. On ferme la fiche et la fiche
+    // commune au changement d'outil, comme toute autre transition. Les prefills (parcelPrefill, m02Prefill,
+    // courrierPrefill…) ne sont PAS touchés ici : ce sont des amorces transitoires posées par les ponts
+    // AVANT setModule puis consommées-et-remises-à-null au montage de l'outil cible.
+    set({ module, view: 'cartes', outilsOpen: false, selectedIdu: null, contexteCommune: null, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null, openProjet: null, iaRestitution: null, surveillanceOpen: false, zone: null, tool: null, focusIdu: null, ...CLOSE_OVERLAYS })
   },
   // IMPLANTATION-4 (LOT A) — ouverture/fermeture de l'overlay Étude. `ouvrirEtude` NE spread PAS
   // CLOSE_OVERLAYS (il ne se saborde pas) : il pose seulement l'assiette. La fermeture rend la main à

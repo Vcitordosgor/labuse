@@ -321,7 +321,7 @@ export function O7Carnet() {
     return (
       <>
         {/* DA-FIX-5 P6 — retour unifié (bouton secondaire, haut gauche) au lieu du texte gris fait main. */}
-        <Retour label="Secteurs" onClick={() => setSecteur(null)} />
+        <Retour label="Retour" onClick={() => setSecteur(null)} />
         <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
           <span className="font-mono text-txt-hi">{d.secteur.slice(8)}</span>
           <span className="ml-2 text-[11px] text-txt-mut">{d.commune} · section {d.section}</span>

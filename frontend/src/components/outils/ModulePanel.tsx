@@ -1524,7 +1524,7 @@ export function M09() {
             </>
           )}
           <div className="flex gap-2">
-            <Retour label="Destinataires" onClick={() => setStep(1)} />
+            <Retour label="Retour" onClick={() => setStep(1)} />
             <Bouton niveau="primaire" ton="vert" data-courrier-next onClick={() => setStep(3)} disabled={!apercu.data || corps.trim().length < 10}
               className="flex-1">Vérifier l'envoi ›</Bouton>
           </div>
@@ -1624,7 +1624,7 @@ export function M09() {
 
           {/* CHASSE-APP-FIX-2 (point 4 S) — le retour de l'étape 3 (Envoi) mène à l'étape PRÉCÉDENTE
               (2 · Relecture), plus directement à l'étape 1 : on peut reculer d'un pas. */}
-          <Retour label="Relecture" onClick={() => setStep(2)} className="mt-auto" />
+          <Retour label="Retour" onClick={() => setStep(2)} className="mt-auto" />
         </div>
       )}
     </div>

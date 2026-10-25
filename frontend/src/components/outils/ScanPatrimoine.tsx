@@ -152,13 +152,13 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
       ) : porte === 'operations' ? (
         /* ───────── PORTE « TOUTES LES OPÉRATIONS » — l'exploration générale. ───────── */
         <>
-          <Retour data-scan-retour-portes label="Scan patrimoine" onClick={() => setPorte(null)} />
+          <Retour data-scan-retour-portes label="Retour" onClick={() => setPorte(null)} />
           <VeillePromoteurs embedded />
         </>
       ) : !owner ? (
         /* ───────── ÉTAT 1 — aucun propriétaire : la recherche SEULE, pas d'onglets. ───────── */
         <>
-          <Retour data-scan-retour-portes label="Scan patrimoine" onClick={() => setPorte(null)} />
+          <Retour data-scan-retour-portes label="Retour" onClick={() => setPorte(null)} />
           {/* DA-FIX-4 verif (task 1) — ENTRÉE CANONIQUE : ParcelInput (omnibox 40 px + séparateur « ou »
               + Bouton « Cliquez une parcelle sur la carte »). Le clic-carte et l'IDU/adresse résolvent le
               PROPRIÉTAIRE de la parcelle (onPick → resoudre → ownerDeIdu). RECHERCHE-2 Lot 1 — une
@@ -210,7 +210,7 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
         <>
           {/* RECETTE-1 (H4, Vic) — le retour « ← Scan patrimoine » reste APRÈS la recherche (palier F4) :
               on revient aux deux portes, pas seulement « changer » de propriétaire. */}
-          <Retour data-scan-retour-portes label="Scan patrimoine" onClick={() => setPorte(null)} />
+          <Retour data-scan-retour-portes label="Retour" onClick={() => setPorte(null)} />
           {/* U1.5 — encart propriétaire : raison sociale + SIREN + « changer » (retour état 1). */}
           <div data-scan-owner className="flex items-center justify-between gap-2.5 rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
             <div className="min-w-0">
