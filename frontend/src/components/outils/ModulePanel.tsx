@@ -46,6 +46,7 @@ import { TaxeAmenagement } from './TaxeAmenagement'
 import { Gabarit } from './Gabarit'   // GABARIT-1 — outil interne (registry hidden:true, flag admin)
 import { MonSecteur } from './MonSecteur'   // SECTEUR-1 (S1) — outil « Mon secteur »
 import { ScanPatrimoine } from './ScanPatrimoine'   // RETOURS-4 S7 — fusion Scan patrimoine (possède + construit)
+import { ouvrirBullePermis, fermerBullePermis } from '../map/MapView'   // RECETTE-OUTILS-1 (6/7) — bulle permis
 import { OwnerParcelles } from '../OwnerParcelles'   // RECHERCHE-2 Lot 2 — sous-panneau propriétaire → ses parcelles
 import { Successions } from './Successions'   // OUTILS-MUSCLER-1 Lot A — radar patrimonial servi en outil
 import { Blocs } from './Blocs'   // OUTILS-MUSCLER-3 — assiettes contiguës d'un même propriétaire PM
@@ -517,7 +518,11 @@ export function M03() {
   const etatSeg = seg === 'acheve' ? 'acheve' : seg === 'autre' ? 'autre' : null
   const [months, setMonths] = useState(moduleKey === 'promesses' ? 36 : 24)
   const [nature, setNature] = useState('')
-  const [open, setOpen] = useState<string | null>(null)
+  // RECETTE-OUTILS-1 (points 6 & 7) — plus de drawer en colonne : la fiche permis s'ouvre en BULLE sur
+  // la carte (ouvrirBullePermis, MapView), que le clic vienne d'un point carte OU d'une ligne de liste.
+  // `permisOuvert` (store) surligne la ligne correspondante. On nettoie la bulle au démontage.
+  const permisOuvert = useApp((s) => s.permisOuvert)
+  const setPermisOuvert = useApp((s) => s.setPermisOuvert)
   // RETOURS-18 X1 — panneau en ACCORDÉON : sous le bloc total (permanent) et le bandeau Sitadel
   // (permanent), trois blocs repliables dont UN SEUL est ouvert (Filtrer par état · Affiner · Voir les
   // permis). Ouvrir l'un referme les autres. « Filtrer par état » ouvert au départ (la liste ne s'affiche
@@ -535,7 +540,21 @@ export function M03() {
   const setFlyTo = useApp((s) => s.setFlyTo)
   const focusParcelle = useApp((s) => s.focusParcelle)   // RETOURS-12 O12.2 — zoom+surbrillance commun (O1)
   const select = useApp((s) => s.select)   // PERMIS-CHECK-2 pt 2 — lever une fiche stale avant de focus
-  useEffect(() => { if (permitToOpen) { setOpen(permitToOpen); setPermitToOpen(null) } }, [permitToOpen, setPermitToOpen])
+  // RECETTE-OUTILS-1 (point 7) — ouvrir la bulle permis depuis la LISTE : on surligne la ligne, on zoome
+  // sur le permis (sa parcelle rattachée) et on ouvre LA MÊME bulle que le clic carte.
+  const ouvrirPermisBulle = (id: string) => {
+    setPermisOuvert(id)
+    const m = (window as unknown as { __labuse_map?: any }).__labuse_map
+    if (!m) return
+    modPermisFiche(id).then((f: Record<string, any>) => {
+      const c = (f?.['geom'] as { coordinates?: [number, number] } | null)?.coordinates
+      if (c) { m.easeTo({ center: c, zoom: Math.max(m.getZoom?.() ?? 15, 17), duration: 600 }); ouvrirBullePermis(m, id, c) }
+      else { ouvrirBullePermis(m, id, m.getCenter()) }   // non géocodé : bulle au centre courant
+    }).catch(() => { /* fiche indisponible : la bulle le dira */ ouvrirBullePermis(m, id, m.getCenter()) })
+  }
+  useEffect(() => { if (permitToOpen) { ouvrirPermisBulle(permitToOpen); setPermitToOpen(null) } }, [permitToOpen, setPermitToOpen])   // eslint-disable-line react-hooks/exhaustive-deps
+  // nettoie la bulle quand on quitte l'outil Permis.
+  useEffect(() => () => { fermerBullePermis(); setPermisOuvert(null) }, [])   // eslint-disable-line react-hooks/exhaustive-deps
   // la clé d'ouverture (radar `permis` vs filtre `promesses`) fixe le MODE d'entrée + la fenêtre par
   // défaut ; ensuite le toggle local est maître (un deep-link vers l'autre clé re-cale l'écran).
   useEffect(() => { const s = moduleKey === 'promesses' ? 'mort' : 'tous'; setSeg(s); setMonths(s === 'mort' ? 36 : 24) }, [moduleKey])
@@ -774,7 +793,7 @@ export function M03() {
             // pt 2 — `select(null)` d'abord : le focus barre prime sur une fiche stale (cf. onSelect).
             if (v.length === 14 && estIdu(v)) { select(null); focusParcelle(v); setParcelIdu(v); setSeg('tous'); return }
             // sinon une référence Sitadel compacte → fiche permis
-            if (/^[0-9][0-9a-z]{6,}$/i.test(v)) setOpen(v)
+            if (/^[0-9][0-9a-z]{6,}$/i.test(v)) ouvrirPermisBulle(v)
           }} />
         {/* RECHERCHE-2 Lot 2 — propriétaire → ses parcelles ; en choisir une cible la parcelle (zoom +
             délimitation) et cherche ses permis, exactement comme un IDU saisi. */}
@@ -971,9 +990,10 @@ export function M03() {
             autre: 'Autre — ni récent, ni dormant, ni achevé (autre nature, permis non rattaché, ou période intermédiaire).' }[et]
           return (
           <button key={k} data-permis-row data-geocode={i['geom'] ? '1' : '0'} data-point-mort={pointMort ? '1' : '0'} data-permis-row-etat={et}
-            onClick={() => setOpen(i['permit_id'] as string)}
+            data-permis-actif={permisOuvert === (i['permit_id'] as string) ? '1' : undefined}
+            onClick={() => ouvrirPermisBulle(i['permit_id'] as string)}
             onMouseEnter={() => i['geom'] && setPermitHover(i['geom'])} onMouseLeave={() => setPermitHover(null)}
-            className={`flex w-full items-center gap-2 rounded-lg border border-line-2 px-3 py-1.5 text-left text-[11px] transition-colors duration-quick hover:border-mint/60 ${i['geom'] ? 'bg-surface-3' : 'bg-surface-1'}`}>
+            className={`flex w-full items-center gap-2 rounded-lg border px-3 py-1.5 text-left text-[11px] transition-colors duration-quick hover:border-mint/60 ${permisOuvert === (i['permit_id'] as string) ? 'border-mint bg-mint/10' : `border-line-2 ${i['geom'] ? 'bg-surface-3' : 'bg-surface-1'}`}`}>
             {/* RETOURS-11 R6 — puce sur UNE seule ligne (moitié moins haute) : pastille · type · date ·
                 lgt/surface · commune (tronquée) à gauche, badge d'état (Autorisé / Sans DAACT / non géocodé)
                 aligné À DROITE de la MÊME ligne (avant : le badge décrochait sur une 2ᵉ ligne). */}
@@ -1023,7 +1043,7 @@ export function M03() {
           </div>
         </BlocAccordeon>
       </div>
-      {open && <PermitDrawer permitId={open} onClose={() => setOpen(null)} />}
+      {/* RECETTE-OUTILS-1 (points 6 & 7) — plus de drawer/modal permis : la fiche vit en bulle sur la carte. */}
     </div>
   )
 }

@@ -606,6 +606,10 @@ interface AppState {
   // l'outil le consomme (ajoute au lot, comme une saisie) puis le remet à null. One-shot.
   carteOutilIdu: string | null
   setCarteOutilIdu: (s: string | null) => void
+  // RECETTE-OUTILS-1 (points 6 & 7) — permis actuellement ouvert en bulle sur la carte (pour surligner
+  // la ligne correspondante dans la liste Permis ; la bulle elle-même vit dans MapView/maplibre).
+  permisOuvert: string | null
+  setPermisOuvert: (s: string | null) => void
   // DESTINATIONS-1 (X4.4) — Copilote (outil destination_zone) → Étude de zone préremplie (parcelle +
   // sous-destination R151-28). Même idiome consommé-puis-reset : EtudeZone lit AU MONTAGE, remet à null.
   etudeZonePrefill: { idu?: string | null; commune?: string | null; zone?: string | null; sous_destination: string } | null
@@ -1088,6 +1092,8 @@ export const useApp = create<AppState>((set, get) => ({
   setParcelPrefill: (parcelPrefill) => set({ parcelPrefill }),
   carteOutilIdu: null,
   setCarteOutilIdu: (carteOutilIdu) => set({ carteOutilIdu }),
+  permisOuvert: null,
+  setPermisOuvert: (permisOuvert) => set({ permisOuvert }),
   etudeZonePrefill: null,
   setEtudeZonePrefill: (etudeZonePrefill) => set({ etudeZonePrefill }),
   communePrefill: null,
