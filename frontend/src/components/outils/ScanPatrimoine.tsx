@@ -243,11 +243,14 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
           {/* RETOURS-11 O11(d) — LÉGENDE des deux natures de chiffre, pour lever la contradiction
               apparente entre l'onglet « Possession » (parcelles détenues, fichiers fonciers) et l'onglet
               « Construction » (opérations + programmes, Sitadel). Deux sources, deux comptes : on le dit. */}
-          <p className="-mt-1 text-[10px] leading-snug text-txt-off">
-            {tab === 'possede'
-              ? 'Parcelles détenues (fichiers fonciers DGFiP) — c’est ce qu’il possède, pas ce qu’il construit.'
-              : 'Opérations bâties et programmes (Sitadel + sites promoteurs) — indépendant du nombre de parcelles possédées.'}
-          </p>
+          {/* RECETTE-OUTILS-2 (R19) — en Possession, cette ligne est reprise EN PIED de l'accordéon
+              « Chiffres clés » de M02 (pour libérer la hauteur de la liste) → on ne la rend ici que pour
+              l'onglet Construction. */}
+          {tab === 'construit' && (
+            <p className="-mt-1 text-[10px] leading-snug text-txt-off">
+              Opérations bâties et programmes (Sitadel + sites promoteurs) — indépendant du nombre de parcelles possédées.
+            </p>
+          )}
 
           <div className="flex min-h-0 flex-1 flex-col gap-1.5">
             {tab === 'possede'

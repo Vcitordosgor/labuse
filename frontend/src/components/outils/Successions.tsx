@@ -169,10 +169,15 @@ function Motif({ it }: { it: SuccessionItem }) {
   const base = it.sci_dormante ? 'SCI dormante'
     : it.dirigeant_age != null ? `${it.dirigeant_nom ?? 'dirigeant'} · ${it.dirigeant_age} ans` : null
   if (!base && !depotMuet) return null
+  // RECETTE-OUTILS-2 (R23) — plus de troncature (« aucun dépôt de compt… ») : le texte PEUT PASSER à la
+  // ligne (`break-words`, plus de `shrink-0`), et la mention de dépôt descend sur SA ligne (« Nom · âge »,
+  // puis « aucun dépôt de comptes » dessous), comme le demande le mandat.
   return (
-    <span className="shrink-0 text-txt-dim">
+    <span className="min-w-0 break-words text-txt-dim">
       {base}
-      {depotMuet && <>{base ? ' · ' : ''}aucun dépôt de comptes depuis {it.depot_comptes!.depuis_ans} ans</>}
+      {depotMuet && (
+        <span className="block">aucun dépôt de comptes depuis {it.depot_comptes!.depuis_ans} ans</span>
+      )}
     </span>
   )
 }

@@ -229,12 +229,9 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
       )}
       {d && (d['n_parcelles'] as number) > 0 && (
         <>
-          {/* OUTILS-FIX-4 A1 — MILLÉSIME MAJIC en tête de l'onglet Possession : ces parcelles sont celles
-              détenues d'après les fichiers fonciers DGFiP d'une année donnée — on la dit (fraîcheur), au
-              même vocabulaire que le reste de l'app. Servi par la base (millesime_majic) ; jamais inventé. */}
-          {d['millesime_majic'] && (
-            <p data-m02-millesime className="text-[10px] text-txt-dim">Fichiers fonciers DGFiP · situation {String(d['millesime_majic'])}</p>
-          )}
+          {/* RECETTE-OUTILS-2 (R19) — millésime MAJIC et « Dépôt de comptes » ne sont PLUS des lignes en
+              tête (elles poussaient la liste des parcelles hors champ) : regroupées EN PIED de l'accordéon
+              « Chiffres clés » (fermé par défaut), plus bas. */}
           {/* signaux d'APPROCHE : BODACC (procédure) + INPI (société absente du registre = succession /
               sommeil probable). Libellés FACTUELS — jamais « fantôme ». */}
           {d['bodacc'] != null && (
@@ -247,22 +244,10 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
               ● Aucun dirigeant au registre INPI — succession ou société en sommeil probable (signal d'approche). À vérifier au registre.
             </div>
           )}
-          {/* DONNEES-1 lot 2.3 — dépôts de comptes BODACC : un dépôt récent = société vivante ; un
-              silence prolongé = société en sommeil (signal d'approche). Factuel. */}
-          {d['depot_comptes'] != null && (
-            <div data-m02-depot className="text-[10.5px] text-txt-dim">
-              Dépôt de comptes — {(() => {
-                const dc = d['depot_comptes'] as { annee: number | null; depuis_ans: number | null; muet?: boolean }
-                if (dc.muet) return `aucun dépôt depuis ${dc.depuis_ans} ans (société en sommeil probable)`
-                return `dernier exercice déposé : ${dc.annee ?? '—'}`
-              })()}
-            </div>
-          )}
-          {/* RECETTE-1 (H4, Vic) — les 4 tuiles de compteurs RESTENT visibles, même quand la liste des
-              parcelles s'ouvre (avant RETOURS-12 O5 : le bandeau se repliait en barre compacte et
-              masquait les chiffres). « Voir ses parcelles » n'affecte plus que la liste + le repli du
-              bloc « Blocs contigus » ; le nom + les 4 chiffres (notaires/agences/apporteurs) restent. */}
-          <div className="truncate text-xs font-medium text-txt-hi">{d['nom'] as string}</div>
+          {/* RECETTE-OUTILS-2 (R19) — le nom du propriétaire n'apparaît qu'UNE fois : en fusion (Scan
+              patrimoine), l'encart du haut le porte déjà → on NE le répète plus ici. Hors fusion (M02
+              seul, dormant), on le garde. */}
+          {!embedded && <div className="truncate text-xs font-medium text-txt-hi">{d['nom'] as string}</div>}
           {/* RECETTE-OUTILS-1 (point 12) — les 4 grands chiffres passent dans un accordéon FERMÉ par
               défaut, pour laisser la place à la liste des parcelles (qui défile) — fini « AD 0548 » coupé. */}
           <details data-m02-chiffres className="group rounded-lg border border-line-2 bg-surface-2">
@@ -283,6 +268,24 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
                 <div className="mt-0.5 text-[10px] leading-tight text-txt-mut">{c.lbl}</div>
               </div>
             ))}
+            </div>
+            {/* RECETTE-OUTILS-2 (R19) — EN PIED de l'accordéon : les trois lignes de contexte (nature de
+                la donnée, millésime des fichiers fonciers, dépôt de comptes) autrefois en tête, qui
+                mangeaient la hauteur de la liste. Repliées par défaut avec les chiffres. */}
+            <div className="flex flex-col gap-1 border-t border-line px-2.5 pb-2.5 pt-2 text-[10px] leading-snug text-txt-dim">
+              <p>Parcelles détenues (fichiers fonciers DGFiP) — c’est ce qu’il possède, pas ce qu’il construit.</p>
+              {d['millesime_majic'] && (
+                <p data-m02-millesime>Fichiers fonciers DGFiP · situation {String(d['millesime_majic'])}</p>
+              )}
+              {d['depot_comptes'] != null && (
+                <p data-m02-depot>
+                  Dépôt de comptes — {(() => {
+                    const dc = d['depot_comptes'] as { annee: number | null; depuis_ans: number | null; muet?: boolean }
+                    if (dc.muet) return `aucun dépôt depuis ${dc.depuis_ans} ans (société en sommeil probable)`
+                    return `dernier exercice déposé : ${dc.annee ?? '—'}`
+                  })()}
+                </p>
+              )}
             </div>
           </details>
           {/* RETOURS-15 C9 — pont Blocs fonciers : les GROUPES de parcelles contiguës du propriétaire
@@ -353,10 +356,12 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
           {/* RETOURS-11 T4 — pied de liste PARTAGÉ (SOCLE) : compteur exact « n / total affichées » +
               « Voir 200 de plus » (jamais de dump, jamais de « Tout charger »). Trié par probabilité. */}
           <div className="shrink-0">
+            {/* RECETTE-OUTILS-2 (R19) — « · triées par probabilité » remonte SUR la ligne du compteur
+                (`countSuffix`), plus en dessous. Le « chargement… » reste en action additionnelle. */}
             <ListPaginationFooter shown={items.length} total={total} step={M02_PAGE}
-              onMore={() => pat.fetchNextPage()}>
+              onMore={() => pat.fetchNextPage()}
+              countSuffix={<span className="text-txt-off"> · triées par probabilité</span>}>
               {pat.isFetchingNextPage && <span className="text-txt-dim">chargement…</span>}
-              <span className="text-txt-off">· triées par probabilité</span>
             </ListPaginationFooter>
           </div>
           </>)}

@@ -309,10 +309,13 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
                       </div>
                     ))}
 
+                    {/* RECETTE-OUTILS-2 (R20) — deux colonnes ÉGALES (grille 1fr 1fr) : les boutons tiennent
+                        côte à côte sur une ligne, texte centré + majuscule initiale, et ne débordent plus
+                        de la carte (chaque colonne `min-w-0`, texte réduit) même à largeur minimale. */}
                     {g.siren && (
-                      <div className="mt-1 flex gap-2 border-t border-line/60 pt-1.5">
-                        <Bouton niveau="secondaire" ton="vert" data-vp-patrimoine onClick={() => voirPatrimoine(g.siren!)} className="whitespace-nowrap">voir son patrimoine →</Bouton>
-                        <Bouton niveau="secondaire" ton="vert" data-vp-frise onClick={() => setOpenSiren((s) => (s === g.siren ? null : g.siren))} className="inline-flex items-center gap-1 whitespace-nowrap">{openSiren === g.siren ? 'masquer sa frise' : 'sa frise'} <Chevron open={openSiren === g.siren} /></Bouton>
+                      <div className="mt-1 grid grid-cols-2 gap-2 border-t border-line/60 pt-1.5">
+                        <Bouton niveau="secondaire" ton="vert" data-vp-patrimoine onClick={() => voirPatrimoine(g.siren!)} className="w-full min-w-0 justify-center whitespace-nowrap px-1 text-[11px]">Voir son patrimoine →</Bouton>
+                        <Bouton niveau="secondaire" ton="vert" data-vp-frise onClick={() => setOpenSiren((s) => (s === g.siren ? null : g.siren))} className="w-full min-w-0 justify-center gap-1 whitespace-nowrap px-1 text-[11px]">{openSiren === g.siren ? 'Masquer sa frise' : 'Sa frise'} <Chevron open={openSiren === g.siren} /></Bouton>
                       </div>
                     )}
                     {openSiren === g.siren && g.siren && <Frise siren={g.siren} />}

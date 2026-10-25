@@ -89,51 +89,70 @@ function Carte({ it, ouvert, onToggle }: { it: BlocItem; ouvert: boolean; onTogg
   const setM02Prefill = useApp((s) => s.setM02Prefill)
   const setModule = useApp((s) => s.setModule)
   const pushOutilRetour = useApp((s) => s.pushOutilRetour)
+  // RECETTE-OUTILS-2 (R22) — zonages PLU : 4 puces au maximum, « +N » déplie le reste au clic.
+  const [zonesDepliees, setZonesDepliees] = useState(false)
   const commune = it.communes[0]   // commune principale (première listée)
+  const ZONES_MAX = 4
+  const zonesVisibles = zonesDepliees ? it.zonages : it.zonages.slice(0, ZONES_MAX)
+  const zonesCachees = it.zonages.length - ZONES_MAX
   return (
     <div className="rounded-lg border border-line-2 bg-surface-3 px-2.5 py-2">
-      {/* ligne 1 — chevron · dénomination + « Commune · SIREN » · pastille N parcelles */}
+      {/* RECETTE-OUTILS-2 (R22) — ligne 1 : chevron · dénomination SUR TOUTE LA LARGEUR (la pastille
+          « N parcelles » n'est plus à côté du nom : elle descend à la ligne des métadonnées, à côté de
+          la commune). SIREN insécable : « SIREN » + numéro ne se coupent jamais ; seul le numéro est en
+          lien bleu souligné. */}
       <div data-bloc-row className="flex cursor-pointer items-start gap-2" onClick={onToggle}>
         <Chevron open={ouvert} className="mt-0.5" />
         <div className="min-w-0 flex-1">
           <div className="break-words text-[15px] font-semibold leading-tight text-txt">
             {it.denomination ?? '—'}
           </div>
-          <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[10.5px] text-txt-mut">
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[10.5px] text-txt-mut">
             {commune && <span className="break-words">{commune}</span>}
-            {commune && it.siren && <span className="text-txt-dim">·</span>}
-            {/* RECETTE-2 (D15) — SIREN en bleu souligné mono (repère de la personne morale). */}
-            {it.siren && <Siren value={it.siren} label className="font-mono text-[10px] text-[#6B8FD4]" />}
+            <span data-bloc-pastille className="rounded-full bg-surface-2 px-2 py-0.5 font-mono text-[10px] tnum text-txt">
+              {it.n_parcelles} parcelles
+            </span>
+            {it.siren && (
+              <span className="whitespace-nowrap">SIREN <Siren value={it.siren} className="font-mono text-[10px] text-[#6B8FD4]" /></span>
+            )}
           </div>
         </div>
-        <span className="shrink-0 rounded-full bg-surface-2 px-2 py-0.5 font-mono text-[10.5px] tnum text-txt">
-          {it.n_parcelles} parcelles
-        </span>
       </div>
 
-      {/* ligne 2 — deux tuiles côte à côte : Surface totale · SDP résiduelle estimée */}
+      {/* ligne 2 — deux tuiles côte à côte : Surface totale · SDP résiduelle */}
       <div className="mt-2 grid grid-cols-2 gap-1.5 pl-7">
         <div className="rounded-md border border-line-2 bg-surface-2 px-2 py-1.5">
           <div className="text-[9px] uppercase tracking-wide text-txt-dim">Surface totale</div>
           <div className="mt-0.5 tnum text-[12px] text-txt">{fmtM2(it.surface_totale_m2)}</div>
         </div>
+        {/* RECETTE-OUTILS-2 (R22) — tuile SDP : « SDP résiduelle » sur UNE ligne (libellé), valeur, puis
+            le badge « Estimé » SOUS la valeur, aligné à gauche — il ne chevauche plus le libellé. */}
         <div className="rounded-md border border-line-2 bg-surface-2 px-2 py-1.5">
-          <div className="flex items-center gap-1 text-[9px] uppercase tracking-wide text-txt-dim">
-            SDP résiduelle estimée <Estime />
-          </div>
+          <div className="whitespace-nowrap text-[9px] uppercase tracking-wide text-txt-dim">SDP résiduelle</div>
           <div className="mt-0.5 tnum text-[12px] font-medium text-mint">{fmtM2(it.sdp_residuelle_m2)}</div>
+          <div className="mt-0.5"><Estime /></div>
           {it.sdp_couverture < it.n_parcelles && (
             <div className="mt-0.5 text-[9px] text-txt-dim">résiduel sur {it.sdp_couverture}/{it.n_parcelles}</div>
           )}
         </div>
       </div>
 
-      {/* ligne 3 — zonages PLU (puces mono) · petit bouton « Scan patrimoine → » (pt 42) */}
-      <div className="mt-1.5 flex items-center gap-2 pl-7">
-        <div className="min-w-0 flex-1 break-words font-mono text-[10.5px] text-txt-dim">
-          {it.zonages.length > 0 ? it.zonages.join(' · ') : '—'}
-        </div>
-        {/* Scan patrimoine → : tout ce que ce SIREN possède et construit. */}
+      {/* RECETTE-OUTILS-2 (R22) — ligne 3 : zonages PLU en PUCES mono (4 max + « +N » dépliable), sur une
+          ligne qui passe à la ligne normalement, jamais empilées en colonne. */}
+      <div className="mt-1.5 flex flex-wrap items-center gap-1 pl-7">
+        {it.zonages.length === 0 && <span className="font-mono text-[10.5px] text-txt-dim">—</span>}
+        {zonesVisibles.map((z, i) => (
+          <span key={i} data-bloc-zone className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[10px] text-txt-dim">{z}</span>
+        ))}
+        {!zonesDepliees && zonesCachees > 0 && (
+          <button data-bloc-zones-plus onClick={(e) => { e.stopPropagation(); setZonesDepliees(true) }}
+            className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[10px] text-mint hover:underline">+{zonesCachees}</button>
+        )}
+      </div>
+
+      {/* RECETTE-OUTILS-2 (R22) — bouton « Scan patrimoine → » petit (contour, ~30 px, 12 px), aligné à
+          DROITE SOUS les puces (plus à côté d'elles). */}
+      <div className="mt-1.5 flex justify-end pl-7">
         <Bouton niveau="secondaire" ton="vert" data-bloc-scan
           className="h-[30px] shrink-0 px-2 text-[12px]"
           onClick={(e) => { e.stopPropagation(); setM02Prefill(it.siren); setModule('patrimoine'); pushOutilRetour({ module: 'blocs-fonciers', label: 'Blocs fonciers' }) }}>
