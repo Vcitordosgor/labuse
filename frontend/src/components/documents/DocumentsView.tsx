@@ -458,13 +458,9 @@ export function DocumentsView() {
   return (
     <div className="min-w-0 flex-1 overflow-y-auto bg-bg">
       <div className="mx-auto max-w-[1400px] px-6 pb-12 pt-6">
-        <h1 className="mb-1 text-[22px] font-bold text-txt">Documents</h1>
-        <p className="mb-5 max-w-[64ch] text-txt-dim">
-          {/* BILAN-1 (Lot 6) — la 8ᵉ tuile « Comparables DVF » (bientôt) est de retour dans la grille :
-              7 documents produits aujourd'hui + Comparables DVF à venir. On ne dit plus « Sept » (qui
-              contredisait les 8 cartes) ni « tous produits » (le 8ᵉ ne l'est pas encore). */}
-          Huit documents produits depuis les données de la fiche et de l’outil d’étude — plus les Comparables DVF, bientôt. Choisissez le document, puis la parcelle, et générez.
-        </p>
+        <h1 className="mb-5 text-[22px] font-bold text-txt">Documents</h1>
+        {/* RECETTE-OUTILS-1 (point 49) — phrase d'introduction « Huit documents produits… » retirée.
+            (point 50) — la carte « Comparables DVF » est retirée du catalogue → plus de compteur « huit ». */}
         <div className="grid grid-cols-4 gap-3 max-[1100px]:grid-cols-2">
           {CATALOGUE.map((d) => (
             // IMPLANTATION-4 (parcelles multiples) — la carte « Étude de faisabilité » n'ouvre PLUS la
