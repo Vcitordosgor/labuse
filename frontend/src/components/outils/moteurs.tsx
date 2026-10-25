@@ -312,6 +312,15 @@ export function M16() {
                     </div>
                   )}
                 </div>
+                {/* RECETTE-OUTILS-1 (point 15) — le bloc rouge « Charge foncière cumulée (estimée) » ET le
+                    paragraphe « Capacité et bilan calculés sur l'UNION… » (note_sdp) passent dans un
+                    accordéon « Bilan » FERMÉ par défaut : l'écran d'arrivée ne montre que le descriptif
+                    (surface, SDP cumulée, ×N, parcelles/interlocuteurs). */}
+                <details data-asm-bilan className="group rounded-lg border border-line-2 bg-surface-2">
+                  <summary className="flex cursor-pointer list-none items-center gap-1.5 px-3 py-2 text-[11px] font-medium text-txt-dim marker:hidden hover:text-mint">
+                    <span aria-hidden className="inline-block w-3 text-mint transition-transform duration-quick group-open:rotate-90">▸</span> Bilan
+                  </summary>
+                  <div className="flex flex-col gap-1.5 px-3 pb-2">
                 {/* point 3 — CHARGE CUMULÉE : négative = MÊME traitement que « Étudier un bien » (bloc
                     rouge + phrase), avec la référence marché à côté. */}
                 {d.charge_fonciere && (() => {
@@ -334,6 +343,8 @@ export function M16() {
                   )
                 })()}
                 <div className="mt-1 text-[10.5px] leading-snug text-txt-dim">{d.note_sdp}</div>
+                  </div>
+                </details>
               </>
             )}
           </div>
@@ -529,10 +540,7 @@ function M18Tableau({ d }: { d: Record<string, any> }) {
   const perm = Object.fromEntries((d.permis_trimestres ?? []).map((r: any) => [r.trimestre, r]))
   // union des trimestres (l'ancien porte l'axe de référence), tri chronologique.
   const tris = [...new Set([...ancien.map((r) => r.trimestre), ...Object.keys(terr), ...Object.keys(perm)])].sort()
-  // RECETTE-1 (H3, Vic) — un trimestre sans ancien NI terrain alors qu'il a des permis = VRAI trou :
-  // DVF n'est publié que jusqu'au dernier trimestre ancien ; les permis (Sitadel) vont plus loin. On le DIT.
-  const dernierDvf = [...ancien.map((r) => r.trimestre as string)].sort().at(-1)
-  const trousRecents = tris.filter((t) => dernierDvf && t > dernierDvf)
+  // RECETTE-OUTILS-1 (point 10) — `dernierDvf`/`trousRecents` retirés avec l'encart « Ancien & terrain ».
   const partiel = new Set(ancien.filter((r) => r.partiel).map((r) => r.trimestre))
   const ancByT = Object.fromEntries(ancien.map((r) => [r.trimestre, r]))
   const th = 'sticky top-0 z-10 bg-bg-3 px-2 py-1.5 text-right font-medium text-txt-dim first:text-left'
@@ -572,11 +580,7 @@ function M18Tableau({ d }: { d: Record<string, any> }) {
         <Tip garder tip="Ancien : médiane €/m² bâti, ventes strictes DVF (VEFA exclu). Terrain : médiane €/m² terrain nu (bâti=0). Permis : autorisés/trimestre (Sitadel). Volume (n) entre parenthèses."><span className="cursor-help rounded-full border border-line-2 px-1 text-[8px]">i</span></Tip>
       </div>
       {tris.some((t) => partiel.has(t)) && <p className="mt-0.5 text-[9.5px] text-st-creuser">· dernier trimestre partiel (délai de publication DVF) — grisé, hors tendance.</p>}
-      {/* RECETTE-1 (H3, Vic) — le vrai trou expliqué : DVF publié jusqu'au <dernierDvf>, les trimestres
-          plus récents n'ont que les permis (Sitadel en avance). Plus de « — » muet pris pour un bug. */}
-      {trousRecents.length > 0 && dernierDvf && (
-        <p className="mt-0.5 text-[9.5px] text-txt-dim">· Ancien &amp; terrain : DVF publié jusqu'au <b className="text-txt-mut">{dernierDvf}</b> — {trousRecents.join(', ')} n'{trousRecents.length > 1 ? 'ont' : 'a'} encore que les permis (Sitadel, en avance sur DVF).</p>
-      )}
+      {/* RECETTE-OUTILS-1 (point 10) — encart « Ancien & terrain : DVF publié jusqu'au … » retiré. */}
     </div>
   )
 }

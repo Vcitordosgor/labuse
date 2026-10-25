@@ -210,6 +210,9 @@ export function Communes() {
   const setCommunesTableOpen = useApp((s) => s.setCommunesTableOpen)
   const setEvolutionTableOpen = useApp((s) => s.setEvolutionTableOpen)
   const setRadarTableOpen = useApp((s) => s.setRadarTableOpen)
+  // RECETTE-OUTILS-1 (point 8) — rouvrir une table FERME la fiche commune ouverte (la table, masquée
+  // derrière la fiche, réapparaît au lieu de rester cachée).
+  const setContexteCommune = useApp((s) => s.setContexteCommune)
   const communePrefill = useApp((s) => s.communePrefill)
   const setCommunePrefill = useApp((s) => s.setCommunePrefill)
   const [vue, setVue] = useState<'accueil' | 'acquisitions'>('accueil')
@@ -223,7 +226,7 @@ export function Communes() {
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
         <Porte dataAttr="comparaison" titre="Comparaison communes"
           sous="Le tableau comparatif des 24 communes, en grand — indicateurs sourcés, tri par colonne."
-          onClick={() => setCommunesTableOpen(true)} />
+          onClick={() => { setContexteCommune(null); setCommunesTableOpen(true) }} />
         {/* RETOURS-14 S1 — DEUX tableaux, DEUX noms (les sources ne se confondent plus) :
             l'évolution = ventes ACTÉES (DVF) + permis, par trimestre ; le Radar = les annonces
             collectées, nommé avec son compteur (la minceur s'explique par la source). */}

@@ -4,10 +4,17 @@
 // on explique que le corpus se constitue, pas un tableau de tirets qui fait peur. Couleurs source unique.
 import { useQuery } from '@tanstack/react-query'
 import { getRadarMarche, type RadarMarcheLigne, type RadarMesure } from '../../lib/api'
+import { communePastille } from '../../lib/communes'   // RECETTE-OUTILS-1 (point 11) — règle d'article
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 
 const fmt = (v: number) => v.toLocaleString('fr-FR')
+// RECETTE-OUTILS-1 (point 11) — date de la dernière collecte Radar (ISO → jj/mm/aaaa).
+const fmtDate = (iso: string | null | undefined) => {
+  if (!iso) return null
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? null : d.toLocaleDateString('fr-FR')
+}
 
 // une MESURE : valeur + unité si n≥seuil, sinon « — » (et le n est toujours dit, discrètement).
 function Mesure({ m, unit }: { m: RadarMesure; unit: string }) {
@@ -20,15 +27,19 @@ function Mesure({ m, unit }: { m: RadarMesure; unit: string }) {
 function Ligne({ l, fort = false }: { l: RadarMarcheLigne; fort?: boolean }) {
   return (
     <tr className={`border-b border-line-2 ${fort ? 'font-medium text-txt-hi' : 'text-txt'}`}>
-      <td className="py-1 pr-2">{l.commune}</td>
+      {/* RECETTE-OUTILS-1 (point 11) — règle d'article des noms de commune (« Les Trois-Bassins » →
+          « Trois-Bassins »), sauf Le Port / Le Tampon / La Possession. La ligne « Toute l'île » (pas
+          d'article) n'est pas affectée. */}
+      <td className="py-1 pr-2">{communePastille(l.commune)}</td>
       <td className="text-right tabular-nums">{l.actives}</td>
       <td className="text-right tabular-nums text-txt-mut">{l.nouvelles_30j}</td>
       <td className="text-right tabular-nums text-txt-mut">{l.retirees_30j}</td>
-      <td className="text-right tabular-nums text-txt-mut">{l.vendues_90j}</td>
+      {/* RECETTE-OUTILS-1 (point 11) — colonnes « Vend.90j » et « Échec » RETIRÉES : non alimentées
+          (0 sur les 24 communes ET l'île ; le back les dérive de `vendue_le`/clôtures que la pige ne
+          capte pas). On ne sert pas des zéros. */}
       <td className="text-right"><Mesure m={l.prix_m2_terrain} unit=" €/m²" /></td>
       <td className="text-right"><Mesure m={l.prix_m2_bati} unit=" €/m²" /></td>
       <td className="text-right"><Mesure m={l.delai_median_j} unit=" j" /></td>
-      <td className="text-right"><Mesure m={l.taux_echec_pct} unit=" %" /></td>
       <td className="text-right"><Mesure m={l.part_particuliers_pct} unit=" %" /></td>
     </tr>
   )
@@ -46,8 +57,17 @@ export function RadarMarche() {
   // FRONT-CHIFFRES-2 (F25) — le front ne décide plus le seuil « corpus jeune » : il lit le flag servi.
   const jeune = data.corpus_jeune
 
+  const capture = fmtDate(data.derniere_capture_at)
   return (
     <div className="flex flex-col gap-3 p-3">
+      {/* RECETTE-OUTILS-1 (point 11) — la DATE de la dernière collecte est affichée dans l'encart du
+          haut : le Radar est alimenté par l'extension (pas un cron), donc une collecte en retard (ou en
+          pause) devient VISIBLE. « Nouv.30j » se lit relativement à cette date, pas à aujourd'hui. */}
+      {capture && (
+        <div data-radar-capture className="text-[10.5px] text-txt-dim">
+          Dernière collecte : <b className="text-txt-mut">{capture}</b> — les fenêtres « 30 j / 90 j » se comptent à partir de cette date.
+        </div>
+      )}
       {/* RECETTE-1 (H3, Vic) — DATE de la dernière capture Radar (le bloc lit la même table que le Radar).
           Le Radar est alimenté par l'EXTENSION (Mac), pas un cron VPS : afficher la date rend une capture
           en retard VISIBLE (ex. « 27/09 » un 4/10 = extension non déposée depuis). */}
@@ -68,9 +88,9 @@ export function RadarMarche() {
             <tr className="border-b border-line-3 font-mono text-[9px] uppercase tracking-wider text-txt-dim">
               <th className="py-1 text-left">Commune</th>
               <th className="text-right">Actives</th><th className="text-right">Nouv.30j</th>
-              <th className="text-right">Retir.30j</th><th className="text-right">Vend.90j</th>
+              <th className="text-right">Retir.30j</th>
               <th className="text-right">€/m² terr.</th><th className="text-right">€/m² bâti</th>
-              <th className="text-right">Délai méd.</th><th className="text-right">Échec</th><th className="text-right">Part.</th>
+              <th className="text-right">Délai méd.</th><th className="text-right">Part.</th>
             </tr>
           </thead>
           <tbody>

@@ -262,19 +262,28 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
               masquait les chiffres). « Voir ses parcelles » n'affecte plus que la liste + le repli du
               bloc « Blocs contigus » ; le nom + les 4 chiffres (notaires/agences/apporteurs) restent. */}
           <div className="truncate text-xs font-medium text-txt-hi">{d['nom'] as string}</div>
-          <div className="grid grid-cols-2 gap-2">
+          {/* RECETTE-OUTILS-1 (point 12) — les 4 grands chiffres passent dans un accordéon FERMÉ par
+              défaut, pour laisser la place à la liste des parcelles (qui défile) — fini « AD 0548 » coupé. */}
+          <details data-m02-chiffres className="group rounded-lg border border-line-2 bg-surface-2">
+            <summary className="flex cursor-pointer list-none items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium text-txt-mut marker:hidden hover:text-mint">
+              <span aria-hidden className="inline-block w-3 text-mint transition-transform duration-quick group-open:rotate-90">▸</span>
+              Chiffres clés
+              <span className="ml-auto font-normal text-txt-dim">{fmt(d['n_parcelles'] as number)} parcelles · {fmtM2(d['surface_totale_m2'] as number | null)}</span>
+            </summary>
+            <div className="grid grid-cols-2 gap-2 px-2.5 pb-2.5">
             {[
               { v: fmt(d['n_parcelles'] as number), lbl: 'parcelles' },
               { v: fmtM2(d['surface_totale_m2'] as number | null), lbl: 'surface totale' },
               { v: `${fmt(d['n_terrains_nus'] as number)} / ${fmt(d['n_terrains_batis'] as number)}`, lbl: 'terrains nus / bâtis' },
               { v: fmt(d['n_constructible_u_au'] as number), lbl: 'en zone U ou AU' },
             ].map((c) => (
-              <div key={c.lbl} data-m02-kpi className="min-w-0 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2.5">
+              <div key={c.lbl} data-m02-kpi className="min-w-0 rounded-lg border border-line-2 bg-surface-3 px-2.5 py-2.5">
                 <div className="num-key whitespace-nowrap text-[16px] tabular-nums text-mint">{c.v}</div>
                 <div className="mt-0.5 text-[10px] leading-tight text-txt-mut">{c.lbl}</div>
               </div>
             ))}
-          </div>
+            </div>
+          </details>
           {/* RETOURS-15 C9 — pont Blocs fonciers : les GROUPES de parcelles contiguës du propriétaire
               (même moteur que l'outil Blocs, table parcel_blocs). Ligne « Blocs contigus : N » + les
               groupes cliquables (→ fiche de leur parcelle représentative). */}

@@ -81,43 +81,66 @@ function BlocDetail({ blocId }: { blocId: number }) {
   )
 }
 
+// RECETTE-OUTILS-3 (pt 41 — « variante B · Cartes ») — une carte par bloc, trois lignes :
+// (1) chevron + dénomination + « Commune · SIREN » / pastille « N parcelles » ;
+// (2) deux tuiles Surface totale / SDP résiduelle estimée ;
+// (3) zonages PLU + petit bouton « Scan patrimoine → » (pt 42). Détail des parcelles à l'ouverture.
 function Carte({ it, ouvert, onToggle }: { it: BlocItem; ouvert: boolean; onToggle: () => void }) {
   const setM02Prefill = useApp((s) => s.setM02Prefill)
   const setModule = useApp((s) => s.setModule)
   const pushOutilRetour = useApp((s) => s.pushOutilRetour)
+  const commune = it.communes[0]   // commune principale (première listée)
   return (
-    <div className="rounded-lg border border-line-2 bg-surface-3 px-2.5 py-1.5">
-      <div data-bloc-row className="flex cursor-pointer items-center gap-2" onClick={onToggle}>
-        <Chevron open={ouvert} />
-        <span className="min-w-0 flex-1 break-words text-[11px] text-txt">
-          {it.denomination ?? '—'}
+    <div className="rounded-lg border border-line-2 bg-surface-3 px-2.5 py-2">
+      {/* ligne 1 — chevron · dénomination + « Commune · SIREN » · pastille N parcelles */}
+      <div data-bloc-row className="flex cursor-pointer items-start gap-2" onClick={onToggle}>
+        <Chevron open={ouvert} className="mt-0.5" />
+        <div className="min-w-0 flex-1">
+          <div className="break-words text-[15px] font-semibold leading-tight text-txt">
+            {it.denomination ?? '—'}
+          </div>
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[10.5px] text-txt-mut">
+            {commune && <span className="break-words">{commune}</span>}
+            {commune && it.siren && <span className="text-txt-dim">·</span>}
+            {/* RECETTE-2 (D15) — SIREN en bleu souligné mono (repère de la personne morale). */}
+            {it.siren && <Siren value={it.siren} label className="font-mono text-[10px] text-[#6B8FD4]" />}
+          </div>
+        </div>
+        <span className="shrink-0 rounded-full bg-surface-2 px-2 py-0.5 font-mono text-[10.5px] tnum text-txt">
+          {it.n_parcelles} parcelles
         </span>
-        <span className="ml-auto tnum text-[11px] text-txt">{fmtM2(it.sdp_residuelle_m2)}</span>
-        <Estime />
       </div>
-      <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 pl-4 text-[10.5px] text-txt-mut">
-        <span className="shrink-0 text-txt">{it.n_parcelles} parcelles</span>
-        <span className="text-txt-dim">·</span>
-        <span className="shrink-0">{fmtM2(it.surface_totale_m2)}</span>
-        <span className="text-txt-dim">·</span>
-        <span className="min-w-0 break-words">{it.communes.join(', ')}</span>
-        {it.zonages.length > 0 && <><span className="text-txt-dim">·</span>
-          <span className="min-w-0 break-words text-txt-dim">{it.zonages.slice(0, 4).join(' ')}</span></>}
+
+      {/* ligne 2 — deux tuiles côte à côte : Surface totale · SDP résiduelle estimée */}
+      <div className="mt-2 grid grid-cols-2 gap-1.5 pl-7">
+        <div className="rounded-md border border-line-2 bg-surface-2 px-2 py-1.5">
+          <div className="text-[9px] uppercase tracking-wide text-txt-dim">Surface totale</div>
+          <div className="mt-0.5 tnum text-[12px] text-txt">{fmtM2(it.surface_totale_m2)}</div>
+        </div>
+        <div className="rounded-md border border-line-2 bg-surface-2 px-2 py-1.5">
+          <div className="flex items-center gap-1 text-[9px] uppercase tracking-wide text-txt-dim">
+            SDP résiduelle estimée <Estime />
+          </div>
+          <div className="mt-0.5 tnum text-[12px] font-medium text-mint">{fmtM2(it.sdp_residuelle_m2)}</div>
+          {it.sdp_couverture < it.n_parcelles && (
+            <div className="mt-0.5 text-[9px] text-txt-dim">résiduel sur {it.sdp_couverture}/{it.n_parcelles}</div>
+          )}
+        </div>
       </div>
-      <div className="mt-0.5 flex items-center gap-1.5 pl-4 text-[10px]">
-        {/* RECETTE-2 (D15) — SIREN en bleu (repère visuel de la personne morale). */}
-        {it.siren && <Siren value={it.siren} className="font-mono text-[10px] text-[#6B8FD4]" />}
-        {it.sdp_couverture < it.n_parcelles && (
-          <span className="text-txt-dim">
-            résiduel sur {it.sdp_couverture}/{it.n_parcelles}
-          </span>
-        )}
+
+      {/* ligne 3 — zonages PLU (puces mono) · petit bouton « Scan patrimoine → » (pt 42) */}
+      <div className="mt-1.5 flex items-center gap-2 pl-7">
+        <div className="min-w-0 flex-1 break-words font-mono text-[10.5px] text-txt-dim">
+          {it.zonages.length > 0 ? it.zonages.join(' · ') : '—'}
+        </div>
         {/* Scan patrimoine → : tout ce que ce SIREN possède et construit. */}
-        <Bouton niveau="secondaire" ton="vert" data-bloc-scan className="ml-auto shrink-0"
+        <Bouton niveau="secondaire" ton="vert" data-bloc-scan
+          className="h-[30px] shrink-0 px-2 text-[12px]"
           onClick={(e) => { e.stopPropagation(); setM02Prefill(it.siren); setModule('patrimoine'); pushOutilRetour({ module: 'blocs-fonciers', label: 'Blocs fonciers' }) }}>
           Scan patrimoine →
         </Bouton>
       </div>
+
       {ouvert && <BlocDetail blocId={it.bloc_id} />}
     </div>
   )
@@ -151,6 +174,16 @@ export function Blocs() {
     setOpenId(null); setMontre(false); setFiltresOuverts(true)
     if (selectedIdu) select(null)
   }
+  // RECETTE-OUTILS-3 (pt 39) — résumé court des filtres actifs, à droite de l'en-tête replié.
+  // Portée commune + seuls les paliers qui diffèrent du défaut ; tout au défaut → juste la portée.
+  const resumeFiltres = (() => {
+    const bouts: string[] = [commune ?? "Toute l'île"]
+    if (nMin !== 2) bouts.push(`${N_MIN.find((o) => o.v === nMin)?.label ?? `≥ ${nMin}`} parcelles`)
+    else bouts.push('≥ 2 parcelles')
+    if (surfMin > 0) bouts.push(`surface ${SURFACE_MIN.find((o) => o.v === surfMin)?.label ?? `≥ ${surfMin} m²`}`)
+    if (sdpMin > 0) bouts.push(`résiduel ${SDP_MIN.find((o) => o.v === sdpMin)?.label ?? `≥ ${sdpMin} m²`}`)
+    return bouts.join(' · ')
+  })()
   const q = useInfiniteQuery({
     queryKey: ['blocs', commune, surfMin, sdpMin, nMin, inclurePublics],
     queryFn: ({ pageParam }) => getBlocs(commune, surfMin, sdpMin, nMin, inclurePublics, pageParam),
@@ -178,55 +211,75 @@ export function Blocs() {
         </Tip>
       </div>
 
-      {/* RECETTE-1 R21 — entrée : périmètre + filtres à paliers, DANS un accordéon qui se replie
-          quand on clique « Voir les parcelles » (le listing prend alors la place). */}
-      <details data-blocs-filtres open={filtresOuverts}
-        onToggle={(e) => setFiltresOuverts((e.target as HTMLDetailsElement).open)}
-        className="flex flex-col gap-2">
-      <summary className="flex cursor-pointer list-none items-center gap-1.5 py-0.5 text-[11px] font-medium text-txt-dim marker:hidden hover:text-mint">
-        <Chevron open={filtresOuverts} />Filtres
-      </summary>
-      <div className="mt-1 flex flex-col gap-2">
-      <CommuneScope commune={commune} noteFiltre={false} onChange={(c) => { setCommune(c); reset() }} />
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-txt-mut">
-        <label className="flex items-center gap-1.5">Surface totale
-          <select data-blocs-surf-min value={surfMin} onChange={(e) => { setSurfMin(Number(e.target.value)); reset() }}
-            className="h-8 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:border-mint focus:outline-none">
-            {SURFACE_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
-          </select>
-        </label>
-        <label className="flex items-center gap-1.5">Résiduel
-          <select data-blocs-sdp-min value={sdpMin} onChange={(e) => { setSdpMin(Number(e.target.value)); reset() }}
-            className="h-8 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:border-mint focus:outline-none">
-            {SDP_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
-          </select>
-        </label>
-        <label className="flex items-center gap-1.5">Parcelles
-          <select data-blocs-n-min value={nMin} onChange={(e) => { setNMin(Number(e.target.value)); reset() }}
-            className="h-8 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:border-mint focus:outline-none">
-            {N_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
-          </select>
-        </label>
-      </div>
-      {/* Propriétaires publics (commune, État, collectivité, EP, SEM — catégorie juridique de la
-          source) écartés par défaut ; la case les rétablit. */}
-      <div className="flex items-center gap-2 text-[11px] text-txt-mut">
-        <Case data-blocs-inclure-publics
-          checked={inclurePublics} onChange={(e) => { setInclurePublics(e.target.checked); reset() }}
-          label="Inclure les propriétaires publics" />
-        <Tip garder tip="Communes, État, Région/Département/EPCI, établissements publics (dont EPF) et SEM — classés par leur catégorie juridique (fichiers des personnes morales, DGFiP), jamais par une liste de noms. Écartés par défaut car rarement cessibles à un promoteur.">
-          <span className="cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
-        </Tip>
-      </div>
-      {/* RECETTE-OUTILS-1 (T5) — « Réinitialiser les filtres » DANS le bloc Filtres, visible seulement
-          quand un filtre diffère de sa valeur par défaut. */}
-      {dirty && (
-        <Bouton niveau="lien" ton="ambre" data-blocs-reset-filtres onClick={resetAll} className="self-start">
-          Réinitialiser les filtres
-        </Bouton>
-      )}
-      </div>
-      </details>
+      {/* RECETTE-OUTILS-3 (pt 39) — contrôles de filtres : même rendu, qu'on soit AVANT (déployés,
+          sans chrome d'accordéon) ou APRÈS « Voir les parcelles » (repliés dans l'accordéon). */}
+      {(() => {
+        const controles = (
+          <div className="flex flex-col gap-2">
+            <CommuneScope commune={commune} noteFiltre={false} onChange={(c) => { setCommune(c); reset() }} />
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-txt-mut">
+              <label className="flex items-center gap-1.5">Surface totale
+                <select data-blocs-surf-min value={surfMin} onChange={(e) => { setSurfMin(Number(e.target.value)); reset() }}
+                  className="h-8 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:border-mint focus:outline-none">
+                  {SURFACE_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
+                </select>
+              </label>
+              <label className="flex items-center gap-1.5">Résiduel
+                <select data-blocs-sdp-min value={sdpMin} onChange={(e) => { setSdpMin(Number(e.target.value)); reset() }}
+                  className="h-8 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:border-mint focus:outline-none">
+                  {SDP_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
+                </select>
+              </label>
+              <label className="flex items-center gap-1.5">Parcelles
+                <select data-blocs-n-min value={nMin} onChange={(e) => { setNMin(Number(e.target.value)); reset() }}
+                  className="h-8 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:border-mint focus:outline-none">
+                  {N_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
+                </select>
+              </label>
+            </div>
+            {/* Propriétaires publics (commune, État, collectivité, EP, SEM — catégorie juridique de la
+                source) écartés par défaut ; la case les rétablit. */}
+            <div className="flex items-center gap-2 text-[11px] text-txt-mut">
+              <Case data-blocs-inclure-publics
+                checked={inclurePublics} onChange={(e) => { setInclurePublics(e.target.checked); reset() }}
+                label="Inclure les propriétaires publics" />
+              <Tip garder tip="Communes, État, Région/Département/EPCI, établissements publics (dont EPF) et SEM — classés par leur catégorie juridique (fichiers des personnes morales, DGFiP), jamais par une liste de noms. Écartés par défaut car rarement cessibles à un promoteur.">
+                <span className="cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
+              </Tip>
+            </div>
+            {/* RECETTE-OUTILS-1 (T5) — « Réinitialiser les filtres » DANS le bloc Filtres, visible seulement
+                quand un filtre diffère de sa valeur par défaut. */}
+            {dirty && (
+              <Bouton niveau="lien" ton="ambre" data-blocs-reset-filtres onClick={resetAll} className="self-start">
+                Réinitialiser les filtres
+              </Bouton>
+            )}
+          </div>
+        )
+        // AVANT « Voir les parcelles » : filtres DÉPLOYÉS, sans en-tête repliable (rien derrière).
+        if (!montre) {
+          return (
+            <div data-blocs-filtres className="flex flex-col gap-2">
+              <div className="py-0.5 text-[11px] font-medium text-txt-dim">Filtres</div>
+              {controles}
+            </div>
+          )
+        }
+        // APRÈS : accordéon « › Filtres » FERMÉ, résumé des filtres actifs à DROITE de l'en-tête.
+        return (
+          <details data-blocs-filtres open={filtresOuverts}
+            onToggle={(e) => setFiltresOuverts((e.target as HTMLDetailsElement).open)}
+            className="flex flex-col gap-2">
+            <summary className="flex cursor-pointer list-none items-center gap-1.5 py-0.5 text-[11px] font-medium text-txt-dim marker:hidden hover:text-mint">
+              <Chevron open={filtresOuverts} />Filtres
+              <span data-blocs-filtres-resume className="ml-2 min-w-0 flex-1 truncate text-[10.5px] font-normal text-txt-mut">
+                {resumeFiltres}
+              </span>
+            </summary>
+            <div className="mt-1">{controles}</div>
+          </details>
+        )
+      })()}
 
       {/* RECETTE-1 R21 — le geste explicite : ouvrir le listing (et replier les filtres). */}
       {!montre && (

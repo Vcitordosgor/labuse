@@ -22,15 +22,14 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 
 import { ParcelInput } from '../ParcelInput'
 import { ListPaginationFooter, usePagination } from '../ListPagination'
-import { etudeZone, etudeZoneEntreprises, getMoteursConfig, nafFamilles, nafSearch, parcelAt, type EtudeZoneInput } from '../../lib/api'
-import type { EtudeZoneDestinations, EtudeZoneResult, NafFamille, NafOption, ZoneEntreprises, ZoneFamille } from '../../lib/types'
+import { etudeZone, etudeZoneEntreprises, getMoteursConfig, parcelAt, type EtudeZoneInput } from '../../lib/api'
+import type { EtudeZoneDestinations, EtudeZoneResult, ZoneEntreprises, ZoneFamille } from '../../lib/types'
 import { iduCourt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { Chargement, Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { DestinationBadge, DestinationSelect } from './DestinationSelect'
 import { Bouton } from '../ui/Bouton'
-import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
 import { Chevron } from '../ui/Chevron'
 
 // RECETTE-1 H8.2/H8.3 — UNE seule entrée (depuis une parcelle) + un rayon en km. CHASSE-DONNEES-FIX-1
@@ -45,10 +44,7 @@ function nb(n: number | null | undefined): string {
 // F2 (OUTILS-4) — date de dernier traitement SIRENE (YYYY-MM-DD) → « MM/YYYY » lisible.
 const majFr = (d: string | null | undefined): string | null => (d && d.length >= 7 ? `${d.slice(5, 7)}/${d.slice(0, 4)}` : null)
 
-function tempsTxt(min: number | null, mode: 'pied' | 'voiture'): string {
-  if (min == null) return 'dans la zone'
-  return `${min} min${mode === 'pied' ? ' à pied' : ''}`
-}
+// RECETTE-OUTILS-1 (point 26) — `tempsTxt` ne servait que la liste des concurrents (section 3 retirée).
 
 export function EtudeZone() {
   const setModuleMap = useApp((s) => s.setModuleMap)
@@ -91,29 +87,15 @@ export function EtudeZone() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const [nafQuery, setNafQuery] = useState('')
-  const [naf, setNaf] = useState<NafOption | null>(null)
-  const [nafOpts, setNafOpts] = useState<NafOption[]>([])
-  useEffect(() => {
-    if (naf || nafQuery.trim().length < 2) { setNafOpts([]); return }
-    let alive = true
-    const t = setTimeout(() => { nafSearch(nafQuery).then((r) => alive && setNafOpts(r.resultats)).catch(() => {}) }, 220)
-    return () => { alive = false; clearTimeout(t) }
-  }, [nafQuery, naf])
-  // C4 — déroulé PARCOURABLE par familles (chargé à la 1re ouverture), pour choisir sans savoir quoi taper
-  const [parcourir, setParcourir] = useState(false)
-  const [familles, setFamilles] = useState<NafFamille[] | null>(null)
-  const [famOuverte, setFamOuverte] = useState<string | null>(null)
-  useEffect(() => {
-    if (parcourir && familles == null) nafFamilles().then((r) => setFamilles(r.familles)).catch(() => {})
-  }, [parcourir, familles])
-  const choisirNaf = (o: NafOption) => { setNaf(o); setNafOpts([]); setNafQuery(''); setParcourir(false) }
+  // RECETTE-OUTILS-1 (point 26) — l'état NAF (recherche d'activité + parcours par familles) servait
+  // uniquement la section 3 « Une activité (facultatif) », retirée : il est supprimé.
 
   const mut = useMutation<EtudeZoneResult, Error, void>({
     mutationFn: () => {
       // RECETTE-1 H8.2 — UNE entrée : parcelle (cible) + rayon km. minutes/mode = constantes neutres
       // (ignorées par le back dès que rayon_km est fourni). Plus de branche polygone/temps.
-      const body: EtudeZoneInput = { minutes: MINUTES_NEUTRE, mode: MODE_NEUTRE, naf: naf?.code ?? null, sous_destination: sousDest }
+      // RECETTE-OUTILS-1 (point 26) — plus de `naf` envoyé : la lentille concurrents/chalandise est retirée.
+      const body: EtudeZoneInput = { minutes: MINUTES_NEUTRE, mode: MODE_NEUTRE, sous_destination: sousDest }
       if (cible) { body.idu = cible.idu; body.titre = cible.label; body.rayon_km = rayonKm }
       return etudeZone(body)
     },
@@ -177,12 +159,8 @@ export function EtudeZone() {
   // d'ouverture d'office de Population/Économie).
   const [openSecs, setOpenSecs] = useState<Set<string>>(() => new Set())
 
-  // RECETTE-1 (F3) — Réinitialiser : vide la zone définie + la lecture, SANS changer de porte (reste
-  // dans l'outil). « ← Changer la zone » (F4) ajoute le retour à l'accueil des deux portes.
-  const resetEtude = () => {
-    setCible(null); setNaf(null); setNafQuery(''); setSousDest(null); setZone(null); setTool(null)
-    setModuleMap({ idus: [], extra: null }); mut.reset()
-  }
+  // RECETTE-OUTILS-1 T5 — le « Réinitialiser » du haut (et son handler `resetEtude`) sont retirés :
+  // l'outil garde son reset de zone via « Changer la zone » / Retour.
 
   // RECETTE-2 (D8) — c'est le RAYON saisi (cercle) qui est mesuré et dessiné, jamais l'isochrone « 10 min ».
   // L'en-tête le dit : « Zone de X km autour de <adresse> » (plus de « LA ZONE À 10 MIN EN VOITURE »).
@@ -196,9 +174,8 @@ export function EtudeZone() {
 
   return (
     <div data-etude-zone className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
-      {/* RECETTE-2 (D8) — chemin UNIQUE : plus de « ← Changer la zone » ni de badge « ZONE SEULE » /
-          « Zone + chalandise ». Réinitialiser seul sur sa ligne (T3), présent ssi une parcelle est posée. */}
-      {(cible || res) && <div className="flex justify-end"><Reinitialiser onReset={resetEtude} /></div>}
+      {/* RECETTE-OUTILS-1 T5 — le « Réinitialiser » du haut est RETIRÉ : l'outil garde son propre
+          reset de zone via le flux « Changer la zone » / Retour. */}
       {/* ÉTAPE 1 — DÉFINIR LA ZONE : RECETTE-1 H8.2/H8.3 — UNE entrée (parcelle) + un rayon km réglable
           (+ / −). Plus de segmenté point/polygone, plus de « temps de trajet ». */}
       <StepHead n={1} titre="Définir la zone" sous="une parcelle + un rayon en km" />
@@ -565,21 +542,8 @@ export function EtudeZone() {
             </Section>
           )}
 
-          {/* ÉTAPE 3 — UNE ACTIVITÉ (lentille additive). O13.1 — porte CHALANDISE seulement : la zone
-              particulière est un contexte foncier, sans hypothèse d'activité. */}
-          {porteZone === 'chalandise' && <div className="mt-1 rounded-lg border border-line-2 bg-surface-2/40 p-2.5">
-            <StepHead n={3} titre="Une activité" facultatif
-              sous="lentille facultative — concurrents / chalandise d’une activité, en plus de la lecture" />
-            <ActiviteLens
-              naf={naf} nafQuery={nafQuery} setNafQuery={setNafQuery} setNaf={setNaf}
-              nafOpts={nafOpts} choisirNaf={choisirNaf}
-              parcourir={parcourir} setParcourir={setParcourir}
-              familles={familles} famOuverte={famOuverte} setFamOuverte={setFamOuverte}
-              dejaApplique={res.concurrents != null}
-              onAppliquer={() => mut.mutate()} enCours={mut.isPending} />
-            {/* CONCURRENTS — trois états honnêtes, jamais un faux zéro. Rendu SOUS la lentille. */}
-            {res.concurrents != null && <Concurrents res={res} />}
-          </div>}
+          {/* RECETTE-OUTILS-1 (point 26) — section 3 « Une activité (facultatif) » RETIRÉE :
+              plus de champ NAF, plus de parcours par familles, plus de lentille concurrents/chalandise. */}
 
           {/* RECETTE-2 LOT C1 : le bouton « Exporter le PDF » est retiré.
               RECETTE-1 H8.4 — l'ex-« Nouvelle étude » du bas est RETIRÉ : le Réinitialiser unique est
@@ -614,74 +578,8 @@ function ActifsStat({ res }: { res: EtudeZoneResult }) {
   )
 }
 
-function Concurrents({ res }: { res: EtudeZoneResult }) {
-  const c = res.concurrents
-  const cov = c?.couverture
-  const { setView, select } = useApp()
-  // A3-bis (OUTILS-2) — cliquable vers la parcelle : le concurrent porte sa position (lon/lat) ;
-  // on résout la parcelle à ce point (parcelAt) et on ouvre sa fiche sur la carte. Rien si hors parcelle.
-  const ouvrirParcelle = async (lon: number, lat: number) => {
-    try {
-      const { idu } = await parcelAt(lon, lat)
-      if (idu) { setView('cartes'); select(idu) }
-    } catch { /* pas de parcelle à ce point — on ne fait rien */ }
-  }
-  return (
-    <div>
-      {/* F2 (OUTILS-4) — « déclarés au registre » : on ne dit jamais que ce sont les concurrents RÉELS,
-          seulement ceux déclarés actifs au registre SIRENE (une fermeture non signalée peut y traîner). */}
-      <SectionTitle>{`Concurrents déclarés au registre${cov === 'servie' ? ` — ${c!.n}` : ''}`}{cov === 'servie' && res.habitants_par_concurrent != null && <span className="ml-1 font-normal normal-case tracking-normal text-txt-mut">· {nb(res.habitants_par_concurrent)} hab./concurrent</span>}</SectionTitle>
-      {/* F1 (OUTILS-3) — activité LISIBLE (le code NAF passe en second plan / survol). */}
-      {cov === 'servie' && (c!.naf_label || c!.naf) && (
-        <p className="mt-0.5 text-[10.5px] text-txt-mut">{c!.naf_label ?? c!.naf} <span className="font-mono text-[9px] text-txt-dim">{c!.naf}</span></p>
-      )}
-      {/* F8 — légende courte des pastilles carte (cliquables). */}
-      {cov === 'servie' && c!.items.length > 0 && (
-        <p className="mt-0.5 flex items-center gap-1.5 text-[10px] text-txt-dim">
-          <span className="h-[8px] w-[8px] shrink-0 rounded-full" style={{ background: '#E0A94F' }} />
-          pastilles orange sur la carte — cliquez pour le détail et la parcelle.
-        </p>
-      )}
-      {cov === 'non_couverte' && (
-        // RECETTE-2 LOT C2 : vocabulaire client — pas de « répertoire SIRENE / ingéré » (tuyauterie).
-        <p className="text-[11px] text-txt-mut">Non couvert · le registre des établissements n’est pas encore servi sur LABUSE.</p>
-      )}
-      {cov === 'erreur' && (
-        <p className="text-[11px] text-txt-mut">Indisponible — la requête concurrents n’a pas abouti.</p>
-      )}
-      {cov === 'servie' && (c!.items.length === 0 ? (
-        <p className="text-[11px] text-txt-mut">Aucun établissement de cette activité dans la zone.</p>
-      ) : (
-        <div className="flex flex-col gap-1">
-          {c!.items.slice(0, 8).map((x) => (
-            // A3-bis + F2 — « enseigne · depuis AAAA · déclaré actif · mis à jour MM/YYYY », cliquable.
-            <button key={x.siret} type="button" onClick={() => ouvrirParcelle(x.lon, x.lat)}
-              className="flex items-start justify-between gap-2 rounded-md px-1 py-0.5 text-left text-[11.5px] transition-colors duration-quick hover:bg-surface-3">
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-txt">{x.nom}
-                  {x.annee_creation != null && <span className="text-txt-dim"> · depuis {x.annee_creation}</span>}</span>
-                {/* F2 — fraîcheur DÉCLARATIVE par établissement + alerte au-delà du seuil (backend). */}
-                <span className="block text-[9.5px] text-txt-dim">
-                  déclaré actif{majFr(x.date_maj) ? ` · mis à jour ${majFr(x.date_maj)}` : ''}
-                  {x.maj_ancienne && <span className="text-cp-amber"> · registre ancien — vérifier sur place</span>}
-                </span>
-              </span>
-              <span className="shrink-0 font-mono text-[11px] text-txt-hi">{tempsTxt(x.temps_min, res.mode)}</span>
-            </button>
-          ))}
-          {c!.items.length > 8 && <span className="text-[10.5px] text-txt-dim">+ {c!.items.length - 8} autres…</span>}
-        </div>
-      ))}
-      {/* F1 — MILLÉSIME toujours affiché (fraîcheur de la source) + pourquoi certains noms manquent. */}
-      {cov === 'servie' && (
-        <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">
-          Source {c!.millesime || 'SIRENE (INSEE)'}. Une fermeture très récente peut ne pas encore y figurer.
-          {c!.items.some((x) => !x.diffusible) && ' Certains noms sont masqués à la demande de l’établissement (diffusion INSEE restreinte).'}
-        </p>
-      )}
-    </div>
-  )
-}
+// RECETTE-OUTILS-1 (point 26) — le composant `Concurrents` (lentille d'activité, section 3 retirée)
+// est supprimé avec elle.
 
 // F3 (OUTILS-4) — « Toutes les entreprises de la zone » : structure économique lisible d'un coup d'œil
 // (familles + comptes exacts), dépliable pour creuser. Familles/comptes servis par le backend (source
@@ -805,7 +703,10 @@ function Section({ id, titre, source, openSecs, setOpenSecs, children }: {
       <button data-zone-section-toggle={id} onClick={toggle} aria-expanded={open}
         className="group flex w-full items-center justify-between gap-2 px-3 py-2 text-left transition-colors duration-quick hover:bg-surface-2">
         <span className="text-[12px] font-semibold text-txt-hi">{titre}</span>
-        <span className="shrink-0 font-mono text-[11px] text-mint">{open ? '▾' : '▸'}</span>
+        {/* RECETTE-OUTILS-1 (point 27) — le chevron collé au bord (glyphe ▸/▾ en dur) est remplacé par
+            LE chevron d'accordéon de la charte (../ui/Chevron), espacé comme ailleurs (gap sur la ligne
+            flex + marge interne du composant), plus flush contre le bord. */}
+        <Chevron open={open} className="ml-1" />
       </button>
       {open && (
         <div className="flex flex-col gap-2 border-t border-line-2 px-3 py-2.5">
@@ -834,91 +735,9 @@ function StepHead({ n, titre, sous, facultatif }: { n: number; titre: string; so
   )
 }
 
-// O19(a) — ÉTAPE 3, la LENTILLE « activité ». Réunit le champ NAF (frappe libre + parcours par familles)
-// et le bouton qui APPLIQUE l'activité à la zone déjà lue. On dit honnêtement que la lecture est relue
-// à travers cette activité (le calcul concurrents vient du même appel serveur) — on ne prétend pas que
-// c'est purement local. Tant qu'aucune activité n'est appliquée, l'étape n'affiche que son invite.
-function ActiviteLens({
-  naf, nafQuery, setNafQuery, setNaf, nafOpts, choisirNaf,
-  parcourir, setParcourir, familles, famOuverte, setFamOuverte,
-  dejaApplique, onAppliquer, enCours,
-}: {
-  naf: NafOption | null
-  nafQuery: string
-  setNafQuery: (v: string) => void
-  setNaf: (v: NafOption | null) => void
-  nafOpts: NafOption[]
-  choisirNaf: (o: NafOption) => void
-  parcourir: boolean
-  setParcourir: (f: (v: boolean) => boolean) => void
-  familles: NafFamille[] | null
-  famOuverte: string | null
-  setFamOuverte: (f: (s: string | null) => string | null) => void
-  dejaApplique: boolean
-  onAppliquer: () => void
-  enCours: boolean
-}) {
-  return (
-    <div className="mt-2">
-      {/* ACTIVITÉ (NAF) — deux entrées : frappe libre avec propositions, OU déroulé par familles.
-          Référentiel = nomenclature NAF complète (« notaire », « pharmacie », « garage »… résolvent). */}
-      <div className="relative">
-        <input value={naf ? naf.label : nafQuery}
-          onChange={(e) => { setNaf(null); setNafQuery(e.target.value) }}
-          placeholder="Activité étudiée (ex. « notaire », « pharmacie »)"
-          className="w-full rounded-lg border border-line-2 bg-surface-1 px-2.5 py-1.5 text-[12px] text-txt outline-none focus:border-mint/60" />
-        {naf && <button onClick={() => { setNaf(null); setNafQuery('') }} className="absolute right-2 top-1.5 text-[11px] text-txt-dim hover:text-txt">×</button>}
-        {nafOpts.length > 0 && (
-          <div className="absolute z-20 mt-1 max-h-52 w-full overflow-y-auto rounded-lg border border-line-2 bg-surface-1 shadow-lg">
-            {nafOpts.map((o) => (
-              <button key={o.code} onClick={() => choisirNaf(o)}
-                className="flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-left text-[11.5px] text-txt hover:bg-mint/10">
-                <span className="truncate">{o.label}</span><span className="shrink-0 font-mono text-[10px] text-txt-dim">{o.code}</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-      <Bouton niveau="lien" onClick={() => setParcourir((v) => !v)} className="mt-1">
-        {parcourir ? 'masquer les familles' : 'parcourir par famille d’activité'}
-      </Bouton>
-      {parcourir && (
-        <div className="mt-1 max-h-64 overflow-y-auto rounded-lg border border-line-2 bg-surface-1">
-          {familles == null ? (
-            <Squelette lignes={4} className="px-2.5 py-2" />
-          ) : familles.map((f) => (
-            <div key={f.section} className="border-b border-line-2 last:border-b-0">
-              <button onClick={() => setFamOuverte((s) => (s === f.section ? null : f.section))}
-                className="flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-left text-[11.5px] font-medium text-txt hover:bg-mint/10">
-                <span className="truncate">{f.nom}</span>
-                <span className="shrink-0 text-[10px] text-txt-dim">{f.activites.length}</span>
-              </button>
-              {famOuverte === f.section && (
-                <div className="bg-surface-2/40">
-                  {f.activites.map((o) => (
-                    <button key={o.code} onClick={() => choisirNaf(o)}
-                      className="flex w-full items-center justify-between gap-2 px-3 py-1 text-left text-[11px] text-txt-mut hover:bg-mint/10 hover:text-txt">
-                      <span className="truncate">{o.label}</span><span className="shrink-0 font-mono text-[9.5px] text-txt-dim">{o.code}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-      {/* APPLIQUER — la lentille s'ajoute à la lecture ; visible seulement quand une activité est choisie. */}
-      {naf && (
-        <>
-          <Bouton niveau="secondaire" ton="vert" onClick={onAppliquer} disabled={enCours} className="mt-2 w-full">
-            {enCours ? 'Application de l’activité…' : dejaApplique ? 'Mettre à jour l’activité' : 'Ajouter cette activité à la lecture'}
-          </Bouton>
-          <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">La lecture de la zone est relue à travers cette activité — les résultats ci-dessus restent, les concurrents s’ajoutent.</p>
-        </>
-      )}
-    </div>
-  )
-}
+// RECETTE-OUTILS-1 (point 26) — le composant `ActiviteLens` (champ NAF + parcours par familles +
+// bouton « Ajouter cette activité à la lecture ») est supprimé avec la section 3.
+
 // O19(c) — le badge dit la NATURE de la donnée, sans jamais mentir : « sourcé » (carreau Filosofi INSEE),
 // « approché » (majorité de carreaux imputés côté backend). Plus de badge « estimé » : le revenu médian
 // est une donnée SOURCÉE, pas une estimation LABUSE.

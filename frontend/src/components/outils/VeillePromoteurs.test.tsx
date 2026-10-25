@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useApp } from '../../store/useApp'
 import { VeillePromoteurs } from './VeillePromoteurs'
@@ -56,10 +56,13 @@ describe('VeillePromoteurs — anti-doublon O6', () => {
     await screen.findByText('CBO TERRITORIA')
     const carte = document.querySelector('[data-vp-siren="452038805"]') as HTMLElement
     const t = (carte.textContent ?? '').replace(/\s/g, ' ')
-    expect(t).toContain('2 opérations')          // ses deux opérations regroupées
+    expect(t).toContain('2 opérations')          // ses deux opérations regroupées (dans l'en-tête)
     expect(t).toContain('41 permis')             // 33 + 8
     expect(t).toContain('123 logements')         // 115 + 8
-    // ses deux opérations restent listées dessous (détail, une fois chacune)
+    // RECETTE-OUTILS-1 (point 14) — le détail des opérations est REPLIÉ par défaut : on déplie la carte
+    // (clic sur l'en-tête accordéon) avant de compter ses deux opérations.
+    const toggle = (carte.querySelector('[data-vp-promoteur-toggle]') ?? carte.querySelector('summary') ?? carte.querySelector('button')) as HTMLElement
+    fireEvent.click(toggle)
     expect(carte.querySelectorAll('[data-vp-operation]')).toHaveLength(2)
   })
 })
