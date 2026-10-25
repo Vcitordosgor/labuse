@@ -227,3 +227,20 @@ Non-régression Lot F : `tsc -b` vert, **vitest 280 passed**.
 ## Lot G — Copilote
 
 - **R24** ✅ — **Exemples en grille 3×3 de CARTES** (`AccueilCopilote.tsx`), selon la maquette validée. Plus aucune pilule ovale multiligne. Mesure LIVE : **9 cartes**, **3 colonnes égales** (`193 px` chacune), **écart 12 px**, chaque carte **96 px de haut**, rayon 12 (`rounded-xl`), fond `bg-cp-card` (un peu plus clair que la page) + contour fin, texte **15 px aligné à GAUCHE** (`line-clamp-2`, 2 lignes max). **Une icône de type 32 px dans un carré violet sombre** en haut à gauche, une par chemin : loupe (parcelle), bâtiment (propriétaire), livre (PLU), horloge (procédure), triangle (pièges), bulle (argumentaire), blocs 4-carrés (assemblage), couches (blocs fonciers), sablier (successions) — les 9 types distincts rendus (`data-ex-type` vérifié). **IDU en mono** (`avecIduMono` isole `\d{8}[A-Z]{2}\d{4}`). Un seul texte modifié : « Quel est le potentiel d'un assemblage… » → **« Quel potentiel pour un assemblage autour de 97411000AD0213 ? »** (vérifié LIVE sur la carte 7). Captures `R24-copilote-avant` (pilules ovales, old text) / `R24-copilote-apres` (cartes + icônes, texte changé) + `R24-copilote-full-apres`. `tsc -b` vert, **vitest 280 passed**.
+
+## Lot H — clôture
+
+- **R25** ✅ — **Revérification LIVE des points que Vic avait trouvés non tenus** :
+  - **T1** (changer d'outil vide tout) → tenu via **R2** : `toggleOutils` remet `selectedIdu:null` ; LIVE la fiche dans le menu passe 1 → 0. Captures `R2-menu-avant/apres`.
+  - **Point 8** (fiche commune par-dessus le tableau) → tenu via **R5** : `ContextePanel` en z-50, tableau `pointer-events-none` (monté, visible derrière). Capture `R5-fiche-over-apres`.
+  - **Point 16** (bouton « Étude de faisabilité de cet assemblage → » en DA) → `<Bouton niveau="secondaire" ton="vert">` charte, hauteur 32 px (corrigé aussi par **R3**/**R21**). Captures `P16-assemblage-*`, `R3-assemblage-btn-avant/apres`.
+  - **Point 48** (bouton « Demander l'envoi à LABUSE » en DA) → `<Bouton niveau="primaire" ton="vert" data-courrier-demander>` charte (ModulePanel:1631). Capture `P47-48-courrier-envoi-apres`.
+  - **Point 32** (3D centrée sur la parcelle) → tenu via **R13** : terrain plat + fitBounds pitch 45, parcelle centrée sur Saint-Paul U6b ET La Possession UAa. Captures `R13-3d-jac/lp-avant/apres`.
+  - **Point 43** (plus de texte coupé dans Successions) → tenu via **R23** : dirigeant non tronqué, mention de dépôt sur sa ligne. Captures `R23-yves-avant/apres`.
+- **R26** ✅ — **Fin de mandat.** Section RECETTE-OUTILS-2 complète : **R1 → R26, aucune ligne sans statut** (tous ✅). Non-régression finale : `tsc -b` vert · **vitest 280 passed** · `pytest` complet (hook) vert. Branche `fix/recette-outils-1` poussée, **NON mergée** (pas de merge, comme demandé). Ports **8820** et **6020** libérés en fin de session, Playwright arrêté.
+
+## Vu, non fait (RECETTE-OUTILS-2)
+
+- **R12** — valeurs de l'Étude de zone non déterministes d'un redémarrage de process à l'autre (habitants/revenu médian). Hors mandat (format + carte), lecture seule côté données ; détaillé au Lot C.
+- **R15** — la zone d'implantation verte recouvre ~22 % de l'emprise du bâti existant (`zone ∩ bâti = 21,9 %`, mesuré) : le calcul de l'enveloppe n'exclut pas le bâti à conserver. Fait du moteur (donnée servie intacte), signalé comme demandé ; détaillé au Lot D.
+- **R14** — les boutons `+/−` de la boussole native règlent le **zoom** (et non l'inclinaison), le mandat ayant explicitement préféré « le contrôle natif … plutôt qu'un widget maison » ; l'inclinaison se fait au glissé de la boussole.
