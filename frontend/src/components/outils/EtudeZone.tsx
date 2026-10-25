@@ -171,10 +171,11 @@ export function EtudeZone() {
 
   const pretA = !!cible   // RECETTE-1 H8.2 — prêt dès qu'une parcelle est désignée (entrée unique)
 
-  // ETUDE-ZONE-2 Lot A — le résultat est organisé en 7 sections repliables (accordéons). Les deux
-  // premières (Population, Économie) sont ouvertes par défaut, les autres repliées. État par id de
-  // section ; le chevron suit l'idiome de l'outil (fermé ▸ pointe à droite, ouvert ▾).
-  const [openSecs, setOpenSecs] = useState<Set<string>>(() => new Set(['population', 'economie']))
+  // ETUDE-ZONE-2 Lot A — le résultat est organisé en 7 sections repliables (accordéons). Le chevron
+  // suit l'idiome de l'outil (fermé ▸ pointe à droite, ouvert ▾).
+  // RECETTE-OUTILS-1 (point 30) — TOUS les accordéons de lecture sont fermés par défaut (plus
+  // d'ouverture d'office de Population/Économie).
+  const [openSecs, setOpenSecs] = useState<Set<string>>(() => new Set())
 
   // RECETTE-1 (F3) — Réinitialiser : vide la zone définie + la lecture, SANS changer de porte (reste
   // dans l'outil). « ← Changer la zone » (F4) ajoute le retour à l'accueil des deux portes.
