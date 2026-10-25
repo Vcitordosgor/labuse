@@ -98,7 +98,7 @@ Build servi sous `/socle/`, navigation en session via le store exposé `window._
 - **27** ⛔ — marges des chevrons d'accordéon (`EtudeZone.tsx:795-817`, `Chevron.tsx`). Non fait.
 - **28** ⛔ — vérif que les rayons 0,5/1/2/5 km changent les résultats. Non fait (le refetch sur `rayonKm` existe, `EtudeZone.tsx:139-143` ; à prouver par captures aux 4 rayons).
 - **29** ⛔ — « Exporter en PDF » (cf. T6). Non fait (l'ancien bouton avait été retiré en RECETTE-2).
-- **30** ⛔ — accordéons fermés par défaut : aujourd'hui Population + Économie **ouverts** (`EtudeZone.tsx:177`). Non fait.
+- **30** ☑️ — accordéons de lecture **fermés par défaut** : `openSecs` initialisé à `new Set()` vide (plus d'ouverture d'office Population/Économie, `EtudeZone.tsx:177`). Vérifié code + tsc ; capture écran différée pour **ne pas déclencher le calcul chalandise/isochrone** (règle « aucun calcul géométrique lourd » du mandat).
 
 ### Gabarit réglementaire
 - **31** 🔎⛔ — vérif calculs + contradiction « Risques intégrés » vs « PPR — analyse ». Audit partiel (l'endpoint `/outils/gabarit/{idu}` sert tout, `Gabarit.tsx:280-376`). Le PDF `gabarit/97411000AD0213.pdf` renvoie 422 (parcelle hors zone calibrée) — exemple mandat = « 3 Chemin de la Citerne (Uh) » à résoudre. **Contradiction risques non corrigée.** Non fait.

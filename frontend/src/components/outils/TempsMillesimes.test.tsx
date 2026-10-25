@@ -65,18 +65,5 @@ describe('TEMPS — la frise (M08) + l\'épingle de la parcelle', () => {
   })
 })
 
-describe('TEMPS — légende des zones noires (comparateur)', () => {
-  afterEach(() => useApp.setState({ cmpLeft: 'bm-ortho-1950', cmpRight: 'bm-ortho-now', tempsPinIdu: null }))
-
-  it('présente sous un fond ancien, absente sous l\'ortho actuelle', async () => {
-    const { TimeMachine } = await import('./TimeMachine')
-    useApp.setState({ cmpLeft: 'bm-ortho-1950', cmpRight: 'bm-ortho-now', commune: null })
-    const { rerender } = render(<QueryClientProvider client={qc()}><TimeMachine center={null} /></QueryClientProvider>)
-    expect(document.querySelector('[data-temps-legende]')).toBeTruthy()
-    expect(document.querySelector('[data-temps-legende]')?.textContent).toContain('pas un défaut de chargement')
-    // fond « avant » = ortho actuelle → aucune zone de mission non couverte → pas de légende
-    useApp.setState({ cmpLeft: 'bm-ortho-now' })
-    rerender(<QueryClientProvider client={qc()}><TimeMachine center={null} /></QueryClientProvider>)
-    await waitFor(() => expect(document.querySelector('[data-temps-legende]')).toBeNull())
-  })
-})
+// RECETTE-OUTILS-1 (point 24) — le bloc « TEMPS — légende des zones noires » est retiré : l'encart
+// `data-temps-legende` a été supprimé de l'outil (demande Vic), le test de sa présence n'a plus d'objet.
