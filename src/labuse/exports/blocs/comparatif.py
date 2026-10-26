@@ -118,8 +118,10 @@ _LIGNES = [
         + (" — Bilan déficitaire : à ces hypothèses, le foncier ne se paie pas"
            if (r.get("charge_fonciere_m2") or 0) < 0 else ""))
         if r.get("charge_fonciere_m2") is not None else None)),
-    ("Prix terrain nu zone", "e", lambda r: _eur_m2(r, "terrain_zone_eur_m2")),
-    ("Prix bâti (section cadastrale)", "e", lambda r: _eur_m2(r, "prix_secteur_bati_m2")),
+    # DOCS-COHERENCE-1 (A8) — prix lus de l'id de la fiche (secteur autour de la parcelle), comme le
+    # Dossier §8 et l'Étude de zone ; plus aucun calcul de prix propre au Comparatif.
+    ("Prix du terrain (secteur)", "e", lambda r: _eur_m2(r, "terrain_zone_eur_m2")),
+    ("Prix du bâti (secteur)", "e", lambda r: _eur_m2(r, "prix_secteur_bati_m2")),
     # IMPLANTATION-4 (LOT B) + FIX-ORFEVRE-1 (décision Vic 18/10/2026) — aucun nombre de logements de
     # l'ancien calcul (fourchette estimate_capacity) : la ligne renvoie à l'Étude de faisabilité, seule
     # à compter des logements. prov=None → aucun badge, comme « Classement LABUSE » (un renvoi, pas une

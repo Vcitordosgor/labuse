@@ -197,13 +197,13 @@ def _pleine_terre(t):
 
 def _prix_bati(t):
     return _n(_cherche(t, rf"Prix (?:ancien )?médian(?: du bâti)?\s+({NB})\s*€/m²",
-                       rf"Prix bâti[^\n]*?({NB})\s*€/m²",
+                       rf"Prix (?:du )?bâti[^\n]*?({NB})\s*€/m²",
                        rf"Ancien bâti[^\n]*?({NB})\s*€/m²",
                        rf"({NB})\s*€/m²\s*[—\-][^\n]*ancien"))
 
 
 def _prix_terrain(t):
-    return _n(_cherche(t, rf"Prix terrain[^\n]*?({NB})\s*€/m²",
+    return _n(_cherche(t, rf"Prix (?:du )?terrain[^\n]*?({NB})\s*€/m²",
                        rf"[Tt]errain\s+({NB})\s*€/m²"))
 
 

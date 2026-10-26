@@ -8240,12 +8240,17 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
     # accès & réseaux : UN verdict (le faisceau de viabilisation servi, F0/F8) ; assainissement à part.
     via = qv2.get("viabilisation") or {}
     anc = qv2.get("anc") or {}
-    # prix bâti du secteur : médiane DVF du type bâti le plus documenté (maison/appartement),
-    # jamais le terrain nu — même source que la fiche Marché (dvf_parcelle.secteur).
-    secteur = ((qv2.get("dvf_parcelle") or {}).get("secteur")) or []
-    bati_rows = [s for s in secteur if (s.get("type_bien") or "").lower() not in ("terrain", "terrain à bâtir")
-                 and s.get("mediane_prix_m2")]
-    prix_bati = max(bati_rows, key=lambda s: s.get("n_ventes") or 0)["mediane_prix_m2"] if bati_rows else None
+    # DOCS-COHERENCE-1 (A8, arbitrage Vic) — prix bâti = l'ID DE LA FICHE (prix_ancien.median =
+    # prix_sortie_bati_eur_m2, médiane du secteur autour de la parcelle, n + rayon effectif), LU tel
+    # quel. Plus aucun recalcul propre au Comparatif (l'ancien « max par n_ventes » du secteur cadastral
+    # divergeait du Dossier §8). Une seule source de prix dans tous les documents.
+    prix_bati = (qv2.get("prix_ancien") or {}).get("median")
+    # A8 — prix du terrain = médiane DVF du terrain nu du secteur cadastral, MÊME source que le
+    # Dossier §8 (dvf_parcelle.secteur) ; jamais un prix « par zone » propre au Comparatif.
+    _secteur = ((qv2.get("dvf_parcelle") or {}).get("secteur")) or []
+    _terr = [s for s in _secteur if (s.get("type_bien") or "").lower() in ("terrain", "terrain à bâtir")
+             and s.get("mediane_prix_m2")]
+    prix_terrain = max(_terr, key=lambda s: s.get("n_ventes") or 0)["mediane_prix_m2"] if _terr else None
     return {
         "idu": qv2["idu"], "commune": qv2.get("commune"),
         # CHASSE-DONNEES-FIX-1 (Lot 1) — le Comparatif sert la surface de TERRAIN (contenance|dessin)
@@ -8290,6 +8295,10 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
         "acces_reseaux": via.get("libelle"),                            # UN verdict viabilisation
         "assainissement": anc.get("libelle") or anc.get("statut_court") or anc.get("statut"),
         "prix_secteur_bati_m2": prix_bati,                              # médiane DVF bâti secteur
+        # DOCS-COHERENCE-1 (A8) — prix du terrain = l'ID DE LA FICHE (mode_b.terrain_nu.prix_m2,
+        # secteur cadastral), lu tel quel (était un prix « par zone » divergent du Dossier §8). Même
+        # valeur à l'écran et au PDF (un seul calcul de prix dans les documents).
+        "terrain_zone_eur_m2": prix_terrain,
     }
 
 
@@ -8635,18 +8644,9 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
         # M82 — prix terrain nu PAR ZONE (point de calcul M79 unique, comme la fiche et l'outil Marché).
         commune, zone = row.get("commune"), (row.get("zone") or "")
         fam = "AU" if zone.upper().startswith("AU") else (zone[:1].upper() if zone else "")
-        if commune and fam in ("U", "AU"):
-            if commune not in marche_cache:
-                try:
-                    marche_cache[commune] = build_marche_commune(db, commune)
-                except Exception:  # noqa: BLE001
-                    marche_cache[commune] = {}
-            for l in (marche_cache[commune].get("lignes") or []):
-                if isinstance(l, dict) and l.get("cle") == "prix_terrain_nu_par_zone":
-                    pz = ((l.get("valeurs") or {}).get("par_zone") or {}).get(fam)
-                    if pz and pz.get("calculable"):
-                        row["terrain_zone_eur_m2"] = pz.get("median_eur_m2")
-                    break
+        # DOCS-COHERENCE-1 (A8) — le prix du terrain du Comparatif N'EST PLUS recalculé « par zone »
+        # ici : il vient de l'id de la fiche (terrain_zone_eur_m2 = mode_b.terrain_nu.prix_m2), posé
+        # dans la ligne. Un seul calcul de prix, trois lecteurs (Dossier §8, Comparatif, Étude de zone).
         # COMPARER-2 §1 — CES (emprise au sol MAX) : la VRAIE règle PLU, seulement si une valeur
         # numérique est VALIDÉE dans plu_destinations (resolve_zone la superpose). Sinon None → le
         # front affiche « non réglementée ». Le taux d'occupation du gabarit (residuel.taux_emprise_pct)
