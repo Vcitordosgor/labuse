@@ -8220,7 +8220,14 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
     # (qv2) ou de la faisabilité du MÊME point de calcul (faisab) — jamais un second moteur.
     # propriétaire : moral (PM connue) sinon particulier (doctrine fiche F11).
     pm = qv2.get("proprietaire_moral") or {}
-    proprietaire = "morale" if pm.get("denomination") or pm.get("siren") else "particulier"
+    # DOCS-COHERENCE-1 (A1) — type lu par le classifieur UNIQUE du registre (succession/indivision ne
+    # sont PAS « morale ») ; sinon particulier (doctrine fiche F11).
+    if pm.get("denomination") or pm.get("siren"):
+        from ..proprietaire_type import tete_denomination
+        proprietaire = {"Succession": "succession", "Indivision": "indivision"}.get(
+            tete_denomination(pm.get("denomination")), "morale")
+    else:
+        proprietaire = "particulier"
     # bâti existant % = emprise bâtie (BD TOPO/CoSIA) ÷ surface terrain — jamais un « 0 » inventé.
     surf = qv2.get("surface_m2") or 0
     bati_pct = (round(100 * res["emprise_batie_m2"] / surf)

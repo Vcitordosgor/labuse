@@ -51,6 +51,23 @@ TYPES_LOGEMENT = ("T1", "T2", "T3", "T4")  # ETUDE-V6 — le programme saisi va 
 _REFS = ["A", "B", "C"]
 
 
+def _pente_pct(deg: float) -> int:
+    from labuse.pente_fmt import pente_pct
+    return pente_pct(deg)
+
+
+def _pente_fiche_deg(session, idus) -> Optional[float]:
+    """DOCS-COHERENCE-1 (A4) — pente de la FICHE (RGE ALTI, `parcel_terrain.pente_moy_deg`), source
+    UNIQUE affichée par tous les documents ; prise sur la parcelle principale (plus grande) de
+    l'assiette. None si absente (le document omet alors la ligne, jamais un faux chiffre)."""
+    from sqlalchemy import text
+    row = session.execute(text(
+        "SELECT pt.pente_moy_deg FROM parcel_terrain pt JOIN parcels p ON p.idu = pt.idu "
+        "WHERE pt.idu = ANY(:i) AND pt.pente_moy_deg IS NOT NULL "
+        "ORDER BY ST_Area(p.geom_2975) DESC LIMIT 1"), {"i": list(idus or [])}).scalar()
+    return float(row) if row is not None else None
+
+
 # ------------------------------------------------------------------ GeoJSON (4326)
 def _feature(geom_2975, props: dict) -> Optional[dict]:
     if geom_2975 is None or geom_2975.is_empty:
@@ -1102,6 +1119,11 @@ def etudier_payload(session, entree: dict) -> dict:
             "ppr_rouge_m2": sd0["terrain"]["ppr_rouge_m2"],
             "ppr_bleue_m2": sd0["terrain"]["ppr_bleue_m2"],
             "pente_lidar": sd0["terrain"]["pente_lidar"],
+            # DOCS-COHERENCE-1 (A4) — pente de la FICHE (RGE ALTI, parcel_terrain.pente_moy_deg) : la
+            # SEULE pente affichée dans les documents (format « 9,7° (17 %) »). La pente LiDAR du profil
+            # ci-dessus sert le MOTEUR (hauteur sur terrain en pente), jamais l'affichage client.
+            "pente_fiche_deg": (_pfd := _pente_fiche_deg(session, idus)),
+            "pente_fiche_pct": (_pente_pct(_pfd) if _pfd is not None else None),
             "parcelles": sd0["terrain"]["parcelles"],
         },
         "hypotheses": {

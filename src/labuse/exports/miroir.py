@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from ..pente_fmt import pente_courte
 from ..registre import declarations as DEC
 from ..registre.valeur import Valeur
 from .nature import chip
@@ -969,7 +970,7 @@ def _verdict_factuel(sec_id: str, valeurs: dict[str, Valeur]) -> tuple[str, str,
         libre = _v(valeurs, "surface_libre_sol_m2")
         bits = []
         if p is not None:
-            bits.append(f"pente {str(p).replace('.', ',')}°")
+            bits.append(f"pente {pente_courte(float(p))}")
         if libre is not None:
             bits.append(f"{fmt_m2(libre)} de sol libre")
         return (esc(" · ".join(bits).capitalize()) + ".", "neutral", "pente_deg") if bits else None
@@ -1082,7 +1083,7 @@ def _bloc_reglement(valeurs: dict[str, Valeur]) -> str:
 _COVER_TUILES = [
     ("surface_parcelle_m2", "Surface", lambda v: fmt_m2(v)),
     ("zone_plu_famille", "Zone", lambda v: esc(v)),
-    ("pente_deg", "Pente", lambda v: esc(f"{str(v).replace('.', ',')}°")),
+    ("pente_deg", "Pente", lambda v: esc(pente_courte(float(v)))),
     ("exposition_versant", "Exposition", lambda v: esc(v)),
     ("n_vigilances", "Risques", lambda v: esc(f"{groupe(v)} relevé{'s' if v and v > 1 else ''}")),
     ("sdp_residuelle_m2", "SDP restante (bâti conservé)", lambda v: fmt_m2(v)),

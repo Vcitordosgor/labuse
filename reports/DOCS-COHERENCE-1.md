@@ -7,9 +7,14 @@ BY0083 + BY0361 + BY0272. **Pas de merge.**
 
 ## REPRISE — dernier point traité
 
-> **Lot 0 FAIT (commité).** Reprendre au **Lot A** (une vérité par donnée, transverse).
-> Le harnais `scripts/docs_coherence.py` mesure 10 écarts sur BY0083 (état « avant »
-> ci-dessous) ; objectif final = 0. Serveur API local : voir « Lancer » en bas.
+> **Lot 0 FAIT. Lot A en cours : A1 (propriétaire), A4 (pente), A10 (date) FAITS et
+> vérifiés (10 → 7 écarts harnais).** Reprendre au **Lot A reste : A2, A3, A5, A6, A7,
+> A8, A9** — entremêlés avec les lots document (D Gabarit, F Étude) ; les traiter là ou
+> ici. Détail des 7 écarts restants dans le diagnostic ci-dessous.
+> ⚠ 2 tests PRÉ-EXISTANTS rouges hors scope (prouvé par stash) : `test_implantation3_pdf::
+> test_route_rend_un_pdf[L'Étang-Salé]` et `test_docs1_ecran_egale_pdf::test_gabarit_…` —
+> parcelles de référence L'Étang-Salé absentes/dérivées de la base de TEST locale.
+> Serveur API local : voir « Lancer » en bas.
 
 ---
 
@@ -93,7 +98,27 @@ PDF dans `reports/DOCS-COHERENCE-1/pdf/` (gitignoré).
 
 ---
 
-## Lots A → H — à faire
+## Lot A — une vérité par donnée (transverse) — EN COURS
+
+| pt | statut | preuve / fichier | note |
+|----|--------|------------------|------|
+| A1 | ✅ | `proprietaire_type.libelle_proprietaire()` (classifieur unique) ; `robinet_fiche._c_proprietaire` ; `app.compare` ; `blocs/comparatif.py` | Dossier/Apporteur/Comparatif/Étude-zone : « Succession — CHAMCIRKAN ARCHABY PHILIPPE » (plus « Personne morale »). Succession/Indivision détectées (SUCCESSION/HOIRIE/HÉRITIERS/INDIVISAIRES/CONSORTS) ; tête redondante ôtée. Le CERFA « particulier » = case DEMANDEUR (pas le propriétaire) → hors comparaison. |
+| A10 | ✅ | `exports/etude_faisabilite._donnees_labuse_au_etude()` | L'Étude portait « Généré via LABUSE le 27/10 » (date de génération) ; pied complété par « Données LABUSE au 21/10/2026 » (run servi, même source que les 7 autres). Harnais : date alignée partout. |
+| A2 | ⬜ | | emprise bâtie : un seul id lu par Gabarit/Dossier/Apporteur/Étude (actuellement seul le Dossier l'affiche, 900). |
+| A3 | ⬜ | | zone d'implantation « terrain libéré X » + « bâti déduit Y » nommées partout (Gabarit 869/867, Étude 1 691, Dossier §10). → voir D2/F1. |
+| A4 | ✅ | `pente_fmt.pente_courte()` ; `miroir.py` (couverture + §2) ; `implantation/service._pente_fiche_deg` (+`pente_fiche_pct`) ; `etude_faisabilite.py` | Source UNIQUE = fiche (RGE ALTI `parcel_terrain.pente_moy_deg`), format « 9,7° (17 %) » dans Dossier p.1+§2 et Étude §terrain (était 14,6 % LiDAR HD). Pente LiDAR du profil reste au MOTEUR (hauteur sur pente), plus affichée. Verrou `nombres_hors_payload` : 0 fuite (9,7 + 17 ancrés). |
+| A5 | ⬜ | | liste contraintes unique (Dossier §5) lue par Apporteur + Étude §2 (« signalée, non interprétée ») ; l'Étude dit « Aucune contrainte ». → voir F2. |
+| A6 | ⬜ | | stationnement + pleine terre chiffrés au Gabarit (« non intégrée au gabarit »). → voir D2. |
+| A7 | ⬜ | | hauteur « 9 m au faîtage · 6 m à l'égout » partout ; le Gabarit dit laquelle il extrude. → voir D2. |
+| A8 | ⬜ | | prix de la fiche, un seul (bâti 3602 vs 2687 ; terrain 250 vs 479). |
+| A9 | ⬜ | | trois SDP, trois libellés fixes. |
+
+**7 écarts restants (harnais BY0083)** : surface (2458 vs 2405 Bilan/CERFA → A2/G2),
+zone impl. (869/1691/1699 → A3), hauteur (9/6 vs 9/? → A7), stationnement (3 formulations
+→ A6/F6), prix bâti (3602 vs 2687 → A8), prix terrain (250 vs 479 → A8), contraintes
+(oui vs « aucune » Étude → A5/F2). *(résolus : propriétaire A1, pente A4, date A10.)*
+
+## Lots B → H — à faire
 
 (Statuts mis à jour à chaque lot ; un commit + une régénération des PDF par lot.)
 

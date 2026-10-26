@@ -149,6 +149,12 @@ def test_derniere_vente_omise_si_inconnue():
 
 
 def test_aucun_ocro_ni_mot_interdit():
+    import html as _H
     html = apporteur.rendu(_valeurs(), _ctx())
     assert "◌" not in html
-    assert [m for m in MOTS if m in html] == []
+    # DOCS-COHERENCE-1 (Lot 0.2) — les mots interdits portent sur le texte CLIENT (celui du PDF), pas
+    # sur le HTML brut : une apostrophe correctement échappée une fois (`&#x27;`) s'affiche « ' » et
+    # n'est PAS un défaut ; seule une entité RESTÉE non décodée dans le rendu (double-échappement, cf.
+    # E1 « D&#x27;HABITATION » en Étude de zone) doit mordre. On décode une passe avant de vérifier.
+    vu = _H.unescape(html)
+    assert [m for m in MOTS if m in vu] == []

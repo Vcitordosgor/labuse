@@ -129,7 +129,8 @@ _LIGNES = [
     ("Gabarit max", "s", lambda r: (f"R+{max(0, int(r['gabarit_niveaux_max']) - 1)}" if r.get("gabarit_niveaux_max") is not None else None)),
     ("Accès & réseaux", "s", lambda r: esc(r.get("acces_reseaux")) if r.get("acces_reseaux") else None),
     ("Assainissement", "e", lambda r: esc(r.get("assainissement")) if r.get("assainissement") else None),
-    ("Propriétaire", "s", lambda r: {"morale": "personne morale", "particulier": "particulier"}.get(r.get("proprietaire"))),
+    ("Propriétaire", "s", lambda r: {"morale": "personne morale", "particulier": "particulier",
+                                      "succession": "succession", "indivision": "indivision"}.get(r.get("proprietaire"))),
     ("Contrainte majeure", "s", lambda r: esc(r.get("contrainte_majeure")) if r.get("contrainte_majeure") else (f"{r.get('n_contraintes')} signalée(s)" if r.get("n_contraintes") else "aucune")),
 ]
 

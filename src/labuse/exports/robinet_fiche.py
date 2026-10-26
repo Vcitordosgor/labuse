@@ -94,23 +94,17 @@ def _c_adresse(db, idu, f):
 
 @extracteur("type_proprietaire")
 def _c_proprietaire(db, idu, f):
-    import re
-    from ..proprietaire_historique import siren_reel
+    from ..proprietaire_type import libelle_proprietaire
     pm = f.get("proprietaire_moral")
     if not isinstance(pm, dict):
         return None
     denom, siren = pm.get("denomination"), pm.get("siren")
-    # ORACLE-FIX-1 (E3) — le type suit la donnée DGFiP : une dénomination « INDIVISAIRES … » est une
-    # INDIVISION, pas une « Personne morale » ; et un pseudo-SIREN (préfixe « U… », ≠ identité juridique)
-    # ne s'affiche pas comme un SIREN réel (cf. siren_reel). S18 (97405000BE0599) : « INDIVISAIRES DE LA
-    # PARCELLE BE599 », SIREN U23631848 → « Indivision », sans SIREN inventé.
-    if denom and re.search(r"indivis", denom, re.I):
-        return f"Indivision — {denom}"
-    if denom and siren_reel(siren):
-        return f"Personne morale — {denom} (SIREN {siren})"
-    if denom:
-        return f"Personne morale — {denom}"
-    return "Personne morale"
+    # DOCS-COHERENCE-1 (A1) — libellé client UNIQUE du registre : « SUCCESSION … » → « Succession — … »,
+    # « INDIVISAIRES … » / « CONSORTS … » → « Indivision — … » (ni l'une ni l'autre n'est une « Personne
+    # morale ») ; un pseudo-SIREN (préfixe « U… », ≠ identité juridique) ne s'affiche jamais en SIREN réel.
+    if not denom:
+        return "Personne morale"
+    return libelle_proprietaire(denom, siren)
 
 
 @extracteur("proprietaire_timeline_liste")

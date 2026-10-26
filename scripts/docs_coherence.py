@@ -226,8 +226,11 @@ def _zone_deduite(t):
 
 
 def _proprietaire(t):
+    # ancré sur le libellé « propriétaire » du document (le « particulier » du CERFA = la case
+    # DEMANDEUR d'un formulaire vierge, pas le propriétaire de la parcelle — jamais comparé ici).
     v = _cherche(t, r"Type de propriétaire\s+([^\n]{3,45})",
-                 r"(Personne morale|Succession|Indivision|Hoirie|Consorts|Particulier|Société|Collectivité)")
+                 r"Propriétaire\s+(?:sourcé\s+)?(Particulier|Personne morale|Succession|Indivision)",
+                 r"\b(Succession|Indivision|Personne morale|Particulier)\s*—")
     v = _plat(v)
     return v.split("—")[0].strip().lower() if v else None
 

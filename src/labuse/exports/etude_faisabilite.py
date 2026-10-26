@@ -20,6 +20,15 @@ from typing import Any, Optional
 
 from .rendu import Cartouche, esc, page_html
 
+
+def _donnees_labuse_au_etude(genere_le: str) -> str:
+    """DOCS-COHERENCE-1 (A10) — pied unique « Données LABUSE au JJ/MM/AAAA » = date de la DONNÉE
+    servie (run servi, `served_manifest.json promoted_at`), identique aux 7 autres documents ;
+    repli sur la date de génération si le manifeste est illisible."""
+    from .builder import _donnees_labuse_au
+    return _donnees_labuse_au() or genere_le
+
+
 # ── palette (reprise EXACTE de implantation.rendu._COUL, en hex pour le SVG) ──────────────────
 _COUL = {
     "parcelle": ("#FBFCFB", "#9AA0A6"),
@@ -492,12 +501,14 @@ def _p2_terrain(payload: dict, retenu: dict) -> str:
                  f'<td><strong>{_m2(t.get("contenance_totale_m2"))}</strong></td><td class="n"></td></tr>')
     # terrain (pente, limites, accès)
     trows = []
-    pente = t.get("pente_lidar")
-    if isinstance(pente, dict):
-        pm = pente.get("pente_moyenne_pct") or pente.get("pente_pct") or pente.get("pente")
-        if pm is not None:
-            trows.append(f'<tr><td class="k">Pente moyenne</td><td>{esc(_dec(pm))} %</td>'
-                         f'<td class="n"><span class="chip s">LiDAR HD</span></td></tr>')
+    # DOCS-COHERENCE-1 (A4) — UNE seule pente dans les documents : celle de la fiche (RGE ALTI,
+    # parcel_terrain), format « 9,7° (17 %) », identique au Dossier et au Gabarit. La pente LiDAR du
+    # profil ne sert QUE le moteur (hauteur sur terrain en pente) — elle ne s'affiche plus ici.
+    pente_deg = t.get("pente_fiche_deg")
+    if pente_deg is not None:
+        from ..pente_fmt import pente_courte
+        trows.append(f'<tr><td class="k">Pente</td><td>{esc(pente_courte(float(pente_deg)))}</td>'
+                     f'<td class="n"><span class="chip s">RGE ALTI</span></td></tr>')
     note = t.get("note_limites")
     if note:
         trows.append(f'<tr><td class="k">Limites</td><td>{esc(str(note))}</td>'
@@ -902,7 +913,8 @@ def rendu_etude(payload: dict, *, genere_le: str, scenario_ref: Optional[str] = 
         doc_title=f"LABUSE — Étude de faisabilité · {payload['terrain'].get('commune') or ''}",
         doc_ref=f"{refs} · {numero}",
         doc_foot=(f"Étude de faisabilité · {refs} · {_type_projet_label(payload['entrees'].get('type_projet'))} · "
-                  f"Généré via LABUSE le {genere_le} · pré-faisabilité, non contractuel"))
+                  f"Généré via LABUSE le {genere_le} · pré-faisabilité, non contractuel · "
+                  f"Données LABUSE au {_donnees_labuse_au_etude(genere_le)}."))
     corps = (
         f"<style>{_STYLE}</style>"
         + _p1_synthese(payload, retenu, numero, genere_le)
@@ -937,7 +949,8 @@ def rendu_lotissement(payload: dict, *, genere_le: str) -> dict:
     cart = Cartouche(
         doc_title=f"LABUSE — Lotissement · {commune}",
         doc_ref=f"{idus[0][8:] if idus else ''} · {numero}",
-        doc_foot=f"Lotissement · zone {zone} · Généré via LABUSE le {genere_le} · pré-faisabilité, non contractuel")
+        doc_foot=(f"Lotissement · zone {zone} · Généré via LABUSE le {genere_le} · pré-faisabilité, "
+                  f"non contractuel · Données LABUSE au {_donnees_labuse_au_etude(genere_le)}."))
     lignes = "".join(f"<tr><td>Lot {i}</td><td class='n'>{fr(s)} m²</td></tr>"
                      for i, s in enumerate(tl["surfaces_m2"], 1))
     racc = "".join(f"<tr><td>{r['reseau']}</td><td class='n'>{'non vérifié' if r['distance_m'] is None else fr(r['distance_m'])+' m'}</td></tr>"
