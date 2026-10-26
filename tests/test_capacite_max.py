@@ -23,8 +23,8 @@ def test_mention_cite_la_mesure_du_volet_d():
 
 
 def test_exports_portent_la_mention_capacite():
+    # Le Financier et le Potentiel portent la mention « capacité = maximum réglementaire ».
     for rel in ("src/labuse/exports/blocs/financier.py",
-                "src/labuse/exports/blocs/comparatif.py",
                 "src/labuse/exports/blocs/potentiel.py"):
         assert "capacite_max" in _lire(rel), rel
     # libellés « maximum » posés — LOGEMENTS-SOURCE-UNIQUE : la ligne logements du Financier ne
@@ -34,11 +34,11 @@ def test_exports_portent_la_mention_capacite():
     assert "Surface de plancher (maximum)" in fin
     assert "Logements (maximum)" not in fin
     assert "Logements (projet)" in fin and "RENVOI_ETUDE" in fin
-    # IMPLANTATION-4 (merge) — le Comparatif ne porte plus la LIGNE « Logements possibles (max.) » (le
-    # nombre de l'ancien moteur part dans l'Étude) ; la mention « capacité = maximum réglementaire » reste
-    # en NOTE sous le tableau (note(_CAP) depuis capacite_max.MENTION).
+    # RECETTE-OUTILS-2 (R18, décision Vic) — le Comparatif ne porte PLUS la note « capacité = maximum
+    # réglementaire … (0,46 / 0,40) », retirée pour être IDENTIQUE à l'outil (où elle l'a déjà été). Il
+    # ne référence donc plus `capacite_max` du tout.
     _cmp = _lire("src/labuse/exports/blocs/comparatif.py")
-    assert "note(_CAP)" in _cmp and "import MENTION as _CAP" in _cmp
+    assert "note(_CAP)" not in _cmp and "capacite_max" not in _cmp
 
 
 def test_fiche_et_gabarit_portent_la_mention():
