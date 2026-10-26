@@ -1,0 +1,269 @@
+LABUSE         Bilan
+
+
+
+
+Bilan
+97415000BY0083 · BI-20261027-0083 · 27/10/2026
+
+
+ Ratios & programme                                     Calendrier prévisionnel
+
+ Terrain                                                Compromis                   —
+ Surface de plancher                                    Dépôt PC                    —
+ Surface taxable                                        Obtention PC                —
+ SUV                                                    Purge PC                  0 m²
+ Coût const. m² SUV HT                                  Réitération authentique     —
+ Prix moyen m² SUV HT                                   DROC                        —
+ Net promoteur m² SUV TTC                               DAT                         —
+ CA TTC programme                                       Réception travaux          0€
+ Renta nette / CA HT                                    Livraison                   —
+ Nombre de lots                                                                     —
+
+45 ligne(s) non renseignée(s) — comptées pour 0.
+
+
+
+
+Document d'information LABUSE. Données au 27/10/2026.                              1/6
+   1 · Charge foncière
+
+ Libellé                            Assiette               Taux ou montant   HT   TVA   TTC   État
+
+ Achat terrain privé                           2 458 m²                                        À
+                                                                                              renseign
+                                                                                              er
+
+ Commission apport                                   —                                         À
+                                                                                              renseign
+                                                                                              er
+
+ Notaire terrain                                     —                                         À
+                                                                                              renseign
+                                                                                              er
+
+ Notaire prêt                                        —                                         À
+                                                                                              renseign
+                                                                                              er
+
+ Taxe logements                                      —                                         À
+                                                                                              renseign
+                                                                                              er
+
+ TA parking extérieurs + archéo                      —                                         À
+                                                                                              renseign
+                                                                                              er
+
+ TRE                                                 —                                         À
+                                                                                              renseign
+                                                                                              er
+
+ Taxe d'archéologie préventive                       —                                         À
+                                                                                              renseign
+                                                                                              er
+
+ Relevé topo                                     forfait                                       À
+                                                                                              renseign
+                                                                                              er
+
+ Géomètre bornage                                forfait                                       À
+                                                                                              renseign
+                                                                                              er
+
+ Étude de sol                                    forfait                                       À
+                                                                                              renseign
+                                                                                              er
+
+ Étude hydraulique                               forfait                                       À
+                                                                                              renseign
+                                                                                              er
+
+ Constat affichage PC                            forfait                                       À
+                                                                                              renseign
+                                                                                              er
+
+ Branchements                                        —                                         À
+                                                                                              renseign
+                                                                                              er
+
+ Transfo EDF                                     forfait                                       À
+                                                                                              renseign
+                                                                                              er
+
+ Diag amiante                                    forfait                                       À
+                                                                                              renseign
+                                                                                              er
+
+                                                 forfait
+
+
+
+Document d'information LABUSE. Données au 27/10/2026.                                                2/6
+ Libellé                            Assiette             Taux ou montant   HT   TVA   TTC   État
+ Défrichage · préparation                                                                    À
+ terrain                                                                                    renseign
+                                                                                            er
+
+ Aléas                                             —                                         À
+                                                                                            renseign
+                                                                                            er
+
+ Total 1 · Charge foncière                                                 0€   0€    0€
+
+
+   2 · Construction et honoraires
+
+ Libellé                            Assiette             Taux ou montant   HT   TVA   TTC   État
+
+ Construction yc VRD                               —                                         À
+                                                                                            renseign
+                                                                                            er
+
+ Déco et aménagement                           forfait                                       À
+ intérieur                                                                                  renseign
+                                                                                            er
+
+ Hono. architecte conception                       —                                         À
+                                                                                            renseign
+                                                                                            er
+
+ Honos paysagiste hydrau                           —                                         À
+                                                                                            renseign
+                                                                                            er
+
+ Hono MOE + BET                                    —                                         À
+                                                                                            renseign
+                                                                                            er
+
+ Honos OPC                                         —                                         À
+                                                                                            renseign
+                                                                                            er
+
+ Labels GIEP et NF                             forfait                                       À
+                                                                                            renseign
+                                                                                            er
+
+ SPS                                               —                                         À
+                                                                                            renseign
+                                                                                            er
+
+ Bureau de contrôle                                —                                         À
+                                                                                            renseign
+                                                                                            er
+
+ Imprévus (aléas techniques)                       —                                         À
+                                                                                            renseign
+                                                                                            er
+
+ Total 2 · Construction et honoraires                                      0€   0€    0€
+
+
+
+
+Document d'information LABUSE. Données au 27/10/2026.                                              3/6
+   3 · Gestion
+
+ Libellé                            Assiette            Taux ou montant   HT   TVA   TTC   État
+
+ Publicité commerciale                             —                                        À
+                                                                                           renseign
+                                                                                           er
+
+ Juridique / divers                                —                                        À
+                                                                                           renseign
+                                                                                           er
+
+ CVAE (ex taxe pro)                                —                                        À
+                                                                                           renseign
+                                                                                           er
+
+ M.O.D. AMO                                        —                                        À
+                                                                                           renseign
+                                                                                           er
+
+ Garantie achèvement                               —                                        À
+                                                                                           renseign
+                                                                                           er
+
+ Garantie de paiement                              —                                        À
+                                                                                           renseign
+                                                                                           er
+
+ Frais financiers                                  —                                        À
+                                                                                           renseign
+                                                                                           er
+
+ Assurances D.O / C.N.R                            —                                        À
+                                                                                           renseign
+                                                                                           er
+
+ Assurance TRC + GAREAT                            —                                        À
+                                                                                           renseign
+                                                                                           er
+
+ Aléas                                             —                                        À
+                                                                                           renseign
+                                                                                           er
+
+ Total 3 · Gestion                                                        0€   0€    0€
+
+
+
+
+Document d'information LABUSE. Données au 27/10/2026.                                             4/6
+   4 · Commercialisation
+
+ Libellé                            Assiette            Taux ou montant   HT   TVA   TTC   État
+
+ Commercialisation logements                       —                                        À
+ Produit 1                                                                                 renseign
+                                                                                           er
+
+ Commercialisation logements                       —                                        À
+ Produit 2                                                                                 renseign
+                                                                                           er
+
+ Frais d'acte et de prêt Pack                      —                                        À
+                                                                                           renseign
+                                                                                           er
+
+ Frais package (int int) Pack                      —                                        À
+                                                                                           renseign
+                                                                                           er
+
+ Frais de proc et dossier                          —                                        À
+ bancaire Pack                                                                             renseign
+                                                                                           er
+
+ Garantie premier locataire Pack                   —                                        À
+                                                                                           renseign
+                                                                                           er
+
+ Aléas                                             —                                        À
+                                                                                           renseign
+                                                                                           er
+
+ Total 4 · Commercialisation                                              0€   0€    0€
+
+
+
+
+Document d'information LABUSE. Données au 27/10/2026.                                             5/6
+   Synthèse
+
+ Dépenses totales                                       0€   0€          0€
+
+ Chiffre d'affaires                                     0€   0€          0€
+
+ TVA résiduelle                                                          0€
+
+ Résultat net                                           0€        — du CA HT
+
+ Cash flow                                              0€
+Document non contractuel.
+
+
+
+
+Document d'information LABUSE. Données au 27/10/2026.                    6/6
+

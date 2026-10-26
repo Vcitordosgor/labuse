@@ -69,6 +69,9 @@ def test_m13_compare_row_colonnes_ajoutees():
         "proprietaire_moral": {"denomination": "PACIFIC", "siren": "484061601"},
         "viabilisation": {"libelle": "Viabilisation probable"},
         "anc": {"libelle": "Tout-à-l'égout (collectif)", "statut": "source"},
+        # DOCS-COHERENCE-1 (A8) — prix bâti du Comparatif = l'id de la FICHE (prix_ancien.median),
+        # jamais un recalcul propre ; prix terrain = médiane DVF terrain nu du secteur cadastral.
+        "prix_ancien": {"median": 2800, "n": 43},
         "dvf_parcelle": {"secteur": [
             {"type_bien": "maison", "mediane_prix_m2": 2800, "n_ventes": 43},
             {"type_bien": "terrain", "mediane_prix_m2": 480, "n_ventes": 12}]},
@@ -88,7 +91,8 @@ def test_m13_compare_row_colonnes_ajoutees():
     assert "logements_possibles" not in row and "logements_min" not in row
     assert row["acces_reseaux"] == "Viabilisation probable"  # UN verdict
     assert row["assainissement"] == "Tout-à-l'égout (collectif)"
-    assert row["prix_secteur_bati_m2"] == 2800            # bâti (maison), JAMAIS le terrain nu
+    assert row["prix_secteur_bati_m2"] == 2800            # A8 — id de la fiche (prix_ancien.median)
+    assert row["terrain_zone_eur_m2"] == 480              # A8 — terrain nu du secteur cadastral
 
 
 def test_m13_compare_row_particulier_et_absences_sans_zero_invente():

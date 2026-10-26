@@ -1,0 +1,36 @@
+PCMI2 — Plan de masse (état existant, indicatif)
+État EXISTANT : contour cadastral + bâti existant (BD TOPO). Commune de Saint-Paul · section BY n° 83.
+
+
+                                                                                                                                               N
+                                                                                                                                               ^
+
+
+
+
+     88 m
+
+
+
+
+                                                                              72 m
+                       10 m
+
+
+
+     Échelle ~1/500 — contour cadastral (IGN), bâti existant en gris (BD TOPO). Emprise du terrain 72 × 88 m.
+
+
+Enveloppe rectangulaire du terrain (le terrain n'est pas rectangulaire) : ~72 × ~88 m ; surface réelle ~2405 m². Emprise bâtie
+existante DANS la parcelle : ~900 m² (BD TOPO).
+
+CE QUE CETTE PIÈCE EST : l'état EXISTANT du terrain (contour cadastral et bâti relevé). CE QU'ELLE N'EST PAS : le plan de
+masse du PROJET (implantation, cotes de la construction projetée, reculs, réseaux raccordés) — à dessiner par le pétitionnaire
+ou son architecte.
+
+
+
+
+Document préparatoire établi à partir de données publiques — ne constitue pas un dossier de demande de permis. À compléter et vérifier par le pétitionnaire ou son
+                                                                           architecte.
+

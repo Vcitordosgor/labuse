@@ -1,0 +1,69 @@
+  Document préparatoire établi à partir de données publiques — ne constitue pas un dossier de demande de
+  permis. À compléter et vérifier par le pétitionnaire ou son architecte.
+
+
+
+PCMI4 — Notice décrivant le terrain
+
+1 — Le terrain (pré-rédigé à partir de données publiques)
+
+Situation et zonage                  Parcelle 97415000BY0083, commune de Saint-Paul, section BY n° 83. Zone du
+                                     document d'urbanisme : U4c.
+                                     Source : cadastre · PLU (GPU)
+
+Adresse du terrain                   143 Rue Évariste de Parny, 97460 (rattachement automatique BAN, à vérifier
+                                     par le pétitionnaire).
+                                     Source : Base Adresse Nationale
+
+Topographie                          Pente moyenne du terrain d'environ 17 % (9.7°).
+                                     Source : RGE ALTI 5 m (IGN)
+
+Bâti existant                        Emprise bâtie existante estimée à ~900 m² (au sol).
+                                     Source : BD TOPO (IGN)
+
+Accès et réseaux                     Viabilisation confirmée par les faits. Indices : Permis accordés à proximité ;
+                                     Façade sur voie publique urbanisée ; Zone urbaine (U).
+                                     Source : viabilisation LABUSE (voirie, bâti, permis, assainissement)
+
+Assainissement                       Dans ce secteur IRIS « Le Ruisseau », 96 % des logements ne sont pas
+                                     raccordés au réseau collectif (INSEE RP2022). C'est un taux de SECTEUR, pas
+                                     l'état de cette parcelle. À vérifier auprès du SPANC.
+                                     Source : INSEE RP2022 — variable EGOUL, agrégée par IRIS
+
+Risque naturel (PPR)                 Aléa / PPR (Géorisques · DEAL) : Aléa mouvement de terrain — niveau faible..
+                                     Les prescriptions du règlement PPR (niveau de plancher, fondations) sont à
+                                     intégrer au projet.
+                                     Source : DEAL Réunion — PPR (Géorisques)
+
+Bruit                                Classement sonore routier : Secteur affecté par le bruit routier (classement
+                                     sonore cat. 3, bande 100 m) — isolement acoustique renforcé obligatoire
+                                     (R.571-32 CE). Isolement acoustique minimal réglementaire obligatoire pour
+                                     tout bâtiment situé dans un secteur affecté par le bruit (art. R.571-43 du Code
+                                     de l'environnement et arrêté du 30 mai 1996) ; le niveau requis dépend de la
+                                     catégorie de classement de l'infrastructure.
+                                     Source : Cerema — classement sonore des infrastructures
+
+
+2 — Le projet (à compléter par le pétitionnaire)
+
+Présentation du projet                                                        À compléter par le pétitionnaire.
+
+Matériaux et couleurs des façades                                             À compléter par le pétitionnaire.
+
+Traitement des toitures                                                       À compléter par le pétitionnaire.
+
+Clôtures et abords                                                            À compléter par le pétitionnaire.
+
+Insertion paysagère                                                           À compléter par le pétitionnaire.
+
+Stationnement                                                                 À compléter par le pétitionnaire.
+
+Partie terrain établie à partir de données publiques, chaque ligne sourcée ; à vérifier sur place. La partie projet relève
+exclusivement du pétitionnaire et de son architecte.
+
+
+
+
+  Document préparatoire établi à partir de données publiques — ne constitue pas un dossier de demande de permis. À compléter et vérifier par le
+                                                         pétitionnaire ou son architecte.
+

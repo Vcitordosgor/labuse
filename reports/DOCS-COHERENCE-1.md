@@ -7,6 +7,17 @@ BY0083 + BY0361 + BY0272. **Pas de merge.**
 
 ## REPRISE — dernier point traité
 
+> **LOT A TERMINÉ — `scripts/docs_coherence.py` affiche ZÉRO écart sur BY0083 ET BL0020.**
+> Arbitrages appliqués : zone = moteur Gabarit (un calcul, trois lecteurs : Étude +
+> CERFA + Dossier §10) ; hauteur CERFA « 9 m faîtage · 6 m égout » ; prix = id fiche
+> (`prix_ancien.median` + terrain secteur) lu par Dossier §8 / Comparatif / Étude de zone ;
+> stationnement/pleine terre chiffrés au Gabarit (A6). 8 PDF régénérés : `reports/
+> DOCS-COHERENCE-1/final-by0083/` + `pdf/`. **Reprendre aux lots B, C, D, E, F, G1-G6, H**
+> (sous-points textuels/présentation non mesurés par le harnais). Python unitaires 2666
+> passed. Pré-push : `npm ci` fait (node_modules réel) → push sans --no-verify.
+
+### Historique
+
 > **Lot 0 FAIT. Lot A en cours : A1 (propriétaire), A4 (pente), A10 (date), surface
 > A2/G2 FAITS et vérifiés (10 → 6 écarts harnais).** Reprendre au **Lot A reste :
 > A2 (emprise au Gabarit/Apporteur/Étude), A3, A5, A6, A7, A8, A9** — entremêlés avec les lots document (D Gabarit, F Étude) ; les traiter là ou
