@@ -1,0 +1,16 @@
+import { launch, mk } from './lib.mjs'
+const SUF = process.argv[2] || 'avant'
+const { browser, page } = await launch()
+const t = mk(page)
+await t.go(''); await t.wait(700)
+await page.evaluate(() => window.__labuse.setView('documents'))
+await t.wait(1600)
+const intro = await page.getByText('Huit documents produits').count()
+const comparables = await page.getByText('Comparables DVF').count()
+await t.shot(`P49-50-docs-${SUF}`)
+await page.evaluate(() => window.__labuse.setModule('temps'))
+await t.wait(1800)
+const zonesNoires = await page.getByText('Zones noires').count()
+await t.shot(`P24-temps-${SUF}`)
+console.log(JSON.stringify({ SUF, intro, comparables, zonesNoires }))
+await browser.close()

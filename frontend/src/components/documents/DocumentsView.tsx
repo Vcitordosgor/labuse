@@ -12,6 +12,7 @@ import { Bouton } from '../ui/Bouton'
 import { Chip } from '../ui/Chip'
 import { Chargement } from '../Loading'
 import { ParcelInput } from '../ParcelInput'
+import { DestinationSelect } from '../outils/DestinationSelect'   // RECETTE-OUTILS-3 (S3) — même choix d'activité que l'outil
 import { BilanEcran } from '../fiche/BilanEcran'
 import {
   getFiche, getGabarit,
@@ -161,6 +162,9 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
   const [idu, setIdu] = useState<string | null>(null)                // parcelle & zone
   const [idus, setIdus] = useState<(string | null)[]>([null, null, null])  // multi (2 à 3)
   const [rayon, setRayon] = useState(2)                              // zone : rayon servi, défaut 2
+  // RECETTE-OUTILS-3 (S3) — activité (sous-destination) choisie pour l'Étude de zone : le menu MODIFIE
+  // la lecture (verdict par zone PLU) → la fenêtre Docs propose le MÊME choix que l'outil, transmis au PDF.
+  const [docDest, setDocDest] = useState<string | null>(null)
   // CHASSE-DONNEES-FIX-1 (suite 2, E-77) — rayons SERVIS (config/moteurs.yaml), plus la liste 1..20 en dur.
   const cfgMot = useQuery({ queryKey: ['moteurs-config'], queryFn: getMoteursConfig, staleTime: 3600_000 })
   const rayonsServis = cfgMot.data?.rayons_etude_zone ?? [0.5, 1, 2, 5]
@@ -278,10 +282,15 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
                   aria-pressed={rayon === r} onClick={() => setRayon(r)}>{String(r).replace('.', ',')} km</Bouton>
               ))}
             </div>
+            {/* RECETTE-OUTILS-3 (S3) — même choix d'activité que l'outil : le PDF affichera l'activité et
+                son verdict par zone PLU. Facultatif (vide = étude de zone « neutre »). */}
+            <div className="mt-2">
+              <DestinationSelect value={docDest} onChange={setDocDest} dataAttr="doc-etude-zone" />
+            </div>
             <p className="my-3 border-l-2 border-line-2 pl-2.5 text-[13px] text-txt-dim">{d.explication}</p>
             {erreur && <p className="my-3 border-l-2 border-amber pl-2.5 text-[13px] text-amber">{erreur}</p>}
             <Bouton niveau="primaire" ton="vert" className="w-full" disabled={!idu || !!enCours}
-              onClick={async () => { if (idu && await ouvrir(docEtudeZoneUrl(idu, rayon), 'etude-zone')) { enregistrer('etude-zone', [idu], rayon); onClose() } }}>
+              onClick={async () => { if (idu && await ouvrir(docEtudeZoneUrl(idu, rayon, docDest), 'etude-zone')) { enregistrer('etude-zone', [idu], rayon); onClose() } }}>
               {enCours ? <Chargement variant="inline" accent="courant" label="Génération…" /> : d.cta}
             </Bouton>
           </div>
@@ -458,13 +467,9 @@ export function DocumentsView() {
   return (
     <div className="min-w-0 flex-1 overflow-y-auto bg-bg">
       <div className="mx-auto max-w-[1400px] px-6 pb-12 pt-6">
-        <h1 className="mb-1 text-[22px] font-bold text-txt">Documents</h1>
-        <p className="mb-5 max-w-[64ch] text-txt-dim">
-          {/* BILAN-1 (Lot 6) — la 8ᵉ tuile « Comparables DVF » (bientôt) est de retour dans la grille :
-              7 documents produits aujourd'hui + Comparables DVF à venir. On ne dit plus « Sept » (qui
-              contredisait les 8 cartes) ni « tous produits » (le 8ᵉ ne l'est pas encore). */}
-          Huit documents produits depuis les données de la fiche et de l’outil d’étude — plus les Comparables DVF, bientôt. Choisissez le document, puis la parcelle, et générez.
-        </p>
+        <h1 className="mb-5 text-[22px] font-bold text-txt">Documents</h1>
+        {/* RECETTE-OUTILS-1 (point 49) — phrase d'introduction « Huit documents produits… » retirée.
+            (point 50) — la carte « Comparables DVF » est retirée du catalogue → plus de compteur « huit ». */}
         <div className="grid grid-cols-4 gap-3 max-[1100px]:grid-cols-2">
           {CATALOGUE.map((d) => (
             // IMPLANTATION-4 (parcelles multiples) — la carte « Étude de faisabilité » n'ouvre PLUS la

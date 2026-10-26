@@ -101,12 +101,19 @@ DONNEES: dict[str, Donnee] = {
  # (démo CDC §9) ; réel per-parcelle dès que la classification des limites arrive (GABARIT-2).
  "gabarit_implantation_m2": C("Zone d'implantation réglementaire", "m²", "parcelle",
     "surface de la zone où une construction peut s'implanter = parcelle − reculs (voie/"
-    "séparatives) − exclusions réglementaires (PPR rouge). Calcul géospatial pur, jamais "
-    "estimé. Servi per-parcelle (GABARIT-2 : classification des limites voie/séparative par "
-    "arête = adjacence cadastre + BD TOPO, mesurée 0 faux/70).",
+    "séparatives) − exclusions réglementaires (PPR rouge) − emprise du bâti existant conservé "
+    "(RECETTE-OUTILS-3 S7). Calcul géospatial pur, jamais estimé. Servi per-parcelle (GABARIT-2 : "
+    "classification des limites voie/séparative par arête = adjacence cadastre + BD TOPO, mesurée 0 faux/70).",
     moteur="gabarit", calcul="moteur",
     fonction="src/labuse/gabarit/engine.py:compute_gabarit",
     reservoirs=("cadastre_api_carto", "gpu_plu_api_carto",), portee="live"),
+ "gabarit_bati_deduit_m2": C("Bâti existant déduit", "m²", "parcelle",
+    "RECETTE-OUTILS-3 (S7, décision Vic) — emprise du bâti existant conservé RETRANCHÉE de la zone "
+    "d'implantation (zone ∩ bâti, après découpe du bâti au contour cadastral). Calcul géospatial pur "
+    "(shapely, CRS 2975), jamais estimé. None s'il n'y a pas de bâti à déduire.",
+    moteur="gabarit", calcul="moteur",
+    fonction="src/labuse/gabarit/builder.py:deduire_bati_de_zone",
+    reservoirs=("cadastre_api_carto", "bd_topo",), portee="live"),
  "gabarit_emprise_plafond_m2": C("Plafond d'emprise", "m²", "parcelle",
     "plafond réglementaire d'emprise au sol = surface parcelle × CES / 100. Calculé À PART "
     "de la zone d'implantation (jamais min()).",

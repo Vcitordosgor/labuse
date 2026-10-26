@@ -360,6 +360,19 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 .maplibregl-map { background: var(--bg-0); }
 .maplibregl-ctrl-attrib { display: none; }
 
+/* RECETTE-OUTILS-2 (R14) — boussole 3D : contrôle natif NavigationControl restylé à la charte LABUSE
+   (fond sombre, filet, accent mint), visible uniquement en 3D (monté/démonté par MapView). */
+.labuse-nav3d .maplibregl-ctrl-group {
+  background: var(--bg-2); border: 1px solid var(--line-2); border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.45); overflow: hidden; margin: 0 0 12px 12px;
+}
+.labuse-nav3d .maplibregl-ctrl-group button { width: 32px; height: 32px; background-color: transparent; }
+.labuse-nav3d .maplibregl-ctrl-group button + button { border-top: 1px solid var(--line); }
+.labuse-nav3d .maplibregl-ctrl-group button:hover { background-color: var(--mint-bg); }
+.labuse-nav3d .maplibregl-ctrl-group button:focus-visible { outline: 2px solid var(--mint); outline-offset: -2px; }
+/* icônes natives (SVG sombres) → claires sur fond sombre ; la boussole garde son aiguille */
+.labuse-nav3d .maplibregl-ctrl-icon { filter: invert(0.88); }
+
 /* M12 C8 — infobulle de zonage/équipement : conteneur MapLibre transparent+arrondi. */
 .labuse-popup .maplibregl-popup-content {
   background: transparent;

@@ -419,9 +419,13 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
         exclusions.append(Exclusion(id="sup", ruleId="SUP", type="sup",
                                     label="Servitude d'utilité publique déduite",
                                     geometry=json.loads(sup_gj[0]), source=sup_src))
+    # RECETTE-OUTILS-2 (R17) — les SUP sont TOUJOURS contrôlées (la requête ci-dessus tranche présence
+    # vs absence) : une absence VÉRIFIÉE est « intégrée » (vérifiée), pas « non modélisée ». Avant, le
+    # PDF/outil marquait les SUP « non modélisées » tout en écrivant « Aucune SUP sur la parcelle » —
+    # contradiction. Le statut est donc « integrated » dans les deux cas ; seul le détail diffère.
     applicable.append(ApplicableRule(
         id="SUP", label="Servitudes d'utilité publique", category="exclusion",
-        integrationStatus="integrated" if _sup_present else "not_integrated",
+        integrationStatus="integrated",
         detail=("assiette SUP déduite de la zone d'implantation" if _sup_present
                 else "Aucune SUP sur la parcelle"), source=sup_src))
 
@@ -578,3 +582,83 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
         sources=sources,
     )
     return BuildResult(input=inp, blocking=blocking, raccordement=racc)
+
+
+def rescale_zone_contenance(db, idu: str, result) -> None:
+    """RECETTE-OUTILS-4 (U4) — ré-échelonne l'aire de la zone d'implantation sur la CONTENANCE cadastrale
+    (repère de la Faisabilité), EXACTEMENT comme l'endpoint /outils/gabarit (api/gabarit.py), À APPELER
+    juste avant `deduire_bati_de_zone`. Sans ça, les chemins PDF (construire_gabarit, robinet_fiche) qui
+    ne passent pas par l'endpoint partaient de l'aire du DESSIN (ex. 176 m²) et affichaient « déduit
+    46 m² » au lieu de « 40 » (170 → 130) : la déduction prend pour référence l'aire AVANT, qui doit être
+    la même partout. Best-effort (jamais un document cassé)."""
+    try:
+        z, s = getattr(result, "zoneImplantationM2", None), getattr(result, "surfaceParcelleM2", None)
+        if not z or not s:
+            return
+        from sqlalchemy import text
+        dessin = db.execute(text("SELECT ST_Area(geom_2975) FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+        if dessin and float(dessin) > 0:
+            result.zoneImplantationM2 = round(float(z) * float(s) / float(dessin), 1)
+    except Exception:  # noqa: BLE001 — l'échelle contenance n'est jamais un bloqueur
+        pass
+
+
+def deduire_bati_de_zone(result) -> None:
+    """RECETTE-OUTILS-3 (S7 / S10) — rend la zone d'implantation et le bâti COHÉRENTS et UNIQUES pour
+    l'app (2D/3D) et le PDF (p1 schéma, p3 3D). Deux opérations, in place sur un `GabaritResult` servi :
+
+      · S10 — le bâti existant est DÉCOUPÉ au contour cadastral (il débordait : ex. 36 % sur « 36 Rue
+        des Jacarandas », bâti voisin / emprise BD TOPO imprécise) — chaque bâtiment garde sa hauteur ;
+      · S7 (décision Vic) — la zone d'implantation DÉDUIT l'emprise du bâti conservé (zone − bâti) :
+        `zoneImplantationM2` devient la valeur APRÈS déduction, `batiDeduitM2` porte l'emprise retranchée.
+
+    Best-effort : toute erreur géométrique laisse le résultat intact (jamais un document cassé). Aires en
+    mètres (CRS métrique 2975), géométries re-servies en WGS84."""
+    if result is None or getattr(result, "status", None) != "ok":
+        return
+    # RECETTE-OUTILS-4 (U4) — « déduit » = surface RÉELLEMENT retirée de la zone AFFICHÉE : la valeur
+    # AVANT déduction (le `zoneImplantationM2` servi par le moteur, avant qu'on l'écrase) moins la
+    # valeur APRÈS. On NE repart PAS de l'aire re-projetée `zone_m.area`, qui diffère de quelques m²
+    # du chiffre moteur — sinon « 170 → 130 » affichait « déduit 46 » au lieu de « 40 ».
+    orig_m2 = getattr(result, "zoneImplantationM2", None)
+    z_gj = getattr(result, "zoneImplantationGeoJSON", None)
+    b_fc = getattr(result, "batiExistantGeoJSON", None)
+    if not z_gj or not b_fc or not (b_fc.get("features") if isinstance(b_fc, dict) else None):
+        return
+    try:
+        from shapely.geometry import mapping, shape
+        from shapely.ops import unary_union
+        from shapely.validation import make_valid
+        from ._geom import to_metric, to_wgs
+        contour_m = make_valid(to_metric(shape(result.contourGeoJSON))) if result.contourGeoJSON else None
+        zone_m = make_valid(to_metric(shape(z_gj)))
+        if zone_m.is_empty or zone_m.area <= 0:
+            return
+        feats, batis_m = [], []
+        for f in b_fc["features"]:
+            if not f.get("geometry"):
+                continue
+            gm = make_valid(to_metric(shape(f["geometry"])))
+            if contour_m is not None:
+                gm = gm.intersection(contour_m)           # S10 — découpe au contour
+            if gm.is_empty:
+                continue
+            batis_m.append(gm)
+            feats.append({"type": "Feature", "properties": f.get("properties") or {},
+                          "geometry": mapping(to_wgs(gm))})
+        if not batis_m:
+            return
+        bati_union = unary_union(batis_m)
+        zone_deduit = zone_m.difference(bati_union)        # S7 — déduction du bâti
+        if zone_deduit.is_empty:
+            return
+        brute_m2, deduit_m2 = round(zone_m.area), round(zone_deduit.area)
+        result.batiExistantGeoJSON = {"type": "FeatureCollection", "features": feats}
+        result.zoneImplantationGeoJSON = mapping(to_wgs(zone_deduit))
+        result.zoneImplantationM2 = deduit_m2
+        # U4 — retrait réel = (avant affiché) − (après). Repli sur l'aire re-projetée si le moteur
+        # n'a pas posé de valeur avant (jamais négatif).
+        ref_avant = round(orig_m2) if isinstance(orig_m2, (int, float)) else brute_m2
+        result.batiDeduitM2 = max(0, ref_avant - deduit_m2)
+    except Exception:  # noqa: BLE001 — géométrie dégénérée : on garde le résultat non déduit
+        pass

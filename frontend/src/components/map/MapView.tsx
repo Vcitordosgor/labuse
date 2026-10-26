@@ -40,6 +40,64 @@ const STYLE: maplibregl.StyleSpecification = {
 // RETOURS-5 T3 — carrosserie SOMBRE commune des popups carte (opérations, concurrents) : jamais de fond
 // blanc illisible. Fond quasi opaque, bord --card-line, ombre portée pour détacher de la carte.
 const POPUP_BOX_CSS = 'font:12px system-ui;color:#e9edeb;min-width:220px;max-width:280px;background:rgba(14,18,16,.97);border:1px solid #232a26;border-radius:11px;padding:13px;box-shadow:0 12px 32px rgba(0,0,0,.55)'
+
+// RECETTE-OUTILS-1 (points 6 & 7) — LA bulle « fiche permis » UNIQUE, sur la carte (plus de drawer en
+// colonne). Ouverte au clic d'un point permis sur la carte OU au clic d'une ligne de la liste (M03, via
+// window.__labuse_map) → MÊME bulle, MÊME contenu. Une ligne par donnée (libellé à gauche, valeur à
+// droite). Fermeture : croix (closeButton) + clic ailleurs (closeOnClick). DOM textContent (anti-injection).
+let _permisPopup: maplibregl.Popup | null = null
+export function fermerBullePermis() { try { _permisPopup?.remove() } catch { /* noop */ } _permisPopup = null }
+export function ouvrirBullePermis(m: maplibregl.Map, pid: string, lngLat: maplibregl.LngLatLike) {
+  fermerBullePermis()   // une seule bulle permis à la fois
+  const select = useApp.getState().select
+  const box = document.createElement('div'); box.style.cssText = POPUP_BOX_CSS
+  const titre = document.createElement('b'); titre.textContent = 'Permis'
+  titre.style.cssText = 'display:block;font-size:14px;font-weight:650;padding-right:16px'; box.appendChild(titre)
+  const sub = document.createElement('div'); sub.style.cssText = 'color:#98a39d;font-size:12px;margin-top:4px;font-family:ui-monospace,monospace'; box.appendChild(sub)
+  const corps = document.createElement('div'); corps.style.cssText = 'margin-top:9px;font-size:12px;line-height:1.75'
+  const load = document.createElement('div'); load.textContent = 'Chargement de la fiche…'; load.style.cssText = 'color:#c9d2cc;font-size:12px;margin-top:9px'
+  box.appendChild(load); box.appendChild(corps)
+  const popup = new maplibregl.Popup({ offset: 12, className: 'labuse-popup', maxWidth: '320px', closeButton: true, closeOnClick: true })
+    .setLngLat(lngLat).setDOMContent(box).addTo(m)
+  _permisPopup = popup
+  popup.on('close', () => { if (_permisPopup === popup) _permisPopup = null; try { useApp.getState().setPermisOuvert(null) } catch { /* noop */ } })
+  const ligne = (lab: string, val: string) => {
+    if (!val) return
+    const d = document.createElement('div'); d.style.cssText = 'display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #232a26;padding:3px 0'
+    const c = document.createElement('span'); c.textContent = lab; c.style.color = '#98a39d'
+    const v = document.createElement('span'); v.textContent = val; v.style.cssText = 'text-align:right;color:#e9edeb'
+    d.appendChild(c); d.appendChild(v); corps.appendChild(d)
+  }
+  modPermisFiche(pid).then((f: Record<string, any>) => {
+    load.remove()
+    const fmtD = (s: unknown) => { if (!s) return ''; const t = new Date(String(s)); return Number.isNaN(t.getTime()) ? '' : t.toLocaleDateString('fr-FR') }
+    titre.textContent = String(f.nature_libelle ?? f.nature ?? 'Permis')
+    sub.textContent = [f.permit_id ? String(f.permit_id) : pid, f.commune ? String(f.commune) : ''].filter(Boolean).join(' · ')
+    if (f.statut) {
+      const bd = document.createElement('span'); bd.textContent = String(f.statut) + (f.annule ? ' · annulé' : '')
+      bd.style.cssText = `display:inline-block;margin-top:7px;padding:1px 8px;border-radius:999px;font-size:11px;${f.annule ? 'background:rgba(232,73,29,.15);color:#e8491d' : 'background:rgba(74,222,128,.15);color:#4ADE80'}`
+      box.insertBefore(bd, corps)
+    }
+    ligne('Destination', String(f.destination_libelle ?? ''))
+    ligne('Pétitionnaire', String(f.porteur ?? f.porteur_note ?? ''))
+    if (f.porteur_siren) ligne('SIREN', String(f.porteur_siren))
+    ligne('Lots', f.nb_lots != null ? String(f.nb_lots) : '')
+    ligne('Surface habitable', f.surface_hab_m2 != null ? `${f.surface_hab_m2} m²` : '')
+    ligne('Autorisé le', fmtD(f.date_autorisation))
+    const parcs = Array.isArray(f.parcelles) ? (f.parcelles as string[]) : []
+    if (parcs.length) ligne('Parcelle(s)', parcs.map((p) => (p.length >= 14 ? `${p.slice(8, 10)} ${p.slice(10)}` : p)).join(', '))
+    const idu0 = parcs[0] ?? null
+    if (idu0 && idu0.length === 14) {
+      const bp = document.createElement('button'); bp.textContent = 'Voir la parcelle sur la carte →'
+      bp.style.cssText = 'margin-top:11px;width:100%;color:#4ADE80;background:none;border:1px solid rgba(74,222,128,.35);border-radius:8px;cursor:pointer;font:12px system-ui;padding:7px 10px'
+      bp.addEventListener('click', () => { select(String(idu0)); popup.remove() }); corps.appendChild(bp)
+    }
+    const srcEl = document.createElement('div'); srcEl.textContent = 'Source : Sitadel (SDES)'
+    srcEl.style.cssText = 'margin-top:9px;color:#6b756f;font-size:10px'; corps.appendChild(srcEl)
+  }).catch(() => { load.textContent = 'Fiche permis indisponible — réessayez.' })
+  return popup
+}
+
 const LEGACY_COLOR = '#39463F'
 const LEGACY_OPACITY = 0.03
 const ETAGE0: maplibregl.ExpressionSpecification = ['>=', ['to-number', ['coalesce', ['get', 'etage0'], 0]], 1]
@@ -321,6 +379,76 @@ interface Measure {
 // M55-G point 13 — BOUTON DE CARTE MOMENTANÉ (zoom +/−…) : au clic, flash mint ~180 ms puis
 // retour — un feedback d'APPUI, pas un état. Les bascules à état (3D, fond, outils) gardent
 // leur état persistant comme feedback ; ce patron est pour les boutons sans état.
+// RECETTE-OUTILS-4 (U5) — SPHÈRE D'ORIENTATION 3D (gizmo type ViewCube / navigation Blender), remplace
+// le bloc ↺/↻/curseur (RECETTE-OUTILS-3 S11). Visible seulement en 3D, coin de la carte, DA de la charte.
+//  · un disque (~80 px) = la sphère : N/E/S/O FIXES sur le pourtour (repère géographique) + une AIGUILLE
+//    mint qui montre l'orientation courante (direction « haut » de la carte) ; l'inclinaison est rendue
+//    par l'aplatissement vertical du disque (vue de dessus = rond, vue rasante = ellipse) ;
+//  · GLISSER dans la sphère fait tourner la caméra autour de la parcelle : gauche/droite = rotation,
+//    haut/bas = inclinaison (bornée vue de dessus 0° → vue rasante 80°), pivot = le centre de la carte
+//    (la parcelle, sur laquelle le Gabarit centre déjà) ;
+//  · CLIC sur N/E/S/O place la caméra de ce côté (ce cardinal devient le « haut ») ;
+//  · ◎ « Recentrer » (sous la sphère) rétablit la vue de départ (délègue au Gabarit via `recentrer3d`).
+//  La sphère SUIT la vue (aiguille + aplatissement se mettent à jour, y compris sur Ctrl + glisser, qui
+//  reste actif sur la carte).
+function Controle3D({ map }: { map: React.RefObject<maplibregl.Map | null> }) {
+  const [bearing, setBearing] = useState(0)
+  const [pitch, setPitch] = useState(45)
+  const drag = useRef<{ x: number; y: number; b: number; p: number } | null>(null)
+  useEffect(() => {
+    const m = map.current
+    if (!m) return
+    const upd = () => { setBearing(m.getBearing()); setPitch(m.getPitch()) }
+    upd(); m.on('rotate', upd); m.on('pitch', upd); m.on('move', upd)
+    return () => { m.off('rotate', upd); m.off('pitch', upd); m.off('move', upd) }
+  }, [map])
+  const clampP = (p: number) => Math.max(0, Math.min(80, p))
+  const down = (e: React.PointerEvent) => {
+    const m = map.current; if (!m) return
+    e.preventDefault(); e.stopPropagation()
+    try { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId) } catch { /* */ }
+    drag.current = { x: e.clientX, y: e.clientY, b: m.getBearing(), p: m.getPitch() }
+  }
+  const move = (e: React.PointerEvent) => {
+    const m = map.current, d = drag.current; if (!m || !d) return
+    m.jumpTo({ bearing: d.b + (e.clientX - d.x) * 0.7, pitch: clampP(d.p + (e.clientY - d.y) * 0.5) })
+  }
+  const up = (e: React.PointerEvent) => {
+    try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId) } catch { /* */ }
+    drag.current = null
+  }
+  const vers = (b: number) => { const m = map.current; if (m) m.easeTo({ bearing: b, duration: 350 }) }
+  const stopP = (e: React.PointerEvent) => e.stopPropagation()
+  const tilt = Math.max(0.2, Math.cos((pitch * Math.PI) / 180))   // 1 (dessus) → 0,2 (rasant)
+  const card = 'absolute z-10 flex h-4 w-4 items-center justify-center rounded font-mono text-[9px] leading-none text-txt-mut transition-colors duration-quick hover:text-mint focus-visible:text-mint focus-visible:outline-none'
+  const btn = 'flex h-7 w-7 items-center justify-center rounded-md border border-line-2 bg-bg-2 text-[15px] leading-none text-txt transition-colors duration-quick hover:border-mint hover:text-mint focus-visible:border-mint focus-visible:text-mint focus-visible:outline-none'
+  return (
+    <div data-controle-3d className="absolute bottom-4 left-4 z-20 flex flex-col items-center gap-2">
+      <div data-c3d-sphere title="Glisser pour tourner / incliner la vue"
+        onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
+        className="relative h-20 w-20 cursor-grab touch-none select-none overflow-hidden rounded-full border border-line-2 bg-bg-2/90 shadow-elev-1 backdrop-blur-sm active:cursor-grabbing"
+        style={{ background: 'radial-gradient(circle at 50% 38%, rgba(255,255,255,0.06), rgba(0,0,0,0.18))' }}>
+        {/* calque incliné (pitch) : équateur + méridiens + aiguille d'orientation (mint) */}
+        <div className="pointer-events-none absolute inset-0" style={{ transform: `scaleY(${tilt})` }}>
+          <span className="absolute inset-2.5 rounded-full border border-line-2/50" />
+          <span className="absolute left-1/2 top-2.5 bottom-2.5 w-px -translate-x-1/2 bg-line-2/40" />
+          <span className="absolute top-1/2 left-2.5 right-2.5 h-px -translate-y-1/2 bg-line-2/40" />
+          <span className="absolute left-1/2 top-1/2 h-7 w-[3px] -translate-x-1/2 -translate-y-full rounded-full bg-gradient-to-t from-mint/10 to-mint"
+            style={{ transformOrigin: 'bottom center', transform: `rotate(${bearing}deg)` }} />
+        </div>
+        {/* cardinaux FIXES, cliquables — placent la caméra de ce côté */}
+        <button data-c3d-n onPointerDown={stopP} onClick={() => vers(0)} title="Vue depuis le nord" className={`${card} left-1/2 top-0.5 -translate-x-1/2 font-bold text-mint`}>N</button>
+        <button data-c3d-e onPointerDown={stopP} onClick={() => vers(90)} title="Vue depuis l'est" className={`${card} right-0.5 top-1/2 -translate-y-1/2`}>E</button>
+        <button data-c3d-s onPointerDown={stopP} onClick={() => vers(180)} title="Vue depuis le sud" className={`${card} bottom-0.5 left-1/2 -translate-x-1/2`}>S</button>
+        <button data-c3d-o onPointerDown={stopP} onClick={() => vers(270)} title="Vue depuis l'ouest" className={`${card} left-0.5 top-1/2 -translate-y-1/2`}>O</button>
+        {/* moyeu central */}
+        <span className="pointer-events-none absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-txt-mut" />
+      </div>
+      <button data-c3d-recentrer className={btn} title="Recentrer sur la parcelle" onClick={() => useApp.getState().recentrer3d()}>◎</button>
+    </div>
+  )
+}
+
 function BoutonCarte({ onClick, title, children }: { onClick: () => void; title: string; children: React.ReactNode }) {
   const [flash, setFlash] = useState(false)
   const timer = useRef<number | null>(null)
@@ -923,49 +1051,10 @@ export function MapView() {
           btn.addEventListener('click', () => { parcelAt(lon, lat).then((r) => { if (r.idu) select(String(r.idu)) }).catch(() => {}); popup.remove() })
           ;(e as maplibregl.MapLayerMouseEvent).preventDefault()
         } else if (pid) {
-          // RECETTE-2 (D2b, Vic 05/10) — la FICHE permis s'ouvre DIRECTEMENT en popup sur la carte : plus
-          // d'étape « détails → », plus d'ouverture dans la colonne de gauche (drawer). On fetch la fiche
-          // (modPermisFiche) et on la rend dans la bulle. DOM textContent (anti-injection).
-          const box = document.createElement('div'); box.style.cssText = POPUP_BOX_CSS
-          const nom = document.createElement('b')
-          nom.textContent = String(props?.label || props?.nature || 'Permis')
-          nom.style.cssText = 'display:block;font-size:14px;font-weight:650'; box.appendChild(nom)
-          const etatLbl: Record<string, string> = { recent: 'Récent', dormant: 'Dormant', acheve: 'Achevé', autre: 'Autre' }
-          const sub = document.createElement('div'); sub.style.cssText = 'color:#98a39d;font-size:12px;margin-top:5px;line-height:1.55'
-          const l1 = [props?.commune ? String(props.commune) : '', etatLbl[String(props?.etat)] ?? ''].filter(Boolean).join(' · ')
-          sub.textContent = l1
-          const prec = props?.geoloc ? 'Position approchée (adresse)' : 'Position de la parcelle rattachée'
-          const br = document.createElement('br'); sub.appendChild(br); sub.appendChild(document.createTextNode(prec))
-          box.appendChild(sub)
-          // CHARGEMENT-1 — l'indicateur unique (trois points menthe) même dans ce popup en DOM impératif.
-          const det = document.createElement('div'); det.style.cssText = 'margin-top:9px;color:#c9d2cc;font-size:12px;line-height:1.6;display:flex;align-items:center;gap:8px'
-          const pts = document.createElement('span'); pts.style.cssText = 'display:inline-flex;gap:4px'
-          for (let i = 0; i < 3; i++) {
-            const d = document.createElement('span'); d.className = 'labuse-dot'
-            d.style.cssText = `width:6px;height:6px;border-radius:9999px;background:#4ADE80;animation-delay:${i * 160}ms`
-            pts.appendChild(d)
-          }
-          det.appendChild(pts); det.appendChild(document.createTextNode('Chargement de la fiche…')); box.appendChild(det)
-          const popup = new maplibregl.Popup({ offset: 12, className: 'labuse-popup', maxWidth: '320px' })
-            .setLngLat((e as maplibregl.MapLayerMouseEvent).lngLat).setDOMContent(box).addTo(m)
-          modPermisFiche(String(pid)).then((f) => {
-            const fmtD = (s: unknown) => { if (!s) return ''; const t = new Date(String(s)); return Number.isNaN(t.getTime()) ? '' : t.toLocaleDateString('fr-FR') }
-            det.textContent = ''
-            const ligne = (lab: string, val: string) => { if (!val) return; const d = document.createElement('div'); const c = document.createElement('span'); c.textContent = lab + ' : '; c.style.color = '#98a39d'; d.appendChild(c); d.appendChild(document.createTextNode(val)); det.appendChild(d) }
-            ligne('Nature', String(f.nature_libelle ?? f.nature ?? ''))
-            ligne('Destination', String(f.destination_libelle ?? ''))
-            ligne('Pétitionnaire', String(f.porteur ?? f.porteur_note ?? ''))
-            ligne('Logements / lots', f.nb_lots != null ? String(f.nb_lots) : '')
-            ligne('Surface habitable', f.surface_hab_m2 != null ? `${f.surface_hab_m2} m²` : '')
-            ligne('Autorisé le', fmtD(f.date_autorisation))
-            ligne('Statut', String(f.statut ?? '') + (f.annule ? ' · annulé' : ''))
-            const idu0 = (props?.idu ?? (Array.isArray(f.parcelles) ? (f.parcelles as string[])[0] : null)) as string | null
-            if (idu0) {
-              const bp = document.createElement('button'); bp.textContent = 'voir la parcelle →'
-              bp.style.cssText = 'margin-top:10px;color:#4ADE80;background:none;border:1px solid rgba(74,222,128,.35);border-radius:8px;cursor:pointer;font:12px system-ui;padding:7px 10px'
-              bp.addEventListener('click', () => { select(String(idu0)); popup.remove() }); det.appendChild(bp)
-            }
-          }).catch(() => { det.textContent = 'Fiche permis indisponible — réessayez.' })
+          // RECETTE-OUTILS-1 (points 6 & 7) — fiche permis en bulle UNIQUE sur la carte (fonction partagée
+          // avec le clic depuis la LISTE). On surligne aussi la ligne correspondante dans la liste.
+          useApp.getState().setPermisOuvert?.(String(pid))
+          ouvrirBullePermis(m, String(pid), (e as maplibregl.MapLayerMouseEvent).lngLat)
           ;(e as maplibregl.MapLayerMouseEvent).preventDefault()
         }
         else if (props?.idu) { select(String(props.idu)); (e as maplibregl.MapLayerMouseEvent).preventDefault() }  // LOT8b : clic piscine → fiche parcelle
@@ -1008,6 +1097,10 @@ export function MapView() {
             st.addToCompare(idu)
             return
           }
+          // RECETTE-OUTILS-2 (R1) — l'outil « risques » rendu est O5Servitudes (UNE parcelle, via
+          // EntreeParcelle) : il adopte le clic carte par `selectedIdu` comme Taxe/Gabarit. L'ancienne
+          // dérivation vers `carteOutilIdu` (prévue pour le lot M10, NON câblé) cassait le clic carte
+          // (rien ne consommait le signal) → retirée. Le clic suit donc la voie normale `select(idu)`.
           // M6.1 : couche zonage active → la zone PLU précise s'affiche AUSSI au clic
           // (popup éphémère, même gabarit que les équipements) — la fiche s'ouvre normalement
           if (st.layers.zonage_parcelle) {
@@ -1041,7 +1134,9 @@ export function MapView() {
         const hits = m.queryRenderedFeatures(e.point, { layers: ['parcels-fill', 'ile-fill'].filter((l) => !!m.getLayer(l)) })
         if (hits.length > 0) return   // le handler de calque a déjà ouvert la fiche
         parcelAt(e.lngLat.lng, e.lngLat.lat).then((r) => {
-          if (r.idu) select(r.idu)
+          if (!r.idu) return
+          // RECETTE-OUTILS-2 (R1) — voie normale pour risques aussi (O5Servitudes adopte selectedIdu).
+          select(r.idu)
         }).catch(() => undefined)
       })
 
@@ -1177,43 +1272,67 @@ export function MapView() {
         useApp.getState().setTerrain3d(false)
         return
       }
-      // Écoute les erreurs de la source de relief (tuiles DEM terrarium) tant que la 3D est active.
-      const onErr = (e: { sourceId?: string; error?: { message?: string } }) => {
-        if (e?.sourceId === 'dem' || /terrain|dem|elevation/i.test(String(e?.error?.message || ''))) {
-          console.error('[LABUSE 3D] tuile de relief en échec', e?.error || e)
-          setErreur3d('tuiles de relief indisponibles (réseau)')
+      // RECETTE-OUTILS-2 (R13) — le Gabarit affiche son volume sur un TERRAIN SUPPOSÉ PLAT (pas de
+      // relief DEM). Motif : une parcelle en pente/altitude (Saint-Paul U6b « 36 Rue des Jacarandas »,
+      // ~760 m) flottait HORS CHAMP une fois le relief posé — à pitch 45 son élévation projetait le
+      // centroïde ~300 px AU-DESSUS du canvas (« écran noir très zoomé à côté », point 32 non tenu). En
+      // plan plat, le centroïde se projette au centre EXACT de l'écran (vérifié : project→525/422 sur un
+      // canvas 1050×844) et le cadrage du Gabarit (fitBounds pitch 45) tient partout. Le bâti et
+      // l'enveloppe restent extrudés à leurs hauteurs réelles → c'est bien une vue 3D, et c'est la
+      // légende même du document (« Volume indicatif — terrain supposé plat »). Pas de DEM → pas d'écoute
+      // ni de garde-fou de chargement de relief.
+      const gabaritFlat = useApp.getState().module === 'gabarit'
+      if (gabaritFlat) {
+        try { m.setTerrain(null) } catch { /* noop */ }
+        terrain3dCleanup.current = () => { /* rien à nettoyer : pas de DEM en Gabarit */ }
+      } else {
+        // Écoute les erreurs de la source de relief (tuiles DEM terrarium) tant que la 3D est active.
+        const onErr = (e: { sourceId?: string; error?: { message?: string } }) => {
+          if (e?.sourceId === 'dem' || /terrain|dem|elevation/i.test(String(e?.error?.message || ''))) {
+            console.error('[LABUSE 3D] tuile de relief en échec', e?.error || e)
+            setErreur3d('tuiles de relief indisponibles (réseau)')
+          }
         }
-      }
-      m.on('error', onErr as never)
-      // Garde-fou timeout : si le relief n'est pas posé en 8 s (tuiles bloquées), on le dit.
-      const t3d = window.setTimeout(() => {
-        if (useApp.getState().terrain3d && !m.getTerrain()) {
-          console.error('[LABUSE 3D] relief non chargé après 8 s (timeout tuiles DEM)')
-          setErreur3d('relief trop lent à charger (délai dépassé)')
+        m.on('error', onErr as never)
+        // Garde-fou timeout : si le relief n'est pas posé en 8 s (tuiles bloquées), on le dit.
+        const t3d = window.setTimeout(() => {
+          if (useApp.getState().terrain3d && !m.getTerrain()) {
+            console.error('[LABUSE 3D] relief non chargé après 8 s (timeout tuiles DEM)')
+            setErreur3d('relief trop lent à charger (délai dépassé)')
+          }
+        }, 8000)
+        terrain3dCleanup.current = () => { m.off('error', onErr); window.clearTimeout(t3d) }
+        try {
+          m.setTerrain({ source: 'dem', exaggeration: 1.35 })
+        } catch (e) {
+          console.error('[LABUSE 3D] setTerrain a échoué', e)
+          setErreur3d('moteur de relief indisponible')
+          useApp.getState().setTerrain3d(false)
+          terrain3dCleanup.current?.(); terrain3dCleanup.current = null
+          return
         }
-      }, 8000)
-      terrain3dCleanup.current = () => { m.off('error', onErr); window.clearTimeout(t3d) }
-      try {
-        m.setTerrain({ source: 'dem', exaggeration: 1.35 })
-      } catch (e) {
-        console.error('[LABUSE 3D] setTerrain a échoué', e)
-        setErreur3d('moteur de relief indisponible')
-        useApp.getState().setTerrain3d(false)
-        terrain3dCleanup.current?.(); terrain3dCleanup.current = null
-        return
       }
       // RECETTE-PROD-1 (6b) — en entrant en 3D avec une fiche ouverte, RECENTRER sur la parcelle avec
       // le MÊME décalage que le vol 2D (−200 px pour la fiche de 400 px) : sinon le seul changement de
       // pitch la laisse « décalée vers la droite », sous le panneau. Sans fiche/centroïde : simple pitch.
       const centroid = selCentroidRef.current
       const ficheOuverte = useApp.getState().selectedIdu != null
-      if (centroid && ficheOuverte) {
+      if (useApp.getState().module === 'gabarit') {
+        // RECETTE-OUTILS-2 (R13) — le cadrage 3D du Gabarit est piloté par SON `fitBounds` (pitch 55,
+        // bearing 0 sur l'emprise de la parcelle), identique à « Vue par défaut ». On NE recentre PLUS
+        // ici : deux animations caméra concurrentes (easeTo centroïde + fitBounds sans pitch) se
+        // battaient → la parcelle finissait hors champ (point 32 non tenu, « écran noir à côté »).
+        // Un seul propriétaire de caméra = le fitBounds du Gabarit. MapView ne fait que poser le relief.
+      } else if (centroid && ficheOuverte) {
         m.easeTo({ center: centroid, pitch: Math.max(m.getPitch(), 55), offset: [-200, 0], duration: 800 })
       } else if (m.getPitch() < 20) {
         m.easeTo({ pitch: 55, duration: 800 })
       }
       chargerBati()
       m.on('moveend', chargerBati)
+      // RECETTE-OUTILS-3 (S11) — la boussole native (R14) est REMPLACÉE par le bloc de contrôle 3D
+      // `Controle3D` (overlay React, coin de carte, visible seulement en 3D) : ↺/↻ 45°, curseur
+      // d'inclinaison, « Recentrer ». Plus de NavigationControl à monter/démonter ici.
     } else {
       m.setTerrain(null)
       m.easeTo({ pitch: 0, duration: 600 })
@@ -1746,6 +1865,8 @@ export function MapView() {
           </BoutonCarte>
         ))}
       </div>
+      {/* RECETTE-OUTILS-3 (S11) — bloc de contrôle 3D (↺/↻ · inclinaison · recentrer), seulement en 3D. */}
+      {terrain3d && <Controle3D map={map} />}
       <MapToolbar />
       {/* M12 C6/C7 : UN SEUL panneau de légendes (verdict replié + zonage + 50 pas +
           équipements), cohabitant sans se recouvrir. La légende « Équipements » a quitté son

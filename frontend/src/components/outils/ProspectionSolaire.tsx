@@ -21,10 +21,9 @@ import { fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECETTE-1 F2
-import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
-import { Chargement, Squelette } from '../Loading'
+import { ListPaginationFooter } from '../ListPagination'   // RECETTE-OUTILS-1 T7 — pied de liste unifié
+import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
-import { Bouton } from '../ui/Bouton'
 import { Retour } from '../ui/Retour'
 
 // A1 — plus de date « gelée » en dur : le millésime affiché à l'écran est celui SERVI par l'endpoint
@@ -75,8 +74,8 @@ function EntreeSolaire({ onChoose }: { onChoose: (m: 'piscines' | 'ensoleillemen
 function BackBar({ onBack, titre }: { onBack: () => void; titre: string }) {
   return (
     <div className="flex items-center justify-between gap-2">
-      {/* OUTILS-2 (O2-2) — fil d'Ariane vers l'OUTIL (« Prospection solaire »), pas un concept interne. */}
-      <Retour data-solaire-retour label="Prospection solaire" onClick={onBack} />
+      {/* RECETTE-OUTILS-1 (T3 / point 37) — un seul « Retour » (hiérarchique : il recule d'une section). */}
+      <Retour data-solaire-retour label="Retour" onClick={onBack} />
       <span className="text-[12px] font-medium text-txt-hi">{titre}</span>
     </div>
   )
@@ -115,7 +114,7 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
   // RECETTE-PROD-1 (9c) — mode unique « confirmées et à confirmer » → total = les deux.
   const nbStatut = nbConf + nbAConf
 
-  const PAGE = 50
+  const PAGE = 200   // RECETTE-OUTILS-1 (T7) — page unifiée à 200 (« Voir 200 de plus »).
   const list = useInfiniteQuery({
     queryKey: ['piscines-liste', commune, statut],
     queryFn: ({ pageParam }) => getPiscinesListe({ commune, statut, limit: PAGE, offset: pageParam }),
@@ -188,11 +187,10 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
   // ── RÉSULTAT — compte · carte (parcelles colorées) · liste paginée ──
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-      <BackBar onBack={onBack} titre="💧 Piscines" />
-      {/* RECETTE-PROD-1 (9d) — retour au choix du PÉRIMÈTRE (plus d'étape Statut). */}
-      <div className="flex items-center gap-2">
-        <Retour data-piscines-back-perim label="Changer le périmètre" onClick={() => setStep('perimetre')} />
-      </div>
+      {/* RECETTE-OUTILS-1 (point 37 / T3) — UN SEUL « Retour » : sur le résultat il revient au choix du
+          périmètre (section précédente). L'ancien double (« ← Prospection solaire » + « ← Changer le
+          périmètre ») est fusionné. */}
+      <BackBar onBack={() => setStep('perimetre')} titre="💧 Piscines" />
       {/* Compte — RECETTE-PROD-1 (#9, précision Vic) : UNE SEULE catégorie « Piscines », un seul
           compteur, aucune notion de statut (ni « confirmées » ni « à confirmer »), une seule couleur. */}
       <div className="rounded-lg border px-3 py-2.5" style={{ borderColor: `${TOKENS.mint}4d`, background: `${TOKENS.mint}0f` }}>
@@ -231,18 +229,10 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
               </div>
             )}
           </div>
-          <div className="flex shrink-0 items-center justify-between gap-2 pt-1">
-            {/* RECETTE-PROD-1 (9b) — phrase « la carte montre tout le périmètre » retirée. */}
-            <span data-piscines-cap className="text-[10.5px] text-txt-dim">
-              {fmtInt(items.length)} affichée(s) sur <b className="text-txt-mut">{fmtInt(total)}</b>
-            </span>
-            {/* RECETTE-PROD-1 (9a) — « Voir plus (+50) » sur UNE seule ligne (shrink-0 + nowrap). */}
-            {list.hasNextPage && (
-              <Bouton niveau="lien" data-piscines-voir-plus className="shrink-0 whitespace-nowrap" onClick={() => list.fetchNextPage()} disabled={list.isFetchingNextPage}>
-                {list.isFetchingNextPage ? <Chargement variant="inline" /> : `Voir plus (+${PAGE})`}
-              </Bouton>
-            )}
-          </div>
+          {/* RECETTE-OUTILS-1 (point 37 / T7) — pied de liste UNIFIÉ : « N / M affichées » + « Voir 200
+              de plus » (composant partagé ListPaginationFooter, comme Permis/Blocs/Successions). */}
+          <ListPaginationFooter shown={items.length} total={total} step={PAGE}
+            onMore={() => list.fetchNextPage()} />
         </>
       )}
       <p className="text-[9.5px] leading-snug text-txt-dim">Source unique fusionnée FLAIR ∪ CoSIA (IGN 20 cm, millésime en page Sources) · propriétaire DGFiP</p>
@@ -277,14 +267,13 @@ function ModeEnsoleillement({ onBack, prefillIdu }: { onBack: () => void; prefil
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       <BackBar onBack={onBack} titre="☀️ Ensoleillement" />
-      {/* RECETTE-1 (F3) — Réinitialiser dès qu'une parcelle est désignée. */}
-      {ficheIdu && <div className="flex justify-end"><Reinitialiser onReset={resetAll} /></div>}
-      {/* RECETTE-1 (F2) — EntreeParcelle : adresse/IDU OU clic carte, l'une grise l'autre. */}
-      <EntreeParcelle source={source}
-        onPick={(i, src) => { setSource(src); setFicheIdu(i) }} />
+      {/* RECETTE-OUTILS-1 (T5) — « Réinitialiser » retiré au profit de « Changer de parcelle ».
+          (point 38) — la parcelle résolue OUVRE sa fiche parcelle (select) comme les autres outils. */}
+      <EntreeParcelle source={source} picked={ficheIdu} onChanger={resetAll}
+        onPick={(i, src) => { setSource(src); setFicheIdu(i); select(i) }} />
       {ficheIdu && fiche.isLoading && <Squelette lignes={4} />}
       {ficheIdu && fiche.isError && <ErrorState message="Parcelle introuvable — vérifiez l’IDU." retry={() => fiche.refetch()} />}
-      {ficheIdu && fiche.data && <FicheSoleil f={fiche.data} onOpen={() => select(ficheIdu)} />}
+      {ficheIdu && fiche.data && <FicheSoleil f={fiche.data} />}
       {/* RECETTE-2 (D13) — retirés : l'invite « Saisissez une parcelle … », l'encart « 💡 Couche carte
           Contraintes EnR … », et le pied « Détection FLAIR · PVGIS … · RGE ALTI ». */}
     </div>
@@ -342,7 +331,7 @@ function Rosace({ azimut }: { azimut: number | null }) {
 }
 
 // FICHE SOLEIL — potentiel (unité), toiture, orientation, PROFIL MENSUEL (12 barres), limites.
-function FicheSoleil({ f, onOpen }: { f: SolaireFiche; onOpen: () => void }) {
+function FicheSoleil({ f }: { f: SolaireFiche }) {
   if (!f.ok) return <ErrorState message={f.message ?? 'Données solaires indisponibles'} />
   const pm = f.prod_mensuel ?? []
   const max = Math.max(...pm, 1)
@@ -437,7 +426,8 @@ function FicheSoleil({ f, onOpen }: { f: SolaireFiche; onOpen: () => void }) {
       <p className="mt-1 text-[9px] leading-snug text-txt-dim">
         En clair : le potentiel est calculé sur un carré d’environ 400 m de côté (une même valeur pour toutes les parcelles du carré), pour des panneaux exposés plein nord{f.inclinaison_deg != null ? ` et inclinés à ${f.inclinaison_deg}°` : ''} — le paramétrage du modèle PVGIS pour La Réunion.
       </p>
-      <Bouton niveau="lien" data-solaire-fiche-ouvrir onClick={onOpen} className="mt-1">Ouvrir la fiche complète →</Bouton>
+      {/* RECETTE-OUTILS-1 (point 38) — lien « Ouvrir la fiche complète → » retiré : la fiche s'ouvre
+          désormais d'elle-même (panneau de droite) dès que la parcelle est résolue. */}
     </div>
   )
 }

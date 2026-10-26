@@ -437,9 +437,7 @@ interface AppState {
   compareIdus: string[]
   compareOpen: boolean
   // SOCLE (refonte 13 outils) — la sélection à comparer SURVIT à la sortie de l'outil (retour sans
-  // perte), mais pas éternellement : TTL 15 min. Horodatage du dernier ajout/retrait ; à la
-  // réouverture (openCompare) ou à un nouvel ajout, une sélection périmée est vidée avant de servir.
-  compareTouchedAt: number | null
+  // RECETTE-OUTILS-1 (point 23) — plus de persistance 15 min : sélection de session, vidée à la sortie.
   addToCompare: (idu: string) => void
   removeFromCompare: (idu: string) => void
   clearCompare: () => void
@@ -482,6 +480,10 @@ interface AppState {
   terrain3d: boolean
   toggleTerrain: () => void
   setTerrain3d: (v: boolean) => void   // RETOURS-14 P4 — le relief 3D se choisit dans un menu (voir MapToolbar)
+  // RECETTE-OUTILS-3 (S11) — le contrôle 3D « Recentrer » (coin de carte) demande au propriétaire de la
+  // caméra (le Gabarit) de remettre la vue sur la parcelle à l'angle de départ. Nonce = re-déclenchable.
+  recentrer3dNonce: number
+  recentrer3d: () => void
   // RETOURS-13 P4 — le bâti extrudé est OPTIONNEL en 3D (chip « Bâtiments »). État de SESSION
   // (pas en base). On par défaut : passer en 3D montre relief + bâti comme avant. Off → relief seul
   // (le bâti reste à plat : l'empreinte 2D grise du Gabarit demeure ; carte principale = pas d'extrusion).
@@ -601,6 +603,15 @@ interface AppState {
   // refactore pas ce qui marche pendant qu'on ajoute).
   parcelPrefill: string | null
   setParcelPrefill: (s: string | null) => void
+  // RECETTE-OUTILS-1 (T4) — signal « une parcelle vient d'être cliquée sur la carte PENDANT qu'un outil
+  // multi-parcelles est actif » (ex. Pièges et risques). MapView l'écrit au lieu d'ouvrir une fiche ;
+  // l'outil le consomme (ajoute au lot, comme une saisie) puis le remet à null. One-shot.
+  carteOutilIdu: string | null
+  setCarteOutilIdu: (s: string | null) => void
+  // RECETTE-OUTILS-1 (points 6 & 7) — permis actuellement ouvert en bulle sur la carte (pour surligner
+  // la ligne correspondante dans la liste Permis ; la bulle elle-même vit dans MapView/maplibre).
+  permisOuvert: string | null
+  setPermisOuvert: (s: string | null) => void
   // DESTINATIONS-1 (X4.4) — Copilote (outil destination_zone) → Étude de zone préremplie (parcelle +
   // sous-destination R151-28). Même idiome consommé-puis-reset : EtudeZone lit AU MONTAGE, remet à null.
   etudeZonePrefill: { idu?: string | null; commune?: string | null; zone?: string | null; sous_destination: string } | null
@@ -637,8 +648,6 @@ interface AppState {
 // plein écran. `ouvrirEtude` pose le drapeau APRÈS ce spread (il ne spread pas CLOSE_OVERLAYS) → pas
 // d'auto-fermeture.
 const CLOSE_OVERLAYS = { compareOpen: false, comparePicking: false, communesTableOpen: false, evolutionTableOpen: false, radarTableOpen: false, densifierTableOpen: false, sourceLine: null, outilRetour: [] as OutilRetour[], etudeIdus: null as string[] | null } as const
-// SOCLE — la sélection de comparaison est gardée 15 min après le dernier geste (retour sans perte).
-const COMPARE_TTL_MS = 15 * 60 * 1000
 
 export const useApp = create<AppState>((set, get) => ({
   tuyauActives: {},
@@ -769,9 +778,12 @@ export const useApp = create<AppState>((set, get) => ({
   // tiroir) — y fermer les overlays refermerait la comparaison qu'on vient d'ouvrir.
   // RETOURS-1 R8 (Vic) : `surveillanceOpen:false` sur la branche d'OUVERTURE — le panneau Veille
   // restait ouvert derrière le tiroir Outils (une seule catégorie du rail ouverte à la fois).
+  // RECETTE-OUTILS-2 (R2 / T1) — « ← Outils » (toggleOutils) VIDE aussi la parcelle : `selectedIdu`
+  // n'était pas remis à null, si bien que la fiche/parcelle de l'outil précédent restait « en cache »
+  // et réapparaissait. On la ferme, comme le fait déjà `setModule`.
   toggleOutils: () => set((s) => s.outilsOpen
     ? { outilsOpen: false }
-    : { outilsOpen: true, view: 'cartes', module: null,
+    : { outilsOpen: true, view: 'cartes', module: null, selectedIdu: null,
         contexteCommune: null, iaRestitution: null, parcours: null, openProjet: null,
         surveillanceOpen: false, ...CLOSE_OVERLAYS }),
   selectedIdu: null,
@@ -897,38 +909,27 @@ export const useApp = create<AppState>((set, get) => ({
     radarEcran: 'veille-foncier', surveillancePorte: 'interne', outilsOpen: false, ...CLOSE_OVERLAYS }),
   compareIdus: [],
   compareOpen: false,
-  compareTouchedAt: null,
-  // SOCLE : un ajout sur une sélection PÉRIMÉE (> 15 min) repart de zéro plutôt que d'empiler sur du
-  // vieux — sinon « revenir sous 15 min » et « recommencer après » se mélangeraient. On restampe.
-  // COMPARAISON (refonte) : un ajout N'OUVRE PLUS le tableau — l'outil est ancré dans Outils, le
-  // panneau montre les chips et c'est le bouton « Comparer (n/3) » qui ouvre l'overlay. Le clic-carte
-  // (picking) ne fait qu'alimenter la sélection.
+  // RECETTE-OUTILS-1 (point 23 / T1) — plus de persistance 15 min : la sélection Comparer est de SESSION
+  // (en mémoire), vidée quand on quitte l'outil (CompareModule au démontage). Plus de `compareTouchedAt`,
+  // plus de TTL. Un ajout n'ouvre pas le tableau (bouton « Comparer (n/3) »), le clic-carte alimente.
   addToCompare: (idu) => set((s) => {
-    const frais = s.compareTouchedAt != null && Date.now() - s.compareTouchedAt <= COMPARE_TTL_MS
-    const base = frais ? s.compareIdus : []
-    const next = base.includes(idu) ? base : [...base, idu].slice(0, 3)
-    return { compareIdus: next, view: 'cartes', compareTouchedAt: Date.now() }
+    const next = s.compareIdus.includes(idu) ? s.compareIdus : [...s.compareIdus, idu].slice(0, 3)
+    return { compareIdus: next, view: 'cartes' }
   }),
-  removeFromCompare: (idu) => set((s) => { const r = s.compareIdus.filter((x) => x !== idu); return { compareIdus: r, compareOpen: r.length > 0 && s.compareOpen, compareTouchedAt: Date.now() } }),
+  removeFromCompare: (idu) => set((s) => { const r = s.compareIdus.filter((x) => x !== idu); return { compareIdus: r, compareOpen: r.length > 0 && s.compareOpen } }),
   // vider NE coupe PAS le picking : on reste dans l'outil, prêt à recliquer la carte.
-  clearCompare: () => set({ compareIdus: [], compareOpen: false, compareTouchedAt: null }),
+  clearCompare: () => set({ compareIdus: [], compareOpen: false }),
   setCompareOpen: (v) => set({ compareOpen: v }),   // le picking reste piloté par l'outil (CompareModule)
-  // COMPARAISON (refonte) : openCompare ouvre désormais l'OUTIL « comparer » (panneau gauche hôte),
-  // ancré dans Outils, carte active à droite — plus l'overlay direct. TTL 15 min appliqué à la
-  // sélection ; picking ON (le clic-carte ajoute). Le tableau, lui, s'ouvre via « Comparer (n/3) ».
-  openCompare: () => set((s) => {
-    const frais = s.compareTouchedAt != null && Date.now() - s.compareTouchedAt <= COMPARE_TTL_MS
-    const ids = frais ? s.compareIdus : []
-    return {
-      module: 'comparer', view: 'cartes', outilsOpen: false, selectedIdu: null,
-      moduleMap: { idus: [], extra: null }, moduleFiche: {},
-      parcours: null, openProjet: null, iaRestitution: null, surveillanceOpen: false,
-      ...CLOSE_OVERLAYS,                    // table Communes/Densifier fermées, compareOpen=false
-      comparePicking: true,                 // le panneau est là → clic-carte ajoute
-      compareIdus: ids,
-      compareTouchedAt: ids.length ? s.compareTouchedAt : null,
-    }
-  }),
+  // openCompare ouvre l'OUTIL « comparer » (panneau gauche hôte), ancré dans Outils, carte active à
+  // droite ; picking ON (le clic-carte ajoute). Le tableau s'ouvre via « Comparer (n/3) ».
+  openCompare: () => set((s) => ({
+    module: 'comparer', view: 'cartes', outilsOpen: false, selectedIdu: null,
+    moduleMap: { idus: [], extra: null }, moduleFiche: {},
+    parcours: null, openProjet: null, iaRestitution: null, surveillanceOpen: false,
+    ...CLOSE_OVERLAYS,                    // table Communes/Densifier fermées, compareOpen=false
+    comparePicking: true,                 // le panneau est là → clic-carte ajoute
+    compareIdus: s.compareIdus,
+  })),
   comparePicking: false,
   setComparePicking: (comparePicking) => set({ comparePicking }),
   communesTableOpen: false,
@@ -951,6 +952,8 @@ export const useApp = create<AppState>((set, get) => ({
   terrain3d: false,
   toggleTerrain: () => set((s) => ({ terrain3d: !s.terrain3d })),
   setTerrain3d: (v) => set({ terrain3d: v }),   // RETOURS-14 P4 — menu Relief (2D / relief / relief+bâti)
+  recentrer3dNonce: 0,                                                   // RECETTE-OUTILS-3 (S11)
+  recentrer3d: () => set((s) => ({ recentrer3dNonce: s.recentrer3dNonce + 1 })),
   batiVisible: true,   // RETOURS-13 P4 — bâti extrudé visible par défaut en 3D
 
   setBatiVisible: (v) => set({ batiVisible: v }),
@@ -985,7 +988,14 @@ export const useApp = create<AppState>((set, get) => ({
         ...CLOSE_OVERLAYS, filters: { ...s.filters, renouvellement: true, sdpMin: s.filters.sdpMin ?? 200 } }))
       return
     }
-    set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null, openProjet: null, iaRestitution: null, surveillanceOpen: false, zone: null, tool: null, focusIdu: null, ...CLOSE_OVERLAYS })
+    // RECETTE-OUTILS-1 (T1) — changer d'outil VIDE TOUT : `setModule` était la SEULE navigation qui ne
+    // remettait pas `selectedIdu`/`contexteCommune` à null (tous les autres — setView, openRadar,
+    // openSurveillance… — le font). D'où le constat Vic : une fiche parcelle d'un outil précédent restait
+    // ouverte (et son liseré « en fond ») dans Remonter le temps / PLU. On ferme la fiche et la fiche
+    // commune au changement d'outil, comme toute autre transition. Les prefills (parcelPrefill, m02Prefill,
+    // courrierPrefill…) ne sont PAS touchés ici : ce sont des amorces transitoires posées par les ponts
+    // AVANT setModule puis consommées-et-remises-à-null au montage de l'outil cible.
+    set({ module, view: 'cartes', outilsOpen: false, selectedIdu: null, contexteCommune: null, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null, openProjet: null, iaRestitution: null, surveillanceOpen: false, zone: null, tool: null, focusIdu: null, ...CLOSE_OVERLAYS })
   },
   // IMPLANTATION-4 (LOT A) — ouverture/fermeture de l'overlay Étude. `ouvrirEtude` NE spread PAS
   // CLOSE_OVERLAYS (il ne se saborde pas) : il pose seulement l'assiette. La fermeture rend la main à
@@ -1074,6 +1084,10 @@ export const useApp = create<AppState>((set, get) => ({
   setCourrierPrefillPiste: (courrierPrefillPiste) => set({ courrierPrefillPiste }),
   parcelPrefill: null,
   setParcelPrefill: (parcelPrefill) => set({ parcelPrefill }),
+  carteOutilIdu: null,
+  setCarteOutilIdu: (carteOutilIdu) => set({ carteOutilIdu }),
+  permisOuvert: null,
+  setPermisOuvert: (permisOuvert) => set({ permisOuvert }),
   etudeZonePrefill: null,
   setEtudeZonePrefill: (etudeZonePrefill) => set({ etudeZonePrefill }),
   communePrefill: null,

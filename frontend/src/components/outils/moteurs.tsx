@@ -14,7 +14,7 @@ import { Tip } from '../Tip'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'   // RETOURS-11 T6 — source unique des 24 communes
 import { trierCommunes } from '../../lib/communes'
 import { Bouton } from '../ui/Bouton'
-import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
+import { Select } from '../ui/Select'   // U3 (RECETTE-OUTILS-4) — menu déroulant partagé
 import { EntreeParcelle } from './EntreeParcelle'   // RECETTE-1 H5 — entrée parcelle (adresse OU clic carte)
 
 const fmt = fmtInt
@@ -162,7 +162,8 @@ export function M16() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [msel])
   // RECETTE-1 (H5, F3) — Réinitialiser : vide la liste + le résultat ; reste dans l'outil.
-  const resetAll = () => { setMsel([]); setMax8(false); run.reset() }
+  // RECETTE-OUTILS-1 (T5) — plus de bouton « Réinitialiser » ni de resetAll : la sélection se gère
+  // par les puces retirables (× sur chaque parcelle, ci-dessous).
   // M-ENTREE — porte fiche → Assemblage : la parcelle devient la 1ʳᵉ du lot (motif parcelPrefill
   // partagé, consommation-puis-reset) ; l'utilisateur agrège les autres au clic-carte / à l'omnibox.
   useEffect(() => {
@@ -202,10 +203,10 @@ export function M16() {
   return (
     // §1a — UN SEUL conteneur de défilement (wrapper ModulePanel = overflow-hidden).
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-0.5">
-      {/* RECETTE-2 (T3) — Réinitialiser SEUL sur sa ligne (haut-droite) ; l'intro vient EN DESSOUS,
-          pleine largeur (plus de bouton côte à côte avec le texte). Présent ssi une parcelle est posée. */}
+      {/* RECETTE-OUTILS-1 (T5) — plus de « Réinitialiser » en tête. Assemblage étant un outil MULTI-
+          parcelles, la sélection se gère par les puces retirables (× sur chaque parcelle, ci-dessous) ;
+          pas de ligne « Changer de parcelle » (qui ne vaut que pour une parcelle unique). */}
       <div className="flex flex-col gap-1.5">
-        {msel.length > 0 && <div className="flex justify-end"><Reinitialiser onReset={resetAll} /></div>}
         <Banner>Réunissez des parcelles voisines pour voir ce qu'elles valent ensemble : surface, droits à bâtir cumulés, logements possibles, charge foncière. Zoomez et cliquez les parcelles sur la carte (re-cliquez pour retirer), ou saisissez-les ci-dessous.</Banner>
       </div>
       {/* RECETTE-1 (H5, Vic) — ÉTAPE 1 « Choisir les parcelles » : EntreeParcelle (adresse OU clic carte)
@@ -312,6 +313,15 @@ export function M16() {
                     </div>
                   )}
                 </div>
+                {/* RECETTE-OUTILS-1 (point 15) — le bloc rouge « Charge foncière cumulée (estimée) » ET le
+                    paragraphe « Capacité et bilan calculés sur l'UNION… » (note_sdp) passent dans un
+                    accordéon « Bilan » FERMÉ par défaut : l'écran d'arrivée ne montre que le descriptif
+                    (surface, SDP cumulée, ×N, parcelles/interlocuteurs). */}
+                <details data-asm-bilan className="group rounded-lg border border-line-2 bg-surface-2">
+                  <summary className="flex cursor-pointer list-none items-center gap-1.5 px-3 py-2 text-[11px] font-medium text-txt-dim marker:hidden hover:text-mint">
+                    <span aria-hidden className="inline-block w-3 text-mint transition-transform duration-quick group-open:rotate-90">▸</span> Bilan
+                  </summary>
+                  <div className="flex flex-col gap-1.5 px-3 pb-2">
                 {/* point 3 — CHARGE CUMULÉE : négative = MÊME traitement que « Étudier un bien » (bloc
                     rouge + phrase), avec la référence marché à côté. */}
                 {d.charge_fonciere && (() => {
@@ -334,6 +344,8 @@ export function M16() {
                   )
                 })()}
                 <div className="mt-1 text-[10.5px] leading-snug text-txt-dim">{d.note_sdp}</div>
+                  </div>
+                </details>
               </>
             )}
           </div>
@@ -341,8 +353,10 @@ export function M16() {
           {/* IMPLANTATION-4 (LOT A) — pont vers l'Étude de faisabilité : ouvre l'écran d'étude (Docs,
               overlay M22 + carte intégrée) avec l'assiette de l'assemblage. Le nombre de logements
               dessiné/contrôlé se lit DANS l'Étude (plus de fourchette de l'ancien moteur ici, LOT B). */}
+          {/* RECETTE-OUTILS-2 (R3) — `shrink-0` sur le Bouton : même crush flex que le Retour (hauteur
+              écrasée, hors DA) sur le dernier enfant d'une colonne qui déborde. */}
           {msel.length >= 1 && (
-            <Bouton niveau="secondaire" ton="vert" data-asm-etude className="w-full"
+            <Bouton niveau="secondaire" ton="vert" data-asm-etude className="w-full shrink-0"
               onClick={() => ouvrirEtude(msel)}>
               Étude de faisabilité de cet assemblage →
             </Bouton>
@@ -529,10 +543,7 @@ function M18Tableau({ d }: { d: Record<string, any> }) {
   const perm = Object.fromEntries((d.permis_trimestres ?? []).map((r: any) => [r.trimestre, r]))
   // union des trimestres (l'ancien porte l'axe de référence), tri chronologique.
   const tris = [...new Set([...ancien.map((r) => r.trimestre), ...Object.keys(terr), ...Object.keys(perm)])].sort()
-  // RECETTE-1 (H3, Vic) — un trimestre sans ancien NI terrain alors qu'il a des permis = VRAI trou :
-  // DVF n'est publié que jusqu'au dernier trimestre ancien ; les permis (Sitadel) vont plus loin. On le DIT.
-  const dernierDvf = [...ancien.map((r) => r.trimestre as string)].sort().at(-1)
-  const trousRecents = tris.filter((t) => dernierDvf && t > dernierDvf)
+  // RECETTE-OUTILS-1 (point 10) — `dernierDvf`/`trousRecents` retirés avec l'encart « Ancien & terrain ».
   const partiel = new Set(ancien.filter((r) => r.partiel).map((r) => r.trimestre))
   const ancByT = Object.fromEntries(ancien.map((r) => [r.trimestre, r]))
   const th = 'sticky top-0 z-10 bg-bg-3 px-2 py-1.5 text-right font-medium text-txt-dim first:text-left'
@@ -572,11 +583,7 @@ function M18Tableau({ d }: { d: Record<string, any> }) {
         <Tip garder tip="Ancien : médiane €/m² bâti, ventes strictes DVF (VEFA exclu). Terrain : médiane €/m² terrain nu (bâti=0). Permis : autorisés/trimestre (Sitadel). Volume (n) entre parenthèses."><span className="cursor-help rounded-full border border-line-2 px-1 text-[8px]">i</span></Tip>
       </div>
       {tris.some((t) => partiel.has(t)) && <p className="mt-0.5 text-[9.5px] text-st-creuser">· dernier trimestre partiel (délai de publication DVF) — grisé, hors tendance.</p>}
-      {/* RECETTE-1 (H3, Vic) — le vrai trou expliqué : DVF publié jusqu'au <dernierDvf>, les trimestres
-          plus récents n'ont que les permis (Sitadel en avance). Plus de « — » muet pris pour un bug. */}
-      {trousRecents.length > 0 && dernierDvf && (
-        <p className="mt-0.5 text-[9.5px] text-txt-dim">· Ancien &amp; terrain : DVF publié jusqu'au <b className="text-txt-mut">{dernierDvf}</b> — {trousRecents.join(', ')} n'{trousRecents.length > 1 ? 'ont' : 'a'} encore que les permis (Sitadel, en avance sur DVF).</p>
-      )}
+      {/* RECETTE-OUTILS-1 (point 10) — encart « Ancien & terrain : DVF publié jusqu'au … » retiré. */}
     </div>
   )
 }
@@ -608,11 +615,11 @@ export function M18() {
           RETOURS-11F M13 — sélecteur de commune (île entière par défaut). */}
       <div className="flex flex-wrap items-center gap-2">
         <label className="text-[10.5px] text-txt-mut">Périmètre</label>
-        <select value={insee} onChange={(e) => setInsee(e.target.value)}
+        <Select value={insee} onChange={(e) => setInsee(e.target.value)}
           className="min-h-7 rounded border border-line-2 bg-bg-2 px-2 py-1 text-[11px] text-txt transition-colors duration-quick hover:border-mint/60">
           <option value="">Île entière (24 communes)</option>
           {communesTriees.map((c) => <option key={c.insee} value={c.insee}>{c.commune}</option>)}
-        </select>
+        </Select>
         <span className="text-[10px] text-txt-dim">{d?.perimetre ?? ''}{nbTri ? ` — ${nbTri} trimestres affichés.` : ''}</span>
       </div>
       {/* COMMUNE-124 (RETOUCHES-1 lot B) — le back refuse désormais un code qui ne résout aucune commune
@@ -728,10 +735,11 @@ export function MarcheCommune({ communeProp }: { communeProp?: string } = {}) {
     <>
       {!communeProp && <Banner>{CLIENT.marche.banner}</Banner>}
       {!communeProp && (
-      <select data-marche-commune value={commune} onChange={(e) => setCommune(e.target.value)}
-        className="self-start rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none">
+      <Select data-marche-commune value={commune} onChange={(e) => setCommune(e.target.value)}
+        wrapClassName="self-start"
+        className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none">
         {MU_COMMUNES.map((c) => <option key={c} value={c}>{c}</option>)}
-      </select>)}
+      </Select>)}
       {q.isLoading && <Squelette bloc className="py-8" />}
       {d && <>
         {/* M137-Z : le signal est HISSÉ dans l'en-tête sticky de la fiche commune (Communes) — on ne le

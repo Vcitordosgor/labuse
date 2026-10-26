@@ -26,7 +26,10 @@ def test_statut_stub_sans_compte(client):
     assert r["disponible"] is False and r["provider"] == "stub"
     # M82 #fuite : la raison est SERVIE au client — jamais le prestataire ni les variables d'env.
     assert r["raison"] and "Merci Facteur" not in r["raison"] and "MERCIFACTEUR" not in r["raison"]
-    assert "envoi postal" in r["raison"].lower()
+    # RECETTE-OUTILS-1 (point 45) — plus de « envoi postal pas encore disponible » : l'envoi est fait à
+    # la main par LABUSE, la demande est enregistrée et traitée.
+    assert "pas encore disponible" not in r["raison"].lower()
+    assert "enregistrée" in r["raison"].lower() and "LABUSE" in r["raison"]
     # OUTILS-S2 Lot B (décision Vic) — REVIENT sur COURRIER-2 Lot 5 : le tarif UNITAIRE TTC est de
     # nouveau servi (affiché à l'étape 3 + repris dans la confirmation). Prix client = coût
     # prestataire (param admin / config) × marge ; jamais le nom du prestataire ni le coût brut.

@@ -188,14 +188,19 @@ def comparatif_pdf(idus: str, request: Request, db: Session = Depends(get_db)) -
 
 @router.get("/etude-zone.pdf")
 def etude_zone_pdf(idu: str, request: Request, rayon_km: float = 2.0,
+                   sous_destination: str | None = None,
                    db: Session = Depends(get_db)) -> Response:
-    """L'Étude de zone, miroir de /outils/etude-zone en mode rayon : carte du périmètre + 7 sections."""
+    """L'Étude de zone, miroir de /outils/etude-zone en mode rayon : carte du périmètre + 7 sections.
+    RECETTE-OUTILS-3 (S3) — `sous_destination` (activité choisie dans la fenêtre Docs) : le PDF affiche
+    l'activité et son verdict par zone PLU (autorisé / sous condition / interdit / en calibration),
+    exactement comme l'outil — le menu « Activité » MODIFIE la lecture de la zone."""
     from ..exports import builder
     from ..quota import porte_export
     porte_export(request, db)
     try:
         from .app import EtudeZoneIn, etude_zone as _etude_zone_fn
-        zone = _etude_zone_fn(EtudeZoneIn(idu=idu, rayon_km=rayon_km), db)
+        zone = _etude_zone_fn(EtudeZoneIn(idu=idu, rayon_km=rayon_km,
+                                          sous_destination=(sous_destination or None)), db)
         res = builder.construire_etude_zone(idu, rayon_km, zone, _zone_map_html(db, zone))
     except HTTPException:
         raise

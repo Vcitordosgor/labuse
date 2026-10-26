@@ -280,20 +280,7 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
       </div>
       <span className="absolute bottom-3 left-3 rounded-full border border-line-2 bg-surface-2 px-3 py-1 font-mono text-[11px] text-txt">{basemapLabel(leftKey)}</span>
       <span className="absolute bottom-3 right-3 rounded-full border border-line-2 bg-surface-2 px-3 py-1 font-mono text-[11px] text-txt">{basemapLabel(rightKey)}</span>
-      {/* TEMPS (refonte) — LÉGENDE des zones noires : présente dès qu'un fond ortho ANCIEN est affiché
-          (le seul cas où des dalles noires « limites de mission / mer » peuvent apparaître). Elle dit
-          honnêtement que ce n'est pas un défaut de chargement — jamais un faux « RAS ». */}
-      {leftKey !== 'bm-ortho-now' && (
-        <div data-temps-legende className="absolute left-3 top-3 z-10 flex max-w-[19rem] items-start gap-2 rounded-lg border border-line-2 bg-surface-2/95 px-3 py-2">
-          <span aria-hidden className="mt-0.5 h-3 w-3 shrink-0 rounded-[3px] border border-line-2 bg-black" />
-          {/* RECETTE-PROD-1 (15) — l'addendum « Carte 1980 (EduGéo) » est retiré (la carte EduGéo n'est
-              plus proposée) : l'encart ne parle plus que de l'ortho ancienne. */}
-          <span className="text-[10.5px] leading-snug text-txt-mut">
-            <b className="text-txt">Zones noires</b> : secteurs non couverts par l'ortho ancienne (mer, limites
-            de mission IGN) — ce n'est pas un défaut de chargement.
-          </span>
-        </div>
-      )}
+      {/* RECETTE-OUTILS-1 (point 24) — l'encart « Zones noires » (en haut à gauche de la carte) est retiré. */}
       {/* Lot B — chip « Parcellaire de l'époque » (haut-droite ; la légende des zones noires est à
           gauche). Off par défaut, grisé quand la période « avant » est < 2017. Millésime et état
           (contour trouvé / pas de parcellaire) dits sous le chip. Survol = rien (règle DA). */}

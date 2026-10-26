@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { getGabarit, type GabaritResult, type GabGeom } from '../../lib/api'
+import { getGabarit, docGabaritUrl, type GabaritResult, type GabGeom } from '../../lib/api'
+import { useOuvrirDocument } from '../../lib/ouvrirDocument'   // RECETTE-OUTILS-1 (34) — export = doc Gabarit
 import { fmtInt } from '../../lib/format'
 import { CAPACITE_MAX_MENTION_COURTE } from '../../lib/capaciteMax'
 import { useApp } from '../../store/useApp'
 import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECETTE-1 F2
-import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { Bouton } from '../ui/Bouton'
@@ -28,6 +28,13 @@ const C_BATI = '#9aa0a6'      // bâti existant — gris neutre (un FAIT context
 const SRC = 'gabarit-outil'
 const LAYERS = ['gabarit-zone', 'gabarit-contour', 'gabarit-retrait', 'gabarit-excl', 'gabarit-zone-3d',
                 'gabarit-bati', 'gabarit-bati-line', 'gabarit-bati-3d']
+// RECETTE-OUTILS-2 (R15) — le liseré blanc de sélection de la carte de base (`selection-line`/`-halo`,
+// posé depuis `getParcelGeojson`) est tracé depuis une AUTRE source que le gabarit (contour du moteur) :
+// les deux parcelles sont la même mais légèrement décalées → « double contour en pointillés décalé ».
+// On masque le liseré de base tant que le gabarit affiche SON contour (aligné à ses couches
+// zone/retrait/bâti, toutes issues du même moteur), rétabli au nettoyage. Mesure géométrique :
+// 0 % de bâti hors du contour moteur → le « bâti qui déborde » n'était QUE cet écart base/gabarit.
+const SEL_BASE = ['selection-line', 'selection-halo']
 
 type MapLike = {
   getSource: (id: string) => unknown
@@ -66,9 +73,12 @@ function useMapLayers(res: GabaritResult | undefined, terrain3d: boolean, batiVi
   useEffect(() => {
     const m = getMap()
     if (!m) return
+    const setBaseSel = (v: 'visible' | 'none') =>
+      SEL_BASE.forEach((id) => { try { const mm = m as unknown as { setLayoutProperty?: (i: string, p: string, x: string) => void }; if (m.getLayer(id)) mm.setLayoutProperty?.(id, 'visibility', v) } catch { /* noop */ } })
     const clear = () => {
       LAYERS.forEach((id) => { try { if (m.getLayer(id)) m.removeLayer(id) } catch { /* noop */ } })
       try { if (m.getSource(SRC)) m.removeSource(SRC) } catch { /* noop */ }
+      setBaseSel('visible')   // R15 — le gabarit ne dessine plus : rendre le liseré de base
     }
     clear()
     if (!res) return
@@ -119,6 +129,7 @@ function useMapLayers(res: GabaritResult | undefined, terrain3d: boolean, batiVi
     }
     m.addLayer({ id: 'gabarit-contour', type: 'line', source: SRC, filter: ['==', 'kind', 'contour'],
       paint: { 'line-color': C_CONTOUR, 'line-width': 1.5, 'line-dasharray': [2, 1] } })
+    setBaseSel('none')   // R15 — un seul contour (celui du gabarit, aligné à ses couches)
     // 3D : extrusion de la zone calculée (enveloppe réglementaire, vert) à la hauteur SOURCÉE. Le bâti
     // existant (gris) est extrudé À PART, à sa hauteur MESURÉE (LiDAR HD, à défaut BD TOPO) : où l'on
     // PEUT construire vs ce qui est DÉJÀ là. Deux couches distinctes, jamais confondues.
@@ -136,8 +147,21 @@ function useMapLayers(res: GabaritResult | undefined, terrain3d: boolean, batiVi
         paint: { 'fill-extrusion-color': C_BATI, 'fill-extrusion-opacity': 0.55,
                  'fill-extrusion-height': ['coalesce', ['get', 'hauteur_m'], 3], 'fill-extrusion-base': 0 } })
     }
+    // RECETTE-OUTILS-2 (R13) — le cadrage est le SEUL propriétaire de la caméra du Gabarit (MapView ne
+    // recentre plus en gabarit). En 3D on cadre AVEC l'inclinaison (pitch 55, bearing 0) — comme « Vue
+    // par défaut » — sinon un fitBounds à plat suivi du pitch poussait la parcelle hors champ (écran
+    // noir « très zoomé à côté »). En 2D, cadrage normal.
+    // RECETTE-OUTILS-2 (R13) — le Gabarit est SEUL propriétaire de la caméra (MapView ne recentre plus
+    // en gabarit, et pose un terrain PLAT). En 3D on cadre avec l'inclinaison (pitch 45, bearing 0),
+    // comme « Vue par défaut ». Terrain plat → le centroïde tombe au centre de l'écran, donc un seul
+    // fitBounds suffit (plus de course avec le chargement du relief, plus d'écran noir sur pente forte).
     const bb = bboxOf(res.contourGeoJSON ?? res.zoneImplantationGeoJSON ?? null)
-    if (bb) { try { m.fitBounds(bb, { padding: 80, duration: 600, maxZoom: 19 }) } catch { /* noop */ } }
+    if (bb) {
+      const opts = terrain3d
+        ? { padding: 70, bearing: 0, pitch: 45, duration: 600, maxZoom: 18 }
+        : { padding: 80, duration: 600, maxZoom: 19 }
+      try { m.fitBounds(bb, opts) } catch { /* noop */ }
+    }
     return clear
   }, [res, terrain3d, batiVisible])
 }
@@ -193,7 +217,30 @@ export function Gabarit() {
   })
   const res = q.data
   useMapLayers(res, terrain3d, batiVisible)
+  // RECETTE-OUTILS-1 (point 34 / T6) — export PDF = le document « Gabarit » de Docs (même générateur).
+  const { ouvrir, enCours } = useOuvrirDocument()
+  // RECETTE-OUTILS-1 (point 33) — « Vue par défaut » : recentre sur la parcelle, orientation initiale
+  // (bearing 0, pitch 55), même cadrage que l'entrée en 3D.
+  const vueParDefaut = () => {
+    const m = (window as unknown as { __labuse_map?: { fitBounds: (b: number[][], o?: unknown) => void; easeTo: (o: unknown) => void } }).__labuse_map
+    if (!m) return
+    const bb = bboxOf(res?.contourGeoJSON ?? res?.zoneImplantationGeoJSON ?? null)
+    // R13 — même cadrage 3D que l'entrée (pitch 45, maxZoom 18) : cohérent et sûr sur pente forte.
+    if (bb) m.fitBounds(bb, { padding: 70, bearing: 0, pitch: 45, duration: 600, maxZoom: 18 })
+    else m.easeTo({ bearing: 0, pitch: 45, duration: 600 })
+  }
+  // RECETTE-OUTILS-3 (S11) — le bouton « Recentrer » (◎) du bloc de contrôle 3D de la carte demande au
+  // Gabarit (propriétaire de la caméra) de reprendre la vue de départ : même recadrage que « Vue par
+  // défaut », désormais déclenché par la carte.
+  const recentrer3dNonce = useApp((s) => s.recentrer3dNonce)
+  useEffect(() => { if (recentrer3dNonce && terrain3d) vueParDefaut() }, [recentrer3dNonce])   // eslint-disable-line react-hooks/exhaustive-deps
 
+  // RECETTE-OUTILS-1 (point 31) — lever la contradiction « ✓ Risques intégrés » vs « PPR — analyse »
+  // listé parmi les règles NON intégrées : si une règle PPR est non intégrée, la famille « risques » ne
+  // doit plus s'afficher comme pleinement intégrée (✓). On distingue alors les zones d'exclusion
+  // (géométriques, appliquées) de l'analyse du règlement PPR (non intégrée, listée ci-dessous).
+  const pprNonIntegre = (res?.nonIntegratedRules ?? []).some(
+    (n) => /PPR/i.test(String(n.label ?? '')) || /PPR/i.test(String(n.source?.document ?? '')))
   const familles = res?.coverage
     ? [
         { k: 'reculs', ok: res.coverage.reculs, label: 'Reculs vérifiés' },
@@ -201,7 +248,10 @@ export function Gabarit() {
           label: res.hauteurStatus === 'not_integrated' ? 'Hauteur non intégrée (prospect L ≥ H)' : 'Hauteur vérifiée' },
         { k: 'emprise', ok: res.coverage.emprise,
           label: res.plafondEmpriseStatus === 'absent' ? 'Emprise vérifiée — sans plafond' : 'Emprise vérifiée' },
-        { k: 'risques', ok: res.coverage.risques, label: 'Risques intégrés' },
+        { k: 'risques', ok: res.coverage.risques && !pprNonIntegre,
+          label: pprNonIntegre
+            ? 'Aléas : zones d’exclusion intégrées — analyse du règlement PPR non intégrée (ci-dessous)'
+            : 'Risques intégrés' },
       ]
     : []
   const nbVerifiees = familles.filter((f) => f.ok).length
@@ -230,7 +280,8 @@ export function Gabarit() {
       {/* RECETTE-2 (T3) — Réinitialiser SEUL sur sa ligne (haut-droite) ; l'intro vient EN DESSOUS,
           pleine largeur (plus côte à côte). Présent ssi une parcelle est désignée. */}
       <div className="flex flex-col gap-1.5">
-        {target && <div className="flex justify-end"><Reinitialiser onReset={resetAll} /></div>}
+        {/* RECETTE-OUTILS-1 (T5) — « Réinitialiser » retiré ; le changement de parcelle passe par
+            « Changer de parcelle » (EntreeParcelle, picked). */}
         <p className="text-[11px] leading-snug text-txt-mut">
           Où et jusqu'où une construction peut s'implanter, selon les règles réglementaires
           <b className="text-txt"> intégrées et sourcées</b> dans LABUSE.
@@ -238,7 +289,7 @@ export function Gabarit() {
       </div>
 
       {/* RECETTE-1 (F2) — EntreeParcelle : adresse/IDU OU clic carte, l'une grise l'autre. */}
-      <EntreeParcelle source={source}
+      <EntreeParcelle source={source} picked={target} onChanger={resetAll}
         onPick={(i, src) => { setSource(src); setIdu(i); focusParcelle(i) }} />
 
       {/* RECETTE-2 (D11) — section « Choisissez une parcelle (barre ci-dessus ou clic sur la carte) »
@@ -284,7 +335,10 @@ export function Gabarit() {
               ? <Num label="Surface parcelle" value={cadastreM2} unit="m²"
                   sub={`dont ${fmtInt(res.surfaceParcelleM2)} m² en ${raccZone?.code ?? 'zone U'} (${pctPortion} %)`} />
               : <Num label="Surface parcelle" value={res.surfaceParcelleM2} unit="m²" />}
-            <Num label="Zone d'implantation" value={res.zoneImplantationM2} unit="m²" accent />
+            {/* RECETTE-OUTILS-3 (S7) — « Zone d'implantation » = valeur APRÈS déduction du bâti existant ;
+                juste en dessous l'emprise retranchée (si bâti conservé). */}
+            <Num label="Zone d'implantation" value={res.zoneImplantationM2} unit="m²" accent
+              sub={res.batiDeduitM2 ? `bâti existant déduit : ${fmtInt(res.batiDeduitM2)} m²` : null} />
             <Num label="Plafond d'emprise" value={res.plafondEmpriseM2} unit="m²"
               statusLabel={res.plafondEmpriseStatus === 'absent' ? 'Non réglementé' : null}
               sub={res.plafondEmpriseStatus === 'absent' ? 'pas de règle d’emprise au sol' : null} />
@@ -403,10 +457,26 @@ export function Gabarit() {
               qui déborde) était ÉCRASÉ par flex-shrink → hauteur 15 px au lieu des 32 px de la DA
               (« hors DA, mal aligné »). Avec shrink-0 il reprend sa hauteur de bouton standard,
               aligné à gauche comme les cartes au-dessus. */}
-          <Bouton niveau="secondaire" ton="vert" data-gabarit-3d
-            onClick={() => setTerrain3d(!terrain3d)} className="shrink-0 self-start">
-            {terrain3d ? 'Revenir en 2D' : 'Voir en 3D'}
-          </Bouton>
+          {/* RECETTE-OUTILS-3 (S11) — « Vue par défaut » RETIRÉ (le « Recentrer » du bloc de contrôle 3D
+              de la carte en tient lieu). « Revenir en 2D » et « Exporter en PDF » CÔTE À CÔTE, même ligne
+              (grille 2 colonnes). L'orientation initiale se reprend par le ◎ du bloc 3D sur la carte. */}
+          <div className="grid grid-cols-2 gap-2">
+            <Bouton niveau="secondaire" ton="vert" data-gabarit-3d
+              onClick={() => setTerrain3d(!terrain3d)} className="w-full justify-center">
+              {terrain3d ? 'Revenir en 2D' : 'Voir en 3D'}
+            </Bouton>
+            {/* RECETTE-OUTILS-1 (point 34 / T6) — « Exporter en PDF » = document « Gabarit » de Docs
+                (même générateur back `/gabarit/{idu}.pdf`). Absent si le calcul est incomplet. */}
+            {target && res?.status === 'ok' && (
+              <Bouton niveau="secondaire" ton="vert" data-gabarit-export
+                disabled={enCours != null} onClick={() => ouvrir(docGabaritUrl(target), 'gabarit')} className="w-full justify-center">
+                Exporter en PDF
+              </Bouton>
+            )}
+          </div>
+          {terrain3d && (
+            <p className="text-[10px] text-txt-dim">Ctrl + glisser pour tourner / incliner la vue 3D.</p>
+          )}
         </>
       )}
     </div>

@@ -602,6 +602,22 @@ def construire_gabarit(db, idu: str, *, jour: date | None = None) -> ResultatDoc
     gr = compute_gabarit(build.input)
     if gr.status != "ok":
         raise DocumentNonEtablissable([{"libelle": _GABARIT_INCALCULABLE}])
+    # RECETTE-OUTILS-2 (R16) — le bâti EXISTANT n'est peuplé que par l'endpoint outil ; on l'attache
+    # ici aussi (best-effort) pour que la vue 3D du PDF montre le MÊME contexte bâti que l'écran.
+    try:
+        from ..api.gabarit import _bati_existant
+        if gr.batiExistantGeoJSON is None:
+            gr.batiExistantGeoJSON = _bati_existant(db, idu)
+    except Exception:  # noqa: BLE001 — le bâti de contexte n'est jamais un bloqueur du document
+        pass
+    # RECETTE-OUTILS-3 (S7/S10) — MÊME déduction/découpe que l'app : la zone d'implantation du PDF (p1
+    # schéma, p3 3D) déduit le bâti et le bâti est découpé au contour. Référence géométrique UNIQUE.
+    try:
+        from ..gabarit.builder import deduire_bati_de_zone, rescale_zone_contenance
+        rescale_zone_contenance(db, idu, gr)   # U4 — même aire AVANT que l'endpoint (contenance), sinon déduit 46≠40
+        deduire_bati_de_zone(gr)
+    except Exception:  # noqa: BLE001
+        pass
     valeurs = collecte(db, idu, sorted(bloc_gabarit.IDS), fiche={})
     numero = numeros.numero_rapport("gabarit", idu, j)
     cart = _cart("gabarit", idu, idu, numero, j)

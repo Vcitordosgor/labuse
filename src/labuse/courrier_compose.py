@@ -190,9 +190,12 @@ def expediteur_du_compte(marque: dict | None, commune: str | None) -> dict:
 def _signature(exp: dict) -> str:
     """« Cette étude vous est offerte par [Prénom Nom], [société], qui intervient à [commune]. Il est
     joignable au [téléphone]… » — clauses absentes retirées proprement (jamais un [champ] vide)."""
+    # RECETTE-OUTILS-1 (point 46) — « Cette étude … » → « Cette synthèse … » (le courrier EST la
+    # synthèse ; l'Étude de faisabilité, elle, est proposée gratuitement par ailleurs) + virgule avant
+    # « qui intervient … ».
     par = f"{exp['signataire']}, {exp['societe']}" if exp.get("signataire") else exp["societe"]
-    ou = f" qui intervient à {exp['commune']}" if exp.get("commune") else ""
-    s = f"Cette étude vous est offerte par {par}{ou}."
+    ou = f", qui intervient à {exp['commune']}" if exp.get("commune") else ""
+    s = f"Cette synthèse vous est offerte par {par}{ou}."
     if exp.get("telephone"):
         s += f" Il est joignable au {exp['telephone']} si vous souhaitez échanger au sujet de votre bien."
     s += " Cette démarche ne vous engage à rien."
@@ -254,6 +257,10 @@ def composer_verso(d: dict) -> list[str]:
         # « les X dernières années » si on n'a pas les bornes (cas sans mutation géo-datée).
         periode = (f"sur {d['periode_dvf']}" if d.get("periode_dvf")
                    else f"sur les {d.get('x_annees', X_ANNEES_DVF)} dernières années")
-        lignes.append(f"Environnement immobilier : {d['n_mutations']} mutation(s) publiée(s) "
+        # RECETTE-OUTILS-1 (point 46) — accord réel : « 1 mutation publiée » / « 9 mutations publiées »
+        # (plus de « mutation(s) publiée(s) »).
+        _nm = d['n_mutations']
+        _mot = "mutation publiée" if _nm == 1 else "mutations publiées"
+        lignes.append(f"Environnement immobilier : {_nm} {_mot} "
                       f"dans le périmètre analysé {periode}.")
     return lignes

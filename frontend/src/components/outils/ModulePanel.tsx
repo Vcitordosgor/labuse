@@ -2,7 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useEffect, useMemo, useState } from 'react'
 import {
-  courrierPdf, getCommunes, getCourrierDemandes, getCourrierStatut, getFiche, modBailleur,
+  courrierPdf, getCommunes, getCourrierStatut, getFiche, modBailleur,
   modDueDiligence, modFantome, modParcellePermis, modPatrimoine, modPermis, modPermisCount,
   modPermisFiche, modPromesses, modPromessesCount, modVelocite, postCourrierDemande, postCourrierAdressage,
   postCourrierComposer,
@@ -10,7 +10,6 @@ import {
 import { AddressAutocomplete } from '../AddressAutocomplete'
 import { ParcelInput } from '../ParcelInput'
 import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECETTE-1 F2
-import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
 import { TEMPS_MILLESIMES } from '../map/basemaps'
 import { fmtInt, fmtM2 } from '../../lib/format'
 import { iduComplet, iduCourt, estIdu } from '../../lib/format'
@@ -47,6 +46,7 @@ import { TaxeAmenagement } from './TaxeAmenagement'
 import { Gabarit } from './Gabarit'   // GABARIT-1 — outil interne (registry hidden:true, flag admin)
 import { MonSecteur } from './MonSecteur'   // SECTEUR-1 (S1) — outil « Mon secteur »
 import { ScanPatrimoine } from './ScanPatrimoine'   // RETOURS-4 S7 — fusion Scan patrimoine (possède + construit)
+import { ouvrirBullePermis, fermerBullePermis } from '../map/MapView'   // RECETTE-OUTILS-1 (6/7) — bulle permis
 import { OwnerParcelles } from '../OwnerParcelles'   // RECHERCHE-2 Lot 2 — sous-panneau propriétaire → ses parcelles
 import { Successions } from './Successions'   // OUTILS-MUSCLER-1 Lot A — radar patrimonial servi en outil
 import { Blocs } from './Blocs'   // OUTILS-MUSCLER-3 — assiettes contiguës d'un même propriétaire PM
@@ -57,6 +57,7 @@ import { Badge } from '../ui/Badge'   // KELFONCIER-FIX-2 (Lot D) — pastille d
 import { Retour } from '../ui/Retour'
 // RECETTE-1 (H2) — Chevron retiré : le bloc proximité n'est plus un accordéon.
 import { Chip } from '../ui/Chip'
+import { Select } from '../ui/Select'   // U3 (RECETTE-OUTILS-4) — menu déroulant partagé
 
 /* ───────── primitives partagées (doctrine module : violet, bandeau honnête, liste→fiche) ───────── */
 
@@ -154,11 +155,12 @@ export function CommuneScope({ commune, onChange, noteFiltre = true }: { commune
   return (
     <label className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-txt-mut">
       Périmètre
-      <select data-commune-scope value={commune ?? ''} onChange={(e) => onChange(e.target.value || null)}
-        className="rounded border border-line-2 bg-surface-3 px-1.5 py-0.5 text-txt focus:border-mint focus:outline-none">
+      {/* U3 (RECETTE-OUTILS-4) — composant partagé `ui/Select` (chevron charte à 16 px, pr suffisant). */}
+      <Select data-commune-scope value={commune ?? ''} onChange={(e) => onChange(e.target.value || null)}
+        className="rounded border border-line-2 bg-surface-3 pl-1.5 py-0.5 text-txt focus:border-mint focus:outline-none">
         <option value="">Toute l'île</option>
         {(communes.data ?? []).map((c) => <option key={c.commune} value={c.commune}>{c.commune}</option>)}
-      </select>
+      </Select>
       {noteFiltre && <span className="text-[10px] text-txt-dim">choisi ici — pas hérité du filtre global</span>}
     </label>
   )
@@ -229,12 +231,9 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
       )}
       {d && (d['n_parcelles'] as number) > 0 && (
         <>
-          {/* OUTILS-FIX-4 A1 — MILLÉSIME MAJIC en tête de l'onglet Possession : ces parcelles sont celles
-              détenues d'après les fichiers fonciers DGFiP d'une année donnée — on la dit (fraîcheur), au
-              même vocabulaire que le reste de l'app. Servi par la base (millesime_majic) ; jamais inventé. */}
-          {d['millesime_majic'] && (
-            <p data-m02-millesime className="text-[10px] text-txt-dim">Fichiers fonciers DGFiP · situation {String(d['millesime_majic'])}</p>
-          )}
+          {/* RECETTE-OUTILS-2 (R19) — millésime MAJIC et « Dépôt de comptes » ne sont PLUS des lignes en
+              tête (elles poussaient la liste des parcelles hors champ) : regroupées EN PIED de l'accordéon
+              « Chiffres clés » (fermé par défaut), plus bas. */}
           {/* signaux d'APPROCHE : BODACC (procédure) + INPI (société absente du registre = succession /
               sommeil probable). Libellés FACTUELS — jamais « fantôme ». */}
           {d['bodacc'] != null && (
@@ -247,35 +246,50 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
               ● Aucun dirigeant au registre INPI — succession ou société en sommeil probable (signal d'approche). À vérifier au registre.
             </div>
           )}
-          {/* DONNEES-1 lot 2.3 — dépôts de comptes BODACC : un dépôt récent = société vivante ; un
-              silence prolongé = société en sommeil (signal d'approche). Factuel. */}
-          {d['depot_comptes'] != null && (
-            <div data-m02-depot className="text-[10.5px] text-txt-dim">
-              Dépôt de comptes — {(() => {
-                const dc = d['depot_comptes'] as { annee: number | null; depuis_ans: number | null; muet?: boolean }
-                if (dc.muet) return `aucun dépôt depuis ${dc.depuis_ans} ans (société en sommeil probable)`
-                return `dernier exercice déposé : ${dc.annee ?? '—'}`
-              })()}
-            </div>
-          )}
-          {/* RECETTE-1 (H4, Vic) — les 4 tuiles de compteurs RESTENT visibles, même quand la liste des
-              parcelles s'ouvre (avant RETOURS-12 O5 : le bandeau se repliait en barre compacte et
-              masquait les chiffres). « Voir ses parcelles » n'affecte plus que la liste + le repli du
-              bloc « Blocs contigus » ; le nom + les 4 chiffres (notaires/agences/apporteurs) restent. */}
-          <div className="truncate text-xs font-medium text-txt-hi">{d['nom'] as string}</div>
-          <div className="grid grid-cols-2 gap-2">
+          {/* RECETTE-OUTILS-2 (R19) — le nom du propriétaire n'apparaît qu'UNE fois : en fusion (Scan
+              patrimoine), l'encart du haut le porte déjà → on NE le répète plus ici. Hors fusion (M02
+              seul, dormant), on le garde. */}
+          {!embedded && <div className="truncate text-xs font-medium text-txt-hi">{d['nom'] as string}</div>}
+          {/* RECETTE-OUTILS-1 (point 12) — les 4 grands chiffres passent dans un accordéon FERMÉ par
+              défaut, pour laisser la place à la liste des parcelles (qui défile) — fini « AD 0548 » coupé. */}
+          <details data-m02-chiffres className="group rounded-lg border border-line-2 bg-surface-2">
+            <summary className="flex cursor-pointer list-none items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium text-txt-mut marker:hidden hover:text-mint">
+              <span aria-hidden className="inline-block w-3 text-mint transition-transform duration-quick group-open:rotate-90">▸</span>
+              Chiffres clés
+              <span className="ml-auto font-normal text-txt-dim">{fmt(d['n_parcelles'] as number)} parcelles · {fmtM2(d['surface_totale_m2'] as number | null)}</span>
+            </summary>
+            <div className="grid grid-cols-2 gap-2 px-2.5 pb-2.5">
             {[
               { v: fmt(d['n_parcelles'] as number), lbl: 'parcelles' },
               { v: fmtM2(d['surface_totale_m2'] as number | null), lbl: 'surface totale' },
               { v: `${fmt(d['n_terrains_nus'] as number)} / ${fmt(d['n_terrains_batis'] as number)}`, lbl: 'terrains nus / bâtis' },
               { v: fmt(d['n_constructible_u_au'] as number), lbl: 'en zone U ou AU' },
             ].map((c) => (
-              <div key={c.lbl} data-m02-kpi className="min-w-0 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2.5">
+              <div key={c.lbl} data-m02-kpi className="min-w-0 rounded-lg border border-line-2 bg-surface-3 px-2.5 py-2.5">
                 <div className="num-key whitespace-nowrap text-[16px] tabular-nums text-mint">{c.v}</div>
                 <div className="mt-0.5 text-[10px] leading-tight text-txt-mut">{c.lbl}</div>
               </div>
             ))}
-          </div>
+            </div>
+            {/* RECETTE-OUTILS-2 (R19) — EN PIED de l'accordéon : les trois lignes de contexte (nature de
+                la donnée, millésime des fichiers fonciers, dépôt de comptes) autrefois en tête, qui
+                mangeaient la hauteur de la liste. Repliées par défaut avec les chiffres. */}
+            <div className="flex flex-col gap-1 border-t border-line px-2.5 pb-2.5 pt-2 text-[10px] leading-snug text-txt-dim">
+              <p>Parcelles détenues (fichiers fonciers DGFiP) — c’est ce qu’il possède, pas ce qu’il construit.</p>
+              {d['millesime_majic'] && (
+                <p data-m02-millesime>Fichiers fonciers DGFiP · situation {String(d['millesime_majic'])}</p>
+              )}
+              {d['depot_comptes'] != null && (
+                <p data-m02-depot>
+                  Dépôt de comptes — {(() => {
+                    const dc = d['depot_comptes'] as { annee: number | null; depuis_ans: number | null; muet?: boolean }
+                    if (dc.muet) return `aucun dépôt depuis ${dc.depuis_ans} ans (société en sommeil probable)`
+                    return `dernier exercice déposé : ${dc.annee ?? '—'}`
+                  })()}
+                </p>
+              )}
+            </div>
+          </details>
           {/* RETOURS-15 C9 — pont Blocs fonciers : les GROUPES de parcelles contiguës du propriétaire
               (même moteur que l'outil Blocs, table parcel_blocs). Ligne « Blocs contigus : N » + les
               groupes cliquables (→ fiche de leur parcelle représentative). */}
@@ -344,10 +358,12 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
           {/* RETOURS-11 T4 — pied de liste PARTAGÉ (SOCLE) : compteur exact « n / total affichées » +
               « Voir 200 de plus » (jamais de dump, jamais de « Tout charger »). Trié par probabilité. */}
           <div className="shrink-0">
+            {/* RECETTE-OUTILS-2 (R19) — « · triées par probabilité » remonte SUR la ligne du compteur
+                (`countSuffix`), plus en dessous. Le « chargement… » reste en action additionnelle. */}
             <ListPaginationFooter shown={items.length} total={total} step={M02_PAGE}
-              onMore={() => pat.fetchNextPage()}>
+              onMore={() => pat.fetchNextPage()}
+              countSuffix={<span className="text-txt-off"> · triées par probabilité</span>}>
               {pat.isFetchingNextPage && <span className="text-txt-dim">chargement…</span>}
-              <span className="text-txt-off">· triées par probabilité</span>
             </ListPaginationFooter>
           </div>
           </>)}
@@ -483,11 +499,12 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
 function CommunePermisSelect({ value, onChange }: { value: string | null; onChange: (c: string | null) => void }) {
   const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
   return (
-    <select data-permis-commune value={value ?? ''} onChange={(e) => onChange(e.target.value || null)}
-      className="w-full rounded-lg border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none">
+    <Select data-permis-commune value={value ?? ''} onChange={(e) => onChange(e.target.value || null)}
+      wrapClassName="w-full"
+      className="w-full rounded-lg border border-line-2 bg-surface-3 pl-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none">
       <option value="">Toutes les communes</option>
       {(communes.data ?? []).map((c) => <option key={c.commune} value={c.commune}>{c.commune}</option>)}
-    </select>
+    </Select>
   )
 }
 
@@ -509,7 +526,11 @@ export function M03() {
   const etatSeg = seg === 'acheve' ? 'acheve' : seg === 'autre' ? 'autre' : null
   const [months, setMonths] = useState(moduleKey === 'promesses' ? 36 : 24)
   const [nature, setNature] = useState('')
-  const [open, setOpen] = useState<string | null>(null)
+  // RECETTE-OUTILS-1 (points 6 & 7) — plus de drawer en colonne : la fiche permis s'ouvre en BULLE sur
+  // la carte (ouvrirBullePermis, MapView), que le clic vienne d'un point carte OU d'une ligne de liste.
+  // `permisOuvert` (store) surligne la ligne correspondante. On nettoie la bulle au démontage.
+  const permisOuvert = useApp((s) => s.permisOuvert)
+  const setPermisOuvert = useApp((s) => s.setPermisOuvert)
   // RETOURS-18 X1 — panneau en ACCORDÉON : sous le bloc total (permanent) et le bandeau Sitadel
   // (permanent), trois blocs repliables dont UN SEUL est ouvert (Filtrer par état · Affiner · Voir les
   // permis). Ouvrir l'un referme les autres. « Filtrer par état » ouvert au départ (la liste ne s'affiche
@@ -527,7 +548,21 @@ export function M03() {
   const setFlyTo = useApp((s) => s.setFlyTo)
   const focusParcelle = useApp((s) => s.focusParcelle)   // RETOURS-12 O12.2 — zoom+surbrillance commun (O1)
   const select = useApp((s) => s.select)   // PERMIS-CHECK-2 pt 2 — lever une fiche stale avant de focus
-  useEffect(() => { if (permitToOpen) { setOpen(permitToOpen); setPermitToOpen(null) } }, [permitToOpen, setPermitToOpen])
+  // RECETTE-OUTILS-1 (point 7) — ouvrir la bulle permis depuis la LISTE : on surligne la ligne, on zoome
+  // sur le permis (sa parcelle rattachée) et on ouvre LA MÊME bulle que le clic carte.
+  const ouvrirPermisBulle = (id: string) => {
+    setPermisOuvert(id)
+    const m = (window as unknown as { __labuse_map?: any }).__labuse_map
+    if (!m) return
+    modPermisFiche(id).then((f: Record<string, any>) => {
+      const c = (f?.['geom'] as { coordinates?: [number, number] } | null)?.coordinates
+      if (c) { m.easeTo({ center: c, zoom: Math.max(m.getZoom?.() ?? 15, 17), duration: 600 }); ouvrirBullePermis(m, id, c) }
+      else { ouvrirBullePermis(m, id, m.getCenter()) }   // non géocodé : bulle au centre courant
+    }).catch(() => { /* fiche indisponible : la bulle le dira */ ouvrirBullePermis(m, id, m.getCenter()) })
+  }
+  useEffect(() => { if (permitToOpen) { ouvrirPermisBulle(permitToOpen); setPermitToOpen(null) } }, [permitToOpen, setPermitToOpen])   // eslint-disable-line react-hooks/exhaustive-deps
+  // nettoie la bulle quand on quitte l'outil Permis.
+  useEffect(() => () => { fermerBullePermis(); setPermisOuvert(null) }, [])   // eslint-disable-line react-hooks/exhaustive-deps
   // la clé d'ouverture (radar `permis` vs filtre `promesses`) fixe le MODE d'entrée + la fenêtre par
   // défaut ; ensuite le toggle local est maître (un deep-link vers l'autre clé re-cale l'écran).
   useEffect(() => { const s = moduleKey === 'promesses' ? 'mort' : 'tous'; setSeg(s); setMonths(s === 'mort' ? 36 : 24) }, [moduleKey])
@@ -766,7 +801,7 @@ export function M03() {
             // pt 2 — `select(null)` d'abord : le focus barre prime sur une fiche stale (cf. onSelect).
             if (v.length === 14 && estIdu(v)) { select(null); focusParcelle(v); setParcelIdu(v); setSeg('tous'); return }
             // sinon une référence Sitadel compacte → fiche permis
-            if (/^[0-9][0-9a-z]{6,}$/i.test(v)) setOpen(v)
+            if (/^[0-9][0-9a-z]{6,}$/i.test(v)) ouvrirPermisBulle(v)
           }} />
         {/* RECHERCHE-2 Lot 2 — propriétaire → ses parcelles ; en choisir une cible la parcelle (zoom +
             délimitation) et cherche ses permis, exactement comme un IDU saisi. */}
@@ -813,11 +848,17 @@ export function M03() {
                     ? <>aucun point à afficher.</>
                     : <>cliquez les points sur la carte{nonLocTxt}.</>}
               </div>
-              {/* RECETTE-2 (T3/T7) — « Revenir à l'île » → « Réinitialiser » (libellé par défaut, composant
-                  partagé) ; seul sur sa ligne. L'effacement du champ adresse est traité en D2. */}
-              <div className="mt-1 flex justify-end">
-                <Reinitialiser onReset={() => { setParcelIdu(null); setSeg('tous') }} />
-              </div>
+              {/* RECETTE-OUTILS-1 (T5) — plus de « Réinitialiser » en bloc isolé : un lien
+                  « Réinitialiser les filtres » (dans le corps de l'outil), visible seulement quand un
+                  filtre diffère du défaut (parcelle focalisée OU état ≠ défaut). */}
+              {(parcelIdu || seg !== (moduleKey === 'promesses' ? 'mort' : 'tous')) && (
+                <div className="mt-1 flex justify-start">
+                  <Bouton niveau="lien" ton="ambre" data-permis-reset-filtres
+                    onClick={() => { setParcelIdu(null); setSeg(moduleKey === 'promesses' ? 'mort' : 'tous') }}>
+                    Réinitialiser les filtres
+                  </Bouton>
+                </div>
+              )}
             </>
           )
         })()}
@@ -957,9 +998,10 @@ export function M03() {
             autre: 'Autre — ni récent, ni dormant, ni achevé (autre nature, permis non rattaché, ou période intermédiaire).' }[et]
           return (
           <button key={k} data-permis-row data-geocode={i['geom'] ? '1' : '0'} data-point-mort={pointMort ? '1' : '0'} data-permis-row-etat={et}
-            onClick={() => setOpen(i['permit_id'] as string)}
+            data-permis-actif={permisOuvert === (i['permit_id'] as string) ? '1' : undefined}
+            onClick={() => ouvrirPermisBulle(i['permit_id'] as string)}
             onMouseEnter={() => i['geom'] && setPermitHover(i['geom'])} onMouseLeave={() => setPermitHover(null)}
-            className={`flex w-full items-center gap-2 rounded-lg border border-line-2 px-3 py-1.5 text-left text-[11px] transition-colors duration-quick hover:border-mint/60 ${i['geom'] ? 'bg-surface-3' : 'bg-surface-1'}`}>
+            className={`flex w-full items-center gap-2 rounded-lg border px-3 py-1.5 text-left text-[11px] transition-colors duration-quick hover:border-mint/60 ${permisOuvert === (i['permit_id'] as string) ? 'border-mint bg-mint/10' : `border-line-2 ${i['geom'] ? 'bg-surface-3' : 'bg-surface-1'}`}`}>
             {/* RETOURS-11 R6 — puce sur UNE seule ligne (moitié moins haute) : pastille · type · date ·
                 lgt/surface · commune (tronquée) à gauche, badge d'état (Autorisé / Sans DAACT / non géocodé)
                 aligné À DROITE de la MÊME ligne (avant : le badge décrochait sur une 2ᵉ ligne). */}
@@ -1009,7 +1051,7 @@ export function M03() {
           </div>
         </BlocAccordeon>
       </div>
-      {open && <PermitDrawer permitId={open} onClose={() => setOpen(null)} />}
+      {/* RECETTE-OUTILS-1 (points 6 & 7) — plus de drawer/modal permis : la fiche vit en bulle sur la carte. */}
     </div>
   )
 }
@@ -1181,6 +1223,7 @@ const TEMPS_KEYS = TEMPS_MILLESIMES.map((m) => m.key) as string[]
 // Exporté pour test (TEMPS — la frise des millésimes + l'épingle de la parcelle sont le cœur du mandat).
 export function M08() {
   const { cmpLeft, setCmpLeft, setCmpRight, parcelPrefill, setParcelPrefill, setFlyTo, setTempsPinIdu } = useApp()
+  const selectedIdu = useApp((s) => s.selectedIdu)   // RECETTE-OUTILS-2 (R1) — adopter le clic carte
   const [idu, setIdu] = useState('')
   // RECETTE-1 (F2) — quelle entrée a désigné la parcelle (grise l'autre dans EntreeParcelle).
   const [source, setSource] = useState<SourceParcelle>(null)
@@ -1193,32 +1236,38 @@ export function M08() {
     const c = code.trim(); if (c.length < 10) return
     setIdu(c); setSource(src)
     setTempsPinIdu(c)   // épingle le contour de LA parcelle sur les deux fonds
+    // RECETTE-OUTILS-1 (point 25) — la parcelle désignée (saisie OU clic carte) OUVRE SA fiche parcelle
+    // (avant : seule l'épingle était posée → aucune fiche, ou la fiche fantôme d'un outil précédent).
+    useApp.getState().select(c)
     if (coords) { setFlyTo({ center: coords, zoom: 18 }); return }
     try { const f = await getFiche(c); if (f.coords) setFlyTo({ center: f.coords, zoom: 18 }) } catch { /* parcelle recentrée au mieux */ }
   }
-  // parcelPrefill (fiche « 1950 », clic carte via parcelAt, Copilote) → désigne la parcelle (source carte).
+  // parcelPrefill (fiche « 1950 », Copilote) → désigne la parcelle (source carte).
   useEffect(() => {
     if (parcelPrefill) { void designer(parcelPrefill, 'carte'); setParcelPrefill(null) }
   }, [parcelPrefill])   // eslint-disable-line react-hooks/exhaustive-deps
+  // RECETTE-OUTILS-2 (R1) — clic carte : MapView appelle `select(idu)` → on l'adopte comme les autres
+  // outils à parcelle (setIdu + épingle + fiche). Le garde `selectedIdu !== idu` évite toute boucle.
+  useEffect(() => {
+    if (selectedIdu && selectedIdu !== idu) void designer(selectedIdu, 'carte')
+  }, [selectedIdu])   // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => setTempsPinIdu(null), [])   // eslint-disable-line react-hooks/exhaustive-deps
   // RECETTE-1 (F3) — Réinitialiser : vide la parcelle épinglée + rend les deux entrées + remet l'année ancienne au défaut.
-  const resetAll = () => { setIdu(''); setSource(null); setTempsPinIdu(null); setCmpLeft('bm-ortho-1950') }
+  const resetAll = () => { setIdu(''); setSource(null); setTempsPinIdu(null); setCmpLeft('bm-ortho-1950'); useApp.getState().select(null) }
 
   // DA-FIX-2 Lot 2 (DA-004) — OMNIBOX PERMANENTE : le champ « désigner la parcelle » reste EN TÊTE,
   // même une fois la parcelle choisie (plus de bandeau + « changer » qui la masquaient). La frise des
   // millésimes apparaît DESSOUS dès qu'une parcelle est désignée ; changer de parcelle = retaper.
   return (
     <>
-      <Banner>La <b>parcelle d'abord</b> : son IDU, une adresse, ou <b>cliquez-la sur la carte</b>. Puis
-        choisissez l'année à revoir — l'« après » est toujours aujourd'hui.</Banner>
+      {/* RECETTE-OUTILS-2 (R6) — encart « La parcelle d'abord… / choisissez l'année… » retiré. */}
       <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
-        {/* RECETTE-2 (T3) — Réinitialiser SEUL sur sa ligne (haut-droite) ; le libellé vient EN DESSOUS. */}
+        {/* RECETTE-OUTILS-1 (T5) — « Réinitialiser » retiré au profit de « Changer de parcelle ». */}
         <div className="flex flex-col gap-1.5">
-          {idu && <div className="flex justify-end"><Reinitialiser onReset={resetAll} /></div>}
           <p className="label-caps text-[9.5px]">Quelle parcelle voir évoluer ?</p>
         </div>
         {/* RECETTE-1 (F2) — EntreeParcelle : adresse/IDU OU clic carte, l'une grise l'autre. */}
-        <EntreeParcelle source={source}
+        <EntreeParcelle source={source} picked={idu} onChanger={resetAll}
           onPick={(id, src) => void designer(id, src)} />
       </div>
       {!idu ? (
@@ -1393,7 +1442,8 @@ export function M09() {
   // OUTILS-FIX-4 D1/D2 — l'état du service (disponible/indisponible) et le plafond du jour (avec le reste)
   // sont lus À L'OUVERTURE, affichés avant toute saisie — plus seulement découverts au moment d'envoyer.
   const statut = useQuery({ queryKey: ['courrier-statut'], queryFn: getCourrierStatut, staleTime: 60_000 })
-  const demandes = useQuery({ queryKey: ['courrier-demandes'], queryFn: getCourrierDemandes, enabled: step === 3 })
+  // RECETTE-OUTILS-1 (point 47) — la requête « Vos demandes » (getCourrierDemandes) est retirée avec
+  // l'encart : les demandes se consultent depuis Projets → Mes courriers.
   // COURRIER-2 Lot 3 — le courrier est COMPOSÉ serveur (ouverture A→E sur les faits) ; l'étape ② est un
   // APERÇU (lecture seule) du 1ᵉʳ destinataire — même texte que le PDF. « Ne pas reformuler » (Vic).
   const apercu = useQuery({ queryKey: ['courrier-apercu', dest[0]?.idu], enabled: step === 2 && !!dest[0],
@@ -1445,12 +1495,9 @@ export function M09() {
             <span data-courrier-plafond className="whitespace-nowrap text-txt-mut">Plafond du jour : <b className="tnum text-txt">{statut.data.reste_jour}</b>/{statut.data.plafond_jour} restant{(statut.data.reste_jour ?? 0) > 1 ? 's' : ''}</span>
           )}
         </div>
-      ) : statut.data ? (
-        <div data-courrier-indispo className="flex items-start gap-1.5 rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-[11px] text-txt-mut">
-          <span className="mt-[4px] h-1.5 w-1.5 shrink-0 rounded-full bg-txt-dim" />
-          <span>{statut.data.raison ?? "L'envoi postal n'est pas encore disponible — la demande est enregistrée."}</span>
-        </div>
       ) : null}
+      {/* RECETTE-OUTILS-2 (R7) — bandeau « La demande est enregistrée — LABUSE procède à l'envoi. »
+          retiré (l'envoi est fait à la main par LABUSE ; inutile d'afficher un statut de service). */}
       {/* stepper 3 étapes */}
       <div className="flex items-center gap-1 text-[10px]">
         {STEPS.map(([n, l], i) => (
@@ -1517,14 +1564,17 @@ export function M09() {
               </div>
               {apercu.data.verso.length > 0 && (
                 <details className="rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-[10.5px] text-txt-mut">
-                  <summary className="cursor-pointer text-txt-dim">Au dos — synthèse de la parcelle</summary>
+                  {/* RECETTE-OUTILS-1 (point 46) — doublon de titre retiré : le libellé du dépliant
+                      devient neutre (« Au dos ») ; le seul titre « Synthèse de la parcelle » est celui
+                      du verso lui-même (généré côté serveur). */}
+                  <summary className="cursor-pointer text-txt-dim">Au dos</summary>
                   <div className="mt-1 whitespace-pre-wrap">{apercu.data.verso.join('\n')}</div>
                 </details>
               )}
             </>
           )}
           <div className="flex gap-2">
-            <Retour label="Destinataires" onClick={() => setStep(1)} />
+            <Retour label="Retour" onClick={() => setStep(1)} />
             <Bouton niveau="primaire" ton="vert" data-courrier-next onClick={() => setStep(3)} disabled={!apercu.data || corps.trim().length < 10}
               className="flex-1">Vérifier l'envoi ›</Bouton>
           </div>
@@ -1593,8 +1643,10 @@ export function M09() {
               {/* OUTILS-S2 Lot B — le MÊME montant qu'à l'étape 3 est repris ici.
                   CHASSE-APP-FIX-2 (point 1) — tant que le service est un bouchon, on ne reprend PAS la
                   prestation tarifée : la raison serveur dit que la demande est seulement enregistrée. */}
+              {/* RECETTE-OUTILS-2 (R7) — plus de « La demande est enregistrée — LABUSE procède à l'envoi. »
+                  (le « ✓ Demande transmise » + « Projets → Mes courriers » suffisent). */}
               {statut.data && !statut.data.disponible
-                ? ` ${statut.data.raison ?? "L'envoi postal n'est pas encore disponible — la demande est enregistrée."}`
+                ? ''
                 : statut.data?.tarif_unitaire_eur != null
                 ? <> {demande.n} courrier{demande.n > 1 ? 's' : ''} × {fmtEur2(statut.data.tarif_unitaire_eur)} = <b className="text-txt-mut">{fmtEur2(statut.data.tarif_unitaire_eur * demande.n)} TTC</b> — impression, mise sous pli, affranchissement et suivi compris.</>
                 : ' LABUSE vous rappelle sous 24 h ouvrées avec le tarif — impression, mise sous pli, affranchissement et suivi compris.'}
@@ -1608,23 +1660,12 @@ export function M09() {
             {pdfBusy ? 'Génération…' : '⬇ Télécharger l’aperçu PDF (relecture)'}</Bouton>
           {pdfErr && <p data-courrier-pdf-err className="text-[10.5px] text-st-ecartee">{pdfErr}</p>}
 
-          {/* OUTILS-1 A4 — récap des demandes du client : N° + volume + communes, SANS état interne
-              (le suivi d'exécution reste chez LABUSE). La vue complète est « Projets → Mes courriers ». */}
-          {(demandes.data?.demandes.length ?? 0) > 0 && (
-            <div className="mt-1 flex flex-col gap-1">
-              <p className="label-caps text-[9px]">Vos demandes</p>
-              {demandes.data!.demandes.slice(0, 5).map((d) => (
-                <div key={d.id} className="flex items-baseline justify-between gap-2 text-[10.5px]">
-                  <span className="min-w-0 truncate text-txt-mut">n° {d.rang_compte ?? d.id} · {d.n} courrier{d.n > 1 ? 's' : ''}{d.communes ? ` · ${d.communes}` : ''}</span>
-                  <span className="shrink-0 font-mono text-[9.5px] text-txt-dim">{String(d.ts).slice(0, 10)}</span>
-                </div>
-              ))}
-            </div>
-          )}
+          {/* RECETTE-OUTILS-1 (point 47) — encart « Vos demandes » retiré du Courrier : les demandes se
+              voient depuis Projets (« Projets → Mes courriers »). */}
 
           {/* CHASSE-APP-FIX-2 (point 4 S) — le retour de l'étape 3 (Envoi) mène à l'étape PRÉCÉDENTE
               (2 · Relecture), plus directement à l'étape 1 : on peut reculer d'un pas. */}
-          <Retour label="Relecture" onClick={() => setStep(2)} className="mt-auto" />
+          <Retour label="Retour" onClick={() => setStep(2)} className="mt-auto" />
         </div>
       )}
     </div>
@@ -1661,6 +1702,13 @@ export function M10() {
     setPaste('')
   }
   const retirer = (t: string) => setLot((l) => l.filter((x) => x !== t))
+  // RECETTE-OUTILS-1 (T4) — clic carte (MapView pose carteOutilIdu quand l'outil « risques » est actif)
+  // → on AJOUTE au lot, exactement comme une saisie, puis on consomme le signal.
+  const carteOutilIdu = useApp((s) => s.carteOutilIdu)
+  const setCarteOutilIdu = useApp((s) => s.setCarteOutilIdu)
+  useEffect(() => {
+    if (carteOutilIdu) { ajouter(carteOutilIdu); setCarteOutilIdu(null) }
+  }, [carteOutilIdu])   // eslint-disable-line react-hooks/exhaustive-deps
   const run = useMutation({ mutationFn: () => modDueDiligence(lot.join('\n')) })
   const d = run.data
   const iduxResolus = (d?.parcelles ?? []).map((p) => p.idu)

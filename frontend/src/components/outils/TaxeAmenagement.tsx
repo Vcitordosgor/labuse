@@ -7,7 +7,6 @@ import {
 import { fmtEur, fmtInt, fmtM2 } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECETTE-1 F2
-import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
 import { Tip } from '../Tip'
 import { Chargement, Squelette } from '../Loading'
 import { ErrorState } from '../States'
@@ -183,9 +182,10 @@ export function TaxeAmenagement() {
       {/* RECETTE-2 (T3) — Réinitialiser SEUL sur sa ligne (haut-droite) ; l'intro vient EN DESSOUS,
           pleine largeur (plus côte à côte). Présent ssi une parcelle est désignée. */}
       <div className="flex flex-col gap-1.5">
-        {prefillIdu && <div className="flex justify-end"><Reinitialiser onReset={resetAll} /></div>}
+        {/* RECETTE-OUTILS-1 (T5) — plus de « Réinitialiser » en tête : dès qu'une parcelle est choisie,
+            le bloc de recherche devient « adresse · Changer de parcelle » (EntreeParcelle, picked). */}
         <div className="flex items-center gap-1.5">
-          <p className="min-w-0 flex-1 text-[11px] text-txt-mut">Désignez la parcelle du projet :</p>
+          <p className="min-w-0 flex-1 text-[11px] text-txt-mut">Calculer la taxe d'aménagement d'une parcelle</p>
           <Tip garder side="bottom" tip={`Estimez la taxe d'aménagement de votre projet avant le dépôt du permis. Valeurs ${c.meta.annee} (arrêté officiel, base CGI art. 1635 quater A et suivants) ; à La Réunion, c'est la valeur forfaitaire hors Île-de-France qui s'applique. Le montant définitif est fixé par l'administration après le permis. Source : ${c.meta.source}.`}>
             <span role="button" tabIndex={0} aria-label="Méthode et sources"
               className="flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full border border-line-2 text-[9px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
@@ -194,7 +194,7 @@ export function TaxeAmenagement() {
       </div>
       {/* RECETTE-1 (F2) — EntreeParcelle : adresse/IDU OU clic carte, l'une grise l'autre. Le pick du
           champ fixe source='adresse' puis focusParcelle (fiche) ; le clic carte est adopté par l'effet selectedIdu. */}
-      <EntreeParcelle source={source}
+      <EntreeParcelle source={source} picked={prefillIdu} onChanger={resetAll}
         onPick={(i, src) => { setSource(src); setPrefillIdu(i); focusParcelle(i, { fiche: true }) }} />
       {/* RECETTE-2 (D12) — section « Le formulaire s'ouvrira quand une parcelle sera choisie … » retirée. */}
       {prefillIdu && (

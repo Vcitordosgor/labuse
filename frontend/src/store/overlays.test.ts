@@ -9,7 +9,7 @@ const st = () => useApp.getState()
 beforeEach(() => {
   // baseline propre : aucun overlay, tiroir fermé, pas de sélection
   useApp.setState({
-    compareIdus: [], compareOpen: false, comparePicking: false, compareTouchedAt: null,
+    compareIdus: [], compareOpen: false, comparePicking: false,
     communesTableOpen: false, densifierTableOpen: false, outilsOpen: false, module: null, view: 'cartes',
     outilRetour: [], permitToOpen: null, m02Prefill: null,
   })
@@ -139,41 +139,28 @@ describe('RETOURS-15 S3 — focusParcelle(idu,{fiche}) : zoom + contour + fiche 
   })
 })
 
-describe('TTL 15 min de la sélection de comparaison', () => {
-  it('retrouve la sélection quand on revient sous 15 min', () => {
-    const t0 = 1_700_000_000_000
-    vi.spyOn(Date, 'now').mockReturnValue(t0)
+// RECETTE-OUTILS-1 (point 23) — plus de TTL 15 min : la sélection Comparer est de SESSION (mémoire),
+// pas de péremption dans le temps ; elle est vidée par clearCompare (au démontage de l'outil).
+describe('sélection de comparaison — de session, sans TTL (point 23)', () => {
+  it('openCompare garde la sélection courante (pas d\'expiration temporelle)', () => {
     st().addToCompare('97411000BZ1065')
     st().addToCompare('97411000BZ1044')
-    st().setView('projets')                   // on quitte l'outil
-    expect(st().compareOpen).toBe(false)
-    expect(st().compareIdus).toHaveLength(2)   // survit
-    ;(Date.now as unknown as { mockReturnValue: (v: number) => void }).mockReturnValue(t0 + 14 * 60 * 1000)
-    st().openCompare()                         // retour 14 min plus tard
+    st().openCompare()
     expect(st().compareIdus).toEqual(['97411000BZ1065', '97411000BZ1044'])
-    // COMPARAISON (refonte) : openCompare ouvre l'OUTIL (panneau), pas le tableau — picking ON, table fermée.
     expect(st().module).toBe('comparer')
     expect(st().compareOpen).toBe(false)
     expect(st().comparePicking).toBe(true)
   })
 
-  it('vide une sélection périmée (> 15 min) et rouvre l\'outil en picking', () => {
-    const t0 = 1_700_000_000_000
-    vi.spyOn(Date, 'now').mockReturnValue(t0)
-    st().addToCompare('97411000BZ1065')
-    ;(Date.now as unknown as { mockReturnValue: (v: number) => void }).mockReturnValue(t0 + 16 * 60 * 1000)
-    st().openCompare()                         // retour 16 min plus tard
-    expect(st().compareIdus).toEqual([])
-    expect(st().module).toBe('comparer')
-    expect(st().comparePicking).toBe(true)
+  it('un ajout empile sur la sélection courante (max 3)', () => {
+    st().addToCompare('A'); st().addToCompare('B'); st().addToCompare('C'); st().addToCompare('D')
+    expect(st().compareIdus).toEqual(['A', 'B', 'C'])   // plafonné à 3, ordre conservé
   })
 
-  it('un nouvel ajout après péremption repart de zéro (pas d\'empilement sur du vieux)', () => {
-    const t0 = 1_700_000_000_000
-    vi.spyOn(Date, 'now').mockReturnValue(t0)
+  it('clearCompare vide la sélection', () => {
     st().addToCompare('A')
-    ;(Date.now as unknown as { mockReturnValue: (v: number) => void }).mockReturnValue(t0 + 20 * 60 * 1000)
-    st().addToCompare('B')
-    expect(st().compareIdus).toEqual(['B'])
+    st().clearCompare()
+    expect(st().compareIdus).toEqual([])
+    expect(st().compareOpen).toBe(false)
   })
 })

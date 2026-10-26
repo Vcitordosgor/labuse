@@ -44,7 +44,7 @@ export function usePagination(total: number, step: number = PAGE_SIZE): Paginati
 }
 
 export function ListPaginationFooter({
-  shown, total, step = PAGE_SIZE, onMore, children, className,
+  shown, total, step = PAGE_SIZE, onMore, children, className, countSuffix,
 }: {
   shown: number
   total: number
@@ -52,6 +52,9 @@ export function ListPaginationFooter({
   onMore: () => void
   children?: ReactNode        // actions additionnelles (ex. Densifier : « Exporter CSV »)
   className?: string
+  // RECETTE-OUTILS-2 (R19) — complément rendu DANS le span du compteur (donc sur la MÊME ligne que
+  // « N / M affichées », sans wrap), ex. « · triées par probabilité » du Scan patrimoine.
+  countSuffix?: ReactNode
 }) {
   const remaining = Math.max(0, total - shown)
   const hasMore = remaining > 0
@@ -64,7 +67,7 @@ export function ListPaginationFooter({
     >
       {/* compteur TOUJOURS rendu, valeurs exactes */}
       <span data-pagination-count>
-        <b className="text-txt">{fmtInt(shown)} / {fmtInt(total)}</b> affichées
+        <b className="text-txt">{fmtInt(shown)} / {fmtInt(total)}</b> affichées{countSuffix}
       </span>
       {hasMore && (
         <button data-pagination-more onClick={onMore} className="text-mint hover:underline">

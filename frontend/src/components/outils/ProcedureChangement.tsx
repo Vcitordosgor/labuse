@@ -6,9 +6,9 @@ import { Squelette } from '../Loading'
 import { EmptyState, ErrorState } from '../States'
 import { CommuneScope } from './ModulePanel'
 import { M15 } from './moteurs'
-import { VerifProcedure } from './VerifProcedure'
 import { Bouton } from '../ui/Bouton'
 import { Chevron } from '../ui/Chevron'
+import { Retour } from '../ui/Retour'
 
 // M137-Q — VOIE UNIFIÉE « Procédure & changement PLU ». Relie les deux écrans qui s'ignoraient :
 //   1. en tête, les communes RÉELLEMENT en procédure (radar Sudocuh, point de calcul unique) ;
@@ -30,15 +30,12 @@ function etatClient(etat: string | null | undefined): string | null {
   return etat.replace(/\s*\(confiance[^)]*\)/i, '').replace(/\bSudocuh\b/gi, '').replace(/\s{2,}/g, ' ').trim()
 }
 
-export function ProcedureChangement() {
+export function ProcedureChangement({ onHub }: { onHub?: () => void } = {}) {
   const globalCommune = useApp((s) => s.commune)
   // périmètre explicite de l'outil — amorcé sur le filtre global, puis piloté ICI.
   const [commune, setCommune] = useState<string | null>(globalCommune)
   const [openProc, setOpenProc] = useState(false)   // §5 — bandeau replié par défaut (compact)
   const [openAttention, setOpenAttention] = useState(false)   // DA-031 — accordéon « Attention »
-  // OUTILS-FIX-2 C1 — deux onglets (même patron que Scan patrimoine) : « Par parcelle » (VerifProcedure)
-  // et « Simuler l'ouverture » (radar procédures + simulation AU→U). Contenu de chaque onglet inchangé.
-  const [tab, setTab] = useState<'parcelle' | 'simuler'>('parcelle')
   const proc = useQuery({ queryKey: ['simulplu-procedures'], queryFn: motSimulPluProcedures })
   // O8(b) — zones AU réellement proposées pour la commune choisie (dynamique, jamais figé au front).
   const zonesQ = useQuery({
@@ -61,20 +58,16 @@ export function ProcedureChangement() {
 
   return (
     <div data-plu-procchg className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-      {/* OUTILS-FIX-2 C1 — onglets (même patron que Scan patrimoine possède/construit). */}
-      <div className="flex gap-6 border-b border-line-2" role="tablist">
-        {([['parcelle', 'Par parcelle'], ['simuler', "Simuler l’ouverture"]] as const).map(([k, label]) => (
-          <button key={k} data-procchg-tab={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
-            className={`-mb-px whitespace-nowrap border-b-2 pb-2 pt-1 text-[13px] transition-colors ${tab === k ? 'border-mint font-medium text-mint' : 'border-transparent text-txt-mut hover:text-txt'}`}>
-            {label}
-          </button>
-        ))}
-      </div>
+      {/* RECETTE-OUTILS-1 (point 1 / T3) — retour unique vers le choix du chemin PLU. */}
+      <Retour label="Retour" onClick={() => onHub?.()} />
+      {/* RECETTE-OUTILS-1 (point 4) — l'onglet « Par parcelle » est retiré : la voie « Procédure &
+          changement » ne porte plus que « Simuler l'ouverture ». (La question « cette parcelle est-elle
+          concernée ? » reste servie par la fiche parcelle.) Plus de barre d'onglets à un seul onglet. */}
 
       {/* ONGLET « Simuler l'ouverture » — 1. COMMUNES EN PROCÉDURE (radar) — §5 : REPLIÉES sous un
           BANDEAU cliquable « ⚠ N communes en procédure PLU » (compact par défaut). Le déplié garde TOUT
           (type/état, date, source, bouton Simuler). 0 procédure → message factuel, pas de bandeau. */}
-      {tab === 'simuler' && (
+      {(
       <div className="flex flex-col gap-1.5">
         {proc.isLoading && <div className="py-3"><Squelette lignes={3} /></div>}
         {proc.isError && (
@@ -118,23 +111,11 @@ export function ProcedureChangement() {
       </div>
       )}
 
-      {/* ONGLET « Par parcelle » — « Cette parcelle est-elle concernée par une procédure ? »
-          (IDU / adresse) = VerifProcedure, au grain parcelle (sursis, veille AU). Contenu inchangé. */}
-      {tab === 'parcelle' && (
-      <div data-procchg-entree="1" className="flex flex-col gap-1.5">
-        <div className="text-[12px] font-medium text-txt-hi">
-          Cette parcelle est-elle concernée par une procédure ?
-        </div>
-        <p className="text-[10.5px] leading-snug text-txt-mut">
-          Saisissez un IDU ou une adresse — sursis à statuer, veille AU.
-        </p>
-        <VerifProcedure />
-      </div>
-      )}
+      {/* RECETTE-OUTILS-1 (point 4) — bloc « Par parcelle » (VerifProcedure) retiré. */}
 
-      {/* ONGLET « Simuler l'ouverture » (suite) — « Simuler l'ouverture d'une zone AU ». Périmètre
-          explicite (CommuneScope) + statut procédure, puis la simulation M15 (réutilisée, calcul intact). */}
-      {tab === 'simuler' && (
+      {/* « Simuler l'ouverture d'une zone AU ». Périmètre explicite (CommuneScope) + statut procédure,
+          puis la simulation M15 (réutilisée, calcul intact). */}
+      {(
       <div ref={simRef} data-procchg-entree="2" className="flex flex-col gap-1.5 border-t border-line-2 pt-2">
         <div className="text-[12px] font-medium text-txt-hi">
           Simuler l’ouverture d’une zone AU

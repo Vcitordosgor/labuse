@@ -1,0 +1,12 @@
+import { launch, mk } from './lib.mjs'
+const { browser, page } = await launch()
+const t = mk(page)
+await t.go(''); await t.wait(900)
+await page.evaluate(() => window.__labuse.setModule('temps')); await t.wait(1200)
+await page.evaluate(() => window.__labuse.select('97408000BL0020'))   // = ce que fait le clic carte (select)
+await t.wait(2200)
+const picked = await page.locator('[data-entree-parcelle-choisie]').count()
+const txt = await page.locator('[data-entree-parcelle-choisie]').first().innerText().catch(()=>'(absent)')
+await t.shot('R1-temps-select-apres')
+console.log(JSON.stringify({ picked, txt }))
+await browser.close()

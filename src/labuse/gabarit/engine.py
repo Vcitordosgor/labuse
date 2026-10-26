@@ -135,6 +135,17 @@ def compute_gabarit(inp: GabaritInput) -> GabaritResult:
             ruleId=ex.ruleId or "", category="exclusion",
             label=(ar.label if ar and ar.label else (ex.label or "Exclusion")),
             detail=ex.label, source=ex.source))
+    # RECETTE-OUTILS-2 (R17) — exclusions VÉRIFIÉES mais SANS géométrie (ex. SUP : « Aucune SUP sur la
+    # parcelle ») : le contrôle a été tenu et n'a rien trouvé → c'est une règle VÉRIFIÉE, pas « non
+    # modélisée ». On les affiche donc en règles appliquées (avec leur détail), au lieu de les perdre
+    # (elles ne sont plus not_integrated). Celles qui ONT une géométrie sont déjà ajoutées ci-dessus.
+    _excl_ids = {ex.ruleId for ex in inp.exclusions}
+    for ar in inp.applicableRules:
+        if (ar.category == "exclusion" and ar.integrationStatus == "integrated"
+                and ar.id and ar.id not in _excl_ids):
+            applied.append(AppliedRule(
+                ruleId=ar.id, category="exclusion",
+                label=ar.label or ar.id, detail=ar.detail, source=ar.source))
 
     non_integ = [NonIntegratedRule(id=ar.id, label=ar.label or (ar.id or "règle"),
                                    detail=ar.detail, source=ar.source)

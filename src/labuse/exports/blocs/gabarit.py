@@ -9,8 +9,8 @@ from ..lignes import ligne, pied
 from ..registre_fmt import fmt_m, fmt_m2, fmt_pct
 from ..rendu import esc, note, section, table_kv, verdict
 
-IDS = ("gabarit_implantation_m2", "gabarit_emprise_plafond_m2", "gabarit_hauteur_m",
-       "gabarit_couverture_verdict", "gabarit_plan_2d")
+IDS = ("gabarit_implantation_m2", "gabarit_bati_deduit_m2", "gabarit_emprise_plafond_m2",
+       "gabarit_hauteur_m", "gabarit_couverture_verdict", "gabarit_plan_2d")
 
 
 def _m2_ou_texte(v):
@@ -70,7 +70,13 @@ def rendu(valeurs, ctx=None) -> str:
         # le plan 2D est un fragment SVG déjà composé par le moteur (gabarit_svg) — embarqué tel quel.
         corps += f'<div class="plan2d">{plan.valeur}</div>'
     lignes = [
+        # RECETTE-OUTILS-3 (S7) — « Zone d'implantation » = valeur APRÈS déduction du bâti ; juste en
+        # dessous, l'emprise de bâti retranchée (ligne omise s'il n'y a rien à déduire).
+        # RECETTE-OUTILS-4 (U4) — libellé « bâti existant déduit » (sans « dont » : la zone affichée est
+        # DÉJÀ la valeur après déduction ; « dont » laissait croire que le bâti en faisait partie), même
+        # formulation qu'à l'écran.
         ligne(valeurs, "Zone d'implantation", "gabarit_implantation_m2", _m2_ou_texte),
+        ligne(valeurs, "bâti existant déduit", "gabarit_bati_deduit_m2", _m2_ou_texte),
         ligne(valeurs, "Plafond d'emprise", "gabarit_emprise_plafond_m2", _m2_ou_texte),
         ligne(valeurs, "Hauteur réglementaire", "gabarit_hauteur_m", _m_ou_texte),
     ]
@@ -89,6 +95,19 @@ def rendu(valeurs, ctx=None) -> str:
     if _au:
         corps += verdict(esc(_au.get("libelle") or "Potentiel différé — ouverture de la zone requise"),
                          "warn")
+    # RECETTE-OUTILS-2 (R16) — page « Vue 3D » : axonométrie du MÊME volume que l'outil (enveloppe
+    # extrudée à la hauteur sourcée + bâti existant), rendue en SVG serveur (l'écran la fait en WebGL,
+    # non reproductible ici). Sol plat → légende « Volume indicatif — terrain supposé plat ». Absente si
+    # la hauteur n'est pas chiffrée (prospect) : pas de volume, comme l'outil dit « 3D indisponible ».
+    try:
+        from ...gabarit.plan_svg import gabarit_svg_3d
+        svg3d = gabarit_svg_3d(gr) if gr is not None else None
+    except Exception:  # noqa: BLE001 — la vue 3D est un plus, jamais un bloqueur du document
+        svg3d = None
+    if svg3d:
+        corps += ('<div class="vue3d" style="page-break-before:always">'
+                  '<h3>Vue 3D du gabarit</h3>'
+                  f'<div class="plan3d">{svg3d}</div></div>')
     corps += note("Gabarit réglementaire 2D, pré-faisabilité sur règlement public. Une étude par un "
                   "professionnel peut modifier ces valeurs.")
     corps += pied(valeurs, IDS)

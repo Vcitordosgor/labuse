@@ -1,0 +1,10 @@
+import { launch, mk } from './lib.mjs'
+const { browser, page } = await launch()
+const t = mk(page)
+await t.go(''); await t.wait(900)
+await page.evaluate(() => window.__labuse.setModule('etude-zone')); await t.wait(1200)
+await page.evaluate(() => window.__labuse.select('97411000AD0213')); await t.wait(9000)
+const sections = await page.locator('[data-zone-section]').count()
+const errTxt = await page.getByText(/indisponible|momentanément|réessay/i).first().innerText().catch(()=>'(none)')
+console.log(JSON.stringify({ sections, errTxt }))
+await browser.close()

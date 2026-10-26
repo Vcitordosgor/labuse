@@ -12,22 +12,46 @@ import { getAccueilCopilote, getBrief, type AccueilCopiloteMeta, type BriefMatin
 // RETOURS-3 R12 (maquette-copilote-v3) — une TUILE d'icône contrastée par capacité (fond mauve ~22 %,
 // contour ~48 %, glyphe 20 px stroke 2.1). Mappée sur la `cle` servie (donnees/web/expliquer/preparer) ;
 // une clé inconnue tombe sur l'étincelle générique (jamais de tuile vide).
-const CAP_ICONS: Record<string, JSX.Element> = {
-  donnees: <><circle cx="11" cy="11" r="7" /><path d="m16.2 16.2 4.3 4.3" /></>,
-  web: <><circle cx="12" cy="12" r="8.5" /><path d="M3.5 12h17" /><path d="M12 3.5a13 13 0 0 1 0 17 13 13 0 0 1 0-17Z" /></>,
-  expliquer: <><path d="M9.5 17.5h5" /><path d="M10.5 20.5h3" /><path d="M12 3a6 6 0 0 1 3.4 10.9c-.5.4-.9 1-.9 1.6H9.5c0-.6-.4-1.2-.9-1.6A6 6 0 0 1 12 3Z" /></>,
-  preparer: <><path d="M6 2.5h8.5L19 7v14.5H6z" /><path d="M14 2.5V7h5" /><path d="M9 12h7M9 16h5" /></>,
-}
+// RECETTE-OUTILS-4 (U6) — `CAP_ICONS` (icônes des 4 capacités) n'est plus utilisé : la section
+// « Ce qu'il sait faire » est retirée. Seule l'étincelle générique reste (repli des exemples).
 const CAP_ICON_FALLBACK = <path d="M12 2.5 14 9l6.5 2L14 13l-2 6.5L10 13l-6.5-2L10 9l2-6.5Z" strokeLinejoin="round" />
 
-// RETOURS-9 (Q10.4) — trois exemples CLIQUABLES qui déclenchent les raccourcis RETOURS-8 R12
-// (fiche parcelle complète · patrimoine d'un promoteur · pièges d'une parcelle). Cliquer LANCE la
-// question telle quelle (onExemple), pas juste remplir la barre — ce sont des démonstrations.
-const EXEMPLES_R12 = [
-  'Dis-moi tout sur la parcelle 97415000CV1186',
-  'Combien de parcelles possède CBO Territoria ?',
-  'Quels sont les pièges de la parcelle 97415000CV1186 ?',
+// RECETTE-OUTILS-2 (R24) — NEUF exemples en grille 3×3 (maquette « Copilote, exemples »), un par chemin
+// traité : parcelle · propriétaire · PLU · procédure · pièges · argumentaire · assemblage · blocs
+// fonciers · successions. Chacun porte SON icône de type. Cliquer PRÉ-REMPLIT la barre (onChange + focus).
+// Un seul texte change (R24) : « Quel est le potentiel d'un assemblage… » → « Quel potentiel pour… ».
+const EXEMPLES_R12: { t: string; ic: string }[] = [
+  { t: 'Dis-moi tout sur la parcelle 97415000CV1186', ic: 'parcelle' },
+  { t: 'Combien de parcelles possède CBO Territoria ?', ic: 'proprietaire' },
+  { t: 'Quelles sont les règles du PLU en zone Ua à Saint-Paul ?', ic: 'plu' },
+  { t: 'Y a-t-il une procédure PLU en cours à Saint-Pierre ?', ic: 'procedure' },
+  { t: 'Quels sont les pièges de la parcelle 97415000CV1186 ?', ic: 'pieges' },
+  { t: 'Prépare un argumentaire pour aborder ce propriétaire', ic: 'argumentaire' },
+  { t: 'Quel potentiel pour un assemblage autour de 97411000AD0213 ?', ic: 'assemblage' },
+  { t: "Montre les blocs fonciers d'un même propriétaire au Tampon", ic: 'blocs' },
+  { t: 'Quelles successions à venir à Saint-Paul ?', ic: 'successions' },
 ]
+
+// R24 — une icône par TYPE (24×24, stroke) : loupe · bâtiment · livre · horloge · triangle · bulle ·
+// blocs (4 carrés) · couches · sablier. Rendue 18 px dans un carré violet sombre de 32 px.
+const EX_ICONS: Record<string, ReactNode> = {
+  parcelle: <><circle cx="11" cy="11" r="7" /><path d="m16.5 16.5 4 4" /></>,
+  proprietaire: <><path d="M4 21V8l8-4 8 4v13" /><path d="M9 21v-6h6v6" /></>,
+  plu: <><path d="M5 4a1 1 0 0 1 1-1h13v15H6a1 1 0 0 0-1 1V4Z" /><path d="M6 15h13" /></>,
+  procedure: <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5v5l3.5 2" /></>,
+  pieges: <><path d="M12 3.5 2.5 20h19L12 3.5Z" /><path d="M12 10v4" /><path d="M12 17h.01" /></>,
+  argumentaire: <><path d="M4 5h16v11H9l-5 4V5Z" /></>,
+  assemblage: <><rect x="3.5" y="3.5" width="7" height="7" rx="1" /><rect x="13.5" y="3.5" width="7" height="7" rx="1" /><rect x="3.5" y="13.5" width="7" height="7" rx="1" /><rect x="13.5" y="13.5" width="7" height="7" rx="1" /></>,
+  blocs: <><path d="m12 3 9 5-9 5-9-5 9-5Z" /><path d="m3 13 9 5 9-5" /></>,
+  successions: <><path d="M6.5 3h11M6.5 21h11" /><path d="M7 3c0 4.5 10 5.5 10 9s-10 4.5-10 9" /><path d="M17 3c0 4.5-10 5.5-10 9s10 4.5 10 9" /></>,
+}
+
+// R24 — « les IDU en mono » : on isole les IDU (8 chiffres · 2 lettres · 4 chiffres) dans le texte et
+// on les rend en police mono, le reste en texte courant.
+function avecIduMono(t: string): ReactNode {
+  return t.split(/(\d{8}[A-Z]{2}\d{4})/).map((p, i) =>
+    /^\d{8}[A-Z]{2}\d{4}$/.test(p) ? <span key={i} className="font-mono">{p}</span> : <span key={i}>{p}</span>)
+}
 
 // RETOURS-11 A1 — `onExemple` (lancer un exemple) n'est plus utilisé : les exemples PRÉ-REMPLISSENT
 // la barre (via onChange). Le prop reste toléré dans le type pour ne pas casser l'appelant.
@@ -176,45 +200,32 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
       {/* RETOURS-11 A1 (03/09) — les exemples ne sont plus ici : ils forment le NIVEAU 3, sous les
           capacités (regroupés), et PRÉ-REMPLISSENT la barre au clic (voir plus bas). */}
 
-      {/* M133 — CE QU'IL SAIT FAIRE (NIVEAU 2) : les 4 capacités en TEXTE. RETOURS-11 A1 — SANS l'exemple
-          sous chacune (les exemples sont regroupés au niveau 3). NON cliquables. */}
-      {!reponse && meta && meta.capacites.length > 0 && (
-        // RETOURS-7 Z2 — même marge (mb-8) que « Reprendre » ci-dessous.
-        <div data-accueil-capacites className="mb-8">
-          <p className="mb-2.5 font-mono text-[10px] tracking-[.12em] text-cp-faint">CE QU'IL SAIT FAIRE</p>
-          {/* RETOURS-10 (T5) — « une ligne de quatre, plus léger » (maquette) : les 4 capacités en colonne
-              (icône mauve LÉGÈRE dessus, libellé, exemple dessous), quatre de front sur écran large, deux
-              par deux en dessous. Toujours NON cliquable (curseur défaut, aucun état). L'icône passe en
-              tuile discrète (mauve ~10 %, sans contour) — plus l'aplat contrasté d'avant. */}
-          <div className="grid grid-cols-2 gap-x-4 gap-y-5 min-[560px]:grid-cols-4">
-            {meta.capacites.map((c) => (
-              <div key={c.cle} data-accueil-capacite data-cap-cle={c.cle} className="flex cursor-default flex-col gap-1.5">
-                <span className="flex h-[30px] w-[30px] items-center justify-center rounded-[8px] bg-cp-ia/[0.10] text-cp-ia">
-                  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round">{CAP_ICONS[c.cle] ?? CAP_ICON_FALLBACK}</svg>
-                </span>
-                <div className="min-w-0">
-                  {/* RETOURS-11 A1 — plus d'exemple sous la capacité (regroupés au niveau 3). */}
-                  <div className="text-[13px] leading-[1.35] font-medium text-cp-txt">{c.libelle}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* RECETTE-OUTILS-4 (U6) — la section « Ce qu'il sait faire » (titre + 4 capacités en texte) est
+          RETIRÉE : elle doublait ce que les exemples montrent déjà. Les EXEMPLES remontent à sa place,
+          juste sous la barre d'envoi. */}
 
-      {/* RETOURS-11 A1 (03/09) — NIVEAU 3 : EXEMPLES regroupés (les 3 raccourcis + les 4 exemples des
-          capacités, dédoublonnés). Cliquer PRÉ-REMPLIT la barre (ne lance plus) : l'utilisateur ajuste
-          puis envoie. Survol plein mauve via .hover-fill-ia. */}
+      {/* RETOURS-11 A1 (03/09) — EXEMPLES regroupés (les 3 raccourcis + les 4 exemples des capacités,
+          dédoublonnés). Cliquer PRÉ-REMPLIT la barre (ne lance plus) : l'utilisateur ajuste puis
+          envoie. Survol plein mauve via .hover-fill-ia. */}
       {!reponse && (
         <div data-accueil-exemples className="mb-8">
           <p className="mb-2.5 font-mono text-[10px] tracking-[.12em] text-cp-faint">EXEMPLES</p>
-          <div className="flex flex-wrap gap-2">
-            {[...EXEMPLES_R12, ...(meta?.capacites ?? []).map((c) => c.exemple)]
-              .filter((e, i, a): e is string => !!e && a.indexOf(e) === i)
-              .map((ex) => (
-              <button key={ex} data-accueil-exemple onClick={() => { onChange(ex); ref.current?.focus() }}
-                className="hover-fill-ia rounded-full border border-cp-line px-3 py-1.5 text-[12px] text-cp-muted transition-colors duration-quick hover:border-transparent">
-                {ex}
+          {/* RECETTE-OUTILS-2 (R24) — grille 3×3 de CARTES (maquette « Copilote, exemples »), plus de
+              pilules ovales multilignes : 3 colonnes égales, 12 px d'écart, 9 cartes. Chaque carte = 96 px
+              de haut, rayon 12, fond un peu plus clair que la page + contour fin, texte 15 px ALIGNÉ À
+              GAUCHE (2 lignes max), icône de type 32 px dans un carré violet sombre en haut à gauche,
+              IDU en mono. Cliquer PRÉ-REMPLIT la barre. */}
+          <div className="grid grid-cols-3 gap-3">
+            {EXEMPLES_R12.map((ex) => (
+              <button key={ex.t} data-accueil-exemple data-ex-type={ex.ic} onClick={() => { onChange(ex.t); ref.current?.focus() }}
+                className="hover-fill-ia flex h-28 flex-col items-start gap-2 rounded-xl border border-cp-line bg-cp-card p-2.5 text-left transition-colors duration-quick hover:border-cp-ia/40">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cp-ia/15 text-cp-ia">
+                  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">{EX_ICONS[ex.ic] ?? CAP_ICON_FALLBACK}</svg>
+                </span>
+                {/* RECETTE-OUTILS-3 (S12) — texte 13 px, 3 lignes max, PAS de « … » (les 9 libellés tiennent
+                    en 3 lignes à cette taille/largeur, vérifié LIVE) ; cartes de hauteur ÉGALE (h-28 = la
+                    plus haute, 3 lignes + icône). IDU en mono. */}
+                <span className="line-clamp-3 text-[13px] leading-tight text-cp-txt">{avecIduMono(ex.t)}</span>
               </button>
             ))}
           </div>

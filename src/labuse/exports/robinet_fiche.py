@@ -795,6 +795,11 @@ def _gabarit(db, idu: str) -> dict:
             from ..api.gabarit import _bati_existant
             if res.status == "ok" and res.batiExistantGeoJSON is None:
                 res.batiExistantGeoJSON = _bati_existant(db, idu)
+            # RECETTE-OUTILS-3 (S7/S10) — MÊME déduction/découpe que l'app : la zone d'implantation du
+            # document (chiffre + schéma) déduit le bâti, le bâti est découpé au contour. Chiffre = app.
+            from ..gabarit.builder import deduire_bati_de_zone, rescale_zone_contenance
+            rescale_zone_contenance(db, idu, res)   # U4 — aire AVANT = contenance (comme l'endpoint)
+            deduire_bati_de_zone(res)
         except Exception:  # noqa: BLE001
             pass
         if res.status != "ok":
@@ -803,17 +808,29 @@ def _gabarit(db, idu: str) -> dict:
             per[idu] = out
             return out
         cov = res.coverage
+        # RECETTE-OUTILS-2 (R17) — MÊME logique que l'outil (Gabarit.tsx) : si une règle PPR est NON
+        # intégrée, la famille « risques » n'est PAS « pleinement vérifiée ». Sinon le PDF écrivait
+        # « Vérifié : … risques » tout en listant « PPR — analyse » dans les règles non intégrées (le
+        # bloc rend nonIntegratedRules tel quel) → lecture contradictoire. On distingue les zones
+        # d'exclusion (géométriques, intégrées) de l'analyse du règlement PPR (non intégrée, ci-dessous).
+        ppr_non_integre = any(
+            ("PPR" in (r.label or "")) or ("PPR" in (getattr(getattr(r, "source", None), "document", "") or ""))
+            for r in (res.nonIntegratedRules or []))
         fam = [nom for ok, nom in ((cov and cov.reculs, "reculs"), (cov and cov.emprise, "emprise"),
-                                   (cov and cov.hauteur, "hauteur"), (cov and cov.risques, "risques")) if ok]
+                                   (cov and cov.hauteur, "hauteur"),
+                                   (cov and cov.risques and not ppr_non_integre, "risques")) if ok]
         # EXPORTS-FIX-1 A8 — plus de « 4 familles vérifiées sur 4 … non intégrée(s) » (jargon QA) :
         # on dit en clair ce qui est vérifié et ce qui n'est pas modélisé.
         txt = ("Vérifié : " + ", ".join(fam)) if fam else "Aucune règle vérifiée"
-        # « PPR — analyse » est not_integrated quand il n'y a pas de zone rouge : la famille risques est
-        # déjà comptée « vérifiée » → ne pas la relister comme non intégrée (lecture contradictoire).
+        if ppr_non_integre:
+            txt += " · Aléas : zones d'exclusion intégrées — analyse du règlement PPR non intégrée"
+        # Les AUTRES règles non modélisées restent nommées. PPR est déjà dit par la clause « Aléas »
+        # ci-dessus (quand concerné) → on ne le redouble pas ici.
         non_int = [r.label for r in (res.nonIntegratedRules or []) if r.label and r.id != "PPR"]
         if non_int:
             txt += " · non modélisé : " + ", ".join(non_int)
         out.update(served=True, zone_m2=res.zoneImplantationM2, couverture=txt,
+                   bati_deduit_m2=res.batiDeduitM2,   # S7 — emprise bâti retranchée (None si aucune)
                    plafond=("Non réglementé" if res.plafondEmpriseStatus == "absent" else res.plafondEmpriseM2),
                    hauteur=("Non chiffrée (prospect)" if res.hauteurStatus == "not_integrated"
                             else res.hauteurReglementaireM),
@@ -828,6 +845,13 @@ def _gabarit(db, idu: str) -> dict:
 def _c_gab_zone(db, idu, f):
     g = _gabarit(db, idu)
     return g.get("zone_m2") if g["served"] else None
+
+
+@extracteur("gabarit_bati_deduit_m2")
+def _c_gab_bati_deduit(db, idu, f):
+    # RECETTE-OUTILS-3 (S7) — emprise du bâti existant retranchée de la zone d'implantation (None si 0).
+    g = _gabarit(db, idu)
+    return g.get("bati_deduit_m2") if g["served"] else None
 
 
 @extracteur("gabarit_emprise_plafond_m2")

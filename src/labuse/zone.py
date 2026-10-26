@@ -29,6 +29,17 @@ from .db import sql_statements
 #: bandes de temps (minutes) pour dater les « plus proches » — sous-multiples de la zone demandée.
 _BANDES = (2, 4, 6, 8, 10, 15)
 
+# RECETTE-OUTILS-3 (S1) — DÉTERMINISME : les fenêtres glissantes « N mois » sont ANCRÉES sur la
+# DERNIÈRE DATE DES DONNÉES servies, jamais sur now(). Motif : `now() - interval` fait dépendre le
+# résultat du JOUR d'appel (même parcelle/rayon → chiffres différents d'un jour à l'autre), alors que
+# la donnée, elle, n'a pas bougé. Ancré sur max(date), le même jeu de données rend TOUJOURS les mêmes
+# valeurs, quelle que soit l'heure/le process. Même ancrage que le DVF `ventes` (CHASSE-DONNEES-FIX-1,
+# E-66) et le registre commune. `_ANCRE_DVF` reprend le garde-fou « date à minuit » (exclut la ligne
+# parasite D-65 horodatée hors flux).
+_ANCRE_DVF = ("(SELECT max(date_mutation) FROM dvf_mutations "
+              "WHERE date_mutation = date_trunc('day', date_mutation))")
+_ANCRE_SITADEL = "(SELECT max(date) FROM sitadel_permits)"
+
 #: familles d'équipements BPE présentées avec leur temps — maille DOMAINE (colonne `dom` toujours
 #: renseignée ; on évite d'inventer un code TYPEQU/SDOM non prouvé). Ordre = pertinence quotidienne.
 _DOMAINES_EQUIP = [
@@ -283,6 +294,9 @@ def concurrents_zone(session: Session, geom_geojson: dict, naf: str, *, bandes: 
                    ST_X(geom) AS lon, ST_Y(geom) AS lat
             FROM sirene_etablissements
             WHERE naf = :naf AND actif AND ST_Contains({_zone2975()}, ST_Transform(geom, 2975))
+            -- RECETTE-OUTILS-3 (S1) — tri STABLE avant LIMIT : sans ORDER BY, PostgreSQL pouvait
+            -- renvoyer des 40 établissements DIFFÉRENTS d'un process/plan à l'autre (non déterminisme).
+            ORDER BY date_creation DESC NULLS LAST, siret
             LIMIT :maxi"""),
         {"zone": json.dumps(geom_geojson), "naf": naf, "maxi": maxi, "seuil": SEUIL_FRAICHEUR_MOIS}).mappings().all()
     items = []
@@ -451,7 +465,7 @@ def marche_zone(session: Session, geom_geojson: dict) -> dict:
     if _existe("sitadel_permits"):
         permis = session.execute(text(
             f"""SELECT count(*) FROM sitadel_permits s
-                WHERE s.geom IS NOT NULL AND s.date >= (now() - interval '36 months')
+                WHERE s.geom IS NOT NULL AND s.date >= ({_ANCRE_SITADEL} - interval '36 months')
                   AND ST_Contains({z}, ST_Transform(s.geom, 2975))"""), p).scalar()
     # EXPORTS-1 (5.5) : le compte d'annonces Radar n'est JAMAIS un compteur de marché — la pige
     # est manuelle et partielle (audit B11 : 104 annonces, 12/24 communes, née fin août). Servi
@@ -559,7 +573,7 @@ def zone_demain(session: Session, geom_geojson: dict) -> dict:
         r = session.execute(text(
             f"""SELECT count(*) n, coalesce(sum((s.raw->>'nb_lgt')::int), 0) lgt
                 FROM sitadel_permits s
-                WHERE s.geom IS NOT NULL AND s.date >= (now() - interval '36 months')
+                WHERE s.geom IS NOT NULL AND s.date >= ({_ANCRE_SITADEL} - interval '36 months')
                   AND ST_Contains({z}, ST_Transform(s.geom, 2975))"""), p).mappings().first()
         permis, logements = int(r["n"] or 0), int(r["lgt"] or 0)
     au_n = au_ha = None
@@ -653,7 +667,7 @@ def prix_par_type_zone(session: Session, geom_geojson: dict) -> dict:
             WHERE dm.geom IS NOT NULL AND dm.nature_mutation ILIKE 'vente%'
               AND dm.valeur_fonciere > 0 AND dm.type_local IS NULL
               AND dm.surface_terrain >= 100 AND coalesce(dm.surface_reelle_bati, 0) < 20
-              AND dm.date_mutation >= (now() - interval '36 months')
+              AND dm.date_mutation >= ({_ANCRE_DVF} - interval '36 months')
               AND ST_Contains({z}, ST_Transform(dm.geom, 2975))"""),
         {"zone": json.dumps(geom_geojson)}).mappings().first()
     nt = int(rt["n"] or 0)
@@ -682,7 +696,7 @@ def permis_par_type_zone(session: Session, geom_geojson: dict) -> dict:
               count(*) FILTER (WHERE raw->>'famille' IN ('pa','pd') AND raw->>'etat' IS DISTINCT FROM '4') AS n_amng,
               count(*) FILTER (WHERE raw->>'etat' = '4')                            AS n_annules
             FROM sitadel_permits
-            WHERE geom IS NOT NULL AND date >= (now() - interval '36 months')
+            WHERE geom IS NOT NULL AND date >= ({_ANCRE_SITADEL} - interval '36 months')
               AND ST_Contains({z}, ST_Transform(geom, 2975))"""),
         {"zone": json.dumps(geom_geojson)}).mappings().first()
     types = [{"type": "logement", "label": "Logement", "n": int(r["n_log"] or 0),
@@ -829,25 +843,33 @@ _DOMAINES_BPE = [
 
 def equipements_bpe_zone(session: Session, geom_geojson: dict, lon0: float, lat0: float, *,
                          bandes: dict[int, dict]) -> dict:
-    """B6 — équipements BPE de la zone par DOMAINE complet (A→G) : le COMPTE par domaine + les 3 plus
-    proches (avec leur temps de trajet quand les bandes d'isochrone existent). Même couche que
-    `equipements_proches` (spatial_layers kind='amenite_bpe')."""
+    """B6 — équipements BPE de la zone par DOMAINE complet (A→G). RECETTE-OUTILS-3 (S2) : pour chaque
+    catégorie, le COMPTE + la LISTE COMPLÈTE (nom, type) des établissements de la zone — plus seulement
+    le plus proche. Le « type » est le libellé de SOUS-DOMAINE BPE (SDOM_LABEL). On garde aussi les 3
+    plus proches avec leur temps de trajet (isochrone). Même couche que `equipements_proches`."""
+    from .ingestion.bpe import SDOM_LABEL
     if session.execute(text("SELECT to_regclass('spatial_layers')")).scalar() is None:
         return {"domaines": []}
     z = _zone2975()
     domaines = []
     for dom, label in _DOMAINES_BPE:
         rows = session.execute(text(
-            f"""SELECT name, ST_X(geom) AS lon, ST_Y(geom) AS lat
+            f"""SELECT name, attrs->>'sdom' AS sdom, ST_X(geom) AS lon, ST_Y(geom) AS lat
                 FROM spatial_layers
                 WHERE kind='amenite_bpe' AND subtype=:dom AND ST_Contains({z}, ST_Transform(geom, 2975))
-                ORDER BY geom <-> ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)"""),
+                -- RECETTE-OUTILS-3 (S1) — tri STABLE (distance puis nom, id) : liste déterministe.
+                ORDER BY geom <-> ST_SetSRID(ST_MakePoint(:lon, :lat), 4326), name NULLS LAST, id"""),
             {"zone": json.dumps(geom_geojson), "dom": dom, "lon": lon0, "lat": lat0}).mappings().all()
         if not rows:
             continue
+        # S2 — liste COMPLÈTE : nom (ou « nom non renseigné » honnête) + type = libellé sous-domaine BPE,
+        # avec repli sur le libellé de domaine si le SDOM n'est pas cartographié (jamais un code brut).
+        liste = [{"nom": ((r["name"] or "").strip() or None),
+                  "type": SDOM_LABEL.get(r["sdom"] or "", label)} for r in rows]
         proches = [{"nom": r["name"], "temps_min": _bande_min(session, r["lon"], r["lat"], bandes)}
                    for r in rows[:3]]
-        domaines.append({"domaine": dom, "label": label, "n": len(rows), "proches": proches})
+        domaines.append({"domaine": dom, "label": label, "n": len(rows),
+                         "liste": liste, "proches": proches})
     return {"domaines": domaines, "millesime": "BPE (INSEE) — base permanente des équipements"}
 
 

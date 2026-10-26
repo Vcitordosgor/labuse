@@ -1,14 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { fireEvent, render } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import type { ReactElement } from 'react'
 import { useApp } from '../../store/useApp'
 import { CompareModule } from './ComparePanel'
+
+// RECETTE-OUTILS-1 (point 17) — CompareModule monte EntreeParcelle (useQuery) : besoin d'un QueryClientProvider.
+const renderQC = (ui: ReactElement) =>
+  render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>{ui}</QueryClientProvider>)
 
 // Mandat COMPARAISON — l'outil est ANCRÉ dans Outils : openCompare ouvre le PANNEAU (pas le tableau),
 // le picking est ON, et « Comparer (n/3) » ouvre l'overlay. Sélection conservée (SOCLE).
 const st = () => useApp.getState()
 
 beforeEach(() => {
-  useApp.setState({ compareIdus: [], compareOpen: false, comparePicking: false, compareTouchedAt: null,
+  useApp.setState({ compareIdus: [], compareOpen: false, comparePicking: false,
     module: null, outilsOpen: false, view: 'cartes', moduleMap: { idus: [], extra: null } })
 })
 afterEach(() => useApp.setState({ compareIdus: [], compareOpen: false, comparePicking: false, module: null }))
@@ -29,13 +35,13 @@ describe('COMPARAISON — ancrage dans Outils', () => {
     expect(st().compareOpen).toBe(false)     // le tableau ne s'ouvre PAS tout seul
   })
 
-  it('le panneau : chips + slots libres + « Comparer (n/3) » ouvre le tableau', () => {
+  it('le panneau : chips (retirables) + « Comparer (n/3) » ouvre le tableau', () => {
     useApp.setState({ compareIdus: ['97411000BZ1065', '97415000CT1837'] })
-    const { container } = render(<CompareModule />)
-    // 2 chips de sélection + 1 slot « + 1 libre »
+    const { container } = renderQC(<CompareModule />)
+    // RECETTE-OUTILS-1 (point 17) — 2 chips de sélection (plus de slots « + 1 libre »)
     expect(container.querySelectorAll('[data-compare-chip]')).toHaveLength(2)
     expect(container.textContent).toContain('BZ 1065')           // idu court
-    expect(container.textContent).toContain('+ 1 libre')
+    expect(container.textContent).not.toContain('+ 1 libre')     // slots retirés
     // le panneau monté a armé le picking (clic-carte ajoute)
     expect(st().comparePicking).toBe(true)
     // « Comparer (2/3) » ouvre l'overlay
@@ -47,7 +53,7 @@ describe('COMPARAISON — ancrage dans Outils', () => {
 
   it('retirer une parcelle depuis une chip', () => {
     useApp.setState({ compareIdus: ['97411000BZ1065', '97415000CT1837'] })
-    const { container } = render(<CompareModule />)
+    const { container } = renderQC(<CompareModule />)
     const chip = container.querySelector('[data-compare-chip] button') as HTMLButtonElement
     fireEvent.click(chip)
     expect(st().compareIdus).toEqual(['97415000CT1837'])

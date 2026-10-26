@@ -759,7 +759,7 @@ export interface ZoneRisques {
 }
 export interface ZoneAssainissement { couvert: boolean; collectif_pct?: number; anc_pct?: number; millesime?: string }
 export interface ZoneEspaces { items: { kind: string; label: string; pct: number }[]; source?: string }
-export interface ZoneBpe { domaines: { domaine: string; label: string; n: number; proches: { nom: string; temps_min: number | null }[] }[]; millesime: string }
+export interface ZoneBpe { domaines: { domaine: string; label: string; n: number; liste: { nom: string | null; type: string }[]; proches: { nom: string; temps_min: number | null }[] }[]; millesime: string }
 export interface ZoneAcquisitionsPM {
   acquereurs: { siren: string; denomination: string | null; n_parcelles: number }[]
   n_parcelles: number; millesime_courant?: number; millesime_precedent?: number; source?: string

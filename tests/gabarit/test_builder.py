@@ -329,12 +329,15 @@ def test_sup_intersectante_deduite_du_gabarit(monkeypatch):
         f"la SUP est rejetée à la validation : {errs}"
 
 
-def test_sans_sup_regle_non_integree(monkeypatch):
-    """Aucune SUP → aucune Exclusion 'sup', règle SUP présente mais « not_integrated » (dit, jamais tue)."""
+def test_sans_sup_regle_verifiee(monkeypatch):
+    """RECETTE-OUTILS-2 (R17) — Aucune SUP → aucune Exclusion 'sup', mais la règle SUP est VÉRIFIÉE
+    (« integrated »), pas « non modélisée » : le contrôle a été tenu et n'a rien trouvé. Avant, elle
+    était « not_integrated » tout en disant « Aucune SUP sur la parcelle » — contradiction corrigée."""
     monkeypatch.setattr(B, "zone_dominante", lambda s, pid: _zone())
     monkeypatch.setattr(B, "resolve_zone", lambda code, com: _rules())
     monkeypatch.setattr(B, "classify_parcel_limits", lambda s, pid, **kw: _fake_limites())
     b = B.build_gabarit_input(FakeSession(_PARCEL, _PPR_NONE), "x")   # FakeSession → SUP absente
     assert not any(x.type == "sup" for x in b.input.exclusions)
     sup_rule = [a for a in b.input.applicableRules if a.id == "SUP"]
-    assert sup_rule and sup_rule[0].integrationStatus == "not_integrated"
+    assert sup_rule and sup_rule[0].integrationStatus == "integrated"
+    assert "Aucune SUP" in (sup_rule[0].detail or "")

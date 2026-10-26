@@ -17,6 +17,7 @@ import { OwnerParcelles } from '../OwnerParcelles'   // RECHERCHE-2 Lot 2 — pr
 import { CollecteProgrammes } from '../admin/Programmes'   // LOT S1 — geste admin discret réutilisant la collecte
 import { Bouton } from '../ui/Bouton'
 import { Chevron } from '../ui/Chevron'
+import { Select } from '../ui/Select'   // U3 (RECETTE-OUTILS-4) — menu déroulant partagé
 
 const CAT_LABEL: Record<string, string> = { promoteur: 'Promoteur', bailleur: 'Bailleur social', sem: 'SEM' }
 
@@ -92,6 +93,15 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
   const [categorie, setCategorie] = useState('')
   const [depuis, setDepuis] = useState('')
   const [openSiren, setOpenSiren] = useState<string | null>(null)
+  // Chaque opération (groupe promoteur) est un accordéon FERMÉ par défaut : on tient les sirens ouverts
+  // dans un Set (vide au départ — aucun auto-déploiement). L'en-tête (nom + résumé + SIREN) reste visible ;
+  // la liste des opérations/programmes n'apparaît qu'une fois déplié.
+  const [openGroupes, setOpenGroupes] = useState<Set<string>>(new Set())
+  const basculerGroupe = (k: string) => setOpenGroupes((prev) => {
+    const next = new Set(prev)
+    if (next.has(k)) next.delete(k); else next.add(k)
+    return next
+  })
   // RECHERCHE-2 Lot 2 — propriétaire choisi dans la barre « se positionner » → ses parcelles.
   const [veilleOwner, setVeilleOwner] = useState<{ siren: string; nom: string } | null>(null)
   // ADMIN-1 (AD3) — MODE STRICT : quand un propriétaire est choisi (Scan patrimoine embarqué + focusSiren),
@@ -230,14 +240,14 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
               onChanger={() => setVeilleOwner(null)} />
           )}
           <div className="flex flex-wrap gap-2">
-            <select data-vp-commune value={commune} onChange={(e) => setCommune(e.target.value)} className={sel}>
+            <Select data-vp-commune value={commune} onChange={(e) => setCommune(e.target.value)} className={sel}>
               <option value="">Toutes les communes</option>
               {CP_COMMUNES.map(([, n]) => <option key={n} value={n}>{n}</option>)}
-            </select>
-            <select data-vp-categorie value={categorie} onChange={(e) => setCategorie(e.target.value)} className={sel}>
+            </Select>
+            <Select data-vp-categorie value={categorie} onChange={(e) => setCategorie(e.target.value)} className={sel}>
               <option value="">Toutes catégories</option>
               {(d?.categories ?? []).map((c) => <option key={c.cle} value={c.cle}>{c.label}</option>)}
-            </select>
+            </Select>
             <input data-vp-depuis type="date" value={depuis} onChange={(e) => setDepuis(e.target.value)} className={sel} aria-label="Déposées depuis…" />
           </div>
         </>
@@ -256,46 +266,65 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
             {/* RETOURS-12 O6 — UNE CARTE PAR PROMOTEUR (regroupée par SIREN). En-tête : nom + total permis
                 + total logements (= somme de ses opérations, même périmètre que la frise). Ses opérations
                 sont listées dessous ; ses programmes publiés une seule fois ; sa frise une seule fois. */}
-            {promoteurs.map((g, i) => (
-              <div key={g.siren ?? i} data-vp-promoteur data-vp-siren={g.siren ?? ''} className="flex flex-col gap-1 rounded-lg border border-line-2 bg-surface-2 p-2.5">
-                <b className="truncate text-[12.5px] text-txt-hi">{g.denomination ?? '(propriétaire non nommé)'}</b>
-                <span className="text-[11px] text-txt-mut">{CAT_LABEL[g.categorie] ?? g.categorie} · <b className="text-txt">{g.ops.length}</b> opération{g.ops.length > 1 ? 's' : ''} · <b className="text-txt">{g.n_permis}</b> permis · <b className="text-txt">{g.nb_logements}</b> logement{g.nb_logements > 1 ? 's' : ''}</span>
-                {g.siren && <span className="truncate font-mono text-[10px] text-txt-off">SIREN <Siren value={g.siren} className="font-mono text-txt-off" /></span>}
-                {g.radar && <span data-vp-radar-cite className="w-fit rounded bg-mint/12 px-1.5 py-px text-[9.5px] font-medium text-mint">annonce neuve Radar rattachée</span>}
+            {promoteurs.map((g, i) => {
+              const gkey = g.siren ?? `∅${i}`
+              const ouvert = openGroupes.has(gkey)
+              return (
+              <div key={gkey} data-vp-promoteur data-vp-siren={g.siren ?? ''} className="flex flex-col gap-1 rounded-lg border border-line-2 bg-surface-2 p-2.5">
+                {/* EN-TÊTE accordéon (toujours visible) : nom + résumé + SIREN + chevron. Fermé par défaut ;
+                    un clic déplie/replie le détail. Le chevron fermé pointe à droite (charte Chevron). */}
+                <button data-vp-promoteur-toggle onClick={() => basculerGroupe(gkey)}
+                  aria-expanded={ouvert} className="flex w-full items-start justify-between gap-2 text-left">
+                  <span className="flex min-w-0 flex-col gap-1">
+                    <b className="truncate text-[12.5px] text-txt-hi">{g.denomination ?? '(propriétaire non nommé)'}</b>
+                    <span className="text-[11px] text-txt-mut">{CAT_LABEL[g.categorie] ?? g.categorie} · <b className="text-txt">{g.ops.length}</b> opération{g.ops.length > 1 ? 's' : ''} · <b className="text-txt">{g.n_permis}</b> permis · <b className="text-txt">{g.nb_logements}</b> logement{g.nb_logements > 1 ? 's' : ''}</span>
+                    {g.siren && <span className="truncate font-mono text-[10px] text-txt-off">SIREN <Siren value={g.siren} className="font-mono text-txt-off" /></span>}
+                    {g.radar && <span data-vp-radar-cite className="w-fit rounded bg-mint/12 px-1.5 py-px text-[9.5px] font-medium text-mint">annonce neuve Radar rattachée</span>}
+                  </span>
+                  <Chevron open={ouvert} className="mt-0.5" />
+                </button>
 
-                {/* ses OPÉRATIONS (une sous-ligne chacune) — le détail sans répéter le nom du promoteur. */}
-                <div className="mt-0.5 flex flex-col gap-1 border-t border-line/60 pt-1">
-                  {g.ops.map((o: OperationPromoteur, k) => (
-                    <div key={k} data-vp-operation className="flex flex-col gap-0.5 rounded-md bg-surface-3 px-2 py-1">
-                      {/* OUTILS-FIX-4 A3 — date Sit@del : année seule si seule l'année est connue (fmtDateSitadel),
-                          plus jamais un « 01/01/2024 » qui ment sur la précision. A4 — le nombre nu final était
-                          le CODE d'état Sit@del brut (etat_dau) : on affiche son LIBELLÉ servi (autorisé/achevé). */}
-                      <span className="text-[10.5px] text-txt">{o.commune} · <b className="text-txt-hi">{o.nb_logements}</b> lgt · {o.n_permis} permis{o.date_max ? ` · ${fmtDateSitadel(o.date_max)}` : ''}{o.etat_libelle ? ` · ${o.etat_libelle}` : ''}</span>
-                      {o.idus[0] && (
-                        <button data-vp-parcelle onClick={() => select(iduComplet(o.idus[0]))}
-                          className="block truncate text-left font-mono text-[10px] text-mint hover:underline">{o.idus[0]} →</button>
-                      )}
+                {ouvert && (
+                  <>
+                    {/* ses OPÉRATIONS (une sous-ligne chacune) — le détail sans répéter le nom du promoteur. */}
+                    <div className="mt-0.5 flex flex-col gap-1 border-t border-line/60 pt-1">
+                      {g.ops.map((o: OperationPromoteur, k) => (
+                        <div key={k} data-vp-operation className="flex flex-col gap-0.5 rounded-md bg-surface-3 px-2 py-1">
+                          {/* OUTILS-FIX-4 A3 — date Sit@del : année seule si seule l'année est connue (fmtDateSitadel),
+                              plus jamais un « 01/01/2024 » qui ment sur la précision. A4 — le nombre nu final était
+                              le CODE d'état Sit@del brut (etat_dau) : on affiche son LIBELLÉ servi (autorisé/achevé). */}
+                          <span className="text-[10.5px] text-txt">{o.commune} · <b className="text-txt-hi">{o.nb_logements}</b> lgt · {o.n_permis} permis{o.date_max ? ` · ${fmtDateSitadel(o.date_max)}` : ''}{o.etat_libelle ? ` · ${o.etat_libelle}` : ''}</span>
+                          {o.idus[0] && (
+                            <button data-vp-parcelle onClick={() => select(iduComplet(o.idus[0]))}
+                              className="block truncate text-left font-mono text-[10px] text-mint hover:underline">{o.idus[0]} →</button>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
 
-                {/* PROMO-1 (P4) — programmes rattachés (dédoublonnés) : FAIT (nom) + LIEN, jamais un visuel. */}
-                {g.programmes.map((p, k) => (
-                  <div key={k} data-vp-programme className="mt-0.5 rounded-md border border-mint/25 bg-mint/[0.05] px-2 py-1 text-[11px]">
-                    <b className="block truncate text-txt-hi">{p.nom}</b>
-                    {p.url && <a data-vp-programme-lien href={p.url} target="_blank" rel="noreferrer" className="text-mint hover:underline">voir sur le site de {p.promoteur_nom ?? 'ce promoteur'} →</a>}
-                  </div>
-                ))}
+                    {/* PROMO-1 (P4) — programmes rattachés (dédoublonnés) : FAIT (nom) + LIEN, jamais un visuel. */}
+                    {g.programmes.map((p, k) => (
+                      <div key={k} data-vp-programme className="mt-0.5 rounded-md border border-mint/25 bg-mint/[0.05] px-2 py-1 text-[11px]">
+                        <b className="block truncate text-txt-hi">{p.nom}</b>
+                        {p.url && <a data-vp-programme-lien href={p.url} target="_blank" rel="noreferrer" className="text-mint hover:underline">voir sur le site de {p.promoteur_nom ?? 'ce promoteur'} →</a>}
+                      </div>
+                    ))}
 
-                {g.siren && (
-                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line/60 pt-1.5 text-[10.5px]">
-                    <Bouton niveau="lien" data-vp-patrimoine onClick={() => voirPatrimoine(g.siren!)} className="whitespace-nowrap">voir son patrimoine →</Bouton>
-                    <Bouton niveau="lien" data-vp-frise onClick={() => setOpenSiren((s) => (s === g.siren ? null : g.siren))} className="inline-flex items-center gap-1 whitespace-nowrap">{openSiren === g.siren ? 'masquer sa frise' : 'sa frise'} <Chevron open={openSiren === g.siren} /></Bouton>
-                  </div>
+                    {/* RECETTE-OUTILS-2 (R20) — deux colonnes ÉGALES (grille 1fr 1fr) : les boutons tiennent
+                        côte à côte sur une ligne, texte centré + majuscule initiale, et ne débordent plus
+                        de la carte (chaque colonne `min-w-0`, texte réduit) même à largeur minimale. */}
+                    {g.siren && (
+                      <div className="mt-1 grid grid-cols-2 gap-2 border-t border-line/60 pt-1.5">
+                        <Bouton niveau="secondaire" ton="vert" data-vp-patrimoine onClick={() => voirPatrimoine(g.siren!)} className="w-full min-w-0 justify-center whitespace-nowrap px-1 text-[11px]">Voir son patrimoine →</Bouton>
+                        <Bouton niveau="secondaire" ton="vert" data-vp-frise onClick={() => setOpenSiren((s) => (s === g.siren ? null : g.siren))} className="w-full min-w-0 justify-center gap-1 whitespace-nowrap px-1 text-[11px]">{openSiren === g.siren ? 'Masquer sa frise' : 'Sa frise'} <Chevron open={openSiren === g.siren} /></Bouton>
+                      </div>
+                    )}
+                    {openSiren === g.siren && g.siren && <Frise siren={g.siren} />}
+                  </>
                 )}
-                {openSiren === g.siren && g.siren && <Frise siren={g.siren} />}
               </div>
-            ))}
+              )
+            })}
           </div>
           <p className="text-[10px] leading-snug text-txt-dim">{d.note}</p>
 

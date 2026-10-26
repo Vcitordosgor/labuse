@@ -139,6 +139,10 @@ def gabarit_detail(idu: str, db: Session = Depends(get_db)) -> GabaritResult:
                                    + (f"en zone {_zn}" if _zn else "en zone constructible")
                                    + " (parcelle à cheval).")
     res.batiExistantGeoJSON = _bati_existant(db, idu)
+    # RECETTE-OUTILS-3 (S7/S10) — bâti découpé au contour + zone d'implantation déduite du bâti conservé.
+    # Référence UNIQUE lue par l'app (2D/3D) ET le PDF (le PDF rappelle la même fonction, cf. construire_gabarit).
+    from ..gabarit.builder import deduire_bati_de_zone
+    deduire_bati_de_zone(res)
     # CHASSE-DOCS-FIX-1 (E-07) — zone d'implantation NULLE (terrain exigu : rien ne passe après reculs) :
     # le plafond d'emprise et la hauteur n'ont pas d'objet (ils donneraient un gabarit chiffré sur un
     # terrain où rien ne s'implante). On les masque et on le DIT.

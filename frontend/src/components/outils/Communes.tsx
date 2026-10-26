@@ -10,6 +10,7 @@ import { RadarMarche } from './RadarMarche'
 import { Bouton } from '../ui/Bouton'
 import { Chevron } from '../ui/Chevron'
 import { Retour } from '../ui/Retour'
+import { Select } from '../ui/Select'   // U3 (RECETTE-OUTILS-4) — menu déroulant partagé
 
 // RETOURS-1 R3/R4 (Vic) — OUTIL « COMMUNES » RESTRUCTURÉ : un écran d'entrée à TROIS portes :
 //   1. Comparaison communes — le tableau comparatif (overlay plein écran, patron §4) ;
@@ -80,11 +81,12 @@ function AcquisitionsRecentes() {
     <div className="flex min-h-0 flex-1 flex-col gap-2">
       <div className="shrink-0">
         <p className="label-caps text-[9.5px]">Commune</p>
-        <select data-acq-commune value={commune ?? ''} onChange={(e) => { setCommune(e.target.value || null); setMillesimes([]); setLimite(200) }}
-          className="mt-1 w-full rounded-md border border-line-2 bg-surface-3 px-2 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none">
+        <Select data-acq-commune value={commune ?? ''} onChange={(e) => { setCommune(e.target.value || null); setMillesimes([]); setLimite(200) }}
+          wrapClassName="mt-1 w-full"
+          className="w-full rounded-md border border-line-2 bg-surface-3 px-2 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none">
           <option value="">Choisir une commune…</option>
           {(communes.data ?? []).map((c) => <option key={c.insee} value={c.commune}>{c.commune}</option>)}
-        </select>
+        </Select>
       </div>
       {/* O16(d) — le champ DGFiP ne publie QUE les personnes morales : dit une fois, franchement. */}
       {commune && (
@@ -210,6 +212,9 @@ export function Communes() {
   const setCommunesTableOpen = useApp((s) => s.setCommunesTableOpen)
   const setEvolutionTableOpen = useApp((s) => s.setEvolutionTableOpen)
   const setRadarTableOpen = useApp((s) => s.setRadarTableOpen)
+  // RECETTE-OUTILS-1 (point 8) — rouvrir une table FERME la fiche commune ouverte (la table, masquée
+  // derrière la fiche, réapparaît au lieu de rester cachée).
+  const setContexteCommune = useApp((s) => s.setContexteCommune)
   const communePrefill = useApp((s) => s.communePrefill)
   const setCommunePrefill = useApp((s) => s.setCommunePrefill)
   const [vue, setVue] = useState<'accueil' | 'acquisitions'>('accueil')
@@ -223,7 +228,7 @@ export function Communes() {
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
         <Porte dataAttr="comparaison" titre="Comparaison communes"
           sous="Le tableau comparatif des 24 communes, en grand — indicateurs sourcés, tri par colonne."
-          onClick={() => setCommunesTableOpen(true)} />
+          onClick={() => { setContexteCommune(null); setCommunesTableOpen(true) }} />
         {/* RETOURS-14 S1 — DEUX tableaux, DEUX noms (les sources ne se confondent plus) :
             l'évolution = ventes ACTÉES (DVF) + permis, par trimestre ; le Radar = les annonces
             collectées, nommé avec son compteur (la minceur s'explique par la source). */}
@@ -241,7 +246,7 @@ export function Communes() {
   }
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
-      <Retour data-communes-retour label="Communes" onClick={() => setVue('accueil')} />
+      <Retour data-communes-retour label="Retour" onClick={() => setVue('accueil')} />
       <AcquisitionsRecentes />
     </div>
   )
@@ -265,11 +270,12 @@ export function CommunesTablePanel() {
   // coin haut-droit du panneau ; cliquer l'ouvre/le referme (défaut : replié).
   const [legendeOuverte, setLegendeOuverte] = useState(false)
   if (module !== 'communes' || !communesTableOpen) return null
-  // Fiche ouverte : on MASQUE l'overlay (sans démonter O6Comparateur, pour garder son tri) afin que
-  // la fiche z-30 soit visible par-dessus la carte. Fermer la fiche la ramène intacte.
+  // RECETTE-OUTILS-2 (R5 / point 8) — fiche ouverte : le tableau RESTE MONTÉ ET VISIBLE derrière (plus
+  // de `hidden`), simplement rendu PASSIF (`pointer-events-none`) pour que le clic aille à la fiche
+  // (z-50, au-dessus) ; sa croix ferme la fiche et rend le tableau interactif, intact (tri/défilement).
   return (
     <div data-communes-table-panel
-      className={`absolute inset-0 z-40 flex items-center justify-center bg-black/50 p-6${contexteCommune ? ' hidden' : ''}`}
+      className={`absolute inset-0 z-40 flex items-center justify-center bg-black/50 p-6${contexteCommune ? ' pointer-events-none' : ''}`}
       onClick={() => setCommunesTableOpen(false)}>
       <div className="floating flex max-h-full w-full max-w-[1240px] flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-line px-4 py-2.5">

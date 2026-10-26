@@ -1,57 +1,23 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useApp } from '../../store/useApp'
 import { PluAnnuaire } from './PluAnnuaire'
-import { ProcedureChangement } from './ProcedureChangement'
-import { Retour } from '../ui/Retour'
 
-// M137-P — OUTIL PLU UNIFIÉ. M137-Q : les voies « Procédure » et « Changement » (qui s'ignoraient)
-// fusionnent en UNE — « Procédure & changement » : les communes en procédure en tête, chacune reliée
-// à sa simulation AU→U préremplie (ProcedureChangement). Le hub passe donc à 2 voies. Chaque voie
-// MONTE le composant existant (aucun calcul ne change). Ouverture directe possible depuis la fiche /
-// le Copilote (pluVue), ou sur l'Annuaire si une zone est pré-remplie (pluPrefill).
-type Vue = 'accueil' | 'annuaire' | 'procchg'
-
-// M137-Q — les anciennes vues 'procedure'/'changement' (contrat store, portes fiche/Copilote)
-// pointent désormais vers la voie fusionnée.
-const mapVue = (v: 'annuaire' | 'procedure' | 'changement'): Exclude<Vue, 'accueil'> =>
-  v === 'annuaire' ? 'annuaire' : 'procchg'
-
-const VOIES: { vue: Exclude<Vue, 'accueil'>; titre: string; sous: string }[] = [
-  { vue: 'annuaire', titre: 'Annuaire PLU',
-    sous: 'Tous les PLU des 24 communes au même endroit — à télécharger ou à interroger' },
-  { vue: 'procchg', titre: 'Procédure & changement',
-    sous: 'Où le PLU est en révision — et simulez ce que la bascule d’une zone AU en U changerait' },
-]
-
+// RECETTE-OUTILS-2 (R4) — la voie « Procédure & changement » est SUPPRIMÉE (décision Vic : le
+// simulateur d'ouverture est une ANALOGIE — densité médiane des zones U appliquée à une zone AU —,
+// pas une information fiable). L'outil PLU n'a donc plus qu'une voie : l'Annuaire, ouvert DIRECTEMENT
+// (plus de hub à 2 cartes). Les anciens deep-links (pluVue 'procedure'/'changement', fiche/Copilote)
+// retombent sans 404 sur l'Annuaire. L'info « procédure PLU en cours » (Sudocuh) reste servie sur la
+// fiche commune et la fiche parcelle (hors de cet outil). Le composant ProcedureChangement et les
+// endpoints back restent au dépôt, simplement non câblés ici.
 export function Plu() {
   const pluVue = useApp((s) => s.pluVue)
   const setPluVue = useApp((s) => s.setPluVue)
-  const pluPrefill = useApp((s) => s.pluPrefill)
-  // Ouverture directe : une vue explicite (fiche → procédure/changement) prime ; sinon une zone
-  // pré-remplie ouvre l'Annuaire ; sinon la page d'accueil des 2 voies.
-  const [vue, setVue] = useState<Vue>(() => (pluVue ? mapVue(pluVue) : pluPrefill ? 'annuaire' : 'accueil'))
-  useEffect(() => { if (pluVue) { setVue(mapVue(pluVue)); setPluVue(null) } }, [pluVue, setPluVue])
-
-  if (vue === 'accueil') {
-    return (
-      <div data-plu-accueil className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-        {/* RETOURS-13 R15 — vert OPAQUE au survol (hover-fill), plus un simple contour vert. */}
-        {VOIES.map((v) => (
-          <button key={v.vue} data-plu-voie={v.vue} onClick={() => setVue(v.vue)}
-            className="hover-fill flex flex-col gap-0.5 rounded-lg border border-line-2 bg-surface-2 px-3.5 py-3 text-left transition-colors duration-quick">
-            <span className="text-[13px] font-medium text-txt-hi">{v.titre}</span>
-            <span className="text-[10.5px] leading-snug text-txt-dim">{v.sous}</span>
-          </button>
-        ))}
-      </div>
-    )
-  }
+  // on consomme l'ancien contrat (procedure/changement/annuaire) sans effet : tout mène à l'Annuaire.
+  useEffect(() => { if (pluVue) setPluVue(null) }, [pluVue, setPluVue])
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
-      <Retour data-plu-hub-retour label="Choix PLU" onClick={() => setVue('accueil')} />
-      {vue === 'annuaire' && <PluAnnuaire />}
-      {vue === 'procchg' && <ProcedureChangement />}
+      <PluAnnuaire />
     </div>
   )
 }
