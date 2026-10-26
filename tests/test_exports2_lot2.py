@@ -102,8 +102,12 @@ def test_dix_sections_et_aucun_ocro():
 
 
 def test_aucun_mot_interdit_et_reference_nettoyee():
+    import html as _H
     html = _dossier().html
-    assert [m for m in MOTS if m in html] == []
+    # DOCS-COHERENCE-1 (Lot 0.2) — les mots interdits portent sur le texte CLIENT (celui du PDF), pas
+    # le HTML brut : une apostrophe échappée une fois (« &#x27; ») s'affiche « ' » (pas un défaut) ;
+    # seule une entité RESTÉE non décodée au rendu (double échappement) doit mordre → on décode avant.
+    assert [m for m in MOTS if m in _H.unescape(html)] == []
     assert "page corrigée" not in html           # note interne de la référence nettoyée
     assert "16 m au faîtage" in html             # la règle utile reste
 

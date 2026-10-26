@@ -115,6 +115,7 @@ HORS_PAYLOAD: dict[str, str] = {
     "rtaa_exigences": "React getFaisabilite(idu).rtaa — hors payload /parcels",
     # GABARIT-5 — le tiroir §10 est servi par getGabarit(idu) = /outils/gabarit/{idu} (moteur pur),
     # PAS par le payload /parcels ; les extracteurs recalculent en direct (build + compute_gabarit).
+    "gabarit_zone_libere_m2": "React getGabarit(idu).zoneImplantationM2 + batiDeduitM2 — outil, hors payload",
     "gabarit_implantation_m2": "React getGabarit(idu).zoneImplantationM2 — outil, hors payload /parcels",
     "gabarit_bati_deduit_m2": "React getGabarit(idu).batiDeduitM2 — outil, hors payload /parcels",
     "gabarit_emprise_plafond_m2": "React getGabarit(idu).plafondEmpriseM2/Status — outil, hors payload",
