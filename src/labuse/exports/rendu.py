@@ -119,8 +119,13 @@ def page_html(titre_html: str, cartouche: Cartouche, corps_html: str, *, lang: s
     # CONTENU LITTÉRAL dans une règle @page par document (chaque PDF est rendu une fois, la valeur est
     # connue) : un content string statique SE REND (le @bottom-center du Dossier le prouve). La mention
     # légale + la date de donnée s'impriment enfin sur chaque page.
+    # DOCS-COHERENCE-1 (C3) — les boîtes de marge @page N'HÉRITENT PAS du body : on y REDÉSACTIVE les
+    # ligatures OpenType (sinon « aﬀaires », « transme re », « éme eur » : le « tt »/« ff » ligaturé
+    # tombe à l'extraction, comme RECETTE-6 pour le corps). Correctif pour les 8 documents.
     foot_css = ('@page { @bottom-left { content: "' + _css_str(cartouche.doc_foot) + '"; '
-                'font: 7.2pt "Inter","DejaVu Sans",sans-serif; color:#6B746E } }')
+                'font: 7.2pt "Inter","DejaVu Sans",sans-serif; color:#6B746E; '
+                'font-variant-ligatures: none; '
+                'font-feature-settings: "liga" 0, "clig" 0, "dlig" 0, "calt" 0 } }')
     return (f'<!doctype html><html lang="{lang}"><head><meta charset="utf-8">'
             f'<title>{esc(titre_html)}</title>'
             f'<link rel="stylesheet" href="theme.css">'

@@ -481,6 +481,12 @@ def _apporteur_contexte(db, idu: str, fiche: dict, jour: date, compte_id: int | 
                       k in ((a.get("nature") or "") + " " + (a.get("libelle") or "")).lower()
                       for k in ("inond", "submers", "ravine", "humide")) for a in _aleas))
     obs_pollution = industriel or _releve("sol_pollue") or _releve("casias")
+    # DOCS-COHERENCE-1 (C2) — question « Mouvements de sol » quand un aléa de mouvement de terrain est
+    # relevé (au lieu de la question d'eau, qui ne concerne que inondation/ravine/zone humide).
+    obs_mouvement = (_releve("mouvement_terrain") or any(
+        isinstance(a, dict) and any(k in ((a.get("nature") or "") + " " + (a.get("libelle") or "")).lower()
+                                    for k in ("mouvement", "glissement", "retrait", "gonflement", "argile"))
+        for a in _aleas))
     return {
         "idu": idu, "adresse": fiche.get("adresse") or "", "emetteur": _emetteur(db, compte_id),
         "emission": f"{jour:%d/%m/%Y}", "validite": f"{jour + timedelta(days=90):%d/%m/%Y}",
@@ -489,7 +495,7 @@ def _apporteur_contexte(db, idu: str, fiche: dict, jour: date, compte_id: int | 
         "industriel_proche": industriel,
         # §6 — questions d'observation conditionnelles (imprimées si la couche touche). La ligne
         # HTA/HTB (< 50 m) n'a pas de couche fiable dans le socle → question omise tant qu'elle manque.
-        "obs_eau": obs_eau, "obs_pollution": obs_pollution, "obs_ligne_ht": False,
+        "obs_eau": obs_eau, "obs_mouvement": obs_mouvement, "obs_pollution": obs_pollution, "obs_ligne_ht": False,
         "icpe_detail": icpe_detail,   # RECETTE-11 D7 — description/distance de l'ICPE relevée
         "voisines": voisines,
         "plan": _apporteur_plan(db, idu, voisines),
