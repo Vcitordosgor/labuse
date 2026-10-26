@@ -7,14 +7,18 @@ BY0083 + BY0361 + BY0272. **Pas de merge.**
 
 ## REPRISE — dernier point traité
 
-> **LOT A TERMINÉ — `scripts/docs_coherence.py` affiche ZÉRO écart sur BY0083 ET BL0020.**
-> Arbitrages appliqués : zone = moteur Gabarit (un calcul, trois lecteurs : Étude +
-> CERFA + Dossier §10) ; hauteur CERFA « 9 m faîtage · 6 m égout » ; prix = id fiche
-> (`prix_ancien.median` + terrain secteur) lu par Dossier §8 / Comparatif / Étude de zone ;
-> stationnement/pleine terre chiffrés au Gabarit (A6). 8 PDF régénérés : `reports/
-> DOCS-COHERENCE-1/final-by0083/` + `pdf/`. **Reprendre aux lots B, C, D, E, F, G1-G6, H**
-> (sous-points textuels/présentation non mesurés par le harnais). Python unitaires 2666
-> passed. Pré-push : `npm ci` fait (node_modules réel) → push sans --no-verify.
+> **HARNAIS = ZÉRO écart sur BY0083 ET BL0020 (critère de fin atteint). 8 PDF régénérés
+> joints** (`reports/DOCS-COHERENCE-1/final-by0083/` + `pdf/`).
+> **FAITS : Lot 0, Lot A (A1-A10, tous), G7, Lot C (C1-C3), Lot D (D1-D2), Lot E (E1-E4).**
+> Arbitrages Vic appliqués : zone = moteur Gabarit (un calcul, trois lecteurs : Étude +
+> CERFA + Dossier §10 = 1 736 m²) ; hauteur CERFA « 9 m faîtage · 6 m égout » ; prix = id
+> fiche (`prix_ancien.median` + terrain secteur) lu par Dossier §8 / Comparatif / Étude de
+> zone ; stationnement/pleine terre chiffrés au Gabarit (A6).
+> **Reste (polish non mesuré par le harnais)** : Lot B (B2 fait ; B3 destinations, B4 mixité,
+> B5 doublon SIS/CASIAS = détail cascade DB, B7 équipements BPE, B8 §10 verdict/SUV, B9
+> solaire), Lot E (E5 tuile noire, reclassement BPE), Lot F (F1 démoli pointillé, F4 surfaces
+> T1-T4, F5 chaîne SDP, F6 L151-35/36, F7 maximum, F8 gradins/barre, F9 doublons),
+> Lot G (G1-G6), Lot H (clôture). Pré-push : `npm ci` fait → push sans --no-verify.
 
 ### Historique
 
