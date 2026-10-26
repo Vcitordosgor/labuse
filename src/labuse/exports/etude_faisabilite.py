@@ -423,7 +423,8 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
         (_m2(t.get("contenance_totale_m2")), "Contenance cadastrale"),
         ((emp_m2 + " m²") if emp_m2 else "—", "Emprise au sol max"),
         ((f"{_grp(haut['valeur'])} {esc(str(haut.get('unite') or 'm'))}") if haut and haut.get("valeur") is not None else "—",
-         esc(f"Hauteur ({haut['nom']})" if haut else "Hauteur")),
+         # DOCS-COHERENCE-1 (F9) — « Hauteur à l'égout », jamais « Hauteur (hauteur à l'égout) ».
+         esc((haut['nom'][:1].upper() + haut['nom'][1:]) if haut and haut.get('nom') else "Hauteur")),
         (aides_txt, "Logements aidés imposés"),
         (str(places_imp) if places_imp is not None else "—", "Places imposées"),
         (str(cc["non_effectue"]), "Contrôles non effectués"),
@@ -516,11 +517,15 @@ def _p2_terrain(payload: dict, retenu: dict) -> str:
                      f'<td class="n"><span class="chip s">BD TOPO · cadastre</span></td></tr>')
     acces = retenu.get("stationnement", {}).get("acces")
     if acces:
+        # DOCS-COHERENCE-1 (F9) — ne pas redoubler « à confirmer » si la note le dit déjà.
+        _anote = (acces.get("note") or "possible").strip()
+        _aconf = "" if _anote.lower().endswith("à confirmer") else " — à confirmer"
         trows.append(f'<tr><td class="k">Accès véhicule</td>'
-                     f'<td>{esc(acces.get("note") or "possible")} — à confirmer</td>'
+                     f'<td>{esc(_anote)}{_aconf}</td>'
                      f'<td class="n"><span class="chip d">Dérivé</span></td></tr>')
     fig = _svg_plan(retenu["geojson"], ["parcelle", "assiette", "voie"], h=380)
-    verdict = (f'{len(t.get("parcelles", []))} parcelle(s), {_m2(t.get("contenance_totale_m2"))} au '
+    _npar = len(t.get("parcelles", []))   # DOCS-COHERENCE-1 (F9) — accord en nombre, jamais « parcelle(s) »
+    verdict = (f'{_npar} parcelle{"s" if _npar > 1 else ""}, {_m2(t.get("contenance_totale_m2"))} au '
                f'cadastre' + (f" ; {esc(str(note))}" if note else "") + ".")
     return (
         '<section><h2>1. Le terrain</h2>'
