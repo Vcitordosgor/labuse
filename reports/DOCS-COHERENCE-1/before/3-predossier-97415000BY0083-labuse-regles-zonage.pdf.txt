@@ -1,0 +1,93 @@
+  Document préparatoire établi à partir de données publiques — ne constitue pas un dossier de demande de
+  permis. À compléter et vérifier par le pétitionnaire ou son architecte.
+
+
+
+Règles du zonage — parcelle 97415000BY0083
+
+Zonage du document d'urbanisme
+
+ZONE                              PART                                          DOCUMENT
+
+U4c                               100 %                                         —
+
+
+Règles calibrées LABUSE
+
+Hauteur d'égout (PLU calibré)                                                                                                 6m
+
+Hauteur au faîtage (PLU calibré)                                                                                              9m
+
+Les règles complètes du règlement (retraits, prospects, servitudes) peuvent modifier ces valeurs.
+
+Prescriptions graphiques
+      • Clause logements aidés
+      • zonage d'eau pluviale - zone réglementaire Modérée
+
+Servitudes et périmètres connus
+      • Parc National de La Réunion : Aire d'Adhésion
+      • Aléa / PPR (Géorisques · DEAL) : Aléa mouvement de terrain — niveau faible.
+      • Classement sonore routier : Secteur affecté par le bruit routier (classement sonore cat. 3,
+        bande 100 m) — isolement acoustique renforcé obligatoire (R.571-32 CE).
+      • Droit de préemption urbain — la commune peut préempter à la vente (DIA, ~2 mois)
+
+Capacité constructible — scénario « terrain libéré »
+Scénario retenu : terrain libéré (l'enveloppe du terrain, bâti existant compté à 0). Surface de
+plancher jusqu'à ~1327 m². Surface à démolir estimée : ~874 m² (à chiffrer). Pré-faisabilité
+sur règlement public, pas un certificat d'urbanisme.
+
+Destinations autorisées
+Exploitation forestière · Hébergement · Artisanat et commerce de détail · Restauration ·
+Commerce de gros · Activités de services où s'effectue l'accueil d'une clientèle · Cinéma · Hôtels.
+Interdites : Exploitation agricole · Entrepôt. CDAC au-delà de 1000 m² de surface de vente.
+
+Fiscalité de l'opération
+
+Taxe d'aménagement               taux communal 5 % — se calcule sur la surface de plancher créée par le projet
+                                 (chiffrée au Bilan)
+
+Redevance                        0,40 % de l'assiette de la taxe d'aménagement pour les travaux soumis à permis
+d'archéologie                    (CGI, gestion DGFiP depuis l'ordonnance 2022-883) — chiffrée sur la SDP du
+préventive                       projet, au Bilan
+
+
+Pièces à joindre (CERFA 13406, maison individuelle)
+
+CODE     PIÈCE                                   ÉTAT
+
+PCMI1 Plan de situation du terrain               FOURNIE (indicative) — 2 vues (ensemble + rapprochée), Nord +
+                                                 échelle ; format/échelle exacte à confirmer par le porteur.
+
+
+
+
+  Document préparatoire établi à partir de données publiques — ne constitue pas un dossier de demande de permis. À compléter et vérifier par le
+                                                         pétitionnaire ou son architecte.
+PCMI2 Plan de masse                              PARTIELLE (indicative) — état EXISTANT coté fourni ; le PROJET
+                                                 (implantation, cotes de la construction) reste à dessiner par le
+                                                 porteur.
+
+PCMI3 Plan en coupe du terrain et                À PRODUIRE par le porteur (dépend du projet).
+      de la construction
+
+PCMI4 Notice décrivant le terrain et PARTIELLE — partie TERRAIN pré-rédigée (sourcée) ; partie PROJET
+      le projet                      à compléter par le porteur.
+
+PCMI5 Plan des façades et des                    À PRODUIRE par le porteur (dépend du projet).
+      toitures
+
+PCMI6 Document graphique                         À PRODUIRE par le porteur (dépend du projet).
+      d'insertion
+
+PCMI7 Photographie —                             PARTIELLE — carte des prises de vue RECOMMANDÉES fournie ; la
+      environnement proche                       photo reste à réaliser par le porteur.
+
+PCMI8 Photographie — paysage                     PARTIELLE — carte des prises de vue RECOMMANDÉES fournie ; la
+      lointain                                   photo reste à réaliser par le porteur.
+
+
+
+
+  Document préparatoire établi à partir de données publiques — ne constitue pas un dossier de demande de permis. À compléter et vérifier par le
+                                                         pétitionnaire ou son architecte.
+
