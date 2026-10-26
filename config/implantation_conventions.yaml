@@ -32,6 +32,7 @@ batiment:
 #   largeur = surface_m2 / (profondeur_m - largeur_coursive_m).
 # SHAB estimée = surface du module dessiné × coef_plancher_habitable.
 modules:
+  T1: {surface_m2: 28.0, pieces: 1}   # ETUDE-V6 — studio (Estimé). La surface saisie au programme surcharge.
   T2: {surface_m2: 50.0, pieces: 2}
   T3: {surface_m2: 65.0, pieces: 3}
   T4: {surface_m2: 80.0, pieces: 4}
@@ -45,3 +46,7 @@ stationnement:
   place_largeur_m: 2.5
   allee_largeur_m: 5.0          # allée de desserte double sens
   acces_largeur_m: 4.0          # débouché sur la voie
+  m2_par_place_sous_sol: 25.0   # place en sous-sol, circulation comprise (Estimé) — ETUDE-V6-2 Lot 3
+  rampe_largeur_m: 3.5          # rampe d'accès au sous-sol : largeur mini usuelle (sens unique)
+  rampe_pente_max_pct: 18.0     # pente max admissible d'une rampe de parking
+  hauteur_sous_sol_m: 3.0       # hauteur d'un niveau de sous-sol (→ longueur de rampe = h / pente)

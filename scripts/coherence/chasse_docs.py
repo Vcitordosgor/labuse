@@ -159,10 +159,12 @@ def g03_courrier_pm_connue_occupant():
 
 def g04_etude_faisabilite_timeout():
     """E-04 — l'Étude de faisabilité (POST /modules/etude) n'aboutit pas sur grande parcelle :
-    timeout silencieux (document non livrable). Robustesse / FAUX-CLIENT (échec non dit)."""
-    st, payload, err = _post_json("/modules/etude", {"idus": [T_AU]}, timeout=45)
+    timeout silencieux (document non livrable). Robustesse / FAUX-CLIENT (échec non dit).
+    ETUDE-V6-2 (Lot 3) — la borne du moteur est passée à 60 s ; le client attend ~75 s (comme le front)
+    pour laisser l'app rendre son 503 honnête AVANT de conclure à un timeout silencieux."""
+    st, payload, err = _post_json("/modules/etude", {"idus": [T_AU]}, timeout=75)
     if err and ("timed out" in err or "timeout" in err.lower()):
-        return "ECART", f"POST /modules/etude {T_AU} : timeout (>45 s) — document non livrable"
+        return "ECART", f"POST /modules/etude {T_AU} : timeout (>75 s) — document non livrable"
     if st == 0 and err:
         return "ECART", f"POST /modules/etude {T_AU} : échec {err}"
     return "OK", f"Étude rendue (HTTP {st})"

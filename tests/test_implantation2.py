@@ -83,12 +83,14 @@ def test_scenarios_distincts(payload):
     assert len(sigs) == len(set(sigs)), "les scénarios doivent être géométriquement distincts"
 
 
-def test_controles_quatre_etats(payload):
+def test_controles_cinq_etats(payload):
+    # ETUDE-V6 (Lot B) — 5ᵉ état « À confirmer » (ambiguïté donnée/texte : PPR, prospect, servitude, barème).
+    from labuse.implantation.controles import A_CONFIRMER
     for sc in payload["scenarios"]:
         c = sc["controles_compte"]
-        assert set(c) == {"reussi", "echoue", "non_effectue", "non_applicable"}
+        assert set(c) == {"reussi", "echoue", "non_effectue", "non_applicable", "a_confirmer"}
         for ct in sc["controles"]:
-            assert ct["resultat"] in (REUSSI, ECHOUE, NON_EFFECTUE, NON_APPLICABLE)
+            assert ct["resultat"] in (REUSSI, ECHOUE, NON_EFFECTUE, NON_APPLICABLE, A_CONFIRMER)
             # VERROU : un « Réussi » n'existe jamais sans règle citée.
             if ct["resultat"] == REUSSI:
                 assert ct["citation"] and str(ct["citation"]).strip(), \

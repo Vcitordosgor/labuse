@@ -349,6 +349,11 @@ def _tableau(terrain, cap) -> str:
         ("Places dessinées / imposées", f"{cap.places} / {cap.places_imposees if cap.places_imposees is not None else '—'}"),
         ("Logements", f"{cap.logements} · " + " · ".join(f"{t} ×{n}" for t, n in cap.par_type.items()) if cap.par_type else str(cap.logements)),
     ]
+    # ETUDE-V6-8 (item 4) — en sous-sol, l'emprise enterrée ET la RAMPE d'accès sont COMPTÉES dans le tableau
+    # des surfaces (la rampe n'est jamais 0 m² : il faut bien descendre au −1).
+    if getattr(cap, "stationnement_mode", "aerien") == "sous_sol":
+        lignes.insert(4, ("Emprise du sous-sol", m2_fr(getattr(cap, "emprise_sous_sol_m2", 0.0))))
+        lignes.insert(5, ("Rampe d’accès au sous-sol", m2_fr(getattr(cap, "rampe_m2", 0.0))))
     y = 326
     b = [_txt(COL_X, y, "SURFACES (mesurées sur le plan)", size=10, weight="700")]
     y += 16
@@ -358,6 +363,13 @@ def _tableau(terrain, cap) -> str:
         b.append(f'<line x1="{COL_X}" y1="{y+4}" x2="1164" y2="{y+4}" stroke="#DDD"/>')
         y += 16
     return "".join(b)
+
+
+def _mode_statio(cap) -> str:
+    """ETUDE-V6-7 (item 5) — libellé du MODE RÉEL de stationnement, jamais « aérien » en sous-sol."""
+    if getattr(cap, "stationnement_mode", "aerien") == "sous_sol":
+        return "sous-sol (niveau −1)"
+    return "aérien"
 
 
 def _cartouche(entrees: dict, cap, forme: str, niveaux: int, ref: str, *, genere_le: str,
@@ -372,7 +384,7 @@ def _cartouche(entrees: dict, cap, forme: str, niveaux: int, ref: str, *, genere
     b.append(_txt(x + 12, y0 + 37, "Étude de faisabilité — plan masse", size=10.5, weight="600"))
     b.append(_txt(x + 12, y0 + 53, f"{commune} · zone {zone}", size=9.5))
     b.append(_txt(x + 12, y0 + 68, f"Parcelles {parcelles}", size=9.5))
-    b.append(_txt(x + 12, y0 + 84, f"Scénario {ref} · {forme.replace('_', ' ')} R+{max(0, niveaux-1)} · stationnement aérien", size=9))
+    b.append(_txt(x + 12, y0 + 84, f"{forme.replace('_', ' ').capitalize()} R+{max(0, niveaux-1)} · stationnement {_mode_statio(cap)}", size=9))
     b.append(_txt(x + 12, y0 + 100, f"PLU {millesime_plu or 'millésime en vigueur'} · LiDAR HD IGN · BD TOPO", size=8.5, fill="#555"))
     b.append(_txt(x + 12, y0 + 115, f"Généré le {genere_le} · {numero}", size=8.5, fill="#555"))
     b.append(_txt(x + 12, y0 + 134, "Esquisse indicative — pas une étude d’architecte", size=9, fill="#B45309", weight="600"))
@@ -594,8 +606,11 @@ def coupe_svg(scenario, contexte: Contexte, *, ref: str, genere_le: str, numero:
     b.append("</g>")
 
     # ── légende + cartouche (colonne de droite)
+    # ETUDE-V6-7 (item 5) — la légende dit le MODE RÉEL (jamais « aérien » sur une étude en sous-sol).
+    _stat_lab = ("Stationnement sous-sol (−1)" if getattr(scene, "sous_sol", None)
+                 else "Stationnement aérien")
     leg = [("#DC2626", "Terrain naturel (LiDAR)"), ("#2563EB", "Hauteur égout / faîtage (règle)"),
-           ("#F5C6B8", "Bâtiment en coupe"), ("#E5E7EB", "Stationnement aérien")]
+           ("#F5C6B8", "Bâtiment en coupe"), ("#E5E7EB", _stat_lab)]
     b.append(_txt(CCOL, CPY0 + 6, "LÉGENDE", size=10, weight="700"))
     ly = CPY0 + 22
     for col, lab in leg:

@@ -13,8 +13,8 @@ import pytest
 from shapely.ops import unary_union
 
 from labuse.implantation import rendu
-from labuse.implantation.controles import (ECHOUE, NON_APPLICABLE, NON_EFFECTUE, REUSSI,
-                                           _ground_tiles)
+from labuse.implantation.controles import (A_CONFIRMER, ECHOUE, NON_APPLICABLE, NON_EFFECTUE,
+                                           REUSSI, _ground_tiles)
 from labuse.implantation.moteur import (IDUS_ETANG_SALE, IDUS_SAINT_ANDRE, IDUS_SAINT_DENIS, etudier)
 
 # IMPLANTATION-1 LOT C — le docstring annonce « Marqués `reel` … jamais en CI », mais le marqueur
@@ -257,7 +257,7 @@ def test_hauteur_non_chiffrable_jamais_exploitable(scenario):
     if scenario.regles.hauteur_non_chiffrable:
         assert scenario.statut != "exploitable en pré-faisabilité"
         c = next(c for c in scenario.controles if c.nom == "Prospect (hauteur relative)")
-        assert c.resultat == NON_EFFECTUE
+        assert c.resultat == A_CONFIRMER   # ETUDE-V6 — prospect non chiffrable = « À confirmer »
     else:
         c = next(c for c in scenario.controles if c.nom == "Prospect (hauteur relative)")
         assert c.resultat == NON_APPLICABLE
@@ -292,8 +292,9 @@ def test_contraintes_absentes_non_applicable(scenario):
         assert par_nom.get("PPR zone bleue (prescription)") == NON_APPLICABLE
 
 
-def test_quatre_etats_seulement(scenario):
-    autorises = {REUSSI, ECHOUE, NON_EFFECTUE, NON_APPLICABLE}
+def test_cinq_etats_seulement(scenario):
+    # ETUDE-V6 (Lot B) — 5ᵉ état « À confirmer » (ambiguïté donnée/texte).
+    autorises = {REUSSI, ECHOUE, NON_EFFECTUE, NON_APPLICABLE, A_CONFIRMER}
     for c in scenario.controles:
         assert c.resultat in autorises
 

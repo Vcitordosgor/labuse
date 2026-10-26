@@ -26,6 +26,12 @@ REUSSI = "Réussi"
 ECHOUE = "Échoué"
 NON_EFFECTUE = "Non effectué"
 NON_APPLICABLE = "Non applicable"
+# ETUDE-V6 (Lot B) — 5ᵉ état : ambiguïté de DONNÉE ou de TEXTE (PPR présent non interprété, prospect
+# non chiffrable, servitude présente, barème manquant). ≠ « Non effectué » (non calculé, ex. locaux
+# vélos) et ≠ « Non applicable » (contrainte absente). « À confirmer » interdit un verdict « Exploitable ».
+A_CONFIRMER = "À confirmer"
+
+ETATS = (REUSSI, ECHOUE, NON_EFFECTUE, NON_APPLICABLE, A_CONFIRMER)
 
 _TOL_AIRE = 1e-6
 _TOL_CONTENU = 0.05
@@ -42,7 +48,9 @@ def _ground_tiles(scene: Scene):
     """Objets du PLAN DE SOL (niveau 0 pour le bâti) qui pavent l'assiette sans se chevaucher."""
     out = []
     for o in scene.objets:
-        if o.kind in ("place", "allee", "acces", "espace_libre"):
+        # ETUDE-V6-2 (Lot 3) — la rampe de sous-sol est un objet du PLAN DE SOL : elle PAVE l'assiette
+        # au même titre que l'accès aérien (sinon la somme des surfaces ne boucle pas).
+        if o.kind in ("place", "allee", "acces", "rampe", "espace_libre"):
             out.append(o)
         elif o.kind in ("module", "noyau", "coursive") and o.niveau == 0:
             out.append(o)
@@ -132,7 +140,11 @@ def verifier_geometrie(scene: Scene, terrain, conv: Conventions, cap: Capacite,
             dim_ok = False
     checks.append(CheckGeo("dimensions modules ≥ convention", dim_ok))
 
-    nb_ok = (cap.logements == len(modules)) and (cap.places == len(places))
+    # ETUDE-V6-2 (Lot 3) — en sous-sol, les places sont au niveau −1 (aucun objet « place » au sol) :
+    # on confronte alors le nombre annoncé au nombre logé au sous-sol, pas aux places dessinées.
+    places_dessinees = (getattr(cap, "places_sous_sol", 0)
+                        if getattr(cap, "stationnement_mode", "aerien") == "sous_sol" else len(places))
+    nb_ok = (cap.logements == len(modules)) and (cap.places == places_dessinees)
     checks.append(CheckGeo("nb annoncé = nb dessiné (logements, places)", nb_ok))
 
     # SDP mesurée = modules + noyaux (coursive ouverte HORS SDP, art. R111-22 c. urb. — LOT D)
@@ -244,10 +256,55 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
     else:
         out.append(ControleReg("Hauteur", "règle non validée", f"R+{cap.niveaux - 1}", NON_EFFECTUE))
 
+    # ETUDE-V6-2 (Lot 3, correction) — HAUTEUR SUR TERRAIN EN PENTE : la hauteur à l'égout se mesure depuis
+    # le terrain NATUREL. Sur une pente, la façade AVAL est plus haute que niveaux × étage du dénivelé sous
+    # le bâtiment. On VÉRIFIE (dénivelé LiDAR) si un volume à toiture plate dépasserait le plafond à l'égout
+    # côté aval : si oui, le bâtiment doit être EN GRADINS (partie aval possiblement R+(N-1), comme
+    # l'architecte). LABUSE suppose des gradins (R+N conservé) et le SIGNALE — à confirmer par l'architecte.
+    # ETUDE-V6-2 (Lot 3, correction §1) — GRADINS MESURÉS SUR LE LiDAR (plus de « à confirmer »). La hauteur
+    # à l'égout se mesure depuis le TN sous chaque partie du bâtiment ; on MESURE le dénivelé sous le bâti
+    # (pente LiDAR × plus grande dimension du bâti, borné par le dénivelé de la parcelle), puis on conclut :
+    #   · toiture plate tenable si niveaux × étage + relief ≤ plafond égout ;
+    #   · sinon bâtiment EN GRADINS (un décrochement par étage) qui tient R+N — nombre de gradins = relief/étage.
+    pente = getattr(terrain, "pente", None)
+    he = regles.hauteur_egout
+    if isinstance(pente, dict) and pente.get("disponible") and he.validee and he.valeur is not None:
+        import math
+        denivele_parcelle = float(pente.get("denivele_m") or 0.0)
+        pm = float(pente.get("pente_moyenne_pct") or 0.0) / 100.0
+        batis_w = [o.geom_world for o in scene.of("batiment_emprise") if o.geom_world is not None]
+        if batis_w:
+            mnx, mny, mxx, mxy = unary_union(batis_w).bounds
+            L_bati = max(mxx - mnx, mxy - mny)
+        else:
+            L_bati = math.sqrt(max(0.0, cap.emprise_sol_m2))
+        relief_bati = round(min(denivele_parcelle, pm * L_bati), 1)
+        etage = conv.hauteur_etage_m
+        egout_plat = round(cap.niveaux * etage + relief_bati, 1)   # façade aval d'un volume à toiture plate
+        src = pente.get("source") or "LiDAR"
+        if relief_bati < 0.5:
+            out.append(ControleReg("Hauteur sur terrain en pente", "terrain quasi plat",
+                                   f"relief sous bâti {relief_bati:.1f} m ({src})", REUSSI, he.citation))
+        elif egout_plat <= he.valeur + 1e-9:
+            out.append(ControleReg(
+                "Hauteur sur terrain en pente", f"≤ {he.valeur:.0f} m à l'égout (toiture plate tenable)",
+                f"R+{cap.niveaux - 1}, relief sous bâti {relief_bati:.1f} m ({src}) → {egout_plat:.1f} m aval",
+                REUSSI, he.citation))
+        else:
+            n_gradins = max(2, math.ceil(relief_bati / etage) + 1)
+            out.append(ControleReg(
+                "Hauteur sur terrain en pente", f"≤ {he.valeur:.0f} m à l'égout — bâtiment EN GRADINS",
+                f"R+{cap.niveaux - 1} en {n_gradins} gradins (relief {relief_bati:.1f} m mesuré, {src})",
+                REUSSI, he.citation,
+                detail=(f"relief sous le bâti {relief_bati:.1f} m (pente moy. {pente.get('pente_moyenne_pct')} %) : "
+                        f"une toiture plate dépasserait de {egout_plat - he.valeur:.1f} m à l'égout aval → le bâtiment "
+                        f"est en {n_gradins} gradins (un décrochement d'étage chacun) pour tenir {he.valeur:.0f} m "
+                        f"partout. L'architecte a fait le même constat (partie aval R+{max(0, cap.niveaux - 2)}).")))
+
     # Prospect / hauteur relative (ex. L ≥ h/2) : non chiffrable par le moteur -> Non effectué
     if regles.prospect is not None:
         out.append(ControleReg("Prospect (hauteur relative)", "non chiffrable par le moteur",
-                               "hauteur bornée par la seule règle absolue", NON_EFFECTUE,
+                               "hauteur bornée par la seule règle absolue", A_CONFIRMER,
                                citation=None,
                                detail=(regles.prospect.citation or "règle de prospect L ≥ h/2 — "
                                        "à vérifier par l'architecte")))
@@ -275,14 +332,65 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
         out.append(ControleReg("Perméabilité (pleine terre)", "règle non validée",
                                f"{cap.pleine_terre_m2:.0f} m²", NON_EFFECTUE))
 
+    # ETUDE-V6-2 (Lot 3, correction §2) — ESPACES VERTS (part végétalisée du terrain, hors stationnement).
+    # EV = espace libre végétalisable = pleine terre + surface sur dalle plantée (en sous-sol).
+    ev = getattr(regles, "espaces_verts", None)
+    if ev is not None and ev.validee and ev.pct is not None:
+        requis = contenance * ev.pct / 100.0
+        ev_m2 = (cap.pleine_terre_m2 or 0.0) + (getattr(cap, "sur_dalle_m2", 0.0) or 0.0)
+        hs = " · hors stationnement" if ev.hors_stationnement else ""
+        ok = ev_m2 >= requis - 1e-6
+        out.append(ControleReg("Espaces verts", f"≥ {requis:.0f} m² ({ev.pct:.0f} %{hs})",
+                               f"{ev_m2:.0f} m²", REUSSI if ok else ECHOUE, ev.citation_complete,
+                               f"écart {ev_m2 - requis:+.0f} m²"))
+
+    # ETUDE-V6-2 (Lot 3, correction §2) — MARGE PLANTÉE périphérique : une bande de largeur_m sur une
+    # fraction du linéaire. Elle s'INSCRIT dans les reculs (voie/séparatives) : vérifiée si le plus
+    # petit recul validé ≥ la largeur de la bande (sinon À confirmer).
+    mp = getattr(regles, "marge_plantee", None)
+    if mp is not None and mp.validee and mp.largeur_m is not None:
+        reculs = [x.valeur for x in (regles.recul_voie, regles.recul_separatives)
+                  if x.validee and x.valeur is not None]
+        recul_min = min(reculs) if reculs else 0.0
+        hm = " hors mitoyenneté" if mp.hors_mitoyennete else ""
+        ok = recul_min >= mp.largeur_m - 1e-6
+        lin = f" sur {mp.pct_lineaire:.0f} % du linéaire" if mp.pct_lineaire is not None else ""
+        out.append(ControleReg("Marge plantée", f"bande {mp.largeur_m:.1f} m{lin}{hm}",
+                               f"reculs ≥ {recul_min:.0f} m" if ok else f"recul {recul_min:.0f} m < {mp.largeur_m:.1f} m",
+                               REUSSI if ok else A_CONFIRMER, mp.citation_complete,
+                               detail=("la bande plantée s'inscrit dans les reculs (périphérie végétalisée)"
+                                       if ok else "recul insuffisant pour loger la bande plantée — à confirmer")))
+
     b = regles.stationnement
+    sous_sol = getattr(cap, "stationnement_mode", "aerien") == "sous_sol"
+    place_mot = "places au sous-sol" if sous_sol else "places dessinées"
     if b.validee and cap.places_imposees is not None:
         ok = cap.places >= cap.places_imposees
         out.append(ControleReg("Stationnement", f"≥ {cap.places_imposees} places (barème validé)",
-                               f"{cap.places} places dessinées", REUSSI if ok else ECHOUE,
+                               f"{cap.places} {place_mot}", REUSSI if ok else ECHOUE,
                                b.citation_complete, f"écart {cap.places - cap.places_imposees:+d}"))
     else:
-        out.append(ControleReg("Stationnement", "barème non validé", f"{cap.places} places dessinées", NON_EFFECTUE))
+        # ETUDE-V6 — barème manquant = ambiguïté (exigence non chiffrée) → À confirmer, pas « Non effectué ».
+        out.append(ControleReg("Stationnement", "barème non servi pour cette zone", f"{cap.places} {place_mot}",
+                               A_CONFIRMER, detail="exigence de stationnement non chiffrée ici — à confirmer au règlement"))
+
+    # ETUDE-V6-2 (Lot 3) — en SOUS-SOL, l'emprise du parking enterré doit tenir sous l'EMPRISE
+    # RÉGLEMENTAIRE (CES × contenance) ; c'est ce contrôle (pas le comptage) qui plafonne la capacité.
+    if sous_sol:
+        rc = regles.emprise_ces
+        if rc.validee and rc.valeur is not None:
+            emp_max = contenance * rc.valeur / 100.0
+            ok = cap.emprise_sous_sol_m2 <= emp_max + 1e-6
+            out.append(ControleReg(
+                "Emprise du sous-sol", f"≤ {emp_max:.0f} m² (emprise réglementaire, CES {rc.valeur:.0f} %)",
+                f"{cap.emprise_sous_sol_m2:.0f} m² ({cap.places_sous_sol} places × {cap.emprise_sous_sol_m2 / cap.places_sous_sol:.0f} m²)"
+                if cap.places_sous_sol else f"{cap.emprise_sous_sol_m2:.0f} m²",
+                REUSSI if ok else ECHOUE, rc.citation_complete,
+                f"écart {emp_max - cap.emprise_sous_sol_m2:+.0f} m²"))
+        else:
+            out.append(ControleReg("Emprise du sous-sol", "CES non servi — emprise réglementaire non chiffrée",
+                                   f"{cap.emprise_sous_sol_m2:.0f} m²", A_CONFIRMER,
+                                   detail="emprise réglementaire du sous-sol à confirmer au règlement"))
 
     # Distance entre constructions (PLU-CALIBRAGE-10, ex-art. 8) : MESURÉE sur la géométrie et
     # confrontée à la règle de la zone. Convention des 4 états :
@@ -322,20 +430,22 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
 
     out.append(ControleReg("Locaux vélos · déchets", "non modélisés", "—", NON_EFFECTUE))
 
-    # PPR rouge (interdiction) : déduite de l'implantation
+    # PPR rouge (interdiction) : déduite de l'implantation, mais l'interdiction reste à CONFIRMER au
+    # règlement (on la retire par prudence, ce n'est pas une preuve de constructibilité du reste).
     if terrain.contraintes.get("ppr_rouge"):
-        out.append(ControleReg("PPR zone rouge (interdiction)", "inconstructible", f"{terrain.ppr_rouge_m2:.0f} m²",
-                               NON_EFFECTUE, detail="retirée de la zone d'implantation (hypothèse prudente)"))
+        out.append(ControleReg("PPR zone rouge (interdiction)", "retirée de la zone (prudence)",
+                               f"{terrain.ppr_rouge_m2:.0f} m²", A_CONFIRMER,
+                               detail="partie interdite retirée de l'implantation ; interdiction à confirmer au règlement PPR"))
     else:
         out.append(ControleReg("PPR zone rouge (interdiction)", "absente du terrain", "—", NON_APPLICABLE))
 
-    # PPR bleue (prescription) : signalée, non interprétée ; à compléter si elle touche le bâti
+    # PPR bleue (prescription) : signalée, non interprétée → à confirmer (prescriptions à lire).
     if terrain.contraintes.get("ppr_bleue"):
         touche = _ppr_bleue_touche_bati(scene, terrain)
         out.append(ControleReg("PPR zone bleue (prescription)", "signalée, non interprétée",
                                ("touche le bâti proposé" if touche else "ne touche pas le bâti"),
-                               NON_EFFECTUE, detail=("prescriptions à lire ; l'étude passe à compléter"
-                                                     if touche else "signalée")))
+                               A_CONFIRMER, detail=("prescriptions à lire : tant qu'elles ne le sont pas, l'étude "
+                                                    "n'est pas exploitable" if touche else "signalée, prescriptions à lire")))
     else:
         out.append(ControleReg("PPR zone bleue (prescription)", "absente du terrain", "—", NON_APPLICABLE))
 
@@ -343,7 +453,7 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
     autres = [k for k in ("emplacement_reserve", "ebc", "sup", "servitude") if terrain.contraintes.get(k)]
     if autres:
         out.append(ControleReg("ER / EBC / SUP / servitudes", "présente(s)", ", ".join(autres),
-                               NON_EFFECTUE, detail="non interprétées par ce moteur"))
+                               A_CONFIRMER, detail="servitude(s) présente(s) non interprétée(s) par ce moteur — à confirmer"))
     else:
         out.append(ControleReg("ER / EBC / SUP / servitudes", "absentes du terrain", "—", NON_APPLICABLE))
     return out
@@ -367,3 +477,36 @@ def statut_etude(controles: list[ControleReg], geo_ok: bool, *, scene: Scene, te
     if _ppr_bleue_touche_bati(scene, terrain):
         return "à compléter"
     return "exploitable en pré-faisabilité"
+
+
+# ETUDE-V6 (Lot B) — verdict GLOBAL de l'étude, dans les trois libellés du mandat. Distinct de
+# `statut_etude` (conservé pour l'écran historique). Règle clé : un PPR, un accès ou un stationnement
+# INDÉTERMINÉ (À confirmer) interdit « Exploitable » — trois contrôles verts ne suffisent pas.
+VERDICT_EXPLOITABLE = "Exploitable sous hypothèses"
+VERDICT_A_COMPLETER = "À compléter"
+VERDICT_IMPOSSIBLE = "Impossible pour cause établie"
+
+# contrôles dont l'état « À confirmer » est RÉDHIBITOIRE pour un verdict exploitable (mandat §4).
+_A_CONFIRMER_BLOQUANTS = frozenset({
+    "PPR zone rouge (interdiction)", "PPR zone bleue (prescription)",
+    "Stationnement", "Prospect (hauteur relative)", "ER / EBC / SUP / servitudes",
+})
+
+
+def verdict_global(controles: list[ControleReg], *, statut_base: str, terrain,
+                   cause_etablie: str | None = None) -> str:
+    """Traduit l'état de l'étude dans les 3 verdicts du mandat. `cause_etablie` (non None) force
+    « Impossible pour cause établie » (ex. assiette entièrement inconstructible, dépassement prouvé)."""
+    if cause_etablie:
+        return VERDICT_IMPOSSIBLE
+    if statut_base == "simulation impossible":
+        return VERDICT_IMPOSSIBLE
+    if any(c.resultat == ECHOUE for c in controles):
+        return VERDICT_A_COMPLETER
+    if any(c.resultat == A_CONFIRMER and c.nom in _A_CONFIRMER_BLOQUANTS for c in controles):
+        return VERDICT_A_COMPLETER
+    if not getattr(terrain, "has_voie", True):      # accès à la voie non établi
+        return VERDICT_A_COMPLETER
+    if statut_base != "exploitable en pré-faisabilité":
+        return VERDICT_A_COMPLETER
+    return VERDICT_EXPLOITABLE

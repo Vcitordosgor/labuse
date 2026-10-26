@@ -7,18 +7,19 @@
 // tuile fiche, pont Assemblage, et les anciens liens #m=programme (redirigés ici par App.tsx).
 import { useEffect, useState } from 'react'
 import { useApp } from '../../store/useApp'
-import { M22, type EtudeProgramme } from './M22Programme'
+import { EtudeV6 } from './EtudeV6'
+import type { EtudeProgramme } from './M22Programme'
 import { BilanEcran } from '../fiche/BilanEcran'
 
+// ETUDE-V6 — l'overlay Docs monte le parcours en 3 étapes (EtudeV6). M22 reste pour son mode outil et
+// ses tests. Lot B : le pont « Bilan de ce scénario » est recâblé depuis le RÉSULTAT (la variante
+// affichée transmet son programme au Bilan existant — pas de refonte du Bilan).
 export function EtudeEcran() {
   const etudeIdus = useApp((s) => s.etudeIdus)
   const fermerEtude = useApp((s) => s.fermerEtude)
-  // IMPLANTATION-4 (LOT B) — pont « Bilan de ce scénario » : ouvre le Bilan (par-dessus l'Étude)
-  // pré-rempli avec le programme du scénario affiché (logements par type + SDP), étiqueté « depuis
-  // l'Étude ». Le Bilan porte sur la 1ʳᵉ parcelle de l'assiette (modèle de bilan par parcelle).
   const [bilanProg, setBilanProg] = useState<EtudeProgramme | null>(null)
 
-  // Échap ferme (comme BilanEcran). Le hook est inconditionnel ; il ne fait rien quand l'overlay est fermé.
+  // Échap ferme. Le hook est inconditionnel ; il ne fait rien quand l'overlay est fermé.
   useEffect(() => {
     if (etudeIdus == null) return
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') fermerEtude() }
@@ -32,12 +33,11 @@ export function EtudeEcran() {
     <div data-etude-ecran className="fixed inset-0 z-50 overflow-auto bg-bg" onClick={fermerEtude}>
       <div className="mx-auto my-6 flex min-h-[calc(100vh-3rem)] max-w-[1400px] flex-col overflow-hidden rounded-lg border border-line bg-surface-1"
         onClick={(e) => e.stopPropagation()}>
-        {/* clé = l'assiette : rouvrir sur une autre parcelle REMONTE M22 (état neuf, sélection locale).
-            M22 (embedded) rend l'écran COMPLET, en-tête compris (← Fermer → onClose / Réinitialiser). */}
-        <M22 key={etudeIdus.join(',')} embedded initialIdus={etudeIdus} onBilan={setBilanProg} onClose={fermerEtude} />
+        {/* clé = l'assiette : rouvrir sur une autre parcelle REMONTE le wizard (état neuf). */}
+        <EtudeV6 key={etudeIdus.join(',')} initialIdus={etudeIdus} onClose={fermerEtude} onBilan={setBilanProg} />
       </div>
 
-      {/* Bilan de ce scénario — par-dessus l'Étude (son propre overlay fixed inset-0). */}
+      {/* Bilan de ce scénario — par-dessus l'Étude (son propre overlay). Le Bilan porte sur la 1ʳᵉ parcelle. */}
       {bilanProg && etudeIdus[0] && (
         <div onClick={(e) => e.stopPropagation()}>
           <BilanEcran idu={etudeIdus[0]} depuisEtude={bilanProg} onClose={() => setBilanProg(null)} />
