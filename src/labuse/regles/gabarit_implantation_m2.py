@@ -6,14 +6,16 @@ données ; une seule fiche les couvre (comme emprise_batie_m2 couvre emprise + c
 from . import FicheRegle, declarer
 
 declarer(FicheRegle(
-    donnees=("gabarit_implantation_m2", "gabarit_emprise_plafond_m2", "gabarit_hauteur_m",
-             "gabarit_couverture_verdict", "gabarit_motif_blocage", "gabarit_plan_2d"),
+    donnees=("gabarit_implantation_m2", "gabarit_bati_deduit_m2", "gabarit_emprise_plafond_m2",
+             "gabarit_hauteur_m", "gabarit_couverture_verdict", "gabarit_motif_blocage", "gabarit_plan_2d"),
     formule_codee=(
         "Moteur géospatial PUR et déterministe (aucun estimatif — liste noire testée). Par parcelle, "
         "après validation stricte (sinon « Calcul incomplet » + motif) :\n"
         "• zone d'implantation = parcelle − reculs − exclusions : chaque limite classée (voie / "
         "séparative / voie privée) est bufferisée de son recul PLU, l'union est retranchée de la "
-        "parcelle, puis les exclusions (PPR zone rouge) sont soustraites ; surface = ST_Area de la "
+        "parcelle, puis les exclusions (PPR zone rouge) sont soustraites ; enfin l'emprise du BÂTI "
+        "EXISTANT conservé (découpé au contour cadastral) est DÉDUITE (RECETTE-OUTILS-3 S7, décision "
+        "Vic) — `gabarit_bati_deduit_m2` = emprise retranchée (zone ∩ bâti) ; surface = ST_Area de la "
         "part surfacique (Polygon/MultiPolygon), en EPSG:2975.\n"
         "• plafond d'emprise = surface_parcelle × CES / 100, calculé À PART (JAMAIS min(zone, "
         "plafond)) ; None (« Non réglementé ») quand le règlement ne fixe pas de CES — silence prouvé "

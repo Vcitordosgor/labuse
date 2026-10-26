@@ -273,3 +273,14 @@ Non-régression Lot B : `tsc -b` vert, **vitest** OK ; `pytest` gabarit/exports/
 ## Lot C — Copilote
 
 - **S12** ✅ — **Exemples non tronqués.** Les 9 cartes passent du texte 15 px / 2 lignes clampées (avec « … ») à **13 px, 3 lignes maximum, AUCUN « … »** : les 9 libellés tiennent en 3 lignes à cette taille/largeur (vérifié LIVE — `truncated: []`). **Toutes de la même hauteur** = la plus haute (3 lignes + icône) : `h-28` (112 px), mesuré **112 px sur les 9** (`allSameHeight: true`). IDU en mono conservés, icônes de type conservées. Aucun libellé n'a eu besoin d'être raccourci (tous tiennent). Captures `S12-copilote-avant` (15 px, 2 lignes, « … ») / `S12-copilote-apres` (13 px, 3 lignes, entier). `tsc -b` vert, vitest 280.
+
+## Lot D — clôture
+
+- **S13** ✅ — **Les 3 documents régénérés, outil == Docs, S6/S8 visibles.** Les boutons d'export de l'outil et la fenêtre Docs appellent le MÊME générateur (`docEtudeZoneUrl`/`docGabaritUrl`/`docComparatifUrl` → même route serveur) → identiques deux à deux par construction ; confirmé LIVE pour l'Étude de zone : **2 générations IDENTIQUES** (hors n° de document et date). Régénérés sur les parcelles de référence : **Étude de zone** 97411000BZ1281 (8 pages, carte coin **(28,32,31)** sombre — **S6 OK, plus de carré blanc**) ; **Gabarit** 97408000BL0020 (389 → zone déduite, « bâti déduit 216 m² », schéma dessine le bâti — **S8 OK**) + 97415000CM1658 (130, 46 m²) ; **Comparatif** 97415000BY0361/BY0272/BY0083 (2 pages). PDF joints `reports/RECETTE-OUTILS-1/pdf/S13-*.pdf`, captures `S8-schema-BL0020-apres`.
+- **S14** ✅ — **Fin.** Section RECETTE-OUTILS-3 complète (S1 → S14, aucune ligne sans statut, tous ✅). Non-régression finale : `tsc -b` vert · **vitest 280 passed** · **hook pytest vert** (filtre `not db and not local and not reel and not network` — 2 rouges de scope corrigés : `gabarit_bati_deduit_m2` déclaré au registre + robinet + fiche de règle + oracle_dossier). Branche `fix/recette-outils-1` poussée, **NON mergée**. Ports **8820** et **6020** libérés, Playwright arrêté.
+
+## Vu, non fait (RECETTE-OUTILS-3)
+
+- **S9** — la « plaque verticale » 3D n'a pas été reproduite (recette-2 comme maintenant rendent un volume). Le correctif prescrit (extruder la géométrie S7 déduite) est en place et vérifié (volume sur les 2 parcelles) ; rien d'autre à corriger côté extrusion.
+- **CSS morte** : la règle `.labuse-nav3d` (style de l'ancienne boussole R14, remplacée par le bloc S11) reste dans `styles/index.css` — inoffensive, non retirée (hors périmètre « chirurgical »).
+- **Clé `equipements`** (flat, un équipement par domaine) encore servie par `zone.etude_de_zone` mais plus lue par l'app ni le PDF (ils lisent `bpe` depuis S2) — champ résiduel inoffensif, non retiré.
