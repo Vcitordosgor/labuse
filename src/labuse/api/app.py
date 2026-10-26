@@ -7019,6 +7019,17 @@ def etude_zone(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> dict:
     if inp.rayon_km is not None and not is_rayon:
         out["rayon_demande_non_retenu_km"] = inp.rayon_km
     out["naf_label"] = naf_label(naf) if naf else None
+    # DOCS-COHERENCE-1 (A8, arbitrage) — quand l'Étude de zone part d'une PARCELLE, son « Prix médian
+    # du bâti » LIT l'id de la fiche (marche_dvf, médiane du secteur de la parcelle), identique au
+    # Dossier §8 et au Comparatif ; plus de prix propre à la zone qui divergeait (une seule source).
+    if inp.idu and isinstance(out.get("marche"), dict):
+        try:
+            from ..marche_service import DVF_BANQUIER_ADAPTATIF, marche_dvf
+            _pa = marche_dvf(db, idu, profil=DVF_BANQUIER_ADAPTATIF) or {}
+            if _pa.get("median") is not None:
+                out["marche"]["prix_m2_median_bati"] = _pa["median"]
+        except Exception:  # noqa: BLE001 — jamais un 500 ; repli sur la médiane de zone
+            db.rollback()
     if out.get("zone_disponible"):
         out["marche"] = out.get("marche")   # déjà posé par etude_de_zone
         # « N habitants par concurrent » (maquette) — un ratio de faits, jamais une projection de CA

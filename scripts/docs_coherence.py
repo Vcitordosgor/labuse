@@ -186,9 +186,11 @@ def _recul_voie(t):
 
 
 def _stationnement(t):
-    v = _cherche(t, r"[Ss]tationnement[^\n]*?[:·]\s*([^\n]{2,45})", r"[Ss]tationnement\s+([^\n]{2,45})")
-    v = _plat(v)
-    return v.lower().rstrip(". ") if v else None
+    # on compare le RATIO réel (« N place(s) / logement »), pas la prose autour (article, « non
+    # intégrée au gabarit »…). Un document qui ne chiffre pas de ratio (CERFA, « règle non chiffrée »)
+    # rend None = non comparé.
+    m = re.search(r"(\d+(?:[.,]\d+)?)\s*places?\s*/\s*log", t, re.I)
+    return (_norm_nb(m.group(1)) + " pl/logt") if m else None
 
 
 def _pleine_terre(t):
