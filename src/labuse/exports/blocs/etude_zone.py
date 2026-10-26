@@ -89,7 +89,9 @@ def _foncier(z) -> str:
         nom = o.get("denomination") or o.get("nom")
         surf = _i(o.get("surface_m2"))
         if nom:
-            lignes.append(_kv(esc(nom), f"{surf} m²" if surf else ""))
+            # DOCS-COHERENCE-1 (E1) — `_kv` échappe déjà sa clé ; pré-échapper ici double l'échappement
+            # (« D'AMENAGEMENT » → « D&#x27;AMENAGEMENT » affiché littéralement). On passe le nom BRUT.
+            lignes.append(_kv(nom, f"{surf} m²" if surf else ""))
     zd = z.get("zone_demain") or {}
     if zd.get("logements_autorises_36m") is not None:
         lignes.append(_kv("Logements autorisés (36 mois)", f"{_i(zd.get('logements_autorises_36m'))}"))
@@ -111,7 +113,7 @@ def _contraintes(z) -> str:
         commune = zn.get("commune")
         if zone:
             val = f"{part} %" if part is not None else ""
-            lignes.append(_kv(f"{esc(zone)}" + (f" · {esc(commune)}" if commune else ""), val))
+            lignes.append(_kv(f"{zone}" + (f" · {commune}" if commune else ""), val))   # E1 — _kv échappe déjà
     # RECETTE-OUTILS-3 (S3) — activité choisie : le menu « Activité » MODIFIE la lecture (verdict de la
     # sous-destination par zone PLU), le PDF l'affiche comme l'outil (autorisé / sous condition / …).
     dest = z.get("destinations") or {}
@@ -134,7 +136,7 @@ def _contraintes(z) -> str:
     assa = z.get("assainissement") or {}
     if assa.get("libelle"):
         lignes.append(_kv("Assainissement", esc(assa.get("libelle"))))
-    return _sec("Contraintes", lignes)
+    return _sec("Zonage PLU dans le rayon", lignes)   # DOCS-COHERENCE-1 (E4) — ce bloc liste le zonage PLU, pas des contraintes
 
 
 def _equipements(z) -> str:
