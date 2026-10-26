@@ -219,14 +219,15 @@ def _stationnement_3lignes(payload: dict, retenu: dict) -> str:
     mode = retenu.get("stationnement", {}).get("mode") or payload["entrees"].get("stationnement") or "aerien"
     places = retenu.get("stationnement", {}).get("places")
     niveaux = retenu.get("stationnement", {}).get("niveaux_sous_sol") or 1
-    regleg = g.get("regle_courte") or (f"{_dec(g.get('ratio_par_logement'))} place/logt" if g.get("ratio_par_logement") is not None else "un barème par typologie")
+    _rp = g.get("ratio_par_logement")
+    regleg = g.get("regle_courte") or (f"{_dec(_rp)} place{'s' if (_rp or 0) >= 2 else ''} / logement" if _rp is not None else "un barème par typologie")
     # ETUDE-V6-5 — le lieu reflète le NOMBRE DE NIVEAUX choisi (−1, ou −1 et −2).
     lieu = (f"au sous-sol ({'niveaux −1 et −2' if niveaux >= 2 else 'niveau −1'})" if mode == "sous_sol"
             else "en aérien (au sol)")
     lignes = [f"Le PLU de {esc(commune)} (art. {esc(g.get('article') or '—')}) exige {esc(regleg)}."]
     if pf:
         lignes.append(f"La loi nationale (Code de l'urbanisme, art. {esc(pf.get('reference') or 'L151-35')}) "
-                      f"plafonne à {_dec(pf.get('ratio_plafond'))} place/logt si le projet est éligible — à confirmer.")
+                      f"plafonne à {_dec(pf.get('ratio_plafond'))} place / logement si le projet est éligible — à confirmer.")
     lignes.append(f"LABUSE a dessiné {int(places) if places is not None else '—'} places {lieu} selon la règle du PLU.")
     mix_html = ""
     mx = next((l for l in payload["regles"].get("lignes", []) if "mixit" in (l.get("nom") or "").lower()), None)
@@ -554,8 +555,9 @@ def _p3_regles(payload: dict, retenu: dict) -> str:
     # seulement dans la section dédiée) : article + barème court du PLU, servis par le payload.
     _g = (payload.get("stationnement_regimes") or {}).get("general") or {}
     if _g.get("article") or _g.get("regle_courte") or _g.get("ratio_par_logement") is not None:
-        _sreg = _g.get("regle_courte") or (f"{_dec(_g.get('ratio_par_logement'))} place/logt"
-                                           if _g.get("ratio_par_logement") is not None else "barème par typologie")
+        _srp = _g.get("ratio_par_logement")
+        _sreg = _g.get("regle_courte") or (f"{_dec(_srp)} place{'s' if (_srp or 0) >= 2 else ''} / logement"
+                                           if _srp is not None else "barème par typologie")
         _sart = f" · art. {esc(str(_g['article']))}" if _g.get("article") else ""
         rows.append(f'<tr><td class="k">Stationnement{_sart}</td><td>{esc(_sreg)}</td>'
                     f'<td class="n"><span class="chip s">Sourcé</span></td></tr>')
@@ -574,11 +576,17 @@ def _p3_regles(payload: dict, retenu: dict) -> str:
         if ct.get(k):
             crows.append(f'<tr><td class="k">{esc(lib)}</td><td>présente</td>'
                          f'<td>retirée seulement si elle interdit de construire ; sinon signalée</td></tr>')
-    contraintes = ("<h3>Contraintes cartographiées</h3>"
+    # DOCS-COHERENCE-1 (A5) — les contraintes SIGNALÉES par la fiche/Dossier §5 (aléas, DPU, Parc
+    # national…) que le moteur d'implantation ne modélise pas : listées « signalée, non interprétée ».
+    # Plus jamais « aucune contrainte » quand le Dossier en relève une.
+    for lib in (t.get("contraintes_signalees") or []):
+        crows.append(f'<tr><td class="k">{esc(lib)}</td><td>signalée</td>'
+                     f'<td>signalée, non interprétée (voir le Dossier §5)</td></tr>')
+    contraintes = ("<h3>Contraintes cartographiées et signalées</h3>"
                    '<table class="kv"><tr><th>Contrainte</th><th>Sur le terrain</th>'
                    '<th>Traitement</th></tr>' + "".join(crows) + "</table>"
                    + '<p class="note">Ligne absente quand la contrainte ne touche pas le terrain.</p>'
-                   ) if crows else '<p class="note">Aucune contrainte cartographiée ne touche le terrain.</p>'
+                   ) if crows else '<p class="note">Aucune contrainte cartographiée ni signalée ne touche le terrain.</p>'
     return (
         '<section><h2>2. Règles et contraintes</h2>'
         f'<div class="verdict">Zone {esc(r.get("zone") or "")} du PLU. Chaque valeur est citée ; '

@@ -2046,6 +2046,43 @@ def _attach_au_ouverture(db: Session, payload: dict, idus) -> None:
             return
 
 
+def _attach_contraintes_signalees(db: Session, payload: dict, idus) -> None:
+    """DOCS-COHERENCE-1 (A5) — l'Étude §2 porte la MÊME liste de contraintes que le Dossier §5 (aléas
+    via `_aleas_block` → `servitudes.aleas_parcelle`, DPU via `_dispositifs_block`), « signalée, non
+    interprétée » quand le moteur d'implantation ne les modélise pas. Plus jamais « aucune contrainte »
+    quand le Dossier en relève une. Agrégé sur toutes les parcelles de l'assiette (dédoublonné)."""
+    if not isinstance(payload, dict):
+        return
+    from .app import _aleas_block, _dispositifs_block
+    vus, items = set(), []
+
+    def _ajoute(libelle: str):
+        cle = libelle.strip().lower()
+        if cle and cle not in vus:
+            vus.add(cle)
+            items.append(libelle.strip())
+
+    for idu in (idus or []):
+        try:
+            al = _aleas_block(db, idu) or {}
+            for a in (al.get("liste") or []):
+                niv = a.get("niveau")
+                # libellé client (comme le Dossier §5) : « _ » techniques → espaces ; jamais le code brut.
+                nat = (a.get("nature") or a.get("libelle") or "").replace("_", " ").replace(
+                    "mouvement terrain", "mouvement de terrain")
+                _ajoute(nat + (f" — niveau {niv}" if niv else ""))
+        except Exception:  # noqa: BLE001 — une contrainte absente n'est jamais un 500
+            pass
+        try:
+            d = _dispositifs_block(db, idu) or {}
+            if d.get("dpu"):   # bloc DPU présent = parcelle dans le périmètre de préemption
+                _ajoute("Droit de préemption urbain (DPU)")
+        except Exception:  # noqa: BLE001
+            pass
+    if items:
+        payload.setdefault("terrain", {})["contraintes_signalees"] = items
+
+
 class EtudeParcellesIn(BaseModel):
     # ETUDE-V6 (Lot A, étape 1) — valide l'assiette AVANT le moteur : faits par parcelle, union,
     # contiguïté (graphe, frontière partagée > tolérance), signaux et sources. Rapide, pas d'implantation.
@@ -2119,6 +2156,7 @@ def etude_implantation(body: EtudeIn, db: Session = Depends(get_db)) -> dict:
     except ValueError as exc:
         raise HTTPException(400, str(exc))
     _attach_au_ouverture(db, out, body.idus)   # vérif #2 — caveat AU porté par l'Étude, comme Comparer
+    _attach_contraintes_signalees(db, out, body.idus)   # A5 — mêmes contraintes que le Dossier §5
     return out
 
 
@@ -2185,6 +2223,7 @@ def etude_pdf(body: EtudePdfIn, request: Request, db: Session = Depends(get_db))
     except ValueError as exc:
         raise HTTPException(400, str(exc))
     _attach_au_ouverture(db, payload, body.idus)   # vérif #2 — caveat AU dans le PDF comme à l'écran
+    _attach_contraintes_signalees(db, payload, body.idus)   # A5 — mêmes contraintes que le Dossier §5
     genere_le = today_reunion().strftime("%d/%m/%Y")
     try:
         # ETUDE-V6 (Lot E) — le lotissement a son propre document (pas de scénario d'implantation).

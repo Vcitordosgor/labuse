@@ -650,7 +650,8 @@ def _regle_stationnement_courte(b) -> Optional[str]:
     def nb(x):
         return f"{x:g}".replace(".", ",")
     if b.mode == "par_logement" and b.flat_places is not None:
-        return f"{nb(b.flat_places)} place/logt"
+        # DOCS-COHERENCE-1 (F9/A6) — format client « 2 places / logement » (jamais « 2 place/logt »).
+        return f"{nb(b.flat_places)} place{'s' if b.flat_places >= 2 else ''} / logement"
     parts = []
     for lg in b.lignes:
         if lg.destination and lg.destination != "collectif":
@@ -1078,7 +1079,7 @@ def etudier_payload(session, entree: dict) -> dict:
                     "logements": best.capacite.logements, "places": best.capacite.places,
                     "ratio_par_logement": _PLAFOND_L15135, "reference": "L151-35",
                     "statut": "À confirmer",
-                    "note": "Capacité SI le projet est éligible au plafond L151-35 (0,5 place/logt) — "
+                    "note": "Capacité SI le projet est éligible au plafond L151-35 (0,5 place / logement) — "
                             "éligibilité juridique de catégorie à confirmer ; la règle générale du PLU "
                             "(appliquée ci-dessus) reste la base servie.",
                 }

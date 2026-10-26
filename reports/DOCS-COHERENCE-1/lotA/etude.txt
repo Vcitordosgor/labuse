@@ -123,15 +123,25 @@ pleine terre (perméabilité)                          40 %                     
 PLU · art. 13.1 · p. 186
 
 
-Stationnement · art. 12.2                            2 place/logt                                                                            Sourcé
+Stationnement · art. 12.2                            2 places / logement                                                                     Sourcé
 
 
-Aucune contrainte cartographiée ne touche le terrain.
+
+Contraintes cartographiées et signalées
+
+Contrainte                                           Sur le terrain       Traitement
+
+Aléa mouvement de terrain — niveau                   signalée             signalée, non interprétée (voir le Dossier §5)
+faible
+
+Droit de préemption urbain (DPU)                     signalée             signalée, non interprétée (voir le Dossier §5)
+
+Ligne absente quand la contrainte ne touche pas le terrain.
 
 
 
     Stationnement & mixité
-Le PLU de Saint-Paul (art. 12.2) exige 2 place/logt.
+Le PLU de Saint-Paul (art. 12.2) exige 2 places / logement.
 
 LABUSE a dessiné 48 places en aérien (au sol) selon la règle du PLU.
 

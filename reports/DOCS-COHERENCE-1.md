@@ -16,6 +16,12 @@ BY0083 + BY0361 + BY0272. **Pas de merge.**
 > parcelles de référence L'Étang-Salé absentes/dérivées de la base de TEST locale.
 >
 > **Complément G7 (Bilan refait maquette v3) FAIT et vérifié** — voir la section Lot G.
+>
+> **Suite autonome (reprise)** : FAIT A3-Gabarit (zone nommée X/Y), A7-Gabarit (hauteur
+> faîtage·égout), A5 (contraintes de l'Étude = celles du Dossier §5). **Harnais BY0083 :
+> 10 → 5 écarts.** Reste : zone (réconciliation moteurs gabarit/implantation/CERFA ~2,6 %),
+> hauteur (CERFA pré-dossier faîtage seul), stationnement (A6), prix bâti + terrain (A8).
+> Reprendre à **A6 (stationnement/pleine terre chiffrés au Gabarit)** puis A8, A9, B→F, G1-G6, H.
 > Serveur API local : voir « Lancer » en bas. Harnais Bilan : `capture-bilan.html`.
 
 ---
@@ -110,7 +116,7 @@ PDF dans `reports/DOCS-COHERENCE-1/pdf/` (gitignoré).
 | A3 | 🟡 | `robinet_fiche._gabarit` (+`zone_libere_m2`), `exports/blocs/gabarit.py`, `registre/donnees.py` (`gabarit_zone_libere_m2`) | **Gabarit FAIT** : « Zone d'implantation, terrain libéré : 1 736 m² » (X) + « …, bâti existant déduit : 869 m² » (Y) ; X − Y = 867 = emprise bâtie dans la zone. Résout la confusion « 869 vs 1 691 » du mandat (on comparait Y du Gabarit à X de l'Étude). **Reste** : Dossier §10 + Étude (label « terrain libéré ») + pré-dossier à aligner, et l'écart résiduel X : Gabarit 1 736 / Étude 1 691 / pré-dossier 1 699 = **différence de moteur** (gabarit vs implantation vs CERFA, ~2,6 %) à réconcilier (une source) — gros, hors ce commit. |
 | A4 | ✅ | `pente_fmt.pente_courte()` ; `miroir.py` (couverture + §2) ; `implantation/service._pente_fiche_deg` (+`pente_fiche_pct`) ; `etude_faisabilite.py` | Source UNIQUE = fiche (RGE ALTI `parcel_terrain.pente_moy_deg`), format « 9,7° (17 %) » dans Dossier p.1+§2 et Étude §terrain (était 14,6 % LiDAR HD). Pente LiDAR du profil reste au MOTEUR (hauteur sur pente), plus affichée. Verrou `nombres_hors_payload` : 0 fuite (9,7 + 17 ancrés). |
 | A7 | 🟡 | `robinet_fiche._gabarit` (hauteur string) | **Gabarit FAIT** : « Hauteur réglementaire : 9 m au faîtage · 6 m à l'égout (le gabarit extrude le faîtage) » (était « 9,0 m »). Les deux hauteurs + la base extrudée sont servies par le moteur gabarit (hauteurReglementaireM / hauteurEgoutM / hauteurBase). **Reste** : le CERFA du pré-dossier n'affiche encore que le faîtage (harnais « 9/? »). |
-| A5 | ⬜ | | liste contraintes unique (Dossier §5) lue par Apporteur + Étude §2 (« signalée, non interprétée ») ; l'Étude dit « Aucune contrainte ». → voir F2. |
+| A5 | ✅ | `api/modules._attach_contraintes_signalees` (via `_aleas_block` + `_dispositifs_block`), `exports/etude_faisabilite.py` §2 | L'Étude §2 porte la MÊME liste que le Dossier §5 (aléa mouvement de terrain — niveau faible, DPU…) « signalée, non interprétée (voir le Dossier §5) » ; plus jamais « Aucune contrainte » quand le Dossier en relève une. Même source (`servitudes.aleas_parcelle`). Harnais : contraintes « oui » partout. Verrou `nombres_hors_payload` : 0 fuite. |
 | A6 | ⬜ | | stationnement + pleine terre chiffrés au Gabarit (« non intégrée au gabarit »). → voir D2. |
 | A7 | ⬜ | | hauteur « 9 m au faîtage · 6 m à l'égout » partout ; le Gabarit dit laquelle il extrude. → voir D2. |
 | A8 | ⬜ | | prix de la fiche, un seul (bâti 3602 vs 2687 ; terrain 250 vs 479). |

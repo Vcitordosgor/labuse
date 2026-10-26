@@ -397,7 +397,7 @@ def etudier_complet(session=None, *, idus: Optional[list[str]] = None, zone: Opt
         regles = replace(regles, stationnement=BaremeStationnement(
             validee=True, mode="par_logement", base=None, arrondi="superieur",
             flat_places=stationnement_ratio, lignes=(), article="L151-35 (plafond national)",
-            page_pdf=None, citation=f"plafond {stationnement_ratio:g} place/logt sous condition d'éligibilité"))
+            page_pdf=None, citation=f"plafond {stationnement_ratio:g} place / logement sous condition d'éligibilité"))
     zi = terrain.zone_implantation
     if zi is None or zi.is_empty or terrain.aire_zone_m2 < 60:
         return [], [], None, _message_impossible(terrain, regles, []), terrain, regles, conv, None
