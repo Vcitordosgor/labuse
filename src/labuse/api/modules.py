@@ -2083,6 +2083,26 @@ def _attach_contraintes_signalees(db: Session, payload: dict, idus) -> None:
         payload.setdefault("terrain", {})["contraintes_signalees"] = items
 
 
+def _attach_zone_gabarit(db: Session, payload: dict, idus) -> None:
+    """DOCS-COHERENCE-1 (A3, arbitrage Vic) — UN SEUL calcul de la zone d'implantation : celui du
+    Gabarit. L'Étude LIT sa valeur (« terrain libéré » X + « bâti existant déduit » Y) au lieu de la
+    recalculer. Assiette MONO-parcelle seulement (le Gabarit est per-parcelle ; une assiette fusionnée
+    multi-parcelles garde la zone du moteur d'implantation, faute de référence Gabarit unique)."""
+    if not isinstance(payload, dict) or len(idus or []) != 1:
+        return
+    from ..exports.robinet_fiche import collecte
+    try:
+        v = collecte(db, idus[0], ["gabarit_zone_libere_m2", "gabarit_implantation_m2"])
+        x, y = v.get("gabarit_zone_libere_m2"), v.get("gabarit_implantation_m2")
+        if x is not None and x.valeur is not None:
+            t = payload.setdefault("terrain", {})
+            t["zone_gabarit_libere_m2"] = float(x.valeur)
+            if y is not None and y.valeur is not None:
+                t["zone_gabarit_bati_deduit_m2"] = float(y.valeur)
+    except Exception:  # noqa: BLE001 — le Gabarit indisponible n'est jamais un 500 ; l'Étude garde sa zone
+        pass
+
+
 class EtudeParcellesIn(BaseModel):
     # ETUDE-V6 (Lot A, étape 1) — valide l'assiette AVANT le moteur : faits par parcelle, union,
     # contiguïté (graphe, frontière partagée > tolérance), signaux et sources. Rapide, pas d'implantation.
@@ -2157,6 +2177,7 @@ def etude_implantation(body: EtudeIn, db: Session = Depends(get_db)) -> dict:
         raise HTTPException(400, str(exc))
     _attach_au_ouverture(db, out, body.idus)   # vérif #2 — caveat AU porté par l'Étude, comme Comparer
     _attach_contraintes_signalees(db, out, body.idus)   # A5 — mêmes contraintes que le Dossier §5
+    _attach_zone_gabarit(db, out, body.idus)   # A3 — zone d'implantation lue du Gabarit (un seul calcul)
     return out
 
 
@@ -2224,6 +2245,7 @@ def etude_pdf(body: EtudePdfIn, request: Request, db: Session = Depends(get_db))
         raise HTTPException(400, str(exc))
     _attach_au_ouverture(db, payload, body.idus)   # vérif #2 — caveat AU dans le PDF comme à l'écran
     _attach_contraintes_signalees(db, payload, body.idus)   # A5 — mêmes contraintes que le Dossier §5
+    _attach_zone_gabarit(db, payload, body.idus)   # A3 — zone d'implantation lue du Gabarit (un seul calcul)
     genere_le = today_reunion().strftime("%d/%m/%Y")
     try:
         # ETUDE-V6 (Lot E) — le lotissement a son propre document (pas de scénario d'implantation).

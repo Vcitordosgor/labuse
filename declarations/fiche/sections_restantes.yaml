@@ -238,14 +238,22 @@ route:     "/outils/gabarit/{idu}"
 rendu:     sections
 fiche_section: potentiel
 donnees:
-  - quoi:  gabarit_implantation_m2
-    ou:    { rang: 60, etat: en_tete, section: "Gabarit réglementaire" }
-    comment: { libelle: "Zone d'implantation", unite: "m²", format: entier_m2, i: "Surface où une construction peut s'implanter = parcelle − reculs (voie / séparatives) − exclusions (PPR rouge). Calcul géospatial pur, jamais estimé." }
+  - quoi:  gabarit_zone_libere_m2
+    ou:    { rang: 55, etat: en_tete, section: "Gabarit réglementaire" }
+    comment: { libelle: "Zone d'implantation, terrain libéré", unite: "m²", format: entier_m2, i: "Zone d'implantation AVANT déduction du bâti existant (« terrain libéré ») = parcelle − reculs − exclusions (PPR rouge). Calcul géospatial pur (Gabarit), jamais estimé." }
     absence: "Zone d'implantation : gabarit non calculable (voir le motif)."
     absence_type: absente_ici
     masquer_si_absent: true
     statut_juridique: informatif
-    pourquoi: "L'enveloppe constructible au sol ; en tête du gabarit."
+    pourquoi: "DOCS-COHERENCE-1 (A3) — l'enveloppe constructible au sol, terrain libéré (X) ; en tête du gabarit."
+  - quoi:  gabarit_implantation_m2
+    ou:    { rang: 60, etat: en_tete, section: "Gabarit réglementaire" }
+    comment: { libelle: "Zone d'implantation, bâti existant déduit", unite: "m²", format: entier_m2, i: "Zone d'implantation APRÈS déduction du bâti existant conservé (Y) ; terrain libéré − Y = emprise du bâti dans la zone. Calcul géospatial pur, jamais estimé." }
+    absence: "Zone d'implantation : gabarit non calculable (voir le motif)."
+    absence_type: absente_ici
+    masquer_si_absent: true
+    statut_juridique: informatif
+    pourquoi: "DOCS-COHERENCE-1 (A3) — l'enveloppe constructible après déduction du bâti existant (Y)."
   - quoi:  gabarit_plan_2d
     ou:    { rang: 62, etat: en_tete, section: "Gabarit réglementaire" }
     comment: { libelle: "Plan 2D", format: figure, i: "Schéma des géométries servies (contour, zone d'implantation, retraits, exclusions) — figure de la ligne « zone d'implantation ». Pas une carte ni un plan de masse." }

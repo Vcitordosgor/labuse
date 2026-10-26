@@ -599,12 +599,25 @@ def _p4_enveloppe(payload: dict, retenu: dict) -> str:
     t = payload["terrain"]
     emp = next((c for c in retenu["controles"] if c["nom"] == "Emprise au sol"), None)
     fig = _svg_plan(retenu["geojson"], ["parcelle", "assiette", "ppr_rouge", "ppr_bleue", "zone", "voie"], h=380)
+    # DOCS-COHERENCE-1 (A3, arbitrage) — UN SEUL calcul de la zone : celui du Gabarit. L'Étude LIT sa
+    # valeur (« terrain libéré » X, « bâti existant déduit » Y) ; repli sur la zone du moteur
+    # d'implantation (assiette multi-parcelles, sans référence Gabarit unique).
+    _zgl = t.get("zone_gabarit_libere_m2")
+    _zgd = t.get("zone_gabarit_bati_deduit_m2")
+    _zone_aff = _zgl if _zgl is not None else t.get("zone_implantation_m2")
     rows = [
         f'<tr><td class="k">Terrain (contenance)</td><td>{_m2(t.get("contenance_totale_m2"))}</td>'
         f'<td class="n"><span class="chip s">Sourcé</span></td></tr>',
-        f'<tr><td class="k">Zone d\'implantation réglementaire</td><td>{_m2(t.get("zone_implantation_m2"))}</td>'
-        f'<td class="n"><span class="chip d">Dérivé</span></td></tr>',
     ]
+    if _zgl is not None:
+        rows.append(f'<tr><td class="k">Zone d\'implantation, terrain libéré</td><td>{_m2(_zgl)}</td>'
+                    f'<td class="n"><span class="chip s">Gabarit</span></td></tr>')
+        if _zgd is not None:
+            rows.append(f'<tr><td class="k">Zone d\'implantation, bâti existant déduit</td><td>{_m2(_zgd)}</td>'
+                        f'<td class="n"><span class="chip s">Gabarit</span></td></tr>')
+    else:
+        rows.append(f'<tr><td class="k">Zone d\'implantation réglementaire</td><td>{_m2(t.get("zone_implantation_m2"))}</td>'
+                    f'<td class="n"><span class="chip d">Dérivé</span></td></tr>')
     if t.get("ppr_rouge_m2"):
         rows.append(f'<tr><td class="k">Retiré par PPR rouge</td><td>{_m2(t.get("ppr_rouge_m2"))}</td>'
                     f'<td class="n"><span class="chip s">Sourcé</span></td></tr>')
@@ -613,7 +626,7 @@ def _p4_enveloppe(payload: dict, retenu: dict) -> str:
                     f'<td class="n"><span class="chip d">Dérivé</span></td></tr>')
     return (
         '<section><h2>3. Enveloppe constructible</h2>'
-        f'<div class="verdict">Zone d\'implantation de {_m2(t.get("zone_implantation_m2"))} après reculs '
+        f'<div class="verdict">Zone d\'implantation, terrain libéré de {_m2(_zone_aff)} après reculs '
         'et contraintes. Ce plafond n\'est pas ce qu\'on peut construire : c\'est le scénario (plan masse) '
         'qui le dit.</div>'
         + fig + _legende(["parcelle", "assiette", "zone", "ppr_rouge", "ppr_bleue", "voie"])
