@@ -30,9 +30,39 @@ def _source(src) -> str:
     return " · ".join(esc(b) for b in bits if b)
 
 
+def _fusion_voie(rules):
+    """DOCS-COHERENCE-1 (D1) — UNE seule ligne « Recul voie 4 m » : les variantes du moteur (« Recul
+    voie », « … (emprise publique) », « … (voie privée) »), de même recul, sont fusionnées et LEURS
+    SOURCES citées ensemble sur la même ligne. Le moteur garde ses règles distinctes ; seul l'affichage
+    du document les regroupe."""
+    import types
+    voies = [r for r in rules if (getattr(r, "label", "") or "").startswith("Recul voie")]
+    if len(voies) <= 1:
+        return rules
+    base = voies[0]
+    srcs = []
+    for r in voies:
+        s = _source(getattr(r, "source", None))
+        if s and s not in srcs:
+            srcs.append(s)
+    merged = types.SimpleNamespace(label="Recul voie", value=getattr(base, "value", None),
+                                   unit=getattr(base, "unit", None),
+                                   detail=getattr(base, "detail", None), source=None)
+    merged._src_html = "".join(f'<div class="src">{s}</div>' for s in srcs)
+    result, done = [], False
+    for r in rules:
+        if (getattr(r, "label", "") or "").startswith("Recul voie"):
+            if not done:
+                result.append(merged)
+                done = True
+        else:
+            result.append(r)
+    return result
+
+
 def _regles(rules, *, appliquees: bool) -> str:
     out = []
-    for r in rules or []:
+    for r in _fusion_voie(list(rules or [])):
         nom = esc(getattr(r, "label", "") or "")
         val = getattr(r, "value", None)
         unit = getattr(r, "unit", None)
@@ -52,8 +82,10 @@ def _regles(rules, *, appliquees: bool) -> str:
             chiffre = ""
         detail = getattr(r, "detail", None)
         det = f" — {esc(detail)}" if detail else ""
-        src = _source(getattr(r, "source", None))
-        src_html = f'<div class="src">{src}</div>' if src else ""
+        src_html = getattr(r, "_src_html", None)   # D1 — sources déjà combinées (ligne « Recul voie » fusionnée)
+        if src_html is None:
+            src = _source(getattr(r, "source", None))
+            src_html = f'<div class="src">{src}</div>' if src else ""
         out.append(f'<div class="r"><span class="nom">{nom}{chiffre}</span>{det}{src_html}</div>')
     cls = "regles" + ("" if appliquees else " nonint")
     return f'<div class="{cls}">{"".join(out)}</div>' if out else ""
