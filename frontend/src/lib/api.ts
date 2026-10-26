@@ -1230,8 +1230,10 @@ export const docPreDossierUrl = (idu: string) => `/pre-dossier/${encodeURICompon
 export const docGabaritUrl = (idu: string) => `/gabarit/${encodeURIComponent(idu)}.pdf`
 export const docComparatifUrl = (idus: string[]) =>
   `/comparatif.pdf?idus=${encodeURIComponent(idus.filter(Boolean).join(','))}`
-export const docEtudeZoneUrl = (idu: string, rayonKm: number) =>
+export const docEtudeZoneUrl = (idu: string, rayonKm: number, sousDestination?: string | null) =>
   `/etude-zone.pdf?idu=${encodeURIComponent(idu)}&rayon_km=${encodeURIComponent(String(rayonKm))}`
+  // RECETTE-OUTILS-3 (S3) — l'activité choisie dans la fenêtre Docs est transmise au PDF (verdict par zone).
+  + (sousDestination ? `&sous_destination=${encodeURIComponent(sousDestination)}` : '')
 
 // DOCS-1 (Lot B) — la bibliothèque « Mes documents » (recette d'un document, jamais le PDF).
 export type DocType = 'dossier' | 'bilan' | 'apporteur' | 'pre-dossier' | 'gabarit' | 'comparatif' | 'etude-zone' | 'etude-faisabilite'

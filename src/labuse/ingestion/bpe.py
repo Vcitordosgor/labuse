@@ -32,6 +32,25 @@ DOM_LABEL = {
     "F": "Sports, loisirs et culture", "G": "Tourisme",
 }
 
+# RECETTE-OUTILS-3 (S2) — libellés des SOUS-DOMAINES BPE (nomenclature INSEE, publique — même nature
+# de donnée de référence que DOM_LABEL). Sert de « type » lisible à chaque établissement de la liste
+# d'une catégorie. Un sous-domaine absent de la table retombe sur le libellé du DOMAINE (jamais un
+# code brut non expliqué, jamais une valeur inventée).
+SDOM_LABEL = {
+    "A1": "Services publics", "A2": "Services généraux", "A3": "Automobile",
+    "A4": "Artisanat du bâtiment", "A5": "Autres services aux particuliers",
+    "B1": "Grandes surfaces", "B2": "Commerces alimentaires", "B3": "Commerces spécialisés",
+    "C1": "Premier degré", "C2": "Collèges", "C3": "Lycées",
+    "C4": "Second cycle professionnel", "C5": "Enseignement supérieur",
+    "C6": "Formation continue", "C7": "Vie étudiante",
+    "D1": "Établissements de santé", "D2": "Professionnels de santé",
+    "D3": "Pharmacies et laboratoires", "D4": "Personnes âgées",
+    "D5": "Enfance et jeunesse", "D6": "Personnes handicapées", "D7": "Action sociale — autres",
+    "E1": "Transports et déplacements",
+    "F1": "Équipements sportifs", "F2": "Loisirs", "F3": "Culture",
+    "G1": "Tourisme",
+}
+
 # SOURCES-4 lot 2 — BPE25 publie 95 colonnes ; on n'en gardait que 4 (dom/sdom/typequ + nom).
 # On capture désormais l'ANNÉE (AN, par enregistrement), l'adresse, le SIRET, la qualité de
 # géoloc, et les CARACTÉRISTIQUES SECTORIELLES (capacité d'une école, salles d'un cinéma, bornes

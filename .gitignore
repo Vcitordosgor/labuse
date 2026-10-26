@@ -101,6 +101,11 @@ reports/j3-revue/_tiles/
 reports/revues/
 reports/**/DOSSIER-*.pdf
 
+# RECETTE-OUTILS-3 — captures et PDF de recette sont des artefacts régénérables, hors git désormais.
+# (N'affecte PAS ce qui est DÉJÀ tracké : les captures R* de RECETTE-OUTILS-1/2 restent versionnées.)
+reports/**/captures/
+reports/**/pdf/
+
 # Prospection — extraits nominatifs (RNE/DGFiP) : JAMAIS en git (mandat deposants-actifs)
 exports/
 # EXPORTS-2 — mais le PAQUET SOURCE et la RÉFÉRENCE du mandat ne sont pas des extraits

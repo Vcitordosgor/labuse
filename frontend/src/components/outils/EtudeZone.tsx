@@ -433,26 +433,29 @@ export function EtudeZone() {
           {((res.bpe && res.bpe.domaines.length > 0) || (res.generateurs_flux && res.generateurs_flux.length > 0) || res.trafic?.couverte) && (
             <Section id="equipements" titre="Équipements" openSecs={openSecs} setOpenSecs={setOpenSecs}
               source="BPE (INSEE) · GTFS/OSM (transports) · Trafic RN (Région Réunion, ODS)">
-              {/* B6 — BPE complet par domaine A→G : compte + les 3 plus proches (avec temps de trajet) */}
+              {/* RECETTE-OUTILS-3 (S2) — BPE par domaine A→G : le COMPTE + la LISTE COMPLÈTE (nom · type)
+                  de la zone, plus seulement le plus proche. Noms NON tronqués (ils passent à la ligne). */}
               {res.bpe && res.bpe.domaines.length > 0 && (
                 <div>
                   <SectionTitle>Équipements par domaine (BPE)</SectionTitle>
-                  <div className="mt-1 flex flex-col gap-1.5">
+                  <div className="mt-1 flex flex-col gap-2">
                     {res.bpe.domaines.map((d) => (
                       <div key={d.domaine}>
-                        <div className="flex items-center justify-between gap-2 text-[11.5px]">
-                          <span className="truncate text-txt">{d.label}</span>
-                          <span className="shrink-0 font-mono text-[11px] text-txt-hi">{nb(d.n)}</span>
+                        <div className="flex items-baseline justify-between gap-2 text-[11.5px]">
+                          <span className="min-w-0 break-words font-medium text-txt">{d.label}</span>
+                          <span className="shrink-0 font-mono text-[11px] text-txt-hi">{nb(d.n)} établissement{d.n > 1 ? 's' : ''}</span>
                         </div>
-                        {d.proches.length > 0 && (
-                          <div className="mt-0.5 text-[9.5px] leading-snug text-txt-dim">
-                            {d.proches.map((x) => x.nom).filter(Boolean).slice(0, 3).join(' · ') || '—'}
-                          </div>
-                        )}
+                        <ul className="mt-0.5 flex flex-col gap-0.5 text-[9.5px] leading-snug">
+                          {d.liste.map((x, i) => (
+                            <li key={i} className="break-words text-txt-mut">
+                              {x.nom ?? 'Établissement (nom non renseigné)'}<span className="text-txt-dim"> · {x.type}</span>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     ))}
                   </div>
-                  <p className="mt-1 text-[9px] leading-snug text-txt-dim">{res.bpe.millesime} — compte par domaine dans la zone, 3 plus proches nommés.</p>
+                  <p className="mt-1 text-[9px] leading-snug text-txt-dim">{res.bpe.millesime} — nombre et liste complète par catégorie dans la zone.</p>
                 </div>
               )}
               {res.generateurs_flux && res.generateurs_flux.length > 0 && (
@@ -563,7 +566,9 @@ export function EtudeZone() {
               </Bouton>
             </div>
           )}
-          {res.note && <p className="text-[9.5px] leading-snug text-txt-dim">{res.note}</p>}
+          {/* RECETTE-OUTILS-3 (S5) — la ligne des sources (« INSEE Filosofi 2021 · SIRENE · … — temps hors
+              trafic. Des faits sourcés, aucune prévision… ») est RETIRÉE de l'outil. Elle RESTE dans le PDF
+              (bloc etude_zone : « Sources : … », lit z['note'] directement). */}
         </div>
       )}
     </div>

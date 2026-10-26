@@ -12,6 +12,7 @@ import { Bouton } from '../ui/Bouton'
 import { Chip } from '../ui/Chip'
 import { Chargement } from '../Loading'
 import { ParcelInput } from '../ParcelInput'
+import { DestinationSelect } from '../outils/DestinationSelect'   // RECETTE-OUTILS-3 (S3) — même choix d'activité que l'outil
 import { BilanEcran } from '../fiche/BilanEcran'
 import {
   getFiche, getGabarit,
@@ -161,6 +162,9 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
   const [idu, setIdu] = useState<string | null>(null)                // parcelle & zone
   const [idus, setIdus] = useState<(string | null)[]>([null, null, null])  // multi (2 à 3)
   const [rayon, setRayon] = useState(2)                              // zone : rayon servi, défaut 2
+  // RECETTE-OUTILS-3 (S3) — activité (sous-destination) choisie pour l'Étude de zone : le menu MODIFIE
+  // la lecture (verdict par zone PLU) → la fenêtre Docs propose le MÊME choix que l'outil, transmis au PDF.
+  const [docDest, setDocDest] = useState<string | null>(null)
   // CHASSE-DONNEES-FIX-1 (suite 2, E-77) — rayons SERVIS (config/moteurs.yaml), plus la liste 1..20 en dur.
   const cfgMot = useQuery({ queryKey: ['moteurs-config'], queryFn: getMoteursConfig, staleTime: 3600_000 })
   const rayonsServis = cfgMot.data?.rayons_etude_zone ?? [0.5, 1, 2, 5]
@@ -278,10 +282,15 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
                   aria-pressed={rayon === r} onClick={() => setRayon(r)}>{String(r).replace('.', ',')} km</Bouton>
               ))}
             </div>
+            {/* RECETTE-OUTILS-3 (S3) — même choix d'activité que l'outil : le PDF affichera l'activité et
+                son verdict par zone PLU. Facultatif (vide = étude de zone « neutre »). */}
+            <div className="mt-2">
+              <DestinationSelect value={docDest} onChange={setDocDest} dataAttr="doc-etude-zone" />
+            </div>
             <p className="my-3 border-l-2 border-line-2 pl-2.5 text-[13px] text-txt-dim">{d.explication}</p>
             {erreur && <p className="my-3 border-l-2 border-amber pl-2.5 text-[13px] text-amber">{erreur}</p>}
             <Bouton niveau="primaire" ton="vert" className="w-full" disabled={!idu || !!enCours}
-              onClick={async () => { if (idu && await ouvrir(docEtudeZoneUrl(idu, rayon), 'etude-zone')) { enregistrer('etude-zone', [idu], rayon); onClose() } }}>
+              onClick={async () => { if (idu && await ouvrir(docEtudeZoneUrl(idu, rayon, docDest), 'etude-zone')) { enregistrer('etude-zone', [idu], rayon); onClose() } }}>
               {enCours ? <Chargement variant="inline" accent="courant" label="Génération…" /> : d.cta}
             </Bouton>
           </div>

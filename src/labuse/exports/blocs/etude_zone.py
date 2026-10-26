@@ -98,6 +98,10 @@ def _foncier(z) -> str:
     return _sec("Foncier", lignes)
 
 
+_ETAT_LABEL = {"autorise": "autorisé", "sous_condition": "sous condition", "interdit": "interdit",
+               "en_cours_de_calibration": "en calibration", "non_lu": "en calibration"}
+
+
 def _contraintes(z) -> str:
     lignes = []
     cp = z.get("contraintes_plu") or {}
@@ -108,6 +112,22 @@ def _contraintes(z) -> str:
         if zone:
             val = f"{part} %" if part is not None else ""
             lignes.append(_kv(f"{esc(zone)}" + (f" · {esc(commune)}" if commune else ""), val))
+    # RECETTE-OUTILS-3 (S3) — activité choisie : le menu « Activité » MODIFIE la lecture (verdict de la
+    # sous-destination par zone PLU), le PDF l'affiche comme l'outil (autorisé / sous condition / …).
+    dest = z.get("destinations") or {}
+    if dest.get("sous_destination"):
+        if dest.get("erreur"):
+            lignes.append(_kv("Activité étudiée", esc(dest.get("erreur"))))
+        else:
+            lignes.append(_kv("Activité étudiée",
+                              f'<b>{esc(dest.get("libelle") or dest["sous_destination"])}</b>'))
+            for zn in (dest.get("zones") or []):
+                etat = zn.get("etat") or zn.get("statut") or ""
+                z_lbl = esc(zn.get("zone") or "") + (f" · {esc(zn.get('commune'))}" if zn.get("commune") else "")
+                val = _ETAT_LABEL.get(etat, esc(etat))
+                if zn.get("condition"):
+                    val += f' <span class="muted">— {esc(zn.get("condition"))}</span>'
+                lignes.append(_kv(z_lbl, val))
     risq = z.get("risques") or {}
     if risq.get("libelle"):
         lignes.append(_kv("Risques", esc(risq.get("libelle"))))
@@ -118,13 +138,24 @@ def _contraintes(z) -> str:
 
 
 def _equipements(z) -> str:
+    # RECETTE-OUTILS-3 (S2) — pour CHAQUE catégorie BPE : le NOMBRE d'établissements dans le rayon,
+    # puis la LISTE COMPLÈTE (nom · type), plus seulement le plus proche. La table se répartit sur
+    # plusieurs pages si besoin (WeasyPrint). On lit `bpe.domaines` (compte + liste), pas le flat
+    # `equipements` (un par domaine) qui ne servait qu'au mini-aperçu.
+    doms = (z.get("bpe") or {}).get("domaines") or []
+    if not doms:
+        return ""
     lignes = []
-    for eq in (z.get("equipements") or [])[:10]:
-        nom, dom = eq.get("nom"), eq.get("domaine")
-        t = eq.get("temps_min")
-        if nom:
-            suff = f" · {round(t)} min" if isinstance(t, (int, float)) and not isinstance(t, bool) else ""
-            lignes.append(_kv(esc(dom or "Équipement"), f"{esc(nom)}{suff}"))
+    for d in doms:
+        n = int(d.get("n") or 0)
+        label = d.get("label") or d.get("domaine") or "Équipements"
+        # en-tête de catégorie : libellé + compte
+        lignes.append(_kv(label, f'<b>{n} établissement{"s" if n > 1 else ""}</b>'))
+        for x in (d.get("liste") or []):
+            nom = x.get("nom") or "Établissement (nom non renseigné)"
+            typ = x.get("type") or ""
+            # une ligne par établissement : nom · type (type en gris discret)
+            lignes.append(_kv("", f'{esc(nom)} <span class="muted">· {esc(typ)}</span>'))
     return _sec("Équipements", lignes)
 
 

@@ -74,14 +74,19 @@ def plan_ortho(geojson_str: str | None, cache_dir: Path, *, timeout_s: float = 1
         try:
             raw = base64.b64decode(t["data_uri"].split(",", 1)[1])
             tile = Image.open(io.BytesIO(raw)).convert("RGB")
-            # RECETTE-OUTILS-2 (R12) — hors couverture (pleine mer au large), l'ortho IGN ne rend PAS un
-            # 404 mais une tuile PUREMENT BLANCHE. Collée telle quelle, elle faisait le « carré blanc » en
-            # coin de carte. Une tuile quasi uniformément blanche = no-data : on ne la colle pas, le fond
-            # neutre sombre reste (comme pour une tuile absente). Un vrai cliché — même écume ou toits
-            # clairs — n'a jamais TOUS ses pixels ≥ 250, donc aucun risque d'effacer de la donnée réelle.
-            if tile.convert("L").getextrema()[0] >= 250:
-                continue
-            img.paste(tile, (int(t["left"]), int(t["top"])))
+            # RECETTE-OUTILS-3 (S6) — hors couverture (pleine mer au large), l'ortho IGN ne rend PAS un
+            # 404 mais du BLANC PUR. R12 (mandat 2) ne masquait que les tuiles ENTIÈREMENT blanches ; or
+            # sur la côte le blanc n'occupe qu'une PORTION de tuile (le reste = vrai cliché) → le « carré
+            # blanc » revenait. On masque donc les PIXELS no-data (quasi blancs) et non la tuile entière :
+            # le fond neutre sombre reste là où il n'y a pas de donnée, qu'il s'agisse d'une tuile ou d'un
+            # coin. On teste la LUMINANCE (L) : le blanc no-data est achromatique (L≥250) ; un vrai
+            # élément clair MAIS coloré (toit, écume) garde une luminance < 250 et n'est pas effacé.
+            gris = tile.convert("L")
+            if gris.getextrema()[1] >= 250:                 # du quasi-blanc présent dans la tuile
+                masque = gris.point(lambda p: 0 if p >= 250 else 255)   # 0 = no-data (transparent)
+                img.paste(tile, (int(t["left"]), int(t["top"])), masque)
+            else:
+                img.paste(tile, (int(t["left"]), int(t["top"])))
         except Exception:  # noqa: BLE001 — une tuile absente ne casse pas la mosaïque
             continue
 
