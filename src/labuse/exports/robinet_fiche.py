@@ -823,11 +823,26 @@ def _gabarit(db, idu: str) -> dict:
         non_int = [r.label for r in (res.nonIntegratedRules or []) if r.label and r.id != "PPR"]
         if non_int:
             txt += " · non modélisé : " + ", ".join(non_int)
+        # DOCS-COHERENCE-1 (A7) — hauteur UNIFORME « 9 m au faîtage · 6 m à l'égout » PARTOUT, et le
+        # Gabarit dit laquelle il EXTRUDE (hauteurBase). Les deux hauteurs sont servies par le moteur.
+        def _hm(x):
+            return None if x is None else (f"{int(x)}" if float(x) == int(x) else f"{x:g}".replace(".", ","))
+        if res.hauteurStatus == "not_integrated":
+            hauteur = "Non chiffrée (prospect)"
+        else:
+            parts = []
+            if res.hauteurReglementaireM is not None:
+                parts.append(f"{_hm(res.hauteurReglementaireM)} m au faîtage")
+            if res.hauteurEgoutM is not None:
+                parts.append(f"{_hm(res.hauteurEgoutM)} m à l'égout")
+            extrude = "faîtage" if res.hauteurBase == "faitage" else "égout"
+            hauteur = " · ".join(parts) + (f" (le gabarit extrude le {extrude})" if parts else "")
         out.update(served=True, zone_m2=res.zoneImplantationM2, couverture=txt,
                    bati_deduit_m2=res.batiDeduitM2,   # S7 — emprise bâti retranchée (None si aucune)
+                   # A3 — « terrain libéré » (X, avant déduction du bâti) = zone + bâti retranché.
+                   zone_libere_m2=((res.zoneImplantationM2 or 0) + (res.batiDeduitM2 or 0)),
                    plafond=("Non réglementé" if res.plafondEmpriseStatus == "absent" else res.plafondEmpriseM2),
-                   hauteur=("Non chiffrée (prospect)" if res.hauteurStatus == "not_integrated"
-                            else res.hauteurReglementaireM),
+                   hauteur=hauteur,
                    svg=gabarit_svg(res))
     except Exception:  # noqa: BLE001 — jamais un 500 sur un document ; la donnée est simplement omise
         pass
@@ -846,6 +861,13 @@ def _c_gab_bati_deduit(db, idu, f):
     # RECETTE-OUTILS-3 (S7) — emprise du bâti existant retranchée de la zone d'implantation (None si 0).
     g = _gabarit(db, idu)
     return g.get("bati_deduit_m2") if g["served"] else None
+
+
+@extracteur("gabarit_zone_libere_m2")
+def _c_gab_zone_libere(db, idu, f):
+    # DOCS-COHERENCE-1 (A3) — zone d'implantation « terrain libéré » (X, avant déduction du bâti).
+    g = _gabarit(db, idu)
+    return g.get("zone_libere_m2") if g["served"] else None
 
 
 @extracteur("gabarit_emprise_plafond_m2")

@@ -149,8 +149,9 @@ def _surface(t):
     # plan de masse (approximative, autre donnée) : le gap des patterns ne franchit ni « ; » ni « ~ ».
     return _n(_cherche(t, rf"({NB})\s*m²\s*\n?\s*SURFACE",
                        rf"[Ss]urface(?:\s*\(plan\))?\s+({NB})\s*m²",
-                       rf"Contenance cadastrale[^\n;~]*?({NB})\s*m²",
-                       rf"(?:Terrain|Assiette fusionn[ée]e?)[^\n;~]*?({NB})\s*m²"))
+                       rf"Contenance(?:\s*cadastrale)?[^\n;~]*?({NB})\s*m²",
+                       # « Terrain (contenance) » / « Assiette fusionnée » — PAS « terrain libéré » (= zone).
+                       rf"(?:Terrain\s*\(contenance\)|Assiette fusionn[ée]e?)[^\n;~]*?({NB})\s*m²"))
 
 
 def _emprise(t):

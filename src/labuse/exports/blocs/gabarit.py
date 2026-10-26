@@ -9,8 +9,8 @@ from ..lignes import ligne, pied
 from ..registre_fmt import fmt_m, fmt_m2, fmt_pct
 from ..rendu import esc, note, section, table_kv, verdict
 
-IDS = ("gabarit_implantation_m2", "gabarit_bati_deduit_m2", "gabarit_emprise_plafond_m2",
-       "gabarit_hauteur_m", "gabarit_couverture_verdict", "gabarit_plan_2d")
+IDS = ("gabarit_zone_libere_m2", "gabarit_implantation_m2", "gabarit_bati_deduit_m2",
+       "gabarit_emprise_plafond_m2", "gabarit_hauteur_m", "gabarit_couverture_verdict", "gabarit_plan_2d")
 
 
 def _m2_ou_texte(v):
@@ -75,8 +75,12 @@ def rendu(valeurs, ctx=None) -> str:
         # RECETTE-OUTILS-4 (U4) — libellé « bâti existant déduit » (sans « dont » : la zone affichée est
         # DÉJÀ la valeur après déduction ; « dont » laissait croire que le bâti en faisait partie), même
         # formulation qu'à l'écran.
-        ligne(valeurs, "Zone d'implantation", "gabarit_implantation_m2", _m2_ou_texte),
-        ligne(valeurs, "bâti existant déduit", "gabarit_bati_deduit_m2", _m2_ou_texte),
+        # DOCS-COHERENCE-1 (A3) — DEUX valeurs nommées partout : « terrain libéré » (X, avant déduction
+        # du bâti) et « bâti existant déduit » (Y, après). X − Y = emprise du bâti dans la zone. La ligne
+        # « bâti existant déduit » est omise s'il n'y a rien à retrancher (X = Y).
+        ligne(valeurs, "Zone d'implantation, terrain libéré", "gabarit_zone_libere_m2", _m2_ou_texte),
+        (ligne(valeurs, "Zone d'implantation, bâti existant déduit", "gabarit_implantation_m2", _m2_ou_texte)
+         if (valeurs.get("gabarit_bati_deduit_m2") and valeurs["gabarit_bati_deduit_m2"].valeur) else None),
         ligne(valeurs, "Plafond d'emprise", "gabarit_emprise_plafond_m2", _m2_ou_texte),
         ligne(valeurs, "Hauteur réglementaire", "gabarit_hauteur_m", _m_ou_texte),
     ]

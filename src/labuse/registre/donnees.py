@@ -107,6 +107,13 @@ DONNEES: dict[str, Donnee] = {
     moteur="gabarit", calcul="moteur",
     fonction="src/labuse/gabarit/engine.py:compute_gabarit",
     reservoirs=("cadastre_api_carto", "gpu_plu_api_carto",), portee="live"),
+ "gabarit_zone_libere_m2": C("Zone d'implantation, terrain libéré", "m²", "parcelle",
+    "DOCS-COHERENCE-1 (A3) — zone d'implantation AVANT déduction du bâti existant (« terrain libéré ») "
+    "= zone d'implantation (après reculs + exclusions) + emprise du bâti retranché. X − Y = emprise du "
+    "bâti dans la zone, avec Y = gabarit_implantation_m2. Calcul géospatial pur, jamais estimé.",
+    moteur="gabarit", calcul="moteur",
+    fonction="src/labuse/gabarit/engine.py:compute_gabarit",
+    reservoirs=("cadastre_api_carto", "gpu_plu_api_carto",), portee="live"),
  "gabarit_bati_deduit_m2": C("Bâti existant déduit", "m²", "parcelle",
     "RECETTE-OUTILS-3 (S7, décision Vic) — emprise du bâti existant conservé RETRANCHÉE de la zone "
     "d'implantation (zone ∩ bâti, après découpe du bâti au contour cadastral). Calcul géospatial pur "
