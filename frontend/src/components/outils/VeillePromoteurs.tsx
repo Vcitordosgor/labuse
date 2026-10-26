@@ -17,6 +17,7 @@ import { OwnerParcelles } from '../OwnerParcelles'   // RECHERCHE-2 Lot 2 — pr
 import { CollecteProgrammes } from '../admin/Programmes'   // LOT S1 — geste admin discret réutilisant la collecte
 import { Bouton } from '../ui/Bouton'
 import { Chevron } from '../ui/Chevron'
+import { Select } from '../ui/Select'   // U3 (RECETTE-OUTILS-4) — menu déroulant partagé
 
 const CAT_LABEL: Record<string, string> = { promoteur: 'Promoteur', bailleur: 'Bailleur social', sem: 'SEM' }
 
@@ -239,14 +240,14 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
               onChanger={() => setVeilleOwner(null)} />
           )}
           <div className="flex flex-wrap gap-2">
-            <select data-vp-commune value={commune} onChange={(e) => setCommune(e.target.value)} className={sel}>
+            <Select data-vp-commune value={commune} onChange={(e) => setCommune(e.target.value)} className={sel}>
               <option value="">Toutes les communes</option>
               {CP_COMMUNES.map(([, n]) => <option key={n} value={n}>{n}</option>)}
-            </select>
-            <select data-vp-categorie value={categorie} onChange={(e) => setCategorie(e.target.value)} className={sel}>
+            </Select>
+            <Select data-vp-categorie value={categorie} onChange={(e) => setCategorie(e.target.value)} className={sel}>
               <option value="">Toutes catégories</option>
               {(d?.categories ?? []).map((c) => <option key={c.cle} value={c.cle}>{c.label}</option>)}
-            </select>
+            </Select>
             <input data-vp-depuis type="date" value={depuis} onChange={(e) => setDepuis(e.target.value)} className={sel} aria-label="Déposées depuis…" />
           </div>
         </>

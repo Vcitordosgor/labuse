@@ -259,7 +259,7 @@ export function EtudeZone() {
                     <div key={i} className="flex items-center gap-2 text-[11px]">
                       <span className="w-20 shrink-0 text-txt-mut">{t.label}</span>
                       <span className="h-2 min-w-[2px] rounded-sm bg-mint/45" style={{ width: `${Math.max(2, t.pct)}%` }} />
-                      <span className="shrink-0 font-mono text-[10px] text-txt-dim">{t.pct}%</span>
+                      <span className="shrink-0 font-mono text-[10px] text-txt-dim">{t.pct} %</span>
                     </div>
                   ))}
                 </div>
@@ -368,7 +368,7 @@ export function EtudeZone() {
                     {res.contraintes_plu.zones.slice(0, 6).map((z, i) => (
                       <div key={i} className="flex items-center justify-between gap-2 text-[11.5px]">
                         <span className="truncate text-txt">{z.zone} <span className="text-txt-mut">· {z.commune ?? ''}</span></span>
-                        <span className="shrink-0 font-mono text-[11px] text-txt-hi">{z.part_pct}%</span>
+                        <span className="shrink-0 font-mono text-[11px] text-txt-hi">{z.part_pct} %</span>
                       </div>
                     ))}
                   </div>
@@ -385,13 +385,13 @@ export function EtudeZone() {
                     {res.risques.ppr.map((r, i) => (
                       <div key={`ppr${i}`} className="flex items-center justify-between gap-2 text-[11.5px]">
                         <span className="text-txt">{r.label}</span>
-                        <span className="shrink-0 font-mono text-[11px] text-txt-hi">{r.pct}% de la zone</span>
+                        <span className="shrink-0 font-mono text-[11px] text-txt-hi">{r.pct} % de la zone</span>
                       </div>
                     ))}
                     {res.risques.aleas.map((a, i) => (
                       <div key={`al${i}`} className="flex items-center justify-between gap-2 text-[11.5px]">
                         <span className="text-txt">{a.label} <span className="text-txt-dim">· aléa {a.niveau}</span></span>
-                        <span className="shrink-0 font-mono text-[11px] text-txt-hi">{a.pct}% de la zone</span>
+                        <span className="shrink-0 font-mono text-[11px] text-txt-hi">{a.pct} % de la zone</span>
                       </div>
                     ))}
                   </div>
@@ -404,9 +404,9 @@ export function EtudeZone() {
                   <SectionTitle>Assainissement</SectionTitle>
                   <div className="mt-1 flex flex-col gap-1 text-[11.5px]">
                     <div className="flex items-center justify-between gap-2"><span className="text-txt">Zonage collectif</span>
-                      <span className="shrink-0 font-mono text-[11px] text-txt-hi">{res.assainissement.collectif_pct}% de la zone</span></div>
+                      <span className="shrink-0 font-mono text-[11px] text-txt-hi">{res.assainissement.collectif_pct} % de la zone</span></div>
                     <div className="flex items-center justify-between gap-2"><span className="text-txt">Assainissement non collectif (ANC)</span>
-                      <span className="shrink-0 font-mono text-[11px] text-txt-hi">{res.assainissement.anc_pct}% de la zone</span></div>
+                      <span className="shrink-0 font-mono text-[11px] text-txt-hi">{res.assainissement.anc_pct} % de la zone</span></div>
                   </div>
                   {res.assainissement.millesime && <p className="mt-1 text-[9px] leading-snug text-txt-dim">{res.assainissement.millesime}</p>}
                 </div>
@@ -419,7 +419,7 @@ export function EtudeZone() {
                     {res.espaces_zonages.items.map((e) => (
                       <div key={e.kind} className="flex items-center justify-between gap-2 text-[11.5px]">
                         <span className="truncate text-txt">{e.label}</span>
-                        <span className="shrink-0 font-mono text-[11px] text-txt-hi">{e.pct}% de la zone</span>
+                        <span className="shrink-0 font-mono text-[11px] text-txt-hi">{e.pct} % de la zone</span>
                       </div>
                     ))}
                   </div>
@@ -543,7 +543,7 @@ export function EtudeZone() {
                   <SectionTitle>Fibre (FttH)</SectionTitle>
                   <div className="mt-1 flex items-center justify-between gap-2 text-[11.5px]">
                     <span className="text-txt">Immeubles raccordables FttH</span>
-                    <span className="shrink-0 font-mono text-[11px] text-txt-hi">{res.fibre.pct_ftth}% <span className="text-txt-dim">({nb(res.fibre.ftth)}/{nb(res.fibre.immeubles)})</span></span>
+                    <span className="shrink-0 font-mono text-[11px] text-txt-hi">{res.fibre.pct_ftth} % <span className="text-txt-dim">({nb(res.fibre.ftth)}/{nb(res.fibre.immeubles)})</span></span>
                   </div>
                   <p className="mt-1 text-[9px] leading-snug text-txt-dim">{res.fibre.source} — sur la zone.</p>
                 </div>
@@ -561,7 +561,7 @@ export function EtudeZone() {
             <div className="flex justify-end">
               <Bouton niveau="secondaire" ton="vert" data-etude-export className="shrink-0 whitespace-nowrap"
                 disabled={enCours != null || !cible}
-                onClick={() => ouvrir(docEtudeZoneUrl(cible.idu, rayonKm), 'etude-zone')}>
+                onClick={() => ouvrir(docEtudeZoneUrl(cible.idu, rayonKm, sousDest), 'etude-zone')}>
                 Exporter en PDF
               </Bouton>
             </div>
@@ -692,7 +692,7 @@ function DestinationsBloc({ d }: { d: EtudeZoneDestinations }) {
                   <span
                     className="inline-flex shrink-0 items-center rounded-full border border-amber/40 px-1.5 py-px font-mono text-[9px] uppercase tracking-wide text-amber">CDAC</span>
                 )}
-                {z.part_pct != null && <span className="ml-auto shrink-0 font-mono text-[11px] text-txt-hi">{z.part_pct}%</span>}
+                {z.part_pct != null && <span className="ml-auto shrink-0 font-mono text-[11px] text-txt-hi">{z.part_pct} %</span>}
               </div>
               <p className="mt-0.5 text-[10.5px] leading-snug text-txt-mut">{z.phrase}</p>
             </div>

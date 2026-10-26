@@ -72,8 +72,11 @@ def rendu(valeurs, ctx=None) -> str:
     lignes = [
         # RECETTE-OUTILS-3 (S7) — « Zone d'implantation » = valeur APRÈS déduction du bâti ; juste en
         # dessous, l'emprise de bâti retranchée (ligne omise s'il n'y a rien à déduire).
+        # RECETTE-OUTILS-4 (U4) — libellé « bâti existant déduit » (sans « dont » : la zone affichée est
+        # DÉJÀ la valeur après déduction ; « dont » laissait croire que le bâti en faisait partie), même
+        # formulation qu'à l'écran.
         ligne(valeurs, "Zone d'implantation", "gabarit_implantation_m2", _m2_ou_texte),
-        ligne(valeurs, "dont bâti existant déduit", "gabarit_bati_deduit_m2", _m2_ou_texte),
+        ligne(valeurs, "bâti existant déduit", "gabarit_bati_deduit_m2", _m2_ou_texte),
         ligne(valeurs, "Plafond d'emprise", "gabarit_emprise_plafond_m2", _m2_ou_texte),
         ligne(valeurs, "Hauteur réglementaire", "gabarit_hauteur_m", _m_ou_texte),
     ]

@@ -379,32 +379,71 @@ interface Measure {
 // M55-G point 13 — BOUTON DE CARTE MOMENTANÉ (zoom +/−…) : au clic, flash mint ~180 ms puis
 // retour — un feedback d'APPUI, pas un état. Les bascules à état (3D, fond, outils) gardent
 // leur état persistant comme feedback ; ce patron est pour les boutons sans état.
-// RECETTE-OUTILS-3 (S11) — bloc de contrôle 3D (remplace la boussole R14) : visible seulement en 3D,
-// dans un coin de la carte, DA de la charte. ↺/↻ = rotation 45° par clic ; curseur vertical =
-// inclinaison (vue de dessus 0° → vue rasante 60°) ; ◎ = recentrer sur la parcelle à l'angle de départ
-// (délègue au propriétaire de la caméra, le Gabarit, via `recentrer3d`). Ctrl + glisser reste actif.
+// RECETTE-OUTILS-4 (U5) — SPHÈRE D'ORIENTATION 3D (gizmo type ViewCube / navigation Blender), remplace
+// le bloc ↺/↻/curseur (RECETTE-OUTILS-3 S11). Visible seulement en 3D, coin de la carte, DA de la charte.
+//  · un disque (~80 px) = la sphère : N/E/S/O FIXES sur le pourtour (repère géographique) + une AIGUILLE
+//    mint qui montre l'orientation courante (direction « haut » de la carte) ; l'inclinaison est rendue
+//    par l'aplatissement vertical du disque (vue de dessus = rond, vue rasante = ellipse) ;
+//  · GLISSER dans la sphère fait tourner la caméra autour de la parcelle : gauche/droite = rotation,
+//    haut/bas = inclinaison (bornée vue de dessus 0° → vue rasante 80°), pivot = le centre de la carte
+//    (la parcelle, sur laquelle le Gabarit centre déjà) ;
+//  · CLIC sur N/E/S/O place la caméra de ce côté (ce cardinal devient le « haut ») ;
+//  · ◎ « Recentrer » (sous la sphère) rétablit la vue de départ (délègue au Gabarit via `recentrer3d`).
+//  La sphère SUIT la vue (aiguille + aplatissement se mettent à jour, y compris sur Ctrl + glisser, qui
+//  reste actif sur la carte).
 function Controle3D({ map }: { map: React.RefObject<maplibregl.Map | null> }) {
+  const [bearing, setBearing] = useState(0)
   const [pitch, setPitch] = useState(45)
+  const drag = useRef<{ x: number; y: number; b: number; p: number } | null>(null)
   useEffect(() => {
     const m = map.current
     if (!m) return
-    const upd = () => setPitch(Math.round(m.getPitch()))
-    upd(); m.on('pitch', upd)
-    return () => { m.off('pitch', upd) }
+    const upd = () => { setBearing(m.getBearing()); setPitch(m.getPitch()) }
+    upd(); m.on('rotate', upd); m.on('pitch', upd); m.on('move', upd)
+    return () => { m.off('rotate', upd); m.off('pitch', upd); m.off('move', upd) }
   }, [map])
-  const roter = (deg: number) => { const m = map.current; if (m) m.easeTo({ bearing: m.getBearing() + deg, duration: 300 }) }
-  const incliner = (p: number) => { const m = map.current; if (m) m.easeTo({ pitch: p, duration: 120 }); setPitch(p) }
-  const btn = 'flex h-8 w-8 items-center justify-center rounded-md border border-line-2 bg-bg-2 text-[16px] leading-none text-txt transition-colors duration-quick hover:border-mint hover:text-mint focus-visible:border-mint focus-visible:text-mint focus-visible:outline-none'
+  const clampP = (p: number) => Math.max(0, Math.min(80, p))
+  const down = (e: React.PointerEvent) => {
+    const m = map.current; if (!m) return
+    e.preventDefault(); e.stopPropagation()
+    try { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId) } catch { /* */ }
+    drag.current = { x: e.clientX, y: e.clientY, b: m.getBearing(), p: m.getPitch() }
+  }
+  const move = (e: React.PointerEvent) => {
+    const m = map.current, d = drag.current; if (!m || !d) return
+    m.jumpTo({ bearing: d.b + (e.clientX - d.x) * 0.7, pitch: clampP(d.p + (e.clientY - d.y) * 0.5) })
+  }
+  const up = (e: React.PointerEvent) => {
+    try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId) } catch { /* */ }
+    drag.current = null
+  }
+  const vers = (b: number) => { const m = map.current; if (m) m.easeTo({ bearing: b, duration: 350 }) }
+  const stopP = (e: React.PointerEvent) => e.stopPropagation()
+  const tilt = Math.max(0.2, Math.cos((pitch * Math.PI) / 180))   // 1 (dessus) → 0,2 (rasant)
+  const card = 'absolute z-10 flex h-4 w-4 items-center justify-center rounded font-mono text-[9px] leading-none text-txt-mut transition-colors duration-quick hover:text-mint focus-visible:text-mint focus-visible:outline-none'
+  const btn = 'flex h-7 w-7 items-center justify-center rounded-md border border-line-2 bg-bg-2 text-[15px] leading-none text-txt transition-colors duration-quick hover:border-mint hover:text-mint focus-visible:border-mint focus-visible:text-mint focus-visible:outline-none'
   return (
-    <div data-controle-3d className="absolute bottom-4 left-4 z-20 flex flex-col items-center gap-1.5 rounded-lg border border-line-2 bg-bg-2/90 p-1.5 shadow-elev-1 backdrop-blur-sm">
-      <div className="flex gap-1.5">
-        <button data-c3d-rot-g className={btn} title="Tourner à gauche (45°)" onClick={() => roter(-45)}>↺</button>
-        <button data-c3d-rot-d className={btn} title="Tourner à droite (45°)" onClick={() => roter(45)}>↻</button>
+    <div data-controle-3d className="absolute bottom-4 left-4 z-20 flex flex-col items-center gap-2">
+      <div data-c3d-sphere title="Glisser pour tourner / incliner la vue"
+        onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
+        className="relative h-20 w-20 cursor-grab touch-none select-none overflow-hidden rounded-full border border-line-2 bg-bg-2/90 shadow-elev-1 backdrop-blur-sm active:cursor-grabbing"
+        style={{ background: 'radial-gradient(circle at 50% 38%, rgba(255,255,255,0.06), rgba(0,0,0,0.18))' }}>
+        {/* calque incliné (pitch) : équateur + méridiens + aiguille d'orientation (mint) */}
+        <div className="pointer-events-none absolute inset-0" style={{ transform: `scaleY(${tilt})` }}>
+          <span className="absolute inset-2.5 rounded-full border border-line-2/50" />
+          <span className="absolute left-1/2 top-2.5 bottom-2.5 w-px -translate-x-1/2 bg-line-2/40" />
+          <span className="absolute top-1/2 left-2.5 right-2.5 h-px -translate-y-1/2 bg-line-2/40" />
+          <span className="absolute left-1/2 top-1/2 h-7 w-[3px] -translate-x-1/2 -translate-y-full rounded-full bg-gradient-to-t from-mint/10 to-mint"
+            style={{ transformOrigin: 'bottom center', transform: `rotate(${bearing}deg)` }} />
+        </div>
+        {/* cardinaux FIXES, cliquables — placent la caméra de ce côté */}
+        <button data-c3d-n onPointerDown={stopP} onClick={() => vers(0)} title="Vue depuis le nord" className={`${card} left-1/2 top-0.5 -translate-x-1/2 font-bold text-mint`}>N</button>
+        <button data-c3d-e onPointerDown={stopP} onClick={() => vers(90)} title="Vue depuis l'est" className={`${card} right-0.5 top-1/2 -translate-y-1/2`}>E</button>
+        <button data-c3d-s onPointerDown={stopP} onClick={() => vers(180)} title="Vue depuis le sud" className={`${card} bottom-0.5 left-1/2 -translate-x-1/2`}>S</button>
+        <button data-c3d-o onPointerDown={stopP} onClick={() => vers(270)} title="Vue depuis l'ouest" className={`${card} left-0.5 top-1/2 -translate-y-1/2`}>O</button>
+        {/* moyeu central */}
+        <span className="pointer-events-none absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-txt-mut" />
       </div>
-      <input data-c3d-pitch type="range" min={0} max={60} step={1} value={pitch} aria-label="Inclinaison de la vue"
-        title="Inclinaison : vue de dessus → vue rasante"
-        onChange={(e) => incliner(Number(e.target.value))}
-        className="my-0.5 h-24 w-8 cursor-pointer accent-mint [direction:rtl] [writing-mode:vertical-lr]" />
       <button data-c3d-recentrer className={btn} title="Recentrer sur la parcelle" onClick={() => useApp.getState().recentrer3d()}>◎</button>
     </div>
   )

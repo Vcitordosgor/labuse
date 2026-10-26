@@ -57,6 +57,7 @@ import { Badge } from '../ui/Badge'   // KELFONCIER-FIX-2 (Lot D) — pastille d
 import { Retour } from '../ui/Retour'
 // RECETTE-1 (H2) — Chevron retiré : le bloc proximité n'est plus un accordéon.
 import { Chip } from '../ui/Chip'
+import { Select } from '../ui/Select'   // U3 (RECETTE-OUTILS-4) — menu déroulant partagé
 
 /* ───────── primitives partagées (doctrine module : violet, bandeau honnête, liste→fiche) ───────── */
 
@@ -154,11 +155,12 @@ export function CommuneScope({ commune, onChange, noteFiltre = true }: { commune
   return (
     <label className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-txt-mut">
       Périmètre
-      <select data-commune-scope value={commune ?? ''} onChange={(e) => onChange(e.target.value || null)}
-        className="rounded border border-line-2 bg-surface-3 px-1.5 py-0.5 text-txt focus:border-mint focus:outline-none">
+      {/* U3 (RECETTE-OUTILS-4) — composant partagé `ui/Select` (chevron charte à 16 px, pr suffisant). */}
+      <Select data-commune-scope value={commune ?? ''} onChange={(e) => onChange(e.target.value || null)}
+        className="rounded border border-line-2 bg-surface-3 pl-1.5 py-0.5 text-txt focus:border-mint focus:outline-none">
         <option value="">Toute l'île</option>
         {(communes.data ?? []).map((c) => <option key={c.commune} value={c.commune}>{c.commune}</option>)}
-      </select>
+      </Select>
       {noteFiltre && <span className="text-[10px] text-txt-dim">choisi ici — pas hérité du filtre global</span>}
     </label>
   )
@@ -497,11 +499,12 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
 function CommunePermisSelect({ value, onChange }: { value: string | null; onChange: (c: string | null) => void }) {
   const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
   return (
-    <select data-permis-commune value={value ?? ''} onChange={(e) => onChange(e.target.value || null)}
-      className="w-full rounded-lg border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none">
+    <Select data-permis-commune value={value ?? ''} onChange={(e) => onChange(e.target.value || null)}
+      wrapClassName="w-full"
+      className="w-full rounded-lg border border-line-2 bg-surface-3 pl-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none">
       <option value="">Toutes les communes</option>
       {(communes.data ?? []).map((c) => <option key={c.commune} value={c.commune}>{c.commune}</option>)}
-    </select>
+    </Select>
   )
 }
 

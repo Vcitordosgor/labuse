@@ -12,12 +12,8 @@ import { getAccueilCopilote, getBrief, type AccueilCopiloteMeta, type BriefMatin
 // RETOURS-3 R12 (maquette-copilote-v3) — une TUILE d'icône contrastée par capacité (fond mauve ~22 %,
 // contour ~48 %, glyphe 20 px stroke 2.1). Mappée sur la `cle` servie (donnees/web/expliquer/preparer) ;
 // une clé inconnue tombe sur l'étincelle générique (jamais de tuile vide).
-const CAP_ICONS: Record<string, JSX.Element> = {
-  donnees: <><circle cx="11" cy="11" r="7" /><path d="m16.2 16.2 4.3 4.3" /></>,
-  web: <><circle cx="12" cy="12" r="8.5" /><path d="M3.5 12h17" /><path d="M12 3.5a13 13 0 0 1 0 17 13 13 0 0 1 0-17Z" /></>,
-  expliquer: <><path d="M9.5 17.5h5" /><path d="M10.5 20.5h3" /><path d="M12 3a6 6 0 0 1 3.4 10.9c-.5.4-.9 1-.9 1.6H9.5c0-.6-.4-1.2-.9-1.6A6 6 0 0 1 12 3Z" /></>,
-  preparer: <><path d="M6 2.5h8.5L19 7v14.5H6z" /><path d="M14 2.5V7h5" /><path d="M9 12h7M9 16h5" /></>,
-}
+// RECETTE-OUTILS-4 (U6) — `CAP_ICONS` (icônes des 4 capacités) n'est plus utilisé : la section
+// « Ce qu'il sait faire » est retirée. Seule l'étincelle générique reste (repli des exemples).
 const CAP_ICON_FALLBACK = <path d="M12 2.5 14 9l6.5 2L14 13l-2 6.5L10 13l-6.5-2L10 9l2-6.5Z" strokeLinejoin="round" />
 
 // RECETTE-OUTILS-2 (R24) — NEUF exemples en grille 3×3 (maquette « Copilote, exemples »), un par chemin
@@ -204,35 +200,13 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
       {/* RETOURS-11 A1 (03/09) — les exemples ne sont plus ici : ils forment le NIVEAU 3, sous les
           capacités (regroupés), et PRÉ-REMPLISSENT la barre au clic (voir plus bas). */}
 
-      {/* M133 — CE QU'IL SAIT FAIRE (NIVEAU 2) : les 4 capacités en TEXTE. RETOURS-11 A1 — SANS l'exemple
-          sous chacune (les exemples sont regroupés au niveau 3). NON cliquables. */}
-      {!reponse && meta && meta.capacites.length > 0 && (
-        // RETOURS-7 Z2 — même marge (mb-8) que « Reprendre » ci-dessous.
-        <div data-accueil-capacites className="mb-8">
-          <p className="mb-2.5 font-mono text-[10px] tracking-[.12em] text-cp-faint">CE QU'IL SAIT FAIRE</p>
-          {/* RETOURS-10 (T5) — « une ligne de quatre, plus léger » (maquette) : les 4 capacités en colonne
-              (icône mauve LÉGÈRE dessus, libellé, exemple dessous), quatre de front sur écran large, deux
-              par deux en dessous. Toujours NON cliquable (curseur défaut, aucun état). L'icône passe en
-              tuile discrète (mauve ~10 %, sans contour) — plus l'aplat contrasté d'avant. */}
-          <div className="grid grid-cols-2 gap-x-4 gap-y-5 min-[560px]:grid-cols-4">
-            {meta.capacites.map((c) => (
-              <div key={c.cle} data-accueil-capacite data-cap-cle={c.cle} className="flex cursor-default flex-col gap-1.5">
-                <span className="flex h-[30px] w-[30px] items-center justify-center rounded-[8px] bg-cp-ia/[0.10] text-cp-ia">
-                  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round">{CAP_ICONS[c.cle] ?? CAP_ICON_FALLBACK}</svg>
-                </span>
-                <div className="min-w-0">
-                  {/* RETOURS-11 A1 — plus d'exemple sous la capacité (regroupés au niveau 3). */}
-                  <div className="text-[13px] leading-[1.35] font-medium text-cp-txt">{c.libelle}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* RECETTE-OUTILS-4 (U6) — la section « Ce qu'il sait faire » (titre + 4 capacités en texte) est
+          RETIRÉE : elle doublait ce que les exemples montrent déjà. Les EXEMPLES remontent à sa place,
+          juste sous la barre d'envoi. */}
 
-      {/* RETOURS-11 A1 (03/09) — NIVEAU 3 : EXEMPLES regroupés (les 3 raccourcis + les 4 exemples des
-          capacités, dédoublonnés). Cliquer PRÉ-REMPLIT la barre (ne lance plus) : l'utilisateur ajuste
-          puis envoie. Survol plein mauve via .hover-fill-ia. */}
+      {/* RETOURS-11 A1 (03/09) — EXEMPLES regroupés (les 3 raccourcis + les 4 exemples des capacités,
+          dédoublonnés). Cliquer PRÉ-REMPLIT la barre (ne lance plus) : l'utilisateur ajuste puis
+          envoie. Survol plein mauve via .hover-fill-ia. */}
       {!reponse && (
         <div data-accueil-exemples className="mb-8">
           <p className="mb-2.5 font-mono text-[10px] tracking-[.12em] text-cp-faint">EXEMPLES</p>

@@ -10,6 +10,7 @@ import { RadarMarche } from './RadarMarche'
 import { Bouton } from '../ui/Bouton'
 import { Chevron } from '../ui/Chevron'
 import { Retour } from '../ui/Retour'
+import { Select } from '../ui/Select'   // U3 (RECETTE-OUTILS-4) — menu déroulant partagé
 
 // RETOURS-1 R3/R4 (Vic) — OUTIL « COMMUNES » RESTRUCTURÉ : un écran d'entrée à TROIS portes :
 //   1. Comparaison communes — le tableau comparatif (overlay plein écran, patron §4) ;
@@ -80,11 +81,12 @@ function AcquisitionsRecentes() {
     <div className="flex min-h-0 flex-1 flex-col gap-2">
       <div className="shrink-0">
         <p className="label-caps text-[9.5px]">Commune</p>
-        <select data-acq-commune value={commune ?? ''} onChange={(e) => { setCommune(e.target.value || null); setMillesimes([]); setLimite(200) }}
-          className="mt-1 w-full rounded-md border border-line-2 bg-surface-3 px-2 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none">
+        <Select data-acq-commune value={commune ?? ''} onChange={(e) => { setCommune(e.target.value || null); setMillesimes([]); setLimite(200) }}
+          wrapClassName="mt-1 w-full"
+          className="w-full rounded-md border border-line-2 bg-surface-3 px-2 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none">
           <option value="">Choisir une commune…</option>
           {(communes.data ?? []).map((c) => <option key={c.insee} value={c.commune}>{c.commune}</option>)}
-        </select>
+        </Select>
       </div>
       {/* O16(d) — le champ DGFiP ne publie QUE les personnes morales : dit une fois, franchement. */}
       {commune && (

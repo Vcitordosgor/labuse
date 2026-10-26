@@ -4,6 +4,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { etudeZoneDestinationsRef } from '../../lib/api'
 import { Badge, type BadgeTon } from '../ui/Badge'
+import { Select } from '../ui/Select'
 
 export function useDestinationsRef() {
   return useQuery({ queryKey: ['destinations-referentiel'], queryFn: etudeZoneDestinationsRef, staleTime: Infinity })
@@ -16,12 +17,12 @@ export function DestinationSelect({ value, onChange, dataAttr }: {
   const d = ref.data
   return (
     <label className="block text-[11px] tracking-wide text-txt-dim">Activité (destination)
-      {/* RECETTE-OUTILS-3 (S4) — marge DROITE du chevron alignée EXACTEMENT sur le menu « Périmètre »
-          de Blocs fonciers (CommuneScope, `px-1.5` = 6 px) : mesuré 6 px là, 28 px ici (`pr-7`, reliquat
-          R10 trop large) → ramené à `pr-1.5` (6 px). Flèche native (appearance auto) comme l'autre menu. */}
-      <select data-destination-select={dataAttr ?? true} value={value ?? ''}
+      {/* U3 (RECETTE-OUTILS-4) — menu via le composant partagé `ui/Select` : chevron de la charte à
+          16 px du bord droit, padding droit suffisant. Plus de flèche native ni de `pr-*` en dur. */}
+      <Select data-destination-select={dataAttr ?? true} value={value ?? ''}
+        wrapClassName="mt-0.5 w-full"
         onChange={(e) => onChange(e.target.value || null)}
-        className="mt-0.5 h-8 w-full rounded-md border border-line-2 bg-surface-1 pl-2 pr-1.5 text-[11.5px] text-txt focus:border-mint focus:outline-none">
+        className="h-8 w-full rounded-md border border-line-2 bg-surface-1 pl-2 text-[11.5px] text-txt focus:border-mint focus:outline-none">
         <option value="">— toutes (facultatif) —</option>
         {(d?.destinations ?? []).map((g) => (
           <optgroup key={g.slug} label={g.libelle}>
@@ -30,7 +31,7 @@ export function DestinationSelect({ value, onChange, dataAttr }: {
             ))}
           </optgroup>
         ))}
-      </select>
+      </Select>
     </label>
   )
 }

@@ -14,6 +14,7 @@ import { Tip } from '../Tip'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'   // RETOURS-11 T6 — source unique des 24 communes
 import { trierCommunes } from '../../lib/communes'
 import { Bouton } from '../ui/Bouton'
+import { Select } from '../ui/Select'   // U3 (RECETTE-OUTILS-4) — menu déroulant partagé
 import { EntreeParcelle } from './EntreeParcelle'   // RECETTE-1 H5 — entrée parcelle (adresse OU clic carte)
 
 const fmt = fmtInt
@@ -614,11 +615,11 @@ export function M18() {
           RETOURS-11F M13 — sélecteur de commune (île entière par défaut). */}
       <div className="flex flex-wrap items-center gap-2">
         <label className="text-[10.5px] text-txt-mut">Périmètre</label>
-        <select value={insee} onChange={(e) => setInsee(e.target.value)}
+        <Select value={insee} onChange={(e) => setInsee(e.target.value)}
           className="min-h-7 rounded border border-line-2 bg-bg-2 px-2 py-1 text-[11px] text-txt transition-colors duration-quick hover:border-mint/60">
           <option value="">Île entière (24 communes)</option>
           {communesTriees.map((c) => <option key={c.insee} value={c.insee}>{c.commune}</option>)}
-        </select>
+        </Select>
         <span className="text-[10px] text-txt-dim">{d?.perimetre ?? ''}{nbTri ? ` — ${nbTri} trimestres affichés.` : ''}</span>
       </div>
       {/* COMMUNE-124 (RETOUCHES-1 lot B) — le back refuse désormais un code qui ne résout aucune commune
@@ -734,10 +735,11 @@ export function MarcheCommune({ communeProp }: { communeProp?: string } = {}) {
     <>
       {!communeProp && <Banner>{CLIENT.marche.banner}</Banner>}
       {!communeProp && (
-      <select data-marche-commune value={commune} onChange={(e) => setCommune(e.target.value)}
-        className="self-start rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none">
+      <Select data-marche-commune value={commune} onChange={(e) => setCommune(e.target.value)}
+        wrapClassName="self-start"
+        className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none">
         {MU_COMMUNES.map((c) => <option key={c} value={c}>{c}</option>)}
-      </select>)}
+      </Select>)}
       {q.isLoading && <Squelette bloc className="py-8" />}
       {d && <>
         {/* M137-Z : le signal est HISSÉ dans l'en-tête sticky de la fiche commune (Communes) — on ne le

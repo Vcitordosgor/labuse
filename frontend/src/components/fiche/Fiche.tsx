@@ -3,6 +3,7 @@ import { Tip } from '../Tip'
 import { Bouton } from '../ui/Bouton'
 import { Badge } from '../ui/Badge'
 import { Chevron } from '../ui/Chevron'
+import { Select } from '../ui/Select'   // U3 (RECETTE-OUTILS-4) — menu déroulant partagé
 import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
 import { addToPipeline, ajouterParcelle, ApiError, archivePipeline, createProjet, docApporteurUrl, docDossierUrl, docPreDossierUrl, getDossierStatut, getFaisabilite, getFiche, getGabarit, getMoi, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, projetsPourParcelle, SOURCE, toggleWatch } from '../../lib/api'
 // DOCS-FIX-1 (P3/P4) — ouverture propre des documents de la fiche (fetch + blob + attente + erreur FR
@@ -112,9 +113,9 @@ function SignalerErreur({ idu, section }: { idu: string; section?: string | null
     <div data-signalement-form className="card-elev px-3 py-2.5">
       <p className="label-caps">Signaler une erreur</p>
       <label className="mt-2 block text-[11px] text-txt-mut">Type d’erreur
-        <select data-signalement-type value={type} onChange={(e) => setType(e.target.value)} className="mt-0.5 w-full rounded-md border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt">
+        <Select data-signalement-type value={type} onChange={(e) => setType(e.target.value)} wrapClassName="mt-0.5 w-full" className="w-full rounded-md border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt">
           {SIGNALEMENT_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-        </select>
+        </Select>
       </label>
       <label className="mt-2 block text-[11px] text-txt-mut">Champ concerné (optionnel)
         <input value={champ} onChange={(e) => setChamp(e.target.value)} placeholder="ex. piscine, zonage, adresse"

@@ -797,7 +797,8 @@ def _gabarit(db, idu: str) -> dict:
                 res.batiExistantGeoJSON = _bati_existant(db, idu)
             # RECETTE-OUTILS-3 (S7/S10) — MÊME déduction/découpe que l'app : la zone d'implantation du
             # document (chiffre + schéma) déduit le bâti, le bâti est découpé au contour. Chiffre = app.
-            from ..gabarit.builder import deduire_bati_de_zone
+            from ..gabarit.builder import deduire_bati_de_zone, rescale_zone_contenance
+            rescale_zone_contenance(db, idu, res)   # U4 — aire AVANT = contenance (comme l'endpoint)
             deduire_bati_de_zone(res)
         except Exception:  # noqa: BLE001
             pass

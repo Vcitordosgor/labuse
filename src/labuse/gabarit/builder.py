@@ -584,6 +584,25 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
     return BuildResult(input=inp, blocking=blocking, raccordement=racc)
 
 
+def rescale_zone_contenance(db, idu: str, result) -> None:
+    """RECETTE-OUTILS-4 (U4) — ré-échelonne l'aire de la zone d'implantation sur la CONTENANCE cadastrale
+    (repère de la Faisabilité), EXACTEMENT comme l'endpoint /outils/gabarit (api/gabarit.py), À APPELER
+    juste avant `deduire_bati_de_zone`. Sans ça, les chemins PDF (construire_gabarit, robinet_fiche) qui
+    ne passent pas par l'endpoint partaient de l'aire du DESSIN (ex. 176 m²) et affichaient « déduit
+    46 m² » au lieu de « 40 » (170 → 130) : la déduction prend pour référence l'aire AVANT, qui doit être
+    la même partout. Best-effort (jamais un document cassé)."""
+    try:
+        z, s = getattr(result, "zoneImplantationM2", None), getattr(result, "surfaceParcelleM2", None)
+        if not z or not s:
+            return
+        from sqlalchemy import text
+        dessin = db.execute(text("SELECT ST_Area(geom_2975) FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+        if dessin and float(dessin) > 0:
+            result.zoneImplantationM2 = round(float(z) * float(s) / float(dessin), 1)
+    except Exception:  # noqa: BLE001 — l'échelle contenance n'est jamais un bloqueur
+        pass
+
+
 def deduire_bati_de_zone(result) -> None:
     """RECETTE-OUTILS-3 (S7 / S10) — rend la zone d'implantation et le bâti COHÉRENTS et UNIQUES pour
     l'app (2D/3D) et le PDF (p1 schéma, p3 3D). Deux opérations, in place sur un `GabaritResult` servi :
@@ -597,6 +616,11 @@ def deduire_bati_de_zone(result) -> None:
     mètres (CRS métrique 2975), géométries re-servies en WGS84."""
     if result is None or getattr(result, "status", None) != "ok":
         return
+    # RECETTE-OUTILS-4 (U4) — « déduit » = surface RÉELLEMENT retirée de la zone AFFICHÉE : la valeur
+    # AVANT déduction (le `zoneImplantationM2` servi par le moteur, avant qu'on l'écrase) moins la
+    # valeur APRÈS. On NE repart PAS de l'aire re-projetée `zone_m.area`, qui diffère de quelques m²
+    # du chiffre moteur — sinon « 170 → 130 » affichait « déduit 46 » au lieu de « 40 ».
+    orig_m2 = getattr(result, "zoneImplantationM2", None)
     z_gj = getattr(result, "zoneImplantationGeoJSON", None)
     b_fc = getattr(result, "batiExistantGeoJSON", None)
     if not z_gj or not b_fc or not (b_fc.get("features") if isinstance(b_fc, dict) else None):
@@ -632,6 +656,9 @@ def deduire_bati_de_zone(result) -> None:
         result.batiExistantGeoJSON = {"type": "FeatureCollection", "features": feats}
         result.zoneImplantationGeoJSON = mapping(to_wgs(zone_deduit))
         result.zoneImplantationM2 = deduit_m2
-        result.batiDeduitM2 = max(0, brute_m2 - deduit_m2)
+        # U4 — retrait réel = (avant affiché) − (après). Repli sur l'aire re-projetée si le moteur
+        # n'a pas posé de valeur avant (jamais négatif).
+        ref_avant = round(orig_m2) if isinstance(orig_m2, (int, float)) else brute_m2
+        result.batiDeduitM2 = max(0, ref_avant - deduit_m2)
     except Exception:  # noqa: BLE001 — géométrie dégénérée : on garde le résultat non déduit
         pass

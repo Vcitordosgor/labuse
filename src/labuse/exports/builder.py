@@ -613,7 +613,8 @@ def construire_gabarit(db, idu: str, *, jour: date | None = None) -> ResultatDoc
     # RECETTE-OUTILS-3 (S7/S10) — MÊME déduction/découpe que l'app : la zone d'implantation du PDF (p1
     # schéma, p3 3D) déduit le bâti et le bâti est découpé au contour. Référence géométrique UNIQUE.
     try:
-        from ..gabarit.builder import deduire_bati_de_zone
+        from ..gabarit.builder import deduire_bati_de_zone, rescale_zone_contenance
+        rescale_zone_contenance(db, idu, gr)   # U4 — même aire AVANT que l'endpoint (contenance), sinon déduit 46≠40
         deduire_bati_de_zone(gr)
     except Exception:  # noqa: BLE001
         pass
