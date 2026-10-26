@@ -244,11 +244,14 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
           <div className="grid grid-cols-3 gap-3">
             {EXEMPLES_R12.map((ex) => (
               <button key={ex.t} data-accueil-exemple data-ex-type={ex.ic} onClick={() => { onChange(ex.t); ref.current?.focus() }}
-                className="hover-fill-ia flex h-24 flex-col items-start gap-2 rounded-xl border border-cp-line bg-cp-card p-2.5 text-left transition-colors duration-quick hover:border-cp-ia/40">
+                className="hover-fill-ia flex h-28 flex-col items-start gap-2 rounded-xl border border-cp-line bg-cp-card p-2.5 text-left transition-colors duration-quick hover:border-cp-ia/40">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cp-ia/15 text-cp-ia">
                   <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">{EX_ICONS[ex.ic] ?? CAP_ICON_FALLBACK}</svg>
                 </span>
-                <span className="line-clamp-2 text-[15px] leading-tight text-cp-txt">{avecIduMono(ex.t)}</span>
+                {/* RECETTE-OUTILS-3 (S12) — texte 13 px, 3 lignes max, PAS de « … » (les 9 libellés tiennent
+                    en 3 lignes à cette taille/largeur, vérifié LIVE) ; cartes de hauteur ÉGALE (h-28 = la
+                    plus haute, 3 lignes + icône). IDU en mono. */}
+                <span className="line-clamp-3 text-[13px] leading-tight text-cp-txt">{avecIduMono(ex.t)}</span>
               </button>
             ))}
           </div>
