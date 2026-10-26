@@ -122,10 +122,20 @@ PDF dans `reports/DOCS-COHERENCE-1/pdf/` (gitignoré).
 | A8 | ⬜ | | prix de la fiche, un seul (bâti 3602 vs 2687 ; terrain 250 vs 479). |
 | A9 | ⬜ | | trois SDP, trois libellés fixes. |
 
-**6 écarts restants (harnais BY0083)** : zone impl. (869/1691/1699 → A3), hauteur
-(9/6 vs 9/? → A7), stationnement (3 formulations → A6/F6), prix bâti (3602 vs 2687 →
-A8), prix terrain (250 vs 479 → A8), contraintes (oui vs « aucune » Étude → A5/F2).
-*(résolus : propriétaire A1, pente A4, date A10, surface A2/G2.)*
+**5 écarts restants (harnais BY0083)** :
+1. **zone impl.** — Gabarit 1 736 (terrain libéré) / Étude 1 691 / pré-dossier 1 699 /
+   Dossier §10 869 (non encore renommé) : **réconciliation de moteurs** (gabarit vs
+   implantation vs CERFA, ~2,6 %) + alignement Dossier §10/Étude sur les libellés A3.
+2. **hauteur** — le CERFA du pré-dossier n'affiche que le faîtage (9/?) ; Dossier/Gabarit/
+   Étude = 9/6. → aligner le pré-dossier.
+3. **stationnement** — Gabarit « règle connue, non chiffrée » → A6 (chiffrer 2 places /
+   logement + pleine terre 40 %, « non intégrée au gabarit ») ; le harnais capte aussi
+   l'« art. 12.2 » devant la valeur de l'Étude (raffiner l'extracteur ou le libellé).
+4-5. **prix bâti** (3602 Dossier vs 2687 Comparatif) et **prix terrain** (250 vs 479) →
+   A8 : réconcilier les 3 sources (Dossier §8 / Comparatif / Étude de zone) sur l'id fiche.
+
+*(résolus cette session : A1 propriétaire, A2/G2 surface, A4 pente, A5 contraintes,
+A7 hauteur-Gabarit, A10 date, A3-Gabarit naming, F9 format stationnement, G7 Bilan.)*
 
 ## Lot G — Bilan — G7 FAIT (complément 26/10)
 
