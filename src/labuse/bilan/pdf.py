@@ -22,13 +22,14 @@ from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17/D-13) — jour Ré
 from .catalogue import Catalogue, assiette_unite, charger_catalogue
 from .moteur import ResultatBilan
 
+# G7 — mêmes libellés d'état que l'écran (pastilles) : Sourcé / Repère / Saisi / À renseigner.
 _ETAT_LABEL = {
     "source": "Sourcé",
     "saisi": "Saisi",
-    "repere": "Repère pris",
+    "repere": "Repère",
     "ratios": "Mes ratios",
     "sans_objet": "Sans objet",
-    "a_renseigner": "",  # BILAN-2 : une ligne vide ne porte plus de pastille orange
+    "a_renseigner": "À renseigner",
 }
 
 # Les 4 blocs sont numérotés comme dans le modèle : TOTAL (1) … TOTAL (4).
@@ -173,19 +174,21 @@ def construire_html(
     corps = ['<div class="bilan">', tete]
     corps.append(_tete(r, programme, calendrier, cat))
     if r.lignes_vides:
+        # DOCS-COHERENCE-1 (G4) — plus aucune mention de l'Excel côté client.
         corps.append(
-            f"<p class='vides'>{r.lignes_vides} ligne(s) vide(s) — comptées pour 0, "
-            "comme dans l'Excel.</p>"
+            f"<p class='vides'>{r.lignes_vides} ligne(s) non renseignée(s) — comptées pour 0.</p>"
         )
     postes = {p.id: p for p in cat.postes()}
     lignes = {ln.id: ln for ln in r.lignes}
     for b in cat.blocs:
         tot = next(x for x in r.blocs if x.id == b.id)
+        n = _NUM_BLOC.get(b.id)
         corps.append('<div class="bloc">')
-        corps.append(f"<h2>{esc(b.titre)}</h2>")
+        # G7 — mêmes libellés que l'écran : « n · Titre ».
+        corps.append(f"<h2>{f'{n} · ' if n else ''}{esc(b.titre)}</h2>")
         corps.append(
             "<table>" + _COLGROUP + "<thead><tr><th>Libellé</th><th>Assiette</th>"
-            "<th class='num'>Taux</th><th class='num'>HT</th><th class='num'>TVA</th>"
+            "<th class='num'>Taux ou montant</th><th class='num'>HT</th><th class='num'>TVA</th>"
             "<th class='num'>TTC</th><th>État</th></tr></thead><tbody>"
         )
         for poste in b.postes:
@@ -203,10 +206,9 @@ def construire_html(
                 f"<td class='num'>{'' if vide else _eur(ln.ttc)}</td>"
                 f"<td>{f'<span class=badge>{esc(etat)}</span>' if etat else ''}</td></tr>"
             )
-        n = _NUM_BLOC.get(b.id)
-        lib_tot = f"TOTAL ({n})" if n else f"Total — {esc(b.titre)}"
+        lib_tot = f"Total {n} · {esc(b.titre)}" if n else f"Total — {esc(b.titre)}"
         corps.append(
-            f"<tr class='tot'><td colspan='3'>{lib_tot} — {esc(b.titre)}</td>"
+            f"<tr class='tot'><td colspan='3'>{lib_tot}</td>"
             f"<td class='num'>{_eur(tot.ht)}</td><td class='num'>{_eur(tot.tva)}</td>"
             f"<td class='num'>{_eur(tot.ttc)}</td><td></td></tr>"
         )

@@ -14,7 +14,9 @@ BY0083 + BY0361 + BY0272. **Pas de merge.**
 > ⚠ 2 tests PRÉ-EXISTANTS rouges hors scope (prouvé par stash) : `test_implantation3_pdf::
 > test_route_rend_un_pdf[L'Étang-Salé]` et `test_docs1_ecran_egale_pdf::test_gabarit_…` —
 > parcelles de référence L'Étang-Salé absentes/dérivées de la base de TEST locale.
-> Serveur API local : voir « Lancer » en bas.
+>
+> **Complément G7 (Bilan refait maquette v3) FAIT et vérifié** — voir la section Lot G.
+> Serveur API local : voir « Lancer » en bas. Harnais Bilan : `capture-bilan.html`.
 
 ---
 
@@ -118,7 +120,35 @@ PDF dans `reports/DOCS-COHERENCE-1/pdf/` (gitignoré).
 A8), prix terrain (250 vs 479 → A8), contraintes (oui vs « aucune » Étude → A5/F2).
 *(résolus : propriétaire A1, pente A4, date A10, surface A2/G2.)*
 
-## Lots B → H — à faire
+## Lot G — Bilan — G7 FAIT (complément 26/10)
+
+**G7 — écran Bilan refait selon la maquette v3** (`docs/design/maquettes/bilan-v3.html`,
+validée par Vic). Le calcul et les 45 postes NE CHANGENT PAS ; seule la présentation est
+refaite. `frontend/src/components/fiche/BilanEcran.tsx`.
+
+| élément | statut | note |
+|---------|--------|------|
+| En-tête collant | ✅ | « ← Docs » · Bilan / IDU / commune · ligne « Programme : Étude reliée / Choisir une Étude de faisabilité · Prix demandé : inconnu » · boutons **Exporter en PDF** / **Exporter en Excel** (grisés si CA nul — G3) + **Enregistrer** (toujours actif). |
+| Ligne d'état | ✅ | « N postes pré-remplis (sourcés) · N à renseigner, comptés pour 0 · les exports s'ouvrent dès que le programme et un prix de vente sont saisis » (compté sur les lignes servies). |
+| Cinq tuiles | ✅ | CA TTC · Dépenses TTC · Résultat net (vert) · Charge foncière max · Lecture (toggle « Ma marge à ce prix / Prix max du terrain »). |
+| Programme en table | ✅ | Produit · Lots · SUV · Prix TTC/m² (repère + « utiliser ») · TVA · CA TTC · Total · « + Ajouter un produit ». Strip compact Terrain/SDP/Surface taxable (sourcé/repère) conservé car nécessaire au calcul (G2 : surface taxable reste vide, modifiable). |
+| Calendrier compact | ✅ | à droite ; repère Sitadel « repère Sitadel · N mois » sous Obtention PC. |
+| 45 postes · 4 sections | ✅ | sections repliables, **sous-total TTC dans l'en-tête de section** (« 1 · Charge foncière · 18 postes · N sourcés · TTC … »), **première ouverte** ; colonnes Libellé · Assiette · Taux ou montant · HT · TVA · TTC · État ; un seul champ, **unité à l'intérieur** ; **État en pastille** (Sourcé vert / Repère jaune / Saisi / À renseigner) à la place des liens « Sans objet ». |
+| Synthèse en pied | ✅ | Dépenses TTC · CA TTC · TVA résiduelle · Résultat net · Cash-flow ; pied « Document non contractuel · Données LABUSE au 21/10/2026 ». |
+| Message « Connectez-vous » | ✅ | retiré de l'écran (plus jamais affiché). |
+| PDF même ordre / libellés | ✅ | `bilan/pdf.py` aligné : « n · Titre », « Total n · Titre », « Taux ou montant », pastille « À renseigner », et **G4** « N ligne(s) non renseignée(s) — comptées pour 0 » (plus « comme dans l'Excel » — 0 mot interdit au pdftotext). |
+
+Preuves : captures `reports/DOCS-COHERENCE-1/captures/bilan-g7-{avant,apres}.png` (+ maquette
+`maquette-bilan-v3.png`), rendues via le harnais `frontend/capture-bilan.{html,tsx}` (modele +
+calcul par le proxy Vite, aucune auth). tsc 0 · vitest bilan OK · `vite build` OK · pytest
+bilan 15 passed / 3 skipped (modèle promotrice gitignoré). ⚠ `donnees_au` ajouté au modele
+(`api/bilan.py`) pour le pied daté. Adresse non servie par le modele (commune affichée) ;
+pré-remplissages sourcés (G2) et en-tête complet (G6) restent à faire — hors G7.
+
+**Reste Lot G** : G1 (choix d'une Étude), G2 (pré-remplissages sourcés), G3 (déjà appliqué
+à G7), G4 (fait côté PDF + écran), G5 (alignement colonne Calendrier), G6 (en-tête complet).
+
+## Lots B → F, G1-G6, H — à faire
 
 (Statuts mis à jour à chaque lot ; un commit + une régénération des PDF par lot.)
 

@@ -10,7 +10,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
-  getBilanModele, calculerBilan, genererBilan, putBilanRatio,
+  getBilanModele, calculerBilan, genererBilan,
   docBilanUrl, docBilanExcelUrl, ApiError,
   type BilanModele, type BilanEntrees, type BilanResultat, type BilanSaisie, type BilanPoste,
 } from '../../lib/api'
@@ -46,14 +46,23 @@ const pctToRate = (s: string): number | null => {
   return v == null ? null : v / 100
 }
 
-// Pastilles d'état (BILAN-2) : plus d'« À renseigner » orange par ligne — une
-// ligne vide ne porte pas de pastille (elle est juste comptée en haut).
+// G7 — l'état de chaque poste en PASTILLE : Sourcé (vert), Repère (jaune), Saisi, À renseigner
+// (à la place des liens « Sans objet »). Une ligne vide porte « À renseigner ».
 const ETAT_LABEL: Record<string, string> = {
-  source: 'Sourcé', saisi: 'Saisi', repere: 'Repère pris',
-  ratios: 'Mes ratios', sans_objet: 'Sans objet',
+  source: 'Sourcé', saisi: 'Saisi', repere: 'Repère', ratios: 'Mes ratios', a_renseigner: 'À renseigner',
 }
-const ETAT_TON: Record<string, 'vert' | 'neutre'> = {
-  source: 'vert', saisi: 'neutre', repere: 'neutre', ratios: 'neutre', sans_objet: 'neutre',
+// classes de la pastille par état (couleur portée directement, sans dépendre du Badge).
+const ETAT_PASTILLE: Record<string, string> = {
+  source: 'border-mint/50 bg-mint/15 text-mint',
+  repere: 'border-amber/50 bg-amber/10 text-amber',
+  ratios: 'border-line-2 bg-surface text-txt-mut',
+  saisi: 'border-line-2 bg-surface text-txt',
+  a_renseigner: 'border-line-2 bg-surface text-txt-dim',
+}
+// Pastille d'état (statut, lecture seule) : couleur + libellé.
+function Pastille({ etat }: { etat: string }) {
+  const label = ETAT_LABEL[etat] ?? etat
+  return <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] ${ETAT_PASTILLE[etat] ?? ETAT_PASTILLE.a_renseigner}`}>{label}</span>
 }
 // Numérotation des blocs comme le modèle : TOTAL (1) … TOTAL (4).
 const NUM_BLOC: Record<string, number> = { T: 1, C: 2, G: 3, V: 4 }
@@ -157,11 +166,6 @@ export function BilanEcran({ idu, onClose, onGenerated, depuisEtude }:
     for (const v of res?.vraisemblance ?? []) m[v.cible] = v.message
     return m
   }, [res])
-  const ratioMap = useMemo(() => {
-    const m: Record<string, string> = {}
-    for (const [k, v] of res?.ratios ?? []) m[k] = v
-    return m
-  }, [res])
 
   if (isLoading) return <Overlay onClose={onClose}><div className="p-6"><Chargement variant="bloc" label="Chargement du bilan…" /></div></Overlay>
   if (error || !modele || !entrees) return <Overlay onClose={onClose}><div className="p-6 text-amber">Bilan indisponible sur cette parcelle.</div></Overlay>
@@ -180,23 +184,33 @@ export function BilanEcran({ idu, onClose, onGenerated, depuisEtude }:
     if (r) majPosteProg(p.id, { valeur: r.valeur, etat: 'repere' })
   }
 
-  const generer = async () => {
-    setErreurGen(null)
+  // G7 — enregistre la recette du document (côté serveur) et rend le doc_id. Le message
+  // « Connectez-vous à votre compte » NE S'AFFICHE PLUS à l'écran (décision G7) ; une erreur
+  // d'enregistrement reste dite, mais jamais ce rappel d'auth.
+  const assurerDoc = async (): Promise<number | null> => {
+    if (docId != null) return docId
     try {
-      // Lot 5.1 — l'empreinte des hypothèses est STOCKÉE AVEC LE DOCUMENT côté serveur (cross-poste).
       const { doc_id } = await genererBilan(idu, entrees, empreinte(entrees))
       setDocId(doc_id)
       onGenerated?.(doc_id)
-      await ouvrir(docBilanUrl(idu, doc_id), 'bilan')
+      return doc_id
     } catch (e) {
-      // A-05-2 — message honnête : l'API renvoie un `detail` STRING (ApiError.detail).
-      // Un 401 (ou un détail « compte requis ») = authentification → on invite à se
-      // connecter plutôt que d'afficher un « Génération impossible. » muet.
       const detail = e instanceof ApiError ? e.detail : undefined
       const auth = e instanceof ApiError && (e.status === 401 || /compte|connect|authenti/i.test(detail ?? ''))
-      if (auth) setErreurGen('Connectez-vous à votre compte pour générer ce document.')
-      else setErreurGen(detail || 'Génération impossible.')
+      setErreurGen(auth ? null : (detail || 'Enregistrement impossible.'))
+      return null
     }
+  }
+  const enregistrer = async () => { setErreurGen(null); await assurerDoc() }
+  const exporterPdf = async () => {
+    setErreurGen(null)
+    const id = await assurerDoc()
+    if (id != null) await ouvrir(docBilanUrl(idu, id), 'bilan')
+  }
+  const exporterExcel = async () => {
+    setErreurGen(null)
+    const id = await assurerDoc()
+    if (id != null) await ouvrir(docBilanExcelUrl(idu, id), 'bilan-excel')
   }
 
   const suvTot = res?.produits_totaux.suv ?? null
@@ -204,31 +218,48 @@ export function BilanEcran({ idu, onClose, onGenerated, depuisEtude }:
   const faisa = modele.reperes_publics['faisabilite'] ?? null
   const sitadel = modele.reperes_publics['sitadel'] ?? null
 
+  // G7 — repères de l'en-tête et des tuiles.
+  const nSource = (res?.lignes ?? []).filter((l) => l.etat === 'source').length
+  const caNul = !res?.ca_ttc                               // G3 — pas de CA → exports grisés
+  const totalPostes = (modele.blocs ?? []).reduce((n, b) => n + b.postes.length, 0)
+  const nSections = (modele.blocs ?? []).length
+
   return (
     <Overlay onClose={onClose}>
-      <div className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b border-line bg-surface-2 px-5">
-        <Bouton niveau="secondaire" ton="vert" onClick={onClose}>← Fermer</Bouton>
-        <div className="leading-tight">
-          <div className="flex items-center gap-2 text-[16px] font-bold text-txt">
-            Bilan · {idu}
-            {/* IMPLANTATION-4 (LOT B) — Bilan pré-rempli AVEC le programme d'un scénario de l'Étude
-                (logements + SDP du scénario) ; l'ancien moteur ne pré-remplit plus les logements. */}
-            {depuisEtude && <Badge ton="vert">depuis l'Étude{depuisEtude.ref ? ` · scénario ${depuisEtude.ref}` : ''}</Badge>}
+      {/* ── En-tête collant : parcelle, Étude reliée, prix demandé · exports + enregistrer ── */}
+      <div className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b border-line bg-surface-2 px-5">
+        <Bouton niveau="secondaire" ton="vert" onClick={onClose}>← Docs</Bouton>
+        <div className="min-w-0 leading-tight">
+          <div className="flex items-center gap-2 text-[15px] font-bold text-txt">
+            <span>Bilan</span>
+            <span className="text-txt-mut">{idu}</span>
+            {modele.sourcee.commune && <span className="text-[12px] font-normal text-txt-mut">· {modele.sourcee.commune}</span>}
           </div>
-          {modele.sourcee.commune && <div className="text-[12px] text-txt-mut">{modele.sourcee.commune}</div>}
+          <div className="flex flex-wrap items-center gap-1.5 text-[12px] text-txt-mut">
+            <span>Programme :</span>
+            {depuisEtude
+              ? <span className="text-txt">Étude reliée{depuisEtude.ref ? ` · scénario ${depuisEtude.ref}` : ''}</span>
+              : <>
+                  <span>aucune Étude reliée</span>
+                  <button className="text-mint underline" onClick={onClose}>Choisir une Étude de faisabilité</button>
+                </>}
+            <span className="text-txt-dim">·</span>
+            <span>Prix demandé : inconnu</span>
+          </div>
         </div>
-        {/* compteur discret « N lignes vides » — information, jamais bloquant */}
-        <span className="ml-3 text-[12px] text-txt-mut" title="Comme dans l'Excel, une case vide vaut 0.">
-          {vides === 0 ? 'Toutes les lignes sont renseignées' : `${vides} ligne${vides > 1 ? 's' : ''} vide${vides > 1 ? 's' : ''}`}
-        </span>
-        <div className="ml-auto flex gap-2">
-          {docId != null && (
-            <a href={docBilanExcelUrl(idu, docId)} className="inline-flex h-8 items-center rounded-md border border-mint px-3 text-[13px] font-semibold text-mint hover:bg-mint hover:text-mint-on">Excel</a>
-          )}
-          <Bouton niveau="primaire" ton="vert" disabled={!!enCours} onClick={generer}>
-            {enCours ? <Chargement variant="inline" accent="courant" label="Génération…" /> : 'Générer le bilan'}
+        <div className="ml-auto flex items-center gap-2">
+          <Bouton niveau="secondaire" ton="vert" disabled={caNul || !!enCours} onClick={exporterPdf}>Exporter en PDF</Bouton>
+          <Bouton niveau="secondaire" ton="vert" disabled={caNul || !!enCours} onClick={exporterExcel}>Exporter en Excel</Bouton>
+          <Bouton niveau="primaire" ton="vert" disabled={!!enCours} onClick={enregistrer}>
+            {enCours ? <Chargement variant="inline" accent="courant" label="Enregistrement…" /> : 'Enregistrer'}
           </Bouton>
         </div>
+      </div>
+
+      {/* ── Ligne d'état sous l'en-tête ── */}
+      <div className="border-b border-line bg-surface-1 px-5 py-2 text-[12px] text-txt-mut">
+        {nSource} poste{nSource > 1 ? 's' : ''} pré-rempli{nSource > 1 ? 's' : ''} (sourcés) · {vides} à renseigner, comptés pour 0 ·
+        {' '}les exports s'ouvrent dès que le programme et un prix de vente sont saisis.
       </div>
 
       <div className="grid gap-4 p-5">
@@ -247,150 +278,149 @@ export function BilanEcran({ idu, onClose, onGenerated, depuisEtude }:
           </div>
         )}
 
-        {/* ── Tête : ratios & programme · calendrier · résultat (ordre de l'Excel) ── */}
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_300px]">
-          {/* Ratios & données du programme */}
-          <Carte titre="Ratios &amp; programme">
+        {/* ── Cinq tuiles ── */}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <Tuile titre="CA TTC programme" valeur={fmtEur(res?.ca_ttc)} sous={caNul ? 'programme à saisir' : `${lotsTot != null ? Math.round(lotsTot) : 0} lots`} />
+          <Tuile titre="Dépenses TTC" valeur={fmtEur(res?.depenses_ttc)} sous={`${totalPostes} postes, ${nSections} sections`} />
+          <Tuile titre="Résultat net" valeur={fmtEur(res?.resultat_net)} sous={`${fmtPct(res?.marge_pct)} du CA HT`} vert />
+          <Tuile titre="Charge foncière max" valeur={fmtEur(res?.prix_max_terrain)} sous="à la marge visée" />
+          {/* 5e tuile : Lecture (ma marge / prix max du terrain) */}
+          <section className="grid content-start gap-2 rounded-md border border-line bg-surface-1 p-3">
+            <div className="text-[11px] uppercase tracking-wide text-txt-dim">Lecture</div>
+            <div className="flex flex-wrap gap-1">
+              {(['marge', 'prix'] as const).map((mode) => (
+                <button key={mode} onClick={() => setEntrees((e) => e && ({ ...e, mode }))}
+                  className={`h-7 rounded-full border px-2 text-[12px] ${entrees.mode === mode ? 'border-mint bg-mint text-mint-on' : 'border-line-2 text-txt-mut'}`}>
+                  {mode === 'marge' ? 'Ma marge à ce prix' : 'Prix max du terrain'}
+                </button>
+              ))}
+            </div>
+            {entrees.mode === 'prix' && (
+              <span className="flex items-center gap-1 text-[12px] text-txt-mut">
+                <input className="h-7 w-full rounded border border-line-2 bg-surface px-1.5 text-right tabular-nums text-[color:var(--ink)] placeholder:text-txt-mut"
+                  defaultValue={entrees.marge_cible ?? ''} placeholder="marge visée"
+                  onChange={(ev) => setEntrees((e) => e && ({ ...e, marge_cible: parseNum(ev.target.value) }))} />
+                <span className="text-txt-dim">% CA&nbsp;HT</span>
+              </span>
+            )}
+            {entrees.mode === 'marge' ? (
+              <div><div className="text-[18px] font-bold leading-tight tabular-nums text-txt">{fmtEur(res?.resultat_net)}</div>
+                <div className="text-[12px] text-txt-mut">{fmtPct(res?.marge_pct)} du CA HT</div></div>
+            ) : entrees.marge_cible == null ? (
+              <div className="text-[13px] font-semibold text-amber">Saisissez la marge visée</div>
+            ) : (
+              <div><div className="text-[18px] font-bold leading-tight tabular-nums text-txt">{fmtEur(res?.prix_max_terrain)}</div>
+                <div className="text-[12px] text-txt-mut">{fmtEur(res?.prix_max_terrain_m2)}/m² de terrain</div></div>
+            )}
+            {vrais['marge'] && <div className="border-l-2 border-amber pl-2 text-[11px] text-amber">{vrais['marge']}</div>}
+            {erreurGen && <p className="rounded border-l-2 border-amber bg-surface p-2 text-[11px] text-amber">{erreurGen}</p>}
+          </section>
+        </div>
+
+        {/* ── Programme (table des produits) · Calendrier ── */}
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+          <Carte titre="Programme" sous="une ligne par produit · libre, PLS, LLI">
+            {/* données du programme (sourcées / repère), nécessaires au calcul des taxes et du SUV */}
+            <div className="flex flex-wrap items-end gap-4 border-b border-line px-3.5 py-2.5 text-[12px]">
+              <TeteChamp label="Terrain" unite="m²" value={entrees.programme.terrain} revKey={rev}
+                source={modele.sourcee.terrain != null} onChange={(v) => majProgramme({ terrain: v })} />
+              <TeteChamp label="Surface de plancher" unite="m²" value={entrees.programme.sdp} revKey={rev}
+                repere={faisa ? { label: faisa.label, valeur: faisa.valeur } : null}
+                onChange={(v) => majProgramme({ sdp: v })} onPick={(v) => { majProgramme({ sdp: v }); bump() }} />
+              <TeteChamp label="Surface taxable" unite="m²" value={entrees.programme.surface_taxable} revKey={rev}
+                onChange={(v) => majProgramme({ surface_taxable: v })} alerte={vrais['stax']} />
+              <div className="text-txt-mut">SUV <b className="text-txt">{suvTot != null ? `${fmtNum(suvTot)} m²` : '—'}</b></div>
+            </div>
             <table className="w-full text-[13px]">
+              <thead><tr className="border-b border-line text-left text-txt-mut">
+                <th className="p-2">Produit</th><th className="p-2 text-right">Lots</th><th className="p-2 text-right">SUV m²</th>
+                <th className="p-2 text-right">Prix TTC / m²</th><th className="p-2 text-right">TVA</th><th className="p-2 text-right">CA TTC</th>
+              </tr></thead>
               <tbody>
-                <TeteInput label="Terrain" unite="m²" value={entrees.programme.terrain} revKey={rev}
-                  source={modele.sourcee.terrain != null} onChange={(v) => majProgramme({ terrain: v })} />
-                <TeteInput label="Surface de plancher" unite="m²" value={entrees.programme.sdp} revKey={rev}
-                  repere={faisa ? { label: faisa.label, valeur: faisa.valeur } : null}
-                  onChange={(v) => majProgramme({ sdp: v })} onPick={(v) => { majProgramme({ sdp: v }); bump() }} />
-                <TeteInput label="Surface taxable" unite="m²" value={entrees.programme.surface_taxable} revKey={rev}
-                  repere={faisa ? { label: faisa.label, valeur: faisa.valeur } : null}
-                  onChange={(v) => majProgramme({ surface_taxable: v })} onPick={(v) => { majProgramme({ surface_taxable: v }); bump() }}
-                  alerte={vrais['stax']} />
-                <TeteCalc label="SUV" value={suvTot != null ? `${fmtNum(suvTot)} m²` : '—'} />
-                <TeteCalc label="Coût const. m² SUV HT" value={ratioMap['Coût const. m² SUV HT'] ?? '—'} alerte={vrais['cout_const']} />
-                <TeteCalc label="Prix moyen m² SUV HT" value={ratioMap['Prix moyen au m² SUV HT'] ?? '—'} />
-                <TeteCalc label="Net promoteur m² SUV TTC" value={ratioMap['Net promoteur m² SUV TTC'] ?? '—'} />
-                <TeteCalc label="CA TTC programme" value={fmtEur(res?.ca_ttc)} />
-                <TeteCalc label="Renta nette / CA HT" value={fmtPct(res?.marge_pct)} />
-                <TeteCalc label="Nombre de lots" value={lotsTot != null ? String(Math.round(lotsTot)) : '—'} />
+                {entrees.produits.map((p, i) => {
+                  const dvf = modele.reperes_publics['dvf_neuf']
+                  const caTtc = (p.suv ?? 0) * (p.prix_ttc_m2_suv ?? 0)
+                  return (
+                    <tr key={i} className="border-b border-line align-top">
+                      <td className="p-2"><input className="w-32 rounded border border-line-2 bg-surface px-1.5 py-1 text-[color:var(--ink)] placeholder:text-txt-mut" defaultValue={p.libelle} onChange={(e) => majProduit(i, { libelle: e.target.value })} /></td>
+                      <td className="p-2"><CellNum revKey={rev} value={p.lots} onChange={(v) => majProduit(i, { lots: v })} /></td>
+                      <td className="p-2"><CellNum revKey={rev} value={p.suv} onChange={(v) => majProduit(i, { suv: v })} /></td>
+                      <td className="p-2">
+                        <CellNum revKey={rev} value={p.prix_ttc_m2_suv} onChange={(v) => majProduit(i, { prix_ttc_m2_suv: v })} />
+                        {p.prix_ttc_m2_suv == null && dvf && (
+                          <div className="mt-0.5 text-right text-[11px] text-txt-dim">
+                            repère {dvf.label}{' '}
+                            <button className="text-mint underline" onClick={() => { majProduit(i, { prix_ttc_m2_suv: dvf.valeur }); bump() }} title={dvf.source}>utiliser</button>
+                          </div>
+                        )}
+                      </td>
+                      <td className="p-2"><CellNum revKey={rev} value={p.tva == null ? null : p.tva * 100} onChange={(v) => majProduit(i, { tva: v == null ? null : v / 100 })} /></td>
+                      <td className="p-2 text-right tabular-nums">{fmtEur(caTtc)}</td>
+                    </tr>
+                  )
+                })}
+                <tr className="font-semibold"><td className="p-2">Total</td>
+                  <td className="p-2 text-right tabular-nums">{lotsTot != null ? Math.round(lotsTot) : ''}</td>
+                  <td className="p-2 text-right tabular-nums">{suvTot != null ? fmtNum(suvTot) : ''}</td>
+                  <td /><td /><td className="p-2 text-right tabular-nums">{fmtEur(res?.produits_totaux.ca_ttc)}</td>
+                </tr>
               </tbody>
             </table>
+            <div className="px-3.5 py-2.5">
+              <button className="text-[12px] text-mint underline"
+                onClick={() => setEntrees((e) => e && ({ ...e, produits: [...e.produits, { libelle: `Produit ${e.produits.length + 1}`, lots: null, suv: null, prix_ttc_m2_suv: null, tva: null }] }))}>
+                + Ajouter un produit
+              </button>
+            </div>
           </Carte>
 
-          {/* Calendrier prévisionnel */}
-          <Carte titre="Calendrier prévisionnel" sous="Compromis → Livraison, en J+n">
+          {/* Calendrier compact */}
+          <Carte titre="Calendrier" sous="en mois après le compromis">
             <table className="w-full text-[13px]">
               <tbody>
                 {(modele.calendrier ?? []).map((c) => (
                   <tr key={c.id} className="border-b border-line last:border-0">
-                    <td className="py-1 pl-3 text-txt-mut">{c.libelle}</td>
+                    <td className="py-1 pl-3 text-txt-mut">{c.libelle}
+                      {c.repere === 'sitadel' && sitadel && (
+                        <div className="text-[11px] text-txt-dim">repère Sitadel ·{' '}
+                          <button className="text-mint underline" title={sitadel.source}
+                            onClick={() => { majCalendrier(c.id, (entrees.calendrier['depot_pc'] ?? 0) + Math.round(sitadel.valeur)); bump() }}>
+                            {Math.round(sitadel.valeur)} mois
+                          </button>
+                        </div>
+                      )}
+                    </td>
                     <td className="py-1 pr-3 text-right">
                       <span className="inline-flex items-center gap-1">
                         <span className="text-[11px] text-txt-dim">J+</span>
-                        <input key={rev} className="h-7 w-16 rounded border border-line-2 bg-surface px-1.5 text-right tabular-nums text-[color:var(--ink)] placeholder:text-txt-mut"
+                        <input key={rev} className="h-7 w-14 rounded border border-line-2 bg-surface px-1.5 text-right tabular-nums text-[color:var(--ink)] placeholder:text-txt-mut"
                           defaultValue={entrees.calendrier[c.id] ?? ''} placeholder="0"
                           onChange={(ev) => majCalendrier(c.id, parseNum(ev.target.value))} />
-                        <span className="text-[11px] text-txt-dim">mois</span>
                       </span>
-                      {c.repere === 'sitadel' && sitadel && (
-                        <button className="ml-1 rounded-full border border-dashed border-line-2 px-1.5 text-[11px] text-txt-mut hover:bg-mint hover:text-mint-on"
-                          title={sitadel.source}
-                          onClick={() => { majCalendrier(c.id, (entrees.calendrier['depot_pc'] ?? 0) + Math.round(sitadel.valeur)); bump() }}>
-                          Sitadel {Math.round(sitadel.valeur)} mois
-                        </button>
-                      )}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </Carte>
-
-          {/* Résultat + sens (marge / prix max terrain) */}
-          <section className="grid content-start gap-3 rounded-md border border-line bg-surface-1 p-3.5">
-            <div className="flex flex-wrap gap-1.5">
-              {(['marge', 'prix'] as const).map((mode) => (
-                <button key={mode} onClick={() => setEntrees((e) => e && ({ ...e, mode }))}
-                  className={`h-8 rounded-full border px-3 text-[13px] ${entrees.mode === mode ? 'border-mint bg-mint text-mint-on' : 'border-line-2 text-txt-mut'}`}>
-                  {mode === 'marge' ? 'Ma marge à ce prix' : 'Le prix max du terrain'}
-                </button>
-              ))}
-            </div>
-            {entrees.mode === 'prix' && (
-              <label className="grid gap-1 text-[12px] text-txt-mut">Marge visée
-                <span className="flex items-center gap-2">
-                  <input className="h-8 w-full rounded-md border border-line-2 bg-surface px-2.5 text-right tabular-nums text-[color:var(--ink)] placeholder:text-txt-mut"
-                    defaultValue={entrees.marge_cible ?? ''} placeholder="à saisir"
-                    onChange={(ev) => setEntrees((e) => e && ({ ...e, marge_cible: parseNum(ev.target.value) }))} />
-                  <span className="min-w-[44px] text-[12px] text-txt-dim">% CA HT</span>
-                </span>
-              </label>
-            )}
-            <div>
-              <div className="text-[12px] text-txt-mut">{entrees.mode === 'marge' ? 'Résultat net' : 'Prix maximum du terrain'}</div>
-              {entrees.mode === 'marge' ? (
-                <>
-                  <div className="text-[26px] font-bold leading-none tabular-nums text-txt">{fmtEur(res?.resultat_net)}</div>
-                  <div className="mt-1.5 text-[13px] text-txt-mut">{fmtPct(res?.marge_pct)} du CA HT</div>
-                </>
-              ) : entrees.marge_cible == null ? (
-                <div className="text-[15px] font-semibold text-amber">Saisissez la marge visée</div>
-              ) : (
-                <>
-                  <div className="text-[26px] font-bold leading-none tabular-nums text-txt">{fmtEur(res?.prix_max_terrain)}</div>
-                  <div className="mt-1.5 text-[13px] text-txt-mut">{fmtEur(res?.prix_max_terrain_m2)}/m² de terrain</div>
-                </>
-              )}
-            </div>
-            {vrais['marge'] && <div className="border-l-2 border-amber pl-2 text-[12px] text-amber">{vrais['marge']}</div>}
-            {erreurGen && <p className="rounded-md border-l-2 border-amber bg-surface p-2.5 text-[12px] text-amber">{erreurGen}</p>}
-          </section>
         </div>
 
-        {/* Produits */}
-        <Carte titre="Produits" sous="une ligne par produit (libre · PLS · LLI)">
-          <table className="w-full text-[13px]">
-            <thead><tr className="border-b border-line text-left text-txt-mut">
-              <th className="p-2">Produit</th><th className="p-2 text-right">Lots</th><th className="p-2 text-right">SUV m²</th>
-              <th className="p-2 text-right">Prix TTC/m²</th><th className="p-2 text-right">TVA %</th><th className="p-2 text-right">CA TTC</th>
-            </tr></thead>
-            <tbody>
-              {entrees.produits.map((p, i) => {
-                const dvf = modele.reperes_publics['dvf_neuf']
-                const caTtc = (p.suv ?? 0) * (p.prix_ttc_m2_suv ?? 0)
-                return (
-                  <tr key={i} className="border-b border-line">
-                    <td className="p-2"><input className="w-32 rounded border border-line-2 bg-surface px-1.5 py-1 text-[color:var(--ink)] placeholder:text-txt-mut" defaultValue={p.libelle} onChange={(e) => majProduit(i, { libelle: e.target.value })} /></td>
-                    <td className="p-2"><CellNum revKey={rev} value={p.lots} onChange={(v) => majProduit(i, { lots: v })} /></td>
-                    <td className="p-2"><CellNum revKey={rev} value={p.suv} onChange={(v) => majProduit(i, { suv: v })} /></td>
-                    <td className="p-2">
-                      <span className="inline-flex items-center gap-1">
-                        <CellNum revKey={rev} value={p.prix_ttc_m2_suv} onChange={(v) => majProduit(i, { prix_ttc_m2_suv: v })} />
-                        {p.prix_ttc_m2_suv == null && dvf && (
-                          <button className="rounded-full border border-dashed border-line-2 px-1.5 text-[11px] text-txt-mut hover:bg-mint hover:text-mint-on"
-                            onClick={() => { majProduit(i, { prix_ttc_m2_suv: dvf.valeur }); bump() }} title={dvf.source}>{dvf.label}</button>
-                        )}
-                      </span>
-                    </td>
-                    <td className="p-2"><CellNum revKey={rev} value={p.tva == null ? null : p.tva * 100} onChange={(v) => majProduit(i, { tva: v == null ? null : v / 100 })} /></td>
-                    <td className="p-2 text-right tabular-nums">{fmtEur(caTtc)}</td>
-                  </tr>
-                )
-              })}
-              <tr className="font-semibold"><td className="p-2">Total</td>
-                <td className="p-2 text-right tabular-nums">{lotsTot != null ? Math.round(lotsTot) : ''}</td>
-                <td className="p-2 text-right tabular-nums">{suvTot != null ? fmtNum(suvTot) : ''}</td>
-                <td /><td /><td className="p-2 text-right tabular-nums">{fmtEur(res?.produits_totaux.ca_ttc)}</td>
-              </tr>
-            </tbody>
-          </table>
-        </Carte>
-
-        {/* ── Le tableau unique du bilan ── */}
-        <Carte titre="Bilan" sous="les repères n'entrent dans le calcul que si vous les cliquez">
+        {/* ── Le tableau du bilan : 45 postes, 4 sections repliables ── */}
+        <section className="overflow-hidden rounded-md border border-line bg-surface-1">
+          <div className="flex flex-wrap items-center gap-2.5 border-b border-line px-3.5 py-3">
+            <h2 className="text-[15px] font-semibold text-txt">Bilan</h2>
+            <small className="font-normal text-txt-mut">{totalPostes} postes · une valeur par défaut seulement si elle est sûre et publique</small>
+            <span className="ml-auto flex flex-wrap items-center gap-2 text-[11px]">
+              <Pastille etat="source" /><Pastille etat="repere" /><Pastille etat="saisi" /><Pastille etat="a_renseigner" />
+            </span>
+          </div>
           <table className="w-full table-fixed text-[13px]">
             <colgroup>
-              <col className="w-[28%]" /><col className="w-[16%]" /><col className="w-[16%]" />
-              <col className="w-[12%]" /><col className="w-[11%]" /><col className="w-[12%]" /><col className="w-[5%]" />
+              <col className="w-[26%]" /><col className="w-[16%]" /><col className="w-[16%]" />
+              <col className="w-[11%]" /><col className="w-[10%]" /><col className="w-[11%]" /><col className="w-[10%]" />
             </colgroup>
             <thead><tr className="border-b border-line text-left text-txt-mut">
-              <th className="p-2">Libellé</th><th className="p-2">Assiette</th><th className="p-2 text-right">Taux</th>
+              <th className="p-2">Libellé</th><th className="p-2">Assiette</th><th className="p-2 text-right">Taux ou montant</th>
               <th className="p-2 text-right">HT</th><th className="p-2 text-right">TVA</th><th className="p-2 text-right">TTC</th><th className="p-2">État</th>
             </tr></thead>
             <tbody>
@@ -398,29 +428,24 @@ export function BilanEcran({ idu, onClose, onGenerated, depuisEtude }:
                 const tot = res?.blocs.find((x) => x.id === b.id)
                 return (
                   <BlocLignes key={b.id} bloc={b} tot={tot} entrees={entrees} ligne={ligne} rev={rev} vrais={vrais}
-                    reperePoste={reperePoste} adopterRepere={adopterRepere} majPoste={majPoste} majPosteProg={majPosteProg} />
+                    reperePoste={reperePoste} adopterRepere={adopterRepere} majPoste={majPoste} />
                 )
               })}
-              {/* Synthèse : CA et marge en bas */}
-              <tr className="bg-surface-2 font-semibold"><td className="p-2" colSpan={3}>Dépenses totales</td>
-                <td className="p-2 text-right tabular-nums">{fmtEur(res?.depenses_ht)}</td>
-                <td className="p-2 text-right tabular-nums">{fmtEur(res?.depenses_tva)}</td>
-                <td className="p-2 text-right tabular-nums">{fmtEur(res?.depenses_ttc)}</td><td /></tr>
-              <tr className="font-semibold"><td className="p-2" colSpan={3}>Chiffre d'affaires</td>
-                <td className="p-2 text-right tabular-nums">{fmtEur(res?.ca_ht)}</td>
-                <td className="p-2 text-right tabular-nums">{fmtEur(res?.ca_tva)}</td>
-                <td className="p-2 text-right tabular-nums">{fmtEur(res?.ca_ttc)}</td><td /></tr>
-              <tr><td className="p-2" colSpan={5}>TVA résiduelle</td>
-                <td className="p-2 text-right tabular-nums">{fmtEur(res?.tva_residuelle)}</td><td /></tr>
-              <tr className="text-[15px] font-bold"><td className="p-2" colSpan={3}>Résultat net</td>
-                <td className="p-2 text-right tabular-nums text-mint">{fmtEur(res?.resultat_net)}</td>
-                <td className="p-2 text-right tabular-nums" colSpan={2}>{fmtPct(res?.marge_pct)} du CA HT</td><td /></tr>
-              <tr><td className="p-2" colSpan={3}>Cash flow</td>
-                <td className="p-2 text-right tabular-nums">{fmtEur(res?.cash_flow)}</td><td colSpan={3} /></tr>
             </tbody>
           </table>
           <Legende />
-        </Carte>
+        </section>
+
+        {/* ── Synthèse en pied ── */}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <Tuile titre="Dépenses TTC" valeur={fmtEur(res?.depenses_ttc)} />
+          <Tuile titre="Chiffre d'affaires TTC" valeur={fmtEur(res?.ca_ttc)} />
+          <Tuile titre="TVA résiduelle" valeur={fmtEur(res?.tva_residuelle)} />
+          <Tuile titre="Résultat net" valeur={fmtEur(res?.resultat_net)} sous={`${fmtPct(res?.marge_pct)} du CA HT`} vert />
+          <Tuile titre="Cash-flow" valeur={fmtEur(res?.cash_flow)} />
+        </div>
+
+        <p className="text-center text-[11px] text-txt-dim">Document non contractuel · Données LABUSE au {(modele.sourcee as { donnees_au?: string }).donnees_au ?? '—'}</p>
       </div>
     </Overlay>
   )
@@ -448,37 +473,38 @@ function Carte({ titre, sous, children }: { titre: string; sous?: string; childr
   )
 }
 
-// Ligne de tête éditable (Terrain / SDP / Surface taxable) : repère à droite.
-function TeteInput({ label, unite, value, source, repere, revKey, onChange, onPick, alerte }: {
+// G7 — tuile de synthèse (en-tête de l'écran). `vert` colore la valeur (Résultat net).
+function Tuile({ titre, valeur, sous, vert }: { titre: string; valeur: string; sous?: string; vert?: boolean }) {
+  return (
+    <section className="grid content-start gap-1 rounded-md border border-line bg-surface-1 p-3">
+      <div className="text-[11px] uppercase tracking-wide text-txt-dim">{titre}</div>
+      <div className={`text-[18px] font-bold leading-tight tabular-nums ${vert ? 'text-mint' : 'text-txt'}`}>{valeur}</div>
+      {sous && <div className="text-[12px] text-txt-mut">{sous}</div>}
+    </section>
+  )
+}
+
+// G7 — champ compact « donnée du programme » (Terrain / SDP / Surface taxable) : un seul composant,
+// unité à l'intérieur, badge Sourcé ou repère cliquable.
+function TeteChamp({ label, unite, value, source, repere, revKey, onChange, onPick, alerte }: {
   label: string; unite: string; value: number | null; source?: boolean; revKey?: number
   repere?: { label: string; valeur: number } | null; alerte?: string
   onChange: (v: number | null) => void; onPick?: (v: number | null) => void
 }) {
   return (
-    <tr className="border-b border-line">
-      <td className="py-1 pl-3 text-txt-mut"><span className="inline-flex items-center gap-1.5">{label}{source && <Badge ton="vert">Sourcé</Badge>}</span></td>
-      <td className="py-1 pr-3 text-right">
-        <span className="inline-flex items-center gap-1">
-          <input key={revKey} className="h-7 w-24 rounded border border-line-2 bg-surface px-1.5 text-right tabular-nums text-[color:var(--ink)] placeholder:text-txt-mut"
-            defaultValue={value == null ? '' : fmtNum(value)} placeholder="0" onChange={(e) => onChange(parseNum(e.target.value))} />
-          <span className="text-[11px] text-txt-dim">{unite}</span>
-          {value == null && repere && (
-            <button className="rounded-full border border-dashed border-line-2 px-1.5 text-[11px] text-txt-mut hover:bg-mint hover:text-mint-on"
-              onClick={() => (onPick ?? onChange)(repere.valeur)} title={repere.label}>repère</button>
-          )}
-        </span>
-        {alerte && <div className="text-[11px] text-amber">{alerte}</div>}
-      </td>
-    </tr>
-  )
-}
-// Ligne de tête calculée (lecture seule).
-function TeteCalc({ label, value, alerte }: { label: string; value: string; alerte?: string }) {
-  return (
-    <tr className="border-b border-line last:border-0">
-      <td className="py-1 pl-3 text-txt-mut">{label}{alerte && <small className="block text-amber">{alerte}</small>}</td>
-      <td className={`py-1 pr-3 text-right tabular-nums font-semibold ${alerte ? 'text-amber' : 'text-txt'}`}>{value}</td>
-    </tr>
+    <label className="grid gap-0.5">
+      <span className="inline-flex items-center gap-1.5 text-txt-mut">{label}{source && <Badge ton="vert">Sourcé</Badge>}</span>
+      <span className="inline-flex items-center gap-1">
+        <input key={revKey} className="h-7 w-24 rounded border border-line-2 bg-surface px-1.5 pr-7 text-right tabular-nums text-[color:var(--ink)] placeholder:text-txt-mut"
+          defaultValue={value == null ? '' : fmtNum(value)} placeholder="0" onChange={(e) => onChange(parseNum(e.target.value))} />
+        <span className="-ml-6 text-[11px] text-txt-dim">{unite}</span>
+        {value == null && repere && (
+          <button className="rounded-full border border-dashed border-line-2 px-1.5 text-[11px] text-txt-mut hover:bg-mint hover:text-mint-on"
+            onClick={() => (onPick ?? onChange)(repere.valeur)} title={repere.label}>repère</button>
+        )}
+      </span>
+      {alerte && <span className="text-[11px] text-amber">{alerte}</span>}
+    </label>
   )
 }
 
@@ -489,7 +515,7 @@ function CellNum({ value, onChange, revKey }: { value: number | null; onChange: 
   )
 }
 
-function BlocLignes({ bloc, tot, entrees, ligne, rev, vrais, reperePoste, adopterRepere, majPoste, majPosteProg }: {
+function BlocLignes({ bloc, tot, entrees, ligne, rev, vrais, reperePoste, adopterRepere, majPoste }: {
   bloc: BilanModele['blocs'][number]
   tot: BilanResultat['blocs'][number] | undefined
   entrees: BilanEntrees
@@ -499,80 +525,71 @@ function BlocLignes({ bloc, tot, entrees, ligne, rev, vrais, reperePoste, adopte
   reperePoste: (p: BilanPoste) => { valeur: number; label: string } | null
   adopterRepere: (p: BilanPoste) => void
   majPoste: (id: string, patch: Partial<BilanSaisie>) => void
-  majPosteProg: (id: string, patch: Partial<BilanSaisie>) => void
 }) {
-  const [ouvert, setOuvert] = useState(true)
   const n = NUM_BLOC[bloc.id]
+  // G7 — première section ouverte, les autres repliées.
+  const [ouvert, setOuvert] = useState(n === 1)
+  const nSources = bloc.postes.filter((p) => (ligne[p.id]?.etat ?? entrees.postes[p.id]?.etat) === 'source').length
   return (
     <>
-      <tr className="cursor-pointer bg-surface-2 font-bold hover:bg-mint hover:text-mint-on" onClick={() => setOuvert((o) => !o)}>
-        <td className="p-2" colSpan={7}>{ouvert ? '▾' : '▸'} {n ? `(${n}) ` : ''}{bloc.titre}</td>
+      {/* en-tête de section : « n · titre » · « N postes · N sourcés » · sous-total TTC */}
+      <tr className="cursor-pointer bg-surface-2 hover:bg-surface-3" onClick={() => setOuvert((o) => !o)}>
+        <td className="p-2" colSpan={7}>
+          <div className="flex items-center gap-3">
+            <span className="font-bold text-txt">{ouvert ? '▾' : '▸'} {n ? `${n} · ` : ''}{bloc.titre}</span>
+            <span className="text-[12px] text-txt-mut">{bloc.postes.length} postes{nSources ? ` · ${nSources} sourcés` : ''}</span>
+            <span className="ml-auto text-[12px] font-semibold tabular-nums text-txt-mut">TTC {fmtEur(tot?.ttc)}</span>
+          </div>
+        </td>
       </tr>
       {ouvert && bloc.postes.map((p) => {
         const s = entrees.postes[p.id] ?? { valeur: null, etat: 'a_renseigner' as const }
         const l = ligne[p.id]
         const rep = reperePoste(p)
         const unite = p.mode === 'pct' ? '%' : p.mode === 'unit' ? (p.unite ?? '') : '€'
-        const estSansObjet = s.etat === 'sans_objet'
         const vide = !!l?.manquant  // ligne vide (BILAN-2) : vaut 0, affichée à blanc
-        const etatLabel = ETAT_LABEL[s.etat]
+        const etat = vide ? 'a_renseigner' : (l?.etat ?? s.etat ?? 'a_renseigner')
         return (
           <tr key={p.id} className="border-b border-line">
             <td className="p-2">{p.libelle}{p.sub && <small className="block text-txt-dim"> {p.sub}</small>}
               {vrais[p.id] && <small className="block text-amber">{vrais[p.id]}</small>}</td>
             <td className="p-2 tabular-nums text-txt-mut">{fmtAssiette(l?.assiette_valeur, p.assiette, p.mode)}
-              {p.besoin_assiette && !estSansObjet && (
+              {p.besoin_assiette && (
                 <input key={rev} className="ml-1 w-24 rounded border border-line-2 bg-surface px-1 py-0.5 text-right"
                   defaultValue={s.assiette_valeur ?? ''} placeholder="assiette"
                   onChange={(e) => majPoste(p.id, { assiette_valeur: parseNum(e.target.value) })} />
               )}
             </td>
             <td className="p-2 text-right">
-              {estSansObjet ? <span className="text-txt-dim">—</span> : (
-                <span className="inline-flex items-center justify-end gap-1">
-                  <input key={rev} className="w-20 rounded border border-line-2 bg-surface px-1.5 py-1 text-right tabular-nums"
-                    defaultValue={s.valeur == null ? '' : fmtNum(s.valeur)} placeholder="0"
-                    onChange={(e) => majPoste(p.id, { valeur: parseNum(e.target.value), etat: 'saisi' })} />
-                  <span className="text-[11px] text-txt-dim">{unite}</span>
-                  {/* repère LABUSE, cliquable À DROITE de la case (n'entre qu'au clic) */}
-                  {s.valeur == null && rep && (
-                    <button className="rounded-full border border-dashed border-line-2 px-1.5 text-[11px] text-txt-mut hover:bg-mint hover:text-mint-on"
-                      onClick={() => adopterRepere(p)} title={rep.label}>repère</button>
-                  )}
-                </span>
+              {/* un seul composant de champ, l'unité À L'INTÉRIEUR (G7) ; le repère reste cliquable dessous */}
+              <span className="relative inline-block">
+                <input key={rev} className="w-24 rounded border border-line-2 bg-surface px-1.5 py-1 pr-8 text-right tabular-nums"
+                  defaultValue={s.valeur == null ? '' : fmtNum(s.valeur)} placeholder="0"
+                  onChange={(e) => majPoste(p.id, { valeur: parseNum(e.target.value), etat: 'saisi' })} />
+                <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[11px] text-txt-dim">{unite}</span>
+              </span>
+              {s.valeur == null && rep && (
+                <div className="mt-0.5 text-[11px] text-txt-dim">repère{' '}
+                  <button className="text-mint underline" onClick={() => adopterRepere(p)} title={rep.label}>utiliser</button>
+                </div>
               )}
             </td>
             <td className="p-2 text-right tabular-nums text-txt">{vide ? <span className="text-txt-dim">—</span> : fmtEur(l?.ht)}</td>
             <td className="p-2 text-right tabular-nums">
-              {p.tva === 'a_saisir' && !estSansObjet
+              {p.tva === 'a_saisir'
                 ? <input key={rev} className="w-14 rounded border border-line-2 bg-surface px-1 py-0.5 text-right"
                     defaultValue={s.tva == null ? '' : fmtNum(s.tva * 100)} placeholder="TVA %"
                     onChange={(e) => majPoste(p.id, { tva: pctToRate(e.target.value) })} />
                 : (vide ? <span className="text-txt-dim">—</span> : fmtEur(l?.tva))}
             </td>
             <td className="p-2 text-right tabular-nums">{vide ? <span className="text-txt-dim">—</span> : fmtEur(l?.ttc)}</td>
-            <td className="p-2">
-              <div className="flex flex-wrap items-center gap-1.5">
-                {etatLabel && <Badge ton={ETAT_TON[s.etat] ?? 'neutre'}>{etatLabel}</Badge>}
-                {s.valeur == null && !estSansObjet && (
-                  <button className="text-[11px] text-txt-mut underline" onClick={() => majPosteProg(p.id, { valeur: null, etat: 'sans_objet' })}>Sans objet</button>
-                )}
-                {s.etat === 'saisi' && s.valeur != null && (
-                  <button className="text-[11px] text-mint underline"
-                    onClick={() => { void putBilanRatio(p.id, s.valeur!, s.tva ?? null); majPosteProg(p.id, { etat: 'ratios' }) }}>Mémoriser</button>
-                )}
-                {(s.valeur != null || estSansObjet) && (
-                  <button className="text-[11px] text-txt-mut underline" title="Vider"
-                    onClick={() => majPosteProg(p.id, { valeur: null, etat: 'a_renseigner' })}>↺</button>
-                )}
-              </div>
-            </td>
+            <td className="p-2"><Pastille etat={etat} /></td>
           </tr>
         )
       })}
-      {/* sous-total du bloc : « TOTAL (n) » comme le modèle */}
+      {/* sous-total du bloc : « Total n · Titre » comme le modèle */}
       <tr className="border-b-2 border-line font-semibold text-txt-mut">
-        <td className="p-2" colSpan={3}>{n ? `TOTAL (${n})` : 'Total'} — {bloc.titre}</td>
+        <td className="p-2" colSpan={3}>Total {n ? `${n} · ` : ''}{bloc.titre}</td>
         <td className="p-2 text-right tabular-nums">{fmtEur(tot?.ht)}</td>
         <td className="p-2 text-right tabular-nums">{fmtEur(tot?.tva)}</td>
         <td className="p-2 text-right tabular-nums">{fmtEur(tot?.ttc)}</td><td />
@@ -582,14 +599,14 @@ function BlocLignes({ bloc, tot, entrees, ligne, rev, vrais, reperePoste, adopte
 }
 
 function Legende() {
+  // G4 — plus aucune mention de l'Excel côté client ; une case vide vaut 0, comptée pour 0.
   return (
     <div className="flex flex-wrap items-center gap-3.5 px-3.5 py-2.5 text-[12px] text-txt-mut">
-      <span>Comme dans l'Excel, une case vide vaut 0 — la marge et les totaux s'affichent dès la première saisie.</span>
-      <span><Badge ton="vert">Sourcé</Badge> donnée publique</span>
-      <span><span className="rounded-full border border-dashed border-line-2 px-1.5">repère</span> proposition, cliquez pour l'adopter</span>
-      <span><Badge ton="neutre">Saisi</Badge> votre valeur</span>
-      <span><Badge ton="neutre">Mes ratios</Badge> mémorisé</span>
-      <span><Badge ton="neutre">Sans objet</Badge> 0 volontaire</span>
+      <span>Une case non renseignée est comptée pour 0 — la marge et les totaux s'affichent dès la première saisie.</span>
+      <span><Pastille etat="source" /> donnée publique</span>
+      <span><Pastille etat="repere" /> proposition, « utiliser » pour l'adopter</span>
+      <span><Pastille etat="saisi" /> votre valeur</span>
+      <span><Pastille etat="a_renseigner" /> non renseignée</span>
     </div>
   )
 }

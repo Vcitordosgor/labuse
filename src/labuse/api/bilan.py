@@ -292,7 +292,11 @@ def modele_bilan(idu: str, request: Request, db: Session = Depends(get_db)) -> d
 
     cat = _serialiser_catalogue()
     sourcee = _rep.sources_parcelle(db, idu)
-    cat["sourcee"] = sourcee  # {terrain, zonage, commune, parcel_id, prix_achat_dvf}
+    # DOCS-COHERENCE-1 (G7/A10) — date de la DONNÉE servie (run servi), pour le pied « Données LABUSE
+    # au JJ/MM/AAAA » de l'écran Bilan, identique aux 8 documents.
+    from ..exports.builder import _donnees_labuse_au
+    sourcee["donnees_au"] = _donnees_labuse_au()
+    cat["sourcee"] = sourcee  # {terrain, zonage, commune, parcel_id, prix_achat_dvf, donnees_au}
     cat["reperes_publics"] = _rep.reperes_publics(db, idu, sourcee)
 
     # ratios maison du compte (état « Mes ratios »)
