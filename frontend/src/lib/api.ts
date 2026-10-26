@@ -667,6 +667,7 @@ export interface GabaritResult {
   // FRONT-CHIFFRES-2 (F57/F50) — % de la parcelle en zone dominante « à cheval », servi (plus recalculé au front).
   pctPortionZone?: number | null
   zoneImplantationM2?: number | null
+  batiDeduitM2?: number | null   // RECETTE-OUTILS-3 (S7) — emprise bâti retranchée de la zone d'implantation
   plafondEmpriseM2?: number | null
   plafondEmpriseStatus?: string | null   // 'absent' → « Non réglementé »
   hauteurReglementaireM?: number | null

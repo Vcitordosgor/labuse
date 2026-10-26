@@ -20,8 +20,18 @@ C_BATI = "#7c828a"       # EXPORTS-FIX-1 F5 — bâti existant (GABARIT-6, comme
 def _rings(geom: Optional[dict]) -> Iterator[list]:
     if not geom:
         return
-    co = geom.get("coordinates")
     t = geom.get("type")
+    # RECETTE-OUTILS-3 (S8) — le bâti existant est servi en FeatureCollection : _rings l'ignorait
+    # (ni Polygon ni MultiPolygon) → le schéma 2D du PDF n'affichait AUCUN bâtiment alors que la légende
+    # l'annonçait. On déroule donc aussi Feature / FeatureCollection.
+    if t == "FeatureCollection":
+        for f in geom.get("features") or []:
+            yield from _rings(f.get("geometry"))
+        return
+    if t == "Feature":
+        yield from _rings(geom.get("geometry"))
+        return
+    co = geom.get("coordinates")
     if t == "Polygon":
         for r in co or []:
             yield r

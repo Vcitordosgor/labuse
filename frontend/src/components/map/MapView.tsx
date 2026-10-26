@@ -379,6 +379,37 @@ interface Measure {
 // M55-G point 13 — BOUTON DE CARTE MOMENTANÉ (zoom +/−…) : au clic, flash mint ~180 ms puis
 // retour — un feedback d'APPUI, pas un état. Les bascules à état (3D, fond, outils) gardent
 // leur état persistant comme feedback ; ce patron est pour les boutons sans état.
+// RECETTE-OUTILS-3 (S11) — bloc de contrôle 3D (remplace la boussole R14) : visible seulement en 3D,
+// dans un coin de la carte, DA de la charte. ↺/↻ = rotation 45° par clic ; curseur vertical =
+// inclinaison (vue de dessus 0° → vue rasante 60°) ; ◎ = recentrer sur la parcelle à l'angle de départ
+// (délègue au propriétaire de la caméra, le Gabarit, via `recentrer3d`). Ctrl + glisser reste actif.
+function Controle3D({ map }: { map: React.RefObject<maplibregl.Map | null> }) {
+  const [pitch, setPitch] = useState(45)
+  useEffect(() => {
+    const m = map.current
+    if (!m) return
+    const upd = () => setPitch(Math.round(m.getPitch()))
+    upd(); m.on('pitch', upd)
+    return () => { m.off('pitch', upd) }
+  }, [map])
+  const roter = (deg: number) => { const m = map.current; if (m) m.easeTo({ bearing: m.getBearing() + deg, duration: 300 }) }
+  const incliner = (p: number) => { const m = map.current; if (m) m.easeTo({ pitch: p, duration: 120 }); setPitch(p) }
+  const btn = 'flex h-8 w-8 items-center justify-center rounded-md border border-line-2 bg-bg-2 text-[16px] leading-none text-txt transition-colors duration-quick hover:border-mint hover:text-mint focus-visible:border-mint focus-visible:text-mint focus-visible:outline-none'
+  return (
+    <div data-controle-3d className="absolute bottom-4 left-4 z-20 flex flex-col items-center gap-1.5 rounded-lg border border-line-2 bg-bg-2/90 p-1.5 shadow-elev-1 backdrop-blur-sm">
+      <div className="flex gap-1.5">
+        <button data-c3d-rot-g className={btn} title="Tourner à gauche (45°)" onClick={() => roter(-45)}>↺</button>
+        <button data-c3d-rot-d className={btn} title="Tourner à droite (45°)" onClick={() => roter(45)}>↻</button>
+      </div>
+      <input data-c3d-pitch type="range" min={0} max={60} step={1} value={pitch} aria-label="Inclinaison de la vue"
+        title="Inclinaison : vue de dessus → vue rasante"
+        onChange={(e) => incliner(Number(e.target.value))}
+        className="my-0.5 h-24 w-8 cursor-pointer accent-mint [direction:rtl] [writing-mode:vertical-lr]" />
+      <button data-c3d-recentrer className={btn} title="Recentrer sur la parcelle" onClick={() => useApp.getState().recentrer3d()}>◎</button>
+    </div>
+  )
+}
+
 function BoutonCarte({ onClick, title, children }: { onClick: () => void; title: string; children: React.ReactNode }) {
   const [flash, setFlash] = useState(false)
   const timer = useRef<number | null>(null)
@@ -429,11 +460,6 @@ export function MapView() {
   // et on l'AFFICHE (« 3D indisponible : … ») au lieu d'un écran vide. null = pas d'erreur 3D.
   const [erreur3d, setErreur3d] = useState<string | null>(null)
   const terrain3dCleanup = useRef<(() => void) | null>(null)
-  // RECETTE-OUTILS-2 (R14) — boussole 3D : le contrôle NATIF de maplibre (NavigationControl avec
-  // `visualizePitch`), restylé à la charte (CSS), monté SEULEMENT en 3D, démonté au retour 2D.
-  // Glisser la boussole tourne/incline ; clic = retour au nord ; +/− = zoom natif. « Vue par défaut »
-  // (panneau Gabarit) reste le recadrage complet.
-  const boussole3d = useRef<maplibregl.NavigationControl | null>(null)
   const measureRef = useRef(measure)
   measureRef.current = measure
   const labelMarker = useRef<maplibregl.Marker | null>(null)
@@ -1265,28 +1291,18 @@ export function MapView() {
       }
       chargerBati()
       m.on('moveend', chargerBati)
-      // RECETTE-OUTILS-2 (R14) — monter la boussole native (si pas déjà là). Posée en BAS-GAUCHE : la
-      // fiche parcelle couvre le bas-droite et le bascule « Sombre / 3D » occupe le haut ; le bas-gauche
-      // de la carte (juste à droite du panneau Outils) est le coin dégagé. Restylée à la charte en CSS.
-      if (!boussole3d.current) {
-        boussole3d.current = new maplibregl.NavigationControl({ visualizePitch: true, showZoom: true, showCompass: true })
-        m.addControl(boussole3d.current, 'bottom-left')
-        try { m.getContainer().querySelector('.maplibregl-ctrl-bottom-left')?.classList.add('labuse-nav3d') } catch { /* noop */ }
-      }
+      // RECETTE-OUTILS-3 (S11) — la boussole native (R14) est REMPLACÉE par le bloc de contrôle 3D
+      // `Controle3D` (overlay React, coin de carte, visible seulement en 3D) : ↺/↻ 45°, curseur
+      // d'inclinaison, « Recentrer ». Plus de NavigationControl à monter/démonter ici.
     } else {
       m.setTerrain(null)
       m.easeTo({ pitch: 0, duration: 600 })
-      if (boussole3d.current) { try { m.removeControl(boussole3d.current) } catch { /* noop */ } boussole3d.current = null }
       if (m.getLayer('batiments-3d')) m.setLayoutProperty('batiments-3d', 'visibility', 'none')
       // CORRECTIFS-1 C1 — retour en 2D : on nettoie les écoutes 3D et le message d'erreur éventuel.
       setErreur3d(null)
       terrain3dCleanup.current?.(); terrain3dCleanup.current = null
     }
-    return () => {
-      m.off('moveend', chargerBati); terrain3dCleanup.current?.(); terrain3dCleanup.current = null
-      // R14 — démontage (sortie du composant) : ne JAMAIS laisser la boussole orpheline.
-      if (!useApp.getState().terrain3d && boussole3d.current) { try { m.removeControl(boussole3d.current) } catch { /* noop */ } boussole3d.current = null }
-    }
+    return () => { m.off('moveend', chargerBati); terrain3dCleanup.current?.(); terrain3dCleanup.current = null }
   }, [terrain3d, batiVisible])
 
   // ───────────────────────── couches / filtres / mode ─────────────────────────
@@ -1810,6 +1826,8 @@ export function MapView() {
           </BoutonCarte>
         ))}
       </div>
+      {/* RECETTE-OUTILS-3 (S11) — bloc de contrôle 3D (↺/↻ · inclinaison · recentrer), seulement en 3D. */}
+      {terrain3d && <Controle3D map={map} />}
       <MapToolbar />
       {/* M12 C6/C7 : UN SEUL panneau de légendes (verdict replié + zonage + 50 pas +
           équipements), cohabitant sans se recouvrir. La légende « Équipements » a quitté son

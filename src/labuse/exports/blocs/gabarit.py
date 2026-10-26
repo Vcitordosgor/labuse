@@ -9,8 +9,8 @@ from ..lignes import ligne, pied
 from ..registre_fmt import fmt_m, fmt_m2, fmt_pct
 from ..rendu import esc, note, section, table_kv, verdict
 
-IDS = ("gabarit_implantation_m2", "gabarit_emprise_plafond_m2", "gabarit_hauteur_m",
-       "gabarit_couverture_verdict", "gabarit_plan_2d")
+IDS = ("gabarit_implantation_m2", "gabarit_bati_deduit_m2", "gabarit_emprise_plafond_m2",
+       "gabarit_hauteur_m", "gabarit_couverture_verdict", "gabarit_plan_2d")
 
 
 def _m2_ou_texte(v):
@@ -70,7 +70,10 @@ def rendu(valeurs, ctx=None) -> str:
         # le plan 2D est un fragment SVG déjà composé par le moteur (gabarit_svg) — embarqué tel quel.
         corps += f'<div class="plan2d">{plan.valeur}</div>'
     lignes = [
+        # RECETTE-OUTILS-3 (S7) — « Zone d'implantation » = valeur APRÈS déduction du bâti ; juste en
+        # dessous, l'emprise de bâti retranchée (ligne omise s'il n'y a rien à déduire).
         ligne(valeurs, "Zone d'implantation", "gabarit_implantation_m2", _m2_ou_texte),
+        ligne(valeurs, "dont bâti existant déduit", "gabarit_bati_deduit_m2", _m2_ou_texte),
         ligne(valeurs, "Plafond d'emprise", "gabarit_emprise_plafond_m2", _m2_ou_texte),
         ligne(valeurs, "Hauteur réglementaire", "gabarit_hauteur_m", _m_ou_texte),
     ]

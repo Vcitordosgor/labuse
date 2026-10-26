@@ -229,6 +229,11 @@ export function Gabarit() {
     if (bb) m.fitBounds(bb, { padding: 70, bearing: 0, pitch: 45, duration: 600, maxZoom: 18 })
     else m.easeTo({ bearing: 0, pitch: 45, duration: 600 })
   }
+  // RECETTE-OUTILS-3 (S11) — le bouton « Recentrer » (◎) du bloc de contrôle 3D de la carte demande au
+  // Gabarit (propriétaire de la caméra) de reprendre la vue de départ : même recadrage que « Vue par
+  // défaut », désormais déclenché par la carte.
+  const recentrer3dNonce = useApp((s) => s.recentrer3dNonce)
+  useEffect(() => { if (recentrer3dNonce && terrain3d) vueParDefaut() }, [recentrer3dNonce])   // eslint-disable-line react-hooks/exhaustive-deps
 
   // RECETTE-OUTILS-1 (point 31) — lever la contradiction « ✓ Risques intégrés » vs « PPR — analyse »
   // listé parmi les règles NON intégrées : si une règle PPR est non intégrée, la famille « risques » ne
@@ -330,7 +335,10 @@ export function Gabarit() {
               ? <Num label="Surface parcelle" value={cadastreM2} unit="m²"
                   sub={`dont ${fmtInt(res.surfaceParcelleM2)} m² en ${raccZone?.code ?? 'zone U'} (${pctPortion} %)`} />
               : <Num label="Surface parcelle" value={res.surfaceParcelleM2} unit="m²" />}
-            <Num label="Zone d'implantation" value={res.zoneImplantationM2} unit="m²" accent />
+            {/* RECETTE-OUTILS-3 (S7) — « Zone d'implantation » = valeur APRÈS déduction du bâti existant ;
+                juste en dessous l'emprise retranchée (si bâti conservé). */}
+            <Num label="Zone d'implantation" value={res.zoneImplantationM2} unit="m²" accent
+              sub={res.batiDeduitM2 ? `bâti existant déduit : ${fmtInt(res.batiDeduitM2)} m²` : null} />
             <Num label="Plafond d'emprise" value={res.plafondEmpriseM2} unit="m²"
               statusLabel={res.plafondEmpriseStatus === 'absent' ? 'Non réglementé' : null}
               sub={res.plafondEmpriseStatus === 'absent' ? 'pas de règle d’emprise au sol' : null} />
@@ -449,23 +457,19 @@ export function Gabarit() {
               qui déborde) était ÉCRASÉ par flex-shrink → hauteur 15 px au lieu des 32 px de la DA
               (« hors DA, mal aligné »). Avec shrink-0 il reprend sa hauteur de bouton standard,
               aligné à gauche comme les cartes au-dessus. */}
-          <div className="flex flex-wrap items-center gap-2">
+          {/* RECETTE-OUTILS-3 (S11) — « Vue par défaut » RETIRÉ (le « Recentrer » du bloc de contrôle 3D
+              de la carte en tient lieu). « Revenir en 2D » et « Exporter en PDF » CÔTE À CÔTE, même ligne
+              (grille 2 colonnes). L'orientation initiale se reprend par le ◎ du bloc 3D sur la carte. */}
+          <div className="grid grid-cols-2 gap-2">
             <Bouton niveau="secondaire" ton="vert" data-gabarit-3d
-              onClick={() => setTerrain3d(!terrain3d)} className="shrink-0 self-start">
+              onClick={() => setTerrain3d(!terrain3d)} className="w-full justify-center">
               {terrain3d ? 'Revenir en 2D' : 'Voir en 3D'}
             </Bouton>
-            {/* RECETTE-OUTILS-1 (point 33) — en 3D : bouton « Vue par défaut » (recentre sur la parcelle,
-                orientation initiale) + mention « Ctrl + glisser pour tourner ». */}
-            {terrain3d && (
-              <Bouton niveau="secondaire" ton="vert" data-gabarit-vue-defaut onClick={vueParDefaut} className="shrink-0 self-start">
-                Vue par défaut
-              </Bouton>
-            )}
             {/* RECETTE-OUTILS-1 (point 34 / T6) — « Exporter en PDF » = document « Gabarit » de Docs
                 (même générateur back `/gabarit/{idu}.pdf`). Absent si le calcul est incomplet. */}
             {target && res?.status === 'ok' && (
               <Bouton niveau="secondaire" ton="vert" data-gabarit-export
-                disabled={enCours != null} onClick={() => ouvrir(docGabaritUrl(target), 'gabarit')} className="shrink-0 self-start">
+                disabled={enCours != null} onClick={() => ouvrir(docGabaritUrl(target), 'gabarit')} className="w-full justify-center">
                 Exporter en PDF
               </Bouton>
             )}

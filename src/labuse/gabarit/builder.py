@@ -582,3 +582,56 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
         sources=sources,
     )
     return BuildResult(input=inp, blocking=blocking, raccordement=racc)
+
+
+def deduire_bati_de_zone(result) -> None:
+    """RECETTE-OUTILS-3 (S7 / S10) — rend la zone d'implantation et le bâti COHÉRENTS et UNIQUES pour
+    l'app (2D/3D) et le PDF (p1 schéma, p3 3D). Deux opérations, in place sur un `GabaritResult` servi :
+
+      · S10 — le bâti existant est DÉCOUPÉ au contour cadastral (il débordait : ex. 36 % sur « 36 Rue
+        des Jacarandas », bâti voisin / emprise BD TOPO imprécise) — chaque bâtiment garde sa hauteur ;
+      · S7 (décision Vic) — la zone d'implantation DÉDUIT l'emprise du bâti conservé (zone − bâti) :
+        `zoneImplantationM2` devient la valeur APRÈS déduction, `batiDeduitM2` porte l'emprise retranchée.
+
+    Best-effort : toute erreur géométrique laisse le résultat intact (jamais un document cassé). Aires en
+    mètres (CRS métrique 2975), géométries re-servies en WGS84."""
+    if result is None or getattr(result, "status", None) != "ok":
+        return
+    z_gj = getattr(result, "zoneImplantationGeoJSON", None)
+    b_fc = getattr(result, "batiExistantGeoJSON", None)
+    if not z_gj or not b_fc or not (b_fc.get("features") if isinstance(b_fc, dict) else None):
+        return
+    try:
+        from shapely.geometry import mapping, shape
+        from shapely.ops import unary_union
+        from shapely.validation import make_valid
+        from ._geom import to_metric, to_wgs
+        contour_m = make_valid(to_metric(shape(result.contourGeoJSON))) if result.contourGeoJSON else None
+        zone_m = make_valid(to_metric(shape(z_gj)))
+        if zone_m.is_empty or zone_m.area <= 0:
+            return
+        feats, batis_m = [], []
+        for f in b_fc["features"]:
+            if not f.get("geometry"):
+                continue
+            gm = make_valid(to_metric(shape(f["geometry"])))
+            if contour_m is not None:
+                gm = gm.intersection(contour_m)           # S10 — découpe au contour
+            if gm.is_empty:
+                continue
+            batis_m.append(gm)
+            feats.append({"type": "Feature", "properties": f.get("properties") or {},
+                          "geometry": mapping(to_wgs(gm))})
+        if not batis_m:
+            return
+        bati_union = unary_union(batis_m)
+        zone_deduit = zone_m.difference(bati_union)        # S7 — déduction du bâti
+        if zone_deduit.is_empty:
+            return
+        brute_m2, deduit_m2 = round(zone_m.area), round(zone_deduit.area)
+        result.batiExistantGeoJSON = {"type": "FeatureCollection", "features": feats}
+        result.zoneImplantationGeoJSON = mapping(to_wgs(zone_deduit))
+        result.zoneImplantationM2 = deduit_m2
+        result.batiDeduitM2 = max(0, brute_m2 - deduit_m2)
+    except Exception:  # noqa: BLE001 — géométrie dégénérée : on garde le résultat non déduit
+        pass
