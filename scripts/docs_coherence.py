@@ -61,14 +61,16 @@ def _pdftotext(octets: bytes, layout: bool = True) -> str:
 
 
 def _bilan_pdf(idu: str) -> bytes:
-    """Le Bilan rendu en process (même chemin que la route) — terrain Sourcé pré-rempli."""
+    """Le Bilan rendu en process (même chemin que la route) avec le MÊME pré-remplissage Sourcé que
+    la route (`bilan.reperes.sources_parcelle` : terrain = contenance cadastrale, comme la fiche)."""
     from sqlalchemy import text
+    from labuse.bilan import reperes
     from labuse.bilan.moteur import EntreesBilan, Moteur, Programme
     from labuse.bilan.pdf import construire_pdf
     from labuse.db import session_scope
     with session_scope() as s:
         commune = s.execute(text("SELECT commune FROM parcels WHERE idu=:i"), {"i": idu}).scalar() or ""
-        terrain = s.execute(text("SELECT surface_m2 FROM parcels WHERE idu=:i"), {"i": idu}).scalar()
+        terrain = (reperes.sources_parcelle(s, idu) or {}).get("terrain")
     e = EntreesBilan(programme=Programme(terrain=float(terrain) if terrain else None))
     r = Moteur().calculer(e)
     return construire_pdf(r, idu=idu, commune=str(commune), programme={}, calendrier={})
@@ -143,10 +145,12 @@ NB = rf"[\d{ESPACES}]+"   # un nombre avec séparateurs de milliers
 
 # ── extracteurs : chaque donnée lue dans TOUS les documents qui la portent ────
 def _surface(t):
+    # surface CADASTRALE du terrain (contenance) ; jamais une « surface réelle ~ » géométrique d'un
+    # plan de masse (approximative, autre donnée) : le gap des patterns ne franchit ni « ; » ni « ~ ».
     return _n(_cherche(t, rf"({NB})\s*m²\s*\n?\s*SURFACE",
                        rf"[Ss]urface(?:\s*\(plan\))?\s+({NB})\s*m²",
-                       rf"Contenance cadastrale[^\n]*?({NB})\s*m²",
-                       rf"(?:Terrain|Assiette fusionn[ée]e?)[^\n]*?({NB})\s*m²"))
+                       rf"Contenance cadastrale[^\n;~]*?({NB})\s*m²",
+                       rf"(?:Terrain|Assiette fusionn[ée]e?)[^\n;~]*?({NB})\s*m²"))
 
 
 def _emprise(t):
