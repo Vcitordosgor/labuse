@@ -9,7 +9,8 @@ BY0083 + BY0361 + BY0272. **Pas de merge.**
 
 > **HARNAIS = ZÉRO écart sur BY0083 ET BL0020 (critère de fin atteint). 8 PDF régénérés
 > joints** (`reports/DOCS-COHERENCE-1/final-by0083/` + `pdf/`).
-> **FAITS : Lot 0, Lot A (A1-A10, tous), G7, Lot C (C1-C3), Lot D (D1-D2), Lot E (E1-E4).**
+> **FAITS : Lot 0, Lot A (A1-A10, tous), G7, Lot C (C1-C3), Lot D (D1-D2), Lot E (E1-E4),
+> B2, F9 (parcelle(s)/Hauteur/à confirmer doublons).** Unitaires 2666 passed à chaque lot.
 > Arbitrages Vic appliqués : zone = moteur Gabarit (un calcul, trois lecteurs : Étude +
 > CERFA + Dossier §10 = 1 736 m²) ; hauteur CERFA « 9 m faîtage · 6 m égout » ; prix = id
 > fiche (`prix_ancien.median` + terrain secteur) lu par Dossier §8 / Comparatif / Étude de
