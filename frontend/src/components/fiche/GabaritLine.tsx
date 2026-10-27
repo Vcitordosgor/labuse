@@ -102,12 +102,12 @@ export function GabaritLine({ idu }: { idu: string }) {
             <Ligne label="Zone d'implantation" valeur={`${fmtInt(r.zoneImplantationM2)} m²`} />
             <Ligne label="Plafond d'emprise" ton={r.plafondEmpriseStatus === 'absent' ? 'gris' : undefined}
               valeur={r.plafondEmpriseStatus === 'absent' ? 'Non réglementé' : `${fmtInt(r.plafondEmpriseM2)} m²`} />
-            <Ligne label={<>Hauteur réglementaire<InfoI aria="Sur la hauteur" tip={`Source : §4 Urbanisme.${r.hauteurEgoutM != null ? ` Égout ${fmtH(r.hauteurEgoutM)} m.` : ''}`} /></>}
-              ton={r.hauteurStatus === 'not_integrated' ? 'gris' : undefined}
+            <Ligne label={<>Hauteur réglementaire<InfoI aria="Sur la hauteur" tip={`Source : §4 Urbanisme.${r.hauteurEstimee ? ' Hauteur estimée (table graphique par secteur) — étiquetée « Estimé ».' : ''}${r.hauteurEgoutM != null ? ` Égout ${fmtH(r.hauteurEgoutM)} m.` : ''}`} /></>}
+              ton={r.hauteurStatus === 'not_integrated' ? 'gris' : r.hauteurEstimee ? 'ambre' : undefined}
               valeur={r.hauteurStatus === 'not_integrated'
-                /* RECETTE-PROD-1 (A7) — distinguer la hauteur non chiffrée en PROSPECT (L≥H) de la
-                   table graphique par secteur (basis égout servi) : ne pas dire « prospect » pour l'une. */
-                ? (r.hauteurBase === 'egout' ? 'Non chiffrée (table graphique)' : 'Non chiffrée (prospect)')
+                ? 'Non chiffrée (prospect)'
+                /* RECETTE-PROD-1 (A7) — hauteur issue de la table graphique par secteur : valeur SERVIE + étiquette « Estimé ». */
+                : r.hauteurEstimee ? `${fmtH(r.hauteurReglementaireM)} m à l'égout · Estimé`
                 : r.hauteurBase === 'egout' ? `${fmtH(r.hauteurReglementaireM)} m à l'égout`
                 : `${fmtH(r.hauteurReglementaireM)} m max`} />
           </Lignes>

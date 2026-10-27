@@ -674,6 +674,7 @@ export interface GabaritResult {
   hauteurSource?: GabRegSource | null
   hauteurStatus?: string | null          // 'not_integrated' → « Non chiffrée » (prospect)
   hauteurBase?: string | null            // 'faitage' | 'egout' — ce que porte hauteurReglementaireM
+  hauteurEstimee?: boolean               // RECETTE-PROD-1 (A7) — hauteur table-graphique → étiquette « Estimé »
   hauteurEgoutM?: number | null          // égout en sous-ligne quand la règle distingue faîtage/égout
   terrainNote?: string | null            // E-C1 — « terrain supposé plat » affiché en mode 3D
   coverage?: GabCoverage | null

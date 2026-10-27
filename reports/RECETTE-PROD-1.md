@@ -79,6 +79,35 @@ Aucune n'est générique/fausse ; les deux liens « adresse » (PJ, Errial) le s
 
 **Validation Lot A** : `tsc` 0 erreur ; vitest fiche **30/30** ; pytest gabarit/faisabilité/zonage/calibrage **156 passed** ; 0 erreur console sur AE1369 (avant/après). Fichiers : `Fiche.tsx`, `reseaux.tsx`, `blocks.tsx`, `risques.tsx`, `layers.ts`, `GabaritLine.tsx`, `styles/index.css` (front) ; `faisabilite/zonage.py`, `gabarit/builder.py` (back).
 
+## A7 — complément (étiquette « Estimé » + dénombrement)
+
+**Étiquette « Estimé » à l'écran ET dans les PDF.** La hauteur issue d'une table graphique par secteur est désormais **servie comme valeur** (volume 3D calculé) et **étiquetée « Estimé »** partout — plus de « Non chiffrée ». `MaxHeight.estimee` + `GabaritResult.hauteurEstimee` (contract) ; `builder.py` (règle appliquée « Hauteur réglementaire — à l'égout (Estimé) », status integrated) ; écran `GabaritLine.tsx` + `Fiche.tsx` en-tête Urbanisme → « 9 m à l'égout · Estimé » (ton ambre) ; PDF `robinet_fiche.py` → « 9 m à l'égout · Estimé (table graphique par secteur) ». L'Étude ne surface PAS cette hauteur (ses règles lisent la feuille PLU brute `statut: propose` → non validée, pas de valeur affichée), donc rien à étiqueter là. Preuve : `A7_gabarit_AE1369_estime.pdf` (PDF, emprise 763 m² + « Hauteur 9 m à l'égout · Estimé ») + écran « 9 m à l'égout · Estimé ».
+
+**Dénombrement — parcelles dont le gabarit change : 10 zones, 14 905 parcelles.** (classification par `resolve_zone().hauteur_estimee`, comptage sur `parcel_zone_plu`.)
+
+| Commune | Parcelles | Zones |
+|---|---|---|
+| Saint-Benoît | 14 346 | Ub (10 245), Ua (3 777), Ue (303), Up (19), Ut (2) |
+| La Possession | 511 | AUBm (243), UAv (172), AUAv (96) |
+| Saint-Denis | 48 | Uma (37), Udo (11) |
+| **Total** | **14 905** | **10 zones** |
+
+Pour toutes ces parcelles, le gabarit cesse d'afficher le **faux « PLU non calibré »** ; là où la géométrie le permet (reculs/limites qualifiés), il **calcule l'emprise réelle (CES) + hauteur estimée** ; les parcelles à autre blocage (recul non réglementé, limites non cadastrées — fréquent à La Réunion : ravines/littoral, multi-zone) ne gagnent que la disparition du message faux.
+
+**5 exemples avant/après** (AVANT = `status incomplete`, « PLU non calibré (estimation générique) », aucune emprise ni hauteur ; APRÈS = `status ok`) :
+
+| Parcelle | Zone | Zone d'implantation (libéré) | Emprise (CES) | Hauteur | SDP indicative* |
+|---|---|---|---|---|---|
+| 97410000AE1369 | St-Benoît Ub | 954 m² | **763 m²** (80 %) | **9 m · Estimé** | ~2 290 m² |
+| 97410000AE0810 | St-Benoît Ub | 661 m² (impl. 376) | **529 m²** | **9 m · Estimé** | ~1 586 m² |
+| 97410000AL0481 | St-Benoît Ua | 137 m² (impl. 90) | **110 m²** | **9 m · Estimé** | ~329 m² |
+| 97411000AO0776 | St-Denis Udo | — | **23 726 m²** | **9 m · Estimé** | — |
+| 97411000AO0755 | St-Denis Udo | — | **24 975 m²** | **9 m · Estimé** | — |
+
+\* SDP indicative = emprise × ⌊hauteur/3⌋ (niveaux), repère — le gabarit sert l'enveloppe, pas une SDP ; AVANT ces 5 lignes valaient toutes « — / PLU non calibré ».
+
+**Validation A7 complément** : pytest gabarit/faisabilité/zone **124 passed** · tsc 0 · vitest fiche 30/30.
+
 ## Lot D — accueil / carte / Sources / Projets / Copilote
 
 | # | Point | Cause | Correction | Preuve |

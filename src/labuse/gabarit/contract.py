@@ -65,6 +65,10 @@ class MaxHeight(BaseModel):
     basis: Optional[Literal["faitage", "egout"]] = None
     egoutMeters: Optional[float] = None
     source: Optional[RegulatorySource] = None
+    # RECETTE-PROD-1 (A7) — hauteur ESTIMÉE : zone à enveloppe calibrée dont la hauteur est une table
+    # graphique par secteur (non chiffrable en valeur unique). La valeur est SERVIE et UTILISÉE (volume),
+    # mais étiquetée « Estimé » à l'écran et dans les PDF (jamais présentée comme la valeur validée).
+    estimee: bool = False
 
 
 class Exclusion(BaseModel):
@@ -168,6 +172,8 @@ class GabaritResult(BaseModel):
     hauteurSource: Optional[RegulatorySource] = None
     hauteurStatus: Optional[str] = None          # 'not_integrated' → « Non chiffrée » (prospect)
     hauteurBase: Optional[str] = None            # 'faitage' | 'egout' — ce que porte hauteurReglementaireM
+    hauteurEstimee: bool = False                 # RECETTE-PROD-1 (A7) — hauteur issue d'une table graphique
+    #   par secteur → valeur ESTIMÉE (étiquette « Estimé » à l'écran et dans les PDF)
     hauteurEgoutM: Optional[float] = None        # égout, en sous-ligne, quand la règle distingue faîtage/égout
     # CHASSE-CALCULS-FIX-1 Lot 6 (E-C1) — l'extrusion 3D est posée À PLAT (le relief n'entre pas dans
     # le volume) : on le DIT quand une hauteur permet un 3D. `terrainNote` est affichée en mode 3D.

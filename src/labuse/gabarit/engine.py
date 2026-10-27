@@ -166,6 +166,7 @@ def compute_gabarit(inp: GabaritInput) -> GabaritResult:
         hauteurSource=mh.source,
         hauteurStatus=mh.status,
         hauteurBase=mh.basis,
+        hauteurEstimee=bool(getattr(mh, "estimee", False)),   # RECETTE-PROD-1 (A7) — étiquette « Estimé »
         hauteurEgoutM=None if mh.egoutMeters is None else _round(mh.egoutMeters),
         coverage=coverage,
         appliedRules=applied,

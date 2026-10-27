@@ -722,7 +722,8 @@ export function Fiche({ idu }: { idu: string }) {
   const reglesGabarit: ReactNode =
     gd && gd.hauteurStatus !== 'not_integrated' && gd.hauteurReglementaireM != null
       ? (gd.hauteurBase === 'egout'
-          ? `${fmtH(gd.hauteurReglementaireM)} m à l'égout`
+          /* RECETTE-PROD-1 (A7) — hauteur table-graphique : valeur servie + étiquette « Estimé ». */
+          ? `${fmtH(gd.hauteurReglementaireM)} m à l'égout${gd.hauteurEstimee ? ' · Estimé' : ''}`
           : gd.hauteurEgoutM != null
             ? <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.15 }}>
                 <span>{fmtH(gd.hauteurReglementaireM)} m max</span>
@@ -730,8 +731,8 @@ export function Fiche({ idu }: { idu: string }) {
               </span>
             : `${fmtH(gd.hauteurReglementaireM)} m max`)
       : gd && gd.hauteurStatus === 'not_integrated'
-        /* RECETTE-PROD-1 (A7) — table graphique par secteur (basis égout) vs prospect : libellé honnête. */
-        ? <span className="t-val absent" style={{ maxWidth: 'none' }}>{gd.hauteurBase === 'egout' ? 'Non chiffrée (table graphique)' : 'Non chiffrée (prospect)'}</span>
+        /* not_integrated = hauteur en prospect (L≥H) ; la table graphique est désormais servie « Estimé » (branche ci-dessus). */
+        ? <span className="t-val absent" style={{ maxWidth: 'none' }}>Non chiffrée (prospect)</span>
         : nonConstructible
           ? <span className="t-val absent" style={{ maxWidth: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
               constructibilité très limitée
