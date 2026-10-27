@@ -437,7 +437,8 @@ def _enveloppe_reglementaire(db: Session, idu: str) -> bytes | None:
     svg = gabarit_svg(res, width=460, height=340) or ""
 
     def _m2(v):
-        return "Non réglementé" if v is None else f"{round(v):g} m²"
+        # DOCS-COHERENCE-1 (formats) — milliers en espace insécable FR : « 2 458 m² », jamais « 2458 ».
+        return "Non réglementé" if v is None else f"{round(v):,} m²".replace(",", " ")
     plafond = "Non réglementé" if res.plafondEmpriseStatus == "absent" else _m2(res.plafondEmpriseM2)
     # A7 (arbitrage) — le CERFA affiche les DEUX hauteurs, « 9 m au faîtage · 6 m à l'égout ».
     if res.hauteurStatus == "not_integrated":
@@ -461,8 +462,26 @@ def _enveloppe_reglementaire(db: Session, idu: str) -> bytes | None:
         f"{_zone_rows}"
         f"<tr><td>Plafond d'emprise au sol</td><td>{plafond}</td></tr>"
         f"<tr><td>Hauteur réglementaire</td><td>{hauteur}</td></tr>")
-    appl = "".join(f"<li>{r.label}{(' — ' + r.detail) if r.detail else ''}</li>"
-                   for r in res.appliedRules if getattr(r, 'label', None))
+    # DOCS-COHERENCE-1 (D1) — UNE SEULE ligne « Recul voie » à l'affichage : le moteur garde deux règles
+    # (voie cadastrée + emprise publique) car elles portent des arêtes/setbacks distincts, mais pour le
+    # lecteur c'est le MÊME recul ; on fusionne les « Recul voie… » en une seule ligne (la plus complète).
+    _reculs = [r for r in res.appliedRules if str(getattr(r, "label", "") or "").startswith("Recul voie")]
+    _recul_det = None
+    if _reculs:
+        _exact = next((r for r in _reculs if r.label == "Recul voie"), _reculs[0])
+        _recul_det = getattr(_exact, "detail", None)
+    _appl_rules, _vu_recul = [], False
+    for r in res.appliedRules:
+        if not getattr(r, "label", None):
+            continue
+        if str(r.label).startswith("Recul voie"):
+            if _vu_recul:
+                continue
+            _vu_recul = True
+            _appl_rules.append(("Recul voie", _recul_det))
+        else:
+            _appl_rules.append((r.label, getattr(r, "detail", None)))
+    appl = "".join(f"<li>{lbl}{(' — ' + det) if det else ''}</li>" for lbl, det in _appl_rules)
     non_int = "".join(f"<li>{r.label}</li>" for r in (res.nonIntegratedRules or []) if r.label)
     # les sources vivent sur chaque règle servie (le contrat de SORTIE n'a pas de catalogue global)
     seen, src_items = set(), []

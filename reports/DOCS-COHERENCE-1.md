@@ -259,3 +259,21 @@ regardé (mixité 1 ligne · sols 2 lignes · équipements sous-catégories · �
 - **Lot B** — Dossier (B1..B9). **Lot C** — Apporteur (C1..C3). **Lot D** — Gabarit (D1..D2).
 - **Lot E** — Étude de zone (E1..E5). **Lot F** — Étude de faisabilité (F1..F9).
 - **Lot G** — Bilan (G1..G6). **Lot H** — clôture (0 écart BY0083 + BL0020, hook vert, pas de merge).
+
+## Recette Vic sur les 8 PDF finaux (27/10) — corrections
+
+Des points déclarés faits n'étaient pas DANS les documents (souvent côté PDF, renderer distinct de
+l'écran). Reprise point par point, régénération + relecture des PDF.
+
+### Lot « docs » #1 (Dossier/Apporteur/Comparatif/Étude de zone/pré-dossier)
+
+| point | doc | correction |
+|-------|-----|-----------|
+| **E3** EPICERIE DES CHAMPS ≠ artisanat du bâtiment | Étude de zone | erreur de SOURCE INSEE (épicerie classée `A4` Artisanat du bâtiment) : `zone._bpe_nom_dement_sdom` RETIRE la ligne (nom alimentaire en A4 = faux). |
+| **C2** « Traces d'eau » seulement si aléa d'eau | Apporteur | un `tri_zone` SOFT_FLAG (territoire de GESTION du risque, large) ne déclenche plus la question ; `builder._releve_ferme` ignore SOFT_FLAG. Sur BY0083 la question DISPARAÎT. |
+| **D1** une seule ligne « Recul voie » | pré-dossier | le moteur gabarit garde 2 règles (voie + emprise publique, setbacks distincts — les fusionner cassait le calcul) ; fusion à l'AFFICHAGE dans `_enveloppe_reglementaire`. |
+| **Formats** « 2 458 m² » | pré-dossier | `_m2` enveloppe : milliers en espace insécable, plus « 2458 ». |
+| **A9** libellés complets | Comparatif | « SDP maximale réglementaire, terrain libéré » et « SDP résiduelle, bâti conservé ». |
+
+Harnais 0 écart BY0083 + BL0020 ; unit zone/gabarit/comparatif/apporteur/pré-dossier 201 passed.
+Reste recette : Dossier B2/B8/A9§10/B9 · A8 (ventes par prix Comparatif+Étude zone) · Bilan PDF (Lot G).

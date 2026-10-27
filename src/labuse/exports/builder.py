@@ -472,11 +472,17 @@ def _apporteur_contexte(db, idu: str, fiche: dict, jour: date, compte_id: int | 
     _lines = [l for l in (fiche.get("lines") or []) if isinstance(l, dict)]
     def _releve(layer: str) -> bool:
         return any(l.get("layer") == layer and l.get("result") not in (None, "PASS") for l in _lines)
+    # DOCS-COHERENCE-1 (C2) — un SOFT_FLAG (ex. TRI : territoire de GESTION du risque inondation, large
+    # périmètre) n'est PAS un aléa d'eau à la parcelle : il ne doit pas, à lui seul, déclencher la
+    # question « Traces d'eau » (BY0083 : TRI SOFT_FLAG, aucun aléa d'eau → question retirée).
+    def _releve_ferme(layer: str) -> bool:
+        return any(l.get("layer") == layer and l.get("result") not in (None, "PASS", "SOFT_FLAG") for l in _lines)
     _aleas = (fiche.get("aleas") or {}).get("liste") or []
     # EXPORTS-FIX-1 E3 — on regarde la nature ET le libellé (l'ancien « nature or libelle » s'arrêtait
     # à la nature « PPR — zone bleue » et manquait « …inondation… » du libellé → P1, qui a un PPR
     # inondation, n'avait pas la question d'eau et se retrouvait identique à P2).
-    obs_eau = (_releve("ravine") or _releve("zone_humide") or _releve("tri_zone") or _releve("dpf")
+    obs_eau = (_releve_ferme("ravine") or _releve_ferme("zone_humide") or _releve_ferme("tri_zone")
+               or _releve_ferme("dpf")
                or any(isinstance(a, dict) and any(
                       k in ((a.get("nature") or "") + " " + (a.get("libelle") or "")).lower()
                       for k in ("inond", "submers", "ravine", "humide")) for a in _aleas))
