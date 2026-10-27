@@ -53,8 +53,14 @@ main() {
   local DEST="${2:-$HOME/labuse-backups}"
   mkdir -p "$DEST"
 
-  # 0) pré-vol disque (alerte seulement, n'empêche pas le rapatriement)
-  alerter_disque "$DEST" "$SEUIL_DISQUE_GO" || true
+  # 0) pré-vol disque — DEPLOY-1027 (OPS-ROTATION-1 durci) : sous le seuil on REFUSE de télécharger,
+  #    et le refus S'ÉCRIT AU JOURNAL (stderr → pull.log). Leçon du 24/10 : un pull sur disque plein
+  #    échoue en plein rsync (« No space left on device ») et la journée reste sans rapatriement.
+  #    Les dumps déjà rapatriés restent intacts (la rotation ne tourne qu'après un pull vérifié).
+  if ! alerter_disque "$DEST" "$SEUIL_DISQUE_GO"; then
+    echo "✗ REFUS de télécharger : moins de ${SEUIL_DISQUE_GO} Go libres sur ${DEST} — libérer de la place puis relancer." >&2
+    exit 1
+  fi
 
   # 1) Rapatrier (rsync : delta seulement, préserve les horodatages)
   rsync -avz --include="labuse*.dump" --exclude="*" "${REMOTE}:${REMOTE_DIR}/" "$DEST/"
