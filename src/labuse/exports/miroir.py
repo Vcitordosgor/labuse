@@ -819,8 +819,15 @@ def _r_filiation(v):
     return esc(_fr_dates(" — ".join(bits)))
 
 
+def _r_artif_ocsge(v):
+    # DOCS-COHERENCE-1 (B2) — « artificialisé » au sens OCS GE = bâti, cours ET jardins (donnée
+    # d'îlot) : on le DIT avec la valeur pour qu'un « 100 % » ne se lise pas « 100 % bâti/scellé ».
+    return esc(f"{fmt_pct(v)} — au sens OCS GE (bâti, cours et jardins), donnée d'îlot")
+
+
 #: id → rendeur. `bloc` = fragment pleine largeur (tableau propre) ; sinon cellule valeur.
 _RENDEURS: dict[str, Any] = {
+    "part_artificialisee_pct": _r_artif_ocsge,
     "prix_achat_historique_eur": _r_prix_achat, "coproprietes_liste": _r_copros,
     "proprietaire_timeline_liste": _r_timeline, "historique_permis_liste": _r_permis_liste,
     "er_emplacement_reserve": _r_er_ebc, "ebc_classe": _r_er_ebc, "dpu_perimetre": _r_dpu,

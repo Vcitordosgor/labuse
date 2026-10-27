@@ -307,3 +307,11 @@ Bilan régénéré et regardé (`pdf-final/8-bilan.pdf`). bilan/taxe/reperes 66 
 |-------|-----------|
 | **Formats** « 9 m » « 6 m » « 3 m » (Étude de faisabilité, coupe) | `planche.coupe_svg` : hauteurs égout/faîtage, cote de hauteur et « N niveaux × H » via `dec_souple` (sans zéro inutile), plus « 9,00 m ». |
 | **A8** « n ventes » avec le prix (Étude de zone) | `blocs/etude_zone._immobilier` : le prix médian du bâti porte « — N ventes sur 12 mois dans le périmètre » (plus de ligne « Ventes » isolée). |
+
+### Lot « docs » #4 (A8 Comparatif + B2)
+
+| point | correction |
+|-------|-----------|
+| **A8** « n ventes à moins de R m » avec chaque prix (Comparatif) | `_compare_row` sert `prix_bati_n`/`prix_bati_rayon_m` (= `prix_ancien.n`/`radius_m`) et `prix_terrain_n` ; `_eur_m2_ventes` affiche « 3 602 €/m² — 15 ventes à moins de 1 000 m » et « 250 €/m² — 13 ventes ». |
+| **B2** phrase OCS GE | rendeur `_r_artif_ocsge` : la part artificialisée porte « — au sens OCS GE (bâti, cours et jardins), donnée d'îlot » pour qu'un « 100 % » ne se lise pas « 100 % bâti/scellé ». |
+| **B9** productible solaire | vérifié : « Productible solaire : non calculé sur cette toiture » reste honnête (outil Prospection solaire, autre payload) — aucun faux chiffre. |

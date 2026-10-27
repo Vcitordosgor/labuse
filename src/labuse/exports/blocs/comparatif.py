@@ -88,6 +88,20 @@ def _eur_m2(r, k):
     return f"{x} €/m²" if x else None
 
 
+def _eur_m2_ventes(r, k, n_key, rayon_key=None):
+    """DOCS-COHERENCE-1 (A8) — prix au m² SUIVI du nombre de ventes qui le fonde (« n ventes à moins
+    de R m »), jamais un prix nu. Sans ventes servies, le prix reste seul (pas de « 0 vente » inventé)."""
+    x = _i(r.get(k))
+    if not x:
+        return None
+    n = r.get(n_key)
+    if n:
+        rayon = r.get(rayon_key) if rayon_key else None
+        ou = f" à moins de {_i(rayon)} m" if rayon else ""
+        return f"{x} €/m² — {_i(n)} vente{'s' if int(n) > 1 else ''}{ou}"
+    return f"{x} €/m²"
+
+
 def _pct(r, k, suffixe="%"):
     x = _i(r.get(k))
     return f"{x} {suffixe}" if x is not None else None
@@ -121,8 +135,8 @@ _LIGNES = [
         if r.get("charge_fonciere_m2") is not None else None)),
     # DOCS-COHERENCE-1 (A8) — prix lus de l'id de la fiche (secteur autour de la parcelle), comme le
     # Dossier §8 et l'Étude de zone ; plus aucun calcul de prix propre au Comparatif.
-    ("Prix du terrain (secteur)", "e", lambda r: _eur_m2(r, "terrain_zone_eur_m2")),
-    ("Prix du bâti (secteur)", "e", lambda r: _eur_m2(r, "prix_secteur_bati_m2")),
+    ("Prix du terrain (secteur)", "e", lambda r: _eur_m2_ventes(r, "terrain_zone_eur_m2", "prix_terrain_n")),
+    ("Prix du bâti (secteur)", "e", lambda r: _eur_m2_ventes(r, "prix_secteur_bati_m2", "prix_bati_n", "prix_bati_rayon_m")),
     # IMPLANTATION-4 (LOT B) + FIX-ORFEVRE-1 (décision Vic 18/10/2026) — aucun nombre de logements de
     # l'ancien calcul (fourchette estimate_capacity) : la ligne renvoie à l'Étude de faisabilité, seule
     # à compter des logements. prov=None → aucun badge, comme « Classement LABUSE » (un renvoi, pas une

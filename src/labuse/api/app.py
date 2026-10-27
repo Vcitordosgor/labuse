@@ -8263,13 +8263,19 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
     # prix_sortie_bati_eur_m2, médiane du secteur autour de la parcelle, n + rayon effectif), LU tel
     # quel. Plus aucun recalcul propre au Comparatif (l'ancien « max par n_ventes » du secteur cadastral
     # divergeait du Dossier §8). Une seule source de prix dans tous les documents.
-    prix_bati = (qv2.get("prix_ancien") or {}).get("median")
+    # DOCS-COHERENCE-1 (A8) — chaque prix porte le NOMBRE de ventes qui le fonde (n + rayon), comme le
+    # Dossier § Marché ; le Comparatif les affiche avec le prix (jamais un prix nu).
+    _pa = qv2.get("prix_ancien") or {}
+    prix_bati = _pa.get("median")
+    prix_bati_n, prix_bati_rayon_m = _pa.get("n"), _pa.get("radius_m")
     # A8 — prix du terrain = médiane DVF du terrain nu du secteur cadastral, MÊME source que le
     # Dossier §8 (dvf_parcelle.secteur) ; jamais un prix « par zone » propre au Comparatif.
     _secteur = ((qv2.get("dvf_parcelle") or {}).get("secteur")) or []
     _terr = [s for s in _secteur if (s.get("type_bien") or "").lower() in ("terrain", "terrain à bâtir")
              and s.get("mediane_prix_m2")]
-    prix_terrain = max(_terr, key=lambda s: s.get("n_ventes") or 0)["mediane_prix_m2"] if _terr else None
+    _terr_sel = max(_terr, key=lambda s: s.get("n_ventes") or 0) if _terr else None
+    prix_terrain = _terr_sel["mediane_prix_m2"] if _terr_sel else None
+    prix_terrain_n = (_terr_sel or {}).get("n_ventes")
     return {
         "idu": qv2["idu"], "commune": qv2.get("commune"),
         # CHASSE-DONNEES-FIX-1 (Lot 1) — le Comparatif sert la surface de TERRAIN (contenance|dessin)
@@ -8314,6 +8320,8 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
         "acces_reseaux": via.get("libelle"),                            # UN verdict viabilisation
         "assainissement": anc.get("libelle") or anc.get("statut_court") or anc.get("statut"),
         "prix_secteur_bati_m2": prix_bati,                              # médiane DVF bâti secteur
+        "prix_bati_n": prix_bati_n, "prix_bati_rayon_m": prix_bati_rayon_m,  # A8 — ventes qui fondent le prix
+        "prix_terrain_n": prix_terrain_n,                               # A8 — ventes du terrain nu
         # DOCS-COHERENCE-1 (A8) — prix du terrain = l'ID DE LA FICHE (mode_b.terrain_nu.prix_m2,
         # secteur cadastral), lu tel quel (était un prix « par zone » divergent du Dossier §8). Même
         # valeur à l'écran et au PDF (un seul calcul de prix dans les documents).
