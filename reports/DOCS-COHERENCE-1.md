@@ -230,12 +230,27 @@ Régressions : suite non-reel ciblée (verdicts · sources · oracle · circuit1
 verrous lot5 · réparations) **271 passed**. Harnais **0 écart** BY0083 + BL0020. Dossier régénéré et
 regardé (mixité 1 ligne · sols 2 lignes · équipements sous-catégories · §10 non dédoublé · carte E5).
 
-## Lot G (G1-G5), H — à faire / état
+## Lot G — Bilan — FAIT (27/10)
 
-- **Lot G** : le pont « Bilan de ce scénario » (G1) pré-remplit déjà le Bilan depuis le programme de
-  l'Étude (`M22Programme`→`BilanEcran depuisEtude`) ; G2 (sourcé) + G3 (exports grisés si CA nul) + G4
-  (lignes à 0) + G6 (en-tête) faits en **G7**. **Reste G5** (alignement colonne Calendrier — cosmétique).
-- **Lot H** : harnais 0 écart confirmé ; régénération + revue des 8 PDF à finaliser.
+| point | statut | ce qui a été fait |
+|-------|--------|-------------------|
+| **G1** Bilan parti d'une Étude | ✅ (déjà) | Le pont « Bilan de ce scénario → » (`M22Programme.ouvrirBilanScenario` → `EtudeEcran` → `BilanEcran depuisEtude`) pré-remplit le programme (logements par type + SDP + SHAB) depuis le scénario de l'Étude (`entreesInitiales`). |
+| **G2** pré-remplissages sourcés | ✅ (déjà) | `modele.sourcee` (terrain = contenance, zonage, commune, prix DVF) + `TeteChamp source=…` marquent le Sourcé ; rien n'entre au calcul sans geste. |
+| **G3** export refusé si CA nul | ✅ (G7) | Boutons « Exporter en PDF / Excel » grisés tant que le CA TTC est nul. |
+| **G4** lignes à 0 | ✅ (G7) | « N ligne(s) non renseignée(s) — comptées pour 0 » (écran + PDF). |
+| **G5** alignement Calendrier | ✅ | `BilanEcran.tsx` : cellules du Calendrier alignées **en haut** (le repère Sitadel sur 2 lignes ne décale plus le champ J+) et unité en **mois** (« + [n] mois », cohérent avec « en mois après le compromis » et le repère « N mois ») — plus de « J+ » qui se lit « jours ». tsc 0 · vitest fiche 30/30. |
+| **G6** en-tête complet | ✅ (G7) | En-tête collant : parcelle/commune · Étude reliée · prix demandé · exports + Enregistrer. |
+
+## Lot H — clôture
+
+- **Harnais : 0 écart** sur **BY0083** ET **BL0020** (18 données partagées), reconfirmé après tous les lots.
+- **8 PDF régénérés et regardés** → `reports/DOCS-COHERENCE-1/pdf-final/` (Dossier, Apporteur, Étude de
+  zone, Gabarit, Comparatif, Étude de faisabilité, Pré-dossier PC, Bilan). Revue visuelle :
+  Étude de faisabilité §5 **coupe en 4 gradins** (F8) + §6 **SHAB 720 = Surface tenue 720 / SDP 980** (F5) ;
+  Dossier **mixité 1 ligne** (B4) · **sols 2 lignes** (B5) · **équipements sous-catégories** (B7) ·
+  **§10 non dédoublé** (B8) ; Étude de zone **carte nette** (E5).
+- **Hook pré-push vert** à chaque lot (tsc + vitest + **2666 unit** passed). Reel ciblé : capacité
+  18/18 (F5/F7), moteur implantation. **Pas de merge.**
 
 (Statuts mis à jour à chaque lot ; un commit + une régénération des PDF par lot.)
 

@@ -618,9 +618,6 @@ def coupe_svg(scenario, contexte: Contexte, *, ref: str, genere_le: str, numero:
     if en_gradins:
         import math as _m
         n_grad = max(2, _m.ceil(relief_bati / h_et) + 1)
-        # pente du TN sous le bâti : le bas (aval) est à sol_bas, le haut (amont) à sol_haut
-        sol_f, sol_b = tn_at(bf), tn_at(bb)
-        amont_cote_f = sol_f >= sol_b          # True si le côté voie (bf) est le plus haut
         for g in range(n_grad):
             gx0 = bf + (bb - bf) * g / n_grad
             gx1 = bf + (bb - bf) * (g + 1) / n_grad
@@ -631,7 +628,8 @@ def coupe_svg(scenario, contexte: Contexte, *, ref: str, genere_le: str, numero:
             for n in range(niveaux):
                 yb = Y(base + (n + 1) * h_et)
                 b.append(f'<line x1="{gX:.1f}" y1="{yb:.1f}" x2="{gX + gW:.1f}" y2="{yb:.1f}" stroke="#111" stroke-width="0.5"/>')
-            b.append(_txt(gX + 4, Y(base) - 4, f"RDC" if niveaux == 1 else f"R+{niveaux - 1}", size=7.5, fill="#7A3B2C"))
+                # chaque gradin EST un R+N complet : on nomme ses niveaux (RDC, R+1…), comme le volume droit.
+                b.append(_txt(gX + 3, Y(base + n * h_et) - 3, "RDC" if n == 0 else f"R+{n}", size=6.5, fill="#7A3B2C"))
         b.append(_txt((bX + bX + bW) / 2.0, Y(max(tn_at(bf), tn_at(bb)) + H_bat) - 8,
                       f"bâtiment en {n_grad} gradins (un décrochement par étage)", size=8.5, anchor="middle", fill="#7A3B2C"))
     else:

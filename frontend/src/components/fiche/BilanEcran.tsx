@@ -379,7 +379,9 @@ export function BilanEcran({ idu, onClose, onGenerated, depuisEtude }:
             <table className="w-full text-[13px]">
               <tbody>
                 {(modele.calendrier ?? []).map((c) => (
-                  <tr key={c.id} className="border-b border-line last:border-0">
+                  // DOCS-COHERENCE-1 (G5) — align-top (le repère Sitadel sur 2 lignes ne décale plus le
+                  // champ) + unité « mois » (cohérent « en mois après le compromis »), plus de « J+ ».
+                  <tr key={c.id} className="border-b border-line last:border-0 align-top">
                     <td className="py-1 pl-3 text-txt-mut">{c.libelle}
                       {c.repere === 'sitadel' && sitadel && (
                         <div className="text-[11px] text-txt-dim">repère Sitadel ·{' '}
@@ -392,10 +394,11 @@ export function BilanEcran({ idu, onClose, onGenerated, depuisEtude }:
                     </td>
                     <td className="py-1 pr-3 text-right">
                       <span className="inline-flex items-center gap-1">
-                        <span className="text-[11px] text-txt-dim">J+</span>
+                        <span className="text-[11px] text-txt-dim">+</span>
                         <input key={rev} className="h-7 w-14 rounded border border-line-2 bg-surface px-1.5 text-right tabular-nums text-[color:var(--ink)] placeholder:text-txt-mut"
                           defaultValue={entrees.calendrier[c.id] ?? ''} placeholder="0"
                           onChange={(ev) => majCalendrier(c.id, parseNum(ev.target.value))} />
+                        <span className="text-[11px] text-txt-dim">mois</span>
                       </span>
                     </td>
                   </tr>
