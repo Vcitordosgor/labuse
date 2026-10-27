@@ -154,18 +154,102 @@ et le verrou ne bloque plus ; garde statique que la couche RNMR déclare un `nom
 
 ---
 
-## P4 — mise en prod (à jouer APRÈS merge par Vic)
+## P4 — mise en prod (EXÉCUTÉE le 27/10/2026, nuit — après merge `e3a30f601`)
 
-**Non démarré** : la prod ne sert jamais du code absent de main. Fin de P1-P3 : hook vert, branche
-`fix/postdeploy-1027` poussée, **pas de merge**. Vic merge, puis P4 est relancé depuis
-`~/Desktop/labuse-main` (règles DEPLOY-1027 : jamais `deploy.sh`, env chargé, manifeste jamais écrasé,
-crontab en ciblé, aucun secret affiché). Séquence prévue :
-1. Sauvegarde + copie de `/opt/labuse/app`.
-2. `deploy/scripts/deploy_app.sh labuse-vps` → `ensure_schema` prod (les fonctions P1 se créent) →
-   `doctor` vert.
-3. `enp_complements` envoyée par `deploy_donnees.sh` → quarantaine verte en prod → **dérogation
-   DEPLOY-1027 levée et tracée**.
-4. Fumée BY0083 : Gabarit 3D en 200, pieds « Sources » des 8 PDF lisibles (aucun id brut), une parcelle
-   côtière ouest près du lagon avec la Réserve marine en contraintes, `readyz` 200, 10 min de journaux
-   propres.
-5. Retour arrière prêt (copie `/opt/labuse/app`).
+`fix/postdeploy-1027` mergée dans `main` (merge `e3a30f601`, P1-P3 `33d3a0e2c`→`eac8ceba2`). P4 relancée
+depuis `~/Desktop/labuse-main`, règles DEPLOY-1027 (jamais `deploy.sh`, env `/etc/labuse/labuse.env`
+chargé, manifeste jamais écrasé, crontab non touchée, aucun secret affiché). Prod servait déjà
+q_v20 / q_v19_sources / division q_v19 / résiduel 17 (DEPLOY-1027) — P4 ne touche NI le scoring NI la
+bascule : **code (P1/P2) + réingestion ENP (P3) seulement**.
+
+### Écart de procédure assumé (et pourquoi)
+
+Le plan disait « `enp_complements` envoyée par `deploy_donnees.sh` ». **`deploy_donnees.sh`/`sync-run.sh`
+ne transfèrent QUE les tables de run de scoring** (score_labuse, dryrun_*, résiduel…) — jamais
+`spatial_layers`/`enp_complements`. Le correctif P3 vit dans l'**ingestion** (`deal_carmen.py`, déployée
+en P4.2) ; le chemin sanctionné, idempotent et rejouable — exactement la preuve P3 du Mac — est
+**`labuse ingest-deal-carmen`** (live Lizmap avec le `nom_prefixe`). C'est ce qui a été joué. La commande
+rejoue elle-même les filtres (`deal_dpf`, `zones_humides`, `enp_complements`) à la fin.
+
+### P4.1 — filet
+
+- Dump frais **vérifié** : `labuse-labuse-20261027-222603.dump` (6,7 G, `pg_restore --list` OK, rc=0,
+  `✓ Sauvegarde OK`). ⚠ Leçon : un backup lancé en `nohup … &` sur ssh paraît « tué » quand on teste
+  son pid avec `kill -0` depuis `ubuntu` sur un process `labuse` (EPERM = faux négatif) ; et
+  `pg_restore --list` passe sur un dump PARTIEL (le TOC custom-format est écrit tôt). **Le dump de
+  référence a été repris EN SYNCHRONE** (ssh tient la session) → taille pleine 6,7 G confirmée.
+- `cp -al /opt/labuse/app → app-avant-postdeploy`, idem `venv → venv-avant-postdeploy` (liens durs,
+  instantané). Snapshots `/root/{served_manifest.json,served_run.txt,cron.labuse,labuse.service,Caddyfile}.avant-postdeploy`.
+
+### P4.2 — code + schéma
+
+`systemctl stop labuse` → `VITE_RUN_LABEL=q_v20 deploy/scripts/deploy_app.sh labuse-vps` :
+garde manifeste (q_v20 présent, 433 229) ✓ · rsync · venv (chaîne de démarrage importable ✓) · front
+rebuild (**repli VITE_RUN_LABEL=q_v20** préservé — le défaut `q_v7_defisc` du script AURAIT régressé le
+bundle, d'où l'override explicite) · unité systemd · contrôle manifeste prod q_v20 ✓. Puis
+`labuse doctor` (service arrêté) → **`✓ Schéma : OK`** (P1 : `ensure_schema` crée/surveille
+`labuse_zone_famille`/`labuse_hauteur_lidar_m`/`labuse_set_geom_2975`), Healthcheck 14/14, Données OK.
+Le `❌ NON PRÊT` résiduel = fiches de démo pré-chauffées (2/8) — préexistant, hors mandat (DEPLOY-1027).
+`systemctl start` → **readyz 200**, boot `env=production · auth=active · schéma=ok`. P2 confirmé :
+`config/circuit/{reservoirs,moteurs,schemas}.csv + golden_idus.json` DÉPLOYÉS (le rsync envoie `config/`).
+
+### P4.3 — réingestion ENP + levée de la dérogation
+
+`labuse ingest-deal-carmen` (live Lizmap) → **3 741 entités** (identique preuve P3 Mac), dont RNMR 150
+secteurs, **`filtre enp_complements : ok`**. Vérifs base prod :
+
+| Mesure | Avant P4 | Après |
+|---|---|---|
+| `ens` total | 411 | 411 |
+| `reserve_naturelle` | 152 | 152 |
+| noms `reserve_naturelle` « marine » | **0** | **150** |
+| `d_enp_reserve_marine` | ko (quarantaine) | **ok** |
+| dernier verdict `enp_complements` | quarantaine · sqm=true | **ok · bloquants_ko=0 · sqm=false** |
+| parcelles ∩ RNMR | 209 | 209 |
+
+**Dérogation DEPLOY-1027 levée et tracée** (une transaction) : `UPDATE filtre_versions SET
+servir_quand_meme=false` sur les **15** lignes de la version `…(13/09/2026)` (motif d'audit « LEVÉE
+POSTDEPLOY-1027 P4 » conservé dans `servi_motif`) + ligne `circuit_journal` (`filtre`/`enp_complements`/
+`ok`, `derogation_levee=true`). **`labuse filtre garde` → « aucune source run en quarantaine »** ;
+0 ligne `enp_complements` reste sous `servir_quand_meme`. Le cron `filtres-sources` (07:05) repassera
+`ok` de lui-même (donnée réparée). Mac déjà réparé en P3.
+
+### P4.4 — fumée (session loopback temporaire pour le compte test admin uid 31, 1 h, purgée)
+
+Cookie frappé côté serveur (`comptes.creer_session`), jamais affiché, fichier 600, **session purgée en
+fin** (`DELETE … WHERE utilisateur_id=31`, 1 ligne), aucun artefact laissé en base (pas de bilan de test).
+
+- **P1 — Gabarit 3D** `GET /outils/gabarit/97415000BY0083` → **200** (0,79 s) — le 500 DEPLOY-1027 est
+  structurellement réparé.
+- **P2 — pieds « Sources » lisibles** : documents générés en 200 avec des **noms publics, aucun id brut** —
+  gabarit (« Cadastre (API Carto PCI) · Urbanisme PLU/GPU (API Carto) · BD TOPO IGN · DEAL Réunion — PPR /
+  aléas »), dossier, étude-zone (« INSEE Filosofi 2021 · SIRENE · BPE 2025 · DVF · … »). Documents couverts :
+  gabarit/dossier/apporteur/étude-zone/comparatif **200** + pré-dossier.zip **200** (35 s) ; financier **422**
+  et bilan **422** (sorties gracieuses — entrées/programme requis, NON fabriqués sur la prod). Le rendu
+  `exports/pieds.py` lit bien `config/circuit/reservoirs.csv` DÉPLOYÉ (110 noms chargés).
+- **P3 — parcelle côtière ouest avec la Réserve marine** : `GET /servitudes-invisibles/97404000AZ0181`
+  (L'Étang-Salé) → **200** : « **Espace naturel protégé — Réserve Naturelle Marine de La Réunion —
+  COT_Etang_Sale_Bassin_Pirogues : réglementation spécifique (autorisation requise)** », à côté du PPR
+  littoral. (Note : la fiche `/parcels/{idu}` ne nomme pas la réserve — l'ENS nommé vit dans les
+  servitudes, lues EN DIRECT de `spatial_layers` par `ST_Intersects`, donc **`build-intersections` inutile**.)
+- **readyz 200**, service `active`, **0 ERROR/Traceback/CRITICAL/5xx** sur ~1 863 lignes de journal depuis
+  le boot (> 10 min, couvrant déploiement + fumée).
+
+### P4.5 — retour arrière (prêt)
+
+Filet en place ; en cas de besoin, depuis le Mac / en ssh :
+```bash
+sudo systemctl stop labuse
+sudo rm -rf /opt/labuse/app  && sudo mv /opt/labuse/app-avant-postdeploy  /opt/labuse/app
+sudo rm -rf /opt/labuse/venv && sudo mv /opt/labuse/venv-avant-postdeploy /opt/labuse/venv
+sudo chown -R labuse:labuse /opt/labuse/app
+sudo systemctl start labuse && curl -fsS http://127.0.0.1:8000/readyz
+# Données (seule la réingestion ENP a bougé des spatial_layers) : restaurer
+#   /var/backups/labuse/labuse-labuse-20261027-222603.dump  UNIQUEMENT si nécessaire.
+```
+Le code P1-P3 étant VALIDÉ vert, les copies `app-avant-postdeploy`/`venv-avant-postdeploy` peuvent être
+supprimées par Vic quand il le souhaite (récupère un peu d'espace ; disque prod à ~88 % — condition
+préexistante signalée par DEPLOY-1027, à traiter par `menage_disque.sh`).
+
+**P4 VERTE — les trois suites (P1 fonctions SQL durables · P2 fichiers lus déployés · P3 Réserve Marine
+nommée) sont en production, dérogation levée.**
