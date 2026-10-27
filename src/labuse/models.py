@@ -1140,7 +1140,8 @@ def _ensure_schema_steps(engine, *, geom_backfill: bool) -> None:
     ensure_parcel_eval_status_dropped(engine)    # M46 (Lot C) : rail legacy status SUPPRIMÉ (à froid)
     ensure_sitadel_depot(engine)                 # M38 : date de dépôt Sitadel (DR_DEPOT)
     ensure_parcel_contenance(engine)             # CONTENANCE-1 : surface cadastrale (Etalab)
-    ensure_geom_2975(engine, backfill=geom_backfill)
+    ensure_geom_2975(engine, backfill=geom_backfill)       # pose labuse_set_geom_2975 + ses triggers
+    ensure_sql_functions(engine)                           # POSTDEPLOY-1027 (P1) : zone_famille + borne LiDAR
     ensure_parcel_origine(engine)
     ensure_residuel_cache(engine)
     ensure_constructibilite_cache(engine)   # déclassement étage 0 (tête de liste non constructible)
@@ -1265,11 +1266,40 @@ def ensure_hauteur_lidar_fn(engine) -> None:
         c.execute(_t(HAUTEUR_LIDAR_FN))
 
 
+# POSTDEPLOY-1027 (P1) — SOURCE UNIQUE des fonctions SQL dont le code a besoin (tout `CREATE FUNCTION`
+# du dépôt). `_ensure_schema_steps` les crée TOUTES (boot / doctor --fix / create_all convergent via
+# cette seule liste) et `state.schema_status` signale toute fonction absente comme une ERREUR de schéma,
+# pas un avertissement. Incident PROD du Gabarit 3D : `labuse_hauteur_lidar_m` manquait → requête 500,
+# et `doctor` ne le voyait pas parce que `ensure_schema` ne créait QUE le trigger geom (via
+# `ensure_geom_2975`) — les deux bornes n'étaient posées que par `create_all`, chemin JAMAIS pris au
+# boot prod. Clé = nom de la fonction (proname), valeur = DDL idempotent (None si posée ailleurs).
+#  · labuse_set_geom_2975 : fonction-trigger, créée/maintenue par `ensure_geom_2975` avec ses triggers
+#    (indissociable d'eux : on ne peut pas la DROP tant qu'un trigger en dépend) → DDL None ici, mais
+#    vérifiée par `doctor` au même titre que les autres.
+SQL_FUNCTIONS: dict[str, str | None] = {
+    "labuse_zone_famille": ZONE_FAMILLE_FN,
+    "labuse_hauteur_lidar_m": HAUTEUR_LIDAR_FN,
+    "labuse_set_geom_2975": None,
+}
+
+#: Noms des fonctions SQL requises (ordre de `SQL_FUNCTIONS`) — consommé par `state.schema_status`.
+REQUIRED_SQL_FUNCTIONS: tuple[str, ...] = tuple(SQL_FUNCTIONS)
+
+
+def ensure_sql_functions(engine) -> None:
+    """POSTDEPLOY-1027 (P1) — crée/actualise les fonctions SQL à DDL autonome (zone_famille, borne
+    LiDAR). Idempotent, `CREATE OR REPLACE` sans verrou de table. `labuse_set_geom_2975` reste posée
+    par `ensure_geom_2975` (indissociable de ses triggers)."""
+    from sqlalchemy import text as _t
+    with engine.begin() as c:
+        for ddl in SQL_FUNCTIONS.values():
+            if ddl is not None:
+                c.execute(_t(ddl))
+
+
 def create_all(engine) -> None:
     Base.metadata.create_all(engine)
     _ensure_schema_steps(engine, geom_backfill=True)
-    ensure_zone_famille_fn(engine)
-    ensure_hauteur_lidar_fn(engine)
 
 
 def ensure_icd_columns(engine) -> None:

@@ -47,6 +47,14 @@ def schema_status(session: Session) -> dict:
     have_idx = {i for (i,) in session.execute(text(
         "SELECT indexname FROM pg_indexes WHERE schemaname='public'")).all()}
     missing += [f"index {i}" for i in _INDEXES if i not in have_idx]
+    # POSTDEPLOY-1027 (P1) — les fonctions SQL dont le code a besoin (labuse_hauteur_lidar_m &co).
+    # Une fonction absente = requête 500 (le Gabarit 3D est tombé ainsi en prod) : c'est une ERREUR de
+    # schéma, pas un avertissement. ensure_schema (doctor --fix) les recrée toutes idempotemment.
+    from . import models
+    have_fn = {n for (n,) in session.execute(text(
+        "SELECT proname FROM pg_proc WHERE proname = ANY(:n)"),
+        {"n": list(models.REQUIRED_SQL_FUNCTIONS)}).all()}
+    missing += [f"fonction {f}" for f in models.REQUIRED_SQL_FUNCTIONS if f not in have_fn]
     return {"ok": not missing, "missing": missing}
 
 
