@@ -4811,7 +4811,8 @@ def _iris_quartier_block(db: Session, idu: str) -> dict | None:
 
 
 def _sols_block(db: Session, idu: str) -> dict | None:
-    """SOURCES-1 lot 3 — l'état des sols de la parcelle (registre `sols_parcelle`).
+    """SOURCES-1 lot 3 — l'état des sols de la parcelle (clé fiche `sols`, servie aux
+    données `sis_classe` et `casias_statut` ; DOCS-COHERENCE-1 B5 : bundle `sols_parcelle` retiré).
 
     SIS : périmètre intersecté → obligations DITES (étude de sols au changement d'usage
     L556-2 CE, information écrite de l'acheteur/locataire L125-7 CE). CASIAS/instruction :
@@ -5652,12 +5653,19 @@ def _proximites_equipements_block(db: Session, idu: str) -> dict | None:
     chacun avec sa distance en mètres. RÉUTILISE le moteur BPE déjà branché (`_plus_proche` KNN sur
     `spatial_layers`, INSEE BPE 2025 + arrêts BD TOPO/GTFS) — AUCUN nouveau calcul, aucune isochrone.
     Catégorie non exposée par le moteur (0 résultat) = OMISE, jamais inventée. Absence totale → None."""
+    from ..ingestion.bpe import SDOM_LABEL
     try:
         items = []
         for label, kind, sub in _PROX_EQUIP:
             r = _plus_proche(db, idu, kind, sub)
             if r:
-                items.append({"cat": label, "nom": r["nom"], "distance_m": r["distance_m"]})
+                # DOCS-COHERENCE-1 (B7) — pour un équipement BPE, la SOUS-catégorie de l'établissement
+                # trouvé (SDOM, ex. « Formation continue ») et non le libellé générique du domaine
+                # (« École »), qui pouvait qualifier un organisme de formation d'« École » à tort.
+                cat = label
+                if kind == "amenite_bpe":
+                    cat = SDOM_LABEL.get((r.get("attrs") or {}).get("sdom") or "", label)
+                items.append({"cat": cat, "nom": r["nom"], "distance_m": r["distance_m"]})
     except Exception:
         db.rollback()
         return _bloc_indisponible("proximites_equipements")   # panne ≠ absence (M125)

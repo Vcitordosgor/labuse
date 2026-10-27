@@ -143,7 +143,10 @@ _ABSENCE_CLAIR = {
 
 #: EXPORTS-FIX-1 C3 — le SAR n'est pas en base : la ligne « Aucune divergence SAR indiquée » ne
 #: doit pas s'imprimer (elle affirme un contrôle qui n'a pas eu lieu). Absence purement masquée.
-_ABSENCE_MASQUEE = {"sar_divergence"}
+# DOCS-COHERENCE-1 (B4) — la mixité sociale tient en UNE ligne (la clause) : le seuil en m² et le
+# quota en % sont des DÉTAILS de cette clause (ils s'affichent quand ils sont servis), jamais une
+# 2ᵉ/3ᵉ ligne « non renseigné » qui répète l'absence de la clause.
+_ABSENCE_MASQUEE = {"sar_divergence", "mixite_seuil_m2", "mixite_quota_pct"}
 
 #: EXPORTS-FIX-1 C6 — marqueurs d'une donnée NON DISPONIBLE (non calculée/déterminée), à distinguer
 #: d'un « vérifié : rien » (contrôle fait, rien trouvé). Deux encadrés distincts au rendu.
@@ -822,7 +825,7 @@ _RENDEURS: dict[str, Any] = {
     "proprietaire_timeline_liste": _r_timeline, "historique_permis_liste": _r_permis_liste,
     "er_emplacement_reserve": _r_er_ebc, "ebc_classe": _r_er_ebc, "dpu_perimetre": _r_dpu,
     "peb_zone": _r_peb, "dispositifs_parcelle": _r_sup, "statut_plu": _r_statut_plu,
-    "sols_parcelle": _r_sols, "viabilisation_verdict": _r_viab, "distance_arret_m": _r_proximites,
+    "viabilisation_verdict": _r_viab, "distance_arret_m": _r_proximites,
     "tcsp_stationnement_allege": _r_tcsp, "part_logements_egout_pct": _r_anc,
     "fibre_parcelle": _r_fibre, "prix_sortie_bati_eur_m2": _r_prix_ancien,
     "prix_neuf_vefa_acte_eur_m2": _r_vefa_prix,   # EXPORTS-FIX-1 C5

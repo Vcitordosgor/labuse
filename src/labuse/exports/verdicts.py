@@ -102,7 +102,13 @@ def verdict_potentiel(valeurs: dict[str, Valeur]) -> Verdict | None:
         extra = ""
         if sdp is not None and float(sdp) > 0:
             from .registre_fmt import fmt_m2
-            extra = f" — surface de plancher constructible restante (bâti conservé) ≈ {fmt_m2(float(sdp))}"
+            n = fmt_m2(float(sdp))
+            # DOCS-COHERENCE-1 (B8) — ne pas RÉPÉTER « surface de plancher constructible restante
+            # (bâti conservé) » quand le libellé du potentiel le dit déjà : on n'ajoute que la mesure.
+            if "constructible restante" in (libelle or "").lower():
+                extra = f" ≈ {n}"
+            else:
+                extra = f" — surface de plancher constructible restante (bâti conservé) ≈ {n}"
         return (f"Potentiel de construction : {libelle}{extra}.", "", "")
     return None
 

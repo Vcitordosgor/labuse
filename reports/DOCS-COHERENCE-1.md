@@ -208,7 +208,34 @@ B3 (vérif hors tableau) : destinations U4c Saint-Paul **non inversées** (`plu.
 = Logement sous-condition mixité, Exploitation agricole/Entrepôt interdits, reste autorisé par silence
 art. 1.2) — aucune correction.
 
-## Lots B, G1-G6, H — à faire
+## Lot E — Étude de zone — FAIT (27/10)
+
+| point | statut | ce qui a été fait |
+|-------|--------|-------------------|
+| **E5** carré noir de la carte | ✅ | `api/plan_situation.py` : le fond « sans imagerie » (tuile réseau absente, pixel no-data pleine mer) passait du **quasi-noir** `(28,32,30)` → lu comme un carré noir/bug. Fond en **gris clair neutre** `(233,231,227)` : se lit « pas de cliché ici » sans fausse alerte (le masque blanc L≥250 reste valide). Partagé par tous les plans ortho (Dossier, Apporteur, Étude de zone). |
+| **BPE** reclassement | ✅ (vérifié) | Les épiceries sont correctement classées en base (`B2` Commerces alimentaires / `A504` épicerie-bar), **jamais `A4` Artisanat du bâtiment** : aucune inversion de données. Le libellé « École » générique est traité en **B7** (sous-catégorie). |
+
+## Lot B — Dossier — FAIT (27/10)
+
+| point | statut | ce qui a été fait |
+|-------|--------|-------------------|
+| **B3** règlement U4c | ✅ (vérifié) | `plu.destinations.zone_resume('Saint-Paul','U4c')` : Logement **sous-condition** (mixité), Exploitation agricole + Entrepôt **interdits**, reste **autorisé** par silence (art. 1.2) — **non inversé**, aucune correction. |
+| **B4** mixité en une ligne | ✅ | Trois lignes « Mixité sociale : … non renseigné » (clause + seuil m² + quota %) → **UNE** : `mixite_seuil_m2` et `mixite_quota_pct` ajoutés à `_ABSENCE_MASQUEE` (ce sont des DÉTAILS de la clause, affichés quand servis, jamais une 2ᵉ/3ᵉ ligne d'absence). |
+| **B5** doublon SIS/CASIAS | ✅ | Le bundle `sols_parcelle` (SIS+CASIAS) DOUBLONNAIT `sis_classe` (opposable) + `casias_statut` (informatif) de la section Risques. Retiré **partout** (déclaration, extracteur, oracle, donnée, robinet, rendeur, FicheRegle, couverture, test) → SIS et CASIAS **une fois chacun**, avec leur statut juridique. `registre.verifier()` 0 · verrou fiche-sections vert. |
+| **B7** équipements BPE sous-catégorie | ✅ | `app._proximites_equipements_block` : la ligne « À proximité » affichait le **domaine** générique (« École » pour un organisme de formation). Désormais la **sous-catégorie BPE** (SDOM) de l'établissement trouvé : « Formation continue : SARL JFA CONSULTING », « Commerces spécialisés : NAROUMA MARIE ». |
+| **B8** §10 verdict | ✅ | `exports/verdicts.py` : le §10 répétait « surface de plancher constructible restante (bâti conservé) » (une fois dans le libellé, une fois dans l'extra). L'extra n'ajoute plus que la **mesure** quand le libellé le dit déjà → « Potentiel modéré — surface de plancher constructible restante, bâti conservé ≈ 453 m² ». |
+| **B9** productible solaire | ✅ (vérifié) | « Productible solaire : non calculé sur cette toiture » = ligne **honnête** (le productible est l'outil Prospection solaire, autre payload, non rendu en fiche — oracle). Aucun faux chiffre, pas de changement. |
+
+Régressions : suite non-reel ciblée (verdicts · sources · oracle · circuit1/4 · registre · couverture ·
+verrous lot5 · réparations) **271 passed**. Harnais **0 écart** BY0083 + BL0020. Dossier régénéré et
+regardé (mixité 1 ligne · sols 2 lignes · équipements sous-catégories · §10 non dédoublé · carte E5).
+
+## Lot G (G1-G5), H — à faire / état
+
+- **Lot G** : le pont « Bilan de ce scénario » (G1) pré-remplit déjà le Bilan depuis le programme de
+  l'Étude (`M22Programme`→`BilanEcran depuisEtude`) ; G2 (sourcé) + G3 (exports grisés si CA nul) + G4
+  (lignes à 0) + G6 (en-tête) faits en **G7**. **Reste G5** (alignement colonne Calendrier — cosmétique).
+- **Lot H** : harnais 0 écart confirmé ; régénération + revue des 8 PDF à finaliser.
 
 (Statuts mis à jour à chaque lot ; un commit + une régénération des PDF par lot.)
 

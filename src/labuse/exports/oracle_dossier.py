@@ -63,7 +63,6 @@ ORACLE: dict[str, tuple[str, ...]] = {
     "aleas_parcelle_liste": ("aleas.liste",),
     "sis_classe": ("sols.sis",),
     "casias_statut": ("sols.casias",),
-    "sols_parcelle": ("sols.sis", "sols.casias"),
     "viabilisation_verdict": ("viabilisation.band", "viabilisation.libelle"),
     "type_proprietaire": ("proprietaire_moral",),
     "proprietaire_timeline_liste": ("proprietaire_historique.millesimes",),

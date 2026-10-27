@@ -225,27 +225,6 @@ donnees:
     pourquoi: "Le plafond de stationnement s'impose au PLU ; il change la faisabilité."
 
 ---
-# ── §5 RISQUES ET ENVIRONNEMENT ─────────────────────────────────────────────────────────
-surface:   fiche_parcelle_risques_reste
-nom:       "Risques — sols (SIS / CASIAS)"
-categorie: fiche
-parent:    fiche_parcelle
-route:     "/parcels/{idu}"
-rendu:     sections
-fiche_section: risques
-donnees:
-  - quoi:  sols_parcelle
-    ou:    { rang: 10, etat: replie, section: "Sols (SIS · CASIAS)" }
-    comment:
-      libelle: "Sols (SIS/CASIAS, parcelle)"
-      format:  liste
-      i:       "État des sols : périmètre SIS intersecté, site CASIAS/instruction le plus proche (≤ 100 m)."
-    absence: "Aucun secteur d'information sur les sols ni site CASIAS à proximité."
-    absence_type: absente_ici
-    statut_juridique: opposable
-    pourquoi: "Un SIS impose une étude de sols au changement d'usage ; à connaître avant d'acheter."
-
----
 # ── §9 QUARTIER ─────────────────────────────────────────────────────────────────────────
 surface:   fiche_parcelle_quartier_reste
 nom:       "Quartier — équipements du quotidien"

@@ -1860,14 +1860,8 @@ DONNEES: dict[str, Donnee] = {
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/couches_tuyau.py:couche_tuile (bruit_carte)",
     reservoirs=("deal_bruit_cartes",), portee="live",
     type="couche", table="spatial_layers (kind=bruit_carte)", fabrication="requete"),
- "sols_parcelle": C("Sols (SIS/CASIAS, parcelle)", "liste", "parcelle",
-    "l'état des sols de la parcelle : périmètre SIS intersecté, site CASIAS/instruction le "
-    "plus proche (≤ 100 m) — intersections live des couches servies, mêmes règles que la "
-    "cascade sol_pollue",
-    moteur=None, calcul="passe_plat",
-    fonction="src/labuse/api/app.py:_sols_block",
-    reservoirs=("georisques_sis", "georisques_casias",), portee="live", type="liste",
-    table="spatial_layers (kind=sol_pollue)"),
+ # DOCS-COHERENCE-1 (B5) — « sols_parcelle » (bundle SIS+CASIAS) retiré : il doublonnait
+ # sis_classe + casias_statut (chacun avec son statut juridique dans la section Risques).
  # ══ SOURCES-1 lot 6 — le foncier et les gens ══
  "filiation_parcelle": C("Historique cadastral (filiation DFI)", "liste", "parcelle",
     "la généalogie OFFICIELLE de la parcelle : d'où elle vient (mères), ce qu'elle est "

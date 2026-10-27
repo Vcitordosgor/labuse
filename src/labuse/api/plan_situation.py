@@ -69,7 +69,11 @@ def plan_ortho(geojson_str: str | None, cache_dir: Path, *, timeout_s: float = 1
         return {"ok": False, "echec": "fond cartographique indisponible — aucune tuile ortho sur l'emprise"}
 
     w, h = int(m["width"]), int(m["height"])
-    img = Image.new("RGB", (w, h), (28, 32, 30))
+    # DOCS-COHERENCE-1 (E5) — fond « sans imagerie » en GRIS CLAIR neutre (et non quasi-noir) : une tuile
+    # absente (réseau) ou un pixel no-data (pleine mer, blanc pur masqué ci-dessous) se lisait comme un
+    # CARRÉ NOIR, perçu comme un bug. Le gris clair se lit « pas de cliché ici » sans fausse alerte ;
+    # l'ortho couvre la parcelle, ce fond n'apparaît qu'aux bords / trous.
+    img = Image.new("RGB", (w, h), (233, 231, 227))
     for t in m["tiles"]:
         try:
             raw = base64.b64decode(t["data_uri"].split(",", 1)[1])

@@ -129,7 +129,7 @@ ROBINETS: dict[str, Robinet] = {
     "/map/batiments.geojson", "json_puis_js", chiffres=("batiments_3d_couche", "hauteur_bati_m",)),
  "fiche_parcelle_sols": _r("fiche", "Sols (SIS / CASIAS)", "fiche_parcelle",
     "/parcels/{idu} (clé sols)", "json_puis_js",
-    chiffres=("sols_parcelle", "sis_classe", "casias_statut",)),
+    chiffres=("sis_classe", "casias_statut",)),
  "fiche_parcelle_droit_sols": _r("fiche", "Dispositifs et périmètres (droit des sols)", "fiche_parcelle",
     "/parcels/{idu} (clé dispositifs)", "json_puis_js",
     chiffres=("dispositifs_parcelle", "er_emplacement_reserve", "ebc_classe",

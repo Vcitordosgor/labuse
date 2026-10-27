@@ -571,13 +571,6 @@ def _c_casias(db, idu, f):
     return v if v and v != "hors" else None
 
 
-@extracteur("sols_parcelle")
-def _c_sols(db, idu, f):
-    s = f.get("sols") or {}
-    touche = {k: v for k, v in s.items() if v not in (None, "hors")}
-    return touche or None
-
-
 @extracteur("endiguement_zone_protegee")
 def _c_endiguement(db, idu, f):
     ligne = next((l for l in (f.get("lines") or [])

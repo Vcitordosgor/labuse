@@ -2,7 +2,7 @@
 from . import FicheRegle, Reference, declarer
 
 declarer(FicheRegle(
-    donnees=("sols_parcelle", "sis_classe", "casias_statut"),
+    donnees=("sis_classe", "casias_statut"),
     formule_codee=(
         "SIS : parcelle ∩ spatial_layers (kind=sol_pollue, subtype=sis, périmètres "
         "réglementaires MultiPolygon) → classe « dans » (part = aire(∩)/aire(parcelle)) ; "
