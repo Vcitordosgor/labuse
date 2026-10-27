@@ -23,8 +23,12 @@ log = logging.getLogger("labuse.jobs.impl")
 BACKUP_MIN_MO = 1.0
 # CRON-2 — rotation en CONSTANTE : on garde les N dumps les plus récents. Le pull-mac de Vic archive
 # plus loin (disque externe) ; le VPS ne conserve qu'une fenêtre courte. CORRECTIFS-1 : aligné sur le
-# shell de prod (`backup_postgres.sh` `LABUSE_BACKUP_KEEP:-4`) → 4 quotidiens (+ 4 hebdo côté shell).
-BACKUP_ROTATION_N = 4
+# shell de prod (`backup_postgres.sh`).
+# DONNEES-ETAT-FIX-1 (Lot E) — 4 → 2 quotidiens (+ 1 hebdo côté shell) : un dump LEAN pèse ~7 Go ;
+# 4 quotidiens + historique hebdo saturaient le disque (écart 1, disque à 94 % le 27/10). L'HISTORIQUE
+# vit AILLEURS (le Mac rapatrie chaque matin + le disque externe) ; le VPS ne garde qu'une fenêtre
+# courte de reprise. Le garde-disque structurel de backup_postgres.sh reste le dernier filet.
+BACKUP_ROTATION_N = 2
 
 
 def _libpq_url(url: str) -> str:
@@ -45,7 +49,7 @@ def backup_postgres(ctx: JobContext) -> None:
     if not script.is_file():
         raise RuntimeError(f"script de sauvegarde introuvable : {script}")
     env = dict(os.environ)
-    env["LABUSE_BACKUP_KEEP"] = str(BACKUP_ROTATION_N)          # 4 dumps quotidiens gardés
+    env["LABUSE_BACKUP_KEEP"] = str(BACKUP_ROTATION_N)          # 2 dumps quotidiens gardés (Lot E)
     env.setdefault("LABUSE_BACKUP_DIR", s.backup_dir)
     if s.pg_bin_dir:                                            # pg_dump/pg_restore du bon PostgreSQL
         env["PATH"] = f"{s.pg_bin_dir}:{env.get('PATH', '')}"
@@ -482,7 +486,19 @@ def sante_endpoints(ctx: JobContext) -> None:
     """CONNEXIONS-2 Lot 7.2 (N3) — sonde les endpoints MÉTIER (avec DB) et vérifie forme + non-vacuité.
     À la PREMIÈRE panne (dédup jour), notifie l'admin (event systeme). Le dashboard lit le même résultat
     via /admin/sante-endpoints. Ne teste PAS que le process vit (ça, c'est `healthcheck`) — teste que les
-    ÉCRANS ont de quoi s'afficher (le cas `/accueil/chiffres` vivant mais vide)."""
+    ÉCRANS ont de quoi s'afficher (le cas `/accueil/chiffres` vivant mais vide).
+
+    DONNEES-ETAT-FIX-1 (Lot C) — CÈDE À LA SAUVEGARDE, comme `mail-queue` (COCKPIT-1 corr. A) : s'il
+    démarre pendant le pg_dump (verrou de backup-postgres tenu), ses requêtes rament sous la charge du
+    dump, dépassent le timeout du job (SIGALRM en plein échange psycopg → « another command is already
+    in progress ») et ouvrent un faux incident quotidien à 13:37 (journaux prod 14→27/10). On saute
+    proprement ce passage (statut ok, ni échec ni alerte) et on repart au prochain créneau, hors de la
+    fenêtre du dump. La sonde /health (`healthcheck`), elle, continue — ce n'est que la sonde MÉTIER lourde
+    (requêtes DB) qui cède."""
+    if _sauvegarde_en_cours():
+        ctx.compte(ok=True, total=0, en_echec=None,
+                   saute="sauvegarde en cours — passage cédé, reprise au prochain créneau")
+        return
     from .api import sante
     res = sante.sonde_metier(ctx.db)
     en_echec = [e["endpoint"] for e in res["endpoints"] if not e["ok"]]
@@ -783,13 +799,27 @@ def sonde_sources(ctx: JobContext) -> None:
 
 
 def _cout_agent_source_eur(db) -> float:
-    """Coût cumulé (EUR) des appels `agent_source` au ledger ia_log — pour le plafond du passage."""
+    """Coût cumulé (EUR) des appels `agent_source` au ledger ia_log — pour le plafond du passage.
+
+    DONNEES-ETAT-FIX-1 (Lot B) — on NE garde JAMAIS `ia_log` verrouillé après ce SELECT. La session
+    du job (`ctx.db`) reste « idle in transaction » après une lecture non validée et tient un
+    AccessShareLock sur `ia_log` ; or chaque passage de `_log_cost` (ai/core) fait un
+    `ALTER TABLE ia_log ADD COLUMN IF NOT EXISTS …` qui prend un ACCESS EXCLUSIVE (même en no-op) depuis
+    la session PAR SOURCE → cycle de verrous applicatif que Postgres ne tranche pas → le passage réel du
+    28/10 a pataugé 11 min puis échoué en `PendingRollbackError` (0 source traitée utilement). On relâche
+    donc la transaction juste après la lecture : le plafond se mesure toujours, mais plus aucun verrou
+    n'est tenu pendant l'appel API de l'agent."""
     from sqlalchemy import text
     try:
         v = db.execute(text("SELECT COALESCE(SUM(cout_eur), 0) FROM ia_log WHERE kind = 'agent_source'")).scalar()
         return float(v or 0.0)
     except Exception:  # noqa: BLE001 — pas de ledger → pas de plafond mesurable, on ne bloque pas
         return 0.0
+    finally:
+        try:
+            db.rollback()          # lecture seule : rien à perdre, et on libère le verrou ia_log
+        except Exception:  # noqa: BLE001 — libérer le verrou ne doit jamais masquer le résultat
+            pass
 
 
 def agents_sources(ctx: JobContext) -> None:
