@@ -168,6 +168,16 @@ Validation : pytest commune/marché/contexte/signaux **201 passed / 15 skipped**
 
 > Lot C est fortement dépendant d'un accès prod authentifié (compte de test) que cette session n'a pas (les endpoints commune exigent une auth → 401). C1 prod et une repro fidèle de C2/C3 nécessitent ce compte. C5 et C1-local sont faits ; C2/C3 ne sont pas reproductibles en local (tout répond 200).
 
+### Lot C prod — tentative de session gb-test-ae (BLOQUÉE)
+
+Vic a autorisé une session temporaire 2 h sur `gb-test-ae`, « comme en DEPLOY-1027 ». Or DEPLOY-1027 a **frappé la session CÔTÉ SERVEUR sur le VPS** (`creer_session(db, 31, 2h)`, cookie en fichier 600 sur le VPS) — il n'existe **pas de mot de passe** récupérable pour `gb-test-ae@labuse.local` (id 31) permettant un `POST /login` web (le compte admin réel a un TOTP, contourné par le frappage serveur). Obtenir la session exige donc **SSH sur le VPS**.
+
+**L'ouverture SSH vers `labuse-vps` a été REFUSÉE par le classifieur auto** (« le compte de test = session web, pas un accès SSH au VPS → escalade de périmètre »). Je **n'ai pas contourné** ce refus. Lot C prod reste donc **bloqué** faute d'un moyen autorisé d'obtenir la session.
+
+**Pour débloquer** (au choix de Vic) : (a) autoriser explicitement l'accès SSH au VPS (règle de permission Bash) pour frapper la session serveur comme en DEPLOY-1027 ; **ou** (b) me fournir directement un **cookie de session `gb-test-ae`** (collé, jamais affiché ensuite, purgé en fin) ; **ou** (c) me donner un **mot de passe** `gb-test-ae` pour `POST /login`. Avec l'un des trois, je fais C1 (mesures `time_total` sur fiche parcelle/commune/clic-commune/outils via le cookie), et je diagnostique C2 (latence contexte sous cache froid/concurrence) et C3 (fiche commune), en lecture seule, puis je purge et confirme au rapport.
+
+**Hypothèse de cause (à confirmer en prod)** : en local, le contexte commune est **précalculé** (cache chaud → 20-145 ms). En prod, la 1ʳᵉ ouverture d'une commune au **cache froid** recalcule en direct (~20 s/commune, cf. le job `fiche-commune-cache`) → **C2 « lent, donne l'impression de ne rien faire »** et **C3 « ne s'ouvre pas »** (le front a bien un squelette de chargement, mais l'attente dépasse la patience / un `statement_timeout`). Le correctif front sûr serait un **état de chargement immédiat au clic commune** + le **réchauffage du cache** au déploiement (job `fiche-commune-cache`) ; à valider une fois la session prod disponible avant de livrer le correctif.
+
 ## Lot B — documents (Gabarit, Étude de faisabilité, Bilan)
 
 **B1 — chaque calcul recalculé à la main vs donnée servie : 0 écart.** Les 3 documents lisent la donnée servie (aucun recompute front). Recompute à la main (témoins BY0083 / BZ1065), tout **MATCH** :
@@ -193,11 +203,11 @@ Validation : pytest commune/marché/contexte/signaux **201 passed / 15 skipped**
 
 | Lot | Résultat |
 |-----|----------|
-| **A** fiche parcelle | A1 (6 contradictions bâti/SDP/urbanisme/réseaux) + A2 polices + A3 bouton Pièges retiré + A4 espace + A5 icônes vérifiées + A7 gabarit « non calibré » (vrai bug de lecture backend) + A8 prix de sortie. |
+| **A** fiche parcelle | A1 (6 contradictions) + A2 + A3 + A4 + A5 + A7 (bug backend) + A8. **A7 complément** : hauteur table-graphique étiquetée **« Estimé »** (écran+PDF) + **dénombrement 10 zones / 14 905 parcelles** + 5 exemples avant/après. |
 | **B** documents | B1 recompute à la main = **0 écart** (3 documents) ; B2 lien Fiche retiré de la fenêtre Bilan. |
-| **C** vitesse | C5 3D LiDAR **vérifié** ; C1 mesures locales ; C2/C3 non reproductibles en local (tout répond 200) ; **prod non accédable** (401 sans compte de test) — signalé. |
-| **D** accueil/carte/Sources/Projets/Copilote | D1 animation (règle réécrite) · D2 encart panneau vide · D3 diag seul · D4 noms communes · D5 Sources épurée · D6 Projets · D7 Copilote 2×5. |
-| **F** fiche commune | 10 corrigés (icônes, polices, surface, permis, foncier couleur, risques, CatNat, dates, fiscalité, identité, équipements) + 1 vérifié OK (SDP unité) + 2 backend signalés (collecte Radar, seuils Activité). |
+| **C** vitesse | C5 3D LiDAR **vérifié** ; C1 mesures locales ; C2/C3 non reproductibles en local. **Session prod gb-test-ae BLOQUÉE** (SSH refusé par le classifieur ; pas de mot de passe pour un login web) → **Lot C prod non fait**, 3 options pour débloquer au rapport. |
+| **D** accueil/carte/Sources/Projets/Copilote | D1–D7 (D3 diag seul). |
+| **F** fiche commune | 10 corrigés + 1 vérifié OK + **complément appliqué** : seuil unique **5 biens** + **date de collecte Radar** dans Activité, cache communes recalculé en local (24/24). |
 
 ### À signaler à Vic
 - **A7** (gabarit) : correction d'un **bug de lecture backend** — Saint-Benoît Ub (et zones similaires : enveloppe calibrée + hauteur en table graphique par secteur) était déclarée « PLU non calibré » à tort. Le gabarit calcule désormais (emprise réelle) avec une hauteur **estimée** honnête. Change le gabarit de cette CLASSE de zones (à valider).
