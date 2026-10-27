@@ -20,7 +20,7 @@ Témoin fiche parcelle : **97410000AE1369** (4 ter Chemin Rebua, Saint-Benoît, 
 | A — fiche parcelle (AE1369) | ✅ fait (A1 ×6, A2, A3, A4, A5 vérifié, A7, A8) |
 | B — documents | ⏳ |
 | C — vitesse | ⏳ |
-| D — accueil/carte/Sources/Projets/Copilote | ⏳ |
+| D — accueil/carte/Sources/Projets/Copilote | ✅ fait (D1,D2,D3 diag,D4,D5,D6,D7) |
 | F — fiche commune | ⏳ |
 
 ## Lot A — fiche parcelle (témoin 97410000AE1369, Ub Saint-Benoît, 954 m²)
@@ -77,6 +77,20 @@ Aucune n'est générique/fausse ; les deux liens « adresse » (PJ, Errial) le s
 
 **Validation Lot A** : `tsc` 0 erreur ; vitest fiche **30/30** ; pytest gabarit/faisabilité/zonage/calibrage **156 passed** ; 0 erreur console sur AE1369 (avant/après). Fichiers : `Fiche.tsx`, `reseaux.tsx`, `blocks.tsx`, `risques.tsx`, `layers.ts`, `GabaritLine.tsx`, `styles/index.css` (front) ; `faisabilite/zonage.py`, `gabarit/builder.py` (back).
 
+## Lot D — accueil / carte / Sources / Projets / Copilote
+
+| # | Point | Cause | Correction | Preuve |
+|---|---|---|---|---|
+| D1 | Animation d'ouverture plus visible en prod | verrou `sessionStorage['labuse.intro']` : jouée **une fois par onglet** ; un **rechargement** ne la rejoue pas (sessionStorage survit au reload du même onglet) → Vic, qui recharge la prod, ne la revoit jamais. Le commentaire du code visait pourtant « au rechargement d'une page, pas à chaque navigation » | `LogoIntro.tsx` — drapeau **en mémoire du module** (plus de sessionStorage) : **RÈGLE** = joue à chaque **chargement complet** (ouverture/rechargement/nouvel onglet), jamais sur une navigation SPA interne | code + règle écrite |
+| D2 | Panneau « Cartes » vide = zone noire | l'encart d'accueil (`AccueilPreuves`) ne s'affichait que tant que `!accueilVu` ; ouvrir Couches/Filtres posait `accueilVu` **définitivement** → au repli (panneau vide, `panneauSection='listing'`), plus rien | `LeftPanel.tsx` (`VerdictHero`) — l'encart réapparaît quand le panneau est **vide** (`!verdict && panneauSection==='listing'`), et se cache dès qu'on ouvre Couches/Filtres | `D2_empty_panel_after.png` ; test live : welcome `false` (Couches ouvert) → `true` (replié) |
+| D3 | Bleu autour de l'île | **DIAGNOSTIC seul** : `MapView.tsx:303` `MER_ORTHO='#0A3B59'`, peint comme couleur de fond du calque `bg` sous fond Ortho (`:315`). Pas de l'imagerie : le proxy ortho ne sert la photo que sur terre + bande côtière ~700 m, la mer = un aplat de couleur unique. Introduit par commit **`a2b59ce85`** (« RETOURS-16 — la mer partout, un seul bleu, sans marches ») | **aucune modification** (Vic décide) | — |
+| D4 | « Les Avirons / L'Étang-Salé / La Plaine-des-Palmistes » au menu vs carte sans article | le menu « Toute l'île » (`Header.tsx:304`) affichait `c.commune` brut ; la carte passe par `communePastille` (article gardé seulement pour Le Port/Le Tampon/La Possession) | `Header.tsx` — menu via **`communePastille(c.commune)`** (clé de sélection = `c.commune` brut) | `D4_communes_menu_after.png` : « Avirons · Étang-Salé · Plaine-des-Palmistes » ; « La Possession · Le Tampon · Le Port » gardés |
+| D5 | Sources : pastilles + phrase sentinelle + explications par source | `SourcesPage.tsx` : badges « En direct »/proxy ; phrase « La plupart de nos sources… une sentinelle… » ; phrases cadence/couverture sous chaque source | `SourcesPage.tsx` — **toutes les pastilles retirées** (composant Badge supprimé), **phrase sentinelle retirée**, **aucune phrase par source** : titre seul + producteur à droite | `D5_sources_after.png` : « Annuaire de l'administration… · DILA … · ↗ » ; 0 pastille |
+| D6 | Projets : « Chaque projet garde votre cadrage et vos parcelles retenues. » | `ProjetsPanel.tsx:209` | `<p>` retiré | `D6_projets_after.png` ; test live : phrase `false` |
+| D7 | Copilote exemples : 3 colonnes, 9 cartes, icône en haut, texte tronqué | `AccueilCopilote.tsx` grille 3×3, carte `flex-col`, `line-clamp-3` | **2 rangées de 5** (10 exemples = 9 + « Calcule la taxe d'aménagement de 97415000BY0083 ») ; grille `grid-cols-5 auto-rows-fr`, carte `flex-row` (**icône à gauche, texte à droite**), `h-full min-h` (hauteurs égales), **plus de `line-clamp`** (aucun texte tronqué) | `D7_copilote_after.png` : 10 cartes, icône gauche/texte droite |
+
+**Validation Lot D** : `tsc` 0 erreur ; vitest (sources/copilote/header/panel/projets) **20/20** ; 0 erreur console. Fichiers : `LogoIntro.tsx`, `panel/LeftPanel.tsx`, `header/Header.tsx`, `sources/SourcesPage.tsx`, `projets/ProjetsPanel.tsx`, `copilote/AccueilCopilote.tsx` (+ réutilise `lib/communes.ts`).
+
 ## Journal — lots suivants
 
-_(B, C, D, F — rempli lot par lot)_
+_(B, C, F — rempli lot par lot)_

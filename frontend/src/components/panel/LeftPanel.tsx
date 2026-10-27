@@ -226,6 +226,7 @@ function FiltresSection({ open, onToggle, onRetract, fill }: { open: boolean; on
 // chaque parcelle garde son verdict cliquable. L'utilisateur garde la main.
 function VerdictHero() {
   const { verdict, accueilVu, setAccueilVu, openFiltres, retourFiltres } = useApp()
+  const panneauSection = useApp((s) => s.panneauSection)   // RECETTE-PROD-1 (D2)
   // M55-F point 3 : deux entrées possibles dans les résultats — l'analyse LABUSE (opinion) OU le
   // tri factuel (« je cherche moi-même »). Le bandeau DIT laquelle est affichée (honnête).
   const analyse = useApp((s) => s.filters.analyseLabuse)
@@ -263,8 +264,12 @@ function VerdictHero() {
   }
   // M55-D stage 8 (décision Vic) : l'accueil devient une PAGE DE PRÉSENTATION — l'UNIQUE CTA
   // d'analyse vit dans le panneau Filtres (la Révélation). Ici : ce que LABUSE fait, sobrement,
-  // et UN lien « Commencer → » qui ouvre la section Filtres. Disparaît après le premier geste.
-  if (accueilVu) return null
+  // et UN lien « Commencer → » qui ouvre la section Filtres.
+  // RECETTE-PROD-1 (D2) — l'encart d'accueil réapparaît quand le panneau Cartes est VIDE (Couches ET
+  // Filtres repliés, aucun résultat : panneauSection 'listing'), pas seulement au tout premier chargement.
+  // Il disparaît dès qu'on ouvre Couches ou Filtres (panneauSection → 'couches'/'filtres').
+  const panneauVide = !verdict && panneauSection === 'listing'
+  if (accueilVu && !panneauVide) return null
   return <AccueilPreuves onCommencer={() => { setAccueilVu(); openFiltres() }} />
 }
 

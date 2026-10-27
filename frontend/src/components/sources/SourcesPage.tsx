@@ -1,11 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { getSources, getSourcesCouverture } from '../../lib/api'
 import type { SourceInfo } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 import { Squelette } from '../Loading'
 import { EmptyState, ErrorState } from '../States'
-import { Badge as UiBadge, type BadgeTon } from '../ui/Badge'
 
 // PAGE-SOURCES-1 (lot 2) — la LICENCE (« licence ouverte »…) est retirée de la vitrine cliente : le
 // client voit la source et son producteur, pas la mention de licence (elle reste en base, lue ailleurs).
@@ -16,15 +15,8 @@ import { Badge as UiBadge, type BadgeTon } from '../ui/Badge'
 // est retiré ici : ce détail vit au dashboard admin (Données / le Circuit). Les pastilles de couches
 // par source (COUCHES-REGISTRE-2 lot 3) ont elles aussi migré vers la fiche du réservoir (Données).
 
-// ── Badge — DA-034 : délègue au Badge partagé (3 tons). `auto` = producteur interrogeable (→ vert),
-// `late` = en retard sur sa cadence (→ ambre), `error` = échec d'ingestion VISIBLE (→ ambre), `dashed`
-// = proxy / curée manuellement — donnée approchée (→ neutre).
-const BADGE_TON: Record<'auto' | 'late' | 'dashed' | 'error', BadgeTon> = {
-  auto: 'vert', late: 'ambre', error: 'ambre', dashed: 'neutre',
-}
-function Badge({ kind, children, title }: { kind: 'auto' | 'late' | 'dashed' | 'error'; children: ReactNode; title?: string }) {
-  return <UiBadge aria-label={title} ton={BADGE_TON[kind]}>{children}</UiBadge>
-}
+// RECETTE-PROD-1 (D5) — le composant Badge (« En direct »/proxy…) et sa table de tons sont retirés :
+// la page Sources ne porte plus aucune pastille.
 
 function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
   const ref = useRef<HTMLElement | null>(null)
@@ -39,30 +31,14 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
     <>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          {/* RECETTE-PROD-1 (D5) — plus aucune pastille (« En direct », nature/proxy…) : seulement le titre. */}
           <span className="flex flex-wrap items-center gap-2 text-[13.5px] text-txt">
             {s.name}
-            {/* nature (« proxy — donnée approchée ») : honnêteté sur la donnée, pas un état d'exploitation. */}
-            {s.nature?.dashed && (
-              <Badge kind="dashed" title={s.nature.detail}><span data-source-nature>{s.nature.label}</span></Badge>
-            )}
-            {/* RETOUCHES-1 D.16 — servie en direct d'un producteur externe (overlay WMTS), sans réservoir
-                ni sonde amont : « En direct », jamais « à jour »/vide (le flux EST le producteur). */}
-            {s.statut === 'live' && (
-              <Badge kind="auto" title="Servie en direct depuis le producteur externe (overlay), sans réservoir en base."><span data-source-live>En direct</span></Badge>
-            )}
           </span>
           {s.provider && <span data-source-provider className="shrink-0 text-[12px] text-txt-dim">{s.provider}</span>}
         </div>
-        {/* cadence habituelle du producteur (à titre d'information ; jamais un jugement, jamais « retard »). */}
-        {s.cadence_mention && (
-          <p data-source-publication className="mt-1 text-[12px] leading-snug text-txt-dim">
-            Le producteur publie habituellement {s.cadence_mention}.
-          </p>
-        )}
-        {/* REPARATIONS-1 lot 3 — la COUVERTURE RÉELLE : où la source arrive et où elle s'arrête. */}
-        {s.couverture_note && (
-          <p data-source-couverture className="mt-1 text-[12px] leading-snug text-txt-dim">{s.couverture_note}</p>
-        )}
+        {/* RECETTE-PROD-1 (D5) — sous chaque source, plus aucune phrase d'explication (cadence de
+            publication, couverture) : seulement le titre (et le producteur à droite). */}
       </div>
       {s.documentation_url && (
         <span aria-hidden className="ml-3 shrink-0 self-center text-[13px] text-txt-dim group-hover:text-mint">↗</span>
@@ -128,14 +104,9 @@ export function SourcesPage() {
       <div className="mx-auto w-full max-w-[1060px] px-7 py-10">
         {/* en-tête — PAGE-SOURCES-1 (lot 2) : le sur-titre « Données et méthode » est retiré. */}
         <h1 className="mb-2 text-[26px] font-semibold tracking-[-.02em] text-txt-hi">Sources</h1>
-        {/* PAGE-SOURCES-1 (lot 2) — phrase sur la VÉRIFICATION des sources. Formulation vérifiée sur la
-            couverture RÉELLE de la sentinelle : 78 des 94 sources sont sondées chaque jour (cadence 24 h) ;
-            16 ne le sont pas (source manuelle sans amont public, ou hors de portée de la sonde). On écrit
-            donc « la plupart », jamais « toutes » (l'affirmation quotidienne globale serait fausse). */}
-        <p data-sources-positionnement className="mb-7 text-[13px] leading-relaxed text-txt-mut">
-          La plupart de nos sources sont vérifiées automatiquement chaque jour : une sentinelle repère
-          quand leur producteur publie une nouvelle version.
-        </p>
+        {/* RECETTE-PROD-1 (D5) — phrase « La plupart de nos sources sont vérifiées… une sentinelle… »
+            retirée (demande Vic). Le titre « Sources » reste seul en tête. */}
+        <div className="mb-7" />
 
         {/* PAGES-RANGEMENT-1 (lot 1) — l'encart ne porte plus que des chiffres CLIENTS : le nombre de
             sources et la couverture réelle (parcelles · communes), LUS des données. La tuile « à jour »
