@@ -315,3 +315,12 @@ Bilan régénéré et regardé (`pdf-final/8-bilan.pdf`). bilan/taxe/reperes 66 
 | **A8** « n ventes à moins de R m » avec chaque prix (Comparatif) | `_compare_row` sert `prix_bati_n`/`prix_bati_rayon_m` (= `prix_ancien.n`/`radius_m`) et `prix_terrain_n` ; `_eur_m2_ventes` affiche « 3 602 €/m² — 15 ventes à moins de 1 000 m » et « 250 €/m² — 13 ventes ». |
 | **B2** phrase OCS GE | rendeur `_r_artif_ocsge` : la part artificialisée porte « — au sens OCS GE (bâti, cours et jardins), donnée d'îlot » pour qu'un « 100 % » ne se lise pas « 100 % bâti/scellé ». |
 | **B9** productible solaire | vérifié : « Productible solaire : non calculé sur cette toiture » reste honnête (outil Prospection solaire, autre payload) — aucun faux chiffre. |
+
+### Recette #2 (2 corrections)
+
+| point | correction |
+|-------|-----------|
+| **Étude de zone — « Prix médian du bâti »** | décrit la fenêtre RÉELLE du prix lu dans la fiche (`prix_ancien` : médiane + n + rayon) = « 3 602 €/m² — 15 ventes à moins de 1 000 m », IDENTIQUE au Comparatif (`documents.etude_zone_pdf` injecte `marche_dvf` dans `zone.marche.prix_ancien`). « Ventes (12 mois) : 2 » reste une ligne À PART (ne qualifie pas le prix). |
+| **Dossier §8 terrain — une seule ligne** | `prix_terrain_secteur_eur_m2` lit la médiane DVF du secteur cadastral (`dvf_parcelle.secteur`, plus `mode_b.terrain_nu` qui était None hors population mode B → fausse mention « insuffisant ») avec **LE seuil `SEUIL_N`=8** : au-dessus → « 250 €/m² — terrain nu, 13 ventes · section cadastrale » ; en dessous → « — (N ventes, échantillon insuffisant) » et le chiffre disparaît. Terrain retiré de la liste DVF (plus de double ligne). **Même règle, même seuil dans le Comparatif** (`_terrain_prix_ventes`). Harnais : prix terrain Dossier = Comparatif = 250. |
+
+Harnais 0 écart BY0083 + BL0020 ; verifier() 0 ; 376 unit (oracle/circuit/miroir/comparatif/étude-zone).

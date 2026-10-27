@@ -207,7 +207,10 @@ def _prix_bati(t):
 
 
 def _prix_terrain(t):
+    # DOCS-COHERENCE-1 (recette) — le Dossier §8 libelle « Terrain nu — secteur » (parallèle à « Ancien
+    # bâti — secteur »), le Comparatif « Prix du terrain » : on extrait les deux pour les confronter.
     return _n(_cherche(t, rf"Prix (?:du )?terrain[^\n]*?({NB})\s*€/m²",
+                       rf"[Tt]errain nu[^\n]*?({NB})\s*€/m²",
                        rf"[Tt]errain\s+({NB})\s*€/m²"))
 
 

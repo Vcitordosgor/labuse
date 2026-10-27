@@ -578,9 +578,16 @@ def _r_vefa_prix(v):
 
 
 def _r_terrain_nu(v):
+    # DOCS-COHERENCE-1 (recette Vic) — échantillon sous le seuil : la ligne le DIT (« — (N ventes,
+    # échantillon insuffisant) ») et aucun chiffre €/m² n'est affiché ; sinon la médiane + ses ventes.
+    if isinstance(v, dict) and v.get("insuffisant"):
+        return esc(f"— ({groupe(v.get('n') or 0)} ventes, échantillon insuffisant)")
     lib = fmt_eur_m2(v["prix_m2"])
     if v.get("n"):
         lib += f" — terrain nu, {groupe(v['n'])} ventes"
+    _ctx = " · ".join(x for x in (v.get("perimetre"), v.get("fenetre")) if x)
+    if _ctx:
+        lib += f" · {_ctx}"
     return esc(lib)
 
 
@@ -614,6 +621,10 @@ def _r_dvf_liste(v, val: Valeur, zone=None):
         # aux lignes maison/appartement/terrain. La fiche ne l'affiche jamais (marche.tsx ne rend que
         # terrain/maison/appartement) ; on le retire du Dossier pour la même raison — cohérence fiche == Dossier.
         if typ.lower() == "autre":
+            continue
+        # DOCS-COHERENCE-1 (recette Vic) — le TERRAIN a sa ligne dédiée « Terrain » (prix + seuil
+        # d'échantillon) : on ne le répète pas ici (plus de double ligne terrain au §8).
+        if typ.lower() == "terrain":
             continue
         tb = esc(typ.capitalize())
         px = fmt_eur_m2(r["mediane_prix_m2"]) if r.get("mediane_prix_m2") else \

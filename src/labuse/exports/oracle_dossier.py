@@ -78,7 +78,7 @@ ORACLE: dict[str, tuple[str, ...]] = {
     "taxe_amenagement_estimee_eur": ("taxe_amenagement.taux_communal_pct",),
     "tfpb_taux_pct": ("fiscalite.tfpb_commune_pct",),
     "prix_sortie_bati_eur_m2": ("prix_ancien.median",),
-    "prix_terrain_secteur_eur_m2": ("mode_b.terrain_nu.prix_m2",),
+    "prix_terrain_secteur_eur_m2": ("dvf_parcelle.secteur",),
     "ventes_retenues_n": ("prix_ancien.n",),
     "ventes_ecartees_n": ("prix_ancien.n_exclus",),
     "dvf_parcelle_liste": ("dvf_parcelle.secteur",),

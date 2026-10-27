@@ -68,14 +68,19 @@ def _economie(z) -> str:
 def _immobilier(z) -> str:
     m = z.get("marche") or {}
     lignes = []
-    # DOCS-COHERENCE-1 (A8) — chaque prix porte le NOMBRE de ventes qui le fonde (jamais un prix nu) :
-    # ici les ventes du périmètre sur 12 mois, attachées au prix médian (plus de ligne « Ventes » isolée).
-    nv = m.get("ventes_12m")
-    if m.get("prix_m2_median_bati") is not None:
-        suff = f" — {_i(nv)} ventes sur 12 mois dans le périmètre" if nv else ""
-        lignes.append(_kv("Prix médian du bâti", f"{_i(m.get('prix_m2_median_bati'))} €/m²{suff}"))
-    elif nv is not None:
-        lignes.append(_kv("Ventes (12 mois)", f"{_i(nv)}"))
+    # DOCS-COHERENCE-1 (recette Vic) — « Prix médian du bâti » = le prix LU DANS LA FICHE (prix_ancien :
+    # médiane + nombre de ventes + rayon), IDENTIQUE au Comparatif (« 3 602 €/m² — 15 ventes à moins
+    # de 1 000 m »). « Ventes (12 mois) » reste une ligne À PART — elle ne qualifie pas le prix.
+    pa = m.get("prix_ancien") or {}
+    if pa.get("median"):
+        n, r = pa.get("n"), (pa.get("radius_m") or pa.get("rayon_m"))
+        suff = (f" — {_i(n)} ventes à moins de {_i(r)} m" if n and r
+                else (f" — {_i(n)} ventes" if n else ""))
+        lignes.append(_kv("Prix médian du bâti", f"{_i(pa['median'])} €/m²{suff}"))
+    elif m.get("prix_m2_median_bati") is not None:
+        lignes.append(_kv("Prix médian du bâti", f"{_i(m.get('prix_m2_median_bati'))} €/m²"))
+    if m.get("ventes_12m") is not None:
+        lignes.append(_kv("Ventes (12 mois)", f"{_i(m.get('ventes_12m'))}"))
     if m.get("annonces_actives") is not None:
         lignes.append(_kv("Annonces actives", f"{_i(m.get('annonces_actives'))}"))
     if m.get("permis_36m") is not None:

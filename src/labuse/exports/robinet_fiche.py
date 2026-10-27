@@ -651,8 +651,21 @@ def _c_prix_ancien(db, idu, f):
 
 @extracteur("prix_terrain_secteur_eur_m2")
 def _c_terrain(db, idu, f):
-    tn = (f.get("mode_b") or {}).get("terrain_nu")
-    return tn if isinstance(tn, dict) and tn.get("prix_m2") else None
+    # DOCS-COHERENCE-1 (recette Vic) — UNE source pour le prix du terrain (médiane DVF du secteur
+    # cadastral), avec LE seuil d'échantillon (SEUIL_N) : au-dessus → la médiane + ses ventes ; en
+    # dessous → marqueur « insuffisant » QUI SE DIT (« — (N ventes, échantillon insuffisant) »), jamais
+    # une absence muette NI un prix nu. Même règle, même seuil et même source que le Comparatif.
+    from ..dvf_mediane import SEUIL_N
+    sec = ((f.get("dvf_parcelle") or {}).get("secteur")) or []
+    terr = [s for s in sec if "terrain" in (s.get("type_bien") or "").lower() and s.get("mediane_prix_m2")]
+    if not terr:
+        return None
+    best = max(terr, key=lambda s: s.get("n_ventes") or 0)
+    n = int(best.get("n_ventes") or 0)
+    if n >= SEUIL_N:
+        return {"prix_m2": best["mediane_prix_m2"], "n": n,
+                "perimetre": best.get("perimetre"), "fenetre": best.get("fenetre")}
+    return {"insuffisant": True, "n": n}
 
 
 @extracteur("ventes_retenues_n")
