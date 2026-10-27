@@ -145,7 +145,14 @@ Fiche = `components/contexte/ContextePanel.tsx` ; contexte = `app.py commune_con
 | Identité vacance | « vacance 0 → 100 % » par IRIS | min/max bruts (IRIS minuscules) présentés comme LA lecture | front : **médiane en premier** + « étendue 0–100 % selon l'IRIS, petits IRIS inclus » (filtrage par taille d'IRIS = back, signalé) | capture |
 | Équipements | section = seul renvoi (vide) | aucune donnée équipement/desserte servie à la commune (BPE/transport/fibre seulement « autour d'un point ») | **section retirée** (tuile « Étude de zone » déjà en tête) — pas de section vide | capture |
 
-**Signalé à Vic (backend, non appliqué ici)** : (1) **Date de dernière collecte Radar** dans la section Activité — `marche_annonces` ne sert aucune date ; à ajouter (`derniere_collecte = max(pige_annonces.date_saisie)`) au bloc backend puis l'afficher (nécessite recompute du cache commune). (2) **Unification comptage/seuil Activité vs Radar** (`SEUIL_N=5` d'affichage ≠ `SEUIL_REF_TYPE=30` de robustesse) = réglage des seuils dans `pige/signaux.py`/`marche.py`, hors périmètre fiche ; les « 21 / 24 » de Vic étaient des captures périmées (données actuelles 13 actives / 42 bâti, l'état « sous le seuil » ne s'affiche plus).
+### Lot F complément (appliqué — décision Vic)
+
+- **Seuil unique de 5 biens.** `fiche_commune.py marche_annonces` : la robustesse du prix demandé médian / de l'écart demandé-acté passe de `SEUIL_REF_TYPE` (30) à **`SEUIL_N` (5)** = le seuil d'affichage ET celui du Radar. Plus de double seuil 5/30 : un seul comptage, un seul seuil. Vérifié Saint-Paul : `demande_seuil_n=5`, médian 4 657 €/m² servi (n=42 ≥ 5). Test `test_a2_seuil_unique_5…` mis à jour (l'ancien testait le 30).
+- **Date de dernière collecte Radar.** `marche_annonces` sert `derniere_collecte = max(pige_annonces.date_saisie)` (ISO), affichée dans la section Activité : **« Radar — dernier relevé le 27/10/2026. »** (en prod ≈ 06/10, la pige étant en pause). `ContextePanel.tsx` + type `marche_annonces.derniere_collecte`. Preuve `F_SaintPaul_activite.png`.
+- **Cache communes recalculé en local** : `rafraichir_contexte_cache` sur les **24 communes → 24/24 ok** (le contexte sert désormais le seuil 5 + la date Radar).
+- **À RECALCULER EN PROD (au déploiement)** : le `commune_contexte_cache` est précalculé — après déploiement, relancer le job **`fiche-commune-cache`** (24 communes, ~20 s/commune) pour que le seuil 5 et la date de collecte apparaissent en prod (sinon la fiche sert l'ancien cache jusqu'à la prochaine nuit).
+
+Validation : pytest commune/marché/contexte/signaux **201 passed / 15 skipped** · tsc 0.
 
 **Validation Lot F** : `tsc` 0 ; vitest **299/299** (suite complète) ; pytest commune/contexte/signaux/fiche **171 passed / 13 skipped** (skips = données absentes de la base de test). Fichiers : `contexte/ContextePanel.tsx`, `config/veille_plu.yaml`, `api/app.py` (signal PPR).
 

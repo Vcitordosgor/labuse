@@ -559,8 +559,8 @@ export function ContextePanel() {
                   ) : (
                     <>
                       {(() => {
-                        // COMMUNE-FIX-1 (A2) — sous le seuil Radar (30 biens), on n'affiche NI médian NI
-                        // pourcentage : « sous le seuil (N biens) », jamais un −31 % tiré de 5 annonces.
+                        // RECETTE-PROD-1 (F) — seuil UNIQUE 5 biens (= Radar) : sous 5, on n'affiche NI
+                        // médian NI pourcentage ; « sous le seuil (N biens) ».
                         const n = ma!.prix_demande_n ?? 0
                         const sous = ma!.demande_sous_seuil
                         const libSeuil = `sous le seuil (${fmt(n)} bien${n > 1 ? 's' : ''})`
@@ -576,6 +576,8 @@ export function ContextePanel() {
                       })()}
                     </>
                   )}
+                  {/* RECETTE-PROD-1 (F) — date du dernier relevé Radar (la pige est en pause depuis le 06/10). */}
+                  {ma?.derniere_collecte && <p data-radar-collecte className="mt-1.5 text-[10.5px] text-txt-dim">Radar — dernier relevé le {fmtDateNum(ma.derniere_collecte)}.</p>}
                   {/* COMMUNE-FIX-1 (D13) — acquéreurs récents (PM) : endpoint dédié, 5 premiers + Scan patrimoine. */}
                   <AcquereursPmCommune commune={commune} />
                   <Source nom={`DVF (mutations)${ma ? ` · ${ma.source}` : ' · Radar LABUSE'}`} />
