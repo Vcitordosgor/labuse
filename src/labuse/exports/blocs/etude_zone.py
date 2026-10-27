@@ -68,10 +68,14 @@ def _economie(z) -> str:
 def _immobilier(z) -> str:
     m = z.get("marche") or {}
     lignes = []
-    if m.get("ventes_12m") is not None:
-        lignes.append(_kv("Ventes (12 mois)", f"{_i(m.get('ventes_12m'))}"))
+    # DOCS-COHERENCE-1 (A8) — chaque prix porte le NOMBRE de ventes qui le fonde (jamais un prix nu) :
+    # ici les ventes du périmètre sur 12 mois, attachées au prix médian (plus de ligne « Ventes » isolée).
+    nv = m.get("ventes_12m")
     if m.get("prix_m2_median_bati") is not None:
-        lignes.append(_kv("Prix médian du bâti", f"{_i(m.get('prix_m2_median_bati'))} €/m²"))
+        suff = f" — {_i(nv)} ventes sur 12 mois dans le périmètre" if nv else ""
+        lignes.append(_kv("Prix médian du bâti", f"{_i(m.get('prix_m2_median_bati'))} €/m²{suff}"))
+    elif nv is not None:
+        lignes.append(_kv("Ventes (12 mois)", f"{_i(nv)}"))
     if m.get("annonces_actives") is not None:
         lignes.append(_kv("Annonces actives", f"{_i(m.get('annonces_actives'))}"))
     if m.get("permis_36m") is not None:

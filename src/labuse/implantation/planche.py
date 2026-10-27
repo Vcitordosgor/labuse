@@ -21,7 +21,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from shapely.geometry.base import BaseGeometry
 
 from .contexte import Contexte
-from .format import dec_fr, groupe_fr, m2_fr
+from .format import dec_fr, dec_souple, groupe_fr, m2_fr
 
 # ── feuille ───────────────────────────────────────────────────────────────────────────────────
 W, H = 1180.0, 780.0
@@ -595,7 +595,7 @@ def coupe_svg(scenario, contexte: Contexte, *, ref: str, genere_le: str, numero:
             continue
         hp = " ".join(f"{X(d):.1f},{Y(a + h):.1f}" for d, a in tn)
         b.append(f'<polyline points="{hp}" fill="none" stroke="#2563EB" stroke-width="1" stroke-dasharray="6 3"/>')
-        b.append(_txt(CPX1 - 4, Y(tn[-1][1] + h) - 3, f"{lab} {dec_fr(h, 2)} m", size=9, anchor="end", fill="#1D4ED8"))
+        b.append(_txt(CPX1 - 4, Y(tn[-1][1] + h) - 3, f"{lab} {dec_souple(h)} m", size=9, anchor="end", fill="#1D4ED8"))
     b.append("</g>")
 
     # ── prospect (seulement s'il est CHIFFRÉ) : droite de pente depuis la limite de fond
@@ -651,7 +651,7 @@ def coupe_svg(scenario, contexte: Contexte, *, ref: str, genere_le: str, numero:
     b.append(f'<line x1="{cx:.1f}" y1="{Y(sol):.1f}" x2="{cx:.1f}" y2="{Y(sol + H_bat):.1f}" stroke="#111" stroke-width="0.8"/>')
     for yy in (Y(sol), Y(sol + H_bat)):
         b.append(f'<line x1="{cx - 3:.1f}" y1="{yy:.1f}" x2="{cx + 3:.1f}" y2="{yy:.1f}" stroke="#111" stroke-width="0.8"/>')
-    b.append(_txt(cx - 5, (Y(sol) + Y(sol + H_bat)) / 2, f"{dec_fr(H_bat, 2)} m", size=9, anchor="end", fill="#111"))
+    b.append(_txt(cx - 5, (Y(sol) + Y(sol + H_bat)) / 2, f"{dec_souple(H_bat)} m", size=9, anchor="end", fill="#111"))
     b.append("</g>")
 
     # ── légende + cartouche (colonne de droite)
@@ -675,7 +675,7 @@ def coupe_svg(scenario, contexte: Contexte, *, ref: str, genere_le: str, numero:
     b.append(_txt(CCOL + 12, cy + 37, "Étude de faisabilité — coupe de principe", size=10.5, weight="600"))
     b.append(_txt(CCOL + 12, cy + 53, f"{commune} · zone {ent.get('zone') or ''}", size=9.5))
     b.append(_txt(CCOL + 12, cy + 68, f"Parcelles {parcelles}", size=9.5))
-    b.append(_txt(CCOL + 12, cy + 84, f"Scénario {ref} · R+{max(0, niveaux - 1)} · {niveaux} niveaux × {dec_fr(h_et, 2)} m", size=9))
+    b.append(_txt(CCOL + 12, cy + 84, f"Scénario {ref} · R+{max(0, niveaux - 1)} · {niveaux} niveaux × {dec_souple(h_et)} m", size=9))
     b.append(_txt(CCOL + 12, cy + 100, "TN LiDAR HD IGN · règles PLU servies", size=8.5, fill="#555"))
     b.append(_txt(CCOL + 12, cy + 115, f"Généré le {genere_le} · {numero}", size=8.5, fill="#555"))
     b.append(_txt(CCOL + 12, cy + 134, "Esquisse indicative — pas une étude d’architecte", size=9, fill="#B45309", weight="600"))

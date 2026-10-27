@@ -300,3 +300,10 @@ Bilan régénéré et regardé (`pdf-final/8-bilan.pdf`). bilan/taxe/reperes 66 
 |-------|-----------|
 | **A9** ligne « SDP maximale réglementaire, terrain libéré » au §10 | l'extracteur `surface_plancher_m2` lisait une clé absente ; il lit maintenant `potentiel_transformation.calcul.sdp_max_m2` (= 1 327 m², même valeur que Comparatif + pré-dossier) ; libellé aligné « SDP maximale réglementaire, terrain libéré ». |
 | **B8** raison de « surface vendable non calculable » | l'absence porte désormais la raison (« zone non constructible ou capacité nulle » → résolue « capacité nulle » sur BY0083). |
+
+### Lot « docs » #3 (formats + A8 Étude de zone)
+
+| point | correction |
+|-------|-----------|
+| **Formats** « 9 m » « 6 m » « 3 m » (Étude de faisabilité, coupe) | `planche.coupe_svg` : hauteurs égout/faîtage, cote de hauteur et « N niveaux × H » via `dec_souple` (sans zéro inutile), plus « 9,00 m ». |
+| **A8** « n ventes » avec le prix (Étude de zone) | `blocs/etude_zone._immobilier` : le prix médian du bâti porte « — N ventes sur 12 mois dans le périmètre » (plus de ligne « Ventes » isolée). |
