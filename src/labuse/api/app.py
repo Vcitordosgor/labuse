@@ -2464,8 +2464,10 @@ def _signaux_commune(db: Session, commune: str, insee: str | None,
                                 else "enveloppe ZAN déjà dépassée")})
     ppr = (risques or {}).get("ppr_pct")
     if ppr is not None and float(ppr) > SEUIL_PPR_PART_PCT:   # PPR > 30 % des parcelles
+        # RECETTE-PROD-1 (F) — MÊME arrondi (1 décimale) que la section Risques de la fiche commune
+        # (qui affiche « 34,5 % ») : le signal arrondissait à l'entier (« 34 % ») → divergence.
         out.append({"code": "ppr", "ton": "orange",
-                    "libelle": f"PPR sur {round(float(ppr))} % des parcelles"})
+                    "libelle": f"PPR sur {float(ppr):.1f} % des parcelles".replace(".", ",")})
     try:
         from ..faisabilite.marche_commune import ligne4_tendance
         d = (ligne4_tendance(db, commune).get("valeurs") or {}).get("delta_pct")

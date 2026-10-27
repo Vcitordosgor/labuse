@@ -21,7 +21,7 @@ Témoin fiche parcelle : **97410000AE1369** (4 ter Chemin Rebua, Saint-Benoît, 
 | B — documents | ⏳ |
 | C — vitesse | ⏳ |
 | D — accueil/carte/Sources/Projets/Copilote | ✅ fait (D1,D2,D3 diag,D4,D5,D6,D7) |
-| F — fiche commune | ⏳ |
+| F — fiche commune (Saint-Paul) | ✅ fait (13 points : 10 corrigés, 1 vérifié OK, 2 backend signalés) |
 
 ## Lot A — fiche parcelle (témoin 97410000AE1369, Ub Saint-Benoît, 954 m²)
 
@@ -91,6 +91,45 @@ Aucune n'est générique/fausse ; les deux liens « adresse » (PJ, Errial) le s
 
 **Validation Lot D** : `tsc` 0 erreur ; vitest (sources/copilote/header/panel/projets) **20/20** ; 0 erreur console. Fichiers : `LogoIntro.tsx`, `panel/LeftPanel.tsx`, `header/Header.tsx`, `sources/SourcesPage.tsx`, `projets/ProjetsPanel.tsx`, `copilote/AccueilCopilote.tsx` (+ réutilise `lib/communes.ts`).
 
-## Journal — lots suivants
+## Lot F — fiche commune (témoin Saint-Paul)
 
-_(B, C, F — rempli lot par lot)_
+Fiche = `components/contexte/ContextePanel.tsx` ; contexte = `app.py commune_contexte` / `fiche_commune.py` (servi depuis `commune_contexte_cache`, précalculé).
+
+| # | Point | Cause | Correction | Preuve |
+|---|---|---|---|---|
+| Icônes | « I » / « P » au lieu d'icônes | Identité/Population passaient la **lettre** au lieu d'un glyphe (les autres sections passent ◉ ▤ ◫ § ₣ ⚠) | `ic="I"→"◈"`, `ic="P"→"⌂"` | `F_Saint-Paul_after_top.png` |
+| Polices | grands chiffres (51 359, 108 088, 4 278 €/m², Foncier) en `font-display` (Space Grotesk) ≠ reste | la charte (règle A2) veut les valeurs chiffrées en **`--mono` + tabular-nums** | `ContextePanel` — `font-display`→`font-mono` sur les tuiles/valeurs numériques (titres laissés en display) | idem |
+| Surface | « 22 927 ha » (en-tête) vs « 23 080 ha » (Zones PLU) | deux grandeurs légitimes, même unité, non nommées : **cadastre** vs **emprise du zonage** | badge « **ha zonés** » + « (emprise du zonage) » → nommées distinctement | capture |
+| Permis | PC+PA+DP+PD = 327 vs « 329 » | « 329 » = permis **déposés** (inclut 2 annulés) ; le libellé disait « autorisés » | libellé « Permis **déposés** (12 mois) » (327 autorisés par type + 2 annulés déjà affichés) → l'arithmétique ferme | capture |
+| Permis dormants | « 2 583 » suspect | servi = `point_mort` = **2 589** (PC sans DAACT > 36 mois, parcelle non bâtie, run servi) ; « 2 583 » = relevé périmé | rien à corriger (le code sert déjà 2 589) ; définition écrite au rapport | — |
+| Foncier couleur | « Horizon 4,2 ans » en **vert** alors que le signal ZAN est orange | la ligne était `strong` → `text-mint` **toujours vert** | `RowT` reçoit un `ton` ; horizon coloré selon le **même seuil que le signal** (< 5 ans → orange, ≤ 0 → rouge) | capture |
+| Foncier unité | « SDP résiduelle 1 421 ha » | servi en m² (14 214 432) → /10 000 = 1 421 **ha** : conversion correcte, cohérente avec le reste de la carte | **rien à corriger** (vérifié) | — |
+| Risques arrondi | section « 34,5 % » vs signal « 34 % » (même source) | le signal faisait `round()` entier | back `app.py` — signal en **1 décimale** → « PPR sur 34,5 % » (vérifié : `_signaux_commune` → « 34,5 % ») | appel direct |
+| Risques libellé | « Mouvement de terrain 90,2 % » (de quoi ?) | pas de complément | « 90,2 % **des parcelles** » | capture |
+| Risques CatNat | « Chocs Mécaniques liés à l'action des Vagues » (casse brute GASPAR) | `type_peril` rendu verbatim | `sentenceCase()` → « Chocs mécaniques liés à l'action des vagues » (affichage seul, base intacte) | capture |
+| Urbanisme date brute | « prescrite le — » | `fmtDateNum("16/12/2021")` → `new Date` invalide → « — » (la date était déjà au format FR) | rendu **verbatim** de la date servie ; absence → « date de prescription non publiée » | capture |
+| Urbanisme date ISO | « millésime … opposable ( 2025-12-17) » | littéral malformé dans `config/veille_plu.yaml` (7 communes), espace parasite + ISO | **YAML corrigé** (7 → « (17/12/2025) ») **+** normaliseur front `normDatesFr` (affichage FR immédiat malgré le cache) | capture |
+| Fiscalité classe | « Classe de la commune : zone A » | la fiche parcelle ne sert PAS la classe ABC (grep 0) ; « zone A » prête à confusion avec le zonage PLU A/N | « **Classe ABC (zonage A/B/C) : A** » (valeur brute DHUP, sans « zone ») | capture |
+| Population RPLS/SRU | 7 265 (RPLS) vs 7 499 (SRU) | deux comptages, deux dates/périmètres | déjà **expliqué** par la ligne SRU (« stock au dernier inventaire SRU · millésime ») — **suffisant** | — |
+| Identité vacance | « vacance 0 → 100 % » par IRIS | min/max bruts (IRIS minuscules) présentés comme LA lecture | front : **médiane en premier** + « étendue 0–100 % selon l'IRIS, petits IRIS inclus » (filtrage par taille d'IRIS = back, signalé) | capture |
+| Équipements | section = seul renvoi (vide) | aucune donnée équipement/desserte servie à la commune (BPE/transport/fibre seulement « autour d'un point ») | **section retirée** (tuile « Étude de zone » déjà en tête) — pas de section vide | capture |
+
+**Signalé à Vic (backend, non appliqué ici)** : (1) **Date de dernière collecte Radar** dans la section Activité — `marche_annonces` ne sert aucune date ; à ajouter (`derniere_collecte = max(pige_annonces.date_saisie)`) au bloc backend puis l'afficher (nécessite recompute du cache commune). (2) **Unification comptage/seuil Activité vs Radar** (`SEUIL_N=5` d'affichage ≠ `SEUIL_REF_TYPE=30` de robustesse) = réglage des seuils dans `pige/signaux.py`/`marche.py`, hors périmètre fiche ; les « 21 / 24 » de Vic étaient des captures périmées (données actuelles 13 actives / 42 bâti, l'état « sous le seuil » ne s'affiche plus).
+
+**Validation Lot F** : `tsc` 0 ; vitest **299/299** (suite complète) ; pytest commune/contexte/signaux/fiche **171 passed / 13 skipped** (skips = données absentes de la base de test). Fichiers : `contexte/ContextePanel.tsx`, `config/veille_plu.yaml`, `api/app.py` (signal PPR).
+
+## Lot C — vitesse (mesures + 3D LiDAR)
+
+| # | Point | État |
+|---|---|---|
+| C1 | Mesures | **Local** (API :8850, cache chaud) : fiche parcelle **6–10 ms**, contexte commune **20–145 ms** (servi depuis `commune_contexte_cache`), 3D bâtiments bbox < 300 ms. **Prod** : non mesurable cette session (contexte commune = **401** sans compte de test ; readyz prod = 200). |
+| C2 | Clic commune lent / « ne fait rien » | Non reproductible en local (contexte 200, rapide). Cause probable en prod = **cache froid recalculé** (1ʳᵉ ouverture) ou concurrence (motif BOOT-VERROU déjà corrigé #11). Correctif UX (état de chargement immédiat au clic) **à faire avec Lot C/ContextePanel** — voir note. |
+| C3 | Fiche commune ne s'ouvre pas | **Non reproductible en local** : les 24 contextes répondent 200 et la fiche s'ouvre (test live). Le 500 prod du tour précédent (#11, DDL sous verrou) est corrigé dans `main` (déployé). Probable perception de C2 (lenteur). Non accédable en prod (401). |
+| C4 | Accélérations sûres | Aucune accélération risquée appliquée. Le contexte est déjà précalculé (cache) ; la fiche parcelle est rapide. Pas d'index/cache évident à ajouter sans mesurer la prod. **Rien changé** (garantie JSON before=after triviale : 0 endpoint touché côté calcul). |
+| C5 | 3D bâtiments lit LiDAR | **Vérifié** : `/map/batiments.geojson` lit `labuse_hauteur_lidar_m(bhl.faitage_m)` (COALESCE BD TOPO, borne ≤ 60 m). Saint-Denis **1784/1789** bâtiments `lidar=true`, Saint-Paul **1208/1214**, Saint-Pierre **1673/1681** — hauteurs plausibles (4,6–19,9 m). `C5_3d_saintdenis.png`. |
+
+> Lot C est fortement dépendant d'un accès prod authentifié (compte de test) que cette session n'a pas (les endpoints commune exigent une auth → 401). C1 prod et une repro fidèle de C2/C3 nécessitent ce compte. C5 et C1-local sont faits ; C2/C3 ne sont pas reproductibles en local (tout répond 200).
+
+## Journal — Lot B
+
+_(documents — rempli ensuite)_
