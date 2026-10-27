@@ -33,7 +33,7 @@ def test_plus_aucun_sql_propre():
 
 
 def _moteurs_inventaire() -> set[str]:
-    with open(RACINE / "docs" / "CIRCUIT" / "inventaire" / "moteurs.csv", encoding="utf-8") as f:
+    with open(RACINE / "config" / "circuit" / "moteurs.csv", encoding="utf-8") as f:
         rows = list(csv.reader(f, delimiter=";"))
     return {r[0].strip() for r in rows[1:] if r and r[0].strip()}
 

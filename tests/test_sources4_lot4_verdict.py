@@ -10,7 +10,7 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
-_SCHEMAS = Path(__file__).resolve().parents[1] / "docs" / "audit-2026-09" / "SOURCES" / "SCHEMAS.csv"
+_SCHEMAS = Path(__file__).resolve().parents[1] / "config" / "circuit" / "schemas.csv"
 
 
 def test_schemas_aucun_a_voir_nu():

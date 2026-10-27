@@ -211,7 +211,9 @@ def _schemas_a_voir_nus() -> list[str]:
     MAXIMUM / PARTIEL — producteur / à ingérer — session dédiée). Best-effort : CSV absent → []."""
     import csv as _csv
     from pathlib import Path as _P
-    p = _P(__file__).resolve().parents[2] / "docs" / "audit-2026-09" / "SOURCES" / "SCHEMAS.csv"
+    # POSTDEPLOY-1027 (P2) — lu À L'EXÉCUTION (verrou G2 du Circuit) : vit sous `config/` (déployé),
+    # pas sous `docs/` (exclu de deploy_app.sh), sinon le verrou ne voit aucun champ « à voir » en prod.
+    p = _P(__file__).resolve().parents[2] / "config" / "circuit" / "schemas.csv"
     if not p.exists():
         return []
     nus = []

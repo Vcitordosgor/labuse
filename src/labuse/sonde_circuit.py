@@ -666,17 +666,19 @@ def temoins_tournants(db, n: int = 50) -> list[str]:
 
 
 def _temoins_golden(db) -> list[str]:
-    """Les parcelles témoins de la sonde catégorielle : les 4 EXPORTS-1 + les GOLDEN_IDUS de
-    qa/golden_check.py (même jeu, jamais deux listes — parsé du fichier ; repli : sélection
-    STABLE par idu si le fichier manque, le compte est dit dans le verdict)."""
-    import re
+    """Les parcelles témoins de la sonde catégorielle : les 4 EXPORTS-1 + les GOLDEN_IDUS (même jeu,
+    jamais deux listes). Repli : sélection STABLE par idu si la source manque, le compte est dit dans
+    le verdict.
+
+    POSTDEPLOY-1027 (P2) — lue depuis `config/circuit/golden_idus.json` (déployé). Avant, cette sonde
+    PARSAIT `qa/golden_check.py` ; `qa/` étant exclu de deploy_app.sh, le fichier était absent en prod
+    et les témoins golden tombaient silencieusement au repli stable."""
+    import json
     from pathlib import Path
     idus = list(TEMOINS_PARCELLES)
-    golden = Path(__file__).resolve().parents[2] / "qa" / "golden_check.py"
+    golden = Path(__file__).resolve().parents[2] / "config" / "circuit" / "golden_idus.json"
     if golden.exists():
-        m = re.search(r"GOLDEN_IDUS = \[(.*?)\]", golden.read_text(), re.S)
-        if m:
-            idus += re.findall(r'"(\d{5}0{3}[A-Z]{2}\d{4})"', m.group(1))
+        idus += json.loads(golden.read_text(encoding="utf-8")).get("idus", [])
     if len(idus) < 10:      # repli honnête : jeu stable, jamais un échantillon aléatoire
         idus += [r for (r,) in db.execute(text(
             "SELECT idu FROM parcels ORDER BY idu LIMIT 46")).all()]

@@ -14,6 +14,9 @@ import sys
 from pathlib import Path
 
 INV = Path(__file__).resolve().parents[2] / "docs/CIRCUIT/inventaire"
+# POSTDEPLOY-1027 (P2) — reservoirs.csv / moteurs.csv lus À L'EXÉCUTION → déplacés sous config/.
+CFG_CIRCUIT = Path(__file__).resolve().parents[2] / "config/circuit"
+_MOVED = {"reservoirs.csv", "moteurs.csv"}
 
 erreurs: list[str] = []
 
@@ -23,7 +26,8 @@ def err(msg: str) -> None:
 
 
 def n_csv(nom: str) -> int:
-    with (INV / nom).open(encoding="utf-8") as f:
+    base = CFG_CIRCUIT if nom in _MOVED else INV
+    with (base / nom).open(encoding="utf-8") as f:
         return sum(1 for _ in csv.DictReader(f, delimiter=";"))
 
 

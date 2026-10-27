@@ -1,6 +1,6 @@
 """CIRCUIT-P4 (lot 4) — LA RÈGLE : injection → recalcul.
 
-Le registre sait quelles données lit chaque moteur (`docs/CIRCUIT/inventaire/moteurs.csv`, colonne
+Le registre sait quelles données lit chaque moteur (`config/circuit/moteurs.csv`, colonne
 `entrees` : les slugs de source cités APRÈS la flèche `→`). On en déduit, pour chaque source, si elle
 nourrit **le résiduel** (moteur `residuel`), **le scoring** (moteurs `scoring_p_v2` / `score_e`), ou
 aucun. Après toute injection d'une source qui nourrit l'un des deux depuis le run servi — et après
@@ -32,7 +32,10 @@ TOUCHE_FAMILLE: dict[str, list[str]] = {
     "scoring": ["score"],
 }
 
-_MOTEURS_CSV = Path(__file__).resolve().parents[2] / "docs" / "CIRCUIT" / "inventaire" / "moteurs.csv"
+# POSTDEPLOY-1027 (P2) — lu À L'EXÉCUTION (endpoint Circuit « À faire ») : vit sous `config/`
+# (déployé), pas sous `docs/` (exclu de deploy_app.sh), sinon la ligne « Calculer » ne pourrait
+# jamais apparaître en prod (CSV absent → aucune source rattachée à un moteur).
+_MOTEURS_CSV = Path(__file__).resolve().parents[2] / "config" / "circuit" / "moteurs.csv"
 
 
 def _slugs_apres_fleche(entrees: str) -> set[str]:

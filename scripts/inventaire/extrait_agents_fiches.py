@@ -11,6 +11,8 @@ import csv
 from pathlib import Path
 
 INV = Path(__file__).resolve().parents[2] / "docs/CIRCUIT/inventaire"
+# POSTDEPLOY-1027 (P2) — reservoirs.csv lu À L'EXÉCUTION → déplacé sous config/.
+CFG_CIRCUIT = Path(__file__).resolve().parents[2] / "config/circuit"
 OUT = INV / "agents_fiches.csv"
 
 #: connaissances PORTÉES PAR LE CODE/LES NOTES (jamais des suppositions réseau).
@@ -66,7 +68,7 @@ HEADER = ["id", "url_producteur_connue", "format_du_millesime", "raison_non_surv
 
 def main() -> None:
     rows = []
-    with (INV / "reservoirs.csv").open(encoding="utf-8") as f:
+    with (CFG_CIRCUIT / "reservoirs.csv").open(encoding="utf-8") as f:
         for r in csv.DictReader(f, delimiter=";"):
             if r["sentinelle"] == "oui":
                 continue

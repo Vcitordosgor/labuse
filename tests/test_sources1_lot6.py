@@ -90,7 +90,7 @@ def test_registre_lot6():
 
 def test_reservoirs_carte_lot6():
     import csv
-    with open("docs/CIRCUIT/inventaire/reservoirs.csv") as f:
+    with open("config/circuit/reservoirs.csv") as f:
         ids = {r[0] for r in csv.reader(f, delimiter=";")}
     assert {"dgfip_dfi", "insee_rp_iris"} <= ids
     from labuse.registre.tables import RESERVOIR_TABLES

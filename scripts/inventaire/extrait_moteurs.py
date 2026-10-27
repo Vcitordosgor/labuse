@@ -13,7 +13,8 @@ import csv
 from collections import Counter
 from pathlib import Path
 
-OUT = Path(__file__).resolve().parents[2] / "docs/CIRCUIT/inventaire/moteurs.csv"
+# POSTDEPLOY-1027 (P2) — lu À L'EXÉCUTION (Circuit « À faire ») → vit sous config/ (déployé), pas docs/.
+OUT = Path(__file__).resolve().parents[2] / "config/circuit/moteurs.csv"
 
 HEADER = ["id", "nom", "fichier", "fonctions", "entrees", "versionne_par_run", "run_lu", "cache", "preuve"]
 

@@ -74,6 +74,48 @@ def test_schema_status_detecte_manque(engine, db_session):
         models.ensure_schema(engine)      # remet l'état propre pour les tests suivants
 
 
+def test_doctor_signale_fonction_sql_manquante_et_ensure_schema_la_recree(engine, db_session):
+    """POSTDEPLOY-1027 (P1) — une fonction SQL absente (ex. `labuse_hauteur_lidar_m`, dont dépend le
+    Gabarit 3D) est une ERREUR de schéma, et `ensure_schema` (doctor --fix) la recrée. Reproduit
+    l'incident prod : le gabarit tombait en 500 et doctor ne le voyait pas."""
+    from labuse import models, state
+
+    assert state.schema_status(db_session)["ok"] is True
+    with engine.begin() as c:
+        c.execute(text("DROP FUNCTION IF EXISTS labuse_hauteur_lidar_m(real)"))
+    try:
+        res = state.schema_status(db_session)
+        assert res["ok"] is False, "une fonction SQL manquante doit rendre le schéma NON ok (erreur)"
+        assert "fonction labuse_hauteur_lidar_m" in res["missing"]
+    finally:
+        models.ensure_schema(engine)      # doctor --fix : recrée toutes les fonctions idempotemment
+    # après réparation : présente, schéma vert, et rejouable sans erreur
+    assert db_session.execute(text(
+        "SELECT count(*) FROM pg_proc WHERE proname = 'labuse_hauteur_lidar_m'")).scalar() == 1
+    assert state.schema_status(db_session)["ok"] is True
+    models.ensure_schema(engine)          # idempotent
+
+
+def test_registre_fonctions_sql_couvre_tout_create_function_du_depot():
+    """POSTDEPLOY-1027 (P1) — garde : toute fonction `CREATE FUNCTION` du dépôt DOIT être déclarée dans
+    `models.REQUIRED_SQL_FUNCTIONS`, sinon ni ensure_schema ni doctor ne la connaissent (c'est ainsi
+    que `labuse_hauteur_lidar_m` est tombée en prod). On scanne le source réel, pas une liste figée."""
+    import re
+    from pathlib import Path
+
+    from labuse import models
+
+    src = Path(models.__file__).resolve().parent
+    trouvees: set[str] = set()
+    for py in src.rglob("*.py"):
+        for m in re.finditer(r"CREATE (?:OR REPLACE )?FUNCTION\s+([a-zA-Z_][a-zA-Z0-9_]*)",
+                             py.read_text(encoding="utf-8")):
+            trouvees.add(m.group(1))
+    manquantes = trouvees - set(models.REQUIRED_SQL_FUNCTIONS)
+    assert not manquantes, (
+        f"fonctions SQL créées par le code mais absentes de REQUIRED_SQL_FUNCTIONS : {sorted(manquantes)}")
+
+
 # ───────────────────────── Données : readiness précis ─────────────────────────
 
 def test_readiness_liste_precisement_ce_qui_manque(db_session):
