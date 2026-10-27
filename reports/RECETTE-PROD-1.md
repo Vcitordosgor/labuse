@@ -144,3 +144,27 @@ Fiche = `components/contexte/ContextePanel.tsx` ; contexte = `app.py commune_con
 **B2 — fenêtre Bilan : lien « Fiche → » retiré.** `DocumentsView.tsx` — la carte parcelle (`ParcelleResolue`, partagée par Dossier/Bilan/Apporteur/Pré-dossier/Gabarit) reçoit `showFiche` ; passé `false` pour `d.key==='bilan'`. **Vérifié live** : Porte Bilan sans « Fiche → », Porte Dossier **garde** « Fiche → » (`B2_Bilan_porte.png` / `B2_Dossier_porte.png`).
 
 **Validation Lot B** : `tsc` 0 ; B1 = 0 écart (recompute à la main, agent de vérification) ; PDF Gabarit + Étude régénérés et ouverts.
+
+## Lot E — clôture
+
+- **Commits** (branche `fix/recette-prod-1`, depuis `origin/main` `a582f8f4`) : Lot A `9e8b060e`, Lot D `512e98a5`, Lot F+C `8a1b9c62`, Lot B `3c9f0e34` (+ docs). **Poussés**, hook pre-push vert (suite pytest complète).
+- **Validation globale** : `tsc` 0 · vitest **299/299** · pytest ciblés (gabarit/faisabilité/zonage/calibrage **156**, commune/contexte/signaux/fiche **171 passed/13 skipped**) · 0 erreur console sur les écrans touchés.
+- **Pas de merge, pas de déploiement** (comme demandé — la mise en prod suivra avec un mandat DEPLOY).
+- **Captures / PDF** dans `reports/RECETTE-PROD-1/` (gitignoré). Harnais Playwright `frontend/qa-rp1/` (gitignoré).
+- **Ports** 8850 (API) / 6050 (front) libérés en fin de session ; navigateurs Playwright fermés par chaque script de capture (`browser.close()`).
+
+### Bilan par lot
+
+| Lot | Résultat |
+|-----|----------|
+| **A** fiche parcelle | A1 (6 contradictions bâti/SDP/urbanisme/réseaux) + A2 polices + A3 bouton Pièges retiré + A4 espace + A5 icônes vérifiées + A7 gabarit « non calibré » (vrai bug de lecture backend) + A8 prix de sortie. |
+| **B** documents | B1 recompute à la main = **0 écart** (3 documents) ; B2 lien Fiche retiré de la fenêtre Bilan. |
+| **C** vitesse | C5 3D LiDAR **vérifié** ; C1 mesures locales ; C2/C3 non reproductibles en local (tout répond 200) ; **prod non accédable** (401 sans compte de test) — signalé. |
+| **D** accueil/carte/Sources/Projets/Copilote | D1 animation (règle réécrite) · D2 encart panneau vide · D3 diag seul · D4 noms communes · D5 Sources épurée · D6 Projets · D7 Copilote 2×5. |
+| **F** fiche commune | 10 corrigés (icônes, polices, surface, permis, foncier couleur, risques, CatNat, dates, fiscalité, identité, équipements) + 1 vérifié OK (SDP unité) + 2 backend signalés (collecte Radar, seuils Activité). |
+
+### À signaler à Vic
+- **A7** (gabarit) : correction d'un **bug de lecture backend** — Saint-Benoît Ub (et zones similaires : enveloppe calibrée + hauteur en table graphique par secteur) était déclarée « PLU non calibré » à tort. Le gabarit calcule désormais (emprise réelle) avec une hauteur **estimée** honnête. Change le gabarit de cette CLASSE de zones (à valider).
+- **Lot C** nécessite un **compte de test prod** pour C1 (mesures prod) et une repro fidèle de C2/C3 (les endpoints commune exigent une auth → 401).
+- **F backend** (non appliqué, nécessite recompute du cache) : date de dernière collecte Radar dans la section Activité ; unification des seuils Activité/Radar (`pige/signaux.py`).
+- **veille_plu.yaml** : 7 dates ISO « ( AAAA-MM-JJ) » corrigées en français ; prend effet au prochain recompute du cache commune (un normaliseur front assure l'affichage FR immédiat entre-temps).
