@@ -293,3 +293,10 @@ Le Bilan PDF (`bilan/pdf.py`) est un renderer DISTINCT de l'écran : les points 
 | **export refusé si CA nul, y compris API** | `_refuser_si_ca_nul` (HTTP 422) sur `/bilan/{idu}.pdf` ET `.xlsx`. |
 
 Bilan régénéré et regardé (`pdf-final/8-bilan.pdf`). bilan/taxe/reperes 66 passed ; harnais 0 écart.
+
+### Lot « docs » #2 (Dossier §10)
+
+| point | correction |
+|-------|-----------|
+| **A9** ligne « SDP maximale réglementaire, terrain libéré » au §10 | l'extracteur `surface_plancher_m2` lisait une clé absente ; il lit maintenant `potentiel_transformation.calcul.sdp_max_m2` (= 1 327 m², même valeur que Comparatif + pré-dossier) ; libellé aligné « SDP maximale réglementaire, terrain libéré ». |
+| **B8** raison de « surface vendable non calculable » | l'absence porte désormais la raison (« zone non constructible ou capacité nulle » → résolue « capacité nulle » sur BY0083). |

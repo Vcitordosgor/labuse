@@ -524,8 +524,14 @@ def _c_capacite(db, idu, f):
 
 @extracteur("surface_plancher_m2")
 def _c_plancher(db, idu, f):
+    # DOCS-COHERENCE-1 (A9) — la SDP maximale réglementaire (terrain libéré) vit sous `calcul.sdp_max_m2`
+    # (même valeur que le Comparatif et le pré-dossier) ; le haut de `potentiel_transformation` ne la
+    # portait pas → le §10 du Dossier l'omettait. On lit la clé réellement servie, en repli.
     p = f.get("potentiel_transformation") or {}
-    return _nz(p.get("surface_plancher_m2"))
+    v = p.get("surface_plancher_m2")
+    if v is None:
+        v = (p.get("calcul") or {}).get("sdp_max_m2")
+    return _nz(v)
 
 
 @extracteur("surface_vendable_m2")
