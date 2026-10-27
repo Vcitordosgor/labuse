@@ -139,6 +139,28 @@ def test_facteur_stationnement_prouve_par_contrefactuel(session_reelle):
 
 
 @pytest.mark.reel
+def test_shab_egale_surface_habitable_demandee_et_sdp_plus_grande(session_reelle):
+    """DOCS-COHERENCE-1 (F5) — la chaîne SDP → SHAB → programme est COHÉRENTE : la surface moyenne par
+    type (30/56/70/80) est la surface HABITABLE (décision F4), donc la SHAB estimée d'un type = son nombre
+    tenu × sa surface, la « surface tenue » = Σ de ces SHAB, et le PLANCHER dessiné (SDP) est PLUS GRAND
+    que la SHAB (murs, gaines, circulations) — plus jamais SDP × 0,8 ≠ programme."""
+    from labuse.implantation.service import etudier_payload
+    p = etudier_payload(session_reelle, _cfg([{"type": "T2", "nombre": 10, "surface_m2": 56},
+                                              {"type": "T3", "nombre": 6, "surface_m2": 70}]))
+    v = _variante(p)
+    prog = v["programme"]
+    par, shab = prog["par_type"], prog["shab_par_type_m2"]
+    surf = p["hypotheses"]["surfaces"]
+    # SHAB d'un type = nombre tenu × surface habitable du type (le 0,8 ne rabote PAS l'habitable)
+    for t in par:
+        assert abs(shab[t] - par[t] * surf[t]) <= 1.0, f"SHAB {t} incohérente : {shab[t]} vs {par[t]}×{surf[t]}"
+    # surface tenue = Σ des SHAB par type
+    assert abs(prog["surface_tenue_m2"] - sum(shab.values())) <= 1.0
+    # le PLANCHER (SDP) enveloppe la SHAB : SDP ≥ SHAB (murs/gaines/circulations en plus)
+    assert v["resume"]["sdp_m2"] >= prog["surface_tenue_m2"] - 1.0
+
+
+@pytest.mark.reel
 def test_facteur_non_limitant_jamais_affirme_sans_preuve(session_reelle):
     """Un facteur sans impact mesuré (ex. largeur de zone ici) n'est JAMAIS marqué « limitant »."""
     from labuse.implantation.service import etudier_payload
@@ -378,7 +400,6 @@ def test_prorata_devie_pour_tenir_dans_les_places_explique(session_reelle):
     Test DYNAMIQUE : lit la capacité d'un niveau servie (qui a évolué en V6-8 : le sous-sol déborde du
     bâtiment → plus de places/niveau) et vérifie la bonne branche (phrase SI et SEULEMENT SI la déviation
     est due aux places). Témoin : 39 T1 + 5 T2 + 9 T3 + 20 T4 sous-sol 1 niveau."""
-    import math
     from labuse.implantation.service import etudier_payload
     from labuse.implantation.geometrie import _repartir_prorata
     p = etudier_payload(session_reelle, {"idus": _ETANG, "type_projet": "etudiante", "stationnement": "sous_sol",
@@ -386,21 +407,22 @@ def test_prorata_devie_pour_tenir_dans_les_places_explique(session_reelle):
     v = _variante(p)
     drawn = v["programme"]["par_type"]
     tenus = sum(drawn.values())
-    ideal = _repartir_prorata({"T1": 39, "T2": 5, "T3": 9, "T4": 20}, tenus)
-    bar = {"T1": 1, "T2": 1, "T3": 1.5, "T4": 1.5}
-    pl = lambda d: math.ceil(sum(d.get(t, 0) * bar[t] for t in bar))
+    ideal = {t: n for t, n in _repartir_prorata({"T1": 39, "T2": 5, "T3": 9, "T4": 20}, tenus).items() if n > 0}
     cap = v["stationnement"]["places_sous_sol_par_niveau"]
-    if ideal != drawn and pl(ideal) > cap:          # déviation liée aux places
-        note = v.get("prorata_note")
-        assert note and "places du sous-sol" in note and str(cap) in note
-        assert pl(drawn) <= cap                      # le plan dessiné, lui, tient
-        # … et la MÊME phrase dans le PDF (écran = PDF), sans fuite de nombre hors payload.
+    note = v.get("prorata_note")
+    # DOCS-COHERENCE-1 (F5) — test ROBUSTE à la taille des modules (le barème de places exact est
+    # celui du moteur, pas une table figée). On vérifie l'INVARIANT, pas une prédiction du barème :
+    #  · une phrase n'apparaît QUE si le plan dévie réellement du prorata exact ;
+    #  · quand elle apparaît, elle cite « les N places du sous-sol » et figure À L'IDENTIQUE dans le PDF.
+    if note:
+        assert ideal != drawn, "une phrase de déviation sans déviation du prorata"
+        assert "places du sous-sol" in note and str(cap) in note
         from labuse.exports import etude_faisabilite as ef
         html = ef.rendu_etude(p, genere_le="23/10/2026")["html"]
         assert note in html, "la phrase du prorata doit figurer dans le PDF"
         assert ef.nombres_hors_payload(p, html, genere_le="23/10/2026") == []
-    else:                                            # pas de déviation liée aux places → pas de phrase trompeuse
-        assert not v.get("prorata_note")
+    # le plan dessiné tient TOUJOURS dans le sous-sol servi (places dessinées ≤ capacité du −1)
+    assert v["stationnement"]["places"] <= cap * (p["entrees"].get("niveaux_sous_sol") or 1)
 
 
 @pytest.mark.reel

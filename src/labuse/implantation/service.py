@@ -932,6 +932,7 @@ def etudier_payload(session, entree: dict) -> dict:
         session=session, idus=idus, objectif=objectif, conv=conv,
         programme=demande or None, repartition=repartition, max_scenarios=3,
         stationnement_mode=stationnement, niveaux_sous_sol=niveaux_sous_sol,
+        type_projet=type_projet,   # DOCS-COHERENCE-1 (F6) — plafond L151-35/36 appliqué si + restrictif que le PLU
     )
 
     # entêtes partagés (terrain / règles / versions) — depuis le 1er scénario/variante PRÉSENT, sinon un
@@ -1015,7 +1016,9 @@ def etudier_payload(session, entree: dict) -> dict:
         _sid = _study_id(entree)
         numero = _sid[:11] if _sid.startswith("EF-") else planche_mod.numero_etude(idus, genere_le)
         ent_planche = {"commune": t.commune or entree.get("commune") or "",
-                       "zone": ref_scn.regles.zone, "idus": idus}
+                       "zone": ref_scn.regles.zone, "idus": idus,
+                       # DOCS-COHERENCE-1 (F1) — le mode terrain pilote le dessin « supposé démoli ».
+                       "terrain": entree.get("terrain") or "libere"}
         try:
             ctx = contexte_mod.charger_contexte(session, t.assiette, idus, avec_tn=True,
                                                 voie_edges=t.voie_edges)

@@ -359,6 +359,8 @@ LECTURES: tuple[Lecture, ...] = (
       "etudier_lotissement() [ETUDE-V6, lotissement] : _raccordements lit geom_2975 des parcelles pour mesurer la distance aux réseaux (ST_Distance) le long de la voirie pavée — machinerie géométrique de l'étude, aucun chiffre du registre servi."),
     L("parcels", "implantation/service.py", None, None,
       "payload d'étude [ETUDE-V6] : _tcsp_sous_800m (distance ST_Distance au TCSP pour le plafond de stationnement L151-35) et _sous_sol_dispo (JOIN ST_Intersects spatial_layers) lisent geom_2975 des parcelles — machinerie géométrique de l'étude, aucun chiffre du registre servi."),
+    L("parcels", "implantation/moteur.py", None, None,
+      "etudier_complet() [DOCS-COHERENCE-1, F6] : _tcsp_dist_m lit geom_2975 des parcelles (JOIN ST_Distance spatial_layers kind='tcsp_station') pour mesurer la distance au TCSP et appliquer le plafond de stationnement L151-35/36 quand il est plus restrictif que le PLU — machinerie géométrique de l'étude, aucun chiffre du registre servi."),
     L("parcels", "marche_service.py", "prix_terrain_secteur_eur_m2", "pdf_banquier",
       "point d'appel UNIQUE du marché des documents : geom de la parcelle ancre les comparables DVF (profil banquier_adaptatif = sector_price → prix terrain secteur des PDF)"),
     L("parcels", "pige/api.py", None, None,

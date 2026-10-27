@@ -188,7 +188,27 @@ pré-remplissages sourcés (G2) et en-tête complet (G6) restent à faire — ho
 **Reste Lot G** : G1 (choix d'une Étude), G2 (pré-remplissages sourcés), G3 (déjà appliqué
 à G7), G4 (fait côté PDF + écran), G5 (alignement colonne Calendrier), G6 (en-tête complet).
 
-## Lots B → F, G1-G6, H — à faire
+## Lot F — Étude de faisabilité — FAIT (27/10)
+
+Pointeur de reprise : **Lot F terminé**. Prochain = **Lot G (G1-G6)**, puis **Lot B** (B4/B5/B7/B8/B9 ;
+B3 déjà vérifié), **E5 + reclassement BPE**, **Lot H**.
+
+| point | statut | ce qui a été fait |
+|-------|--------|-------------------|
+| **F4** surfaces 30/56/70/80 | ✅ | `config/implantation_conventions.yaml` : T1 30 · T2 56 · T3 70 · T4 80 m² (habitable, varangue comprise, Estimé). Rendu §6/§7 + hypothèses « Surface moyenne par type 30 / 56 / 70 / 80 m² ». |
+| **F6** plafond L151-35/36 | ✅ | `implantation/moteur.py` : `_plafond_l151` (TCSP-station < 500 m → `_tcsp_dist_m` sur `kind='tcsp_station'` SEUL, jamais un arrêt de bus) applique le plafond **seulement s'il est plus restrictif que le PLU**. §6 cite « Le Code de l'urbanisme (art. L151-35) plafonne… » (plus « le PLU de … »). Collectif BY0083 reste 2 pl/logt (PLU) → **harnais 0 écart** ; étudiante plafonnée à 1 (L151-35). |
+| **F1** bâti « supposé démoli » | ✅ | **écrit** : §3 « Étude sur terrain libéré : les 11 bâtiments existants (900 m² au sol) sont supposés démolis » (emprise+nombre lus en direct BD TOPO `spatial_layers kind='batiment'` ∩ assiette, même producteur que le Dossier). **dessiné** : `contexte.batis_assiette` + `planche._g_bati_assiette` → emprise existante en **pointillé gris par-dessus le projet** (« existant · supposé démoli ») + entrée de légende. |
+| **F5** chaîne SDP → SHAB → programme | ✅ | Les surfaces (F4) sont **habitables** ; le module **dessiné** est du **plancher**, donc `largeur_module` dimensionne l'empreinte = habitable / coef_plancher (0,80). Résultat BY0083 24 T1 : **SHAB 720 = Surface tenue 720 = programme**, **SDP 980 ≥ SHAB** (plus « SDP×0,8 ≠ programme »). Correction de **justesse** (« rien de faux » : un 30 m² habitable ne tient pas dans un plancher de 30 m²). Test `test_shab_egale_surface_habitable_demandee_et_sdp_plus_grande`. |
+| **F7** maximum ≠ demande | ✅ (déjà) | `moteur.etudier_complet` : le maximum = `_best_faisable` (propriété du terrain). Vérifié : 8 T1 et 24 T1 → **maximum 24** identique ; narratif « indépendant de la demande ». Test existant `test_capacite_maximale_stable_entre_deux_demandes`. |
+| **F8** plan / coupe / texte concordants | ✅ | Le contrôle « hauteur sur terrain en pente » conclut **EN GRADINS** sur BY0083 (relief 6,3 m → R+1 en 4 gradins) : la **coupe** (`planche.coupe_svg`) dessine désormais les **4 gradins** (décrochement d'un étage) au lieu d'un volume droit. L'emprise « barre » reste le **plan** (forme au sol) ; la coupe montre la **section** — plus de contradiction. |
+
+Régressions vérifiées : `test_etude_v6_capacite.py` **18/18** (dont F5 + F7 ; `test_prorata_devie…`
+rendu robuste au barème réel après F5). Harnais **0 écart** BY0083 + BL0020 après F4/F5/F6.
+B3 (vérif hors tableau) : destinations U4c Saint-Paul **non inversées** (`plu.destinations.zone_resume`
+= Logement sous-condition mixité, Exploitation agricole/Entrepôt interdits, reste autorisé par silence
+art. 1.2) — aucune correction.
+
+## Lots B, G1-G6, H — à faire
 
 (Statuts mis à jour à chaque lot ; un commit + une régénération des PDF par lot.)
 

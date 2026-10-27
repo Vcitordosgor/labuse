@@ -54,9 +54,14 @@ class Conventions:
     source: dict[str, Any]
 
     def largeur_module(self, type_logement: str) -> float:
-        """Largeur d'un module = surface_m2 / (profondeur - coursive). Déterministe, de la géométrie."""
+        """Largeur d'un module. DOCS-COHERENCE-1 (F5) — `surface_m2` est la surface HABITABLE cible du
+        type (décision F4, varangue comprise) ; le module DESSINÉ est du PLANCHER, plus large que
+        l'habitable (murs, gaines, cloisons). On dimensionne donc l'empreinte = habitable /
+        coef_plancher_habitable, pour que SHAB = empreinte × coef = l'habitable demandée et que la
+        chaîne SDP × coef = SHAB = programme tienne (sinon SDP×0,8 ≠ programme). Déterministe."""
         m = self.modules[type_logement]
-        return m.surface_m2 / (self.profondeur_m - self.largeur_coursive_m)
+        plancher = m.surface_m2 / self.coef_plancher_habitable
+        return plancher / (self.profondeur_m - self.largeur_coursive_m)
 
     def profondeur_logement_m(self) -> float:
         return self.profondeur_m - self.largeur_coursive_m

@@ -2094,11 +2094,23 @@ def _attach_zone_gabarit(db: Session, payload: dict, idus) -> None:
     try:
         v = collecte(db, idus[0], ["gabarit_zone_libere_m2", "gabarit_implantation_m2"])
         x, y = v.get("gabarit_zone_libere_m2"), v.get("gabarit_implantation_m2")
+        t = payload.setdefault("terrain", {})
         if x is not None and x.valeur is not None:
-            t = payload.setdefault("terrain", {})
             t["zone_gabarit_libere_m2"] = float(x.valeur)
             if y is not None and y.valeur is not None:
                 t["zone_gabarit_bati_deduit_m2"] = float(y.valeur)
+        # DOCS-COHERENCE-1 (F1) — bâti EXISTANT (emprise BD TOPO clippée + nombre, MÊME producteur que
+        # la fiche/Dossier §3, bati.emprise_bati_bdtopo_m2) pour écrire « supposé démoli » sur une
+        # étude « terrain libéré ».
+        from sqlalchemy import text as _text
+        row = db.execute(_text(
+            "SELECT COALESCE(ST_Area(ST_Union(ST_Intersection(b.geom_2975, p.geom_2975))), 0) AS emprise, "
+            "count(DISTINCT b.id) AS n FROM parcels p "
+            "JOIN spatial_layers b ON b.kind='batiment' AND ST_Intersects(b.geom_2975, p.geom_2975) "
+            "WHERE p.idu = :i"), {"i": idus[0]}).mappings().first()
+        if row and (row["emprise"] or 0) > 0:
+            t["bati_existant_emprise_m2"] = round(float(row["emprise"]), 1)
+            t["bati_existant_nombre"] = int(row["n"] or 0)
     except Exception:  # noqa: BLE001 — le Gabarit indisponible n'est jamais un 500 ; l'Étude garde sa zone
         pass
 

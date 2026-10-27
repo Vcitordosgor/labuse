@@ -124,6 +124,28 @@ def _g_voisins(ctx: Contexte, vue) -> str:
     return "".join(b)
 
 
+def _g_bati_assiette(ctx: Contexte, vue, *, libere: bool) -> str:
+    # DOCS-COHERENCE-1 (F1) — bâti EXISTANT sur l'assiette, gris pointillé. Sur une étude terrain libéré,
+    # il est « supposé démoli » (écrit au §3 du PDF, dessiné ici) : il ne fait pas partie du projet.
+    if not ctx.batis_assiette:
+        return ""
+    # Convention archi : l'existant à démolir se montre en POINTILLÉ SANS remplissage, par-dessus le
+    # projet, pour rester lisible (le bâtiment proposé occupe souvent la même emprise).
+    b = ['<g id="g-bati-assiette" clip-path="url(#plan)">']
+    for g in ctx.batis_assiette:
+        b.append(_poly(g, vue, fill="none", stroke="#6B7280", stroke_width="1.1", stroke_dasharray="5 3"))
+    try:
+        from shapely.ops import unary_union
+        c = unary_union(ctx.batis_assiette).representative_point()
+        X, Y = vue.px(c.x, c.y)
+        lab = "existant · supposé démoli" if libere else "existant"
+        b.append(_txt(X, Y, lab, size=8, anchor="middle", fill="#6B7280"))
+    except Exception:
+        pass
+    b.append("</g>")
+    return "".join(b)
+
+
 def _g_voies(ctx: Contexte, vue) -> str:
     b = ['<g id="g-voies" clip-path="url(#plan)">']
     vus = set()
@@ -322,6 +344,7 @@ def _legende() -> str:
         ("#E5E7EB", "#111", "", "Allée, accès"),
         ("#CDE8C6", "#CDE8C6", "", "Espaces libres, pleine terre"),
         ("#D9D9D9", "#111", "", "Bâti voisin (BD TOPO)"),
+        ("none", "#6B7280", "5 3", "Bâti existant (supposé démoli)"),
         ("url(#ppr)", "#DC2626", "", "PPR zone rouge (retirée)"),
         ("url(#pprb)", "#2563EB", "", "PPR zone bleue (signalée)"),
     ]
@@ -420,6 +443,8 @@ def planche_svg(scenario, contexte: Contexte, *, ref: str, genere_le: str, numer
         _g_voisins(contexte, vue),
         _g_voies(contexte, vue),
         _g_projet(scene, vue),
+        # F1 — existant « supposé démoli » APRÈS le projet : pointillé lisible par-dessus l'emprise neuve.
+        _g_bati_assiette(contexte, vue, libere=(ent.get("terrain") or "libere") == "libere"),
         # PPR APRÈS la pleine terre / les objets : sinon l'aplat vert des espaces libres recouvrait les
         # hachures (bug recette Vic). Dessinée au-dessus du sol, sous les limites rouges et les cotes.
         _g_ppr(terrain, vue),
@@ -582,18 +607,44 @@ def coupe_svg(scenario, contexte: Contexte, *, ref: str, genere_le: str, numero:
         b.append("</g>")
 
     # ── bâtiment en coupe à sa VRAIE position (bf→bb), plateforme au TN, niveaux nommés
+    # DOCS-COHERENCE-1 (F8) — si le contrôle « hauteur sur terrain en pente » conclut EN GRADINS (une
+    # toiture plate dépasserait le plafond à l'égout côté aval), la coupe DOIT dessiner les gradins —
+    # sinon le plan/coupe (volume droit) contredit le texte. Le relief sous le bâti se mesure sur le TN
+    # entre bf et bb ; même seuil et même nombre de gradins que controles.py (décrochement d'un étage).
     b.append('<g id="g-batiment">')
     bX, bW = X(bf), X(bb) - X(bf)
-    b.append(f'<rect x="{bX:.1f}" y="{Y(sol + H_bat):.1f}" width="{bW:.1f}" height="{H_bat * sc:.1f}" '
-             'fill="#F5C6B8" stroke="#111" stroke-width="1.4"/>')
-    for n in range(niveaux):
-        yb = Y(sol + (n + 1) * h_et)
-        b.append(f'<line x1="{bX:.1f}" y1="{yb:.1f}" x2="{bX + bW:.1f}" y2="{yb:.1f}" stroke="#111" stroke-width="0.6"/>')
-        b.append(_txt(bX + 6, Y(sol + n * h_et) - 4, "RDC" if n == 0 else f"R+{n}", size=9, fill="#7A3B2C"))
-    if h_ft and h_eg and h_ft > h_eg:
-        yft = Y(sol + h_ft)
-        b.append(f'<polygon points="{bX:.1f},{Y(sol + H_bat):.1f} {bX + bW / 2:.1f},{yft:.1f} '
-                 f'{bX + bW:.1f},{Y(sol + H_bat):.1f}" fill="#E8D5CE" stroke="#111" stroke-width="0.8"/>')
+    relief_bati = abs(tn_at(bb) - tn_at(bf))
+    en_gradins = bool(h_eg and relief_bati >= 0.5 and (H_bat + relief_bati) > h_eg + 1e-9)
+    if en_gradins:
+        import math as _m
+        n_grad = max(2, _m.ceil(relief_bati / h_et) + 1)
+        # pente du TN sous le bâti : le bas (aval) est à sol_bas, le haut (amont) à sol_haut
+        sol_f, sol_b = tn_at(bf), tn_at(bb)
+        amont_cote_f = sol_f >= sol_b          # True si le côté voie (bf) est le plus haut
+        for g in range(n_grad):
+            gx0 = bf + (bb - bf) * g / n_grad
+            gx1 = bf + (bb - bf) * (g + 1) / n_grad
+            base = tn_at((gx0 + gx1) / 2.0)    # plateforme du gradin = TN sous son milieu
+            gX, gW = X(gx0), X(gx1) - X(gx0)
+            b.append(f'<rect x="{gX:.1f}" y="{Y(base + H_bat):.1f}" width="{gW:.1f}" height="{H_bat * sc:.1f}" '
+                     'fill="#F5C6B8" stroke="#111" stroke-width="1.2"/>')
+            for n in range(niveaux):
+                yb = Y(base + (n + 1) * h_et)
+                b.append(f'<line x1="{gX:.1f}" y1="{yb:.1f}" x2="{gX + gW:.1f}" y2="{yb:.1f}" stroke="#111" stroke-width="0.5"/>')
+            b.append(_txt(gX + 4, Y(base) - 4, f"RDC" if niveaux == 1 else f"R+{niveaux - 1}", size=7.5, fill="#7A3B2C"))
+        b.append(_txt((bX + bX + bW) / 2.0, Y(max(tn_at(bf), tn_at(bb)) + H_bat) - 8,
+                      f"bâtiment en {n_grad} gradins (un décrochement par étage)", size=8.5, anchor="middle", fill="#7A3B2C"))
+    else:
+        b.append(f'<rect x="{bX:.1f}" y="{Y(sol + H_bat):.1f}" width="{bW:.1f}" height="{H_bat * sc:.1f}" '
+                 'fill="#F5C6B8" stroke="#111" stroke-width="1.4"/>')
+        for n in range(niveaux):
+            yb = Y(sol + (n + 1) * h_et)
+            b.append(f'<line x1="{bX:.1f}" y1="{yb:.1f}" x2="{bX + bW:.1f}" y2="{yb:.1f}" stroke="#111" stroke-width="0.6"/>')
+            b.append(_txt(bX + 6, Y(sol + n * h_et) - 4, "RDC" if n == 0 else f"R+{n}", size=9, fill="#7A3B2C"))
+        if h_ft and h_eg and h_ft > h_eg:
+            yft = Y(sol + h_ft)
+            b.append(f'<polygon points="{bX:.1f},{Y(sol + H_bat):.1f} {bX + bW / 2:.1f},{yft:.1f} '
+                     f'{bX + bW:.1f},{Y(sol + H_bat):.1f}" fill="#E8D5CE" stroke="#111" stroke-width="0.8"/>')
     b.append("</g>")
 
     # ── cote de hauteur du bâtiment (à gauche du volume, côté voie)

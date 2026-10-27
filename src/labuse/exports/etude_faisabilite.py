@@ -224,11 +224,21 @@ def _stationnement_3lignes(payload: dict, retenu: dict) -> str:
     # ETUDE-V6-5 — le lieu reflète le NOMBRE DE NIVEAUX choisi (−1, ou −1 et −2).
     lieu = (f"au sous-sol ({'niveaux −1 et −2' if niveaux >= 2 else 'niveau −1'})" if mode == "sous_sol"
             else "en aérien (au sol)")
-    lignes = [f"Le PLU de {esc(commune)} (art. {esc(g.get('article') or '—')}) exige {esc(regleg)}."]
-    if pf:
+    # DOCS-COHERENCE-1 (F6) — la règle RETENUE peut être la loi (Code de l'urbanisme L151-35/36) quand
+    # elle plafonne sous le PLU : le texte le dit (jamais « le PLU exige » un article du Code national).
+    _art = g.get("article") or "—"
+    _is_loi = str(_art).upper().startswith("L151")
+    if _is_loi:
+        lignes = [f"Le Code de l'urbanisme (art. {esc(_art)}) plafonne le stationnement à {esc(regleg)} "
+                  "— le PLU ne s'applique que s'il est plus favorable ; éligibilité de la catégorie à confirmer."]
+    else:
+        lignes = [f"Le PLU de {esc(commune)} (art. {esc(_art)}) exige {esc(regleg)}."]
+    # Le plafond RÉDUIT « à confirmer » (0,5) n'est signalé que si la règle retenue n'est pas déjà la loi.
+    if pf and not _is_loi:
         lignes.append(f"La loi nationale (Code de l'urbanisme, art. {esc(pf.get('reference') or 'L151-35')}) "
                       f"plafonne à {_dec(pf.get('ratio_plafond'))} place / logement si le projet est éligible — à confirmer.")
-    lignes.append(f"LABUSE a dessiné {int(places) if places is not None else '—'} places {lieu} selon la règle du PLU.")
+    lignes.append(f"LABUSE a dessiné {int(places) if places is not None else '—'} places {lieu} "
+                  f"selon la règle {'retenue' if _is_loi else 'du PLU'}.")
     mix_html = ""
     mx = next((l for l in payload["regles"].get("lignes", []) if "mixit" in (l.get("nom") or "").lower()), None)
     if mx and mx.get("valeur") is not None:
@@ -629,11 +639,23 @@ def _p4_enveloppe(payload: dict, retenu: dict) -> str:
     if emp:
         rows.append(f'<tr><td class="k">Plafond d\'emprise</td><td>{esc(emp["regle"])}</td>'
                     f'<td class="n"><span class="chip d">Dérivé</span></td></tr>')
+    # DOCS-COHERENCE-1 (F1) — hypothèse de départ écrite : sur un terrain LIBÉRÉ, le bâti existant est
+    # supposé démoli. (Le plan le dessine en pointillé gris « existant, supposé démoli ».)
+    _bn, _be = t.get("bati_existant_nombre"), t.get("bati_existant_emprise_m2")
+    _mode = (payload.get("entrees") or {}).get("terrain")
+    demoli = ""
+    if _mode == "libere" and _be:
+        _plur = (_bn or 0) > 1
+        _quoi = (f"les {_bn} bâtiments existants" if _plur else
+                 (f"le bâtiment existant" if _bn else "le bâti existant"))
+        demoli = (f'<div class="note">Étude sur <b>terrain libéré</b> : {_quoi} ({_m2(_be)} au sol) '
+                  f'{"sont supposés démolis" if _plur else "est supposé démoli"}.</div>')
     return (
         '<section><h2>3. Enveloppe constructible</h2>'
         f'<div class="verdict">Zone d\'implantation, terrain libéré de {_m2(_zone_aff)} après reculs '
         'et contraintes. Ce plafond n\'est pas ce qu\'on peut construire : c\'est le scénario (plan masse) '
         'qui le dit.</div>'
+        + demoli
         + fig + _legende(["parcelle", "assiette", "zone", "ppr_rouge", "ppr_bleue", "voie"])
         + '<table class="kv"><tr><th>Surface</th><th>Valeur</th><th class="n">Nature</th></tr>'
         + "".join(rows) + "</table></section>")
