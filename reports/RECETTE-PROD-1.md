@@ -21,6 +21,8 @@ Témoin fiche parcelle : **97410000AE1369** (4 ter Chemin Rebua, Saint-Benoît, 
 | B — documents | ⏳ |
 | C — vitesse | ⏳ |
 | D — accueil/carte/Sources/Projets/Copilote | ✅ fait (D1,D2,D3 diag,D4,D5,D6,D7) |
+| B — documents (Bilan/Gabarit/Étude) | ✅ fait (B1 recompute 0 écart, B2 lien Fiche retiré) |
+| C — vitesse | ◐ partiel (C5 ok, C1 local, C2/C3 non repro local, prod 401 sans compte) |
 | F — fiche commune (Saint-Paul) | ✅ fait (13 points : 10 corrigés, 1 vérifié OK, 2 backend signalés) |
 
 ## Lot A — fiche parcelle (témoin 97410000AE1369, Ub Saint-Benoît, 954 m²)
@@ -130,6 +132,15 @@ Fiche = `components/contexte/ContextePanel.tsx` ; contexte = `app.py commune_con
 
 > Lot C est fortement dépendant d'un accès prod authentifié (compte de test) que cette session n'a pas (les endpoints commune exigent une auth → 401). C1 prod et une repro fidèle de C2/C3 nécessitent ce compte. C5 et C1-local sont faits ; C2/C3 ne sont pas reproductibles en local (tout répond 200).
 
-## Journal — Lot B
+## Lot B — documents (Gabarit, Étude de faisabilité, Bilan)
 
-_(documents — rempli ensuite)_
+**B1 — chaque calcul recalculé à la main vs donnée servie : 0 écart.** Les 3 documents lisent la donnée servie (aucun recompute front). Recompute à la main (témoins BY0083 / BZ1065), tout **MATCH** :
+
+- **Gabarit** (`gabarit/engine.py`, `api/gabarit.py`) : plafond emprise BZ1065 = 1567 × 30 % = **470,1** ✓ ; BY0083 emprise = silence prouvé → « Non réglementé » ✓ ; zone d'implantation terrain libéré **1 736 m²**, bâti déduit **869 m²**, bati déduit du gabarit **867 m²** (1736−869) ✓ ; hauteur 9/6 m (BY0083), 7/4,5 m (BZ1065) lues du PLU. Le plafond est calculé **à part**, jamais `min(zone, plafond)`. PDF régénéré + **ouvert** (`B_gabarit_BY0083.pdf`, 3 pages, valide).
+- **Étude de faisabilité** (`implantation/capacite.py`, `exports/etude_faisabilite.py`) BY0083 : **16 logements**, SDP **1 365 m²** (682,5 × 2 niveaux), SHAB **1 028 m²** (ratio 0,753), places PLU **32** (16 × 2), **17,8 m²/place** (569,3/32), pleine terre ≥ **983 m²** (40 % × 2458) ✓. Loi vs PLU : `plafond_national=null` → barème PLU (2 pl/log) appliqué. BZ1065 : « simulation impossible » (hauteur 4,5 m égout n'autorise aucun niveau habitable) — honnête, pas un écart. PDF régénéré + **ouvert** (`B_etude_BY0083.pdf`, 133 Ko, valide).
+- **Bilan** (`bilan/moteur.py`, `bilan/reperes.py`) : taxe d'aménagement BY0083 = 892 × (5 %+2,5 %) = **66,9 €/m²** ✓, BZ1065 = 892 × (3 %+2,5 %) = **49,06** ✓ ; archéologie = 892 × 0,40 % = **3,57** ✓. Run complet (prix sortie 4 730 TTC, TVA DOM 8,5 %) : CA TTC **4 862 440**, CA HT **4 481 511,52**, TVA résiduelle **176 293,26**, résultat net **1 240 446,77**, marge **27,7 %**, charge foncière **811 €/m² SUV** — **tout MATCH** (TVA : base HT→×taux, base TTC→/(1+taux)). ⚠ Le PDF Bilan exige une **session** (`compte_ou_401`, comme en prod) : non régénérable sans compte de test ; l'**écran** Bilan utilise les routes publiques `/bilan/{idu}/modele` + `/calcul` et le **même `Moteur`** que le PDF (calc vérifié = PDF correct).
+- **Cohérence croisée** : l'Étude lit le Gabarit (robinets `gabarit_zone_libere_m2`/`gabarit_implantation_m2`) → terrain libéré 1 736, bâti déduit 869, 1736−869 = 867 : **une seule valeur, deux documents, 0 divergence**.
+
+**B2 — fenêtre Bilan : lien « Fiche → » retiré.** `DocumentsView.tsx` — la carte parcelle (`ParcelleResolue`, partagée par Dossier/Bilan/Apporteur/Pré-dossier/Gabarit) reçoit `showFiche` ; passé `false` pour `d.key==='bilan'`. **Vérifié live** : Porte Bilan sans « Fiche → », Porte Dossier **garde** « Fiche → » (`B2_Bilan_porte.png` / `B2_Dossier_porte.png`).
+
+**Validation Lot B** : `tsc` 0 ; B1 = 0 écart (recompute à la main, agent de vérification) ; PDF Gabarit + Étude régénérés et ouverts.
