@@ -69,8 +69,15 @@ LAYERS: list[dict] = [
     {"typename": "Reserve_naturelle_Etang_de_Saint-Paul", "kind": "ens",
      "subtype": "reserve_naturelle", "source": SOURCE_ENP_C,
      "props": ("NOM", "DATE", "ZONE", "SURFACE_HA")},
+    # POSTDEPLOY-1027 (P3) — Lizmap sert la RNMR en 150 features par SECTEUR nommés `Nom_zone`
+    # (COT_*/DAR_*) : aucun ne contient « marine ». La migration Carmen→Lizmap du 13/09 a ainsi
+    # dissous l'entité unique « Réserve Naturelle Marine » que Carmen fusionnait — la géométrie
+    # restait, mais l'IDENTITÉ du réservoir (et le verdict `d_enp_reserve_marine` qui la cherche par
+    # nom) était perdue. On REDONNE l'identité à l'ingestion via `nom_prefixe` : chaque secteur devient
+    # « Réserve Naturelle Marine de La Réunion — <secteur> », self-descriptif et retrouvable.
     {"typename": "Reserve_Naturelle_Marine_Regionale__RNMR", "kind": "ens",
      "subtype": "reserve_naturelle", "source": SOURCE_ENP_C,
+     "nom_prefixe": "Réserve Naturelle Marine de La Réunion — ",
      "props": ("Nom_zone", "Statut_RNM", "Secteur", "Surface_ha")},
     # Sites_Classes_-_Inscrits : subtype résolu par entité (Type = classe | inscrit)
     {"typename": "Sites_Classes_-_Inscrits", "kind": "ens", "subtype": None,
@@ -148,6 +155,10 @@ def ingest_deal_carmen(session: Session, source_ids: dict[str, int | None] | Non
                 nom = (p.get("TOPONYME") or p.get("Toponyme") or p.get("NOM")
                        or p.get("Nom") or p.get("nom") or p.get("Nom_zone")
                        or p.get("LieuDit") or p.get("Nature") or lay["typename"])
+                # POSTDEPLOY-1027 (P3) — préfixe d'identité (RNMR : les secteurs COT_*/DAR_* ne
+                # portent pas « marine » ; on le rétablit pour que le réservoir reste retrouvable).
+                if lay.get("nom_prefixe"):
+                    nom = lay["nom_prefixe"] + str(nom)
                 # SOURCES-4 lot 3 (comparaisons DEAL) — DescribeFeatureType a montré des champs
                 # publiés jetés (ex. Zones_humides_2009 : Bassin_ver, Intérêt_, Liste_espe/espèces,
                 # Fiche ; Cours_d_eau_DPF : Commune, Longueur, Toponyme_p). Règle du mandat : « tout

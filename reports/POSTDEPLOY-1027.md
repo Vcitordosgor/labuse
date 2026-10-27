@@ -104,3 +104,68 @@ combinaison « livré en dev, absent en prod » est fautive.
 (1 `@pytest.mark.local` `test_g7_vert_apres_sonde` rouge **pré-existant** et sans rapport : il mesure
 la fraîcheur de la sonde dans la base locale `labuse`, dernier passage 22/10 > 48 h ; déselectionné
 par le hook sans base).
+
+---
+
+## P3 — réingestion des espaces naturels protégés (Réserve Marine)
+
+Détail et preuves : `docs/audit-2026-10/postdeploy-1027/RAPPORT-P3.md` (+ `enp_avant.txt`/`enp_apres.txt`).
+
+### Pourquoi la RNMR était « perdue »
+
+La Réserve Naturelle Marine Régionale **n'a jamais quitté la base** : ses 150 secteurs sont en
+`spatial_layers (ens/reserve_naturelle)`. Ce qui s'est perdu au 13/09, c'est son **nom**. La migration
+amont **Carmen→Lizmap** (vérifiée 13/09) a cessé de servir la RNMR comme **une** entité « Réserve
+Naturelle Marine » et la sert désormais en **150 features par secteur** nommés `Nom_zone` = `COT_*` /
+`DAR_*`. L'ingestion prenait `Nom_zone` tel quel → **aucun nom ne contenait « marine »**. Le seul `ens`
+« marine » en base est un faux-ami (`conservatoire_du_littoral` « Marine De Vincendo »), que le verrou
+écarte car il exige `subtype='reserve_naturelle'`. D'où `d_enp_reserve_marine` → quarantaine → service
+sous dérogation. **Ni filtre, ni rejet de géométrie marine : seul le nommage.**
+
+### Correctif (ingestion, pas la donnée à la main)
+
+`deal_carmen.py` : la couche RNMR porte `nom_prefixe = "Réserve Naturelle Marine de La Réunion — "`,
+appliqué à l'ingestion (chaque secteur → « Réserve Naturelle Marine de La Réunion — COT_Cap_Champagne »).
+Rejouable ; aucune ligne éditée à la main.
+
+### Réingestion Mac + avant/après
+
+`labuse ingest-deal-carmen` (live Lizmap) → RNMR 150, filtre **`enp_complements : ok`**
+(`bloquants_ko=0`), **sans dérogation**.
+
+| Mesure | Avant | Après |
+|---|---|---|
+| Total `ens` | 411 | 411 |
+| `reserve_naturelle` (150 RNMR + 2 Étang St-Paul) | 152 | 152 |
+| Noms `reserve_naturelle` « marine » | 0 | 150 |
+| Verrou `d_enp_reserve_marine` bloque ? | oui | **non** |
+| Filtre `enp_complements` | quarantaine (dérogation) | **ok** |
+| Parcelles intersectant la RNMR | 209 | 209 |
+
+Entités inchangées (simple renommage des 150 secteurs). Parcelles touchées **stables à 209** et faibles
+au regard de l'île — la réserve est **en mer**, seules les parcelles du trait de côte ouest (lagon,
+Boucan Canot → L'Étang-Salé) chevauchent sa frange terrestre.
+
+### Test (`tests/test_postdeploy_enp_marine.py`)
+
+WFS simulé (sans réseau) : un secteur `COT_*` entré ressort nommé « …Marine… » en `reserve_naturelle`
+et le verrou ne bloque plus ; garde statique que la couche RNMR déclare un `nom_prefixe` « marine ».
+→ **14 passed** (avec `test_sources1_lot2`).
+
+---
+
+## P4 — mise en prod (à jouer APRÈS merge par Vic)
+
+**Non démarré** : la prod ne sert jamais du code absent de main. Fin de P1-P3 : hook vert, branche
+`fix/postdeploy-1027` poussée, **pas de merge**. Vic merge, puis P4 est relancé depuis
+`~/Desktop/labuse-main` (règles DEPLOY-1027 : jamais `deploy.sh`, env chargé, manifeste jamais écrasé,
+crontab en ciblé, aucun secret affiché). Séquence prévue :
+1. Sauvegarde + copie de `/opt/labuse/app`.
+2. `deploy/scripts/deploy_app.sh labuse-vps` → `ensure_schema` prod (les fonctions P1 se créent) →
+   `doctor` vert.
+3. `enp_complements` envoyée par `deploy_donnees.sh` → quarantaine verte en prod → **dérogation
+   DEPLOY-1027 levée et tracée**.
+4. Fumée BY0083 : Gabarit 3D en 200, pieds « Sources » des 8 PDF lisibles (aucun id brut), une parcelle
+   côtière ouest près du lagon avec la Réserve marine en contraintes, `readyz` 200, 10 min de journaux
+   propres.
+5. Retour arrière prêt (copie `/opt/labuse/app`).

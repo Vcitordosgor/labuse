@@ -1,0 +1,26 @@
+== ens par subtype ==
+apb|8
+conservatoire_du_littoral|27
+ens_departement|178
+ramsar|1
+reserve_naturelle|152
+réserve_biologique|37
+réserve_naturelle_nationale|1
+site_classe|5
+site_inscrit|2
+== total ens ==
+411
+== RNMR features (typename) ==
+150
+== ens names containing marine ==
+151
+== reserve_naturelle names containing marine (ce que vise le verdict) ==
+150
+== guard d_enp_reserve_marine FAILS? (false=OK) ==
+f
+== parcelles intersectant la RNMR ==
+209
+== exemples de noms RNMR apres ==
+Réserve Naturelle Marine de La Réunion — COT_Boucan_Canot
+Réserve Naturelle Marine de La Réunion — COT_Boucan_Canot
+Réserve Naturelle Marine de La Réunion — COT_Boucan_Canot
