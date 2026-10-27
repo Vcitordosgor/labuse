@@ -86,6 +86,10 @@ import_all.log
 audit_shots/
 outputs/
 
+# RECETTE-PROD-1 — captures/PDF avant-après (livrés via l'app) + harnais de capture jetable
+reports/RECETTE-PROD-1/
+frontend/qa-rp1/
+
 # Orphelins M6 — artefacts d'audit lourds (PNG/PDF/exports), hors historique git
 reports/m6-audit/captures/
 reports/m6-audit/captures-1-5/

@@ -1,90 +1,82 @@
-# RECETTE-PROD-1 — retours Vic sur la prod (06/10 soir)
+# RECETTE-PROD-1 — retours de Vic sur la prod (27/10/2026 soir)
 
-Branche `fix/recette-prod-1` · ports API 8810 / front 6010 · pas de merge · capture avant/après par point.
-Règle : chaque point tel quel, sans élargir ; si un point dépasse 1 h → le dire et passer au suivant.
-Prod = **lecture seule** (ssh labuse-vps, journalctl -u labuse, base via sudo -u postgres psql).
+Branche `fix/recette-prod-1` (depuis `origin/main` `a582f8f4`) · worktree `~/Desktop/labuse-recette-prod` · API **8850** / front **6050** · prod `https://app.labuse.immo` lecture seule (compte de test) · **pas de merge, pas de déploiement**.
 
-## Synthèse finale
+Règle : chirurgical, DA existante, formats français, aucun texte tronqué, écran ET PDF rendus séparés. Preuve = capture LIVE avant/après (PDF régénéré+ouvert pour les documents), dans `reports/RECETTE-PROD-1/` (gitignoré).
 
-**15/15 traités** : 13 corrigés (code), 1 réponse seule (#10), 1 audit-verdict + fix 1 ligne (#8).
-- **#7** : rien à corriger — les 2 couches nommées sont déjà présentes (vérifié à l'écran) ; cause probable = bundle/cache antérieur côté Vic le 06/10.
-- **#6(a)** : inclinaison déjà activée (mesuré) — aucun changement. **#6(b)** : fix code (recentrage en 3D).
-- **Réserves** (non vérifiées visuellement en session, fix au code) : #3 badge (data PPR locale trop maigre), #4 overflow faisabilité (outil collé sur parcelle 0-potentiel), #6(b) (3D+parcelle non reproduit). Fixes sûrs par construction, à confirmer d'un coup d'œil par Vic.
-- **#9(d)** : « les 3 chemins » interprété comme les 3 choix de statut — à confirmer par Vic.
+Témoin fiche parcelle : **97410000AE1369** (4 ter Chemin Rebua, Saint-Benoît, Ub, 954 m²). Témoins documents : **97415000BY0083**, **97411000BZ1065**.
 
-**Fichiers modifiés** (branche `fix/recette-prod-1`, aucun merge) :
-- Front : `MapToolbar.tsx` (#2), `Fiche.tsx` (#3), `constructibilite.tsx` (#4), `Gabarit.tsx` (#5), `MapView.tsx` (#6b), `CouchesTuyau.tsx` (#8), `ProspectionSolaire.tsx`+`.test.tsx` (#9), `ComparePanel.tsx`+`lib/api.ts` (#12), `moteurs.tsx` (#1), `header/Header.tsx` (#13, #14), `map/basemaps.ts` + `outils/TimeMachine.tsx` (#15).
-- Back : `api/app.py` (#11 contexte + #12 `_compare_row`), `exports/blocs/comparatif.py` (#12), `api/couches_tuyau.py` (#7 simplification bas-zoom), `models.py` (déblocage boot-verrou incident — ALTER `parcel_au_statut` gardé par catalogue, même motif que #11 ; nécessaire pour booter sous charge concurrente, hors des 15 points mais signalé).
-- MAJ #9 (précision Vic) touche aussi `map/MapView.tsx` (couleur unique piscines).
+> Un précédent tour RECETTE-PROD-1 (06/10, points #1–#15) a été mergé dans `main` — son rapport est archivé en `reports/RECETTE-PROD-1-2026-10-06.md`. Le présent tour (Lots A–F, 27/10) repart de `main` à jour.
 
-**Validation** : `tsc` 0 erreur · vitest **243/243** · pytest (contexte-cache #11 / carte-tuiles #7-#8 / boot-verrou / comparateur / export-comparables) **≥14 passés, 1 skip** · imports back OK · points 2/5/7/9/11/12/13/14/15 **vérifiés en direct** (navigateur/`/compare`/`window.__labuse_map`/tuiles). ⚠ Déploiement #7 : reconstruire le cache overlay (octets bas-zoom modifiés).
+## Environnement vérifié
+- API worktree sur **:8850**, served_run **q_v20** (= prod), DB locale `labuse` (434 582 parcelles).
+- Front dev **:6050** (`/socle/`), proxy → :8850.
+- Captures : Playwright (Chrome `channel:'chrome'`) via omnibox `[data-omnibox]` → `onEnterRaw` → fiche ; harnais `frontend/qa-rp1/`.
 
-**Prod (lecture seule)** : #11 reproduit via journald (500 réel), #7/#8 mesurés sur le VPS, rien modifié sur le VPS.
+## Synthèse (au fil de l'eau)
 
-## État d'avancement (mis à jour au fil de l'eau)
+| Lot | État |
+|-----|------|
+| A — fiche parcelle (AE1369) | ✅ fait (A1 ×6, A2, A3, A4, A5 vérifié, A7, A8) |
+| B — documents | ⏳ |
+| C — vitesse | ⏳ |
+| D — accueil/carte/Sources/Projets/Copilote | ⏳ |
+| F — fiche commune | ⏳ |
 
-| # | Point | État | Note |
-|---|-------|------|------|
-| 1 | Assemblage : bouton persistant + fiche résiduelle | ✅ fait | `moteurs.tsx` M16. (a) Bouton « Vérifier l'assemblage » rendu inconditionnellement → reste sous le résultat. Fix : `{!d && …}` (disparaît quand résultat `d` présent) + `run.reset()` dans l'effet `[msel]` (réapparaît dès que la sélection change). (b) Fiche résiduelle à droite : `useEffect(()=>select(null),[])` au montage (ouvrir Assemblage ferme la fiche). (c) « cliquer d'autres parcelles ne ressuscite pas l'ancienne » : déjà OK — en mode assemblage le clic compose `msel` sans `select()` (MapView:938). |
-| 2 | Barre d'outils carte : zone invisible bloque clic parcelles | ✅ fait | `MapToolbar.tsx` : conteneur `items-end` → boîte englobante débordait à gauche des boutons (strip ~107px) + espaces `gap-2`, div transparent `pointer-events:auto` interceptait le clic carte. Fix `pointer-events-none` conteneur + `pointer-events-auto` sur chaque groupe. **Mesuré** : probe zone vide hit CANVAS (avant: DIV), boutons toujours cliquables. |
-| 3 | En-tête fiche : pastille « Hors zone rouge » déborde case SDP + comptage base | ✅ fait | `Fiche.tsx:963` : pilule `<Badge>` (inline-flex, rounded-full, padding + « i ») débordait la cellule `.stat` (grille 3 col ~130 px). Remplacée par une **ligne de légende ambre compacte** (`text-[9px] text-amber`, `min-w-0 break-words`) sous la valeur → passe à la ligne, ne déborde plus. Chiffre/source/InfoI inchangés. **Comptage base (run q_v16)** : SDP restante > 0 = **188 557 / 431 663 (43,68 %)** (= 0 : 238 862 ; NULL : 4 244). ⚠ badge rare en data locale (74 obj PPR INTERDICTION) → pas de capture live, fix non-débordant par construction. |
-| 4 | Faisabilité : lignes « art. 10.2… » débordent (scroll horizontal) | ✅ fait | Outil Faisabilité (`FaisabiliteTab`, `constructibilite.tsx`). Cause = panneau racine `data-faisa-panneau` sans `min-w-0` → une citation longue force le panneau plus large que sa colonne flex (la fiche, elle, a `overflow-x-clip` → pas touchée). Fix : `min-w-0` sur le panneau + `break-words` sur le libellé d'étape (la citation `s.source` l'avait déjà depuis RECETTE-2) → le texte passe à la ligne, 0 défilement horizontal (règle Gabarit). ⚠ repro live gênée (outil collé sur une parcelle 0-potentiel en session) → fix au code, classe de bug flex standard. |
-| 5 | « Voir en 3D » / « Revenir en 2D » : bouton hors DA, mal aligné | ✅ fait | `Gabarit.tsx:394`. Le bouton EST le composant DA `<Bouton>` mais, dernier enfant d'une colonne flex qui déborde, il était **écrasé par flex-shrink** → **hauteur 15 px au lieu de 32 px** (mesuré) = « hors DA ». Fix : `shrink-0`. **Vérifié** : hauteur 32 px (standard DA), aligné à gauche (x=86) comme les cartes. |
-| 6 | 3D : (a) incliner la vue ; (b) centrer parcelle en tenant compte du panneau | 🟡 (a) déjà actif / (b) fix code | **(a)** Mesuré sur la carte vivante (`window.__labuse_map`) : `dragRotate`, `touchPitch`, `keyboard` = **activés**, `maxPitch:70` → l'inclinaison (clic droit / Ctrl+glisser) est DÉJÀ permise, `setPitch` fonctionne. Aucun drapeau ne la bloque → pas de changement (sinon discoverability). **(b)** BUG réel : l'entrée en 3D (`MapView.tsx:1103`) ne faisait que `easeTo({pitch:55})` sans recentrer → la parcelle restait « décalée vers la droite » sous la fiche. Fix : mémo du centroïde (`selCentroidRef`) + recentrage en 3D avec le MÊME offset `[-200,0]` que le vol 2D (fiche 400 px). ⚠ repro live 3D+parcelle non obtenue en session → fix par réutilisation du centrage 2D éprouvé (à confirmer visuellement). |
-| 7 | Couches : OCS GE + DPU — visibles à tous les zooms (géométrie simplifiée à bas zoom) | ✅ fait | **Présence** : les 2 couches sont dans la liste (groupe Urbanisme) et **rendent déjà en vue île complète** (mesuré `window.__labuse_map` : z9.4 = 25 718 features artificialisation + 917 DPU, `zoom_min=0`, aucun gate front/back). **Précision Vic (lourdeur)** : la tuile île était ÉNORME (artificialisation **886 Ko** à z9, DPU 76 Ko) → sous charge prod elle « n'apparaît qu'en zoomant ». Fix `couches_tuyau.py` : `ST_SimplifyPreserveTopology` à tolérance SOUS-PIXEL (largeur tuile 3857÷1024) pour **z<12 seulement** → **art 886→373 Ko (−58 %), DPU 76→29 Ko (−61 %)**, features intactes (toujours 25 718/917 rendus en île), **déterministe** (md5 stable), **z≥12 octets IDENTIQUES** (cache de détail + invariant VITESSE-PROD-1 intacts). ⚠ **déploiement** : purger/reconstruire le cache overlay `mvt_tile_cache` (les octets bas-zoom changent) — sinon les anciennes tuiles lourdes continuent d'être servies. |
-| 8 | Couche Contraintes EnR : recouvre presque toute l'île — normal ou bug ? | ✅ fait (verdict + fix 1 ligne) | **Verdict : DONNÉE normale** (couche RASTER APER, buffers ~autour des habitations — pas un aplat dégénéré ; preuve pixel). Le symptôme « recouvre toute l'île » = BUG de rendu front : la régression `CHARGE_LOURDE`/`zmin` (RECETTE-2 C1, `01a1a9c7`) neutralisait le gate z13 (RECETTE-1 C7) → tuiles EnR demandées dès l'échelle île. **Fix appliqué** `CouchesTuyau.tsx:482` : les rasters ré-honorent `c.zoom_min` (EnR rien avant z13). Voir journal. |
-| 9 | Piscines : « Voir plus », phrase, UNE SEULE catégorie (aucun statut) | ✅ fait | `ProspectionSolaire.tsx` + `MapView.tsx`. **(9a)** « Voir plus (+50) » une ligne. **(9b)** phrase « la carte montre… » retirée. **(9c/9d)** étape « Statut » SUPPRIMÉE, clic périmètre → résultat direct. **Précision Vic — plus AUCUNE notion de statut** : une seule catégorie « Piscines » → **une seule couleur** sur la carte (`module-piscine-fill/line` menthe, plus de match confirmées/à confirmer), **un seul compteur** (« N piscines à X », plus de « confirmées et à confirmer »), **libellés sans « confirmées » ni « à confirmer »** (badge ligne retiré, légende 2 couleurs retirée, tooltip « à confirmer » retiré, compteurs communes = total unique). Vérifié en direct + test `not.toMatch(/confirmée|à confirmer/)`. |
-| 10 | Docs : pourquoi 7 docs au lieu de 8 (réponse seule) | ✅ fait | Réponse donnée, 0 changement |
-| 11 | Prod : fiche commune ne s'ouvre pas sur le VPS | ✅ fait (CODE) | Cause = DDL no-op (`ALTER … ADD COLUMN IF NOT EXISTS cle_fraicheur`) lancée à CHAQUE requête dans `_ensure_contexte_cache` → ACCESS EXCLUSIVE en file derrière un lecteur en prod → statement_timeout 60 s → 500. Fix `app.py` : garde par `information_schema.columns` avant l'ALTER (même patron que `app.py:1102`). Vérifié local : `/communes/Saint-Denis/contexte` → 200. |
-| 12 | Vérité : 3 parcelles Um EI0145/0146/0147 constructible non/oui — règle + libellé | ✅ fait | **Règle** : « Constructible : oui/non » = verdict faisabilité en direct (`engine.py:491-504`, emprise insetée des reculs `< 5 m²` → `terrain_exigu` → non). Les 3 Um bâties, 0 potentiel résiduel : EI0145 emprise ≥ seuil → « oui » (trompeur), EI0146/0147 trop étroites → « non ». **Libellé corrigé** (Comparer `ComparePanel.tsx` + PDF `comparatif.py`) : ligne « Zone constructible » (famille ∉ A/N → **oui pour les 3**, cohérent) séparée de « SDP résiduelle » (0 pour les 3) **suffixée de la cause** (« terrain exigu »). Backend `_compare_row` : +`zone_constructible`/`cause`/`cause_libelle`. Fiche & tuiles ne servent PAS la string (déjà distinct / absente). **Vérifié /compare** : 3 × zone_constructible=true. |
-| 13 | Bouton compte : bulle « VL » → icône utilisateur générique | ✅ fait | `Header.tsx:642`. Le « VL » était un **littéral codé en dur** (aucune initiale calculée côté compte). Remplacé par une **icône utilisateur** (SVG feather/lucide, style des glyphes Rail/LeftPanel), **même bulle** (h-8 w-8, ronde, bord), même `aria-label`/clic. **Vérifié en direct** : plus de texte, `svg` présent, 32×32, `border-radius 9999px`. Capture `captures/RECETTE-PROD-1/13-compte-apres.png`. (Les avatars-initiales de la page admin Licences = autres clients, feature distincte, non touchés.) |
-| 14 | Menu « Mon compte » : retirer « Préférences de notifications » + « Marque blanche » | ✅ fait | `Header.tsx` : les deux `<button>` du menu retirés (menu seulement). **Code derrière intact** : `MarqueForm`, état `marqueOpen`, écouteur `labuse:open-notif-prefs` (cloche) non supprimés. Restent : Compte · Abonnement · **Changer mon mot de passe** (dans le bloc `mode==='compte'`, visible en prod ; masqué en dev local sans compte réel) · Contact · Se déconnecter. **Vérifié en direct** : `data-account-prefs`/`data-account-marque` absents ; menu = « MON COMPTE · COMPTE · ABONNEMENT · Contact · Se déconnecter ». Capture `captures/RECETTE-PROD-1/14-menu-compte-apres.png`. |
-| 15 | Carte EduGéo 1980 : la retirer partout où elle est proposée + réécrire l'encart « Zones noires » | ✅ fait | `basemaps.ts` : entrée `bm-edugeo-1980` retirée de `TEMPS_MILLESIMES` — **source unique** lue par l'outil « Remonter le temps » ET par le sélecteur de fond d'accueil (`ORTHO_YEARS = now + TEMPS_MILLESIMES`) → disparaît des DEUX d'un coup. Source `BASEMAP_SOURCES`/route carte-ancienne laissées (plus proposées, rien cassé). `TimeMachine.tsx` : addendum « Carte 1980 (EduGéo) » retiré de l'encart « Zones noires » → ne parle plus que de l'ortho ancienne. **Vérifié en direct** : sélecteur d'accueil = Actuelle · SCAN 50 (1950) · 1950-1965 · 2000-2005 … 2021-2023 (0 EduGéo/1980). |
+## Lot A — fiche parcelle (témoin 97410000AE1369, Ub Saint-Benoît, 954 m²)
 
-## Journal détaillé
+Vérité du JSON servi : BD TOPO voit **0 bâtiment** (emprise 0, nb 0 → « terrain nu ») alors que RNB (1 « constructed »), CoSIA (267 m²) et OCS GE (100 % artif.) disent bâti → **lecture unique du bâti** introduite (`bati = nb>0 || emprise>0`, = `leBien.tsx:58`) et câblée partout.
 
-### Point 11 — Fiche commune ne s'ouvre pas sur le VPS — ⬛ diagnostic fait, fix CODE en cours
-- Endpoint : `GET /communes/{commune}/contexte` (front `ContextePanel.tsx:280`→`api.ts:372` ; back `app.py:2198` `commune_contexte`).
-- Erreur prod (journald, appel client réel 500) : `_ensure_contexte_cache(db)` (app.py:2205) exécute `ALTER TABLE commune_contexte_cache ADD COLUMN IF NOT EXISTS cle_fraicheur text` à **chaque requête, sans garde** → `QueryCanceled: canceling statement due to statement timeout` après 60 s.
-- **CODE, pas DATA** : la table existe, 24/24 communes peuplées, colonne `cle_fraicheur` **déjà présente** → l'ALTER est un no-op MAIS exige quand même un verrou `ACCESS EXCLUSIVE` ; en prod (5 workers + lecteurs concurrents) il se met en file derrière un lecteur, atteint le `statement_timeout` API (60 s, `app.py:404-408`/`config.py:59`) → 500. Exactement le motif BOOT-VERROU-1.
-- Local OK = un seul lecteur, pas de concurrence → ACCESS EXCLUSIVE obtenu en <1 ms.
-- **Fix** : garder la DDL derrière le catalogue (même patron que `app.py:1058/1066`) — ALTER seulement si la colonne est absente. Branche DDL devient morte en prod → plus de 500.
-- Note hors-scope signalée : `/admin/circuit` 500 (`dashboard.py:2229`, `d.mode_remplissage does not exist` sur `data_sources`) = drift schéma réel (DATA/migration), distinct.
+| # (A1) | Contradiction | Cause | Correction | Preuve |
+|---|---|---|---|---|
+| 1 | « bâti présent » (sous-titre Bâti) vs « terrain nu » (badge+détail) | sous-titre reposait sur `nb_batiments` seul, repli littéral `'bâti présent'` | `Fiche.tsx` — sous-titre + badge Bâti lisent la **lecture unique `bati`** → « terrain nu » partout | `A_before_bati.png` → `A_after_bati.png` |
+| 2 | « SDP consommée 25 % » + « SDP restante 777 m² — bâti conservé » sur terrain nu | 3 libellés SDP (`'bâti conservé'`) + la ligne « SDP consommée » + le bloc « Potentiel de transformation » (× bâti BD TOPO) tous indépendants du bâti | `Fiche.tsx` — tuile/ChiffreDissous/Verdict : `bati ? 'bâti conservé' : 'terrain libre'` ; « SDP consommée » et `TransformationBlock` **masqués** si `!bati` | `A_after_tiles.png` (SDP restante → « terrain libre »), `A_after_potentiel.png` |
+| 3 | « règlement des zones agricoles et naturelles non indexé… » en **Ub**, **deux fois** | note rendue par zone (`blocks.tsx:188`) **et** en commun (`:206`) → doublé ; aucune garde de famille | `blocks.tsx` — note gardée sur famille **A/N** (ne s'affiche plus en U) + rendu commun dédoublé retiré | `A_before_urbanisme.png` → `A_after_urbanisme.png` |
+| 4 | « BD CARTO : sol classé naturel — artificialisation à justifier » sur parcelle 100 % artif. (OCS GE) / 83 % imperm. (CoSIA) | ligne `ocs_ge` (grain grossier) rendue sans condition en « Situation » | `Fiche.tsx` — ligne `ocs_ge` **retirée** dès qu'une mesure fine (OCS GE part_artif ou CoSIA imperm.) existe | `A_after_urbanisme.png` |
+| 5 | ligne brute « declassement · fort · accès non identifié… » | clé `declassement` absente de `LAYER_LABEL` → snake_case affiché tel quel | `layers.ts` — libellé humain **« Desserte et accès (BD TOPO — à vérifier) »** | `A_after_urbanisme.png` |
+| 6 | en-tête + tuile « assainissement non renseigné » vs détail « CISE Réunion (SAUR) · DSP confirmé » | en-tête/tuile lisent `anc` (INSEE secteur, ton neutre) ; le détail lit `gestionnaires` | `reseaux.tsx` — en-tête et case assainissement affichés **seulement si verdict réel** (ton ≠ neutre) ; détail inchangé | `A_before_reseaux.png` → `A_after_reseaux.png` (en-tête → « — ») |
+| 7 (A7) | « Gabarit — Calcul incomplet — PLU non calibré pour la zone Ub » | **bug de lecture backend** : Ub EST calibrée (emprise CES 80 %, reculs valides) ; seule la hauteur est une **table graphique par secteur** (Art. U-4, 4/7/10/13/15 m, `statut propose`). `zonage.py` jetait les règles calibrées en générique dès que la hauteur n'était pas une valeur unique | `zonage.py` — zone à enveloppe calibrée sans hauteur unique : **garde ses règles** (`calibree=True`), hauteur de repli marquée `hauteur_estimee` ; `builder.py` — hauteur présentée **estimée / non intégrée** (jamais comme la valeur validée) ; front `GabaritLine.tsx`/`Fiche.tsx` — « Non chiffrée (table graphique) ». Gabarit **status=ok**, emprise 763 m² intégrée. 156 tests gabarit/faisabilité/zonage/calibrage **verts** | endpoint `/outils/gabarit/97410000AE1369` status ok ; `A_after_potentiel.png` |
+| 8 (A8) | « Prix de sortie retenu » affiché **lettre par lettre en colonne** | sous-titre long (`ps.label` ~77 car.) gonflait la colonne valeur (grille `auto`) → le libellé s'écrasait à 0 (`overflow-wrap:anywhere`) | `Fiche.tsx` — sous-titre court (`≤ 28 car.`), le détail long reste dans le « i » | `A_before_potentiel.png` → `A_after_potentiel.png` |
 
-### Point 12 — 3 parcelles Um EI0145/0146/0147 : constructible non/oui — ⬛ règle expliquée, relibellé en cours
-- **La règle** : le « Constructible : oui/non » affiché = **verdict faisabilité en direct** (`engine.py` → `db.py:780` `"constructible": f.constructible`), PAS la SDP résiduelle du run. `engine.py:491-504` : si l'emprise constructible (contour inseté des reculs par côté : voirie 5 m, limites sép. 3 m par défaut) `< SEUIL_EXIGU_M2 = 5.0` → `cause="terrain_exigu"` → `constructible=False`.
-- Les 3 sont Um (zone constructible), bâties, lanières étroites ~14-15 m. Différence = **pure géométrie** : EI0145 (191,7 m²) garde une emprise insetée ≥ 5 m² → **oui** ; EI0146 (146,3) et EI0147 (136,0) tombent < 5 m² → **terrain_exigu** → **non**. Les 3 ont `sdp_residuelle = 0` (sur-bâties/exiguës). Donc **pas** bâti saturé, pas PPR, pas surface-mini, pas exclusion de zone : c'est `terrain_exigu`.
-- **Le libellé ment** : EI0145 « oui » alors que potentiel résiduel = 0. Fix = afficher **zone constructible** (Um = oui pour les 3) + **potentiel résiduel** (0) + **cause** séparément.
-- **Où le libellé « Constructible : oui/non » est servi** : UNIQUEMENT **Comparer** (`frontend/src/components/compare/ComparePanel.tsx:59`) + son **PDF** (`src/labuse/exports/blocs/comparatif.py:64`), alimentés par `app.py:7530` ← `db.py:780`. La **fiche** utilise un flag zone-level (`constructibilite.tsx:1058`, SDP résiduelle avec cause) — ne sert pas la string. Les **tuiles** n'ont aucune propriété `constructible` (`tiles.py:166-199`). → fix ciblé sur Comparer + PDF.
+**A2 — polices (charte).** Les valeurs des 6 tuiles d'en-tête héritaient Inter (sans) alors que les mêmes nombres sont en mono (`--mono`, tabular-nums) dans les lignes de détail. `index.css` `.fiche-v6 .stat-v` → **`font-family:var(--mono); font-variant-numeric:tabular-nums`** : valeurs chiffrées et unités dans la même police numérique, cohérentes avec le détail. Preuve `A_after_tiles.png`.
 
-### Point 9 — Piscines : 4 sous-points
-« comportement d'avant » (commit `aaee8929`, pré-assistant 2-étapes) : encart repliable + liste des communes en liens (clic commune = **filtre en place**, pas de navigation) + bouton « Voir les piscines ». Le 2-étapes a été introduit par `5b143834`.
+**A4 — petit espace en haut.** Le conteneur de la fiche n'avait pas de `padding-top` (carte d'en-tête collée au bord). `Fiche.tsx` `pt-2` + `index.css` `.tete-collee top:8px` : un liseré de fond `--bg-0` au-dessus de la carte, la carte se recolle à 8 px au défilement (le fond opaque couvre toujours le défilement). Preuve `A_after_tiles.png`.
 
-### Point 10 — Docs 7 au lieu de 8 (RÉPONSE SEULE, 0 changement) — ✅
-Le document manquant est bien **« Comparables DVF »** (pas « Courrier »).
-- La liste des tuiles est `CATALOGUE` dans `frontend/src/components/documents/catalogue.ts:35-85` : **7 entrées** (Dossier, Bilan, Apporteur, Pré-dossier PC, Gabarit, Comparatif, Étude de zone). La grille rend tout `CATALOGUE` sans filtre (`DocumentsView.tsx:426`) → « 7 affichés » = « 7 définis ».
-- La 8ᵉ tuile a été **physiquement retirée du tableau** en RECETTE-2 (E2), `catalogue.ts:70-72` : commentaire « tuile Comparables DVF RETIRÉE : aucun export (pas d'endpoint, le tiroir comparables de la fiche et sa règle de sélection n'existent pas) → on ne laisse pas un document bancal grisé “bientôt”. À réintroduire le jour où l'export existe. »
-- « Huit » → « Sept » est un arbitrage Vic assumé (`DocumentsView.tsx:421-423`) ; « Courrier » est délibérément exclu (c'est un outil, pas un document).
-- **Restaurer n'est PAS un simple dé-masquage** : pas d'endpoint générateur, pas de `urlDocument` case `comparables`, tiroir+règle de sélection inexistants. C'est un chantier back (prévu par BILAN-1), pas un flag. (Une branche « bientôt » grisée morte subsiste en `DocumentsView.tsx:73-87` mais RECETTE-2 l'a explicitement refusée.)
+**A3 — boutons d'outils (gardé/retiré).** Règle Vic : un bouton vers un **outil d'information** n'est gardé que s'il apporte une info **absente** de sa section.
 
-### Point 8 — Couche « Contraintes EnR près des habitations » recouvre presque toute l'île — ✅ (AUDIT, 0 changement)
+| Bouton | Section | Ce que l'outil ajoute | Décision |
+|---|---|---|---|
+| **Pièges & risques** | Risques | relit les **mêmes couches** que la section (aléas, PPR, bruit, pente, SUP) | **RETIRÉ** (exemple de Vic) |
+| Annuaire PLU | Urbanisme | recherche plein-texte du règlement + téléchargement pack GPU | gardé (absent de la fiche) |
+| Vérif procédure | Urbanisme | procédures PLU en cours (Sudocuh) | gardé |
+| Simuler ouverture AU | Urbanisme (si AU) | simulation AU→U | gardé |
+| Calculer la taxe d'aménagement | Fiscalité | recalcul interactif (hypothèses éditables) | gardé |
+| Étude de faisabilité | Potentiel | étude d'implantation (plan masse, scénarios) | gardé |
+| Densifier l'existant | Potentiel | raccourci de **filtres carte** (action, pas un outil d'info) | gardé (hors règle : action) |
+| Calculette foncière | Potentiel | bilan/marge interactif | gardé |
+| Assemblage | Potentiel | agrégation multi-parcelles | gardé |
+| Scan patrimoine | Propriétaire | portefeuille complet du propriétaire | gardé |
+| Courrier SPF | Propriétaire | génération de courrier (action) | gardé |
+| Outil Communes | Marché | comparateur/vélocité/rareté | gardé |
+| Étude de zone | Quartier | chalandise (isochrones) | gardé |
+| Permis commune | Quartier | radar permis **commune** (section = proximité) | gardé (chevauchement partiel — à surveiller) |
+| Fiche commune | Quartier | fiche commune complète | gardé |
+| Remonter le temps | Exports | imagerie ancienne | gardé |
 
-**Verdict : la DONNÉE est NORMALE ; le rendu à l'échelle île est un BUG de régression front.** Ce n'est PAS une anomalie de donnée (pas de polygone géant unique) — c'est l'empilement légitime de buffers autour des habitations, rendu à une échelle où il n'a aucun sens.
+**A5 — 5 icônes de l'en-tête.** Vérifiées (`liensExternes.ts` + test `liensExternes.test.ts`, 10 assertions vertes). Les 5 icônes = **Cadastre, Pages Jaunes, Google Maps, Géorisques (Errial), Google Earth** (il n'y a pas d'icône « Géoportail » distincte : l'icône Cadastre EST le lien geoportail.gouv.fr ; la 5ᵉ est Google Earth/KMZ).
 
-**Ce qu'est la couche (pas une table BDD).** `enr_habitation` est une couche **RASTER WMTS** relayée par le proxy, source IGN Géoplateforme `ENR.PERIMETRE.HABITATION` (style `PERIMETRE.HABITATION`, loi APER). Aucune géométrie en base : `src/labuse/api/ortho_proxy.py:296-326` (`_ENR_HABITATION_WMTS`, `/map/tiles/enr_habitation/{z}/{x}/{y}`), déclarée front-only en `frontend/src/components/map/CouchesTuyau.tsx:85-103`. Donc « ST_Area de l'union » ne s'applique pas : la mesure se fait sur les pixels des tuiles.
+| Icône | URL sur la parcelle | Correct ? |
+|---|---|---|
+| Cadastre | `geoportail.gouv.fr/carte?c={lon},{lat}&z=19` + couche parcellaire | ✅ centroïde, zoom 19 |
+| Pages Jaunes | `pagesjaunes.fr/...?ou={adresse}` (repli commune, flag `commune_seule`) | ✅ (site = adresse) |
+| Google Maps | `google.com/maps/search/?api=1&query={lat},{lon}` | ✅ (ordre lat,lon correct) |
+| Géorisques (Errial) | `errial.georisques.gouv.fr/#/?adresse={adresse}` | ✅ (Errial = adresse only) |
+| Google Earth | `/parcels/{idu}.kmz` (géométrie servie) | ✅ exact à la parcelle |
 
-**Preuve que la donnée est NORMALE (buffers autour des habitations, pas un aplat dégénéré).** Mesure pixel sur le cache de tuiles de PROD (`/opt/labuse/app/.local/ortho-proxy-cache/enr_habitation/`, 86 tuiles cachées) :
-- z13 : 22 tuiles, 22 non vides, **57,0 %** de pixels opaques
-- z12 : 28 tuiles, 24 non vides, **38,6 %**
-- z11 : 24 tuiles, 14 non vides, **18,9 %**
-- z10 : 12 tuiles, 6 non vides, **9,6 %**
+Aucune n'est générique/fausse ; les deux liens « adresse » (PJ, Errial) le sont par contrainte des sites cibles (documenté en code). **Aucune modification** (A5 = vérification).
 
-Le rendu visuel des tuiles cachées (`enr_habitation/12/2679_2294.png`) montre sans ambiguïté des **disques/buffers circulaires qui se chevauchent et coalescent** autour des grappes de bâti — le périmètre APER (~rayon fixe) autour de chaque habitation. À l'échelle île (z10), ces buffers fusionnent en grandes plages beiges couvrant l'essentiel du littoral habité : wide coverage est le comportement ATTENDU d'un tampon autour de toutes les habitations d'un littoral dense. Pas de polygone unique « tout-île ».
+**Validation Lot A** : `tsc` 0 erreur ; vitest fiche **30/30** ; pytest gabarit/faisabilité/zonage/calibrage **156 passed** ; 0 erreur console sur AE1369 (avant/après). Fichiers : `Fiche.tsx`, `reseaux.tsx`, `blocks.tsx`, `risques.tsx`, `layers.ts`, `GabaritLine.tsx`, `styles/index.css` (front) ; `faisabilite/zonage.py`, `gabarit/builder.py` (back).
 
-**Le BUG (rendu, pas donnée) — régression connue ré-ouverte.** Le symptôme Vic « recouvre presque toute l'île » avait DÉJÀ été corrigé puis RE-CASSÉ :
-1. RECETTE-1 (C7, `5ba5d1d9`, 05/10) : `zoom_min: 13` sur la couche + source raster `minzoom: c.zoom_min ?? 6` → EnR rien dessiné sous z13. Commentaire explicite `CouchesTuyau.tsx:91-94` : « l'aplat beige recouvrait quasiment toute l'île à l'échelle île… zoom_min relevé à 13 ; EN DESSOUS, RIEN n'est dessiné ».
-2. RECETTE-2 (C1, `01a1a9c7`, 05/10 **19:42, plus tard**) a introduit `CHARGE_LOURDE = new Set(['zonage_parcelle'])` et `zmin(kind, declared, fallback) = CHARGE_LOURDE.has(kind) ? (declared ?? fallback) : 0` (`CouchesTuyau.tsx:194-196`), et remplacé `c.zoom_min ?? 6` par `zmin(c.kind, c.zoom_min, 6)` à l'`addSource` raster (`:482`). Comme `enr_habitation` **n'est pas** dans `CHARGE_LOURDE`, `zmin` renvoie **0** → la source raster EnR a `minzoom: 0` → MapLibre redemande les tuiles EnR dès l'échelle île. **Le gate C7 est inerte.**
+## Journal — lots suivants
 
-**Confirmé dans le bundle DÉPLOYÉ en prod** (`/opt/labuse/app/frontend/dist/assets/index-BoI4m4-v.js`, build 2026-10-07 00:51) : `pr=new Set(["zonage_parcelle"]),mr=(e,t,n)=>pr.has(e)?t??n:0` et `addSource(...,{type:"raster",...,minzoom:mr(e.kind,e.zoom_min,6),...})`. Les deux commits sont dans `main`. Les tuiles z10/z11 non vides existent dans le cache prod (warm RECETTE-1 04/10 17:46) — une fois cachées elles sont servies, mais c'est bien le front qui les DEMANDE à l'échelle île via ce `minzoom:0`.
-
-**Correctif (pour un futur lot, non appliqué ici).** Deux options honnêtes : (a) ajouter `enr_habitation` à `CHARGE_LOURDE` (le gate z13 reprend) — mais `CHARGE_LOURDE` est pensé pour les couches vecteur lourdes, pas idéal sémantiquement ; (b) mieux : pour les couches **raster**, faire respecter `c.zoom_min` directement au lieu de passer par `zmin` (le raster EnR n'est pas une « charge lourde » vecteur, il a juste un `zoom_min` métier à honorer). Fichier : `frontend/src/components/map/CouchesTuyau.tsx:482`. **Aucune donnée ni table à toucher.**
+_(B, C, D, F — rempli lot par lot)_

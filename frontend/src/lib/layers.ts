@@ -48,6 +48,9 @@ export const LAYER_LABEL: Record<string, string> = {
   ocs_ge: 'Occupation du sol (BD CARTO V5 — grain grossier)',
   friche: 'Friche',
   acces: 'Accès voirie',
+  // RECETTE-PROD-1 (A1) — le code brut « declassement » s'affichait tel quel (clé snake_case non
+  // traduite) : libellé humain qui nomme la nature de la donnée (desserte/accès, source BD TOPO).
+  declassement: 'Desserte et accès (BD TOPO — à vérifier)',
   // proprio
   proprietaire: 'Propriétaire',
   age_dirigeant: 'Âge du dirigeant',
