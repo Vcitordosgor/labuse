@@ -1,0 +1,123 @@
+LABUSE           Gabarit
+
+
+
+
+Gabarit
+L'enveloppe réglementaire de la parcelle : zone d'implantation, plafond d'emprise, hauteur.
+
+97415000BY0083 · GA-20261027-0083 · 27/10/2026
+
+
+
+   Enveloppe réglementaire (gabarit)
+
+   Vérifié : reculs, emprise, hauteur · Aléas : zones d'exclusion intégrées — analyse
+   du règlement PPR non intégrée · non modélisé : Stationnement, Espaces libres
+
+
+
+
+         Zone d'implantation réglementaire (schéma — pas un plan de masse)
+
+              Zone d'implantation                                                  Retraits
+              Bâti existant                                                        Contour cadastral
+
+
+
+
+Zone d'implantation                                  869 m²                                                                               sourcé
+
+
+bâti existant déduit                                 867 m²                                                                               sourcé
+
+
+Plafond d'emprise                                    Non réglementé                                                                       sourcé
+
+
+Hauteur réglementaire                                9,0 m                                                                                sourcé
+
+
+
+
+                                                                                                                                  Généré via LABUSE
+
+
+
+Gabarit réglementaire 2D, pré-faisabilité sur règlement public. Ne remplace ni un certificat d'urbanisme, ni une étude de faisabilité           1/
+réglementaire. Données LABUSE au 21/10/2026.                                                                                                     3
+Règles appliquées
+
+Limites séparatives : 3,0 m
+BD TOPO® — troncon_de_route (voirie) + cadastre · BD TOPO® V3 (IGN) — édition non enregistrée · LABUSE — adjacence cadastre +
+BD TOPO
+
+
+Recul voie (emprise publique) : 4,0 m
+Domaine public non cadastré — PLU Saint-Paul U4c 6 · 6 · LABUSE — cadastre (non cadastré = domaine public) + citation PLU 6
+
+
+Recul voie : 4,0 m
+BD TOPO® — troncon_de_route (voirie) + cadastre · BD TOPO® V3 (IGN) — édition non enregistrée · LABUSE — adjacence cadastre +
+BD TOPO
+
+
+Emprise au sol — non réglementée — PLU Saint-Paul zone U4c : silence du règlement
+PLU — Saint-Paul · U4c · LABUSE — règlement PLU validé (config/plu_destinations)
+
+
+Hauteur maximale : 9,0 m
+PLU — Saint-Paul · U4c · LABUSE — règlement PLU validé (config/plu_destinations)
+
+
+Servitudes d'utilité publique — Aucune SUP sur la parcelle
+SUP — servitudes d'utilité publique · GPU / API Carto — servitudes d'utilité publique (assiettes)
+
+
+
+Règles non intégrées
+
+Stationnement — Règle connue, non chiffrée
+PLU — Saint-Paul · U4c · LABUSE — règlement PLU validé (config/plu_destinations)
+
+
+Espaces libres — Règle connue, non chiffrée
+PLU — Saint-Paul · U4c · LABUSE — règlement PLU validé (config/plu_destinations)
+
+
+PPR — analyse — Aléa mouvement_terrain — niveau faible.
+PPR — zonage réglementaire · DEAL Réunion — PPR (zonage réglementaire)
+
+
+
+
+                                                                                                                                  Généré via LABUSE
+
+
+
+Gabarit réglementaire 2D, pré-faisabilité sur règlement public. Ne remplace ni un certificat d'urbanisme, ni une étude de faisabilité           2/
+réglementaire. Données LABUSE au 21/10/2026.                                                                                                     3
+Vue 3D du gabarit
+
+
+
+
+   Volume indicatif — terrain supposé plat
+      Enveloppe réglementaire (hauteur 9 m)
+      Bâti existant
+
+
+Gabarit réglementaire 2D, pré-faisabilité sur règlement public. Une étude par un professionnel peut modifier ces valeurs.
+
+Sources : Cadastre (API Carto PCI) · Urbanisme PLU/GPU (API Carto) · BD TOPO IGN · DEAL Réunion — PPR / aléas
+
+
+
+
+                                                                                                                                  Généré via LABUSE
+
+
+
+Gabarit réglementaire 2D, pré-faisabilité sur règlement public. Ne remplace ni un certificat d'urbanisme, ni une étude de faisabilité           3/
+réglementaire. Données LABUSE au 21/10/2026.                                                                                                     3
+

@@ -183,10 +183,13 @@ def test_mots_interdits_liste_versionnee():
     import yaml
     doc = yaml.safe_load((RACINE / "config/mots_interdits.yaml").read_text())
     # RECETTE-11 : +2 (A6 : « surélévation possible », « non identifiée ») +6 (D6 : marqueurs de source).
-    assert doc["version"] and len(doc["mots"]) == 24
+    # DOCS-COHERENCE-1 (Lot 0.2) : +6 (jargon Excel / renvois / artefacts de présentation).
+    assert doc["version"] and len(doc["mots"]) == 30
     assert "MOBPRO" in doc["mots"] and "n 11" in doc["mots"]
     assert "surélévation possible" in doc["mots"] and "non identifiée" in doc["mots"]
     assert "rpls_sdes" in doc["mots"] and "RPG.LATEST" in doc["mots"]
+    for mot in ("Excel", "comme dans", "dont bâti", "à confirmer — à confirmer", "&#x27;", "parcelle(s)"):
+        assert mot in doc["mots"], f"mot interdit manquant : {mot}"
 
 
 def test_controle_exporte_seulement_la_nuit(db_session, monkeypatch):

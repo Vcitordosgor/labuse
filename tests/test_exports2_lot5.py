@@ -100,7 +100,10 @@ def test_document_rend_ht_verdict_regime():
     assert "Régime de TVA retenu" in html and "expert-comptable" in html
     assert "Sensibilité double" in html and "Calendrier" in html
     assert "◌" not in html
-    assert [m for m in MOTS if m in html] == []
+    # DOCS-COHERENCE-1 (Lot 0.2) — mots interdits sur le texte CLIENT (entités décodées), pas le HTML
+    # brut : « &#x27; » échappé une fois s'affiche « ' » (pas un défaut). Cf. test_exports2_lot6.
+    import html as _H
+    assert [m for m in MOTS if m in _H.unescape(html)] == []
 
 
 def test_document_maximum_sans_valeur_inventee():

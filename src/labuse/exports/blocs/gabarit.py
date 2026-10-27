@@ -9,8 +9,8 @@ from ..lignes import ligne, pied
 from ..registre_fmt import fmt_m, fmt_m2, fmt_pct
 from ..rendu import esc, note, section, table_kv, verdict
 
-IDS = ("gabarit_implantation_m2", "gabarit_bati_deduit_m2", "gabarit_emprise_plafond_m2",
-       "gabarit_hauteur_m", "gabarit_couverture_verdict", "gabarit_plan_2d")
+IDS = ("gabarit_zone_libere_m2", "gabarit_implantation_m2", "gabarit_bati_deduit_m2",
+       "gabarit_emprise_plafond_m2", "gabarit_hauteur_m", "gabarit_couverture_verdict", "gabarit_plan_2d")
 
 
 def _m2_ou_texte(v):
@@ -30,9 +30,39 @@ def _source(src) -> str:
     return " · ".join(esc(b) for b in bits if b)
 
 
+def _fusion_voie(rules):
+    """DOCS-COHERENCE-1 (D1) — UNE seule ligne « Recul voie 4 m » : les variantes du moteur (« Recul
+    voie », « … (emprise publique) », « … (voie privée) »), de même recul, sont fusionnées et LEURS
+    SOURCES citées ensemble sur la même ligne. Le moteur garde ses règles distinctes ; seul l'affichage
+    du document les regroupe."""
+    import types
+    voies = [r for r in rules if (getattr(r, "label", "") or "").startswith("Recul voie")]
+    if len(voies) <= 1:
+        return rules
+    base = voies[0]
+    srcs = []
+    for r in voies:
+        s = _source(getattr(r, "source", None))
+        if s and s not in srcs:
+            srcs.append(s)
+    merged = types.SimpleNamespace(label="Recul voie", value=getattr(base, "value", None),
+                                   unit=getattr(base, "unit", None),
+                                   detail=getattr(base, "detail", None), source=None)
+    merged._src_html = "".join(f'<div class="src">{s}</div>' for s in srcs)
+    result, done = [], False
+    for r in rules:
+        if (getattr(r, "label", "") or "").startswith("Recul voie"):
+            if not done:
+                result.append(merged)
+                done = True
+        else:
+            result.append(r)
+    return result
+
+
 def _regles(rules, *, appliquees: bool) -> str:
     out = []
-    for r in rules or []:
+    for r in _fusion_voie(list(rules or [])):
         nom = esc(getattr(r, "label", "") or "")
         val = getattr(r, "value", None)
         unit = getattr(r, "unit", None)
@@ -52,8 +82,10 @@ def _regles(rules, *, appliquees: bool) -> str:
             chiffre = ""
         detail = getattr(r, "detail", None)
         det = f" — {esc(detail)}" if detail else ""
-        src = _source(getattr(r, "source", None))
-        src_html = f'<div class="src">{src}</div>' if src else ""
+        src_html = getattr(r, "_src_html", None)   # D1 — sources déjà combinées (ligne « Recul voie » fusionnée)
+        if src_html is None:
+            src = _source(getattr(r, "source", None))
+            src_html = f'<div class="src">{src}</div>' if src else ""
         out.append(f'<div class="r"><span class="nom">{nom}{chiffre}</span>{det}{src_html}</div>')
     cls = "regles" + ("" if appliquees else " nonint")
     return f'<div class="{cls}">{"".join(out)}</div>' if out else ""
@@ -75,8 +107,12 @@ def rendu(valeurs, ctx=None) -> str:
         # RECETTE-OUTILS-4 (U4) — libellé « bâti existant déduit » (sans « dont » : la zone affichée est
         # DÉJÀ la valeur après déduction ; « dont » laissait croire que le bâti en faisait partie), même
         # formulation qu'à l'écran.
-        ligne(valeurs, "Zone d'implantation", "gabarit_implantation_m2", _m2_ou_texte),
-        ligne(valeurs, "bâti existant déduit", "gabarit_bati_deduit_m2", _m2_ou_texte),
+        # DOCS-COHERENCE-1 (A3) — DEUX valeurs nommées partout : « terrain libéré » (X, avant déduction
+        # du bâti) et « bâti existant déduit » (Y, après). X − Y = emprise du bâti dans la zone. La ligne
+        # « bâti existant déduit » est omise s'il n'y a rien à retrancher (X = Y).
+        ligne(valeurs, "Zone d'implantation, terrain libéré", "gabarit_zone_libere_m2", _m2_ou_texte),
+        (ligne(valeurs, "Zone d'implantation, bâti existant déduit", "gabarit_implantation_m2", _m2_ou_texte)
+         if (valeurs.get("gabarit_bati_deduit_m2") and valeurs["gabarit_bati_deduit_m2"].valeur) else None),
         ligne(valeurs, "Plafond d'emprise", "gabarit_emprise_plafond_m2", _m2_ou_texte),
         ligne(valeurs, "Hauteur réglementaire", "gabarit_hauteur_m", _m_ou_texte),
     ]

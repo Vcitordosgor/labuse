@@ -327,12 +327,35 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                     racc.setdefault("non_integrees", []).append("hauteur (prospect)")
                 else:
                     blocking.append("hauteur réglementaire non validée")
+                # DOCS-COHERENCE-1 (A6) — stationnement & pleine terre CHIFFRÉS depuis la MÊME calibration
+                # PLU que le Dossier §4 et l'Étude §2 (regles_zone), avec la mention « non intégrée au
+                # gabarit » (le gabarit ne les modélise pas) et l'article cité. Par logement seulement
+                # (barème par typologie non chiffré ici) : repli « Règle connue, non chiffrée ».
+                _rz = regles_zone(commune, work_zone) or {}
+                _st = (_rz.get("stationnement") or {}).get("par_logement") or {}
+                if _st.get("places") is not None and _st.get("statut") == "valide":
+                    _np, _arts = _st["places"], _st.get("article")
+                    _stat_detail = (f"{_np:g} place{'s' if _np >= 2 else ''} / logement — non intégrée au gabarit"
+                                    + (f" (art. {_arts})" if _arts else ""))
+                    _stat_src = RegulatorySource(document=f"PLU — {commune}", zone=work_zone,
+                                                 article=_arts or None, provider=PLU_PROVIDER)
+                else:
+                    _stat_detail, _stat_src = "Règle connue, non chiffrée", plu_zone_src
                 applicable.append(ApplicableRule(id="STAT", label="Stationnement", category="other",
                                                  integrationStatus="not_integrated",
-                                                 detail="Règle connue, non chiffrée", source=plu_zone_src))
+                                                 detail=_stat_detail, source=_stat_src))
+                _pt = (_rz.get("pleine_terre") or {}).get("pct") or {}
+                if _pt.get("pct") is not None and _pt.get("statut") == "valide":
+                    _npt, _artp = _pt["pct"], _pt.get("article")
+                    _esp_detail = (f"{_npt:g} % de pleine terre — non intégrée au gabarit"
+                                   + (f" (art. {_artp})" if _artp else ""))
+                    _esp_src = RegulatorySource(document=f"PLU — {commune}", zone=work_zone,
+                                                article=_artp or None, provider=PLU_PROVIDER)
+                else:
+                    _esp_detail, _esp_src = "Règle connue, non chiffrée", plu_zone_src
                 applicable.append(ApplicableRule(id="ESP", label="Espaces libres", category="other",
                                                  integrationStatus="not_integrated",
-                                                 detail="Règle connue, non chiffrée", source=plu_zone_src))
+                                                 detail=_esp_detail, source=_esp_src))
 
     # --- risques : PPR zone rouge (réglementaire, per-parcelle) ---------------
     ppr = session.execute(text(

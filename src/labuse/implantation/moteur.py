@@ -374,12 +374,62 @@ def _roles(base: list, programme: Optional[dict[str, int]]) -> list[tuple[str, o
     return out
 
 
+# DOCS-COHERENCE-1 (F6) — destinations ouvrant le plafond L151-35 (1° à 3° de L151-34).
+_L15134_F6 = {"social", "senior", "etudiante"}
+_CAT_L15134 = {"social": "logement locatif aidé (L151-34, 1°)",
+               "senior": "résidence pour personnes âgées (L151-34, 3°)",
+               "etudiante": "résidence universitaire (L151-34, 2°)"}
+
+
+def _tcsp_dist_m(session, idus) -> Optional[int]:
+    """Distance (m) à la plus proche STATION de transport collectif en site propre (TCSP). L151-35/36
+    visent une gare / un transport guidé / un site propre « bien desservi » — PAS un simple arrêt de bus
+    (`transport_arret`), qui ne déclenche donc pas le plafond. None si inconnu."""
+    if session is None or not idus:
+        return None
+    try:
+        from sqlalchemy import text
+        return session.execute(text(
+            "SELECT min(round(ST_Distance(s.geom_2975, p.geom_2975))::int) FROM parcels p, spatial_layers s "
+            "WHERE p.idu = ANY(:i) AND s.kind = 'tcsp_station' AND s.geom_2975 IS NOT NULL"),
+            {"i": list(idus)}).scalar()
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _plafond_l151(session, idus, type_projet, bareme):
+    """F6 — plafond de stationnement du Code de l'urbanisme s'il est PLUS restrictif que le PLU. Rend
+    (ratio, article, citation) ou None. L151-35 (résid. univ/social/RPA) : ≤ 1 /logt, ≤ 0,5 si < 500 m
+    d'un transport collectif bien desservi. L151-36 (autres logements) : ≤ 1 si < 500 m."""
+    plu = bareme.flat_places if (bareme.validee and bareme.mode == "par_logement") else None
+    dist = _tcsp_dist_m(session, idus)
+    sous_500 = dist is not None and dist < 500
+    if type_projet in _L15134_F6:
+        cap, art = (0.5 if sous_500 else 1.0), "L151-35"
+        cat = _CAT_L15134.get(type_projet, "catégorie L151-34")
+        cite = (f"Code de l'urbanisme L151-35 : pour une {cat}, il ne peut être exigé plus de {cap:g} "
+                f"aire de stationnement par logement"
+                + (" (terrain à moins de 500 m d'un transport collectif bien desservi)" if sous_500 else "")
+                + " — le PLU ne s'applique que s'il est plus favorable ; éligibilité de la catégorie à confirmer.")
+    elif type_projet == "collectif" and sous_500:
+        cap, art = 1.0, "L151-36"
+        cite = ("Code de l'urbanisme L151-36 : à moins de 500 m d'un transport collectif bien desservi, il "
+                "ne peut être exigé plus de 1 aire de stationnement par logement — le PLU ne s'applique "
+                "que s'il est plus favorable.")
+    else:
+        return None
+    # la loi ne « mord » que si elle plafonne SOUS la règle du PLU par logement.
+    if plu is not None and cap >= plu:
+        return None
+    return cap, art, cite
+
+
 def etudier_complet(session=None, *, idus: Optional[list[str]] = None, zone: Optional[str] = None,
                     objectif: str = "equilibre", conv: Optional[Conventions] = None,
                     avec_pente: bool = True, programme: Optional[dict[str, int]] = None,
                     repartition: Optional[list[str]] = None, max_scenarios: int = 3,
                     stationnement_ratio: Optional[float] = None, stationnement_mode: str = "aerien",
-                    niveaux_sous_sol: int = 1):
+                    niveaux_sous_sol: int = 1, type_projet: Optional[str] = None):
     """ETUDE-V6 (Lot B) — UN SEUL passage de recherche, deux vues :
     `scenarios` = sémantique historique (Pareto des candidats couvrant la demande ; [] si la demande
     ne tient pas), et `variantes` = les 3 rôles du mandat (best-effort si dépassement). Renvoie
@@ -390,14 +440,24 @@ def etudier_complet(session=None, *, idus: Optional[list[str]] = None, zone: Opt
     idus = idus or IDUS_ETANG_SALE
     conv = conv or charger_conventions()
     terrain, regles, _zone = _charger(session, idus, zone, conv, avec_pente)
+    # DOCS-COHERENCE-1 (F6, décision Vic) — plafond national du Code de l'urbanisme appliqué quand il
+    # est PLUS restrictif que le PLU (« le PLU ne s'applique que s'il est plus favorable »). L151-35 :
+    # logements aidés / résidences universitaires / RPA → au plus 1 place/logement, 0,5 si < 500 m d'un
+    # transport collectif bien desservi. L151-36 : autres logements < 500 m → au plus 1. On remplace
+    # alors le barème servi par ce plafond, et la citation dit la règle RETENUE (loi, article).
+    _art151, _cite151 = "L151-35 (plafond national)", None
+    if stationnement_ratio is None and type_projet:
+        _r151 = _plafond_l151(session, idus, type_projet, regles.stationnement)
+        if _r151 is not None:
+            stationnement_ratio, _art151, _cite151 = _r151
     if stationnement_ratio is not None:
         from dataclasses import replace
 
         from .regles import BaremeStationnement
         regles = replace(regles, stationnement=BaremeStationnement(
             validee=True, mode="par_logement", base=None, arrondi="superieur",
-            flat_places=stationnement_ratio, lignes=(), article="L151-35 (plafond national)",
-            page_pdf=None, citation=f"plafond {stationnement_ratio:g} place/logt sous condition d'éligibilité"))
+            flat_places=stationnement_ratio, lignes=(), article=_art151,
+            page_pdf=None, citation=_cite151 or f"plafond {stationnement_ratio:g} place / logement sous condition d'éligibilité"))
     zi = terrain.zone_implantation
     if zi is None or zi.is_empty or terrain.aire_zone_m2 < 60:
         return [], [], None, _message_impossible(terrain, regles, []), terrain, regles, conv, None

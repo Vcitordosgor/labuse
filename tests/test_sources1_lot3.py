@@ -77,7 +77,9 @@ def test_filtres_lot3_enregistres():
 def test_registre_lot3_servi():
     from labuse.registre.couverture import COUCHE_PAR_CLE_FRONT, FICHE_PARCELLE_CLES
     from labuse.registre.donnees import DONNEES
-    for cid in ("sis_classe", "casias_statut", "sols_parcelle", "sis_couche",
+    # DOCS-COHERENCE-1 (B5) — « sols_parcelle » (bundle) retiré : SIS/CASIAS servis par
+    # sis_classe + casias_statut, chacun avec son statut juridique, SANS doublon.
+    for cid in ("sis_classe", "casias_statut", "sis_couche",
                 "casias_couche", "bruit_couche", "bruit_carte_couche"):
         assert cid in DONNEES, cid
         assert DONNEES[cid].en_attente is None
@@ -86,7 +88,8 @@ def test_registre_lot3_servi():
     assert "sols" in FICHE_PARCELLE_CLES
     from labuse.registre import ROBINETS
     servies = {c for r in ROBINETS.values() for c in r.chiffres}
-    assert {"sols_parcelle", "sis_classe", "casias_statut"} <= servies
+    assert {"sis_classe", "casias_statut"} <= servies
+    assert "sols_parcelle" not in servies
 
 
 def test_cascade_rules_lot3():

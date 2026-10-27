@@ -6,8 +6,9 @@ données ; une seule fiche les couvre (comme emprise_batie_m2 couvre emprise + c
 from . import FicheRegle, declarer
 
 declarer(FicheRegle(
-    donnees=("gabarit_implantation_m2", "gabarit_bati_deduit_m2", "gabarit_emprise_plafond_m2",
-             "gabarit_hauteur_m", "gabarit_couverture_verdict", "gabarit_motif_blocage", "gabarit_plan_2d"),
+    donnees=("gabarit_zone_libere_m2", "gabarit_implantation_m2", "gabarit_bati_deduit_m2",
+             "gabarit_emprise_plafond_m2", "gabarit_hauteur_m", "gabarit_couverture_verdict",
+             "gabarit_motif_blocage", "gabarit_plan_2d"),
     formule_codee=(
         "Moteur géospatial PUR et déterministe (aucun estimatif — liste noire testée). Par parcelle, "
         "après validation stricte (sinon « Calcul incomplet » + motif) :\n"

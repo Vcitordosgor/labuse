@@ -88,6 +88,34 @@ def _eur_m2(r, k):
     return f"{x} €/m²" if x else None
 
 
+def _terrain_prix_ventes(r):
+    """DOCS-COHERENCE-1 (recette Vic) — MÊME règle et MÊME seuil que le Dossier §8 : sous le seuil
+    d'échantillon, « — (N ventes, échantillon insuffisant) » et le chiffre €/m² DISPARAÎT ; au-dessus,
+    le prix + ses ventes."""
+    from ...dvf_mediane import SEUIL_N
+    n = r.get("prix_terrain_n")
+    if n is not None and int(n) < SEUIL_N:
+        return f"— ({_i(n)} ventes, échantillon insuffisant)"
+    x = _i(r.get("terrain_zone_eur_m2"))
+    if not x:
+        return None
+    return f"{x} €/m² — {_i(n)} ventes" if n else f"{x} €/m²"
+
+
+def _eur_m2_ventes(r, k, n_key, rayon_key=None):
+    """DOCS-COHERENCE-1 (A8) — prix au m² SUIVI du nombre de ventes qui le fonde (« n ventes à moins
+    de R m »), jamais un prix nu. Sans ventes servies, le prix reste seul (pas de « 0 vente » inventé)."""
+    x = _i(r.get(k))
+    if not x:
+        return None
+    n = r.get(n_key)
+    if n:
+        rayon = r.get(rayon_key) if rayon_key else None
+        ou = f" à moins de {_i(rayon)} m" if rayon else ""
+        return f"{x} €/m² — {_i(n)} vente{'s' if int(n) > 1 else ''}{ou}"
+    return f"{x} €/m²"
+
+
 def _pct(r, k, suffixe="%"):
     x = _i(r.get(k))
     return f"{x} {suffixe}" if x is not None else None
@@ -107,8 +135,9 @@ _LIGNES = [
     ("Zone constructible", "s", lambda r: _oui_non(r.get("zone_constructible"))),
     # IMPLANTATION-4 (LOT C) — SDP de l'ancien moteur = « SDP maximale réglementaire » (jamais « du
     # scénario », réservé à l'Étude) ; même libellé qu'à l'écran Comparer.
-    ("SDP maximale réglementaire", "e", lambda r: _m2(r, "sdp_max_m2")),
-    ("SDP résiduelle", "e", lambda r: _sdp_residuelle_cause(r)),
+    # DOCS-COHERENCE-1 (A9) — libellés COMPLETS : ce que mesure chaque SDP (comme le §10 du Dossier).
+    ("SDP maximale réglementaire, terrain libéré", "e", lambda r: _m2(r, "sdp_max_m2")),
+    ("SDP résiduelle, bâti conservé", "e", lambda r: _sdp_residuelle_cause(r)),
     ("Emprise au sol max (PLU)", "s", lambda r: (_pct(r, "emprise_ces_pct") or "non réglementée")),
     ("Taux d'occupation du gabarit", "e", lambda r: esc(fmt_taux_emprise(r.get("taux_emprise_pct")))),
     ("Sous-densité", "e", lambda r: _oui_non(r.get("sous_densite"))),
@@ -118,8 +147,10 @@ _LIGNES = [
         + (" — Bilan déficitaire : à ces hypothèses, le foncier ne se paie pas"
            if (r.get("charge_fonciere_m2") or 0) < 0 else ""))
         if r.get("charge_fonciere_m2") is not None else None)),
-    ("Prix terrain nu zone", "e", lambda r: _eur_m2(r, "terrain_zone_eur_m2")),
-    ("Prix bâti (section cadastrale)", "e", lambda r: _eur_m2(r, "prix_secteur_bati_m2")),
+    # DOCS-COHERENCE-1 (A8) — prix lus de l'id de la fiche (secteur autour de la parcelle), comme le
+    # Dossier §8 et l'Étude de zone ; plus aucun calcul de prix propre au Comparatif.
+    ("Prix du terrain (secteur)", "e", _terrain_prix_ventes),
+    ("Prix du bâti (secteur)", "e", lambda r: _eur_m2_ventes(r, "prix_secteur_bati_m2", "prix_bati_n", "prix_bati_rayon_m")),
     # IMPLANTATION-4 (LOT B) + FIX-ORFEVRE-1 (décision Vic 18/10/2026) — aucun nombre de logements de
     # l'ancien calcul (fourchette estimate_capacity) : la ligne renvoie à l'Étude de faisabilité, seule
     # à compter des logements. prov=None → aucun badge, comme « Classement LABUSE » (un renvoi, pas une
@@ -129,7 +160,8 @@ _LIGNES = [
     ("Gabarit max", "s", lambda r: (f"R+{max(0, int(r['gabarit_niveaux_max']) - 1)}" if r.get("gabarit_niveaux_max") is not None else None)),
     ("Accès & réseaux", "s", lambda r: esc(r.get("acces_reseaux")) if r.get("acces_reseaux") else None),
     ("Assainissement", "e", lambda r: esc(r.get("assainissement")) if r.get("assainissement") else None),
-    ("Propriétaire", "s", lambda r: {"morale": "personne morale", "particulier": "particulier"}.get(r.get("proprietaire"))),
+    ("Propriétaire", "s", lambda r: {"morale": "personne morale", "particulier": "particulier",
+                                      "succession": "succession", "indivision": "indivision"}.get(r.get("proprietaire"))),
     ("Contrainte majeure", "s", lambda r: esc(r.get("contrainte_majeure")) if r.get("contrainte_majeure") else (f"{r.get('n_contraintes')} signalée(s)" if r.get("n_contraintes") else "aucune")),
 ]
 

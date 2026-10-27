@@ -2046,6 +2046,75 @@ def _attach_au_ouverture(db: Session, payload: dict, idus) -> None:
             return
 
 
+def _attach_contraintes_signalees(db: Session, payload: dict, idus) -> None:
+    """DOCS-COHERENCE-1 (A5) — l'Étude §2 porte la MÊME liste de contraintes que le Dossier §5 (aléas
+    via `_aleas_block` → `servitudes.aleas_parcelle`, DPU via `_dispositifs_block`), « signalée, non
+    interprétée » quand le moteur d'implantation ne les modélise pas. Plus jamais « aucune contrainte »
+    quand le Dossier en relève une. Agrégé sur toutes les parcelles de l'assiette (dédoublonné)."""
+    if not isinstance(payload, dict):
+        return
+    from .app import _aleas_block, _dispositifs_block
+    vus, items = set(), []
+
+    def _ajoute(libelle: str):
+        cle = libelle.strip().lower()
+        if cle and cle not in vus:
+            vus.add(cle)
+            items.append(libelle.strip())
+
+    for idu in (idus or []):
+        try:
+            al = _aleas_block(db, idu) or {}
+            for a in (al.get("liste") or []):
+                niv = a.get("niveau")
+                # libellé client (comme le Dossier §5) : « _ » techniques → espaces ; jamais le code brut.
+                nat = (a.get("nature") or a.get("libelle") or "").replace("_", " ").replace(
+                    "mouvement terrain", "mouvement de terrain")
+                _ajoute(nat + (f" — niveau {niv}" if niv else ""))
+        except Exception:  # noqa: BLE001 — une contrainte absente n'est jamais un 500
+            pass
+        try:
+            d = _dispositifs_block(db, idu) or {}
+            if d.get("dpu"):   # bloc DPU présent = parcelle dans le périmètre de préemption
+                _ajoute("Droit de préemption urbain (DPU)")
+        except Exception:  # noqa: BLE001
+            pass
+    if items:
+        payload.setdefault("terrain", {})["contraintes_signalees"] = items
+
+
+def _attach_zone_gabarit(db: Session, payload: dict, idus) -> None:
+    """DOCS-COHERENCE-1 (A3, arbitrage Vic) — UN SEUL calcul de la zone d'implantation : celui du
+    Gabarit. L'Étude LIT sa valeur (« terrain libéré » X + « bâti existant déduit » Y) au lieu de la
+    recalculer. Assiette MONO-parcelle seulement (le Gabarit est per-parcelle ; une assiette fusionnée
+    multi-parcelles garde la zone du moteur d'implantation, faute de référence Gabarit unique)."""
+    if not isinstance(payload, dict) or len(idus or []) != 1:
+        return
+    from ..exports.robinet_fiche import collecte
+    try:
+        v = collecte(db, idus[0], ["gabarit_zone_libere_m2", "gabarit_implantation_m2"])
+        x, y = v.get("gabarit_zone_libere_m2"), v.get("gabarit_implantation_m2")
+        t = payload.setdefault("terrain", {})
+        if x is not None and x.valeur is not None:
+            t["zone_gabarit_libere_m2"] = float(x.valeur)
+            if y is not None and y.valeur is not None:
+                t["zone_gabarit_bati_deduit_m2"] = float(y.valeur)
+        # DOCS-COHERENCE-1 (F1) — bâti EXISTANT (emprise BD TOPO clippée + nombre, MÊME producteur que
+        # la fiche/Dossier §3, bati.emprise_bati_bdtopo_m2) pour écrire « supposé démoli » sur une
+        # étude « terrain libéré ».
+        from sqlalchemy import text as _text
+        row = db.execute(_text(
+            "SELECT COALESCE(ST_Area(ST_Union(ST_Intersection(b.geom_2975, p.geom_2975))), 0) AS emprise, "
+            "count(DISTINCT b.id) AS n FROM parcels p "
+            "JOIN spatial_layers b ON b.kind='batiment' AND ST_Intersects(b.geom_2975, p.geom_2975) "
+            "WHERE p.idu = :i"), {"i": idus[0]}).mappings().first()
+        if row and (row["emprise"] or 0) > 0:
+            t["bati_existant_emprise_m2"] = round(float(row["emprise"]), 1)
+            t["bati_existant_nombre"] = int(row["n"] or 0)
+    except Exception:  # noqa: BLE001 — le Gabarit indisponible n'est jamais un 500 ; l'Étude garde sa zone
+        pass
+
+
 class EtudeParcellesIn(BaseModel):
     # ETUDE-V6 (Lot A, étape 1) — valide l'assiette AVANT le moteur : faits par parcelle, union,
     # contiguïté (graphe, frontière partagée > tolérance), signaux et sources. Rapide, pas d'implantation.
@@ -2119,6 +2188,8 @@ def etude_implantation(body: EtudeIn, db: Session = Depends(get_db)) -> dict:
     except ValueError as exc:
         raise HTTPException(400, str(exc))
     _attach_au_ouverture(db, out, body.idus)   # vérif #2 — caveat AU porté par l'Étude, comme Comparer
+    _attach_contraintes_signalees(db, out, body.idus)   # A5 — mêmes contraintes que le Dossier §5
+    _attach_zone_gabarit(db, out, body.idus)   # A3 — zone d'implantation lue du Gabarit (un seul calcul)
     return out
 
 
@@ -2185,6 +2256,8 @@ def etude_pdf(body: EtudePdfIn, request: Request, db: Session = Depends(get_db))
     except ValueError as exc:
         raise HTTPException(400, str(exc))
     _attach_au_ouverture(db, payload, body.idus)   # vérif #2 — caveat AU dans le PDF comme à l'écran
+    _attach_contraintes_signalees(db, payload, body.idus)   # A5 — mêmes contraintes que le Dossier §5
+    _attach_zone_gabarit(db, payload, body.idus)   # A3 — zone d'implantation lue du Gabarit (un seul calcul)
     genere_le = today_reunion().strftime("%d/%m/%Y")
     try:
         # ETUDE-V6 (Lot E) — le lotissement a son propre document (pas de scénario d'implantation).

@@ -167,11 +167,17 @@ def reperes_publics(db: Session, idu: str, sourcee: dict) -> dict[str, dict]:
         pct = tp.get("part_communale_pct") if tp else None
         if not pct:
             return None
-        val = round(vf * float(pct) / 100.0, 2)
+        # DOCS-COHERENCE-1 (recette Vic) — taxe d'aménagement = part COMMUNALE + part DÉPARTEMENTALE
+        # (2,5 % confirmé pour La Réunion) : on pré-remplit le TOTAL sourcé en disant les deux parts.
+        pct_dep = float(cfg["taux"].get("part_departementale_defaut") or 0.0)
+        val_com = round(vf * float(pct) / 100.0, 2)
+        val_dep = round(vf * pct_dep / 100.0, 2)
+        val = round(val_com + val_dep, 2)
         return {
             "valeur": val,
             "label": f"Outil Taxe : {val:g} €/m²",
-            "source": f"taxe d'aménagement, part communale {pct} % × {vf:g} €/m²",
+            "source": (f"taxe d'aménagement = part communale {pct:g} % ({val_com:g} €/m²) + part "
+                       f"départementale {pct_dep:g} % ({val_dep:g} €/m²), sur {vf:g} €/m² (La Réunion)"),
         }
 
     taxe = _sans_poison(db, _taxe)
@@ -266,3 +272,39 @@ def reperes_publics(db: Session, idu: str, sourcee: dict) -> dict[str, dict]:
         out["cout_construction_ref"] = cout
 
     return out
+
+
+def bilan_prefill(db: Session, idu: str) -> dict[str, Any]:
+    """DOCS-COHERENCE-1 (recette Vic) — pré-remplissages SOURCÉS du Bilan (PDF = écran) : terrain
+    (contenance cadastrale), taxe d'aménagement (part communale + départementale), redevance
+    d'archéologie (0,40 %), + métadonnées d'en-tête (adresse BAN, commune, date des données servies).
+    Jamais un chiffre inventé : un repère non résolu reste « À renseigner »."""
+    from .moteur import SOURCE, SaisiePoste
+
+    sourcee = sources_parcelle(db, idu) or {}
+    rp = reperes_publics(db, idu, sourcee) or {}
+    postes: dict[str, SaisiePoste] = {}
+    taxe = rp.get("outil_taxe")
+    if taxe and taxe.get("valeur"):
+        postes["txLog"] = SaisiePoste(valeur=float(taxe["valeur"]), etat=SOURCE)
+    rap = rp.get("redevance_archeologie")
+    if rap and rap.get("valeur"):
+        postes["archeo"] = SaisiePoste(valeur=float(rap["valeur"]), etat=SOURCE)
+    adresse = None
+    try:
+        from ..courrier import adresse_ban_parcelle
+        adresse = _sans_poison(db, lambda: adresse_ban_parcelle(db, idu))
+    except Exception:  # noqa: BLE001
+        adresse = None
+    try:
+        from ..exports.builder import _donnees_labuse_au
+        donnees_au = _donnees_labuse_au()
+    except Exception:  # noqa: BLE001
+        donnees_au = None
+    return {
+        "terrain": sourcee.get("terrain"),
+        "postes": postes,
+        "adresse": adresse or "",
+        "commune": sourcee.get("commune") or "",
+        "donnees_au": donnees_au,
+    }

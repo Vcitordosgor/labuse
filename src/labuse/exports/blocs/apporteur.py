@@ -324,9 +324,21 @@ def rendu(valeurs, ctx=None) -> str:
     q += _q(nm, "Date de la visite ou du contact")
     q += _q(nm, "Comment vous connaissez le propriétaire", "Voisin, famille, hasard, démarche…", zone=True)
 
-    # ── §3 — Qui décide (version personne physique OU personne morale) ──
+    # ── §3 — Qui décide (DOCS-COHERENCE-1 C1 : 3 variantes selon le type — succession/indivision,
+    #        société, ou particulier ; le type suit le classifieur unique A1 lu sur type_proprietaire) ──
+    _tp = str(val(valeurs, "type_proprietaire") or "")
+    is_succession = _tp.startswith("Succession") or _tp.startswith("Indivision")
     q += "<h3>3. Qui décide</h3>"
-    if is_pm:
+    if is_succession:
+        _mot = "succession" if _tp.startswith("Succession") else "indivision"
+        q += _aide(f"Une {_mot} ne vend que si TOUS les héritiers signent — c'est la première chose "
+                   "qui fait échouer une vente.")
+        q += _q(nm, "Combien d'héritiers, et lesquels sont joignables ?",
+                "Nombre, noms connus, coordonnées.", zone=True)
+        q += _boxes(nm, "Sont-ils d'accord pour vendre ?", ["Oui", "Non", "Ne sait pas"])
+        q += _q(nm, "Quel notaire est chargé de la succession ?", "Nom de l'étude.", zone=True)
+        q += _boxes(nm, "Un partage ou une licitation sont-ils en cours ?", ["Non", "Oui", "Ne sait pas"])
+    elif is_pm:
         # EXPORTS-FIX-1 E4 — VERSION PERSONNE MORALE : dirigeant, organe qui décide, signataires —
         # jamais l'âge / la santé / l'indivision / la succession / les époux (questions de personne
         # physique, hors sujet pour une société).
@@ -382,6 +394,10 @@ def rendu(valeurs, ctx=None) -> str:
     if ctx.get("obs_eau"):
         q += _q(nm, "Traces d'eau : inondation, ravine, zone humide, drainage ?",
                 "La parcelle est concernée par un aléa d'eau (inondation / ravine / zone humide).", zone=True)
+    if ctx.get("obs_mouvement"):
+        # DOCS-COHERENCE-1 (C2) — aléa de mouvement de terrain relevé : on pose la question qui va avec.
+        q += _q(nm, "Mouvements de sol : fissures, glissements, murs qui penchent ?",
+                "La parcelle est concernée par un aléa de mouvement de terrain.", zone=True)
     if ctx.get("obs_ligne_ht"):
         q += _boxes(nm, "Ligne électrique, pylône, transformateur sur ou au bord ?", ["Non", "Oui"])
     if ctx.get("obs_pollution"):

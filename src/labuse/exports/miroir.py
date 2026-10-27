@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from ..pente_fmt import pente_courte
 from ..registre import declarations as DEC
 from ..registre.valeur import Valeur
 from .nature import chip
@@ -142,7 +143,10 @@ _ABSENCE_CLAIR = {
 
 #: EXPORTS-FIX-1 C3 — le SAR n'est pas en base : la ligne « Aucune divergence SAR indiquée » ne
 #: doit pas s'imprimer (elle affirme un contrôle qui n'a pas eu lieu). Absence purement masquée.
-_ABSENCE_MASQUEE = {"sar_divergence"}
+# DOCS-COHERENCE-1 (B4) — la mixité sociale tient en UNE ligne (la clause) : le seuil en m² et le
+# quota en % sont des DÉTAILS de cette clause (ils s'affichent quand ils sont servis), jamais une
+# 2ᵉ/3ᵉ ligne « non renseigné » qui répète l'absence de la clause.
+_ABSENCE_MASQUEE = {"sar_divergence", "mixite_seuil_m2", "mixite_quota_pct"}
 
 #: EXPORTS-FIX-1 C6 — marqueurs d'une donnée NON DISPONIBLE (non calculée/déterminée), à distinguer
 #: d'un « vérifié : rien » (contrôle fait, rien trouvé). Deux encadrés distincts au rendu.
@@ -574,9 +578,16 @@ def _r_vefa_prix(v):
 
 
 def _r_terrain_nu(v):
+    # DOCS-COHERENCE-1 (recette Vic) — échantillon sous le seuil : la ligne le DIT (« — (N ventes,
+    # échantillon insuffisant) ») et aucun chiffre €/m² n'est affiché ; sinon la médiane + ses ventes.
+    if isinstance(v, dict) and v.get("insuffisant"):
+        return esc(f"— ({groupe(v.get('n') or 0)} ventes, échantillon insuffisant)")
     lib = fmt_eur_m2(v["prix_m2"])
     if v.get("n"):
         lib += f" — terrain nu, {groupe(v['n'])} ventes"
+    _ctx = " · ".join(x for x in (v.get("perimetre"), v.get("fenetre")) if x)
+    if _ctx:
+        lib += f" · {_ctx}"
     return esc(lib)
 
 
@@ -610,6 +621,10 @@ def _r_dvf_liste(v, val: Valeur, zone=None):
         # aux lignes maison/appartement/terrain. La fiche ne l'affiche jamais (marche.tsx ne rend que
         # terrain/maison/appartement) ; on le retire du Dossier pour la même raison — cohérence fiche == Dossier.
         if typ.lower() == "autre":
+            continue
+        # DOCS-COHERENCE-1 (recette Vic) — le TERRAIN a sa ligne dédiée « Terrain » (prix + seuil
+        # d'échantillon) : on ne le répète pas ici (plus de double ligne terrain au §8).
+        if typ.lower() == "terrain":
             continue
         tb = esc(typ.capitalize())
         px = fmt_eur_m2(r["mediane_prix_m2"]) if r.get("mediane_prix_m2") else \
@@ -815,13 +830,20 @@ def _r_filiation(v):
     return esc(_fr_dates(" — ".join(bits)))
 
 
+def _r_artif_ocsge(v):
+    # DOCS-COHERENCE-1 (B2) — « artificialisé » au sens OCS GE = bâti, cours ET jardins (donnée
+    # d'îlot) : on le DIT avec la valeur pour qu'un « 100 % » ne se lise pas « 100 % bâti/scellé ».
+    return esc(f"{fmt_pct(v)} — au sens OCS GE (bâti, cours et jardins), donnée d'îlot")
+
+
 #: id → rendeur. `bloc` = fragment pleine largeur (tableau propre) ; sinon cellule valeur.
 _RENDEURS: dict[str, Any] = {
+    "part_artificialisee_pct": _r_artif_ocsge,
     "prix_achat_historique_eur": _r_prix_achat, "coproprietes_liste": _r_copros,
     "proprietaire_timeline_liste": _r_timeline, "historique_permis_liste": _r_permis_liste,
     "er_emplacement_reserve": _r_er_ebc, "ebc_classe": _r_er_ebc, "dpu_perimetre": _r_dpu,
     "peb_zone": _r_peb, "dispositifs_parcelle": _r_sup, "statut_plu": _r_statut_plu,
-    "sols_parcelle": _r_sols, "viabilisation_verdict": _r_viab, "distance_arret_m": _r_proximites,
+    "viabilisation_verdict": _r_viab, "distance_arret_m": _r_proximites,
     "tcsp_stationnement_allege": _r_tcsp, "part_logements_egout_pct": _r_anc,
     "fibre_parcelle": _r_fibre, "prix_sortie_bati_eur_m2": _r_prix_ancien,
     "prix_neuf_vefa_acte_eur_m2": _r_vefa_prix,   # EXPORTS-FIX-1 C5
@@ -969,7 +991,7 @@ def _verdict_factuel(sec_id: str, valeurs: dict[str, Valeur]) -> tuple[str, str,
         libre = _v(valeurs, "surface_libre_sol_m2")
         bits = []
         if p is not None:
-            bits.append(f"pente {str(p).replace('.', ',')}°")
+            bits.append(f"pente {pente_courte(float(p))}")
         if libre is not None:
             bits.append(f"{fmt_m2(libre)} de sol libre")
         return (esc(" · ".join(bits).capitalize()) + ".", "neutral", "pente_deg") if bits else None
@@ -1082,7 +1104,7 @@ def _bloc_reglement(valeurs: dict[str, Valeur]) -> str:
 _COVER_TUILES = [
     ("surface_parcelle_m2", "Surface", lambda v: fmt_m2(v)),
     ("zone_plu_famille", "Zone", lambda v: esc(v)),
-    ("pente_deg", "Pente", lambda v: esc(f"{str(v).replace('.', ',')}°")),
+    ("pente_deg", "Pente", lambda v: esc(pente_courte(float(v)))),
     ("exposition_versant", "Exposition", lambda v: esc(v)),
     ("n_vigilances", "Risques", lambda v: esc(f"{groupe(v)} relevé{'s' if v and v > 1 else ''}")),
     ("sdp_residuelle_m2", "SDP restante (bâti conservé)", lambda v: fmt_m2(v)),

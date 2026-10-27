@@ -28,3 +28,10 @@ def pente_texte(deg: float) -> str:
     """Phrase client complète : « 11,4° ≈ 20 % (modérée) »."""
     p = pente_pct(deg)
     return f"{deg:.1f}".replace(".", ",") + f"° ≈ {p} % ({pente_label(p)})"
+
+
+def pente_courte(deg: float) -> str:
+    """DOCS-COHERENCE-1 (A4) — format UNIQUE « 9,7° (17 %) » lu à l'identique par le Dossier
+    (couverture + §2), l'Étude de faisabilité et le Gabarit. Degrés ET pente en %, une seule
+    mesure (celle de la fiche, RGE ALTI `parcel_terrain`)."""
+    return f"{deg:.1f}".replace(".", ",") + f"° ({pente_pct(deg)} %)"

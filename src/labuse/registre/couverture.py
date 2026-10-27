@@ -71,8 +71,10 @@ FICHE_PARCELLE_CLES: dict[str, tuple[str, ...] | tuple[str, str]] = {
                     "dpu_perimetre", "peb_zone"),
     # SOURCES-1 lot 5 — fibre Arcep (Réseaux et accès)
     "fibre": ("fibre_parcelle",),
-    # SOURCES-1 lot 3 — bloc « Sols » (SIS, CASIAS)
-    "sols": ("sols_parcelle", "sis_classe", "casias_statut"),
+    # SOURCES-1 lot 3 — bloc « Sols » (SIS, CASIAS). DOCS-COHERENCE-1 (B5) : le bundle
+    # « sols_parcelle » retiré (il DOUBLONNAIT sis_classe + casias_statut, chacun avec son
+    # statut juridique — opposable vs informatif — dans la section Risques).
+    "sols": ("sis_classe", "casias_statut"),
 }
 
 

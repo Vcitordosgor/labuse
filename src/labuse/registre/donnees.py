@@ -107,6 +107,13 @@ DONNEES: dict[str, Donnee] = {
     moteur="gabarit", calcul="moteur",
     fonction="src/labuse/gabarit/engine.py:compute_gabarit",
     reservoirs=("cadastre_api_carto", "gpu_plu_api_carto",), portee="live"),
+ "gabarit_zone_libere_m2": C("Zone d'implantation, terrain libéré", "m²", "parcelle",
+    "DOCS-COHERENCE-1 (A3) — zone d'implantation AVANT déduction du bâti existant (« terrain libéré ») "
+    "= zone d'implantation (après reculs + exclusions) + emprise du bâti retranché. X − Y = emprise du "
+    "bâti dans la zone, avec Y = gabarit_implantation_m2. Calcul géospatial pur, jamais estimé.",
+    moteur="gabarit", calcul="moteur",
+    fonction="src/labuse/gabarit/engine.py:compute_gabarit",
+    reservoirs=("cadastre_api_carto", "gpu_plu_api_carto",), portee="live"),
  "gabarit_bati_deduit_m2": C("Bâti existant déduit", "m²", "parcelle",
     "RECETTE-OUTILS-3 (S7, décision Vic) — emprise du bâti existant conservé RETRANCHÉE de la zone "
     "d'implantation (zone ∩ bâti, après découpe du bâti au contour cadastral). Calcul géospatial pur "
@@ -1853,14 +1860,8 @@ DONNEES: dict[str, Donnee] = {
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/couches_tuyau.py:couche_tuile (bruit_carte)",
     reservoirs=("deal_bruit_cartes",), portee="live",
     type="couche", table="spatial_layers (kind=bruit_carte)", fabrication="requete"),
- "sols_parcelle": C("Sols (SIS/CASIAS, parcelle)", "liste", "parcelle",
-    "l'état des sols de la parcelle : périmètre SIS intersecté, site CASIAS/instruction le "
-    "plus proche (≤ 100 m) — intersections live des couches servies, mêmes règles que la "
-    "cascade sol_pollue",
-    moteur=None, calcul="passe_plat",
-    fonction="src/labuse/api/app.py:_sols_block",
-    reservoirs=("georisques_sis", "georisques_casias",), portee="live", type="liste",
-    table="spatial_layers (kind=sol_pollue)"),
+ # DOCS-COHERENCE-1 (B5) — « sols_parcelle » (bundle SIS+CASIAS) retiré : il doublonnait
+ # sis_classe + casias_statut (chacun avec son statut juridique dans la section Risques).
  # ══ SOURCES-1 lot 6 — le foncier et les gens ══
  "filiation_parcelle": C("Historique cadastral (filiation DFI)", "liste", "parcelle",
     "la généalogie OFFICIELLE de la parcelle : d'où elle vient (mères), ce qu'elle est "

@@ -36,6 +36,9 @@ class Voie:
 class Contexte:
     voisins: list[Voisin] = field(default_factory=list)
     batis_voisins: list[BaseGeometry] = field(default_factory=list)
+    # DOCS-COHERENCE-1 (F1) — bâti EXISTANT SUR l'assiette (BD TOPO) : dessiné en gris pointillé
+    # « supposé démoli » quand l'étude est menée terrain libéré. Même source que batis_voisins.
+    batis_assiette: list[BaseGeometry] = field(default_factory=list)
     voies: list[Voie] = field(default_factory=list)
     tn_coins: list[dict] = field(default_factory=list)   # [{x, y, alt_m|None}] aux angles de la bbox
     # axe de coupe (perpendiculaire à la voie, passant par l'assiette) + profil TN le long de cet axe,
@@ -71,13 +74,7 @@ def _voisins(session, aw_wkt: str, idus: list[str]) -> list[Voisin]:
     return out
 
 
-def _batis(session, aw_wkt: str) -> list[BaseGeometry]:
-    rows = _rows(session,
-        "SELECT ST_AsText(geom_2975) AS wkt FROM spatial_layers "
-        "WHERE kind='batiment' AND geom_2975 IS NOT NULL "
-        "AND ST_DWithin(geom_2975, ST_GeomFromText(:g,2975), :r) "
-        "AND NOT ST_Intersects(geom_2975, ST_GeomFromText(:g,2975)) LIMIT 400",
-        {"g": aw_wkt, "r": _RAYON_VOISINS_M})
+def _wkts(rows) -> list[BaseGeometry]:
     out = []
     for (w,) in rows:
         if not w:
@@ -89,6 +86,24 @@ def _batis(session, aw_wkt: str) -> list[BaseGeometry]:
         except Exception:
             continue
     return out
+
+
+def _batis(session, aw_wkt: str) -> list[BaseGeometry]:
+    return _wkts(_rows(session,
+        "SELECT ST_AsText(geom_2975) AS wkt FROM spatial_layers "
+        "WHERE kind='batiment' AND geom_2975 IS NOT NULL "
+        "AND ST_DWithin(geom_2975, ST_GeomFromText(:g,2975), :r) "
+        "AND NOT ST_Intersects(geom_2975, ST_GeomFromText(:g,2975)) LIMIT 400",
+        {"g": aw_wkt, "r": _RAYON_VOISINS_M}))
+
+
+def _batis_assiette(session, aw_wkt: str) -> list[BaseGeometry]:
+    # DOCS-COHERENCE-1 (F1) — le bâti existant QUI TOUCHE l'assiette (= à démolir sur terrain libéré).
+    return _wkts(_rows(session,
+        "SELECT ST_AsText(ST_Intersection(geom_2975, ST_GeomFromText(:g,2975))) AS wkt FROM spatial_layers "
+        "WHERE kind='batiment' AND geom_2975 IS NOT NULL "
+        "AND ST_Intersects(geom_2975, ST_GeomFromText(:g,2975)) LIMIT 400",
+        {"g": aw_wkt}))
 
 
 def _voies(session, aw_wkt: str) -> list[Voie]:
@@ -214,6 +229,7 @@ def charger_contexte(session, assiette: BaseGeometry, idus: list[str], *, avec_t
     return Contexte(
         voisins=_voisins(session, aw, idus),
         batis_voisins=_batis(session, aw),
+        batis_assiette=_batis_assiette(session, aw),
         voies=_voies(session, aw),
         tn_coins=_tn_coins(session, assiette, avec_ign=avec_tn),
         axe=axe,

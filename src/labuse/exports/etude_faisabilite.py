@@ -20,6 +20,15 @@ from typing import Any, Optional
 
 from .rendu import Cartouche, esc, page_html
 
+
+def _donnees_labuse_au_etude(genere_le: str) -> str:
+    """DOCS-COHERENCE-1 (A10) — pied unique « Données LABUSE au JJ/MM/AAAA » = date de la DONNÉE
+    servie (run servi, `served_manifest.json promoted_at`), identique aux 7 autres documents ;
+    repli sur la date de génération si le manifeste est illisible."""
+    from .builder import _donnees_labuse_au
+    return _donnees_labuse_au() or genere_le
+
+
 # ── palette (reprise EXACTE de implantation.rendu._COUL, en hex pour le SVG) ──────────────────
 _COUL = {
     "parcelle": ("#FBFCFB", "#9AA0A6"),
@@ -210,15 +219,26 @@ def _stationnement_3lignes(payload: dict, retenu: dict) -> str:
     mode = retenu.get("stationnement", {}).get("mode") or payload["entrees"].get("stationnement") or "aerien"
     places = retenu.get("stationnement", {}).get("places")
     niveaux = retenu.get("stationnement", {}).get("niveaux_sous_sol") or 1
-    regleg = g.get("regle_courte") or (f"{_dec(g.get('ratio_par_logement'))} place/logt" if g.get("ratio_par_logement") is not None else "un barème par typologie")
+    _rp = g.get("ratio_par_logement")
+    regleg = g.get("regle_courte") or (f"{_dec(_rp)} place{'s' if (_rp or 0) >= 2 else ''} / logement" if _rp is not None else "un barème par typologie")
     # ETUDE-V6-5 — le lieu reflète le NOMBRE DE NIVEAUX choisi (−1, ou −1 et −2).
     lieu = (f"au sous-sol ({'niveaux −1 et −2' if niveaux >= 2 else 'niveau −1'})" if mode == "sous_sol"
             else "en aérien (au sol)")
-    lignes = [f"Le PLU de {esc(commune)} (art. {esc(g.get('article') or '—')}) exige {esc(regleg)}."]
-    if pf:
+    # DOCS-COHERENCE-1 (F6) — la règle RETENUE peut être la loi (Code de l'urbanisme L151-35/36) quand
+    # elle plafonne sous le PLU : le texte le dit (jamais « le PLU exige » un article du Code national).
+    _art = g.get("article") or "—"
+    _is_loi = str(_art).upper().startswith("L151")
+    if _is_loi:
+        lignes = [f"Le Code de l'urbanisme (art. {esc(_art)}) plafonne le stationnement à {esc(regleg)} "
+                  "— le PLU ne s'applique que s'il est plus favorable ; éligibilité de la catégorie à confirmer."]
+    else:
+        lignes = [f"Le PLU de {esc(commune)} (art. {esc(_art)}) exige {esc(regleg)}."]
+    # Le plafond RÉDUIT « à confirmer » (0,5) n'est signalé que si la règle retenue n'est pas déjà la loi.
+    if pf and not _is_loi:
         lignes.append(f"La loi nationale (Code de l'urbanisme, art. {esc(pf.get('reference') or 'L151-35')}) "
-                      f"plafonne à {_dec(pf.get('ratio_plafond'))} place/logt si le projet est éligible — à confirmer.")
-    lignes.append(f"LABUSE a dessiné {int(places) if places is not None else '—'} places {lieu} selon la règle du PLU.")
+                      f"plafonne à {_dec(pf.get('ratio_plafond'))} place / logement si le projet est éligible — à confirmer.")
+    lignes.append(f"LABUSE a dessiné {int(places) if places is not None else '—'} places {lieu} "
+                  f"selon la règle {'retenue' if _is_loi else 'du PLU'}.")
     mix_html = ""
     mx = next((l for l in payload["regles"].get("lignes", []) if "mixit" in (l.get("nom") or "").lower()), None)
     if mx and mx.get("valeur") is not None:
@@ -413,7 +433,8 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
         (_m2(t.get("contenance_totale_m2")), "Contenance cadastrale"),
         ((emp_m2 + " m²") if emp_m2 else "—", "Emprise au sol max"),
         ((f"{_grp(haut['valeur'])} {esc(str(haut.get('unite') or 'm'))}") if haut and haut.get("valeur") is not None else "—",
-         esc(f"Hauteur ({haut['nom']})" if haut else "Hauteur")),
+         # DOCS-COHERENCE-1 (F9) — « Hauteur à l'égout », jamais « Hauteur (hauteur à l'égout) ».
+         esc((haut['nom'][:1].upper() + haut['nom'][1:]) if haut and haut.get('nom') else "Hauteur")),
         (aides_txt, "Logements aidés imposés"),
         (str(places_imp) if places_imp is not None else "—", "Places imposées"),
         (str(cc["non_effectue"]), "Contrôles non effectués"),
@@ -492,23 +513,29 @@ def _p2_terrain(payload: dict, retenu: dict) -> str:
                  f'<td><strong>{_m2(t.get("contenance_totale_m2"))}</strong></td><td class="n"></td></tr>')
     # terrain (pente, limites, accès)
     trows = []
-    pente = t.get("pente_lidar")
-    if isinstance(pente, dict):
-        pm = pente.get("pente_moyenne_pct") or pente.get("pente_pct") or pente.get("pente")
-        if pm is not None:
-            trows.append(f'<tr><td class="k">Pente moyenne</td><td>{esc(_dec(pm))} %</td>'
-                         f'<td class="n"><span class="chip s">LiDAR HD</span></td></tr>')
+    # DOCS-COHERENCE-1 (A4) — UNE seule pente dans les documents : celle de la fiche (RGE ALTI,
+    # parcel_terrain), format « 9,7° (17 %) », identique au Dossier et au Gabarit. La pente LiDAR du
+    # profil ne sert QUE le moteur (hauteur sur terrain en pente) — elle ne s'affiche plus ici.
+    pente_deg = t.get("pente_fiche_deg")
+    if pente_deg is not None:
+        from ..pente_fmt import pente_courte
+        trows.append(f'<tr><td class="k">Pente</td><td>{esc(pente_courte(float(pente_deg)))}</td>'
+                     f'<td class="n"><span class="chip s">RGE ALTI</span></td></tr>')
     note = t.get("note_limites")
     if note:
         trows.append(f'<tr><td class="k">Limites</td><td>{esc(str(note))}</td>'
                      f'<td class="n"><span class="chip s">BD TOPO · cadastre</span></td></tr>')
     acces = retenu.get("stationnement", {}).get("acces")
     if acces:
+        # DOCS-COHERENCE-1 (F9) — ne pas redoubler « à confirmer » si la note le dit déjà.
+        _anote = (acces.get("note") or "possible").strip()
+        _aconf = "" if _anote.lower().endswith("à confirmer") else " — à confirmer"
         trows.append(f'<tr><td class="k">Accès véhicule</td>'
-                     f'<td>{esc(acces.get("note") or "possible")} — à confirmer</td>'
+                     f'<td>{esc(_anote)}{_aconf}</td>'
                      f'<td class="n"><span class="chip d">Dérivé</span></td></tr>')
     fig = _svg_plan(retenu["geojson"], ["parcelle", "assiette", "voie"], h=380)
-    verdict = (f'{len(t.get("parcelles", []))} parcelle(s), {_m2(t.get("contenance_totale_m2"))} au '
+    _npar = len(t.get("parcelles", []))   # DOCS-COHERENCE-1 (F9) — accord en nombre, jamais « parcelle(s) »
+    verdict = (f'{_npar} parcelle{"s" if _npar > 1 else ""}, {_m2(t.get("contenance_totale_m2"))} au '
                f'cadastre' + (f" ; {esc(str(note))}" if note else "") + ".")
     return (
         '<section><h2>1. Le terrain</h2>'
@@ -543,8 +570,9 @@ def _p3_regles(payload: dict, retenu: dict) -> str:
     # seulement dans la section dédiée) : article + barème court du PLU, servis par le payload.
     _g = (payload.get("stationnement_regimes") or {}).get("general") or {}
     if _g.get("article") or _g.get("regle_courte") or _g.get("ratio_par_logement") is not None:
-        _sreg = _g.get("regle_courte") or (f"{_dec(_g.get('ratio_par_logement'))} place/logt"
-                                           if _g.get("ratio_par_logement") is not None else "barème par typologie")
+        _srp = _g.get("ratio_par_logement")
+        _sreg = _g.get("regle_courte") or (f"{_dec(_srp)} place{'s' if (_srp or 0) >= 2 else ''} / logement"
+                                           if _srp is not None else "barème par typologie")
         _sart = f" · art. {esc(str(_g['article']))}" if _g.get("article") else ""
         rows.append(f'<tr><td class="k">Stationnement{_sart}</td><td>{esc(_sreg)}</td>'
                     f'<td class="n"><span class="chip s">Sourcé</span></td></tr>')
@@ -563,11 +591,17 @@ def _p3_regles(payload: dict, retenu: dict) -> str:
         if ct.get(k):
             crows.append(f'<tr><td class="k">{esc(lib)}</td><td>présente</td>'
                          f'<td>retirée seulement si elle interdit de construire ; sinon signalée</td></tr>')
-    contraintes = ("<h3>Contraintes cartographiées</h3>"
+    # DOCS-COHERENCE-1 (A5) — les contraintes SIGNALÉES par la fiche/Dossier §5 (aléas, DPU, Parc
+    # national…) que le moteur d'implantation ne modélise pas : listées « signalée, non interprétée ».
+    # Plus jamais « aucune contrainte » quand le Dossier en relève une.
+    for lib in (t.get("contraintes_signalees") or []):
+        crows.append(f'<tr><td class="k">{esc(lib)}</td><td>signalée</td>'
+                     f'<td>signalée, non interprétée (voir le Dossier §5)</td></tr>')
+    contraintes = ("<h3>Contraintes cartographiées et signalées</h3>"
                    '<table class="kv"><tr><th>Contrainte</th><th>Sur le terrain</th>'
                    '<th>Traitement</th></tr>' + "".join(crows) + "</table>"
                    + '<p class="note">Ligne absente quand la contrainte ne touche pas le terrain.</p>'
-                   ) if crows else '<p class="note">Aucune contrainte cartographiée ne touche le terrain.</p>'
+                   ) if crows else '<p class="note">Aucune contrainte cartographiée ni signalée ne touche le terrain.</p>'
     return (
         '<section><h2>2. Règles et contraintes</h2>'
         f'<div class="verdict">Zone {esc(r.get("zone") or "")} du PLU. Chaque valeur est citée ; '
@@ -580,23 +614,48 @@ def _p4_enveloppe(payload: dict, retenu: dict) -> str:
     t = payload["terrain"]
     emp = next((c for c in retenu["controles"] if c["nom"] == "Emprise au sol"), None)
     fig = _svg_plan(retenu["geojson"], ["parcelle", "assiette", "ppr_rouge", "ppr_bleue", "zone", "voie"], h=380)
+    # DOCS-COHERENCE-1 (A3, arbitrage) — UN SEUL calcul de la zone : celui du Gabarit. L'Étude LIT sa
+    # valeur (« terrain libéré » X, « bâti existant déduit » Y) ; repli sur la zone du moteur
+    # d'implantation (assiette multi-parcelles, sans référence Gabarit unique).
+    _zgl = t.get("zone_gabarit_libere_m2")
+    _zgd = t.get("zone_gabarit_bati_deduit_m2")
+    _zone_aff = _zgl if _zgl is not None else t.get("zone_implantation_m2")
     rows = [
         f'<tr><td class="k">Terrain (contenance)</td><td>{_m2(t.get("contenance_totale_m2"))}</td>'
         f'<td class="n"><span class="chip s">Sourcé</span></td></tr>',
-        f'<tr><td class="k">Zone d\'implantation réglementaire</td><td>{_m2(t.get("zone_implantation_m2"))}</td>'
-        f'<td class="n"><span class="chip d">Dérivé</span></td></tr>',
     ]
+    if _zgl is not None:
+        rows.append(f'<tr><td class="k">Zone d\'implantation, terrain libéré</td><td>{_m2(_zgl)}</td>'
+                    f'<td class="n"><span class="chip s">Gabarit</span></td></tr>')
+        if _zgd is not None:
+            rows.append(f'<tr><td class="k">Zone d\'implantation, bâti existant déduit</td><td>{_m2(_zgd)}</td>'
+                        f'<td class="n"><span class="chip s">Gabarit</span></td></tr>')
+    else:
+        rows.append(f'<tr><td class="k">Zone d\'implantation réglementaire</td><td>{_m2(t.get("zone_implantation_m2"))}</td>'
+                    f'<td class="n"><span class="chip d">Dérivé</span></td></tr>')
     if t.get("ppr_rouge_m2"):
         rows.append(f'<tr><td class="k">Retiré par PPR rouge</td><td>{_m2(t.get("ppr_rouge_m2"))}</td>'
                     f'<td class="n"><span class="chip s">Sourcé</span></td></tr>')
     if emp:
         rows.append(f'<tr><td class="k">Plafond d\'emprise</td><td>{esc(emp["regle"])}</td>'
                     f'<td class="n"><span class="chip d">Dérivé</span></td></tr>')
+    # DOCS-COHERENCE-1 (F1) — hypothèse de départ écrite : sur un terrain LIBÉRÉ, le bâti existant est
+    # supposé démoli. (Le plan le dessine en pointillé gris « existant, supposé démoli ».)
+    _bn, _be = t.get("bati_existant_nombre"), t.get("bati_existant_emprise_m2")
+    _mode = (payload.get("entrees") or {}).get("terrain")
+    demoli = ""
+    if _mode == "libere" and _be:
+        _plur = (_bn or 0) > 1
+        _quoi = (f"les {_bn} bâtiments existants" if _plur else
+                 (f"le bâtiment existant" if _bn else "le bâti existant"))
+        demoli = (f'<div class="note">Étude sur <b>terrain libéré</b> : {_quoi} ({_m2(_be)} au sol) '
+                  f'{"sont supposés démolis" if _plur else "est supposé démoli"}.</div>')
     return (
         '<section><h2>3. Enveloppe constructible</h2>'
-        f'<div class="verdict">Zone d\'implantation de {_m2(t.get("zone_implantation_m2"))} après reculs '
+        f'<div class="verdict">Zone d\'implantation, terrain libéré de {_m2(_zone_aff)} après reculs '
         'et contraintes. Ce plafond n\'est pas ce qu\'on peut construire : c\'est le scénario (plan masse) '
         'qui le dit.</div>'
+        + demoli
         + fig + _legende(["parcelle", "assiette", "zone", "ppr_rouge", "ppr_bleue", "voie"])
         + '<table class="kv"><tr><th>Surface</th><th>Valeur</th><th class="n">Nature</th></tr>'
         + "".join(rows) + "</table></section>")
@@ -902,7 +961,8 @@ def rendu_etude(payload: dict, *, genere_le: str, scenario_ref: Optional[str] = 
         doc_title=f"LABUSE — Étude de faisabilité · {payload['terrain'].get('commune') or ''}",
         doc_ref=f"{refs} · {numero}",
         doc_foot=(f"Étude de faisabilité · {refs} · {_type_projet_label(payload['entrees'].get('type_projet'))} · "
-                  f"Généré via LABUSE le {genere_le} · pré-faisabilité, non contractuel"))
+                  f"Généré via LABUSE le {genere_le} · pré-faisabilité, non contractuel · "
+                  f"Données LABUSE au {_donnees_labuse_au_etude(genere_le)}."))
     corps = (
         f"<style>{_STYLE}</style>"
         + _p1_synthese(payload, retenu, numero, genere_le)
@@ -937,7 +997,8 @@ def rendu_lotissement(payload: dict, *, genere_le: str) -> dict:
     cart = Cartouche(
         doc_title=f"LABUSE — Lotissement · {commune}",
         doc_ref=f"{idus[0][8:] if idus else ''} · {numero}",
-        doc_foot=f"Lotissement · zone {zone} · Généré via LABUSE le {genere_le} · pré-faisabilité, non contractuel")
+        doc_foot=(f"Lotissement · zone {zone} · Généré via LABUSE le {genere_le} · pré-faisabilité, "
+                  f"non contractuel · Données LABUSE au {_donnees_labuse_au_etude(genere_le)}."))
     lignes = "".join(f"<tr><td>Lot {i}</td><td class='n'>{fr(s)} m²</td></tr>"
                      for i, s in enumerate(tl["surfaces_m2"], 1))
     racc = "".join(f"<tr><td>{r['reseau']}</td><td class='n'>{'non vérifié' if r['distance_m'] is None else fr(r['distance_m'])+' m'}</td></tr>"

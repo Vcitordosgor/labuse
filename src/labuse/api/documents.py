@@ -201,6 +201,16 @@ def etude_zone_pdf(idu: str, request: Request, rayon_km: float = 2.0,
         from .app import EtudeZoneIn, etude_zone as _etude_zone_fn
         zone = _etude_zone_fn(EtudeZoneIn(idu=idu, rayon_km=rayon_km,
                                           sous_destination=(sous_destination or None)), db)
+        # DOCS-COHERENCE-1 (recette Vic) — le « Prix médian du bâti » de l'Étude de zone décrit la
+        # fenêtre RÉELLE du prix lu dans la fiche (prix_ancien : médiane + n + rayon, « 3 602 €/m² —
+        # 15 ventes à moins de 1 000 m »), identique au Comparatif ; « Ventes (12 mois) » reste à part.
+        try:
+            from ..marche_service import DVF_BANQUIER_ADAPTATIF, marche_dvf
+            _pa = marche_dvf(db, idu, profil=DVF_BANQUIER_ADAPTATIF)
+            if _pa and _pa.get("median"):
+                zone.setdefault("marche", {})["prix_ancien"] = _pa
+        except Exception:  # noqa: BLE001 — le prix de la fiche est un plus, jamais un bloqueur
+            pass
         res = builder.construire_etude_zone(idu, rayon_km, zone, _zone_map_html(db, zone))
     except HTTPException:
         raise

@@ -51,6 +51,23 @@ TYPES_LOGEMENT = ("T1", "T2", "T3", "T4")  # ETUDE-V6 — le programme saisi va 
 _REFS = ["A", "B", "C"]
 
 
+def _pente_pct(deg: float) -> int:
+    from labuse.pente_fmt import pente_pct
+    return pente_pct(deg)
+
+
+def _pente_fiche_deg(session, idus) -> Optional[float]:
+    """DOCS-COHERENCE-1 (A4) — pente de la FICHE (RGE ALTI, `parcel_terrain.pente_moy_deg`), source
+    UNIQUE affichée par tous les documents ; prise sur la parcelle principale (plus grande) de
+    l'assiette. None si absente (le document omet alors la ligne, jamais un faux chiffre)."""
+    from sqlalchemy import text
+    row = session.execute(text(
+        "SELECT pt.pente_moy_deg FROM parcel_terrain pt JOIN parcels p ON p.idu = pt.idu "
+        "WHERE pt.idu = ANY(:i) AND pt.pente_moy_deg IS NOT NULL "
+        "ORDER BY ST_Area(p.geom_2975) DESC LIMIT 1"), {"i": list(idus or [])}).scalar()
+    return float(row) if row is not None else None
+
+
 # ------------------------------------------------------------------ GeoJSON (4326)
 def _feature(geom_2975, props: dict) -> Optional[dict]:
     if geom_2975 is None or geom_2975.is_empty:
@@ -633,7 +650,8 @@ def _regle_stationnement_courte(b) -> Optional[str]:
     def nb(x):
         return f"{x:g}".replace(".", ",")
     if b.mode == "par_logement" and b.flat_places is not None:
-        return f"{nb(b.flat_places)} place/logt"
+        # DOCS-COHERENCE-1 (F9/A6) — format client « 2 places / logement » (jamais « 2 place/logt »).
+        return f"{nb(b.flat_places)} place{'s' if b.flat_places >= 2 else ''} / logement"
     parts = []
     for lg in b.lignes:
         if lg.destination and lg.destination != "collectif":
@@ -914,6 +932,7 @@ def etudier_payload(session, entree: dict) -> dict:
         session=session, idus=idus, objectif=objectif, conv=conv,
         programme=demande or None, repartition=repartition, max_scenarios=3,
         stationnement_mode=stationnement, niveaux_sous_sol=niveaux_sous_sol,
+        type_projet=type_projet,   # DOCS-COHERENCE-1 (F6) — plafond L151-35/36 appliqué si + restrictif que le PLU
     )
 
     # entêtes partagés (terrain / règles / versions) — depuis le 1er scénario/variante PRÉSENT, sinon un
@@ -997,7 +1016,9 @@ def etudier_payload(session, entree: dict) -> dict:
         _sid = _study_id(entree)
         numero = _sid[:11] if _sid.startswith("EF-") else planche_mod.numero_etude(idus, genere_le)
         ent_planche = {"commune": t.commune or entree.get("commune") or "",
-                       "zone": ref_scn.regles.zone, "idus": idus}
+                       "zone": ref_scn.regles.zone, "idus": idus,
+                       # DOCS-COHERENCE-1 (F1) — le mode terrain pilote le dessin « supposé démoli ».
+                       "terrain": entree.get("terrain") or "libere"}
         try:
             ctx = contexte_mod.charger_contexte(session, t.assiette, idus, avec_tn=True,
                                                 voie_edges=t.voie_edges)
@@ -1061,7 +1082,7 @@ def etudier_payload(session, entree: dict) -> dict:
                     "logements": best.capacite.logements, "places": best.capacite.places,
                     "ratio_par_logement": _PLAFOND_L15135, "reference": "L151-35",
                     "statut": "À confirmer",
-                    "note": "Capacité SI le projet est éligible au plafond L151-35 (0,5 place/logt) — "
+                    "note": "Capacité SI le projet est éligible au plafond L151-35 (0,5 place / logement) — "
                             "éligibilité juridique de catégorie à confirmer ; la règle générale du PLU "
                             "(appliquée ci-dessus) reste la base servie.",
                 }
@@ -1102,6 +1123,11 @@ def etudier_payload(session, entree: dict) -> dict:
             "ppr_rouge_m2": sd0["terrain"]["ppr_rouge_m2"],
             "ppr_bleue_m2": sd0["terrain"]["ppr_bleue_m2"],
             "pente_lidar": sd0["terrain"]["pente_lidar"],
+            # DOCS-COHERENCE-1 (A4) — pente de la FICHE (RGE ALTI, parcel_terrain.pente_moy_deg) : la
+            # SEULE pente affichée dans les documents (format « 9,7° (17 %) »). La pente LiDAR du profil
+            # ci-dessus sert le MOTEUR (hauteur sur terrain en pente), jamais l'affichage client.
+            "pente_fiche_deg": (_pfd := _pente_fiche_deg(session, idus)),
+            "pente_fiche_pct": (_pente_pct(_pfd) if _pfd is not None else None),
             "parcelles": sd0["terrain"]["parcelles"],
         },
         "hypotheses": {

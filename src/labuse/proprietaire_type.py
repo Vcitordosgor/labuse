@@ -8,6 +8,7 @@ cadastrale (donnée publique). Jamais de nom de personne physique.
 """
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from .tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — jour Réunion, jamais le fuseau du process
@@ -96,6 +97,48 @@ def _pack(otype: str, *, indivision: bool, identifiable: bool, categorie: str | 
         # Pour les filtres : famille agrégée.
         "famille": ("public" if public else "prive" if public is False else "inconnu"),
     }
+
+
+# DOCS-COHERENCE-1 (A1) — classifieur UNIQUE de la TÊTE du libellé propriétaire lue dans une
+# dénomination DGFiP, servi au registre (`type_proprietaire`) et lu à l'identique par le Dossier §1,
+# l'Apporteur, le Comparatif, le Courrier et le Copilote. Une succession/indivision N'EST PAS une
+# « personne morale » : c'est un patrimoine en attente de partage (plusieurs décideurs).
+_TETE_SUCCESSION = ("succession", "hoirie", "heritiers", "héritiers", "ayants droit", "ayants-droit")
+_TETE_INDIVISION = ("indivis", "consorts")   # « INDIVISAIRES … », « CONSORTS … »
+
+
+def tete_denomination(denomination: str | None) -> str | None:
+    """« Succession » / « Indivision » / « Personne morale » selon la dénomination DGFiP (ou None
+    si vide). Le NOM est accolé par l'appelant (« Succession — DUPONT »)."""
+    d = (denomination or "").strip().lower()
+    if not d:
+        return None
+    if any(k in d for k in _TETE_INDIVISION):
+        return "Indivision"
+    if any(d.startswith(k) or f" {k}" in d for k in _TETE_SUCCESSION):
+        return "Succession"
+    return "Personne morale"
+
+
+def libelle_proprietaire(denomination: str | None, siren: str | None = None) -> str:
+    """DOCS-COHERENCE-1 (A1) — libellé client UNIQUE « Tête — Nom » du propriétaire moral, lu à
+    l'identique par le Dossier, l'Apporteur, le Comparatif, le Courrier et le Copilote. La tête
+    redondante (« SUCCESSION … », « INDIVISAIRES … ») est ôtée du nom pour éviter le doublon
+    (« Succession — SUCCESSION … » → « Succession — … ») ; un SIREN réel n'est montré que pour
+    une vraie personne morale."""
+    from .proprietaire_historique import siren_reel
+    tete = tete_denomination(denomination)
+    if not tete:
+        return "Personne morale"
+    nom = (denomination or "").strip()
+    if tete in ("Succession", "Indivision"):
+        # retire le mot de tête (et « DE/DES/DE LA … ») en début de dénomination, sans toucher au reste.
+        nom = re.sub(r"^(succession|indivision|indivisaires?|consorts|hoirie|h[ée]ritiers?)"
+                     r"(\s+(de|des|de\s+la|du))?\s+", "", nom, flags=re.I).strip() or nom
+        return f"{tete} — {nom}"
+    if siren_reel(siren):
+        return f"Personne morale — {nom} (SIREN {siren})"
+    return f"Personne morale — {nom}"
 
 
 def classify_dgfip(groupe: int | None, forme_abregee: str | None, denomination: str | None) -> dict:

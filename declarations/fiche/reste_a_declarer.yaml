@@ -165,11 +165,11 @@ donnees:
   - quoi:  surface_plancher_m2
     ou:    { rang: 10, etat: replie, section: "Ce qui est constructible" }
     comment:
-      libelle: "Surface de plancher créée (table rase)"
+      libelle: "SDP maximale réglementaire, terrain libéré"
       unite:   "m²"
       format:  entier_m2
-      i:       "Surface de plancher CRÉÉE par le scénario table rase (moteur commun : emprise × occupation × niveaux)."
-    absence: "Surface de plancher non calculable (zone non constructible ou capacité nulle)."
+      i:       "Surface de plancher MAXIMALE réglementaire, terrain libéré (table rase, moteur commun : emprise × occupation × niveaux) — même valeur que le Comparatif et le pré-dossier."
+    absence: "SDP maximale réglementaire non calculable (zone non constructible ou capacité nulle)."
     absence_type: absente_ici
     pourquoi: "Le volume constructible du scénario neuf ; base du bilan."
   - quoi:  surface_vendable_m2
@@ -179,7 +179,7 @@ donnees:
       unite:   "m²"
       format:  entier_m2
       i:       "SHAB vendable du scénario table rase (fourchette du moteur commun) — distincte de la capacité logements."
-    absence: "Surface vendable non calculable pour cette parcelle."
+    absence: "Surface vendable non calculable (zone non constructible ou capacité nulle)."
     absence_type: absente_ici
     pourquoi: "La surface qui fait le chiffre d'affaires ; base de la charge foncière."
   - quoi:  marge_surelevation_m
@@ -223,27 +223,6 @@ donnees:
     absence_type: absente_ici
     statut_juridique: opposable
     pourquoi: "Le plafond de stationnement s'impose au PLU ; il change la faisabilité."
-
----
-# ── §5 RISQUES ET ENVIRONNEMENT ─────────────────────────────────────────────────────────
-surface:   fiche_parcelle_risques_reste
-nom:       "Risques — sols (SIS / CASIAS)"
-categorie: fiche
-parent:    fiche_parcelle
-route:     "/parcels/{idu}"
-rendu:     sections
-fiche_section: risques
-donnees:
-  - quoi:  sols_parcelle
-    ou:    { rang: 10, etat: replie, section: "Sols (SIS · CASIAS)" }
-    comment:
-      libelle: "Sols (SIS/CASIAS, parcelle)"
-      format:  liste
-      i:       "État des sols : périmètre SIS intersecté, site CASIAS/instruction le plus proche (≤ 100 m)."
-    absence: "Aucun secteur d'information sur les sols ni site CASIAS à proximité."
-    absence_type: absente_ici
-    statut_juridique: opposable
-    pourquoi: "Un SIS impose une étude de sols au changement d'usage ; à connaître avant d'acheter."
 
 ---
 # ── §9 QUARTIER ─────────────────────────────────────────────────────────────────────────

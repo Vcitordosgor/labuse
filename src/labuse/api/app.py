@@ -4811,7 +4811,8 @@ def _iris_quartier_block(db: Session, idu: str) -> dict | None:
 
 
 def _sols_block(db: Session, idu: str) -> dict | None:
-    """SOURCES-1 lot 3 — l'état des sols de la parcelle (registre `sols_parcelle`).
+    """SOURCES-1 lot 3 — l'état des sols de la parcelle (clé fiche `sols`, servie aux
+    données `sis_classe` et `casias_statut` ; DOCS-COHERENCE-1 B5 : bundle `sols_parcelle` retiré).
 
     SIS : périmètre intersecté → obligations DITES (étude de sols au changement d'usage
     L556-2 CE, information écrite de l'acheteur/locataire L125-7 CE). CASIAS/instruction :
@@ -5652,12 +5653,19 @@ def _proximites_equipements_block(db: Session, idu: str) -> dict | None:
     chacun avec sa distance en mètres. RÉUTILISE le moteur BPE déjà branché (`_plus_proche` KNN sur
     `spatial_layers`, INSEE BPE 2025 + arrêts BD TOPO/GTFS) — AUCUN nouveau calcul, aucune isochrone.
     Catégorie non exposée par le moteur (0 résultat) = OMISE, jamais inventée. Absence totale → None."""
+    from ..ingestion.bpe import SDOM_LABEL
     try:
         items = []
         for label, kind, sub in _PROX_EQUIP:
             r = _plus_proche(db, idu, kind, sub)
             if r:
-                items.append({"cat": label, "nom": r["nom"], "distance_m": r["distance_m"]})
+                # DOCS-COHERENCE-1 (B7) — pour un équipement BPE, la SOUS-catégorie de l'établissement
+                # trouvé (SDOM, ex. « Formation continue ») et non le libellé générique du domaine
+                # (« École »), qui pouvait qualifier un organisme de formation d'« École » à tort.
+                cat = label
+                if kind == "amenite_bpe":
+                    cat = SDOM_LABEL.get((r.get("attrs") or {}).get("sdom") or "", label)
+                items.append({"cat": cat, "nom": r["nom"], "distance_m": r["distance_m"]})
     except Exception:
         db.rollback()
         return _bloc_indisponible("proximites_equipements")   # panne ≠ absence (M125)
@@ -7019,6 +7027,17 @@ def etude_zone(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> dict:
     if inp.rayon_km is not None and not is_rayon:
         out["rayon_demande_non_retenu_km"] = inp.rayon_km
     out["naf_label"] = naf_label(naf) if naf else None
+    # DOCS-COHERENCE-1 (A8, arbitrage) — quand l'Étude de zone part d'une PARCELLE, son « Prix médian
+    # du bâti » LIT l'id de la fiche (marche_dvf, médiane du secteur de la parcelle), identique au
+    # Dossier §8 et au Comparatif ; plus de prix propre à la zone qui divergeait (une seule source).
+    if inp.idu and isinstance(out.get("marche"), dict):
+        try:
+            from ..marche_service import DVF_BANQUIER_ADAPTATIF, marche_dvf
+            _pa = marche_dvf(db, idu, profil=DVF_BANQUIER_ADAPTATIF) or {}
+            if _pa.get("median") is not None:
+                out["marche"]["prix_m2_median_bati"] = _pa["median"]
+        except Exception:  # noqa: BLE001 — jamais un 500 ; repli sur la médiane de zone
+            db.rollback()
     if out.get("zone_disponible"):
         out["marche"] = out.get("marche")   # déjà posé par etude_de_zone
         # « N habitants par concurrent » (maquette) — un ratio de faits, jamais une projection de CA
@@ -8220,7 +8239,14 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
     # (qv2) ou de la faisabilité du MÊME point de calcul (faisab) — jamais un second moteur.
     # propriétaire : moral (PM connue) sinon particulier (doctrine fiche F11).
     pm = qv2.get("proprietaire_moral") or {}
-    proprietaire = "morale" if pm.get("denomination") or pm.get("siren") else "particulier"
+    # DOCS-COHERENCE-1 (A1) — type lu par le classifieur UNIQUE du registre (succession/indivision ne
+    # sont PAS « morale ») ; sinon particulier (doctrine fiche F11).
+    if pm.get("denomination") or pm.get("siren"):
+        from ..proprietaire_type import tete_denomination
+        proprietaire = {"Succession": "succession", "Indivision": "indivision"}.get(
+            tete_denomination(pm.get("denomination")), "morale")
+    else:
+        proprietaire = "particulier"
     # bâti existant % = emprise bâtie (BD TOPO/CoSIA) ÷ surface terrain — jamais un « 0 » inventé.
     surf = qv2.get("surface_m2") or 0
     bati_pct = (round(100 * res["emprise_batie_m2"] / surf)
@@ -8233,12 +8259,23 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
     # accès & réseaux : UN verdict (le faisceau de viabilisation servi, F0/F8) ; assainissement à part.
     via = qv2.get("viabilisation") or {}
     anc = qv2.get("anc") or {}
-    # prix bâti du secteur : médiane DVF du type bâti le plus documenté (maison/appartement),
-    # jamais le terrain nu — même source que la fiche Marché (dvf_parcelle.secteur).
-    secteur = ((qv2.get("dvf_parcelle") or {}).get("secteur")) or []
-    bati_rows = [s for s in secteur if (s.get("type_bien") or "").lower() not in ("terrain", "terrain à bâtir")
-                 and s.get("mediane_prix_m2")]
-    prix_bati = max(bati_rows, key=lambda s: s.get("n_ventes") or 0)["mediane_prix_m2"] if bati_rows else None
+    # DOCS-COHERENCE-1 (A8, arbitrage Vic) — prix bâti = l'ID DE LA FICHE (prix_ancien.median =
+    # prix_sortie_bati_eur_m2, médiane du secteur autour de la parcelle, n + rayon effectif), LU tel
+    # quel. Plus aucun recalcul propre au Comparatif (l'ancien « max par n_ventes » du secteur cadastral
+    # divergeait du Dossier §8). Une seule source de prix dans tous les documents.
+    # DOCS-COHERENCE-1 (A8) — chaque prix porte le NOMBRE de ventes qui le fonde (n + rayon), comme le
+    # Dossier § Marché ; le Comparatif les affiche avec le prix (jamais un prix nu).
+    _pa = qv2.get("prix_ancien") or {}
+    prix_bati = _pa.get("median")
+    prix_bati_n, prix_bati_rayon_m = _pa.get("n"), _pa.get("radius_m")
+    # A8 — prix du terrain = médiane DVF du terrain nu du secteur cadastral, MÊME source que le
+    # Dossier §8 (dvf_parcelle.secteur) ; jamais un prix « par zone » propre au Comparatif.
+    _secteur = ((qv2.get("dvf_parcelle") or {}).get("secteur")) or []
+    _terr = [s for s in _secteur if (s.get("type_bien") or "").lower() in ("terrain", "terrain à bâtir")
+             and s.get("mediane_prix_m2")]
+    _terr_sel = max(_terr, key=lambda s: s.get("n_ventes") or 0) if _terr else None
+    prix_terrain = _terr_sel["mediane_prix_m2"] if _terr_sel else None
+    prix_terrain_n = (_terr_sel or {}).get("n_ventes")
     return {
         "idu": qv2["idu"], "commune": qv2.get("commune"),
         # CHASSE-DONNEES-FIX-1 (Lot 1) — le Comparatif sert la surface de TERRAIN (contenance|dessin)
@@ -8283,6 +8320,12 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
         "acces_reseaux": via.get("libelle"),                            # UN verdict viabilisation
         "assainissement": anc.get("libelle") or anc.get("statut_court") or anc.get("statut"),
         "prix_secteur_bati_m2": prix_bati,                              # médiane DVF bâti secteur
+        "prix_bati_n": prix_bati_n, "prix_bati_rayon_m": prix_bati_rayon_m,  # A8 — ventes qui fondent le prix
+        "prix_terrain_n": prix_terrain_n,                               # A8 — ventes du terrain nu
+        # DOCS-COHERENCE-1 (A8) — prix du terrain = l'ID DE LA FICHE (mode_b.terrain_nu.prix_m2,
+        # secteur cadastral), lu tel quel (était un prix « par zone » divergent du Dossier §8). Même
+        # valeur à l'écran et au PDF (un seul calcul de prix dans les documents).
+        "terrain_zone_eur_m2": prix_terrain,
     }
 
 
@@ -8628,18 +8671,9 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
         # M82 — prix terrain nu PAR ZONE (point de calcul M79 unique, comme la fiche et l'outil Marché).
         commune, zone = row.get("commune"), (row.get("zone") or "")
         fam = "AU" if zone.upper().startswith("AU") else (zone[:1].upper() if zone else "")
-        if commune and fam in ("U", "AU"):
-            if commune not in marche_cache:
-                try:
-                    marche_cache[commune] = build_marche_commune(db, commune)
-                except Exception:  # noqa: BLE001
-                    marche_cache[commune] = {}
-            for l in (marche_cache[commune].get("lignes") or []):
-                if isinstance(l, dict) and l.get("cle") == "prix_terrain_nu_par_zone":
-                    pz = ((l.get("valeurs") or {}).get("par_zone") or {}).get(fam)
-                    if pz and pz.get("calculable"):
-                        row["terrain_zone_eur_m2"] = pz.get("median_eur_m2")
-                    break
+        # DOCS-COHERENCE-1 (A8) — le prix du terrain du Comparatif N'EST PLUS recalculé « par zone »
+        # ici : il vient de l'id de la fiche (terrain_zone_eur_m2 = mode_b.terrain_nu.prix_m2), posé
+        # dans la ligne. Un seul calcul de prix, trois lecteurs (Dossier §8, Comparatif, Étude de zone).
         # COMPARER-2 §1 — CES (emprise au sol MAX) : la VRAIE règle PLU, seulement si une valeur
         # numérique est VALIDÉE dans plu_destinations (resolve_zone la superpose). Sinon None → le
         # front affiche « non réglementée ». Le taux d'occupation du gabarit (residuel.taux_emprise_pct)

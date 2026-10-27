@@ -417,7 +417,7 @@ def _enveloppe_reglementaire(db: Session, idu: str) -> bytes | None:
     (SVG) que la fiche + les 4 chiffres + les règles appliquées / non intégrées + les sources. AIDE À
     LA LECTURE du règlement, PAS un plan de masse (le titre et la phrase le disent). Si le gabarit est
     bloqué (calcul incomplet), la page N'EST PAS produite → None (et le sommaire ne la cite pas)."""
-    from ..gabarit.builder import build_gabarit_input
+    from ..gabarit.builder import build_gabarit_input, deduire_bati_de_zone, rescale_zone_contenance
     from ..gabarit.engine import compute_gabarit
     from ..gabarit.plan_svg import gabarit_svg
 
@@ -427,20 +427,61 @@ def _enveloppe_reglementaire(db: Session, idu: str) -> bytes | None:
     res = compute_gabarit(build.input)
     if res.status != "ok":
         return None
+    # DOCS-COHERENCE-1 (A3, arbitrage) — le CERFA LIT la valeur du Gabarit (un seul calcul) : même
+    # pipeline que le document Gabarit (zone recalée à la contenance, puis bâti existant déduit).
+    try:
+        rescale_zone_contenance(db, idu, res)
+        deduire_bati_de_zone(res)
+    except Exception:  # noqa: BLE001 — jamais un 500 ; repli sur la zone brute
+        pass
     svg = gabarit_svg(res, width=460, height=340) or ""
 
     def _m2(v):
-        return "Non réglementé" if v is None else f"{round(v):g} m²"
+        # DOCS-COHERENCE-1 (formats) — milliers en espace insécable FR : « 2 458 m² », jamais « 2458 ».
+        return "Non réglementé" if v is None else f"{round(v):,} m²".replace(",", " ")
     plafond = "Non réglementé" if res.plafondEmpriseStatus == "absent" else _m2(res.plafondEmpriseM2)
-    hauteur = ("Non chiffrée (prospect L ≥ H)" if res.hauteurStatus == "not_integrated"
-               else f"{res.hauteurReglementaireM:g} m")
+    # A7 (arbitrage) — le CERFA affiche les DEUX hauteurs, « 9 m au faîtage · 6 m à l'égout ».
+    if res.hauteurStatus == "not_integrated":
+        hauteur = "Non chiffrée (prospect L ≥ H)"
+    else:
+        _h = []
+        if res.hauteurReglementaireM is not None:
+            _h.append(f"{res.hauteurReglementaireM:g} m au faîtage")
+        if getattr(res, "hauteurEgoutM", None) is not None:
+            _h.append(f"{res.hauteurEgoutM:g} m à l'égout")
+        hauteur = " · ".join(_h) or "—"
+    # A3 — zone d'implantation « terrain libéré » (X = zone + bâti retranché) + « bâti existant déduit » (Y).
+    _zy = res.zoneImplantationM2
+    _zbd = getattr(res, "batiDeduitM2", None)
+    _zx = (_zy or 0) + (_zbd or 0)
+    _zone_rows = f"<tr><td>Zone d'implantation, terrain libéré</td><td>{_m2(_zx)}</td></tr>"
+    if _zbd:
+        _zone_rows += f"<tr><td>Zone d'implantation, bâti existant déduit</td><td>{_m2(_zy)}</td></tr>"
     chiffres = (
         f"<tr><td>Surface de la parcelle</td><td>{_m2(res.surfaceParcelleM2)}</td></tr>"
-        f"<tr><td>Zone d'implantation réglementaire</td><td>{_m2(res.zoneImplantationM2)}</td></tr>"
+        f"{_zone_rows}"
         f"<tr><td>Plafond d'emprise au sol</td><td>{plafond}</td></tr>"
         f"<tr><td>Hauteur réglementaire</td><td>{hauteur}</td></tr>")
-    appl = "".join(f"<li>{r.label}{(' — ' + r.detail) if r.detail else ''}</li>"
-                   for r in res.appliedRules if getattr(r, 'label', None))
+    # DOCS-COHERENCE-1 (D1) — UNE SEULE ligne « Recul voie » à l'affichage : le moteur garde deux règles
+    # (voie cadastrée + emprise publique) car elles portent des arêtes/setbacks distincts, mais pour le
+    # lecteur c'est le MÊME recul ; on fusionne les « Recul voie… » en une seule ligne (la plus complète).
+    _reculs = [r for r in res.appliedRules if str(getattr(r, "label", "") or "").startswith("Recul voie")]
+    _recul_det = None
+    if _reculs:
+        _exact = next((r for r in _reculs if r.label == "Recul voie"), _reculs[0])
+        _recul_det = getattr(_exact, "detail", None)
+    _appl_rules, _vu_recul = [], False
+    for r in res.appliedRules:
+        if not getattr(r, "label", None):
+            continue
+        if str(r.label).startswith("Recul voie"):
+            if _vu_recul:
+                continue
+            _vu_recul = True
+            _appl_rules.append(("Recul voie", _recul_det))
+        else:
+            _appl_rules.append((r.label, getattr(r, "detail", None)))
+    appl = "".join(f"<li>{lbl}{(' — ' + det) if det else ''}</li>" for lbl, det in _appl_rules)
     non_int = "".join(f"<li>{r.label}</li>" for r in (res.nonIntegratedRules or []) if r.label)
     # les sources vivent sur chaque règle servie (le contrat de SORTIE n'a pas de catalogue global)
     seen, src_items = set(), []

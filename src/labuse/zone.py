@@ -841,6 +841,18 @@ _DOMAINES_BPE = [
 ]
 
 
+#: DOCS-COHERENCE-1 (E3) — mots du NOM qui démentent une classification « Artisanat du bâtiment »
+#: (A4 INSEE = maçon/plombier/électricien…) : un commerce alimentaire/restauration rangé là est une
+#: erreur de source → on retire la ligne (« rien de faux »).
+_BPE_NOM_ALIMENTAIRE = ("epicerie", "épicerie", "superette", "supérette", "alimentation",
+                        "boulangerie", "patisserie", "pâtisserie", "boucherie", "primeur",
+                        "supermarche", "supermarché", "restaurant", "snack", "boulanger")
+
+
+def _bpe_nom_dement_sdom(nom_minuscule: str, sdom: str | None) -> bool:
+    return (sdom or "") == "A4" and any(k in nom_minuscule for k in _BPE_NOM_ALIMENTAIRE)
+
+
 def equipements_bpe_zone(session: Session, geom_geojson: dict, lon0: float, lat0: float, *,
                          bandes: dict[int, dict]) -> dict:
     """B6 — équipements BPE de la zone par DOMAINE complet (A→G). RECETTE-OUTILS-3 (S2) : pour chaque
@@ -864,11 +876,26 @@ def equipements_bpe_zone(session: Session, geom_geojson: dict, lon0: float, lat0
             continue
         # S2 — liste COMPLÈTE : nom (ou « nom non renseigné » honnête) + type = libellé sous-domaine BPE,
         # avec repli sur le libellé de domaine si le SDOM n'est pas cartographié (jamais un code brut).
-        liste = [{"nom": ((r["name"] or "").strip() or None),
-                  "type": SDOM_LABEL.get(r["sdom"] or "", label)} for r in rows]
+        # DOCS-COHERENCE-1 (E3) — DÉDOUBLONNAGE par établissement (nom) : un même établissement peut
+        # porter plusieurs enregistrements BPE (la même SCP sortait sept fois). Le compte « n » reflète
+        # la liste dédoublonnée (écran ET PDF lisent la même donnée).
+        vus, liste = set(), []
+        for r in rows:
+            nom = (r["name"] or "").strip() or None
+            cle = (nom or "").lower()
+            if nom and cle in vus:
+                continue
+            # DOCS-COHERENCE-1 (E3) — erreur de SOURCE INSEE : un commerce alimentaire mal rangé en
+            # A4 « Artisanat du bâtiment » (maçon/plombier) est FAUX ; on retire la ligne plutôt que
+            # d'affirmer une catégorie démentie par le nom (« EPICERIE DES CHAMPS » ≠ artisan du bâtiment).
+            if _bpe_nom_dement_sdom(cle, r["sdom"]):
+                continue
+            if nom:
+                vus.add(cle)
+            liste.append({"nom": nom, "type": SDOM_LABEL.get(r["sdom"] or "", label)})
         proches = [{"nom": r["name"], "temps_min": _bande_min(session, r["lon"], r["lat"], bandes)}
                    for r in rows[:3]]
-        domaines.append({"domaine": dom, "label": label, "n": len(rows),
+        domaines.append({"domaine": dom, "label": label, "n": len(liste),
                          "liste": liste, "proches": proches})
     return {"domaines": domaines, "millesime": "BPE (INSEE) — base permanente des équipements"}
 

@@ -1,0 +1,67 @@
+  Document préparatoire établi à partir de données publiques — ne constitue pas un dossier de demande de
+  permis. À compléter et vérifier par le pétitionnaire ou son architecte.
+
+
+
+Enveloppe réglementaire selon les règles intégrées —
+parcelle 97415000BY0083
+Aide à la lecture du règlement — ce n'est pas un plan de masse. La « zone d'implantation » est l'enveloppe où une
+construction pourrait prendre place selon les seules règles intégrées ci-dessous (reculs, exclusions) ; elle ne préjuge
+d'aucun projet.
+
+
+
+
+                      Zone d'implantation réglementaire (schéma — pas un plan de masse)
+
+                         Zone d'implantation                                  Retraits
+                         Contour cadastral
+
+
+
+
+Chiffres du gabarit
+
+Surface de la parcelle                                                                            2458 m²
+
+Zone d'implantation réglementaire                                                                 1699 m²
+
+Plafond d'emprise au sol                                                                          Non réglementé
+
+Hauteur réglementaire                                                                             9m
+
+
+Règles appliquées
+     • Limites séparatives
+     • Recul voie (emprise publique)
+     • Recul voie
+     • Emprise au sol — non réglementée — PLU Saint-Paul zone U4c : silence du règlement
+     • Hauteur maximale
+     • Servitudes d'utilité publique — Aucune SUP sur la parcelle
+
+Règles connues, non intégrées
+     • Stationnement
+     • Espaces libres
+     • PPR — analyse
+
+
+
+
+  Document préparatoire établi à partir de données publiques — ne constitue pas un dossier de demande de permis. À compléter et vérifier par le
+                                                         pétitionnaire ou son architecte.
+Sources
+    • BD TOPO® — troncon_de_route (voirie) + cadastre — LABUSE — adjacence cadastre + BD
+      TOPO
+    • Domaine public non cadastré — PLU Saint-Paul U4c 6 — LABUSE — cadastre (non cadastré
+      = domaine public) + citation PLU 6
+    • PLU — Saint-Paul — LABUSE — règlement PLU validé (config/plu_destinations)
+    • SUP — servitudes d'utilité publique — GPU / API Carto — servitudes d'utilité publique
+      (assiettes)
+    • PPR — zonage réglementaire — DEAL Réunion — PPR (zonage réglementaire)
+
+
+
+
+ Document préparatoire établi à partir de données publiques — ne constitue pas un dossier de demande de permis. À compléter et vérifier par le
+                                                        pétitionnaire ou son architecte.
+

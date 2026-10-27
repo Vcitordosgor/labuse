@@ -94,23 +94,17 @@ def _c_adresse(db, idu, f):
 
 @extracteur("type_proprietaire")
 def _c_proprietaire(db, idu, f):
-    import re
-    from ..proprietaire_historique import siren_reel
+    from ..proprietaire_type import libelle_proprietaire
     pm = f.get("proprietaire_moral")
     if not isinstance(pm, dict):
         return None
     denom, siren = pm.get("denomination"), pm.get("siren")
-    # ORACLE-FIX-1 (E3) — le type suit la donnée DGFiP : une dénomination « INDIVISAIRES … » est une
-    # INDIVISION, pas une « Personne morale » ; et un pseudo-SIREN (préfixe « U… », ≠ identité juridique)
-    # ne s'affiche pas comme un SIREN réel (cf. siren_reel). S18 (97405000BE0599) : « INDIVISAIRES DE LA
-    # PARCELLE BE599 », SIREN U23631848 → « Indivision », sans SIREN inventé.
-    if denom and re.search(r"indivis", denom, re.I):
-        return f"Indivision — {denom}"
-    if denom and siren_reel(siren):
-        return f"Personne morale — {denom} (SIREN {siren})"
-    if denom:
-        return f"Personne morale — {denom}"
-    return "Personne morale"
+    # DOCS-COHERENCE-1 (A1) — libellé client UNIQUE du registre : « SUCCESSION … » → « Succession — … »,
+    # « INDIVISAIRES … » / « CONSORTS … » → « Indivision — … » (ni l'une ni l'autre n'est une « Personne
+    # morale ») ; un pseudo-SIREN (préfixe « U… », ≠ identité juridique) ne s'affiche jamais en SIREN réel.
+    if not denom:
+        return "Personne morale"
+    return libelle_proprietaire(denom, siren)
 
 
 @extracteur("proprietaire_timeline_liste")
@@ -530,8 +524,14 @@ def _c_capacite(db, idu, f):
 
 @extracteur("surface_plancher_m2")
 def _c_plancher(db, idu, f):
+    # DOCS-COHERENCE-1 (A9) — la SDP maximale réglementaire (terrain libéré) vit sous `calcul.sdp_max_m2`
+    # (même valeur que le Comparatif et le pré-dossier) ; le haut de `potentiel_transformation` ne la
+    # portait pas → le §10 du Dossier l'omettait. On lit la clé réellement servie, en repli.
     p = f.get("potentiel_transformation") or {}
-    return _nz(p.get("surface_plancher_m2"))
+    v = p.get("surface_plancher_m2")
+    if v is None:
+        v = (p.get("calcul") or {}).get("sdp_max_m2")
+    return _nz(v)
 
 
 @extracteur("surface_vendable_m2")
@@ -575,13 +575,6 @@ def _c_sis(db, idu, f):
 def _c_casias(db, idu, f):
     v = (f.get("sols") or {}).get("casias_statut")
     return v if v and v != "hors" else None
-
-
-@extracteur("sols_parcelle")
-def _c_sols(db, idu, f):
-    s = f.get("sols") or {}
-    touche = {k: v for k, v in s.items() if v not in (None, "hors")}
-    return touche or None
 
 
 @extracteur("endiguement_zone_protegee")
@@ -658,8 +651,21 @@ def _c_prix_ancien(db, idu, f):
 
 @extracteur("prix_terrain_secteur_eur_m2")
 def _c_terrain(db, idu, f):
-    tn = (f.get("mode_b") or {}).get("terrain_nu")
-    return tn if isinstance(tn, dict) and tn.get("prix_m2") else None
+    # DOCS-COHERENCE-1 (recette Vic) — UNE source pour le prix du terrain (médiane DVF du secteur
+    # cadastral), avec LE seuil d'échantillon (SEUIL_N) : au-dessus → la médiane + ses ventes ; en
+    # dessous → marqueur « insuffisant » QUI SE DIT (« — (N ventes, échantillon insuffisant) »), jamais
+    # une absence muette NI un prix nu. Même règle, même seuil et même source que le Comparatif.
+    from ..dvf_mediane import SEUIL_N
+    sec = ((f.get("dvf_parcelle") or {}).get("secteur")) or []
+    terr = [s for s in sec if "terrain" in (s.get("type_bien") or "").lower() and s.get("mediane_prix_m2")]
+    if not terr:
+        return None
+    best = max(terr, key=lambda s: s.get("n_ventes") or 0)
+    n = int(best.get("n_ventes") or 0)
+    if n >= SEUIL_N:
+        return {"prix_m2": best["mediane_prix_m2"], "n": n,
+                "perimetre": best.get("perimetre"), "fenetre": best.get("fenetre")}
+    return {"insuffisant": True, "n": n}
 
 
 @extracteur("ventes_retenues_n")
@@ -829,11 +835,26 @@ def _gabarit(db, idu: str) -> dict:
         non_int = [r.label for r in (res.nonIntegratedRules or []) if r.label and r.id != "PPR"]
         if non_int:
             txt += " · non modélisé : " + ", ".join(non_int)
+        # DOCS-COHERENCE-1 (A7) — hauteur UNIFORME « 9 m au faîtage · 6 m à l'égout » PARTOUT, et le
+        # Gabarit dit laquelle il EXTRUDE (hauteurBase). Les deux hauteurs sont servies par le moteur.
+        def _hm(x):
+            return None if x is None else (f"{int(x)}" if float(x) == int(x) else f"{x:g}".replace(".", ","))
+        if res.hauteurStatus == "not_integrated":
+            hauteur = "Non chiffrée (prospect)"
+        else:
+            parts = []
+            if res.hauteurReglementaireM is not None:
+                parts.append(f"{_hm(res.hauteurReglementaireM)} m au faîtage")
+            if res.hauteurEgoutM is not None:
+                parts.append(f"{_hm(res.hauteurEgoutM)} m à l'égout")
+            extrude = "faîtage" if res.hauteurBase == "faitage" else "égout"
+            hauteur = " · ".join(parts) + (f" (le gabarit extrude le {extrude})" if parts else "")
         out.update(served=True, zone_m2=res.zoneImplantationM2, couverture=txt,
                    bati_deduit_m2=res.batiDeduitM2,   # S7 — emprise bâti retranchée (None si aucune)
+                   # A3 — « terrain libéré » (X, avant déduction du bâti) = zone + bâti retranché.
+                   zone_libere_m2=((res.zoneImplantationM2 or 0) + (res.batiDeduitM2 or 0)),
                    plafond=("Non réglementé" if res.plafondEmpriseStatus == "absent" else res.plafondEmpriseM2),
-                   hauteur=("Non chiffrée (prospect)" if res.hauteurStatus == "not_integrated"
-                            else res.hauteurReglementaireM),
+                   hauteur=hauteur,
                    svg=gabarit_svg(res))
     except Exception:  # noqa: BLE001 — jamais un 500 sur un document ; la donnée est simplement omise
         pass
@@ -852,6 +873,13 @@ def _c_gab_bati_deduit(db, idu, f):
     # RECETTE-OUTILS-3 (S7) — emprise du bâti existant retranchée de la zone d'implantation (None si 0).
     g = _gabarit(db, idu)
     return g.get("bati_deduit_m2") if g["served"] else None
+
+
+@extracteur("gabarit_zone_libere_m2")
+def _c_gab_zone_libere(db, idu, f):
+    # DOCS-COHERENCE-1 (A3) — zone d'implantation « terrain libéré » (X, avant déduction du bâti).
+    g = _gabarit(db, idu)
+    return g.get("zone_libere_m2") if g["served"] else None
 
 
 @extracteur("gabarit_emprise_plafond_m2")

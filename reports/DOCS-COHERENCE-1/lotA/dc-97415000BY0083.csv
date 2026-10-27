@@ -1,0 +1,19 @@
+idu,donnee,ecart,Dossier,Apporteur,Pré-dossier PC,Étude de zone,Gabarit,Comparatif,Étude de faisabilité,Bilan
+97415000BY0083,surface terrain (m²),,2458,2458,,,,,2458,2458
+97415000BY0083,emprise bâtie (m²),,900,,,,,,,
+97415000BY0083,nombre de bâtiments,,11,,,,,,,
+97415000BY0083,zone impl. libérée (m²),ECART,869,,1699,,869,,1691,
+97415000BY0083,zone impl. déduite (m²),,,,,,867,,,
+97415000BY0083,pente,,"9,7° (17 %)",,,,,,"9,7° (17 %)",
+97415000BY0083,hauteur faît./égout,ECART,9/6,,9/?,,9/?,,9/6,
+97415000BY0083,recul voie (m),,4,,,,4,,4,
+97415000BY0083,stationnement,ECART,2 places / logement,,imposés par le document,,"— règle connue, non chiffrée",,art. 12.2 2 place/,
+97415000BY0083,pleine terre (%),,40,,,,,,40,
+97415000BY0083,prix bâti (€/m²),ECART,3602,,,,,2687,,
+97415000BY0083,prix terrain (€/m²),ECART,250,,,,,479,,
+97415000BY0083,prix neuf VEFA (€/m²),,4745,,,,,,,
+97415000BY0083,SDP résiduelle (m²),,,,,,,453,,
+97415000BY0083,SDP max régl. (m²),,,,,,,1327,,
+97415000BY0083,contraintes relevées,ECART,oui,oui,oui,,oui,oui,aucune,oui
+97415000BY0083,propriétaire (type),,succession,succession,,,,succession,,
+97415000BY0083,date des données,,21/10/2026,21/10/2026,,21/10/2026,21/10/2026,21/10/2026,21/10/2026,

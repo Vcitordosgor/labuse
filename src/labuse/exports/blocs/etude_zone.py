@@ -68,10 +68,19 @@ def _economie(z) -> str:
 def _immobilier(z) -> str:
     m = z.get("marche") or {}
     lignes = []
+    # DOCS-COHERENCE-1 (recette Vic) — « Prix médian du bâti » = le prix LU DANS LA FICHE (prix_ancien :
+    # médiane + nombre de ventes + rayon), IDENTIQUE au Comparatif (« 3 602 €/m² — 15 ventes à moins
+    # de 1 000 m »). « Ventes (12 mois) » reste une ligne À PART — elle ne qualifie pas le prix.
+    pa = m.get("prix_ancien") or {}
+    if pa.get("median"):
+        n, r = pa.get("n"), (pa.get("radius_m") or pa.get("rayon_m"))
+        suff = (f" — {_i(n)} ventes à moins de {_i(r)} m" if n and r
+                else (f" — {_i(n)} ventes" if n else ""))
+        lignes.append(_kv("Prix médian du bâti", f"{_i(pa['median'])} €/m²{suff}"))
+    elif m.get("prix_m2_median_bati") is not None:
+        lignes.append(_kv("Prix médian du bâti", f"{_i(m.get('prix_m2_median_bati'))} €/m²"))
     if m.get("ventes_12m") is not None:
         lignes.append(_kv("Ventes (12 mois)", f"{_i(m.get('ventes_12m'))}"))
-    if m.get("prix_m2_median_bati") is not None:
-        lignes.append(_kv("Prix médian du bâti", f"{_i(m.get('prix_m2_median_bati'))} €/m²"))
     if m.get("annonces_actives") is not None:
         lignes.append(_kv("Annonces actives", f"{_i(m.get('annonces_actives'))}"))
     if m.get("permis_36m") is not None:
@@ -89,7 +98,9 @@ def _foncier(z) -> str:
         nom = o.get("denomination") or o.get("nom")
         surf = _i(o.get("surface_m2"))
         if nom:
-            lignes.append(_kv(esc(nom), f"{surf} m²" if surf else ""))
+            # DOCS-COHERENCE-1 (E1) — `_kv` échappe déjà sa clé ; pré-échapper ici double l'échappement
+            # (« D'AMENAGEMENT » → « D&#x27;AMENAGEMENT » affiché littéralement). On passe le nom BRUT.
+            lignes.append(_kv(nom, f"{surf} m²" if surf else ""))
     zd = z.get("zone_demain") or {}
     if zd.get("logements_autorises_36m") is not None:
         lignes.append(_kv("Logements autorisés (36 mois)", f"{_i(zd.get('logements_autorises_36m'))}"))
@@ -111,7 +122,7 @@ def _contraintes(z) -> str:
         commune = zn.get("commune")
         if zone:
             val = f"{part} %" if part is not None else ""
-            lignes.append(_kv(f"{esc(zone)}" + (f" · {esc(commune)}" if commune else ""), val))
+            lignes.append(_kv(f"{zone}" + (f" · {commune}" if commune else ""), val))   # E1 — _kv échappe déjà
     # RECETTE-OUTILS-3 (S3) — activité choisie : le menu « Activité » MODIFIE la lecture (verdict de la
     # sous-destination par zone PLU), le PDF l'affiche comme l'outil (autorisé / sous condition / …).
     dest = z.get("destinations") or {}
@@ -134,7 +145,7 @@ def _contraintes(z) -> str:
     assa = z.get("assainissement") or {}
     if assa.get("libelle"):
         lignes.append(_kv("Assainissement", esc(assa.get("libelle"))))
-    return _sec("Contraintes", lignes)
+    return _sec("Zonage PLU dans le rayon", lignes)   # DOCS-COHERENCE-1 (E4) — ce bloc liste le zonage PLU, pas des contraintes
 
 
 def _equipements(z) -> str:

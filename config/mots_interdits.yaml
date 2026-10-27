@@ -2,7 +2,7 @@
 # Au terme d'EXPORTS-1 : 56 occurrences → 0 sur les 24 PDF des 4 témoins. Cette liste est LA
 # référence : scripts/recette_exports1.py la lit, la sonde coherence-robinets la rejoue comme
 # contrôle DISTINCT (verdict séparé des divergences de grandeurs). Toute évolution = commit ici.
-version: "2026-09-10"
+version: "2026-10-26"
 mots:
   - "run m1"
   - "EPSG"
@@ -31,3 +31,12 @@ mots:
   - "propre non public"
   - "RPG.LATEST"
   - "[2022, 2025]"
+  # DOCS-COHERENCE-1 (Lot 0.2) — jargon interne et artefacts de présentation jamais vus par le client :
+  # l'Excel (support, pas une notion métier), les renvois « comme dans … », le « dont bâti » ambigu,
+  # le doublon « à confirmer — à confirmer », l'entité HTML non décodée, le pluriel paresseux « (s) ».
+  - "Excel"
+  - "comme dans"
+  - "dont bâti"
+  - "à confirmer — à confirmer"
+  - "&#x27;"
+  - "parcelle(s)"
