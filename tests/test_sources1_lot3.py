@@ -105,7 +105,7 @@ def test_vanne_et_reservoirs_lot3():
     from labuse import filtres
     labels = {e.get("label") for e in filtres.sources_a_job()}
     assert "bruit_cartes" in labels
-    with open("docs/CIRCUIT/inventaire/reservoirs.csv") as f:
+    with open("config/circuit/reservoirs.csv") as f:
         ids = {r[0] for r in csv.reader(f, delimiter=";")}
     for rid in ("georisques_sis", "georisques_casias", "deal_bruit_cartes"):
         assert rid in ids, rid

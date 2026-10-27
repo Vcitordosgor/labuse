@@ -52,3 +52,55 @@ les **trois** fonctions sont présentes (`labuse_hauteur_lidar_m`, `labuse_set_g
 pour lever le 500 du Gabarit. **Aucune fonction absente en prod aujourd'hui.** Le correctif garantit
 qu'au prochain `ensure_schema` prod elles seront (re)créées idempotemment sans geste manuel, et que
 `doctor` les surveillerait désormais.
+
+---
+
+## P2 — aucun fichier lu à l'exécution sous un dossier exclu du déploiement
+
+### Diagnostic
+
+`deploy_app.sh` n'envoie PAS `docs/`, `reports/`, `qa/`, `captures/`, `audit_shots/`, `tests/`,
+`outputs/`, `exports/` ni certains `data/*`. Un fichier **versionné** sous l'un d'eux et **lu à
+l'exécution** est présent en dev mais **absent en prod** → repli silencieux (le bug des pieds
+« Sources : » en ids bruts). Revue de `src/labuse` (AST + relecture). **Quatre** lectures runtime de
+fichiers versionnés sous dossier exclu :
+
+| Fichier lu | Lecteur runtime | Effet en prod (avant) |
+|---|---|---|
+| `docs/CIRCUIT/inventaire/reservoirs.csv` | `exports/pieds.py` (pieds de PDF) | pieds « Sources : » en **ids bruts** |
+| `docs/CIRCUIT/inventaire/moteurs.csv` | `circuit_dependance.py` (Circuit « À faire ») | ligne « Calculer » **jamais** affichée |
+| `docs/audit-2026-09/SOURCES/SCHEMAS.csv` | `circuit_garanties.py` (verrou G2) | verrou G2 **aveugle** aux champs « à voir » |
+| `qa/golden_check.py` (parsé pour `GOLDEN_IDUS`) | `sonde_circuit.py` (sonde catégorielle) | témoins golden **tombent au repli** |
+
+### Correctif
+
+- Les trois fichiers de données déplacés (`git mv`) sous **`config/circuit/`** :
+  `reservoirs.csv`, `moteurs.csv`, `schemas.csv`. Lecteurs runtime repointés.
+  Générateurs/consommateurs dev (`scripts/inventaire/*`) mis à jour pour que le CSV reste
+  **régénérable au même endroit** (un `_src()`/`_MOVED` route les 2 fichiers déplacés vers `config/`,
+  le reste de l'inventaire reste sous `docs/`).
+- `GOLDEN_IDUS` : extraits dans **`config/circuit/golden_idus.json`** (source unique, 32 ids).
+  `sonde_circuit.py` lit désormais ce JSON (déployé) au lieu de parser `qa/golden_check.py` ;
+  `qa/golden_check.py` charge la même source → plus de double liste.
+- `config/` est déployé par `deploy_donnees.sh`/`deploy_app.sh` (seuls `served_manifest.json` et
+  `served_run.txt` y sont exclus, car prod-owned) : les quatre lectures aboutissent désormais en prod.
+
+**Non déplacé (classé, non-bug) :** `reports/m6-audit/golden/golden-parcelles.json` lu par
+`bascule_gardes.check_golden_regenere` — appelé **uniquement** par les scripts `scripts/bascule_*.py`,
+joués depuis le dépôt complet sur le Mac (jamais le runtime prod), et qui **lève bruyamment**
+(`GoldenPerimeError`) si le fichier manque — l'inverse du repli silencieux.
+
+### Test (`tests/test_deploy_runtime_reads.py`)
+
+`test_aucune_lecture_runtime_sous_un_dossier_exclu_du_deploiement` : parse les exclusions de
+`deploy_app.sh`, reconstruit par AST le chemin de chaque lecture de fichier de `src/labuse`
+(`open()` en lecture, `Path.open/.read_text/.read_bytes`, y compris via constante de module), et
+échoue si ce chemin est **versionné (git) ET sous un dossier exclu**. C'est ce test qui a fait
+remonter la 4ᵉ lecture (`qa/golden_check.py`), que la revue manuelle avait manquée. Les fichiers
+seulement écrits (sorties) ou créés au runtime (non versionnés) ne déclenchent pas — seule la
+combinaison « livré en dev, absent en prod » est fautive.
+
+`pytest` ciblé (guard + sources1 + sources4 + circuit2 + circuit_p4 + exports/sonde) → **200 passed**
+(1 `@pytest.mark.local` `test_g7_vert_apres_sonde` rouge **pré-existant** et sans rapport : il mesure
+la fraîcheur de la sonde dans la base locale `labuse`, dernier passage 22/10 > 48 h ; déselectionné
+par le hook sans base).

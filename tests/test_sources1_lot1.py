@@ -185,7 +185,7 @@ def test_registre_lot1_servi():
 
 def test_reservoirs_carte_lot1():
     import csv
-    with open("docs/CIRCUIT/inventaire/reservoirs.csv") as f:
+    with open("config/circuit/reservoirs.csv") as f:
         ids = {r[0] for r in csv.reader(f, delimiter=";")}
     for rid in ("gpu_prescriptions_er", "gpu_prescriptions_ebc", "dpu_perimetres",
                 "peb_dgac", "zonage_abc_dhup", "zppa_culture"):

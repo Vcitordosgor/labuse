@@ -70,7 +70,7 @@ def test_pont_et_carte_lot7():
         assert not RESERVOIR_TABLES[s].tables, s            # rien de remis = aucune table
     for nom in CHANTIERS + ("DV3F (Cerema)",):
         assert nom in NOM_VERS_SLUG, nom
-    with open("docs/CIRCUIT/inventaire/reservoirs.csv") as f:
+    with open("config/circuit/reservoirs.csv") as f:
         ids = {r[0] for r in csv.reader(f, delimiter=";")}
     for s in slugs:
         assert s in ids, s

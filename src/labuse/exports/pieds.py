@@ -3,6 +3,10 @@ lus (mécanisme EXPORTS-1 lot 6.1, généralisé). On ne liste jamais une source
 le pied est la réunion des réservoirs des Valeur du bloc, avec leur millésime quand il est connu.
 
 Le nom affiché d'un réservoir vient de `reservoirs.csv` (nom_affiche) — le catalogue du Circuit.
+
+POSTDEPLOY-1027 (P2) — ce CSV est lu À L'EXÉCUTION (pied de PDF). Il vit donc sous `config/`
+(déployé), pas sous `docs/` (exclu de `deploy_app.sh`) : sinon les pieds « Sources : » sortaient
+en ids bruts en prod, le fichier étant absent du serveur.
 """
 from __future__ import annotations
 
@@ -13,7 +17,7 @@ from typing import Iterable
 
 from ..registre.valeur import Valeur
 
-_RESERVOIRS_CSV = Path(__file__).resolve().parents[3] / "docs" / "CIRCUIT" / "inventaire" / "reservoirs.csv"
+_RESERVOIRS_CSV = Path(__file__).resolve().parents[3] / "config" / "circuit" / "reservoirs.csv"
 
 
 @lru_cache(maxsize=1)

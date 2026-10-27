@@ -10,10 +10,14 @@ from collections import Counter
 from pathlib import Path
 
 INV = Path(__file__).resolve().parents[2] / "docs/CIRCUIT/inventaire"
+# POSTDEPLOY-1027 (P2) — reservoirs.csv / moteurs.csv lus À L'EXÉCUTION → déplacés sous config/.
+CFG_CIRCUIT = Path(__file__).resolve().parents[2] / "config/circuit"
+_MOVED = {"reservoirs.csv", "moteurs.csv"}
 
 
 def lire(nom: str) -> list[dict]:
-    with (INV / nom).open(encoding="utf-8") as f:
+    base = CFG_CIRCUIT if nom in _MOVED else INV
+    with (base / nom).open(encoding="utf-8") as f:
         return list(csv.DictReader(f, delimiter=";"))
 
 

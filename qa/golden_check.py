@@ -74,25 +74,12 @@ if not RUN_LABEL:
 DEFAULT_GOLDEN = os.path.join(os.path.dirname(__file__), "..",
                               "reports", "m6-audit", "golden", "golden-parcelles.json")
 
-#: liste canonique du golden set (fallback pour --dump quand la référence n'existe pas encore)
-GOLDEN_IDUS = [
-    # témoins M5.1
-    "97410000AS1425", "97410000CD0905", "97423000AB1908", "97423000AB1341", "97415000EY1509",
-    # brûlantes
-    "97411000KA0296", "97422000AD1237", "97403000AR1423", "97418000AT2379", "97413000CD0729",
-    # chaudes
-    "97408000AP1647", "97415000CX1395", "97410000AS1450", "97422000AX1253",
-    "97420000AO0654", "97407000BI0350",
-    # réserve foncière
-    "97408000AC1870", "97416000CR1351", "97409000AX0289",
-    # à creuser
-    "97415000CW1056", "97413000CS0160", "97411000AL0360", "97402000AK1725", "97424000AI0355",
-    # écartées v2 riches en couches
-    "97413000DM0210", "97422000BY0489",
-    # étage 0, un motif chacun
-    "97424000AD0409", "97416000CD0765", "97411000AO0748", "97419000AC0159",
-    "97421000AC0156", "97405000AB0168",
-]
+#: liste canonique du golden set (fallback pour --dump quand la référence n'existe pas encore).
+#: POSTDEPLOY-1027 (P2) — SOURCE UNIQUE dans config/circuit/golden_idus.json (déployé), partagée avec
+#: la sonde catégorielle (src/labuse/sonde_circuit.py) qui la lit à l'exécution ; plus de double liste.
+with open(os.path.join(os.path.dirname(__file__), "..", "config", "circuit", "golden_idus.json"),
+          encoding="utf-8") as _f:
+    GOLDEN_IDUS = json.load(_f)["idus"]
 
 #: tolérances ABSOLUES par suffixe de chemin de champ (sinon : égalité stricte)
 TOLERANCES: dict[str, float] = {

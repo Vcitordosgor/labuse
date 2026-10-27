@@ -108,7 +108,7 @@ def test_registre_lot4():
 
 def test_reservoirs_et_pont_lot4():
     import csv
-    with open("docs/CIRCUIT/inventaire/reservoirs.csv") as f:
+    with open("config/circuit/reservoirs.csv") as f:
         ids = {r[0] for r in csv.reader(f, delimiter=";")}
     assert {"sar_region", "region_dvf"} <= ids
     from labuse.circuit_etats import NOM_VERS_SLUG

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """CIRCUIT-0 Lot 1 — extraction des RÉSERVOIRS (lecture seule).
 
-Produit docs/CIRCUIT/inventaire/reservoirs.csv : une ligne par source de data_sources
+Produit config/circuit/reservoirs.csv : une ligne par source de data_sources
 (77 lignes en base au 05/09/2026) + les sources VOULUES mais ABSENTES (ECLN, LOVAC).
 
 Colonnes DB (psql, SELECT seul) : nom_affiche, producteur, famille, millesime_servi,
@@ -27,7 +27,8 @@ from collections import Counter
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-OUT = REPO / "docs/CIRCUIT/inventaire/reservoirs.csv"
+# POSTDEPLOY-1027 (P2) — lu À L'EXÉCUTION (pieds de PDF) → vit sous config/ (déployé), pas docs/.
+OUT = REPO / "config/circuit/reservoirs.csv"
 DB = "labuse"
 
 SQL = """
