@@ -10,12 +10,11 @@
  * Auto-suffisante : re-dérive ses lignes depuis `f.lines`. Cycle-free (n'importe que primitives).
  */
 import type { Fiche } from '../../lib/types'
-import { useApp } from '../../store/useApp'
 import { IC, RefDrawer, Line, GroupLabel, FactNote } from './primitives'
 import { Badge } from '../ui/Badge'
 // KELFONCIER-FIX-2 (Lot H) — maquette v3 : Verdict en tête + aléas en Jauge3 (3 crans + % servi).
 // FICHE-FIX-4 (Lot G) — CASIAS/EnR/mesures en Ligne de vigilance, CatNat en Repli, Pièges en bouton.
-import { Verdict, Jauge3, Lignes, Ligne, Repli, OutilsSection, InfoI } from './formes'
+import { Verdict, Jauge3, Lignes, Ligne, Repli, InfoI } from './formes'
 import { fmtDateNum, fmtAlea, fmtIntensite, fmtDec } from '../../lib/format'
 
 // niveau d'aléa (catégoriel servi) → cran 0..3 de la Jauge3 (présentation, aucun seuil inventé).
@@ -24,7 +23,6 @@ const aleaCran = (niveau: string | null | undefined, redhibitoire: boolean): 0 |
   redhibitoire ? 3 : (niveau ? (ALEA_CRAN[niveau.toLowerCase()] ?? 1) : 0)
 
 export function RisquesSection({ f }: { f: Fiche; idu: string }) {
-  const setModule = useApp((s) => s.setModule)
   const lignes = f.lines.filter((l) => l.onglet === 'risques')
   // FICHE-ORFEVRERIE-1 (Lot D, pt 29) — le BASSIN VERSANT est un CONTEXTE hydrographique, pas une
   // vigilance (pas une contrainte opposable) : il sort des vigilances (bandeau/badge passent à 3) et
@@ -278,9 +276,9 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
           </details>
         )}
         {lignes.length === 0 && <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
-        {/* FICHE-FIX-4 (Lot G) — Pièges & risques en bouton OutilsSection (plus de grande carte). */}
-        <OutilsSection outils={[{ label: 'Pièges & risques', principal: true, full: true, data: 'risques',
-          onClick: () => setModule('risques') }]} />
+        {/* RECETTE-PROD-1 (A3) — bouton « Pièges & risques » RETIRÉ : l'outil ne fait que relire les
+            MÊMES couches que cette section (aléas, PPR, bruit, pente, SUP…), il n'apporte aucune
+            information absente → règle Vic « un bouton n'est gardé que s'il ajoute du neuf ». */}
       </div>
     </RefDrawer>
   )

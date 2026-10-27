@@ -297,6 +297,25 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                     applicable.append(ApplicableRule(id=f"{work_zone}-hauteur", label="Hauteur maximale",
                                                      category="maxHeight", integrationStatus="integrated",
                                                      detail=f"{haut:g} m", source=plu_zone_src))
+                elif egout is not None and getattr(zr, "hauteur_estimee", False):
+                    # RECETTE-PROD-1 (A7) — la zone est calibrée pour l'enveloppe (emprise/reculs) mais sa
+                    # HAUTEUR est une table graphique par secteur (non réductible à une valeur unique). La
+                    # valeur de repli est SERVIE et UTILISÉE (volume 3D indicatif), mais marquée ESTIMÉE
+                    # (`estimee=True`) → l'écran et les PDF l'étiquettent « Estimé », jamais comme la valeur
+                    # validée du règlement. Le gabarit reste calculable, sans le faux « PLU non calibré ».
+                    art = _feuille_article(commune, work_zone, "hauteur", "egout")
+                    cit = _feuille_citation(commune, work_zone, "hauteur", "egout")
+                    est_src = RegulatorySource(document=f"PLU — {commune}", zone=work_zone, article=art or None,
+                                               provider="LABUSE — hauteur estimée (table graphique par secteur)")
+                    max_height = MaxHeight(ruleId=f"{work_zone}-hauteur", meters=egout,
+                                           status="integrated", basis="egout", estimee=True, source=est_src)
+                    applicable.append(ApplicableRule(
+                        id=f"{work_zone}-hauteur", label="Hauteur réglementaire — à l'égout (Estimé)",
+                        category="maxHeight", integrationStatus="integrated",
+                        detail=(f"{egout:g} m à l'égout · Estimé — table graphique par secteur"
+                                + (f" ({cit})" if cit else "")),
+                        source=est_src))
+                    racc.setdefault("hauteur_egout", {"m": egout, "article": art, "estimee": True})
                 elif egout is not None:
                     # PLU-CALIBRAGE-8 — le règlement borne la hauteur À L'ÉGOUT sans fixer de faîtage
                     # (ex. Salazie U 10, La Possession, Le Tampon). On sert cette valeur telle quelle :

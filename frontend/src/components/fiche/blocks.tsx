@@ -104,11 +104,9 @@ export function ZoneDestinationsLigne({ d }: { d: FicheZoneDestinations }) {
 export function ReglementPluBlock({ rp, tcsp }: { rp: ReglementPlu; tcsp?: { station: string; distance_m: number; sous_800m: boolean; mode?: string } | null }) {
   if (rp.indisponible) return <BlocIndisponible titre="Règlement PLU" />   // M125 — panne ≠ absence
   const tcspPlafond = !!tcsp?.sous_800m
-  // M62-P1 (j) : la phrase d'explication (`note`) était répétée par zone alors qu'elle est
-  // identique pour les deux → une seule fois, en gris, sous les lignes. Si les notes diffèrent,
-  // on reste par zone (repli honnête).
-  const notes = rp.zones.map((z) => z.note).filter(Boolean) as string[]
-  const noteCommune = notes.length === rp.zones.length && notes.every((n) => n === notes[0]) ? notes[0] : null
+  // M62-P1 (j) / RECETTE-PROD-1 (A1) : la note (phrase A/N non indexée) est rendue UNE SEULE FOIS, par
+  // zone, dans la branche non-indexée ci-dessous (gardée sur la famille A/N). Le rendu commun dédoublé a
+  // été retiré (il la ré-affichait sous les lignes).
   // COUCHES-1 lot 3 (item 12 / B4) — parcelle À CHEVAL sur plusieurs zones du PLU : la fiche dit la
   // vérité (toutes les zones et leur SURFACE respective), là où la couche « par parcelle » ne montre
   // que la zone dominante.
@@ -185,7 +183,9 @@ export function ReglementPluBlock({ rp, tcsp }: { rp: ReglementPlu; tcsp?: { sta
             // (z.note = « Le règlement des zones agricoles et naturelles n'est pas indexé… »). Le
             // règlement écrit reste lié (en-tête « voir le règlement »), les articles listés dessous.
             <>
-              {z.note && <p className="text-[12px] leading-snug text-txt-mut">{z.note}</p>}
+              {/* RECETTE-PROD-1 (A1) — la note « zones agricoles et naturelles non indexées » ne doit
+                  s'afficher QU'EN zone A/N (elle apparaissait sur Ub, zone U). Garde sur la famille servie. */}
+              {z.note && (rp.zone_famille === 'A' || rp.zone_famille === 'N') && <p className="text-[12px] leading-snug text-txt-mut">{z.note}</p>}
               {z.articles.length > 0 && (
                 <ul className="mt-1 flex flex-col gap-0.5">
                   {z.articles.slice(0, 6).map((a, j) => (
@@ -203,7 +203,8 @@ export function ReglementPluBlock({ rp, tcsp }: { rp: ReglementPlu; tcsp?: { sta
               non-indexée ci-dessus (plus de doublon ici). */}
         </div>
       ))}
-      {noteCommune && <FactNote>{noteCommune}</FactNote>}
+      {/* RECETTE-PROD-1 (A1) — le rendu commun de la note (doublon résiduel : elle est déjà rendue par
+          zone ci-dessus, cf. commentaire RECETTE-2 A5b) est retiré → la note ne s'affiche plus deux fois. */}
       <FactNote>{rp.disclaimer}</FactNote>
     </div>
   )

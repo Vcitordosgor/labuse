@@ -60,15 +60,20 @@ def test_a4_job_cache_nocturne_enregistre():
 
 
 # ───────────────────────────── A2 — seuil Radar (30) ─────────────────────────────
-def test_a2_seuil_radar_30_sur_ecart_demande_acte():
-    """Le seuil Radar (30) garde le prix demandé médian et l'écart demandé/acté."""
-    from labuse.pige.signaux import SEUIL_REF_TYPE
-    assert SEUIL_REF_TYPE == 30
+def test_a2_seuil_unique_5_sur_ecart_demande_acte():
+    """RECETTE-PROD-1 (F, décision Vic) — SEUIL UNIQUE de 5 biens (= Radar) pour l'affichage ET la
+    robustesse du prix demandé médian / de l'écart demandé-acté (plus de double seuil 5/30)."""
+    from labuse.pige.marche import SEUIL_N
+    assert SEUIL_N == 5
     src = (_ROOT / "src" / "labuse" / "api" / "fiche_commune.py").read_text()
     i = src.index("def marche_annonces(")
-    bloc = src[i:i + 2000]
-    assert "SEUIL_REF_TYPE" in bloc            # l'écart est gardé par le seuil Radar (30)
+    j = src.index("\ndef ", i + 1)      # jusqu'à la fonction suivante (le bloc complet)
+    bloc = src[i:j]
+    # le médian/écart sont gardés par SEUIL_N, plus par SEUIL_REF_TYPE (30)
+    assert "SEUIL_REF_TYPE" not in bloc
+    assert "demande_n >= SEUIL_N" in bloc
     assert "demande_sous_seuil" in bloc
+    assert "derniere_collecte" in bloc        # date du dernier relevé Radar servie
 
 
 # ───────────────────────────── B6 — run résiduel servi ─────────────────────────────

@@ -41,11 +41,9 @@ def marche_annonces(db: Session, commune: str) -> dict | None:
     demandé/acté — le signal exclusif LABUSE — est calculé entre le prix demandé (annonces, bâti) et le
     prix acté commune entière (baromètre DVF, cf. `comparable`). None si Radar ne couvre pas la commune."""
     from ..pige.marche import SEUIL_N, stats
-    # COMMUNE-FIX-1 (A2) — le seuil Radar (30) : un prix demandé médian (et donc l'écart demandé/acté)
-    # calculé sur moins de 30 biens n'est pas statistiquement robuste (le même seuil que la référence
-    # de type du Radar). Sous ce seuil, on ne sert NI le médian NI le pourcentage — la fiche dira
-    # « sous le seuil (N biens) », jamais un −31 % tiré de 5 annonces.
-    from ..pige.signaux import SEUIL_REF_TYPE
+    # RECETTE-PROD-1 (F) — décision Vic : SEUIL UNIQUE de 5 biens, aligné sur l'outil Radar (qui sert
+    # une médiane dès 5 biens). On ne garde plus deux seuils (5 pour l'affichage, 30 pour la robustesse
+    # du médian) : un seul comptage, un seul seuil = `SEUIL_N`. En-dessous de 5, « sous le seuil (N biens) ».
     row = next((c for c in stats(db).get("communes", []) if c.get("commune") == commune), None)
     if not row:
         return None
@@ -54,19 +52,23 @@ def marche_annonces(db: Session, commune: str) -> dict | None:
     cmp = comparable(db, commune) or {}
     acte = cmp.get("ancien_median_eur_m2")
     biens = int(row.get("actives") or 0)
-    robuste = demande is not None and demande_n is not None and demande_n >= SEUIL_REF_TYPE
+    robuste = demande is not None and demande_n is not None and demande_n >= SEUIL_N
     ecart = round(100.0 * (demande - acte) / acte, 1) if (robuste and acte) else None
+    # RECETTE-PROD-1 (F) — date de la DERNIÈRE COLLECTE Radar (pige d'annonces) : dire quand la pige a
+    # relevé pour la dernière fois (en pause depuis le 06/10 en prod). ISO → formaté FR côté front.
+    derniere = db.execute(text("SELECT to_char(max(date_saisie), 'YYYY-MM-DD') FROM pige_annonces")).scalar()
     return {
         "biens": biens,
         "seuil_n": SEUIL_N,
         "sous_seuil": biens < SEUIL_N,
-        # COMMUNE-FIX-1 (A2) — seuil de robustesse du prix demandé médian / de l'écart (Radar, 30 biens).
-        "demande_seuil_n": SEUIL_REF_TYPE,
+        # RECETTE-PROD-1 (F) — seuil unique (5) : robustesse du médian alignée sur l'affichage et le Radar.
+        "demande_seuil_n": SEUIL_N,
         "demande_sous_seuil": demande is not None and not robuste,
         "prix_demande_median_eur_m2": demande if robuste else None,
         "prix_demande_n": demande_n,
         "ecart_demande_acte_pct": ecart,
         "prix_acte_eur_m2": acte,
+        "derniere_collecte": derniere,
         "source": "Radar LABUSE (annonces relevées) · écart mesuré contre le baromètre DVF commune entière.",
     }
 

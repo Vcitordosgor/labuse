@@ -30,6 +30,8 @@ const EXEMPLES_R12: { t: string; ic: string }[] = [
   { t: 'Quel potentiel pour un assemblage autour de 97411000AD0213 ?', ic: 'assemblage' },
   { t: "Montre les blocs fonciers d'un même propriétaire au Tampon", ic: 'blocs' },
   { t: 'Quelles successions à venir à Saint-Paul ?', ic: 'successions' },
+  // RECETTE-PROD-1 (D7) — 10ᵉ exemple (2 rangées de 5).
+  { t: "Calcule la taxe d'aménagement de 97415000BY0083", ic: 'taxe' },
 ]
 
 // R24 — une icône par TYPE (24×24, stroke) : loupe · bâtiment · livre · horloge · triangle · bulle ·
@@ -44,6 +46,7 @@ const EX_ICONS: Record<string, ReactNode> = {
   assemblage: <><rect x="3.5" y="3.5" width="7" height="7" rx="1" /><rect x="13.5" y="3.5" width="7" height="7" rx="1" /><rect x="3.5" y="13.5" width="7" height="7" rx="1" /><rect x="13.5" y="13.5" width="7" height="7" rx="1" /></>,
   blocs: <><path d="m12 3 9 5-9 5-9-5 9-5Z" /><path d="m3 13 9 5 9-5" /></>,
   successions: <><path d="M6.5 3h11M6.5 21h11" /><path d="M7 3c0 4.5 10 5.5 10 9s-10 4.5-10 9" /><path d="M17 3c0 4.5-10 5.5-10 9s10 4.5 10 9" /></>,
+  taxe: <><circle cx="12" cy="12" r="8.5" /><path d="M15 9.6a3.3 3.3 0 1 0 0 4.8" /><path d="M8 11h5M8 13h4" /></>,
 }
 
 // R24 — « les IDU en mono » : on isole les IDU (8 chiffres · 2 lettres · 4 chiffres) dans le texte et
@@ -210,22 +213,17 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
       {!reponse && (
         <div data-accueil-exemples className="mb-8">
           <p className="mb-2.5 font-mono text-[10px] tracking-[.12em] text-cp-faint">EXEMPLES</p>
-          {/* RECETTE-OUTILS-2 (R24) — grille 3×3 de CARTES (maquette « Copilote, exemples »), plus de
-              pilules ovales multilignes : 3 colonnes égales, 12 px d'écart, 9 cartes. Chaque carte = 96 px
-              de haut, rayon 12, fond un peu plus clair que la page + contour fin, texte 15 px ALIGNÉ À
-              GAUCHE (2 lignes max), icône de type 32 px dans un carré violet sombre en haut à gauche,
-              IDU en mono. Cliquer PRÉ-REMPLIT la barre. */}
-          <div className="grid grid-cols-3 gap-3">
+          {/* RECETTE-PROD-1 (D7) — DEUX rangées de 5 cartes (10 exemples) : 5 colonnes, hauteurs égales
+              (auto-rows-fr + h-full), icône À GAUCHE et texte À DROITE sur la même ligne (flex-row),
+              AUCUN texte tronqué (plus de line-clamp). IDU en mono. Cliquer PRÉ-REMPLIT la barre. */}
+          <div className="grid grid-cols-5 gap-3 auto-rows-fr">
             {EXEMPLES_R12.map((ex) => (
               <button key={ex.t} data-accueil-exemple data-ex-type={ex.ic} onClick={() => { onChange(ex.t); ref.current?.focus() }}
-                className="hover-fill-ia flex h-28 flex-col items-start gap-2 rounded-xl border border-cp-line bg-cp-card p-2.5 text-left transition-colors duration-quick hover:border-cp-ia/40">
+                className="hover-fill-ia flex h-full min-h-[84px] flex-row items-start gap-2.5 rounded-xl border border-cp-line bg-cp-card p-2.5 text-left transition-colors duration-quick hover:border-cp-ia/40">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cp-ia/15 text-cp-ia">
                   <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">{EX_ICONS[ex.ic] ?? CAP_ICON_FALLBACK}</svg>
                 </span>
-                {/* RECETTE-OUTILS-3 (S12) — texte 13 px, 3 lignes max, PAS de « … » (les 9 libellés tiennent
-                    en 3 lignes à cette taille/largeur, vérifié LIVE) ; cartes de hauteur ÉGALE (h-28 = la
-                    plus haute, 3 lignes + icône). IDU en mono. */}
-                <span className="line-clamp-3 text-[13px] leading-tight text-cp-txt">{avecIduMono(ex.t)}</span>
+                <span className="min-w-0 flex-1 self-center text-[12px] leading-tight text-cp-txt">{avecIduMono(ex.t)}</span>
               </button>
             ))}
           </div>

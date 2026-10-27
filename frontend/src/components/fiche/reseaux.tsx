@@ -69,13 +69,17 @@ export function ReseauxSection({ f }: { f: Fiche; idu: string }) {
   if (f.fibre) cases.push({ etat: f.fibre.ftth ? 'ok' : (f.fibre.etat === 'servi' ? 'ko' : 'q'), label: 'Fibre',
     valeur: f.fibre.ftth ? 'FttH' : (f.fibre.distance_m != null ? `${f.fibre.distance_m} m` : '—') })
   if (trans?.arret) cases.push({ etat: 'ok', label: 'Bus', valeur: fmtDistanceM(trans.arret.distance_m) })
-  cases.push({ etat: assain.ton === 'vert' ? 'ok' : 'q', label: 'Assainissement', valeur: assain.court })
+  // RECETTE-PROD-1 (A1) — « une seule vérité » : l'assainissement ne s'affiche en case que s'il porte
+  // un verdict réel (collectif / non collectif, ton ≠ neutre). Le cas « non renseigné » (anc INSEE
+  // secteur indicatif) contredisait le détail servi (gestionnaire DSP confirmé) → on ne l'affiche plus
+  // ici ; la vérité du gestionnaire reste dans le détail déplié (GestionnairesBlock).
+  if (assain.ton !== 'neutre') cases.push({ etat: assain.ton === 'vert' ? 'ok' : 'q', label: 'Assainissement', valeur: assain.court })
   return (
     // RECETTE-2 (A7b) — « Viabilisation eau/élec … » était dans le BANDEAU (badge) ET en ligne (Verdict)
     // plus bas : on garde la LIGNE, on retire le badge du bandeau (plus de doublon). Le contexte
     // assainissement reste le résumé replié.
     <RefDrawer id="reseaux" icon={IC.viab} name="Réseaux et desserte" context={viabContext}
-      value={assainAvailable ? `assainissement ${assain.court}` : undefined}>
+      value={assainAvailable && assain.ton !== 'neutre' ? `assainissement ${assain.court}` : undefined}>
       <div className="flex flex-col gap-3">
         {/* KELFONCIER-FIX-2 (Lot H) — Verdict (viabilisation servie) + CasesEtat en glance. Le détail
             (accès, transport, gestionnaires, viabilisation, axes…) reste rendu en dessous, inchangé. */}

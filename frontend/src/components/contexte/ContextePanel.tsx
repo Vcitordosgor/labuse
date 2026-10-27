@@ -15,11 +15,29 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : Math.round(Nu
 const fmtV = (v: unknown, s = '') => (v == null ? '—' : `${Number(v).toLocaleString('fr-FR')}${s}`)
 const fmtDec = (n: number | null | undefined, s = '') => (n == null ? '—' : `${Number(n).toLocaleString('fr-FR', { maximumFractionDigits: 1 })}${s}`)
 
-function RowT({ lbl, val, strong }: { lbl: string; val: string; strong?: boolean }) {
+// RECETTE-PROD-1 (F) — casse de phrase pour les libellés bruts GASPAR (« Chocs Mécaniques liés à l'action
+// des Vagues » → « Chocs mécaniques liés à l'action des vagues ») : affichage seulement, la base reste intacte.
+function sentenceCase(s: string): string {
+  if (!s) return s
+  const low = s.toLocaleLowerCase('fr-FR')
+  return low.charAt(0).toLocaleUpperCase('fr-FR') + low.slice(1)
+}
+
+// RECETTE-PROD-1 (F) — toute date ISO « ( AAAA-MM-JJ) » (avec espace parasite) → « (JJ/MM/AAAA) ».
+// La source de vérité (config/veille_plu.yaml) est corrigée, mais le contexte est caché : ce normaliseur
+// garantit l'affichage français immédiat quel que soit l'état du cache.
+function normDatesFr(s?: string | null): string {
+  return (s ?? '').replace(/\(\s*(\d{4})-(\d{2})-(\d{2})\)/g, (_m, y, mo, d) => `(${d}/${mo}/${y})`)
+}
+
+// RECETTE-PROD-1 (F) — `ton` optionnel : colore la valeur selon la tension (vert/orange/rouge), au lieu
+// du vert systématique de `strong`. Sert à aligner « Horizon d'épuisement » sur le signal ZAN (alerte).
+function RowT({ lbl, val, strong, ton }: { lbl: string; val: string; strong?: boolean; ton?: 'vert' | 'orange' | 'rouge' }) {
   return (
     <div className="flex items-baseline justify-between gap-2 py-0.5">
       <span className="min-w-0 text-txt-mut">{lbl}</span>
-      <span className={`tnum shrink-0 text-right ${strong ? 'font-semibold text-mint' : 'text-txt'}`}>{val}</span>
+      <span className={`tnum shrink-0 text-right ${strong ? 'font-semibold ' : ''}${ton ? '' : strong ? 'text-mint' : 'text-txt'}`}
+        style={ton ? { color: TON_COL[ton] } : undefined}>{val}</span>
     </div>
   )
 }
@@ -343,7 +361,7 @@ export function ContextePanel() {
                   { v: d.plu_statut?.statut ?? '—', n: 'État du PLU', s: 'GPU · Sudocuh' },
                 ].map((c) => (
                   <div key={c.n} className="rounded-lg bg-surface-3 px-2.5 py-1.5">
-                    <p className="tnum font-display text-[14px] font-bold leading-tight text-txt-hi">{c.v}</p>
+                    <p className="tnum font-mono text-[14px] font-bold leading-tight text-txt-hi">{c.v}</p>
                     <p className="mt-0.5 text-[9.5px] uppercase tracking-[0.04em] text-txt-mut">{c.n}</p>
                     <p className="text-[9px] text-txt-dim">{c.s}</p>
                   </div>
@@ -396,15 +414,18 @@ export function ContextePanel() {
               {/* ═══ LE TERRITOIRE ═══ */}
               <GroupeLabel>Le territoire</GroupeLabel>
 
-              <LigneCarte id="identite" ic="I" titre="Identité"
+              {/* RECETTE-PROD-1 (F) — vraie icône (glyphe) au lieu de la lettre « I ». */}
+              <LigneCarte id="identite" ic="◈" titre="Identité"
                 sous={`${d.epci ?? ''}${d.population?.quartiers ? ` · ${d.population.quartiers.n_iris} IRIS` : ''}`}
                 val={insee ?? undefined}>
                 <div className="flex flex-col gap-0.5 text-[12px]">
                   <RowT lbl="Intercommunalité" val={d.epci ?? '—'} />
                   {d.epci_nom && <p className="-mt-0.5 mb-0.5 text-[10.5px] text-txt-dim">{d.epci_nom}</p>}
+                  {/* RECETTE-PROD-1 (F) — médiane EN PREMIER : l'étendue brute 0→100 % vient de petits IRIS
+                      (parc minuscule) et était trompeuse présentée comme LA lecture. */}
                   {d.population?.quartiers && (
                     <RowT lbl={`Par quartier (${d.population.quartiers.n_iris} IRIS)`}
-                      val={`vacance ${fmtDec(d.population.quartiers.vacance_min_pct)} → ${fmtDec(d.population.quartiers.vacance_max_pct)} % (méd. ${fmtDec(d.population.quartiers.vacance_mediane_pct)} %)`} />
+                      val={`vacance méd. ${fmtDec(d.population.quartiers.vacance_mediane_pct)} % (étendue ${fmtDec(d.population.quartiers.vacance_min_pct)}–${fmtDec(d.population.quartiers.vacance_max_pct)} % selon l'IRIS, petits IRIS inclus)`} />
                   )}
                 </div>
                 {d.mairie && (
@@ -424,7 +445,8 @@ export function ContextePanel() {
               </LigneCarte>
 
               {/* RETOURS-15 C10 — toutes les sections FERMÉES par défaut (plus de defaultOpen). */}
-              <LigneCarte id="population" chiffre="habitants_n" ic="P" titre="Population et logement"
+              {/* RECETTE-PROD-1 (F) — vraie icône (glyphe maison) au lieu de la lettre « P ». */}
+              <LigneCarte id="population" chiffre="habitants_n" ic="⌂" titre="Population et logement"
                 sous={`${d.population.logements != null ? `${fmt(d.population.logements)} logts` : ''}${d.population.vacance_pct != null ? ` · ${fmtDec(d.population.vacance_pct)} % vacants` : ''} · INSEE`}
                 val={d.population.habitants != null ? `${fmt(d.population.habitants)} hab.` : null}>
                 <div className="mb-2 flex flex-col gap-0.5 text-[12px]">
@@ -472,7 +494,7 @@ export function ContextePanel() {
                   const baseSru = (nbLls != null && taux > 0) ? Math.round(nbLls / (taux / 100)) : null
                   return (
                     <div className="rounded-lg border px-3 py-2" style={{ borderColor: `${m.color}55`, background: `${m.color}14` }}>
-                      <span className="font-display text-[13px] font-bold" style={{ color: m.color }}>SRU {taux.toLocaleString('fr-FR')} %</span>
+                      <span className="font-mono text-[13px] font-bold" style={{ color: m.color }}>SRU {taux.toLocaleString('fr-FR')} %</span>
                       <span className="ml-2 text-[11px] text-txt-mut">objectif {Number(d.sru.objectif_pct).toLocaleString('fr-FR')} %</span>
                       {nbLls != null && (
                         <p className="mt-1 text-[11px] text-txt"><b>{fmt(nbLls)} logements sociaux (LLS)</b> — stock au dernier inventaire SRU{d.sru.millesime ? ` · ${d.sru.millesime}` : ''}.</p>
@@ -507,8 +529,8 @@ export function ContextePanel() {
                     {(['U', 'AU'] as const).map((fam) => {
                       const pz = d.foncier!.prix_terrain_nu.par_zone?.[fam]
                       return pz?.calculable
-                        ? <div key={fam}><p className="font-display text-base font-bold text-txt-hi">{fmt(pz.median_eur_m2)} €/m²</p><p className="text-[10.5px] text-txt-dim">terrain nu zone {fam} · {fmt(pz.n)} ventes</p></div>
-                        : <div key={fam}><p className="font-display text-sm text-txt-mut">zone {fam} —</p><p className="text-[10.5px] text-txt-dim">&lt; {d.foncier!.prix_terrain_nu.seuil_n} ventes</p></div>
+                        ? <div key={fam}><p className="font-mono text-base font-bold text-txt-hi">{fmt(pz.median_eur_m2)} €/m²</p><p className="text-[10.5px] text-txt-dim">terrain nu zone {fam} · {fmt(pz.n)} ventes</p></div>
+                        : <div key={fam}><p className="font-mono text-sm text-txt-mut">zone {fam} —</p><p className="text-[10.5px] text-txt-dim">&lt; {d.foncier!.prix_terrain_nu.seuil_n} ventes</p></div>
                     })}
                   </div>
                 )}
@@ -537,8 +559,8 @@ export function ContextePanel() {
                   ) : (
                     <>
                       {(() => {
-                        // COMMUNE-FIX-1 (A2) — sous le seuil Radar (30 biens), on n'affiche NI médian NI
-                        // pourcentage : « sous le seuil (N biens) », jamais un −31 % tiré de 5 annonces.
+                        // RECETTE-PROD-1 (F) — seuil UNIQUE 5 biens (= Radar) : sous 5, on n'affiche NI
+                        // médian NI pourcentage ; « sous le seuil (N biens) ».
                         const n = ma!.prix_demande_n ?? 0
                         const sous = ma!.demande_sous_seuil
                         const libSeuil = `sous le seuil (${fmt(n)} bien${n > 1 ? 's' : ''})`
@@ -554,6 +576,8 @@ export function ContextePanel() {
                       })()}
                     </>
                   )}
+                  {/* RECETTE-PROD-1 (F) — date du dernier relevé Radar (la pige est en pause depuis le 06/10). */}
+                  {ma?.derniere_collecte && <p data-radar-collecte className="mt-1.5 text-[10.5px] text-txt-dim">Radar — dernier relevé le {fmtDateNum(ma.derniere_collecte)}.</p>}
                   {/* COMMUNE-FIX-1 (D13) — acquéreurs récents (PM) : endpoint dédié, 5 premiers + Scan patrimoine. */}
                   <AcquereursPmCommune commune={commune} />
                   <Source nom={`DVF (mutations)${ma ? ` · ${ma.source}` : ' · Radar LABUSE'}`} />
@@ -568,7 +592,9 @@ export function ContextePanel() {
                 sous={`${fmt(d.permis_bloc.permis_12m)} permis / 12 mois${d.permis_bloc.logements_12m != null ? ` · ${fmt(d.permis_bloc.logements_12m)} logts` : ''}`}
                 val={d.permis_bloc.delai_median_mois != null ? `${fmtDec(d.permis_bloc.delai_median_mois)} mois` : null}>
                 <div className="flex flex-col gap-0.5 text-[12px]">
-                  <RowT lbl="Permis autorisés (12 mois)" val={`${fmt(d.permis_bloc.permis_12m)}${d.permis_bloc.permis_5a != null ? ` · ${fmt(d.permis_bloc.permis_5a)} sur 5 ans` : ''}`} strong />
+                  {/* RECETTE-PROD-1 (F) — « déposés », pas « autorisés » : le total 12 mois INCLUT les annulés
+                      (329 = 327 autorisés par type + 2 annulés, affichés séparément ci-dessous). */}
+                  <RowT lbl="Permis déposés (12 mois)" val={`${fmt(d.permis_bloc.permis_12m)}${d.permis_bloc.permis_5a != null ? ` · ${fmt(d.permis_bloc.permis_5a)} sur 5 ans` : ''}`} strong />
                   {/* KELFONCIER-FIX-2 (Lot D) — ventilation PC / PA / DP (+ PD) sur 12 mois, à côté du chiffre
                       existant. Servie par le back (permis_type_12m, KELFONCIER-FIX-1 Lot C), même source SITADEL.
                       Ordre stable PC · PA · DP · PD ; seuls les types présents s'affichent. */}
@@ -600,17 +626,17 @@ export function ContextePanel() {
                 {d.foncier && (
                   <>
                     <div className="mb-3 flex gap-5">
-                      <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.foncier.n_parcelles)}</p><p className="text-[11px] text-txt-dim">parcelles<i className="block not-italic text-[10px]">{fmt(d.foncier.surface_ha)} ha</i></p></div>
+                      <div><p className="font-mono text-lg font-bold text-txt-hi">{fmt(d.foncier.n_parcelles)}</p><p className="text-[11px] text-txt-dim">parcelles<i className="block not-italic text-[10px]">{fmt(d.foncier.surface_ha)} ha</i></p></div>
                       {/* RECETTE-2 (B5) — libellés explicites lus du registre (stock_opportunites =
                           « Stock d'opportunités (brûlantes + chaudes) ») : le 196 = nb de terrains classés
                           opportunité par LABUSE, les 50 ha = leur surface cumulée. */}
-                      <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.foncier.stock_opportunites.n)}</p><p className="text-[11px] text-txt-dim">terrains classés opportunité<i className="block not-italic text-[10px]">{fmt(d.foncier.stock_opportunites.ha)} ha cumulés</i></p></div>
+                      <div><p className="font-mono text-lg font-bold text-txt-hi">{fmt(d.foncier.stock_opportunites.n)}</p><p className="text-[11px] text-txt-dim">terrains classés opportunité<i className="block not-italic text-[10px]">{fmt(d.foncier.stock_opportunites.ha)} ha cumulés</i></p></div>
                     </div>
                     {d.densifiables?.parcelles != null && (
                       <div className="mb-2 flex gap-5">
-                        <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.densifiables.parcelles)}</p><p className="text-[11px] text-txt-dim">densifiables<i className="block not-italic text-[10px]">capacité résiduelle</i></p></div>
+                        <div><p className="font-mono text-lg font-bold text-txt-hi">{fmt(d.densifiables.parcelles)}</p><p className="text-[11px] text-txt-dim">densifiables<i className="block not-italic text-[10px]">capacité résiduelle</i></p></div>
                         {/* RECETTE-2 (B5) — « 7 M m² » → « 700 ha » (hectares, lisibles par un client). */}
-                        {d.densifiables.sdp_residuelle_m2 != null && <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(Math.round(d.densifiables.sdp_residuelle_m2 / 1e4))} ha</p><p className="text-[11px] text-txt-dim">SDP résiduelle théorique</p></div>}
+                        {d.densifiables.sdp_residuelle_m2 != null && <div><p className="font-mono text-lg font-bold text-txt-hi">{fmt(Math.round(d.densifiables.sdp_residuelle_m2 / 1e4))} ha</p><p className="text-[11px] text-txt-dim">SDP résiduelle théorique</p></div>}
                       </div>
                     )}
                   </>
@@ -619,7 +645,10 @@ export function ContextePanel() {
                   <RowT lbl="Consommation NAF (budget ZAN consommé)" val={r?.['pct_budget_consomme'] != null ? `${fmtDec(r['pct_budget_consomme'])} %${r?.['budget_zan_ha'] != null ? ` de ${fmtV(r['budget_zan_ha'], ' ha')}` : ''}` : '—'} />
                   <RowT lbl="Budget ZAN restant (estimé)" val={fmtV(r?.['reste_zan_ha'], ' ha')} />
                   <RowT lbl="Rythme de consommation" val={fmtV(r?.['rythme_conso_ha_an'], ' ha/an')} />
-                  <RowT lbl="Horizon d'épuisement" val={r?.['horizon_epuisement_ans'] != null ? fmtAns(r['horizon_epuisement_ans']) : '—'} strong />
+                  {/* RECETTE-PROD-1 (F) — couleur alignée sur le signal ZAN (seuil 5 ans) : plus de vert
+                      systématique sur un horizon tendu (« 4,2 ans » = alerte, orange comme le signal). */}
+                  <RowT lbl="Horizon d'épuisement" val={r?.['horizon_epuisement_ans'] != null ? fmtAns(r['horizon_epuisement_ans']) : '—'}
+                    ton={r?.['horizon_epuisement_ans'] != null ? (r['horizon_epuisement_ans'] <= 0 ? 'rouge' : r['horizon_epuisement_ans'] < 5 ? 'orange' : 'vert') : undefined} strong />
                 </div>
                 <Source nom={`Cadastre DGFiP · ${d.densifiables?.source ?? 'analyse LABUSE'} · Consommation ENAF Cerema (estimé)`} />
               </LigneCarte>
@@ -638,7 +667,7 @@ export function ContextePanel() {
                 {/* COMMUNE-FIX-1 (D12) — procédure PLU en cours au dernier relevé Sudocuh (révision, modification…). */}
                 {d.plu_statut.procedure_sudocuh?.etat && (
                   <p className="mt-1 text-[11px] leading-relaxed text-txt-mut">
-                    <b className="text-txt">Procédure (Sudocuh{d.plu_statut.procedure_sudocuh.millesime ? ` ${d.plu_statut.procedure_sudocuh.millesime}` : ''})</b> : {d.plu_statut.procedure_sudocuh.etat}{d.plu_statut.procedure_sudocuh.prescription ? ` · prescrite le ${fmtDateNum(d.plu_statut.procedure_sudocuh.prescription)}` : ''}.
+                    <b className="text-txt">Procédure (Sudocuh{d.plu_statut.procedure_sudocuh.millesime ? ` ${d.plu_statut.procedure_sudocuh.millesime}` : ''})</b> : {d.plu_statut.procedure_sudocuh.etat}{d.plu_statut.procedure_sudocuh.prescription ? ` · prescrite le ${d.plu_statut.procedure_sudocuh.prescription}` : ' · date de prescription non publiée'}.
                   </p>
                 )}
                 {/* GEOPF-3 — SCOT (planification supra-communale, GPU) : nom + date d'approbation. */}
@@ -653,8 +682,10 @@ export function ContextePanel() {
                   const f = d.foncier.repartition_zonage.familles
                   return (
                     <div className="mt-2 border-t border-line pt-2">
-                      <p className="mb-1 flex items-center gap-1.5 text-[11px] text-txt-dim">Zones du PLU <span className="text-txt-mut">(parts de surface)</span>
-                        <span className="rounded bg-mint/10 px-1 text-[9px] text-mint">{d.foncier!.repartition_zonage!.total_ha.toLocaleString('fr-FR')} ha</span></p>
+                      {/* RECETTE-PROD-1 (F) — « ha zonés » : emprise du ZONAGE PLU, nommée distinctement de la
+                          surface CADASTRALE de l'en-tête (deux grandeurs légitimes, même unité → on les nomme). */}
+                      <p className="mb-1 flex items-center gap-1.5 text-[11px] text-txt-dim">Zones du PLU <span className="text-txt-mut">(emprise du zonage)</span>
+                        <span className="rounded bg-mint/10 px-1 text-[9px] text-mint">{d.foncier!.repartition_zonage!.total_ha.toLocaleString('fr-FR')} ha zonés</span></p>
                       <Bar parts={[
                         { label: 'U', pct: f.U.pct, color: TOKENS.mint },
                         { label: 'AU', pct: f.AU.pct, color: TOKENS.vizCyan },
@@ -674,7 +705,7 @@ export function ContextePanel() {
                     <p data-plh-sans-objet className="text-[12px] text-txt-mut">Aucun programme local de l'habitat recensé pour l'intercommunalité {d.epci ?? ''}.</p>
                   )}
                 </div>
-                <Source nom={`${d.plu_statut.source ?? 'GPU'} · Zonage PLU (GPU) · PLH (EPCI)`} />
+                <Source nom={`${normDatesFr(d.plu_statut.source) || 'GPU'} · Zonage PLU (GPU) · PLH (EPCI)`} />
               </LigneCarte>
 
               {/* Fiscalité et dispositifs — taxes + zonages + QPV/ORT (creux dits). */}
@@ -703,7 +734,9 @@ export function ContextePanel() {
                     <p data-fiscalite-perime className="mt-1 text-[11px] text-st-creuser">Donnée ingérée il y a plus d'un an — à rafraîchir (fichier REI annuel).</p>
                   )}
                   <div className="mt-2 flex flex-col gap-0.5 border-t border-line pt-2 text-[12px]">
-                    <RowT lbl="Classe de la commune" val={d.zonage_abc ? `zone ${d.zonage_abc.zone}` : 'non déterminée'} />
+                    {/* RECETTE-PROD-1 (F) — « Classe ABC : A / B1 » (sans le mot « zone » qui prête à confusion
+                        avec le zonage PLU A/U/AU/N de la même fiche) ; même valeur brute que la source DHUP. */}
+                    <RowT lbl="Classe ABC (zonage A/B/C)" val={d.zonage_abc ? d.zonage_abc.zone : 'non déterminée'} />
                     {d.zfang_frr && <RowT lbl="ZFANG" val={d.zfang_frr.zfang.regime === 'renforce' ? 'Régime renforcé' : 'Régime standard'} />}
                     {d.zfang_frr && <RowT lbl="FRR" val={d.zfang_frr.frr.classement === 'totalite' ? 'Classée en totalité' : d.zfang_frr.frr.classement === 'partie' ? 'Classée en partie (les Hauts)' : 'Hors dispositif'} />}
                     {/* COMMUNE-FIX-1 (B8) — le libellé distingue les 3 états réels : la commune SIGNATAIRE
@@ -736,7 +769,8 @@ export function ContextePanel() {
                 badge={d.risques.ppr_pct != null} ton="orange">
                 <div className="flex flex-col gap-0.5 text-[12px]">
                   <RowT lbl="PPR (risque naturel)" val={d.risques.ppr_pct != null ? `${fmtDec(d.risques.ppr_pct)} % des parcelles` : '—'} />
-                  <RowT lbl="Mouvement de terrain" val={d.risques.mouvement_terrain_pct != null ? `${fmtDec(d.risques.mouvement_terrain_pct)} %` : '—'} />
+                  {/* RECETTE-PROD-1 (F) — dire DE QUOI : part des parcelles exposées à l'aléa. */}
+                  <RowT lbl="Mouvement de terrain" val={d.risques.mouvement_terrain_pct != null ? `${fmtDec(d.risques.mouvement_terrain_pct)} % des parcelles` : '—'} />
                   <RowT lbl="Arrêtés CatNat" val={fmt(d.risques.catnat_arretes)} />
                   {d.risques.catnat_detail?.length ? (
                     /* RECETTE-2 (B2) — chaque arrêté sur DEUX lignes : libellé pleine largeur, puis
@@ -748,7 +782,7 @@ export function ContextePanel() {
                           que React ne voie plus deux enfants à la même clé (même rendu). */}
                       {d.risques.catnat_detail.slice(0, 6).map((a, i) => (
                         <div key={`${a.code_national ?? 'catnat'}-${i}`}>
-                          <div className="text-[12px] text-txt">{a.type_peril}</div>
+                          <div className="text-[12px] text-txt">{sentenceCase(a.type_peril)}</div>
                           <div className="text-[11px] text-txt-dim">{[a.date_debut && a.date_fin ? `${fmtDateNum(a.date_debut)} → ${fmtDateNum(a.date_fin)}` : (a.date_arrete ? fmtDateNum(a.date_arrete) : ''),
                                 a.code_national].filter(Boolean).join(' · ')}</div>
                         </div>
@@ -773,13 +807,10 @@ export function ContextePanel() {
                 <Source nom={d.risques.source} />
               </LigneCarte>
 
-              <LigneCarte id="equipements" ic="⌘" titre="Équipements et desserte"
-                sous="services, transport, réseaux"
-                val={undefined}>
-                <p className="text-[12px] leading-relaxed text-txt-mut">Équipements (écoles, santé, commerces), transport public, trafic, fibre, assainissement et productible
-                  solaire de la commune se lisent au plus près dans l'Étude de zone (autour d'un point) — tuile « Étude de zone » en tête de fiche.</p>
-                <Source nom="BPE INSEE · GTFS PAN · OSM · Arcep · INSEE RP · PVGIS (via Étude de zone)" />
-              </LigneCarte>
+              {/* RECETTE-PROD-1 (F) — section « Équipements et desserte » RETIRÉE : elle ne portait AUCUN
+                  chiffre commune (BPE/transport/fibre/assainissement ne sont servis qu'« autour d'un point »
+                  dans l'Étude de zone), juste un renvoi — or la tuile « Étude de zone » est déjà en tête de
+                  fiche. Vic : pas de section vide. */}
             </div>
 
             {/* FICHE-COMMUNE-2 (C1) — pied : les compteurs sont PRÉCALCULÉS chaque nuit et servis tels quels

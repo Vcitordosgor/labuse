@@ -205,8 +205,8 @@ export function ProjetsPanel() {
         {/* 1 · EN-TÊTE — « Vos projets », un seul bouton plein, « Décrire au copilote » en lien discret. */}
         <div className="flex items-start justify-between gap-6" style={{ marginBottom: 28 }}>
           <div className="min-w-0">
-            <h1 style={{ fontSize: 22, fontWeight: 500, color: '#ECF5EF', margin: '0 0 5px' }}>Vos projets</h1>
-            <p style={{ fontSize: 13, color: '#6F8578', margin: 0 }}>Chaque projet garde votre cadrage et vos parcelles retenues.</p>
+            <h1 style={{ fontSize: 22, fontWeight: 500, color: '#ECF5EF', margin: 0 }}>Vos projets</h1>
+            {/* RECETTE-PROD-1 (D6) — phrase « Chaque projet garde votre cadrage… » retirée (demande Vic). */}
           </div>
           {/* M118 — « Décrire au copilote » RETIRÉ : la création de projet quitte le Copilote, elle se
               fait ici, par le parcours guidé. Un seul point d'entrée. */}

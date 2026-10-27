@@ -675,6 +675,10 @@ export function Fiche({ idu }: { idu: string }) {
   // que le Pré-dossier et la garde SDP résiduelle. Le front ne dérive plus par regex sur le libellé.
   const zoneFamille = f?.reglement_plu?.zone_famille ?? null
   const reglesSdp = f?.potentiel_transformation?.sdp_residuelle_m2
+  // RECETTE-PROD-1 (A1) — LECTURE UNIQUE DU BÂTI pour toute la fiche (tuile, Bâti, Urbanisme, Potentiel) :
+  // même règle que BatiBlock (leBien.tsx:58). Sinon la fiche disait « bâti présent » / « bâti conservé »
+  // (dérivés de reglesSdp>0) sur une parcelle que ses propres badges déclarent terrain nu (nb=0, emprise=0).
+  const bati = (f?.le_bien?.nb_batiments ?? 0) > 0 || (f?.le_bien?.emprise_batie_m2 ?? 0) > 0
   // PPR-PARTIEL-FIX-1 (étape B) — partie HORS zone rouge d'une parcelle partiellement rouge servie 0
   // par prudence (foncier brut, reculs non appliqués, PAS une SDP). null hors gisement. Badge « à
   // étudier » sous la tuile SDP et au tiroir Potentiel — MÊME chiffre que le Dossier/Copilote.
@@ -718,7 +722,8 @@ export function Fiche({ idu }: { idu: string }) {
   const reglesGabarit: ReactNode =
     gd && gd.hauteurStatus !== 'not_integrated' && gd.hauteurReglementaireM != null
       ? (gd.hauteurBase === 'egout'
-          ? `${fmtH(gd.hauteurReglementaireM)} m à l'égout`
+          /* RECETTE-PROD-1 (A7) — hauteur table-graphique : valeur servie + étiquette « Estimé ». */
+          ? `${fmtH(gd.hauteurReglementaireM)} m à l'égout${gd.hauteurEstimee ? ' · Estimé' : ''}`
           : gd.hauteurEgoutM != null
             ? <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.15 }}>
                 <span>{fmtH(gd.hauteurReglementaireM)} m max</span>
@@ -726,6 +731,7 @@ export function Fiche({ idu }: { idu: string }) {
               </span>
             : `${fmtH(gd.hauteurReglementaireM)} m max`)
       : gd && gd.hauteurStatus === 'not_integrated'
+        /* not_integrated = hauteur en prospect (L≥H) ; la table graphique est désormais servie « Estimé » (branche ci-dessus). */
         ? <span className="t-val absent" style={{ maxWidth: 'none' }}>Non chiffrée (prospect)</span>
         : nonConstructible
           ? <span className="t-val absent" style={{ maxWidth: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
@@ -787,7 +793,9 @@ export function Fiche({ idu }: { idu: string }) {
       {/* FICHE-FIX-5 (Lot B) — AUCUNE marge au-dessus de l'en-tête : le bloc collant est opaque
           (--bg-2) jusqu'au bord HAUT du panneau (lui-même --bg-0 opaque), plus de trou par lequel on
           voyait les boutons de carte derrière. (Annule le pt-2.5 flottant de FIX-4 A1.) */}
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pb-4">
+      {/* RECETTE-PROD-1 (A4) — pt-2 : petit espace (fond du panneau) au-dessus de la carte d'en-tête ;
+          la carte se recolle à top:8px (.tete-collee) → pas de contenu qui défile dans l'interstice. */}
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pt-2 pb-4">
       {/* RETOURS-13 P7 — EN-TÊTE COLLÉ. SEUL le bloc identité (PARCELLE·commune, IDU, adresse, icônes,
           croix de fermeture) reste collé en haut au défilement — un client ferme la fiche sans remonter.
           Les 6 tuiles NE collent PAS (carte séparée dessous). Le bloc est un ENFANT DIRECT du conteneur
@@ -988,7 +996,7 @@ export function Fiche({ idu }: { idu: string }) {
               ? { l: 'SDP restante', v: '—', s: 'surface incertaine', vide: true,
                   i: 'Capacité non calculée : la surface du terrain est indéterminée (le plan et le cadastre ne concordent pas).' } as Tuile
               : { l: 'SDP restante', v: reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m²` : '—',
-              s: reglesSdp != null && reglesSdp > 0 ? 'bâti conservé' : (nonConstructible ? 'zone non constructible' : 'pas de potentiel résiduel'),
+              s: reglesSdp != null && reglesSdp > 0 ? (bati ? 'bâti conservé' : 'terrain libre') : (nonConstructible ? 'zone non constructible' : 'pas de potentiel résiduel'),
               vide: !(reglesSdp != null && reglesSdp > 0),
               i: 'Surface de plancher constructible qui reste à bâtir EN GARDANT les bâtiments existants (le bâti existant est déjà déduit) — ce n’est pas du terrain libre. Pour la capacité après démolition, voir l’outil Faisabilité (« terrain libéré »). « — » : zone non constructible ou plus de potentiel.' },
           ]
@@ -1365,7 +1373,7 @@ export function Fiche({ idu }: { idu: string }) {
           const tfpb = f.fiscalite?.tfpb_commune_pct
           // SDP restante → §10 Potentiel (potentiel résiduel autorisé par le PLU).
           const tuileSdp = { v: reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m²` : '—',
-            s: reglesSdp != null && reglesSdp > 0 ? 'bâti conservé' : (nonConstructible ? 'zone non constructible' : 'pas de potentiel résiduel'),
+            s: reglesSdp != null && reglesSdp > 0 ? (bati ? 'bâti conservé' : 'terrain libre') : (nonConstructible ? 'zone non constructible' : 'pas de potentiel résiduel'),
             vide: !(reglesSdp != null && reglesSdp > 0),
             i: 'Surface de plancher constructible qui reste à bâtir EN GARDANT les bâtiments existants (le bâti existant est déjà déduit) — ce n’est pas du terrain libre. Pour la capacité après démolition, voir l’outil Faisabilité (« terrain libéré »). « — » : zone non constructible ou plus de potentiel.' }
           // ChiffreDissous — présente une ex-tuile d'en-tête comme un fait de section (label · valeur ·
@@ -1617,15 +1625,18 @@ export function Fiche({ idu }: { idu: string }) {
                 context={(() => {
                   // FICHE-ORFEVRERIE-1 (Lot A, pt 6) — sous-titre ALIGNÉ sur le verdict interne : accord
                   // BD TOPO = RNB → « N bâtiments » ; divergence → « sources discordantes : N / M » ; sinon
-                  // « bâti présent » — plus de « Présence de bâti à vérifier » muet.
+                  // « bâti présent ».
+                  // RECETTE-PROD-1 (A1) — AUCUN bâti (lecture unique `bati`, = badge « terrain nu ») → le
+                  // sous-titre dit « terrain nu » (il disait « bâti présent » sur une parcelle nue).
                   const nb = f.le_bien.nb_batiments
                   const nbRnb = Array.isArray(f.le_bien.rnb) ? f.le_bien.rnb.length : 0
-                  return (nb != null && nb >= 1 && nbRnb > 0 && nb !== nbRnb)
+                  return !bati ? 'terrain nu'
+                    : (nb != null && nb >= 1 && nbRnb > 0 && nb !== nbRnb)
                     ? `sources discordantes : ${nb} BD TOPO · ${nbRnb} RNB`
                     : (nb != null && nb >= 1) ? `${nb} bâtiment${nb > 1 ? 's' : ''}` : 'bâti présent'
                 })()}
-                value={f.le_bien.nb_batiments != null && f.le_bien.nb_batiments > 0
-                  ? <Badge ton="vert">{f.le_bien.nb_batiments} bâtiment{f.le_bien.nb_batiments > 1 ? 's' : ''}</Badge>
+                value={bati
+                  ? <Badge ton="vert">{f.le_bien.nb_batiments != null && f.le_bien.nb_batiments > 0 ? `${f.le_bien.nb_batiments} bâtiment${f.le_bien.nb_batiments > 1 ? 's' : ''}` : 'bâti présent'}</Badge>
                   : <Badge ton="vert">terrain nu</Badge>}>
                 <BatiBlock f={f} />
               </RefDrawer>
@@ -1668,7 +1679,9 @@ export function Fiche({ idu }: { idu: string }) {
                 <ChiffreDissous l="Zone" t={tuileZone} />
                 {/* FICHE-FIX-5 (Lot E) — SDP consommée en Ligne (plus flottante), méthode en « i ». */}
                 {/* COHERENCE-FIX-1 (lot B) — au-delà de 300 : « > 300 % » (jamais un 999 servi tel quel). */}
-                {pctConsomme != null && (
+                {/* RECETTE-PROD-1 (A1) — « SDP consommée » implique du bâti déduit : on ne l'affiche pas
+                    sur une parcelle sans bâti (lecture unique `bati`), où elle contredisait « terrain nu ». */}
+                {pctConsomme != null && bati && (
                   <Lignes>
                     <Ligne label={<>SDP consommée<InfoI aria="Sur la SDP consommée" tip={CLIENT.fiche.sdpConsommeeTip(reglesSdp ?? null)} /></>}
                       ton={pctConsomme >= 100 ? 'ambre' : undefined}
@@ -1779,7 +1792,13 @@ export function Fiche({ idu }: { idu: string }) {
                     −25…+30) qui fuite en Situation un VERDICT DÉDUIT (« petit collectif / 2-4 lots ») + du
                     jargon de barème : retiré de l'affichage de la fiche (la SDP restante, elle, vit déjà
                     au bandeau et en Potentiel). Le scoring n'est PAS touché (la couche calcule toujours). */}
-                {(() => { const rl = reglesLines.filter((l) => l.result !== 'PASS' && !['zonage_plu_gpu', 'bati', 'dpu', 'peb', 'residuel_socle'].includes(l.layer)); return rl.length > 0
+                {(() => {
+                  // RECETTE-PROD-1 (A1) — la ligne OCS GE BD CARTO V5 (grain grossier) « sol classé naturel —
+                  // artificialisation à justifier » contredisait les deux mesures fines de la MÊME fiche
+                  // (OCS GE part_artif_pct, CoSIA part_impermeabilisée). Quand une mesure fine existe, on
+                  // retire la ligne grossière (elle ne sert que de repli en l'absence de donnée fine).
+                  const hasFinArtif = f.le_bien?.ocsge?.part_artif_pct != null || f.le_bien?.cosia_couverture?.part_impermeabilisee_pct != null
+                  const rl = reglesLines.filter((l) => l.result !== 'PASS' && !['zonage_plu_gpu', 'bati', 'dpu', 'peb', 'residuel_socle'].includes(l.layer) && !(l.layer === 'ocs_ge' && hasFinArtif)); return rl.length > 0
                   ? <div><GroupLabel>Situation</GroupLabel><div className="flex flex-col gap-1">{rl.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div></div> : null })()}
                 {/* FICHE-FIX-4 (Lot F) — les 2 outils PLU (Annuaire · Vérif procédure) en boutons
                     OutilsSection au lieu de grandes cartes PorteOutil. M137-P : Annuaire ouvre le hub
@@ -2050,7 +2069,10 @@ export function Fiche({ idu }: { idu: string }) {
                   const prixSortie = ps && !ps.non_calculable ? ps.prix : null
                   const panneau = (
                     <div className="flex flex-col gap-3">
-                      {f.potentiel_transformation && <TransformationBlock pt={f.potentiel_transformation} />}
+                      {/* RECETTE-PROD-1 (A1) — le « Potentiel de transformation » (SDP consommée/autorisée +
+                          surélévation) porte sur le bâti EXISTANT (× bâti BD TOPO) : sans bâti (lecture unique
+                          `bati`), il affichait « SDP consommée 25 % » sur une parcelle terrain nu → masqué. */}
+                      {f.potentiel_transformation && bati && <TransformationBlock pt={f.potentiel_transformation} />}
                       <GabaritLine idu={idu} />
                     </div>
                   )
@@ -2059,7 +2081,7 @@ export function Fiche({ idu }: { idu: string }) {
                       <Verdict ton={inconstructible ? 'rouge' : (reglesSdp != null && reglesSdp > 0 ? 'vert' : 'ambre')}
                         reponse={inconstructible
                           ? `Construction neuve non autorisée${reglesZone ? ` en ${reglesZone}` : ''}`
-                          : (reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m² de SDP constructible restante · bâti conservé` : 'Pas de SDP résiduelle exploitable')}
+                          : (reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m² de SDP constructible restante${bati ? ' · bâti conservé' : ''}` : 'Pas de SDP résiduelle exploitable')}
                         contexte={!inconstructible && fo?.niveaux ? `capacité ${fo.niveaux}` : undefined} />
                       <ChiffreDissous l="SDP restante" t={tuileSdp} />
                       {/* FICHE-ORFEVRERIE-1 (Lot B, pt 16) — « Prix de sortie retenu » : une LIGNE du
@@ -2067,7 +2089,10 @@ export function Fiche({ idu }: { idu: string }) {
                       {prixSortie != null && (
                         <ChiffreDissous l="Prix de sortie retenu" t={{
                           v: `${fmtInt(Number(prixSortie))} €/m²`,
-                          s: ps?.label ?? 'neuf servi — base du bilan',
+                          // RECETTE-PROD-1 (A1) — sous-titre COURT : un `ps.label` long (ex. « Estimé — repli
+                          // à l'échelle de l'île… ») gonflait la colonne valeur et écrasait le libellé à 0 →
+                          // « Prix de sortie retenu » s'affichait lettre par lettre. Le détail reste dans le « i ».
+                          s: ps?.label && ps.label.length <= 28 ? ps.label : 'base du bilan',
                           i: `Prix de sortie NEUF servi${ps?.label ? ` — ${ps.label}` : ''}. C'est la base du bilan de charge foncière ci-dessous, et le même chiffre dans la Calculette, l'Assemblage et les documents. Distinct du prix de l'ancien (secteur) affiché dans « Marché ».` }} />
                       )}
                       {/* PPR-PARTIEL-FIX-1 (étape B) — tiroir Potentiel : la parcelle touche une zone

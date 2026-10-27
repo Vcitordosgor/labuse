@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Fragment, useEffect, useState } from 'react'
 import { banAutocomplete, deleteLogo, getCommunes, getEnteteCloche, getEvents, getMarque, getMoi, getNotifPrefs, getParcelsGeojson, markAllEventsRead, markEventRead, modPatrimoineSearch, parcelAt, patchDigestFrequence, patchNotifPref, postLogo, postMarque, postRetour, searchParcels, type LabuseEvent } from '../../lib/api'
 import { estIdu, estSectionNumero, iduComplet, normSectionNumero } from '../../lib/format'
+import { communePastille } from '../../lib/communes'
 import { Chargement } from '../Loading'
 
 // M87 P5.1 — REGROUPER les notifications : une ligne par commune quand plusieurs événements de même
@@ -301,7 +302,9 @@ function CommuneSelect() {
               <div key={c.insee} className="flex items-center gap-0.5">
                 <button onClick={() => pick(c.commune)}
                   className={`hover-fill min-w-0 flex-1 truncate whitespace-nowrap rounded-md px-3 py-1.5 text-left text-xs ${filters.communes.includes(c.commune) ? 'text-mint' : 'text-txt'}`}>
-                  {c.commune} <span className="font-mono text-[11px] tabular-nums text-txt-dim">{CP_PAR_COMMUNE[c.commune] ?? c.insee}</span>
+                  {/* RECETTE-PROD-1 (D4) — même règle d'article que la carte (communePastille) : article
+                      gardé seulement pour Le Port / Le Tampon / La Possession. Clé de sélection = c.commune brut. */}
+                  {communePastille(c.commune)} <span className="font-mono text-[11px] tabular-nums text-txt-dim">{CP_PAR_COMMUNE[c.commune] ?? c.insee}</span>
                 </button>
                 <button data-fiche-commune onClick={(e) => { e.stopPropagation(); setContexteCommune(c.commune); setOpen(false) }}
                   className="hover-jaune shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-[11px]">

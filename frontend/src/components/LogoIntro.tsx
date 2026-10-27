@@ -190,14 +190,15 @@ export function LogoIntro({ onFini }: { onFini?: () => void }) {
   )
 }
 
-/** Une seule ouverture par session : au rechargement d'une page, pas à chaque navigation. */
+// RECETTE-PROD-1 (D1) — RÈGLE DE DÉCLENCHEMENT : l'animation joue à CHAQUE chargement complet de la page
+// (ouverture, rechargement, nouvel onglet), JAMAIS sur une navigation interne (SPA). Mécanisme : un drapeau
+// EN MÉMOIRE du module — un rechargement complet réinitialise le module (→ rejoue) ; une navigation SPA le
+// conserve (→ ne rejoue pas). Avant, un verrou `sessionStorage` empêchait le rejeu au rechargement dans le
+// même onglet : Vic ne revoyait jamais l'oiseau en prod (il rechargeait la page). Le drapeau mémoire rétablit
+// le comportement décrit (« au rechargement d'une page, pas à chaque navigation »).
+let introDejaVue = false
 export function useOuvertureUneFois(): [boolean, () => void] {
-  const [montre, setMontre] = useState(() => {
-    try { return sessionStorage.getItem('labuse.intro') !== 'vue' } catch { return true }
-  })
-  const fini = useCallback(() => {
-    try { sessionStorage.setItem('labuse.intro', 'vue') } catch { /* navigation privée */ }
-    setMontre(false)
-  }, [])
+  const [montre, setMontre] = useState(() => !introDejaVue)
+  const fini = useCallback(() => { introDejaVue = true; setMontre(false) }, [])
   return [montre, fini]
 }

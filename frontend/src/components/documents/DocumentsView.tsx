@@ -109,7 +109,7 @@ function DocCard({ d, onOpen }: { d: DocCatalogue; onOpen: () => void }) {
 }
 
 // ── la parcelle résolue (lit la fiche) : IDU, adresse+CP, zone + surface « à cheval ». ──
-function ParcelleResolue({ idu, onFiche }: { idu: string; onFiche: () => void }) {
+function ParcelleResolue({ idu, onFiche, showFiche = true }: { idu: string; onFiche: () => void; showFiche?: boolean }) {
   const q = useQuery({ queryKey: ['fiche', idu], queryFn: () => getFiche(idu) })
   const f = q.data
   // zone dominante + part « à cheval » (comme la fiche) : la plus grande part des zones du règlement.
@@ -140,7 +140,8 @@ function ParcelleResolue({ idu, onFiche }: { idu: string; onFiche: () => void })
           )}
         </>
       )}
-      <button onClick={onFiche} className="absolute right-3 top-2.5 text-[13px] font-semibold text-amber hover:text-mint-on hover:rounded hover:bg-amber hover:px-1">Fiche →</button>
+      {/* RECETTE-PROD-1 (B2) — le lien « Fiche → » est masqué dans la fenêtre Bilan (showFiche=false). */}
+      {showFiche && <button onClick={onFiche} className="absolute right-3 top-2.5 text-[13px] font-semibold text-amber hover:text-mint-on hover:rounded hover:bg-amber hover:px-1">Fiche →</button>}
     </div>
   )
 }
@@ -235,7 +236,7 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
           <div>
             <div className="mb-2 font-semibold text-txt">Sur quelle parcelle ?</div>
             <ParcelInput placeholder={placeholder} withCarte={false} onPick={setIdu} autoFocus />
-            {idu && <ParcelleResolue idu={idu} onFiche={() => ouvrirFiche(idu)} />}
+            {idu && <ParcelleResolue idu={idu} onFiche={() => ouvrirFiche(idu)} showFiche={d.key !== 'bilan'} />}
             {gabaritBloque ? (
               <p className="my-3 border-l-2 border-amber pl-2.5 text-[13px] text-amber">
                 Gabarit non calculable sur cette parcelle : donnée réglementaire manquante.

@@ -57,6 +57,9 @@ class ZoneRules:
     constructible_neuf: bool = True          # False pour les zones AU*st
     habitat: str | None = None               # "interdit" = vocation non résidentielle au règlement
     calibree: bool = True                    # True = règles d'une commune ; False = estimation générique
+    hauteur_estimee: bool = False            # RECETTE-PROD-1 (A7) : enveloppe calibrée mais HAUTEUR non
+    #  réductible à une valeur unique (table graphique par secteur) → hauteur de repli, à présenter
+    #  comme ESTIMÉE (jamais comme la valeur validée du règlement)
     hauteur_mode: str | None = None          # 'prospect' = hf_m calculé PAR PARCELLE (L≥H, largeur voirie)
     niveaux_max: int | None = None           # R+n LU au règlement (validé) → niveaux imposés
     hauteur_plage: dict | None = None         # hauteur variant par secteur (base) → plage
@@ -399,6 +402,17 @@ def _resolve_zone_base(code: str, commune: str | None = None) -> ZoneRules | Non
                 r.via_renvoi = f"{lib} → règles de {hit} (zone AU phasée « {prefixe_phase} »)"
             if strict or _has_usable_height(r):
                 return r
+            # RECETTE-PROD-1 (A7) — zone calibrée pour l'enveloppe mais sans hauteur unique exploitable :
+            # on GARDE ses valeurs calibrées (calibree=True → plus de faux « PLU non calibré ») et on
+            # complète la SEULE hauteur par le repli générique, en le DISANT (note + source). On ne jette
+            # plus l'emprise/les reculs calibrés au profit d'une estimation entièrement générique.
+            from .zone_norm import est_famille
+            if _a_enveloppe_calibree(r) and est_famille(lib, _positive_prefixes()):
+                from .engine import HE_DEFAUT_GENERIQUE_M
+                return _replace(
+                    r, he_m=float(HE_DEFAUT_GENERIQUE_M), hauteur_estimee=True,
+                    notes=[*(r.notes or []), _NOTE_HAUTEUR_GRAPHIQUE],
+                    sources={**(r.sources or {}), "hauteur": "hauteur estimée (table graphique par secteur, non chiffrable en valeur unique)"})
             return _zone_generique(lib)
 
         # 1) correspondance directe (normalisée)
@@ -785,6 +799,23 @@ def _has_usable_height(r: ZoneRules) -> bool:
     """Le moteur ne calcule des niveaux que si he_m OU hf_m est chiffré (sinon « non constructible »).
     EXCEPTION : zone 'prospect' → hf_m calculé PAR PARCELLE, donc considérée exploitable."""
     return r.hauteur_mode == 'prospect' or isinstance(r.he_m, (int, float)) or isinstance(r.hf_m, (int, float))
+
+
+# RECETTE-PROD-1 (A7) — une zone peut être CALIBRÉE pour l'enveloppe (emprise, reculs, niveaux) alors
+# que sa HAUTEUR n'est pas réductible à une valeur unique (ex. table graphique par secteur, Art. U-4 à
+# La Réunion). Sans cette distinction, `_resolu_direct` la jetait en `_zone_generique` (calibree=False)
+# → le gabarit affichait « PLU non calibré pour la zone Ub », FAUX (l'emprise CES 80 % est calibrée).
+_NOTE_HAUTEUR_GRAPHIQUE = ("Hauteur réglementaire non réductible à une valeur unique (table graphique "
+                           "par secteur) — hauteur estimée ; emprise et reculs restent calibrés.")
+
+
+def _a_enveloppe_calibree(r: ZoneRules) -> bool:
+    """La zone porte au moins une feuille d'enveloppe chiffrée (emprise / reculs / niveaux), même si la
+    hauteur manque. Sert à NE PAS la déclasser en « PLU non calibré » quand seule la hauteur est absente."""
+    return (isinstance(r.emprise_sol_pct, (int, float)) or r.emprise_plage is not None
+            or isinstance(r.recul_voirie_m, (int, float)) or r.recul_voirie_alignement
+            or isinstance(r.recul_limites_sep_m, (int, float)) or r.recul_limites_alignement
+            or r.recul_limites_formule is not None or isinstance(r.niveaux_max, int))
 
 
 def _positive_prefixes() -> tuple[str, ...]:

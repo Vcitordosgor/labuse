@@ -455,7 +455,10 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
    carrés, d'où le « haut rogné · trou noir au-dessus »). On restaure une carte pleinement arrondie +
    bordure haute ; le bloc reste collé top:0 (fond --bg-2 opaque, aucun contenu ne défile au-dessus),
    les petits arcs du haut laissent voir le fond opaque du panneau — des coins, pas un trou. */
-.fiche-v6 .tete-collee { position:sticky; top:0; z-index:20; background:var(--bg-2);
+/* RECETTE-PROD-1 (A4) — petit espace (fond --bg-0 du panneau) entre le bord haut et la carte
+   d'en-tête : la carte se colle à top:8px (pt-2 du conteneur), pas au bord ; le fond opaque couvre
+   toujours le défilement au-dessus (aucun contenu ne passe dans l'interstice). */
+.fiche-v6 .tete-collee { position:sticky; top:8px; z-index:20; background:var(--bg-2);
   border:0.5px solid var(--f-linehead); border-radius:6px;
   box-shadow:0 3px 10px -6px rgba(0,0,0,.55); }
 .fiche-v6 .head-top { padding:13px 14px; display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
@@ -523,7 +526,10 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 /* A-02-1 — la valeur d'une tuile (ex. « Non publié au GPU ») ne se coupe plus par ellipsis : elle
    s'enroule sur 2 lignes max (comme le sous-titre .stat-s). Les tuiles gardent la même hauteur
    (grid-auto-rows:1fr) ; les valeurs courtes (prix, code de zone) tiennent toujours sur une ligne. */
-.fiche-v6 .stat-v { font-size:13px; color:var(--txt-hi); margin-top:3px; line-height:1.2; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow-wrap:anywhere; }
+/* RECETTE-PROD-1 (A2) — CHARTE : la valeur chiffrée d'une tuile est dans la MÊME police numérique
+   (--mono, tabular-nums) que les valeurs des lignes de détail (.f-row > .v). Avant, les tuiles
+   héritaient Inter (sans) → les mêmes nombres étaient tantôt mono (détail) tantôt sans (tuiles). */
+.fiche-v6 .stat-v { font-family:var(--mono); font-variant-numeric:tabular-nums; font-size:13px; color:var(--txt-hi); margin-top:3px; line-height:1.2; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow-wrap:anywhere; }
 .fiche-v6 .stat-v.vide { color:var(--txt-faint); font-weight:400; }
 .fiche-v6 .stat-v.neuf { color:var(--mint); }
 /* RECETTE-7 (B3) — le sous-titre (« pas de potentiel résiduel ») ne se COUPE plus (« pas de

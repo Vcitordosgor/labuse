@@ -841,6 +841,10 @@ def _gabarit(db, idu: str) -> dict:
             return None if x is None else (f"{int(x)}" if float(x) == int(x) else f"{x:g}".replace(".", ","))
         if res.hauteurStatus == "not_integrated":
             hauteur = "Non chiffrée (prospect)"
+        elif getattr(res, "hauteurEstimee", False):
+            # RECETTE-PROD-1 (A7) — hauteur issue de la table graphique par secteur : valeur servie,
+            # étiquetée « Estimé » dans le PDF (jamais présentée comme la valeur validée du règlement).
+            hauteur = f"{_hm(res.hauteurReglementaireM)} m à l'égout · Estimé (table graphique par secteur)"
         else:
             parts = []
             if res.hauteurReglementaireM is not None:
