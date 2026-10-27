@@ -2927,13 +2927,33 @@ def admin_circuit(request: Request) -> dict:
             _incidents = _ops.incidents_ouverts(_si)
     except Exception:  # noqa: BLE001 — table d'incidents absente : aucune carte (jamais un crash)
         _incidents = []
+    # ── DONNEES-ETAT-FIX-2 — copie hors-site (Lot B) + test de restauration (Lot A) : marqueurs FICHIER
+    #    (indépendants du code déployé), enrichis de l'âge en jours pour la couleur de la carte. ──
+    _copie_externe = None
+    _restore_test = None
+    try:
+        from .. import ops_alertes as _ops2
+        from datetime import datetime as _dt, timezone as _tz
+        _bdir = _config.get_settings().backup_dir
+        _seuil = getattr(_config.get_settings(), "copie_externe_seuil_j", 10)
+        _ce = _ops2.lire_copie_externe(_bdir)
+        if _ce:
+            _age = (_dt.now(_tz.utc) - _ce["copie_at"]).days
+            _copie_externe = {**_ce, "age_j": _age, "seuil_j": _seuil,
+                              "derniere": _ce["copie_at"].astimezone().strftime("%d/%m/%Y"),
+                              "copie_at": _ce["copie_at"].isoformat()}
+        else:
+            _copie_externe = None   # aucune copie connue → carte rouge (géré côté composer)
+        _restore_test = _ops2.lire_restore_test(_bdir)
+    except Exception:  # noqa: BLE001 — marqueurs absents/illisibles : pas de carte (jamais un crash)
+        _copie_externe, _restore_test = None, None
     cockpit = _cockpit.composer_cockpit(
         a_faire=a_faire, etats_sources=_etats_compte, reservoirs=reservoirs,
         verrous=_verrous, fuites_rob=_fuites_rob, caches_perimes=_caches_perimes, incidents=_incidents,
         ecarts_toleres=_ecarts_toleres, jobs_list=_jobs_list, run_servi=runs.current(),
         candidat=_candidat, calculer_present=_resume._calculer_present(_calculer_af, residuel),
         dernier_calcul=_run_date, env=_config.get_settings().env, prod_run=None,
-        dates=_dates_af)
+        dates=_dates_af, copie_externe=_copie_externe, restore_test=_restore_test)
     return {
         "cockpit": cockpit,   # COCKPIT-1 Lot A — l'onglet « Tableau de bord » (3 sections)
         "run_servi": runs.current(), "candidat": _candidat, "manifeste": m,
@@ -3102,6 +3122,32 @@ def admin_cockpit_accepter_ecarts(request: Request) -> dict:
     return _lancer_cli_detache(argv=argv, log_path="/tmp/labuse-cockpit-accepter.log",
                                par=_qui(request), geste="cockpit:accepter-ecarts", cible="écarts tolérés",
                                resume="labuse coherence --accepter (regénère les golden)")
+
+
+@router.post("/admin/cockpit/accepter-incident")
+def admin_cockpit_accepter_incident(request: Request) -> dict:
+    """DONNEES-ETAT-FIX-2 (Lot C) — « Accepter » une carte d'incident : acquitte (résout) l'incident
+    ouvert par sa clé. Il ROUVRIRA au prochain contrôle s'il est toujours réel (le signalement est
+    idempotent) ; « Accepter » sert à faire taire ce qu'on a vu et décidé de laisser. Journalisé."""
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    from .. import ops_alertes
+    exiger_admin(request)
+    cle = (request.query_params.get("cle") or "").strip()
+    if not cle:
+        raise HTTPException(400, "clé d'incident manquante")
+    with session_scope() as db:
+        ops_alertes.resoudre(db, cle)
+        db.commit()
+    try:
+        from .. import circuit_journal
+        with session_scope() as s:
+            circuit_journal.journaliser(s, "cockpit:accepter-incident", cle, _qui(request),
+                                        "acquitté", {"resume": "rouvre si toujours réel"})
+            s.commit()
+    except Exception:  # noqa: BLE001 — le journal qui rate ne casse pas l'acquittement
+        pass
+    return {"ok": True, "cle": cle}
 
 
 @router.post("/admin/cockpit/envoyer-prod")

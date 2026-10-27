@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# LA BUSE — (ré)installation des 3 agents launchd du Mac HORS DU BUREAU.
+# LA BUSE — (ré)installation des 4 agents launchd du Mac HORS DU BUREAU.
 # -----------------------------------------------------------------------------
 # POURQUOI. macOS (TCC) interdit à launchd de LIRE un script rangé sous ~/Desktop :
 # les agents échouent alors en code 126 « Operation not permitted ». On installe
@@ -11,14 +11,15 @@
 #   1. crée ~/.labuse/ops et y COPIE les 3 scripts depuis le dépôt (cette copie-ci,
 #      sur la branche courante — à lancer depuis un clone à jour de `main`) ;
 #   2. vérifie qu'aucun script installé ne lit plus quoi que ce soit sous ~/Desktop ;
-#   3. installe les 3 .plist dans ~/Library/LaunchAgents en substituant /Users/VIC → $HOME ;
+#   3. installe les 4 .plist dans ~/Library/LaunchAgents en substituant /Users/VIC → $HOME ;
 #   4. décharge puis recharge chaque agent (bootout/bootstrap, repli load -w) ;
 #   5. kickstart chacun (sauf --no-kickstart) et affiche la fin de chaque journal.
 #
-# Les 3 agents :
+# Les 4 agents :
 #   com.labuse.backup-offsite   copie vérifiée des dumps VPS → disque externe du Mac
 #   immo.labuse.pull-backups    rapatriement quotidien des dumps VPS → ~/labuse-backups/vps
 #   immo.labuse.watch-prod      sentinelle /healthz de la prod toutes les 10 min
+#   com.labuse.restore-test     test de restauration mensuel (restaure un dump → base jetable → DROP)
 #
 # DÉPENDANCES EXTERNES (hors ~/Desktop, rien à copier) :
 #   · bash/ssh/rsync/curl/shasum/python3/osascript : /usr/bin (PATH launchd minimal) ;
@@ -44,12 +45,14 @@ SCRIPTS=(
   "deploy/mac/backup_offsite_disque.sh"
   "deploy/scripts/pull_backups.sh"
   "deploy/scripts/watch_prod.sh"
+  "deploy/mac/restore_test.sh"           # DONNEES-ETAT-FIX-2 (Lot A) — test de restauration mensuel
 )
 # plist (modèles /Users/VIC) → label launchd
 PLISTS=(
   "com.labuse.backup-offsite"
   "immo.labuse.pull-backups"
   "immo.labuse.watch-prod"
+  "com.labuse.restore-test"              # DONNEES-ETAT-FIX-2 (Lot A)
 )
 
 echo "▶ dépôt source : $REPO_ROOT"
@@ -98,11 +101,11 @@ for label in "${PLISTS[@]}"; do
   echo "  plist → $dst (script = $(/usr/libexec/PlistBuddy -c 'Print :ProgramArguments:1' "$dst" 2>/dev/null))"
   reload_agent "$label" "$dst"
 done
-echo "✓ 3 agents (ré)installés dans ~/.labuse/ops et rechargés."
+echo "✓ 4 agents (ré)installés dans ~/.labuse/ops et rechargés."
 
 # ── 5) kickstart + journaux ──────────────────────────────────────────────────────────────────────────
 if [ "$KICKSTART" = 1 ]; then
-  echo; echo "▶ kickstart des 3 agents (exécution immédiate) :"
+  echo; echo "▶ kickstart des 4 agents (exécution immédiate) :"
   for label in "${PLISTS[@]}"; do
     launchctl kickstart -k "$DOMAIN/$label" 2>/dev/null || true
     echo "  kickstart $label"

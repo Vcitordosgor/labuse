@@ -1,0 +1,12 @@
+{
+ "id": "copie-externe",
+ "pastille": "rouge",
+ "titre": "Copie hors-site ancienne (10 jours)",
+ "phrase": "Dernière copie sur le disque externe le 17/10/2026. Branche le disque pour en refaire une.",
+ "code": false,
+ "tri": 0.4,
+ "detail": {
+  "texte": "Dernière copie hors-site : 17/10/2026 (il y a 10 jours)\nDump copié : labuse-labuse-20261019-133004.dump\nDisque : MUSIQUE-VIDEO\nSeuil rouge : 10 jours."
+ },
+ "voir_detail": true
+}

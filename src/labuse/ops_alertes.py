@@ -260,6 +260,26 @@ def lire_copie_externe(backup_dir: str) -> dict | None:
         return None
 
 
+# DONNEES-ETAT-FIX-2 (Lot A) — marqueur du test de restauration mensuel (écrit par l'agent Mac
+# deploy/mac/restore_test.sh). Même esprit que la copie externe : un FICHIER lu par le Tableau de bord,
+# indépendant de tout code applicatif déployé. Statut : ok | ko | refuse.
+MARQUEUR_RESTORE_TEST = ".restore-test.json"
+
+
+def lire_restore_test(backup_dir: str) -> dict | None:
+    """Le marqueur du dernier test de restauration, ou None s'il est absent/illisible. Renvoie le dict
+    tel qu'écrit par restore_test.sh : {test_at, statut, message, dump, run_servi, run_servi_lignes,
+    tables, min_go}. Jamais d'exception."""
+    try:
+        p = Path(backup_dir) / MARQUEUR_RESTORE_TEST
+        if not p.exists():
+            return None
+        d = json.loads(p.read_text(encoding="utf-8"))
+        return d if isinstance(d, dict) and d.get("statut") else None
+    except (OSError, ValueError, TypeError):
+        return None
+
+
 def _intervalle_s(cron_utc: str) -> float | None:
     """Secondes entre deux exécutions consécutives d'une planif cron (via le parseur du registre).
     None si on ne peut pas trouver deux occurrences sous l'horizon (planif très rare)."""
