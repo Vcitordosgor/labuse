@@ -44,23 +44,25 @@ _CSS = """
 .bilan tr.tot td{font-weight:700;background:#eaf2ec}
 .bilan .bloc{page-break-inside:avoid;margin-bottom:10px}
 .bilan .synth{page-break-before:always}
-.bilan .badge{font-size:10px;border:1px solid #9bb0a4;border-radius:9px;padding:1px 6px;color:#44584c}
+.bilan .badge{font-size:10px;border:1px solid #9bb0a4;border-radius:9px;padding:1px 6px;color:#44584c;white-space:nowrap}
 .bilan .res{font-size:16px;font-weight:700;color:#0a6b38}
-.bilan .tete{display:flex;gap:26px;margin:4px 0 6px}
-.bilan .tete table{font-size:11px}
-.bilan .tete td{border:0;padding:2px 6px}
-.bilan .tete .k{color:#6b7a72}
-.bilan .tete .v{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.bilan .tete2{font-size:11px;margin:4px 0 8px}
+.bilan .tete2 td{border:0;padding:2px 8px}
+.bilan .tete2 .k{color:#6b7a72}
+.bilan .tete2 .cal{padding-left:26px}
+.bilan .tete2 .v{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
 .bilan .vides{color:#6b7a72;font-size:10px;margin:2px 0 8px}
+.bilan .tete-doc{color:#6b7a72;font-size:11px;margin:-2px 0 6px}
 """
 
 # Colonne « Libellé · Assiette · Taux · HT · TVA · TTC · État » — largeurs fixes
 # (en-tête et lignes partagent la même grille, chiffres calés à droite).
+# DOCS-COHERENCE-1 (recette Vic) — colonne « État » élargie pour « À renseigner » sur UNE ligne.
 _COLGROUP = (
     "<colgroup>"
-    "<col style='width:26%'><col style='width:15%'><col style='width:11%'>"
-    "<col style='width:14%'><col style='width:12%'><col style='width:14%'>"
-    "<col style='width:8%'></colgroup>"
+    "<col style='width:24%'><col style='width:13%'><col style='width:12%'>"
+    "<col style='width:13%'><col style='width:12%'><col style='width:14%'>"
+    "<col style='width:12%'></colgroup>"
 )
 
 
@@ -108,8 +110,13 @@ def _tete(
     ratios = {k: v for k, v in r.ratios}
     pt = r.produits_totaux
 
+    # DOCS-COHERENCE-1 (recette Vic) — « nothing entered » = « — », JAMAIS « 0 m² » / « 0 € »
+    # (un zéro inventé). Quand rien n'est saisi, SUV et CA TTC valent 0 → on affiche « — ».
     def m2(x):
-        return "—" if x in (None, "") else f"{round(float(x)):,}".replace(",", " ") + " m²"
+        return "—" if not x else f"{round(float(x)):,}".replace(",", " ") + " m²"
+
+    def eur0(x):
+        return "—" if not x else _eur(x)
 
     # Ordre du modèle (A4, A9, A10, A11, A14, A15, A16, A18, A21, A22).
     lignes_g = [
@@ -120,30 +127,33 @@ def _tete(
         ("Coût const. m² SUV HT", ratios.get("Coût const. m² SUV HT", "—")),
         ("Prix moyen m² SUV HT", ratios.get("Prix moyen au m² SUV HT", "—")),
         ("Net promoteur m² SUV TTC", ratios.get("Net promoteur m² SUV TTC", "—")),
-        ("CA TTC programme", _eur(r.ca_ttc)),
-        ("Renta nette / CA HT", _pct(r.marge_pct)),
+        ("CA TTC programme", eur0(r.ca_ttc)),
+        ("Renta nette / CA HT", _pct(r.marge_pct) if r.ca_ttc else "—"),
         ("Nombre de lots", str(round(pt.get("lots") or 0)) if pt.get("lots") else "—"),
     ]
-    g = "".join(
-        f"<tr><td class='k'>{esc(k)}</td><td class='v'>{esc(str(v))}</td></tr>"
-        for k, v in lignes_g
-    )
-
     cal = calendrier or {}
     lignes_c = []
     for etape in cat.calendrier:
         off = cal.get(etape["id"], etape.get("defaut"))
-        txt = "—" if off is None else (f"J+{off}" if off else "J")
-        lignes_c.append(
-            f"<tr><td class='k'>{esc(etape['libelle'])}</td><td class='v'>{txt}</td></tr>"
-        )
-    c = "".join(lignes_c)
+        txt = "—" if off is None else (f"J + {off} mois" if off else "J")
+        lignes_c.append((etape["libelle"], txt))
 
+    # DOCS-COHERENCE-1 (recette Vic) — UNE SEULE table à 4 colonnes (ratios | calendrier) : la
+    # disposition flex de deux tables se repliait sous WeasyPrint et faisait « fuir » les valeurs
+    # des ratios (« 0 m² », « 0 € ») dans la colonne du calendrier. Grille déterministe ici.
+    n = max(len(lignes_g), len(lignes_c))
+    rows = []
+    for i in range(n):
+        gk, gv = lignes_g[i] if i < len(lignes_g) else ("", "")
+        ck, cv = lignes_c[i] if i < len(lignes_c) else ("", "")
+        rows.append(
+            f"<tr><td class='k'>{esc(gk)}</td><td class='v'>{esc(str(gv))}</td>"
+            f"<td class='k cal'>{esc(ck)}</td><td class='v'>{esc(str(cv))}</td></tr>"
+        )
     return (
-        "<div class='tete'>"
-        f"<table><tr><th colspan='2'>Ratios &amp; programme</th></tr>{g}</table>"
-        f"<table><tr><th colspan='2'>Calendrier prévisionnel</th></tr>{c}</table>"
-        "</div>"
+        "<table class='tete2'><thead><tr><th colspan='2'>Ratios &amp; programme</th>"
+        "<th colspan='2'>Calendrier prévisionnel</th></tr></thead><tbody>"
+        + "".join(rows) + "</tbody></table>"
     )
 
 
@@ -157,11 +167,18 @@ def construire_html(
     calendrier: dict | None = None,
     cat: Catalogue | None = None,
     jour: date | None = None,
+    etude_reliee: str | None = None,
+    prix_demande: float | None = None,
+    donnees_au: str | None = None,
 ) -> tuple[str, Cartouche]:
     cat = cat or charger_catalogue()
     j = jour or today_reunion()
     numero = numeros.numero_rapport("bilan", idu, j)
 
+    # DOCS-COHERENCE-1 (recette Vic, G6) — en-tête COMPLET : adresse + Étude reliée + prix demandé,
+    # comme à l'écran. « — » honnête quand une donnée n'est pas servie (jamais un zéro inventé).
+    _etude = etude_reliee or "aucune Étude reliée"
+    _prix = (f"{round(prix_demande):,}".replace(",", " ") + " €") if prix_demande else "non renseigné"
     tete = (
         f'<div class="brand"><span class="wordmark">LABUSE</span>'
         f'<span class="kind">Bilan</span></div>'
@@ -169,6 +186,7 @@ def construire_html(
         f'<p class="idu">{esc(idu)}'
         + (f" · {esc(adresse)}" if adresse else "")
         + f" · {esc(numero)} · {j:%d/%m/%Y}</p>"
+        f'<p class="tete-doc">Programme : {esc(_etude)} · Prix demandé : {esc(_prix)}</p>'
     )
 
     corps = ['<div class="bilan">', tete]
@@ -238,11 +256,13 @@ def construire_html(
     corps.append('<p style="color:#6b7a72;font-size:10px">Document non contractuel.</p>')
     corps.append("</div></div>")
 
-    au = f"{j:%d/%m/%Y}"
+    # DOCS-COHERENCE-1 (recette Vic) — pied « Données LABUSE au <date du RUN servi> » (comme les 7
+    # autres documents : 21/10/2026), pas la date de génération du jour.
+    au = donnees_au or f"{j:%d/%m/%Y}"
     cart = Cartouche(
         doc_title=f"LABUSE — Bilan" + (f" · {adresse}" if adresse else ""),
         doc_ref=f"{idu} · {numero}",
-        doc_foot=f"Document d'information LABUSE. Données au {au}.",
+        doc_foot=f"Document d'information LABUSE. Données LABUSE au {au}.",
     )
     html = page_html("Bilan", cart, f"<style>{_CSS}</style>" + "".join(corps))
     return html, cart

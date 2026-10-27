@@ -277,3 +277,19 @@ l'écran). Reprise point par point, régénération + relecture des PDF.
 
 Harnais 0 écart BY0083 + BL0020 ; unit zone/gabarit/comparatif/apporteur/pré-dossier 201 passed.
 Reste recette : Dossier B2/B8/A9§10/B9 · A8 (ventes par prix Comparatif+Étude zone) · Bilan PDF (Lot G).
+
+### Lot G (Bilan PDF) — recette
+
+Le Bilan PDF (`bilan/pdf.py`) est un renderer DISTINCT de l'écran : les points G7 étaient à l'écran, pas dans le PDF.
+
+| point | correction |
+|-------|-----------|
+| **en-tête** adresse + Étude reliée + prix demandé | `construire_html` : ligne IDU + **adresse BAN** (143 Rue Évariste de Parny…) + ligne « Programme : <Étude reliée / aucune> · Prix demandé : <… / non renseigné> ». |
+| **pré-remplissages sourcés** | `reperes.bilan_prefill` injecte des SaisiePoste **Sourcé** : taxe d'aménagement = part communale 5 % (Saint-Paul) **+ part départementale 2,5 %** (confirmée 974) = 67 €/m² ; redevance d'archéologie **0,40 %** = 4 €/m². Appliqués dans le harnais ET la route (postes non saisis). |
+| **Calendrier — plus de « 0 m² » / « 0 € » dans les dates** | la disposition flex de 2 tables se repliait sous WeasyPrint (valeurs des ratios qui « fuyaient » dans la colonne calendrier) → **UNE table à 4 colonnes** ; SUV/CA TTC à « — » quand rien n'est saisi (jamais un zéro inventé). |
+| **« 0 € » avec espace** | `_eur` : espace insécable (0 occurrence de « 0€ » collé). |
+| **pied « Données LABUSE au 21/10/2026 »** | date du RUN servi (`_donnees_labuse_au`), plus la date du jour. |
+| **colonne État** | élargie (8 % → 12 %) + badge `white-space:nowrap` → « À renseigner » sur UNE ligne. |
+| **export refusé si CA nul, y compris API** | `_refuser_si_ca_nul` (HTTP 422) sur `/bilan/{idu}.pdf` ET `.xlsx`. |
+
+Bilan régénéré et regardé (`pdf-final/8-bilan.pdf`). bilan/taxe/reperes 66 passed ; harnais 0 écart.

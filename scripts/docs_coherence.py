@@ -61,19 +61,21 @@ def _pdftotext(octets: bytes, layout: bool = True) -> str:
 
 
 def _bilan_pdf(idu: str) -> bytes:
-    """Le Bilan rendu en process (même chemin que la route) avec le MÊME pré-remplissage Sourcé que
-    la route (`bilan.reperes.sources_parcelle` : terrain = contenance cadastrale, comme la fiche)."""
-    from sqlalchemy import text
+    """Le Bilan rendu en process (même chemin que la route) avec les pré-remplissages SOURCÉS :
+    terrain (contenance), taxe d'aménagement (communale + départementale), archéologie — et l'en-tête
+    complet (adresse BAN, données au <run servi>). DOCS-COHERENCE-1 (recette Vic)."""
     from labuse.bilan import reperes
     from labuse.bilan.moteur import EntreesBilan, Moteur, Programme
     from labuse.bilan.pdf import construire_pdf
     from labuse.db import session_scope
     with session_scope() as s:
-        commune = s.execute(text("SELECT commune FROM parcels WHERE idu=:i"), {"i": idu}).scalar() or ""
-        terrain = (reperes.sources_parcelle(s, idu) or {}).get("terrain")
-    e = EntreesBilan(programme=Programme(terrain=float(terrain) if terrain else None))
+        pf = reperes.bilan_prefill(s, idu)
+    e = EntreesBilan(programme=Programme(terrain=float(pf["terrain"]) if pf.get("terrain") else None),
+                     postes=pf.get("postes") or {})
     r = Moteur().calculer(e)
-    return construire_pdf(r, idu=idu, commune=str(commune), programme={}, calendrier={})
+    return construire_pdf(r, idu=idu, commune=str(pf.get("commune") or ""),
+                          adresse=pf.get("adresse") or "", donnees_au=pf.get("donnees_au"),
+                          programme={"terrain": pf.get("terrain")}, calendrier={})
 
 
 def documents(idu: str) -> dict[str, str]:

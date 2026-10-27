@@ -369,6 +369,14 @@ def _saisies_du_document(db: Session, idu: str, doc_id: int, request: Request) -
     return CalculIn.model_validate(data)
 
 
+def _refuser_si_ca_nul(r) -> None:
+    """DOCS-COHERENCE-1 (recette Vic, G3) — export REFUSÉ côté SERVEUR si le CA est nul (pas seulement
+    le bouton grisé à l'écran) : un Bilan sans programme ni prix de vente n'a rien à exporter."""
+    if not getattr(r, "ca_ttc", None):
+        raise HTTPException(
+            422, "Export indisponible : aucun chiffre d'affaires. Saisissez le programme et un prix de vente.")
+
+
 @router.get("/bilan/{idu}.pdf")
 def bilan_pdf(
     idu: str, request: Request, doc_id: int = Query(...), db: Session = Depends(get_db)
@@ -376,11 +384,23 @@ def bilan_pdf(
     from ..bilan import pdf as _pdf
 
     corps = _saisies_du_document(db, idu, doc_id, request)
-    r = Moteur().calculer(_entrees(corps))
+    # DOCS-COHERENCE-1 (recette Vic) — pré-remplissages SOURCÉS (taxe d'aménagement, archéologie) pour
+    # les postes que le client n'a PAS saisis : le PDF montre le même Sourcé que l'écran. En-tête
+    # complet (adresse BAN) + pied daté du run servi.
+    from ..bilan import reperes as _rep
+    _pf = _rep.bilan_prefill(db, idu)
+    e = _entrees(corps)
+    for _pid, _sp in (_pf.get("postes") or {}).items():
+        if _pid not in e.postes:
+            e.postes[_pid] = _sp
+    r = Moteur().calculer(e)
+    _refuser_si_ca_nul(r)
     octets = _pdf.construire_pdf(
         r,
         idu=idu,
         commune=_commune(db, idu),
+        adresse=_pf.get("adresse") or "",
+        donnees_au=_pf.get("donnees_au"),
         programme=corps.programme.model_dump(),
         calendrier=dict(corps.calendrier),
     )
@@ -399,6 +419,7 @@ def bilan_xlsx(
 
     corps = _saisies_du_document(db, idu, doc_id, request)
     e = _entrees(corps)
+    _refuser_si_ca_nul(Moteur().calculer(e))
     octets = classeur_bilan_bytes(e, titre=f"Bilan — {idu}")
     return Response(
         content=octets,
