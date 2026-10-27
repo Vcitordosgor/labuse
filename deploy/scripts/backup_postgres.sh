@@ -16,8 +16,11 @@ set -euo pipefail
 
 BACKUP_DIR="${LABUSE_BACKUP_DIR:-/var/backups/labuse}"   # JAMAIS dans /opt/labuse/app
 # DISQUE-VPS-1 — un dump « lean » pèse ~4,4 Go : défaut 7 → 4 (7×4,4 = 30 Go saturaient le disque).
-# LABUSE_BACKUP_KEEP (env) l'emporte toujours ; un garde-disque (ci-dessous) borne la rotation quoi qu'il arrive.
-KEEP="${LABUSE_BACKUP_KEEP:-4}"                          # nb de dumps quotidiens conservés
+# DONNEES-ETAT-FIX-1 (Lot E) — défaut 4 → 2 quotidiens : le dump réel pèse ~7 Go (pas 4,4) et le disque
+# a atteint 94 % le 27/10 (écart 1). L'historique vit AILLEURS (le Mac rapatrie chaque matin + disque
+# externe) ; le VPS ne garde qu'une courte fenêtre de reprise. Le job backup-postgres force déjà KEEP=2
+# (BACKUP_ROTATION_N). LABUSE_BACKUP_KEEP (env) l'emporte toujours ; un garde-disque (ci-dessous) borne quoi qu'il arrive.
+KEEP="${LABUSE_BACKUP_KEEP:-2}"                          # nb de dumps quotidiens conservés (Lot E : 2)
 DB="${LABUSE_DB_NAME:-labuse}"
 DB_USER="${LABUSE_DB_USER:-labuse}"
 DB_HOST="${LABUSE_DB_HOST:-localhost}"
@@ -91,13 +94,14 @@ if ((${#OLD[@]})); then
 fi
 echo "  $(ls -1 "$BACKUP_DIR"/labuse-"${DB}"-*.dump 2>/dev/null | wc -l) dump(s) conservé(s) dans $BACKUP_DIR"
 
-# --- Rétention HEBDO (mandat VPS V6) : le dump du dimanche est retenu 4 semaines ---
-# Hardlink (zéro octet copié) sous un préfixe hors du glob de la rotation quotidienne ;
-# rotation propre à 4 exemplaires. Restauration : mêmes gestes que pour un dump quotidien.
+# --- Rétention HEBDO (mandat VPS V6 ; DONNEES-ETAT-FIX-1 Lot E : 4 → 1 exemplaire) ---
+# Hardlink (zéro octet copié) sous un préfixe hors du glob de la rotation quotidienne. On ne garde que
+# LE dernier dump du dimanche : l'historique long vit sur le Mac + le disque externe, pas sur le VPS.
+# Restauration : mêmes gestes que pour un dump quotidien.
 if [ "$(date +%u)" = "7" ]; then
     HEBDO="$BACKUP_DIR/hebdo-labuse-${DB}-${TS}.dump"
-    ln "$OUT" "$HEBDO" && echo "  hebdo : $HEBDO retenu (3 semaines)"
-    mapfile -t OLDH < <(ls -1t "$BACKUP_DIR"/hebdo-labuse-"${DB}"-*.dump 2>/dev/null | tail -n +4)
+    ln "$OUT" "$HEBDO" && echo "  hebdo : $HEBDO retenu (1 exemplaire)"
+    mapfile -t OLDH < <(ls -1t "$BACKUP_DIR"/hebdo-labuse-"${DB}"-*.dump 2>/dev/null | tail -n +2)
     ((${#OLDH[@]})) && rm -f -- "${OLDH[@]}"
 fi
 

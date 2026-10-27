@@ -64,6 +64,38 @@ def test_mail_queue_cede_a_la_sauvegarde(tmp_path, monkeypatch):
     assert appels["n"] == 1 and ctx2.compteurs.get("traites") == 1
 
 
+def test_sante_endpoints_cede_a_la_sauvegarde(tmp_path, monkeypatch):
+    """DONNEES-ETAT-FIX-1 (Lot C) — `sante-endpoints` CÈDE à la sauvegarde comme mail-queue : verrou du
+    dump TENU → sonde métier (requêtes DB lourdes) PAS lancée, retour propre (statut ok), fin du faux
+    incident quotidien de 13:37. Verrou LIBRE → la sonde tourne normalement."""
+    import types
+
+    from labuse import jobs_impl
+    from labuse.api import sante
+    monkeypatch.setenv("LABUSE_LOCK_DIR", str(tmp_path))
+    appels = {"n": 0}
+    monkeypatch.setattr(sante, "sonde_metier",
+                        lambda db: (appels.__setitem__("n", appels["n"] + 1),
+                                    {"ok": True, "endpoints": []})[1])
+
+    def _ctx():
+        c = types.SimpleNamespace(dry_run=False, db=None, compteurs={})
+        c.compte = lambda **k: c.compteurs.update(k)
+        return c
+
+    # verrou TENU → passage cédé, sonde PAS appelée, ne lève pas
+    (tmp_path / "labuse-job-backup-postgres.lock.d").mkdir()
+    ctx = _ctx()
+    jobs_impl.sante_endpoints(ctx)
+    assert appels["n"] == 0 and "saute" in ctx.compteurs and ctx.compteurs.get("ok") is True
+
+    # verrou LIBRE → la sonde tourne
+    (tmp_path / "labuse-job-backup-postgres.lock.d").rmdir()
+    ctx2 = _ctx()
+    jobs_impl.sante_endpoints(ctx2)
+    assert appels["n"] == 1 and ctx2.compteurs.get("total") == 0
+
+
 # ─────────────── Correction C — oracle risque zonal ───────────────
 
 def test_aleas_zonaux_retire_seisme_et_feu():

@@ -96,6 +96,36 @@ echo "✓ anthropic $VER_ANTHROPIC (== pin pyproject [ai])"
 # --- 4. migrations (schéma additif idempotent) ---
 sudo -u $RUN_AS --preserve-env=LABUSE_DATABASE_URL "$VENV/bin/labuse" init-db
 
+# --- 4b. crontab : REPOSÉ depuis le registre à CHAQUE déploiement (DONNEES-ETAT-FIX-1 Lot A) ---
+# Le bug DONNEES-ETAT-2 : un déploiement changeait le binaire (donc le REGISTRE des jobs) sans jamais
+# reposer /etc/cron.d/labuse → crontab périmé EN SILENCE (POSTDEPLOY-1027 : agents-sources absent du
+# cron, restore-test fantôme encore présent). La pose du crontab vivait dans un AUTRE script (deploy.sh
+# racine, CRON-1) qu'aucun déploiement d'app n'appelait. Désormais : chaque deploy régénère le crontab
+# depuis le registre, sauvegarde l'ancien à côté, le pose, et VÉRIFIE l'égalité au registre — tout écart
+# ARRÊTE le déploiement (plus jamais « déployé mais crontab périmé »). Heures : le registre est en UTC,
+# `--tz reunion` convertit (+4 h) pour ce serveur Indian/Reunion.
+echo "▶ crontab depuis le registre (repose à chaque deploy)…"
+SRVTZ="$(timedatectl show -p Timezone --value 2>/dev/null || cat /etc/timezone 2>/dev/null || echo inconnu)"
+case "$SRVTZ" in
+    UTC|Etc/UTC)      GENTZ=utc ;;
+    Indian/Reunion)  GENTZ=reunion ;;
+    *) echo "✗ fuseau serveur « $SRVTZ » ni UTC ni Indian/Reunion (le registre est en UTC) — on ARRÊTE." >&2; exit 5 ;;
+esac
+CRONTMP="$(mktemp)"
+sudo -u $RUN_AS "$VENV/bin/labuse" jobs crontab --tz "$GENTZ" > "$CRONTMP"
+if [ -f /etc/cron.d/labuse ]; then
+    cp -p /etc/cron.d/labuse "/etc/cron.d/labuse.bak-deploy-$(date +%Y%m%d-%H%M%S)"
+fi
+install -o root -g root -m 644 "$CRONTMP" /etc/cron.d/labuse
+rm -f "$CRONTMP"
+if ! sudo -u $RUN_AS "$VENV/bin/labuse" jobs crontab --tz "$GENTZ" --verifier /etc/cron.d/labuse; then
+    echo "✗ /etc/cron.d/labuse DIVERGE du registre juste après la pose — on ARRÊTE (jamais servir un crontab périmé)." >&2
+    echo "  (improbable : la pose vient du même registre ; signe d'un problème de génération/droits)." >&2
+    exit 5
+fi
+command -v systemctl >/dev/null 2>&1 && systemctl restart cron 2>/dev/null || service cron restart 2>/dev/null || true
+echo "✓ crontab reposé depuis le registre (tz=$GENTZ) + vérifié — ancien sauvé en /etc/cron.d/labuse.bak-deploy-*"
+
 # --- 5. front (seulement si frontend/ a bougé, ou si dist absent) ---
 if [ ! -d "$APP/frontend/dist" ] || ! sudo -u $RUN_AS git -C $APP diff --quiet "$AVANT" "$APRES" -- frontend/; then
     echo "▶ build front…"
