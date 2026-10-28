@@ -28,6 +28,34 @@ from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — témoins tir�
 #: creux (signature DPE : 17 lignes), pas un échantillon clairsemé.
 SEUIL_QUASI_VIDE = 100
 
+
+# VITESSE-2 (Lot 2) — index fonctionnels pour le remplissage « parcelle ». Le test de présence
+# `WHERE left(idu, 14) = ANY(:v)` (ligne du SELECT count ci-dessous) ne peut PAS utiliser un btree
+# sur `idu` (prédicat fonctionnel) → Parallel Seq Scan mesuré à 84 ms sur pm_proprietaires_millesimes
+# (153 k lignes, retirées une à une), rejoué pour CHAQUE fiche parcelle via `_data_sources_fiche`.
+# Un index sur l'expression `left(idu, 14)` rend le test indexé (0,13 ms mesuré, Bitmap Index Scan).
+# Les deux tables visées sont les grosses tables « parcelle » du catalogue (propriétaires PM
+# millésimés + rattachement PM courant) ; les autres réservoirs idu sont petits. Idempotent.
+_FICHE_PERF_INDEXES = (
+    ("pm_proprietaires_millesimes", "ix_pm_millesimes_idu14"),
+    ("parcelle_personne_morale", "ix_parcelle_pm_idu14"),
+)
+
+
+def ensure_perf_indexes(engine) -> int:
+    """Pose les index fonctionnels `left(idu,14)` manquants (VITESSE-2 Lot 2). Rend le nombre
+    d'index créés. Idempotent (IF NOT EXISTS), non destructif ; une table absente est ignorée."""
+    n = 0
+    with engine.begin() as c:
+        for table, idx in _FICHE_PERF_INDEXES:
+            if c.execute(text("SELECT to_regclass(:t)"), {"t": table}).scalar() is None:
+                continue
+            avant = c.execute(text("SELECT to_regclass(:i)"), {"i": idx}).scalar()
+            c.execute(text(f"CREATE INDEX IF NOT EXISTS {idx} ON {table} (left(idu, 14))"))
+            if avant is None:
+                n += 1
+    return n
+
 #: 4 témoins URBAINS fixes (N/O/S/E, bâtis — ceux de SOURCES-AUDIT, vérifiés en base) +
 #: 4 témoins RURAUX fixes (cirques et Est sauvage — attrapent les couches nature).
 TEMOINS_URBAINS = (

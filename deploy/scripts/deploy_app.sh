@@ -143,4 +143,27 @@ if [ "${NP:-0}" -lt 1 ]; then
 fi
 echo "   manifeste prod : '$PROD_RUN' ($NP lignes) ✓"
 
+# ── VITESSE-2 (Lot 4) — RÉCHAUFFAGE DES CACHES APRÈS DÉPLOIEMENT ──────────────────────────────
+# Le code déployé change la version (deploiement.json) → la CLÉ DE FRAÎCHEUR change → les caches
+# partagés (comparateur_raw_cache des 24 communes, commune_contexte_cache) deviennent périmés :
+# sans réchauffage, chaque worker froid recalcule au 1ᵉʳ clic (DEPLOY-1028 §Phase 4 : ~5 s, plusieurs
+# fois/jour). On relance le job `fiche-commune-cache` (il réchauffe D'ABORD comparateur_raw_cache
+# puis les 24 fiches communes), DÉTACHÉ (setsid) et JOURNALISÉ — il ne bloque pas le déploiement.
+# Le réchauffage PAR WORKER (indicateurs + 3 fiches témoins en mémoire) est fait par CHAQUE worker
+# à son démarrage (événement startup FastAPI, LABUSE_WARM_ON_BOOT) — rien à faire ici côté HTTP.
+echo "── 6. réchauffage des caches (job fiche-commune-cache, détaché + journalisé) ──"
+# VITESSE-2 (Lot 7) — INVALIDATION AU DÉPLOIEMENT du cache de fiche PARTAGÉ : le nouveau code change
+# code_sha → la clé de fraîcheur change → les fiches de l'ancien code ne seraient de toute façon plus
+# servies ; on VIDE la table pour libérer l'espace (best-effort, ne bloque jamais le déploiement).
+ssh -o BatchMode=yes "$HOST" "sudo -u postgres psql -d labuse -c 'DELETE FROM fiche_cache' 2>/dev/null || true; echo '   fiche_cache vidé (invalidation déploiement)'"
+ssh -o BatchMode=yes "$HOST" 'sudo -u labuse bash -lc "
+  set -a; [ -f /etc/labuse/labuse.env ] && . /etc/labuse/labuse.env; set +a
+  mkdir -p /var/log/labuse
+  setsid nohup /opt/labuse/venv/bin/labuse jobs run fiche-commune-cache \
+    >> /var/log/labuse/rechauffage-deploy.log 2>&1 < /dev/null &
+  echo \"   job fiche-commune-cache relancé (détaché) — journal : /var/log/labuse/rechauffage-deploy.log + le journal du job\"
+"' || echo "   ⚠ relance du job non bloquante (échec ssh/labuse) — à relancer à la main : labuse jobs run fiche-commune-cache"
+
 echo "✓ déployé — reste : /etc/labuse/labuse.env (secrets), systemctl enable --now labuse"
+echo "  (au restart, chaque worker se réchauffe seul : indicateurs 24 communes + 3 fiches témoins ;"
+echo "   le job fiche-commune-cache (étape 6) a (re)peuplé les caches partagés en base.)"

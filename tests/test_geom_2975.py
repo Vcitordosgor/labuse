@@ -38,9 +38,10 @@ def test_intersection_ppr_sans_crash_geos(db_session):
     assert n >= 0   # le seul fait de ne pas lever GEOS suffit
 
 
-def test_cascade_lit_ppr_assiette_flag_prudent(db_session):
+def test_cascade_lit_ppr_assiette_flag_prudent(cascade_live_layers):
     """Bout en bout : une assiette PPR (servitude) → flag FORT « prescriptions », JAMAIS
     une exclusion (zonage interne inconnu). La cascade lit la couche PPR sans erreur."""
+    db_session = cascade_live_layers   # VITESSE-2 (Lot 5) — cascade sur `spatial_layers` live (pas le sub figé)
     from labuse.cascade import evaluate_parcels
     from labuse.enums import CascadeVerdict, EvaluationStatus, Severity
     par = "POLYGON((55.300 -21.000,55.310 -21.000,55.310 -20.990,55.300 -20.990,55.300 -21.000))"

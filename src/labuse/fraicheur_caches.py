@@ -451,6 +451,15 @@ def rebuild_tout(engine, log=lambda *_: None, force: bool = False) -> dict:
     db = session_factory()()
     try:
         from .api.app import _ensure_contexte_cache, rafraichir_contexte_cache
+        # VITESSE-2 (Lot 1) — réchauffe d'abord le cache PARTAGÉ raw_rows (24 communes) : la fiche
+        # commune le lit (indicateurs comparateur) ; une seule régénération sert tous les workers.
+        try:
+            from .api.comparateur import rafraichir_raw_cache
+            rafraichir_raw_cache(db)
+            log("✓ comparateur_raw_cache : indicateurs bruts (24 communes) régénérés.")
+        except Exception as e:  # noqa: BLE001
+            db.rollback()
+            log(f"⚠ comparateur_raw_cache : {e}")
         _ensure_contexte_cache(db)      # pose table + colonne cle_fraicheur (base d'avant le mandat)
         db.commit()
         attendue = empreinte_attendue(db)

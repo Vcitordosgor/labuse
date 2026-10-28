@@ -418,3 +418,26 @@ def db_session(engine):
         session.close()
         trans.rollback()
         connection.close()
+
+
+@pytest.fixture
+def cascade_live_layers(db_session):
+    """VITESSE-2 (Lot 5) — ISOLE un test de cascade du cache DÉRIVÉ `spatial_layers_sub`.
+
+    `cascade.context.prime` lit `spatial_layers_sub` (couches pré-subdivisées) DÈS QU'ELLE
+    EXISTE, au lieu de `spatial_layers`. Un test ANTÉRIEUR de la suite (ex.
+    `test_coherencefix1_lot_a_fraicheur`) construit et COMMITE cette table ; elle survit au
+    rollback de `db_session`. Les lignes qu'un test de cascade insère ensuite dans
+    `spatial_layers` ne sont PAS dans le sub (cache figé) → la cascade « ne voit rien »
+    (« hors îlot cartographié ») et les assertions tombent — mais UNIQUEMENT quand un test
+    précédent a peuplé le sub (d'où « passe seul / rouge dans la suite complète »).
+
+    En PROD le sub est TOUJOURS reconstruit après ingestion (`ensure_spatial_layers_sub` +
+    garde de fraîcheur `labuse rebuild`) : le trou n'existe qu'en test. On neutralise donc le
+    cache DANS la transaction du test — la DDL Postgres est transactionnelle, le `DROP` est
+    capturé par le rollback de fin de `db_session`, la table est restaurée telle quelle pour
+    les tests suivants. La cascade retombe sur le découpage à la volée de `spatial_layers`
+    (chemin historique, coverage identique). Rien n'est réensemencé dans `labuse_test`."""
+    from sqlalchemy import text
+    db_session.execute(text("DROP TABLE IF EXISTS spatial_layers_sub"))
+    return db_session

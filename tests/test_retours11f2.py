@@ -86,7 +86,10 @@ def test_m13_table_communes_lit_le_moteur_terrain_nu_unique():
     # Le tableau Communes ne recalcule PAS le terrain nu : il lit `ligne2_terrain_zone` (le moteur de
     # la fiche Marché). La colonne `prix_terrain_nu` est posée dans chaque ligne (« — » si absente).
     from labuse.api import comparateur
-    src = inspect.getsource(comparateur.raw_rows)
+    # VITESSE-2 (Lot 1) — le CALCUL des indicateurs bruts vit désormais dans `_compute_raw`
+    # (`raw_rows` n'en est plus que la lecture cachée L1/L2). L'intention reste : le terrain nu
+    # est LU du moteur `ligne2_terrain_zone`, jamais recalculé, et posé en `prix_terrain_nu`.
+    src = inspect.getsource(comparateur.raw_rows) + inspect.getsource(comparateur._compute_raw)
     assert "ligne2_terrain_zone" in src
     assert "prix_terrain_nu" in src
 

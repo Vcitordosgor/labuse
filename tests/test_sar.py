@@ -41,9 +41,10 @@ def test_rural_habite_faible():
     assert st == "vocation_rurale" and niv == "faible"
 
 
-def test_cascade_sar_proxy_informatif_sans_exclure_ni_flaguer(db_session):
+def test_cascade_sar_proxy_informatif_sans_exclure_ni_flaguer(cascade_live_layers):
     """Bout en bout (Décision 2) : une vocation SAR naturelle (proxy) → PASS INFORMATIF,
     jamais une exclusion NI un flag. Le proxy SAR n'a plus aucun pouvoir sur le score."""
+    db_session = cascade_live_layers   # VITESSE-2 (Lot 5) — cascade sur `spatial_layers` live (pas le sub figé)
     from labuse.cascade import evaluate_parcels
     from labuse.enums import CascadeVerdict
     par = "POLYGON((55.40 -21.00,55.41 -21.00,55.41 -20.99,55.40 -20.99,55.40 -21.00))"

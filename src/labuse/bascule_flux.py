@@ -125,6 +125,12 @@ def purger_caches_run() -> list[str]:
     _try("tuiles carte (LRU)", lambda: _tiles._CACHE.clear())
     # RETOURS-10 (T2) — écarts de runs (Circuit) : le servi change → l'écart de chaque candidat à lui aussi.
     _try("flux (_ECART_CACHE)", _ECART_CACHE.clear)
+    # VITESSE-2 (Lot 7) — le cache de fiche PARTAGÉ (base) dépend du run servi : on le VIDE à la bascule
+    # (les fiches de l'ancien run seraient de toute façon invalidées par leur clé, mais on libère la
+    # table). Le `_FICHE_CACHE` L1 par worker, lui, se dé-sert tout seul (la clé inclut le run).
+    from .api import app as _app
+    _try("fiche_cache partagé (base)", lambda: _app.vider_fiche_cache_partage())
+    _try("fiche L1 (ce worker)", lambda: _app._FICHE_CACHE.clear())
     return purges
 
 

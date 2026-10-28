@@ -18,6 +18,7 @@ from __future__ import annotations
 import logging
 
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from .. import runs
@@ -41,47 +42,154 @@ def get_db():
     yield from _g()
 
 
+def _compute_raw(db: Session) -> dict[str, dict]:
+    """Le CALCUL réel des indicateurs bruts par commune (24 communes, 6-joins + Radar/DVF/terrain) —
+    coûteux (~4 s mesuré en prod). Appelé par le cache PARTAGÉ (job nocturne / déploiement) et, en
+    dernier recours, par une lecture qui tombe sur un cache vide. Ne touche JAMAIS le chemin chaud."""
+    from ..ingestion.dvf_marche import neuf_vefa_commune
+    from ..marche_service import neuf_vefa_seuil
+    from ..faisabilite.marche_commune import ligne2_terrain_zone
+    seuil = neuf_vefa_seuil()
+    rows = indicateurs_communes(db, runs.current())   # 1.6 — moteur commune_compteurs
+    pa = prix_ancien_communes(db)   # §1b — SOURCE UNIQUE du €/m² ancien (partagée avec le PDF baromètre)
+    for r in rows:
+        r["prix_ancien"] = (pa.get(r["commune"]) or {}).get("median")
+        r["prix_ancien_n"] = (pa.get(r["commune"]) or {}).get("n")
+        # RETOURS-11F M1 — NEUF depuis le moteur live (même seuil/fenêtre que la fiche et la carte) :
+        # sous le seuil, prix_neuf reste null (jamais un chiffre fragile ni un précalcul périmé).
+        v = neuf_vefa_commune(db, r["insee"])
+        suffisant = v["n"] >= seuil and v["mediane_prix_m2_bati"] is not None
+        r["prix_neuf"] = v["mediane_prix_m2_bati"] if suffisant else None
+        r["prix_neuf_n"] = v["n"]
+        # RETOURS-11F M13 — €/m² TERRAIN NU DVF (« le chiffre du promoteur », O14) : MÊME moteur
+        # que la fiche (Marché) et la calculette — `ligne2_terrain_zone`, aucun calcul parallèle.
+        # Zone U de préférence, sinon AU ; sous le seuil de cellule → null (jamais un 0 trompeur).
+        try:
+            pz = (ligne2_terrain_zone(db, r["commune"]).get("valeurs") or {}).get("par_zone") or {}
+        except Exception:  # noqa: BLE001 — le terrain nu ne casse jamais le tableau
+            pz = {}
+        tn = None
+        for fam in ("U", "AU"):
+            cell = pz.get(fam) or {}
+            if cell.get("calculable") and cell.get("median_eur_m2"):
+                tn = {"eur_m2": cell["median_eur_m2"], "n": cell.get("n"), "zone": fam}
+                break
+        r["prix_terrain_nu"] = tn["eur_m2"] if tn else None
+        r["prix_terrain_nu_n"] = tn["n"] if tn else None
+        r["prix_terrain_nu_zone"] = tn["zone"] if tn else None
+    return {r["commune"]: r for r in rows}
+
+
+# VITESSE-2 (Lot 1) — CACHE PARTAGÉ des indicateurs bruts. Avant, `raw_rows` était mémoïsé PAR WORKER
+# (TTL 1 h) : le 1ᵉʳ clic sur une commune touchant un worker froid recalculait les 24 communes (~5 s en
+# prod), et ce PLUSIEURS FOIS PAR JOUR (5 workers × TTL 1 h) — c'est le résiduel « clic commune lent »
+# de DEPLOY-1028 §Phase 4. On sort le calcul du chemin de lecture : le résultat est stocké EN BASE
+# (`comparateur_raw_cache`, UNE ligne par empreinte servie) où TOUS les workers le lisent, écrit par le
+# job nocturne + le réchauffage de déploiement, invalidé par la clé de fraîcheur du run servi. Un worker
+# chaud garde un mémo in-process (L1) ; un worker froid lit la base (L2, quelques ms) au lieu de recalculer.
+_RAW_CACHE_DDL = """
+CREATE TABLE IF NOT EXISTS comparateur_raw_cache (
+  cle_fraicheur text PRIMARY KEY,
+  payload jsonb NOT NULL,
+  computed_at timestamptz NOT NULL DEFAULT now()
+)
+"""
+
+
+def _raw_cache_json(payload: dict) -> str:
+    """Sérialise le payload en JSON tolérant (Decimal/date/datetime → primitives) — mêmes types que
+    ce que FastAPI sert déjà en sortie, donc round-trip neutre (valeur servie identique avant/après)."""
+    import json as _json
+    from datetime import date as _date, datetime as _dt
+    from decimal import Decimal as _Dec
+
+    def _default(o):
+        if isinstance(o, _Dec):
+            return float(o)
+        if isinstance(o, (_date, _dt)):
+            return o.isoformat()
+        raise TypeError(f"non sérialisable : {type(o)}")
+    return _json.dumps(payload, ensure_ascii=False, default=_default)
+
+
+def _persister_raw_cache(cle: str, payload: dict) -> None:
+    """Écrit le payload dans `comparateur_raw_cache` via une session DÉDIÉE (jamais la session de
+    lecture de l'appelant : une écriture+commit ne doit pas entraîner la transaction d'une fiche).
+    Crée la table au besoin. Best-effort : une base en lecture seule ne casse pas la lecture."""
+    from ..db import session_factory
+    s = session_factory()()
+    try:
+        s.execute(text(_RAW_CACHE_DDL))
+        s.execute(text(
+            "INSERT INTO comparateur_raw_cache (cle_fraicheur, payload, computed_at) "
+            "VALUES (:k, CAST(:p AS jsonb), now()) "
+            "ON CONFLICT (cle_fraicheur) DO UPDATE SET payload = EXCLUDED.payload, computed_at = now()"),
+            {"k": cle, "p": _raw_cache_json(payload)})
+        s.commit()
+    except Exception:  # noqa: BLE001 — l'écriture du cache ne doit jamais casser une lecture
+        s.rollback()
+    finally:
+        s.close()
+
+
+def rafraichir_raw_cache(db: Session) -> dict[str, dict]:
+    """POINT D'ÉCRITURE du cache partagé (job nocturne `fiche-commune-cache`, `labuse rebuild`,
+    réchauffage de déploiement) : calcule les 24 communes UNE fois et les stocke pour TOUS les workers,
+    clé = empreinte du run servi. Purge les clés périmées (> 7 j). Rend le payload calculé."""
+    from ..fraicheur_caches import empreinte_attendue
+    cle = empreinte_attendue(db)
+    payload = _compute_raw(db)
+    _persister_raw_cache(cle, payload)
+    try:
+        from ..db import session_factory
+        s = session_factory()()
+        try:
+            s.execute(text("DELETE FROM comparateur_raw_cache WHERE cle_fraicheur <> :k "
+                           "AND computed_at < now() - interval '7 days'"), {"k": cle})
+            s.commit()
+        finally:
+            s.close()
+    except Exception:  # noqa: BLE001 — la purge n'est jamais bloquante
+        pass
+    return payload
+
+
 def raw_rows(db: Session) -> dict[str, dict]:
     """SOURCE UNIQUE des indicateurs bruts PAR COMMUNE (avant normalisation) — le comparateur ET la
     fiche commune (OUTILS-6 C2) la lisent : ancien/neuf/permis/vélocité/stock viennent du MÊME run et
-    des MÊMES requêtes des deux côtés, donc chaque chiffre commun est identique. Mémoïsé (crons
-    quotidiens ; single-flight anti-stampede). Clé = nom de commune."""
-    from .app import _mem_cached
+    des MÊMES requêtes des deux côtés, donc chaque chiffre commun est identique. Clé = nom de commune.
 
-    def _c():
-        from ..ingestion.dvf_marche import neuf_vefa_commune
-        from ..marche_service import neuf_vefa_seuil
-        from ..faisabilite.marche_commune import ligne2_terrain_zone
-        seuil = neuf_vefa_seuil()
-        rows = indicateurs_communes(db, runs.current())   # 1.6 — moteur commune_compteurs
-        pa = prix_ancien_communes(db)   # §1b — SOURCE UNIQUE du €/m² ancien (partagée avec le PDF baromètre)
-        for r in rows:
-            r["prix_ancien"] = (pa.get(r["commune"]) or {}).get("median")
-            r["prix_ancien_n"] = (pa.get(r["commune"]) or {}).get("n")
-            # RETOURS-11F M1 — NEUF depuis le moteur live (même seuil/fenêtre que la fiche et la carte) :
-            # sous le seuil, prix_neuf reste null (jamais un chiffre fragile ni un précalcul périmé).
-            v = neuf_vefa_commune(db, r["insee"])
-            suffisant = v["n"] >= seuil and v["mediane_prix_m2_bati"] is not None
-            r["prix_neuf"] = v["mediane_prix_m2_bati"] if suffisant else None
-            r["prix_neuf_n"] = v["n"]
-            # RETOURS-11F M13 — €/m² TERRAIN NU DVF (« le chiffre du promoteur », O14) : MÊME moteur
-            # que la fiche (Marché) et la calculette — `ligne2_terrain_zone`, aucun calcul parallèle.
-            # Zone U de préférence, sinon AU ; sous le seuil de cellule → null (jamais un 0 trompeur).
-            try:
-                pz = (ligne2_terrain_zone(db, r["commune"]).get("valeurs") or {}).get("par_zone") or {}
-            except Exception:  # noqa: BLE001 — le terrain nu ne casse jamais le tableau
-                pz = {}
-            tn = None
-            for fam in ("U", "AU"):
-                cell = pz.get(fam) or {}
-                if cell.get("calculable") and cell.get("median_eur_m2"):
-                    tn = {"eur_m2": cell["median_eur_m2"], "n": cell.get("n"), "zone": fam}
-                    break
-            r["prix_terrain_nu"] = tn["eur_m2"] if tn else None
-            r["prix_terrain_nu_n"] = tn["n"] if tn else None
-            r["prix_terrain_nu_zone"] = tn["zone"] if tn else None
-        return {r["commune"]: r for r in rows}
-    return _mem_cached(("o6-raw",), 3600.0, _c)
+    VITESSE-2 (Lot 1) — lecture en deux étages, HORS du calcul coûteux : L1 mémo in-process (worker
+    chaud), L2 cache PARTAGÉ en base `comparateur_raw_cache` (tous les workers, clé = empreinte servie).
+    Le chemin chaud ne fait qu'un SELECT PK ; le calcul n'a lieu QUE si la base n'a pas encore été
+    réchauffée (job nocturne / déploiement), et il est alors persisté pour les workers suivants."""
+    from .app import _mem_cached
+    from ..fraicheur_caches import empreinte_attendue
+    cle = empreinte_attendue(db)
+
+    def _load():
+        # Tests : JAMAIS le cache partagé — l'app de test attend un calcul LIVE qui reflète les
+        # insertions NON committées de la session du test (comme `parcel_fiche` désactive son cache
+        # sous pytest). Le mémo in-process est vidé entre tests (fixture `_clear_mem_caches`).
+        import os as _os
+        if _os.environ.get("PYTEST_CURRENT_TEST"):
+            return _compute_raw(db)
+        # L2 — cache partagé en base. Garde par EXISTENCE (`to_regclass` : ne vide JAMAIS la
+        # transaction de l'appelant si la table manque, contrairement à un SELECT qui lèverait et
+        # exigerait un rollback — destructeur en pleine requête). Aucune DDL sur le chemin de lecture
+        # (la table est créée par le 1ᵉʳ écrivain : job nocturne / déploiement / ce miss).
+        if db.execute(text("SELECT to_regclass('comparateur_raw_cache')")).scalar():
+            row = db.execute(text(
+                "SELECT payload FROM comparateur_raw_cache WHERE cle_fraicheur = :k"),
+                {"k": cle}).scalar()
+            if row is not None:
+                return row   # jsonb → dict (valeurs identiques à ce que FastAPI sert)
+        payload = _compute_raw(db)   # lectures sur la session de l'appelant (aucune écriture ici)
+        _persister_raw_cache(cle, payload)   # persistance via session dédiée (pour les workers suivants)
+        return payload
+
+    # L1 — mémo in-process, clé incluant l'empreinte servie : une bascule de run l'invalide d'elle-même.
+    return _mem_cached(("o6-raw", cle), 3600.0, _load)
 
 
 def _compute(db: Session, poids: dict) -> dict:

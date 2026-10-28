@@ -3009,10 +3009,24 @@ def doctor_cmd(
         data = state.data_status(s, commune)
         st = state.demo_status(s, commune)
         peremption = state._au_statut_readiness(s)
+        # VITESSE-2 (Lot 4) — FUMÉE du réchauffage : le cache PARTAGÉ des indicateurs (24 communes,
+        # comparateur_raw_cache) doit porter l'empreinte du run servi. Froid/périmé → les workers
+        # recalculent au 1ᵉʳ clic (lent) : remède = relancer le job fiche-commune-cache.
+        raw_cache = {"present": False, "frais": False}
+        try:
+            from sqlalchemy import text as _text
+            from .fraicheur_caches import empreinte_attendue as _emp
+            if s.execute(_text("SELECT to_regclass('comparateur_raw_cache')")).scalar():
+                raw_cache["present"] = True
+                raw_cache["frais"] = bool(s.execute(_text(
+                    "SELECT 1 FROM comparateur_raw_cache WHERE cle_fraicheur = :k"),
+                    {"k": _emp(s)}).scalar())
+        except Exception:  # noqa: BLE001 — la fumée ne casse jamais sur ce contrôle informatif
+            s.rollback()
 
     if as_json:
         typer.echo(_json.dumps({"db_reachable": True, "schema": sch, "data": data,
-                                "au_statut_en_attente": peremption, **st},
+                                "au_statut_en_attente": peremption, "raw_cache": raw_cache, **st},
                                ensure_ascii=False))
         if not st["ready_for_demo"]:
             raise typer.Exit(1)
@@ -3027,6 +3041,10 @@ def doctor_cmd(
     typer.echo(f"{'✓' if st['demo']['all_conform'] else '✗'} Parcelles de démo conformes")
     w = st["warm"]
     typer.echo(f"{'✓' if w['done'] else '•'} Cache fiches démo : {w['warmed']}/{w['total']} pré-chauffées")
+    # VITESSE-2 (Lot 4) — réchauffage : cache partagé des indicateurs commune (24 communes).
+    _rc = "frais" if raw_cache["frais"] else ("à réchauffer (labuse jobs run fiche-commune-cache)"
+                                              if raw_cache["present"] else "absent (jamais réchauffé)")
+    typer.echo(f"{'✓' if raw_cache['frais'] else '•'} Cache indicateurs communes (VITESSE-2) : {_rc}")
     if peremption and peremption["n"]:
         glyph = {"ok": "•", "warn": "⚠", "blocage": "⛔"}.get(peremption["statut"], "•")
         typer.echo(f"{glyph} Déclassements AU en attente : {peremption['n']} "
