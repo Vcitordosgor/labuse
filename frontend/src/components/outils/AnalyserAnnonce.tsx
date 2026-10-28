@@ -19,38 +19,46 @@ import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 
 import { ParcelInput } from '../ParcelInput'
-import { analyserAnnonce, getAnnonceClassement, getContexteCommune, getFiche, getParcelExposition, type AnnonceAnalyse } from '../../lib/api'
+import { analyserAnnonce, docAnalyseAnnonceLienUrl, docAnalyseAnnonceUrl, getAnnonceClassement, getAnnonceEstimation, getContexteCommune, getFiche, getParcelExposition, type AnnonceAnalyse } from '../../lib/api'
 import { fmtInt, fmtM2, iduCourt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
+import { useOuvrirDocument } from '../../lib/ouvrirDocument'
 import { Chargement } from '../Loading'
 import { ErrorState } from '../States'
 import { Bouton } from '../ui/Bouton'
 import { Retour } from '../ui/Retour'
 import { Badge } from '../ui/Badge'
 
-// Le comparateur de prix de la fiche (`prix_ancien`) porte, au runtime, plus de champs que n'en déclare
-// le type `Fiche` (resserré pour les tuiles d'en-tête) : on les lit via ce type local, sans recalcul.
-type PrixAncienRiche = {
-  median?: number | null; q1?: number | null; q3?: number | null
-  n?: number | null; radius_m?: number | null
-  periode?: number[] | string | null; fiabilite?: string | null
-  commune_fallback?: boolean; type_prix?: string | null
-  distribution?: { apres?: { p25?: number | null; p75?: number | null; median?: number | null; n?: number | null } | null } | null
+// ANNONCE-3 — « Exporter en PDF » : le MÊME document que Docs (mêmes routes /analyse-annonce…), donc
+// le PDF sorti de l'outil et celui de Docs sont identiques, mêmes chiffres que cet écran. Ouverture
+// propre (fetch + blob + attente + message FR) via le hook partagé useOuvrirDocument.
+function ExportPdf({ url }: { url: string }) {
+  const { ouvrir, enCours, erreur } = useOuvrirDocument()
+  return (
+    <div className="shrink-0">
+      <Bouton niveau="secondaire" ton="vert" className="w-full" disabled={!!enCours}
+        onClick={() => void ouvrir(url, 'analyse-annonce')}>
+        {enCours ? <Chargement variant="inline" accent="courant" label="Export…" /> : 'Exporter en PDF'}
+      </Bouton>
+      {erreur && <p className="mt-1 text-[12px] leading-snug text-coral">{erreur}</p>}
+    </div>
+  )
 }
 
 type Etape = 'entree' | 'parcelle' | 'annonce'
 
-function fmtPeriode(p: PrixAncienRiche['periode']): string | null {
+function fmtPeriode(p: number[] | string | null | undefined): string | null {
   if (!p) return null
   if (Array.isArray(p)) { const [a, b] = p; return a === b ? String(a) : `${a}–${b}` }
   return String(p)
 }
-// Fiabilité affichée + ton de badge. L'entrée LIEN est toujours « limitée » (repère commune, pas
-// d'adresse) ; l'estimation parcelle suit la fiabilité servie par le comparateur (fiable → élevée).
+// ANNONCE-3-FIX — fiabilité en TROIS niveaux capitalisés (l'étiquette « Fiabilité » est posée à côté
+// du badge, donc le badge ne porte QUE le niveau) : « Élevée » (repère fiable), « Moyenne » (indicatif),
+// « Limitée » (repli commune / entrée lien).
 function fiab(f?: string | null, communeFallback?: boolean): { mot: string; ton: 'vert' | 'ambre' } {
-  if (communeFallback) return { mot: 'limitée', ton: 'ambre' }
-  if (f === 'fiable') return { mot: 'élevée', ton: 'vert' }
-  return { mot: 'indicative', ton: 'ambre' }
+  if (communeFallback) return { mot: 'Limitée', ton: 'ambre' }
+  if (f === 'fiable') return { mot: 'Élevée', ton: 'vert' }
+  return { mot: 'Moyenne', ton: 'ambre' }
 }
 
 const INPUT_CLS =
@@ -91,6 +99,9 @@ function RapportParcelle({ idu }: { idu: string }) {
   // Classement LABUSE = la BANDE du run SERVI + le vocabulaire client gravé (back, score_labuse.yaml) —
   // JAMAIS `score_v2.verbal.mot` (c'est le phrasé de percentile du Signal, d'où l'ancien « proche de la moyenne »).
   const cls = useQuery({ queryKey: ['annonce-classement', idu], queryFn: () => getAnnonceClassement(idu) })
+  // ANNONCE-3-FIX — l'estimation selon la nature (nue → terrain nu ; bâtie → bâti), servie par le MÊME
+  // point que le PDF (/radar/annonce/estimation) → mêmes chiffres à l'écran et dans le document.
+  const estim = useQuery({ queryKey: ['annonce-estim', idu], queryFn: () => getAnnonceEstimation(idu) })
 
   if (fiche.isLoading) return <Corps><Chargement /></Corps>
   if (fiche.isError || !fiche.data) return <Corps><ErrorState message="Impossible de charger la fiche parcelle." retry={() => fiche.refetch()} /></Corps>
@@ -103,7 +114,6 @@ function RapportParcelle({ idu }: { idu: string }) {
     : (cls.isLoading ? '…' : '—')
   const nAleas = f.aleas?.n ?? 0
   const orientation = expo.data?.orientation ?? null
-  const pa = (f.prix_ancien ?? null) as unknown as PrixAncienRiche | null
 
   const tuiles: { k: string; v: string }[] = [
     { k: 'Surface', v: fmtM2(f.surface_m2) },
@@ -114,15 +124,17 @@ function RapportParcelle({ idu }: { idu: string }) {
     { k: 'Exposition', v: orientation ?? '—' },
   ]
 
-  // Estimation = comparateur DVF de la fiche (bâti ancien du secteur), lu tel quel. €/m² : la valeur en
-  // euros d'un bien dépend de sa surface et de son état — on ne fabrique pas un total sur une parcelle nue.
-  const median = pa?.median ?? pa?.distribution?.apres?.median ?? null
-  const p25 = pa?.q1 ?? pa?.distribution?.apres?.p25 ?? null
-  const p75 = pa?.q3 ?? pa?.distribution?.apres?.p75 ?? null
-  const nVentes = pa?.n ?? pa?.distribution?.apres?.n ?? null
-  const rayon = pa?.radius_m ?? null
-  const periode = fmtPeriode(pa?.periode)
-  const fi = fiab(pa?.fiabilite, pa?.commune_fallback)
+  // Estimation en €/m² (jamais un total inventé). Selon la nature de la parcelle : nue → repère terrain
+  // nu ; bâtie → comparateur bâti. On lit le point unique partagé avec le PDF (pas de recalcul au front).
+  const e = estim.data
+  const terrain = e?.type_comparateur === 'terrain_nu'
+  const median = e?.median ?? null
+  const p25 = e?.q1 ?? null
+  const p75 = e?.q3 ?? null
+  const nVentes = e?.n ?? null
+  const rayon = e?.radius_m ?? null
+  const periode = fmtPeriode(e?.periode)
+  const fi = fiab(e?.fiabilite, e?.commune_fallback)
 
   return (
     <Corps>
@@ -137,9 +149,13 @@ function RapportParcelle({ idu }: { idu: string }) {
 
       <section className={SECTION}>
         <h3 className="text-sm font-medium text-txt-hi">Estimation du prix</h3>
-        {median == null ? (
+        {estim.isLoading ? (
+          <p className="mt-1 text-[12px] text-txt-dim">…</p>
+        ) : median == null ? (
           <p className="mt-1 text-[12px] text-txt-dim">
-            Indisponible — pas assez de ventes comparables dans le secteur pour un repère de prix.
+            {e?.note ?? (terrain
+              ? 'Indisponible — pas assez de ventes de terrain nu comparables dans le secteur.'
+              : 'Indisponible — pas assez de ventes comparables dans le secteur pour un repère de prix.')}
           </p>
         ) : (
           <>
@@ -148,17 +164,23 @@ function RapportParcelle({ idu }: { idu: string }) {
               <p className="mt-0.5 text-[12px] text-txt-dim">de {fmtInt(Math.round(p25))} à {fmtInt(Math.round(p75))} €/m²</p>
             )}
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <Badge ton={fi.ton} point>Fiabilité : {fi.mot}</Badge>
-              <span className="text-[11px] text-txt-dim">
-                {nVentes != null ? `${fmtInt(nVentes)} ventes comparables` : 'ventes comparables'}
-                {rayon != null ? ` · rayon ${fmtInt(Math.round(rayon))} m` : ''}
-                {periode ? ` · ${periode}` : ''}
-              </span>
+              <span className="text-[11px] text-txt-dim">Fiabilité</span>
+              <Badge ton={fi.ton} point>{fi.mot}</Badge>
+              {/* ANNONCE-3-FIX-2 — le terrain nu affiche sa source comme le bâti : n réel · périmètre/rayon · période. */}
+              {(nVentes != null || rayon != null || e?.perimetre || periode) && (
+                <span className="text-[11px] text-txt-dim">
+                  {nVentes != null ? `${fmtInt(nVentes)} ${terrain ? 'ventes de terrain' : 'ventes comparables'}` : (terrain ? 'ventes de terrain' : 'ventes comparables')}
+                  {terrain ? (e?.perimetre ? ` · ${e.perimetre === 'secteur' ? 'secteur cadastral' : 'commune'}` : '') : (rayon != null ? ` · rayon ${fmtInt(Math.round(rayon))} m` : '')}
+                  {periode ? ` · ${periode}` : ''}
+                </span>
+              )}
             </div>
             <p className="mt-2 text-[11px] leading-snug text-txt-mut">
-              Prix observés au m² (bâti ancien{pa?.type_prix ? `, ${pa.type_prix}` : ''}) autour de la parcelle.
-              {pa?.commune_fallback ? ' Repère élargi à la commune (secteur trop peu fourni).' : ''} La valeur
-              d’un bien dépend de sa surface et de son état, non connus du modèle.
+              {terrain ? (
+                <>Parcelle nue — comparée aux ventes de <strong className="text-txt-hi">terrain nu</strong> (repère €/m² de terrain).</>
+              ) : (
+                <>Parcelle bâtie — comparée au <strong className="text-txt-hi">bâti ancien</strong> (prix observés au m²{e?.type_prix ? `, ${e.type_prix}` : ''}) autour de la parcelle.{e?.commune_fallback ? ' Repère élargi à la commune (secteur trop peu fourni).' : ''} La valeur d’un bien dépend de sa surface et de son état, non connus du modèle.</>
+              )}
             </p>
           </>
         )}
@@ -176,6 +198,8 @@ function RapportParcelle({ idu }: { idu: string }) {
         <Bouton niveau="lien" ton="vert" className="mt-2"
           onClick={() => focusParcelle(idu, { fiche: true })}>Ouvrir la fiche parcelle →</Bouton>
       </section>
+
+      <ExportPdf url={docAnalyseAnnonceUrl(idu)} />
     </Corps>
   )
 }
@@ -250,9 +274,10 @@ function RapportAnnonce({ res }: { res: AnnonceAnalyse }) {
               face au repère commune {m.repere_perimetre ?? m.perimetre ?? 'du bon type'}
               {m.referentiel_eur_m2 != null ? ` : ${fmtInt(m.referentiel_eur_m2)} €/m²` : ''}
             </p>
-            <div className="mt-2">
-              <Badge ton="ambre" point>Fiabilité : limitée</Badge>
-              <span className="ml-2 text-[11px] text-txt-dim">repère à l’échelle de la commune</span>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className="text-[11px] text-txt-dim">Fiabilité</span>
+              <Badge ton="ambre" point>Limitée</Badge>
+              <span className="text-[11px] text-txt-dim">repère à l’échelle de la commune</span>
             </div>
           </>
         ) : (
@@ -280,6 +305,8 @@ function RapportAnnonce({ res }: { res: AnnonceAnalyse }) {
           <Bouton niveau="lien" ton="vert" className="mt-2" onClick={() => setContexteCommune(commune)}>Fiche commune →</Bouton>
         )}
       </section>
+
+      <ExportPdf url={docAnalyseAnnonceLienUrl(a.url)} />
     </Corps>
   )
 }

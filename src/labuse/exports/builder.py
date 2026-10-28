@@ -73,6 +73,10 @@ _LABEL = {
     "gabarit": ("Gabarit", "L'enveloppe réglementaire de la parcelle : zone d'implantation, plafond d'emprise, hauteur."),
     "comparatif": ("Comparatif", "Deux à trois parcelles côte à côte, sur les lignes de Comparer."),
     "etude-zone": ("Étude de zone", "Le territoire autour de la parcelle, dans le rayon choisi."),
+  # ANNONCE-3 — miroir de l'outil « Analyser une annonce » : une adresse (rapport parcelle) ou un lien
+  # d'annonce (rapport commune). Même source que l'écran ; aucun moteur neuf. ANNONCE-3-FIX : pas de
+  # sous-titre (redondant avec le wordmark+titre ; la place va au contenu pour tenir sur une page).
+  "analyse-annonce": ("Analyse d'annonce", ""),
 }
 
 
@@ -98,6 +102,10 @@ _FOOT = {
                    "ni un conseil. Données LABUSE au {au}."),
     "etude-zone": ("Agrégats de données publiques dans le périmètre indiqué. Les mailles « à l'échelle "
                    "de la commune » portent sur toute la commune. Données LABUSE au {au}."),
+    # ANNONCE-3 — l'estimation est COMPARATIVE (prix observés au m², DVF), jamais un avis de valeur.
+    "analyse-annonce": ("Estimation comparative établie sur des données publiques (prix observés au m², "
+                        "DVF) — ce n'est pas un avis de valeur. Sources : DVF · Radar LABUSE. "
+                        "Données LABUSE au {au}."),
 }
 
 #: composition de chaque document. EXPORTS-REBRANCHEMENT-1 lot 1 : le Dossier n'est PLUS une
@@ -673,6 +681,177 @@ def construire_etude_zone(idu: str, rayon_km, zone: dict, map_html: str, *,
     html = page_html(_LABEL["etude-zone"][0], cart, corps)
     return ResultatDoc(html=html, valeurs={}, numero=numero, cartouche=cart,
                        contexte={"zone": zone})
+
+
+# ── ANNONCE-3 — « Analyse d'annonce » : deux variantes, miroir de l'outil Analyser une annonce. ──
+#: ANNONCE-3-FIX — CSS SCOPÉ au seul document « Analyse d'annonce » (page_extra_css → les 8 autres
+#: documents servis sont INCHANGÉS) : (1) pagination « 1 / 2 » tenue sur UNE ligne (le long pied
+#: @bottom-left rétrécissait la case @bottom-right) ; (2) interlignes resserrés (titres, plan, note)
+#: pour que la VARIANTE PARCELLE tienne sur UNE page sans recadrer le plan (hauteur du plan réduite).
+_ANNONCE_PAGE_CSS = (
+    "@page { @bottom-right { white-space: nowrap; } }"
+    "h1 { font-size: 18pt; margin-bottom: 1pt; }"
+    "h2 { margin: 9pt 0 4pt; font-size: 13pt; }"
+    "h3 { margin: 7pt 0 3pt; }"
+    ".plan { margin: 5pt 0 2pt; }"
+    ".plan .cap { padding: 2pt 8pt; }"
+    ".verdict { margin: 0 0 4pt; padding: 5pt 10pt; font-size: 11.5pt; }"
+    ".note { margin: 2pt 0 3pt; }"
+    ".kv td { padding: 2.5pt 0; }"
+    ".cover-tiles { margin: 7pt 0 3pt; gap: 6pt; } .cover-tiles .tile { padding: 5pt 8pt; }"
+    ".cover-tiles .tile .v { font-size: 13pt; }"
+)
+
+
+# ANNONCE-3-FIX-3 — le cadre est LARGE (pleine largeur, ~48 mm → aspect ~3,6) ; `build_situation_map`
+# rend une fenêtre FIXE (720×450). Pour une parcelle HAUTE, le recadrage à cet aspect borné à la
+# fenêtre rognait le contour en haut/bas. Règle : la parcelle ENTIÈRE est toujours visible, quelle que
+# soit sa forme — pour une parcelle haute, l'emprise HORIZONTALE s'élargit (plus de contexte) afin que
+# TOUTE la hauteur (marge comprise) tienne. On y parvient en reculant le zoom : la parcelle occupe une
+# fraction plus petite de la fenêtre, le recadrage large la contient enfin.
+_PLAN_ASPECT = 3.6
+_PLAN_ZOOMS = (0, -1, -2, -3)   # du plus serré au plus large
+
+
+def _parcelle_dans_cadre(parcel_px, width, height, marge_px: float = 0.0) -> bool:
+    """La parcelle ENTIÈRE tient-elle dans le cadre, insérée d'au moins `marge_px` ? `parcel_px` = liste
+    d'anneaux [(x, y), …] en pixels de l'image RENDUE (recadrée). Un contour qui touche/déborde un bord
+    (coord < marge ou > dim − marge) = parcelle rognée → False."""
+    pts = [p for ring in (parcel_px or []) for p in ring]
+    if not pts:
+        return False
+    xs = [p[0] for p in pts]
+    ys = [p[1] for p in pts]
+    return (min(xs) >= marge_px and max(xs) <= width - marge_px
+            and min(ys) >= marge_px and max(ys) <= height - marge_px)
+
+
+def _choisir_cadre_plan(rendre, marge_px: float, zooms=_PLAN_ZOOMS):
+    """Essaie les zooms du plus serré au plus large (`rendre(zoom_delta)` → dict plan_ortho) ; retient le
+    PREMIER rendu où la parcelle entière tient dans le cadre (marge comprise). À défaut (parcelle très
+    haute), le plus large essayé — la plus petite emprise, la meilleure chance d'être entière."""
+    dernier = None
+    for zd in zooms:
+        res = rendre(zd)
+        if not res or not res.get("ok"):
+            continue
+        dernier = res
+        if _parcelle_dans_cadre(res.get("parcel_px"), res.get("width"), res.get("height"), marge_px):
+            return res
+    return dernier
+
+
+def _plan_annonce_html(db, idu: str) -> str:
+    """ANNONCE-3-FIX — le plan de situation de l'annonce : la parcelle ENTIÈRE, CENTRÉE, avec une MARGE,
+    toujours visible QUELLE QUE SOIT sa forme (zoom reculé au besoin, cf. `_choisir_cadre_plan`). L'image
+    REMPLIT le cadre (`width:100%`), sans bandes blanches ni recadrage du contour. Best-effort : réseau /
+    géométrie absents → cadre neutre légendé (jamais d'erreur)."""
+    from sqlalchemy import text
+    from .rendu import esc
+    try:
+        gj = db.execute(text("SELECT ST_AsGeoJSON(geom) FROM parcels WHERE idu = :idu"), {"idu": idu}).scalar()
+    except Exception as exc:  # noqa: BLE001
+        log.warning("plan annonce %s : géométrie illisible (%s)", idu, exc)
+        gj = None
+    if gj:
+        try:
+            from ..api.plan_situation import plan_ortho
+            from ..flash.report import storage_dir
+            cd = storage_dir() / "tiles"
+            res = _choisir_cadre_plan(
+                lambda zd: plan_ortho(gj, cache_dir=cd, crop_margin_m=16.0, target_aspect=_PLAN_ASPECT,
+                                      min_px=900, zoom_delta=zd, zoom_max=19),
+                marge_px=3.0)
+            if res and res.get("ok"):
+                import base64
+                img = "data:image/jpeg;base64," + base64.b64encode(res["jpeg"]).decode()
+                cap = esc(res.get("attribution") or "")
+                return (f'<div class="plan">'
+                        f'<img style="display:block;width:100%;height:auto" '
+                        f'src="{img}" alt="Plan de situation">'
+                        f'<div class="cap">Plan de situation — la parcelle (contour), entière et centrée avec une marge'
+                        + (f' · {cap}' if cap else "") + "</div></div>")
+        except Exception as exc:  # noqa: BLE001 — la carte est un plus, jamais un bloqueur
+            log.warning("plan annonce %s non rendu : %s — cadre neutre (ORF-19)", idu, exc)
+    return ('<div class="plan"><div class="ph">Plan de situation — la parcelle '
+            '(fond cartographique momentanément indisponible)</div></div>')
+
+
+def construire_analyse_annonce_parc(db, idu: str, *, request=None, jour: date | None = None) -> ResultatDoc:
+    """Variante PARCELLE (entrée adresse) : en-tête (adresse · IDU · date) + plan de situation (contour
+    parcelle, MÊME composant que le Dossier) + les 6 tuiles + « Estimation du prix » + « Le foncier ».
+    Aucun recalcul : on LIT les MÊMES endpoints que l'écran — `parcel_fiche` (prix_ancien, zone PLU,
+    SDP, aléas, surface), `parcel_exposition` (orientation), `radar_annonce_classement` (bande du run
+    SERVI + vocabulaire gravé). Le PDF sorti de l'outil et celui sorti de Docs sont IDENTIQUES (même route)."""
+    from .blocs import annonce as bloc_annonce
+    from ..api.app import parcel_exposition, parcel_fiche
+    j = jour or today_reunion()
+    fiche = parcel_fiche(idu, db=db, request=request)
+    try:
+        expo = parcel_exposition(idu, db=db)
+    except Exception as exc:  # noqa: BLE001 — l'exposition est un plus, jamais un bloqueur (ORF-19)
+        log.warning("analyse-annonce %s : exposition indisponible (%s)", idu, exc)
+        expo = None
+    try:
+        from ..pige.api import radar_annonce_classement
+        classement = radar_annonce_classement(idu)
+    except Exception as exc:  # noqa: BLE001 — le classement est un plus ; sa tuile sera simplement omise
+        log.warning("analyse-annonce %s : classement indisponible (%s)", idu, exc)
+        classement = None
+    # ANNONCE-3-FIX — l'estimation SELON LA NATURE (nue → terrain nu ; bâtie → bâti). Point unique
+    # `estimation_annonce` (le MÊME que l'endpoint écran /radar/annonce/estimation) → mêmes chiffres.
+    from ..pige.api import estimation_annonce
+    est = estimation_annonce(db, idu, fiche)
+    numero = numeros.numero_rapport("analyse-annonce", idu, j)
+    # ANNONCE-3-FIX — en-tête : adresse (si la fiche en résout une), sinon la commune ; puis l'IDU et la
+    # date (portés par la ligne d'identité d'_entete_doc). Jamais une case vide.
+    adresse = fiche.get("adresse") or ""
+    lieu = adresse or fiche.get("commune") or ""
+    ref = " · ".join(x for x in (lieu, idu) if x)
+    cart = _cart("analyse-annonce", lieu or idu, idu, numero, j)
+    corps = (_entete_doc("analyse-annonce", ref, numero, j)
+             + _plan_annonce_html(db, idu)
+             + bloc_annonce.rendu_parcelle(fiche, expo, classement, est))
+    html = page_html(_LABEL["analyse-annonce"][0], cart, corps, page_extra_css=_ANNONCE_PAGE_CSS)
+    return ResultatDoc(html=html, valeurs={}, numero=numero, cartouche=cart,
+                       contexte={"idu": idu, "adresse": adresse})
+
+
+def construire_analyse_annonce_lien(annonce: dict, marche: dict | None, contexte: dict | None, *,
+                                    jour: date | None = None) -> ResultatDoc:
+    """Variante COMMUNE (entrée lien) : en-tête (type · commune · « Annonce Leboncoin · relevée le … »)
+    + « Ce que dit l'annonce » + « Prix face au marché » + « La commune ». `annonce`/`marche` sont les
+    sorties EXACTES de `radar_annonce_analyser` (Radar d'abord, sinon fetch) et `contexte` celle de
+    `commune_contexte` — aucun recalcul ici (le PDF outil == PDF Docs, même route)."""
+    from .blocs import annonce as bloc_annonce
+    j = jour or today_reunion()
+    a = annonce or {}
+    commune = a.get("commune") or ""
+    typ = a.get("type")
+    pieces = a.get("pieces")
+    titre = ((typ[0].upper() + typ[1:]) if typ else "Annonce")
+    if isinstance(pieces, int):
+        titre += f" {pieces} pièces"
+    if commune:
+        titre += f" · {commune}"
+    # le suffixe du numéro = l'identifiant d'annonce (list_id, chiffres de l'URL) — ASCII et STABLE ;
+    # jamais le nom de commune tronqué mi-mot (« …-noît » pour Saint-Benoît, qui cassait aussi l'en-tête
+    # Content-Disposition en octets non-ASCII). Repli « annonce » si l'URL ne porte aucun identifiant.
+    import re as _re
+    _ids = _re.findall(r"\d{6,}", a.get("url") or "")
+    numero = numeros.numero_rapport("analyse-annonce", _ids[-1] if _ids else "annonce", j)
+    # « relevée le … » = la date de relevé portée par le rapport (capture Radar, ou jour du fetch).
+    releve = a.get("releve_le")
+    # miroir de l'écran : « 2026-10-27 » → « 27/10/2026 » (split('-').reverse().join('/')).
+    releve_fr = "/".join(reversed(releve.split("-"))) if isinstance(releve, str) and "-" in releve else None
+    emis = (f'<p class="emis">Annonce Leboncoin'
+            + (f' · relevée le {esc(releve_fr)}' if releve_fr else "") + "</p>")
+    cart = _cart("analyse-annonce", titre, commune or "annonce", numero, j)
+    corps = (_entete_doc("analyse-annonce", titre, numero, j) + emis
+             + bloc_annonce.rendu_commune(a, marche, contexte))
+    html = page_html(_LABEL["analyse-annonce"][0], cart, corps, page_extra_css=_ANNONCE_PAGE_CSS)
+    return ResultatDoc(html=html, valeurs={}, numero=numero, cartouche=cart,
+                       contexte={"annonce": a})
 
 
 def generer_pdf(db, idu: str, document: str = "dossier", *, fiche: dict | None = None,

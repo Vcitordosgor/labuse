@@ -17,6 +17,8 @@ PREFIXE = {
     "predossier_pc": "PC", "flash": "FL",
     # DOCS-1 (Lot C) — les 3 nouveaux documents.
     "gabarit": "GA", "comparatif": "CO", "etude-zone": "EZ",
+    # ANNONCE-3 — le document « Analyse d'annonce » (miroir de l'outil Analyser une annonce).
+    "analyse-annonce": "AA",
     # BILAN-1 (Lot 5) — le bilan promoteur (code propre, jamais « Financier » côté client).
     "bilan": "BI",
 }

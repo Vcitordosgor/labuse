@@ -413,6 +413,21 @@ export const analyserAnnonce = (url: string) =>
 export interface AnnonceClassement { idu: string; bande: string | null; libelle: string | null }
 export const getAnnonceClassement = (idu: string) =>
   j<AnnonceClassement>(`/radar/annonce/classement/${encodeURIComponent(idu)}`)
+// ANNONCE-3-FIX — l'estimation du prix SELON la nature de la parcelle (nue → terrain nu ; bâtie → bâti).
+// Point unique partagé avec le PDF (`estimation_annonce`) → mêmes chiffres à l'écran et dans le document.
+export interface AnnonceEstimation {
+  idu: string
+  type_comparateur: 'bati' | 'terrain_nu' | null
+  nature?: string
+  median: number | null
+  q1?: number | null; q3?: number | null
+  n?: number | null; radius_m?: number | null; periode?: number[] | string | null
+  perimetre?: 'secteur' | 'commune' | null
+  fiabilite?: string | null; commune_fallback?: boolean
+  type_prix?: string | null; note?: string | null
+}
+export const getAnnonceEstimation = (idu: string) =>
+  j<AnnonceEstimation>(`/radar/annonce/estimation/${encodeURIComponent(idu)}`)
 export const parcelAt = (lon: number, lat: number) =>
   j<{ idu: string | null }>(`/parcels/at?lon=${lon}&lat=${lat}`)
 export const searchParcels = (needle: string, opts?: { ileEntiere?: boolean }) =>
@@ -1269,9 +1284,14 @@ export const docEtudeZoneUrl = (idu: string, rayonKm: number, sousDestination?: 
   `/etude-zone.pdf?idu=${encodeURIComponent(idu)}&rayon_km=${encodeURIComponent(String(rayonKm))}`
   // RECETTE-OUTILS-3 (S3) — l'activité choisie dans la fenêtre Docs est transmise au PDF (verdict par zone).
   + (sousDestination ? `&sous_destination=${encodeURIComponent(sousDestination)}` : '')
+// ANNONCE-3 — « Analyse d'annonce » : adresse → rapport parcelle (/analyse-annonce/{idu}.pdf) ou lien
+// d'annonce → rapport commune (/analyse-annonce.pdf?url=…). Mêmes routes que le bouton « Exporter en PDF »
+// de l'outil : le PDF sorti de l'outil et celui sorti de Docs sont identiques.
+export const docAnalyseAnnonceUrl = (idu: string) => `/analyse-annonce/${encodeURIComponent(idu)}.pdf`
+export const docAnalyseAnnonceLienUrl = (url: string) => `/analyse-annonce.pdf?url=${encodeURIComponent(url)}`
 
 // DOCS-1 (Lot B) — la bibliothèque « Mes documents » (recette d'un document, jamais le PDF).
-export type DocType = 'dossier' | 'bilan' | 'apporteur' | 'pre-dossier' | 'gabarit' | 'comparatif' | 'etude-zone' | 'etude-faisabilite'
+export type DocType = 'dossier' | 'bilan' | 'apporteur' | 'pre-dossier' | 'gabarit' | 'comparatif' | 'etude-zone' | 'etude-faisabilite' | 'analyse-annonce'
 export interface DocGenereRow {
   id: number
   doc_type: DocType

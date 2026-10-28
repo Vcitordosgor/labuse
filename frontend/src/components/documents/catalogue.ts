@@ -6,7 +6,8 @@
 // « Comparables DVF » est HORS mandat DOCS-1 (le tiroir de la fiche et sa règle de sélection n'existent
 // pas encore) : sa carte est présente, grisée, « bientôt », non cliquable (`bientot: true`).
 
-export type DocKind = 'parcelle' | 'multi' | 'zone'
+// ANNONCE-3 — `annonce` : deux entrées (une adresse OU un lien d'annonce), comme l'outil Analyser une annonce.
+export type DocKind = 'parcelle' | 'multi' | 'zone' | 'annonce'
 
 export interface DocBadge {
   label: string
@@ -31,7 +32,8 @@ export interface DocCatalogue {
   bientot?: boolean
 }
 
-// L'ordre EST celui de la maquette : 2 rangées de 4.
+// L'ordre EST celui de la maquette : 2 rangées de 4 + ANNONCE-3 (9e carte « Analyse d'annonce »,
+// la grille `grid-cols-4` s'adapte : 2 rangées pleines + 1 carte à la 3e).
 export const CATALOGUE: DocCatalogue[] = [
   {
     key: 'dossier', nom: 'Dossier', kind: 'parcelle', formats: ['PDF'],
@@ -89,5 +91,13 @@ export const CATALOGUE: DocCatalogue[] = [
     desc: 'Scénarios d’implantation collectif : fourchette de logements, plan masse dessiné, contrôles des règles du PLU — pré-faisabilité.',
     cta: 'Ouvrir l’étude de faisabilité',
     explication: 'Ouvre l’écran d’étude : configuration, scénarios A/B/C, plan masse, puis « Générer le PDF ».',
+  },
+  {
+    // ANNONCE-3 — miroir de l'outil « Analyser une annonce » : une adresse (rapport parcelle) OU un
+    // lien d'annonce Leboncoin (rapport commune). Le PDF Docs est identique à celui de l'outil.
+    key: 'analyse-annonce', nom: 'Analyse d’annonce', kind: 'annonce', formats: ['PDF'],
+    desc: 'Une adresse ou un lien d’annonce : LABUSE croise le bien avec le marché et le foncier.',
+    cta: 'Générer l’analyse',
+    explication: 'Une adresse → rapport parcelle (tuiles, prix, foncier) ; un lien → rapport commune.',
   },
 ]

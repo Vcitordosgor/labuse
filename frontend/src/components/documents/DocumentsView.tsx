@@ -17,6 +17,7 @@ import { BilanEcran } from '../fiche/BilanEcran'
 import {
   getFiche, getGabarit,
   docDossierUrl, docBilanUrl, docBilanExcelUrl, docApporteurUrl, docPreDossierUrl, docGabaritUrl, docComparatifUrl, docEtudeZoneUrl,
+  docAnalyseAnnonceUrl, docAnalyseAnnonceLienUrl,
   ETUDE_PDF_URL, etudePdfInit,
   listerDocuments, enregistrerDocument, rafraichirDocument,
   type DocType, type DocGenereRow, type EtudePdfIn,
@@ -38,6 +39,9 @@ function urlDocument(r: Pick<DocGenereRow, 'id' | 'doc_type' | 'idus' | 'rayon_k
     case 'gabarit': return i0 ? docGabaritUrl(i0) : null
     case 'comparatif': return r.idus.length >= 2 ? docComparatifUrl(r.idus) : null
     case 'etude-zone': return i0 ? docEtudeZoneUrl(i0, r.rayon_km ?? 2) : null
+    // ANNONCE-3 — seule l'entrée ADRESSE (IDU) est régénérable depuis « Mes documents » ; l'entrée
+    // LIEN n'a pas d'objet LABUSE stable à mémoriser (elle n'est pas inscrite à la bibliothèque).
+    case 'analyse-annonce': return i0 ? docAnalyseAnnonceUrl(i0) : null
     default: return null
   }
 }
@@ -163,6 +167,7 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
   const [idu, setIdu] = useState<string | null>(null)                // parcelle & zone
   const [idus, setIdus] = useState<(string | null)[]>([null, null, null])  // multi (2 à 3)
   const [rayon, setRayon] = useState(2)                              // zone : rayon servi, défaut 2
+  const [lien, setLien] = useState('')                               // ANNONCE-3 : lien d'annonce (variante annonce)
   // RECETTE-OUTILS-3 (S3) — activité (sous-destination) choisie pour l'Étude de zone : le menu MODIFIE
   // la lecture (verdict par zone PLU) → la fenêtre Docs propose le MÊME choix que l'outil, transmis au PDF.
   const [docDest, setDocDest] = useState<string | null>(null)
@@ -296,6 +301,38 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
             </Bouton>
           </div>
         )}
+
+        {/* ── ANNONCE-3 — variante annonce (Analyse d'annonce) : une adresse OU un lien, comme l'outil.
+            Adresse → rapport parcelle (/analyse-annonce/{idu}.pdf), inscrit à « Mes documents » (IDU
+            stable). Lien → rapport commune (/analyse-annonce.pdf?url=…), Radar d'abord puis fetch côté
+            serveur, le même message d'échec qu'à l'outil (pas d'inscription : pas d'objet stable). ── */}
+        {d.kind === 'annonce' && (
+          <div>
+            <div className="mb-2 font-semibold text-txt">Une adresse</div>
+            <ParcelInput placeholder={placeholder} withCarte={false} autoFocus onPick={setIdu} />
+            {idu && <ParcelleResolue idu={idu} onFiche={() => ouvrirFiche(idu)} />}
+            <Bouton niveau="primaire" ton="vert" className="mt-2 w-full" disabled={!idu || !!enCours}
+              onClick={async () => { if (idu && await ouvrir(docAnalyseAnnonceUrl(idu), 'analyse-annonce')) { enregistrer('analyse-annonce', [idu]); onClose() } }}>
+              {enCours === 'analyse-annonce' ? <Chargement variant="inline" accent="courant" label="Génération…" /> : d.cta}
+            </Bouton>
+            <div className="my-3 flex items-center gap-2 text-[13px] text-txt-mut">
+              <span className="h-px flex-1 bg-line-2" />OU<span className="h-px flex-1 bg-line-2" />
+            </div>
+            <div className="mb-2 font-semibold text-txt">Un lien d’annonce</div>
+            <input
+              className="h-10 w-full rounded-md border border-line-2 bg-surface-3 px-3 text-[13px] text-txt-hi placeholder:text-txt-mut focus:border-mint focus:outline-none"
+              placeholder="https://www.leboncoin.fr/ventes_immobilieres/…"
+              value={lien} onChange={(e) => setLien(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && lien.trim() && !enCours) void ouvrir(docAnalyseAnnonceLienUrl(lien.trim()), 'analyse-annonce').then((ok) => { if (ok) onClose() }) }}
+            />
+            <p className="my-3 border-l-2 border-line-2 pl-2.5 text-[13px] text-txt-dim">{d.explication}</p>
+            {erreur && <p className="my-3 border-l-2 border-amber pl-2.5 text-[13px] text-amber">{erreur}</p>}
+            <Bouton niveau="secondaire" ton="vert" className="w-full" disabled={!lien.trim() || !!enCours}
+              onClick={async () => { if (await ouvrir(docAnalyseAnnonceLienUrl(lien.trim()), 'analyse-annonce')) onClose() }}>
+              {enCours ? <Chargement variant="inline" accent="courant" label="Génération…" /> : 'Générer depuis le lien'}
+            </Bouton>
+          </div>
+        )}
       </div>
 
       {/* Bilan (exception assumée) : le bilan promoteur pré-rempli sur la parcelle (BILAN-1). Il
@@ -318,6 +355,7 @@ const FILTRES: { label: string; type: DocType | null }[] = [
   { label: 'Apporteur', type: 'apporteur' }, { label: 'Pré-dossier PC', type: 'pre-dossier' },
   { label: 'Gabarit', type: 'gabarit' }, { label: 'Comparatif', type: 'comparatif' },
   { label: 'Étude de zone', type: 'etude-zone' }, { label: 'Étude de faisabilité', type: 'etude-faisabilite' },
+  { label: 'Analyse d’annonce', type: 'analyse-annonce' },   // ANNONCE-3
 ]
 const dateFr = (iso: string) => { const d = new Date(iso); return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}` }
 

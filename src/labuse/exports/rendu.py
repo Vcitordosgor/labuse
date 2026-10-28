@@ -108,7 +108,7 @@ def _spans_cartouche(c: Cartouche) -> str:
 
 
 def page_html(titre_html: str, cartouche: Cartouche, corps_html: str, *, lang: str = "fr",
-              paysage: bool = False) -> str:
+              paysage: bool = False, page_extra_css: str = "") -> str:
     """Le document HTML complet : theme.css liée + polices, cartouche @page, corps.
     DOCS-1 (Lot C) — `paysage=True` enveloppe le corps dans `.paysage` (page A4 paysage, @page
     paysage de theme.css) : le Comparatif met ses parcelles en colonnes. Rien d'autre ne change —
@@ -126,10 +126,14 @@ def page_html(titre_html: str, cartouche: Cartouche, corps_html: str, *, lang: s
                 'font: 7.2pt "Inter","DejaVu Sans",sans-serif; color:#6B746E; '
                 'font-variant-ligatures: none; '
                 'font-feature-settings: "liga" 0, "clig" 0, "dlig" 0, "calt" 0 } }')
+    # ANNONCE-3-FIX — `page_extra_css` : règles @page SUPPLÉMENTAIRES propres à un document (ex. le
+    # compteur de pages en `white-space:nowrap`). Vide par défaut → les documents existants (servis)
+    # produisent EXACTEMENT le même HTML qu'avant.
+    extra = f"<style>{page_extra_css}</style>" if page_extra_css else ""
     return (f'<!doctype html><html lang="{lang}"><head><meta charset="utf-8">'
             f'<title>{esc(titre_html)}</title>'
             f'<link rel="stylesheet" href="theme.css">'
-            f'<style>{_FONT_FACE}</style><style>{foot_css}</style></head><body>'
+            f'<style>{_FONT_FACE}</style><style>{foot_css}</style>{extra}</head><body>'
             f'{_spans_cartouche(cartouche)}{corps}</body></html>')
 
 

@@ -33,13 +33,15 @@ def get_db():  # branché sur la session app au moment de l'inclusion (cf. app.p
 # Les types de documents que la bibliothèque enregistre (clé interne stable, jamais affichée brute).
 # « bilan » = le document « financier » (le mot « Financier » disparaît côté client, DOCS-1 §4).
 DOC_TYPES = {"dossier", "bilan", "apporteur", "pre-dossier", "gabarit", "comparatif", "etude-zone",
-             "etude-faisabilite"}   # IMPLANTATION-3 — le document « Étude de faisabilité »
+             "etude-faisabilite",   # IMPLANTATION-3 — le document « Étude de faisabilité »
+             "analyse-annonce"}     # ANNONCE-3 — « Analyse d'annonce » (entrée adresse, IDU-based)
 #: libellé humain par type (ce que la colonne « Document » affiche).
 DOC_LABEL = {
     "dossier": "Dossier", "bilan": "Bilan", "apporteur": "Apporteur",
     "pre-dossier": "Pré-dossier PC", "gabarit": "Gabarit",
     "comparatif": "Comparatif", "etude-zone": "Étude de zone",
     "etude-faisabilite": "Étude de faisabilité",
+    "analyse-annonce": "Analyse d'annonce",   # ANNONCE-3
 }
 #: l'Excel vivant existe désormais pour le Bilan (BILAN-1 Lot 5) : la colonne « Excel » est servie
 #: sur les lignes Bilan. Les autres documents n'ont pas d'export Excel.

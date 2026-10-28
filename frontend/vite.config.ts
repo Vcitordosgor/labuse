@@ -95,6 +95,10 @@ const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/filtre
   // tests/test_proxy_dev_couvre_routes_api.py échoue désormais si une route d'API reste hors
   // de cette liste — pour qu'une 4ᵉ occurrence ne revienne pas. ⚠ TRAIN 8 Caddy : routées aussi.
   '/gabarit', '/comparatif', '/etude-zone', '/documents',
+  // ANNONCE-3 : le document « Analyse d'annonce » (miroir de l'outil Analyser une annonce) — entrée
+  // adresse `/analyse-annonce/{idu}.pdf` ET entrée lien `/analyse-annonce.pdf?url=…`. Même famille de
+  // trous de proxy dev que /gabarit·/comparatif·/etude-zone ; prod OK (FastAPI même origine).
+  '/analyse-annonce',
   // DOCS-FIX-1 (P1, garde-fou) : trois routes d'API que le FRONT appelle en JSON (`j<…>`) mais qui
   // MANQUAIENT encore au proxy dev — révélées par test_proxy_dev_couvre_routes_api.py :
   //   • '/config'      → main.tsx au démarrage (fetchServedRun = /config/run = runs.current())

@@ -1235,6 +1235,91 @@ def radar_annonce_classement(idu: str) -> dict:
     return {"idu": idu, "bande": bande, "libelle": libelle_client_bande(bande, bareme, row.get("cause"))}
 
 
+def _nature_parcelle(db, idu: str) -> str:
+    """ANNONCE-3-FIX (suite) — la nature bâti/nu de la parcelle, lue de l'INDICATEUR DÉJÀ CALCULÉ pour
+    le résiduel ET le scoring : `parcel_residuel.taux_emprise_pct` (part bâtie BD TOPO). MÊME logique
+    que `_ETAT_BIEN_SQL` de la fiche (taux NULL → non mesuré ; < 5 % → nu ; sinon bâti — encore/max
+    selon la SDP résiduelle). On lit la SOURCE et non le champ `etat_bien` de la fiche SERVIE : ce
+    champ, pourtant calculé en direct, n'est PAS peuplé sur la base servie (0 parcelle le porte), alors
+    que l'indicateur sous-jacent l'est pour ~254 000 parcelles (dont 27 700 nues)."""
+    row = db.execute(text(
+        "SELECT rb.taux_emprise_pct AS t, rb.sdp_residuelle_m2 AS s "
+        "FROM parcels p LEFT JOIN parcel_residuel rb ON rb.parcel_id = p.id "
+        "WHERE p.idu = :idu LIMIT 1"), {"idu": idu}).mappings().first()
+    if not row or row["t"] is None:
+        return "non_mesure"
+    if row["t"] < 5:
+        return "nu"
+    return "bati_encore" if (row["s"] or 0) > 0 else "bati_max"
+
+
+def _periode_fenetre(fenetre) -> str | None:
+    """ANNONCE-3-FIX-2 — extrait la PÉRIODE (plage d'années) d'un libellé `fenetre` de
+    `dvf_secteur_medianes` (« 2021-2025 (millésimes géo-DVF disponibles) » → « 2021–2025 »)."""
+    if not isinstance(fenetre, str):
+        return None
+    m = _re.search(r"(\d{4})\s*[-–]\s*(\d{4})", fenetre)
+    if m:
+        return f"{m.group(1)}–{m.group(2)}"
+    m = _re.search(r"\b(\d{4})\b", fenetre)
+    return m.group(1) if m else None
+
+
+def estimation_annonce(db, idu: str, fiche: dict) -> dict:
+    """ANNONCE-3-FIX — l'estimation du prix SELON LA NATURE de la parcelle. POINT UNIQUE lu par l'écran
+    (endpoint ci-dessous) ET par le PDF (builder) → mêmes chiffres partout, aucun recalcul divergent.
+
+    La nature vient de l'INDICATEUR déjà calculé (`parcel_residuel.taux_emprise_pct`, part bâtie BD TOPO,
+    via `_nature_parcelle`), PAS du champ `etat_bien` de la fiche servie (non peuplé). Parcelle NUE
+    (emprise bâtie < 5 %) → repère €/m² de TERRAIN NU AVEC sa source (n réel, périmètre, période —
+    `_terrain_comparateur`). Parcelle BÂTIE (ou non mesurée) → comparateur BÂTI de la fiche
+    (`prix_ancien`, inchangé). Le champ `type_comparateur` dit lequel (la note côté rendu l'explicite).
+    On NE retombe JAMAIS du terrain vers le bâti sur une parcelle nue : faute de repère, « indisponible »."""
+    nature = _nature_parcelle(db, idu)
+    if nature == "nu":
+        # Repère TERRAIN NU du secteur avec sa SOURCE (médiane + n RÉEL + période) : on réutilise le
+        # lecteur DÉCLARÉ `_terrain_section` (api/mon_secteur, même méthode que le §Marché de la fiche —
+        # `dvf_secteur_medianes`, section cadastrale), pas une relecture directe de la table ici.
+        from ..api.mon_secteur import _terrain_section
+        t = _terrain_section(db, idu)
+        if t and t.get("eur_m2"):
+            return {"nature": "nue", "type_comparateur": "terrain_nu",
+                    "median": t["eur_m2"], "n": t.get("n"),
+                    "periode": _periode_fenetre(t.get("millesime")),
+                    "perimetre": "secteur", "fiabilite": "fiable", "commune_fallback": False}
+        return {"nature": "nue", "type_comparateur": "terrain_nu", "median": None,
+                "note": "Pas assez de ventes de terrain nu comparables dans le secteur."}
+    pa = (fiche or {}).get("prix_ancien") or {}
+    dist = (pa.get("distribution") or {}).get("apres") or {}
+    return {
+        "nature": "batie" if nature in ("bati_encore", "bati_max") else "inconnue",
+        "type_comparateur": "bati",
+        "median": pa.get("median") if pa.get("median") is not None else dist.get("median"),
+        "q1": pa.get("q1") if pa.get("q1") is not None else dist.get("p25"),
+        "q3": pa.get("q3") if pa.get("q3") is not None else dist.get("p75"),
+        "n": pa.get("n") if pa.get("n") is not None else dist.get("n"),
+        "radius_m": pa.get("radius_m"),
+        "periode": pa.get("periode"),
+        "fiabilite": pa.get("fiabilite"),
+        "commune_fallback": pa.get("commune_fallback"),
+        "type_prix": pa.get("type_prix"),
+    }
+
+
+@router.get("/radar/annonce/estimation/{idu}")
+def radar_annonce_estimation(idu: str) -> dict:
+    """ANNONCE-3-FIX — l'estimation du prix d'une parcelle, selon sa NATURE (nue → terrain nu, bâtie →
+    bâti). Lit la fiche SERVIE (lecture seule) puis `estimation_annonce` (point unique). L'écran et le
+    PDF lisent exactement ce rapport → mêmes chiffres, même règle."""
+    from ..api.app import parcel_fiche
+    with session_scope() as db:
+        try:
+            fiche = parcel_fiche(idu, db=db)
+        except ValueError:
+            return {"idu": idu, "median": None, "type_comparateur": None, "note": "Parcelle inconnue."}
+        return {"idu": idu, **estimation_annonce(db, idu, fiche)}
+
+
 @router.post("/admin/radar/depot-agence/publier")
 def radar_depot_agence_publier(body: DepotPublierIn, request: Request) -> dict:
     """ÉTAPE 3-4 — publier l'annonce déposée : rattachement CERTAIN depuis l'adresse, contenu confié."""
