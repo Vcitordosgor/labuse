@@ -233,7 +233,11 @@ Déploiement **code-seul** (aucune donnée, aucune bascule, aucune migration man
    sur q_v20 (V6b), et diagnostiquer V3b/V3c (journal circuit/sources).
 
 ### État de clôture
-- **Hook** (pytest `not db/local/reel/network`) : **2687 passed, 48 skipped, 0 failed** (84 s) — vert.
+- **Hook** (pre-push) : scan de secrets **OK** ; pytest `not db/local/reel/network` **2687 passed, 48
+  skipped, 0 failed** (84 s). Étape **front** (tsc -b + vitest) non exécutable (`frontend/node_modules`
+  absent sur cette machine) → `git push --no-verify` — **cas explicitement prévu par le hook** « si tu ne
+  touches pas au front » : `git diff origin/main...fix/remise-1` = **0 fichier `frontend/`** ; la CI
+  GitHub re-vérifiera le front.
 - **Tests réels** : 6/6 reels verts (commande de rejeu ci-dessus) ; V1c `ok` sur base réelle.
 - **Parité JSON** : 17/17 identiques.
 - **Ports** : 8870/8871 libérés en fin de run ; worktree de référence `/tmp/labuse-main-ref` retiré.
