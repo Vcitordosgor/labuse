@@ -1235,17 +1235,36 @@ def radar_annonce_classement(idu: str) -> dict:
     return {"idu": idu, "bande": bande, "libelle": libelle_client_bande(bande, bareme, row.get("cause"))}
 
 
+def _nature_parcelle(db, idu: str) -> str:
+    """ANNONCE-3-FIX (suite) — la nature bâti/nu de la parcelle, lue de l'INDICATEUR DÉJÀ CALCULÉ pour
+    le résiduel ET le scoring : `parcel_residuel.taux_emprise_pct` (part bâtie BD TOPO). MÊME logique
+    que `_ETAT_BIEN_SQL` de la fiche (taux NULL → non mesuré ; < 5 % → nu ; sinon bâti — encore/max
+    selon la SDP résiduelle). On lit la SOURCE et non le champ `etat_bien` de la fiche SERVIE : ce
+    champ, pourtant calculé en direct, n'est PAS peuplé sur la base servie (0 parcelle le porte), alors
+    que l'indicateur sous-jacent l'est pour ~254 000 parcelles (dont 27 700 nues)."""
+    row = db.execute(text(
+        "SELECT rb.taux_emprise_pct AS t, rb.sdp_residuelle_m2 AS s "
+        "FROM parcels p LEFT JOIN parcel_residuel rb ON rb.parcel_id = p.id "
+        "WHERE p.idu = :idu LIMIT 1"), {"idu": idu}).mappings().first()
+    if not row or row["t"] is None:
+        return "non_mesure"
+    if row["t"] < 5:
+        return "nu"
+    return "bati_encore" if (row["s"] or 0) > 0 else "bati_max"
+
+
 def estimation_annonce(db, idu: str, fiche: dict) -> dict:
     """ANNONCE-3-FIX — l'estimation du prix SELON LA NATURE de la parcelle. POINT UNIQUE lu par l'écran
     (endpoint ci-dessous) ET par le PDF (builder) → mêmes chiffres partout, aucun recalcul divergent.
 
-    Parcelle NUE (`etat_bien == 'nu'`, emprise bâtie < 5 %) → repère €/m² de TERRAIN NU
-    (`_prix_terrain_local`, secteur → repli commune). Parcelle BÂTIE (ou non mesurée) → comparateur
-    BÂTI de la fiche (`prix_ancien`, inchangé). Le champ `type_comparateur` dit lequel (la note côté
-    rendu l'explicite). On NE retombe JAMAIS du terrain vers le bâti sur une parcelle nue (ce serait
-    trompeur) : faute de repère terrain, l'estimation est « indisponible », sourcée."""
-    etat = (fiche or {}).get("etat_bien")
-    if etat == "nu":
+    La nature vient de l'INDICATEUR déjà calculé (`parcel_residuel.taux_emprise_pct`, part bâtie BD TOPO,
+    via `_nature_parcelle`), PAS du champ `etat_bien` de la fiche servie (non peuplé). Parcelle NUE
+    (emprise bâtie < 5 %) → repère €/m² de TERRAIN NU (`_prix_terrain_local`, secteur → repli commune).
+    Parcelle BÂTIE (ou non mesurée) → comparateur BÂTI de la fiche (`prix_ancien`, inchangé). Le champ
+    `type_comparateur` dit lequel (la note côté rendu l'explicite). On NE retombe JAMAIS du terrain vers
+    le bâti sur une parcelle nue : faute de repère terrain, l'estimation est « indisponible », sourcée."""
+    nature = _nature_parcelle(db, idu)
+    if nature == "nu":
         from ..faisabilite.bilan import _prix_terrain_local
         t = _prix_terrain_local(db, idu)
         if t and t.get("prix_m2"):
@@ -1260,7 +1279,7 @@ def estimation_annonce(db, idu: str, fiche: dict) -> dict:
     pa = (fiche or {}).get("prix_ancien") or {}
     dist = (pa.get("distribution") or {}).get("apres") or {}
     return {
-        "nature": "batie" if etat in ("bati_encore", "bati_max") else "inconnue",
+        "nature": "batie" if nature in ("bati_encore", "bati_max") else "inconnue",
         "type_comparateur": "bati",
         "median": pa.get("median") if pa.get("median") is not None else dist.get("median"),
         "q1": pa.get("q1") if pa.get("q1") is not None else dist.get("p25"),

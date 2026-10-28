@@ -82,23 +82,30 @@ def test_parcelle_estimation_absente_est_sourcee():
 
 
 def test_estimation_annonce_helper_nature():
-    """`estimation_annonce` choisit le comparateur par nature : bâtie → bâti (prix_ancien, sans DB) ;
-    nue → terrain nu (`_prix_terrain_local`, via un db simulé)."""
+    """`estimation_annonce` choisit le comparateur selon la NATURE lue de `parcel_residuel.taux_emprise_pct`
+    (l'indicateur du résiduel/scoring), PAS du champ `etat_bien` de la fiche : bâtie (taux ≥ 5) → bâti
+    (prix_ancien) ; nue (taux < 5) → terrain nu (`_prix_terrain_local`)."""
     from labuse.pige.api import estimation_annonce
-    # BÂTIE : lit prix_ancien de la fiche, aucune requête DB (db=None accepté)
-    batie = estimation_annonce(None, "97411000AB0123",
-                               {"etat_bien": "bati_encore", "prix_ancien": {"median": 3602, "n": 15}})
-    assert batie["type_comparateur"] == "bati" and batie["median"] == 3602
 
     class _FakeDB:
+        """Simule `parcel_residuel` : le mapping porte t (taux), s (sdp) ET prix (médiane terrain)."""
+        def __init__(self, row): self._row = row
         def execute(self, *a, **k):
+            row = self._row
             class _R:
                 def mappings(self_):
                     class _M:
-                        def first(self__): return {"prix": 210.0}
+                        def first(self__): return row
                     return _M()
             return _R()
-    nue = estimation_annonce(_FakeDB(), "97411000AB0123", {"etat_bien": "nu"})
+
+    # BÂTIE : taux ≥ 5 → comparateur bâti (prix_ancien de la fiche)
+    batie = estimation_annonce(_FakeDB({"t": 30.0, "s": 0}), "97411000AB0123",
+                               {"prix_ancien": {"median": 3602, "n": 15}})
+    assert batie["type_comparateur"] == "bati" and batie["median"] == 3602
+
+    # NUE : taux < 5 → repère terrain nu (médiane secteur via _prix_terrain_local)
+    nue = estimation_annonce(_FakeDB({"t": 0.0, "s": 1412, "prix": 210.0}), "97411000AB0123", {})
     assert nue["type_comparateur"] == "terrain_nu" and round(nue["median"]) == 210
 
 

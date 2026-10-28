@@ -16,24 +16,29 @@
 > 5. **Pagination « 1 / 2 » sur une seule ligne** (@bottom-right `white-space:nowrap`, scopé) ; la
 >    variante parcelle tient sur une page → « 1 / 1 ».
 > 6. **Estimation selon la nature de la parcelle** — point UNIQUE `estimation_annonce` (lu par l'écran
->    via `GET /radar/annonce/estimation/{idu}` ET par le PDF) : parcelle NUE (`etat_bien='nu'`) →
->    repère €/m² de TERRAIN NU (`_prix_terrain_local`, secteur→commune) ; BÂTIE → comparateur bâti
->    (prix_ancien). **La note dit lequel est utilisé**, même règle à l'écran et dans le PDF.
-> 7. **Nouvelle capture du bouton** (`captures/bouton-exporter-pdf-outil.png`).
+>    via `GET /radar/annonce/estimation/{idu}` ET par le PDF) : parcelle NUE → repère €/m² de TERRAIN NU
+>    (`_prix_terrain_local`, secteur→commune) ; BÂTIE → comparateur bâti (prix_ancien). **La note dit
+>    lequel est utilisé**, même règle à l'écran et dans le PDF.
+> 7. **Nouvelle capture du bouton** (`captures/bouton-exporter-pdf-outil.png`) — CX0800 en « Parcelle nue ».
 >
-> ⚠ Sur la base LOCALE (stale, PROD=LOCAL), `etat_bien` n'est pas servi sur la fiche (cache antérieur
-> à la colonne) → les parcelles LIVE retombent toutes sur le comparateur BÂTI. Le chemin TERRAIN NU est
-> prouvé par les tests unitaires + une capture forcée (`captures/demo-terrain-parcelle.pdf`,
-> `etat_bien='nu'` injecté sur `97411000IH0259` → « Parcelle nue — comparée aux ventes de TERRAIN NU »,
-> 489 €/m², vraie médiane DVF terrain du secteur).
+> **D'où vient la nature (correction, lecture seule — psql, sans session app, sans écriture ; la base
+> servie Mac EST la donnée de production, PROD=LOCAL ; pas d'accès VPS séparé, prod gelée).** Le champ
+> `etat_bien` de la FICHE est calculé en direct (CASE sur `parcel_residuel.taux_emprise_pct`) mais la
+> fiche SERVIE le rend `None` (**0 parcelle servie le porte**, sur 30 sondées puis vérifié). En revanche
+> l'INDICATEUR sous-jacent — `parcel_residuel.taux_emprise_pct` (part bâtie BD TOPO, celui du résiduel
+> et du scoring) — est peuplé sur **253 764 / 434 582 parcelles** (27 695 **nues** < 5 %, 226 069 bâties).
+> → `estimation_annonce` ne dépend PLUS de `etat_bien` : `_nature_parcelle(db, idu)` lit `taux_emprise_pct`
+> en direct (même CASE : NULL→non mesuré, < 5 %→nu, sinon bâti). **CX0800 : `taux_emprise_pct = 0 → nue`**,
+> secteur avec médiane DVF terrain (495 €/m², n=78) → l'outil ET le PDF sortent « Parcelle nue — comparée
+> aux ventes de TERRAIN NU · 495 €/m² », **sans injection**. La capture forcée est supprimée (plus utile).
 >
 > **Recette FIX** (uvicorn :8940 redémarré — ⚠ sans redémarrage il sert le code périmé) :
-> `outil-parcelle.pdf`/`docs-parcelle.pdf` (CX0800, **1 page**, outil==docs texte identique),
-> `outil-parcelle-batie.pdf`/`docs-parcelle-batie.pdf` (`97422000BN2715`, 1 page, identiques),
-> `outil-commune.pdf`/`docs-commune.pdf` (1 page, « 1 / 1 »). Écran == PDF vérifié (CX0800 : 3 291 €/m²,
-> 2 953–3 518, Fiabilité Élevée, 12 ventes · 500 m · 2022–2025, « Parcelle bâtie — comparée au bâti
-> ancien »). tsc 0 · vitest **301/301** · pytest hook **2601 passed, 0 failed** (test `test_annonce_pdf.py`
-> 12 cas, dont nature terrain/bâti). Commit FIX sur la branche.
+> `outil-parcelle.pdf`/`docs-parcelle.pdf` (CX0800 **NUE → terrain 495 €/m²**, **1 page**, outil==docs),
+> `outil-parcelle-batie.pdf`/`docs-parcelle-batie.pdf` (`97422000BN2715` **BÂTIE → bâti 1 859 €/m²**, 1 page,
+> identiques), `outil-commune.pdf`/`docs-commune.pdf` (1 page, « 1 / 1 »). Écran == PDF vérifié (CX0800 :
+> 495 €/m², Fiabilité Élevée, « Parcelle nue — comparée aux ventes de terrain nu »). tsc 0 · vitest
+> **301/301** · pytest hook **2601 passed, 0 failed** (`test_annonce_pdf.py` 12 cas, nature lue de
+> `parcel_residuel`). Commit FIX sur la branche.
 >
 > ---
 
