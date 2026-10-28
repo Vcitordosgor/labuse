@@ -581,7 +581,7 @@ def composer_cockpit(*, a_faire: dict, etats_sources: dict | None, reservoirs: l
                      run_servi: str, candidat: str | None, calculer_present: bool,
                      dernier_calcul: str | None, env: str, prod_run: str | None,
                      dates: dict | None = None, copie_externe: dict | None = None,
-                     restore_test: dict | None = None) -> dict:
+                     restore_test: dict | None = None, radar: dict | None = None) -> dict:
     """Compose le payload du Tableau de bord (trois sections). Tout est déjà calculé en amont par
     l'endpoint — ici on ne fait que GROUPER par problème et formuler en français. `prod_run` est
     None quand l'état prod n'est pas encore lu (le front le complète via /admin/cockpit/etat-prod)."""
@@ -600,4 +600,39 @@ def composer_cockpit(*, a_faire: dict, etats_sources: dict | None, reservoirs: l
         "mise_a_jour": {"etapes": _etapes_mise_a_jour(
             a_faire, run_servi=run_servi, candidat=candidat, calculer_present=calculer_present,
             dernier_calcul=dernier_calcul, env=env, prod_run=prod_run)},
+        "radar": _carte_radar(radar),   # RADAR-FIX-2 (Lot D) — Données ON / Notifications OFF + fraîcheur capture
+    }
+
+
+def _carte_radar(radar: dict | None) -> dict | None:
+    """RADAR-FIX-2 (Lot D) — la carte « Radar » du Tableau de bord. Dit d'un coup d'œil : la DONNÉE
+    tourne (capture + cycle de vie), les NOTIFICATIONS sont coupées (interrupteur LABUSE_RADAR_NOTIFS),
+    la dernière capture AUTO (date + nb d'annonces) et le dernier passage de radar-cycle. ORANGE si
+    aucune capture auto depuis 48 h (la collecte s'est tue — c'est le défaut qu'a vu RADAR-ETAT-1)."""
+    if not radar:
+        return None
+    from datetime import datetime, timezone, timedelta
+    cap = radar.get("capture") or None
+    cap_at = None
+    if cap and cap.get("captured_at"):
+        try:
+            cap_at = datetime.fromisoformat(cap["captured_at"])
+        except (ValueError, TypeError):
+            cap_at = None
+    perimee = cap_at is None or cap_at < datetime.now(timezone.utc) - timedelta(hours=48)
+    if cap_at is None:
+        ligne_cap = "Aucune capture automatique"
+    else:
+        quand = cap_at.astimezone().strftime("%d/%m %H:%M")
+        ligne_cap = (f"Dernière capture auto {quand} · {int(cap.get('nouvelles') or 0)} annonce(s), "
+                     f"{int(cap.get('pages') or 0)} page(s)")
+    cyc = radar.get("cycle") or None
+    ligne_cyc = f"radar-cycle : {_hhmm(cyc.get('fin'))}" if cyc else "radar-cycle : jamais"
+    donnees_on, notifs_on = bool(radar.get("donnees_on")), bool(radar.get("notifs_on"))
+    return {
+        "id": "radar", "titre": "Radar",
+        "pastille": "ambre" if perimee else "vert",   # ambre = l'orange du design (pas de capture 48 h)
+        "donnees_on": donnees_on, "notifs_on": notifs_on,
+        "etat": f"Données {'ON' if donnees_on else 'OFF'} · Notifications {'ON' if notifs_on else 'OFF'}",
+        "capture": ligne_cap, "cycle": ligne_cyc,
     }

@@ -2947,13 +2947,35 @@ def admin_circuit(request: Request) -> dict:
         _restore_test = _ops2.lire_restore_test(_bdir)
     except Exception:  # noqa: BLE001 — marqueurs absents/illisibles : pas de carte (jamais un crash)
         _copie_externe, _restore_test = None, None
+    # ── RADAR-FIX-2 (Lot D) — la carte « Radar » : Données ON / Notifications OFF, dernière capture AUTO
+    #    (pige_passes.source='auto'), dernier passage de radar-cycle. ORANGE si pas de capture depuis 48 h. ──
+    _radar = None
+    try:
+        with session_scope() as _sr:
+            _cap = _sr.execute(text(
+                "SELECT captured_at, sum(n_pages) AS pages, sum(n_nouvelles) AS nouv "
+                "FROM pige_passes WHERE source = 'auto' "
+                "GROUP BY captured_at ORDER BY captured_at DESC LIMIT 1")).mappings().first()
+        _cyc = next((j for j in _jobs_list if j.get("nom") == "radar-cycle"), None)
+        _cyc_dernier = (_cyc or {}).get("dernier") or {}
+        _notifs_on = (_config.get_settings().radar_notifs or "off").strip().lower() == "on"
+        _radar = {
+            "donnees_on": True,   # les 3 jobs de cycle sont dégelés (Lot C) + la capture alimente pige_passes
+            "notifs_on": _notifs_on,
+            "capture": None if not _cap else {
+                "captured_at": _cap["captured_at"].isoformat() if _cap["captured_at"] else None,
+                "pages": int(_cap["pages"] or 0), "nouvelles": int(_cap["nouv"] or 0)},
+            "cycle": _cyc_dernier if _cyc_dernier.get("fin") else None,
+        }
+    except Exception:  # noqa: BLE001 — table pige absente/illisible : pas de carte (jamais un crash)
+        _radar = None
     cockpit = _cockpit.composer_cockpit(
         a_faire=a_faire, etats_sources=_etats_compte, reservoirs=reservoirs,
         verrous=_verrous, fuites_rob=_fuites_rob, caches_perimes=_caches_perimes, incidents=_incidents,
         ecarts_toleres=_ecarts_toleres, jobs_list=_jobs_list, run_servi=runs.current(),
         candidat=_candidat, calculer_present=_resume._calculer_present(_calculer_af, residuel),
         dernier_calcul=_run_date, env=_config.get_settings().env, prod_run=None,
-        dates=_dates_af, copie_externe=_copie_externe, restore_test=_restore_test)
+        dates=_dates_af, copie_externe=_copie_externe, restore_test=_restore_test, radar=_radar)
     return {
         "cockpit": cockpit,   # COCKPIT-1 Lot A — l'onglet « Tableau de bord » (3 sections)
         "run_servi": runs.current(), "candidat": _candidat, "manifeste": m,

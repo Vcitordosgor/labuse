@@ -153,6 +153,16 @@ export function TableauDeBord({ data, onVoirUsine, onDepotManuel }:
             </div>
           ))}
         </div>
+        {/* RADAR-FIX-2 (Lot D) — la carte Radar : Données ON / Notifications OFF, dernière capture auto,
+            dernier radar-cycle. Ambre si aucune capture depuis 48 h (la collecte s'est tue). */}
+        {ck.radar && (
+          <div className={`ck-radar ck-tuile ${ck.radar.pastille === 'ambre' ? 'ambre' : ''}`}>
+            <div className="th"><span className={`ck-tdot ${ck.radar.pastille}`} />{ck.radar.titre}
+              <span className={`ck-radar-etat ${ck.radar.notifs_on ? '' : 'off'}`}>{ck.radar.etat}</span></div>
+            <div className="tl">{ck.radar.capture}</div>
+            <div className="tl">{ck.radar.cycle}</div>
+          </div>
+        )}
       </div>
 
       {/* ─────────── 3. Où en est la mise à jour ? ─────────── */}

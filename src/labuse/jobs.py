@@ -367,6 +367,14 @@ def _j(nom, titre, cadence, cron_utc, heure_reunion, *, raison, touche, test,
                timeout_s=timeout_s, envoie_mail=envoie_mail, besoin_db=besoin_db, planifie=planifie, gel=gel)
 
 
+def _gel_notifs() -> str | None:
+    """RADAR-FIX-2 (Lot C) — L'INTERRUPTEUR des notifications Radar (radar-cloche + digest). Gelés tant
+    que LABUSE_RADAR_NOTIFS != « on » (données ON, notifications OFF). On rallume d'un seul geste au Mac
+    mini. None = actif ; motif court sinon (le crontab l'émet COMMENTÉ, healthz le classe « gele »)."""
+    return None if (get_settings().radar_notifs or "off").strip().lower() == "on" \
+        else "notifications OFF (LABUSE_RADAR_NOTIFS=off)"
+
+
 JOBS: dict[str, Job] = {j.nom: j for j in [
     # ══════════════════ L'EAU — surveillance & ingestion des sources vitrine ══════════════════
     _j("sonde-sources", "Sonde des sources amont — détecte une nouvelle version, n'ingère pas",
@@ -500,7 +508,7 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
        raison="Chaque annonce du jour qui matche une veille Radar d'un client se pose à SA cloche (kind "
               "radar → l'annonce), pour que le digest du matin l'e-maile avec les parcelles suivies et les "
               "nouveautés. Idempotent (dédup compte+bien+jour). N'envoie aucun mail (le digest s'en charge).",
-       test="tests/test_veille2_lot5.py::test_un_seul_mail_par_jour_trois_comptes", gel="Phase 8 Stéphanie"),
+       test="tests/test_veille2_lot5.py::test_un_seul_mail_par_jour_trois_comptes", gel=_gel_notifs()),
     # ── RADAR-AUTO-1 (Lot C) — le cycle de vie, DÉSORMAIS PLANIFIÉ. La capture automatique (extension,
     # rythme humain) rend ces jobs utiles chaque nuit : sans eux, une annonce expirée reste « active »,
     # aucune vente DVF ne se rapproche, la cible Courrier ne se qualifie jamais (cf. RADAR-AUDIT-1 §6c).
@@ -511,19 +519,19 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
               "ligne → `en_vente_longue`, > 60 j sans confirmation → `a_reverifier`. Sans ce job, le "
               "cycle fige et une annonce expirée reste « active » indéfiniment (RADAR-AUDIT-1 §6c). "
               "Idempotent, zéro réseau.",
-       test="tests/test_radar_auto1.py::test_jobs_cycle_planifies", gel="Phase 8 Stéphanie"),
+       test="tests/test_radar_auto1.py::test_jobs_cycle_planifies"),
     _j("radar-cycle-dvf", "Radar — rapprochement DVF (bien rattaché Sourcé + vente → vendue)",
        "quotidien", "30 0 * * *", "04:30", touche="exploitation", timeout_s=900,
        raison="Un bien RATTACHÉ Sourcé dont la parcelle a une mutation DVF « Vente » dans [3;18] mois "
               "après publication passe `vendue` (+ délai, écart affiché/acté). Alimente l'entonnoir "
               "vendue → Courrier et le digest. Après l'ingestion DVF. Jamais sur une PISTE.",
-       test="tests/test_radar_auto1.py::test_jobs_cycle_planifies", gel="Phase 8 Stéphanie"),
+       test="tests/test_radar_auto1.py::test_jobs_cycle_planifies"),
     _j("radar-cycle-mensuel", "Radar — qualification mensuelle retiree_sans_vente (cible Courrier)",
        "mensuel (1er)", "30 1 1 * *", "05:30 le 1er", touche="exploitation", timeout_s=600,
        raison="La CIBLE Courrier : un bien `retiree` rattaché, retiré depuis > 12 mois et SANS mutation "
               "DVF « Vente » depuis la publication → `retiree_sans_vente`. JAMAIS depuis un lien mort — "
               "seule l'absence de vente DVF prouvée qualifie. Sans ce job, l'entonnoir Courrier dort.",
-       test="tests/test_radar_auto1.py::test_jobs_cycle_planifies", gel="Phase 8 Stéphanie"),
+       test="tests/test_radar_auto1.py::test_jobs_cycle_planifies"),
 
     # ── VEILLE-FIX-1 (lot 1) — les quatre fonctions du LEGACY du matin que le registre ne portait pas.
     # Sans elles, retirer les crons legacy éteignait la veille (suivis/secteurs/recherches) et le digest.
@@ -549,7 +557,7 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
        raison="TOUT ce qui change pour un compte la veille (parcelles suivies, Radar, nouveautés de l'app) "
               "part en UN digest quotidien, filtré par préférence, jamais vide, un par jour (dédup mail_queue). "
               "Passe par mail_queue. Sans événement la veille : pas de mail (dry-run si SMTP absent).",
-       test="tests/test_veille_fix1.py::test_les_jobs_veille_existent", gel="Phase 8 Stéphanie"),
+       test="tests/test_veille_fix1.py::test_les_jobs_veille_existent", gel=_gel_notifs()),
     # VEILLE-FIX-2 (Lot D) — LE CONSOMMATEUR DE LA FILE. Toutes les 5 min, il fait partir ce qui est
     # `en_attente` (immédiats différés, dont le digest ; programmés J+3/J+10) et rejoue les `a_rejouer`
     # dont l'heure est venue (5 min → 1 h → 24 h). Sans lui, un mail programmé ne partait jamais et un
