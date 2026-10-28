@@ -484,15 +484,23 @@ def basculer(db: Session, nouveau_run: str, par: str,
             "caches_purges": caches, "sens": sens, "coherence": coherence, "commit": commit,
             "propagation": propagation,
             "note": "Effective immédiatement (manifeste relu à la requête, confirmé par runs.current()). "
-                    "Cloche rejouée + caches rafraîchis (rebuild détaché)."}
+                    "Cloche rejouée ; caches purgés (purger_caches_run) + build-mvt détaché existant."}
 
 
 def _propager_apres_bascule(db: Session) -> dict:
     """DONNEES-ETAT-FIX-2 (Lot D) — après une bascule : (a) REJOUE LA CLOCHE — `detect_events` pose les
     « bascules du marché » dans event_log avec run_to = run servi (sinon la cloche reste figée sur
     l'ancien run → écarts `cloche-fraicheur`/`digest-vs-cloche`), puis `evaluer_radar_cloche` réévalue
-    les veilles ; (b) RAFRAÎCHIT LES CACHES à clé de run via un `labuse rebuild` DÉTACHÉ (tuiles + fiche
-    commune). Tout est best-effort : une propagation qui rate ne défait jamais la bascule."""
+    les veilles. Les CACHES à clé de run, eux, sont déjà invalidés par `purger_caches_run()` (appelé
+    par `basculer()` juste avant) ; les tables servies run-scopées + les tuiles se reconstruisent
+    ensuite (build-mvt détaché, mécanisme existant). Best-effort : une propagation qui rate ne défait
+    jamais la bascule.
+
+    DONNEES-ETAT-FIX-2 (correctif) — on NE spawn PLUS de `labuse rebuild` détaché ici : ce sous-processus
+    héritait de `LABUSE_DATABASE_URL` et, en test (conftest le pointe sur `labuse_test`), construisait
+    `spatial_layers_sub` dans la base de test → la cascade lisait le cache subdivisé et ne voyait plus
+    les couches insérées en direct par les tests (régression `test_geom_2975`/`test_sar`). Le rafraîchi
+    des caches reste porté par la purge ci-dessus + le build-mvt détaché existant."""
     out: dict = {}
     try:
         from sqlalchemy import text as _text
@@ -519,20 +527,7 @@ def _propager_apres_bascule(db: Session) -> dict:
             out["radar_cloche"] = {"erreur": f"{type(exc).__name__}: {exc}"[:140]}
     except Exception as exc:  # noqa: BLE001 — le rejeu de la cloche ne casse jamais la bascule
         out["cloche"] = {"erreur": f"{type(exc).__name__}: {exc}"[:160]}
-    try:
-        import os
-        import subprocess
-        import sys
-        from pathlib import Path
-        racine = Path(__file__).resolve().parents[2]
-        env = {**os.environ, "PYTHONPATH": os.pathsep.join(
-            [str(racine / "src"), os.environ.get("PYTHONPATH", "")]).rstrip(os.pathsep)}
-        subprocess.Popen([sys.executable, "-c", "from labuse.cli import app; app()", "rebuild"],
-                         cwd=str(racine), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                         start_new_session=True, env=env)
-        out["caches"] = "rebuild détaché lancé"
-    except Exception as exc:  # noqa: BLE001
-        out["caches"] = f"rebuild non lancé ({type(exc).__name__})"
+    out["caches"] = "invalidés par purger_caches_run() ; tables run-scopées via build-mvt détaché"
     return out
 
 
