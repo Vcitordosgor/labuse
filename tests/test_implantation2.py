@@ -22,6 +22,27 @@ pytestmark = pytest.mark.reel
 _STATUTS = {"exploitable en pré-faisabilité", "à compléter", "simulation impossible", "ne tient pas"}
 
 
+@pytest.fixture(autouse=True)
+def _base_reelle():
+    """REMISE-1 (Lot B) — rebranche l'engine GLOBAL de l'app sur la base applicative réelle
+    (LABUSE_APP_DATABASE_URL) le temps du test. Les tests de ROUTE (`etude_implantation`) reçoivent
+    `db=session_reelle`, mais le CALCUL (`modules._etudier_borne`) ouvre sa PROPRE `session_scope()`
+    (moteur global) — sous pytest, conftest le pointe sur `labuse_test` (vide des parcelles témoins)
+    → « parcelles introuvables ». En prod/au banc, le moteur global vise déjà la base servie ; ici on
+    l'y pointe aussi. Même patron que test_a05_1_capacite_pdf_fiche._base_reelle."""
+    from labuse import db as db_mod
+    app_url = os.environ.get("LABUSE_APP_DATABASE_URL")
+    if not app_url:
+        pytest.skip("LABUSE_APP_DATABASE_URL absent — base applicative réelle inconnue")
+    ancien_eng, ancien_sess = db_mod._engine, db_mod._Session
+    db_mod._engine = db_mod.make_engine(app_url)
+    db_mod._Session = None
+    try:
+        yield
+    finally:
+        db_mod._engine, db_mod._Session = ancien_eng, ancien_sess
+
+
 @pytest.fixture(scope="module")
 def session_reelle():
     from sqlalchemy import text

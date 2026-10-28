@@ -455,6 +455,13 @@ TABLES_FABRIQUEES: dict[str, str] = {
     "entonnoir_motifs": "entonnoir des motifs (scoring)",
     "zone_isochrone_cache": "cache isochrones (étude de zone)",
     "commune_contexte_cache": "cache fiche commune",
+    # VITESSE-2 (Lots 1 & 7, V1c) — caches PARTAGÉS en base lus par TOUS les workers, écrits par le
+    # job `fiche-commune-cache` / `labuse rebuild` / le réchauffage de déploiement, invalidés par la clé
+    # de fraîcheur du run servi. Artefacts de build (comme mvt_tile_cache / commune_contexte_cache) :
+    # les déclarer les fait appartenir à la carte (V1c) au lieu d'être des orphelines. Vus en prod
+    # depuis DEPLOY-1028b (auto-créées au 1ᵉʳ écrivain).
+    "comparateur_raw_cache": "cache partagé des indicateurs comparateur des 24 communes (VITESSE-2 Lot 1)",
+    "fiche_cache": "cache partagé des fiches parcelle PUBLIQUES multi-worker (VITESSE-2 Lot 7)",
     "v_foncier_propension_vendre": "vue (score V)",
     "v_foncier_sous_pression": "vue (score V)",
     "v_parcel_dvf_last": "vue (DVF dernier passage)",
@@ -495,6 +502,11 @@ TABLES_EXPLOITATION: dict[str, str] = {
     # Table d'EXPLOITATION active (jamais une orpheline à purger) : la déclarer éteint V1c sans
     # rien désactiver — elle a un écriveur et un lecteur dans le code servi.
     "coherence_runs": "journal des passages du banc de cohérence",
+    # REMISE-1 (Lot B, V1c) — journal des passages du banc de CHASSE (chasse_journal.py : CREATE TABLE
+    # IF NOT EXISTS chasse_runs ; écrit par `labuse chasse`, lu par chasse_journal + la page Données).
+    # Table d'EXPLOITATION active (jamais une orpheline à purger) — même raison que coherence_runs :
+    # matérialisée en prod dès que le banc tourne, elle a un écriveur ET un lecteur dans le code servi.
+    "chasse_runs": "journal des passages du banc de chasse (chasse_journal.py)",
     "circuit_candidat_assume": "candidat assumé (V3a — déclaration journalisée, réversible)",
     "circuit_ecarts": "sonde — fuites",
     "circuit_eau_ancienne": "sonde — eau ancienne",

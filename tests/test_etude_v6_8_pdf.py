@@ -64,13 +64,20 @@ def _pdf_texte(payload) -> str:
 
 
 def test_item1_une_seule_implantation(session_reelle):
-    """Item 1 — une seule implantation (le programme du client) : logements=23 et places=27 identiques au
-    plan, à la répartition, aux contrôles et à la page 1 ; aucune « autre implantation possible »."""
+    """Item 1 — une seule implantation (le programme du client) : logements=23 et places=23 identiques au
+    plan, à la répartition, aux contrôles et à la page 1 ; aucune « autre implantation possible ».
+
+    REMISE-1 (Lot B) — recette RÉ-ANCRÉE 27 → 23 places. L'étude applique désormais le PLAFOND du Code de
+    l'urbanisme (art. L151-35 = 1 place / logement), PLUS FAVORABLE que le barème PLU (ex-UA 2.7.3) qui
+    donnait 27 places pour 23 logements. Changement DÉLIBÉRÉ et déployé (ETUDE-V6-7/8 « stationnement
+    plafonné » + DOCS-COHERENCE-1 F9), postérieur au gel de la recette (24/10) : vérifié IDENTIQUE en PROD
+    et en local (23 places les deux) → ce n'est NI un retard de base locale NI une régression, mais la
+    recette qui n'avait pas suivi la règle validée. 23 logements × 1 place/logt = 23 places."""
     from labuse.exports import etude_faisabilite as ef
     pl = _payload(session_reelle, {"T1": 11, "T2": 5, "T3": 2, "T4": 5}, "aerien")
     retenu = ef.scenario_retenu(pl)
     L, P = retenu["resume"]["logements"], retenu["resume"]["places"]
-    assert (L, P) == (23, 27)                                     # garde-fou du cas de recette
+    assert (L, P) == (23, 23)                                     # garde-fou du cas de recette (plafond L151-35)
     txt = _pdf_texte(pl)
     assert "autre implantation" not in txt.lower()               # annexe supprimée
     # répartition par niveau : la somme imprimée des logements = L (lue dans le payload du plan rogné)
@@ -103,14 +110,21 @@ def test_item1b_statut_recalcule_pas_simulation_impossible(session_reelle):
 
 def test_item2b_une_seule_ligne_stationnement_sans_tiret(session_reelle):
     """Item 2b — dans le tableau des règles (section 2) : AUCUNE ligne de règle avec la valeur « — », et UNE
-    SEULE ligne de stationnement portant son barème (article UA 2.7.3)."""
+    SEULE ligne de stationnement portant sa règle (art. L151-35).
+
+    REMISE-1 (Lot B) — citation RÉ-ANCRÉE « UA 2.7.3 » → « L151-35 ». L'étude cite désormais le PLAFOND du
+    Code de l'urbanisme (art. L151-35, 1 place/logement) qui PRIME sur le barème PLU (ex-UA 2.7.3) car plus
+    favorable ; le PLU reste mentionné comme non liant (« ne s'applique que s'il est plus favorable »).
+    Changement déployé (ETUDE-V6-7/8 + DOCS-COHERENCE-1 F9) postérieur au gel de la recette, IDENTIQUE en
+    PROD et en local → recette non suivie, pas une régression. L'INTENTION du test est inchangée : une
+    SEULE ligne de stationnement portant sa règle, et aucune valeur « — »."""
     pl = _payload(session_reelle, {"T1": 11, "T2": 5, "T3": 2, "T4": 5}, "aerien")
     txt = _pdf_texte(pl)
     # le TABLEAU des règles (section 2) va de « 2. Règles » jusqu'à la section « Stationnement & mixité ».
     apres_titre = txt.split("2. R", 1)[-1]
     tableau = re.split(r"Stationnement\s*&\s*mixit", apres_titre)[0]
-    # une seule ligne de stationnement portant le barème (article UA 2.7.3) dans le tableau des règles.
-    assert tableau.count("UA 2.7.3") == 1, f"occurrences UA 2.7.3 dans le tableau = {tableau.count('UA 2.7.3')}"
+    # une seule ligne de stationnement portant sa règle (art. L151-35) dans le tableau des règles.
+    assert tableau.count("L151-35") == 1, f"occurrences L151-35 dans le tableau = {tableau.count('L151-35')}"
     # aucune ligne de règle avec la valeur « — » (plus de stationnement « nu »).
     for ligne in tableau.splitlines():
         cols = re.split(r"\s{2,}", ligne.strip())
