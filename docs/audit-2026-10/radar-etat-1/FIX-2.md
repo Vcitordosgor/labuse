@@ -50,7 +50,7 @@ cliquer **« Tester l'alarme (+2 min) »**, laisser Chrome ouvert → une captur
 jamais la prod.
 
 **Le correctif** (`background.js`, `options.js`, `options.html`, `manifest.json`, `README.md`) :
-- **Prod par défaut** : `labuseUrl = https://labuse.immo`, ajouté aux `host_permissions`. `localhost`
+- **Prod par défaut** : `labuseUrl = https://app.labuse.immo`, ajouté aux `host_permissions`. `localhost`
   reste autorisé mais ne sert qu'en **recette explicite** (on le tape dans les Options).
 - Jeton de prod lu depuis les Options (inchangé : en-tête `X-Radar-Token`).
 - **Rattrapage après bascule** : à la 1ʳᵉ capture après un changement d'hôte LABUSE (`lastCaptureHost`),

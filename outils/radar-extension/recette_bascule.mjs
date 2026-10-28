@@ -9,7 +9,7 @@ globalThis.setTimeout = (fn, _ms) => _real(fn, 0);
 
 let store, captures, failCapture;
 function reset(overrides = {}) {
-  store = { searchUrl: "https://www.leboncoin.fr/recherche?x", labuseUrl: "https://labuse.immo",
+  store = { searchUrl: "https://www.leboncoin.fr/recherche?x", labuseUrl: "https://app.labuse.immo",
             token: "jeton", lastCaptureHost: "", ...overrides };
   captures = []; failCapture = false;
 }
@@ -62,16 +62,16 @@ reset({ lastCaptureHost: "" });
 await soiree();
 const nouv1 = captures.filter((c) => c.passe === "nouvelles").length;
 assert.strictEqual(nouv1, 40, `rattrapage attendu 40 pages « nouvelles », obtenu ${nouv1}`);
-assert.strictEqual(store.lastCaptureHost, "labuse.immo", "la bascule doit être consommée (lastCaptureHost=prod)");
+assert.strictEqual(store.lastCaptureHost, "app.labuse.immo", "la bascule doit être consommée (lastCaptureHost=prod)");
 
 // 2) RÉGIME NORMAL (host déjà la prod) → pas de rattrapage : plafond « nouvelles » = 15.
-reset({ lastCaptureHost: "labuse.immo" });
+reset({ lastCaptureHost: "app.labuse.immo" });
 await soiree();
 const nouv2 = captures.filter((c) => c.passe === "nouvelles").length;
 assert.strictEqual(nouv2, 15, `régime normal attendu 15 pages « nouvelles », obtenu ${nouv2}`);
 
 // 3) ÉCHEC → message LISIBLE dans le popup (lastResult), invitant au dépôt manuel.
-reset({ lastCaptureHost: "labuse.immo" });
+reset({ lastCaptureHost: "app.labuse.immo" });
 failCapture = true;
 await soiree();
 assert(/Déposez à la main/.test(store.lastResult || ""), `message d'échec peu lisible : ${store.lastResult}`);

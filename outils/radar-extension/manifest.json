@@ -12,7 +12,7 @@
   ],
   "host_permissions": [
     "*://*.leboncoin.fr/*",
-    "https://labuse.immo/*",
+    "https://app.labuse.immo/*",
     "http://localhost/*"
   ],
   "optional_host_permissions": [

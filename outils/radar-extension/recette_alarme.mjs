@@ -6,7 +6,7 @@ import assert from "node:assert";
 
 const captures = [];       // POST /admin/radar/capture reçus
 const store = { searchUrl: "https://www.leboncoin.fr/recherche?x",
-                labuseUrl: "https://labuse.immo", token: "jeton-recette" };
+                labuseUrl: "https://app.labuse.immo", token: "jeton-recette" };
 
 // Page Leboncoin « riche » simulée (une seule page, pas de suivante).
 function fakeInspect() {
@@ -65,7 +65,7 @@ await new Promise((r) => setTimeout(r, 200));
 assert(captures.length >= 1, "l'alarme n'a déclenché AUCUNE capture");
 assert(captures.every((c) => c.source === "auto"), "une capture n'est pas en source « auto » : "
   + JSON.stringify(captures));
-assert(captures.some((c) => c.url.startsWith("https://labuse.immo/")), "la capture ne vise pas la PROD : "
+assert(captures.some((c) => c.url.startsWith("https://app.labuse.immo/")), "la capture ne vise pas la PROD : "
   + JSON.stringify(captures.map((c) => c.url)));
 assert(store.autoRunDate, "autoRunDate non posé (garde une-seule-capture-par-soir)");
 console.log(`OK — l'alarme a déclenché ${captures.length} capture(s), toutes source « auto », vers la prod.`);

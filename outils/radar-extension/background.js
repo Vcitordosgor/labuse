@@ -46,9 +46,9 @@ function nowIso() {
 async function getOpts() {
   const d = await chrome.storage.local.get({
     searchUrl: "",
-    // RADAR-FIX-2 (Lot B) — PROD par défaut : l'extension nourrit https://labuse.immo. localhost ne sert
+    // RADAR-FIX-2 (Lot B) — PROD par défaut : l'extension nourrit https://app.labuse.immo. localhost ne sert
     // qu'en recette, en le tapant EXPLICITEMENT dans les Options.
-    labuseUrl: "https://labuse.immo",
+    labuseUrl: "https://app.labuse.immo",
     token: "",
     hour: 21,
     jitterMaxMin: 180,
