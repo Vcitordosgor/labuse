@@ -1,0 +1,17 @@
+# VITESSE-2 — parité JSON avant/après (diff vide = IDENTIQUE)
+# baseline = origin/main servi ; après = branche fix/vitesse-2 (tous lots)
+
+## /communes/Saint-Benoît/contexte
+  → IDENTIQUE (0 écart)
+## /communes/Saint-Paul/contexte
+  → IDENTIQUE (0 écart)
+## /communes/Saint-Denis/contexte
+  → IDENTIQUE (0 écart)
+## /parcels/97410000AE1369
+  → IDENTIQUE (0 écart)
+## /parcels/97415000BY0083
+  → IDENTIQUE (0 écart)
+## /parcels/97411000BZ1065
+  → IDENTIQUE (0 écart)
+## /compare?idus=AE1369,BY0083,BZ1065
+  → IDENTIQUE (0 écart)
