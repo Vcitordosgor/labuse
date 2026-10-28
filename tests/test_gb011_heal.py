@@ -169,3 +169,84 @@ def test_readyz_ne_force_pas_l_echec_quand_le_heal_est_ok(client):
         assert "heal" not in body or body.get("heal", {}).get("ok") is not False
     finally:
         app.state.schema_heal = ancien
+
+
+# ── 4. REMISE-1 (Lot A) — un VRAI verrou Postgres tenu pendant le heal → le heal converge, readyz 200 ─
+
+def test_remise1_heal_converge_malgre_un_verrou_tenu_puis_readyz_200(engine, client, monkeypatch):
+    """Simule EXACTEMENT l'incident DEPLOY-1028b : un lecteur concurrent TIENT un verrou sur la table
+    que le heal doit ALTER (comme `pige_biens` pendant que le job `fiche-commune-cache` lisait). Avec le
+    correctif (moteur de heal à `lock_timeout` court + `_run_heal_steps` qui réessaie), l'ALTER échoue
+    VITE au 1er essai (verrou tenu) puis CONVERGE une fois le verrou relâché — au lieu de rester bloqué
+    → `heal_failed` définitif. Puis on prouve le bout final : heal convergé ⇒ `/readyz` 200."""
+    import threading
+    import time as _t
+
+    from sqlalchemy import event as _sa_event
+
+    from labuse.api.app import _run_heal_steps, app
+    from labuse.db import make_engine
+
+    table = "remise1_heal_cible"
+    with engine.begin() as c:
+        c.execute(text(f"DROP TABLE IF EXISTS {table}"))
+        c.execute(text(f"CREATE TABLE {table} (id int)"))
+
+    # (1) un « lecteur » tient un verrou ACCESS SHARE sur la cible ~2,5 s (conflit avec l'ALTER qui
+    #     veut ACCESS EXCLUSIVE), puis le relâche (commit) — comme le job de réchauffage finit par le faire.
+    pret = threading.Event()
+
+    def _tenir_verrou():
+        with engine.connect() as c, c.begin():
+            c.execute(text(f"LOCK TABLE {table} IN ACCESS SHARE MODE"))
+            pret.set()
+            _t.sleep(2.5)
+        # sortie du bloc begin() → COMMIT → verrou relâché
+
+    th = threading.Thread(target=_tenir_verrou, daemon=True)
+    th.start()
+    assert pret.wait(5), "le verrou lecteur aurait dû être pris"
+
+    # (2) moteur de HEAL dédié avec lock_timeout COURT (1 s) — reproduit `_lifespan`.
+    heal_eng = make_engine()
+
+    @_sa_event.listens_for(heal_eng, "connect")
+    def _lt(_dbapi, _rec):  # noqa: ANN001
+        cur = _dbapi.cursor()
+        try:
+            cur.execute("SET lock_timeout = '1s'")
+        finally:
+            cur.close()
+
+    def _alter_pige():
+        with heal_eng.begin() as c:
+            c.execute(text(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS retiree_le timestamptz"))
+
+    retries: list[int] = []
+    try:
+        fails = _run_heal_steps((("pige", _alter_pige),), essais=8, pause_s=0.5,
+                                on_retry=lambda _m, t, _e: retries.append(t))
+    finally:
+        heal_eng.dispose()
+    th.join(timeout=5)
+
+    assert fails == [], f"le heal aurait dû CONVERGER après relâche du verrou ; échecs={fails}"
+    assert retries, "le 1er ALTER a bien été bloqué par le verrou (≥ 1 réessai) — sinon le test ne prouve rien"
+    assert "retiree_le" in _colonnes(engine, table), "la colonne ALTER a fini par être posée"
+
+    # (3) bout final : heal convergé ⇒ /readyz 200. On isole le contrat heal→readyz en rendant
+    #     state.readiness « prêt » (la base de test peut manquer de données métier, hors sujet ici).
+    from labuse import state
+    monkeypatch.setattr(state, "readiness",
+                        lambda _s, _n: {"ready": True, "checked_at": "2026-10-28T00:00:00+04:00",
+                                        "schema": {"ok": True}})
+    ancien = getattr(app.state, "schema_heal", None)
+    try:
+        app.state.schema_heal = {"ok": not fails, "failures": fails, "total": 1}
+        r = client.get("/readyz")
+        assert r.status_code == 200, f"heal convergé ⇒ readyz devait être 200, got {r.status_code}"
+        assert r.json().get("ready") is True
+    finally:
+        app.state.schema_heal = ancien
+        with engine.begin() as c:
+            c.execute(text(f"DROP TABLE IF EXISTS {table}"))

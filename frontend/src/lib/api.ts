@@ -2325,8 +2325,10 @@ export interface EtudeStationnementRegimes {
   }
   plafond_national: {
     categorie: string; reference: string; ratio_plafond: number
-    condition_tcsp_sous_800m: boolean; distance_tcsp_m: number | null
+    // REMISE-1 — plafonds L151-35 (aidé/senior/étudiant) & L151-36 (autres) : condition TCSP à 500 m
+    condition_tcsp_sous_500m: boolean; distance_tcsp_m: number | null
     eligibilite_categorie: string; statut: string; applicable_si_eligible: boolean
+    reduction_sous_500m?: boolean
     citation: string; note: string
   } | null
 }

@@ -1,16 +1,16 @@
 {
  "meta": {
-  "api_base": "http://127.0.0.1:8605",
-  "genere_le": "2026-10-19T12:22:44",
+  "api_base": "http://127.0.0.1:8870",
+  "genere_le": "2026-10-28T19:06:26",
   "mandat": "M6 Phase 1 §1.2 — golden dataset",
   "n_parcelles": 119,
-  "run_cascade": "q_v19",
-  "run_v2_servi": "q_v19",
+  "run_cascade": "q_v20",
+  "run_v2_servi": "q_v20",
   "tiers_effectifs": {
-   "a_suivre": 662,
+   "a_suivre": 659,
    "ecartee": 153283,
-   "priorite": 142,
-   "sans_signal": 279142
+   "priorite": 143,
+   "sans_signal": 279144
   },
   "tolerances": {
    "canopee_pct": 2.0,
@@ -54,7 +54,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 0.03,
-      "percentile": 0.54,
+      "percentile": 0.55,
       "pourquoi": [
        {
         "bin": "true",
@@ -97,7 +97,7 @@
         "signe": "+"
        }
       ],
-      "rang": 427468,
+      "rang": 427456,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -114,9 +114,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.03,
-     "percentile": 0.54,
-     "rang": 427468,
-     "run_id": "q_v19",
+     "percentile": 0.55,
+     "rang": 427456,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -167,8 +167,8 @@
      "event_date": null,
      "model_version": "q_v15",
      "mult_base": 0.03,
-     "percentile": 0.5,
-     "rang": 427468,
+     "percentile": 0.6,
+     "rang": 427456,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -215,7 +215,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 1.27,
-      "percentile": 75.34,
+      "percentile": 75.36,
       "pourquoi": [
        {
         "bin": "true",
@@ -258,7 +258,7 @@
         "signe": "-"
        }
       ],
-      "rang": 105968,
+      "rang": 105907,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -275,9 +275,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 1.27,
-     "percentile": 75.34,
-     "rang": 105968,
-     "run_id": "q_v19",
+     "percentile": 75.36,
+     "rang": 105907,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -328,8 +328,8 @@
      "event_date": null,
      "model_version": "q_v15",
      "mult_base": 1.27,
-     "percentile": 75.3,
-     "rang": 105968,
+     "percentile": 75.4,
+     "rang": 105907,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -376,7 +376,7 @@
       "label": "Sans signal",
       "motif": null,
       "mult_base": 0.51,
-      "percentile": 15.52,
+      "percentile": 15.62,
       "pourquoi": [
        {
         "bin": "A",
@@ -419,7 +419,7 @@
         "signe": "-"
        }
       ],
-      "rang": 363081,
+      "rang": 362680,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -436,9 +436,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.51,
-     "percentile": 15.52,
-     "rang": 363081,
-     "run_id": "q_v19",
+     "percentile": 15.62,
+     "rang": 362680,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -490,8 +490,8 @@
      "event_date": null,
      "model_version": "q_v15",
      "mult_base": 0.51,
-     "percentile": 15.5,
-     "rang": 363081,
+     "percentile": 15.6,
+     "rang": 362680,
      "tier": "sans_signal"
     },
     "section": "AD",
@@ -538,7 +538,7 @@
       "label": "Sans signal",
       "motif": null,
       "mult_base": 1.23,
-      "percentile": 72.73,
+      "percentile": 72.75,
       "pourquoi": [
        {
         "bin": "(0.007014, 0.008375]",
@@ -581,7 +581,7 @@
         "signe": "-"
        }
       ],
-      "rang": 117202,
+      "rang": 117135,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -598,9 +598,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 1.23,
-     "percentile": 72.73,
-     "rang": 117202,
-     "run_id": "q_v19",
+     "percentile": 72.75,
+     "rang": 117135,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -648,8 +648,8 @@
      "event_date": null,
      "model_version": "q_v15",
      "mult_base": 1.23,
-     "percentile": 72.7,
-     "rang": 117202,
+     "percentile": 72.8,
+     "rang": 117135,
      "tier": "sans_signal"
     },
     "section": "AD",
@@ -696,7 +696,7 @@
       "label": "Sans signal",
       "motif": null,
       "mult_base": 1.23,
-      "percentile": 73.74,
+      "percentile": 73.75,
       "pourquoi": [
        {
         "bin": "≤ 1",
@@ -739,7 +739,7 @@
         "signe": "+"
        }
       ],
-      "rang": 112883,
+      "rang": 112824,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -756,9 +756,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 1.23,
-     "percentile": 73.74,
-     "rang": 112883,
-     "run_id": "q_v19",
+     "percentile": 73.75,
+     "rang": 112824,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -810,8 +810,8 @@
      "event_date": null,
      "model_version": "q_v15",
      "mult_base": 1.23,
-     "percentile": 73.7,
-     "rang": 112883,
+     "percentile": 73.8,
+     "rang": 112824,
      "tier": "sans_signal"
     },
     "section": "AD",
@@ -858,7 +858,7 @@
       "label": "Sans signal",
       "motif": null,
       "mult_base": 1.01,
-      "percentile": 65.27,
+      "percentile": 65.3,
       "pourquoi": [
        {
         "bin": "(0.007014, 0.008375]",
@@ -901,7 +901,7 @@
         "signe": "+"
        }
       ],
-      "rang": 149263,
+      "rang": 149137,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -918,9 +918,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 1.01,
-     "percentile": 65.27,
-     "rang": 149263,
-     "run_id": "q_v19",
+     "percentile": 65.3,
+     "rang": 149137,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -969,7 +969,7 @@
      "model_version": "q_v15",
      "mult_base": 1.01,
      "percentile": 65.3,
-     "rang": 149263,
+     "rang": 149137,
      "tier": "sans_signal"
     },
     "section": "AD",
@@ -1016,7 +1016,7 @@
       "label": "Sans signal",
       "motif": null,
       "mult_base": 1.39,
-      "percentile": 85.64,
+      "percentile": 85.66,
       "pourquoi": [
        {
         "bin": "true",
@@ -1059,7 +1059,7 @@
         "signe": "+"
        }
       ],
-      "rang": 61727,
+      "rang": 61655,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -1076,9 +1076,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 1.39,
-     "percentile": 85.64,
-     "rang": 61727,
-     "run_id": "q_v19",
+     "percentile": 85.66,
+     "rang": 61655,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -1129,8 +1129,8 @@
      "event_date": null,
      "model_version": "q_v15",
      "mult_base": 1.39,
-     "percentile": 85.6,
-     "rang": 61727,
+     "percentile": 85.7,
+     "rang": 61655,
      "tier": "sans_signal"
     },
     "section": "AD",
@@ -1177,7 +1177,7 @@
       "label": "Sans signal",
       "motif": null,
       "mult_base": 1.27,
-      "percentile": 83.97,
+      "percentile": 83.98,
       "pourquoi": [
        {
         "bin": "true",
@@ -1220,7 +1220,7 @@
         "signe": "-"
        }
       ],
-      "rang": 68910,
+      "rang": 68837,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -1237,9 +1237,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 1.27,
-     "percentile": 83.97,
-     "rang": 68910,
-     "run_id": "q_v19",
+     "percentile": 83.98,
+     "rang": 68837,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -1291,7 +1291,7 @@
      "model_version": "q_v15",
      "mult_base": 1.27,
      "percentile": 84.0,
-     "rang": 68910,
+     "rang": 68837,
      "tier": "sans_signal"
     },
     "section": "AD",
@@ -1401,7 +1401,7 @@
      "mult_base": 2.39,
      "percentile": null,
      "rang": null,
-     "run_id": "q_v19",
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -1501,7 +1501,7 @@
       "label": "Sans signal",
       "motif": null,
       "mult_base": 0.86,
-      "percentile": 52.28,
+      "percentile": 52.32,
       "pourquoi": [
        {
         "bin": "AU",
@@ -1544,7 +1544,7 @@
         "signe": "-"
        }
       ],
-      "rang": 205116,
+      "rang": 204911,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -1561,9 +1561,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.86,
-     "percentile": 52.28,
-     "rang": 205116,
-     "run_id": "q_v19",
+     "percentile": 52.32,
+     "rang": 204911,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -1612,7 +1612,7 @@
      "model_version": "q_v15",
      "mult_base": 0.86,
      "percentile": 52.3,
-     "rang": 205116,
+     "rang": 204911,
      "tier": "sans_signal"
     },
     "section": "AI",
@@ -1659,7 +1659,7 @@
       "label": "Sans signal",
       "motif": null,
       "mult_base": 1.23,
-      "percentile": 73.72,
+      "percentile": 73.74,
       "pourquoi": [
        {
         "bin": "(7, 9]",
@@ -1702,7 +1702,7 @@
         "signe": "-"
        }
       ],
-      "rang": 112939,
+      "rang": 112881,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -1719,9 +1719,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 1.23,
-     "percentile": 73.72,
-     "rang": 112939,
-     "run_id": "q_v19",
+     "percentile": 73.74,
+     "rang": 112881,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -1770,7 +1770,7 @@
      "model_version": "q_v15",
      "mult_base": 1.23,
      "percentile": 73.7,
-     "rang": 112939,
+     "rang": 112881,
      "tier": "sans_signal"
     },
     "section": "AM",
@@ -1817,7 +1817,7 @@
       "label": "Sans signal",
       "motif": null,
       "mult_base": 0.9,
-      "percentile": 60.9,
+      "percentile": 60.93,
       "pourquoi": [
        {
         "bin": "(236, 490.3]",
@@ -1860,7 +1860,7 @@
         "signe": "-"
        }
       ],
-      "rang": 168065,
+      "rang": 167920,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -1877,9 +1877,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.9,
-     "percentile": 60.9,
-     "rang": 168065,
-     "run_id": "q_v19",
+     "percentile": 60.93,
+     "rang": 167920,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -1928,7 +1928,7 @@
      "model_version": "q_v15",
      "mult_base": 0.9,
      "percentile": 60.9,
-     "rang": 168065,
+     "rang": 167920,
      "tier": "sans_signal"
     },
     "section": "AM",
@@ -1975,7 +1975,7 @@
       "hors_classement": "Copropriété — hors univers de classement (pas d'assiette foncière mobilisable)",
       "label": "À suivre",
       "motif": "SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4",
-      "mult_base": 7.5,
+      "mult_base": 7.51,
       "percentile": null,
       "pourquoi": [
        {
@@ -2035,10 +2035,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "q_v15",
-     "mult_base": 7.5,
+     "mult_base": 7.51,
      "percentile": null,
      "rang": null,
-     "run_id": "q_v19",
+     "run_id": "q_v20",
      "tier": "a_suivre"
     }
    },
@@ -2092,7 +2092,7 @@
      "copro": true,
      "event_date": null,
      "model_version": "q_v15",
-     "mult_base": 7.5,
+     "mult_base": 7.51,
      "percentile": null,
      "rang": null,
      "tier": "a_suivre"
@@ -2141,7 +2141,7 @@
       "label": "Écartée",
       "motif": "bâtie saturée — ratio 201 % (emprise 1207 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",
       "mult_base": 2.97,
-      "percentile": 96.19,
+      "percentile": 96.2,
       "pourquoi": [
        {
         "bin": "(1.065, 1.665]",
@@ -2184,7 +2184,7 @@
         "signe": "+"
        }
       ],
-      "rang": 16363,
+      "rang": 16344,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -2201,9 +2201,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 2.97,
-     "percentile": 96.19,
-     "rang": 16363,
-     "run_id": "q_v19",
+     "percentile": 96.2,
+     "rang": 16344,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -2259,7 +2259,7 @@
      "model_version": "q_v15",
      "mult_base": 2.97,
      "percentile": 96.2,
-     "rang": 16363,
+     "rang": 16344,
      "tier": "ecartee"
     },
     "section": "AN",
@@ -2306,7 +2306,7 @@
       "label": "Écartée",
       "motif": "bâtie saturée — ratio 76 % (emprise 4329 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",
       "mult_base": 1.27,
-      "percentile": 82.77,
+      "percentile": 82.78,
       "pourquoi": [
        {
         "bin": "(4594, 1.204e+04]",
@@ -2349,7 +2349,7 @@
         "signe": "-"
        }
       ],
-      "rang": 74062,
+      "rang": 74001,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -2366,9 +2366,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 1.27,
-     "percentile": 82.77,
-     "rang": 74062,
-     "run_id": "q_v19",
+     "percentile": 82.78,
+     "rang": 74001,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -2424,7 +2424,7 @@
      "model_version": "q_v15",
      "mult_base": 1.27,
      "percentile": 82.8,
-     "rang": 74062,
+     "rang": 74001,
      "tier": "ecartee"
     },
     "section": "AN",
@@ -2514,7 +2514,7 @@
         "signe": "+"
        }
       ],
-      "rang": 425771,
+      "rang": 425754,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -2532,8 +2532,8 @@
      "model_version": "q_v15",
      "mult_base": 0.03,
      "percentile": 0.94,
-     "rang": 425771,
-     "run_id": "q_v19",
+     "rang": 425754,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -2585,7 +2585,7 @@
      "model_version": "q_v15",
      "mult_base": 0.03,
      "percentile": 0.9,
-     "rang": 425771,
+     "rang": 425754,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -2694,7 +2694,7 @@
      "mult_base": 0.0,
      "percentile": 0.28,
      "rang": 428609,
-     "run_id": "q_v19",
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -2793,7 +2793,7 @@
       "label": "Sans signal",
       "motif": null,
       "mult_base": 2.97,
-      "percentile": 95.38,
+      "percentile": 95.39,
       "pourquoi": [
        {
         "bin": "> 4",
@@ -2836,7 +2836,7 @@
         "signe": "-"
        }
       ],
-      "rang": 19846,
+      "rang": 19824,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -2853,9 +2853,9 @@
      "badge_veille_succession": true,
      "model_version": "q_v15",
      "mult_base": 2.97,
-     "percentile": 95.38,
-     "rang": 19846,
-     "run_id": "q_v19",
+     "percentile": 95.39,
+     "rang": 19824,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -2911,7 +2911,7 @@
      "model_version": "q_v15",
      "mult_base": 2.97,
      "percentile": 95.4,
-     "rang": 19846,
+     "rang": 19824,
      "tier": "sans_signal"
     },
     "section": "AI",
@@ -2961,7 +2961,7 @@
       "label": "Sans signal",
       "motif": "SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4",
       "mult_base": 0.84,
-      "percentile": 47.46,
+      "percentile": 47.5,
       "pourquoi": [
        {
         "bin": "≤ 55",
@@ -3004,7 +3004,7 @@
         "signe": "+"
        }
       ],
-      "rang": 225830,
+      "rang": 225653,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -3021,9 +3021,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.84,
-     "percentile": 47.46,
-     "rang": 225830,
-     "run_id": "q_v19",
+     "percentile": 47.5,
+     "rang": 225653,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -3079,7 +3079,7 @@
      "model_version": "q_v15",
      "mult_base": 0.84,
      "percentile": 47.5,
-     "rang": 225830,
+     "rang": 225653,
      "tier": "sans_signal"
     },
     "section": "AK",
@@ -3126,7 +3126,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 0.78,
-      "percentile": 44.03,
+      "percentile": 44.06,
       "pourquoi": [
        {
         "bin": "nu_sans_droits",
@@ -3169,7 +3169,7 @@
         "signe": "+"
        }
       ],
-      "rang": 240542,
+      "rang": 240428,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -3186,9 +3186,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.78,
-     "percentile": 44.03,
-     "rang": 240542,
-     "run_id": "q_v19",
+     "percentile": 44.06,
+     "rang": 240428,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -3236,8 +3236,8 @@
      "event_date": null,
      "model_version": "q_v15",
      "mult_base": 0.78,
-     "percentile": 44.0,
-     "rang": 240542,
+     "percentile": 44.1,
+     "rang": 240428,
      "tier": "ecartee"
     },
     "section": "AH",
@@ -3284,7 +3284,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 0.45,
-      "percentile": 12.18,
+      "percentile": 12.2,
       "pourquoi": [
        {
         "bin": "nu_sans_droits",
@@ -3327,7 +3327,7 @@
         "signe": "-"
        }
       ],
-      "rang": 377435,
+      "rang": 377366,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -3344,9 +3344,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.45,
-     "percentile": 12.18,
-     "rang": 377435,
-     "run_id": "q_v19",
+     "percentile": 12.2,
+     "rang": 377366,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -3395,7 +3395,7 @@
      "model_version": "q_v15",
      "mult_base": 0.45,
      "percentile": 12.2,
-     "rang": 377435,
+     "rang": 377366,
      "tier": "ecartee"
     },
     "section": "AK",
@@ -3441,7 +3441,7 @@
       "fraction": "1/3",
       "label": "À suivre",
       "motif": null,
-      "mult_base": 28.55,
+      "mult_base": 28.56,
       "percentile": 100.0,
       "pourquoi": [
        {
@@ -3485,7 +3485,7 @@
         "signe": "+"
        }
       ],
-      "rang": 16,
+      "rang": 17,
       "rang_total": 429799,
       "tier": "priorite",
       "verbal": {
@@ -3501,10 +3501,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "q_v15",
-     "mult_base": 28.55,
+     "mult_base": 28.56,
      "percentile": 100.0,
-     "rang": 16,
-     "run_id": "q_v19",
+     "rang": 17,
+     "run_id": "q_v20",
      "tier": "priorite"
     }
    },
@@ -3554,9 +3554,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "q_v15",
-     "mult_base": 28.55,
+     "mult_base": 28.56,
      "percentile": 100.0,
-     "rang": 16,
+     "rang": 17,
      "tier": "priorite"
     },
     "section": "AR",
@@ -3602,7 +3602,7 @@
       "fraction": "1/5",
       "label": "À suivre",
       "motif": null,
-      "mult_base": 14.36,
+      "mult_base": 14.37,
       "percentile": 99.98,
       "pourquoi": [
        {
@@ -3662,10 +3662,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "q_v15",
-     "mult_base": 14.36,
+     "mult_base": 14.37,
      "percentile": 99.98,
      "rang": 90,
-     "run_id": "q_v19",
+     "run_id": "q_v20",
      "tier": "a_suivre"
     }
    },
@@ -3715,7 +3715,7 @@
      "copro": false,
      "event_date": null,
      "model_version": "q_v15",
-     "mult_base": 14.36,
+     "mult_base": 14.37,
      "percentile": 100.0,
      "rang": 90,
      "tier": "a_suivre"
@@ -3764,7 +3764,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 0.45,
-      "percentile": 11.88,
+      "percentile": 11.89,
       "pourquoi": [
        {
         "bin": "nu_sans_droits",
@@ -3807,7 +3807,7 @@
         "signe": "+"
        }
       ],
-      "rang": 378754,
+      "rang": 378685,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -3824,9 +3824,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.45,
-     "percentile": 11.88,
-     "rang": 378754,
-     "run_id": "q_v19",
+     "percentile": 11.89,
+     "rang": 378685,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -3875,7 +3875,7 @@
      "model_version": "q_v15",
      "mult_base": 0.45,
      "percentile": 11.9,
-     "rang": 378754,
+     "rang": 378685,
      "tier": "ecartee"
     },
     "section": "AC",
@@ -3922,7 +3922,7 @@
       "label": "Sans signal",
       "motif": null,
       "mult_base": 0.85,
-      "percentile": 47.8,
+      "percentile": 47.84,
       "pourquoi": [
        {
         "bin": "≤ 0.01177",
@@ -3965,7 +3965,7 @@
         "signe": "+"
        }
       ],
-      "rang": 224377,
+      "rang": 224163,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -3982,9 +3982,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.85,
-     "percentile": 47.8,
-     "rang": 224377,
-     "run_id": "q_v19",
+     "percentile": 47.84,
+     "rang": 224163,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -4033,7 +4033,7 @@
      "model_version": "q_v15",
      "mult_base": 0.85,
      "percentile": 47.8,
-     "rang": 224377,
+     "rang": 224163,
      "tier": "sans_signal"
     },
     "section": "AC",
@@ -4080,7 +4080,7 @@
       "label": "Écartée",
       "motif": "SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4",
       "mult_base": 2.83,
-      "percentile": 94.68,
+      "percentile": 94.69,
       "pourquoi": [
        {
         "bin": "(1239, 4594]",
@@ -4123,7 +4123,7 @@
         "signe": "-"
        }
       ],
-      "rang": 22848,
+      "rang": 22811,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -4140,9 +4140,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 2.83,
-     "percentile": 94.68,
-     "rang": 22848,
-     "run_id": "q_v19",
+     "percentile": 94.69,
+     "rang": 22811,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -4198,7 +4198,7 @@
      "model_version": "q_v15",
      "mult_base": 2.83,
      "percentile": 94.7,
-     "rang": 22848,
+     "rang": 22811,
      "tier": "ecartee"
     },
     "section": "AD",
@@ -4245,7 +4245,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 0.61,
-      "percentile": 28.03,
+      "percentile": 28.09,
       "pourquoi": [
        {
         "bin": "N",
@@ -4288,7 +4288,7 @@
         "signe": "+"
        }
       ],
-      "rang": 309336,
+      "rang": 309053,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -4305,9 +4305,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.61,
-     "percentile": 28.03,
-     "rang": 309336,
-     "run_id": "q_v19",
+     "percentile": 28.09,
+     "rang": 309053,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -4359,8 +4359,8 @@
      "event_date": null,
      "model_version": "q_v15",
      "mult_base": 0.61,
-     "percentile": 28.0,
-     "rang": 309336,
+     "percentile": 28.1,
+     "rang": 309053,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -4407,7 +4407,7 @@
       "label": "Écartée",
       "motif": "bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",
       "mult_base": 0.51,
-      "percentile": 18.09,
+      "percentile": 18.15,
       "pourquoi": [
        {
         "bin": "A",
@@ -4450,7 +4450,7 @@
         "signe": "-"
        }
       ],
-      "rang": 352037,
+      "rang": 351809,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -4467,9 +4467,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.51,
-     "percentile": 18.09,
-     "rang": 352037,
-     "run_id": "q_v19",
+     "percentile": 18.15,
+     "rang": 351809,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -4517,8 +4517,8 @@
      "event_date": null,
      "model_version": "q_v15",
      "mult_base": 0.51,
-     "percentile": 18.1,
-     "rang": 352037,
+     "percentile": 18.2,
+     "rang": 351809,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -4565,7 +4565,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 0.85,
-      "percentile": 47.63,
+      "percentile": 47.67,
       "pourquoi": [
        {
         "bin": "nu_sans_droits",
@@ -4608,7 +4608,7 @@
         "signe": "+"
        }
       ],
-      "rang": 225106,
+      "rang": 224930,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -4625,9 +4625,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.85,
-     "percentile": 47.63,
-     "rang": 225106,
-     "run_id": "q_v19",
+     "percentile": 47.67,
+     "rang": 224930,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -4675,8 +4675,8 @@
      "event_date": null,
      "model_version": "q_v15",
      "mult_base": 0.85,
-     "percentile": 47.6,
-     "rang": 225106,
+     "percentile": 47.7,
+     "rang": 224930,
      "tier": "ecartee"
     },
     "section": "AD",
@@ -4785,7 +4785,7 @@
      "mult_base": 6.8,
      "percentile": 99.83,
      "rang": 724,
-     "run_id": "q_v19",
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -4888,7 +4888,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 0.03,
-      "percentile": 0.59,
+      "percentile": 0.6,
       "pourquoi": [
        {
         "bin": "true",
@@ -4931,7 +4931,7 @@
         "signe": "+"
        }
       ],
-      "rang": 427245,
+      "rang": 427233,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -4948,9 +4948,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.03,
-     "percentile": 0.59,
-     "rang": 427245,
-     "run_id": "q_v19",
+     "percentile": 0.6,
+     "rang": 427233,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -5002,7 +5002,7 @@
      "model_version": "q_v15",
      "mult_base": 0.03,
      "percentile": 0.6,
-     "rang": 427245,
+     "rang": 427233,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -5092,7 +5092,7 @@
         "signe": "-"
        }
       ],
-      "rang": 14007,
+      "rang": 13993,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -5110,8 +5110,8 @@
      "model_version": "q_v15",
      "mult_base": 2.97,
      "percentile": 96.74,
-     "rang": 14007,
-     "run_id": "q_v19",
+     "rang": 13993,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -5163,7 +5163,7 @@
      "model_version": "q_v15",
      "mult_base": 2.97,
      "percentile": 96.7,
-     "rang": 14007,
+     "rang": 13993,
      "tier": "ecartee"
     },
     "section": "AC",
@@ -5212,7 +5212,7 @@
       "fraction": "1/20",
       "label": "Sans signal",
       "motif": null,
-      "mult_base": 4.86,
+      "mult_base": 4.87,
       "percentile": 99.71,
       "pourquoi": [
        {
@@ -5256,14 +5256,14 @@
         "signe": "+"
        }
       ],
-      "rang": 1266,
+      "rang": 1260,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
        "cle": "forte",
        "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
        "mot": "forte probabilité relative",
-       "reglette_pct": 49.1
+       "reglette_pct": 49.2
       }
      },
      "surface_m2": 152,
@@ -5272,10 +5272,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "q_v15",
-     "mult_base": 4.86,
+     "mult_base": 4.87,
      "percentile": 99.71,
-     "rang": 1266,
-     "run_id": "q_v19",
+     "rang": 1260,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -5325,9 +5325,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "q_v15",
-     "mult_base": 4.86,
+     "mult_base": 4.87,
      "percentile": 99.7,
-     "rang": 1266,
+     "rang": 1260,
      "tier": "sans_signal"
     },
     "section": "AW",
@@ -5374,7 +5374,7 @@
       "label": "Sans signal",
       "motif": null,
       "mult_base": 2.97,
-      "percentile": 95.52,
+      "percentile": 95.53,
       "pourquoi": [
        {
         "bin": "true",
@@ -5417,7 +5417,7 @@
         "signe": "-"
        }
       ],
-      "rang": 19248,
+      "rang": 19223,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -5434,9 +5434,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 2.97,
-     "percentile": 95.52,
-     "rang": 19248,
-     "run_id": "q_v19",
+     "percentile": 95.53,
+     "rang": 19223,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -5495,7 +5495,7 @@
      "model_version": "q_v15",
      "mult_base": 2.97,
      "percentile": 95.5,
-     "rang": 19248,
+     "rang": 19223,
      "tier": "sans_signal"
     },
     "section": "AB",
@@ -5542,7 +5542,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 1.27,
-      "percentile": 82.2,
+      "percentile": 82.22,
       "pourquoi": [
        {
         "bin": "true",
@@ -5585,7 +5585,7 @@
         "signe": "-"
        }
       ],
-      "rang": 76488,
+      "rang": 76405,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -5602,9 +5602,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 1.27,
-     "percentile": 82.2,
-     "rang": 76488,
-     "run_id": "q_v19",
+     "percentile": 82.22,
+     "rang": 76405,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -5656,7 +5656,7 @@
      "model_version": "q_v15",
      "mult_base": 1.27,
      "percentile": 82.2,
-     "rang": 76488,
+     "rang": 76405,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -5703,7 +5703,7 @@
       "label": "Sans signal",
       "motif": "bâtie saturée — ratio 45 % (emprise 2226 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",
       "mult_base": 1.27,
-      "percentile": 83.33,
+      "percentile": 83.35,
       "pourquoi": [
        {
         "bin": "(4594, 1.204e+04]",
@@ -5746,7 +5746,7 @@
         "signe": "-"
        }
       ],
-      "rang": 71629,
+      "rang": 71553,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -5763,9 +5763,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 1.27,
-     "percentile": 83.33,
-     "rang": 71629,
-     "run_id": "q_v19",
+     "percentile": 83.35,
+     "rang": 71553,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -5823,8 +5823,8 @@
      "event_date": null,
      "model_version": "q_v15",
      "mult_base": 1.27,
-     "percentile": 83.3,
-     "rang": 71629,
+     "percentile": 83.4,
+     "rang": 71553,
      "tier": "sans_signal"
     },
     "section": "AV",
@@ -5914,7 +5914,7 @@
         "signe": "+"
        }
       ],
-      "rang": 3351,
+      "rang": 3336,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -5932,8 +5932,8 @@
      "model_version": "q_v15",
      "mult_base": 3.56,
      "percentile": 99.22,
-     "rang": 3351,
-     "run_id": "q_v19",
+     "rang": 3336,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -5988,7 +5988,7 @@
      "model_version": "q_v15",
      "mult_base": 3.56,
      "percentile": 99.2,
-     "rang": 3351,
+     "rang": 3336,
      "tier": "sans_signal"
     },
     "section": "BI",
@@ -6038,7 +6038,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 1.27,
-      "percentile": 79.35,
+      "percentile": 79.37,
       "pourquoi": [
        {
         "bin": "nu_sans_droits",
@@ -6081,7 +6081,7 @@
         "signe": "-"
        }
       ],
-      "rang": 88767,
+      "rang": 88686,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -6098,9 +6098,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 1.27,
-     "percentile": 79.35,
-     "rang": 88767,
-     "run_id": "q_v19",
+     "percentile": 79.37,
+     "rang": 88686,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -6152,7 +6152,7 @@
      "model_version": "q_v15",
      "mult_base": 1.27,
      "percentile": 79.4,
-     "rang": 88767,
+     "rang": 88686,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -6199,7 +6199,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 2.1,
-      "percentile": 93.26,
+      "percentile": 93.27,
       "pourquoi": [
        {
         "bin": "> 0.0111",
@@ -6242,7 +6242,7 @@
         "signe": "-"
        }
       ],
-      "rang": 28963,
+      "rang": 28918,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -6259,9 +6259,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 2.1,
-     "percentile": 93.26,
-     "rang": 28963,
-     "run_id": "q_v19",
+     "percentile": 93.27,
+     "rang": 28918,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -6310,7 +6310,7 @@
      "model_version": "q_v15",
      "mult_base": 2.1,
      "percentile": 93.3,
-     "rang": 28963,
+     "rang": 28918,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -6357,7 +6357,7 @@
       "label": "Sans signal",
       "motif": null,
       "mult_base": 1.23,
-      "percentile": 72.49,
+      "percentile": 72.51,
       "pourquoi": [
        {
         "bin": "(0.008375, 0.0111]",
@@ -6400,7 +6400,7 @@
         "signe": "-"
        }
       ],
-      "rang": 118248,
+      "rang": 118153,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -6417,9 +6417,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 1.23,
-     "percentile": 72.49,
-     "rang": 118248,
-     "run_id": "q_v19",
+     "percentile": 72.51,
+     "rang": 118153,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -6468,7 +6468,7 @@
      "model_version": "q_v15",
      "mult_base": 1.23,
      "percentile": 72.5,
-     "rang": 118248,
+     "rang": 118153,
      "tier": "sans_signal"
     },
     "section": "AC",
@@ -6514,7 +6514,7 @@
       "fraction": "1/3",
       "label": "À suivre",
       "motif": null,
-      "mult_base": 24.47,
+      "mult_base": 24.48,
       "percentile": 99.99,
       "pourquoi": [
        {
@@ -6558,7 +6558,7 @@
         "signe": "+"
        }
       ],
-      "rang": 34,
+      "rang": 35,
       "rang_total": 429799,
       "tier": "priorite",
       "verbal": {
@@ -6574,10 +6574,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "q_v15",
-     "mult_base": 24.47,
+     "mult_base": 24.48,
      "percentile": 99.99,
-     "rang": 34,
-     "run_id": "q_v19",
+     "rang": 35,
+     "run_id": "q_v20",
      "tier": "priorite"
     }
    },
@@ -6634,9 +6634,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "q_v15",
-     "mult_base": 24.47,
+     "mult_base": 24.48,
      "percentile": 100.0,
-     "rang": 34,
+     "rang": 35,
      "tier": "priorite"
     },
     "section": "AP",
@@ -6682,7 +6682,7 @@
       "fraction": "1/3",
       "label": "À suivre",
       "motif": null,
-      "mult_base": 28.55,
+      "mult_base": 28.56,
       "percentile": 99.99,
       "pourquoi": [
        {
@@ -6726,7 +6726,7 @@
         "signe": "+"
        }
       ],
-      "rang": 27,
+      "rang": 28,
       "rang_total": 429799,
       "tier": "priorite",
       "verbal": {
@@ -6742,10 +6742,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "q_v15",
-     "mult_base": 28.55,
+     "mult_base": 28.56,
      "percentile": 99.99,
-     "rang": 27,
-     "run_id": "q_v19",
+     "rang": 28,
+     "run_id": "q_v20",
      "tier": "priorite"
     }
    },
@@ -6799,9 +6799,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "q_v15",
-     "mult_base": 28.55,
+     "mult_base": 28.56,
      "percentile": 100.0,
-     "rang": 27,
+     "rang": 28,
      "tier": "priorite"
     },
     "section": "AP",
@@ -6848,7 +6848,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 0.86,
-      "percentile": 51.99,
+      "percentile": 52.03,
       "pourquoi": [
        {
         "bin": "> 1.204e+04",
@@ -6891,7 +6891,7 @@
         "signe": "+"
        }
       ],
-      "rang": 206345,
+      "rang": 206166,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -6908,9 +6908,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.86,
-     "percentile": 51.99,
-     "rang": 206345,
-     "run_id": "q_v19",
+     "percentile": 52.03,
+     "rang": 206166,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -6962,7 +6962,7 @@
      "model_version": "q_v15",
      "mult_base": 0.86,
      "percentile": 52.0,
-     "rang": 206345,
+     "rang": 206166,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -7009,7 +7009,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 1.27,
-      "percentile": 84.45,
+      "percentile": 84.47,
       "pourquoi": [
        {
         "bin": "≤ 1",
@@ -7052,7 +7052,7 @@
         "signe": "+"
        }
       ],
-      "rang": 66845,
+      "rang": 66766,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -7069,9 +7069,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 1.27,
-     "percentile": 84.45,
-     "rang": 66845,
-     "run_id": "q_v19",
+     "percentile": 84.47,
+     "rang": 66766,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -7123,7 +7123,7 @@
      "model_version": "q_v15",
      "mult_base": 1.27,
      "percentile": 84.5,
-     "rang": 66845,
+     "rang": 66766,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -7213,7 +7213,7 @@
         "signe": "+"
        }
       ],
-      "rang": 577,
+      "rang": 574,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -7231,8 +7231,8 @@
      "model_version": "q_v15",
      "mult_base": 7.24,
      "percentile": 99.87,
-     "rang": 577,
-     "run_id": "q_v19",
+     "rang": 574,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -7288,7 +7288,7 @@
      "model_version": "q_v15",
      "mult_base": 7.24,
      "percentile": 99.9,
-     "rang": 577,
+     "rang": 574,
      "tier": "sans_signal"
     },
     "section": "AR",
@@ -7335,7 +7335,7 @@
       "label": "Sans signal",
       "motif": "bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",
       "mult_base": 0.73,
-      "percentile": 38.12,
+      "percentile": 38.16,
       "pourquoi": [
        {
         "bin": "> 0.0111",
@@ -7378,7 +7378,7 @@
         "signe": "+"
        }
       ],
-      "rang": 265943,
+      "rang": 265770,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -7395,9 +7395,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.73,
-     "percentile": 38.12,
-     "rang": 265943,
-     "run_id": "q_v19",
+     "percentile": 38.16,
+     "rang": 265770,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -7452,8 +7452,8 @@
      "event_date": null,
      "model_version": "q_v15",
      "mult_base": 0.73,
-     "percentile": 38.1,
-     "rang": 265943,
+     "percentile": 38.2,
+     "rang": 265770,
      "tier": "sans_signal"
     },
     "section": "AX",
@@ -7500,7 +7500,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 1.27,
-      "percentile": 77.17,
+      "percentile": 77.2,
       "pourquoi": [
        {
         "bin": "true",
@@ -7543,7 +7543,7 @@
         "signe": "-"
        }
       ],
-      "rang": 98140,
+      "rang": 98002,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -7560,9 +7560,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 1.27,
-     "percentile": 77.17,
-     "rang": 98140,
-     "run_id": "q_v19",
+     "percentile": 77.2,
+     "rang": 98002,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -7614,7 +7614,7 @@
      "model_version": "q_v15",
      "mult_base": 1.27,
      "percentile": 77.2,
-     "rang": 98140,
+     "rang": 98002,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -7661,7 +7661,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 0.69,
-      "percentile": 35.99,
+      "percentile": 36.03,
       "pourquoi": [
        {
         "bin": "(236, 490.3]",
@@ -7704,7 +7704,7 @@
         "signe": "+"
        }
       ],
-      "rang": 275115,
+      "rang": 274952,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -7721,9 +7721,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.69,
-     "percentile": 35.99,
-     "rang": 275115,
-     "run_id": "q_v19",
+     "percentile": 36.03,
+     "rang": 274952,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -7772,7 +7772,7 @@
      "model_version": "q_v15",
      "mult_base": 0.69,
      "percentile": 36.0,
-     "rang": 275115,
+     "rang": 274952,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -7862,7 +7862,7 @@
         "signe": "+"
        }
       ],
-      "rang": 220,
+      "rang": 218,
       "rang_total": 429799,
       "tier": "a_suivre",
       "verbal": {
@@ -7880,8 +7880,8 @@
      "model_version": "q_v15",
      "mult_base": 12.36,
      "percentile": 99.95,
-     "rang": 220,
-     "run_id": "q_v19",
+     "rang": 218,
+     "run_id": "q_v20",
      "tier": "a_suivre"
     }
    },
@@ -7940,7 +7940,7 @@
      "model_version": "q_v15",
      "mult_base": 12.36,
      "percentile": 100.0,
-     "rang": 220,
+     "rang": 218,
      "tier": "a_suivre"
     },
     "section": "AS",
@@ -8030,7 +8030,7 @@
         "signe": "+"
        }
       ],
-      "rang": 228,
+      "rang": 226,
       "rang_total": 429799,
       "tier": "a_suivre",
       "verbal": {
@@ -8048,8 +8048,8 @@
      "model_version": "q_v15",
      "mult_base": 12.36,
      "percentile": 99.95,
-     "rang": 228,
-     "run_id": "q_v19",
+     "rang": 226,
+     "run_id": "q_v20",
      "tier": "a_suivre"
     }
    },
@@ -8108,7 +8108,7 @@
      "model_version": "q_v15",
      "mult_base": 12.36,
      "percentile": 100.0,
-     "rang": 228,
+     "rang": 226,
      "tier": "a_suivre"
     },
     "section": "AS",
@@ -8154,7 +8154,7 @@
       "fraction": "1/3",
       "label": "À suivre",
       "motif": null,
-      "mult_base": 28.55,
+      "mult_base": 28.56,
       "percentile": 99.99,
       "pourquoi": [
        {
@@ -8198,7 +8198,7 @@
         "signe": "+"
        }
       ],
-      "rang": 25,
+      "rang": 26,
       "rang_total": 429799,
       "tier": "priorite",
       "verbal": {
@@ -8214,10 +8214,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "q_v15",
-     "mult_base": 28.55,
+     "mult_base": 28.56,
      "percentile": 99.99,
-     "rang": 25,
-     "run_id": "q_v19",
+     "rang": 26,
+     "run_id": "q_v20",
      "tier": "priorite"
     }
    },
@@ -8271,9 +8271,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "q_v15",
-     "mult_base": 28.55,
+     "mult_base": 28.56,
      "percentile": 100.0,
-     "rang": 25,
+     "rang": 26,
      "tier": "priorite"
     },
     "section": "CD",
@@ -8319,8 +8319,8 @@
       "fraction": "1/20",
       "label": "Sans signal",
       "motif": null,
-      "mult_base": 3.89,
-      "percentile": 99.41,
+      "mult_base": 3.9,
+      "percentile": 99.42,
       "pourquoi": [
        {
         "bin": "1-2",
@@ -8363,14 +8363,14 @@
         "signe": "+"
        }
       ],
-      "rang": 2517,
+      "rang": 2506,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
        "cle": "au_dessus",
        "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
        "mot": "nettement au-dessus de la moyenne",
-       "reglette_pct": 42.2
+       "reglette_pct": 42.3
       }
      },
      "surface_m2": 499,
@@ -8379,10 +8379,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "q_v15",
-     "mult_base": 3.89,
-     "percentile": 99.41,
-     "rang": 2517,
-     "run_id": "q_v19",
+     "mult_base": 3.9,
+     "percentile": 99.42,
+     "rang": 2506,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -8436,9 +8436,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "q_v15",
-     "mult_base": 3.89,
+     "mult_base": 3.9,
      "percentile": 99.4,
-     "rang": 2517,
+     "rang": 2506,
      "tier": "sans_signal"
     },
     "section": "CD",
@@ -8528,7 +8528,7 @@
         "signe": "+"
        }
       ],
-      "rang": 421091,
+      "rang": 421063,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -8546,8 +8546,8 @@
      "model_version": "q_v15",
      "mult_base": 0.26,
      "percentile": 2.03,
-     "rang": 421091,
-     "run_id": "q_v19",
+     "rang": 421063,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -8602,7 +8602,7 @@
      "model_version": "q_v15",
      "mult_base": 0.26,
      "percentile": 2.0,
-     "rang": 421091,
+     "rang": 421063,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -8649,7 +8649,7 @@
       "label": "Écartée",
       "motif": "bâtie saturée — ratio 47 % (emprise 1897 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",
       "mult_base": 1.27,
-      "percentile": 77.16,
+      "percentile": 77.2,
       "pourquoi": [
        {
         "bin": "true",
@@ -8692,7 +8692,7 @@
         "signe": "-"
        }
       ],
-      "rang": 98148,
+      "rang": 98010,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -8709,9 +8709,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 1.27,
-     "percentile": 77.16,
-     "rang": 98148,
-     "run_id": "q_v19",
+     "percentile": 77.2,
+     "rang": 98010,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -8763,7 +8763,7 @@
      "model_version": "q_v15",
      "mult_base": 1.27,
      "percentile": 77.2,
-     "rang": 98148,
+     "rang": 98010,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -8873,7 +8873,7 @@
      "mult_base": 5.41,
      "percentile": null,
      "rang": null,
-     "run_id": "q_v19",
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -8975,7 +8975,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 1.27,
-      "percentile": 75.48,
+      "percentile": 75.5,
       "pourquoi": [
        {
         "bin": "true",
@@ -9018,7 +9018,7 @@
         "signe": "-"
        }
       ],
-      "rang": 105375,
+      "rang": 105292,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -9035,9 +9035,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 1.27,
-     "percentile": 75.48,
-     "rang": 105375,
-     "run_id": "q_v19",
+     "percentile": 75.5,
+     "rang": 105292,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -9089,7 +9089,7 @@
      "model_version": "q_v15",
      "mult_base": 1.27,
      "percentile": 75.5,
-     "rang": 105375,
+     "rang": 105292,
      "tier": "ecartee"
     },
     "section": "AO",
@@ -9136,7 +9136,7 @@
       "label": "Sans signal",
       "motif": null,
       "mult_base": 1.27,
-      "percentile": 76.43,
+      "percentile": 76.46,
       "pourquoi": [
        {
         "bin": "true",
@@ -9179,7 +9179,7 @@
         "signe": "-"
        }
       ],
-      "rang": 101326,
+      "rang": 101181,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -9196,9 +9196,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 1.27,
-     "percentile": 76.43,
-     "rang": 101326,
-     "run_id": "q_v19",
+     "percentile": 76.46,
+     "rang": 101181,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -9249,8 +9249,8 @@
      "event_date": null,
      "model_version": "q_v15",
      "mult_base": 1.27,
-     "percentile": 76.4,
-     "rang": 101326,
+     "percentile": 76.5,
+     "rang": 101181,
      "tier": "sans_signal"
     },
     "section": "HK",
@@ -9359,7 +9359,7 @@
      "mult_base": 6.8,
      "percentile": 99.83,
      "rang": 717,
-     "run_id": "q_v19",
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -9505,7 +9505,7 @@
         "signe": "+"
        }
       ],
-      "rang": 427065,
+      "rang": 427053,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -9523,8 +9523,8 @@
      "model_version": "q_v15",
      "mult_base": 0.03,
      "percentile": 0.64,
-     "rang": 427065,
-     "run_id": "q_v19",
+     "rang": 427053,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -9576,7 +9576,7 @@
      "model_version": "q_v15",
      "mult_base": 0.03,
      "percentile": 0.6,
-     "rang": 427065,
+     "rang": 427053,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -9666,7 +9666,7 @@
         "signe": "+"
        }
       ],
-      "rang": 427483,
+      "rang": 427471,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -9684,8 +9684,8 @@
      "model_version": "q_v15",
      "mult_base": 0.03,
      "percentile": 0.54,
-     "rang": 427483,
-     "run_id": "q_v19",
+     "rang": 427471,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -9737,7 +9737,7 @@
      "model_version": "q_v15",
      "mult_base": 0.03,
      "percentile": 0.5,
-     "rang": 427483,
+     "rang": 427471,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -9827,7 +9827,7 @@
         "signe": "+"
        }
       ],
-      "rang": 708,
+      "rang": 707,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -9845,8 +9845,8 @@
      "model_version": "q_v15",
      "mult_base": 6.8,
      "percentile": 99.84,
-     "rang": 708,
-     "run_id": "q_v19",
+     "rang": 707,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -9898,7 +9898,7 @@
      "model_version": "q_v15",
      "mult_base": 6.8,
      "percentile": 99.8,
-     "rang": 708,
+     "rang": 707,
      "tier": "sans_signal"
     },
     "section": "CP",
@@ -9945,7 +9945,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 1.27,
-      "percentile": 81.79,
+      "percentile": 81.81,
       "pourquoi": [
        {
         "bin": "true",
@@ -9988,7 +9988,7 @@
         "signe": "-"
        }
       ],
-      "rang": 78254,
+      "rang": 78182,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -10005,9 +10005,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 1.27,
-     "percentile": 81.79,
-     "rang": 78254,
-     "run_id": "q_v19",
+     "percentile": 81.81,
+     "rang": 78182,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -10059,7 +10059,7 @@
      "model_version": "q_v15",
      "mult_base": 1.27,
      "percentile": 81.8,
-     "rang": 78254,
+     "rang": 78182,
      "tier": "ecartee"
     },
     "section": "AC",
@@ -10106,7 +10106,7 @@
       "label": "Écartée",
       "motif": "bâtie saturée — ratio 174 % (emprise 79 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",
       "mult_base": 0.51,
-      "percentile": 20.96,
+      "percentile": 21.01,
       "pourquoi": [
        {
         "bin": "A",
@@ -10149,7 +10149,7 @@
         "signe": "-"
        }
       ],
-      "rang": 339693,
+      "rang": 339515,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -10166,9 +10166,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.51,
-     "percentile": 20.96,
-     "rang": 339693,
-     "run_id": "q_v19",
+     "percentile": 21.01,
+     "rang": 339515,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -10221,7 +10221,7 @@
      "model_version": "q_v15",
      "mult_base": 0.51,
      "percentile": 21.0,
-     "rang": 339693,
+     "rang": 339515,
      "tier": "ecartee"
     },
     "section": "AC",
@@ -10311,7 +10311,7 @@
         "signe": "-"
        }
       ],
-      "rang": 395,
+      "rang": 392,
       "rang_total": 429799,
       "tier": "a_suivre",
       "verbal": {
@@ -10329,8 +10329,8 @@
      "model_version": "q_v15",
      "mult_base": 9.18,
      "percentile": 99.91,
-     "rang": 395,
-     "run_id": "q_v19",
+     "rang": 392,
+     "run_id": "q_v20",
      "tier": "a_suivre"
     }
    },
@@ -10385,7 +10385,7 @@
      "model_version": "q_v15",
      "mult_base": 9.18,
      "percentile": 99.9,
-     "rang": 395,
+     "rang": 392,
      "tier": "a_suivre"
     },
     "section": "CD",
@@ -10431,7 +10431,7 @@
       "fraction": "1/20",
       "label": "Sans signal",
       "motif": null,
-      "mult_base": 4.86,
+      "mult_base": 4.87,
       "percentile": 99.71,
       "pourquoi": [
        {
@@ -10475,14 +10475,14 @@
         "signe": "+"
        }
       ],
-      "rang": 1268,
+      "rang": 1262,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
        "cle": "forte",
        "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
        "mot": "forte probabilité relative",
-       "reglette_pct": 49.1
+       "reglette_pct": 49.2
       }
      },
      "surface_m2": 147,
@@ -10491,10 +10491,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "q_v15",
-     "mult_base": 4.86,
+     "mult_base": 4.87,
      "percentile": 99.71,
-     "rang": 1268,
-     "run_id": "q_v19",
+     "rang": 1262,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -10544,9 +10544,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "q_v15",
-     "mult_base": 4.86,
+     "mult_base": 4.87,
      "percentile": 99.7,
-     "rang": 1268,
+     "rang": 1262,
      "tier": "sans_signal"
     },
     "section": "CR",
@@ -10593,7 +10593,7 @@
       "label": "Sans signal",
       "motif": "bâtie saturée — ratio 55 % (emprise 320 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",
       "mult_base": 2.58,
-      "percentile": 94.43,
+      "percentile": 94.44,
       "pourquoi": [
        {
         "bin": "<1",
@@ -10636,7 +10636,7 @@
         "signe": "+"
        }
       ],
-      "rang": 23940,
+      "rang": 23905,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -10653,9 +10653,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 2.58,
-     "percentile": 94.43,
-     "rang": 23940,
-     "run_id": "q_v19",
+     "percentile": 94.44,
+     "rang": 23905,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -10715,7 +10715,7 @@
      "model_version": "q_v15",
      "mult_base": 2.58,
      "percentile": 94.4,
-     "rang": 23940,
+     "rang": 23905,
      "tier": "sans_signal"
     },
     "section": "CS",
@@ -10748,8 +10748,8 @@
      "proprietaire_moral_siren": null,
      "q_score": null,
      "renouvellement": {
-      "rang_segment": 38100,
-      "renouv_score": 37.7
+      "rang_segment": 38149,
+      "renouv_score": 37.8
      },
      "score_v": {
       "owner_type": "pp",
@@ -10765,7 +10765,7 @@
       "label": "Sans signal",
       "motif": "bâtie saturée — ratio 41 % (emprise 285 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",
       "mult_base": 0.73,
-      "percentile": 39.11,
+      "percentile": 39.14,
       "pourquoi": [
        {
         "bin": "(7, 9]",
@@ -10808,7 +10808,7 @@
         "signe": "+"
        }
       ],
-      "rang": 261721,
+      "rang": 261559,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -10825,9 +10825,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.73,
-     "percentile": 39.11,
-     "rang": 261721,
-     "run_id": "q_v19",
+     "percentile": 39.14,
+     "rang": 261559,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -10884,7 +10884,7 @@
      "model_version": "q_v15",
      "mult_base": 0.73,
      "percentile": 39.1,
-     "rang": 261721,
+     "rang": 261559,
      "tier": "sans_signal"
     },
     "section": "DM",
@@ -10931,7 +10931,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 1.39,
-      "percentile": 85.68,
+      "percentile": 85.7,
       "pourquoi": [
        {
         "bin": "true",
@@ -10974,7 +10974,7 @@
         "signe": "-"
        }
       ],
-      "rang": 61555,
+      "rang": 61483,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -10991,9 +10991,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 1.39,
-     "percentile": 85.68,
-     "rang": 61555,
-     "run_id": "q_v19",
+     "percentile": 85.7,
+     "rang": 61483,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -11048,7 +11048,7 @@
      "model_version": "q_v15",
      "mult_base": 1.39,
      "percentile": 85.7,
-     "rang": 61555,
+     "rang": 61483,
      "tier": "ecartee"
     },
     "section": "CH",
@@ -11095,7 +11095,7 @@
       "label": "Écartée",
       "motif": "bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",
       "mult_base": 0.61,
-      "percentile": 31.06,
+      "percentile": 31.13,
       "pourquoi": [
        {
         "bin": "(0.001958, 0.003567]",
@@ -11138,7 +11138,7 @@
         "signe": "-"
        }
       ],
-      "rang": 296295,
+      "rang": 295987,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -11155,9 +11155,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.61,
-     "percentile": 31.06,
-     "rang": 296295,
-     "run_id": "q_v19",
+     "percentile": 31.13,
+     "rang": 295987,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -11206,7 +11206,7 @@
      "model_version": "q_v15",
      "mult_base": 0.61,
      "percentile": 31.1,
-     "rang": 296295,
+     "rang": 295987,
      "tier": "ecartee"
     },
     "section": "CI",
@@ -11253,7 +11253,7 @@
       "label": "Sans signal",
       "motif": "bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",
       "mult_base": 6.24,
-      "percentile": 99.8,
+      "percentile": 99.81,
       "pourquoi": [
        {
         "bin": "<2a",
@@ -11296,7 +11296,7 @@
         "signe": "+"
        }
       ],
-      "rang": 842,
+      "rang": 839,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -11313,9 +11313,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 6.24,
-     "percentile": 99.8,
-     "rang": 842,
-     "run_id": "q_v19",
+     "percentile": 99.81,
+     "rang": 839,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -11367,7 +11367,7 @@
      "model_version": "q_v15",
      "mult_base": 6.24,
      "percentile": 99.8,
-     "rang": 842,
+     "rang": 839,
      "tier": "sans_signal"
     },
     "section": "CV",
@@ -11414,7 +11414,7 @@
       "label": "Sans signal",
       "motif": null,
       "mult_base": 2.97,
-      "percentile": 96.28,
+      "percentile": 96.29,
       "pourquoi": [
        {
         "bin": "AU",
@@ -11457,7 +11457,7 @@
         "signe": "-"
        }
       ],
-      "rang": 15984,
+      "rang": 15956,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -11474,9 +11474,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 2.97,
-     "percentile": 96.28,
-     "rang": 15984,
-     "run_id": "q_v19",
+     "percentile": 96.29,
+     "rang": 15956,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -11528,7 +11528,7 @@
      "model_version": "q_v15",
      "mult_base": 2.97,
      "percentile": 96.3,
-     "rang": 15984,
+     "rang": 15956,
      "tier": "sans_signal"
     },
     "section": "CV",
@@ -11618,7 +11618,7 @@
         "signe": "-"
        }
       ],
-      "rang": 3686,
+      "rang": 3676,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -11636,8 +11636,8 @@
      "model_version": "q_v15",
      "mult_base": 3.56,
      "percentile": 99.14,
-     "rang": 3686,
-     "run_id": "q_v19",
+     "rang": 3676,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -11692,7 +11692,7 @@
      "model_version": "q_v15",
      "mult_base": 3.56,
      "percentile": 99.1,
-     "rang": 3686,
+     "rang": 3676,
      "tier": "sans_signal"
     },
     "section": "AC",
@@ -11739,7 +11739,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 1.27,
-      "percentile": 81.75,
+      "percentile": 81.77,
       "pourquoi": [
        {
         "bin": "true",
@@ -11782,7 +11782,7 @@
         "signe": "-"
        }
       ],
-      "rang": 78421,
+      "rang": 78344,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -11799,9 +11799,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 1.27,
-     "percentile": 81.75,
-     "rang": 78421,
-     "run_id": "q_v19",
+     "percentile": 81.77,
+     "rang": 78344,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -11856,7 +11856,7 @@
      "model_version": "q_v15",
      "mult_base": 1.27,
      "percentile": 81.8,
-     "rang": 78421,
+     "rang": 78344,
      "tier": "ecartee"
     },
     "section": "AH",
@@ -11903,7 +11903,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 0.45,
-      "percentile": 6.3,
+      "percentile": 6.32,
       "pourquoi": [
        {
         "bin": "nu_sans_droits",
@@ -11946,7 +11946,7 @@
         "signe": "-"
        }
       ],
-      "rang": 402744,
+      "rang": 402640,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -11963,9 +11963,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.45,
-     "percentile": 6.3,
-     "rang": 402744,
-     "run_id": "q_v19",
+     "percentile": 6.32,
+     "rang": 402640,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -12014,7 +12014,7 @@
      "model_version": "q_v15",
      "mult_base": 0.45,
      "percentile": 6.3,
-     "rang": 402744,
+     "rang": 402640,
      "tier": "ecartee"
     },
     "section": "AI",
@@ -12061,7 +12061,7 @@
       "label": "Sans signal",
       "motif": null,
       "mult_base": 0.78,
-      "percentile": 44.29,
+      "percentile": 44.32,
       "pourquoi": [
        {
         "bin": "≤ 1",
@@ -12104,7 +12104,7 @@
         "signe": "-"
        }
       ],
-      "rang": 239445,
+      "rang": 239300,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -12121,9 +12121,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.78,
-     "percentile": 44.29,
-     "rang": 239445,
-     "run_id": "q_v19",
+     "percentile": 44.32,
+     "rang": 239300,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -12172,7 +12172,7 @@
      "model_version": "q_v15",
      "mult_base": 0.78,
      "percentile": 44.3,
-     "rang": 239445,
+     "rang": 239300,
      "tier": "sans_signal"
     },
     "section": "BW",
@@ -12218,7 +12218,7 @@
       "fraction": "1/3",
       "label": "À suivre",
       "motif": null,
-      "mult_base": 28.55,
+      "mult_base": 28.56,
       "percentile": 100.0,
       "pourquoi": [
        {
@@ -12262,7 +12262,7 @@
         "signe": "+"
        }
       ],
-      "rang": 20,
+      "rang": 21,
       "rang_total": 429799,
       "tier": "priorite",
       "verbal": {
@@ -12278,10 +12278,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "q_v15",
-     "mult_base": 28.55,
+     "mult_base": 28.56,
      "percentile": 100.0,
-     "rang": 20,
-     "run_id": "q_v19",
+     "rang": 21,
+     "run_id": "q_v20",
      "tier": "priorite"
     }
    },
@@ -12331,9 +12331,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "q_v15",
-     "mult_base": 28.55,
+     "mult_base": 28.56,
      "percentile": 100.0,
-     "rang": 20,
+     "rang": 21,
      "tier": "priorite"
     },
     "section": "CW",
@@ -12423,7 +12423,7 @@
         "signe": "+"
        }
       ],
-      "rang": 585,
+      "rang": 583,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -12441,8 +12441,8 @@
      "model_version": "q_v15",
      "mult_base": 7.24,
      "percentile": 99.86,
-     "rang": 585,
-     "run_id": "q_v19",
+     "rang": 583,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -12498,7 +12498,7 @@
      "model_version": "q_v15",
      "mult_base": 7.24,
      "percentile": 99.9,
-     "rang": 585,
+     "rang": 583,
      "tier": "sans_signal"
     },
     "section": "CX",
@@ -12588,7 +12588,7 @@
         "signe": "+"
        }
       ],
-      "rang": 5674,
+      "rang": 5664,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -12606,8 +12606,8 @@
      "model_version": "q_v15",
      "mult_base": 2.97,
      "percentile": 98.68,
-     "rang": 5674,
-     "run_id": "q_v19",
+     "rang": 5664,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -12665,7 +12665,7 @@
      "model_version": "q_v15",
      "mult_base": 2.97,
      "percentile": 98.7,
-     "rang": 5674,
+     "rang": 5664,
      "tier": "sans_signal"
     },
     "section": "CY",
@@ -12712,7 +12712,7 @@
       "label": "Sans signal",
       "motif": null,
       "mult_base": 1.27,
-      "percentile": 75.8,
+      "percentile": 75.83,
       "pourquoi": [
        {
         "bin": "true",
@@ -12755,7 +12755,7 @@
         "signe": "-"
        }
       ],
-      "rang": 103992,
+      "rang": 103886,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -12772,9 +12772,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 1.27,
-     "percentile": 75.8,
-     "rang": 103992,
-     "run_id": "q_v19",
+     "percentile": 75.83,
+     "rang": 103886,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -12830,7 +12830,7 @@
      "model_version": "q_v15",
      "mult_base": 1.27,
      "percentile": 75.8,
-     "rang": 103992,
+     "rang": 103886,
      "tier": "sans_signal"
     },
     "section": "EY",
@@ -12877,7 +12877,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 0.45,
-      "percentile": 10.37,
+      "percentile": 10.39,
       "pourquoi": [
        {
         "bin": "nu_sans_droits",
@@ -12920,7 +12920,7 @@
         "signe": "+"
        }
       ],
-      "rang": 385220,
+      "rang": 385139,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -12937,9 +12937,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.45,
-     "percentile": 10.37,
-     "rang": 385220,
-     "run_id": "q_v19",
+     "percentile": 10.39,
+     "rang": 385139,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -12988,7 +12988,7 @@
      "model_version": "q_v15",
      "mult_base": 0.45,
      "percentile": 10.4,
-     "rang": 385220,
+     "rang": 385139,
      "tier": "ecartee"
     },
     "section": "CD",
@@ -13035,7 +13035,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 0.45,
-      "percentile": 10.5,
+      "percentile": 10.52,
       "pourquoi": [
        {
         "bin": "nu_sans_droits",
@@ -13078,7 +13078,7 @@
         "signe": "+"
        }
       ],
-      "rang": 384670,
+      "rang": 384589,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -13095,9 +13095,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.45,
-     "percentile": 10.5,
-     "rang": 384670,
-     "run_id": "q_v19",
+     "percentile": 10.52,
+     "rang": 384589,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -13146,7 +13146,7 @@
      "model_version": "q_v15",
      "mult_base": 0.45,
      "percentile": 10.5,
-     "rang": 384670,
+     "rang": 384589,
      "tier": "ecartee"
     },
     "section": "CD",
@@ -13193,7 +13193,7 @@
       "label": "Sans signal",
       "motif": "bâtie saturée — ratio 92 % (emprise 87 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",
       "mult_base": 1.01,
-      "percentile": 65.9,
+      "percentile": 65.93,
       "pourquoi": [
        {
         "bin": "≤ 0.3716",
@@ -13236,7 +13236,7 @@
         "signe": "+"
        }
       ],
-      "rang": 146546,
+      "rang": 146424,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -13253,9 +13253,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 1.01,
-     "percentile": 65.9,
-     "rang": 146546,
-     "run_id": "q_v19",
+     "percentile": 65.93,
+     "rang": 146424,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -13304,7 +13304,7 @@
      "model_version": "q_v15",
      "mult_base": 1.01,
      "percentile": 65.9,
-     "rang": 146546,
+     "rang": 146424,
      "tier": "sans_signal"
     },
     "section": "CD",
@@ -13351,7 +13351,7 @@
       "label": "Sans signal",
       "motif": null,
       "mult_base": 1.27,
-      "percentile": 77.68,
+      "percentile": 77.7,
       "pourquoi": [
        {
         "bin": "true",
@@ -13394,7 +13394,7 @@
         "signe": "+"
        }
       ],
-      "rang": 95932,
+      "rang": 95841,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -13411,9 +13411,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 1.27,
-     "percentile": 77.68,
-     "rang": 95932,
-     "run_id": "q_v19",
+     "percentile": 77.7,
+     "rang": 95841,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -13465,7 +13465,7 @@
      "model_version": "q_v15",
      "mult_base": 1.27,
      "percentile": 77.7,
-     "rang": 95932,
+     "rang": 95841,
      "tier": "sans_signal"
     },
     "section": "CR",
@@ -13555,7 +13555,7 @@
         "signe": "+"
        }
       ],
-      "rang": 393,
+      "rang": 390,
       "rang_total": 429799,
       "tier": "a_suivre",
       "verbal": {
@@ -13573,8 +13573,8 @@
      "model_version": "q_v15",
      "mult_base": 9.66,
      "percentile": 99.91,
-     "rang": 393,
-     "run_id": "q_v19",
+     "rang": 390,
+     "run_id": "q_v20",
      "tier": "a_suivre"
     }
    },
@@ -13626,7 +13626,7 @@
      "model_version": "q_v15",
      "mult_base": 9.66,
      "percentile": 99.9,
-     "rang": 393,
+     "rang": 390,
      "tier": "a_suivre"
     },
     "section": "EY",
@@ -13673,7 +13673,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 0.86,
-      "percentile": 51.51,
+      "percentile": 51.56,
       "pourquoi": [
        {
         "bin": "true",
@@ -13716,7 +13716,7 @@
         "signe": "+"
        }
       ],
-      "rang": 208398,
+      "rang": 208217,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -13733,9 +13733,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.86,
-     "percentile": 51.51,
-     "rang": 208398,
-     "run_id": "q_v19",
+     "percentile": 51.56,
+     "rang": 208217,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -13786,8 +13786,8 @@
      "event_date": null,
      "model_version": "q_v15",
      "mult_base": 0.86,
-     "percentile": 51.5,
-     "rang": 208398,
+     "percentile": 51.6,
+     "rang": 208217,
      "tier": "ecartee"
     },
     "section": "AC",
@@ -13834,7 +13834,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 0.86,
-      "percentile": 51.29,
+      "percentile": 51.33,
       "pourquoi": [
        {
         "bin": "true",
@@ -13877,7 +13877,7 @@
         "signe": "+"
        }
       ],
-      "rang": 209355,
+      "rang": 209184,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -13894,9 +13894,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.86,
-     "percentile": 51.29,
-     "rang": 209355,
-     "run_id": "q_v19",
+     "percentile": 51.33,
+     "rang": 209184,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -13948,7 +13948,7 @@
      "model_version": "q_v15",
      "mult_base": 0.86,
      "percentile": 51.3,
-     "rang": 209355,
+     "rang": 209184,
      "tier": "ecartee"
     },
     "section": "AC",
@@ -14038,7 +14038,7 @@
         "signe": "-"
        }
       ],
-      "rang": 242,
+      "rang": 240,
       "rang_total": 429799,
       "tier": "a_suivre",
       "verbal": {
@@ -14056,8 +14056,8 @@
      "model_version": "q_v15",
      "mult_base": 12.36,
      "percentile": 99.94,
-     "rang": 242,
-     "run_id": "q_v19",
+     "rang": 240,
+     "run_id": "q_v20",
      "tier": "a_suivre"
     }
    },
@@ -14116,7 +14116,7 @@
      "model_version": "q_v15",
      "mult_base": 12.36,
      "percentile": 99.9,
-     "rang": 242,
+     "rang": 240,
      "tier": "a_suivre"
     },
     "section": "BC",
@@ -14163,7 +14163,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 1.27,
-      "percentile": 78.47,
+      "percentile": 78.49,
       "pourquoi": [
        {
         "bin": "true",
@@ -14206,7 +14206,7 @@
         "signe": "+"
        }
       ],
-      "rang": 92525,
+      "rang": 92461,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -14223,9 +14223,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 1.27,
-     "percentile": 78.47,
-     "rang": 92525,
-     "run_id": "q_v19",
+     "percentile": 78.49,
+     "rang": 92461,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -14277,7 +14277,7 @@
      "model_version": "q_v15",
      "mult_base": 1.27,
      "percentile": 78.5,
-     "rang": 92525,
+     "rang": 92461,
      "tier": "ecartee"
     },
     "section": "AC",
@@ -14367,7 +14367,7 @@
         "signe": "+"
        }
       ],
-      "rang": 10201,
+      "rang": 10185,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -14385,8 +14385,8 @@
      "model_version": "q_v15",
      "mult_base": 2.97,
      "percentile": 97.63,
-     "rang": 10201,
-     "run_id": "q_v19",
+     "rang": 10185,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -14441,7 +14441,7 @@
      "model_version": "q_v15",
      "mult_base": 2.97,
      "percentile": 97.6,
-     "rang": 10201,
+     "rang": 10185,
      "tier": "ecartee"
     },
     "section": "AC",
@@ -14531,7 +14531,7 @@
         "signe": "+"
        }
       ],
-      "rang": 223,
+      "rang": 221,
       "rang_total": 429799,
       "tier": "a_suivre",
       "verbal": {
@@ -14549,8 +14549,8 @@
      "model_version": "q_v15",
      "mult_base": 12.36,
      "percentile": 99.95,
-     "rang": 223,
-     "run_id": "q_v19",
+     "rang": 221,
+     "run_id": "q_v20",
      "tier": "a_suivre"
     }
    },
@@ -14609,7 +14609,7 @@
      "model_version": "q_v15",
      "mult_base": 12.36,
      "percentile": 100.0,
-     "rang": 223,
+     "rang": 221,
      "tier": "a_suivre"
     },
     "section": "AT",
@@ -14655,7 +14655,7 @@
       "fraction": "1/5",
       "label": "À suivre",
       "motif": null,
-      "mult_base": 14.36,
+      "mult_base": 14.37,
       "percentile": 99.97,
       "pourquoi": [
        {
@@ -14699,7 +14699,7 @@
         "signe": "+"
        }
       ],
-      "rang": 136,
+      "rang": 134,
       "rang_total": 429799,
       "tier": "a_suivre",
       "verbal": {
@@ -14715,10 +14715,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "q_v15",
-     "mult_base": 14.36,
+     "mult_base": 14.37,
      "percentile": 99.97,
-     "rang": 136,
-     "run_id": "q_v19",
+     "rang": 134,
+     "run_id": "q_v20",
      "tier": "a_suivre"
     }
    },
@@ -14772,9 +14772,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "q_v15",
-     "mult_base": 14.36,
+     "mult_base": 14.37,
      "percentile": 100.0,
-     "rang": 136,
+     "rang": 134,
      "tier": "a_suivre"
     },
     "section": "AT",
@@ -14821,7 +14821,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 1.39,
-      "percentile": 85.53,
+      "percentile": 85.54,
       "pourquoi": [
        {
         "bin": "true",
@@ -14864,7 +14864,7 @@
         "signe": "+"
        }
       ],
-      "rang": 62210,
+      "rang": 62138,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -14881,9 +14881,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 1.39,
-     "percentile": 85.53,
-     "rang": 62210,
-     "run_id": "q_v19",
+     "percentile": 85.54,
+     "rang": 62138,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -14935,7 +14935,7 @@
      "model_version": "q_v15",
      "mult_base": 1.39,
      "percentile": 85.5,
-     "rang": 62210,
+     "rang": 62138,
      "tier": "ecartee"
     },
     "section": "AC",
@@ -14982,7 +14982,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 0.85,
-      "percentile": 50.48,
+      "percentile": 50.52,
       "pourquoi": [
        {
         "bin": "≤ 47.23",
@@ -15025,7 +15025,7 @@
         "signe": "-"
        }
       ],
-      "rang": 212842,
+      "rang": 212671,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -15042,9 +15042,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.85,
-     "percentile": 50.48,
-     "rang": 212842,
-     "run_id": "q_v19",
+     "percentile": 50.52,
+     "rang": 212671,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -15093,7 +15093,7 @@
      "model_version": "q_v15",
      "mult_base": 0.85,
      "percentile": 50.5,
-     "rang": 212842,
+     "rang": 212671,
      "tier": "ecartee"
     },
     "section": "AC",
@@ -15140,7 +15140,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 0.45,
-      "percentile": 11.77,
+      "percentile": 11.78,
       "pourquoi": [
        {
         "bin": "nu_sans_droits",
@@ -15183,7 +15183,7 @@
         "signe": "+"
        }
       ],
-      "rang": 379234,
+      "rang": 379165,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -15200,9 +15200,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.45,
-     "percentile": 11.77,
-     "rang": 379234,
-     "run_id": "q_v19",
+     "percentile": 11.78,
+     "rang": 379165,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -15251,7 +15251,7 @@
      "model_version": "q_v15",
      "mult_base": 0.45,
      "percentile": 11.8,
-     "rang": 379234,
+     "rang": 379165,
      "tier": "ecartee"
     },
     "section": "AD",
@@ -15298,7 +15298,7 @@
       "label": "Sans signal",
       "motif": null,
       "mult_base": 0.61,
-      "percentile": 25.13,
+      "percentile": 25.21,
       "pourquoi": [
        {
         "bin": "≤ 0.01177",
@@ -15341,7 +15341,7 @@
         "signe": "+"
        }
       ],
-      "rang": 321774,
+      "rang": 321450,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -15358,9 +15358,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.61,
-     "percentile": 25.13,
-     "rang": 321774,
-     "run_id": "q_v19",
+     "percentile": 25.21,
+     "rang": 321450,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -15412,8 +15412,8 @@
      "event_date": null,
      "model_version": "q_v15",
      "mult_base": 0.61,
-     "percentile": 25.1,
-     "rang": 321774,
+     "percentile": 25.2,
+     "rang": 321450,
      "tier": "sans_signal"
     },
     "section": "AH",
@@ -15460,7 +15460,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 1.27,
-      "percentile": 75.21,
+      "percentile": 75.23,
       "pourquoi": [
        {
         "bin": "true",
@@ -15503,7 +15503,7 @@
         "signe": "+"
        }
       ],
-      "rang": 106557,
+      "rang": 106466,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -15520,9 +15520,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 1.27,
-     "percentile": 75.21,
-     "rang": 106557,
-     "run_id": "q_v19",
+     "percentile": 75.23,
+     "rang": 106466,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -15581,7 +15581,7 @@
      "model_version": "q_v15",
      "mult_base": 1.27,
      "percentile": 75.2,
-     "rang": 106557,
+     "rang": 106466,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -15628,7 +15628,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 0.33,
-      "percentile": 2.45,
+      "percentile": 2.46,
       "pourquoi": [
        {
         "bin": "> 1.204e+04",
@@ -15671,7 +15671,7 @@
         "signe": "-"
        }
       ],
-      "rang": 419279,
+      "rang": 419230,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -15688,9 +15688,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.33,
-     "percentile": 2.45,
-     "rang": 419279,
-     "run_id": "q_v19",
+     "percentile": 2.46,
+     "rang": 419230,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -15739,7 +15739,7 @@
      "model_version": "q_v15",
      "mult_base": 0.33,
      "percentile": 2.5,
-     "rang": 419279,
+     "rang": 419230,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -15785,7 +15785,7 @@
       "fraction": "1/3",
       "label": "À suivre",
       "motif": null,
-      "mult_base": 24.47,
+      "mult_base": 24.48,
       "percentile": 99.99,
       "pourquoi": [
        {
@@ -15829,7 +15829,7 @@
         "signe": "+"
        }
       ],
-      "rang": 31,
+      "rang": 32,
       "rang_total": 429799,
       "tier": "priorite",
       "verbal": {
@@ -15845,10 +15845,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "q_v15",
-     "mult_base": 24.47,
+     "mult_base": 24.48,
      "percentile": 99.99,
-     "rang": 31,
-     "run_id": "q_v19",
+     "rang": 32,
+     "run_id": "q_v20",
      "tier": "priorite"
     }
    },
@@ -15905,9 +15905,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "q_v15",
-     "mult_base": 24.47,
+     "mult_base": 24.48,
      "percentile": 100.0,
-     "rang": 31,
+     "rang": 32,
      "tier": "priorite"
     },
     "section": "AO",
@@ -15953,7 +15953,7 @@
       "fraction": "1/20",
       "label": "Sans signal",
       "motif": null,
-      "mult_base": 4.86,
+      "mult_base": 4.87,
       "percentile": 99.69,
       "pourquoi": [
        {
@@ -15997,14 +15997,14 @@
         "signe": "+"
        }
       ],
-      "rang": 1320,
+      "rang": 1316,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
        "cle": "forte",
        "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
        "mot": "forte probabilité relative",
-       "reglette_pct": 49.1
+       "reglette_pct": 49.2
       }
      },
      "surface_m2": 438,
@@ -16013,10 +16013,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "q_v15",
-     "mult_base": 4.86,
+     "mult_base": 4.87,
      "percentile": 99.69,
-     "rang": 1320,
-     "run_id": "q_v19",
+     "rang": 1316,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -16070,9 +16070,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "q_v15",
-     "mult_base": 4.86,
+     "mult_base": 4.87,
      "percentile": 99.7,
-     "rang": 1320,
+     "rang": 1316,
      "tier": "sans_signal"
     },
     "section": "BD",
@@ -16119,7 +16119,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 0.86,
-      "percentile": 51.67,
+      "percentile": 51.71,
       "pourquoi": [
        {
         "bin": "true",
@@ -16162,7 +16162,7 @@
         "signe": "-"
        }
       ],
-      "rang": 207710,
+      "rang": 207539,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -16179,9 +16179,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.86,
-     "percentile": 51.67,
-     "rang": 207710,
-     "run_id": "q_v19",
+     "percentile": 51.71,
+     "rang": 207539,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -16233,7 +16233,7 @@
      "model_version": "q_v15",
      "mult_base": 0.86,
      "percentile": 51.7,
-     "rang": 207710,
+     "rang": 207539,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -16280,7 +16280,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 0.26,
-      "percentile": 1.99,
+      "percentile": 2.0,
       "pourquoi": [
        {
         "bin": "true",
@@ -16323,7 +16323,7 @@
         "signe": "+"
        }
       ],
-      "rang": 421252,
+      "rang": 421225,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -16340,9 +16340,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.26,
-     "percentile": 1.99,
-     "rang": 421252,
-     "run_id": "q_v19",
+     "percentile": 2.0,
+     "rang": 421225,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -16394,7 +16394,7 @@
      "model_version": "q_v15",
      "mult_base": 0.26,
      "percentile": 2.0,
-     "rang": 421252,
+     "rang": 421225,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -16441,7 +16441,7 @@
       "label": "Sans signal",
       "motif": null,
       "mult_base": 0.41,
-      "percentile": 4.3,
+      "percentile": 3.85,
       "pourquoi": [
        {
         "bin": "A",
@@ -16484,7 +16484,7 @@
         "signe": "-"
        }
       ],
-      "rang": 411337,
+      "rang": 413238,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -16501,9 +16501,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.41,
-     "percentile": 4.3,
-     "rang": 411337,
-     "run_id": "q_v19",
+     "percentile": 3.85,
+     "rang": 413238,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -16540,9 +16540,9 @@
     "proprietaire_moral": null,
     "q_score": null,
     "residuel": {
-     "sdp_residuelle_m2": 0,
-     "sous_densite": null,
-     "taux_emprise_pct": null
+     "sdp_residuelle_m2": 421,
+     "sous_densite": false,
+     "taux_emprise_pct": 46
     },
     "risques": [],
     "score_v": {
@@ -16555,8 +16555,8 @@
      "event_date": null,
      "model_version": "q_v15",
      "mult_base": 0.41,
-     "percentile": 4.3,
-     "rang": 411337,
+     "percentile": 3.9,
+     "rang": 413238,
      "tier": "sans_signal"
     },
     "section": "AC",
@@ -16602,7 +16602,7 @@
       "fraction": "1/20",
       "label": "Sans signal",
       "motif": null,
-      "mult_base": 4.86,
+      "mult_base": 4.87,
       "percentile": 99.71,
       "pourquoi": [
        {
@@ -16646,14 +16646,14 @@
         "signe": "+"
        }
       ],
-      "rang": 1236,
+      "rang": 1232,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
        "cle": "forte",
        "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
        "mot": "forte probabilité relative",
-       "reglette_pct": 49.1
+       "reglette_pct": 49.2
       }
      },
      "surface_m2": 378,
@@ -16662,10 +16662,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "q_v15",
-     "mult_base": 4.86,
+     "mult_base": 4.87,
      "percentile": 99.71,
-     "rang": 1236,
-     "run_id": "q_v19",
+     "rang": 1232,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -16715,9 +16715,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "q_v15",
-     "mult_base": 4.86,
+     "mult_base": 4.87,
      "percentile": 99.7,
-     "rang": 1236,
+     "rang": 1232,
      "tier": "sans_signal"
     },
     "section": "AV",
@@ -16807,7 +16807,7 @@
         "signe": "+"
        }
       ],
-      "rang": 427061,
+      "rang": 427049,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -16825,8 +16825,8 @@
      "model_version": "q_v15",
      "mult_base": 0.03,
      "percentile": 0.64,
-     "rang": 427061,
-     "run_id": "q_v19",
+     "rang": 427049,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -16878,7 +16878,7 @@
      "model_version": "q_v15",
      "mult_base": 0.03,
      "percentile": 0.6,
-     "rang": 427061,
+     "rang": 427049,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -16925,7 +16925,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 0.03,
-      "percentile": 0.59,
+      "percentile": 0.6,
       "pourquoi": [
        {
         "bin": "true",
@@ -16968,7 +16968,7 @@
         "signe": "+"
        }
       ],
-      "rang": 427244,
+      "rang": 427232,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -16985,9 +16985,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.03,
-     "percentile": 0.59,
-     "rang": 427244,
-     "run_id": "q_v19",
+     "percentile": 0.6,
+     "rang": 427232,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -17039,7 +17039,7 @@
      "model_version": "q_v15",
      "mult_base": 0.03,
      "percentile": 0.6,
-     "rang": 427244,
+     "rang": 427232,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -17129,7 +17129,7 @@
         "signe": "+"
        }
       ],
-      "rang": 509,
+      "rang": 507,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -17147,8 +17147,8 @@
      "model_version": "q_v15",
      "mult_base": 7.24,
      "percentile": 99.88,
-     "rang": 509,
-     "run_id": "q_v19",
+     "rang": 507,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -17204,7 +17204,7 @@
      "model_version": "q_v15",
      "mult_base": 7.24,
      "percentile": 99.9,
-     "rang": 509,
+     "rang": 507,
      "tier": "sans_signal"
     },
     "section": "AD",
@@ -17250,7 +17250,7 @@
       "fraction": "1/10",
       "label": "À suivre",
       "motif": null,
-      "mult_base": 10.41,
+      "mult_base": 10.42,
       "percentile": 99.92,
       "pourquoi": [
        {
@@ -17294,7 +17294,7 @@
         "signe": "+"
        }
       ],
-      "rang": 351,
+      "rang": 348,
       "rang_total": 429799,
       "tier": "a_suivre",
       "verbal": {
@@ -17310,10 +17310,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "q_v15",
-     "mult_base": 10.41,
+     "mult_base": 10.42,
      "percentile": 99.92,
-     "rang": 351,
-     "run_id": "q_v19",
+     "rang": 348,
+     "run_id": "q_v20",
      "tier": "a_suivre"
     }
    },
@@ -17363,9 +17363,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "q_v15",
-     "mult_base": 10.41,
+     "mult_base": 10.42,
      "percentile": 99.9,
-     "rang": 351,
+     "rang": 348,
      "tier": "a_suivre"
     },
     "section": "AS",
@@ -17411,7 +17411,7 @@
       "fraction": "1/5",
       "label": "À suivre",
       "motif": null,
-      "mult_base": 14.68,
+      "mult_base": 14.69,
       "percentile": 99.98,
       "pourquoi": [
        {
@@ -17455,7 +17455,7 @@
         "signe": "+"
        }
       ],
-      "rang": 78,
+      "rang": 79,
       "rang_total": 429799,
       "tier": "priorite",
       "verbal": {
@@ -17471,10 +17471,10 @@
     "score_v2": {
      "badge_veille_succession": false,
      "model_version": "q_v15",
-     "mult_base": 14.68,
+     "mult_base": 14.69,
      "percentile": 99.98,
-     "rang": 78,
-     "run_id": "q_v19",
+     "rang": 79,
+     "run_id": "q_v20",
      "tier": "priorite"
     }
    },
@@ -17528,9 +17528,9 @@
      "copro": false,
      "event_date": null,
      "model_version": "q_v15",
-     "mult_base": 14.68,
+     "mult_base": 14.69,
      "percentile": 100.0,
-     "rang": 78,
+     "rang": 79,
      "tier": "priorite"
     },
     "section": "AX",
@@ -17577,7 +17577,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 2.1,
-      "percentile": 93.84,
+      "percentile": 93.85,
       "pourquoi": [
        {
         "bin": "<1",
@@ -17620,7 +17620,7 @@
         "signe": "+"
        }
       ],
-      "rang": 26472,
+      "rang": 26444,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -17637,9 +17637,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 2.1,
-     "percentile": 93.84,
-     "rang": 26472,
-     "run_id": "q_v19",
+     "percentile": 93.85,
+     "rang": 26444,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -17697,8 +17697,8 @@
      "event_date": null,
      "model_version": "q_v15",
      "mult_base": 2.1,
-     "percentile": 93.8,
-     "rang": 26472,
+     "percentile": 93.9,
+     "rang": 26444,
      "tier": "ecartee"
     },
     "section": "BY",
@@ -17745,7 +17745,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 0.86,
-      "percentile": 51.42,
+      "percentile": 51.46,
       "pourquoi": [
        {
         "bin": "true",
@@ -17788,7 +17788,7 @@
         "signe": "+"
        }
       ],
-      "rang": 208801,
+      "rang": 208620,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -17805,9 +17805,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.86,
-     "percentile": 51.42,
-     "rang": 208801,
-     "run_id": "q_v19",
+     "percentile": 51.46,
+     "rang": 208620,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -17858,8 +17858,8 @@
      "event_date": null,
      "model_version": "q_v15",
      "mult_base": 0.86,
-     "percentile": 51.4,
-     "rang": 208801,
+     "percentile": 51.5,
+     "rang": 208620,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -17906,7 +17906,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 0.45,
-      "percentile": 8.71,
+      "percentile": 8.73,
       "pourquoi": [
        {
         "bin": "nu_sans_droits",
@@ -17949,7 +17949,7 @@
         "signe": "+"
        }
       ],
-      "rang": 392370,
+      "rang": 392296,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -17966,9 +17966,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.45,
-     "percentile": 8.71,
-     "rang": 392370,
-     "run_id": "q_v19",
+     "percentile": 8.73,
+     "rang": 392296,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -18017,7 +18017,7 @@
      "model_version": "q_v15",
      "mult_base": 0.45,
      "percentile": 8.7,
-     "rang": 392370,
+     "rang": 392296,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -18107,7 +18107,7 @@
         "signe": "+"
        }
       ],
-      "rang": 1101,
+      "rang": 1097,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -18125,8 +18125,8 @@
      "model_version": "q_v15",
      "mult_base": 5.21,
      "percentile": 99.74,
-     "rang": 1101,
-     "run_id": "q_v19",
+     "rang": 1097,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -18169,9 +18169,9 @@
     },
     "q_score": null,
     "residuel": {
-     "sdp_residuelle_m2": 0,
-     "sous_densite": null,
-     "taux_emprise_pct": null
+     "sdp_residuelle_m2": 34,
+     "sous_densite": true,
+     "taux_emprise_pct": 0
     },
     "risques": [],
     "score_v": {
@@ -18185,7 +18185,7 @@
      "model_version": "q_v15",
      "mult_base": 5.21,
      "percentile": 99.7,
-     "rang": 1101,
+     "rang": 1097,
      "tier": "sans_signal"
     },
     "section": "AB",
@@ -18275,7 +18275,7 @@
         "signe": "+"
        }
       ],
-      "rang": 2671,
+      "rang": 2659,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -18293,8 +18293,8 @@
      "model_version": "q_v15",
      "mult_base": 3.63,
      "percentile": 99.38,
-     "rang": 2671,
-     "run_id": "q_v19",
+     "rang": 2659,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -18350,7 +18350,7 @@
      "model_version": "q_v15",
      "mult_base": 3.63,
      "percentile": 99.4,
-     "rang": 2671,
+     "rang": 2659,
      "tier": "sans_signal"
     },
     "section": "AB",
@@ -18397,7 +18397,7 @@
       "label": "Sans signal",
       "motif": null,
       "mult_base": 0.61,
-      "percentile": 21.98,
+      "percentile": 22.03,
       "pourquoi": [
        {
         "bin": "(1239, 4594]",
@@ -18440,7 +18440,7 @@
         "signe": "-"
        }
       ],
-      "rang": 335326,
+      "rang": 335124,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -18457,9 +18457,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.61,
-     "percentile": 21.98,
-     "rang": 335326,
-     "run_id": "q_v19",
+     "percentile": 22.03,
+     "rang": 335124,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -18512,7 +18512,7 @@
      "model_version": "q_v15",
      "mult_base": 0.61,
      "percentile": 22.0,
-     "rang": 335326,
+     "rang": 335124,
      "tier": "sans_signal"
     },
     "section": "AH",
@@ -18559,7 +18559,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 0.45,
-      "percentile": 9.77,
+      "percentile": 9.79,
       "pourquoi": [
        {
         "bin": "nu_sans_droits",
@@ -18602,7 +18602,7 @@
         "signe": "-"
        }
       ],
-      "rang": 387802,
+      "rang": 387726,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -18619,9 +18619,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.45,
-     "percentile": 9.77,
-     "rang": 387802,
-     "run_id": "q_v19",
+     "percentile": 9.79,
+     "rang": 387726,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -18670,7 +18670,7 @@
      "model_version": "q_v15",
      "mult_base": 0.45,
      "percentile": 9.8,
-     "rang": 387802,
+     "rang": 387726,
      "tier": "ecartee"
     },
     "section": "AC",
@@ -18717,7 +18717,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 0.24,
-      "percentile": 1.77,
+      "percentile": 1.78,
       "pourquoi": [
        {
         "bin": "nu_sans_droits",
@@ -18760,7 +18760,7 @@
         "signe": "-"
        }
       ],
-      "rang": 422173,
+      "rang": 422146,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -18777,9 +18777,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.24,
-     "percentile": 1.77,
-     "rang": 422173,
-     "run_id": "q_v19",
+     "percentile": 1.78,
+     "rang": 422146,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -18828,7 +18828,7 @@
      "model_version": "q_v15",
      "mult_base": 0.24,
      "percentile": 1.8,
-     "rang": 422173,
+     "rang": 422146,
      "tier": "ecartee"
     },
     "section": "AC",
@@ -18875,7 +18875,7 @@
       "label": "Écartée",
       "motif": null,
       "mult_base": 0.85,
-      "percentile": 47.77,
+      "percentile": 47.82,
       "pourquoi": [
        {
         "bin": "nu_sans_droits",
@@ -18918,7 +18918,7 @@
         "signe": "+"
        }
       ],
-      "rang": 224487,
+      "rang": 224281,
       "rang_total": 429799,
       "tier": "ecartee",
       "verbal": {
@@ -18935,9 +18935,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.85,
-     "percentile": 47.77,
-     "rang": 224487,
-     "run_id": "q_v19",
+     "percentile": 47.82,
+     "rang": 224281,
+     "run_id": "q_v20",
      "tier": "ecartee"
     }
    },
@@ -18986,7 +18986,7 @@
      "model_version": "q_v15",
      "mult_base": 0.85,
      "percentile": 47.8,
-     "rang": 224487,
+     "rang": 224281,
      "tier": "ecartee"
     },
     "section": "AD",
@@ -19076,7 +19076,7 @@
         "signe": "+"
        }
       ],
-      "rang": 821,
+      "rang": 818,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -19094,8 +19094,8 @@
      "model_version": "q_v15",
      "mult_base": 6.24,
      "percentile": 99.81,
-     "rang": 821,
-     "run_id": "q_v19",
+     "rang": 818,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -19147,7 +19147,7 @@
      "model_version": "q_v15",
      "mult_base": 6.24,
      "percentile": 99.8,
-     "rang": 821,
+     "rang": 818,
      "tier": "sans_signal"
     },
     "section": "AH",
@@ -19194,7 +19194,7 @@
       "label": "Sans signal",
       "motif": "bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible",
       "mult_base": 0.86,
-      "percentile": 53.22,
+      "percentile": 53.26,
       "pourquoi": [
        {
         "bin": "(0.008375, 0.0111]",
@@ -19237,7 +19237,7 @@
         "signe": "-"
        }
       ],
-      "rang": 201076,
+      "rang": 200908,
       "rang_total": 429799,
       "tier": "sans_signal",
       "verbal": {
@@ -19254,9 +19254,9 @@
      "badge_veille_succession": false,
      "model_version": "q_v15",
      "mult_base": 0.86,
-     "percentile": 53.22,
-     "rang": 201076,
-     "run_id": "q_v19",
+     "percentile": 53.26,
+     "rang": 200908,
+     "run_id": "q_v20",
      "tier": "sans_signal"
     }
    },
@@ -19308,8 +19308,8 @@
      "event_date": null,
      "model_version": "q_v15",
      "mult_base": 0.86,
-     "percentile": 53.2,
-     "rang": 201076,
+     "percentile": 53.3,
+     "rang": 200908,
      "tier": "sans_signal"
     },
     "section": "AI",

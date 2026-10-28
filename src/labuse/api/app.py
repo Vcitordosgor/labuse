@@ -88,19 +88,50 @@ def _journaliser_heal_echec(module: str, exc: Exception) -> None:
         pass
 
 
-def _run_heal_steps(steps, on_echec=None) -> list[dict]:
+def _run_heal_steps(steps, on_echec=None, essais: int = 3, pause_s: float = 2.0,
+                    on_retry=None) -> list[dict]:
     """FIX-GB-011 — exécute chaque step de heal `(nom, fn)` EN ISOLATION : l'échec d'un step n'arrête
     PLUS les suivants (avant, une exception cassait toute la boucle → cascade GB-011). Retourne la liste
-    des échecs `[{module, error}]`. `on_echec(nom, exc)` est appelé à chaque échec (log + journal)."""
+    des échecs `[{module, error}]`. `on_echec(nom, exc)` est appelé à chaque échec DÉFINITIF (log + journal).
+
+    REMISE-1 (Lot A) — chaque step est en outre RÉESSAYÉ `essais` fois (défaut 3 = 1 + 2 nouveaux essais)
+    sur un conflit de VERROU (`OperationalError` : lock_timeout dépassé, deadlock), espacés de `pause_s`.
+    Le DDL de heal est idempotent (`IF NOT EXISTS` / `ADD COLUMN IF NOT EXISTS`) → un réessai est sûr et
+    ne persiste rien de partiel (chaque `engine.begin()` rollback sur exception). Avant, une simple
+    collision passagère avec un lecteur concurrent (le job de réchauffage de l'étape 6 du déploiement)
+    devenait un `heal_failed` DÉFINITIF → `readyz` 503 figé (incident DEPLOY-1028b). On ne réessaie QUE
+    les erreurs de verrou ; une vraie erreur de schéma échoue tout de suite (inutile d'attendre). Couplé
+    au `lock_timeout` court posé sur le moteur de heal dédié (cf. `_lifespan`), chaque essai échoue VITE
+    au lieu de rester bloqué. `on_retry(nom, tentative, exc)` est notifié à chaque nouvelle tentative."""
+    import time as _t
+
+    from sqlalchemy.exc import OperationalError
     failures: list[dict] = []
     for name, fn in steps:
-        try:
-            fn()
-        except Exception as exc:  # noqa: BLE001 — un step KO n'avorte plus les suivants
-            failures.append({"module": name, "error": f"{type(exc).__name__}: {exc}"})
+        derniere: Exception | None = None
+        for tentative in range(essais):
+            try:
+                fn()
+                derniere = None
+                break
+            except OperationalError as exc:  # conflit de verrou / deadlock → on réessaie
+                derniere = exc
+                if tentative == essais - 1:
+                    break
+                if on_retry is not None:
+                    try:
+                        on_retry(name, tentative + 1, exc)
+                    except Exception:  # noqa: BLE001 — log best-effort
+                        pass
+                _t.sleep(pause_s)
+            except Exception as exc:  # noqa: BLE001 — erreur NON-verrou : échec immédiat (pas de retry)
+                derniere = exc
+                break
+        if derniere is not None:
+            failures.append({"module": name, "error": f"{type(derniere).__name__}: {derniere}"})
             if on_echec is not None:
                 try:
-                    on_echec(name, exc)
+                    on_echec(name, derniere)
                 except Exception:  # noqa: BLE001 — log/journal best-effort
                     pass
     return failures
@@ -206,16 +237,52 @@ async def _lifespan(app: FastAPI):
         from ..promo.tables import ensure_tables as _promo_ens
         from .recherche import ensure_index as _recherche_ens   # RETOURS-16 V5
         from ..registre.remplissage import ensure_perf_indexes as _remplissage_perf_ens  # VITESSE-2 Lot 2
+        # REMISE-1 (Lot A) — MOTEUR DE HEAL DÉDIÉ, avec un `lock_timeout` COURT sur CHACUNE de ses
+        # connexions. Les `ensure_tables` ouvrent leur propre `engine.begin()` : impossible de leur
+        # injecter un `SET lock_timeout` après coup → on le pose sur CHAQUE connexion neuve de CE moteur
+        # (événement `connect`). Un `SET` session survit au rollback (contrairement à `SET LOCAL`), donc
+        # il tient pour tout le DDL du step. Moteur ISOLÉ du moteur de service + DISPOSÉ en `finally` :
+        # le `lock_timeout` ne fuit JAMAIS vers les requêtes d'API après le boot. Couplé au retry de
+        # `_run_heal_steps`, un ALTER qui percute un verrou tenu par un lecteur concurrent (le job de
+        # réchauffage de l'étape 6, incident DEPLOY-1028b) échoue en 5 s puis on réessaie — au lieu de
+        # rester bloqué → `heal_failed` définitif → `readyz` 503.
+        from sqlalchemy import event as _sa_event
+        from sqlalchemy.orm import sessionmaker as _sessionmaker
+        from ..db import make_engine as _make_engine
+        _heal_eng = _make_engine()
+
+        @_sa_event.listens_for(_heal_eng, "connect")
+        def _heal_lock_timeout(_dbapi_conn, _rec):  # noqa: ANN001 — signature imposée par SQLAlchemy
+            _cur = _dbapi_conn.cursor()
+            try:
+                _cur.execute("SET lock_timeout = '5s'")
+            finally:
+                _cur.close()
+
+        _heal_sess = _sessionmaker(bind=_heal_eng, expire_on_commit=False, future=True)
+
+        @contextmanager
+        def _heal_scope():
+            _s = _heal_sess()
+            try:
+                yield _s
+                _s.commit()
+            except Exception:
+                _s.rollback()
+                raise
+            finally:
+                _s.close()
+
         # ÉTUDE DE ZONE Z1 — tables sirene_etablissements + mobpro_commune (idempotentes).
         def _zone_ens():
-            with session_scope() as _s:
+            with _heal_scope() as _s:
                 from ..ingestion.sirene_etablissements import ensure_tables as _se_ens
                 from ..ingestion.mobpro import ensure_tables as _mo_ens
                 from ..zone import ensure_tables as _iso_ens   # Z2 — cache d'isochrones
                 _se_ens(_s); _mo_ens(_s); _iso_ens(_s)
 
         def _heal_comptes_scoping():
-            with session_scope() as _s:      # session (pas engine) ; après les modules (tables créées)
+            with _heal_scope() as _s:        # session (pas engine) ; après les modules (tables créées)
                 _comptes_ens(_s)
                 _scoping_ens(_s)
 
@@ -224,44 +291,53 @@ async def _lifespan(app: FastAPI):
         # AVORTAIT tous les suivants (crm_columns, veilles, comptes, scoping IDOR, copilote) → migrations
         # gelées à chaque boot ET /readyz menteur. Désormais chaque module est ISOLÉ : son échec est
         # loggé + journalisé en event_log (kind système, visible admin) et n'empêche plus les autres.
+        # REMISE-1 (Lot A) — tous les steps passent par `_heal_eng` (lock_timeout court) et non plus
+        # par `_engine()` (moteur de service) : le DDL échoue vite sur conflit de verrou, puis retry.
         _heal_steps = (
-            ("modules", lambda: _modules_ens(_engine())),
-            ("ia", lambda: _ia_ens(_engine())),
-            ("events", lambda: _events_ens(_engine())),
-            ("partners", lambda: _partners_ens(_engine())),
-            ("projets", lambda: _projets_ens(_engine())),
-            ("protection", lambda: _protection_ens(_engine())),
-            ("courrier", lambda: _courrier_ens(_engine())),
+            ("modules", lambda: _modules_ens(_heal_eng)),
+            ("ia", lambda: _ia_ens(_heal_eng)),
+            ("events", lambda: _events_ens(_heal_eng)),
+            ("partners", lambda: _partners_ens(_heal_eng)),
+            ("projets", lambda: _projets_ens(_heal_eng)),
+            ("protection", lambda: _protection_ens(_heal_eng)),
+            ("courrier", lambda: _courrier_ens(_heal_eng)),
             # FIX-C6 (GB-048) — `comptes` AVANT `crm_columns` : ce dernier porte une FK
             # crm_columns.compte_id → comptes(id). Sur une base NEUVE, l'ancien ordre
             # (crm_columns d'abord) échouait « relation "comptes" does not exist » et ne
             # convergeait qu'au 2ᵉ boot. `scoping` ajoute compte_id aux tables client (dont
             # celles des modules/projets déjà ensurées au-dessus) → reste après elles.
             ("comptes+scoping", _heal_comptes_scoping),
-            ("crm_columns", lambda: _crm_columns_ens(_engine())),
-            ("veilles", lambda: _veilles_ens(_engine())),
-            ("copilote_v2", lambda: (_copv2_hist_ens(_engine()), _copv2_tel_ens(_engine()))),
+            ("crm_columns", lambda: _crm_columns_ens(_heal_eng)),
+            ("veilles", lambda: _veilles_ens(_heal_eng)),
+            ("copilote_v2", lambda: (_copv2_hist_ens(_heal_eng), _copv2_tel_ens(_heal_eng))),
             # DASHBOARD-V1 · D1 — capteurs (usage_events, retours, ia_log.compte_id, quota
             # Copilote par licence). Après « comptes+scoping » (ALTER comptes.copilote_quota_jour).
-            ("dashboard", lambda: _dashboard_ens(_engine())),
-            ("pige", lambda: _pige_ens(_engine())),
-            ("promo", lambda: _promo_ens(_engine())),   # PROMO-1 P1 — table programmes
+            ("dashboard", lambda: _dashboard_ens(_heal_eng)),
+            ("pige", lambda: _pige_ens(_heal_eng)),
+            ("promo", lambda: _promo_ens(_heal_eng)),   # PROMO-1 P1 — table programmes
             # ÉTUDE DE ZONE Z1 — tables SIRENE établissements + MOBPRO (interrogées par le moteur de
             # zone même vides ; l'ingestion réelle vient des CLI ingest-sirene-etab / ingest-mobpro).
             ("zone", lambda: _zone_ens()),
             # RETOURS-16 V5 — index (section, numéro) : la référence courte du suggest unifié
             # se résout indexée (799 ms seq-scan → < 5 ms mesuré).
-            ("recherche", lambda: _recherche_ens(_engine())),
+            ("recherche", lambda: _recherche_ens(_heal_eng)),
             # VITESSE-2 (Lot 2) — index fonctionnels left(idu,14) sur les grosses tables PM : le
             # test de présence du bloc « Les données » de la fiche (remplissage_source) passait en
             # Parallel Seq Scan (84 ms × fiche) → Bitmap Index Scan (0,13 ms mesuré).
-            ("fiche_perf_index", lambda: _remplissage_perf_ens(_engine())),
+            ("fiche_perf_index", lambda: _remplissage_perf_ens(_heal_eng)),
         )
         def _on_echec(_mod, _mexc):
-            log.error("heal schéma — module « %s » a ÉCHOUÉ : %s", _mod, _mexc)
+            log.error("heal schéma — module « %s » a ÉCHOUÉ (après réessais) : %s", _mod, _mexc)
             _journaliser_heal_echec(_mod, _mexc)
 
-        _heal_failures = _run_heal_steps(_heal_steps, on_echec=_on_echec)
+        def _on_retry(_mod, _tent, _mexc):
+            log.warning("heal schéma — module « %s » : conflit de verrou (essai %s), "
+                        "nouvelle tentative dans 2 s… (%s)", _mod, _tent, type(_mexc).__name__)
+
+        try:
+            _heal_failures = _run_heal_steps(_heal_steps, on_echec=_on_echec, on_retry=_on_retry)
+        finally:
+            _heal_eng.dispose()   # moteur de heal jeté : son lock_timeout ne fuit pas vers le service
         # `total` (DASHBOARD-V1 · D3) — la tuile « santé serveur » affiche N/N modules OK.
         app.state.schema_heal = {"ok": not _heal_failures, "failures": _heal_failures,
                                  "total": len(_heal_steps)}
@@ -8807,8 +8883,34 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
     out: list[dict] = []
     marche_cache: dict[str, dict] = {}
     sl_ready = _score_labuse_ready(db)   # COMPARER-2 §4 — table candidate q_v15 présente ?
+    _run = runs.current()
+    # pid par idu (une requête légère par parcelle, sur la session de l'appelant)
+    pid_of: dict[str, int] = {}
     for idu in ids:
         pid = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+        if pid is not None:                   # IDU introuvable → ignoré silencieusement (contrat D2)
+            pid_of[idu] = pid
+    # VITESSE-3 (REMISE-1 · Lot C) — les 2-3 fiches du comparatif sont construites EN PARALLÈLE, chacune
+    # dans sa PROPRE session. Avant, le comparatif de parcelles JAMAIS ouvertes payait 3× le calcul EN
+    # SÉRIE (prod ~6,6 s à froid, DEPLOY-1028b) ; désormais ~1× le plus lent. AUCUNE valeur changée : les
+    # payloads `_fiche_servie`/`fiche_payload` ne dépendent que de (idu, run), le tri final suit l'ordre
+    # des `ids`, `_compare_row` est pur → JSON STRICTEMENT identique au calcul série (parité vérifiée).
+    # `_fiche_servie` est déjà protégé (`_FICHE_LOCK`) et conçu pour la concurrence multi-worker.
+    def _bati(idu: str):
+        with session_scope() as _s2:
+            return _fiche_servie(_s2, idu, _run), fiche_payload(_s2, pid_of[idu])
+    prefetch: dict[str, tuple] = {}
+    if len(pid_of) > 1:
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=len(pid_of)) as _ex:
+            _futs = {idu: _ex.submit(_bati, idu) for idu in pid_of}
+            for idu, _f in _futs.items():
+                try:
+                    prefetch[idu] = _f.result()
+                except Exception:  # noqa: BLE001 — une fiche en échec est traitée comme en série ci-dessous
+                    prefetch[idu] = None
+    for idu in ids:
+        pid = pid_of.get(idu)
         if pid is None:                       # IDU introuvable → ignoré silencieusement (contrat D2)
             continue
         try:
@@ -8816,8 +8918,13 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
             # faisabilité du même point de calcul — plus la fiche legacy `_build_fiche`.
             # VITESSE-2 (Lot 3) — via `_fiche_servie` (cache _FICHE_CACHE partagé avec /parcels) :
             # le comparatif ne recalcule plus la fiche à chaque appel (identique à `_q_v2_fiche(db, idu)`,
-            # vérifié). `_compare_row` ignore les clés en plus (analyse_labuse).
-            row = _compare_row(_fiche_servie(db, idu, runs.current()), fiche_payload(db, pid))
+            # vérifié). VITESSE-3 : on réutilise le résultat PRÉ-CALCULÉ en parallèle si présent (valeurs
+            # identiques), sinon on retombe sur le calcul en série. `_compare_row` ignore les clés en plus.
+            _pre = prefetch.get(idu)
+            if _pre is not None:
+                row = _compare_row(_pre[0], _pre[1])
+            else:
+                row = _compare_row(_fiche_servie(db, idu, _run), fiche_payload(db, pid))
         except HTTPException:
             continue
         # DOCS-FIX-1 (P5) + CHASSE-DONNEES-FIX-1 (Lot 3, C-06) — la « Zone PLU » du Comparatif =

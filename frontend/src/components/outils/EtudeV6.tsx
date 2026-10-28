@@ -1037,7 +1037,7 @@ function StationnementRegle({ regimes, lotissement, commune, zone }: { regimes: 
           </div>
           <p className="mt-1 text-[11px] text-txt">
             Au plus <b>{fmtDec(pf.ratio_plafond)} place / logement</b> pour {pf.categorie}.
-            {' '}Condition « à moins de 800 m d'un transport collectif » : {pf.condition_tcsp_sous_800m
+            {' '}Condition « à moins de 500 m d'un transport collectif » : {pf.condition_tcsp_sous_500m
               ? <span className="text-mint">vérifiée{pf.distance_tcsp_m != null ? ` (${fmtInt(pf.distance_tcsp_m)} m)` : ''}</span>
               : <span className="text-coral">non remplie</span>}. Éligibilité de catégorie : <b className="text-amber">{pf.eligibilite_categorie}</b>.
           </p>

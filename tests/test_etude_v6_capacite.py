@@ -470,12 +470,21 @@ def test_sous_sol_disponibilite_servie(session_reelle):
 def _jauge_logements(jd, dem, surf, mode):
     """Reproduit la jauge EN LOGEMENTS côté serveur (miroir de enveloppeJauge, ETUDE-V6-7 item 6) :
     numérateur = BANDE de bâtiment (profondeur hyp × longueur de la zone) × niveaux × coef ; en sous-sol,
-    borné par la capacité des places au −1 (per-niveau servi) ÷ places/logement."""
+    borné par la capacité des places au −1 (per-niveau servi) ÷ places/logement.
+
+    REMISE-1 (Lot B) — places/logement PLAFONNÉES à 1 (art. L151-35). Le CALCUL détaillé déployé applique
+    ce plafond du Code de l'urbanisme (plus favorable que le barème PLU T3/T4=1,5), vérifié IDENTIQUE en
+    PROD et en local. Le test mesurant « la jauge PROCHE DU CALCUL », il doit charger le stationnement avec
+    la MÊME règle que le calcul — sinon il sur-compte le parking et sous-estime de ~22 % (écart constaté
+    avant correction, dans le sens CONSERVATEUR). Avec le plafond : écart 12,5 % aérien (≤ 20 %). ⚠ La
+    jauge du FRONT (enveloppeJauge, EtudeV6.tsx) reste volontairement NON plafonnée (plafond « à
+    confirmer ») — elle sous-estime du côté sûr ; à aligner si l'on veut la même précision (suivi)."""
     tot = sum(dem.values());
     if tot == 0:
         return 0
     surf_moy = sum(dem[t] * surf[t] for t in dem) / tot
-    places_moy = sum(dem[t] * (jd["places_par_type"].get(t, 1)) for t in dem) / tot
+    # plafond L151-35 = 1 place / logement (zone UA L'Étang-Salé) — min avec le barème PLU (T3/T4=1,5)
+    places_moy = sum(dem[t] * min(jd["places_par_type"].get(t, 1), 1.0) for t in dem) / tot
     niv, coef = jd["niveaux"], jd["coef_plancher"]
     bande = jd["bande_batiment_m2"]
     if mode == "sous_sol":
