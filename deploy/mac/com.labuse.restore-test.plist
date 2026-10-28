@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- SOLIDITE-1 (Lot 3.3) — test de restauration MENSUEL sur le Mac (jamais sur le VPS).
-     Le 1er de chaque mois à 09:00. Installation : voir deploy/mac/README.md. -->
+<!-- SOLIDITE-1 (Lot 3.3) + DONNEES-ETAT-FIX-2 (Lot A) — test de restauration MENSUEL sur le Mac
+     (jamais sur le VPS). Le 1er de chaque mois à 09:00. Le script vit dans ~/.labuse/ops (JAMAIS
+     ~/Desktop, interdit à launchd par macOS/TCC → code 126) : deploy/mac/install_agents.sh y copie
+     le script et substitue /Users/VIC → $HOME. Écrit un marqueur .restore-test.json lu par le
+     Tableau de bord. Garde-fou : refuse si < 20 Go libres (LABUSE_RESTORE_MIN_GO). -->
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
@@ -10,19 +13,27 @@
   <key>ProgramArguments</key>
   <array>
     <string>/bin/bash</string>
-    <!-- ADAPTER ce chemin au dépôt local -->
-    <string>/Users/VIC/Desktop/labuse/deploy/mac/restore_test.sh</string>
+    <string>/Users/VIC/.labuse/ops/restore_test.sh</string>
   </array>
 
   <key>EnvironmentVariables</key>
   <dict>
     <key>LABUSE_VPS_SSH</key>
     <string>labuse-vps</string>
-    <!-- pg_restore/psql >= la majeure PostgreSQL du VPS (ex. 18). Adapter si le PATH est ancien. -->
+    <!-- pg_restore/psql >= la majeure PostgreSQL du VPS (18). launchd a un PATH minimal : chemin ABSOLU
+         (env conda labusedb, PostgreSQL 18). -->
     <key>PG_RESTORE_BIN</key>
-    <string>pg_restore</string>
+    <string>/Users/VIC/miniforge3/envs/labusedb/bin/pg_restore</string>
     <key>PSQL_BIN</key>
-    <string>psql</string>
+    <string>/Users/VIC/miniforge3/envs/labusedb/bin/psql</string>
+    <!-- où écrire le marqueur .restore-test.json lu par le dashboard (= dossier de réception local). -->
+    <key>LABUSE_LOCAL_BACKUP</key>
+    <string>/Users/VIC/labuse-backups</string>
+    <key>LABUSE_BACKUP_DIR</key>
+    <string>/Users/VIC/labuse-backups</string>
+    <!-- garde-fou espace libre (Go) ; vide = défaut 20 dans le script. -->
+    <key>LABUSE_RESTORE_MIN_GO</key>
+    <string>20</string>
     <!-- Mail d'alerte (sinon notif macOS + log) -->
     <key>LABUSE_BREVO_API_KEY</key>
     <string></string>

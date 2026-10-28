@@ -62,7 +62,7 @@ export type HorsVitrine = {
 // COCKPIT-1 (Lot A) — l'onglet « Tableau de bord » (remplace « À faire » + « Cohérence »), composé
 // côté serveur (le front ne recalcule rien) : trois sections, cartes PAR PROBLÈME.
 export type CockpitPastille = 'jaune' | 'rouge' | 'gris'
-export type CockpitBouton = { label: string; action: string; sources?: number[]; candidat?: string | null; n?: number; nom?: string }
+export type CockpitBouton = { label: string; action: string; sources?: number[]; candidat?: string | null; n?: number; nom?: string; cle?: string }
 export type CockpitCarte = {
   id: string; pastille: CockpitPastille; titre: string; phrase: string
   code: boolean; voir_detail: boolean; tri: number

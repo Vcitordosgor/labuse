@@ -18,15 +18,29 @@ RACINE = Path(__file__).resolve().parents[1]
 
 # ─────────────── Lot A — le déploiement repose TOUJOURS le crontab ───────────────
 
-def test_deploy_vps_repose_et_verifie_le_crontab():
-    """Le bug ETAT-2 : un deploy changeait le binaire (registre) sans reposer /etc/cron.d/labuse.
-    Désormais deploy_vps.sh régénère depuis le registre, sauvegarde l'ancien, pose, et VÉRIFIE —
-    tout écart ARRÊTE le déploiement (exit 5)."""
-    sh = (RACINE / "deploy/scripts/deploy_vps.sh").read_text()
+def test_deploy_app_repose_et_verifie_le_crontab():
+    """DONNEES-ETAT-FIX-2 (Lot 0) — la repose du crontab vit dans le SEUL vrai déploiement,
+    deploy_app.sh (rsync depuis le Mac ; la prod n'a pas de clone git). Il régénère depuis le
+    registre, sauvegarde l'ancien, pose, et VÉRIFIE — tout écart ARRÊTE le déploiement (exit 5)."""
+    sh = (RACINE / "deploy/scripts/deploy_app.sh").read_text()
     assert "jobs crontab --tz" in sh                              # régénère depuis le registre
     assert "--verifier /etc/cron.d/labuse" in sh                  # vérifie l'égalité au registre
     assert "labuse.bak-deploy-" in sh                             # sauvegarde l'ancien à côté
     assert "exit 5" in sh                                         # échoue bruyamment
+
+
+def test_deploy_app_met_a_jour_deploiement_json():
+    """Lot 0 — deploy_app.sh écrit config/deploiement.json (sha + date) à chaque déploiement."""
+    sh = (RACINE / "deploy/scripts/deploy_app.sh").read_text()
+    assert "config/deploiement.json" in sh
+    assert "rev-parse HEAD" in sh and "deploye_le" in sh
+
+
+def test_deploy_vps_est_obsolete():
+    """Lot 0 — un SEUL script de déploiement : deploy_vps.sh est neutralisé (ne déploie rien)."""
+    sh = (RACINE / "deploy/scripts/deploy_vps.sh").read_text()
+    assert "OBSOLÈTE" in sh and "deploy_app.sh" in sh
+    assert "git pull" not in sh or "NE PLUS UTILISER" in sh       # plus de vrai déploiement ici
 
 
 # ─────────────── Lot B — la lecture du coût ne verrouille pas ia_log ───────────────

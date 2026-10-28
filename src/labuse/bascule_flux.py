@@ -473,11 +473,67 @@ def basculer(db: Session, nouveau_run: str, par: str,
     # à commiter » (geste à finir à la main). Ne casse JAMAIS une bascule réussie.
     commit = _commit_pointeurs(_manifeste.chemin().resolve().parents[1], nouveau_run)
 
+    # DONNEES-ETAT-FIX-2 (Lot D) — PROPAGATION APRÈS BASCULE : tout ce qui dépend du run se met à jour
+    # TOUT DE SUITE (plus d'attente du run de nuit). La cloche est rejouée (sinon elle reste « dans un
+    # autre monde » : écarts chasse_donnees `cloche-fraicheur` + `digest-vs-cloche`), les caches à clé
+    # de run sont rafraîchis (rebuild détaché). Best-effort : jamais bloquant pour une bascule réussie.
+    propagation = _propager_apres_bascule(db)
+
     return {"ok": True, "verifie": True, "ancien": ancien, "nouveau": nouveau_run,
             "current_apres": current_apres, "manifeste_path": manifeste_path, "arbre": arbre,
             "caches_purges": caches, "sens": sens, "coherence": coherence, "commit": commit,
+            "propagation": propagation,
             "note": "Effective immédiatement (manifeste relu à la requête, confirmé par runs.current()). "
-                    "Les tables servies run-scopées et les tuiles se reconstruisent ensuite (build-mvt détaché)."}
+                    "Cloche rejouée + caches rafraîchis (rebuild détaché)."}
+
+
+def _propager_apres_bascule(db: Session) -> dict:
+    """DONNEES-ETAT-FIX-2 (Lot D) — après une bascule : (a) REJOUE LA CLOCHE — `detect_events` pose les
+    « bascules du marché » dans event_log avec run_to = run servi (sinon la cloche reste figée sur
+    l'ancien run → écarts `cloche-fraicheur`/`digest-vs-cloche`), puis `evaluer_radar_cloche` réévalue
+    les veilles ; (b) RAFRAÎCHIT LES CACHES à clé de run via un `labuse rebuild` DÉTACHÉ (tuiles + fiche
+    commune). Tout est best-effort : une propagation qui rate ne défait jamais la bascule."""
+    out: dict = {}
+    try:
+        from sqlalchemy import text as _text
+        from . import runs
+        from .api.events import detect_events as _detect, ensure_tables
+        from .db import engine
+        ensure_tables(engine())
+        run_to = runs.current()
+        prev = db.execute(_text(
+            "SELECT run_id FROM p_score_v2_runs "
+            "WHERE computed_at < (SELECT computed_at FROM p_score_v2_runs WHERE run_id = :s) "
+            "ORDER BY computed_at DESC LIMIT 1"), {"s": run_to}).scalar()
+        if prev:
+            r = _detect(db, prev, run_to, demo=False)
+            db.commit()
+            out["cloche"] = {"run_from": prev, "run_to": run_to, **(r or {})}
+        else:
+            out["cloche"] = {"note": "aucun run antérieur au servi — rien à diffuser"}
+        try:
+            from .pige.digests import evaluer_radar_cloche
+            out["radar_cloche"] = evaluer_radar_cloche(db)
+            db.commit()
+        except Exception as exc:  # noqa: BLE001 — la cloche radar est best-effort
+            out["radar_cloche"] = {"erreur": f"{type(exc).__name__}: {exc}"[:140]}
+    except Exception as exc:  # noqa: BLE001 — le rejeu de la cloche ne casse jamais la bascule
+        out["cloche"] = {"erreur": f"{type(exc).__name__}: {exc}"[:160]}
+    try:
+        import os
+        import subprocess
+        import sys
+        from pathlib import Path
+        racine = Path(__file__).resolve().parents[2]
+        env = {**os.environ, "PYTHONPATH": os.pathsep.join(
+            [str(racine / "src"), os.environ.get("PYTHONPATH", "")]).rstrip(os.pathsep)}
+        subprocess.Popen([sys.executable, "-c", "from labuse.cli import app; app()", "rebuild"],
+                         cwd=str(racine), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                         start_new_session=True, env=env)
+        out["caches"] = "rebuild détaché lancé"
+    except Exception as exc:  # noqa: BLE001
+        out["caches"] = f"rebuild non lancé ({type(exc).__name__})"
+    return out
 
 
 # ═══════════════ CIRCUIT-1 lot 3.3 — la NOTE DE VERSION (registre) + garde résiduel ═══════════════

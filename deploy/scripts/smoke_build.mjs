@@ -64,7 +64,17 @@ async function execPath() {
   return undefined;
 }
 const executablePath = await execPath();
-const browser = await pw.chromium.launch(executablePath ? { executablePath } : {});
+// DONNEES-ETAT-FIX-2 (Lot 0) — le PAQUET playwright peut être présent sans le NAVIGATEUR téléchargé
+// (`chrome-headless-shell` absent sur le VPS) : `launch()` jette alors une exception NON RATTRAPÉE
+// (elle est hors du try plus bas) → node sortait en code 1 → le test de fumée passait au ROUGE pour un
+// simple manque d'outil. On SAUTE proprement (code 77 = SKIP non bloquant, comme « playwright absent »).
+let browser;
+try {
+  browser = await pw.chromium.launch(executablePath ? { executablePath } : {});
+} catch (e) {
+  console.log('· smoke_build : navigateur Playwright indisponible (non téléchargé) — SKIP « sauté » (non bloquant). ' + String(e).split('\n')[0]);
+  process.exit(77);
+}
 const page = await browser.newPage();
 const fatals = [];
 page.on('console', (m) => {

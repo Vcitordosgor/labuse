@@ -137,36 +137,118 @@ _INCIDENT_CARTE = {
 }
 
 
+def _titre_incident_generique(cle: str, sujet: str):
+    """DONNEES-ETAT-FIX-2 (Lot C) — titre FR + bouton pour un incident HORS `_INCIDENT_CARTE`
+    (job en échec, vérité sources, tout nouveau contrôle) : plus jamais un incident ouvert INVISIBLE."""
+    if cle.startswith("job-echec:"):
+        nom = cle.split(":", 1)[1]
+        return ("rouge", f"Un automate a échoué : {nom}",
+                {"label": "Réessayer", "action": "lancer-job", "nom": nom})
+    if cle == "verite-sources":
+        return ("rouge", "Des valeurs servies divergent des sources officielles", None)
+    return ("rouge", sujet or "Un contrôle d'exploitation est au rouge", None)
+
+
 def _cartes_incidents(incidents: list[dict]) -> list[dict]:
-    """Une carte par incident d'EXPLOITATION ouvert (sauvegarde / disque / copie externe / readyz).
-    Les détails (seuils, dates) ne sortent que dans « Voir le détail »."""
+    """Une carte ROUGE par incident OUVERT (ops_incidents) — sauvegarde, disque, copie externe, readyz,
+    VÉRITÉ SOURCES, JOB EN ÉCHEC… Un incident FERMÉ n'est plus dans la liste → sa carte disparaît.
+    Les détails (seuils, dates, les écarts parcelle↔source…) ne sortent que dans « Voir le détail » ;
+    sans action spécifique, un bouton « Accepter » acquitte l'incident (il rouvrira au prochain
+    contrôle s'il est toujours réel). DONNEES-ETAT-FIX-2 (Lot C) : plus de `continue` qui masquait
+    les incidents inconnus (vérité-sources, job-echec:*)."""
     out = []
     for inc in incidents or []:
-        conf = _INCIDENT_CARTE.get(inc.get("cle"))
-        if not conf:
-            continue
-        pastille, titre, bouton = conf
+        cle = inc.get("cle") or ""
+        if cle == "copie-externe-ancienne":
+            continue   # DONNEES-ETAT-FIX-2 (Lot B) : rendu par la carte dédiée « copie hors-site »
+        conf = _INCIDENT_CARTE.get(cle)
+        if conf:
+            pastille, titre, bouton = conf
+        else:
+            pastille, titre, bouton = _titre_incident_generique(cle, inc.get("sujet") or "")
         depuis = (inc.get("ouvert_at") or "")[:16].replace("T", " ")
         texte = "\n".join(x for x in [
             inc.get("sujet"), inc.get("detail"),
             f"ouvert depuis {depuis}" if depuis else None,
             f"{inc['rappels']} rappel(s)" if inc.get("rappels") else None,
         ] if x)
+        if bouton is None:   # pas d'action métier → « Accepter » (acquitte l'incident)
+            bouton = {"label": "Accepter", "action": "accepter-incident", "cle": cle}
         out.append(_carte(
-            f"incident:{inc['cle']}", pastille, titre,
+            f"incident:{cle}", pastille, titre,
             inc.get("sujet") or "Un contrôle d'exploitation est au rouge.",
             bouton=bouton, detail={"texte": texte}, tri=0.5))
     return out
 
 
+def _carte_copie_externe(ce: dict | None) -> dict | None:
+    """DONNEES-ETAT-FIX-2 (Lot B) — carte « copie hors-site » : date de la dernière copie sur le disque
+    externe, JAUNE à 7 j, ROUGE à 10 j. Fraîche (< 7 j) → pas de carte (rien à faire).
+    `ce` = ops_alertes.lire_copie_externe(backup_dir) enrichi de `age_j`, `derniere`, `seuil_j` ;
+    None (marqueur absent : env sans copie hors-site / dev) → pas de carte (l'alerte « aucune copie »
+    reste portée par l'incident `copie-externe-ancienne` via le canal mail/cloche)."""
+    if not ce:
+        return None
+    age = ce.get("age_j")
+    if age is None or age < 7:
+        return None                           # copie fraîche : rien à signaler
+    pastille = "rouge" if age >= 10 else "jaune"
+    date = ce.get("derniere") or (ce.get("copie_at") or "")[:10]
+    texte = "\n".join(x for x in [
+        f"Dernière copie hors-site : {date} (il y a {age} jour{'s' if age > 1 else ''})",
+        f"Dump copié : {ce.get('dump')}" if ce.get("dump") else None,
+        f"Disque : {ce.get('disque')}" if ce.get("disque") else None,
+        f"Seuil rouge : {ce.get('seuil_j', 10)} jours.",
+    ] if x)
+    return _carte("copie-externe", pastille, f"Copie hors-site ancienne ({age} jours)",
+                  f"Dernière copie sur le disque externe le {date}. Branche le disque pour en refaire une.",
+                  detail={"texte": texte}, tri=0.4)
+
+
+def _carte_restore_test(rt: dict | None) -> dict | None:
+    """DONNEES-ETAT-FIX-2 (Lot A) — carte « test de restauration » (agent Mac mensuel) : date + verdict
+    (gris OK · jaune reporté · rouge KO). `rt` = ops_alertes.lire_restore_test(backup_dir) ; None =
+    jamais joué → pas de carte."""
+    if not rt:
+        return None
+    statut = (rt.get("statut") or "").lower()
+    quand = (rt.get("test_at") or "")[:16].replace("T", " ")
+    tables = rt.get("tables") or {}
+    lignes = [f"{t} : restauré {v.get('restaure')} / prod {v.get('prod')}"
+              for t, v in tables.items() if isinstance(v, dict)]
+    if rt.get("run_servi"):
+        lignes.append(f"run servi {rt['run_servi']} : {rt.get('run_servi_lignes')} lignes")
+    texte = "\n".join(x for x in [f"Test de restauration du {quand}", rt.get("message"), *lignes] if x)
+    if statut == "ok":
+        return _carte("restore-test", "gris", f"Dernière restauration : vérifiée ({quand[:10]})",
+                      "La sauvegarde se restaure et les comptages clés collent avec la prod.",
+                      detail={"texte": texte}, tri=0.46)
+    if statut == "refuse":
+        return _carte("restore-test", "jaune", "Test de restauration reporté",
+                      rt.get("message") or "Espace insuffisant — test reporté.",
+                      detail={"texte": texte}, tri=0.46)
+    return _carte("restore-test", "rouge", "La dernière restauration a échoué",
+                  rt.get("message") or "La sauvegarde ne se restaure pas correctement.",
+                  detail={"texte": texte}, tri=0.46)
+
+
 def _cartes_aujourdhui(a_faire: dict, *, noms_source: dict, ecarts_toleres: int,
                        verrous: dict | None, fuites_rob: list[dict],
-                       caches_perimes: list[dict], incidents: list[dict], dates: dict | None) -> list[dict]:
+                       caches_perimes: list[dict], incidents: list[dict], dates: dict | None,
+                       copie_externe: dict | None = None, restore_test: dict | None = None) -> list[dict]:
     cartes: list[dict] = []
     dates = dates or {}
 
-    # (0) VIGIES D'EXPLOITATION (sauvegarde en retard, disque, copie externe, /readyz) — ex-rail.
+    # (0) VIGIES D'EXPLOITATION (sauvegarde en retard, disque, /readyz, vérité-sources, job-echec) — ex-rail.
     cartes.extend(_cartes_incidents(incidents))
+
+    # (0 bis) DONNEES-ETAT-FIX-2 — copie hors-site (Lot B) + test de restauration (Lot A).
+    _b = _carte_copie_externe(copie_externe)
+    if _b:
+        cartes.append(_b)
+    _a = _carte_restore_test(restore_test)
+    if _a:
+        cartes.append(_a)
 
     # (1) DONNÉES À INJECTER — en premier (tri=0). Les N sources en nouvelle version → UNE carte.
     inj = _lignes_par_type(a_faire, "injecter")
@@ -498,7 +580,8 @@ def composer_cockpit(*, a_faire: dict, etats_sources: dict | None, reservoirs: l
                      ecarts_toleres: int, jobs_list: list[dict],
                      run_servi: str, candidat: str | None, calculer_present: bool,
                      dernier_calcul: str | None, env: str, prod_run: str | None,
-                     dates: dict | None = None) -> dict:
+                     dates: dict | None = None, copie_externe: dict | None = None,
+                     restore_test: dict | None = None) -> dict:
     """Compose le payload du Tableau de bord (trois sections). Tout est déjà calculé en amont par
     l'endpoint — ici on ne fait que GROUPER par problème et formuler en français. `prod_run` est
     None quand l'état prod n'est pas encore lu (le front le complète via /admin/cockpit/etat-prod)."""
@@ -507,7 +590,8 @@ def composer_cockpit(*, a_faire: dict, etats_sources: dict | None, reservoirs: l
 
     cartes = _cartes_aujourdhui(
         a_faire, noms_source=noms_source, ecarts_toleres=ecarts_toleres, verrous=verrous,
-        fuites_rob=fuites_rob, caches_perimes=caches_perimes or [], incidents=incidents or [], dates=dates)
+        fuites_rob=fuites_rob, caches_perimes=caches_perimes or [], incidents=incidents or [], dates=dates,
+        copie_externe=copie_externe, restore_test=restore_test)
 
     return {
         "aujourdhui": {"n": len(cartes), "cartes": cartes},

@@ -11,8 +11,8 @@ import { useRef, useState } from 'react'
 
 import {
   getAdminCockpitEtatProd, postAdminCircuitSonder, postAdminFluxBascule, postAdminFluxLancerRun,
-  postCockpitAccepterEcarts, postCockpitEnvoyerProd, postCockpitInjecter, postCockpitReconstruire,
-  postJobLancer,
+  postCockpitAccepterEcarts, postCockpitAccepterIncident, postCockpitEnvoyerProd, postCockpitInjecter,
+  postCockpitReconstruire, postJobLancer,
 } from '../../../lib/api'
 
 import type { CircuitData, CockpitCarte, CockpitEtape } from './types'
@@ -50,6 +50,9 @@ export function TableauDeBord({ data, onVoirUsine, onDepotManuel }:
   // COCKPIT-1b (point 5) — « Réessayer » d'une carte vigie (ex. sauvegarde en retard) relance le poste.
   const lancerJob = useMutation({ mutationFn: (nom: string) => postJobLancer(nom),
     onSuccess: () => apres('Relancé — suivi dans le Journal.'), onError: surErreur })
+  // DONNEES-ETAT-FIX-2 (Lot C) — « Accepter » une carte d'incident : l'acquitte (rouvre si toujours réel).
+  const accepterIncident = useMutation({ mutationFn: (cle: string) => postCockpitAccepterIncident(cle),
+    onSuccess: () => apres('Incident accepté — il réapparaîtra au prochain contrôle s\'il est toujours réel.'), onError: surErreur })
 
   if (!ck) return <div className="muted">Tableau de bord indisponible.</div>
 
@@ -67,6 +70,10 @@ export function TableauDeBord({ data, onVoirUsine, onDepotManuel }:
         break
       case 'deposer': onDepotManuel(); break
       case 'lancer-job': if (b.nom) lancerJob.mutate(b.nom); break
+      case 'accepter-incident':
+        if (b.cle && window.confirm('Accepter cet incident ? Il réapparaîtra au prochain contrôle s\'il est toujours réel.'))
+          accepterIncident.mutate(b.cle)
+        break
     }
   }
 

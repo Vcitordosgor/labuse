@@ -82,6 +82,54 @@ echo "── 4. systemd (unit versionnée) ──"
 ssh -o BatchMode=yes "$HOST" 'sudo install -o root -g root -m 644 /opt/labuse/app/deploy/systemd/labuse.service /etc/systemd/system/labuse.service
 sudo systemctl daemon-reload'
 
+# ── DONNEES-ETAT-FIX-2 (Lot 0) — CRONTAB REPOSÉ + VÉRIFIÉ À CHAQUE DÉPLOIEMENT ───────────────
+# Le SEUL vrai déploiement passe ICI (la prod n'a pas de clone git → deploy_vps.sh ne tourne jamais ;
+# FIX-1 avait mis la repose au mauvais endroit). On régénère le crontab depuis le registre du binaire
+# qu'on vient de poser, on sauvegarde l'ancien, on pose, et on VÉRIFIE l'égalité au registre — tout
+# écart ARRÊTE le déploiement (plus jamais « déployé mais crontab périmé », écart DONNEES-ETAT-2 §2/§3).
+# Heures : le registre est en UTC, --tz convertit (+4 h pour Indian/Reunion).
+echo "── 4b. crontab reposé + vérifié depuis le registre ──"
+if ! ssh -o BatchMode=yes "$HOST" 'set -e
+  SRVTZ=$(timedatectl show -p Timezone --value 2>/dev/null || cat /etc/timezone 2>/dev/null || echo inconnu)
+  case "$SRVTZ" in
+    UTC|Etc/UTC) GENTZ=utc ;;
+    Indian/Reunion) GENTZ=reunion ;;
+    *) echo "✗ fuseau serveur $SRVTZ ni UTC ni Indian/Reunion (le registre est en UTC)" >&2; exit 5 ;;
+  esac
+  CT=$(mktemp)
+  sudo -u labuse /opt/labuse/venv/bin/labuse jobs crontab --tz "$GENTZ" > "$CT"
+  [ -f /etc/cron.d/labuse ] && sudo cp -p /etc/cron.d/labuse "/etc/cron.d/labuse.bak-deploy-$(date +%Y%m%d-%H%M%S)"
+  sudo install -o root -g root -m 644 "$CT" /etc/cron.d/labuse
+  rm -f "$CT"
+  sudo -u labuse /opt/labuse/venv/bin/labuse jobs crontab --tz "$GENTZ" --verifier /etc/cron.d/labuse
+  sudo systemctl restart cron 2>/dev/null || true'; then
+  echo "✗ REFUS : crontab non reposé / divergent du registre — déploiement ARRÊTÉ (DONNEES-ETAT-FIX-2 Lot 0)." >&2
+  exit 5
+fi
+echo "   crontab reposé depuis le registre + vérifié ✓"
+
+# ── DONNEES-ETAT-FIX-2 (Lot 0) — MARQUEUR DE DÉPLOIEMENT (sha + date) ────────────────────────
+# config/deploiement.json est lu par le Pilotage (« Déployer » : avance de main sur la prod). Il
+# n'était jamais mis à jour par ce script (deploy_app.sh) → sha figé/périmé. On l'écrit ICI après
+# la pose, avec le sha réellement déployé et la date du déploiement.
+echo "── 4c. marqueur de déploiement (config/deploiement.json) ──"
+DSHA=$(git -C "$REPO" rev-parse HEAD 2>/dev/null || echo '')
+DISO=$(git -C "$REPO" show -s --format=%cI HEAD 2>/dev/null || echo '')
+DEPLOYE_LE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+if [ -n "$DSHA" ]; then
+  ssh -o BatchMode=yes "$HOST" "sudo -u labuse tee /opt/labuse/app/config/deploiement.json >/dev/null" <<EOF
+{
+ "sha": "$DSHA",
+ "iso": "$DISO",
+ "par": "deploy_app.sh",
+ "deploye_le": "$DEPLOYE_LE"
+}
+EOF
+  echo "   deploiement.json = ${DSHA:0:12} (déployé $DEPLOYE_LE)"
+else
+  echo "   ⚠ git indisponible — deploiement.json inchangé"
+fi
+
 # ── SOLIDITE-1 (Lot 4.2) — CONTRÔLE DU MANIFESTE PROD APRÈS ENVOI ───────────────────────────
 # Le manifeste prod n'a pas dû bouger (on ne l'expédie pas) ; on VÉRIFIE qu'il sert toujours un run
 # qui a ses données, et que /readyz répond. Un code déployé par-dessus un manifeste incohérent se verrait

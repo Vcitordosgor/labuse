@@ -1,0 +1,45 @@
+{
+ "aujourdhui_cartes": [
+  {
+   "id": "copie-externe",
+   "pastille": "jaune",
+   "titre": "Copie hors-site ancienne (8 jours)",
+   "phrase": "Dernière copie sur le disque externe le 19/10/2026. Branche le disque pour en refaire une.",
+   "code": false,
+   "tri": 0.4,
+   "detail": {
+    "texte": "Dernière copie hors-site : 19/10/2026 (il y a 8 jours)\nDump copié : labuse-labuse-20261019-133004.dump\nDisque : MUSIQUE-VIDEO\nSeuil rouge : 10 jours."
+   },
+   "voir_detail": true
+  },
+  {
+   "id": "restore-test",
+   "pastille": "gris",
+   "titre": "Dernière restauration : vérifiée (2026-10-28)",
+   "phrase": "La sauvegarde se restaure et les comptages clés collent avec la prod.",
+   "code": false,
+   "tri": 0.46,
+   "detail": {
+    "texte": "Test de restauration du 2026-10-28 02:40\nRestauration vérifiée (tables clés = prod) à partir de labuse-labuse-20261027-173056.dump\nparcels : restauré 434582 / prod 434582\ndata_sources : restauré 130 / prod 130\nrun servi q_v20 : 433229 lignes"
+   },
+   "voir_detail": true
+  },
+  {
+   "id": "incident:verite-sources",
+   "pastille": "rouge",
+   "titre": "Des valeurs servies divergent des sources officielles",
+   "phrase": "Vérité sources : 3 écart(s) parcelle ↔ source officielle",
+   "code": false,
+   "tri": 0.5,
+   "bouton": {
+    "label": "Accepter",
+    "action": "accepter-incident",
+    "cle": "verite-sources"
+   },
+   "detail": {
+    "texte": "Vérité sources : 3 écart(s) parcelle ↔ source officielle\nDes valeurs servies divergent des sources officielles en ligne :\n  • 97411000AB0123 — zonage PLU : servi « UA » vs source « UB » (GPU)\n  • 97415000AC0045 — PPR inondation : servi « bleu » vs source « rouge » (Géorisques)\n  • 97409000AD0210 — dernière vente : servi « 2021 » vs source « 2023 » (DVF)\n(Détail : page Données › Vérité sources.)\nouvert depuis 2026-10-28 03:38"
+   },
+   "voir_detail": true
+  }
+ ]
+}

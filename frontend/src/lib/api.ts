@@ -2897,6 +2897,7 @@ export const postCockpitInjecter = (sources: number[]) =>
     { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sources }) })
 export const postCockpitReconstruire = () => j<{ ok: boolean; log: string }>('/admin/cockpit/reconstruire', { method: 'POST' })
 export const postCockpitAccepterEcarts = () => j<{ ok: boolean; log: string }>('/admin/cockpit/accepter-ecarts', { method: 'POST' })
+export const postCockpitAccepterIncident = (cle: string) => j<{ ok: boolean; cle: string }>(`/admin/cockpit/accepter-incident?cle=${encodeURIComponent(cle)}`, { method: 'POST' })
 export const postCockpitEnvoyerProd = () => j<{ ok: boolean; log: string }>('/admin/cockpit/envoyer-prod', { method: 'POST' })
 
 // COCKPIT-1 (Lot B) — « L'usine » : le registre des jobs en 4 familles + « Lancer maintenant » /
