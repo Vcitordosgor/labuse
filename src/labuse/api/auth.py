@@ -81,6 +81,23 @@ def wants_html(path: str) -> bool:
     return path == "/" or path.startswith("/app") or path.startswith("/socle")
 
 
+# RADAR-FIX-2 (serveur) — les SEULS endpoints que l'extension de capture appelle, authentifiés par
+# en-tête X-Radar-Token (jamais une session). Le garde global les laisse passer SI le jeton est valide
+# (comparaison à temps constant) ; sans jeton / jeton faux → 401 comme pour toute route protégée.
+# L'enforcement final reste _exiger_radar DANS la route (fail-closed). Les AUTRES /admin/radar/* (dépôt,
+# validation, extraction…) restent gardés par session (exiger_admin) : le jeton radar ne les ouvre pas.
+RADAR_TOKEN_PATHS = frozenset({"/admin/radar/capture", "/admin/radar/etat", "/admin/radar/confirmation"})
+
+
+def radar_token_header_ok(request) -> bool:
+    """Vrai si l'en-tête X-Radar-Token correspond au jeton configuré (LABUSE_RADAR_TOKEN), comparé à
+    TEMPS CONSTANT. Fail-closed : jeton serveur absent OU en-tête absent/faux → False (le garde répond
+    401). N'ouvre AUCUNE session, ne lit aucune base — pur contrôle d'en-tête."""
+    attendu = (get_settings().radar_token or "").strip()
+    fourni = (request.headers.get("x-radar-token") or "").strip()
+    return bool(attendu) and bool(fourni) and hmac.compare_digest(fourni, attendu)
+
+
 def _key() -> bytes:
     s = get_settings()
     if s.secret_key:

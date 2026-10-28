@@ -452,6 +452,11 @@ async def _auth_guard(request, call_next):
         return await call_next(request)
     if info is not None or await run_in_threadpool(auth.token_ok, cookie):
         return await call_next(request)
+    # RADAR-FIX-2 (serveur) — l'extension de capture s'authentifie par en-tête X-Radar-Token (pas de
+    # session). On laisse passer SES 3 endpoints UNIQUEMENT si le jeton est valide (temps constant) ;
+    # sans jeton / jeton faux → on tombe dans le 401 habituel ci-dessous. La route garde _exiger_radar.
+    if path in auth.RADAR_TOKEN_PATHS and auth.radar_token_header_ok(request):
+        return await call_next(request)
     if not auth.configured():
         return JSONResponse(status_code=503, content={
             "detail": "Authentification non configurée (LABUSE_AUTH_PASSWORD absent) — accès fermé."})

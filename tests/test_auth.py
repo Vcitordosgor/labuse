@@ -140,3 +140,35 @@ def test_mot_de_passe_hash_sha256_supporte(client, monkeypatch):
         assert _login(client, "secret-hashe").status_code == 303    # le hash matche le mot de passe
     finally:
         config.get_settings.cache_clear()
+
+
+# ───────────── RADAR-FIX-2 (serveur, Option 2) : jeton X-Radar-Token au garde ─────────────
+
+_RADAR_TOKEN_TEST = "jeton-radar-RADARFIX2-test-constant-48c-xxxxxxxxxxxx"
+
+
+def test_radar_token_passe_le_garde_mais_rien_d_autre(client, pilot, engine, monkeypatch):
+    """Le garde _auth_guard laisse passer les 3 endpoints de l'extension SI X-Radar-Token est valide
+    (comparaison à temps constant) ; sans jeton / faux jeton → 401 ; et le jeton n'ouvre AUCUNE autre
+    route /admin/*. _exiger_radar reste dans la route (enforcement final, fail-closed)."""
+    from labuse import config
+    from labuse.pige.tables import ensure_tables
+
+    ensure_tables(engine)   # /admin/radar/etat lit pige_passes : garantir le schéma pour le 200
+    monkeypatch.setenv("LABUSE_RADAR_TOKEN", _RADAR_TOKEN_TEST)
+    config.get_settings.cache_clear()
+    try:
+        bon = {"X-Radar-Token": _RADAR_TOKEN_TEST}
+        faux = {"X-Radar-Token": "jeton-faux"}
+        # sans jeton → 401 (comme aujourd'hui)
+        assert client.get("/admin/radar/etat").status_code == 401
+        # faux jeton → 401
+        assert client.get("/admin/radar/etat", headers=faux).status_code == 401
+        # bon jeton → passe le garde ET la route (200)
+        assert client.get("/admin/radar/etat", headers=bon).status_code == 200
+        # capture (POST) passe aussi le garde avec le bon jeton : corps vide → 422 métier, JAMAIS 401
+        assert client.post("/admin/radar/capture", headers=bon, json={}).status_code != 401
+        # une AUTRE route /admin/* avec le jeton radar → toujours 401 (jeton scopé aux 3 endpoints)
+        assert client.get("/admin/radar/extraction", headers=bon).status_code == 401
+    finally:
+        config.get_settings.cache_clear()
