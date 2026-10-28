@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- MENAGE-1 (geste 11) — alarme disque du Mac. Tourne toutes les 30 min (StartInterval) et au
+     chargement (RunAtLoad), et notifie quand le disque de travail passe sous 5 Go.
+
+     Le script NE DOIT PAS vivre sous ~/Desktop : macOS (TCC) interdit à launchd d'y lire un fichier
+     → échec 126. On l'installe dans ~/.labuse/ops via deploy/mac/install_agents.sh (placeholders
+     /Users/VIC substitués en $HOME réel). Il n'écrit que dans ~/.labuse : aucun « Accès complet au
+     disque » requis. -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.labuse.alerte-disque</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/VIC/.labuse/ops/alerte_disque_mac.sh</string>
+  </array>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>LABUSE_DISK_MIN_GO</key>
+    <string>5</string>
+    <key>LABUSE_DISK_VOLUME</key>
+    <string>/System/Volumes/Data</string>
+  </dict>
+
+  <!-- au chargement, puis toutes les 30 minutes -->
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StartInterval</key>
+  <integer>1800</integer>
+
+  <key>StandardOutPath</key>
+  <string>/Users/VIC/.labuse/alerte_disque.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/VIC/.labuse/alerte_disque.err.log</string>
+</dict>
+</plist>

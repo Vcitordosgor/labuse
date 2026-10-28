@@ -273,4 +273,147 @@ Recommandation : **B maintenant** (ferme la fuite), **A plus tard** en fenêtre 
 - **Modèle promotrice** (gitignoré : `docs/audit-2026-10/bilan-1/*.xlsx`, `reports/q-v14/*.pkl`) et tout ce dont dépend un test/témoin (bases `labuse_test*`, `labuse_c5`…).
 - **Worktrees non mergés** `labuse-etat2`, `labuse-etatfix2` (travail actif).
 
-*Fin — aucune donnée supprimée, déplacée ou modifiée. Phase B sur feu vert, case par case.*
+*Fin de la PHASE A — aucune donnée supprimée, déplacée ou modifiée. Phase B sur feu vert, case par case.*
+
+---
+
+# PHASE B — EXÉCUTION (2026-10-28, branche `fix/menage-1`)
+
+Exécution de la liste **exacte** validée par Vic (« Rien d'autre »). Chaque geste ci-dessous a été joué,
+mesuré, prouvé. Branche `fix/menage-1`, poussée, **pas de merge**. `df` avant/après par machine.
+**Note disque Mac :** au moment de l'exécution le Mac n'était plus à 649 Mo mais à **19 Gio libres**
+(du disque s'était libéré depuis l'audit) → les `VACUUM FULL` étaient confortables ; on a quand même
+appliqué la règle « libre > taille de la table » avant chacun.
+
+## `df` avant / après
+
+| Machine | Avant | Après | Remarque |
+|---|---|---|---|
+| **Mac** (`/System/Volumes/Data`) | 188 Gi util. / **19 Gi libres** / 91 % | 171 Gi util. / **37 Gi libres** / 83 % | **+18 Gio** (rm + poubelle + VACUUM FULL) |
+| **Base locale** `labuse` | **54 Go** | **44 Go** | −10 Go (runs purgés + VACUUM FULL) |
+| **VPS** (`/`) | 78 G util. / 19 G libres / 81 % | 71 G util. / **26 G libres** / 74 % | DROP 11 tables + rm copie + rotation dump ; **le gros (~7 Go dryrun) arrive au VACUUM FULL de la nuit** |
+| **`.git`** partagé | 4,4 Go | 4,4 Go | **inchangé par conception** (Option B ne réécrit pas l'historique ; elle ferme la fuite) |
+
+## MAC
+
+**(1)(2)(3) `rm`** — faits, vérifiés absents ensuite :
+- `~/labuse-backups/vps/hebdo-labuse-labuse-20261018-133004.dump` (6,4 Go) ✓
+- `~/Desktop/labuse/.local/ortho-proxy-cache` (100 Mo) ✓
+- `~/labuse-backups/sources-maj-1/` (275 Mo) ✓
+
+**(5) `DROP SCHEMA poubelle CASCADE`** — **preuve d'absence de lecture** : `grep` sur tout le dépôt
+(`.py/.sql/.ts/.sh/.yaml`) → les 12 occurrences de `poubelle` sont soit des **écritures** (la commande
+CLI `circuit purge-orphelines` qui *déplace vers* `poubelle` : `CREATE SCHEMA` + `ALTER … SET SCHEMA`),
+soit des **commentaires**. **Aucun `FROM/JOIN poubelle.…`, aucun `search_path` `poubelle`.** DROP joué :
+**35 objets** supprimés (1,89 Go libérés immédiatement). Schéma `poubelle` : **absent** ensuite.
+
+**(4) Purge des vieux runs du Postgres local + VACUUM FULL table par table.**
+Frontière confirmée par le registre `residuel_runs` : seq 17 = **q_v20 servi**, seq 16 = q_v19, seq 15 = q_v18,
+seq 1 = **épinglé** (gardés) ; seq 13 = **q_v16** (purgé). `q_v13_sources1` purgé de la cascade.
+DELETE (runs **gardés après** : q_v18/q_v19/q_v20 ; cascade q_v18_sources/q_v19_sources ; seq 1/15/16/17) :
+
+| Table | DELETE | VACUUM FULL : avant → après |
+|---|---|---|
+| `score_labuse` (q_v16) | 431 663 | 8 780 → **5 711 Mo** |
+| `parcel_p_score_v2` (run_id q_v16) | 431 663 | 3 683 → **1 618 Mo** |
+| `parcel_residuel_runs` (seq 13) | 431 663 | 391 → **298 Mo** |
+| `dryrun_parcel_evaluations` (q_v13_sources1) | 431 663 | 221 → **140 Mo** |
+| `dryrun_cascade_results` (q_v13_sources1) | 17 599 544 | 12 Go → **8 269 Mo** |
+
+**Règle « libre > taille table » appliquée AVANT chaque VACUUM FULL** (ordre du + petit au + gros pour
+libérer au fur et à mesure) — les 5 tables passaient (libre 27→37 Gio). Registres de runs
+(`residuel_runs`, `score_labuse_runs`, `p_score_v2_runs`) **non touchés** (hors liste A1.1 ; la provenance
+historique reste lisible).
+
+## VPS — `ssh labuse-vps`, aucun redémarrage du service
+
+**Sauvegarde fraîche d'abord.** Une sauvegarde `backup-postgres` (dump lean `-Fc`) tournait déjà au
+lancement (lancée hors de moi, 19:32→19:53) → **dump frais complet `labuse-labuse-20261028-193252.dump`
+7,12 Go** présent avant tout geste destructeur. Tous les gestes faits **hors des heures de dump** (03 h /
+13:30 / 17 h) : exécution ~20 h.
+
+**(7) Tables obsolètes — DROP une par une, seulement les non-lues (preuve).** `grep` de chaque table :
+- **DROP (11, référencées UNIQUEMENT dans `registre/tables.py` comme « purger … », soit aucune lecture de données)** :
+  `_cad_sm1_staging` (0 réf.), `m6_a02_backup_plu_dup`, `m6_snapshot_mvt_post2a`, `m6_snapshot_mvt_post2b`,
+  `parcel_zone_plu_prebascule`, `backup_spaul_ppr_avant_littoral`, `parcel_au_statut_pre_m32`,
+  `parcel_au_statut_prebascule`, `backup_sp_ppr_avant_littoral`, `m6_p103_backup_dvf_surfaces`,
+  `cascade_ext_avant`. DROP sans CASCADE (une dépendance aurait fait erreur) → 11/11 OK, 0 survivant.
+  **~919 Mo** rendus. *(Le `COPY m6_snapshot_mvt_post2b` vu pendant l'audit était le `pg_dump`, pas du
+  code applicatif.)*
+- **GARDÉES (un lecteur de code existe — par prudence, hors DROP, remontées ici)** :
+  `score_snapshot_parcelles` (**table vivante** : modèle SQLAlchemy, écrite par le scoring, lue par
+  `monitoring`/`brulantes`), `parcel_residuel_base_legacy` (cible de swap **vivante** dans
+  `faisabilite/residuel_runs.py`), `p_model_static_pre_v8` + `parcel_residuel_pre_v8` (lues par
+  `scripts/rollback_v8_calibre.py`), `parcel_residuel_rerun` (lue par `scripts/bascule_v8_calibre.py`).
+  → gain conservateur (~0,9 Go vs ~2 Go estimés) : « seulement celles qu'aucun code ne lit ».
+
+**(6) `dryrun_cascade_results` (PROD).** Servi = q_v20 sur cascade **q_v19_sources** ; précédent =
+**q_v18_sources**. Cibles `q_v11_m137` + `q_v13_sources1` = bien antérieures → **DELETE 33 500 354 lignes
+en 64 s** (restent q_v18_sources + q_v19_sources). **`pg_repack` INDISPONIBLE** (ni binaire, ni extension
+dans `pg_available_extensions`). **Effet du verrou vérifié** : `dryrun_cascade_results` est **lue au
+runtime** (`renouvellement`, `models`, `courrier_compose`, `regles/*`, `solaire`) → un `VACUUM FULL`
+(ACCESS EXCLUSIVE) **bloquerait ces lectures** le temps de la réécriture. Donc, comme demandé,
+**VACUUM FULL programmé LA NUIT** : timer systemd **one-shot** `labuse-menage1-vacuumfull` →
+**jeu. 2026-10-29 01:30 +04** (avant le dump de 03 h), wrapper `/opt/labuse/menage1_vacuumfull_night.sh`
+(`lock_timeout 10 min`, journal `/var/log/labuse/menage1_vacuumfull.log`, puis **re-fumée** readyz + BY0083).
+À 20 h la table est encore à 16 Go (33,5 M tuples morts) ; **~7 Go seront rendus après le VACUUM FULL**.
+*(Vérif : `systemctl list-timers labuse-menage1-vacuumfull.timer` ; résultat au journal ci-dessus.)*
+
+**(8) `rm -rf /opt/labuse/app-avant-etatfix-20261028-0249`** — fait. Copie de retour arrière **la plus
+récente GARDÉE = `app-avant-radarfix2`** (28/10 16:52 ; la copie `1028b` du rapport n'existe plus, elle a
+été remplacée). Données **hard-linkées** → ~297 Mo réels rendus (le reste des blocs reste porté par `app`
++ `app-avant-radarfix2`). **Aucun redémarrage.**
+
+**Fumée après gestes serveur.** `readyz` = **200** (public `app.labuse.immo` ET interne `127.0.0.1:8000`).
+**Fumée BY0083** : la fiche a été **reconstruite en process** (chemin réel `_fiche_servie`, lecture seule,
+sans HTTP) sur la base **post-gestes** → **OK**, run servi **q_v20**, **77 clés**, `commune=Saint-Paul`,
+`adresse=143 Rue Évariste de Parny`. *(Le fetch HTTP direct renvoie 401 — l'app exige une session ; le
+login « pilote » de compat est mort ; d'où la fumée en process, qui exerce le vrai code de la fiche.)*
+
+## GIT — Option B uniquement (pas de `git rm --cached`, pas de réécriture)
+
+- **`.gitignore`** : bloc « MENAGE-1 » large — `captures/`, `captures-*/`, `**/captures/`,
+  `docs/design/**/*.png`, `docs/GABARIT/**/*.png`, `docs/audit-*/**/*.{png,pdf}`, `*.har`,
+  `docs/mandats/*.zip`, `**/deck_*.html`, `reports/**/DOSSIER-*.{html,pdf}`. Vérifié : **n'ignore
+  aucun fichier déjà suivi** (`git check-ignore` sur `git ls-files` = vide).
+- **Hook `pre-commit`** (`scripts/git-hooks/pre-commit`, posé par `install-hooks.sh`, `core.hooksPath`
+  déjà en place) : **refuse tout fichier mis en index > 2 Mio hors liste blanche** (liste vide
+  aujourd'hui, extensible + commentée), message clair, `--no-verify` en secours. Testé : refuse un
+  fichier 3 Mio (exit 1), laisse passer un petit (exit 0), liste blanche OK. **Ne retire rien de déjà
+  suivi** (les 395 fichiers > 2 Mio existants restent — décision d'historique = Vic). `.git` reste à 4,4 Go.
+
+## PRÉVENTION
+
+- **(10) Job `purge-runs` au registre** (`labuse.jobs` + habillage « L'usine » + `HORLOGES.csv`).
+  Garde **servi + 2 précédents** (récence) + runs référencés (lignée/exceptions/démo) + épinglés ;
+  supprime le reste puis **VACUUM ANALYZE (pas FULL : aucun verrou exclusif, sûr en prod)**.
+  Implémentation `jobs_impl.purge_runs` ; test `test_cron1_registre.py::test_purge_runs_gele_garde_servi_plus_deux`.
+  **GELÉ par défaut** (`gel=…`) : geste destructeur — au registre (connu, monitoré, lançable à la main,
+  crontab **commenté**), **à dégeler quand Vic valide l'automatisation**. (Historiquement cette rétention
+  vivait à la bascule, `labuse purge-runs-morts`, « jamais un cron ».)
+- **(11) Alarme disque Mac < 5 Go** : `deploy/mac/alerte_disque_mac.sh` + agent launchd
+  `com.labuse.alerte-disque.plist` (toutes les 30 min, notif macOS, 1 alerte/jour, journal
+  `~/.labuse/alerte_disque.log`), câblé dans `install_agents.sh` (5ᵉ agent). Testé : branche « bas »
+  (notif) et « rétabli » OK.
+- **(12) Retrait des worktrees mergés** : `scripts/ops/retrait_worktrees_merges.sh` — retire une worktree
+  **seulement si** sa branche est mergée dans `main` **ET** l'arbre est propre ; **REFUSE** (et liste les
+  fichiers) s'il reste des **non-suivis** (livrables). DRY-RUN par défaut (`--apply` pour agir), jamais la
+  worktree principale/courante/sur `main`. Validé en **dry-run** sur le dépôt réel : garde `labuse`/
+  `labuse-main`/`labuse-menage`, **retirable** `labuse-radarfix2` (mergée+propre), 0 refusé.
+  *(Le jeu de worktrees a changé depuis l'audit A1.3 — liste réelle ci-dessus.)*
+
+## Tests
+
+`tests/test_cron1_registre.py` **9/9** (dont la garde du nouveau job), crontab généré **couvre** `purge-runs`
+(gelé = ligne commentée), `test_usine_endpoint` (gelés 5→**6**) et `test_dashboardfix1_horloges`
+(`HORLOGES.csv` ← `purge-runs`) **verts**. Import de `labuse.jobs`/`jobs_impl` OK (assertion registre↔usine
+tenue). *(Les échecs `test_circuit_provenance` + 20 SKIP = base `labuse_test`/rôle `labuse` absents de cet
+environnement local — pré-existants, sans rapport avec ces gestes.)*
+
+## Reste (hors périmètre, non fait — rappel)
+
+VACUUM FULL `dryrun_cascade_results` PROD = **programmé 01:30** (ci-dessus). Réécriture d'historique git
+(Option A, ~4 Go) **non faite** (Option B seule demandée). Worktrees : **non retirés** (script livré, Vic
+décide). Tables PROD gardées (lecteur de code) listées ci-dessus.
+
+*Fin PHASE B — gestes exactement ceux validés, rien d'autre. Branche `fix/menage-1` poussée, pas de merge.*

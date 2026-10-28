@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# LA BUSE — (ré)installation des 4 agents launchd du Mac HORS DU BUREAU.
+# LA BUSE — (ré)installation des 5 agents launchd du Mac HORS DU BUREAU.
 # -----------------------------------------------------------------------------
 # POURQUOI. macOS (TCC) interdit à launchd de LIRE un script rangé sous ~/Desktop :
 # les agents échouent alors en code 126 « Operation not permitted ». On installe
@@ -15,11 +15,12 @@
 #   4. décharge puis recharge chaque agent (bootout/bootstrap, repli load -w) ;
 #   5. kickstart chacun (sauf --no-kickstart) et affiche la fin de chaque journal.
 #
-# Les 4 agents :
+# Les 5 agents :
 #   com.labuse.backup-offsite   copie vérifiée des dumps VPS → disque externe du Mac
 #   immo.labuse.pull-backups    rapatriement quotidien des dumps VPS → ~/labuse-backups/vps
 #   immo.labuse.watch-prod      sentinelle /healthz de la prod toutes les 10 min
 #   com.labuse.restore-test     test de restauration mensuel (restaure un dump → base jetable → DROP)
+#   com.labuse.alerte-disque    alarme disque Mac sous 5 Go, toutes les 30 min (MENAGE-1)
 #
 # DÉPENDANCES EXTERNES (hors ~/Desktop, rien à copier) :
 #   · bash/ssh/rsync/curl/shasum/python3/osascript : /usr/bin (PATH launchd minimal) ;
@@ -46,6 +47,7 @@ SCRIPTS=(
   "deploy/scripts/pull_backups.sh"
   "deploy/scripts/watch_prod.sh"
   "deploy/mac/restore_test.sh"           # DONNEES-ETAT-FIX-2 (Lot A) — test de restauration mensuel
+  "deploy/mac/alerte_disque_mac.sh"      # MENAGE-1 (geste 11) — alarme disque Mac sous 5 Go
 )
 # plist (modèles /Users/VIC) → label launchd
 PLISTS=(
@@ -53,6 +55,7 @@ PLISTS=(
   "immo.labuse.pull-backups"
   "immo.labuse.watch-prod"
   "com.labuse.restore-test"              # DONNEES-ETAT-FIX-2 (Lot A)
+  "com.labuse.alerte-disque"             # MENAGE-1 (geste 11)
 )
 
 echo "▶ dépôt source : $REPO_ROOT"
@@ -101,11 +104,11 @@ for label in "${PLISTS[@]}"; do
   echo "  plist → $dst (script = $(/usr/libexec/PlistBuddy -c 'Print :ProgramArguments:1' "$dst" 2>/dev/null))"
   reload_agent "$label" "$dst"
 done
-echo "✓ 4 agents (ré)installés dans ~/.labuse/ops et rechargés."
+echo "✓ 5 agents (ré)installés dans ~/.labuse/ops et rechargés."
 
 # ── 5) kickstart + journaux ──────────────────────────────────────────────────────────────────────────
 if [ "$KICKSTART" = 1 ]; then
-  echo; echo "▶ kickstart des 4 agents (exécution immédiate) :"
+  echo; echo "▶ kickstart des 5 agents (exécution immédiate) :"
   for label in "${PLISTS[@]}"; do
     launchctl kickstart -k "$DOMAIN/$label" 2>/dev/null || true
     echo "  kickstart $label"

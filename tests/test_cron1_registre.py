@@ -3,6 +3,25 @@ Ces tests ne touchent PAS la base (pur registre) → ils tournent partout."""
 from labuse.jobs import JOBS, TOUCHE_EAU
 
 
+def test_purge_runs_gele_garde_servi_plus_deux():
+    """MENAGE-1 (geste 10) — le job de purge des runs existe AU REGISTRE, GELÉ (crontab commenté
+    tant que Vic ne l'a pas validé), et son implémentation garde bien le servi + 2 précédents."""
+    import inspect
+
+    from labuse import jobs_impl
+    j = JOBS["purge-runs"]
+    assert j.touche == "exploitation" and j.besoin_db
+    assert j.gel, "purge-runs doit être GELÉ au registre (geste destructeur à valider)"
+    assert j.cadence.startswith("hebdo"), "purge hebdomadaire (après l'entretien de la base)"
+    # l'implémentation est bien câblée et porte la règle « servi + 2 précédents ».
+    assert callable(getattr(jobs_impl, "purge_runs", None)), "jobs_impl.purge_runs manquant"
+    src = inspect.getsource(jobs_impl.purge_runs)
+    assert "recents[:3]" in src, "la règle = servi + 2 précédents (3 plus récents gardés)"
+    assert "is_pinned" in src, "les runs épinglés doivent être gardés"
+    assert "VACUUM (ANALYZE)" in src and "FULL" not in src.split("VACUUM (ANALYZE)")[1][:40], \
+        "VACUUM plain (pas FULL : aucun verrou exclusif en prod)"
+
+
 def test_job_a_une_raison():
     """« Un job sans raison n'existe pas » — chaque job porte une RAISON (FR), un TOUCHE (eau|exploitation)
     et un TEST (node-id). Le méta-verrou du registre : impossible d'ajouter un job muet."""

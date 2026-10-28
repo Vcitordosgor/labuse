@@ -599,6 +599,101 @@ def pg_maintenance(ctx: JobContext) -> None:
             "— un vert ici serait un vert par vacuité")
 
 
+def purge_runs(ctx: JobContext) -> None:
+    """MENAGE-1 (geste 10) — PURGE DES VIEUX RUNS DE SCORING pour que la base n'empile plus q_v11→q_v20
+    (la cause des 12–16 Go de `dryrun_cascade_results`, cf. rapport MENAGE-1 A1.1/A2). Garde le SERVI +
+    les 2 PRÉCÉDENTS (par récence, `score_labuse_runs.computed_at`) + tout run RÉFÉRENCÉ (lignée /
+    exceptions de service / démo) + les runs ÉPINGLÉS (`residuel_runs.is_pinned`). Supprime le reste de
+    façon ATOMIQUE sur toutes les tables run-scopées TEXTE (labels `q_*`) puis VACUUM ANALYZE — JAMAIS
+    `FULL` : pas de verrou exclusif, sûr sur la prod vivante (la place est réutilisée en interne,
+    l'empilement cesse ; le gain-disque-vers-l'OS reste un geste de bascule/nuit). Respecte le dry-run.
+
+    Ne touche PAS les tables keyées par `run_seq` entier (`parcel_residuel_runs`) : celles-là sont
+    purgées à la bascule (`residuel_runs.purge_run`). Le gros du volume (dryrun_cascade_results,
+    score_labuse, parcel_p_score_v2) est keyé par label → couvert ici.
+
+    GELÉ au registre par défaut (geste destructeur) : la rétention historique vivait À LA BASCULE
+    (`labuse purge-runs-morts`, délibérément « jamais un cron »). Dégel = décommenter la ligne du
+    crontab généré, quand Vic valide l'automatisation."""
+    from . import db, runs
+
+    purgeables: list[str] = []
+    touched: list[str] = []
+    with db.session_scope() as s:
+        # 1) tables run-scopées TEXTE (labels q_*) — même périmètre que `purge-runs-morts`.
+        tables = [(r[0], r[1]) for r in s.execute(text(
+            "SELECT table_name, column_name FROM information_schema.columns "
+            "WHERE table_schema='public' AND column_name IN ('run_id','run_label') "
+            "AND data_type IN ('character varying','text','character') ORDER BY table_name")).all()]
+
+        # 2) keep = servi + 2 précédents (récence) + référencés + épinglés (+ cascades/_sources).
+        servi = runs.current()
+        try:
+            from .scoring.score_v_constants import RUN_PRECEDENT
+        except Exception:  # noqa: BLE001
+            RUN_PRECEDENT = servi
+        recents = [r[0] for r in s.execute(text(
+            "SELECT run_label FROM score_labuse_runs ORDER BY computed_at DESC NULLS LAST")).all() if r[0]]
+        keep = set(recents[:3])                         # servi + 2 précédents par récence
+        keep |= {servi, RUN_PRECEDENT, "q_v2_demo"}
+        try:                                            # lignée (lignee_tete lit leur donnée)
+            from .scoring.lignee_tete import CHAINE_GESTES
+            for a, b, *_ in CHAINE_GESTES:
+                keep.update({a, b})
+        except Exception:  # noqa: BLE001 — la lignée ne doit jamais faire échouer la purge
+            log.warning("purge-runs : lignée indisponible, keep = servi + 2 précédents", exc_info=True)
+        keep.update(r[0] for r in s.execute(text(       # exceptions de service encore posées
+            "SELECT DISTINCT run_id FROM served_run_exceptions")).all() if r[0])
+        for lbl, casc in s.execute(text(                # cascade des gardés (dryrun_cascade_results)
+                "SELECT run_label, cascade_label FROM score_labuse_runs")).all():
+            if lbl in keep and casc:
+                keep.add(casc)
+        keep.update({f"{k}_sources" for k in list(keep)})   # défensif : garde aussi le *_sources
+        keep.update(r[0] for r in s.execute(text(           # runs ÉPINGLÉS (label)
+            "SELECT label FROM residuel_runs WHERE is_pinned")).all() if r[0])
+
+        # 3) présents - keep = purgeables.
+        present: set[str] = set()
+        for t, c in tables:
+            present.update(r[0] for r in s.execute(text(f"SELECT DISTINCT {c} FROM {t}")).all() if r[0])
+        purgeables = sorted(present - keep)
+        ctx.compte(servi=servi, garde=sorted(keep & present), purgeables=purgeables)
+        if not purgeables:
+            ctx.compte(purges=0, tables_touchees=[])
+            return
+        if ctx.dry_run:
+            ctx.compte(purges=len(purgeables), note="dry-run — rien supprimé")
+            return
+
+        # 4) purge ATOMIQUE (toutes les tables run-scoped dans une transaction).
+        for t, c in tables:
+            n = s.execute(text(f"DELETE FROM {t} WHERE {c} = ANY(:r)"), {"r": purgeables}).rowcount
+            if n:
+                touched.append(t)
+        from . import circuit_journal
+        circuit_journal.journaliser(s, "purger", ",".join(purgeables), "cron", "ok",
+                                    {"tables": sorted(set(touched))})
+        s.commit()
+
+    # 5) VACUUM ANALYZE (plain, autocommit) sur les tables touchées — PAS de verrou exclusif.
+    if touched:
+        from .db import engine
+        raw = engine().raw_connection()
+        try:
+            dbapi = raw.driver_connection
+            av = dbapi.autocommit
+            dbapi.autocommit = True
+            try:
+                with dbapi.cursor() as cur:
+                    for t in sorted(set(touched)):
+                        cur.execute(f"VACUUM (ANALYZE) {t}")
+            finally:
+                dbapi.autocommit = av
+        finally:
+            raw.close()
+    ctx.compte(purges=len(purgeables), tables_touchees=sorted(set(touched)))
+
+
 def rapport_admin(ctx: JobContext) -> None:
     """Un mail hebdo : disque, 5 plus grosses tables, statut de chaque job sur 7 j, sources en retard,
     veilles actives, dépôts traités, digests envoyés, date du dernier restore-test réussi."""

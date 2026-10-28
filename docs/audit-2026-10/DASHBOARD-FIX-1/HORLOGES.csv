@@ -11,6 +11,7 @@ sync-gpu;mensuel (15);04:00 le 15;eau;deploy.sh → /etc/cron.d/labuse (génér�
 ingest-dvf;hebdo (mar);05:00 mardi;eau;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run ingest-dvf
 backup-postgres;quotidien;13:30;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run backup-postgres
 pg-maintenance;hebdo (dim);04:00 dim;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run pg-maintenance
+purge-runs;hebdo (dim);04:30 dim;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs — GELÉ, ligne commentée);labuse jobs run purge-runs
 healthcheck;15 min;toutes les 15 min;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run healthcheck
 sante-endpoints;15 min;toutes les 30 min;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run sante-endpoints
 copilote-purge;quotidien;03:30;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run copilote-purge

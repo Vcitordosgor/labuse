@@ -110,7 +110,7 @@ def test_usine_endpoint():
     assert r.status_code == 200
     j = r.json()
     assert [f["n"] for f in j["familles"]] == [1, 2, 3, 4]
-    assert len(j["geles"]) == 5   # 4 Radar + digest (restore-test retiré du registre, Lot C)
+    assert len(j["geles"]) == 6   # 4 Radar + digest + purge-runs (gelé MENAGE-1, geste 10)
 
 
 @pytest.mark.db
