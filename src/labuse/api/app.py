@@ -6686,34 +6686,16 @@ def _fiche_cadastre_disparue(db: Session, idu: str, row) -> dict:
     }
 
 
-@app.get("/parcels/{idu}")
-def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_db),
-                 request: Request = None, trace: int = 0) -> dict:
-    """Fiche « Tout ce que LA BUSE a trouvé » (§8).
-
-    FIX-FICHE F3 : l'endpoint sert DÉSORMAIS TOUJOURS la fiche PREMIUM (`_q_v2_fiche`) — la seule
-    structure que l'UI sait afficher. Sans `source` valide (`q_v*`), on retombe sur le run SERVI
-    `Q_A_RUN_LABEL`, PLUS sur le builder legacy `_build_fiche` (dont la structure divergente —
-    verdict/cascade/resume/ai/bati… — n'était jamais rendue par l'UI et pouvait fuir à un appelant API
-    direct). Le front envoie de toute façon `source=q_v*` (api.ts `getFiche`). Le builder legacy
-    survit UNIQUEMENT pour /explain et /export (usages internes), plus jamais servi comme fiche."""
-    idu = _check_idu(idu)   # garde O5 (octet nul / IDU malformé) → 404 propre AVANT tout accès DB
-    # SOURCES-MAJ-1 — parcelle sortie du cadastre : fiche de courtoisie (jamais une erreur) même si
-    # le run servi ne la porte plus. Lookup PK indexé, filtré sur le marqueur (≈0 ligne hors disparues).
-    if db is not None:
-        _disp = db.execute(text("SELECT commune, cadastre_disparue_le FROM parcels "
-                                "WHERE idu = :idu AND cadastre_disparue_le IS NOT NULL"),
-                           {"idu": idu}).mappings().first()
-        if _disp:
-            return _fiche_cadastre_disparue(db, idu, _disp)
-    run = source if (source and source.startswith("q_v")) else runs.current()
-    # VITESSE-PROD-1 — lecture du cache de fiche (cf. _FICHE_CACHE). La copie `dict(...)` protège
-    # l'entrée cachée des ajouts par requête (`_trace` admin) ; le contenu servi est IDENTIQUE.
+def _fiche_servie(db: Session, idu: str, run: str) -> dict:
+    """VITESSE-2 (Lot 3) — fiche premium SERVIE (q_v2 + `analyse_labuse`) passant par `_FICHE_CACHE`.
+    POINT D'ACCÈS UNIQUE partagé par `/parcels/{idu}` ET `/compare` : le comparateur réutilise ainsi
+    le cache de fiche au lieu de recalculer 3 fiches à CHAQUE appel (DEPLOY-1028 : /compare ~7 s même
+    en relance, « rien n'est réutilisé »). Même clé/empreinte que la fiche → une fiche ouverte réchauffe
+    le comparatif et réciproquement. Contenu IDENTIQUE à l'ancien chemin (la copie `dict(...)` protège
+    l'entrée cachée des ajouts par requête, ex. `_trace`)."""
     version = "" if os.environ.get("PYTEST_CURRENT_TEST") else _fiche_version(db)
-    # CHASSE-CALCULS-FIX-1 Lot 3 (E-B1) — le cache de fiche est invalidé DÈS QU'UNE PARCELLE CHANGE :
-    # `_fiche_version` est GLOBAL (data_sources) et ne capte pas une édition parcellaire (contenance,
-    # géométrie → `updated_at`). On ajoute un jeton PAR PARCELLE à la clé : toute modification de la
-    # ligne `parcels` (donc de `updated_at`) OU de la contenance fait changer la clé → recalcul.
+    # CHASSE-CALCULS-FIX-1 Lot 3 (E-B1) — jeton PAR PARCELLE (updated_at + contenance) : toute édition
+    # de la ligne `parcels` change la clé → recalcul (le cache ne sert jamais une donnée parcellaire périmée).
     jeton_parcelle = None
     if db is not None:
         try:
@@ -6728,32 +6710,16 @@ def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_
             hit = _FICHE_CACHE.get(cle)
             if hit is not None:
                 _FICHE_CACHE.move_to_end(cle)
-                payload = dict(hit)
-            else:
-                payload = None
-    else:
-        payload = None
-    if payload is not None:
-        if trace:
-            from .. import registre
-            from .auth import exiger_admin
-            exiger_admin(request)
-            cids = sorted({cid for rid, r in registre.ROBINETS.items()
-                           if rid.startswith("fiche_parcelle") for cid in r.chiffres})
-            payload["_trace"] = registre.tampons_pour(db, cids)
-        return payload
+                return dict(hit)
     payload = _q_v2_fiche(db, idu, run_label=run)
     # ANALYSE-1 — le verdict du NOUVEAU moteur (Score LABUSE + Signal de mutation, run candidat) attaché
-    # à la fiche : bande, Signal, contributions FR EN ENTIER, cause d'incomplétude. Servi TEL QUEL (le
-    # moteur produit le vocabulaire ; le score ne s'affiche QUE sur la fiche et dans l'Analyse, mandat §4).
+    # à la fiche : bande, Signal, contributions FR EN ENTIER, cause d'incomplétude. Servi TEL QUEL.
     sl = db.execute(text(
         """SELECT bande, signal_niveau, contributions, cause, non_calculable, sdp_residuelle_m2
            FROM score_labuse WHERE run_label = :r AND idu = :idu"""),
         {"r": _score_labuse_run(), "idu": idu}).mappings().first() if (db is not None and _score_labuse_ready(db)) else None
-    # CHASSE-DONNEES-FIX-1 (Lot 4, C-13 + arbitrage Vic AC0157) — MÊME convention que le listing/la
-    # tuile : SDP « — » (None) + la cause dès qu'une cause écarte la parcelle (plus un 0 à côté du
-    # « — » de la carte). Si score_labuse n'a PAS de cause (0 muet) mais que parcel_residuel en porte
-    # une (terrain_exigu/portion_reduite…), on la REMONTE + son libellé → jamais un 0 sans pourquoi.
+    # CHASSE-DONNEES-FIX-1 (Lot 4, C-13 + arbitrage Vic AC0157) — SDP « — » (None) + la cause dès
+    # qu'une cause écarte la parcelle ; cause remontée de parcel_residuel si score_labuse est muet.
     if sl:
         _sl = dict(sl)
         if _sl.get("cause") is None and db is not None:
@@ -6781,6 +6747,33 @@ def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_
             while len(_FICHE_CACHE) > _FICHE_CACHE_MAX:
                 _FICHE_CACHE.popitem(last=False)
         payload = dict(payload)   # l'appelant (trace) ne doit jamais muter l'entrée cachée
+    return payload
+
+
+@app.get("/parcels/{idu}")
+def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_db),
+                 request: Request = None, trace: int = 0) -> dict:
+    """Fiche « Tout ce que LA BUSE a trouvé » (§8).
+
+    FIX-FICHE F3 : l'endpoint sert DÉSORMAIS TOUJOURS la fiche PREMIUM (`_q_v2_fiche`) — la seule
+    structure que l'UI sait afficher. Sans `source` valide (`q_v*`), on retombe sur le run SERVI
+    `Q_A_RUN_LABEL`, PLUS sur le builder legacy `_build_fiche` (dont la structure divergente —
+    verdict/cascade/resume/ai/bati… — n'était jamais rendue par l'UI et pouvait fuir à un appelant API
+    direct). Le front envoie de toute façon `source=q_v*` (api.ts `getFiche`). Le builder legacy
+    survit UNIQUEMENT pour /explain et /export (usages internes), plus jamais servi comme fiche."""
+    idu = _check_idu(idu)   # garde O5 (octet nul / IDU malformé) → 404 propre AVANT tout accès DB
+    # SOURCES-MAJ-1 — parcelle sortie du cadastre : fiche de courtoisie (jamais une erreur) même si
+    # le run servi ne la porte plus. Lookup PK indexé, filtré sur le marqueur (≈0 ligne hors disparues).
+    if db is not None:
+        _disp = db.execute(text("SELECT commune, cadastre_disparue_le FROM parcels "
+                                "WHERE idu = :idu AND cadastre_disparue_le IS NOT NULL"),
+                           {"idu": idu}).mappings().first()
+        if _disp:
+            return _fiche_cadastre_disparue(db, idu, _disp)
+    run = source if (source and source.startswith("q_v")) else runs.current()
+    # VITESSE-2 (Lot 3) — fiche servie via le point d'accès UNIQUE `_fiche_servie` (cache _FICHE_CACHE),
+    # partagé avec /compare. La copie `dict(...)` interne protège l'entrée cachée (ajout `_trace`).
+    payload = _fiche_servie(db, idu, run)
     if trace:
         # CIRCUIT-1 lot 1.4 — MODE TRAÇAGE (admin seulement, 403 sinon) : le tampon de chaque
         # chiffre déclaré pour les sections de la fiche parcelle (registre.robinets fiche_parcelle_*).
@@ -8655,7 +8648,10 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
         try:
             # SOURCE SERVIE : la fiche premium (verdict/rang/fraction/raison M135/M137) + la
             # faisabilité du même point de calcul — plus la fiche legacy `_build_fiche`.
-            row = _compare_row(_q_v2_fiche(db, idu), fiche_payload(db, pid))
+            # VITESSE-2 (Lot 3) — via `_fiche_servie` (cache _FICHE_CACHE partagé avec /parcels) :
+            # le comparatif ne recalcule plus la fiche à chaque appel (identique à `_q_v2_fiche(db, idu)`,
+            # vérifié). `_compare_row` ignore les clés en plus (analyse_labuse).
+            row = _compare_row(_fiche_servie(db, idu, runs.current()), fiche_payload(db, pid))
         except HTTPException:
             continue
         # DOCS-FIX-1 (P5) + CHASSE-DONNEES-FIX-1 (Lot 3, C-06) — la « Zone PLU » du Comparatif =
