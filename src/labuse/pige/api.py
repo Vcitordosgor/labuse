@@ -1068,7 +1068,7 @@ def radar_annonce_analyser(body: AnnonceAnalyseIn) -> dict:
     les champs PRÉSENTS dans l'annonce (jamais devinés) et l'écart au REPÈRE COMMUNE du bon type — sans
     jamais rattacher à une parcelle (pont V2 écarté par le mandat), donc fiabilité « limitée » assumée.
     Toute panne du portail / page illisible → message HONNÊTE (jamais de rapport partiel silencieux)."""
-    from datetime import date
+    from ..tz import today_reunion
     from . import html_next, signaux
     url = (body.url or "").strip()
     if not _URL_RE.match(url) or "leboncoin." not in url.lower():
@@ -1104,7 +1104,7 @@ def radar_annonce_analyser(body: AnnonceAnalyseIn) -> dict:
         "prix_m2": rec.get("prix_m2"),
         "commune": commune,
         "url": url,
-        "releve_le": date.today().isoformat(),
+        "releve_le": today_reunion().isoformat(),
         # Position Leboncoin (souvent un centroïde de quartier/commune) — sert UNIQUEMENT à centrer la
         # carte sur la commune, jamais à rattacher une parcelle (pont V2 écarté par le mandat).
         "lat": rec.get("lat"),

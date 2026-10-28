@@ -593,6 +593,12 @@ NON_SONDES: dict[str, str] = {
                        "l'échantillon producteur SRU (4.4, à valider) puis extension sonde",
     "taux_lls_pct": "idem SRU — échantillon producteur 4.4 + identité du bloc (V4b)",
     "ecart_demande_acte_pct": "Radar marché : n<5 déjà gardé ; extension sonde à décider Vic",
+    # ANNONCE-1 — prix_demandé servi à DEUX robinets, mais depuis DEUX sources distinctes : fiche_annonce
+    # = prix d'un bien Radar en base (table pige_biens) ; outil_analyser_annonce = prix SCRAPÉ en direct
+    # d'une URL Leboncoin collée. Jamais le même bien, jamais la même valeur à confronter — la comparaison
+    # robinet à robinet est sans objet (comme hauteur_bati_m / prix_neuf_vefa_acte_eur_m2).
+    "prix_demande_eur": "fiche_annonce = bien Radar en base ; outil Analyser une annonce = prix scrapé "
+                        "en direct d'une annonce collée — deux sources, deux biens, comparaison sans objet",
     "mixite_clause": "règle L111 servie fiche+PDF du même moteur — cas recette_exports1",
     "mutations_12m_n": "fiche commune + comparateur (moteur commune.indicateurs) — échantillon "
                        "producteur DVF (4.4, à valider)",

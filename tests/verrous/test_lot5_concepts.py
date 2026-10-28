@@ -158,12 +158,15 @@ def test_v5f_vert_sur_les_15_outils():
     (scoreur-adresse) retiré → 18 → 17. DENSIFIER-PLI (PISCINES-2 Lot B) : « Densifier l'existant »
     (renouvellement) retiré du menu et plié dans le filtre Capacité (« Déjà bâti ») → 17 → 16.
     IMPLANTATION-4 (LOT A) : « Étude de faisabilité » (programme) QUITTE les Outils pour vivre dans Docs
-    (overlay ouvert par ouvrirEtude, `registry` `programme` → hidden) → 16 → 15."""
+    (overlay ouvert par ouvrirEtude, `registry` `programme` → hidden) → 16 → 15. ANNONCE-1 : « Analyser
+    une annonce » (analyser-annonce) ajouté au menu, robinet `outil_analyser_annonce` (adresse → fiche
+    parcelle ; lien → prix demandé opposé au repère commune, chiffres du Radar) → 15 → 16."""
     cles = CV._cles_outils_menu()
-    assert len(cles) == 15, f"attendu 15 outils au menu, vu {len(cles)} : {sorted(cles)}"
+    assert len(cles) == 16, f"attendu 16 outils au menu, vu {len(cles)} : {sorted(cles)}"
     assert "scoreur-adresse" not in cles
     assert "renouvellement" not in cles
     assert "programme" not in cles                 # l'Étude de faisabilité a quitté les Outils (→ Docs)
+    assert "analyser-annonce" in cles              # ANNONCE-1 — ajouté au menu, robinet outil_analyser_annonce
     r = CV.verrou_outils_registre()
     assert r.verdict == "ok", r.details[:5]
-    assert "15 outils du menu" in r.preuve
+    assert "16 outils du menu" in r.preuve

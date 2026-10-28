@@ -756,6 +756,7 @@ OUTIL_ROBINET_MENU: dict[str, str] = {
     "permis": "outil_permis",
     "renouvellement": "outil_densifier",
     "etude-zone": "outil_etude_zone",
+    "analyser-annonce": "outil_analyser_annonce",   # ANNONCE-1 — adresse (fiche parcelle) + lien (prix vs repère commune)
     "temps": "outil_remonter_temps",
     "successions": "outil_successions",
     "blocs-fonciers": "outil_blocs_fonciers",

@@ -252,6 +252,13 @@ ROBINETS: dict[str, Robinet] = {
     "/radar/biens", "json_puis_js", chiffres=("annonces_actives_n", "prix_demande_median_eur_m2",)),
  "outil_radar_marche": _r("outil", "Marché", "outil_radar_client",
     "/radar/marche", "json_puis_js", chiffres=("annonces_actives_n", "prix_demande_median_eur_m2", "delai_vente_median_j", "ecart_demande_acte_pct",)),
+ # ANNONCE-1 — « Analyser une annonce » : l'entrée ADRESSE rejoue la fiche parcelle (robinets
+ # `fiche_parcelle_*`) et l'entrée LIEN (POST /radar/annonce/analyser) oppose le prix demandé de
+ # l'annonce au REPÈRE COMMUNE du bon type (mêmes chiffres que le Radar/`fiche_annonce` : prix
+ # demandé, médiane demandée €/m², écart demandé-acté) — aucune lecture hors registre.
+ "outil_analyser_annonce": _r("outil", "Analyser une annonce", None,
+    "/radar/annonce/analyser", "json_puis_js",
+    chiffres=("prix_demande_eur", "prix_demande_median_eur_m2", "ecart_demande_acte_pct",)),
  # FICHE-RANGEMENT-1 Lot 3 — + exposition_versant : la tuile « Exposition » de l'en-tête sert cette
  # donnée (RGE ALTI) ; elle entre au graphe (orpheline du registre déclarée).
  "fiche_parcelle_entete": _r("fiche", "En-tête (adresse, géométrie)", "fiche_parcelle",
