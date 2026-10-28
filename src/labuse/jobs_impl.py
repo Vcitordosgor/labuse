@@ -152,6 +152,15 @@ def fiche_commune_cache(ctx: JobContext) -> None:
     combien d'OK/échecs. Point d'écriture unique du cache (aussi « lançable à la main » : jobs run)."""
     db = ctx.db
     from .api.app import rafraichir_contexte_cache
+    # VITESSE-2 (Lot 1) — réchauffe le cache PARTAGÉ des indicateurs bruts (24 communes, ~5 s) UNE
+    # fois ici : tous les workers le liront en base au lieu de le recalculer au 1ᵉʳ clic (DEPLOY-1028
+    # §Phase 4). Non bloquant pour le précalcul des fiches ci-dessous.
+    try:
+        from .api.comparateur import rafraichir_raw_cache
+        rafraichir_raw_cache(db)
+    except Exception as e:  # noqa: BLE001 — l'échec du raw cache ne doit pas tuer le précalcul des fiches
+        db.rollback()
+        ctx.compte(raw_cache_erreur=str(e)[:120])
     communes = [r[0] for r in db.execute(text(
         "SELECT DISTINCT commune FROM parcels WHERE commune IS NOT NULL ORDER BY commune")).all()]
     ok, echecs, noms_echecs = 0, 0, []
