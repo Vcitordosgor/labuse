@@ -33,6 +33,25 @@ _ALLOWLIST_AFFICHAGE = (
     "frontend/src/components/admin/Radar",  # page admin Radar (P1)
 )
 
+# ANNONCE-1/2 — exceptions LIGNE PAR LIGNE (jamais un fichier entier). L'outil « Analyser une annonce »
+# nomme « Leboncoin » hors commentaire UNIQUEMENT pour de l'AFFICHAGE client ou de la VALIDATION d'URL —
+# aucun appel réseau (ces lignes ne portent aucun motif HTTP, donc restent hors `fautes_reseau`). Chaque
+# entrée = (chemin relatif EXACT, fragment EXACT de la ligne tolérée). Une seule ligne par fragment.
+_ALLOWLIST_LIGNES = (
+    # VALIDATION : refuse un lien hors Leboncoin avant toute lecture (test de domaine, pas une requête).
+    ("src/labuse/pige/api.py", '"leboncoin." not in url.lower()'),
+    # AFFICHAGE : invite quand l'URL n'est pas un lien d'annonce Leboncoin (erreur url_invalide, back).
+    ("src/labuse/pige/api.py", "Collez un lien d'annonce Leboncoin (https"),
+    # AFFICHAGE : phrase d'échec du mandat ANNONCE-2 (bien absent du Radar + portail qui bloque).
+    ("frontend/src/components/outils/AnalyserAnnonce.tsx", "Leboncoin bloque sa lecture automatique"),
+    # AFFICHAGE : invite d'erreur url_invalide côté front (« …ou entrez l'adresse »).
+    ("frontend/src/components/outils/AnalyserAnnonce.tsx", "Collez un lien d’annonce Leboncoin, ou entrez"),
+    # AFFICHAGE : sous-titre du rapport « Annonce Leboncoin · relevée le … ».
+    ("frontend/src/components/outils/AnalyserAnnonce.tsx", "sous={`Annonce Leboncoin"),
+    # AFFICHAGE : note d'entrée « Leboncoin pour l'instant. SeLoger et Bien'ici à venir. ».
+    ("frontend/src/components/outils/AnalyserAnnonce.tsx", "Leboncoin pour l’instant. SeLoger et Bien’ici"),
+)
+
 _EXTS = (".py", ".js", ".ts", ".tsx")
 _DIRS = ("src", "frontend/src")
 
@@ -99,6 +118,13 @@ def _allowliste(p: Path) -> bool:
     return any(a in rel for a in _ALLOWLIST_AFFICHAGE)
 
 
+def _ligne_allowlistee(p: Path, ligne: str) -> bool:
+    """Exception LIGNE PAR LIGNE : la ligne exacte est-elle une des chaînes d'affichage/validation
+    tolérées (`_ALLOWLIST_LIGNES`) ? Ne vaut QUE pour `fautes_code` — jamais pour un appel réseau."""
+    rel = str(p.relative_to(_ROOT))
+    return any(rel == f and frag in ligne for f, frag in _ALLOWLIST_LIGNES)
+
+
 def test_aucune_requete_portail_dans_le_depot():
     """DOCTRINE §2 — collecte 100 % humaine : aucun token portail sur une ligne d'APPEL RÉSEAU,
     et hors commentaire un token n'apparaît QUE dans un fichier d'affichage allowlisté."""
@@ -117,7 +143,7 @@ def test_aucune_requete_portail_dans_le_depot():
                 en_commentaire = n in bloc or _est_commentaire(ligne, idx)
                 if _HTTP.search(ligne) and not en_commentaire:   # péché capital : requête + portail
                     fautes_reseau.append(f"{rel}  {ligne.strip()[:100]}")
-                elif not en_commentaire and not _allowliste(p):
+                elif not en_commentaire and not _allowliste(p) and not _ligne_allowlistee(p, ligne):
                     fautes_code.append(f"{rel}  {ligne.strip()[:100]}")
                 break
     assert not fautes_reseau, "APPEL RÉSEAU vers un portail détecté :\n" + "\n".join(fautes_reseau)
