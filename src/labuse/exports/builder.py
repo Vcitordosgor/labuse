@@ -703,12 +703,49 @@ _ANNONCE_PAGE_CSS = (
 )
 
 
+# ANNONCE-3-FIX-3 — le cadre est LARGE (pleine largeur, ~48 mm → aspect ~3,6) ; `build_situation_map`
+# rend une fenêtre FIXE (720×450). Pour une parcelle HAUTE, le recadrage à cet aspect borné à la
+# fenêtre rognait le contour en haut/bas. Règle : la parcelle ENTIÈRE est toujours visible, quelle que
+# soit sa forme — pour une parcelle haute, l'emprise HORIZONTALE s'élargit (plus de contexte) afin que
+# TOUTE la hauteur (marge comprise) tienne. On y parvient en reculant le zoom : la parcelle occupe une
+# fraction plus petite de la fenêtre, le recadrage large la contient enfin.
+_PLAN_ASPECT = 3.6
+_PLAN_ZOOMS = (0, -1, -2, -3)   # du plus serré au plus large
+
+
+def _parcelle_dans_cadre(parcel_px, width, height, marge_px: float = 0.0) -> bool:
+    """La parcelle ENTIÈRE tient-elle dans le cadre, insérée d'au moins `marge_px` ? `parcel_px` = liste
+    d'anneaux [(x, y), …] en pixels de l'image RENDUE (recadrée). Un contour qui touche/déborde un bord
+    (coord < marge ou > dim − marge) = parcelle rognée → False."""
+    pts = [p for ring in (parcel_px or []) for p in ring]
+    if not pts:
+        return False
+    xs = [p[0] for p in pts]
+    ys = [p[1] for p in pts]
+    return (min(xs) >= marge_px and max(xs) <= width - marge_px
+            and min(ys) >= marge_px and max(ys) <= height - marge_px)
+
+
+def _choisir_cadre_plan(rendre, marge_px: float, zooms=_PLAN_ZOOMS):
+    """Essaie les zooms du plus serré au plus large (`rendre(zoom_delta)` → dict plan_ortho) ; retient le
+    PREMIER rendu où la parcelle entière tient dans le cadre (marge comprise). À défaut (parcelle très
+    haute), le plus large essayé — la plus petite emprise, la meilleure chance d'être entière."""
+    dernier = None
+    for zd in zooms:
+        res = rendre(zd)
+        if not res or not res.get("ok"):
+            continue
+        dernier = res
+        if _parcelle_dans_cadre(res.get("parcel_px"), res.get("width"), res.get("height"), marge_px):
+            return res
+    return dernier
+
+
 def _plan_annonce_html(db, idu: str) -> str:
-    """ANNONCE-3-FIX — le plan de situation de l'annonce : la parcelle ENTIÈRE, CENTRÉE, avec une MARGE
-    autour du contour (plan_ortho `crop_margin_m` → cadre centré sur l'emprise + marge, l'axe déficient
-    s'élargit, la parcelle n'est JAMAIS rognée). Hauteur RÉDUITE au rendu (img ~44 mm, sans recadrage :
-    `width:auto`+`height` garde l'aspect, pas d'`object-fit:cover`) pour que la variante tienne sur une
-    page. Best-effort : réseau/géométrie absents → cadre neutre légendé (jamais d'erreur)."""
+    """ANNONCE-3-FIX — le plan de situation de l'annonce : la parcelle ENTIÈRE, CENTRÉE, avec une MARGE,
+    toujours visible QUELLE QUE SOIT sa forme (zoom reculé au besoin, cf. `_choisir_cadre_plan`). L'image
+    REMPLIT le cadre (`width:100%`), sans bandes blanches ni recadrage du contour. Best-effort : réseau /
+    géométrie absents → cadre neutre légendé (jamais d'erreur)."""
     from sqlalchemy import text
     from .rendu import esc
     try:
@@ -720,20 +757,19 @@ def _plan_annonce_html(db, idu: str) -> str:
         try:
             from ..api.plan_situation import plan_ortho
             from ..flash.report import storage_dir
-            # ANNONCE-3-FIX-2 — le cadre `target_aspect` = l'aspect de la boîte d'affichage (pleine
-            # largeur du cadre / ~48 mm) : l'image REMPLIT le cadre (`width:100%`), SANS bandes blanches
-            # et SANS recadrage (l'axe déficient s'élargit — plus de contexte — la parcelle n'est jamais
-            # rognée). La marge autour du contour reste donnée par `crop_margin_m`.
-            res = plan_ortho(gj, cache_dir=storage_dir() / "tiles", crop_margin_m=16.0,
-                             target_aspect=3.6, min_px=900, zoom_delta=0, zoom_max=19)
-            if res.get("ok"):
+            cd = storage_dir() / "tiles"
+            res = _choisir_cadre_plan(
+                lambda zd: plan_ortho(gj, cache_dir=cd, crop_margin_m=16.0, target_aspect=_PLAN_ASPECT,
+                                      min_px=900, zoom_delta=zd, zoom_max=19),
+                marge_px=3.0)
+            if res and res.get("ok"):
                 import base64
                 img = "data:image/jpeg;base64," + base64.b64encode(res["jpeg"]).decode()
                 cap = esc(res.get("attribution") or "")
                 return (f'<div class="plan">'
                         f'<img style="display:block;width:100%;height:auto" '
                         f'src="{img}" alt="Plan de situation">'
-                        f'<div class="cap">Plan de situation — la parcelle (contour), centrée avec une marge'
+                        f'<div class="cap">Plan de situation — la parcelle (contour), entière et centrée avec une marge'
                         + (f' · {cap}' if cap else "") + "</div></div>")
         except Exception as exc:  # noqa: BLE001 — la carte est un plus, jamais un bloqueur
             log.warning("plan annonce %s non rendu : %s — cadre neutre (ORF-19)", idu, exc)

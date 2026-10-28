@@ -1,5 +1,23 @@
 # ANNONCE-3 — « Analyser une annonce » gagne un export PDF, Docs gagne « Analyse d'annonce »
 
+> ## ANNONCE-3-FIX-3 (retours Vic) — appliqué sur la même branche
+>
+> **La parcelle entière est TOUJOURS visible dans le plan, quelle que soit sa forme.** Le cadre est large
+> (pleine largeur, ~48 mm, aspect ~3,6) ; `build_situation_map` rend une fenêtre FIXE 720×450 → pour une
+> parcelle HAUTE, le recadrage à cet aspect, borné à la fenêtre, rognait le contour en haut/bas (CX0800).
+> **Règle appliquée** : on recule le zoom (`_choisir_cadre_plan`, zooms 0 → −3) jusqu'à ce que TOUT le
+> contour tienne dans le cadre, marge comprise — pour une parcelle haute, l'emprise HORIZONTALE s'élargit
+> d'elle-même (plus de contexte) et toute la hauteur tient. La vérification est pure et testée
+> (`_parcelle_dans_cadre`). L'image remplit toujours le cadre (`width:100%`), sans bandes blanches.
+>
+> **Tests ajoutés** (`test_annonce_pdf.py`, 12 → **15**) : `_parcelle_dans_cadre` (débordement haut/bas,
+> gauche/droite, cas contenu) + **parcelle allongée VERTICALEMENT** (rognée au zoom serré → cadre reculé
+> retenu, parcelle entière) + **parcelle allongée HORIZONTALEMENT** (idem). **Recette** : CX0800 (nue) et
+> BN2715 (bâtie) régénérés — plan pleine largeur, **contour entier visible avec marge**, 1 page, outil==docs.
+> tsc 0 · vitest **301/301** · pytest hook **2604 passed, 0 failed**. Commit FIX-3 sur la branche.
+>
+> ---
+>
 > ## ANNONCE-3-FIX-2 (retours Vic) — appliqué sur la même branche
 >
 > 1. **Plan de situation pleine largeur, sans bandes blanches** — l'image REMPLIT le cadre

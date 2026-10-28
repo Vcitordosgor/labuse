@@ -176,6 +176,44 @@ def test_construire_lien_document_complet_et_deterministe():
     assert "DVF" in res1.cartouche.doc_foot and "Radar LABUSE" in res1.cartouche.doc_foot
 
 
+def test_parcelle_dans_cadre_detecte_debordement():
+    """La règle « parcelle entière visible » : un contour qui touche/déborde un bord n'est PAS dans le cadre."""
+    assert not builder._parcelle_dans_cadre([[(100, -5), (200, -5), (200, 210)]], 720, 200, 3.0)   # déborde haut/bas
+    assert not builder._parcelle_dans_cadre([[(-5, 50), (730, 50), (730, 150)]], 720, 200, 3.0)    # déborde gauche/droite
+    assert builder._parcelle_dans_cadre([[(50, 20), (300, 20), (300, 180), (50, 180)]], 720, 200, 3.0)  # entière + marge
+    assert not builder._parcelle_dans_cadre([], 720, 200, 3.0)
+
+
+def test_plan_cadre_parcelle_allongee_verticalement():
+    """Parcelle HAUTE : au zoom serré le contour sort en HAUT et en BAS du cadre large ; on recule le zoom
+    jusqu'à ce que TOUTE la hauteur tienne (emprise horizontale élargie) → parcelle entière visible."""
+    W, H = 720, 200
+    def rendre(zd):
+        if zd == 0:   # trop grande pour la hauteur du cadre : déborde en haut (<0) et en bas (>H)
+            return {"ok": True, "width": W, "height": H,
+                    "parcel_px": [[(350, -30), (370, -30), (370, H + 30), (350, H + 30)]]}
+        return {"ok": True, "width": W, "height": H,        # zoom reculé : tient, marge comprise
+                "parcel_px": [[(345, 40), (375, 40), (375, H - 40), (345, H - 40)]]}
+    res = builder._choisir_cadre_plan(rendre, marge_px=3.0)
+    assert builder._parcelle_dans_cadre(res["parcel_px"], W, H, 3.0)   # entière visible
+    assert res["parcel_px"][0][0] == (345, 40)                          # cadre reculé retenu
+
+
+def test_plan_cadre_parcelle_allongee_horizontalement():
+    """Parcelle LARGE : au zoom serré le contour sort à GAUCHE et à DROITE ; on recule le zoom jusqu'à ce
+    que toute la largeur tienne → parcelle entière visible."""
+    W, H = 720, 200
+    def rendre(zd):
+        if zd == 0:
+            return {"ok": True, "width": W, "height": H,
+                    "parcel_px": [[(-40, 90), (W + 40, 90), (W + 40, 120), (-40, 120)]]}
+        return {"ok": True, "width": W, "height": H,
+                "parcel_px": [[(40, 85), (W - 40, 85), (W - 40, 125), (40, 125)]]}
+    res = builder._choisir_cadre_plan(rendre, marge_px=3.0)
+    assert builder._parcelle_dans_cadre(res["parcel_px"], W, H, 3.0)
+    assert res["parcel_px"][0][0] == (40, 85)
+
+
 def test_numero_prefixe_analyse_annonce():
     assert numeros.numero_rapport("analyse-annonce", "97411000AB0123", J) == "AA-20261027-0123"
 
