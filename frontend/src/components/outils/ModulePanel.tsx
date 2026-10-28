@@ -42,6 +42,7 @@ import { Plu } from './Plu'
 // le composant reste au dépôt dans ./ScoringV2 (cf. son en-tête).
 import { ProspectionSolaire } from './ProspectionSolaire'
 import { EtudeZone } from './EtudeZone'
+import { AnalyserAnnonce } from './AnalyserAnnonce'   // ANNONCE-1 — « Analyser une annonce »
 import { TaxeAmenagement } from './TaxeAmenagement'
 import { Gabarit } from './Gabarit'   // GABARIT-1 — outil interne (registry hidden:true, flag admin)
 import { MonSecteur } from './MonSecteur'   // SECTEUR-1 (S1) — outil « Mon secteur »
@@ -1864,6 +1865,9 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   'blocs-fonciers': Blocs,
   // ÉTUDE DE ZONE Z4 — l'outil de chalandise (isochrones IGN + INSEE/SIRENE/BPE).
   'etude-zone': EtudeZone,
+  // ANNONCE-1 — « Analyser une annonce » : rendu EN PLEINE HAUTEUR (voir `bare` ci-dessous) pour porter
+  // son propre en-tête à 3 écrans (entrée / rapport parcelle / rapport lien), un seul Retour par écran.
+  'analyser-annonce': AnalyserAnnonce,
   // ETUDIER-BIEN-2 (Lot C) — l'outil « Étudier un bien » (clé 'scoreur-adresse', EtudierBien) est
   // SUPPRIMÉ : ses 3 faits de marché uniques vivent dans la §Marché de la fiche (Lot A), l'entrée par
   // adresse dans la barre de recherche → fiche. Ne reste que la CALCULETTE FONCIÈRE (M23), restaurée
@@ -1925,6 +1929,17 @@ export function ModulePanel() {
   }, [])
   if (!def) return null
   const Body = COMPONENTS[def.key]
+  // ANNONCE-1 — cet outil porte SON PROPRE en-tête (3 écrans : entrée / rapport parcelle / rapport lien)
+  // avec un seul Retour par écran dont le libellé change (« ← Outils » à l'entrée, « ← Retour » dans un
+  // rapport). On le monte donc SANS l'en-tête fixe du panneau (qui afficherait un 2ᵉ retour + un titre
+  // figé) : il remplit l'`aside` et rend lui-même le bandeau DA (mêmes classes que ci-dessous).
+  if (def.key === 'analyser-annonce') {
+    return (
+      <aside className="apparition flex h-full w-[320px] shrink-0 flex-col border-r border-line bg-surface-1">
+        <Body />
+      </aside>
+    )
+  }
   return (
     <aside className="apparition flex h-full w-[320px] shrink-0 flex-col border-r border-line bg-surface-1">
       <div className="flex shrink-0 flex-col border-b border-mint/20 bg-mint/[0.07] px-4 py-3">

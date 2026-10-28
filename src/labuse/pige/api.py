@@ -7,6 +7,7 @@ donnée d'annonce republiée : on sert des FAITS + le lien sortant, jamais photo
 from __future__ import annotations
 
 import base64
+import logging
 
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
@@ -17,6 +18,7 @@ from . import intake
 from .tables import EV_BAISSE_PRIX, EV_STATUT_CHANGE, journaliser
 
 router = APIRouter(tags=["radar"])
+log = logging.getLogger("labuse.pige.api")
 
 # seuils de cycle (mandat V0 §4) — repris ici pour la priorisation de la file.
 SEUIL_VENTE_LONGUE_J = 90
@@ -1051,6 +1053,104 @@ def radar_depot_agence_analyser(body: DepotAnalyserIn, request: Request) -> dict
         return {"ok": True, "records": depot_agence.analyser(body.html)}
     except html_next.NextDataError as exc:
         return {"ok": False, "erreur": "next_data", "motif": str(exc)}
+
+
+# ─────────────────── ANNONCE-1 — outil « Analyser une annonce » (entrée LIEN) ───────────────────
+class AnnonceAnalyseIn(BaseModel):
+    url: str
+
+
+@router.post("/radar/annonce/analyser")
+def radar_annonce_analyser(body: AnnonceAnalyseIn) -> dict:
+    """ANNONCE-1 (entrée LIEN) — l'utilisateur colle un lien d'annonce Leboncoin. Lecture serveur
+    ONE-SHOT (même garde que le dépôt agence : une requête, headers navigateur, timeout court, aucun
+    retry), puis parseur PAGE D'ANNONCE (`extraire_page_annonce`, chemin `props.pageProps.ad`). On rend
+    les champs PRÉSENTS dans l'annonce (jamais devinés) et l'écart au REPÈRE COMMUNE du bon type — sans
+    jamais rattacher à une parcelle (pont V2 écarté par le mandat), donc fiabilité « limitée » assumée.
+    Toute panne du portail / page illisible → message HONNÊTE (jamais de rapport partiel silencieux)."""
+    from datetime import date
+    from . import html_next, signaux
+    url = (body.url or "").strip()
+    if not _URL_RE.match(url) or "leboncoin." not in url.lower():
+        return {"ok": False, "erreur": "url_invalide",
+                "motif": "Collez un lien d'annonce Leboncoin (https://www.leboncoin.fr/…)."}
+    try:
+        page = _fetch_page_oneshot(url)
+    except RuntimeError as exc:
+        # ANNONCE-1-FIX (pt 2) — le DÉTAIL technique (code HTTP, DataDome…) part en LOG ; l'écran ne
+        # verra qu'une phrase propre, sans code ni jargon (choisie côté front sur le code `erreur`).
+        log.warning("radar/annonce/analyser — portail bloque %s : %s", url, exc)
+        return {"ok": False, "erreur": "url_bloquee"}
+    try:
+        res = html_next.extraire_page_annonce(page)
+    except html_next.NextDataError:
+        res = None
+    if not res or not res.get("rec") or not res["rec"].get("list_id"):
+        log.info("radar/annonce/analyser — page récupérée mais non exploitable : %s", url)
+        return {"ok": False, "erreur": "url_illisible"}
+    rec = res["rec"]
+    commune = rec.get("commune")
+    type_bien = rec.get("type")
+    prix = rec.get("prix")
+    surface_hab = rec.get("surface_hab")
+    surface_terrain = rec.get("surface_terrain")
+    annonce = {
+        "titre": rec.get("subject"),
+        "type": type_bien,
+        "prix": prix,
+        "surface_hab": surface_hab,
+        "surface_terrain": surface_terrain,
+        "pieces": rec.get("pieces"),
+        "prix_m2": rec.get("prix_m2"),
+        "commune": commune,
+        "url": url,
+        "releve_le": date.today().isoformat(),
+        # Position Leboncoin (souvent un centroïde de quartier/commune) — sert UNIQUEMENT à centrer la
+        # carte sur la commune, jamais à rattacher une parcelle (pont V2 écarté par le mandat).
+        "lat": rec.get("lat"),
+        "lng": rec.get("lng"),
+    }
+    # Écart au REPÈRE COMMUNE du bon type — réutilise le moteur de prix du Radar (aucun recalcul maison).
+    # idu=None : pas de rattachement → `_referentiel` sert la médiane commune (repli_commune), d'où une
+    # fiabilité « limitée » explicite côté outil.
+    marche = None
+    if commune:
+        with session_scope() as db:
+            ref = signaux._referentiel(db, commune, type_bien, idu=None)
+            try:
+                terrain_ref = (signaux._dvf_terrain(db, commune) or {}).get("eur_m2")
+            except Exception:
+                terrain_ref = None
+            badge = signaux._badge(prix, type_bien, surface_hab, surface_terrain, ref, terrain_ref)
+        if badge is not None:
+            marche = {**badge, "fiabilite": "limitee",
+                      "repere_perimetre": ref.get("perimetre"), "periode": ref.get("periode"),
+                      "meme_type": bool(ref.get("meme_type"))}
+    return {"ok": True, "annonce": annonce, "marche": marche}
+
+
+@router.get("/radar/annonce/classement/{idu}")
+def radar_annonce_classement(idu: str) -> dict:
+    """ANNONCE-1-FIX (pt 1) — le « Classement LABUSE » d'une parcelle = la BANDE du run SERVI
+    (table `score_labuse`, run courant) rendue avec le VOCABULAIRE CLIENT GRAVÉ — source unique
+    `config/score_labuse.yaml` → `score_labuse.libelle_client_bande` (A·Excellente … 0·Non retenue,
+    NC·Analyse incomplète + cause). On NE passe JAMAIS par le phrasé de percentile du Signal de
+    mutation (`score_v2.verbal.mot`, « proche de la moyenne »), qui n'est pas un classement. Lecture
+    seule du run servi — rien de servi touché."""
+    import os
+    from ..scoring.score_labuse import charger_bareme, libelle_client_bande
+    from .. import runs
+    run = os.environ.get("LABUSE_SCORE_RUN") or runs.current()
+    with session_scope() as db:
+        row = db.execute(text(
+            "SELECT sl.bande, sl.cause FROM score_labuse sl JOIN parcels p ON p.id = sl.parcel_id "
+            "WHERE p.idu = :idu AND sl.run_label = :run LIMIT 1"),
+            {"idu": idu, "run": run}).mappings().first()
+    if not row or not row.get("bande"):
+        return {"idu": idu, "bande": None, "libelle": None}
+    bareme, _ = charger_bareme()
+    bande = str(row["bande"])
+    return {"idu": idu, "bande": bande, "libelle": libelle_client_bande(bande, bareme, row.get("cause"))}
 
 
 @router.post("/admin/radar/depot-agence/publier")

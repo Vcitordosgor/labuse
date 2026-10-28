@@ -107,6 +107,12 @@ export const MODULES: ModuleDef[] = [
   { key: 'etude-zone', num: 'M27', group: 'marche', descSmall: true,
     label: 'Étude de zone', desc: 'Habitants, emplois, concurrents : la zone autour d\'un point.' },
 
+  // ANNONCE-1 — « Analyser une annonce » : une adresse OU un lien d'annonce Leboncoin. Adresse →
+  // parcelle (fiche + estimation DVF débloquée par l'idu + foncier) ; lien → ce que dit l'annonce +
+  // écart au repère commune (fiabilité limitée, aucun rattachement parcelle). Carte à droite.
+  { key: 'analyser-annonce', num: 'N1', group: 'marche', descSmall: true,
+    label: 'Analyser une annonce', desc: 'Une adresse ou un lien d\'annonce, croisés au marché et au foncier.' },
+
   // 10. Remonter le temps — la frise des faits datés + le comparateur d'orthos.
   { key: 'temps', num: 'M08', group: 'temps',
     label: 'Remonter le temps', desc: 'La parcelle vue du ciel, année après année.' },

@@ -381,6 +381,38 @@ export interface Entonnoir {
 }
 export const getContexteCommune = (commune: string) =>
   j<ContexteCommune>(`/communes/${encodeURIComponent(commune)}/contexte`)
+
+// ANNONCE-1 — outil « Analyser une annonce », entrée LIEN. POST une URL d'annonce Leboncoin ; le back
+// la lit en one-shot, la parse (page d'annonce) et oppose son prix au REPÈRE COMMUNE du bon type. Les
+// champs ABSENTS de l'annonce restent `null` (jamais devinés) ; une panne du portail rend `ok: false`
+// + un motif honnête (jamais un rapport partiel). `marche` = sortie du moteur de prix Radar (`_badge`),
+// fiabilité « limitée » car l'annonce ne porte pas d'adresse précise (aucun rattachement parcelle).
+export interface AnnonceLue {
+  titre: string | null; type: string | null; prix: number | null
+  surface_hab: number | null; surface_terrain: number | null
+  pieces: number | null; prix_m2: number | null; commune: string | null
+  url: string; releve_le: string; lat: number | null; lng: number | null
+}
+export interface AnnonceMarche {
+  calculable: boolean | null; affiche_eur_m2?: number | null
+  referentiel_eur_m2?: number | null; n_referentiel?: number | null
+  millesime_dvf?: string | null; ecart_pct?: number | null; ecart_libelle?: string | null
+  repli_commune?: boolean; perimetre?: string | null; repere_perimetre?: string | null
+  periode?: string | null; meme_type?: boolean; fiabilite?: string; motif?: string | null
+}
+export interface AnnonceAnalyse {
+  ok: boolean; erreur?: string; motif?: string
+  annonce?: AnnonceLue; marche?: AnnonceMarche | null
+}
+export const analyserAnnonce = (url: string) =>
+  j<AnnonceAnalyse>('/radar/annonce/analyser', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) })
+
+// ANNONCE-1-FIX (pt 1) — classement LABUSE d'une parcelle : la BANDE du run SERVI + le vocabulaire
+// client GRAVÉ (score_labuse.yaml), servi par le back. `bande` null = pas de ligne dans le run.
+export interface AnnonceClassement { idu: string; bande: string | null; libelle: string | null }
+export const getAnnonceClassement = (idu: string) =>
+  j<AnnonceClassement>(`/radar/annonce/classement/${encodeURIComponent(idu)}`)
 export const parcelAt = (lon: number, lat: number) =>
   j<{ idu: string | null }>(`/parcels/at?lon=${lon}&lat=${lat}`)
 export const searchParcels = (needle: string, opts?: { ileEntiere?: boolean }) =>
