@@ -46,15 +46,37 @@ function nowIso() {
 async function getOpts() {
   const d = await chrome.storage.local.get({
     searchUrl: "",
-    labuseUrl: "http://localhost:8205",
+    // RADAR-FIX-2 (Lot B) — PROD par défaut : l'extension nourrit https://labuse.immo. localhost ne sert
+    // qu'en recette, en le tapant EXPLICITEMENT dans les Options.
+    labuseUrl: "https://labuse.immo",
     token: "",
     hour: 21,
     jitterMaxMin: 180,
     relectureCursor: 0,
     lastRun: null,
-    lastResult: null
+    lastResult: null,
+    // RADAR-FIX-2 (Lot A) — pilotage du déclenchement automatique du soir (heartbeat).
+    autoRunDate: "",        // date locale (YYYY-MM-DD) de la dernière capture AUTO : une seule par soir
+    todayTargetDate: "",    // jour pour lequel la minute-cible ci-dessous a été tirée
+    todayTargetTs: 0,       // instant-cible (dans la fenêtre du soir) tiré une fois par jour
+    running: false,         // un run est en cours (garde anti double-déclenchement entre réveils du worker)
+    // RADAR-FIX-2 (Lot B) — hôte LABUSE de la dernière capture réussie : un changement = BASCULE → rattrapage.
+    lastCaptureHost: ""
   });
   return d;
+}
+
+// RADAR-FIX-2 — hôte d'une URL (pour détecter la bascule localhost→prod).
+function hostOf(url) {
+  try { return new URL(url).host; } catch (_) { return ""; }
+}
+
+// RADAR-FIX-2 — date locale YYYY-MM-DD (le « soir » se juge en heure locale de la machine qui capture).
+function localDateStr(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 async function setOpts(patch) {
@@ -229,11 +251,12 @@ async function inject(tabId, fn) {
 // Appels back LABUSE (chaque appel porte X-Radar-Token)
 // =========================================================================
 
-async function apiCapture(opts, passe, url, page, html, capturedAt) {
+async function apiCapture(opts, passe, url, page, html, capturedAt, source) {
   const r = await fetch(opts.labuseUrl.replace(/\/$/, "") + "/admin/radar/capture", {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-Radar-Token": opts.token },
-    body: JSON.stringify({ passe, url, page, html, captured_at: capturedAt })
+    // RADAR-FIX-2 (Lot A) — `source` grave le déclencheur (auto | manuel) côté back (journal + dashboard).
+    body: JSON.stringify({ passe, url, page, html, captured_at: capturedAt, source: source || "auto" })
   });
   if (!r.ok) throw new Error("capture HTTP " + r.status);
   return r.json();
@@ -291,16 +314,21 @@ function maxDate(dates) {
 // =========================================================================
 
 // Renvoie le nb de pages consommées (pour le plafond total).
-async function passeNouvelles(opts, tabId, capturedAt, etat, budget) {
+// RADAR-FIX-2 (Lot B) — `rattrapage` (1ʳᵉ capture après bascule vers la prod) : on remonte PLUS LOIN que
+// les 15 pages d'une soirée normale, jusqu'au plafond dur de 40 pages, pour rattraper depuis la dernière
+// annonce connue en prod. La RÈGLE D'ARRÊT ne change pas : on s'arrête dès qu'une page ne porte plus
+// d'annonce plus récente que le seuil (index_date). Le plafond 40 reste la garde dure.
+async function passeNouvelles(opts, tabId, capturedAt, etat, budget, source, rattrapage) {
   const seuil = etat && etat.derniere_capture_at
     ? Date.parse(etat.derniere_capture_at) - 3600 * 1000 // −1 h
     : null;
   let page = 1;
   let used = 0;
-  const maxPages = Math.min(CAP_NOUVELLES, budget);
+  const plafond = rattrapage ? CAP_TOTAL_PAGES : CAP_NOUVELLES;
+  const maxPages = Math.min(plafond, budget);
   while (page <= maxPages) {
     const info = await readPage(tabId);
-    await apiCapture(opts, "nouvelles", opts.searchUrl, page, info.outerHTML, capturedAt);
+    await apiCapture(opts, "nouvelles", opts.searchUrl, page, info.outerHTML, capturedAt, source);
     used++;
     // On continue tant que la page contient des annonces plus récentes que le seuil.
     const newest = maxDate(info.indexDates);
@@ -316,7 +344,7 @@ async function passeNouvelles(opts, tabId, capturedAt, etat, budget) {
   return used;
 }
 
-async function passeRelecture(opts, tabId, capturedAt, budget) {
+async function passeRelecture(opts, tabId, capturedAt, budget, source) {
   // Rotation : on reprend là où on s'était arrêté hier.
   let cursor = opts.relectureCursor || 0;
   const maxPages = Math.min(CAP_RELECTURE, budget);
@@ -327,7 +355,7 @@ async function passeRelecture(opts, tabId, capturedAt, budget) {
   while (used < maxPages && page <= CAP_TOTAL_PAGES) {
     const info = await readPage(tabId);
     if (page > cursor) {
-      await apiCapture(opts, "relecture", opts.searchUrl, page, info.outerHTML, capturedAt);
+      await apiCapture(opts, "relecture", opts.searchUrl, page, info.outerHTML, capturedAt, source);
       used++;
     }
     if (!info.hasNext) {
@@ -392,16 +420,24 @@ async function passeConfirmation(opts, tabId, etat) {
 // Plan de soirée
 // =========================================================================
 
-async function runEvening() {
+// `source` = "auto" (alarme du soir) | "manuel" (bouton « Capturer maintenant »).
+async function runEvening(source) {
+  source = source || "auto";
   const opts = await getOpts();
   if (!opts.searchUrl || !opts.labuseUrl || !opts.token) {
     await notify("Radar : configuration incomplète (Options).");
     await setBadge("✗", "#c0392b");
+    await setOpts({ lastResult: "Configuration incomplète — ouvrez les Options (URL, jeton)." });
     return;
   }
+  // RADAR-FIX-2 (Lot B) — BASCULE : si l'hôte LABUSE a changé depuis la dernière capture réussie (ou
+  // première capture tout court), on est en rattrapage → `passeNouvelles` remonte jusqu'à 40 pages.
+  const host = hostOf(opts.labuseUrl);
+  const rattrapage = host !== (opts.lastCaptureHost || "");
   const capturedAt = nowIso();
   let tabId = null;
   let budget = CAP_TOTAL_PAGES;
+  await setOpts({ running: true });
   try {
     // Ouverture page 1 normalement (page riche).
     tabId = await openWorkTab(opts.searchUrl);
@@ -409,15 +445,15 @@ async function runEvening() {
     // État courant du back (seuil "nouvelles" + liste à confirmer).
     const etat = await apiEtat(opts);
 
-    // 1) Nouvelles.
-    const nNouv = await passeNouvelles(opts, tabId, capturedAt, etat, budget);
+    // 1) Nouvelles (rattrapage = remontée profonde après une bascule).
+    const nNouv = await passeNouvelles(opts, tabId, capturedAt, etat, budget, source, rattrapage);
     budget -= nNouv;
 
     // 2) Relecture (on rouvre page 1 pour repartir proprement).
     if (budget > 0) {
       await chrome.tabs.update(tabId, { url: opts.searchUrl, active: false });
       await waitTabComplete(tabId);
-      const nRel = await passeRelecture(opts, tabId, capturedAt, budget);
+      const nRel = await passeRelecture(opts, tabId, capturedAt, budget, source);
       budget -= nRel;
     }
 
@@ -428,18 +464,23 @@ async function runEvening() {
     await setBadge("✓", "#27ae60");
     await setOpts({
       lastRun: capturedAt,
-      lastResult: `OK ${stamp} — nouv ${nNouv}, relec ${CAP_TOTAL_PAGES - budget - nNouv}, conf ${nConf}`
+      lastCaptureHost: host,     // la bascule est consommée : les soirs suivants ne rattrapent plus
+      lastResult: `OK ${stamp} (${source}${rattrapage ? ", rattrapage" : ""}) — nouv ${nNouv}, `
+                  + `relec ${CAP_TOTAL_PAGES - budget - nNouv}, conf ${nConf} → ${host}`
     });
   } catch (e) {
-    // Blocage OU erreur réseau : on arrête net, on prévient, on n'insiste pas.
+    // Blocage OU erreur réseau : on arrête net, on prévient, on n'insiste pas. Message LISIBLE dans le
+    // popup (lastResult) ; côté back, l'absence de capture fait apparaître « Déposer Radar » dans À faire.
     await setBadge("✗", "#c0392b");
-    await setOpts({ lastRun: capturedAt, lastResult: "STOP — " + (e && e.message ? e.message : "erreur") });
+    const msg = e && e.message ? e.message : "erreur réseau";
+    await setOpts({ lastRun: capturedAt, lastResult: `Échec (${source}) — ${msg}. Déposez à la main si ça dure.` });
     if (e instanceof BlockError) {
       await notify("Radar bloqué, dépose à la main");
     } else {
-      await notify("Radar arrêté : " + (e && e.message ? e.message : "erreur réseau"));
+      await notify("Radar arrêté : " + msg);
     }
   } finally {
+    await setOpts({ running: false });
     if (tabId !== null) {
       try { await chrome.tabs.remove(tabId); } catch (_) {}
     }
@@ -450,64 +491,91 @@ async function runEvening() {
 // Planification (alarme quotidienne + jitter)
 // =========================================================================
 
-async function scheduleDaily() {
-  const opts = await getOpts();
-  const now = new Date();
-  const target = new Date();
-  target.setHours(opts.hour || 21, 0, 0, 0);
-  // Jitter : 0..jitterMaxMin minutes après l'heure de base.
-  const extraMin = Math.floor(Math.random() * ((opts.jitterMaxMin || 180) + 1));
-  target.setMinutes(target.getMinutes() + extraMin);
-  if (target.getTime() <= now.getTime()) {
-    target.setDate(target.getDate() + 1);
-  }
-  await chrome.alarms.create(ALARM_NAME, { when: target.getTime() });
+// RADAR-FIX-2 (Lot A) — POURQUOI l'alarme ne partait jamais seule, et le correctif.
+//
+// AVANT : une alarme UNIQUE (`when`) était posée pour « ce soir 21 h + jitter 0-3 h ». Trois défauts se
+// cumulaient : (1) une alarme `when` unique à heure fixe est FRAGILE — si Chrome dort/est fermé pile sur
+// ce créneau, l'alarme brûle au réveil (après minuit → la signature observée par l'audit), ou est
+// ÉCRASÉE par le reschedule d'`onStartup` avant d'avoir pu partir ; (2) rien ne garantissait un passage
+// DANS la fenêtre du soir une fois l'instant manqué ; (3) la capture ne portait aucune trace « auto ».
+//
+// APRÈS : un BATTEMENT DE CŒUR. Une alarme PÉRIODIQUE (toutes les 5 min) réveille le worker ; à chaque
+// battement on regarde si on est DANS la fenêtre du soir [heure .. heure+jitter] et si on n'a pas encore
+// capturé ce soir — si oui, on capture UNE fois (source « auto »). Robuste au déchargement MV3 (le
+// périodique survit), honnête sur la fenêtre (Mac réveillé à 2 h = hors fenêtre → on NE capture pas à
+// 2 h), et une seule capture par soir (garde `autoRunDate` posée AVANT le run).
+
+const HEARTBEAT_MIN = 5;             // battement : on vérifie la fenêtre toutes les 5 minutes
+const TEST_ALARM = "radar-soir-test"; // recette : déclenche un run « auto » dans 2 min
+
+// Bornes de la fenêtre du soir pour un instant donné (heure locale). [début, fin].
+function fenetreSoir(opts, now) {
+  const debut = new Date(now); debut.setHours(opts.hour || 21, 0, 0, 0);
+  const fin = debut.getTime() + (opts.jitterMaxMin || 180) * 60 * 1000;
+  return { debut: debut.getTime(), fin };
 }
 
-// Auto-réarme (RADAR-FIX-1 · 3). En MV3 le service worker est ÉPHÉMÈRE : Chrome le décharge après
-// ~30 s d'inactivité et le réveille pour délivrer un événement (alarme, message du popup…). Les
-// `chrome.alarms` SURVIVENT à ce déchargement ET à la fermeture du popup (elles vivent dans le
-// navigateur, pas dans le worker ni dans la page popup). Mais si l'alarme a été PERDUE (crash, mise à
-// jour, profil réinitialisé), plus rien ne la recrée entre deux démarrages de Chrome. Donc à CHAQUE
-// réveil du worker on vérifie qu'elle existe et on la recrée SI ELLE MANQUE (jamais sinon : on ne
-// repousse pas l'heure du soir à chaque réveil).
-async function ensureAlarm() {
+// Décide (et exécute) la capture du soir. `force` = recette (ignore fenêtre + « déjà fait »).
+async function maybeRunTonight(force) {
+  const opts = await getOpts();
+  const now = new Date();
+  const today = localDateStr(now);
+  const { debut, fin } = fenetreSoir(opts, now);
+
+  // Minute-cible du jour : tirée UNE fois par date, dans la fenêtre (le jitter « humain » d'autrefois).
+  let targetTs = opts.todayTargetTs;
+  if (opts.todayTargetDate !== today) {
+    targetTs = debut + Math.floor(Math.random() * ((fin - debut) + 1));
+    await setOpts({ todayTargetDate: today, todayTargetTs: targetTs });
+  }
+
+  if (!force) {
+    if (opts.autoRunDate === today) return;          // déjà capturé ce soir
+    if (now.getTime() < targetTs) return;            // pas encore l'heure tirée
+    if (now.getTime() > fin) return;                 // fenêtre du soir passée (réveil après minuit) → on s'abstient
+  }
+  if (opts.running) return;                          // un run est déjà en cours (entre deux réveils du worker)
+  await setOpts({ autoRunDate: today });             // marque AVANT de lancer : une seule capture auto par soir
+  await runEvening("auto");
+}
+
+// Le battement périodique. Idempotent : (re)créer avec le même nom remplace proprement.
+async function ensureHeartbeat() {
   try {
-    const a = await chrome.alarms.get(ALARM_NAME);
-    if (!a) await scheduleDaily();
+    await chrome.alarms.create(ALARM_NAME, { periodInMinutes: HEARTBEAT_MIN, delayInMinutes: 1 });
   } catch (_) { /* API alarms indisponible : rien à faire */ }
 }
 
-// Au CHARGEMENT du service worker (démarrage de Chrome, réveil, ou reprise après déchargement).
-ensureAlarm();
-
-chrome.runtime.onInstalled.addListener(() => { scheduleDaily(); });   // installation / mise à jour
-chrome.runtime.onStartup.addListener(() => { scheduleDaily(); });     // démarrage de Chrome (nouveau jitter du jour)
+// Au CHARGEMENT du worker (démarrage de Chrome, réveil, reprise après déchargement) et aux événements.
+ensureHeartbeat();
+chrome.runtime.onInstalled.addListener(() => { ensureHeartbeat(); });
+chrome.runtime.onStartup.addListener(() => { ensureHeartbeat(); });
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
-  if (alarm.name !== ALARM_NAME) return;
-  await runEvening();
-  // Reprogrammation pour le lendemain (avec un nouveau jitter).
-  await scheduleDaily();
+  if (alarm.name === ALARM_NAME) { await maybeRunTonight(false); return; }
+  if (alarm.name === TEST_ALARM) { await maybeRunTonight(true); return; }  // recette : run « auto » forcé
 });
 
-// Message depuis le popup : "Capturer maintenant" ou relecture de config.
+// Message depuis le popup : "Capturer maintenant" ou recette.
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg && msg.type === "run-now") {
-    runEvening().then(() => sendResponse({ ok: true })).catch((e) =>
+    runEvening("manuel").then(() => sendResponse({ ok: true })).catch((e) =>
       sendResponse({ ok: false, error: String(e) })
     );
     return true; // réponse asynchrone
   }
   if (msg && msg.type === "reschedule") {
-    scheduleDaily().then(() => sendResponse({ ok: true }));
+    // Nouvelle heure/jitter : on oublie la cible du jour (retirée au prochain battement) et on réarme.
+    setOpts({ todayTargetDate: "", todayTargetTs: 0 })
+      .then(ensureHeartbeat)
+      .then(() => sendResponse({ ok: true }));
     return true;
   }
-  // RADAR-FIX-1 (3) — RECETTE : forcer l'alarme à +2 min pour VOIR la capture partir par le chemin
-  // ALARME (pas seulement « Capturer maintenant »). Prouve que l'alarme déclenche bien runEvening.
+  // RADAR-FIX-2 (Lot A) — RECETTE : alarme à +2 min qui déclenche une capture AUTO (pas le bouton), pour
+  // PROUVER que le chemin automatique part seul et laisse la trace « auto » dans le journal.
   if (msg && msg.type === "test-alarm") {
     const when = Date.now() + 2 * 60 * 1000;
-    Promise.resolve(chrome.alarms.create(ALARM_NAME, { when }))
+    Promise.resolve(chrome.alarms.create(TEST_ALARM, { when }))
       .then(() => sendResponse({ ok: true, when: new Date(when).toISOString() }))
       .catch((e) => sendResponse({ ok: false, error: String(e) }));
     return true; // réponse asynchrone

@@ -116,6 +116,8 @@ class CaptureIn(BaseModel):
     page: int = 1
     html: str
     captured_at: str
+    # RADAR-FIX-2 (Lot A) — déclencheur de la soirée : auto (alarme) | manuel (bouton) | test (recette).
+    source: str = "auto"
 
 
 class ConfirmationIn(BaseModel):
@@ -125,17 +127,23 @@ class ConfirmationIn(BaseModel):
     http_status: int | None = None
 
 
-def _upsert_passe(db, passe: str, captured_at: str, **inc) -> None:
+_SOURCES = ("auto", "manuel", "test")
+
+
+def _upsert_passe(db, passe: str, captured_at: str, source: str = "auto", **inc) -> None:
     """Agrège une passe (nouvelles|relecture|confirmation) au fil des pages, idempotent sur
-    (passe, captured_at) : +1 page et cumul des compteurs fournis."""
+    (passe, captured_at) : +1 page et cumul des compteurs fournis. `source` (RADAR-FIX-2) grave le
+    déclencheur de la soirée (auto|manuel|test) ; toutes les pages d'un même run le partagent, donc
+    la 1ʳᵉ page pose la valeur et le conflit ne l'écrase pas."""
+    src = source if source in _SOURCES else "auto"
     cols = ("n_pages", "n_nouvelles", "n_maj", "n_prix_modifies", "n_supprimees", "n_hors_perimetre")
     vals = {c: int(inc.get(c, 0)) for c in cols}
     set_sql = ", ".join(f"{c} = pige_passes.{c} + EXCLUDED.{c}" for c in cols)
     db.execute(text(
-        f"INSERT INTO pige_passes (passe, captured_at, {', '.join(cols)}) "
-        f"VALUES (:p, CAST(:ca AS timestamptz), {', '.join(':'+c for c in cols)}) "
+        f"INSERT INTO pige_passes (passe, captured_at, source, {', '.join(cols)}) "
+        f"VALUES (:p, CAST(:ca AS timestamptz), :src, {', '.join(':'+c for c in cols)}) "
         f"ON CONFLICT (passe, captured_at) DO UPDATE SET {set_sql}, updated_at = now()"),
-        {"p": passe, "ca": captured_at, **vals})
+        {"p": passe, "ca": captured_at, "src": src, **vals})
 
 
 @router.post("/admin/radar/capture")
@@ -159,8 +167,8 @@ def radar_capture(body: CaptureIn, request: Request) -> dict:
         prix_mod = int(db.execute(text(
             "SELECT count(*) FROM event_log WHERE kind IN ('pige.baisse_prix','pige.hausse_prix') "
             "AND ts >= CAST(:ca AS timestamptz)"), {"ca": body.captured_at}).scalar() or 0)
-        _upsert_passe(db, passe, body.captured_at, n_pages=1, n_nouvelles=r["nb_nouvelles"],
-                      n_maj=r["nb_maj"], n_hors_perimetre=r["nb_hors_perimetre"])
+        _upsert_passe(db, passe, body.captured_at, source=body.source, n_pages=1,
+                      n_nouvelles=r["nb_nouvelles"], n_maj=r["nb_maj"], n_hors_perimetre=r["nb_hors_perimetre"])
         p = db.execute(text(
             "SELECT n_pages, n_nouvelles, n_maj, n_hors_perimetre FROM pige_passes "
             "WHERE passe = :p AND captured_at = CAST(:ca AS timestamptz)"),
@@ -175,6 +183,11 @@ def radar_capture(body: CaptureIn, request: Request) -> dict:
         else:
             titre = f"Radar — relecture · {p.get('n_pages',1)} page(s)"
             detail = f"{p.get('n_maj',0)} annonce(s) revue(s), {prix_mod} prix modifié(s) aujourd'hui"
+        # RADAR-FIX-2 (Lot A) — la SIGNATURE du déclencheur dans le journal : une capture « auto » est
+        # partie seule (l'alarme du soir), « manuel » = bouton, « test » = recette. C'est ce que l'audit
+        # cherchait et ne trouvait pas.
+        src = body.source if body.source in _SOURCES else "auto"
+        detail = f"{detail} · déclenchée {src}"
         journaliser_passe(db, passe, titre, detail, dedup=f"pige:passe:{passe}:{body.captured_at}")
         db.commit()
     return {"ok": True, "passe": passe, "page": body.page, **{k: r[k] for k in

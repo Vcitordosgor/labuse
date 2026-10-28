@@ -73,10 +73,16 @@ export type CockpitEtape = {
   id: string; titre: string; ordre: number; fait: boolean; ligne: string
   bouton?: CockpitBouton | null; local?: boolean
 }
+// RADAR-FIX-2 (Lot D) — la carte Radar : Données ON / Notifications OFF + fraîcheur de la capture.
+export type CockpitRadar = {
+  id: string; titre: string; pastille: 'vert' | 'ambre'
+  donnees_on: boolean; notifs_on: boolean; etat: string; capture: string; cycle: string
+}
 export type Cockpit = {
   aujourdhui: { n: number; cartes: CockpitCarte[] }
   tout_tourne: { resume: { postes: number; vert: number; echec: number; arret: number }; tuiles: CockpitTuile[] }
   mise_a_jour: { etapes: CockpitEtape[] }
+  radar?: CockpitRadar | null
 }
 
 export type CircuitData = {
