@@ -1055,30 +1055,125 @@ def radar_depot_agence_analyser(body: DepotAnalyserIn, request: Request) -> dict
         return {"ok": False, "erreur": "next_data", "motif": str(exc)}
 
 
-# ─────────────────── ANNONCE-1 — outil « Analyser une annonce » (entrée LIEN) ───────────────────
+# ─────────────────── ANNONCE-1/2 — outil « Analyser une annonce » (entrée LIEN) ───────────────────
+# ANNONCE-2 — toute URL d'annonce Leboncoin porte un IDENTIFIANT numérique (list_id). On le reconnaît sur
+# les formes courantes (…/ventes_immobilieres/{id}.htm, …/ad/ventes_immobilieres/{id}, avec ou sans query
+# ?… ni ancre #…) pour chercher le bien DÉJÀ relevé par le Radar AVANT tout appel réseau à Leboncoin.
+_LBC_ID_RE = _re.compile(r"\d{5,}")
+
+
+def _list_id_from_url(url: str) -> int | None:
+    """Identifiant d'annonce Leboncoin (list_id) extrait de l'URL — query (?…) et ancre (#…) IGNORÉS. On
+    lit le DERNIER segment de chemin (où vit l'id, avec ou sans suffixe .htm) ; à défaut (id non terminal),
+    repli sur la plus longue suite de ≥ 8 chiffres du chemin. None si l'URL ne porte pas d'identifiant
+    (page de recherche, lien malformé) → l'appelant bascule sur le fetch one-shot."""
+    chemin = url.split("?", 1)[0].split("#", 1)[0].rstrip("/")
+    m = _LBC_ID_RE.search(chemin.rsplit("/", 1)[-1])
+    if m:
+        return int(m.group())
+    suites = _re.findall(r"\d{8,}", chemin)
+    return int(max(suites, key=len)) if suites else None
+
+
+def _marche_commune(db, commune, type_bien, prix, surface_hab, surface_terrain) -> dict | None:
+    """Écart au REPÈRE COMMUNE du bon type (idu=None : aucun rattachement parcelle → médiane commune),
+    d'où une fiabilité « limitée » assumée. Partagé par les DEUX voies de l'entrée LIEN (relevé Radar et
+    fetch one-shot) : un SEUL moteur de prix, aucune divergence de calcul. None si pas de €/m² calculable
+    ou commune absente."""
+    from . import signaux
+    if not commune:
+        return None
+    ref = signaux._referentiel(db, commune, type_bien, idu=None)
+    try:
+        terrain_ref = (signaux._dvf_terrain(db, commune) or {}).get("eur_m2")
+    except Exception:
+        terrain_ref = None
+    badge = signaux._badge(prix, type_bien, surface_hab, surface_terrain, ref, terrain_ref)
+    if badge is None:
+        return None
+    return {**badge, "fiabilite": "limitee", "repere_perimetre": ref.get("perimetre"),
+            "periode": ref.get("periode"), "meme_type": bool(ref.get("meme_type"))}
+
+
+def _annonce_depuis_radar(db, list_id: int, url: str) -> dict | None:
+    """ANNONCE-2 (lookup Radar D'ABORD) — le bien correspondant à cet identifiant a-t-il DÉJÀ été relevé
+    par le Radar ? Si oui, le rapport est construit depuis les tables EXISTANTES (pige_annonces → bien →
+    faits), SANS aucun appel à Leboncoin, et `relevé le` = date de CAPTURE Radar (fuseau Réunion). None si
+    l'identifiant est inconnu du Radar → l'appelant bascule sur le fetch one-shot (repli ANNONCE-1)."""
+    from ..tz import REUNION_TZ
+    row = db.execute(text(
+        "SELECT b.commune, b.type_bien, b.lat, b.lng, "
+        "       b.date_premiere_saisie, b.date_derniere_confirmation, "
+        "       f.prix, f.pieces, f.surface_hab, f.surface_terrain, f.prix_m2 "
+        "FROM pige_annonces a "
+        "JOIN pige_biens b ON b.bien_id = a.bien_id "
+        "JOIN pige_faits f ON f.bien_id = b.bien_id "
+        "WHERE a.list_id = :lid ORDER BY a.date_saisie DESC LIMIT 1"),
+        {"lid": list_id}).mappings().first()
+    if not row:
+        return None
+    commune = row["commune"]
+    type_bien = row["type_bien"]
+    prix = row["prix"]
+    surface_hab = float(row["surface_hab"]) if row["surface_hab"] is not None else None
+    surface_terrain = float(row["surface_terrain"]) if row["surface_terrain"] is not None else None
+    # VRAIE date de relevé = capture Radar (jamais today). Convertie EXPLICITEMENT au fuseau Réunion
+    # (ORF-17) même si la session SQL rend déjà l'heure Réunion — jamais `date.today()` naïf.
+    cap = row["date_derniere_confirmation"] or row["date_premiere_saisie"]
+    annonce = {
+        "titre": None,                       # le Radar ne conserve pas le contenu d'annonce (doctrine « faits + lien »)
+        "type": type_bien,
+        "prix": prix,
+        "surface_hab": surface_hab,
+        "surface_terrain": surface_terrain,
+        "pieces": row["pieces"],
+        "prix_m2": row["prix_m2"],
+        "commune": commune,
+        "url": url,
+        "releve_le": cap.astimezone(REUNION_TZ).date().isoformat() if cap else None,
+        # Position portail (centroïde de quartier/commune) — centre la carte sur la commune, jamais un
+        # rattachement parcelle (pont V2 écarté par le mandat, idu=None pour le repère de prix).
+        "lat": row["lat"], "lng": row["lng"],
+    }
+    marche = _marche_commune(db, commune, type_bien, prix, surface_hab, surface_terrain)
+    return {"ok": True, "annonce": annonce, "marche": marche}
+
+
 class AnnonceAnalyseIn(BaseModel):
     url: str
 
 
 @router.post("/radar/annonce/analyser")
 def radar_annonce_analyser(body: AnnonceAnalyseIn) -> dict:
-    """ANNONCE-1 (entrée LIEN) — l'utilisateur colle un lien d'annonce Leboncoin. Lecture serveur
-    ONE-SHOT (même garde que le dépôt agence : une requête, headers navigateur, timeout court, aucun
-    retry), puis parseur PAGE D'ANNONCE (`extraire_page_annonce`, chemin `props.pageProps.ad`). On rend
-    les champs PRÉSENTS dans l'annonce (jamais devinés) et l'écart au REPÈRE COMMUNE du bon type — sans
-    jamais rattacher à une parcelle (pont V2 écarté par le mandat), donc fiabilité « limitée » assumée.
-    Toute panne du portail / page illisible → message HONNÊTE (jamais de rapport partiel silencieux)."""
+    """ANNONCE-1/2 (entrée LIEN) — l'utilisateur colle un lien d'annonce Leboncoin.
+
+    ANNONCE-2 — on lit D'ABORD ce que LABUSE a DÉJÀ relevé : le Radar capture chaque soir les annonces de
+    toute l'île. On extrait l'identifiant (list_id) de l'URL et, si le bien est connu du Radar, le rapport
+    est servi depuis les tables existantes SANS aucun appel à Leboncoin (date de relevé = capture Radar).
+    REPLI (bien absent du Radar) — lecture serveur ONE-SHOT (ANNONCE-1 inchangé : une requête, headers
+    navigateur, timeout court, aucun retry), puis parseur PAGE D'ANNONCE (`extraire_page_annonce`). On rend
+    les champs PRÉSENTS (jamais devinés) et l'écart au REPÈRE COMMUNE du bon type — sans rattacher à une
+    parcelle (idu=None), fiabilité « limitée » assumée. Bien absent ET portail bloqué → message HONNÊTE
+    (`url_bloquee`, phrase imposée côté front), aucun code HTTP à l'écran."""
     from ..tz import today_reunion   # FIX ANNONCE-1-TESTS — jour relevé au fuseau Réunion (ORF-17), pas date.today() naïf
-    from . import html_next, signaux
+    from . import html_next
     url = (body.url or "").strip()
     if not _URL_RE.match(url) or "leboncoin." not in url.lower():
         return {"ok": False, "erreur": "url_invalide",
                 "motif": "Collez un lien d'annonce Leboncoin (https://www.leboncoin.fr/…)."}
+    # 1 — LOOKUP RADAR D'ABORD : si le bien a déjà été relevé, rapport servi sans aucun appel Leboncoin.
+    list_id = _list_id_from_url(url)
+    if list_id is not None:
+        with session_scope() as db:
+            radar = _annonce_depuis_radar(db, list_id, url)
+        if radar is not None:
+            return radar
+    # 2 — REPLI : bien absent du Radar → fetch one-shot (comportement ANNONCE-1 inchangé).
     try:
         page = _fetch_page_oneshot(url)
     except RuntimeError as exc:
-        # ANNONCE-1-FIX (pt 2) — le DÉTAIL technique (code HTTP, DataDome…) part en LOG ; l'écran ne
-        # verra qu'une phrase propre, sans code ni jargon (choisie côté front sur le code `erreur`).
+        # bien ABSENT du Radar ET portail bloqué → le DÉTAIL technique (code HTTP, DataDome…) part en LOG ;
+        # l'écran ne verra qu'une phrase propre, sans code ni jargon (choisie côté front sur `erreur`).
         log.warning("radar/annonce/analyser — portail bloque %s : %s", url, exc)
         return {"ok": False, "erreur": "url_bloquee"}
     try:
@@ -1110,22 +1205,9 @@ def radar_annonce_analyser(body: AnnonceAnalyseIn) -> dict:
         "lat": rec.get("lat"),
         "lng": rec.get("lng"),
     }
-    # Écart au REPÈRE COMMUNE du bon type — réutilise le moteur de prix du Radar (aucun recalcul maison).
-    # idu=None : pas de rattachement → `_referentiel` sert la médiane commune (repli_commune), d'où une
-    # fiabilité « limitée » explicite côté outil.
-    marche = None
-    if commune:
-        with session_scope() as db:
-            ref = signaux._referentiel(db, commune, type_bien, idu=None)
-            try:
-                terrain_ref = (signaux._dvf_terrain(db, commune) or {}).get("eur_m2")
-            except Exception:
-                terrain_ref = None
-            badge = signaux._badge(prix, type_bien, surface_hab, surface_terrain, ref, terrain_ref)
-        if badge is not None:
-            marche = {**badge, "fiabilite": "limitee",
-                      "repere_perimetre": ref.get("perimetre"), "periode": ref.get("periode"),
-                      "meme_type": bool(ref.get("meme_type"))}
+    # Écart au REPÈRE COMMUNE du bon type — même moteur partagé que la voie Radar (aucun recalcul maison).
+    with session_scope() as db:
+        marche = _marche_commune(db, commune, type_bien, prix, surface_hab, surface_terrain)
     return {"ok": True, "annonce": annonce, "marche": marche}
 
 

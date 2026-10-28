@@ -297,12 +297,13 @@ export function AnalyserAnnonce() {
   const [erreur, setErreur] = useState<string | null>(null)
   const [res, setRes] = useState<AnnonceAnalyse | null>(null)
 
-  // ANNONCE-1-FIX (pt 2) — UNE phrase d'erreur, aucun code HTTP ni jargon (le détail technique part en
-  // log côté back). Le cas « portail bloque » porte le message imposé par le mandat.
+  // ANNONCE-1-FIX (pt 2) / ANNONCE-2 (pt 4) — UNE phrase d'erreur, aucun code HTTP ni jargon (le détail
+  // technique part en log côté back). `url_bloquee` n'arrive QUE si le bien est absent du Radar ET que
+  // Leboncoin bloque le fetch (le lookup Radar est tenté d'abord) → la phrase le dit.
   const messageErreur = (erreur?: string): string => {
     switch (erreur) {
       case 'url_bloquee':
-        return 'Leboncoin bloque la lecture automatique de cette annonce. Entrez l’adresse du bien pour l’analyser.'
+        return 'Cette annonce n’a pas encore été relevée par LABUSE et Leboncoin bloque sa lecture automatique. Entrez l’adresse du bien pour l’analyser.'
       case 'url_illisible':
         return 'Cette page n’est pas une annonce exploitable. Entrez l’adresse du bien pour l’analyser.'
       case 'url_invalide':
