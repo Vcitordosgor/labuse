@@ -143,27 +143,71 @@ if [ "${NP:-0}" -lt 1 ]; then
 fi
 echo "   manifeste prod : '$PROD_RUN' ($NP lignes) ✓"
 
-# ── VITESSE-2 (Lot 4) — RÉCHAUFFAGE DES CACHES APRÈS DÉPLOIEMENT ──────────────────────────────
+# ── VITESSE-2 (Lot 4) + REMISE-1 (Lot A) — RESTART → readyz STABLE → RÉCHAUFFAGE ─────────────
 # Le code déployé change la version (deploiement.json) → la CLÉ DE FRAÎCHEUR change → les caches
 # partagés (comparateur_raw_cache des 24 communes, commune_contexte_cache) deviennent périmés :
 # sans réchauffage, chaque worker froid recalcule au 1ᵉʳ clic (DEPLOY-1028 §Phase 4 : ~5 s, plusieurs
 # fois/jour). On relance le job `fiche-commune-cache` (il réchauffe D'ABORD comparateur_raw_cache
-# puis les 24 fiches communes), DÉTACHÉ (setsid) et JOURNALISÉ — il ne bloque pas le déploiement.
-# Le réchauffage PAR WORKER (indicateurs + 3 fiches témoins en mémoire) est fait par CHAQUE worker
-# à son démarrage (événement startup FastAPI, LABUSE_WARM_ON_BOOT) — rien à faire ici côté HTTP.
-echo "── 6. réchauffage des caches (job fiche-commune-cache, détaché + journalisé) ──"
-# VITESSE-2 (Lot 7) — INVALIDATION AU DÉPLOIEMENT du cache de fiche PARTAGÉ : le nouveau code change
-# code_sha → la clé de fraîcheur change → les fiches de l'ancien code ne seraient de toute façon plus
-# servies ; on VIDE la table pour libérer l'espace (best-effort, ne bloque jamais le déploiement).
+# puis les 24 fiches communes), DÉTACHÉ (setsid) et JOURNALISÉ.
+#
+# REMISE-1 (Lot A) — INCIDENT DEPLOY-1028b : le job de réchauffage (gros 6-joins + DVF, lecteurs
+# concurrents) partait AVANT/PENDANT que les workers rejouaient leur heal de schéma au (re)démarrage.
+# L'ALTER du heal (ex. `pige_biens ADD COLUMN`) percutait un lecteur du job → verrou → heal_failed →
+# `/readyz` 503 ~40 % jusqu'à un restart manuel. CORRECTIF : on RESTART le service, on attend que
+# `/readyz` soit 200 STABLE (25 succès CONSÉCUTIFS : le heal des workers a convergé, plus aucun ALTER
+# en vol), et SEULEMENT APRÈS on lance le job — plus aucune contention de verrou possible.
+# (Côté code, le heal est en outre résilient : lock_timeout court + 2 réessais par step.)
+echo "── 6. restart + attente readyz STABLE + réchauffage des caches (REMISE-1 Lot A) ──"
+# Pré-requis : secrets en place. En PREMIER déploiement (env absente), on NE restart/warm PAS ici —
+# l'opérateur pose /etc/labuse/labuse.env puis `systemctl enable --now labuse` (le réchauffage par
+# worker au boot suffit à l'amorçage ; relancer le job à la main si besoin).
+if ! ssh -o BatchMode=yes "$HOST" "test -f /etc/labuse/labuse.env"; then
+  echo "   ⚠ /etc/labuse/labuse.env absente (premier déploiement ?) — restart/réchauffage SAUTÉS."
+  echo "✓ déployé — reste : /etc/labuse/labuse.env (secrets), puis systemctl enable --now labuse"
+  echo "  (au boot, chaque worker se réchauffe seul ; lancer ensuite : labuse jobs run fiche-commune-cache)"
+  exit 0
+fi
+# VITESSE-2 (Lot 7) — INVALIDATION du cache de fiche PARTAGÉ : nouveau code → code_sha change → les
+# fiches de l'ancien code ne seraient plus servies ; on VIDE pour libérer l'espace (best-effort).
 ssh -o BatchMode=yes "$HOST" "sudo -u postgres psql -d labuse -c 'DELETE FROM fiche_cache' 2>/dev/null || true; echo '   fiche_cache vidé (invalidation déploiement)'"
-ssh -o BatchMode=yes "$HOST" 'sudo -u labuse bash -lc "
-  set -a; [ -f /etc/labuse/labuse.env ] && . /etc/labuse/labuse.env; set +a
-  mkdir -p /var/log/labuse
-  setsid nohup /opt/labuse/venv/bin/labuse jobs run fiche-commune-cache \
-    >> /var/log/labuse/rechauffage-deploy.log 2>&1 < /dev/null &
-  echo \"   job fiche-commune-cache relancé (détaché) — journal : /var/log/labuse/rechauffage-deploy.log + le journal du job\"
-"' || echo "   ⚠ relance du job non bloquante (échec ssh/labuse) — à relancer à la main : labuse jobs run fiche-commune-cache"
+echo "   restart du service labuse (nouveau code)…"
+ssh -o BatchMode=yes "$HOST" 'sudo systemctl restart labuse'
+# Attente readyz 200 STABLE : 25 succès CONSÉCUTIFS (un seul 503 remet le compteur à zéro → on ne
+# considère stable que lorsque TOUS les workers ont fini leur heal). Plafond ~180 essais (~3 min).
+if ssh -o BatchMode=yes "$HOST" "HEALTH_PORT='$HEALTH_PORT' bash -s" <<'REMOTE'
+set -u
+ok=0; tours=0
+while [ "$ok" -lt 25 ]; do
+  tours=$((tours + 1))
+  if [ "$tours" -gt 180 ]; then
+    echo "   ✗ /readyz jamais stable (25/25) après $tours essais" >&2
+    exit 1
+  fi
+  if curl -fsS -o /dev/null "http://127.0.0.1:${HEALTH_PORT}/readyz" 2>/dev/null; then
+    ok=$((ok + 1))
+  else
+    ok=0   # un 503 (heal pas fini sur un worker) → on repart de zéro
+  fi
+  sleep 1
+done
+echo "   /readyz 200 STABLE ($ok/25 consécutifs, $tours essais) ✓"
+REMOTE
+then
+  # readyz stable → le heal de TOUS les workers a convergé → AUCUN ALTER en vol → on peut réchauffer
+  ssh -o BatchMode=yes "$HOST" 'sudo -u labuse bash -lc "
+    set -a; [ -f /etc/labuse/labuse.env ] && . /etc/labuse/labuse.env; set +a
+    mkdir -p /var/log/labuse
+    setsid nohup /opt/labuse/venv/bin/labuse jobs run fiche-commune-cache \
+      >> /var/log/labuse/rechauffage-deploy.log 2>&1 < /dev/null &
+    echo \"   job fiche-commune-cache relancé (détaché, APRÈS readyz stable) — journal : /var/log/labuse/rechauffage-deploy.log\"
+  "' || echo "   ⚠ relance du job non bloquante (échec ssh/labuse) — à relancer : labuse jobs run fiche-commune-cache"
+else
+  echo "   ✗ /readyz non stable — job de réchauffage NON lancé (on n'empile pas la contention)." >&2
+  echo "     Diagnostiquer : curl /readyz (heal_failed ?), journaux du service ; puis relancer" >&2
+  echo "     labuse jobs run fiche-commune-cache une fois readyz stable." >&2
+  exit 6
+fi
 
-echo "✓ déployé — reste : /etc/labuse/labuse.env (secrets), systemctl enable --now labuse"
-echo "  (au restart, chaque worker se réchauffe seul : indicateurs 24 communes + 3 fiches témoins ;"
-echo "   le job fiche-commune-cache (étape 6) a (re)peuplé les caches partagés en base.)"
+echo "✓ déployé — service redémarré, /readyz 200 stable, caches en réchauffage."
+echo "  (chaque worker s'est réchauffé au boot : indicateurs 24 communes + 3 fiches témoins ;"
+echo "   le job fiche-commune-cache a (re)peuplé les caches partagés en base, sans contention.)"
