@@ -413,6 +413,20 @@ export const analyserAnnonce = (url: string) =>
 export interface AnnonceClassement { idu: string; bande: string | null; libelle: string | null }
 export const getAnnonceClassement = (idu: string) =>
   j<AnnonceClassement>(`/radar/annonce/classement/${encodeURIComponent(idu)}`)
+// ANNONCE-3-FIX — l'estimation du prix SELON la nature de la parcelle (nue → terrain nu ; bâtie → bâti).
+// Point unique partagé avec le PDF (`estimation_annonce`) → mêmes chiffres à l'écran et dans le document.
+export interface AnnonceEstimation {
+  idu: string
+  type_comparateur: 'bati' | 'terrain_nu' | null
+  nature?: string
+  median: number | null
+  q1?: number | null; q3?: number | null
+  n?: number | null; radius_m?: number | null; periode?: number[] | string | null
+  fiabilite?: string | null; commune_fallback?: boolean
+  type_prix?: string | null; note?: string | null
+}
+export const getAnnonceEstimation = (idu: string) =>
+  j<AnnonceEstimation>(`/radar/annonce/estimation/${encodeURIComponent(idu)}`)
 export const parcelAt = (lon: number, lat: number) =>
   j<{ idu: string | null }>(`/parcels/at?lon=${lon}&lat=${lat}`)
 export const searchParcels = (needle: string, opts?: { ileEntiere?: boolean }) =>

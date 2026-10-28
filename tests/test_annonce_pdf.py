@@ -32,35 +32,74 @@ _FICHE = {
 }
 
 
+# ANNONCE-3-FIX — l'estimation est un dict UNIFIÉ (point `estimation_annonce`) passé au bloc.
+_EST_BATI = {"type_comparateur": "bati", "nature": "batie", "median": 3602, "q1": 3000, "q3": 4200,
+             "n": 15, "radius_m": 1000, "periode": [2023, 2025], "fiabilite": "fiable", "type_prix": "maison"}
+_EST_TERRAIN = {"type_comparateur": "terrain_nu", "nature": "nue", "median": 210,
+                "fiabilite": "fiable", "commune_fallback": False,
+                "note": "médiane DVF terrain du secteur (n ≥ 3)"}
+
+
 def test_parcelle_contenu_miroir_ecran():
-    html = bloc.rendu_parcelle(_FICHE, {"orientation": "Sud-Ouest"}, {"bande": "B", "libelle": "Bonne"})
-    # les 6 tuiles (valeurs présentes) + estimation + foncier
+    html = bloc.rendu_parcelle(_FICHE, {"orientation": "Sud-Ouest"}, {"bande": "B", "libelle": "Bonne"}, _EST_BATI)
+    # titre de section « La parcelle » (ANNONCE-3-FIX), 6 tuiles, estimation, foncier
+    assert "La parcelle" in html and "Analyse d&#x27;annonce" not in html
     assert "UA" in html and "Sud-Ouest" in html and "B · Bonne" in html
     assert "aucun aléa" in html                      # 0 aléa = donnée présente, pas un vide
-    assert "€/m²" in html and "Fiabilité : élevée" in html
+    assert "€/m²" in html
+    # badge fiabilité = niveau SEUL (« Fiabilité » est l'étiquette kv à côté), pas « Fiabilité : élevée »
+    assert "Élevée" in html and "Fiabilité : élevée" not in html and "Fiabilité : Élevée" not in html
+    assert "Parcelle bâtie" in html and "bâti ancien" in html      # la note DIT le comparateur
     assert "Estimation du prix" in html and "Le foncier" in html
     assert "Hauteur réglementaire" in html and "estimation simplifiée" in html
-    # fourchette q1/q3 (nombres groupés, espace insécable)
-    assert "à" in html and "3" in html and "200" in html
+    assert "à" in html and "3" in html and "200" in html           # fourchette q1/q3
+
+
+def test_parcelle_estimation_selon_nature_terrain():
+    """Parcelle NUE → repère €/m² de TERRAIN NU ; la note dit qu'on compare au terrain nu."""
+    html = bloc.rendu_parcelle(_FICHE, {"orientation": "Est"}, {}, _EST_TERRAIN)
+    assert "Parcelle nue" in html and "TERRAIN NU" in html
+    assert "210" in html and "€/m²" in html
+    assert "Ventes comparables" not in html          # pas de N pour le repère terrain (jamais un vide)
 
 
 def test_parcelle_jamais_un_champ_vide():
-    """Exposition, classement et SDP absents → tuiles OMISES, aucun « — », aucune case vide."""
+    """Exposition, classement et SDP absents → tuiles OMISES, aucune case de tuile vide."""
     fiche = {**_FICHE, "potentiel_transformation": {}, "aleas": {"n": 2}}
-    html = bloc.rendu_parcelle(fiche, {"orientation": None}, {"bande": None, "libelle": None})
+    html = bloc.rendu_parcelle(fiche, {"orientation": None}, {"bande": None, "libelle": None}, _EST_BATI)
     assert "Exposition" not in html            # tuile absente (pas de valeur)
     assert "Classement LABUSE" not in html     # tuile absente
     assert "SDP restante" not in html          # tuile absente
-    assert "—" not in html                     # jamais un tiret de remplissage
+    assert '<div class="v"></div>' not in html  # jamais une case de tuile vide
     assert "2 aléas" in html                   # mais le compte d'aléas (présent) s'imprime
 
 
 def test_parcelle_estimation_absente_est_sourcee():
-    """Sans médiane DVF, l'estimation dit une absence SOURCÉE (pas un vide), comme l'écran."""
-    fiche = {**_FICHE, "prix_ancien": {}}
-    html = bloc.rendu_parcelle(fiche, {"orientation": "Est"}, {})
+    """Sans médiane, l'estimation dit une absence SOURCÉE (pas un vide), comme l'écran."""
+    html = bloc.rendu_parcelle(_FICHE, {"orientation": "Est"}, {}, {"type_comparateur": "bati", "median": None})
     assert "Indisponible" in html and "ventes comparables" in html
     assert "€/m²" not in html.split("Estimation du prix")[1].split("Le foncier")[0]
+
+
+def test_estimation_annonce_helper_nature():
+    """`estimation_annonce` choisit le comparateur par nature : bâtie → bâti (prix_ancien, sans DB) ;
+    nue → terrain nu (`_prix_terrain_local`, via un db simulé)."""
+    from labuse.pige.api import estimation_annonce
+    # BÂTIE : lit prix_ancien de la fiche, aucune requête DB (db=None accepté)
+    batie = estimation_annonce(None, "97411000AB0123",
+                               {"etat_bien": "bati_encore", "prix_ancien": {"median": 3602, "n": 15}})
+    assert batie["type_comparateur"] == "bati" and batie["median"] == 3602
+
+    class _FakeDB:
+        def execute(self, *a, **k):
+            class _R:
+                def mappings(self_):
+                    class _M:
+                        def first(self__): return {"prix": 210.0}
+                    return _M()
+            return _R()
+    nue = estimation_annonce(_FakeDB(), "97411000AB0123", {"etat_bien": "nu"})
+    assert nue["type_comparateur"] == "terrain_nu" and round(nue["median"]) == 210
 
 
 def test_commune_type_pilote_les_lignes():
@@ -88,7 +127,8 @@ def test_commune_prix_face_marche_et_phrase_gravee():
     annonce = {"type": "appartement", "prix": 300000, "surface_hab": 60, "pieces": 3,
                "commune": "Saint-Denis", "releve_le": "2026-10-27"}
     html = bloc.rendu_commune(annonce, marche, ctx)
-    assert "+33 %" in html and "Fiabilité : limitée" in html
+    # badge = niveau SEUL « Limitée » (l'étiquette « Fiabilité » est la clé kv), pas « Fiabilité : limitée »
+    assert "+33 %" in html and "Limitée" in html and "Fiabilité : limitée" not in html
     assert "Localisez la parcelle" in html           # phrase gravée du mandat
     assert "inondation" in html and "parc national" in html    # aléas déduits comme l'écran
     assert "La commune · Saint-Denis" in html

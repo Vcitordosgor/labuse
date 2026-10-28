@@ -1235,6 +1235,59 @@ def radar_annonce_classement(idu: str) -> dict:
     return {"idu": idu, "bande": bande, "libelle": libelle_client_bande(bande, bareme, row.get("cause"))}
 
 
+def estimation_annonce(db, idu: str, fiche: dict) -> dict:
+    """ANNONCE-3-FIX — l'estimation du prix SELON LA NATURE de la parcelle. POINT UNIQUE lu par l'écran
+    (endpoint ci-dessous) ET par le PDF (builder) → mêmes chiffres partout, aucun recalcul divergent.
+
+    Parcelle NUE (`etat_bien == 'nu'`, emprise bâtie < 5 %) → repère €/m² de TERRAIN NU
+    (`_prix_terrain_local`, secteur → repli commune). Parcelle BÂTIE (ou non mesurée) → comparateur
+    BÂTI de la fiche (`prix_ancien`, inchangé). Le champ `type_comparateur` dit lequel (la note côté
+    rendu l'explicite). On NE retombe JAMAIS du terrain vers le bâti sur une parcelle nue (ce serait
+    trompeur) : faute de repère terrain, l'estimation est « indisponible », sourcée."""
+    etat = (fiche or {}).get("etat_bien")
+    if etat == "nu":
+        from ..faisabilite.bilan import _prix_terrain_local
+        t = _prix_terrain_local(db, idu)
+        if t and t.get("prix_m2"):
+            niveau = t.get("niveau")
+            return {"nature": "nue", "type_comparateur": "terrain_nu",
+                    "median": round(t["prix_m2"]),
+                    "fiabilite": "fiable" if niveau == "secteur" else None,
+                    "commune_fallback": niveau == "commune",
+                    "note": t.get("libelle")}
+        return {"nature": "nue", "type_comparateur": "terrain_nu", "median": None,
+                "note": "Pas assez de ventes de terrain nu comparables dans le secteur."}
+    pa = (fiche or {}).get("prix_ancien") or {}
+    dist = (pa.get("distribution") or {}).get("apres") or {}
+    return {
+        "nature": "batie" if etat in ("bati_encore", "bati_max") else "inconnue",
+        "type_comparateur": "bati",
+        "median": pa.get("median") if pa.get("median") is not None else dist.get("median"),
+        "q1": pa.get("q1") if pa.get("q1") is not None else dist.get("p25"),
+        "q3": pa.get("q3") if pa.get("q3") is not None else dist.get("p75"),
+        "n": pa.get("n") if pa.get("n") is not None else dist.get("n"),
+        "radius_m": pa.get("radius_m"),
+        "periode": pa.get("periode"),
+        "fiabilite": pa.get("fiabilite"),
+        "commune_fallback": pa.get("commune_fallback"),
+        "type_prix": pa.get("type_prix"),
+    }
+
+
+@router.get("/radar/annonce/estimation/{idu}")
+def radar_annonce_estimation(idu: str) -> dict:
+    """ANNONCE-3-FIX — l'estimation du prix d'une parcelle, selon sa NATURE (nue → terrain nu, bâtie →
+    bâti). Lit la fiche SERVIE (lecture seule) puis `estimation_annonce` (point unique). L'écran et le
+    PDF lisent exactement ce rapport → mêmes chiffres, même règle."""
+    from ..api.app import parcel_fiche
+    with session_scope() as db:
+        try:
+            fiche = parcel_fiche(idu, db=db)
+        except ValueError:
+            return {"idu": idu, "median": None, "type_comparateur": None, "note": "Parcelle inconnue."}
+        return {"idu": idu, **estimation_annonce(db, idu, fiche)}
+
+
 @router.post("/admin/radar/depot-agence/publier")
 def radar_depot_agence_publier(body: DepotPublierIn, request: Request) -> dict:
     """ÉTAPE 3-4 — publier l'annonce déposée : rattachement CERTAIN depuis l'adresse, contenu confié."""

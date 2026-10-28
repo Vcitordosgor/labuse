@@ -35,13 +35,14 @@ def _fmt_m2(m2) -> str | None:
 
 
 def _fiab(fiabilite: str | None, commune_fallback) -> tuple[str, str]:
-    """Miroir de `fiab()` (AnalyserAnnonce.tsx) : (mot, classe de chip). L'entrée commune est toujours
-    « limitée » ; sinon « élevée » (fiable) ou « indicative »."""
+    """Miroir de `fiab()` (AnalyserAnnonce.tsx) : (niveau, classe de chip). ANNONCE-3-FIX — trois
+    niveaux SEULEMENT, capitalisés (l'étiquette « Fiabilité » est portée à côté) : « Élevée » (repère
+    fiable au secteur), « Moyenne » (repère indicatif), « Limitée » (repli commune)."""
     if commune_fallback:
-        return ("limitée", "p")                 # chip ambre
+        return ("Limitée", "p")                 # chip ambre
     if fiabilite == "fiable":
-        return ("élevée", "s")                   # chip menthe
-    return ("indicative", "p")
+        return ("Élevée", "s")                   # chip menthe
+    return ("Moyenne", "p")
 
 
 def _fmt_periode(p) -> str | None:
@@ -58,7 +59,8 @@ def _fmt_periode(p) -> str | None:
 
 
 # ═══════════════════════════════════════ VARIANTE PARCELLE ═══════════════════════════════════════
-def rendu_parcelle(fiche: dict, expo: dict | None, classement: dict | None) -> str:
+def rendu_parcelle(fiche: dict, expo: dict | None, classement: dict | None,
+                   estimation: dict | None = None) -> str:
     f = fiche or {}
     rp = f.get("reglement_plu") or {}
     zones = rp.get("zones") or []
@@ -88,35 +90,31 @@ def rendu_parcelle(fiche: dict, expo: dict | None, classement: dict | None) -> s
                     for k, v in tuiles if v)
     corps = f'<div class="cover-tiles">{cells}</div>'
 
-    corps += _estimation_prix(f.get("prix_ancien"))
+    corps += _estimation_prix(estimation)
     corps += _le_foncier(zone, pot, sdp)
-    return section("Analyse d'annonce", corps)
+    return section("La parcelle", corps)
 
 
-def _estimation_prix(prix_ancien) -> str:
-    """« Estimation du prix » = le comparateur DVF de la fiche (lu tel quel, €/m²). MÊME sélection que
-    l'écran : median ← median|distribution.apres.median ; fourchette ← q1/q3|p25/p75 ; N · rayon · période."""
-    pa = prix_ancien if isinstance(prix_ancien, dict) else {}
-    dist = ((pa.get("distribution") or {}).get("apres")) or {}
-    median = pa.get("median") if pa.get("median") is not None else dist.get("median")
-    p25 = pa.get("q1") if pa.get("q1") is not None else dist.get("p25")
-    p75 = pa.get("q3") if pa.get("q3") is not None else dist.get("p75")
-    n_ventes = pa.get("n") if pa.get("n") is not None else dist.get("n")
-    rayon = pa.get("radius_m")
-    periode = _fmt_periode(pa.get("periode"))
-    fallback = pa.get("commune_fallback")
-    type_prix = pa.get("type_prix")
-
+def _estimation_prix(est) -> str:
+    """ANNONCE-3-FIX — « Estimation du prix » SELON LA NATURE de la parcelle (point unique
+    `_estimation_annonce` lu aussi par l'écran → mêmes chiffres) : parcelle BÂTIE → comparateur bâti
+    (médiane + fourchette + N · rayon · période) ; parcelle NUE → repère €/m² de TERRAIN NU (médiane
+    du secteur/commune). La note DIT lequel est utilisé. Jamais un champ vide : ce qui est absent est omis."""
+    e = est if isinstance(est, dict) else {}
+    terrain = e.get("type_comparateur") == "terrain_nu"
+    median = e.get("median")
     if not isinstance(median, (int, float)):
-        # absence SOURCÉE (pas un champ vide) : le même constat honnête qu'à l'écran.
-        corps = note("Indisponible — pas assez de ventes comparables dans le secteur pour un repère de prix.")
-        return section("Estimation du prix", corps)
+        motif = e.get("note") or ("Indisponible — pas assez de ventes de terrain nu comparables dans le secteur."
+                                  if terrain else "Indisponible — pas assez de ventes comparables dans le secteur.")
+        return section("Estimation du prix", note(motif))
 
-    mot, chip_cls = _fiab(pa.get("fiabilite"), fallback)
+    mot, chip_cls = _fiab(e.get("fiabilite"), e.get("commune_fallback"))
+    p25, p75 = e.get("q1"), e.get("q3")
     petit = (f"de {_fmt_int(p25)} à {_fmt_int(p75)} €/m²"
              if isinstance(p25, (int, float)) and isinstance(p75, (int, float)) else "")
     corps = verdict(f"{_fmt_int(median)} €/m²", ton="" if chip_cls == "s" else "neutral", petit_html=petit)
-    lignes = [ligne_kv("Fiabilité", chip_span(chip_cls, f"Fiabilité : {mot}"))]
+    lignes = [ligne_kv("Fiabilité", chip_span(chip_cls, mot))]   # étiquette « Fiabilité » + niveau seul
+    n_ventes, rayon, periode = e.get("n"), e.get("radius_m"), _fmt_periode(e.get("periode"))
     if isinstance(n_ventes, (int, float)):
         lignes.append(ligne_kv("Ventes comparables", esc(_fmt_int(n_ventes))))
     if isinstance(rayon, (int, float)):
@@ -124,9 +122,15 @@ def _estimation_prix(prix_ancien) -> str:
     if periode:
         lignes.append(ligne_kv("Période", esc(periode)))
     corps += table_kv(lignes)
-    note_txt = (f"Prix observés au m² (bâti ancien{f', {type_prix}' if type_prix else ''}) autour de la "
-                "parcelle." + (" Repère élargi à la commune (secteur trop peu fourni)." if fallback else "")
-                + " La valeur d'un bien dépend de sa surface et de son état, non connus du modèle.")
+    if terrain:
+        note_txt = ("Parcelle nue — comparée aux ventes de TERRAIN NU (repère €/m² de terrain). "
+                    + (e.get("note") or "")).strip()
+    else:
+        type_prix = e.get("type_prix")
+        note_txt = (f"Parcelle bâtie — comparée au bâti ancien (prix observés au m²"
+                    + (f", {type_prix}" if type_prix else "") + ") autour de la parcelle."
+                    + (" Repère élargi à la commune (secteur trop peu fourni)." if e.get("commune_fallback") else "")
+                    + " La valeur d'un bien dépend de sa surface et de son état, non connus du modèle.")
     corps += note(note_txt)
     return section("Estimation du prix", corps)
 
@@ -210,7 +214,7 @@ def _prix_face_marche(m: dict | None) -> str:
             f" : {_fmt_int(ref)} €/m²" if isinstance(ref, (int, float)) else "")
         corps = verdict(esc(m["ecart_libelle"]), ton="neutral", petit_html=sub)
         corps += table_kv([ligne_kv("Fiabilité",
-                 chip_span("p", "Fiabilité : limitée") + ' <span class="none">repère à l\'échelle de la commune</span>')])
+                 chip_span("p", "Limitée") + ' <span class="none">repère à l\'échelle de la commune</span>')])
     else:
         motif = (m or {}).get("motif") or ("Comparaison au marché indisponible (prix ou surface absents "
                  "de l'annonce, ou échantillon DVF insuffisant).")

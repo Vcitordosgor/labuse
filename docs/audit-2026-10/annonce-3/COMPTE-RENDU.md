@@ -1,5 +1,42 @@
 # ANNONCE-3 — « Analyser une annonce » gagne un export PDF, Docs gagne « Analyse d'annonce »
 
+> ## ANNONCE-3-FIX (retours Vic) — appliqué sur la même branche
+>
+> Sept points, tous tenus (rien de servi touché : le CSS de mise en page est injecté **seulement**
+> pour ce document via `page_extra_css`, les 8 autres documents sont inchangés) :
+>
+> 1. **Plan de situation** — la parcelle ENTIÈRE, CENTRÉE, avec une MARGE autour du contour
+>    (`plan_ortho(crop_margin_m=22, target_aspect=2.4)` : cadre centré sur l'emprise + marge, l'axe
+>    déficient s'élargit, la parcelle n'est jamais rognée). Hauteur réduite au rendu (~30 mm,
+>    `width:auto`+`height`, pas d'`object-fit:cover`) → **la variante parcelle tient sur UNE page**.
+> 2. **En-tête variante parcelle** — adresse (ou commune si la fiche n'en résout pas), IDU, date.
+> 3. **Titre de la section des tuiles** — « La parcelle » (au lieu de « Analyse d'annonce »).
+> 4. **Badge de fiabilité** — trois niveaux seulement (« Élevée » / « Moyenne » / « Limitée »), le badge
+>    ne porte QUE le niveau, l'étiquette « Fiabilité » est à côté — à l'écran ET dans le PDF.
+> 5. **Pagination « 1 / 2 » sur une seule ligne** (@bottom-right `white-space:nowrap`, scopé) ; la
+>    variante parcelle tient sur une page → « 1 / 1 ».
+> 6. **Estimation selon la nature de la parcelle** — point UNIQUE `estimation_annonce` (lu par l'écran
+>    via `GET /radar/annonce/estimation/{idu}` ET par le PDF) : parcelle NUE (`etat_bien='nu'`) →
+>    repère €/m² de TERRAIN NU (`_prix_terrain_local`, secteur→commune) ; BÂTIE → comparateur bâti
+>    (prix_ancien). **La note dit lequel est utilisé**, même règle à l'écran et dans le PDF.
+> 7. **Nouvelle capture du bouton** (`captures/bouton-exporter-pdf-outil.png`).
+>
+> ⚠ Sur la base LOCALE (stale, PROD=LOCAL), `etat_bien` n'est pas servi sur la fiche (cache antérieur
+> à la colonne) → les parcelles LIVE retombent toutes sur le comparateur BÂTI. Le chemin TERRAIN NU est
+> prouvé par les tests unitaires + une capture forcée (`captures/demo-terrain-parcelle.pdf`,
+> `etat_bien='nu'` injecté sur `97411000IH0259` → « Parcelle nue — comparée aux ventes de TERRAIN NU »,
+> 489 €/m², vraie médiane DVF terrain du secteur).
+>
+> **Recette FIX** (uvicorn :8940 redémarré — ⚠ sans redémarrage il sert le code périmé) :
+> `outil-parcelle.pdf`/`docs-parcelle.pdf` (CX0800, **1 page**, outil==docs texte identique),
+> `outil-parcelle-batie.pdf`/`docs-parcelle-batie.pdf` (`97422000BN2715`, 1 page, identiques),
+> `outil-commune.pdf`/`docs-commune.pdf` (1 page, « 1 / 1 »). Écran == PDF vérifié (CX0800 : 3 291 €/m²,
+> 2 953–3 518, Fiabilité Élevée, 12 ventes · 500 m · 2022–2025, « Parcelle bâtie — comparée au bâti
+> ancien »). tsc 0 · vitest **301/301** · pytest hook **2601 passed, 0 failed** (test `test_annonce_pdf.py`
+> 12 cas, dont nature terrain/bâti). Commit FIX sur la branche.
+>
+> ---
+
 **Branche** `feat/annonce-3` · worktree `~/Desktop/labuse-annonce3` · base `origin/main` (`472e292fd`,
 qui contient déjà ANNONCE-1 et ANNONCE-2 mergés). Ports 8940/6140. Aucun merge, rien de servi touché,
 aucun accès prod. DA existante, **aucun nouveau composant, aucune nouvelle couleur**.

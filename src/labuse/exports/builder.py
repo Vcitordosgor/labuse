@@ -74,8 +74,9 @@ _LABEL = {
     "comparatif": ("Comparatif", "Deux à trois parcelles côte à côte, sur les lignes de Comparer."),
     "etude-zone": ("Étude de zone", "Le territoire autour de la parcelle, dans le rayon choisi."),
   # ANNONCE-3 — miroir de l'outil « Analyser une annonce » : une adresse (rapport parcelle) ou un lien
-  # d'annonce (rapport commune). Même source que l'écran ; aucun moteur neuf.
-  "analyse-annonce": ("Analyse d'annonce", "Une adresse ou un lien d'annonce, croisés au marché et au foncier."),
+  # d'annonce (rapport commune). Même source que l'écran ; aucun moteur neuf. ANNONCE-3-FIX : pas de
+  # sous-titre (redondant avec le wordmark+titre ; la place va au contenu pour tenir sur une page).
+  "analyse-annonce": ("Analyse d'annonce", ""),
 }
 
 
@@ -683,6 +684,59 @@ def construire_etude_zone(idu: str, rayon_km, zone: dict, map_html: str, *,
 
 
 # ── ANNONCE-3 — « Analyse d'annonce » : deux variantes, miroir de l'outil Analyser une annonce. ──
+#: ANNONCE-3-FIX — CSS SCOPÉ au seul document « Analyse d'annonce » (page_extra_css → les 8 autres
+#: documents servis sont INCHANGÉS) : (1) pagination « 1 / 2 » tenue sur UNE ligne (le long pied
+#: @bottom-left rétrécissait la case @bottom-right) ; (2) interlignes resserrés (titres, plan, note)
+#: pour que la VARIANTE PARCELLE tienne sur UNE page sans recadrer le plan (hauteur du plan réduite).
+_ANNONCE_PAGE_CSS = (
+    "@page { @bottom-right { white-space: nowrap; } }"
+    "h1 { font-size: 18pt; margin-bottom: 1pt; }"
+    "h2 { margin: 9pt 0 4pt; font-size: 13pt; }"
+    "h3 { margin: 7pt 0 3pt; }"
+    ".plan { margin: 5pt 0 2pt; }"
+    ".plan .cap { padding: 2pt 8pt; }"
+    ".verdict { margin: 0 0 4pt; padding: 5pt 10pt; font-size: 11.5pt; }"
+    ".note { margin: 2pt 0 3pt; }"
+    ".kv td { padding: 2.5pt 0; }"
+    ".cover-tiles { margin: 7pt 0 3pt; gap: 6pt; } .cover-tiles .tile { padding: 5pt 8pt; }"
+    ".cover-tiles .tile .v { font-size: 13pt; }"
+)
+
+
+def _plan_annonce_html(db, idu: str) -> str:
+    """ANNONCE-3-FIX — le plan de situation de l'annonce : la parcelle ENTIÈRE, CENTRÉE, avec une MARGE
+    autour du contour (plan_ortho `crop_margin_m` → cadre centré sur l'emprise + marge, l'axe déficient
+    s'élargit, la parcelle n'est JAMAIS rognée). Hauteur RÉDUITE au rendu (img ~44 mm, sans recadrage :
+    `width:auto`+`height` garde l'aspect, pas d'`object-fit:cover`) pour que la variante tienne sur une
+    page. Best-effort : réseau/géométrie absents → cadre neutre légendé (jamais d'erreur)."""
+    from sqlalchemy import text
+    from .rendu import esc
+    try:
+        gj = db.execute(text("SELECT ST_AsGeoJSON(geom) FROM parcels WHERE idu = :idu"), {"idu": idu}).scalar()
+    except Exception as exc:  # noqa: BLE001
+        log.warning("plan annonce %s : géométrie illisible (%s)", idu, exc)
+        gj = None
+    if gj:
+        try:
+            from ..api.plan_situation import plan_ortho
+            from ..flash.report import storage_dir
+            res = plan_ortho(gj, cache_dir=storage_dir() / "tiles", crop_margin_m=22.0,
+                             target_aspect=2.4, min_px=640, zoom_delta=0, zoom_max=19)
+            if res.get("ok"):
+                import base64
+                img = "data:image/jpeg;base64," + base64.b64encode(res["jpeg"]).decode()
+                cap = esc(res.get("attribution") or "")
+                return (f'<div class="plan">'
+                        f'<img style="display:block;margin:0 auto;height:30mm;width:auto;max-width:100%;object-fit:contain" '
+                        f'src="{img}" alt="Plan de situation">'
+                        f'<div class="cap">Plan de situation — la parcelle (contour), centrée avec une marge'
+                        + (f' · {cap}' if cap else "") + "</div></div>")
+        except Exception as exc:  # noqa: BLE001 — la carte est un plus, jamais un bloqueur
+            log.warning("plan annonce %s non rendu : %s — cadre neutre (ORF-19)", idu, exc)
+    return ('<div class="plan"><div class="ph">Plan de situation — la parcelle '
+            '(fond cartographique momentanément indisponible)</div></div>')
+
+
 def construire_analyse_annonce_parc(db, idu: str, *, request=None, jour: date | None = None) -> ResultatDoc:
     """Variante PARCELLE (entrée adresse) : en-tête (adresse · IDU · date) + plan de situation (contour
     parcelle, MÊME composant que le Dossier) + les 6 tuiles + « Estimation du prix » + « Le foncier ».
@@ -704,14 +758,21 @@ def construire_analyse_annonce_parc(db, idu: str, *, request=None, jour: date | 
     except Exception as exc:  # noqa: BLE001 — le classement est un plus ; sa tuile sera simplement omise
         log.warning("analyse-annonce %s : classement indisponible (%s)", idu, exc)
         classement = None
+    # ANNONCE-3-FIX — l'estimation SELON LA NATURE (nue → terrain nu ; bâtie → bâti). Point unique
+    # `estimation_annonce` (le MÊME que l'endpoint écran /radar/annonce/estimation) → mêmes chiffres.
+    from ..pige.api import estimation_annonce
+    est = estimation_annonce(db, idu, fiche)
     numero = numeros.numero_rapport("analyse-annonce", idu, j)
+    # ANNONCE-3-FIX — en-tête : adresse (si la fiche en résout une), sinon la commune ; puis l'IDU et la
+    # date (portés par la ligne d'identité d'_entete_doc). Jamais une case vide.
     adresse = fiche.get("adresse") or ""
-    ref = " · ".join(x for x in (adresse, idu) if x)
-    cart = _cart("analyse-annonce", adresse or idu, idu, numero, j)
+    lieu = adresse or fiche.get("commune") or ""
+    ref = " · ".join(x for x in (lieu, idu) if x)
+    cart = _cart("analyse-annonce", lieu or idu, idu, numero, j)
     corps = (_entete_doc("analyse-annonce", ref, numero, j)
-             + _plan_situation_html(db, idu)
-             + bloc_annonce.rendu_parcelle(fiche, expo, classement))
-    html = page_html(_LABEL["analyse-annonce"][0], cart, corps)
+             + _plan_annonce_html(db, idu)
+             + bloc_annonce.rendu_parcelle(fiche, expo, classement, est))
+    html = page_html(_LABEL["analyse-annonce"][0], cart, corps, page_extra_css=_ANNONCE_PAGE_CSS)
     return ResultatDoc(html=html, valeurs={}, numero=numero, cartouche=cart,
                        contexte={"idu": idu, "adresse": adresse})
 
@@ -748,7 +809,7 @@ def construire_analyse_annonce_lien(annonce: dict, marche: dict | None, contexte
     cart = _cart("analyse-annonce", titre, commune or "annonce", numero, j)
     corps = (_entete_doc("analyse-annonce", titre, numero, j) + emis
              + bloc_annonce.rendu_commune(a, marche, contexte))
-    html = page_html(_LABEL["analyse-annonce"][0], cart, corps)
+    html = page_html(_LABEL["analyse-annonce"][0], cart, corps, page_extra_css=_ANNONCE_PAGE_CSS)
     return ResultatDoc(html=html, valeurs={}, numero=numero, cartouche=cart,
                        contexte={"annonce": a})
 
