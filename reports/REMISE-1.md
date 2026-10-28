@@ -232,6 +232,45 @@ Déploiement **code-seul** (aucune donnée, aucune bascule, aucune migration man
 4. **Hors mandat à planifier** : ré-accepter le golden de cohérence 7 témoins (`tests/golden/coherence/`)
    sur q_v20 (V6b), et diagnostiquer V3b/V3c (journal circuit/sources).
 
+---
+
+## Addendum — stationnement L151-35 / L151-36 (retour Vic)
+
+**Question.** Sur le témoin L'Étang-Salé, le programme étudié est une **résidence étudiante**
+(`type_projet="etudiante"`, résidence universitaire = 2° de L151-34). **L151-35 s'applique donc
+correctement** : il vise logements aidés / résidences seniors / résidences universitaires → au plus
+1 place/logement (0,5 à moins de 500 m d'un TCSP). Le témoin est à **7 817 m** d'un TCSP → pas de
+réduction → **1 place/logt → 23 places** pour 23 logements (c'est bien ce que le moteur applique).
+
+**Règle de Vic (= Code de l'urbanisme).** L151-35 : étudiante / senior / social uniquement. L151-36 :
+autres logements, **seulement** à moins de 500 m d'un TCSP.
+
+**Vérification & correction.** La règle **APPLIQUÉE** (`moteur._plafond_l151`, qui fixe le nombre de
+places) était **déjà juste** : L151-35 pour les 3 catégories (1/logt, 0,5 si < 500 m), L151-36 pour les
+autres uniquement < 500 m, distance mesurée sur les `tcsp_station` (pas les arrêts de bus), seuil **500 m**.
+Mais la règle **AFFICHÉE** (`service._stationnement_regimes`, bloc « plafond national » + front) était
+**FAUSSE** : ratio **0,5 codé en dur** étiqueté « L151-35 », condition au mauvais seuil **800 m**, inclusion
+des arrêts de bus, et **aucune branche L151-36** pour les logements de droit commun. Corrigé pour coller
+exactement à la règle appliquée / à Vic :
+
+- `_tcsp_sous_800m` → `_tcsp_sous_500m` (réutilise `moteur._tcsp_dist_m` → **source unique**, `tcsp_station`, 500 m) ;
+- L151-35 (étudiante/senior/social) : ratio **1,0**, abaissé à **0,5** si < 500 m ;
+- L151-36 (collectif/droit commun) : affiché **seulement** si < 500 m, ratio **1,0** ; au-delà, **aucun** plafond national ;
+- `capacite_reduite` prend le ratio/article **du régime calculé** (plus de 0,5 « L151-35 » codé en dur) ;
+- front `EtudeV6.tsx` + `api.ts` : texte « 800 m » → « 500 m », clé `condition_tcsp_sous_800m` → `condition_tcsp_sous_500m`.
+
+Fichiers : `src/labuse/implantation/service.py`, `src/labuse/registre/lectures.py`,
+`frontend/src/{components/outils/EtudeV6.tsx, components/outils/EtudeV6.test.tsx, lib/api.ts}`.
+
+**Tests — un par cas** (`tests/test_remise1_stationnement_l151.py`, **sans base → au hook**, 15 cas) :
+appliqué **et** affiché, pour étudiante (1,0 ; 0,5 si < 500 m), senior (0,5 < 500 m), social (1,0 hors
+500 m), collectif (L151-36 1,0 si < 500 m, **rien** au-delà), lotissement (aucun plafond), « la loi ne mord
+pas si le PLU est déjà plus favorable », et un garde-fou **affiché == appliqué** sur le ratio. Les 5 reels
+étude affectés (item1/2b/3, jauge, contrefactuel) restent **verts**. L'application sur le témoin était juste
+(23 places) ; c'est l'**affichage** du régime qui a été corrigé.
+
+---
+
 ### État de clôture
 - **Hook** (pre-push) : scan de secrets **OK** ; pytest `not db/local/reel/network` **2687 passed, 48
   skipped, 0 failed** (84 s). Étape **front** (tsc -b + vitest) non exécutable (`frontend/node_modules`

@@ -594,22 +594,23 @@ _L15134 = {
     "senior": "résidence pour personnes âgées (L151-34, 3°)",
     "etudiante": "résidence universitaire (L151-34)",
 }
-_PLAFOND_L15135 = 0.5   # « il ne peut être exigé plus de 0,5 aire / logement » (1° à 3° de L151-34, < 800 m TCSP)
-_CITATION_L15135 = (
-    "Code de l'urbanisme L151-35 : à moins de 800 m d'une gare / station de transport collectif en site "
-    "propre, « il ne peut être exigé la réalisation de plus de 0,5 aire de stationnement par logement » "
-    "pour les logements aidés et résidences des 1° à 3° de L151-34 (en vigueur depuis le 28/11/2025).")
+# REMISE-1 (décision Vic) — SOURCE UNIQUE avec moteur._plafond_l151 (règle APPLIQUÉE) :
+#   · L151-35 (logement aidé / RPA / résidence universitaire, 1°-3° de L151-34) : au plus 1 place/logement,
+#     et au plus 0,5 À MOINS DE 500 m d'un transport collectif en site propre bien desservi.
+#   · L151-36 (AUTRES logements) : au plus 1 place/logement, SEULEMENT à moins de 500 m d'un tel transport.
+# (L'ancien code posait 0,5 inconditionnel « L151-35 » à < 800 m — il mélangeait L151-35 et L151-36 et
+#  prenait le mauvais seuil ; corrigé ici pour que l'AFFICHAGE dise exactement ce que le moteur APPLIQUE.)
+def _ratio_l15135(sous_500: bool) -> float:
+    return 0.5 if sous_500 else 1.0
 
 
-def _tcsp_sous_800m(session, idus: list[str]) -> tuple[bool, Optional[int]]:
-    """Condition géographique du plafond L151-35/36 : distance au plus proche TCSP (< 800 m). LABUSE la
-    VÉRIFIE (c'est une donnée), contrairement à l'éligibilité juridique de catégorie (non prouvable ici)."""
-    from sqlalchemy import text
-    d = session.execute(text(
-        "SELECT min(round(ST_Distance(s.geom_2975, p.geom_2975))::int) FROM parcels p, spatial_layers s "
-        "WHERE p.idu = ANY(:i) AND s.kind IN ('tcsp_station', 'transport_arret') AND s.geom_2975 IS NOT NULL"
-    ), {"i": idus}).scalar()
-    return (d is not None and d < 800), (int(d) if d is not None else None)
+def _tcsp_sous_500m(session, idus: list[str]) -> tuple[bool, Optional[int]]:
+    """Condition géographique des plafonds L151-35/36 : distance au plus proche TCSP (< 500 m). On réutilise
+    `moteur._tcsp_dist_m` (STATIONS en site propre `tcsp_station` SEULEMENT — un simple arrêt de bus ne
+    déclenche pas le plafond) → l'affichage et le calcul appliqué partagent la MÊME distance et le MÊME seuil."""
+    from .moteur import _tcsp_dist_m
+    d = _tcsp_dist_m(session, idus)
+    return (d is not None and d < 500), (int(d) if d is not None else None)
 
 
 def _plu_millesime(session, insee: str) -> Optional[str]:
@@ -687,20 +688,45 @@ def _stationnement_regimes(session, idus: list[str], type_projet: str, regles, i
         # ETUDE-V6-3 (item 3) — la RÈGLE en clair (ex. « 1 pl. T1–T2 · 1,5 pl. T3–T4 ») pour le récap.
         "regle_courte": _regle_stationnement_courte(b),
     }
+    sous_500, dist = _tcsp_sous_500m(session, idus)
     cat = _L15134.get(type_projet)
     plafond = None
     if cat:
-        sous_800, dist = _tcsp_sous_800m(session, idus)
+        # L151-35 — logement aidé / senior / résidence universitaire : au plus 1 place/logt, 0,5 si < 500 m.
+        ratio = _ratio_l15135(sous_500)
         plafond = {
-            "categorie": cat, "reference": "L151-35", "ratio_plafond": _PLAFOND_L15135,
-            "condition_tcsp_sous_800m": sous_800, "distance_tcsp_m": dist,
-            "eligibilite_categorie": "À confirmer",
+            "categorie": cat, "reference": "L151-35", "ratio_plafond": ratio,
+            "condition_tcsp_sous_500m": sous_500, "distance_tcsp_m": dist,
+            "eligibilite_categorie": "À confirmer", "statut": "À confirmer",
+            # le plafond L151-35 (≤ 1/logt) vise la catégorie quelle que soit la distance ; la condition
+            # TCSP < 500 m ne concerne QUE l'abaissement à 0,5 (c'est lui qu'on chiffre en « capacité réduite »).
+            "applicable_si_eligible": sous_500,
+            "reduction_sous_500m": sous_500,
+            "citation": (
+                f"Code de l'urbanisme L151-35 : pour un(e) {cat}, il ne peut être exigé plus de {ratio:g} "
+                f"aire de stationnement par logement"
+                + (" (terrain à moins de 500 m d'un transport collectif en site propre bien desservi)" if sous_500
+                   else " ; ce plafond est abaissé à 0,5 à moins de 500 m d'un tel transport")
+                + " — le PLU ne s'applique que s'il est plus favorable."),
+            "note": ("Le nom « " + type_projet + " » ne prouve pas l'éligibilité juridique à la catégorie "
+                     "L151-34 ; à confirmer. Le ratio affiché est le plafond LÉGAL, pas une règle du PLU."),
+        }
+    elif type_projet == "collectif" and sous_500:
+        # L151-36 — autres logements : au plus 1 place/logt, SEULEMENT à moins de 500 m d'un TCSP.
+        # Au-delà de 500 m, L151-36 N'EXISTE PAS → aucun plafond national (seule la règle PLU s'applique).
+        plafond = {
+            "categorie": "autres logements (hors L151-34)", "reference": "L151-36",
+            "ratio_plafond": 1.0,
+            "condition_tcsp_sous_500m": True, "distance_tcsp_m": dist,
+            "eligibilite_categorie": "catégorie de droit commun",
             "statut": "À confirmer",
-            "applicable_si_eligible": sous_800,   # la condition TCSP, elle, est vérifiée
-            "citation": _CITATION_L15135,
-            "note": ("Le nom « " + type_projet + " » ne prouve pas l'éligibilité juridique à cette catégorie. "
-                     "Un ratio de 1 place / 3 logements n'est PAS une règle du PLU de cette commune "
-                     "(on le trouve ailleurs, ex. Saint-Benoît) — ne pas le présenter comme opposable ici."),
+            "applicable_si_eligible": True,   # L151-36 n'existe QU'À moins de 500 m (donc applicable ici)
+            "reduction_sous_500m": True,
+            "citation": (
+                "Code de l'urbanisme L151-36 : à moins de 500 m d'un transport collectif en site propre "
+                "bien desservi, il ne peut être exigé plus de 1 aire de stationnement par logement pour les "
+                "logements autres que ceux de L151-34 — le PLU ne s'applique que s'il est plus favorable."),
+            "note": "S'applique aux logements de droit commun (hors aidé / senior / résidence universitaire).",
         }
     return {"general": general, "plafond_national": plafond}
 
@@ -1051,12 +1077,16 @@ def etudier_payload(session, entree: dict) -> dict:
     verdict = next((v["verdict"] for v in variantes_pub if not v.get("absente")),
                    "Impossible pour cause établie")
 
-    # ETUDE-V6 (Lot C) — régimes de stationnement (règle générale PLU + plafond L151-35 à confirmer),
-    # et capacité SOUS le régime réduit (2ᵉ passage moteur au plafond 0,5), seulement si une destination
-    # L151-34 est choisie ET la condition TCSP (< 800 m) est vérifiée — jamais présenté comme acquis.
+    # ETUDE-V6 (Lot C) — régimes de stationnement (règle générale PLU + plafond national à confirmer),
+    # et capacité SOUS le régime réduit (2ᵉ passage moteur au ratio plafonné), seulement si le plafond est
+    # géographiquement applicable (< 500 m d'un TCSP) — jamais présenté comme acquis. REMISE-1 : on prend le
+    # ratio ET l'article DEPUIS le régime calculé (L151-35 à 0,5 pour aidé/senior/étudiant ; L151-36 à 1
+    # pour les autres), plus de 0,5 « L151-35 » codé en dur au mauvais seuil.
     stationnement_regimes = _stationnement_regimes(session, idus, type_projet, ref_scn.regles, t.insee)
     capacite_reduite = None
     pf = stationnement_regimes["plafond_national"]
+    _pf_ratio = pf.get("ratio_plafond") if pf else None
+    _pf_ref = pf.get("reference") if pf else None
     # on ne lance le 2ᵉ passage (coûteux) QUE si le stationnement PLAFONNE réellement la capacité —
     # sinon le régime réduit ne change rien (et on l'écrit), et l'étude reste dans le budget de 30 s.
     # ETUDE-V6-2 (Lot 2) — « le stationnement limite » n'est affirmé que PROUVÉ (contrefactuel sans places).
@@ -1065,26 +1095,27 @@ def etudier_payload(session, entree: dict) -> dict:
     # ETUDE-V6-2 (Lot 3) — le plafond L151-35 est un régime AÉRIEN ; en sous-sol, il est sans objet.
     if stationnement == "sous_sol":
         pf = None
-    if pf and pf["applicable_si_eligible"] and demande and not stat_limitante:
-        capacite_reduite = {"logements": None, "places": None, "ratio_par_logement": _PLAFOND_L15135,
-                            "reference": "L151-35", "statut": "sans effet",
+    if pf and pf["applicable_si_eligible"] and _pf_ratio is not None and demande and not stat_limitante:
+        capacite_reduite = {"logements": None, "places": None, "ratio_par_logement": _pf_ratio,
+                            "reference": _pf_ref, "statut": "sans effet",
                             "note": "Le stationnement n'est pas le facteur limitant ici : le plafond réduit "
                                     "ne changerait pas la capacité."}
-    elif pf and pf["applicable_si_eligible"] and demande:
+    elif pf and pf["applicable_si_eligible"] and _pf_ratio is not None and demande:
         try:
             r_sc, r_var, r_dep, _m, _ter, _reg, _cv, _smax = moteur_mod.etudier_complet(
                 session=session, idus=idus, objectif=objectif, conv=conv,
                 programme=demande or None, repartition=repartition, max_scenarios=1,
-                stationnement_ratio=_PLAFOND_L15135)
+                stationnement_ratio=_pf_ratio)
             best = (r_sc[0] if r_sc else next((s for _r, s, _rz in r_var if s is not None), None))
             if best is not None:
                 capacite_reduite = {
                     "logements": best.capacite.logements, "places": best.capacite.places,
-                    "ratio_par_logement": _PLAFOND_L15135, "reference": "L151-35",
+                    "ratio_par_logement": _pf_ratio, "reference": _pf_ref,
                     "statut": "À confirmer",
-                    "note": "Capacité SI le projet est éligible au plafond L151-35 (0,5 place / logement) — "
-                            "éligibilité juridique de catégorie à confirmer ; la règle générale du PLU "
-                            "(appliquée ci-dessus) reste la base servie.",
+                    "note": (f"Capacité SI le projet est éligible au plafond {_pf_ref} "
+                             f"({_pf_ratio:g} place / logement, terrain à moins de 500 m d'un transport "
+                             "collectif) — éligibilité juridique à confirmer ; la règle générale du PLU "
+                             "(appliquée ci-dessus) reste la base servie."),
                 }
         except Exception:  # noqa: BLE001 — la capacité réduite est un bonus, jamais bloquante
             logging.getLogger("labuse").exception("étude v6 : passage stationnement réduit impossible")

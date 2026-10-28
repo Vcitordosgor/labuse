@@ -64,7 +64,7 @@ const STATIO = {
     general: { mode: 'par_logement', validee: true, ratio_par_logement: 1, article: 'Ua.12', page_pdf: 46,
       millesime: '2026-08-05', citation: '1 place par logement', applique: true, etat: 'règle vérifiée' },
     plafond_national: { categorie: 'résidence pour personnes âgées (L151-34, 3°)', reference: 'L151-35',
-      ratio_plafond: 0.5, condition_tcsp_sous_800m: true, distance_tcsp_m: 120, eligibilite_categorie: 'À confirmer',
+      ratio_plafond: 0.5, condition_tcsp_sous_500m: true, distance_tcsp_m: 120, eligibilite_categorie: 'À confirmer',
       statut: 'À confirmer', applicable_si_eligible: true, citation: 'L151-35 …', note: 'Le nom ne prouve pas…' },
   },
 }
