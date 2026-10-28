@@ -167,6 +167,7 @@ async def _lifespan(app: FastAPI):
         # PROMO-1 · P1 — référentiel des programmes publiés par les promoteurs (table `programmes`)
         from ..promo.tables import ensure_tables as _promo_ens
         from .recherche import ensure_index as _recherche_ens   # RETOURS-16 V5
+        from ..registre.remplissage import ensure_perf_indexes as _remplissage_perf_ens  # VITESSE-2 Lot 2
         # ÉTUDE DE ZONE Z1 — tables sirene_etablissements + mobpro_commune (idempotentes).
         def _zone_ens():
             with session_scope() as _s:
@@ -213,6 +214,10 @@ async def _lifespan(app: FastAPI):
             # RETOURS-16 V5 — index (section, numéro) : la référence courte du suggest unifié
             # se résout indexée (799 ms seq-scan → < 5 ms mesuré).
             ("recherche", lambda: _recherche_ens(_engine())),
+            # VITESSE-2 (Lot 2) — index fonctionnels left(idu,14) sur les grosses tables PM : le
+            # test de présence du bloc « Les données » de la fiche (remplissage_source) passait en
+            # Parallel Seq Scan (84 ms × fiche) → Bitmap Index Scan (0,13 ms mesuré).
+            ("fiche_perf_index", lambda: _remplissage_perf_ens(_engine())),
         )
         def _on_echec(_mod, _mexc):
             log.error("heal schéma — module « %s » a ÉCHOUÉ : %s", _mod, _mexc)
