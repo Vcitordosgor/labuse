@@ -248,6 +248,15 @@ ROBINETS: dict[str, Robinet] = {
     "/modules/etude-zone", "json_puis_js", chiffres=("population_zone", "n_concurrents_zone", "emplois_fourchette", "revenu_approche_eur", "trafic_mja", "iris_quartier",)),
  "outil_remonter_temps": _r("outil", "Remonter le temps", None,
     "/ortho?an=…", "json_puis_js", chiffres=("annee_ortho",)),
+ # ANNONCE-1 — « Analyser une annonce » (N1) : 2 entrées. Adresse → la fiche parcelle (GET /parcels/{idu})
+ # rend l'estimation (comparateur DVF `prix_ancien_median_eur_m2`) + la SDP restante (`sdp_residuelle_m2`) ;
+ # lien Leboncoin → POST /radar/annonce/analyser rend le €/m² demandé de l'annonce (`prix_demande_median_eur_m2`)
+ # et son écart au repère DVF commune (`ecart_demande_acte_pct`). Aucun chiffre neuf : l'outil RÉUTILISE le
+ # moteur de prix du Radar et la fiche — tous ces ids sont déjà raisonnés (NON_SONDES).
+ "outil_analyser_annonce": _r("outil", "Analyser une annonce", None,
+    "/radar/annonce/analyser", "json_puis_js",
+    chiffres=("prix_ancien_median_eur_m2", "prix_demande_median_eur_m2", "ecart_demande_acte_pct",
+              "sdp_residuelle_m2",)),
  "outil_radar_client": _r("outil", "Radar", None,
     "/radar/biens", "json_puis_js", chiffres=("annonces_actives_n", "prix_demande_median_eur_m2",)),
  "outil_radar_marche": _r("outil", "Marché", "outil_radar_client",

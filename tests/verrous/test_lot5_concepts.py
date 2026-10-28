@@ -152,7 +152,7 @@ def test_v5f_prouve_casse_sur_une_lecture_directe(monkeypatch):
     assert any("chiffre_lu_en_direct_hors_registre" in d for d in r.details)
 
 
-def test_v5f_vert_sur_les_15_outils():
+def test_v5f_vert_sur_les_16_outils():
     """Sur l'état réel : les outils du menu (registry.ts) ont tous leur robinet, et chaque chiffre
     servi est un id du registre — aucune lecture directe. ETUDIER-BIEN-2 (Lot C) : « Étudier un bien »
     (scoreur-adresse) retiré → 18 → 17. DENSIFIER-PLI (PISCINES-2 Lot B) : « Densifier l'existant »

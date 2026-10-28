@@ -140,3 +140,34 @@ Aucun code HTTP ni jargon à l'écran. (Les autres cas — lien invalide, page i
 tsc **0** · vitest **299/299** · vite build **OK** · garde proxy **3/3** · endpoint `classement` vérifié par bande (A/B/C/D/0) · échec `/analyser` → payload **sans** code HTTP, détail en **log** (`WARNING labuse.pige.api … HTTP 403`).
 
 **Merge = geste de Vic après recette.**
+
+---
+
+# ANNONCE-1-TESTS — suite pytest remise au vert après merge dans `main`
+
+Le hook `pre-push` (`scripts/git-hooks/pre-push`, famille `not db and not local and not reel and not network`) refusait l'envoi : 7 tests rouges après le merge d'ANNONCE-1. Diagnostic d'abord, correction ensuite, **uniquement sur `feat/annonce-1`**.
+
+## 1 — Horloge naïve (`test_orfevre1_point3_tz`) — VRAIE régression ANNONCE-1, corrigée
+`test_garde_de_classe_aucune_horloge_naive_dans_src_labuse` balaie tout `src/labuse` et casse sur le moindre « aujourd'hui » au fuseau du process. ANNONCE-1 avait introduit `date.today().isoformat()` à **`pige/api.py:1107`** (champ `releve_le` du rapport-annonce par lien). **Corrigé** : import local `from ..tz import today_reunion` (pige est sous `labuse.pige`, donc `..tz`) + `today_reunion().isoformat()` — le jour du relevé est désormais le jour **Réunion**, comme partout ailleurs (ORF-17, cf. `ops_alertes.py`, `verite_terrain_plu_toutes.py`). L'import `from datetime import date` devenu inutile a été retiré (aucun autre usage de `date` dans la fonction).
+
+## 2 — Verrou du nombre d'outils (`test_v5f_vert_sur_les_15_outils`) — outil VOULU, verrou mis à 16
+ANNONCE-1 ajoute « Analyser une annonce » (`analyser-annonce`, N1) au menu → 16 outils au menu, le verrou V5f en attendait 15. L'outil est **voulu** (mandat ANNONCE-1). Reprise en deux temps :
+- Test renommé `test_v5f_vert_sur_les_15_outils` → **`_16_`** (la convention suit le décompte : 18→17→16→15, la cible 16 avait déjà porté ce nom, cf. `docs/audit-2026-09/piscines-2/PISCINES-DENSIFIER.md`). Compte passé à **16**, ligne de traçabilité ajoutée au docstring dans la même forme que les décomptes précédents (« ANNONCE-1 : … → 15 → 16 ») + assertion `"analyser-annonce" in cles`.
+- Le verrou V5f ne se contente pas du décompte : il exige que **chaque outil du menu ait son robinet au registre** (`verrou_outils_registre` → `OUTIL_ROBINET_MENU`). ANNONCE-1 avait ajouté l'entrée de menu **sans déclarer de robinet** → le verrou restait « cassé » (« outil analyser-annonce au menu sans robinet au registre »). Déclaré donc **`outil_analyser_annonce`** dans `registre/robinets.py` + mappé dans `circuit_verrous.OUTIL_ROBINET_MENU`.
+  - Chiffres déclarés (tous déjà au registre, l'outil **ne crée aucun chiffre neuf**, il réutilise le moteur de prix du Radar et la fiche) : `prix_ancien_median_eur_m2` (repère DVF, estimation adresse + repère lien), `prix_demande_median_eur_m2` (€/m² demandé de l'annonce), `ecart_demande_acte_pct` (écart au repère), `sdp_residuelle_m2` (SDP restante de l'estimation adresse). Les 4 sont dans `NON_SONDES` → **V5c reste vert** (134 couples raisonnés, aucun couple silencieux).
+
+## 3 — Les 4 getsource (`test_retours11f2/f3`) — PAS ANNONCE-1, cause environnementale, RIEN touché
+Diagnostic demandé avant toute action. Faits établis :
+- **ANNONCE-1 n'a pas touché `app.py`** : `git show b35284715 --stat` ne liste pas `src/labuse/api/app.py` (0 ligne). Ces tests passaient sur `main` juste avant le merge.
+- Rejoués seuls **avec le `src` du worktree sur `PYTHONPATH`** : ils **passent** (`test_retours11f2` + `test_retours11f3` → 26 passed / 1 skip).
+- Cause identifiée (précédent connu : « le `.venv` qui chargeait le mauvais code ») : les deux venvs du poste (`~/Desktop/labuse/.venv` et `~/Desktop/labuse-main/.venv`) sont installés en editable **vers `/Users/openclaw/Desktop/labuse/src`**, PAS vers le worktree. Ce dépôt-là est sur un **HEAD détaché `d9c1b23a0`** dont `app.py` **diffère** de celui du worktree. Quand pytest tourne sans forcer le `src` du worktree, `inspect.getsource(app._pm_block)` lit le `app.py` périmé → les bornes de lignes tombent sur **une autre fonction** (`_pm_block`→`_pm_dirigeant`, `_proximites_block`→`_depots_block`). Le hook, lui, lance `PYTHONPATH=src` (worktree) → avec le bon `src`, ces 4 tests sont verts.
+- **Conclusion : aucune modification de `app.py` ni de ces tests.** Le rouge getsource est un artefact du `src` editable périmé, pas une régression ANNONCE-1.
+
+## 4 — Note d'environnement (base de test)
+Le défaut du hook (`postgresql+psycopg://labuse:labuse@localhost:5432/labuse`) suppose un rôle `labuse` ; sur ce poste le rôle est **`openclaw`** et les bases `labuse`/`labuse_test` existent. Pour jouer la suite localement : `LABUSE_DATABASE_URL`/`LABUSE_TEST_DATABASE_URL` = `postgresql+psycopg://openclaw@localhost:5432/{labuse,labuse_test}` (URL **avec hôte TCP** : un DSN socket `postgresql+psycopg:///labuse` fait échouer `test_boot_sans_verrou_sur_tables_chaudes`, qui résout l'hôte — artefact de DSN, pas de code). Ceci ne concerne que l'exécution locale, pas le code.
+
+## Vérifications
+Famille du hook (`not db and not local and not reel and not network`), `PYTHONPATH=src`, venv `~/Desktop/labuse/.venv`, URL openclaw : **2684 passed, 47 skipped, 0 failed** (les skips = base applicative/SIRENE absentes, gated par l'environnement). V5f **ok** (16 outils, tous avec robinet ; 64 chiffres servis). V5c **ok**. Front non touché (0 fichier `frontend/` modifié) — tsc/vitest/build restent ceux validés plus haut.
+
+## Fichiers touchés par ANNONCE-1-TESTS
+`src/labuse/pige/api.py` (horloge Réunion) · `tests/verrous/test_lot5_concepts.py` (verrou 15→16 + assertion) · `src/labuse/registre/robinets.py` (robinet `outil_analyser_annonce`) · `src/labuse/circuit_verrous.py` (mapping `analyser-annonce`→robinet). **Pas de merge, pas de push.**
