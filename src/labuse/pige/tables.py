@@ -316,6 +316,11 @@ CREATE TABLE IF NOT EXISTS pige_passes (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE UNIQUE INDEX IF NOT EXISTS uq_pige_passes ON pige_passes (passe, captured_at);
+-- RADAR-FIX-2 (Lot A) — PROVENANCE du déclenchement : « auto » (l'alarme du soir, sans clic) |
+-- « manuel » (bouton « Capturer maintenant ») | « test » (recette +2 min). Le défaut historique est
+-- « auto » : l'ancienne audit ne pouvait PAS distinguer une capture de l'alarme d'un clic — ce champ
+-- grave la signature que l'audit RADAR-ETAT-1 cherchait dans les données.
+ALTER TABLE pige_passes ADD COLUMN IF NOT EXISTS source varchar(8) NOT NULL DEFAULT 'auto';
 """
 
 

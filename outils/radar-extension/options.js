@@ -5,7 +5,7 @@ const fields = ["searchUrl", "labuseUrl", "token", "hour", "jitterMaxMin"];
 async function load() {
   const d = await chrome.storage.local.get({
     searchUrl: "",
-    labuseUrl: "http://localhost:8205",
+    labuseUrl: "https://labuse.immo",   // RADAR-FIX-2 (Lot B) — PROD par défaut
     token: "",
     hour: 21,
     jitterMaxMin: 180
@@ -16,7 +16,7 @@ async function load() {
 document.getElementById("save").addEventListener("click", async () => {
   const patch = {
     searchUrl: document.getElementById("searchUrl").value.trim(),
-    labuseUrl: document.getElementById("labuseUrl").value.trim() || "http://localhost:8205",
+    labuseUrl: document.getElementById("labuseUrl").value.trim() || "https://labuse.immo",
     token: document.getElementById("token").value.trim(),
     hour: Math.max(0, Math.min(23, parseInt(document.getElementById("hour").value, 10) || 21)),
     jitterMaxMin: Math.max(0, Math.min(600, parseInt(document.getElementById("jitterMaxMin").value, 10) || 180))

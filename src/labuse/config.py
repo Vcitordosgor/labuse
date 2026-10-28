@@ -92,6 +92,11 @@ class Settings(BaseSettings):
     # sans pouvoir ouvrir de session. Vide = les endpoints /admin/radar/capture|etat|confirmation
     # refusent (401) hors session admin. LABUSE_RADAR_TOKEN=… pour l'activer.
     radar_token: str | None = None
+    # RADAR-FIX-2 (Lot C) — INTERRUPTEUR UNIQUE des notifications Radar. « off » (défaut) = les deux
+    # jobs qui PRÉVIENNENT le client restent gelés (radar-cloche pose les alertes, digest e-maile) ;
+    # la DONNÉE continue (cycle de vie, DVF, mensuel). « on » = on rallume les notifications. À basculer
+    # sur la machine qui capture (Mac mini) une fois les veilles clients créées. LABUSE_RADAR_NOTIFS=on.
+    radar_notifs: str = "off"
     # Origine publique (https://…) autorisée en CORS hors local ; vide = même origine seulement.
     public_url: str | None = None
 

@@ -218,4 +218,11 @@ def test_circuit_contient_cockpit():
         r = c.get("/admin/circuit")
     assert r.status_code == 200
     ckd = r.json().get("cockpit")
-    assert ckd and set(ckd) == {"aujourdhui", "tout_tourne", "mise_a_jour"}
+    # RADAR-FIX-2 (Lot D) — la carte « Radar » rejoint les sections du Tableau de bord.
+    assert ckd and set(ckd) == {"aujourdhui", "tout_tourne", "mise_a_jour", "radar"}
+    radar = ckd["radar"]
+    if radar is not None:   # None seulement si la table pige est illisible (jamais un crash)
+        assert radar["donnees_on"] is True            # Lot C : les 3 jobs de cycle sont dégelés
+        assert radar["notifs_on"] is False            # Lot C : notifications gelées par défaut (interrupteur)
+        assert radar["pastille"] in ("vert", "ambre") # ambre = pas de capture depuis 48 h
+        assert "Données ON" in radar["etat"] and "Notifications OFF" in radar["etat"]

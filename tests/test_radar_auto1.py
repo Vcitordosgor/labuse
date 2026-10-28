@@ -34,6 +34,29 @@ def test_jobs_cycle_planifies():
     assert "radar-releves" not in JOBS
 
 
+def test_radar_cycle_degele_cloche_et_digest_derriere_interrupteur(monkeypatch):
+    """RADAR-FIX-2 (Lot C) — les TROIS jobs de DONNÉE (cycle / -dvf / -mensuel) sortent du gel « Phase 8 »
+    (gel None → crontab les émet, cron les lance). Les DEUX jobs de NOTIFICATION (radar-cloche, digest)
+    restent gelés tant que LABUSE_RADAR_NOTIFS != « on » (interrupteur unique, documenté)."""
+    from labuse.jobs import JOBS, _gel_notifs
+    from labuse.config import get_settings
+    # Données ON : plus aucun gel sur les trois jobs de cycle.
+    for nom in ("radar-cycle", "radar-cycle-dvf", "radar-cycle-mensuel"):
+        assert JOBS[nom].gel is None, f"{nom} doit être dégelé (donnée ON)"
+    # Notifications OFF par défaut : radar-cloche + digest gelés, avec un motif qui NOMME l'interrupteur.
+    for nom in ("radar-cloche", "digest"):
+        assert JOBS[nom].gel, f"{nom} doit rester gelé tant que les notifs sont OFF"
+        assert "LABUSE_RADAR_NOTIFS" in JOBS[nom].gel
+    # L'interrupteur bascule : « on » dégèle, tout autre valeur gèle.
+    get_settings.cache_clear()
+    monkeypatch.setenv("LABUSE_RADAR_NOTIFS", "on")
+    assert _gel_notifs() is None
+    get_settings.cache_clear()
+    monkeypatch.setenv("LABUSE_RADAR_NOTIFS", "off")
+    assert _gel_notifs() and "LABUSE_RADAR_NOTIFS" in _gel_notifs()
+    get_settings.cache_clear()
+
+
 # ─────────────────────────── parseur sur les pages réelles (sans DB) ───────────────────────────
 
 @pytest.mark.skipif(not _RICHE.exists(), reason="page riche absente")

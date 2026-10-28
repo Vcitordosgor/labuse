@@ -110,7 +110,10 @@ def test_usine_endpoint():
     assert r.status_code == 200
     j = r.json()
     assert [f["n"] for f in j["familles"]] == [1, 2, 3, 4]
-    assert len(j["geles"]) == 5   # 4 Radar + digest (restore-test retiré du registre, Lot C)
+    # RADAR-FIX-2 (Lot C) — ne restent gelés que les DEUX jobs de notification (radar-cloche + digest),
+    # derrière l'interrupteur LABUSE_RADAR_NOTIFS. Les trois jobs de cycle (donnée) sont dégelés.
+    geles = {g["nom"] for g in j["geles"]}
+    assert geles == {"radar-cloche", "digest"}, geles
 
 
 @pytest.mark.db
