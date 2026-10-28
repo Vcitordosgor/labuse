@@ -106,6 +106,44 @@ def _run_heal_steps(steps, on_echec=None) -> list[dict]:
     return failures
 
 
+#: VITESSE-2 (Lot 4) — témoins de réchauffage par défaut (surchargés par LABUSE_WARM_IDUS).
+_WARM_IDUS_DEFAUT = ("97410000AE1369", "97415000BY0083", "97411000BZ1065")
+
+
+def _rechauffer_worker() -> None:
+    """VITESSE-2 (Lot 4) — réchauffe CE worker après un (re)démarrage : les indicateurs partagés
+    `raw_rows` (→ mémo in-process L1 depuis le cache PARTAGÉ en base, Lot 1 ; c'est le coût des
+    « 24 communes » du contexte) + les fiches TÉMOINS (→ `_FICHE_CACHE`). But : le 1ᵉʳ client ne
+    paie plus l'amorçage à froid (DEPLOY-1028 : 1ᵉʳ clic commune ~5 s, 1ʳᵉ fiche 3-4 s). Lancé en
+    thread DÉMON (ne bloque JAMAIS le boot), best-effort, journalisé (logger labuse.rechauffage)."""
+    import logging as _lg
+    log = _lg.getLogger("labuse.rechauffage")
+    try:
+        from ..db import session_scope
+        t0 = time.monotonic()
+        with session_scope() as db:
+            try:
+                from .comparateur import raw_rows
+                n = len(raw_rows(db))   # L1 depuis le cache partagé DB (ou calcule+persiste si vide)
+                log.info("réchauffage : indicateurs partagés (%s communes) chauds", n)
+            except Exception as e:  # noqa: BLE001 — jamais bloquant
+                log.warning("réchauffage raw_rows impossible : %s", e)
+            idus = [x.strip() for x in os.environ.get(
+                "LABUSE_WARM_IDUS", ",".join(_WARM_IDUS_DEFAUT)).split(",") if x.strip()]
+            run = runs.current()
+            ok = 0
+            for idu in idus:
+                try:
+                    _fiche_servie(db, idu, run)   # → _FICHE_CACHE (fiche témoin chaude)
+                    ok += 1
+                except Exception as e:  # noqa: BLE001 — une fiche ratée n'arrête pas le réchauffage
+                    log.warning("réchauffage fiche %s impossible : %s", idu, e)
+            log.info("réchauffage worker : %s/%s fiches témoins chaudes en %.1fs",
+                     ok, len(idus), time.monotonic() - t0)
+    except Exception as e:  # noqa: BLE001 — le réchauffage ne doit jamais faire tomber le worker
+        log.warning("réchauffage worker impossible : %s", e)
+
+
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
     """Auto-réconciliation LÉGÈRE du schéma au démarrage (recyclage d'environnement).
@@ -284,6 +322,13 @@ async def _lifespan(app: FastAPI):
     # (kinds spatiaux, ~1,2 s) est déléguée au RUN de scoring, pas au boot.
     from ..cascade.cablage import check_cablage_scoring
     check_cablage_scoring()
+    # VITESSE-2 (Lot 4) — RÉCHAUFFAGE de CE worker (détaché, ne bloque pas le boot). Chaque worker
+    # (re)démarré charge lui-même ses caches à froid → le 1ᵉʳ client ne paie plus l'amorçage. Désactivé
+    # sous pytest et en env=local par défaut (LABUSE_WARM_ON_BOOT=1 pour forcer, =0 pour couper).
+    _warm = os.environ.get("LABUSE_WARM_ON_BOOT")
+    if not os.environ.get("PYTEST_CURRENT_TEST") and (_warm == "1" or (_warm is None and s.env != "local")):
+        import threading as _th
+        _th.Thread(target=_rechauffer_worker, name="rechauffage", daemon=True).start()
     yield
 
 

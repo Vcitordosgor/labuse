@@ -87,3 +87,34 @@ sudo systemctl restart labuse
 
 > Le rollback ne supprime jamais les backups ; il restaure par-dessus. En cas de doute sur
 > l'état du service après rollback : `docs/EXPLOITATION.md`, geste 10 (« l'app est tombée »).
+
+## Réchauffage des caches après déploiement (VITESSE-2 Lot 4)
+
+Un déploiement change la **version du code** → la **clé de fraîcheur** change → les caches
+partagés (`comparateur_raw_cache` des 24 communes, `commune_contexte_cache`) deviennent
+périmés. Sans réchauffage, chaque worker froid recalcule au **1ᵉʳ clic** d'une commune
+(~5 s mesuré, DEPLOY-1028 §Phase 4), plusieurs fois par jour.
+
+Le réchauffage est **automatique**, en deux temps, après la pose du code :
+
+1. **Caches partagés (base)** — `deploy/scripts/deploy_app.sh` relance, à son **étape 6**,
+   le job `fiche-commune-cache` en arrière-plan (`setsid`), journalisé dans
+   `/var/log/labuse/rechauffage-deploy.log` **et** le journal du job. Le job réchauffe
+   d'abord `comparateur_raw_cache` (indicateurs des 24 communes) puis les 24 fiches communes.
+   Si le lancement échoue, le relancer à la main :
+   ```bash
+   sudo -u labuse bash -lc 'set -a; . /etc/labuse/labuse.env; set +a; \
+     /opt/labuse/venv/bin/labuse jobs run fiche-commune-cache'
+   ```
+
+2. **Caches par worker (mémoire)** — **chaque worker** réchauffe seul, à son démarrage
+   (événement startup FastAPI, thread détaché), les indicateurs partagés (`raw_rows` → mémo
+   in-process, lu depuis le cache partagé en base) et les **3 fiches témoins**
+   (`_FICHE_CACHE`). Contrôlé par `LABUSE_WARM_ON_BOOT` (défaut : actif hors `env=local`,
+   `=0` pour couper) et `LABUSE_WARM_IDUS` (témoins, défaut AE1369/BY0083/BZ1065). Journal :
+   logger `labuse.rechauffage` (visible dans `journalctl -u labuse`).
+
+**Fumée.** `labuse doctor` affiche une ligne « Cache indicateurs communes (VITESSE-2) :
+frais / à réchauffer / absent » (et `raw_cache` en `--json`). Un `à réchauffer` juste après
+le déploiement est normal tant que le job de l'étape 6 n'a pas fini (~13 min) ; il doit
+passer `frais` ensuite. Témoins HTTP attendus < 0,3 s (contexte commune) une fois chaud.
