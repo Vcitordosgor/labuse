@@ -92,6 +92,8 @@ def test_bascule_a_une_propagation():
     src = (RACINE / "src/labuse/bascule_flux.py").read_text()
     assert "_propager_apres_bascule" in src
     assert "detect_events" in src and "evaluer_radar_cloche" in src            # cloche rejouée
-    assert "\"rebuild\"" in src or "'rebuild'" in src                         # caches rafraîchis (détaché)
-    # basculer() renvoie la propagation
-    assert "\"propagation\": propagation" in src
+    assert "\"propagation\": propagation" in src                              # basculer() la renvoie
+    # caches rafraîchis = purge (déjà faite par basculer) ; PAS de rebuild détaché spawné ici
+    # (ce sous-processus polluait labuse_test → régression cascade ; correctif DONNEES-ETAT-FIX-2).
+    assert "purger_caches_run" in src
+    assert "subprocess.Popen" not in src and "app() ... rebuild" not in src
