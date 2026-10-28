@@ -16,13 +16,14 @@ const qc = () => new QueryClient({ defaultOptions: { queries: { retry: false } }
 const renderEtude = () => render(<QueryClientProvider client={qc()}><EtudeEcran /></QueryClientProvider>)
 
 describe('LOT A — l\'Étude quitte les Outils', () => {
-  it('« programme » est au registre mais HORS menu (hidden) — 15 tuiles visibles', () => {
+  it('« programme » est au registre mais HORS menu (hidden) — 16 tuiles visibles', () => {
     const prog = MODULES.find((m) => m.key === 'programme')
     expect(prog).toBeTruthy()                 // la clé reste valide (COMPONENTS, rétro-compat liens)
     expect(prog!.hidden).toBe(true)           // mais plus de carte au Rail
     const visibles = MODULES.filter((m) => !m.hidden)
     expect(visibles.some((m) => m.key === 'programme')).toBe(false)
-    expect(visibles.length).toBe(15)          // le compte de tuiles a bien baissé (16 → 15)
+    // ANNONCE-1 — ajout de l'outil « Analyser une annonce » (carte visible) : 15 → 16 tuiles.
+    expect(visibles.length).toBe(16)
   })
 })
 
