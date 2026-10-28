@@ -1253,27 +1253,40 @@ def _nature_parcelle(db, idu: str) -> str:
     return "bati_encore" if (row["s"] or 0) > 0 else "bati_max"
 
 
+def _periode_fenetre(fenetre) -> str | None:
+    """ANNONCE-3-FIX-2 — extrait la PÉRIODE (plage d'années) d'un libellé `fenetre` de
+    `dvf_secteur_medianes` (« 2021-2025 (millésimes géo-DVF disponibles) » → « 2021–2025 »)."""
+    if not isinstance(fenetre, str):
+        return None
+    m = _re.search(r"(\d{4})\s*[-–]\s*(\d{4})", fenetre)
+    if m:
+        return f"{m.group(1)}–{m.group(2)}"
+    m = _re.search(r"\b(\d{4})\b", fenetre)
+    return m.group(1) if m else None
+
+
 def estimation_annonce(db, idu: str, fiche: dict) -> dict:
     """ANNONCE-3-FIX — l'estimation du prix SELON LA NATURE de la parcelle. POINT UNIQUE lu par l'écran
     (endpoint ci-dessous) ET par le PDF (builder) → mêmes chiffres partout, aucun recalcul divergent.
 
     La nature vient de l'INDICATEUR déjà calculé (`parcel_residuel.taux_emprise_pct`, part bâtie BD TOPO,
     via `_nature_parcelle`), PAS du champ `etat_bien` de la fiche servie (non peuplé). Parcelle NUE
-    (emprise bâtie < 5 %) → repère €/m² de TERRAIN NU (`_prix_terrain_local`, secteur → repli commune).
-    Parcelle BÂTIE (ou non mesurée) → comparateur BÂTI de la fiche (`prix_ancien`, inchangé). Le champ
-    `type_comparateur` dit lequel (la note côté rendu l'explicite). On NE retombe JAMAIS du terrain vers
-    le bâti sur une parcelle nue : faute de repère terrain, l'estimation est « indisponible », sourcée."""
+    (emprise bâtie < 5 %) → repère €/m² de TERRAIN NU AVEC sa source (n réel, périmètre, période —
+    `_terrain_comparateur`). Parcelle BÂTIE (ou non mesurée) → comparateur BÂTI de la fiche
+    (`prix_ancien`, inchangé). Le champ `type_comparateur` dit lequel (la note côté rendu l'explicite).
+    On NE retombe JAMAIS du terrain vers le bâti sur une parcelle nue : faute de repère, « indisponible »."""
     nature = _nature_parcelle(db, idu)
     if nature == "nu":
-        from ..faisabilite.bilan import _prix_terrain_local
-        t = _prix_terrain_local(db, idu)
-        if t and t.get("prix_m2"):
-            niveau = t.get("niveau")
+        # Repère TERRAIN NU du secteur avec sa SOURCE (médiane + n RÉEL + période) : on réutilise le
+        # lecteur DÉCLARÉ `_terrain_section` (api/mon_secteur, même méthode que le §Marché de la fiche —
+        # `dvf_secteur_medianes`, section cadastrale), pas une relecture directe de la table ici.
+        from ..api.mon_secteur import _terrain_section
+        t = _terrain_section(db, idu)
+        if t and t.get("eur_m2"):
             return {"nature": "nue", "type_comparateur": "terrain_nu",
-                    "median": round(t["prix_m2"]),
-                    "fiabilite": "fiable" if niveau == "secteur" else None,
-                    "commune_fallback": niveau == "commune",
-                    "note": t.get("libelle")}
+                    "median": t["eur_m2"], "n": t.get("n"),
+                    "periode": _periode_fenetre(t.get("millesime")),
+                    "perimetre": "secteur", "fiabilite": "fiable", "commune_fallback": False}
         return {"nature": "nue", "type_comparateur": "terrain_nu", "median": None,
                 "note": "Pas assez de ventes de terrain nu comparables dans le secteur."}
     pa = (fiche or {}).get("prix_ancien") or {}

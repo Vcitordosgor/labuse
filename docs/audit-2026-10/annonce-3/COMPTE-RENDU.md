@@ -1,5 +1,26 @@
 # ANNONCE-3 — « Analyser une annonce » gagne un export PDF, Docs gagne « Analyse d'annonce »
 
+> ## ANNONCE-3-FIX-2 (retours Vic) — appliqué sur la même branche
+>
+> 1. **Plan de situation pleine largeur, sans bandes blanches** — l'image REMPLIT le cadre
+>    (`width:100%;height:auto`, plus d'`object-fit:contain` qui letterboxait) ; le cadrage `plan_ortho`
+>    est calé sur l'aspect de la boîte (`target_aspect=3.6`, `crop_margin_m=16`) → **parcelle entière,
+>    centrée, avec marge**, jamais rognée (l'axe déficient s'élargit). La variante parcelle reste 1 page.
+> 2. **Estimation « terrain nu » montre sa source comme la variante bâtie** — médiane + **nombre RÉEL de
+>    ventes** (`n = 78`, plus « n ≥ 3 ») + **périmètre** (secteur cadastral / commune) + **période**
+>    (`2021–2025`). Lu via le lecteur DÉCLARÉ `api/mon_secteur._terrain_section` (même méthode que le
+>    §Marché de la fiche, `dvf_secteur_medianes`) — pas une relecture directe de la table (garde-fou du
+>    graphe de lectures `test_graphe_exact_dans_les_deux_sens` vert). **Note en casse normale** (« terrain
+>    nu », plus de capitales) **close par un point** (plus de minuscule après le point). Même rendu écran/PDF.
+>
+> **Recette FIX-2** : CX0800 (NUE) → « Estimation 495 €/m² · Fiabilité Élevée · 78 ventes de terrain ·
+> secteur cadastral · 2021–2025 · Parcelle nue — comparée aux ventes de terrain nu (repère €/m² de
+> terrain). » — **identique à l'écran et au PDF**, 1 page, plan pleine largeur sans bandes. BN2715 (BÂTIE)
+> inchangée (bâti : 1 859 €/m², fourchette 1 549–1 962, 9 ventes, rayon 1 500 m). `outil==docs` (pdftotext).
+> tsc 0 · vitest **301/301** · pytest hook **2601 passed, 0 failed**. Commit FIX-2 sur la branche.
+>
+> ---
+>
 > ## ANNONCE-3-FIX (retours Vic) — appliqué sur la même branche
 >
 > Sept points, tous tenus (rien de servi touché : le CSS de mise en page est injecté **seulement**

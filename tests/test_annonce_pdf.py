@@ -35,9 +35,9 @@ _FICHE = {
 # ANNONCE-3-FIX — l'estimation est un dict UNIFIÉ (point `estimation_annonce`) passé au bloc.
 _EST_BATI = {"type_comparateur": "bati", "nature": "batie", "median": 3602, "q1": 3000, "q3": 4200,
              "n": 15, "radius_m": 1000, "periode": [2023, 2025], "fiabilite": "fiable", "type_prix": "maison"}
-_EST_TERRAIN = {"type_comparateur": "terrain_nu", "nature": "nue", "median": 210,
-                "fiabilite": "fiable", "commune_fallback": False,
-                "note": "médiane DVF terrain du secteur (n ≥ 3)"}
+_EST_TERRAIN = {"type_comparateur": "terrain_nu", "nature": "nue", "median": 210, "n": 78,
+                "periode": "2021–2025", "perimetre": "secteur",
+                "fiabilite": "fiable", "commune_fallback": False}
 
 
 def test_parcelle_contenu_miroir_ecran():
@@ -56,11 +56,14 @@ def test_parcelle_contenu_miroir_ecran():
 
 
 def test_parcelle_estimation_selon_nature_terrain():
-    """Parcelle NUE → repère €/m² de TERRAIN NU ; la note dit qu'on compare au terrain nu."""
+    """Parcelle NUE → repère €/m² de TERRAIN NU avec sa SOURCE comme le bâti : n réel, périmètre, période.
+    Note en CASSE NORMALE (« terrain nu », pas en majuscules), phrase close par un point."""
     html = bloc.rendu_parcelle(_FICHE, {"orientation": "Est"}, {}, _EST_TERRAIN)
-    assert "Parcelle nue" in html and "TERRAIN NU" in html
+    assert "Parcelle nue" in html and "terrain nu" in html and "TERRAIN NU" not in html
     assert "210" in html and "€/m²" in html
-    assert "Ventes comparables" not in html          # pas de N pour le repère terrain (jamais un vide)
+    assert "Ventes de terrain" in html and "78" in html      # nombre RÉEL de ventes
+    assert "secteur cadastral" in html and "2021" in html    # périmètre + période
+    assert "terrain nu (repère €/m² de terrain)." in html    # phrase close, pas de minuscule après point
 
 
 def test_parcelle_jamais_un_champ_vide():
@@ -104,9 +107,13 @@ def test_estimation_annonce_helper_nature():
                                {"prix_ancien": {"median": 3602, "n": 15}})
     assert batie["type_comparateur"] == "bati" and batie["median"] == 3602
 
-    # NUE : taux < 5 → repère terrain nu (médiane secteur via _prix_terrain_local)
-    nue = estimation_annonce(_FakeDB({"t": 0.0, "s": 1412, "prix": 210.0}), "97411000AB0123", {})
-    assert nue["type_comparateur"] == "terrain_nu" and round(nue["median"]) == 210
+    # NUE : taux < 5 → repère terrain nu avec n réel + période (via le lecteur déclaré _terrain_section).
+    # Le même mapping sert _nature_parcelle (t, s) ET _terrain_section (mediane_prix_m2, n_ventes, fenetre).
+    nue = estimation_annonce(
+        _FakeDB({"t": 0.0, "s": 1412, "mediane_prix_m2": 210, "n_ventes": 78,
+                 "fenetre": "2021-2025 (millésimes)"}), "97411000AB0123", {})
+    assert nue["type_comparateur"] == "terrain_nu" and nue["median"] == 210
+    assert nue["n"] == 78 and nue["periode"] == "2021–2025" and nue["perimetre"] == "secteur"
 
 
 def test_commune_type_pilote_les_lignes():

@@ -422,6 +422,7 @@ export interface AnnonceEstimation {
   median: number | null
   q1?: number | null; q3?: number | null
   n?: number | null; radius_m?: number | null; periode?: number[] | string | null
+  perimetre?: 'secteur' | 'commune' | null
   fiabilite?: string | null; commune_fallback?: boolean
   type_prix?: string | null; note?: string | null
 }

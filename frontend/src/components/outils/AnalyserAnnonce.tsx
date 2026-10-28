@@ -166,17 +166,18 @@ function RapportParcelle({ idu }: { idu: string }) {
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <span className="text-[11px] text-txt-dim">Fiabilité</span>
               <Badge ton={fi.ton} point>{fi.mot}</Badge>
-              {!terrain && (nVentes != null || rayon != null || periode) && (
+              {/* ANNONCE-3-FIX-2 — le terrain nu affiche sa source comme le bâti : n réel · périmètre/rayon · période. */}
+              {(nVentes != null || rayon != null || e?.perimetre || periode) && (
                 <span className="text-[11px] text-txt-dim">
-                  {nVentes != null ? `${fmtInt(nVentes)} ventes comparables` : 'ventes comparables'}
-                  {rayon != null ? ` · rayon ${fmtInt(Math.round(rayon))} m` : ''}
+                  {nVentes != null ? `${fmtInt(nVentes)} ${terrain ? 'ventes de terrain' : 'ventes comparables'}` : (terrain ? 'ventes de terrain' : 'ventes comparables')}
+                  {terrain ? (e?.perimetre ? ` · ${e.perimetre === 'secteur' ? 'secteur cadastral' : 'commune'}` : '') : (rayon != null ? ` · rayon ${fmtInt(Math.round(rayon))} m` : '')}
                   {periode ? ` · ${periode}` : ''}
                 </span>
               )}
             </div>
             <p className="mt-2 text-[11px] leading-snug text-txt-mut">
               {terrain ? (
-                <>Parcelle nue — comparée aux ventes de <strong className="text-txt-hi">terrain nu</strong> (repère €/m² de terrain).{e?.note ? ` ${e.note}` : ''}</>
+                <>Parcelle nue — comparée aux ventes de <strong className="text-txt-hi">terrain nu</strong> (repère €/m² de terrain).</>
               ) : (
                 <>Parcelle bâtie — comparée au <strong className="text-txt-hi">bâti ancien</strong> (prix observés au m²{e?.type_prix ? `, ${e.type_prix}` : ''}) autour de la parcelle.{e?.commune_fallback ? ' Repère élargi à la commune (secteur trop peu fourni).' : ''} La valeur d’un bien dépend de sa surface et de son état, non connus du modèle.</>
               )}

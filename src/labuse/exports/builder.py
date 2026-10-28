@@ -720,14 +720,18 @@ def _plan_annonce_html(db, idu: str) -> str:
         try:
             from ..api.plan_situation import plan_ortho
             from ..flash.report import storage_dir
-            res = plan_ortho(gj, cache_dir=storage_dir() / "tiles", crop_margin_m=22.0,
-                             target_aspect=2.4, min_px=640, zoom_delta=0, zoom_max=19)
+            # ANNONCE-3-FIX-2 — le cadre `target_aspect` = l'aspect de la boîte d'affichage (pleine
+            # largeur du cadre / ~48 mm) : l'image REMPLIT le cadre (`width:100%`), SANS bandes blanches
+            # et SANS recadrage (l'axe déficient s'élargit — plus de contexte — la parcelle n'est jamais
+            # rognée). La marge autour du contour reste donnée par `crop_margin_m`.
+            res = plan_ortho(gj, cache_dir=storage_dir() / "tiles", crop_margin_m=16.0,
+                             target_aspect=3.6, min_px=900, zoom_delta=0, zoom_max=19)
             if res.get("ok"):
                 import base64
                 img = "data:image/jpeg;base64," + base64.b64encode(res["jpeg"]).decode()
                 cap = esc(res.get("attribution") or "")
                 return (f'<div class="plan">'
-                        f'<img style="display:block;margin:0 auto;height:30mm;width:auto;max-width:100%;object-fit:contain" '
+                        f'<img style="display:block;width:100%;height:auto" '
                         f'src="{img}" alt="Plan de situation">'
                         f'<div class="cap">Plan de situation — la parcelle (contour), centrée avec une marge'
                         + (f' · {cap}' if cap else "") + "</div></div>")

@@ -114,17 +114,22 @@ def _estimation_prix(est) -> str:
              if isinstance(p25, (int, float)) and isinstance(p75, (int, float)) else "")
     corps = verdict(f"{_fmt_int(median)} €/m²", ton="" if chip_cls == "s" else "neutral", petit_html=petit)
     lignes = [ligne_kv("Fiabilité", chip_span(chip_cls, mot))]   # étiquette « Fiabilité » + niveau seul
-    n_ventes, rayon, periode = e.get("n"), e.get("radius_m"), _fmt_periode(e.get("periode"))
+    # ANNONCE-3-FIX-2 — le TERRAIN NU affiche sa source COMME le bâti : n réel, périmètre (secteur/commune)
+    # ou rayon, période (chaque ligne absente est omise, jamais un vide).
+    n_ventes, periode = e.get("n"), _fmt_periode(e.get("periode"))
     if isinstance(n_ventes, (int, float)):
-        lignes.append(ligne_kv("Ventes comparables", esc(_fmt_int(n_ventes))))
-    if isinstance(rayon, (int, float)):
-        lignes.append(ligne_kv("Rayon", f"{_fmt_int(rayon)} m"))
+        lignes.append(ligne_kv("Ventes de terrain" if terrain else "Ventes comparables", esc(_fmt_int(n_ventes))))
+    if terrain:
+        perim = e.get("perimetre")
+        if perim:
+            lignes.append(ligne_kv("Périmètre", "secteur cadastral" if perim == "secteur" else "commune"))
+    elif isinstance(e.get("radius_m"), (int, float)):
+        lignes.append(ligne_kv("Rayon", f"{_fmt_int(e['radius_m'])} m"))
     if periode:
         lignes.append(ligne_kv("Période", esc(periode)))
     corps += table_kv(lignes)
     if terrain:
-        note_txt = ("Parcelle nue — comparée aux ventes de TERRAIN NU (repère €/m² de terrain). "
-                    + (e.get("note") or "")).strip()
+        note_txt = "Parcelle nue — comparée aux ventes de terrain nu (repère €/m² de terrain)."
     else:
         type_prix = e.get("type_prix")
         note_txt = (f"Parcelle bâtie — comparée au bâti ancien (prix observés au m²"
