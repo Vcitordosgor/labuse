@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# MENAGE-1 (geste 9, Option B) — GARDE-FOU GROS FICHIERS au commit.
+# Refuse tout fichier mis en index de plus de 2 Mio, SAUF ceux de la liste blanche.
+# But : couper la racine du bloat `.git` (A3 du rapport MENAGE-1 — 4,1 Go de PNG de captures
+# dans l'historique). Ne réécrit rien, ne retire rien de déjà suivi : empêche seulement
+# d'EN AJOUTER de nouveaux. Combiné aux règles .gitignore larges (captures/, *.har, etc.).
+# Installé par `bash scripts/ci/install-hooks.sh` (core.hooksPath=scripts/git-hooks).
+# URGENCE : `git commit --no-verify` contourne ce filet.
+# Compatible bash 3.2 (Mac).
+set -uo pipefail
+
+LIMIT=$((2 * 1024 * 1024))   # 2 Mio
+
+# --- Liste blanche : motifs de chemins AUTORISÉS au-delà de 2 Mio (glob, un par ligne). ---
+# Ajoute ici UNIQUEMENT un gros fichier dont le versionnage est délibéré et justifié.
+# (Aujourd'hui vide : aucun ajout de gros binaire n'est légitime. Les 395 fichiers >2 Mio
+#  déjà suivis restent suivis — ce hook ne vise que les NOUVEAUX ajouts/modifs.)
+WHITELIST=(
+  # "data/obsimmo_vente_reunion.json"
+  # "chemin/vers/un/gros/fichier/justifie.ext"
+)
+
+is_whitelisted() {
+  local f="$1" pat
+  # Expansion sûre d'un tableau potentiellement vide sous `set -u` (bash 3.2).
+  for pat in ${WHITELIST[@]+"${WHITELIST[@]}"}; do
+    # shellcheck disable=SC2254
+    case "$f" in $pat) return 0 ;; esac
+  done
+  return 1
+}
+
+human() { # octets -> lisible
+  awk -v b="$1" 'BEGIN{
+    if (b>=1073741824) printf "%.1f Gio", b/1073741824;
+    else if (b>=1048576) printf "%.1f Mio", b/1048576;
+    else printf "%.0f Kio", b/1024;
+  }'
+}
+
+violations=""
+# Fichiers Ajoutés/Copiés/Modifiés mis en index (pas les suppressions/renommages purs).
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  # Taille du blob TEL QU'IL SERA COMMITÉ (version en index).
+  size="$(git cat-file -s ":$f" 2>/dev/null)" || continue
+  [ -z "$size" ] && continue
+  if [ "$size" -gt "$LIMIT" ]; then
+    is_whitelisted "$f" && continue
+    violations="$violations$f|$size"$'\n'
+  fi
+done < <(git diff --cached --name-only --diff-filter=ACM)
+
+if [ -n "$violations" ]; then
+  printf '\n✗ COMMIT REFUSÉ — fichier(s) de plus de 2 Mio hors liste blanche :\n\n'
+  printf '%s' "$violations" | while IFS='|' read -r f s; do
+    [ -z "$f" ] && continue
+    printf '    %8s  %s\n' "$(human "$s")" "$f"
+  done
+  printf '\n  C'\''est la racine du bloat .git (cf. rapport MENAGE-1, A3/A4).\n'
+  printf '  Options :\n'
+  printf '    • retire le fichier de l'\''index   : git restore --staged <fichier>\n'
+  printf '    • livre-le via l'\''app / SendUserFile, ou héberge-le hors git\n'
+  printf '    • s'\''il DOIT être versionné : ajoute son chemin à WHITELIST dans\n'
+  printf '      scripts/git-hooks/pre-commit (et explique pourquoi dans le commit)\n'
+  printf '    • urgence : git commit --no-verify\n\n'
+  exit 1
+fi
+
+exit 0

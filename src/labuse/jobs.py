@@ -461,6 +461,17 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
        raison="Sans VACUUM ANALYZE, le planner PostgreSQL dérive et les requêtes chaudes ralentissent. "
               "Hebdomadaire (dimanche), hors des heures d'usage.",
        test="tests/test_cron1_registre.py::test_job_a_une_raison"),
+    _j("purge-runs", "Purge des vieux runs de scoring (garde servi + 2 précédents)", "hebdo (dim)",
+       "30 0 * * 0", "04:30 dim", touche="exploitation", timeout_s=3600,
+       raison="Sans purge, les runs de scoring s'empilent (q_v11→q_v20) et gonflent dryrun_cascade_results "
+              "à 12–16 Go (cause n°1 du ménage MENAGE-1). Garde le servi + 2 précédents + les runs "
+              "référencés (lignée/exceptions/démo) + les épinglés ; supprime le reste puis VACUUM ANALYZE "
+              "(pas FULL : aucun verrou exclusif, sûr en prod). Hebdo (dim) après l'entretien de la base.",
+       # MENAGE-1 (geste 10) — GELÉ au registre : la rétention vivait à la BASCULE (purge-runs-morts,
+       # « jamais un cron »). Au registre (connu, monitoré, lançable à la main, crontab COMMENTÉ) ;
+       # dégel quand Vic valide l'automatisation du DELETE.
+       gel="MENAGE-1 — purge auto à valider avant dégel",
+       test="tests/test_cron1_registre.py::test_purge_runs_gele_garde_servi_plus_deux"),
     _j("healthcheck", "Sonde /health locale + espace disque (2 échecs → alerte)", "15 min",
        "*/15 * * * *", "toutes les 15 min", touche="exploitation", timeout_s=120, besoin_db=False,
        raison="Dead-man local : si /health tombe ou le disque se remplit, l'admin est alerté (2 échecs). "
@@ -675,6 +686,8 @@ _FAMILLE_LIBELLE_ROLE: dict[str, tuple[int, str, str, bool]] = {
                         "Copie complète de la base chaque jour, 4 conservées.", False),
     "pg-maintenance": (4, "L'entretien de la base",
                        "Réaligne le moteur PostgreSQL chaque dimanche pour garder les requêtes rapides.", True),
+    "purge-runs": (4, "La purge des vieux runs",
+                   "Garde le run servi et les 2 précédents, supprime les plus anciens pour que la base n'enfle pas. Gelé tant que Vic ne l'a pas validé.", True),
     "healthcheck": (4, "La sonde de vie",
                     "Vérifie toutes les 15 min que l'app répond, le disque, la sauvegarde et les jobs en retard.", False),
     "sante-endpoints": (4, "La sonde métier",

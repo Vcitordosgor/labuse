@@ -177,3 +177,31 @@ docs/audit-2026-09/RECETTE-1/captures-recette-1e/
 # BILAN-2 — modèle Excel « vierge » de la promotrice (référence de mise en page), jamais commité
 docs/audit-2026-10/bilan-1/modele-vierge.xlsx
 reports/.vitesse2/
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MENAGE-1 (geste 9, Option B) — RÈGLES LARGES anti-bloat .git.
+# Le pack .git fait 4,4 Go dont ~4,1 Go de PNG de captures (rapport MENAGE-1, A3).
+# Ces règles STOPPENT la ré-injection de captures/binaires dans les NOUVEAUX commits.
+# Elles ne retirent rien de déjà suivi (pas de git rm --cached : décision d'historique = Vic).
+# Le hook pre-commit (scripts/git-hooks/pre-commit) complète en refusant tout fichier >2 Mio.
+# Si un binaire DOIT vraiment être versionné : `git add -f <chemin>`.
+#
+# Tout dossier « captures » / « captures-* », où qu'il soit (couvre docs/**, reports/**, qa/**, racine)
+captures/
+captures-*/
+**/captures/
+**/captures-*/
+# PNG de design & d'audit (les plus gros churn de l'historique)
+docs/design/**/*.png
+docs/GABARIT/**/*.png
+docs/audit-*/**/*.png
+docs/audit-*/**/*.pdf
+# Traces de perf / réseau lourdes
+*.har
+reports/**/*.har
+# Archives de mandats (zips lourds)
+docs/mandats/*.zip
+# Decks / dossiers HTML de revue (régénérables, volumineux)
+**/deck_*.html
+reports/**/DOSSIER-*.html
+reports/**/DOSSIER-*.pdf

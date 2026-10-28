@@ -94,8 +94,9 @@ def test_familles_attendues():
     for j in jobs.liste():
         par_fam[j["famille"]] = par_fam.get(j["famille"], 0) + 1
     # COCKPIT-1 Lot C : restore-test + recap-matin retirés du registre → 29 jobs, F4 passe de 21 à 19.
-    assert par_fam == {1: 2, 2: 6, 3: 2, 4: 19}
-    assert sum(par_fam.values()) == 29
+    # MENAGE-1 (geste 10) : + purge-runs (famille 4, gelé) → 30 jobs, F4 passe de 19 à 20.
+    assert par_fam == {1: 2, 2: 6, 3: 2, 4: 20}
+    assert sum(par_fam.values()) == 30
 
 
 # ─────────────── endpoints (db) ───────────────
@@ -112,8 +113,9 @@ def test_usine_endpoint():
     assert [f["n"] for f in j["familles"]] == [1, 2, 3, 4]
     # RADAR-FIX-2 (Lot C) — ne restent gelés que les DEUX jobs de notification (radar-cloche + digest),
     # derrière l'interrupteur LABUSE_RADAR_NOTIFS. Les trois jobs de cycle (donnée) sont dégelés.
+    # MENAGE-1 (geste 10) — + purge-runs, gelé au registre (à valider avant dégel de l'automatisation).
     geles = {g["nom"] for g in j["geles"]}
-    assert geles == {"radar-cloche", "digest"}, geles
+    assert geles == {"radar-cloche", "digest", "purge-runs"}, geles
 
 
 @pytest.mark.db
