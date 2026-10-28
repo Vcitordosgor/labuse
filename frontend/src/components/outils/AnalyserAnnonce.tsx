@@ -19,14 +19,31 @@ import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 
 import { ParcelInput } from '../ParcelInput'
-import { analyserAnnonce, getAnnonceClassement, getContexteCommune, getFiche, getParcelExposition, type AnnonceAnalyse } from '../../lib/api'
+import { analyserAnnonce, docAnalyseAnnonceLienUrl, docAnalyseAnnonceUrl, getAnnonceClassement, getContexteCommune, getFiche, getParcelExposition, type AnnonceAnalyse } from '../../lib/api'
 import { fmtInt, fmtM2, iduCourt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
+import { useOuvrirDocument } from '../../lib/ouvrirDocument'
 import { Chargement } from '../Loading'
 import { ErrorState } from '../States'
 import { Bouton } from '../ui/Bouton'
 import { Retour } from '../ui/Retour'
 import { Badge } from '../ui/Badge'
+
+// ANNONCE-3 — « Exporter en PDF » : le MÊME document que Docs (mêmes routes /analyse-annonce…), donc
+// le PDF sorti de l'outil et celui de Docs sont identiques, mêmes chiffres que cet écran. Ouverture
+// propre (fetch + blob + attente + message FR) via le hook partagé useOuvrirDocument.
+function ExportPdf({ url }: { url: string }) {
+  const { ouvrir, enCours, erreur } = useOuvrirDocument()
+  return (
+    <div className="shrink-0">
+      <Bouton niveau="secondaire" ton="vert" className="w-full" disabled={!!enCours}
+        onClick={() => void ouvrir(url, 'analyse-annonce')}>
+        {enCours ? <Chargement variant="inline" accent="courant" label="Export…" /> : 'Exporter en PDF'}
+      </Bouton>
+      {erreur && <p className="mt-1 text-[12px] leading-snug text-coral">{erreur}</p>}
+    </div>
+  )
+}
 
 // Le comparateur de prix de la fiche (`prix_ancien`) porte, au runtime, plus de champs que n'en déclare
 // le type `Fiche` (resserré pour les tuiles d'en-tête) : on les lit via ce type local, sans recalcul.
@@ -176,6 +193,8 @@ function RapportParcelle({ idu }: { idu: string }) {
         <Bouton niveau="lien" ton="vert" className="mt-2"
           onClick={() => focusParcelle(idu, { fiche: true })}>Ouvrir la fiche parcelle →</Bouton>
       </section>
+
+      <ExportPdf url={docAnalyseAnnonceUrl(idu)} />
     </Corps>
   )
 }
@@ -280,6 +299,8 @@ function RapportAnnonce({ res }: { res: AnnonceAnalyse }) {
           <Bouton niveau="lien" ton="vert" className="mt-2" onClick={() => setContexteCommune(commune)}>Fiche commune →</Bouton>
         )}
       </section>
+
+      <ExportPdf url={docAnalyseAnnonceLienUrl(a.url)} />
     </Corps>
   )
 }

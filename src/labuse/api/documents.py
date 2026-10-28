@@ -242,6 +242,73 @@ def _zone_map_html(db, zone: dict) -> str:
     return '<div class="zone-map-ph">Carte du périmètre (fond cartographique momentanément indisponible)</div>'
 
 
+# ── ANNONCE-3 — « Analyse d'annonce » : deux entrées (adresse → parcelle, lien → commune), MÊMES
+#    chemins que l'outil « Analyser une annonce ». Le PDF sorti de l'outil et celui sorti de Docs sont
+#    identiques (mêmes routes, mêmes endpoints, mêmes chiffres que l'écran).
+@router.get("/analyse-annonce/{idu}.pdf")
+def analyse_annonce_parcelle_pdf(idu: str, request: Request, db: Session = Depends(get_db)) -> Response:
+    """Variante PARCELLE (entrée adresse) : rapport parcelle (tuiles + estimation + foncier + plan de
+    situation). Lit les MÊMES endpoints que l'écran (fiche, exposition, classement du run servi)."""
+    from ..exports import builder
+    from ..quota import porte_export
+    porte_export(request, db)
+    try:
+        res = builder.construire_analyse_annonce_parc(db, idu, request=request)
+    except ValueError as exc:
+        raise HTTPException(404, str(exc))
+    except HTTPException:
+        raise
+    except Exception:  # noqa: BLE001
+        log.exception("analyse-annonce parcelle %s : échec technique", idu)
+        raise HTTPException(status_code=500, detail={"erreur": "erreur_technique",
+                            "message": "Le document n'a pas pu être généré (erreur technique)."})
+    return _pdf_response(res, "analyse-annonce")
+
+
+#: ANNONCE-3 — message d'échec IDENTIQUE à l'outil (AnalyserAnnonce.tsx `messageErreur`) : la lecture du
+#: lien passe par la MÊME voie (Radar d'abord, sinon fetch) ; en cas d'échec le PDF ne se génère pas et
+#: l'écran affiche cette phrase (via le hook useOuvrirDocument → detail.message), jamais un code HTTP.
+_ANNONCE_ECHEC = {
+    "url_bloquee": "Cette annonce n'a pas encore été relevée par LABUSE et Leboncoin bloque sa lecture "
+                   "automatique. Entrez l'adresse du bien pour l'analyser.",
+    "url_illisible": "Cette page n'est pas une annonce exploitable. Entrez l'adresse du bien pour l'analyser.",
+    "url_invalide": "Collez un lien d'annonce Leboncoin, ou entrez l'adresse du bien pour l'analyser.",
+}
+
+
+@router.get("/analyse-annonce.pdf")
+def analyse_annonce_lien_pdf(url: str, request: Request, db: Session = Depends(get_db)) -> Response:
+    """Variante COMMUNE (entrée lien) : rapport commune (ce que dit l'annonce + prix face au marché +
+    la commune). MÊME chemin que l'outil : Radar D'ABORD, sinon fetch one-shot, sinon le MÊME message
+    d'échec (422 + phrase, pas de code HTTP à l'écran)."""
+    from ..exports import builder
+    from ..quota import porte_export
+    from ..pige.api import AnnonceAnalyseIn, radar_annonce_analyser
+    porte_export(request, db)
+    res_annonce = radar_annonce_analyser(AnnonceAnalyseIn(url=url))
+    if not res_annonce.get("ok") or not res_annonce.get("annonce"):
+        erreur = res_annonce.get("erreur")
+        raise HTTPException(status_code=422, detail={
+            "erreur": erreur or "url_illisible",
+            "message": _ANNONCE_ECHEC.get(erreur, "La lecture de l'annonce a échoué. "
+                       "Entrez l'adresse du bien pour l'analyser.")})
+    commune = (res_annonce["annonce"] or {}).get("commune")
+    contexte = None
+    if commune:
+        try:
+            from .app import commune_contexte
+            contexte = commune_contexte(commune, db=db, request=request)
+        except Exception as exc:  # noqa: BLE001 — « La commune » est un plus, jamais un bloqueur
+            log.warning("analyse-annonce lien : contexte commune %s indisponible (%s)", commune, exc)
+    try:
+        res = builder.construire_analyse_annonce_lien(res_annonce["annonce"], res_annonce.get("marche"), contexte)
+    except Exception:  # noqa: BLE001
+        log.exception("analyse-annonce lien : échec technique")
+        raise HTTPException(status_code=500, detail={"erreur": "erreur_technique",
+                            "message": "Le document n'a pas pu être généré (erreur technique)."})
+    return _pdf_response(res, "analyse-annonce")
+
+
 # RECETTE-3 (T2, décision Vic) — le document Résumé est SUPPRIMÉ : sa route /resume/{idu}.pdf
 # n'existe plus (aucun autre document ne l'appelait ; l'ex-redirection export.pdf pointe désormais
 # vers le Dossier). Reste Dossier · Financier · Apporteur (+ Flash via facturation, Pré-dossier ZIP).

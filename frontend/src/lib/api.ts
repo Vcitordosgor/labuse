@@ -1269,9 +1269,14 @@ export const docEtudeZoneUrl = (idu: string, rayonKm: number, sousDestination?: 
   `/etude-zone.pdf?idu=${encodeURIComponent(idu)}&rayon_km=${encodeURIComponent(String(rayonKm))}`
   // RECETTE-OUTILS-3 (S3) — l'activité choisie dans la fenêtre Docs est transmise au PDF (verdict par zone).
   + (sousDestination ? `&sous_destination=${encodeURIComponent(sousDestination)}` : '')
+// ANNONCE-3 — « Analyse d'annonce » : adresse → rapport parcelle (/analyse-annonce/{idu}.pdf) ou lien
+// d'annonce → rapport commune (/analyse-annonce.pdf?url=…). Mêmes routes que le bouton « Exporter en PDF »
+// de l'outil : le PDF sorti de l'outil et celui sorti de Docs sont identiques.
+export const docAnalyseAnnonceUrl = (idu: string) => `/analyse-annonce/${encodeURIComponent(idu)}.pdf`
+export const docAnalyseAnnonceLienUrl = (url: string) => `/analyse-annonce.pdf?url=${encodeURIComponent(url)}`
 
 // DOCS-1 (Lot B) — la bibliothèque « Mes documents » (recette d'un document, jamais le PDF).
-export type DocType = 'dossier' | 'bilan' | 'apporteur' | 'pre-dossier' | 'gabarit' | 'comparatif' | 'etude-zone' | 'etude-faisabilite'
+export type DocType = 'dossier' | 'bilan' | 'apporteur' | 'pre-dossier' | 'gabarit' | 'comparatif' | 'etude-zone' | 'etude-faisabilite' | 'analyse-annonce'
 export interface DocGenereRow {
   id: number
   doc_type: DocType

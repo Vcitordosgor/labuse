@@ -73,6 +73,9 @@ _LABEL = {
     "gabarit": ("Gabarit", "L'enveloppe réglementaire de la parcelle : zone d'implantation, plafond d'emprise, hauteur."),
     "comparatif": ("Comparatif", "Deux à trois parcelles côte à côte, sur les lignes de Comparer."),
     "etude-zone": ("Étude de zone", "Le territoire autour de la parcelle, dans le rayon choisi."),
+  # ANNONCE-3 — miroir de l'outil « Analyser une annonce » : une adresse (rapport parcelle) ou un lien
+  # d'annonce (rapport commune). Même source que l'écran ; aucun moteur neuf.
+  "analyse-annonce": ("Analyse d'annonce", "Une adresse ou un lien d'annonce, croisés au marché et au foncier."),
 }
 
 
@@ -98,6 +101,10 @@ _FOOT = {
                    "ni un conseil. Données LABUSE au {au}."),
     "etude-zone": ("Agrégats de données publiques dans le périmètre indiqué. Les mailles « à l'échelle "
                    "de la commune » portent sur toute la commune. Données LABUSE au {au}."),
+    # ANNONCE-3 — l'estimation est COMPARATIVE (prix observés au m², DVF), jamais un avis de valeur.
+    "analyse-annonce": ("Estimation comparative établie sur des données publiques (prix observés au m², "
+                        "DVF) — ce n'est pas un avis de valeur. Sources : DVF · Radar LABUSE. "
+                        "Données LABUSE au {au}."),
 }
 
 #: composition de chaque document. EXPORTS-REBRANCHEMENT-1 lot 1 : le Dossier n'est PLUS une
@@ -673,6 +680,77 @@ def construire_etude_zone(idu: str, rayon_km, zone: dict, map_html: str, *,
     html = page_html(_LABEL["etude-zone"][0], cart, corps)
     return ResultatDoc(html=html, valeurs={}, numero=numero, cartouche=cart,
                        contexte={"zone": zone})
+
+
+# ── ANNONCE-3 — « Analyse d'annonce » : deux variantes, miroir de l'outil Analyser une annonce. ──
+def construire_analyse_annonce_parc(db, idu: str, *, request=None, jour: date | None = None) -> ResultatDoc:
+    """Variante PARCELLE (entrée adresse) : en-tête (adresse · IDU · date) + plan de situation (contour
+    parcelle, MÊME composant que le Dossier) + les 6 tuiles + « Estimation du prix » + « Le foncier ».
+    Aucun recalcul : on LIT les MÊMES endpoints que l'écran — `parcel_fiche` (prix_ancien, zone PLU,
+    SDP, aléas, surface), `parcel_exposition` (orientation), `radar_annonce_classement` (bande du run
+    SERVI + vocabulaire gravé). Le PDF sorti de l'outil et celui sorti de Docs sont IDENTIQUES (même route)."""
+    from .blocs import annonce as bloc_annonce
+    from ..api.app import parcel_exposition, parcel_fiche
+    j = jour or today_reunion()
+    fiche = parcel_fiche(idu, db=db, request=request)
+    try:
+        expo = parcel_exposition(idu, db=db)
+    except Exception as exc:  # noqa: BLE001 — l'exposition est un plus, jamais un bloqueur (ORF-19)
+        log.warning("analyse-annonce %s : exposition indisponible (%s)", idu, exc)
+        expo = None
+    try:
+        from ..pige.api import radar_annonce_classement
+        classement = radar_annonce_classement(idu)
+    except Exception as exc:  # noqa: BLE001 — le classement est un plus ; sa tuile sera simplement omise
+        log.warning("analyse-annonce %s : classement indisponible (%s)", idu, exc)
+        classement = None
+    numero = numeros.numero_rapport("analyse-annonce", idu, j)
+    adresse = fiche.get("adresse") or ""
+    ref = " · ".join(x for x in (adresse, idu) if x)
+    cart = _cart("analyse-annonce", adresse or idu, idu, numero, j)
+    corps = (_entete_doc("analyse-annonce", ref, numero, j)
+             + _plan_situation_html(db, idu)
+             + bloc_annonce.rendu_parcelle(fiche, expo, classement))
+    html = page_html(_LABEL["analyse-annonce"][0], cart, corps)
+    return ResultatDoc(html=html, valeurs={}, numero=numero, cartouche=cart,
+                       contexte={"idu": idu, "adresse": adresse})
+
+
+def construire_analyse_annonce_lien(annonce: dict, marche: dict | None, contexte: dict | None, *,
+                                    jour: date | None = None) -> ResultatDoc:
+    """Variante COMMUNE (entrée lien) : en-tête (type · commune · « Annonce Leboncoin · relevée le … »)
+    + « Ce que dit l'annonce » + « Prix face au marché » + « La commune ». `annonce`/`marche` sont les
+    sorties EXACTES de `radar_annonce_analyser` (Radar d'abord, sinon fetch) et `contexte` celle de
+    `commune_contexte` — aucun recalcul ici (le PDF outil == PDF Docs, même route)."""
+    from .blocs import annonce as bloc_annonce
+    j = jour or today_reunion()
+    a = annonce or {}
+    commune = a.get("commune") or ""
+    typ = a.get("type")
+    pieces = a.get("pieces")
+    titre = ((typ[0].upper() + typ[1:]) if typ else "Annonce")
+    if isinstance(pieces, int):
+        titre += f" {pieces} pièces"
+    if commune:
+        titre += f" · {commune}"
+    # le suffixe du numéro = l'identifiant d'annonce (list_id, chiffres de l'URL) — ASCII et STABLE ;
+    # jamais le nom de commune tronqué mi-mot (« …-noît » pour Saint-Benoît, qui cassait aussi l'en-tête
+    # Content-Disposition en octets non-ASCII). Repli « annonce » si l'URL ne porte aucun identifiant.
+    import re as _re
+    _ids = _re.findall(r"\d{6,}", a.get("url") or "")
+    numero = numeros.numero_rapport("analyse-annonce", _ids[-1] if _ids else "annonce", j)
+    # « relevée le … » = la date de relevé portée par le rapport (capture Radar, ou jour du fetch).
+    releve = a.get("releve_le")
+    # miroir de l'écran : « 2026-10-27 » → « 27/10/2026 » (split('-').reverse().join('/')).
+    releve_fr = "/".join(reversed(releve.split("-"))) if isinstance(releve, str) and "-" in releve else None
+    emis = (f'<p class="emis">Annonce Leboncoin'
+            + (f' · relevée le {esc(releve_fr)}' if releve_fr else "") + "</p>")
+    cart = _cart("analyse-annonce", titre, commune or "annonce", numero, j)
+    corps = (_entete_doc("analyse-annonce", titre, numero, j) + emis
+             + bloc_annonce.rendu_commune(a, marche, contexte))
+    html = page_html(_LABEL["analyse-annonce"][0], cart, corps)
+    return ResultatDoc(html=html, valeurs={}, numero=numero, cartouche=cart,
+                       contexte={"annonce": a})
 
 
 def generer_pdf(db, idu: str, document: str = "dossier", *, fiche: dict | None = None,
