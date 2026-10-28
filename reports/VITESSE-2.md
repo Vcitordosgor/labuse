@@ -97,8 +97,15 @@ contourné) → recalcul des 3 fiches à chaque appel, même en relance (7 s pro
 `_q_v2_fiche(db, idu)` == `_q_v2_fiche(db, idu, run_label=runs.current())` vérifié sur les 3 témoins →
 `/compare` passe par le run servi **sans changer sa sortie** ; `_compare_row` ignore les clés en plus.
 
-**Résultat.** Relance (chaud) **0,27 s < 0,5 s** ; à froid worker chaud ~1,8 s < 2 s ; stone-cold ~2,6 s
-(buffers froids → réchauffage Lot 4). JSON `/compare` identique avant/après. Fichier : `src/labuse/api/app.py`.
+**Résultat (1 worker).** Relance (chaud) **0,27 s < 0,5 s** ; à froid worker chaud ~1,8 s < 2 s ;
+stone-cold ~2,6 s (buffers froids → réchauffage Lot 4). JSON `/compare` identique avant/après.
+Fichier : `src/labuse/api/app.py`.
+
+> ⚠ **Nuance multi-worker (découverte à la mesure 5 workers).** `_FICHE_CACHE` est **PAR WORKER**.
+> Avec 5 workers, une relance `/compare` qui retombe sur un **autre** worker recalcule → les relances
+> étaient **bimodales** (0,3 s si même worker, ~2,2 s sinon). Le « < 0,5 s à chaud » valait **par
+> worker**. Corrigé par le **Lot 7** (cache de fiche PARTAGÉ en base) : voir ci-dessous — relances
+> `/compare` désormais 0,20–0,56 s sur tous les workers.
 
 ## Lot 4 — réchauffage après chaque déploiement
 
@@ -136,9 +143,47 @@ la volée de `spatial_layers` (chemin historique, coverage identique). Passe sur
 
 ---
 
+## Lot 7 — cache de fiche PARTAGÉ en base (multi-worker)
+
+**Pourquoi.** La mesure 5 workers « vrai cas client » (parcelles jamais ouvertes) a révélé que le gain
+Lot 3 était **par worker** : `/compare` relance bimodale 0,3 s / 2,2 s ; une fiche ouverte sur un worker
+restait froide sur les 4 autres (relecture ~0,5–1 s selon le worker). En prod 5 workers, ce n'est pas
+fiablement rapide.
+
+**Correctif.** Un cache de fiche **PARTAGÉ en base** `fiche_cache`, lu par TOUS les workers — L2 sous le
+L1 `_FICHE_CACHE` par worker :
+- **Clé** = `idu` (PK) + `cle_fraicheur` = empreinte du run servi (`fraicheur_caches.empreinte_attendue` :
+  run + cascade + résiduel + millésimes sources + **code_sha**) + version `data_sources` + **jeton parcelle**
+  (updated_at+contenance). Une fiche d'un **ancien run**, d'un **ancien code**, d'une source rafraîchie ou
+  d'une parcelle éditée **n'est jamais servie** (la clé ne colle plus → recalcul).
+- **Invalidation** : à la **bascule de run** (`bascule_flux.purger_caches_run` vide `fiche_cache` + le L1) ;
+  au **déploiement** (code_sha dans la clé → implicite ; `deploy_app.sh` étape 6 vide la table).
+- **Taille bornée** (`_FICHE_CACHE_DB_CAP = 20 000`), **purge des plus anciennes** (`computed_at`) à l'écriture.
+- **Fiche PUBLIQUE seulement** : `_q_v2_fiche`/`analyse_labuse` ne dépendent que de `(idu, run)` — AUCUNE
+  donnée propre à un compte. Ce qui dépend de l'utilisateur (`_trace` admin, extras `/compare`) est ajouté
+  APRÈS `_fiche_servie`, hors cache.
+- **Chemin** : L1 (worker chaud) → sinon L2 (lecture base, garde `to_regclass`, jamais de rollback de la
+  session appelante) → sinon calcul + publication L2 (session dédiée). Le chemin chaud L1 reste sans coût ajouté.
+
+**Parité (critique).** La sérialisation du cache reproduit **exactement la forme filaire de FastAPI**
+(`_fiche_cache_json` = `jsonable_encoder(..., custom_encoder={Decimal: str})`) : un premier jet stockait
+les `Decimal` en `float` → `nivvie_moyen_eur` passait de `"18369"` (chaîne, comme l'endpoint) à `18369.0`.
+Corrigé et **prouvé** : `compute == L2` byte-à-byte (5 parcelles, toutes relectures), et **13/13 fiches
+IDENTIQUES origin/main vs branche** (3 témoins + 10 parcelles tirées au hasard, servies depuis L2).
+
+**Mesures (5 workers, réchauffage actif) :**
+- `/compare` 3 parcelles jamais ouvertes : 1ʳᵉ ouverture 2,56 s · relances **0,20 / 0,30 / 0,29 / 0,20 / 0,48 s**
+  (plus de pic à 2,2 s — tous les workers lisent le cache partagé).
+- Fiche jamais ouverte, ouverte 1× (0,85 s) puis **relue 10× en round-robin : 0,005–0,022 s** sur CHAQUE worker.
+
+Fichiers : `src/labuse/api/app.py` (cache + sérialiseur), `src/labuse/bascule_flux.py` (invalidation bascule),
+`deploy/scripts/deploy_app.sh` (invalidation déploiement).
+
 ## Vérifications
 
-- **Parité JSON** : 7 endpoints × 3 témoins → **0 écart** (`reports/vitesse2/parite-json.txt`).
+- **Parité JSON** : contexte/fiche/compare sur 3 témoins → **0 écart** (`reports/vitesse2/parite-json.txt`) ;
+  **Lot 7 : 13/13 fiches identiques origin/main vs branche** (3 témoins + 10 parcelles au hasard, servies L2)
+  + `compute == L2` byte-à-byte.
 - **Tests unitaires (hook pre-push, `not db/local/reel/network`)** : **2 681 passed** après mise à jour d'un
   test de structure (`test_m13_table_communes_lit_le_moteur_terrain_nu_unique` : le calcul des indicateurs
   bruts a migré dans `_compute_raw`, l'assertion `inspect.getsource` suit — intention inchangée).
@@ -164,6 +209,8 @@ la volée de `spatial_layers` (chemin historique, coverage identique). Passe sur
 
 - **Nouvelle table** `comparateur_raw_cache` : créée au besoin par le 1ᵉʳ écrivain (job / déploiement /
   read-miss). Aucune migration manuelle requise.
+- **Nouvelle table** `fiche_cache` (Lot 7, cache de fiche partagé) : créée au besoin, bornée à 20 000 fiches
+  (purge des plus anciennes), vidée à la bascule et au déploiement. Aucune migration manuelle requise.
 - **Nouveaux index** `ix_pm_millesimes_idu14`, `ix_parcelle_pm_idu14` : posés au boot (heal idempotent).
 - **Nouveaux env** : `LABUSE_WARM_ON_BOOT` (défaut actif hors local), `LABUSE_WARM_IDUS` (témoins).
 - Un DEPLOY court suffira ; refaire les mesures en prod (5 workers) pour confirmer les ordres de grandeur.

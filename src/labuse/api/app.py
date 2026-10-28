@@ -6678,6 +6678,108 @@ _FICHE_VER = {"v": "", "at": -1.0}
 _FICHE_VER_TTL_S = 60.0
 _FICHE_VER_LOCK = threading.Lock()
 
+# ───────────────────────── VITESSE-2 (Lot 7) — CACHE DE FICHE PARTAGÉ (base) ─────────────────────────
+# Le `_FICHE_CACHE` ci-dessus est PAR WORKER : avec 5 workers, une fiche ouverte sur l'un reste froide
+# sur les 4 autres (mesuré : /compare relance 0,3 s OU 2,2 s selon le worker touché). On ajoute un cache
+# PARTAGÉ en base `fiche_cache`, lu par TOUS les workers (L2 ; `_FICHE_CACHE` reste le L1 par worker).
+#   · Clé = `idu` (PK) + `cle_fraicheur` = empreinte du run servi + version du code (fraicheur_caches)
+#     + version des sources (`_fiche_version`) + jeton de la parcelle (updated_at+contenance). Une fiche
+#     d'un ANCIEN run, d'un ANCIEN code, d'une source rafraîchie ou d'une parcelle éditée n'est JAMAIS
+#     servie (la clé ne colle plus → recalcul).
+#   · Invalidé À LA BASCULE de run (clear explicite, bascule_flux) et AU DÉPLOIEMENT (code_sha dans la
+#     clé → implicite ; purge des plus anciennes au bornage).
+#   · Taille BORNÉE (`_FICHE_CACHE_DB_CAP`), purge des plus anciennes (par `computed_at`) à l'écriture.
+#   · FICHE PUBLIQUE SEULEMENT : `_q_v2_fiche`/`analyse_labuse` ne dépendent que de (idu, run) — AUCUNE
+#     donnée propre à un compte. Ce qui dépend de l'utilisateur (`_trace` admin, extras /compare) est
+#     ajouté APRÈS `_fiche_servie`, hors cache.
+_FICHE_CACHE_DB_DDL = """
+CREATE TABLE IF NOT EXISTS fiche_cache (
+  idu text PRIMARY KEY,
+  cle_fraicheur text NOT NULL,
+  payload jsonb NOT NULL,
+  computed_at timestamptz NOT NULL DEFAULT now()
+)
+"""
+_FICHE_CACHE_DB_CAP = 20000
+
+
+def _fiche_cache_json(payload: dict) -> str:
+    """VITESSE-2 (Lot 7) — sérialise la fiche POUR LE CACHE en reproduisant EXACTEMENT la forme
+    filaire que FastAPI sert (notamment Decimal → CHAÎNE, comme la réponse de l'endpoint — pas
+    `float`). Ainsi, servir depuis le cache est byte-à-byte identique au calcul direct : la valeur
+    relue (str/int/float/None) est re-sérialisée à l'identique par FastAPI. `jsonable_encoder` =
+    le même pré-encodage que FastAPI ; `custom_encoder` fige le choix Decimal→str (parité prouvée)."""
+    import json as _json
+    from decimal import Decimal as _Dec
+    from fastapi.encoders import jsonable_encoder
+    return _json.dumps(jsonable_encoder(payload, custom_encoder={_Dec: str}), ensure_ascii=False)
+
+
+def _fiche_db_cle(db: Session, version: str, jeton_parcelle) -> str:
+    """Clé de fraîcheur du cache de fiche partagé : empreinte du run servi (run+cascade+résiduel+
+    sources+code_sha) + version data_sources (`_fiche_version`) + jeton parcelle. md5 (largeur bornée)."""
+    import hashlib
+    from ..fraicheur_caches import empreinte_attendue
+    base = f"{empreinte_attendue(db)}|v={version}|j={jeton_parcelle if jeton_parcelle is not None else ''}"
+    return hashlib.md5(base.encode(), usedforsecurity=False).hexdigest()
+
+
+def _fiche_cache_db_get(db: Session, idu: str, dbcle: str) -> dict | None:
+    """Lit la fiche partagée SI sa clé de fraîcheur colle. Garde par `to_regclass` (jamais de rollback
+    de la session de l'appelant si la table manque). Retourne le dict jsonb ou None."""
+    try:
+        if db.execute(text("SELECT to_regclass('fiche_cache')")).scalar():
+            return db.execute(text(
+                "SELECT payload FROM fiche_cache WHERE idu = :i AND cle_fraicheur = :k"),
+                {"i": idu, "k": dbcle}).scalar()
+    except Exception:  # noqa: BLE001 — table pas encore créée / lecture KO : on recalcule
+        db.rollback()
+    return None
+
+
+def _fiche_cache_db_put(idu: str, dbcle: str, payload: dict) -> None:
+    """Écrit la fiche dans le cache partagé via une session DÉDIÉE (jamais la transaction de lecture
+    de l'appelant). Crée la table au besoin, borne la taille (purge des plus anciennes). Best-effort."""
+    from ..db import session_factory
+    s = session_factory()()
+    try:
+        s.execute(text(_FICHE_CACHE_DB_DDL))
+        s.execute(text(
+            "INSERT INTO fiche_cache (idu, cle_fraicheur, payload, computed_at) "
+            "VALUES (:i, :k, CAST(:p AS jsonb), now()) "
+            "ON CONFLICT (idu) DO UPDATE SET cle_fraicheur = EXCLUDED.cle_fraicheur, "
+            "payload = EXCLUDED.payload, computed_at = now()"),
+            {"i": idu, "k": dbcle, "p": _fiche_cache_json(payload)})
+        n = s.execute(text("SELECT count(*) FROM fiche_cache")).scalar() or 0
+        if n > _FICHE_CACHE_DB_CAP:   # bornage : ne garder que les N plus récentes
+            s.execute(text("DELETE FROM fiche_cache WHERE idu IN "
+                           "(SELECT idu FROM fiche_cache ORDER BY computed_at DESC OFFSET :c)"),
+                      {"c": _FICHE_CACHE_DB_CAP})
+        s.commit()
+    except Exception:  # noqa: BLE001 — l'écriture du cache ne doit jamais casser une lecture
+        s.rollback()
+    finally:
+        s.close()
+
+
+def vider_fiche_cache_partage() -> int:
+    """Vide le cache de fiche PARTAGÉ (appelé à la bascule de run : les fiches de l'ancien run ne
+    doivent plus occuper la table ; elles seraient de toute façon invalidées par la clé). Best-effort,
+    rend le nombre de lignes supprimées (ou -1 si la table n'existe pas / erreur)."""
+    from ..db import session_factory
+    s = session_factory()()
+    try:
+        if not s.execute(text("SELECT to_regclass('fiche_cache')")).scalar():
+            return -1
+        n = s.execute(text("DELETE FROM fiche_cache")).rowcount or 0
+        s.commit()
+        return n
+    except Exception:  # noqa: BLE001
+        s.rollback()
+        return -1
+    finally:
+        s.close()
+
 
 def _fiche_version(db: Session) -> str:
     """Empreinte de fraîcheur des données de la fiche (cf. bloc ci-dessus). '' = indisponible
@@ -6750,12 +6852,24 @@ def _fiche_servie(db: Session, idu: str, run: str) -> dict:
         except Exception:  # noqa: BLE001 — pas de jeton → on ne cache pas plutôt que de cacher faux
             jeton_parcelle = None
     cle = (idu, run, _score_labuse_run(), version, jeton_parcelle)
+    dbcle = None
     if version:
+        # L1 — cache PAR WORKER (le plus rapide quand ce worker a déjà servi cette fiche).
         with _FICHE_LOCK:
             hit = _FICHE_CACHE.get(cle)
             if hit is not None:
                 _FICHE_CACHE.move_to_end(cle)
                 return dict(hit)
+        # L2 — cache PARTAGÉ en base (VITESSE-2 Lot 7) : une fiche calculée par N'IMPORTE quel worker
+        # sert tous les autres. Lu seulement sur miss L1 (le chemin chaud L1 reste sans coût ajouté).
+        dbcle = _fiche_db_cle(db, version, jeton_parcelle)
+        shared = _fiche_cache_db_get(db, idu, dbcle)
+        if shared is not None:
+            with _FICHE_LOCK:
+                _FICHE_CACHE[cle] = shared   # réchauffe le L1 de CE worker
+                while len(_FICHE_CACHE) > _FICHE_CACHE_MAX:
+                    _FICHE_CACHE.popitem(last=False)
+            return dict(shared)
     payload = _q_v2_fiche(db, idu, run_label=run)
     # ANALYSE-1 — le verdict du NOUVEAU moteur (Score LABUSE + Signal de mutation, run candidat) attaché
     # à la fiche : bande, Signal, contributions FR EN ENTIER, cause d'incomplétude. Servi TEL QUEL.
@@ -6791,6 +6905,8 @@ def _fiche_servie(db: Session, idu: str, run: str) -> dict:
             _FICHE_CACHE[cle] = payload
             while len(_FICHE_CACHE) > _FICHE_CACHE_MAX:
                 _FICHE_CACHE.popitem(last=False)
+        if dbcle is not None:   # VITESSE-2 (Lot 7) — publie dans le cache PARTAGÉ (session dédiée)
+            _fiche_cache_db_put(idu, dbcle, payload)
         payload = dict(payload)   # l'appelant (trace) ne doit jamais muter l'entrée cachée
     return payload
 

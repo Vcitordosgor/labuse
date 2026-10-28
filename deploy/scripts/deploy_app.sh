@@ -152,6 +152,10 @@ echo "   manifeste prod : '$PROD_RUN' ($NP lignes) ✓"
 # Le réchauffage PAR WORKER (indicateurs + 3 fiches témoins en mémoire) est fait par CHAQUE worker
 # à son démarrage (événement startup FastAPI, LABUSE_WARM_ON_BOOT) — rien à faire ici côté HTTP.
 echo "── 6. réchauffage des caches (job fiche-commune-cache, détaché + journalisé) ──"
+# VITESSE-2 (Lot 7) — INVALIDATION AU DÉPLOIEMENT du cache de fiche PARTAGÉ : le nouveau code change
+# code_sha → la clé de fraîcheur change → les fiches de l'ancien code ne seraient de toute façon plus
+# servies ; on VIDE la table pour libérer l'espace (best-effort, ne bloque jamais le déploiement).
+ssh -o BatchMode=yes "$HOST" "sudo -u postgres psql -d labuse -c 'DELETE FROM fiche_cache' 2>/dev/null || true; echo '   fiche_cache vidé (invalidation déploiement)'"
 ssh -o BatchMode=yes "$HOST" 'sudo -u labuse bash -lc "
   set -a; [ -f /etc/labuse/labuse.env ] && . /etc/labuse/labuse.env; set +a
   mkdir -p /var/log/labuse

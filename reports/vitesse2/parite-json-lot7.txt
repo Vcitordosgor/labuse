@@ -1,0 +1,21 @@
+# VITESSE-2 Lot 7 — parité cache de fiche PARTAGÉ (fiche servie depuis L2)
+# avant = origin/main (aucun cache fiche) ; après = branche fix/vitesse-2 (servie depuis fiche_cache, 5 workers)
+# 3 témoins + 10 parcelles tirées au hasard (5 communes) — diff vide = IDENTIQUE
+
+  97410000AE1369  → IDENTIQUE
+  97415000BY0083  → IDENTIQUE
+  97411000BZ1065  → IDENTIQUE
+  97422000BV2440  → IDENTIQUE
+  97422000CZ0275  → IDENTIQUE
+  97410000AT0689  → IDENTIQUE
+  97410000BW0967  → IDENTIQUE
+  97411000HE0412  → IDENTIQUE
+  97411000IB0044  → IDENTIQUE
+  97415000AW2362  → IDENTIQUE
+  97415000DX0049  → IDENTIQUE
+  97416000CW1762  → IDENTIQUE
+  97416000CZ0589  → IDENTIQUE
+
+TOTAL : 13/13 IDENTIQUES
+
+# + preuve compute==L2 (le cache est transparent) : 5 parcelles, toutes relectures byte-à-byte identiques.
