@@ -1,0 +1,13 @@
+== FIDÉLITÉ TERRAIN (médiane recalculée pleine fenêtre vs dvf_secteur_medianes servie) ==
+   secteurs terrain servis : 791
+   concordants (±1 €)      : 693/693 = 100.0%
+   écarts > 1 €            : 0
+   non comparables (0 comp band) : 98
+
+== FIDÉLITÉ BÂTI (estime_bati fenêtre pleine vs sector_price en direct) ==
+   parcelles testées : 60 (+0 ignorées)
+   médianes identiques (±1 €) : 57/60 = 95.0%
+   écarts : 3
+      97411000HS0041 prod=2841 mien=2831 — prix prod=appartement / mien=appartement
+      97412000BK0357 prod=3228 mien=3089 — prix prod=mixte (appart+maison) / mien=mixte (appart+maison)
+      97414000HL0276 prod=2589 mien=2604 — prix prod=mixte (appart+maison) / mien=mixte (appart+maison)
