@@ -1305,8 +1305,8 @@ def rapport_lien(db, annonce: dict) -> dict:
     fonciere = None
     tn = bloc.get("median_terrain_eur_m2") if bloc else None
     if isinstance(tn, (int, float)) and isinstance(st, (int, float)) and st > 0 and isinstance(prix, (int, float)) and prix > 0:
-        val = round(st * tn)
-        pct = round(val / prix * 100)
+        val = _arrondi_mille(st * tn)          # ANNONCE-5-FIX-2 — arrondi au millier comme partout ailleurs
+        pct = round(st * tn / prix * 100)      # % sur le produit exact (l'arrondi d'affichage ne biaise pas la part)
         if pct >= 75:
             concl = f"Le terrain seul vaut {pct} % du prix demandé : bien à valeur surtout foncière."
         elif pct >= 40:
