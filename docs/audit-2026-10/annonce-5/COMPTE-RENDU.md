@@ -107,10 +107,63 @@ comparables, deux lectures). Tests : `tests/test_annonce_pdf.py`.
 
 ## À noter
 
-- Variante parcelle **nue** : pas de tableau de comparables bâti (les ventes de terrain nu ne portent
-  pas de distance exploitable dans `dvf_mutations`) ; le repère secteur (n réel) tient lieu d'échantillon,
-  et la valeur indicative = contenance × repère terrain nu. Choix assumé, sans divergence.
+- Variante parcelle **nue** : le tableau des comparables montre les ventes de TERRAIN NU les plus proches
+  (via `dvf_mutations_parcelle`, cf. ANNONCE-5-FIX §5) ; l'estimation reste le repère secteur (n réel) et
+  la valeur indicative = surface × repère terrain nu. Les deux périmètres (secteur pour le repère, rayon
+  pour le tableau) sont tous deux étiquetés.
 - La carte de la variante lien est un repère NEUTRE à l'échelle de la commune (le mandat écarte le
   rattachement parcellaire de l'entrée lien) ; sa légende le dit.
 - ⚠ venv éditable `~/Desktop/labuse/.venv` → `labuse-main/src` : lancer avec `PYTHONPATH=…annonce5/src`.
   Relancer uvicorn après édition (pas de `--reload`).
+
+---
+
+# ANNONCE-5-FIX — retours de Vic sur les 3 PDF
+
+Même branche `feat/annonce-5`, même worktree, pas de merge.
+
+## Constats traités
+
+1. **Valeur indicative bâtie = ORDRE DE GRANDEUR.** La surface habitable n'est pas connue : la ligne dit
+   désormais « D'après l'emprise au sol BD TOPO (197 m²) × 3 528 €/m² », fourchette **élargie par l'écart
+   mesuré du segment** (±32 % maison), et une note « Ordre de grandeur, pas un calcul exact ». **Tous les
+   montants en € arrondis au millier**, fourchettes comprises (`_arrondi_mille`).
+2. **SDP restante BZ1065 (35 → 26).** Cause : le champ `potentiel_transformation.sdp_residuelle_m2` est
+   **recalculé en direct** et varie sur cache froid, alors que `parcel_residuel.sdp_residuelle_m2` (RUN
+   SERVI) est stable à 26. Le rapport lit désormais la **valeur du run servi** → PDF = écran = fiche.
+3. **Phrase de classement DÉRIVÉE DES RÈGLES.** `_contrainte_limitante` compare les mesures aux règles et
+   nomme la règle qui mord, chiffrée : BZ1065 → « la hauteur limite : le bâti existant atteint un faîtage
+   mesuré de 10,3 m pour 7 m autorisés — pas de marge en surélévation. » (plus de contradiction avec le
+   tableau : l'emprise à 12 % n'est PAS la contrainte, la hauteur l'est). Si aucune ne mord, c'est dit.
+4. **Risques : une ligne PAR ALÉA, sans doublon DEAL/PPR.** Les entrées Géorisques « Aléa X » et les
+   entrées « PPR — zone rouge/bleue » du même aléa FUSIONNENT : CX0800 passe de 4 lignes à 2 (Inondation,
+   Mouvement de terrain), chacune avec niveau (Fort), **zone PPR + part** (Zone rouge · 23 %) et implication.
+5. **Parcelle nue : tableau des 8 ventes de TERRAIN NU** (`marche_service.comparateur_terrain`, via
+   `dvf_mutations_parcelle`, même format que le bâti : date · surface · prix · €/m² · distance). La page 1
+   de CX0800 n'est plus à moitié vide.
+6. **Badge de fiabilité recalibré sur ESTIMATION-BANC-1** (écart médian mesuré par segment : appartement
+   17 %, maison 32 %, terrain nu 19 %). « Élevée » < 15 %, « Moyenne » < 25 %, « Limitée » au-delà → maison
+   **Limitée**, terrain **Moyenne**. La note affiche « Précision mesurée sur les ventes 2025 : ±32 % ».
+   Même règle à l'écran.
+7. **Titre sans adresse** : « Parcelle CX0800 · Saint-Leu » (plus la commune seule).
+8. **Parcelle bâtie : lecture FONCIÈRE** à côté de la lecture bâti (comme la variante lien) — surface de la
+   parcelle × repère terrain nu = valeur foncière (€, arrondie), avec la part du bâti : BZ1065 = 600 000 €,
+   soit 86 % de l'ordre de grandeur bâti.
+
+## Garde légal (test §2 `test_aucune_requete_portail_dans_le_depot`)
+
+Rouge sur 3 chaînes d'affichage ANNONCE-3/5 (sous-titre « Annonce Leboncoin » du PDF, 2 phrases d'échec de
+la route lien). Remis VERT par **allowlist LIGNE PAR LIGNE** dans `tests/test_pige_socle.py`
+(`_ALLOWLIST_LIGNES`), uniquement des chaînes d'affichage — aucun fichier entier, aucun appel réseau.
+
+## Recette (routes réelles, run q_v20)
+
+`pdf/recette-{BZ1065,CX0800,lapossession}.pdf` régénérés : **2 / 2 / 1 pages** · HTTP 200 · **outil == Docs**
+(md5 pdftotext identique) · **PDF == écran** (`/radar/annonce/estimation/BZ1065` → médiane 3528, fiab
+limitee, précision 32, ordre de grandeur 695 000 €, foncière 600 000 € / 86 % — identiques au PDF).
+Capture `png/ecran-parcelle-fix-accordeon.png` (ordre de grandeur + lecture foncière + accordéon ouvert).
+
+## Vérifications
+
+`tsc -b` 0 · `vitest` **301/301** · `pytest` famille hook **2710 passed, 0 failed** (dont `test_annonce_pdf`
+**15/15** mis à jour, `test_pige_socle` vert, verrou de graphe 4/4).

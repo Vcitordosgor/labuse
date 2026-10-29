@@ -389,6 +389,53 @@ def comparateur_bien(db: Session, idu: str, *, type_bien: str | None = None,
     }
 
 
+def comparateur_terrain(db: Session, idu: str, *, rayons=(1000.0, 2000.0, 3000.0), n_table: int = 8) -> dict:
+    """ANNONCE-5-FIX — les ventes de TERRAIN NU les plus proches (dvf_mutations_parcelle, ventes sans
+    bâti), MÊME format que le comparateur bâti : date · surface · prix · €/m² · distance. Agrège par
+    mutation (une mutation = une vente ; terrain total = somme des parcelles, distance = la plus proche de
+    la parcelle sujet). Rayon adaptatif jusqu'au seuil. `marche_service.py` est déjà lecteur déclaré."""
+    pid = _parcel_id(db, idu)
+    if pid is None:
+        return {"comparables": [], "n_total": 0, "radius_m": None, "periode": None}
+
+    def _fetch(r: float) -> list[dict]:
+        rows = db.execute(text(
+            "WITH p AS (SELECT geom_2975 g FROM parcels WHERE idu = :idu), "
+            "t AS (SELECT dm.id_mutation, "
+            "        to_char(min(dm.date_mutation), 'YYYY-MM-DD') AS date, "
+            "        extract(year FROM min(dm.date_mutation))::int AS annee, "
+            "        sum(dm.surface_terrain) AS surf, max(dm.valeur_fonciere) AS vf, "
+            "        min(round(ST_Distance(pp.geom_2975, p.g)))::int AS dist "
+            "      FROM dvf_mutations_parcelle dm JOIN parcels pp ON pp.idu = dm.id_parcelle, p "
+            "      WHERE dm.nature_mutation ILIKE 'vente%' AND COALESCE(dm.surface_reelle_bati,0)=0 "
+            "        AND dm.surface_terrain > 0 AND dm.date_mutation IS NOT NULL "
+            "        AND " + fenetre_dvf_sql("dm.date_mutation", annees_param="ans") + " "
+            "        AND ST_DWithin(pp.geom_2975, p.g, :r) "
+            "      GROUP BY dm.id_mutation) "
+            "SELECT date, annee, round(surf)::int AS surface_m2, round(vf)::int AS prix_eur, "
+            "       round(vf / NULLIF(surf,0))::int AS prix_m2, dist AS distance_m "
+            "FROM t WHERE vf / NULLIF(surf,0) BETWEEN 50 AND 4000 ORDER BY dist ASC LIMIT 200"),
+            {"idu": idu, "ans": 5, "r": r}).mappings().all()
+        return [dict(x) for x in rows]
+
+    kept: list[dict] = []
+    radius = None
+    for r in rayons:
+        kept = _fetch(r)
+        if len(kept) >= 4:
+            radius = int(r)
+            break
+    else:
+        radius = int(rayons[-1]) if kept else None
+    annees = [k["annee"] for k in kept if k.get("annee")]
+    proches = sorted(kept, key=lambda v: (v.get("distance_m") is None, v.get("distance_m")))[:n_table]
+    comparables = [{"date": f"{k['date'][5:7]}/{k['date'][0:4]}" if isinstance(k.get("date"), str) and len(k["date"]) >= 7 else None,
+                    "type": "Terrain", "surface_m2": k.get("surface_m2"), "prix_eur": k.get("prix_eur"),
+                    "prix_m2": k.get("prix_m2"), "distance_m": k.get("distance_m")} for k in proches]
+    return {"comparables": comparables, "n_total": len(kept), "radius_m": radius,
+            "periode": [min(annees), max(annees)] if annees else None}
+
+
 def permits(db: Session, idu: str, *, profil: str) -> dict | None:
     """Lecture des permis (SITADEL) d'une parcelle, par le point d'appel UNIQUE. `profil` = préset de
     paramètres nommé (provisoire, MANDAT_DVF). Délègue au calcul existant — aucun recalcul."""

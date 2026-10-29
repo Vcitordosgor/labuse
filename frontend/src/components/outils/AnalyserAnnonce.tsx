@@ -178,17 +178,18 @@ function RapportParcelle({ idu }: { idu: string }) {
             </div>
             <p className="mt-2 text-[11px] leading-snug text-txt-mut">
               {terrain ? (
-                <>Parcelle nue — comparée aux ventes de <strong className="text-txt-hi">terrain nu</strong> (repère €/m² de terrain).</>
+                <>Parcelle nue — comparée aux ventes de <strong className="text-txt-hi">terrain nu</strong> du secteur (repère €/m² de terrain).</>
               ) : (
                 <>{cap(e?.type_bien) ?? 'Bâti'} — comparé{e?.type_bien === 'maison' ? 'e' : ''} aux ventes de <strong className="text-txt-hi">{e?.type_label_pluriel ?? 'biens bâtis anciens'}</strong> autour de la parcelle. État et prestations du bien non connus du modèle.</>
               )}
+              {e?.precision_pct != null && <> Précision mesurée sur les ventes 2025 : ±{fmtInt(e.precision_pct)} %.</>}
             </p>
-            {/* ANNONCE-5 — valeur indicative = surface × €/m² (même point que le PDF). */}
+            {/* ANNONCE-5-FIX — ORDRE DE GRANDEUR (jamais un calcul exact, bâti = emprise au sol). */}
             {e?.valeur_indicative && (
               <div className="mt-3 rounded-md border border-line-2 bg-surface-3 p-2.5">
-                <p className="text-[10px] uppercase tracking-wide text-txt-dim">Valeur indicative du bien</p>
+                <p className="text-[10px] uppercase tracking-wide text-txt-dim">{terrain ? 'Ordre de grandeur du terrain' : 'Ordre de grandeur du bien'}</p>
                 <p className="mt-1 flex justify-between gap-2 text-[12.5px] text-txt-hi">
-                  <span className="text-txt-dim">{terrain ? 'Terrain' : (cap(e.type_bien) ?? 'Bâti')}{e.surface_batie?.niveaux_estimes ? ' estimé' : ''} {fmtM2(e.valeur_indicative.surface_m2)} × {fmtInt(e.valeur_indicative.eur_m2)} €/m²</span>
+                  <span className="text-txt-dim">{terrain ? `Terrain ${fmtM2(e.valeur_indicative.surface_m2)}` : `D’après l’emprise au sol BD TOPO (${fmtM2(e.valeur_indicative.surface_m2)})`} × {fmtInt(e.valeur_indicative.eur_m2)} €/m²</span>
                   <span className="shrink-0 font-semibold">{fmtInt(e.valeur_indicative.valeur_eur)} €</span>
                 </p>
                 {e.valeur_indicative.valeur_basse != null && e.valeur_indicative.valeur_haute != null && (
@@ -196,11 +197,16 @@ function RapportParcelle({ idu }: { idu: string }) {
                     <span>Fourchette</span><span className="shrink-0">{fmtInt(e.valeur_indicative.valeur_basse)} – {fmtInt(e.valeur_indicative.valeur_haute)} €</span>
                   </p>
                 )}
-                {!terrain && e.repere_terrain_nu?.eur_m2 != null && (
-                  <p className="mt-1 flex justify-between gap-2 text-[12px] text-txt-dim">
-                    <span>Repère terrain nu, secteur</span><span className="shrink-0">{fmtInt(e.repere_terrain_nu.eur_m2)} €/m²{e.repere_terrain_nu.n != null ? ` · ${fmtInt(e.repere_terrain_nu.n)} ventes` : ''}</span>
-                  </p>
-                )}
+                {!terrain && <p className="mt-1.5 text-[11px] leading-snug text-txt-mut">Ordre de grandeur, pas un calcul exact : la surface habitable réelle n’est pas connue (emprise au sol BD TOPO).</p>}
+              </div>
+            )}
+            {/* Lecture foncière (parcelle bâtie) — comme la variante lien. */}
+            {!terrain && e?.lecture_fonciere && (
+              <div className="mt-2 rounded-md border border-line-2 bg-surface-3 p-2.5">
+                <p className="text-[10px] uppercase tracking-wide text-txt-dim">Lecture foncière · valeur du terrain</p>
+                <p className="mt-1 text-lg font-semibold leading-none text-mint">{fmtInt(e.lecture_fonciere.valeur_eur)} €</p>
+                <p className="mt-0.5 text-[12px] text-txt-dim">{fmtM2(e.lecture_fonciere.surface_m2)} × {fmtInt(e.lecture_fonciere.eur_m2)} €/m² de terrain nu{e.lecture_fonciere.perimetre ? ` · ${e.lecture_fonciere.perimetre}` : ''}</p>
+                {e.lecture_fonciere.pct_du_bati != null && <p className="mt-1 text-[11px] text-txt-mut">soit {fmtInt(e.lecture_fonciere.pct_du_bati)} % de l’ordre de grandeur bâti.</p>}
               </div>
             )}
           </>
@@ -210,7 +216,7 @@ function RapportParcelle({ idu }: { idu: string }) {
       {/* ANNONCE-5 — les 8 ventes comparables, accordéon FERMÉ par défaut (mêmes lignes que le PDF). */}
       {(e?.comparables?.length ?? 0) > 0 && (
         <details className={SECTION}>
-          <summary className="cursor-pointer text-sm font-medium text-txt-hi">Les ventes comparables{e?.n_total != null ? ` (${fmtInt(e.n_total)})` : ''}</summary>
+          <summary className="cursor-pointer text-sm font-medium text-txt-hi">{terrain ? 'Les ventes de terrain nu' : 'Les ventes comparables'}{e?.n_total != null ? ` (${fmtInt(e.n_total)})` : ''}</summary>
           <div className="mt-2 overflow-x-auto">
             <table className="w-full text-[11px]">
               <thead>
@@ -234,8 +240,8 @@ function RapportParcelle({ idu }: { idu: string }) {
             </table>
           </div>
           <p className="mt-1.5 text-[11px] leading-snug text-txt-mut">
-            {(() => { const autres = Math.max(0, (e?.n_total ?? 0) - (e?.comparables?.length ?? 0)); return autres > 0 ? `${fmtInt(autres)} autre${autres > 1 ? 's' : ''} vente${autres > 1 ? 's' : ''} dans le rayon entrent dans le calcul. ` : '' })()}
-            Source : DVF, ventes de {e?.type_label_pluriel ?? 'biens'}{periode ? `, ${periode}` : ''}.
+            {(() => { const autres = Math.max(0, (e?.n_total ?? 0) - (e?.comparables?.length ?? 0)); const pl = terrain ? 'terrain nu' : (e?.type_label_pluriel ?? 'biens'); return autres > 0 ? `${fmtInt(autres)} autre${autres > 1 ? 's' : ''} vente${autres > 1 ? 's' : ''} de ${pl} à proximité. ` : '' })()}
+            Source : DVF, ventes de {terrain ? 'terrain nu' : (e?.type_label_pluriel ?? 'biens')}{(terrain ? fmtPeriode(e?.comparables_periode) : periode) ? `, ${terrain ? fmtPeriode(e?.comparables_periode) : periode}` : ''}.
           </p>
         </details>
       )}

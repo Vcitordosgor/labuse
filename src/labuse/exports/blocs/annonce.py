@@ -59,14 +59,20 @@ def _periode(p) -> str | None:
 
 
 def _fiab_niveau(fiabilite, commune_fallback=False) -> tuple[str, str]:
-    """(niveau affiché, classe de chip). Trois niveaux : Élevée (menthe) / Moyenne / Limitée (ambre)."""
-    if commune_fallback:
-        return ("Limitée", "p")
+    """(niveau affiché, classe de chip). Trois niveaux : Élevée (menthe) / Moyenne / Limitée (ambre).
+    ANNONCE-5-FIX — recalibré sur le SEGMENT (ESTIMATION-BANC-1) : `fiabilite` vaut fiable/moyen/limitee."""
     if fiabilite == "fiable":
         return ("Élevée", "s")
     if fiabilite == "limitee":
         return ("Limitée", "p")
     return ("Moyenne", "p")
+
+
+def _idu_court(idu) -> str | None:
+    """Forme courte d'un IDU (section + numéro) : « 97413000CX0800 » → « CX0800 ». None si vide."""
+    if not isinstance(idu, str) or not idu:
+        return None
+    return idu[8:] if len(idu) >= 14 else idu
 
 
 def _chip(classe: str, libelle: str) -> str:
@@ -106,7 +112,13 @@ def rendu_parcelle(rapport: dict, *, plan_ortho_html: str = "", plan_zonage_html
         r.get("nature_label"),
     ) if b]
     sous = " · ".join(esc(x) for x in sous_bits)
-    titre = r.get("adresse") or (f"{r.get('commune')}" if r.get("commune") else r.get("idu") or "Parcelle")
+    # ANNONCE-5-FIX — titre sans adresse : « Parcelle CX0800 · Saint-Leu » (jamais la commune seule).
+    if r.get("adresse"):
+        titre = r["adresse"]
+    else:
+        ic = _idu_court(r.get("idu"))
+        titre = (f"Parcelle {ic} · {r['commune']}" if r.get("commune") and ic
+                 else (r.get("commune") or ic or "Parcelle"))
     ref_d = r.get("_ref_droite") or ""
     corps = entete(titre, sous, ref_d)
     # ── deux cartes côte à côte ──
@@ -182,49 +194,69 @@ def _estimation(est: dict) -> str:
     if per:
         src_bits.append(per)
     source = " · ".join(src_bits)
-    # note
+    # note : comparateur + PRÉCISION MESURÉE du segment (ESTIMATION-BANC-1).
+    prec = est.get("precision_pct")
+    prec_txt = (f" Précision mesurée sur les ventes 2025 : ±{_int(prec)} %." if isinstance(prec, (int, float)) else "")
     if terrain:
-        note = "Terrain nu — comparé aux ventes de terrain nu du secteur (repère €/m² de terrain)."
+        note = "Terrain nu — comparé aux ventes de terrain nu du secteur (repère €/m² de terrain)." + prec_txt
     else:
         pl = est.get("type_label_pluriel") or "biens bâtis anciens"
         note = (f"{(est.get('type_bien') or 'Bâti').capitalize()} — comparé aux ventes de <b>{esc(pl)}</b> "
-                "autour de la parcelle. État et prestations du bien non connus du modèle.")
+                "autour de la parcelle. État et prestations du bien non connus du modèle." + prec_txt)
     gauche = (f'<div class="estbig">{_int(median)} €/m²'
               + (f' <span class="estrange">{esc(fourch)}</span>' if fourch else "") + "</div>"
               + f'<div class="estmeta">{_chip(chip_cls, "Fiabilité " + niv)}'
               + (f' <span class="muted">{esc(source)}</span>' if source else "") + "</div>"
               + f'<p class="anote">{note}</p>')
-    droite = _valeur_indicative(est)
+    droite = _valeur_indicative(est) + ("" if terrain else _lecture_fonciere_box(est))
     return ('<h2>Estimation du prix</h2>'
             f'<div class="estgrid"><div class="estleft">{gauche}</div>'
             f'<div class="estright">{droite}</div></div>')
 
 
 def _valeur_indicative(est: dict) -> str:
+    """ANNONCE-5-FIX — ORDRE DE GRANDEUR (jamais un calcul exact). Bâti : emprise au sol BD TOPO × €/m²,
+    fourchette élargie par l'écart mesuré du segment, et la note le dit. Montants arrondis au millier."""
     vi = est.get("valeur_indicative") or {}
     terrain = est.get("type_comparateur") == "terrain_nu"
-    rows = []
     surf = vi.get("surface_m2")
     val = vi.get("valeur_eur")
-    if isinstance(surf, (int, float)) and isinstance(val, (int, float)):
-        label = "Terrain" if terrain else (est.get("type_bien") or "Bâti").capitalize()
-        em = est.get("surface_batie") or {}
-        note_surf = " estimé" if (not terrain and em.get("niveaux_estimes")) else ""
-        libelle = f"{label}{note_surf} {_m2(surf)} × {_eur_m2(vi.get('eur_m2'))}"
-        rows.append((libelle, _eur(val)))
+    if not (isinstance(surf, (int, float)) and isinstance(val, (int, float))):
+        return ""
+    rows = []
+    if terrain:
+        titre = "Ordre de grandeur du terrain"
+        ligne = f"Terrain {_m2(surf)} × {_eur_m2(vi.get('eur_m2'))}"
+    else:
+        titre = "Ordre de grandeur du bien"
+        ligne = f"D'après l'emprise au sol BD TOPO ({_m2(surf)}) × {_eur_m2(vi.get('eur_m2'))}"
+    rows.append((ligne, _eur(val)))
     vb, vh = vi.get("valeur_basse"), vi.get("valeur_haute")
     if isinstance(vb, (int, float)) and isinstance(vh, (int, float)):
         rows.append(("Fourchette", f"{_int(vb)} – {_int(vh)} €"))
-    # repère terrain nu (ancre foncière), montré aussi pour un bâti
-    rtn = est.get("repere_terrain_nu") or {}
-    if not terrain and isinstance(rtn.get("eur_m2"), (int, float)):
-        suff = f" · {_int(rtn['n'])} ventes" if isinstance(rtn.get("n"), (int, float)) else ""
-        rows.append(("Repère terrain nu, secteur", f"{_eur_m2(rtn['eur_m2'])}{esc(suff)}"))
-    if not rows:
-        return ""
     body = "".join(f'<tr><td class="k">{esc(k)}</td><td class="v">{v}</td></tr>' for k, v in rows)
-    return (f'<div class="vibox"><div class="kicker">Valeur indicative du bien</div>'
-            f'<table class="akv vikv">{body}</table></div>')
+    note = ("" if terrain else
+            '<p class="anote">Ordre de grandeur, pas un calcul exact : la surface habitable réelle '
+            "n'est pas connue (emprise au sol BD TOPO).</p>")
+    return (f'<div class="vibox"><div class="kicker">{esc(titre)}</div>'
+            f'<table class="akv vikv">{body}</table>{note}</div>')
+
+
+def _lecture_fonciere_box(est: dict) -> str:
+    """Lecture FONCIÈRE d'une parcelle bâtie (à côté de la lecture bâti, comme la variante lien) : surface
+    × repère terrain nu = valeur foncière + la part qu'elle représente de l'ordre de grandeur bâti."""
+    lf = est.get("lecture_fonciere") or {}
+    val = lf.get("valeur_eur")
+    if not isinstance(val, (int, float)):
+        return ""
+    sub = (f"{_m2(lf.get('surface_m2'))} × {_eur_m2(lf.get('eur_m2'))} de terrain nu"
+           + (f" · {lf.get('perimetre')}" if lf.get("perimetre") else ""))
+    pct = lf.get("pct_du_bati")
+    concl = (f'<p class="anote">soit {_int(pct)} % de l\'ordre de grandeur bâti.</p>'
+             if isinstance(pct, (int, float)) else "")
+    return (f'<div class="lcard"><div class="kicker">Lecture foncière · valeur du terrain</div>'
+            f'<div class="estbig pos">{esc(_eur(val))}</div>'
+            f'<div class="lcsub">{esc(sub)}</div>{concl}</div>')
 
 
 def _comparables(est: dict) -> str:
@@ -243,16 +275,19 @@ def _comparables(est: dict) -> str:
                  f'<td class="r">{esc(_int(c.get("prix_m2")) or "")}</td>'
                  f'<td class="r">{esc((_int(c.get("distance_m")) + " m") if isinstance(c.get("distance_m"), (int, float)) else "")}</td>'
                  '</tr>')
+    terrain = est.get("type_comparateur") == "terrain_nu"
     n_total = est.get("n_total") or len(comps)
     autres = max(0, int(n_total) - len(comps))
-    pl = est.get("type_label_pluriel") or "biens"
-    per = _periode(est.get("periode"))
+    pl = "terrain nu" if terrain else (est.get("type_label_pluriel") or "biens")
+    per = _periode(est.get("comparables_periode") if terrain else est.get("periode"))
     foot = ""
     if autres > 0:
         foot = (f"{_int(autres)} autre" + ("s" if autres > 1 else "") + " vente"
-                + ("s" if autres > 1 else "") + " dans le rayon entrent dans le calcul. ")
+                + ("s" if autres > 1 else "") + " de " + esc(pl) + " à proximité. ")
     foot += f"Source : DVF, ventes de {esc(pl)}" + (f", {esc(per)}" if per else "") + "."
-    return ('<h2>Les 8 ventes les plus proches retenues</h2>'
+    titre = ("Les 8 ventes de terrain nu les plus proches" if terrain
+             else "Les 8 ventes les plus proches retenues")
+    return (f'<h2>{titre}</h2>'
             f'<table class="acomp">{head}{rows}</table>'
             f'<p class="anote">{foot}</p>')
 
@@ -274,16 +309,19 @@ def _foncier(r: dict) -> str:
 
 
 def _risques(rows: list[dict]) -> str:
+    """ANNONCE-5-FIX — une ligne PAR ALÉA (sans doublon DEAL/PPR) : aléa · niveau · zone PPR + part ·
+    implication."""
     if not rows:
         return ""
-    head = '<tr><th>Aléa</th><th>Niveau</th><th>Document</th><th>Ce que ça implique</th></tr>'
+    head = ('<tr><th>Aléa</th><th>Niveau</th><th>Zone PPR · part</th>'
+            '<th>Ce que ça implique</th></tr>')
     body = ""
     for x in rows:
         body += ('<tr>'
                  f'<td>{esc(x.get("alea") or "")}</td>'
                  f'<td>{esc(x.get("niveau") or "")}</td>'
-                 f'<td>{esc_noms(x.get("document") or "")}</td>'
-                 f'<td>{esc(x.get("implique") or "")}</td>'
+                 f'<td>{esc(x.get("zone_part") or "")}</td>'
+                 f'<td>{esc_noms(x.get("implique") or "")}</td>'
                  '</tr>')
     return ('<h2>Risques et contraintes</h2>'
             f'<table class="arisq">{head}{body}</table>')

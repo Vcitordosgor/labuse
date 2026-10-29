@@ -696,31 +696,36 @@ _ANNONCE_PAGE_CSS = """
   font-family:"IBM Plex Mono","DejaVu Sans Mono",monospace; }
 .atitre { font-size:19pt; font-weight:700; margin:0 0 2pt; letter-spacing:-.01em; line-height:1.12; }
 .asub { font-size:10pt; color:var(--muted); margin:0 0 8pt; }
-.amaps { display:grid; grid-template-columns:1fr 1fr; gap:7pt; margin:2pt 0 7pt; }
+.amaps { display:grid; grid-template-columns:1fr 1fr; gap:7pt; margin:2pt 0 5pt; }
 .mapcell { position:relative; border:1px solid var(--line); border-radius:3pt; overflow:hidden; }
-.mapcell img { display:block; width:100%; height:44mm; object-fit:cover; }
+.mapcell img { display:block; width:100%; height:37mm; object-fit:cover; }
 .mcap { font-size:6.8pt; color:var(--muted); padding:2pt 6pt; background:#fff; border-top:1px solid var(--line); }
 .zlabel { position:absolute; left:5pt; top:5pt; background:rgba(255,255,255,.9);
   border:1px solid var(--line); border-radius:2pt; padding:1pt 5pt; font-size:8.5pt; font-weight:700; color:var(--ink); }
 .zalea { position:absolute; left:5pt; bottom:15pt; background:rgba(255,255,255,.86);
   border-radius:2pt; padding:1pt 5pt; font-size:7.3pt; color:var(--amber); }
-.atiles { display:grid; grid-template-columns:repeat(6,1fr); gap:5pt; margin:6pt 0; }
-.atiles .tile { border:1px solid var(--line); border-radius:3pt; padding:5pt 6pt; }
-.atiles .tile .v { font-size:11.5pt; font-weight:700; line-height:1.05; }
-.atiles .tile .l { font-size:6.6pt; color:var(--muted); margin-top:2pt; text-transform:uppercase; letter-spacing:.03em; }
-h2 { font-size:12.5pt; margin:11pt 0 5pt; }
-.anote { font-size:8pt; color:var(--muted); margin:3pt 0 2pt; line-height:1.35; }
+.atiles { display:grid; grid-template-columns:repeat(6,1fr); gap:5pt; margin:5pt 0; }
+.atiles .tile { border:1px solid var(--line); border-radius:3pt; padding:4pt 6pt; }
+.atiles .tile .v { font-size:11pt; font-weight:700; line-height:1.05; }
+.atiles .tile .l { font-size:6.6pt; color:var(--muted); margin-top:1pt; text-transform:uppercase; letter-spacing:.03em; }
+h2 { font-size:12pt; margin:8pt 0 4pt; }
+.anote { font-size:7.8pt; color:var(--muted); margin:3pt 0 2pt; line-height:1.3; }
 .muted { color:var(--muted); }
-.kicker { font-size:7.5pt; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-weight:600; margin-bottom:4pt; }
-.estgrid { display:grid; grid-template-columns:1.1fr 1fr; gap:10pt; align-items:stretch; page-break-inside:avoid; }
-.estleft { background:var(--mint-bg); border-radius:4pt; padding:9pt 12pt; }
-.estbig { font-size:23pt; font-weight:700; color:var(--mint-ink); line-height:1; }
-.estbig .estrange { font-size:9.5pt; font-weight:400; color:var(--muted); margin-left:5pt; }
-.estmeta { margin:6pt 0 3pt; font-size:8.5pt; }
+.kicker { font-size:7.3pt; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-weight:600; margin-bottom:3pt; }
+.estgrid { display:grid; grid-template-columns:1.1fr 1fr; gap:9pt; align-items:start; page-break-inside:avoid; }
+.estleft { background:var(--mint-bg); border-radius:4pt; padding:8pt 11pt; }
+.estbig { font-size:20pt; font-weight:700; color:var(--mint-ink); line-height:1; }
+.estbig .estrange { font-size:9pt; font-weight:400; color:var(--muted); margin-left:5pt; }
+.estmeta { margin:5pt 0 3pt; font-size:8.3pt; }
 .estmeta .chip { margin-right:5pt; }
-.vibox { border:1px solid var(--line); border-radius:4pt; padding:9pt 12pt; }
-.akv { width:100%; border-collapse:collapse; font-size:9.3pt; }
-.akv td { padding:3.4pt 0; border-bottom:1px solid var(--line); vertical-align:top; }
+.estright { display:flex; flex-direction:column; gap:6pt; }
+.estright .lcard { padding:7pt 10pt; }
+.estright .lcard .estbig { font-size:15pt; }
+.estright .lcard .lcsub { margin-top:2pt; }
+.estright .anote { margin:3pt 0 0; }
+.vibox { border:1px solid var(--line); border-radius:4pt; padding:7pt 10pt; }
+.akv { width:100%; border-collapse:collapse; font-size:9pt; }
+.akv td { padding:3pt 0; border-bottom:1px solid var(--line); vertical-align:top; }
 .akv td.k { color:var(--muted); padding-right:8pt; }
 .akv td.v { text-align:right; font-weight:600; white-space:nowrap; }
 .akv tr:last-child td { border-bottom:none; }
@@ -728,7 +733,7 @@ h2 { font-size:12.5pt; margin:11pt 0 5pt; }
 .acomp { width:100%; border-collapse:collapse; font-size:9pt; margin:1pt 0; }
 .acomp th { text-align:left; font-size:7.5pt; text-transform:uppercase; letter-spacing:.04em;
   color:var(--muted); border-bottom:1.5px solid var(--ink); padding:4pt 8pt 4pt 0; }
-.acomp td { padding:3.5pt 8pt 3.5pt 0; border-bottom:1px solid var(--line); }
+.acomp td { padding:2.7pt 8pt 2.7pt 0; border-bottom:1px solid var(--line); }
 .acomp th.r, .acomp td.r { text-align:right; padding-right:0; }
 .acomp tr { page-break-inside:avoid; }
 .apage2 { page-break-before:always; }

@@ -30,23 +30,28 @@ _RAPPORT_BATI = {
     "estimation": {
         "type_comparateur": "bati", "type_bien": "maison", "type_label_pluriel": "maisons",
         "median": 3602, "q1": 3000, "q3": 4200, "n": 42, "radius_m": 500, "periode": [2022, 2025],
-        "fiabilite": "fiable", "commune_fallback": False,
+        "fiabilite": "limitee", "precision_pct": 32, "commune_fallback": False,
         "comparables": [{"date": "08/2025", "type": "Maison", "surface_m2": 120, "prix_eur": 450000,
                          "prix_m2": 3750, "distance_m": 103}],
-        "n_total": 42, "surface_batie": {"surface_m2": 197, "niveaux": 1, "niveaux_estimes": False},
-        "valeur_indicative": {"surface_m2": 197, "eur_m2": 3602, "valeur_eur": 709594,
-                              "valeur_basse": 591000, "valeur_haute": 827400},
+        "n_total": 42, "emprise_bati_m2": 197,
+        "valeur_indicative": {"surface_m2": 197, "eur_m2": 3602, "valeur_eur": 710000,
+                              "valeur_basse": 483000, "valeur_haute": 937000},
+        "lecture_fonciere": {"surface_m2": 504, "eur_m2": 369, "valeur_eur": 186000,
+                             "perimetre": "secteur", "pct_du_bati": 26},
         "repere_terrain_nu": {"eur_m2": 369, "n": 15, "perimetre": "secteur", "periode": "2021–2025"},
     },
     "classement": {"bande": "D", "libelle": "Faible",
-                   "phrase": "Classement D · Faible : le bâti existant consomme presque tout."},
+                   "phrase": ("Classement D · Faible : la hauteur limite : le bâti existant atteint un "
+                              "faîtage mesuré de 10,3 m pour 7 m autorisés — pas de marge en surélévation.")},
     "foncier": {"zone": "UA", "commune": "Saint-Denis",
                 "regles": [{"cle": "Hauteur maximale", "valeur": "7 m"},
                            {"cle": "Stationnement", "valeur": "1 place / logement"}],
                 "parcelle": [{"cle": "Assiette constructible, aléa déduit", "valeur": "1 625 m²"},
                              {"cle": "SDP restante estimée", "valeur": "26 m²"}]},
-    "risques": [{"alea": "Inondation, Mouvement de terrain", "niveau": "Zone bleue",
-                 "document": "PPR Saint-Denis, 2012", "implique": "Constructible sous prescriptions."}],
+    "risques": [{"alea": "Inondation", "niveau": "Modéré", "zone_part": "Zone bleue · 100 %",
+                 "implique": "Zone bleue du PPR Saint-Denis (2012) — constructible sous prescriptions."},
+                {"alea": "Mouvement de terrain", "niveau": "Modéré", "zone_part": "Zone bleue · 100 %",
+                 "implique": "Zone bleue du PPR Saint-Denis (2012) — constructible sous prescriptions."}],
     "marche": {"ventes_maison_12m": 289, "median_maison_eur_m2": 3235, "median_appartement_eur_m2": 2600,
                "median_terrain_eur_m2": 459, "evolution_maison_12m_pct": -3.3,
                "serie_maison_5a": [{"annee": 2021, "median": 3031, "n": 5},
@@ -60,11 +65,16 @@ _RAPPORT_NUE = {
     "idu": "97413000CX0800", "adresse": None, "commune": "Saint-Leu", "zone": "UD",
     "surface_m2": 1819.0, "nature_label": "Parcelle nue", "exposition": "Ouest",
     "estimation": {"type_comparateur": "terrain_nu", "type_bien": "terrain", "median": 495,
-                   "n": 78, "periode": "2021–2025", "perimetre": "secteur", "fiabilite": "fiable",
-                   "commune_fallback": False, "comparables": [], "n_total": 78,
-                   "valeur_indicative": {"surface_m2": 1819, "eur_m2": 495, "valeur_eur": 900405},
+                   "n": 78, "periode": "2021–2025", "perimetre": "secteur", "fiabilite": "moyen",
+                   "precision_pct": 19, "commune_fallback": False,
+                   "comparables": [{"date": "06/2024", "type": "Terrain", "surface_m2": 850,
+                                    "prix_eur": 300000, "prix_m2": 353, "distance_m": 120}],
+                   "n_total": 24, "comparables_periode": [2021, 2025],
+                   "valeur_indicative": {"surface_m2": 1819, "eur_m2": 495, "valeur_eur": 900000,
+                                         "valeur_basse": 729000, "valeur_haute": 1071000},
                    "repere_terrain_nu": {"eur_m2": 495, "n": 78, "perimetre": "secteur"}},
-    "classement": {"bande": "C", "libelle": "À étudier", "phrase": "Classement C · À étudier : …"},
+    "classement": {"bande": "C", "libelle": "À étudier",
+                   "phrase": "Classement C · À étudier : aucune règle réglementaire ne mord nettement."},
     "foncier": {"zone": "UD", "commune": "Saint-Leu", "regles": [], "parcelle": []},
     "risques": [], "marche": None, "a_verifier": ["La desserte et la viabilisation du terrain."],
 }
@@ -78,35 +88,39 @@ def test_parcelle_structure_maquette():
     assert "Zone UA" in html and "Parcelle bâtie, maison" in html
     # les deux cartes posées dans la grille
     assert '<div class="amaps">' in html and "<i>O</i>" in html and "<i>Z</i>" in html
-    # 6 tuiles + estimation + fiabilité niveau seul
+    # 6 tuiles + estimation + fiabilité RECALIBRÉE sur le segment (maison 32 % → Limitée) + précision
     assert "Sud-Ouest" in html and "D · Faible" in html
-    assert "3 602 €/m²" in html and "Fiabilité Élevée" in html
-    # valeur indicative : surface × €/m² + fourchette + repère terrain nu
-    assert "Valeur indicative du bien" in html and "709 594 €" in html
-    assert "Maison" in html and "197 m²" in html and "× 3 602 €/m²" in html
-    assert "591 000 – 827 400 €" in html and "Repère terrain nu, secteur" in html and "369 €/m²" in html
+    assert "3 602 €/m²" in html and "Fiabilité Limitée" in html
+    assert "Précision mesurée sur les ventes 2025 : ±32 %" in html
+    # ORDRE DE GRANDEUR (emprise au sol), montants arrondis au millier, fourchette élargie
+    assert "Ordre de grandeur du bien" in html and "710 000 €" in html
+    assert "emprise au sol BD TOPO (197 m²)" in html and "× 3 602 €/m²" in html  # esc() échappe l apostrophe
+    assert "483 000 – 937 000 €" in html
+    # lecture FONCIÈRE à côté de la lecture bâti (comme la variante lien)
+    assert "Lecture foncière" in html and "186 000 €" in html and "26 % de l" in html
     # tableau des comparables + total
     assert "Les 8 ventes les plus proches retenues" in html and "08/2025" in html and "103 m" in html
-    assert "41 autres ventes" in html and "Source : DVF, ventes de maisons" in html  # 42 - 1 montrée
-    # page 2 : foncier (règles face parcelle) + classement + risques + marché + à vérifier
+    assert "41 autres ventes de maisons à proximité" in html and "Source : DVF, ventes de maisons" in html
+    # page 2 : foncier + classement DÉRIVÉ DES RÈGLES + risques UNE LIGNE PAR ALÉA + marché + à vérifier
     assert '<div class="apage2">' in html
     assert "Le foncier" in html and "Hauteur maximale" in html and "Assiette constructible, aléa déduit" in html
-    assert "Classement D · Faible : le bâti existant" in html
-    assert "Risques et contraintes" in html and "Inondation, Mouvement de terrain" in html
-    assert "PPR" in html and "Saint-Denis" in html and "2012" in html  # document (esc_noms insère un span nb)
+    assert "la hauteur limite" in html and "10,3 m pour 7 m autorisés" in html   # nomme la règle qui limite
+    assert "Risques et contraintes" in html and "Inondation" in html and "Mouvement de terrain" in html
+    assert "Zone bleue · 100 %" in html and "constructible sous prescriptions" in html
     assert "Le marché · Saint-Denis" in html and "3 235 €/m²" in html
     assert "Prix médian maison" in html and 'class="barchart"' in html     # graphique 5 ans
     assert "reste à vérifier" in html and "état du bâti" in html  # items esc(apostrophe → &#x27;)
 
 
-def test_parcelle_nue_pas_de_tableau_comparables():
-    """Parcelle NUE : estimation terrain nu + valeur indicative = surface × repère ; AUCUN tableau de
-    comparables bâti (le repère secteur tient lieu d'échantillon)."""
+def test_parcelle_nue_titre_et_comparables_terrain():
+    """Parcelle NUE : titre « Parcelle CX0800 · Saint-Leu » + tableau des ventes de TERRAIN NU (via
+    dvf_mutations_parcelle), ordre de grandeur arrondi, pas de lecture foncière séparée."""
     html = bloc.rendu_parcelle(_RAPPORT_NUE, plan_ortho_html="", plan_zonage_html="").replace("\u00a0", " ")
-    assert "Parcelle nue" in html and "495 €/m²" in html
-    assert "Terrain" in html and "900 405 €" in html          # valeur indicative = contenance × repère
-    assert "Les 8 ventes les plus proches retenues" not in html   # pas de tableau bâti pour une nue
-    assert "(repère €/m² de terrain)." in html
+    assert "Parcelle CX0800" in html and "Saint-Leu" in html  # titre sans adresse (esc_noms span nb)
+    assert "495 €/m²" in html and "Ordre de grandeur du terrain" in html and "900 000 €" in html
+    assert "Les 8 ventes de terrain nu les plus proches" in html and "06/2024" in html and "Terrain" in html
+    assert "Source : DVF, ventes de terrain nu" in html
+    assert "Lecture foncière" not in html                    # la nue EST foncière (pas de double lecture)
 
 
 def test_parcelle_jamais_un_champ_vide():
@@ -183,33 +197,45 @@ def test_construire_lien_document_deterministe():
 
 
 # ═══════════════════════════════════════ HELPERS PURS ═══════════════════════════════════════════
-def test_valeur_indicative_omet_si_surface_ou_mediane_absente():
-    assert _valeur_indicative(197, 3602, 3000, 4200) == {
-        "surface_m2": 197, "eur_m2": 3602, "valeur_eur": 709594,
-        "valeur_basse": 591000, "valeur_haute": 827400}
-    assert _valeur_indicative(None, 3602, None, None) is None     # pas de surface → pas de ligne
-    assert _valeur_indicative(197, None, None, None) is None       # pas de médiane → pas de ligne
-    assert "valeur_basse" not in _valeur_indicative(1819, 495, None, None)  # sans quartiles : pas de fourchette
+def test_valeur_indicative_ordre_de_grandeur_arrondi():
+    """ANNONCE-5-FIX — ORDRE DE GRANDEUR : montants arrondis au millier, fourchette élargie par l'écart
+    mesuré du segment (ecart_pct), jamais surface × Q1/Q3."""
+    vi = _valeur_indicative(197, 3528, 32)   # 197 × 3528 = 694 ... → 695 000 ; ±32 %
+    assert vi["valeur_eur"] == 695000 and vi["valeur_eur"] % 1000 == 0
+    assert vi["valeur_basse"] % 1000 == 0 and vi["valeur_haute"] % 1000 == 0
+    assert vi["valeur_basse"] < vi["valeur_eur"] < vi["valeur_haute"]
+    assert _valeur_indicative(None, 3528, 32) is None          # pas de surface → pas de ligne
+    assert _valeur_indicative(197, None, 32) is None            # pas de médiane → pas de ligne
+    assert "valeur_basse" not in _valeur_indicative(1819, 495, None)  # sans écart : pas de fourchette
 
 
-def test_classement_phrase_vocabulaire_grave():
-    d = _classement_phrase("D", "Faible", "bati_max")
-    assert d.startswith("Classement D · Faible :") and "extension, pas dans une opération" in d
-    assert _classement_phrase(None, None, "nu") is None            # pas de bande → pas de phrase
-    assert "analyse incomplète" in _classement_phrase("NC", "Analyse incomplète", "nu").lower()
+def test_classement_phrase_nomme_la_regle_qui_limite():
+    """ANNONCE-5-FIX — la phrase DÉRIVE DES RÈGLES : elle nomme la contrainte chiffrée, ou dit qu'aucune
+    ne mord (jamais une phrase qui contredit le tableau)."""
+    d = _classement_phrase("D", "Faible", {"regle": "hauteur", "detail": "la hauteur limite : 10 m pour 7 m."})
+    assert d == "Classement D · Faible : la hauteur limite : 10 m pour 7 m."
+    aucune = _classement_phrase("D", "Faible", {})
+    assert "aucune règle" in aucune and "contredit" not in aucune   # pas de contradiction, dit « aucune »
+    assert _classement_phrase(None, None, {}) is None
+    assert "analyse incomplète" in _classement_phrase("NC", "Analyse incomplète", {}).lower()
 
 
-def test_risques_rows_tires_de_la_fiche():
-    fiche = {"aleas": {"n": 1, "liste": [{
-        "nature": "PPR — zone bleue",
-        "libelle": "Zone bleue PPR inondation et mouvement de terrain — constructible SOUS PRESCRIPTIONS.",
-        "redhibitoire": False, "source": "DEAL", "ppr": [{"document": "PPR", "approbation": "2012-10-17"}]}]}}
-    rows = _risques_rows(fiche, "Saint-Denis")
-    assert len(rows) == 1
-    assert rows[0]["alea"] == "Inondation, Mouvement de terrain"    # aléas extraits du libellé
-    assert rows[0]["niveau"] == "Zone bleue"
-    assert rows[0]["document"] == "PPR Saint-Denis, 2012"           # document assemblé (PPR + commune + année)
-    assert rows[0]["implique"].startswith("Constructible")
+def test_risques_rows_une_ligne_par_alea_sans_doublon():
+    """ANNONCE-5-FIX — les entrées Géorisques « Aléa X » et les entrées « PPR — zone » du MÊME aléa
+    fusionnent en UNE ligne par aléa (plus de doublon DEAL/PPR), avec zone PPR + part + implication."""
+    fiche = {"aleas": {"n": 4, "liste": [
+        {"nature": "Aléa inondation", "niveau": "fort", "part_pct": 23, "source": "DEAL"},
+        {"nature": "Aléa mouvement_terrain", "niveau": "fort", "part_pct": 23, "source": "DEAL"},
+        {"nature": "PPR — zone rouge", "part_pct": 23, "ppr": [{"document": "PPR", "approbation": "2015-11-23"}]},
+        {"nature": "PPR — zone bleue", "part_pct": 8, "ppr": [{"document": "PPR", "approbation": "2015-11-23"}]},
+    ]}}
+    rows = _risques_rows(fiche, "Saint-Leu")
+    assert len(rows) == 2                                        # 4 entrées → 2 aléas (plus de doublon)
+    noms = {r["alea"] for r in rows}
+    assert noms == {"Inondation", "Mouvement de terrain"}
+    assert all(r["niveau"] == "Fort" for r in rows)             # intensité Géorisques
+    assert all(r["zone_part"] == "Zone rouge · 23 %" for r in rows)   # zone PPR la plus contraignante + part
+    assert all("Zone rouge du PPR Saint-Leu (2015)" in r["implique"] for r in rows)
     assert _risques_rows({"aleas": {"n": 0, "liste": []}}, "X") == []
 
 

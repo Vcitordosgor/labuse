@@ -452,12 +452,14 @@ export interface AnnonceEstimation {
   n?: number | null; radius_m?: number | null; periode?: number[] | string | null
   perimetre?: 'secteur' | 'commune' | null
   fiabilite?: string | null; commune_fallback?: boolean
+  precision_pct?: number | null   // ANNONCE-5-FIX — écart médian mesuré du segment (ESTIMATION-BANC-1)
   type_prix?: string | null; note?: string | null
-  // ANNONCE-5 — comparables (8 ventes les plus proches), valeur indicative, repère foncier : servis par
-  // le MÊME point que le PDF → l'accordéon, la valeur indicative et le document montrent les mêmes chiffres.
-  comparables?: AnnonceComparable[]; n_total?: number | null
-  surface_batie?: { surface_m2: number; emprise_m2?: number; niveaux?: number; niveaux_estimes?: boolean } | null
+  // ANNONCE-5 — comparables (8 ventes les plus proches), valeur indicative (ORDRE DE GRANDEUR), lecture
+  // foncière : servis par le MÊME point que le PDF → écran == document.
+  comparables?: AnnonceComparable[]; n_total?: number | null; comparables_periode?: number[] | null
+  emprise_bati_m2?: number | null
   valeur_indicative?: AnnonceValeurIndicative | null
+  lecture_fonciere?: { surface_m2: number; eur_m2: number; valeur_eur: number; n?: number | null; perimetre?: string; pct_du_bati?: number } | null
   repere_terrain_nu?: { eur_m2: number; n?: number | null; perimetre?: string; periode?: string | null } | null
 }
 export const getAnnonceEstimation = (idu: string) =>
