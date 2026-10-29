@@ -1,0 +1,441 @@
+{
+  "global": {
+    "n_ventes": 5592,
+    "n_estimable": 5498,
+    "pct_non_estimable": 1.7,
+    "ecart_median_abs_pct": 27.9,
+    "ecart_median_signe_pct": -3.2,
+    "biais_moyen_signe_pct": 4565.6,
+    "pct_dans_10": 19.6,
+    "pct_dans_20": 38.3
+  },
+  "global_base_alignee": {
+    "n_ventes": 4712,
+    "n_estimable": 4648,
+    "pct_non_estimable": 1.4,
+    "ecart_median_abs_pct": 22.6,
+    "ecart_median_signe_pct": -8.7,
+    "biais_moyen_signe_pct": 23.7,
+    "pct_dans_10": 23.1,
+    "pct_dans_20": 45.2
+  },
+  "par_type": {
+    "maison": {
+      "n_ventes": 2292,
+      "n_estimable": 2285,
+      "pct_non_estimable": 0.3,
+      "ecart_median_abs_pct": 31.8,
+      "ecart_median_signe_pct": -10.5,
+      "biais_moyen_signe_pct": 42.0,
+      "pct_dans_10": 15.5,
+      "pct_dans_20": 31.6
+    },
+    "appartement": {
+      "n_ventes": 2076,
+      "n_estimable": 2054,
+      "pct_non_estimable": 1.1,
+      "ecart_median_abs_pct": 17.1,
+      "ecart_median_signe_pct": -8.6,
+      "biais_moyen_signe_pct": -1.4,
+      "pct_dans_10": 30.9,
+      "pct_dans_20": 57.9
+    },
+    "terrain nu": {
+      "n_ventes": 1224,
+      "n_estimable": 1159,
+      "pct_non_estimable": 5.3,
+      "ecart_median_abs_pct": 633.0,
+      "ecart_median_signe_pct": 633.0,
+      "biais_moyen_signe_pct": 21577.6,
+      "pct_dans_10": 7.5,
+      "pct_dans_20": 16.9
+    }
+  },
+  "par_type_base_alignee": {
+    "maison": {
+      "n_ventes": 2278,
+      "n_estimable": 2272,
+      "pct_non_estimable": 0.3,
+      "ecart_median_abs_pct": 31.6,
+      "ecart_median_signe_pct": -10.3,
+      "biais_moyen_signe_pct": 42.6,
+      "pct_dans_10": 15.6,
+      "pct_dans_20": 31.7
+    },
+    "appartement": {
+      "n_ventes": 2030,
+      "n_estimable": 2030,
+      "pct_non_estimable": 0.0,
+      "ecart_median_abs_pct": 16.9,
+      "ecart_median_signe_pct": -8.3,
+      "biais_moyen_signe_pct": -0.4,
+      "pct_dans_10": 31.3,
+      "pct_dans_20": 58.6
+    },
+    "terrain nu": {
+      "n_ventes": 404,
+      "n_estimable": 346,
+      "pct_non_estimable": 14.4,
+      "ecart_median_abs_pct": 18.8,
+      "ecart_median_signe_pct": -6.4,
+      "biais_moyen_signe_pct": 40.3,
+      "pct_dans_10": 24.0,
+      "pct_dans_20": 54.3
+    }
+  },
+  "terrain_detail": {
+    "parcelle_nue_alignee": {
+      "n_ventes": 404,
+      "n_estimable": 346,
+      "pct_non_estimable": 14.4,
+      "ecart_median_abs_pct": 18.8,
+      "ecart_median_signe_pct": -6.4,
+      "biais_moyen_signe_pct": 40.3,
+      "pct_dans_10": 24.0,
+      "pct_dans_20": 54.3
+    },
+    "parcelle_batie_mismatch": {
+      "n_ventes": 820,
+      "n_estimable": 813,
+      "pct_non_estimable": 0.9,
+      "ecart_median_abs_pct": 1206.6,
+      "ecart_median_signe_pct": 1206.6,
+      "biais_moyen_signe_pct": 30743.5,
+      "pct_dans_10": 0.5,
+      "pct_dans_20": 1.0
+    }
+  },
+  "par_commune": {
+    "Saint-Denis": {
+      "n_ventes": 1330,
+      "n_estimable": 1295,
+      "pct_non_estimable": 2.6,
+      "ecart_median_abs_pct": 20.8,
+      "ecart_median_signe_pct": -7.0,
+      "biais_moyen_signe_pct": 102.3,
+      "pct_dans_10": 25.7,
+      "pct_dans_20": 48.7
+    },
+    "Saint-Paul": {
+      "n_ventes": 626,
+      "n_estimable": 615,
+      "pct_non_estimable": 1.8,
+      "ecart_median_abs_pct": 25.4,
+      "ecart_median_signe_pct": -4.4,
+      "biais_moyen_signe_pct": 2848.8,
+      "pct_dans_10": 20.7,
+      "pct_dans_20": 40.2
+    },
+    "Saint-Pierre": {
+      "n_ventes": 590,
+      "n_estimable": 579,
+      "pct_non_estimable": 1.9,
+      "ecart_median_abs_pct": 24.4,
+      "ecart_median_signe_pct": -6.4,
+      "biais_moyen_signe_pct": 2155.7,
+      "pct_dans_10": 21.8,
+      "pct_dans_20": 42.5
+    },
+    "Le Tampon": {
+      "n_ventes": 573,
+      "n_estimable": 568,
+      "pct_non_estimable": 0.9,
+      "ecart_median_abs_pct": 31.2,
+      "ecart_median_signe_pct": -6.4,
+      "biais_moyen_signe_pct": 3409.8,
+      "pct_dans_10": 15.0,
+      "pct_dans_20": 31.3
+    },
+    "Saint-Joseph": {
+      "n_ventes": 281,
+      "n_estimable": 277,
+      "pct_non_estimable": 1.4,
+      "ecart_median_abs_pct": 47.9,
+      "ecart_median_signe_pct": 21.2,
+      "biais_moyen_signe_pct": 19153.6,
+      "pct_dans_10": 12.6,
+      "pct_dans_20": 25.3
+    },
+    "Saint-Louis": {
+      "n_ventes": 253,
+      "n_estimable": 246,
+      "pct_non_estimable": 2.8,
+      "ecart_median_abs_pct": 32.5,
+      "ecart_median_signe_pct": -3.0,
+      "biais_moyen_signe_pct": 6231.4,
+      "pct_dans_10": 18.3,
+      "pct_dans_20": 33.3
+    },
+    "La Possession": {
+      "n_ventes": 250,
+      "n_estimable": 250,
+      "pct_non_estimable": 0.0,
+      "ecart_median_abs_pct": 22.7,
+      "ecart_median_signe_pct": -12.0,
+      "biais_moyen_signe_pct": 1243.6,
+      "pct_dans_10": 23.2,
+      "pct_dans_20": 46.8
+    },
+    "Saint-André": {
+      "n_ventes": 229,
+      "n_estimable": 227,
+      "pct_non_estimable": 0.9,
+      "ecart_median_abs_pct": 37.3,
+      "ecart_median_signe_pct": 1.2,
+      "biais_moyen_signe_pct": 3116.4,
+      "pct_dans_10": 15.4,
+      "pct_dans_20": 35.7
+    },
+    "Saint-Leu": {
+      "n_ventes": 222,
+      "n_estimable": 217,
+      "pct_non_estimable": 2.3,
+      "ecart_median_abs_pct": 28.3,
+      "ecart_median_signe_pct": 1.9,
+      "biais_moyen_signe_pct": 6518.8,
+      "pct_dans_10": 21.7,
+      "pct_dans_20": 41.9
+    },
+    "Sainte-Marie": {
+      "n_ventes": 172,
+      "n_estimable": 172,
+      "pct_non_estimable": 0.0,
+      "ecart_median_abs_pct": 27.3,
+      "ecart_median_signe_pct": 5.8,
+      "biais_moyen_signe_pct": 3437.7,
+      "pct_dans_10": 23.3,
+      "pct_dans_20": 39.5
+    },
+    "Saint-Benoît": {
+      "n_ventes": 151,
+      "n_estimable": 150,
+      "pct_non_estimable": 0.7,
+      "ecart_median_abs_pct": 44.3,
+      "ecart_median_signe_pct": 17.6,
+      "biais_moyen_signe_pct": 8409.3,
+      "pct_dans_10": 16.0,
+      "pct_dans_20": 28.7
+    },
+    "Le Port": {
+      "n_ventes": 130,
+      "n_estimable": 130,
+      "pct_non_estimable": 0.0,
+      "ecart_median_abs_pct": 41.0,
+      "ecart_median_signe_pct": -5.7,
+      "biais_moyen_signe_pct": 137.0,
+      "pct_dans_10": 11.5,
+      "pct_dans_20": 24.6
+    },
+    "L'Étang-Salé": {
+      "n_ventes": 108,
+      "n_estimable": 106,
+      "pct_non_estimable": 1.9,
+      "ecart_median_abs_pct": 35.4,
+      "ecart_median_signe_pct": 11.7,
+      "biais_moyen_signe_pct": 951.4,
+      "pct_dans_10": 16.0,
+      "pct_dans_20": 37.7
+    },
+    "Petite-Île": {
+      "n_ventes": 96,
+      "n_estimable": 94,
+      "pct_non_estimable": 2.1,
+      "ecart_median_abs_pct": 38.0,
+      "ecart_median_signe_pct": 22.2,
+      "biais_moyen_signe_pct": 10191.6,
+      "pct_dans_10": 17.0,
+      "pct_dans_20": 31.9
+    },
+    "Sainte-Suzanne": {
+      "n_ventes": 91,
+      "n_estimable": 90,
+      "pct_non_estimable": 1.1,
+      "ecart_median_abs_pct": 38.1,
+      "ecart_median_signe_pct": 11.6,
+      "biais_moyen_signe_pct": 3375.2,
+      "pct_dans_10": 11.1,
+      "pct_dans_20": 27.8
+    },
+    "Cilaos": {
+      "n_ventes": 87,
+      "n_estimable": 87,
+      "pct_non_estimable": 0.0,
+      "ecart_median_abs_pct": 286.3,
+      "ecart_median_signe_pct": 286.3,
+      "biais_moyen_signe_pct": 61676.0,
+      "pct_dans_10": 4.6,
+      "pct_dans_20": 9.2
+    },
+    "La Plaine-des-Palmistes": {
+      "n_ventes": 73,
+      "n_estimable": 72,
+      "pct_non_estimable": 1.4,
+      "ecart_median_abs_pct": 37.8,
+      "ecart_median_signe_pct": 16.3,
+      "biais_moyen_signe_pct": 6792.9,
+      "pct_dans_10": 19.4,
+      "pct_dans_20": 33.3
+    },
+    "Les Avirons": {
+      "n_ventes": 72,
+      "n_estimable": 72,
+      "pct_non_estimable": 0.0,
+      "ecart_median_abs_pct": 28.4,
+      "ecart_median_signe_pct": -9.0,
+      "biais_moyen_signe_pct": 892.6,
+      "pct_dans_10": 9.7,
+      "pct_dans_20": 36.1
+    },
+    "Bras-Panon": {
+      "n_ventes": 65,
+      "n_estimable": 64,
+      "pct_non_estimable": 1.5,
+      "ecart_median_abs_pct": 18.8,
+      "ecart_median_signe_pct": -7.3,
+      "biais_moyen_signe_pct": 59.5,
+      "pct_dans_10": 32.8,
+      "pct_dans_20": 53.1
+    },
+    "Entre-Deux": {
+      "n_ventes": 53,
+      "n_estimable": 52,
+      "pct_non_estimable": 1.9,
+      "ecart_median_abs_pct": 42.1,
+      "ecart_median_signe_pct": -9.2,
+      "biais_moyen_signe_pct": 4713.2,
+      "pct_dans_10": 5.8,
+      "pct_dans_20": 17.3
+    },
+    "Les Trois-Bassins": {
+      "n_ventes": 37,
+      "n_estimable": 37,
+      "pct_non_estimable": 0.0,
+      "ecart_median_abs_pct": 639.1,
+      "ecart_median_signe_pct": 639.1,
+      "biais_moyen_signe_pct": 3703.4,
+      "pct_dans_10": 2.7,
+      "pct_dans_20": 10.8
+    },
+    "Saint-Philippe": {
+      "n_ventes": 37,
+      "n_estimable": 37,
+      "pct_non_estimable": 0.0,
+      "ecart_median_abs_pct": 49.9,
+      "ecart_median_signe_pct": 44.2,
+      "biais_moyen_signe_pct": 7597.3,
+      "pct_dans_10": 13.5,
+      "pct_dans_20": 16.2
+    },
+    "Salazie": {
+      "n_ventes": 35,
+      "n_estimable": 32,
+      "pct_non_estimable": 8.6,
+      "ecart_median_abs_pct": 38.8,
+      "ecart_median_signe_pct": 8.5,
+      "biais_moyen_signe_pct": 15883.2,
+      "pct_dans_10": 21.9,
+      "pct_dans_20": 34.4
+    },
+    "Sainte-Rose": {
+      "n_ventes": 31,
+      "n_estimable": 29,
+      "pct_non_estimable": 6.5,
+      "ecart_median_abs_pct": 275.0,
+      "ecart_median_signe_pct": 275.0,
+      "biais_moyen_signe_pct": 14938.4,
+      "pct_dans_10": 6.9,
+      "pct_dans_20": 13.8
+    }
+  },
+  "par_badge": {
+    "Élevée": {
+      "n_ventes": 4351,
+      "n_estimable": 4351,
+      "pct_non_estimable": 0.0,
+      "ecart_median_abs_pct": 25.0,
+      "ecart_median_signe_pct": -7.0,
+      "biais_moyen_signe_pct": 1070.0,
+      "pct_dans_10": 21.5,
+      "pct_dans_20": 41.6
+    },
+    "Moyenne": {
+      "n_ventes": 1083,
+      "n_estimable": 1083,
+      "pct_non_estimable": 0.0,
+      "ecart_median_abs_pct": 47.3,
+      "ecart_median_signe_pct": 36.5,
+      "biais_moyen_signe_pct": 15151.4,
+      "pct_dans_10": 12.9,
+      "pct_dans_20": 26.9
+    },
+    "Limitée": {
+      "n_ventes": 64,
+      "n_estimable": 64,
+      "pct_non_estimable": 0.0,
+      "ecart_median_abs_pct": 3118.9,
+      "ecart_median_signe_pct": 3118.9,
+      "biais_moyen_signe_pct": 63077.6,
+      "pct_dans_10": 1.6,
+      "pct_dans_20": 6.2
+    }
+  },
+  "par_badge_base_alignee": {
+    "Élevée": {
+      "n_ventes": 3887,
+      "n_estimable": 3887,
+      "pct_non_estimable": 0.0,
+      "ecart_median_abs_pct": 21.9,
+      "ecart_median_signe_pct": -10.3,
+      "biais_moyen_signe_pct": 16.7,
+      "pct_dans_10": 24.0,
+      "pct_dans_20": 46.4
+    },
+    "Moyenne": {
+      "n_ventes": 738,
+      "n_estimable": 738,
+      "pct_non_estimable": 0.0,
+      "ecart_median_abs_pct": 26.4,
+      "ecart_median_signe_pct": 3.5,
+      "biais_moyen_signe_pct": 57.4,
+      "pct_dans_10": 19.0,
+      "pct_dans_20": 39.3
+    },
+    "Limitée": {
+      "n_ventes": 23,
+      "n_estimable": 23,
+      "pct_non_estimable": 0.0,
+      "ecart_median_abs_pct": 58.8,
+      "ecart_median_signe_pct": 44.2,
+      "biais_moyen_signe_pct": 123.4,
+      "pct_dans_10": 4.3,
+      "pct_dans_20": 17.4
+    }
+  },
+  "maison_prix_appartement": {
+    "maisons_estimees": 2272,
+    "plan_appartement_pur": {
+      "n": 1644,
+      "ecart_median_abs_pct": 33.2,
+      "ecart_median_signe_pct": -15.4,
+      "pct_dans_20": 29.3
+    },
+    "plan_mixte_appart_maison": {
+      "n": 628,
+      "ecart_median_abs_pct": 27.1,
+      "ecart_median_signe_pct": 4.4,
+      "pct_dans_20": 38.2
+    }
+  },
+  "nature_mismatch": {
+    "n": 880,
+    "pct": 15.7,
+    "detail": {
+      "terrain_vendu_parcelle_batie": 820,
+      "bati_vendu_parcelle_nue": 60
+    }
+  },
+  "fuite": {
+    "toutes_ok": true,
+    "n_violations": 0
+  }
+}

@@ -1,0 +1,93 @@
+Chargement…
+  univers brut : 5892 mutations 2025 mono-parcelle
+  bâti : 28144 comparables dédoublonnés / 24 communes
+  terrain : 10539 comparables / 791 secteurs
+
+================  GLOBAL  ================
+Toutes ventes              n= 5592  non-est=   1.7%  médian|écart|=   27.9%  ±10%=  19.6%  ±20%=  38.3%  médian signé=   -3.2%
+Base alignée (hors mismatch) n= 4712  non-est=   1.4%  médian|écart|=   22.6%  ±10%=  23.1%  ±20%=  45.2%  médian signé=   -8.7%
+
+================  PAR TYPE (toutes)  ================
+maison                     n= 2292  non-est=   0.3%  médian|écart|=   31.8%  ±10%=  15.5%  ±20%=  31.6%  médian signé=  -10.5%
+appartement                n= 2076  non-est=   1.1%  médian|écart|=   17.1%  ±10%=  30.9%  ±20%=  57.9%  médian signé=   -8.6%
+terrain nu                 n= 1224  non-est=   5.3%  médian|écart|=  633.0%  ±10%=   7.5%  ±20%=  16.9%  médian signé=  633.0%
+
+================  PAR TYPE (base alignée)  ================
+maison                     n= 2278  non-est=   0.3%  médian|écart|=   31.6%  ±10%=  15.6%  ±20%=  31.7%  médian signé=  -10.3%
+appartement                n= 2030  non-est=   0.0%  médian|écart|=   16.9%  ±10%=  31.3%  ±20%=  58.6%  médian signé=   -8.3%
+terrain nu                 n=  404  non-est=  14.4%  médian|écart|=   18.8%  ±10%=  24.0%  ±20%=  54.3%  médian signé=   -6.4%
+
+================  TERRAIN : détail nature parcelle  ================
+parcelle NUE (alignée)     n=  404  non-est=  14.4%  médian|écart|=   18.8%  ±10%=  24.0%  ±20%=  54.3%  médian signé=   -6.4%
+parcelle BÂTIE (mismatch)  n=  820  non-est=   0.9%  médian|écart|= 1206.6%  ±10%=   0.5%  ±20%=   1.0%  médian signé= 1206.6%
+
+================  PAR BADGE (toutes)  ================
+Élevée                     n= 4351  non-est=   0.0%  médian|écart|=   25.0%  ±10%=  21.5%  ±20%=  41.6%  médian signé=   -7.0%
+Moyenne                    n= 1083  non-est=   0.0%  médian|écart|=   47.3%  ±10%=  12.9%  ±20%=  26.9%  médian signé=   36.5%
+Limitée                    n=   64  non-est=   0.0%  médian|écart|= 3118.9%  ±10%=   1.6%  ±20%=   6.2%  médian signé= 3118.9%
+
+================  PAR BADGE (base alignée)  ================
+Élevée                     n= 3887  non-est=   0.0%  médian|écart|=   21.9%  ±10%=  24.0%  ±20%=  46.4%  médian signé=  -10.3%
+Moyenne                    n=  738  non-est=   0.0%  médian|écart|=   26.4%  ±10%=  19.0%  ±20%=  39.3%  médian signé=    3.5%
+Limitée                    n=   23  non-est=   0.0%  médian|écart|=   58.8%  ±10%=   4.3%  ±20%=  17.4%  médian signé=   44.2%
+
+================  MAISON estimée au prix d'un APPARTEMENT  ================
+{
+  "maisons_estimees": 2272,
+  "plan_appartement_pur": {
+    "n": 1644,
+    "ecart_median_abs_pct": 33.2,
+    "ecart_median_signe_pct": -15.4,
+    "pct_dans_20": 29.3
+  },
+  "plan_mixte_appart_maison": {
+    "n": 628,
+    "ecart_median_abs_pct": 27.1,
+    "ecart_median_signe_pct": 4.4,
+    "pct_dans_20": 38.2
+  }
+}
+
+================  PAR COMMUNE  ================
+Saint-Denis                n= 1330  non-est=   2.6%  médian|écart|=   20.8%  ±10%=  25.7%  ±20%=  48.7%  médian signé=   -7.0%
+Saint-Paul                 n=  626  non-est=   1.8%  médian|écart|=   25.4%  ±10%=  20.7%  ±20%=  40.2%  médian signé=   -4.4%
+Saint-Pierre               n=  590  non-est=   1.9%  médian|écart|=   24.4%  ±10%=  21.8%  ±20%=  42.5%  médian signé=   -6.4%
+Le Tampon                  n=  573  non-est=   0.9%  médian|écart|=   31.2%  ±10%=  15.0%  ±20%=  31.3%  médian signé=   -6.4%
+Saint-Joseph               n=  281  non-est=   1.4%  médian|écart|=   47.9%  ±10%=  12.6%  ±20%=  25.3%  médian signé=   21.2%
+Saint-Louis                n=  253  non-est=   2.8%  médian|écart|=   32.5%  ±10%=  18.3%  ±20%=  33.3%  médian signé=   -3.0%
+La Possession              n=  250  non-est=   0.0%  médian|écart|=   22.7%  ±10%=  23.2%  ±20%=  46.8%  médian signé=  -12.0%
+Saint-André                n=  229  non-est=   0.9%  médian|écart|=   37.3%  ±10%=  15.4%  ±20%=  35.7%  médian signé=    1.2%
+Saint-Leu                  n=  222  non-est=   2.3%  médian|écart|=   28.3%  ±10%=  21.7%  ±20%=  41.9%  médian signé=    1.9%
+Sainte-Marie               n=  172  non-est=   0.0%  médian|écart|=   27.3%  ±10%=  23.3%  ±20%=  39.5%  médian signé=    5.8%
+Saint-Benoît               n=  151  non-est=   0.7%  médian|écart|=   44.3%  ±10%=  16.0%  ±20%=  28.7%  médian signé=   17.6%
+Le Port                    n=  130  non-est=   0.0%  médian|écart|=   41.0%  ±10%=  11.5%  ±20%=  24.6%  médian signé=   -5.7%
+L'Étang-Salé               n=  108  non-est=   1.9%  médian|écart|=   35.4%  ±10%=  16.0%  ±20%=  37.7%  médian signé=   11.7%
+Petite-Île                 n=   96  non-est=   2.1%  médian|écart|=   38.0%  ±10%=  17.0%  ±20%=  31.9%  médian signé=   22.2%
+Sainte-Suzanne             n=   91  non-est=   1.1%  médian|écart|=   38.1%  ±10%=  11.1%  ±20%=  27.8%  médian signé=   11.6%
+Cilaos                     n=   87  non-est=   0.0%  médian|écart|=  286.3%  ±10%=   4.6%  ±20%=   9.2%  médian signé=  286.3%
+La Plaine-des-Palmistes    n=   73  non-est=   1.4%  médian|écart|=   37.8%  ±10%=  19.4%  ±20%=  33.3%  médian signé=   16.3%
+Les Avirons                n=   72  non-est=   0.0%  médian|écart|=   28.4%  ±10%=   9.7%  ±20%=  36.1%  médian signé=   -9.0%
+Bras-Panon                 n=   65  non-est=   1.5%  médian|écart|=   18.8%  ±10%=  32.8%  ±20%=  53.1%  médian signé=   -7.3%
+Entre-Deux                 n=   53  non-est=   1.9%  médian|écart|=   42.1%  ±10%=   5.8%  ±20%=  17.3%  médian signé=   -9.2%
+Les Trois-Bassins          n=   37  non-est=   0.0%  médian|écart|=  639.1%  ±10%=   2.7%  ±20%=  10.8%  médian signé=  639.1%
+Saint-Philippe             n=   37  non-est=   0.0%  médian|écart|=   49.9%  ±10%=  13.5%  ±20%=  16.2%  médian signé=   44.2%
+Salazie                    n=   35  non-est=   8.6%  médian|écart|=   38.8%  ±10%=  21.9%  ±20%=  34.4%  médian signé=    8.5%
+Sainte-Rose                n=   31  non-est=   6.5%  médian|écart|=  275.0%  ±10%=   6.9%  ±20%=  13.8%  médian signé=  275.0%
+
+================  NATURE MISMATCH  ================
+{
+  "n": 880,
+  "pct": 15.7,
+  "detail": {
+    "terrain_vendu_parcelle_batie": 820,
+    "bati_vendu_parcelle_nue": 60
+  }
+}
+
+================  CONTRÔLE DE FUITE  ================
+{
+  "toutes_ok": true,
+  "n_violations": 0
+}
+
+écrit : /Users/openclaw/Desktop/labuse-banc/docs/audit-2026-10/estimation-banc-1/PAR-VENTE.csv  et  /Users/openclaw/Desktop/labuse-banc/docs/audit-2026-10/estimation-banc-1/METRIQUES.json
