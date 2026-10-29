@@ -86,7 +86,8 @@ def wants_html(path: str) -> bool:
 # (comparaison à temps constant) ; sans jeton / jeton faux → 401 comme pour toute route protégée.
 # L'enforcement final reste _exiger_radar DANS la route (fail-closed). Les AUTRES /admin/radar/* (dépôt,
 # validation, extraction…) restent gardés par session (exiger_admin) : le jeton radar ne les ouvre pas.
-RADAR_TOKEN_PATHS = frozenset({"/admin/radar/capture", "/admin/radar/etat", "/admin/radar/confirmation"})
+RADAR_TOKEN_PATHS = frozenset({"/admin/radar/capture", "/admin/radar/etat",
+                               "/admin/radar/confirmation", "/admin/radar/confirmation-batch"})
 
 
 def radar_token_header_ok(request) -> bool:

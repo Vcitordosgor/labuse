@@ -125,11 +125,33 @@ class CaptureIn(BaseModel):
 class ConfirmationIn(BaseModel):
     list_id: int
     verdict: str
+    # RADAR-FIX-3 — PREUVE POSITIVE du retrait. Un bien n'est retiré que sur preuve :
+    #   « expiree »   = page « cette annonce n'est plus disponible / supprimée / désactivée » reconnue ;
+    #   « http_404 »  = vraie page d'erreur « page introuvable » du portail.
+    # Toute autre valeur (None, « bloquee », « vide », « redirige »…) = PAS une preuve → non vérifiée.
+    preuve: str | None = None
     url: str = ""
     http_status: int | None = None
 
 
+class ConfirmationBatchIn(BaseModel):
+    """Toute une PASSE de confirmation en un envoi : c'est l'unité sur laquelle s'applique le garde-fou
+    des 30 %. L'extension ouvre chaque lien, classe la page, puis dépose le lot entier."""
+    items: list[ConfirmationIn]
+    captured_at: str | None = None   # défaut = jour Réunion (clé d'idempotence de la passe)
+
+
 _SOURCES = ("auto", "manuel", "test")
+
+# RADAR-FIX-3 — un retrait EXIGE une de ces preuves positives. Sans preuve, on ne retire jamais :
+# page bloquée, vide, illisible ou redirigée = « non vérifiée », comptée à part, zéro écriture de statut.
+PREUVES_RETRAIT = ("expiree", "http_404")
+# Garde-fou : une passe qui veut retirer PLUS de 30 % des biens qu'elle a vérifiés n'écrit AUCUN retrait
+# et se signale en anomalie (c'est la signature d'un blocage/captcha pris pour des suppressions de masse :
+# 60/60 le 28/10, 107/107 le 26/09). Plancher : en-dessous de 5 liens vérifiés le ratio ne déclenche pas
+# (une petite passe « tout expiré » prouvé reste légitime).
+SEUIL_ANOMALIE_RETRAIT = 0.30
+PLANCHER_PASSE_GARDE = 5
 
 
 def _upsert_passe(db, passe: str, captured_at: str, source: str = "auto", **inc) -> None:
@@ -138,7 +160,8 @@ def _upsert_passe(db, passe: str, captured_at: str, source: str = "auto", **inc)
     déclencheur de la soirée (auto|manuel|test) ; toutes les pages d'un même run le partagent, donc
     la 1ʳᵉ page pose la valeur et le conflit ne l'écrase pas."""
     src = source if source in _SOURCES else "auto"
-    cols = ("n_pages", "n_nouvelles", "n_maj", "n_prix_modifies", "n_supprimees", "n_hors_perimetre")
+    cols = ("n_pages", "n_nouvelles", "n_maj", "n_prix_modifies", "n_supprimees",
+            "n_hors_perimetre", "n_non_verifiees")
     vals = {c: int(inc.get(c, 0)) for c in cols}
     set_sql = ", ".join(f"{c} = pige_passes.{c} + EXCLUDED.{c}" for c in cols)
     db.execute(text(
@@ -224,44 +247,130 @@ def radar_etat(request: Request) -> dict:
             "actives": actives, "a_confirmer": a_confirmer}
 
 
-@router.post("/admin/radar/confirmation")
-def radar_confirmation(body: ConfirmationIn, request: Request) -> dict:
-    """Verdict de liveness d'une annonce (l'extension a ouvert son lien). `presente` → re-vue (last_seen
-    + statut active) ; `supprimee` → `retiree` + retiree_le (JAMAIS retiree_sans_vente : ça reste au
-    cycle mensuel, sur preuve DVF) ; `inconnue` → rien. Une ligne de journal par jour de confirmation."""
+def _classer_confirmation(item: ConfirmationIn) -> str:
+    """Classe UN lien vérifié, côté serveur, sans jamais faire confiance au seul mot « supprimee » :
+      · « presente »    → l'annonce est toujours là (re-vue) ;
+      · « retrait »     → suppression PROUVÉE (verdict supprimee ET preuve positive) — le SEUL cas qui retire ;
+      · « non_verifiee » → tout le reste : supprimee sans preuve, inconnue, page bloquée/vide/illisible/redirigée.
+    C'est la règle gravée par RADAR-FIX-3 : on ne retire JAMAIS sur une page qu'on n'a pas pu lire."""
+    if item.verdict == "presente":
+        return "presente"
+    if item.verdict == "supprimee" and item.preuve in PREUVES_RETRAIT:
+        return "retrait"
+    return "non_verifiee"
+
+
+def _appliquer_confirmations(db, items: list[ConfirmationIn], jour: str,
+                             *, autoriser_retrait: bool) -> dict:
+    """Applique une passe de confirmation en UNE transaction. Preuve positive exigée pour retirer,
+    garde-fou des 30 % sur l'ensemble de la passe, comptage séparé des « non vérifiées »."""
     from .tables import EV_STATUT_CHANGE, journaliser, journaliser_passe
-    from ..tz import today_reunion
-    _exiger_radar(request)
-    verdict = body.verdict if body.verdict in ("presente", "supprimee", "inconnue") else "inconnue"
-    jour = today_reunion().isoformat()
-    with session_scope() as db:
+
+    # Résolution des list_id → bien_id (on ignore proprement les inconnus, sans jamais rien écrire pour eux).
+    classes: list[tuple[ConfirmationIn, str, dict]] = []
+    inconnus = 0
+    for it in items:
         bien = db.execute(text(
-            "SELECT b.bien_id, b.commune, b.statut FROM pige_biens b JOIN pige_annonces a ON a.bien_id = b.bien_id "
-            "WHERE a.list_id = :l LIMIT 1"), {"l": body.list_id}).mappings().first()
+            "SELECT b.bien_id, b.commune, b.statut FROM pige_biens b "
+            "JOIN pige_annonces a ON a.bien_id = b.bien_id WHERE a.list_id = :l LIMIT 1"),
+            {"l": it.list_id}).mappings().first()
         if not bien:
-            return {"ok": False, "motif": "list_id inconnu"}
-        bid = bien["bien_id"]
-        supprimee = 0
-        if verdict == "presente":
-            db.execute(text("UPDATE pige_biens SET last_seen_at = now(), date_derniere_confirmation = now(), "
-                            "statut = CASE WHEN statut IN ('a_reverifier','en_vente_longue') THEN 'active' ELSE statut END "
-                            "WHERE bien_id = :b AND statut NOT IN ('retiree','vendue','retiree_sans_vente')"), {"b": bid})
-        elif verdict == "supprimee":
+            inconnus += 1
+            continue
+        classes.append((it, _classer_confirmation(it), dict(bien)))
+
+    n_verifies = len(classes)
+    retraits = [(it, b) for it, c, b in classes if c == "retrait"]
+    presentes = [(it, b) for it, c, b in classes if c == "presente"]
+    n_non_verifiees = sum(1 for _it, c, _b in classes if c == "non_verifiee")
+
+    # Voie historique (un appel = un lien) : PAS de garde-fou possible → elle ne retire JAMAIS.
+    # Un retrait prouvé arrivé par là est compté « non vérifiée » (il faudra une PASSE pour l'écrire).
+    if not autoriser_retrait:
+        n_non_verifiees += len(retraits)
+        retraits = []
+
+    # Garde-fou RADAR-FIX-3 : > 30 % de retraits sur la passe = anomalie → on n'écrit AUCUN retrait.
+    taux = (len(retraits) / n_verifies) if n_verifies else 0.0
+    anomalie = (autoriser_retrait and n_verifies >= PLANCHER_PASSE_GARDE
+                and taux > SEUIL_ANOMALIE_RETRAIT)
+    ecrire_retraits = autoriser_retrait and not anomalie
+
+    # Les annonces TOUJOURS LÀ sont confirmées dans tous les cas (même en anomalie : c'est sans risque).
+    for _it, bien in presentes:
+        db.execute(text(
+            "UPDATE pige_biens SET last_seen_at = now(), date_derniere_confirmation = now(), "
+            "statut = CASE WHEN statut IN ('a_reverifier','en_vente_longue') THEN 'active' ELSE statut END "
+            "WHERE bien_id = :b AND statut NOT IN ('retiree','vendue','retiree_sans_vente')"),
+            {"b": bien["bien_id"]})
+
+    n_retires = 0
+    if ecrire_retraits:
+        for it, bien in retraits:
+            bid = bien["bien_id"]
             db.execute(text("UPDATE pige_biens SET statut = 'retiree', retiree_le = COALESCE(retiree_le, now()) "
                             "WHERE bien_id = :b AND statut NOT IN ('vendue','retiree_sans_vente')"), {"b": bid})
-            journaliser(db, EV_STATUT_CHANGE, f"Bien retiré (lien vérifié) — #{bid} ({bien['commune']})",
-                        detail=f"annonce {body.list_id} absente (HTTP {body.http_status}) — confirmée par le lien",
+            journaliser(db, EV_STATUT_CHANGE, f"Bien retiré (preuve positive) — #{bid} ({bien['commune']})",
+                        detail=f"annonce {it.list_id} — preuve « {it.preuve} » (HTTP {it.http_status})",
                         dedup=f"pige:retiree:{bid}")
-            supprimee = 1
-        _upsert_passe(db, "confirmation", jour, n_pages=1, n_supprimees=supprimee)
-        p = db.execute(text("SELECT n_pages, n_supprimees FROM pige_passes "
-                            "WHERE passe = 'confirmation' AND captured_at = CAST(:ca AS timestamptz)"),
-                       {"ca": jour}).mappings().first() or {}
-        journaliser_passe(db, "confirmation",
-                          f"Radar — confirmation · {p.get('n_pages',1)} lien(s) vérifié(s)",
-                          f"{p.get('n_supprimees',0)} supprimée(s)", dedup=f"pige:passe:confirmation:{jour}")
-        db.commit()
-    return {"ok": True, "list_id": body.list_id, "verdict": verdict}
+            n_retires += 1
+
+    # Les retraits REFUSÉS par l'anomalie ne sont ni retirés ni comptés comme « non vérifiées » :
+    # ils restent actifs et seront re-vérifiés à la passe suivante une fois le blocage passé.
+    _upsert_passe(db, "confirmation", jour, n_pages=n_verifies, n_supprimees=n_retires,
+                  n_non_verifiees=n_non_verifiees)
+    p = db.execute(text("SELECT n_pages, n_supprimees, n_non_verifiees FROM pige_passes "
+                        "WHERE passe = 'confirmation' AND captured_at = CAST(:ca AS timestamptz)"),
+                   {"ca": jour}).mappings().first() or {}
+    detail = (f"{p.get('n_supprimees',0)} retirée(s) sur preuve, "
+              f"{p.get('n_non_verifiees',0)} non vérifiée(s)")
+    if anomalie:
+        detail += (f" · ANOMALIE : {len(retraits)}/{n_verifies} ({taux:.0%}) > "
+                   f"{SEUIL_ANOMALIE_RETRAIT:.0%} — aucun retrait écrit (blocage probable)")
+        journaliser(db, EV_STATUT_CHANGE,
+                    f"Radar — passe de confirmation SUSPECTE ({taux:.0%} de retraits)",
+                    detail=f"{len(retraits)}/{n_verifies} liens vus comme retirés — rien écrit, à re-vérifier",
+                    dedup=f"pige:anomalie:confirmation:{jour}")
+    journaliser_passe(db, "confirmation",
+                      f"Radar — confirmation · {p.get('n_pages',n_verifies)} lien(s) vérifié(s)",
+                      detail, dedup=f"pige:passe:confirmation:{jour}")
+    db.commit()
+    return {"ok": True, "n_verifies": n_verifies, "n_retires": n_retires,
+            "n_non_verifiees": n_non_verifiees, "list_id_inconnus": inconnus,
+            "anomalie": anomalie, "taux_retrait": round(taux, 4)}
+
+
+@router.post("/admin/radar/confirmation")
+def radar_confirmation(body: ConfirmationIn, request: Request) -> dict:
+    """Verdict d'UN lien (voie historique, un appel = un lien). RADAR-FIX-3 : cette voie NE RETIRE PLUS
+    rien — un retrait ne peut venir que d'une PASSE entière (/confirmation-batch) où s'applique le
+    garde-fou des 30 %. `presente` confirme l'annonce active ; tout verdict de suppression est compté
+    « non vérifiée » (voie sans garde-fou, donc jamais d'écriture de retrait). Le retrait HUMAIN reste
+    `/admin/radar/retiree`."""
+    from ..tz import today_reunion
+    _exiger_radar(request)
+    with session_scope() as db:
+        if not db.execute(text(
+                "SELECT 1 FROM pige_annonces WHERE list_id = :l LIMIT 1"),
+                {"l": body.list_id}).first():
+            return {"ok": False, "motif": "list_id inconnu"}
+        res = _appliquer_confirmations(db, [body], today_reunion().isoformat(),
+                                       autoriser_retrait=False)
+    return {"ok": True, "list_id": body.list_id, "verdict": body.verdict,
+            "retire": res["n_retires"] > 0, "non_verifiee": res["n_non_verifiees"] > 0}
+
+
+@router.post("/admin/radar/confirmation-batch")
+def radar_confirmation_batch(body: ConfirmationBatchIn, request: Request) -> dict:
+    """La PASSE de confirmation en un envoi (l'extension). C'est l'unité du garde-fou des 30 % :
+    si plus de 30 % des liens vérifiés sont vus comme retirés, AUCUN retrait n'est écrit et la passe
+    est signalée en anomalie. Seuls les retraits PROUVÉS (preuve « expiree » ou « http_404 ») retirent."""
+    from ..tz import today_reunion
+    _exiger_radar(request)
+    jour = body.captured_at or today_reunion().isoformat()
+    with session_scope() as db:
+        res = _appliquer_confirmations(db, body.items, jour, autoriser_retrait=True)
+    return res
 
 
 @router.post("/admin/radar/valider")

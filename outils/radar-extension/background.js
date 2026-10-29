@@ -182,13 +182,20 @@ function inspectPage() {
     hasAditemContainer: false,
     looksBlocked: false,
     outerHTML: "",
+    bodyText: "",
+    title: "",
     indexDates: []
   };
   try {
     out.outerHTML = document.documentElement.outerHTML;
+    // RADAR-FIX-3 — on garde le TEXTE VISIBLE (innerText) à part : la reconnaissance « annonce
+    // expirée » doit se faire sur ce que l'utilisateur voit, pas sur le HTML/JS complet (où « 404 »,
+    // « expirée »… traînent dans les scripts et déclenchaient de fausses suppressions).
+    out.bodyText = (document.body ? document.body.innerText : "");
+    out.title = document.title || "";
 
     // Détection blocage / captcha / vérification.
-    const bodyTxt = (document.body ? document.body.innerText : "").toLowerCase();
+    const bodyTxt = out.bodyText.toLowerCase();
     const hay = (bodyTxt + " " + document.title + " " + location.href).toLowerCase();
     const blockers = ["datadome", "captcha", "verification", "vérification", "challenge", "access denied"];
     if (blockers.some((b) => hay.includes(b))) out.looksBlocked = true;
@@ -271,13 +278,15 @@ async function apiEtat(opts) {
   return r.json();
 }
 
-async function apiConfirmation(opts, listId, verdict, url, httpStatus) {
-  const r = await fetch(opts.labuseUrl.replace(/\/$/, "") + "/admin/radar/confirmation", {
+// RADAR-FIX-3 — toute la passe en UN envoi : c'est l'unité sur laquelle le serveur applique le
+// garde-fou des 30 %. On ne poste plus lien par lien.
+async function apiConfirmationBatch(opts, items) {
+  const r = await fetch(opts.labuseUrl.replace(/\/$/, "") + "/admin/radar/confirmation-batch", {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-Radar-Token": opts.token },
-    body: JSON.stringify({ list_id: listId, verdict, url, http_status: httpStatus })
+    body: JSON.stringify({ items })
   });
-  if (!r.ok) throw new Error("confirmation HTTP " + r.status);
+  if (!r.ok) throw new Error("confirmation-batch HTTP " + r.status);
   return r.json();
 }
 
@@ -377,42 +386,66 @@ async function passeRelecture(opts, tabId, capturedAt, budget, source) {
   return used;
 }
 
+// RADAR-FIX-3 — SIGNATURES d'une annonce DISPARUE, lues sur le TEXTE VISIBLE (jamais le HTML/JS
+// complet). Des PHRASES entières, pas des jetons « 404 »/« expirée » qui traînent partout dans le
+// bundle et faisaient passer des pages en ligne pour supprimées (60/60 le 28/10).
+const RE_ANNONCE_EXPIREE = /cette annonce n'est plus disponible|cette annonce a été supprimée|cette annonce (est|a été) désactivée|l'annonce que vous (recherchez|cherchez) n'est plus (disponible|en ligne)|annonce (expirée|supprimée|désactivée|n'existe plus)/i;
+const RE_PAGE_404 = /la page que vous (recherchez|cherchez) (est introuvable|n'existe plus)|page introuvable|erreur 404|oups[^.]{0,40}introuvable/i;
+const RE_PRIX_VISIBLE = /\d[\d  .]*€/;   // un prix affiché = signe fort d'une annonce bien présente
+
+// Classe PUREMENT un lien vérifié, sans jamais faire confiance à un indice faible. Règle gravée :
+// on ne retire QUE sur PREUVE POSITIVE (phrase d'expiration reconnue, ou page d'erreur 404 reconnue).
+// Bloquée / vide / illisible / redirigée ailleurs = « inconnue » → non vérifiée (zéro retrait).
+function classifierConfirmation(info, finalUrl, listId) {
+  if (!info || !info.outerHTML) return { verdict: "inconnue", preuve: null, httpStatus: null };
+  if (info.looksBlocked) return { verdict: "inconnue", preuve: null, httpStatus: null };
+
+  const vis = ((info.bodyText || "") + "\n" + (info.title || ""));
+  // Preuve POSITIVE d'abord (une page expirée peut aussi afficher des annonces « recommandées » avec
+  // leurs prix — la PHRASE d'expiration tranche, pas la présence d'un prix).
+  if (RE_ANNONCE_EXPIREE.test(vis)) return { verdict: "supprimee", preuve: "expiree", httpStatus: 410 };
+  if (RE_PAGE_404.test(vis)) return { verdict: "supprimee", preuve: "http_404", httpStatus: 404 };
+
+  // Toujours là : on est RESTÉ sur l'annonce (son list_id dans l'URL finale) ET on voit son contenu.
+  const surLAnnonce = !!(finalUrl && listId && String(finalUrl).includes(String(listId)));
+  const contenuAnnonce = !!(info.hasAditemContainer || RE_PRIX_VISIBLE.test(info.bodyText || ""));
+  if (surLAnnonce && contenuAnnonce) return { verdict: "presente", preuve: null, httpStatus: 200 };
+
+  // Redirigée (consentement/login/accueil), vide, ou contenu non reconnu → non vérifiée.
+  return { verdict: "inconnue", preuve: null, httpStatus: null };
+}
+
 async function passeConfirmation(opts, tabId, etat) {
   const liste = (etat && Array.isArray(etat.a_confirmer)) ? etat.a_confirmer : [];
+  const verdicts = [];
   let done = 0;
   for (const item of liste) {
     if (done >= CAP_CONFIRMATION) break;
-    let verdict = "inconnue";
-    let httpStatus = null;
+    let res = { verdict: "inconnue", preuve: null, httpStatus: null };
+    let bloque = false;
     try {
       await chrome.tabs.update(tabId, { url: item.url, active: false });
       await waitTabComplete(tabId);
       const t = await chrome.tabs.get(tabId);
       const finalUrl = t.url || "";
       const info = await inject(tabId, inspectPage);
-      if (info && info.looksBlocked) throw new BlockError("Vérification pendant confirmation");
-      const txt = (info ? info.outerHTML : "").toLowerCase();
-      const gone = /page introuvable|cette annonce n'est plus|n'existe plus|404|annonce supprimée|expirée/.test(txt);
-      const redirectedAway = finalUrl && item.url && !finalUrl.includes(String(item.list_id));
-      if (gone || redirectedAway) {
-        verdict = "supprimee";
-        httpStatus = gone ? 404 : 301;
-      } else if (info && (info.hasAditemContainer || info.nextData || txt.includes("prix") || txt.includes("€"))) {
-        verdict = "presente";
-        httpStatus = 200;
-      } else {
-        verdict = "inconnue";
-      }
+      bloque = !!(info && info.looksBlocked);
+      res = classifierConfirmation(info, finalUrl, item.list_id);
     } catch (e) {
-      if (e instanceof BlockError) throw e; // remonte pour stopper la soirée
-      verdict = "inconnue";
+      res = { verdict: "inconnue", preuve: null, httpStatus: null };
     }
-    await apiConfirmation(opts, item.list_id, verdict, item.url, httpStatus);
+    verdicts.push({ list_id: item.list_id, verdict: res.verdict, preuve: res.preuve,
+                    url: item.url, http_status: res.httpStatus });
     done++;
+    // Mur DataDome/captcha : on ARRÊTE la passe (on ne martèle pas) ; ces liens restent « non
+    // vérifiés », donc aucun retrait. Le reste sera revu la prochaine fois.
+    if (bloque) break;
     if (done < liste.length && done < CAP_CONFIRMATION) {
       await sleep(jitter(CONF_MIN, CONF_MAX));
     }
   }
+  // La PASSE part en un seul envoi : le serveur y applique le garde-fou des 30 %.
+  if (verdicts.length) await apiConfirmationBatch(opts, verdicts);
   return done;
 }
 
@@ -582,3 +615,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
   return false;
 });
+
+// RADAR-FIX-3 — surface testable (recette hors-navigateur) : la classification PURE d'un lien vérifié.
+// N'expose rien en production (le drapeau n'est posé que par la recette avant l'import).
+if (globalThis.__RADAR_TEST__) {
+  globalThis.__radar = { classifierConfirmation };
+}
