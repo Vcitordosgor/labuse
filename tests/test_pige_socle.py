@@ -50,6 +50,12 @@ _ALLOWLIST_LIGNES = (
     ("frontend/src/components/outils/AnalyserAnnonce.tsx", "sous={`Annonce Leboncoin"),
     # AFFICHAGE : note d'entrée « Leboncoin pour l'instant. SeLoger et Bien'ici à venir. ».
     ("frontend/src/components/outils/AnalyserAnnonce.tsx", "Leboncoin pour l’instant. SeLoger et Bien’ici"),
+    # AFFICHAGE : sous-titre du PDF « Analyse d'annonce » variante lien (ANNONCE-5) — « Annonce Leboncoin · relevée… ».
+    ("src/labuse/exports/builder.py", 'sous = ("Annonce Leboncoin"'),
+    # AFFICHAGE : phrase d'échec du lien (route Docs/outil), miroir MOT POUR MOT de l'outil (ANNONCE-3).
+    ("src/labuse/api/documents.py", "Leboncoin bloque sa lecture"),
+    # AFFICHAGE : invite d'erreur url_invalide de la route lien (« …ou entrez l'adresse »).
+    ("src/labuse/api/documents.py", "Collez un lien d'annonce Leboncoin, ou entrez"),
 )
 
 _EXTS = (".py", ".js", ".ts", ".tsx")

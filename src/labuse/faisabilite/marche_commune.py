@@ -394,3 +394,115 @@ def build_marche_commune(db: Session, commune: str) -> dict:
             "market_signal": market_signal(db, commune),
             "note": "Chaque ligne porte SA date de source amont — le bloc ne prétend pas à un "
                     "millésime unique (P2-54). Fraîcheur = date source amont."}
+
+
+# ── ANNONCE-5 — le bloc « Marché de la commune » du PDF/outil « Analyser une annonce » ────────────
+#: Point de calcul UNIQUE des chiffres de marché commune de l'annonce (médianes par TYPE, évolution
+#: 12 mois, série annuelle 5 ans, permis déposés 12 mois). Même fichier DÉCLARÉ (dvf_mutations +
+#: dvf_mutations_parcelle + sitadel_permits) que les lignes du bloc Marché — aucune nouvelle arête.
+#: Tout est INSENSIBLE À LA CASSE de la commune (cf. correctif « commune vide » de La Possession).
+_CMN_BORNE = (1000.0, 12000.0)   # domaine €/m² bâti de bon sens (mêmes bornes que le filtre comparables)
+
+
+def _median_bati_commune(db: Session, commune: str, frag: str | None, *,
+                         lo_off: int = 0, hi_off: int = 12) -> tuple[int | None, int]:
+    """Médiane €/m² bâti de la commune pour le type `frag` (ILIKE ; None = tout bâti) sur la fenêtre
+    glissante ]max_vente − hi_off ; max_vente − lo_off] mois. Renvoie (médiane arrondie | None, n)."""
+    typ = "AND dm.type_local ILIKE :frag " if frag else ""
+    row = db.execute(text(
+        "WITH mx AS (SELECT max(date_mutation) d FROM dvf_mutations WHERE lower(commune)=lower(:c)) "
+        "SELECT round(percentile_cont(0.5) WITHIN GROUP "
+        "   (ORDER BY dm.valeur_fonciere/NULLIF(dm.surface_reelle_bati,0)))::int AS med, count(*) AS n "
+        "FROM dvf_mutations dm, mx "
+        "WHERE lower(dm.commune)=lower(:c) AND dm.nature_mutation ILIKE 'vente%' "
+        "  AND dm.surface_reelle_bati>=20 AND dm.valeur_fonciere>0 " + typ +
+        "  AND dm.valeur_fonciere/NULLIF(dm.surface_reelle_bati,0) BETWEEN :lo AND :hi "
+        "  AND dm.date_mutation >  mx.d - make_interval(months => :hi_off) "
+        "  AND dm.date_mutation <= mx.d - make_interval(months => :lo_off)"),
+        {"c": commune, "frag": f"%{frag}%" if frag else None,
+         "lo": _CMN_BORNE[0], "hi": _CMN_BORNE[1], "lo_off": lo_off, "hi_off": hi_off}).first()
+    return (row[0] if row else None), (int(row[1]) if row and row[1] else 0)
+
+
+def _median_terrain_commune(db: Session, commune: str, *, mois: int = 12) -> tuple[int | None, int]:
+    """Médiane €/m² du TERRAIN NU de la commune (dvf_mutations_parcelle, ventes sans bâti), fenêtre
+    glissante `mois`. Dédoublonnage par mutation (une mutation = une vente). n = nombre de ventes."""
+    row = db.execute(text(
+        "WITH mx AS (SELECT max(date_mutation) d FROM dvf_mutations WHERE lower(commune)=lower(:c)), "
+        "t AS (SELECT dm.id_mutation, max(dm.valeur_fonciere) vf, sum(dm.surface_terrain) st "
+        "      FROM dvf_mutations_parcelle dm JOIN parcels p ON p.idu = dm.id_parcelle, mx "
+        "      WHERE lower(p.commune)=lower(:c) AND dm.nature_mutation ILIKE 'vente%' "
+        "        AND COALESCE(dm.surface_reelle_bati,0)=0 AND dm.surface_terrain>0 "
+        "        AND dm.date_mutation > mx.d - make_interval(months => :mois) AND dm.date_mutation <= mx.d "
+        "      GROUP BY dm.id_mutation) "
+        "SELECT round(percentile_cont(0.5) WITHIN GROUP (ORDER BY vf/NULLIF(st,0)))::int, count(*) "
+        "FROM t WHERE vf/NULLIF(st,0) BETWEEN 50 AND 4000"), {"c": commune, "mois": mois}).first()
+    return (row[0] if row else None), (int(row[1]) if row and row[1] else 0)
+
+
+def _serie_maison_annuelle(db: Session, commune: str, *, n_ans: int = 5) -> list[dict]:
+    """Médiane €/m² MAISON par année civile, sur les `n_ans` dernières années DE VENTES de la commune
+    (pour le graphique 5 ans). Chaque point porte son n ; une année sans vente est omise."""
+    rows = db.execute(text(
+        "WITH mx AS (SELECT max(extract(year FROM date_mutation))::int y FROM dvf_mutations "
+        "            WHERE lower(commune)=lower(:c)) "
+        "SELECT extract(year FROM dm.date_mutation)::int AS annee, "
+        "  round(percentile_cont(0.5) WITHIN GROUP "
+        "    (ORDER BY dm.valeur_fonciere/NULLIF(dm.surface_reelle_bati,0)))::int AS med, count(*) AS n "
+        "FROM dvf_mutations dm, mx "
+        "WHERE lower(dm.commune)=lower(:c) AND dm.nature_mutation ILIKE 'vente%' "
+        "  AND dm.type_local ILIKE '%maison%' AND dm.surface_reelle_bati>=20 AND dm.valeur_fonciere>0 "
+        "  AND dm.valeur_fonciere/NULLIF(dm.surface_reelle_bati,0) BETWEEN :lo AND :hi "
+        "  AND extract(year FROM dm.date_mutation) > mx.y - :na "
+        "GROUP BY 1 ORDER BY 1"),
+        {"c": commune, "lo": _CMN_BORNE[0], "hi": _CMN_BORNE[1], "na": n_ans}).mappings().all()
+    return [{"annee": int(r["annee"]), "median": r["med"], "n": int(r["n"])}
+            for r in rows if r["med"] is not None]
+
+
+def _permis_12m_commune(db: Session, commune: str) -> int | None:
+    """Permis DÉPOSÉS sur les 12 derniers mois (Sit@del), par commune — insensible à la casse. None si
+    la table est absente (base de test). La date de dépôt (défaut : la date d'autorisation)."""
+    try:
+        d = db.execute(text("SELECT max(COALESCE(date_depot, date)) FROM sitadel_permits "
+                            "WHERE lower(commune)=lower(:c)"), {"c": commune}).scalar()
+        if d is None:
+            return None
+        return int(db.execute(text(
+            "SELECT count(*) FROM sitadel_permits WHERE lower(commune)=lower(:c) "
+            "AND COALESCE(date_depot, date) > :d - interval '12 months'"), {"c": commune, "d": d}).scalar() or 0)
+    except Exception:  # noqa: BLE001 — table absente : la ligne disparaît (jamais un faux 0)
+        try:
+            db.rollback()
+        except Exception:  # noqa: BLE001
+            pass
+        return None
+
+
+def marche_commune_bloc(db: Session, commune: str) -> dict | None:
+    """ANNONCE-5 — les chiffres du « Marché de la commune » : ventes de maisons 12 mois, médianes
+    MAISON / APPARTEMENT / TERRAIN NU, évolution des maisons sur 12 mois, série annuelle 5 ans (maison)
+    pour le graphique, permis déposés 12 mois. Chaque chiffre absent est None (la ligne disparaît du
+    rendu). Renvoie None si la commune est inconnue (aucune vente)."""
+    if not commune:
+        return None
+    med_m, n_m = _median_bati_commune(db, commune, "maison")
+    med_a, n_a = _median_bati_commune(db, commune, "appart")
+    med_t, n_t = _median_terrain_commune(db, commune)
+    med_m_prec, n_m_prec = _median_bati_commune(db, commune, "maison", lo_off=12, hi_off=24)
+    evo = (round((med_m - med_m_prec) / med_m_prec * 100, 1)
+           if med_m and med_m_prec and n_m_prec >= SEUIL_TENDANCE_N else None)
+    serie = _serie_maison_annuelle(db, commune)
+    if med_m is None and med_a is None and med_t is None and not serie:
+        return None   # commune sans donnée DVF exploitable
+    return {
+        "commune": commune,
+        "ventes_maison_12m": n_m or None,
+        "median_maison_eur_m2": med_m, "n_maison": n_m or None,
+        "median_appartement_eur_m2": med_a, "n_appartement": n_a or None,
+        "median_terrain_eur_m2": med_t, "n_terrain": n_t or None,
+        "evolution_maison_12m_pct": evo,
+        "serie_maison_5a": serie,
+        "permis_12m": _permis_12m_commune(db, commune),
+        "millesime": _dvf_millesime(db, commune),
+    }

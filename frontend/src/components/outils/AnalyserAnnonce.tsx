@@ -19,7 +19,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 
 import { ParcelInput } from '../ParcelInput'
-import { analyserAnnonce, docAnalyseAnnonceLienUrl, docAnalyseAnnonceUrl, getAnnonceClassement, getAnnonceEstimation, getContexteCommune, getFiche, getParcelExposition, type AnnonceAnalyse } from '../../lib/api'
+import { analyserAnnonce, docAnalyseAnnonceLienUrl, docAnalyseAnnonceUrl, getAnnonceClassement, getAnnonceEstimation, getFiche, getParcelExposition, type AnnonceAnalyse } from '../../lib/api'
 import { fmtInt, fmtM2, iduCourt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'
@@ -60,6 +60,7 @@ function fiab(f?: string | null, communeFallback?: boolean): { mot: string; ton:
   if (f === 'fiable') return { mot: 'Élevée', ton: 'vert' }
   return { mot: 'Moyenne', ton: 'ambre' }
 }
+const cap = (s: string | null | undefined) => (s ? s[0].toUpperCase() + s.slice(1) : null)
 
 const INPUT_CLS =
   'w-full h-10 rounded-md border border-line-2 bg-surface-3 px-3 text-[13px] text-txt-hi ' +
@@ -177,14 +178,73 @@ function RapportParcelle({ idu }: { idu: string }) {
             </div>
             <p className="mt-2 text-[11px] leading-snug text-txt-mut">
               {terrain ? (
-                <>Parcelle nue — comparée aux ventes de <strong className="text-txt-hi">terrain nu</strong> (repère €/m² de terrain).</>
+                <>Parcelle nue — comparée aux ventes de <strong className="text-txt-hi">terrain nu</strong> du secteur (repère €/m² de terrain).</>
               ) : (
-                <>Parcelle bâtie — comparée au <strong className="text-txt-hi">bâti ancien</strong> (prix observés au m²{e?.type_prix ? `, ${e.type_prix}` : ''}) autour de la parcelle.{e?.commune_fallback ? ' Repère élargi à la commune (secteur trop peu fourni).' : ''} La valeur d’un bien dépend de sa surface et de son état, non connus du modèle.</>
+                <>{cap(e?.type_bien) ?? 'Bâti'} — comparé{e?.type_bien === 'maison' ? 'e' : ''} aux ventes de <strong className="text-txt-hi">{e?.type_label_pluriel ?? 'biens bâtis anciens'}</strong> autour de la parcelle. État et prestations du bien non connus du modèle.</>
               )}
+              {e?.precision_pct != null && <> Précision mesurée sur les ventes 2025 : ±{fmtInt(e.precision_pct)} %.</>}
             </p>
+            {/* ANNONCE-5-FIX — ORDRE DE GRANDEUR (jamais un calcul exact, bâti = emprise au sol). */}
+            {e?.valeur_indicative && (
+              <div className="mt-3 rounded-md border border-line-2 bg-surface-3 p-2.5">
+                <p className="text-[10px] uppercase tracking-wide text-txt-dim">{terrain ? 'Ordre de grandeur du terrain' : 'Ordre de grandeur du bien'}</p>
+                <p className="mt-1 flex justify-between gap-2 text-[12.5px] text-txt-hi">
+                  <span className="text-txt-dim">{terrain ? `Terrain ${fmtM2(e.valeur_indicative.surface_m2)}` : `D’après l’emprise au sol BD TOPO (${fmtM2(e.valeur_indicative.surface_m2)})`} × {fmtInt(e.valeur_indicative.eur_m2)} €/m²</span>
+                  <span className="shrink-0 font-semibold">{fmtInt(e.valeur_indicative.valeur_eur)} €</span>
+                </p>
+                {e.valeur_indicative.valeur_basse != null && e.valeur_indicative.valeur_haute != null && (
+                  <p className="mt-1 flex justify-between gap-2 text-[12px] text-txt-dim">
+                    <span>Fourchette</span><span className="shrink-0">{fmtInt(e.valeur_indicative.valeur_basse)} – {fmtInt(e.valeur_indicative.valeur_haute)} €</span>
+                  </p>
+                )}
+                {!terrain && <p className="mt-1.5 text-[11px] leading-snug text-txt-mut">Ordre de grandeur, pas un calcul exact : la surface habitable réelle n’est pas connue (emprise au sol BD TOPO).</p>}
+              </div>
+            )}
+            {/* Lecture foncière (parcelle bâtie) — comme la variante lien. */}
+            {!terrain && e?.lecture_fonciere && (
+              <div className="mt-2 rounded-md border border-line-2 bg-surface-3 p-2.5">
+                <p className="text-[10px] uppercase tracking-wide text-txt-dim">Lecture foncière · valeur du terrain</p>
+                <p className="mt-1 text-lg font-semibold leading-none text-mint">{fmtInt(e.lecture_fonciere.valeur_eur)} €</p>
+                <p className="mt-0.5 text-[12px] text-txt-dim">{fmtM2(e.lecture_fonciere.surface_m2)} × {fmtInt(e.lecture_fonciere.eur_m2)} €/m² de terrain nu{e.lecture_fonciere.perimetre ? ` · ${e.lecture_fonciere.perimetre}` : ''}</p>
+                {e.lecture_fonciere.pct_du_bati != null && <p className="mt-1 text-[11px] text-txt-mut">soit {fmtInt(e.lecture_fonciere.pct_du_bati)} % de l’ordre de grandeur bâti.</p>}
+              </div>
+            )}
           </>
         )}
       </section>
+
+      {/* ANNONCE-5 — les 8 ventes comparables, accordéon FERMÉ par défaut (mêmes lignes que le PDF). */}
+      {(e?.comparables?.length ?? 0) > 0 && (
+        <details className={SECTION}>
+          <summary className="cursor-pointer text-sm font-medium text-txt-hi">{terrain ? 'Les ventes de terrain nu' : 'Les ventes comparables'}{e?.n_total != null ? ` (${fmtInt(e.n_total)})` : ''}</summary>
+          <div className="mt-2 overflow-x-auto">
+            <table className="w-full text-[11px]">
+              <thead>
+                <tr className="text-left text-txt-dim">
+                  <th className="pb-1 pr-2 font-medium">Date</th><th className="pb-1 pr-2 font-medium">Type</th>
+                  <th className="pb-1 pr-2 text-right font-medium">Surface</th><th className="pb-1 pr-2 text-right font-medium">Prix</th>
+                  <th className="pb-1 pr-2 text-right font-medium">€/m²</th><th className="pb-1 text-right font-medium">Dist.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {e!.comparables!.map((c, i) => (
+                  <tr key={i} className="border-t border-line-2 text-txt-hi">
+                    <td className="py-1 pr-2">{c.date ?? ''}</td><td className="py-1 pr-2">{c.type ?? ''}</td>
+                    <td className="py-1 pr-2 text-right">{c.surface_m2 != null ? fmtM2(c.surface_m2) : ''}</td>
+                    <td className="py-1 pr-2 text-right">{c.prix_eur != null ? `${fmtInt(c.prix_eur)} €` : ''}</td>
+                    <td className="py-1 pr-2 text-right">{c.prix_m2 != null ? fmtInt(c.prix_m2) : ''}</td>
+                    <td className="py-1 text-right">{c.distance_m != null ? `${fmtInt(c.distance_m)} m` : ''}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-1.5 text-[11px] leading-snug text-txt-mut">
+            {(() => { const autres = Math.max(0, (e?.n_total ?? 0) - (e?.comparables?.length ?? 0)); const pl = terrain ? 'terrain nu' : (e?.type_label_pluriel ?? 'biens'); return autres > 0 ? `${fmtInt(autres)} autre${autres > 1 ? 's' : ''} vente${autres > 1 ? 's' : ''} de ${pl} à proximité. ` : '' })()}
+            Source : DVF, ventes de {terrain ? 'terrain nu' : (e?.type_label_pluriel ?? 'biens')}{(terrain ? fmtPeriode(e?.comparables_periode) : periode) ? `, ${terrain ? fmtPeriode(e?.comparables_periode) : periode}` : ''}.
+          </p>
+        </details>
+      )}
 
       <section className={SECTION}>
         <h3 className="text-sm font-medium text-txt-hi">Le foncier</h3>
@@ -221,14 +281,14 @@ function pairs(entries: { k: string; v: string }[]) {
 function RapportAnnonce({ res }: { res: AnnonceAnalyse }) {
   const setContexteCommune = useApp((s) => s.setContexteCommune)
   const a = res.annonce!
-  const m = res.marche
   const commune = a.commune ?? ''
-  const ctx = useQuery({ queryKey: ['annonce-commune', commune], queryFn: () => getContexteCommune(commune), enabled: !!commune })
+  const lb = res.lectures?.bati
+  const lf = res.lectures?.fonciere
+  const cm = res.commune
 
   // ANNONCE-1-FIX (pt 3) — « non précisé dans l'annonce » est RÉSERVÉ aux champs ATTENDUS pour ce type
   // et absents. Un champ non applicable au type (ex. Pièces sur un terrain) n'apparaît PAS du tout.
   const NP = 'non précisé dans l’annonce'
-  const cap = (s: string | null | undefined) => (s ? s[0].toUpperCase() + s.slice(1) : null)
   const prixM2 = a.prix_m2 != null ? ` · ${fmtInt(a.prix_m2)} €/m²` : ''
   const rows: { k: string; v: string }[] = [
     { k: 'Prix demandé', v: a.prix != null ? `${fmtInt(a.prix)} €` : NP },
@@ -247,58 +307,73 @@ function RapportAnnonce({ res }: { res: AnnonceAnalyse }) {
     if (a.surface_terrain != null) rows.push({ k: 'Terrain', v: fmtM2(a.surface_terrain) })
   }
 
-  // « La commune » : repère de prix par type (du moteur de prix, via `marche`) + PLU + aléas (contexte).
-  const c = ctx.data
-  const aleas: string[] = []
-  if (c?.risques) {
-    if ((c.risques.ppr_pct ?? 0) > 0 || (c.risques.azi_tri?.azi?.length ?? 0) > 0 || (c.risques.azi_tri?.tri?.length ?? 0) > 0) aleas.push('inondation')
-    if ((c.risques.mouvement_terrain_pct ?? 0) > 0) aleas.push('mouvement de terrain')
-    if (c.risques.parc_national) aleas.push('parc national')
+  const pctSigne = (n: number) => {
+    const s = n.toFixed(1).replace('.', ',').replace(/,0$/, '')
+    return n > 0 ? `+${s} %` : `${s} %`
   }
-  const pluTxt = c?.plu_statut?.statut ?? c?.plu_statut?.libelle ?? '—'
+  const desc = (a as { description?: string | null }).description
+  const descCourt = typeof desc === 'string' && desc.trim()
+    ? (desc.trim().replace(/\s+/g, ' ').length > 150 ? desc.trim().replace(/\s+/g, ' ').slice(0, 148) + '…' : desc.trim().replace(/\s+/g, ' '))
+    : null
 
   return (
     <Corps>
       <section className={SECTION}>
         <h3 className="text-sm font-medium text-txt-hi">Ce que dit l’annonce</h3>
         <div className="mt-2">{pairs(rows)}</div>
+        {descCourt && (
+          <p className="mt-2 border-l-2 border-line-2 pl-2 text-[11px] italic leading-snug text-txt-dim">« {descCourt} » <span className="not-italic text-txt-mut">— extrait, texte complet sur l’annonce</span></p>
+        )}
         <p className="mt-2 text-[11px] leading-snug text-txt-mut">Seules les informations présentes dans l’annonce sont affichées.</p>
       </section>
 
+      {/* ANNONCE-5 — les DEUX lectures CHIFFRÉES (la phrase « valeur surtout foncière » sans chiffre disparaît). */}
       <section className={SECTION}>
         <h3 className="text-sm font-medium text-txt-hi">Prix face au marché</h3>
-        {m && m.calculable && m.ecart_libelle ? (
+        {(lb || lf) ? (
           <>
-            <p className="mt-1 text-xl font-semibold leading-none text-txt-hi">{m.ecart_libelle}</p>
-            <p className="mt-0.5 text-[12px] text-txt-dim">
-              face au repère commune {m.repere_perimetre ?? m.perimetre ?? 'du bon type'}
-              {m.referentiel_eur_m2 != null ? ` : ${fmtInt(m.referentiel_eur_m2)} €/m²` : ''}
-            </p>
+            <div className="mt-2 flex flex-col gap-2">
+              {lb && (
+                <div className="rounded-md border border-line-2 bg-surface-3 p-2.5">
+                  <p className="text-[10px] uppercase tracking-wide text-txt-dim">Lecture bâti · au m² habitable</p>
+                  <p className="mt-1 text-xl font-semibold leading-none text-txt-hi">{lb.ecart_pct > 0 ? '+' : ''}{lb.ecart_pct} %</p>
+                  <p className="mt-0.5 text-[12px] text-txt-dim">face aux {lb.type_label_pluriel} de la commune{lb.referentiel_eur_m2 != null ? ` : ${fmtInt(lb.referentiel_eur_m2)} €/m²` : ''}</p>
+                  {lb.n != null && <p className="mt-0.5 text-[11px] text-txt-mut">{fmtInt(lb.n)} ventes · {lb.type_label_pluriel}</p>}
+                </div>
+              )}
+              {lf && (
+                <div className="rounded-md border border-line-2 bg-surface-3 p-2.5">
+                  <p className="text-[10px] uppercase tracking-wide text-txt-dim">Lecture foncière · valeur du terrain</p>
+                  <p className="mt-1 text-xl font-semibold leading-none text-mint">{fmtInt(lf.valeur_eur)} €</p>
+                  <p className="mt-0.5 text-[12px] text-txt-dim">{fmtM2(lf.terrain_m2)} × {fmtInt(lf.terrain_eur_m2)} €/m² de terrain nu</p>
+                  <p className="mt-1 text-[11px] leading-snug text-txt-mut">{lf.conclusion}</p>
+                </div>
+              )}
+            </div>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <span className="text-[11px] text-txt-dim">Fiabilité</span>
               <Badge ton="ambre" point>Limitée</Badge>
-              <span className="text-[11px] text-txt-dim">repère à l’échelle de la commune</span>
+              <span className="text-[11px] text-txt-dim">repère communal, sans adresse précise · les deux lectures sont indicatives</span>
             </div>
           </>
         ) : (
           <p className="mt-1 text-[12px] text-txt-dim">
-            {m?.motif ?? 'Comparaison au marché indisponible (prix ou surface absents de l’annonce, ou échantillon DVF insuffisant).'}
+            Comparaison au marché indisponible : le prix, la surface ou le repère communal manquent pour cette annonce.
           </p>
         )}
-        <p className="mt-2 text-[11px] leading-snug text-txt-mut">
-          L’annonce ne donne pas d’adresse précise : le repère est large. Localisez la parcelle pour une
-          estimation au micro-marché et l’analyse foncière.
-        </p>
       </section>
 
       <section className={SECTION}>
         <h3 className="text-sm font-medium text-txt-hi">La commune{commune ? ` · ${commune}` : ''}</h3>
         <div className="mt-2">
           {pairs([
-            { k: `Ventes ${m?.repere_perimetre ?? 'comparables'}`, v: m?.n_referentiel != null ? `${fmtInt(m.n_referentiel)}${m.periode ? ` · ${m.periode}` : ''}` : '—' },
-            { k: 'Prix médian (DVF)', v: m?.referentiel_eur_m2 != null ? `${fmtInt(m.referentiel_eur_m2)} €/m²` : '—' },
-            { k: 'PLU', v: pluTxt },
-            { k: 'Aléas principaux', v: aleas.length ? aleas.join(', ') : (ctx.isLoading ? '…' : '—') },
+            { k: 'Ventes de maisons, 12 mois', v: cm?.ventes_maison_12m != null ? fmtInt(cm.ventes_maison_12m) : '—' },
+            { k: 'Prix médian maison', v: cm?.median_maison_eur_m2 != null ? `${fmtInt(cm.median_maison_eur_m2)} €/m²` : '—' },
+            { k: 'Terrain nu, médiane', v: cm?.median_terrain_eur_m2 != null ? `${fmtInt(cm.median_terrain_eur_m2)} €/m²` : '—' },
+            { k: 'Évolution maisons, 12 mois', v: cm?.evolution_maison_12m_pct != null ? pctSigne(cm.evolution_maison_12m_pct) : '—' },
+            { k: 'PLU', v: cm?.plu_statut ?? '—' },
+            { k: 'Aléas principaux', v: cm?.aleas?.length ? cm.aleas.join(', ') : '—' },
+            { k: 'Permis déposés, 12 mois', v: cm?.permis_12m != null ? fmtInt(cm.permis_12m) : '—' },
           ])}
         </div>
         {commune && (

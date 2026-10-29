@@ -292,16 +292,11 @@ def analyse_annonce_lien_pdf(url: str, request: Request, db: Session = Depends(g
             "erreur": erreur or "url_illisible",
             "message": _ANNONCE_ECHEC.get(erreur, "La lecture de l'annonce a échoué. "
                        "Entrez l'adresse du bien pour l'analyser.")})
-    commune = (res_annonce["annonce"] or {}).get("commune")
-    contexte = None
-    if commune:
-        try:
-            from .app import commune_contexte
-            contexte = commune_contexte(commune, db=db, request=request)
-        except Exception as exc:  # noqa: BLE001 — « La commune » est un plus, jamais un bloqueur
-            log.warning("analyse-annonce lien : contexte commune %s indisponible (%s)", commune, exc)
+    # ANNONCE-5 — `radar_annonce_analyser` renvoie désormais le RAPPORT ENRICHI (annonce normalisée +
+    # lectures bâti/foncière + bloc commune complet, PLU/aléas inclus). Le builder le rend tel quel : le
+    # PDF (outil ET Docs) == l'écran, même point de données, plus aucun appel commune_contexte ici.
     try:
-        res = builder.construire_analyse_annonce_lien(res_annonce["annonce"], res_annonce.get("marche"), contexte)
+        res = builder.construire_analyse_annonce_lien(res_annonce)
     except Exception:  # noqa: BLE001
         log.exception("analyse-annonce lien : échec technique")
         raise HTTPException(status_code=500, detail={"erreur": "erreur_technique",
