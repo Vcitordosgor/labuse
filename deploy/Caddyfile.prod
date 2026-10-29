@@ -59,11 +59,13 @@
 		file_server @front
 
 		# 4. API / tuiles / login / PDF / webhook Stripe → backend
-		# ETUDE-V6-2 (Lot 3) — l'Étude de faisabilité est bornée à 60 s côté app ; le proxy laisse ~75 s
-		# (15 s de marge) pour ne jamais couper AVANT le message honnête de l'app. (Aligne la conf nginx.)
+		# ETUDE-V6-2 (Lot 3) — l'Étude de faisabilité est bornée à 60 s côté app (_ETUDE_TIMEOUT_S).
+		# CORRECTIFS-2 (Lot 2) — marge portée de 75 s à 90 s (30 s au-dessus de la borne) : la borne ne
+		# couvre QUE le calcul ; l'EXPORT PDF (WeasyPrint, /modules/etude/pdf) rend APRÈS, si bien qu'une
+		# assiette lourde de 4 parcelles à froid dépassait 75 s et récoltait un 504 transitoire. (Aligne nginx.)
 		reverse_proxy 127.0.0.1:8000 {
 			transport http {
-				read_timeout 75s
+				read_timeout 90s
 			}
 		}
 	}
