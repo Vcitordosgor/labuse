@@ -278,6 +278,117 @@ def comparables(db: Session, idu: str, *, profil: str = COMPARABLES_PREMIUM) -> 
             "reserve": reserve_methode()}
 
 
+# ── ANNONCE-5 — le comparateur UNIQUE de l'outil « Analyser une annonce » ─────────────────────────
+#: Point d'appel UNIQUE pour l'estimation, la valeur indicative ET le tableau de comparables de
+#: l'annonce : À PARTIR D'UNE SEULE requête DVF ancrée sur la parcelle, on sort l'AGRÉGAT (médiane,
+#: Q1/Q3, n retenues, rayon effectif, période, fiabilité) ET les ventes LES PLUS PROCHES retenues. Ainsi
+#: l'estimation « 34 ventes · rayon 1 000 m », la valeur indicative et le tableau des « 8 ventes les
+#: plus proches » ne divergent JAMAIS (même échantillon, même filtre). `marche_service.py` est déjà un
+#: lecteur DÉCLARÉ de dvf_mutations (robinet pdf_banquier) — aucune nouvelle arête à déclarer.
+_CMP_RAYONS = (500.0, 1000.0, 1500.0)   # rayon ADAPTATIF : on élargit jusqu'au seuil d'effectif
+
+
+def _cle_type(type_bien: str | None) -> str | None:
+    """Fragment ILIKE du type_local DVF pour un type de bien, ou None (bâti combiné)."""
+    if type_bien == "maison":
+        return "maison"
+    if type_bien == "appartement":
+        return "appart"
+    return None
+
+
+def comparateur_bien(db: Session, idu: str, *, type_bien: str | None = None,
+                     fenetre_ans: int = 5, seuil: int | None = None, n_table: int = 8) -> dict | None:
+    """Comparateur BÂTI de l'annonce (ventes de maisons / d'appartements), SURFAÇAGE de dvf_mutations.
+    `type_bien` ∈ {maison, appartement, bati, None} : None/bati → on DÉDUIT le type dominant du secteur
+    (règle de nature de la fiche : une parcelle bâtie en secteur de maisons est comparée aux maisons).
+    Rayon ADAPTATIF 500→1000→1500 m jusqu'au seuil d'effectif, repli commune. Renvoie None si la parcelle
+    n'a pas de géométrie ; sinon un dict toujours défini (median None si échantillon insuffisant)."""
+    import statistics
+    pid = _parcel_id(db, idu)
+    if pid is None:
+        return None
+    seuil = int(seuil if seuil is not None else seuil_effectif_local("comparables_annonce", 8))
+    fp = filtre_params()
+
+    def _fetch(rayon_m: float | None) -> list[dict]:
+        where_r = ("ST_DWithin(ST_Transform(dm.geom, 2975), p.geom_2975, :r)"
+                   if rayon_m is not None else "dm.commune = (SELECT commune FROM parcels WHERE idu = :idu)")
+        rows = db.execute(text(
+            "WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu) "
+            "SELECT to_char(dm.date_mutation, 'YYYY-MM-DD') AS date, dm.type_local, "
+            "  round(ST_Distance(ST_Transform(dm.geom, 2975), p.geom_2975))::int AS distance_m, "
+            "  round(dm.surface_reelle_bati)::int AS surface_m2, "
+            "  round(dm.valeur_fonciere)::int AS prix_eur, "
+            "  round(dm.valeur_fonciere / NULLIF(dm.surface_reelle_bati, 0))::int AS prix_m2, "
+            "  extract(year FROM dm.date_mutation)::int AS annee "
+            "FROM dvf_mutations dm, p "
+            "WHERE dm.geom IS NOT NULL AND dm.date_mutation IS NOT NULL "
+            "  AND " + fenetre_dvf_sql("dm.date_mutation", annees_param="ans") + " "
+            "  AND dm.nature_mutation ILIKE 'vente%' AND dm.valeur_fonciere > 0 "
+            "  AND dm.surface_reelle_bati >= 20 AND " + where_r + " "
+            "ORDER BY distance_m ASC LIMIT 600"),
+            {"idu": idu, "ans": fenetre_ans, "r": rayon_m}).mappings().all()
+        return [dict(r) for r in rows]
+
+    def _garde(rows: list[dict], typ: str | None) -> list[dict]:
+        g, _ = filtre_ventes(rows, cle_prix="prix_m2", cle_type="type_local", bornes=fp["bornes"],
+                             z_mad=fp["z_mad"], seuil_type_m2=fp["seuil_type_m2"])
+        frag = _cle_type(typ)
+        return [v for v in g if frag in (v.get("type_local") or "").lower()] if frag else g
+
+    # type dominant déduit (une seule fois, sur le 1 000 m) si le type n'est pas donné.
+    if type_bien in (None, "bati"):
+        base = _garde(_fetch(1000.0), None)
+        nm = sum(1 for v in base if "maison" in (v.get("type_local") or "").lower())
+        na = sum(1 for v in base if "appart" in (v.get("type_local") or "").lower())
+        if nm + na > 0 and max(nm, na) / (nm + na) >= 0.55:
+            type_bien = "maison" if nm >= na else "appartement"
+        else:
+            type_bien = None   # bâti combiné (secteur mixte)
+
+    radius: int | None = None
+    commune_fallback = False
+    kept: list[dict] = []
+    for rayon in _CMP_RAYONS:
+        kept = _garde(_fetch(rayon), type_bien)
+        if len(kept) >= seuil:
+            radius = int(rayon)
+            break
+    else:
+        commune = _garde(_fetch(None), type_bien)   # repli commune entière
+        if len(commune) > len(kept):
+            kept, commune_fallback = commune, True
+        elif kept:
+            radius = int(_CMP_RAYONS[-1])
+
+    prix = [float(v["prix_m2"]) for v in kept if v.get("prix_m2") is not None]
+    annees = [int(v["annee"]) for v in kept if v.get("annee") is not None]
+    n = len(prix)
+    median = round(statistics.median(prix)) if prix else None
+    q1 = q3 = None
+    if n >= 4:
+        qs = statistics.quantiles(prix, n=4, method="inclusive")
+        q1, q3 = round(qs[0]), round(qs[2])
+    proches = sorted(kept, key=lambda v: (v.get("distance_m") is None, v.get("distance_m")))[:n_table]
+    comparables = [{
+        "date": f"{v['date'][5:7]}/{v['date'][0:4]}" if isinstance(v.get("date"), str) and len(v["date"]) >= 7 else None,
+        "type": (v.get("type_local") or "").capitalize() or None,
+        "surface_m2": v.get("surface_m2"), "prix_eur": v.get("prix_eur"),
+        "prix_m2": v.get("prix_m2"), "distance_m": v.get("distance_m"),
+    } for v in proches]
+    label_pl = {"maison": "maisons", "appartement": "appartements"}.get(type_bien or "", "biens bâtis anciens")
+    return {
+        "type_bien": type_bien or "bati", "type_label_pluriel": label_pl,
+        "median": median, "q1": q1, "q3": q3, "n": n,
+        "radius_m": radius, "commune_fallback": commune_fallback,
+        "periode": [min(annees), max(annees)] if annees else None,
+        "fiable": n >= seuil, "fiabilite": "fiable" if n >= seuil else "moyen",
+        "seuil_effectif": seuil, "comparables": comparables, "n_total": n,
+        "reserve": reserve_methode(),
+    }
+
+
 def permits(db: Session, idu: str, *, profil: str) -> dict | None:
     """Lecture des permis (SITADEL) d'une parcelle, par le point d'appel UNIQUE. `profil` = préset de
     paramètres nommé (provisoire, MANDAT_DVF). Délègue au calcul existant — aucun recalcul."""

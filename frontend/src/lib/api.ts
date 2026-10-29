@@ -400,9 +400,28 @@ export interface AnnonceMarche {
   repli_commune?: boolean; perimetre?: string | null; repere_perimetre?: string | null
   periode?: string | null; meme_type?: boolean; fiabilite?: string; motif?: string | null
 }
+// ANNONCE-5 — les DEUX lectures de l'entrée lien (CHIFFRÉES) : bâti (écart % au repère du type dans la
+// commune) et foncière (terrain × terrain nu, en % du prix demandé + conclusion). Mêmes médianes que le
+// bloc commune → aucune divergence.
+export interface LectureBati {
+  calculable: boolean; ecart_pct: number; referentiel_eur_m2: number | null
+  n: number | null; type_label_pluriel: string | null; periode?: number | null
+}
+export interface LectureFonciere {
+  terrain_m2: number; terrain_eur_m2: number; valeur_eur: number; pct_du_prix: number; conclusion: string
+}
+export interface AnnonceCommune {
+  commune?: string
+  ventes_maison_12m?: number | null; median_maison_eur_m2?: number | null
+  median_appartement_eur_m2?: number | null; median_terrain_eur_m2?: number | null
+  evolution_maison_12m_pct?: number | null; serie_maison_5a?: { annee: number; median: number; n: number }[]
+  permis_12m?: number | null; plu_statut?: string | null; aleas?: string[] | null; parc_national?: boolean | null
+}
 export interface AnnonceAnalyse {
   ok: boolean; erreur?: string; motif?: string
   annonce?: AnnonceLue; marche?: AnnonceMarche | null
+  lectures?: { bati?: LectureBati | null; fonciere?: LectureFonciere | null }
+  commune?: AnnonceCommune | null
 }
 export const analyserAnnonce = (url: string) =>
   j<AnnonceAnalyse>('/radar/annonce/analyser', {
@@ -415,9 +434,18 @@ export const getAnnonceClassement = (idu: string) =>
   j<AnnonceClassement>(`/radar/annonce/classement/${encodeURIComponent(idu)}`)
 // ANNONCE-3-FIX — l'estimation du prix SELON la nature de la parcelle (nue → terrain nu ; bâtie → bâti).
 // Point unique partagé avec le PDF (`estimation_annonce`) → mêmes chiffres à l'écran et dans le document.
+export interface AnnonceComparable {
+  date: string | null; type: string | null; surface_m2: number | null
+  prix_eur: number | null; prix_m2: number | null; distance_m: number | null
+}
+export interface AnnonceValeurIndicative {
+  surface_m2: number; eur_m2: number; valeur_eur: number
+  valeur_basse?: number; valeur_haute?: number
+}
 export interface AnnonceEstimation {
   idu: string
   type_comparateur: 'bati' | 'terrain_nu' | null
+  type_bien?: string; type_label_pluriel?: string
   nature?: string
   median: number | null
   q1?: number | null; q3?: number | null
@@ -425,6 +453,12 @@ export interface AnnonceEstimation {
   perimetre?: 'secteur' | 'commune' | null
   fiabilite?: string | null; commune_fallback?: boolean
   type_prix?: string | null; note?: string | null
+  // ANNONCE-5 — comparables (8 ventes les plus proches), valeur indicative, repère foncier : servis par
+  // le MÊME point que le PDF → l'accordéon, la valeur indicative et le document montrent les mêmes chiffres.
+  comparables?: AnnonceComparable[]; n_total?: number | null
+  surface_batie?: { surface_m2: number; emprise_m2?: number; niveaux?: number; niveaux_estimes?: boolean } | null
+  valeur_indicative?: AnnonceValeurIndicative | null
+  repere_terrain_nu?: { eur_m2: number; n?: number | null; perimetre?: string; periode?: string | null } | null
 }
 export const getAnnonceEstimation = (idu: string) =>
   j<AnnonceEstimation>(`/radar/annonce/estimation/${encodeURIComponent(idu)}`)

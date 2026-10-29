@@ -1248,6 +1248,103 @@ def _annonce_depuis_radar(db, list_id: int, url: str) -> dict | None:
     return {"ok": True, "annonce": annonce, "marche": marche}
 
 
+def _commune_canonique(db, nom: str | None) -> str | None:
+    """ANNONCE-5 (correctif « commune vide » La Possession) — ramène un nom de commune À LA CASSE
+    CANONIQUE stockée (référentiel communes), insensible à la casse/espaces. Le flux LIEN peut recevoir
+    « la possession » (Leboncoin) quand la base porte « La Possession » : un lookup EXACT en aval
+    (cache contexte commune) manquait alors et le bloc commune sortait VIDE. On normalise À LA SOURCE."""
+    if not nom or not nom.strip():
+        return nom
+    n = nom.strip()
+    try:
+        r = db.execute(text("SELECT nom FROM communes_referentiel WHERE lower(nom) = lower(:n) LIMIT 1"),
+                       {"n": n}).scalar()
+        if r:
+            return r
+        r = db.execute(text("SELECT commune FROM parcels WHERE lower(commune) = lower(:n) LIMIT 1"),
+                       {"n": n}).scalar()
+        return r or n
+    except Exception:  # noqa: BLE001 — référentiel absent : on garde le nom tel quel
+        try:
+            db.rollback()
+        except Exception:  # noqa: BLE001
+            pass
+        return n
+
+
+def rapport_lien(db, annonce: dict) -> dict:
+    """ANNONCE-5 — le rapport LIEN complet (variante commune, 1 page) : POINT UNIQUE écran == PDF. À partir
+    de l'annonce relevée (Radar d'abord, sinon fetch), compose : la commune CANONIQUE, les DEUX lectures
+    (bâti : écart % au repère du type dans la commune ; foncière : terrain × terrain nu, en % du prix
+    demandé, conclusion CHIFFRÉE) et le bloc commune COMPLET (ventes, médianes, évolution, PLU, aléas,
+    permis 12 mois). Mêmes médianes partout (marche_commune_bloc) → aucune divergence lecture ↔ bloc."""
+    from ..faisabilite.marche_commune import marche_commune_bloc
+    a = dict(annonce or {})
+    commune = _commune_canonique(db, a.get("commune"))
+    a["commune"] = commune
+    typ = a.get("type")
+    prix = a.get("prix")
+    prix_m2 = a.get("prix_m2")
+    st = a.get("surface_terrain")
+    bloc = None
+    try:
+        bloc = marche_commune_bloc(db, commune) if commune else None
+    except Exception as exc:  # noqa: BLE001
+        log.warning("rapport lien : marché commune %s indisponible (%s)", commune, exc)
+    # lecture BÂTI : écart % au repère du TYPE de l'annonce dans la commune (même médiane que le bloc).
+    bati = None
+    if bloc and typ in ("maison", "appartement") and isinstance(prix_m2, (int, float)):
+        ref = bloc.get("median_maison_eur_m2" if typ == "maison" else "median_appartement_eur_m2")
+        nref = bloc.get("n_maison" if typ == "maison" else "n_appartement")
+        if isinstance(ref, (int, float)) and ref > 0:
+            bati = {"calculable": True, "ecart_pct": round((prix_m2 - ref) / ref * 100),
+                    "referentiel_eur_m2": ref, "n": nref,
+                    "type_label_pluriel": "maisons" if typ == "maison" else "appartements",
+                    "periode": (bloc.get("serie_maison_5a") or [{}])[0].get("annee")}
+    # lecture FONCIÈRE : terrain de l'annonce × terrain nu du secteur → valeur + % du prix + conclusion.
+    fonciere = None
+    tn = bloc.get("median_terrain_eur_m2") if bloc else None
+    if isinstance(tn, (int, float)) and isinstance(st, (int, float)) and st > 0 and isinstance(prix, (int, float)) and prix > 0:
+        val = round(st * tn)
+        pct = round(val / prix * 100)
+        if pct >= 75:
+            concl = f"Le terrain seul vaut {pct} % du prix demandé : bien à valeur surtout foncière."
+        elif pct >= 40:
+            concl = f"Le terrain représente {pct} % du prix demandé : la valeur est partagée bâti / foncier."
+        else:
+            concl = f"Le terrain représente {pct} % du prix demandé : la valeur tient surtout au bâti."
+        fonciere = {"terrain_m2": round(st), "terrain_eur_m2": tn, "valeur_eur": val,
+                    "pct_du_prix": pct, "conclusion": concl}
+    # PLU / aléas / parc national : contexte commune (servi). Best-effort — jamais un bloqueur.
+    plu_statut = aleas = None
+    parc_national = None
+    try:
+        from ..api.app import commune_contexte
+        ctx = commune_contexte(commune, db=db) if commune else None
+        if ctx:
+            plu_statut = (ctx.get("plu_statut") or {}).get("statut")
+            risq = ctx.get("risques") or {}
+            aleas = _aleas_commune(risq)
+            parc_national = risq.get("parc_national")
+    except Exception as exc:  # noqa: BLE001
+        log.warning("rapport lien : contexte commune %s indisponible (%s)", commune, exc)
+    commune_bloc = dict(bloc or {})
+    commune_bloc.update({"plu_statut": plu_statut, "aleas": aleas, "parc_national": parc_national})
+    return {"annonce": a, "lectures": {"bati": bati, "fonciere": fonciere}, "commune": commune_bloc}
+
+
+def _aleas_commune(risq: dict) -> list[str]:
+    """Aléas principaux de la commune (miroir du calcul de l'écran) : inondation / mouvement de terrain /
+    parc national, à partir du bloc risques servi."""
+    out = []
+    azi = risq.get("azi_tri") or {}
+    if (risq.get("ppr_pct") or 0) > 0 or (azi.get("azi") or []) or (azi.get("tri") or []):
+        out.append("inondation")
+    if (risq.get("mouvement_terrain_pct") or 0) > 0:
+        out.append("mouvement de terrain")
+    return out
+
+
 class AnnonceAnalyseIn(BaseModel):
     url: str
 
@@ -1275,8 +1372,9 @@ def radar_annonce_analyser(body: AnnonceAnalyseIn) -> dict:
     if list_id is not None:
         with session_scope() as db:
             radar = _annonce_depuis_radar(db, list_id, url)
-        if radar is not None:
-            return radar
+            if radar is not None:
+                rep = rapport_lien(db, radar["annonce"])
+                return {"ok": True, **rep, "marche": radar.get("marche")}
     # 2 — REPLI : bien absent du Radar → fetch one-shot (comportement ANNONCE-1 inchangé).
     try:
         page = _fetch_page_oneshot(url)
@@ -1317,7 +1415,8 @@ def radar_annonce_analyser(body: AnnonceAnalyseIn) -> dict:
     # Écart au REPÈRE COMMUNE du bon type — même moteur partagé que la voie Radar (aucun recalcul maison).
     with session_scope() as db:
         marche = _marche_commune(db, commune, type_bien, prix, surface_hab, surface_terrain)
-    return {"ok": True, "annonce": annonce, "marche": marche}
+        rep = rapport_lien(db, annonce)
+    return {"ok": True, **rep, "marche": marche}
 
 
 @router.get("/radar/annonce/classement/{idu}")
@@ -1328,15 +1427,21 @@ def radar_annonce_classement(idu: str) -> dict:
     NC·Analyse incomplète + cause). On NE passe JAMAIS par le phrasé de percentile du Signal de
     mutation (`score_v2.verbal.mot`, « proche de la moyenne »), qui n'est pas un classement. Lecture
     seule du run servi — rien de servi touché."""
+    with session_scope() as db:
+        return _classement_bande(db, idu)
+
+
+def _classement_bande(db, idu: str) -> dict:
+    """Le classement (bande + libellé gravé) du run SERVI pour une parcelle, sur la session fournie —
+    partagé par l'endpoint et par `rapport_parcelle` (un seul lecteur, une seule session)."""
     import os
     from ..scoring.score_labuse import charger_bareme, libelle_client_bande
     from .. import runs
     run = os.environ.get("LABUSE_SCORE_RUN") or runs.current()
-    with session_scope() as db:
-        row = db.execute(text(
-            "SELECT sl.bande, sl.cause FROM score_labuse sl JOIN parcels p ON p.id = sl.parcel_id "
-            "WHERE p.idu = :idu AND sl.run_label = :run LIMIT 1"),
-            {"idu": idu, "run": run}).mappings().first()
+    row = db.execute(text(
+        "SELECT sl.bande, sl.cause FROM score_labuse sl JOIN parcels p ON p.id = sl.parcel_id "
+        "WHERE p.idu = :idu AND sl.run_label = :run LIMIT 1"),
+        {"idu": idu, "run": run}).mappings().first()
     if not row or not row.get("bande"):
         return {"idu": idu, "bande": None, "libelle": None}
     bareme, _ = charger_bareme()
@@ -1374,44 +1479,98 @@ def _periode_fenetre(fenetre) -> str | None:
     return m.group(1) if m else None
 
 
-def estimation_annonce(db, idu: str, fiche: dict) -> dict:
-    """ANNONCE-3-FIX — l'estimation du prix SELON LA NATURE de la parcelle. POINT UNIQUE lu par l'écran
-    (endpoint ci-dessous) ET par le PDF (builder) → mêmes chiffres partout, aucun recalcul divergent.
-
-    La nature vient de l'INDICATEUR déjà calculé (`parcel_residuel.taux_emprise_pct`, part bâtie BD TOPO,
-    via `_nature_parcelle`), PAS du champ `etat_bien` de la fiche servie (non peuplé). Parcelle NUE
-    (emprise bâtie < 5 %) → repère €/m² de TERRAIN NU AVEC sa source (n réel, périmètre, période —
-    `_terrain_comparateur`). Parcelle BÂTIE (ou non mesurée) → comparateur BÂTI de la fiche
-    (`prix_ancien`, inchangé). Le champ `type_comparateur` dit lequel (la note côté rendu l'explicite).
-    On NE retombe JAMAIS du terrain vers le bâti sur une parcelle nue : faute de repère, « indisponible »."""
-    nature = _nature_parcelle(db, idu)
-    if nature == "nu":
-        # Repère TERRAIN NU du secteur avec sa SOURCE (médiane + n RÉEL + période) : on réutilise le
-        # lecteur DÉCLARÉ `_terrain_section` (api/mon_secteur, même méthode que le §Marché de la fiche —
-        # `dvf_secteur_medianes`, section cadastrale), pas une relecture directe de la table ici.
+def _terrain_repere(db, idu: str) -> dict | None:
+    """Repère €/m² de TERRAIN NU du secteur (médiane + n + période) — lecteur DÉCLARÉ `_terrain_section`
+    (api/mon_secteur, même méthode que le §Marché de la fiche). L'ANCRE FONCIÈRE, servie aussi pour une
+    parcelle BÂTIE (« repère terrain nu, secteur »). None si le secteur est trop peu fourni."""
+    try:
         from ..api.mon_secteur import _terrain_section
         t = _terrain_section(db, idu)
-        if t and t.get("eur_m2"):
-            return {"nature": "nue", "type_comparateur": "terrain_nu",
-                    "median": t["eur_m2"], "n": t.get("n"),
-                    "periode": _periode_fenetre(t.get("millesime")),
-                    "perimetre": "secteur", "fiabilite": "fiable", "commune_fallback": False}
-        return {"nature": "nue", "type_comparateur": "terrain_nu", "median": None,
+    except Exception as exc:  # noqa: BLE001 — le repère foncier est un plus, jamais un bloqueur
+        log.warning("estimation %s : repère terrain nu indisponible (%s)", idu, exc)
+        return None
+    if t and t.get("eur_m2"):
+        return {"eur_m2": t["eur_m2"], "n": t.get("n"),
+                "perimetre": "secteur", "periode": _periode_fenetre(t.get("millesime"))}
+    return None
+
+
+def _surface_batie_estimee(db, idu: str, lidar: dict | None) -> dict | None:
+    """Surface de PLANCHER bâtie estimée d'une parcelle bâtie = emprise bâtie (BD TOPO, `p_model_bati`)
+    × nombre de niveaux (déduit de la hauteur LiDAR à l'égout : ~3 m/niveau, plancher 1 — même règle que
+    le moteur résiduel). Dimension comparable au €/m² DVF (surface_reelle_bati). None si pas d'emprise."""
+    emp = db.execute(text("SELECT emprise_bati_m2 FROM p_model_bati WHERE idu = :i"), {"i": idu}).scalar()
+    if not emp or float(emp) <= 0:
+        return None
+    egout = (lidar or {}).get("egout_m")
+    niveaux = max(1, round(float(egout) / 3.0)) if isinstance(egout, (int, float)) and egout else 1
+    return {"surface_m2": round(float(emp) * niveaux), "emprise_m2": round(float(emp)),
+            "niveaux": niveaux, "niveaux_estimes": not (isinstance(egout, (int, float)) and egout)}
+
+
+def _valeur_indicative(surface_m2, median, q1, q3) -> dict | None:
+    """Valeur indicative = surface × €/m², avec sa fourchette (surface × Q1 … surface × Q3). None si la
+    surface ou la médiane manquent (la ligne disparaît — jamais un chiffre à moitié calculé)."""
+    if not isinstance(surface_m2, (int, float)) or not isinstance(median, (int, float)):
+        return None
+    out = {"surface_m2": round(surface_m2), "eur_m2": round(median), "valeur_eur": round(surface_m2 * median)}
+    if isinstance(q1, (int, float)) and isinstance(q3, (int, float)):
+        out["valeur_basse"] = round(surface_m2 * q1)
+        out["valeur_haute"] = round(surface_m2 * q3)
+    return out
+
+
+def estimation_annonce(db, idu: str, fiche: dict) -> dict:
+    """ANNONCE-5 — l'estimation du prix d'une parcelle, POINT UNIQUE lu par l'écran (endpoint) ET par le
+    PDF (builder) → mêmes chiffres, mêmes comparables, même valeur indicative, aucun recalcul divergent.
+
+    La nature vient de l'indicateur déjà calculé (`_nature_parcelle` → `parcel_residuel.taux_emprise_pct`).
+    · Parcelle NUE → repère €/m² de TERRAIN NU du secteur (`_terrain_repere`) ; valeur indicative =
+      contenance × repère ; pas de tableau de comparables bâti.
+    · Parcelle BÂTIE → comparateur BÂTI UNIQUE `marche_service.comparateur_bien` (une requête → agrégat
+      + 8 ventes les plus proches + total), TYPE suivi (maison/appartement déduit du secteur) ; valeur
+      indicative = surface bâtie estimée × médiane ; ANCRE FONCIÈRE = repère terrain nu du secteur.
+    Jamais un chiffre à moitié : une surface/médiane absente supprime la valeur indicative, pas la fiche."""
+    from .. import marche_service as _msvc
+    from ..faisabilite.hauteur_lidar import hauteur_lidar_servie
+    nature = _nature_parcelle(db, idu)
+    repere_tn = _terrain_repere(db, idu)
+    if nature == "nu":
+        # la surface de la valeur indicative = celle AFFICHÉE en tuile « Surface » (surface_m2) → l'outil
+        # et le PDF montrent le MÊME m² (pas la contenance cadastrale, qui diffère de ~2 %).
+        contenance = (fiche or {}).get("surface_m2") or (fiche or {}).get("contenance_m2")
+        if repere_tn and repere_tn.get("eur_m2"):
+            med = repere_tn["eur_m2"]
+            return {"nature": "nue", "type_comparateur": "terrain_nu", "type_bien": "terrain",
+                    "median": med, "n": repere_tn.get("n"), "periode": repere_tn.get("periode"),
+                    "perimetre": repere_tn.get("perimetre"), "fiabilite": "fiable",
+                    "commune_fallback": False, "comparables": [], "n_total": repere_tn.get("n"),
+                    "valeur_indicative": _valeur_indicative(contenance, med, None, None),
+                    "repere_terrain_nu": repere_tn}
+        return {"nature": "nue", "type_comparateur": "terrain_nu", "type_bien": "terrain",
+                "median": None, "comparables": [], "repere_terrain_nu": repere_tn,
                 "note": "Pas assez de ventes de terrain nu comparables dans le secteur."}
-    pa = (fiche or {}).get("prix_ancien") or {}
-    dist = (pa.get("distribution") or {}).get("apres") or {}
+    # BÂTIE (ou non mesurée traitée comme bâtie) — comparateur bâti unique.
+    cb = _msvc.comparateur_bien(db, idu)
+    if not cb or cb.get("median") is None:
+        return {"nature": "batie" if nature in ("bati_encore", "bati_max") else "inconnue",
+                "type_comparateur": "bati", "type_bien": (cb or {}).get("type_bien") or "bati",
+                "median": None, "comparables": [], "repere_terrain_nu": repere_tn,
+                "note": "Pas assez de ventes comparables dans le secteur."}
+    lidar = hauteur_lidar_servie(db, idu)
+    surf = _surface_batie_estimee(db, idu, lidar)
     return {
         "nature": "batie" if nature in ("bati_encore", "bati_max") else "inconnue",
-        "type_comparateur": "bati",
-        "median": pa.get("median") if pa.get("median") is not None else dist.get("median"),
-        "q1": pa.get("q1") if pa.get("q1") is not None else dist.get("p25"),
-        "q3": pa.get("q3") if pa.get("q3") is not None else dist.get("p75"),
-        "n": pa.get("n") if pa.get("n") is not None else dist.get("n"),
-        "radius_m": pa.get("radius_m"),
-        "periode": pa.get("periode"),
-        "fiabilite": pa.get("fiabilite"),
-        "commune_fallback": pa.get("commune_fallback"),
-        "type_prix": pa.get("type_prix"),
+        "type_comparateur": "bati", "type_bien": cb.get("type_bien"),
+        "type_label_pluriel": cb.get("type_label_pluriel"),
+        "median": cb.get("median"), "q1": cb.get("q1"), "q3": cb.get("q3"), "n": cb.get("n"),
+        "radius_m": cb.get("radius_m"), "periode": cb.get("periode"),
+        "fiabilite": cb.get("fiabilite"), "commune_fallback": cb.get("commune_fallback"),
+        "comparables": cb.get("comparables") or [], "n_total": cb.get("n_total"),
+        "surface_batie": surf,
+        "valeur_indicative": _valeur_indicative((surf or {}).get("surface_m2"),
+                                                cb.get("median"), cb.get("q1"), cb.get("q3")),
+        "repere_terrain_nu": repere_tn,
     }
 
 
@@ -1427,6 +1586,253 @@ def radar_annonce_estimation(idu: str) -> dict:
         except ValueError:
             return {"idu": idu, "median": None, "type_comparateur": None, "note": "Parcelle inconnue."}
         return {"idu": idu, **estimation_annonce(db, idu, fiche)}
+
+
+# ── ANNONCE-5 — le RAPPORT PARCELLE complet (variante adresse, 2 pages) : POINT UNIQUE écran == PDF ──
+def _num(x) -> str | None:
+    """Nombre affiché FR court : 7.0 → « 7 », 4.5 → « 4,5 ». None → None."""
+    if not isinstance(x, (int, float)):
+        return None
+    return (f"{int(round(x))}" if float(x).is_integer() else f"{x:.1f}").replace(".", ",")
+
+
+def _assiette_alea_deduite(db, idu: str) -> int | None:
+    """Assiette constructible « aléa déduit » = surface de la parcelle en zone constructible (U/AU) MOINS
+    la part en aléa FORT (PPR interdiction / zone rouge). Calculée sur les couches servies (spatial_layers,
+    hors verrou de graphe). None si le calcul échoue (la ligne disparaît du rendu)."""
+    try:
+        row = db.execute(text(
+            "WITH p AS (SELECT geom_2975 g FROM parcels WHERE idu = :i), "
+            "cons AS (SELECT COALESCE(ST_Union(sl.geom_2975), ST_GeomFromText('POLYGON EMPTY',2975)) geom "
+            "         FROM spatial_layers sl, p WHERE sl.kind='plu_gpu_zone' AND ST_Intersects(sl.geom_2975,p.g) "
+            "           AND labuse_zone_famille(sl.subtype) IN ('U','AU')), "
+            "ppr AS (SELECT COALESCE(ST_Union(sl.geom_2975), ST_GeomFromText('POLYGON EMPTY',2975)) geom "
+            "        FROM spatial_layers sl, p WHERE sl.kind='ppr' AND sl.subtype='INTERDICTION' "
+            "          AND ST_Intersects(sl.geom_2975,p.g)) "
+            "SELECT round(ST_Area(ST_Difference(ST_Intersection(cons.geom,p.g), ppr.geom)))::int "
+            "FROM p, cons, ppr"), {"i": idu}).scalar()
+        return int(row) if row and row > 0 else None
+    except Exception as exc:  # noqa: BLE001 — géométrie/fonction absente : ligne omise, jamais un 500
+        try:
+            db.rollback()
+        except Exception:  # noqa: BLE001
+            pass
+        log.warning("assiette aléa-déduite %s indisponible (%s)", idu, exc)
+        return None
+
+
+def _regles_zone(zone: str | None, commune: str | None) -> list[dict]:
+    """Règles de la zone PLU LUES DU CALIBRAGE (`resolve_zone`) : hauteur, emprise, reculs, stationnement.
+    Chaque règle NON chiffrée (zone non calibrée) est OMISE — jamais un « à vérifier » brut imprimé."""
+    if not zone:
+        return []
+    try:
+        from ..faisabilite.zonage import resolve_zone
+        zr = resolve_zone(zone, commune)
+    except Exception:  # noqa: BLE001
+        zr = None
+    if not zr:
+        return []
+    out = []
+
+    def _recul(m, alignement, formule):
+        if alignement:
+            return "à l'alignement"
+        if isinstance(m, (int, float)):
+            suff = " ou H/2" if formule and "h/2" in str(formule).lower() else ""
+            return f"{_num(m)} m{suff}"
+        return None
+    if isinstance(zr.hf_m, (int, float)):
+        out.append({"cle": "Hauteur maximale", "valeur": f"{_num(zr.hf_m)} m"})
+    if isinstance(zr.emprise_sol_pct, (int, float)):
+        out.append({"cle": "Emprise au sol maximale", "valeur": f"{_num(zr.emprise_sol_pct)} %"})
+    rv = _recul(zr.recul_voirie_m, zr.recul_voirie_alignement, None)
+    if rv:
+        out.append({"cle": "Recul par rapport à la voie", "valeur": rv})
+    rl = _recul(zr.recul_limites_sep_m, zr.recul_limites_alignement, zr.recul_limites_formule)
+    if rl:
+        out.append({"cle": "Recul par rapport aux limites", "valeur": rl})
+    stat = getattr(zr, "stat_logement", None)
+    if isinstance(stat, str) and stat and "vérif" not in stat.lower():
+        out.append({"cle": "Stationnement", "valeur": stat})
+    return out
+
+
+def _parcelle_mesures(db, idu: str, fiche: dict) -> list[dict]:
+    """Les mesures DE LA PARCELLE face aux règles : assiette (aléa déduit), emprise bâtie, hauteurs LiDAR
+    (faîtage / égout) + date de survol, SDP restante. Chaque mesure absente est OMISE."""
+    pot = (fiche or {}).get("potentiel_transformation") or {}
+    out = []
+    ass = _assiette_alea_deduite(db, idu)
+    if ass:
+        out.append({"cle": "Assiette constructible, aléa déduit", "valeur": f"{_fmt_m2_fr(ass)}"})
+    emp = db.execute(text("SELECT emprise_bati_m2 FROM p_model_bati WHERE idu = :i"), {"i": idu}).scalar()
+    if emp and float(emp) > 0:
+        out.append({"cle": "Bâti existant, emprise", "valeur": f"{_fmt_m2_fr(round(float(emp)))}"})
+    hf, he = pot.get("hauteur_faitage_lidar_m"), pot.get("hauteur_egout_lidar_m")
+    if isinstance(hf, (int, float)) and isinstance(he, (int, float)):
+        out.append({"cle": "Hauteur mesurée, faîtage / égout", "valeur": f"{_num(hf)} m / {_num(he)} m"})
+    elif isinstance(hf, (int, float)):
+        out.append({"cle": "Hauteur mesurée, faîtage", "valeur": f"{_num(hf)} m"})
+    survol = pot.get("hauteur_survol")
+    if survol:
+        out.append({"cle": "Survol LiDAR", "valeur": str(survol)})
+    sdp = pot.get("sdp_residuelle_m2")
+    if isinstance(sdp, (int, float)):
+        suff = " (estimation simplifiée)" if pot.get("estimation_simplifiee") else ""
+        out.append({"cle": "SDP restante estimée", "valeur": f"{_fmt_m2_fr(round(sdp))}{suff}"})
+    return out
+
+
+def _fmt_m2_fr(m2) -> str:
+    """« 1 290 m² » (groupage FR par espace)."""
+    return f"{int(round(m2)):,}".replace(",", " ") + " m²"
+
+
+_HAZARDS = (("inondation", "Inondation"), ("mouvement", "Mouvement de terrain"),
+            ("littoral", "Littoral / submersion"), ("submersion", "Littoral / submersion"),
+            ("volcan", "Volcanique"), ("incendie", "Feux de forêt"), ("feux", "Feux de forêt"),
+            ("houle", "Houle / recul du trait de côte"))
+
+
+def _risques_rows(fiche: dict, commune: str | None) -> list[dict]:
+    """Table des risques : aléa · niveau · document · ce que ça implique — TIRÉE de la fiche (bloc aléas),
+    jamais inventée. L'implication est la phrase SERVIE (DEAL) ; le document assemble PPR + millésime +
+    commune. Une entrée sans aléa identifiable est omise."""
+    aleas = (fiche or {}).get("aleas") or {}
+    rows = []
+    for e in (aleas.get("liste") or []):
+        txt = f"{e.get('nature') or ''} {e.get('libelle') or ''}".lower()
+        noms = []
+        for frag, lab in _HAZARDS:
+            if frag in txt and lab not in noms:
+                noms.append(lab)
+        alea = ", ".join(noms) or (e.get("nature") or None)
+        if not alea:
+            continue
+        nat = (e.get("nature") or "").lower()
+        niv = e.get("niveau")
+        if niv:
+            niveau = str(niv).capitalize()
+        elif "rouge" in nat:
+            niveau = "Zone rouge"
+        elif "bleue" in nat or "bleu" in nat:
+            niveau = "Zone bleue"
+        else:
+            niveau = "Interdiction" if e.get("redhibitoire") else "Signalé"
+        ppr = e.get("ppr") or []
+        if ppr:
+            doc = ppr[0].get("document") or "PPR"
+            an = (str(ppr[0].get("approbation") or ""))[:4]
+            document = f"{doc} {commune}".strip() + (f", {an}" if an else "")
+        else:
+            document = e.get("source")
+        lib = e.get("libelle") or ""
+        implique = lib.split("—")[-1].strip() if "—" in lib else lib.strip()
+        implique = (implique[0].upper() + implique[1:]) if implique else None
+        rows.append({"alea": alea, "niveau": niveau, "document": document, "implique": implique})
+    return rows
+
+
+def _classement_phrase(bande: str | None, libelle: str | None, nature: str) -> str | None:
+    """La phrase qui EXPLIQUE le classement, dans le vocabulaire gravé (pas un chiffre nu). None si NC."""
+    if not bande:
+        return None
+    tete = f"Classement {bande} · {libelle}" if libelle and libelle != bande else f"Classement {bande}"
+    corps = {
+        "A": "la parcelle réunit un fort potentiel constructible et peu de contraintes.",
+        "B": "un potentiel réel, à confirmer sur les contraintes de la zone.",
+        "C": "le potentiel existe, mais plusieurs conditions restent à lever avant une opération.",
+        "D": ("le bâti existant consomme presque tout ce que la zone autorise. La marge restante tient "
+              "dans une extension, pas dans une opération."),
+        "0": "la zone ou les contraintes excluent une opération sur cette parcelle.",
+    }.get(str(bande))
+    if not corps:
+        return f"{tete} : analyse incomplète — une donnée réglementaire manque pour classer la parcelle."
+    return f"{tete} : {corps}"
+
+
+def _a_verifier(fiche: dict, nature: str, zone: str | None) -> list[str]:
+    """« Ce qu'il reste à vérifier » — AU PLUS 3 points, DÉRIVÉS des données (aléa présent, bâti existant,
+    état inconnu / viabilisation). Jamais un conseil générique hors données."""
+    pts = []
+    aleas = (fiche or {}).get("aleas") or {}
+    batie = nature in ("bati_encore", "bati_max")
+    if batie:
+        pts.append("L'état du bâti et les travaux récents, non connus du modèle.")
+        pts.append("La conformité du bâti existant (permis, déclarations) avant tout projet d'extension.")
+    else:
+        pts.append("La desserte et la viabilisation du terrain (eau, voirie, assainissement).")
+    if (aleas.get("n") or 0) > 0:
+        z = f" de la zone {zone}" if zone else ""
+        pts.append(f"Le règlement écrit{z} pour les prescriptions du PPR (étude géotechnique, eaux pluviales).")
+    elif not batie:
+        pts.append("Les contraintes d'accès et de pente sur le terrain.")
+    return pts[:3]
+
+
+def rapport_parcelle(db, idu: str, fiche: dict | None = None) -> dict:
+    """ANNONCE-5 — le rapport PARCELLE complet (variante adresse, 2 pages du PDF) : POINT UNIQUE lu par
+    l'écran ET par le PDF → aucune divergence. Compose la fiche servie, l'estimation (comparables + valeur
+    indicative), le foncier (règles calibrées face aux mesures de la parcelle), le classement (run servi +
+    phrase gravée), les risques et le marché de la commune. Aucun recalcul de prix ici."""
+    from ..api.app import parcel_fiche
+    if fiche is None:
+        fiche = parcel_fiche(idu, db=db)
+    rp = (fiche or {}).get("reglement_plu") or {}
+    zones = rp.get("zones") or []
+    zone = (zones[0] or {}).get("zone") if zones and isinstance(zones[0], dict) else None
+    commune = (fiche or {}).get("commune")
+    nature = _nature_parcelle(db, idu)
+    est = estimation_annonce(db, idu, fiche)
+    try:
+        cls = _classement_bande(db, idu)
+    except Exception:  # noqa: BLE001
+        cls = {}
+    try:
+        from ..api.app import parcel_exposition
+        expo = (parcel_exposition(idu, db=db) or {}).get("orientation")
+    except Exception:  # noqa: BLE001 — l'exposition est une tuile « plus », jamais un bloqueur
+        expo = None
+    type_bien = est.get("type_bien")
+    if nature == "nu":
+        nature_label = "Parcelle nue"
+    else:
+        suff = {"maison": ", maison", "appartement": ", appartement"}.get(type_bien or "", "")
+        nature_label = f"Parcelle bâtie{suff}"
+    from ..faisabilite.marche_commune import marche_commune_bloc
+    try:
+        marche = marche_commune_bloc(db, commune) if commune else None
+    except Exception as exc:  # noqa: BLE001
+        log.warning("rapport parcelle %s : marché commune indisponible (%s)", idu, exc)
+        marche = None
+    return {
+        "idu": idu, "adresse": (fiche or {}).get("adresse"), "commune": commune,
+        "zone": zone, "surface_m2": (fiche or {}).get("surface_m2"), "nature_label": nature_label,
+        "exposition": expo,
+        "estimation": est,
+        "classement": {"bande": cls.get("bande"), "libelle": cls.get("libelle"),
+                       "phrase": _classement_phrase(cls.get("bande"), cls.get("libelle"), nature)},
+        "foncier": {"zone": zone, "commune": commune,
+                    "regles": _regles_zone(zone, commune),
+                    "parcelle": _parcelle_mesures(db, idu, fiche)},
+        "risques": _risques_rows(fiche, commune),
+        "marche": marche,
+        "a_verifier": _a_verifier(fiche, nature, zone),
+    }
+
+
+@router.get("/radar/annonce/rapport/{idu}")
+def radar_annonce_rapport(idu: str) -> dict:
+    """ANNONCE-5 — le rapport PARCELLE complet (adresse) servi à l'écran ET au PDF (même point).
+    Lecture seule de la fiche servie. Parcelle inconnue → structure minimale, jamais un 500."""
+    from ..api.app import parcel_fiche
+    with session_scope() as db:
+        try:
+            fiche = parcel_fiche(idu, db=db)
+        except ValueError:
+            return {"idu": idu, "introuvable": True}
+        return rapport_parcelle(db, idu, fiche)
 
 
 @router.post("/admin/radar/depot-agence/publier")

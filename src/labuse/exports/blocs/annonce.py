@@ -1,269 +1,470 @@
-"""ANNONCE-3 — bloc « Analyse d'annonce » : deux variantes, MIROIR EXACT de l'outil « Analyser une
-annonce » (frontend/src/components/outils/AnalyserAnnonce.tsx). Aucun recalcul : on rend les MÊMES
-sorties d'endpoints que l'écran (fiche / exposition / classement pour la parcelle ; le rapport de
-`radar_annonce_analyser` + `commune_contexte` pour la commune). Le builder appelle les endpoints et
-passe des dicts purs ; ce module ne fait que de la mise en forme.
+"""ANNONCE-5 — bloc « Analyse d'annonce », REFONTE selon la maquette validée. Deux variantes, MIROIR
+EXACT de l'outil « Analyser une annonce » : aucun recalcul ici, de la mise en forme. Le builder appelle
+les POINTS UNIQUES (`pige.api.rapport_parcelle` / `rapport_lien`) et passe des dicts purs ; l'écran lit
+les MÊMES → le PDF et l'outil ne divergent jamais.
 
- · variante PARCELLE (entrée adresse) : les 6 tuiles (surface, zone PLU, SDP restante, classement
-   LABUSE, risques, exposition) + « Estimation du prix » (fourchette, fiabilité, N ventes · rayon ·
-   période) + « Le foncier » (zone, hauteur réglementaire, SDP restante). Le plan de situation
-   (contour parcelle) est posé AVANT par le builder (_plan_situation_html, même composant que le Dossier).
- · variante COMMUNE (entrée lien) : « Ce que dit l'annonce » (champs PRÉSENTS seulement, pilotés par
-   type comme l'écran), « Prix face au marché » (fiabilité LIMITÉE + phrase « localisez la parcelle… »),
-   « La commune » (ventes, prix médian DVF, PLU, aléas).
+ · variante PARCELLE (adresse), 2 pages : en-tête (adresse · IDU · zone · surface · nature) ; deux cartes
+   (ortho + cadastre/zonage/aléas) ; 6 tuiles ; « Estimation du prix » (€/m², fourchette, fiabilité,
+   source) + « Valeur indicative du bien » (surface × €/m², fourchette, repère terrain nu) ; tableau des
+   8 ventes les plus proches. Page 2 : « Le foncier » (règles de la zone face aux mesures de la parcelle)
+   + phrase de classement ; « Risques et contraintes » ; « Le marché » (médianes + graphique 5 ans) ;
+   « Ce qu'il reste à vérifier ».
+ · variante LIEN (commune), 1 page : « Ce que dit l'annonce » (+ extrait si en base) ; « Prix face au
+   marché » (lecture bâti + lecture foncière CHIFFRÉE) ; « La commune » (marché + PLU + aléas + permis) ;
+   encart « rapport complet ».
 
 Règle « jamais un champ vide imprimé » : une valeur absente ne s'imprime pas (ni « — » ni case vide) ;
-les champs non applicables au type restent masqués, comme à l'écran. Le classement LABUSE est servi
-par le builder depuis le run SERVI avec le vocabulaire gravé (radar_annonce_classement)."""
+une LIGNE sans valeur disparaît. Formats français ; aucun code brut ; aucun texte coupé."""
 from __future__ import annotations
 
 from ..registre_fmt import groupe
-from ..rendu import chip_span, esc, ligne_kv, note, section, table_kv, verdict
+from ..rendu import esc, esc_noms
 
 
-# ── formats MIROIR de l'écran (frontend/src/lib/format.ts) pour une parité visuelle stricte. ──
-def _fmt_int(n) -> str | None:
-    """fmtInt : entier groupé fr (« 431 663 »). None → None (jamais un « — » imprimé)."""
+# ── formats FR (miroir de frontend/src/lib/format.ts) ────────────────────────────────────────────
+def _int(n) -> str | None:
     return groupe(round(n)) if isinstance(n, (int, float)) else None
 
 
-def _fmt_m2(m2) -> str | None:
-    """fmtM2 : « 1 245 m² », « 2,50 ha » au-delà d'un hectare. None → None."""
+def _m2(m2) -> str | None:
     if not isinstance(m2, (int, float)):
         return None
     return f"{groupe(m2 / 10_000, 2)} ha" if m2 >= 10_000 else f"{groupe(round(m2))} m²"
 
 
-def _fiab(fiabilite: str | None, commune_fallback) -> tuple[str, str]:
-    """Miroir de `fiab()` (AnalyserAnnonce.tsx) : (niveau, classe de chip). ANNONCE-3-FIX — trois
-    niveaux SEULEMENT, capitalisés (l'étiquette « Fiabilité » est portée à côté) : « Élevée » (repère
-    fiable au secteur), « Moyenne » (repère indicatif), « Limitée » (repli commune)."""
-    if commune_fallback:
-        return ("Limitée", "p")                 # chip ambre
-    if fiabilite == "fiable":
-        return ("Élevée", "s")                   # chip menthe
-    return ("Moyenne", "p")
+def _eur(n) -> str | None:
+    return f"{groupe(round(n))} €" if isinstance(n, (int, float)) else None
 
 
-def _fmt_periode(p) -> str | None:
-    """Miroir de `fmtPeriode()` : [a, b] → « a » / « a–b » ; scalaire → str ; vide → None."""
+def _eur_m2(n) -> str | None:
+    return f"{groupe(round(n))} €/m²" if isinstance(n, (int, float)) else None
+
+
+def _pct_signe(n) -> str | None:
+    if not isinstance(n, (int, float)):
+        return None
+    s = f"{n:.1f}".replace(".", ",").rstrip("0").rstrip(",")
+    return (f"+{s} %" if n > 0 else f"{s} %")
+
+
+def _periode(p) -> str | None:
     if p is None or p == [] or p == "":
         return None
     if isinstance(p, (list, tuple)):
         if not p:
             return None
-        a = p[0]
-        b = p[-1] if len(p) > 1 else p[0]
+        a, b = p[0], p[-1]
         return str(a) if a == b else f"{a}–{b}"
     return str(p)
 
 
-# ═══════════════════════════════════════ VARIANTE PARCELLE ═══════════════════════════════════════
-def rendu_parcelle(fiche: dict, expo: dict | None, classement: dict | None,
-                   estimation: dict | None = None) -> str:
-    f = fiche or {}
-    rp = f.get("reglement_plu") or {}
-    zones = rp.get("zones") or []
-    zone = (zones[0] or {}).get("zone") if zones and isinstance(zones[0], dict) else None
-    pot = f.get("potentiel_transformation") or {}
-    sdp = pot.get("sdp_residuelle_m2")
-    # classement : bande + libellé gravé (le builder a interrogé radar_annonce_classement sur le run servi).
-    cls = classement or {}
-    bande, libelle = cls.get("bande"), cls.get("libelle")
-    classement_txt = (f"{bande} · {libelle}" if bande and libelle and libelle != bande
-                      else bande if bande else None)
-    n_aleas = (f.get("aleas") or {}).get("n")
-    orientation = (expo or {}).get("orientation")
-
-    # ── les 6 tuiles — une tuile dont la valeur est absente N'EST PAS imprimée (jamais une case vide). ──
-    tuiles = [
-        ("Surface", _fmt_m2(f.get("surface_m2"))),
-        ("Zone PLU", esc(zone) if zone else None),
-        ("SDP restante", _fmt_m2(round(sdp)) if isinstance(sdp, (int, float)) else None),
-        ("Classement LABUSE", esc(classement_txt) if classement_txt else None),
-        # « Risques » : le compte d'aléas est une donnée présente (0 → « aucun aléa »), pas un vide.
-        ("Risques", ("aucun aléa" if n_aleas == 0 else f"{n_aleas} aléa{'s' if n_aleas > 1 else ''}")
-         if isinstance(n_aleas, int) else None),
-        ("Exposition", esc(orientation) if orientation else None),
-    ]
-    cells = "".join(f'<div class="tile"><div class="v">{v}</div><div class="l">{esc(k)}</div></div>'
-                    for k, v in tuiles if v)
-    corps = f'<div class="cover-tiles">{cells}</div>'
-
-    corps += _estimation_prix(estimation)
-    corps += _le_foncier(zone, pot, sdp)
-    return section("La parcelle", corps)
+def _fiab_niveau(fiabilite, commune_fallback=False) -> tuple[str, str]:
+    """(niveau affiché, classe de chip). Trois niveaux : Élevée (menthe) / Moyenne / Limitée (ambre)."""
+    if commune_fallback:
+        return ("Limitée", "p")
+    if fiabilite == "fiable":
+        return ("Élevée", "s")
+    if fiabilite == "limitee":
+        return ("Limitée", "p")
+    return ("Moyenne", "p")
 
 
-def _estimation_prix(est) -> str:
-    """ANNONCE-3-FIX — « Estimation du prix » SELON LA NATURE de la parcelle (point unique
-    `_estimation_annonce` lu aussi par l'écran → mêmes chiffres) : parcelle BÂTIE → comparateur bâti
-    (médiane + fourchette + N · rayon · période) ; parcelle NUE → repère €/m² de TERRAIN NU (médiane
-    du secteur/commune). La note DIT lequel est utilisé. Jamais un champ vide : ce qui est absent est omis."""
-    e = est if isinstance(est, dict) else {}
-    terrain = e.get("type_comparateur") == "terrain_nu"
-    median = e.get("median")
-    if not isinstance(median, (int, float)):
-        motif = e.get("note") or ("Indisponible — pas assez de ventes de terrain nu comparables dans le secteur."
-                                  if terrain else "Indisponible — pas assez de ventes comparables dans le secteur.")
-        return section("Estimation du prix", note(motif))
-
-    mot, chip_cls = _fiab(e.get("fiabilite"), e.get("commune_fallback"))
-    p25, p75 = e.get("q1"), e.get("q3")
-    petit = (f"de {_fmt_int(p25)} à {_fmt_int(p75)} €/m²"
-             if isinstance(p25, (int, float)) and isinstance(p75, (int, float)) else "")
-    corps = verdict(f"{_fmt_int(median)} €/m²", ton="" if chip_cls == "s" else "neutral", petit_html=petit)
-    lignes = [ligne_kv("Fiabilité", chip_span(chip_cls, mot))]   # étiquette « Fiabilité » + niveau seul
-    # ANNONCE-3-FIX-2 — le TERRAIN NU affiche sa source COMME le bâti : n réel, périmètre (secteur/commune)
-    # ou rayon, période (chaque ligne absente est omise, jamais un vide).
-    n_ventes, periode = e.get("n"), _fmt_periode(e.get("periode"))
-    if isinstance(n_ventes, (int, float)):
-        lignes.append(ligne_kv("Ventes de terrain" if terrain else "Ventes comparables", esc(_fmt_int(n_ventes))))
-    if terrain:
-        perim = e.get("perimetre")
-        if perim:
-            lignes.append(ligne_kv("Périmètre", "secteur cadastral" if perim == "secteur" else "commune"))
-    elif isinstance(e.get("radius_m"), (int, float)):
-        lignes.append(ligne_kv("Rayon", f"{_fmt_int(e['radius_m'])} m"))
-    if periode:
-        lignes.append(ligne_kv("Période", esc(periode)))
-    corps += table_kv(lignes)
-    if terrain:
-        note_txt = "Parcelle nue — comparée aux ventes de terrain nu (repère €/m² de terrain)."
-    else:
-        type_prix = e.get("type_prix")
-        note_txt = (f"Parcelle bâtie — comparée au bâti ancien (prix observés au m²"
-                    + (f", {type_prix}" if type_prix else "") + ") autour de la parcelle."
-                    + (" Repère élargi à la commune (secteur trop peu fourni)." if e.get("commune_fallback") else "")
-                    + " La valeur d'un bien dépend de sa surface et de son état, non connus du modèle.")
-    corps += note(note_txt)
-    return section("Estimation du prix", corps)
+def _chip(classe: str, libelle: str) -> str:
+    cls = {"s": "chip s", "p": "chip p"}.get(classe, "chip")
+    return f'<span class="{cls}">{esc(libelle)}</span>'
 
 
-def _le_foncier(zone: str | None, pot: dict, sdp) -> str:
-    """« Le foncier » — zone, hauteur réglementaire, SDP restante (mêmes champs que l'écran). Chaque
-    ligne absente est omise ; à défaut de SDP, le libellé servi (sinon le repli de l'écran)."""
-    lignes = []
-    if zone:
-        lignes.append(ligne_kv("Zone", f"<b>{esc(zone)}</b>"))
-    h = pot.get("hauteur_regle_m")
-    if isinstance(h, (int, float)):
-        lignes.append(ligne_kv("Hauteur réglementaire", f"{_fmt_int(h)} m"))
-    if isinstance(sdp, (int, float)):
-        suff = " (estimation simplifiée)" if pot.get("estimation_simplifiee") else ""
-        lignes.append(ligne_kv("SDP restante estimée", f"{_fmt_m2(round(sdp))}{esc(suff)}"))
-    elif pot.get("libelle"):
-        lignes.append(ligne_kv("Potentiel", esc(pot.get("libelle"))))
-    if not lignes:
+def _kv(pairs: list[tuple[str, str | None]], *, titre: str | None = None) -> str:
+    """Table clé/valeur : chaque ligne dont la valeur est None DISPARAÎT. `pairs` = [(clé, valeur_html)]."""
+    rows = "".join(f'<tr><td class="k">{esc(k)}</td><td class="v">{v}</td></tr>'
+                   for k, v in pairs if v is not None and v != "")
+    if not rows:
         return ""
-    return section("Le foncier", table_kv(lignes))
+    head = f'<div class="kicker">{esc(titre)}</div>' if titre else ""
+    return f'{head}<table class="akv">{rows}</table>'
 
 
-# ═══════════════════════════════════════ VARIANTE COMMUNE ════════════════════════════════════════
+# ═══════════════════════════════════════ EN-TÊTE COMMUN ══════════════════════════════════════════
+def entete(titre_html: str, sous_html: str, ref_droite: str, *, sous_bar: str | None = None) -> str:
+    """Bandeau haut (LABUSE · Analyse d'annonce … n° · date) + titre + sous-titre, façon maquette."""
+    barre = (f'<div class="abar"><span class="abrand">LABUSE</span>'
+             f'<span class="akind">Analyse d\'annonce{(" · " + esc(sous_bar)) if sous_bar else ""}</span>'
+             f'<span class="aref">{esc(ref_droite)}</span></div>')
+    return (barre + f'<h1 class="atitre">{esc_noms(titre_html)}</h1>'
+            + (f'<p class="asub">{sous_html}</p>' if sous_html else ""))
+
+
+# ═══════════════════════════════════════ VARIANTE PARCELLE ═══════════════════════════════════════
+def rendu_parcelle(rapport: dict, *, plan_ortho_html: str = "", plan_zonage_html: str = "") -> str:
+    r = rapport or {}
+    est = r.get("estimation") or {}
+    # ── sous-titre : IDU · Zone · Surface · Nature ──
+    sous_bits = [b for b in (
+        r.get("idu"),
+        f"Zone {r['zone']}" if r.get("zone") else None,
+        _m2(r.get("surface_m2")),
+        r.get("nature_label"),
+    ) if b]
+    sous = " · ".join(esc(x) for x in sous_bits)
+    titre = r.get("adresse") or (f"{r.get('commune')}" if r.get("commune") else r.get("idu") or "Parcelle")
+    ref_d = r.get("_ref_droite") or ""
+    corps = entete(titre, sous, ref_d)
+    # ── deux cartes côte à côte ──
+    corps += f'<div class="amaps">{plan_ortho_html}{plan_zonage_html}</div>'
+    # ── 6 tuiles ──
+    corps += _tuiles(r, est)
+    # ── estimation + valeur indicative ──
+    corps += _estimation(est)
+    # ── tableau des comparables ──
+    corps += _comparables(est)
+    # ── page 2 ──
+    corps += '<div class="apage2">'
+    corps += _foncier(r)
+    corps += _risques(r.get("risques") or [])
+    corps += _marche(r.get("marche") or {}, titre_lieu=r.get("commune"))
+    corps += _a_verifier(r.get("a_verifier") or [])
+    corps += "</div>"
+    return corps
+
+
+def _tuiles(r: dict, est: dict) -> str:
+    cls = r.get("classement") or {}
+    bande, lib = cls.get("bande"), cls.get("libelle")
+    classement = (f"{bande} · {lib}" if bande and lib and lib != bande else bande) if bande else None
+    risq = r.get("risques") or []
+    n_al = len(risq)
+    expo = r.get("exposition")
+    tuiles = [
+        (_m2(r.get("surface_m2")), "Surface"),
+        (esc(r["zone"]) if r.get("zone") else None, "Zone PLU"),
+        (_sdp_tuile(r), "SDP restante"),
+        (esc(classement) if classement else None, "Classement"),
+        (("aucun aléa" if n_al == 0 else f"{n_al} aléa" + ("s" if n_al > 1 else "")), "Risques"),
+        (esc(expo) if expo else None, "Exposition"),
+    ]
+    cells = "".join(f'<div class="tile"><div class="v">{v}</div><div class="l">{esc(l)}</div></div>'
+                    for v, l in tuiles if v)
+    return f'<div class="atiles">{cells}</div>'
+
+
+def _sdp_tuile(r: dict) -> str | None:
+    for row in ((r.get("foncier") or {}).get("parcelle") or []):
+        if row.get("cle", "").startswith("SDP restante"):
+            return esc(row.get("valeur"))
+    return None
+
+
+def _estimation(est: dict) -> str:
+    median = est.get("median")
+    terrain = est.get("type_comparateur") == "terrain_nu"
+    if not isinstance(median, (int, float)):
+        motif = est.get("note") or "Estimation indisponible — échantillon de ventes insuffisant."
+        return ('<h2>Estimation du prix</h2>'
+                f'<p class="anote">{esc(motif)}</p>')
+    niv, chip_cls = _fiab_niveau(est.get("fiabilite"), est.get("commune_fallback"))
+    q1, q3 = est.get("q1"), est.get("q3")
+    fourch = (f"de {_int(q1)} à {_int(q3)} €/m²" if isinstance(q1, (int, float)) and isinstance(q3, (int, float))
+              else None)
+    # source : N ventes · rayon/secteur · période
+    src_bits = []
+    n = est.get("n")
+    if isinstance(n, (int, float)):
+        src_bits.append(f"{_int(n)} vente" + ("s" if n != 1 else ""))
+    if terrain:
+        if est.get("perimetre"):
+            src_bits.append("secteur cadastral" if est["perimetre"] == "secteur" else "commune")
+    else:
+        if isinstance(est.get("radius_m"), (int, float)):
+            src_bits.append(f"rayon {_int(est['radius_m'])} m")
+        elif est.get("commune_fallback"):
+            src_bits.append("commune")
+    per = _periode(est.get("periode"))
+    if per:
+        src_bits.append(per)
+    source = " · ".join(src_bits)
+    # note
+    if terrain:
+        note = "Terrain nu — comparé aux ventes de terrain nu du secteur (repère €/m² de terrain)."
+    else:
+        pl = est.get("type_label_pluriel") or "biens bâtis anciens"
+        note = (f"{(est.get('type_bien') or 'Bâti').capitalize()} — comparé aux ventes de <b>{esc(pl)}</b> "
+                "autour de la parcelle. État et prestations du bien non connus du modèle.")
+    gauche = (f'<div class="estbig">{_int(median)} €/m²'
+              + (f' <span class="estrange">{esc(fourch)}</span>' if fourch else "") + "</div>"
+              + f'<div class="estmeta">{_chip(chip_cls, "Fiabilité " + niv)}'
+              + (f' <span class="muted">{esc(source)}</span>' if source else "") + "</div>"
+              + f'<p class="anote">{note}</p>')
+    droite = _valeur_indicative(est)
+    return ('<h2>Estimation du prix</h2>'
+            f'<div class="estgrid"><div class="estleft">{gauche}</div>'
+            f'<div class="estright">{droite}</div></div>')
+
+
+def _valeur_indicative(est: dict) -> str:
+    vi = est.get("valeur_indicative") or {}
+    terrain = est.get("type_comparateur") == "terrain_nu"
+    rows = []
+    surf = vi.get("surface_m2")
+    val = vi.get("valeur_eur")
+    if isinstance(surf, (int, float)) and isinstance(val, (int, float)):
+        label = "Terrain" if terrain else (est.get("type_bien") or "Bâti").capitalize()
+        em = est.get("surface_batie") or {}
+        note_surf = " estimé" if (not terrain and em.get("niveaux_estimes")) else ""
+        libelle = f"{label}{note_surf} {_m2(surf)} × {_eur_m2(vi.get('eur_m2'))}"
+        rows.append((libelle, _eur(val)))
+    vb, vh = vi.get("valeur_basse"), vi.get("valeur_haute")
+    if isinstance(vb, (int, float)) and isinstance(vh, (int, float)):
+        rows.append(("Fourchette", f"{_int(vb)} – {_int(vh)} €"))
+    # repère terrain nu (ancre foncière), montré aussi pour un bâti
+    rtn = est.get("repere_terrain_nu") or {}
+    if not terrain and isinstance(rtn.get("eur_m2"), (int, float)):
+        suff = f" · {_int(rtn['n'])} ventes" if isinstance(rtn.get("n"), (int, float)) else ""
+        rows.append(("Repère terrain nu, secteur", f"{_eur_m2(rtn['eur_m2'])}{esc(suff)}"))
+    if not rows:
+        return ""
+    body = "".join(f'<tr><td class="k">{esc(k)}</td><td class="v">{v}</td></tr>' for k, v in rows)
+    return (f'<div class="vibox"><div class="kicker">Valeur indicative du bien</div>'
+            f'<table class="akv vikv">{body}</table></div>')
+
+
+def _comparables(est: dict) -> str:
+    comps = est.get("comparables") or []
+    if not comps:
+        return ""
+    head = ('<tr><th>Date</th><th>Type</th><th class="r">Surface</th><th class="r">Prix</th>'
+            '<th class="r">€/m²</th><th class="r">Distance</th></tr>')
+    rows = ""
+    for c in comps:
+        rows += ('<tr>'
+                 f'<td>{esc(c.get("date") or "")}</td>'
+                 f'<td>{esc(c.get("type") or "")}</td>'
+                 f'<td class="r">{esc(_m2(c.get("surface_m2")) or "")}</td>'
+                 f'<td class="r">{esc(_eur(c.get("prix_eur")) or "")}</td>'
+                 f'<td class="r">{esc(_int(c.get("prix_m2")) or "")}</td>'
+                 f'<td class="r">{esc((_int(c.get("distance_m")) + " m") if isinstance(c.get("distance_m"), (int, float)) else "")}</td>'
+                 '</tr>')
+    n_total = est.get("n_total") or len(comps)
+    autres = max(0, int(n_total) - len(comps))
+    pl = est.get("type_label_pluriel") or "biens"
+    per = _periode(est.get("periode"))
+    foot = ""
+    if autres > 0:
+        foot = (f"{_int(autres)} autre" + ("s" if autres > 1 else "") + " vente"
+                + ("s" if autres > 1 else "") + " dans le rayon entrent dans le calcul. ")
+    foot += f"Source : DVF, ventes de {esc(pl)}" + (f", {esc(per)}" if per else "") + "."
+    return ('<h2>Les 8 ventes les plus proches retenues</h2>'
+            f'<table class="acomp">{head}{rows}</table>'
+            f'<p class="anote">{foot}</p>')
+
+
+def _foncier(r: dict) -> str:
+    f = r.get("foncier") or {}
+    regles = f.get("regles") or []
+    parcelle = f.get("parcelle") or []
+    if not regles and not parcelle:
+        return ""
+    zone, commune = f.get("zone"), f.get("commune")
+    t_reg = "Règles de la zone" + (f" {zone}" if zone else "") + (f" · PLU de {commune}" if commune else "")
+    gauche = _kv([(x["cle"], esc(x["valeur"])) for x in regles], titre=t_reg)
+    droite = _kv([(x["cle"], esc(x["valeur"])) for x in parcelle], titre="Sur cette parcelle")
+    phrase = (r.get("classement") or {}).get("phrase")
+    note = f'<p class="anote">{esc(phrase)}</p>' if phrase else ""
+    return ('<h2>Le foncier</h2>'
+            f'<div class="fongrid"><div>{gauche}</div><div>{droite}</div></div>{note}')
+
+
+def _risques(rows: list[dict]) -> str:
+    if not rows:
+        return ""
+    head = '<tr><th>Aléa</th><th>Niveau</th><th>Document</th><th>Ce que ça implique</th></tr>'
+    body = ""
+    for x in rows:
+        body += ('<tr>'
+                 f'<td>{esc(x.get("alea") or "")}</td>'
+                 f'<td>{esc(x.get("niveau") or "")}</td>'
+                 f'<td>{esc_noms(x.get("document") or "")}</td>'
+                 f'<td>{esc(x.get("implique") or "")}</td>'
+                 '</tr>')
+    return ('<h2>Risques et contraintes</h2>'
+            f'<table class="arisq">{head}{body}</table>')
+
+
+def _marche(m: dict, *, titre_lieu: str | None = None) -> str:
+    if not m:
+        return ""
+    lignes = [
+        ("Ventes de maisons, 12 mois", _int(m.get("ventes_maison_12m"))),
+        ("Prix médian maison", _eur_m2(m.get("median_maison_eur_m2"))),
+        ("Prix médian appartement", _eur_m2(m.get("median_appartement_eur_m2"))),
+        ("Terrain nu, médiane", _eur_m2(m.get("median_terrain_eur_m2"))),
+        ("Évolution maisons sur 12 mois", _pct_signe(m.get("evolution_maison_12m_pct"))),
+    ]
+    gauche = _kv(lignes)
+    droite = _bar_chart(m.get("serie_maison_5a") or [])
+    if not gauche and not droite:
+        return ""
+    titre = "Le marché" + (f" · {titre_lieu}" if titre_lieu else "")
+    return (f'<h2>{esc(titre)}</h2>'
+            f'<div class="mkgrid"><div>{gauche}</div><div>{droite}</div></div>')
+
+
+def _bar_chart(serie: list[dict]) -> str:
+    """Graphique 5 ans (médiane maison) en TABLE (hauteurs en mm) — fiable sous WeasyPrint, contrairement
+    à un flex en pourcentage. Dernière barre en menthe foncée. Omis si moins de 2 points."""
+    pts = [(s.get("annee"), s.get("median")) for s in serie if isinstance(s.get("median"), (int, float))]
+    if len(pts) < 2:
+        return ""
+    vmax = max(v for _, v in pts)
+    vmin = min(v for _, v in pts)
+    span = max(1, vmax - vmin)
+    vals = "".join(f'<td class="bv">{esc(_int(v))}</td>' for _, v in pts)
+    bars = ""
+    for i, (an, v) in enumerate(pts):
+        h = 6 + round((v - vmin) / span * 20)   # 6 → 26 mm (lisible même valeurs proches)
+        last = " last" if i == len(pts) - 1 else ""
+        bars += f'<td><div class="bb{last}" style="height:{h}mm"></div></td>'
+    years = "".join(f'<td class="bl">{esc(str(an))}</td>' for an, _ in pts)
+    return (f'<div class="chart"><div class="kicker">Prix médian maison, €/m²</div>'
+            f'<table class="barchart"><tr class="rvals">{vals}</tr>'
+            f'<tr class="rbars">{bars}</tr><tr class="ryears">{years}</tr></table></div>')
+
+
+def _a_verifier(points: list[str]) -> str:
+    pts = [p for p in points if p][:3]
+    if not pts:
+        return ""
+    items = "".join(f"<li>{esc(p)}</li>" for p in pts)
+    return f'<h2>Ce qu\'il reste à vérifier</h2><ul class="averif">{items}</ul>'
+
+
+# ═══════════════════════════════════════ VARIANTE LIEN ═══════════════════════════════════════════
 _NP = "non précisé dans l'annonce"
 
 
-def rendu_commune(annonce: dict, marche: dict | None, contexte: dict | None) -> str:
-    a = annonce or {}
-    m = marche if isinstance(marche, dict) else None
-    c = contexte or {}
-    return (_ce_que_dit(a) + _prix_face_marche(m) + _la_commune(a.get("commune"), m, c))
-
-
-def _cap(s):
-    return s[0].upper() + s[1:] if isinstance(s, str) and s else None
+def rendu_lien(rapport: dict, *, plan_commune_html: str = "", releve_html: str = "") -> str:
+    r = rapport or {}
+    a = r.get("annonce") or {}
+    typ = a.get("type")
+    pieces = a.get("pieces")
+    commune = a.get("commune")
+    titre = (typ[0].upper() + typ[1:]) if typ else "Annonce"
+    if isinstance(pieces, int) and typ in ("maison", "appartement"):
+        titre += f" {pieces} pièces"
+    if commune:
+        titre += f" · {commune}"
+    corps = entete(titre, releve_html, r.get("_ref_droite") or "")
+    # ── ligne 1 : ce que dit l'annonce (gauche) + carte commune (droite) ──
+    corps += (f'<div class="liengrid"><div>{_ce_que_dit(a)}</div>'
+              f'<div class="lienmap">{plan_commune_html}</div></div>')
+    # ── prix face au marché : deux lectures ──
+    corps += _prix_face_marche(r.get("lectures") or {}, a)
+    # ── la commune ──
+    corps += _la_commune(r.get("commune") or {}, commune)
+    # ── encart ──
+    corps += _encart()
+    return corps
 
 
 def _ce_que_dit(a: dict) -> str:
-    """« Ce que dit l'annonce » — champs PILOTÉS PAR TYPE, à l'identique de l'écran : terrain (surface du
-    terrain), maison/appart (surface, pièces, + terrain pour la maison), type inconnu (présents seulement).
-    « non précisé dans l'annonce » est RÉSERVÉ aux champs ATTENDUS pour le type et absents (jamais un « — »)."""
     typ = a.get("type")
     prix = a.get("prix")
     prix_m2 = a.get("prix_m2")
-    suff_m2 = f" · {_fmt_int(prix_m2)} €/m²" if isinstance(prix_m2, (int, float)) else ""
+    suff = f" · {_eur_m2(prix_m2)}" if isinstance(prix_m2, (int, float)) else ""
     rows = [
-        ligne_kv("Prix demandé", f"{_fmt_int(prix)} €" if isinstance(prix, (int, float)) else _NP),
-        ligne_kv("Type", esc(_cap(typ)) if typ else _NP),
+        ("Prix demandé", _eur(prix) or _NP),
+        ("Type", esc(typ[0].upper() + typ[1:]) if typ else _NP),
     ]
     st, sh, pieces = a.get("surface_terrain"), a.get("surface_hab"), a.get("pieces")
     if typ == "terrain":
-        rows.append(ligne_kv("Surface du terrain",
-                             f"{_fmt_m2(st)}{suff_m2}" if isinstance(st, (int, float)) else _NP))
+        rows.append(("Surface du terrain", (f"{_m2(st)}{suff}") if isinstance(st, (int, float)) else _NP))
     elif typ in ("maison", "appartement"):
-        rows.append(ligne_kv("Surface", f"{_fmt_m2(sh)}{suff_m2}" if isinstance(sh, (int, float)) else _NP))
-        rows.append(ligne_kv("Pièces", esc(str(pieces)) if isinstance(pieces, int) else _NP))
+        rows.append(("Surface habitable", (f"{_m2(sh)}{suff}") if isinstance(sh, (int, float)) else _NP))
+        rows.append(("Pièces", esc(str(pieces)) if isinstance(pieces, int) else _NP))
         if typ == "maison":
-            rows.append(ligne_kv("Terrain", _fmt_m2(st) if isinstance(st, (int, float)) else _NP))
+            rows.append(("Terrain", _m2(st) if isinstance(st, (int, float)) else _NP))
     else:
-        # type inconnu : on n'affirme aucun attendu → seulement ce qui est réellement présent.
         if isinstance(sh, (int, float)):
-            rows.append(ligne_kv("Surface", f"{_fmt_m2(sh)}{suff_m2}"))
-        if isinstance(pieces, int):
-            rows.append(ligne_kv("Pièces", esc(str(pieces))))
+            rows.append(("Surface habitable", f"{_m2(sh)}{suff}"))
         if isinstance(st, (int, float)):
-            rows.append(ligne_kv("Terrain", _fmt_m2(st)))
-    corps = table_kv(rows) + note("Seules les informations présentes dans l'annonce sont affichées.")
-    return section("Ce que dit l'annonce", corps)
+            rows.append(("Terrain", _m2(st)))
+    vendeur = a.get("vendeur")
+    if vendeur:
+        rows.append(("Vendeur", esc(vendeur)))
+    body = "".join(f'<tr><td class="k">{esc(k)}</td><td class="v">{v}</td></tr>' for k, v in rows)
+    desc = a.get("description")
+    extrait = ""
+    if isinstance(desc, str) and desc.strip():
+        court = desc.strip().replace("\n", " ")
+        if len(court) > 150:
+            court = court[:148].rstrip() + "…"
+        extrait = (f'<p class="lienextr">« {esc(court)} » '
+                   '<span class="muted">— extrait, texte complet sur l\'annonce</span></p>')
+    lien = ""
+    url = a.get("url")
+    return (f'<div class="kicker">Ce que dit l\'annonce</div>'
+            f'<table class="akv">{body}</table>{extrait}{lien}')
 
 
-def _prix_face_marche(m: dict | None) -> str:
-    """« Prix face au marché » — écart au repère commune du bon type, fiabilité LIMITÉE assumée, puis la
-    phrase gravée « localisez la parcelle… ». Repère indisponible → le motif servi (jamais un vide)."""
-    phrase = ("L'annonce ne donne pas d'adresse précise : le repère est large. Localisez la parcelle "
-              "pour une estimation au micro-marché et l'analyse foncière.")
-    if m and m.get("calculable") and m.get("ecart_libelle"):
-        repere = m.get("repere_perimetre") or m.get("perimetre") or "du bon type"
-        ref = m.get("referentiel_eur_m2")
-        sub = f"face au repère commune {esc(repere)}" + (
-            f" : {_fmt_int(ref)} €/m²" if isinstance(ref, (int, float)) else "")
-        corps = verdict(esc(m["ecart_libelle"]), ton="neutral", petit_html=sub)
-        corps += table_kv([ligne_kv("Fiabilité",
-                 chip_span("p", "Limitée") + ' <span class="none">repère à l\'échelle de la commune</span>')])
-    else:
-        motif = (m or {}).get("motif") or ("Comparaison au marché indisponible (prix ou surface absents "
-                 "de l'annonce, ou échantillon DVF insuffisant).")
-        corps = note(motif)
-    corps += note(phrase)
-    return section("Prix face au marché", corps)
+def _prix_face_marche(lectures: dict, a: dict) -> str:
+    bati = lectures.get("bati") or {}
+    fonc = lectures.get("fonciere") or {}
+    cartes = ""
+    if bati.get("calculable") and isinstance(bati.get("ecart_pct"), (int, float)):
+        ec = bati["ecart_pct"]
+        gros = (f"+{ec} %" if ec > 0 else f"{ec} %")
+        ref = bati.get("referentiel_eur_m2")
+        sub = (f"face aux {esc(bati.get('type_label_pluriel') or 'biens')} de la commune"
+               + (f" : {_eur_m2(ref)}" if isinstance(ref, (int, float)) else ""))
+        src = ""
+        if isinstance(bati.get("n"), (int, float)):
+            src = (f'<p class="anote">{_int(bati["n"])} ventes · {esc(bati.get("type_label_pluriel") or "")}'
+                   + '</p>')
+        cartes += ('<div class="lcard"><div class="kicker">Lecture bâti · au m² habitable</div>'
+                   f'<div class="estbig neg">{esc(gros)}</div><div class="lcsub">{sub}</div>{src}</div>')
+    if isinstance(fonc.get("valeur_eur"), (int, float)):
+        tm, te = fonc.get("terrain_m2"), fonc.get("terrain_eur_m2")
+        sub = (f"{_m2(tm)} × {_eur_m2(te)} de terrain nu" if isinstance(tm, (int, float))
+               and isinstance(te, (int, float)) else "")
+        concl = fonc.get("conclusion")
+        cartes += ('<div class="lcard"><div class="kicker">Lecture foncière · valeur du terrain</div>'
+                   f'<div class="estbig">{esc(_eur(fonc["valeur_eur"]))}</div>'
+                   f'<div class="lcsub">{esc(sub)}</div>'
+                   + (f'<p class="anote">{esc(concl)}</p>' if concl else "") + "</div>")
+    if not cartes:
+        return ('<h2>Prix face au marché</h2>'
+                '<p class="anote">Comparaison au marché indisponible : le prix, la surface ou le repère '
+                'communal manquent pour cette annonce.</p>')
+    fiab = (f'<div class="estmeta">{_chip("p", "Fiabilité Limitée")} '
+            '<span class="muted">repère communal, sans adresse précise · les deux lectures sont '
+            'indicatives</span></div>')
+    return (f'<h2>Prix face au marché</h2><div class="lgrid">{cartes}</div>{fiab}')
 
 
-def _la_commune(commune: str | None, m: dict | None, c: dict) -> str:
-    """« La commune » — ventes du repère + prix médian DVF (du rapport d'annonce), PLU et aléas (contexte
-    commune). Lignes absentes OMISES (jamais un « — »). Aléas déduits comme à l'écran."""
-    m = m or {}
-    lignes = []
-    n_ref = m.get("n_referentiel")
-    if isinstance(n_ref, (int, float)):
-        per = _fmt_periode(m.get("periode")) or (m.get("periode") if isinstance(m.get("periode"), str) else None)
-        val = _fmt_int(n_ref) + (f" · {esc(per)}" if per else "")
-        lignes.append(ligne_kv(f"Ventes {esc(m.get('repere_perimetre') or 'comparables')}", val))
-    ref = m.get("referentiel_eur_m2")
-    if isinstance(ref, (int, float)):
-        lignes.append(ligne_kv("Prix médian (DVF)", f"{_fmt_int(ref)} €/m²"))
-    plu = c.get("plu_statut") or {}
-    plu_txt = plu.get("statut") or plu.get("libelle")
-    if plu_txt:
-        lignes.append(ligne_kv("PLU", esc(plu_txt)))
-    aleas = _aleas(c.get("risques") or {})
-    if aleas:
-        lignes.append(ligne_kv("Aléas principaux", esc(", ".join(aleas))))
-    if not lignes:
+def _la_commune(c: dict, commune: str | None) -> str:
+    if not c:
+        return ""
+    gauche = _kv([
+        ("Ventes de maisons, 12 mois", _int(c.get("ventes_maison_12m"))),
+        ("Prix médian maison", _eur_m2(c.get("median_maison_eur_m2"))),
+        ("Terrain nu, médiane", _eur_m2(c.get("median_terrain_eur_m2"))),
+        ("Évolution maisons sur 12 mois", _pct_signe(c.get("evolution_maison_12m_pct"))),
+    ])
+    aleas = c.get("aleas") or []
+    droite = _kv([
+        ("PLU", esc(c["plu_statut"]) if c.get("plu_statut") else None),
+        ("Aléas principaux", esc(", ".join(aleas)) if aleas else None),
+        ("Parc national", "partie du territoire en cœur de parc" if c.get("parc_national") else None),
+        ("Permis déposés, 12 mois", _int(c.get("permis_12m"))),
+    ])
+    if not gauche and not droite:
         return ""
     titre = "La commune" + (f" · {commune}" if commune else "")
-    return section(titre, table_kv(lignes))
+    return (f'<h2>{esc(titre)}</h2><div class="mkgrid"><div>{gauche}</div><div>{droite}</div></div>')
 
 
-def _aleas(risques: dict) -> list[str]:
-    """Miroir du calcul d'aléas de l'écran : inondation (PPR / AZI / TRI), mouvement de terrain, parc national."""
-    out = []
-    azi_tri = risques.get("azi_tri") or {}
-    inond = ((risques.get("ppr_pct") or 0) > 0 or (azi_tri.get("azi") or [])
-             or (azi_tri.get("tri") or []))
-    if inond:
-        out.append("inondation")
-    if (risques.get("mouvement_terrain_pct") or 0) > 0:
-        out.append("mouvement de terrain")
-    if risques.get("parc_national"):
-        out.append("parc national")
-    return out
+def _encart() -> str:
+    return ('<div class="encart"><div class="encl">'
+            '<div class="enct">Pour le rapport complet sur 2 pages</div>'
+            '<div class="encd">Localisez la parcelle dans LABUSE : zonage, SDP restante, ventes '
+            'comparables à moins d\'un kilomètre, risques, LiDAR.</div></div>'
+            '<div class="encr">Analyser une annonce → C\'est cette parcelle</div></div>')

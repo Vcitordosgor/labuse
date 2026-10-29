@@ -683,24 +683,91 @@ def construire_etude_zone(idu: str, rayon_km, zone: dict, map_html: str, *,
                        contexte={"zone": zone})
 
 
-# ── ANNONCE-3 — « Analyse d'annonce » : deux variantes, miroir de l'outil Analyser une annonce. ──
-#: ANNONCE-3-FIX — CSS SCOPÉ au seul document « Analyse d'annonce » (page_extra_css → les 8 autres
-#: documents servis sont INCHANGÉS) : (1) pagination « 1 / 2 » tenue sur UNE ligne (le long pied
-#: @bottom-left rétrécissait la case @bottom-right) ; (2) interlignes resserrés (titres, plan, note)
-#: pour que la VARIANTE PARCELLE tienne sur UNE page sans recadrer le plan (hauteur du plan réduite).
-_ANNONCE_PAGE_CSS = (
-    "@page { @bottom-right { white-space: nowrap; } }"
-    "h1 { font-size: 18pt; margin-bottom: 1pt; }"
-    "h2 { margin: 9pt 0 4pt; font-size: 13pt; }"
-    "h3 { margin: 7pt 0 3pt; }"
-    ".plan { margin: 5pt 0 2pt; }"
-    ".plan .cap { padding: 2pt 8pt; }"
-    ".verdict { margin: 0 0 4pt; padding: 5pt 10pt; font-size: 11.5pt; }"
-    ".note { margin: 2pt 0 3pt; }"
-    ".kv td { padding: 2.5pt 0; }"
-    ".cover-tiles { margin: 7pt 0 3pt; gap: 6pt; } .cover-tiles .tile { padding: 5pt 8pt; }"
-    ".cover-tiles .tile .v { font-size: 13pt; }"
-)
+# ── ANNONCE-5 — « Analyse d'annonce », REFONTE maquette : deux variantes, miroir de l'outil. ──
+#: CSS SCOPÉ au seul document « Analyse d'annonce » (page_extra_css → les 8 autres documents servis sont
+#: INCHANGÉS). Variante parcelle = 2 pages (saut forcé `.apage2`), variante lien = 1 page.
+_ANNONCE_PAGE_CSS = """
+@page { @bottom-right { white-space: nowrap; } }
+.abar { display:flex; align-items:baseline; gap:8pt; border-bottom:1.5px solid var(--ink);
+  padding-bottom:5pt; margin-bottom:9pt; }
+.abar .abrand { font-weight:700; color:var(--mint-ink); font-size:12pt; letter-spacing:.02em; }
+.abar .akind { color:var(--muted); font-size:9pt; }
+.abar .aref { margin-left:auto; color:var(--muted); font-size:8.5pt;
+  font-family:"IBM Plex Mono","DejaVu Sans Mono",monospace; }
+.atitre { font-size:19pt; font-weight:700; margin:0 0 2pt; letter-spacing:-.01em; line-height:1.12; }
+.asub { font-size:10pt; color:var(--muted); margin:0 0 8pt; }
+.amaps { display:grid; grid-template-columns:1fr 1fr; gap:7pt; margin:2pt 0 7pt; }
+.mapcell { position:relative; border:1px solid var(--line); border-radius:3pt; overflow:hidden; }
+.mapcell img { display:block; width:100%; height:44mm; object-fit:cover; }
+.mcap { font-size:6.8pt; color:var(--muted); padding:2pt 6pt; background:#fff; border-top:1px solid var(--line); }
+.zlabel { position:absolute; left:5pt; top:5pt; background:rgba(255,255,255,.9);
+  border:1px solid var(--line); border-radius:2pt; padding:1pt 5pt; font-size:8.5pt; font-weight:700; color:var(--ink); }
+.zalea { position:absolute; left:5pt; bottom:15pt; background:rgba(255,255,255,.86);
+  border-radius:2pt; padding:1pt 5pt; font-size:7.3pt; color:var(--amber); }
+.atiles { display:grid; grid-template-columns:repeat(6,1fr); gap:5pt; margin:6pt 0; }
+.atiles .tile { border:1px solid var(--line); border-radius:3pt; padding:5pt 6pt; }
+.atiles .tile .v { font-size:11.5pt; font-weight:700; line-height:1.05; }
+.atiles .tile .l { font-size:6.6pt; color:var(--muted); margin-top:2pt; text-transform:uppercase; letter-spacing:.03em; }
+h2 { font-size:12.5pt; margin:11pt 0 5pt; }
+.anote { font-size:8pt; color:var(--muted); margin:3pt 0 2pt; line-height:1.35; }
+.muted { color:var(--muted); }
+.kicker { font-size:7.5pt; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-weight:600; margin-bottom:4pt; }
+.estgrid { display:grid; grid-template-columns:1.1fr 1fr; gap:10pt; align-items:stretch; page-break-inside:avoid; }
+.estleft { background:var(--mint-bg); border-radius:4pt; padding:9pt 12pt; }
+.estbig { font-size:23pt; font-weight:700; color:var(--mint-ink); line-height:1; }
+.estbig .estrange { font-size:9.5pt; font-weight:400; color:var(--muted); margin-left:5pt; }
+.estmeta { margin:6pt 0 3pt; font-size:8.5pt; }
+.estmeta .chip { margin-right:5pt; }
+.vibox { border:1px solid var(--line); border-radius:4pt; padding:9pt 12pt; }
+.akv { width:100%; border-collapse:collapse; font-size:9.3pt; }
+.akv td { padding:3.4pt 0; border-bottom:1px solid var(--line); vertical-align:top; }
+.akv td.k { color:var(--muted); padding-right:8pt; }
+.akv td.v { text-align:right; font-weight:600; white-space:nowrap; }
+.akv tr:last-child td { border-bottom:none; }
+.vikv td.k { font-weight:400; color:var(--ink); }
+.acomp { width:100%; border-collapse:collapse; font-size:9pt; margin:1pt 0; }
+.acomp th { text-align:left; font-size:7.5pt; text-transform:uppercase; letter-spacing:.04em;
+  color:var(--muted); border-bottom:1.5px solid var(--ink); padding:4pt 8pt 4pt 0; }
+.acomp td { padding:3.5pt 8pt 3.5pt 0; border-bottom:1px solid var(--line); }
+.acomp th.r, .acomp td.r { text-align:right; padding-right:0; }
+.acomp tr { page-break-inside:avoid; }
+.apage2 { page-break-before:always; }
+.fongrid { display:grid; grid-template-columns:1fr 1fr; gap:18pt; page-break-inside:avoid; }
+.arisq { width:100%; border-collapse:collapse; font-size:9pt; }
+.arisq th { text-align:left; font-size:7.5pt; text-transform:uppercase; letter-spacing:.04em;
+  color:var(--muted); border-bottom:1.5px solid var(--ink); padding:4pt 8pt 4pt 0; }
+.arisq td { padding:4pt 8pt 4pt 0; border-bottom:1px solid var(--line); vertical-align:top; }
+.arisq th:last-child, .arisq td:last-child { width:45%; padding-right:0; }
+.mkgrid { display:grid; grid-template-columns:1fr 1fr; gap:18pt; align-items:start; page-break-inside:avoid; }
+.chart { border:1px solid var(--line); border-radius:4pt; padding:8pt 11pt; }
+.barchart { width:100%; border-collapse:collapse; margin-top:7pt; table-layout:fixed; }
+.barchart td { text-align:center; padding:0; }
+.barchart .bv { font-size:7pt; color:var(--muted); padding-bottom:2pt; }
+.barchart tr.rbars td { vertical-align:bottom; height:27mm; }
+.barchart .bb { width:62%; margin:0 auto; background:#CFE8D8; border-radius:2pt 2pt 0 0; }
+.barchart .bb.last { background:var(--mint-ink); }
+.barchart .bl { font-size:7pt; color:var(--muted); padding-top:3pt; }
+.averif { margin:3pt 0; padding-left:15pt; font-size:9.5pt; }
+.averif li { margin:2.5pt 0; }
+.liengrid { display:grid; grid-template-columns:1fr 1fr; gap:10pt; align-items:start; margin-bottom:4pt; }
+.lienmap { position:relative; border:1px solid var(--line); border-radius:3pt; height:52mm;
+  background:var(--mint-bg); overflow:hidden; }
+.lienmap .mcap { position:absolute; left:0; right:0; bottom:0; }
+.lienmap .zlabel { }
+.lienextr { font-size:8pt; color:var(--ink); font-style:italic; margin:6pt 0 0;
+  border-left:2px solid var(--line); padding-left:8pt; line-height:1.4; }
+.lgrid { display:grid; grid-template-columns:1fr 1fr; gap:10pt; page-break-inside:avoid; }
+.lcard { border:1px solid var(--line); border-radius:4pt; padding:9pt 12pt; }
+.lcard .estbig { color:var(--ink); }
+.lcard .estbig.pos { color:var(--mint-ink); }
+.lcsub { font-size:8.5pt; color:var(--muted); margin-top:4pt; line-height:1.35; }
+.encart { display:flex; gap:12pt; align-items:center; border:1px solid var(--mint);
+  background:var(--mint-bg); border-radius:4pt; padding:10pt 13pt; margin-top:12pt; page-break-inside:avoid; }
+.enct { font-weight:700; font-size:10pt; color:var(--ink); }
+.encd { font-size:8.5pt; color:var(--muted); margin-top:2pt; line-height:1.35; }
+.encr { margin-left:auto; font-size:9pt; color:var(--mint-ink); font-weight:600; white-space:nowrap; }
+.chip.p { border-color:var(--amber); color:var(--amber); background:var(--amber-bg); }
+"""
 
 
 # ANNONCE-3-FIX-3 — le cadre est LARGE (pleine largeur, ~48 mm → aspect ~3,6) ; `build_situation_map`
@@ -741,114 +808,152 @@ def _choisir_cadre_plan(rendre, marge_px: float, zooms=_PLAN_ZOOMS):
     return dernier
 
 
-def _plan_annonce_html(db, idu: str) -> str:
-    """ANNONCE-3-FIX — le plan de situation de l'annonce : la parcelle ENTIÈRE, CENTRÉE, avec une MARGE,
-    toujours visible QUELLE QUE SOIT sa forme (zoom reculé au besoin, cf. `_choisir_cadre_plan`). L'image
-    REMPLIT le cadre (`width:100%`), sans bandes blanches ni recadrage du contour. Best-effort : réseau /
-    géométrie absents → cadre neutre légendé (jamais d'erreur)."""
+def _img_data_uri(jpeg: bytes) -> str:
+    import base64
+    return "data:image/jpeg;base64," + base64.b64encode(jpeg).decode()
+
+
+def _parcel_geojson(db, idu: str) -> str | None:
     from sqlalchemy import text
-    from .rendu import esc
     try:
-        gj = db.execute(text("SELECT ST_AsGeoJSON(geom) FROM parcels WHERE idu = :idu"), {"idu": idu}).scalar()
+        return db.execute(text("SELECT ST_AsGeoJSON(geom) FROM parcels WHERE idu = :idu"), {"idu": idu}).scalar()
     except Exception as exc:  # noqa: BLE001
-        log.warning("plan annonce %s : géométrie illisible (%s)", idu, exc)
-        gj = None
+        log.warning("carte annonce %s : géométrie illisible (%s)", idu, exc)
+        return None
+
+
+def _carte_ortho_html(db, idu: str) -> str:
+    """ANNONCE-5 — la carte ORTHO (contour parcelle entier, centré, marge). Cellule de la grille `.amaps`.
+    Best-effort : réseau/géométrie absents → cellule neutre légendée (jamais d'erreur)."""
+    from .rendu import esc
+    gj = _parcel_geojson(db, idu)
     if gj:
         try:
             from ..api.plan_situation import plan_ortho
             from ..flash.report import storage_dir
             cd = storage_dir() / "tiles"
             res = _choisir_cadre_plan(
-                lambda zd: plan_ortho(gj, cache_dir=cd, crop_margin_m=16.0, target_aspect=_PLAN_ASPECT,
-                                      min_px=900, zoom_delta=zd, zoom_max=19),
+                lambda zd: plan_ortho(gj, cache_dir=cd, crop_margin_m=18.0, target_aspect=1.55,
+                                      min_px=720, zoom_delta=zd, zoom_max=19),
                 marge_px=3.0)
             if res and res.get("ok"):
-                import base64
-                img = "data:image/jpeg;base64," + base64.b64encode(res["jpeg"]).decode()
-                cap = esc(res.get("attribution") or "")
-                return (f'<div class="plan">'
-                        f'<img style="display:block;width:100%;height:auto" '
-                        f'src="{img}" alt="Plan de situation">'
-                        f'<div class="cap">Plan de situation — la parcelle (contour), entière et centrée avec une marge'
-                        + (f' · {cap}' if cap else "") + "</div></div>")
-        except Exception as exc:  # noqa: BLE001 — la carte est un plus, jamais un bloqueur
-            log.warning("plan annonce %s non rendu : %s — cadre neutre (ORF-19)", idu, exc)
-    return ('<div class="plan"><div class="ph">Plan de situation — la parcelle '
-            '(fond cartographique momentanément indisponible)</div></div>')
+                cap = esc(res.get("attribution") or "IGN BD ORTHO")
+                return (f'<div class="mapcell"><img src="{_img_data_uri(res["jpeg"])}" alt="Orthophoto">'
+                        f'<div class="mcap">Orthophoto · la parcelle (contour) et ses voisines · {cap}</div></div>')
+        except Exception as exc:  # noqa: BLE001
+            log.warning("carte ortho %s non rendue : %s (ORF-19)", idu, exc)
+    return ('<div class="mapcell"><div class="mcap">Orthophoto — fond cartographique '
+            'momentanément indisponible</div></div>')
+
+
+def _carte_zonage_html(db, idu: str, *, zone_label: str | None = None, alea_label: str | None = None) -> str:
+    """ANNONCE-5 — la carte CADASTRALE (zonage PLU + aléas), 100 % vectorielle depuis les couches servies
+    (spatial_layers, hors réseau). Étiquettes zone (haut-gauche) et aléa (bas) posées EN HTML (nettes).
+    Best-effort : géométrie absente → cellule neutre légendée."""
+    from sqlalchemy import text
+    from .rendu import esc
+    gj = _parcel_geojson(db, idu)
+    if gj:
+        try:
+            from ..api.plan_situation import plan_zonage
+            nb = [r[0] for r in db.execute(text(
+                "SELECT ST_AsGeoJSON(n.geom) FROM parcels n JOIN parcels p ON p.idu=:i "
+                "WHERE n.idu<>:i AND ST_DWithin(n.geom_2975,p.geom_2975,80) LIMIT 80"), {"i": idu})]
+            dom = db.execute(text(
+                "SELECT split_part(btrim(COALESCE(sl.attrs->>'libelle',sl.name)),' ',1) "
+                "FROM spatial_layers sl JOIN parcels p ON p.idu=:i "
+                "WHERE sl.kind='plu_gpu_zone' AND ST_Intersects(sl.geom_2975,p.geom_2975) "
+                "ORDER BY ST_Area(ST_Intersection(sl.geom_2975,p.geom_2975)) DESC LIMIT 1"), {"i": idu}).scalar()
+            zones = [{"gj": r[0], "dominant": (r[1] == dom)} for r in db.execute(text(
+                "SELECT ST_AsGeoJSON(ST_Intersection(sl.geom, ST_Expand(p.geom,0.004))), "
+                "       split_part(btrim(COALESCE(sl.attrs->>'libelle',sl.name)),' ',1) "
+                "FROM spatial_layers sl JOIN parcels p ON p.idu=:i "
+                "WHERE sl.kind='plu_gpu_zone' AND ST_DWithin(sl.geom_2975,p.geom_2975,150)"), {"i": idu})]
+            aleas = [r[0] for r in db.execute(text(
+                "SELECT ST_AsGeoJSON(ST_Intersection(sl.geom, ST_Expand(p.geom,0.004))) "
+                "FROM spatial_layers sl JOIN parcels p ON p.idu=:i "
+                "WHERE sl.kind IN ('ppr','georisque_alea') AND ST_DWithin(sl.geom_2975,p.geom_2975,120) LIMIT 40"),
+                {"i": idu})]
+            res = plan_zonage(gj, neighbors=nb, zones=zones, aleas=aleas,
+                              crop_margin_m=18.0, target_aspect=1.55, min_px=720)
+            if res and res.get("ok"):
+                zl = (f'<div class="zlabel">{esc(zone_label or dom)}</div>' if (zone_label or dom) else "")
+                al = f'<div class="zalea">{esc(alea_label)}</div>' if alea_label else ""
+                return (f'<div class="mapcell">{zl}<img src="{_img_data_uri(res["jpeg"])}" alt="Cadastre, zonage et aléas">{al}'
+                        f'<div class="mcap">Cadastre, zonage PLU et aléas · DGFiP, commune, Géorisques</div></div>')
+        except Exception as exc:  # noqa: BLE001
+            log.warning("carte zonage %s non rendue : %s (ORF-19)", idu, exc)
+    return ('<div class="mapcell"><div class="mcap">Cadastre & zonage — fond '
+            'momentanément indisponible</div></div>')
+
+
+def _alea_label_carte(risques: list[dict]) -> str | None:
+    """Étiquette d'aléa pour la carte zonage (le 1ᵉʳ aléa de la fiche : nom + niveau), ou None."""
+    if not risques:
+        return None
+    r0 = risques[0]
+    nom, niv = r0.get("alea"), r0.get("niveau")
+    if nom and niv:
+        return f"{nom} · {niv}"
+    return nom or None
 
 
 def construire_analyse_annonce_parc(db, idu: str, *, request=None, jour: date | None = None) -> ResultatDoc:
-    """Variante PARCELLE (entrée adresse) : en-tête (adresse · IDU · date) + plan de situation (contour
-    parcelle, MÊME composant que le Dossier) + les 6 tuiles + « Estimation du prix » + « Le foncier ».
-    Aucun recalcul : on LIT les MÊMES endpoints que l'écran — `parcel_fiche` (prix_ancien, zone PLU,
-    SDP, aléas, surface), `parcel_exposition` (orientation), `radar_annonce_classement` (bande du run
-    SERVI + vocabulaire gravé). Le PDF sorti de l'outil et celui sorti de Docs sont IDENTIQUES (même route)."""
+    """Variante PARCELLE (entrée adresse), 2 PAGES selon la maquette. Un SEUL point de données :
+    `pige.api.rapport_parcelle` (lu AUSSI par l'écran → PDF == outil). Deux cartes (ortho + cadastre /
+    zonage / aléas), 6 tuiles, estimation + valeur indicative + comparables ; page 2 : foncier + risques
+    + marché + à vérifier. Aucun recalcul ici."""
     from .blocs import annonce as bloc_annonce
-    from ..api.app import parcel_exposition, parcel_fiche
+    from ..api.app import parcel_fiche
+    from ..pige.api import rapport_parcelle
     j = jour or today_reunion()
     fiche = parcel_fiche(idu, db=db, request=request)
-    try:
-        expo = parcel_exposition(idu, db=db)
-    except Exception as exc:  # noqa: BLE001 — l'exposition est un plus, jamais un bloqueur (ORF-19)
-        log.warning("analyse-annonce %s : exposition indisponible (%s)", idu, exc)
-        expo = None
-    try:
-        from ..pige.api import radar_annonce_classement
-        classement = radar_annonce_classement(idu)
-    except Exception as exc:  # noqa: BLE001 — le classement est un plus ; sa tuile sera simplement omise
-        log.warning("analyse-annonce %s : classement indisponible (%s)", idu, exc)
-        classement = None
-    # ANNONCE-3-FIX — l'estimation SELON LA NATURE (nue → terrain nu ; bâtie → bâti). Point unique
-    # `estimation_annonce` (le MÊME que l'endpoint écran /radar/annonce/estimation) → mêmes chiffres.
-    from ..pige.api import estimation_annonce
-    est = estimation_annonce(db, idu, fiche)
+    rapport = rapport_parcelle(db, idu, fiche)
     numero = numeros.numero_rapport("analyse-annonce", idu, j)
-    # ANNONCE-3-FIX — en-tête : adresse (si la fiche en résout une), sinon la commune ; puis l'IDU et la
-    # date (portés par la ligne d'identité d'_entete_doc). Jamais une case vide.
-    adresse = fiche.get("adresse") or ""
-    lieu = adresse or fiche.get("commune") or ""
-    ref = " · ".join(x for x in (lieu, idu) if x)
-    cart = _cart("analyse-annonce", lieu or idu, idu, numero, j)
-    corps = (_entete_doc("analyse-annonce", ref, numero, j)
-             + _plan_annonce_html(db, idu)
-             + bloc_annonce.rendu_parcelle(fiche, expo, classement, est))
+    rapport["_ref_droite"] = f"{numero} · {j:%d/%m/%Y}"
+    adresse = rapport.get("adresse") or ""
+    lieu = adresse or rapport.get("commune") or idu
+    carte_ortho = _carte_ortho_html(db, idu)
+    carte_zon = _carte_zonage_html(db, idu, zone_label=rapport.get("zone"),
+                                   alea_label=_alea_label_carte(rapport.get("risques")))
+    corps = bloc_annonce.rendu_parcelle(rapport, plan_ortho_html=carte_ortho, plan_zonage_html=carte_zon)
+    cart = _cart("analyse-annonce", lieu, idu, numero, j)
     html = page_html(_LABEL["analyse-annonce"][0], cart, corps, page_extra_css=_ANNONCE_PAGE_CSS)
     return ResultatDoc(html=html, valeurs={}, numero=numero, cartouche=cart,
                        contexte={"idu": idu, "adresse": adresse})
 
 
-def construire_analyse_annonce_lien(annonce: dict, marche: dict | None, contexte: dict | None, *,
-                                    jour: date | None = None) -> ResultatDoc:
-    """Variante COMMUNE (entrée lien) : en-tête (type · commune · « Annonce Leboncoin · relevée le … »)
-    + « Ce que dit l'annonce » + « Prix face au marché » + « La commune ». `annonce`/`marche` sont les
-    sorties EXACTES de `radar_annonce_analyser` (Radar d'abord, sinon fetch) et `contexte` celle de
-    `commune_contexte` — aucun recalcul ici (le PDF outil == PDF Docs, même route)."""
+def _carte_commune_inner(commune: str | None) -> str:
+    """Contenu de la carte à l'ÉCHELLE DE LA COMMUNE (variante lien : pas d'adresse → pas de parcelle).
+    Repère neutre légendé (le mandat écarte le rattachement parcellaire de l'entrée lien)."""
+    from .rendu import esc as _esc
+    zl = f'<div class="zlabel">{_esc(commune)}</div>' if commune else ""
+    return (zl + '<div class="mcap">L\'annonce ne donne pas d\'adresse : repère à l\'échelle de la commune</div>')
+
+
+def construire_analyse_annonce_lien(rapport: dict, *, jour: date | None = None) -> ResultatDoc:
+    """Variante LIEN (commune), 1 PAGE selon la maquette. `rapport` = la sortie ENRICHIE de
+    `radar_annonce_analyser` (annonce normalisée + lectures bâti/foncière + bloc commune) — même point que
+    l'écran. « Ce que dit l'annonce » + carte commune + deux lectures + « La commune » + encart."""
     from .blocs import annonce as bloc_annonce
+    from .rendu import esc as _esc
     j = jour or today_reunion()
-    a = annonce or {}
+    a = (rapport or {}).get("annonce") or {}
     commune = a.get("commune") or ""
-    typ = a.get("type")
-    pieces = a.get("pieces")
-    titre = ((typ[0].upper() + typ[1:]) if typ else "Annonce")
-    if isinstance(pieces, int):
-        titre += f" {pieces} pièces"
-    if commune:
-        titre += f" · {commune}"
-    # le suffixe du numéro = l'identifiant d'annonce (list_id, chiffres de l'URL) — ASCII et STABLE ;
-    # jamais le nom de commune tronqué mi-mot (« …-noît » pour Saint-Benoît, qui cassait aussi l'en-tête
-    # Content-Disposition en octets non-ASCII). Repli « annonce » si l'URL ne porte aucun identifiant.
     import re as _re
     _ids = _re.findall(r"\d{6,}", a.get("url") or "")
     numero = numeros.numero_rapport("analyse-annonce", _ids[-1] if _ids else "annonce", j)
-    # « relevée le … » = la date de relevé portée par le rapport (capture Radar, ou jour du fetch).
+    rapport = dict(rapport or {})
+    rapport["_ref_droite"] = f"{numero} · {j:%d/%m/%Y}"
+    # sous-titre : « Annonce Leboncoin · relevée par le Radar LABUSE le JJ/MM/AAAA · Voir l'annonce → »
     releve = a.get("releve_le")
-    # miroir de l'écran : « 2026-10-27 » → « 27/10/2026 » (split('-').reverse().join('/')).
     releve_fr = "/".join(reversed(releve.split("-"))) if isinstance(releve, str) and "-" in releve else None
-    emis = (f'<p class="emis">Annonce Leboncoin'
-            + (f' · relevée le {esc(releve_fr)}' if releve_fr else "") + "</p>")
-    cart = _cart("analyse-annonce", titre, commune or "annonce", numero, j)
-    corps = (_entete_doc("analyse-annonce", titre, numero, j) + emis
-             + bloc_annonce.rendu_commune(a, marche, contexte))
+    url = a.get("url")
+    lien = (f' · <a href="{_esc(url)}">Voir l\'annonce →</a>' if url else "")
+    sous = ("Annonce Leboncoin"
+            + (f" · relevée par le Radar LABUSE le {_esc(releve_fr)}" if releve_fr else "") + lien)
+    corps = bloc_annonce.rendu_lien(rapport, plan_commune_html=_carte_commune_inner(commune), releve_html=sous)
+    cart = _cart("analyse-annonce", (a.get("type") or "Annonce"), commune or "annonce", numero, j)
     html = page_html(_LABEL["analyse-annonce"][0], cart, corps, page_extra_css=_ANNONCE_PAGE_CSS)
     return ResultatDoc(html=html, valeurs={}, numero=numero, cartouche=cart,
                        contexte={"annonce": a})

@@ -1,14 +1,15 @@
-"""ANNONCE-3 — le document « Analyse d'annonce » (miroir de l'outil Analyser une annonce).
+"""ANNONCE-5 — le document « Analyse d'annonce » REFONDU (miroir de l'outil Analyser une annonce).
 
 Famille UNITAIRE (aucun marqueur db/local/reel/network → tourne dans le filet pre-push) : on teste
-l'ASSEMBLAGE HTML (pur, sans base) des deux variantes + les garde-fous du mandat. Le rendu PDF réel
-(WeasyPrint) et la variante parcelle de bout en bout (parcel_fiche → base) sont joués à la recette.
+l'ASSEMBLAGE HTML (pur, sans base) des deux variantes à partir du RAPPORT (le point unique écran == PDF),
+les garde-fous du mandat, et les helpers PURS du rapport. Le bout-en-bout (rapport_parcelle /
+rapport_lien → base + WeasyPrint) est joué à la recette.
 
 Garde-fous vérifiés ici :
-  · « jamais un champ vide imprimé » — une valeur absente ne produit NI « — » NI case vide, et les
-    champs non applicables au type restent masqués (comme à l'écran) ;
+  · « jamais un champ vide imprimé » — une valeur absente ne produit NI « — » NI case vide ;
   · le PDF outil == PDF Docs — même route, même builder, donc HTML DÉTERMINISTE à entrées égales ;
-  · l'estimation est COMPARATIVE (pied de page) ; la phrase « localisez la parcelle… » est présente ;
+  · variante parcelle = 2 pages (saut `.apage2`) ; estimation + valeur indicative + comparables ;
+  · variante lien = deux lectures CHIFFRÉES (bâti % + foncière €) + bloc commune complet + encart ;
   · le message d'échec du lien est IDENTIQUE à celui de l'outil (frontend messageErreur).
 """
 from __future__ import annotations
@@ -17,201 +18,233 @@ from datetime import date
 
 from labuse.exports import builder, numeros
 from labuse.exports.blocs import annonce as bloc
+from labuse.pige.api import (_a_verifier, _classement_phrase, _regles_zone, _risques_rows,
+                             _valeur_indicative)
 
 J = date(2026, 10, 27)
 
-_FICHE = {
+_RAPPORT_BATI = {
     "idu": "97411000AB0123", "adresse": "12 rue des Camélias", "commune": "Saint-Denis",
-    "surface_m2": 504.3,
-    "reglement_plu": {"zones": [{"zone": "UA"}]},
-    "potentiel_transformation": {"sdp_residuelle_m2": 320.0, "hauteur_regle_m": 9.0,
-                                 "estimation_simplifiee": True},
-    "aleas": {"n": 0},
-    "prix_ancien": {"median": 3602, "q1": 3000, "q3": 4200, "n": 15, "radius_m": 1000,
-                    "periode": [2023, 2025], "fiabilite": "fiable", "type_prix": "maison"},
+    "zone": "UA", "surface_m2": 504.3, "nature_label": "Parcelle bâtie, maison", "exposition": "Sud-Ouest",
+    "_ref_droite": "AA-20261027-0123 · 27/10/2026",
+    "estimation": {
+        "type_comparateur": "bati", "type_bien": "maison", "type_label_pluriel": "maisons",
+        "median": 3602, "q1": 3000, "q3": 4200, "n": 42, "radius_m": 500, "periode": [2022, 2025],
+        "fiabilite": "fiable", "commune_fallback": False,
+        "comparables": [{"date": "08/2025", "type": "Maison", "surface_m2": 120, "prix_eur": 450000,
+                         "prix_m2": 3750, "distance_m": 103}],
+        "n_total": 42, "surface_batie": {"surface_m2": 197, "niveaux": 1, "niveaux_estimes": False},
+        "valeur_indicative": {"surface_m2": 197, "eur_m2": 3602, "valeur_eur": 709594,
+                              "valeur_basse": 591000, "valeur_haute": 827400},
+        "repere_terrain_nu": {"eur_m2": 369, "n": 15, "perimetre": "secteur", "periode": "2021–2025"},
+    },
+    "classement": {"bande": "D", "libelle": "Faible",
+                   "phrase": "Classement D · Faible : le bâti existant consomme presque tout."},
+    "foncier": {"zone": "UA", "commune": "Saint-Denis",
+                "regles": [{"cle": "Hauteur maximale", "valeur": "7 m"},
+                           {"cle": "Stationnement", "valeur": "1 place / logement"}],
+                "parcelle": [{"cle": "Assiette constructible, aléa déduit", "valeur": "1 625 m²"},
+                             {"cle": "SDP restante estimée", "valeur": "26 m²"}]},
+    "risques": [{"alea": "Inondation, Mouvement de terrain", "niveau": "Zone bleue",
+                 "document": "PPR Saint-Denis, 2012", "implique": "Constructible sous prescriptions."}],
+    "marche": {"ventes_maison_12m": 289, "median_maison_eur_m2": 3235, "median_appartement_eur_m2": 2600,
+               "median_terrain_eur_m2": 459, "evolution_maison_12m_pct": -3.3,
+               "serie_maison_5a": [{"annee": 2021, "median": 3031, "n": 5},
+                                   {"annee": 2024, "median": 3345, "n": 7},
+                                   {"annee": 2025, "median": 3235, "n": 8}]},
+    "a_verifier": ["L'état du bâti et les travaux récents, non connus du modèle.",
+                   "La conformité du bâti existant avant tout projet d'extension."],
+}
+
+_RAPPORT_NUE = {
+    "idu": "97413000CX0800", "adresse": None, "commune": "Saint-Leu", "zone": "UD",
+    "surface_m2": 1819.0, "nature_label": "Parcelle nue", "exposition": "Ouest",
+    "estimation": {"type_comparateur": "terrain_nu", "type_bien": "terrain", "median": 495,
+                   "n": 78, "periode": "2021–2025", "perimetre": "secteur", "fiabilite": "fiable",
+                   "commune_fallback": False, "comparables": [], "n_total": 78,
+                   "valeur_indicative": {"surface_m2": 1819, "eur_m2": 495, "valeur_eur": 900405},
+                   "repere_terrain_nu": {"eur_m2": 495, "n": 78, "perimetre": "secteur"}},
+    "classement": {"bande": "C", "libelle": "À étudier", "phrase": "Classement C · À étudier : …"},
+    "foncier": {"zone": "UD", "commune": "Saint-Leu", "regles": [], "parcelle": []},
+    "risques": [], "marche": None, "a_verifier": ["La desserte et la viabilisation du terrain."],
 }
 
 
-# ANNONCE-3-FIX — l'estimation est un dict UNIFIÉ (point `estimation_annonce`) passé au bloc.
-_EST_BATI = {"type_comparateur": "bati", "nature": "batie", "median": 3602, "q1": 3000, "q3": 4200,
-             "n": 15, "radius_m": 1000, "periode": [2023, 2025], "fiabilite": "fiable", "type_prix": "maison"}
-_EST_TERRAIN = {"type_comparateur": "terrain_nu", "nature": "nue", "median": 210, "n": 78,
-                "periode": "2021–2025", "perimetre": "secteur",
-                "fiabilite": "fiable", "commune_fallback": False}
+# ═══════════════════════════════════════ VARIANTE PARCELLE ═══════════════════════════════════════
+def test_parcelle_structure_maquette():
+    html = bloc.rendu_parcelle(_RAPPORT_BATI, plan_ortho_html="<i>O</i>", plan_zonage_html="<i>Z</i>").replace("\u00a0", " ")
+    # en-tête : titre = adresse, sous-titre IDU · zone · surface · nature
+    assert "12 rue des Camélias" in html and "97411000AB0123" in html
+    assert "Zone UA" in html and "Parcelle bâtie, maison" in html
+    # les deux cartes posées dans la grille
+    assert '<div class="amaps">' in html and "<i>O</i>" in html and "<i>Z</i>" in html
+    # 6 tuiles + estimation + fiabilité niveau seul
+    assert "Sud-Ouest" in html and "D · Faible" in html
+    assert "3 602 €/m²" in html and "Fiabilité Élevée" in html
+    # valeur indicative : surface × €/m² + fourchette + repère terrain nu
+    assert "Valeur indicative du bien" in html and "709 594 €" in html
+    assert "Maison" in html and "197 m²" in html and "× 3 602 €/m²" in html
+    assert "591 000 – 827 400 €" in html and "Repère terrain nu, secteur" in html and "369 €/m²" in html
+    # tableau des comparables + total
+    assert "Les 8 ventes les plus proches retenues" in html and "08/2025" in html and "103 m" in html
+    assert "41 autres ventes" in html and "Source : DVF, ventes de maisons" in html  # 42 - 1 montrée
+    # page 2 : foncier (règles face parcelle) + classement + risques + marché + à vérifier
+    assert '<div class="apage2">' in html
+    assert "Le foncier" in html and "Hauteur maximale" in html and "Assiette constructible, aléa déduit" in html
+    assert "Classement D · Faible : le bâti existant" in html
+    assert "Risques et contraintes" in html and "Inondation, Mouvement de terrain" in html
+    assert "PPR" in html and "Saint-Denis" in html and "2012" in html  # document (esc_noms insère un span nb)
+    assert "Le marché · Saint-Denis" in html and "3 235 €/m²" in html
+    assert "Prix médian maison" in html and 'class="barchart"' in html     # graphique 5 ans
+    assert "reste à vérifier" in html and "état du bâti" in html  # items esc(apostrophe → &#x27;)
 
 
-def test_parcelle_contenu_miroir_ecran():
-    html = bloc.rendu_parcelle(_FICHE, {"orientation": "Sud-Ouest"}, {"bande": "B", "libelle": "Bonne"}, _EST_BATI)
-    # titre de section « La parcelle » (ANNONCE-3-FIX), 6 tuiles, estimation, foncier
-    assert "La parcelle" in html and "Analyse d&#x27;annonce" not in html
-    assert "UA" in html and "Sud-Ouest" in html and "B · Bonne" in html
-    assert "aucun aléa" in html                      # 0 aléa = donnée présente, pas un vide
-    assert "€/m²" in html
-    # badge fiabilité = niveau SEUL (« Fiabilité » est l'étiquette kv à côté), pas « Fiabilité : élevée »
-    assert "Élevée" in html and "Fiabilité : élevée" not in html and "Fiabilité : Élevée" not in html
-    assert "Parcelle bâtie" in html and "bâti ancien" in html      # la note DIT le comparateur
-    assert "Estimation du prix" in html and "Le foncier" in html
-    assert "Hauteur réglementaire" in html and "estimation simplifiée" in html
-    assert "à" in html and "3" in html and "200" in html           # fourchette q1/q3
-
-
-def test_parcelle_estimation_selon_nature_terrain():
-    """Parcelle NUE → repère €/m² de TERRAIN NU avec sa SOURCE comme le bâti : n réel, périmètre, période.
-    Note en CASSE NORMALE (« terrain nu », pas en majuscules), phrase close par un point."""
-    html = bloc.rendu_parcelle(_FICHE, {"orientation": "Est"}, {}, _EST_TERRAIN)
-    assert "Parcelle nue" in html and "terrain nu" in html and "TERRAIN NU" not in html
-    assert "210" in html and "€/m²" in html
-    assert "Ventes de terrain" in html and "78" in html      # nombre RÉEL de ventes
-    assert "secteur cadastral" in html and "2021" in html    # périmètre + période
-    assert "terrain nu (repère €/m² de terrain)." in html    # phrase close, pas de minuscule après point
+def test_parcelle_nue_pas_de_tableau_comparables():
+    """Parcelle NUE : estimation terrain nu + valeur indicative = surface × repère ; AUCUN tableau de
+    comparables bâti (le repère secteur tient lieu d'échantillon)."""
+    html = bloc.rendu_parcelle(_RAPPORT_NUE, plan_ortho_html="", plan_zonage_html="").replace("\u00a0", " ")
+    assert "Parcelle nue" in html and "495 €/m²" in html
+    assert "Terrain" in html and "900 405 €" in html          # valeur indicative = contenance × repère
+    assert "Les 8 ventes les plus proches retenues" not in html   # pas de tableau bâti pour une nue
+    assert "(repère €/m² de terrain)." in html
 
 
 def test_parcelle_jamais_un_champ_vide():
-    """Exposition, classement et SDP absents → tuiles OMISES, aucune case de tuile vide."""
-    fiche = {**_FICHE, "potentiel_transformation": {}, "aleas": {"n": 2}}
-    html = bloc.rendu_parcelle(fiche, {"orientation": None}, {"bande": None, "libelle": None}, _EST_BATI)
-    assert "Exposition" not in html            # tuile absente (pas de valeur)
-    assert "Classement LABUSE" not in html     # tuile absente
-    assert "SDP restante" not in html          # tuile absente
-    assert '<div class="v"></div>' not in html  # jamais une case de tuile vide
-    assert "2 aléas" in html                   # mais le compte d'aléas (présent) s'imprime
+    """Tuiles/lignes sans valeur OMISES ; jamais une case de tuile vide ni un « — » imprimé."""
+    r = {**_RAPPORT_BATI, "exposition": None,
+         "classement": {"bande": None, "libelle": None, "phrase": None},
+         "foncier": {"zone": "UA", "commune": "Saint-Denis", "regles": [], "parcelle": []},
+         "marche": None, "risques": []}
+    html = bloc.rendu_parcelle(r, plan_ortho_html="", plan_zonage_html="").replace("\u00a0", " ")
+    assert "Exposition" not in html                       # tuile absente
+    assert '<div class="v"></div>' not in html            # jamais une case de tuile vide
+    assert "Le foncier" not in html                       # section vide → disparaît
+    assert "Risques et contraintes" not in html and "Le marché" not in html
 
 
 def test_parcelle_estimation_absente_est_sourcee():
-    """Sans médiane, l'estimation dit une absence SOURCÉE (pas un vide), comme l'écran."""
-    html = bloc.rendu_parcelle(_FICHE, {"orientation": "Est"}, {}, {"type_comparateur": "bati", "median": None})
-    assert "Indisponible" in html and "ventes comparables" in html
-    assert "€/m²" not in html.split("Estimation du prix")[1].split("Le foncier")[0]
+    r = {**_RAPPORT_BATI, "estimation": {"type_comparateur": "bati", "median": None,
+                                          "note": "Pas assez de ventes comparables dans le secteur."}}
+    html = bloc.rendu_parcelle(r, plan_ortho_html="", plan_zonage_html="").replace("\u00a0", " ")
+    assert "Estimation du prix" in html and "Pas assez de ventes comparables" in html
+    assert "€/m²" not in html.split("Estimation du prix")[1].split("apage2")[0]
 
 
-def test_estimation_annonce_helper_nature():
-    """`estimation_annonce` choisit le comparateur selon la NATURE lue de `parcel_residuel.taux_emprise_pct`
-    (l'indicateur du résiduel/scoring), PAS du champ `etat_bien` de la fiche : bâtie (taux ≥ 5) → bâti
-    (prix_ancien) ; nue (taux < 5) → terrain nu (`_prix_terrain_local`)."""
-    from labuse.pige.api import estimation_annonce
-
-    class _FakeDB:
-        """Simule `parcel_residuel` : le mapping porte t (taux), s (sdp) ET prix (médiane terrain)."""
-        def __init__(self, row): self._row = row
-        def execute(self, *a, **k):
-            row = self._row
-            class _R:
-                def mappings(self_):
-                    class _M:
-                        def first(self__): return row
-                    return _M()
-            return _R()
-
-    # BÂTIE : taux ≥ 5 → comparateur bâti (prix_ancien de la fiche)
-    batie = estimation_annonce(_FakeDB({"t": 30.0, "s": 0}), "97411000AB0123",
-                               {"prix_ancien": {"median": 3602, "n": 15}})
-    assert batie["type_comparateur"] == "bati" and batie["median"] == 3602
-
-    # NUE : taux < 5 → repère terrain nu avec n réel + période (via le lecteur déclaré _terrain_section).
-    # Le même mapping sert _nature_parcelle (t, s) ET _terrain_section (mediane_prix_m2, n_ventes, fenetre).
-    nue = estimation_annonce(
-        _FakeDB({"t": 0.0, "s": 1412, "mediane_prix_m2": 210, "n_ventes": 78,
-                 "fenetre": "2021-2025 (millésimes)"}), "97411000AB0123", {})
-    assert nue["type_comparateur"] == "terrain_nu" and nue["median"] == 210
-    assert nue["n"] == 78 and nue["periode"] == "2021–2025" and nue["perimetre"] == "secteur"
+# ═══════════════════════════════════════ VARIANTE LIEN ═══════════════════════════════════════════
+_RAPPORT_LIEN = {
+    "annonce": {"type": "maison", "prix": 360000, "surface_hab": 134.0, "surface_terrain": 625.0,
+                "pieces": 6, "prix_m2": 2687, "commune": "La Possession", "releve_le": "2026-10-28",
+                "url": "https://www.leboncoin.fr/ad/ventes_immobilieres/1234567890",
+                "description": "Maison F6 sur terrain plat de 625 m², 3 chambres à l'étage, garage double."},
+    "lectures": {
+        "bati": {"calculable": True, "ecart_pct": -28, "referentiel_eur_m2": 3728, "n": 114,
+                 "type_label_pluriel": "maisons", "periode": 2021},
+        "fonciere": {"terrain_m2": 625, "terrain_eur_m2": 474, "valeur_eur": 296250, "pct_du_prix": 82,
+                     "conclusion": "Le terrain seul vaut 82 % du prix demandé : bien à valeur surtout foncière."},
+    },
+    "commune": {"commune": "La Possession", "ventes_maison_12m": 114, "median_maison_eur_m2": 3728,
+                "median_terrain_eur_m2": 474, "evolution_maison_12m_pct": 2.2, "permis_12m": 31,
+                "plu_statut": "à jour", "aleas": ["inondation", "mouvement de terrain"], "parc_national": True},
+    "_ref_droite": "AA-20261027-1234567890 · 27/10/2026",
+}
 
 
-def test_commune_type_pilote_les_lignes():
-    """terrain → « Surface du terrain », JAMAIS « Pièces » ; champs non applicables masqués (écran)."""
-    annonce = {"type": "terrain", "prix": 150000, "prix_m2": 300, "surface_terrain": 500,
-               "surface_hab": None, "pieces": None, "commune": "Saint-Denis", "releve_le": "2026-10-27"}
-    html = bloc.rendu_commune(annonce, None, None)
-    assert "Surface du terrain" in html and "Pièces" not in html
-    assert "Prix demandé" in html and "150" in html
+def test_lien_deux_lectures_chiffrees():
+    html = bloc.rendu_lien(_RAPPORT_LIEN, plan_commune_html="<b>carte</b>", releve_html="Annonce Leboncoin").replace("\u00a0", " ")
+    assert "Maison 6 pièces · La Possession" in html
+    # ce que dit l'annonce + extrait en base (2 lignes max)
+    assert "Prix demandé" in html and "360 000 €" in html and "6" in html
+    assert "Maison F6 sur terrain plat" in html and "extrait, texte complet sur l'annonce" in html
+    # DEUX lectures CHIFFRÉES
+    assert "Lecture bâti" in html and "-28 %" in html and "face aux maisons de la commune" in html
+    assert "Lecture foncière" in html and "296 250 €" in html
+    assert "625 m² × 474 €/m² de terrain nu" in html
+    assert "Le terrain seul vaut 82 % du prix demandé : bien à valeur surtout foncière." in html
+    assert "Fiabilité Limitée" in html
+    # bloc commune COMPLET : ventes, médianes, évolution, PLU, aléas, permis
+    assert "La commune · La Possession" in html
+    assert "3 728 €/m²" in html and "474 €/m²" in html and "+2,2 %" in html
+    assert "à jour" in html and "inondation, mouvement de terrain" in html
+    assert "cœur de parc" in html and "Permis déposés, 12 mois" in html and "31" in html
+    # encart vers le rapport complet
+    assert "Pour le rapport complet sur 2 pages" in html and "C'est cette parcelle" in html
+    assert "carte" in html                      # la carte commune insérée dans .lienmap
 
 
-def test_commune_np_pour_attendu_absent_pas_de_tiret():
-    """Un champ ATTENDU pour le type mais absent → « non précisé dans l'annonce » (pas « — »)."""
-    annonce = {"type": "appartement", "prix": None, "surface_hab": 60, "pieces": None,
-               "commune": "Saint-Paul", "releve_le": "2026-10-27"}
-    html = bloc.rendu_commune(annonce, None, None)
-    assert "non précisé dans l'annonce" in html      # prix + pièces attendus et absents
-    assert "Pièces" in html                          # applicable à l'appartement → affiché
-
-
-def test_commune_prix_face_marche_et_phrase_gravee():
-    marche = {"calculable": True, "ecart_libelle": "+33 %", "repere_perimetre": "appartements",
-              "referentiel_eur_m2": 2700, "n_referentiel": 40, "periode": "2024", "fiabilite": "limitee"}
-    ctx = {"plu_statut": {"statut": "PLU"}, "risques": {"ppr_pct": 5, "parc_national": True}}
-    annonce = {"type": "appartement", "prix": 300000, "surface_hab": 60, "pieces": 3,
-               "commune": "Saint-Denis", "releve_le": "2026-10-27"}
-    html = bloc.rendu_commune(annonce, marche, ctx)
-    # badge = niveau SEUL « Limitée » (l'étiquette « Fiabilité » est la clé kv), pas « Fiabilité : limitée »
-    assert "+33 %" in html and "Limitée" in html and "Fiabilité : limitée" not in html
-    assert "Localisez la parcelle" in html           # phrase gravée du mandat
-    assert "inondation" in html and "parc national" in html    # aléas déduits comme l'écran
-    assert "La commune · Saint-Denis" in html
-
-
-def test_commune_la_commune_omet_les_lignes_absentes():
-    """Repère non calculable + contexte vide → « La commune » n'imprime aucune ligne « — »."""
-    annonce = {"type": "maison", "prix": 400000, "surface_hab": 90, "surface_terrain": 600,
-               "pieces": 4, "commune": "Le Port", "releve_le": "2026-10-27"}
-    html = bloc.rendu_commune(annonce, {"calculable": False, "motif": "échantillon insuffisant"}, {})
-    assert "—" not in html
-    assert "Comparaison au marché indisponible" in html or "échantillon insuffisant" in html
-
-
-def test_construire_lien_document_complet_et_deterministe():
-    """Le document commun (variante lien) : titre, numéro AA-, pied comparatif, « relevée le ». Même
-    entrée → HTML IDENTIQUE (preuve que PDF outil == PDF Docs : même route, même builder)."""
-    annonce = {"type": "terrain", "prix": 150000, "prix_m2": 300, "surface_terrain": 500,
-               "commune": "Saint-Denis", "releve_le": "2026-10-27"}
-    marche = {"calculable": True, "ecart_libelle": "+10 %", "repere_perimetre": "terrains",
-              "referentiel_eur_m2": 270, "n_referentiel": 22, "periode": "2024"}
-    res1 = builder.construire_analyse_annonce_lien(annonce, marche, None, jour=J)
-    res2 = builder.construire_analyse_annonce_lien(annonce, marche, None, jour=J)
-    assert res1.html == res2.html                    # déterministe → outil et Docs rendent la MÊME chose
-    assert "Analyse d'annonce" in res1.cartouche.doc_title   # titre humain (le HTML l'échappe en d&#x27;)
-    assert res1.numero.startswith("AA-20261027-")
-    assert "Annonce Leboncoin" in res1.html and "relevée le 27/10/2026" in res1.html
-    assert "Terrain · Saint-Denis" in res1.html
-    # pied de page (cartouche) : estimation COMPARATIVE, pas un avis de valeur
+def test_construire_lien_document_deterministe():
+    res1 = builder.construire_analyse_annonce_lien(_RAPPORT_LIEN, jour=J)
+    res2 = builder.construire_analyse_annonce_lien(_RAPPORT_LIEN, jour=J)
+    assert res1.html == res2.html                    # même entrée → même HTML (PDF outil == PDF Docs)
+    assert "Analyse d'annonce" in res1.cartouche.doc_title
+    assert res1.numero == "AA-20261027-7890"   # suffixe = 4 derniers chiffres du list_id (ASCII, stable)
+    assert "Voir l'annonce" in res1.html and "leboncoin.fr/ad" in res1.html
     assert "comparative" in res1.cartouche.doc_foot and "pas un avis de valeur" in res1.cartouche.doc_foot
     assert "DVF" in res1.cartouche.doc_foot and "Radar LABUSE" in res1.cartouche.doc_foot
 
 
+# ═══════════════════════════════════════ HELPERS PURS ═══════════════════════════════════════════
+def test_valeur_indicative_omet_si_surface_ou_mediane_absente():
+    assert _valeur_indicative(197, 3602, 3000, 4200) == {
+        "surface_m2": 197, "eur_m2": 3602, "valeur_eur": 709594,
+        "valeur_basse": 591000, "valeur_haute": 827400}
+    assert _valeur_indicative(None, 3602, None, None) is None     # pas de surface → pas de ligne
+    assert _valeur_indicative(197, None, None, None) is None       # pas de médiane → pas de ligne
+    assert "valeur_basse" not in _valeur_indicative(1819, 495, None, None)  # sans quartiles : pas de fourchette
+
+
+def test_classement_phrase_vocabulaire_grave():
+    d = _classement_phrase("D", "Faible", "bati_max")
+    assert d.startswith("Classement D · Faible :") and "extension, pas dans une opération" in d
+    assert _classement_phrase(None, None, "nu") is None            # pas de bande → pas de phrase
+    assert "analyse incomplète" in _classement_phrase("NC", "Analyse incomplète", "nu").lower()
+
+
+def test_risques_rows_tires_de_la_fiche():
+    fiche = {"aleas": {"n": 1, "liste": [{
+        "nature": "PPR — zone bleue",
+        "libelle": "Zone bleue PPR inondation et mouvement de terrain — constructible SOUS PRESCRIPTIONS.",
+        "redhibitoire": False, "source": "DEAL", "ppr": [{"document": "PPR", "approbation": "2012-10-17"}]}]}}
+    rows = _risques_rows(fiche, "Saint-Denis")
+    assert len(rows) == 1
+    assert rows[0]["alea"] == "Inondation, Mouvement de terrain"    # aléas extraits du libellé
+    assert rows[0]["niveau"] == "Zone bleue"
+    assert rows[0]["document"] == "PPR Saint-Denis, 2012"           # document assemblé (PPR + commune + année)
+    assert rows[0]["implique"].startswith("Constructible")
+    assert _risques_rows({"aleas": {"n": 0, "liste": []}}, "X") == []
+
+
+def test_a_verifier_derive_des_donnees_max_3():
+    batie = _a_verifier({"aleas": {"n": 1}}, "bati_max", "Uh")
+    assert len(batie) <= 3 and any("bâti" in p for p in batie) and any("PPR" in p for p in batie)
+    nue = _a_verifier({"aleas": {"n": 0}}, "nu", "UD")
+    assert len(nue) <= 3 and any("viabilisation" in p or "desserte" in p for p in nue)
+
+
+def test_regles_zone_omet_les_non_calibrees():
+    """Les règles viennent du calibrage (resolve_zone, config, sans base) ; une zone inconnue → []."""
+    assert _regles_zone(None, "Saint-Denis") == []
+    assert _regles_zone("ZONE_INEXISTANTE_XYZ", "Saint-Denis") == []
+
+
+# ═══════════════════════════════════ CADRE / NUMÉRO / MESSAGES ═══════════════════════════════════
 def test_parcelle_dans_cadre_detecte_debordement():
-    """La règle « parcelle entière visible » : un contour qui touche/déborde un bord n'est PAS dans le cadre."""
-    assert not builder._parcelle_dans_cadre([[(100, -5), (200, -5), (200, 210)]], 720, 200, 3.0)   # déborde haut/bas
-    assert not builder._parcelle_dans_cadre([[(-5, 50), (730, 50), (730, 150)]], 720, 200, 3.0)    # déborde gauche/droite
-    assert builder._parcelle_dans_cadre([[(50, 20), (300, 20), (300, 180), (50, 180)]], 720, 200, 3.0)  # entière + marge
+    assert not builder._parcelle_dans_cadre([[(100, -5), (200, -5), (200, 210)]], 720, 200, 3.0)
+    assert not builder._parcelle_dans_cadre([[(-5, 50), (730, 50), (730, 150)]], 720, 200, 3.0)
+    assert builder._parcelle_dans_cadre([[(50, 20), (300, 20), (300, 180), (50, 180)]], 720, 200, 3.0)
     assert not builder._parcelle_dans_cadre([], 720, 200, 3.0)
 
 
 def test_plan_cadre_parcelle_allongee_verticalement():
-    """Parcelle HAUTE : au zoom serré le contour sort en HAUT et en BAS du cadre large ; on recule le zoom
-    jusqu'à ce que TOUTE la hauteur tienne (emprise horizontale élargie) → parcelle entière visible."""
-    W, H = 720, 200
-    def rendre(zd):
-        if zd == 0:   # trop grande pour la hauteur du cadre : déborde en haut (<0) et en bas (>H)
-            return {"ok": True, "width": W, "height": H,
-                    "parcel_px": [[(350, -30), (370, -30), (370, H + 30), (350, H + 30)]]}
-        return {"ok": True, "width": W, "height": H,        # zoom reculé : tient, marge comprise
-                "parcel_px": [[(345, 40), (375, 40), (375, H - 40), (345, H - 40)]]}
-    res = builder._choisir_cadre_plan(rendre, marge_px=3.0)
-    assert builder._parcelle_dans_cadre(res["parcel_px"], W, H, 3.0)   # entière visible
-    assert res["parcel_px"][0][0] == (345, 40)                          # cadre reculé retenu
-
-
-def test_plan_cadre_parcelle_allongee_horizontalement():
-    """Parcelle LARGE : au zoom serré le contour sort à GAUCHE et à DROITE ; on recule le zoom jusqu'à ce
-    que toute la largeur tienne → parcelle entière visible."""
     W, H = 720, 200
     def rendre(zd):
         if zd == 0:
             return {"ok": True, "width": W, "height": H,
-                    "parcel_px": [[(-40, 90), (W + 40, 90), (W + 40, 120), (-40, 120)]]}
+                    "parcel_px": [[(350, -30), (370, -30), (370, H + 30), (350, H + 30)]]}
         return {"ok": True, "width": W, "height": H,
-                "parcel_px": [[(40, 85), (W - 40, 85), (W - 40, 125), (40, 125)]]}
+                "parcel_px": [[(345, 40), (375, 40), (375, H - 40), (345, H - 40)]]}
     res = builder._choisir_cadre_plan(rendre, marge_px=3.0)
     assert builder._parcelle_dans_cadre(res["parcel_px"], W, H, 3.0)
-    assert res["parcel_px"][0][0] == (40, 85)
+    assert res["parcel_px"][0][0] == (345, 40)
 
 
 def test_numero_prefixe_analyse_annonce():
@@ -219,7 +252,6 @@ def test_numero_prefixe_analyse_annonce():
 
 
 def test_message_echec_lien_identique_a_l_outil():
-    """Le message d'échec du lien (route Docs/outil) reprend MOT POUR MOT celui de l'outil (front)."""
     from labuse.api.documents import _ANNONCE_ECHEC
     assert _ANNONCE_ECHEC["url_bloquee"] == (
         "Cette annonce n'a pas encore été relevée par LABUSE et Leboncoin bloque sa lecture "
