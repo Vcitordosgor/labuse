@@ -321,6 +321,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_pige_passes ON pige_passes (passe, captured
 -- « auto » : l'ancienne audit ne pouvait PAS distinguer une capture de l'alarme d'un clic — ce champ
 -- grave la signature que l'audit RADAR-ETAT-1 cherchait dans les données.
 ALTER TABLE pige_passes ADD COLUMN IF NOT EXISTS source varchar(8) NOT NULL DEFAULT 'auto';
+-- RADAR-FIX-3 — une page BLOQUÉE (DataDome/captcha), VIDE ou ILLISIBLE ne prouve RIEN : elle ne
+-- retire aucun bien et se compte À PART. `n_non_verifiees` = liens ouverts dont le verdict n'est ni
+-- « présente » ni un retrait PROUVÉ (preuve positive exigée). Sépare « on n'a pas pu voir » de
+-- « l'annonce est partie » — la confusion des deux a causé 60 fausses suppressions le 28/10.
+ALTER TABLE pige_passes ADD COLUMN IF NOT EXISTS n_non_verifiees integer NOT NULL DEFAULT 0;
 """
 
 
