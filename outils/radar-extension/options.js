@@ -1,10 +1,11 @@
 // Options : formulaire → chrome.storage.local. Reprogramme l'alarme au save.
 
-const fields = ["searchUrl", "labuseUrl", "token", "hour", "jitterMaxMin"];
+const fields = ["searchUrl", "bieniciSearchUrl", "labuseUrl", "token", "hour", "jitterMaxMin"];
 
 async function load() {
   const d = await chrome.storage.local.get({
     searchUrl: "",
+    bieniciSearchUrl: "",
     labuseUrl: "https://app.labuse.immo",   // RADAR-FIX-2 (Lot B) — PROD par défaut
     token: "",
     hour: 21,
@@ -16,6 +17,7 @@ async function load() {
 document.getElementById("save").addEventListener("click", async () => {
   const patch = {
     searchUrl: document.getElementById("searchUrl").value.trim(),
+    bieniciSearchUrl: document.getElementById("bieniciSearchUrl").value.trim(),
     labuseUrl: document.getElementById("labuseUrl").value.trim() || "https://app.labuse.immo",
     token: document.getElementById("token").value.trim(),
     hour: Math.max(0, Math.min(23, parseInt(document.getElementById("hour").value, 10) || 21)),

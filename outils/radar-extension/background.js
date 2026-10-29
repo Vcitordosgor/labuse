@@ -17,6 +17,24 @@ const NAV_MAX = 8000;
 const CONF_MIN = 8000;
 const CONF_MAX = 15000;
 
+// ---- Bien'ici (RADAR-SOURCES-2) : capture par APPEL API, pas lecture de page ----------------
+// Bien'ici est une SPA Angular : les annonces n'arrivent PAS dans le HTML mais par un appel JSON
+// `realEstateAds.json`. L'extension fait ce fetch() MÊME-ORIGINE depuis la session réelle de Vic
+// (doctrine §2 : vraie session, vrais en-têtes/cookies — jamais un robot serveur) et POSTE le JSON
+// tel quel au serveur, exactement comme le HTML Leboncoin. Le serveur reconnaît le payload (clé
+// `realEstateAds`) et le traduit (html_next.aplatir_bienici).
+const BIENICI_SIZE = 24;                 // annonces par appel (= pagination du site)
+const BIENICI_ZONE_REUNION = "-77601";   // identifiant de zone « La Réunion » (observé — à CONFIRMER par Vic)
+// Base des filtres « VENTES, toute La Réunion » (à confirmer par Vic). L'extension y ajoute size/from/page.
+const BIENICI_FILTERS = {
+  filterType: "buy",
+  propertyType: ["house", "flat", "terrain", "loft", "townhouse", "castle", "building", "parking", "premises"],
+  sortBy: "relevance", sortOrder: "desc", onTheMarket: [true],
+  zoneIdsByTypes: { zoneIds: [BIENICI_ZONE_REUNION] }
+};
+const BIENICI_CAP_NOUVELLES = 15;        // appels « nouvelles » (comme Leboncoin ; ~360 annonces max)
+const BIENICI_CAP_RELECTURE = 20;        // appels « relecture » en rotation
+
 // Les 24 communes de La Réunion (ordre du mandat).
 const COMMUNES = [
   "Saint-Denis", "Sainte-Marie", "Sainte-Suzanne", "Saint-André",
@@ -46,6 +64,10 @@ function nowIso() {
 async function getOpts() {
   const d = await chrome.storage.local.get({
     searchUrl: "",
+    // RADAR-SOURCES-2 — page de recherche Bien'ici (VENTES, toute La Réunion). Sert à OUVRIR un onglet
+    // bienici.com (session chaude) d'où partent les fetch() même-origine ; vide = Bien'ici désactivé.
+    bieniciSearchUrl: "",
+    bieniciRelectureCursor: 0,
     // RADAR-FIX-2 (Lot B) — PROD par défaut : l'extension nourrit https://app.labuse.immo. localhost ne sert
     // qu'en recette, en le tapant EXPLICITEMENT dans les Options.
     labuseUrl: "https://app.labuse.immo",
@@ -69,6 +91,19 @@ async function getOpts() {
 // RADAR-FIX-2 — hôte d'une URL (pour détecter la bascule localhost→prod).
 function hostOf(url) {
   try { return new URL(url).host; } catch (_) { return ""; }
+}
+
+// RADAR-SOURCES-2 — reconnaissance du portail d'une URL (routage des passes et de la confirmation).
+function isBienici(url) { return /(^|\.)bienici\.com$/i.test(hostOf(url)); }
+function isLeboncoin(url) { return /(^|\.)leboncoin\.fr$/i.test(hostOf(url)); }
+
+// L'id Bien'ici est le DERNIER segment de l'URL d'annonce (« …/immo-facile-61412190 ») — c'est lui qui
+// résout l'annonce chez Bien'ici. On l'extrait pour interroger l'API d'une annonce seule (confirmation).
+function bieniciIdFromUrl(url) {
+  try {
+    const p = new URL(url).pathname.replace(/\/+$/, "").split("/");
+    return p[p.length - 1] || null;
+  } catch (_) { return null; }
 }
 
 // RADAR-FIX-2 — date locale YYYY-MM-DD (le « soir » se juge en heure locale de la machine qui capture).
@@ -415,8 +450,8 @@ function classifierConfirmation(info, finalUrl, listId) {
   return { verdict: "inconnue", preuve: null, httpStatus: null };
 }
 
-async function passeConfirmation(opts, tabId, etat) {
-  const liste = (etat && Array.isArray(etat.a_confirmer)) ? etat.a_confirmer : [];
+async function passeConfirmation(opts, tabId, items) {
+  const liste = Array.isArray(items) ? items : [];
   const verdicts = [];
   let done = 0;
   for (const item of liste) {
@@ -450,6 +485,138 @@ async function passeConfirmation(opts, tabId, etat) {
 }
 
 // =========================================================================
+// Bien'ici — capture par appel API (RADAR-SOURCES-2)
+// =========================================================================
+
+// Fonction INJECTÉE dans un onglet bienici.com : fetch() MÊME-ORIGINE (donc avec la session/cookies de
+// Vic) de `realEstateAds.json` pour UNE page de filtres donnés. Retourne {status, body} — jamais ne lève.
+async function biFetchResults(baseFilters, page, size) {
+  const filters = Object.assign({}, baseFilters, { size, from: (page - 1) * size, page });
+  const url = location.origin + "/realEstateAds.json?filters=" + encodeURIComponent(JSON.stringify(filters));
+  try {
+    const r = await fetch(url, { headers: { "x-requested-with": "XMLHttpRequest", "accept": "application/json" } });
+    const body = await r.text();
+    return { status: r.status, body };
+  } catch (e) {
+    return { status: 0, body: "", error: String(e) };
+  }
+}
+
+// Fonction INJECTÉE : fetch() d'UNE annonce seule (confirmation). 404 = preuve POSITIVE de disparition ;
+// 200 + status.onTheMarket=false = expirée ; 200 + onTheMarket = toujours présente.
+async function biFetchAd(id) {
+  const url = location.origin + "/realEstateAd.json?id=" + encodeURIComponent(id);
+  try {
+    const r = await fetch(url, { headers: { "x-requested-with": "XMLHttpRequest", "accept": "application/json" } });
+    let onTheMarket = null, found = false;
+    if (r.status === 200) {
+      try { const j = JSON.parse(await r.text()); found = !!(j && j.id); onTheMarket = j && j.status ? !!j.status.onTheMarket : null; }
+      catch (_) { found = false; }
+    }
+    return { status: r.status, found, onTheMarket };
+  } catch (e) {
+    return { status: 0, found: false, onTheMarket: null, error: String(e) };
+  }
+}
+
+async function injectArgs(tabId, fn, args) {
+  const res = await chrome.scripting.executeScript({ target: { tabId }, func: fn, args });
+  return res && res[0] ? res[0].result : null;
+}
+
+// Lit une page de résultats Bien'ici et la poste. Retourne la liste des dates (modificationDate) des
+// annonces de la page, pour la règle d'arrêt « plus rien de neuf » (comme index_date côté Leboncoin).
+async function biCapturePage(opts, tabId, passe, page, capturedAt, source) {
+  const res = await biFetchResults(BIENICI_FILTERS, page, BIENICI_SIZE);
+  if (res.status === 429) throw new BlockError("Bien'ici 429 (trop vite) — on se calme");
+  if (res.status !== 200 || !res.body) throw new BlockError("Bien'ici : réponse vide (HTTP " + res.status + ")");
+  let ads = [];
+  try { ads = (JSON.parse(res.body).realEstateAds) || []; } catch (_) { throw new BlockError("Bien'ici : JSON illisible"); }
+  if (!ads.length) return { dates: [], empty: true };   // page au-delà du dernier résultat : fin propre
+  // On poste le CORPS JSON brut (le serveur reconnaît `realEstateAds` et le traduit). Même route que LBC.
+  await apiCapture(opts, passe, opts.bieniciSearchUrl, page, res.body, capturedAt, source);
+  const dates = ads.map((a) => a && (a.modificationDate || a.publicationDate)).filter(Boolean).map(String);
+  return { dates, empty: false };
+}
+
+async function passeNouvellesBienici(opts, tabId, capturedAt, etat, source) {
+  const seuil = etat && etat.derniere_capture_at ? Date.parse(etat.derniere_capture_at) - 3600 * 1000 : null;
+  let page = 1, used = 0;
+  while (page <= BIENICI_CAP_NOUVELLES) {
+    const { dates, empty } = await biCapturePage(opts, tabId, "nouvelles", page, capturedAt, source);
+    used++;
+    if (empty) break;
+    const newest = maxDate(dates);
+    if (seuil !== null && newest !== null && newest <= seuil) break;   // plus rien de plus récent
+    await sleep(jitter(NAV_MIN, NAV_MAX));
+    page++;
+  }
+  return used;
+}
+
+async function passeRelectureBienici(opts, tabId, capturedAt, source) {
+  // Rotation : on reprend là où on s'était arrêté hier (curseur de page). Inventaire complet en ≤ quelques soirs.
+  let cursor = opts.bieniciRelectureCursor || 0;
+  let used = 0;
+  while (used < BIENICI_CAP_RELECTURE) {
+    const page = cursor + used + 1;
+    const { empty } = await biCapturePage(opts, tabId, "relecture", page, capturedAt, source);
+    used++;
+    if (empty) { cursor = 0; break; }   // fin d'inventaire : on repart de la page 1 la prochaine fois
+    await sleep(jitter(NAV_MIN, NAV_MAX));
+  }
+  await setOpts({ bieniciRelectureCursor: cursor === 0 ? 0 : cursor + used });
+  return used;
+}
+
+// Classification PURE d'une annonce Bien'ici vérifiée (testable hors navigateur). Même doctrine
+// RADAR-FIX-3 : on ne retire QUE sur preuve positive (404, ou off-market déclaré). Tout le reste = inconnue.
+function classifierConfirmationBienici(ad) {
+  if (!ad || ad.status === 0) return { verdict: "inconnue", preuve: null, httpStatus: null };
+  if (ad.status === 404) return { verdict: "supprimee", preuve: "http_404", httpStatus: 404 };
+  if (ad.status === 200 && ad.onTheMarket === false) return { verdict: "supprimee", preuve: "expiree", httpStatus: 410 };
+  if (ad.status === 200 && ad.found) return { verdict: "presente", preuve: null, httpStatus: 200 };
+  return { verdict: "inconnue", preuve: null, httpStatus: null };
+}
+
+async function passeConfirmationBienici(opts, tabId, items) {
+  const liste = Array.isArray(items) ? items : [];
+  const verdicts = [];
+  let done = 0;
+  for (const item of liste) {
+    if (done >= CAP_CONFIRMATION) break;
+    const id = bieniciIdFromUrl(item.url);
+    let res = { verdict: "inconnue", preuve: null, httpStatus: null };
+    if (id) {
+      const ad = await injectArgs(tabId, biFetchAd, [id]);
+      if (ad && ad.status === 429) break;          // mur anti-robots : on arrête (rien retiré)
+      res = classifierConfirmationBienici(ad);
+    }
+    verdicts.push({ list_id: item.list_id, verdict: res.verdict, preuve: res.preuve,
+                    url: item.url, http_status: res.httpStatus });
+    done++;
+    if (done < liste.length && done < CAP_CONFIRMATION) await sleep(jitter(CONF_MIN, CONF_MAX));
+  }
+  if (verdicts.length) await apiConfirmationBatch(opts, verdicts);
+  return done;
+}
+
+// Bloc Bien'ici d'une soirée : ouvre un onglet bienici.com (session chaude), enchaîne nouvelles →
+// relecture → confirmation (sous-ensemble Bien'ici de la liste à confirmer). Ferme l'onglet.
+async function runSoireeBienici(opts, capturedAt, etat, confItems, source) {
+  let tabId = null;
+  try {
+    tabId = await openWorkTab(opts.bieniciSearchUrl);
+    const nNouv = await passeNouvellesBienici(opts, tabId, capturedAt, etat, source);
+    const nRel = await passeRelectureBienici(opts, tabId, capturedAt, source);
+    const nConf = await passeConfirmationBienici(opts, tabId, confItems);
+    return { nNouv, nRel, nConf };
+  } finally {
+    if (tabId !== null) { try { await chrome.tabs.remove(tabId); } catch (_) {} }
+  }
+}
+
+// =========================================================================
 // Plan de soirée
 // =========================================================================
 
@@ -457,10 +624,10 @@ async function passeConfirmation(opts, tabId, etat) {
 async function runEvening(source) {
   source = source || "auto";
   const opts = await getOpts();
-  if (!opts.searchUrl || !opts.labuseUrl || !opts.token) {
+  if ((!opts.searchUrl && !opts.bieniciSearchUrl) || !opts.labuseUrl || !opts.token) {
     await notify("Radar : configuration incomplète (Options).");
     await setBadge("✗", "#c0392b");
-    await setOpts({ lastResult: "Configuration incomplète — ouvrez les Options (URL, jeton)." });
+    await setOpts({ lastResult: "Configuration incomplète — ouvrez les Options (recherche, URL, jeton)." });
     return;
   }
   // RADAR-FIX-2 (Lot B) — BASCULE : si l'hôte LABUSE a changé depuis la dernière capture réussie (ou
@@ -470,36 +637,47 @@ async function runEvening(source) {
   const capturedAt = nowIso();
   let tabId = null;
   let budget = CAP_TOTAL_PAGES;
+  const parts = [];
   await setOpts({ running: true });
   try {
-    // Ouverture page 1 normalement (page riche).
-    tabId = await openWorkTab(opts.searchUrl);
-
-    // État courant du back (seuil "nouvelles" + liste à confirmer).
+    // État courant du back (seuil "nouvelles" + liste à confirmer), partagé par les deux portails.
     const etat = await apiEtat(opts);
+    const aConf = (etat && Array.isArray(etat.a_confirmer)) ? etat.a_confirmer : [];
+    // Chaque portail ne confirme QUE ses propres liens (routage par hôte). Un lien d'un autre portail,
+    // ou sans hôte reconnu, reste pour la voie manuelle — jamais classé à tort.
+    const confLbc = aConf.filter((it) => isLeboncoin(it.url));
+    const confBi = aConf.filter((it) => isBienici(it.url));
 
-    // 1) Nouvelles (rattrapage = remontée profonde après une bascule).
-    const nNouv = await passeNouvelles(opts, tabId, capturedAt, etat, budget, source, rattrapage);
-    budget -= nNouv;
-
-    // 2) Relecture (on rouvre page 1 pour repartir proprement).
-    if (budget > 0) {
-      await chrome.tabs.update(tabId, { url: opts.searchUrl, active: false });
-      await waitTabComplete(tabId);
-      const nRel = await passeRelecture(opts, tabId, capturedAt, budget, source);
-      budget -= nRel;
+    // ── Bloc Leboncoin (inchangé : lecture de page riche + clics « page suivante ») ──
+    if (opts.searchUrl) {
+      tabId = await openWorkTab(opts.searchUrl);
+      const nNouv = await passeNouvelles(opts, tabId, capturedAt, etat, budget, source, rattrapage);
+      budget -= nNouv;
+      let nRel = 0;
+      if (budget > 0) {
+        await chrome.tabs.update(tabId, { url: opts.searchUrl, active: false });
+        await waitTabComplete(tabId);
+        nRel = await passeRelecture(opts, tabId, capturedAt, budget, source);
+        budget -= nRel;
+      }
+      const nConf = await passeConfirmation(opts, tabId, confLbc);
+      parts.push(`LBC nouv ${nNouv}, relec ${nRel}, conf ${nConf}`);
+      try { await chrome.tabs.remove(tabId); } catch (_) {}
+      tabId = null;
     }
 
-    // 3) Confirmation.
-    const nConf = await passeConfirmation(opts, tabId, etat);
+    // ── Bloc Bien'ici (RADAR-SOURCES-2 : appel API même-origine, pas de lecture de page) ──
+    if (opts.bieniciSearchUrl) {
+      const bi = await runSoireeBienici(opts, capturedAt, etat, confBi, source);
+      parts.push(`BI nouv ${bi.nNouv}, relec ${bi.nRel}, conf ${bi.nConf}`);
+    }
 
     const stamp = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
     await setBadge("✓", "#27ae60");
     await setOpts({
       lastRun: capturedAt,
       lastCaptureHost: host,     // la bascule est consommée : les soirs suivants ne rattrapent plus
-      lastResult: `OK ${stamp} (${source}${rattrapage ? ", rattrapage" : ""}) — nouv ${nNouv}, `
-                  + `relec ${CAP_TOTAL_PAGES - budget - nNouv}, conf ${nConf} → ${host}`
+      lastResult: `OK ${stamp} (${source}${rattrapage ? ", rattrapage" : ""}) — ${parts.join(" · ")} → ${host}`
     });
   } catch (e) {
     // Blocage OU erreur réseau : on arrête net, on prévient, on n'insiste pas. Message LISIBLE dans le
@@ -619,5 +797,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 // RADAR-FIX-3 — surface testable (recette hors-navigateur) : la classification PURE d'un lien vérifié.
 // N'expose rien en production (le drapeau n'est posé que par la recette avant l'import).
 if (globalThis.__RADAR_TEST__) {
-  globalThis.__radar = { classifierConfirmation };
+  globalThis.__radar = { classifierConfirmation, classifierConfirmationBienici, bieniciIdFromUrl,
+                         isBienici, isLeboncoin };
 }

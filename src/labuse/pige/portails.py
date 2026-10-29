@@ -39,3 +39,15 @@ def slug_pour_url(url: str) -> str:
         if pref and u.startswith(pref.lower()):
             return slug
     return "autre"
+
+
+def lien_annonce_jsonads(ville: str, type_bien: str, pieces: str, ref: str) -> str | None:
+    """RADAR-SOURCES-2 — URL sortante canonique du portail servi en JSON (realEstateAds), qui n'embarque
+    PAS d'URL dans ses annonces. On la reconstruit ICI (seul module autorisé à nommer un portail) sur le
+    préfixe officiel + le patron du site /annonce/vente/{ville}/{type}/{N}pieces/{id} — le dernier segment
+    (l'id) résout l'annonce, les segments de tête sont cosmétiques/SEO. `slug_pour_url` reclassera cette
+    URL sur son préfixe. None si l'identifiant manque."""
+    pref = PORTAILS["bienici"]["prefixe_url"]
+    if not pref or not ref:
+        return None
+    return f"{pref}annonce/vente/{ville}/{type_bien}/{pieces}/{ref}"

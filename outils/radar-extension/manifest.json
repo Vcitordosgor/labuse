@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "LABUSE Radar",
   "version": "0.1.0",
-  "description": "Pige immobilière LABUSE — capture des annonces Leboncoin (île entière), à rythme humain.",
+  "description": "Pige immobilière LABUSE — capture des annonces Leboncoin et Bien'ici (île entière), à rythme humain.",
   "permissions": [
     "alarms",
     "storage",
@@ -12,6 +12,7 @@
   ],
   "host_permissions": [
     "*://*.leboncoin.fr/*",
+    "*://*.bienici.com/*",
     "https://app.labuse.immo/*",
     "http://localhost/*"
   ],
