@@ -21,8 +21,13 @@ Aucune structure reconnue ⇒ échec bruyant qui NOMME les trois chemins cherch�
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re
+import unicodedata
+
+from . import portails    # module d'affichage (SEUL à nommer un portail) — bâtit l'URL sortante
+from .. import communes   # référentiel INSEE↔nom (pur, sans réseau) — résout la commune via l'INSEE
 
 # Provenance des FAITS d'un bien (mandat D1) : rich = tout le JSON structuré ; degrade = DOM seul.
 PROV_RICHE = "json_riche"
@@ -154,11 +159,160 @@ def aplatir(ad: dict) -> dict:
 
 
 def _classe(v) -> str | None:
-    """energy_rate / ges du portail : 'n' = non renseigné, sinon lettre A–G. None si absent."""
+    """energy_rate / ges du portail : 'n' = non renseigné, sinon lettre A–G. None si absent.
+    Bien'ici utilise aussi 'NS' (non soumis) / 'VI' (vierge) → None (seule une lettre A–G passe)."""
     if not v or not isinstance(v, str):
         return None
     u = v.strip().upper()
     return u if u in set("ABCDEFG") else None
+
+
+# ════════════ RADAR-SOURCES-2 · traducteur d'un portail servi en JSON (API realEstateAds) ════════════
+# Bien'ici est une application Angular (SPA) : la page HTML est une coquille, les annonces arrivent par
+# un appel JSON `realEstateAds.json`. L'extension (session RÉELLE de Vic, doctrine §2 inchangée) fait ce
+# fetch même-origine et POSTE le JSON tel quel au serveur — exactement comme elle poste le HTML Leboncoin.
+# Ce traducteur alimente le MÊME schéma plat que le traducteur Next.js : une donnée absente reste absente,
+# aucun champ n'est deviné. La réponse porte `{total, from, perPage, realEstateAds:[…]}`. Le nom du
+# portail ne vit QU'EN COMMENTAIRE et dans le module d'affichage `portails.py` (doctrine §2) : le code
+# ci-dessous est neutre (`json_ads`), l'URL sortante est bâtie par `portails.lien_annonce_jsonads`.
+
+# propertyType → notre vocabulaire. Seuls les types SÛRS sont mappés ; les autres (loft, castle,
+# townhouse, parking, premises, programme…) donnent type=None (conservé dans `brut`, jamais rattaché) —
+# on n'invente pas une correspondance non observée.
+_JSON_ADS_TYPE = {"house": "maison", "flat": "appartement", "terrain": "terrain", "building": "immeuble"}
+
+# Champs bruts conservés (contrat de structure : la réponse est réputée changée si AUCUN n'apparaît sur
+# une annonce). Miroir du rôle de `_ATTRS` côté Next.js.
+_JSON_ADS_ATTRS = (
+    "reference", "propertyType", "adType", "transactionType", "price", "priceWithoutFees",
+    "pricePerSquareMeter", "surfaceArea", "landSurfaceArea", "roomsQuantity", "bedroomsQuantity",
+    "yearOfConstruction", "energyClassification", "greenhouseGazClassification", "accountType",
+    "adCreatedByPro", "accountDisplayName", "customerId", "isInCondominium", "hasPool",
+    "priceHasDecreased", "addressKnown",
+)
+
+# Au-delà de ce rayon de floutage (disque), la position n'est plus « à l'adresse » mais large (≈ commune) :
+# le point ne tombe plus dans le rayon de rattachement (150 m) de façon fiable. Mesuré sur l'échantillon :
+# 90 % des annonces floutées à 50 m, quelques-unes à 125 m, de rares à 500 m.
+_JSON_ADS_RAYON_ADRESSE_M = 150
+
+# Les list_id de ce portail sont des CHAÎNES (« immo-facile-61412190 ») ; la colonne
+# `pige_annonces.list_id` est un bigint. On en dérive un entier STABLE (même chaîne → même id, donc
+# idempotence) par un hachage 56 bits, et on force le bit 62 pour garantir que cet espace (> 4,6·10¹⁸)
+# ne CROISE JAMAIS les list_id numériques Leboncoin (< ~10¹⁰) : aucune fausse collision « même annonce ».
+# La chaîne réelle reste dans l'URL sortante (index unique) et dans `brut` pour la traçabilité.
+_JSON_ADS_LIST_ID_BIT = 1 << 62
+
+
+def _list_id_json_ads(id_str) -> int | None:
+    if not id_str:
+        return None
+    h = int(hashlib.blake2b(str(id_str).encode("utf-8"), digest_size=7).hexdigest(), 16)
+    return _JSON_ADS_LIST_ID_BIT | h
+
+
+def _slug(s) -> str:
+    """Segment d'URL lisible (sans accents, en minuscules) — jamais vide (défaut « bien »)."""
+    t = unicodedata.normalize("NFKD", str(s or "")).encode("ascii", "ignore").decode()
+    t = re.sub(r"[^A-Za-z0-9]+", "-", t).strip("-").lower()
+    return t or "bien"
+
+
+def _url_json_ads(ad: dict, typ: str | None, id_str) -> str | None:
+    """URL sortante canonique. Le JSON n'embarque PAS d'URL ; on la reconstruit via le module d'affichage
+    (qui détient seul le préfixe du portail) sur le patron du site /annonce/vente/{ville}/{type}/{N}pieces/
+    {id} — le dernier segment (l'id) résout l'annonce, les segments de tête sont cosmétiques/SEO."""
+    if not id_str:
+        return None
+    tfr = typ if typ in ("maison", "appartement", "terrain", "immeuble") else "bien"
+    pieces = ad.get("roomsQuantity")
+    seg = f"{int(pieces)}pieces" if isinstance(pieces, (int, float)) and pieces else "bien"
+    return portails.lien_annonce_jsonads(_slug(ad.get("city")), tfr, seg, str(id_str))
+
+
+def aplatir_json_ads(ad: dict) -> dict:
+    """Annonce brute d'un portail servi en JSON → enregistrement plat, typé, dans le MÊME schéma plat que
+    le traducteur Next.js. Conserve tout ce qui est utile ; `brut` porte le sous-ensemble d'attributs
+    tracés. Une donnée absente reste absente (jamais devinée). La commune est résolue via l'INSEE du
+    quartier (le champ `city` peut être une LOCALITÉ qui n'est pas une des 24 communes officielles)."""
+    ref_id = ad.get("id")
+    if not any(k in ad for k in _JSON_ADS_ATTRS):
+        raise NextDataError(f"annonce {ref_id} sans aucun attribut connu — structure du portail changée")
+    pt = str(ad.get("propertyType") or "")
+    typ = _JSON_ADS_TYPE.get(pt)
+    blur = ad.get("blurInfo") or {}
+    pos = blur.get("position") or blur.get("centroid") or {}
+    rayon = _num(blur.get("radius"))
+    addr_known = bool(ad.get("addressKnown"))
+    # position « à l'adresse » seulement si l'adresse est connue ET le floutage est serré (≤150 m) ;
+    # sinon « city » (large). On fournit TOUJOURS lat/lng : le rattachement s'appuie dessus, et une
+    # position large ne convergera simplement pas (≥2 critères requis) — jamais un faux positif.
+    source_position = "address" if (addr_known and rayon is not None and rayon <= _JSON_ADS_RAYON_ADRESSE_M) else "city"
+    district = ad.get("district") or {}
+    insee = district.get("code_insee") or district.get("insee_code")
+    commune_officielle = communes.nom_officiel(insee) if insee else None
+    commune = commune_officielle or ad.get("city")   # officielle d'abord ; sinon la ville brute (jugée hors-périmètre si inconnue)
+    pro = ad.get("adCreatedByPro")
+    statut = ad.get("status") or {}
+    brut = {k: ad.get(k) for k in _JSON_ADS_ATTRS if ad.get(k) not in (None, "")}
+    brut.update({"id": ref_id, "blur_radius_m": rayon, "code_insee": insee})
+    return {
+        "provenance": PROV_RICHE,                                # JSON structuré complet
+        "list_id": _list_id_json_ads(ref_id),
+        "url": _url_json_ads(ad, typ, ref_id),
+        "subject": ad.get("title"),
+        "piscine": bool(ad.get("hasPool")),                      # booléen DÉDIÉ (pas de titre deviné)
+        "prix": _num(ad.get("price")),
+        "prix_m2": _num(ad.get("pricePerSquareMeter")),
+        "type_code": pt or None,
+        "type": typ,                                             # None si type non listé (conservé dans brut)
+        "surface_hab": _num(ad.get("surfaceArea")),
+        "surface_terrain": _num(ad.get("landSurfaceArea")),
+        "pieces": _num(ad.get("roomsQuantity")),
+        "chambres": _num(ad.get("bedroomsQuantity")),
+        "etages": None,                                          # Bien'ici ne porte pas le nombre d'étages
+        "annee_construction": _num(ad.get("yearOfConstruction")),
+        "etat_bien": None,                                       # pas d'équivalent global_condition chez Bien'ici
+        "dpe_classe": _classe(ad.get("energyClassification")),   # 'NS'/'VI' → None
+        "dpe_ges": _classe(ad.get("greenhouseGazClassification")),
+        "taxe_fonciere": None,
+        "chauffage": None,
+        "commune": commune,
+        "zipcode": (ad.get("postalCode") or district.get("postal_code")),
+        "district": (district.get("libelle") or district.get("name")),
+        "lat": _num(pos.get("lat")),
+        "lng": _num(pos.get("lon")),
+        "source_position": source_position,
+        "owner_type": ("pro" if pro else "particulier" if pro is False else None),
+        "owner_siren": None,                                     # Bien'ici ne publie pas de SIREN
+        "first_publication_date": ad.get("publicationDate"),
+        "index_date": ad.get("modificationDate"),
+        "expiration_date": None,
+        "statut_portail": ("active" if statut.get("onTheMarket") else ("inactive" if statut else None)),
+        # Bien'ici porte un drapeau EXPLICITE « prix en baisse » → badge daté (comme la vignette Leboncoin).
+        "baisse_badge": bool(ad.get("priceHasDecreased")),
+        "brut": brut,
+    }
+
+
+def extraire_json_ads(contenu: str):
+    """Reconnaît un dépôt JSON d'un portail-API (corps de `realEstateAds.json`) et retourne la liste des
+    annonces BRUTES, ou None si ce n'est pas ce payload (→ l'appelant tente les chemins Next.js). Détection
+    rapide et sûre : une page Next.js est du HTML (« < »), ce payload est un objet JSON (« { ») portant la
+    clé `realEstateAds`."""
+    s = (contenu or "").lstrip()
+    if not s.startswith("{"):
+        return None
+    try:
+        data = json.loads(contenu)
+    except (json.JSONDecodeError, ValueError):
+        return None
+    if not isinstance(data, dict) or "realEstateAds" not in data:
+        return None
+    ads = data.get("realEstateAds")
+    if not isinstance(ads, list):
+        raise NextDataError("`realEstateAds` n'est pas une liste — structure du portail changée")
+    return ads
 
 
 # ════════════════════════ D1 · VARIANTE B — extraction DOM des vignettes ════════════════════════
@@ -366,7 +520,16 @@ def analyser(html: str) -> dict:
       2. `pageProps.ad` (page d'annonce, D2) ;
       3. vignettes DOM (variante B) ;
       4. sinon échec bruyant NOMMANT les trois chemins.
+    RADAR-SOURCES-2 — un dépôt JSON d'un portail-API (corps de `realEstateAds.json`) est reconnu AVANT
+    tout : ce n'est pas du HTML Next.js, le traducteur `aplatir_json_ads` l'alimente dans le même schéma.
     """
+    ads_json = extraire_json_ads(html)
+    if ads_json is not None:
+        if not ads_json:
+            raise NextDataError("0 annonce dans le JSON déposé — refus silencieux évité : page vide, "
+                                "filtre trop restrictif, ou structure du portail changée (à vérifier à la main)")
+        return {"mode": "resultats", "provenance": PROV_RICHE, "records": [aplatir_json_ads(a) for a in ads_json]}
+
     data = extraire_next_data(html)                     # lève NextDataError si __NEXT_DATA__ absent/illisible
     pp = data
     for cle in ("props", "pageProps"):
