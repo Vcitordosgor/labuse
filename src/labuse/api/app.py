@@ -4436,12 +4436,20 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
     source cliquable, date), flags, événement. « La traçabilité EST le produit »."""
     run_label = _cascade_run(db, run_label)   # C1 : résout la cascade (empruntée si étage 0 réutilisé)
     head = db.execute(text(
-        """SELECT p.id, p.idu, p.commune, p.surface_m2, p.contenance_m2,
+        f"""SELECT p.id, p.idu, p.commune, p.surface_m2, p.contenance_m2,
                   ST_Y(ST_Transform(ST_Centroid(p.geom_2975), 4326)) AS lat,
                   ST_X(ST_Transform(ST_Centroid(p.geom_2975), 4326)) AS lon,
                   d.status AS status, d.completeness_score,  -- M129-B : matrice morte
-                  (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
+                  (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
+                  -- CORRECTIFS-2 (Lot 1) — l'état du bien (nu/bâti) était calculé en direct dans la
+                  -- liste (_q_v2_list), la carte (_q_v2_geojson) et les projets, mais ABSENT de la
+                  -- fiche servie (0/434 582 parcelles le portaient — constat ANNONCE-3). On le sert
+                  -- ici avec la MÊME source que le résiduel (parcel_residuel.taux_emprise_pct) et la
+                  -- MÊME expression que la liste (_ETAT_BIEN_SQL, alias `rb`) : fiche et liste ne
+                  -- divergent plus.
+                  {_ETAT_BIEN_SQL} AS etat_bien
            FROM parcels p JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+           LEFT JOIN parcel_residuel rb ON rb.parcel_id = p.id
            WHERE p.idu = :idu"""), {"idu": idu, "run": run_label}).mappings().first()
     if not head:
         # M102 P1.4 — jamais un identifiant de run dans un message susceptible d'atteindre
@@ -4786,6 +4794,9 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         # il contredisait le tier (71 115 parcelles) et a servi de munition à l'IA (F1). Le classement
         # se lit sur `score_v2.tier` (via verdictMeta au front) ; la matrice reste un signal interne.
         "score_v2": score_v2, "etage0": bool(head["etage0"]),  # M129-B : q/a retirés
+        # CORRECTIFS-2 (Lot 1) — état du bien servi sur la FICHE (était absent du cache), même source
+        # et même expression que la liste : nu | bati_encore | bati_max | non_mesure (affichage pur).
+        "etat_bien": head["etat_bien"],
         "parc_analysees": _parc_analysees(db, v2run),   # M52 L2 — théâtre « N parcelles analysées » (compte gelé du run)
         "data_sources": _data_sources_fiche(db, head["id"], run_label),   # M52 L3 — « Les données » (sources utilisées)
         "qualite_commune": _qualite_commune(idu[:5] if idu else None),     # M52 L4 — qualité commune DITE
