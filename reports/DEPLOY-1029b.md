@@ -177,11 +177,16 @@ run** (`DELETE … uid 31` → 1 supprimée ; ne reste active que la session de 
 - Réponse : **`ok:true, nb_annonces:100, nb_nouvelles:95, nb_maj:5, nb_hors_perimetre:0,
   provenance:json_riche, mode:resultats`**. En base : **100 `pige_annonces` avec `portail='bienici'`** ;
   passe journalisée `source=test`.
-- **⚠ À DÉCIDER par Vic** : la recette a **ingéré 95 nouvelles annonces Bien'ici** dans la base servie
-  (marquées `source=test`). Ce sont de vraies annonces (Bien'ici est une source désormais active). Les
-  laisser est cohérent ; pour les purger : `DELETE FROM pige_annonces WHERE url_sortante ILIKE
-  '%bienici.com%';` puis purge des `pige_biens`/`pige_faits` orphelins de la passe test (SQL à cadrer avec
-  Vic — non exécuté).
+- **DÉCISION VIC (29/10) — on GARDE les 95 annonces** (Bien'ici est une source désormais active, ce sont
+  de vraies annonces). Leur capture a été **requalifiée en capture ordinaire** : `pige_passes` id 335
+  passée de `source='test'` à **`source='auto'`** (la signature de l'alarme du soir), en **une transaction
+  à garde-fou** (`UPDATE 1`, committé) :
+  ```sql
+  BEGIN;  -- garde-fou : exactement id=335, source='test', passe='nouvelles', n_nouvelles=95
+  UPDATE pige_passes SET source='auto', updated_at=now() WHERE id=335;  -- → UPDATE 1
+  COMMIT;
+  ```
+  Après : **0 passe `test` restante**, les **100 `pige_annonces` Bien'ici conservées** (`portail='bienici'`).
 
 ### 6. Analyser une annonce ✓ (nuance DVF sur un chiffre)
 - **Par adresse `97413000CX0800` (Saint-Leu)** : `nature=nue`, `type_comparateur=terrain_nu`, **médiane
@@ -228,9 +233,11 @@ radar-cloche/digest gelés. **1 colonne** posée (`pige_passes.n_non_verifiees`)
 **Les 7 points de fumée sont VERTS**, avec trois nuances honnêtes, **toutes non bloquantes et orthogonales
 au déploiement** : (2) les études 4-parcelles *lourdes* à froid atteignent la borne applicative de 60 s
 (503 honnête, inchangée) — le proxy 90 s ne produit **aucun 504** ; une étude servie à l'unité rend bien un
-PDF 200 (10 p., 28,5 s) ; (5) la recette Bien'ici a ingéré **95 annonces** (marquées `test`) dans la base —
-**décision de conservation/purge laissée à Vic** ; (6) la foncière de l'annonce La Possession vaut 296 000 €
-(et non 289 000 € de la recette) à cause d'une dérive de médiane DVF, pas du code.
+PDF 200 (10 p., 28,5 s). **Décision Vic : ce point fera l'objet d'un mandat séparé — rien touché.**
+(5) la recette Bien'ici a ingéré **95 annonces** dans la base — **décision Vic : GARDÉES**, leur capture
+requalifiée `test→auto` (capture ordinaire, cf. §5). (6) la foncière de l'annonce La Possession vaut
+**296 000 €** (et non 289 000 € de la recette) à cause d'une dérive de médiane DVF, pas du code —
+**décision Vic : 296 000 € accepté, rien à faire.**
 
 **À signaler à Vic** : dette d'architecture pré-existante — une étude abandonnée à la borne 60 s laisse un
 thread GIL-bound en fond qui peut affamer l'unique boucle uvicorn (observé comme 504 transitoires lors
