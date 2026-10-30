@@ -76,7 +76,8 @@ _LABEL = {
   # ANNONCE-3 — miroir de l'outil « Analyser une annonce » : une adresse (rapport parcelle) ou un lien
   # d'annonce (rapport commune). Même source que l'écran ; aucun moteur neuf. ANNONCE-3-FIX : pas de
   # sous-titre (redondant avec le wordmark+titre ; la place va au contenu pour tenir sur une page).
-  "analyse-annonce": ("Analyse d'annonce", ""),
+  # RECETTE-4 — titre PDF renommé « Estimer un bien » (clé interne analyse-annonce inchangée).
+  "analyse-annonce": ("Estimer un bien", ""),
 }
 
 

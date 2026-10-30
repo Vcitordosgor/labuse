@@ -350,7 +350,7 @@ const FILTRES: { label: string; type: DocType | null }[] = [
   { label: 'Apporteur', type: 'apporteur' }, { label: 'Pré-dossier PC', type: 'pre-dossier' },
   { label: 'Gabarit', type: 'gabarit' }, { label: 'Comparatif', type: 'comparatif' },
   { label: 'Étude de zone', type: 'etude-zone' }, { label: 'Étude de faisabilité', type: 'etude-faisabilite' },
-  { label: 'Analyse d’annonce', type: 'analyse-annonce' },   // ANNONCE-3
+  { label: 'Estimer un bien', type: 'analyse-annonce' },   // RECETTE-4 — libellé (type interne inchangé)
 ]
 const dateFr = (iso: string) => { const d = new Date(iso); return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}` }
 

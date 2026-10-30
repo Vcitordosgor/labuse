@@ -235,3 +235,64 @@ restauré à sa date d'origine. Verrou front `RadarEcran.joursDepuis.test.ts` : 
 (1970 → null, < 2005 → null, illisible → null, date récente → nombre).
 
 _tsc -b : 0 erreur · vitest joursDepuis : 4 passed._
+
+---
+
+## Lot 6 — « Estimer un bien » : renommage + écran + pont Radar
+
+### Renommage « Analyser une annonce » → « Estimer un bien » (partout)
+
+**Mandat.** Renommer partout (menu Outils, Docs, titres PDF, textes). Identifiants internes
+inchangés ; verrous mis à jour avec traçabilité.
+
+**Correctif (libellés seulement — clés/kind/endpoints inchangés).**
+- Menu : `registry.ts` (`label`). Écran : `AnalyserAnnonce.tsx` (titre de l'en-tête).
+- Docs : `catalogue.ts` (`nom`), `DocumentsView.tsx` (onglet bibliothèque).
+- PDF : `exports/builder.py` (titre), `exports/blocs/annonce.py` (bandeau + encart).
+- Bibliothèque : `api/documents_bibliotheque.py`. Verrous registre : `registre/robinets.py`
+  (libellé `_r("outil", "Estimer un bien", …)`, clé `outil_analyser_annonce` inchangée).
+- Verrou test MAJ : `tests/test_annonce_pdf.py` (doc_title attend « Estimer un bien »).
+
+**APRÈS.** Menu Outils : carte « Estimer un bien » (plus « Analyser une annonce » nulle part dans
+le DOM). PDF : `doc_title` contient « Estimer un bien » (28 tests backend annonce/pige verts).
+
+### Écran « Estimer un bien » (variante adresse)
+
+**Mandat.** Comparables sans défilement horizontal ; « Le foncier » supprimée, « Ouvrir la fiche
+parcelle → » remonté sous les tuiles ; tuile « Classement LABUSE » → « Dernière vente » (date +
+prix DVF, sinon « aucune depuis 2014 »), écran ET PDF.
+
+**Correctif.** `AnalyserAnnonce.tsx` : tableau `table-fixed text-[10px] tabular-nums`, colonnes
+resserrées, prix/€m² `whitespace-nowrap` (plus d'`overflow-x-auto`). Section « Le foncier »
+retirée ; « Ouvrir la fiche parcelle → » placé sous la grille de tuiles. Tuile « Dernière vente »
+lue de `fiche.dvf_parcelle.derniere_mutation`. PDF : `pige/api.py` ajoute `derniere_vente` au
+rapport ; `exports/blocs/annonce.py` remplace la tuile « Classement » par « Dernière vente ».
+
+**APRÈS.** Parcelle `97403000AH0307` : tuile « Dernière vente · 12/2025 · 60 000 € » ; plus de
+tuile « Classement LABUSE » ni de section « Le foncier » ; « Ouvrir la fiche parcelle → » sous les
+tuiles ; tableau comparables `scrollWidth == clientWidth` (261 px, **0 défilement horizontal**). →
+`captures/estimer-ecran-APRES.png`, `captures/estimer-comparables-APRES.png`.
+
+### Radar — panneau « Ce bien » = mêmes chiffres qu'Estimer + bouton « Estimer ce bien → »
+
+**Mandat.** « Ce bien » lit le même point de données qu'Estimer (mêmes chiffres) + bouton
+« Estimer ce bien → » qui ouvre l'outil sur ce lien.
+
+**Correctif.**
+- Back `pige/marche.py` (`bien_vs_marche`) : la médiane ACTÉE provient désormais de
+  `marche_commune_bloc` (la MÊME que le rapport lien d'« Estimer un bien »), au lieu de
+  `_dvf_bati_type` qui divergeait. Repli sur l'ancien calcul si le bloc manque le type.
+- Front : `store/useApp` ajoute `annonceLienPrefill` (consommé-puis-reset au montage) ;
+  `AnalyserAnnonce` lit le prefill et lance l'analyse du lien ; `RadarMarcheColonne` ajoute le
+  bouton « Estimer ce bien → » (pose le prefill + `setModule('analyser-annonce')`).
+
+**AVANT.** « Ce bien » affichait « vs acté **+41 %** » alors qu'Estimer affichait « **+36 %** · 3 797
+€/m² · 104 ventes » pour le même bien (deux médianes DVF différentes).
+
+**APRÈS.** Bien leboncoin `3226754959` (Saint-Leu, 832 000 €, 5 168 €/m²) : « Ce bien » affiche
+« vs acté **+36,1 %** » (médiane 3 797, n 104) = chiffres d'Estimer. Bouton « Estimer ce bien → »
+ouvre l'outil qui ré-analyse le lien et montre **832 000 € · 5 168 €/m²** (identiques) + « +36 %
+face aux maisons de la commune : 3 797 €/m² ». → `captures/radar-cebien-estimer-APRES.png`.
+
+_tsc -b : 0 erreur · vitest docs/outils/radar : 17 passed · pytest annonce/pige/marche/radar :
+237 passed, 7 skipped (DVF)._

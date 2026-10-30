@@ -19,7 +19,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 
 import { ParcelInput } from '../ParcelInput'
-import { analyserAnnonce, docAnalyseAnnonceLienUrl, docAnalyseAnnonceUrl, getAnnonceClassement, getAnnonceEstimation, getFiche, getParcelExposition, type AnnonceAnalyse } from '../../lib/api'
+import { analyserAnnonce, docAnalyseAnnonceLienUrl, docAnalyseAnnonceUrl, getAnnonceEstimation, getFiche, getParcelExposition, type AnnonceAnalyse } from '../../lib/api'
 import { fmtInt, fmtM2, iduCourt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'
@@ -100,9 +100,9 @@ function RapportParcelle({ idu }: { idu: string }) {
   const focusParcelle = useApp((s) => s.focusParcelle)
   const fiche = useQuery({ queryKey: ['annonce-fiche', idu], queryFn: () => getFiche(idu) })
   const expo = useQuery({ queryKey: ['annonce-expo', idu], queryFn: () => getParcelExposition(idu) })
-  // Classement LABUSE = la BANDE du run SERVI + le vocabulaire client gravé (back, score_labuse.yaml) —
-  // JAMAIS `score_v2.verbal.mot` (c'est le phrasé de percentile du Signal, d'où l'ancien « proche de la moyenne »).
-  const cls = useQuery({ queryKey: ['annonce-classement', idu], queryFn: () => getAnnonceClassement(idu) })
+  // RECETTE-4 — la tuile « Classement LABUSE » est remplacée par « Dernière vente » (date + prix DVF de la
+  // parcelle, lus de la fiche `dvf_parcelle.derniere_mutation`). La requête `getAnnonceClassement` n'est
+  // donc plus appelée côté écran.
   // ANNONCE-3-FIX — l'estimation selon la nature (nue → terrain nu ; bâtie → bâti), servie par le MÊME
   // point que le PDF (/radar/annonce/estimation) → mêmes chiffres à l'écran et dans le document.
   const estim = useQuery({ queryKey: ['annonce-estim', idu], queryFn: () => getAnnonceEstimation(idu) })
@@ -113,9 +113,12 @@ function RapportParcelle({ idu }: { idu: string }) {
   const zone = f.reglement_plu?.zones?.[0]?.zone ?? null
   const pot = f.potentiel_transformation
   const sdp = pot?.sdp_residuelle_m2
-  const classement = cls.data?.bande
-    ? (cls.data.libelle && cls.data.libelle !== cls.data.bande ? `${cls.data.bande} · ${cls.data.libelle}` : cls.data.bande)
-    : (cls.isLoading ? '…' : '—')
+  // RECETTE-4 — « Dernière vente » : date (MM/AAAA) + prix DVF de la parcelle (sa dernière mutation),
+  // sinon « aucune depuis 2014 » (début de la couverture DVF). Lu de la fiche, aucun recalcul.
+  const dm = (f.dvf_parcelle?.derniere_mutation ?? null) as { date_mutation?: string | null; valeur?: number | null } | null
+  const derniereVente = dm?.date_mutation
+    ? `${dm.date_mutation.slice(5, 7)}/${dm.date_mutation.slice(0, 4)}${dm.valeur != null ? ` · ${fmtInt(dm.valeur)} €` : ''}`
+    : 'aucune depuis 2014'
   // CHASSE-4-FIX (C4-002) — la tuile « Risques » lit le MÊME compte dédupliqué que le PDF (servi par
   // l'estimation, `n_aleas` = liste `_risques_rows`). Repli sur le brut `aleas.n` seulement si l'estimation
   // n'est pas encore là.
@@ -126,7 +129,7 @@ function RapportParcelle({ idu }: { idu: string }) {
     { k: 'Surface', v: fmtM2(f.surface_m2) },
     { k: 'Zone PLU', v: zone ?? '—' },
     { k: 'SDP restante', v: sdp == null ? '—' : fmtM2(Math.round(sdp)) },
-    { k: 'Classement LABUSE', v: classement ?? '—' },
+    { k: 'Dernière vente', v: derniereVente },
     { k: 'Risques', v: nAleas === 0 ? 'aucun aléa' : `${nAleas} aléa${nAleas > 1 ? 's' : ''}` },
     { k: 'Exposition', v: orientation ?? '—' },
   ]
@@ -160,6 +163,9 @@ function RapportParcelle({ idu }: { idu: string }) {
           </div>
         ))}
       </div>
+      {/* RECETTE-4 — le lien « Ouvrir la fiche parcelle → » remonte SOUS les tuiles (la section
+          « Le foncier » qui le portait est supprimée). */}
+      <Bouton niveau="lien" ton="vert" onClick={() => focusParcelle(idu, { fiche: true })}>Ouvrir la fiche parcelle →</Bouton>
 
       <section className={SECTION}>
         <h3 className="text-sm font-medium text-txt-hi">Estimation du prix</h3>
@@ -233,23 +239,25 @@ function RapportParcelle({ idu }: { idu: string }) {
       {(e?.comparables?.length ?? 0) > 0 && (
         <details className={SECTION}>
           <summary className="cursor-pointer text-sm font-medium text-txt-hi">{terrain ? `Les ventes de terrain nu ${rayonTxt}` : 'Les ventes comparables'}{e?.n_total != null ? ` (${fmtInt(e.n_total)})` : ''}</summary>
-          <div className="mt-2 overflow-x-auto">
-            <table className="w-full text-[11px]">
+          {/* RECETTE-4 — le tableau TIENT SANS DÉFILEMENT HORIZONTAL : police réduite (10 px), colonnes
+              resserrées (padding serré), prix et €/m² sur UNE ligne (tabular-nums + nowrap). */}
+          <div className="mt-2">
+            <table className="w-full table-fixed text-[10px] tabular-nums">
               <thead>
                 <tr className="text-left text-txt-dim">
-                  <th className="pb-1 pr-2 font-medium">Date</th><th className="pb-1 pr-2 font-medium">Type</th>
-                  <th className="pb-1 pr-2 text-right font-medium">Surface</th><th className="pb-1 pr-2 text-right font-medium">Prix</th>
-                  <th className="pb-1 pr-2 text-right font-medium">€/m²</th><th className="pb-1 text-right font-medium">Dist.</th>
+                  <th className="pb-1 pr-1 font-medium">Date</th><th className="pb-1 pr-1 font-medium">Type</th>
+                  <th className="pb-1 pr-1 text-right font-medium">Surf.</th><th className="pb-1 pr-1 text-right font-medium">Prix</th>
+                  <th className="pb-1 pr-1 text-right font-medium">€/m²</th><th className="pb-1 text-right font-medium">Dist.</th>
                 </tr>
               </thead>
               <tbody>
                 {e!.comparables!.map((c, i) => (
                   <tr key={i} className="border-t border-line-2 text-txt-hi">
-                    <td className="py-1 pr-2">{c.date ?? ''}</td><td className="py-1 pr-2">{c.type ?? ''}</td>
-                    <td className="py-1 pr-2 text-right">{c.surface_m2 != null ? fmtM2(c.surface_m2) : ''}</td>
-                    <td className="py-1 pr-2 text-right">{c.prix_eur != null ? `${fmtInt(c.prix_eur)} €` : ''}</td>
-                    <td className="py-1 pr-2 text-right">{c.prix_m2 != null ? fmtInt(c.prix_m2) : ''}</td>
-                    <td className="py-1 text-right">{c.distance_m != null ? `${fmtInt(c.distance_m)} m` : ''}</td>
+                    <td className="py-1 pr-1 whitespace-nowrap">{c.date ?? ''}</td><td className="py-1 pr-1 truncate">{c.type ?? ''}</td>
+                    <td className="py-1 pr-1 text-right whitespace-nowrap">{c.surface_m2 != null ? fmtM2(c.surface_m2) : ''}</td>
+                    <td className="py-1 pr-1 text-right whitespace-nowrap">{c.prix_eur != null ? `${fmtInt(c.prix_eur)} €` : ''}</td>
+                    <td className="py-1 pr-1 text-right whitespace-nowrap">{c.prix_m2 != null ? fmtInt(c.prix_m2) : ''}</td>
+                    <td className="py-1 text-right whitespace-nowrap">{c.distance_m != null ? `${fmtInt(c.distance_m)} m` : ''}</td>
                   </tr>
                 ))}
               </tbody>
@@ -262,18 +270,8 @@ function RapportParcelle({ idu }: { idu: string }) {
         </details>
       )}
 
-      <section className={SECTION}>
-        <h3 className="text-sm font-medium text-txt-hi">Le foncier</h3>
-        <p className="mt-1 text-[12px] leading-snug text-txt-dim">
-          {zone ? <>Zone <strong className="text-txt-hi">{zone}</strong>. </> : null}
-          {pot?.hauteur_regle_m != null ? `Hauteur réglementaire ${fmtInt(Math.round(pot.hauteur_regle_m))} m. ` : ''}
-          {sdp != null
-            ? <>SDP restante estimée : <strong className="text-txt-hi">{fmtM2(Math.round(sdp))}</strong>{pot?.estimation_simplifiee ? ' (estimation simplifiée)' : ''}.</>
-            : (pot?.libelle ?? 'Potentiel non calculé pour cette parcelle.')}
-        </p>
-        <Bouton niveau="lien" ton="vert" className="mt-2"
-          onClick={() => focusParcelle(idu, { fiche: true })}>Ouvrir la fiche parcelle →</Bouton>
-      </section>
+      {/* RECETTE-4 — section « Le foncier » supprimée de l'écran (zone/hauteur/SDP restent dans la fiche
+          parcelle, ouverte par le lien remonté sous les tuiles). */}
 
       <ExportPdf url={docAnalyseAnnonceUrl(idu)} />
     </Corps>
@@ -439,6 +437,18 @@ export function AnalyserAnnonce() {
     onError: () => setErreur(messageErreur()),
   })
 
+  // RECETTE-4 — pont Radar « Ce bien » → « Estimer ce bien → » : le lien de l'annonce préremplit l'entrée
+  // LIEN et lance l'analyse au montage (consommé-puis-reset, comme les autres prefills).
+  const annonceLienPrefill = useApp((s) => s.annonceLienPrefill)
+  const setAnnonceLienPrefill = useApp((s) => s.setAnnonceLienPrefill)
+  useEffect(() => {
+    if (!annonceLienPrefill) return
+    setLien(annonceLienPrefill)
+    analyse.mutate(annonceLienPrefill)
+    setAnnonceLienPrefill(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Carte : parcelle zoomée+surlignée (adresse) · commune centrée sans parcelle (lien) · rien (entrée).
   const lastCommune = useRef<string | null>(null)
   useEffect(() => {
@@ -488,8 +498,9 @@ export function AnalyserAnnonce() {
   // ÉCRAN D'ENTRÉE
   return (
     <>
+      {/* RECETTE-4 — titre renommé « Estimer un bien » (clé interne analyser-annonce inchangée). */}
       <Entete retour={{ label: 'Outils', onClick: toggleOutils }}
-        titre="Analyser une annonce"
+        titre="Estimer un bien"
         sous="Une adresse ou un lien d’annonce : LABUSE croise le bien avec le marché et le foncier." />
       <Corps>
         <div className="flex flex-col gap-1.5">

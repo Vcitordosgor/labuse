@@ -581,6 +581,10 @@ interface AppState {
   // RC : les 5 autres tuiles réutilisent un prefill existant, seule Solaire en manquait).
   solairePrefill: string | null
   setSolairePrefill: (s: string | null) => void
+  // RECETTE-4 — Radar (panneau « Ce bien ») → « Estimer un bien » : le lien de l'annonce préremplit
+  // l'entrée LIEN de l'outil (consommé-puis-reset au montage, comme les autres prefills).
+  annonceLienPrefill: string | null
+  setAnnonceLienPrefill: (s: string | null) => void
   // Assemblage → Courrier : une parcelle de l'assiette ouvre l'outil Courrier prérempli sur SON IDU
   // (consommé-puis-reset au montage). Le « N particuliers » devient un geste, plus un cul-de-sac.
   courrierPrefill: string | null
@@ -1076,6 +1080,8 @@ export const useApp = create<AppState>((set, get) => ({
   setCalcPrefill: (calcPrefill) => set({ calcPrefill }),
   solairePrefill: null,
   setSolairePrefill: (solairePrefill) => set({ solairePrefill }),
+  annonceLienPrefill: null,
+  setAnnonceLienPrefill: (annonceLienPrefill) => set({ annonceLienPrefill }),
   courrierPrefill: null,
   setCourrierPrefill: (courrierPrefill) => set({ courrierPrefill }),
   courrierPrefillIdus: null,

@@ -329,8 +329,26 @@ def bien_vs_marche(db: Session, bien_id: int) -> dict | None:
 
     dm = radar_stats(db, commune, t)["prix_m2_median_demande"]
     dem_v, dem_n = dm.get("valeur"), int(dm.get("n") or 0)
-    acte = _dvf_terrain(db, commune) if t == "terrain" else _dvf_bati_type(db, commune, t)
-    acte_v, acte_n = acte.get("eur_m2"), int(acte.get("n") or 0)
+    # RECETTE-4 — « Ce bien » lit le MÊME point de données qu'« Estimer un bien » : la médiane ACTÉE est
+    # celle du bloc commune (`marche_commune_bloc`, même médiane que le rapport lien de l'outil), au lieu
+    # de `_dvf_bati_type` qui divergeait (écart 36 % ↔ 41 % constaté). Repli sur l'ancien calcul si le
+    # bloc commune n'a pas la médiane du type.
+    from ..faisabilite.marche_commune import marche_commune_bloc
+    try:
+        _mb = marche_commune_bloc(db, commune) or {}
+    except Exception:  # noqa: BLE001 — le repli couvre l'indisponibilité du bloc
+        _mb = {}
+    if t == "terrain":
+        acte_v, acte_n = _mb.get("median_terrain_eur_m2"), int(_mb.get("n_terrain") or 0)
+    elif t == "maison":
+        acte_v, acte_n = _mb.get("median_maison_eur_m2"), int(_mb.get("n_maison") or 0)
+    elif t == "appartement":
+        acte_v, acte_n = _mb.get("median_appartement_eur_m2"), int(_mb.get("n_appartement") or 0)
+    else:
+        acte_v, acte_n = None, 0
+    if acte_v is None:   # repli : type hors bloc commune ou médiane absente
+        acte = _dvf_terrain(db, commune) if t == "terrain" else _dvf_bati_type(db, commune, t)
+        acte_v, acte_n = acte.get("eur_m2"), int(acte.get("n") or 0)
 
     def _cmp(ref, n):
         # RADAR-FIX-3 — même palier que le tableau : normal ≥ 30, indicatif 5–29, sous le seuil < 5.
