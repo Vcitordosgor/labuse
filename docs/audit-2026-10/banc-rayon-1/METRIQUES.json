@@ -1,0 +1,169 @@
+{
+  "run_v2_copro": "q_v20",
+  "segments": [
+    {
+      "segment": "Toutes ventes",
+      "banc1": {
+        "n_ventes": 5592,
+        "n_estimable": 5498,
+        "pct_non_estimable": 1.7,
+        "ecart_median_abs_pct": 27.9,
+        "ecart_median_signe_pct": -3.2,
+        "biais_moyen_signe_pct": 4565.6,
+        "pct_dans_10": 19.6,
+        "pct_dans_20": 38.3
+      },
+      "banc2": {
+        "n_ventes": 5592,
+        "n_estimable": 5498,
+        "pct_non_estimable": 1.7,
+        "ecart_median_abs_pct": 26.4,
+        "ecart_median_signe_pct": -1.4,
+        "biais_moyen_signe_pct": 4622.8,
+        "pct_dans_10": 20.8,
+        "pct_dans_20": 40.4
+      }
+    },
+    {
+      "segment": "Appartement",
+      "banc1": {
+        "n_ventes": 2076,
+        "n_estimable": 2054,
+        "pct_non_estimable": 1.1,
+        "ecart_median_abs_pct": 17.1,
+        "ecart_median_signe_pct": -8.6,
+        "biais_moyen_signe_pct": -1.4,
+        "pct_dans_10": 30.9,
+        "pct_dans_20": 57.9
+      },
+      "banc2": {
+        "n_ventes": 2076,
+        "n_estimable": 2054,
+        "pct_non_estimable": 1.1,
+        "ecart_median_abs_pct": 17.3,
+        "ecart_median_signe_pct": -9.0,
+        "biais_moyen_signe_pct": -1.4,
+        "pct_dans_10": 30.3,
+        "pct_dans_20": 56.8
+      }
+    },
+    {
+      "segment": "Maison",
+      "banc1": {
+        "n_ventes": 2292,
+        "n_estimable": 2285,
+        "pct_non_estimable": 0.3,
+        "ecart_median_abs_pct": 31.8,
+        "ecart_median_signe_pct": -10.5,
+        "biais_moyen_signe_pct": 42.0,
+        "pct_dans_10": 15.5,
+        "pct_dans_20": 31.6
+      },
+      "banc2": {
+        "n_ventes": 2292,
+        "n_estimable": 2285,
+        "pct_non_estimable": 0.3,
+        "ecart_median_abs_pct": 28.0,
+        "ecart_median_signe_pct": -4.5,
+        "biais_moyen_signe_pct": 49.8,
+        "pct_dans_10": 19.3,
+        "pct_dans_20": 37.9
+      }
+    },
+    {
+      "segment": "Terrain nu",
+      "banc1": {
+        "n_ventes": 1224,
+        "n_estimable": 1159,
+        "pct_non_estimable": 5.3,
+        "ecart_median_abs_pct": 633.0,
+        "ecart_median_signe_pct": 633.0,
+        "biais_moyen_signe_pct": 21577.6,
+        "pct_dans_10": 7.5,
+        "pct_dans_20": 16.9
+      },
+      "banc2": {
+        "n_ventes": 1224,
+        "n_estimable": 1159,
+        "pct_non_estimable": 5.3,
+        "ecart_median_abs_pct": 712.8,
+        "ecart_median_signe_pct": 712.8,
+        "biais_moyen_signe_pct": 21833.7,
+        "pct_dans_10": 7.2,
+        "pct_dans_20": 16.4
+      }
+    },
+    {
+      "segment": "Copropriété (parcelle)",
+      "banc1": {
+        "n_ventes": 2130,
+        "n_estimable": 2108,
+        "pct_non_estimable": 1.0,
+        "ecart_median_abs_pct": 17.1,
+        "ecart_median_signe_pct": -8.7,
+        "biais_moyen_signe_pct": -1.6,
+        "pct_dans_10": 30.7,
+        "pct_dans_20": 57.5
+      },
+      "banc2": {
+        "n_ventes": 2130,
+        "n_estimable": 2108,
+        "pct_non_estimable": 1.0,
+        "ecart_median_abs_pct": 17.4,
+        "ecart_median_signe_pct": -9.3,
+        "biais_moyen_signe_pct": -1.7,
+        "pct_dans_10": 29.9,
+        "pct_dans_20": 56.4
+      }
+    }
+  ],
+  "aux": {
+    "maison_base_alignee_b2": {
+      "n_ventes": 2279,
+      "n_estimable": 2272,
+      "pct_non_estimable": 0.3,
+      "ecart_median_abs_pct": 27.8,
+      "ecart_median_signe_pct": -4.3,
+      "biais_moyen_signe_pct": 50.5,
+      "pct_dans_10": 19.4,
+      "pct_dans_20": 38.1
+    },
+    "maison_b2_type_maison": {
+      "n_ventes": 1558,
+      "n_estimable": 1558,
+      "pct_non_estimable": 0.0,
+      "ecart_median_abs_pct": 25.6,
+      "ecart_median_signe_pct": -1.4,
+      "biais_moyen_signe_pct": 46.9,
+      "pct_dans_10": 21.0,
+      "pct_dans_20": 40.8
+    },
+    "maison_b2_type_appartement": {
+      "n_ventes": 574,
+      "n_estimable": 574,
+      "pct_non_estimable": 0.0,
+      "ecart_median_abs_pct": 33.5,
+      "ecart_median_signe_pct": -13.3,
+      "biais_moyen_signe_pct": 59.2,
+      "pct_dans_10": 15.0,
+      "pct_dans_20": 30.1
+    },
+    "maison_b2_type_bati_combine": {
+      "n_ventes": 146,
+      "n_estimable": 140,
+      "pct_non_estimable": 4.1,
+      "ecart_median_abs_pct": 25.5,
+      "ecart_median_signe_pct": -1.8,
+      "biais_moyen_signe_pct": 55.3,
+      "pct_dans_10": 19.3,
+      "pct_dans_20": 40.7
+    }
+  },
+  "fuite": {
+    "banc1_ok": true,
+    "banc2_ok": true,
+    "banc1_violations": 0,
+    "banc2_violations": 0
+  },
+  "n_total": 5592
+}

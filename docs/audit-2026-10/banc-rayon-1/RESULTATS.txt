@@ -1,0 +1,43 @@
+Chargement…
+  univers brut : 5892 mutations 2025 mono-parcelle
+  bâti maison/appart (banc1) : 28556 / tous locaux (banc2) : 28823
+  terrain : 10539 comparables / 791 secteurs
+  parcelles jugées en copropriété (run q_v20) : 963
+
+================  COMPARAISON BANC 1 vs BANC 2  ================
+
+【 Toutes ventes 】
+  banc 1 (sector_price)  n= 5592 non-est=   1.7% médian|écart|=   27.9% ±10%=  19.6% ±20%=  38.3% biais méd=   -3.2%
+  banc 2 (comparat.bien) n= 5592 non-est=   1.7% médian|écart|=   26.4% ±10%=  20.8% ±20%=  40.4% biais méd=   -1.4%
+
+【 Appartement 】
+  banc 1 (sector_price)  n= 2076 non-est=   1.1% médian|écart|=   17.1% ±10%=  30.9% ±20%=  57.9% biais méd=   -8.6%
+  banc 2 (comparat.bien) n= 2076 non-est=   1.1% médian|écart|=   17.3% ±10%=  30.3% ±20%=  56.8% biais méd=   -9.0%
+
+【 Maison 】
+  banc 1 (sector_price)  n= 2292 non-est=   0.3% médian|écart|=   31.8% ±10%=  15.5% ±20%=  31.6% biais méd=  -10.5%
+  banc 2 (comparat.bien) n= 2292 non-est=   0.3% médian|écart|=   28.0% ±10%=  19.3% ±20%=  37.9% biais méd=   -4.5%
+
+【 Terrain nu 】
+  banc 1 (sector_price)  n= 1224 non-est=   5.3% médian|écart|=  633.0% ±10%=   7.5% ±20%=  16.9% biais méd=  633.0%
+  banc 2 (comparat.bien) n= 1224 non-est=   5.3% médian|écart|=  712.8% ±10%=   7.2% ±20%=  16.4% biais méd=  712.8%
+
+【 Copropriété (parcelle) 】
+  banc 1 (sector_price)  n= 2130 non-est=   1.0% médian|écart|=   17.1% ±10%=  30.7% ±20%=  57.5% biais méd=   -8.7%
+  banc 2 (comparat.bien) n= 2130 non-est=   1.0% médian|écart|=   17.4% ±10%=  29.9% ±20%=  56.4% biais méd=   -9.3%
+
+================  MAISON banc 2 — détail du type servi  ================
+  maison_base_alignee_b2 n= 2279 non-est=   0.3% médian|écart|=   27.8% ±10%=  19.4% ±20%=  38.1% biais méd=   -4.3%
+  maison_b2_type_maison  n= 1558 non-est=   0.0% médian|écart|=   25.6% ±10%=  21.0% ±20%=  40.8% biais méd=   -1.4%
+  maison_b2_type_appartement n=  574 non-est=   0.0% médian|écart|=   33.5% ±10%=  15.0% ±20%=  30.1% biais méd=  -13.3%
+  maison_b2_type_bati_combine n=  146 non-est=   4.1% médian|écart|=   25.5% ±10%=  19.3% ±20%=  40.7% biais méd=   -1.8%
+
+================  CONTRÔLE DE FUITE  ================
+{
+  "banc1_ok": true,
+  "banc2_ok": true,
+  "banc1_violations": 0,
+  "banc2_violations": 0
+}
+
+écrit : /Users/openclaw/Desktop/labuse-bancrayon/docs/audit-2026-10/banc-rayon-1/PAR-VENTE.csv  et  /Users/openclaw/Desktop/labuse-bancrayon/docs/audit-2026-10/banc-rayon-1/METRIQUES.json
