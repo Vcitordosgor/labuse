@@ -1,0 +1,299 @@
+[
+  {
+    "list_id": 4662284466334252701,
+    "commune": "Saint-Paul",
+    "type": "maison",
+    "surface_hab": 220,
+    "surface_terrain": 1480,
+    "lat": -21.03714800330421,
+    "lng": 55.29652169709027,
+    "source_position": "address",
+    "blur_radius_m": 50,
+    "idu": "97415000CM0143",
+    "niveau": "source",
+    "confiance": 0.75,
+    "criteres": [
+      {
+        "critere": "surface",
+        "valeur": "terrain 1445 m² ≈ 1480 m² annoncés (2 %)"
+      },
+      {
+        "critere": "emprise",
+        "valeur": "emprise bâtie 327 m² (attendu 66-396)"
+      }
+    ],
+    "n_pistes": 12,
+    "subject": "Villa d'architecte de 220m2 au Guillaume",
+    "url": "https://www.bienici.com/annonce/vente/saint-paul/maison/5pieces/immo-facile-60351019"
+  },
+  {
+    "list_id": 4643041724864730562,
+    "commune": "Saint-Paul",
+    "type": "maison",
+    "surface_hab": 220,
+    "surface_terrain": 1480,
+    "lat": -21.037251691622927,
+    "lng": 55.29686954124878,
+    "source_position": "address",
+    "blur_radius_m": 50,
+    "idu": "97415000CM0143",
+    "niveau": "source",
+    "confiance": 0.75,
+    "criteres": [
+      {
+        "critere": "surface",
+        "valeur": "terrain 1445 m² ≈ 1480 m² annoncés (2 %)"
+      },
+      {
+        "critere": "emprise",
+        "valeur": "emprise bâtie 327 m² (attendu 66-396)"
+      }
+    ],
+    "n_pistes": 12,
+    "subject": "Villa d'architecte avec piscine au Guillaume - 220 m², T2 indépendant, terrain 1 480 m²",
+    "url": "https://www.bienici.com/annonce/vente/saint-paul/maison/5pieces/immo-facile-59719264"
+  },
+  {
+    "list_id": 4652369928210212556,
+    "commune": "Saint-Paul",
+    "type": "maison",
+    "surface_hab": 125,
+    "surface_terrain": 425,
+    "lat": -21.057592855792635,
+    "lng": 55.26009537212332,
+    "source_position": "address",
+    "blur_radius_m": 50,
+    "idu": "97415000DM0880",
+    "niveau": "source",
+    "confiance": 0.75,
+    "criteres": [
+      {
+        "critere": "surface",
+        "valeur": "terrain 413 m² ≈ 425 m² annoncés (3 %)"
+      },
+      {
+        "critere": "emprise",
+        "valeur": "emprise bâtie 187 m² (attendu 38-225)"
+      }
+    ],
+    "n_pistes": 7,
+    "subject": "Villa 3 chambres + Studio, piscine et vue mer proche du Golf",
+    "url": "https://www.bienici.com/annonce/vente/saint-paul/maison/6pieces/hektor-patrimoine-expertise-immobiliere-3467"
+  },
+  {
+    "list_id": 4658651912736147794,
+    "commune": "Saint-Pierre",
+    "type": "maison",
+    "surface_hab": 100,
+    "surface_terrain": 180,
+    "lat": -21.30043723634475,
+    "lng": 55.49997427438097,
+    "source_position": "address",
+    "blur_radius_m": 50,
+    "idu": "97416000CX1521",
+    "niveau": "source",
+    "confiance": 0.75,
+    "criteres": [
+      {
+        "critere": "surface",
+        "valeur": "terrain 178 m² ≈ 180 m² annoncés (1 %)"
+      },
+      {
+        "critere": "emprise",
+        "valeur": "emprise bâtie 120 m² (attendu 30-180)"
+      }
+    ],
+    "n_pistes": 8,
+    "subject": "Maison F4 Secteur Ligne des Bambous 97410 Proximité RN3",
+    "url": "https://www.bienici.com/annonce/vente/saint-pierre/maison/4pieces/immo-facile-61272665"
+  },
+  {
+    "list_id": 4642288898829553521,
+    "commune": "Saint-Pierre",
+    "type": "maison",
+    "surface_hab": 130,
+    "surface_terrain": 1019,
+    "lat": -21.29845855821781,
+    "lng": 55.5020985788504,
+    "source_position": "address",
+    "blur_radius_m": 50,
+    "idu": "97416000CW1019",
+    "niveau": "source",
+    "confiance": 0.75,
+    "criteres": [
+      {
+        "critere": "surface",
+        "valeur": "terrain 998 m² ≈ 1019 m² annoncés (2 %)"
+      },
+      {
+        "critere": "emprise",
+        "valeur": "emprise bâtie 194 m² (attendu 39-234)"
+      }
+    ],
+    "n_pistes": 12,
+    "subject": "MAISON CONTEMPORAINE EN BOIS AVEC PISCINE ET VUE OCÉAN  LIGNE DES BAMBOUS",
+    "url": "https://www.bienici.com/annonce/vente/saint-pierre/maison/4pieces/immo-facile-61680270"
+  },
+  {
+    "list_id": 4669607489545054067,
+    "commune": "Saint-Pierre",
+    "type": "maison",
+    "surface_hab": 155,
+    "surface_terrain": 1480,
+    "lat": -21.273279105761883,
+    "lng": 55.48706500053246,
+    "source_position": "address",
+    "blur_radius_m": 50,
+    "idu": "97416000HM0300",
+    "niveau": "source",
+    "confiance": 0.75,
+    "criteres": [
+      {
+        "critere": "surface",
+        "valeur": "terrain 1474 m² ≈ 1480 m² annoncés (0 %)"
+      },
+      {
+        "critere": "emprise",
+        "valeur": "emprise bâtie 254 m² (attendu 46-279)"
+      }
+    ],
+    "n_pistes": 7,
+    "subject": "Vente Maison/villa 6 pièces",
+    "url": "https://www.bienici.com/annonce/vente/saint-pierre/maison/6pieces/iad-france-1742911"
+  },
+  {
+    "list_id": 4612801741223452803,
+    "commune": "Saint-Louis",
+    "type": "maison",
+    "surface_hab": 77.4,
+    "surface_terrain": 587,
+    "lat": -21.264573136867806,
+    "lng": 55.438772242116,
+    "source_position": "address",
+    "blur_radius_m": 50,
+    "idu": "97414000HA0051",
+    "niveau": "source",
+    "confiance": 0.75,
+    "criteres": [
+      {
+        "critere": "surface",
+        "valeur": "terrain 583 m² ≈ 587 m² annoncés (1 %)"
+      },
+      {
+        "critere": "emprise",
+        "valeur": "emprise bâtie 136 m² (attendu 25-139)"
+      }
+    ],
+    "n_pistes": 12,
+    "subject": "Vente Maison/villa 5 pièces",
+    "url": "https://www.bienici.com/annonce/vente/saint-louis/maison/5pieces/iad-france-1026377"
+  },
+  {
+    "list_id": 4625835970671668898,
+    "commune": "Saint-André",
+    "type": "maison",
+    "surface_hab": 125,
+    "surface_terrain": 596,
+    "lat": -20.939362563334104,
+    "lng": 55.67136522306482,
+    "source_position": "address",
+    "blur_radius_m": 50,
+    "idu": "97409000AK1331",
+    "niveau": "source",
+    "confiance": 0.75,
+    "criteres": [
+      {
+        "critere": "surface",
+        "valeur": "terrain 597 m² ≈ 596 m² annoncés (0 %)"
+      },
+      {
+        "critere": "emprise",
+        "valeur": "emprise bâtie 147 m² (attendu 38-225)"
+      }
+    ],
+    "n_pistes": 6,
+    "subject": "Vente Maison traditionnelle 4 pièces",
+    "url": "https://www.bienici.com/annonce/vente/saint-andre/maison/4pieces/iad-france-1019504"
+  },
+  {
+    "list_id": 4638627175744665028,
+    "commune": "Saint-Denis",
+    "type": "maison",
+    "surface_hab": 155,
+    "surface_terrain": 458,
+    "lat": -20.909570844155557,
+    "lng": 55.49348091627093,
+    "source_position": "address",
+    "blur_radius_m": 50,
+    "idu": "97411000HW0552",
+    "niveau": "source",
+    "confiance": 0.75,
+    "criteres": [
+      {
+        "critere": "surface",
+        "valeur": "terrain 448 m² ≈ 458 m² annoncés (2 %)"
+      },
+      {
+        "critere": "emprise",
+        "valeur": "emprise bâtie 225 m² (attendu 46-279)"
+      }
+    ],
+    "n_pistes": 12,
+    "subject": "Maison 6 pièces 155 m² avec piscine, kiosque et beaux espaces extérieurs",
+    "url": "https://www.bienici.com/annonce/vente/saint-denis/maison/6pieces/immo-facile-61504495"
+  },
+  {
+    "list_id": 4617984314486063895,
+    "commune": "Saint-Denis",
+    "type": "maison",
+    "surface_hab": 165,
+    "surface_terrain": 476,
+    "lat": -20.893444347211613,
+    "lng": 55.44360606991957,
+    "source_position": "address",
+    "blur_radius_m": 50,
+    "idu": "97411000DE0058",
+    "niveau": "source",
+    "confiance": 0.75,
+    "criteres": [
+      {
+        "critere": "surface",
+        "valeur": "terrain 454 m² ≈ 476 m² annoncés (5 %)"
+      },
+      {
+        "critere": "emprise",
+        "valeur": "emprise bâtie 79 m² (attendu 50-297)"
+      }
+    ],
+    "n_pistes": 12,
+    "subject": "",
+    "url": "https://www.bienici.com/annonce/vente/saint-denis/maison/6pieces/century-21-202_2780_14995"
+  },
+  {
+    "list_id": 4631137818452254681,
+    "commune": "Saint-Pierre",
+    "type": "maison",
+    "surface_hab": 125,
+    "surface_terrain": 275,
+    "lat": -21.31237406982698,
+    "lng": 55.55583909204964,
+    "source_position": "address",
+    "blur_radius_m": 50,
+    "idu": "97416000HL0295",
+    "niveau": "source",
+    "confiance": 0.75,
+    "criteres": [
+      {
+        "critere": "surface",
+        "valeur": "terrain 275 m² ≈ 275 m² annoncés (0 %)"
+      },
+      {
+        "critere": "emprise",
+        "valeur": "emprise bâtie 187 m² (attendu 38-225)"
+      }
+    ],
+    "n_pistes": 7,
+    "subject": "Maison 2 Chambres",
+    "url": "https://www.bienici.com/annonce/vente/saint-pierre/maison/3pieces/ag311656-540739538"
+  }
+]

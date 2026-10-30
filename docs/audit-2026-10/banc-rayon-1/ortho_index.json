@@ -1,0 +1,122 @@
+[
+  {
+    "n": 1,
+    "idu": "97409000AK1331",
+    "img": "01_97409000AK1331.png",
+    "commune": "Saint-André",
+    "hab": 125,
+    "terr": 596,
+    "parcelle_surface": 596.6703603951744,
+    "emprise": 146.75342577565215,
+    "point_to_centroid_m": 31,
+    "subject": "Vente Maison traditionnelle 4 pièces"
+  },
+  {
+    "n": 2,
+    "idu": "97411000DE0058",
+    "img": "02_97411000DE0058.png",
+    "commune": "Saint-Denis",
+    "hab": 165,
+    "terr": 476,
+    "parcelle_surface": 453.86974377521824,
+    "emprise": 78.8413973106527,
+    "point_to_centroid_m": 34,
+    "subject": ""
+  },
+  {
+    "n": 3,
+    "idu": "97411000HW0552",
+    "img": "03_97411000HW0552.png",
+    "commune": "Saint-Denis",
+    "hab": 155,
+    "terr": 458,
+    "parcelle_surface": 447.6837009858138,
+    "emprise": 224.64181181073934,
+    "point_to_centroid_m": 76,
+    "subject": "Maison 6 pièces 155 m² avec piscine, kiosque et beaux espaces extérieurs"
+  },
+  {
+    "n": 4,
+    "idu": "97414000HA0051",
+    "img": "04_97414000HA0051.png",
+    "commune": "Saint-Louis",
+    "hab": 77.4,
+    "terr": 587,
+    "parcelle_surface": 582.9027347451176,
+    "emprise": 135.85593275637916,
+    "point_to_centroid_m": 39,
+    "subject": "Vente Maison/villa 5 pièces"
+  },
+  {
+    "n": 5,
+    "idu": "97415000CM0143",
+    "img": "05_97415000CM0143.png",
+    "commune": "Saint-Paul",
+    "hab": 220,
+    "terr": 1480,
+    "parcelle_surface": 1445.2714184791457,
+    "emprise": 327.45450832288753,
+    "point_to_centroid_m": 25,
+    "subject": "Villa d'architecte de 220m2 au Guillaume"
+  },
+  {
+    "n": 6,
+    "idu": "97415000DM0880",
+    "img": "06_97415000DM0880.png",
+    "commune": "Saint-Paul",
+    "hab": 125,
+    "terr": 425,
+    "parcelle_surface": 412.60002923669845,
+    "emprise": 186.7095036099287,
+    "point_to_centroid_m": 57,
+    "subject": "Villa 3 chambres + Studio, piscine et vue mer proche du Golf"
+  },
+  {
+    "n": 7,
+    "idu": "97416000CW1019",
+    "img": "07_97416000CW1019.png",
+    "commune": "Saint-Pierre",
+    "hab": 130,
+    "terr": 1019,
+    "parcelle_surface": 998.3127643896147,
+    "emprise": 194.0823386194271,
+    "point_to_centroid_m": 79,
+    "subject": "MAISON CONTEMPORAINE EN BOIS AVEC PISCINE ET VUE OCÉAN  LIGNE DES BAMBOUS"
+  },
+  {
+    "n": 8,
+    "idu": "97416000CX1521",
+    "img": "08_97416000CX1521.png",
+    "commune": "Saint-Pierre",
+    "hab": 100,
+    "terr": 180,
+    "parcelle_surface": 177.64371615177288,
+    "emprise": 120.08812564532961,
+    "point_to_centroid_m": 63,
+    "subject": "Maison F4 Secteur Ligne des Bambous 97410 Proximité RN3"
+  },
+  {
+    "n": 9,
+    "idu": "97416000HL0295",
+    "img": "09_97416000HL0295.png",
+    "commune": "Saint-Pierre",
+    "hab": 125,
+    "terr": 275,
+    "parcelle_surface": 275.4257555117673,
+    "emprise": 186.9706765724915,
+    "point_to_centroid_m": 9,
+    "subject": "Maison 2 Chambres"
+  },
+  {
+    "n": 10,
+    "idu": "97416000HM0300",
+    "img": "10_97416000HM0300.png",
+    "commune": "Saint-Pierre",
+    "hab": 155,
+    "terr": 1480,
+    "parcelle_surface": 1474.352533402273,
+    "emprise": 254.05316274267707,
+    "point_to_centroid_m": 41,
+    "subject": "Vente Maison/villa 6 pièces"
+  }
+]

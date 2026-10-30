@@ -21,7 +21,17 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-RAYON_M = 150            # rayon serré autour du point flouté (Lot 0 : au-delà, l'unicité s'effondre)
+RAYON_M = 150            # rayon serré autour du point flouté (Lot 0 : au-delà, l'unicité s'effondre).
+#                          C'est le rayon des sources à position de QUARTIER (centroïde ville, p.ex.
+#                          Leboncoin) : la position est large, 150 m est déjà le plus serré qui garde
+#                          une chance de couvrir la vraie parcelle — INCHANGÉ (verrou
+#                          test_rattachement_rayon_source.py).
+RAYON_M_ADRESSE = 60     # RADAR-SOURCES-3 — rayon des sources à position PRÉCISE (à l'adresse, floutée
+#                          à ~50 m par le portail, p.ex. Bien'ici) : ~50 m de floutage + une marge de
+#                          sécurité. Ce rayon serré fait fondre l'univers de candidates (mesuré : ~12 à
+#                          150 m → 1-3 à 60 m en zone dense), ce qui rend le rattachement AUTOMATIQUE
+#                          « une seule candidate » réellement atteignable sans faux positif. Le portail
+#                          n'est JAMAIS nommé : on branche sur `source_position`, pas sur la source.
 TOL_SURFACE = 0.10       # ±10 % surface terrain (cadastre vs annonce) ET DVF terrain — élargi (S5) :
 #                          la surface annoncée est souvent arrondie/approximative (« terrain d'environ
 #                          500 m² »), ±5 % ratait des candidates légitimes ; ±10 % ré-ouvre la piste sans
@@ -51,6 +61,14 @@ def _insee(commune: str) -> str | None:
     return communes._OFFICIAL_BY_NAME.get(commune)
 
 
+def _rayon(rec: dict) -> int:
+    """RADAR-SOURCES-3 — le rayon de recherche propre à la PRÉCISION de la position de l'annonce,
+    JAMAIS à la source. `source_position == 'address'` (position à l'adresse, floutée ~50 m) → rayon
+    serré `RAYON_M_ADRESSE` ; sinon (position de quartier/centroïde ville) → `RAYON_M` (inchangé).
+    Un record sans `source_position` est traité comme une position de quartier (prudent : large)."""
+    return RAYON_M_ADRESSE if rec.get("source_position") == "address" else RAYON_M
+
+
 def _f(x) -> float | None:
     try:
         return float(x)
@@ -60,11 +78,13 @@ def _f(x) -> float | None:
 
 # ── DÉTECTEURS DE CRITÈRE ─── chacun renvoie {idu: "valeur lisible"} pour les parcelles candidates ──
 
-def _crit_surface(db: Session, lon, lat, commune, terrain, tol: float | None = None) -> dict[str, str]:
+def _crit_surface(db: Session, lon, lat, commune, terrain, tol: float | None = None,
+                  rayon: int = RAYON_M) -> dict[str, str]:
     """C1 — surface cadastrale ≈ surface terrain annoncée (±`tol` ; défaut = TOL_SURFACE, ±10 %, LU AU
-    MOMENT DE L'APPEL pour rester monkeypatchable), dans le rayon du point flouté. RADAR-AUTO-1 (Lot D) :
-    `tol` explicite — un terrain se rattache en `probable` seulement si UNE seule parcelle matche à ±1 %
-    (mesure 0.3 : à ±3 % l'ambiguïté explose)."""
+    MOMENT DE L'APPEL pour rester monkeypatchable), dans le `rayon` du point flouté (RADAR-SOURCES-3 :
+    serré pour une position à l'adresse, large pour un centroïde ville ; défaut = RAYON_M, inchangé).
+    RADAR-AUTO-1 (Lot D) : `tol` explicite — un terrain se rattache en `probable` seulement si UNE seule
+    parcelle matche à ±1 % (mesure 0.3 : à ±3 % l'ambiguïté explose)."""
     if terrain is None:
         return {}
     t = TOL_SURFACE if tol is None else tol
@@ -73,7 +93,7 @@ def _crit_surface(db: Session, lon, lat, commune, terrain, tol: float | None = N
         """SELECT p.idu, p.surface_m2 FROM parcels p WHERE p.commune = :c
            AND p.surface_m2 BETWEEN :lo AND :hi
            AND ST_DWithin(p.geom_2975, ST_Transform(ST_SetSRID(ST_MakePoint(:lon,:lat),4326),2975), :r)"""),
-        {"c": commune, "lo": lo, "hi": hi, "lon": lon, "lat": lat, "r": RAYON_M}).mappings().all()
+        {"c": commune, "lo": lo, "hi": hi, "lon": lon, "lat": lat, "r": rayon}).mappings().all()
     return {r["idu"]: f"terrain {r['surface_m2']:.0f} m² ≈ {terrain:.0f} m² annoncés "
                       f"({abs(r['surface_m2']-terrain)/terrain*100:.0f} %)" for r in rows}
 
@@ -86,9 +106,10 @@ def _emprise_bornes(hab: float, etages) -> tuple[float, float]:
     return max(EMPRISE_MIN_ABS, hab * EMPRISE_LO_FACTEUR), hab * EMPRISE_HI_FACTEUR
 
 
-def _crit_emprise(db: Session, lon, lat, commune, hab, etages) -> dict[str, str]:
-    """C2 — emprise bâtie (BD TOPO) plausible pour une maison de `hab` m², dans le rayon. La borne basse
-    élimine la parcelle vide (le faux positif cardinal du surface-seul)."""
+def _crit_emprise(db: Session, lon, lat, commune, hab, etages, rayon: int = RAYON_M) -> dict[str, str]:
+    """C2 — emprise bâtie (BD TOPO) plausible pour une maison de `hab` m², dans le `rayon` (serré pour
+    une position à l'adresse, RADAR-SOURCES-3). La borne basse élimine la parcelle vide (le faux positif
+    cardinal du surface-seul)."""
     if hab is None:
         return {}
     lo, hi = _emprise_bornes(hab, etages)
@@ -96,7 +117,7 @@ def _crit_emprise(db: Session, lon, lat, commune, hab, etages) -> dict[str, str]
         """SELECT p.idu, mb.emprise_bati_m2 FROM parcels p JOIN p_model_bati mb ON mb.idu = p.idu
            WHERE p.commune = :c AND mb.emprise_bati_m2 BETWEEN :lo AND :hi
            AND ST_DWithin(p.geom_2975, ST_Transform(ST_SetSRID(ST_MakePoint(:lon,:lat),4326),2975), :r)"""),
-        {"c": commune, "lo": lo, "hi": hi, "lon": lon, "lat": lat, "r": RAYON_M}).mappings().all()
+        {"c": commune, "lo": lo, "hi": hi, "lon": lon, "lat": lat, "r": rayon}).mappings().all()
     return {r["idu"]: f"emprise bâtie {r['emprise_bati_m2']:.0f} m² (attendu {lo:.0f}-{hi:.0f})" for r in rows}
 
 
@@ -166,14 +187,15 @@ def rattacher(db: Session, rec: dict) -> dict:
     hab = _f(rec.get("surface_hab"))
     terrain = _f(rec.get("surface_terrain"))
     est_bati = typ in _TYPES_BATIS
+    rayon = _rayon(rec)   # RADAR-SOURCES-3 — serré (60 m) si position à l'adresse, 150 m sinon.
 
-    # L'UNIVERS des candidates est POSITIONNEL (dans le rayon du point flouté) : surface ∪ emprise.
+    # L'UNIVERS des candidates est POSITIONNEL (dans le `rayon` du point flouté) : surface ∪ emprise.
     # DVF/DPE/piscine sont position-INDÉPENDANTS (commune-large) : mesuré au Lot 0, seuls, ils désignent
     # des parcelles à plusieurs kilomètres (bruit). On ne les laisse donc PAS introduire de candidate —
     # ils CORROBORENT une candidate déjà retenue par la position (2ᵉ critère indépendant), jamais plus.
-    detect: dict[str, dict[str, str]] = {"surface": _crit_surface(db, lon, lat, commune, terrain)}
+    detect: dict[str, dict[str, str]] = {"surface": _crit_surface(db, lon, lat, commune, terrain, rayon=rayon)}
     if est_bati:
-        detect["emprise"] = _crit_emprise(db, lon, lat, commune, hab, rec.get("etages"))
+        detect["emprise"] = _crit_emprise(db, lon, lat, commune, hab, rec.get("etages"), rayon=rayon)
     univers = set().union(*[set(d) for d in detect.values()]) if detect else set()
     if not univers:
         return _non("aucune parcelle candidate dans le rayon (surface/emprise) — quartier retenu")
@@ -215,7 +237,7 @@ def rattacher(db: Session, rec: dict) -> dict:
     # rayon, on rattache en PROBABLE (niveau `estime`, confiance 0.70). Deux candidates ou plus à ±1 % →
     # RIEN d'automatique (jamais une liste à trier). L'humain tranche via « C'est cette parcelle ».
     if typ == "terrain" and terrain is not None:
-        stricts = _crit_surface(db, lon, lat, commune, terrain, tol=TOL_SURFACE_TERRAIN_STRICT)
+        stricts = _crit_surface(db, lon, lat, commune, terrain, tol=TOL_SURFACE_TERRAIN_STRICT, rayon=rayon)
         if len(stricts) == 1:
             idu, val = next(iter(stricts.items()))
             return {"etat": "rattachee", "niveau": "estime", "idu": idu, "confiance": 0.70,

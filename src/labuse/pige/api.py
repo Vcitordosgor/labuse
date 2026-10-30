@@ -1495,10 +1495,14 @@ def _terrain_repere(db, idu: str) -> dict | None:
     return None
 
 
-# ANNONCE-5-FIX — précision RECALIBRÉE sur ESTIMATION-BANC-1 (médian |écart| sur les ventes DVF 2025) :
-# l'estimateur est une médiane de secteur, pas un AVM. Le badge dit la précision du SEGMENT, pas de n.
-#   appartement 17 % · maison 32 % · terrain nu 19 % · bâti combiné 28 % (toutes ventes).
-_ECART_SEGMENT = {"appartement": 17, "maison": 32, "terrain": 19, "bati": 28}
+# ESTIMATION-BANC-2 (mandat BANC-RAYON-1) — précision RECALIBRÉE sur le banc rejoué sur l'estimateur
+# ACTUEL (maisons comparées aux maisons, copropriété = appartement), même règle SANS FUITE, mêmes
+# 5 592 ventes DVF 2025. L'estimateur reste une médiane de secteur, pas un AVM. Le badge dit la précision
+# du SEGMENT, pas de n. Médian |écart| par VRAI segment (docs/audit-2026-10/banc-rayon-1) :
+#   appartement 17 % (banc 1 : 17) · maison 28 % (banc 1 : 32, −4 pts grâce au comparateur maison↔maison)
+#   · terrain nu 19 % (inchangé, logique terrain inchangée) · bâti combiné 26 % (banc 1 : 28, global).
+# Seuils de badge inchangés : < 15 % Élevée, < 25 % Moyenne, au-delà Limitée.
+_ECART_SEGMENT = {"appartement": 17, "maison": 28, "terrain": 19, "bati": 26}
 
 
 def _arrondi_mille(n):
