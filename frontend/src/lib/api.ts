@@ -1673,7 +1673,9 @@ export const getBrief = () => j<BriefMatin>('/events/brief')
 // M85-B — les parcelles suivies + date du dernier changement (null = jamais bougé).
 export interface SuiviItem { idu: string; depuis: string; commune: string | null; dernier_changement: string | null
   // RADAR-2 (Lot 4) — enrichissements de l'écran Veille · le foncier.
-  secteur?: string | null; dernier_evenement?: string | null; nouveau?: boolean }
+  secteur?: string | null; dernier_evenement?: string | null; nouveau?: boolean
+  // VEILLE-3 — surface de terrain (m²) + zone PLU dominante, pour la ligne « IDU · surface · zone ».
+  surface?: number | null; zone?: string | null }
 export const getSuivis = () => j<{ suivis: SuiviItem[]; plafond: number }>('/events/suivis')
 // M85 / M85-B — préférences par type (registre) et par canal (cloche / e-mail). `verrou` = non
 // désactivable (maintenance : e-mail toujours actif, conséquences réelles).
@@ -2877,6 +2879,9 @@ export const creerRadarVeille = (criteria: Record<string, unknown>) =>
   j<{ ok: boolean; veille_id: number }>('/radar/veille', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(criteria) })
 export const supprimerRadarVeille = (id: number) =>
   j<{ ok: boolean }>(`/radar/veille/${id}`, { method: 'DELETE' })
+// VEILLE-3 — « Modifier » une alerte : remplace ses critères en place (même formulaire que la création).
+export const modifierRadarVeille = (id: number, criteria: Record<string, unknown>) =>
+  j<{ ok: boolean }>(`/radar/veille/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(criteria) })
 // RETOURS-11 A7 — renommer une veille Radar (nom vide = retour au résumé des critères).
 export const renommerRadarVeille = (id: number, nom: string) =>
   j<{ ok: boolean }>(`/radar/veille/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nom }) })
