@@ -213,17 +213,17 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
       {!reponse && (
         <div data-accueil-exemples className="mb-8">
           <p className="mb-2.5 font-mono text-[10px] tracking-[.12em] text-cp-faint">EXEMPLES</p>
-          {/* RECETTE-PROD-1 (D7) — DEUX rangées de 5 cartes (10 exemples) : 5 colonnes, hauteurs égales
-              (auto-rows-fr + h-full), icône À GAUCHE et texte À DROITE sur la même ligne (flex-row),
-              AUCUN texte tronqué (plus de line-clamp). IDU en mono. Cliquer PRÉ-REMPLIT la barre. */}
-          <div className="grid grid-cols-5 gap-3 auto-rows-fr">
+          {/* RECETTE-4 — grille à 2 COLONNES de cartes LARGES (décision Vic) : icône à gauche, texte
+              13 px sur 2 à 3 lignes, AUCUNE troncature (plus de line-clamp ni nowrap). Hauteurs égales
+              (auto-rows-fr + h-full). IDU en mono. Cliquer PRÉ-REMPLIT la barre. */}
+          <div className="grid grid-cols-2 gap-3 auto-rows-fr">
             {EXEMPLES_R12.map((ex) => (
               <button key={ex.t} data-accueil-exemple data-ex-type={ex.ic} onClick={() => { onChange(ex.t); ref.current?.focus() }}
-                className="hover-fill-ia flex h-full min-h-[84px] flex-row items-start gap-2.5 rounded-xl border border-cp-line bg-cp-card p-2.5 text-left transition-colors duration-quick hover:border-cp-ia/40">
+                className="hover-fill-ia flex h-full min-h-[64px] flex-row items-start gap-3 rounded-xl border border-cp-line bg-cp-card p-3 text-left transition-colors duration-quick hover:border-cp-ia/40">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cp-ia/15 text-cp-ia">
                   <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">{EX_ICONS[ex.ic] ?? CAP_ICON_FALLBACK}</svg>
                 </span>
-                <span className="min-w-0 flex-1 self-center text-[12px] leading-tight text-cp-txt">{avecIduMono(ex.t)}</span>
+                <span className="min-w-0 flex-1 self-center text-[13px] leading-snug text-cp-txt">{avecIduMono(ex.t)}</span>
               </button>
             ))}
           </div>

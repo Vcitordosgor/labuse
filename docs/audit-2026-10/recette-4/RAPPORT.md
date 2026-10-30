@@ -114,3 +114,32 @@ Parcours complet navigateur ⇒ « ✓ Demande **C-3010-VB** transmise. » →
 `captures/courrier-ref-APRES.png`.
 
 _tsc -b : 0 erreur._
+
+---
+
+## Lot 3 — Copilote (cartes exemples) + Notifications (intro retirée)
+
+### Copilote — grille d'exemples à 2 colonnes, cartes larges, rien de tronqué
+
+**Mandat.** Grille à 2 colonnes de cartes larges, icône à gauche, texte 13 px sur 2–3 lignes,
+rien de tronqué.
+
+**Correctif.** `AccueilCopilote.tsx` : `grid-cols-5` → `grid-cols-2` ; texte `text-[12px]
+leading-tight` → `text-[13px] leading-snug` ; padding/gap élargis ; pas de `line-clamp`.
+
+**APRÈS.** Mesuré navigateur : `gridTemplateColumns` = **2 colonnes**, cartes **296 px** de
+large, police **13 px**, `anyTruncated = false` sur les 10 cartes. →
+`captures/copilote-cards-APRES.png`.
+
+### Notifications — paragraphe d'intro retiré
+
+**Mandat.** Supprimer « Ce qui bouge sur vos parcelles suivies … réellement détecter. ».
+
+**Correctif.** `Header.tsx` : le `<p>` d'intro retiré (ternaire `prefsOpen ? … : <p>` → `prefsOpen
+&& …`) ; la requête `entete-cloche` (qui l'alimentait) et son import retirés.
+
+**APRÈS.** Panneau Notifications ouvert : en-tête « NOTIFICATIONS · 1045 », puis directement la
+liste — plus aucune occurrence de « Ce qui bouge sur » / « réellement détecter ». →
+`captures/notif-sans-blurb-APRES.png`.
+
+_tsc -b : 0 erreur._

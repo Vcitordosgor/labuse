@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Fragment, useEffect, useState } from 'react'
-import { banAutocomplete, deleteLogo, getCommunes, getEnteteCloche, getEvents, getMarque, getMoi, getNotifPrefs, getParcelsGeojson, markAllEventsRead, markEventRead, modPatrimoineSearch, parcelAt, patchDigestFrequence, patchNotifPref, postLogo, postMarque, postRetour, searchParcels, type LabuseEvent } from '../../lib/api'
+import { banAutocomplete, deleteLogo, getCommunes, getEvents, getMarque, getMoi, getNotifPrefs, getParcelsGeojson, markAllEventsRead, markEventRead, modPatrimoineSearch, parcelAt, patchDigestFrequence, patchNotifPref, postLogo, postMarque, postRetour, searchParcels, type LabuseEvent } from '../../lib/api'
 import { estIdu, estSectionNumero, iduComplet, normSectionNumero } from '../../lib/format'
 import { communePastille } from '../../lib/communes'
 import { Chargement } from '../Loading'
@@ -380,7 +380,7 @@ function NotifBell() {
   const [limite, setLimite] = useState(PAGE_SIZE)
   const ev = useQuery({ queryKey: ['events', limite], queryFn: () => getEvents(limite), refetchInterval: 60_000 })
   // M87 P5 — l'en-tête est DÉRIVÉ du registre (jamais écrit à la main) : on ne promet que le détectable.
-  const entete = useQuery({ queryKey: ['entete-cloche'], queryFn: getEnteteCloche, enabled: open, staleTime: 3_600_000 })
+  // RECETTE-4 — l'intro Notifications (libellés d'en-tête cloche) est retirée : plus de requête entete-cloche.
   const invalidate = () => { qc.invalidateQueries({ queryKey: ['events'] }); qc.invalidateQueries({ queryKey: ['events-count'] }) }
   const readOne = useMutation({ mutationFn: markEventRead, onSuccess: invalidate })
   const readAll = useMutation({ mutationFn: markAllEventsRead, onSuccess: invalidate })
@@ -476,7 +476,7 @@ function NotifBell() {
               </div>
             </header>
             {/* M85 — l'écran minimal : par type, cloche / e-mail / les deux / rien. */}
-            {prefsOpen ? (
+            {prefsOpen && (
               <div data-notif-prefs className="shrink-0 border-b border-line bg-surface-2 px-4 py-3">
                 <p className="mb-2 text-[11px] font-medium text-txt">Que recevoir, et où ?</p>
                 {/* RETOURS-11F3 A5 — TROIS canaux : cloche · brief (du matin) · e-mail, par type. */}
@@ -522,18 +522,9 @@ function NotifBell() {
                 </div>
                 <p className="mt-2 text-[10px] leading-snug text-txt-dim">La cloche est instantanée · le brief est le résumé du matin (Copilote) · l'e-mail est un résumé (7h, heure Réunion) : quotidien, hebdomadaire (lundi), ou aucun (cloche seulement). Tout décocher = ne rien recevoir.</p>
               </div>
-            ) : (
-            /* M87 P5 : intro DÉRIVÉE du registre (libelles_entete_cloche) — maille SUR la parcelle,
-               jamais « à proximité » figé ; un déclencheur ajouté au registre met la phrase à jour
-               SEUL. M104 : vocabulaire aligné (« vos secteurs », plus jamais « veille »). */
-            <p className="shrink-0 border-b border-line px-[22px] py-3 text-[12.5px] leading-snug text-txt-mut">
-              {/* RECETTE-2 (E4) — « vos secteurs » retiré : la veille secteur n'existe plus. */}
-              Ce qui bouge sur <b className="font-semibold text-txt">vos parcelles suivies</b>
-              {entete.data?.libelles?.length ? <> — {entete.data.libelles.join(', ')} — </> : ' '}
-              et sur <b className="font-semibold text-txt">vos critères</b>. On ne vous prévient que sur ce
-              qu'on sait réellement détecter.
-            </p>
             )}
+            {/* RECETTE-4 — le paragraphe d'intro « Ce qui bouge sur vos parcelles suivies … réellement
+                détecter. » de la page Notifications est RETIRÉ (décision Vic). */}
             <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2">
               {(ev.data?.items ?? []).length === 0 && <p className="p-3 text-xs leading-snug text-txt-dim">Aucune notification pour l'instant — nous vous préviendrons dès qu'une parcelle suivie change ou qu'une de vos veilles se déclenche.</p>}
               {/* M87 P5.1 — REGROUPÉ par commune (une ligne + « Voir les N → ») ; sinon carte simple. */}
