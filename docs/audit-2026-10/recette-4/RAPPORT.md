@@ -296,3 +296,34 @@ face aux maisons de la commune : 3 797 €/m² ». → `captures/radar-cebien-es
 
 _tsc -b : 0 erreur · vitest docs/outils/radar : 17 passed · pytest annonce/pige/marche/radar :
 237 passed, 7 skipped (DVF)._
+
+---
+
+## Lot 7 — En-tête : sélecteur commune retiré → bouton « Fiche commune ▾ »
+
+**AVANT (constat Vic).** Le sélecteur « Toute l'île ▾ » de l'en-tête appelait `setCommune` en
+choisissant une commune → pose le périmètre actif `commune` (→ `getParcelsGeojson` charge TOUT le
+parcellaire de la commune) + pré-coche le filtre + cadre la carte : « ça mouline puis bloque ».
+
+**Correctif.** `Header.tsx` : le sélecteur « Toute l'île ▾ » (et le bouton doublon « ⓘ Fiche
+commune ») sont remplacés par un **seul bouton « ⓘ Fiche commune ▾ »**. Il ouvre la liste des 24
+communes ; choisir une commune appelle `setContexteCommune` (ouvre le volet FICHE de la commune) —
+**jamais `setCommune`** : aucun filtrage, aucun rechargement de carte. Le filtre par commune reste
+dans le panneau Filtres.
+
+**APRÈS.** En-tête : bouton « ⓘ Fiche commune », plus aucun « Toute l'île » dans le DOM. Le menu
+liste **24 communes** ; choisir « Saint-Paul » ouvre le volet « FICHE COMMUNE · Saint-Paul » tandis
+que la carte reste sur l'île entière et `filters.communes` reste `[]` (aucun filtrage). →
+`captures/entete-fiche-commune-APRES.png`.
+
+**Vérification du filtre commune du panneau Filtres (mandat : noter sans corriger).** Sélection de
+« Saint-Denis » (CP 97400) dans le panneau Filtres : l'app **reste fluide** — sonde de réactivité du
+fil principal sur 5 s = **écart d'image max 19 ms** (aucun gel). Raison : le panneau pose seulement
+le FILTRE (`filters.communes`, param `cs`), pas le périmètre `commune` (param `c`) qui déclenche le
+`getParcelsGeojson` responsable du gel de l'en-tête. **Pas de blocage à noter.**
+
+**Note verrou (Lot 1 / Prospection solaire).** Le retrait des deux paragraphes solaire a rendu
+obsolète l'assertion « A1 » (inclinaison 15° dans « En clair… ») : le test est mis à jour pour
+verrouiller le RETRAIT (`ProspectionSolaire.test.tsx`).
+
+_tsc -b : 0 erreur · vitest header + solaire : 14 passed._
