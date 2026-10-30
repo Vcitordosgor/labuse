@@ -306,7 +306,8 @@ def creer_demande(db, *, compte_id: int | None, parcelles: list[str],
         ORDER BY ts DESC LIMIT 1"""),
         {"c": compte_id, "corps": corps, "p": p_json, "w": IDEMPOTENCE_FENETRE_S}).mappings().first()
     if dup is not None:
-        return {**dict(dup), "rang_compte": _rang_compte(db, compte_id, dup["id"]), "existing": True}
+        return {**dict(dup), "rang_compte": _rang_compte(db, compte_id, dup["id"]),
+                "reference": _reference(dup["id"], dup["ts"]), "existing": True}
     r = db.execute(text("""
         INSERT INTO courrier_demandes (compte_id, parcelles, n, communes, modele, corps, statut,
                                        pipeline_entry_id, projet_id)
@@ -315,7 +316,20 @@ def creer_demande(db, *, compte_id: int | None, parcelles: list[str],
         {"c": compte_id, "p": p_json, "n": len(parcelles),
          "com": communes, "m": modele, "corps": corps,
          "pe": pipeline_entry_id, "pj": projet_id}).mappings().one()
-    return {**dict(r), "rang_compte": _rang_compte(db, compte_id, r["id"]), "existing": False}
+    return {**dict(r), "rang_compte": _rang_compte(db, compte_id, r["id"]),
+            "reference": _reference(r["id"], r["ts"]), "existing": False}
+
+
+def _reference(demande_id: int, ts) -> str:
+    """RECETTE-4 — référence de demande NON séquentielle (décision Vic) : plus de « Demande n° 2 ».
+    Format `C-DDMM-XX` : `C` (courrier), `DDMM` (jour/mois de la demande), `XX` = deux lettres dérivées
+    de l'id par hachage (md5 → base 26). Stable et retrouvable, mais non devinable et SANS révéler le
+    volume plateforme (contrairement au PK) ni le rang du compte. Ex. « C-2610-KD »."""
+    h = hashlib.md5(f"courrier-ref-{demande_id}".encode(), usedforsecurity=False).hexdigest()
+    n = int(h[:8], 16)
+    lettres = chr(65 + (n // 26) % 26) + chr(65 + n % 26)
+    ddmm = ts.strftime("%d%m") if ts is not None else "0000"
+    return f"C-{ddmm}-{lettres}"
 
 
 def _rang_compte(db, compte_id: int | None, demande_id: int) -> int:

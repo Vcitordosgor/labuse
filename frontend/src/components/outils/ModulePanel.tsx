@@ -525,7 +525,10 @@ export function M03() {
   const tous = seg === 'tous'
   // RETOURS-17 W2 — état de cycle servi par /permis (dormant reste sur /promesses).
   const etatSeg = seg === 'acheve' ? 'acheve' : seg === 'autre' ? 'autre' : null
-  const [months, setMonths] = useState(moduleKey === 'promesses' ? 36 : 24)
+  // RECETTE-4 — le segment par défaut est « Tous » (seg='tous'), dont la fenêtre est 240 mois (tout
+  // l'historique), comme `choisirSeg`. L'init était à 24 (fenêtre « Récent ») : d'où le constat Vic
+  // « Tous affiché actif mais Récent appliqué » à l'arrivée. On aligne l'init sur le segment par défaut.
+  const [months, setMonths] = useState(moduleKey === 'promesses' ? 36 : 240)
   const [nature, setNature] = useState('')
   // RECETTE-OUTILS-1 (points 6 & 7) — plus de drawer en colonne : la fiche permis s'ouvre en BULLE sur
   // la carte (ouvrirBullePermis, MapView), que le clic vienne d'un point carte OU d'une ligne de liste.
@@ -566,7 +569,9 @@ export function M03() {
   useEffect(() => () => { fermerBullePermis(); setPermisOuvert(null) }, [])   // eslint-disable-line react-hooks/exhaustive-deps
   // la clé d'ouverture (radar `permis` vs filtre `promesses`) fixe le MODE d'entrée + la fenêtre par
   // défaut ; ensuite le toggle local est maître (un deep-link vers l'autre clé re-cale l'écran).
-  useEffect(() => { const s = moduleKey === 'promesses' ? 'mort' : 'tous'; setSeg(s); setMonths(s === 'mort' ? 36 : 24) }, [moduleKey])
+  // RECETTE-4 — même fenêtre que `choisirSeg` : 'tous' → 240 mois (pas 24, qui appliquait « Récent »
+  // sous un chip « Tous » affiché actif).
+  useEffect(() => { const s = moduleKey === 'promesses' ? 'mort' : 'tous'; setSeg(s); setMonths(s === 'mort' ? 36 : 240) }, [moduleKey])
 
   const MONTHS_RADAR = [12, 24, 48, 72, 240]   // 240 = « Tout » (≈ toute la profondeur Sitadel servie)
   const MONTHS_PM = [24, 36, 48, 60]   // point mort : 36 = caducité légale du PC (défaut à l'ouverture)
@@ -1378,7 +1383,7 @@ export function M09() {
   const [rattach, setRattach] = useState<{ pipeline_entry_id: number; projet_id: number | null } | null>(null)
   const [modele, setModele] = useState('auto')
   const [corps, setCorps] = useState('')
-  const [demande, setDemande] = useState<{ id: number; rang_compte?: number; statut: string; n: number; communes: string | null } | null>(null)
+  const [demande, setDemande] = useState<{ id: number; rang_compte?: number; reference?: string; statut: string; n: number; communes: string | null } | null>(null)
   const [pdfBusy, setPdfBusy] = useState(false)
   const [pdfErr, setPdfErr] = useState<string | null>(null)
   // OUTILS-S2 Lot B — un pli « à l'occupant » n'atteint personne sur un terrain nu ou sans adresse :
@@ -1635,12 +1640,11 @@ export function M09() {
             <Bouton niveau="primaire" ton="vert" data-courrier-demander onClick={() => envoyer.mutate()} disabled={envoyer.isPending || depotBloque || adressage.isLoading}>
               {envoyer.isPending ? 'Envoi de la demande…' : depotBloque ? 'Dépôt bloqué — voir les motifs' : "Demander l'envoi à LABUSE"}</Bouton>
           ) : (
-            // OUTILS-1 A4/B6 — la confirmation porte le N° DE DEMANDE et renvoie vers le suivi. AUCUN
-            // état interne (imprimé/posté) côté client : décision Vic — moins de surface, moins de bugs.
-            // RECETTE-1 R13 — le numéro montré est le rang PROPRE AU COMPTE (1, 2, 3…), plus le `id`
-            // PK global (qui fuitait le volume plateforme : « n° 44 » au 1ᵉʳ courrier). Repli sur id.
+            // OUTILS-1 A4/B6 — la confirmation porte la RÉFÉRENCE de la demande et renvoie vers le suivi.
+            // RECETTE-4 — plus de numéro séquentiel « Demande n° 2 » : une référence NON séquentielle
+            // (lettres + date), servie par le back (`reference` = C-DDMM-XX). Repli sur rang/id si absente.
             <div data-courrier-confirm className="rounded-lg border border-line-2 bg-mint/[0.05] px-3 py-2 text-[11px] leading-snug text-txt-mut">
-              <b className="text-mint">✓ Demande n° {demande.rang_compte ?? demande.id} transmise.</b>
+              <b className="text-mint">✓ Demande {demande.reference ?? `n° ${demande.rang_compte ?? demande.id}`} transmise.</b>
               {/* OUTILS-S2 Lot B — le MÊME montant qu'à l'étape 3 est repris ici.
                   CHASSE-APP-FIX-2 (point 1) — tant que le service est un bouchon, on ne reprend PAS la
                   prestation tarifée : la raison serveur dit que la demande est seulement enregistrée. */}

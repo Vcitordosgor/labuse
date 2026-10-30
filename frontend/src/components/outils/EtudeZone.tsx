@@ -24,12 +24,12 @@ import { ParcelInput } from '../ParcelInput'
 import { ListPaginationFooter, usePagination } from '../ListPagination'
 import { docEtudeZoneUrl, etudeZone, etudeZoneEntreprises, getMoteursConfig, parcelAt, type EtudeZoneInput } from '../../lib/api'
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'
-import type { EtudeZoneDestinations, EtudeZoneResult, ZoneEntreprises, ZoneFamille } from '../../lib/types'
+import type { EtudeZoneResult, ZoneEntreprises, ZoneFamille } from '../../lib/types'
 import { iduCourt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { Chargement, Squelette } from '../Loading'
 import { ErrorState } from '../States'
-import { DestinationBadge, DestinationSelect } from './DestinationSelect'
+// RECETTE-4 — DestinationSelect/DestinationBadge retirés de l'Étude de zone (menu Activité supprimé).
 import { Bouton } from '../ui/Bouton'
 import { Chevron } from '../ui/Chevron'
 
@@ -64,7 +64,6 @@ export function EtudeZone() {
   // RECETTE-2 (D8) — CHEMIN UNIQUE : plus de choix « Zone seule » / « Zone + chalandise » à l'entrée.
   // On part toujours du superset (le sélecteur d'activité et le bloc concurrents, OPTIONNELS, restent
   // disponibles ; sans activité choisie, c'est la lecture « zone seule »).
-  const [porteZone] = useState<'chalandise' | 'particuliere'>('chalandise')
   const [cible, setCible] = useState<{ idu: string; label: string } | null>(null)
   const [rayonKm, setRayonKm] = useState(1)
   // RECETTE-OUTILS-1 (point 29 / T6) — « Exporter en PDF » : MÊME document que la carte Docs « Étude de
@@ -75,8 +74,7 @@ export function EtudeZone() {
   // l'isochrone — un rayon affiché « 3 km » donnerait un périmètre ≠ cercle, cf. E-69).
   const cfgMot = useQuery({ queryKey: ['moteurs-config'], queryFn: getMoteursConfig, staleTime: 3600_000 })
   const rayonsServis = cfgMot.data?.rayons_etude_zone ?? [0.5, 1, 2, 5]
-  // DESTINATIONS-1 (X4.1) — sous-destination R151-28 choisie (facultative) : verdict par zone PLU.
-  const [sousDest, setSousDest] = useState<string | null>(null)
+  // RECETTE-4 — l'état sous-destination (menu Activité) est retiré.
 
   // DESTINATIONS-1 (X4.4) — porte Copilote « Étude de zone » préremplie (parcelle + sous-destination).
   // Même idiome consommé-puis-reset que parcelPrefill : lu AU MONTAGE, remis à null aussitôt.
@@ -85,8 +83,7 @@ export function EtudeZone() {
   useEffect(() => {
     if (!etudeZonePrefill) return
     if (etudeZonePrefill.idu) { setCible({ idu: etudeZonePrefill.idu, label: iduCourt(etudeZonePrefill.idu) }) }
-    setSousDest(etudeZonePrefill.sous_destination)
-    // RECETTE-2 (D8) — chemin unique : plus de choix de porte (le prefill alimente juste l'activité).
+    // RECETTE-4 — le prefill ne porte plus de sous-destination (menu Activité retiré).
     setEtudeZonePrefill(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -99,7 +96,8 @@ export function EtudeZone() {
       // RECETTE-1 H8.2 — UNE entrée : parcelle (cible) + rayon km. minutes/mode = constantes neutres
       // (ignorées par le back dès que rayon_km est fourni). Plus de branche polygone/temps.
       // RECETTE-OUTILS-1 (point 26) — plus de `naf` envoyé : la lentille concurrents/chalandise est retirée.
-      const body: EtudeZoneInput = { minutes: MINUTES_NEUTRE, mode: MODE_NEUTRE, sous_destination: sousDest }
+      // RECETTE-4 — plus de `sous_destination` envoyé : le menu Activité (destination) est retiré.
+      const body: EtudeZoneInput = { minutes: MINUTES_NEUTRE, mode: MODE_NEUTRE }
       if (cible) { body.idu = cible.idu; body.titre = cible.label; body.rayon_km = rayonKm }
       return etudeZone(body)
     },
@@ -123,10 +121,8 @@ export function EtudeZone() {
   // O19 : l'ACTIVITÉ (étape 3) N'EST PAS dans ces dépendances — changer d'activité n'efface pas la
   // lecture de zone ; elle est appliquée par le bouton dédié de l'étape 3 (lentille additive).
   useEffect(() => { mut.reset(); setEntOpen(false) /* eslint-disable-next-line react-hooks/exhaustive-deps */ },
-    // DESTINATIONS-1 (X4.1) — sousDest fait partie de la LECTURE de zone (étape 1/2, payload principal) :
-    // le changer réarme « Lire la zone ». naf reste HORS deps (RETOURS-11 O19 : l'activité est la lentille
-    // additive de l'étape 3, appliquée par son propre bouton — elle n'efface pas la lecture).
-    [cible, sousDest, rayonKm])
+    // RECETTE-4 — sousDest retiré des deps (menu Activité supprimé).
+    [cible, rayonKm])
 
   // pousse la zone sur la carte : anneaux d'isochrone + point d'origine + concurrents (ambre). Nettoie en sortie.
   useEffect(() => {
@@ -200,10 +196,9 @@ export function EtudeZone() {
         </div>
       </div>
 
-      {/* DESTINATIONS-1 (X4.1) — sous-destination R151-28 (facultative) : « peut-on y ouvrir un
-          restaurant / un hôtel / un commerce ? » — verdict par zone PLU recouverte, phrase sourcée.
-          O13.1 — question d'ACTIVITÉ → mode « Zone + chalandise » seulement. */}
-      {porteZone === 'chalandise' && <DestinationSelect dataAttr="etude-zone" value={sousDest} onChange={setSousDest} />}
+      {/* RECETTE-4 — le menu « Activité (destination) » est RETIRÉ de l'Étude de zone (décision Vic) :
+          plus de sélecteur, plus de verdict par destination (ni à l'écran, ni dans Docs/PDF). Le
+          composant DestinationSelect reste au dépôt (toujours utilisé par la Faisabilité). */}
 
       {/* RETOURS-13 R28 — bouton d'ACTION PRINCIPALE vert opaque. RECETTE-1 H8.5 — une fois la zone lue,
           le bouton DISPARAÎT (l'étape 2 s'ouvre d'elle-même) ; il revient si l'on relance (mut.reset). */}
@@ -355,7 +350,7 @@ export function EtudeZone() {
           )}
 
           {/* 5 · CONTRAINTES */}
-          {((res.contraintes_plu && res.contraintes_plu.zones.length > 0) || res.destinations
+          {((res.contraintes_plu && res.contraintes_plu.zones.length > 0)
             || (res.risques && (res.risques.ppr.length > 0 || res.risques.aleas.length > 0))
             || res.assainissement?.couvert || (res.espaces_zonages && res.espaces_zonages.items.length > 0)) && (
             <Section id="contraintes" titre="Contraintes" openSecs={openSecs} setOpenSecs={setOpenSecs}
@@ -375,8 +370,7 @@ export function EtudeZone() {
                   {res.contraintes_plu.cdac_vigilance && <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">{res.contraintes_plu.cdac_vigilance}</p>}
                 </div>
               )}
-              {/* DESTINATIONS-1 (X4.1) — verdict par zone PLU, phrase SERVIE telle quelle (jamais reformulée). */}
-              {res.destinations && <DestinationsBloc d={res.destinations} />}
+              {/* RECETTE-4 — verdict par destination retiré (menu Activité supprimé). */}
               {/* B5 — PPR (rouge/bleu) + aléas par niveau, % de la zone (couches DEAL, comme Pièges & risques) */}
               {res.risques && (res.risques.ppr.length > 0 || res.risques.aleas.length > 0) && (
                 <div>
@@ -561,7 +555,7 @@ export function EtudeZone() {
             <div className="flex justify-end">
               <Bouton niveau="secondaire" ton="vert" data-etude-export className="shrink-0 whitespace-nowrap"
                 disabled={enCours != null || !cible}
-                onClick={() => ouvrir(docEtudeZoneUrl(cible.idu, rayonKm, sousDest), 'etude-zone')}>
+                onClick={() => ouvrir(docEtudeZoneUrl(cible.idu, rayonKm), 'etude-zone')}>
                 Exporter en PDF
               </Bouton>
             </div>
@@ -668,41 +662,7 @@ function FamilleEtabs({ f, ouvrirParcelle }: { f: ZoneFamille; ouvrirParcelle: (
   )
 }
 
-// DESTINATIONS-1 (X4.1) — bloc « Destinations » : une ligne par zone PLU recouverte — badge d'état
-// (pastille contour), part %, mention CDAC si présente, et la PHRASE SERVIE telle quelle (sourcée
-// article/page/millésime par le backend — le front n'en reformule jamais un mot).
-function DestinationsBloc({ d }: { d: EtudeZoneDestinations }) {
-  if (d.erreur) {
-    return <p data-zone-destinations className="text-[11px] text-txt-mut">Destinations — {d.erreur}</p>
-  }
-  return (
-    <div data-zone-destinations>
-      <SectionTitle>Destinations{d.libelle ? <span className="ml-1 normal-case tracking-normal">· {d.libelle}</span> : null}</SectionTitle>
-      {(d.zones?.length ?? 0) === 0 ? (
-        <p className="text-[11px] text-txt-mut">Aucune zone PLU recouverte par la zone d’étude.</p>
-      ) : (
-        <div className="mt-1 flex flex-col gap-1.5">
-          {d.zones!.map((z, i) => (
-            <div key={i}>
-              <div className="flex items-center gap-2 text-[11.5px]">
-                <span className="font-mono text-txt-hi">{z.zone ?? '?'}</span>
-                {z.commune && <span className="truncate text-txt-mut">{z.commune}</span>}
-                <DestinationBadge etat={z.etat} />
-                {z.cdac && (
-                  <span
-                    className="inline-flex shrink-0 items-center rounded-full border border-amber/40 px-1.5 py-px font-mono text-[9px] uppercase tracking-wide text-amber">CDAC</span>
-                )}
-                {z.part_pct != null && <span className="ml-auto shrink-0 font-mono text-[11px] text-txt-hi">{z.part_pct} %</span>}
-              </div>
-              <p className="mt-0.5 text-[10.5px] leading-snug text-txt-mut">{z.phrase}</p>
-            </div>
-          ))}
-        </div>
-      )}
-      {d.referentiel && <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">Référentiel : {d.referentiel}</p>}
-    </div>
-  )
-}
+// RECETTE-4 — le bloc « Destinations » (verdict par zone PLU) est retiré avec le menu Activité.
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return <div className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-txt-dim">{children}</div>

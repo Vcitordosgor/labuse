@@ -65,3 +65,52 @@ MODERE DE LA REUNION » affiché **en entier sur 2 lignes**, non tronqué. →
 `captures/assemblage-APRES.png`, `captures/assemblage-pm-nom-APRES.png`.
 
 _tsc -b : 0 erreur._
+
+---
+
+## Lot 2 — Étude de zone (menu Activité) · Permis (« Tous ») · Courrier (référence)
+
+### Étude de zone — menu « Activité (destination) » retiré (outil + Docs + PDF)
+
+**Mandat.** Supprimer le menu « Activité (destination) » de l'outil, de Docs et du PDF.
+
+**Correctif.**
+- Outil `EtudeZone.tsx` : `DestinationSelect` retiré, `sous_destination` n'est plus envoyé, le
+  bloc verdict `DestinationsBloc` et la condition `res.destinations` supprimés (+ imports morts).
+- Docs `DocumentsView.tsx` : le `DestinationSelect` de la fenêtre Étude de zone retiré ; l'URL
+  PDF n'emporte plus `sous_destination`.
+- PDF `exports/blocs/etude_zone.py` : le bloc « Activité étudiée » (verdict par zone) supprimé.
+
+**APRÈS.** Outil Étude de zone : plus de libellé « Activité (destination) », plus de
+`[data-destination-select]`. PDF `/etude-zone.pdf?idu=97410000AS1425&rayon_km=1` (HTTP 200,
+132 Ko) : `pdftotext` ⇒ 0 occurrence de « Activité étudiée » / « Destinations ». →
+`captures/etudezone-APRES.png`.
+
+### Permis — « Tous » réellement appliqué à l'arrivée
+
+**AVANT (racine).** Le segment par défaut est « Tous » (`seg='tous'`), mais la fenêtre `months`
+était initialisée à **24** (init state + effet de montage) — la fenêtre « Récent » — alors que
+`choisirSeg` applique **240** pour « Tous ». D'où le constat Vic : chip « Tous » affiché actif,
+données « Récent » appliquées.
+
+**Correctif.** `ModulePanel.tsx` (M03) : `months` initial `240` (hors `promesses`) et l'effet de
+montage aligné sur `choisirSeg` (`'tous' → 240`).
+
+**APRÈS.** À l'arrivée : chip « Tous » actif (`aria-pressed`) ET « **50 808** dans la sélection »
+(toute la base), plus 5 640 (Récent). Compteur et sélection cohérents. →
+`captures/permis-tous-APRES.png`.
+
+### Courrier — référence non séquentielle
+
+**Mandat.** Plus de « Demande n° 2 ». Une référence lettres + date, non séquentielle (ex. C-2610-KD).
+
+**Correctif.** `courrier.py` : `_reference(id, ts)` = `C-DDMM-XX` (DDMM = date de la demande ;
+XX = 2 lettres dérivées de l'id par md5→base26, non devinables, sans révéler le volume ni le
+rang). Champ `reference` ajouté à la réponse `creer_demande` (branche neuve + dédup). Front
+(`api.ts`, `ModulePanel.tsx`) : la confirmation affiche `demande.reference` (repli rang/id).
+
+**APRÈS.** `POST /courrier/demande` ⇒ `"reference":"C-3010-IW"` (id 51, rang 21 — jamais montrés).
+Parcours complet navigateur ⇒ « ✓ Demande **C-3010-VB** transmise. » →
+`captures/courrier-ref-APRES.png`.
+
+_tsc -b : 0 erreur._

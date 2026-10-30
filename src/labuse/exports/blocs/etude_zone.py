@@ -123,22 +123,8 @@ def _contraintes(z) -> str:
         if zone:
             val = f"{part} %" if part is not None else ""
             lignes.append(_kv(f"{zone}" + (f" · {commune}" if commune else ""), val))   # E1 — _kv échappe déjà
-    # RECETTE-OUTILS-3 (S3) — activité choisie : le menu « Activité » MODIFIE la lecture (verdict de la
-    # sous-destination par zone PLU), le PDF l'affiche comme l'outil (autorisé / sous condition / …).
-    dest = z.get("destinations") or {}
-    if dest.get("sous_destination"):
-        if dest.get("erreur"):
-            lignes.append(_kv("Activité étudiée", esc(dest.get("erreur"))))
-        else:
-            lignes.append(_kv("Activité étudiée",
-                              f'<b>{esc(dest.get("libelle") or dest["sous_destination"])}</b>'))
-            for zn in (dest.get("zones") or []):
-                etat = zn.get("etat") or zn.get("statut") or ""
-                z_lbl = esc(zn.get("zone") or "") + (f" · {esc(zn.get('commune'))}" if zn.get("commune") else "")
-                val = _ETAT_LABEL.get(etat, esc(etat))
-                if zn.get("condition"):
-                    val += f' <span class="muted">— {esc(zn.get("condition"))}</span>'
-                lignes.append(_kv(z_lbl, val))
+    # RECETTE-4 — le menu « Activité (destination) » est retiré de l'Étude de zone : plus de bloc
+    # « Activité étudiée » (verdict de sous-destination par zone PLU) dans le PDF.
     risq = z.get("risques") or {}
     if risq.get("libelle"):
         lignes.append(_kv("Risques", esc(risq.get("libelle"))))
