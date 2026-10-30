@@ -204,3 +204,34 @@ stationnement, surface < 5 m² exonérée, combo (RP + piscine + stationnement),
 2 places com 4 % ⇒ assiette 102 586, total 6 668,09.
 
 _tsc -b : 0 erreur · pytest taxe : 10 passed._
+
+---
+
+## Lot 5 — Radar : compteur de jours (date absente ≠ 1970)
+
+**AVANT (reproduit).** Un bien dont la date de publication est ABSENTE mais stockée comme sentinelle
+`1970-01-01` (époque) affichait « **en vente depuis 20 756 j** ». Reproduit sur le bien 1 passé à
+`date_publication='1970-01-01'` : l'ancien `COALESCE(date_publication, date_premiere_saisie)` donne
+**20 756**.
+
+**Racine.** Deux compteurs calculaient une durée depuis l'époque :
+1. Back `pige/marche.py` (`bien_vs_marche`, panneau « Ce bien » + sa médiane) — `COALESCE` prenait la
+   date 1970 au lieu de retomber sur la 1re saisie.
+2. Front `RadarEcran.tsx` `joursDepuis` — ne gardait que `null`/`NaN`, pas l'époque
+   (`new Date('1970-01-01')` est une date valide → 20 756 j).
+
+**Correctif (racine + autres compteurs).**
+- Back `marche.py` : `COALESCE(CASE WHEN date_publication > 2005-01-01 THEN date_publication END,
+  date_premiere_saisie)` — toute date avant 2005 (= sentinelle) est ignorée ⇒ retombe sur la 1re
+  saisie, sinon NULL ⇒ aucune durée. JAMAIS depuis zéro. Appliqué au bien ET à la médiane.
+- Front `RadarEcran.tsx` : `joursDepuis` rejette les dates < 2005 et illisibles (→ null) ; essai des
+  deux dates (publication puis saisie) INDÉPENDAMMENT.
+- Intake `pige/intake.py` : `_clamp_date_publication` nulle aussi les dates avant 2005 (défense à
+  l'ingestion, en plus du futur déjà géré).
+
+**APRÈS (re-constaté).** Même bien à `1970-01-01` : expression gardée = **62** (jours depuis la 1re
+saisie 2026-08-29) ; API `/radar/biens/1/vs-marche` ⇒ `anciennete_j = 62` (plus 20 756). Bien
+restauré à sa date d'origine. Verrou front `RadarEcran.joursDepuis.test.ts` : 4 tests verts
+(1970 → null, < 2005 → null, illisible → null, date récente → nombre).
+
+_tsc -b : 0 erreur · vitest joursDepuis : 4 passed._
