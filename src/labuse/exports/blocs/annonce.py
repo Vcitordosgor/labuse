@@ -109,8 +109,9 @@ def _kv(pairs: list[tuple[str, str | None]], *, titre: str | None = None) -> str
 # ═══════════════════════════════════════ EN-TÊTE COMMUN ══════════════════════════════════════════
 def entete(titre_html: str, sous_html: str, ref_droite: str, *, sous_bar: str | None = None) -> str:
     """Bandeau haut (LABUSE · Analyse d'annonce … n° · date) + titre + sous-titre, façon maquette."""
+    # RECETTE-4 — bandeau PDF renommé « Estimer un bien ».
     barre = (f'<div class="abar"><span class="abrand">LABUSE</span>'
-             f'<span class="akind">Analyse d\'annonce{(" · " + esc(sous_bar)) if sous_bar else ""}</span>'
+             f'<span class="akind">Estimer un bien{(" · " + esc(sous_bar)) if sous_bar else ""}</span>'
              f'<span class="aref">{esc(ref_droite)}</span></div>')
     return (barre + f'<h1 class="atitre">{esc_noms(titre_html)}</h1>'
             + (f'<p class="asub">{sous_html}</p>' if sous_html else ""))
@@ -156,9 +157,16 @@ def rendu_parcelle(rapport: dict, *, plan_ortho_html: str = "", plan_zonage_html
 
 
 def _tuiles(r: dict, est: dict) -> str:
-    cls = r.get("classement") or {}
-    bande, lib = cls.get("bande"), cls.get("libelle")
-    classement = (f"{bande} · {lib}" if bande and lib and lib != bande else bande) if bande else None
+    # RECETTE-4 — la tuile « Classement LABUSE » est remplacée par « Dernière vente » (date + prix DVF de
+    # la parcelle, sinon « aucune depuis 2014 »), même source que l'écran.
+    dv = r.get("derniere_vente") or {}
+    if dv.get("date"):
+        d = str(dv["date"])
+        mmaaaa = f"{d[5:7]}/{d[0:4]}" if len(d) >= 7 else d
+        val = dv.get("valeur")
+        derniere_vente = f"{mmaaaa} · {_int(val)} €" if isinstance(val, (int, float)) else mmaaaa
+    else:
+        derniere_vente = "aucune depuis 2014"
     risq = r.get("risques") or []
     n_al = len(risq)
     expo = r.get("exposition")
@@ -166,7 +174,7 @@ def _tuiles(r: dict, est: dict) -> str:
         (_m2(r.get("surface_m2")), "Surface"),
         (esc(r["zone"]) if r.get("zone") else None, "Zone PLU"),
         (_sdp_tuile(r), "SDP restante"),
-        (esc(classement) if classement else None, "Classement"),
+        (esc(derniere_vente), "Dernière vente"),
         (("aucun aléa" if n_al == 0 else f"{n_al} aléa" + ("s" if n_al > 1 else "")), "Risques"),
         (esc(expo) if expo else None, "Exposition"),
     ]
@@ -529,4 +537,4 @@ def _encart() -> str:
             '<div class="enct">Pour le rapport complet sur 2 pages</div>'
             '<div class="encd">Localisez la parcelle dans LABUSE : zonage, SDP restante, ventes '
             'comparables à moins d\'un kilomètre, risques, LiDAR.</div></div>'
-            '<div class="encr">Analyser une annonce → C\'est cette parcelle</div></div>')
+            '<div class="encr">Estimer un bien → C\'est cette parcelle</div></div>')

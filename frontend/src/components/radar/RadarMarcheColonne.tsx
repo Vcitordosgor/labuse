@@ -10,6 +10,7 @@ import {
 } from '../../lib/api'
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
+import { useApp } from '../../store/useApp'
 
 const fmt = (v: number | null | undefined) => (v == null ? '—' : v.toLocaleString('fr-FR'))
 const pct = (v: number | null | undefined) => (v == null ? null : `${v > 0 ? '+' : ''}${v} %`)
@@ -235,6 +236,10 @@ function EcartInline({ label, cmp }: { label: string; cmp: RadarBienCmp }) {
 function CeBienBloc({ loading, error, bien, onClose }: {
   loading: boolean; error: boolean; bien: RadarBienVsMarche | null; onClose?: () => void
 }) {
+  // RECETTE-4 — pont « Estimer ce bien → » : préremplit l'entrée LIEN de l'outil « Estimer un bien »
+  // avec le lien de l'annonce, puis l'ouvre (clé interne analyser-annonce inchangée).
+  const setAnnonceLienPrefill = useApp((s) => s.setAnnonceLienPrefill)
+  const setModule = useApp((s) => s.setModule)
   const baisses = (bien?.historique_prix ?? []).filter((h) => (h.nouveau ?? 0) < (h.ancien ?? 0))
   const der = baisses[baisses.length - 1]
   const histLigne = baisses.length === 0
@@ -268,11 +273,21 @@ function CeBienBloc({ loading, error, bien, onClose }: {
             {bien.anciennete_mediane_j != null && !bien.anciennete_sous_seuil ? ` · médiane commune ${bien.anciennete_mediane_j} j` : ''}
             {' · '}{histLigne}
           </div>
-          <a onClick={(e) => { e.preventDefault(); radarClic(bien.bien_id).catch(() => {}); window.open(bien.url_sortante, '_blank', 'noopener,noreferrer') }}
-            href={bien.url_sortante} target="_blank" rel="noopener noreferrer"
-            data-ce-bien-portail className="mt-2 inline-flex text-[12px] font-medium text-[#E7B008] underline decoration-[#E7B008]/40 underline-offset-2 hover:decoration-[#E7B008]">
-            Voir l’annonce ↗
-          </a>
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+            <a onClick={(e) => { e.preventDefault(); radarClic(bien.bien_id).catch(() => {}); window.open(bien.url_sortante, '_blank', 'noopener,noreferrer') }}
+              href={bien.url_sortante} target="_blank" rel="noopener noreferrer"
+              data-ce-bien-portail className="inline-flex text-[12px] font-medium text-[#E7B008] underline decoration-[#E7B008]/40 underline-offset-2 hover:decoration-[#E7B008]">
+              Voir l’annonce ↗
+            </a>
+            {/* RECETTE-4 — ouvre « Estimer un bien » sur CE lien (mêmes chiffres : €/m², écart au repère). */}
+            {bien.url_sortante && (
+              <button data-ce-bien-estimer
+                onClick={() => { setAnnonceLienPrefill(bien.url_sortante); setModule('analyser-annonce') }}
+                className="inline-flex text-[12px] font-medium text-mint underline decoration-mint/40 underline-offset-2 hover:decoration-mint">
+                Estimer ce bien →
+              </button>
+            )}
+          </div>
         </>
       )}
     </div>

@@ -95,9 +95,10 @@ export const CATALOGUE: DocCatalogue[] = [
   {
     // ANNONCE-3 — miroir de l'outil « Analyser une annonce » : une adresse (rapport parcelle) OU un
     // lien d'annonce Leboncoin (rapport commune). Le PDF Docs est identique à celui de l'outil.
-    key: 'analyse-annonce', nom: 'Analyse d’annonce', kind: 'annonce', formats: ['PDF'],
+    // RECETTE-4 — nom affiché « Estimer un bien » (clé/kind internes inchangés).
+    key: 'analyse-annonce', nom: 'Estimer un bien', kind: 'annonce', formats: ['PDF'],
     desc: 'Une adresse ou un lien d’annonce : LABUSE croise le bien avec le marché et le foncier.',
-    cta: 'Générer l’analyse',
+    cta: 'Générer l’estimation',
     explication: 'Une adresse → rapport parcelle (tuiles, prix, foncier) ; un lien → rapport commune.',
   },
 ]

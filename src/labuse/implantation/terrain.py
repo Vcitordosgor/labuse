@@ -46,6 +46,10 @@ class Terrain:
     autres_edges: list[LineString]
     has_voie: bool
     note_limites: Optional[str]
+    # RECETTE-4 — aucune limite classée « voie » : au lieu d'arrêter l'étude, on retient l'arête la plus
+    # longue comme ACCÈS HYPOTHÉTIQUE. `voie_hypothese=True` → l'étude continue, mais le verdict et le PDF
+    # disent « accès à confirmer » (has_voie reste False : l'accès n'est PAS établi).
+    voie_hypothese: bool = False
     contraintes: dict[str, int] = field(default_factory=dict)
     # ETUDE-ZONE-1 — l'assiette est déjà restreinte à la portion CONSTRUCTIBLE (familles U/AU, même
     # source zone_servie que Dossier/Gabarit) : le non-constructible (A/N) en est retiré AVANT reculs/PPR.
@@ -71,6 +75,17 @@ def _plus_grand_polygone(geom: BaseGeometry) -> Polygon:
     if isinstance(geom, MultiPolygon):
         return max(geom.geoms, key=lambda g: g.area)
     return geom
+
+
+def _contour_segments(poly: Polygon) -> list[LineString]:
+    """RECETTE-4 — le contour extérieur découpé en segments (une arête = deux sommets consécutifs).
+    Repli pour l'accès hypothétique quand aucune arête n'est servie par la classification."""
+    try:
+        cs = list(poly.exterior.coords)
+    except Exception:  # noqa: BLE001 — géométrie dégénérée : pas de segment
+        return []
+    return [LineString([cs[i], cs[i + 1]]) for i in range(len(cs) - 1)
+            if LineString([cs[i], cs[i + 1]]).length > 0.5]
 
 
 def _ppr_par_couleur(session, aw: str):
@@ -239,6 +254,19 @@ def charger(session, idus: list[str], *, recul_voie_m: float, recul_separative_m
     if res and res.non_classees:
         note = ("arêtes non qualifiées (ni voie ni voisin cadastré ≤ 0,5 m), traitées en recul "
                 "séparatif : " + " ; ".join(res.non_classees))
+    # RECETTE-4 — aucune limite classée « voie » : on ne stoppe PLUS l'étude. On promeut l'arête la plus
+    # longue (frontage le plus probable) en ACCÈS HYPOTHÉTIQUE pour que l'implantation se trace, et on
+    # signale « accès à confirmer » (verdict + PDF). `has_voie` reste False (l'accès n'est pas établi).
+    voie_hypothese = False
+    if not has_voie:
+        candidats_arete = autres_edges or _contour_segments(assiette)
+        if candidats_arete:
+            arete = max(candidats_arete, key=lambda g: g.length)
+            voie_edges = [arete]
+            autres_edges = [g for g in autres_edges if g is not arete]
+            voie_hypothese = True
+            note = ((note + " · " if note else "")
+                    + "aucune limite classée « voie » : accès supposé sur l'arête la plus longue — à confirmer")
 
     # zone = assiette − reculs (voie 4 m, séparative 3 m sur tout le reste) − PPR rouge
     bufs = [g.buffer(recul_voie_m) for g in voie_edges] + \
@@ -269,6 +297,7 @@ def charger(session, idus: list[str], *, recul_voie_m: float, recul_separative_m
         assiette=assiette, contenance_totale_m2=contenance_totale, aire_dessin_m2=aire_dessin,
         zone_implantation=zone, aire_zone_m2=float(zone.area),
         voie_edges=voie_edges, autres_edges=autres_edges, has_voie=has_voie, note_limites=note,
+        voie_hypothese=voie_hypothese,
         contraintes=contraintes,
         aire_hors_zone_m2=round(aire_hors_zone, 1), pct_constructible=pct_c,
         note_constructibilite=note_c,

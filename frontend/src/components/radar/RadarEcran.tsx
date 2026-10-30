@@ -24,11 +24,21 @@ const TYPE_LABEL: Record<string, string> = { terrain: 'Terrain', maison: 'Maison
 
 const fmtEur = (v: number | null | undefined) => (v == null ? '—' : v.toLocaleString('fr-FR') + ' €')
 
-function joursDepuis(iso: string | null): number | null {
+// RECETTE-4 — une date ABSENTE lue comme 1970 (époque) donnait « en vente depuis 20 756 j ». On REJETTE
+// toute date avant 2005 (impossible pour une annonce ; = sentinelle d'époque) et toute date illisible :
+// aucune date valable → null (aucune durée affichée). JAMAIS un calcul depuis zéro.
+export function joursDepuis(iso: string | null | undefined): number | null {
   if (!iso) return null
-  const d = new Date(iso).getTime()
-  if (Number.isNaN(d)) return null
-  return Math.max(0, Math.floor((Date.now() - d) / 86_400_000))
+  const t = new Date(iso).getTime()
+  if (Number.isNaN(t)) return null
+  if (new Date(iso).getFullYear() < 2005) return null
+  return Math.max(0, Math.floor((Date.now() - t) / 86_400_000))
+}
+// RECETTE-4 — on essaie les deux dates INDÉPENDAMMENT : si la publication est une sentinelle 1970,
+// elle renvoie null et l'on retombe sur la saisie (plutôt que d'afficher 20 756 j).
+function ancienneteJ(b: { date_publication: string | null; date_saisie: string | null }): number | null {
+  const jp = joursDepuis(b.date_publication)
+  return jp != null ? jp : joursDepuis(b.date_saisie)
 }
 
 function specsBien(b: RadarBienClient): string {
@@ -57,7 +67,7 @@ function resumeFiltres(f: RadarFiltres): string {
 function CarteBien({ b, sel, onClick, selRef }: {
   b: RadarBienClient; sel: boolean; onClick: () => void; selRef: React.RefObject<HTMLButtonElement>
 }) {
-  const j = joursDepuis(b.date_publication || b.date_saisie)
+  const j = ancienneteJ(b)
   // FRONT-CHIFFRES-2 (F14) — les DÉCISIONS de badge sont servies (le front ne les recalcule plus) :
   // `nouveau` à plat (seuil back SEUIL_NOUVEAU_J), « en vente longue » sur le `statut` du cycle back
   // (seuil SEUIL_VENTE_LONGUE_J). `j` ne sert plus qu'à AFFICHER l'ancienneté (présentation).

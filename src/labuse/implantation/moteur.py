@@ -658,9 +658,11 @@ def _contient(cap: cap_mod.Capacite, programme: dict[str, int]) -> bool:
 
 def _message_impossible(terrain, regles, candidats) -> str:
     r = regles.hauteur_plafond
-    if not terrain.has_voie:
-        return ("simulation impossible : aucune limite classée « voie » sur l'assiette — un accès "
-                "véhicule ne peut être tracé.")
+    # RECETTE-4 — on ne stoppe plus l'étude pour « aucune voie classée » : terrain.charger promeut une
+    # arête en accès hypothétique (voie_hypothese). Ce message ne vaut que si AUCUNE arête n'existe du tout.
+    if not terrain.voie_edges:
+        return ("simulation impossible : aucune arête d'assiette exploitable — un accès véhicule ne peut "
+                "être tracé.")
     if terrain.aire_zone_m2 < 60:
         return (f"simulation impossible : la zone d'implantation après reculs ne fait que "
                 f"{terrain.aire_zone_m2:.0f} m² — trop étroite pour une barre de logements.")

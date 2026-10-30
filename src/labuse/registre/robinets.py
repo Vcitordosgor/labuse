@@ -253,7 +253,8 @@ ROBINETS: dict[str, Robinet] = {
  # lien Leboncoin → POST /radar/annonce/analyser rend le €/m² demandé de l'annonce (`prix_demande_median_eur_m2`)
  # et son écart au repère DVF commune (`ecart_demande_acte_pct`). Aucun chiffre neuf : l'outil RÉUTILISE le
  # moteur de prix du Radar et la fiche — tous ces ids sont déjà raisonnés (NON_SONDES).
- "outil_analyser_annonce": _r("outil", "Analyser une annonce", None,
+ # RECETTE-4 — libellé registre renommé « Estimer un bien » (clé verrou outil_analyser_annonce inchangée).
+ "outil_analyser_annonce": _r("outil", "Estimer un bien", None,
     "/radar/annonce/analyser", "json_puis_js",
     chiffres=("prix_ancien_median_eur_m2", "prix_demande_median_eur_m2", "ecart_demande_acte_pct",
               "sdp_residuelle_m2",)),
@@ -265,7 +266,8 @@ ROBINETS: dict[str, Robinet] = {
  # `fiche_parcelle_*`) et l'entrée LIEN (POST /radar/annonce/analyser) oppose le prix demandé de
  # l'annonce au REPÈRE COMMUNE du bon type (mêmes chiffres que le Radar/`fiche_annonce` : prix
  # demandé, médiane demandée €/m², écart demandé-acté) — aucune lecture hors registre.
- "outil_analyser_annonce": _r("outil", "Analyser une annonce", None,
+ # RECETTE-4 — libellé registre renommé « Estimer un bien » (clé verrou outil_analyser_annonce inchangée).
+ "outil_analyser_annonce": _r("outil", "Estimer un bien", None,
     "/radar/annonce/analyser", "json_puis_js",
     chiffres=("prix_demande_eur", "prix_demande_median_eur_m2", "ecart_demande_acte_pct",)),
  # FICHE-RANGEMENT-1 Lot 3 — + exposition_versant : la tuile « Exposition » de l'en-tête sert cette

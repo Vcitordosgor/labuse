@@ -122,15 +122,16 @@ describe('SOLAIRE — deux modes', () => {
     expect(document.querySelector('[data-solaire-fiche]')?.textContent).toContain('kWh/kWc/an')  // potentiel AVEC unité
   })
 
-  it('A1 — le pied dit l\'inclinaison RÉELLE du calcul PVGIS (15°), jamais « 65 » en dur', async () => {
+  it('RECETTE-4 — les deux paragraphes sous le graphe mensuel sont RETIRÉS (plus de « Productible estimé… » ni « En clair… »)', async () => {
+    // Décision Vic : les deux paragraphes d'explication sous le graphe mensuel sont supprimés. L'ancien
+    // verrou « A1 » (inclinaison 15° affichée dans « En clair… ») est donc obsolète : on verrouille le RETRAIT.
     useApp.setState({ solairePrefill: '97411000AP0000' })
     renderTool()
     await screen.findByText(/Profil mensuel/)
     const fiche = document.querySelector('[data-solaire-fiche]')!
-    expect(fiche.textContent).toContain('inclinés à 15°')
-    expect(fiche.textContent).not.toContain('65°')
-    // A1 — plus de date « gelée » en dur dans le pied de page
-    expect(fiche.textContent).not.toContain('gelées 11/07/2026')
+    expect(fiche.textContent).not.toContain('Productible estimé à la')
+    expect(fiche.textContent).not.toContain('En clair : le potentiel')
+    expect(fiche.textContent).not.toContain('inclinés à')
   })
 
   it('A6 — puissance installable + production servies par le back, ratio kWc/m² écrit', async () => {

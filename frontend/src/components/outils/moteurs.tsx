@@ -206,9 +206,8 @@ export function M16() {
       {/* RECETTE-OUTILS-1 (T5) — plus de « Réinitialiser » en tête. Assemblage étant un outil MULTI-
           parcelles, la sélection se gère par les puces retirables (× sur chaque parcelle, ci-dessous) ;
           pas de ligne « Changer de parcelle » (qui ne vaut que pour une parcelle unique). */}
-      <div className="flex flex-col gap-1.5">
-        <Banner>Réunissez des parcelles voisines pour voir ce qu'elles valent ensemble : surface, droits à bâtir cumulés, logements possibles, charge foncière. Zoomez et cliquez les parcelles sur la carte (re-cliquez pour retirer), ou saisissez-les ci-dessous.</Banner>
-      </div>
+      {/* RECETTE-4 — l'encart d'explication en tête (« Réunissez des parcelles voisines… ») est RETIRÉ
+          (décision Vic) : l'outil se lit directement par ses étapes. */}
       {/* RECETTE-1 (H5, Vic) — ÉTAPE 1 « Choisir les parcelles » : EntreeParcelle (adresse OU clic carte)
           + liste des parcelles retenues (✕), 8 maximum, puis « Vérifier l'assemblage ». */}
       <p className="label-caps text-[9.5px]">Étape 1 — choisir les parcelles ({ASM_MAX} maximum)</p>
@@ -369,8 +368,9 @@ export function M16() {
             ) : (
               <span className="text-txt-mut">{d.n_personnes_morales} personne(s) morale(s) · <b className="text-st-creuser">{d.n_particuliers} particulier(s)</b> (approche plus lourde)</span>
             )}
+            {/* RECETTE-4 — noms des personnes morales EN ENTIER (plusieurs lignes si besoin) : plus de troncature (break-words). */}
             {(d.proprietaires_pm as string[]).length > 0 && (
-              <div className="mt-0.5 truncate text-txt-dim">PM : {(d.proprietaires_pm as string[]).join(' · ')}</div>
+              <div className="mt-0.5 break-words text-txt-dim">PM : {(d.proprietaires_pm as string[]).join(' · ')}</div>
             )}
           </div>
 
@@ -386,7 +386,7 @@ export function M16() {
                 </div>
                 <div className="mt-0.5 flex items-center gap-2">
                   {/* PRIVACY : PM = dénomination + SIREN (public) ; particulier = jamais nommé */}
-                  <div className="min-w-0 flex-1 truncate text-[11px] text-txt-dim">
+                  <div className="min-w-0 flex-1 break-words text-[11px] text-txt-dim">
                     {pr.type === 'personne_morale'
                       ? <><span className="text-txt">{pr.denomination}</span>{pr.siren ? <span> · SIREN <Siren value={pr.siren} className="font-mono text-txt-dim" /></span> : null}</>
                       : <span className="italic">propriétaire particulier — non communiqué</span>}

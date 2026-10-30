@@ -415,17 +415,9 @@ function FicheSoleil({ f }: { f: SolaireFiche }) {
           <div className="flex gap-0.5 text-[8px] text-txt-dim">{MOIS.map((m, i) => <span key={i} className="flex-1 text-center">{m}</span>)}</div>
         </>
       )}
-      {/* LOT9a — HONNÊTETÉ de la maille : le productible (annuel ET mensuel) est servi à la MAILLE
-          PVGIS (~400 m), pas mesuré au toit → des parcelles voisines partagent la même valeur. On le
-          DIT, pas de fausse précision parcellaire. */}
-      <p className="mt-1.5 text-[9px] leading-snug text-txt-dim">
-        Productible estimé à la <b className="text-txt-mut">maille PVGIS (~400 m)</b> — commun aux parcelles voisines, pas une mesure au toit. · Ombrage de proximité (bâti, arbres) non modélisé · panneaux existants non détectés — vérif photo aérienne avant démarchage.{f.millesime ? ` · ${f.millesime}` : ''}
-      </p>
-      {/* A1 — explication en clair : l'inclinaison est le PARAMÈTRE RÉEL du calcul PVGIS (servi de la
-          config), plus un « 65° » recopié en dur. Plein nord = aspect 180° (hémisphère sud). */}
-      <p className="mt-1 text-[9px] leading-snug text-txt-dim">
-        En clair : le potentiel est calculé sur un carré d’environ 400 m de côté (une même valeur pour toutes les parcelles du carré), pour des panneaux exposés plein nord{f.inclinaison_deg != null ? ` et inclinés à ${f.inclinaison_deg}°` : ''} — le paramétrage du modèle PVGIS pour La Réunion.
-      </p>
+      {/* RECETTE-4 — les deux paragraphes d'explication sous le graphique mensuel (« Productible estimé… »
+          maille PVGIS et « En clair… ») sont RETIRÉS (décision Vic) : le graphe mensuel se suffit, la
+          mention de maille reste portée par le bloc annuel plus haut. */}
       {/* RECETTE-OUTILS-1 (point 38) — lien « Ouvrir la fiche complète → » retiré : la fiche s'ouvre
           désormais d'elle-même (panneau de droite) dès que la parcelle est résolue. */}
     </div>

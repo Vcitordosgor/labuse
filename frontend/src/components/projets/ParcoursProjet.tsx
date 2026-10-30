@@ -7,7 +7,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 
 import { AlgoExplainer, ScoringExplainer } from '../panel/LeftPanel'
-import { createProjet, getCadrageCompteur, getProjetTypes, type Cadrage, type Identite, type TypeLogement } from '../../lib/api'
+import { createProjet, getCadrageCompteur, type Cadrage, type Identite } from '../../lib/api'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'
 import { FiltreFacettes } from '../panel/FiltreFacettes'
 import { FiltreProvider } from '../panel/filtreContext'
@@ -40,15 +40,13 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
   const [ile, setIle] = useState(false)
   const [communes, setCommunes] = useState<string[]>(typeof pf.commune === 'string' ? [pf.commune] : [])
   const [budget, setBudget] = useState<string>(typeof pf.budget_eur === 'number' ? String(pf.budget_eur) : '')
-  const [type, setType] = useState<string>('')
+  // RECETTE-4 — section « programme » (type de logement) supprimée : plus d'état type/types.
   const [cadrageFacettes, setCadrageFacettes] = useState<Filters>({ ...EMPTY_FILTERS })
   const [envoi, setEnvoi] = useState(false)
   const [erreur, setErreur] = useState<string | null>(null)
   const [cree, setCree] = useState<{ id: number; nom: string; existing?: boolean } | null>(null)
-  const [types, setTypes] = useState<TypeLogement[]>([])
   const [vivierN, setVivierN] = useState<number | null>(null)   // OUTILS-5 (P3) — le VRAI compteur du vivier (récap)
   const rootRef = useRef<HTMLDivElement>(null)
-  useEffect(() => { getProjetTypes().then((r) => setTypes(r.types)).catch(() => {}) }, [])
   useEffect(() => { if (etape === N - 1) rootRef.current?.focus() }, [etape])
 
   const nomEffectif = nom.trim() || (communes.length === 1 ? `Projet ${communes[0]}` : 'Nouveau projet')
@@ -74,8 +72,8 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
 
   const identite: Identite = useMemo(() => ({
     ...(budget.trim() ? { budget_eur: parseInt(budget, 10) } : {}),
-    ...(type ? { type_logement: type } : {}),
-  }), [budget, type])
+    // RECETTE-4 — plus de `type_logement` (section « programme » supprimée).
+  }), [budget])
 
   // OUTILS-5 (P3) — au récap, on affiche le VRAI chiffre du vivier (le compteur du cadrage), pas
   // « N facettes ». Même moteur que la carte (getCadrageCompteur). Rafraîchi à l'arrivée sur le récap.
@@ -123,7 +121,7 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
           <p data-cree-vivier style={{ fontSize: 13, color: '#8FA69A', margin: '0 0 16px' }}>
             {/* CHASSE-APP-FIX-2 (point 4 P) — on reprend la définition « figeable » de l'étape 4 au
                 lieu de « rien n'est retiré » : les terrains non constructibles et faux positifs SONT exclus. */}
-            Le vivier figeable est dans le projet, classé par probabilité de mutation — hors terrains non constructibles et faux positifs (exclusions automatiques du moteur).
+            Les parcelles correspondant à vos filtres sont dans le projet.
           </p>
         )}
         <div style={{ display: 'flex', gap: 12 }}>
@@ -149,9 +147,11 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
         <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '.12em', color: A.c, marginBottom: 6 }}>NOUVEAU PROJET</div>
         <h2 style={{ fontSize: 22, fontWeight: 500, color: '#ECF5EF', margin: '0 0 16px' }}>Comment démarrer ?</h2>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <Porte k="vivier" on titre="Partir du vivier LABUSE"
-            desc="Vous cadrez (périmètre, critères, signaux de vie) — le moteur verse toutes les parcelles correspondantes, classées par probabilité de mutation." />
-          <Porte k="zero" on={false} titre="Projet de zéro"
+          {/* RECETTE-4 — chemins renommés. Le premier ne parle plus d'analyse LABUSE ni de probabilité
+              de mutation : ce sont les mêmes filtres que le panneau Filtre de la carte, appliqués à la base. */}
+          <Porte k="vivier" on titre="Partir d’une sélection filtrée"
+            desc="Les mêmes filtres que le panneau Filtre de la carte, appliqués à la base — rien d’autre." />
+          <Porte k="zero" on={false} titre="Partir de zéro"
             desc="Un dossier vide. Vous y ajoutez vos parcelles une à une, depuis leurs fiches (bouton « Projet »). Pour qui a déjà ses cibles." />
         </div>
         <div style={{ marginTop: 18, paddingTop: 14, borderTop: '.5px solid #1E2A23' }}>
@@ -186,10 +186,10 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
     ['Quel nom pour ce projet ?', 'Facultatif — un nom vous aide à le retrouver.'],
     ['Sur quel périmètre ?', 'Une ou plusieurs communes, ou toute l’île.'],
     ['Le contexte du projet', 'Indicatif — figure sur le projet et le PDF, sans effet sur la sélection.'],
-    ['Affinez le cadrage.', 'Les mêmes critères que la carte. Chaque critère resserre le vivier — le reste arrive classé, les mieux d’abord.'],
-    // CHASSE-APP-FIX-2 (point 4 P) — récap aligné sur l'étape 4 (« figeable ») : on n'affirme plus
-    // « rien n'est retiré » alors que les non constructibles et faux positifs sont exclus du vivier.
-    ['On récapitule.', 'Le vivier figeable entre dans le projet, classé — hors terrains non constructibles et faux positifs (exclusions automatiques du moteur), tout le reste est ordonné.'],
+    // RECETTE-4 — le premier chemin ne parle plus d'analyse LABUSE ni de probabilité de mutation :
+    // ce sont les mêmes filtres que le panneau Filtre de la carte, appliqués à la base.
+    ['Affinez le cadrage.', 'Les mêmes filtres que le panneau Filtre de la carte, appliqués à la base.'],
+    ['On récapitule.', 'Les parcelles correspondant à vos filtres entrent dans le projet.'],
   ]
   const noteInfo = (txt: string) => (
     <p style={{ fontSize: 12, color: '#6F8578', margin: '10px 0 0', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -200,7 +200,7 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
   const trail: string[] = []
   if (etape > 0 && nom.trim()) trail.push(nomEffectif)
   if (etape > 1) trail.push(perimetreLabel)
-  if (etape > 2 && (budget.trim() || type)) trail.push([budget.trim() ? `${parseInt(budget, 10).toLocaleString('fr-FR')} €` : null, type ? types.find((t) => t.cle === type)?.libelle ?? type : null].filter(Boolean).join(' · ') + ' (indic.)')
+  if (etape > 2 && budget.trim()) trail.push(`${parseInt(budget, 10).toLocaleString('fr-FR')} € (indic.)`)
 
   return (
     <div data-parcours-projet ref={rootRef} tabIndex={-1} onKeyDown={onKey}
@@ -243,20 +243,12 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
           )}
         </div>
       )}
-      {/* OUTILS-5 (P3) — CONTEXTE : budget + type FUSIONNÉS sur un écran, indicatifs. */}
+      {/* RECETTE-4 — CONTEXTE : budget indicatif seul. La section « programme » (type de logement :
+          Logement libre, social…) est SUPPRIMÉE. */}
       {etape === 2 && (
         <div data-projet-contexte style={{ marginBottom: 28 }}>
           <input data-projet-budget autoFocus type="number" min="0" value={budget} onChange={(e) => setBudget(e.target.value)}
             placeholder="Budget foncier en € (facultatif)" style={champ} />
-          <div data-projet-type style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
-            {types.map((t) => {
-              const on = type === t.cle
-              return (
-                <button key={t.cle} onClick={() => setType(on ? '' : t.cle)}
-                  style={{ padding: '9px 16px', borderRadius: 6, fontSize: 14, cursor: 'pointer', border: on ? `.5px solid ${A.c}` : '.5px solid #1E2A23', background: on ? A.bg : 'transparent', color: on ? A.c : '#8FA69A' }}>{t.libelle}</button>
-              )
-            })}
-          </div>
           {noteInfo('Indicatif — figure sur le projet et le PDF, sans effet sur la sélection.')}
         </div>
       )}
@@ -274,11 +266,9 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
             <li><span style={{ color: '#6F8578' }}>Périmètre : </span>{perimetreLabel}</li>
             {/* OUTILS-5 (P3) — le VRAI chiffre du vivier, classé (plus « N facettes ») + « pourquoi ? ». */}
             <li data-recap-vivier><span style={{ color: '#6F8578' }}>Vivier : </span>
-              <b style={{ color: A.c }}>{vivierN != null ? `${vivierN.toLocaleString('fr-FR')} parcelles` : '…'}</b> classées par probabilité de mutation
-              {' '}<button data-recap-pourquoi onClick={() => setAlgoModale('scoring')} style={{ color: A.c, background: 'none', border: 0, cursor: 'pointer', textDecoration: 'underline', fontSize: 12 }}>pourquoi ?</button>
+              <b style={{ color: A.c }}>{vivierN != null ? `${vivierN.toLocaleString('fr-FR')} parcelles` : '…'}</b> correspondant à vos filtres
             </li>
             {budget.trim() && <li><span style={{ color: '#6F8578' }}>Budget foncier : </span>{parseInt(budget, 10).toLocaleString('fr-FR')} € <em style={{ color: '#6F8578' }}>(indicatif)</em></li>}
-            {type && <li><span style={{ color: '#6F8578' }}>Type : </span>{types.find((t) => t.cle === type)?.libelle ?? type} <em style={{ color: '#6F8578' }}>(indicatif)</em></li>}
           </ul>
         </div>
       )}

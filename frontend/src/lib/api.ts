@@ -1590,7 +1590,7 @@ export interface CourrierDemande {
 // CONNEXIONS-2 Lot 4 — la demande peut naître d'une piste (pipeline_entry_id) / d'un projet (sans ressaisie).
 export const postCourrierDemande = (parcelles: string[], corps: string, modele: string | null, communes: string | null,
                                     rattach?: { pipeline_entry_id?: number | null; projet_id?: number | null }) =>
-  j<{ ok: boolean; id: number; rang_compte?: number; ts: string; n: number; communes: string | null; statut: string }>('/courrier/demande', {
+  j<{ ok: boolean; id: number; rang_compte?: number; reference?: string; ts: string; n: number; communes: string | null; statut: string }>('/courrier/demande', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ parcelles, corps, modele, communes, ...(rattach ?? {}) }) })
 export const getCourrierDemandes = () => j<{ demandes: CourrierDemande[] }>('/courrier/demandes')

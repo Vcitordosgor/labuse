@@ -41,7 +41,7 @@ DOC_LABEL = {
     "pre-dossier": "Pré-dossier PC", "gabarit": "Gabarit",
     "comparatif": "Comparatif", "etude-zone": "Étude de zone",
     "etude-faisabilite": "Étude de faisabilité",
-    "analyse-annonce": "Analyse d'annonce",   # ANNONCE-3
+    "analyse-annonce": "Estimer un bien",   # RECETTE-4 — libellé (clé interne inchangée)
 }
 #: l'Excel vivant existe désormais pour le Bilan (BILAN-1 Lot 5) : la colonne « Excel » est servie
 #: sur les lignes Bilan. Les autres documents n'ont pas d'export Excel.

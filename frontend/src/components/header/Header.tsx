@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Fragment, useEffect, useState } from 'react'
-import { banAutocomplete, deleteLogo, getCommunes, getEnteteCloche, getEvents, getMarque, getMoi, getNotifPrefs, getParcelsGeojson, markAllEventsRead, markEventRead, modPatrimoineSearch, parcelAt, patchDigestFrequence, patchNotifPref, postLogo, postMarque, postRetour, searchParcels, type LabuseEvent } from '../../lib/api'
+import { banAutocomplete, deleteLogo, getCommunes, getEvents, getMarque, getMoi, getNotifPrefs, getParcelsGeojson, markAllEventsRead, markEventRead, modPatrimoineSearch, parcelAt, patchDigestFrequence, patchNotifPref, postLogo, postMarque, postRetour, searchParcels, type LabuseEvent } from '../../lib/api'
 import { estIdu, estSectionNumero, iduComplet, normSectionNumero } from '../../lib/format'
 import { communePastille } from '../../lib/communes'
 import { Chargement } from '../Loading'
@@ -238,8 +238,13 @@ export function Omnibox() {
 // filtre Communes (setCommune : vue + pré-coche) ; le client décoche librement au panneau (la
 // carte reste où elle est — sens unique). « Toute l'île » dézoome ET décoche. En MULTI (≥2,
 // posé au panneau), le header devient une VUE (« 3 communes ») dont le clic ouvre le panneau.
+// RECETTE-4 — le sélecteur « Toute l'île ▾ » de l'en-tête est RETIRÉ : choisir une commune y appelait
+// `setCommune` (cadrage carte + pré-coche filtre + chargement geojson de toute la commune) qui faisait
+// « mouliner puis bloquer » l'app. Le FILTRE par commune reste dans le panneau Filtres. À sa place, un
+// SEUL bouton « Fiche commune ▾ » qui ouvre la liste des 24 communes ; choisir une commune ouvre SA FICHE
+// (`setContexteCommune`, volet flottant) — SANS filtrer ni recharger la carte (aucun `setCommune`).
 function CommuneSelect() {
-  const { filters, setCommune, openFiltres, setContexteCommune } = useApp()
+  const { setContexteCommune } = useApp()
   const [open, setOpen] = useState(false)
   const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
   useEffect(() => {
@@ -248,69 +253,25 @@ function CommuneSelect() {
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
   }, [open])
-  const n = filters.communes.length
-  const label = n === 0 ? 'Toute l’île' : n === 1 ? filters.communes[0] : `${n} communes`
-  if (n >= 2) {
-    return (
-      <button onClick={openFiltres} data-commune-select
-        className="flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border border-line-2 bg-surface-3 px-3 text-xs text-txt transition-colors duration-quick hover:border-mint/40">
-        <span className="h-1.5 w-1.5 rounded-full bg-mint" />
-        {label}
-      </button>
-    )
-  }
-  const pick = (c: string | null) => { setCommune(c); setOpen(false) }
+  const pick = (c: string) => { setContexteCommune(c); setOpen(false) }
   return (
     <div className="relative shrink-0">
-      {/* RETOURS-19 Y1 — ÉTAT ACTIF (menu ouvert OU un périmètre choisi) = vert opaque, contenu inversé
-          sombre (avant : simple contour vert au survol). */}
-      <button onClick={() => setOpen((o) => !o)} data-commune-select
+      <button onClick={() => setOpen((o) => !o)} data-commune-select data-fiche-commune-menu
         className={`flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs transition-colors duration-quick ${
-          open || n > 0 ? 'border-mint bg-mint text-mint-ink' : 'border-line-2 bg-surface-3 text-txt hover:border-mint/40'}`}>
-        {/* RECETTE-7 (A6) — la pastille ronde avant « Toute l'île » est RETIRÉE (demande Vic) : le
-            libellé + le chevron suffisent ; le pill vert plein dit l'état quand un périmètre est choisi. */}
-        {label}
-        <svg viewBox="0 0 10 10" className={`h-2.5 w-2.5 ${open || n > 0 ? 'text-mint-ink' : 'text-txt-dim'}`}><polyline points="2,4 5,7 8,4" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>
+          open ? 'border-amber bg-amber/[0.12] text-amber' : 'border-amber/40 bg-amber/[0.08] text-amber hover:border-amber'}`}>
+        ⓘ Fiche commune
+        <svg viewBox="0 0 10 10" className="h-2.5 w-2.5"><polyline points="2,4 5,7 8,4" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>
       </button>
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          {/* M55-H point 7, RESTAURÉ par RETOURS-1 R2 (Vic) : le retrait du CP (M65 P7, commit
-              61dde68b) est ANNULÉ — menu 320 px, nom + code postal (CP_COMMUNES, source unique
-              mesurée du panneau — l'INSEE ressemblait à un CP sans l'être) + « voir la fiche → »
-              sur UNE ligne, et le NOM ENTIER de la commune au survol (title). */}
+          {/* La liste des 24 communes : choisir = ouvrir la FICHE de la commune (volet), jamais filtrer. */}
           <div className="floating absolute left-0 top-9 z-20 flex max-h-[70vh] w-[320px] flex-col overflow-y-auto p-1.5">
-            {/* RETOURS-5 T8 — survol PLEIN (dégradé vert, encre sombre) sur chaque ligne, comme partout. */}
-            <button onClick={() => pick(null)}
-              className={`hover-fill rounded-md px-3 py-2 text-left text-xs ${n === 0 ? 'bg-surface-3 text-mint' : 'text-txt'}`}>
-              Toute l’île
-            </button>
-            <div className="mx-3 my-1 border-t border-line" />
-            {/* M55-D stage 9 ter point 2 (correction Vic) : le LIEN TEXTE d'origine (pattern
-                M55-C) — « voir la fiche → » à droite du nom. Le NOM sélectionne (zoom +
-                pré-coche, bloc 3 inchangé) ; le lien ouvre la fiche de CETTE commune SANS
-                changer le périmètre (stopPropagation). RETOURS-5 T8 — la LIGNE ENTIÈRE reçoit
-                l'aplat plein vert (nom + code postal + « voir la fiche → » inversés en encre sombre). */}
-            {/* RETOURS-13 R10 — l'infobulle qui RÉPÉTAIT le nom (title={c.commune}) est retirée
-                (une infobulle n'existe que si elle apporte un fait non affiché) ; « voir la
-                fiche → » = action SECONDAIRE : jaune opaque au survol, distinct du vert de la ligne. */}
-            {/* RETOURS-19 Y3 — DEUX actions sur la ligne, DISSOCIÉES au survol : le `.hover-fill` (vert) est
-                sur la ZONE PRINCIPALE seule (plus sur toute la ligne → plus de bande verte continue), et
-                « voir la fiche → » garde sa zone jaune (`.hover-jaune`, opaque au survol). Un petit écart les
-                sépare, chaque zone a son arrondi : le survol dit lequel des deux se déclenchera. */}
             {(communes.data ?? []).map((c) => (
-              <div key={c.insee} className="flex items-center gap-0.5">
-                <button onClick={() => pick(c.commune)}
-                  className={`hover-fill min-w-0 flex-1 truncate whitespace-nowrap rounded-md px-3 py-1.5 text-left text-xs ${filters.communes.includes(c.commune) ? 'text-mint' : 'text-txt'}`}>
-                  {/* RECETTE-PROD-1 (D4) — même règle d'article que la carte (communePastille) : article
-                      gardé seulement pour Le Port / Le Tampon / La Possession. Clé de sélection = c.commune brut. */}
-                  {communePastille(c.commune)} <span className="font-mono text-[11px] tabular-nums text-txt-dim">{CP_PAR_COMMUNE[c.commune] ?? c.insee}</span>
-                </button>
-                <button data-fiche-commune onClick={(e) => { e.stopPropagation(); setContexteCommune(c.commune); setOpen(false) }}
-                  className="hover-jaune shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-[11px]">
-                  voir la fiche →
-                </button>
-              </div>
+              <button key={c.insee} data-fiche-commune onClick={() => pick(c.commune)}
+                className="hover-fill min-w-0 truncate whitespace-nowrap rounded-md px-3 py-1.5 text-left text-xs text-txt">
+                {communePastille(c.commune)} <span className="font-mono text-[11px] tabular-nums text-txt-dim">{CP_PAR_COMMUNE[c.commune] ?? c.insee}</span>
+              </button>
             ))}
           </div>
         </>
@@ -319,29 +280,11 @@ function CommuneSelect() {
   )
 }
 
-// bouton FICHE COMMUNE — visible quand une commune est active : le volet SRU/ANRU/PLH/marché.
-// RETOURS-3 R7 (Vic 31/08) : « Contexte » ne disait rien à l'utilisateur → « Fiche commune » (ce que
-// le clic ouvre). Couleur passée du mauve (réservé IA) à l'AMBRE des chips d'information (ex. « drapeau
-// fermé ») — ce n'est pas une surface IA.
-function ContexteButton() {
-  const { commune, focusCommune } = useApp()
-  if (!commune) return null
-  return (
-    <button onClick={() => focusCommune(commune)} data-contexte-btn
-      className="flex h-[26px] shrink-0 items-center gap-1 rounded-full border border-amber/40 bg-amber/[0.08] px-2.5 text-[11px] text-amber transition-colors duration-quick hover:border-amber">
-      ⓘ Fiche commune
-    </button>
-  )
-}
-
-// M55-D stage 3 : le header ne porte PLUS aucun filtre — le bouton « Filtres (N) » et les chips
-// ont rejoint la section repliable « Filtres » du panneau gauche. Ne restent que le périmètre
-// (commune) et le contexte commune, qui ne sont pas des filtres.
+// M55-D stage 3 : le header ne porte aucun filtre. RECETTE-4 — ne reste que le bouton « Fiche commune ▾ ».
 function FilterChips() {
   return (
     <div className="flex min-w-0 items-center gap-2">
       <CommuneSelect />
-      <ContexteButton />
     </div>
   )
 }
@@ -380,7 +323,7 @@ function NotifBell() {
   const [limite, setLimite] = useState(PAGE_SIZE)
   const ev = useQuery({ queryKey: ['events', limite], queryFn: () => getEvents(limite), refetchInterval: 60_000 })
   // M87 P5 — l'en-tête est DÉRIVÉ du registre (jamais écrit à la main) : on ne promet que le détectable.
-  const entete = useQuery({ queryKey: ['entete-cloche'], queryFn: getEnteteCloche, enabled: open, staleTime: 3_600_000 })
+  // RECETTE-4 — l'intro Notifications (libellés d'en-tête cloche) est retirée : plus de requête entete-cloche.
   const invalidate = () => { qc.invalidateQueries({ queryKey: ['events'] }); qc.invalidateQueries({ queryKey: ['events-count'] }) }
   const readOne = useMutation({ mutationFn: markEventRead, onSuccess: invalidate })
   const readAll = useMutation({ mutationFn: markAllEventsRead, onSuccess: invalidate })
@@ -476,7 +419,7 @@ function NotifBell() {
               </div>
             </header>
             {/* M85 — l'écran minimal : par type, cloche / e-mail / les deux / rien. */}
-            {prefsOpen ? (
+            {prefsOpen && (
               <div data-notif-prefs className="shrink-0 border-b border-line bg-surface-2 px-4 py-3">
                 <p className="mb-2 text-[11px] font-medium text-txt">Que recevoir, et où ?</p>
                 {/* RETOURS-11F3 A5 — TROIS canaux : cloche · brief (du matin) · e-mail, par type. */}
@@ -522,18 +465,9 @@ function NotifBell() {
                 </div>
                 <p className="mt-2 text-[10px] leading-snug text-txt-dim">La cloche est instantanée · le brief est le résumé du matin (Copilote) · l'e-mail est un résumé (7h, heure Réunion) : quotidien, hebdomadaire (lundi), ou aucun (cloche seulement). Tout décocher = ne rien recevoir.</p>
               </div>
-            ) : (
-            /* M87 P5 : intro DÉRIVÉE du registre (libelles_entete_cloche) — maille SUR la parcelle,
-               jamais « à proximité » figé ; un déclencheur ajouté au registre met la phrase à jour
-               SEUL. M104 : vocabulaire aligné (« vos secteurs », plus jamais « veille »). */
-            <p className="shrink-0 border-b border-line px-[22px] py-3 text-[12.5px] leading-snug text-txt-mut">
-              {/* RECETTE-2 (E4) — « vos secteurs » retiré : la veille secteur n'existe plus. */}
-              Ce qui bouge sur <b className="font-semibold text-txt">vos parcelles suivies</b>
-              {entete.data?.libelles?.length ? <> — {entete.data.libelles.join(', ')} — </> : ' '}
-              et sur <b className="font-semibold text-txt">vos critères</b>. On ne vous prévient que sur ce
-              qu'on sait réellement détecter.
-            </p>
             )}
+            {/* RECETTE-4 — le paragraphe d'intro « Ce qui bouge sur vos parcelles suivies … réellement
+                détecter. » de la page Notifications est RETIRÉ (décision Vic). */}
             <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2">
               {(ev.data?.items ?? []).length === 0 && <p className="p-3 text-xs leading-snug text-txt-dim">Aucune notification pour l'instant — nous vous préviendrons dès qu'une parcelle suivie change ou qu'une de vos veilles se déclenche.</p>}
               {/* M87 P5.1 — REGROUPÉ par commune (une ligne + « Voir les N → ») ; sinon carte simple. */}

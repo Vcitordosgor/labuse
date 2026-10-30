@@ -111,7 +111,8 @@ export const MODULES: ModuleDef[] = [
   // parcelle (fiche + estimation DVF débloquée par l'idu + foncier) ; lien → ce que dit l'annonce +
   // écart au repère commune (fiabilité limitée, aucun rattachement parcelle). Carte à droite.
   { key: 'analyser-annonce', num: 'N1', group: 'marche', descSmall: true,
-    label: 'Analyser une annonce', desc: 'Une adresse ou un lien d\'annonce, croisés au marché et au foncier.' },
+    // RECETTE-4 — libellé renommé « Estimer un bien » (clé interne `analyser-annonce`/num N1 inchangés).
+    label: 'Estimer un bien', desc: 'Une adresse ou un lien d\'annonce, croisés au marché et au foncier.' },
 
   // 10. Remonter le temps — la frise des faits datés + le comparateur d'orthos.
   { key: 'temps', num: 'M08', group: 'temps',

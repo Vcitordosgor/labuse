@@ -233,7 +233,7 @@ def test_construire_lien_document_deterministe():
     res1 = builder.construire_analyse_annonce_lien(_RAPPORT_LIEN, jour=J)
     res2 = builder.construire_analyse_annonce_lien(_RAPPORT_LIEN, jour=J)
     assert res1.html == res2.html                    # même entrée → même HTML (PDF outil == PDF Docs)
-    assert "Analyse d'annonce" in res1.cartouche.doc_title
+    assert "Estimer un bien" in res1.cartouche.doc_title   # RECETTE-4 — titre PDF renommé
     assert res1.numero == "AA-20261027-7890"   # suffixe = 4 derniers chiffres du list_id (ASCII, stable)
     assert "Voir l'annonce" in res1.html and "leboncoin.fr/ad" in res1.html
     assert "comparative" in res1.cartouche.doc_foot and "pas un avis de valeur" in res1.cartouche.doc_foot

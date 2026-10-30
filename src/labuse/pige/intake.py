@@ -84,7 +84,10 @@ def _clamp_date_publication(faits: dict) -> None:
     dp = faits.get("date_publication")
     if isinstance(dp, str) and dp:
         try:
-            if date.fromisoformat(dp[:10]) > today_reunion():
+            d = date.fromisoformat(dp[:10])
+            # RD-506 — dans le FUTUR = lecture impossible → null. RECETTE-4 — AVANT 2005 = sentinelle
+            # d'époque (une annonce piégée ne peut pas dater d'avant 2005) → null, jamais « depuis 1970 ».
+            if d > today_reunion() or d < date(2005, 1, 1):
                 faits["date_publication"] = None
         except ValueError:
             faits["date_publication"] = None   # date illisible → null, jamais devinée

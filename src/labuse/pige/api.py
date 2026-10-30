@@ -1978,11 +1978,17 @@ def rapport_parcelle(db, idu: str, fiche: dict | None = None) -> dict:
         log.warning("rapport parcelle %s : marché commune indisponible (%s)", idu, exc)
         marche = None
     contrainte = _contrainte_limitante(db, idu, fiche, zone, commune)
+    # RECETTE-4 — « Dernière vente » (date + prix DVF de la parcelle), lue de la fiche (dvf_parcelle.
+    # derniere_mutation) → MÊME source que l'écran. None = aucune mutation (le PDF affiche « aucune depuis 2014 »).
+    _dm = ((fiche or {}).get("dvf_parcelle") or {}).get("derniere_mutation") or {}
+    derniere_vente = ({"date": _dm.get("date_mutation"), "valeur": _dm.get("valeur")}
+                      if _dm.get("date_mutation") else None)
     return {
         "idu": idu, "adresse": (fiche or {}).get("adresse"), "commune": commune,
         "zone": zone, "surface_m2": (fiche or {}).get("surface_m2"), "nature_label": nature_label,
         "exposition": expo,
         "estimation": est,
+        "derniere_vente": derniere_vente,
         "classement": {"bande": cls.get("bande"), "libelle": cls.get("libelle"),
                        "phrase": _classement_phrase(cls.get("bande"), cls.get("libelle"), contrainte)},
         "foncier": {"zone": zone, "commune": commune,

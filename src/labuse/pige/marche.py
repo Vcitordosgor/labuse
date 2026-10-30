@@ -309,8 +309,13 @@ def bien_vs_marche(db: Session, bien_id: int) -> dict | None:
     r = db.execute(text("""
         SELECT b.bien_id, b.commune, b.type_bien, f.prix, f.surface_hab, f.surface_terrain,
                a.url_sortante, a.portail,
+               -- RECETTE-4 — une date de publication ABSENTE stockée comme 1970 (sentinelle époque)
+               -- donnait « en vente depuis 20 756 j ». On IGNORE toute date avant 2005 (impossible pour
+               -- une annonce piégée) : COALESCE retombe sur la date de 1re saisie ; si rien → NULL → aucune
+               -- durée. JAMAIS un calcul depuis l'époque.
                ((now() AT TIME ZONE 'Indian/Reunion')::date
-                - COALESCE(b.date_publication, b.date_premiere_saisie::date)) AS anciennete_j
+                - COALESCE(CASE WHEN b.date_publication > DATE '2005-01-01' THEN b.date_publication END,
+                           b.date_premiere_saisie::date)) AS anciennete_j
         FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id
         LEFT JOIN LATERAL (SELECT url_sortante, portail FROM pige_annonces WHERE bien_id = b.bien_id
                            ORDER BY date_saisie DESC LIMIT 1) a ON true
@@ -324,8 +329,26 @@ def bien_vs_marche(db: Session, bien_id: int) -> dict | None:
 
     dm = radar_stats(db, commune, t)["prix_m2_median_demande"]
     dem_v, dem_n = dm.get("valeur"), int(dm.get("n") or 0)
-    acte = _dvf_terrain(db, commune) if t == "terrain" else _dvf_bati_type(db, commune, t)
-    acte_v, acte_n = acte.get("eur_m2"), int(acte.get("n") or 0)
+    # RECETTE-4 — « Ce bien » lit le MÊME point de données qu'« Estimer un bien » : la médiane ACTÉE est
+    # celle du bloc commune (`marche_commune_bloc`, même médiane que le rapport lien de l'outil), au lieu
+    # de `_dvf_bati_type` qui divergeait (écart 36 % ↔ 41 % constaté). Repli sur l'ancien calcul si le
+    # bloc commune n'a pas la médiane du type.
+    from ..faisabilite.marche_commune import marche_commune_bloc
+    try:
+        _mb = marche_commune_bloc(db, commune) or {}
+    except Exception:  # noqa: BLE001 — le repli couvre l'indisponibilité du bloc
+        _mb = {}
+    if t == "terrain":
+        acte_v, acte_n = _mb.get("median_terrain_eur_m2"), int(_mb.get("n_terrain") or 0)
+    elif t == "maison":
+        acte_v, acte_n = _mb.get("median_maison_eur_m2"), int(_mb.get("n_maison") or 0)
+    elif t == "appartement":
+        acte_v, acte_n = _mb.get("median_appartement_eur_m2"), int(_mb.get("n_appartement") or 0)
+    else:
+        acte_v, acte_n = None, 0
+    if acte_v is None:   # repli : type hors bloc commune ou médiane absente
+        acte = _dvf_terrain(db, commune) if t == "terrain" else _dvf_bati_type(db, commune, t)
+        acte_v, acte_n = acte.get("eur_m2"), int(acte.get("n") or 0)
 
     def _cmp(ref, n):
         # RADAR-FIX-3 — même palier que le tableau : normal ≥ 30, indicatif 5–29, sous le seuil < 5.
@@ -338,7 +361,8 @@ def bien_vs_marche(db: Session, bien_id: int) -> dict | None:
     anc = db.execute(text("""
         SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY
                  ((now() AT TIME ZONE 'Indian/Reunion')::date
-                  - COALESCE(b.date_publication, b.date_premiere_saisie::date))) AS med,
+                  - COALESCE(CASE WHEN b.date_publication > DATE '2005-01-01' THEN b.date_publication END,
+                             b.date_premiere_saisie::date))) AS med,
                count(*) AS n
         FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id
         WHERE f.valide_at IS NOT NULL AND b.a_qualifier = false AND b.est_copro = false
