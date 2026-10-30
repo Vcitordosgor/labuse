@@ -13,11 +13,12 @@ Score division = 30·min(lot/500,1) + 25·(1−emprise) + 20·min(r/12,1) + 15·
 """
 from __future__ import annotations
 
-import concurrent.futures
 import csv
 import io
 import logging
 import json
+import multiprocessing
+import queue as _queue
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response
@@ -1998,38 +1999,124 @@ class EtudeIn(BaseModel):
 
 
 # CHASSE-DOCS-FIX-1 (E-04) — borne DURE sur le moteur d'implantation : au-delà, le client reçoit un
-# message honnête (jamais un HTTP 000 / timeout silencieux). Le moteur n'est PAS optimisé ; il tourne
-# dans un thread avec SA PROPRE session (SQLAlchemy n'est pas thread-safe), et on ABANDONNE l'attente à
-# la borne (le thread finit en arrière-plan, son résultat est ignoré).
+# message honnête (jamais un HTTP 000 / timeout silencieux).
 # ETUDE-V6-2 (Lot 3) — borne portée de 30 à 60 s (le sous-sol + la capacité maximale peuvent demander
-# davantage sur une assiette lourde). Tout ce qui attend DERRIÈRE est aligné sur ~75 s (15 s de marge) :
-# nginx proxy_read/send_timeout (deploy/nginx/labuse.conf), uvicorn --timeout-keep-alive
-# (deploy/systemd/labuse.service) et le timeout du fetch front (frontend/src/lib/api.ts). Cf.
-# docs/deploiement/etude-v6-2-timeouts.md pour le geste de production (Vic).
-_ETUDE_TIMEOUT_S = 60
+# davantage sur une assiette lourde). Tout ce qui attend DERRIÈRE est aligné sur ~90 s de marge :
+# Caddy read_timeout (deploy/Caddyfile.prod), uvicorn --timeout-keep-alive (deploy/systemd/labuse.service)
+# et le timeout du fetch front (frontend/src/lib/api.ts). Cf. docs/deploiement/etude-v6-2-timeouts.md.
+#
+# ETUDE-ASYNC-1 — le calcul tourne désormais dans un PROCESSUS SÉPARÉ (plus un thread in-process). Deux
+# raisons, toutes deux dans le mandat :
+#   1) Un thread Python n'est PAS tuable : l'ancien code ABANDONNAIT l'attente à la borne mais le thread
+#      continuait en arrière-plan — il tenait le GIL pendant le calcul géométrique (shapely) et AFFAMAIT
+#      la boucle de l'API, faisant tomber les autres requêtes (fiche/carte) en 504. Un processus, lui, se
+#      TUE (SIGTERM → SIGKILL) : le calcul s'arrête VRAIMENT, le GIL de l'API reste libre, sa connexion
+#      Postgres se referme (Postgres annule la requête en cours à la déconnexion du client).
+#   2) L'endpoint de l'API est un `def` synchrone : FastAPI l'exécute dans son pool de threads. Pendant
+#      qu'on ATTEND le processus enfant (`queue.get`, attente C → GIL relâché), la boucle et les autres
+#      threads du pool servent normalement fiche/carte/annonce. Une étude, aussi lourde soit-elle, ne
+#      bloque donc jamais les autres requêtes.
+# Contexte « spawn » (jamais « fork ») : fork depuis un process multi-thread peut interbloquer (verrous
+# tenus par d'autres threads) et hérite du pool SQLAlchemy du parent — dangereux. spawn repart d'un
+# interpréteur neuf (engine recréé à la demande dans l'enfant). Surcoût mesuré ~1 s, négligeable devant
+# un calcul de plusieurs dizaines de secondes.
 _ETUDE_TROP_LOURDE = {
     "erreur": "etude_trop_lourde",
-    "message": "Étude trop lourde pour cette parcelle, non générée. Essayez une assiette plus simple "
-               "(moins de parcelles) ou contactez-nous.",
+    "message": "L'étude n'a pas pu être calculée dans le temps imparti. Elle peut aboutir en relançant "
+               "(les données sont parfois plus lentes à froid) ; sur une assiette très lourde, essayez "
+               "moins de parcelles.",
 }
 
 
-def _etudier_borne(data: dict) -> dict:
+def _etude_timeout_s() -> float:
+    from ..config import get_settings
+    return float(get_settings().etude_timeout_s)
+
+
+def _worker_etude(data: dict, idus: list[str]) -> dict:
+    """PROCESSUS ENFANT (spawn) — calcul + enrichissements de l'écran Étude, avec une session DB FRAÎCHE
+    (l'enfant repart d'un interpréteur neuf : aucun héritage du pool du parent). Retourne le MÊME payload
+    qu'avant (mêmes chiffres) : seul le LIEU d'exécution change."""
     from ..db import session_scope
     from ..implantation.service import etudier_payload
+    with session_scope() as s:
+        out = etudier_payload(s, data)
+        _attach_au_ouverture(s, out, idus)            # vérif #2 — caveat AU, comme Comparer
+        _attach_contraintes_signalees(s, out, idus)   # A5 — mêmes contraintes que le Dossier §5
+        _attach_zone_gabarit(s, out, idus)            # A3 — zone d'implantation lue du Gabarit
+    return out
 
-    def _run():
-        with session_scope() as s:
-            return etudier_payload(s, data)
 
-    ex = concurrent.futures.ThreadPoolExecutor(max_workers=1, thread_name_prefix="etude")
-    fut = ex.submit(_run)
+def _worker_etude_pdf(data: dict, idus: list[str], scenario_ref: str | None, genere_le: str) -> dict:
+    """PROCESSUS ENFANT (spawn) — l'export PDF de l'étude de bout en bout : calcul + enrichissements +
+    rendu WeasyPrint (lui aussi gourmand en CPU et porteur du GIL). Tout est TUABLE à la borne, et le
+    rendu lourd ne bloque donc jamais la boucle de l'API. Retourne les octets du PDF + le numéro/scénario
+    retenu pour l'archivage (fait côté parent, instantané). `ValueError` (aucun scénario) remonte telle
+    quelle → 400 ; toute autre erreur de rendu → 500 technique, comme avant."""
+    from ..db import session_scope
+    from ..implantation.service import etudier_payload
+    from ..exports import etude_faisabilite as ef
+    from ..exports.rendu import render_pdf
+    with session_scope() as s:
+        payload = etudier_payload(s, data)
+        _attach_au_ouverture(s, payload, idus)
+        _attach_contraintes_signalees(s, payload, idus)
+        _attach_zone_gabarit(s, payload, idus)
+    rendu = (ef.rendu_lotissement(payload, genere_le=genere_le) if payload.get("lotissement")
+             else ef.rendu_etude(payload, genere_le=genere_le, scenario_ref=scenario_ref))
+    pdf = render_pdf(rendu["html"])
+    return {"pdf": pdf, "numero": rendu["numero"], "retenu_ref": rendu["retenu_ref"],
+            "payload": payload}   # payload complet → archivage identique côté parent
+
+
+def _cible_processus(q, fn, args) -> None:
+    """Point d'entrée du processus enfant : exécute `fn(*args)` et renvoie ("ok", résultat) ou
+    ("err", exception) par la file. L'exception traverse le pickle (ValueError, etc.) ; si elle n'est pas
+    picklable, on renvoie un RuntimeError portant son repr (jamais de silence)."""
     try:
-        return fut.result(timeout=_ETUDE_TIMEOUT_S)
-    except concurrent.futures.TimeoutError:
-        raise HTTPException(503, detail=_ETUDE_TROP_LOURDE)
+        q.put(("ok", fn(*args)))
+    except BaseException as exc:  # noqa: BLE001 — toute erreur de l'enfant doit remonter au parent
+        try:
+            q.put(("err", exc))
+        except Exception:  # noqa: BLE001 — exception non picklable
+            q.put(("err", RuntimeError(repr(exc))))
+
+
+def _tuer_processus(p: "multiprocessing.Process") -> None:
+    """Arrête VRAIMENT l'enfant : SIGTERM, courte grâce, puis SIGKILL s'il s'accroche. Idempotent (no-op
+    si déjà terminé). C'est le cœur du mandat : aucun calcul abandonné ne survit à la borne."""
+    if p.is_alive():
+        p.terminate()      # SIGTERM
+        p.join(1.0)
+    if p.is_alive():
+        p.kill()           # SIGKILL
+        p.join(1.0)
+
+
+def _dans_processus(fn, args: tuple):
+    """Exécute `fn(*args)` dans un processus séparé « spawn », borné à `etude_timeout_s`. Rend le résultat,
+    ou lève HTTPException(503) à la borne APRÈS avoir tué l'enfant, ou ré-élève l'exception de l'enfant."""
+    ctx = multiprocessing.get_context("spawn")
+    q = ctx.Queue()
+    p = ctx.Process(target=_cible_processus, args=(q, fn, args), name="etude", daemon=True)
+    p.start()
+    try:
+        try:
+            statut, charge = q.get(timeout=_etude_timeout_s())
+        except _queue.Empty:
+            # borne dépassée : on TUE l'enfant (le calcul s'arrête vraiment, pas de thread/processus fantôme)
+            raise HTTPException(503, detail=_ETUDE_TROP_LOURDE)
+        if statut == "err":
+            raise charge   # ValueError → 400 côté route ; autre → gérée par la route (PDF : 500 technique)
+        return charge
     finally:
-        ex.shutdown(wait=False)   # ne JAMAIS bloquer à la sortie (sinon la borne ne sert à rien)
+        _tuer_processus(p)
+        q.close()
+
+
+def _etudier_borne(data: dict) -> dict:
+    idus = [str(i).strip() for i in (data.get("idus") or []) if str(i).strip()]
+    return _dans_processus(_worker_etude, (data, idus))
 
 
 def _attach_au_ouverture(db: Session, payload: dict, idus) -> None:
@@ -2180,16 +2267,17 @@ def etude_implantation(body: EtudeIn, db: Session = Depends(get_db)) -> dict:
     (`labuse.implantation`, déterministe, sans IA) : il dessine jusqu'à 3 scénarios distincts et en
     TIRE capacité, contrôles 4 états et statut ; le payload porte la géométrie en GeoJSON (WGS84)
     pour le plan masse de la carte, les hypothèses modifiables et les versions moteur + règles.
-    ValueError → 400 (entrée invalide), jamais un faux chiffre. Au-delà de 30 s → 503 honnête (E-04)."""
+    ValueError → 400 (entrée invalide), jamais un faux chiffre. ETUDE-ASYNC-1 — le calcul tourne dans un
+    processus séparé TUABLE : au-delà de la borne (LABUSE_ETUDE_TIMEOUT_S, 60 s) → 503 honnête « relancez »
+    et le processus est tué (plus jamais de thread fantôme qui affame les autres requêtes)."""
     for idu in (body.idus or []):
         _check_idu(idu)
     try:
+        # ETUDE-ASYNC-1 — calcul ET enrichissements (_attach_*) dans le processus enfant tuable : la boucle
+        # de l'API ne porte plus aucun travail lourd d'étude. Mêmes chiffres qu'avant (même code, même DB).
         out = _etudier_borne(body.model_dump())
     except ValueError as exc:
         raise HTTPException(400, str(exc))
-    _attach_au_ouverture(db, out, body.idus)   # vérif #2 — caveat AU porté par l'Étude, comme Comparer
-    _attach_contraintes_signalees(db, out, body.idus)   # A5 — mêmes contraintes que le Dossier §5
-    _attach_zone_gabarit(db, out, body.idus)   # A3 — zone d'implantation lue du Gabarit (un seul calcul)
     return out
 
 
@@ -2242,40 +2330,34 @@ def etude_pdf(body: EtudePdfIn, request: Request, db: Session = Depends(get_db))
     de l'outil passe `scenario_ref` (le scénario affiché) ; la carte Docs sert la config par défaut."""
     from urllib.parse import quote
 
-    from ..exports import etude_faisabilite as ef
     from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (D-13) — « généré le » au jour Réunion
-    from ..exports.rendu import render_pdf
 
     for idu in (body.idus or []):
         _check_idu(idu)
     data = body.model_dump()
     scenario_ref = data.pop("scenario_ref", None)
     empreinte = data.pop("empreinte", None)   # Lot 5.1 — hors moteur, rangée dans la recette archivée
-    try:
-        payload = _etudier_borne(data)   # E-04 — borne 30 s (503 honnête, jamais un timeout silencieux)
-    except ValueError as exc:
-        raise HTTPException(400, str(exc))
-    _attach_au_ouverture(db, payload, body.idus)   # vérif #2 — caveat AU dans le PDF comme à l'écran
-    _attach_contraintes_signalees(db, payload, body.idus)   # A5 — mêmes contraintes que le Dossier §5
-    _attach_zone_gabarit(db, payload, body.idus)   # A3 — zone d'implantation lue du Gabarit (un seul calcul)
     genere_le = today_reunion().strftime("%d/%m/%Y")
+    idus = [str(i).strip() for i in (data.get("idus") or []) if str(i).strip()]
     try:
-        # ETUDE-V6 (Lot E) — le lotissement a son propre document (pas de scénario d'implantation).
-        rendu = (ef.rendu_lotissement(payload, genere_le=genere_le) if payload.get("lotissement")
-                 else ef.rendu_etude(payload, genere_le=genere_le, scenario_ref=scenario_ref))
+        # ETUDE-ASYNC-1 — calcul + enrichissements + rendu WeasyPrint dans le MÊME processus enfant tuable
+        # (le rendu PDF est aussi gourmand en CPU et porteur du GIL). Au-delà de la borne → 503 honnête
+        # « relancez » (jamais un 504 ni un onglet figé), le processus est tué, rien ne reste en fond.
+        res = _dans_processus(_worker_etude_pdf, (data, idus, scenario_ref, genere_le))
     except ValueError as exc:
-        # aucun scénario : le document n'a rien à montrer (400, jamais un PDF vide ni un faux chiffre).
+        # aucun scénario (ou entrée refusée) : le document n'a rien à montrer (400, jamais un PDF vide).
         raise HTTPException(400, str(exc))
-    try:
-        pdf = render_pdf(rendu["html"])
-    except Exception:  # noqa: BLE001 — échec de rendu WeasyPrint : dit comme technique.
+    except HTTPException:
+        raise
+    except Exception:  # noqa: BLE001 — échec de rendu WeasyPrint (remonté de l'enfant) : dit comme technique.
         logging.getLogger("labuse").exception("étude de faisabilité : échec du rendu PDF")
         raise HTTPException(500, detail={"erreur": "erreur_technique",
                             "message": "Le document n'a pas pu être rendu (erreur technique)."})
+    pdf, payload = res["pdf"], res["payload"]
     _archiver_etude(db, request, {**data, "scenario_ref": scenario_ref, "empreinte": empreinte}, payload,
-                    rendu["numero"], rendu["retenu_ref"])
-    nom = f"Étude de faisabilité — {rendu['numero']}.pdf"
-    dispo = f'inline; filename="{rendu["numero"]}.pdf"; filename*=UTF-8\'\'{quote(nom)}'
+                    res["numero"], res["retenu_ref"])
+    nom = f"Étude de faisabilité — {res['numero']}.pdf"
+    dispo = f'inline; filename="{res["numero"]}.pdf"; filename*=UTF-8\'\'{quote(nom)}'
     return Response(pdf, media_type="application/pdf",
                     headers={"Content-Disposition": dispo,
                              "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
