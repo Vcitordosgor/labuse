@@ -55,12 +55,15 @@ function fmtPeriode(p: number[] | string | null | undefined): string | null {
 // ANNONCE-3-FIX — fiabilité en TROIS niveaux capitalisés (l'étiquette « Fiabilité » est posée à côté
 // du badge, donc le badge ne porte QUE le niveau) : « Élevée » (repère fiable), « Moyenne » (indicatif),
 // « Limitée » (repli commune / entrée lien).
-function fiab(f?: string | null, communeFallback?: boolean): { mot: string; ton: 'vert' | 'ambre' } {
-  if (communeFallback) return { mot: 'Limitée', ton: 'ambre' }
-  if (f === 'fiable') return { mot: 'Élevée', ton: 'vert' }
-  return { mot: 'Moyenne', ton: 'ambre' }
+// CHASSE-4-FIX (C4-001) — le MOT vient du backend (`fiabilite_mot`, même source que le PDF) ; le front
+// l'AFFICHE tel quel, sans retraduction qui pourrait diverger (l'ancienne version ratait « limitee » et
+// remontait à « Moyenne »). Seule la COULEUR est dérivée du mot (visuel, pas le libellé).
+function fiab(mot?: string | null): { mot: string; ton: 'vert' | 'ambre' } {
+  return { mot: mot || 'Moyenne', ton: mot === 'Élevée' ? 'vert' : 'ambre' }
 }
 const cap = (s: string | null | undefined) => (s ? s[0].toUpperCase() + s.slice(1) : null)
+// « de maisons » / « de terrain nu » mais « d’appartements » (élision devant voyelle) — CHASSE-4-FIX (C4-003).
+const dePl = (pl: string) => (/^[aeiouyàâäéèêëîïôöùûü]/i.test(pl) ? `d’${pl}` : `de ${pl}`)
 
 const INPUT_CLS =
   'w-full h-10 rounded-md border border-line-2 bg-surface-3 px-3 text-[13px] text-txt-hi ' +
@@ -113,7 +116,10 @@ function RapportParcelle({ idu }: { idu: string }) {
   const classement = cls.data?.bande
     ? (cls.data.libelle && cls.data.libelle !== cls.data.bande ? `${cls.data.bande} · ${cls.data.libelle}` : cls.data.bande)
     : (cls.isLoading ? '…' : '—')
-  const nAleas = f.aleas?.n ?? 0
+  // CHASSE-4-FIX (C4-002) — la tuile « Risques » lit le MÊME compte dédupliqué que le PDF (servi par
+  // l'estimation, `n_aleas` = liste `_risques_rows`). Repli sur le brut `aleas.n` seulement si l'estimation
+  // n'est pas encore là.
+  const nAleas = estim.data?.n_aleas ?? f.aleas?.n ?? 0
   const orientation = expo.data?.orientation ?? null
 
   const tuiles: { k: string; v: string }[] = [
@@ -135,7 +141,14 @@ function RapportParcelle({ idu }: { idu: string }) {
   const nVentes = e?.n ?? null
   const rayon = e?.radius_m ?? null
   const periode = fmtPeriode(e?.periode)
-  const fi = fiab(e?.fiabilite, e?.commune_fallback)
+  const copro = e?.nature === 'copropriete'
+  const fi = fiab(e?.fiabilite_mot)
+  // CHASSE-4-FIX (C4-005) — périmètre des comparables avec le rayon RÉEL (distinct du « secteur cadastral »
+  // du repère €/m²). Terrain nu → rayon des ventes de terrain ; bâti → rayon du comparateur bâti.
+  const rayonComp = terrain ? e?.comparables_radius_m : rayon
+  const rayonTxt = (rayonComp != null && rayonComp > 0)
+    ? (rayonComp >= 1000 ? `à moins de ${rayonComp / 1000} km` : `à moins de ${fmtInt(rayonComp)} m`)
+    : 'à proximité'
 
   return (
     <Corps>
@@ -179,6 +192,9 @@ function RapportParcelle({ idu }: { idu: string }) {
             <p className="mt-2 text-[11px] leading-snug text-txt-mut">
               {terrain ? (
                 <>Parcelle nue — comparée aux ventes de <strong className="text-txt-hi">terrain nu</strong> du secteur (repère €/m² de terrain).</>
+              ) : copro ? (
+                /* CHASSE-4-FIX (C4-003) — copropriété comparée aux appartements, pas de bien unique à valoriser. */
+                <>Copropriété — comparée aux ventes d’<strong className="text-txt-hi">{e?.type_label_pluriel ?? 'appartements'}</strong> de la commune (repère €/m²). Le lot exact (étage, surface) n’est pas connu du modèle.</>
               ) : (
                 <>{cap(e?.type_bien) ?? 'Bâti'} — comparé{e?.type_bien === 'maison' ? 'e' : ''} aux ventes de <strong className="text-txt-hi">{e?.type_label_pluriel ?? 'biens bâtis anciens'}</strong> autour de la parcelle. État et prestations du bien non connus du modèle.</>
               )}
@@ -216,7 +232,7 @@ function RapportParcelle({ idu }: { idu: string }) {
       {/* ANNONCE-5 — les 8 ventes comparables, accordéon FERMÉ par défaut (mêmes lignes que le PDF). */}
       {(e?.comparables?.length ?? 0) > 0 && (
         <details className={SECTION}>
-          <summary className="cursor-pointer text-sm font-medium text-txt-hi">{terrain ? 'Les ventes de terrain nu' : 'Les ventes comparables'}{e?.n_total != null ? ` (${fmtInt(e.n_total)})` : ''}</summary>
+          <summary className="cursor-pointer text-sm font-medium text-txt-hi">{terrain ? `Les ventes de terrain nu ${rayonTxt}` : 'Les ventes comparables'}{e?.n_total != null ? ` (${fmtInt(e.n_total)})` : ''}</summary>
           <div className="mt-2 overflow-x-auto">
             <table className="w-full text-[11px]">
               <thead>
@@ -240,8 +256,8 @@ function RapportParcelle({ idu }: { idu: string }) {
             </table>
           </div>
           <p className="mt-1.5 text-[11px] leading-snug text-txt-mut">
-            {(() => { const autres = Math.max(0, (e?.n_total ?? 0) - (e?.comparables?.length ?? 0)); const pl = terrain ? 'terrain nu' : (e?.type_label_pluriel ?? 'biens'); return autres > 0 ? `${fmtInt(autres)} autre${autres > 1 ? 's' : ''} vente${autres > 1 ? 's' : ''} de ${pl} à proximité. ` : '' })()}
-            Source : DVF, ventes de {terrain ? 'terrain nu' : (e?.type_label_pluriel ?? 'biens')}{(terrain ? fmtPeriode(e?.comparables_periode) : periode) ? `, ${terrain ? fmtPeriode(e?.comparables_periode) : periode}` : ''}.
+            {(() => { const autres = Math.max(0, (e?.n_total ?? 0) - (e?.comparables?.length ?? 0)); const pl = terrain ? 'terrain nu' : (e?.type_label_pluriel ?? 'biens'); return autres > 0 ? `${fmtInt(autres)} autre${autres > 1 ? 's' : ''} vente${autres > 1 ? 's' : ''} ${dePl(pl)} ${rayonTxt}. ` : '' })()}
+            Source : DVF, ventes {dePl(terrain ? 'terrain nu' : (e?.type_label_pluriel ?? 'biens'))}{(terrain ? fmtPeriode(e?.comparables_periode) : periode) ? `, ${terrain ? fmtPeriode(e?.comparables_periode) : periode}` : ''}.
           </p>
         </details>
       )}

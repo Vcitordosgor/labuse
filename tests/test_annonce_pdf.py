@@ -79,6 +79,29 @@ _RAPPORT_NUE = {
     "risques": [], "marche": None, "a_verifier": ["La desserte et la viabilisation du terrain."],
 }
 
+# CHASSE-4-FIX (C4-003) — une COPROPRIÉTÉ : nature « Copropriété », comparateur APPARTEMENTS, PAS
+# d'ordre de grandeur sur l'emprise totale du bâti (`valeur_indicative` absente), la lecture foncière
+# reste. Le MOT de fiabilité vient du backend (`fiabilite_mot`), affiché tel quel.
+_RAPPORT_COPRO = {
+    "idu": "97422000BV2257", "adresse": None, "commune": "Le Tampon", "zone": "Uav",
+    "surface_m2": 78.0, "nature_label": "Copropriété", "exposition": "Sud-Ouest",
+    "estimation": {
+        "nature": "copropriete", "type_comparateur": "bati", "type_bien": "appartement",
+        "type_label_pluriel": "appartements", "median": 2558, "q1": 2086, "q3": 2871, "n": 51,
+        "radius_m": 500, "periode": [2021, 2025], "fiabilite": "moyen", "precision_pct": 17,
+        "commune_fallback": False, "fiabilite_mot": "Moyenne",
+        "comparables": [{"date": "08/2025", "type": "Appartement", "surface_m2": 60,
+                         "prix_eur": 150000, "prix_m2": 2500, "distance_m": 80}],
+        "n_total": 51, "emprise_bati_m2": None, "valeur_indicative": None,
+        "lecture_fonciere": {"surface_m2": 78, "eur_m2": 210, "valeur_eur": 16000, "perimetre": "secteur"},
+    },
+    "classement": {"bande": "0", "libelle": "Non retenue", "phrase": "Classement 0 · Non retenue."},
+    "foncier": {"zone": "Uav", "commune": "Le Tampon", "regles": [], "parcelle": []},
+    "risques": [{"alea": "Inondation", "niveau": "Modéré", "zone_part": "Zone bleue · 100 %",
+                 "implique": "Zone bleue du PPR."}],
+    "marche": None, "a_verifier": ["Le règlement de copropriété et les charges."],
+}
+
 
 # ═══════════════════════════════════════ VARIANTE PARCELLE ═══════════════════════════════════════
 def test_parcelle_structure_maquette():
@@ -100,7 +123,8 @@ def test_parcelle_structure_maquette():
     assert "Lecture foncière" in html and "186 000 €" in html and "26 % de l" in html
     # tableau des comparables + total
     assert "Les 8 ventes les plus proches retenues" in html and "08/2025" in html and "103 m" in html
-    assert "41 autres ventes de maisons à proximité" in html and "Source : DVF, ventes de maisons" in html
+    # CHASSE-4-FIX (C4-005) — le périmètre des comparables est DIT avec le rayon réel (radius_m = 500 m).
+    assert "41 autres ventes de maisons à moins de 500 m" in html and "Source : DVF, ventes de maisons" in html
     # page 2 : foncier + classement DÉRIVÉ DES RÈGLES + risques UNE LIGNE PAR ALÉA + marché + à vérifier
     assert '<div class="apage2">' in html
     assert "Le foncier" in html and "Hauteur maximale" in html and "Assiette constructible, aléa déduit" in html
@@ -121,6 +145,26 @@ def test_parcelle_nue_titre_et_comparables_terrain():
     assert "Les 8 ventes de terrain nu les plus proches" in html and "06/2024" in html and "Terrain" in html
     assert "Source : DVF, ventes de terrain nu" in html
     assert "Lecture foncière" not in html                    # la nue EST foncière (pas de double lecture)
+
+
+def test_parcelle_copropriete():
+    """CHASSE-4-FIX (C4-003) — une copropriété : nature « Copropriété », comparée aux APPARTEMENTS, PAS
+    d'ordre de grandeur sur l'emprise totale (aucun bien unique), la LECTURE FONCIÈRE reste."""
+    html = bloc.rendu_parcelle(_RAPPORT_COPRO, plan_ortho_html="", plan_zonage_html="").replace(" ", " ")
+    assert "Copropriété" in html                                   # nature (sous-titre)
+    assert "comparée aux ventes d'<b>appartements</b>" in html     # comparateur appartements, élision
+    assert "Ordre de grandeur du bien" not in html                 # pas de bien unique à valoriser
+    assert "Lecture foncière" in html and "16 000 €" in html       # la lecture foncière reste
+    assert "Fiabilité Moyenne" in html                             # mot servi par le backend
+
+
+def test_fiabilite_mot_est_servi_tel_quel():
+    """CHASSE-4-FIX (C4-001) — le PDF AFFICHE `fiabilite_mot` du backend tel quel, sans retraduire : même
+    si l'ancien champ `fiabilite` dit autre chose, c'est le mot servi qui s'affiche (source unique)."""
+    r = {**_RAPPORT_BATI, "estimation": {**_RAPPORT_BATI["estimation"],
+                                          "fiabilite": "fiable", "fiabilite_mot": "Limitée"}}
+    html = bloc.rendu_parcelle(r, plan_ortho_html="", plan_zonage_html="").replace(" ", " ")
+    assert "Fiabilité Limitée" in html and "Fiabilité Élevée" not in html
 
 
 def test_parcelle_jamais_un_champ_vide():

@@ -452,11 +452,14 @@ export interface AnnonceEstimation {
   n?: number | null; radius_m?: number | null; periode?: number[] | string | null
   perimetre?: 'secteur' | 'commune' | null
   fiabilite?: string | null; commune_fallback?: boolean
+  fiabilite_mot?: string | null   // CHASSE-4-FIX (C4-001) — le MOT affiché, décidé par le backend, affiché tel quel
+  n_aleas?: number | null         // CHASSE-4-FIX (C4-002) — aléas dédupliqués (même liste que le PDF)
   precision_pct?: number | null   // ANNONCE-5-FIX — écart médian mesuré du segment (ESTIMATION-BANC-1)
   type_prix?: string | null; note?: string | null
   // ANNONCE-5 — comparables (8 ventes les plus proches), valeur indicative (ORDRE DE GRANDEUR), lecture
   // foncière : servis par le MÊME point que le PDF → écran == document.
   comparables?: AnnonceComparable[]; n_total?: number | null; comparables_periode?: number[] | null
+  comparables_radius_m?: number | null   // CHASSE-4-FIX (C4-005) — rayon réel des comparables de terrain nu
   emprise_bati_m2?: number | null
   valeur_indicative?: AnnonceValeurIndicative | null
   lecture_fonciere?: { surface_m2: number; eur_m2: number; valeur_eur: number; n?: number | null; perimetre?: string; pct_du_bati?: number } | null

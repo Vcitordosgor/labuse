@@ -58,14 +58,30 @@ def _periode(p) -> str | None:
     return str(p)
 
 
-def _fiab_niveau(fiabilite, commune_fallback=False) -> tuple[str, str]:
-    """(niveau affiché, classe de chip). Trois niveaux : Élevée (menthe) / Moyenne / Limitée (ambre).
-    ANNONCE-5-FIX — recalibré sur le SEGMENT (ESTIMATION-BANC-1) : `fiabilite` vaut fiable/moyen/limitee."""
-    if fiabilite == "fiable":
-        return ("Élevée", "s")
-    if fiabilite == "limitee":
-        return ("Limitée", "p")
-    return ("Moyenne", "p")
+def _fiab_niveau(est: dict) -> tuple[str, str]:
+    """(mot affiché, classe de chip). CHASSE-4-FIX (C4-001) — le MOT vient du backend (`fiabilite_mot`,
+    la MÊME source que l'écran) : le PDF l'affiche tel quel, plus de retraduction qui pourrait diverger.
+    Repli de compatibilité sur l'ancien mapping si le champ manque. Chip menthe (« s ») pour « Élevée »."""
+    mot = est.get("fiabilite_mot")
+    if not mot:
+        mot = "Limitée" if est.get("commune_fallback") else \
+            {"fiable": "Élevée", "limitee": "Limitée"}.get(est.get("fiabilite"), "Moyenne")
+    return (mot, "s" if mot == "Élevée" else "p")
+
+
+def _de(pl: str) -> str:
+    """« de maisons » / « de terrain nu » mais « d'appartements » (élision) — CHASSE-4-FIX (C4-003)."""
+    return ("d'" if (pl[:1].lower() in "aeiouyàâäéèêëîïôöùûü") else "de ") + pl
+
+
+def _rayon_txt(rayon_m) -> str:
+    """CHASSE-4-FIX (C4-005) — « à moins de 1 km » / « à moins de 500 m » depuis le rayon réel ; à défaut
+    « à proximité » (aucun rayon connu)."""
+    if isinstance(rayon_m, (int, float)) and rayon_m > 0:
+        if rayon_m >= 1000:
+            return "à moins de " + ("%g" % (rayon_m / 1000)).replace(".", ",") + " km"
+        return f"à moins de {int(rayon_m)} m"
+    return "à proximité"
 
 
 def _idu_court(idu) -> str | None:
@@ -173,7 +189,7 @@ def _estimation(est: dict) -> str:
         motif = est.get("note") or "Estimation indisponible — échantillon de ventes insuffisant."
         return ('<h2>Estimation du prix</h2>'
                 f'<p class="anote">{esc(motif)}</p>')
-    niv, chip_cls = _fiab_niveau(est.get("fiabilite"), est.get("commune_fallback"))
+    niv, chip_cls = _fiab_niveau(est)
     q1, q3 = est.get("q1"), est.get("q3")
     fourch = (f"de {_int(q1)} à {_int(q3)} €/m²" if isinstance(q1, (int, float)) and isinstance(q3, (int, float))
               else None)
@@ -199,6 +215,10 @@ def _estimation(est: dict) -> str:
     prec_txt = (f" Précision mesurée sur les ventes 2025 : ±{_int(prec)} %." if isinstance(prec, (int, float)) else "")
     if terrain:
         note = "Terrain nu — comparé aux ventes de terrain nu du secteur (repère €/m² de terrain)." + prec_txt
+    elif est.get("nature") == "copropriete":   # CHASSE-4-FIX (C4-003)
+        pl = est.get("type_label_pluriel") or "appartements"
+        note = (f"Copropriété — comparée aux ventes d'<b>{esc(pl)}</b> de la commune (repère €/m²). "
+                "Le lot exact (étage, surface) n'est pas connu du modèle." + prec_txt)
     else:
         pl = est.get("type_label_pluriel") or "biens bâtis anciens"
         note = (f"{(est.get('type_bien') or 'Bâti').capitalize()} — comparé aux ventes de <b>{esc(pl)}</b> "
@@ -280,11 +300,15 @@ def _comparables(est: dict) -> str:
     autres = max(0, int(n_total) - len(comps))
     pl = "terrain nu" if terrain else (est.get("type_label_pluriel") or "biens")
     per = _periode(est.get("comparables_periode") if terrain else est.get("periode"))
+    # CHASSE-4-FIX (C4-005) — le périmètre des comparables est DIT, avec le rayon réel (« à moins de
+    # 1 km »), pour qu'il ne soit plus confondu avec le « secteur cadastral » du repère €/m² de l'estimation.
+    rayon_m = est.get("comparables_radius_m") if terrain else est.get("radius_m")
+    peri = _rayon_txt(rayon_m)
     foot = ""
     if autres > 0:
         foot = (f"{_int(autres)} autre" + ("s" if autres > 1 else "") + " vente"
-                + ("s" if autres > 1 else "") + " de " + esc(pl) + " à proximité. ")
-    foot += f"Source : DVF, ventes de {esc(pl)}" + (f", {esc(per)}" if per else "") + "."
+                + ("s" if autres > 1 else "") + " " + _de(esc(pl)) + f" {esc(peri)}. ")
+    foot += f"Source : DVF, ventes {_de(esc(pl))}" + (f", {esc(per)}" if per else "") + "."
     titre = ("Les 8 ventes de terrain nu les plus proches" if terrain
              else "Les 8 ventes les plus proches retenues")
     return (f'<h2>{titre}</h2>'
