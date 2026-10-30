@@ -917,6 +917,23 @@ def radar_veille_supprimer(veille_id: int, request: Request) -> dict:
     return {"ok": ok}
 
 
+@router.put("/radar/veille/{veille_id}")
+def radar_veille_modifier(veille_id: int, body: VeilleIn, request: Request) -> dict:
+    """VEILLE-3 — « Modifier » une alerte : remplace ses critères EN PLACE (même formulaire que la création).
+    Refuse (409) si les nouveaux critères dupliquent une AUTRE alerte du compte (dédup excluant soi-même)."""
+    from fastapi import HTTPException
+    from ..api.tenant import current_compte
+    from . import veille
+    crit = {k: v for k, v in body.model_dump().items() if v not in (None, [], False)}
+    cid = current_compte(request)
+    with session_scope() as db:
+        if veille.existe_identique(db, cid, crit, sauf_id=veille_id):
+            raise HTTPException(409, "Vous avez déjà une autre alerte avec ces critères.")
+        ok = veille.modifier(db, cid, veille_id, crit)
+        db.commit()
+    return {"ok": ok}
+
+
 class VeilleRenommerIn(BaseModel):
     nom: str = ""
 

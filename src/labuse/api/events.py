@@ -922,7 +922,7 @@ def suivis_liste(request: Request, db: Session = Depends(get_db)) -> dict:
     from .tenant import current_compte
     cid = current_compte(request)
     rows = db.execute(text("""
-        SELECT w.idu, w.created_at::date::text AS depuis, p.commune,
+        SELECT w.idu, w.created_at::date::text AS depuis, p.commune, p.surface_m2 AS surface,
                ev.titre AS ev_titre, ev.kind AS ev_kind,
                ev.ts::date::text AS ev_date,
                (ev.ts IS NOT NULL AND ev.ts >= now() - interval '7 days') AS ev_nouveau
@@ -936,6 +936,17 @@ def suivis_liste(request: Request, db: Session = Depends(get_db)) -> dict:
         ORDER BY ev.ts DESC NULLS LAST, w.created_at DESC"""),
         {"cid": cid}).mappings().all()
     from ..api import app as _app   # helpers de secteur (lieu-dit) / adresse BAN — lazy (évite le circulaire)
+    # VEILLE-3 — la zone PLU dominante (libellé « Ui », repli famille) de chaque parcelle suivie, en UNE
+    # requête (table dérivée). Gardée : une base sans `parcel_zone_plu` = pas de zone, jamais un 500.
+    zones: dict[str, str] = {}
+    idus = [r["idu"] for r in rows if r["idu"]]
+    if idus:
+        try:
+            zones = {z[0]: z[1] for z in db.execute(text(
+                "SELECT idu, COALESCE(zone_lib, zone_fam) FROM parcel_zone_plu WHERE idu = ANY(:idus)"),
+                {"idus": idus}).all() if z[1]}
+        except Exception:  # noqa: BLE001 — couche zonage absente = pas de zone, jamais un 500
+            zones = {}
     out = []
     for r in rows:
         try:
@@ -946,6 +957,10 @@ def suivis_liste(request: Request, db: Session = Depends(get_db)) -> dict:
                  else (r["ev_titre"] or None))
         out.append({
             "idu": r["idu"], "depuis": r["depuis"], "commune": r["commune"], "secteur": secteur,
+            # VEILLE-3 — surface de terrain (contenance cadastrale, m²) + zone PLU dominante, pour la ligne
+            # « IDU · surface · zone » de la page Veille. null si inconnue (parcelle hors base / sans zonage).
+            "surface": float(r["surface"]) if r["surface"] is not None else None,
+            "zone": zones.get(r["idu"]),
             "dernier_evenement": label, "dernier_changement": r["ev_date"],
             "nouveau": bool(r["ev_nouveau"]),
         })

@@ -9,7 +9,7 @@ import type { ReactNode } from 'react'
 import { useApp } from '../../store/useApp'
 import { Squelette } from '../Loading'
 import { RadarEcran } from './RadarEcran'
-import { VeilleAnnonces, VeilleFoncier, VeillePortes } from './VeilleEcrans'
+import { VeilleEcran } from './VeilleEcrans'
 
 // « 27/09 21 h 46 » (heure de La Réunion) — la dernière capture, telle que la maquette l'écrit.
 export function fmtCapture(iso: string | null): string {
@@ -97,9 +97,9 @@ function PortesRadar() {
 export function RadarHub() {
   const ecran = useApp((s) => s.radarEcran)
   if (ecran === 'radar') return <RadarEcran />
-  if (ecran === 'veille') return <VeillePortes />
-  if (ecran === 'veille-foncier') return <VeilleFoncier />
-  if (ecran === 'veille-annonces') return <VeilleAnnonces />
+  // VEILLE-3 — une seule page pour la Veille : la porte « Veille » ET les anciennes routes
+  // (veille-foncier / veille-annonces, deep-links #surveillance=…) y mènent toutes.
+  if (ecran === 'veille' || ecran === 'veille-foncier' || ecran === 'veille-annonces') return <VeilleEcran />
   return <PortesRadar />
 }
 

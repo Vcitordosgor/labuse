@@ -1,15 +1,19 @@
-// RADAR-2 (Lot 4) — LA VEILLE, trois écrans plein écran (SANS carte), derrière la porte « Veille » du
-// hub Radar : les deux portes (Le foncier / Les annonces) + le réglage du mail ; les parcelles suivies ;
-// les alertes. Le réglage du mail partage LA MÊME source que Mon compte (VEILLE-FIX-2, /events/prefs).
+// VEILLE-3 — LA VEILLE EN UNE SEULE PAGE (plus de chooser « Choisissez ce que vous voulez surveiller »,
+// plus de deux sous-pages « Vos parcelles suivies » / « Vos alertes »). Derrière la porte « Veille » du hub
+// Radar : un en-tête (← Radar · VEILLE · « Ce que vous surveillez » · sous-titre dynamique · chips du mail)
+// puis DEUX colonnes — à gauche les parcelles suivies (omnibox + liste), à droite les alertes (+ nouvelle
+// alerte + liste). Les anciennes routes (veille-foncier/veille-annonces, #surveillance=…) y mènent toutes.
+// Le réglage du mail partage LA MÊME source que Mon compte (VEILLE-FIX-2, /events/prefs). Aucun défilement
+// horizontal, listes longues en « Voir 200 de plus », formats français, un seul « Retour ».
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import {
-  ApiError, creerRadarVeille, getNotifPrefs, getRadarAlertes, getRadarApercu, getSuivis,
-  patchDigestFrequence, pauseRadarVeille, supprimerRadarVeille, toggleWatch,
-  type RadarAlerte,
+  ApiError, creerRadarVeille, getNotifPrefs, getRadarAlertes, getSuivis,
+  modifierRadarVeille, patchDigestFrequence, pauseRadarVeille, supprimerRadarVeille, toggleWatch,
+  type RadarAlerte, type SuiviItem,
 } from '../../lib/api'
 import { useApp } from '../../store/useApp'
-import { iduCourt } from '../../lib/format'
+import { iduCourt, fmtM2, ilYA } from '../../lib/format'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'
 import { trierCommunes } from '../../lib/communes'
 import { ParcelInput } from '../ParcelInput'
@@ -18,35 +22,38 @@ import { EmptyState } from '../States'
 import { Badge } from '../ui/Badge'
 import { Bouton } from '../ui/Bouton'
 import { Retour } from '../ui/Retour'
-import { EcranTete, PorteCard } from './RadarHub'
-
-// icônes des portes Veille (bouclier / maison)
-const IcoBouclier = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round">
-    <path d="M12 3l7 3v5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V6z" />
-  </svg>
-)
-const IcoMaison = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round">
-    <path d="M4 11l8-6 8 6" /><path d="M6 10v9h12v-9" />
-  </svg>
-)
 
 // fréquence du mail — mêmes valeurs que Mon compte (VEILLE-FIX-2). Libellés de la maquette.
 const FREQ_LABEL: Record<string, string> = { quotidien: 'Chaque matin', hebdo: 'Chaque lundi', cloche_seule: 'Seulement dans la cloche' }
 const FREQ_ORDRE = ['quotidien', 'hebdo', 'cloche_seule']
 
-// RADAR-2 (retouches 2) — création d'une alerte DANS la Veille (le formulaire vit ici, plus dans Radar).
+// communes/type/vendeur du formulaire d'alerte (inchangé depuis RADAR-2).
 const COMMUNES_24 = trierCommunes(CP_COMMUNES.map(([, nom]) => nom), (n) => n)
 const TYPES_ALERTE = [['', 'Tous'], ['terrain', 'Terrain'], ['maison', 'Maison']] as const
 const VENDEURS_ALERTE = [['', 'Tous'], ['particulier', 'Particulier']] as const
 
-// ══════════════ VEILLE — les deux portes + le réglage du mail ══════════════
-export function VeillePortes() {
+// combien d'éléments on montre avant le bouton « Voir … de plus » (évite une liste à rallonge).
+const PAGE_INITIALE = 50
+const PAGE_PAS = 200
+
+// ══════════════════════════════ LA PAGE ══════════════════════════════
+export function VeilleEcran() {
   const setRadarEcran = useApp((s) => s.setRadarEcran)
   const qc = useQueryClient()
-  const { data } = useQuery({ queryKey: ['radar-apercu'], queryFn: getRadarApercu })
+
+  // données des deux colonnes + réglage du mail (une seule page → tout est chargé ici).
+  const suivisQ = useQuery({ queryKey: ['suivis'], queryFn: getSuivis })
+  const alertesQ = useQuery({ queryKey: ['radar-alertes'], queryFn: getRadarAlertes })
   const prefs = useQuery({ queryKey: ['notif-prefs'], queryFn: getNotifPrefs })
+  const suivis = suivisQ.data?.suivis ?? []
+  const alertes = alertesQ.data?.alertes ?? []
+
+  // sous-titre dynamique : « N événements depuis votre dernier passage » (parcelles bougées ces 7 jours +
+  // annonces tombées depuis hier) ; sinon une phrase d'explication courte. Rien d'inventé : les deux comptes
+  // viennent de ce que la veille détecte déjà.
+  const nEvenements = suivis.filter((s) => s.nouveau).length + alertes.reduce((n, a) => n + (a.en_pause ? 0 : a.nouveaux), 0)
+
+  // chips du mail — même source/mutation que Mon compte.
   const freq = prefs.data?.frequence ?? 'quotidien'
   const frequences = prefs.data?.frequences?.length ? prefs.data.frequences : FREQ_ORDRE
   const setFreq = useMutation({
@@ -54,50 +61,63 @@ export function VeillePortes() {
     onMutate: (v) => { qc.setQueryData(['notif-prefs'], (p: { frequence: string } | undefined) => (p ? { ...p, frequence: v } : p)) },
     onSettled: () => qc.invalidateQueries({ queryKey: ['notif-prefs'] }),
   })
-  const suivis = data?.suivis_n ?? 0
-  const alertes = data?.alertes_n ?? 0
-  const nouveaux = data?.nouveaux_total ?? 0
+
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
-     <div className="mx-auto w-full max-w-[1060px] px-8 py-10">
-      <EcranTete surtitre="VEILLE" titre="Choisissez ce que vous voulez surveiller"
-        retour={<Retour label="Radar" data-veille-retour-radar onClick={() => setRadarEcran('portes')} />} />
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-        <PorteCard data="veille-porte-foncier" ic={<IcoBouclier />} titre="Le foncier"
-          desc="Vos parcelles suivies : vente, permis, changement de propriétaire, mise en vente sur un portail."
-          resume={<>{suivis} parcelle{suivis > 1 ? 's' : ''} suivie{suivis > 1 ? 's' : ''}</>}
-          onClick={() => setRadarEcran('veille-foncier')} />
-        <PorteCard data="veille-porte-annonces" ic={<IcoMaison />} titre="Les annonces"
-          desc="Vos alertes Radar : une nouvelle annonce, une baisse de prix ou un retrait, selon vos critères."
-          resume={<>{alertes} alerte{alertes > 1 ? 's' : ''} · {nouveaux} nouveau{nouveaux > 1 ? 'x' : ''} bien{nouveaux > 1 ? 's' : ''}</>}
-          onClick={() => setRadarEcran('veille-annonces')} />
+     <div className="mx-auto w-full max-w-[1120px] px-8 py-10">
+      {/* ── EN-TÊTE : un seul « ← Radar », surtitre/titre/sous-titre à gauche, chips du mail à droite ── */}
+      <div className="mb-4"><Retour label="Radar" data-veille-retour-radar onClick={() => setRadarEcran('portes')} /></div>
+      <div className="mb-8 flex flex-wrap items-start justify-between gap-x-8 gap-y-4">
+        <div className="min-w-0">
+          <div className="font-mono text-[10.5px] tracking-[0.2em] text-txt-mut">VEILLE</div>
+          <h1 className="mt-1.5 text-[28px] font-semibold leading-tight text-txt-hi">Ce que vous surveillez</h1>
+          <p data-veille-soustitre className="mt-1.5 text-[13px] leading-snug text-txt-mut">
+            {nEvenements > 0
+              ? `${nEvenements} événement${nEvenements > 1 ? 's' : ''} depuis votre dernier passage`
+              : 'Vos parcelles suivies et vos alertes, au même endroit — prévenu dès que quelque chose bouge.'}
+          </p>
+        </div>
+        {/* réglage du mail (chips) — en haut à droite, même réglage qu'aujourd'hui */}
+        <div className="shrink-0">
+          <div className="mb-1.5 text-right text-[11px] text-txt-dim">Résumé par mail</div>
+          <div className="flex flex-wrap justify-end gap-2">
+            {frequences.map((v) => (
+              <button key={v} data-veille-freq={v} onClick={() => setFreq.mutate(v)}
+                className={`h-8 rounded-full border px-3.5 text-[12.5px] transition-colors duration-quick ${
+                  freq === v ? 'border-mint bg-mint text-mint-on font-medium' : 'border-line-2 text-txt hover:border-mint/50'}`}>
+                {freq === v && <span className="mr-1">✓</span>}{FREQ_LABEL[v] ?? v}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* réglage du mail — une seule source (Mon compte) */}
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-line-2 bg-surface-2 px-6 py-4">
-        <span className="text-[13px] text-txt">Recevoir le résumé par mail</span>
-        <div className="flex flex-wrap gap-2">
-          {frequences.map((v) => (
-            <button key={v} data-veille-freq={v} onClick={() => setFreq.mutate(v)}
-              className={`h-8 rounded-full border px-3.5 text-[12.5px] transition-colors duration-quick ${
-                freq === v ? 'border-mint bg-mint text-mint-on font-medium' : 'border-line-2 text-txt hover:border-mint/50'}`}>
-              {freq === v && <span className="mr-1">✓</span>}{FREQ_LABEL[v] ?? v}
-            </button>
-          ))}
-        </div>
+      {/* ── DEUX COLONNES : parcelles suivies · alertes ── */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <ColonneParcelles suivis={suivis} isLoading={suivisQ.isLoading} />
+        <ColonneAlertes alertes={alertes} isLoading={alertesQ.isLoading} />
       </div>
      </div>
     </div>
   )
 }
 
-// ══════════════ VEILLE · LE FONCIER — les parcelles suivies ══════════════
-export function VeilleFoncier() {
-  const { setRadarEcran, focusParcelle } = useApp()
+// ── petit en-tête de colonne (titre + action à droite) ──
+function ColonneTete({ titre, action }: { titre: string; action?: ReactNode }) {
+  return (
+    <div className="mb-3 flex items-center justify-between gap-3">
+      <h2 className="text-[15px] font-semibold text-txt-hi">{titre}</h2>
+      {action}
+    </div>
+  )
+}
+
+// ══════════════════════════════ COLONNE GAUCHE · parcelles suivies ══════════════════════════════
+function ColonneParcelles({ suivis, isLoading }: { suivis: SuiviItem[]; isLoading: boolean }) {
+  const { focusParcelle } = useApp()
   const qc = useQueryClient()
-  const q = useQuery({ queryKey: ['suivis'], queryFn: getSuivis })
-  const suivis = q.data?.suivis ?? []
   const [msg, setMsg] = useState<string | null>(null)
+  const [vus, setVus] = useState(PAGE_INITIALE)
   const suivre = useMutation({
     mutationFn: (idu: string) => toggleWatch(idu),
     onSuccess: (r) => {
@@ -107,76 +127,74 @@ export function VeilleFoncier() {
     },
     onError: (err) => setMsg(err instanceof ApiError && err.detail ? err.detail : 'Impossible de suivre cette parcelle.'),
   })
+  const reste = suivis.length - vus
+
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto">
-     <div className="mx-auto w-full max-w-[1060px] px-8 py-10">
-      <EcranTete surtitre="VEILLE · LE FONCIER" titre="Vos parcelles suivies"
-        sous="Ajoutez une parcelle ici, ou avec la cloche de sa fiche."
-        retour={<Retour label="Veille" data-veille-retour onClick={() => setRadarEcran('veille')} />} />
-      <div className="mb-4 max-w-[560px]">
-        {/* RADAR-2 (retouches 2) — pas de carte sur cette page : `withCarte={false}` retire l'invite
-            « ou cliquez une parcelle sur la carte » (et le geste clic-carte, sans objet ici). */}
+    <section data-veille-colonne="parcelles" className="min-w-0">
+      <ColonneTete titre="Parcelles suivies" />
+      {/* omnibox d'ajout en tête (pas de carte ici → withCarte=false retire l'invite « cliquez la carte ») */}
+      <div className="mb-3">
         <ParcelInput dataAttr="veille-parcelle" placeholder="Adresse, IDU ou référence (BW0917)" withCarte={false}
           onPick={(idu) => suivre.mutate(idu)}
           onAddress={() => setMsg("Cette adresse n'a pas de parcelle rattachée — précisez un IDU pour la suivre.")} />
         {msg && <p className="mt-1.5 text-[11px] text-txt-mut">{msg}</p>}
       </div>
 
-      {q.isLoading && <Squelette lignes={4} />}
-      {!q.isLoading && suivis.length === 0 && (
+      {isLoading && <Squelette lignes={4} />}
+      {!isLoading && suivis.length === 0 && (
         <EmptyState className="rounded-lg border border-dashed border-line-2"
           title="Aucune parcelle suivie."
           hint={<>Ajoutez-en une ci-dessus, ou ouvrez une fiche et cliquez la <b className="text-txt">cloche « Suivre »</b>.</>} />
       )}
       {suivis.length > 0 && (
-        <div className="overflow-hidden rounded-lg border border-line-2">
-          <table className="w-full border-collapse text-[12.5px]">
-            <thead>
-              <tr className="border-b border-line-2 bg-surface-2 font-mono text-[9.5px] uppercase tracking-wider text-txt-dim">
-                <th className="px-4 py-2.5 text-left">Parcelle</th><th className="px-2 py-2.5 text-left">Commune</th>
-                <th className="px-2 py-2.5 text-left">Secteur</th><th className="px-2 py-2.5 text-left">Dernier événement</th>
-                <th className="px-2 py-2.5 text-left">Date</th><th className="px-4 py-2.5" />
-              </tr>
-            </thead>
-            <tbody>
-              {suivis.map((s) => (
-                <tr key={s.idu} data-suivi className="border-b border-line-2 last:border-0">
-                  <td className="px-4 py-3">
-                    <button data-suivi-idu onClick={() => focusParcelle(s.idu, { fiche: true })}
-                      className="font-mono text-[12px] text-mint underline decoration-mint/40 underline-offset-2 hover:decoration-mint">
-                      {iduCourt(s.idu)}
-                    </button>
-                  </td>
-                  <td className="px-2 py-3 text-txt">{s.commune ?? '—'}</td>
-                  <td className="px-2 py-3 text-txt-mut">{s.secteur ?? '—'}</td>
-                  <td className="px-2 py-3">
-                    {s.dernier_evenement ? (
-                      <span className="inline-flex items-center gap-1.5">
-                        <span className={s.nouveau ? 'text-mint' : 'text-txt'}>{s.dernier_evenement}</span>
-                        {s.nouveau && <Badge ton="vert">Nouveau</Badge>}
-                      </span>
-                    ) : <span className="text-txt-dim">Rien depuis le début du suivi</span>}
-                  </td>
-                  <td className="px-2 py-3 tabular-nums text-txt-mut">{s.dernier_changement ? new Date(s.dernier_changement).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : '—'}</td>
-                  <td className="px-4 py-3 text-right">
-                    <Bouton niveau="secondaire" ton="vert" data-suivi-retirer onClick={() => suivre.mutate(s.idu)}>Ne plus suivre</Bouton>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="flex flex-col gap-2">
+          {suivis.slice(0, vus).map((s) => <LigneParcelle key={s.idu} s={s} onOuvrir={() => focusParcelle(s.idu, { fiche: true })} onRetirer={() => suivre.mutate(s.idu)} />)}
+          {reste > 0 && (
+            <button data-veille-parcelles-plus onClick={() => setVus((v) => v + PAGE_PAS)}
+              className="mt-1 self-start text-[12px] text-mint underline decoration-mint/40 underline-offset-2 hover:decoration-mint">
+              Voir {Math.min(PAGE_PAS, reste)} de plus
+            </button>
+          )}
         </div>
       )}
-      <p className="mt-4 text-[11px] leading-relaxed text-txt-dim">
-        Surveillé pour chaque parcelle : vente (DVF), permis (Sitadel), changement de propriétaire (société, DGFiP),
-        mise en vente sur un portail (mail immédiat).
-      </p>
-     </div>
+    </section>
+  )
+}
+
+// ── une ligne « parcelle suivie » : clic = ouvre la fiche ; la croix retire du suivi ──
+function LigneParcelle({ s, onOuvrir, onRetirer }: { s: SuiviItem; onOuvrir: () => void; onRetirer: () => void }) {
+  // titre : l'adresse/le secteur si connu, sinon « Parcelle <section numéro>, Commune ».
+  const titre = s.secteur || `Parcelle ${iduCourt(s.idu)}${s.commune ? `, ${s.commune}` : ''}`
+  // ligne secondaire : IDU · surface · zone (les champs absents sont omis, jamais « — » en rafale).
+  const meta = [iduCourt(s.idu), s.surface != null ? fmtM2(s.surface) : null, s.zone || null].filter(Boolean)
+  const age = s.dernier_changement ? ilYA(s.dernier_changement) : ''
+  return (
+    <div data-suivi role="button" tabIndex={0} onClick={onOuvrir}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOuvrir() } }}
+      className="group flex cursor-pointer items-start justify-between gap-3 rounded-lg border border-line-2 bg-surface-2 px-4 py-3 transition-colors hover:border-mint/40">
+      <div className="min-w-0 flex-1">
+        <div data-suivi-idu className="truncate text-[13px] font-medium text-txt-hi group-hover:text-mint">{titre}</div>
+        <div className="mt-0.5 truncate font-mono text-[11px] text-txt-dim">{meta.join(' · ')}</div>
+        <div className="mt-1.5">
+          {s.dernier_evenement ? (
+            <span className="inline-flex flex-wrap items-center gap-1.5">
+              <Badge ton={s.nouveau ? 'vert' : 'neutre'}>{s.dernier_evenement}</Badge>
+              {age && <span className="text-[11px] text-txt-mut">{age}</span>}
+            </span>
+          ) : <span className="text-[11.5px] text-txt-dim">Rien de nouveau</span>}
+        </div>
+      </div>
+      <button data-suivi-retirer aria-label="Ne plus suivre cette parcelle"
+        onClick={(e) => { e.stopPropagation(); onRetirer() }}
+        className="shrink-0 grid h-7 w-7 place-items-center rounded-md text-txt-dim transition-colors hover:bg-line-1 hover:text-coral">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+      </button>
     </div>
   )
 }
 
-// criteria → chips (pour l'affichage d'une alerte)
+// ══════════════════════════════ COLONNE DROITE · alertes ══════════════════════════════
+// criteria → chips lisibles (type · communes · budget).
 function alerteChips(a: RadarAlerte): string[] {
   const c = a.criteria as Record<string, unknown>
   const out: string[] = []
@@ -202,53 +220,151 @@ function alerteVersFiltres(a: RadarAlerte): Record<string, unknown> {
   }
 }
 
-// RADAR-2 (retouches 2) — le FORMULAIRE de création d'alerte, dans la Veille (commune(s), type, prix max,
-// surface min, vendeur). Au moins une commune OU un type est exigé ; le refus d'un doublon (message du
-// serveur, HTTP 409) et l'erreur de validation s'affichent sous le formulaire.
-function FormulaireAlerte({ onCreee, onAnnuler }: { onCreee: () => void; onAnnuler: () => void }) {
-  const [communes, setCommunes] = useState<string[]>([])
+function ColonneAlertes({ alertes, isLoading }: { alertes: RadarAlerte[]; isLoading: boolean }) {
+  const { setRadarEcran, setRadarPrefill } = useApp()
+  const qc = useQueryClient()
+  const [form, setForm] = useState<null | { mode: 'creer' } | { mode: 'modifier'; alerte: RadarAlerte }>(null)
+  const [vus, setVus] = useState(PAGE_INITIALE)
+  const [menu, setMenu] = useState<number | null>(null)
+  const inval = () => { qc.invalidateQueries({ queryKey: ['radar-alertes'] }); qc.invalidateQueries({ queryKey: ['radar-apercu'] }) }
+  const pause = useMutation({ mutationFn: ({ id, p }: { id: number; p: boolean }) => pauseRadarVeille(id, p), onSuccess: inval })
+  const suppr = useMutation({ mutationFn: (id: number) => supprimerRadarVeille(id), onSuccess: inval })
+  const voirDansRadar = (a: RadarAlerte) => { setRadarPrefill(alerteVersFiltres(a)); setRadarEcran('radar') }
+  const reste = alertes.length - vus
+
+  return (
+    <section data-veille-colonne="alertes" className="min-w-0">
+      <ColonneTete titre="Alertes" action={
+        <Bouton niveau="primaire" ton="vert" data-veille-nouvelle-alerte onClick={() => setForm(form?.mode === 'creer' ? null : { mode: 'creer' })}>
+          + Nouvelle alerte
+        </Bouton>
+      } />
+
+      {form?.mode === 'creer' && (
+        <FormulaireAlerte onFini={() => { inval(); setForm(null) }} onAnnuler={() => setForm(null)} />
+      )}
+
+      {isLoading && <Squelette lignes={3} />}
+      {!isLoading && alertes.length === 0 && !form && (
+        <EmptyState className="rounded-lg border border-dashed border-line-2"
+          title="Aucune alerte." hint={<>Cliquez <b className="text-txt">« + Nouvelle alerte »</b> pour surveiller des annonces selon vos critères.</>} />
+      )}
+
+      <div className="flex flex-col gap-3">
+        {alertes.slice(0, vus).map((a) => (
+          form?.mode === 'modifier' && form.alerte.id === a.id ? (
+            <FormulaireAlerte key={a.id} edit={a} onFini={() => { inval(); setForm(null) }} onAnnuler={() => setForm(null)} />
+          ) : (
+            <div key={a.id} data-veille-alerte className="rounded-lg border border-line-2 bg-surface-2 px-5 py-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {alerteChips(a).map((chip, i) => <Badge key={i} ton="neutre">{chip}</Badge>)}
+                </div>
+                {/* menu ⋯ : Modifier · Voir dans Radar · Pause/Reprendre · Supprimer */}
+                <div className="relative shrink-0">
+                  <button data-alerte-menu aria-label="Actions de l’alerte" onClick={() => setMenu(menu === a.id ? null : a.id)}
+                    className="grid h-7 w-7 place-items-center rounded-md text-txt-mut transition-colors hover:bg-line-1 hover:text-txt">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="19" cy="12" r="1.6" /></svg>
+                  </button>
+                  {menu === a.id && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setMenu(null)} />
+                      <div data-alerte-menu-liste className="absolute right-0 z-20 mt-1 w-44 overflow-hidden rounded-md border border-line-2 bg-surface-1 py-1 shadow-lg">
+                        <MenuItem data="alerte-modifier" onClick={() => { setMenu(null); setForm({ mode: 'modifier', alerte: a }) }}>Modifier</MenuItem>
+                        <MenuItem data="alerte-voir" onClick={() => { setMenu(null); voirDansRadar(a) }}>Voir dans Radar</MenuItem>
+                        <MenuItem data="alerte-pause" onClick={() => { setMenu(null); pause.mutate({ id: a.id, p: !a.en_pause }) }}>{a.en_pause ? 'Reprendre' : 'Mettre en pause'}</MenuItem>
+                        <MenuItem data="alerte-supprimer" danger onClick={() => { setMenu(null); suppr.mutate(a.id) }}>Supprimer</MenuItem>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+              {/* ce qui est surveillé — une veille notifie sur TOUT événement d'un bien correspondant (V3) */}
+              <p className="mt-2.5 text-[11px] text-txt-dim">Surveillé : nouvelle annonce, baisse de prix, retrait.</p>
+              {/* badge : nombre d'annonces tombées depuis la dernière visite, « Rien cette semaine », ou « En pause » */}
+              <div className="mt-2 flex items-center gap-3 text-[12px]">
+                <span className={a.en_pause ? 'text-amber' : a.nouveaux > 0 ? 'text-mint' : 'text-txt-dim'}>
+                  {a.en_pause
+                    ? 'En pause'
+                    : a.nouveaux > 0 ? `${a.nouveaux} annonce${a.nouveaux > 1 ? 's' : ''} depuis votre dernier passage` : 'Rien cette semaine'}
+                </span>
+                <span className="text-txt-dim">
+                  {a.en_pause
+                    ? (a.paused_at ? `En pause depuis le ${new Date(a.paused_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}` : '')
+                    : (a.created_at ? `Créée le ${new Date(a.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}` : '')}
+                </span>
+              </div>
+            </div>
+          )
+        ))}
+        {reste > 0 && (
+          <button data-veille-alertes-plus onClick={() => setVus((v) => v + PAGE_PAS)}
+            className="mt-1 self-start text-[12px] text-mint underline decoration-mint/40 underline-offset-2 hover:decoration-mint">
+            Voir {Math.min(PAGE_PAS, reste)} de plus
+          </button>
+        )}
+      </div>
+    </section>
+  )
+}
+
+// ── une entrée du menu ⋯ ──
+function MenuItem({ children, onClick, danger, data }: { children: ReactNode; onClick: () => void; danger?: boolean; data: string }) {
+  return (
+    <button {...{ [`data-${data}`]: true }} onClick={onClick}
+      className={`block w-full px-3.5 py-2 text-left text-[12.5px] transition-colors hover:bg-line-1 ${danger ? 'text-coral' : 'text-txt'}`}>
+      {children}
+    </button>
+  )
+}
+
+// ══════════════ le FORMULAIRE d'alerte (création OU modification) — inchangé côté saisie ══════════════
+// `edit` = l'alerte à modifier (pré-remplit, enregistre en place) ; absent = création.
+function FormulaireAlerte({ edit, onFini, onAnnuler }: { edit?: RadarAlerte; onFini: () => void; onAnnuler: () => void }) {
+  const c = (edit?.criteria ?? {}) as Record<string, unknown>
+  const communesInit = Array.isArray(c.communes) ? (c.communes as string[]) : (edit?.commune ? [edit.commune] : [])
+  const [communes, setCommunes] = useState<string[]>(communesInit)
   const [ajout, setAjout] = useState('')
-  const [type, setType] = useState('')
-  const [prixMax, setPrixMax] = useState('')
-  const [surfMin, setSurfMin] = useState('')
-  const [vendeur, setVendeur] = useState('')
+  const [type, setType] = useState(c.type_bien ? String(c.type_bien) : '')
+  const [prixMax, setPrixMax] = useState(c.prix_max != null ? String(c.prix_max) : '')
+  const [surfMin, setSurfMin] = useState(c.surface_min != null ? String(c.surface_min) : '')
+  const [vendeur, setVendeur] = useState(c.particulier_only ? 'particulier' : '')
   const [msg, setMsg] = useState<string | null>(null)
   const inp = 'h-8 rounded-md border border-line-2 bg-surface-1 px-2.5 text-[12.5px] text-txt focus:border-mint focus:outline-none'
 
-  const creer = useMutation({
-    mutationFn: () => creerRadarVeille({
-      communes: communes.length ? communes : undefined,
-      type_bien: type || undefined,
-      prix_max: prixMax ? Number(prixMax) : undefined,
-      surface_min: surfMin ? Number(surfMin) : undefined,
-      particulier_only: vendeur === 'particulier' || undefined,
-    }),
-    onSuccess: onCreee,
-    onError: (err) => setMsg(err instanceof ApiError && err.detail ? err.detail : "Impossible de créer l'alerte."),
+  const payload = () => ({
+    communes: communes.length ? communes : undefined,
+    type_bien: type || undefined,
+    prix_max: prixMax ? Number(prixMax) : undefined,
+    surface_min: surfMin ? Number(surfMin) : undefined,
+    particulier_only: vendeur === 'particulier' || undefined,
+  })
+  const enreg = useMutation({
+    mutationFn: () => (edit ? modifierRadarVeille(edit.id, payload()) : creerRadarVeille(payload())),
+    onSuccess: onFini,
+    onError: (err) => setMsg(err instanceof ApiError && err.detail ? err.detail : (edit ? "Impossible de modifier l'alerte." : "Impossible de créer l'alerte.")),
   })
   const soumettre = () => {
-    // au moins une commune OU un type (une alerte « tous biens de l'île » n'a pas de sens ici).
     if (!communes.length && !type) { setMsg('Choisissez au moins une commune ou un type de bien.'); return }
-    setMsg(null); creer.mutate()
+    setMsg(null); enreg.mutate()
   }
-  const ajouterCommune = (c: string) => { if (c && !communes.includes(c)) setCommunes((p) => [...p, c]); setAjout('') }
+  const ajouterCommune = (nom: string) => { if (nom && !communes.includes(nom)) setCommunes((p) => [...p, nom]); setAjout('') }
 
   return (
-    <div data-veille-form className="mb-6 rounded-lg border border-mint/40 bg-mint/[0.04] px-5 py-4">
-      <div className="mb-3 text-[13px] font-semibold text-txt-hi">Nouvelle alerte</div>
-      {/* commune(s) — on ajoute une commune à la fois, chips retirables */}
+    <div data-veille-form className="mb-3 rounded-lg border border-mint/40 bg-mint/[0.04] px-5 py-4">
+      <div className="mb-3 text-[13px] font-semibold text-txt-hi">{edit ? "Modifier l'alerte" : 'Nouvelle alerte'}</div>
       <div className="mb-3">
         <label className="mb-1 block text-[11px] text-txt-dim">Commune(s)</label>
         <div className="flex flex-wrap items-center gap-2">
-          {communes.map((c) => (
-            <span key={c} data-veille-form-commune className="inline-flex items-center gap-1 rounded-full bg-mint/12 px-2.5 py-1 text-[11.5px] text-mint">
-              {c}
-              <button aria-label={`Retirer ${c}`} onClick={() => setCommunes((p) => p.filter((x) => x !== c))} className="text-mint/70 hover:text-mint">✕</button>
+          {communes.map((c0) => (
+            <span key={c0} data-veille-form-commune className="inline-flex items-center gap-1 rounded-full bg-mint/12 px-2.5 py-1 text-[11.5px] text-mint">
+              {c0}
+              <button aria-label={`Retirer ${c0}`} onClick={() => setCommunes((p) => p.filter((x) => x !== c0))} className="text-mint/70 hover:text-mint">✕</button>
             </span>
           ))}
           <select data-veille-form-ajout-commune value={ajout} onChange={(e) => ajouterCommune(e.target.value)} className={`${inp} min-w-[170px]`}>
             <option value="">+ Ajouter une commune…</option>
-            {COMMUNES_24.filter((c) => !communes.includes(c)).map((c) => <option key={c} value={c}>{c}</option>)}
+            {COMMUNES_24.filter((c0) => !communes.includes(c0)).map((c0) => <option key={c0} value={c0}>{c0}</option>)}
           </select>
         </div>
       </div>
@@ -260,7 +376,7 @@ function FormulaireAlerte({ onCreee, onAnnuler }: { onCreee: () => void; onAnnul
       </div>
       {msg && <p data-veille-form-msg className="mt-2.5 text-[11.5px] text-amber">{msg}</p>}
       <div className="mt-3.5 flex items-center gap-2">
-        <Bouton niveau="primaire" ton="vert" data-veille-form-creer disabled={creer.isPending} onClick={soumettre}>Créer l’alerte</Bouton>
+        <Bouton niveau="primaire" ton="vert" data-veille-form-creer disabled={enreg.isPending} onClick={soumettre}>{edit ? 'Enregistrer' : "Créer l’alerte"}</Bouton>
         <Bouton niveau="secondaire" ton="vert" data-veille-form-annuler onClick={onAnnuler}>Annuler</Bouton>
       </div>
     </div>
@@ -280,72 +396,6 @@ function Segment({ label, value, onChange, options, data }: {
             className={`flex items-center justify-center whitespace-nowrap px-2.5 text-[12px] ${i ? 'border-l border-line-2' : ''} ${value === v ? 'bg-mint/12 font-medium text-mint' : 'text-txt-mut hover:text-txt'}`}>{l}</button>
         ))}
       </div>
-    </div>
-  )
-}
-
-// ══════════════ VEILLE · LES ANNONCES — les alertes ══════════════
-export function VeilleAnnonces() {
-  const { setRadarEcran, setRadarPrefill } = useApp()
-  const qc = useQueryClient()
-  const q = useQuery({ queryKey: ['radar-alertes'], queryFn: getRadarAlertes })
-  const alertes = q.data?.alertes ?? []
-  const [formOuvert, setFormOuvert] = useState(false)
-  const inval = () => { qc.invalidateQueries({ queryKey: ['radar-alertes'] }); qc.invalidateQueries({ queryKey: ['radar-apercu'] }) }
-  const pause = useMutation({ mutationFn: ({ id, p }: { id: number; p: boolean }) => pauseRadarVeille(id, p), onSuccess: inval })
-  const suppr = useMutation({ mutationFn: (id: number) => supprimerRadarVeille(id), onSuccess: inval })
-  const voirDansRadar = (a: RadarAlerte) => { setRadarPrefill(alerteVersFiltres(a)); setRadarEcran('radar') }
-
-  return (
-    <div className="min-h-0 flex-1 overflow-y-auto">
-     <div className="mx-auto w-full max-w-[1060px] px-8 py-10">
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <EcranTete surtitre="VEILLE · LES ANNONCES" titre="Vos alertes"
-          sous="Une nouvelle annonce, une baisse de prix ou un retrait, selon vos critères."
-          retour={<Retour label="Veille" data-veille-retour onClick={() => setRadarEcran('veille')} />} />
-        <Bouton niveau="primaire" ton="vert" data-veille-nouvelle-alerte className="mt-10 shrink-0" onClick={() => setFormOuvert((v) => !v)}>
-          + Nouvelle alerte
-        </Bouton>
-      </div>
-
-      {formOuvert && <FormulaireAlerte onCreee={() => { inval(); setFormOuvert(false) }} onAnnuler={() => setFormOuvert(false)} />}
-
-      {q.isLoading && <Squelette lignes={3} />}
-      {!q.isLoading && alertes.length === 0 && (
-        <EmptyState className="rounded-lg border border-dashed border-line-2"
-          title="Aucune alerte." hint={<>Cliquez <b className="text-txt">« + Nouvelle alerte »</b> pour surveiller des annonces selon vos critères.</>} />
-      )}
-      <div className="flex flex-col gap-3">
-        {alertes.map((a) => (
-          <div key={a.id} data-veille-alerte className="rounded-lg border border-line-2 bg-surface-2 px-5 py-4">
-            <div className="flex flex-wrap items-center gap-1.5">
-              {alerteChips(a).map((chip, i) => <Badge key={i} ton="neutre">{chip}</Badge>)}
-            </div>
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-3 text-[12px]">
-                <span className={a.en_pause ? 'text-amber' : a.nouveaux > 0 ? 'text-mint' : 'text-txt-dim'}>
-                  {a.en_pause ? 'En pause' : a.nouveaux > 0 ? `${a.nouveaux} nouveau${a.nouveaux > 1 ? 'x' : ''} depuis hier` : 'Rien de neuf'}
-                </span>
-                <span className="text-txt-dim">
-                  {a.en_pause
-                    ? (a.paused_at ? `En pause depuis le ${new Date(a.paused_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}` : 'En pause')
-                    : (a.created_at ? `Créée le ${new Date(a.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}` : '')}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Bouton niveau="secondaire" ton="vert" data-alerte-voir onClick={() => voirDansRadar(a)}>Voir dans Radar</Bouton>
-                <Bouton niveau="secondaire" ton="vert" data-alerte-pause onClick={() => pause.mutate({ id: a.id, p: !a.en_pause })}>
-                  {a.en_pause ? 'Reprendre' : 'Mettre en pause'}
-                </Bouton>
-                <Bouton niveau="secondaire" ton="danger" icone data-alerte-supprimer aria-label="Supprimer l’alerte" onClick={() => suppr.mutate(a.id)}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" /></svg>
-                </Bouton>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-     </div>
     </div>
   )
 }

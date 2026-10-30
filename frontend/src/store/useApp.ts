@@ -891,10 +891,11 @@ export const useApp = create<AppState>((set, get) => ({
   setSurveillancePorte: (p) => set({ surveillancePorte: p }),
   // RV2-V3 — la Veille est une VUE plein écran (plus un overlay). Le volet 'secteurs' n'existe
   // plus (A-08-3) : il n'est plus accepté. `surveillanceOpen` reste true tant que la vue est ouverte.
-  // RADAR-2 (Lot 1) — la Veille vit désormais DANS le hub Radar (view:'radar'). Les deep-links de notif
-  // ('parcelles' → le foncier, 'criteres' → les annonces) atterrissent directement sur le bon écran Veille.
+  // RADAR-2 (Lot 1) — la Veille vit désormais DANS le hub Radar (view:'radar'). VEILLE-3 — une seule page :
+  // les deep-links de notif ('parcelles'/'criteres') atterrissent tous sur la Veille unifiée (les deux
+  // colonnes y sont visibles ensemble). `surveillanceVolet` est conservé (compat), sans écran dédié.
   openSurveillance: (volet) => set((s) => ({ surveillanceOpen: true, view: 'radar',
-    radarEcran: volet === 'criteres' ? 'veille-annonces' : 'veille-foncier', surveillancePorte: 'interne',
+    radarEcran: 'veille', surveillancePorte: 'interne',
     outilsOpen: false, surveillanceVolet: volet ?? s.surveillanceVolet,
     selectedIdu: null, module: null, ...CLOSE_OVERLAYS })),
   setSurveillanceOpen: (v) => set(v ? { surveillanceOpen: true, view: 'radar', radarEcran: 'veille' } : { surveillanceOpen: false, view: 'cartes' }),
@@ -902,11 +903,11 @@ export const useApp = create<AppState>((set, get) => ({
     ? { surveillanceOpen: false, view: 'cartes', module: null, selectedIdu: null, ...CLOSE_OVERLAYS }
     : { surveillanceOpen: true, view: 'radar', radarEcran: 'veille', surveillancePorte: 'accueil', outilsOpen: false,
         selectedIdu: null, module: null, ...CLOSE_OVERLAYS })),
-  // anciennes entrées : elles REDIRIGENT vers la Veille (hub Radar), le foncier.
+  // anciennes entrées : elles REDIRIGENT vers la Veille unifiée (hub Radar) — VEILLE-3, une seule page.
   toggleVeilles: () => set({ surveillanceOpen: true, surveillanceVolet: 'parcelles', view: 'radar',
-    radarEcran: 'veille-foncier', surveillancePorte: 'interne', outilsOpen: false, selectedIdu: null, module: null, ...CLOSE_OVERLAYS }),
+    radarEcran: 'veille', surveillancePorte: 'interne', outilsOpen: false, selectedIdu: null, module: null, ...CLOSE_OVERLAYS }),
   toggleSuivis: () => set({ surveillanceOpen: true, surveillanceVolet: 'parcelles', view: 'radar',
-    radarEcran: 'veille-foncier', surveillancePorte: 'interne', outilsOpen: false, ...CLOSE_OVERLAYS }),
+    radarEcran: 'veille', surveillancePorte: 'interne', outilsOpen: false, ...CLOSE_OVERLAYS }),
   compareIdus: [],
   compareOpen: false,
   // RECETTE-OUTILS-1 (point 23 / T1) — plus de persistance 15 min : la sélection Comparer est de SESSION

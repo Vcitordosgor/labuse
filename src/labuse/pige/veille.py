@@ -59,12 +59,28 @@ def _norme(criteria: dict) -> dict:
     return c
 
 
-def existe_identique(db: Session, compte_id: int | None, criteria: dict) -> bool:
+def existe_identique(db: Session, compte_id: int | None, criteria: dict, *, sauf_id: int | None = None) -> bool:
     """RADAR-2 (retouches 2) — une alerte AUX MÊMES critères existe-t-elle déjà (compte-scopé, actives) ?
     Comparaison sur la forme canonique (`_norme`) → l'ordre des communes ou une commune seule vs liste
-    d'une n'échappe pas au doublon."""
+    d'une n'échappe pas au doublon. VEILLE-3 : `sauf_id` exclut l'alerte en cours d'édition (sinon
+    « Modifier » sans toucher aux critères déclencherait un faux doublon)."""
     cible = _norme(criteria)
-    return any(_norme(v["criteria"]) == cible for v in lister(db, compte_id))
+    return any(_norme(v["criteria"]) == cible for v in lister(db, compte_id) if v["id"] != sauf_id)
+
+
+def modifier(db: Session, compte_id: int | None, veille_id: int, criteria: dict) -> bool:
+    """VEILLE-3 — remplace les critères d'une alerte EN PLACE (id/created_at/pause conservés). Même garde
+    IDOR que supprimer/renommer (compte-scopé, actives). `criteria` est le même modèle que `creer` ; la
+    colonne `commune` (affichage/index) est recalculée comme à la création. True si une ligne a bougé."""
+    commune = criteria.get("commune")
+    communes = criteria.get("communes") or []
+    if communes and not commune:
+        commune = communes[0] if len(communes) == 1 else None
+    n = db.execute(text(
+        "UPDATE veilles SET criteria = CAST(:cr AS jsonb), commune = :comm "
+        "WHERE id = :i AND type = :t AND actif AND compte_id IS NOT DISTINCT FROM :c"),
+        {"cr": json.dumps(criteria), "comm": commune, "i": veille_id, "t": TYPE_RADAR, "c": compte_id}).rowcount
+    return bool(n)
 
 
 def lister(db: Session, compte_id: int | None) -> list[dict]:
