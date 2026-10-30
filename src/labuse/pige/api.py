@@ -1514,6 +1514,15 @@ def _fiabilite_segment(type_bien: str | None) -> tuple[str, int]:
     return niveau, ecart
 
 
+# CHASSE-4-FIX (C4-001) — le MOT affiché de la fiabilité est décidé ICI, une seule fois, et servi tel
+# quel. L'écran et le PDF l'AFFICHENT sans retraduire (plus de table de correspondance au front qui
+# ratait `limitee` et remontait le niveau à « Moyenne »). Repli commune → toujours « Limitée ».
+def _fiabilite_mot(niveau: str | None, commune_fallback: bool = False) -> str:
+    if commune_fallback:
+        return "Limitée"
+    return {"fiable": "Élevée", "moyen": "Moyenne", "limitee": "Limitée"}.get(niveau or "", "Moyenne")
+
+
 def _emprise_bati_m2(db, idu: str) -> int | None:
     """Emprise au sol du bâti existant (BD TOPO, `p_model_bati`), m². None si pas de bâti servi."""
     emp = db.execute(text("SELECT emprise_bati_m2 FROM p_model_bati WHERE idu = :i"), {"i": idu}).scalar()
@@ -1561,6 +1570,9 @@ def estimation_annonce(db, idu: str, fiche: dict) -> dict:
     Fiabilité RECALIBRÉE sur le SEGMENT (ESTIMATION-BANC-1), pas sur n. Montants arrondis au millier."""
     from .. import marche_service as _msvc
     nature = _nature_parcelle(db, idu)
+    # CHASSE-4-FIX (C4-003) — une parcelle en COPROPRIÉTÉ n'est pas une maison : flag copro du run servi
+    # (même indicateur que le verdict « Copro — acquisition complexe » de la fiche).
+    copro = bool(((fiche or {}).get("score_v2") or {}).get("copro"))
     repere_tn = _terrain_repere(db, idu)
     surface_parc = (fiche or {}).get("surface_m2") or (fiche or {}).get("contenance_m2")
     if nature == "nu":
@@ -1571,14 +1583,35 @@ def estimation_annonce(db, idu: str, fiche: dict) -> dict:
             return {"nature": "nue", "type_comparateur": "terrain_nu", "type_bien": "terrain",
                     "median": med, "n": repere_tn.get("n"), "periode": repere_tn.get("periode"),
                     "perimetre": repere_tn.get("perimetre"), "fiabilite": niveau, "precision_pct": ecart,
-                    "commune_fallback": False,
+                    "commune_fallback": False, "fiabilite_mot": _fiabilite_mot(niveau, False),
                     "comparables": terr.get("comparables") or [], "n_total": terr.get("n_total"),
                     "comparables_periode": terr.get("periode"),
+                    "comparables_radius_m": terr.get("radius_m"),   # C4-005 — rayon réel des comparables
                     "valeur_indicative": _valeur_indicative(surface_parc, med, ecart),
                     "repere_terrain_nu": repere_tn}
         return {"nature": "nue", "type_comparateur": "terrain_nu", "type_bien": "terrain",
                 "median": None, "comparables": [], "repere_terrain_nu": repere_tn,
                 "note": "Pas assez de ventes de terrain nu comparables dans le secteur."}
+    # COPROPRIÉTÉ (C4-003) — comparateur APPARTEMENTS, PAS d'ordre de grandeur sur l'emprise totale du
+    # bâti (aucun bien unique à valoriser), la lecture foncière reste.
+    if copro:
+        niveau, ecart = _fiabilite_segment("appartement")
+        cb = _msvc.comparateur_bien(db, idu, type_bien="appartement")
+        base = {"nature": "copropriete", "type_comparateur": "bati", "type_bien": "appartement",
+                "repere_terrain_nu": repere_tn,
+                "lecture_fonciere": _lecture_fonciere_parcelle(surface_parc, repere_tn, None)}
+        if not cb or cb.get("median") is None:
+            return {**base, "median": None, "comparables": [],
+                    "fiabilite_mot": _fiabilite_mot(niveau, False),
+                    "note": "Pas assez de ventes d'appartements comparables dans le secteur."}
+        return {**base,
+                "type_label_pluriel": cb.get("type_label_pluriel") or "appartements",
+                "median": cb.get("median"), "q1": cb.get("q1"), "q3": cb.get("q3"), "n": cb.get("n"),
+                "radius_m": cb.get("radius_m"), "periode": cb.get("periode"),
+                "fiabilite": niveau, "precision_pct": ecart, "commune_fallback": cb.get("commune_fallback"),
+                "fiabilite_mot": _fiabilite_mot(niveau, cb.get("commune_fallback")),
+                "comparables": cb.get("comparables") or [], "n_total": cb.get("n_total"),
+                "emprise_bati_m2": None, "valeur_indicative": None}
     # BÂTIE (ou non mesurée traitée comme bâtie) — comparateur bâti unique.
     cb = _msvc.comparateur_bien(db, idu)
     if not cb or cb.get("median") is None:
@@ -1596,6 +1629,7 @@ def estimation_annonce(db, idu: str, fiche: dict) -> dict:
         "median": cb.get("median"), "q1": cb.get("q1"), "q3": cb.get("q3"), "n": cb.get("n"),
         "radius_m": cb.get("radius_m"), "periode": cb.get("periode"),
         "fiabilite": niveau, "precision_pct": ecart, "commune_fallback": cb.get("commune_fallback"),
+        "fiabilite_mot": _fiabilite_mot(niveau, cb.get("commune_fallback")),
         "comparables": cb.get("comparables") or [], "n_total": cb.get("n_total"),
         "emprise_bati_m2": emprise,
         "valeur_indicative": vi,
@@ -1616,7 +1650,11 @@ def radar_annonce_estimation(idu: str) -> dict:
             fiche = parcel_fiche(idu, db=db)
         except ValueError:
             return {"idu": idu, "median": None, "type_comparateur": None, "note": "Parcelle inconnue."}
-        return {"idu": idu, **estimation_annonce(db, idu, fiche)}
+        # CHASSE-4-FIX (C4-002) — nombre d'aléas = la liste DÉDUPLIQUÉE `_risques_rows` (une ligne par
+        # aléa, sans doublon DEAL/PPR), la MÊME que le PDF compte. Servi ici pour que la tuile « Risques »
+        # de l'écran lise EXACTEMENT ce que le document imprime (fin de l'écart 1≠2 / 4≠2).
+        n_aleas = len(_risques_rows(fiche, (fiche or {}).get("commune")))
+        return {"idu": idu, "n_aleas": n_aleas, **estimation_annonce(db, idu, fiche)}
 
 
 # ── ANNONCE-5 — le RAPPORT PARCELLE complet (variante adresse, 2 pages) : POINT UNIQUE écran == PDF ──
@@ -1905,7 +1943,9 @@ def rapport_parcelle(db, idu: str, fiche: dict | None = None) -> dict:
     except Exception:  # noqa: BLE001 — l'exposition est une tuile « plus », jamais un bloqueur
         expo = None
     type_bien = est.get("type_bien")
-    if nature == "nu":
+    if est.get("nature") == "copropriete":   # CHASSE-4-FIX (C4-003)
+        nature_label = "Copropriété"
+    elif nature == "nu":
         nature_label = "Parcelle nue"
     else:
         suff = {"maison": ", maison", "appartement": ", appartement"}.get(type_bien or "", "")
