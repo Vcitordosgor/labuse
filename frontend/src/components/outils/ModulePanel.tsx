@@ -1929,6 +1929,13 @@ export function ModulePanel() {
   }, [])
   if (!def) return null
   const Body = COMPONENTS[def.key]
+  // RECETTE-4 (T1 — racine) — changer d'outil doit VIDER tout l'état de l'outil quitté. Le store le fait
+  // déjà (setModule remet selectedIdu/contexteCommune/moduleMap… à null), mais l'ÉTAT LOCAL React (useState
+  // internes : sous-vue, commune choisie, onglet…) ne tombe QUE si React remonte le composant. Or `<Body/>`
+  // n'était pas KEYÉ : quand deux clés d'outil résolvent le MÊME composant (communes↔barometre → Communes,
+  // permis↔promesses → M03), React réutilisait l'instance → la sous-vue « Acquisitions récentes » (et sa
+  // commune) survivait au changement d'outil (constat Vic). `key={def.key}` force un montage NEUF à chaque
+  // changement de clé — garantie uniforme pour TOUS les outils, pas seulement les paires aliasées.
   // ANNONCE-1 — cet outil porte SON PROPRE en-tête (3 écrans : entrée / rapport parcelle / rapport lien)
   // avec un seul Retour par écran dont le libellé change (« ← Outils » à l'entrée, « ← Retour » dans un
   // rapport). On le monte donc SANS l'en-tête fixe du panneau (qui afficherait un 2ᵉ retour + un titre
@@ -1936,7 +1943,7 @@ export function ModulePanel() {
   if (def.key === 'analyser-annonce') {
     return (
       <aside className="apparition flex h-full w-[320px] shrink-0 flex-col border-r border-line bg-surface-1">
-        <Body />
+        <Body key={def.key} />
       </aside>
     )
   }
@@ -1959,7 +1966,7 @@ export function ModulePanel() {
         </div>
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-4">
-        <Body />
+        <Body key={def.key} />
       </div>
     </aside>
   )
