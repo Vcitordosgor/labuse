@@ -388,3 +388,34 @@ géométrique « accès sur voie » échoue pour tout candidat → aucun faisabl
 
 _IDUs sans voie trouvés (golden) : 97410000CD0905, 97411000KA0296, 97422000AD1237,
 97418000AT2379, 97408000AP1647, 97415000CX1395 — tous continuent désormais._
+
+---
+
+## Bilan — 18 points, 9 lots (tous commités, AUCUN mergé)
+
+| # | Point | Lot | État |
+|---|---|---|---|
+| 1 | T1 — état d'outil vidé au changement (5 outils) | 1 | ✅ `key={def.key}` sur Body |
+| 2 | Copilote cartes 2 colonnes, rien tronqué | 3 | ✅ 2 cols 13px, 0 tronqué |
+| 3 | Notifications — intro « Ce qui bouge… » retirée | 3 | ✅ |
+| 4 | Étude faisabilité — accès à confirmer (plus Impossible) | 9 | ✅ verdict À compléter |
+| 5 | Radar — date absente ≠ 1970 (« 20 756 j ») + autres compteurs | 5 | ✅ 20756→62 |
+| 6 | Radar « Ce bien » = mêmes chiffres + « Estimer ce bien → » | 6 | ✅ +36 % aligné |
+| 7 | Projets « Nouveau projet » reformulé, « programme » retiré | 8 | ✅ |
+| 8 | Étude de zone — menu « Activité » retiré (outil+Docs+PDF) | 2 | ✅ |
+| 9 | Prospection solaire — 2 paragraphes retirés | 1 | ✅ |
+| 10 | Assemblage — encart retiré, noms PM en entier | 1 | ✅ |
+| 11 | Permis — « Tous » appliqué à l'arrivée | 2 | ✅ 50 808 |
+| 12 | Renommer « Analyser une annonce » → « Estimer un bien » | 6 | ✅ partout |
+| 13 | Estimer un bien — écran (comparables, foncier, Dernière vente) | 6 | ✅ |
+| 14 | Gabarit 3D — volume vert vérifié | 4 | ✅ pas de bug, dit explicite |
+| 15 | Courrier — référence non séquentielle | 2 | ✅ C-DDMM-XX |
+| 16 | Taxe d'aménagement — barème 2026 vérifié | 4 | ✅ 0 écart, 10 tests |
+| 17 | En-tête — sélecteur commune retiré → « Fiche commune ▾ » | 7 | ✅ (filtre Filtres : fluide) |
+
+**Qualité.** `tsc -b` 0 · **vitest 305/305** · pytest ciblés verts : taxe 10, étude-accès 3,
+annonce/pige/marche/radar 237, implantation (distance/ppr/contenance/gabarit/study) 179.
+Pre-commit hook (garde gros fichiers) vert sur les 9 commits.
+
+**Reste à Vic.** Merge (geste de Vic) puis déploiement groupé. Recharger l'extension n'est pas requis
+(aucune modif extension).
