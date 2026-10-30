@@ -147,11 +147,15 @@ function ColonneParcelles({ suivis, isLoading }: { suivis: SuiviItem[]; isLoadin
           hint={<>Ajoutez-en une ci-dessus, ou ouvrez une fiche et cliquez la <b className="text-txt">cloche « Suivre »</b>.</>} />
       )}
       {suivis.length > 0 && (
-        <div className="flex flex-col gap-2">
-          {suivis.slice(0, vus).map((s) => <LigneParcelle key={s.idu} s={s} onOuvrir={() => focusParcelle(s.idu, { fiche: true })} onRetirer={() => suivre.mutate(s.idu)} />)}
+        <div>
+          {/* VEILLE-3-FIX (3) — lignes compactes dans UN seul cadre, séparées par un filet (plus une carte
+              par parcelle). Le filet = border-b, retiré sur la dernière ligne. */}
+          <div className="overflow-hidden rounded-lg border border-line-2">
+            {suivis.slice(0, vus).map((s) => <LigneParcelle key={s.idu} s={s} onOuvrir={() => focusParcelle(s.idu, { fiche: true })} onRetirer={() => suivre.mutate(s.idu)} />)}
+          </div>
           {reste > 0 && (
             <button data-veille-parcelles-plus onClick={() => setVus((v) => v + PAGE_PAS)}
-              className="mt-1 self-start text-[12px] text-mint underline decoration-mint/40 underline-offset-2 hover:decoration-mint">
+              className="mt-2 text-[12px] text-mint underline decoration-mint/40 underline-offset-2 hover:decoration-mint">
               Voir {Math.min(PAGE_PAS, reste)} de plus
             </button>
           )}
@@ -164,31 +168,33 @@ function ColonneParcelles({ suivis, isLoading }: { suivis: SuiviItem[]; isLoadin
 // ── une ligne « parcelle suivie » : clic = ouvre la fiche ; la croix retire du suivi ──
 function LigneParcelle({ s, onOuvrir, onRetirer }: { s: SuiviItem; onOuvrir: () => void; onRetirer: () => void }) {
   // titre : l'adresse/le secteur si connu, sinon « Parcelle <section numéro>, Commune ».
-  const titre = s.secteur || `Parcelle ${iduCourt(s.idu)}${s.commune ? `, ${s.commune}` : ''}`
+  // VEILLE-3-FIX (2) — le lieu-dit commence par une majuscule (« Le Chemin mon Repos »).
+  const sect = s.secteur ? s.secteur.charAt(0).toUpperCase() + s.secteur.slice(1) : null
+  const titre = sect || `Parcelle ${iduCourt(s.idu)}${s.commune ? `, ${s.commune}` : ''}`
   // ligne secondaire : IDU · surface · zone (les champs absents sont omis, jamais « — » en rafale).
   const meta = [iduCourt(s.idu), s.surface != null ? fmtM2(s.surface) : null, s.zone || null].filter(Boolean)
   const age = s.dernier_changement ? ilYA(s.dernier_changement) : ''
   return (
     <div data-suivi role="button" tabIndex={0} onClick={onOuvrir}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOuvrir() } }}
-      className="group flex cursor-pointer items-start justify-between gap-3 rounded-lg border border-line-2 bg-surface-2 px-4 py-3 transition-colors hover:border-mint/40">
+      className="group flex cursor-pointer items-center justify-between gap-3 border-b border-line-2 px-4 py-2.5 transition-colors last:border-0 hover:bg-surface-2">
       <div className="min-w-0 flex-1">
-        <div data-suivi-idu className="truncate text-[13px] font-medium text-txt-hi group-hover:text-mint">{titre}</div>
-        <div className="mt-0.5 truncate font-mono text-[11px] text-txt-dim">{meta.join(' · ')}</div>
-        <div className="mt-1.5">
-          {s.dernier_evenement ? (
-            <span className="inline-flex flex-wrap items-center gap-1.5">
-              <Badge ton={s.nouveau ? 'vert' : 'neutre'}>{s.dernier_evenement}</Badge>
-              {age && <span className="text-[11px] text-txt-mut">{age}</span>}
-            </span>
-          ) : <span className="text-[11.5px] text-txt-dim">Rien de nouveau</span>}
-        </div>
+        <div data-suivi-idu className="truncate text-[12.5px] font-medium text-txt-hi group-hover:text-mint">{titre}</div>
+        <div className="mt-0.5 truncate font-mono text-[10.5px] text-txt-dim">{meta.join(' · ')}</div>
       </div>
-      <button data-suivi-retirer aria-label="Ne plus suivre cette parcelle"
-        onClick={(e) => { e.stopPropagation(); onRetirer() }}
-        className="shrink-0 grid h-7 w-7 place-items-center rounded-md text-txt-dim transition-colors hover:bg-line-1 hover:text-coral">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
-      </button>
+      <div className="flex shrink-0 items-center gap-2.5">
+        {s.dernier_evenement ? (
+          <span className="flex flex-col items-end text-right">
+            <Badge ton={s.nouveau ? 'vert' : 'neutre'}>{s.dernier_evenement}</Badge>
+            {age && <span className="mt-0.5 text-[10.5px] text-txt-mut">{age}</span>}
+          </span>
+        ) : <span className="text-[11.5px] text-txt-dim">Rien de nouveau</span>}
+        <button data-suivi-retirer aria-label="Ne plus suivre cette parcelle"
+          onClick={(e) => { e.stopPropagation(); onRetirer() }}
+          className="grid h-7 w-7 place-items-center rounded-md text-txt-dim transition-colors hover:bg-line-1 hover:text-coral">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+        </button>
+      </div>
     </div>
   )
 }
@@ -255,34 +261,33 @@ function ColonneAlertes({ alertes, isLoading }: { alertes: RadarAlerte[]; isLoad
           form?.mode === 'modifier' && form.alerte.id === a.id ? (
             <FormulaireAlerte key={a.id} edit={a} onFini={() => { inval(); setForm(null) }} onAnnuler={() => setForm(null)} />
           ) : (
-            <div key={a.id} data-veille-alerte className="rounded-lg border border-line-2 bg-surface-2 px-5 py-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {alerteChips(a).map((chip, i) => <Badge key={i} ton="neutre">{chip}</Badge>)}
-                </div>
-                {/* menu ⋯ : Modifier · Voir dans Radar · Pause/Reprendre · Supprimer */}
-                <div className="relative shrink-0">
-                  <button data-alerte-menu aria-label="Actions de l’alerte" onClick={() => setMenu(menu === a.id ? null : a.id)}
-                    className="grid h-7 w-7 place-items-center rounded-md text-txt-mut transition-colors hover:bg-line-1 hover:text-txt">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="19" cy="12" r="1.6" /></svg>
-                  </button>
-                  {menu === a.id && (
-                    <>
-                      <div className="fixed inset-0 z-10" onClick={() => setMenu(null)} />
-                      <div data-alerte-menu-liste className="absolute right-0 z-20 mt-1 w-44 overflow-hidden rounded-md border border-line-2 bg-surface-1 py-1 shadow-lg">
-                        <MenuItem data="alerte-modifier" onClick={() => { setMenu(null); setForm({ mode: 'modifier', alerte: a }) }}>Modifier</MenuItem>
-                        <MenuItem data="alerte-voir" onClick={() => { setMenu(null); voirDansRadar(a) }}>Voir dans Radar</MenuItem>
-                        <MenuItem data="alerte-pause" onClick={() => { setMenu(null); pause.mutate({ id: a.id, p: !a.en_pause }) }}>{a.en_pause ? 'Reprendre' : 'Mettre en pause'}</MenuItem>
-                        <MenuItem data="alerte-supprimer" danger onClick={() => { setMenu(null); suppr.mutate(a.id) }}>Supprimer</MenuItem>
-                      </div>
-                    </>
-                  )}
-                </div>
+            <div key={a.id} data-veille-alerte className="relative rounded-lg border border-line-2 bg-surface-2 px-5 py-4">
+              {/* VEILLE-3-FIX (4) — le menu ⋯ est hors du flux (coin haut-droit), pour que la ligne
+                  « Surveillé » suive les critères SANS vide. */}
+              <div className="absolute right-3.5 top-3.5">
+                <button data-alerte-menu aria-label="Actions de l’alerte" onClick={() => setMenu(menu === a.id ? null : a.id)}
+                  className="grid h-7 w-7 place-items-center rounded-md text-txt-mut transition-colors hover:bg-line-1 hover:text-txt">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="19" cy="12" r="1.6" /></svg>
+                </button>
+                {menu === a.id && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setMenu(null)} />
+                    <div data-alerte-menu-liste className="absolute right-0 z-20 mt-1 w-44 overflow-hidden rounded-md border border-line-2 bg-surface-1 py-1 shadow-lg">
+                      <MenuItem data="alerte-modifier" onClick={() => { setMenu(null); setForm({ mode: 'modifier', alerte: a }) }}>Modifier</MenuItem>
+                      <MenuItem data="alerte-voir" onClick={() => { setMenu(null); voirDansRadar(a) }}>Voir dans Radar</MenuItem>
+                      <MenuItem data="alerte-pause" onClick={() => { setMenu(null); pause.mutate({ id: a.id, p: !a.en_pause }) }}>{a.en_pause ? 'Reprendre' : 'Mettre en pause'}</MenuItem>
+                      <MenuItem data="alerte-supprimer" danger onClick={() => { setMenu(null); suppr.mutate(a.id) }}>Supprimer</MenuItem>
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5 pr-9">
+                {alerteChips(a).map((chip, i) => <Badge key={i} ton="neutre">{chip}</Badge>)}
               </div>
               {/* ce qui est surveillé — une veille notifie sur TOUT événement d'un bien correspondant (V3) */}
-              <p className="mt-2.5 text-[11px] text-txt-dim">Surveillé : nouvelle annonce, baisse de prix, retrait.</p>
+              <p className="mt-1.5 text-[11px] text-txt-dim">Surveillé : nouvelle annonce, baisse de prix, retrait.</p>
               {/* badge : nombre d'annonces tombées depuis la dernière visite, « Rien cette semaine », ou « En pause » */}
-              <div className="mt-2 flex items-center gap-3 text-[12px]">
+              <div className="mt-1.5 flex items-center gap-3 text-[12px]">
                 <span className={a.en_pause ? 'text-amber' : a.nouveaux > 0 ? 'text-mint' : 'text-txt-dim'}>
                   {a.en_pause
                     ? 'En pause'
@@ -368,11 +373,19 @@ function FormulaireAlerte({ edit, onFini, onAnnuler }: { edit?: RadarAlerte; onF
           </select>
         </div>
       </div>
-      <div className="flex flex-wrap items-center gap-2">
+      {/* VEILLE-3-FIX (1) — chaque champ porte son étiquette visible (Type · Vendeur · Prix max · Surface
+          min) : plus aucun chiffre dans un champ sans nom. Le placeholder ne sert qu'à l'unité. */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5">
         <Segment label="Type" value={type} onChange={setType} options={TYPES_ALERTE} data="veille-form-type" />
         <Segment label="Vendeur" value={vendeur} onChange={setVendeur} options={VENDEURS_ALERTE} data="veille-form-vendeur" />
-        <input data-veille-form-prix type="number" min={0} placeholder="Prix max" value={prixMax} onChange={(e) => setPrixMax(e.target.value)} className={`${inp} w-[120px]`} />
-        <input data-veille-form-surface type="number" min={0} placeholder="Surface min" value={surfMin} onChange={(e) => setSurfMin(e.target.value)} className={`${inp} w-[120px]`} />
+        <label className="flex items-center gap-1.5">
+          <span className="text-[11px] text-txt-dim">Prix max</span>
+          <input data-veille-form-prix type="number" min={0} placeholder="€" value={prixMax} onChange={(e) => setPrixMax(e.target.value)} className={`${inp} w-[110px]`} />
+        </label>
+        <label className="flex items-center gap-1.5">
+          <span className="text-[11px] text-txt-dim">Surface min</span>
+          <input data-veille-form-surface type="number" min={0} placeholder="m²" value={surfMin} onChange={(e) => setSurfMin(e.target.value)} className={`${inp} w-[110px]`} />
+        </label>
       </div>
       {msg && <p data-veille-form-msg className="mt-2.5 text-[11.5px] text-amber">{msg}</p>}
       <div className="mt-3.5 flex items-center gap-2">

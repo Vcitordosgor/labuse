@@ -117,6 +117,35 @@ Vérifié aussi :
 
 ---
 
+---
+
+## VEILLE-3-FIX (retouches Vic, 30/10 — même branche, pas de merge)
+
+Quatre finitions après la première passe :
+
+1. **Formulaire Modifier / Nouvelle alerte — chaque champ a son étiquette visible.** « Prix max » et
+   « Surface min » n'étaient que des *placeholders* (le nom disparaissait dès qu'on tapait un chiffre). Ils
+   ont désormais une **étiquette à gauche** (comme Type / Vendeur) ; le placeholder ne porte plus que l'unité
+   (`€`, `m²`). Plus aucun chiffre dans un champ sans nom.
+2. **Lieu-dits en majuscule initiale.** « le Chemin mon Repos » → **« Le Chemin mon Repos »** (première
+   lettre capitalisée à l'affichage ; le reste du libellé est conservé tel quel).
+3. **Parcelles suivies — lignes compactes dans un seul cadre.** Fini la carte par parcelle : un **seul cadre
+   bordé**, lignes **séparées par un filet** (`border-b`, retiré sur la dernière), padding réduit, le dernier
+   événement et la croix passent à droite de la ligne.
+4. **Cartes d'alerte — plus de vide avant « Surveillé ».** Le menu ⋯ sort du flux (coin haut-droit absolu) :
+   la ligne « Surveillé : … » **suit directement** les critères, marges resserrées.
+
+Frontend seul (`VeilleEcrans.tsx`) — aucun changement back. `tsc -b` **0** · `vitest` **301/301**.
+
+**Captures avant/après** :
+
+| Sujet | Avant | Après |
+|-------|-------|-------|
+| Page remplie (lieu-dits (2) + cadre/filet (3) + vide alerte (4)) | `captures/fix-05-avant-rempli.png` | `captures/fix-06-apres-rempli.png` |
+| Formulaire (étiquettes des champs (1)) | `captures/fix-07-avant-formulaire.png` | `captures/fix-08-apres-formulaire.png` |
+
+---
+
 ## Gestes de Vic
 Recette sur `:6240`, puis **merge** `feat/veille-3`. Pour relancer en local :
 `PYTHONPATH=…/labuse-veille3/src LABUSE_DATABASE_URL=postgresql+psycopg://openclaw@localhost/labuse uvicorn labuse.api.app:app --port 9040`
