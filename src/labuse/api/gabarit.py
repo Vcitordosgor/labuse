@@ -155,5 +155,8 @@ def gabarit_detail(idu: str, db: Session = Depends(get_db)) -> GabaritResult:
     # CHASSE-CALCULS-FIX-1 Lot 6 (E-C1) — l'extrusion 3D est posée à plat : on le DIT dès qu'une
     # hauteur réglementaire permet un volume (le mode 3D l'affiche).
     if res.hauteurReglementaireM is not None:
-        res.terrainNote = "Volume 3D indicatif — terrain supposé plat (le relief n'entre pas dans le volume)."
+        # RECETTE-4 — formulation explicite : la hauteur EST mesurée depuis le terrain naturel (le volume
+        # vert part du sol du MNT), mais le SOMMET est représenté à plat (il ne suit pas la pente).
+        res.terrainNote = ("Volume 3D indicatif — la hauteur réglementaire est mesurée depuis le terrain "
+                           "naturel, mais le sommet est représenté à plat (il ne suit pas la pente du terrain).")
     return res

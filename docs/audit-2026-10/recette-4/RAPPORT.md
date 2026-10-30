@@ -143,3 +143,64 @@ liste — plus aucune occurrence de « Ce qui bouge sur » / « réellement dét
 `captures/notif-sans-blurb-APRES.png`.
 
 _tsc -b : 0 erreur._
+
+---
+
+## Lot 4 — Gabarit 3D (vérification du volume vert) + Taxe d'aménagement (vérification barème 2026)
+
+### Gabarit réglementaire — volume vert vérifié
+
+**Vérification (mandat).** La hauteur du volume vert doit être la hauteur autorisée, mesurée
+depuis le terrain naturel, le sommet suivant la pente le cas échéant ; afficher la hauteur retenue.
+
+**Constat.**
+- Hauteur du volume = **hauteur réglementaire PLU** : l'extrusion (`Gabarit.tsx` `fill-extrusion-height
+  = res.hauteurReglementaireM`) prend exactement la hauteur sourcée (ex. `97415000CX1395` → 12 m,
+  base « faitage », status `integrated`). ✓
+- **Depuis le terrain naturel** : un vrai MNT (`raster-dem terrarium`) est chargé et
+  `setTerrain({source:'dem'})` actif ⇒ l'extrusion part du sol du MNT (`base:0` posé sur le relief),
+  pas d'un plan à 0 m. ✓ Le volume vert rend bien depuis le sol (capture 3D).
+- **Sommet / pente** : un `fill-extrusion` a un **sommet plat** (limite MapLibre) — le toit ne suit
+  PAS la pente. C'est une simplification, désormais **dite explicitement** (voir ci-dessous). Un toit
+  drapé sur la pente demanderait un maillage WebGL par sommet — hors proportion de cette recette.
+- **Hauteur retenue affichée** : oui.
+
+**Correctifs (honnêteté + explicite, bas risque).**
+- `Gabarit.tsx` : la tuile « Hauteur réglementaire » affiche désormais « **hauteur retenue (faitage)
+  — depuis le terrain naturel** » (la hauteur retenue, sa base faitage/égout, et son origine).
+- `api/gabarit.py` : `terrainNote` reformulée — « la hauteur réglementaire est **mesurée depuis le
+  terrain naturel**, mais le **sommet est représenté à plat** (il ne suit pas la pente du terrain) ».
+
+**APRÈS.** `/outils/gabarit/97415000CX1395` ⇒ H 12 m, base faitage, status integrated, nouvelle
+`terrainNote`. Écran : panneau « Hauteur réglementaire · 12 m · hauteur retenue (faitage) — depuis
+le terrain naturel » ; en 3D (« Relief seul »), volume vert posé sur le relief + note de sommet à
+plat. → `captures/gabarit-3d-APRES.png`.
+
+**Verdict : le volume n'est pas faux** (hauteur = hauteur autorisée, depuis le terrain naturel,
+hauteur retenue affichée) ; la seule réserve (sommet à plat sur pente) est maintenant dite
+clairement. Le drapage du toit sur la pente reste un chantier séparé (hors recette).
+
+### Taxe d'aménagement — barème 2026 vérifié à l'euro près
+
+**Vérification (mandat).** Chaque calcul confronté à la formule officielle 2026 (valeur forfaitaire
+hors Île-de-France, abattement 50 % sur les 100 premiers m² en résidence principale, piscines,
+stationnement, taux communal et départemental 974), un test par combinaison de filtres.
+
+**Constat : aucun écart.** `config/taxe_amenagement.yaml` est sur le bon millésime 2026 (sources
+service-public A15416 / construires.fr) :
+valeur forfaitaire hors IdF **892 €/m²**, piscine **251 €/m²**, stationnement **2 928 €/place**
+(→ 5 857 € sur délibération), PV au sol 10 €/m², éolienne 3 000 €, abattement **50 % / 100 m² PAR
+LOGEMENT**, part départementale 974 **2,5 %** (confirmée DELTA), part communale votée (jamais
+inventée), exonération < 5 m². Le front (`TaxeAmenagement.tsx`) ne calcule rien : il affiche les
+lignes servies par le back ⇒ aucune divergence front↔back.
+
+**Correctif.** Aucun code à corriger. Ajout d'un **verrou de recette** `tests/test_recette4_taxe.py`
+(10 tests) : config officielle + **un test par combinaison de filtres** confronté à la formule
+calculée à la main — non-RP, RP 1 logement, RP collectif 3 logements, logement aidé, piscine,
+stationnement, surface < 5 m² exonérée, combo (RP + piscine + stationnement), sans taux communal.
+
+**APRÈS.** `pytest tests/test_recette4_taxe.py` ⇒ **10 passed**. Exemples vérifiés à l'euro :
+200 m² non-RP com 3 % ⇒ assiette 178 400, total 9 812, RAP 713,60 · combo 150 m² RP + piscine 30 +
+2 places com 4 % ⇒ assiette 102 586, total 6 668,09.
+
+_tsc -b : 0 erreur · pytest taxe : 10 passed._

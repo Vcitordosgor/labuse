@@ -342,9 +342,14 @@ export function Gabarit() {
             <Num label="Plafond d'emprise" value={res.plafondEmpriseM2} unit="m²"
               statusLabel={res.plafondEmpriseStatus === 'absent' ? 'Non réglementé' : null}
               sub={res.plafondEmpriseStatus === 'absent' ? 'pas de règle d’emprise au sol' : null} />
+            {/* RECETTE-4 — la HAUTEUR RETENUE est affichée (faitage/égout), et on dit qu'elle est mesurée
+                DEPUIS LE TERRAIN NATUREL : c'est bien elle que porte le volume vert (fill-extrusion height
+                = hauteurReglementaireM, base posée sur le MNT). */}
             <Num label="Hauteur réglementaire" value={res.hauteurReglementaireM} unit="m"
               statusLabel={res.hauteurStatus === 'not_integrated' ? 'Non chiffrée' : null}
-              sub={res.hauteurStatus === 'not_integrated' ? 'prospect L ≥ H (non intégré)' : null} />
+              sub={res.hauteurStatus === 'not_integrated'
+                ? 'prospect L ≥ H (non intégré)'
+                : `hauteur retenue${res.hauteurBase ? ` (${res.hauteurBase})` : ''} — depuis le terrain naturel`} />
           </div>
           {/* FIX-PRIX-ET-OPPORTUNITES (lot 3) — l'enveloppe est un MAXIMUM réglementaire ; les permis
               réels en réalisent ~½ en médiane (volet D). Point de texte unique lib/capaciteMax. */}
