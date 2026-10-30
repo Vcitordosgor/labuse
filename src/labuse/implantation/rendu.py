@@ -224,7 +224,7 @@ def scenario_dict(scenario: Scenario, *, genere_le: str | None = None) -> dict[s
             "aire_hors_zone_m2": round(t.aire_hors_zone_m2, 1),
             "pct_constructible": t.pct_constructible,
             "note_constructibilite": t.note_constructibilite,
-            "has_voie": t.has_voie, "note_limites": t.note_limites,
+            "has_voie": t.has_voie, "voie_hypothese": t.voie_hypothese, "note_limites": t.note_limites,
             "contraintes": t.contraintes, "ppr_rouge_m2": t.ppr_rouge_m2, "ppr_bleue_m2": t.ppr_bleue_m2,
             "pente_lidar": t.pente,
             "parcelles": [{"idu": p.idu, "numero": p.numero, "contenance_m2": p.contenance_m2,

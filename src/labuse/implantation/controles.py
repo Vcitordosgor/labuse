@@ -321,6 +321,14 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
     else:
         out.append(ControleReg("Reculs", "règle non validée", "bâti dans la zone", NON_EFFECTUE))
 
+    # RECETTE-4 — contrôle ACCÈS, AJOUTÉ SEULEMENT quand aucune voie n'est classée : l'étude continue sous
+    # l'hypothèse d'un accès (arête la plus longue), signalée « À confirmer » (réhibitoire pour un verdict
+    # « Exploitable » — cf. _A_CONFIRMER_BLOQUANTS). Voie classée = rien à signaler (comportement d'origine).
+    if getattr(terrain, "voie_hypothese", False):
+        out.append(ControleReg("Accès (voie)", "aucune limite classée « voie »",
+                               "accès supposé sur l'arête la plus longue", A_CONFIRMER,
+                               detail="classement de la limite « voie » non établi — accès à confirmer"))
+
     r = regles.pleine_terre
     if r.validee and r.valeur is not None:
         requis = contenance * r.valeur / 100.0
@@ -490,6 +498,7 @@ VERDICT_IMPOSSIBLE = "Impossible pour cause établie"
 _A_CONFIRMER_BLOQUANTS = frozenset({
     "PPR zone rouge (interdiction)", "PPR zone bleue (prescription)",
     "Stationnement", "Prospect (hauteur relative)", "ER / EBC / SUP / servitudes",
+    "Accès (voie)",   # RECETTE-4 — accès hypothétique (aucune voie classée) → verdict non « Exploitable »
 })
 
 

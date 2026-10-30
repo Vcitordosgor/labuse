@@ -354,3 +354,37 @@ filtres de la carte, rien d'autre (aucune mention LABUSE/mutation). Étape CONTE
 `captures/projet-chemins-APRES.png`, `captures/projet-contexte-sans-programme-APRES.png`.
 
 _tsc -b : 0 erreur._
+
+---
+
+## Lot 9 — Étude de faisabilité : « aucune voie classée » ne bloque plus (accès à confirmer)
+
+**AVANT (constat Vic).** Quand la classification ne trouve **aucune limite classée « voie »** sur
+l'assiette, le moteur renvoyait « simulation impossible : aucune limite classée voie » → verdict
+**Impossible**, aucun scénario : l'étude s'arrêtait alors que la parcelle a un accès.
+
+**Racine.** `implantation/terrain.py` : sans voie classée, `voie_edges` est vide → le contrôle
+géométrique « accès sur voie » échoue pour tout candidat → aucun faisable → `_message_impossible`
+(moteur.py) renvoie « aucune limite classée voie » → `verdict_global` = Impossible.
+
+**Correctif (continue sous « accès à confirmer »).**
+- `terrain.py` : quand `not has_voie`, on **promeut l'arête la plus longue** (frontage le plus
+  probable) en ACCÈS HYPOTHÉTIQUE (`voie_hypothese=True`) → l'implantation se trace. `has_voie`
+  reste False (l'accès n'est pas établi). `note_limites` dit « accès supposé… à confirmer ».
+- `controles.py` : nouveau contrôle **« Accès (voie) »** = « À confirmer » quand `voie_hypothese`
+  (ajouté à `_A_CONFIRMER_BLOQUANTS` → interdit « Exploitable », n'interdit pas l'étude).
+- `moteur.py` : `_message_impossible` ne parle plus d'« aucune voie » (une arête existe toujours) ;
+  il ne signale l'impossibilité que si AUCUNE arête n'est exploitable.
+- `rendu.py` / `service.py` : `voie_hypothese` exposé au payload (écran + PDF).
+
+**APRÈS (re-constaté, parcelle sans voie `97422000AD1237`).**
+- API `/modules/etude` : `verdict` = **À compléter** (plus Impossible) · **1 scénario** (l'étude
+  continue) · contrôle « **Accès (voie) : À confirmer** » · `note_limites` « aucune limite classée
+  « voie » : accès supposé sur l'arête la plus longue — à confirmer ».
+- Écran : « Verdict de l'étude : **À compléter** » + « **Accès (voie)** · aucune limite classée
+  « voie » · accès supposé sur l'arête la plus longue · **À confirmer** ». →
+  `captures/etude-acces-confirmer-APRES.png`.
+- PDF `/modules/etude/pdf` (HTTP 200) : contient « accès supposé… à confirmer » (`pdftotext`).
+
+_IDUs sans voie trouvés (golden) : 97410000CD0905, 97411000KA0296, 97422000AD1237,
+97418000AT2379, 97408000AP1647, 97415000CX1395 — tous continuent désormais._

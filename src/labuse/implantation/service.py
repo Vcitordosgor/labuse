@@ -1149,7 +1149,7 @@ def etudier_payload(session, entree: dict) -> dict:
             "aire_hors_zone_m2": sd0["terrain"]["aire_hors_zone_m2"],
             "pct_constructible": sd0["terrain"]["pct_constructible"],
             "note_constructibilite": sd0["terrain"]["note_constructibilite"],
-            "has_voie": t.has_voie, "note_limites": t.note_limites,
+            "has_voie": t.has_voie, "voie_hypothese": t.voie_hypothese, "note_limites": t.note_limites,
             "contraintes": sd0["terrain"]["contraintes"],
             "ppr_rouge_m2": sd0["terrain"]["ppr_rouge_m2"],
             "ppr_bleue_m2": sd0["terrain"]["ppr_bleue_m2"],
