@@ -66,7 +66,13 @@ async function getOpts() {
     searchUrl: "",
     // RADAR-SOURCES-2 — page de recherche Bien'ici (VENTES, toute La Réunion). Sert à OUVRIR un onglet
     // bienici.com (session chaude) d'où partent les fetch() même-origine ; vide = Bien'ici désactivé.
-    bieniciSearchUrl: "",
+    // RADAR-COUVERTURE-1 — DÉFAUT NON VIDE : la nuit du 29→30 (passe 336) la passe auto a bien capturé
+    // Leboncoin mais PAS Bien'ici — parce que `bieniciSearchUrl` n'était pas configurée (bloc sauté en
+    // silence). On fournit donc la recherche « ventes, toute La Réunion » par défaut pour que la passe
+    // AUTO couvre Leboncoin PUIS Bien'ici out-of-the-box. Les filtres réels du fetch sont BIENICI_FILTERS
+    // (zone -77601) ; cette URL ne sert qu'à ouvrir l'onglet de session. Laisser vide dans les Options
+    // pour désactiver Bien'ici.
+    bieniciSearchUrl: "https://www.bienici.com/recherche/achat/la-reunion-974",
     bieniciRelectureCursor: 0,
     // RADAR-FIX-2 (Lot B) — PROD par défaut : l'extension nourrit https://app.labuse.immo. localhost ne sert
     // qu'en recette, en le tapant EXPLICITEMENT dans les Options.
@@ -106,12 +112,46 @@ function bieniciIdFromUrl(url) {
   } catch (_) { return null; }
 }
 
-// RADAR-FIX-2 — date locale YYYY-MM-DD (le « soir » se juge en heure locale de la machine qui capture).
-function localDateStr(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+// RADAR-COUVERTURE-1 — le « soir » se juge en heure de LA RÉUNION (Indian/Reunion, UTC+4 fixe, pas
+// d'heure d'été), QUELLE QUE SOIT l'horloge de la machine qui capture : le Mac de Vic est à l'heure de
+// Paris, et l'ancienne fenêtre « 21 h » tirée en heure locale partait vers 02 h Réunion (passe 336).
+// L'epoch (Date.now) est absolu et indépendant du fuseau de l'OS ; seule la conversion en horloge MURALE
+// dépend du fuseau. On dérive donc les composantes « murales » Réunion via Intl (qui ignore le fuseau de
+// l'OS car on lui passe timeZone), et on reconvertit une horloge murale Réunion en epoch via le décalage
+// mesuré sur l'instant courant.
+const RADAR_TZ = "Indian/Reunion";
+
+// Composantes de l'horloge murale Réunion pour un instant donné (+ la date YYYY-MM-DD).
+function reunionParts(now) {
+  const f = new Intl.DateTimeFormat("en-CA", {
+    timeZone: RADAR_TZ, hour12: false,
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit"
+  });
+  const p = {};
+  for (const part of f.formatToParts(now)) p[part.type] = part.value;
+  let hour = parseInt(p.hour, 10);
+  if (hour === 24) hour = 0;   // certains moteurs rendent « 24 » à minuit : on normalise en 0
+  return {
+    year: +p.year, month: +p.month, day: +p.day,
+    hour, minute: +p.minute, second: +p.second,
+    dateStr: `${p.year}-${p.month}-${p.day}`
+  };
+}
+
+// Décalage (ms) tel que : epoch + offset = horloge murale Réunion. +4 h fixe, mais MESURÉ pour rester
+// juste si la base de fuseaux évoluait un jour.
+function reunionOffsetMs(now) {
+  const p = reunionParts(now);
+  const commeUtc = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second);
+  return commeUtc - (now.getTime() - now.getMilliseconds());
+}
+
+// epoch absolu de l'horloge MURALE Réunion h:m, pour la DATE Réunion de `now`.
+function reunionWallToEpoch(now, h, m) {
+  const p = reunionParts(now);
+  const offset = reunionOffsetMs(now);
+  return Date.UTC(p.year, p.month - 1, p.day, h, m, 0) - offset;
 }
 
 async function setOpts(patch) {
@@ -344,39 +384,30 @@ async function readPage(tabId) {
   return info;
 }
 
-function maxDate(dates) {
-  let m = null;
-  for (const d of dates) {
-    const t = Date.parse(d);
-    if (!isNaN(t) && (m === null || t > m)) m = t;
-  }
-  return m;
-}
-
 // =========================================================================
 // Les trois passes
 // =========================================================================
 
 // Renvoie le nb de pages consommées (pour le plafond total).
-// RADAR-FIX-2 (Lot B) — `rattrapage` (1ʳᵉ capture après bascule vers la prod) : on remonte PLUS LOIN que
-// les 15 pages d'une soirée normale, jusqu'au plafond dur de 40 pages, pour rattraper depuis la dernière
-// annonce connue en prod. La RÈGLE D'ARRÊT ne change pas : on s'arrête dès qu'une page ne porte plus
-// d'annonce plus récente que le seuil (index_date). Le plafond 40 reste la garde dure.
+// RADAR-COUVERTURE-1 — RÈGLE D'ARRÊT PAR NOUVEAUTÉ : on tourne les pages TANT QUE la dernière page
+// rapporte ≥ 1 annonce NOUVELLE (compté par le serveur, `nb_nouvelles` renvoyé par /capture), et on
+// S'ARRÊTE À LA PREMIÈRE PAGE SANS NOUVEAUTÉ. L'ancienne règle « index_date ≤ dernière capture −1 h »
+// stoppait dès la page 1 dès qu'une capture récente avait relevé le seuil (index_date au jour → ≤ seuil) :
+// c'est la signature des 27 nouvelles-sur-1-page de la passe 336. Le délai « rythme humain » entre pages
+// est conservé. Le plafond (40 en rattrapage, 15 en régime normal) reste la garde dure ; `n_pages` côté
+// serveur = +1 par page POSTÉE → il reflète le nombre RÉEL de pages lues.
+// RADAR-FIX-2 (Lot B) — `rattrapage` (1ʳᵉ capture après bascule d'hôte) relève seulement le PLAFOND.
 async function passeNouvelles(opts, tabId, capturedAt, etat, budget, source, rattrapage) {
-  const seuil = etat && etat.derniere_capture_at
-    ? Date.parse(etat.derniere_capture_at) - 3600 * 1000 // −1 h
-    : null;
   let page = 1;
   let used = 0;
   const plafond = rattrapage ? CAP_TOTAL_PAGES : CAP_NOUVELLES;
   const maxPages = Math.min(plafond, budget);
   while (page <= maxPages) {
     const info = await readPage(tabId);
-    await apiCapture(opts, "nouvelles", opts.searchUrl, page, info.outerHTML, capturedAt, source);
+    const rep = await apiCapture(opts, "nouvelles", opts.searchUrl, page, info.outerHTML, capturedAt, source);
     used++;
-    // On continue tant que la page contient des annonces plus récentes que le seuil.
-    const newest = maxDate(info.indexDates);
-    if (seuil !== null && newest !== null && newest <= seuil) break;
+    const nouv = rep && typeof rep.nb_nouvelles === "number" ? rep.nb_nouvelles : 0;
+    if (nouv < 1) break;                        // page sans nouveauté → fin de la passe
     if (page >= maxPages || !info.hasNext) break;
     // Navigation via le "page suivante" du site (garde la page riche).
     await sleep(jitter(NAV_MIN, NAV_MAX));
@@ -524,30 +555,37 @@ async function injectArgs(tabId, fn, args) {
   return res && res[0] ? res[0].result : null;
 }
 
-// Lit une page de résultats Bien'ici et la poste. Retourne la liste des dates (modificationDate) des
-// annonces de la page, pour la règle d'arrêt « plus rien de neuf » (comme index_date côté Leboncoin).
+// Lit une page de résultats Bien'ici et la poste. Retourne le nombre d'annonces NOUVELLES de la page
+// (renvoyé par le serveur) pour la règle d'arrêt par nouveauté (comme Leboncoin), + `empty` quand la
+// page est au-delà du dernier résultat.
 async function biCapturePage(opts, tabId, passe, page, capturedAt, source) {
-  const res = await biFetchResults(BIENICI_FILTERS, page, BIENICI_SIZE);
+  // RADAR-COUVERTURE-1 — `biFetchResults` est une fonction INJECTÉE (elle lit `location.origin` et fait un
+  // fetch MÊME-ORIGINE avec la session de Vic). Elle DOIT tourner dans l'onglet bienici.com via
+  // `injectArgs`, comme `biFetchAd` à la confirmation — et NON être appelée dans le service worker (où
+  // `location.origin` = l'extension, donc la requête n'atteint jamais bienici.com). C'est ce qui faisait
+  // échouer la capture Bien'ici de la passe auto (« Bien'ici n'y était pas » la nuit du 29→30).
+  const res = (await injectArgs(tabId, biFetchResults, [BIENICI_FILTERS, page, BIENICI_SIZE]))
+    || { status: 0, body: "" };
   if (res.status === 429) throw new BlockError("Bien'ici 429 (trop vite) — on se calme");
   if (res.status !== 200 || !res.body) throw new BlockError("Bien'ici : réponse vide (HTTP " + res.status + ")");
   let ads = [];
   try { ads = (JSON.parse(res.body).realEstateAds) || []; } catch (_) { throw new BlockError("Bien'ici : JSON illisible"); }
-  if (!ads.length) return { dates: [], empty: true };   // page au-delà du dernier résultat : fin propre
+  if (!ads.length) return { nouvelles: 0, empty: true };   // page au-delà du dernier résultat : fin propre
   // On poste le CORPS JSON brut (le serveur reconnaît `realEstateAds` et le traduit). Même route que LBC.
-  await apiCapture(opts, passe, opts.bieniciSearchUrl, page, res.body, capturedAt, source);
-  const dates = ads.map((a) => a && (a.modificationDate || a.publicationDate)).filter(Boolean).map(String);
-  return { dates, empty: false };
+  const rep = await apiCapture(opts, passe, opts.bieniciSearchUrl, page, res.body, capturedAt, source);
+  const nouvelles = rep && typeof rep.nb_nouvelles === "number" ? rep.nb_nouvelles : 0;
+  return { nouvelles, empty: false };
 }
 
+// RADAR-COUVERTURE-1 — MÊME RÈGLE QUE LEBONCOIN : on tourne les pages tant qu'une page rapporte ≥ 1
+// annonce nouvelle, arrêt à la 1ʳᵉ page sans nouveauté (ou page vide), plafond en garde dure, délai humain.
 async function passeNouvellesBienici(opts, tabId, capturedAt, etat, source) {
-  const seuil = etat && etat.derniere_capture_at ? Date.parse(etat.derniere_capture_at) - 3600 * 1000 : null;
   let page = 1, used = 0;
   while (page <= BIENICI_CAP_NOUVELLES) {
-    const { dates, empty } = await biCapturePage(opts, tabId, "nouvelles", page, capturedAt, source);
+    const { nouvelles, empty } = await biCapturePage(opts, tabId, "nouvelles", page, capturedAt, source);
     used++;
     if (empty) break;
-    const newest = maxDate(dates);
-    if (seuil !== null && newest !== null && newest <= seuil) break;   // plus rien de plus récent
+    if (nouvelles < 1) break;   // page sans nouveauté → fin de la passe
     await sleep(jitter(NAV_MIN, NAV_MAX));
     page++;
   }
@@ -672,12 +710,13 @@ async function runEvening(source) {
       parts.push(`BI nouv ${bi.nNouv}, relec ${bi.nRel}, conf ${bi.nConf}`);
     }
 
-    const stamp = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    // RADAR-COUVERTURE-1 — horodatage en HEURE RÉUNION (le Mac est à Paris ; on affiche l'heure du terrain).
+    const stamp = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: RADAR_TZ });
     await setBadge("✓", "#27ae60");
     await setOpts({
       lastRun: capturedAt,
       lastCaptureHost: host,     // la bascule est consommée : les soirs suivants ne rattrapent plus
-      lastResult: `OK ${stamp} (${source}${rattrapage ? ", rattrapage" : ""}) — ${parts.join(" · ")} → ${host}`
+      lastResult: `OK ${stamp} Réunion (${source}${rattrapage ? ", rattrapage" : ""}) — ${parts.join(" · ")} → ${host}`
     });
   } catch (e) {
     // Blocage OU erreur réseau : on arrête net, on prévient, on n'insiste pas. Message LISIBLE dans le
@@ -719,18 +758,20 @@ async function runEvening(source) {
 const HEARTBEAT_MIN = 5;             // battement : on vérifie la fenêtre toutes les 5 minutes
 const TEST_ALARM = "radar-soir-test"; // recette : déclenche un run « auto » dans 2 min
 
-// Bornes de la fenêtre du soir pour un instant donné (heure locale). [début, fin].
+// Bornes de la fenêtre du soir (epoch absolu), ANCRÉES sur l'horloge murale de LA RÉUNION : de
+// `opts.hour`:00 Réunion (défaut 21 h) à +jitterMaxMin (défaut 180 min → minuit Réunion), quelle que soit
+// l'horloge de l'OS. [début, fin].
 function fenetreSoir(opts, now) {
-  const debut = new Date(now); debut.setHours(opts.hour || 21, 0, 0, 0);
-  const fin = debut.getTime() + (opts.jitterMaxMin || 180) * 60 * 1000;
-  return { debut: debut.getTime(), fin };
+  const debut = reunionWallToEpoch(now, opts.hour || 21, 0);
+  const fin = debut + (opts.jitterMaxMin || 180) * 60 * 1000;
+  return { debut, fin };
 }
 
 // Décide (et exécute) la capture du soir. `force` = recette (ignore fenêtre + « déjà fait »).
 async function maybeRunTonight(force) {
   const opts = await getOpts();
   const now = new Date();
-  const today = localDateStr(now);
+  const today = reunionParts(now).dateStr;   // le « soir » se compte par DATE Réunion (pas date OS)
   const { debut, fin } = fenetreSoir(opts, now);
 
   // Minute-cible du jour : tirée UNE fois par date, dans la fenêtre (le jitter « humain » d'autrefois).
@@ -798,5 +839,5 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 // N'expose rien en production (le drapeau n'est posé que par la recette avant l'import).
 if (globalThis.__RADAR_TEST__) {
   globalThis.__radar = { classifierConfirmation, classifierConfirmationBienici, bieniciIdFromUrl,
-                         isBienici, isLeboncoin };
+                         isBienici, isLeboncoin, fenetreSoir, reunionParts, reunionWallToEpoch };
 }

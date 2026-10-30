@@ -5,7 +5,9 @@ const fields = ["searchUrl", "bieniciSearchUrl", "labuseUrl", "token", "hour", "
 async function load() {
   const d = await chrome.storage.local.get({
     searchUrl: "",
-    bieniciSearchUrl: "",
+    // RADAR-COUVERTURE-1 — Bien'ici ACTIF par défaut (ventes, toute La Réunion) : la passe auto doit
+    // couvrir Leboncoin PUIS Bien'ici. Vider ce champ désactive Bien'ici.
+    bieniciSearchUrl: "https://www.bienici.com/recherche/achat/la-reunion-974",
     labuseUrl: "https://app.labuse.immo",   // RADAR-FIX-2 (Lot B) — PROD par défaut
     token: "",
     hour: 21,

@@ -9,8 +9,8 @@ globalThis.setTimeout = (fn, _ms) => _real(fn, 0);
 
 let store, captures, failCapture;
 function reset(overrides = {}) {
-  store = { searchUrl: "https://www.leboncoin.fr/recherche?x", labuseUrl: "https://app.labuse.immo",
-            token: "jeton", lastCaptureHost: "", ...overrides };
+  store = { searchUrl: "https://www.leboncoin.fr/recherche?x", bieniciSearchUrl: "",   // recette LBC seule
+            labuseUrl: "https://app.labuse.immo", token: "jeton", lastCaptureHost: "", ...overrides };
   captures = []; failCapture = false;
 }
 
