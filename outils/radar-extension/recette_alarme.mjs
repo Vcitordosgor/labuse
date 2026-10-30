@@ -5,7 +5,7 @@
 import assert from "node:assert";
 
 const captures = [];       // POST /admin/radar/capture reçus
-const store = { searchUrl: "https://www.leboncoin.fr/recherche?x",
+const store = { searchUrl: "https://www.leboncoin.fr/recherche?x", bieniciSearchUrl: "",   // recette LBC seule
                 labuseUrl: "https://app.labuse.immo", token: "jeton-recette" };
 
 // Page Leboncoin « riche » simulée (une seule page, pas de suivante).
