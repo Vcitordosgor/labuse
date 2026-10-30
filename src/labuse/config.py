@@ -57,6 +57,12 @@ class Settings(BaseSettings):
     # de service légitime (la fiche pré-lot-B monte à ~15 s, ~23 s sous charge ; après lot B ~1 s → peut
     # être resserré). Réglable en prod par LABUSE_API_STATEMENT_TIMEOUT_MS.
     api_statement_timeout_ms: int = 60000
+    # ETUDE-ASYNC-1 — borne DURE du moteur d'implantation (Étude de faisabilité). Le calcul tourne dans un
+    # PROCESSUS SÉPARÉ (jamais la boucle de l'API) ; au-delà de cette borne le processus est TUÉ (SIGTERM
+    # puis SIGKILL — plus jamais de thread fantôme qui affame les autres requêtes) et le client reçoit le
+    # message honnête « étude trop lourde, relancez ». Réglable en prod par LABUSE_ETUDE_TIMEOUT_S ; une
+    # valeur basse (recette) force un dépassement pour prouver la mise à mort.
+    etude_timeout_s: float = 60.0
 
     # ── Mode de déploiement : local (démo dev) | pilot (client encadré) | production ──
     # Pilote/production : cookies Secure, CORS restreint, /docs protégés, auth OBLIGATOIRE

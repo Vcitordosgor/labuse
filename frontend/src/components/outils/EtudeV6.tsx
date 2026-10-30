@@ -6,7 +6,7 @@
 // (« ce que le terrain accueille », variantes, facteurs limitants) est repris au Lot B ; ici, base servie.
 import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { postEtude, postEtudeParcelles, postEtudeStationnement, postEtudeJauge, ETUDE_PDF_URL, etudePdfInit } from '../../lib/api'
+import { postEtude, postEtudeParcelles, postEtudeStationnement, postEtudeJauge, ETUDE_PDF_URL, etudePdfInit, messageEtudeErreur } from '../../lib/api'
 import type { EtudeJaugeOut } from '../../lib/api'
 import type { EtudeParcelle, EtudeParcellesOut, EtudePayload, EtudeVariante, EtudeGrandeur, EtudeStationnementRegimes, EtudeLotissement, EtudeIn, EtudeRegle } from '../../lib/api'
 import { fmtInt, fmtDec } from '../../lib/format'
@@ -1241,7 +1241,9 @@ function PiedEtape({ step, peutContinuer1, peutAnalyser, enAnalyse, erreurAnalys
         <div className="text-[10.5px]">
           {raison && <span className="text-amber">{raison}</span>}
           {enAnalyse && <span className="text-txt-dim">Calcul en cours, jusqu'à une minute…</span>}
-          {!!erreurAnalyse && <span className="text-coral">{(erreurAnalyse as Error).message}</span>}
+          {/* ETUDE-ASYNC-1 — message TOUJOURS propre (jamais un code / message d'abort). Le bouton
+              « Analyser mon projet → » reste cliquable : au-delà de la borne, l'utilisateur relance. */}
+          {!!erreurAnalyse && <span className="text-coral">{messageEtudeErreur(erreurAnalyse)}</span>}
         </div>
       )}
       <div className="flex items-center gap-2">

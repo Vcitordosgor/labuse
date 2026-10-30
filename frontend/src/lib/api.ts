@@ -2462,6 +2462,18 @@ export const postEtude = (body: EtudeIn) =>
     signal: AbortSignal.timeout(ETUDE_FETCH_TIMEOUT_MS),
   })
 
+// ETUDE-ASYNC-1 — message d'erreur d'une étude, TOUJOURS propre (jamais un code HTTP, jamais le message
+// technique d'un abort réseau). 400 = entrée refusée → motif EXACT du moteur (ex. « parcelles non
+// contiguës »). 503 = borne dépassée : le calcul a été réellement interrompu côté serveur (plus de thread
+// fantôme) → le serveur renvoie un message « relancez » (une assiette lourde peut aboutir au 2ᵉ essai,
+// les données étant plus lentes à froid). Toute autre panne → générique relançable.
+export const messageEtudeErreur = (e: unknown): string => {
+  if (e instanceof ApiError && e.detail) return e.detail
+  return "L'étude n'a pas pu être calculée. Relancez ; si cela persiste, essayez une assiette plus simple."
+}
+// Relançable SAUF entrée refusée (400) : relancer la même assiette invalide échouerait à l'identique.
+export const etudeRelancable = (e: unknown): boolean => !(e instanceof ApiError && e.status === 400)
+
 // ETUDE-V6 (Lot A, étape 1) — valide l'assiette AVANT le moteur : faits par parcelle, union,
 // contiguïté (graphe, frontière partagée > 0,5 m), signaux et sources. Rapide, pas d'implantation.
 export interface EtudeParcelle {

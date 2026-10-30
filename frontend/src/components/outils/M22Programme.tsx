@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useApp } from '../../store/useApp'
-import { getMoteursConfig, postEtude, ETUDE_PDF_URL, etudePdfInit, ApiError } from '../../lib/api'
+import { getMoteursConfig, postEtude, ETUDE_PDF_URL, etudePdfInit, messageEtudeErreur, etudeRelancable } from '../../lib/api'
 import type { EtudeIn, EtudePayload, EtudeScenario } from '../../lib/api'
 import { fmtInt, fmtDec } from '../../lib/format'
 import { empreinte, noterEditeur } from '../../lib/empreinteDoc'
@@ -149,12 +149,14 @@ export function M22({ embedded = false, initialIdus, onBilan, onClose }: {
   const scenarios = data?.scenarios ?? []
   const actif: EtudeScenario | undefined = scenarios[Math.min(tab, Math.max(0, scenarios.length - 1))]
 
-  // Message d'erreur de génération : une entrée refusée (400, ex. « parcelles non contiguës ») OU une
-  // étude trop lourde (503, CHASSE-DOCS-FIX-1 vérif #4) affiche le motif EXACT du moteur, SANS bouton
-  // réessayer (relancer la même assiette échouerait pareil) ; une panne quelconque garde le générique.
-  const erreurTerminale = run.error instanceof ApiError
-    && (run.error.status === 400 || run.error.status === 503) ? run.error.detail : null
-  const erreurMsg = erreurTerminale ?? "L'étude a échoué — réessayez."
+  // ETUDE-ASYNC-1 — message TOUJOURS propre (jamais un code), relance proposée SAUF entrée refusée :
+  //   • 400 (ex. « parcelles non contiguës ») → motif exact du moteur, PAS de « Réessayer » (relancer la
+  //     même assiette invalide échouerait pareil) ;
+  //   • 503 (borne dépassée) → le calcul a été réellement interrompu côté serveur ; on PROPOSE de relancer
+  //     (une assiette lourde peut aboutir au 2ᵉ essai, données plus lentes à froid) ;
+  //   • panne/réseau → message générique, relançable.
+  const erreurMsg = messageEtudeErreur(run.error)
+  const peutRelancer = etudeRelancable(run.error)
 
   // GeoJSON du plan masse filtré par couche cochée (affichage, PAS un calcul) — réutilisé par la carte
   // intégrée (embedded) OU poussé à la carte globale (setModuleMap, hors embedded).
@@ -315,7 +317,7 @@ export function M22({ embedded = false, initialIdus, onBilan, onClose }: {
             onClick={() => { setTab(0); run.mutate(corpsBody()) }}>
             {run.isPending ? 'Génération…' : 'Générer les scénarios'}
           </Bouton>
-          {run.isError && <ErrorState message={erreurMsg} retry={erreurTerminale ? undefined : () => run.mutate(corpsBody())} />}
+          {run.isError && <ErrorState message={erreurMsg} retry={peutRelancer ? () => run.mutate(corpsBody()) : undefined} />}
         </>
       )}
 
@@ -601,7 +603,7 @@ export function M22({ embedded = false, initialIdus, onBilan, onClose }: {
             onClick={() => { setTab(0); setEditing(false); run.mutate(corpsBody()) }}>
             {run.isPending ? 'Génération…' : 'Générer les scénarios'}
           </Bouton>
-          {run.isError && <div className="mt-2"><ErrorState message={erreurMsg} retry={erreurTerminale ? undefined : () => run.mutate(corpsBody())} /></div>}
+          {run.isError && <div className="mt-2"><ErrorState message={erreurMsg} retry={peutRelancer ? () => run.mutate(corpsBody()) : undefined} /></div>}
         </div>
       )}
 
