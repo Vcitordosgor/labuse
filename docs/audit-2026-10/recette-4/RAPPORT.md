@@ -327,3 +327,30 @@ obsolète l'assertion « A1 » (inclinaison 15° dans « En clair… ») : le te
 verrouiller le RETRAIT (`ProspectionSolaire.test.tsx`).
 
 _tsc -b : 0 erreur · vitest header + solaire : 14 passed._
+
+---
+
+## Lot 8 — Projets « Nouveau projet » : chemins reformulés, « programme » retiré
+
+**Mandat.** Les deux chemins deviennent « Partir d'une sélection filtrée » et « Partir de zéro ».
+Le premier ne parle plus d'analyse LABUSE ni de probabilité de mutation : ce sont les mêmes filtres
+que le panneau Filtre de la carte, appliqués à la base, rien d'autre. La section « programme »
+(Logement libre, social…) est supprimée.
+
+**Correctif.** `ParcoursProjet.tsx` :
+- Portes renommées : « Partir du vivier LABUSE » → « **Partir d'une sélection filtrée** » (desc =
+  « Les mêmes filtres que le panneau Filtre de la carte, appliqués à la base — rien d'autre. ») ;
+  « Projet de zéro » → « **Partir de zéro** ».
+- Textes du wizard reformulés : plus de « classé par probabilité de mutation », « exclusions
+  automatiques du moteur », « les mieux d'abord » ni lien « pourquoi ? » (scoring). Récap :
+  « N parcelles correspondant à vos filtres ».
+- Section « programme » SUPPRIMÉE : les chips de type de logement (`data-projet-type`), l'état
+  `type`/`types`, `getProjetTypes`/`TypeLogement`, `type_logement` (identité), et les lignes
+  récap/trail associées retirés. L'étape CONTEXTE ne garde que le budget indicatif.
+
+**APRÈS.** Écran 0 : « Partir d'une sélection filtrée » / « Partir de zéro », desc du premier =
+filtres de la carte, rien d'autre (aucune mention LABUSE/mutation). Étape CONTEXTE : plus de
+`data-projet-type` (programme absent), seul le budget indicatif subsiste. →
+`captures/projet-chemins-APRES.png`, `captures/projet-contexte-sans-programme-APRES.png`.
+
+_tsc -b : 0 erreur._
