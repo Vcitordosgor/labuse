@@ -29,7 +29,7 @@ function Banner({ children }: { children: React.ReactNode }) {
 
 type Servitudes = {
   idu: string; n: number; synthese: string
-  servitudes: { categorie: string; effet: string; source: string; date: string | null }[]
+  servitudes: { categorie: string; effet: string; source: string; date: string | null; redhibitoire?: boolean }[]
   non_couvert: string[]
 }
 
@@ -80,12 +80,16 @@ export function O5Servitudes() {
               des voies » catégories 2 et 4) ne font plus DEUX cartes identiques mais UNE, qui liste ses
               effets (« catégorie 2 · catégorie 4 »). Dédoublonne aussi les effets strictement identiques. */}
           {(() => {
-            const groupes = Object.values((d.servitudes as { categorie: string; effet: string; source?: string; date?: string }[])
+            const groupes = Object.values((d.servitudes as { categorie: string; effet: string; source?: string; date?: string; redhibitoire?: boolean }[])
               .reduce((acc, s) => {
-                const g = acc[s.categorie] ?? (acc[s.categorie] = { categorie: s.categorie, source: s.source, date: s.date, effets: [] as string[] })
+                const g = acc[s.categorie] ?? (acc[s.categorie] = { categorie: s.categorie, source: s.source, date: s.date, effets: [] as string[], redhibitoire: false })
                 if (s.effet && !g.effets.includes(s.effet)) g.effets.push(s.effet)
+                // PPR-UNIQUE-1 (D-035) — une contrainte rédhibitoire (zone rouge PPR = interdiction)
+                // teinte sa carte en rouge et remonte en tête, au lieu d'une carte grise indistincte.
+                if (s.redhibitoire) g.redhibitoire = true
                 return acc
-              }, {} as Record<string, { categorie: string; source?: string; date?: string; effets: string[] }>))
+              }, {} as Record<string, { categorie: string; source?: string; date?: string; effets: string[]; redhibitoire: boolean }>))
+              .sort((a, b) => Number(b.redhibitoire) - Number(a.redhibitoire))
             return (<>
               <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]">
                 <span className="num-key text-base text-mint">{groupes.length}</span>
@@ -93,10 +97,13 @@ export function O5Servitudes() {
                 <span className="font-mono text-txt-hi">{d.idu.slice(8, 10)} {d.idu.slice(10)}</span>
               </div>
               {groupes.map((s, i) => (
-                <div key={i} className="rounded-lg bg-surface-3 px-3 py-2 shadow-elev-1">
+                <div key={i} className={`rounded-lg px-3 py-2 shadow-elev-1 ${s.redhibitoire ? 'border border-red-500/50 bg-red-500/10' : 'bg-surface-3'}`}>
                   <div className="flex flex-wrap items-baseline gap-1.5">
+                    {s.redhibitoire && <span aria-hidden className="text-red-500">●</span>}
                     <b className="text-[11.5px] text-txt-hi">{s.categorie}</b>
-                    <span className="rounded-full border border-mint/40 bg-mint/10 px-1.5 text-[8.5px] font-medium text-mint">Sourcé</span>
+                    {s.redhibitoire
+                      ? <span className="rounded-full border border-red-500/40 bg-red-500/10 px-1.5 text-[8.5px] font-medium text-red-500">Inconstructible (partie rouge)</span>
+                      : <span className="rounded-full border border-mint/40 bg-mint/10 px-1.5 text-[8.5px] font-medium text-mint">Sourcé</span>}
                     <span className="text-[9.5px] text-txt-dim">{s.source}{s.date ? ` · ${s.date}` : ''}</span>
                   </div>
                   <p className="mt-1 text-[11px] leading-snug text-txt">{s.effets.join(' · ')}</p>

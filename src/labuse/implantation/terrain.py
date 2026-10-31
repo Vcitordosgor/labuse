@@ -89,25 +89,15 @@ def _contour_segments(poly: Polygon) -> list[LineString]:
 
 
 def _ppr_par_couleur(session, aw: str):
-    """(geom_rouge, geom_bleue) sur l'assiette. rouge = interdiction, bleue = prescription."""
-    from sqlalchemy import text
-    rows = session.execute(text(
-        "SELECT subtype, ST_AsText(ST_Intersection(geom_2975, ST_GeomFromText(:g,2975))) AS wkt "
-        "FROM spatial_layers WHERE kind='ppr' AND ST_Intersects(geom_2975, ST_GeomFromText(:g,2975))"
-    ), {"g": aw}).fetchall()
-    rouges, bleues = [], []
-    for sub, wkt in rows:
-        if not wkt:
-            continue
-        g = shp_wkt.loads(wkt)
-        s = (sub or "").lower()
-        if "interdict" in s or "rouge" in s:
-            rouges.append(g)
-        elif "prescript" in s or "bleu" in s:
-            bleues.append(g)
-    rouge = unary_union(rouges) if rouges else None
-    bleue = unary_union(bleues) if bleues else None
-    return rouge, bleue
+    """(geom_interdite, geom_bleue) sur l'assiette.
+
+    PPR-UNIQUE-1 — classification déléguée au module unique `labuse.ppr` (fonction SQL
+    `labuse_ppr_couleur`). La géométrie « interdite » = rouge (INTERDICTION) ∪ code non classé
+    (ex. le `subtype='i'` hérité de Saint-Philippe, 1 237 parcelles, NU-D-001) : on ne dessine
+    JAMAIS dans une zone PPR dont la couleur n'est pas certaine. L'ancien classement par
+    sous-chaîne « interdict »/« rouge » laissait `i` NI rouge NI bleu → zone jamais retranchée."""
+    from ..ppr import lire_zones_interdites_wkt
+    return lire_zones_interdites_wkt(session, aw)
 
 
 def _zone_constructible(session, aw: str):

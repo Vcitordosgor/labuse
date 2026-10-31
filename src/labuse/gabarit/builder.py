@@ -382,33 +382,35 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
         "WHERE parcel_id = :pid AND layer_name = 'risques' ORDER BY (result = 'HARD_EXCLUDE') DESC LIMIT 1"
     ), {"pid": pid}).mappings().first()
     ppr_src = RegulatorySource(document="PPR — zonage réglementaire", provider=PPR_PROVIDER)
-    ppr_rouge = bool(ppr and ppr["result"] == "HARD_EXCLUDE" and "PPR zone rouge" in (ppr["detail"] or ""))
+    exclusions: list[Exclusion] = []
+    # PPR-UNIQUE-1 — la part ROUGE exclue est déterminée EN DIRECT par la classification UNIQUE
+    # `labuse_ppr_couleur` (rouge ∪ code non classé), pas par le run de cascade figé : une parcelle
+    # en zone `i` (Saint-Philippe, non reconnue par l'ancien `subtype='INTERDICTION'`) voit quand
+    # même son rouge exclu. GEOMETRIE-1 lot A — ST_ClipByBox2D avant l'intersection fine (mégapolygones
+    # PPR ~320 k sommets) ; résultat identique (parcelle ⊆ sa bbox). ST_MakeValid par sécurité.
+    gj = session.execute(text(
+        "SELECT ST_AsGeoJSON(ST_CollectionExtract(ST_Transform(ST_Intersection("
+        "  ST_Union(ST_MakeValid(ST_ClipByBox2D(sl.geom_2975, p.geom_2975))), p.geom_2975), 4326), 3)) "
+        "FROM spatial_layers sl, parcels p WHERE p.id = :pid AND sl.kind='ppr' "
+        "AND labuse_ppr_couleur(sl.subtype, sl.attrs) <> 'bleu' AND ST_Intersects(sl.geom_2975, p.geom_2975) "
+        "GROUP BY p.geom_2975"
+    ), {"pid": pid}).first()
+    ppr_rouge = False
+    if gj and gj[0]:
+        geo = json.loads(gj[0])
+        if geo.get("coordinates"):
+            ppr_rouge = True
+            exclusions.append(Exclusion(id="ppr-rouge", ruleId="PPR", type="ppr_rouge",
+                                        label="PPR zone rouge exclue", geometry=geo, source=ppr_src))
     racc["ppr"] = {"result": ppr["result"] if ppr else None,
                    "detail": ppr["detail"] if ppr else None, "rouge": ppr_rouge}
     sources.append(ppr_src)
     applicable.append(ApplicableRule(
         id="PPR", label="PPR — analyse", category="exclusion",
         integrationStatus="integrated" if ppr_rouge else "not_integrated",
-        detail=(ppr["detail"] if ppr else "Aucune zone rouge PPR sur la parcelle"), source=ppr_src))
-    exclusions: list[Exclusion] = []
-    if ppr_rouge:
-        # GEOMETRIE-1 lot A — ST_ClipByBox2D avant l'intersection fine (même optimisation que
-        # _greve_certaine_m2, cf. faisabilite/db.py). Les polygones PPR INTERDICTION montent à
-        # 320 k sommets ; les rogner d'abord à la bbox de la parcelle rend l'intersection O(petit).
-        # Résultat STRICTEMENT identique : parcelle ⊆ sa bbox, donc rien de ce qui est coupé
-        # ne pouvait intersecter la parcelle. ST_MakeValid par sécurité sur le morceau clippé.
-        gj = session.execute(text(
-            "SELECT ST_AsGeoJSON(ST_CollectionExtract(ST_Transform(ST_Intersection("
-            "  ST_Union(ST_MakeValid(ST_ClipByBox2D(sl.geom_2975, p.geom_2975))), p.geom_2975), 4326), 3)) "
-            "FROM spatial_layers sl, parcels p WHERE p.id = :pid AND sl.kind='ppr' "
-            "AND sl.subtype='INTERDICTION' AND ST_Intersects(sl.geom_2975, p.geom_2975) "
-            "GROUP BY p.geom_2975"
-        ), {"pid": pid}).first()
-        if gj and gj[0]:
-            geo = json.loads(gj[0])
-            if geo.get("coordinates"):
-                exclusions.append(Exclusion(id="ppr-rouge", ruleId="PPR", type="ppr_rouge",
-                                            label="PPR zone rouge exclue", geometry=geo, source=ppr_src))
+        detail=((ppr["detail"] if ppr else None)
+                or ("Zone rouge PPR exclue de l'assiette (classification unique PPR-UNIQUE-1)."
+                    if ppr_rouge else "Aucune zone rouge PPR sur la parcelle")), source=ppr_src))
 
     # --- SUP : servitudes d'utilité publique déduites de la zone d'implantation ----------------
     # RETOUCHES-1 lot D.15 — ER et EBC sont DÉJÀ retranchés par le résiduel (_GREVE) ; le MOTEUR

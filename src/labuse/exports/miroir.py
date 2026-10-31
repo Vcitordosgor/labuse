@@ -1106,7 +1106,7 @@ _COVER_TUILES = [
     ("zone_plu_famille", "Zone", lambda v: esc(v)),
     ("pente_deg", "Pente", lambda v: esc(pente_courte(float(v)))),
     ("exposition_versant", "Exposition", lambda v: esc(v)),
-    ("n_vigilances", "Risques", lambda v: esc(f"{groupe(v)} relevé{'s' if v and v > 1 else ''}")),
+    ("n_vigilances", "Risques", lambda v: esc(f"{groupe(v)} vigilance{'s' if v and v > 1 else ''}")),
     ("sdp_residuelle_m2", "SDP restante (bâti conservé)", lambda v: fmt_m2(v)),
 ]
 
@@ -1132,11 +1132,9 @@ def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, V
             aff = None
         if cid == "zone_plu_famille" and _zone_code:
             aff = esc(_zone_code)
-        # EXPORTS-FIX-1-BIS point 6 — la tuile « Risques » compte les aléas IMPRIMÉS au §5 (le même
-        # chiffre que le §5), pas n_vigilances (couches internes).
-        if cid == "n_vigilances":
-            _na = _n_aleas(valeurs)
-            aff = esc(f"{groupe(_na)} relevé{'s' if _na and _na > 1 else ''}") if _na is not None else None
+        # PPR-UNIQUE-1 (A-011) — la tuile « Risques » affiche le COMPTEUR UNIQUE `n_vigilances`
+        # (= tuile d'en-tête == badge §5, bassin versant exclu, cf. robinet_fiche._c_vigilances) ;
+        # plus de divergence tuile/section/PDF. Le rendu normal (lambda _COVER_TUILES) suffit.
         # EXPORTS-FIX-1 C7 — SDP en zone A/N : « 0 m² — zone A » (arbitrage Q6), jamais « — ».
         if aff is None and cid == "sdp_residuelle_m2" and _zone_v in ("A", "N"):
             aff = f'0 m² — zone {esc(_zone_v)}'
@@ -1285,9 +1283,10 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
                     blocs_pleins.append(_RENDEURS_BLOC[l.quoi](v.valeur, v))
                 continue
             if l.quoi == "n_vigilances":
-                # EXPORTS-FIX-1-BIS point 6 — le compteur affiche le nombre d'aléas IMPRIMÉS au §5,
-                # pas n_vigilances (couches internes) ; le mot « cascade » n'apparaît plus.
-                na = _n_aleas(valeurs)
+                # PPR-UNIQUE-1 (A-011) — compteur de risques UNIQUE (= tuile d'en-tête == badge §5),
+                # servi par `n_vigilances` (bassin versant exclu, robinet_fiche._c_vigilances).
+                _vv = valeurs.get("n_vigilances")
+                na = _vv.valeur if _vv is not None else None
                 html = esc(groupe(na)) if na is not None else ""
             else:
                 html = _valeur_html(l.quoi, l, v.valeur, v)

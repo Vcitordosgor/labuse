@@ -220,6 +220,8 @@ class Contraintes:
     pente_pct: float | None = None
     alea_ppr: str | None = None
     bande_littorale: bool = False
+    # PPR-UNIQUE-1 (E-006) — part (0..1) de la parcelle réellement DANS la bande littorale.
+    littoral_pct: float = 0.0
     agricole_sar: bool = False
     libelles: list[str] = field(default_factory=list)
 
@@ -799,9 +801,15 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
         f = 0.6 if c.alea_ppr == "moyen" else 0.85
         facteur = min(facteur, f)
         modul.append(f"Aléa {c.alea_ppr} (PPR) → prescriptions, capacité réduite (~×{f:g}).")
-    if c.bande_littorale:
-        facteur = min(facteur, 0.0)
-        modul.append("Trait de côte / bande littorale → inconstructible ou très restreint.")
+    if c.littoral_pct and c.littoral_pct > 0.005:
+        # PPR-UNIQUE-1 (E-006) — seule la PART réellement dans la bande littorale est retirée
+        # (plus d'annulation de toute la parcelle par un simple contact de 12 %). Le facteur est
+        # plafonné à la part HORS bande ; la parcelle entièrement dans la bande reste inconstructible.
+        f = max(0.0, 1.0 - c.littoral_pct)
+        facteur = min(facteur, f)
+        pct = round(c.littoral_pct * 100)
+        modul.append(f"Trait de côte / bande littorale sur ~{pct} % de la parcelle → seule la part "
+                     f"dans la bande est retirée (capacité ~×{f:.2f}).")
     if c.pente_pct is not None:
         if c.pente_pct >= 30:
             facteur = min(facteur, 0.4)

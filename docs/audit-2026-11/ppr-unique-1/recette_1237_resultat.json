@@ -1,0 +1,10 @@
+{
+  "n_parcelles": 1242,
+  "AVANT_dessinait_dans_le_rouge": 1217,
+  "AVANT_aire_rouge_constructible_totale_m2": 5110065.0,
+  "APRES_empietement_rouge_max_m2": 0.0,
+  "APRES_zone_nulle_0_logement": 380,
+  "APRES_zone_hors_rouge_subsiste": 862,
+  "pires_empietements_apres": [],
+  "invariant_aucun_logement_en_rouge": true
+}

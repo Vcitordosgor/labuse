@@ -941,8 +941,11 @@ export function Fiche({ idu }: { idu: string }) {
           // FRONT-CHIFFRES-2 (F01b) — bande de pente SERVIE (terrain.pente_bande) ; le front ne
           // classe plus par seuils 5/15/30° codés en dur.
           const penteSous = f.terrain?.pente_bande ?? undefined
-          // Risques — compteur (vigilances de l'onglet risques) + niveau, comme le badge de §5.
-          const vigils = f.lines.filter((l) => l.onglet === 'risques' && (l.result === 'SOFT_FLAG' || l.result === 'HARD_EXCLUDE'))
+          // Risques — compteur (vigilances de l'onglet risques) + niveau, EXACTEMENT comme le badge de
+          // §5 (RisquesSection) et la tuile « Risques » du Dossier PDF : PPR-UNIQUE-1 (A-011) un seul
+          // compteur partout. Le BASSIN VERSANT est un contexte hydrographique, pas une vigilance — exclu
+          // ici comme en §5 (sinon la tuile comptait 3 là où la section et le PDF comptaient 2).
+          const vigils = f.lines.filter((l) => l.onglet === 'risques' && l.layer !== 'bassin_versant' && (l.result === 'SOFT_FLAG' || l.result === 'HARD_EXCLUDE'))
           // FRONT-CHIFFRES-2 (F01e) — la synthèse aléa (« rédhibitoire »/« fort ») est DÉCIDÉE au back
           // (aleas.synthese, moteur qui ordonne la sévérité) ; le front n'inspecte plus les niveaux.
           const risqueNiveau = f.aleas?.synthese === 'redhibitoire' ? 'aléa rédhibitoire'

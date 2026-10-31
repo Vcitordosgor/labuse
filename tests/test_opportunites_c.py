@@ -43,7 +43,10 @@ def test_rpg_reste_bloquant_en_zone_n():
 
 def test_causes_reellement_bloquantes_conservees_en_zone_u():
     rules_u = resolve_zone("U1c")
-    # bande littorale = cause RÉELLEMENT bloquante → rédhibitoire, même en zone U.
-    assert not _cap(rules_u, bande_littorale=True).constructible
+    # PPR-UNIQUE-1 (E-006) — bande littorale PROPORTIONNÉE : une parcelle ENTIÈREMENT dans la bande
+    # (littoral_pct≈1) reste rédhibitoire, même en zone U…
+    assert not _cap(rules_u, littoral_pct=1.0).constructible
+    # … mais un simple CONTACT (part faible) n'annule plus toute la parcelle (plus de tout-ou-rien).
+    assert _cap(rules_u, littoral_pct=0.15).constructible
     # aléa PPR fort = cause réellement bloquante → rédhibitoire.
     assert not _cap(rules_u, alea_ppr="fort").constructible

@@ -1241,6 +1241,36 @@ def ensure_zone_famille_fn(engine) -> None:
         c.execute(_t(ZONE_FAMILLE_FN))
 
 
+# PPR-UNIQUE-1 (décision Vic 31/10/2026) — CLASSIFICATION UNIQUE de la couleur d'une zone PPR
+# (`spatial_layers.kind='ppr'`), lue EN SQL par tous les moteurs (fiche, Étude de faisabilité,
+# Gabarit, Pièges et risques, PDF) et reflétée côté Python par `labuse.ppr.classer`. Rend
+# 'rouge' (interdiction, inconstructible — C. env. L562-1), 'bleu' (prescription, constructible
+# sous conditions) ou 'autre' (code non classé → traité EN ROUGE par prudence + journalisé ;
+# JAMAIS ignoré). Priorité : (1) le `subtype` DEAL faisant foi (INTERDICTION/PRESCRIPTION couvrent
+# 162/164 zones de la base) ; (2) repli sur le code de zone `attrs->>'code_degre'` (R…/rR… = rouge,
+# B…/rB… = bleu) ; (3) tout le reste — dont le `subtype='i'` hérité PM1 de Saint-Philippe (2 zones,
+# 1 237 parcelles, D-001) — tombe en 'autre'. La partie INTERDITE à retrancher est donc
+# `labuse_ppr_couleur(...) <> 'bleu'` (rouge ∪ autre) : on ne dessine jamais dans une zone non classée.
+# IMMUTABLE → utilisable en WHERE ; `CREATE OR REPLACE` ne prend pas de verrou de table.
+PPR_COULEUR_FN = (
+    "CREATE OR REPLACE FUNCTION labuse_ppr_couleur(subtype text, attrs jsonb) RETURNS text "
+    "LANGUAGE sql IMMUTABLE PARALLEL SAFE AS $$ "
+    "SELECT CASE "
+    "WHEN upper(coalesce($1,'')) = 'INTERDICTION' THEN 'rouge' "
+    "WHEN upper(coalesce($1,'')) = 'PRESCRIPTION' THEN 'bleu' "
+    "WHEN coalesce($2->>'code_degre','') ~ '^[rb]?R' THEN 'rouge' "
+    "WHEN coalesce($2->>'code_degre','') ~ '^[rb]?B' THEN 'bleu' "
+    "ELSE 'autre' END $$"
+)
+
+
+def ensure_ppr_couleur_fn(engine) -> None:
+    """Crée/actualise la fonction SQL unique `labuse_ppr_couleur`. Idempotent, sans verrou lourd."""
+    from sqlalchemy import text as _t
+    with engine.begin() as c:
+        c.execute(_t(PPR_COULEUR_FN))
+
+
 # CHASSE-INVARIANTS-FIX-2 (point 1) — BORNE UNIQUE des hauteurs mesurées au LiDAR (faîtage/égout,
 # table `batiment_hauteur_lidar`). La mesure MNS−MNT « dalle » devient négative quand le modèle de sol
 # passe au-dessus du bâti (remblai/débord/glitch vertical) et, sur 2 cellules mal géoréférencées, atteint
@@ -1279,6 +1309,7 @@ def ensure_hauteur_lidar_fn(engine) -> None:
 SQL_FUNCTIONS: dict[str, str | None] = {
     "labuse_zone_famille": ZONE_FAMILLE_FN,
     "labuse_hauteur_lidar_m": HAUTEUR_LIDAR_FN,
+    "labuse_ppr_couleur": PPR_COULEUR_FN,
     "labuse_set_geom_2975": None,
 }
 
