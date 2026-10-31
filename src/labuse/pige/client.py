@@ -11,7 +11,6 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from .cycle import SEUIL_NOUVEAU_J   # FRONT-CHIFFRES-2 (F14) — seuil « nouveau » servi à plat
-from .rattachement_html import niveau_preuve as _niveau_preuve
 from .tables import EV_SIGNALEMENT, journaliser
 
 STATUTS_DEFAUT = ("active", "en_vente_longue")
@@ -115,6 +114,12 @@ SELECT b.bien_id, b.commune, b.type_bien, b.est_copro, b.statut, b.idu,
        -- même fuseau que le cycle en_vente_longue) : le front ne recalcule plus « j < 2 ».
        (b.date_publication IS NOT NULL
         AND b.date_publication >= (now() AT TIME ZONE 'Indian/Reunion')::date - {SEUIL_NOUVEAU_J}) AS nouveau,
+       -- RADAR-4 (F-014 + durée de repli) — « en vente depuis N j » calculé UNE SEULE FOIS, côté serveur,
+       -- en heure de La Réunion (plus d'off-by-one : le front n'a plus de Date.now()). Un bien SANS vraie
+       -- date de publication (NULL ou sentinelle < 2005) n'a AUCUNE durée (NULL) : plus de repli sur la
+       -- date de 1re saisie (qui affichait « 913 j » sur le corpus semé en bloc).
+       (CASE WHEN b.date_publication > DATE '2005-01-01'
+             THEN (now() AT TIME ZONE 'Indian/Reunion')::date - b.date_publication END) AS anciennete_j,
        ST_X(p.centroid) AS lon, ST_Y(p.centroid) AS lat,
        -- RADAR-AUTO-1 (recette) — position de QUARTIER portée par le bien lui-même (portail, floutée),
        -- servie quand le bien n'est pas rattaché à une parcelle : la carte l'affiche en marqueur distinct.
@@ -139,10 +144,12 @@ def _bien_row(r: dict) -> dict:
         # RADAR-RECETTE-1 D1c — un bien incohérent reste VISIBLE dans le flux mais MARQUÉ (mention +
         # motifs consultables) ; il n'est jamais rattaché (idu NULL, cf. html_ingest).
         "a_qualifier": bool(r["a_qualifier"]), "a_qualifier_motifs": r["a_qualifier_motifs"] or [],
+        # RADAR-4 — le rattachement AUTOMATIQUE est retiré (décision Vic : trop peu d'annonces
+        # rattachables). Le seul rattachement possible est le geste admin « C'est cette parcelle »
+        # (rattachement_humain) : un bien rattaché l'est donc à la main → preuve toujours « certain ».
         "rattachement": ({"niveau": r["rattachement_niveau"], "idu": r["idu"],
                           "confiance": float(r["rattachement_confiance"]) if r["rattachement_confiance"] is not None else None,
-                          # RADAR-AUTO-1 (Lot D) — niveau de PREUVE affiché (certain/probable/quartier).
-                          "preuve": _niveau_preuve(r["rattachement_humain"], r["rattachement_etat"], r["rattachement_niveau"])}
+                          "preuve": "certain"}
                          if rattache else {"niveau": "absent", "idu": None, "confiance": None, "preuve": "quartier"}),
         # RADAR-AUTO-1 (recette) — position servie : la PARCELLE (centroïde) si rattaché ; sinon le
         # QUARTIER (position floutée du portail) si le bien en porte une ; sinon rien. La carte pinne
@@ -161,6 +168,9 @@ def _bien_row(r: dict) -> dict:
         "date_publication": r["date_publication"].isoformat() if r["date_publication"] else None,
         "date_saisie": r["date_premiere_saisie"].isoformat() if r["date_premiere_saisie"] else None,
         "date_derniere_confirmation": r["date_derniere_confirmation"].isoformat() if r["date_derniere_confirmation"] else None,
+        # RADAR-4 (F-014) — ancienneté « en vente depuis N j » servie à plat, Réunion ; None si pas de
+        # vraie date de publication (plus aucune durée de repli affichée).
+        "anciennete_j": int(r["anciennete_j"]) if r.get("anciennete_j") is not None else None,
         "portail": r["portail"], "url_sortante": r["url_sortante"], "annonce_id": r["annonce_id"],
         "baisse": bool(r["baisse"]),
         # RADAR-2 (Lot 2) — l'ancien prix (barré) + le % de la dernière baisse (calculé contre le prix

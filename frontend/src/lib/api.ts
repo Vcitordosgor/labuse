@@ -2670,9 +2670,9 @@ export interface RadarReverif {
   bien_id: number; commune: string; type_bien: string | null; statut: string; prix: number | null
   portail: string; url_sortante: string; date_derniere_confirmation: string | null
   date_publication: string | null; suivi_client: boolean; proche_longue: boolean
-  // RETOURS-10 (T1) — non rattachée (idu NULL) + rattachement AUTOMATIQUE à confiance forte disponible :
-  // un bouton « Rattacher » (1 clic) sur la ligne, dans la re-vérification. Faible → pas de bouton.
-  non_rattachee?: boolean; rattachable_forte?: boolean; piste_idu?: string | null
+  // RADAR-4 — non rattachée (idu NULL) : l'admin rattache À LA MAIN (« C'est cette parcelle », saisie de
+  // l'IDU). Plus de rattachement automatique (ni piste, ni « confiance forte »).
+  non_rattachee?: boolean
 }
 export interface RadarCheck {
   cible_minutes: number; file_extraction: number; reverif_du_jour: number; signalements_en_attente: number
@@ -2733,18 +2733,15 @@ export const radarInteresse = (bien_id: number) =>
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id }),
   })
 export const getRadarExtraction = () => j<{ file: RadarBrouillon[]; n: number }>('/admin/radar/extraction')
-// RADAR-DEPOT-2 (D3) — file d'instruction ADMIN : biens en PISTE, non tranchés à la main.
-export interface RadarAInstruire {
+// RADAR-4 — file « à rattacher » ADMIN : biens validés, en vente, NON rattachés. Plus de pistes ni de
+// cascade — l'admin identifie la parcelle lui-même et saisit l'IDU (« C'est cette parcelle »).
+export interface RadarARattacher {
   bien_id: number; commune: string; type_bien: string | null; prix: number | null
   surface_terrain: number | null; surface_hab: number | null
   declaratif: RadarDeclaratif | null
-  portail: string | null; url_sortante: string | null; n_candidates: number
-  // RETOURS-8 (R5) — confiance (forte/faible) + pourquoi (critères convergents) + 1re candidate.
-  rattachement_confiance: number | null; confiance: 'forte' | 'faible'
-  rattachement_criteres: RadarCritere[] | null; rattachement_etat: string | null
-  premiere_piste: RadarPiste | null
+  portail: string | null; url_sortante: string | null; district: string | null
 }
-export const getRadarAInstruire = () => j<{ file: RadarAInstruire[]; n: number }>('/admin/radar/a-instruire')
+export const getRadarARattacher = () => j<{ file: RadarARattacher[]; n: number }>('/admin/radar/a-rattacher')
 export const getRadarReverif = () => j<{ file: RadarReverif[]; n: number }>('/admin/radar/reverif')
 export const getRadarCheck = () => j<RadarCheck>('/admin/radar/check')
 export const radarToujoursEnLigne = (bien_id: number) =>
@@ -2759,7 +2756,9 @@ export interface RadarBienClient {
   bien_id: number; commune: string; type_bien: string | null; est_copro: boolean; statut: string
   // RADAR-RECETTE-1 D1c — bien incohérent : visible mais marqué, motifs consultables, jamais rattaché.
   a_qualifier: boolean; a_qualifier_motifs: string[]
-  rattachement: { niveau: 'source' | 'estime' | 'absent'; idu: string | null; confiance: number | null; preuve?: 'certain' | 'probable' | 'quartier' }
+  // RADAR-4 — rattachement manuel uniquement : un bien rattaché l'est à la main → preuve « certain » ;
+  // sinon « quartier » (position approximative). Plus de « probable » (cascade retirée).
+  rattachement: { niveau: 'source' | 'estime' | 'absent'; idu: string | null; confiance: number | null; preuve?: 'certain' | 'quartier' }
   coords: [number, number] | null
   // RADAR-AUTO-1 (recette) — position servie : parcelle (rattaché) ou QUARTIER (position floutée du
   // portail, marqueur distinct sur la carte) ou absente. `quartier` = nom du quartier si approximatif.
@@ -2767,6 +2766,9 @@ export interface RadarBienClient {
   faits: { prix: number | null; pieces: number | null; surface_hab: number | null; surface_terrain: number | null; dpe_classe: string | null; dpe_conso: number | null; dpe_ges: number | null; particulier_pro: string | null }
   etiquettes: Record<string, string>; fraicheur_source: string | null
   date_publication: string | null; date_saisie: string | null; date_derniere_confirmation: string | null
+  // RADAR-4 (F-014) — « en vente depuis N j » calculé par le serveur en heure de La Réunion (plus
+  // d'off-by-one). null = pas de vraie date de publication → aucune durée affichée (plus de repli).
+  anciennete_j: number | null
   portail: string; url_sortante: string; annonce_id: number | null; baisse: boolean
   // RADAR-2 (Lot 2) — pastilles de la liste : ancien prix (barré) + % de la dernière baisse ; « de retour »
   // (annonce ré-activée après un retrait sans vente). Servis à plat par le back (jamais recalculés au front).
@@ -2799,10 +2801,9 @@ export interface RadarSousMarche {
 }
 export interface RadarBienDetail extends RadarBienClient {
   historique_prix: { date: string | null; ancien: number | null; nouveau: number | null }[]
-  // RADAR-HTML (Lot 3) — état de rattachement + candidates de PISTE (servis au détail seulement).
-  rattachement_etat?: 'rattachee' | 'piste' | 'non_rattachee'
-  pistes?: RadarPiste[]
-  // RATTACHEMENT-V2 — critères convergents (pourquoi RATTACHÉE) + rattachement tranché à la main.
+  // RADAR-4 — état de rattachement : 'rattachee' (tranché à la main) ou 'non_rattachee'. Plus de 'piste'.
+  rattachement_etat?: 'rattachee' | 'non_rattachee'
+  // critère du rattachement HUMAIN (« tranché à la main ») + drapeau.
   rattachement_criteres?: RadarCritere[]
   rattachement_humain?: boolean
 }
@@ -2830,24 +2831,9 @@ export const radarClic = (bien_id: number, annonce_id?: number | null) =>
   j<{ ok: boolean; clic_id: number }>('/radar/clic', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id, annonce_id: annonce_id ?? null }) })
 export const radarSignaler = (bien_id: number, motif = '') =>
   j<{ ok: boolean; event_id: number }>('/radar/signaler', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id, motif }) })
-// RADAR-HTML (Lot 3) + V2 (Lot 2) — « Instruire » : candidates ENRICHIES (ortho + critères par candidate).
+// RADAR-4 — le critère du rattachement HUMAIN (« tranché à la main ») servi au détail d'un bien rattaché.
 export interface RadarCritere { critere: string; valeur: string; converge?: boolean }
-// RETOURS-9 (Q7) — les faits de la candidate, lus tels quels de la fiche parcelle (aucun calcul neuf).
-export interface RadarCandidateFiche {
-  surface_cadastrale: number | null; surface_bati: number | null; n_batiments: number | null
-  zone_plu: string | null; adresse_ban: string | null
-}
-export interface RadarPiste {
-  idu: string; distance_m?: number | null; n_criteres?: number
-  criteres?: RadarCritere[]                 // critères convergents (cascade)
-  criteres_detail?: RadarCritere[]          // chaque critère applicable : converge (✓) ou diverge (✗)
-  ortho_url?: string | null                 // vignette BD ORTHO 20 cm de la candidate
-  fiche?: RadarCandidateFiche | null        // RETOURS-9 (Q7) — faits candidate pour trancher côte à côte
-}
-// RADAR-DEPOT-2 (D3) — l'Instruire et le rattachement humain sont ADMIN SEULEMENT (endpoints /admin/…).
-export const radarInstruire = (bien_id: number) =>
-  j<{ ok: boolean; bien_id: number; etat: string; humain?: boolean; candidates: RadarPiste[]; criteres?: RadarCritere[]; motif?: string | null }>(
-    '/admin/radar/instruire', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id }) })
+// RADAR-DEPOT-2 (D3) / RADAR-4 — le rattachement est MANUEL et ADMIN SEULEMENT : l'admin saisit l'IDU.
 export const radarRattacherHumain = (bien_id: number, idu: string) =>
   j<{ ok: boolean; bien_id: number; idu: string; etat: string; humain: boolean; motif?: string }>(
     '/admin/radar/rattacher-humain', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bien_id, idu }) })

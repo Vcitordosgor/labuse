@@ -24,22 +24,9 @@ const TYPE_LABEL: Record<string, string> = { terrain: 'Terrain', maison: 'Maison
 
 const fmtEur = (v: number | null | undefined) => (v == null ? '—' : v.toLocaleString('fr-FR') + ' €')
 
-// RECETTE-4 — une date ABSENTE lue comme 1970 (époque) donnait « en vente depuis 20 756 j ». On REJETTE
-// toute date avant 2005 (impossible pour une annonce ; = sentinelle d'époque) et toute date illisible :
-// aucune date valable → null (aucune durée affichée). JAMAIS un calcul depuis zéro.
-export function joursDepuis(iso: string | null | undefined): number | null {
-  if (!iso) return null
-  const t = new Date(iso).getTime()
-  if (Number.isNaN(t)) return null
-  if (new Date(iso).getFullYear() < 2005) return null
-  return Math.max(0, Math.floor((Date.now() - t) / 86_400_000))
-}
-// RECETTE-4 — on essaie les deux dates INDÉPENDAMMENT : si la publication est une sentinelle 1970,
-// elle renvoie null et l'on retombe sur la saisie (plutôt que d'afficher 20 756 j).
-function ancienneteJ(b: { date_publication: string | null; date_saisie: string | null }): number | null {
-  const jp = joursDepuis(b.date_publication)
-  return jp != null ? jp : joursDepuis(b.date_saisie)
-}
+// RADAR-4 (F-014) — l'ancienneté « en vente depuis N j » n'est PLUS calculée au front (plus de Date.now()
+// ni de fuseau OS, donc plus d'off-by-one) : le serveur la sert déjà en heure de La Réunion (`anciennete_j`,
+// null si pas de vraie date de publication → aucune durée). Le front se contente de l'afficher.
 
 function specsBien(b: RadarBienClient): string {
   const p: string[] = []
@@ -67,7 +54,8 @@ function resumeFiltres(f: RadarFiltres): string {
 function CarteBien({ b, sel, onClick, selRef }: {
   b: RadarBienClient; sel: boolean; onClick: () => void; selRef: React.RefObject<HTMLButtonElement>
 }) {
-  const j = ancienneteJ(b)
+  // RADAR-4 (F-014) — ancienneté servie à plat par le serveur (Réunion) ; null = aucune durée affichée.
+  const j = b.anciennete_j
   // FRONT-CHIFFRES-2 (F14) — les DÉCISIONS de badge sont servies (le front ne les recalcule plus) :
   // `nouveau` à plat (seuil back SEUIL_NOUVEAU_J), « en vente longue » sur le `statut` du cycle back
   // (seuil SEUIL_VENTE_LONGUE_J). `j` ne sert plus qu'à AFFICHER l'ancienneté (présentation).

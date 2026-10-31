@@ -206,31 +206,23 @@ def client_http(engine):
     return TestClient(app)
 
 
-def test_d3_instruire_est_admin_only(client_http, monkeypatch):
-    """D3 — l'Instruire, le rattachement humain et l'ortho sont sous la garde ADMIN (endpoints /admin/…) :
-    si la garde refuse, ils refusent (un rattachement client erroné serait un faux fait servi à tous)."""
+def test_d3_rattachement_humain_est_admin_only(client_http, monkeypatch):
+    """D3 / RADAR-4 — le rattachement est MANUEL et ADMIN seulement : « C'est cette parcelle »
+    (rattacher-humain) et la file « à rattacher » sont sous la garde ADMIN. Le rattachement AUTOMATIQUE est
+    RETIRÉ (décision Vic) : plus d'Instruire, de cascade, de pistes ni d'ortho, et aucun chemin CLIENT."""
     from fastapi import HTTPException
 
     def _refuse(request):
         raise HTTPException(status_code=403, detail="admin requis")
     monkeypatch.setattr("labuse.api.auth.exiger_admin", _refuse)
-    assert client_http.post("/admin/radar/instruire", json={"bien_id": 1}).status_code == 403
     assert client_http.post("/admin/radar/rattacher-humain",
                             json={"bien_id": 1, "idu": "X"}).status_code == 403
-    assert client_http.get("/admin/radar/ortho/ABC").status_code == 403
-    # l'ancien chemin CLIENT n'existe plus (le client ne rattache jamais).
-    assert client_http.post("/radar/instruire", json={"bien_id": 1}).status_code == 404
+    assert client_http.get("/admin/radar/a-rattacher").status_code == 403
+    # les endpoints du rattachement AUTOMATIQUE (cascade/pistes/ortho) n'existent plus.
+    assert client_http.post("/admin/radar/instruire", json={"bien_id": 1}).status_code == 404
+    assert client_http.get("/admin/radar/ortho/ABC").status_code == 404
+    # l'ancien chemin CLIENT n'a jamais existé (le client ne rattache jamais).
     assert client_http.post("/radar/rattacher-humain", json={"bien_id": 1, "idu": "X"}).status_code == 404
-
-
-def test_q7_candidate_fiche_robuste(db_session):
-    """RETOURS-9 (Q7) — les faits de la candidate (surface cadastrale, bâti, bâtiments, zone PLU, adresse
-    BAN) sont lus de la fiche parcelle. Pour un IDU inconnu, TOUS les champs sortent None (jamais un
-    chiffre inventé, jamais un 500) — la garde par table tient sur une base partielle."""
-    from labuse.pige import api as pige_api
-    fi = pige_api._candidate_fiche(db_session, "IDU-INEXISTANT-00")
-    assert set(fi) == {"surface_cadastrale", "surface_bati", "n_batiments", "zone_plu", "adresse_ban"}
-    assert all(v is None for v in fi.values())
 
 
 # ════════════════════════ D4 — badge « sous le marché » ════════════════════════
