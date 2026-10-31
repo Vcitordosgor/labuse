@@ -37,7 +37,9 @@ def _population(z) -> str:
         lignes.append(_kv("Ménages", f"{_i(p.get('menages'))}"))
     if p.get("revenu_median_eur") is not None:
         suff = " (estimé)" if p.get("revenu_estime") else ""
-        lignes.append(_kv("Revenu médian", f"{_i(p.get('revenu_median_eur'))} €{suff}"))
+        # NU-C-002 — le chiffre est sum(ind_snv)/sum(ind) = niveau de vie MOYEN par individu, ni
+        # médian ni un revenu. Le libellé PDF s'aligne sur l'écran (EtudeZone.tsx:243).
+        lignes.append(_kv("Niveau de vie moyen / an", f"{_i(p.get('revenu_median_eur'))} €{suff}"))
     if p.get("pct_moins_25") is not None:
         lignes.append(_kv("Moins de 25 ans", f"{_i(p.get('pct_moins_25'))} %"))
     if p.get("taux_pauvrete_pct") is not None:

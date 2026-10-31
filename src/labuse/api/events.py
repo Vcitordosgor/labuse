@@ -1247,7 +1247,10 @@ def brief_matin(db: Session, cid: int | None) -> dict:
         " GROUP BY COALESCE(p.commune, '—') ORDER BY max(e.ts) DESC"),
         {"c": cid, "perso": list(_PERSO_KINDS)}).mappings().all()
     n_evenements = sum(r["n"] for r in groupes) + int(permis_hier)
-    vide = (len(veilles) == 0 and permis_hier == 0)
+    # NU-F-017 — « vide » doit refléter LE compte servi : un événement perso (p. ex. vente DVF sur
+    # parcelle suivie) vit dans `groupes`, pas dans `veilles`. L'ancien `len(veilles)==0 and
+    # permis_hier==0` ignorait `groupes` → « Rien de nouveau » affiché alors que n_evenements>0.
+    vide = (n_evenements == 0)
     cause = None
     if vide:
         if not communes:

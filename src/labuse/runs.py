@@ -105,6 +105,24 @@ def precedent() -> str:
     return val
 
 
+def promu_at():
+    """NU-F-012 — l'instant de PROMOTION du run servi (`promoted_at` du manifeste), en datetime aware.
+    Sert à invalider les caches qui survivent à une bascule (ex. `projets.cadrage_total`) : un cache
+    daté AVANT cette promotion a été calculé sur l'ancien run → à recalculer. `None` si le manifeste
+    n'est pas posé (dev/test fichier pur) ou sans `promoted_at` → l'appelant retombe sur son amorçage."""
+    from datetime import datetime
+    from . import manifeste as _manifeste
+    if _manifeste.chemin().parent != _SERVED_FILE.parent:
+        return None
+    raw = (_manifeste.lire() or {}).get("promoted_at")
+    if not raw:
+        return None
+    try:
+        return datetime.fromisoformat(raw)
+    except (ValueError, TypeError):
+        return None
+
+
 def invalidate() -> None:
     """À appeler juste après une bascule (réécriture du manifeste et de ses vues dérivées) : la
     prochaine lecture relit tout. Rend la bascule effective SANS redémarrage."""

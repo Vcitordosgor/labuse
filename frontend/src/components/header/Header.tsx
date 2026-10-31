@@ -555,9 +555,9 @@ function MarqueForm() {
         </div>
       </div>
       {upLogo.isError && <p className="text-[10.5px] text-st-ecartee">Logo refusé (format ou taille).</p>}
-      <input className={field} placeholder="Raison sociale" value={vRs} onChange={(e) => setRs(e.target.value)} />
-      <input className={field} placeholder="Coordonnées (tél, email…)" value={vCo} onChange={(e) => setCo(e.target.value)} />
-      <input className={field} placeholder="Mention libre (bas de page)" value={vMe} onChange={(e) => setMe(e.target.value)} />
+      <input className={field} aria-label="Raison sociale" placeholder="Raison sociale" value={vRs} onChange={(e) => setRs(e.target.value)} />
+      <input className={field} aria-label="Coordonnées (tél, email…)" placeholder="Coordonnées (tél, email…)" value={vCo} onChange={(e) => setCo(e.target.value)} />
+      <input className={field} aria-label="Mention libre (bas de page)" placeholder="Mention libre (bas de page)" value={vMe} onChange={(e) => setMe(e.target.value)} />
       <Bouton niveau="primaire" ton="vert" data-marque-save className="mt-0.5 w-full" disabled={save.isPending} onClick={() => save.mutate()}>
         {save.isSuccess && rs === null ? '✓ Enregistré' : save.isPending ? 'Enregistrement…' : 'Enregistrer'}
       </Bouton>
@@ -745,7 +745,7 @@ function SignalerButton() {
               ))}
             </div>
             <textarea value={msg} onChange={(e) => setMsg(e.target.value)} rows={4} maxLength={2000}
-              placeholder="Décrivez le bug, l'idée ou la question…" data-retour-message
+              aria-label="Décrivez le bug, l'idée ou la question" placeholder="Décrivez le bug, l'idée ou la question…" data-retour-message
               className="mt-3 w-full resize-none rounded-md border border-line-2 bg-bg p-2 text-xs text-txt outline-none focus:border-mint" />
             <div className="mt-2 flex items-center justify-between">
               <span className="text-[10px] text-txt-mut">Transmis avec votre licence — jamais anonyme.</span>

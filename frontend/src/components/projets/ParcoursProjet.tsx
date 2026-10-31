@@ -19,7 +19,7 @@ const MONO = 'ui-monospace, SFMono-Regular, Menlo, monospace'
 const ETAPES = ['NOM', 'PÉRIMÈTRE', 'CONTEXTE', 'CADRAGE', 'RÉCAPITULATIF']
 const N = ETAPES.length
 
-const ACCENT_MINT = { c: '#4ADE80', bg: '#12291D', on: '#05140B' }
+const ACCENT_MINT = { c: 'var(--mint)', bg: '#12291D', on: '#05140B' }
 const ACCENT_IA = { c: '#B497F0', bg: '#1A1430', on: '#14091F' }
 
 export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
@@ -147,10 +147,12 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
         <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '.12em', color: A.c, marginBottom: 6 }}>NOUVEAU PROJET</div>
         <h2 style={{ fontSize: 22, fontWeight: 500, color: '#ECF5EF', margin: '0 0 16px' }}>Comment démarrer ?</h2>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          {/* RECETTE-4 — chemins renommés. Le premier ne parle plus d'analyse LABUSE ni de probabilité
-              de mutation : ce sont les mêmes filtres que le panneau Filtre de la carte, appliqués à la base. */}
+          {/* RECETTE-4 / NU-F-003 — chemins renommés. Le premier ne parle plus d'analyse LABUSE ni de
+              probabilité de mutation : ce sont EXACTEMENT les filtres du panneau Filtre de la carte
+              (toutes les familles, étage 0 compris). « rien d'autre » retiré (le projet trie ensuite
+              les parcelles constructibles — le compteur du cadrage l'explique). */}
           <Porte k="vivier" on titre="Partir d’une sélection filtrée"
-            desc="Les mêmes filtres que le panneau Filtre de la carte, appliqués à la base — rien d’autre." />
+            desc="Les mêmes filtres que le panneau Filtre de la carte, appliqués à la base." />
           <Porte k="zero" on={false} titre="Partir de zéro"
             desc="Un dossier vide. Vous y ajoutez vos parcelles une à une, depuis leurs fiches (bouton « Projet »). Pour qui a déjà ses cibles." />
         </div>
@@ -169,8 +171,10 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
         <h2 style={{ fontSize: 22, fontWeight: 500, color: '#ECF5EF', margin: '0 0 4px' }}>Un dossier vide.</h2>
         <p style={{ fontSize: 13.5, color: '#8FA69A', margin: '0 0 18px' }}>Nommez-le ; ajoutez vos parcelles depuis leurs fiches (bouton « Projet ») — elles arrivent dans <b style={{ color: '#C9DCD1' }}>Retenues</b>.</p>
         <input data-projet-nom autoFocus value={nom} onChange={(e) => setNom(e.target.value)} placeholder={`Ex. ${nomEffectif}`}
+          aria-label="Nom du projet"
           style={{ width: '100%', height: 48, background: '#060A08', border: '.5px solid #2A3A31', borderRadius: 6, padding: '0 14px', fontSize: 18, color: '#ECF5EF', outline: 'none', marginBottom: 12 }} />
         <input data-projet-budget type="number" min="0" value={budget} onChange={(e) => setBudget(e.target.value)} placeholder="Budget foncier en € (facultatif, indicatif)"
+          aria-label="Budget foncier en € (facultatif, indicatif)"
           style={{ width: '100%', height: 44, background: '#060A08', border: '.5px solid #2A3A31', borderRadius: 6, padding: '0 14px', fontSize: 15, color: '#ECF5EF', outline: 'none' }} />
         {erreur && <p style={{ fontSize: 12, color: '#E0B341', margin: '12px 0 0' }}>{erreur}</p>}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 18, marginTop: 18, borderTop: '.5px solid #1E2A23' }}>
@@ -219,7 +223,7 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
       {etape === 0 && (
         <div style={{ marginBottom: 28 }}>
           <input data-projet-nom autoFocus value={nom} onChange={(e) => setNom(e.target.value)}
-            placeholder={`Ex. ${nomEffectif}`} style={champ} />
+            placeholder={`Ex. ${nomEffectif}`} aria-label="Nom du projet" style={champ} />
         </div>
       )}
       {etape === 1 && (
@@ -248,7 +252,7 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
       {etape === 2 && (
         <div data-projet-contexte style={{ marginBottom: 28 }}>
           <input data-projet-budget autoFocus type="number" min="0" value={budget} onChange={(e) => setBudget(e.target.value)}
-            placeholder="Budget foncier en € (facultatif)" style={champ} />
+            placeholder="Budget foncier en € (facultatif)" aria-label="Budget foncier en € (facultatif)" style={champ} />
           {noteInfo('Indicatif — figure sur le projet et le PDF, sans effet sur la sélection.')}
         </div>
       )}

@@ -1,14 +1,17 @@
-// M120 — LE CADRAGE PROJET : les facettes de la carte (terrain + signaux) RÉUTILISÉES telles
-// quelles — mêmes contrôles (ChipGroup / ZoneSelector / SignalChip / NumField), jamais une copie —
-// branchées sur le binding fourni (le cadrage projet local, via FiltreProvider).
-// M120-B — le compteur vivant compte le VIVIER FIGEABLE (hors exclusions dures), pas le total carte
-// gonflé : le client voit l'univers réel qu'il triera, et qu'il figera un TOP-N (jamais l'ensemble).
+// M120 — LE CADRAGE PROJET : les facettes de la carte RÉUTILISÉES telles quelles — mêmes contrôles
+// (ChipGroup / ZoneSelector / SignalChip / NumField), jamais une copie — branchées sur le binding
+// fourni (le cadrage projet local, via FiltreProvider).
+// NU-F-003 (décision Vic « total partout, split visible ») — le cadrage rend EXACTEMENT les familles
+// de la carte (terrain + Affiner la recherche + Propriétaire, étage 0 compris) et son compteur annonce
+// le MÊME nombre que le panneau Filtre de la carte (`total`), avec le split qui l'explique
+// (`figeable` triable · `ecartees` écartées). Plus de sous-ensemble codé en dur, plus de « rien
+// d'autre » démenti par les faits.
 import { useEffect, useState } from 'react'
 
 import { getCadrageCompteur, type CadrageCompteur } from '../../lib/api'
 import { countActiveFilters } from '../../lib/filters'
 import {
-  ChipGroup, ETAT_SOL, NumField, SignalChip, SIGNAUX_KEYS, TitreSection, ZoneSelector,
+  AffinerRecherche, ChipGroup, ETAT_SOL, NumField, SectionProprietaire, TitreSection, ZoneSelector,
 } from './FiltreLabuse'
 import { useFiltre } from './filtreContext'
 import { type Filters } from '../../store/useApp'
@@ -39,7 +42,7 @@ export function FiltreFacettes({ compteurScope }: { compteurScope?: Partial<Filt
 
   return (
     <div data-cadrage-facettes className="flex flex-col gap-4">
-      {/* LE TERRAIN — faits objectifs */}
+      {/* LE TERRAIN — faits objectifs (mêmes contrôles que « 2 · Le terrain » de la carte) */}
       <div>
         <TitreSection titre="Le terrain"
           info="Des faits objectifs (surface, zonage, état du sol) — valables sans aucune analyse." />
@@ -57,40 +60,37 @@ export function FiltreFacettes({ compteurScope }: { compteurScope?: Partial<Filt
           </div>
           <div>
             <p className="label-caps text-txt-dim">État du sol</p>
-            <div className="mt-1"><ChipGroup field="etatSol" options={ETAT_SOL} /></div>
+            {/* NU-B-002 / NU-F-003 — même partition que la carte (nu · bâti · non mesuré). */}
+            <div className="mt-1"><ChipGroup field="etatSol" options={ETAT_SOL} partition /></div>
           </div>
         </div>
       </div>
 
-      {/* SIGNAUX DE VIE — événements sourcés, cumulables (OU dans le groupe) */}
-      <div>
-        <div className="flex items-baseline justify-between gap-2">
-          <TitreSection titre="Signaux de vie"
-            info="Des événements sourcés, cumulables — une parcelle correspond si au moins un des signaux cochés est présent." />
-          {filters.signaux.length > 0 && (
-            <span className="shrink-0 text-[10.5px] text-txt-dim">
-              {`${filters.signaux.length} actif${filters.signaux.length > 1 ? 's' : ''} sur ${SIGNAUX_KEYS.length}`}
-            </span>
-          )}
-        </div>
-        <div className="gcard mt-2 flex flex-wrap gap-1.5 p-3">
-          {SIGNAUX_KEYS.map((k) => <SignalChip key={k} k={k} />)}
-        </div>
-      </div>
+      {/* NU-F-003 — les familles qui manquaient au cadrage, RÉUTILISÉES telles quelles depuis la carte :
+          Affiner la recherche (copropriété, hauteur LiDAR, emprise/saturé, ZFANG, FRR, signaux de vie)
+          et toute la section Propriétaire (dénomination, SIREN, forme juridique, APE, dirigeants, âge). */}
+      <AffinerRecherche />
+      <SectionProprietaire />
 
-      {/* COMPTEUR VIVANT — le VIVIER FIGEABLE (SQL exact) : ce que le client triera réellement, et
-          qu'il figera un TOP-N. Jamais le total gonflé par les exclusions dures. */}
+      {/* COMPTEUR — le MÊME nombre que la carte (`total`, étage 0 compris) + le split : combien seront
+          réellement à trier (`figeable`), combien sont écartées. Le wizard annonce la carte, le split
+          dit ce que le projet servira — plus de nombre démenti à l'ouverture. */}
       {nActifs > 0 && (
         <div data-cadrage-compteur aria-live="polite"
           className={`text-[11.5px] transition-opacity duration-quick ${liveLoading ? 'opacity-50' : 'opacity-100'}`}>
           {live == null ? <span className="text-txt-mut">…</span>
-            : live.vivier === 0 ? <span className="text-st-creuser">Aucune parcelle figeable — élargissez le cadrage.</span>
-            : live.vivier <= live.cap ? (
-              <span className="text-txt-mut"><b className="tabular-nums text-txt">{nf.format(live.vivier)}</b> parcelle{live.vivier > 1 ? 's' : ''} figeable{live.vivier > 1 ? 's' : ''} — toutes seront à trier.</span>
-            ) : (
-              <span className="text-txt-mut"><b className="tabular-nums text-txt">{nf.format(live.vivier)}</b> parcelles figeables · la shortlist figera les <b className="text-txt">{live.cap}</b> meilleures (par probabilité de mutation) — <span className="text-st-creuser">resserrez le cadrage pour cibler</span>.</span>
+            : live.total === 0 ? <span className="text-st-creuser">Aucune parcelle — élargissez le cadrage.</span>
+            : (
+              <>
+                <span className="text-txt-mut"><b className="tabular-nums text-txt">{nf.format(live.total)}</b> parcelle{live.total > 1 ? 's' : ''} correspondent à ce cadrage.</span>
+                <p className="mt-0.5 text-[11px] text-txt-mut">
+                  <b className="tabular-nums text-txt">{nf.format(live.figeable)}</b> à trier
+                  {live.ecartees > 0 && <> · <span className="text-st-ecartee tabular-nums">{nf.format(live.ecartees)}</span> écartées</>}
+                  {live.figeable > live.cap && <> · la shortlist figera les <b className="text-txt">{live.cap}</b> meilleures (par probabilité de mutation)</>}
+                </p>
+                <p className="mt-0.5 text-[10px] text-txt-dim">Écartées = terrains non constructibles et faux positifs (exclusions automatiques du moteur) — comptés par la carte, non triables.</p>
+              </>
             )}
-          <p className="mt-0.5 text-[10px] text-txt-dim">Figeable = hors terrains non constructibles et faux positifs (exclusions automatiques du moteur).</p>
         </div>
       )}
     </div>

@@ -222,6 +222,16 @@ _CADRAGE_MAP: dict[str, tuple[str, str]] = {
     "modebTravauxM2": ("modeb_travaux_m2", "num"), "modebLoyerM2": ("modeb_loyer_m2", "num"),
     "modebRendementPct": ("modeb_rendement_pct", "num"), "signaux": ("signaux", "csv"),
     "zfangRegime": ("zfang", "csv"), "frrClassement": ("frr", "csv"),   # FILTRES-FIX-1 (lot 1) — parité facettes
+    # NU-F-003 — PARITÉ CARTE : les familles « bâti » (hauteur LiDAR, emprise, saturé) et toute la
+    # section « Propriétaire » (dénomination, SIREN, forme juridique, APE, nb dirigeants, tranche
+    # d'âge) manquaient à la carte → cadrage. Le wizard les rend désormais (AffinerRecherche /
+    # SectionProprietaire) ; sans ces entrées, clean_cadrage les aurait avalées en silence.
+    "hauteurMin": ("hauteur_min", "num"), "hauteurMax": ("hauteur_max", "num"),
+    "empriseMin": ("emprise_min", "num"), "empriseMax": ("emprise_max", "num"),
+    "empriseSature": ("emprise_sature", "bool"),
+    "pmDenom": ("pm_denom", "str"), "pmSiren": ("pm_siren", "str"),
+    "pmForme": ("pm_forme", "csv"), "pmApe": ("pm_ape", "csv"), "pmAge": ("pm_age", "csv"),
+    "pmDirigMin": ("pm_dirig_min", "num"), "pmDirigMax": ("pm_dirig_max", "num"),
 }
 
 
@@ -240,6 +250,9 @@ def clean_cadrage(cadrage: dict | None) -> dict:
         elif kind == "csv":
             if isinstance(v, list) and v:
                 out[k] = list(v)
+        elif kind == "str":   # NU-F-003 — dénomination / SIREN (chaîne libre de la section Propriétaire)
+            if isinstance(v, str) and v.strip():
+                out[k] = v
         else:  # num
             if v is not None:
                 out[k] = v
@@ -503,25 +516,31 @@ def _compteur_cle(cadrage: dict) -> str:
 
 @router.post("/compteur")
 def projet_compteur(body: CadrageIn, db: Session = Depends(get_db)) -> dict:
-    """PROJETS-FIX F1 — le compteur du CADRAGE, sorti de LA MÊME requête que le compteur « À trier »
-    du projet ouvert : `_cadrage_total(...)["total"]`. C'est, PAR CONSTRUCTION, le nombre que le
-    projet servira (`/{pid}/parcelles` appelle `_cadrage_total` sur le même cadrage) — le wizard ne
-    peut plus annoncer un nombre que le projet dément.
+    """NU-F-003 (décision Vic « total partout, split visible ») — le compteur du CADRAGE annonce
+    EXACTEMENT le compteur de la carte (`_q_v2_stats.total`, étage 0 COMPRIS), avec le split qui
+    l'explique : `figeable` = ce que le projet triera (hors exclusions dures, = `_cadrage_total.total`,
+    la MÊME source que « À trier » du projet ouvert et que `/{pid}/parcelles`), `ecartees` = le reste.
+    Le wizard ne ment plus (il annonce le nombre carte) ET ne sur-promet plus (le split dit combien
+    sont réellement triables, = ce que le projet servira).
 
-    Le champ `total` (compte carte GONFLÉ par ~79 % d'exclusions dures — mesuré) est RETIRÉ : il était
-    la source du mirage « le wizard annonce 30 000, le projet montre 0 » (le récap lisait `r.total`).
-    On ne sert plus qu'UN nombre — le vivier réel, triable. `cap` = taille max de la shortlist figée.
-
-    GB-024b — le cadrage ÎLE coûte ~1 s. On MÉMORISE le résultat par (run, cadrage) avec un TTL et on
-    sert sa fraîcheur `calcule_le` : le 1er appel paie, les suivants sont instantanés. La VALEUR est
-    identique (même requête), seul le chemin change."""
+    GB-024b — on MÉMORISE le résultat par (run, cadrage) avec un TTL et on sert sa fraîcheur
+    `calcule_le` : le 1er appel paie, les suivants sont instantanés. Valeur identique (même requête)."""
     cadrage = clean_cadrage(body.cadrage)
     cle = _compteur_cle(cadrage)
     hit = _COMPTEUR_CACHE.get(cle)
     if hit and (_time.time() - hit[0]) < _COMPTEUR_TTL_S:
         return {**hit[1], "cache": True}
-    vivier = _cadrage_total(db, cadrage)["total"] or 0   # F1 — LA source unique du « vivier à trier »
-    res = {"vivier": vivier, "cap": _shortlist_max(), "cache": False,
+    from .app import _q_v2_stats
+    fc = _cadrage_to_filtre(cadrage)
+    where, params = fc.where()
+    # `total` = compteur carte (LEFT JOIN score_v2, étage 0 compris) — PAR CONSTRUCTION le même nombre
+    # que `/filtre` sert pour ce cadrage (preuve recette : Projets == carte sur 3 combinaisons).
+    total = _q_v2_stats(db, fc.commune, run_label=fc.source, extra_where=where,
+                        extra_params=params, exclure_slivers=True)["total"]
+    figeable = _cadrage_total(db, cadrage)["total"] or 0   # ce que le projet triera (hors étage 0)
+    res = {"total": total, "figeable": figeable, "ecartees": max(0, total - figeable),
+           "vivier": figeable,   # rétro-compat : anciens appelants lisaient `vivier` (= figeable)
+           "cap": _shortlist_max(), "cache": False,
            "calcule_le": datetime.now(_REUNION_TZ).isoformat(timespec="minutes")}
     _COMPTEUR_CACHE[cle] = (_time.time(), res)
     return res
@@ -645,8 +664,14 @@ def projets_list(request: Request, db: Session = Depends(get_db)) -> list[dict]:
     ouvertures/rejeux suivants le tiennent à jour. Jamais de retour au figé."""
     cid = current_compte(request)
     rows = _scope(db.query(models.Projet), cid).order_by(models.Projet.updated_at.desc()).all()
+    # NU-F-012 — le cache `cadrage_total` survivait à une bascule de run (la liste affichait un
+    # compteur périmé jusqu'à la 1re ouverture). On le rafraîchit aussi quand il est ANTÉRIEUR à la
+    # promotion du run servi — plus de « 399 à trier » qui devient 368 à l'ouverture.
+    promu = runs.promu_at()
     for p in rows:
-        if p.cadrage_total is None:                 # cache froid → amorçage unique (borné au compte)
+        stale_run = (promu is not None and p.cadrage_total_at is not None
+                     and p.cadrage_total_at < promu)
+        if p.cadrage_total is None or stale_run:     # cache froid OU calculé sur l'ancien run → recalcul
             _refresh_cadrage_total(db, p)
     db.flush()
     ids = [p.id for p in rows]

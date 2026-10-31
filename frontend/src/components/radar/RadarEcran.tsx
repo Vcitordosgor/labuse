@@ -8,11 +8,14 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { getRadarBiens, radarClic, type RadarBienClient, type RadarFiltres } from '../../lib/api'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'
 import { trierCommunes } from '../../lib/communes'
+import { fmtEur, fmtM2 } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { Squelette } from '../Loading'
 import { EmptyState, ErrorState } from '../States'
+import { Badge } from '../ui/Badge'
 import { Chevron } from '../ui/Chevron'
 import { Retour } from '../ui/Retour'
+import { Select } from '../ui/Select'
 import { RadarMarcheColonne } from './RadarMarcheColonne'
 
 const COMMUNES_24 = trierCommunes(CP_COMMUNES.map(([, nom]) => nom), (n) => n)
@@ -22,8 +25,6 @@ const TRIS = [['recentes', 'Plus récentes'], ['prix_asc', 'Prix croissant'], ['
   ['anciennete', 'Ancienneté'], ['baisses', 'Baisses']] as const
 const TYPE_LABEL: Record<string, string> = { terrain: 'Terrain', maison: 'Maison' }
 
-const fmtEur = (v: number | null | undefined) => (v == null ? '—' : v.toLocaleString('fr-FR') + ' €')
-
 // RADAR-4 (F-014) — l'ancienneté « en vente depuis N j » n'est PLUS calculée au front (plus de Date.now()
 // ni de fuseau OS, donc plus d'off-by-one) : le serveur la sert déjà en heure de La Réunion (`anciennete_j`,
 // null si pas de vraie date de publication → aucune durée). Le front se contente de l'afficher.
@@ -31,10 +32,10 @@ const fmtEur = (v: number | null | undefined) => (v == null ? '—' : v.toLocale
 function specsBien(b: RadarBienClient): string {
   const p: string[] = []
   if (b.faits.pieces) p.push(`${b.faits.pieces} pièce${b.faits.pieces > 1 ? 's' : ''}`)
-  if (b.faits.surface_hab) p.push(`${b.faits.surface_hab} m² hab`)
-  if (b.faits.surface_terrain) p.push(`${b.faits.surface_terrain} m² de terrain`)
+  if (b.faits.surface_hab) p.push(`${fmtM2(b.faits.surface_hab)} hab`)
+  if (b.faits.surface_terrain) p.push(`${fmtM2(b.faits.surface_terrain)} de terrain`)
   const surf = b.type_bien === 'terrain' ? b.faits.surface_terrain : (b.faits.surface_hab || b.faits.surface_terrain)
-  if (b.faits.prix && surf) p.push(`${Math.round(b.faits.prix / surf).toLocaleString('fr-FR')} €/m²`)
+  if (b.faits.prix && surf) p.push(`${fmtEur(Math.round(b.faits.prix / surf))}/m²`)
   return p.join(' · ') || '—'
 }
 
@@ -44,10 +45,10 @@ function resumeFiltres(f: RadarFiltres): string {
   if (f.commune) b.push(f.commune)
   if (f.type_bien) b.push(TYPE_LABEL[f.type_bien] ?? f.type_bien)
   if (f.particulier_pro) b.push(f.particulier_pro === 'pro' ? 'Pro' : 'Particulier')
-  if (f.surface_terrain_min != null) b.push(`≥ ${f.surface_terrain_min} m²`)
-  if (f.surface_terrain_max != null) b.push(`≤ ${f.surface_terrain_max} m²`)
-  if (f.prix_min != null) b.push(`≥ ${f.prix_min.toLocaleString('fr-FR')} €`)
-  if (f.prix_max != null) b.push(`≤ ${f.prix_max.toLocaleString('fr-FR')} €`)
+  if (f.surface_terrain_min != null) b.push(`≥ ${fmtM2(f.surface_terrain_min)}`)
+  if (f.surface_terrain_max != null) b.push(`≤ ${fmtM2(f.surface_terrain_max)}`)
+  if (f.prix_min != null) b.push(`≥ ${fmtEur(f.prix_min)}`)
+  if (f.prix_max != null) b.push(`≤ ${fmtEur(f.prix_max)}`)
   return b.length ? b.join(' · ') : 'Tous les biens'
 }
 
@@ -79,16 +80,28 @@ function CarteBien({ b, sel, onClick, selRef }: {
       </div>
       <div className={`mt-1.5 text-[12.5px] leading-snug ${sel ? 'text-mint-on/80' : 'text-txt-mut'}`}>{specsBien(b)}</div>
       <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-        {nouveau && <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-medium ${sel ? puce : 'bg-mint/12 text-mint'}`}>Nouveau</span>}
-        {b.baisse && b.baisse_pct != null && (
-          <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-medium ${sel ? puce : 'bg-mint/12 text-mint'}`}>
-            Baisse −{b.baisse_pct} %{b.ancien_prix != null && <span className={`ml-1 line-through ${sel ? 'text-mint-on/60' : 'text-txt-dim'}`}>{fmtEur(b.ancien_prix)}</span>}
+        {/* F-020 — pastilles d'état via le composant Badge de la charte (vert/ambre) ; l'état SÉLECTIONNÉ
+            garde son aspect bespoke (fond vert, encre sombre) → span avec la classe `puce`. */}
+        {nouveau && (sel
+          ? <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-medium ${puce}`}>Nouveau</span>
+          : <Badge ton="vert">Nouveau</Badge>)}
+        {b.baisse && b.baisse_pct != null && (sel ? (
+          <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-medium ${puce}`}>
+            {`Baisse −${b.baisse_pct} %`}{b.ancien_prix != null && <span className="ml-1 line-through text-mint-on/60">{fmtEur(b.ancien_prix)}</span>}
           </span>
-        )}
-        {enVenteLongue && <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-medium ${sel ? puce : 'bg-amber/12 text-amber'}`}>En vente{j != null ? ` depuis ${j} j` : ' longue'}</span>}
-        {b.de_retour && <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-medium ${sel ? puce : 'bg-amber/12 text-amber'}`}>De retour</span>}
+        ) : (
+          <Badge ton="vert">
+            {`Baisse −${b.baisse_pct} %`}{b.ancien_prix != null && <span className="ml-1 line-through text-txt-dim">{fmtEur(b.ancien_prix)}</span>}
+          </Badge>
+        ))}
+        {enVenteLongue && (sel
+          ? <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-medium ${puce}`}>{j != null ? `En vente depuis ${j} j` : 'En vente longue'}</span>
+          : <Badge ton="ambre">{j != null ? `En vente depuis ${j} j` : 'En vente longue'}</Badge>)}
+        {b.de_retour && (sel
+          ? <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-medium ${puce}`}>De retour</span>
+          : <Badge ton="ambre">De retour</Badge>)}
         <a onClick={(e) => { e.stopPropagation(); e.preventDefault(); ouvrir() }} href={b.url_sortante} target="_blank" rel="noopener noreferrer"
-          data-radar-portail className={`ml-auto text-[12px] font-medium underline underline-offset-2 ${sel ? 'text-mint-on decoration-mint-on/50 hover:decoration-mint-on' : 'text-[#E7B008] decoration-[#E7B008]/40 hover:decoration-[#E7B008]'}`}>
+          data-radar-portail className={`ml-auto text-[12px] font-medium underline underline-offset-2 ${sel ? 'text-mint-on decoration-mint-on/50 hover:decoration-mint-on' : 'text-amber decoration-amber/40 hover:decoration-amber'}`}>
           Voir l’annonce ↗
         </a>
       </div>
@@ -133,9 +146,9 @@ export function RadarEcran() {
         <div className="flex shrink-0 items-center gap-3 border-b border-line-2 px-6 py-3.5">
           <Retour label="Radar" data-radar-retour onClick={() => setRadarEcran('portes')} />
           <div className="text-[12.5px] text-txt-mut"><b className="text-[14px] font-semibold text-txt-hi">{nTotal}</b> bien{nTotal > 1 ? 's' : ''}</div>
-          <select value={tri} onChange={(e) => setTri(e.target.value)} className="ml-auto h-8 rounded-md border border-line-2 bg-surface-1 px-2.5 text-[12px] text-txt focus:border-mint focus:outline-none">
+          <Select value={tri} onChange={(e) => setTri(e.target.value)} wrapClassName="ml-auto" className="h-8 rounded-md border border-line-2 bg-surface-1 px-2.5 text-[12px] text-txt focus:border-mint focus:outline-none">
             {TRIS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-          </select>
+          </Select>
         </div>
 
         {/* accordéon « Filtres » (fermé par défaut, résumé sur une ligne) */}
@@ -149,10 +162,10 @@ export function RadarEcran() {
           {filtresOpen && (
             <div className="mt-3 flex flex-col gap-2">
               <div className="flex flex-wrap items-center gap-2">
-                <select data-radar-commune value={f.commune ?? ''} onChange={(e) => setF((p) => ({ ...p, commune: e.target.value || undefined }))} className={`${selInput} min-w-[150px] flex-1`}>
+                <Select data-radar-commune value={f.commune ?? ''} onChange={(e) => setF((p) => ({ ...p, commune: e.target.value || undefined }))} wrapClassName="min-w-[150px] flex-1" className={`${selInput} w-full`}>
                   <option value="">Toutes les communes</option>
                   {COMMUNES_24.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
+                </Select>
                 <input type="number" min={0} placeholder="Prix max" value={f.prix_max ?? ''} onChange={(e) => setNum('prix_max', e.target.value)} className={`${selInput} w-[110px]`} />
                 <input type="number" min={0} placeholder="Surface min" value={f.surface_terrain_min ?? ''} onChange={(e) => setNum('surface_terrain_min', e.target.value)} className={`${selInput} w-[110px]`} />
               </div>
@@ -195,7 +208,7 @@ function Segment({ label, value, onChange, options, data }: {
       <div data-seg={data} className="flex h-8 overflow-hidden rounded-md border border-line-2">
         {options.map(([v, l], i) => (
           <button key={v || 'tous'} data-seg-opt={v || 'tous'} onClick={() => onChange(v)}
-            className={`flex items-center justify-center whitespace-nowrap px-2.5 text-[12px] ${i ? 'border-l border-line-2' : ''} ${value === v ? 'bg-mint/12 font-medium text-mint' : 'text-txt-mut hover:text-txt'}`}>{l}</button>
+            className={`flex items-center justify-center whitespace-nowrap px-2.5 text-[12px] ${i ? 'border-l border-line-2' : ''} ${value === v ? 'bg-mint/10 font-medium text-mint' : 'text-txt-mut hover:text-txt'}`}>{l}</button>
         ))}
       </div>
     </div>

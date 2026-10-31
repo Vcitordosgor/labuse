@@ -29,12 +29,14 @@ import { useFiltre } from './filtreContext'   // M120 — binding partagé (cart
 
 // M55-G suite point 3 : CONSTRUCTIBILITE et les chips de verdict/motif ont quitté l'état
 // post-analyse (0-caller) — les champs de filtre restent dans le store + l'URL.
-// M101 A2 (arbitrage Vic) : DEUX entrées — les tiers internes (saturé/révélé) sortent du
-// filtre (information de fiabilité, dite en fiche via le motif). Partition exacte sur
-// l'emprise bâtie (seuil 5 %, backend app.py etat_sol) : nu ∪ bâti = parc filtrable.
+// M101 A2 (arbitrage Vic) : les tiers internes (saturé/révélé) sortent du filtre (information de
+// fiabilité, dite en fiche via le motif). NU-B-002 — TROIS états pour une partition RÉELLE :
+// nu (emprise < 5 %) ∪ bâti (≥ 5 %) ∪ non mesuré (emprise jamais calculée) = toute la base
+// filtrable. Sans le 3e état, les 41,5 % sans emprise disparaissaient en silence des deux seaux.
 export const ETAT_SOL = [
   { k: 'nu', l: 'Terrain nu' },
   { k: 'bati', l: 'Terrain bâti' },
+  { k: 'non_mesure', l: 'Non mesuré' },
 ]
 // M55-J point 1 : égalité de filtres pour le FILET d'invalidation — toute différence (y compris
 // un simple réordonnancement) invalide la carte, ce qui est le comportement conservateur voulu
@@ -309,7 +311,7 @@ export function NumField({ field, ph, suffix }: { field: keyof Filters; ph: stri
 // Y sont REGROUPÉS (aucun filtre supprimé — simple relocalisation) : ZFANG (zone franche), FRR (ruralités)
 // — qui quittent la section « 2 · Le terrain » — et les Signaux de vie — qui quittaient la section « 4 ».
 // Chevron de la charte (ui/Chevron), titre au style des autres sections (label-caps text-txt-mut).
-function AffinerRecherche() {
+export function AffinerRecherche() {
   const { filters, setFilter } = useFiltre()
   const [ouvert, setOuvert] = useState(false)
   const nSig = filters.signaux.filter((s) => SIGNAUX_KEYS.includes(s)).length
@@ -632,13 +634,18 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
   const totalIleQ = useQuery({ queryKey: ['accueil-chiffres'], queryFn: getAccueilChiffres, staleTime: 60 * 60 * 1000 })
   const totalIle = totalIleQ.data?.parcelles ?? null
   const [live, setLive] = useState<number | null>(null)
+  // NU-B-001 — le split du compteur : `à instruire` (peint) · `écartées` (étage 0, non peint).
+  const [liveSplit, setLiveSplit] = useState<{ instruire: number; ecartees: number } | null>(null)
   const [liveLoading, setLiveLoading] = useState(false)
   useEffect(() => {
     const ctrl = new AbortController()
     setLiveLoading(true)
     const tmr = window.setTimeout(() => {
       getFiltreCount(filters, ctrl.signal)
-        .then((r) => { setLive(r.compte); setLiveLoading(false) })
+        .then((r) => {
+          setLive(r.compte); setLiveLoading(false)
+          setLiveSplit({ instruire: r.instruire, ecartees: r.ecartees })
+        })
         .catch(() => { /* abort/réseau : on garde le dernier nombre, l'opacité signale le flottement */ })
     }, 400)
     return () => { window.clearTimeout(tmr); ctrl.abort() }
@@ -963,6 +970,16 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
             <Bouton data-voir-factuel niveau="primaire" ton="vert" onClick={voirFactuel} className="w-full">
               {CLIENT.revelation.voirN(live ?? totalIle ?? 0)}
             </Bouton>
+            {/* NU-B-001 — le split : le bouton garde le TOTAL, cette ligne dit ce que la carte PEINT
+                vraiment (hors étage 0) et combien sont écartées. Plus de « 6 576 » qui n'allume que
+                3 107 pastilles sans explication. Affiché dès qu'il y a des écartées. */}
+            {liveSplit && liveSplit.ecartees > 0 && (
+              <p data-voir-split className="-mt-0.5 text-center text-[11px] leading-snug text-txt-dim">
+                <span className="text-txt">{liveSplit.instruire.toLocaleString('fr-FR')}</span> à instruire
+                {' · '}
+                <span className="text-st-ecartee">{liveSplit.ecartees.toLocaleString('fr-FR')}</span> écartées
+              </p>
+            )}
             <Bouton data-analyser-btn niveau="secondaire" ton="vert" onClick={lancer} className="group w-full">
               <span>{CLIENT.revelation.boutonFaire.replace(/\s*→\s*$/, '')}</span>
               <svg viewBox="0 0 16 16" aria-hidden="true"

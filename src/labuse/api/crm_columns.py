@@ -168,9 +168,12 @@ def _own_column(db: Session, cid: int | None, col_id: int) -> dict:
 
 
 def _cards_in(db: Session, cid: int | None, key: str) -> int:
+    # NU-F-009 — `archived_at IS NULL` : la garde « colonne peuplée » compte EXACTEMENT ce que
+    # l'écran affiche (cartes actives, cf. moteur `cartes_par_colonne`). Sans ce filtre, une carte
+    # archivée rendait une colonne « vide » à l'écran indéboulonnable (422 sans raison visible).
     return db.execute(text(
         "SELECT count(*) FROM pipeline_entries WHERE compte_id IS NOT DISTINCT FROM :cid"
-        " AND status = :k"), {"cid": cid, "k": key}).scalar() or 0
+        " AND status = :k AND archived_at IS NULL"), {"cid": cid, "k": key}).scalar() or 0
 
 
 @router.get("")

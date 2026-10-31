@@ -152,6 +152,7 @@ export function SourcesPage() {
             (les thèmes existent déjà dans le catalogue : Énergie, Urbanisme, Risques, Marché, Cadastre…). */}
         <div className="sticky top-0 z-[5] mb-5 flex flex-wrap items-center gap-2.5 border-b border-line bg-bg py-3">
           <input data-sources-search value={q} onChange={(e) => setQ(e.target.value)}
+            aria-label="Chercher une source, un producteur"
             placeholder="Chercher une source, un producteur…"
             className="min-w-[200px] flex-[1_1_240px] rounded-lg border border-line bg-surface-2 px-3 py-2 text-[13px] text-txt placeholder:text-txt-dim focus:border-line-2 focus:outline-none" />
           {/* RECETTE-1 R37 — arrondi aligné sur la DA (rounded-lg, comme la barre de recherche et les
