@@ -309,13 +309,12 @@ def bien_vs_marche(db: Session, bien_id: int) -> dict | None:
     r = db.execute(text("""
         SELECT b.bien_id, b.commune, b.type_bien, f.prix, f.surface_hab, f.surface_terrain,
                a.url_sortante, a.portail,
-               -- RECETTE-4 — une date de publication ABSENTE stockée comme 1970 (sentinelle époque)
-               -- donnait « en vente depuis 20 756 j ». On IGNORE toute date avant 2005 (impossible pour
-               -- une annonce piégée) : COALESCE retombe sur la date de 1re saisie ; si rien → NULL → aucune
-               -- durée. JAMAIS un calcul depuis l'époque.
-               ((now() AT TIME ZONE 'Indian/Reunion')::date
-                - COALESCE(CASE WHEN b.date_publication > DATE '2005-01-01' THEN b.date_publication END,
-                           b.date_premiere_saisie::date)) AS anciennete_j
+               -- RADAR-4 (F-014 + durée de repli) — ancienneté « en vente depuis N j » calculée en heure
+               -- de La Réunion, UNIQUEMENT sur une VRAIE date de publication (> 2005). Pas de vraie date
+               -- → NULL → aucune durée affichée. Plus de repli sur la date de 1re saisie (qui donnait
+               -- « 913 j » sur le corpus semé en bloc), plus de calcul depuis l'époque (« 20 756 j »).
+               (CASE WHEN b.date_publication > DATE '2005-01-01'
+                     THEN (now() AT TIME ZONE 'Indian/Reunion')::date - b.date_publication END) AS anciennete_j
         FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id
         LEFT JOIN LATERAL (SELECT url_sortante, portail FROM pige_annonces WHERE bien_id = b.bien_id
                            ORDER BY date_saisie DESC LIMIT 1) a ON true
@@ -358,15 +357,17 @@ def bien_vs_marche(db: Session, bien_id: int) -> dict | None:
                 "ecart_pct": round(100.0 * (bien_m2 - ref) / ref, 1) if niveau != "insuffisant" else None,
                 "niveau": niveau, "sous_seuil": niveau == "insuffisant"}
 
+    # RADAR-4 (F-014 + durée de repli) — médiane d'ancienneté calculée en heure de La Réunion, UNIQUEMENT
+    # sur les biens à VRAIE date de publication (> 2005) ; les biens sans date n'entrent pas dans la médiane
+    # (plus de repli sur la date de 1re saisie). `n` = le nombre de biens réellement datés.
     anc = db.execute(text("""
         SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY
-                 ((now() AT TIME ZONE 'Indian/Reunion')::date
-                  - COALESCE(CASE WHEN b.date_publication > DATE '2005-01-01' THEN b.date_publication END,
-                             b.date_premiere_saisie::date))) AS med,
-               count(*) AS n
+                 ((now() AT TIME ZONE 'Indian/Reunion')::date - b.date_publication)) AS med,
+               count(*) FILTER (WHERE b.date_publication > DATE '2005-01-01') AS n
         FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id
         WHERE f.valide_at IS NOT NULL AND b.a_qualifier = false AND b.est_copro = false
-          AND b.statut IN ('active','en_vente_longue') AND b.commune = :c AND b.type_bien = :t"""),
+          AND b.statut IN ('active','en_vente_longue') AND b.commune = :c AND b.type_bien = :t
+          AND b.date_publication > DATE '2005-01-01'"""),
         {"c": commune, "t": t}).mappings().first() or {}
     anc_n = int(anc.get("n") or 0)
     hist = [{"date": h["date_constat"].isoformat() if h["date_constat"] else None,

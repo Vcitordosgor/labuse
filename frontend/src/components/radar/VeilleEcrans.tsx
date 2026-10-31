@@ -48,9 +48,10 @@ export function VeilleEcran() {
   const suivis = suivisQ.data?.suivis ?? []
   const alertes = alertesQ.data?.alertes ?? []
 
-  // sous-titre dynamique : « N événements depuis votre dernier passage » (parcelles bougées ces 7 jours +
-  // annonces tombées depuis hier) ; sinon une phrase d'explication courte. Rien d'inventé : les deux comptes
-  // viennent de ce que la veille détecte déjà.
+  // RADAR-4 (F-015) — sous-titre dynamique honnête : « N événements récents sur vos secteurs ». Le compte
+  // additionne ce que la veille détecte DÉJÀ (parcelles suivies bougées ces 7 jours + annonces d'alerte
+  // tombées depuis hier) ; aucune fenêtre fausse n'est promise — il n'existe PAS de suivi de « dernier
+  // passage », et le compte n'est pas sur « cette semaine ».
   const nEvenements = suivis.filter((s) => s.nouveau).length + alertes.reduce((n, a) => n + (a.en_pause ? 0 : a.nouveaux), 0)
 
   // chips du mail — même source/mutation que Mon compte.
@@ -73,7 +74,7 @@ export function VeilleEcran() {
           <h1 className="mt-1.5 text-[28px] font-semibold leading-tight text-txt-hi">Ce que vous surveillez</h1>
           <p data-veille-soustitre className="mt-1.5 text-[13px] leading-snug text-txt-mut">
             {nEvenements > 0
-              ? `${nEvenements} événement${nEvenements > 1 ? 's' : ''} depuis votre dernier passage`
+              ? `${nEvenements} événement${nEvenements > 1 ? 's' : ''} récent${nEvenements > 1 ? 's' : ''} sur vos secteurs`
               : 'Vos parcelles suivies et vos alertes, au même endroit — prévenu dès que quelque chose bouge.'}
           </p>
         </div>
@@ -286,12 +287,14 @@ function ColonneAlertes({ alertes, isLoading }: { alertes: RadarAlerte[]; isLoad
               </div>
               {/* ce qui est surveillé — une veille notifie sur TOUT événement d'un bien correspondant (V3) */}
               <p className="mt-1.5 text-[11px] text-txt-dim">Surveillé : nouvelle annonce, baisse de prix, retrait.</p>
-              {/* badge : nombre d'annonces tombées depuis la dernière visite, « Rien cette semaine », ou « En pause » */}
+              {/* RADAR-4 (F-015) — le badge dit la VRAIE fenêtre du compteur : `a.nouveaux` = annonces
+                  tombées DEPUIS HIER (début d'hier, Réunion). Plus de « dernier passage » (aucun suivi de
+                  visite n'existe) ni de « cette semaine » (le compteur n'est pas sur 7 jours). */}
               <div className="mt-1.5 flex items-center gap-3 text-[12px]">
                 <span className={a.en_pause ? 'text-amber' : a.nouveaux > 0 ? 'text-mint' : 'text-txt-dim'}>
                   {a.en_pause
                     ? 'En pause'
-                    : a.nouveaux > 0 ? `${a.nouveaux} annonce${a.nouveaux > 1 ? 's' : ''} depuis votre dernier passage` : 'Rien cette semaine'}
+                    : a.nouveaux > 0 ? `${a.nouveaux} annonce${a.nouveaux > 1 ? 's' : ''} depuis hier` : 'Rien depuis hier'}
                 </span>
                 <span className="text-txt-dim">
                   {a.en_pause

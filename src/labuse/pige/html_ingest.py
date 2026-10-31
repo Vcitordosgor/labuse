@@ -112,7 +112,7 @@ def _f(x):
 
 
 def _est_meme_bien(cand: dict, *, type_bien, prix, surface_hab, surface_terrain, source_position,
-                   district) -> bool:
+                   district, exact_only: bool = False) -> bool:
     """`cand` (bien existant : type_bien, prix, surface_hab, surface_terrain, source_position, district)
     est-il le MÊME bien physique que l'annonce décrite ? La commune est déjà garantie identique par
     l'appelant. Il faut TOUJOURS le même type et une surface pertinente des DEUX côtés.
@@ -124,7 +124,11 @@ def _est_meme_bien(cand: dict, *, type_bien, prix, surface_hab, surface_terrain,
       · sinon, la TOLÉRANCE ±2 %/±3 % n'est accordée QUE si le QUARTIER corrobore (même `district`) ;
       · règle B du mandat : même quartier (position 'city' + même district) ∧ surface EXACTE (prix libre).
     Une position 'city' de leboncoin est fortement bruitée (points d'un même bien à plusieurs km) — on ne
-    s'appuie donc PAS sur la distance lat/lng, mais sur le libellé de quartier."""
+    s'appuie donc PAS sur la distance lat/lng, mais sur le libellé de quartier.
+
+    RADAR-4 (E-040) — `exact_only` : ne retenir QUE l'identité exacte (prix ET surface), le signal le plus
+    fort et sans faux positif mesuré. C'est le dédoublonnage servi AVANT la garde provenance/à-qualifier :
+    deux annonces du même bien sur deux portails (ou une annonce à qualifier) ne font qu'un bien."""
     if type_bien is None or cand.get("type_bien") != type_bien:
         return False
     surf = _f(_surface_pertinente(type_bien, surface_hab, surface_terrain))
@@ -137,9 +141,11 @@ def _est_meme_bien(cand: dict, *, type_bien, prix, surface_hab, surface_terrain,
     meme_quartier = bool(dist) and dist == cdist
     exact_surf = surf == csurf
     exact_prix = prix is not None and cprix is not None and prix == cprix
-    # valeurs exactes → même bien (position non requise)
+    # valeurs exactes → même bien (position non requise) : seul critère quand `exact_only`.
     if exact_surf and exact_prix:
         return True
+    if exact_only:
+        return False
     # tolérance ±2 %/±3 % — SEULEMENT si le quartier corrobore (garde anti-faux-positif)
     if (meme_quartier and prix is not None and cprix and csurf
             and abs(csurf - surf) <= TOL_SURFACE_FUSION * csurf
@@ -151,10 +157,11 @@ def _est_meme_bien(cand: dict, *, type_bien, prix, surface_hab, surface_terrain,
     return False
 
 
-def bien_meme_physique(db: Session, commune: str, rec: dict) -> int | None:
+def bien_meme_physique(db: Session, commune: str, rec: dict, *, exact_only: bool = False) -> int | None:
     """Cherche dans la commune un bien existant qui EST le même bien physique que `rec` (cf.
     `_est_meme_bien`). Retourne le bien le plus ANCIEN (date de 1ʳᵉ publication), ou None. Corpus Radar
-    petit → filtrage en Python, une seule implémentation de la règle."""
+    petit → filtrage en Python, une seule implémentation de la règle. `exact_only` (RADAR-4, E-040) =
+    identité exacte prix+surface seulement (dédoublonnage inter-portails / à-qualifier)."""
     cands = db.execute(text(
         "SELECT b.bien_id, b.type_bien, b.source_position, b.district, f.prix, f.surface_hab, "
         "       f.surface_terrain "
@@ -164,7 +171,8 @@ def bien_meme_physique(db: Session, commune: str, rec: dict) -> int | None:
     for cand in cands:
         if _est_meme_bien(dict(cand), type_bien=rec.get("type"), prix=rec.get("prix"),
                           surface_hab=rec.get("surface_hab"), surface_terrain=rec.get("surface_terrain"),
-                          source_position=rec.get("source_position"), district=rec.get("district")):
+                          source_position=rec.get("source_position"), district=rec.get("district"),
+                          exact_only=exact_only):
             return cand["bien_id"]
     return None
 
@@ -320,15 +328,13 @@ def _ecrire_bien(db: Session, bien_id: int, rec: dict, ratt: dict, motifs: list[
 
 
 def _rattacher(db: Session, rec: dict, motifs: list[str]) -> dict:
-    """RADAR-2 (Lot 2) — le RATTACHEMENT AUTOMATIQUE est RETIRÉ : l'ingestion ne rattache plus AUCUNE
-    annonce à une parcelle. Toute annonce entre `non_rattachee`. Le seul rattachement possible est le
-    geste ADMIN « C'est cette parcelle » (rattachement_humain=true), que `_ecrire_bien` ne touche jamais
-    (son UPDATE est gardé `rattachement_humain = false`). Un rattachement erroné servi à tous n'existe
-    donc plus. (Les motifs dégradé/à-qualifier donnaient déjà `non_rattachee` — désormais c'est la règle
-    unique.) Le module `rattachement_html.rattacher` reste en place pour le calcul de PISTES de l'écran
-    d'instruction admin (endpoint `/admin/radar/instruire`), il n'est simplement plus appelé ici."""
+    """RADAR-2 / RADAR-4 — le RATTACHEMENT AUTOMATIQUE est RETIRÉ, pour toutes les sources (décision Vic :
+    trop peu d'annonces rattachables). L'ingestion ne rattache plus AUCUNE annonce à une parcelle : toute
+    annonce entre `non_rattachee`. Le seul rattachement possible est le geste ADMIN « C'est cette parcelle »
+    (rattachement_humain=true), que `_ecrire_bien` ne touche jamais (son UPDATE est gardé
+    `rattachement_humain = false`). Il n'y a plus ni cascade de matching, ni calcul de pistes, ni rayon."""
     return {"etat": "non_rattachee", "niveau": "absent", "idu": None, "confiance": None,
-            "pistes": [], "criteres": [], "motif": "rattachement automatique retiré (RADAR-2) — instruction manuelle en admin"}
+            "pistes": [], "criteres": [], "motif": "rattachement automatique retiré (RADAR-4) — rattachement manuel en admin"}
 
 
 def _confirmer_bien_existant(db: Session, bien_id: int, rec: dict, commune: str, list_id) -> None:
@@ -375,23 +381,30 @@ def _ingester_annonce(db: Session, rec: dict) -> str:
 
     if existing is None:
         motifs = coherence.evaluer(rec, db)
-        # RADAR-FIX-1 (1) — MÊME BIEN, NOUVEAU NUMÉRO : avant de créer, chercher un bien PHYSIQUE identique
-        # déjà connu (cf. bien_meme_physique). On ne fusionne QUE des annonces RICHES et COHÉRENTES : une
-        # variante dégradée (position au quartier non fiable) ou une annonce à qualifier reste isolée.
-        if not degrade and not motifs:
-            meme = bien_meme_physique(db, commune, rec)
-            if meme is not None:
-                db.execute(text(
-                    "INSERT INTO pige_annonces (bien_id, portail, url_sortante, list_id, "
-                    " first_publication_date, index_date, expiration_date, statut_portail) "
-                    "VALUES (:b, :p, :u, :l, CAST(:fpd AS timestamptz), CAST(:idx AS timestamptz), "
-                    " CAST(:exp AS timestamptz), :sp)"),
-                    {"b": meme, "p": portails.slug_pour_url(rec.get("url") or ""),
-                     "u": rec.get("url"), "l": list_id, "fpd": rec.get("first_publication_date"),
-                     "idx": rec.get("index_date"), "exp": rec.get("expiration_date"),
-                     "sp": rec.get("statut_portail")})
-                _confirmer_bien_existant(db, meme, rec, commune, list_id)
-                return "fusion"
+        # RADAR-4 (E-040) — DÉDOUBLONNAGE EXACT, AVANT la garde À-QUALIFIER : deux annonces RICHES du MÊME
+        # bien physique (commune ∧ type ∧ surface EXACTE ∧ prix EXACT) ne font qu'UN bien — y compris le
+        # même bien sur DEUX portails (Leboncoin ↔ Bien'ici) ou une annonce À QUALIFIER (champs
+        # contradictoires). L'ancien garde `not degrade and not motifs` laissait filer ces vrais doublons
+        # (constat E-040, biens #284/#332). On garde l'exclusion DÉGRADÉ : la variante B (vignettes DOM) a
+        # des faits trop pauvres pour une identité exacte fiable — elle reste isolée (chacune son bien).
+        # RADAR-FIX-1 (1) — fusion TOLÉRANTE (±2 %/±3 % + quartier) : en plus réservée aux annonces COHÉRENTES.
+        meme = None
+        if not degrade:
+            meme = bien_meme_physique(db, commune, rec, exact_only=True)
+            if meme is None and not motifs:
+                meme = bien_meme_physique(db, commune, rec)
+        if meme is not None:
+            db.execute(text(
+                "INSERT INTO pige_annonces (bien_id, portail, url_sortante, list_id, "
+                " first_publication_date, index_date, expiration_date, statut_portail) "
+                "VALUES (:b, :p, :u, :l, CAST(:fpd AS timestamptz), CAST(:idx AS timestamptz), "
+                " CAST(:exp AS timestamptz), :sp)"),
+                {"b": meme, "p": portails.slug_pour_url(rec.get("url") or ""),
+                 "u": rec.get("url"), "l": list_id, "fpd": rec.get("first_publication_date"),
+                 "idx": rec.get("index_date"), "exp": rec.get("expiration_date"),
+                 "sp": rec.get("statut_portail")})
+            _confirmer_bien_existant(db, meme, rec, commune, list_id)
+            return "fusion"
         ratt = _rattacher(db, rec, motifs)
         bien_id = db.execute(text(
             "INSERT INTO pige_biens (commune, statut, date_publication, last_seen_at) VALUES (:c, 'active', "

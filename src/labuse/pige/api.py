@@ -416,8 +416,6 @@ def radar_reverif(request: Request) -> dict:
             f"""SELECT b.bien_id, b.commune, b.type_bien, b.statut, f.prix, a.portail, a.url_sortante,
                       b.date_derniere_confirmation, b.date_publication,
                       (b.idu IS NULL) AS non_rattachee,
-                      b.rattachement_confiance,
-                      (b.rattachement_pistes -> 0 ->> 'idu') AS premiere_piste_idu,
                       EXISTS (SELECT 1 FROM watched_parcels w WHERE w.idu = b.idu) AS suivi_client,
                       (b.date_publication IS NOT NULL
                        AND b.date_publication <= current_date - {SEUIL_VENTE_LONGUE_J}) AS proche_longue
@@ -430,16 +428,9 @@ def radar_reverif(request: Request) -> dict:
     for r in rows:
         for k in ("date_derniere_confirmation", "date_publication"):
             r[k] = r[k].isoformat() if r[k] else None
-        # RETOURS-10 (T1) — l'instruction humaine des candidates est retirée : il ne reste, sur la ligne
-        # d'une annonce NON RATTACHÉE, que le rattachement AUTOMATIQUE à CONFIANCE FORTE (adresse BAN
-        # exacte ou position, ≥ 0,85 — même seuil que l'ex-« À rattacher »), proposé en un bouton
-        # « Rattacher » (un clic humain). Faible → pas de tâche : l'annonce reste « non rattachée ».
-        # Aucun calcul neuf : on relit la confiance et la 1re piste déjà stockées à la validation.
-        conf = r.pop("rattachement_confiance", None)
-        idu_piste = r.pop("premiere_piste_idu", None)
-        r["rattachable_forte"] = bool(r.get("non_rattachee") and conf is not None
-                                      and float(conf) >= 0.85 and idu_piste)
-        r["piste_idu"] = idu_piste if r["rattachable_forte"] else None
+        # RADAR-4 — le rattachement AUTOMATIQUE est retiré (plus de cascade, de pistes ni de score de
+        # confiance). Une annonce NON RATTACHÉE le reste jusqu'au geste admin « C'est cette parcelle »
+        # (saisie manuelle de l'IDU, `/admin/radar/rattacher-humain`). Aucune suggestion automatique.
     return {"file": rows, "n": len(rows)}
 
 
@@ -504,15 +495,17 @@ def radar_check(request: Request) -> dict:
     with engine().begin() as c:
         q = lambda s: c.execute(text(s)).scalar() or 0
         file_extraction = depots_a_verifier(c)
-        # RETOURS-8 (R5) — les deux chiffres de tête qui manquaient : annonces EN VIE (biens validés,
-        # actifs) et à RATTACHER (validés, en piste, non tranchés à la main). Comptés ici, servis à
-        # l'en-tête des onglets Radar.
+        # RETOURS-8 (R5) — les deux chiffres de tête : annonces EN VIE (biens validés, actifs) et à
+        # RATTACHER. RADAR-4 — « à rattacher » = biens validés, en vente, NON rattachés (idu NULL), à
+        # rattacher À LA MAIN par l'admin (plus de pistes auto ni d'état « piste »). Comptés ici, servis
+        # à l'en-tête des onglets Radar (même périmètre que la file /admin/radar/a-rattacher).
         annonces_en_vie = q(
             "SELECT count(*) FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id "
             "WHERE f.valide_at IS NOT NULL AND b.statut IN ('active','en_vente_longue','a_reverifier')")
         a_rattacher = q(
             "SELECT count(*) FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id "
-            "WHERE f.valide_at IS NOT NULL AND b.rattachement_etat = 'piste' "
+            "WHERE f.valide_at IS NOT NULL AND b.idu IS NULL "
+            "  AND b.statut IN ('active','en_vente_longue') "
             "  AND b.rattachement_humain = false AND b.a_qualifier = false")
         reverif_dues = q(
             "SELECT count(*) FROM pige_biens WHERE statut = 'a_reverifier'")
@@ -663,144 +656,25 @@ def radar_clic(body: ClicIn, request: Request) -> dict:
     return {"ok": True, "clic_id": cid}
 
 
-@router.get("/admin/radar/a-instruire")
-def radar_a_instruire(request: Request) -> dict:
-    """RADAR-DEPOT-2 (D3) — file d'INSTRUCTION admin : les biens en PISTE (plusieurs candidates possibles),
-    non encore tranchés à la main. C'est là que l'admin rattache — jamais le client. Priorise les biens
-    suivis par un client (watched_parcels) puis les plus récents."""
+@router.get("/admin/radar/a-rattacher")
+def radar_a_rattacher(request: Request) -> dict:
+    """RADAR-4 — file « à rattacher » (admin) : les biens validés, en vente, NON rattachés à une parcelle.
+    Le rattachement AUTOMATIQUE est retiré (décision Vic : trop peu d'annonces rattachables) — plus de
+    pistes, de cascade ni de score de confiance. L'admin ouvre l'annonce, identifie la parcelle lui-même
+    et saisit l'IDU via « C'est cette parcelle » (`/admin/radar/rattacher-humain`). Simple lecture : les
+    plus récents d'abord."""
     from ..api.auth import exiger_admin
     exiger_admin(request)
     with engine().begin() as c:
         rows = [dict(r) for r in c.execute(text(
-            # RETOURS-8 (R5) — on remonte la CONFIANCE et le POURQUOI (déjà calculés/stockés à la
-            # validation, rattachement_html) pour que l'onglet « À rattacher » dise, par proposition :
-            # « forte » (adresse BAN exacte ou position → bouton Rattacher en 1 clic) vs « faible »
-            # (surface seule ±10 % → Instruire avec l'ortho). Zéro calcul neuf : lecture des colonnes.
             """SELECT b.bien_id, b.commune, b.type_bien, f.prix, f.surface_terrain, f.surface_hab,
-                      f.declaratif, a.portail, a.url_sortante,
-                      COALESCE(jsonb_array_length(b.rattachement_pistes), 0) AS n_candidates,
-                      b.rattachement_confiance, b.rattachement_criteres, b.rattachement_etat,
-                      (b.rattachement_pistes -> 0) AS premiere_piste
+                      f.declaratif, a.portail, a.url_sortante, b.district
                FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id
                LEFT JOIN pige_annonces a ON a.bien_id = b.bien_id
-               WHERE f.valide_at IS NOT NULL AND b.rattachement_etat = 'piste'
+               WHERE f.valide_at IS NOT NULL AND b.idu IS NULL
                  AND b.rattachement_humain = false AND b.a_qualifier = false
                ORDER BY b.date_premiere_saisie DESC LIMIT 100""")).mappings()]
-    for r in rows:
-        # « forte » = ≥ 0,85 (adresse BAN exacte ou position, ≥ 3 critères convergents) → Rattacher 1 clic ;
-        # « faible » = surface seule (±10 %) → Instruire avec l'ortho. Seuil aligné sur rattachement_html.
-        conf = r.get("rattachement_confiance")
-        r["confiance"] = "forte" if (conf is not None and float(conf) >= 0.85) else "faible"
     return {"file": rows, "n": len(rows)}
-
-
-def _candidate_fiche(db, idu: str) -> dict:
-    """RETOURS-9 (Q7) — les faits de la CANDIDATE, lus tels quels de la fiche parcelle (AUCUN calcul
-    neuf) : surface cadastrale, surface bâtie (BD TOPO) + nombre de bâtiments, zone PLU, adresse BAN.
-    L'admin met l'annonce et ces faits côte à côte pour trancher. Toute valeur absente → None (jamais
-    inventée). Robuste : une table manquante (base partielle) ne casse pas l'instruction."""
-    from sqlalchemy import text as _t
-    out = {"surface_cadastrale": None, "surface_bati": None, "n_batiments": None,
-           "zone_plu": None, "adresse_ban": None}
-    try:
-        p = db.execute(_t("SELECT id, surface_m2 FROM parcels WHERE idu = :i"), {"i": idu}).mappings().first()
-    except Exception:  # noqa: BLE001
-        return out
-    if not p:
-        return out
-    out["surface_cadastrale"] = round(p["surface_m2"]) if p["surface_m2"] is not None else None
-    for sql, key, cast in (
-        ("SELECT emprise_bati_m2 FROM p_model_bati WHERE idu = :i", "surface_bati", lambda v: round(v) if v else None),
-        ("SELECT zone_libelle FROM parcel_zone_plu WHERE idu = :i", "zone_plu", lambda v: v or None),
-    ):
-        try:
-            v = db.execute(_t(sql), {"i": idu}).scalar()
-            out[key] = cast(v)
-        except Exception:  # noqa: BLE001 — table absente/partielle : le champ reste None, jamais un 500
-            pass
-    # nombre de bâtiments — même bloc « bâti détecté » que la fiche (bati.fiche_block).
-    try:
-        from .. import bati
-        out["n_batiments"] = bati.fiche_block(db, p["id"], p["surface_m2"]).get("nb_batiments")
-    except Exception:  # noqa: BLE001
-        pass
-    # adresse BAN principale de la parcelle (comme la fiche/exports).
-    try:
-        a = db.execute(_t("SELECT numero, rep, voie, code_postal, commune FROM adresses "
-                          "WHERE idu = :i ORDER BY (numero IS NULL), id_ban LIMIT 1"), {"i": idu}).mappings().first()
-        if a and a["voie"]:
-            num = " ".join(x for x in (a["numero"], a["rep"]) if x)
-            out["adresse_ban"] = " ".join(x for x in (num, a["voie"]) if x) + (
-                f", {a['code_postal']} {a['commune']}" if a["commune"] else "")
-    except Exception:  # noqa: BLE001
-        pass
-    return out
-
-
-@router.post("/admin/radar/instruire")
-def radar_instruire(body: BienIn, request: Request) -> dict:
-    """RADAR-DEPOT-2 (D3) — « Instruire cette annonce » est désormais un geste ADMIN SEULEMENT : un
-    rattachement client erroné serait un faux fait servi à tous. Relance la cascade À LA DEMANDE et rend
-    les candidates ENRICHIES — pour chacune, sa VUE ORTHO (`ortho_url`) et l'état de CHAQUE critère
-    (convergent/divergent). L'admin compare les toits et tranche. Aucun automatisme n'en part (ni
-    courrier, ni « vendue », ni stat parcellaire). Un bien déjà rattaché À LA MAIN n'est pas ré-instruit."""
-    import json as _json
-
-    from sqlalchemy import text as _t
-
-    from ..api.auth import exiger_admin
-    from . import rattachement_html
-    exiger_admin(request)
-    with session_scope() as db:
-        rec = db.execute(_t(
-            "SELECT b.bien_id, b.commune, b.type_bien AS type, b.est_copro, b.lat, b.lng, "
-            "       b.source_position, b.rattachement_humain, f.surface_terrain, f.surface_hab, "
-            "       f.annee_construction, f.dpe_classe "
-            "FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id WHERE b.bien_id = :b"),
-            {"b": body.bien_id}).mappings().first()
-        if not rec:
-            return {"ok": False, "motif": "bien inconnu"}
-        if rec["rattachement_humain"]:
-            return {"ok": True, "bien_id": body.bien_id, "etat": "rattachee", "humain": True,
-                    "candidates": [], "motif": "rattachement tranché à la main — fait foi"}
-        ratt = rattachement_html.rattacher(db, dict(rec))
-        # enrichit chaque candidate : critères convergents/divergents + URL ortho.
-        candidates = []
-        for p in ratt.get("pistes", []):
-            idu = p.get("idu")
-            candidates.append({**p, "ortho_url": f"/admin/radar/ortho/{idu}" if idu else None,
-                               "criteres_detail": rattachement_html.criteres_pour_idu(db, dict(rec), idu) if idu else [],
-                               # RETOURS-9 (Q7) — faits de la candidate (fiche parcelle), pour trancher côte à côte.
-                               "fiche": _candidate_fiche(db, idu) if idu else None})
-        # ré-écrit UNIQUEMENT l'état/pistes/critères (jamais la position ni le statut).
-        db.execute(_t(
-            "UPDATE pige_biens SET rattachement_etat = :e, rattachement_niveau = :n, idu = :idu, "
-            " rattachement_confiance = :c, rattachement_pistes = CAST(:p AS jsonb), "
-            " rattachement_criteres = CAST(:cr AS jsonb) "
-            "WHERE bien_id = :b AND rattachement_humain = false"),
-            {"e": ratt["etat"], "n": ratt["niveau"], "idu": ratt.get("idu"),
-             "c": ratt.get("confiance"), "p": _json.dumps(ratt.get("pistes") or []),
-             "cr": _json.dumps(ratt.get("criteres") or []), "b": body.bien_id})
-        db.commit()
-    return {"ok": True, "bien_id": body.bien_id, "etat": ratt["etat"], "humain": False,
-            "candidates": candidates, "criteres": ratt.get("criteres", []), "motif": ratt.get("motif")}
-
-
-@router.get("/admin/radar/ortho/{idu}")
-def radar_ortho(idu: str, request: Request):
-    """RATTACHEMENT-V2 (Lot 2) — vignette ORTHO (BD ORTHO 20 cm IGN) d'une parcelle candidate, servie à
-    l'écran d'instruction ADMIN (D3). PNG ou 204 si indisponible (parcelle inconnue / WMS injoignable)."""
-    from fastapi import Response
-
-    from ..api.auth import exiger_admin
-    from ..ingestion.ortho_tiles import ortho_png_parcelle
-    exiger_admin(request)
-    with session_scope() as db:
-        png = ortho_png_parcelle(db, idu)
-    if not png:
-        return Response(status_code=204)
-    return Response(content=png, media_type="image/png",
-                    headers={"Cache-Control": "public, max-age=86400"})
 
 
 class RattacherHumainIn(BaseModel):

@@ -277,14 +277,3 @@ def test_v2_criteres_stockes_sur_rattachee(html, depots_prive, nettoyer):
         rows = db.execute(text(
             "SELECT jsonb_typeof(rattachement_criteres) t FROM pige_biens LIMIT 1")).mappings().all()
     assert rows and rows[0]["t"] == "array"
-
-
-def test_v2_criteres_pour_idu_parcelle_inconnue():
-    """`criteres_pour_idu` ne lève jamais et renvoie [] pour une parcelle inconnue (base de test sans
-    parcellaire) — l'écran Instruire reste robuste."""
-    from labuse.pige import rattachement_html
-    with session_scope() as db:
-        out = rattachement_html.criteres_pour_idu(
-            db, {"commune": "Saint-Denis", "type": "maison", "surface_hab": 120,
-                 "surface_terrain": 400}, "IDU_INEXISTANT_00")
-    assert out == []

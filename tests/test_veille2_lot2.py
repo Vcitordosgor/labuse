@@ -18,7 +18,7 @@ import pytest
 from sqlalchemy import text
 
 from labuse.db import session_scope
-from labuse.pige import cycle, digests, html_ingest, rattachement_html, tables, veille
+from labuse.pige import cycle, digests, html_ingest, tables, veille
 
 pytestmark = pytest.mark.db
 
@@ -134,31 +134,9 @@ def test_annonce_expiree_retiree(corpus):
         assert bid not in {b["bien_id"] for b in biens}
 
 
-# ─────────────── RATTACHEMENT — convergence ≥2 critères, jamais inventé ───────────────
-
-def test_rattachement_convergence_et_jamais_invente(corpus):
-    """Annonce A (SD maison 202 m² hab / 265 m² terrain, position adresse) : une parcelle seedée qui
-    CONVERGE (surface cadastrale ≈ terrain ET emprise bâtie plausible) → RATTACHÉE. Sans parcelle
-    convergente, l'annonce reste « non rattachée » — jamais une parcelle inventée."""
-    with session_scope() as db:
-        a = _faits(db, A)
-        assert a["rattachement_etat"] == "non_rattachee"      # aucune parcelle en base → jamais inventé
-        # seed d'une parcelle qui converge, au point de l'annonce, surface ≈ 265, emprise ≈ 150 (maison 202)
-        lat, lng = -20.90516, 55.45873
-        wkt = (f"POLYGON(({lng} {lat},{lng+0.0006} {lat},{lng+0.0006} {lat+0.0006},"
-               f"{lng} {lat+0.0006},{lng} {lat}))")
-        db.execute(text(
-            "INSERT INTO parcels (idu, commune, section, numero, geom, geom_2975, surface_m2, centroid, bbox) "
-            "VALUES (:i,'Saint-Denis','ZZ','2001', ST_GeomFromText(:w,4326), "
-            " ST_Transform(ST_GeomFromText(:w,4326),2975), 265, ST_Centroid(ST_GeomFromText(:w,4326)), "
-            " ST_Envelope(ST_GeomFromText(:w,4326)))"), {"i": _SEED_IDU, "w": wkt})
-        db.execute(text("INSERT INTO p_model_bati (idu, emprise_bati_m2) VALUES (:i, 150)"), {"i": _SEED_IDU})
-        db.commit()
-        rec = {"type": "maison", "lng": lng, "lat": lat, "commune": "Saint-Denis",
-               "surface_hab": 202, "surface_terrain": 265}
-        ratt = rattachement_html.rattacher(db, rec)
-        assert ratt["etat"] == "rattachee" and ratt["idu"] == _SEED_IDU
-        assert {c["critere"] for c in ratt["criteres"]} >= {"surface", "emprise"}   # ≥2 critères convergents
+# RADAR-4 — le rattachement AUTOMATIQUE (cascade de convergence ≥2 critères) est RETIRÉ : le test de
+# convergence est supprimé. Une annonce ingérée reste toujours « non rattachée » (prouvé ailleurs) ;
+# le seul rattachement est le geste manuel admin « C'est cette parcelle ».
 
 
 # ─────────────── MATCHING — 3 veilles, chaque annonce aux bons comptes et à eux seuls ───────────────

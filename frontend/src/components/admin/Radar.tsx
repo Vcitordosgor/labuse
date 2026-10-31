@@ -169,19 +169,22 @@ function joursDepuis(iso: string | null): number {
 }
 function LigneReverif({ r, onInval }: { r: RadarReverif; onInval: () => void }) {
   const [ratt, setRatt] = useState(false)
+  // RADAR-4 — rattachement MANUEL uniquement : l'admin ouvre l'annonce, identifie la parcelle (fiche /
+  // carte) et saisit son IDU. Plus de suggestion automatique (ni piste, ni « confiance forte »).
   const rattacher = () => {
-    if (!r.piste_idu) return
+    const idu = window.prompt('C’est cette parcelle — saisir l’IDU (ex. 974110000AB0123) :')?.trim()
+    if (!idu) return
     setRatt(true)
-    radarRattacherHumain(r.bien_id, r.piste_idu).then(onInval).catch(() => setRatt(false))
+    radarRattacherHumain(r.bien_id, idu).then(onInval).catch(() => setRatt(false))
   }
   return (
     <div className="flex flex-wrap items-center gap-2 py-2 text-[12px]">
       <span className="text-txt-mut">{fmtEur(r.prix)}</span>
       {r.non_rattachee && <Chip tone="warn">non rattachée</Chip>}
-      {r.rattachable_forte && (
+      {r.non_rattachee && (
         <button data-radar-rattacher disabled={ratt} onClick={rattacher}
           className="rounded-md bg-mint px-2.5 py-1 text-[11px] font-medium text-mint-ink hover:brightness-110">
-          {ratt ? 'Rattachement…' : 'Rattacher'}
+          {ratt ? 'Rattachement…' : 'C’est cette parcelle'}
         </button>
       )}
       {r.suivi_client && <Chip tone="ok">suivi client</Chip>}
