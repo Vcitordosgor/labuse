@@ -1,0 +1,3 @@
+run_seq,label,is_served,is_pinned,code_commit,communes,computed_at_min,computed_at_max,duree_s,note,created_at
+1,servi,t,f,,,,,,,2026-10-29 01:18:42.327333+04
+2,neuf,f,f,,,,,,,2026-10-29 01:18:42.327333+04

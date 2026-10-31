@@ -683,6 +683,9 @@ export function Fiche({ idu }: { idu: string }) {
   // par prudence (foncier brut, reculs non appliqués, PAS une SDP). null hors gisement. Badge « à
   // étudier » sous la tuile SDP et au tiroir Potentiel — MÊME chiffre que le Dossier/Copilote.
   const horsRouge = f?.potentiel_transformation?.hors_ppr_rouge
+  // SDP-UNIQUE-1 (E-007) — la SDP restante « bâti conservé » déduit un bâti dont la hauteur a été
+  // SUPPOSÉE R+1 (ni LiDAR ni BD TOPO) : on le dit sous la tuile (ligne légende ambre, comme horsRouge).
+  const hauteurSupposee = f?.potentiel_transformation?.hauteur_bati_supposee === true
   // M19 réf. · faisabilité au niveau fiche pour la MICRO-PREUVE fermée (gabarit / logements /
   // charge). MÊME queryKey ['bilan', idu] que Faisabilité/Bilan → cache partagé, zéro requête en +.
   // CHASSE-NAV-FIX-1 (N-2) : la requête `faisa` est montée plus haut (avant le garde disparue).
@@ -1033,6 +1036,16 @@ export function Fiche({ idu }: { idu: string }) {
                       <span className="min-w-0 break-words">Hors zone rouge : {fmtInt(horsRouge.hors_rouge_m2)} m² ({horsRouge.pct} %) — à étudier</span>
                       <InfoI aria="Sur la partie hors zone rouge"
                         tip={`Les droits sont servis à 0 par prudence : la parcelle touche une zone rouge PPR. ${fmtInt(horsRouge.hors_rouge_m2)} m² restent hors de cette zone. Surface brute, reculs non appliqués, accès et unité du terrain à vérifier. Ce n'est pas un certificat de constructibilité.`} />
+                    </div>
+                  )}
+                  {/* SDP-UNIQUE-1 (E-007) — le bâti déduit a une hauteur SUPPOSÉE R+1 (ni LiDAR ni BD
+                      TOPO) : ligne légende sous la tuile, même échelle 9 px que horsRouge. La SDP
+                      restante « bâti conservé » est donc à confirmer. */}
+                  {c.l === 'SDP restante' && hauteurSupposee && (
+                    <div data-hauteur-supposee className="mt-1 flex items-start gap-1 text-[9px] leading-tight text-amber">
+                      <span className="min-w-0 break-words">Hauteur du bâti supposée R+1 — SDP restante à confirmer</span>
+                      <InfoI aria="Hauteur du bâti supposée"
+                        tip="La SDP restante « bâti conservé » déduit le bâti existant. Faute de mesure (ni LiDAR à l'égout, ni hauteur BD TOPO), sa hauteur est supposée R+1 (un niveau). La surface déduite — donc la SDP restante — est à confirmer par une étude." />
                     </div>
                   )}
                 </div>

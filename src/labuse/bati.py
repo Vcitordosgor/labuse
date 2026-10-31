@@ -141,8 +141,9 @@ def emprise_bati_bdtopo_m2(session: Session, parcel_id: int) -> float:
     PART (« bâti révélé », le_bien_block). C'est la définition de la donnée `emprise_batie_m2`.
 
     ≠ `p_model_bati.emprise_bati_m2` (= MAX(BD TOPO, CoSIA), ENTRÉE SCORING `emprise_bati_scoring_m2`,
-    cf. scoring/p_model/sql.py) et ≠ `stats_batch().bati_ratio` (SUM sans union → double-compte,
-    usage scoring/résiduel). Ces deux-là ne sont jamais l'emprise bâtie CLIENT."""
+    cf. scoring/p_model/sql.py) et ≠ `stats_batch().bati_ratio` (ratio au sol, usage scoring/résiduel).
+    Ces deux-là ne sont jamais l'emprise bâtie CLIENT. (NB : depuis ORACLE-FIX-1 `stats_batch` UNIT lui
+    aussi les empreintes avant de mesurer — plus de double-compte ; le commentaire « SUM » était périmé.)"""
     v = session.execute(text(
         "SELECT COALESCE(ST_Area(ST_Union(ST_Intersection(b.geom_2975, p.geom_2975))), 0) "
         "FROM spatial_layers b JOIN parcels p ON p.id = :pid "

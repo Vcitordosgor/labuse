@@ -1799,10 +1799,25 @@ def _parcelle_mesures(db, idu: str, fiche: dict) -> list[dict]:
     # ANNONCE-5-FIX — SDP restante = la valeur DU RUN SERVI (`parcel_residuel`, stable), PLUS le champ
     # `potentiel_transformation.sdp_residuelle_m2` qui, lui, est RECALCULÉ EN DIRECT et varie sur cache
     # froid (35 m² hier, 26 m² aujourd'hui). PDF, écran et fiche montrent ainsi le MÊME chiffre servi.
-    srun = db.execute(text(
-        "SELECT rb.sdp_residuelle_m2 AS s, rb.assiette_source AS a FROM parcel_residuel rb "
-        "JOIN parcels p ON p.id = rb.parcel_id WHERE p.idu = :i"), {"i": idu}).mappings().first()
-    if srun and isinstance(srun["s"], (int, float)):
+    # SDP-UNIQUE-1 (A-001) — une parcelle ÉCARTÉE (cause du résiduel OU hors_classement du scoring :
+    # forêt publique inacquérable…) ne porte PAS de SDP positive ici non plus : l'écran, la fiche et
+    # ce PDF disent « aucune SDP exploitable » de la même voix (une seule notion, une seule valeur).
+    # score_labuse/mvt_meta peuvent manquer (fixture/base sans scoring) → repli sur la cause du run seul.
+    try:
+        srun = db.execute(text(
+            "SELECT rb.sdp_residuelle_m2 AS s, rb.assiette_source AS a, rb.cause AS rc, sl.cause AS sc "
+            "FROM parcel_residuel rb JOIN parcels p ON p.id = rb.parcel_id "
+            "LEFT JOIN score_labuse sl ON sl.parcel_id = rb.parcel_id "
+            "   AND sl.run_label = (SELECT value FROM mvt_meta WHERE key='run_label') "
+            "WHERE p.idu = :i"), {"i": idu}).mappings().first()
+    except Exception:  # noqa: BLE001 — scoring absent : on garde la cause du run résiduel seule
+        db.rollback()
+        srun = db.execute(text(
+            "SELECT rb.sdp_residuelle_m2 AS s, rb.assiette_source AS a, rb.cause AS rc, NULL AS sc "
+            "FROM parcel_residuel rb JOIN parcels p ON p.id = rb.parcel_id WHERE p.idu = :i"),
+            {"i": idu}).mappings().first()
+    ecartee = bool(srun) and (srun["rc"] is not None or srun["sc"] is not None)
+    if srun and isinstance(srun["s"], (int, float)) and not ecartee:
         suff = " (estimation simplifiée)" if srun["a"] == "residuel_legacy" else ""
         out.append({"cle": "SDP restante estimée", "valeur": f"{_fmt_m2_fr(round(srun['s']))}{suff}"})
     return out

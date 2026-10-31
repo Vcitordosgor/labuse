@@ -7,6 +7,7 @@ import { addProfile, getCommunes, getMoteursConfig, getProfiles, getResults, mot
 import { CLIENT } from '../../lib/strings'
 import { fmtEurCompact, fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
+import { PERIM_POTENTIEL_COURT } from '../../lib/perimetres'   // SDP-UNIQUE-1 — jamais « SDP » nu
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 import { Chargement, Squelette } from '../Loading'
 import { EmptyState, ErrorState } from '../States'
@@ -299,7 +300,7 @@ export function M16() {
                       sur l'assiette. ≠ « SDP gabarit » de la Faisabilité (capacité PLU) ≠ « SHAB vendable »
                       (× rendement 0,8). Le titre le dit pour éviter toute comparaison entre outils. */}
                   <div data-asm-kpi="sdp" className="rounded-md bg-surface-3 px-2 py-1.5">
-                    <div className="text-[9px] text-txt-dim">SDP estimée cumulée</div>
+                    <div className="text-[9px] text-txt-dim">SDP estimée cumulée · {PERIM_POTENTIEL_COURT}</div>
                     <div className="tnum text-[14px] font-semibold text-mint">{fmt(d.sdp_combinee_m2)} m²</div>
                   </div>
                   {/* IMPLANTATION-4 (LOT B) — la tuile « Logements » (fourchette cumulée de l'ancien
@@ -381,7 +382,7 @@ export function M16() {
               <div key={i.idu} className="rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-[11px]">
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-txt-hi">{i.idu.slice(8)}</span>
-                  <span className="text-txt-dim">{fmt(i.surface_m2)} m² · SDP {fmt(i.sdp_m2)}</span>
+                  <span className="text-txt-dim">{fmt(i.surface_m2)} m² · SDP {fmt(i.sdp_m2)} m² · {PERIM_POTENTIEL_COURT}</span>
                   {/* RECETTE-1 R8 — pastille de palier (scoring q_v14) retirée de l'Assemblage. */}
                 </div>
                 <div className="mt-0.5 flex items-center gap-2">
