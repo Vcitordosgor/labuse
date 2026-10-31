@@ -1,0 +1,194 @@
+{
+  "n_total": 5579,
+  "segments_m2": {
+    "Toutes ventes bâties": {
+      "avant": {
+        "n": 4298,
+        "median_abs_pct": 21.4,
+        "pct_20": 47.2,
+        "pct_10": 24.7
+      },
+      "apres": {
+        "n": 4324,
+        "median_abs_pct": 21.3,
+        "pct_20": 47.5,
+        "pct_10": 24.8
+      }
+    },
+    "Maison": {
+      "avant": {
+        "n": 2271,
+        "median_abs_pct": 27.7,
+        "pct_20": 38.1,
+        "pct_10": 19.4
+      },
+      "apres": {
+        "n": 2248,
+        "median_abs_pct": 27.6,
+        "pct_20": 38.3,
+        "pct_10": 19.5
+      }
+    },
+    "Appartement": {
+      "avant": {
+        "n": 2027,
+        "median_abs_pct": 17.2,
+        "pct_20": 57.4,
+        "pct_10": 30.6
+      },
+      "apres": {
+        "n": 2076,
+        "median_abs_pct": 17.2,
+        "pct_20": 57.4,
+        "pct_10": 30.5
+      }
+    },
+    "Copropriété (parcelle)": {
+      "avant": {
+        "n": 2080,
+        "median_abs_pct": 17.2,
+        "pct_20": 57.0,
+        "pct_10": 30.2
+      },
+      "apres": {
+        "n": 2130,
+        "median_abs_pct": 17.3,
+        "pct_20": 56.9,
+        "pct_10": 30.1
+      }
+    },
+    "Terrain nu": {
+      "avant": {
+        "n": 394,
+        "median_abs_pct": 20.0,
+        "pct_20": 50.3,
+        "pct_10": 23.1
+      },
+      "apres": {
+        "n": 452,
+        "median_abs_pct": 23.0,
+        "pct_20": 45.4,
+        "pct_10": 20.8
+      }
+    }
+  },
+  "segments_total": {
+    "Toutes ventes bâties": {
+      "avant": {
+        "n": 4214,
+        "median_abs_pct": 246.4,
+        "pct_20": 8.2,
+        "pct_10": 4.1
+      },
+      "apres": {
+        "n": 4309,
+        "median_abs_pct": 31.4,
+        "pct_20": 32.4,
+        "pct_10": 16.5
+      }
+    },
+    "Maison": {
+      "avant": {
+        "n": 2263,
+        "median_abs_pct": 86.3,
+        "pct_20": 14.0,
+        "pct_10": 7.0
+      },
+      "apres": {
+        "n": 2240,
+        "median_abs_pct": 31.8,
+        "pct_20": 31.5,
+        "pct_10": 15.8
+      }
+    },
+    "Appartement": {
+      "avant": {
+        "n": 1951,
+        "median_abs_pct": 1409.3,
+        "pct_20": 1.4,
+        "pct_10": 0.8
+      },
+      "apres": {
+        "n": 2069,
+        "median_abs_pct": 30.9,
+        "pct_20": 33.3,
+        "pct_10": 17.4
+      }
+    },
+    "Copropriété (parcelle)": {
+      "avant": {
+        "n": 2005,
+        "median_abs_pct": 1462.1,
+        "pct_20": 0.9,
+        "pct_10": 0.4
+      },
+      "apres": {
+        "n": 2123,
+        "median_abs_pct": 30.6,
+        "pct_20": 33.7,
+        "pct_10": 17.8
+      }
+    }
+  },
+  "surface_source_apres": {
+    "dvf_vente": 2162,
+    "emprise_ratio": 2147
+  },
+  "e022_terrain_misnature": {
+    "n_terrain": 1217,
+    "n_misnature": 757,
+    "pct": 62.2
+  },
+  "fiabilite": {
+    "fiable": {
+      "n": 1292,
+      "median_abs_pct": 18.0,
+      "pct_20": 54.2,
+      "pct_10": 30.2
+    },
+    "moyen": {
+      "n": 2884,
+      "median_abs_pct": 22.2,
+      "pct_20": 45.4,
+      "pct_10": 22.8
+    },
+    "limitee": {
+      "n": 148,
+      "median_abs_pct": 36.2,
+      "pct_20": 30.4,
+      "pct_10": 16.9
+    }
+  },
+  "fiabilite_grille": {
+    "8-14 · 0.30-0.75": {
+      "n": 259,
+      "median_abs_pct": 26.5,
+      "pct_20": 40.2
+    },
+    "8-14 · disp<=0.30": {
+      "n": 163,
+      "median_abs_pct": 20.6,
+      "pct_20": 49.1
+    },
+    "8-14 · disp>0.75": {
+      "n": 12,
+      "median_abs_pct": 33.9,
+      "pct_20": 25.0
+    },
+    "n>=15 · 0.30-0.75": {
+      "n": 2492,
+      "median_abs_pct": 22.0,
+      "pct_20": 45.5
+    },
+    "n>=15 · disp<=0.30": {
+      "n": 1303,
+      "median_abs_pct": 18.3,
+      "pct_20": 54.0
+    },
+    "n>=15 · disp>0.75": {
+      "n": 91,
+      "median_abs_pct": 36.1,
+      "pct_20": 33.0
+    }
+  }
+}

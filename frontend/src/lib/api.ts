@@ -441,6 +441,9 @@ export interface AnnonceComparable {
 export interface AnnonceValeurIndicative {
   surface_m2: number; eur_m2: number; valeur_eur: number
   valeur_basse?: number; valeur_haute?: number
+  // ESTIMER-2 (D-009, E-021) — provenance de la surface du total + libellé/note servis à l'identique au PDF.
+  surface_source?: 'dvf_vente' | 'emprise_ratio' | null
+  ligne?: string | null; note?: string | null
 }
 export interface AnnonceEstimation {
   idu: string

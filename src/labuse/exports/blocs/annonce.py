@@ -243,8 +243,10 @@ def _estimation(est: dict) -> str:
 
 
 def _valeur_indicative(est: dict) -> str:
-    """ANNONCE-5-FIX — ORDRE DE GRANDEUR (jamais un calcul exact). Bâti : emprise au sol BD TOPO × €/m²,
-    fourchette élargie par l'écart mesuré du segment, et la note le dit. Montants arrondis au millier."""
+    """ESTIMER-2 — ORDRE DE GRANDEUR (jamais un calcul exact). Bâti : SURFACE (bâtie de la dernière vente
+    DVF, sinon emprise au sol × ratio médian de la commune — jamais l'emprise brute) × €/m² habitable.
+    Le LIBELLÉ de la surface servie et la NOTE viennent du back (`valeur_indicative.ligne`/`note`) → écran
+    == PDF, mot pour mot. Montants arrondis au millier."""
     vi = est.get("valeur_indicative") or {}
     terrain = est.get("type_comparateur") == "terrain_nu"
     surf = vi.get("surface_m2")
@@ -257,15 +259,15 @@ def _valeur_indicative(est: dict) -> str:
         ligne = f"Terrain {_m2(surf)} × {_eur_m2(vi.get('eur_m2'))}"
     else:
         titre = "Ordre de grandeur du bien"
-        ligne = f"D'après l'emprise au sol BD TOPO ({_m2(surf)}) × {_eur_m2(vi.get('eur_m2'))}"
+        base = vi.get("ligne") or f"Surface ({_m2(surf)})"   # ESTIMER-2 — dit QUELLE surface a servi
+        ligne = f"{base} × {_eur_m2(vi.get('eur_m2'))}"
     rows.append((ligne, _eur(val)))
     vb, vh = vi.get("valeur_basse"), vi.get("valeur_haute")
     if isinstance(vb, (int, float)) and isinstance(vh, (int, float)):
         rows.append(("Fourchette", f"{_int(vb)} – {_int(vh)} €"))
     body = "".join(f'<tr><td class="k">{esc(k)}</td><td class="v">{v}</td></tr>' for k, v in rows)
-    note = ("" if terrain else
-            '<p class="anote">Ordre de grandeur, pas un calcul exact : la surface habitable réelle '
-            "n'est pas connue (emprise au sol BD TOPO).</p>")
+    note_txt = vi.get("note")
+    note = (f'<p class="anote">{esc(note_txt)}</p>' if (note_txt and not terrain) else "")
     return (f'<div class="vibox"><div class="kicker">{esc(titre)}</div>'
             f'<table class="akv vikv">{body}</table>{note}</div>')
 
