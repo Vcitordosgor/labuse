@@ -37,10 +37,14 @@ SELECT p.idu, p.commune,
        (SELECT max((pl.attrs->>'slope_pct')::float) FROM spatial_layers pl
           WHERE pl.commune = p.commune AND pl.kind = 'pente'
             AND ST_Intersects(pl.geom_2975, p.geom_2975))  AS pente_pct,
-       EXISTS(SELECT 1 FROM spatial_layers t
-          WHERE t.commune = p.commune AND t.kind = 'trait_de_cote'
-            AND t.subtype IN ('bande_courte','bande_longue')
-            AND ST_Intersects(t.geom_2975, p.geom_2975))    AS littoral,
+       -- PPR-UNIQUE-1 (E-006) — PART réellement dans la bande littorale (0..1), pas un booléen :
+       -- un simple contact (12,7 % max observé) annulait toute la parcelle. On ne retire que la part.
+       COALESCE((SELECT ST_Area(ST_Union(ST_Intersection(t.geom_2975, p.geom_2975)))
+                 FROM spatial_layers t
+                 WHERE t.commune = p.commune AND t.kind = 'trait_de_cote'
+                   AND t.subtype IN ('bande_courte','bande_longue')
+                   AND ST_Intersects(t.geom_2975, p.geom_2975))
+                / NULLIF(ST_Area(p.geom_2975), 0), 0.0)        AS littoral_pct,
        EXISTS(SELECT 1 FROM spatial_layers a
           WHERE a.commune = p.commune AND a.kind = 'safer'
             AND ST_Intersects(a.geom_2975, p.geom_2975))     AS safer
@@ -183,9 +187,11 @@ def parcel_context(session: Session, parcel_id: int) -> ParcelContext | None:
     if r is None:
         return None
     libelles = []
+    _litt_pct = float(r.littoral_pct or 0.0)
     c = Contraintes(
         pente_pct=float(r.pente_pct) if r.pente_pct is not None else None,
-        bande_littorale=bool(r.littoral),
+        littoral_pct=_litt_pct,
+        bande_littorale=_litt_pct > 0.0,
         agricole_sar=bool(r.safer),
         libelles=libelles,
     )
@@ -278,9 +284,11 @@ assiette AS (SELECT CASE WHEN uau.u IS NULL THEN p.b
                          ELSE ST_Intersection(p.b, uau.u) END AS a
              FROM p LEFT JOIN uau ON TRUE),
 greves AS (
+    -- PPR-UNIQUE-1 — part INTERDITE (rouge ∪ code non classé) via la classification UNIQUE
+    -- `labuse_ppr_couleur` (remplace l'ancien filtre `subtype = ANY(ppr_red)` qui ratait le code `i`).
     SELECT ST_MakeValid(ST_ClipByBox2D(g.geom_2975, p.b)) AS geom FROM spatial_layers g, p
       WHERE g.kind = 'ppr' AND g.commune = p.commune
-        AND g.subtype = ANY(:ppr_red) AND ST_Intersects(g.geom_2975, p.b)
+        AND labuse_ppr_couleur(g.subtype, g.attrs) <> 'bleu' AND ST_Intersects(g.geom_2975, p.b)
   UNION ALL
     SELECT ST_MakeValid(ST_ClipByBox2D(g.geom_2975, p.b)) FROM spatial_layers g, p
       WHERE g.kind = 'peb' AND lower(g.subtype) = ANY(:peb_ab)
@@ -304,7 +312,6 @@ def _greve_certaine_m2(session: Session, parcel_id: int, recul: float, commune: 
     """Surface (m²) des contraintes géométriques certaines grevant la portion U/AU insetée
     (SCORING-6 lot A). Seuils lus de cascade_rules.yaml (source unique)."""
     zonage = _layer_params("zonage_plu_gpu")
-    risq = _layer_params("risques")
     dpfp = _layer_params("dpf")
     ravp = _layer_params("ravine")
     pebp = _layer_params("peb")
@@ -312,7 +319,6 @@ def _greve_certaine_m2(session: Session, parcel_id: int, recul: float, commune: 
         "pid": parcel_id, "d": recul,
         "zkind": zonage.get("spatial_kind", "plu_gpu_zone"),
         "uau_fams": list(zonage.get("positive_prefixes", ["U", "AU"])),
-        "ppr_red": [str(s) for s in risq.get("ppr_red_subtypes", ["INTERDICTION"])],
         "peb_ab": [str(z).lower() for z in pebp.get("hard_zones", ["a", "b"])],
         "dpf_m": float(dpfp.get("marchepied_m", 3.25)),
         "rav_m": float(ravp.get("buffer_m", 10)),
@@ -906,7 +912,7 @@ _HORS_PPR_ROUGE = text(
     "       ST_Area(ST_Intersection("
     "         ST_Union(ST_MakeValid(ST_ClipByBox2D(sl.geom_2975, p.geom_2975))), p.geom_2975)) AS rouge_m2 "
     "FROM spatial_layers sl, parcels p "
-    "WHERE p.id = :pid AND sl.kind = 'ppr' AND sl.subtype = 'INTERDICTION' "
+    "WHERE p.id = :pid AND sl.kind = 'ppr' AND labuse_ppr_couleur(sl.subtype, sl.attrs) <> 'bleu' "
     "  AND ST_Intersects(sl.geom_2975, p.geom_2975) GROUP BY p.geom_2975"
 )
 
@@ -980,7 +986,7 @@ _HORS_ROUGE_FRAGMENT = text(
     "WITH rouge AS ("
     "  SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(sl.geom_2975, p.geom_2975))) AS g "
     "  FROM spatial_layers sl, parcels p WHERE p.id = :pid AND sl.kind='ppr' "
-    "  AND sl.subtype='INTERDICTION' AND ST_Intersects(sl.geom_2975, p.geom_2975)), "
+    "  AND labuse_ppr_couleur(sl.subtype, sl.attrs) <> 'bleu' AND ST_Intersects(sl.geom_2975, p.geom_2975)), "
     "hr AS (SELECT ST_Difference(p.geom_2975, COALESCE((SELECT g FROM rouge), "
     "       ST_GeomFromText('POLYGON EMPTY', 2975))) AS g FROM parcels p WHERE p.id = :pid), "
     "dump AS (SELECT (ST_Dump(ST_CollectionExtract(ST_MakeValid(g), 3))).geom AS part FROM hr) "

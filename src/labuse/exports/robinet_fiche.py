@@ -560,8 +560,14 @@ def _c_aleas(db, idu, f):
 
 @extracteur("n_vigilances")
 def _c_vigilances(db, idu, f):
-    n = sum(1 for l in (f.get("flags") or [])
-            if isinstance(l, dict) and l.get("result") in ("SOFT_FLAG", "HARD_EXCLUDE"))
+    # PPR-UNIQUE-1 (A-011) — compteur de risques UNIQUE, défini EXACTEMENT comme la tuile d'en-tête
+    # et le badge §5 côté React (RisquesSection) : lignes de l'onglet 'risques' en vigilance
+    # (SOFT/HARD), BASSIN VERSANT exclu (contexte hydrographique, pas une vigilance). La tuile
+    # « Risques » de la garde du Dossier lit CE chiffre → tuile == section == PDF, un seul compteur.
+    n = sum(1 for l in (f.get("lines") or [])
+            if isinstance(l, dict) and l.get("onglet") == "risques"
+            and l.get("layer") != "bassin_versant"
+            and l.get("result") in ("SOFT_FLAG", "HARD_EXCLUDE"))
     return n or None
 
 

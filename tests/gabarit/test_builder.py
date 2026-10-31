@@ -36,8 +36,11 @@ class FakeSession:
             return _Res(self._ppr)
         if "data_sources" in sql:
             return _Res(("BD TOPO test v3",))          # _bdtopo_millesime
-        if "INTERDICTION" in sql:
-            return _Res((None,))                         # géométrie d'exclusion PPR : aucune → ignorée
+        if "labuse_ppr_couleur" in sql:                  # PPR-UNIQUE-1 — classification unique
+            # La part rouge vient désormais de la GÉOMÉTRIE live (plus du run figé) : on rend un
+            # GeoJSON non vide quand le scénario pose un PPR rouge (ppr_row HARD_EXCLUDE), sinon rien.
+            rouge = bool(self._ppr and self._ppr.get("result") == "HARD_EXCLUDE")
+            return _Res((_GEOJSON,) if rouge else (None,))
         if "kind = 'sup'" in sql:
             return _Res((None,))                         # RETOUCHES-1 D.15 — assiette SUP : aucune → ignorée
         if "ravine" in sql or "trait_de_cote" in sql:

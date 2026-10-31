@@ -182,7 +182,9 @@ def test_lotB_ppr_gradue_alea_deux_modes_et_fiche(db_session):
         " ST_Transform(ST_GeomFromText(:w,4326),2975))"), {"ds": ds, "w": _WKT})
     s.flush()
     effs = [c["effet"] for c in sv.contraintes_parcelle(s, idu) if c["categorie"].startswith("Risque")]
-    assert any("Zone bleue PPR inondation" in e for e in effs)              # PPR bleu gradué (Lot B, É2)
+    # PPR-UNIQUE-1 — libellé canonique : « PPR <risque> — zone bleue … à confirmer au règlement du PPR ».
+    assert any("zone bleue" in e and "inondation" in e for e in effs)       # PPR bleu (classification unique)
+    assert any("à confirmer au règlement du PPR" in e for e in effs)        # renvoi règlement (exigé)
     assert any("Aléa mouvement de terrain" in e and "fort" in e for e in effs)   # aléa par niveau (Lot B)
     fiche = app_mod._aleas_block(s, idu)                                    # Lot C — fiche == outil
     assert fiche and sorted(a["libelle"] for a in fiche["liste"]) == sorted(effs)

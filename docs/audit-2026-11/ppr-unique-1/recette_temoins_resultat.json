@@ -1,0 +1,184 @@
+[
+  {
+    "idu": "97421000AB0133",
+    "description": "Salazie — PPR rouge 15 % + bleu 21 % + aléas",
+    "ecran_AVANT": {
+      "n_lignes_risque": 4,
+      "lignes": [
+        "PPR rouge 15%",
+        "PPR bleue 21%",
+        "Aléa inondation fort 3%",
+        "Aléa mouvement_terrain fort 3%"
+      ]
+    },
+    "ecran_APRES": {
+      "n_lignes_risque": 6,
+      "lignes": [
+        "PPR inondation et mouvement de terrain — zone rouge sur 15 % de la parcelle : partie INCONSTRUCTIBLE (interdiction, C. env. L562-1), quelle que soit la surface. Partie hors zone rouge (85 %) : constructible selon les règles de sa zone, à confirmer au règlement du PPR.",
+        "PPR inondation et mouvement de terrain — zone bleue sur 21 % de la parcelle : constructible SOUS PRESCRIPTIONS, à confirmer au règlement du PPR.",
+        "Aléa inondation — niveau fort sur ~3 % de la parcelle.",
+        "Aléa mouvement de terrain — niveau fort sur ~3 % de la parcelle — exposition totale au risque mouvement de terrain : ~100 % de la parcelle.",
+        "Aléa mouvement de terrain — niveau moyen sur ~33 % de la parcelle.",
+        "Aléa mouvement de terrain — niveau faible sur ~64 % de la parcelle."
+      ]
+    },
+    "etude_AVANT": {
+      "ppr_rouge_m2": 0.0,
+      "ppr_bleu_m2": 0.0,
+      "rouge_retranche": false
+    },
+    "etude_APRES": {
+      "ppr_rouge_m2": 0.0,
+      "ppr_bleu_m2": 0.0,
+      "rouge_retranche": false,
+      "zone_implantation_m2": 0.0
+    }
+  },
+  {
+    "idu": "97417000AH0053",
+    "description": "Saint-Philippe — D-001, 100 % code `i` (non classé)",
+    "ecran_AVANT": {
+      "n_lignes_risque": 2,
+      "lignes": [
+        "Aléa inondation fort 100%",
+        "Aléa mouvement_terrain fort 100%"
+      ]
+    },
+    "ecran_APRES": {
+      "n_lignes_risque": 3,
+      "lignes": [
+        "PPR inondation — zone rouge sur 100 % de la parcelle (dont une zone au code PPR non reconnu, classée rouge par prudence) : partie INCONSTRUCTIBLE (interdiction, C. env. L562-1), quelle que soit la surface. Partie hors zone rouge (0 %) : constructible selon les règles de sa zone, à confirmer au règlement du PPR.",
+        "Aléa inondation — niveau fort sur ~100 % de la parcelle.",
+        "Aléa mouvement de terrain — niveau fort sur ~100 % de la parcelle."
+      ]
+    },
+    "etude_AVANT": {
+      "ppr_rouge_m2": 0.0,
+      "ppr_bleu_m2": 0.0,
+      "rouge_retranche": false
+    },
+    "etude_APRES": {
+      "ppr_rouge_m2": 1308.9,
+      "ppr_bleu_m2": 0.0,
+      "rouge_retranche": true,
+      "zone_implantation_m2": 0.0
+    }
+  },
+  {
+    "idu": "97424000AE0050",
+    "description": "Cilaos — PPR rouge 58 % + bleu 42 %",
+    "ecran_AVANT": {
+      "n_lignes_risque": 3,
+      "lignes": [
+        "PPR rouge 58%",
+        "PPR bleue 42%",
+        "Aléa mouvement_terrain fort 14%"
+      ]
+    },
+    "ecran_APRES": {
+      "n_lignes_risque": 4,
+      "lignes": [
+        "PPR multi — zone rouge sur 58 % de la parcelle : partie INCONSTRUCTIBLE (interdiction, C. env. L562-1), quelle que soit la surface. Partie hors zone rouge (42 %) : constructible selon les règles de sa zone, à confirmer au règlement du PPR.",
+        "PPR multi — zone bleue sur 42 % de la parcelle : constructible SOUS PRESCRIPTIONS, à confirmer au règlement du PPR.",
+        "Aléa mouvement de terrain — niveau fort sur ~14 % de la parcelle — exposition totale au risque mouvement de terrain : ~100 % de la parcelle.",
+        "Aléa mouvement de terrain — niveau moyen sur ~86 % de la parcelle."
+      ]
+    },
+    "etude_AVANT": {
+      "ppr_rouge_m2": 103.0,
+      "ppr_bleu_m2": 692.3,
+      "rouge_retranche": true
+    },
+    "etude_APRES": {
+      "ppr_rouge_m2": 103.0,
+      "ppr_bleu_m2": 692.3,
+      "rouge_retranche": true,
+      "zone_implantation_m2": 499.2
+    }
+  },
+  {
+    "idu": "97411000EY0173",
+    "description": "Saint-Denis — grande, PPR rouge partiel",
+    "ecran_AVANT": {
+      "n_lignes_risque": 2,
+      "lignes": [
+        "PPR rouge 24%",
+        "PPR bleue 76%"
+      ]
+    },
+    "ecran_APRES": {
+      "n_lignes_risque": 2,
+      "lignes": [
+        "PPR inondation et mouvement de terrain — zone rouge sur 24 % de la parcelle : partie INCONSTRUCTIBLE (interdiction, C. env. L562-1), quelle que soit la surface. Partie hors zone rouge (76 %) : constructible selon les règles de sa zone, à confirmer au règlement du PPR.",
+        "PPR inondation et mouvement de terrain — zone bleue sur 76 % de la parcelle : constructible SOUS PRESCRIPTIONS, à confirmer au règlement du PPR."
+      ]
+    },
+    "etude_AVANT": {
+      "ppr_rouge_m2": 0.0,
+      "ppr_bleu_m2": 3816.6,
+      "rouge_retranche": false
+    },
+    "etude_APRES": {
+      "ppr_rouge_m2": 0.0,
+      "ppr_bleu_m2": 3816.6,
+      "rouge_retranche": false,
+      "zone_implantation_m2": 1486.6
+    }
+  },
+  {
+    "idu": "97415000BR0025",
+    "description": "Saint-Paul — PPR + bande littorale",
+    "ecran_AVANT": {
+      "n_lignes_risque": 2,
+      "lignes": [
+        "PPR rouge 41%",
+        "Aléa submersion_marine faible 16%"
+      ]
+    },
+    "ecran_APRES": {
+      "n_lignes_risque": 2,
+      "lignes": [
+        "PPR littoral — zone rouge sur 41 % de la parcelle : partie INCONSTRUCTIBLE (interdiction, C. env. L562-1), quelle que soit la surface. Partie hors zone rouge (59 %) : constructible selon les règles de sa zone, à confirmer au règlement du PPR.",
+        "Aléa submersion marine — niveau faible sur ~16 % de la parcelle."
+      ]
+    },
+    "etude_AVANT": {
+      "ppr_rouge_m2": 234.3,
+      "ppr_bleu_m2": 0.0,
+      "rouge_retranche": true
+    },
+    "etude_APRES": {
+      "ppr_rouge_m2": 234.3,
+      "ppr_bleu_m2": 0.0,
+      "rouge_retranche": true,
+      "zone_implantation_m2": 154.4
+    }
+  },
+  {
+    "idu": "97411000IE0241",
+    "description": "Saint-Denis — maison, PPR bleu 100 %",
+    "ecran_AVANT": {
+      "n_lignes_risque": 1,
+      "lignes": [
+        "PPR bleue 100%"
+      ]
+    },
+    "ecran_APRES": {
+      "n_lignes_risque": 1,
+      "lignes": [
+        "PPR inondation et mouvement de terrain — zone bleue sur 100 % de la parcelle : constructible SOUS PRESCRIPTIONS, à confirmer au règlement du PPR."
+      ]
+    },
+    "etude_AVANT": {
+      "ppr_rouge_m2": 0.0,
+      "ppr_bleu_m2": 629.6,
+      "rouge_retranche": false
+    },
+    "etude_APRES": {
+      "ppr_rouge_m2": 0.0,
+      "ppr_bleu_m2": 629.6,
+      "rouge_retranche": false,
+      "zone_implantation_m2": 337.2
+    }
+  }
+]

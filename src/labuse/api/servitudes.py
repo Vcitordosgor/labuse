@@ -210,6 +210,17 @@ def _risque_seuils(db_unused=None) -> tuple[float, float, float]:
     return (2.0, 50.0, 10.0)
 
 
+def _risque_fr(s: str | None) -> str:
+    """Nom FR d'un (ou plusieurs) risque(s) PPR agrégé(s) — passe-plat des libellés DEAL techniques."""
+    if not s:
+        return "risque naturel"
+    d = (s.replace("INONDATION_MOUVEMENT_DE_TERRAIN", "inondation et mouvement de terrain")
+          .replace("INONDATION+MOUVEMENTS_DE_TERRAIN", "inondation et mouvements de terrain")
+          .replace("MOUVEMENT_DE_TERRAIN", "mouvement de terrain")
+          .replace("_", " ").lower())
+    return d
+
+
 def _clean_risque(detail: str) -> str:
     """Nettoyage client des libellés techniques (miroir de risques_arbitrage.libelle_client_detail)."""
     try:
@@ -252,50 +263,54 @@ def aleas_parcelle(db: Session, idu: str) -> list[dict]:
     memo = db.info.setdefault("_aleas_parcelle_memo", {})
     if idu in memo:
         return memo[idu]
-    marg, excl, mincov = _risque_seuils()
     srctable = _table_aleas(db)
     out: list[dict] = []
-    # PPR zoné DEAL : INTERDICTION = rouge (3 paliers) / PRESCRIPTION = bleu. % = union sur la parcelle.
+    # ── PPR zoné — CLASSIFICATION UNIQUE PPR-UNIQUE-1 (`labuse_ppr_couleur`) ───────────────────────
+    # Deux groupes : part INTERDITE = rouge (INTERDICTION) ∪ code non classé (traité en rouge par
+    # prudence, p.ex. le `subtype='i'` de Saint-Philippe — l'ancien filtre `IN ('INTERDICTION',
+    # 'PRESCRIPTION')` le LAISSAIT TOMBER) ; part BLEUE = prescription. % = union sur la parcelle.
+    # La part rouge est inconstructible (interdiction, C. env. L562-1) QUELLE QUE SOIT la surface
+    # (doctrine Vic : plus de seuil 50 %). On nomme part rouge ET part hors rouge, « à confirmer au
+    # règlement du PPR ». Une seule ligne rouge, une seule ligne bleue (plus de doublon par risque).
     for r in db.execute(text(
         f"""WITH p AS (SELECT geom_2975 g, ST_Area(geom_2975) a FROM parcels WHERE idu = :idu)
-           SELECT upper(sl.subtype) AS zone, sl.attrs->>'risque' AS risque,
+           SELECT CASE WHEN labuse_ppr_couleur(sl.subtype, sl.attrs) = 'bleu' THEN 'bleu' ELSE 'rouge' END AS couleur,
+                  bool_or(labuse_ppr_couleur(sl.subtype, sl.attrs) = 'autre') AS non_classe,
+                  string_agg(DISTINCT sl.attrs->>'risque', ', ') AS risques,
                   round((100 * ST_Area(ST_Union(ST_Intersection(sl.geom_2975, p.g))) / NULLIF(min(p.a), 0))::numeric)::int AS pct,
                   max(ds.name) AS source,
                   max(ds.source_millesime) AS source_millesime, max(ds.source_horizon_at) AS source_horizon_at,
                   max(COALESCE(ds.last_sync_at, ds.updated_at)::date)::text AS ingere_le
            FROM {srctable} sl CROSS JOIN p LEFT JOIN data_sources ds ON ds.id = sl.data_source_id
            WHERE sl.kind = 'ppr' AND sl.geom_2975 IS NOT NULL AND ST_Intersects(sl.geom_2975, p.g)
-             AND upper(sl.subtype) IN ('INTERDICTION', 'PRESCRIPTION')
-           GROUP BY upper(sl.subtype), sl.attrs->>'risque'"""), {"idu": idu}).mappings().all():
+           GROUP BY 1 ORDER BY 1 DESC"""), {"idu": idu}).mappings().all():
         pct = r["pct"] or 0
         if pct <= 0:   # intersection au bord (aire arrondie à 0 %) → bruit, pas une contrainte
             continue
         # RETOUCHES-1 point 7 — libellé daté nommé selon sa provenance : « millésime <X> » si publié
         # en amont (source_millesime), sinon « ingéré le JJ/MM/AAAA » (repli d'ingestion).
         mill = _date_source(r["source_millesime"], source_horizon_at=r["source_horizon_at"], ingere_le=r["ingere_le"])
-        risque = r["risque"] or "risque naturel"
-        pctxt = f" (~{pct}% de la parcelle)" if pct < 99 else " (toute la parcelle)"
-        if r["zone"] == "INTERDICTION":
-            if pct >= excl:
-                lib = f"PPR {risque} — zone rouge (inconstructible) sur {pct} % de la surface."
-                red = True
-            elif pct >= marg:
-                lib = (f"PPR {risque} — zone rouge sur {pct} % de la surface : vigilance forte, "
-                       "constructibilité à vérifier au règlement (pas d'exclusion automatique).")
-                red = False
-            else:
-                lib = f"PPR {risque} — zone rouge marginale ({pct} %), hors emprise probable."
-                red = False
+        risques = _risque_fr(r["risques"])
+        if r["couleur"] == "rouge":
+            hors = max(0, 100 - pct)
+            nc = (" (dont une zone au code PPR non reconnu, classée rouge par prudence)"
+                  if r["non_classe"] else "")
+            lib = (f"PPR {risques} — zone rouge sur {pct} % de la parcelle{nc} : partie INCONSTRUCTIBLE "
+                   f"(interdiction, C. env. L562-1), quelle que soit la surface. Partie hors zone rouge "
+                   f"({hors} %) : constructible selon les règles de sa zone, à confirmer au règlement du PPR.")
             out.append({"nature": "PPR — zone rouge", "niveau": "rouge", "part_pct": pct,
-                        "libelle": _clean_risque(lib), "redhibitoire": red,
+                        "libelle": _clean_risque(lib), "redhibitoire": True,
                         "source": r["source"] or "DEAL Réunion", "millesime": mill})
         else:   # PRESCRIPTION = zone bleue
-            lib = (f"Zone bleue PPR {risque}{pctxt} — constructible SOUS PRESCRIPTIONS (règlement DEAL).")
+            lib = (f"PPR {risques} — zone bleue sur {pct} % de la parcelle : constructible SOUS "
+                   f"PRESCRIPTIONS, à confirmer au règlement du PPR.")
             out.append({"nature": "PPR — zone bleue", "niveau": "bleu", "part_pct": pct,
                         "libelle": _clean_risque(lib), "redhibitoire": False,
                         "source": r["source"] or "DEAL Réunion", "millesime": mill})
-    # Aléas Géorisques : UN niveau (le plus fort) par type d'aléa, avec % touché (arbitrage M73).
-    best: dict[str, tuple[int, dict]] = {}
+    # ── Aléas Géorisques : TOUS les niveaux par type, chacun avec sa part (PPR-UNIQUE-1, A-007/D-033 :
+    #    plus de « meilleur niveau seul » — « fort ~3 % » masquait une exposition totale). Triés par
+    #    type puis par niveau décroissant.
+    aleas_par_type: dict[str, list[dict]] = {}
     for a in db.execute(text(
         f"""WITH p AS (SELECT geom_2975 g, ST_Area(geom_2975) a FROM parcels WHERE idu = :idu)
            SELECT COALESCE(sl.attrs->>'type', sl.subtype) AS type, lower(sl.attrs->>'niveau') AS niveau,
@@ -310,17 +325,21 @@ def aleas_parcelle(db: Session, idu: str) -> list[dict]:
         if (a["pct"] or 0) <= 0:   # intersection au bord → bruit
             continue
         typ = (a["type"] or "aléa").replace("submersion_marine_cc", "submersion marine (horizon 2100)")
-        rank = _NIVEAU_RANK.get(a["niveau"] or "moyen", 3)
-        if typ not in best or rank > best[typ][0]:
-            best[typ] = (rank, a)
-    for typ, (_rank, a) in best.items():
-        niveau = a["niveau"] or "moyen"
-        pct = a["pct"] or 0
-        pctxt = f" (~{pct}% de la parcelle)" if pct < 99 else " (toute la parcelle)"
-        mill = _date_source(a["source_millesime"], source_horizon_at=a["source_horizon_at"], ingere_le=a["ingere_le"])
-        out.append({"nature": f"Aléa {typ}", "niveau": niveau, "part_pct": pct,
-                    "libelle": _clean_risque(f"Aléa {typ} — niveau {niveau}{pctxt}."), "redhibitoire": False,
-                    "source": a["source"] or "DEAL Réunion / Géorisques", "millesime": mill})
+        aleas_par_type.setdefault(typ, []).append(dict(a))
+    for typ, niveaux in aleas_par_type.items():
+        niveaux.sort(key=lambda a: _NIVEAU_RANK.get(a["niveau"] or "moyen", 3), reverse=True)
+        total = sum(a["pct"] or 0 for a in niveaux)
+        for a in niveaux:
+            niveau = a["niveau"] or "moyen"
+            pct = a["pct"] or 0
+            mill = _date_source(a["source_millesime"], source_horizon_at=a["source_horizon_at"], ingere_le=a["ingere_le"])
+            # exposition cumulée du type notée sur la ligne du niveau le plus fort (≥ 2 niveaux).
+            cumul = f" — exposition totale au risque {typ} : ~{min(total, 100)} % de la parcelle" \
+                if (a is niveaux[0] and len(niveaux) > 1) else ""
+            out.append({"nature": f"Aléa {typ}", "niveau": niveau, "part_pct": pct,
+                        "libelle": _clean_risque(f"Aléa {typ} — niveau {niveau} sur ~{pct} % de la parcelle{cumul}."),
+                        "redhibitoire": False,
+                        "source": a["source"] or "DEAL Réunion / Géorisques", "millesime": mill})
     memo[idu] = out
     return out
 
@@ -343,9 +362,18 @@ def contraintes_parcelle(db: Session, idu: str) -> list[dict]:
              AND ST_Intersects(sl.geom_2975, p.geom_2975)"""),
         {"idu": idu, "kinds": list(_KINDS)}).mappings().all()
 
+    # PPR-UNIQUE-1 (D-036) — le PPR zoné live (rouge/bleu, via aleas_parcelle) remplace l'assiette SUP
+    # `pm1` (« enveloppe des zonages PPR », périmètre sans couleur) : servi en plus, le même PPR
+    # comptait deux fois (SUP + zonage). On lit les aléas D'ABORD ; si le PPR zoné est servi, on masque
+    # la ligne SUP `pm1` redondante (les autres SUP — ac*/el10/pm2/pm3 — restent des contraintes réelles).
+    aleas = aleas_parcelle(db, idu)
+    ppr_zonal = any((a.get("nature") or "").startswith("PPR") for a in aleas)
+
     # dédup (kind, detail) — une SUP répétée (enveloppes gen1/gen2) = une ligne
     seen, items = set(), []
     for r in rows:
+        if r["kind"] == "sup" and (r["subtype"] or "").lower() == "pm1" and ppr_zonal:
+            continue
         # audit-risques — zonage d'assainissement : SEUL le non-collectif (ANC) est une vigilance ; le
         # collectif (raccordé) est le cas FAVORABLE et n'est JAMAIS une servitude (faux positif sur
         # 67 208 parcelles avant ce filtre). L'assainissement complet vit dans le bloc `anc` de la fiche.
@@ -368,9 +396,12 @@ def contraintes_parcelle(db: Session, idu: str) -> list[dict]:
     # PIEGES-RISQUES-2 (Lot B) — RISQUE GRADUÉ (PPR zoné rouge/bleu + aléas par niveau) ajouté aux DEUX
     # modes : la même donnée que la couche carte et que la fiche §Pièges & risques (le mode parcelle ne
     # voyait le PPR que par l'assiette SUP, sans le zonage ni le niveau).
-    for al in aleas_parcelle(db, idu):
+    for al in aleas:
+        # PPR-UNIQUE-1 (D-035) — le drapeau `redhibitoire` atteint l'écran (zone rouge = interdiction,
+        # puce rouge/tri en tête côté blocB) au lieu d'une note grise indistincte.
         items.append({"categorie": _CAT_RISQUE, "effet": al["libelle"],
-                      "source": al["source"], "date": al["millesime"]})
+                      "source": al["source"], "date": al["millesime"],
+                      "redhibitoire": bool(al.get("redhibitoire"))})
     # KELFONCIER-FIX-1 (Lot A) — une zone AU FERMÉE (ou au statut d'ouverture non déterminé) est une
     # contrainte foncière DORMANTE : la parcelle n'est pas constructible tant que le PLU n'a pas ouvert la
     # zone. Ajoutée au crible partagé → visible en mode « une parcelle », en mode « un lot » (N/M) ET en
