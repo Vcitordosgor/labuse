@@ -1,0 +1,18 @@
+URGENCE-1 (NU-F-002 / NU-E-049) — COPILOTE : payload fiche_parcelle
+====================================================================
+Parcelle témoin au TIER BRUT 'sans_signal' (le code qui fuyait au client).
+
+AVANT (code d'origine) : data portait
+   "verdict": sv2.get("verdict") or sv2.get("libelle") or sv2.get("tier")
+   → toujours None/None/tier ⇒ le client lisait « verdict LABUSE : sans_signal ».
+
+APRÈS (ce correctif) : data.keys() =
+   ['commune', 'etage0', 'idu', 'surface_m2', 'zone']
+   ✓ aucune clé 'verdict' — le palier brut ne sort plus du Copilote.
+
+_substance() ne contient plus « verdict LABUSE » : True  (True attendu)
+
+URGENCE-1 (NU-F-026) — resume_fiche : ids de registre non sérialisés
+--------------------------------------------------------------------
+tuiles.append sans clé 'id' : True  (True attendu)
+sections.append sans clé 'id' : True  (True attendu)

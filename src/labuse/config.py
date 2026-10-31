@@ -429,6 +429,20 @@ def base_url_probleme(url: str | None = None) -> str | None:
     return None
 
 
+def exiger_base_url_publique(url: str | None = None) -> str:
+    """URGENCE-1 (NU-F-018) — FAIL-CLOSED pour tout mail : exige une URL de base PUBLIQUE ABSOLUE
+    (https://app.labuse.immo en prod), posée par `LABUSE_PUBLIC_BASE_URL`. Lève RuntimeError si l'URL
+    est absente/vide ou pointe sur la machine locale — AUCUN mail ne doit partir avec un lien mort. La
+    variable d'environnement est donc OBLIGATOIRE pour envoyer : un test échoue si elle manque. Renvoie
+    l'URL validée (sans slash final)."""
+    u = ((url if url is not None else get_settings().public_base_url) or "").strip()
+    probleme = base_url_probleme(u)
+    if probleme:
+        raise RuntimeError(f"{probleme} Renseignez LABUSE_PUBLIC_BASE_URL (ex. https://app.labuse.immo) "
+                           "avant tout envoi de mail.")
+    return u.rstrip("/")
+
+
 @lru_cache(maxsize=None)
 def load_yaml_config(name: str) -> dict[str, Any]:
     """Charge un fichier de config YAML par nom (sans extension), avec cache.

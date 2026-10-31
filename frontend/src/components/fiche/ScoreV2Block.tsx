@@ -2,7 +2,8 @@
  * Bloc « Pourquoi ce score » — Scoring v2 (M5 lot 4.1), ADDITIF.
  *
  * Décisions produit gravées : JAMAIS de probabilité brute (saturation isotonique
- * en tête) — affichage = « ×N vs moyenne » + percentile + rang + tier ; badges
+ * en tête) — affichage = fraction humaine + tier ; percentile/rang BRUTS seulement
+ * pour un tier actionnable (`montreRang`, cf. NU-A-009), jamais sur « sans signal » ; badges
  * copro / veille succession / événement daté ; 5 contributions lisibles (signe +
  * libellé de bin en français). Auto-porté : fetch /v2/score/{idu}.
  *
@@ -33,7 +34,7 @@ const TIER_META = ALL_TIER_META
 
 type ErreurV2 = Error & { status?: number }
 
-export function ScoreV2Block({ idu }: { idu: string }) {
+export function ScoreV2Block({ idu, montreRang = false }: { idu: string; montreRang?: boolean }) {
   const { data, isError, error, refetch, isFetching } = useQuery<ScoreV2, ErreurV2>({
     queryKey: ['score-v2', idu],
     queryFn: async () => {
@@ -113,10 +114,13 @@ export function ScoreV2Block({ idu }: { idu: string }) {
         {/* M135 — la probabilité en FRACTION humaine (« 1/5 sous 1 an »), jamais un ×N. */}
         <span className="font-mono text-xl font-semibold text-txt-hi">{data.fraction ?? '—'}</span>
         <span className="text-[11px] text-txt-dim">{data.fraction ? 'de vente sous 1 an' : 'peu probable sous 1 an'}</span>
-        {data.percentile != null && (
+        {/* URGENCE-1 (NU-A-009) — percentile/rang BRUTS seulement pour un tier ACTIONNABLE (priorité /
+            à suivre), derrière la MÊME condition que le verdict d'en-tête (`montreRang` ← montreMultiple).
+            Pour « sans signal » / « écartée » : fausse précision pour une parcelle non actionnable, masquée. */}
+        {montreRang && data.percentile != null && (
           <span className="font-mono text-xs text-txt">percentile {data.percentile.toFixed(1)}</span>
         )}
-        {data.rang != null && <span className="font-mono text-xs text-txt-dim">rang {data.rang}</span>}
+        {montreRang && data.rang != null && <span className="font-mono text-xs text-txt-dim">rang {data.rang}</span>}
         {/* M89 — copropriété sans rang : on DIT pourquoi (hors univers de classement), jamais un vide. */}
         {data.rang == null && data.hors_classement && (
           <span className="text-[11px] text-txt-mut">{data.hors_classement}</span>

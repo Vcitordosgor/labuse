@@ -1367,6 +1367,11 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str | None = None,
     from ..emails import digest_html_email, digest_notifications
     from ..mailfile import ensure_tables as _mq_ensure
     from ..db import engine as _mq_engine
+    # URGENCE-1 (NU-F-018) — FAIL-CLOSED : aucun digest ne s'enfile/s'envoie tant que l'URL de base n'est
+    # pas une adresse PUBLIQUE absolue (sinon les liens des mails seraient morts). dry_run excepté (diagnostic).
+    if not dry_run:
+        from .. import config as _config
+        _config.exiger_base_url_publique(base_url)
     _mq_ensure(_mq_engine())   # VEILLE-FIX-1 (lot 5) — mail_queue disponible (idempotent)
 
     now = datetime.now(timezone.utc)

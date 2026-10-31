@@ -1,0 +1,63 @@
+URGENCE-1 (NU-A-009) — FICHE : rang/percentile BRUTS masqués pour un tier non actionnable
+========================================================================================
+Garde = la MÊME condition que le verdict d'en-tête (montreMultiple = tier ∈ {priorite, a_suivre}).
+ScoreV2Block, monté 3 lignes plus bas, contournait ce garde et montrait rang+percentile pour TOUS.
+
+--- DIFF Fiche.tsx (passe la condition) ---
+diff --git a/frontend/src/components/fiche/Fiche.tsx b/frontend/src/components/fiche/Fiche.tsx
+index 6a5e98a1e..1b1e06a4c 100644
+--- a/frontend/src/components/fiche/Fiche.tsx
++++ b/frontend/src/components/fiche/Fiche.tsx
+@@ -1204,7 +1204,7 @@ export function Fiche({ idu }: { idu: string }) {
+                 renouvellement et éligibilité en tiroirs) → réuni ici. Aucune donnée nouvelle. */}
+             {/* P (probabilité de mutation) + « Pourquoi ce score » — déménagé du tiroir Les données. */}
+             <div data-analyse-p style={{ marginTop: 13, paddingTop: 12, borderTop: `1px solid ${verdict.color}33` }}>
+-              <ScoreV2Block idu={idu} />
++              <ScoreV2Block idu={idu} montreRang={montreMultiple} />
+             </div>
+             {/* M61 P4 — la section « RENOUVELLEMENT — POURQUOI CE RANG » a été REGROUPÉE dans le
+                 dépliant « Pourquoi ce rang » juste sous le rang (voir data-renouv-pourquoi ci-dessus). */}
+
+--- DIFF ScoreV2Block.tsx (gate rang/percentile) ---
+diff --git a/frontend/src/components/fiche/ScoreV2Block.tsx b/frontend/src/components/fiche/ScoreV2Block.tsx
+index 08f3cc833..7e97780ce 100644
+--- a/frontend/src/components/fiche/ScoreV2Block.tsx
++++ b/frontend/src/components/fiche/ScoreV2Block.tsx
+@@ -2,7 +2,8 @@
+  * Bloc « Pourquoi ce score » — Scoring v2 (M5 lot 4.1), ADDITIF.
+  *
+  * Décisions produit gravées : JAMAIS de probabilité brute (saturation isotonique
+- * en tête) — affichage = « ×N vs moyenne » + percentile + rang + tier ; badges
++ * en tête) — affichage = fraction humaine + tier ; percentile/rang BRUTS seulement
++ * pour un tier actionnable (`montreRang`, cf. NU-A-009), jamais sur « sans signal » ; badges
+  * copro / veille succession / événement daté ; 5 contributions lisibles (signe +
+  * libellé de bin en français). Auto-porté : fetch /v2/score/{idu}.
+  *
+@@ -33,7 +34,7 @@ const TIER_META = ALL_TIER_META
+ 
+ type ErreurV2 = Error & { status?: number }
+ 
+-export function ScoreV2Block({ idu }: { idu: string }) {
++export function ScoreV2Block({ idu, montreRang = false }: { idu: string; montreRang?: boolean }) {
+   const { data, isError, error, refetch, isFetching } = useQuery<ScoreV2, ErreurV2>({
+     queryKey: ['score-v2', idu],
+     queryFn: async () => {
+@@ -113,10 +114,13 @@ export function ScoreV2Block({ idu }: { idu: string }) {
+         {/* M135 — la probabilité en FRACTION humaine (« 1/5 sous 1 an »), jamais un ×N. */}
+         <span className="font-mono text-xl font-semibold text-txt-hi">{data.fraction ?? '—'}</span>
+         <span className="text-[11px] text-txt-dim">{data.fraction ? 'de vente sous 1 an' : 'peu probable sous 1 an'}</span>
+-        {data.percentile != null && (
++        {/* URGENCE-1 (NU-A-009) — percentile/rang BRUTS seulement pour un tier ACTIONNABLE (priorité /
++            à suivre), derrière la MÊME condition que le verdict d'en-tête (`montreRang` ← montreMultiple).
++            Pour « sans signal » / « écartée » : fausse précision pour une parcelle non actionnable, masquée. */}
++        {montreRang && data.percentile != null && (
+           <span className="font-mono text-xs text-txt">percentile {data.percentile.toFixed(1)}</span>
+         )}
+-        {data.rang != null && <span className="font-mono text-xs text-txt-dim">rang {data.rang}</span>}
++        {montreRang && data.rang != null && <span className="font-mono text-xs text-txt-dim">rang {data.rang}</span>}
+         {/* M89 — copropriété sans rang : on DIT pourquoi (hors univers de classement), jamais un vide. */}
+         {data.rang == null && data.hors_classement && (
+           <span className="text-[11px] text-txt-mut">{data.hors_classement}</span>
+
+Effet : tier 'sans_signal'/'ecartee' (montreRang=false) → percentile/rang NON rendus (fausse
+précision supprimée) ; 'priorite'/'a_suivre' (montreRang=true) → inchangé. tsc + vitest verts.

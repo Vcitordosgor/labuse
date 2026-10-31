@@ -1024,7 +1024,8 @@ export interface CopiloteV2Reponse {
   // fiche + le Dossier), ou la valeur d'un champ précis (ligne déclarée + id). Le `text` porte déjà la
   // phrase servie ; ces objets structurés sont un appoint (rendu riche possible), jamais recalculés côté client.
   champ_id?: string | null
-  resume_fiche?: { idu: string; commune: string; tuiles: { id: string; libelle: string; valeur: string }[]; sections: { id: string; titre: string; verdict: string; ton: string }[]; source: string; millesime: string | null } | null
+  // URGENCE-1 (NU-F-026) — les ids de registre des tuiles/sections ne sont plus sérialisés (non lus ici).
+  resume_fiche?: { idu: string; commune: string; tuiles: { libelle: string; valeur: string }[]; sections: { titre: string; verdict: string; ton: string }[]; source: string; millesime: string | null } | null
   resume_commune?: { commune: string; tuiles: { libelle: string; valeur: string }[]; cartes: { titre: string; verdict: string }[]; source: string; millesime: string | null } | null
   prefill_commune?: string | null       // porte 'communes' préremplie de la commune du résumé
   // COPILOTE-2 lot 7 — la ligne de JOURNAL lisible du tour (« J'ai lu la fiche… », « J'ai ouvert

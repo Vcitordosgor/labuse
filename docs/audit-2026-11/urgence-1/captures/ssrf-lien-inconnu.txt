@@ -1,0 +1,30 @@
+URGENCE-1 (NU-F-004) — CURL : lien d'annonce INCONNU du Radar → aucune requête sortante
+======================================================================================
+$ curl -s -X POST http://127.0.0.1:9110/radar/annonce/analyser \
+       -H 'Content-Type: application/json' -d '{"url":"https://www.leboncoin.fr/ad/ventes_immobilieres/9998887776"}'
+--- RÉPONSE ---
+{"ok":false,"erreur":"url_bloquee"}
+
+--- PREUVE : lien INVALIDE (hors Leboncoin) ---
+{"ok":false,"erreur":"url_invalide","motif":"Collez un lien d'annonce Leboncoin (https://www.leboncoin.fr/…)."}
+
+--- JOURNAL SERVEUR (doit dire : aucun fetch) ---
+INFO:     labuse.pige.api — radar/annonce/analyser — bien absent du Radar, aucun fetch (SSRF fermé) : https://www.leboncoin.fr/ad/ventes_immobilieres/9998887776
+INFO:     127.0.0.1:50417 - "POST /radar/annonce/analyser HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50418 - "POST /radar/annonce/analyser HTTP/1.1" 200 OK
+
+URGENCE-1 (NU-F-007) — DÉPÔT AGENCE : liste blanche d'hôtes, jamais d'adresse privée
+====================================================================================
+--- adresse PRIVÉE / métadonnées cloud (hors liste blanche) → refusée, aucune requête ---
+$ POST /admin/radar/depot-agence/analyser  {html: 'http://169.254.169.254/latest/meta-data/'}
+{"ok":false,"erreur":"url_bloquee","motif":"Le portail refuse la lecture automatique de cette adresse — hôte non autorisé (hors portails connus). Enregistrez la page de l'annonce en « page web complète » (Cmd+S / Ctrl+S), puis collez ici le HTML."}
+
+$ POST /admin/radar/depot-agence/analyser  {html: 'http://10.0.0.5:8000/'}
+{"ok":false,"erreur":"url_bloquee","motif":"Le portail refuse la lecture automatique de cette adresse — hôte non autorisé (hors portails connus). Enregistrez la page de l'annonce en « page web complète » (Cmd+S / Ctrl+S), puis collez ici le HTML."}
+
+--- hôte NON portail (site quelconque) → refusé ---
+$ POST /admin/radar/depot-agence/analyser  {html: 'https://evil.example/listing'}
+{"ok":false,"erreur":"url_bloquee","motif":"Le portail refuse la lecture automatique de cette adresse — hôte non autorisé (hors portails connus). Enregistrez la page de l'annonce en « page web complète » (Cmd+S / Ctrl+S), puis collez ici le HTML."}
+
+(un hôte de la liste blanche — leboncoin.fr/seloger.com/… — serait lu ; NON testé ici pour
+ ne PAS émettre de requête réseau réelle pendant la recette.)
