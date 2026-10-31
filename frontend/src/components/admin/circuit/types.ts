@@ -68,7 +68,7 @@ export type CockpitCarte = {
   code: boolean; voir_detail: boolean; tri: number
   bouton?: CockpitBouton; detail?: { texte: string }
 }
-export type CockpitTuile = { id: string; titre: string; pastille: 'vert' | 'rouge' | 'violet' | 'gris'; ligne: string }
+export type CockpitTuile = { id: string; titre: string; pastille: 'vert' | 'rouge' | 'violet' | 'gris' | 'ambre'; ligne: string }
 export type CockpitEtape = {
   id: string; titre: string; ordre: number; fait: boolean; ligne: string
   bouton?: CockpitBouton | null; local?: boolean

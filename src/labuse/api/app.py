@@ -1844,6 +1844,12 @@ def _q_v2_where(run_label: str,
         if "bati" in cl:
             sub.append("EXISTS (SELECT 1 FROM parcel_residuel rs WHERE rs.parcel_id = p.id"
                        " AND rs.taux_emprise_pct IS NOT NULL AND rs.taux_emprise_pct >= 5)")
+        # NU-B-002 — 3e état EXPLICITE « non mesuré » = emprise jamais calculée (pas de ligne
+        # parcel_residuel, ou taux NULL). C'est le complément EXACT de nu∪bâti : les trois cochés
+        # recouvrent toute la base filtrable (41,5 % ne disparaissent plus en silence).
+        if "non_mesure" in cl:
+            sub.append("NOT EXISTS (SELECT 1 FROM parcel_residuel rs WHERE rs.parcel_id = p.id"
+                       " AND rs.taux_emprise_pct IS NOT NULL)")
         if sub:
             conds.append("(" + " OR ".join(sub) + ")")
         elif cl:
@@ -4254,6 +4260,7 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
     row = db.execute(text(
         f"""
         SELECT count(*) AS total,
+               count(*) FILTER (WHERE NOT ({_ETAGE0_SQL})) AS instruire,
                count(*) FILTER (WHERE {eff} IN ('brulante', 'priorite')) AS t_brulante,
                count(*) FILTER (WHERE {eff} IN ('chaude', 'a_suivre'))   AS t_chaude,
                count(*) FILTER (WHERE {eff} = 'reserve_fonciere')  AS t_reserve,
@@ -4283,8 +4290,17 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
           AND (CAST(:c AS text) IS NULL OR p.commune = :c)
           {extra_where} {sliver}
         """), params).mappings().one()
+    # NU-B-001 — « à instruire » = ce que la CARTE peint réellement (hors étage 0, même gate
+    # `NOT _ETAGE0_SQL` que la liste d'IDU). Le bouton « Voir les N parcelles » garde le TOTAL mais
+    # affiche le split « N à instruire · M écartées » (décision Vic « total partout, split visible ») :
+    # l'écartée n'est plus cachée sans perdre le total que Projets reproduit. `ecartees = total − instruire`
+    # (somme garantie, jamais deux périmètres).
+    _total = int(row["total"] or 0)
+    _instruire = int(row["instruire"] or 0)
     out = {
-        "total": int(row["total"] or 0),
+        "total": _total,
+        "instruire": _instruire,
+        "ecartees": max(0, _total - _instruire),
         "tiers": {"brulante": int(row["t_brulante"] or 0), "chaude": int(row["t_chaude"] or 0),
                   "reserve_fonciere": int(row["t_reserve"] or 0),
                   "a_creuser": int(row["t_a_creuser"] or 0),

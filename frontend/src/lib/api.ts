@@ -175,6 +175,10 @@ const tiersParam = (f: Filters): Record<string, string> =>
 export interface FiltreReponse {
   compte: number
   total: number
+  // NU-B-001 — split du compteur : `instruire` = ce que la carte PEINT (hors étage 0) ; `ecartees`
+  // = total − instruire. Le bouton garde le total et affiche « N à instruire · M écartées ».
+  instruire: number
+  ecartees: number
   tiers: { brulante: number; chaude: number; reserve_fonciere: number; a_creuser: number; ecartee: number }
   // RECETTE-3 (T4) — comptes des 4 segments du listing d'analyse (hors étage 0, ordre fixe).
   segments?: { permis_pro: number; terrain_nu: number; bati_densifier: number; reste: number }
@@ -2557,7 +2561,10 @@ export interface ShortlistDiff {
 }
 // PROJETS-FIX F1 — le compteur du cadrage sort de LA MÊME requête que « À trier » du projet ouvert :
 // `vivier` = le nombre EXACT que le projet servira (plus de `total` carte gonflé, source du mirage).
-export interface CadrageCompteur { vivier: number; cap: number }
+// NU-F-003 — le compteur du cadrage porte le total CARTE (`total`, étage 0 compris, = `/filtre`) et
+// son split : `figeable` (triable, ce que le projet servira) · `ecartees` (le reste). `vivier` =
+// alias rétro-compat de `figeable`.
+export interface CadrageCompteur { total: number; figeable: number; ecartees: number; vivier: number; cap: number }
 export const getCadrageCompteur = (cadrage: Cadrage, signal?: AbortSignal) =>
   j<CadrageCompteur>('/projets/compteur', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cadrage }), signal })
 // M120 — l'ancien entretien de cadrage IA (ProjetEntretien) a été retiré : un projet se cadre par
@@ -3020,7 +3027,7 @@ export const postCockpitEnvoyerProd = () => j<{ ok: boolean; log: string }>('/ad
 // « Réveiller… » (le même verrou flock que le cron, via run-job.sh).
 export interface UsinePoste {
   nom: string; libelle: string; role: string
-  pastille: 'vert' | 'violet' | 'rouge' | 'gris'
+  pastille: 'vert' | 'violet' | 'rouge' | 'gris' | 'ambre'   // NU-F-050 — ambre = ok mais périmé
   cadence: string | null; heure_reunion: string | null
   dernier: { statut: string | null; fin: string | null; duree_s: number | null }
   prochaine: string | null; gel: string | null

@@ -30,17 +30,51 @@ _LIVRAISON_NOM = {
 }
 
 
-def _pastille_job(dernier: dict | None, gel: str | None) -> str:
+def _job_perime(job: dict | None) -> bool:
+    """NU-F-050 — un poste dont le dernier passage OK est plus VIEUX que 1,5× sa cadence est PÉRIMÉ :
+    il a tourné, puis s'est tu. MÊME règle (1,5×) et MÊME prédicat de fraîcheur que
+    `ops_alertes._jobs_en_retard` (qui, lui, ouvre un incident et rougit le Tableau de bord) — pour
+    que L'usine ne peigne plus « au vert » un automate quotidien mort depuis 11 j. Un job gelé ou
+    jamais passé n'est PAS « périmé » (gris, dit par ailleurs)."""
+    job = job or {}
+    if job.get("gel"):
+        return False
+    dernier = job.get("dernier") or {}
+    if dernier.get("statut") not in ("ok", "dry-run"):
+        return False
+    fin, cron = dernier.get("fin"), job.get("cron_utc")
+    if not fin or not cron:
+        return False
+    from datetime import datetime, timezone
+
+    from .ops_alertes import _intervalle_s
+    inter = _intervalle_s(cron)
+    if inter is None:
+        return False
+    try:
+        fin_dt = datetime.fromisoformat(str(fin))
+    except (ValueError, TypeError):
+        return False
+    if fin_dt.tzinfo is None:
+        fin_dt = fin_dt.replace(tzinfo=timezone.utc)
+    return (datetime.now(timezone.utc) - fin_dt).total_seconds() > 1.5 * inter
+
+
+def _pastille_job(job: dict | None) -> str:
     """La couleur d'un poste : gris = gelé ou jamais parti · rouge = dernier passage en échec ·
-    vert = ok/dry-run. (Le « violet = tourne en ce moment » est décidé côté L'usine, Lot B : ici on
-    ne lit que le dernier état journalisé.)"""
-    if gel:
+    ambre = ok mais PÉRIMÉ (dernier succès > 1,5× cadence, NU-F-050) · vert = ok/dry-run frais.
+    (Le « violet = tourne en ce moment » est décidé côté L'usine, Lot B : ici on ne lit que le
+    dernier état journalisé.)"""
+    job = job or {}
+    if job.get("gel"):
         return "gris"
-    statut = (dernier or {}).get("statut")
+    statut = (job.get("dernier") or {}).get("statut")
     if statut is None:
         return "gris"
     if statut in ("echec", "timeout"):
         return "rouge"
+    if _job_perime(job):
+        return "ambre"
     return "vert"
 
 
@@ -174,9 +208,14 @@ def _cartes_incidents(incidents: list[dict]) -> list[dict]:
         ] if x)
         if bouton is None:   # pas d'action métier → « Accepter » (acquitte l'incident)
             bouton = {"label": "Accepter", "action": "accepter-incident", "cle": cle}
+        # NU-F-051 — l'âge de l'incident monte dans la PHRASE (plus caché dans « Voir le détail ») :
+        # un incident vieux de 2 j ne se lit plus comme « maintenant » et ne contredit plus en silence
+        # un autre onglet redevenu vert (readyz 200). La carte dit depuis quand elle est ouverte.
+        phrase = inc.get("sujet") or "Un contrôle d'exploitation est au rouge."
+        if depuis:
+            phrase = f"{phrase} · ouvert depuis {depuis}"
         out.append(_carte(
-            f"incident:{cle}", pastille, titre,
-            inc.get("sujet") or "Un contrôle d'exploitation est au rouge.",
+            f"incident:{cle}", pastille, titre, phrase,
             bouton=bouton, detail={"texte": texte}, tri=0.5))
     return out
 
@@ -365,7 +404,7 @@ def _job(jobs_par_nom: dict, nom: str) -> dict:
 def _tuiles_tout_tourne(jobs_par_nom: dict, etats_sources: dict) -> list[dict]:
     def tuile(cid, titre, nom_job, ligne_ok, *, gel_from=None):
         j = _job(jobs_par_nom, nom_job)
-        pastille = _pastille_job(j.get("dernier"), j.get("gel"))
+        pastille = _pastille_job(j)
         return {"id": cid, "titre": titre, "pastille": pastille, "ligne": ligne_ok(j)}
 
     veille = tuile(
@@ -373,12 +412,14 @@ def _tuiles_tout_tourne(jobs_par_nom: dict, etats_sources: dict) -> list[dict]:
         lambda j: (f"Le veilleur est passé à {_hhmm((j.get('dernier') or {}).get('fin'))} · "
                    f"{(etats_sources or {}).get('total', '—')} sources suivies"))
 
-    # Livraisons : état agrégé des 6 livreurs + ceux qui sont ok.
+    # Livraisons : état agrégé des 6 livreurs + ceux qui sont ok. NU-F-050 — un livreur périmé (ambre)
+    # ne compte plus comme « ok » : la tuile passe en ambre s'il n'y a pas déjà un rouge.
     etats_liv = []
     for n in LIVRAISONS:
         j = _job(jobs_par_nom, n)
-        etats_liv.append((_LIVRAISON_NOM[n], _pastille_job(j.get("dernier"), j.get("gel"))))
+        etats_liv.append((_LIVRAISON_NOM[n], _pastille_job(j)))
     past_liv = ("rouge" if any(p == "rouge" for _, p in etats_liv)
+                else "ambre" if any(p == "ambre" for _, p in etats_liv)
                 else "gris" if all(p == "gris" for _, p in etats_liv) else "vert")
     oks = ", ".join(nom for nom, p in etats_liv if p == "vert") or "aucune ce jour"
     livraisons = {"id": "livraisons", "titre": "Livraisons du jour", "pastille": past_liv,
@@ -386,12 +427,14 @@ def _tuiles_tout_tourne(jobs_par_nom: dict, etats_sources: dict) -> list[dict]:
 
     controle = tuile(
         "controle", "Contrôle de nuit", "coherence-banc",
-        lambda j: "0 chiffre faux chez le client" if _pastille_job(j.get("dernier"), j.get("gel")) == "vert"
+        lambda j: "0 chiffre faux chez le client" if _pastille_job(j) == "vert"
+        else "dernier passage trop ancien (en retard)" if _pastille_job(j) == "ambre"
         else "dernier passage à revoir")
 
     courrier = tuile(
         "courrier", "Courrier aux clients", "mail-queue-consommer",
-        lambda j: ("part régulièrement" if _pastille_job(j.get("dernier"), j.get("gel")) == "vert"
+        lambda j: ("part régulièrement" if _pastille_job(j) == "vert"
+                   else "dernier passage trop ancien (en retard)" if _pastille_job(j) == "ambre"
                    else "dernier passage en échec"))
 
     return [veille, livraisons, controle, courrier]
@@ -413,6 +456,9 @@ def _resume_usine(jobs_list: list[dict]) -> dict:
             vert += 1
         else:
             arret += 1
+    # NU-F-050 — le résumé garde son contrat historique (4 clés) ; le « en retard » (postes ok mais
+    # périmés) se LIT sur les PASTILLES (ambre, côté grille/tuiles/légende) et est recompté au front à
+    # partir d'elles — pas besoin d'un 5ᵉ compteur ici (qui romprait les compteurs verrouillés par test).
     return {"postes": len(jobs_list), "vert": vert, "echec": echec, "arret": arret}
 
 
@@ -526,7 +572,9 @@ def _pastille_poste(job: dict, en_cours: set[str]) -> str:
     if statut in ("echec", "timeout"):
         return "rouge"
     if statut in ("ok", "dry-run"):
-        return "vert"
+        # NU-F-050 — ok mais dernier succès plus vieux que 1,5× la cadence → ambre (en retard),
+        # jamais « au vert ». Même prédicat de fraîcheur partagé que les tuiles et le Tableau de bord.
+        return "ambre" if _job_perime(job) else "vert"
     return "gris"
 
 
@@ -571,7 +619,7 @@ def composer_usine(jobs_list: list[dict], *, en_cours: set[str] | None = None) -
     geles = [p for p in postes if p["gel"]]
     return {"familles": familles, "geles": geles, "resume": _resume_usine(jobs_list),
             "legende": [["vert", "au vert"], ["violet", "travaille en ce moment"],
-                        ["rouge", "en échec"], ["gris", "à l'arrêt"]]}
+                        ["ambre", "en retard"], ["rouge", "en échec"], ["gris", "à l'arrêt"]]}
 
 
 def composer_cockpit(*, a_faire: dict, etats_sources: dict | None, reservoirs: list[dict],

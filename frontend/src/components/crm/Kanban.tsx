@@ -473,6 +473,11 @@ export function Kanban() {
   ].some((f) => fold(f).includes(q))
   const byCol = (key: string) => (entries.data ?? []).filter((e) => e.status === key && matchSearch(e))
   const cardCount = (key: string) => byCol(key).length
+  // NU-F-010 — le dialogue de suppression lit le compteur NON filtré par la recherche. `/pipeline` ne
+  // sert que les cartes actives (archived_at IS NULL) → ce compte est EXACTEMENT celui de la garde
+  // backend `_cards_in` (NU-F-009). Sans ça, une recherche masquant les cartes faisait croire « 0 carte
+  // · suppression immédiate » puis le backend refusait (422 muet) : colonne jamais supprimable.
+  const cardCountAll = (key: string) => (entries.data ?? []).filter((e) => e.status === key).length
 
   const startEdit = (c: PipelineColumn) => { setEditingId(c.id ?? null); setEditLabel(c.label) }
   const commitEdit = () => {
@@ -615,7 +620,7 @@ export function Kanban() {
                     <Bouton icone niveau="secondaire" ton="vert" onClick={() => moveCol(idx, 1)} disabled={idx === cols.length - 1}
                       aria-label="Déplacer la colonne à droite">→</Bouton>
                     <Bouton icone niveau="secondaire" ton="danger"
-                      onClick={() => setPendingDelete(withCounts[idx])}
+                      onClick={() => setPendingDelete({ ...withCounts[idx], cards: cardCountAll(withCounts[idx].key) } as PipelineColumn)}
                       disabled={cols.length <= 1}
                       aria-label="Supprimer la colonne">✕</Bouton>
                   </span>

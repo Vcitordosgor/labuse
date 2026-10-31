@@ -43,6 +43,11 @@ export function Usine({ data }: { data: CircuitData }) {
     onSuccess: () => apres('Envoi en prod lancé — suivi dans le Journal.'), onError: surErreur })
 
   const d = q.data
+  // NU-F-050 — « en retard » = postes ok mais périmés (pastille ambre, décidée au back). Recompté ICI
+  // à partir des pastilles (le résumé garde son contrat 4-clés, verrouillé par test) ; « au vert » exclut
+  // donc les périmés pour ne pas les recompter deux fois.
+  const nRetard = d ? [...d.familles.flatMap((f) => f.postes), ...d.geles].filter((p) => p.pastille === 'ambre').length : 0
+  const nVert = d ? Math.max(0, d.resume.vert - nRetard) : 0
   const enCours = lancer.isPending || agents.isPending || calculer.isPending || basculer.isPending || envoyer.isPending
   const etapes = data.cockpit?.mise_a_jour.etapes ?? []
 
@@ -63,7 +68,10 @@ export function Usine({ data }: { data: CircuitData }) {
   const poste = (p: UsinePoste) => (
     <div className="us-poste" key={p.nom}>
       <div className="us-ph">
-        <span className={`us-dot ${p.pastille}`} />
+        {/* NU-F-050 — pastille ambre « en retard » : le var --ambre existe déjà, mais la règle CSS
+            .us-dot.ambre vit dans style.ts (capturée par un snapshot) ; on pose donc le fond en inline
+            pour ne pas toucher au snapshot. Non-ambre : aucun attribut style (DOM inchangé). */}
+        <span className={`us-dot ${p.pastille}`} style={p.pastille === 'ambre' ? { background: 'var(--ambre)' } : undefined} />
         <span className="nm">{p.libelle}</span>
         {p.heure_reunion && !p.gel && <span className="hr">{p.heure_reunion}</span>}
       </div>
@@ -118,9 +126,9 @@ export function Usine({ data }: { data: CircuitData }) {
 
       <div className="us-top">
         <h2>L'usine</h2>
-        <span className="sub">{d ? `${d.resume.postes} postes · ${d.resume.vert} au vert${d.resume.echec ? ` · ${d.resume.echec} en échec` : ''}${d.resume.arret ? ` · ${d.resume.arret} à l'arrêt` : ''}` : 'chargement…'}</span>
+        <span className="sub">{d ? `${d.resume.postes} postes · ${nVert} au vert${nRetard ? ` · ${nRetard} en retard` : ''}${d.resume.echec ? ` · ${d.resume.echec} en échec` : ''}${d.resume.arret ? ` · ${d.resume.arret} à l'arrêt` : ''}` : 'chargement…'}</span>
       </div>
-      {d && <div className="us-leg">{d.legende.map(([c, l]) => <span key={c}><i className={`us-dot ${c}`} style={{ display: 'inline-block' }} />{l}</span>)}</div>}
+      {d && <div className="us-leg">{d.legende.map(([c, l]) => <span key={c}><i className={`us-dot ${c}`} style={{ display: 'inline-block', ...(c === 'ambre' ? { background: 'var(--ambre)' } : {}) }} />{l}</span>)}</div>}
 
       {!d ? <div className="muted">L'usine — chargement…</div> : (
         <>

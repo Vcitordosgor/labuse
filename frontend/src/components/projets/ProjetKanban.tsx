@@ -8,7 +8,7 @@ import { palierDe, usePaliersDA } from '../../lib/usePaliers'
 import { AlgoExplainer, ScoringExplainer } from '../panel/LeftPanel'
 import { FiltreFacettes } from '../panel/FiltreFacettes'
 import { FiltreProvider } from '../panel/filtreContext'
-import { fmtDate, fmtEurCompact, fmtInt, fmtM2, iduCourt } from '../../lib/format'
+import { fmtDate, fmtEur, fmtEurCompact, fmtM2, iduCourt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
 import { Squelette } from '../Loading'
@@ -198,8 +198,8 @@ function FiltreDrawer({ cadrageProjet, initial, onApply, onClear, onClose }: {
 function facetteLabels(c: Cadrage): { key: keyof Filters; label: string }[] {
   const out: { key: keyof Filters; label: string }[] = []
   if (c.etatSol?.length) out.push({ key: 'etatSol', label: c.etatSol.map((e) => (e === 'nu' ? 'terrain nu' : 'bâti')).join(' / ') })
-  if (c.surfaceMin != null) out.push({ key: 'surfaceMin', label: `surface ≥ ${c.surfaceMin} m²` })
-  if (c.surfaceMax != null) out.push({ key: 'surfaceMax', label: `surface ≤ ${c.surfaceMax} m²` })
+  if (c.surfaceMin != null) out.push({ key: 'surfaceMin', label: `surface ≥ ${fmtM2(c.surfaceMin)}` })
+  if (c.surfaceMax != null) out.push({ key: 'surfaceMax', label: `surface ≤ ${fmtM2(c.surfaceMax)}` })
   if (c.zonePlu?.length) out.push({ key: 'zonePlu', label: `zone ${c.zonePlu.join('/')}` })
   if (c.zonagePlu?.length) out.push({ key: 'zonagePlu', label: `zonage ${c.zonagePlu.join('/')}` })
   if (c.signaux?.length) out.push({ key: 'signaux', label: `${c.signaux.length} signal${c.signaux.length > 1 ? 'aux' : ''}` })
@@ -326,13 +326,16 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
               {/* CHASSE-APP-FIX-2 (point 4 N) — quand AUCUNE parcelle ne ressort (signalees = 0,
                   compteur bien calculé côté back, mais rien n'atteint les tiers brûlante/chaude), on
                   ne dit plus « 0 ressortent — 0 À suivre » : le cadrage est classé, les plus probables d'abord. */}
+              {/* NU-F-011 — un seul discours : le parcours « sélection filtrée » promet « les mêmes
+                  filtres que la carte », sans « analyse LABUSE » ni « probabilité de mutation ». Le
+                  bandeau s'y aligne : on parle de signaux de vie et d'ordre de tri, pas d'un jugement. */}
               {analyse.signalees > 0 ? (
-                <>LABUSE a analysé <b className="text-txt-hi">{analyse.total.toLocaleString('fr-FR')} parcelles</b> :
-                {' '}<b className="text-mint">{analyse.signalees.toLocaleString('fr-FR')}</b> ressortent
-                {' '}— {(analyse.priorite + analyse.a_suivre).toLocaleString('fr-FR')} À suivre.</>
+                <>Votre cadrage : <b className="text-txt-hi">{analyse.total.toLocaleString('fr-FR')} parcelles</b>.
+                {' '}<b className="text-mint">{analyse.signalees.toLocaleString('fr-FR')}</b> portent un signal de vie récent
+                {' '}— {(analyse.priorite + analyse.a_suivre).toLocaleString('fr-FR')} à suivre, en tête de tri.</>
               ) : (
-                <>LABUSE a analysé <b className="text-txt-hi">{analyse.total.toLocaleString('fr-FR')} parcelles</b> :
-                {' '}aucune ne se détache pour l'instant — toutes sont classées par probabilité de mutation.</>
+                <>Votre cadrage : <b className="text-txt-hi">{analyse.total.toLocaleString('fr-FR')} parcelles</b>
+                {' '}— aucun signal de vie récent pour l'instant ; les plus actives arrivent en tête de tri.</>
               )}
             </p>
             <button data-kanban-pourquoi aria-expanded={analyseOuvert} onClick={() => setAnalyseOuvert((o) => !o)}
@@ -346,13 +349,13 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                 {/* CHASSE-APP-FIX-2 (point 4 N) — phrase honnête sur un ensemble vide : si rien ne
                     ressort, « Elles arrivent en tête » / « les N autres » n'ont pas de sens. */}
                 {analyse.signalees > 0 ? (
-                  <>LABUSE a analysé les <b className="text-txt-hi">{analyse.total.toLocaleString('fr-FR')} parcelles</b> de votre cadrage :
-                  {' '}<b className="text-mint">{analyse.signalees.toLocaleString('fr-FR')}</b> ont plus de chances que les autres d'être vendues
-                  {' '}— {(analyse.priorite + analyse.a_suivre).toLocaleString('fr-FR')} À suivre.
+                  <>Les <b className="text-txt-hi">{analyse.total.toLocaleString('fr-FR')} parcelles</b> de votre cadrage :
+                  {' '}<b className="text-mint">{analyse.signalees.toLocaleString('fr-FR')}</b> portent un signal de vie récent
+                  {' '}— {(analyse.priorite + analyse.a_suivre).toLocaleString('fr-FR')} à suivre.
                   {' '}Elles arrivent en tête de votre tri ; les {(analyse.total - analyse.signalees).toLocaleString('fr-FR')} autres suivent, sans jugement.</>
                 ) : (
-                  <>LABUSE a analysé les <b className="text-txt-hi">{analyse.total.toLocaleString('fr-FR')} parcelles</b> de votre cadrage :
-                  {' '}aucune ne se détache pour l'instant. Toutes sont classées par probabilité de mutation, les plus probables en tête de votre tri, sans jugement.</>
+                  <>Les <b className="text-txt-hi">{analyse.total.toLocaleString('fr-FR')} parcelles</b> de votre cadrage :
+                  {' '}aucun signal de vie récent pour l'instant. Les plus actives arrivent en tête de votre tri, sans jugement.</>
                 )}
               </p>
               <p data-kanban-analyse-sub className="mt-1 text-[11px] text-txt-dim">
@@ -363,7 +366,7 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                 {/* RETOURS-7 Z12.2 — libellé lisible = la DATE ; l'identifiant technique du run
                     (valeurs_run.label) reste au survol et au dashboard, plus servi au client. */}
                 {etat?.valeurs_run?.date ? <span>{`valeurs au ${fmtDate(etat.valeurs_run.date)}`}</span> : ''}
-                {(() => { const m = (etat?.proposees ?? []).find((it) => it.marche_eur_m2 != null)?.marche_eur_m2; return m != null && projet && (projet.cadrage.communes?.length === 1) ? ` · marché ancien ${projet.cadrage.communes[0]} ~${fmtInt(m)} €/m²` : '' })()}
+                {(() => { const m = (etat?.proposees ?? []).find((it) => it.marche_eur_m2 != null)?.marche_eur_m2; return m != null && projet && (projet.cadrage.communes?.length === 1) ? ` · marché ancien ${projet.cadrage.communes[0]} ~${fmtEur(m)}/m²` : '' })()}
               </p>
               <Bouton niveau="lien" data-kanban-scoring onClick={() => setAlgoModale('scoring')} className="mt-1.5">Comprendre le classement →</Bouton>
             </div>

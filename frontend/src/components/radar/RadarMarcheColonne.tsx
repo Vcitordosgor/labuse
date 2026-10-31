@@ -11,9 +11,11 @@ import {
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { useApp } from '../../store/useApp'
+import { fmtEur, fmtInt, fmtPct } from '../../lib/format'
 
-const fmt = (v: number | null | undefined) => (v == null ? '—' : v.toLocaleString('fr-FR'))
-const pct = (v: number | null | undefined) => (v == null ? null : `${v > 0 ? '+' : ''}${v} %`)
+// `fmtInt` pour un nombre nu (groupé fr) ; `fmtEur` pose « €/m² » ou « € » avec l'espace INSÉCABLE.
+const fmt = fmtInt
+const pct = (v: number | null | undefined) => (v == null ? null : `${v > 0 ? '+' : ''}${fmtPct(v)}`)
 const TYPE_LABEL: Record<string, string> = { terrain: 'Terrain', maison: 'Maison', appartement: 'Appartement' }
 // RADAR-FIX-3 — couleur d'un écart selon son signe (au-dessus = ambre, sous = menthe).
 const ecartCouleur = (v: number) => (v > 0 ? 'text-amber' : 'text-mint')
@@ -223,7 +225,7 @@ function EcartInline({ label, cmp }: { label: string; cmp: RadarBienCmp }) {
       {cmp.niveau === 'insuffisant' || cmp.median == null
         ? <span className="text-txt-dim">sous le seuil</span>
         : cmp.ecart_pct == null
-          ? <span className="tabular-nums text-txt">{fmt(cmp.median)} €/m²</span>
+          ? <span className="tabular-nums text-txt">{fmtEur(cmp.median)}/m²</span>
           : cmp.niveau === 'indicatif'
             ? <span className="text-txt-dim">{pct(cmp.ecart_pct)} · indicatif · n = {cmp.n}</span>
             : <span className={`font-medium ${ecartCouleur(cmp.ecart_pct)}`}>{pct(cmp.ecart_pct)}</span>}
@@ -244,7 +246,7 @@ function CeBienBloc({ loading, error, bien, onClose }: {
   const der = baisses[baisses.length - 1]
   const histLigne = baisses.length === 0
     ? 'aucune baisse enregistrée'
-    : `${baisses.length} baisse${baisses.length > 1 ? 's' : ''}${der ? ` · ${fmt(der.ancien)} → ${fmt(der.nouveau)} €` : ''}`
+    : `${baisses.length} baisse${baisses.length > 1 ? 's' : ''}${der ? ` · ${fmt(der.ancien)} → ${fmtEur(der.nouveau)}` : ''}`
   return (
     <div data-ce-bien className="mb-4 rounded-lg border border-mint/40 bg-mint/[0.05] px-4 py-3.5">
       <div className="flex items-start justify-between gap-3">
@@ -260,8 +262,8 @@ function CeBienBloc({ loading, error, bien, onClose }: {
       {bien && (
         <>
           <div className="mt-1 flex flex-wrap items-end gap-x-2">
-            <span className="text-[22px] font-bold tabular-nums text-txt-hi">{bien.eur_m2 != null ? `${fmt(bien.eur_m2)} €/m²` : '—'}</span>
-            <span className="pb-0.5 text-[12px] text-txt-mut">{bien.prix != null ? `${fmt(bien.prix)} €` : ''}{bien.type_bien ? ` · ${TYPE_LABEL[bien.type_bien] ?? bien.type_bien}` : ''}</span>
+            <span className="text-[22px] font-bold tabular-nums text-txt-hi">{bien.eur_m2 != null ? `${fmtEur(bien.eur_m2)}/m²` : '—'}</span>
+            <span className="pb-0.5 text-[12px] text-txt-mut">{bien.prix != null ? fmtEur(bien.prix) : ''}{bien.type_bien ? ` · ${TYPE_LABEL[bien.type_bien] ?? bien.type_bien}` : ''}</span>
           </div>
           <div className="mt-2 text-[9.5px] uppercase tracking-wide text-txt-dim">Écart · {bien.commune} · {TYPE_MOT[bien.type_bien ?? ''] ?? 'même type'}</div>
           <div className="mt-0.5 flex flex-wrap gap-x-4 gap-y-1 text-[11.5px]">
@@ -276,7 +278,7 @@ function CeBienBloc({ loading, error, bien, onClose }: {
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
             <a onClick={(e) => { e.preventDefault(); radarClic(bien.bien_id).catch(() => {}); window.open(bien.url_sortante, '_blank', 'noopener,noreferrer') }}
               href={bien.url_sortante} target="_blank" rel="noopener noreferrer"
-              data-ce-bien-portail className="inline-flex text-[12px] font-medium text-[#E7B008] underline decoration-[#E7B008]/40 underline-offset-2 hover:decoration-[#E7B008]">
+              data-ce-bien-portail className="inline-flex text-[12px] font-medium text-amber underline decoration-amber/40 underline-offset-2 hover:decoration-amber">
               Voir l’annonce ↗
             </a>
             {/* RECETTE-4 — ouvre « Estimer un bien » sur CE lien (mêmes chiffres : €/m², écart au repère). */}

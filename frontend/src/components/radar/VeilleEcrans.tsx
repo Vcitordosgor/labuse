@@ -13,7 +13,7 @@ import {
   type RadarAlerte, type SuiviItem,
 } from '../../lib/api'
 import { useApp } from '../../store/useApp'
-import { iduCourt, fmtM2, ilYA } from '../../lib/format'
+import { iduCourt, fmtEur, fmtM2, ilYA } from '../../lib/format'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'
 import { trierCommunes } from '../../lib/communes'
 import { ParcelInput } from '../ParcelInput'
@@ -21,7 +21,9 @@ import { Squelette } from '../Loading'
 import { EmptyState } from '../States'
 import { Badge } from '../ui/Badge'
 import { Bouton } from '../ui/Bouton'
+import { Chip } from '../ui/Chip'
 import { Retour } from '../ui/Retour'
+import { Select } from '../ui/Select'
 
 // fréquence du mail — mêmes valeurs que Mon compte (VEILLE-FIX-2). Libellés de la maquette.
 const FREQ_LABEL: Record<string, string> = { quotidien: 'Chaque matin', hebdo: 'Chaque lundi', cloche_seule: 'Seulement dans la cloche' }
@@ -81,12 +83,12 @@ export function VeilleEcran() {
         <div className="shrink-0">
           <div className="mb-1.5 text-right text-[11px] text-txt-dim">Résumé par mail</div>
           <div className="flex flex-wrap justify-end gap-2">
+            {/* F-020 — bascules de fréquence via le composant Chip de la charte (coché = vert plein + coche,
+                `aria-pressed` porté par Chip). */}
             {frequences.map((v) => (
-              <button key={v} data-veille-freq={v} onClick={() => setFreq.mutate(v)}
-                className={`h-8 rounded-full border px-3.5 text-[12.5px] transition-colors duration-quick ${
-                  freq === v ? 'border-mint bg-mint text-mint-on font-medium' : 'border-line-2 text-txt hover:border-mint/50'}`}>
-                {freq === v && <span className="mr-1">✓</span>}{FREQ_LABEL[v] ?? v}
-              </button>
+              <Chip key={v} ton="vert" on={freq === v} data-veille-freq={v} onClick={() => setFreq.mutate(v)}>
+                {FREQ_LABEL[v] ?? v}
+              </Chip>
             ))}
           </div>
         </div>
@@ -207,8 +209,8 @@ function alerteChips(a: RadarAlerte): string[] {
   if (c.type_bien) out.push(String(c.type_bien).charAt(0).toUpperCase() + String(c.type_bien).slice(1))
   const communes = Array.isArray(c.communes) ? (c.communes as string[]) : (a.commune ? [String(a.commune)] : [])
   if (communes.length) out.push(communes.join(' · '))
-  if (c.surface_min) out.push(`≥ ${Number(c.surface_min)} m²`)
-  if (c.prix_max) out.push(`≤ ${Number(c.prix_max).toLocaleString('fr-FR')} €`)
+  if (c.surface_min) out.push(`≥ ${fmtM2(Number(c.surface_min))}`)
+  if (c.prix_max) out.push(`≤ ${fmtEur(Number(c.prix_max))}`)
   if (c.particulier_only) out.push('Particulier')
   return out.length ? out : ['Tous les biens']
 }
@@ -362,15 +364,15 @@ function FormulaireAlerte({ edit, onFini, onAnnuler }: { edit?: RadarAlerte; onF
         <label className="mb-1 block text-[11px] text-txt-dim">Commune(s)</label>
         <div className="flex flex-wrap items-center gap-2">
           {communes.map((c0) => (
-            <span key={c0} data-veille-form-commune className="inline-flex items-center gap-1 rounded-full bg-mint/12 px-2.5 py-1 text-[11.5px] text-mint">
+            <span key={c0} data-veille-form-commune className="inline-flex items-center gap-1 rounded-full bg-mint/10 px-2.5 py-1 text-[11.5px] text-mint">
               {c0}
               <button aria-label={`Retirer ${c0}`} onClick={() => setCommunes((p) => p.filter((x) => x !== c0))} className="text-mint/70 hover:text-mint">✕</button>
             </span>
           ))}
-          <select data-veille-form-ajout-commune value={ajout} onChange={(e) => ajouterCommune(e.target.value)} className={`${inp} min-w-[170px]`}>
+          <Select data-veille-form-ajout-commune value={ajout} onChange={(e) => ajouterCommune(e.target.value)} wrapClassName="min-w-[170px]" className={`${inp} w-full`}>
             <option value="">+ Ajouter une commune…</option>
             {COMMUNES_24.filter((c0) => !communes.includes(c0)).map((c0) => <option key={c0} value={c0}>{c0}</option>)}
-          </select>
+          </Select>
         </div>
       </div>
       {/* VEILLE-3-FIX (1) — chaque champ porte son étiquette visible (Type · Vendeur · Prix max · Surface
@@ -406,7 +408,7 @@ function Segment({ label, value, onChange, options, data }: {
       <div data-seg={data} className="flex h-8 overflow-hidden rounded-md border border-line-2">
         {options.map(([v, l], i) => (
           <button key={v || 'tous'} data-seg-opt={v || 'tous'} onClick={() => onChange(v)}
-            className={`flex items-center justify-center whitespace-nowrap px-2.5 text-[12px] ${i ? 'border-l border-line-2' : ''} ${value === v ? 'bg-mint/12 font-medium text-mint' : 'text-txt-mut hover:text-txt'}`}>{l}</button>
+            className={`flex items-center justify-center whitespace-nowrap px-2.5 text-[12px] ${i ? 'border-l border-line-2' : ''} ${value === v ? 'bg-mint/10 font-medium text-mint' : 'text-txt-mut hover:text-txt'}`}>{l}</button>
         ))}
       </div>
     </div>

@@ -67,6 +67,8 @@ function ProjetRow({ p }: { p: Projet }) {
   // (index.css) ; l'ancien survol JS gris est retiré.
   return (
     <div data-projet-row data-intensite={c.proposee > 0 ? 'todo' : 'ajour'} onClick={ouvrir}
+      role="button" tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ouvrir() } }}
       style={{ display: 'grid', gridTemplateColumns: '1fr 260px 130px', gap: 18, alignItems: 'center',
         padding: '13px 16px', borderBottom: '1px solid #161C18', cursor: 'pointer' }}>
       {/* gauche : titre + périmètre mono + ligne de contexte */}
@@ -77,7 +79,7 @@ function ProjetRow({ p }: { p: Projet }) {
         </h4>
         {vivierZero ? (
           <div data-projet-sub style={{ fontSize: 12, color: '#8FA69A', marginTop: 2 }}>
-            aucune parcelle ne correspond à ce cadrage · <span style={{ color: '#4ADE80' }}>modifier →</span>
+            aucune parcelle ne correspond à ce cadrage · <span style={{ color: 'var(--mint)' }}>modifier →</span>
           </div>
         ) : (
           <div data-projet-sub style={{ fontSize: 12, color: '#8FA69A', marginTop: 2 }}>
@@ -88,13 +90,13 @@ function ProjetRow({ p }: { p: Projet }) {
       {/* centre : la barre + son libellé sous elle */}
       <div>
         <div data-projet-barre style={{ height: 6, background: '#161C18', borderRadius: 4, overflow: 'hidden', marginBottom: 5 }}>
-          {pct > 0 && <div style={{ height: '100%', width: `${pct}%`, background: '#4ADE80' }} />}
+          {pct > 0 && <div style={{ height: '100%', width: `${pct}%`, background: 'var(--mint)' }} />}
         </div>
         <div style={{ fontSize: 11.5, color: '#6F8578' }}>{barLabel}</div>
       </div>
       {/* droite : le compteur RETENUES */}
       <div data-projet-retenues style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-        <div style={{ fontFamily: MONO, fontSize: 22, color: '#4ADE80', fontWeight: 700, lineHeight: 1 }}>{c.retenue}</div>
+        <div style={{ fontFamily: MONO, fontSize: 22, color: 'var(--mint)', fontWeight: 700, lineHeight: 1 }}>{c.retenue}</div>
         <div style={{ fontFamily: MONO, fontSize: 9, color: '#6F8578', marginTop: 3, letterSpacing: '.16em' }}>RETENUES</div>
       </div>
     </div>
@@ -300,6 +302,8 @@ export function ProjetsPanel() {
                     avec le compteur affichées / total. */}
                 {reste > 0 && (
                   <div data-projets-plus onClick={() => setMontre((m) => m + 200)}
+                    role="button" tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setMontre((m) => m + 200) } }}
                     style={{ textAlign: 'center', padding: '16px 0 4px', fontFamily: MONO, fontSize: 12, color: '#8FA69A', letterSpacing: '.06em', cursor: 'pointer' }}>
                     VOIR {Math.min(200, reste)} DE PLUS · {affichees.length} / {visibles.length}
                   </div>
