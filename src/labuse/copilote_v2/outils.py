@@ -26,6 +26,14 @@ from .. import runs  # S3 : run servi relu à la requête
 # « édition courante »). Le run interne (runs.current()) reste l'argument des points de calcul.
 CADASTRE_MILLESIME = "cadastre Etalab — édition courante"
 
+# NU-E-048 — CHAQUE fait porte SA VRAIE source : un verdict PLU (zonage) ne s'estampille PLUS
+# « cadastre Etalab », une copropriété vient du RNIC, un propriétaire personne morale de la DGFiP.
+# L'ancien payload taguait TOUT son contenu avec une source unique (« cadastre »), y compris la zone.
+_SRC_CADASTRE = "cadastre"                                  # surface, commune (identité parcellaire)
+_SRC_PLU = "PLU — zonage (règlement communal)"             # la zone est un fait PLU, pas cadastral
+_SRC_RNIC = "RNIC — répertoire des copropriétés"           # copropriété
+_SRC_PM = "DGFiP — parcelles de personnes morales (SIREN public)"   # propriétaire personne morale
+
 
 @dataclass
 class ToolResult:
@@ -42,6 +50,12 @@ class ToolResult:
     # M109 — critères de la demande que l'outil choisi NE PEUT PAS appliquer (absents de ses
     # paramètres). Un chiffre servi avec un critère lâché DOIT le dire (jamais le sous-total muet).
     criteres_non_appliques: list[str] = field(default_factory=list)
+    # NU-E-046/048 — faits QUALITATIFS portés par l'outil, CHACUN avec sa vraie source :
+    # [{cle, libelle, valeur (bool|str|None), source}]. Le verrou qualitatif (NU-E-047) s'appuie
+    # dessus pour vérifier qu'une affirmation oui/non correspond bien à un champ servi ; le formuler
+    # y lit la source EXACTE de chaque fait (jamais une source générique sur un verdict d'une autre
+    # origine). `valeur=None` sur une clé présente = « inconnu » → aucune affirmation permise.
+    faits: list[dict[str, Any]] = field(default_factory=list)
 
 
 # ───────────────────────── compter_parcelles ─────────────────────────
@@ -353,15 +367,40 @@ def fiche_parcelle(db: Session, *, idu: str) -> ToolResult:
     if not f or f.get("commune") is None:
         return ToolResult("fiche_parcelle", ok=False, refus=f"parcelle {idu} introuvable")
     reg = (f.get("reglement_plu") or {}).get("zones") or []
-    # URGENCE-1 (NU-E-049 / NU-F-002) — `fiche_parcelle` est un outil FACTUEL (commune, surface, zone) :
-    # il n'embarque PLUS le verdict de scoring, qui n'est pas demandé ici et dont le code de palier brut
-    # (`sans_signal`, `a_creuser`…) fuyait au client (le repli lisait `tier`, jamais traduit). Le
-    # potentiel/la constructibilité se demandent par la voie dédiée (résumé fiche, verdict CLIENT).
+    zone = (reg[0].get("zone") if reg else None)
+    # URGENCE-1 (NU-E-049 / NU-F-002) — `fiche_parcelle` est un outil FACTUEL : il n'embarque PLUS le
+    # verdict de scoring (palier brut `sans_signal`/`a_creuser`… qui fuyait). Le potentiel/la
+    # constructibilité se demandent par la voie dédiée.
+    # NU-E-046 — COPROPRIÉTÉ : fait qualitatif désormais PORTÉ par l'outil (le LLM ne tranche plus).
+    # Le drapeau fiable est `score_v2.copro` (CHASSE-4 : `p_model_ext_copro` = TOUTES les parcelles,
+    # faux signal) ; le répertoire RNIC (`coproprietes`) le CONFIRME. Ni l'un ni l'autre servi → None
+    # (« inconnu », JAMAIS « non » par défaut) : sans donnée, on ne tranche pas (Règle à graver).
+    sv2 = f.get("score_v2") or {}
+    copros_rnic = f.get("coproprietes") or []
+    if "copro" in sv2:
+        copro = bool(sv2.get("copro")) or bool(copros_rnic)
+    elif copros_rnic:
+        copro = True
+    else:
+        copro = None
+    # NU-E-046 — PROPRIÉTAIRE PERSONNE MORALE : la dénomination publique (DGFiP/SIREN) si présente,
+    # None si aucune PM connue (le propriétaire personne physique n'est JAMAIS servi — donnée fermée).
+    pm = f.get("proprietaire_moral") or {}
+    pm_denom = pm.get("denomination")
     data = {"idu": idu, "commune": f.get("commune"), "surface_m2": f.get("surface_m2"),
-            "zone": (reg[0].get("zone") if reg else None),
-            "etage0": f.get("etage0")}
-    return ToolResult("fiche_parcelle", valeur=f.get("surface_m2"), data=data,
-                      source="cadastre", millesime=CADASTRE_MILLESIME)
+            "zone": zone, "etage0": f.get("etage0"),
+            "copro": copro, "proprietaire_personne_morale": pm_denom}
+    # NU-E-048 — chaque fait avec SA source : zone → PLU, copro → RNIC, PM → DGFiP, surface → cadastre.
+    faits = [
+        {"cle": "commune", "libelle": "commune", "valeur": f.get("commune"), "source": _SRC_CADASTRE},
+        {"cle": "surface_m2", "libelle": "surface", "valeur": f.get("surface_m2"), "source": _SRC_CADASTRE},
+        {"cle": "zone", "libelle": "zone PLU", "valeur": zone, "source": _SRC_PLU},
+        {"cle": "copro", "libelle": "copropriété", "valeur": copro, "source": _SRC_RNIC},
+        {"cle": "proprietaire_personne_morale", "libelle": "propriétaire (personne morale)",
+         "valeur": pm_denom, "source": _SRC_PM},
+    ]
+    return ToolResult("fiche_parcelle", valeur=f.get("surface_m2"), data=data, faits=faits,
+                      source=_SRC_CADASTRE, millesime=CADASTRE_MILLESIME)
 
 
 # ───────────────────────── stats_commune ─────────────────────────
