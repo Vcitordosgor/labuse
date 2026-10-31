@@ -101,6 +101,10 @@ def documents(idu: str) -> dict[str, str]:
                                "stationnement": "aerien", "terrain": "libere", "programme": PROGRAMME})))
     essaie("Pré-dossier PC", lambda: _cerfa_texte(_get(f"/pre-dossier/{idu}.zip")))
     essaie("Bilan", lambda: _pdftotext(_bilan_pdf(idu)))
+    # SDP-UNIQUE-1 (D-042/NU-D-043) — « Estimer un bien » (9ᵉ doc) était HORS du harnais : le seul
+    # document qui portait « SDP restante » sans être contrôlé. On l'ajoute pour que sa SDP résiduelle
+    # soit comparée aux huit autres et casse le harnais au moindre écart inter-document.
+    essaie("Estimer un bien", lambda: _pdftotext(_get(f"/analyse-annonce/{idu}.pdf")))
     return textes
 
 

@@ -6460,7 +6460,7 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
             """SELECT p.id AS pid, r.pct_potentiel, r.sdp_residuelle_m2, r.sous_densite,
                       r.capacite_estimee, r.cause, zp.zone_fam, zp.zone_lib,
                       r.surface_terrain_m2 AS surface_run, r.computed_at AS run_computed_at,
-                      r.assiette_source,
+                      r.assiette_source, r.hauteur_source, r.taux_emprise_pct,
                       p.contenance_m2 AS contenance_live, p.updated_at AS parcel_updated_at
                  FROM parcels p
                  LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
@@ -6468,6 +6468,18 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
                 WHERE p.idu = :idu"""), {"idu": idu}).mappings().first()
         from ..faisabilite.potentiel import surelevation as _surelevation
         sur = _surelevation(db, row["pid"]) if row else None
+        # SDP-UNIQUE-1 (A-001) — cause d'écartement du SCORING (hors_classement : forêt publique
+        # inacquérable…) lue À PART et GARDÉE : un score_labuse absent (fixture/base sans scoring)
+        # ne doit jamais faire planter la fiche (table absente → None, pas d'abort de transaction).
+        sl_cause = None
+        if row is not None and _score_labuse_ready(db):
+            try:
+                sl_cause = db.execute(text(
+                    "SELECT cause FROM score_labuse WHERE run_label = :r AND parcel_id = :p"),
+                    {"r": _score_labuse_run(), "p": row["pid"]}).scalar()
+            except Exception:  # noqa: BLE001 — lecture annexe, jamais bloquante
+                db.rollback()
+                sl_cause = None
     except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche (tables résiduel absentes)
         return _bloc_indisponible("potentiel_transformation")   # M125 — panne ≠ absence
     cause = row["cause"] if row else None
@@ -6485,6 +6497,13 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
     # > 100 % (ex. 607 %, 640 % vus à l'audit) est SUPPRIMÉ (None), jamais affiché comme un fait ;
     # (2) chaque chiffre de ce moteur porte la mention « estimation simplifiée ».
     estimation_simplifiee = (row["assiette_source"] == "residuel_legacy")
+    # SDP-UNIQUE-1 (E-007) — la SDP résiduelle « bâti conservé » DÉDUIT le bâti existant (emprise ×
+    # niveaux). Quand la hauteur du bâti n'est ni mesurée au LiDAR ni déclarée en BD TOPO, le moteur
+    # suppose R+1 (`hauteur_source='sans'`). On le DIT au client dès qu'il y a du bâti à déduire
+    # (`taux_emprise_pct > 0`) : sinon la SDP restante est « hauteur du bâti supposée », pas mesurée.
+    # (hauteur_source NULL = parcelle non constructible/hors-PLU, aucun bâti déduit → pas de mention.)
+    hauteur_bati_supposee = (row["hauteur_source"] == "sans"
+                             and (row["taux_emprise_pct"] or 0) > 0)
     if estimation_simplifiee and pct is not None and pct > 100:
         pct = None   # un « % consommé » > 100 du moteur simplifié n'est pas un fait servable
     if pct is None:
@@ -6551,6 +6570,18 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
             niveau = "exclu"
         else:
             niveau, sdp_servie = "indetermine", None
+    # SDP-UNIQUE-1 (A-001 résidu) — le SCORING peut écarter une parcelle pour une cause que le
+    # résiduel ne modélise pas (hors_classement : forêt publique / DPF / route — domaine inacquérable).
+    # Le verdict LABUSE sert alors « aucune SDP exploitable » (app.py ~7001, cause → sdp None) ; l'EN-TÊTE
+    # doit dire LA MÊME chose, sinon « SDP restante 196 m² » côtoie « écartée » sur la même fiche (le
+    # contresens A-001/E-001 que Vic proscrit). On DÉFÈRE à l'écartement du scoring : une seule notion,
+    # une seule valeur. (Le résiduel physique reste écrit au run ; c'est l'AFFICHAGE qu'on réconcilie.)
+    if sl_cause and cause is None and sdp_servie is not None and sdp_servie > 0:
+        from ..faisabilite.engine import cause_libelle as _cause_libelle_sl
+        cause = sl_cause
+        niveau = "exclu"
+        sdp_servie = None
+        libelle = _cause_libelle_sl(cause) or libelle
     # CHASSE-DOCS-FIX-1 (E-06) — sous un verdict de SATURATION (densité consommée), on ne sert PAS de
     # marge de surélévation positive : elle contredirait « déjà consommée » pour le lecteur (§10 tranche
     # une seule histoire). La hauteur du bâti reste dans « Le bien » ; c'est la MARGE qui est masquée ici.
@@ -6691,6 +6722,14 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
         "estimation_simplifiee_note": ("Estimation simplifiée — le gabarit réglementaire (reculs par "
                                        "côté) n'est pas disponible pour cette parcelle ; capacité "
                                        "approchée, à affiner par une étude." if estimation_simplifiee else None),
+        # SDP-UNIQUE-1 (E-007) — le client lit si la hauteur du bâti déduit a été MESURÉE
+        # ('lidar'/'bdtopo') ou SUPPOSÉE R+1 ('sans'). `hauteur_bati_supposee` n'est vrai que
+        # lorsqu'un bâti est effectivement retranché (taux d'emprise > 0).
+        "hauteur_bati_source": row["hauteur_source"],
+        "hauteur_bati_supposee": hauteur_bati_supposee,
+        "hauteur_bati_supposee_note": ("Hauteur du bâti existant supposée R+1 (ni LiDAR ni BD TOPO) — "
+                                       "la SDP restante « bâti conservé » est donc à confirmer."
+                                       if hauteur_bati_supposee else None),
         # CHASSE-FIX-1 (C06) — capacité DIFFÉRÉE (zone AU non ouverte) : drapeau + détail de la
         # règle unique au_differe ; la SDP reste servie (≈ m² APRÈS ouverture), jamais « disponible ».
         "capacite_differee": capacite_differee,
@@ -8479,6 +8518,10 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
     fa = faisab or {}
     fr = fa.get("fourchette") or {}
     res = fa.get("residuel") or {}
+    # SDP-UNIQUE-1 (E-003 / A-001) — la ligne « SDP résiduelle · bâti conservé » de Comparer lit la
+    # MÊME valeur que la fiche SERVIE (qv2.potentiel_transformation : run servi + réconciliation de
+    # l'écartement hors_classement), jamais un recalcul live divergent. Une seule source par notion.
+    _pt_serv = qv2.get("potentiel_transformation") or {}
     cf = (fa.get("bilan") or {}).get("charge_fonciere") or {}
     lignes = qv2.get("lines") or []
     contraintes = [l for l in lignes if l.get("result") in ("HARD_EXCLUDE", "SOFT_FLAG")]
@@ -8552,11 +8595,14 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
         # résiduel, lui, a déjà sa propre ligne (`sdp_residuelle_m2`). Front : « Zone constructible »
         # + « SDP résiduelle — <cause> ». Même logique que la tuile SDP de la fiche.
         "zone_constructible": (lambda _zf: None if _zf is None else _zf not in ("A", "N"))(_famille_zone(fa.get("zone"))),
-        "cause": res.get("cause"),
-        "cause_libelle": cause_libelle(res.get("cause")) if res.get("cause") else None,
+        "cause": _pt_serv.get("cause") if _pt_serv else res.get("cause"),
+        "cause_libelle": (_pt_serv.get("libelle") if _pt_serv.get("cause")
+                          else (cause_libelle(res.get("cause")) if res.get("cause") else None)),
         "sdp_max_m2": fr.get("surface_plancher_m2"),
         "taux_emprise_pct": res.get("taux_emprise_pct") if res.get("disponible") else None,
-        "sdp_residuelle_m2": res.get("sdp_residuelle_m2") if res.get("disponible") else None,
+        # SDP-UNIQUE-1 — valeur SERVIE par la fiche (réconciliée), pas le résiduel live brut.
+        "sdp_residuelle_m2": (_pt_serv.get("sdp_residuelle_m2") if _pt_serv
+                              else (res.get("sdp_residuelle_m2") if res.get("disponible") else None)),
         "sous_densite": res.get("sous_densite") if res.get("disponible") else None,
         "charge_fonciere_m2": cf.get("par_m2_terrain"),
         "n_contraintes": len(contraintes),

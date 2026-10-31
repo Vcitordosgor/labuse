@@ -966,6 +966,12 @@ export interface PotentielTransformation extends Indisponible {
   pct_consomme: number | null
   pct_residuel: number | null
   sdp_residuelle_m2: number | null
+  // SDP-UNIQUE-1 (E-007) — provenance de la hauteur du bâti DÉDUIT pour la SDP restante :
+  // 'lidar'/'bdtopo' (mesurée) ou 'sans' (supposée R+1). `hauteur_bati_supposee` n'est vrai que
+  // lorsqu'un bâti est réellement retranché → le client sait quand la SDP restante est à confirmer.
+  hauteur_bati_source?: string | null
+  hauteur_bati_supposee?: boolean | null
+  hauteur_bati_supposee_note?: string | null
   // FICHE-ORFEVRERIE-1 (Lot A, pt 7) — la chaîne lisible du calcul (comment on arrive à N m²) +
   // l'étape qui limite. Présent seulement quand elle retombe sur la SDP servie (sinon null).
   calcul?: {

@@ -1,0 +1,17 @@
+SDP-UNIQUE-1 — cohérence SDP résiduelle · API http://127.0.0.1:9120
+
+témoin            en-tête  verdict  comparer  dossier  estimer  verdict
+97411000IN0347          0        0         0        ∅        0  OK — toutes « rien » (0/—)
+97411000IE0241         92       92        92       92       92  OK — toutes = 92 m²
+97411000HC0139         84       84        84       84       84  OK — toutes = 84 m²
+97424000AE0050          ∅        ∅         ∅        ∅        ∅  OK — toutes « rien » (0/—)
+97424000AM0893         73       73        73       73       73  OK — toutes = 73 m²
+97421000AB0133          0        ∅         0        ∅        ∅  OK — toutes « rien » (0/—)
+97411000AO0753          0        ∅         0        ∅        ∅  OK — toutes « rien » (0/—)
+97411000EY0173        461      461       461      461      461  OK — toutes = 461 m²
+97417000BI0076          ∅        ∅         ∅        ∅        ∅  OK — toutes « rien » (0/—)
+97411000AB0785          0        0         0        ∅        0  OK — toutes « rien » (0/—)
+97411000HN0074         17       17        17       17       17  OK — toutes = 17 m²
+97411000DR0042   fiche indisponible (HTTP Error 500: Internal Server Error) — parcelle disparue, pas de SDP
+
+✓ Cohérence SDP résiduelle « bâti conservé » : une seule valeur par témoin, partout.
