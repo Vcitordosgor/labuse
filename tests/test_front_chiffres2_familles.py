@@ -180,8 +180,13 @@ def test_f01b_pente_bande_servie():
     from labuse.api.app import _pente_bande
     assert (_pente_bande(3), _pente_bande(8), _pente_bande(20), _pente_bande(40), _pente_bande(None)) == \
         ("plat", "modérée", "forte", "très forte", None)
+    # FAISA-REGLES-1 (A-006) — la bande tient compte de la pente MAXIMALE : une falaise (max ≥ 30°) n'est
+    # jamais « modérée » ; le terrassement lourd remonte au moins à « forte ». Jamais sous la moyenne.
+    assert _pente_bande(14.9, 43.9, True) == "très forte"   # EY0173 : moy « modérée » mais pan à 43,9°
+    assert _pente_bande(10.0, 31.0, False) == "forte"       # un pan ≥ 30° → au moins « forte »
+    assert _pente_bande(3.0, 4.0, False) == "plat"          # terrain plat reste plat
     app = (ROOT / "src/labuse/api/app.py").read_text(encoding="utf-8")
-    assert '"pente_bande": _pente_bande(terrain["pente_moy_deg"])' in app
+    assert '"pente_bande": _pente_bande(' in app and 'terrain.get("pente_max_deg")' in app
     fiche = (SRC / "components/fiche/Fiche.tsx").read_text(encoding="utf-8")
     assert "f.terrain?.pente_bande ?? undefined" in fiche
     assert "pente < 15" not in fiche and "penteDeg < 15" not in fiche, "bande de pente reclassée au front (F01b)"
@@ -319,10 +324,17 @@ def test_f57_f50_pct_portion_zone_servie():
     sur le dessin (qui divergeait du Dossier : « Ud 45,6 % » vs « 43 % »)."""
     contract = (ROOT / "src/labuse/gabarit/contract.py").read_text(encoding="utf-8")
     assert "pctPortionZone" in contract
+    # FAISA-REGLES-1 (D-025/026) — le calcul à-cheval (pct_constructible + surfaceNote) vit dans UN helper
+    # PARTAGÉ `gabarit.builder.appliquer_note_a_cheval`, appelé par l'endpoint outil ET le builder PDF, pour
+    # que l'écran et le PDF portent la MÊME note. Source UNIQUE = zonage (zone_dominante.pct_constructible).
+    builder = (ROOT / "src/labuse/gabarit/builder.py").read_text(encoding="utf-8")
+    assert "def appliquer_note_a_cheval" in builder
+    assert "from ..faisabilite.zone_servie import zone_dominante" in builder
+    assert "pct_constructible" in builder and "result.pctPortionZone = round(pct)" in builder
     gab = (ROOT / "src/labuse/api/gabarit.py").read_text(encoding="utf-8")
-    # source UNIQUE = zonage (zone_dominante.pct_constructible), plus de recalcul sur le dessin
-    assert "from ..faisabilite.zone_servie import zone_dominante" in gab
-    assert "pct_constructible" in gab and "res.pctPortionZone = round(_pct)" in gab
+    assert "appliquer_note_a_cheval(db, idu, res)" in gab          # endpoint outil
+    pdf_builder = (ROOT / "src/labuse/exports/builder.py").read_text(encoding="utf-8")
+    assert "appliquer_note_a_cheval(db, idu, gr)" in pdf_builder    # builder PDF (écran == PDF)
     assert "round(res.surfaceParcelleM2 / _cad * 100)" not in gab, "pctPortionZone recalculé sur le dessin"
     gl = (SRC / "components/fiche/GabaritLine.tsx").read_text(encoding="utf-8")
     gp = (SRC / "components/outils/Gabarit.tsx").read_text(encoding="utf-8")

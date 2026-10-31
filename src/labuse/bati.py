@@ -350,6 +350,18 @@ def le_bien_block(session: Session, idu: str) -> dict | None:
     # Ni remplacement ni doublon d'OCS GE (donnée d'ÎLOT, part ARTIFICIALISÉE) : imperméabilisé n'est
     # pas artificialisé, et la maille est la parcelle elle-même. Table absente → None.
     cosia_couverture = _cosia_couverture(session, idu, surface)
+    # FAISA-REGLES-1 (A-005) — ne JAMAIS servir une hauteur « mesurée / sourcée » là où la fiche déclare
+    # nb_batiments = 0 : `hauteur_parcelle_lidar`/`_hauteur_bati_m` prennent le plus grand bâtiment
+    # intersectant SANS seuil de surface, alors que `nb_batiments` ne compte que les polygones ≥ 10 m².
+    # Un bâti sous le seuil (bruit de sol, débord voisin) ne doit pas produire une hauteur affichée comme
+    # une mesure là où le produit déclare « aucun bâtiment ». On gate la hauteur sur un bâti SIGNIFICATIF.
+    _bati_significatif = bool(nb and nb > 0)
+    _hauteur_note = None
+    if hauteur_bati is not None and not _bati_significatif:
+        _hauteur_note = ("Bâti non significatif (aucun bâtiment ≥ 10 m² sur la parcelle) : hauteur non "
+                         "servie — micro-emprise (bruit de sol ou débord d'un voisin), pas une mesure du bien.")
+        hauteur_bati = None
+    _lid_signif = lid if _bati_significatif else None
     return {
         "disponible": True,
         "code": bloc.get("code"), "occupation_label": bloc.get("label"),
@@ -357,23 +369,23 @@ def le_bien_block(session: Session, idu: str) -> dict | None:
         "cosia_detecte_m2": cosia_m2,   # None sauf sur-détection CoSIA hors BD TOPO (dit à part)
         "nb_batiments": nb,
         "hauteur_bati_m": hauteur_bati,
+        "hauteur_note": _hauteur_note,   # FAISA-REGLES-1 (A-005) — dit pourquoi aucune hauteur n'est servie
         # RECETTE-9 T9 — faîtage/égout MESURÉS + nature (« sourcé » LiDAR / « estimé » BD TOPO).
-        "hauteur_faitage_m": (lid["faitage_m"] if lid else None),
-        "hauteur_egout_m": (lid["egout_m"] if lid else None),
-        "hauteur_nature": ("sourcé" if lid else ("estimé" if hauteur is not None else None)),
+        "hauteur_faitage_m": (_lid_signif["faitage_m"] if _lid_signif else None),
+        "hauteur_egout_m": (_lid_signif["egout_m"] if _lid_signif else None),
+        "hauteur_nature": ("sourcé" if _lid_signif else ("estimé" if (hauteur is not None and _bati_significatif) else None)),
         "adresses_bati": adresses_bati,   # SOURCES-2 lot 3 — BAN PLUS (None si table absente)
         # RECETTE-11 A3 — la date de survol servie avec la mesure (jamais une mesure sans date).
-        "hauteur_survol": (lid.get("survol") if lid else None),
-        "hauteur_source": (lid["source"] if lid else ("BD TOPO® (hauteur déclarée)" if hauteur is not None else None)),
-        # DONNEES-FIX-1 lot A — le badge « Sources discordantes » compare la MÊME grandeur (égout
-        # LiDAR ↔ hauteur BD TOPO ≈ égout), plus un plafond sur le faîtage aberrant. Règle UNIQUE
-        # partagée avec la marge en hauteur (Potentiel) : `discordance_hauteur`. On SERT les trois
-        # hauteurs + les deux écarts + le drapeau/motif, sans jamais choisir automatiquement.
-        "hauteur_bdtopo_m": (lid.get("hauteur_bdtopo_m") if lid else None),
-        "ecart_faitage_bdtopo_m": _disc["ecart_faitage_bdtopo_m"],
-        "ecart_egout_bdtopo_m": _disc["ecart_egout_bdtopo_m"],
-        "hauteur_discordante": _disc["discordante"],
-        "hauteur_discordance_motif": _disc["motif"],
+        "hauteur_survol": (_lid_signif.get("survol") if _lid_signif else None),
+        "hauteur_source": (_lid_signif["source"] if _lid_signif else ("BD TOPO® (hauteur déclarée)" if (hauteur is not None and _bati_significatif) else None)),
+        # DONNEES-FIX-1 lot A + FAISA-REGLES-1 (A-004) — le badge « Sources discordantes » compare des
+        # hauteurs de MÊME NATURE : BD TOPO (haut du bâtiment ≈ faîtage) confronté à l'enveloppe mesurée
+        # [égout, faîtage] LiDAR (cf. discordance_hauteur). Gaté sur un bâti significatif (A-005).
+        "hauteur_bdtopo_m": (_lid_signif.get("hauteur_bdtopo_m") if _lid_signif else None),
+        "ecart_faitage_bdtopo_m": (_disc["ecart_faitage_bdtopo_m"] if _bati_significatif else None),
+        "ecart_egout_bdtopo_m": (_disc["ecart_egout_bdtopo_m"] if _bati_significatif else None),
+        "hauteur_discordante": (_disc["discordante"] if _bati_significatif else False),
+        "hauteur_discordance_motif": (_disc["motif"] if _bati_significatif else None),
         "surface_libre_m2": surface_libre,
         "surface_parcelle_m2": round(surface) if surface is not None else None,
         "toit": toit,          # None = toit non encore relevé (LiDAR non chauffé), sinon 3 états U5

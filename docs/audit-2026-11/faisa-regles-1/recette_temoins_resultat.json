@@ -1,0 +1,185 @@
+{
+  "etude": {
+    "RNU_AT1496": {
+      "secondes": 0.2,
+      "zone_servie": null,
+      "verdict": "Étude hors périmètre",
+      "statut_global": "hors périmètre",
+      "hors_perimetre": true,
+      "motif": "rnu",
+      "logements_max": null,
+      "niveaux": null,
+      "facteur_limitant": null,
+      "grille_note_presente": false,
+      "message": "Commune au RNU : aucune zone PLU opposable sur cette parcelle — étude hors périmètre, aucun programme de logements n'est chiffrable.",
+      "pas_de_503": true
+    },
+    "zoneN_AN0072": {
+      "secondes": 0.1,
+      "zone_servie": "N",
+      "verdict": "Étude hors périmètre",
+      "statut_global": "hors périmètre",
+      "hors_perimetre": true,
+      "motif": "zone_non_constructible",
+      "logements_max": null,
+      "niveaux": null,
+      "facteur_limitant": null,
+      "grille_note_presente": false,
+      "message": "Zone N (famille N) non constructible : aucun programme de logements n'est chiffrable en zone A ou N.",
+      "pas_de_503": true
+    },
+    "Uh_IN0347": {
+      "secondes": 1.4,
+      "zone_servie": "Uh",
+      "verdict": "Impossible pour cause établie",
+      "statut_global": "simulation impossible",
+      "hors_perimetre": null,
+      "motif": null,
+      "logements_max": null,
+      "niveaux": null,
+      "facteur_limitant": null,
+      "grille_note_presente": false,
+      "message": "simulation impossible : aucune implantation ne passe tous les contrôles durs sur cette assiette (zone trop étroite, reculs, ou stationnement aérien impossible).",
+      "pas_de_503": true
+    },
+    "a_cheval_AE0050": {
+      "secondes": 5.5,
+      "zone_servie": "Ub",
+      "verdict": "À compléter",
+      "statut_global": "à compléter",
+      "hors_perimetre": null,
+      "motif": null,
+      "logements_max": 2,
+      "niveaux": "R+0",
+      "facteur_limitant": "hauteur réglementaire",
+      "grille_note_presente": false,
+      "message": "",
+      "pas_de_503": true
+    },
+    "grande_CT2637": {
+      "secondes": 28.8,
+      "zone_servie": "U3c",
+      "verdict": "Impossible pour cause établie",
+      "statut_global": "simulation impossible",
+      "hors_perimetre": null,
+      "motif": null,
+      "logements_max": null,
+      "niveaux": null,
+      "facteur_limitant": null,
+      "grille_note_presente": true,
+      "message": "simulation impossible : aucune implantation ne passe tous les contrôles durs sur cette assiette (zone trop étroite, reculs, ou stationnement aérien impossible).",
+      "pas_de_503": true
+    },
+    "falaise_EY0173": {
+      "secondes": 24.1,
+      "zone_servie": "Uh",
+      "verdict": "Impossible pour cause établie",
+      "statut_global": "simulation impossible",
+      "hors_perimetre": null,
+      "motif": null,
+      "logements_max": null,
+      "niveaux": null,
+      "facteur_limitant": null,
+      "grille_note_presente": true,
+      "message": "simulation impossible : aucune implantation ne passe tous les contrôles durs sur cette assiette (zone trop étroite, reculs, ou stationnement aérien impossible).",
+      "pas_de_503": true
+    }
+  },
+  "gabarit": {
+    "D024_recul_IE0241_Um": {
+      "recul_sep_m": 5.0,
+      "recul_sep_formule": "recul séparatif = max(4 m, h×0.5 = 5 m) = 5 m (h = faîtage 10 m)",
+      "zone_implantation_m2": 260.1,
+      "plafond_emprise_m2": 312.5,
+      "surfaceNote": null,
+      "pctPortionZone": null
+    },
+    "D025_026_a_cheval_AE0050": {
+      "recul_sep_m": 3.0,
+      "recul_sep_formule": null,
+      "zone_implantation_m2": 196.6,
+      "plafond_emprise_m2": 397.6,
+      "surfaceNote": "Contenance cadastrale 1720 m² — dont ~802 m² en zone Ub (parcelle à cheval).",
+      "pctPortionZone": 47
+    },
+    "D028_disparue_DR0042": {
+      "disparue": true,
+      "message": "Parcelle disparue du cadastre (version du 2026-09-01). Aucune donnée n'est servie pour cette parcelle ; les documents ne",
+      "gabarit_complet_servi": false
+    }
+  },
+  "fiche_hauteur_pente": {
+    "A006_falaise_EY0173": {
+      "pente": {
+        "moy_deg": 14.9,
+        "max_deg": 43.9,
+        "flag_terrassement": true,
+        "bande": "très forte"
+      },
+      "nb_batiments": 1,
+      "hauteur_bati_m": 4.6,
+      "hauteur_nature": "sourcé",
+      "hauteur_note": null,
+      "hauteur_discordante": false,
+      "hauteur_discordance_motif": null,
+      "ecart_faitage_bdtopo_m": null,
+      "ecart_egout_bdtopo_m": null
+    },
+    "A005_micro_AO0753": {
+      "pente": {
+        "moy_deg": 3.8,
+        "max_deg": 8.1,
+        "flag_terrassement": false,
+        "bande": "plat"
+      },
+      "nb_batiments": 0,
+      "hauteur_bati_m": null,
+      "hauteur_nature": null,
+      "hauteur_note": "Bâti non significatif (aucun bâtiment ≥ 10 m² sur la parcelle) : hauteur non servie — micro-emprise (bruit de sol ou débord d'un voisin), pas une mesure du bien.",
+      "hauteur_discordante": false,
+      "hauteur_discordance_motif": null,
+      "ecart_faitage_bdtopo_m": null,
+      "ecart_egout_bdtopo_m": null
+    },
+    "A004_copro_HC0139": {
+      "pente": {
+        "moy_deg": 8.5,
+        "max_deg": 15.0,
+        "flag_terrassement": false,
+        "bande": "modérée"
+      },
+      "nb_batiments": 1,
+      "hauteur_bati_m": 13.7,
+      "hauteur_nature": "sourcé",
+      "hauteur_note": null,
+      "hauteur_discordante": false,
+      "hauteur_discordance_motif": null,
+      "ecart_faitage_bdtopo_m": -1.5,
+      "ecart_egout_bdtopo_m": -11.2
+    }
+  },
+  "stationnement_800m_E056": {
+    "Uh_IN0347_617m": {
+      "zone": "Uh",
+      "plafond_national": {
+        "reference": "L151-36",
+        "ratio_plafond": 1.0,
+        "rayon_tcsp_m": 800,
+        "distance_tcsp_m": 617,
+        "condition_remplie": true,
+        "citation": "Code de l'urbanisme L151-36 : à moins de 800 m d'un transport collectif en site propre bien desservi (loi 2025-1129), il ne peut être exigé plus de 1 aire de stationnement par logement pour les logeme"
+      }
+    },
+    "IE0241_247m": {
+      "zone": "Um",
+      "plafond_national": {
+        "reference": "L151-36",
+        "ratio_plafond": 1.0,
+        "rayon_tcsp_m": 800,
+        "distance_tcsp_m": 247,
+        "condition_remplie": true,
+        "citation": "Code de l'urbanisme L151-36 : à moins de 800 m d'un transport collectif en site propre bien desservi (loi 2025-1129), il ne peut être exigé plus de 1 aire de stationnement par logement pour les logeme"
+      }
+    }
+  }
+}

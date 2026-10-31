@@ -37,6 +37,26 @@ _TOL_AIRE = 1e-6
 _TOL_CONTENU = 0.05
 
 
+def _fr(x: float) -> str:
+    """Nombre au format français (virgule), sans zéro inutile : 4.5→« 4,5 », 18.0→« 18 »."""
+    return (f"{x:.1f}".rstrip("0").rstrip(".")).replace(".", ",")
+
+
+def hauteur_projet_m(conv: Conventions, regles: ReglesZone, niveaux: int) -> tuple[float, str, bool]:
+    """FAISA-REGLES-1 (E-059) — hauteur du PROJET mesurée SELON LA RÈGLE DU PLU (R.111-26), depuis le
+    terrain naturel. Les murs = rez-de-chaussée + étages = `niveaux × hauteur d'étage` (le rez EST un
+    niveau, compté). Si la règle qui plafonne se mesure au FAÎTAGE, on AJOUTE la toiture/acrotère
+    (`conv.toiture_m`, faîtage = égout + toiture) — sinon un R+n passerait un plafond de faîtage en ne
+    comptant que ses murs. Si elle se mesure à l'ÉGOUT, le haut des murs EST l'égout (toiture au-dessus,
+    non comptée). Renvoie (hauteur_m, base, estimee) : base ∈ {« égout », « faîtage » } ; `estimee`=True
+    quand la toiture a été ajoutée (marge prudente à DIRE sur le chiffre). Jamais une règle inventée :
+    la hauteur d'étage et la toiture sont des conventions « Estimé »."""
+    h_murs = niveaux * conv.hauteur_etage_m
+    if regles.hauteur_egout.validee:
+        return round(h_murs, 1), "égout", False
+    return round(h_murs + conv.toiture_m, 1), "faîtage", True
+
+
 @dataclass
 class CheckGeo:
     nom: str
@@ -156,9 +176,10 @@ def verifier_geometrie(scene: Scene, terrain, conv: Conventions, cap: Capacite,
 
     r = regles.hauteur_plafond
     if r.validee and r.valeur is not None:
-        h = cap.niveaux * conv.hauteur_etage_m
-        checks.append(CheckGeo("niveaux × hauteur ≤ hauteur réglementaire",
-                               h <= r.valeur + 1e-9, f"{h:.1f} m ≤ {r.valeur:.1f} m"))
+        # FAISA-REGLES-1 (E-059) — hauteur RÉELLE du projet selon la règle (égout/faîtage, toiture comptée).
+        h, base, _est = hauteur_projet_m(conv, regles, cap.niveaux)
+        checks.append(CheckGeo(f"hauteur projet ({base}) ≤ hauteur réglementaire",
+                               h <= r.valeur + 1e-9, f"{_fr(h)} m ≤ {_fr(r.valeur)} m"))
     return checks
 
 
@@ -234,13 +255,20 @@ def _ppr_bleue_touche_bati(scene: Scene, terrain) -> bool:
 def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capacite,
                              regles: ReglesZone) -> list[ControleReg]:
     out: list[ControleReg] = []
-    contenance = terrain.contenance_totale_m2
+    # FAISA-REGLES-1 (E-058) — MÊME BASE que le dessin pour l'emprise au sol et la pleine terre : l'emprise
+    # et la pleine terre sont MESURÉES sur la géométrie (EPSG:2975) ; le plafond CES/perméabilité est donc
+    # calculé sur la SURFACE DESSINÉE de la portion constructible (`aire_dessin_m2`), pas sur la contenance
+    # cadastrale (qui diffère du dessin de ~1-3 %). Numérateur et dénominateur dans le même repère.
+    # (Le vrai Terrain porte toujours `aire_dessin_m2` ; repli défensif sur la contenance pour une
+    # scène synthétique de test qui ne l'expose pas.)
+    _aire_dessin = getattr(terrain, "aire_dessin_m2", None)
+    contenance = _aire_dessin if _aire_dessin is not None else terrain.contenance_totale_m2
 
     r = regles.emprise_ces
     if r.validee and r.valeur is not None:
         plafond = contenance * r.valeur / 100.0
         ok = cap.emprise_sol_m2 <= plafond + 1e-6
-        out.append(ControleReg("Emprise au sol", f"≤ {plafond:.0f} m² ({r.valeur:.0f} % de la contenance)",
+        out.append(ControleReg("Emprise au sol", f"≤ {plafond:.0f} m² ({r.valeur:.0f} % de la surface du terrain)",
                                f"{cap.emprise_sol_m2:.0f} m²", REUSSI if ok else ECHOUE,
                                r.citation_complete, f"écart {plafond - cap.emprise_sol_m2:+.0f} m²"))
     else:
@@ -248,11 +276,15 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
 
     r = regles.hauteur_plafond
     if r.validee and r.valeur is not None:
-        h = cap.niveaux * conv.hauteur_etage_m
+        # FAISA-REGLES-1 (E-059) — hauteur du PROJET mesurée selon la règle (égout/faîtage), rez + toiture
+        # comptés ; marge prudente DITE (« hauteur estimée, toiture comprise ») quand la toiture est ajoutée.
+        h, base, estimee = hauteur_projet_m(conv, regles, cap.niveaux)
         ok = h <= r.valeur + 1e-9
-        base = "à l'égout" if regles.hauteur_egout.validee else "au faîtage (pas d'égout chiffré)"
-        out.append(ControleReg("Hauteur", f"≤ {r.valeur:.0f} m {base}",
-                               f"R+{cap.niveaux - 1} ≈ {h:.0f} m", REUSSI if ok else ECHOUE, r.citation_complete))
+        base_lbl = "à l'égout" if base == "égout" else "au faîtage (pas d'égout chiffré)"
+        mesure = (f"R+{cap.niveaux - 1} ≈ {_fr(h)} m {base}"
+                  + (" (hauteur estimée, toiture comprise)" if estimee else ""))
+        out.append(ControleReg("Hauteur", f"≤ {_fr(r.valeur)} m {base_lbl}",
+                               mesure, REUSSI if ok else ECHOUE, r.citation_complete))
     else:
         out.append(ControleReg("Hauteur", "règle non validée", f"R+{cap.niveaux - 1}", NON_EFFECTUE))
 
@@ -333,7 +365,7 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
     if r.validee and r.valeur is not None:
         requis = contenance * r.valeur / 100.0
         ok = cap.pleine_terre_m2 >= requis - 1e-6
-        out.append(ControleReg("Perméabilité (pleine terre)", f"≥ {requis:.0f} m² ({r.valeur:.0f} % de la contenance)",
+        out.append(ControleReg("Perméabilité (pleine terre)", f"≥ {requis:.0f} m² ({r.valeur:.0f} % de la surface du terrain)",
                                f"{cap.pleine_terre_m2:.0f} m²", REUSSI if ok else ECHOUE,
                                r.citation_complete, f"écart {cap.pleine_terre_m2 - requis:+.0f} m²"))
     else:

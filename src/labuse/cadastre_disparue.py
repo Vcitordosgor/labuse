@@ -44,11 +44,17 @@ def info_disparue(db: Session, idu: str) -> dict | None:
         return None
     dt = row["cadastre_disparue_le"]
     ds = dt.isoformat() if dt else None
-    remp = db.execute(text(
-        "SELECT r.nouvelle_idu AS idu, p.commune, r.taux_couv_ancienne AS recouvrement "
-        "FROM parcel_cadastre_remplacement r JOIN parcels p ON p.idu = r.nouvelle_idu "
-        "WHERE r.ancienne_idu = :i AND p.cadastre_disparue_le IS NULL "
-        "ORDER BY r.taux_couv_ancienne DESC NULLS LAST"), {"i": idu}).mappings().all()
+    # FAISA-REGLES-1 (D-028 / NU-A-003) — la table des remplaçantes est posée HORS ORM (différentiel
+    # SOURCES-MAJ-1) et peut être ABSENTE (base de test / ingestion partielle). On garde son existence
+    # au catalogue AVANT de l'interroger — sinon `UndefinedTable` → 500 sur toute parcelle disparue (fiche
+    # ET Gabarit). Absente → « aucune remplaçante connue », jamais un plantage.
+    remp = []
+    if db.execute(text("SELECT to_regclass('parcel_cadastre_remplacement')")).scalar():
+        remp = db.execute(text(
+            "SELECT r.nouvelle_idu AS idu, p.commune, r.taux_couv_ancienne AS recouvrement "
+            "FROM parcel_cadastre_remplacement r JOIN parcels p ON p.idu = r.nouvelle_idu "
+            "WHERE r.ancienne_idu = :i AND p.cadastre_disparue_le IS NULL "
+            "ORDER BY r.taux_couv_ancienne DESC NULLS LAST"), {"i": idu}).mappings().all()
     return {
         "idu": idu, "commune": row["commune"], "disparue_le": ds,
         "message": (f"Parcelle disparue du cadastre (version du {ds})."

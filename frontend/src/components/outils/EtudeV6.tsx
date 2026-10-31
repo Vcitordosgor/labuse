@@ -265,7 +265,8 @@ export function EtudeV6({ initialIdus, onClose }: {
     const sousSol = active?.stationnement?.mode === 'sous_sol'
     // ETUDE-V6-4 (items 10/11/13) — LA phrase « ce qui limite » vient du serveur (source unique) : l'écran et
     // le PDF disent exactement les mêmes mots. Repli local seulement si le serveur ne l'a pas renseignée.
-    const limitePhrase: string | null = resultat.facteur_limitant ?? facteurs[0]?.facteur ?? active?.limite_capacite ?? null
+    // FAISA-REGLES-1 (D-002) — repli local qui respecte « limitant » : jamais le 1er facteur si rien ne mord.
+    const limitePhrase: string | null = resultat.facteur_limitant ?? facteurs.find((f) => f.limitant)?.facteur ?? active?.limite_capacite ?? null
     // ETUDE-V6-3 (item 8) — bloc fusionné « Votre programme : N demandés · M tiennent · max K » ; UNE réserve.
     const confr = resultat.confrontation
     const kMax = resultat.capacite_maximale?.logements ?? active?.resume.logements ?? null
@@ -1037,7 +1038,7 @@ function StationnementRegle({ regimes, lotissement, commune, zone }: { regimes: 
           </div>
           <p className="mt-1 text-[11px] text-txt">
             Au plus <b>{fmtDec(pf.ratio_plafond)} place / logement</b> pour {pf.categorie}.
-            {' '}Condition « à moins de 500 m d'un transport collectif » : {pf.condition_tcsp_sous_500m
+            {' '}Condition « à moins de 800 m d'un transport collectif » (loi 2025-1129) : {pf.condition_tcsp_sous_500m
               ? <span className="text-mint">vérifiée{pf.distance_tcsp_m != null ? ` (${fmtInt(pf.distance_tcsp_m)} m)` : ''}</span>
               : <span className="text-coral">non remplie</span>}. Éligibilité de catégorie : <b className="text-amber">{pf.eligibilite_categorie}</b>.
           </p>

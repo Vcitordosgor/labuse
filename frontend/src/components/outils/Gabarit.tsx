@@ -267,6 +267,11 @@ export function Gabarit() {
   // dominante. On affiche le CADASTRE ENTIER (= la fiche) puis la portion servie en sous-ligne (cf.
   // GABARIT-AUDIT-1 : « Surface parcelle 7 465 m² » masquait qu'il s'agissait d'un morceau, pas de la parcelle).
   const raccZone = (res?.raccordement?.zone ?? null) as { code?: string; a_cheval?: boolean } | null
+  // FAISA-REGLES-1 (D-025) — la portion servie porte le nom de la zone CONSTRUCTIBLE (où le gabarit est
+  // calculé), jamais la zone DOMINANTE (souvent A/N). Le back la sert dans `multizone.servie_sur` (ex.
+  // « Ub (46.6 %) ») ; on en prend le code court, repli sur raccZone.code si absent.
+  const multizone = (res?.raccordement?.multizone ?? null) as { servie_sur?: string } | null
+  const zoneServieCode = (multizone?.servie_sur?.split(' ')[0]) || raccZone?.code
   // CHASSE-FIX-1 (C06) — zone AU non ouverte : bandeau « potentiel différé » servi par le back.
   const auDiffere = (res?.raccordement?.au_differe ?? null) as { libelle?: string } | null
   const cadastreM2 = parcelle?.surface_m2 ?? null
@@ -333,7 +338,7 @@ export function Gabarit() {
           <div data-gabarit-chiffres className="grid grid-cols-2 gap-x-3 gap-y-2 rounded-lg border border-line-2 bg-surface-2 p-3">
             {aCheval
               ? <Num label="Surface parcelle" value={cadastreM2} unit="m²"
-                  sub={`dont ${fmtInt(res.surfaceParcelleM2)} m² en ${raccZone?.code ?? 'zone U'} (${pctPortion} %)`} />
+                  sub={`dont ${fmtInt(res.surfaceParcelleM2)} m² en ${zoneServieCode ?? 'zone constructible'} (${pctPortion} %)`} />
               : <Num label="Surface parcelle" value={res.surfaceParcelleM2} unit="m²" />}
             {/* RECETTE-OUTILS-3 (S7) — « Zone d'implantation » = valeur APRÈS déduction du bâti existant ;
                 juste en dessous l'emprise retranchée (si bâti conservé). */}

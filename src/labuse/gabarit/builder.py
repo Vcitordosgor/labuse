@@ -56,6 +56,17 @@ def _num(x) -> Optional[float]:
     return float(x) if isinstance(x, (int, float)) else None
 
 
+def _fraction_hauteur_formule(formule: Optional[str]) -> Optional[float]:
+    """FAISA-REGLES-1 (D-024) — lit la FRACTION DE HAUTEUR d'une formule de recul séparatif (« L ≥ h/2 »,
+    « au tiers de la différence d'altitude h : h/3 »…) : rend 0,5 pour h/2, 1/3 pour h/3, None si la
+    formule ne lie pas le recul à la hauteur. On n'INVENTE rien : sans terme h/n, on renvoie None (le
+    plancher sourcé s'applique seul)."""
+    if not formule:
+        return None
+    m = re.search(r"\bh\s*/\s*([234])\b", str(formule).lower())
+    return (1.0 / int(m.group(1))) if m else None
+
+
 def _bdtopo_millesime(session: Session) -> str:
     """Millésime BD TOPO lu depuis data_sources (jamais codé en dur)."""
     row = session.execute(text(
@@ -259,8 +270,29 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                 recul_voie = 0.0   # alignement = recul 0 explicite, sourcé
             if recul_sep is None and getattr(zr, "recul_limites_alignement", False):
                 recul_sep = 0.0
+            # FAISA-REGLES-1 (D-024) — recul séparatif « L ≥ h/2 (min N m) » appliqué EN ENTIER : si la
+            # formule du règlement lie le recul à la hauteur (h/2, h/3…), le recul retenu = max(minimum,
+            # h × fraction), h = FAÎTAGE de la zone (hauteur prudente) — jamais réduit au seul plancher
+            # (NU-D-024 : min 4 m appliqué seul sur-estimait la zone d'implantation de ~15 %). Si la hauteur
+            # n'est pas validée, la formule reste « non intégrée » (on ne devine pas h).
+            recul_sep_formule = None
+            _frac_h = _fraction_hauteur_formule(getattr(zr, "recul_limites_formule", None))
+            if _frac_h is not None and recul_sep is not None:
+                _h_ref = haut if haut is not None else egout
+                if _h_ref is not None:
+                    _rec_h = round(_h_ref * _frac_h, 1)
+                    if _rec_h > recul_sep:
+                        recul_sep_formule = (
+                            f"recul séparatif = max({recul_sep:g} m, h×{_frac_h:.3g} = {_rec_h:g} m) "
+                            f"= {_rec_h:g} m (h = faîtage {_h_ref:g} m)")
+                        recul_sep = _rec_h
+                else:
+                    racc.setdefault("regles_non_integrees", []).append(
+                        "recul séparatif lié à la hauteur (ex. h/2) non chiffrable : hauteur de zone non validée")
             racc["plu"] = {"emprise_pct": emp, "hauteur_faitage_m": haut, "hauteur_egout_m": egout,
                            "recul_voie_m": recul_voie, "recul_sep_m": recul_sep, "source": plu_zone_src.document}
+            if recul_sep_formule:
+                racc["plu"]["recul_sep_formule"] = recul_sep_formule
             silence_total = (not regles_zone(commune, work_zone) and not via_renvoi
                              and emp is None and haut is None and recul_voie is None and recul_sep is None)
             if silence_total:
@@ -644,6 +676,35 @@ def rescale_zone_contenance(db, idu: str, result) -> None:
         if dessin and float(dessin) > 0:
             result.zoneImplantationM2 = round(float(z) * float(s) / float(dessin), 1)
     except Exception:  # noqa: BLE001 — l'échelle contenance n'est jamais un bloqueur
+        pass
+
+
+def appliquer_note_a_cheval(db: Session, idu: str, result) -> None:
+    """FAISA-REGLES-1 (D-025/D-026) — sur parcelle À CHEVAL, pose `pctPortionZone` et `surfaceNote` depuis
+    la SOURCE UNIQUE de zonage (zone_servie.zone_dominante — la même que la fiche §PLU / Comparer) : part
+    constructible + contenance + zone constructible servie. Appelée par l'endpoint outil ET le builder PDF,
+    pour que l'ÉCRAN et le PDF portent la MÊME mise en garde (le gabarit n'est calculé que sur la part
+    constructible). Best-effort : jamais un bloqueur."""
+    try:
+        racc = getattr(result, "raccordement", None) or {}
+        if not (racc.get("zone") or {}).get("a_cheval"):
+            return
+        from ..faisabilite.zone_servie import zone_dominante
+        pid = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+        zs = zone_dominante(db, pid) if pid else None
+        pct = zs.pct_constructible if zs else None
+        if pct is None:
+            return
+        contenance = db.execute(text("SELECT contenance_m2 FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+        result.pctPortionZone = round(pct)
+        uu = [p["zone"] for p in (zs.parts or []) if p.get("fam") in ("U", "AU")]
+        zn = uu[0] if len(uu) == 1 else None
+        if contenance:
+            portion = round(float(contenance) * pct / 100)   # % NON arrondi × contenance
+            result.surfaceNote = (f"Contenance cadastrale {int(contenance)} m² — dont ~{portion} m² "
+                                  + (f"en zone {zn}" if zn else "en zone constructible")
+                                  + " (parcelle à cheval).")
+    except Exception:  # noqa: BLE001 — la note à-cheval n'est jamais un bloqueur
         pass
 
 

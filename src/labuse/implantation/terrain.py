@@ -61,6 +61,10 @@ class Terrain:
     ppr_rouge_m2: float = 0.0
     ppr_bleue_m2: float = 0.0
     pente: Optional[dict] = None                   # dénivelé LiDAR (fait contextuel)
+    # FAISA-REGLES-1 (D-003/E-057) — posé par le moteur : grille réduite (grande assiette) et/ou recherche
+    # bornée par le budget de temps (résultat rendu dans la borne au lieu d'un 503). Dit au client.
+    grille_reduite: bool = False
+    grille_budget_atteint: bool = False
 
     @property
     def ecart_contenance_dessin_m2(self) -> float:

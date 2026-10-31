@@ -101,6 +101,17 @@ def rendu(valeurs, ctx=None) -> str:
     if plan is not None and plan.valeur:
         # le plan 2D est un fragment SVG déjà composé par le moteur (gabarit_svg) — embarqué tel quel.
         corps += f'<div class="plan2d">{plan.valeur}</div>'
+    # FAISA-REGLES-1 (D-026) — parcelle à cheval : le PDF GARDE la mise en garde (contenance, zone
+    # constructible servie, part NON constructible). Sans elle, le document imprimé — celui qui circule —
+    # masquait que l'essentiel du terrain est inconstructible (le gabarit n'est calculé que sur la part
+    # constructible). `surfaceNote` est calculée au back (api/gabarit), identique à l'écran.
+    _note_cheval = getattr(gr, "surfaceNote", None) if gr is not None else None
+    if _note_cheval:
+        _pct_c = getattr(gr, "pctPortionZone", None)
+        _txt = esc(_note_cheval)
+        if isinstance(_pct_c, (int, float)) and _pct_c < 100:
+            _txt += f" Part NON constructible (zone A/N) : ~{round(100 - _pct_c)} % de la parcelle — hors gabarit."
+        corps += verdict(_txt, "warn")
     lignes = [
         # RECETTE-OUTILS-3 (S7) — « Zone d'implantation » = valeur APRÈS déduction du bâti ; juste en
         # dessous, l'emprise de bâti retranchée (ligne omise s'il n'y a rien à déduire).

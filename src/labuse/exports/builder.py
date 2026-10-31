@@ -623,6 +623,9 @@ def construire_gabarit(db, idu: str, *, jour: date | None = None) -> ResultatDoc
     gr = compute_gabarit(build.input)
     if gr.status != "ok":
         raise DocumentNonEtablissable([{"libelle": _GABARIT_INCALCULABLE}])
+    # FAISA-REGLES-1 (D-026) — on attache le raccordement (zone, à-cheval) comme le fait l'endpoint outil,
+    # pour que la mise en garde « parcelle à cheval » soit disponible au PDF (appliquer_note_a_cheval).
+    gr.raccordement = build.raccordement
     # RECETTE-OUTILS-2 (R16) — le bâti EXISTANT n'est peuplé que par l'endpoint outil ; on l'attache
     # ici aussi (best-effort) pour que la vue 3D du PDF montre le MÊME contexte bâti que l'écran.
     try:
@@ -634,8 +637,9 @@ def construire_gabarit(db, idu: str, *, jour: date | None = None) -> ResultatDoc
     # RECETTE-OUTILS-3 (S7/S10) — MÊME déduction/découpe que l'app : la zone d'implantation du PDF (p1
     # schéma, p3 3D) déduit le bâti et le bâti est découpé au contour. Référence géométrique UNIQUE.
     try:
-        from ..gabarit.builder import deduire_bati_de_zone, rescale_zone_contenance
+        from ..gabarit.builder import appliquer_note_a_cheval, deduire_bati_de_zone, rescale_zone_contenance
         rescale_zone_contenance(db, idu, gr)   # U4 — même aire AVANT que l'endpoint (contenance), sinon déduit 46≠40
+        appliquer_note_a_cheval(db, idu, gr)   # FAISA-REGLES-1 (D-026) — même mise en garde à-cheval qu'à l'écran
         deduire_bati_de_zone(gr)
     except Exception:  # noqa: BLE001
         pass
