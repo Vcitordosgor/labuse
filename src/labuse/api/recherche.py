@@ -77,6 +77,33 @@ def ensure_index(engine) -> None:
             c.execute(text(f"CREATE INDEX ix_adresses_suggest_full_trgm ON adresses "
                            f"USING gin (({expr_full}) gin_trgm_ops) "
                            f"WHERE idu IS NOT NULL AND geom IS NOT NULL"))
+        # VITESSE-3 (NU-B-004) — « rue »/« saint » (jetons très fréquents) mettaient 2,6 s : l'index
+        # trigram trouve les ~138 k candidats en 5 ms, mais le Bitmap Heap Scan RÉ-ÉVALUE l'expression
+        # de normalisation (translate/replace/regexp imbriqués) sur CHAQUE ligne au recheck + au tri
+        # (2 242 ms mesurés). On MATÉRIALISE la valeur normalisée en colonne GÉNÉRÉE STORED : sa valeur
+        # est, par construction, EXACTEMENT l'expression → recheck/tri la LISENT (plus de recalcul).
+        # Résultat IDENTIQUE à l'octet (même filtre, même ordre), 2 288 ms → 53 ms mesuré (×43).
+        # ⚠ ALTER … ADD COLUMN GENERATED STORED réécrit la table (~30 s sur 340 k lignes, une fois) :
+        # posé ICI, au heal (AVANT que le worker serve) et SEULEMENT si la colonne manque (existence
+        # vérifiée) — jamais un verrou ACCESS EXCLUSIVE pris sous trafic. Repli sûr : tant que la
+        # colonne n'existe pas, `_sugg_adresse` retombe sur l'expression (lent mais correct).
+        a_colonne = c.execute(text(
+            "SELECT 1 FROM information_schema.columns "
+            "WHERE table_name='adresses' AND column_name='suggest_norm'")).first()
+        if not a_colonne:
+            # Le moteur de heal pose lock_timeout=5s sur chaque connexion (REMISE-1) : trop court
+            # pour ACQUÉRIR l'ACCESS EXCLUSIVE quand les connexions du worker précédent drainent
+            # encore. On tolère 20 s pour CE verrou (SET LOCAL, le temps de la transaction), couplé
+            # au retry du heal : un drain transitoire se résorbe, un vrai writer fait échouer
+            # proprement → repli sur l'expression. (La RÉÉCRITURE elle-même, une fois le verrou pris,
+            # n'est pas bornée par lock_timeout.)
+            c.execute(text("SET LOCAL lock_timeout = '20s'"))
+            c.execute(text(f"ALTER TABLE adresses ADD COLUMN suggest_norm text "
+                           f"GENERATED ALWAYS AS ({expr_full}) STORED"))
+        if _idx_absent(c, "ix_adresses_suggest_norm_trgm"):
+            c.execute(text("CREATE INDEX ix_adresses_suggest_norm_trgm ON adresses "
+                           "USING gin (suggest_norm gin_trgm_ops) "
+                           "WHERE idu IS NOT NULL AND geom IS NOT NULL"))
 
 
 def get_db():   # branché sur la session app au moment de l'inclusion (cf. app.py, patron tiles)
@@ -141,6 +168,23 @@ def _sugg_cadastre(db: Session, q: str, n: int) -> list[dict]:
     return out
 
 
+# VITESSE-3 (NU-B-004) — présence de la colonne `suggest_norm` mémorisée par PROCESS : vérifiée une
+# seule fois (le heal l'a posée AVANT que ce worker serve) ; jamais une requête catalogue par frappe.
+_SUGGEST_NORM_COL: bool | None = None
+
+
+def _colonne_suggest_norm(db: Session) -> bool:
+    global _SUGGEST_NORM_COL
+    if _SUGGEST_NORM_COL is None:
+        try:
+            _SUGGEST_NORM_COL = db.execute(text(
+                "SELECT 1 FROM information_schema.columns "
+                "WHERE table_name='adresses' AND column_name='suggest_norm'")).first() is not None
+        except Exception:  # noqa: BLE001 — au moindre doute, repli sur l'expression (correct, plus lent)
+            return False
+    return _SUGGEST_NORM_COL
+
+
 def _sugg_adresse(db: Session, q: str, n: int) -> list[dict]:
     # PERMIS-CHECK-1 P3 — texte cherché ÉTENDU (numéro+rep+voie+CP+commune) et NORMALISÉ (séparateurs
     # réduits) : une adresse recopiée depuis une fiche (« 1 bis Chemin de la Citerne, 97417 Saint-Denis »)
@@ -153,7 +197,11 @@ def _sugg_adresse(db: Session, q: str, n: int) -> list[dict]:
     # Citerne », et le pick recopiait ce libellé rep-less dans la barre → « 1 bis corrigé en 1 » (constat
     # Vic). La RÉSOLUTION était déjà juste (idu par ligne) ; c'est l'AFFICHAGE qui perdait le rep.
     from ..constants import ADRESSE_SUGGEST_EXPR, plie_suggest, sql_plie_lit_suggest
-    col = sql_plie_lit_suggest(ADRESSE_SUGGEST_EXPR)
+    # VITESSE-3 (NU-B-004) — si la colonne générée STORED `suggest_norm` existe (posée au heal), on
+    # la LIT (recheck/tri sans recalcul de l'expression, ×43) ; sinon repli sur l'expression littérale.
+    # La colonne vaut, par construction (GENERATED ALWAYS AS <expr>), EXACTEMENT l'expression → le
+    # filtre et l'ordre sont les MÊMES, la réponse est identique à l'octet.
+    col = "suggest_norm" if _colonne_suggest_norm(db) else sql_plie_lit_suggest(ADRESSE_SUGGEST_EXPR)
     # RECHERCHE-2 Lot 3 (a) — MATCH PAR JETONS EN ET. Avant, un `col LIKE '%saisie%'` en sous-chaîne
     # CONTIGUË ratait « n° + voie + commune » SANS code postal : la colonne stocke numéro+rep+voie+CP+
     # commune, donc « 27 chemin vidot saint denis » n'est PAS un sous-texte de « 27 chemin vidot 97490
@@ -180,12 +228,18 @@ def _sugg_adresse(db: Session, q: str, n: int) -> list[dict]:
     params = {f"t{i}": t for i, t in enumerate(filtre)}
     params["qp"] = plied
     params["lim"] = n
+    # VITESSE-3 (NU-B-004) — `idu` en ULTIME départage : l'ordre devient TOTAL. Avant, des lignes aux
+    # clés de tri IDENTIQUES (p. ex. plusieurs « 2 Chemin Go » n° 2, ou « 1 Rue Moka » dans deux
+    # communes) sortaient dans un ordre ARBITRAIRE dépendant du plan (bitmap heap scan, parallélisme,
+    # tri non stable) — non garanti et instable d'un plan à l'autre. Avec `idu`, le chemin colonne et
+    # le chemin expression donnent EXACTEMENT la même réponse (octet pour octet, prouvé), et
+    # l'autocomplétion est stable d'un appel à l'autre.
     if num_tete is not None:
         params["num"] = num_tete
         ordre = (f"({col} LIKE :qp || '%') DESC, ({num_expr} = :num) DESC, "
-                 f"abs({num_expr} - :num) NULLS LAST, length(voie), voie, {num_expr}")
+                 f"abs({num_expr} - :num) NULLS LAST, length(voie), voie, {num_expr}, idu")
     else:
-        ordre = f"({col} LIKE :qp || '%') DESC, length(voie), voie, {num_expr} NULLS LAST, numero"
+        ordre = f"({col} LIKE :qp || '%') DESC, length(voie), voie, {num_expr} NULLS LAST, numero, idu"
     rows = db.execute(text(
         f"""SELECT trim(concat_ws(' ', nullif(numero,''), nullif(rep,''), voie)) AS label,
                    commune, code_postal, idu, {num_expr} AS numero_num,

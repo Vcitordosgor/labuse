@@ -228,6 +228,9 @@ function PilotageSection({ data, go, majAt }: { data: AdminPilotage | undefined;
   }
   if (!data) return <div className="py-10 text-center"><Chargement variant="bloc" /></div>
   const st = data.stripe
+  // VITESSE-3 (NU-F-005) — tant que la lecture Stripe de fond n'a pas abouti (`en_cours`, bref au boot),
+  // les chiffres ne sont pas encore connus : on affiche « — », jamais un « 0 € » trompeur.
+  const stPret = st.configure && !st.en_cours
   const caCourant = Object.entries(st.ca_mois ?? {}).at(-1)?.[1] ?? 0
 
   // ── les cinq chiffres des tuiles, chacun LU de la fonction serveur de sa page (jamais recompté ici) ──
@@ -254,7 +257,7 @@ function PilotageSection({ data, go, majAt }: { data: AdminPilotage | undefined;
 
   // ── cinq tuiles pleines et opaques, dans l'ordre de la maquette (P1) ──
   const tuiles: { cle: string; valeur: React.ReactNode; unite?: string; label: string; sous?: string; tone: TuileTone; cible: AdminSection }[] = [
-    { cle: 'ca', valeur: st.configure ? fmtEur(caCourant) : '—', unite: st.configure ? '€' : undefined,
+    { cle: 'ca', valeur: stPret ? fmtEur(caCourant) : '—', unite: stPret ? '€' : undefined,
       label: "Chiffre d'affaires du mois", tone: 'ok', cible: 'licences' },
     { cle: 'licences', valeur: licencesActives, label: `Licence${licencesActives > 1 ? 's' : ''} active${licencesActives > 1 ? 's' : ''}`, tone: 'ok', cible: 'licences' },
     { cle: 'ia', valeur: fmtEur(iaMois, 2), unite: '€', label: 'Coût IA du mois', tone: 'ia', cible: 'ia' },

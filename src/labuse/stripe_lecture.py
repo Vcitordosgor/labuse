@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import logging
 import os
+import threading
 import time
 from datetime import datetime, timezone
 
@@ -28,6 +29,10 @@ log = logging.getLogger("labuse.stripe_lecture")
 
 CACHE_TTL_S = 300  # 5 min (mandat)
 _CACHE: dict = {"ts": 0.0, "data": None}
+# VITESSE-3 (NU-F-005) — un seul rafraîchissement Stripe en vol à la fois (les appels réseau
+# synchrones duraient 88 s en prod ET tenaient le thread de requête du Pilotage). Le verrou évite
+# que N requêtes concurrentes lancent N fetches ; `apercu_affichage` ne l'ATTEND jamais.
+_REFRESH_LOCK = threading.Lock()
 
 
 def cle_restreinte() -> str | None:
@@ -127,7 +132,11 @@ def _rapprocher(data: dict) -> dict:
 
 
 def apercu(force: bool = False) -> dict:
-    """Vue Stripe complète du dashboard, cachée 5 min. TOUJOURS un dict propre, jamais une levée."""
+    """Vue Stripe complète du dashboard, cachée 5 min. TOUJOURS un dict propre, jamais une levée.
+
+    BLOQUANT par construction (fait les appels réseau Stripe) — réservé au RAFRAÎCHISSEMENT
+    (tâche de fond / CLI / `force`). Le chemin de la page passe par `apercu_affichage`
+    (VITESSE-3 NU-F-005 : jamais 88 s dans le thread de requête)."""
     cle = cle_restreinte()
     if not cle:
         return _non_configure()
@@ -143,6 +152,42 @@ def apercu(force: bool = False) -> dict:
         data = {"configure": True, "erreur": f"Lecture Stripe indisponible ({type(exc).__name__})."}
     _CACHE.update(ts=now, data=data)
     return data
+
+
+def _refraichir_en_fond() -> None:
+    """VITESSE-3 (NU-F-005) — rafraîchit le cache Stripe HORS du thread de requête. Un seul fetch
+    en vol (verrou non bloquant) : si un rafraîchissement tourne déjà, on ne relance rien."""
+    if not _REFRESH_LOCK.acquire(blocking=False):
+        return
+    try:
+        apercu(force=True)   # fait les appels réseau, remplit `_CACHE`
+    except Exception as exc:  # noqa: BLE001 — le fond ne lève jamais vers l'appelant
+        log.warning("rafraîchissement Stripe de fond impossible : %s", exc)
+    finally:
+        _REFRESH_LOCK.release()
+
+
+def apercu_affichage() -> dict:
+    """VITESSE-3 (NU-F-005) — vue Stripe pour LA PAGE : ne fait JAMAIS d'appel réseau dans le thread
+    de requête. Sert le dernier cache tel quel (daté par `maj`, affiché avec son heure) et déclenche
+    un rafraîchissement EN TÂCHE DE FOND quand il est périmé. Cache jamais encore rempli → marqueur
+    `en_cours` (le Pilotage s'affiche tout de suite, la carte Stripe dit « lecture en cours »).
+
+    Identité (mandat) : cache à jour → ce retour est `_CACHE["data"]`, octet pour octet ce que
+    `apercu()` renvoie ; seul le MOMENT du fetch (fond, hors requête) change."""
+    cle = cle_restreinte()
+    if not cle:
+        return _non_configure()
+    now = time.time()
+    data = _CACHE["data"]
+    frais = data is not None and now - _CACHE["ts"] < CACHE_TTL_S
+    if not frais:
+        # périmé OU jamais rempli : on rafraîchit SANS attendre (thread démon, best-effort).
+        threading.Thread(target=_refraichir_en_fond, name="stripe-refresh", daemon=True).start()
+    if data is not None:
+        return data   # dernier état connu, daté (`maj`) — jamais un blocage
+    return {"configure": True, "en_cours": True,
+            "raison": "Lecture Stripe en cours — les chiffres s'afficheront au prochain rafraîchissement."}
 
 
 def vider_cache() -> None:

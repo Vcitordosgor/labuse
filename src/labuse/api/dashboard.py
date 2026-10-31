@@ -272,8 +272,10 @@ def admin_stripe(request: Request, force: bool = False) -> dict:
     RESTREINTE lecture, cache 5 min, mode « non configuré » propre. Admin seulement (403 client)."""
     from .auth import exiger_admin
     exiger_admin(request)
-    from ..stripe_lecture import apercu
-    return apercu(force=force)
+    # VITESSE-3 (NU-F-005) — défaut NON bloquant (dernier cache daté + rafraîchissement de fond) ;
+    # `force=true` = geste admin explicite « rafraîchir maintenant » (bloque le temps du fetch).
+    from ..stripe_lecture import apercu, apercu_affichage
+    return apercu(force=True) if force else apercu_affichage()
 
 
 # ───────────────────────── D3 — PILOTAGE ─────────────────────────
@@ -394,8 +396,9 @@ def admin_pilotage(request: Request) -> dict:
     from .auth import exiger_admin
     exiger_admin(request)
     from ..db import engine
-    from ..stripe_lecture import apercu
-    stripe = apercu()
+    # VITESSE-3 (NU-F-005) — Stripe hors du thread de requête (voir apercu_affichage).
+    from ..stripe_lecture import apercu_affichage
+    stripe = apercu_affichage()
 
     # CIRCUIT-2 lot 1.6 — compteurs calculés par le moteur nommé `plateforme_compteurs`
     # (ids registre n_comptes_actifs, ia_cout_eur) : ce robinet ne calcule plus, il appelle.
@@ -665,8 +668,9 @@ def admin_licences(request: Request) -> dict:
     from .. import config
     from ..brevo import etat_configuration
     from ..db import engine
-    from ..stripe_lecture import apercu
-    stripe = apercu()
+    # VITESSE-3 (NU-F-005) — Stripe hors du thread de requête (voir apercu_affichage).
+    from ..stripe_lecture import apercu_affichage
+    stripe = apercu_affichage()
     abos_par_cust = {a["customer_id"]: a for a in (stripe.get("abonnements") or [])}
     defaut_quota = int(config.get_settings().copilote_questions_jour_defaut)
     with engine().begin() as c:
