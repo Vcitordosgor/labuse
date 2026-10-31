@@ -1,4 +1,4 @@
-"""COHERENCE-HOOK-1 — socle de la suite de cohérence (tests/coherence/).
+"""COHERENCE-HOOK-1 — socle de la suite de cohérence (tests/coherence_ecrans/).
 
 La suite interroge la base APPLICATIVE réelle (le run SERVI, le scoring, DVF, PLU…), pas la base de
 test vierge. On lit donc `LABUSE_APP_DATABASE_URL` (posée par le conftest racine = la base d'origine),

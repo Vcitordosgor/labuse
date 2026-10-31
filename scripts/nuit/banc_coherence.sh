@@ -19,7 +19,7 @@ set -uo pipefail
 FORCE=0; [ "${1:-}" = "--force" ] && { FORCE=1; shift; }
 REPO="${1:-${LABUSE_REPO:-}}"
 if [ -z "$REPO" ]; then REPO="$(git rev-parse --show-toplevel 2>/dev/null || true)"; fi
-if [ -z "$REPO" ] || [ ! -d "$REPO/tests/coherence" ]; then
+if [ -z "$REPO" ] || [ ! -d "$REPO/tests/coherence_ecrans" ]; then
   echo "✗ dépôt LA BUSE introuvable (REPO='$REPO') — passer le chemin en argument ou poser LABUSE_REPO." >&2
   exit 2
 fi

@@ -26,7 +26,7 @@ from __future__ import annotations
 import pytest
 from sqlalchemy import text
 
-from tests.coherence.conftest import TEMOINS
+from tests.coherence_ecrans.conftest import TEMOINS
 
 pytestmark = [pytest.mark.coherence, pytest.mark.reel]
 

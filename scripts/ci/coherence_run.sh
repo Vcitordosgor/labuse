@@ -3,7 +3,7 @@
 # COHERENCE-HOOK-1 — lance la SUITE DE COHÉRENCE sur la base locale, ou le dit EN ROUGE.
 # -----------------------------------------------------------------------------
 # Point d'entrée UNIQUE partagé par le hook pre-push ET le banc de nuit : sonde la base applicative
-# réelle (le run servi) ; si elle répond → joue `pytest -m coherence tests/coherence/` avec
+# réelle (le run servi) ; si elle répond → joue `pytest -m coherence tests/coherence_ecrans/` avec
 # LABUSE_COHERENCE_REQUIRE_DB=1 (un skip silencieux devient alors un ÉCHEC) ; si elle ne répond pas →
 # écrit un message ROUGE explicite (jamais un silence).
 #
@@ -54,7 +54,7 @@ case "$probe" in
   OK:*)
     printf '%s✓ base locale OK (run résiduel servi = %s) — suite de cohérence lancée…%s\n' \
            "$GRN" "${probe#OK:}" "$NC"
-    LABUSE_COHERENCE_REQUIRE_DB=1 PYTHONPATH=src "$PY" -m pytest tests/coherence/ -m coherence \
+    LABUSE_COHERENCE_REQUIRE_DB=1 PYTHONPATH=src "$PY" -m pytest tests/coherence_ecrans/ -m coherence \
       -q -p no:cacheprovider -o addopts=""
     rc=$?
     if [ "$rc" -eq 0 ]; then printf '%s✓ cohérence : aucun écart (1 €/1 m²) sur les témoins.%s\n' "$GRN" "$NC"; exit 0
