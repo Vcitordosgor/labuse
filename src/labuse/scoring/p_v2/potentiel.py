@@ -4,9 +4,11 @@ PAS affiché — l'affichage est PALIERS-1).
 Par parcelle du run candidat (colonnes de `parcel_p_score_v2`, run-scopées) :
   - `potentiel_sdp_m2`     : SDP résiduelle lue EN ENTIER (doctrine K3 :
     0 = réponse du moteur, NULL = hors_plu seul réellement inconnaissable) ;
-  - `prix_secteur_eur_m2`  : médiane €/m² bâti de la COMMUNE, année Y-1 du run
-    (DVF L2-F, `p_model_ext_mut_l2` — la même source que le modèle) ;
-  - `valeur_creee_eur`     : SDP résiduelle × prix de secteur ; l'intervalle
+  - `prix_commune_eur_m2`  : médiane €/m² bâti de la COMMUNE, année Y-1 du run
+    (DVF L2-F, `p_model_ext_mut_l2` — la même source que le modèle). MARCHE-UNIQUE-1
+    (NU-E-014) : renommé de `prix_secteur_eur_m2` — le GROUP BY est `left(idu,5)`, soit
+    la COMMUNE, jamais le secteur cadastral : le nom dit enfin le grain réel ;
+  - `valeur_creee_eur`     : SDP résiduelle × prix commune ; l'intervalle
     honnête `valeur_creee_min/max_eur` = SDP × [q1, q3] communal ;
   - `indice_opportunite`   : probabilité 12 mois × valeur créée, NORMALISÉ PAR
     COMMUNE (percentile 0-100 intra-commune) — un produit de deux colonnes
@@ -33,9 +35,9 @@ from sqlalchemy.orm import Session
 DEFINITIONS = {
     "potentiel_sdp_m2": "SDP résiduelle (parcel_residuel M125, lue en entier : "
                         "0 = réponse du moteur, NULL = hors_plu)",
-    "prix_secteur_eur_m2": "médiane €/m² bâti de la commune, année Y-1 du run "
+    "prix_commune_eur_m2": "médiane €/m² bâti de la commune, année Y-1 du run "
                            "(DVF L2-F, p_model_ext_mut_l2, hors exclusions L2F)",
-    "valeur_creee_eur": "SDP résiduelle × prix de secteur (médiane communale)",
+    "valeur_creee_eur": "SDP résiduelle × prix commune (médiane communale)",
     "valeur_creee_min_eur": "SDP résiduelle × 1er quartile communal (borne basse honnête)",
     "valeur_creee_max_eur": "SDP résiduelle × 3e quartile communal (borne haute honnête)",
     "indice_opportunite": "percentile intra-commune (0-100) de p_raw × valeur_creee_eur "
@@ -48,7 +50,7 @@ DEFINITIONS = {
 
 COLONNES_SQL = """
     ALTER TABLE parcel_p_score_v2 ADD COLUMN IF NOT EXISTS potentiel_sdp_m2 integer;
-    ALTER TABLE parcel_p_score_v2 ADD COLUMN IF NOT EXISTS prix_secteur_eur_m2 real;
+    ALTER TABLE parcel_p_score_v2 ADD COLUMN IF NOT EXISTS prix_commune_eur_m2 real;
     ALTER TABLE parcel_p_score_v2 ADD COLUMN IF NOT EXISTS valeur_creee_eur double precision;
     ALTER TABLE parcel_p_score_v2 ADD COLUMN IF NOT EXISTS valeur_creee_min_eur double precision;
     ALTER TABLE parcel_p_score_v2 ADD COLUMN IF NOT EXISTS valeur_creee_max_eur double precision;
@@ -81,6 +83,16 @@ def backfill_run(session: Session, run_id: str) -> dict:
     """Calcule et stocke le potentiel pour UN run (run-scopé, idempotent).
     Ne touche ni p_raw, ni rang, ni tier — colonnes annexes cloisonnées du
     score, comme l'ICD."""
+    # MARCHE-UNIQUE-1 (NU-E-014) — migration de nom AVANT la garantie de colonne : le grain est
+    # communal (left(idu,5)), pas sectoriel. On renomme l'ancienne colonne (données préservées) ssi
+    # elle existe encore et la nouvelle pas encore ; idempotent (ne refait rien une fois renommé).
+    _cols = session.execute(text(
+        "SELECT column_name FROM information_schema.columns "
+        "WHERE table_name = 'parcel_p_score_v2' "
+        "AND column_name IN ('prix_secteur_eur_m2', 'prix_commune_eur_m2')")).scalars().all()
+    if "prix_secteur_eur_m2" in _cols and "prix_commune_eur_m2" not in _cols:
+        session.execute(text(
+            "ALTER TABLE parcel_p_score_v2 RENAME COLUMN prix_secteur_eur_m2 TO prix_commune_eur_m2"))
     for stmt in COLONNES_SQL.strip().split(";"):
         if stmt.strip():
             session.execute(text(stmt))
@@ -91,9 +103,9 @@ def backfill_run(session: Session, run_id: str) -> dict:
     if annee is None:
         raise RuntimeError(f"run inconnu au registre : {run_id!r}")
 
-    # 1 — prix de secteur communal, année Y-1 du run (as-of : jamais l'année courante)
+    # 1 — prix de la COMMUNE, année Y-1 du run (as-of : jamais l'année courante ; grain left(idu,5))
     session.execute(text("""
-        CREATE TEMP TABLE _prix_secteur ON COMMIT DROP AS
+        CREATE TEMP TABLE _prix_commune ON COMMIT DROP AS
         SELECT left(m.idu, 5) AS commune,
                percentile_cont(0.25) WITHIN GROUP (ORDER BY m.pm2_bati) AS q1,
                percentile_cont(0.50) WITHIN GROUP (ORDER BY m.pm2_bati) AS med,
@@ -108,7 +120,7 @@ def backfill_run(session: Session, run_id: str) -> dict:
     n = session.execute(text("""
         UPDATE parcel_p_score_v2 s
         SET potentiel_sdp_m2 = r.sdp_residuelle_m2,
-            prix_secteur_eur_m2 = px.med,
+            prix_commune_eur_m2 = px.med,
             valeur_creee_eur     = CASE WHEN r.sdp_residuelle_m2 IS NULL OR px.med IS NULL
                                         THEN NULL ELSE r.sdp_residuelle_m2 * px.med END,
             valeur_creee_min_eur = CASE WHEN r.sdp_residuelle_m2 IS NULL OR px.q1 IS NULL
@@ -123,7 +135,7 @@ def backfill_run(session: Session, run_id: str) -> dict:
                                        AND a.ban_voie IS NOT NULL)
         FROM parcels p
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
-        LEFT JOIN _prix_secteur px ON px.commune = left(p.idu, 5)
+        LEFT JOIN _prix_commune px ON px.commune = left(p.idu, 5)
         WHERE s.run_id = :r AND s.parcelle_id = p.idu"""), {"r": run_id}).rowcount
 
     # 3 — indice d'opportunité : percentile intra-commune de p_raw × valeur créée
@@ -145,7 +157,7 @@ def backfill_run(session: Session, run_id: str) -> dict:
         UPDATE p_score_v2_runs
         SET params = params || jsonb_build_object('potentiel',
             jsonb_build_object('definitions', CAST(:d AS jsonb),
-                               'annee_prix_secteur', :a1,
+                               'annee_prix_commune', :a1,
                                'n_lignes', :n))
         WHERE run_id = :r"""), {
         "d": json.dumps(DEFINITIONS, ensure_ascii=False),

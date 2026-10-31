@@ -229,7 +229,12 @@ def _ventes_bati_dedup(db: Session, parcel_id: int) -> tuple[list[dict], int]:
         "  round(ST_Distance(d.geom::geography, p.centroid::geography)) AS dist "
         "FROM dvf_mutations d, parcels p "
         "WHERE p.id = :pid AND d.commune = p.commune AND d.surface_reelle_bati >= 20 "
-        "  AND d.valeur_fonciere > 20000 AND d.nature_mutation ILIKE '%vente%' "
+        # MARCHE-UNIQUE-1 (NU-E-035) — on ne retient que la vente de gré à gré et la VEFA (gardée pour
+        # la ventilation neuf/ancien de `_comparables`). Avant, `ILIKE '%vente%'` laissait aussi entrer
+        # « Vente terrain à bâtir » portant du bâti (31 mutations) ; adjudication / échange /
+        # expropriation étaient déjà hors (pas de « vente » dans le libellé) mais on les nomme ici.
+        "  AND d.valeur_fonciere > 20000 "
+        "  AND d.nature_mutation IN ('Vente', 'Vente en l''état futur d''achèvement') "
         "  AND d.type_local ILIKE ANY(ARRAY['%APPARTEMENT%','%MAISON%'])"),
         {"pid": parcel_id}).mappings().all()
     seen: dict = {}
@@ -279,6 +284,11 @@ def sector_price(db: Session, parcel_id: int, hyp: Hypotheses) -> dict:
         chosen = ("mixte (appart+maison)", kept, ecartees, 1500.0, True, sub, "élargie")
 
     label, kept, ecartees, radius, commune, sub, periode_seg = chosen
+    # MARCHE-UNIQUE-1 (NU-A-012 / NU-E-030) — la médiane SERVIE (lue comme « Prix ancien médian » par
+    # `phrase_prix_ancien`) ne mêle JAMAIS la VEFA (neuf). On retient l'ANCIEN pour toutes les
+    # statistiques de tête ; `_comparables` garde l'échantillon COMPLET pour ventiler neuf vs ancien.
+    kept_all = kept
+    kept = [s for s in kept if not s.get("vefa")]
     nex = len(ecartees)
     niveau, raisons = _fiabilite(kept, label, commune, min_n)
     # Distribution AVANT / APRÈS l'exclusion des 5 % extrêmes (transparence de la méthode T1).
@@ -306,7 +316,7 @@ def sector_price(db: Session, parcel_id: int, hyp: Hypotheses) -> dict:
             # (retenues ET écartées), jamais une disparition muette.
             "prix_points_ecartes": sorted(round(float(e["prix"])) for e in ecartees)[:120],
             **_marche_dynamique(kept, q1, med, q3, min_n),
-            "comparables": _comparables(kept, min_n, niveau)}
+            "comparables": _comparables(kept_all, min_n, niveau)}
 
 
 def reference_locale(db: Session, idu: str | None, type_bien: str | None,
@@ -338,6 +348,11 @@ def reference_locale(db: Session, idu: str | None, type_bien: str | None,
     if chosen is None:
         return None
     _label, kept, _ecartees, radius, _commune, sub, _periode = chosen
+    # MARCHE-UNIQUE-1 (NU-A-012 / NU-E-030) — référence ANCIEN de secteur : la VEFA (neuf) sort de la
+    # médiane servie (le neuf a son point unique, `mediane_neuf_commune`). None si plus rien sous le seuil.
+    kept = [s for s in kept if not s.get("vefa")]
+    if len(kept) < n_min:
+        return None
     prices = [s["prix"] for s in kept]
     annees = [s["annee"] for s in kept]
     # CHASSE-DONNEES-FIX-1 (suite 2, E-73) — la médiane locale porte la PÉRIODE réelle (min–max),

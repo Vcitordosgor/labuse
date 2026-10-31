@@ -60,10 +60,15 @@ def mediane_bati(session: Session, *, geom_geojson: dict | None = None, commune:
               SELECT (dm.valeur_fonciere / NULLIF(dm.surface_reelle_bati, 0)) AS ratio,
                      dm.date_mutation AS d
               FROM dvf_mutations dm
-              WHERE dm.geom IS NOT NULL AND dm.nature_mutation ILIKE 'vente%%'
+              WHERE dm.geom IS NOT NULL AND dm.nature_mutation = 'Vente'
                 AND dm.valeur_fonciere > 0 AND coalesce(dm.surface_reelle_bati, 0) >= 20
                 {tcond}
-                AND dm.date_mutation >= (now() - make_interval(months => :fen))
+                -- MARCHE-UNIQUE-1 (NU-A-012 / NU-E-033) — ancien de gré à gré SEUL (plus de VEFA via
+                -- ILIKE), et fenêtre ANCRÉE sur la dernière vente DVF (jamais now() qui, l'horloge
+                -- avançant, jetait le vieux bord d'un millésime figé).
+                AND dm.date_mutation >= ((SELECT max(date_mutation) FROM dvf_mutations
+                                          WHERE date_mutation = date_trunc('day', date_mutation))
+                                         - make_interval(months => :fen))
                 AND {clause})
            SELECT count(*) FILTER (WHERE ratio BETWEEN {lo} AND {hi}) AS n,
                   round(percentile_cont(0.5) WITHIN GROUP (ORDER BY ratio)

@@ -513,7 +513,7 @@ export function ContextePanel() {
               <GroupeLabel>Le marché</GroupeLabel>
 
               <LigneCarte id="marche" chiffre="prix_ancien_median_eur_m2" ic="↗" titre="Prix"
-                sous={`ancien ${fmt(d.comparable?.ancien_median_eur_m2)} · neuf ${fmt(d.comparable?.neuf_eur_m2)} €/m²`}
+                sous={`ancien ${fmt(d.comparable?.ancien_median_eur_m2)} · neuf (VEFA) ${fmt(d.comparable?.neuf_eur_m2)} €/m²`}
                 val={tendPct != null ? `${Number(tendPct) > 0 ? '+' : ''}${fmtDec(tendPct)} %` : null}
                 ton={tendPct != null && Number(tendPct) < 0 ? 'rouge' : 'vert'}>
                 <div className="flex flex-col gap-0.5 text-[12px]">
