@@ -126,7 +126,10 @@ def resume_parcelle(db: Session, idu: str) -> dict | None:
         v = valeurs.get(cid)
         rendu = _fmt(v.valeur, kind) if v is not None else None
         if rendu is not None:
-            tuiles.append({"id": cid, "libelle": lib, "valeur": rendu})
+            # URGENCE-1 (NU-F-026) — on NE sérialise PLUS l'id de registre (`surface_parcelle_m2`,
+            # `pente_deg`…) vers le client : il n'est lu ni par le front ni par `phrase()`, seul
+            # libellé/valeur le sont. Surface client réduite au strict affichage.
+            tuiles.append({"libelle": lib, "valeur": rendu})
     from ..registre.declarations import sections_fiche
     sections = []
     for s in sections_fiche():
@@ -135,7 +138,8 @@ def resume_parcelle(db: Session, idu: str) -> dict | None:
             continue
         vd = _verdict_section(sid, valeurs)
         if vd is not None:
-            sections.append({"id": sid, "titre": s["titre"], "verdict": vd[0], "ton": vd[1]})
+            # URGENCE-1 (NU-F-026) — id de section (registre) non sérialisé vers le client (non lu).
+            sections.append({"titre": s["titre"], "verdict": vd[0], "ton": vd[1]})
     # FIX-PRIX-ET-OPPORTUNITES (lot 1) — commune OFFICIELLE dérivée de l'INSEE de l'IDU (jamais le
     # `parcels.commune` texte qui nommait « Saint-Denis » une parcelle de L'Étang-Salé).
     from ..communes import nom_officiel

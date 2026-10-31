@@ -1087,15 +1087,85 @@ _DEPOT_REPLI = ("Enregistrez la page de l'annonce en « page web complète » (C
                 "puis collez ici le HTML.")
 
 
+def _domaines_autorises() -> set[str]:
+    """URGENCE-1 (NU-F-007) — LISTE BLANCHE des domaines fetchables : les portails connus de
+    `portails.py` qui portent un préfixe d'URL (leboncoin.fr, seloger.com, pap.fr, logic-immo.com,
+    bienici.com). Les slugs « agence »/« autre » (préfixe None) ne sont PAS fetchables : un site
+    d'agence se dépose par copier-coller du HTML (repli Cmd+S), jamais par une requête serveur."""
+    from urllib.parse import urlparse
+    from .portails import PORTAILS
+    out: set[str] = set()
+    for meta in PORTAILS.values():
+        pref = meta.get("prefixe_url")
+        if not pref:
+            continue
+        h = (urlparse(pref).hostname or "").lower()
+        if h.startswith("www."):
+            h = h[4:]
+        if h:
+            out.add(h)
+    return out
+
+
+def _hote_autorise(host: str) -> bool:
+    """L'hôte est-il un portail de la liste blanche (domaine exact ou sous-domaine) ?"""
+    host = (host or "").lower().rstrip(".")
+    return any(host == d or host.endswith("." + d) for d in _domaines_autorises())
+
+
+def _resout_public(host: str) -> bool:
+    """L'hôte résout-il UNIQUEMENT vers des adresses publiques ? False si résolution impossible OU si
+    une adresse privée/loopback/lien-local/réservée/multicast apparaît (anti-SSRF : jamais 169.254.x,
+    127.0.0.1, 10/8, 192.168/16, ::1, fd00::/8, etc.)."""
+    import ipaddress
+    import socket
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except socket.gaierror:
+        return False
+    for info in infos:
+        try:
+            ip = ipaddress.ip_address(info[4][0])
+        except ValueError:
+            return False
+        if (ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved
+                or ip.is_multicast or ip.is_unspecified):
+            return False
+    return True
+
+
+def _valider_cible(url: str) -> None:
+    """Valide une URL AVANT toute requête (SSRF fermé) : schéma http(s), hôte d'une liste blanche de
+    portails, et aucune résolution vers une adresse interne/privée. Lève RuntimeError sinon."""
+    from urllib.parse import urlparse
+    p = urlparse(url)
+    if p.scheme not in ("http", "https"):
+        raise RuntimeError("schéma d'URL non autorisé")
+    host = (p.hostname or "").lower()
+    if not _hote_autorise(host):
+        raise RuntimeError("hôte non autorisé (hors portails connus)")
+    if not _resout_public(host):
+        raise RuntimeError("l'adresse pointe sur un hôte interne/privé")
+
+
 def _fetch_page_oneshot(url: str) -> str:
     """Lecture ONE-SHOT d'une URL d'annonce : une seule requête, headers navigateur, timeout court,
-    AUCUN retry. Lève RuntimeError (message court) si le portail refuse — l'appelant en fait un motif
-    honnête. Ne suit qu'un nombre borné de redirections (requests par défaut)."""
+    AUCUN retry, AUCUNE boucle. Lève RuntimeError (message court) si le portail refuse — l'appelant en
+    fait un motif honnête.
+
+    URGENCE-1 (NU-F-007, SSRF) — l'hôte est VALIDÉ contre une liste blanche de portails ET interdit de
+    résoudre vers une adresse privée/interne AVANT la requête ; les redirections ne sont PAS suivies
+    (`allow_redirects=False`) — un 3xx renvoie le message « bloqué » plutôt que d'échapper à la liste
+    blanche ou de pointer vers un hôte interne."""
     import requests
+    cible = (url or "").strip()
+    _valider_cible(cible)
     try:
-        r = requests.get(url, headers=_BROWSER_HEADERS, timeout=8, allow_redirects=True)
+        r = requests.get(cible, headers=_BROWSER_HEADERS, timeout=8, allow_redirects=False)
     except requests.RequestException as exc:  # DNS, timeout, connexion refusée…
         raise RuntimeError(f"le portail n'a pas répondu ({type(exc).__name__})") from exc
+    if 300 <= r.status_code < 400:
+        raise RuntimeError(f"le portail redirige la lecture automatique (HTTP {r.status_code})")
     corps = r.text or ""
     if r.status_code in (401, 403, 429) or "datadome" in corps[:8000].lower():
         raise RuntimeError(f"le portail bloque la lecture automatique (HTTP {r.status_code})")
@@ -1373,13 +1443,11 @@ def radar_annonce_analyser(body: AnnonceAnalyseIn) -> dict:
     ANNONCE-2 — on lit D'ABORD ce que LABUSE a DÉJÀ relevé : le Radar capture chaque soir les annonces de
     toute l'île. On extrait l'identifiant (list_id) de l'URL et, si le bien est connu du Radar, le rapport
     est servi depuis les tables existantes SANS aucun appel à Leboncoin (date de relevé = capture Radar).
-    REPLI (bien absent du Radar) — lecture serveur ONE-SHOT (ANNONCE-1 inchangé : une requête, headers
-    navigateur, timeout court, aucun retry), puis parseur PAGE D'ANNONCE (`extraire_page_annonce`). On rend
-    les champs PRÉSENTS (jamais devinés) et l'écart au REPÈRE COMMUNE du bon type — sans rattacher à une
-    parcelle (idu=None), fiabilité « limitée » assumée. Bien absent ET portail bloqué → message HONNÊTE
-    (`url_bloquee`, phrase imposée côté front), aucun code HTTP à l'écran."""
-    from ..tz import today_reunion   # FIX ANNONCE-1-TESTS — jour relevé au fuseau Réunion (ORF-17), pas date.today() naïf
-    from . import html_next
+    URGENCE-1 (NU-F-004, SSRF) — PLUS DE REPLI fetch one-shot : un bien ABSENT du Radar renvoie le
+    MESSAGE EXISTANT (`url_bloquee`, phrase imposée côté front) SANS AUCUNE REQUÊTE SORTANTE. La seule
+    donnée d'annonce servie provient du Radar (relevé par l'extension) ; le serveur ne va jamais chercher
+    un lien fourni par le client (fermeture de l'oracle de ports internes). Entrer l'adresse reste la voie
+    pour un bien non relevé."""
     url = (body.url or "").strip()
     if not _URL_RE.match(url) or "leboncoin." not in url.lower():
         return {"ok": False, "erreur": "url_invalide",
@@ -1392,48 +1460,9 @@ def radar_annonce_analyser(body: AnnonceAnalyseIn) -> dict:
             if radar is not None:
                 rep = rapport_lien(db, radar["annonce"])
                 return {"ok": True, **rep, "marche": radar.get("marche")}
-    # 2 — REPLI : bien absent du Radar → fetch one-shot (comportement ANNONCE-1 inchangé).
-    try:
-        page = _fetch_page_oneshot(url)
-    except RuntimeError as exc:
-        # bien ABSENT du Radar ET portail bloqué → le DÉTAIL technique (code HTTP, DataDome…) part en LOG ;
-        # l'écran ne verra qu'une phrase propre, sans code ni jargon (choisie côté front sur `erreur`).
-        log.warning("radar/annonce/analyser — portail bloque %s : %s", url, exc)
-        return {"ok": False, "erreur": "url_bloquee"}
-    try:
-        res = html_next.extraire_page_annonce(page)
-    except html_next.NextDataError:
-        res = None
-    if not res or not res.get("rec") or not res["rec"].get("list_id"):
-        log.info("radar/annonce/analyser — page récupérée mais non exploitable : %s", url)
-        return {"ok": False, "erreur": "url_illisible"}
-    rec = res["rec"]
-    commune = rec.get("commune")
-    type_bien = rec.get("type")
-    prix = rec.get("prix")
-    surface_hab = rec.get("surface_hab")
-    surface_terrain = rec.get("surface_terrain")
-    annonce = {
-        "titre": rec.get("subject"),
-        "type": type_bien,
-        "prix": prix,
-        "surface_hab": surface_hab,
-        "surface_terrain": surface_terrain,
-        "pieces": rec.get("pieces"),
-        "prix_m2": rec.get("prix_m2"),
-        "commune": commune,
-        "url": url,
-        "releve_le": today_reunion().isoformat(),
-        # Position Leboncoin (souvent un centroïde de quartier/commune) — sert UNIQUEMENT à centrer la
-        # carte sur la commune, jamais à rattacher une parcelle (pont V2 écarté par le mandat).
-        "lat": rec.get("lat"),
-        "lng": rec.get("lng"),
-    }
-    # Écart au REPÈRE COMMUNE du bon type — même moteur partagé que la voie Radar (aucun recalcul maison).
-    with session_scope() as db:
-        marche = _marche_commune(db, commune, type_bien, prix, surface_hab, surface_terrain)
-        rep = rapport_lien(db, annonce)
-    return {"ok": True, **rep, "marche": marche}
+    # 2 — bien ABSENT du Radar : AUCUN fetch (SSRF fermé). On rend le message existant `url_bloquee`.
+    log.info("radar/annonce/analyser — bien absent du Radar, aucun fetch (SSRF fermé) : %s", url)
+    return {"ok": False, "erreur": "url_bloquee"}
 
 
 @router.get("/radar/annonce/classement/{idu}")

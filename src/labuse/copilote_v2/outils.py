@@ -352,11 +352,13 @@ def fiche_parcelle(db: Session, *, idu: str) -> ToolResult:
         return ToolResult("fiche_parcelle", ok=False, refus=f"parcelle {idu} introuvable")
     if not f or f.get("commune") is None:
         return ToolResult("fiche_parcelle", ok=False, refus=f"parcelle {idu} introuvable")
-    sv2 = f.get("score_v2") or {}
     reg = (f.get("reglement_plu") or {}).get("zones") or []
+    # URGENCE-1 (NU-E-049 / NU-F-002) — `fiche_parcelle` est un outil FACTUEL (commune, surface, zone) :
+    # il n'embarque PLUS le verdict de scoring, qui n'est pas demandé ici et dont le code de palier brut
+    # (`sans_signal`, `a_creuser`…) fuyait au client (le repli lisait `tier`, jamais traduit). Le
+    # potentiel/la constructibilité se demandent par la voie dédiée (résumé fiche, verdict CLIENT).
     data = {"idu": idu, "commune": f.get("commune"), "surface_m2": f.get("surface_m2"),
             "zone": (reg[0].get("zone") if reg else None),
-            "verdict": sv2.get("verdict") or sv2.get("libelle") or sv2.get("tier"),
             "etage0": f.get("etage0")}
     return ToolResult("fiche_parcelle", valeur=f.get("surface_m2"), data=data,
                       source="cadastre", millesime=CADASTRE_MILLESIME)

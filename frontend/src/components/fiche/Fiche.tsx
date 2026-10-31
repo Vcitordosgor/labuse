@@ -1204,7 +1204,7 @@ export function Fiche({ idu }: { idu: string }) {
                 renouvellement et éligibilité en tiroirs) → réuni ici. Aucune donnée nouvelle. */}
             {/* P (probabilité de mutation) + « Pourquoi ce score » — déménagé du tiroir Les données. */}
             <div data-analyse-p style={{ marginTop: 13, paddingTop: 12, borderTop: `1px solid ${verdict.color}33` }}>
-              <ScoreV2Block idu={idu} />
+              <ScoreV2Block idu={idu} montreRang={montreMultiple} />
             </div>
             {/* M61 P4 — la section « RENOUVELLEMENT — POURQUOI CE RANG » a été REGROUPÉE dans le
                 dépliant « Pourquoi ce rang » juste sous le rang (voir data-renouv-pourquoi ci-dessus). */}

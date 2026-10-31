@@ -47,14 +47,16 @@ def test_list_id_absent_quand_pas_une_annonce():
 # ──────────────────────────── 2 · garde-fous de source (sans base) ────────────────────────────
 
 
-def test_lookup_radar_tente_avant_le_fetch():
-    """Dans l'endpoint, le lookup Radar (`_annonce_depuis_radar`) PRÉCÈDE le fetch réseau
-    (`_fetch_page_oneshot`) — sinon un bien déjà relevé déclencherait quand même un appel Leboncoin."""
+def test_annonce_lien_ne_fetch_jamais():
+    """URGENCE-1 (NU-F-004, SSRF) — l'endpoint lit UNIQUEMENT le Radar (`_annonce_depuis_radar`) ; il
+    n'y a PLUS AUCUN repli fetch (`_fetch_page_oneshot`) vers le lien fourni par le client. Un bien
+    absent du Radar renvoie le message existant (`url_bloquee`) sans la moindre requête sortante."""
     src = (_ROOT / "src" / "labuse" / "pige" / "api.py").read_text(encoding="utf-8")
     corps = src.split("def radar_annonce_analyser", 1)[1].split("\n@router", 1)[0]
-    assert "_annonce_depuis_radar" in corps and "_fetch_page_oneshot" in corps
-    assert corps.index("_annonce_depuis_radar") < corps.index("_fetch_page_oneshot"), (
-        "le fetch Leboncoin est tenté avant le lookup Radar — le mandat ANNONCE-2 exige l'inverse")
+    assert "_annonce_depuis_radar" in corps, "le lookup Radar a disparu de l'endpoint"
+    assert "_fetch_page_oneshot" not in corps, (
+        "SSRF : un repli fetch vers le lien client subsiste dans radar_annonce_analyser (NU-F-004)")
+    assert '"url_bloquee"' in corps, "le message existant url_bloquee doit être rendu pour un bien absent"
 
 
 def test_message_echec_front_est_la_phrase_du_mandat():

@@ -510,6 +510,10 @@ def envoyer(db: Session, *, base_url: str = "", dry_run: bool = False,
             dry_dir: str | None = None) -> dict:
     """Les DEUX envois de fin de journée (template 12 digest + 13 alerte). Idempotent, jamais vide.
     Retourne le rapport (envoyes/echecs/simules/deja par type)."""
+    # URGENCE-1 (NU-F-018) — FAIL-CLOSED : pas d'alerte de veille avec un lien mort. dry_run excepté.
+    if not dry_run:
+        from .. import config as _config
+        _config.exiger_base_url_publique(base_url)
     jour = today_reunion()
     lien_radar = _lien_radar(base_url)
     ddir = Path(dry_dir) if dry_dir else None

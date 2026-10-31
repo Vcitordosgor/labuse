@@ -9484,8 +9484,10 @@ def pipeline_patch(entry_id: int, body: PipelinePatchIn, request: Request, db: S
         # le journal n'est JAMAIS agrégé entre comptes.
         et = body.contact_etiquette.strip()
         if et and et not in CONTACT_ETIQUETTES:
+            # URGENCE-1 (NU-F-028) — le message d'erreur liste les LIBELLÉS client (`.values()`), jamais
+            # les clés internes snake_case (`contacte`, `pas_de_reponse`…) qui fuyaient le vocabulaire interne.
             raise HTTPException(422, f"Étiquette invalide : {et} "
-                                     f"(attendu : {', '.join(CONTACT_ETIQUETTES)})")
+                                     f"(attendu : {', '.join(CONTACT_ETIQUETTES.values())})")
         from datetime import datetime as _dt, timezone as _tz
         e.contact_etiquette = et or None
         e.contact_etiquette_at = _dt.now(tz=_tz.utc) if et else None

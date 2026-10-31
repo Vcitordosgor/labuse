@@ -1,0 +1,40 @@
+URGENCE-1 (NU-F-018) — MAIL DE TEST RENDU AVEC LE BON LIEN
+====================================================================
+LABUSE_PUBLIC_BASE_URL simulée = https://app.labuse.immo
+base_url_probleme('https://app.labuse.immo') = None  (None = OK)
+
+Sujet : LABUSE — 2 changements sur vos suivis
+
+--- CORPS TEXTE ---
+Bonjour,
+
+Voici le point sur vos parcelles suivies et vos critères pour hier (2 événements) :
+
+• Nouvelle annonce sur votre veille — maison à Saint-Paul
+  285 000 € · 95 m²
+  https://app.labuse.immo/socle/#idu=97415000BR0025
+
+• Changement de statut — parcelle suivie
+  mise en vente détectée
+  https://app.labuse.immo/socle/#idu=97411000IE0241
+
+— — —
+Vous recevez cet e-mail parce que vous suivez des parcelles ou surveillez des critères Radar dans LABUSE.
+Régler la fréquence et vos préférences (quotidien, hebdo, cloche seule ; par type) :
+https://app.labuse.immo/events/preferences?c=42&t=TOKEN
+Pour ne plus rien recevoir par e-mail :
+https://app.labuse.immo/events/desabonner?c=42&t=TOKEN
+
+— LABUSE
+contact@labuse.immo
+
+--- LIENS TROUVÉS DANS LE HTML ---
+  https://app.labuse.immo/events/desabonner?c=42&t=TOKEN
+  https://app.labuse.immo/events/preferences?c=42&t=TOKEN
+  https://app.labuse.immo/socle/#idu=97411000IE0241
+  https://app.labuse.immo/socle/#idu=97415000BR0025
+
+--- PREUVE FAIL-CLOSED (localhost / vide refusés) ---
+  base='' -> REFUSÉ : Aucune URL de base n'est configurée (LABUSE_PUBLIC_BASE_URL) — les liens des mails seront vides. Renseignez LABUSE_PUBLIC_BASE_URL (ex. https://app.labuse.immo) avant tout envoi de mail.
+  base='http://127.0.0.1:8000' -> REFUSÉ : Les liens des mails pointent sur http://127.0.0.1:8000 — aucun client ne pourra cliquer. Renseignez LABUSE_PUBLIC_BASE_URL (ex. https://app.labuse.immo) avant tout envoi de mail.
+  base='http://localhost:8205' -> REFUSÉ : Les liens des mails pointent sur http://localhost:8205 — aucun client ne pourra cliquer. Renseignez LABUSE_PUBLIC_BASE_URL (ex. https://app.labuse.immo) avant tout envoi de mail.

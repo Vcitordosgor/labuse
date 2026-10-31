@@ -126,8 +126,8 @@ CATALOGUE = [
                 "zonage": "csv parmi U,AU,A,N (famille de zone PLU)"}},
     {"nom": "parcelles_par_entreprise", "desc": "Parcelles détenues par une personne morale (nom OU SIREN).",
      "params": {"q": "nom ou SIREN"}},
-    {"nom": "fiche_parcelle", "desc": "Données d'UNE parcelle précise identifiée par son IDU (14 car.) : "
-     "commune, surface, zone, verdict.", "params": {"idu": "str 14 car."}},
+    {"nom": "fiche_parcelle", "desc": "Données FACTUELLES d'UNE parcelle précise identifiée par son IDU "
+     "(14 car.) : commune, surface, zone.", "params": {"idu": "str 14 car."}},
     {"nom": "stats_commune", "desc": "Contexte d'une commune : taux de logement social (SRU), statut SRU, "
      "nombre de logements, part de propriétaires.", "params": {"commune": "str"}},
     {"nom": "delais_instruction", "desc": "DÉLAI médian d'instruction d'une commune (dépôt→autorisation, "
@@ -1820,8 +1820,9 @@ def _chemin_fiche(db: Session, message: str, params: dict, contexte: dict | None
 
 
 def _substance(db: Session, idu: str | None) -> str:
-    """Ce que LABUSE SAIT déjà sur une parcelle citée (fond), sans outil. RETOURS-8 (R12) — enrichi du
-    VERDICT servi (même source que la fiche, `_q_v2_fiche`) pour un résumé plus riche que « surface·zone »."""
+    """Ce que LABUSE SAIT déjà sur une parcelle citée (fond), sans outil : surface · zone · commune.
+    URGENCE-1 (NU-E-049 / NU-F-002) — on ne ré-expose PLUS le verdict de scoring ici (le palier brut
+    `sans_signal`/`a_creuser`… fuyait tel quel) : le scoring ne s'affiche que là où le client le demande."""
     if not idu:
         return ""
     from .outils import fiche_parcelle
@@ -1831,8 +1832,7 @@ def _substance(db: Session, idu: str | None) -> str:
     d = r.data
     bout = [f"{d['surface_m2']} m²" if d.get("surface_m2") else None,
             f"zone {d['zone']}" if d.get("zone") else None,
-            f"à {d['commune']}" if d.get("commune") else None,
-            f"verdict LABUSE : {d['verdict']}" if d.get("verdict") else None]
+            f"à {d['commune']}" if d.get("commune") else None]
     return " · ".join(x for x in bout if x)
 
 
