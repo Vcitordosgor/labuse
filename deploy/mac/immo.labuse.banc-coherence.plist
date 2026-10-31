@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- COHERENCE-HOOK-1 — BANC DE NUIT : suite complète avec base, chaque soir à 22 h 30 HEURE RÉUNION.
+     Le script vit dans ~/.labuse/ops (JAMAIS ~/Desktop, que macOS/TCC interdit à launchd → code 126).
+     deploy/mac/install_agents.sh substitue /Users/VIC → $HOME.
+     ANCRAGE RÉUNION : launchd amorce à 19:30 ET 20:30 Paris (qui encadrent 22:30 Réunion été/hiver) ;
+     le script ne tourne QUE dans la fenêtre 22:15–23:45 Réunion, au plus une fois par jour (verrou).
+     ⚠ TCC : ce job LIT le dépôt sous ~/Desktop → donner « Accès complet au disque » à l'agent launchd
+     (Réglages ▸ Confidentialité ▸ Accès complet au disque ▸ ajouter /bin/bash ou le binaire python du venv),
+     sinon « Operation not permitted ». Repointer l'argument dépôt vers le clone servi après merge. -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>immo.labuse.banc-coherence</string>
+  <key>ProgramArguments</key><array>
+    <string>/bin/bash</string>
+    <string>/Users/VIC/.labuse/ops/banc_coherence.sh</string>
+    <string>/Users/VIC/Desktop/labuse-hook</string>
+  </array>
+  <key>StartCalendarInterval</key><array>
+    <dict><key>Hour</key><integer>19</integer><key>Minute</key><integer>30</integer></dict>
+    <dict><key>Hour</key><integer>20</integer><key>Minute</key><integer>30</integer></dict>
+  </array>
+  <key>StandardOutPath</key><string>/Users/VIC/labuse-nuit/launchd.log</string>
+  <key>StandardErrorPath</key><string>/Users/VIC/labuse-nuit/launchd.log</string>
+</dict></plist>

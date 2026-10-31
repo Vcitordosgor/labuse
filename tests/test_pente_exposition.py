@@ -21,7 +21,11 @@ def _pente(db, wkt, slope):
         {"w": wkt, "a": f'{{"slope_pct": {slope}}}'})
 
 
-def test_pente_forte_soft_flag_pas_exclusion(db_session):
+def test_pente_forte_soft_flag_pas_exclusion(cascade_live_layers):
+    # COHERENCE-HOOK-1 — `cascade_live_layers` (≡ db_session, mais DROP le cache figé
+    # `spatial_layers_sub`) : sinon la cascade lit le sub périmé et la cellule de pente semée
+    # ici (slope 45) reste invisible → verdict PASS « pente ~0% » au lieu de SOFT_FLAG.
+    db_session = cascade_live_layers
     from labuse.cascade import evaluate_parcels
     from labuse.enums import CascadeVerdict, Severity
     cell = "POLYGON((55.40 -21.00,55.41 -21.00,55.41 -20.99,55.40 -20.99,55.40 -21.00))"
@@ -35,7 +39,10 @@ def test_pente_forte_soft_flag_pas_exclusion(db_session):
     assert not any(x.is_hard_exclude() for x in out.verdicts)   # jamais une exclusion
 
 
-def test_pente_faible_pass(db_session):
+def test_pente_faible_pass(cascade_live_layers):
+    # COHERENCE-HOOK-1 — même isolation du cache `spatial_layers_sub` que ci-dessus (robustesse :
+    # ce test passait par coïncidence, sub figé ⇒ ~0% ⇒ PASS, mais pour la mauvaise raison).
+    db_session = cascade_live_layers
     from labuse.cascade import evaluate_parcels
     from labuse.enums import CascadeVerdict
     cell = "POLYGON((55.50 -21.10,55.51 -21.10,55.51 -21.09,55.50 -21.09,55.50 -21.10))"

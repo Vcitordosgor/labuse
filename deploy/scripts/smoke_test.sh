@@ -110,6 +110,52 @@ else
     printf '  · smoke build : node absent — SKIP (non bloquant)\n'
 fi
 
+# 10) COHERENCE-HOOK-1 — ÂGE DU RUN SERVI. Le manifeste (check 7) prouve QUEL run est servi ; ici on
+#     prouve qu'il n'est pas ANCIEN (promote oublié, run figé). BLOQUANT au-delà du seuil (défaut 90 j).
+RUN_MAX_AGE="${LABUSE_SMOKE_RUN_MAX_AGE_DAYS:-90}"
+run_age=$("${PSQL[@]}" -c "SELECT extract(day FROM now()-computed_at_max)::int FROM residuel_runs WHERE is_served;" 2>/dev/null || true)
+if [ -z "$run_age" ]; then
+    ko "âge du run servi indéterminé (residuel_runs.is_served vide ?) — run non traçable"
+elif [ "$run_age" -le "$RUN_MAX_AGE" ]; then
+    ok "run servi frais (données il y a ${run_age} j ≤ ${RUN_MAX_AGE} j)"
+else
+    ko "RUN SERVI PÉRIMÉ : données il y a ${run_age} j > ${RUN_MAX_AGE} j (promote oublié ? LABUSE_SMOKE_RUN_MAX_AGE_DAYS pour ajuster)"
+fi
+
+# 11) COHERENCE-HOOK-1 — ÂGE DES CACHES DE MÉDIANES (dvf_secteur_medianes). « Attendu » = NON vide ET
+#     à jour : si la colonne `millesime_dvf` existe (NU-E-032) → son millésime == le millésime DVF
+#     COURANT (comparaison AUTORITATIVE, un computed_at récent ne suffit pas) ; sinon → repli sur l'âge
+#     de computed_at (défaut 180 j). BLOQUANT. (Miroir SQL de marche_dvf_commune.caches_marche_perimes.)
+CACHE_MAX_AGE="${LABUSE_SMOKE_CACHE_MAX_AGE_DAYS:-180}"
+if [ "$("${PSQL[@]}" -tA -c "SELECT to_regclass('dvf_secteur_medianes') IS NOT NULL;" 2>/dev/null)" != "t" ]; then
+    ko "cache de médianes absent (dvf_secteur_medianes) — médianes servies au vol, non traçables"
+else
+    ncache=$("${PSQL[@]}" -tA -c "SELECT count(*) FROM dvf_secteur_medianes;" 2>/dev/null || echo 0)
+    if [ "${ncache:-0}" -le 0 ]; then
+        ko "cache de médianes VIDE (dvf_secteur_medianes : 0 ligne)"
+    else
+        has_mill=$("${PSQL[@]}" -tA -c "SELECT count(*) FROM information_schema.columns WHERE table_name='dvf_secteur_medianes' AND column_name='millesime_dvf';" 2>/dev/null || echo 0)
+        if [ "${has_mill:-0}" -ge 1 ]; then
+            stampe=$("${PSQL[@]}" -tA -c "SELECT max(millesime_dvf) FROM dvf_secteur_medianes;" 2>/dev/null || true)
+            courant=$("${PSQL[@]}" -tA -c "SELECT max(date_mutation) FROM dvf_mutations_parcelle;" 2>/dev/null || true)
+            if [ -n "$courant" ] && [ "$stampe" = "$courant" ]; then
+                ok "cache de médianes à jour (millésime DVF ${stampe} = courant)"
+            else
+                ko "CACHE DE MÉDIANES PÉRIMÉ : millésime ${stampe:-?} ≠ DVF courant ${courant:-?} — recalcul requis"
+            fi
+        else
+            cage=$("${PSQL[@]}" -tA -c "SELECT extract(day FROM now()-max(computed_at))::int FROM dvf_secteur_medianes;" 2>/dev/null || true)
+            if [ -z "$cage" ]; then
+                ko "âge du cache de médianes indéterminé (ni millesime_dvf ni computed_at exploitables)"
+            elif [ "$cage" -le "$CACHE_MAX_AGE" ]; then
+                ok "cache de médianes frais (calculé il y a ${cage} j ≤ ${CACHE_MAX_AGE} j ; millesime_dvf absent → repli âge)"
+            else
+                ko "CACHE DE MÉDIANES PÉRIMÉ : calculé il y a ${cage} j > ${CACHE_MAX_AGE} j (LABUSE_SMOKE_CACHE_MAX_AGE_DAYS pour ajuster)"
+            fi
+        fi
+    fi
+fi
+
 echo "=============================================="
 if [ "$fail" -eq 0 ]; then
     echo "✓ Smoke test : tous les tests critiques PASSENT."

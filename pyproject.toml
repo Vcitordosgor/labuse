@@ -112,4 +112,5 @@ markers = [
   "local: tests joués sur la BASE RÉELLE locale (labuse), hors CI — `pytest -m local` (CIRCUIT-P3 3.2)",
   "reel: tests exigeant des DONNÉES RÉELLES seedées/servies (run servi, DVF, PLU, scoring, identité éditeur…) qu'une base PostGIS vierge + petites fixtures ne reproduit pas — JAMAIS en CI (base vide), rejoués au banc de nuit en prod (CI-1 Lot 1/2)",
   "verrous: les verrous CIRCUIT-5 (tests/verrous/) — aussi joués par `labuse circuit verrous`",
+  "coherence: suite de COHÉRENCE unique (tests/coherence/) — un même fait servi à l'identique (1 € / 1 m²) par la fiche, les outils, les PDF, Docs et le Copilote, sur les 12 parcelles témoins. Jouée au push (hook) quand la base locale répond, et en entier au banc de nuit (COHERENCE-HOOK-1)",
 ]

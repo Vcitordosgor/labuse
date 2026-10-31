@@ -17,7 +17,13 @@ pytestmark = pytest.mark.db
 
 
 @pytest.fixture
-def demo(db_session):
+def demo(cascade_live_layers):
+    # COHERENCE-HOOK-1 — passe par `cascade_live_layers` (≡ db_session mais DROP le cache
+    # dérivé `spatial_layers_sub` figé dans la transaction) : sinon `cascade.context.prime`
+    # lit le sub périmé (26 lignes vefa_neuf laissées par un test antérieur dans labuse_test)
+    # au lieu des couches semées ici → la cascade « ne voit rien » et les verdicts tombent.
+    # Même patron que test_sar.py::test_cascade_sar_proxy_informatif (VITESSE-2 Lot 5).
+    db_session = cascade_live_layers
     seed_sources.seed(db_session)
     demo_saint_paul.seed_demo(db_session)
     ids = [r[0] for r in db_session.execute(select(models.Parcel.id)).all()]

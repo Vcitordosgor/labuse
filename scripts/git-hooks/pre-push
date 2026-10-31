@@ -43,6 +43,23 @@ else
   PYTHONPATH=src "$PY" -m pytest -m "not db and not local and not reel and not network" -q -p no:cacheprovider || fail=1
 fi
 
+# 4) COHÉRENCE (COHERENCE-HOOK-1) — la suite tourne QUAND la base locale répond ; sinon le hook l'écrit
+# EN ROUGE, jamais en silence. Un écart (1 €/1 m²) entre fiche/outils/PDF/Docs/Copilote REFUSE le push.
+# Base injoignable : ROUGE non bloquant par défaut (les sessions // peuvent pousser DB froide) — poser
+# LABUSE_COHERENCE_HOOK=block pour refuser aussi dans ce cas. Le banc de nuit reste le filet dur.
+step "Cohérence (12 témoins — base locale)"
+bash scripts/ci/coherence_run.sh
+coh_rc=$?
+if [ "$coh_rc" -eq 1 ]; then
+  fail=1                                   # écart RÉEL de cohérence → toujours bloquant
+elif [ "$coh_rc" -eq 2 ]; then
+  if [ "${LABUSE_COHERENCE_HOOK:-warn}" = "block" ]; then
+    printf '  (LABUSE_COHERENCE_HOOK=block → base injoignable bloque le push.)\n'; fail=1
+  else
+    printf '  (base injoignable : AVERTISSEMENT rouge, push autorisé — LABUSE_COHERENCE_HOOK=block pour bloquer.)\n'
+  fi
+fi
+
 if [ "$fail" -ne 0 ]; then
   printf '\n✗ PUSH REFUSÉ — une vérification a échoué (détail ci-dessus).\n'
   printf '  Corrige puis repousse. URGENCE réelle uniquement : git push --no-verify\n'
