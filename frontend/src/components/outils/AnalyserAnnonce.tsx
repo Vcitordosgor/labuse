@@ -105,7 +105,20 @@ function RapportParcelle({ idu }: { idu: string }) {
   // donc plus appelée côté écran.
   // ANNONCE-3-FIX — l'estimation selon la nature (nue → terrain nu ; bâtie → bâti), servie par le MÊME
   // point que le PDF (/radar/annonce/estimation) → mêmes chiffres à l'écran et dans le document.
-  const estim = useQuery({ queryKey: ['annonce-estim', idu], queryFn: () => getAnnonceEstimation(idu) })
+  // ESTIMER-PRECISION-1 — surface habitable SAISISSABLE (facultative) : si renseignée, le total l'utilise
+  // (libellé « surface saisie »). Préremplie depuis la dernière vente DVF quand elle la donne. Le champ
+  // voyage dans l'estimation ET le PDF (écran == PDF == Doc).
+  const [surfaceHab, setSurfaceHab] = useState('')
+  const [surfaceTouchee, setSurfaceTouchee] = useState(false)
+  const surfNum = surfaceHab.trim() ? Math.round(Number(surfaceHab)) : null
+  const surfValide = surfNum != null && Number.isFinite(surfNum) && surfNum > 0 ? surfNum : null
+  const estim = useQuery({ queryKey: ['annonce-estim', idu, surfValide], queryFn: () => getAnnonceEstimation(idu, surfValide) })
+  // Préremplissage UNE fois depuis la dernière vente DVF (tant que l'utilisateur n'a rien tapé).
+  useEffect(() => {
+    if (!surfaceTouchee && !surfaceHab && estim.data?.surface_dvf_m2 != null) {
+      setSurfaceHab(String(estim.data.surface_dvf_m2))
+    }
+  }, [estim.data?.surface_dvf_m2, surfaceTouchee, surfaceHab])
 
   if (fiche.isLoading) return <Corps><Chargement /></Corps>
   if (fiche.isError || !fiche.data) return <Corps><ErrorState message="Impossible de charger la fiche parcelle." retry={() => fiche.refetch()} /></Corps>
@@ -206,6 +219,24 @@ function RapportParcelle({ idu }: { idu: string }) {
               )}
               {e?.precision_pct != null && <> Précision mesurée sur les ventes 2025 : ±{fmtInt(e.precision_pct)} %.</>}
             </p>
+            {/* ESTIMER-PRECISION-1 — surface habitable SAISISSABLE (bâti, hors copropriété). Si renseignée,
+                le total l'utilise (« surface saisie ») ; préremplie depuis la dernière vente DVF. */}
+            {!terrain && !copro && (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <label className="text-[11px] text-txt-dim" htmlFor="surface-hab">Surface habitable</label>
+                <input
+                  id="surface-hab" type="number" min={1} step={1} inputMode="numeric"
+                  className="h-8 w-28 rounded-md border border-line-2 bg-surface-3 px-2 text-[12.5px] text-txt-hi placeholder:text-txt-mut focus:border-mint focus:outline-none"
+                  placeholder={e?.surface_dvf_m2 != null ? String(e.surface_dvf_m2) : 'm²'}
+                  value={surfaceHab}
+                  onChange={(ev) => { setSurfaceTouchee(true); setSurfaceHab(ev.target.value) }} />
+                <span className="text-[11px] text-txt-mut">m² — facultatif, affine le total</span>
+                {surfaceHab && (
+                  <button className="text-[11px] text-mint underline underline-offset-2"
+                    onClick={() => { setSurfaceTouchee(true); setSurfaceHab('') }}>effacer</button>
+                )}
+              </div>
+            )}
             {/* ANNONCE-5-FIX — ORDRE DE GRANDEUR (jamais un calcul exact, bâti = emprise au sol). */}
             {e?.valeur_indicative && (
               <div className="mt-3 rounded-md border border-line-2 bg-surface-3 p-2.5">
@@ -274,7 +305,7 @@ function RapportParcelle({ idu }: { idu: string }) {
       {/* RECETTE-4 — section « Le foncier » supprimée de l'écran (zone/hauteur/SDP restent dans la fiche
           parcelle, ouverte par le lien remonté sous les tuiles). */}
 
-      <ExportPdf url={docAnalyseAnnonceUrl(idu)} />
+      <ExportPdf url={docAnalyseAnnonceUrl(idu, surfValide)} />
     </Corps>
   )
 }

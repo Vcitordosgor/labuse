@@ -1422,16 +1422,25 @@ def _terrain_repere(db, idu: str) -> dict | None:
 # « Limitée » = peu de comparables OU forte dispersion OU repli commune ; sinon « Moyenne ». Le ±%
 # SERVI est l'écart médian MESURÉ de la bande (honnête — « Élevée » tient ce qu'elle promet), pas la
 # promesse. Seuils et ±% calibrés en fin de banc (cf. COMPTE-RENDU, section « bandes de fiabilité »).
-_FIAB_N_ELEVEE = 15        # n ≥ ce seuil requis pour « Élevée »
-_FIAB_DISP_ELEVEE = 0.30   # dispersion IQR/médiane ≤ ce seuil requise pour « Élevée »
-_FIAB_N_MIN = 8            # n < ce seuil → « Limitée »
-_FIAB_DISP_LIMITEE = 0.75  # dispersion > ce seuil → « Limitée »
-# ±% SERVI = écart médian |mesuré| de la bande sur le banc rejoué (4 324 ventes bâties DVF 2025, sans
-# fuite) : Élevée 18,0 % · Moyenne 22,2 % · Limitée 36,2 % (docs/audit-2026-11/estimer-2/METRIQUES.json).
-# Le plancher d'erreur €/m² de l'estimateur (médiane de secteur, pas un AVM) est ~18 % même pour la
-# meilleure bande (n≥15, dispersion ≤0,30) : « Élevée » SERT ce ±18 % mesuré — elle tient sa promesse
-# parce que le ±% affiché EST l'écart réel, et non un « <15 % » que l'estimateur ne peut pas tenir.
-_FIAB_ECART = {"fiable": 18, "moyen": 23, "limitee": 36}
+# ESTIMER-PRECISION-1 — bandes de fiabilité RECALIBRÉES sur la MÉTHODE PONDÉRÉE et PAR SEGMENT, à partir
+# de la grille (n × dispersion) du banc 2024-règle/2025-annonce (docs/audit-2026-11/estimer-precision-1).
+# « Élevée » ne s'affiche que là où le banc 2025 TIENT la promesse ; le ±% servi EST l'écart médian
+# mesuré de la bande (honnête). APPARTEMENT/copro : Élevée (n≥15, disp≤0,40) tient ~14 % < 15 %.
+# MAISON (plancher donnée ~27 %, qu'aucune méthode ne franchit) : « Élevée » RÉSERVÉE aux secteurs denses
+# ET homogènes (n≥40, disp≤0,25 → ~17-20 % mesuré) ; partout ailleurs « Moyenne » (±26 %) ou « Limitée »
+# (±36 %), avec une fourchette large — on ne promet jamais une précision que la donnée ne permet pas.
+_FIAB_SEG = {
+    "appartement": {"n_elevee": 15, "disp_elevee": 0.40, "n_min": 8, "disp_lim": 0.75,
+                    "ecart": {"fiable": 15, "moyen": 18, "limitee": 30}},
+    "maison": {"n_elevee": 40, "disp_elevee": 0.25, "n_min": 8, "disp_lim": 0.75,
+               "ecart": {"fiable": 20, "moyen": 26, "limitee": 36}},
+}
+
+
+def _fiab_seg(type_bien: str | None) -> str:
+    """Les copropriétés et les biens de secteur dominé par l'appartement suivent les bandes APPARTEMENT ;
+    tout le reste (maison, bâti mixte, type inconnu) suit les bandes MAISON, plus prudentes."""
+    return "appartement" if type_bien == "appartement" else "maison"
 # Terrain nu : logique inchangée (mandat §terrain non modifié) — ±% du segment, calibré banc 1/2.
 _ECART_SEGMENT = {"terrain": 19}
 
@@ -1449,23 +1458,27 @@ def _fiabilite_segment(type_bien: str | None) -> tuple[str, int]:
     return niveau, ecart
 
 
-def _fiabilite_bien(n, median, q1, q3, commune_fallback: bool) -> tuple[str, int]:
-    """ESTIMER-2 (E-024) — fiabilité d'une estimation bâtie, CALCULÉE pour CE bien : à partir du nombre
-    de comparables `n` et de leur DISPERSION (IQR relatif (q3−q1)/médiane). Bandes calibrées sur le banc.
-    Renvoie (niveau interne, ±% médian mesuré de la bande). Repli commune → toujours « Limitée »."""
+def _fiabilite_bien(n, median, q1, q3, commune_fallback: bool,
+                    type_bien: str | None = None) -> tuple[str, int]:
+    """ESTIMER-PRECISION-1 (ex-E-024) — fiabilité d'une estimation bâtie, CALCULÉE pour CE bien et PAR
+    SEGMENT : nombre de comparables `n` + DISPERSION (IQR relatif (q3−q1)/médiane), bandes recalibrées sur
+    la méthode pondérée (banc 2025). Renvoie (niveau interne, ±% médian mesuré de la bande). « Élevée » ne
+    sort que là où le banc le tient (maison : secteurs denses+homogènes seulement). Repli commune →
+    « Limitée »."""
+    cfg = _FIAB_SEG[_fiab_seg(type_bien)]
     if commune_fallback:
-        return "limitee", _FIAB_ECART["limitee"]
+        return "limitee", cfg["ecart"]["limitee"]
     disp = None
     if isinstance(q1, (int, float)) and isinstance(q3, (int, float)) and isinstance(median, (int, float)) and median:
         disp = (q3 - q1) / median
     n = int(n or 0)
-    if n < _FIAB_N_MIN or (disp is not None and disp > _FIAB_DISP_LIMITEE):
+    if n < cfg["n_min"] or (disp is not None and disp > cfg["disp_lim"]):
         niveau = "limitee"
-    elif n >= _FIAB_N_ELEVEE and disp is not None and disp <= _FIAB_DISP_ELEVEE:
+    elif n >= cfg["n_elevee"] and disp is not None and disp <= cfg["disp_elevee"]:
         niveau = "fiable"
     else:
         niveau = "moyen"
-    return niveau, _FIAB_ECART[niveau]
+    return niveau, cfg["ecart"][niveau]
 
 
 def _derniere_mutation_dvf(db, idu: str) -> dict | None:
@@ -1527,13 +1540,23 @@ def _ratio_surf_emprise_commune(db, insee: str) -> tuple[float | None, int]:
     return round(float(row["ratio"]), 3), n
 
 
-def _surface_pour_total(db, idu: str, emprise, mut: dict | None, insee: str) -> tuple[int | None, dict | None]:
+def _surface_pour_total(db, idu: str, emprise, mut: dict | None, insee: str,
+                        surface_hab: float | None = None) -> tuple[int | None, dict | None]:
     """ESTIMER-2 (D-009, E-021) — la surface du TOTAL indicatif d'un bien bâti, DANS CET ORDRE :
+      0. ESTIMER-PRECISION-1 — la SURFACE HABITABLE SAISIE par l'utilisateur, si elle est fournie
+         (champ facultatif de l'entrée par adresse) : le total la prend telle quelle, libellé « surface
+         saisie ». C'est l'intrant le plus sûr (le bien réel), devant toute estimation.
       1. la surface bâtie de la DERNIÈRE VENTE DVF de la parcelle si elle existe ;
       2. sinon l'emprise au sol BD TOPO × le RATIO MÉDIAN (surface vendue / emprise) des ventes de
          maisons de la commune (ratio + assise JOURNALISÉS).
     Plus JAMAIS l'emprise brute × un prix habitable. Le libellé dit quelle surface a servi.
     Renvoie (surface_m2, source) ou (None, None) si aucune surface n'est disponible."""
+    if isinstance(surface_hab, (int, float)) and surface_hab > 0:
+        s = round(surface_hab)
+        return s, {"source": "surface_saisie",
+                   "ligne": f"Surface habitable saisie ({s} m²)",
+                   "note": "Surface habitable renseignée par l'utilisateur. Ordre de grandeur, "
+                           "pas un calcul exact."}
     if mut and (mut.get("bati_m2") or 0) > 0:
         s = round(mut["bati_m2"])
         an = (mut.get("date") or "")[:4]
@@ -1607,7 +1630,7 @@ def _lecture_fonciere_parcelle(surface_terrain_m2, repere_tn, valeur_bati_eur) -
     return out
 
 
-def estimation_annonce(db, idu: str, fiche: dict) -> dict:
+def estimation_annonce(db, idu: str, fiche: dict, surface_hab: float | None = None) -> dict:
     """ANNONCE-5 — l'estimation du prix d'une parcelle, POINT UNIQUE lu par l'écran (endpoint) ET par le
     PDF (builder) → mêmes chiffres, mêmes comparables, même valeur indicative, aucun recalcul divergent.
 
@@ -1646,7 +1669,7 @@ def estimation_annonce(db, idu: str, fiche: dict) -> dict:
                     "fiabilite_mot": _fiabilite_mot("limitee", False),
                     "note": "Pas assez de ventes d'appartements comparables dans le secteur."}
         niveau, ecart = _fiabilite_bien(cb.get("n"), cb.get("median"), cb.get("q1"), cb.get("q3"),
-                                        cb.get("commune_fallback"))
+                                        cb.get("commune_fallback"), type_bien="appartement")
         return {**base,
                 "type_label_pluriel": cb.get("type_label_pluriel") or "appartements",
                 "median": cb.get("median"), "q1": cb.get("q1"), "q3": cb.get("q3"), "n": cb.get("n"),
@@ -1682,19 +1705,27 @@ def estimation_annonce(db, idu: str, fiche: dict) -> dict:
     type_force = nature_mut if nature_mut in ("maison", "appartement") else None
     non_mesure = (nature_mut is None and nature_parc == "non_mesure")
     nature_out = "bati_non_mesure" if non_mesure else "batie"
-    cb = _msvc.comparateur_bien(db, idu, type_bien=type_force)
+    # ESTIMER-PRECISION-1 — surface du sujet pour PONDÉRER les comparables (surface saisie > surface de
+    # la dernière vente DVF) et taille de terrain du sujet (contenance parcelle) pour les maisons.
+    surf_poids = (surface_hab if (isinstance(surface_hab, (int, float)) and surface_hab > 0)
+                  else ((mut or {}).get("bati_m2") or None))
+    cb = _msvc.comparateur_bien(db, idu, type_bien=type_force,
+                                surface_sujet=surf_poids, terrain_sujet=surface_parc)
     if not cb or cb.get("median") is None:
         return {"nature": nature_out, "type_comparateur": "bati",
                 "type_bien": (cb or {}).get("type_bien") or (type_force or "bati"),
                 "median": None, "comparables": [], "repere_terrain_nu": repere_tn,
                 "note": "Pas assez de ventes comparables dans le secteur."}
     niveau, ecart = _fiabilite_bien(cb.get("n"), cb.get("median"), cb.get("q1"), cb.get("q3"),
-                                    cb.get("commune_fallback"))
+                                    cb.get("commune_fallback"), type_bien=cb.get("type_bien"))
     emprise = _emprise_bati_m2(db, idu)
     # ESTIMER-2 (D-009, E-021) — la SURFACE du total : surface bâtie de la dernière vente DVF si elle
     # existe, sinon emprise × ratio médian de la commune. Jamais l'emprise brute × un prix habitable.
-    surface_tot, src_surf = _surface_pour_total(db, idu, emprise, mut, insee)
+    surface_tot, src_surf = _surface_pour_total(db, idu, emprise, mut, insee, surface_hab)
     vi = _valeur_indicative(surface_tot, cb.get("median"), ecart, source=src_surf)
+    # ESTIMER-PRECISION-1 — surface habitable de la dernière vente DVF, exposée pour PRÉREMPLIR le champ
+    # facultatif « surface habitable » de l'écran (prérempli quand la dernière vente DVF la donne).
+    surface_dvf = round(mut["bati_m2"]) if (mut and (mut.get("bati_m2") or 0) > 0) else None
     return {
         "nature": nature_out,
         "type_comparateur": "bati", "type_bien": cb.get("type_bien"),
@@ -1704,7 +1735,7 @@ def estimation_annonce(db, idu: str, fiche: dict) -> dict:
         "fiabilite": niveau, "precision_pct": ecart, "commune_fallback": cb.get("commune_fallback"),
         "fiabilite_mot": _fiabilite_mot(niveau, cb.get("commune_fallback")),
         "comparables": cb.get("comparables") or [], "n_total": cb.get("n_total"),
-        "emprise_bati_m2": emprise,
+        "emprise_bati_m2": emprise, "surface_dvf_m2": surface_dvf,
         "valeur_indicative": vi,
         "lecture_fonciere": _lecture_fonciere_parcelle(surface_parc, repere_tn,
                                                         (vi or {}).get("valeur_eur")),
@@ -1713,7 +1744,7 @@ def estimation_annonce(db, idu: str, fiche: dict) -> dict:
 
 
 @router.get("/radar/annonce/estimation/{idu}")
-def radar_annonce_estimation(idu: str) -> dict:
+def radar_annonce_estimation(idu: str, surface_hab: float | None = None) -> dict:
     """ANNONCE-3-FIX — l'estimation du prix d'une parcelle, selon sa NATURE (nue → terrain nu, bâtie →
     bâti). Lit la fiche SERVIE (lecture seule) puis `estimation_annonce` (point unique). L'écran et le
     PDF lisent exactement ce rapport → mêmes chiffres, même règle."""
@@ -1727,7 +1758,8 @@ def radar_annonce_estimation(idu: str) -> dict:
         # aléa, sans doublon DEAL/PPR), la MÊME que le PDF compte. Servi ici pour que la tuile « Risques »
         # de l'écran lise EXACTEMENT ce que le document imprime (fin de l'écart 1≠2 / 4≠2).
         n_aleas = len(_risques_rows(fiche, (fiche or {}).get("commune")))
-        return {"idu": idu, "n_aleas": n_aleas, **estimation_annonce(db, idu, fiche)}
+        return {"idu": idu, "n_aleas": n_aleas,
+                **estimation_annonce(db, idu, fiche, surface_hab=surface_hab)}
 
 
 # ── ANNONCE-5 — le RAPPORT PARCELLE complet (variante adresse, 2 pages) : POINT UNIQUE écran == PDF ──
@@ -2007,7 +2039,7 @@ def _a_verifier(fiche: dict, nature: str, zone: str | None) -> list[str]:
     return pts[:3]
 
 
-def rapport_parcelle(db, idu: str, fiche: dict | None = None) -> dict:
+def rapport_parcelle(db, idu: str, fiche: dict | None = None, surface_hab: float | None = None) -> dict:
     """ANNONCE-5 — le rapport PARCELLE complet (variante adresse, 2 pages du PDF) : POINT UNIQUE lu par
     l'écran ET par le PDF → aucune divergence. Compose la fiche servie, l'estimation (comparables + valeur
     indicative), le foncier (règles calibrées face aux mesures de la parcelle), le classement (run servi +
@@ -2020,7 +2052,7 @@ def rapport_parcelle(db, idu: str, fiche: dict | None = None) -> dict:
     zone = (zones[0] or {}).get("zone") if zones and isinstance(zones[0], dict) else None
     commune = (fiche or {}).get("commune")
     nature = _nature_parcelle(db, idu)
-    est = estimation_annonce(db, idu, fiche)
+    est = estimation_annonce(db, idu, fiche, surface_hab=surface_hab)
     try:
         cls = _classement_bande(db, idu)
     except Exception:  # noqa: BLE001
@@ -2074,16 +2106,17 @@ def rapport_parcelle(db, idu: str, fiche: dict | None = None) -> dict:
 
 
 @router.get("/radar/annonce/rapport/{idu}")
-def radar_annonce_rapport(idu: str) -> dict:
+def radar_annonce_rapport(idu: str, surface_hab: float | None = None) -> dict:
     """ANNONCE-5 — le rapport PARCELLE complet (adresse) servi à l'écran ET au PDF (même point).
-    Lecture seule de la fiche servie. Parcelle inconnue → structure minimale, jamais un 500."""
+    Lecture seule de la fiche servie. Parcelle inconnue → structure minimale, jamais un 500.
+    ESTIMER-PRECISION-1 — `surface_hab` (facultatif) : surface habitable saisie → le total l'utilise."""
     from ..api.app import parcel_fiche
     with session_scope() as db:
         try:
             fiche = parcel_fiche(idu, db=db)
         except ValueError:
             return {"idu": idu, "introuvable": True}
-        return rapport_parcelle(db, idu, fiche)
+        return rapport_parcelle(db, idu, fiche, surface_hab=surface_hab)
 
 
 @router.post("/admin/radar/depot-agence/publier")

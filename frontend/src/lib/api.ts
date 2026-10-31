@@ -442,7 +442,8 @@ export interface AnnonceValeurIndicative {
   surface_m2: number; eur_m2: number; valeur_eur: number
   valeur_basse?: number; valeur_haute?: number
   // ESTIMER-2 (D-009, E-021) — provenance de la surface du total + libellé/note servis à l'identique au PDF.
-  surface_source?: 'dvf_vente' | 'emprise_ratio' | null
+  // ESTIMER-PRECISION-1 — 'surface_saisie' : surface habitable renseignée par l'utilisateur.
+  surface_source?: 'surface_saisie' | 'dvf_vente' | 'emprise_ratio' | null
   ligne?: string | null; note?: string | null
 }
 export interface AnnonceEstimation {
@@ -464,12 +465,14 @@ export interface AnnonceEstimation {
   comparables?: AnnonceComparable[]; n_total?: number | null; comparables_periode?: number[] | null
   comparables_radius_m?: number | null   // CHASSE-4-FIX (C4-005) — rayon réel des comparables de terrain nu
   emprise_bati_m2?: number | null
+  surface_dvf_m2?: number | null   // ESTIMER-PRECISION-1 — surface de la dernière vente DVF (préremplissage)
   valeur_indicative?: AnnonceValeurIndicative | null
   lecture_fonciere?: { surface_m2: number; eur_m2: number; valeur_eur: number; n?: number | null; perimetre?: string; pct_du_bati?: number } | null
   repere_terrain_nu?: { eur_m2: number; n?: number | null; perimetre?: string; periode?: string | null } | null
 }
-export const getAnnonceEstimation = (idu: string) =>
-  j<AnnonceEstimation>(`/radar/annonce/estimation/${encodeURIComponent(idu)}`)
+export const getAnnonceEstimation = (idu: string, surfaceHab?: number | null) =>
+  j<AnnonceEstimation>(`/radar/annonce/estimation/${encodeURIComponent(idu)}`
+    + (surfaceHab != null && surfaceHab > 0 ? `?surface_hab=${surfaceHab}` : ''))
 export const parcelAt = (lon: number, lat: number) =>
   j<{ idu: string | null }>(`/parcels/at?lon=${lon}&lat=${lat}`)
 export const searchParcels = (needle: string, opts?: { ileEntiere?: boolean }) =>
@@ -1330,7 +1333,9 @@ export const docEtudeZoneUrl = (idu: string, rayonKm: number, sousDestination?: 
 // ANNONCE-3 — « Analyse d'annonce » : adresse → rapport parcelle (/analyse-annonce/{idu}.pdf) ou lien
 // d'annonce → rapport commune (/analyse-annonce.pdf?url=…). Mêmes routes que le bouton « Exporter en PDF »
 // de l'outil : le PDF sorti de l'outil et celui sorti de Docs sont identiques.
-export const docAnalyseAnnonceUrl = (idu: string) => `/analyse-annonce/${encodeURIComponent(idu)}.pdf`
+export const docAnalyseAnnonceUrl = (idu: string, surfaceHab?: number | null) =>
+  `/analyse-annonce/${encodeURIComponent(idu)}.pdf`
+  + (surfaceHab != null && surfaceHab > 0 ? `?surface_hab=${surfaceHab}` : '')
 export const docAnalyseAnnonceLienUrl = (url: string) => `/analyse-annonce.pdf?url=${encodeURIComponent(url)}`
 
 // DOCS-1 (Lot B) — la bibliothèque « Mes documents » (recette d'un document, jamais le PDF).

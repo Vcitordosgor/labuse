@@ -246,14 +246,16 @@ def _zone_map_html(db, zone: dict) -> str:
 #    chemins que l'outil « Analyser une annonce ». Le PDF sorti de l'outil et celui sorti de Docs sont
 #    identiques (mêmes routes, mêmes endpoints, mêmes chiffres que l'écran).
 @router.get("/analyse-annonce/{idu}.pdf")
-def analyse_annonce_parcelle_pdf(idu: str, request: Request, db: Session = Depends(get_db)) -> Response:
+def analyse_annonce_parcelle_pdf(idu: str, request: Request, surface_hab: float | None = None,
+                                 db: Session = Depends(get_db)) -> Response:
     """Variante PARCELLE (entrée adresse) : rapport parcelle (tuiles + estimation + foncier + plan de
-    situation). Lit les MÊMES endpoints que l'écran (fiche, exposition, classement du run servi)."""
+    situation). Lit les MÊMES endpoints que l'écran (fiche, exposition, classement du run servi).
+    `surface_hab` (ESTIMER-PRECISION-1, facultatif) : surface habitable saisie → total identique écran."""
     from ..exports import builder
     from ..quota import porte_export
     porte_export(request, db)
     try:
-        res = builder.construire_analyse_annonce_parc(db, idu, request=request)
+        res = builder.construire_analyse_annonce_parc(db, idu, request=request, surface_hab=surface_hab)
     except ValueError as exc:
         raise HTTPException(404, str(exc))
     except HTTPException:
