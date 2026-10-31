@@ -211,6 +211,21 @@ def _dvf_bati_type(db: Session, commune: str | None, type_bien: str | None) -> d
     RADAR-2 (retouches 2) — `commune=None` → médiane ÎLE ENTIÈRE (filtre commune retiré), pour que
     « Toute l'île » serve un acté par type au lieu d'un « 0 vente »."""
     from ..api.moteurs import _BAROMETRE_RETENUE
+    # MARCHE-UNIQUE-1 (NU-F-001) — la médiane ACTÉE d'une COMMUNE par type (maison/appartement) est
+    # désormais servie par LE point de calcul unique `mediane_commune`. Le tableau Radar, le « Ce bien »
+    # du Radar (vs-marche via marche_commune_bloc), la fiche commune et les PDF lisent la MÊME valeur.
+    # Avant, ce chemin tirait du baromètre tout-historique [100;12000] et divergeait du bloc commune.
+    if commune and type_bien in ("maison", "appartement", "immeuble"):
+        from ..marche_dvf_commune import mediane_commune
+        tb = "maison" if type_bien == "immeuble" else type_bien
+        rc = mediane_commune(db, commune, tb)
+        if rc["eur_m2"] is not None:
+            y0 = str(rc["periode"][0]) if rc.get("periode") else None
+            y1 = str(rc["periode"][1]) if rc.get("periode") else None
+            return {"eur_m2": rc["eur_m2"], "n": rc["n"], "millesime": y1,
+                    "periode": _periode_annees(y0, y1),
+                    "perimetre": "maisons" if tb == "maison" else "appartements", "meme_type": True}
+        # sous le seuil du type → repli sur le bâti MIXTE de la commune (périmètre écrit tel quel).
     cw = "commune = :c AND " if commune else ""
     cp = {"c": commune} if commune else {}
     tl = {"maison": "Maison", "appartement": "Appartement", "immeuble": "Maison"}.get(type_bien or "")

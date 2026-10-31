@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS dvf_prix_sortie_neuf (
   prix_m2_neuf  int  NOT NULL,          -- médiane €/m² habitable, appartements neufs de MARCHÉ (hors social)
   n             int  NOT NULL,          -- nb de ventes ayant servi
   computed_at   timestamptz DEFAULT now(),
+  millesime_dvf date,                   -- MARCHE-UNIQUE-1 (NU-E-032) : millésime DVF source (max date mutation)
   PRIMARY KEY (cle, niveau)
 );
 """
@@ -104,8 +105,10 @@ agg AS (
   SELECT '__ILE__' AS cle, 'ile' AS niveau,
          round(percentile_cont(0.5) WITHIN GROUP (ORDER BY prix_m2))::int AS p, count(*) AS n
   FROM neuf)
-INSERT INTO dvf_prix_sortie_neuf (cle, niveau, prix_m2_neuf, n, computed_at)
-SELECT cle, niveau, p, n, now() FROM agg
+INSERT INTO dvf_prix_sortie_neuf (cle, niveau, prix_m2_neuf, n, computed_at, millesime_dvf)
+SELECT cle, niveau, p, n, now(),
+       (SELECT max(date_mutation) FROM dvf_mutations_parcelle)   -- NU-E-032 : millésime source
+FROM agg
 -- règle de fragilité : n franchi de justesse ET médiane sous le seuil de bascule → écarté
 -- (jamais pour l'île : n île très élevé, médiane bien au-dessus du seuil).
 WHERE NOT (n < :nfragile AND p < :seuil);
@@ -210,6 +213,8 @@ def build_prix_neuf(session: Session, *, commit: bool = True, log=lambda *_: Non
     # M-O P2-59 — TRUNCATE au lieu de DROP (build rapide ~0,05 s, schéma stable ; table lue en direct
     # par resolve_prix_neuf_marche) : garde schéma/index/OID, verrou bien plus court.
     session.execute(text(DDL))                           # CREATE … IF NOT EXISTS
+    # NU-E-032 — migration douce d'une table préexistante (prod) sans la colonne millésime.
+    session.execute(text("ALTER TABLE dvf_prix_sortie_neuf ADD COLUMN IF NOT EXISTS millesime_dvf date"))
     session.execute(text("TRUNCATE dvf_prix_sortie_neuf"))
     session.execute(text(_BUILD),
                     {"nmin": N_MIN, "nfragile": N_FRAGILE, "seuil": SEUIL_BASCULE,

@@ -486,18 +486,32 @@ def marche_commune_bloc(db: Session, commune: str) -> dict | None:
     rendu). Renvoie None si la commune est inconnue (aucune vente)."""
     if not commune:
         return None
-    med_m, n_m = _median_bati_commune(db, commune, "maison")
-    med_a, n_a = _median_bati_commune(db, commune, "appart")
-    med_t, n_t = _median_terrain_commune(db, commune)
+    # MARCHE-UNIQUE-1 (NU-F-001) — les médianes MAISON / APPARTEMENT / TERRAIN servies viennent du
+    # point de calcul UNIQUE `mediane_commune` (millésime entier, nature stricte, dédoublonnage terrain).
+    # Le « Ce bien » du Radar (qui lit ce bloc) sert donc EXACTEMENT la médiane du tableau Radar et de
+    # la fiche commune. La fenêtre 12 mois ne sert plus qu'à l'ÉVOLUTION (récent vs année précédente) et
+    # au compteur « ventes 12 mois », jamais à une médiane divergente.
+    from ..marche_dvf_commune import mediane_commune
+    rc_m = mediane_commune(db, commune, "maison")
+    rc_a = mediane_commune(db, commune, "appartement")
+    rc_t = mediane_commune(db, commune, "terrain")
+    med_m = round(rc_m["eur_m2"]) if rc_m["eur_m2"] is not None else None
+    med_a = round(rc_a["eur_m2"]) if rc_a["eur_m2"] is not None else None
+    med_t = round(rc_t["eur_m2"]) if rc_t["eur_m2"] is not None else None
+    n_m, n_a, n_t = rc_m["n"], rc_a["n"], rc_t["n"]
+    # Évolution 12 mois : médiane maison des 12 derniers mois vs les 12 mois précédents (fenêtre glissante
+    # locale, distincte de la médiane de référence servie ci-dessus).
+    med_m12, _n_m12 = _median_bati_commune(db, commune, "maison")
+    ventes_maison_12m = _n_m12
     med_m_prec, n_m_prec = _median_bati_commune(db, commune, "maison", lo_off=12, hi_off=24)
-    evo = (round((med_m - med_m_prec) / med_m_prec * 100, 1)
-           if med_m and med_m_prec and n_m_prec >= SEUIL_TENDANCE_N else None)
+    evo = (round((med_m12 - med_m_prec) / med_m_prec * 100, 1)
+           if med_m12 and med_m_prec and n_m_prec >= SEUIL_TENDANCE_N else None)
     serie = _serie_maison_annuelle(db, commune)
     if med_m is None and med_a is None and med_t is None and not serie:
         return None   # commune sans donnée DVF exploitable
     return {
         "commune": commune,
-        "ventes_maison_12m": n_m or None,
+        "ventes_maison_12m": ventes_maison_12m or None,
         "median_maison_eur_m2": med_m, "n_maison": n_m or None,
         "median_appartement_eur_m2": med_a, "n_appartement": n_a or None,
         "median_terrain_eur_m2": med_t, "n_terrain": n_t or None,

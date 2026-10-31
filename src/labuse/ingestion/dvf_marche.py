@@ -91,6 +91,11 @@ DDL_MEDIANES = text(
       mediane_prix_m2  integer,                -- €/m² bâti (maison/appart) ou terrain (terrain)
       fenetre          text        NOT NULL,
       computed_at      timestamptz NOT NULL DEFAULT now(),
+      -- MARCHE-UNIQUE-1 (NU-E-032) — le MILLÉSIME DVF (max date de mutation) sur lequel le cache a été
+      -- bâti : il lie le cache à la donnée source. `computed_at` dit QUAND on a calculé ; `millesime_dvf`
+      -- dit SUR QUOI. Un cache dont `millesime_dvf` ≠ max(date_mutation) courant est PÉRIMÉ (vérifiable
+      -- par `caches_marche_perimes`), même si `computed_at` est récent.
+      millesime_dvf    date,
       PRIMARY KEY (secteur, type_bien)
     )""")
 
@@ -98,11 +103,13 @@ DDL_MEDIANES = text(
 def compute_medianes_secteur(session: Session) -> dict:
     """Médianes €/m² par secteur × type de bien — grain MUTATION, ventes seules, idempotent."""
     session.execute(DDL_MEDIANES)
+    # NU-E-032 — migration douce d'une table préexistante (prod) sans la colonne millésime.
+    session.execute(text("ALTER TABLE dvf_secteur_medianes ADD COLUMN IF NOT EXISTS millesime_dvf date"))
     session.execute(text("TRUNCATE dvf_secteur_medianes"))
     session.execute(text(
         """
         INSERT INTO dvf_secteur_medianes
-          (secteur, type_bien, n_ventes, mediane_valeur, mediane_prix_m2, fenetre)
+          (secteur, type_bien, n_ventes, mediane_valeur, mediane_prix_m2, fenetre, millesime_dvf)
         WITH mutations AS (            -- 1 vente = 1 observation (toutes lignes agrégées)
           -- M101 B2 (arbitrage Vic) : « Vente terrain à bâtir » (995 actes) ENTRE dans la médiane
           -- TERRAIN — un acte qui se déclare terrain à bâtir EST une vente de terrain nu ; l'exclure
@@ -146,7 +153,8 @@ def compute_medianes_secteur(session: Session) -> dict:
                percentile_cont(0.5) WITHIN GROUP (ORDER BY valeur)::int,
                percentile_cont(0.5) WITHIN GROUP (ORDER BY prix_m2)
                  FILTER (WHERE prix_m2 IS NOT NULL AND prix_m2 BETWEEN 50 AND 20000)::int,
-               :fenetre
+               :fenetre,
+               (SELECT max(date_mutation) FROM dvf_mutations_parcelle)   -- NU-E-032 : millésime source
         FROM secteurs GROUP BY secteur, type_bien
         """), {"fenetre": FENETRE})
     session.flush()

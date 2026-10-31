@@ -256,7 +256,12 @@ def comparables(db: Session, idu: str, *, profil: str = COMPARABLES_PREMIUM) -> 
         "WHERE dm.geom IS NOT NULL AND dm.date_mutation IS NOT NULL "
         # CHASSE-INVARIANTS-FIX-1 Lot 5 (E-04) — fenêtre ancrée sur la dernière vente, pas CURRENT_DATE.
         "  AND " + fenetre_dvf_sql("dm.date_mutation", annees_param="ans") + " "
-        "  AND dm.nature_mutation ILIKE 'vente%' AND dm.valeur_fonciere > 0 "
+        # MARCHE-UNIQUE-1 (NU-A-012 / NU-E-025) — comparables ANCIENS : vente de gré à gré SEULE
+        # (exclut VEFA/neuf, VTB, adjudication, échange, expropriation). (NU-E-023) — la parcelle
+        # sujet n'est JAMAIS son propre comparable (ses mutations sont retirées).
+        "  AND dm.nature_mutation = 'Vente' AND dm.valeur_fonciere > 0 "
+        "  AND dm.mutation_id NOT IN "
+        "      (SELECT id_mutation FROM dvf_mutations_parcelle WHERE id_parcelle = :idu) "
         "  AND dm.surface_reelle_bati >= 20 "
         "  AND ST_DWithin(ST_Transform(dm.geom, 2975), p.geom_2975, :r) "
         "ORDER BY dm.date_mutation DESC LIMIT 60"),
@@ -325,7 +330,11 @@ def comparateur_bien(db: Session, idu: str, *, type_bien: str | None = None,
             "FROM dvf_mutations dm, p "
             "WHERE dm.geom IS NOT NULL AND dm.date_mutation IS NOT NULL "
             "  AND " + fenetre_dvf_sql("dm.date_mutation", annees_param="ans") + " "
-            "  AND dm.nature_mutation ILIKE 'vente%' AND dm.valeur_fonciere > 0 "
+            # MARCHE-UNIQUE-1 — comparateur BÂTI (Estimer) : ancien de gré à gré SEUL (NU-A-012 /
+            # NU-E-025) ; la parcelle sujet exclue de ses propres comparables (NU-E-023).
+            "  AND dm.nature_mutation = 'Vente' AND dm.valeur_fonciere > 0 "
+            "  AND dm.mutation_id NOT IN "
+            "      (SELECT id_mutation FROM dvf_mutations_parcelle WHERE id_parcelle = :idu) "
             "  AND dm.surface_reelle_bati >= 20 AND " + where_r + " "
             "ORDER BY distance_m ASC LIMIT 600"),
             {"idu": idu, "ans": fenetre_ans, "r": rayon_m}).mappings().all()
@@ -401,17 +410,24 @@ def comparateur_terrain(db: Session, idu: str, *, rayons=(1000.0, 2000.0, 3000.0
     def _fetch(r: float) -> list[dict]:
         rows = db.execute(text(
             "WITH p AS (SELECT geom_2975 g FROM parcels WHERE idu = :idu), "
-            "t AS (SELECT dm.id_mutation, "
-            "        to_char(min(dm.date_mutation), 'YYYY-MM-DD') AS date, "
-            "        extract(year FROM min(dm.date_mutation))::int AS annee, "
-            "        sum(dm.surface_terrain) AS surf, max(dm.valeur_fonciere) AS vf, "
-            "        min(round(ST_Distance(pp.geom_2975, p.g)))::int AS dist "
-            "      FROM dvf_mutations_parcelle dm JOIN parcels pp ON pp.idu = dm.id_parcelle, p "
-            "      WHERE dm.nature_mutation ILIKE 'vente%' AND COALESCE(dm.surface_reelle_bati,0)=0 "
-            "        AND dm.surface_terrain > 0 AND dm.date_mutation IS NOT NULL "
-            "        AND " + fenetre_dvf_sql("dm.date_mutation", annees_param="ans") + " "
-            "        AND ST_DWithin(pp.geom_2975, p.g, :r) "
-            "      GROUP BY dm.id_mutation) "
+            # MARCHE-UNIQUE-1 (NU-E-031) — dénominateur TERRAIN dédoublonné : surface = max() par
+            # (mutation, parcelle) PUIS somme par mutation, jamais la somme des lignes répétées
+            # (nature_culture) qui gonflait le terrain (×146 observé) et faussait le €/m². (NU-E-023) —
+            # la parcelle sujet exclue. (NU-E-025) — nature terrain = Vente + Vente terrain à bâtir.
+            "parc AS (SELECT DISTINCT dm.id_mutation, dm.id_parcelle, dm.valeur_fonciere AS vf, "
+            "           dm.date_mutation AS d, "
+            "           max(COALESCE(dm.surface_terrain,0)) OVER (PARTITION BY dm.id_mutation, dm.id_parcelle) AS terr_p, "
+            "           round(ST_Distance(pp.geom_2975, p.g))::int AS dist "
+            "         FROM dvf_mutations_parcelle dm JOIN parcels pp ON pp.idu = dm.id_parcelle, p "
+            "         WHERE dm.nature_mutation IN ('Vente', 'Vente terrain à bâtir') "
+            "           AND COALESCE(dm.surface_reelle_bati,0)=0 AND dm.surface_terrain > 0 "
+            "           AND dm.date_mutation IS NOT NULL AND dm.id_parcelle <> :idu "
+            "           AND " + fenetre_dvf_sql("dm.date_mutation", annees_param="ans") + " "
+            "           AND ST_DWithin(pp.geom_2975, p.g, :r)), "
+            "t AS (SELECT id_mutation, to_char(min(d), 'YYYY-MM-DD') AS date, "
+            "        extract(year FROM min(d))::int AS annee, "
+            "        sum(terr_p) AS surf, max(vf) AS vf, min(dist)::int AS dist "
+            "      FROM parc GROUP BY id_mutation) "
             "SELECT date, annee, round(surf)::int AS surface_m2, round(vf)::int AS prix_eur, "
             "       round(vf / NULLIF(surf,0))::int AS prix_m2, dist AS distance_m "
             "FROM t WHERE vf / NULLIF(surf,0) BETWEEN 50 AND 4000 ORDER BY dist ASC LIMIT 200"),

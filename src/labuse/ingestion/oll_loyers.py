@@ -186,13 +186,20 @@ def oll_commune(session: Session, insee: str) -> dict | None:
 def oll_parcelle(session: Session, idu: str) -> dict | None:
     """Le loyer OLL de la ZONE de la parcelle (via l'IRIS INSEE intersecté — contours en base,
     kind iris_insee). None si IRIS ou zone introuvable."""
+    # MARCHE-UNIQUE-1 (NU-A-013) — le code IRIS est porté par `spatial_layers.subtype` (9 chiffres :
+    # INSEE + IRIS, ex. 974030103), PAS par `attrs->>'code_iris'` (NULL partout) ni par `name` (libellé
+    # texte dont `right(…,4)` donnait « Deux » et ne joignait RIEN → loyer « non disponible » sur toutes
+    # les fiches). On lit les 4 derniers chiffres de `subtype` ; à défaut d'un IRIS cartographié dans le
+    # zonage OLL, on retombe sur la zone AGRÉGÉE de la commune (iris '0000'), en préférant l'IRIS précis.
     row = session.execute(text(
         "SELECT z.zone FROM parcels p "
         "JOIN spatial_layers sl ON sl.kind = 'iris_insee' "
         " AND ST_Intersects(p.geom_2975, sl.geom_2975) "
         "JOIN oll_zonage z ON z.annee = :a AND z.insee = left(p.idu, 5) "
-        " AND z.iris = right(coalesce(sl.attrs->>'code_iris', sl.name), 4) "
-        "WHERE p.idu = :idu LIMIT 1"), {"idu": idu, "a": ANNEE}).first()
+        " AND z.iris IN (right(sl.subtype, 4), '0000') "
+        "WHERE p.idu = :idu "
+        "ORDER BY (z.iris <> '0000') DESC "   # IRIS précis prioritaire sur l'agrégat commune
+        "LIMIT 1"), {"idu": idu, "a": ANNEE}).first()
     if row is None:
         return None
     zone = int(row[0])

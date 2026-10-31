@@ -74,7 +74,7 @@ def run_minimal(db_session):
 
 def _lig(db_session, idu):
     return db_session.execute(text(
-        "SELECT potentiel_sdp_m2, prix_secteur_eur_m2, valeur_creee_eur, "
+        "SELECT potentiel_sdp_m2, prix_commune_eur_m2, valeur_creee_eur, "
         "       valeur_creee_min_eur, valeur_creee_max_eur, indice_opportunite, "
         "       acces_pm_siren, acces_courrier, p_raw, rang, tier "
         "FROM parcel_p_score_v2 WHERE run_id = :r AND parcelle_id = :i"),
@@ -87,7 +87,7 @@ def test_backfill_potentiel_valeurs_et_intervalle(db_session, run_minimal):
     assert stats["n"] == 3 and stats["n_valeur"] == 2 and stats["n_valeur_pos"] == 1
     a = _lig(db_session, idus[0])
     # 300 m² × médiane 2 000 = 600 000 € ; intervalle honnête = q1/q3 communaux
-    assert a["potentiel_sdp_m2"] == 300 and a["prix_secteur_eur_m2"] == 2000.0
+    assert a["potentiel_sdp_m2"] == 300 and a["prix_commune_eur_m2"] == 2000.0
     assert a["valeur_creee_eur"] == 600_000
     assert a["valeur_creee_min_eur"] == 300 * 1750.0   # q1 (percentile_cont interpolé)
     assert a["valeur_creee_max_eur"] == 300 * 2250.0   # q3
@@ -121,9 +121,9 @@ def test_backfill_ecrit_les_definitions_au_registre(db_session, run_minimal):
     pot = db_session.execute(text(
         "SELECT params -> 'potentiel' FROM p_score_v2_runs WHERE run_id = :r"),
         {"r": RUN}).scalar()
-    assert pot and pot["annee_prix_secteur"] == 2025
+    assert pot and pot["annee_prix_commune"] == 2025
     defs = pot["definitions"]
     # chaque terme NOMME sa source (traçabilité datée)
-    assert "DVF" in defs["prix_secteur_eur_m2"]
+    assert "DVF" in defs["prix_commune_eur_m2"]
     assert "parcel_residuel" in defs["potentiel_sdp_m2"]
     assert "jamais partagé entre comptes" in defs["deja_contacte"]
