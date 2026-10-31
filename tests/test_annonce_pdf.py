@@ -34,8 +34,14 @@ _RAPPORT_BATI = {
         "comparables": [{"date": "08/2025", "type": "Maison", "surface_m2": 120, "prix_eur": 450000,
                          "prix_m2": 3750, "distance_m": 103}],
         "n_total": 42, "emprise_bati_m2": 197,
-        "valeur_indicative": {"surface_m2": 197, "eur_m2": 3602, "valeur_eur": 710000,
-                              "valeur_basse": 483000, "valeur_haute": 937000},
+        # ESTIMER-2 (D-009, E-021) — la valeur indicative porte la SURFACE servie (ici bâtie de la
+        # dernière vente DVF) + son libellé/note, servis à l'identique à l'écran et au PDF.
+        "valeur_indicative": {"surface_m2": 150, "eur_m2": 3602, "valeur_eur": 540000,
+                              "valeur_basse": 367000, "valeur_haute": 713000,
+                              "surface_source": "dvf_vente",
+                              "ligne": "Surface bâtie de la dernière vente DVF (2023, 150 m²)",
+                              "note": ("Surface bâtie de la dernière vente DVF de la parcelle. "
+                                       "Ordre de grandeur, pas un calcul exact.")},
         "lecture_fonciere": {"surface_m2": 504, "eur_m2": 369, "valeur_eur": 186000,
                              "perimetre": "secteur", "pct_du_bati": 26},
         "repere_terrain_nu": {"eur_m2": 369, "n": 15, "perimetre": "secteur", "periode": "2021–2025"},
@@ -115,10 +121,13 @@ def test_parcelle_structure_maquette():
     assert "Sud-Ouest" in html and "D · Faible" in html
     assert "3 602 €/m²" in html and "Fiabilité Limitée" in html
     assert "Précision mesurée sur les ventes 2025 : ±32 %" in html
-    # ORDRE DE GRANDEUR (emprise au sol), montants arrondis au millier, fourchette élargie
-    assert "Ordre de grandeur du bien" in html and "710 000 €" in html
-    assert "emprise au sol BD TOPO (197 m²)" in html and "× 3 602 €/m²" in html  # esc() échappe l apostrophe
-    assert "483 000 – 937 000 €" in html
+    # ESTIMER-2 — ORDRE DE GRANDEUR : la SURFACE servie est dite (ici bâtie de la dernière vente DVF),
+    # montants arrondis au millier, fourchette élargie. Le libellé vient du back (`ligne`), identique au PDF.
+    assert "Ordre de grandeur du bien" in html and "540 000 €" in html
+    assert "Surface bâtie de la dernière vente DVF (2023, 150 m²)" in html and "× 3 602 €/m²" in html
+    assert "367 000 – 713 000 €" in html
+    # la mention d'incertitude (note servie par le back) est imprimée
+    assert "Ordre de grandeur, pas un calcul exact" in html
     # lecture FONCIÈRE à côté de la lecture bâti (comme la variante lien)
     assert "Lecture foncière" in html and "186 000 €" in html and "26 % de l" in html
     # tableau des comparables + total

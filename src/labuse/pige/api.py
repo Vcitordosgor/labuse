@@ -1541,14 +1541,25 @@ def _terrain_repere(db, idu: str) -> dict | None:
     return None
 
 
-# ESTIMATION-BANC-2 (mandat BANC-RAYON-1) — précision RECALIBRÉE sur le banc rejoué sur l'estimateur
-# ACTUEL (maisons comparées aux maisons, copropriété = appartement), même règle SANS FUITE, mêmes
-# 5 592 ventes DVF 2025. L'estimateur reste une médiane de secteur, pas un AVM. Le badge dit la précision
-# du SEGMENT, pas de n. Médian |écart| par VRAI segment (docs/audit-2026-10/banc-rayon-1) :
-#   appartement 17 % (banc 1 : 17) · maison 28 % (banc 1 : 32, −4 pts grâce au comparateur maison↔maison)
-#   · terrain nu 19 % (inchangé, logique terrain inchangée) · bâti combiné 26 % (banc 1 : 28, global).
-# Seuils de badge inchangés : < 15 % Élevée, < 25 % Moyenne, au-delà Limitée.
-_ECART_SEGMENT = {"appartement": 17, "maison": 28, "terrain": 19, "bati": 26}
+# ESTIMER-2 (E-024) — la fiabilité n'est plus un ±% FIXE par segment (« ±28 % pour toute maison »). Elle
+# est CALCULÉE pour CE bien à partir du nombre de comparables (n) et de leur DISPERSION (écart
+# interquartile relatif, q3−q1 sur médiane), en bandes CALIBRÉES sur le banc rejoué sans fuite
+# (docs/audit-2026-11/estimer-2). Règle : « Élevée » = beaucoup de comparables ET faible dispersion ;
+# « Limitée » = peu de comparables OU forte dispersion OU repli commune ; sinon « Moyenne ». Le ±%
+# SERVI est l'écart médian MESURÉ de la bande (honnête — « Élevée » tient ce qu'elle promet), pas la
+# promesse. Seuils et ±% calibrés en fin de banc (cf. COMPTE-RENDU, section « bandes de fiabilité »).
+_FIAB_N_ELEVEE = 15        # n ≥ ce seuil requis pour « Élevée »
+_FIAB_DISP_ELEVEE = 0.30   # dispersion IQR/médiane ≤ ce seuil requise pour « Élevée »
+_FIAB_N_MIN = 8            # n < ce seuil → « Limitée »
+_FIAB_DISP_LIMITEE = 0.75  # dispersion > ce seuil → « Limitée »
+# ±% SERVI = écart médian |mesuré| de la bande sur le banc rejoué (4 324 ventes bâties DVF 2025, sans
+# fuite) : Élevée 18,0 % · Moyenne 22,2 % · Limitée 36,2 % (docs/audit-2026-11/estimer-2/METRIQUES.json).
+# Le plancher d'erreur €/m² de l'estimateur (médiane de secteur, pas un AVM) est ~18 % même pour la
+# meilleure bande (n≥15, dispersion ≤0,30) : « Élevée » SERT ce ±18 % mesuré — elle tient sa promesse
+# parce que le ±% affiché EST l'écart réel, et non un « <15 % » que l'estimateur ne peut pas tenir.
+_FIAB_ECART = {"fiable": 18, "moyen": 23, "limitee": 36}
+# Terrain nu : logique inchangée (mandat §terrain non modifié) — ±% du segment, calibré banc 1/2.
+_ECART_SEGMENT = {"terrain": 19}
 
 
 def _arrondi_mille(n):
@@ -1557,11 +1568,120 @@ def _arrondi_mille(n):
 
 
 def _fiabilite_segment(type_bien: str | None) -> tuple[str, int]:
-    """Fiabilité RECALIBRÉE sur le SEGMENT (ESTIMATION-BANC-1) : écart médian mesuré → « Élevée » sous
+    """Fiabilité PAR SEGMENT (terrain nu seulement, logique inchangée) : ±% mesuré → « Élevée » sous
     15 %, « Moyenne » sous 25 %, « Limitée » au-delà. Renvoie (niveau interne, écart % mesuré)."""
-    ecart = _ECART_SEGMENT.get(type_bien or "bati", _ECART_SEGMENT["bati"])
+    ecart = _ECART_SEGMENT.get(type_bien or "terrain", 25)
     niveau = "fiable" if ecart < 15 else ("moyen" if ecart < 25 else "limitee")
     return niveau, ecart
+
+
+def _fiabilite_bien(n, median, q1, q3, commune_fallback: bool) -> tuple[str, int]:
+    """ESTIMER-2 (E-024) — fiabilité d'une estimation bâtie, CALCULÉE pour CE bien : à partir du nombre
+    de comparables `n` et de leur DISPERSION (IQR relatif (q3−q1)/médiane). Bandes calibrées sur le banc.
+    Renvoie (niveau interne, ±% médian mesuré de la bande). Repli commune → toujours « Limitée »."""
+    if commune_fallback:
+        return "limitee", _FIAB_ECART["limitee"]
+    disp = None
+    if isinstance(q1, (int, float)) and isinstance(q3, (int, float)) and isinstance(median, (int, float)) and median:
+        disp = (q3 - q1) / median
+    n = int(n or 0)
+    if n < _FIAB_N_MIN or (disp is not None and disp > _FIAB_DISP_LIMITEE):
+        niveau = "limitee"
+    elif n >= _FIAB_N_ELEVEE and disp is not None and disp <= _FIAB_DISP_ELEVEE:
+        niveau = "fiable"
+    else:
+        niveau = "moyen"
+    return niveau, _FIAB_ECART[niveau]
+
+
+def _derniere_mutation_dvf(db, idu: str) -> dict | None:
+    """ESTIMER-2 (E-022) — la DERNIÈRE mutation DVF de la parcelle (ventes « Vente » / « Vente terrain à
+    bâtir »), avec la NATURE du bien VENDU (maison / appartement / terrain) et sa surface bâtie. La nature
+    est lue sur la MUTATION, pas sur l'état actuel de la parcelle : un terrain vendu nu n'est plus
+    valorisé comme une maison. None si aucune vente. Renvoie {date, nature, bati_m2, terrain_m2, valeur}."""
+    row = db.execute(text(
+        "WITH lm AS ("
+        "  SELECT id_mutation, date_mutation FROM dvf_mutations_parcelle "
+        "  WHERE id_parcelle = :idu AND date_mutation IS NOT NULL "
+        "    AND nature_mutation IN ('Vente', 'Vente terrain à bâtir') "
+        "  ORDER BY date_mutation DESC LIMIT 1) "
+        "SELECT to_char(lm.date_mutation, 'YYYY-MM-DD') AS date, "
+        "  COALESCE(sum(dm.surface_reelle_bati) FILTER "
+        "    (WHERE dm.type_local IN ('Maison','Appartement')), 0) AS bati_m2, "
+        "  count(*) FILTER (WHERE dm.type_local = 'Maison') AS n_maison, "
+        "  count(*) FILTER (WHERE dm.type_local = 'Appartement') AS n_appart, "
+        "  max(dm.surface_terrain) AS terrain_m2, max(dm.valeur_fonciere) AS valeur "
+        "FROM lm JOIN dvf_mutations_parcelle dm "
+        "  ON dm.id_parcelle = :idu AND dm.id_mutation = lm.id_mutation "
+        "GROUP BY lm.date_mutation"), {"idu": idu}).mappings().first()
+    if not row:
+        return None
+    n_m, n_a = int(row["n_maison"] or 0), int(row["n_appart"] or 0)
+    if n_m or n_a:
+        nature = "maison" if n_m >= n_a else "appartement"
+    elif (row["terrain_m2"] or 0) > 0:
+        nature = "terrain"
+    else:
+        nature = None
+    return {"date": row["date"], "nature": nature, "bati_m2": float(row["bati_m2"] or 0),
+            "terrain_m2": float(row["terrain_m2"] or 0), "valeur": row["valeur"]}
+
+
+_RATIO_ASSISE_MIN = 20   # ESTIMER-2 — assise minimale (n ventes) pour servir le ratio surface/emprise
+
+
+def _ratio_surf_emprise_commune(db, insee: str) -> tuple[float | None, int]:
+    """ESTIMER-2 (E-021) — ratio médian (surface bâtie VENDUE / emprise au sol BD TOPO) sur les ventes de
+    MAISONS de la commune, et son assise (n). Sert à estimer une surface habitable depuis l'emprise quand
+    la parcelle n'a pas de vente DVF. (ratio, n) — (None, n) si l'assise est trop mince."""
+    if not insee:
+        return None, 0
+    row = db.execute(text(
+        "WITH v AS ("
+        "  SELECT dm.id_parcelle, dm.id_mutation, sum(dm.surface_reelle_bati) AS surf "
+        "  FROM dvf_mutations_parcelle dm "
+        "  WHERE dm.code_commune = :insee AND dm.type_local = 'Maison' "
+        "    AND dm.nature_mutation = 'Vente' AND dm.surface_reelle_bati > 0 "
+        "  GROUP BY dm.id_parcelle, dm.id_mutation) "
+        "SELECT count(*) AS n, "
+        "  percentile_cont(0.5) WITHIN GROUP (ORDER BY v.surf / b.emprise_bati_m2) AS ratio "
+        "FROM v JOIN p_model_bati b ON b.idu = v.id_parcelle AND b.emprise_bati_m2 > 0"),
+        {"insee": insee}).mappings().first()
+    n = int((row or {}).get("n") or 0)
+    if not row or not row.get("ratio") or n < _RATIO_ASSISE_MIN:
+        return None, n
+    return round(float(row["ratio"]), 3), n
+
+
+def _surface_pour_total(db, idu: str, emprise, mut: dict | None, insee: str) -> tuple[int | None, dict | None]:
+    """ESTIMER-2 (D-009, E-021) — la surface du TOTAL indicatif d'un bien bâti, DANS CET ORDRE :
+      1. la surface bâtie de la DERNIÈRE VENTE DVF de la parcelle si elle existe ;
+      2. sinon l'emprise au sol BD TOPO × le RATIO MÉDIAN (surface vendue / emprise) des ventes de
+         maisons de la commune (ratio + assise JOURNALISÉS).
+    Plus JAMAIS l'emprise brute × un prix habitable. Le libellé dit quelle surface a servi.
+    Renvoie (surface_m2, source) ou (None, None) si aucune surface n'est disponible."""
+    if mut and (mut.get("bati_m2") or 0) > 0:
+        s = round(mut["bati_m2"])
+        an = (mut.get("date") or "")[:4]
+        return s, {"source": "dvf_vente",
+                   "ligne": (f"Surface bâtie de la dernière vente DVF ({an}, {s} m²)" if an
+                             else f"Surface bâtie de la dernière vente DVF ({s} m²)"),
+                   "note": ("Surface bâtie de la dernière vente DVF de la parcelle. "
+                            "Ordre de grandeur, pas un calcul exact.")}
+    if isinstance(emprise, (int, float)) and emprise > 0:
+        ratio, assise = _ratio_surf_emprise_commune(db, insee)
+        if ratio:
+            s = round(emprise * ratio)
+            log.info("estimation %s : surface habitable estimée = emprise %d m² × ratio %.3f "
+                     "(médiane surface vendue / emprise sur %d ventes de maisons de la commune %s)",
+                     idu, round(emprise), ratio, assise, insee)
+            return s, {"source": "emprise_ratio",
+                       "ligne": f"Surface habitable estimée d'après l'emprise au sol ({s} m²)",
+                       "note": ("Surface habitable estimée d'après l'emprise au sol : total indicatif "
+                                "(ratio médian surface vendue / emprise au sol des ventes de maisons de "
+                                f"la commune : {('%.2f' % ratio).replace('.', ',')} sur "
+                                f"{f'{assise:,}'.replace(',', ' ')} ventes).")}
+    return None, None
 
 
 # CHASSE-4-FIX (C4-001) — le MOT affiché de la fiabilité est décidé ICI, une seule fois, et servi tel
@@ -1579,10 +1699,11 @@ def _emprise_bati_m2(db, idu: str) -> int | None:
     return round(float(emp)) if emp and float(emp) > 0 else None
 
 
-def _valeur_indicative(surface_m2, median, ecart_pct) -> dict | None:
+def _valeur_indicative(surface_m2, median, ecart_pct, *, source: dict | None = None) -> dict | None:
     """Valeur indicative = surface × €/m² — un ORDRE DE GRANDEUR (jamais un calcul exact). Montants
-    arrondis au millier ; fourchette ÉLARGIE par l'écart mesuré du segment (surface d'emprise ≠ surface
-    habitable). None si surface ou médiane manquent (la ligne disparaît)."""
+    arrondis au millier ; fourchette ÉLARGIE par l'écart mesuré du segment. `source` (ESTIMER-2) porte
+    la PROVENANCE de la surface (vente DVF ou emprise×ratio), le LIBELLÉ et la NOTE servis à l'identique
+    à l'écran et au PDF. None si surface ou médiane manquent (la ligne disparaît)."""
     if not isinstance(surface_m2, (int, float)) or not isinstance(median, (int, float)):
         return None
     central = surface_m2 * median
@@ -1590,6 +1711,10 @@ def _valeur_indicative(surface_m2, median, ecart_pct) -> dict | None:
     if isinstance(ecart_pct, (int, float)) and ecart_pct > 0:
         out["valeur_basse"] = _arrondi_mille(central * (1 - ecart_pct / 100.0))
         out["valeur_haute"] = _arrondi_mille(central * (1 + ecart_pct / 100.0))
+    src = source or {}
+    out["surface_source"] = src.get("source")   # 'dvf_vente' | 'emprise_ratio' | None
+    out["ligne"] = src.get("ligne")              # libellé « quelle surface a servi » (écran == PDF)
+    out["note"] = src.get("note")
     return out
 
 
@@ -1614,18 +1739,52 @@ def estimation_annonce(db, idu: str, fiche: dict) -> dict:
 
     · Parcelle NUE → repère €/m² de TERRAIN NU du secteur (`_terrain_repere`) + les 8 ventes de terrain nu
       les plus proches (`comparateur_terrain`) ; valeur indicative = surface × repère.
-    · Parcelle BÂTIE → comparateur BÂTI UNIQUE `comparateur_bien` (agrégat + 8 proches + total), TYPE suivi.
-      Valeur indicative = ORDRE DE GRANDEUR (emprise au sol BD TOPO × médiane, fourchette élargie par
-      l'écart mesuré du segment) + lecture FONCIÈRE (surface × repère terrain nu, % du bâti).
-    Fiabilité RECALIBRÉE sur le SEGMENT (ESTIMATION-BANC-1), pas sur n. Montants arrondis au millier."""
+    · Parcelle BÂTIE → comparateur BÂTI UNIQUE `comparateur_bien` (agrégat + 8 proches + total).
+      Valeur indicative = ORDRE DE GRANDEUR : SURFACE (surface bâtie de la dernière vente DVF, sinon
+      emprise au sol × ratio médian surface/emprise de la commune — jamais l'emprise brute) × médiane
+      €/m² habitable + lecture FONCIÈRE (surface × repère terrain nu, % du bâti).
+
+    ESTIMER-2 — la NATURE est lue sur la dernière mutation DVF (E-022) ; la branche copropriété passe
+    AVANT la branche terrain nu (E-026) ; une parcelle non mesurée reste « bâti non mesuré » (D-012) ;
+    la fiabilité est calculée bien par bien (E-024). Montants arrondis au millier."""
     from .. import marche_service as _msvc
-    nature = _nature_parcelle(db, idu)
-    # CHASSE-4-FIX (C4-003) — une parcelle en COPROPRIÉTÉ n'est pas une maison : flag copro du run servi
-    # (même indicateur que le verdict « Copro — acquisition complexe » de la fiche).
+    # ESTIMER-2 (E-022) — nature du bien VENDU, lue sur la dernière mutation DVF ; à défaut, l'état de
+    # la parcelle (emprise BD TOPO). Un terrain vendu nu n'est plus valorisé comme une maison.
+    mut = _derniere_mutation_dvf(db, idu)
+    nature_mut = mut.get("nature") if mut else None       # 'maison' | 'appartement' | 'terrain' | None
+    nature_parc = _nature_parcelle(db, idu)               # 'nu' | 'non_mesure' | 'bati_encore' | 'bati_max'
+    # CHASSE-4-FIX (C4-003) — flag copropriété du run servi (même indicateur que le verdict fiche).
     copro = bool(((fiche or {}).get("score_v2") or {}).get("copro"))
     repere_tn = _terrain_repere(db, idu)
     surface_parc = (fiche or {}).get("surface_m2") or (fiche or {}).get("contenance_m2")
-    if nature == "nu":
+    insee = idu[:5]
+
+    # 1 — COPROPRIÉTÉ (E-026) : la branche copropriété passe AVANT la branche terrain nu. Un lot de copro
+    #     n'est ni un terrain ni une maison : comparateur APPARTEMENTS, pas d'ordre de grandeur bâti
+    #     (aucun bien unique à valoriser), la lecture foncière reste.
+    if copro:
+        cb = _msvc.comparateur_bien(db, idu, type_bien="appartement")
+        base = {"nature": "copropriete", "type_comparateur": "bati", "type_bien": "appartement",
+                "repere_terrain_nu": repere_tn,
+                "lecture_fonciere": _lecture_fonciere_parcelle(surface_parc, repere_tn, None)}
+        if not cb or cb.get("median") is None:
+            return {**base, "median": None, "comparables": [],
+                    "fiabilite_mot": _fiabilite_mot("limitee", False),
+                    "note": "Pas assez de ventes d'appartements comparables dans le secteur."}
+        niveau, ecart = _fiabilite_bien(cb.get("n"), cb.get("median"), cb.get("q1"), cb.get("q3"),
+                                        cb.get("commune_fallback"))
+        return {**base,
+                "type_label_pluriel": cb.get("type_label_pluriel") or "appartements",
+                "median": cb.get("median"), "q1": cb.get("q1"), "q3": cb.get("q3"), "n": cb.get("n"),
+                "radius_m": cb.get("radius_m"), "periode": cb.get("periode"),
+                "fiabilite": niveau, "precision_pct": ecart, "commune_fallback": cb.get("commune_fallback"),
+                "fiabilite_mot": _fiabilite_mot(niveau, cb.get("commune_fallback")),
+                "comparables": cb.get("comparables") or [], "n_total": cb.get("n_total"),
+                "emprise_bati_m2": None, "valeur_indicative": None}
+
+    # 2 — TERRAIN NU : la dernière vente DVF est un terrain (E-022) OU, à défaut de vente, la parcelle
+    #     est nue (emprise < 5 %). Un terrain vendu nu n'est plus valorisé comme une maison.
+    if (nature_mut == "terrain") or (nature_mut is None and nature_parc == "nu"):
         niveau, ecart = _fiabilite_segment("terrain")
         terr = _msvc.comparateur_terrain(db, idu)
         if repere_tn and repere_tn.get("eur_m2"):
@@ -1642,38 +1801,28 @@ def estimation_annonce(db, idu: str, fiche: dict) -> dict:
         return {"nature": "nue", "type_comparateur": "terrain_nu", "type_bien": "terrain",
                 "median": None, "comparables": [], "repere_terrain_nu": repere_tn,
                 "note": "Pas assez de ventes de terrain nu comparables dans le secteur."}
-    # COPROPRIÉTÉ (C4-003) — comparateur APPARTEMENTS, PAS d'ordre de grandeur sur l'emprise totale du
-    # bâti (aucun bien unique à valoriser), la lecture foncière reste.
-    if copro:
-        niveau, ecart = _fiabilite_segment("appartement")
-        cb = _msvc.comparateur_bien(db, idu, type_bien="appartement")
-        base = {"nature": "copropriete", "type_comparateur": "bati", "type_bien": "appartement",
-                "repere_terrain_nu": repere_tn,
-                "lecture_fonciere": _lecture_fonciere_parcelle(surface_parc, repere_tn, None)}
-        if not cb or cb.get("median") is None:
-            return {**base, "median": None, "comparables": [],
-                    "fiabilite_mot": _fiabilite_mot(niveau, False),
-                    "note": "Pas assez de ventes d'appartements comparables dans le secteur."}
-        return {**base,
-                "type_label_pluriel": cb.get("type_label_pluriel") or "appartements",
-                "median": cb.get("median"), "q1": cb.get("q1"), "q3": cb.get("q3"), "n": cb.get("n"),
-                "radius_m": cb.get("radius_m"), "periode": cb.get("periode"),
-                "fiabilite": niveau, "precision_pct": ecart, "commune_fallback": cb.get("commune_fallback"),
-                "fiabilite_mot": _fiabilite_mot(niveau, cb.get("commune_fallback")),
-                "comparables": cb.get("comparables") or [], "n_total": cb.get("n_total"),
-                "emprise_bati_m2": None, "valeur_indicative": None}
-    # BÂTIE (ou non mesurée traitée comme bâtie) — comparateur bâti unique.
-    cb = _msvc.comparateur_bien(db, idu)
+
+    # 3 — BÂTI : la dernière vente DVF est un bâti (type maison/appartement FORCÉ dans le comparateur,
+    #     E-022) ; à défaut de vente, le comparateur déduit le type dominant du secteur. Une parcelle
+    #     NON MESURÉE (taux d'emprise inconnu, aucune vente) reste « bâti non mesuré » (D-012).
+    type_force = nature_mut if nature_mut in ("maison", "appartement") else None
+    non_mesure = (nature_mut is None and nature_parc == "non_mesure")
+    nature_out = "bati_non_mesure" if non_mesure else "batie"
+    cb = _msvc.comparateur_bien(db, idu, type_bien=type_force)
     if not cb or cb.get("median") is None:
-        return {"nature": "batie" if nature in ("bati_encore", "bati_max") else "inconnue",
-                "type_comparateur": "bati", "type_bien": (cb or {}).get("type_bien") or "bati",
+        return {"nature": nature_out, "type_comparateur": "bati",
+                "type_bien": (cb or {}).get("type_bien") or (type_force or "bati"),
                 "median": None, "comparables": [], "repere_terrain_nu": repere_tn,
                 "note": "Pas assez de ventes comparables dans le secteur."}
-    niveau, ecart = _fiabilite_segment(cb.get("type_bien"))
+    niveau, ecart = _fiabilite_bien(cb.get("n"), cb.get("median"), cb.get("q1"), cb.get("q3"),
+                                    cb.get("commune_fallback"))
     emprise = _emprise_bati_m2(db, idu)
-    vi = _valeur_indicative(emprise, cb.get("median"), ecart)
+    # ESTIMER-2 (D-009, E-021) — la SURFACE du total : surface bâtie de la dernière vente DVF si elle
+    # existe, sinon emprise × ratio médian de la commune. Jamais l'emprise brute × un prix habitable.
+    surface_tot, src_surf = _surface_pour_total(db, idu, emprise, mut, insee)
+    vi = _valeur_indicative(surface_tot, cb.get("median"), ecart, source=src_surf)
     return {
-        "nature": "batie" if nature in ("bati_encore", "bati_max") else "inconnue",
+        "nature": nature_out,
         "type_comparateur": "bati", "type_bien": cb.get("type_bien"),
         "type_label_pluriel": cb.get("type_label_pluriel"),
         "median": cb.get("median"), "q1": cb.get("q1"), "q3": cb.get("q3"), "n": cb.get("n"),
@@ -2008,10 +2157,16 @@ def rapport_parcelle(db, idu: str, fiche: dict | None = None) -> dict:
     except Exception:  # noqa: BLE001 — l'exposition est une tuile « plus », jamais un bloqueur
         expo = None
     type_bien = est.get("type_bien")
-    if est.get("nature") == "copropriete":   # CHASSE-4-FIX (C4-003)
+    # ESTIMER-2 — le libellé de nature suit le verdict de l'estimation (nature lue sur la dernière vente
+    # DVF, E-022) : copropriété, terrain nu, bâti non mesuré (D-012 — jamais « bâtie, maison » sans
+    # mesure), sinon « Parcelle bâtie » + type (maison/appartement).
+    est_nat = est.get("nature")
+    if est_nat == "copropriete":   # CHASSE-4-FIX (C4-003)
         nature_label = "Copropriété"
-    elif nature == "nu":
+    elif est_nat == "nue":
         nature_label = "Parcelle nue"
+    elif est_nat == "bati_non_mesure":   # D-012
+        nature_label = "Bâti non mesuré"
     else:
         suff = {"maison": ", maison", "appartement": ", appartement"}.get(type_bien or "", "")
         nature_label = f"Parcelle bâtie{suff}"

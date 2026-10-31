@@ -211,7 +211,8 @@ function RapportParcelle({ idu }: { idu: string }) {
               <div className="mt-3 rounded-md border border-line-2 bg-surface-3 p-2.5">
                 <p className="text-[10px] uppercase tracking-wide text-txt-dim">{terrain ? 'Ordre de grandeur du terrain' : 'Ordre de grandeur du bien'}</p>
                 <p className="mt-1 flex justify-between gap-2 text-[12.5px] text-txt-hi">
-                  <span className="text-txt-dim">{terrain ? `Terrain ${fmtM2(e.valeur_indicative.surface_m2)}` : `D’après l’emprise au sol BD TOPO (${fmtM2(e.valeur_indicative.surface_m2)})`} × {fmtInt(e.valeur_indicative.eur_m2)} €/m²</span>
+                  {/* ESTIMER-2 — le libellé « quelle surface a servi » vient du back (ligne), identique au PDF. */}
+                  <span className="text-txt-dim">{terrain ? `Terrain ${fmtM2(e.valeur_indicative.surface_m2)}` : (e.valeur_indicative.ligne ?? `Surface (${fmtM2(e.valeur_indicative.surface_m2)})`)} × {fmtInt(e.valeur_indicative.eur_m2)} €/m²</span>
                   <span className="shrink-0 font-semibold">{fmtInt(e.valeur_indicative.valeur_eur)} €</span>
                 </p>
                 {e.valeur_indicative.valeur_basse != null && e.valeur_indicative.valeur_haute != null && (
@@ -219,7 +220,7 @@ function RapportParcelle({ idu }: { idu: string }) {
                     <span>Fourchette</span><span className="shrink-0">{fmtInt(e.valeur_indicative.valeur_basse)} – {fmtInt(e.valeur_indicative.valeur_haute)} €</span>
                   </p>
                 )}
-                {!terrain && <p className="mt-1.5 text-[11px] leading-snug text-txt-mut">Ordre de grandeur, pas un calcul exact : la surface habitable réelle n’est pas connue (emprise au sol BD TOPO).</p>}
+                {!terrain && e.valeur_indicative.note && <p className="mt-1.5 text-[11px] leading-snug text-txt-mut">{e.valeur_indicative.note}</p>}
               </div>
             )}
             {/* Lecture foncière (parcelle bâtie) — comme la variante lien. */}

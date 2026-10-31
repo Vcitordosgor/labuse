@@ -139,6 +139,8 @@ LECTURES: tuple[Lecture, ...] = (
       "« Dernières ventes de cette parcelle » (6 mutations actées portant son idu, DISTINCT ON id_mutation) servies telles quelles sur l'écran scoreur/Étudier."),
     L("dvf_mutations_parcelle", "cascade/context.py", "tier_opportunite", "couche_verdict",
       "EXISTS(mutation DVF sur la parcelle) = signal renouvellement du contexte de cascade → classement servi (tier)."),
+    L("dvf_mutations_parcelle", "pige/api.py", None, None,
+      "ESTIMER-2 (E-022/E-021) — Estimer un bien lit la DERNIÈRE mutation DVF de la parcelle (nature du bien VENDU : maison/appartement/terrain, et sa surface bâtie) et le ratio médian surface vendue/emprise des ventes de maisons de la commune ; sert la nature de l'estimation et la surface du total indicatif de l'outil (jamais l'emprise brute). Machinerie de l'outil Estimer, hors robinets de fiche."),
     L("dvf_mutations_parcelle", "pige/cycle.py", "ecart_demande_acte_pct", "outil_radar_marche",
       "matcher_dvf : mutation « Vente » 3-18 mois après publication → statut vendue + délai + écart prix affiché/acté enregistrés sur pige_biens (nourrit l'écart demandé/acté du Radar)."),
     L("dvf_mutations_parcelle", "pige/rattachement_html.py", None, None,
