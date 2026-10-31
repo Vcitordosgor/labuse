@@ -1,19 +1,24 @@
-"""DONNEES-FIX-1 lot A — le badge « Sources discordantes » compare la BONNE grandeur.
+"""Le badge « Sources discordantes » compare des hauteurs de MÊME NATURE.
 
-Règle UNIQUE (`discordance_hauteur`) lue par la fiche §Bâti ET la marge en hauteur (Potentiel).
-Avant : on comparait le FAÎTAGE LiDAR (p99) à BD TOPO (≈ égout) → 52 759 bâtis badgés à tort.
-Après : on compare l'ÉGOUT LiDAR à BD TOPO (même grandeur) + un plafond sur le faîtage aberrant.
+DONNEES-FIX-1 lot A : on ne compare plus le FAÎTAGE LiDAR au simple « BD TOPO ≈ égout ».
+FAISA-REGLES-1 (A-004) : la hauteur BD TOPO est une hauteur de BÂTIMENT (haut du bâti, ≈ faîtage) ; elle
+doit tomber dans l'ENVELOPPE mesurée [égout, faîtage] du LiDAR. Discordance UNIQUEMENT si BD TOPO sort de
+l'enveloppe (au-dessus du faîtage ou sous l'égout), JAMAIS le simple « faîtage > égout » (définition d'un
+toit, qui comparait deux grandeurs différentes et allumait ~16 % des bâtis). L'écart égout↔BD TOPO reste
+fourni en annexe (nature différente), mais ne pilote plus le verdict.
 """
 from labuse.faisabilite.hauteur_lidar import (
-    discordance_hauteur,
-    SEUIL_ECART_EGOUT_BDTOPO_M,
     PLAFOND_FAITAGE_ABERRANT_M,
+    SEUIL_BDTOPO_SOUS_EGOUT_M,
+    SEUIL_ECART_EGOUT_BDTOPO_M,
+    SEUIL_FAITAGE_SOUS_BDTOPO_M,
+    discordance_hauteur,
 )
 
 
 def test_bz1065_plus_badgee():
-    """BZ1065 (R+2/R+3, LiDAR juste) : faîtage 10,3 > BD TOPO 4,2 était badgé à tort. L'égout 3,6
-    ≈ BD TOPO 4,2 → même grandeur cohérente → plus de badge."""
+    """BZ1065 (R+2/R+3, LiDAR juste) : faîtage 10,3 > BD TOPO 4,2 était badgé à tort. BD TOPO 4,2 ∈
+    [égout 3,6 ; faîtage 10,3] → cohérent → plus de badge."""
     d = discordance_hauteur({"faitage_m": 10.3, "egout_m": 3.6, "hauteur_bdtopo_m": 4.2,
                              "ecart_faitage_bdtopo_m": 6.1})
     assert d["discordante"] is False
@@ -22,8 +27,7 @@ def test_bz1065_plus_badgee():
 
 
 def test_aberration_faitage_toujours_badgee():
-    """Les 2 aberrations de l'audit (faîtage 53 401 m = bug de coordonnée) : l'égout est normal
-    (−1,8 m), donc invisible à la comparaison égout↔BD TOPO — c'est le PLAFOND faîtage qui les capte."""
+    """Les 2 aberrations de l'audit (faîtage 53 401 m = bug de coordonnée) captées par le PLAFOND faîtage."""
     d = discordance_hauteur({"faitage_m": 53401.6, "egout_m": 4.3, "hauteur_bdtopo_m": 6.1,
                              "ecart_faitage_bdtopo_m": 53395.5})
     assert d["discordante"] is True
@@ -31,30 +35,39 @@ def test_aberration_faitage_toujours_badgee():
 
 
 def test_faitage_negatif_est_aberrant():
-    """MNS < MNT → faîtage ≤ 0 : mesure cassée, à écarter (56 lignes en base)."""
+    """MNS < MNT → faîtage ≤ 0 : mesure cassée, à écarter."""
     d = discordance_hauteur({"faitage_m": -11.6, "egout_m": -15.7, "hauteur_bdtopo_m": 4.5})
     assert d["discordante"] is True
     assert d["motif"] == "faîtage aberrant"
 
 
-def test_discordance_egout_meme_grandeur():
-    """CI-1 : depuis RECETTE-2 A4, un faîtage nettement SOUS BD TOPO a son propre motif prioritaire
-    (« faîtage sous la hauteur BD TOPO »). Pour exercer le motif « égout ↔ BD TOPO » (l'ÉGOUT LiDAR
-    en désaccord avec BD TOPO sur la MÊME grandeur), on garde un faîtage cohérent avec BD TOPO
-    (28,0 ≈ 28,9, écart 0,9 < seuil 3 m) et un égout LiDAR faux (5,6) : écart égout↔BD TOPO 23,3 m > 15 m."""
+def test_bdtopo_au_dessus_du_faitage():
+    """FAISA-REGLES-1 (A-004) — BD TOPO AU-DESSUS du faîtage mesuré (rien n'est plus haut que le point
+    haut du toit) : comparaison de MÊME nature (faîtage ↔ BD TOPO), écart > seuil 3 m → badge."""
+    d = discordance_hauteur({"faitage_m": 10.0, "egout_m": 4.0, "hauteur_bdtopo_m": 15.5,
+                             "ecart_faitage_bdtopo_m": -5.5})
+    assert d["discordante"] is True
+    assert d["motif"] == "BD TOPO au-dessus du faîtage mesuré"
+
+
+def test_bdtopo_sous_l_egout():
+    """FAISA-REGLES-1 (A-004) — BD TOPO SOUS l'égout mesuré (la hauteur déclarée ne peut être sous le
+    bord de toit) : écart égout − BD TOPO > seuil 3 m → badge."""
+    d = discordance_hauteur({"faitage_m": 20.0, "egout_m": 12.0, "hauteur_bdtopo_m": 5.0,
+                             "ecart_faitage_bdtopo_m": 15.0})
+    assert d["discordante"] is True
+    assert d["motif"] == "BD TOPO sous l'égout mesuré"
+
+
+def test_bdtopo_dans_enveloppe_pas_de_badge():
+    """FAISA-REGLES-1 (A-004) — BD TOPO cohérente DANS l'enveloppe [égout, faîtage] : jamais badgée, même
+    si l'écart ÉGOUT↔BD TOPO est grand (toit en pente / R+n : faîtage ≫ égout est NORMAL, pas une erreur —
+    fin des ~16 % de faux positifs). Cas type : égout 5,6, faîtage 28, BD TOPO 28,9 (≈ faîtage)."""
     d = discordance_hauteur({"faitage_m": 28.0, "egout_m": 5.6, "hauteur_bdtopo_m": 28.9,
                              "ecart_faitage_bdtopo_m": -0.9})
-    assert d["discordante"] is True
-    assert d["motif"] == "égout ↔ BD TOPO"
-    assert d["ecart_egout_bdtopo_m"] == -23.3
-
-
-def test_ecart_egout_sous_seuil_pas_de_badge():
-    """Un écart égout↔BD TOPO dans le bruit normal (≤ ~8 m) n'est PAS discordant."""
-    d = discordance_hauteur({"faitage_m": 12.0, "egout_m": 8.0, "hauteur_bdtopo_m": 3.5,
-                             "ecart_faitage_bdtopo_m": 8.5})
-    assert abs(d["ecart_egout_bdtopo_m"]) < SEUIL_ECART_EGOUT_BDTOPO_M
     assert d["discordante"] is False
+    assert d["motif"] is None
+    assert d["ecart_egout_bdtopo_m"] == -23.3   # grand écart égout↔BD TOPO, mais nature différente → ignoré
 
 
 def test_sans_mesure_lidar_jamais_discordant():
@@ -65,6 +78,8 @@ def test_sans_mesure_lidar_jamais_discordant():
 
 
 def test_seuils_documentes():
-    """Les deux constantes valent ce que le rapport justifie (garde contre une dérive muette)."""
-    assert SEUIL_ECART_EGOUT_BDTOPO_M == 15.0
+    """Les constantes valent ce que le rapport justifie (garde contre une dérive muette)."""
+    assert SEUIL_FAITAGE_SOUS_BDTOPO_M == 3.0
+    assert SEUIL_BDTOPO_SOUS_EGOUT_M == 3.0
     assert PLAFOND_FAITAGE_ABERRANT_M == 60.0
+    assert SEUIL_ECART_EGOUT_BDTOPO_M == 15.0   # conservée pour l'annexe (écart égout↔BD TOPO servi)

@@ -222,19 +222,28 @@ PLAFOND_FAITAGE_ABERRANT_M = 60.0
 # > 60). Ce motif ne RÉINTRODUIT PAS les 16 % de faux positifs de FICHE-FIX-2 (qui flaguaient le faîtage
 # AU-DESSUS de BD TOPO, cas normal des toits en pente) : il ne vise que le sens impossible (faîtage SOUS l'égout).
 SEUIL_FAITAGE_SOUS_BDTOPO_M = 3.0
+# FAISA-REGLES-1 (A-004) — BD TOPO sous l'ÉGOUT mesuré (le haut d'un bâtiment ne peut être sous sa
+# gouttière) : marge au-delà de laquelle c'est une incohérence, pas du bruit.
+SEUIL_BDTOPO_SOUS_EGOUT_M = 3.0
 
 
 def discordance_hauteur(lid: dict | None) -> dict:
-    """DONNEES-FIX-1 lot A — RÈGLE UNIQUE du badge « Sources discordantes », lue par la fiche §Bâti
-    ET la marge en hauteur (Potentiel) : une seule règle pour les deux écrans.
+    """RÈGLE UNIQUE du badge « Sources discordantes », lue par la fiche §Bâti ET la marge en hauteur
+    (Potentiel) : une seule règle pour les deux écrans.
 
-    Compare l'ÉGOUT LiDAR à la hauteur BD TOPO (MÊME grandeur, cf. audit) ; l'ancienne comparaison
-    faîtage↔BD TOPO s'allumait à tort sur ~16 % des bâtis. Deux motifs, tous deux réels :
-      - « faîtage aberrant » : faîtage impossible (≤ 0 ou > plafond) → bug de mesure/coordonnée ;
-      - « égout ↔ BD TOPO »  : les deux sources désignent des hauteurs incompatibles (> seuil).
+    FAISA-REGLES-1 (A-004) — on compare des hauteurs de MÊME NATURE. La hauteur BD TOPO est une hauteur
+    de bâtiment (haut du bâti, ≈ faîtage) : elle doit tomber dans l'ENVELOPPE mesurée [égout, faîtage] du
+    LiDAR. Discordance UNIQUEMENT si BD TOPO sort de cette enveloppe (au-dessus du faîtage ou sous l'égout),
+    JAMAIS le simple « faîtage > égout » (définition d'un toit, qui faisait s'allumer ~16 % des bâtis en
+    comparant deux grandeurs différentes). On n'utilise plus l'écart égout↔BD TOPO pour le verdict (il
+    reste servi comme info annexe). Motifs, tous réels :
+      - « faîtage aberrant »              : faîtage impossible (≤ 0 ou > plafond) → bug de mesure/coordonnée ;
+      - « BD TOPO au-dessus du faîtage »  : la hauteur déclarée dépasse le point haut mesuré (> seuil) ;
+      - « BD TOPO sous l'égout »          : la hauteur déclarée est sous le bord de toit mesuré (> seuil).
 
-    Renvoie {discordante, motif, ecart_egout_bdtopo_m, ecart_faitage_bdtopo_m} — toujours défini,
-    même sans mesure LiDAR (discordante=False)."""
+    Renvoie {discordante, motif, ecart_egout_bdtopo_m, ecart_faitage_bdtopo_m} — toujours défini, même
+    sans mesure LiDAR (discordante=False). `ecart_faitage_bdtopo_m` (faîtage − BD TOPO, MÊME nature) est
+    l'écart de référence ; `ecart_egout_bdtopo_m` reste fourni en annexe (nature différente)."""
     if not lid:
         return {"discordante": False, "motif": None,
                 "ecart_egout_bdtopo_m": None, "ecart_faitage_bdtopo_m": None}
@@ -244,14 +253,15 @@ def discordance_hauteur(lid: dict | None) -> dict:
     ecart_eg = (round(float(egout) - float(bdtopo), 1)
                 if egout is not None and bdtopo is not None else None)
     aberrant = fait is not None and (float(fait) <= 0 or float(fait) > PLAFOND_FAITAGE_ABERRANT_M)
-    discord_eg = ecart_eg is not None and abs(ecart_eg) > SEUIL_ECART_EGOUT_BDTOPO_M
-    # RECETTE-2 (A4) — faîtage nettement SOUS la hauteur BD TOPO (sens physiquement impossible).
-    discord_fait_bas = (fait is not None and bdtopo is not None
-                        and (float(bdtopo) - float(fait)) > SEUIL_FAITAGE_SOUS_BDTOPO_M)
+    # BD TOPO HORS de l'enveloppe [égout, faîtage] mesurée (comparaison de même nature) :
+    bdtopo_sur_faitage = (fait is not None and bdtopo is not None
+                          and (float(bdtopo) - float(fait)) > SEUIL_FAITAGE_SOUS_BDTOPO_M)
+    bdtopo_sous_egout = (egout is not None and bdtopo is not None
+                         and (float(egout) - float(bdtopo)) > SEUIL_BDTOPO_SOUS_EGOUT_M)
     motif = ("faîtage aberrant" if aberrant
-             else "faîtage sous la hauteur BD TOPO" if discord_fait_bas
-             else "égout ↔ BD TOPO" if discord_eg else None)
-    return {"discordante": bool(aberrant or discord_eg or discord_fait_bas), "motif": motif,
+             else "BD TOPO au-dessus du faîtage mesuré" if bdtopo_sur_faitage
+             else "BD TOPO sous l'égout mesuré" if bdtopo_sous_egout else None)
+    return {"discordante": bool(aberrant or bdtopo_sur_faitage or bdtopo_sous_egout), "motif": motif,
             "ecart_egout_bdtopo_m": ecart_eg,
             "ecart_faitage_bdtopo_m": lid.get("ecart_faitage_bdtopo_m")}
 

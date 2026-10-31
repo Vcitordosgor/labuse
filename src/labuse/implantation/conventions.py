@@ -33,6 +33,11 @@ class Conventions:
     max_logements_par_noyau: int
     longueur_max_coursive_par_noyau_m: float
     hauteur_etage_m: float
+    # FAISA-REGLES-1 (E-059) — hauteur de TOITURE / acrotère (Estimé), AJOUTÉE à la hauteur des murs
+    # (niveaux × étage) UNIQUEMENT quand la règle PLU se mesure au FAÎTAGE : un faîtage = l'égout + la
+    # toiture. Une règle à l'égout mesure le haut des murs (toiture au-dessus, non comptée). Marge prudente
+    # dite sur le chiffre servi (« hauteur estimée, toiture comprise »). Jamais une règle PLU.
+    toiture_m: float
     coef_plancher_habitable: float
     retrait_inter_barre_m: float
     inset_zone_m: float
@@ -117,6 +122,7 @@ def charger(path: str | Path | None = None) -> Conventions:
         max_logements_par_noyau=int(bat["max_logements_par_noyau"]),
         longueur_max_coursive_par_noyau_m=float(bat["longueur_max_coursive_par_noyau_m"]),
         hauteur_etage_m=float(bat["hauteur_etage_m"]),
+        toiture_m=float(bat.get("toiture_m", 2.5)),
         coef_plancher_habitable=float(bat["coef_plancher_habitable"]),
         retrait_inter_barre_m=float(bat["retrait_inter_barre_m"]),
         inset_zone_m=float(bat.get("inset_zone_m", 0.1)),

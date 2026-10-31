@@ -4422,13 +4422,37 @@ def _secteur_opportunites(db: Session, idu: str) -> dict:
 _PENTE_BANDES = ((5.0, "plat"), (15.0, "modérée"), (30.0, "forte"))
 
 
-def _pente_bande(deg: float | None) -> str | None:
-    if deg is None:
-        return None
+_PENTE_RANG = {"plat": 0, "modérée": 1, "forte": 2, "très forte": 3}
+
+
+def _pente_classe(deg: float) -> str:
     for borne, libelle in _PENTE_BANDES:
         if deg < borne:
             return libelle
     return "très forte"
+
+
+def _pente_bande(deg: float | None, pente_max: float | None = None,
+                 flag_terrassement: bool = False) -> str | None:
+    """FAISA-REGLES-1 (A-006) — la classe de pente tient compte de la pente MAXIMALE, pas seulement de la
+    moyenne : une falaise (un pan ≥ 30°) n'est jamais « modérée ». On classe la moyenne, puis on REMONTE
+    la bande si un pan est fort (≥ 30° → au moins « forte » ; ≥ 40° → « très forte ») ou si le terrassement
+    lourd est signalé — jamais sous la moyenne. (NU-A-006 : EY0173 moy 14,9° mais max 43,9° lue « modérée ».)"""
+    if deg is None:
+        return None
+    bande = _pente_classe(deg)
+    planchers: list[str] = []
+    if flag_terrassement:
+        planchers.append("forte")
+    if pente_max is not None:
+        if pente_max >= 40.0:
+            planchers.append("très forte")
+        elif pente_max >= 30.0:
+            planchers.append("forte")
+    for p in planchers:
+        if _PENTE_RANG[p] > _PENTE_RANG[bande]:
+            bande = p
+    return bande
 
 
 def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
@@ -4818,7 +4842,9 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         "score_v": score_v,
         "dvf_parcelle": dvf_parcelle,
         # FRONT-CHIFFRES-2 (F01b) — + la bande de pente servie (plat/modérée/forte/très forte).
-        "terrain": {**dict(terrain), "pente_bande": _pente_bande(terrain["pente_moy_deg"])} if terrain else None,
+        "terrain": {**dict(terrain), "pente_bande": _pente_bande(
+            terrain["pente_moy_deg"], terrain.get("pente_max_deg"),
+            bool(terrain.get("flag_terrassement_lourd")))} if terrain else None,
         "coproprietes": copros,
         "radar_bien": radar_bien,   # RADAR P3 (C3) — bien en vente rattaché (fait + statut + lien)
         "marche_secteur": marche_secteur,

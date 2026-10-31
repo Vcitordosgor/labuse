@@ -129,8 +129,11 @@ def _facteur_limitant_phrase(facteurs_limitants: list, variante: Optional[dict])
     pour que l'écran et le PDF disent exactement les mêmes mots. Reprend la logique de l'écran :
     1er facteur limitant, sinon la limite de capacité de la variante ; en sous-sol, si la hauteur limite
     et que le terrain est en pente, on nomme la pente."""
-    f0 = facteurs_limitants[0] if facteurs_limitants else None
-    phrase = (f0 or {}).get("facteur") if f0 else None
+    # FAISA-REGLES-1 (D-002) — n'affirmer QUE la contrainte qui MORD réellement : on nomme le premier
+    # facteur dont `limitant` est vrai (impact mesuré > 0), jamais un facteur à impact nul laissé en tête
+    # par le tri (ex. « stationnement aérien » quand 0 place n'est dessinée et ne limite rien).
+    f0 = next((f for f in (facteurs_limitants or []) if f.get("limitant")), None)
+    phrase = f0.get("facteur") if f0 else None
     if phrase is None and variante is not None:
         phrase = variante.get("limite_capacite")
     if variante is not None and (variante.get("stationnement") or {}).get("mode") == "sous_sol" \
@@ -254,7 +257,10 @@ def _grandeurs(terrain, regles, conv, scenario) -> dict:
     mobilisable, SDP autorisée (plafond réglementaire), m² de programme (plancher) envisageables.
     Chacune porte un statut : mesuré (sur le dessin), dérivé (d'une règle), non vérifié (règle absente)."""
     cap = scenario.capacite
-    contenance = terrain.contenance_totale_m2
+    # FAISA-REGLES-1 (E-058) — MÊME base que le dessin : l'emprise et le stationnement sont MESURÉS sur la
+    # géométrie, donc les grandeurs dérivées (sol restant, emprise mobilisable, SDP autorisée) se calculent
+    # sur la surface DESSINÉE constructible, comme le contrôle d'emprise (contrôles.py), jamais la contenance.
+    contenance = terrain.aire_dessin_m2
     emprise = cap.emprise_sol_m2 or 0.0
     stat = cap.surface_stationnement_m2 or 0.0
     sol_restant = max(0.0, contenance - emprise - stat)
@@ -596,21 +602,24 @@ _L15134 = {
 }
 # REMISE-1 (décision Vic) — SOURCE UNIQUE avec moteur._plafond_l151 (règle APPLIQUÉE) :
 #   · L151-35 (logement aidé / RPA / résidence universitaire, 1°-3° de L151-34) : au plus 1 place/logement,
-#     et au plus 0,5 À MOINS DE 500 m d'un transport collectif en site propre bien desservi.
-#   · L151-36 (AUTRES logements) : au plus 1 place/logement, SEULEMENT à moins de 500 m d'un tel transport.
-# (L'ancien code posait 0,5 inconditionnel « L151-35 » à < 800 m — il mélangeait L151-35 et L151-36 et
-#  prenait le mauvais seuil ; corrigé ici pour que l'AFFICHAGE dise exactement ce que le moteur APPLIQUE.)
-def _ratio_l15135(sous_500: bool) -> float:
-    return 0.5 if sous_500 else 1.0
+#     et au plus 0,5 À MOINS DE 800 m d'un transport collectif en site propre bien desservi.
+#   · L151-36 (AUTRES logements) : au plus 1 place/logement, SEULEMENT à moins de 800 m d'un tel transport.
+# FAISA-REGLES-1 (E-056) — rayon porté de 500 à 800 m par la loi n° 2025-1129 du 26/11/2025 ; l'AFFICHAGE
+# dit exactement ce que le moteur APPLIQUE (même seuil, mêmes citations).
+_RAYON_TCSP_M = 800
 
 
-def _tcsp_sous_500m(session, idus: list[str]) -> tuple[bool, Optional[int]]:
-    """Condition géographique des plafonds L151-35/36 : distance au plus proche TCSP (< 500 m). On réutilise
-    `moteur._tcsp_dist_m` (STATIONS en site propre `tcsp_station` SEULEMENT — un simple arrêt de bus ne
-    déclenche pas le plafond) → l'affichage et le calcul appliqué partagent la MÊME distance et le MÊME seuil."""
+def _ratio_l15135(sous_rayon: bool) -> float:
+    return 0.5 if sous_rayon else 1.0
+
+
+def _tcsp_sous_rayon(session, idus: list[str]) -> tuple[bool, Optional[int]]:
+    """Condition géographique des plafonds L151-35/36 : distance au plus proche TCSP (< 800 m, loi 2025-1129).
+    On réutilise `moteur._tcsp_dist_m` (STATIONS en site propre `tcsp_station` SEULEMENT — un simple arrêt de
+    bus ne déclenche pas le plafond) → l'affichage et le calcul appliqué partagent la MÊME distance/seuil."""
     from .moteur import _tcsp_dist_m
     d = _tcsp_dist_m(session, idus)
-    return (d is not None and d < 500), (int(d) if d is not None else None)
+    return (d is not None and d < _RAYON_TCSP_M), (int(d) if d is not None else None)
 
 
 def _plu_millesime(session, insee: str) -> Optional[str]:
@@ -688,43 +697,45 @@ def _stationnement_regimes(session, idus: list[str], type_projet: str, regles, i
         # ETUDE-V6-3 (item 3) — la RÈGLE en clair (ex. « 1 pl. T1–T2 · 1,5 pl. T3–T4 ») pour le récap.
         "regle_courte": _regle_stationnement_courte(b),
     }
-    sous_500, dist = _tcsp_sous_500m(session, idus)
+    sous_rayon, dist = _tcsp_sous_rayon(session, idus)
     cat = _L15134.get(type_projet)
     plafond = None
     if cat:
-        # L151-35 — logement aidé / senior / résidence universitaire : au plus 1 place/logt, 0,5 si < 500 m.
-        ratio = _ratio_l15135(sous_500)
+        # L151-35 — logement aidé / senior / résidence universitaire : au plus 1 place/logt, 0,5 si < 800 m.
+        ratio = _ratio_l15135(sous_rayon)
         plafond = {
             "categorie": cat, "reference": "L151-35", "ratio_plafond": ratio,
-            "condition_tcsp_sous_500m": sous_500, "distance_tcsp_m": dist,
+            # clé historique (lue par l'écran) conservée ; le seuil est désormais 800 m (loi 2025-1129).
+            "condition_tcsp_sous_500m": sous_rayon, "rayon_tcsp_m": _RAYON_TCSP_M, "distance_tcsp_m": dist,
             "eligibilite_categorie": "À confirmer", "statut": "À confirmer",
             # le plafond L151-35 (≤ 1/logt) vise la catégorie quelle que soit la distance ; la condition
-            # TCSP < 500 m ne concerne QUE l'abaissement à 0,5 (c'est lui qu'on chiffre en « capacité réduite »).
-            "applicable_si_eligible": sous_500,
-            "reduction_sous_500m": sous_500,
+            # TCSP < 800 m ne concerne QUE l'abaissement à 0,5 (c'est lui qu'on chiffre en « capacité réduite »).
+            "applicable_si_eligible": sous_rayon,
+            "reduction_sous_500m": sous_rayon,
             "citation": (
                 f"Code de l'urbanisme L151-35 : pour un(e) {cat}, il ne peut être exigé plus de {ratio:g} "
                 f"aire de stationnement par logement"
-                + (" (terrain à moins de 500 m d'un transport collectif en site propre bien desservi)" if sous_500
-                   else " ; ce plafond est abaissé à 0,5 à moins de 500 m d'un tel transport")
+                + (" (terrain à moins de 800 m d'un transport collectif en site propre bien desservi, loi "
+                   "2025-1129)" if sous_rayon
+                   else " ; ce plafond est abaissé à 0,5 à moins de 800 m d'un tel transport (loi 2025-1129)")
                 + " — le PLU ne s'applique que s'il est plus favorable."),
             "note": ("Le nom « " + type_projet + " » ne prouve pas l'éligibilité juridique à la catégorie "
                      "L151-34 ; à confirmer. Le ratio affiché est le plafond LÉGAL, pas une règle du PLU."),
         }
-    elif type_projet == "collectif" and sous_500:
-        # L151-36 — autres logements : au plus 1 place/logt, SEULEMENT à moins de 500 m d'un TCSP.
-        # Au-delà de 500 m, L151-36 N'EXISTE PAS → aucun plafond national (seule la règle PLU s'applique).
+    elif type_projet == "collectif" and sous_rayon:
+        # L151-36 — autres logements : au plus 1 place/logt, SEULEMENT à moins de 800 m d'un TCSP.
+        # Au-delà de 800 m, L151-36 N'EXISTE PAS → aucun plafond national (seule la règle PLU s'applique).
         plafond = {
             "categorie": "autres logements (hors L151-34)", "reference": "L151-36",
             "ratio_plafond": 1.0,
-            "condition_tcsp_sous_500m": True, "distance_tcsp_m": dist,
+            "condition_tcsp_sous_500m": True, "rayon_tcsp_m": _RAYON_TCSP_M, "distance_tcsp_m": dist,
             "eligibilite_categorie": "catégorie de droit commun",
             "statut": "À confirmer",
-            "applicable_si_eligible": True,   # L151-36 n'existe QU'À moins de 500 m (donc applicable ici)
+            "applicable_si_eligible": True,   # L151-36 n'existe QU'À moins de 800 m (donc applicable ici)
             "reduction_sous_500m": True,
             "citation": (
-                "Code de l'urbanisme L151-36 : à moins de 500 m d'un transport collectif en site propre "
-                "bien desservi, il ne peut être exigé plus de 1 aire de stationnement par logement pour les "
+                "Code de l'urbanisme L151-36 : à moins de 800 m d'un transport collectif en site propre "
+                "bien desservi (loi 2025-1129), il ne peut être exigé plus de 1 aire de stationnement par logement pour les "
                 "logements autres que ceux de L151-34 — le PLU ne s'applique que s'il est plus favorable."),
             "note": "S'applique aux logements de droit commun (hors aidé / senior / résidence universitaire).",
         }
@@ -899,6 +910,50 @@ def _lotissement_payload(session, idus: list[str], entree: dict) -> dict:
     }
 
 
+# ------------------------------------------------------------------ FAISA-REGLES-1 (E-055, D-004)
+def _payload_hors_perimetre(session, idus: list[str], entree: dict, exc) -> dict:
+    """Payload de REFUS quand la zone ne permet pas de chiffrer un programme : RNU (aucune zone PLU
+    opposable, E-055) ou zone A/N non constructible (D-004). Aucun logement chiffré ; le motif est DIT.
+    Même forme de haut niveau que le payload normal (clés présentes, listes vides) pour que l'écran rende
+    proprement (bloc « verdict + message », aucune variante). Le moteur n'a rien inventé."""
+    from sqlalchemy import text
+    row = session.execute(text(
+        "SELECT commune, left(idu, 5) AS insee FROM parcels WHERE idu = ANY(:i) LIMIT 1"),
+        {"i": list(idus)}).mappings().first()
+    commune = row["commune"] if row else None
+    insee = (row["insee"] if row else (idus[0][:5] if idus else None))
+    zone_dom = getattr(exc, "zone_dominante", None)
+    verdict = "Étude hors périmètre"
+    statut = "hors périmètre"
+    return {
+        "moteur": {"livrable": "IMPLANTATION-2", "crs_dessin": "EPSG:2975", "crs_carte": "EPSG:4326"},
+        "entrees": {"idus": idus, "commune": commune, "insee": insee, "zone": zone_dom,
+                    "type_projet": entree.get("type_projet") or "collectif",
+                    "objectif": entree.get("objectif") or "equilibre"},
+        "regles": {"zone": zone_dom, "insee": insee, "commune": commune, "lignes": []},
+        "terrain": None,
+        "study_id": _study_id(entree),
+        "statut_global": statut,
+        "verdict": verdict,
+        "message": str(exc),
+        "hors_perimetre": True,
+        "motif_hors_perimetre": getattr(exc, "code", None),   # 'rnu' | 'zone_non_constructible'
+        "scenarios": [],
+        "variantes": [],
+        "depassement": None,
+        "capacite_maximale": None,
+        "facteurs_limitants": [],
+        "facteur_limitant": None,
+        "facteur_limitant_detail": None,
+        "confrontation": None,
+        "stationnement_regimes": None,
+        "capacite_reduite": None,
+        "regles_non_verifiees": [],
+        "programme_saisi": None,
+        "bilan_surfacique": None,
+    }
+
+
 # ------------------------------------------------------------------ point d'entrée
 def etudier_payload(session, entree: dict) -> dict:
     """Payload d'étude servi par l'API. `entree` = {idus, type_projet, objectif, programme,
@@ -954,12 +1009,16 @@ def etudier_payload(session, entree: dict) -> dict:
 
     # ETUDE-V6 (Lot B) — UN SEUL passage de recherche → vue historique (scenarios) + 3 variantes mandat.
     # ETUDE-V6-2 (Lot 3) — `stationnement` ∈ {aerien, sous_sol} pilote l'implantation du parking.
-    scenarios, variantes, depassement, message, terrain, regles, conv, scn_max = moteur_mod.etudier_complet(
-        session=session, idus=idus, objectif=objectif, conv=conv,
-        programme=demande or None, repartition=repartition, max_scenarios=3,
-        stationnement_mode=stationnement, niveaux_sous_sol=niveaux_sous_sol,
-        type_projet=type_projet,   # DOCS-COHERENCE-1 (F6) — plafond L151-35/36 appliqué si + restrictif que le PLU
-    )
+    # FAISA-REGLES-1 (E-055, D-004) — le moteur n'invente jamais une zone : RNU / zone A-N → refus net.
+    try:
+        scenarios, variantes, depassement, message, terrain, regles, conv, scn_max = moteur_mod.etudier_complet(
+            session=session, idus=idus, objectif=objectif, conv=conv,
+            programme=demande or None, repartition=repartition, max_scenarios=3,
+            stationnement_mode=stationnement, niveaux_sous_sol=niveaux_sous_sol,
+            type_projet=type_projet,   # DOCS-COHERENCE-1 (F6) — plafond L151-35/36 appliqué si + restrictif que le PLU
+        )
+    except moteur_mod.EtudeHorsPerimetre as exc:
+        return _payload_hors_perimetre(session, idus, entree, exc)
 
     # entêtes partagés (terrain / règles / versions) — depuis le 1er scénario/variante PRÉSENT, sinon un
     # scénario vide (même terrain/règles, scène vide) : aucune 2e recherche coûteuse.
@@ -1072,6 +1131,17 @@ def etudier_payload(session, entree: dict) -> dict:
     else:
         statut_global = "simulation impossible"
 
+    # FAISA-REGLES-1 (D-003/E-057) — grande assiette : la recherche a pu être réduite (grille grossière)
+    # et/ou bornée par le budget de temps, pour rendre un RÉSULTAT dans la borne au lieu d'un 503. On le DIT.
+    grille_note = None
+    _reduite = getattr(terrain, "grille_reduite", False)
+    _budget = getattr(terrain, "grille_budget_atteint", False)
+    if _reduite or _budget:
+        _parts = ([("grille simplifiée (grande assiette)")] if _reduite else []) \
+            + (["recherche bornée par le temps de calcul"] if _budget else [])
+        grille_note = ("Recherche réduite pour rendre un résultat dans le délai (" + " · ".join(_parts)
+                       + ") — le maximum servi est un plancher, la capacité réelle peut être légèrement supérieure.")
+
     # ETUDE-V6 (Lot B) — verdict GLOBAL de l'étude (3 libellés mandat) : sur la 1ʳᵉ variante PRÉSENTE
     # (votre programme en tête), sinon « impossible pour cause établie » si rien n'est faisable.
     verdict = next((v["verdict"] for v in variantes_pub if not v.get("absente")),
@@ -1079,7 +1149,7 @@ def etudier_payload(session, entree: dict) -> dict:
 
     # ETUDE-V6 (Lot C) — régimes de stationnement (règle générale PLU + plafond national à confirmer),
     # et capacité SOUS le régime réduit (2ᵉ passage moteur au ratio plafonné), seulement si le plafond est
-    # géographiquement applicable (< 500 m d'un TCSP) — jamais présenté comme acquis. REMISE-1 : on prend le
+    # géographiquement applicable (< 800 m d'un TCSP, loi 2025-1129) — jamais présenté comme acquis. REMISE-1 : on prend le
     # ratio ET l'article DEPUIS le régime calculé (L151-35 à 0,5 pour aidé/senior/étudiant ; L151-36 à 1
     # pour les autres), plus de 0,5 « L151-35 » codé en dur au mauvais seuil.
     stationnement_regimes = _stationnement_regimes(session, idus, type_projet, ref_scn.regles, t.insee)
@@ -1113,8 +1183,8 @@ def etudier_payload(session, entree: dict) -> dict:
                     "ratio_par_logement": _pf_ratio, "reference": _pf_ref,
                     "statut": "À confirmer",
                     "note": (f"Capacité SI le projet est éligible au plafond {_pf_ref} "
-                             f"({_pf_ratio:g} place / logement, terrain à moins de 500 m d'un transport "
-                             "collectif) — éligibilité juridique à confirmer ; la règle générale du PLU "
+                             f"({_pf_ratio:g} place / logement, terrain à moins de 800 m d'un transport "
+                             "collectif, loi 2025-1129) — éligibilité juridique à confirmer ; la règle générale du PLU "
                              "(appliquée ci-dessus) reste la base servie."),
                 }
         except Exception:  # noqa: BLE001 — la capacité réduite est un bonus, jamais bloquante
@@ -1185,6 +1255,8 @@ def etudier_payload(session, entree: dict) -> dict:
         "variantes": variantes_pub,
         "depassement": depassement,
         "capacite_maximale": capacite_maximale,
+        # FAISA-REGLES-1 (D-003/E-057) — note si la grille a été réduite / bornée (grande assiette) ; None sinon.
+        "grille_note": grille_note,
         "facteurs_limitants": facteurs_limitants,
         # ETUDE-V6-4 (items 10/11/13) — LA phrase « ce qui limite », une seule fois : écran et PDF la lisent.
         "facteur_limitant": _facteur_limitant_phrase(

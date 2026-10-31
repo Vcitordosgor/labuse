@@ -80,6 +80,22 @@ def gabarit_detail(idu: str, db: Session = Depends(get_db)) -> GabaritResult:
                             "avertissement": "Données FICTIVES de démonstration (CDC §9)"}
         return res
 
+    # FAISA-REGLES-1 (D-028) — parcelle disparue du cadastre : l'outil le DIT et ne sert PAS de gabarit
+    # complet (comme le fait déjà le PDF). On rend un contour + le message, jamais une enveloppe comme si
+    # la parcelle existait encore. (Le PDF refuse en 422 côté route ; l'outil interactif ne doit pas non
+    # plus présenter un gabarit sur une référence qui n'existe plus.)
+    from .. import cadastre_disparue as _cd
+    _disp = _cd.info_disparue(db, idu)
+    if _disp:
+        _geom = db.execute(text("SELECT ST_AsGeoJSON(geom) FROM parcels WHERE idu = :i"),
+                           {"i": idu}).scalar()
+        return GabaritResult(
+            status="incomplete", message=_cd.phrase_disparue(_disp),
+            validationErrors=["parcelle disparue du cadastre"],
+            raccordement={"parcelle": {"idu": idu, "commune": _disp.get("commune")},
+                          "disparue": _disp},
+            contourGeoJSON=(json.loads(_geom) if _geom else None))
+
     build = build_gabarit_input(db, idu)
     if build is None:
         raise HTTPException(404, f"Parcelle inconnue : {idu}")
@@ -117,27 +133,11 @@ def gabarit_detail(idu: str, db: Session = Depends(get_db)) -> GabaritResult:
         if _dessin and float(_dessin) > 0:
             res.zoneImplantationM2 = round(
                 float(res.zoneImplantationM2) * float(res.surfaceParcelleM2) / float(_dessin), 1)
-    # CHASSE-DOCS-FIX-1 (vérif #3) — SOURCE UNIQUE pour la part en zone constructible : le ZONAGE
-    # (faisabilite.zone_servie.zone_dominante — la MÊME que la fiche §PLU, Comparer et le Copilote),
-    # JAMAIS un recalcul géométrique sur le dessin (qui divergeait de 1 à 3 points : Dossier « Ud 45,6 % »
-    # vs Gabarit « 43 % »). pctPortionZone + surfaceNote dérivent donc du même % et de la contenance.
-    _rac = build.raccordement or {}
-    if (_rac.get("zone") or {}).get("a_cheval"):
-        from ..faisabilite.zone_servie import zone_dominante as _zdom
-        _pid = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
-        _zs = _zdom(db, _pid) if _pid else None
-        _pct = _zs.pct_constructible if _zs else None
-        if _pct is not None:
-            _contenance = db.execute(text("SELECT contenance_m2 FROM parcels WHERE idu = :i"),
-                                     {"i": idu}).scalar()
-            res.pctPortionZone = round(_pct)
-            _uu = [p["zone"] for p in (_zs.parts or []) if p.get("fam") in ("U", "AU")]
-            _zn = _uu[0] if len(_uu) == 1 else None
-            if _contenance:
-                _portion = round(float(_contenance) * _pct / 100)   # % NON arrondi × contenance
-                res.surfaceNote = (f"Contenance cadastrale {int(_contenance)} m² — dont ~{_portion} m² "
-                                   + (f"en zone {_zn}" if _zn else "en zone constructible")
-                                   + " (parcelle à cheval).")
+    # CHASSE-DOCS-FIX-1 (vérif #3) + FAISA-REGLES-1 (D-025/026) — SOURCE UNIQUE pour la part en zone
+    # constructible (zone_servie.zone_dominante, la MÊME que la fiche §PLU / Comparer) : pctPortionZone +
+    # surfaceNote. Helper PARTAGÉ avec le builder PDF → écran et PDF portent la même mise en garde à-cheval.
+    from ..gabarit.builder import appliquer_note_a_cheval
+    appliquer_note_a_cheval(db, idu, res)
     res.batiExistantGeoJSON = _bati_existant(db, idu)
     # RECETTE-OUTILS-3 (S7/S10) — bâti découpé au contour + zone d'implantation déduite du bâti conservé.
     # Référence UNIQUE lue par l'app (2D/3D) ET le PDF (le PDF rappelle la même fonction, cf. construire_gabarit).

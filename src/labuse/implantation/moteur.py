@@ -25,8 +25,15 @@ IDUS_ETANG_SALE = ["97404000AW0099", "97404000AW0451", "97404000AW0624", "974040
 IDUS_SAINT_ANDRE = ["97409000AX0255", "97409000AX0256"]
 IDUS_SAINT_DENIS = ["97411000DL0247", "97411000DL0248"]
 
-_NIVEAUX = [2, 3, 4, 5, 6]
+_NIVEAUX = [1, 2, 3, 4, 5, 6]   # FAISA-REGLES-1 (D-005) — on essaie AUSSI R+0 (niveau unique) : une zone
+                                # plafonnée sous 6 m peut autoriser un rez-de-chaussée.
 _FRACTIONS = [round(1.0 - 0.05 * k, 2) for k in range(0, 15)]   # 1.00 .. 0.30
+# FAISA-REGLES-1 (D-003/E-057) — grille GROSSIÈRE pour les grandes assiettes (> _SEUIL_GRANDE_M2) : pas de
+# fraction 0,10 au lieu de 0,05 → moitié moins de candidats, pour tenir la borne de temps sans 503. La grille
+# reste ORDONNÉE (grande fraction d'abord = capacité maximale en tête), et un budget de temps (cf. _rechercher)
+# borne toujours la recherche.
+_FRACTIONS_GROSSIERES = [round(1.0 - 0.10 * k, 2) for k in range(0, 8)]   # 1.00 .. 0.30 par 0,10
+_SEUIL_GRANDE_M2 = 5000.0
 _FORMES = ["barre", "deux_barres", "L"]
 
 
@@ -89,10 +96,14 @@ def _construire(forme: str, scene: Scene, conv: Conventions, *, niveaux: int, fr
 
 def _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction, repartition=None,
              stationnement_mode="aerien", niveaux_sous_sol=1):
-    # hauteur : nb de niveaux borné par la hauteur réglementaire (plafond / étage)
+    # hauteur : nb de niveaux borné par la hauteur réglementaire. FAISA-REGLES-1 (E-059) — on compare la
+    # hauteur RÉELLE du projet (rez + étages, toiture comptée si la règle se mesure au faîtage), pas le seul
+    # niveaux × étage.
     r = regles.hauteur_plafond
-    if r.validee and r.valeur is not None and niveaux * conv.hauteur_etage_m > r.valeur + 1e-9:
-        return None, Candidat(forme, niveaux, fraction, False, "—", 0, 0.0, 0, None, "dépasse la hauteur")
+    if r.validee and r.valeur is not None:
+        _h_proj, _b, _e = ctrl_mod.hauteur_projet_m(conv, regles, niveaux)
+        if _h_proj > r.valeur + 1e-9:
+            return None, Candidat(forme, niveaux, fraction, False, "—", 0, 0.0, 0, None, "dépasse la hauteur")
     scene = scene_depuis(terrain, frame)
     n_mod = _construire(forme, scene, conv, niveaux=niveaux, fraction=fraction, repartition=repartition)
     if n_mod <= 0:
@@ -133,14 +144,46 @@ def _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction, repartition
     return paquet, candidat
 
 
-def _resoudre_zone(session, idus: list[str]) -> Optional[str]:
+class EtudeHorsPerimetre(ValueError):
+    """FAISA-REGLES-1 — la zone PLU ne permet PAS de chiffrer un programme de logements : commune au RNU
+    (aucune zone opposable, E-055) ou zone entièrement A/N non constructible (D-004). Le moteur REFUSE et
+    le DIT, au lieu d'inventer une zone « UA » ou de dessiner des logements. Sous-classe de ValueError pour
+    rester compatible avec le mapping 400 de la route, mais interceptée en amont (service) pour un message net."""
+    def __init__(self, code: str, message: str, zone_dominante: Optional[str] = None):
+        self.code = code                       # 'rnu' | 'zone_non_constructible'
+        self.zone_dominante = zone_dominante
+        super().__init__(message)
+
+
+def _resoudre_zone(session, idus: list[str]) -> str:
+    """FAISA-REGLES-1 (E-055, D-004) — LA zone dont le moteur lit les règles : la zone CONSTRUCTIBLE (U/AU)
+    dominante par surface sur la parcelle principale (la plus grande de l'assiette). C'est sur cette portion
+    que `terrain.charger` implante (il clippe l'assiette à l'U/AU) → on lit les règles de CETTE zone, pas de
+    la zone dominante qui peut être A/N (cas parcelle à cheval).
+
+    Le moteur n'invente JAMAIS « UA ». Lève `EtudeHorsPerimetre` si aucune zone PLU n'est opposable (RNU)
+    ou si la parcelle est entièrement A/N (rien de constructible)."""
     from sqlalchemy import text
-    rows = session.execute(text("SELECT zone_lib FROM parcel_zone_plu WHERE idu = ANY(:i)"),
-                           {"i": idus}).fetchall()
-    zones = [r[0] for r in rows if r[0]]
-    if not zones:
-        return None
-    return max(set(zones), key=zones.count)
+
+    from labuse.faisabilite.zone_servie import FAMILLES_CONSTRUCTIBLES, zone_dominante
+    pid = session.execute(text(
+        "SELECT id FROM parcels WHERE idu = ANY(:i) ORDER BY ST_Area(geom_2975) DESC NULLS LAST LIMIT 1"),
+        {"i": list(idus)}).scalar()
+    zs = zone_dominante(session, pid) if pid is not None else None
+    if zs is None or zs.zone is None:
+        raise EtudeHorsPerimetre(
+            "rnu",
+            "Commune au RNU : aucune zone PLU opposable sur cette parcelle — étude hors périmètre, "
+            "aucun programme de logements n'est chiffrable.")
+    cons = [p for p in (zs.parts or []) if p.get("fam") in FAMILLES_CONSTRUCTIBLES]
+    if not cons:
+        raise EtudeHorsPerimetre(
+            "zone_non_constructible",
+            f"Zone {zs.zone} (famille {zs.zone_fam}) non constructible : aucun programme de logements "
+            "n'est chiffrable en zone A ou N.",
+            zone_dominante=zs.zone)
+    cons.sort(key=lambda p: p.get("pct") or 0.0, reverse=True)
+    return cons[0]["zone"]
 
 
 def _simplicite_forme(forme: str) -> int:
@@ -181,7 +224,9 @@ def _charger(session, idus, zone, conv, avec_pente):
         fermer = True
     try:
         if zone is None:
-            zone = _resoudre_zone(session, idus) or "UA"
+            # FAISA-REGLES-1 — jamais de zone « UA » inventée : _resoudre_zone lève EtudeHorsPerimetre
+            # (RNU / zone A/N) plutôt que de retomber sur un défaut.
+            zone = _resoudre_zone(session, idus)
         regles = regles_mod.charger(insee, zone)
         terrain = terrain_mod.charger(
             session, idus,
@@ -200,22 +245,64 @@ def _rechercher(terrain, regles, conv, objectif, *, repartition=None, stationnem
     """Parcourt la grille ORDONNÉE forme×niveaux×fraction et renvoie (ranked, candidats) :
     `ranked` = liste des candidats FAISABLES, triée par la clef d'objectif décroissante, chaque
     item = (clef, paquet, forme, niveaux, fraction). `candidats` = la trace complète.
-    `stationnement_mode` ∈ {aerien, sous_sol} (Lot 3)."""
+    `stationnement_mode` ∈ {aerien, sous_sol} (Lot 3).
+
+    FAISA-REGLES-1 (D-003/E-057) — deux garde-fous pour qu'une GRANDE assiette rende un RÉSULTAT dans la
+    borne au lieu d'un 503 : (1) grille de fractions GROSSIÈRE au-delà de `_SEUIL_GRANDE_M2` (moitié moins de
+    candidats) ; (2) BUDGET DE TEMPS (`LABUSE_ETUDE_GRILLE_BUDGET_S`) — la grille étant ordonnée meilleur
+    d'abord, on garde le meilleur candidat FAISABLE trouvé à l'échéance. On le DIT (`terrain.grille_*`)."""
+    import os
+    import time
+    grande = (terrain.aire_zone_m2 or 0.0) > _SEUIL_GRANDE_M2
+    fractions = _FRACTIONS_GROSSIERES if grande else _FRACTIONS
+    terrain.grille_reduite = grande
+    # FAISA-REGLES-1 (D-003/E-057) — grande assiette : on SIMPLIFIE le contour de la zone d'implantation
+    # (tolérance 0,5 m, négligeable sur > 1 ha) pour accélérer chaque dessin de bâtiment/stationnement, qui
+    # coûte sinon plusieurs secondes sur un contour à ~1 300 sommets (poser_barre/poser_stationnement). Le
+    # chiffre servi est une PRÉ-faisabilité ; l'écart de contour est immatériel.
+    if grande:
+        zi = terrain.zone_implantation
+        if zi is not None and not zi.is_empty:
+            try:
+                zs = zi.simplify(0.5, preserve_topology=True)
+                if not zs.is_empty and zs.is_valid:
+                    terrain.zone_implantation = terrain_mod._plus_grand_polygone(zs)
+                    terrain.aire_zone_m2 = float(terrain.zone_implantation.area)
+            except Exception:  # noqa: BLE001 — la simplification ne doit jamais casser l'étude
+                pass
     frame = Frame.depuis(terrain.zone_implantation)
+    # budget par défaut 22 s : laisse une marge confortable sous la borne API (etude_timeout_s=60) pour le
+    # chargement (LiDAR), l'assemblage du payload, les planches SVG et les enrichissements du worker.
+    try:
+        budget_s = float(os.environ.get("LABUSE_ETUDE_GRILLE_BUDGET_S", "22"))
+    except (TypeError, ValueError):
+        budget_s = 22.0
+    t0 = time.monotonic()
     candidats: list[Candidat] = []
     faisables: list = []
+    coupe = False
     for forme in _FORMES:
+        if coupe:
+            break
         for niveaux in _NIVEAUX:
-            for fraction in _FRACTIONS:
+            if coupe:
+                break
+            for fraction in fractions:
                 paquet, cand = _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction,
                                         repartition=repartition, stationnement_mode=stationnement_mode,
                                         niveaux_sous_sol=niveaux_sous_sol)
                 candidats.append(cand)
-                if paquet is None:
-                    continue
-                _scene, cap, _ctrl, _chk, _geo, statut = paquet
-                clef = _clef(objectif, statut, cap, niveaux, forme, fraction)
-                faisables.append((clef, paquet, forme, niveaux, fraction))
+                if paquet is not None:
+                    _scene, cap, _ctrl, _chk, _geo, statut = paquet
+                    clef = _clef(objectif, statut, cap, niveaux, forme, fraction)
+                    faisables.append((clef, paquet, forme, niveaux, fraction))
+                # BUDGET DE TEMPS (garde-fou DUR) — on borne la recherche INCONDITIONNELLEMENT : passé le
+                # budget, on s'arrête et on rend le MEILLEUR candidat trouvé (ou « simulation impossible » si
+                # aucun). La recherche ne franchit JAMAIS la borne de l'API → plus de 503 (D-003/E-057).
+                if (time.monotonic() - t0) > budget_s:
+                    coupe = True
+                    terrain.grille_budget_atteint = True
+                    break
     faisables.sort(key=lambda it: it[0], reverse=True)
     return faisables, candidats
 
@@ -269,11 +356,11 @@ def etudier_multi(session=None, *, idus: Optional[list[str]] = None, zone: Optio
     # zone d'implantation vide ou minuscule (après reculs/PPR) : rien à chercher, pas de crash.
     zi = terrain.zone_implantation
     if zi is None or zi.is_empty or terrain.aire_zone_m2 < 60:
-        return [], _message_impossible(terrain, regles, []), terrain, regles, conv
+        return [], _message_impossible(terrain, regles, [], conv), terrain, regles, conv
     faisables, candidats = _rechercher(terrain, regles, conv, objectif, repartition=repartition)
 
     if not faisables:
-        return [], _message_impossible(terrain, regles, candidats), terrain, regles, conv
+        return [], _message_impossible(terrain, regles, candidats, conv), terrain, regles, conv
 
     if programme:
         couvrants = [it for it in faisables if _contient(it[1][1], programme)]
@@ -399,23 +486,24 @@ def _tcsp_dist_m(session, idus) -> Optional[int]:
 
 def _plafond_l151(session, idus, type_projet, bareme):
     """F6 — plafond de stationnement du Code de l'urbanisme s'il est PLUS restrictif que le PLU. Rend
-    (ratio, article, citation) ou None. L151-35 (résid. univ/social/RPA) : ≤ 1 /logt, ≤ 0,5 si < 500 m
-    d'un transport collectif bien desservi. L151-36 (autres logements) : ≤ 1 si < 500 m."""
+    (ratio, article, citation) ou None. L151-35 (résid. univ/social/RPA) : ≤ 1 /logt, ≤ 0,5 si < 800 m
+    d'un transport collectif bien desservi. L151-36 (autres logements) : ≤ 1 si < 800 m.
+    FAISA-REGLES-1 (E-056) — rayon porté de 500 à 800 m par la loi n° 2025-1129 du 26 novembre 2025."""
     plu = bareme.flat_places if (bareme.validee and bareme.mode == "par_logement") else None
     dist = _tcsp_dist_m(session, idus)
-    sous_500 = dist is not None and dist < 500
+    sous_800 = dist is not None and dist < 800
     if type_projet in _L15134_F6:
-        cap, art = (0.5 if sous_500 else 1.0), "L151-35"
+        cap, art = (0.5 if sous_800 else 1.0), "L151-35"
         cat = _CAT_L15134.get(type_projet, "catégorie L151-34")
         cite = (f"Code de l'urbanisme L151-35 : pour une {cat}, il ne peut être exigé plus de {cap:g} "
                 f"aire de stationnement par logement"
-                + (" (terrain à moins de 500 m d'un transport collectif bien desservi)" if sous_500 else "")
+                + (" (terrain à moins de 800 m d'un transport collectif bien desservi, loi 2025-1129)" if sous_800 else "")
                 + " — le PLU ne s'applique que s'il est plus favorable ; éligibilité de la catégorie à confirmer.")
-    elif type_projet == "collectif" and sous_500:
+    elif type_projet == "collectif" and sous_800:
         cap, art = 1.0, "L151-36"
-        cite = ("Code de l'urbanisme L151-36 : à moins de 500 m d'un transport collectif bien desservi, il "
-                "ne peut être exigé plus de 1 aire de stationnement par logement — le PLU ne s'applique "
-                "que s'il est plus favorable.")
+        cite = ("Code de l'urbanisme L151-36 : à moins de 800 m d'un transport collectif bien desservi (loi "
+                "2025-1129 du 26/11/2025), il ne peut être exigé plus de 1 aire de stationnement par logement "
+                "— le PLU ne s'applique que s'il est plus favorable.")
     else:
         return None
     # la loi ne « mord » que si elle plafonne SOUS la règle du PLU par logement.
@@ -460,12 +548,12 @@ def etudier_complet(session=None, *, idus: Optional[list[str]] = None, zone: Opt
             page_pdf=None, citation=_cite151 or f"plafond {stationnement_ratio:g} place / logement sous condition d'éligibilité"))
     zi = terrain.zone_implantation
     if zi is None or zi.is_empty or terrain.aire_zone_m2 < 60:
-        return [], [], None, _message_impossible(terrain, regles, []), terrain, regles, conv, None
+        return [], [], None, _message_impossible(terrain, regles, [], conv), terrain, regles, conv, None
     faisables, candidats = _rechercher(terrain, regles, conv, objectif, repartition=repartition,
                                        stationnement_mode=stationnement_mode,
                                        niveaux_sous_sol=niveaux_sous_sol)
     if not faisables:
-        return [], [], None, _message_impossible(terrain, regles, candidats), terrain, regles, conv, None
+        return [], [], None, _message_impossible(terrain, regles, candidats, conv), terrain, regles, conv, None
 
     message, depassement = None, None
     couvrants = faisables
@@ -656,7 +744,7 @@ def _contient(cap: cap_mod.Capacite, programme: dict[str, int]) -> bool:
     return all(cap.par_type.get(t, 0) >= n for t, n in programme.items() if n > 0)
 
 
-def _message_impossible(terrain, regles, candidats) -> str:
+def _message_impossible(terrain, regles, candidats, conv=None) -> str:
     r = regles.hauteur_plafond
     # RECETTE-4 — on ne stoppe plus l'étude pour « aucune voie classée » : terrain.charger promeut une
     # arête en accès hypothétique (voie_hypothese). Ce message ne vaut que si AUCUNE arête n'existe du tout.
@@ -666,9 +754,14 @@ def _message_impossible(terrain, regles, candidats) -> str:
     if terrain.aire_zone_m2 < 60:
         return (f"simulation impossible : la zone d'implantation après reculs ne fait que "
                 f"{terrain.aire_zone_m2:.0f} m² — trop étroite pour une barre de logements.")
-    if r.validee and r.valeur is not None and r.valeur < 6:
-        return (f"simulation impossible : la hauteur réglementaire ({r.valeur:.0f} m) n'autorise "
-                f"pas un niveau de logements habitable.")
+    # FAISA-REGLES-1 (D-005) — on essaie AUSSI R+0 : « impossible pour cause de hauteur » ne vaut plus que
+    # si le plafond n'autorise même PAS un rez-de-chaussée (hauteur d'un niveau unique, toiture comptée si la
+    # règle se mesure au faîtage). Une zone plafonnée < 6 m qui autorise un rez n'est plus « Impossible ».
+    if r.validee and r.valeur is not None and conv is not None:
+        h_rdc, base, _e = ctrl_mod.hauteur_projet_m(conv, regles, 1)
+        if r.valeur + 1e-9 < h_rdc:
+            return (f"simulation impossible : la hauteur réglementaire ({ctrl_mod._fr(r.valeur)} m {base}) "
+                    f"n'autorise même pas un rez-de-chaussée ({ctrl_mod._fr(h_rdc)} m).")
     return ("simulation impossible : aucune implantation ne passe tous les contrôles durs sur cette "
             "assiette (zone trop étroite, reculs, ou stationnement aérien impossible).")
 
