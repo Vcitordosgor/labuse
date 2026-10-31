@@ -30,6 +30,7 @@ from sqlalchemy.orm import Session
 # annulé) est décodé par UNE seule fonction, celle de la fiche : ingestion/permits.py. L'outil Permis
 # et le drawer s'y adossent (fin de la divergence avec le `_ETAT_LABELS` local, où 4 = « Chantier ouvert »).
 from ..ingestion.permits import est_annule, etat_libelle
+from ..perf_cache import MemoLRU as _MemoLRU  # VITESSE-3 (NU-D-018) — mémo clé de fraîcheur
 
 router = APIRouter(prefix="/modules", tags=["modules"])
 
@@ -1084,6 +1085,24 @@ def prospection_solaire_parcelle(idu: str, db: Session = Depends(get_db)):
 # propriétaire servi est une PM NOMMÉE (le critère exige le SIREN confirmé) ; le repli particulier
 # de `_solaire_proprio` reste en ceinture. Aucun tier/score servi : l'analyse n'a pas été demandée.
 
+# VITESSE-3 (NU-D-018) — Successions : 8,7 s à froid. Mesure EXPLAIN : le coût n'est PAS la
+# sous-requête corrélée `dirigeant_nom` (32 ms, déjà indexée siren) mais la jointure île-entière
+# `parcel_veille_succession → parcels` filtrée TARD par commune (6 256 sondes parcels à froid) + le
+# seq-scan de `parcelle_personne_morale`. La table veille est un SNAPSHOT mono-run : la réponse ne
+# bouge qu'au recalcul Score V / à la bascule. On MÉMOÏSE par clé de fraîcheur + paramètres.
+_SUCCESSIONS_MEMO = _MemoLRU(maxsize=64)
+
+
+def _cle_successions(db: Session, commune, sdp_min, limit, offset) -> str:
+    from ..fraicheur_caches import empreinte_attendue
+    vs = db.execute(text(
+        "SELECT coalesce(max(computed_at)::text, '∅') FROM parcel_veille_succession")).scalar()
+    rne = db.execute(text("SELECT coalesce(max(last_sync_at)::text, '∅') FROM data_sources "
+                          "WHERE name = 'INPI RNE (dirigeants)'")).scalar()
+    return (f"{empreinte_attendue(db)}|vs={vs}|rne={rne}"
+            f"|c={commune}|sdp={sdp_min}|lim={limit}|off={offset}")
+
+
 @router.get("/successions")
 def successions_liste(commune: str | None = None,
                       sdp_min: int = Query(0, ge=0),
@@ -1093,6 +1112,15 @@ def successions_liste(commune: str | None = None,
     grandeur que la fiche : `p_model_ext_dataset.sdp_residuelle_m2` à l'année de scoring, cf. fiche
     de règle regles/sdp_residuelle_m2.py). Surface/zonage Sourcés ; propriétaire = PM DGFiP (public).
     Le millésime du signal (date du calcul Score V) et la date amont RNE voyagent au bandeau."""
+    try:
+        cle = _cle_successions(db, commune, sdp_min, limit, offset)
+    except Exception:  # noqa: BLE001 — clé indisponible → calcul direct (jamais un cache menteur)
+        return _calcul_successions(db, commune, sdp_min, limit, offset)
+    return _SUCCESSIONS_MEMO.get_or_compute(
+        cle, lambda: _calcul_successions(db, commune, sdp_min, limit, offset))
+
+
+def _calcul_successions(db: Session, commune, sdp_min, limit, offset) -> dict:
     if not db.execute(text("SELECT to_regclass('parcel_veille_succession') IS NOT NULL")).scalar():
         raise HTTPException(503, "signal succession non calculé (table absente).")
     # `p_model_ext_dataset` n'est PAS une table ORM (bâtie par le feature store) : elle peut manquer

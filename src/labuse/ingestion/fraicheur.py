@@ -189,9 +189,37 @@ def _etat_set(session: Session, cle: str, valeur: str) -> None:
 
 # ─────────────────────────── J1/J4 · l'état des sources (la matrice vivante) ───────────────────────────
 
-def etat_sources(session: Session) -> list[dict]:
+# VITESSE-3 (NU-F-006) — cache à CLÉ DE FRAÎCHEUR (pas un TTL arbitraire). Les 11 scans max(date)
+# coûtent ~1,7 s mais l'état ne bouge qu'aux INGESTIONS et au changement de jour (le delta est en
+# jours). La clé embarque donc TOUT ce dont dépend la sortie : jour Réunion + max(last_sync_at) +
+# max(ingestion_runs.finished_at) — et M84 garantit que TOUTE ingestion laisse une trace dans
+# ingestion_runs (`trace_ingestion`). Clé identique ⇒ octet pour octet la même liste ; clé
+# différente ⇒ recalcul. Le cache reste donc chaud ENTRE deux ingestions (pas de péremption à 5 min)
+# → la page Sources reste < 2 s même après une période d'inactivité. GARDES live : `force=True`.
+_ETAT_SOURCES_CACHE: dict = {"cle": None, "v": None}
+
+
+def _cle_etat_sources(session: Session) -> str:
+    row = session.execute(text(
+        "SELECT coalesce(max(last_sync_at)::text, '∅') AS ds, "
+        "       (SELECT coalesce(max(coalesce(finished_at, started_at))::text, '∅') "
+        "          FROM ingestion_runs) AS ir "
+        "FROM data_sources")).mappings().first()
+    return f"jour={today_reunion()}|ds={row['ds']}|ir={row['ir']}"
+
+
+def etat_sources(session: Session, *, force: bool = False) -> list[dict]:
     """Par source : cadence réelle, dernière DONNÉE en base, dernière INGESTION, delta en jours.
-    C'est la surface honnête : les dates parlent seules."""
+    C'est la surface honnête : les dates parlent seules. Caché par clé de fraîcheur (VITESSE-3) ;
+    `force` recalcule (gardes qui exigent le live)."""
+    cle = None
+    if not force:
+        try:
+            cle = _cle_etat_sources(session)
+            if _ETAT_SOURCES_CACHE["v"] is not None and _ETAT_SOURCES_CACHE["cle"] == cle:
+                return _ETAT_SOURCES_CACHE["v"]
+        except Exception:  # noqa: BLE001 — clé indisponible → calcul direct (jamais un cache menteur)
+            cle = None
     out = []
     for key, s in SOURCES.items():
         try:
@@ -210,6 +238,8 @@ def etat_sources(session: Session) -> list[dict]:
                     "delta_donnee_jours": delta, "seuil_jours": seuil_jours(key),
                     "statut": statut_fraicheur(key, delta),   # M84 — verdict live (anti-faux-positif)
                     "auto": s["auto"], "detection": s["detection"]})
+    if cle is not None:
+        _ETAT_SOURCES_CACHE.update(cle=cle, v=out)   # VITESSE-3 — mémo à clé de fraîcheur
     return out
 
 
@@ -253,7 +283,7 @@ def retards_live(session: Session) -> list[dict]:
     """Les sources RÉELLEMENT en retard (statut live `en_retard`). Vide = tout est frais pour sa cadence.
     Lue par la sentinelle (CLI `check-fraicheur`, code de sortie) : un décrochage y est visible en un
     GET / une commande, jamais découvert en ratant une opportunité. L'alerte qui manquait aux surfaces."""
-    return [e for e in etat_sources(session) if e["statut"] == "en_retard"]
+    return [e for e in etat_sources(session, force=True) if e["statut"] == "en_retard"]
 
 
 # ─────────────── M84 · trace_ingestion : toute ingestion LAISSE UNE TRACE (échec compris) ───────────────

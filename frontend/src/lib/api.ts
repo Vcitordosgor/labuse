@@ -1728,6 +1728,9 @@ export const postRetour = (body: {
 // ── DASHBOARD-V1 — Tour de contrôle (admin) ──
 export interface StripeApercu {
   configure: boolean
+  // VITESSE-3 (NU-F-005) — lecture Stripe déportée en tâche de fond : `en_cours` vrai sur le
+  // tout premier chargement (cache pas encore rempli) ; les chiffres arrivent au rafraîchissement.
+  en_cours?: boolean
   raison?: string
   erreur?: string
   mrr_eur?: number

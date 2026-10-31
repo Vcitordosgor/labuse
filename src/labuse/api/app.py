@@ -141,12 +141,69 @@ def _run_heal_steps(steps, on_echec=None, essais: int = 3, pause_s: float = 2.0,
 _WARM_IDUS_DEFAUT = ("97410000AE1369", "97415000BY0083", "97411000BZ1065")
 
 
+#: VITESSE-3 (NU-C-003) — verrou consultatif dédié au préchauffage du contexte commune : un seul
+#: worker recalcule les 24 fiches périmées (évite le double calcul par les 2 workers uvicorn).
+_WARM_CONTEXTE_LOCK = 0x1ABE5C03
+
+
+def _prechauffer_stripe(log) -> None:
+    """VITESSE-3 (NU-F-005) — remplit le cache Stripe HORS requête, au boot : quand l'admin ouvre
+    Pilotage, `apercu_affichage` sert un cache chaud (identique à l'avant), jamais 88 s d'attente."""
+    try:
+        from ..stripe_lecture import apercu, cle_restreinte
+        if cle_restreinte():
+            apercu(force=True)
+            log.info("réchauffage : aperçu Stripe chaud (hors requête)")
+    except Exception as e:  # noqa: BLE001 — jamais bloquant
+        log.warning("réchauffage Stripe impossible : %s", e)
+
+
+def _prechauffer_contexte_communes(log) -> None:
+    """VITESSE-3 (NU-C-003) — (re)calcule le contexte des communes dont la clé de fraîcheur est
+    PÉRIMÉE (après un déploiement, le code change → les 24 le sont) pour que le 1ᵉʳ client ne paie
+    plus 6–18 s. Un seul worker (verrou consultatif). Par commune (session + commit isolés)."""
+    from ..db import engine, session_scope
+    from ..fraicheur_caches import empreinte_attendue
+    lk = engine().connect()
+    try:
+        if not lk.execute(text("SELECT pg_try_advisory_lock(:k)"),
+                          {"k": _WARM_CONTEXTE_LOCK}).scalar():
+            return   # un autre worker s'en charge déjà
+        try:
+            with session_scope() as db:
+                _ensure_contexte_cache(db)
+                attendue = empreinte_attendue(db)
+                communes = [r[0] for r in db.execute(text(
+                    "SELECT DISTINCT commune FROM parcels WHERE commune IS NOT NULL "
+                    "ORDER BY commune")).all()]
+                deja = {r[0]: r[1] for r in db.execute(text(
+                    "SELECT commune, cle_fraicheur FROM commune_contexte_cache")).all()}
+            perimes = [c for c in communes if deja.get(c) != attendue]
+            t0, ok = time.monotonic(), 0
+            for c in perimes:
+                try:
+                    with session_scope() as db:
+                        rafraichir_contexte_cache(db, c)   # upsert + commit (point d'écriture unique)
+                    ok += 1
+                except Exception as e:  # noqa: BLE001 — une commune ratée n'arrête pas le lot
+                    log.warning("réchauffage contexte %s impossible : %s", c, e)
+            log.info("réchauffage : contexte %s/%s communes (re)calculées en %.1fs",
+                     ok, len(perimes), time.monotonic() - t0)
+        finally:
+            lk.execute(text("SELECT pg_advisory_unlock(:k)"), {"k": _WARM_CONTEXTE_LOCK})
+            lk.commit()
+    except Exception as e:  # noqa: BLE001 — jamais bloquant
+        log.warning("réchauffage contexte communes impossible : %s", e)
+    finally:
+        lk.close()
+
+
 def _rechauffer_worker() -> None:
-    """VITESSE-2 (Lot 4) — réchauffe CE worker après un (re)démarrage : les indicateurs partagés
-    `raw_rows` (→ mémo in-process L1 depuis le cache PARTAGÉ en base, Lot 1 ; c'est le coût des
-    « 24 communes » du contexte) + les fiches TÉMOINS (→ `_FICHE_CACHE`). But : le 1ᵉʳ client ne
-    paie plus l'amorçage à froid (DEPLOY-1028 : 1ᵉʳ clic commune ~5 s, 1ʳᵉ fiche 3-4 s). Lancé en
-    thread DÉMON (ne bloque JAMAIS le boot), best-effort, journalisé (logger labuse.rechauffage)."""
+    """VITESSE-2 (Lot 4) + VITESSE-3 — réchauffe CE worker après un (re)démarrage : indicateurs
+    partagés `raw_rows`, fiches TÉMOINS (→ `_FICHE_CACHE`), mémos d'outils (Sources NU-F-006,
+    Successions NU-D-018), aperçu Stripe (NU-F-005) et contexte des 24 communes (NU-C-003). But :
+    le 1ᵉʳ client ne paie plus l'amorçage à froid. Thread DÉMON (ne bloque JAMAIS le boot),
+    best-effort, journalisé (logger labuse.rechauffage)."""
     import logging as _lg
     log = _lg.getLogger("labuse.rechauffage")
     try:
@@ -171,8 +228,26 @@ def _rechauffer_worker() -> None:
                     log.warning("réchauffage fiche %s impossible : %s", idu, e)
             log.info("réchauffage worker : %s/%s fiches témoins chaudes en %.1fs",
                      ok, len(idus), time.monotonic() - t0)
+            # VITESSE-3 — réchauffe les caches coûteux des outils : /sources chauffe
+            # fraicheur.etat_sources + noms_vides_caches (NU-F-006) ; successions remplit
+            # _SUCCESSIONS_MEMO par clé de fraîcheur (NU-D-018). Même fonction que l'endpoint.
+            try:
+                list_sources(db)
+                log.info("réchauffage : caches Sources chauds (NU-F-006)")
+            except Exception as e:  # noqa: BLE001
+                log.warning("réchauffage Sources impossible : %s", e)
+            try:
+                from .modules import successions_liste
+                # valeurs EXPLICITES (les défauts de la route sont des objets fastapi.Query hors FastAPI)
+                successions_liste(commune=None, sdp_min=0, limit=200, offset=0, db=db)  # défaut île entière
+                log.info("réchauffage : mémo Successions chaud (NU-D-018)")
+            except Exception as e:  # noqa: BLE001
+                log.warning("réchauffage Successions impossible : %s", e)
     except Exception as e:  # noqa: BLE001 — le réchauffage ne doit jamais faire tomber le worker
         log.warning("réchauffage worker impossible : %s", e)
+    # Stripe (hors requête) + contexte des 24 communes : sessions dédiées, best-effort.
+    _prechauffer_stripe(log)
+    _prechauffer_contexte_communes(log)
 
 
 @asynccontextmanager
@@ -1190,8 +1265,19 @@ def _source_pour_run(commune: str | None) -> str | None:
     return "Cadastre Etalab (bulk DGFiP/Etalab)"
 
 
+from ..perf_cache import MemoLRU as _MemoLRU   # VITESSE-3 — mémos in-process (Étude de zone NU-C-003)
+
+
 @app.get("/sources")
 def list_sources(db: Session = Depends(get_db)) -> list[dict]:
+    # VITESSE-3 (NU-F-006) — la page Sources mettait 14,8 s à froid. Mesure : le coût tient à DEUX
+    # sous-appels (`fraicheur.etat_sources` ≈ 1,7 s = 11 scans max(date) sur la base de 44 Go ;
+    # `noms_vides_caches` ≈ 1,2 s). Le reste (sélection data_sources, runs, checks) est < 30 ms et
+    # reste LIVE → une désactivation de source, un changement de statut se voient immédiatement. On
+    # ne cache donc PAS la réponse ; on cache les deux sous-appels coûteux (verdicts de fraîcheur qui
+    # ne bougent qu'aux ingestions) : `noms_vides_caches` a déjà son cache 5 min, et VITESSE-3 en
+    # pose un identique sur `etat_sources`. Préchauffés au boot (réchauffage worker) → 1er client
+    # instantané. La sélection des sources affichées reste calculée en direct (identité préservée).
     # FIX-SOURCES S1 — la page SÉLECTIONNE via la définition CANONIQUE `sources_catalog.WHERE_AFFICHEES`
     # (connecte ∪ manuel, hors DOUBLON/RETIRÉ/DORMANT/masquées), EXACTEMENT comme le compteur d'accueil
     # (accueil.py) : le nombre rendu == le nombre annoncé, par construction. Fini le `status=='connecte'`
@@ -7254,6 +7340,24 @@ class EtudeZoneIn(BaseModel):
     titre: str | None = None        # libellé d'entrée (adresse) pour le titre du PDF
 
 
+# VITESSE-3 (NU-C-003) — Étude de zone : > 5 s à CHAQUE usage (aucun cache de résultat, recalcul
+# intégral : ST_Union/ST_Intersects sur spatial_layers, SIRENE, Filosofi, DVF). La réponse est
+# DÉTERMINISTE pour (entrée, rayon, paramètres) à état de données figé → mémo clé de fraîcheur.
+# Borné (LRU 256) car la clé `geom` est à cardinalité ouverte (polygones dessinés librement).
+_ETUDE_ZONE_MEMO = _MemoLRU(maxsize=256)
+
+
+def _cle_etude_zone(db: Session, inp: "EtudeZoneIn") -> str:
+    import hashlib
+    from ..fraicheur_caches import empreinte_attendue
+    entree = json.dumps({"idu": inp.idu, "lon": inp.lon, "lat": inp.lat, "geom": inp.geom,
+                         "naf": inp.naf, "sous_destination": inp.sous_destination,
+                         "minutes": inp.minutes, "mode": inp.mode, "rayon_km": inp.rayon_km,
+                         "titre": inp.titre}, sort_keys=True, ensure_ascii=False)
+    h = hashlib.md5(entree.encode("utf-8"), usedforsecurity=False).hexdigest()
+    return f"{empreinte_attendue(db)}|{h}"
+
+
 @app.post("/outils/etude-zone")
 def etude_zone(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> dict:
     """L'outil de chalandise : une zone (isochrone OU polygone), qui y vit, qui y travaille, quels
@@ -7262,6 +7366,14 @@ def etude_zone(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> dict:
 
     Trois entrées : `idu` (centroïde de la parcelle), `lon/lat` (point/adresse), ou `geom` (polygone).
     Échec isochrone → dégradé honnête et nommé, jamais un cercle."""
+    try:
+        cle = _cle_etude_zone(db, inp)
+    except Exception:  # noqa: BLE001 — clé indisponible → calcul direct, jamais un cache menteur
+        return _calcul_etude_zone(db, inp)
+    return _ETUDE_ZONE_MEMO.get_or_compute(cle, lambda: _calcul_etude_zone(db, inp))
+
+
+def _calcul_etude_zone(db: Session, inp: EtudeZoneIn) -> dict:
     from ..zone import etude_de_zone
     from ..naf_labels import label as naf_label
     minutes = inp.minutes if inp.minutes in (5, 10, 15) else 10
