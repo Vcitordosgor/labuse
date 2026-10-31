@@ -37,10 +37,21 @@ def _base_reelle():
     ancien_eng, ancien_sess = db_mod._engine, db_mod._Session
     db_mod._engine = db_mod.make_engine(app_url)
     db_mod._Session = None
+    # COHERENCE-HOOK-1 — la route `etude_implantation` calcule dans un PROCESSUS SÉPARÉ « spawn »
+    # (ETUDE-ASYNC-1) : le fils ne voit PAS `db_mod._engine` rebranché en mémoire, il relit
+    # `LABUSE_DATABASE_URL` dans l'environnement — que conftest a épinglé sur `labuse_test` (vide
+    # des parcelles témoins) → « parcelles introuvables ». On pointe donc AUSSI l'environnement
+    # (hérité par le fils) sur la base applicative réelle le temps du test, restauré ensuite.
+    ancien_url = os.environ.get("LABUSE_DATABASE_URL")
+    os.environ["LABUSE_DATABASE_URL"] = app_url
     try:
         yield
     finally:
         db_mod._engine, db_mod._Session = ancien_eng, ancien_sess
+        if ancien_url is None:
+            os.environ.pop("LABUSE_DATABASE_URL", None)
+        else:
+            os.environ["LABUSE_DATABASE_URL"] = ancien_url
 
 
 @pytest.fixture(scope="module")
@@ -215,10 +226,16 @@ def test_route_etude_entrees_invalides(session_reelle):
         etude_implantation(EtudeIn(idus=IDUS_ETANG_SALE * 3), db=session_reelle)  # > 8
     assert e2.value.status_code == 400
 
-    with pytest.raises(HTTPException) as e3:
-        etude_implantation(EtudeIn(idus=IDUS_ETANG_SALE, type_projet="lotissement"),
-                           db=session_reelle)
-    assert e3.value.status_code == 400
+    # COHERENCE-HOOK-1 — l'ancien 3ᵉ cas affirmait « type_projet=lotissement → 400 », vrai au
+    # temps où seul le collectif était actif ; mais le moteur SERT désormais le lotissement
+    # (`service._TYPES_PROJET` = {collectif, etudiante, senior, social, lotissement}). Ce cas ne
+    # passait que par ACCIDENT : sous pytest le calcul « spawn » visait labuse_test (sans les
+    # parcelles témoins) → 400 « parcelles introuvables » pour TOUT, lotissement compris. Le fils
+    # pointant maintenant la base réelle (cf. _base_reelle), lotissement calcule un payload valide.
+    # Garde remise en POSITIF : lotissement est un type servi, pas une entrée rejetée.
+    out = etude_implantation(EtudeIn(idus=IDUS_ETANG_SALE, type_projet="lotissement"),
+                             db=session_reelle)
+    assert out["moteur"]["livrable"] == "ETUDE-V6-LOTISSEMENT" and out.get("lotissement")
 
 
 # IMPLANTATION-4 (planche) — le payload sert la PLANCHE (SVG « façon archi »), et le VERROU tient :

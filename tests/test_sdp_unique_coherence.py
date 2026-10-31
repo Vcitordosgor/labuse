@@ -37,6 +37,7 @@ def _rien(x) -> bool:
     return x is None or x == 0
 
 
+@pytest.mark.coherence  # COHERENCE-HOOK-1 — regroupée sous la suite de cohérence (banc de nuit / -m coherence)
 @pytest.mark.reel  # interroge la base APPLICATIVE réelle (run servi + scoring) — hors CI (base vide)
 def test_sdp_residuelle_coherente_sur_temoins():
     from sqlalchemy import create_engine, text

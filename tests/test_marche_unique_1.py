@@ -17,6 +17,9 @@ from __future__ import annotations
 import pytest
 from sqlalchemy import text
 
+# COHERENCE-HOOK-1 — regroupée sous la suite de cohérence (médiane : une valeur, trois lectures).
+pytestmark = pytest.mark.coherence
+
 # 3 communes témoins × 2 types, chacune à un niveau de prix DISTINCT (pour qu'un mélange de
 # types ou de communes se verrait). Médiane construite pour être EXACTE (prix tous égaux).
 _PLAN = {

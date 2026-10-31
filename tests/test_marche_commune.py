@@ -70,7 +70,13 @@ def test_gisement_run_servi_et_dpe_denominateur_connu():
     lignes, _ = _bloc("Saint-Paul")
     g = lignes["gisement_constructible"]
     if g["calculable"]:
-        assert Q_A_RUN_LABEL in (g["date_amont"] or "") and Q_A_RUN_LABEL in g["etiquette"]
+        # COHERENCE-HOOK-1 — le gisement reste prouvé « run servi », mais depuis COMMUNE-FIX-1
+        # (29025ba3f8) le libellé BRUT du run (q_v20) vit dans `date_amont` (interne) tandis que
+        # l'`etiquette` cliente est LISIBLE (« Analyse LABUSE · run servi ») — changement de
+        # comportement SERVI délibéré (cf. commentaire dans faisabilite.marche_commune.ligne7_gisement).
+        # Le test suivait l'ancien libellé. On vérifie désormais la vérité là où elle est servie.
+        assert Q_A_RUN_LABEL in (g["date_amont"] or ""), g["date_amont"]
+        assert "run servi" in (g["etiquette"] or "").lower(), g["etiquette"]
     dpe = lignes["pression_dpe"]
     # dénominateur = parc DIAGNOSTIQUÉ, dit explicitement (« sur N DPE connus »)
     assert "DPE conn" in dpe["etiquette"]

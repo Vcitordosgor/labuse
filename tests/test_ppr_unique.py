@@ -8,6 +8,9 @@ from sqlalchemy import text
 
 from labuse import ppr
 
+# COHERENCE-HOOK-1 — regroupée sous la suite de cohérence (PPR : une classification unique).
+pytestmark = pytest.mark.coherence
+
 
 # ── Classification pure (miroir Python de la fonction SQL) ────────────────────────────────────────
 @pytest.mark.parametrize("subtype,code_degre,attendu", [
