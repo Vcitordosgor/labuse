@@ -908,17 +908,19 @@ def _alea_label_carte(risques: list[dict]) -> str | None:
     return nom or None
 
 
-def construire_analyse_annonce_parc(db, idu: str, *, request=None, jour: date | None = None) -> ResultatDoc:
+def construire_analyse_annonce_parc(db, idu: str, *, request=None, surface_hab: float | None = None,
+                                    jour: date | None = None) -> ResultatDoc:
     """Variante PARCELLE (entrée adresse), 2 PAGES selon la maquette. Un SEUL point de données :
     `pige.api.rapport_parcelle` (lu AUSSI par l'écran → PDF == outil). Deux cartes (ortho + cadastre /
     zonage / aléas), 6 tuiles, estimation + valeur indicative + comparables ; page 2 : foncier + risques
-    + marché + à vérifier. Aucun recalcul ici."""
+    + marché + à vérifier. Aucun recalcul ici. `surface_hab` (ESTIMER-PRECISION-1, facultatif) : surface
+    habitable saisie → le total l'utilise, à l'identique de l'écran (écran == PDF == Doc)."""
     from .blocs import annonce as bloc_annonce
     from ..api.app import parcel_fiche
     from ..pige.api import rapport_parcelle
     j = jour or today_reunion()
     fiche = parcel_fiche(idu, db=db, request=request)
-    rapport = rapport_parcelle(db, idu, fiche)
+    rapport = rapport_parcelle(db, idu, fiche, surface_hab=surface_hab)
     numero = numeros.numero_rapport("analyse-annonce", idu, j)
     rapport["_ref_droite"] = f"{numero} · {j:%d/%m/%Y}"
     adresse = rapport.get("adresse") or ""

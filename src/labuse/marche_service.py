@@ -292,6 +292,78 @@ def comparables(db: Session, idu: str, *, profil: str = COMPARABLES_PREMIUM) -> 
 #: lecteur DÉCLARÉ de dvf_mutations (robinet pdf_banquier) — aucune nouvelle arête à déclarer.
 _CMP_RAYONS = (500.0, 1000.0, 1500.0)   # rayon ADAPTATIF : on élargit jusqu'au seuil d'effectif
 
+# ── ESTIMER-PRECISION-1 — médiane PONDÉRÉE par la ressemblance (poids RÉGLÉS sur les ventes 2024,
+# ANNONCÉS sur 2025, banc docs/audit-2026-11/estimer-precision-1/). Chaque comparable compte selon :
+# sa DISTANCE (gaussien), son écart de SURFACE bâtie (laplacien), pour les MAISONS son écart de TAILLE
+# de TERRAIN, et son ANCIENNETÉ (demi-vie). Les prix sont RAMENÉS À AUJOURD'HUI par un indice local de
+# dérive (médiane €/m² de la commune, 2019-2024, figé). L'écart d'ALTITUDE (Hauts/littoral) a été mesuré
+# via la distance au trait de côte (le MNT RGE ALTI n'est pas chargé island-wide) : contribution 0,1 pt
+# → NON servie (ne justifie pas un index spatial au serve-time). Gain mesuré 2025 : appartement/copro
+# €/m² 17,2 % → 14,4 % (objectif < 15 % atteint, surface connue) ; maison ~27 % (plancher donnée DVF,
+# confirmé par un test gradient boosting à 27,8 % — aucune méthode ne descend sous 20 %).
+_POIDS_SEGMENT = {
+    "appartement": {"h_dist": 500.0, "h_surf": 160.0, "halflife": 2.0, "drift": True, "h_terr": None},
+    "maison":      {"h_dist": 900.0, "h_surf": 120.0, "halflife": 4.0, "drift": True, "h_terr": 1500.0},
+}
+_POIDS_DEFAUT = {"h_dist": 900.0, "h_surf": 120.0, "halflife": 4.0, "drift": True, "h_terr": None}
+_DRIFT_ANS = (2019, 2024)            # indice local estimé sur ≤2024 et FIGÉ
+_DRIFT_MIN, _DRIFT_MAX = -0.04, 0.12
+
+
+def _annee_decimale(d: str | None) -> float | None:
+    """'YYYY-MM-DD' → année décimale (ex. 2024-07-02 ≈ 2024,5). None si illisible."""
+    if not isinstance(d, str) or len(d) < 10:
+        return None
+    try:
+        import datetime as _dt
+        dd = _dt.date.fromisoformat(d[:10])
+        deb = _dt.date(dd.year, 1, 1).toordinal()
+        fin = _dt.date(dd.year + 1, 1, 1).toordinal()
+        return dd.year + (dd.toordinal() - deb) / (fin - deb)
+    except ValueError:
+        return None
+
+
+def _drift_commune(db: Session, commune: str | None) -> float:
+    """Dérive géométrique annuelle du €/m² bâti de la commune (médianes 2019-2024, FIGÉES). Repli île si
+    assise mince. Bornée [−4 % ; +12 %]/an (garde-fou contre les communes à faible effectif)."""
+    import statistics as _st
+    rows = db.execute(text(
+        "SELECT extract(year FROM date_mutation)::int AS annee, "
+        "  percentile_cont(0.5) WITHIN GROUP (ORDER BY valeur_fonciere/surface_reelle_bati) AS med, "
+        "  count(*) AS n "
+        "FROM dvf_mutations "
+        "WHERE surface_reelle_bati >= 20 AND valeur_fonciere > 0 AND nature_mutation = 'Vente' "
+        "  AND valeur_fonciere/surface_reelle_bati BETWEEN 1000 AND 12000 "
+        "  AND extract(year FROM date_mutation) BETWEEN :a AND :b "
+        "  AND (commune = :c OR :c IS NULL) "
+        "GROUP BY annee"), {"a": _DRIFT_ANS[0], "b": _DRIFT_ANS[1], "c": commune}).mappings().all()
+    serie = {int(r["annee"]): float(r["med"]) for r in rows if (r["n"] or 0) >= 8 and r["med"]}
+    ans = sorted(serie)
+    if len(ans) >= 4 and serie.get(ans[0]) and serie.get(ans[-1]):
+        d = (serie[ans[-1]] / serie[ans[0]]) ** (1.0 / (ans[-1] - ans[0])) - 1.0
+        return max(_DRIFT_MIN, min(_DRIFT_MAX, d))
+    return 0.0
+
+
+def _med_quantiles_pondere(vw: list[tuple[float, float]]) -> tuple[float | None, float | None, float | None]:
+    """(q1, médiane, q3) PONDÉRÉS d'une liste (valeur, poids). Quantile pondéré = valeur où le poids
+    cumulé franchit 25/50/75 %. None si vide."""
+    vw = [(float(v), float(w)) for v, w in vw if w and w > 0]
+    if not vw:
+        return None, None, None
+    vw.sort(key=lambda t: t[0])
+    total = sum(w for _, w in vw)
+    cum, out, cibles, qs = 0.0, {}, [0.25, 0.5, 0.75], {}
+    for v, w in vw:
+        cum += w
+        for c in cibles:
+            if c not in qs and cum >= total * c:
+                qs[c] = v
+    for c in cibles:
+        qs.setdefault(c, vw[-1][0])
+    return qs[0.25], qs[0.5], qs[0.75]
+
 
 def _cle_type(type_bien: str | None) -> str | None:
     """Fragment ILIKE du type_local DVF pour un type de bien, ou None (bâti combiné)."""
@@ -303,12 +375,19 @@ def _cle_type(type_bien: str | None) -> str | None:
 
 
 def comparateur_bien(db: Session, idu: str, *, type_bien: str | None = None,
-                     fenetre_ans: int = 5, seuil: int | None = None, n_table: int = 8) -> dict | None:
+                     fenetre_ans: int = 5, seuil: int | None = None, n_table: int = 8,
+                     surface_sujet: float | None = None, terrain_sujet: float | None = None) -> dict | None:
     """Comparateur BÂTI de l'annonce (ventes de maisons / d'appartements), SURFAÇAGE de dvf_mutations.
     `type_bien` ∈ {maison, appartement, bati, None} : None/bati → on DÉDUIT le type dominant du secteur
     (règle de nature de la fiche : une parcelle bâtie en secteur de maisons est comparée aux maisons).
     Rayon ADAPTATIF 500→1000→1500 m jusqu'au seuil d'effectif, repli commune. Renvoie None si la parcelle
-    n'a pas de géométrie ; sinon un dict toujours défini (median None si échantillon insuffisant)."""
+    n'a pas de géométrie ; sinon un dict toujours défini (median None si échantillon insuffisant).
+
+    ESTIMER-PRECISION-1 — la médiane servie est PONDÉRÉE par la ressemblance (distance, écart de surface,
+    écart de terrain pour les maisons, ancienneté) et les prix sont ramenés à aujourd'hui par un indice
+    local de dérive ; `surface_sujet` / `terrain_sujet` (facultatifs) alimentent les poids de surface et
+    de terrain. Les 8 comparables affichés sont ceux qui PÈSENT LE PLUS (prix bruts affichés). Poids réglés
+    sur 2024, annoncés sur 2025 (`_POIDS_SEGMENT`)."""
     import statistics
     pid = _parcel_id(db, idu)
     if pid is None:
@@ -326,6 +405,7 @@ def comparateur_bien(db: Session, idu: str, *, type_bien: str | None = None,
             "  round(dm.surface_reelle_bati)::int AS surface_m2, "
             "  round(dm.valeur_fonciere)::int AS prix_eur, "
             "  round(dm.valeur_fonciere / NULLIF(dm.surface_reelle_bati, 0))::int AS prix_m2, "
+            "  round(COALESCE(dm.surface_terrain, 0))::int AS terrain_m2, "
             "  extract(year FROM dm.date_mutation)::int AS annee "
             "FROM dvf_mutations dm, p "
             "WHERE dm.geom IS NOT NULL AND dm.date_mutation IS NOT NULL "
@@ -371,15 +451,52 @@ def comparateur_bien(db: Session, idu: str, *, type_bien: str | None = None,
         elif kept:
             radius = int(_CMP_RAYONS[-1])
 
-    prix = [float(v["prix_m2"]) for v in kept if v.get("prix_m2") is not None]
+    kept = [v for v in kept if v.get("prix_m2") is not None]
     annees = [int(v["annee"]) for v in kept if v.get("annee") is not None]
-    n = len(prix)
-    median = round(statistics.median(prix)) if prix else None
-    q1 = q3 = None
-    if n >= 4:
-        qs = statistics.quantiles(prix, n=4, method="inclusive")
-        q1, q3 = round(qs[0]), round(qs[2])
-    proches = sorted(kept, key=lambda v: (v.get("distance_m") is None, v.get("distance_m")))[:n_table]
+    n = len(kept)
+    # ── ESTIMER-PRECISION-1 — médiane PONDÉRÉE + prix ramenés à aujourd'hui (indice local) ──
+    import math as _math
+    par = _POIDS_SEGMENT.get(type_bien or "", _POIDS_DEFAUT)
+    commune_nom = db.execute(text("SELECT commune FROM parcels WHERE idu = :idu"), {"idu": idu}).scalar()
+    drift = _drift_commune(db, commune_nom) if par.get("drift") else 0.0
+    is_maison = (type_bien == "maison")
+    # Référence de dérive = le comparable le PLUS RÉCENT (l'ancre, comme le banc) — on ramène les prix
+    # à l'état de marché le plus frais DONT ON A LA DONNÉE, jamais une extrapolation calendaire.
+    ycs = [(_annee_decimale(v.get("date")) or float(v.get("annee") or 0)) for v in kept]
+    ref_dec = max([y for y in ycs if y] or [0.0])
+    vw = []   # (prix ramené à l'ancre, poids)
+    for v, yc in zip(kept, ycs):
+        p = float(v["prix_m2"])
+        if drift and yc:
+            fac = (1.0 + drift) ** (ref_dec - yc)
+            fac = min(1.6, max(0.7, fac))   # garde-fou : un comparable n'est ré-indexé qu'au plus ±(…)
+            p_adj = p * fac
+        else:
+            p_adj = p
+        w = 1.0
+        hd = par.get("h_dist")
+        if hd and isinstance(v.get("distance_m"), (int, float)):
+            w *= _math.exp(-(float(v["distance_m"]) / hd) ** 2)
+        hs = par.get("h_surf")
+        if hs and isinstance(surface_sujet, (int, float)) and surface_sujet > 0 and v.get("surface_m2"):
+            w *= _math.exp(-abs(float(v["surface_m2"]) - float(surface_sujet)) / hs)
+        ht = par.get("h_terr")
+        if ht and is_maison and isinstance(terrain_sujet, (int, float)) and terrain_sujet > 0 \
+                and (v.get("terrain_m2") or 0) > 0:
+            w *= _math.exp(-abs(float(v["terrain_m2"]) - float(terrain_sujet)) / ht)
+        hl = par.get("halflife")
+        if hl:
+            w *= 0.5 ** (max(0.0, ref_dec - yc) / hl)
+        if not (w > 0) or not _math.isfinite(w):
+            w = 1e-12
+        v["_poids"] = w
+        vw.append((p_adj, w))
+    q1f, medf, q3f = _med_quantiles_pondere(vw)
+    median = round(medf) if medf is not None else None
+    q1 = round(q1f) if (n >= 4 and q1f is not None) else None
+    q3 = round(q3f) if (n >= 4 and q3f is not None) else None
+    # Les 8 comparables AFFICHÉS = ceux qui PÈSENT LE PLUS (mandat) ; prix BRUTS (non ramenés) affichés.
+    proches = sorted(kept, key=lambda v: v.get("_poids", 0.0), reverse=True)[:n_table]
     comparables = [{
         "date": f"{v['date'][5:7]}/{v['date'][0:4]}" if isinstance(v.get("date"), str) and len(v["date"]) >= 7 else None,
         "type": (v.get("type_local") or "").capitalize() or None,

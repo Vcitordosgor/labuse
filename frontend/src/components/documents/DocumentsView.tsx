@@ -168,6 +168,7 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
   const [idus, setIdus] = useState<(string | null)[]>([null, null, null])  // multi (2 à 3)
   const [rayon, setRayon] = useState(2)                              // zone : rayon servi, défaut 2
   const [lien, setLien] = useState('')                               // ANNONCE-3 : lien d'annonce (variante annonce)
+  const [surfaceHab, setSurfaceHab] = useState('')                   // ESTIMER-PRECISION-1 : surface habitable facultative (variante adresse)
   // RECETTE-4 — menu Activité (sous-destination) retiré de l'Étude de zone (Docs incluse).
   // CHASSE-DONNEES-FIX-1 (suite 2, E-77) — rayons SERVIS (config/moteurs.yaml), plus la liste 1..20 en dur.
   const cfgMot = useQuery({ queryKey: ['moteurs-config'], queryFn: getMoteursConfig, staleTime: 3600_000 })
@@ -306,8 +307,18 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
             <div className="mb-2 font-semibold text-txt">Une adresse</div>
             <ParcelInput placeholder={placeholder} withCarte={false} autoFocus onPick={setIdu} />
             {idu && <ParcelleResolue idu={idu} onFiche={() => ouvrirFiche(idu)} />}
+            {/* ESTIMER-PRECISION-1 — surface habitable facultative : si renseignée, le total du rapport
+                l'utilise (« surface saisie »), à l'identique de l'écran de l'outil (écran == PDF == Doc). */}
+            {idu && (
+              <div className="mt-2 flex items-center gap-2">
+                <label className="text-[13px] text-txt-dim" htmlFor="doc-surface-hab">Surface habitable (m²)</label>
+                <input id="doc-surface-hab" type="number" min={1} step={1} inputMode="numeric"
+                  className="h-9 w-24 rounded-md border border-line-2 bg-surface-3 px-2 text-[13px] text-txt-hi placeholder:text-txt-mut focus:border-mint focus:outline-none"
+                  placeholder="facultatif" value={surfaceHab} onChange={(e) => setSurfaceHab(e.target.value)} />
+              </div>
+            )}
             <Bouton niveau="primaire" ton="vert" className="mt-2 w-full" disabled={!idu || !!enCours}
-              onClick={async () => { if (idu && await ouvrir(docAnalyseAnnonceUrl(idu), 'analyse-annonce')) { enregistrer('analyse-annonce', [idu]); onClose() } }}>
+              onClick={async () => { const sh = surfaceHab.trim() ? Math.round(Number(surfaceHab)) : null; const shv = sh != null && Number.isFinite(sh) && sh > 0 ? sh : null; if (idu && await ouvrir(docAnalyseAnnonceUrl(idu, shv), 'analyse-annonce')) { enregistrer('analyse-annonce', [idu]); onClose() } }}>
               {enCours === 'analyse-annonce' ? <Chargement variant="inline" accent="courant" label="Génération…" /> : d.cta}
             </Bouton>
             <div className="my-3 flex items-center gap-2 text-[13px] text-txt-mut">

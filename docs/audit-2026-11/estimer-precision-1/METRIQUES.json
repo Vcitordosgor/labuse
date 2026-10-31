@@ -1,0 +1,468 @@
+{
+  "n_2024": 4141,
+  "n_2025": 4362,
+  "reglage": {
+    "maison": {
+      "params": {
+        "h_dist": null,
+        "h_surf": null,
+        "h_coast": null,
+        "halflife": null,
+        "drift": false,
+        "h_terr": 1500.0
+      },
+      "median_2024_apres": 28.4,
+      "n_2024": 2065,
+      "median_2024_avant": 28.6,
+      "median_2025_servi": 27.2
+    },
+    "appartement": {
+      "params": {
+        "h_dist": 500.0,
+        "h_surf": 160.0,
+        "h_coast": 600.0,
+        "halflife": 2.0,
+        "drift": true,
+        "h_terr": null
+      },
+      "median_2024_apres": 14.8,
+      "n_2024": 2076,
+      "median_2024_avant": 17.4,
+      "median_2025_servi": 14.5
+    }
+  },
+  "litto_max_m": 1000.0,
+  "hauts_min_m": 4000.0,
+  "segments": {
+    "Maison": {
+      "m2": {
+        "avant": {
+          "n": 2286,
+          "median_abs_pct": 26.8,
+          "pct_10": 20.2,
+          "pct_20": 39.1
+        },
+        "apres": {
+          "n": 2286,
+          "median_abs_pct": 27.2,
+          "pct_10": 20.9,
+          "pct_20": 39.6
+        }
+      },
+      "total_connu": {
+        "avant": {
+          "n": 2286,
+          "median_abs_pct": 26.8,
+          "pct_10": 20.2,
+          "pct_20": 39.1
+        },
+        "apres": {
+          "n": 2286,
+          "median_abs_pct": 27.2,
+          "pct_10": 20.9,
+          "pct_20": 39.6
+        }
+      },
+      "total_estime": {
+        "avant": {
+          "n": 2276,
+          "median_abs_pct": 30.9,
+          "pct_10": 17.2,
+          "pct_20": 33.8
+        },
+        "apres": {
+          "n": 2276,
+          "median_abs_pct": 30.5,
+          "pct_10": 18.8,
+          "pct_20": 35.4
+        }
+      }
+    },
+    "Appartement": {
+      "m2": {
+        "avant": {
+          "n": 2076,
+          "median_abs_pct": 17.2,
+          "pct_10": 30.5,
+          "pct_20": 57.4
+        },
+        "apres": {
+          "n": 2076,
+          "median_abs_pct": 14.5,
+          "pct_10": 36.5,
+          "pct_20": 62.4
+        }
+      },
+      "total_connu": {
+        "avant": {
+          "n": 2076,
+          "median_abs_pct": 17.2,
+          "pct_10": 30.5,
+          "pct_20": 57.4
+        },
+        "apres": {
+          "n": 2076,
+          "median_abs_pct": 14.5,
+          "pct_10": 36.5,
+          "pct_20": 62.4
+        }
+      },
+      "total_estime": {
+        "avant": {
+          "n": 2069,
+          "median_abs_pct": 30.9,
+          "pct_10": 17.4,
+          "pct_20": 33.2
+        },
+        "apres": {
+          "n": 2069,
+          "median_abs_pct": 30.8,
+          "pct_10": 18.8,
+          "pct_20": 36.1
+        }
+      }
+    },
+    "Copropriété": {
+      "m2": {
+        "avant": {
+          "n": 2130,
+          "median_abs_pct": 17.3,
+          "pct_10": 30.1,
+          "pct_20": 56.9
+        },
+        "apres": {
+          "n": 2130,
+          "median_abs_pct": 14.8,
+          "pct_10": 36.1,
+          "pct_20": 62.0
+        }
+      },
+      "total_connu": {
+        "avant": {
+          "n": 2130,
+          "median_abs_pct": 17.3,
+          "pct_10": 30.1,
+          "pct_20": 56.9
+        },
+        "apres": {
+          "n": 2130,
+          "median_abs_pct": 14.8,
+          "pct_10": 36.1,
+          "pct_20": 62.0
+        }
+      },
+      "total_estime": {
+        "avant": {
+          "n": 2123,
+          "median_abs_pct": 30.6,
+          "pct_10": 17.7,
+          "pct_20": 33.7
+        },
+        "apres": {
+          "n": 2123,
+          "median_abs_pct": 30.5,
+          "pct_10": 19.0,
+          "pct_20": 36.5
+        }
+      }
+    },
+    "Terrain nu": {
+      "m2": {
+        "avant": {
+          "n": 974,
+          "median_abs_pct": 36.2,
+          "pct_10": 16.3,
+          "pct_20": 32.4
+        },
+        "apres": {
+          "n": 974,
+          "median_abs_pct": 36.2,
+          "pct_10": 16.3,
+          "pct_20": 32.4
+        }
+      }
+    }
+  },
+  "zones": {
+    "littoral·maison": {
+      "n": 485,
+      "median_abs_pct": 29.6,
+      "pct_10": 18.1,
+      "pct_20": 37.7
+    },
+    "littoral·appartement": {
+      "n": 768,
+      "median_abs_pct": 15.5,
+      "pct_10": 35.7,
+      "pct_20": 61.3
+    },
+    "medians·maison": {
+      "n": 906,
+      "median_abs_pct": 28.8,
+      "pct_10": 18.8,
+      "pct_20": 38.5
+    },
+    "medians·appartement": {
+      "n": 1046,
+      "median_abs_pct": 13.8,
+      "pct_10": 37.6,
+      "pct_20": 63.5
+    },
+    "hauts·maison": {
+      "n": 895,
+      "median_abs_pct": 24.8,
+      "pct_10": 24.5,
+      "pct_20": 41.7
+    },
+    "hauts·appartement": {
+      "n": 262,
+      "median_abs_pct": 15.3,
+      "pct_10": 34.4,
+      "pct_20": 61.5
+    }
+  },
+  "communes": {
+    "mieux": [
+      [
+        "97414",
+        19.3,
+        164
+      ],
+      [
+        "97404",
+        20.0,
+        53
+      ],
+      [
+        "97408",
+        22.8,
+        100
+      ]
+    ],
+    "moins": [
+      [
+        "97407",
+        36.3,
+        76
+      ],
+      [
+        "97411",
+        37.0,
+        278
+      ],
+      [
+        "97424",
+        51.7,
+        35
+      ]
+    ]
+  },
+  "ablation": {
+    "appartement": {
+      "tous": 14.5,
+      "sans_h_dist": 15.0,
+      "sans_h_surf": 14.6,
+      "sans_h_coast": 14.5,
+      "sans_halflife": 14.9,
+      "sans_drift": 15.6,
+      "sans_h_terr": 14.5
+    },
+    "maison": {
+      "tous": 27.2,
+      "sans_h_dist": 27.4,
+      "sans_h_surf": 27.2,
+      "sans_h_coast": 27.2,
+      "sans_halflife": 27.4,
+      "sans_drift": 26.8,
+      "sans_h_terr": 27.6
+    }
+  },
+  "grille": {
+    "maison": {
+      "15-39 · 0.25-0.40": {
+        "n": 481,
+        "median": 27.8,
+        "pct_20": 39.3,
+        "pct_10": 20.8
+      },
+      "15-39 · 0.40-0.75": {
+        "n": 751,
+        "median": 26.8,
+        "pct_20": 39.4,
+        "pct_10": 22.5
+      },
+      "15-39 · d<=0.25": {
+        "n": 74,
+        "median": 20.8,
+        "pct_20": 48.6,
+        "pct_10": 28.4
+      },
+      "15-39 · d>0.75": {
+        "n": 45,
+        "median": 50.3,
+        "pct_20": 17.8,
+        "pct_10": 13.3
+      },
+      "8-14 · 0.25-0.40": {
+        "n": 146,
+        "median": 29.0,
+        "pct_20": 41.8,
+        "pct_10": 22.6
+      },
+      "8-14 · 0.40-0.75": {
+        "n": 179,
+        "median": 27.2,
+        "pct_20": 38.0,
+        "pct_10": 15.6
+      },
+      "8-14 · d<=0.25": {
+        "n": 72,
+        "median": 25.5,
+        "pct_20": 41.7,
+        "pct_10": 11.1
+      },
+      "8-14 · d>0.75": {
+        "n": 15,
+        "median": 30.6,
+        "pct_20": 40.0,
+        "pct_10": 6.7
+      },
+      "n<8 · ?": {
+        "n": 2,
+        "median": 14.0,
+        "pct_20": 50.0,
+        "pct_10": 50.0
+      },
+      "n>=40 · 0.25-0.40": {
+        "n": 172,
+        "median": 24.5,
+        "pct_20": 44.8,
+        "pct_10": 20.9
+      },
+      "n>=40 · 0.40-0.75": {
+        "n": 305,
+        "median": 28.8,
+        "pct_20": 38.4,
+        "pct_10": 21.6
+      },
+      "n>=40 · d<=0.25": {
+        "n": 12,
+        "median": 12.7,
+        "pct_20": 58.3,
+        "pct_10": 41.7
+      },
+      "n>=40 · d>0.75": {
+        "n": 32,
+        "median": 40.5,
+        "pct_20": 28.1,
+        "pct_10": 9.4
+      }
+    },
+    "appartement": {
+      "15-39 · 0.25-0.40": {
+        "n": 139,
+        "median": 14.1,
+        "pct_20": 61.2,
+        "pct_10": 36.7
+      },
+      "15-39 · 0.40-0.75": {
+        "n": 35,
+        "median": 17.0,
+        "pct_20": 57.1,
+        "pct_10": 34.3
+      },
+      "15-39 · d<=0.25": {
+        "n": 120,
+        "median": 15.5,
+        "pct_20": 64.2,
+        "pct_10": 31.7
+      },
+      "15-39 · d>0.75": {
+        "n": 3,
+        "median": 7.9,
+        "pct_20": 100.0,
+        "pct_10": 66.7
+      },
+      "8-14 · 0.25-0.40": {
+        "n": 27,
+        "median": 15.5,
+        "pct_20": 63.0,
+        "pct_10": 29.6
+      },
+      "8-14 · 0.40-0.75": {
+        "n": 8,
+        "median": 11.0,
+        "pct_20": 62.5,
+        "pct_10": 50.0
+      },
+      "8-14 · d<=0.25": {
+        "n": 43,
+        "median": 12.4,
+        "pct_20": 72.1,
+        "pct_10": 44.2
+      },
+      "n<8 · ?": {
+        "n": 3,
+        "median": 49.2,
+        "pct_20": 33.3,
+        "pct_10": 0.0
+      },
+      "n>=40 · 0.25-0.40": {
+        "n": 1112,
+        "median": 14.5,
+        "pct_20": 62.3,
+        "pct_10": 37.1
+      },
+      "n>=40 · 0.40-0.75": {
+        "n": 350,
+        "median": 16.7,
+        "pct_20": 56.9,
+        "pct_10": 32.0
+      },
+      "n>=40 · d<=0.25": {
+        "n": 220,
+        "median": 11.8,
+        "pct_20": 73.2,
+        "pct_10": 42.7
+      },
+      "n>=40 · d>0.75": {
+        "n": 16,
+        "median": 27.8,
+        "pct_20": 25.0,
+        "pct_10": 25.0
+      }
+    }
+  },
+  "gbm": {
+    "maison": {
+      "gbm_m2": {
+        "n": 2286,
+        "median_abs_pct": 27.8,
+        "pct_10": 18.3,
+        "pct_20": 36.4
+      },
+      "blend_m2": {
+        "n": 2286,
+        "median_abs_pct": 26.6,
+        "pct_10": 19.7,
+        "pct_20": 39.5
+      },
+      "n_train": 2065
+    },
+    "appartement": {
+      "gbm_m2": {
+        "n": 2076,
+        "median_abs_pct": 13.5,
+        "pct_10": 37.9,
+        "pct_20": 65.8
+      },
+      "blend_m2": {
+        "n": 2076,
+        "median_abs_pct": 14.4,
+        "pct_10": 35.5,
+        "pct_20": 64.5
+      },
+      "n_train": 2076
+    }
+  }
+}
