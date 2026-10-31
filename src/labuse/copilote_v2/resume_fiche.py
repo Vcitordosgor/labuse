@@ -238,7 +238,8 @@ def phrase_commune(resume: dict) -> str:
 # mot-clé (folded) → (id du registre, libellé). La réponse cite la ligne et son id : plus de champ
 # jeté par l'outil (le trou d'outillage constaté à COPILOTE-AUDIT-1 point 3).
 _CHAMPS = [
-    (("proprietaire", "proprio", "a qui appartient", "qui possede", "qui detient"),
+    (("proprietaire", "proprio", "a qui appartient", "appartient-elle", "appartient elle",
+      "appartient a", "qui possede", "qui detient", "personne morale", "detenue par", "detenu par"),
      ("type_proprietaire", "Propriétaire")),
     (("taxe d'amenagement", "taxe damenagement", "taxe amenagement", "ta communale", "taux de ta"),
      ("taxe_amenagement_estimee_eur", "Taxe d'aménagement")),
@@ -253,6 +254,63 @@ _CHAMPS = [
 ]
 
 
+# NU-E-048 — la VRAIE source de chaque champ qualitatif (un verdict de zone vient du PLU, pas du
+# cadastre ; les aléas/PPR de la DEAL ; le propriétaire personne morale de la DGFiP). Défaut
+# « fiche LABUSE » pour les champs mesurés sans source réglementaire distincte (pente, surface…).
+_SOURCE_CHAMP = {
+    "zone_plu_famille": "PLU — zonage (règlement communal)",
+    "aleas_parcelle_liste": "DEAL Réunion — PPR / aléas",
+    "type_proprietaire": "DGFiP — propriétaire (personnes morales : SIREN public)",
+    "surface_parcelle_m2": "cadastre",
+    "taxe_amenagement_estimee_eur": "barème taxe d'aménagement (service-public.gouv.fr)",
+}
+
+
+def _source_champ(cid: str) -> str:
+    return _SOURCE_CHAMP.get(cid, "fiche LABUSE")
+
+
+# NU-E-046 — la COPROPRIÉTÉ est un fait qualitatif lu DIRECTEMENT de la fiche servie (drapeau
+# `score_v2.copro` + répertoire RNIC `coproprietes`), hors registre robinet. Réponse OUI/NON
+# DÉTERMINISTE (aucun LLM), source RNIC. Détecteur : un mot de copropriété + une tournure de STATUT
+# (pas une NOTION « c'est quoi une copropriété » → voie explication).
+_COPRO_KW = ("copropriete", "copro", "en copro", "syndic", "coproprietaire", "lots de copropriete")
+
+
+def est_question_copro(message: str) -> bool:
+    m = _fold_py(message.lower())
+    if not any(k in m for k in _COPRO_KW):
+        return False
+    if any(k in m for k in ("c'est quoi", "c est quoi", "qu'est-ce", "qu est-ce", "explique",
+                            "definition", "a quoi sert")):
+        return False
+    return True
+
+
+def reponse_copro(db: Session, idu: str) -> dict | None:
+    """OUI/NON déterministe sur la copropriété d'une parcelle (score_v2.copro + RNIC). Source RNIC.
+    Inconnu (ni drapeau ni RNIC servis au run) → on le DIT (« je n'ai pas cette donnée »), JAMAIS un
+    « non » par défaut (Règle à graver). None si la parcelle est absente du run servi."""
+    fiche = _fiche(db, idu)
+    if fiche is None:
+        return None
+    sv2 = fiche.get("score_v2") or {}
+    copros = fiche.get("coproprietes") or []
+    src = "RNIC — répertoire des copropriétés"
+    if "copro" not in sv2 and not copros:
+        return {"texte": f"Je n'ai pas l'information de copropriété pour la parcelle {idu} au run servi.",
+                "champ_id": "copro", "valeur": None, "source": src}
+    copro = bool(sv2.get("copro")) or bool(copros)
+    if copro:
+        n = sum(int(c.get("nb_lots_total") or 0) for c in copros if isinstance(c, dict))
+        detail = f" ({n} lots recensés au répertoire des copropriétés)" if n else ""
+        texte = f"Oui, la parcelle {idu} est en copropriété{detail}."
+    else:
+        texte = (f"Non, la parcelle {idu} n'est pas répertoriée en copropriété "
+                 "(d'après le répertoire des copropriétés servi).")
+    return {"texte": texte, "champ_id": "copro", "valeur": copro, "source": src}
+
+
 def _quel_champ(message: str) -> tuple[str, str] | None:
     m = _fold_py(message.lower())
     for kws, cible in _CHAMPS:
@@ -264,6 +322,9 @@ def _quel_champ(message: str) -> tuple[str, str] | None:
 def champ_precis(db: Session, idu: str, message: str) -> dict | None:
     """Une question sur UN champ de la fiche → la ligne DÉCLARÉE et son id (jamais un champ jeté).
     Rend {texte, champ_id, valeur, source} ou None si la demande ne vise pas un champ connu."""
+    # NU-E-046 — la copropriété d'abord : fait qualitatif lu direct de la fiche (hors registre robinet).
+    if est_question_copro(message):
+        return reponse_copro(db, idu)
     cible = _quel_champ(message)
     if cible is None:
         return None
@@ -275,7 +336,7 @@ def champ_precis(db: Session, idu: str, message: str) -> dict | None:
     v = valeurs.get(cid)
     if v is None or v.valeur in (None, "", [], {}):
         return {"texte": f"{libelle} : non renseigné pour la parcelle {idu} (donnée absente au run servi).",
-                "champ_id": cid, "valeur": None, "source": "fiche LABUSE"}
+                "champ_id": cid, "valeur": None, "source": _source_champ(cid)}
     texte = _rendre_champ(cid, libelle, v.valeur, valeurs)
     # FIX-PRIX-ET-OPPORTUNITES (lot 3) — une capacité constructible est un MAXIMUM réglementaire ; on
     # ajoute la mention mesurée (volet D : ~½ utilisé en médiane par les permis réels).
@@ -284,7 +345,9 @@ def champ_precis(db: Session, idu: str, message: str) -> dict | None:
         texte = f"{texte} C'est un {_CAP}."
     # CHASSE-APP-FIX-2 (point 4 U) — la source LISIBLE ne porte plus le cid (nom de colonne) : il
     # restait affiché dans l'accueil Copilote (sources.join). Le cid vit dans `champ_id` (structuré).
-    return {"texte": texte, "champ_id": cid, "valeur": v.valeur, "source": "fiche LABUSE"}
+    # NU-E-048 — et la source est celle du FAIT (zone → PLU, aléas → DEAL, propriétaire → DGFiP),
+    # jamais un « cadastre »/« fiche » générique sur un verdict réglementaire.
+    return {"texte": texte, "champ_id": cid, "valeur": v.valeur, "source": _source_champ(cid)}
 
 
 def _rendre_champ(cid: str, libelle: str, valeur: Any, valeurs: dict) -> str:

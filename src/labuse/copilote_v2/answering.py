@@ -127,7 +127,8 @@ CATALOGUE = [
     {"nom": "parcelles_par_entreprise", "desc": "Parcelles détenues par une personne morale (nom OU SIREN).",
      "params": {"q": "nom ou SIREN"}},
     {"nom": "fiche_parcelle", "desc": "Données FACTUELLES d'UNE parcelle précise identifiée par son IDU "
-     "(14 car.) : commune, surface, zone.", "params": {"idu": "str 14 car."}},
+     "(14 car.) : commune, surface, zone PLU, COPROPRIÉTÉ (oui/non), PROPRIÉTAIRE personne morale. "
+     "Chaque fait porte sa source (cadastre / PLU / RNIC / DGFiP).", "params": {"idu": "str 14 car."}},
     {"nom": "stats_commune", "desc": "Contexte d'une commune : taux de logement social (SRU), statut SRU, "
      "nombre de logements, part de propriétaires.", "params": {"commune": "str"}},
     {"nom": "delais_instruction", "desc": "DÉLAI médian d'instruction d'une commune (dépôt→autorisation, "
@@ -225,6 +226,13 @@ question du client, UNIQUEMENT à partir du RÉSULTAT D'OUTIL fourni (JSON). Rè
   peux reprendre UNIQUEMENT un chiffre qui y figure, en citant sa source et son millésime. Un chiffre
   absent des faits_du_fil ET du résultat d'outil N'EXISTE PAS pour toi — jamais de reprise « de
   mémoire ».
+- N'affirme AUCUN verdict OUI/NON (copropriété, constructibilité, PPR, propriétaire personne morale)
+  qui ne figure pas EXPLICITEMENT dans le résultat (champs `data`/`faits`). Si le résultat ne porte
+  pas la réponse à la question qualitative posée, dis « je n'ai pas cette donnée » et renvoie à la
+  fiche/l'outil qui l'a — ne devine jamais un oui/non.
+- Si le résultat porte des `faits` (liste {cle, valeur, source}), CHAQUE fait énoncé porte SA
+  source (le champ `source` DE CE FAIT) : jamais une source générique (« cadastre ») collée sur un
+  verdict d'une autre origine (une zone/constructibilité vient du PLU, un risque de la DEAL).
 - Cite la source entre parenthèses à la fin (champ "source"), avec le millésime s'il est fourni.
 - Si le résultat porte une "reserve" (couverture partielle), INCLUS-la fidèlement — ne la tais jamais.
 - Si un champ "criteres_non_appliques" est fourni, ta réponse ne doit PAS prétendre que ces critères
@@ -308,6 +316,138 @@ def _anti_invention(prose: str, res, valeurs_fil: set[float] | None = None) -> b
         if n in autor or round(n) in autor or any(abs(n - a) <= 1 for a in autor):
             continue
         return False
+    return True
+
+
+# ───────────────────────── NU-E-047 — VERROU QUALITATIF ─────────────────────────
+# Le verrou anti-invention ne gardait que les NOMBRES. Un verdict OUI/NON (copropriété,
+# constructibilité, PPR, propriétaire personne morale) n'était JAMAIS confronté à la donnée → le
+# Copilote pouvait affirmer « pas en copropriété » sur une copropriété avérée (NU-E-046). Règle à
+# graver : le Copilote n'affirme que ce qu'un OUTIL PORTE. Toute affirmation qualitative de la prose
+# doit correspondre à un champ présent dans le résultat d'outil (data/faits) ET en respecter la
+# polarité — sinon on REFUSE (→ gabarit de repli déterministe), jamais on ne laisse passer.
+
+# topic → mots-clés (folded) qui signalent le topic dans la prose.
+_QUALI_KW = {
+    "copropriete": ("copropriete", "copro", "syndic", "coproprietaire"),
+    "proprietaire_moral": ("personne morale", "une societe", "la societe", "detenue par", "detenu par",
+                           "appartient a une", "appartient a la societe", "sci "),
+    "ppr": ("ppr", "zone rouge", "zone bleue", "plan de prevention des risques"),
+    "constructibilite": ("constructible", "inconstructible", "constructibilite", "batissable"),
+}
+# négations tokenisées (sur une fenêtre autour du mot-clé) → verdict NÉGATIF.
+_NEG_TOK = {"pas", "non", "ni", "sans", "hors", "aucun", "aucune", "jamais"}
+# marqueurs de NON-ASSERTION (refus honnête, renvoi) — près du topic, ce n'est pas un verdict.
+_REFUS_QUALI = ("je n'ai pas", "je n ai pas", "pas cette donnee", "pas de donnee", "pas l'information",
+                "pas d'information", "pas renseign", "non renseign", "donnee absente", "je ne sais",
+                "inconnu", "n'ai pas l'info", "n ai pas l'info")
+
+
+def _mot_present(pf: str, kw: str) -> int:
+    """Index de la 1re occurrence du mot-clé dans la prose foldée, ou -1. Les mots-clés COURTS et
+    purement alpha (« ppr », « copro », « sci ») sont cherchés avec bornes de mot (sinon « ppr » se
+    déclenche dans « approprié »/« supprimer », « copro » n'est qu'un préfixe de « copropriété »)."""
+    kwc = kw.strip()
+    if " " in kwc or (len(kwc) > 5 and kwc.isalpha()):
+        return pf.find(kwc)
+    m = re.search(r"(?<![a-z])" + re.escape(kwc) + r"(?![a-z])", pf)
+    return m.start() if m else -1
+
+
+def _polarite_quali(pf: str, topic: str) -> bool | None:
+    """Polarité du verdict qualitatif porté par la prose pour ce topic : True (affirmatif),
+    False (négatif), ou None (aucun verdict net : mot-clé absent, ou refus/renvoi honnête)."""
+    for kw in _QUALI_KW[topic]:
+        i = _mot_present(pf, kw)
+        if i == -1:
+            continue
+        fen = pf[max(0, i - 50):i + len(kw) + 20]
+        if any(r in fen for r in _REFUS_QUALI):
+            return None                         # « je n'ai pas cette donnée » n'est PAS une affirmation
+        if topic == "constructibilite" and "inconstructible" in fen:
+            return False
+        toks = set(re.findall(r"[a-z']+", fen))
+        neg = bool(toks & _NEG_TOK) or "n'est" in fen or "ne peut" in fen or "n'appartient" in fen
+        return not neg
+    return None
+
+
+def _quali_backing(res, topic: str) -> bool | None:
+    """Polarité FACTUELLE portée par le résultat d'outil pour ce topic (True/False), ou None si le
+    fait n'est PAS porté (clé absente, ou présente mais valeur inconnue) → aucune affirmation permise.
+    Lit `res.faits` (chaque fait sa source) puis `res.data`."""
+    data = res.data if isinstance(res.data, dict) else {}
+    faits = {ft.get("cle"): ft.get("valeur") for ft in (getattr(res, "faits", None) or [])
+             if isinstance(ft, dict)}
+
+    def get(*keys):
+        for k in keys:
+            if k in faits:
+                return True, faits[k]
+            if k in data:
+                return True, data[k]
+        return False, None
+
+    def _str_bool(v):
+        s = str(v).strip().lower()
+        if s in ("avec", "oui", "true", "rouge", "bleue"):
+            return True
+        if s in ("sans", "non", "false", "hors"):
+            return False
+        return None
+
+    if topic == "copropriete":
+        present, v = get("copro")
+        if not present or v is None:
+            return None
+        if isinstance(v, bool):
+            return v
+        return _str_bool(v)
+    if topic == "proprietaire_moral":
+        present, v = get("proprietaire_personne_morale")
+        if present:
+            return bool(v)              # fiche : champ TOUJOURS calculé, None = pas de PM (« non »)
+        present, v = get("personne_morale")            # compter_parcelles : filtre PM booléen
+        if present:
+            return bool(v)
+        p2, v2 = get("nom", "siren", "denomination")   # patrimoine/entreprise : présence d'un nom = PM
+        return bool(v2) if p2 else None
+    if topic == "ppr":
+        present, v = get("statut_ppr", "reponse")
+        if not present or v is None:
+            return None
+        return _str_bool(v)
+    if topic == "constructibilite":
+        # porté SEULEMENT par un outil de constructibilité/règles (destination_zone/regles_plu_zone) ;
+        # jamais par la fiche factuelle → un verdict de constructibilité issu de `fiche_parcelle` est
+        # une invention. Présence d'un verdict de zone = backing (polarité non vérifiée ici).
+        present, _ = get("statut_effectif", "constructible", "regles", "verdict", "phrase")
+        return True if present else None
+    return None
+
+
+def _verdicts_coherents(prose: str, res) -> bool:
+    """NU-E-047 — Vrai si CHAQUE affirmation qualitative (oui/non) de la prose correspond à un champ
+    porté par le résultat d'outil ET en respecte la polarité. Faux dès qu'un verdict n'est pas porté
+    (invention) ou contredit la donnée servie → gabarit de repli déterministe."""
+    pf = _fold_py((prose or "").lower())
+    tool = getattr(res, "tool", None)
+    for topic in _QUALI_KW:
+        pol = _polarite_quali(pf, topic)
+        if pol is None:
+            continue                            # pas d'affirmation nette sur ce topic
+        # « constructible » est un mot sur-chargé (marché, terrain à bâtir…) : on ne juge son
+        # invention que sur les outils où un tel verdict peut être FABRIQUÉ sans donnée dédiée.
+        if topic == "constructibilite" and tool not in (None, "fiche_parcelle", "regles_plu_zone",
+                                                         "destination_zone"):
+            continue
+        back = _quali_backing(res, topic)
+        if back is None:
+            return False                        # fait NON porté par l'outil → invention
+        if topic == "constructibilite":
+            continue                            # backing présent ; polarité non vérifiable ici
+        if bool(back) != bool(pol):
+            return False                        # polarité contredit la donnée servie
     return True
 
 
@@ -442,7 +582,10 @@ def _formuler(db: Session, message: str, res, faits_fil: list[dict] | None = Non
     payload = {"question": message, "outil": res.tool, "resultat": res.data,
                "valeur": res.valeur, "source": res.source, "millesime": res.millesime,
                "reserve": res.reserve if res.partiel else None,
-               "criteres_non_appliques": cna or None}
+               "criteres_non_appliques": cna or None,
+               # NU-E-048 — faits qualitatifs avec LEUR source (le modèle cite la vraie source par fait).
+               "faits": [f for f in (getattr(res, "faits", None) or []) if f.get("valeur") is not None]
+                        or None}
     if faits_fil:
         # M102-B3 — les faits du fil (chiffres déjà servis, avec outil/source/millésime) : le
         # formuler ne peut reprendre QUE ceux-là, le verrou le vérifie contre le registre.
@@ -450,9 +593,13 @@ def _formuler(db: Session, message: str, res, faits_fil: list[dict] | None = Non
     out = core.complete(db, kind="copilote-formule", model=core.model_for("copilote-formule"), max_tokens=350,
                         system=FORMULE_SYSTEM, context=payload)
     prose = (out.text or "").strip()
-    if out.degraded or not prose or not _anti_invention(prose, res, registre_faits.valeurs(faits_fil or [])):
+    if (out.degraded or not prose
+            or not _anti_invention(prose, res, registre_faits.valeurs(faits_fil or []))
+            or not _verdicts_coherents(prose, res)):
         # GB-015 — gabarit sourcé LISIBLE (jamais l'affirmation douteuse NI le JSON brut) — inclut la
         # réserve si partielle. `_repli_lisible` garantit qu'aucun `json.dumps(data)` n'atteint l'écran.
+        # NU-E-047 — `_verdicts_coherents` ajoute la garde QUALITATIVE : un verdict oui/non non porté
+        # par la donnée (copro, constructibilité, PPR, PM) tombe aussi sur le gabarit déterministe.
         prose = _repli_lisible(res)
         if res.partiel and res.reserve:
             prose += " " + res.reserve
@@ -647,6 +794,28 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
                 res = OUTILS["regles_plu_zone"](db, idu=idu_cible)
                 if res.ok:
                     rep = _reply_compte(db, message, res, faits_fil, "QUESTION")
+                    rep["_route"] = {"intent": "QUESTION", "params": {"idu": idu_cible}, "voie": prior_voie}
+                    return rep
+            # NU-E-046 — COPROPRIÉTÉ : OUI/NON déterministe lu de la fiche servie (RNIC), AVANT tout
+            # LLM. Sans ça la question tombait dans le formuler qui INVENTAIT (« pas en copropriété »
+            # sur une copro avérée, 97404000AV0167). Source RNIC, jamais « cadastre ».
+            from . import resume_fiche as _RF
+            if _RF.est_question_copro(message):
+                ch = _RF.reponse_copro(db, idu_cible)
+                if ch is not None:
+                    rep = _reply(ch["texte"], "QUESTION", tool="fiche_parcelle", sources=[ch["source"]],
+                                 champ_id=ch.get("champ_id"),
+                                 voie={"cible": "fiche", "libelle": "Voir la fiche parcelle complète",
+                                       "idu": idu_cible})
+                    rep["_route"] = {"intent": "QUESTION", "params": {"idu": idu_cible}, "voie": prior_voie}
+                    return rep
+            # NU-E-046/049 — CONSTRUCTIBILITÉ : jamais un OUI/NON inventé. On restitue les FAITS qui la
+            # déterminent — la zone (PLU) et le PPR (DEAL), chacun sourcé — et on renvoie la mesure
+            # précise au règlement de la zone / à l'Étude. (La fiche factuelle ne PORTE pas de verdict
+            # de constructibilité : le formuler, lui, ne peut donc pas l'affirmer — cf. verrou NU-E-047.)
+            if _est_question_constructibilite(message):
+                rep = _reponse_constructibilite(db, idu_cible)
+                if rep is not None:
                     rep["_route"] = {"intent": "QUESTION", "params": {"idu": idu_cible}, "voie": prior_voie}
                     return rep
     # COPILOTE-2 lot 1 — LE CHEMIN FICHE, DÉTERMINISTE ET SANS MODÈLE : une parcelle NOMMÉE (IDU dans
@@ -1782,6 +1951,67 @@ _PLU_REGLE_KW = ("hauteur maximale", "hauteur max", "hauteur autorisee", "hauteu
 def _est_question_regle_plu(message: str) -> bool:
     m = _fold_py(message.lower())
     return any(k in m for k in (_fold_py(x) for x in _PLU_REGLE_KW))
+
+
+# NU-E-046/049 — QUESTION DE CONSTRUCTIBILITÉ d'UNE parcelle (« est-ce constructible ? », « peut-on
+# construire ? », « terrain à bâtir ? »). On ne tranche JAMAIS un oui/non inventé : on restitue la
+# zone (PLU) et le PPR (DEAL), chacun sourcé, et on renvoie au règlement/à l'Étude. Les activités
+# précises (restaurant, commerce…) restent à destination_zone (verbe « ouvrir/implanter »).
+_CONSTR_KW = ("constructible", "inconstructible", "constructibilite", "batissable", "a batir",
+              "peut-on construire", "peut on construire", "puis-je construire", "puis je construire",
+              "terrain a batir", "est-elle batissable")
+
+
+def _est_question_constructibilite(message: str) -> bool:
+    m = _fold_py(message.lower())
+    if any(k in m for k in ("c'est quoi", "c est quoi", "qu'est-ce", "qu est-ce", "definition")):
+        return False
+    return any(k in m for k in _CONSTR_KW)
+
+
+def _reponse_constructibilite(db: Session, idu: str) -> dict | None:
+    """La constructibilité, SANS verdict inventé : les faits qui la déterminent (zone PLU + PPR),
+    chacun sourcé, puis le renvoi au règlement/à l'Étude. RNU (pas de zone) → on le DIT et on ne
+    tranche pas (NU-E-055). None si la parcelle est introuvable (le flux normal gère le refus)."""
+    from .outils import fiche_parcelle, statut_ppr
+    fr = fiche_parcelle(db, idu=idu)
+    if not fr.ok:
+        return None
+    zone = fr.data.get("zone")
+    commune = fr.data.get("commune")
+    pr = statut_ppr(db, idu=idu)
+    ppr_rouge = pr.ok and (pr.data or {}).get("statut_ppr") == "rouge"
+    ppr_bleue = pr.ok and (pr.data or {}).get("statut_ppr") == "bleue"
+    sources = []
+    if not zone:
+        # RNU — pas de PLU : je ne tranche pas (doctrine NU-E-055).
+        texte = (f"La parcelle {idu}" + (f" ({commune})" if commune else "")
+                 + " n'a pas de zonage PLU servi : la commune est probablement au règlement national "
+                 "d'urbanisme (RNU). Je ne tranche pas la constructibilité sans PLU — elle relève des "
+                 "articles L111-3 et suivants (limitation aux parties urbanisées).")
+    else:
+        z = zone.upper()
+        non_constructible = z.startswith("N") or (z.startswith("A") and not z.startswith("AU"))
+        voc = "naturelle" if z.startswith("N") else ("agricole" if z.startswith("A") else None)
+        if non_constructible:
+            texte = (f"En zone {zone} (à vocation {voc}, PLU), la construction nouvelle n'est en "
+                     f"principe pas autorisée pour la parcelle {idu}.")
+        else:
+            texte = (f"La parcelle {idu} est en zone {zone} (PLU). Je ne déclare pas « constructible » "
+                     "en un mot : cela dépend du règlement de la zone (emprise, hauteur, reculs, accès) "
+                     "et des servitudes.")
+        sources.append("PLU — zonage (règlement communal)")
+    if ppr_rouge:
+        texte += (" Elle est de plus classée en zone ROUGE du PPR : la partie rouge est inconstructible "
+                  "(DEAL Réunion).")
+        sources.append("DEAL Réunion — PPR / aléas")
+    elif ppr_bleue:
+        texte += (" Elle est classée en zone BLEUE du PPR : constructible sous prescriptions "
+                  "(DEAL Réunion).")
+        sources.append("DEAL Réunion — PPR / aléas")
+    texte += (" Pour la mesure précise, ouvrez les règles PLU de la zone ou l'Étude de faisabilité.")
+    return _reply(texte, "QUESTION", tool="fiche_parcelle", sources=sources or ["PLU — zonage"],
+                  voie={"cible": "fiche", "libelle": "Voir la fiche parcelle complète", "idu": idu})
 
 
 def _chemin_fiche(db: Session, message: str, params: dict, contexte: dict | None) -> dict | None:
