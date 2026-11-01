@@ -15,7 +15,7 @@ chaque écart rejoué sur son témoin, suite de cohérence verte, banc complet 0
 | Suite de cohérence (`scripts/ci/coherence_run.sh`, run 17 servi, 12 témoins, égalité 1 €/1 m²) | **6 passed, 0 écart** ✅ |
 | Banc Python unitaire (`pytest -m "not db and not local and not reel and not network"`) | **2813 passed / 0 rouge** (48 skipped) ✅ |
 | Front `tsc -b` | **0 erreur** ✅ |
-| Front `vitest run` | **266 tests passed** ✅ (8 suites « 0 test » = artefact du `node_modules` symlinké vers le worktree voisin : vite refuse le worker maplibre hors racine ; non lié au code — tsc propre + 266 tests verts) |
+| Front `vitest run` | **301 tests passed / 63 suites** ✅ (égal à `main` — voir note ci-dessous sur les « 266 » d'une mesure antérieure) |
 | Décisions de Vic respectées | Flash livre le Dossier, seul le **sous-titre** change (M-T02) ; palier « Priorité » reste masqué partout ; noms de particuliers **non** masqués (J02 RGPD non touché) |
 
 > Un test-garde a été **mis à jour** et non contourné : `test_f31_blocb_zan_horizon_sans_defaut_fabrique`
@@ -52,7 +52,7 @@ chaque écart rejoué sur son témoin, suite de cohérence verte, banc complet 0
 | OUT-SCAN-003 | Scan « surface totale » = somme des **contenances** | `api/modules.py` | ✅ |
 | OUT-SECTEUR-005 | « Commune entière » qui l'est vraiment : médiane DVF **de la commune** (`mediane_commune` via `_dvf_bati_type`), par type, plus le `sector_price` au centroïde | `api/mon_secteur.py` | ✅ |
 | OUT-ZONE-032 | « Loyer médian · commune » = **médiane des secteurs OLL** de la commune (plus le secteur le plus bas) | `zone.py` (fork) | ✅ |
-| OUT-COMPARER-009 | Charge foncière Comparer (bilan calibré) ≠ Calculette (hypothèses saisies + prix neuf) : **deux méthodes légitimes** — reporté, décision Vic sur la méthode canonique à trancher (voir Notes) | — | 📄 reporté |
+| OUT-COMPARER-009 | **Décision Vic : la méthode canonique est le bilan calibré de Comparer.** La Calculette utilise désormais le MÊME contexte de bilan (secteur calibré, prix de sortie neuf, contexte éco mixité/pluvial/VRD) ; l'écran affiche « Hypothèses par défaut » et sert la **référence Comparer** (chiffre qui fait foi) + les hypothèses à saisir pour la retrouver. Vérifié : à hypothèses égales, Calculette == Comparer (témoin DX0049 : 75 == 75 €/m²) | `faisabilite/bilan.py` (`compute_calculette`), `api/modules.py`, `fiche/constructibilite.tsx` | ✅ |
 | OUT-CALC-006 | VRD : la phrase ne dit plus « sur {terrain} m² » (base × **emprise aménagée**, pas le terrain) | `fiche/constructibilite.tsx` (fork) | ✅ |
 | OUT-PERMIS-009 | Compteurs c100/c200 = **COUNT exacts** (plus le `len()` d'une liste plafonnée à 100) ; `affiches`/`tronque` servis | `api/modules.py` | ✅ |
 | OUT-PLU-008 | « N affichés sur M » (total réel via `count_reglement`, plus le compte plafonné pris pour le total) | `api/modules.py`, `ingestion/plu_ingest.py`, `outils/PluAnnuaire.tsx`, `lib/api.ts` | ✅ |
@@ -83,7 +83,7 @@ chaque écart rejoué sur son témoin, suite de cohérence verte, banc complet 0
 | G-003 | Surface 907 vs 913 : Estimer et Assemblage servent la **contenance** (907), comme fiche/comparateur | `pige/api.py`, `assemblage.py`, `api/moteurs.py` | ✅ |
 | G-004 | Dossier d'un terrain nu ne met plus un **bâti** en tête (gaté sur `etat_bien == "nu"`) ; fiche met déjà le terrain en tête | `exports/robinet_fiche.py` | ✅ (Dossier) |
 | G-005 | Dossier reporte le qualificatif **type + fiabilité** (mixte/fragile) sur le prix de tête | `exports/miroir.py` | ✅ |
-| G-007 | Assemblage : surface d'assiette alignée (contenance). **Bornage de la SDP cumulée à la part en zone constructible + % hors zone** = reporté (change de capacité, voir Notes) | `assemblage.py`, `api/moteurs.py` | ◑ partiel |
+| G-007 | Assemblage : la SDP cumulée est **bornée à la part en zone constructible** (le plafond CES est calculé sur la part U/AU de l'assiette, pas l'assiette totale) et le **% hors zone est servi + DIT à l'écran** (« dont X m² en zone constructible · Y % hors zone »), aligné sur le `bilan_surfacique` de l'Étude | `assemblage.py` (`_capacite_union`), `api/moteurs.py`, `api/app.py`, `outils/moteurs.tsx` | ✅ |
 | G-009 | Trois €/m² : fiche == comparateur (même source) ; Estimer typé distinct (ESTIMER-2) — cf. J#3 | — | ✅ / by-design |
 | G-010 | Terrain nu : plus de « Prix ancien médian » bâti en tête du Dossier (= G-004) | `exports/robinet_fiche.py` | ✅ |
 | G-012 | Copilote « prix médian maison » : **outil Copilote (domaine FIX-NU3-2)** — non touché pour éviter la collision ; la médiane maison est disponible via `marche_dvf_commune.mediane_commune(commune,'maison')` | — | 📄 déféré (session 2) |
@@ -114,17 +114,19 @@ Aucune surface n'annonce le palier **Priorité** du classement : `PRIORITE_SERVI
 registre CA-002 (« Priorité listé comme servi ») est donc un **fait de registre périmé**, le produit le
 masque déjà — aucun code à changer. (La notion CRM « priorité dossier » est distincte et hors périmètre.)
 
-## Notes — écarts reportés / partiels (avec plan)
+## Note sur le compte vitest (301 vs 266)
 
-- **OUT-COMPARER-009** (charge foncière Comparer ≠ Calculette, ×3,5) : deux méthodes légitimes — Comparer
-  sert le bilan **calibré par secteur** (`fiche_payload.bilan`), la Calculette applique les **hypothèses
-  saisies** + prix neuf. Les rendre identiques exige que Vic tranche la méthode canonique (ou qu'on
-  signale explicitement les hypothèses de chaque écran). Non résolu faute de décision produit.
-- **G-007** (Assemblage ↔ Étude) : la **surface** d'assiette est désormais la contenance (OUT-ASSEMB) et
-  le ton/`sdp_m2` viennent déjà du moteur de capacité sur l'union (`aggregate_assiette`). Reste à
-  **borner l'affichage « SDP cumulée ×N » à la part en zone constructible et afficher le % hors zone** —
-  changement de capacité (intersection zone U/AU dans `aggregate_assiette`), reporté pour ne pas
-  déstabiliser le moteur d'implantation partagé.
+Une mesure antérieure de `vitest` affichait **266** tests : elle avait été lancée avec un `node_modules`
+**symlinké** vers le worktree voisin, et `vite` refuse (`Denied ID`) de charger le worker `maplibre-gl`
+quand il résout hors de la racine du projet. 8 suites qui importent la carte échouaient alors au
+CHARGEMENT (0 test) : `Faisabilite`, `PermisDouble`, `PiegesLot`, `CourrierRecette4`, `ScanPatrimoine`,
+`CourrierService`, `ScanRetraits`, `TempsMillesimes` (= les 35 tests manquants). Avec un `node_modules`
+**réel** (copié dans le worktree), les **63 suites chargent → 301 tests, 0 rouge**, identique à `main`.
+Aucun test n'a été supprimé ni cassé ; l'écart était purement un artefact d'environnement de mesure,
+maintenant levé.
+
+## Notes — écarts reportés (avec plan)
+
 - **G-012** (Copilote prix médian maison) : l'outil `marche` du Copilote relève de **FIX-NU3-2** ; non
   touché pour éviter une collision inter-sessions. Donnée disponible : `mediane_commune(commune,'maison')`.
 - **J#9** (parcelles absentes de la carte) : décision produit assumée (la carte = le gisement, ne peint

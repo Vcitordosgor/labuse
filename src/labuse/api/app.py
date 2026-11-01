@@ -7978,6 +7978,10 @@ def assemblage_study(idus: str, db: Session = Depends(get_db)) -> dict:
         "n_parcelles": len(parcels),
         "contigu": contigu,
         "surface_cumulee_m2": agg["surface_cumulee_m2"],
+        # NU-G-007 — part de l'assiette EN ZONE CONSTRUCTIBLE + % hors zone (alignés sur le
+        # `bilan_surfacique` de l'Étude) : la SDP est bornée à cette part, le % hors zone est DIT.
+        "surface_constructible_m2": agg.get("surface_constructible_m2"),
+        "pct_hors_zone": agg.get("pct_hors_zone"),
         # LOGEMENTS-SOURCE-UNIQUE — plus de fourchette de logements (ancien calcul de capacité) :
         # le nombre de logements n'a qu'une source, l'Étude de faisabilité (moteur d'implantation).
         "capacite": {"sdp_m2": agg["sdp_m2"]},

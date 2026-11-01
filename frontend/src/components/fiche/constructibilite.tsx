@@ -351,7 +351,11 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne, 
                 LOT1 — empilées (un champ par ligne, pleine largeur) : les libellés longs et leur chip
                 « hyp. » ne se chevauchent plus. Placeholder = la valeur PAR DÉFAUT réelle (celle qui
                 s'applique si le champ est vidé — deb retombe sur defauts.*), jamais un nombre en dur. */}
-            <div className="mt-2 flex flex-col gap-2">
+            {/* OUT-COMPARER-009 (décision Vic) — ces trois champs sont des HYPOTHÈSES PAR DÉFAUT,
+                dites comme telles : la charge « canonique » est le bilan CALIBRÉ de Comparer (ligne de
+                référence ci-dessous). À hypothèses égales, la Calculette redonne le chiffre de Comparer. */}
+            <p data-calc-hyp-defaut className="mt-2 label-caps text-[9.5px] text-txt-mut">Hypothèses par défaut — ajustez pour votre opération</p>
+            <div className="mt-1 flex flex-col gap-2">
               <HypInput label="Coût construction" value={cout} onChange={setCout} suffix="€/m²" hint
                 placeholder={defauts.cout_construction_m2 != null ? String(defauts.cout_construction_m2) : undefined} />
               <HypInput label="Marge & frais" value={marge} onChange={setMarge} suffix="%" hint
@@ -359,6 +363,16 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne, 
               <HypInput label="VRD & aménagements" value={vrd} onChange={setVrd} suffix="€/m²" hint
                 placeholder={defauts.vrd_m2 != null ? String(defauts.vrd_m2) : undefined} />
             </div>
+            {d.reference_comparer?.par_m2_terrain != null && (
+              <p data-calc-ref-comparer className="mt-1.5 rounded-lg bg-surface-2 px-2.5 py-1.5 text-[10.5px] leading-snug text-txt-dim">
+                Référence — <b className="text-txt">bilan calibré de Comparer</b> (méthode qui fait foi) :
+                {' '}<b className="tnum text-mint">{fmtInt(Number(d.reference_comparer.par_m2_terrain))} €/m²</b> de terrain
+                {d.reference_comparer.hypotheses?.marge_frais_pct != null && (
+                  <> — pour le retrouver ici : marge & frais {Number(d.reference_comparer.hypotheses.marge_frais_pct)} %
+                  {d.reference_comparer.hypotheses.vrd_m2 != null ? `, VRD ${fmtInt(Number(d.reference_comparer.hypotheses.vrd_m2))} €/m²` : ''}.</>
+                )}
+              </p>
+            )}
             {d.vrd_total_eur != null && (
               <p data-calc-vrd className="mt-1 text-[9.5px] leading-snug text-txt-dim">
                 {/* OUT-CALC-006 — le total VRD = base × EMPRISE AMÉNAGÉE (bilan.py), PAS base × terrain :

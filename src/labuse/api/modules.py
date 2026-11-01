@@ -2476,10 +2476,19 @@ def faisabilite_charge(idu: str, body: ChargeIn, db: Session = Depends(get_db)) 
         return {"calculable": False, "raison": "capacite_non_resolue", "defaults": defaults,
                 "message": "Capacité constructible non résolue pour cette parcelle (zone PLU "
                            "non résolue / non constructible) — charge foncière non calculable."}
-    # MANDAT PRIX SORTIE CONSOMMATEURS (Vic 28/07/2026) — le prix de sortie de la calculette est un
-    # prix NEUF (point de résolution partagé), plus jamais sector_price/existant. Non calculable
-    # (social-dominant) → réponse honnête, jamais un faux chiffre.
-    ps = resolve_prix_sortie_servi(db, row["id"])
+    # OUT-COMPARER-009 (décision Vic) — méthode canonique = le BILAN CALIBRÉ de Comparer. On réutilise
+    # EXACTEMENT le contexte de `compute_bilan_servi` (secteur, prix de sortie NEUF, hypothèses calibrées,
+    # contexte éco mixité/pluvial/VRD) via `contexte_bilan_servi` (lecteur unique des champs logements) :
+    # saisir les hypothèses de Comparer y redonne sa charge foncière. Les coût/marge/VRD SAISIS ne font
+    # que surcharger ces hypothèses calibrées — l'écran les présente comme « hypothèses par défaut ».
+    from ..faisabilite.bilan import compute_bilan_servi, contexte_bilan_servi
+    _cx = contexte_bilan_servi(db, row["id"], fz=fz) or {}
+    _hyp = _cx.get("hyp") or Hypotheses.charger(row["commune"])
+    _eco = _cx.get("eco")
+    _bp = _cx.get("base_params")
+    # MANDAT PRIX SORTIE CONSOMMATEURS (Vic 28/07/2026) — prix de sortie NEUF (même point, même secteur
+    # que le bilan servi). Non calculable (social-dominant) → réponse honnête, jamais un faux chiffre.
+    ps = _cx.get("ps") or resolve_prix_sortie_servi(db, row["id"])
     if ps["non_calculable"]:
         return {"calculable": False, "raison": "prix_sortie_non_calculable", "defaults": defaults,
                 "message": ps["motif"]}
@@ -2492,7 +2501,22 @@ def faisabilite_charge(idu: str, body: ChargeIn, db: Session = Depends(get_db)) 
     _terrain_m2 = _surface.surface_terrain(row["s"], row["contenance_m2"]).valeur or float(row["s"] or 0)
     res = compute_calculette(float(shab), float(_terrain_m2), prix,
                              body.cout_construction_m2, body.marge_frais_pct, body.prix_demande_eur,
-                             mode=body.mode, vrd_m2=body.vrd_m2)
+                             mode=body.mode, vrd_m2=body.vrd_m2,
+                             base_params=_bp, contexte_eco=_eco, prix_neuf=ps, hyp=_hyp)
+    # OUT-COMPARER-009 — la RÉFÉRENCE canonique (bilan calibré de Comparer, même parcelle) servie à côté
+    # de la charge « selon vos hypothèses » : l'écran montre les deux et dit laquelle fait foi.
+    try:
+        _b_ref, _ = compute_bilan_servi(db, row["id"], fz=fz)
+        if _b_ref and _b_ref.fiable and _b_ref.charge_fonciere:
+            res["reference_comparer"] = {
+                "par_m2_terrain": _b_ref.charge_fonciere.get("par_m2_terrain"),
+                "central": _b_ref.charge_fonciere.get("central"),
+                # les hypothèses CALIBRÉES à saisir pour retrouver ce chiffre (coût 0 = fourchette auditée).
+                "hypotheses": {"marge_frais_pct": (_bp or {}).get("marge_cible_pct"),
+                               "vrd_m2": (_bp or {}).get("cout_vrd_base")},
+                "source": "bilan calibré de Comparer (méthode canonique)"}
+    except Exception:  # noqa: BLE001 — la référence est un bonus, ne casse jamais la charge
+        pass
     res["prix_neuf_label"] = ps["label"]
     res["prix_neuf_repli_ile"] = ps["repli_ile"]
     # MANDAT PRIX-SORTIE-1 — même objet source-unique que la fiche (resolve_prix_sortie_servi) :

@@ -415,6 +415,37 @@ def resolve_prix_sortie_servi(session: Session, parcel_id: int, secteur: str | N
             "label": None if motif is not None else niveau_prix_label(niveau, n)}
 
 
+def contexte_bilan_servi(session: Session, parcel_id: int, fz=None) -> dict | None:
+    """OUT-COMPARER-009 — le CONTEXTE calibré du bilan SERVI de Comparer (secteur, prix de sortie neuf,
+    hypothèses calibrées `base_params`, contexte éco mixité/pluvial/VRD, `hyp` commune). Centralise ICI
+    (lecteur autorisé des champs `logements_au_sol`/`logements_sous_sol`) la construction du contexte,
+    pour que la Calculette parte EXACTEMENT des mêmes hypothèses que Comparer sans lire ces champs
+    ailleurs. Renvoie None si la parcelle n'est pas constructible."""
+    from .db import parcel_faisabilite
+    from .zonage import resolve_zone
+    from .engine import Hypotheses
+    from . import bilan_params as bpmod
+    fz = fz or parcel_faisabilite(session, parcel_id)
+    if not fz or not fz[1].constructible:
+        return None
+    ctx, f = fz
+    fr = f.fourchette or {}
+    rules = resolve_zone(ctx.zone, ctx.commune) if ctx.zone else None
+    secteur = (rules.bassin if rules else None) or "Saint-Paul"
+    hyp = Hypotheses.charger(ctx.commune)
+    ps = resolve_prix_sortie_servi(session, parcel_id, secteur)
+    logements_est = max((fr.get("logements_au_sol") or (0, 0))[1],
+                        (fr.get("logements_sous_sol") or (0, 0))[1])
+    eco = dict(ctx.prescriptions_eco)
+    eco.update({"sdp_max_m2": fr.get("surface_plancher_m2"), "logements_estimes": logements_est,
+                "terrain_m2": ctx.surface_m2, "pente_pct": ctx.contraintes.pente_pct,
+                "niveaux_max": fr.get("niveaux_max"),
+                "places_par_logt": (rules.places_par_logement() if rules else None)})
+    bp = {k: r["value"] for k, r in bpmod.resolve(session, secteur).items()}
+    bp["prix_m2_neuf"] = ps["prix"]
+    return {"secteur": secteur, "hyp": hyp, "ps": ps, "eco": eco, "base_params": bp}
+
+
 def compute_bilan_servi(session: Session, parcel_id: int, fz=None) -> tuple["Bilan | None", dict | None]:
     """LE bilan promoteur SERVI pour une parcelle — SOURCE UNIQUE partagée par le cœur (fiche), le
     Banquier, l'Argumentaire et le Rapport de potentiel. Garantit une charge COHÉRENTE À L'EURO entre
@@ -851,7 +882,9 @@ def bilan_params_defaut() -> dict:
 def compute_calculette(shab_vendable_m2: float, surface_terrain_m2: float, prix: dict,
                        cout_construction_m2: float, marge_frais_pct: float,
                        prix_demande_eur: float | None = None, mode: str = "charge",
-                       vrd_m2: float | None = None) -> dict:
+                       vrd_m2: float | None = None, *,
+                       base_params: dict | None = None, contexte_eco: dict | None = None,
+                       prix_neuf: dict | None = None, hyp: "Hypotheses | None" = None) -> dict:
     """Charge foncière supportable — PURE, testable en isolation (aucun accès DB : `prix` est
     fourni). LIGNE ROUGE : les valeurs SOURCÉES (SDP vendable, prix de sortie DVF) viennent du
     moteur ; le coût de construction et la marge sont les HYPOTHÈSES SAISIES par le promoteur —
@@ -872,12 +905,19 @@ def compute_calculette(shab_vendable_m2: float, surface_terrain_m2: float, prix:
     # de l'utilisateur remplacent les deux valeurs par défaut.
     # VRD/aménagements : hypothèse SAISIE (défaut DIT CALCULETTE_VRD_DEFAUT_M2), jamais un 0 muet.
     vrd = CALCULETTE_VRD_DEFAUT_M2 if vrd_m2 is None else float(vrd_m2)
-    bp = {**bilan_params_defaut(),
+    # OUT-COMPARER-009 (décision Vic) — la méthode canonique est le BILAN CALIBRÉ de Comparer. La
+    # Calculette part des MÊMES hypothèses de base (secteur : honoraires, frais financiers, majorations
+    # VRD, mixité/pluvial via `contexte_eco`, prix de sortie NEUF) que `compute_bilan_servi`, et ne laisse
+    # l'utilisateur surcharger QUE coût / marge & frais / VRD. Ainsi, saisir les hypothèses de Comparer
+    # redonne EXACTEMENT la charge foncière de Comparer (même équation, même contexte). À défaut de
+    # contexte calibré (appel pur/legacy), on retombe sur les défauts agrégés historiques.
+    bp = {**(base_params if base_params is not None else bilan_params_defaut()),
           "cout_construction_m2_sdp": float(cout_construction_m2),
           "marge_cible_pct": float(marge_frais_pct),
           "cout_vrd_base": vrd}
     b = compute_bilan(float(shab_vendable_m2), float(surface_terrain_m2 or 0), prix,
-                      Hypotheses.charger(), bilan_params=bp)
+                      hyp or Hypotheses.charger(), contexte_eco=contexte_eco,
+                      bilan_params=bp, prix_neuf=prix_neuf)
     # RETOUCHES-1 (lot B.8) — la source ET la fenêtre du prix DVF (n ventes, rayon effectif, période,
     # type) accompagnent la médiane : le bilan affiche « Estimé » + sous-ligne sourcée, jamais un €/m² nu.
     marche = {"median": prix.get("median"), "fiabilite": prix.get("fiabilite"), "n": prix.get("n"),
