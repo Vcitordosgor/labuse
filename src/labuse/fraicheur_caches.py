@@ -71,15 +71,22 @@ def residuel_seq_servi(db) -> int | None:
 
 
 def millesimes_hash(db) -> str:
-    """Empreinte courte des millésimes de TOUTES les sources (`data_sources.source_millesime`).
-    Un millésime qui bouge (nouvelle édition producteur) invalide les caches qui en dérivent —
-    sur-invalider une source non lue est bénin (le job régénère), sous-invalider est le bug."""
+    """Empreinte courte des millésimes de TOUTES les sources. Un millésime qui bouge (nouvelle
+    édition producteur) invalide les caches qui en dérivent — sur-invalider une source non lue est
+    bénin (le job régénère), sous-invalider est le bug.
+
+    FIX-NU3-3 (L-CHN-04) — on hache DÉSORMAIS aussi `source_horizon_at`, pas seulement
+    `source_millesime` : une nouvelle livraison DVF réécrit un `source_millesime` IDENTIQUE
+    (« 2021–2025 ») mais fait avancer l'horizon → l'empreinte ne bougeait pas → sous-invalidation des
+    caches (commune_contexte_cache, tuiles). « Sur-invalider est bénin, sous-invalider est le bug. »"""
     try:
         rows = db.execute(text(
-            "SELECT name, coalesce(source_millesime, '') FROM data_sources ORDER BY name")).all()
+            "SELECT name, coalesce(source_millesime, ''), coalesce(source_horizon_at::text, '') "
+            "FROM data_sources ORDER BY name")).all()
     except Exception:  # noqa: BLE001 — table absente (base de test nue) : composante neutre
         return "sans-sources"
-    h = hashlib.md5("|".join(f"{n}={m}" for n, m in rows).encode(), usedforsecurity=False).hexdigest()[:10]
+    h = hashlib.md5("|".join(f"{n}={m}@{hz}" for n, m, hz in rows).encode(),
+                    usedforsecurity=False).hexdigest()[:10]
     return h
 
 

@@ -142,4 +142,9 @@ def render_pdf(page_html_str: str, *, forms: bool = False) -> bytes:
     `forms=True` : les <input>/<textarea> du gabarit deviennent des champs remplissables PDF
     (Apporteur — lot 6)."""
     from weasyprint import HTML  # import paresseux : pango requis au rendu seulement
-    return HTML(string=page_html_str, base_url=str(_PKG)).write_pdf(pdf_forms=forms)
+    # FIX-NU3-3 (K-CHG-02) — le rendu weasyprint est le goulot CPU sous charge : on le passe en FILE
+    # (au plus `pdf_rendu_max` à la fois) pour que fiche/carte restent < 1 s. Point de rendu UNIQUE des
+    # 5 documents premium → un seul endroit à borner.
+    from ..perf_limits import pdf_slot
+    with pdf_slot():
+        return HTML(string=page_html_str, base_url=str(_PKG)).write_pdf(pdf_forms=forms)

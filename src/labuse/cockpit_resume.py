@@ -60,14 +60,31 @@ def _job_perime(job: dict | None) -> bool:
     return (datetime.now(timezone.utc) - fin_dt).total_seconds() > 1.5 * inter
 
 
+def _job_bloque(job: dict | None) -> bool:
+    """FIX-NU3-3 (I-ADM-03) — un poste dont le dernier état est « en_cours » depuis plus que son
+    timeout + marge a été TUÉ en plein travail (le finally n'a pas réécrit d'état terminal). Même
+    prédicat partagé (`jobs.bloque_depuis`) que la vigie et la page Horloge → le même job est dit
+    BLOQUÉ partout, jamais « travaille en ce moment » / vert à vie. Un gelé n'est pas bloqué."""
+    job = job or {}
+    if job.get("gel"):
+        return False
+    dernier = job.get("dernier") or {}
+    if dernier.get("statut") != "en_cours":
+        return False
+    from .jobs import bloque_depuis
+    return bloque_depuis("en_cours", dernier.get("debut"), job.get("timeout_s")) is not None
+
+
 def _pastille_job(job: dict | None) -> str:
-    """La couleur d'un poste : gris = gelé ou jamais parti · rouge = dernier passage en échec ·
-    ambre = ok mais PÉRIMÉ (dernier succès > 1,5× cadence, NU-F-050) · vert = ok/dry-run frais.
-    (Le « violet = tourne en ce moment » est décidé côté L'usine, Lot B : ici on ne lit que le
-    dernier état journalisé.)"""
+    """La couleur d'un poste : gris = gelé ou jamais parti · rouge = dernier passage en échec OU
+    BLOQUÉ (en_cours tué) · ambre = ok mais PÉRIMÉ (dernier succès > 1,5× cadence, NU-F-050) ·
+    vert = ok/dry-run frais ou en cours sain. (Le « violet = tourne en ce moment » est décidé côté
+    L'usine, Lot B : ici on ne lit que le dernier état journalisé.)"""
     job = job or {}
     if job.get("gel"):
         return "gris"
+    if _job_bloque(job):                       # FIX-NU3-3 (I-ADM-03) — tué en plein run = rouge, pas vert
+        return "rouge"
     statut = (job.get("dernier") or {}).get("statut")
     if statut is None:
         return "gris"
@@ -191,6 +208,16 @@ def _titre_incident_generique(cle: str, sujet: str):
         nom = cle.split(":", 1)[1]
         return ("ambre", f"Un automate a du retard : {nom}",
                 {"label": "Réessayer", "action": "lancer-job", "nom": nom})
+    # FIX-NU3-3 (I-ADM-03) — automate BLOQUÉ (tué en plein travail, verrou figé) : rouge, « Réessayer »
+    # relance et relâche le verrou.
+    if cle.startswith("job-bloque:"):
+        nom = cle.split(":", 1)[1]
+        return ("rouge", f"Un automate est bloqué (tué en plein travail) : {nom}",
+                {"label": "Réessayer", "action": "lancer-job", "nom": nom})
+    # FIX-NU3-3 (escalade Vic) — alertes CRITIQUES escaladées (sauvegarde HS >24 h, automate jamais
+    # réussi, Radar muet 2 nuits) : rouge, pas de bouton métier (acquittement par défaut).
+    if cle.startswith("escalade:"):
+        return ("rouge", sujet or "Alerte critique à escalader", None)
     if cle == "verite-sources":
         return ("rouge", "Des valeurs servies divergent des sources officielles", None)
     return ("rouge", sujet or "Un contrôle d'exploitation est au rouge", None)
@@ -462,10 +489,18 @@ def _resume_usine(jobs_list: list[dict]) -> dict:
         if j.get("gel"):
             arret += 1
             continue
+        if _job_bloque(j):                     # FIX-NU3-3 (I-ADM-03/05) — bloqué = en échec, jamais "à l'arrêt"
+            echec += 1
+            continue
         statut = (j.get("dernier") or {}).get("statut")
         if statut in ("echec", "timeout"):
             echec += 1
         elif statut in ("ok", "dry-run"):
+            vert += 1
+        elif statut == "en_cours":
+            # FIX-NU3-3 (I-ADM-05) — un poste qui TRAVAILLE (en_cours sain) n'est pas « à l'arrêt » :
+            # avant, l'en-tête le comptait « à l'arrêt » alors que la grille le peignait « travaille »
+            # (violet). On le compte au vert (flotte saine) → plus de contradiction en-tête↔grille.
             vert += 1
         else:
             arret += 1
@@ -578,6 +613,8 @@ def _pastille_poste(job: dict, en_cours: set[str]) -> str:
     passage en échec · gris = gelé ou jamais parti."""
     if job.get("gel"):
         return "gris"
+    if _job_bloque(job):                       # FIX-NU3-3 (I-ADM-03) — en_cours tué = BLOQUÉ (rouge), pas violet à vie
+        return "rouge"
     dernier = job.get("dernier") or {}
     if job["nom"] in en_cours or dernier.get("statut") == "en_cours":
         return "violet"
@@ -611,7 +648,9 @@ def _poste(job: dict, en_cours: set[str]) -> dict:
         "nom": job["nom"], "libelle": job.get("libelle") or job["nom"],
         "role": job.get("role") or "", "pastille": pastille,
         "cadence": job.get("cadence"), "heure_reunion": job.get("heure_reunion"),
-        "dernier": {"statut": statut, "fin": dernier.get("fin"), "duree_s": dernier.get("duree_s")},
+        "dernier": {"statut": statut, "fin": dernier.get("fin"), "debut": dernier.get("debut"),
+                    "duree_s": dernier.get("duree_s")},
+        "bloque": _job_bloque(job),   # FIX-NU3-3 (I-ADM-03) — tué en plein run : dit « bloqué » partout
         "prochaine": job.get("prochaine_reunion") if not job.get("gel") else None,
         "gel": job.get("gel"), "bouton": bouton,
         "voir_detail": bool(detail), "detail": detail,

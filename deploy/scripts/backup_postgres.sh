@@ -48,6 +48,45 @@ done
 # Motif quoté (le `*` ne doit PAS être globé par le shell) ; passé en argument explicite à pg_dump.
 EXCLUDE_SCHEMAS='--exclude-schema=sauvegarde_*'
 
+# FIX-NU3-3 (K-SAV-01/05) — FILET PAR TABLE. Le 30/10→01/11, plus AUCUN dump pendant 3 jours : pg_dump
+# pose un SEUL `LOCK TABLE` sur TOUTES les tables au démarrage et butait sur `pige_restauration_radarfix3`
+# (propriétaire postgres, labuse sans SELECT) → « permission denied » → dump entier avorté. L'exclusion
+# de schéma ci-dessus ne couvre PAS une table du schéma `public`. Ici, on DÉTECTE à l'avance toute table
+# `public` que le rôle de dump ne peut pas lire et on l'EXCLUT nominativement : une table illisible ne
+# fait plus tomber tout le dump — les ~301 autres (dont toute table NOUVELLE lisible, K-SAV-05) passent.
+# Les exclusions sont RAPPORTÉES bruyamment (stderr + marqueur JSON) : il faut un GRANT SELECT (geste
+# prod, DEPLOY-FINAL) pour les réintégrer — le dump ne fait plus silence dessus.
+PSQL_BIN="${LABUSE_PSQL_BIN:-psql}"
+EXCLUDE_TABLES=""
+TABLES_EXCLUES=""
+MARQUEUR_EXCLUES="$BACKUP_DIR/.dump-tables-exclues.json"
+if command -v "$PSQL_BIN" >/dev/null 2>&1; then
+    # tables `public` NON lisibles par le rôle de dump (current_user) : candidates à casser le LOCK.
+    while IFS= read -r t; do
+        [ -z "$t" ] && continue
+        EXCLUDE_TABLES="$EXCLUDE_TABLES --exclude-table=public.$t"
+        TABLES_EXCLUES="$TABLES_EXCLUES $t"
+    done < <("$PSQL_BIN" -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB" -At -c \
+        "SELECT tablename FROM pg_tables WHERE schemaname='public'
+           AND NOT has_table_privilege(current_user, format('public.%I', tablename), 'SELECT')
+         ORDER BY tablename" 2>/dev/null)
+    if [ -n "$TABLES_EXCLUES" ]; then
+        echo "⚠ FILET PAR TABLE : table(s) public illisible(s) par le rôle de dump → exclue(s) pour ne" >&2
+        echo "  pas faire échouer tout le dump :$TABLES_EXCLUES" >&2
+        echo "  (restaurer l'exhaustivité = GRANT SELECT … TO $DB_USER ; geste prod DEPLOY-FINAL.)" >&2
+        printf '{"quand":"%s","db":"%s","role":"%s","tables_exclues":[%s]}\n' \
+            "$(date -u +%FT%TZ)" "$DB" "$DB_USER" \
+            "$(echo "$TABLES_EXCLUES" | tr -s ' ' '\n' | sed '/^$/d' | sed 's/.*/"&"/' | paste -sd, -)" \
+            > "$MARQUEUR_EXCLUES" 2>/dev/null || true
+    else
+        # aucune table illisible : effacer un éventuel marqueur périmé (le trou est refermé).
+        rm -f -- "$MARQUEUR_EXCLUES" 2>/dev/null || true
+    fi
+else
+    echo "⚠ psql introuvable : filet par table inactif (le dump échouera bruyamment si une table" >&2
+    echo "  public est illisible — c'est le comportement sûr, pas de dump corrompu silencieux)." >&2
+fi
+
 # DISQUE-VPS-1 — GARDE-DISQUE avant dump : « tient dans le disque, garde toujours au moins le plus
 # récent ». Si l'espace libre < 1,3 × le plus gros dump existant, on supprime les dumps quotidiens
 # LES PLUS ANCIENS (jamais le plus récent) jusqu'à avoir la place. Structurel, indépendant de KEEP.
@@ -72,8 +111,8 @@ ensure_space
 echo "▶ [$(date '+%F %T')] pg_dump $DB (lean) → $OUT"
 # J+2 (incident 22/07 : un échec d'auth laissait un dump de 0 octet, silencieux jusqu'au pull) :
 # le fichier raté est SUPPRIMÉ et le script échoue BRUYAMMENT ; un dump vide/illisible ne survit pas.
-# shellcheck disable=SC2086 — $EXCLUDES est une liste d'options construite ci-dessus.
-if ! pg_dump -Fc --no-owner "$EXCLUDE_SCHEMAS" $EXCLUDES -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB" -f "$OUT"; then
+# shellcheck disable=SC2086 — $EXCLUDES / $EXCLUDE_TABLES sont des listes d'options construites ci-dessus.
+if ! pg_dump -Fc --no-owner "$EXCLUDE_SCHEMAS" $EXCLUDES $EXCLUDE_TABLES -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB" -f "$OUT"; then
     rm -f -- "$OUT"
     echo "✗ pg_dump A ÉCHOUÉ — dump supprimé, rien de corrompu ne reste" >&2
     exit 1

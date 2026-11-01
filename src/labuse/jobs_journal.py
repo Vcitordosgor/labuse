@@ -64,6 +64,15 @@ def dernier_succes(db) -> dict[str, object]:
     return {r[0]: r[1] for r in rows if r[1] is not None}
 
 
+def premiere_activite(db):
+    """FIX-NU3-3 (I-ADM-01 / L-JOB-01) — le plus ANCIEN passage journalisé, tous jobs confondus :
+    « le système tourne au moins depuis cet instant ». Sert de référence pour dire qu'un job planifié
+    qui n'a JAMAIS réussi (ni même tourné) est EN RETARD — un cron jamais tiré est invisible sinon.
+    None si la table est vide (système tout neuf : on ne crie pas « jamais lancé » sur une base vierge)."""
+    ensure_table(db)
+    return db.execute(text("SELECT min(debut) FROM job_runs")).scalar()
+
+
 def dernier_passage(db) -> dict[str, dict]:
     """Pour chaque job : son DERNIER passage quel qu'en soit le statut (le plus récent par `debut`)."""
     ensure_table(db)

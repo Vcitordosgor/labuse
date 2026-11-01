@@ -14,19 +14,22 @@ from labuse.api import ops
 
 
 def test_82_crons_alignes_sur_le_registre_des_jobs():
-    """CHAQUE entrée de healthz est un job du REGISTRE (touche l'eau + backup) ; les cadences
-    en dérivent. Les anciens noms legacy (ban/dvf/abuse — sans job wrapper) ont disparu :
-    leur fraîcheur de SOURCE vit sur la page Circuit (cadence 1.7 + « à vérifier » 8.4).
-    Décision 13/10 : un job `planifie=False` (ex. agents-sources, manuel-seul — pas de crédit API)
-    est EXCLU du monitoring healthz (comme du crontab), bien qu'il reste dans le registre."""
-    from labuse.jobs import JOBS, TOUCHE_EAU
-    attendu = {n for n in (TOUCHE_EAU | {"backup-postgres"}) & set(JOBS) if JOBS[n].planifie}
+    """FIX-NU3-3 (I-ADM-02 / L-JOB-02) — CHAQUE job PLANIFIÉ du registre est exposé par /healthz/crons,
+    plus seulement ceux qui « touchent l'eau » + backup : avant, la moitié de la flotte (mail-queue,
+    digest, healthcheck, purge-sessions, radar-cycle…) était absente de l'endpoint que le monitoring
+    VPS curle pour `ok:true`. Un job `planifie=False` (manuel-seul) reste exclu. Les cadences dérivent
+    du registre ; les cadences sous la journée ont un seuil en heures (< 1 jour)."""
+    from labuse.jobs import JOBS
+    attendu = {n for n in JOBS if JOBS[n].planifie}
     assert set(ops.CRONS) == attendu
     for nom, c in ops.CRONS.items():
-        assert c["attendu_jours"] >= 1, nom
+        assert c["attendu_jours"] > 0, nom
     # les mensonges de CIRCUIT-0 sont soldés : DPE mensuel (35 j), BODACC au wrapper (2 j)
     assert ops.CRONS["ingest-dpe"]["attendu_jours"] == 35
     assert ops.CRONS["ingest-bodacc"]["attendu_jours"] == 2
+    # les jobs critiques jadis absents sont bien là, avec un seuil fin (heures) pour les sous-journaliers
+    assert "mail-queue-consommer" in ops.CRONS and ops.CRONS["mail-queue-consommer"]["attendu_jours"] < 1
+    assert {"digest", "healthcheck", "purge-sessions", "coherence-banc"} <= set(ops.CRONS)
 
 
 def test_81_legacy_marque_obsolete():

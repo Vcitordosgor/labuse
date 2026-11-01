@@ -679,7 +679,10 @@ SOURCES: list[dict] = [
                          "couleurs : PIR=canal R, rouge=canal G → pseudo-NDVI. Même grille "
                          "ortho_tiles (512 m), 0,4 m/px suffit (cache data/ortho_irc ≈ 2 Go)."),
     dict(name="LiDAR HD — MNH 50 cm (IGN)", category="terrain", provider="IGN / Géoplateforme",
-         source_millesime="Survol 11/08–11/10/2023 · MNx édités 13/03/2025",   # SOURCES-2 : WFS TA métadonnées, 2 665 dalles
+         # FIX-NU3-3 (L-MIL-04) — « MNx édités 13/03/2025 » RETIRÉ : date d'édition en dur, présente
+         # dans AUCUNE colonne (non traçable). On garde la fenêtre de SURVOL, elle, vérifiable
+         # (batiment_hauteur_lidar.date_debut/fin_survol = 11/08→11/10/2023).
+         source_millesime="Survol 11/08–11/10/2023",   # SOURCES-2 : WFS TA métadonnées, 2 665 dalles
          access_type="WMS GeoTIFF", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://diffusion-lidarhd.ign.fr/mnx/",
          endpoint_url="https://data.geopf.fr/wms-r "

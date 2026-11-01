@@ -2054,6 +2054,13 @@ _ETUDE_TROP_LOURDE = {
                "(les données sont parfois plus lentes à froid) ; sur une assiette très lourde, essayez "
                "moins de parcelles.",
 }
+# FIX-NU3-3 (K-CHG-03) — file des processus d'étude pleine (plafond atteint, aucune place libérée dans
+# le délai) : 503 honnête plutôt que de laisser N processus saturer la RAM et écrouler fiche/carte.
+_ETUDE_FILE_PLEINE = {
+    "erreur": "etude_file_pleine",
+    "message": "Beaucoup d'études tournent en ce moment. Patientez quelques secondes et relancez — "
+               "la place se libère dès qu'une étude se termine.",
+}
 
 
 def _etude_timeout_s() -> float:
@@ -2130,6 +2137,15 @@ def _tuer_processus(p: "multiprocessing.Process") -> None:
 def _dans_processus(fn, args: tuple):
     """Exécute `fn(*args)` dans un processus séparé « spawn », borné à `etude_timeout_s`. Rend le résultat,
     ou lève HTTPException(503) à la borne APRÈS avoir tué l'enfant, ou ré-élève l'exception de l'enfant."""
+    # FIX-NU3-3 (K-CHG-03) — PLAFOND de processus d'étude simultanés : on prend une place dans la file
+    # AVANT de spawner. File pleine (aucune place libérée dans le délai) → 503 honnête, sans spawner
+    # (la RAM ne sature pas, fiche/carte restent réactives). La place est tenue pendant tout le calcul.
+    from ..perf_limits import FileEtudePleine, etude_slot
+    try:
+        cm = etude_slot()
+        cm.__enter__()
+    except FileEtudePleine:
+        raise HTTPException(503, detail=_ETUDE_FILE_PLEINE)
     ctx = multiprocessing.get_context("spawn")
     q = ctx.Queue()
     p = ctx.Process(target=_cible_processus, args=(q, fn, args), name="etude", daemon=True)
@@ -2146,6 +2162,7 @@ def _dans_processus(fn, args: tuple):
     finally:
         _tuer_processus(p)
         q.close()
+        cm.__exit__(None, None, None)   # libère la place de la file pour l'étude suivante
 
 
 def _etudier_borne(data: dict) -> dict:
