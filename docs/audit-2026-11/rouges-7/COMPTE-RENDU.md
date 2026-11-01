@@ -165,6 +165,23 @@ d'emprise/perméabilité — or **FAISA-REGLES-1 (E-058)** a déplacé ce plafon
 jour ce test `reel`. Même classe que #3 : **test qui fige un ancien comportement voulu** → aligné sur E-058
 (raison écrite dans le test). Les 3 repassent verts.
 
+## Les 4 rouges signalés par SCORING-COPRO-1 (même tri)
+
+Demandés en plus : `boot_verrou`, `exports2`, `proxy_dev`, `flux`. SCORING-COPRO-1 les voit rouges dans SON
+arbre (run **q_v21** servi localement + ses routes/code) ; je les trie ici, et sur MON arbre (q_v20).
+
+| test | commit / cause | classement | correctif |
+|------|----------------|------------|-----------|
+| `test_flux::test_ecrire_releve_puis_courbe` | FIX-ORFEVRE-1 (ORF-17) a mis `ecrire_releve`/`courbe` au jour **Réunion** (`today_reunion`) ; le test comparait à `date.today()` (process) | **Test fige** l'ancien jour-process | le test compare au jour Réunion → vert de part et d'autre de minuit |
+| `test_solidite1_lot2::test_toutes_les_gardes…` | COHERENCE-HOOK-1 a créé le paquet `tests/coherence` qui **entre en collision** avec `scripts/coherence` dans `sys.modules` (banc complet) → `chasse_donnees` : `ModuleNotFoundError: coherence.lib` | **Régression** (collision test-infra) | `chasse_donnees` importe `scripts.coherence.lib` (qualifié, sans ambiguïté) |
+| `test_boot_verrou_1::…tables_chaudes` | test de **TIMING** (boot < seuil sous verrous) | **Environnement** (charge machine) | aucun code — **vert dans mon arbre** (2 bancs complets) ; rouge sous forte charge concurrente |
+| `test_proxy_dev::…proxifiee…` | vérifie que toute route API est dans l'allowlist du proxy Vite (déterministe) | **branche SCORING-COPRO** (route neuve non proxifiée chez eux) | **vert dans mon arbre** ; à proxifier côté scoring-copro (hors mon périmètre) |
+| `test_exports2…` | PDF d'export qui LISENT le scoring (tier/palier) | **run-state local scoring-copro** (q_v21 change les tiers) | **vert dans mon arbre** (q_v20) ; relève du run servi par scoring-copro |
+
+`flux` et `solidite1` sont CORRIGÉS (déterministes, racine trouvée). `boot_verrou`/`proxy_dev`/`exports2` sont
+**verts sur mon arbre** (confirmé : absents des échecs des deux bancs complets) — leurs rouges appartiennent au
+run q_v21 / au code de la session SCORING-COPRO-1, pas au mien.
+
 ## Recette
 
 - **Les 7 (+ G7 + le bonus Saint-André + les 3 `test_implantation1`) joués sur base réelle** : tous verts,
@@ -173,20 +190,19 @@ jour ce test `reel`. Même classe que #3 : **test qui fige un ancien comportemen
 - **Golden** : `git diff tests/golden/coherence/` = exactement 8 valeurs (7 `rang_score` + 1 `hauteur_faitage`
   → `null`), rien d'autre.
 - **Hook backend** (`pytest -m "not reel and not local and not network"`) : **4114 passés**.
-- **Banc complet** (`pytest -m "not network"`, base réelle, run 17, 36 min) : les 7 de la liste + G7 +
-  `test_implantation1` sont **verts**. Restent **4 rouges FLAKY, pré-existants, NI dans les 7 ni causés par mes
-  éditions** — chacun **repasse VERT en isolation** (prouvé : `7 passed` ci-dessus ; et `test_implantation1`
-  échoue encore `git stash` des 3 fichiers code → c'est bien E-058, pas moi) :
-  - `test_flux::test_ecrire_releve_puis_courbe` — **frontière de date** (31/10 Paris / **01/11 Réunion**) :
-    `ecrire_releve` écrit `jour` en heure Réunion, le test compte en `date.today()` locale.
-  - `test_dpe::test_rattachement_point_ban` et `test_enrichment::test_reseaux_et_proprietaire_honnetes` —
-    **pollution d'ordre** dans `labuse_test` (état laissé par un test antérieur du banc complet) ; verts seuls.
-  - `test_solidite1_lot2::test_toutes_les_gardes_entrent_automatiquement` — **ordre d'import** :
-    `ModuleNotFoundError: coherence.lib` (sys.path d'un autre test) ; vert seul.
-
-  Ces 4 sont des faiblesses d'ISOLATION/horloge du banc, pré-existantes et non déterministes (code radar /
-  proprietaire / sys.path, hors des 7 et hors périmètre). Non masquées : motifs écrits, reproduction donnée.
-  Les rouges DÉTERMINISTES du banc (les 7 + G7 + `test_implantation1`) sont, eux, tous à **0**.
+- **Banc complet** (`pytest -m "not network"`, base réelle, run 17, 2 passages de ~35 min) :
+  - **Passage 1** (avant le fix `test_implantation1`) : 7 rouges = les 3 `test_implantation1` (E-058, corrigés
+    depuis) + 4 flaky (`flux`, `dpe`, `enrichment`, `solidite1`).
+  - **Passage 2** (commit `18b6df20f`, `test_implantation1` corrigé) : **1 seul rouge** —
+    `test_solidite1_lot2` ; `test_dpe`/`test_enrichment`/`test_flux` ont, eux, **viré au VERT** ce passage-là
+    (preuve directe qu'ils sont NON déterministes). `test_solidite1` était donc le **seul rouge DÉTERMINISTE
+    restant** (la collision `scripts/coherence` ↔ `tests/coherence`) — **corrigé** (import qualifié).
+  - Après `flux` (jour Réunion) + `solidite1` (import qualifié), **tous les rouges DÉTERMINISTES du banc sont à
+    0** : les 7 + G7 + `test_implantation1` + `flux` + `solidite1`. Reste le COUPLE `test_dpe` /
+    `test_enrichment`, **flaky pré-existant** (pollution d'ordre par un test TIERS qui *commit* dans
+    `labuse_test` — `db_session` est pourtant transactionnel ; verts en isolation ET au passage 2). Non
+    masqués : racine identifiée (committeur tiers à bisecter), hors des 7 et hors périmètre, non causés par mes
+    éditions (prouvé `git stash`). Un dernier passage de banc confirme le compte final (ci-dessous).
 
 ## Fichiers touchés
 
@@ -195,7 +211,9 @@ jour ce test `reel`. Même classe que #3 : **test qui fige un ancien comportemen
   `src/labuse/registre/tables.py` (déclaration V1c des 2 tables).
 - **Tests** : `tests/test_docs1_ecran_egale_pdf.py` (écran = endpoint), `tests/test_etude_v6_stationnement.py`
   (aligné sur le livré), `tests/test_implantation3_pdf.py` (fixture spawn), `tests/test_implantation1.py`
-  (aligné sur E-058 : « surface du terrain »).
+  (aligné sur E-058 : « surface du terrain »), `tests/test_flux.py` (jour Réunion, SCORING-COPRO-1).
+- **Scripts (test-infra)** : `scripts/coherence/chasse_donnees.py` (import qualifié `scripts.coherence.lib`,
+  fin de la collision avec `tests/coherence` — SCORING-COPRO-1 `test_solidite1`).
 - **Scripts / données** : `scripts/ci/reparer_sonde_locale.sh` (V3b/V3c), `tests/golden/coherence/*.json`
   (ré-accepté `q_v20`).
 - **Aucune ligne touchée** en estimation « Estimer un bien », Projets, CRM, filtres (sessions // PRODUIT-NU-1
