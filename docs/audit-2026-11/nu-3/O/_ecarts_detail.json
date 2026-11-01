@@ -1,0 +1,233 @@
+[
+ {
+  "id": "CA-002",
+  "libelle": "Légende Verdict · Classement servi (Priorité/À suivre/Sans s",
+  "cause": "frontend/src/lib/status.ts:33 (PRIORITE_SERVIE=false) + :77-79 (LEGEND_V2_ORDER à 3 éléments) ; Legend.tsx:79 itère LEGEND_V2_ORDER. Le fait liste 'Priorité' comme palier servi alors qu'il est désacti",
+  "preuve": "PALIER_META (status.ts:36-40) porte bien les 4 paliers Priorité #E8695A / À suivre #E8B44C(code dit #E8B44C? réel '#E8B44C'? non: a_suivre color='#E8B44C' -> co",
+  "libelle_ok": false
+ },
+ {
+  "id": "CF-013",
+  "libelle": "Bande d'analyse (Excellente/Bonne/À étudier/Faible/Non reten",
+  "cause": "src/labuse/api/app.py:4464 (et 4487) — la clé HC de BANDE_META est volontairement absente de la liste de ventilation ; bande_total sous-compte de exactement le nombre de parcelles HC (6659 île = A-001",
+  "preuve": "BANDE_META (status.ts:118-126) : labels EXACTS Excellente(A)/Bonne(B)/À étudier(C)/Faible(D)/Non retenue(0)/Analyse incomplète(NC)/Hors classement(HC). _q_v2_st",
+  "libelle_ok": true
+ },
+ {
+  "id": "DOC-APPORTEUR-017",
+  "libelle": "§6 — Ligne électrique, pylône, transformateur sur ou au bord",
+  "cause": "builder._apporteur_contexte:513 (obs_ligne_ht code False en dur) ; apporteur.py:401-402 (if ctx.get('obs_ligne_ht'))",
+  "preuve": "La question conditionnelle '_boxes(Ligne electrique, pylone, transformateur sur ou au bord ?)' n'apparait dans AUCUN des 6 PDF (grep 'pylone, transformateur' = ",
+  "libelle_ok": false
+ },
+ {
+  "id": "DOC-APPORTEUR-018",
+  "libelle": "§6 — ICPE : <description · distance> (contexte industriel)",
+  "cause": "builder.py:476,514 (icpe_detail produit) + apporteur.py:262 ('industriel' assigne mais jamais utilise) : donnee orpheline, jamais rendue. La spec RECETTE-11 D7 (ICPE relevee avec description/distance)",
+  "preuve": "97407000AZ0019 a une ICPE relevee avec detail (icpe line SOFT_FLAG, detail='Installation (ICPE) a proximite — SCI MILHAC, regime Enregistrement, 93 m'). builder",
+  "libelle_ok": false
+ },
+ {
+  "id": "DOC-DOSSIER-045",
+  "libelle": "SCOT",
+  "cause": "robinet_fiche.py:290-296 _c_scot : bits.append(f\"approuvé le {d['date_approbation']}\") SANS lire d['statut'] -> un SCOT 'en projet' est affiché 'approuvé le <date projetée>' (le millésime amont 'appro",
+  "preuve": "97424000AC0001 : JSON scot.statut='en projet' mais _c_scot rend 'SCOT DU GRAND SUD — approuvé le 2024-09-02' -> PDF 'DU GRAND SUD — approuvé le 02/09/2024'. Le ",
+  "libelle_ok": false
+ },
+ {
+  "id": "DOC-DOSSIER-063",
+  "libelle": "Fibre (FTTH)",
+  "cause": "miroir.py:541-543 _r_fibre : fallback str(etat) au lieu d'un libellé clair ; le dict fibre n'a pas de clé 'libelle' donc l'enum technique fuit au client",
+  "preuve": "fibre JSON {etat:'aucun_immeuble', detail:'aucun immeuble Arcep à moins de 100 m', millesime:'2026_T2'} (aucun 'libelle'). _r_fibre: etat!='servi' -> v.get('lib",
+  "libelle_ok": false
+ },
+ {
+  "id": "DOC-ESTIMER-009",
+  "libelle": "Tuile Exposition",
+  "cause": "src/labuse/exports/robinet_fiche.py:124-135 utilise faisabilite.exposition.exposition_parcelle ; src/labuse/api/enrichment.py:154-187 utilise un autre calcul d'azimut → deux expositions pour la même p",
+  "preuve": "Tuile Exposition (annonce.py:179 r.get('exposition')) = terrain.exposition, calculé par le robinet via faisabilite/exposition.py exposition_parcelle (= endpoint",
+  "libelle_ok": true
+ },
+ {
+  "id": "DOC-ETUDE-029",
+  "libelle": "Espaces libres · dont pleine terre",
+  "cause": "src/labuse/exports/etude_faisabilite.py:676 — le LIBELLÉ de la ligne est « Espaces libres · dont pleine terre » mais la VALEUR rendue est uniquement pleine_terre_m2 (la part pleine terre), pas la surf",
+  "preuve": "pleine_terre_m2 dérivé de la géométrie du scénario (capacite.py:115 pleine_terre=aire('espace_libre'), ajusté sous-dalle 130-131), chip « Dérivé ». St-Paul serv",
+  "libelle_ok": false
+ },
+ {
+  "id": "DOC-ETUDEZONE-013",
+  "libelle": "Risques / Assainissement (rayon)",
+  "cause": "src/labuse/exports/blocs/etude_zone.py:131-135 — clé 'libelle' absente de risques_zone (zone.py:746) et assainissement_zone (zone.py:789) ; condition toujours falsy",
+  "preuve": "LIGNE MORTE : etude_zone.py:131-135 lit risq.get('libelle') et assa.get('libelle'), mais risques_zone() retourne {ppr,aleas,source} SANS clé 'libelle' et assain",
+  "libelle_ok": false
+ },
+ {
+  "id": "FP-B-039",
+  "libelle": "Signal de marché condensé (DVF actes + Sitadel)",
+  "cause": "marche.tsx:187 (fiche) lit un champ (market_signal) que le builder servi _q_v2_fiche (app.py:7150) n'émet pas ; seul _build_fiche:8530 le portait, non servi depuis FIX-FICHE F3 → fonctionnalité fiche ",
+  "preuve": "ÉCART DE RENDU : marche.tsx:187 lit f.market_signal, mais l'endpoint servi /parcels/{idu} passe par _q_v2_fiche (FIX-FICHE F3, app.py:7150/7192) qui n'inclut PA",
+  "libelle_ok": true
+ },
+ {
+  "id": "FP-B-060",
+  "libelle": "Parc social (RPLS commune) — logements + % QPV",
+  "cause": "app.py:4841 strippe pct_qpv ; le fait FP-B-060 libellé « logements + % QPV » décrit un champ volontairement NON servi",
+  "preuve": "nb_logements == rpls_commune.nb_logements 5/5 (7265, 1766, 25185, 62, 70). MAIS le « % QPV » du libellé N'EST PAS SERVI : app.py:4841 retire explicitement pct_q",
+  "libelle_ok": false
+ },
+ {
+  "id": "OUT-ASSEMB-001",
+  "libelle": "{n} parcelle(s) contiguë(s) · surface totale {m²}",
+  "cause": "moteurs.py:205 `round(p.surface_m2)` et assemblage.py:256 `sum(p.surface_m2 ...)` ne COALESCEnt PAS la contenance, contrairement a assemblage.py:56-58 (parcel_assemblage fiche) et au prefill taxe (app",
+  "preuve": "Contiguite PostGIS exacte (ST_DWithin 0,5 m) : paire AY0248/AY0247 contigu=True ; Saint-Paul+Cilaos contigu=False, isolees=['97424...'] OK. MAIS surface_totale ",
+  "libelle_ok": false
+ },
+ {
+  "id": "OUT-ASSEMB-002",
+  "libelle": "Surface d''assiette {m²}",
+  "cause": "assemblage.py:256 `surface = round(sum(p.surface_m2 or 0 for p in parcels))` — identique a 001.",
+  "preuve": "surface_totale_m2 = agg['surface_cumulee_m2'] = round(sum(p.surface_m2)) : AY0248+AY0247=1992, CT3278+CT3279=1991 — arithmetique de la somme EXACTE (993+999=199",
+  "libelle_ok": false
+ },
+ {
+  "id": "OUT-ASSEMB-013",
+  "libelle": "{idu} · {surface_m2} m² · SDP {sdp} m² · maximum réglementai",
+  "cause": "moteurs.py:205 round(p.surface_m2) (dessin) pour items, divergent de la fiche (contenance).",
+  "preuve": "items[] : idu + surface_m2 (DESSIN round(p.surface_m2) moteurs.py:205) + sdp_m2 (sdp_par.get) + proprio. SDP et proprio corrects ; PM nommee / particulier non c",
+  "libelle_ok": false
+ },
+ {
+  "id": "OUT-CALC-006",
+  "libelle": "VRD &amp; aménagements {n} €/m² (hypothèse saisie) + total {",
+  "cause": "constructibilite.tsx:364 — affiche vrd_m2 €/m² « de terrain » et « sur {terrain_m2} m² » alors que vrd_total_eur = base × emprise aménagée (≠ terrain). Le client qui multiplie 90×3110 obtient 279 900 ",
+  "preuve": "Le total VRD SERVI est correct (base × emprise AMÉNAGÉE, bilan.py:690 cout_vrd=vrd_base×(1+maj)×emprise_amenagee), MAIS le libellé FRONT (constructibilite.tsx:3",
+  "libelle_ok": false
+ },
+ {
+  "id": "OUT-COMMUNE-010",
+  "libelle": "Légende : Instruction=… · Permis 5 ans=… · €/m² terrain nu —",
+  "cause": "frontend/src/components/outils/blocB.tsx:294 (légende '€/m² terrain nu sous 5 ventes') vs config/dvf_profils.yaml terrain_cellule_commune:10 via marche_commune.py:43,134",
+  "preuve": "Seuil NEUF : légende 'sous 8 ventes VEFA' == code (neuf_vefa_seuil=8) JUSTE (StBenoit n=6<8→null, StP n=158→servi). Seuil TERRAIN NU : légende dit 'sous 5 vente",
+  "libelle_ok": false
+ },
+ {
+  "id": "OUT-COMMUNE-018",
+  "libelle": "Barre de progression % (largeur)",
+  "cause": "frontend/src/components/outils/blocB.tsx:414-415 (clamp front-only), ABSENT de src/labuse/api/rarete.py",
+  "preuve": "Barre calculée UNIQUEMENT au front (blocB.tsx:414-415) : pct=depasse?100:max(4,min(100,reste/budget*100)) — largeur=pct_RESTANT clampé [4,100], PAS pct_consomme",
+  "libelle_ok": true
+ },
+ {
+  "id": "OUT-COMMUNE-019",
+  "libelle": "Statut Rareté (dépassé/creuser/détendu)",
+  "cause": "frontend/src/components/outils/blocB.tsx:413,426,434 (3 vocabulaires) vs src/labuse/api/rarete.py:86-89 vs libellé fait brief",
+  "preuve": "L'API .statut renvoie labels CODE (rarete.py:86-89) : 'budget dépassé'(h==0),'non projetable'(None),'tension forte'(<=5),'tension modérée'(<=15),'détendu'. reca",
+  "libelle_ok": false
+ },
+ {
+  "id": "OUT-COMPARER-009",
+  "libelle": "Charge foncière /m² terrain {eur}/m²",
+  "cause": "app.py:8779 (compare lit bilan servi calibré) vs bilan.py:compute_calculette (défauts YAML + prix neuf resolve_prix_sortie_servi) — deux jeux d'hypothèses sous le même libellé « charge foncière ».",
+  "preuve": "charge_fonciere_m2 de /compare = fiche_payload.bilan.charge_fonciere.par_m2_terrain (bilan SERVI, params calibrés par secteur). AZ1645 compare=37 €/m² (recalc f",
+  "libelle_ok": true
+ },
+ {
+  "id": "OUT-PERMIS-009",
+  "libelle": "{n} permis à moins de 200 m de {idu}",
+  "cause": "src/labuse/api/modules.py:754 'ORDER BY dist_m ASC LIMIT 100' — plafond dur sans indicateur 'sur N' : le compte affiché (loc) est capé à 100, sous-estime le réel pour les parcelles urbaines denses",
+  "preuve": "Sur parcelle peu dense (97414000CD0034) recalc 8/API c200=8 EXACT. Mais LIMIT 100 tronque silencieusement les parcelles denses : 97415000AY1674 recalc 185 permi",
+  "libelle_ok": false
+ },
+ {
+  "id": "OUT-PERMIS-011",
+  "libelle": "sur les 24 derniers mois (Sitadel au {date})",
+  "cause": "frontend/src/components/outils/ModulePanel.tsx:852 (Math.max(...MONTHS_RADAR)=240) et modules.py:742-754 (aucun prédicat de date) — le registre OUT-PERMIS-011 '24 mois' est périmé",
+  "preuve": "La date 'Sitadel au 2026-08-31' est exacte (donnees_jusqu_au=max(date)). MAIS le libellé du registre dit 'sur les 24 derniers mois' alors que l'écran rend 'sur ",
+  "libelle_ok": false
+ },
+ {
+  "id": "OUT-PERMIS-017",
+  "libelle": "{commune} ou Parcelle {ref}",
+  "cause": "src/labuse/api/modules.py:656-657 — la liste 'items' DROP 'commune' du résultat (pourtant sélectionné ligne 594) ; front ModulePanel.tsx:691/705 lit i['commune'] inexistant",
+  "preuve": "Le branchement 'commune' du libellé N'EST JAMAIS peuplé par /modules/permis : l'item dict omet 'commune' (seuls permit_id,type,date,depot,delai_mois,etat,nb_lgt",
+  "libelle_ok": false
+ },
+ {
+  "id": "OUT-PLU-008",
+  "libelle": "{n} extrait(s) — {commune}",
+  "cause": "src/labuse/api/modules.py:2813 (n=len(res)) + ingestion/plu_ingest.py:search_reglement (LIMIT :lim sans count total)",
+  "preuve": "'{n} extrait(s)' = len(resultats) = nombre de lignes RETOURNÉES, plafonné par limit (defaut 25, max 200) — PAS le total des correspondances. Recalc: q='construc",
+  "libelle_ok": false
+ },
+ {
+  "id": "OUT-SCAN-003",
+  "libelle": "surface totale {m²}",
+  "cause": "modules.py:386 surface_totale_m2=round(sum(r['surface_m2'])) — utilise surface géométrique, pas contenance_m2 (disponible dans la requête l.311 mais non utilisée pour ce total).",
+  "preuve": "surface_totale recalc==API exact sur 6 SIREN (SIDR 4023407, CBO 25603086, etc). MAIS = SUM(surface_m2) (surface DESSIN/géométrique cadastrale), PAS la contenanc",
+  "libelle_ok": false
+ },
+ {
+  "id": "OUT-SCAN-006",
+  "libelle": "Blocs contigus : {n} · {n_parcelles} parcelles · {communes} ",
+  "cause": "modules.py:453 brs[:12] (cap dur) ; front ModulePanel.tsx:304-307 affiche 'Blocs contigus : {n}'=460 puis mappe bc.items (12) sans mention de troncature.",
+  "preuve": "blocs_contigus.n recalc==API exact (SIDR 460, Cilaos 66 ; COUNT parcel_blocs par siren). Top items recalc==API exact (SIDR top bloc 205 parcelles 30694 m² Saint",
+  "libelle_ok": false
+ },
+ {
+  "id": "OUT-SECTEUR-005",
+  "libelle": "secteur {r} m · commune entière {cv} €/m² ({±p} %) · sous/au",
+  "cause": "src/labuse/pige/signaux.py:127 (_dvf_bati=sector_price au centroïde, servi comme 'commune entière' via mon_secteur.py:98,110)",
+  "preuve": "ARITHMÉTIQUE ecart_pct=round(100*(sec-cv)/cv), sens, phrase : 6/6 EXACTS (StPierre 2653/2904→-9 sous, StLeu 4905/4773→+3 au_dessus…). MAIS commune_eur_m2 n'est ",
+  "libelle_ok": false
+ },
+ {
+  "id": "OUT-SECTEUR-007",
+  "libelle": "Méthode : {avant} ventes → {apres} retenues · {n} extrêmes (",
+  "cause": "src/labuse/faisabilite/bilan.py:149 _trim_aberrants (bornes domaine [1000;12000] + trim 5% comptés ensemble dans n_exclus) ; libellé '(5 %)' MonSecteur.tsx:19",
+  "preuve": "Cohérence interne avant-apres==n_exclus_extremes 6/6 EXACTE (21-20=1, 216-206=10, 101-83=18…). Plages se resserrent. MAIS n_exclus≈5% FAUX pour petits échantill",
+  "libelle_ok": false
+ },
+ {
+  "id": "OUT-SECTEUR-009",
+  "libelle": "Sources : DVF (bâti rayon adaptatif 500→1500 ; terrain nu se",
+  "cause": "frontend/src/components/outils/MonSecteur.tsx:43 ('échantillon < 5' en dur) vs note back mon_secteur.py:163 (SEUIL_N=8)",
+  "preuve": "SEUIL_N=8 confirmé (config/dvf_profils.yaml 'mediane_generique:8'), servi dans la note API 'sous 8 ventes, ABSENT' 6/6. Sources conformes. INCOHÉRENCE : front M",
+  "libelle_ok": false
+ },
+ {
+  "id": "OUT-TAXE-EXTRA-BOUNDARY",
+  "libelle": "",
+  "cause": "taxe_amenagement.py:256 `if surf > 0 and seuil_exo and surf < seuil_exo` — devrait etre `surf <= seuil_exo`.",
+  "preuve": "ANOMALIE DE BORNE trouvee hors fait nomme : a surface=5 m2 l'API taxe 5*892=4460 euro d'assiette. 4,99 m2 -> 0 (exonere). Le code taxe_amenagement.py:256 `surf ",
+  "libelle_ok": true
+ },
+ {
+  "id": "OUT-ZONE-007",
+  "libelle": "{min}–{max}{+} postes salariés déclarés dans la zone",
+  "cause": "libellé zone.py:274 'postes salariés déclarés dans la zone'",
+  "preuve": "postes_min=sum(lo*n),postes_max=sum(hi*n) sur TRANCHE_BORNES. StPierre 219/418==219/418 ; Cilaos 3/5 ; StPaul 261/500 ; StDenis 13205/27177 ; Tampon 2625/5301. ",
+  "libelle_ok": false
+ },
+ {
+  "id": "OUT-ZONE-013",
+  "libelle": "{X} € — médian €/m² bâti",
+  "cause": "src/labuse/dvf_mediane.py:58-77 — l'instantané DVF servi par le process diverge de dvf_mutations interrogé en psql",
+  "preuve": "prix_m2_median_bati : la source DVF SERVIE par :9360 diverge de dvf_mutations live. Recalc exact du code mediane_bati sur geom identique + base identique : 1875",
+  "libelle_ok": true
+ },
+ {
+  "id": "OUT-ZONE-016",
+  "libelle": "{type} · {N} ventes — {X} €/m² {base}",
+  "cause": "src/labuse/dvf_mediane.py:58-77 (instantané DVF servi ≠ live) ; + champ JSON 'seuil:5' (zone.py:677) TROMPEUR — seuil réel=8 (SEUIL_N dvf_mediane.py:31, confirmé StDenis maison n=6→null). CORROBORÉ pa",
+  "preuve": "prix_par_type maison/appart : le COMPTE de ventes servi est SYSTÉMATIQUEMENT < recalc live (maison 19<26,30<47 ; appart 8<11,16<19,27<43) → médiane déplacée. Mê",
+  "libelle_ok": false
+ },
+ {
+  "id": "OUT-ZONE-032",
+  "libelle": "Loyer médian · {commune} — {X} €/m²",
+  "cause": "src/labuse/zone.py:958-961 (jointure oll_zonage/oll_loyers sans agrégation ni sélection secteur, ORDER BY annee DESC LIMIT 1 sur insee multi-secteurs)",
+  "preuve": "Valeur servie == requête code (recalc identique : 97411=9.2, 97418=9.2…) donc le code fait ce qu'il dit, MAIS la requête est fausse pour un 'loyer médian commun",
+  "libelle_ok": false
+ }
+]
