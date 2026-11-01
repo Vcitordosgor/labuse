@@ -24,7 +24,7 @@ Deux autres lots (G, J) tournaient en parallèle : Postgres **jamais coupé** (r
 | **Bloquant** | **0** |
 | **Majeur** | **2** |
 | **Mineur** | **4** |
-| **Dette** | **2** |
+| **Dette** | **3** |
 
 **Verdict de synthèse.** La surface d'entrée est **largement durcie** — l'héritage des campagnes « C5 / GB-034-036 /
 URGENCE-1 » tient : SQL paramétré partout (injection → liste vide, jamais une erreur), SSRF fermé au cordeau,
@@ -179,6 +179,19 @@ vrai téléphone ; la seule casse est l'en-tête d'une **fenêtre de bureau rét
 - **Amélioration** : porter la garde en `dependencies=[Depends(exiger_admin)]` sur les routeurs admin (fail-safe par
   construction).
 
+### NU-3-H-D03 — DETTE — Pas de verrou optimiste sur les projets : perte de mise à jour silencieuse à deux (même compte)
+
+- **Où** : `src/labuse/api/projets.py` — `models.Projet` porte `updated_at` (`:60`) mais **aucun contrôle de
+  version / If-Match / ETag / `FOR UPDATE`** sur la mise à jour d'un projet.
+- **Constat (axe concurrence)** : les projets sont scopés par compte (`_scope(query, cid)`), donc deux comptes
+  **distincts** ne partagent jamais un projet (bonne isolation tenant). Le cas réaliste du mandat — « deux comptes qui
+  travaillent sur le même projet » — se réduit à **deux utilisateurs du même compte** : là, **dernier qui écrit gagne**,
+  sans détection de conflit → modification perdue en silence. (Nuance : l'**assemblage** de projets, lui, SIGNALE les
+  conflits de statut parcelle au lieu de les résoudre, `projets.py:808-830` — le soin existe à cet endroit précis, pas
+  sur l'édition concurrente du projet lui-même.)
+- **Amélioration** : colonne `version` + `UPDATE … WHERE id=:id AND version=:v` → **409 Conflit** si 0 ligne touchée,
+  avec rechargement proposé.
+
 ---
 
 ## Ce qui a tenu (confirmations — l'audit valide aussi le durci)
@@ -213,12 +226,15 @@ vrai téléphone ; la seule casse est l'en-tête d'une **fenêtre de bureau rét
 | Vendue ≥ 3×/an | `97415000BI0290` (59), `97422000EN0343` (57), `97404000AW0636` (53) | `count(DISTINCT id_mutation)`, Δdate ≤ 365 j | fiche 200, PDF 200 |
 | Géométrie NULL | **AUCUN** | `geom IS NULL` → 0 ligne | — |
 | IDU dupliqué | **AUCUN** | `GROUP BY idu HAVING count>1` → 0 ligne | `idu` unique en base |
-| À cheval ≥ 3 zones | *non isolé* | intersection `spatial_layers.plu_gpu_zone` (requête bornée 25 s, 0 témoin sur 97415) | — |
-| 200 bâtiments | *non témoigné* | nécessite jointure spatiale lourde (hors budget lecture-seule) | — |
-| Propriétaire ≥ 1000 parcelles | *non témoigné* | la base Mac n'expose pas la table de propriété DGFiP (RGPD) ; `owner_enrichment` est de l'enrichissement, pas un lien compte→parcelles | — |
+| À cheval ≥ 3 zones | **`97415000BW1613`** (Saint-Paul, ~399 000 m²) | **8 libellés de zone distincts** (Ncu/A/Nerl/N/U1g/Acu/Ncor/AU6st), recouvrements réels 292→181 638 m² (`spatial_layers.plu_gpu_zone`) | **fiche 200 — `reglement_plu.zones[]` liste les 8 zones** (pas de choix silencieux d'une seule) |
+| ~200 bâtiments | **`97411000EZ0371`** (23 908 m²) | **186 bâtiments** intersectés (max de l'île ; `spatial_layers.kind='batiment'`) | fiche 200 |
+| Propriétaire ≥ 1000 parcelles | **SIDR** (`SOCIETE IMMOBILIERE DEPARTEMENT REUNION`) ; puis Commune de Saint-Denis (3 919), Département (3 848) | **4 109 idu** (`pm_proprietaires_millesimes`, millésime 2024) | **pas d'écran « portefeuille propriétaire »** (gardé RGPD, cf. [NU-1-D blocs.py]) → autocomplétion seule, rien à faire déborder |
 
-Les trois derniers cas n'ont pu être **témoignés dans cette base** (soit 0 occurrence, soit table de propriété absente) ;
-dit ici explicitement plutôt que supposé couvert.
+> Correction vs première passe : les trois cas ci-dessus **sont** témoignables dans cette base. Le lien
+> propriétaire→parcelles existe via `pm_proprietaires_millesimes` (ce n'est pas `owner_enrichment`) ;
+> la jointure spatiale bâtiments/zones, bornée **par commune**, sort des témoins en < 1 min. Seuls
+> « géométrie NULL », « IDU dupliqué » et « commune sans DVF » restent **sans occurrence** (donnée propre
+> sur ces axes). La parcelle à 8 zones a été rejouée **en direct** : la fiche liste bien ses 8 zones.
 
 ---
 
@@ -228,8 +244,9 @@ dit ici explicitement plutôt que supposé couvert.
   latence monté) ; le durcissement async existant (ÉTUDE-ASYNC-1, processus spawn tuable à la borne) est hors-périmètre
   de régression ici.
 - **Deux comptes sur la même parcelle/le même projet** : non joué en live (auth locale désactivée → un seul contexte ;
-  monter deux comptes payants eût exigé des écritures/Stripe hors cadre lecture-seule). À reprendre sur un banc
-  multi-comptes dédié.
+  monter deux comptes payants eût exigé des écritures/Stripe hors cadre lecture-seule). **Analysé en code → dette D03**
+  (pas de verrou optimiste sur les projets : perte de maj silencieuse pour deux utilisateurs du même compte). À rejouer
+  sur un banc multi-comptes dédié.
 - **Coupure de base pendant une étude** : **non jouée** (Postgres partagé avec les lots G/J) → raisonnée en dette D01.
 
 ---
