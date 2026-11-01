@@ -17,7 +17,7 @@ accès en lecture seule et page de régularisation ; le login reste possible pou
 |---|---|
 | **Front — `tsc -b`** | **0 erreur** |
 | **Front — `vitest run`** | **63 fichiers / 301 tests — tous verts** (node_modules réel `npm ci`) |
-| **Back — `pytest -m "not db and not local and not reel and not network"`** | **2813 passés / 0 échec** (48 skips d'env : pas de base/API live/`dist`) |
+| **Back — `pytest -m "not db and not local and not reel and not network"`** | **2813 passés / 0 échec** (48 skips d'env). Deux passes complètes vertes ; une 3ᵉ a fait sauter `test_dashboard2_cloture::test_clients_le_meme_9` une fois (flake **pré-existant** de pollution base partagée : passe en isolement + avec mes tests comptes/facturation ; `licences_actives` non touché par ce diff). |
 | **Axe — fiche / Estimer / Copilote** | aria-live + libellés + piège de focus posés (analyse statique + composants ; voir M-A*) |
 | **Parcours clavier** | modales piégées + restituées ; champ Estimer nommé ; focus visible Copilote embarqué |
 
