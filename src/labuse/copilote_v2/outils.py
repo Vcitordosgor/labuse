@@ -451,7 +451,7 @@ def delais_instruction(db: Session, *, commune: str) -> ToolResult:
 # ───────────────────────── marche ─────────────────────────
 def marche(db: Session, *, commune: str) -> ToolResult:
     """Marché commune via `build_marche_commune` (point de calcul unique, terrain nu M79 inclus)."""
-    from ..faisabilite.marche_commune import build_marche_commune
+    from ..faisabilite.marche_commune import build_marche_commune, marche_commune_bloc
     resolue = resoudre_commune(commune)              # M103 P4 — filet toponyme
     if resolue is None:
         return _refus_commune("marche", commune)
@@ -472,6 +472,22 @@ def marche(db: Session, *, commune: str) -> ToolResult:
                        "fiabilite": l.get("fiabilite"), "etiquette": l.get("etiquette")})
         if cle and prim is not None:
             valeurs[cle] = prim
+    # FIX-NU3-2 (G-012) — SEGMENTATION PAR TYPE : la médiane MAISON / APPARTEMENT / TERRAIN NU existe
+    # déjà dans `marche_commune_bloc` (point unique `mediane_commune`, la MÊME que la fiche commune,
+    # l'Estimer et le Radar) mais n'était pas exposée au Copilote → il répondait « pas de segmentation
+    # par type ». On ajoute ces grandeurs (lignes + valeurs) pour que « prix médian des maisons au
+    # Tampon » soit servi, au même chiffre que les autres écrans.
+    bloc = marche_commune_bloc(db, commune) or {}
+    for cle, med, n, lib in (
+        ("prix_median_maison", bloc.get("median_maison_eur_m2"), bloc.get("n_maison"), "Prix médian maison (DVF)"),
+        ("prix_median_appartement", bloc.get("median_appartement_eur_m2"), bloc.get("n_appartement"), "Prix médian appartement (DVF)"),
+        ("prix_median_terrain", bloc.get("median_terrain_eur_m2"), bloc.get("n_terrain"), "Prix médian terrain nu (DVF)"),
+    ):
+        if med is not None:
+            lignes.append({"cle": cle, "libelle": lib, "valeur": med,
+                           "detail": {"median_eur_m2": med, "n": n},
+                           "source": "DVF (ventes, médiane par type)", "millesime": bloc.get("millesime")})
+            valeurs[cle] = med
     return ToolResult("marche", data={"commune": commune, "lignes": lignes, "valeurs": valeurs},
                       source="DVF, Sitadel, DHUP (terrain nu)",
                       millesime="par ligne (fraîcheur = source amont)")

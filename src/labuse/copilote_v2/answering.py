@@ -138,8 +138,10 @@ CATALOGUE = [
      "COMPTE, pas un délai.", "params": {"commune": "str", "mois": "int (défaut 24)"}},
     {"nom": "marche", "desc": "Marché immobilier d'une commune : terrain nu "
      "(prix_terrain_nu_par_zone), NEUF (prix_sortie_neuf), tendance (tendance_12m), loyer "
-     "(loyer_median). Le prix de l'ANCIEN est PARCELLAIRE (sector_price — demander une parcelle), "
-     "plus une ligne commune. Les grandeurs sont NOMMÉES dans data.valeurs — sers celle demandée.",
+     "(loyer_median), et la MÉDIANE PAR TYPE de bien (prix_median_maison, prix_median_appartement, "
+     "prix_median_terrain — « prix médian des maisons/appartements à X »). Le prix de l'ANCIEN est "
+     "PARCELLAIRE (sector_price — demander une parcelle), plus une ligne commune. Les grandeurs sont "
+     "NOMMÉES dans data.valeurs — sers celle demandée.",
      "params": {"commune": "str"}},
     {"nom": "compter_piscines", "desc": "Compter les PISCINES détectées (île entière ou une commune) — "
      "détection ortho/IA gelée. « combien de piscines à X », « piscines détectées ».",
