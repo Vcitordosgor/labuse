@@ -1,0 +1,2258 @@
+[
+ {
+  "idu": "97402000AE0617",
+  "commune": "Bras-Panon",
+  "contenance_m2": 4996,
+  "zone_fam": "AU",
+  "zone_lib": "1AUd",
+  "emprise_pct": 7.0,
+  "copro": false,
+  "palier": "A",
+  "dvf_date": "2025-09-22",
+  "dvf_nature": "Vente",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "grande",
+   "vendue_recente",
+   "zoneA",
+   "zoneAU"
+  ]
+ },
+ {
+  "idu": "97402000AH1282",
+  "commune": "Bras-Panon",
+  "contenance_m2": 15,
+  "zone_fam": "U",
+  "zone_lib": "Ua",
+  "emprise_pct": 0.0,
+  "copro": true,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "copro",
+   "nu",
+   "petite",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97402000AO0010",
+  "commune": "Bras-Panon",
+  "contenance_m2": 697688,
+  "zone_fam": "N",
+  "zone_lib": "Npnr",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "grande",
+   "nu",
+   "zoneN"
+  ]
+ },
+ {
+  "idu": "97402000AD0456",
+  "commune": "Bras-Panon",
+  "contenance_m2": 138,
+  "zone_fam": "U",
+  "zone_lib": "Uc",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "nu",
+   "petite",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97402000AD0416",
+  "commune": "Bras-Panon",
+  "contenance_m2": 515,
+  "zone_fam": "U",
+  "zone_lib": "Uc",
+  "emprise_pct": 176.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "bati",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97424000AE0394",
+  "commune": "Cilaos",
+  "contenance_m2": 6800,
+  "zone_fam": "AU",
+  "zone_lib": "AUb",
+  "emprise_pct": 1.0,
+  "copro": false,
+  "palier": "B",
+  "dvf_date": "2025-01-16",
+  "dvf_nature": "Vente",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "grande",
+   "nu",
+   "vendue_recente",
+   "zoneA",
+   "zoneAU"
+  ]
+ },
+ {
+  "idu": "97424000AE2278",
+  "commune": "Cilaos",
+  "contenance_m2": 619,
+  "zone_fam": "U",
+  "zone_lib": "Ub",
+  "emprise_pct": 78.0,
+  "copro": true,
+  "palier": "D",
+  "dvf_date": "2021-03-11",
+  "dvf_nature": "Vente",
+  "ppr": false,
+  "profils": [
+   "bati",
+   "copro",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97424000AL0072",
+  "commune": "Cilaos",
+  "contenance_m2": 170,
+  "zone_fam": "N",
+  "zone_lib": "N",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "nu",
+   "petite",
+   "zoneN"
+  ]
+ },
+ {
+  "idu": "97424000AI1476",
+  "commune": "Cilaos",
+  "contenance_m2": 519,
+  "zone_fam": "U",
+  "zone_lib": "Ub",
+  "emprise_pct": 61.0,
+  "copro": false,
+  "palier": "D",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97424000AC0699",
+  "commune": "Cilaos",
+  "contenance_m2": 877,
+  "zone_fam": "A",
+  "zone_lib": "Anc",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "nu",
+   "zoneA"
+  ]
+ },
+ {
+  "idu": "97403000AM0767",
+  "commune": "Entre-Deux",
+  "contenance_m2": 1478,
+  "zone_fam": "AU",
+  "zone_lib": "AUb",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "HC",
+  "dvf_date": "2024-07-22",
+  "dvf_nature": "Vente",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "nu",
+   "vendue_recente",
+   "zoneA",
+   "zoneAU"
+  ]
+ },
+ {
+  "idu": "97403000AM0246",
+  "commune": "Entre-Deux",
+  "contenance_m2": 514,
+  "zone_fam": "U",
+  "zone_lib": "Ub",
+  "emprise_pct": 56.0,
+  "copro": true,
+  "palier": "D",
+  "dvf_date": "2023-03-21",
+  "dvf_nature": "Vente",
+  "ppr": false,
+  "profils": [
+   "bati",
+   "copro",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97403000AS0721",
+  "commune": "Entre-Deux",
+  "contenance_m2": 3360,
+  "zone_fam": "N",
+  "zone_lib": "N",
+  "emprise_pct": 23.0,
+  "copro": false,
+  "palier": "B",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "grande",
+   "zoneN"
+  ]
+ },
+ {
+  "idu": "97403000AR1412",
+  "commune": "Entre-Deux",
+  "contenance_m2": 118,
+  "zone_fam": "U",
+  "zone_lib": "Ub",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "D",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "nu",
+   "petite",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97403000AM0580",
+  "commune": "Entre-Deux",
+  "contenance_m2": 1614,
+  "zone_fam": "N",
+  "zone_lib": "N",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "nu",
+   "zoneN"
+  ]
+ },
+ {
+  "idu": "97404000AD1107",
+  "commune": "L'Étang-Salé",
+  "contenance_m2": 39514,
+  "zone_fam": "A",
+  "zone_lib": "A",
+  "emprise_pct": 0.0,
+  "copro": true,
+  "palier": "0",
+  "dvf_date": "2025-02-17",
+  "dvf_nature": "Vente",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "copro",
+   "grande",
+   "nu",
+   "vendue_recente",
+   "zoneA"
+  ]
+ },
+ {
+  "idu": "97404000AT0769",
+  "commune": "L'Étang-Salé",
+  "contenance_m2": 154,
+  "zone_fam": "AU",
+  "zone_lib": "AUb",
+  "emprise_pct": 347.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": "2022-06-27",
+  "dvf_nature": "Vente terrain à bâtir",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "petite",
+   "zoneA",
+   "zoneAU"
+  ]
+ },
+ {
+  "idu": "97404000AD1113",
+  "commune": "L'Étang-Salé",
+  "contenance_m2": 64529,
+  "zone_fam": "N",
+  "zone_lib": "Nce",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "grande",
+   "nu",
+   "zoneN"
+  ]
+ },
+ {
+  "idu": "97404000AY0542",
+  "commune": "L'Étang-Salé",
+  "contenance_m2": 13,
+  "zone_fam": "U",
+  "zone_lib": "UA",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "nu",
+   "petite",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97404000AD0014",
+  "commune": "L'Étang-Salé",
+  "contenance_m2": 200,
+  "zone_fam": "N",
+  "zone_lib": "N",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "nu",
+   "zoneN"
+  ]
+ },
+ {
+  "idu": "97406000AV1338",
+  "commune": "La Plaine-des-Palmistes",
+  "contenance_m2": 6971,
+  "zone_fam": "AU",
+  "zone_lib": "AUb",
+  "emprise_pct": 2.0,
+  "copro": false,
+  "palier": "A",
+  "dvf_date": "2025-08-06",
+  "dvf_nature": "Vente",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "grande",
+   "nu",
+   "vendue_recente",
+   "zoneA",
+   "zoneAU"
+  ]
+ },
+ {
+  "idu": "97406000AE0592",
+  "commune": "La Plaine-des-Palmistes",
+  "contenance_m2": 1340,
+  "zone_fam": "U",
+  "zone_lib": "Ub",
+  "emprise_pct": 109.0,
+  "copro": true,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "copro",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97406000AI0590",
+  "commune": "La Plaine-des-Palmistes",
+  "contenance_m2": 19,
+  "zone_fam": "N",
+  "zone_lib": "Nco",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "nu",
+   "petite",
+   "zoneN"
+  ]
+ },
+ {
+  "idu": "97406000AP0252",
+  "commune": "La Plaine-des-Palmistes",
+  "contenance_m2": 131876,
+  "zone_fam": "A",
+  "zone_lib": "A",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "grande",
+   "nu",
+   "zoneA"
+  ]
+ },
+ {
+  "idu": "97406000AT0703",
+  "commune": "La Plaine-des-Palmistes",
+  "contenance_m2": 450,
+  "zone_fam": "U",
+  "zone_lib": "Uc",
+  "emprise_pct": 64.0,
+  "copro": false,
+  "palier": "D",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97408000AP1631",
+  "commune": "La Possession",
+  "contenance_m2": 4932,
+  "zone_fam": "AU",
+  "zone_lib": "AUBm",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "A",
+  "dvf_date": "2025-09-11",
+  "dvf_nature": "Vente",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "grande",
+   "nu",
+   "vendue_recente",
+   "zoneA",
+   "zoneAU"
+  ]
+ },
+ {
+  "idu": "97408000BI0378",
+  "commune": "La Possession",
+  "contenance_m2": 159,
+  "zone_fam": "U",
+  "zone_lib": "UB",
+  "emprise_pct": 508.0,
+  "copro": true,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "copro",
+   "petite",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97408000BE0054",
+  "commune": "La Possession",
+  "contenance_m2": 72,
+  "zone_fam": "N",
+  "zone_lib": "Npnr",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "nu",
+   "petite",
+   "zoneN"
+  ]
+ },
+ {
+  "idu": "97408000BM0204",
+  "commune": "La Possession",
+  "contenance_m2": 522,
+  "zone_fam": "U",
+  "zone_lib": "UA",
+  "emprise_pct": 47.0,
+  "copro": false,
+  "palier": "C",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "bati",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97408000AR1032",
+  "commune": "La Possession",
+  "contenance_m2": 272,
+  "zone_fam": "U",
+  "zone_lib": "UB",
+  "emprise_pct": 61.0,
+  "copro": false,
+  "palier": "D",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "bati",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97407000AX0193",
+  "commune": "Le Port",
+  "contenance_m2": 7778,
+  "zone_fam": "AU",
+  "zone_lib": "1AUe",
+  "emprise_pct": 19.0,
+  "copro": false,
+  "palier": "A",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "grande",
+   "zoneA",
+   "zoneAU"
+  ]
+ },
+ {
+  "idu": "97407000AE0739",
+  "commune": "Le Port",
+  "contenance_m2": 28,
+  "zone_fam": "U",
+  "zone_lib": "Ub",
+  "emprise_pct": 0.0,
+  "copro": true,
+  "palier": "0",
+  "dvf_date": "2025-07-30",
+  "dvf_nature": "Vente",
+  "ppr": false,
+  "profils": [
+   "copro",
+   "nu",
+   "petite",
+   "vendue_recente",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97407000AD0086",
+  "commune": "Le Port",
+  "contenance_m2": 45103,
+  "zone_fam": "N",
+  "zone_lib": "N",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "grande",
+   "nu",
+   "zoneN"
+  ]
+ },
+ {
+  "idu": "97407000AI1794",
+  "commune": "Le Port",
+  "contenance_m2": 183,
+  "zone_fam": "U",
+  "zone_lib": "Uc",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "nu",
+   "petite",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97407000AM0148",
+  "commune": "Le Port",
+  "contenance_m2": 373,
+  "zone_fam": "U",
+  "zone_lib": "Uoap",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "C",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "nu",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97422000BI1097",
+  "commune": "Le Tampon",
+  "contenance_m2": 6516,
+  "zone_fam": "AU",
+  "zone_lib": "1AUe",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "A",
+  "dvf_date": "2025-11-27",
+  "dvf_nature": "Vente",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "grande",
+   "nu",
+   "vendue_recente",
+   "zoneA",
+   "zoneAU"
+  ]
+ },
+ {
+  "idu": "97422000EL0342",
+  "commune": "Le Tampon",
+  "contenance_m2": 157,
+  "zone_fam": "U",
+  "zone_lib": "Ua",
+  "emprise_pct": 40.0,
+  "copro": true,
+  "palier": "D",
+  "dvf_date": "2021-11-15",
+  "dvf_nature": "Vente",
+  "ppr": false,
+  "profils": [
+   "bati",
+   "copro",
+   "petite",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97422000BS1632",
+  "commune": "Le Tampon",
+  "contenance_m2": 1006,
+  "zone_fam": "N",
+  "zone_lib": "Nco",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "nu",
+   "zoneN"
+  ]
+ },
+ {
+  "idu": "97422000BT0027",
+  "commune": "Le Tampon",
+  "contenance_m2": 3220,
+  "zone_fam": "A",
+  "zone_lib": "A",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "grande",
+   "nu",
+   "zoneA"
+  ]
+ },
+ {
+  "idu": "97422000CI0650",
+  "commune": "Le Tampon",
+  "contenance_m2": 648,
+  "zone_fam": "U",
+  "zone_lib": "Ua",
+  "emprise_pct": 44.0,
+  "copro": false,
+  "palier": "B",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "bati",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97401000AT0727",
+  "commune": "Les Avirons",
+  "contenance_m2": 4687,
+  "zone_fam": "AU",
+  "zone_lib": "AUa",
+  "emprise_pct": 85.0,
+  "copro": false,
+  "palier": "D",
+  "dvf_date": "2024-10-31",
+  "dvf_nature": "Vente",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "grande",
+   "vendue_recente",
+   "zoneA",
+   "zoneAU"
+  ]
+ },
+ {
+  "idu": "97401000AR1377",
+  "commune": "Les Avirons",
+  "contenance_m2": 1,
+  "zone_fam": "U",
+  "zone_lib": "Ud",
+  "emprise_pct": 0.0,
+  "copro": true,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "copro",
+   "nu",
+   "petite",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97401000AC0379",
+  "commune": "Les Avirons",
+  "contenance_m2": 2650,
+  "zone_fam": "N",
+  "zone_lib": "Npnr",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "nu",
+   "zoneN"
+  ]
+ },
+ {
+  "idu": "97401000AM1492",
+  "commune": "Les Avirons",
+  "contenance_m2": 190,
+  "zone_fam": "U",
+  "zone_lib": "Ub2",
+  "emprise_pct": 105.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": "2025-03-26",
+  "dvf_nature": "Vente",
+  "ppr": false,
+  "profils": [
+   "bati",
+   "petite",
+   "vendue_recente",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97401000AL0289",
+  "commune": "Les Avirons",
+  "contenance_m2": 818,
+  "zone_fam": "U",
+  "zone_lib": "Ud",
+  "emprise_pct": 94.0,
+  "copro": false,
+  "palier": "D",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "bati",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97423000AB0338",
+  "commune": "Les Trois-Bassins",
+  "contenance_m2": 2222,
+  "zone_fam": "AU",
+  "zone_lib": "1AUb",
+  "emprise_pct": 98.0,
+  "copro": true,
+  "palier": "0",
+  "dvf_date": "2024-07-17",
+  "dvf_nature": "Vente",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "copro",
+   "vendue_recente",
+   "zoneA",
+   "zoneAU"
+  ]
+ },
+ {
+  "idu": "97423000AB0956",
+  "commune": "Les Trois-Bassins",
+  "contenance_m2": 7787,
+  "zone_fam": "N",
+  "zone_lib": "N",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "grande",
+   "nu",
+   "zoneN"
+  ]
+ },
+ {
+  "idu": "97423000AE1039",
+  "commune": "Les Trois-Bassins",
+  "contenance_m2": 175,
+  "zone_fam": "U",
+  "zone_lib": "Ub",
+  "emprise_pct": 185.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "petite",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97423000AH1544",
+  "commune": "Les Trois-Bassins",
+  "contenance_m2": 457,
+  "zone_fam": "U",
+  "zone_lib": "Ub",
+  "emprise_pct": 17.0,
+  "copro": false,
+  "palier": "HC",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97423000AH0867",
+  "commune": "Les Trois-Bassins",
+  "contenance_m2": 845,
+  "zone_fam": "U",
+  "zone_lib": "Ub",
+  "emprise_pct": 197.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97405000AX0036",
+  "commune": "Petite-Île",
+  "contenance_m2": 9920,
+  "zone_fam": "AU",
+  "zone_lib": "1AUa",
+  "emprise_pct": 72.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": "2025-08-02",
+  "dvf_nature": "Vente en l'état futur d'achèvement",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "grande",
+   "vendue_recente",
+   "zoneA",
+   "zoneAU"
+  ]
+ },
+ {
+  "idu": "97405000AH0844",
+  "commune": "Petite-Île",
+  "contenance_m2": 120,
+  "zone_fam": "N",
+  "zone_lib": "N",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": "2025-05-28",
+  "dvf_nature": "Vente",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "nu",
+   "petite",
+   "vendue_recente",
+   "zoneN"
+  ]
+ },
+ {
+  "idu": "97405000AK1424",
+  "commune": "Petite-Île",
+  "contenance_m2": 477,
+  "zone_fam": "U",
+  "zone_lib": "UC",
+  "emprise_pct": 105.0,
+  "copro": true,
+  "palier": "0",
+  "dvf_date": "2021-09-07",
+  "dvf_nature": "Vente",
+  "ppr": false,
+  "profils": [
+   "bati",
+   "copro",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97405000BH0941",
+  "commune": "Petite-Île",
+  "contenance_m2": 450,
+  "zone_fam": "U",
+  "zone_lib": "UB",
+  "emprise_pct": 61.0,
+  "copro": false,
+  "palier": "D",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "bati",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97405000BI0567",
+  "commune": "Petite-Île",
+  "contenance_m2": 111,
+  "zone_fam": "U",
+  "zone_lib": "UB",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "nu",
+   "petite",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97409000AS1236",
+  "commune": "Saint-André",
+  "contenance_m2": 8228,
+  "zone_fam": "AU",
+  "zone_lib": "1AUc",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "A",
+  "dvf_date": "2025-11-21",
+  "dvf_nature": "Vente",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "grande",
+   "nu",
+   "vendue_recente",
+   "zoneA",
+   "zoneAU"
+  ]
+ },
+ {
+  "idu": "97409000AD0083",
+  "commune": "Saint-André",
+  "contenance_m2": 185,
+  "zone_fam": "U",
+  "zone_lib": "UC",
+  "emprise_pct": 217.0,
+  "copro": true,
+  "palier": "0",
+  "dvf_date": "2022-09-20",
+  "dvf_nature": "Vente",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "copro",
+   "petite",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97409000AB0577",
+  "commune": "Saint-André",
+  "contenance_m2": 1399,
+  "zone_fam": "N",
+  "zone_lib": "Nli",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "nu",
+   "zoneN"
+  ]
+ },
+ {
+  "idu": "97409000BD0418",
+  "commune": "Saint-André",
+  "contenance_m2": 364,
+  "zone_fam": "U",
+  "zone_lib": "UB",
+  "emprise_pct": 116.0,
+  "copro": false,
+  "palier": "D",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97409000BD0447",
+  "commune": "Saint-André",
+  "contenance_m2": 390,
+  "zone_fam": "U",
+  "zone_lib": "UB",
+  "emprise_pct": 166.0,
+  "copro": false,
+  "palier": "D",
+  "dvf_date": "2023-03-15",
+  "dvf_nature": "Vente",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97410000AT1066",
+  "commune": "Saint-Benoît",
+  "contenance_m2": 9099,
+  "zone_fam": "U",
+  "zone_lib": "Ub",
+  "emprise_pct": 29.0,
+  "copro": true,
+  "palier": "A",
+  "dvf_date": "2024-08-13",
+  "dvf_nature": "Vente",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "copro",
+   "grande",
+   "vendue_recente",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97410000AS1467",
+  "commune": "Saint-Benoît",
+  "contenance_m2": 40,
+  "zone_fam": "AU",
+  "zone_lib": "AUa5",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "nu",
+   "petite",
+   "zoneA",
+   "zoneAU"
+  ]
+ },
+ {
+  "idu": "97410000CE0005",
+  "commune": "Saint-Benoît",
+  "contenance_m2": 67512,
+  "zone_fam": "N",
+  "zone_lib": "Npnr",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "grande",
+   "nu",
+   "zoneN"
+  ]
+ },
+ {
+  "idu": "97410000AH0660",
+  "commune": "Saint-Benoît",
+  "contenance_m2": 738,
+  "zone_fam": "U",
+  "zone_lib": "Ub",
+  "emprise_pct": 31.0,
+  "copro": false,
+  "palier": "C",
+  "dvf_date": "2025-02-13",
+  "dvf_nature": "Vente",
+  "ppr": false,
+  "profils": [
+   "bati",
+   "vendue_recente",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97410000AI0554",
+  "commune": "Saint-Benoît",
+  "contenance_m2": 378,
+  "zone_fam": "U",
+  "zone_lib": "Ub",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "B",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "nu",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97411000EP0106",
+  "commune": "Saint-Denis",
+  "contenance_m2": 409,
+  "zone_fam": "AU",
+  "zone_lib": "AUm",
+  "emprise_pct": 0.0,
+  "copro": true,
+  "palier": "0",
+  "dvf_date": "2025-09-17",
+  "dvf_nature": "Vente",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "copro",
+   "nu",
+   "vendue_recente",
+   "zoneA",
+   "zoneAU"
+  ]
+ },
+ {
+  "idu": "97411000EP0285",
+  "commune": "Saint-Denis",
+  "contenance_m2": 8809,
+  "zone_fam": "N",
+  "zone_lib": "N",
+  "emprise_pct": 139.0,
+  "copro": true,
+  "palier": "0",
+  "dvf_date": "2024-10-28",
+  "dvf_nature": "Vente",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "copro",
+   "grande",
+   "vendue_recente",
+   "zoneN"
+  ]
+ },
+ {
+  "idu": "97411000HW0340",
+  "commune": "Saint-Denis",
+  "contenance_m2": 3,
+  "zone_fam": "U",
+  "zone_lib": "Um",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "nu",
+   "petite",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97411000EZ0178",
+  "commune": "Saint-Denis",
+  "contenance_m2": 93,
+  "zone_fam": "U",
+  "zone_lib": "Um",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "nu",
+   "petite",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97411000HY0039",
+  "commune": "Saint-Denis",
+  "contenance_m2": 560,
+  "zone_fam": "U",
+  "zone_lib": "Um",
+  "emprise_pct": 69.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97412000AN0155",
+  "commune": "Saint-Joseph",
+  "contenance_m2": 4650,
+  "zone_fam": "A",
+  "zone_lib": "A",
+  "emprise_pct": 0.0,
+  "copro": true,
+  "palier": "0",
+  "dvf_date": "2024-11-07",
+  "dvf_nature": "Vente",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "copro",
+   "grande",
+   "nu",
+   "vendue_recente",
+   "zoneA"
+  ]
+ },
+ {
+  "idu": "97412000AM1955",
+  "commune": "Saint-Joseph",
+  "contenance_m2": 187,
+  "zone_fam": "AU",
+  "zone_lib": "1AU5",
+  "emprise_pct": 67.0,
+  "copro": false,
+  "palier": "D",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "bati",
+   "petite",
+   "zoneA",
+   "zoneAU"
+  ]
+ },
+ {
+  "idu": "97412000AL0089",
+  "commune": "Saint-Joseph",
+  "contenance_m2": 62975,
+  "zone_fam": "N",
+  "zone_lib": "Nco",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "grande",
+   "nu",
+   "zoneN"
+  ]
+ },
+ {
+  "idu": "97412000BX0071",
+  "commune": "Saint-Joseph",
+  "contenance_m2": 665,
+  "zone_fam": "U",
+  "zone_lib": "U3a",
+  "emprise_pct": 48.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "bati",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97412000BX1294",
+  "commune": "Saint-Joseph",
+  "contenance_m2": 460,
+  "zone_fam": "U",
+  "zone_lib": "U3a",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "C",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "nu",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97413000CU0804",
+  "commune": "Saint-Leu",
+  "contenance_m2": 9687,
+  "zone_fam": "AU",
+  "zone_lib": "AUB",
+  "emprise_pct": 52.0,
+  "copro": true,
+  "palier": "B",
+  "dvf_date": "2025-06-30",
+  "dvf_nature": "Vente",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "copro",
+   "grande",
+   "vendue_recente",
+   "zoneA",
+   "zoneAU"
+  ]
+ },
+ {
+  "idu": "97413000DE0811",
+  "commune": "Saint-Leu",
+  "contenance_m2": 175,
+  "zone_fam": null,
+  "zone_lib": null,
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "NC",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "RNU",
+   "nu",
+   "petite"
+  ]
+ },
+ {
+  "idu": "97413000CG0716",
+  "commune": "Saint-Leu",
+  "contenance_m2": 1460,
+  "zone_fam": "N",
+  "zone_lib": "N",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "nu",
+   "zoneN"
+  ]
+ },
+ {
+  "idu": "97413000CI0683",
+  "commune": "Saint-Leu",
+  "contenance_m2": 496,
+  "zone_fam": "U",
+  "zone_lib": "UD",
+  "emprise_pct": 57.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "bati",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97413000CA0244",
+  "commune": "Saint-Leu",
+  "contenance_m2": 1040,
+  "zone_fam": "AU",
+  "zone_lib": "AUE",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "B",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "nu",
+   "zoneA",
+   "zoneAU"
+  ]
+ },
+ {
+  "idu": "97414000DY0170",
+  "commune": "Saint-Louis",
+  "contenance_m2": 13940,
+  "zone_fam": "AU",
+  "zone_lib": "2AUst",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": "2024-05-17",
+  "dvf_nature": "Vente",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "grande",
+   "nu",
+   "vendue_recente",
+   "zoneA",
+   "zoneAU"
+  ]
+ },
+ {
+  "idu": "97414000EW0697",
+  "commune": "Saint-Louis",
+  "contenance_m2": 193,
+  "zone_fam": "U",
+  "zone_lib": "UC",
+  "emprise_pct": 330.0,
+  "copro": true,
+  "palier": "0",
+  "dvf_date": "2021-03-24",
+  "dvf_nature": "Vente",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "copro",
+   "petite",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97414000HE0022",
+  "commune": "Saint-Louis",
+  "contenance_m2": 861,
+  "zone_fam": "N",
+  "zone_lib": "N",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "nu",
+   "zoneN"
+  ]
+ },
+ {
+  "idu": "97414000CR0018",
+  "commune": "Saint-Louis",
+  "contenance_m2": 1000,
+  "zone_fam": "A",
+  "zone_lib": "A",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "nu",
+   "zoneA"
+  ]
+ },
+ {
+  "idu": "97414000EL0158",
+  "commune": "Saint-Louis",
+  "contenance_m2": 44,
+  "zone_fam": "U",
+  "zone_lib": "UA",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "nu",
+   "petite",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97415000CT2791",
+  "commune": "Saint-Paul",
+  "contenance_m2": 8877,
+  "zone_fam": "AU",
+  "zone_lib": "AU3c",
+  "emprise_pct": 71.0,
+  "copro": true,
+  "palier": "D",
+  "dvf_date": "2024-06-27",
+  "dvf_nature": "Vente",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "copro",
+   "grande",
+   "vendue_recente",
+   "zoneA",
+   "zoneAU"
+  ]
+ },
+ {
+  "idu": "97415000BR0139",
+  "commune": "Saint-Paul",
+  "contenance_m2": 2,
+  "zone_fam": "N",
+  "zone_lib": "Nerl",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "nu",
+   "petite",
+   "zoneN"
+  ]
+ },
+ {
+  "idu": "97415000DE0516",
+  "commune": "Saint-Paul",
+  "contenance_m2": 2690,
+  "zone_fam": "U",
+  "zone_lib": "U2h",
+  "emprise_pct": 5.0,
+  "copro": false,
+  "palier": "HC",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97415000CH2905",
+  "commune": "Saint-Paul",
+  "contenance_m2": 1924,
+  "zone_fam": "A",
+  "zone_lib": "A",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "NC",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "nu",
+   "zoneA"
+  ]
+ },
+ {
+  "idu": "97415000DE0845",
+  "commune": "Saint-Paul",
+  "contenance_m2": 549,
+  "zone_fam": "U",
+  "zone_lib": "U2c",
+  "emprise_pct": 74.0,
+  "copro": false,
+  "palier": "D",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "bati",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97417000BC0095",
+  "commune": "Saint-Philippe",
+  "contenance_m2": 11160,
+  "zone_fam": null,
+  "zone_lib": null,
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "NC",
+  "dvf_date": "2025-11-13",
+  "dvf_nature": "Vente",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "RNU",
+   "grande",
+   "nu",
+   "vendue_recente"
+  ]
+ },
+ {
+  "idu": "97417000BC1199",
+  "commune": "Saint-Philippe",
+  "contenance_m2": 339,
+  "zone_fam": null,
+  "zone_lib": null,
+  "emprise_pct": 0.0,
+  "copro": true,
+  "palier": "NC",
+  "dvf_date": "2025-10-29",
+  "dvf_nature": "Vente",
+  "ppr": false,
+  "profils": [
+   "RNU",
+   "copro",
+   "nu",
+   "vendue_recente"
+  ]
+ },
+ {
+  "idu": "97417000AT1352",
+  "commune": "Saint-Philippe",
+  "contenance_m2": 146,
+  "zone_fam": null,
+  "zone_lib": null,
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "NC",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "RNU",
+   "nu",
+   "petite"
+  ]
+ },
+ {
+  "idu": "97417000BO0007",
+  "commune": "Saint-Philippe",
+  "contenance_m2": 247750,
+  "zone_fam": "N",
+  "zone_lib": "Npnr",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "grande",
+   "nu",
+   "zoneN"
+  ]
+ },
+ {
+  "idu": "97417000AO0332",
+  "commune": "Saint-Philippe",
+  "contenance_m2": 2137,
+  "zone_fam": null,
+  "zone_lib": null,
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "NC",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "RNU",
+   "nu"
+  ]
+ },
+ {
+  "idu": "97416000CS1636",
+  "commune": "Saint-Pierre",
+  "contenance_m2": 122,
+  "zone_fam": "AU",
+  "zone_lib": "AUazi",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": "2024-04-16",
+  "dvf_nature": "Vente",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "nu",
+   "petite",
+   "vendue_recente",
+   "zoneA",
+   "zoneAU"
+  ]
+ },
+ {
+  "idu": "97416000DT0804",
+  "commune": "Saint-Pierre",
+  "contenance_m2": 6087,
+  "zone_fam": "U",
+  "zone_lib": "Ucv",
+  "emprise_pct": 42.0,
+  "copro": true,
+  "palier": "B",
+  "dvf_date": "2024-07-26",
+  "dvf_nature": "Vente",
+  "ppr": false,
+  "profils": [
+   "bati",
+   "copro",
+   "grande",
+   "vendue_recente",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97416000IA1264",
+  "commune": "Saint-Pierre",
+  "contenance_m2": 1310,
+  "zone_fam": "N",
+  "zone_lib": "N",
+  "emprise_pct": 255.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "zoneN"
+  ]
+ },
+ {
+  "idu": "97416000DR0281",
+  "commune": "Saint-Pierre",
+  "contenance_m2": 410,
+  "zone_fam": "U",
+  "zone_lib": "Ud",
+  "emprise_pct": 60.0,
+  "copro": false,
+  "palier": "C",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "bati",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97416000CD0735",
+  "commune": "Saint-Pierre",
+  "contenance_m2": 295,
+  "zone_fam": "A",
+  "zone_lib": "A",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "nu",
+   "zoneA"
+  ]
+ },
+ {
+  "idu": "97418000AP3309",
+  "commune": "Sainte-Marie",
+  "contenance_m2": 4162,
+  "zone_fam": "N",
+  "zone_lib": "N",
+  "emprise_pct": 20.0,
+  "copro": true,
+  "palier": "C",
+  "dvf_date": "2025-08-27",
+  "dvf_nature": "Vente",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "copro",
+   "grande",
+   "vendue_recente",
+   "zoneN"
+  ]
+ },
+ {
+  "idu": "97418000BH0624",
+  "commune": "Sainte-Marie",
+  "contenance_m2": 100,
+  "zone_fam": "AU",
+  "zone_lib": "1AUb",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "D",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "nu",
+   "petite",
+   "zoneA",
+   "zoneAU"
+  ]
+ },
+ {
+  "idu": "97418000AY0267",
+  "commune": "Sainte-Marie",
+  "contenance_m2": 471,
+  "zone_fam": "U",
+  "zone_lib": "UA",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "B",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "nu",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97418000AC1203",
+  "commune": "Sainte-Marie",
+  "contenance_m2": 1827,
+  "zone_fam": "U",
+  "zone_lib": "UEm",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "nu",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97418000AR1414",
+  "commune": "Sainte-Marie",
+  "contenance_m2": 531,
+  "zone_fam": "U",
+  "zone_lib": "UD",
+  "emprise_pct": 58.0,
+  "copro": false,
+  "palier": "D",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "bati",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97419000AC0457",
+  "commune": "Sainte-Rose",
+  "contenance_m2": 352,
+  "zone_fam": "AU",
+  "zone_lib": "1AUa",
+  "emprise_pct": 147.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": "2025-10-24",
+  "dvf_nature": "Vente",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "vendue_recente",
+   "zoneA",
+   "zoneAU"
+  ]
+ },
+ {
+  "idu": "97419000AI0925",
+  "commune": "Sainte-Rose",
+  "contenance_m2": 3867,
+  "zone_fam": "N",
+  "zone_lib": "Npnr",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "grande",
+   "nu",
+   "zoneN"
+  ]
+ },
+ {
+  "idu": "97419000AR0791",
+  "commune": "Sainte-Rose",
+  "contenance_m2": 646,
+  "zone_fam": "U",
+  "zone_lib": "Ub",
+  "emprise_pct": 87.0,
+  "copro": true,
+  "palier": "D",
+  "dvf_date": "2024-10-04",
+  "dvf_nature": "Vente",
+  "ppr": false,
+  "profils": [
+   "bati",
+   "copro",
+   "vendue_recente",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97419000AL0771",
+  "commune": "Sainte-Rose",
+  "contenance_m2": 185,
+  "zone_fam": "U",
+  "zone_lib": "Ua",
+  "emprise_pct": 181.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "bati",
+   "petite",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97419000AL0180",
+  "commune": "Sainte-Rose",
+  "contenance_m2": 4670,
+  "zone_fam": "U",
+  "zone_lib": "Uc",
+  "emprise_pct": 7.0,
+  "copro": false,
+  "palier": "B",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "bati",
+   "grande",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97420000AI0562",
+  "commune": "Sainte-Suzanne",
+  "contenance_m2": 4260,
+  "zone_fam": "AU",
+  "zone_lib": "1AUa",
+  "emprise_pct": 15.0,
+  "copro": false,
+  "palier": "A",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "grande",
+   "zoneA",
+   "zoneAU"
+  ]
+ },
+ {
+  "idu": "97420000BC1587",
+  "commune": "Sainte-Suzanne",
+  "contenance_m2": 11,
+  "zone_fam": "U",
+  "zone_lib": "UA",
+  "emprise_pct": 0.0,
+  "copro": true,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": false,
+  "profils": [
+   "copro",
+   "nu",
+   "petite",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97420000AO0601",
+  "commune": "Sainte-Suzanne",
+  "contenance_m2": 457,
+  "zone_fam": "N",
+  "zone_lib": "N",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": "2025-12-03",
+  "dvf_nature": "Vente",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "nu",
+   "vendue_recente",
+   "zoneN"
+  ]
+ },
+ {
+  "idu": "97420000BH1139",
+  "commune": "Sainte-Suzanne",
+  "contenance_m2": 681,
+  "zone_fam": "U",
+  "zone_lib": "UC1",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "nu",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97420000AO0583",
+  "commune": "Sainte-Suzanne",
+  "contenance_m2": 291,
+  "zone_fam": "U",
+  "zone_lib": "UC",
+  "emprise_pct": 148.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": "2023-10-31",
+  "dvf_nature": "Vente terrain à bâtir",
+  "ppr": false,
+  "profils": [
+   "bati",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97421000AL0156",
+  "commune": "Salazie",
+  "contenance_m2": 3030,
+  "zone_fam": "AU",
+  "zone_lib": "AUb",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "B",
+  "dvf_date": "2024-08-27",
+  "dvf_nature": "Vente",
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "grande",
+   "nu",
+   "vendue_recente",
+   "zoneA",
+   "zoneAU"
+  ]
+ },
+ {
+  "idu": "97421000AP0396",
+  "commune": "Salazie",
+  "contenance_m2": 8,
+  "zone_fam": "U",
+  "zone_lib": "UB",
+  "emprise_pct": 0.0,
+  "copro": true,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "copro",
+   "nu",
+   "petite",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97421000BD0396",
+  "commune": "Salazie",
+  "contenance_m2": 668,
+  "zone_fam": "N",
+  "zone_lib": "N",
+  "emprise_pct": 621.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "bati",
+   "zoneN"
+  ]
+ },
+ {
+  "idu": "97421000AX0135",
+  "commune": "Salazie",
+  "contenance_m2": 838,
+  "zone_fam": "U",
+  "zone_lib": "UC",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "nu",
+   "zoneU"
+  ]
+ },
+ {
+  "idu": "97421000BD0405",
+  "commune": "Salazie",
+  "contenance_m2": 299,
+  "zone_fam": "N",
+  "zone_lib": "N",
+  "emprise_pct": 0.0,
+  "copro": false,
+  "palier": "0",
+  "dvf_date": null,
+  "dvf_nature": null,
+  "ppr": true,
+  "profils": [
+   "PPR",
+   "nu",
+   "zoneN"
+  ]
+ }
+]

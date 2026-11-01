@@ -1,0 +1,783 @@
+[
+ {
+  "idu": "97402000AE0617",
+  "commune": "Bras-Panon",
+  "ext_contenance": 4996,
+  "int_contenance": 4996,
+  "ext_numero": "0617",
+  "ecart_surface": false,
+  "ext_zone": "1AUd",
+  "ext_zone_type": "AUc",
+  "int_zone": "1AUd",
+  "ecart_zone": false,
+  "ext_vente": {
+   "date": "2025-09-22",
+   "valeur": "749400.0",
+   "nature": "Vente"
+  },
+  "int_vente": {
+   "date": "2025-09-22",
+   "valeur": 749400.0
+  },
+  "ecart_vente": false,
+  "ext_risques_commune": [
+   "Inondation",
+   "Mouvement de terrain",
+   "Séisme",
+   "Eruption volcanique",
+   "Feu de forêt",
+   "Phénomène lié à l'atmosphère",
+   "Cyclone / Ouragan (vent)",
+   "Transport de marchandises dangereuses"
+  ],
+  "int_ppr_rouge_pct": 0.0,
+  "int_aleas": [
+   "MOUVEMENT_DE_TERRAIN"
+  ],
+  "ext_adresse": "93quater Chemin Bras Pétard Refuge 97412 Bras-Panon",
+  "int_adresse": null
+ },
+ {
+  "idu": "97424000AE0394",
+  "commune": "Cilaos",
+  "ext_contenance": 6800,
+  "int_contenance": 6800,
+  "ext_numero": "0394",
+  "ecart_surface": false,
+  "ext_zone": "AUb",
+  "ext_zone_type": "AUc",
+  "int_zone": "AUb",
+  "ecart_zone": false,
+  "ext_vente": {
+   "date": "2025-01-16",
+   "valeur": "530400.0",
+   "nature": "Vente"
+  },
+  "int_vente": {
+   "date": "2025-01-16",
+   "valeur": 530400.0
+  },
+  "ecart_vente": false,
+  "ext_risques_commune": [
+   "Inondation",
+   "Mouvement de terrain",
+   "Séisme",
+   "Eruption volcanique",
+   "Feu de forêt",
+   "Phénomène lié à l'atmosphère",
+   "Cyclone / Ouragan (vent)",
+   "Transport de marchandises dangereuses"
+  ],
+  "int_ppr_rouge_pct": 32.8,
+  "int_aleas": [
+   "MOUVEMENT_DE_TERRAIN"
+  ],
+  "ext_adresse": "22bis Chemin du Brulé Marron 97413 Cilaos",
+  "int_adresse": null
+ },
+ {
+  "idu": "97403000AM0767",
+  "commune": "Entre-Deux",
+  "ext_contenance": 1478,
+  "int_contenance": 1478,
+  "ext_numero": "0767",
+  "ecart_surface": false,
+  "ext_zone": "AUb",
+  "ext_zone_type": "AUc",
+  "int_zone": "AUb",
+  "ecart_zone": false,
+  "ext_vente": {
+   "date": "2024-07-22",
+   "valeur": "305000.0",
+   "nature": "Vente"
+  },
+  "int_vente": {
+   "date": "2024-07-22",
+   "valeur": 305000.0
+  },
+  "ecart_vente": false,
+  "ext_risques_commune": [
+   "Inondation",
+   "Mouvement de terrain",
+   "Séisme",
+   "Eruption volcanique",
+   "Feu de forêt",
+   "Phénomène lié à l'atmosphère",
+   "Cyclone / Ouragan (vent)",
+   "Transport de marchandises dangereuses"
+  ],
+  "int_ppr_rouge_pct": 0.1,
+  "int_aleas": [
+   "INONDATION",
+   "MOUVEMENTS_DE_TERRAIN"
+  ],
+  "ext_adresse": "1 Impasse des Aloes 97414 Entre-Deux",
+  "int_adresse": "1 Impasse des Aloes 97414 Entre-Deux"
+ },
+ {
+  "idu": "97404000AT0769",
+  "commune": "L'Étang-Salé",
+  "ext_contenance": 154,
+  "int_contenance": 154,
+  "ext_numero": "0769",
+  "ecart_surface": false,
+  "ext_zone": "AUb",
+  "ext_zone_type": "AUc",
+  "int_zone": "AUb",
+  "ecart_zone": false,
+  "ext_vente": {
+   "date": "2022-06-27",
+   "valeur": "128100.0",
+   "nature": "Vente terrain à bâtir"
+  },
+  "int_vente": {
+   "date": "2022-06-27",
+   "valeur": 128100.0
+  },
+  "ecart_vente": false,
+  "ext_risques_commune": [
+   "Inondation",
+   "Mouvement de terrain",
+   "Séisme",
+   "Eruption volcanique",
+   "Feu de forêt",
+   "Phénomène lié à l'atmosphère",
+   "Cyclone / Ouragan (vent)",
+   "Transport de marchandises dangereuses"
+  ],
+  "int_ppr_rouge_pct": 0.0,
+  "int_aleas": [
+   "MOUVEMENT_DE_TERRAIN"
+  ],
+  "ext_adresse": "18 rue des bilimbis 97427 L'Étang-Salé",
+  "int_adresse": null
+ },
+ {
+  "idu": "97406000AV1338",
+  "commune": "La Plaine-des-Palmistes",
+  "ext_contenance": 6971,
+  "int_contenance": 6971,
+  "ext_numero": "1338",
+  "ecart_surface": false,
+  "ext_zone": "AUb",
+  "ext_zone_type": "AUc",
+  "int_zone": "AUb",
+  "ecart_zone": false,
+  "ext_vente": {
+   "date": "2025-08-06",
+   "valeur": "129290.45",
+   "nature": "Vente"
+  },
+  "int_vente": {
+   "date": "2025-08-06",
+   "valeur": 129290.45
+  },
+  "ecart_vente": false,
+  "ext_risques_commune": [
+   "Inondation",
+   "Mouvement de terrain",
+   "Séisme",
+   "Eruption volcanique",
+   "Feu de forêt",
+   "Phénomène lié à l'atmosphère",
+   "Cyclone / Ouragan (vent)",
+   "Transport de marchandises dangereuses"
+  ],
+  "int_ppr_rouge_pct": 0.0,
+  "int_aleas": [
+   "MOUVEMENT_DE_TERRAIN"
+  ],
+  "ext_adresse": "13 Impasse des Marjolaines 97431 La Plaine-des-Palmistes",
+  "int_adresse": null
+ },
+ {
+  "idu": "97408000AP1631",
+  "commune": "La Possession",
+  "ext_contenance": 4932,
+  "int_contenance": 4932,
+  "ext_numero": "1631",
+  "ecart_surface": false,
+  "ext_zone": "AUBm",
+  "ext_zone_type": "AUc",
+  "int_zone": "AUBm",
+  "ecart_zone": false,
+  "ext_vente": {
+   "date": "2025-09-11",
+   "valeur": "9543711.62",
+   "nature": "Vente"
+  },
+  "int_vente": {
+   "date": "2025-09-11",
+   "valeur": 9543711.62
+  },
+  "ecart_vente": false,
+  "ext_risques_commune": [
+   "Inondation",
+   "Mouvement de terrain",
+   "Séisme",
+   "Eruption volcanique",
+   "Feu de forêt",
+   "Phénomène lié à l'atmosphère",
+   "Cyclone / Ouragan (vent)",
+   "Transport de marchandises dangereuses"
+  ],
+  "int_ppr_rouge_pct": 0.0,
+  "int_aleas": [
+   "MOUVEMENTS DE TERRAIN"
+  ],
+  "ext_adresse": "32 Rue Françoise Dolto 97419 La Possession",
+  "int_adresse": null
+ },
+ {
+  "idu": "97407000AE0739",
+  "commune": "Le Port",
+  "ext_contenance": 28,
+  "int_contenance": 28,
+  "ext_numero": "0739",
+  "ecart_surface": false,
+  "ext_zone": "Ub",
+  "ext_zone_type": "U",
+  "int_zone": "Ub",
+  "ecart_zone": false,
+  "ext_vente": {
+   "date": "2025-07-30",
+   "valeur": "115000.0",
+   "nature": "Vente"
+  },
+  "int_vente": {
+   "date": "2025-07-30",
+   "valeur": 115000.0
+  },
+  "ecart_vente": false,
+  "ext_risques_commune": [
+   "Inondation",
+   "Mouvement de terrain",
+   "Séisme",
+   "Eruption volcanique",
+   "Feu de forêt",
+   "Phénomène lié à l'atmosphère",
+   "Cyclone / Ouragan (vent)",
+   "Risque industriel",
+   "Effet thermique",
+   "Effet de surpression",
+   "Effet toxique",
+   "Transport de marchandises dangereuses"
+  ],
+  "int_ppr_rouge_pct": 0.0,
+  "int_aleas": [],
+  "ext_adresse": "6 Rue François de Mahy 97420 Le Port",
+  "int_adresse": null
+ },
+ {
+  "idu": "97422000BI1097",
+  "commune": "Le Tampon",
+  "ext_contenance": 6516,
+  "int_contenance": 6516,
+  "ext_numero": "1097",
+  "ecart_surface": false,
+  "ext_zone": "1AUe",
+  "ext_zone_type": "AUc",
+  "int_zone": "1AUe",
+  "ecart_zone": false,
+  "ext_vente": {
+   "date": "2025-11-27",
+   "valeur": "1481025.0",
+   "nature": "Vente"
+  },
+  "int_vente": {
+   "date": "2025-11-27",
+   "valeur": 1481025.0
+  },
+  "ecart_vente": false,
+  "ext_risques_commune": [
+   "Inondation",
+   "Mouvement de terrain",
+   "Séisme",
+   "Eruption volcanique",
+   "Feu de forêt",
+   "Phénomène lié à l'atmosphère",
+   "Cyclone / Ouragan (vent)",
+   "Risque industriel",
+   "Effet thermique",
+   "Effet de surpression",
+   "Effet toxique",
+   "Transport de marchandises dangereuses"
+  ],
+  "int_ppr_rouge_pct": 19.5,
+  "int_aleas": [
+   "INONDATION",
+   "MOUVEMENT_DE_TERRAIN"
+  ],
+  "ext_adresse": "21b Chemin Luspot 97430 Le Tampon",
+  "int_adresse": null
+ },
+ {
+  "idu": "97401000AT0727",
+  "commune": "Les Avirons",
+  "ext_contenance": 4687,
+  "int_contenance": 4687,
+  "ext_numero": "0727",
+  "ecart_surface": false,
+  "ext_zone": "AUa",
+  "ext_zone_type": "AUc",
+  "int_zone": "AUa",
+  "ecart_zone": false,
+  "ext_vente": {
+   "date": "2024-10-31",
+   "valeur": "999485.7",
+   "nature": "Vente"
+  },
+  "int_vente": {
+   "date": "2024-10-31",
+   "valeur": 999485.7
+  },
+  "ecart_vente": false,
+  "ext_risques_commune": [
+   "Inondation",
+   "Mouvement de terrain",
+   "Séisme",
+   "Eruption volcanique",
+   "Feu de forêt",
+   "Phénomène lié à l'atmosphère",
+   "Cyclone / Ouragan (vent)",
+   "Transport de marchandises dangereuses"
+  ],
+  "int_ppr_rouge_pct": 5.8,
+  "int_aleas": [
+   "INONDATION",
+   "MOUVEMENT_DE_TERRAIN"
+  ],
+  "ext_adresse": "56a Chemin Merlo 97425 Les Avirons",
+  "int_adresse": null
+ },
+ {
+  "idu": "97423000AB0338",
+  "commune": "Les Trois-Bassins",
+  "ext_contenance": 2222,
+  "int_contenance": 2222,
+  "ext_numero": "0338",
+  "ecart_surface": false,
+  "ext_zone": "1AUb",
+  "ext_zone_type": "AUc",
+  "int_zone": "1AUb",
+  "ecart_zone": false,
+  "ext_vente": {
+   "date": "2024-07-17",
+   "valeur": "450000.0",
+   "nature": "Vente"
+  },
+  "int_vente": {
+   "date": "2024-07-17",
+   "valeur": 450000.0
+  },
+  "ecart_vente": false,
+  "ext_risques_commune": [
+   "Inondation",
+   "Mouvement de terrain",
+   "Séisme",
+   "Eruption volcanique",
+   "Feu de forêt",
+   "Phénomène lié à l'atmosphère",
+   "Cyclone / Ouragan (vent)",
+   "Transport de marchandises dangereuses"
+  ],
+  "int_ppr_rouge_pct": 0.0,
+  "int_aleas": [
+   "MOUVEMENT_DE_TERRAIN"
+  ],
+  "ext_adresse": "2 Impasse des Pailles En Queue 97426 Les Trois-Bassins",
+  "int_adresse": "2 Impasse des Pailles En Queue 97426 Les Trois-Bassins"
+ },
+ {
+  "idu": "97405000AX0036",
+  "commune": "Petite-Île",
+  "ext_contenance": 9920,
+  "int_contenance": 9920,
+  "ext_numero": "0036",
+  "ecart_surface": false,
+  "ext_zone": "1AUa",
+  "ext_zone_type": "AUc",
+  "int_zone": "1AUa",
+  "ecart_zone": false,
+  "ext_vente": {
+   "date": "2025-08-02",
+   "valeur": "342000.0",
+   "nature": "Vente en l'état futur d'achèvement"
+  },
+  "int_vente": {
+   "date": "2025-08-02",
+   "valeur": 342000.0
+  },
+  "ecart_vente": false,
+  "ext_risques_commune": [
+   "Inondation",
+   "Mouvement de terrain",
+   "Séisme",
+   "Eruption volcanique",
+   "Feu de forêt",
+   "Phénomène lié à l'atmosphère",
+   "Cyclone / Ouragan (vent)",
+   "Transport de marchandises dangereuses"
+  ],
+  "int_ppr_rouge_pct": 26.7,
+  "int_aleas": [
+   "MOUVEMENT_DE_TERRAIN"
+  ],
+  "ext_adresse": "28 Rue des Mascarins 97429 Petite-Île",
+  "int_adresse": null
+ },
+ {
+  "idu": "97409000AD0083",
+  "commune": "Saint-André",
+  "ext_contenance": 185,
+  "int_contenance": 185,
+  "ext_numero": "0083",
+  "ecart_surface": false,
+  "ext_zone": null,
+  "ext_zone_type": null,
+  "int_zone": "UC",
+  "ecart_zone": null,
+  "ext_vente": {
+   "date": "2022-09-20",
+   "valeur": "438000.0",
+   "nature": "Vente"
+  },
+  "int_vente": {
+   "date": "2022-09-20",
+   "valeur": 438000.0
+  },
+  "ecart_vente": false,
+  "ext_risques_commune": [
+   "Inondation",
+   "Mouvement de terrain",
+   "Séisme",
+   "Eruption volcanique",
+   "Feu de forêt",
+   "Phénomène lié à l'atmosphère",
+   "Cyclone / Ouragan (vent)",
+   "Transport de marchandises dangereuses"
+  ],
+  "int_ppr_rouge_pct": 0.0,
+  "int_aleas": [
+   "INONDATION",
+   "MOUVEMENT_DE_TERRAIN"
+  ],
+  "ext_adresse": "45 Ruelle Bois Amère 97440 Saint-André",
+  "int_adresse": "45 Ruelle Bois Amère 97440 Saint-André"
+ },
+ {
+  "idu": "97410000AT1066",
+  "commune": "Saint-Benoît",
+  "ext_contenance": 9099,
+  "int_contenance": 9099,
+  "ext_numero": "1066",
+  "ecart_surface": false,
+  "ext_zone": "Ub",
+  "ext_zone_type": "U",
+  "int_zone": "Ub",
+  "ecart_zone": false,
+  "ext_vente": {
+   "date": "2024-08-13",
+   "valeur": "4991765.5",
+   "nature": "Vente"
+  },
+  "int_vente": {
+   "date": "2024-08-13",
+   "valeur": 4991765.5
+  },
+  "ecart_vente": false,
+  "ext_risques_commune": [
+   "Inondation",
+   "Mouvement de terrain",
+   "Séisme",
+   "Eruption volcanique",
+   "Feu de forêt",
+   "Phénomène lié à l'atmosphère",
+   "Cyclone / Ouragan (vent)",
+   "Transport de marchandises dangereuses"
+  ],
+  "int_ppr_rouge_pct": 29.8,
+  "int_aleas": [
+   "INONDATION",
+   "MOUVEMENT_DE_TERRAIN"
+  ],
+  "ext_adresse": "20 Chemin Prevoisy 97470 Saint-Benoît",
+  "int_adresse": "22 Chemin Prevoisy 97470 Saint-Benoît"
+ },
+ {
+  "idu": "97411000EP0285",
+  "commune": "Saint-Denis",
+  "ext_contenance": 8809,
+  "int_contenance": 8809,
+  "ext_numero": "0285",
+  "ecart_surface": false,
+  "ext_zone": "N",
+  "ext_zone_type": "N",
+  "int_zone": "N",
+  "ecart_zone": false,
+  "ext_vente": {
+   "date": "2024-10-28",
+   "valeur": "155350.0",
+   "nature": "Vente"
+  },
+  "int_vente": {
+   "date": "2024-10-28",
+   "valeur": 155350.0
+  },
+  "ecart_vente": false,
+  "ext_risques_commune": [
+   "Inondation",
+   "Mouvement de terrain",
+   "Séisme",
+   "Eruption volcanique",
+   "Feu de forêt",
+   "Phénomène lié à l'atmosphère",
+   "Cyclone / Ouragan (vent)",
+   "Transport de marchandises dangereuses"
+  ],
+  "int_ppr_rouge_pct": 69.9,
+  "int_aleas": [
+   "INONDATION"
+  ],
+  "ext_adresse": "69b Rue de la Colline 97400 Saint-Denis",
+  "int_adresse": "69 Rue de la Colline 97400 Saint-Denis"
+ },
+ {
+  "idu": "97412000AN0155",
+  "commune": "Saint-Joseph",
+  "ext_contenance": 4650,
+  "int_contenance": 4650,
+  "ext_numero": "0155",
+  "ecart_surface": false,
+  "ext_zone": "A",
+  "ext_zone_type": "A",
+  "int_zone": "A",
+  "ecart_zone": false,
+  "ext_vente": {
+   "date": "2024-11-07",
+   "valeur": "6900.0",
+   "nature": "Vente"
+  },
+  "int_vente": {
+   "date": "2024-11-07",
+   "valeur": 6900.0
+  },
+  "ecart_vente": false,
+  "ext_risques_commune": [
+   "Inondation",
+   "Mouvement de terrain",
+   "Séisme",
+   "Eruption volcanique",
+   "Feu de forêt",
+   "Phénomène lié à l'atmosphère",
+   "Cyclone / Ouragan (vent)",
+   "Transport de marchandises dangereuses"
+  ],
+  "int_ppr_rouge_pct": 50.1,
+  "int_aleas": [
+   "INONDATION",
+   "MOUVEMENT_DE_TERRAIN"
+  ],
+  "ext_adresse": "71 Route de Grand Coude 97480 Saint-Joseph",
+  "int_adresse": null
+ },
+ {
+  "idu": "97413000CU0804",
+  "commune": "Saint-Leu",
+  "ext_contenance": 9687,
+  "int_contenance": 9687,
+  "ext_numero": "0804",
+  "ecart_surface": false,
+  "ext_zone": null,
+  "ext_zone_type": null,
+  "int_zone": "AUB",
+  "ecart_zone": null,
+  "ext_vente": {
+   "date": "2025-06-30",
+   "valeur": "355000.0",
+   "nature": "Vente"
+  },
+  "int_vente": {
+   "date": "2025-06-30",
+   "valeur": 355000.0
+  },
+  "ecart_vente": false,
+  "ext_risques_commune": [
+   "Inondation",
+   "Mouvement de terrain",
+   "Séisme",
+   "Eruption volcanique",
+   "Feu de forêt",
+   "Phénomène lié à l'atmosphère",
+   "Cyclone / Ouragan (vent)",
+   "Transport de marchandises dangereuses"
+  ],
+  "int_ppr_rouge_pct": 0.0,
+  "int_aleas": [
+   "MOUVEMENT_DE_TERRAIN",
+   "SUBMERSION_MARINE"
+  ],
+  "ext_adresse": "1i Allee des Porcelaines 97436 Saint-Leu",
+  "int_adresse": "1 Allee des Porcelaines 97436 Saint-Leu"
+ },
+ {
+  "idu": "97414000EW0697",
+  "commune": "Saint-Louis",
+  "ext_contenance": 193,
+  "int_contenance": 193,
+  "ext_numero": "0697",
+  "ecart_surface": false,
+  "ext_zone": "UC",
+  "ext_zone_type": "U",
+  "int_zone": "UC",
+  "ecart_zone": false,
+  "ext_vente": {
+   "date": "2021-03-24",
+   "valeur": "158730.0",
+   "nature": "Vente"
+  },
+  "int_vente": {
+   "date": "2021-03-24",
+   "valeur": 158730.0
+  },
+  "ecart_vente": false,
+  "ext_risques_commune": [
+   "Inondation",
+   "Mouvement de terrain",
+   "Séisme",
+   "Eruption volcanique",
+   "Feu de forêt",
+   "Phénomène lié à l'atmosphère",
+   "Cyclone / Ouragan (vent)",
+   "Transport de marchandises dangereuses"
+  ],
+  "int_ppr_rouge_pct": 0.0,
+  "int_aleas": [
+   "INONDATION",
+   "MOUVEMENT_DE_TERRAIN"
+  ],
+  "ext_adresse": "101c Rue du Père Laporte 97421 Saint-Louis",
+  "int_adresse": "101 Rue du Père Laporte 97421 Saint-Louis"
+ },
+ {
+  "idu": "97415000CT2791",
+  "commune": "Saint-Paul",
+  "ext_contenance": 8877,
+  "int_contenance": 8877,
+  "ext_numero": "2791",
+  "ecart_surface": false,
+  "ext_zone": "AU3c",
+  "ext_zone_type": "AUc",
+  "int_zone": "AU3c",
+  "ecart_zone": false,
+  "ext_vente": {
+   "date": "2024-06-27",
+   "valeur": "10814215.0",
+   "nature": "Vente"
+  },
+  "int_vente": {
+   "date": "2024-06-27",
+   "valeur": 10814215.0
+  },
+  "ecart_vente": false,
+  "ext_risques_commune": [
+   "Inondation",
+   "Mouvement de terrain",
+   "Séisme",
+   "Eruption volcanique",
+   "Feu de forêt",
+   "Phénomène lié à l'atmosphère",
+   "Cyclone / Ouragan (vent)",
+   "Risque industriel",
+   "Effet thermique",
+   "Effet de surpression",
+   "Effet toxique",
+   "Transport de marchandises dangereuses"
+  ],
+  "int_ppr_rouge_pct": 0.0,
+  "int_aleas": [
+   "INONDATION",
+   "MOUVEMENT_DE_TERRAIN"
+  ],
+  "ext_adresse": "32 Rue d'Eden 97435 Saint-Paul",
+  "int_adresse": "34 Rue d'Eden 97435 Saint-Paul"
+ },
+ {
+  "idu": "97417000BC0095",
+  "commune": "Saint-Philippe",
+  "ext_contenance": 11160,
+  "int_contenance": 11160,
+  "ext_numero": "0095",
+  "ecart_surface": false,
+  "ext_zone": null,
+  "ext_zone_type": null,
+  "int_zone": null,
+  "ecart_zone": null,
+  "ext_vente": {
+   "date": "2025-11-13",
+   "valeur": "128220.0",
+   "nature": "Vente"
+  },
+  "int_vente": {
+   "date": "2025-11-13",
+   "valeur": 128220.0
+  },
+  "ecart_vente": false,
+  "ext_risques_commune": [
+   "Inondation",
+   "Mouvement de terrain",
+   "Séisme",
+   "Eruption volcanique",
+   "Feu de forêt",
+   "Phénomène lié à l'atmosphère",
+   "Cyclone / Ouragan (vent)",
+   "Transport de marchandises dangereuses"
+  ],
+  "int_ppr_rouge_pct": 0.0,
+  "int_aleas": [
+   "INONDATION",
+   "MOUVEMENTS_DE_TERRAIN"
+  ],
+  "ext_adresse": "16c Chemin Perote 97442 Saint-Philippe",
+  "int_adresse": null
+ },
+ {
+  "idu": "97416000CS1636",
+  "commune": "Saint-Pierre",
+  "ext_contenance": 122,
+  "int_contenance": 122,
+  "ext_numero": "1636",
+  "ecart_surface": false,
+  "ext_zone": "AUazi",
+  "ext_zone_type": "AUc",
+  "int_zone": "AUazi",
+  "ecart_zone": false,
+  "ext_vente": {
+   "date": "2024-04-16",
+   "valeur": "1587026.5",
+   "nature": "Vente"
+  },
+  "int_vente": {
+   "date": "2024-04-16",
+   "valeur": 1587026.5
+  },
+  "ecart_vente": false,
+  "ext_risques_commune": [
+   "Inondation",
+   "Mouvement de terrain",
+   "Séisme",
+   "Eruption volcanique",
+   "Feu de forêt",
+   "Phénomène lié à l'atmosphère",
+   "Cyclone / Ouragan (vent)",
+   "Transport de marchandises dangereuses"
+  ],
+  "int_ppr_rouge_pct": 0.0,
+  "int_aleas": [
+   "INONDATION",
+   "MOUVEMENTS_DE_TERRAIN"
+  ],
+  "ext_adresse": null,
+  "int_adresse": null
+ }
+]

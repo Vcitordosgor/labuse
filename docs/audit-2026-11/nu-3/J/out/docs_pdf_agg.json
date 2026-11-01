@@ -1,0 +1,8020 @@
+[
+ {
+  "idu": "97402000AD0416",
+  "commune": "Bras-Panon",
+  "donnee": "surface terrain (m²)",
+  "ecart": false,
+  "valeurs": [
+   "515"
+  ],
+  "cells": {
+   "Dossier": "515",
+   "Apporteur": "515",
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97402000AD0416",
+  "commune": "Bras-Panon",
+  "donnee": "emprise bâtie (m²)",
+  "ecart": false,
+  "valeurs": [
+   "449"
+  ],
+  "cells": {
+   "Dossier": "449",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97402000AD0416",
+  "commune": "Bras-Panon",
+  "donnee": "nombre de bâtiments",
+  "ecart": false,
+  "valeurs": [
+   "1"
+  ],
+  "cells": {
+   "Dossier": "1",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97402000AD0416",
+  "commune": "Bras-Panon",
+  "donnee": "zone impl. libérée (m²)",
+  "ecart": false,
+  "valeurs": [
+   "131"
+  ],
+  "cells": {
+   "Dossier": "131",
+   "Apporteur": null,
+   "Pré-dossier PC": "131",
+   "Étude de zone": null,
+   "Gabarit": "131",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97402000AD0416",
+  "commune": "Bras-Panon",
+  "donnee": "zone impl. déduite (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97402000AD0416",
+  "commune": "Bras-Panon",
+  "donnee": "pente",
+  "ecart": false,
+  "valeurs": [
+   "2,3° (4 %)"
+  ],
+  "cells": {
+   "Dossier": "2,3° (4 %)",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97402000AD0416",
+  "commune": "Bras-Panon",
+  "donnee": "hauteur faît./égout",
+  "ecart": false,
+  "valeurs": [
+   "11/8"
+  ],
+  "cells": {
+   "Dossier": "11/8",
+   "Apporteur": null,
+   "Pré-dossier PC": "11/8",
+   "Étude de zone": null,
+   "Gabarit": "11/8",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97402000AD0416",
+  "commune": "Bras-Panon",
+  "donnee": "recul voie (m)",
+  "ecart": false,
+  "valeurs": [
+   "4"
+  ],
+  "cells": {
+   "Dossier": "4",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97402000AD0416",
+  "commune": "Bras-Panon",
+  "donnee": "stationnement",
+  "ecart": false,
+  "valeurs": [
+   "1 pl/logt"
+  ],
+  "cells": {
+   "Dossier": "1 pl/logt",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": "1 pl/logt",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97402000AD0416",
+  "commune": "Bras-Panon",
+  "donnee": "pleine terre (%)",
+  "ecart": false,
+  "valeurs": [
+   "30"
+  ],
+  "cells": {
+   "Dossier": "30",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97402000AD0416",
+  "commune": "Bras-Panon",
+  "donnee": "prix bâti (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "2348"
+  ],
+  "cells": {
+   "Dossier": "2348",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": "2348",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97402000AD0416",
+  "commune": "Bras-Panon",
+  "donnee": "prix terrain (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "252"
+  ],
+  "cells": {
+   "Dossier": "252",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97402000AD0416",
+  "commune": "Bras-Panon",
+  "donnee": "prix neuf VEFA (€/m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97402000AD0416",
+  "commune": "Bras-Panon",
+  "donnee": "SDP résiduelle (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97402000AD0416",
+  "commune": "Bras-Panon",
+  "donnee": "SDP max régl. (m²)",
+  "ecart": false,
+  "valeurs": [
+   "232"
+  ],
+  "cells": {
+   "Dossier": "232",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97402000AD0416",
+  "commune": "Bras-Panon",
+  "donnee": "contraintes relevées",
+  "ecart": false,
+  "valeurs": [
+   "oui"
+  ],
+  "cells": {
+   "Dossier": "oui",
+   "Apporteur": "oui",
+   "Pré-dossier PC": "oui",
+   "Étude de zone": null,
+   "Gabarit": "oui",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": "oui"
+  }
+ },
+ {
+  "idu": "97402000AD0416",
+  "commune": "Bras-Panon",
+  "donnee": "propriétaire (type)",
+  "ecart": false,
+  "valeurs": [
+   ": non déterminé."
+  ],
+  "cells": {
+   "Dossier": ": non déterminé.",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97402000AD0416",
+  "commune": "Bras-Panon",
+  "donnee": "date des données",
+  "ecart": false,
+  "valeurs": [
+   "21/10/2026"
+  ],
+  "cells": {
+   "Dossier": "21/10/2026",
+   "Apporteur": "21/10/2026",
+   "Pré-dossier PC": null,
+   "Étude de zone": "21/10/2026",
+   "Gabarit": "21/10/2026",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": "21/10/2026"
+  }
+ },
+ {
+  "idu": "97424000AE2278",
+  "commune": "Cilaos",
+  "donnee": "surface terrain (m²)",
+  "ecart": false,
+  "valeurs": [
+   "619"
+  ],
+  "cells": {
+   "Dossier": "619",
+   "Apporteur": "619",
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "619",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97424000AE2278",
+  "commune": "Cilaos",
+  "donnee": "emprise bâtie (m²)",
+  "ecart": false,
+  "valeurs": [
+   "229"
+  ],
+  "cells": {
+   "Dossier": "229",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "229",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97424000AE2278",
+  "commune": "Cilaos",
+  "donnee": "nombre de bâtiments",
+  "ecart": false,
+  "valeurs": [
+   "4"
+  ],
+  "cells": {
+   "Dossier": "4",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97424000AE2278",
+  "commune": "Cilaos",
+  "donnee": "zone impl. libérée (m²)",
+  "ecart": false,
+  "valeurs": [
+   "328"
+  ],
+  "cells": {
+   "Dossier": "328",
+   "Apporteur": null,
+   "Pré-dossier PC": "328",
+   "Étude de zone": null,
+   "Gabarit": "328",
+   "Comparatif": null,
+   "Étude de faisabilité": "328",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97424000AE2278",
+  "commune": "Cilaos",
+  "donnee": "zone impl. déduite (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97424000AE2278",
+  "commune": "Cilaos",
+  "donnee": "pente",
+  "ecart": false,
+  "valeurs": [
+   "7,9° (14 %)"
+  ],
+  "cells": {
+   "Dossier": "7,9° (14 %)",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "7,9° (14 %)",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97424000AE2278",
+  "commune": "Cilaos",
+  "donnee": "hauteur faît./égout",
+  "ecart": false,
+  "valeurs": [
+   "11/7"
+  ],
+  "cells": {
+   "Dossier": "11/7",
+   "Apporteur": null,
+   "Pré-dossier PC": "11/7",
+   "Étude de zone": null,
+   "Gabarit": "11/7",
+   "Comparatif": null,
+   "Étude de faisabilité": "11/7",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97424000AE2278",
+  "commune": "Cilaos",
+  "donnee": "recul voie (m)",
+  "ecart": false,
+  "valeurs": [
+   "3"
+  ],
+  "cells": {
+   "Dossier": "3",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": "3",
+   "Comparatif": null,
+   "Étude de faisabilité": "3",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97424000AE2278",
+  "commune": "Cilaos",
+  "donnee": "stationnement",
+  "ecart": false,
+  "valeurs": [
+   "1.5 pl/logt"
+  ],
+  "cells": {
+   "Dossier": "1.5 pl/logt",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": "1.5 pl/logt",
+   "Comparatif": null,
+   "Étude de faisabilité": "1.5 pl/logt",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97424000AE2278",
+  "commune": "Cilaos",
+  "donnee": "pleine terre (%)",
+  "ecart": false,
+  "valeurs": [
+   "40"
+  ],
+  "cells": {
+   "Dossier": "40",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "40",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97424000AE2278",
+  "commune": "Cilaos",
+  "donnee": "prix bâti (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "1978"
+  ],
+  "cells": {
+   "Dossier": "1978",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": "1978",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97424000AE2278",
+  "commune": "Cilaos",
+  "donnee": "prix terrain (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "107"
+  ],
+  "cells": {
+   "Dossier": "107",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97424000AE2278",
+  "commune": "Cilaos",
+  "donnee": "prix neuf VEFA (€/m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97424000AE2278",
+  "commune": "Cilaos",
+  "donnee": "SDP résiduelle (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97424000AE2278",
+  "commune": "Cilaos",
+  "donnee": "SDP max régl. (m²)",
+  "ecart": false,
+  "valeurs": [
+   "277"
+  ],
+  "cells": {
+   "Dossier": "277",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97424000AE2278",
+  "commune": "Cilaos",
+  "donnee": "contraintes relevées",
+  "ecart": false,
+  "valeurs": [
+   "oui"
+  ],
+  "cells": {
+   "Dossier": "oui",
+   "Apporteur": "oui",
+   "Pré-dossier PC": "oui",
+   "Étude de zone": null,
+   "Gabarit": "oui",
+   "Comparatif": null,
+   "Étude de faisabilité": "oui",
+   "Bilan": "oui"
+  }
+ },
+ {
+  "idu": "97424000AE2278",
+  "commune": "Cilaos",
+  "donnee": "propriétaire (type)",
+  "ecart": false,
+  "valeurs": [
+   ": non déterminé."
+  ],
+  "cells": {
+   "Dossier": ": non déterminé.",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97424000AE2278",
+  "commune": "Cilaos",
+  "donnee": "date des données",
+  "ecart": false,
+  "valeurs": [
+   "21/10/2026"
+  ],
+  "cells": {
+   "Dossier": "21/10/2026",
+   "Apporteur": "21/10/2026",
+   "Pré-dossier PC": null,
+   "Étude de zone": "21/10/2026",
+   "Gabarit": "21/10/2026",
+   "Comparatif": null,
+   "Étude de faisabilité": "21/10/2026",
+   "Bilan": "21/10/2026"
+  }
+ },
+ {
+  "idu": "97403000AM0246",
+  "commune": "Entre-Deux",
+  "donnee": "surface terrain (m²)",
+  "ecart": false,
+  "valeurs": [
+   "514"
+  ],
+  "cells": {
+   "Dossier": "514",
+   "Apporteur": "514",
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97403000AM0246",
+  "commune": "Entre-Deux",
+  "donnee": "emprise bâtie (m²)",
+  "ecart": false,
+  "valeurs": [
+   "125"
+  ],
+  "cells": {
+   "Dossier": "125",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97403000AM0246",
+  "commune": "Entre-Deux",
+  "donnee": "nombre de bâtiments",
+  "ecart": false,
+  "valeurs": [
+   "1"
+  ],
+  "cells": {
+   "Dossier": "1",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97403000AM0246",
+  "commune": "Entre-Deux",
+  "donnee": "zone impl. libérée (m²)",
+  "ecart": false,
+  "valeurs": [
+   "228"
+  ],
+  "cells": {
+   "Dossier": "228",
+   "Apporteur": null,
+   "Pré-dossier PC": "228",
+   "Étude de zone": null,
+   "Gabarit": "228",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97403000AM0246",
+  "commune": "Entre-Deux",
+  "donnee": "zone impl. déduite (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97403000AM0246",
+  "commune": "Entre-Deux",
+  "donnee": "pente",
+  "ecart": false,
+  "valeurs": [
+   "10,0° (18 %)"
+  ],
+  "cells": {
+   "Dossier": "10,0° (18 %)",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97403000AM0246",
+  "commune": "Entre-Deux",
+  "donnee": "hauteur faît./égout",
+  "ecart": false,
+  "valeurs": [
+   "13/9"
+  ],
+  "cells": {
+   "Dossier": "13/9",
+   "Apporteur": null,
+   "Pré-dossier PC": "13/9",
+   "Étude de zone": null,
+   "Gabarit": "13/9",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97403000AM0246",
+  "commune": "Entre-Deux",
+  "donnee": "recul voie (m)",
+  "ecart": false,
+  "valeurs": [
+   "4"
+  ],
+  "cells": {
+   "Dossier": "4",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": "4",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97403000AM0246",
+  "commune": "Entre-Deux",
+  "donnee": "stationnement",
+  "ecart": false,
+  "valeurs": [
+   "2 pl/logt"
+  ],
+  "cells": {
+   "Dossier": "2 pl/logt",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": "2 pl/logt",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97403000AM0246",
+  "commune": "Entre-Deux",
+  "donnee": "pleine terre (%)",
+  "ecart": false,
+  "valeurs": [
+   "40"
+  ],
+  "cells": {
+   "Dossier": "40",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97403000AM0246",
+  "commune": "Entre-Deux",
+  "donnee": "prix bâti (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "2389"
+  ],
+  "cells": {
+   "Dossier": "2389",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": "2389",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97403000AM0246",
+  "commune": "Entre-Deux",
+  "donnee": "prix terrain (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "204"
+  ],
+  "cells": {
+   "Dossier": "204",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97403000AM0246",
+  "commune": "Entre-Deux",
+  "donnee": "prix neuf VEFA (€/m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97403000AM0246",
+  "commune": "Entre-Deux",
+  "donnee": "SDP résiduelle (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97403000AM0246",
+  "commune": "Entre-Deux",
+  "donnee": "SDP max régl. (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97403000AM0246",
+  "commune": "Entre-Deux",
+  "donnee": "contraintes relevées",
+  "ecart": false,
+  "valeurs": [
+   "oui"
+  ],
+  "cells": {
+   "Dossier": "oui",
+   "Apporteur": "oui",
+   "Pré-dossier PC": "oui",
+   "Étude de zone": null,
+   "Gabarit": "oui",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": "oui"
+  }
+ },
+ {
+  "idu": "97403000AM0246",
+  "commune": "Entre-Deux",
+  "donnee": "propriétaire (type)",
+  "ecart": false,
+  "valeurs": [
+   ": non déterminé."
+  ],
+  "cells": {
+   "Dossier": ": non déterminé.",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97403000AM0246",
+  "commune": "Entre-Deux",
+  "donnee": "date des données",
+  "ecart": false,
+  "valeurs": [
+   "21/10/2026"
+  ],
+  "cells": {
+   "Dossier": "21/10/2026",
+   "Apporteur": "21/10/2026",
+   "Pré-dossier PC": null,
+   "Étude de zone": "21/10/2026",
+   "Gabarit": "21/10/2026",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": "21/10/2026"
+  }
+ },
+ {
+  "idu": "97404000AT0769",
+  "commune": "L'Étang-Salé",
+  "donnee": "surface terrain (m²)",
+  "ecart": false,
+  "valeurs": [
+   "154"
+  ],
+  "cells": {
+   "Dossier": "154",
+   "Apporteur": "154",
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97404000AT0769",
+  "commune": "L'Étang-Salé",
+  "donnee": "emprise bâtie (m²)",
+  "ecart": false,
+  "valeurs": [
+   "146"
+  ],
+  "cells": {
+   "Dossier": "146",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97404000AT0769",
+  "commune": "L'Étang-Salé",
+  "donnee": "nombre de bâtiments",
+  "ecart": false,
+  "valeurs": [
+   "1"
+  ],
+  "cells": {
+   "Dossier": "1",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97404000AT0769",
+  "commune": "L'Étang-Salé",
+  "donnee": "zone impl. libérée (m²)",
+  "ecart": false,
+  "valeurs": [
+   "41"
+  ],
+  "cells": {
+   "Dossier": "41",
+   "Apporteur": null,
+   "Pré-dossier PC": "41",
+   "Étude de zone": null,
+   "Gabarit": "41",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97404000AT0769",
+  "commune": "L'Étang-Salé",
+  "donnee": "zone impl. déduite (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97404000AT0769",
+  "commune": "L'Étang-Salé",
+  "donnee": "pente",
+  "ecart": false,
+  "valeurs": [
+   "11,2° (20 %)"
+  ],
+  "cells": {
+   "Dossier": "11,2° (20 %)",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97404000AT0769",
+  "commune": "L'Étang-Salé",
+  "donnee": "hauteur faît./égout",
+  "ecart": false,
+  "valeurs": [
+   "12/9"
+  ],
+  "cells": {
+   "Dossier": "12/9",
+   "Apporteur": null,
+   "Pré-dossier PC": "12/9",
+   "Étude de zone": null,
+   "Gabarit": "12/9",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97404000AT0769",
+  "commune": "L'Étang-Salé",
+  "donnee": "recul voie (m)",
+  "ecart": false,
+  "valeurs": [
+   "4"
+  ],
+  "cells": {
+   "Dossier": "4",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97404000AT0769",
+  "commune": "L'Étang-Salé",
+  "donnee": "stationnement",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97404000AT0769",
+  "commune": "L'Étang-Salé",
+  "donnee": "pleine terre (%)",
+  "ecart": false,
+  "valeurs": [
+   "35"
+  ],
+  "cells": {
+   "Dossier": "35",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97404000AT0769",
+  "commune": "L'Étang-Salé",
+  "donnee": "prix bâti (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "3324"
+  ],
+  "cells": {
+   "Dossier": "3324",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": "3324",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97404000AT0769",
+  "commune": "L'Étang-Salé",
+  "donnee": "prix terrain (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "369"
+  ],
+  "cells": {
+   "Dossier": "369",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97404000AT0769",
+  "commune": "L'Étang-Salé",
+  "donnee": "prix neuf VEFA (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "4796"
+  ],
+  "cells": {
+   "Dossier": "4796",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97404000AT0769",
+  "commune": "L'Étang-Salé",
+  "donnee": "SDP résiduelle (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97404000AT0769",
+  "commune": "L'Étang-Salé",
+  "donnee": "SDP max régl. (m²)",
+  "ecart": false,
+  "valeurs": [
+   "56"
+  ],
+  "cells": {
+   "Dossier": "56",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97404000AT0769",
+  "commune": "L'Étang-Salé",
+  "donnee": "contraintes relevées",
+  "ecart": false,
+  "valeurs": [
+   "oui"
+  ],
+  "cells": {
+   "Dossier": "oui",
+   "Apporteur": "oui",
+   "Pré-dossier PC": "oui",
+   "Étude de zone": null,
+   "Gabarit": "oui",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": "oui"
+  }
+ },
+ {
+  "idu": "97404000AT0769",
+  "commune": "L'Étang-Salé",
+  "donnee": "propriétaire (type)",
+  "ecart": false,
+  "valeurs": [
+   ": non déterminé."
+  ],
+  "cells": {
+   "Dossier": ": non déterminé.",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97404000AT0769",
+  "commune": "L'Étang-Salé",
+  "donnee": "date des données",
+  "ecart": false,
+  "valeurs": [
+   "21/10/2026"
+  ],
+  "cells": {
+   "Dossier": "21/10/2026",
+   "Apporteur": "21/10/2026",
+   "Pré-dossier PC": null,
+   "Étude de zone": "21/10/2026",
+   "Gabarit": "21/10/2026",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": "21/10/2026"
+  }
+ },
+ {
+  "idu": "97406000AE0592",
+  "commune": "La Plaine-des-Palmistes",
+  "donnee": "surface terrain (m²)",
+  "ecart": false,
+  "valeurs": [
+   "1340"
+  ],
+  "cells": {
+   "Dossier": "1340",
+   "Apporteur": "1340",
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "1340",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97406000AE0592",
+  "commune": "La Plaine-des-Palmistes",
+  "donnee": "emprise bâtie (m²)",
+  "ecart": false,
+  "valeurs": [
+   "734"
+  ],
+  "cells": {
+   "Dossier": "734",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "734",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97406000AE0592",
+  "commune": "La Plaine-des-Palmistes",
+  "donnee": "nombre de bâtiments",
+  "ecart": false,
+  "valeurs": [
+   "3"
+  ],
+  "cells": {
+   "Dossier": "3",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97406000AE0592",
+  "commune": "La Plaine-des-Palmistes",
+  "donnee": "zone impl. libérée (m²)",
+  "ecart": false,
+  "valeurs": [
+   "722"
+  ],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "722",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97406000AE0592",
+  "commune": "La Plaine-des-Palmistes",
+  "donnee": "zone impl. déduite (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97406000AE0592",
+  "commune": "La Plaine-des-Palmistes",
+  "donnee": "pente",
+  "ecart": false,
+  "valeurs": [
+   "3,8° (7 %)"
+  ],
+  "cells": {
+   "Dossier": "3,8° (7 %)",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "3,8° (7 %)",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97406000AE0592",
+  "commune": "La Plaine-des-Palmistes",
+  "donnee": "hauteur faît./égout",
+  "ecart": true,
+  "valeurs": [
+   "9/6",
+   "9/?"
+  ],
+  "cells": {
+   "Dossier": "9/6",
+   "Apporteur": null,
+   "Pré-dossier PC": "9/?",
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "9/6",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97406000AE0592",
+  "commune": "La Plaine-des-Palmistes",
+  "donnee": "recul voie (m)",
+  "ecart": false,
+  "valeurs": [
+   "4"
+  ],
+  "cells": {
+   "Dossier": "4",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "4",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97406000AE0592",
+  "commune": "La Plaine-des-Palmistes",
+  "donnee": "stationnement",
+  "ecart": false,
+  "valeurs": [
+   "1.5 pl/logt"
+  ],
+  "cells": {
+   "Dossier": "1.5 pl/logt",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "1.5 pl/logt",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97406000AE0592",
+  "commune": "La Plaine-des-Palmistes",
+  "donnee": "pleine terre (%)",
+  "ecart": false,
+  "valeurs": [
+   "40"
+  ],
+  "cells": {
+   "Dossier": "40",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "40",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97406000AE0592",
+  "commune": "La Plaine-des-Palmistes",
+  "donnee": "prix bâti (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "1935"
+  ],
+  "cells": {
+   "Dossier": "1935",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": "1935",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97406000AE0592",
+  "commune": "La Plaine-des-Palmistes",
+  "donnee": "prix terrain (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "134"
+  ],
+  "cells": {
+   "Dossier": "134",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97406000AE0592",
+  "commune": "La Plaine-des-Palmistes",
+  "donnee": "prix neuf VEFA (€/m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97406000AE0592",
+  "commune": "La Plaine-des-Palmistes",
+  "donnee": "SDP résiduelle (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97406000AE0592",
+  "commune": "La Plaine-des-Palmistes",
+  "donnee": "SDP max régl. (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97406000AE0592",
+  "commune": "La Plaine-des-Palmistes",
+  "donnee": "contraintes relevées",
+  "ecart": false,
+  "valeurs": [
+   "oui"
+  ],
+  "cells": {
+   "Dossier": "oui",
+   "Apporteur": "oui",
+   "Pré-dossier PC": "oui",
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "oui",
+   "Bilan": "oui"
+  }
+ },
+ {
+  "idu": "97406000AE0592",
+  "commune": "La Plaine-des-Palmistes",
+  "donnee": "propriétaire (type)",
+  "ecart": false,
+  "valeurs": [
+   ": non déterminé."
+  ],
+  "cells": {
+   "Dossier": ": non déterminé.",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97406000AE0592",
+  "commune": "La Plaine-des-Palmistes",
+  "donnee": "date des données",
+  "ecart": false,
+  "valeurs": [
+   "21/10/2026"
+  ],
+  "cells": {
+   "Dossier": "21/10/2026",
+   "Apporteur": "21/10/2026",
+   "Pré-dossier PC": null,
+   "Étude de zone": "21/10/2026",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "21/10/2026",
+   "Bilan": "21/10/2026"
+  }
+ },
+ {
+  "idu": "97408000BI0378",
+  "commune": "La Possession",
+  "donnee": "surface terrain (m²)",
+  "ecart": false,
+  "valeurs": [
+   "159"
+  ],
+  "cells": {
+   "Dossier": "159",
+   "Apporteur": "159",
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97408000BI0378",
+  "commune": "La Possession",
+  "donnee": "emprise bâtie (m²)",
+  "ecart": false,
+  "valeurs": [
+   "84"
+  ],
+  "cells": {
+   "Dossier": "84",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97408000BI0378",
+  "commune": "La Possession",
+  "donnee": "nombre de bâtiments",
+  "ecart": false,
+  "valeurs": [
+   "3"
+  ],
+  "cells": {
+   "Dossier": "3",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97408000BI0378",
+  "commune": "La Possession",
+  "donnee": "zone impl. libérée (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97408000BI0378",
+  "commune": "La Possession",
+  "donnee": "zone impl. déduite (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97408000BI0378",
+  "commune": "La Possession",
+  "donnee": "pente",
+  "ecart": false,
+  "valeurs": [
+   "15,2° (27 %)"
+  ],
+  "cells": {
+   "Dossier": "15,2° (27 %)",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97408000BI0378",
+  "commune": "La Possession",
+  "donnee": "hauteur faît./égout",
+  "ecart": false,
+  "valeurs": [
+   "12/9"
+  ],
+  "cells": {
+   "Dossier": "12/9",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97408000BI0378",
+  "commune": "La Possession",
+  "donnee": "recul voie (m)",
+  "ecart": false,
+  "valeurs": [
+   "3"
+  ],
+  "cells": {
+   "Dossier": "3",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97408000BI0378",
+  "commune": "La Possession",
+  "donnee": "stationnement",
+  "ecart": false,
+  "valeurs": [
+   "2 pl/logt"
+  ],
+  "cells": {
+   "Dossier": "2 pl/logt",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97408000BI0378",
+  "commune": "La Possession",
+  "donnee": "pleine terre (%)",
+  "ecart": false,
+  "valeurs": [
+   "35"
+  ],
+  "cells": {
+   "Dossier": "35",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97408000BI0378",
+  "commune": "La Possession",
+  "donnee": "prix bâti (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "2727"
+  ],
+  "cells": {
+   "Dossier": "2727",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": "2727",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97408000BI0378",
+  "commune": "La Possession",
+  "donnee": "prix terrain (€/m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97408000BI0378",
+  "commune": "La Possession",
+  "donnee": "prix neuf VEFA (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "4221"
+  ],
+  "cells": {
+   "Dossier": "4221",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97408000BI0378",
+  "commune": "La Possession",
+  "donnee": "SDP résiduelle (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97408000BI0378",
+  "commune": "La Possession",
+  "donnee": "SDP max régl. (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97408000BI0378",
+  "commune": "La Possession",
+  "donnee": "contraintes relevées",
+  "ecart": false,
+  "valeurs": [
+   "oui"
+  ],
+  "cells": {
+   "Dossier": "oui",
+   "Apporteur": "oui",
+   "Pré-dossier PC": "oui",
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": "oui"
+  }
+ },
+ {
+  "idu": "97408000BI0378",
+  "commune": "La Possession",
+  "donnee": "propriétaire (type)",
+  "ecart": false,
+  "valeurs": [
+   ": non déterminé."
+  ],
+  "cells": {
+   "Dossier": ": non déterminé.",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97408000BI0378",
+  "commune": "La Possession",
+  "donnee": "date des données",
+  "ecart": false,
+  "valeurs": [
+   "21/10/2026"
+  ],
+  "cells": {
+   "Dossier": "21/10/2026",
+   "Apporteur": "21/10/2026",
+   "Pré-dossier PC": null,
+   "Étude de zone": "21/10/2026",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": "21/10/2026"
+  }
+ },
+ {
+  "idu": "97407000AX0193",
+  "commune": "Le Port",
+  "donnee": "surface terrain (m²)",
+  "ecart": false,
+  "valeurs": [
+   "7778"
+  ],
+  "cells": {
+   "Dossier": "7778",
+   "Apporteur": "7778",
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "7778",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97407000AX0193",
+  "commune": "Le Port",
+  "donnee": "emprise bâtie (m²)",
+  "ecart": false,
+  "valeurs": [
+   "1368"
+  ],
+  "cells": {
+   "Dossier": "1368",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "1368",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97407000AX0193",
+  "commune": "Le Port",
+  "donnee": "nombre de bâtiments",
+  "ecart": false,
+  "valeurs": [
+   "2"
+  ],
+  "cells": {
+   "Dossier": "2",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97407000AX0193",
+  "commune": "Le Port",
+  "donnee": "zone impl. libérée (m²)",
+  "ecart": false,
+  "valeurs": [
+   "8371"
+  ],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "8371",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97407000AX0193",
+  "commune": "Le Port",
+  "donnee": "zone impl. déduite (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97407000AX0193",
+  "commune": "Le Port",
+  "donnee": "pente",
+  "ecart": false,
+  "valeurs": [
+   "7,5° (13 %)"
+  ],
+  "cells": {
+   "Dossier": "7,5° (13 %)",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "7,5° (13 %)",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97407000AX0193",
+  "commune": "Le Port",
+  "donnee": "hauteur faît./égout",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97407000AX0193",
+  "commune": "Le Port",
+  "donnee": "recul voie (m)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97407000AX0193",
+  "commune": "Le Port",
+  "donnee": "stationnement",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97407000AX0193",
+  "commune": "Le Port",
+  "donnee": "pleine terre (%)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97407000AX0193",
+  "commune": "Le Port",
+  "donnee": "prix bâti (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "2006"
+  ],
+  "cells": {
+   "Dossier": "2006",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": "2006",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97407000AX0193",
+  "commune": "Le Port",
+  "donnee": "prix terrain (€/m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97407000AX0193",
+  "commune": "Le Port",
+  "donnee": "prix neuf VEFA (€/m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97407000AX0193",
+  "commune": "Le Port",
+  "donnee": "SDP résiduelle (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97407000AX0193",
+  "commune": "Le Port",
+  "donnee": "SDP max régl. (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97407000AX0193",
+  "commune": "Le Port",
+  "donnee": "contraintes relevées",
+  "ecart": false,
+  "valeurs": [
+   "oui"
+  ],
+  "cells": {
+   "Dossier": "oui",
+   "Apporteur": "oui",
+   "Pré-dossier PC": "oui",
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "oui",
+   "Bilan": "oui"
+  }
+ },
+ {
+  "idu": "97407000AX0193",
+  "commune": "Le Port",
+  "donnee": "propriétaire (type)",
+  "ecart": false,
+  "valeurs": [
+   "personne morale"
+  ],
+  "cells": {
+   "Dossier": "personne morale",
+   "Apporteur": "personne morale",
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97407000AX0193",
+  "commune": "Le Port",
+  "donnee": "date des données",
+  "ecart": false,
+  "valeurs": [
+   "21/10/2026"
+  ],
+  "cells": {
+   "Dossier": "21/10/2026",
+   "Apporteur": "21/10/2026",
+   "Pré-dossier PC": null,
+   "Étude de zone": "21/10/2026",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "21/10/2026",
+   "Bilan": "21/10/2026"
+  }
+ },
+ {
+  "idu": "97422000EL0342",
+  "commune": "Le Tampon",
+  "donnee": "surface terrain (m²)",
+  "ecart": false,
+  "valeurs": [
+   "157"
+  ],
+  "cells": {
+   "Dossier": "157",
+   "Apporteur": "157",
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97422000EL0342",
+  "commune": "Le Tampon",
+  "donnee": "emprise bâtie (m²)",
+  "ecart": false,
+  "valeurs": [
+   "13"
+  ],
+  "cells": {
+   "Dossier": "13",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97422000EL0342",
+  "commune": "Le Tampon",
+  "donnee": "nombre de bâtiments",
+  "ecart": false,
+  "valeurs": [
+   "1"
+  ],
+  "cells": {
+   "Dossier": "1",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97422000EL0342",
+  "commune": "Le Tampon",
+  "donnee": "zone impl. libérée (m²)",
+  "ecart": false,
+  "valeurs": [
+   "33"
+  ],
+  "cells": {
+   "Dossier": "33",
+   "Apporteur": null,
+   "Pré-dossier PC": "33",
+   "Étude de zone": null,
+   "Gabarit": "33",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97422000EL0342",
+  "commune": "Le Tampon",
+  "donnee": "zone impl. déduite (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97422000EL0342",
+  "commune": "Le Tampon",
+  "donnee": "pente",
+  "ecart": false,
+  "valeurs": [
+   "7,9° (14 %)"
+  ],
+  "cells": {
+   "Dossier": "7,9° (14 %)",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97422000EL0342",
+  "commune": "Le Tampon",
+  "donnee": "hauteur faît./égout",
+  "ecart": false,
+  "valeurs": [
+   "25/21"
+  ],
+  "cells": {
+   "Dossier": "25/21",
+   "Apporteur": null,
+   "Pré-dossier PC": "25/21",
+   "Étude de zone": null,
+   "Gabarit": "25/21",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97422000EL0342",
+  "commune": "Le Tampon",
+  "donnee": "recul voie (m)",
+  "ecart": false,
+  "valeurs": [
+   "4"
+  ],
+  "cells": {
+   "Dossier": "4",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97422000EL0342",
+  "commune": "Le Tampon",
+  "donnee": "stationnement",
+  "ecart": false,
+  "valeurs": [
+   "1 pl/logt"
+  ],
+  "cells": {
+   "Dossier": "1 pl/logt",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": "1 pl/logt",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97422000EL0342",
+  "commune": "Le Tampon",
+  "donnee": "pleine terre (%)",
+  "ecart": false,
+  "valeurs": [
+   "15"
+  ],
+  "cells": {
+   "Dossier": "15",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97422000EL0342",
+  "commune": "Le Tampon",
+  "donnee": "prix bâti (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "2228"
+  ],
+  "cells": {
+   "Dossier": "2228",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": "2228",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97422000EL0342",
+  "commune": "Le Tampon",
+  "donnee": "prix terrain (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "462"
+  ],
+  "cells": {
+   "Dossier": "462",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97422000EL0342",
+  "commune": "Le Tampon",
+  "donnee": "prix neuf VEFA (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "4785"
+  ],
+  "cells": {
+   "Dossier": "4785",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97422000EL0342",
+  "commune": "Le Tampon",
+  "donnee": "SDP résiduelle (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97422000EL0342",
+  "commune": "Le Tampon",
+  "donnee": "SDP max régl. (m²)",
+  "ecart": false,
+  "valeurs": [
+   "103"
+  ],
+  "cells": {
+   "Dossier": "103",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97422000EL0342",
+  "commune": "Le Tampon",
+  "donnee": "contraintes relevées",
+  "ecart": false,
+  "valeurs": [
+   "oui"
+  ],
+  "cells": {
+   "Dossier": "oui",
+   "Apporteur": "oui",
+   "Pré-dossier PC": "oui",
+   "Étude de zone": null,
+   "Gabarit": "oui",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": "oui"
+  }
+ },
+ {
+  "idu": "97422000EL0342",
+  "commune": "Le Tampon",
+  "donnee": "propriétaire (type)",
+  "ecart": false,
+  "valeurs": [
+   ": non déterminé."
+  ],
+  "cells": {
+   "Dossier": ": non déterminé.",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97422000EL0342",
+  "commune": "Le Tampon",
+  "donnee": "date des données",
+  "ecart": false,
+  "valeurs": [
+   "21/10/2026"
+  ],
+  "cells": {
+   "Dossier": "21/10/2026",
+   "Apporteur": "21/10/2026",
+   "Pré-dossier PC": null,
+   "Étude de zone": "21/10/2026",
+   "Gabarit": "21/10/2026",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": "21/10/2026"
+  }
+ },
+ {
+  "idu": "97401000AL0289",
+  "commune": "Les Avirons",
+  "donnee": "surface terrain (m²)",
+  "ecart": false,
+  "valeurs": [
+   "818"
+  ],
+  "cells": {
+   "Dossier": "818",
+   "Apporteur": "818",
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "818",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97401000AL0289",
+  "commune": "Les Avirons",
+  "donnee": "emprise bâtie (m²)",
+  "ecart": false,
+  "valeurs": [
+   "395"
+  ],
+  "cells": {
+   "Dossier": "395",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "395",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97401000AL0289",
+  "commune": "Les Avirons",
+  "donnee": "nombre de bâtiments",
+  "ecart": false,
+  "valeurs": [
+   "2"
+  ],
+  "cells": {
+   "Dossier": "2",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97401000AL0289",
+  "commune": "Les Avirons",
+  "donnee": "zone impl. libérée (m²)",
+  "ecart": false,
+  "valeurs": [
+   "548"
+  ],
+  "cells": {
+   "Dossier": "548",
+   "Apporteur": null,
+   "Pré-dossier PC": "548",
+   "Étude de zone": null,
+   "Gabarit": "548",
+   "Comparatif": null,
+   "Étude de faisabilité": "548",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97401000AL0289",
+  "commune": "Les Avirons",
+  "donnee": "zone impl. déduite (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97401000AL0289",
+  "commune": "Les Avirons",
+  "donnee": "pente",
+  "ecart": false,
+  "valeurs": [
+   "14,8° (26 %)"
+  ],
+  "cells": {
+   "Dossier": "14,8° (26 %)",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "14,8° (26 %)",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97401000AL0289",
+  "commune": "Les Avirons",
+  "donnee": "hauteur faît./égout",
+  "ecart": false,
+  "valeurs": [
+   "10/7"
+  ],
+  "cells": {
+   "Dossier": "10/7",
+   "Apporteur": null,
+   "Pré-dossier PC": "10/7",
+   "Étude de zone": null,
+   "Gabarit": "10/7",
+   "Comparatif": null,
+   "Étude de faisabilité": "10/7",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97401000AL0289",
+  "commune": "Les Avirons",
+  "donnee": "recul voie (m)",
+  "ecart": false,
+  "valeurs": [
+   "4"
+  ],
+  "cells": {
+   "Dossier": "4",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": "4",
+   "Comparatif": null,
+   "Étude de faisabilité": "4",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97401000AL0289",
+  "commune": "Les Avirons",
+  "donnee": "stationnement",
+  "ecart": false,
+  "valeurs": [
+   "1.5 pl/logt"
+  ],
+  "cells": {
+   "Dossier": "1.5 pl/logt",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": "1.5 pl/logt",
+   "Comparatif": null,
+   "Étude de faisabilité": "1.5 pl/logt",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97401000AL0289",
+  "commune": "Les Avirons",
+  "donnee": "pleine terre (%)",
+  "ecart": false,
+  "valeurs": [
+   "40"
+  ],
+  "cells": {
+   "Dossier": "40",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "40",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97401000AL0289",
+  "commune": "Les Avirons",
+  "donnee": "prix bâti (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "2414"
+  ],
+  "cells": {
+   "Dossier": "2414",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": "2414",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97401000AL0289",
+  "commune": "Les Avirons",
+  "donnee": "prix terrain (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "351"
+  ],
+  "cells": {
+   "Dossier": "351",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97401000AL0289",
+  "commune": "Les Avirons",
+  "donnee": "prix neuf VEFA (€/m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97401000AL0289",
+  "commune": "Les Avirons",
+  "donnee": "SDP résiduelle (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97401000AL0289",
+  "commune": "Les Avirons",
+  "donnee": "SDP max régl. (m²)",
+  "ecart": false,
+  "valeurs": [
+   "368"
+  ],
+  "cells": {
+   "Dossier": "368",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97401000AL0289",
+  "commune": "Les Avirons",
+  "donnee": "contraintes relevées",
+  "ecart": false,
+  "valeurs": [
+   "oui"
+  ],
+  "cells": {
+   "Dossier": "oui",
+   "Apporteur": "oui",
+   "Pré-dossier PC": "oui",
+   "Étude de zone": "oui",
+   "Gabarit": "oui",
+   "Comparatif": null,
+   "Étude de faisabilité": "oui",
+   "Bilan": "oui"
+  }
+ },
+ {
+  "idu": "97401000AL0289",
+  "commune": "Les Avirons",
+  "donnee": "propriétaire (type)",
+  "ecart": false,
+  "valeurs": [
+   ": non déterminé."
+  ],
+  "cells": {
+   "Dossier": ": non déterminé.",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97401000AL0289",
+  "commune": "Les Avirons",
+  "donnee": "date des données",
+  "ecart": false,
+  "valeurs": [
+   "21/10/2026"
+  ],
+  "cells": {
+   "Dossier": "21/10/2026",
+   "Apporteur": "21/10/2026",
+   "Pré-dossier PC": null,
+   "Étude de zone": "21/10/2026",
+   "Gabarit": "21/10/2026",
+   "Comparatif": null,
+   "Étude de faisabilité": "21/10/2026",
+   "Bilan": "21/10/2026"
+  }
+ },
+ {
+  "idu": "97423000AB0338",
+  "commune": "Les Trois-Bassins",
+  "donnee": "surface terrain (m²)",
+  "ecart": false,
+  "valeurs": [
+   "2222"
+  ],
+  "cells": {
+   "Dossier": "2222",
+   "Apporteur": "2222",
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "2222",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97423000AB0338",
+  "commune": "Les Trois-Bassins",
+  "donnee": "emprise bâtie (m²)",
+  "ecart": false,
+  "valeurs": [
+   "1120"
+  ],
+  "cells": {
+   "Dossier": "1120",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "1120",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97423000AB0338",
+  "commune": "Les Trois-Bassins",
+  "donnee": "nombre de bâtiments",
+  "ecart": false,
+  "valeurs": [
+   "2"
+  ],
+  "cells": {
+   "Dossier": "2",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97423000AB0338",
+  "commune": "Les Trois-Bassins",
+  "donnee": "zone impl. libérée (m²)",
+  "ecart": false,
+  "valeurs": [
+   "1677"
+  ],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "1677",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97423000AB0338",
+  "commune": "Les Trois-Bassins",
+  "donnee": "zone impl. déduite (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97423000AB0338",
+  "commune": "Les Trois-Bassins",
+  "donnee": "pente",
+  "ecart": false,
+  "valeurs": [
+   "5,1° (9 %)"
+  ],
+  "cells": {
+   "Dossier": "5,1° (9 %)",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "5,1° (9 %)",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97423000AB0338",
+  "commune": "Les Trois-Bassins",
+  "donnee": "hauteur faît./égout",
+  "ecart": false,
+  "valeurs": [
+   "12/8"
+  ],
+  "cells": {
+   "Dossier": "12/8",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "12/8",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97423000AB0338",
+  "commune": "Les Trois-Bassins",
+  "donnee": "recul voie (m)",
+  "ecart": false,
+  "valeurs": [
+   "4"
+  ],
+  "cells": {
+   "Dossier": "4",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "4",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97423000AB0338",
+  "commune": "Les Trois-Bassins",
+  "donnee": "stationnement",
+  "ecart": false,
+  "valeurs": [
+   "1.5 pl/logt"
+  ],
+  "cells": {
+   "Dossier": "1.5 pl/logt",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "1.5 pl/logt",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97423000AB0338",
+  "commune": "Les Trois-Bassins",
+  "donnee": "pleine terre (%)",
+  "ecart": false,
+  "valeurs": [
+   "30"
+  ],
+  "cells": {
+   "Dossier": "30",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "30",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97423000AB0338",
+  "commune": "Les Trois-Bassins",
+  "donnee": "prix bâti (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "6692"
+  ],
+  "cells": {
+   "Dossier": "6692",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": "6692",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97423000AB0338",
+  "commune": "Les Trois-Bassins",
+  "donnee": "prix terrain (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "702"
+  ],
+  "cells": {
+   "Dossier": "702",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97423000AB0338",
+  "commune": "Les Trois-Bassins",
+  "donnee": "prix neuf VEFA (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "6370"
+  ],
+  "cells": {
+   "Dossier": "6370",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97423000AB0338",
+  "commune": "Les Trois-Bassins",
+  "donnee": "SDP résiduelle (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97423000AB0338",
+  "commune": "Les Trois-Bassins",
+  "donnee": "SDP max régl. (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97423000AB0338",
+  "commune": "Les Trois-Bassins",
+  "donnee": "contraintes relevées",
+  "ecart": false,
+  "valeurs": [
+   "oui"
+  ],
+  "cells": {
+   "Dossier": "oui",
+   "Apporteur": "oui",
+   "Pré-dossier PC": "oui",
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "oui",
+   "Bilan": "oui"
+  }
+ },
+ {
+  "idu": "97423000AB0338",
+  "commune": "Les Trois-Bassins",
+  "donnee": "propriétaire (type)",
+  "ecart": false,
+  "valeurs": [
+   ": non déterminé."
+  ],
+  "cells": {
+   "Dossier": ": non déterminé.",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97423000AB0338",
+  "commune": "Les Trois-Bassins",
+  "donnee": "date des données",
+  "ecart": false,
+  "valeurs": [
+   "21/10/2026"
+  ],
+  "cells": {
+   "Dossier": "21/10/2026",
+   "Apporteur": "21/10/2026",
+   "Pré-dossier PC": null,
+   "Étude de zone": "21/10/2026",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "21/10/2026",
+   "Bilan": "21/10/2026"
+  }
+ },
+ {
+  "idu": "97405000AK1424",
+  "commune": "Petite-Île",
+  "donnee": "surface terrain (m²)",
+  "ecart": false,
+  "valeurs": [
+   "477"
+  ],
+  "cells": {
+   "Dossier": "477",
+   "Apporteur": "477",
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97405000AK1424",
+  "commune": "Petite-Île",
+  "donnee": "emprise bâtie (m²)",
+  "ecart": false,
+  "valeurs": [
+   "253"
+  ],
+  "cells": {
+   "Dossier": "253",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97405000AK1424",
+  "commune": "Petite-Île",
+  "donnee": "nombre de bâtiments",
+  "ecart": false,
+  "valeurs": [
+   "1"
+  ],
+  "cells": {
+   "Dossier": "1",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97405000AK1424",
+  "commune": "Petite-Île",
+  "donnee": "zone impl. libérée (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97405000AK1424",
+  "commune": "Petite-Île",
+  "donnee": "zone impl. déduite (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97405000AK1424",
+  "commune": "Petite-Île",
+  "donnee": "pente",
+  "ecart": false,
+  "valeurs": [
+   "6,1° (11 %)"
+  ],
+  "cells": {
+   "Dossier": "6,1° (11 %)",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97405000AK1424",
+  "commune": "Petite-Île",
+  "donnee": "hauteur faît./égout",
+  "ecart": false,
+  "valeurs": [
+   "10/7"
+  ],
+  "cells": {
+   "Dossier": "10/7",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97405000AK1424",
+  "commune": "Petite-Île",
+  "donnee": "recul voie (m)",
+  "ecart": false,
+  "valeurs": [
+   "4"
+  ],
+  "cells": {
+   "Dossier": "4",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97405000AK1424",
+  "commune": "Petite-Île",
+  "donnee": "stationnement",
+  "ecart": false,
+  "valeurs": [
+   "1 pl/logt"
+  ],
+  "cells": {
+   "Dossier": "1 pl/logt",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97405000AK1424",
+  "commune": "Petite-Île",
+  "donnee": "pleine terre (%)",
+  "ecart": false,
+  "valeurs": [
+   "30"
+  ],
+  "cells": {
+   "Dossier": "30",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97405000AK1424",
+  "commune": "Petite-Île",
+  "donnee": "prix bâti (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "2537"
+  ],
+  "cells": {
+   "Dossier": "2537",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": "2537",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97405000AK1424",
+  "commune": "Petite-Île",
+  "donnee": "prix terrain (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "206"
+  ],
+  "cells": {
+   "Dossier": "206",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97405000AK1424",
+  "commune": "Petite-Île",
+  "donnee": "prix neuf VEFA (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "5277"
+  ],
+  "cells": {
+   "Dossier": "5277",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97405000AK1424",
+  "commune": "Petite-Île",
+  "donnee": "SDP résiduelle (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97405000AK1424",
+  "commune": "Petite-Île",
+  "donnee": "SDP max régl. (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97405000AK1424",
+  "commune": "Petite-Île",
+  "donnee": "contraintes relevées",
+  "ecart": false,
+  "valeurs": [
+   "oui"
+  ],
+  "cells": {
+   "Dossier": "oui",
+   "Apporteur": "oui",
+   "Pré-dossier PC": "oui",
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": "oui"
+  }
+ },
+ {
+  "idu": "97405000AK1424",
+  "commune": "Petite-Île",
+  "donnee": "propriétaire (type)",
+  "ecart": false,
+  "valeurs": [
+   ": non déterminé."
+  ],
+  "cells": {
+   "Dossier": ": non déterminé.",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97405000AK1424",
+  "commune": "Petite-Île",
+  "donnee": "date des données",
+  "ecart": false,
+  "valeurs": [
+   "21/10/2026"
+  ],
+  "cells": {
+   "Dossier": "21/10/2026",
+   "Apporteur": "21/10/2026",
+   "Pré-dossier PC": null,
+   "Étude de zone": "21/10/2026",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": "21/10/2026"
+  }
+ },
+ {
+  "idu": "97409000AD0083",
+  "commune": "Saint-André",
+  "donnee": "surface terrain (m²)",
+  "ecart": false,
+  "valeurs": [
+   "185"
+  ],
+  "cells": {
+   "Dossier": "185",
+   "Apporteur": "185",
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97409000AD0083",
+  "commune": "Saint-André",
+  "donnee": "emprise bâtie (m²)",
+  "ecart": false,
+  "valeurs": [
+   "105"
+  ],
+  "cells": {
+   "Dossier": "105",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97409000AD0083",
+  "commune": "Saint-André",
+  "donnee": "nombre de bâtiments",
+  "ecart": false,
+  "valeurs": [
+   "1"
+  ],
+  "cells": {
+   "Dossier": "1",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97409000AD0083",
+  "commune": "Saint-André",
+  "donnee": "zone impl. libérée (m²)",
+  "ecart": false,
+  "valeurs": [
+   "49"
+  ],
+  "cells": {
+   "Dossier": "49",
+   "Apporteur": null,
+   "Pré-dossier PC": "49",
+   "Étude de zone": null,
+   "Gabarit": "49",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97409000AD0083",
+  "commune": "Saint-André",
+  "donnee": "zone impl. déduite (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97409000AD0083",
+  "commune": "Saint-André",
+  "donnee": "pente",
+  "ecart": false,
+  "valeurs": [
+   "2,4° (4 %)"
+  ],
+  "cells": {
+   "Dossier": "2,4° (4 %)",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97409000AD0083",
+  "commune": "Saint-André",
+  "donnee": "hauteur faît./égout",
+  "ecart": false,
+  "valeurs": [
+   "12/9"
+  ],
+  "cells": {
+   "Dossier": "12/9",
+   "Apporteur": null,
+   "Pré-dossier PC": "12/9",
+   "Étude de zone": null,
+   "Gabarit": "12/9",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97409000AD0083",
+  "commune": "Saint-André",
+  "donnee": "recul voie (m)",
+  "ecart": false,
+  "valeurs": [
+   "4"
+  ],
+  "cells": {
+   "Dossier": "4",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": "4",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97409000AD0083",
+  "commune": "Saint-André",
+  "donnee": "stationnement",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97409000AD0083",
+  "commune": "Saint-André",
+  "donnee": "pleine terre (%)",
+  "ecart": false,
+  "valeurs": [
+   "40"
+  ],
+  "cells": {
+   "Dossier": "40",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97409000AD0083",
+  "commune": "Saint-André",
+  "donnee": "prix bâti (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "1641"
+  ],
+  "cells": {
+   "Dossier": "1641",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": "1641",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97409000AD0083",
+  "commune": "Saint-André",
+  "donnee": "prix terrain (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "219"
+  ],
+  "cells": {
+   "Dossier": "219",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97409000AD0083",
+  "commune": "Saint-André",
+  "donnee": "prix neuf VEFA (€/m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97409000AD0083",
+  "commune": "Saint-André",
+  "donnee": "SDP résiduelle (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97409000AD0083",
+  "commune": "Saint-André",
+  "donnee": "SDP max régl. (m²)",
+  "ecart": false,
+  "valeurs": [
+   "73"
+  ],
+  "cells": {
+   "Dossier": "73",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97409000AD0083",
+  "commune": "Saint-André",
+  "donnee": "contraintes relevées",
+  "ecart": false,
+  "valeurs": [
+   "oui"
+  ],
+  "cells": {
+   "Dossier": "oui",
+   "Apporteur": "oui",
+   "Pré-dossier PC": "oui",
+   "Étude de zone": null,
+   "Gabarit": "oui",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": "oui"
+  }
+ },
+ {
+  "idu": "97409000AD0083",
+  "commune": "Saint-André",
+  "donnee": "propriétaire (type)",
+  "ecart": false,
+  "valeurs": [
+   ": non déterminé."
+  ],
+  "cells": {
+   "Dossier": ": non déterminé.",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97409000AD0083",
+  "commune": "Saint-André",
+  "donnee": "date des données",
+  "ecart": false,
+  "valeurs": [
+   "21/10/2026"
+  ],
+  "cells": {
+   "Dossier": "21/10/2026",
+   "Apporteur": "21/10/2026",
+   "Pré-dossier PC": null,
+   "Étude de zone": "21/10/2026",
+   "Gabarit": "21/10/2026",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": "21/10/2026"
+  }
+ },
+ {
+  "idu": "97410000AT1066",
+  "commune": "Saint-Benoît",
+  "donnee": "surface terrain (m²)",
+  "ecart": false,
+  "valeurs": [
+   "9099"
+  ],
+  "cells": {
+   "Dossier": "9099",
+   "Apporteur": "9099",
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "9099",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97410000AT1066",
+  "commune": "Saint-Benoît",
+  "donnee": "emprise bâtie (m²)",
+  "ecart": false,
+  "valeurs": [
+   "1858"
+  ],
+  "cells": {
+   "Dossier": "1858",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "1858",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97410000AT1066",
+  "commune": "Saint-Benoît",
+  "donnee": "nombre de bâtiments",
+  "ecart": false,
+  "valeurs": [
+   "11"
+  ],
+  "cells": {
+   "Dossier": "11",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97410000AT1066",
+  "commune": "Saint-Benoît",
+  "donnee": "zone impl. libérée (m²)",
+  "ecart": false,
+  "valeurs": [
+   "6302"
+  ],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "6302",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97410000AT1066",
+  "commune": "Saint-Benoît",
+  "donnee": "zone impl. déduite (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97410000AT1066",
+  "commune": "Saint-Benoît",
+  "donnee": "pente",
+  "ecart": false,
+  "valeurs": [
+   "3,7° (6 %)"
+  ],
+  "cells": {
+   "Dossier": "3,7° (6 %)",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "3,7° (6 %)",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97410000AT1066",
+  "commune": "Saint-Benoît",
+  "donnee": "hauteur faît./égout",
+  "ecart": false,
+  "valeurs": [
+   "9/9"
+  ],
+  "cells": {
+   "Dossier": "9/9",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97410000AT1066",
+  "commune": "Saint-Benoît",
+  "donnee": "recul voie (m)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97410000AT1066",
+  "commune": "Saint-Benoît",
+  "donnee": "stationnement",
+  "ecart": false,
+  "valeurs": [
+   "1 pl/logt"
+  ],
+  "cells": {
+   "Dossier": "1 pl/logt",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "1 pl/logt",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97410000AT1066",
+  "commune": "Saint-Benoît",
+  "donnee": "pleine terre (%)",
+  "ecart": false,
+  "valeurs": [
+   "20"
+  ],
+  "cells": {
+   "Dossier": "20",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "20",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97410000AT1066",
+  "commune": "Saint-Benoît",
+  "donnee": "prix bâti (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "1934"
+  ],
+  "cells": {
+   "Dossier": "1934",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": "1934",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97410000AT1066",
+  "commune": "Saint-Benoît",
+  "donnee": "prix terrain (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "187"
+  ],
+  "cells": {
+   "Dossier": "187",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97410000AT1066",
+  "commune": "Saint-Benoît",
+  "donnee": "prix neuf VEFA (€/m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97410000AT1066",
+  "commune": "Saint-Benoît",
+  "donnee": "SDP résiduelle (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97410000AT1066",
+  "commune": "Saint-Benoît",
+  "donnee": "SDP max régl. (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97410000AT1066",
+  "commune": "Saint-Benoît",
+  "donnee": "contraintes relevées",
+  "ecart": false,
+  "valeurs": [
+   "oui"
+  ],
+  "cells": {
+   "Dossier": "oui",
+   "Apporteur": "oui",
+   "Pré-dossier PC": "oui",
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "oui",
+   "Bilan": "oui"
+  }
+ },
+ {
+  "idu": "97410000AT1066",
+  "commune": "Saint-Benoît",
+  "donnee": "propriétaire (type)",
+  "ecart": false,
+  "valeurs": [
+   "personne morale"
+  ],
+  "cells": {
+   "Dossier": "personne morale",
+   "Apporteur": "personne morale",
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97410000AT1066",
+  "commune": "Saint-Benoît",
+  "donnee": "date des données",
+  "ecart": false,
+  "valeurs": [
+   "21/10/2026"
+  ],
+  "cells": {
+   "Dossier": "21/10/2026",
+   "Apporteur": "21/10/2026",
+   "Pré-dossier PC": null,
+   "Étude de zone": "21/10/2026",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "21/10/2026",
+   "Bilan": "21/10/2026"
+  }
+ },
+ {
+  "idu": "97411000EP0285",
+  "commune": "Saint-Denis",
+  "donnee": "surface terrain (m²)",
+  "ecart": true,
+  "valeurs": [
+   "2784",
+   "8809"
+  ],
+  "cells": {
+   "Dossier": "8809",
+   "Apporteur": "8809",
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": "8809",
+   "Comparatif": null,
+   "Étude de faisabilité": "2784",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97411000EP0285",
+  "commune": "Saint-Denis",
+  "donnee": "emprise bâtie (m²)",
+  "ecart": false,
+  "valeurs": [
+   "1139"
+  ],
+  "cells": {
+   "Dossier": "1139",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "1139",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97411000EP0285",
+  "commune": "Saint-Denis",
+  "donnee": "nombre de bâtiments",
+  "ecart": false,
+  "valeurs": [
+   "8"
+  ],
+  "cells": {
+   "Dossier": "8",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97411000EP0285",
+  "commune": "Saint-Denis",
+  "donnee": "zone impl. libérée (m²)",
+  "ecart": true,
+  "valeurs": [
+   "394",
+   "707"
+  ],
+  "cells": {
+   "Dossier": "707",
+   "Apporteur": null,
+   "Pré-dossier PC": "394",
+   "Étude de zone": null,
+   "Gabarit": "707",
+   "Comparatif": null,
+   "Étude de faisabilité": "707",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97411000EP0285",
+  "commune": "Saint-Denis",
+  "donnee": "zone impl. déduite (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97411000EP0285",
+  "commune": "Saint-Denis",
+  "donnee": "pente",
+  "ecart": false,
+  "valeurs": [
+   "27,5° (52 %)"
+  ],
+  "cells": {
+   "Dossier": "27,5° (52 %)",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "27,5° (52 %)",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97411000EP0285",
+  "commune": "Saint-Denis",
+  "donnee": "hauteur faît./égout",
+  "ecart": false,
+  "valeurs": [
+   "10/7"
+  ],
+  "cells": {
+   "Dossier": "10/7",
+   "Apporteur": null,
+   "Pré-dossier PC": "10/7",
+   "Étude de zone": null,
+   "Gabarit": "10/7",
+   "Comparatif": null,
+   "Étude de faisabilité": "10/7",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97411000EP0285",
+  "commune": "Saint-Denis",
+  "donnee": "recul voie (m)",
+  "ecart": false,
+  "valeurs": [
+   "3"
+  ],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": "3",
+   "Comparatif": null,
+   "Étude de faisabilité": "3",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97411000EP0285",
+  "commune": "Saint-Denis",
+  "donnee": "stationnement",
+  "ecart": false,
+  "valeurs": [
+   "1 pl/logt"
+  ],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": "1 pl/logt",
+   "Comparatif": null,
+   "Étude de faisabilité": "1 pl/logt",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97411000EP0285",
+  "commune": "Saint-Denis",
+  "donnee": "pleine terre (%)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97411000EP0285",
+  "commune": "Saint-Denis",
+  "donnee": "prix bâti (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "2520"
+  ],
+  "cells": {
+   "Dossier": "2520",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": "2520",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97411000EP0285",
+  "commune": "Saint-Denis",
+  "donnee": "prix terrain (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "251"
+  ],
+  "cells": {
+   "Dossier": "251",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97411000EP0285",
+  "commune": "Saint-Denis",
+  "donnee": "prix neuf VEFA (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "4878"
+  ],
+  "cells": {
+   "Dossier": "4878",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97411000EP0285",
+  "commune": "Saint-Denis",
+  "donnee": "SDP résiduelle (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97411000EP0285",
+  "commune": "Saint-Denis",
+  "donnee": "SDP max régl. (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97411000EP0285",
+  "commune": "Saint-Denis",
+  "donnee": "contraintes relevées",
+  "ecart": false,
+  "valeurs": [
+   "oui"
+  ],
+  "cells": {
+   "Dossier": "oui",
+   "Apporteur": "oui",
+   "Pré-dossier PC": "oui",
+   "Étude de zone": null,
+   "Gabarit": "oui",
+   "Comparatif": null,
+   "Étude de faisabilité": "oui",
+   "Bilan": "oui"
+  }
+ },
+ {
+  "idu": "97411000EP0285",
+  "commune": "Saint-Denis",
+  "donnee": "propriétaire (type)",
+  "ecart": false,
+  "valeurs": [
+   ": non déterminé."
+  ],
+  "cells": {
+   "Dossier": ": non déterminé.",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97411000EP0285",
+  "commune": "Saint-Denis",
+  "donnee": "date des données",
+  "ecart": false,
+  "valeurs": [
+   "21/10/2026"
+  ],
+  "cells": {
+   "Dossier": "21/10/2026",
+   "Apporteur": "21/10/2026",
+   "Pré-dossier PC": null,
+   "Étude de zone": "21/10/2026",
+   "Gabarit": "21/10/2026",
+   "Comparatif": null,
+   "Étude de faisabilité": "21/10/2026",
+   "Bilan": "21/10/2026"
+  }
+ },
+ {
+  "idu": "97412000AM1955",
+  "commune": "Saint-Joseph",
+  "donnee": "surface terrain (m²)",
+  "ecart": false,
+  "valeurs": [
+   "187"
+  ],
+  "cells": {
+   "Dossier": "187",
+   "Apporteur": "187",
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97412000AM1955",
+  "commune": "Saint-Joseph",
+  "donnee": "emprise bâtie (m²)",
+  "ecart": false,
+  "valeurs": [
+   "29"
+  ],
+  "cells": {
+   "Dossier": "29",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97412000AM1955",
+  "commune": "Saint-Joseph",
+  "donnee": "nombre de bâtiments",
+  "ecart": false,
+  "valeurs": [
+   "1"
+  ],
+  "cells": {
+   "Dossier": "1",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97412000AM1955",
+  "commune": "Saint-Joseph",
+  "donnee": "zone impl. libérée (m²)",
+  "ecart": true,
+  "valeurs": [
+   "42",
+   "43"
+  ],
+  "cells": {
+   "Dossier": "43",
+   "Apporteur": null,
+   "Pré-dossier PC": "42",
+   "Étude de zone": null,
+   "Gabarit": "43",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97412000AM1955",
+  "commune": "Saint-Joseph",
+  "donnee": "zone impl. déduite (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97412000AM1955",
+  "commune": "Saint-Joseph",
+  "donnee": "pente",
+  "ecart": false,
+  "valeurs": [
+   "12,4° (22 %)"
+  ],
+  "cells": {
+   "Dossier": "12,4° (22 %)",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97412000AM1955",
+  "commune": "Saint-Joseph",
+  "donnee": "hauteur faît./égout",
+  "ecart": false,
+  "valeurs": [
+   "9/7"
+  ],
+  "cells": {
+   "Dossier": "9/7",
+   "Apporteur": null,
+   "Pré-dossier PC": "9/7",
+   "Étude de zone": null,
+   "Gabarit": "9/7",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97412000AM1955",
+  "commune": "Saint-Joseph",
+  "donnee": "recul voie (m)",
+  "ecart": false,
+  "valeurs": [
+   "4"
+  ],
+  "cells": {
+   "Dossier": "4",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": "4",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97412000AM1955",
+  "commune": "Saint-Joseph",
+  "donnee": "stationnement",
+  "ecart": false,
+  "valeurs": [
+   "2 pl/logt"
+  ],
+  "cells": {
+   "Dossier": "2 pl/logt",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": "2 pl/logt",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97412000AM1955",
+  "commune": "Saint-Joseph",
+  "donnee": "pleine terre (%)",
+  "ecart": false,
+  "valeurs": [
+   "35"
+  ],
+  "cells": {
+   "Dossier": "35",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97412000AM1955",
+  "commune": "Saint-Joseph",
+  "donnee": "prix bâti (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "2193"
+  ],
+  "cells": {
+   "Dossier": "2193",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": "2193",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97412000AM1955",
+  "commune": "Saint-Joseph",
+  "donnee": "prix terrain (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "146"
+  ],
+  "cells": {
+   "Dossier": "146",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97412000AM1955",
+  "commune": "Saint-Joseph",
+  "donnee": "prix neuf VEFA (€/m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97412000AM1955",
+  "commune": "Saint-Joseph",
+  "donnee": "SDP résiduelle (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97412000AM1955",
+  "commune": "Saint-Joseph",
+  "donnee": "SDP max régl. (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97412000AM1955",
+  "commune": "Saint-Joseph",
+  "donnee": "contraintes relevées",
+  "ecart": false,
+  "valeurs": [
+   "oui"
+  ],
+  "cells": {
+   "Dossier": "oui",
+   "Apporteur": "oui",
+   "Pré-dossier PC": "oui",
+   "Étude de zone": null,
+   "Gabarit": "oui",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": "oui"
+  }
+ },
+ {
+  "idu": "97412000AM1955",
+  "commune": "Saint-Joseph",
+  "donnee": "propriétaire (type)",
+  "ecart": false,
+  "valeurs": [
+   ": non déterminé."
+  ],
+  "cells": {
+   "Dossier": ": non déterminé.",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97412000AM1955",
+  "commune": "Saint-Joseph",
+  "donnee": "date des données",
+  "ecart": false,
+  "valeurs": [
+   "21/10/2026"
+  ],
+  "cells": {
+   "Dossier": "21/10/2026",
+   "Apporteur": "21/10/2026",
+   "Pré-dossier PC": null,
+   "Étude de zone": "21/10/2026",
+   "Gabarit": "21/10/2026",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": "21/10/2026"
+  }
+ },
+ {
+  "idu": "97413000CU0804",
+  "commune": "Saint-Leu",
+  "donnee": "surface terrain (m²)",
+  "ecart": true,
+  "valeurs": [
+   "9677",
+   "9687"
+  ],
+  "cells": {
+   "Dossier": "9687",
+   "Apporteur": "9687",
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "9677",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97413000CU0804",
+  "commune": "Saint-Leu",
+  "donnee": "emprise bâtie (m²)",
+  "ecart": false,
+  "valeurs": [
+   "2991"
+  ],
+  "cells": {
+   "Dossier": "2991",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "2991",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97413000CU0804",
+  "commune": "Saint-Leu",
+  "donnee": "nombre de bâtiments",
+  "ecart": false,
+  "valeurs": [
+   "4"
+  ],
+  "cells": {
+   "Dossier": "4",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97413000CU0804",
+  "commune": "Saint-Leu",
+  "donnee": "zone impl. libérée (m²)",
+  "ecart": false,
+  "valeurs": [
+   "9150"
+  ],
+  "cells": {
+   "Dossier": "9150",
+   "Apporteur": null,
+   "Pré-dossier PC": "9150",
+   "Étude de zone": null,
+   "Gabarit": "9150",
+   "Comparatif": null,
+   "Étude de faisabilité": "9150",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97413000CU0804",
+  "commune": "Saint-Leu",
+  "donnee": "zone impl. déduite (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97413000CU0804",
+  "commune": "Saint-Leu",
+  "donnee": "pente",
+  "ecart": false,
+  "valeurs": [
+   "9,8° (17 %)"
+  ],
+  "cells": {
+   "Dossier": "9,8° (17 %)",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "9,8° (17 %)",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97413000CU0804",
+  "commune": "Saint-Leu",
+  "donnee": "hauteur faît./égout",
+  "ecart": false,
+  "valeurs": [
+   "10/7"
+  ],
+  "cells": {
+   "Dossier": "10/7",
+   "Apporteur": null,
+   "Pré-dossier PC": "10/7",
+   "Étude de zone": null,
+   "Gabarit": "10/7",
+   "Comparatif": null,
+   "Étude de faisabilité": "10/7",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97413000CU0804",
+  "commune": "Saint-Leu",
+  "donnee": "recul voie (m)",
+  "ecart": false,
+  "valeurs": [
+   "2"
+  ],
+  "cells": {
+   "Dossier": "2",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": "2",
+   "Comparatif": null,
+   "Étude de faisabilité": "2",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97413000CU0804",
+  "commune": "Saint-Leu",
+  "donnee": "stationnement",
+  "ecart": false,
+  "valeurs": [
+   "2 pl/logt"
+  ],
+  "cells": {
+   "Dossier": "2 pl/logt",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97413000CU0804",
+  "commune": "Saint-Leu",
+  "donnee": "pleine terre (%)",
+  "ecart": false,
+  "valeurs": [
+   "30"
+  ],
+  "cells": {
+   "Dossier": "30",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97413000CU0804",
+  "commune": "Saint-Leu",
+  "donnee": "prix bâti (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "4910"
+  ],
+  "cells": {
+   "Dossier": "4910",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": "4910",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97413000CU0804",
+  "commune": "Saint-Leu",
+  "donnee": "prix terrain (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "573"
+  ],
+  "cells": {
+   "Dossier": "573",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97413000CU0804",
+  "commune": "Saint-Leu",
+  "donnee": "prix neuf VEFA (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "4958"
+  ],
+  "cells": {
+   "Dossier": "4958",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97413000CU0804",
+  "commune": "Saint-Leu",
+  "donnee": "SDP résiduelle (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97413000CU0804",
+  "commune": "Saint-Leu",
+  "donnee": "SDP max régl. (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97413000CU0804",
+  "commune": "Saint-Leu",
+  "donnee": "contraintes relevées",
+  "ecart": false,
+  "valeurs": [
+   "oui"
+  ],
+  "cells": {
+   "Dossier": "oui",
+   "Apporteur": "oui",
+   "Pré-dossier PC": "oui",
+   "Étude de zone": null,
+   "Gabarit": "oui",
+   "Comparatif": null,
+   "Étude de faisabilité": "oui",
+   "Bilan": "oui"
+  }
+ },
+ {
+  "idu": "97413000CU0804",
+  "commune": "Saint-Leu",
+  "donnee": "propriétaire (type)",
+  "ecart": false,
+  "valeurs": [
+   ": non déterminé."
+  ],
+  "cells": {
+   "Dossier": ": non déterminé.",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97413000CU0804",
+  "commune": "Saint-Leu",
+  "donnee": "date des données",
+  "ecart": false,
+  "valeurs": [
+   "21/10/2026"
+  ],
+  "cells": {
+   "Dossier": "21/10/2026",
+   "Apporteur": "21/10/2026",
+   "Pré-dossier PC": null,
+   "Étude de zone": "21/10/2026",
+   "Gabarit": "21/10/2026",
+   "Comparatif": null,
+   "Étude de faisabilité": "21/10/2026",
+   "Bilan": "21/10/2026"
+  }
+ },
+ {
+  "idu": "97414000EW0697",
+  "commune": "Saint-Louis",
+  "donnee": "surface terrain (m²)",
+  "ecart": false,
+  "valeurs": [
+   "193"
+  ],
+  "cells": {
+   "Dossier": "193",
+   "Apporteur": "193",
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97414000EW0697",
+  "commune": "Saint-Louis",
+  "donnee": "emprise bâtie (m²)",
+  "ecart": false,
+  "valeurs": [
+   "104"
+  ],
+  "cells": {
+   "Dossier": "104",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97414000EW0697",
+  "commune": "Saint-Louis",
+  "donnee": "nombre de bâtiments",
+  "ecart": false,
+  "valeurs": [
+   "1"
+  ],
+  "cells": {
+   "Dossier": "1",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97414000EW0697",
+  "commune": "Saint-Louis",
+  "donnee": "zone impl. libérée (m²)",
+  "ecart": false,
+  "valeurs": [
+   "31"
+  ],
+  "cells": {
+   "Dossier": "31",
+   "Apporteur": null,
+   "Pré-dossier PC": "31",
+   "Étude de zone": null,
+   "Gabarit": "31",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97414000EW0697",
+  "commune": "Saint-Louis",
+  "donnee": "zone impl. déduite (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97414000EW0697",
+  "commune": "Saint-Louis",
+  "donnee": "pente",
+  "ecart": false,
+  "valeurs": [
+   "10,7° (19 %)"
+  ],
+  "cells": {
+   "Dossier": "10,7° (19 %)",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97414000EW0697",
+  "commune": "Saint-Louis",
+  "donnee": "hauteur faît./égout",
+  "ecart": false,
+  "valeurs": [
+   "11/7"
+  ],
+  "cells": {
+   "Dossier": "11/7",
+   "Apporteur": null,
+   "Pré-dossier PC": "11/7",
+   "Étude de zone": null,
+   "Gabarit": "11/7",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97414000EW0697",
+  "commune": "Saint-Louis",
+  "donnee": "recul voie (m)",
+  "ecart": false,
+  "valeurs": [
+   "4"
+  ],
+  "cells": {
+   "Dossier": "4",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97414000EW0697",
+  "commune": "Saint-Louis",
+  "donnee": "stationnement",
+  "ecart": false,
+  "valeurs": [
+   "2 pl/logt"
+  ],
+  "cells": {
+   "Dossier": "2 pl/logt",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": "2 pl/logt",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97414000EW0697",
+  "commune": "Saint-Louis",
+  "donnee": "pleine terre (%)",
+  "ecart": false,
+  "valeurs": [
+   "25"
+  ],
+  "cells": {
+   "Dossier": "25",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97414000EW0697",
+  "commune": "Saint-Louis",
+  "donnee": "prix bâti (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "1961"
+  ],
+  "cells": {
+   "Dossier": "1961",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": "1961",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97414000EW0697",
+  "commune": "Saint-Louis",
+  "donnee": "prix terrain (€/m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97414000EW0697",
+  "commune": "Saint-Louis",
+  "donnee": "prix neuf VEFA (€/m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97414000EW0697",
+  "commune": "Saint-Louis",
+  "donnee": "SDP résiduelle (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97414000EW0697",
+  "commune": "Saint-Louis",
+  "donnee": "SDP max régl. (m²)",
+  "ecart": false,
+  "valeurs": [
+   "28"
+  ],
+  "cells": {
+   "Dossier": "28",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97414000EW0697",
+  "commune": "Saint-Louis",
+  "donnee": "contraintes relevées",
+  "ecart": false,
+  "valeurs": [
+   "oui"
+  ],
+  "cells": {
+   "Dossier": "oui",
+   "Apporteur": "oui",
+   "Pré-dossier PC": "oui",
+   "Étude de zone": null,
+   "Gabarit": "oui",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": "oui"
+  }
+ },
+ {
+  "idu": "97414000EW0697",
+  "commune": "Saint-Louis",
+  "donnee": "propriétaire (type)",
+  "ecart": false,
+  "valeurs": [
+   ": non déterminé."
+  ],
+  "cells": {
+   "Dossier": ": non déterminé.",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97414000EW0697",
+  "commune": "Saint-Louis",
+  "donnee": "date des données",
+  "ecart": false,
+  "valeurs": [
+   "21/10/2026"
+  ],
+  "cells": {
+   "Dossier": "21/10/2026",
+   "Apporteur": "21/10/2026",
+   "Pré-dossier PC": null,
+   "Étude de zone": "21/10/2026",
+   "Gabarit": "21/10/2026",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": "21/10/2026"
+  }
+ },
+ {
+  "idu": "97415000CT2791",
+  "commune": "Saint-Paul",
+  "donnee": "surface terrain (m²)",
+  "ecart": false,
+  "valeurs": [
+   "8877"
+  ],
+  "cells": {
+   "Dossier": "8877",
+   "Apporteur": "8877",
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "8877",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97415000CT2791",
+  "commune": "Saint-Paul",
+  "donnee": "emprise bâtie (m²)",
+  "ecart": false,
+  "valeurs": [
+   "3750"
+  ],
+  "cells": {
+   "Dossier": "3750",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "3750",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97415000CT2791",
+  "commune": "Saint-Paul",
+  "donnee": "nombre de bâtiments",
+  "ecart": false,
+  "valeurs": [
+   "4"
+  ],
+  "cells": {
+   "Dossier": "4",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97415000CT2791",
+  "commune": "Saint-Paul",
+  "donnee": "zone impl. libérée (m²)",
+  "ecart": false,
+  "valeurs": [
+   "7489"
+  ],
+  "cells": {
+   "Dossier": "7489",
+   "Apporteur": null,
+   "Pré-dossier PC": "7489",
+   "Étude de zone": null,
+   "Gabarit": "7489",
+   "Comparatif": null,
+   "Étude de faisabilité": "7489",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97415000CT2791",
+  "commune": "Saint-Paul",
+  "donnee": "zone impl. déduite (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97415000CT2791",
+  "commune": "Saint-Paul",
+  "donnee": "pente",
+  "ecart": false,
+  "valeurs": [
+   "7,5° (13 %)"
+  ],
+  "cells": {
+   "Dossier": "7,5° (13 %)",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "7,5° (13 %)",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97415000CT2791",
+  "commune": "Saint-Paul",
+  "donnee": "hauteur faît./égout",
+  "ecart": false,
+  "valeurs": [
+   "12/9"
+  ],
+  "cells": {
+   "Dossier": "12/9",
+   "Apporteur": null,
+   "Pré-dossier PC": "12/9",
+   "Étude de zone": null,
+   "Gabarit": "12/9",
+   "Comparatif": null,
+   "Étude de faisabilité": "12/9",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97415000CT2791",
+  "commune": "Saint-Paul",
+  "donnee": "recul voie (m)",
+  "ecart": false,
+  "valeurs": [
+   "4"
+  ],
+  "cells": {
+   "Dossier": "4",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": "4",
+   "Comparatif": null,
+   "Étude de faisabilité": "4",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97415000CT2791",
+  "commune": "Saint-Paul",
+  "donnee": "stationnement",
+  "ecart": false,
+  "valeurs": [
+   "2 pl/logt"
+  ],
+  "cells": {
+   "Dossier": "2 pl/logt",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": "2 pl/logt",
+   "Comparatif": null,
+   "Étude de faisabilité": "2 pl/logt",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97415000CT2791",
+  "commune": "Saint-Paul",
+  "donnee": "pleine terre (%)",
+  "ecart": false,
+  "valeurs": [
+   "40"
+  ],
+  "cells": {
+   "Dossier": "40",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "40",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97415000CT2791",
+  "commune": "Saint-Paul",
+  "donnee": "prix bâti (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "3982"
+  ],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": "3982",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97415000CT2791",
+  "commune": "Saint-Paul",
+  "donnee": "prix terrain (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "257"
+  ],
+  "cells": {
+   "Dossier": "257",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97415000CT2791",
+  "commune": "Saint-Paul",
+  "donnee": "prix neuf VEFA (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "4745"
+  ],
+  "cells": {
+   "Dossier": "4745",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97415000CT2791",
+  "commune": "Saint-Paul",
+  "donnee": "SDP résiduelle (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97415000CT2791",
+  "commune": "Saint-Paul",
+  "donnee": "SDP max régl. (m²)",
+  "ecart": false,
+  "valeurs": [
+   "7190"
+  ],
+  "cells": {
+   "Dossier": "7190",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97415000CT2791",
+  "commune": "Saint-Paul",
+  "donnee": "contraintes relevées",
+  "ecart": false,
+  "valeurs": [
+   "oui"
+  ],
+  "cells": {
+   "Dossier": "oui",
+   "Apporteur": "oui",
+   "Pré-dossier PC": "oui",
+   "Étude de zone": null,
+   "Gabarit": "oui",
+   "Comparatif": null,
+   "Étude de faisabilité": "oui",
+   "Bilan": "oui"
+  }
+ },
+ {
+  "idu": "97415000CT2791",
+  "commune": "Saint-Paul",
+  "donnee": "propriétaire (type)",
+  "ecart": false,
+  "valeurs": [
+   "personne morale"
+  ],
+  "cells": {
+   "Dossier": "personne morale",
+   "Apporteur": "personne morale",
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97415000CT2791",
+  "commune": "Saint-Paul",
+  "donnee": "date des données",
+  "ecart": false,
+  "valeurs": [
+   "21/10/2026"
+  ],
+  "cells": {
+   "Dossier": "21/10/2026",
+   "Apporteur": "21/10/2026",
+   "Pré-dossier PC": null,
+   "Étude de zone": "21/10/2026",
+   "Gabarit": "21/10/2026",
+   "Comparatif": null,
+   "Étude de faisabilité": "21/10/2026",
+   "Bilan": "21/10/2026"
+  }
+ },
+ {
+  "idu": "97417000BC1199",
+  "commune": "Saint-Philippe",
+  "donnee": "surface terrain (m²)",
+  "ecart": false,
+  "valeurs": [
+   "339"
+  ],
+  "cells": {
+   "Dossier": "339",
+   "Apporteur": "339",
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97417000BC1199",
+  "commune": "Saint-Philippe",
+  "donnee": "emprise bâtie (m²)",
+  "ecart": false,
+  "valeurs": [
+   "134"
+  ],
+  "cells": {
+   "Dossier": "134",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97417000BC1199",
+  "commune": "Saint-Philippe",
+  "donnee": "nombre de bâtiments",
+  "ecart": false,
+  "valeurs": [
+   "1"
+  ],
+  "cells": {
+   "Dossier": "1",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97417000BC1199",
+  "commune": "Saint-Philippe",
+  "donnee": "zone impl. libérée (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97417000BC1199",
+  "commune": "Saint-Philippe",
+  "donnee": "zone impl. déduite (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97417000BC1199",
+  "commune": "Saint-Philippe",
+  "donnee": "pente",
+  "ecart": false,
+  "valeurs": [
+   "2,4° (4 %)"
+  ],
+  "cells": {
+   "Dossier": "2,4° (4 %)",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97417000BC1199",
+  "commune": "Saint-Philippe",
+  "donnee": "hauteur faît./égout",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97417000BC1199",
+  "commune": "Saint-Philippe",
+  "donnee": "recul voie (m)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97417000BC1199",
+  "commune": "Saint-Philippe",
+  "donnee": "stationnement",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97417000BC1199",
+  "commune": "Saint-Philippe",
+  "donnee": "pleine terre (%)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97417000BC1199",
+  "commune": "Saint-Philippe",
+  "donnee": "prix bâti (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "1744"
+  ],
+  "cells": {
+   "Dossier": "1744",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": "1744",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97417000BC1199",
+  "commune": "Saint-Philippe",
+  "donnee": "prix terrain (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "114"
+  ],
+  "cells": {
+   "Dossier": "114",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97417000BC1199",
+  "commune": "Saint-Philippe",
+  "donnee": "prix neuf VEFA (€/m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97417000BC1199",
+  "commune": "Saint-Philippe",
+  "donnee": "SDP résiduelle (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97417000BC1199",
+  "commune": "Saint-Philippe",
+  "donnee": "SDP max régl. (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97417000BC1199",
+  "commune": "Saint-Philippe",
+  "donnee": "contraintes relevées",
+  "ecart": false,
+  "valeurs": [
+   "oui"
+  ],
+  "cells": {
+   "Dossier": "oui",
+   "Apporteur": "oui",
+   "Pré-dossier PC": "oui",
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": "oui"
+  }
+ },
+ {
+  "idu": "97417000BC1199",
+  "commune": "Saint-Philippe",
+  "donnee": "propriétaire (type)",
+  "ecart": false,
+  "valeurs": [
+   ": non déterminé."
+  ],
+  "cells": {
+   "Dossier": ": non déterminé.",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97417000BC1199",
+  "commune": "Saint-Philippe",
+  "donnee": "date des données",
+  "ecart": false,
+  "valeurs": [
+   "21/10/2026"
+  ],
+  "cells": {
+   "Dossier": "21/10/2026",
+   "Apporteur": "21/10/2026",
+   "Pré-dossier PC": null,
+   "Étude de zone": "21/10/2026",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": "21/10/2026"
+  }
+ },
+ {
+  "idu": "97416000DT0804",
+  "commune": "Saint-Pierre",
+  "donnee": "surface terrain (m²)",
+  "ecart": false,
+  "valeurs": [
+   "6087"
+  ],
+  "cells": {
+   "Dossier": "6087",
+   "Apporteur": "6087",
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "6087",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97416000DT0804",
+  "commune": "Saint-Pierre",
+  "donnee": "emprise bâtie (m²)",
+  "ecart": false,
+  "valeurs": [
+   "1801"
+  ],
+  "cells": {
+   "Dossier": "1801",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "1801",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97416000DT0804",
+  "commune": "Saint-Pierre",
+  "donnee": "nombre de bâtiments",
+  "ecart": false,
+  "valeurs": [
+   "5"
+  ],
+  "cells": {
+   "Dossier": "5",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97416000DT0804",
+  "commune": "Saint-Pierre",
+  "donnee": "zone impl. libérée (m²)",
+  "ecart": false,
+  "valeurs": [
+   "5187"
+  ],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "5187",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97416000DT0804",
+  "commune": "Saint-Pierre",
+  "donnee": "zone impl. déduite (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97416000DT0804",
+  "commune": "Saint-Pierre",
+  "donnee": "pente",
+  "ecart": false,
+  "valeurs": [
+   "3,0° (5 %)"
+  ],
+  "cells": {
+   "Dossier": "3,0° (5 %)",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "3,0° (5 %)",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97416000DT0804",
+  "commune": "Saint-Pierre",
+  "donnee": "hauteur faît./égout",
+  "ecart": false,
+  "valeurs": [
+   "20/15"
+  ],
+  "cells": {
+   "Dossier": "20/15",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "20/15",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97416000DT0804",
+  "commune": "Saint-Pierre",
+  "donnee": "recul voie (m)",
+  "ecart": false,
+  "valeurs": [
+   "0"
+  ],
+  "cells": {
+   "Dossier": "0",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "0",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97416000DT0804",
+  "commune": "Saint-Pierre",
+  "donnee": "stationnement",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97416000DT0804",
+  "commune": "Saint-Pierre",
+  "donnee": "pleine terre (%)",
+  "ecart": false,
+  "valeurs": [
+   "20"
+  ],
+  "cells": {
+   "Dossier": "20",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "20",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97416000DT0804",
+  "commune": "Saint-Pierre",
+  "donnee": "prix bâti (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "3732"
+  ],
+  "cells": {
+   "Dossier": "3732",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": "3732",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97416000DT0804",
+  "commune": "Saint-Pierre",
+  "donnee": "prix terrain (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "568"
+  ],
+  "cells": {
+   "Dossier": "568",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97416000DT0804",
+  "commune": "Saint-Pierre",
+  "donnee": "prix neuf VEFA (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "4931"
+  ],
+  "cells": {
+   "Dossier": "4931",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97416000DT0804",
+  "commune": "Saint-Pierre",
+  "donnee": "SDP résiduelle (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97416000DT0804",
+  "commune": "Saint-Pierre",
+  "donnee": "SDP max régl. (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97416000DT0804",
+  "commune": "Saint-Pierre",
+  "donnee": "contraintes relevées",
+  "ecart": false,
+  "valeurs": [
+   "oui"
+  ],
+  "cells": {
+   "Dossier": "oui",
+   "Apporteur": "oui",
+   "Pré-dossier PC": "oui",
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "oui",
+   "Bilan": "oui"
+  }
+ },
+ {
+  "idu": "97416000DT0804",
+  "commune": "Saint-Pierre",
+  "donnee": "propriétaire (type)",
+  "ecart": false,
+  "valeurs": [
+   ": non déterminé."
+  ],
+  "cells": {
+   "Dossier": ": non déterminé.",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97416000DT0804",
+  "commune": "Saint-Pierre",
+  "donnee": "date des données",
+  "ecart": false,
+  "valeurs": [
+   "21/10/2026"
+  ],
+  "cells": {
+   "Dossier": "21/10/2026",
+   "Apporteur": "21/10/2026",
+   "Pré-dossier PC": null,
+   "Étude de zone": "21/10/2026",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "21/10/2026",
+   "Bilan": "21/10/2026"
+  }
+ },
+ {
+  "idu": "97418000AP3309",
+  "commune": "Sainte-Marie",
+  "donnee": "surface terrain (m²)",
+  "ecart": true,
+  "valeurs": [
+   "4162",
+   "895"
+  ],
+  "cells": {
+   "Dossier": "4162",
+   "Apporteur": "4162",
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "895",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97418000AP3309",
+  "commune": "Sainte-Marie",
+  "donnee": "emprise bâtie (m²)",
+  "ecart": false,
+  "valeurs": [
+   "90"
+  ],
+  "cells": {
+   "Dossier": "90",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "90",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97418000AP3309",
+  "commune": "Sainte-Marie",
+  "donnee": "nombre de bâtiments",
+  "ecart": false,
+  "valeurs": [
+   "1"
+  ],
+  "cells": {
+   "Dossier": "1",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97418000AP3309",
+  "commune": "Sainte-Marie",
+  "donnee": "zone impl. libérée (m²)",
+  "ecart": false,
+  "valeurs": [
+   "608"
+  ],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "608",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97418000AP3309",
+  "commune": "Sainte-Marie",
+  "donnee": "zone impl. déduite (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97418000AP3309",
+  "commune": "Sainte-Marie",
+  "donnee": "pente",
+  "ecart": false,
+  "valeurs": [
+   "20,0° (36 %)"
+  ],
+  "cells": {
+   "Dossier": "20,0° (36 %)",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "20,0° (36 %)",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97418000AP3309",
+  "commune": "Sainte-Marie",
+  "donnee": "hauteur faît./égout",
+  "ecart": false,
+  "valeurs": [
+   "11/8"
+  ],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "11/8",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97418000AP3309",
+  "commune": "Sainte-Marie",
+  "donnee": "recul voie (m)",
+  "ecart": false,
+  "valeurs": [
+   "3"
+  ],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "3",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97418000AP3309",
+  "commune": "Sainte-Marie",
+  "donnee": "stationnement",
+  "ecart": false,
+  "valeurs": [
+   "1.5 pl/logt"
+  ],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "1.5 pl/logt",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97418000AP3309",
+  "commune": "Sainte-Marie",
+  "donnee": "pleine terre (%)",
+  "ecart": false,
+  "valeurs": [
+   "30"
+  ],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "30",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97418000AP3309",
+  "commune": "Sainte-Marie",
+  "donnee": "prix bâti (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "2472"
+  ],
+  "cells": {
+   "Dossier": "2472",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": "2472",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97418000AP3309",
+  "commune": "Sainte-Marie",
+  "donnee": "prix terrain (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "220"
+  ],
+  "cells": {
+   "Dossier": "220",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97418000AP3309",
+  "commune": "Sainte-Marie",
+  "donnee": "prix neuf VEFA (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "4190"
+  ],
+  "cells": {
+   "Dossier": "4190",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97418000AP3309",
+  "commune": "Sainte-Marie",
+  "donnee": "SDP résiduelle (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97418000AP3309",
+  "commune": "Sainte-Marie",
+  "donnee": "SDP max régl. (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97418000AP3309",
+  "commune": "Sainte-Marie",
+  "donnee": "contraintes relevées",
+  "ecart": false,
+  "valeurs": [
+   "oui"
+  ],
+  "cells": {
+   "Dossier": "oui",
+   "Apporteur": "oui",
+   "Pré-dossier PC": "oui",
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "oui",
+   "Bilan": "oui"
+  }
+ },
+ {
+  "idu": "97418000AP3309",
+  "commune": "Sainte-Marie",
+  "donnee": "propriétaire (type)",
+  "ecart": false,
+  "valeurs": [
+   ": non déterminé."
+  ],
+  "cells": {
+   "Dossier": ": non déterminé.",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97418000AP3309",
+  "commune": "Sainte-Marie",
+  "donnee": "date des données",
+  "ecart": false,
+  "valeurs": [
+   "21/10/2026"
+  ],
+  "cells": {
+   "Dossier": "21/10/2026",
+   "Apporteur": "21/10/2026",
+   "Pré-dossier PC": null,
+   "Étude de zone": "21/10/2026",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "21/10/2026",
+   "Bilan": "21/10/2026"
+  }
+ },
+ {
+  "idu": "97419000AR0791",
+  "commune": "Sainte-Rose",
+  "donnee": "surface terrain (m²)",
+  "ecart": false,
+  "valeurs": [
+   "646"
+  ],
+  "cells": {
+   "Dossier": "646",
+   "Apporteur": "646",
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": "646",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97419000AR0791",
+  "commune": "Sainte-Rose",
+  "donnee": "emprise bâtie (m²)",
+  "ecart": false,
+  "valeurs": [
+   "140"
+  ],
+  "cells": {
+   "Dossier": "140",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97419000AR0791",
+  "commune": "Sainte-Rose",
+  "donnee": "nombre de bâtiments",
+  "ecart": false,
+  "valeurs": [
+   "1"
+  ],
+  "cells": {
+   "Dossier": "1",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97419000AR0791",
+  "commune": "Sainte-Rose",
+  "donnee": "zone impl. libérée (m²)",
+  "ecart": false,
+  "valeurs": [
+   "64"
+  ],
+  "cells": {
+   "Dossier": "64",
+   "Apporteur": null,
+   "Pré-dossier PC": "64",
+   "Étude de zone": null,
+   "Gabarit": "64",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97419000AR0791",
+  "commune": "Sainte-Rose",
+  "donnee": "zone impl. déduite (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97419000AR0791",
+  "commune": "Sainte-Rose",
+  "donnee": "pente",
+  "ecart": false,
+  "valeurs": [
+   "3,9° (7 %)"
+  ],
+  "cells": {
+   "Dossier": "3,9° (7 %)",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97419000AR0791",
+  "commune": "Sainte-Rose",
+  "donnee": "hauteur faît./égout",
+  "ecart": false,
+  "valeurs": [
+   "12/7"
+  ],
+  "cells": {
+   "Dossier": "12/7",
+   "Apporteur": null,
+   "Pré-dossier PC": "12/7",
+   "Étude de zone": null,
+   "Gabarit": "12/7",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97419000AR0791",
+  "commune": "Sainte-Rose",
+  "donnee": "recul voie (m)",
+  "ecart": false,
+  "valeurs": [
+   "4"
+  ],
+  "cells": {
+   "Dossier": "4",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": "4",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97419000AR0791",
+  "commune": "Sainte-Rose",
+  "donnee": "stationnement",
+  "ecart": false,
+  "valeurs": [
+   "1.5 pl/logt"
+  ],
+  "cells": {
+   "Dossier": "1.5 pl/logt",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": "1.5 pl/logt",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97419000AR0791",
+  "commune": "Sainte-Rose",
+  "donnee": "pleine terre (%)",
+  "ecart": false,
+  "valeurs": [
+   "30"
+  ],
+  "cells": {
+   "Dossier": "30",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97419000AR0791",
+  "commune": "Sainte-Rose",
+  "donnee": "prix bâti (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "2090"
+  ],
+  "cells": {
+   "Dossier": "2090",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": "2090",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97419000AR0791",
+  "commune": "Sainte-Rose",
+  "donnee": "prix terrain (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "148"
+  ],
+  "cells": {
+   "Dossier": "148",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97419000AR0791",
+  "commune": "Sainte-Rose",
+  "donnee": "prix neuf VEFA (€/m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97419000AR0791",
+  "commune": "Sainte-Rose",
+  "donnee": "SDP résiduelle (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97419000AR0791",
+  "commune": "Sainte-Rose",
+  "donnee": "SDP max régl. (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97419000AR0791",
+  "commune": "Sainte-Rose",
+  "donnee": "contraintes relevées",
+  "ecart": false,
+  "valeurs": [
+   "oui"
+  ],
+  "cells": {
+   "Dossier": "oui",
+   "Apporteur": "oui",
+   "Pré-dossier PC": "oui",
+   "Étude de zone": null,
+   "Gabarit": "oui",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": "oui"
+  }
+ },
+ {
+  "idu": "97419000AR0791",
+  "commune": "Sainte-Rose",
+  "donnee": "propriétaire (type)",
+  "ecart": false,
+  "valeurs": [
+   ": non déterminé."
+  ],
+  "cells": {
+   "Dossier": ": non déterminé.",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97419000AR0791",
+  "commune": "Sainte-Rose",
+  "donnee": "date des données",
+  "ecart": false,
+  "valeurs": [
+   "21/10/2026"
+  ],
+  "cells": {
+   "Dossier": "21/10/2026",
+   "Apporteur": "21/10/2026",
+   "Pré-dossier PC": null,
+   "Étude de zone": "21/10/2026",
+   "Gabarit": "21/10/2026",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": "21/10/2026"
+  }
+ },
+ {
+  "idu": "97420000AI0562",
+  "commune": "Sainte-Suzanne",
+  "donnee": "surface terrain (m²)",
+  "ecart": true,
+  "valeurs": [
+   "2654",
+   "4260"
+  ],
+  "cells": {
+   "Dossier": "4260",
+   "Apporteur": "4260",
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": "4260",
+   "Comparatif": null,
+   "Étude de faisabilité": "2654",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97420000AI0562",
+  "commune": "Sainte-Suzanne",
+  "donnee": "emprise bâtie (m²)",
+  "ecart": false,
+  "valeurs": [
+   "167"
+  ],
+  "cells": {
+   "Dossier": "167",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "167",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97420000AI0562",
+  "commune": "Sainte-Suzanne",
+  "donnee": "nombre de bâtiments",
+  "ecart": false,
+  "valeurs": [
+   "2"
+  ],
+  "cells": {
+   "Dossier": "2",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97420000AI0562",
+  "commune": "Sainte-Suzanne",
+  "donnee": "zone impl. libérée (m²)",
+  "ecart": true,
+  "valeurs": [
+   "1268",
+   "1880"
+  ],
+  "cells": {
+   "Dossier": "1880",
+   "Apporteur": null,
+   "Pré-dossier PC": "1268",
+   "Étude de zone": null,
+   "Gabarit": "1880",
+   "Comparatif": null,
+   "Étude de faisabilité": "1880",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97420000AI0562",
+  "commune": "Sainte-Suzanne",
+  "donnee": "zone impl. déduite (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97420000AI0562",
+  "commune": "Sainte-Suzanne",
+  "donnee": "pente",
+  "ecart": false,
+  "valeurs": [
+   "3,0° (5 %)"
+  ],
+  "cells": {
+   "Dossier": "3,0° (5 %)",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "3,0° (5 %)",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97420000AI0562",
+  "commune": "Sainte-Suzanne",
+  "donnee": "hauteur faît./égout",
+  "ecart": false,
+  "valeurs": [
+   "16/13"
+  ],
+  "cells": {
+   "Dossier": "16/13",
+   "Apporteur": null,
+   "Pré-dossier PC": "16/13",
+   "Étude de zone": null,
+   "Gabarit": "16/13",
+   "Comparatif": null,
+   "Étude de faisabilité": "16/13",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97420000AI0562",
+  "commune": "Sainte-Suzanne",
+  "donnee": "recul voie (m)",
+  "ecart": false,
+  "valeurs": [
+   "2"
+  ],
+  "cells": {
+   "Dossier": "2",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": "2",
+   "Comparatif": null,
+   "Étude de faisabilité": "2",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97420000AI0562",
+  "commune": "Sainte-Suzanne",
+  "donnee": "stationnement",
+  "ecart": false,
+  "valeurs": [
+   "2 pl/logt"
+  ],
+  "cells": {
+   "Dossier": "2 pl/logt",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": "2 pl/logt",
+   "Comparatif": null,
+   "Étude de faisabilité": "2 pl/logt",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97420000AI0562",
+  "commune": "Sainte-Suzanne",
+  "donnee": "pleine terre (%)",
+  "ecart": false,
+  "valeurs": [
+   "20"
+  ],
+  "cells": {
+   "Dossier": "20",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": "20",
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97420000AI0562",
+  "commune": "Sainte-Suzanne",
+  "donnee": "prix bâti (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "2614"
+  ],
+  "cells": {
+   "Dossier": "2614",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": "2614",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97420000AI0562",
+  "commune": "Sainte-Suzanne",
+  "donnee": "prix terrain (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "329"
+  ],
+  "cells": {
+   "Dossier": "329",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97420000AI0562",
+  "commune": "Sainte-Suzanne",
+  "donnee": "prix neuf VEFA (€/m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97420000AI0562",
+  "commune": "Sainte-Suzanne",
+  "donnee": "SDP résiduelle (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97420000AI0562",
+  "commune": "Sainte-Suzanne",
+  "donnee": "SDP max régl. (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97420000AI0562",
+  "commune": "Sainte-Suzanne",
+  "donnee": "contraintes relevées",
+  "ecart": false,
+  "valeurs": [
+   "oui"
+  ],
+  "cells": {
+   "Dossier": "oui",
+   "Apporteur": "oui",
+   "Pré-dossier PC": "oui",
+   "Étude de zone": null,
+   "Gabarit": "oui",
+   "Comparatif": null,
+   "Étude de faisabilité": "oui",
+   "Bilan": "oui"
+  }
+ },
+ {
+  "idu": "97420000AI0562",
+  "commune": "Sainte-Suzanne",
+  "donnee": "propriétaire (type)",
+  "ecart": false,
+  "valeurs": [
+   ": non déterminé."
+  ],
+  "cells": {
+   "Dossier": ": non déterminé.",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97420000AI0562",
+  "commune": "Sainte-Suzanne",
+  "donnee": "date des données",
+  "ecart": false,
+  "valeurs": [
+   "21/10/2026"
+  ],
+  "cells": {
+   "Dossier": "21/10/2026",
+   "Apporteur": "21/10/2026",
+   "Pré-dossier PC": null,
+   "Étude de zone": "21/10/2026",
+   "Gabarit": "21/10/2026",
+   "Comparatif": null,
+   "Étude de faisabilité": "21/10/2026",
+   "Bilan": "21/10/2026"
+  }
+ },
+ {
+  "idu": "97421000BD0396",
+  "commune": "Salazie",
+  "donnee": "surface terrain (m²)",
+  "ecart": false,
+  "valeurs": [
+   "668"
+  ],
+  "cells": {
+   "Dossier": "668",
+   "Apporteur": "668",
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": "668",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97421000BD0396",
+  "commune": "Salazie",
+  "donnee": "emprise bâtie (m²)",
+  "ecart": false,
+  "valeurs": [
+   "94"
+  ],
+  "cells": {
+   "Dossier": "94",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97421000BD0396",
+  "commune": "Salazie",
+  "donnee": "nombre de bâtiments",
+  "ecart": false,
+  "valeurs": [
+   "1"
+  ],
+  "cells": {
+   "Dossier": "1",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97421000BD0396",
+  "commune": "Salazie",
+  "donnee": "zone impl. libérée (m²)",
+  "ecart": false,
+  "valeurs": [
+   "8"
+  ],
+  "cells": {
+   "Dossier": "8",
+   "Apporteur": null,
+   "Pré-dossier PC": "8",
+   "Étude de zone": null,
+   "Gabarit": "8",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97421000BD0396",
+  "commune": "Salazie",
+  "donnee": "zone impl. déduite (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97421000BD0396",
+  "commune": "Salazie",
+  "donnee": "pente",
+  "ecart": false,
+  "valeurs": [
+   "24,2° (45 %)"
+  ],
+  "cells": {
+   "Dossier": "24,2° (45 %)",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97421000BD0396",
+  "commune": "Salazie",
+  "donnee": "hauteur faît./égout",
+  "ecart": false,
+  "valeurs": [
+   "12/?"
+  ],
+  "cells": {
+   "Dossier": "12/?",
+   "Apporteur": null,
+   "Pré-dossier PC": "12/?",
+   "Étude de zone": null,
+   "Gabarit": "12/?",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97421000BD0396",
+  "commune": "Salazie",
+  "donnee": "recul voie (m)",
+  "ecart": false,
+  "valeurs": [
+   "3"
+  ],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": "3",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97421000BD0396",
+  "commune": "Salazie",
+  "donnee": "stationnement",
+  "ecart": false,
+  "valeurs": [
+   "2 pl/logt"
+  ],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": "2 pl/logt",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97421000BD0396",
+  "commune": "Salazie",
+  "donnee": "pleine terre (%)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97421000BD0396",
+  "commune": "Salazie",
+  "donnee": "prix bâti (€/m²)",
+  "ecart": false,
+  "valeurs": [
+   "1478"
+  ],
+  "cells": {
+   "Dossier": "1478",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": "1478",
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97421000BD0396",
+  "commune": "Salazie",
+  "donnee": "prix terrain (€/m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97421000BD0396",
+  "commune": "Salazie",
+  "donnee": "prix neuf VEFA (€/m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97421000BD0396",
+  "commune": "Salazie",
+  "donnee": "SDP résiduelle (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97421000BD0396",
+  "commune": "Salazie",
+  "donnee": "SDP max régl. (m²)",
+  "ecart": false,
+  "valeurs": [],
+  "cells": {
+   "Dossier": null,
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97421000BD0396",
+  "commune": "Salazie",
+  "donnee": "contraintes relevées",
+  "ecart": false,
+  "valeurs": [
+   "oui"
+  ],
+  "cells": {
+   "Dossier": "oui",
+   "Apporteur": "oui",
+   "Pré-dossier PC": "oui",
+   "Étude de zone": null,
+   "Gabarit": "oui",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": "oui"
+  }
+ },
+ {
+  "idu": "97421000BD0396",
+  "commune": "Salazie",
+  "donnee": "propriétaire (type)",
+  "ecart": false,
+  "valeurs": [
+   ": non déterminé."
+  ],
+  "cells": {
+   "Dossier": ": non déterminé.",
+   "Apporteur": null,
+   "Pré-dossier PC": null,
+   "Étude de zone": null,
+   "Gabarit": null,
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": null
+  }
+ },
+ {
+  "idu": "97421000BD0396",
+  "commune": "Salazie",
+  "donnee": "date des données",
+  "ecart": false,
+  "valeurs": [
+   "21/10/2026"
+  ],
+  "cells": {
+   "Dossier": "21/10/2026",
+   "Apporteur": "21/10/2026",
+   "Pré-dossier PC": null,
+   "Étude de zone": "21/10/2026",
+   "Gabarit": "21/10/2026",
+   "Comparatif": null,
+   "Étude de faisabilité": null,
+   "Bilan": "21/10/2026"
+  }
+ }
+]

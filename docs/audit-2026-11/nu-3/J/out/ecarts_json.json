@@ -1,0 +1,4143 @@
+[
+ {
+  "idu": "97402000AE0617",
+  "commune": "Bras-Panon",
+  "notion": "zone_plu",
+  "cells": {
+   "fiche": "1AUD",
+   "compare": "1AUD",
+   "map": "1AUD",
+   "gabarit": "1AUD",
+   "faisa": "1AUD SUR 89 %"
+  }
+ },
+ {
+  "idu": "97402000AE0617",
+  "commune": "Bras-Panon",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 3,
+   "fiche": 2
+  }
+ },
+ {
+  "idu": "97402000AE0617",
+  "commune": "Bras-Panon",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 2.3,
+   "exposition": 4.5
+  }
+ },
+ {
+  "idu": "97402000AE0617",
+  "commune": "Bras-Panon",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 3
+  }
+ },
+ {
+  "idu": "97402000AE0617",
+  "commune": "Bras-Panon",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "public"
+  }
+ },
+ {
+  "idu": "97402000AH1282",
+  "commune": "Bras-Panon",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 2.5,
+   "exposition": 2.1
+  }
+ },
+ {
+  "idu": "97402000AH1282",
+  "commune": "Bras-Panon",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 1596,
+   "compare": 1596,
+   "estimer": 1747
+  }
+ },
+ {
+  "idu": "97402000AH1282",
+  "commune": "Bras-Panon",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97402000AO0010",
+  "commune": "Bras-Panon",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 39.8,
+   "exposition": 35
+  }
+ },
+ {
+  "idu": "97402000AO0010",
+  "commune": "Bras-Panon",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 3
+  }
+ },
+ {
+  "idu": "97402000AO0010",
+  "commune": "Bras-Panon",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 1750,
+   "compare": 1750,
+   "estimer": 2950
+  }
+ },
+ {
+  "idu": "97402000AO0010",
+  "commune": "Bras-Panon",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "pm"
+  }
+ },
+ {
+  "idu": "97402000AD0456",
+  "commune": "Bras-Panon",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 5.1,
+   "exposition": 3
+  }
+ },
+ {
+  "idu": "97402000AD0456",
+  "commune": "Bras-Panon",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2455,
+   "compare": 2455,
+   "estimer": 2098
+  }
+ },
+ {
+  "idu": "97402000AD0456",
+  "commune": "Bras-Panon",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "public"
+  }
+ },
+ {
+  "idu": "97402000AD0416",
+  "commune": "Bras-Panon",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 89,
+   "fiche": 87
+  }
+ },
+ {
+  "idu": "97402000AD0416",
+  "commune": "Bras-Panon",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 2.3,
+   "exposition": 2.8
+  }
+ },
+ {
+  "idu": "97402000AD0416",
+  "commune": "Bras-Panon",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2348,
+   "compare": 2348,
+   "estimer": 2486
+  }
+ },
+ {
+  "idu": "97402000AD0416",
+  "commune": "Bras-Panon",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97424000AE0394",
+  "commune": "Cilaos",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 10,
+   "exposition": 13.8
+  }
+ },
+ {
+  "idu": "97424000AE0394",
+  "commune": "Cilaos",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 1,
+   "fiche": 4
+  }
+ },
+ {
+  "idu": "97424000AE0394",
+  "commune": "Cilaos",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97424000AE2278",
+  "commune": "Cilaos",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 41,
+   "fiche": 37
+  }
+ },
+ {
+  "idu": "97424000AE2278",
+  "commune": "Cilaos",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 7.9,
+   "exposition": 6.7
+  }
+ },
+ {
+  "idu": "97424000AE2278",
+  "commune": "Cilaos",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 1978,
+   "compare": 1978,
+   "estimer": 1083
+  }
+ },
+ {
+  "idu": "97424000AE2278",
+  "commune": "Cilaos",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97424000AL0072",
+  "commune": "Cilaos",
+  "notion": "zone_plu",
+  "cells": {
+   "fiche": "N",
+   "compare": "N",
+   "map": "N",
+   "gabarit": "N",
+   "faisa": "UB"
+  }
+ },
+ {
+  "idu": "97424000AL0072",
+  "commune": "Cilaos",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 30.5,
+   "exposition": 20.5
+  }
+ },
+ {
+  "idu": "97424000AL0072",
+  "commune": "Cilaos",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 1,
+   "fiche": 2
+  }
+ },
+ {
+  "idu": "97424000AL0072",
+  "commune": "Cilaos",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2294,
+   "compare": 2294,
+   "estimer": 2117
+  }
+ },
+ {
+  "idu": "97424000AL0072",
+  "commune": "Cilaos",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97424000AI1476",
+  "commune": "Cilaos",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 30,
+   "fiche": 21
+  }
+ },
+ {
+  "idu": "97424000AI1476",
+  "commune": "Cilaos",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 1,
+   "fiche": 3
+  }
+ },
+ {
+  "idu": "97424000AI1476",
+  "commune": "Cilaos",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2131,
+   "compare": 2131,
+   "estimer": 2058
+  }
+ },
+ {
+  "idu": "97424000AI1476",
+  "commune": "Cilaos",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97424000AC0699",
+  "commune": "Cilaos",
+  "notion": "zone_plu",
+  "cells": {
+   "fiche": "ANC",
+   "compare": "ANC",
+   "map": "ANC",
+   "gabarit": "ANC",
+   "faisa": "UC SUR 19 %"
+  }
+ },
+ {
+  "idu": "97424000AC0699",
+  "commune": "Cilaos",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 10.5,
+   "exposition": 27.9
+  }
+ },
+ {
+  "idu": "97424000AC0699",
+  "commune": "Cilaos",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 1,
+   "fiche": 3
+  }
+ },
+ {
+  "idu": "97424000AC0699",
+  "commune": "Cilaos",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 1840,
+   "compare": 1840,
+   "estimer": 1649
+  }
+ },
+ {
+  "idu": "97424000AC0699",
+  "commune": "Cilaos",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97403000AM0767",
+  "commune": "Entre-Deux",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 5.7,
+   "exposition": 9.4
+  }
+ },
+ {
+  "idu": "97403000AM0767",
+  "commune": "Entre-Deux",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 3
+  }
+ },
+ {
+  "idu": "97403000AM0767",
+  "commune": "Entre-Deux",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97403000AM0246",
+  "commune": "Entre-Deux",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 25,
+   "fiche": 24
+  }
+ },
+ {
+  "idu": "97403000AM0246",
+  "commune": "Entre-Deux",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 10,
+   "exposition": 17
+  }
+ },
+ {
+  "idu": "97403000AM0246",
+  "commune": "Entre-Deux",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2389,
+   "compare": 2389,
+   "estimer": 3529
+  }
+ },
+ {
+  "idu": "97403000AM0246",
+  "commune": "Entre-Deux",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97403000AS0721",
+  "commune": "Entre-Deux",
+  "notion": "zone_plu",
+  "cells": {
+   "fiche": "N",
+   "compare": "N",
+   "map": "N",
+   "gabarit": "N",
+   "faisa": "UB SUR 33 %"
+  }
+ },
+ {
+  "idu": "97403000AS0721",
+  "commune": "Entre-Deux",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 10.6,
+   "exposition": 11.4
+  }
+ },
+ {
+  "idu": "97403000AS0721",
+  "commune": "Entre-Deux",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 6
+  }
+ },
+ {
+  "idu": "97403000AS0721",
+  "commune": "Entre-Deux",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 3469,
+   "compare": 3469,
+   "estimer": 3417
+  }
+ },
+ {
+  "idu": "97403000AS0721",
+  "commune": "Entre-Deux",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97403000AR1412",
+  "commune": "Entre-Deux",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 6.9,
+   "exposition": 12.2
+  }
+ },
+ {
+  "idu": "97403000AR1412",
+  "commune": "Entre-Deux",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97403000AM0580",
+  "commune": "Entre-Deux",
+  "notion": "zone_plu",
+  "cells": {
+   "fiche": "N",
+   "compare": "N",
+   "map": "N",
+   "gabarit": "N",
+   "faisa": "UB SUR 26 %"
+  }
+ },
+ {
+  "idu": "97403000AM0580",
+  "commune": "Entre-Deux",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 28.2,
+   "exposition": 34.3
+  }
+ },
+ {
+  "idu": "97403000AM0580",
+  "commune": "Entre-Deux",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 3
+  }
+ },
+ {
+  "idu": "97403000AM0580",
+  "commune": "Entre-Deux",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2678,
+   "compare": 2678,
+   "estimer": 2834
+  }
+ },
+ {
+  "idu": "97403000AM0580",
+  "commune": "Entre-Deux",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97404000AD1107",
+  "commune": "L'Étang-Salé",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 10,
+   "exposition": 8.6
+  }
+ },
+ {
+  "idu": "97404000AD1107",
+  "commune": "L'Étang-Salé",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 6
+  }
+ },
+ {
+  "idu": "97404000AD1107",
+  "commune": "L'Étang-Salé",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 5022,
+   "compare": 5022,
+   "estimer": 2408
+  }
+ },
+ {
+  "idu": "97404000AD1107",
+  "commune": "L'Étang-Salé",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97404000AT0769",
+  "commune": "L'Étang-Salé",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 90,
+   "fiche": 95
+  }
+ },
+ {
+  "idu": "97404000AT0769",
+  "commune": "L'Étang-Salé",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 11.2,
+   "exposition": 9.7
+  }
+ },
+ {
+  "idu": "97404000AT0769",
+  "commune": "L'Étang-Salé",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97404000AD1113",
+  "commune": "L'Étang-Salé",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 37.8,
+   "exposition": 38.2
+  }
+ },
+ {
+  "idu": "97404000AD1113",
+  "commune": "L'Étang-Salé",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 4
+  }
+ },
+ {
+  "idu": "97404000AD1113",
+  "commune": "L'Étang-Salé",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2758,
+   "compare": 2758,
+   "estimer": 3052
+  }
+ },
+ {
+  "idu": "97404000AD1113",
+  "commune": "L'Étang-Salé",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97404000AY0542",
+  "commune": "L'Étang-Salé",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 2.2,
+   "exposition": 1.7
+  }
+ },
+ {
+  "idu": "97404000AY0542",
+  "commune": "L'Étang-Salé",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 3321,
+   "compare": 3321,
+   "estimer": 3584
+  }
+ },
+ {
+  "idu": "97404000AY0542",
+  "commune": "L'Étang-Salé",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97404000AD0014",
+  "commune": "L'Étang-Salé",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 22.9,
+   "exposition": 24.3
+  }
+ },
+ {
+  "idu": "97404000AD0014",
+  "commune": "L'Étang-Salé",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 4
+  }
+ },
+ {
+  "idu": "97404000AD0014",
+  "commune": "L'Étang-Salé",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 3129,
+   "compare": 3129,
+   "estimer": 2680
+  }
+ },
+ {
+  "idu": "97404000AD0014",
+  "commune": "L'Étang-Salé",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97406000AV1338",
+  "commune": "La Plaine-des-Palmistes",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 4.4,
+   "exposition": 4.7
+  }
+ },
+ {
+  "idu": "97406000AV1338",
+  "commune": "La Plaine-des-Palmistes",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97406000AE0592",
+  "commune": "La Plaine-des-Palmistes",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 3.8,
+   "exposition": 5.5
+  }
+ },
+ {
+  "idu": "97406000AE0592",
+  "commune": "La Plaine-des-Palmistes",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 1935,
+   "compare": 1935,
+   "estimer": 2571
+  }
+ },
+ {
+  "idu": "97406000AE0592",
+  "commune": "La Plaine-des-Palmistes",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97406000AI0590",
+  "commune": "La Plaine-des-Palmistes",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 13.6,
+   "exposition": 7.5
+  }
+ },
+ {
+  "idu": "97406000AI0590",
+  "commune": "La Plaine-des-Palmistes",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 4
+  }
+ },
+ {
+  "idu": "97406000AI0590",
+  "commune": "La Plaine-des-Palmistes",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2194,
+   "compare": 2194,
+   "estimer": 2087
+  }
+ },
+ {
+  "idu": "97406000AI0590",
+  "commune": "La Plaine-des-Palmistes",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "public"
+  }
+ },
+ {
+  "idu": "97406000AP0252",
+  "commune": "La Plaine-des-Palmistes",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 5.1,
+   "exposition": 3.7
+  }
+ },
+ {
+  "idu": "97406000AP0252",
+  "commune": "La Plaine-des-Palmistes",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 6
+  }
+ },
+ {
+  "idu": "97406000AP0252",
+  "commune": "La Plaine-des-Palmistes",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2376,
+   "compare": 2376,
+   "estimer": 2578
+  }
+ },
+ {
+  "idu": "97406000AP0252",
+  "commune": "La Plaine-des-Palmistes",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97406000AT0703",
+  "commune": "La Plaine-des-Palmistes",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 26,
+   "fiche": 24
+  }
+ },
+ {
+  "idu": "97406000AT0703",
+  "commune": "La Plaine-des-Palmistes",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 2.6,
+   "exposition": 3.6
+  }
+ },
+ {
+  "idu": "97406000AT0703",
+  "commune": "La Plaine-des-Palmistes",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2111,
+   "compare": 2111,
+   "estimer": 2207
+  }
+ },
+ {
+  "idu": "97406000AT0703",
+  "commune": "La Plaine-des-Palmistes",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97408000AP1631",
+  "commune": "La Possession",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 12.1,
+   "exposition": 12.6
+  }
+ },
+ {
+  "idu": "97408000AP1631",
+  "commune": "La Possession",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 3
+  }
+ },
+ {
+  "idu": "97408000AP1631",
+  "commune": "La Possession",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "bailleur"
+  }
+ },
+ {
+  "idu": "97408000BI0378",
+  "commune": "La Possession",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 49,
+   "fiche": 53
+  }
+ },
+ {
+  "idu": "97408000BI0378",
+  "commune": "La Possession",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 15.2,
+   "exposition": 14.7
+  }
+ },
+ {
+  "idu": "97408000BI0378",
+  "commune": "La Possession",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 3
+  }
+ },
+ {
+  "idu": "97408000BI0378",
+  "commune": "La Possession",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2727,
+   "compare": 2727,
+   "estimer": 3093
+  }
+ },
+ {
+  "idu": "97408000BI0378",
+  "commune": "La Possession",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97408000BE0054",
+  "commune": "La Possession",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 1.6,
+   "exposition": 15
+  }
+ },
+ {
+  "idu": "97408000BE0054",
+  "commune": "La Possession",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2720,
+   "compare": 2720,
+   "estimer": 2540
+  }
+ },
+ {
+  "idu": "97408000BE0054",
+  "commune": "La Possession",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "public"
+  }
+ },
+ {
+  "idu": "97408000BM0204",
+  "commune": "La Possession",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 3.6,
+   "exposition": 2.8
+  }
+ },
+ {
+  "idu": "97408000BM0204",
+  "commune": "La Possession",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2869,
+   "compare": 2869,
+   "estimer": 3113
+  }
+ },
+ {
+  "idu": "97408000BM0204",
+  "commune": "La Possession",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97408000AR1032",
+  "commune": "La Possession",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 23,
+   "fiche": 24
+  }
+ },
+ {
+  "idu": "97408000AR1032",
+  "commune": "La Possession",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 6.4,
+   "exposition": 7
+  }
+ },
+ {
+  "idu": "97408000AR1032",
+  "commune": "La Possession",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 3057,
+   "compare": 3057,
+   "estimer": 3239
+  }
+ },
+ {
+  "idu": "97408000AR1032",
+  "commune": "La Possession",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97407000AX0193",
+  "commune": "Le Port",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 15,
+   "fiche": 18
+  }
+ },
+ {
+  "idu": "97407000AX0193",
+  "commune": "Le Port",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 7.5,
+   "exposition": 7.3
+  }
+ },
+ {
+  "idu": "97407000AX0193",
+  "commune": "Le Port",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2006,
+   "compare": 2006,
+   "estimer": 3665
+  }
+ },
+ {
+  "idu": "97407000AX0193",
+  "commune": "Le Port",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "pm"
+  }
+ },
+ {
+  "idu": "97407000AE0739",
+  "commune": "Le Port",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 1.9,
+   "exposition": 2
+  }
+ },
+ {
+  "idu": "97407000AE0739",
+  "commune": "Le Port",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2556,
+   "compare": 2556,
+   "estimer": 2550
+  }
+ },
+ {
+  "idu": "97407000AE0739",
+  "commune": "Le Port",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97407000AD0086",
+  "commune": "Le Port",
+  "notion": "zone_plu",
+  "cells": {
+   "fiche": "N",
+   "compare": "N",
+   "map": "N",
+   "gabarit": "N",
+   "faisa": "N SUR 57 %"
+  }
+ },
+ {
+  "idu": "97407000AD0086",
+  "commune": "Le Port",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 5.8,
+   "exposition": 5.9
+  }
+ },
+ {
+  "idu": "97407000AD0086",
+  "commune": "Le Port",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 3,
+   "fiche": 9
+  }
+ },
+ {
+  "idu": "97407000AD0086",
+  "commune": "Le Port",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 1884,
+   "compare": 1884,
+   "estimer": 1989
+  }
+ },
+ {
+  "idu": "97407000AD0086",
+  "commune": "Le Port",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "public"
+  }
+ },
+ {
+  "idu": "97407000AI1794",
+  "commune": "Le Port",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 3,
+   "exposition": 1.7
+  }
+ },
+ {
+  "idu": "97407000AI1794",
+  "commune": "Le Port",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2552,
+   "compare": 2552,
+   "estimer": 2755
+  }
+ },
+ {
+  "idu": "97407000AI1794",
+  "commune": "Le Port",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97407000AM0148",
+  "commune": "Le Port",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 2.1,
+   "exposition": 3.5
+  }
+ },
+ {
+  "idu": "97407000AM0148",
+  "commune": "Le Port",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "public"
+  }
+ },
+ {
+  "idu": "97422000BI1097",
+  "commune": "Le Tampon",
+  "notion": "zone_plu",
+  "cells": {
+   "fiche": "1AUE",
+   "compare": "1AUE",
+   "map": "1AUE",
+   "gabarit": "1AUE",
+   "faisa": "UB SUR 0 %"
+  }
+ },
+ {
+  "idu": "97422000BI1097",
+  "commune": "Le Tampon",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 11.1,
+   "exposition": 9.5
+  }
+ },
+ {
+  "idu": "97422000BI1097",
+  "commune": "Le Tampon",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 6
+  }
+ },
+ {
+  "idu": "97422000BI1097",
+  "commune": "Le Tampon",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "public"
+  }
+ },
+ {
+  "idu": "97422000EL0342",
+  "commune": "Le Tampon",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 7.9,
+   "exposition": 6
+  }
+ },
+ {
+  "idu": "97422000EL0342",
+  "commune": "Le Tampon",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2228,
+   "compare": 2228,
+   "estimer": 2427
+  }
+ },
+ {
+  "idu": "97422000EL0342",
+  "commune": "Le Tampon",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97422000BS1632",
+  "commune": "Le Tampon",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 7.1,
+   "exposition": 8.7
+  }
+ },
+ {
+  "idu": "97422000BS1632",
+  "commune": "Le Tampon",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 6
+  }
+ },
+ {
+  "idu": "97422000BS1632",
+  "commune": "Le Tampon",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 1962,
+   "compare": 1962,
+   "estimer": 2116
+  }
+ },
+ {
+  "idu": "97422000BS1632",
+  "commune": "Le Tampon",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97422000BT0027",
+  "commune": "Le Tampon",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 9.4,
+   "exposition": 8.5
+  }
+ },
+ {
+  "idu": "97422000BT0027",
+  "commune": "Le Tampon",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2408,
+   "compare": 2408,
+   "estimer": 2153
+  }
+ },
+ {
+  "idu": "97422000BT0027",
+  "commune": "Le Tampon",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97422000CI0650",
+  "commune": "Le Tampon",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 5.8,
+   "exposition": 5.3
+  }
+ },
+ {
+  "idu": "97422000CI0650",
+  "commune": "Le Tampon",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2000,
+   "compare": 2000,
+   "estimer": 2373
+  }
+ },
+ {
+  "idu": "97422000CI0650",
+  "commune": "Le Tampon",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97401000AT0727",
+  "commune": "Les Avirons",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 8.8,
+   "exposition": 12
+  }
+ },
+ {
+  "idu": "97401000AT0727",
+  "commune": "Les Avirons",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 6
+  }
+ },
+ {
+  "idu": "97401000AT0727",
+  "commune": "Les Avirons",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "bailleur"
+  }
+ },
+ {
+  "idu": "97401000AR1377",
+  "commune": "Les Avirons",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 3526,
+   "compare": 3526,
+   "estimer": 3882
+  }
+ },
+ {
+  "idu": "97401000AC0379",
+  "commune": "Les Avirons",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 14.2,
+   "exposition": 15.4
+  }
+ },
+ {
+  "idu": "97401000AC0379",
+  "commune": "Les Avirons",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 3
+  }
+ },
+ {
+  "idu": "97401000AC0379",
+  "commune": "Les Avirons",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 3247,
+   "compare": 3247,
+   "estimer": 1930
+  }
+ },
+ {
+  "idu": "97401000AC0379",
+  "commune": "Les Avirons",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "public"
+  }
+ },
+ {
+  "idu": "97401000AM1492",
+  "commune": "Les Avirons",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 6.1,
+   "exposition": 8.5
+  }
+ },
+ {
+  "idu": "97401000AM1492",
+  "commune": "Les Avirons",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 3247,
+   "compare": 3247,
+   "estimer": 3205
+  }
+ },
+ {
+  "idu": "97401000AM1492",
+  "commune": "Les Avirons",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97401000AL0289",
+  "commune": "Les Avirons",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 46,
+   "fiche": 48
+  }
+ },
+ {
+  "idu": "97401000AL0289",
+  "commune": "Les Avirons",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 14.8,
+   "exposition": 17
+  }
+ },
+ {
+  "idu": "97401000AL0289",
+  "commune": "Les Avirons",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2414,
+   "compare": 2414,
+   "estimer": 2570
+  }
+ },
+ {
+  "idu": "97401000AL0289",
+  "commune": "Les Avirons",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97423000AB0338",
+  "commune": "Les Trois-Bassins",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 48,
+   "fiche": 50
+  }
+ },
+ {
+  "idu": "97423000AB0338",
+  "commune": "Les Trois-Bassins",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 5.1,
+   "exposition": 8
+  }
+ },
+ {
+  "idu": "97423000AB0338",
+  "commune": "Les Trois-Bassins",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 3
+  }
+ },
+ {
+  "idu": "97423000AB0338",
+  "commune": "Les Trois-Bassins",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97423000AB0956",
+  "commune": "Les Trois-Bassins",
+  "notion": "zone_plu",
+  "cells": {
+   "fiche": "N",
+   "compare": "N",
+   "map": "N",
+   "gabarit": "N",
+   "faisa": "N SUR 81 %"
+  }
+ },
+ {
+  "idu": "97423000AB0956",
+  "commune": "Les Trois-Bassins",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 18.9,
+   "exposition": 20.8
+  }
+ },
+ {
+  "idu": "97423000AB0956",
+  "commune": "Les Trois-Bassins",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 4
+  }
+ },
+ {
+  "idu": "97423000AB0956",
+  "commune": "Les Trois-Bassins",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 4259,
+   "compare": 4259,
+   "estimer": 4416
+  }
+ },
+ {
+  "idu": "97423000AB0956",
+  "commune": "Les Trois-Bassins",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "public"
+  }
+ },
+ {
+  "idu": "97423000AE1039",
+  "commune": "Les Trois-Bassins",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 15.3,
+   "exposition": 9.3
+  }
+ },
+ {
+  "idu": "97423000AE1039",
+  "commune": "Les Trois-Bassins",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 6692,
+   "compare": 6692,
+   "estimer": 4845
+  }
+ },
+ {
+  "idu": "97423000AE1039",
+  "commune": "Les Trois-Bassins",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97423000AH1544",
+  "commune": "Les Trois-Bassins",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 11.9,
+   "exposition": 12.7
+  }
+ },
+ {
+  "idu": "97423000AH1544",
+  "commune": "Les Trois-Bassins",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2337,
+   "compare": 2337,
+   "estimer": 4153
+  }
+ },
+ {
+  "idu": "97423000AH1544",
+  "commune": "Les Trois-Bassins",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97423000AH0867",
+  "commune": "Les Trois-Bassins",
+  "notion": "zone_plu",
+  "cells": {
+   "fiche": "UB",
+   "compare": "UB",
+   "map": "UB",
+   "gabarit": "UB",
+   "faisa": "UB SUR 61 %"
+  }
+ },
+ {
+  "idu": "97423000AH0867",
+  "commune": "Les Trois-Bassins",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 47,
+   "fiche": 22
+  }
+ },
+ {
+  "idu": "97423000AH0867",
+  "commune": "Les Trois-Bassins",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 14.3,
+   "exposition": 12
+  }
+ },
+ {
+  "idu": "97423000AH0867",
+  "commune": "Les Trois-Bassins",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 6
+  }
+ },
+ {
+  "idu": "97423000AH0867",
+  "commune": "Les Trois-Bassins",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2337,
+   "compare": 2337,
+   "estimer": 4237
+  }
+ },
+ {
+  "idu": "97423000AH0867",
+  "commune": "Les Trois-Bassins",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97405000AX0036",
+  "commune": "Petite-Île",
+  "notion": "zone_plu",
+  "cells": {
+   "fiche": "1AUA",
+   "compare": "1AUA",
+   "map": "1AUA",
+   "gabarit": "1AUA",
+   "faisa": "1AUA SUR 73 %"
+  }
+ },
+ {
+  "idu": "97405000AX0036",
+  "commune": "Petite-Île",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 10.8,
+   "exposition": 12
+  }
+ },
+ {
+  "idu": "97405000AX0036",
+  "commune": "Petite-Île",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 4
+  }
+ },
+ {
+  "idu": "97405000AX0036",
+  "commune": "Petite-Île",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 3039,
+   "compare": 3039,
+   "estimer": 2343
+  }
+ },
+ {
+  "idu": "97405000AX0036",
+  "commune": "Petite-Île",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "pm"
+  }
+ },
+ {
+  "idu": "97405000AH0844",
+  "commune": "Petite-Île",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 19,
+   "exposition": 20.4
+  }
+ },
+ {
+  "idu": "97405000AH0844",
+  "commune": "Petite-Île",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 3
+  }
+ },
+ {
+  "idu": "97405000AH0844",
+  "commune": "Petite-Île",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97405000AK1424",
+  "commune": "Petite-Île",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 52,
+   "fiche": 53
+  }
+ },
+ {
+  "idu": "97405000AK1424",
+  "commune": "Petite-Île",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 6.1,
+   "exposition": 7.3
+  }
+ },
+ {
+  "idu": "97405000AK1424",
+  "commune": "Petite-Île",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2537,
+   "compare": 2537,
+   "estimer": 2313
+  }
+ },
+ {
+  "idu": "97405000AK1424",
+  "commune": "Petite-Île",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97405000BH0941",
+  "commune": "Petite-Île",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 11.6,
+   "exposition": 12.5
+  }
+ },
+ {
+  "idu": "97405000BH0941",
+  "commune": "Petite-Île",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 3046,
+   "compare": 3046,
+   "estimer": 3244
+  }
+ },
+ {
+  "idu": "97405000BH0941",
+  "commune": "Petite-Île",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97405000BI0567",
+  "commune": "Petite-Île",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 7.7,
+   "exposition": 10.6
+  }
+ },
+ {
+  "idu": "97405000BI0567",
+  "commune": "Petite-Île",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2513,
+   "compare": 2513,
+   "estimer": 2739
+  }
+ },
+ {
+  "idu": "97405000BI0567",
+  "commune": "Petite-Île",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97409000AS1236",
+  "commune": "Saint-André",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 2.6,
+   "exposition": 2.1
+  }
+ },
+ {
+  "idu": "97409000AS1236",
+  "commune": "Saint-André",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 3
+  }
+ },
+ {
+  "idu": "97409000AS1236",
+  "commune": "Saint-André",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97409000AD0083",
+  "commune": "Saint-André",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 58,
+   "fiche": 57
+  }
+ },
+ {
+  "idu": "97409000AD0083",
+  "commune": "Saint-André",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 2.4,
+   "exposition": 1.7
+  }
+ },
+ {
+  "idu": "97409000AD0083",
+  "commune": "Saint-André",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 3
+  }
+ },
+ {
+  "idu": "97409000AD0083",
+  "commune": "Saint-André",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 1641,
+   "compare": 1641,
+   "estimer": 1753
+  }
+ },
+ {
+  "idu": "97409000AD0083",
+  "commune": "Saint-André",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97409000AB0577",
+  "commune": "Saint-André",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 1.8,
+   "exposition": 4.6
+  }
+ },
+ {
+  "idu": "97409000AB0577",
+  "commune": "Saint-André",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 3,
+   "fiche": 8
+  }
+ },
+ {
+  "idu": "97409000AB0577",
+  "commune": "Saint-André",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2087,
+   "compare": 2087,
+   "estimer": 2219
+  }
+ },
+ {
+  "idu": "97409000AB0577",
+  "commune": "Saint-André",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97409000BD0418",
+  "commune": "Saint-André",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 33,
+   "fiche": 32
+  }
+ },
+ {
+  "idu": "97409000BD0418",
+  "commune": "Saint-André",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 0.9,
+   "exposition": 1.8
+  }
+ },
+ {
+  "idu": "97409000BD0418",
+  "commune": "Saint-André",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 3
+  }
+ },
+ {
+  "idu": "97409000BD0418",
+  "commune": "Saint-André",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 1830,
+   "compare": 1830,
+   "estimer": 1642
+  }
+ },
+ {
+  "idu": "97409000BD0418",
+  "commune": "Saint-André",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97409000BD0447",
+  "commune": "Saint-André",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 44,
+   "fiche": 39
+  }
+ },
+ {
+  "idu": "97409000BD0447",
+  "commune": "Saint-André",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 1.1,
+   "exposition": 2.1
+  }
+ },
+ {
+  "idu": "97409000BD0447",
+  "commune": "Saint-André",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 3
+  }
+ },
+ {
+  "idu": "97409000BD0447",
+  "commune": "Saint-André",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 1475,
+   "compare": 1475,
+   "estimer": 1655
+  }
+ },
+ {
+  "idu": "97409000BD0447",
+  "commune": "Saint-André",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97410000AT1066",
+  "commune": "Saint-Benoît",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 21,
+   "fiche": 20
+  }
+ },
+ {
+  "idu": "97410000AT1066",
+  "commune": "Saint-Benoît",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 3.7,
+   "exposition": 4.7
+  }
+ },
+ {
+  "idu": "97410000AT1066",
+  "commune": "Saint-Benoît",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 6
+  }
+ },
+ {
+  "idu": "97410000AT1066",
+  "commune": "Saint-Benoît",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 1934,
+   "compare": 1934,
+   "estimer": 1240
+  }
+ },
+ {
+  "idu": "97410000AT1066",
+  "commune": "Saint-Benoît",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "pm"
+  }
+ },
+ {
+  "idu": "97410000AS1467",
+  "commune": "Saint-Benoît",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 2.7,
+   "exposition": 3.9
+  }
+ },
+ {
+  "idu": "97410000AS1467",
+  "commune": "Saint-Benoît",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 1555,
+   "compare": 1555,
+   "estimer": 1766
+  }
+ },
+ {
+  "idu": "97410000AS1467",
+  "commune": "Saint-Benoît",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "pm"
+  }
+ },
+ {
+  "idu": "97410000CE0005",
+  "commune": "Saint-Benoît",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 23.3,
+   "exposition": 20.4
+  }
+ },
+ {
+  "idu": "97410000CE0005",
+  "commune": "Saint-Benoît",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 4
+  }
+ },
+ {
+  "idu": "97410000CE0005",
+  "commune": "Saint-Benoît",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 1545,
+   "compare": 1545,
+   "estimer": 1544
+  }
+ },
+ {
+  "idu": "97410000CE0005",
+  "commune": "Saint-Benoît",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "public"
+  }
+ },
+ {
+  "idu": "97410000AH0660",
+  "commune": "Saint-Benoît",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 12.4,
+   "exposition": 7.4
+  }
+ },
+ {
+  "idu": "97410000AH0660",
+  "commune": "Saint-Benoît",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2734,
+   "compare": 2734,
+   "estimer": 2739
+  }
+ },
+ {
+  "idu": "97410000AH0660",
+  "commune": "Saint-Benoît",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97410000AI0554",
+  "commune": "Saint-Benoît",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 9.8,
+   "exposition": 13.1
+  }
+ },
+ {
+  "idu": "97410000AI0554",
+  "commune": "Saint-Benoît",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97411000EP0106",
+  "commune": "Saint-Denis",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 29,
+   "exposition": 25.4
+  }
+ },
+ {
+  "idu": "97411000EP0106",
+  "commune": "Saint-Denis",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 1
+  }
+ },
+ {
+  "idu": "97411000EP0106",
+  "commune": "Saint-Denis",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2910,
+   "compare": 2910,
+   "estimer": 3280
+  }
+ },
+ {
+  "idu": "97411000EP0106",
+  "commune": "Saint-Denis",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97411000EP0285",
+  "commune": "Saint-Denis",
+  "notion": "zone_plu",
+  "cells": {
+   "fiche": "N",
+   "compare": "N",
+   "map": "N",
+   "gabarit": "N",
+   "faisa": "UM SUR 32 %"
+  }
+ },
+ {
+  "idu": "97411000EP0285",
+  "commune": "Saint-Denis",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 22,
+   "fiche": 13
+  }
+ },
+ {
+  "idu": "97411000EP0285",
+  "commune": "Saint-Denis",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 27.5,
+   "exposition": 28
+  }
+ },
+ {
+  "idu": "97411000EP0285",
+  "commune": "Saint-Denis",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 3
+  }
+ },
+ {
+  "idu": "97411000EP0285",
+  "commune": "Saint-Denis",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2520,
+   "compare": 2520,
+   "estimer": 2902
+  }
+ },
+ {
+  "idu": "97411000EP0285",
+  "commune": "Saint-Denis",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97411000HW0340",
+  "commune": "Saint-Denis",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 12.6,
+   "exposition": 8.8
+  }
+ },
+ {
+  "idu": "97411000HW0340",
+  "commune": "Saint-Denis",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 1
+  }
+ },
+ {
+  "idu": "97411000HW0340",
+  "commune": "Saint-Denis",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2967,
+   "compare": 2967,
+   "estimer": 3243
+  }
+ },
+ {
+  "idu": "97411000HW0340",
+  "commune": "Saint-Denis",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "public"
+  }
+ },
+ {
+  "idu": "97411000EZ0178",
+  "commune": "Saint-Denis",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 19.1,
+   "exposition": 11.8
+  }
+ },
+ {
+  "idu": "97411000EZ0178",
+  "commune": "Saint-Denis",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 1
+  }
+ },
+ {
+  "idu": "97411000EZ0178",
+  "commune": "Saint-Denis",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 3170,
+   "compare": 3170,
+   "estimer": 3490
+  }
+ },
+ {
+  "idu": "97411000EZ0178",
+  "commune": "Saint-Denis",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "pm"
+  }
+ },
+ {
+  "idu": "97411000HY0039",
+  "commune": "Saint-Denis",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 32,
+   "fiche": 31
+  }
+ },
+ {
+  "idu": "97411000HY0039",
+  "commune": "Saint-Denis",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 11.3,
+   "exposition": 7.9
+  }
+ },
+ {
+  "idu": "97411000HY0039",
+  "commune": "Saint-Denis",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 3128,
+   "compare": 3128,
+   "estimer": 3397
+  }
+ },
+ {
+  "idu": "97411000HY0039",
+  "commune": "Saint-Denis",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "pm"
+  }
+ },
+ {
+  "idu": "97412000AN0155",
+  "commune": "Saint-Joseph",
+  "notion": "zone_plu",
+  "cells": {
+   "fiche": "A",
+   "compare": "A",
+   "map": "A",
+   "gabarit": "A",
+   "faisa": "A SUR 51 %"
+  }
+ },
+ {
+  "idu": "97412000AN0155",
+  "commune": "Saint-Joseph",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 15.1,
+   "exposition": 12.9
+  }
+ },
+ {
+  "idu": "97412000AN0155",
+  "commune": "Saint-Joseph",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 6
+  }
+ },
+ {
+  "idu": "97412000AN0155",
+  "commune": "Saint-Joseph",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2364,
+   "compare": 2364,
+   "estimer": 2258
+  }
+ },
+ {
+  "idu": "97412000AN0155",
+  "commune": "Saint-Joseph",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97412000AM1955",
+  "commune": "Saint-Joseph",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 15,
+   "fiche": 16
+  }
+ },
+ {
+  "idu": "97412000AM1955",
+  "commune": "Saint-Joseph",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 12.4,
+   "exposition": 9.5
+  }
+ },
+ {
+  "idu": "97412000AM1955",
+  "commune": "Saint-Joseph",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2193,
+   "compare": 2193,
+   "estimer": 1994
+  }
+ },
+ {
+  "idu": "97412000AM1955",
+  "commune": "Saint-Joseph",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97412000AL0089",
+  "commune": "Saint-Joseph",
+  "notion": "zone_plu",
+  "cells": {
+   "fiche": "NCO",
+   "compare": "NCO",
+   "map": "NCO",
+   "gabarit": "NCO",
+   "faisa": "NCO SUR 66 %"
+  }
+ },
+ {
+  "idu": "97412000AL0089",
+  "commune": "Saint-Joseph",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 15.8,
+   "exposition": 13.1
+  }
+ },
+ {
+  "idu": "97412000AL0089",
+  "commune": "Saint-Joseph",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 5
+  }
+ },
+ {
+  "idu": "97412000AL0089",
+  "commune": "Saint-Joseph",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2325,
+   "compare": 2325,
+   "estimer": 2253
+  }
+ },
+ {
+  "idu": "97412000AL0089",
+  "commune": "Saint-Joseph",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97412000BX0071",
+  "commune": "Saint-Joseph",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 28,
+   "fiche": 26
+  }
+ },
+ {
+  "idu": "97412000BX0071",
+  "commune": "Saint-Joseph",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 4.7,
+   "exposition": 5
+  }
+ },
+ {
+  "idu": "97412000BX0071",
+  "commune": "Saint-Joseph",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 1923,
+   "compare": 1923,
+   "estimer": 2527
+  }
+ },
+ {
+  "idu": "97412000BX0071",
+  "commune": "Saint-Joseph",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97412000BX1294",
+  "commune": "Saint-Joseph",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 10.2,
+   "exposition": 7
+  }
+ },
+ {
+  "idu": "97412000BX1294",
+  "commune": "Saint-Joseph",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97413000CU0804",
+  "commune": "Saint-Leu",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 9.8,
+   "exposition": 8.3
+  }
+ },
+ {
+  "idu": "97413000CU0804",
+  "commune": "Saint-Leu",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 4910,
+   "compare": 4910,
+   "estimer": 5764
+  }
+ },
+ {
+  "idu": "97413000CU0804",
+  "commune": "Saint-Leu",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97413000DE0811",
+  "commune": "Saint-Leu",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 16.1,
+   "exposition": 13.8
+  }
+ },
+ {
+  "idu": "97413000DE0811",
+  "commune": "Saint-Leu",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 3148,
+   "compare": 3148,
+   "estimer": 4169
+  }
+ },
+ {
+  "idu": "97413000DE0811",
+  "commune": "Saint-Leu",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97413000CG0716",
+  "commune": "Saint-Leu",
+  "notion": "zone_plu",
+  "cells": {
+   "fiche": "N",
+   "compare": "N",
+   "map": "N",
+   "gabarit": "N",
+   "faisa": "UC SUR 12 %"
+  }
+ },
+ {
+  "idu": "97413000CG0716",
+  "commune": "Saint-Leu",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 29.4,
+   "exposition": 21.5
+  }
+ },
+ {
+  "idu": "97413000CG0716",
+  "commune": "Saint-Leu",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 4
+  }
+ },
+ {
+  "idu": "97413000CG0716",
+  "commune": "Saint-Leu",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2290,
+   "compare": 2290,
+   "estimer": 2591
+  }
+ },
+ {
+  "idu": "97413000CG0716",
+  "commune": "Saint-Leu",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97413000CI0683",
+  "commune": "Saint-Leu",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 24,
+   "fiche": 22
+  }
+ },
+ {
+  "idu": "97413000CI0683",
+  "commune": "Saint-Leu",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 17.5,
+   "exposition": 16.6
+  }
+ },
+ {
+  "idu": "97413000CI0683",
+  "commune": "Saint-Leu",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 4020,
+   "compare": 4020,
+   "estimer": 4530
+  }
+ },
+ {
+  "idu": "97413000CI0683",
+  "commune": "Saint-Leu",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97413000CA0244",
+  "commune": "Saint-Leu",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 9.5,
+   "exposition": 7.9
+  }
+ },
+ {
+  "idu": "97413000CA0244",
+  "commune": "Saint-Leu",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "public"
+  }
+ },
+ {
+  "idu": "97414000DY0170",
+  "commune": "Saint-Louis",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 6.4,
+   "exposition": 10.8
+  }
+ },
+ {
+  "idu": "97414000DY0170",
+  "commune": "Saint-Louis",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 4
+  }
+ },
+ {
+  "idu": "97414000DY0170",
+  "commune": "Saint-Louis",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "pm"
+  }
+ },
+ {
+  "idu": "97414000EW0697",
+  "commune": "Saint-Louis",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 52,
+   "fiche": 54
+  }
+ },
+ {
+  "idu": "97414000EW0697",
+  "commune": "Saint-Louis",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 10.7,
+   "exposition": 7.8
+  }
+ },
+ {
+  "idu": "97414000EW0697",
+  "commune": "Saint-Louis",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 3
+  }
+ },
+ {
+  "idu": "97414000EW0697",
+  "commune": "Saint-Louis",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 1961,
+   "compare": 1961,
+   "estimer": 1804
+  }
+ },
+ {
+  "idu": "97414000EW0697",
+  "commune": "Saint-Louis",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97414000HE0022",
+  "commune": "Saint-Louis",
+  "notion": "zone_plu",
+  "cells": {
+   "fiche": "N",
+   "compare": "N",
+   "map": "N",
+   "gabarit": "N",
+   "faisa": "UC"
+  }
+ },
+ {
+  "idu": "97414000HE0022",
+  "commune": "Saint-Louis",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 21.1,
+   "exposition": 15.8
+  }
+ },
+ {
+  "idu": "97414000HE0022",
+  "commune": "Saint-Louis",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 3
+  }
+ },
+ {
+  "idu": "97414000HE0022",
+  "commune": "Saint-Louis",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2301,
+   "compare": 2301,
+   "estimer": 2704
+  }
+ },
+ {
+  "idu": "97414000HE0022",
+  "commune": "Saint-Louis",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97414000CR0018",
+  "commune": "Saint-Louis",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 7.6,
+   "exposition": 8.1
+  }
+ },
+ {
+  "idu": "97414000CR0018",
+  "commune": "Saint-Louis",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 1737,
+   "compare": 1737,
+   "estimer": 1899
+  }
+ },
+ {
+  "idu": "97414000CR0018",
+  "commune": "Saint-Louis",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97414000EL0158",
+  "commune": "Saint-Louis",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 0.9,
+   "exposition": 2.3
+  }
+ },
+ {
+  "idu": "97414000EL0158",
+  "commune": "Saint-Louis",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 1991,
+   "compare": 1991,
+   "estimer": 1978
+  }
+ },
+ {
+  "idu": "97414000EL0158",
+  "commune": "Saint-Louis",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97415000CT2791",
+  "commune": "Saint-Paul",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 7.5,
+   "exposition": 6
+  }
+ },
+ {
+  "idu": "97415000CT2791",
+  "commune": "Saint-Paul",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "bailleur"
+  }
+ },
+ {
+  "idu": "97415000BR0139",
+  "commune": "Saint-Paul",
+  "notion": "zone_plu",
+  "cells": {
+   "fiche": "NERL",
+   "compare": "NERL",
+   "gabarit": "NERL",
+   "faisa": "U1B SUR 33 %"
+  }
+ },
+ {
+  "idu": "97415000BR0139",
+  "commune": "Saint-Paul",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 0.6,
+   "exposition": 15.2
+  }
+ },
+ {
+  "idu": "97415000BR0139",
+  "commune": "Saint-Paul",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2513,
+   "compare": 2513,
+   "estimer": 4543
+  }
+ },
+ {
+  "idu": "97415000BR0139",
+  "commune": "Saint-Paul",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale"
+  }
+ },
+ {
+  "idu": "97415000DE0516",
+  "commune": "Saint-Paul",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 1.6,
+   "exposition": 4.5
+  }
+ },
+ {
+  "idu": "97415000DE0516",
+  "commune": "Saint-Paul",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 6
+  }
+ },
+ {
+  "idu": "97415000DE0516",
+  "commune": "Saint-Paul",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 5349,
+   "compare": 5349,
+   "estimer": 5753
+  }
+ },
+ {
+  "idu": "97415000DE0516",
+  "commune": "Saint-Paul",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "public"
+  }
+ },
+ {
+  "idu": "97415000CH2905",
+  "commune": "Saint-Paul",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 4.5,
+   "exposition": 6.6
+  }
+ },
+ {
+  "idu": "97415000CH2905",
+  "commune": "Saint-Paul",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2661,
+   "compare": 2661,
+   "estimer": 2899
+  }
+ },
+ {
+  "idu": "97415000CH2905",
+  "commune": "Saint-Paul",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97415000DE0845",
+  "commune": "Saint-Paul",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 29,
+   "fiche": 30
+  }
+ },
+ {
+  "idu": "97415000DE0845",
+  "commune": "Saint-Paul",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 5,
+   "exposition": 10.4
+  }
+ },
+ {
+  "idu": "97415000DE0845",
+  "commune": "Saint-Paul",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 5575,
+   "compare": 5575,
+   "estimer": 6248
+  }
+ },
+ {
+  "idu": "97415000DE0845",
+  "commune": "Saint-Paul",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "pm"
+  }
+ },
+ {
+  "idu": "97417000BC0095",
+  "commune": "Saint-Philippe",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 7.6,
+   "exposition": 7.8
+  }
+ },
+ {
+  "idu": "97417000BC0095",
+  "commune": "Saint-Philippe",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 5
+  }
+ },
+ {
+  "idu": "97417000BC0095",
+  "commune": "Saint-Philippe",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "pm"
+  }
+ },
+ {
+  "idu": "97417000BC1199",
+  "commune": "Saint-Philippe",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 2.4,
+   "exposition": 4.3
+  }
+ },
+ {
+  "idu": "97417000BC1199",
+  "commune": "Saint-Philippe",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 1744,
+   "compare": 1744,
+   "estimer": 1750
+  }
+ },
+ {
+  "idu": "97417000BC1199",
+  "commune": "Saint-Philippe",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97417000AT1352",
+  "commune": "Saint-Philippe",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 3.9,
+   "exposition": 6.5
+  }
+ },
+ {
+  "idu": "97417000AT1352",
+  "commune": "Saint-Philippe",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 1636,
+   "compare": 1636,
+   "estimer": 1933
+  }
+ },
+ {
+  "idu": "97417000AT1352",
+  "commune": "Saint-Philippe",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "bailleur"
+  }
+ },
+ {
+  "idu": "97417000BO0007",
+  "commune": "Saint-Philippe",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 41.2,
+   "exposition": 40.7
+  }
+ },
+ {
+  "idu": "97417000BO0007",
+  "commune": "Saint-Philippe",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 3
+  }
+ },
+ {
+  "idu": "97417000BO0007",
+  "commune": "Saint-Philippe",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2158,
+   "compare": 2158,
+   "estimer": 4348
+  }
+ },
+ {
+  "idu": "97417000BO0007",
+  "commune": "Saint-Philippe",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "public"
+  }
+ },
+ {
+  "idu": "97417000AO0332",
+  "commune": "Saint-Philippe",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 13,
+   "exposition": 8.6
+  }
+ },
+ {
+  "idu": "97417000AO0332",
+  "commune": "Saint-Philippe",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2604,
+   "compare": 2604,
+   "estimer": 2328
+  }
+ },
+ {
+  "idu": "97417000AO0332",
+  "commune": "Saint-Philippe",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97416000CS1636",
+  "commune": "Saint-Pierre",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 7.3,
+   "exposition": 8.1
+  }
+ },
+ {
+  "idu": "97416000CS1636",
+  "commune": "Saint-Pierre",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 3
+  }
+ },
+ {
+  "idu": "97416000CS1636",
+  "commune": "Saint-Pierre",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "public"
+  }
+ },
+ {
+  "idu": "97416000DT0804",
+  "commune": "Saint-Pierre",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 29,
+   "fiche": 30
+  }
+ },
+ {
+  "idu": "97416000DT0804",
+  "commune": "Saint-Pierre",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 3,
+   "exposition": 2.4
+  }
+ },
+ {
+  "idu": "97416000DT0804",
+  "commune": "Saint-Pierre",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 3732,
+   "compare": 3732,
+   "estimer": 4047
+  }
+ },
+ {
+  "idu": "97416000DT0804",
+  "commune": "Saint-Pierre",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97416000IA1264",
+  "commune": "Saint-Pierre",
+  "notion": "zone_plu",
+  "cells": {
+   "fiche": "N",
+   "compare": "N",
+   "map": "N",
+   "gabarit": "N",
+   "faisa": "UF"
+  }
+ },
+ {
+  "idu": "97416000IA1264",
+  "commune": "Saint-Pierre",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 4,
+   "fiche": 6
+  }
+ },
+ {
+  "idu": "97416000IA1264",
+  "commune": "Saint-Pierre",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 17.1,
+   "exposition": 14.4
+  }
+ },
+ {
+  "idu": "97416000IA1264",
+  "commune": "Saint-Pierre",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 3
+  }
+ },
+ {
+  "idu": "97416000IA1264",
+  "commune": "Saint-Pierre",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2781,
+   "compare": 2781,
+   "estimer": 4017
+  }
+ },
+ {
+  "idu": "97416000IA1264",
+  "commune": "Saint-Pierre",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97416000DR0281",
+  "commune": "Saint-Pierre",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 28,
+   "fiche": 29
+  }
+ },
+ {
+  "idu": "97416000DR0281",
+  "commune": "Saint-Pierre",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 1.9,
+   "exposition": 5.3
+  }
+ },
+ {
+  "idu": "97416000DR0281",
+  "commune": "Saint-Pierre",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 3172,
+   "compare": 3172,
+   "estimer": 3635
+  }
+ },
+ {
+  "idu": "97416000DR0281",
+  "commune": "Saint-Pierre",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97416000CD0735",
+  "commune": "Saint-Pierre",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 14.9,
+   "exposition": 10.9
+  }
+ },
+ {
+  "idu": "97416000CD0735",
+  "commune": "Saint-Pierre",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 3061,
+   "compare": 3061,
+   "estimer": 3418
+  }
+ },
+ {
+  "idu": "97416000CD0735",
+  "commune": "Saint-Pierre",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97418000AP3309",
+  "commune": "Sainte-Marie",
+  "notion": "zone_plu",
+  "cells": {
+   "fiche": "N",
+   "compare": "N",
+   "map": "N",
+   "gabarit": "N",
+   "faisa": "UD SUR 22 %"
+  }
+ },
+ {
+  "idu": "97418000AP3309",
+  "commune": "Sainte-Marie",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 20,
+   "exposition": 15.3
+  }
+ },
+ {
+  "idu": "97418000AP3309",
+  "commune": "Sainte-Marie",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 6
+  }
+ },
+ {
+  "idu": "97418000AP3309",
+  "commune": "Sainte-Marie",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2472,
+   "compare": 2472,
+   "estimer": 2254
+  }
+ },
+ {
+  "idu": "97418000AP3309",
+  "commune": "Sainte-Marie",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97418000BH0624",
+  "commune": "Sainte-Marie",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 5,
+   "exposition": 16.4
+  }
+ },
+ {
+  "idu": "97418000BH0624",
+  "commune": "Sainte-Marie",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97418000AY0267",
+  "commune": "Sainte-Marie",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 2.1,
+   "exposition": 2.7
+  }
+ },
+ {
+  "idu": "97418000AY0267",
+  "commune": "Sainte-Marie",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97418000AC1203",
+  "commune": "Sainte-Marie",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 10.8,
+   "exposition": 7.1
+  }
+ },
+ {
+  "idu": "97418000AC1203",
+  "commune": "Sainte-Marie",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 3694,
+   "compare": 3694,
+   "estimer": 2933
+  }
+ },
+ {
+  "idu": "97418000AC1203",
+  "commune": "Sainte-Marie",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97418000AR1414",
+  "commune": "Sainte-Marie",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 14.7,
+   "exposition": 10.7
+  }
+ },
+ {
+  "idu": "97418000AR1414",
+  "commune": "Sainte-Marie",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2303,
+   "compare": 2303,
+   "estimer": 2590
+  }
+ },
+ {
+  "idu": "97418000AR1414",
+  "commune": "Sainte-Marie",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97419000AC0457",
+  "commune": "Sainte-Rose",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 4.6,
+   "exposition": 6.8
+  }
+ },
+ {
+  "idu": "97419000AC0457",
+  "commune": "Sainte-Rose",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 1,
+   "fiche": 3
+  }
+ },
+ {
+  "idu": "97419000AC0457",
+  "commune": "Sainte-Rose",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97419000AI0925",
+  "commune": "Sainte-Rose",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 15.1,
+   "exposition": 16.6
+  }
+ },
+ {
+  "idu": "97419000AI0925",
+  "commune": "Sainte-Rose",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 1,
+   "fiche": 2
+  }
+ },
+ {
+  "idu": "97419000AI0925",
+  "commune": "Sainte-Rose",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2079,
+   "compare": 2079,
+   "estimer": 2453
+  }
+ },
+ {
+  "idu": "97419000AI0925",
+  "commune": "Sainte-Rose",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97419000AR0791",
+  "commune": "Sainte-Rose",
+  "notion": "zone_plu",
+  "cells": {
+   "fiche": "UB",
+   "compare": "UB",
+   "map": "UB",
+   "gabarit": "UB",
+   "faisa": "UB SUR 54 %"
+  }
+ },
+ {
+  "idu": "97419000AR0791",
+  "commune": "Sainte-Rose",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 16,
+   "fiche": 22
+  }
+ },
+ {
+  "idu": "97419000AR0791",
+  "commune": "Sainte-Rose",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 3.9,
+   "exposition": 5.7
+  }
+ },
+ {
+  "idu": "97419000AR0791",
+  "commune": "Sainte-Rose",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97419000AL0771",
+  "commune": "Sainte-Rose",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 2.2,
+   "exposition": 3.3
+  }
+ },
+ {
+  "idu": "97419000AL0771",
+  "commune": "Sainte-Rose",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2689,
+   "compare": 2689,
+   "estimer": 2766
+  }
+ },
+ {
+  "idu": "97419000AL0771",
+  "commune": "Sainte-Rose",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97419000AL0180",
+  "commune": "Sainte-Rose",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2689,
+   "compare": 2689,
+   "estimer": 2944
+  }
+ },
+ {
+  "idu": "97419000AL0180",
+  "commune": "Sainte-Rose",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97420000AI0562",
+  "commune": "Sainte-Suzanne",
+  "notion": "zone_plu",
+  "cells": {
+   "fiche": "1AUA",
+   "compare": "1AUA",
+   "map": "1AUA",
+   "gabarit": "1AUA",
+   "faisa": "1AUA SUR 62 %"
+  }
+ },
+ {
+  "idu": "97420000AI0562",
+  "commune": "Sainte-Suzanne",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 7,
+   "fiche": 4
+  }
+ },
+ {
+  "idu": "97420000AI0562",
+  "commune": "Sainte-Suzanne",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 3,
+   "exposition": 3.4
+  }
+ },
+ {
+  "idu": "97420000AI0562",
+  "commune": "Sainte-Suzanne",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 6
+  }
+ },
+ {
+  "idu": "97420000AI0562",
+  "commune": "Sainte-Suzanne",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2614,
+   "compare": 2614,
+   "estimer": 2283
+  }
+ },
+ {
+  "idu": "97420000AI0562",
+  "commune": "Sainte-Suzanne",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97420000BC1587",
+  "commune": "Sainte-Suzanne",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 2.4,
+   "exposition": 3.7
+  }
+ },
+ {
+  "idu": "97420000BC1587",
+  "commune": "Sainte-Suzanne",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2143,
+   "compare": 2143,
+   "estimer": 1973
+  }
+ },
+ {
+  "idu": "97420000BC1587",
+  "commune": "Sainte-Suzanne",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97420000AO0601",
+  "commune": "Sainte-Suzanne",
+  "notion": "zone_plu",
+  "cells": {
+   "fiche": "N",
+   "compare": "N",
+   "map": "N",
+   "gabarit": "N",
+   "faisa": "UC"
+  }
+ },
+ {
+  "idu": "97420000AO0601",
+  "commune": "Sainte-Suzanne",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 16.3,
+   "exposition": 10.8
+  }
+ },
+ {
+  "idu": "97420000AO0601",
+  "commune": "Sainte-Suzanne",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 5
+  }
+ },
+ {
+  "idu": "97420000AO0601",
+  "commune": "Sainte-Suzanne",
+  "notion": "proprietaire_type",
+  "cells": {
+   "fiche": "personne morale",
+   "compare": "morale",
+   "map": "pm"
+  }
+ },
+ {
+  "idu": "97420000BH1139",
+  "commune": "Sainte-Suzanne",
+  "notion": "zone_plu",
+  "cells": {
+   "fiche": "UC1",
+   "compare": "UC1",
+   "map": "UC1",
+   "gabarit": "UC1",
+   "faisa": "UC1 SUR 57 %"
+  }
+ },
+ {
+  "idu": "97420000BH1139",
+  "commune": "Sainte-Suzanne",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 21.6,
+   "exposition": 15.4
+  }
+ },
+ {
+  "idu": "97420000BH1139",
+  "commune": "Sainte-Suzanne",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 4
+  }
+ },
+ {
+  "idu": "97420000BH1139",
+  "commune": "Sainte-Suzanne",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 2160,
+   "compare": 2160,
+   "estimer": 2011
+  }
+ },
+ {
+  "idu": "97420000BH1139",
+  "commune": "Sainte-Suzanne",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97420000AO0583",
+  "commune": "Sainte-Suzanne",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 5.4,
+   "exposition": 7.6
+  }
+ },
+ {
+  "idu": "97420000AO0583",
+  "commune": "Sainte-Suzanne",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97421000AL0156",
+  "commune": "Salazie",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 21,
+   "exposition": 16.6
+  }
+ },
+ {
+  "idu": "97421000AL0156",
+  "commune": "Salazie",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 3
+  }
+ },
+ {
+  "idu": "97421000AL0156",
+  "commune": "Salazie",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97421000AP0396",
+  "commune": "Salazie",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 2.7,
+   "exposition": 4.8
+  }
+ },
+ {
+  "idu": "97421000AP0396",
+  "commune": "Salazie",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97421000BD0396",
+  "commune": "Salazie",
+  "notion": "zone_plu",
+  "cells": {
+   "fiche": "N",
+   "compare": "N",
+   "map": "N",
+   "gabarit": "N",
+   "faisa": "UB SUR 26 %"
+  }
+ },
+ {
+  "idu": "97421000BD0396",
+  "commune": "Salazie",
+  "notion": "bati_existant_pct",
+  "cells": {
+   "compare": 27,
+   "fiche": 14
+  }
+ },
+ {
+  "idu": "97421000BD0396",
+  "commune": "Salazie",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 24.2,
+   "exposition": 9.8
+  }
+ },
+ {
+  "idu": "97421000BD0396",
+  "commune": "Salazie",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 6
+  }
+ },
+ {
+  "idu": "97421000BD0396",
+  "commune": "Salazie",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 1478,
+   "compare": 1478,
+   "estimer": 1694
+  }
+ },
+ {
+  "idu": "97421000BD0396",
+  "commune": "Salazie",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97421000AX0135",
+  "commune": "Salazie",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 8.7,
+   "exposition": 14
+  }
+ },
+ {
+  "idu": "97421000AX0135",
+  "commune": "Salazie",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 1822,
+   "compare": 1822,
+   "estimer": 2232
+  }
+ },
+ {
+  "idu": "97421000AX0135",
+  "commune": "Salazie",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ },
+ {
+  "idu": "97421000BD0405",
+  "commune": "Salazie",
+  "notion": "pente_moy_deg",
+  "cells": {
+   "fiche": 18,
+   "exposition": 9.9
+  }
+ },
+ {
+  "idu": "97421000BD0405",
+  "commune": "Salazie",
+  "notion": "n_aleas",
+  "cells": {
+   "estimer": 2,
+   "fiche": 5
+  }
+ },
+ {
+  "idu": "97421000BD0405",
+  "commune": "Salazie",
+  "notion": "mediane_bati_eur_m2",
+  "cells": {
+   "fiche": 1478,
+   "compare": 1478,
+   "estimer": 1526
+  }
+ },
+ {
+  "idu": "97421000BD0405",
+  "commune": "Salazie",
+  "notion": "proprietaire_type",
+  "cells": {
+   "compare": "particulier",
+   "map": "pp"
+  }
+ }
+]

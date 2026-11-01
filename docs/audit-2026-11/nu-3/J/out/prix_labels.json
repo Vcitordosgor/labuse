@@ -1,0 +1,1082 @@
+[
+ {
+  "idu": "97402000AE0617",
+  "etat": "bati_encore",
+  "type_prix": "appartement",
+  "median": 1596,
+  "fiab": "fiable",
+  "n": 11,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97402000AH1282",
+  "etat": "non_mesure",
+  "type_prix": "appartement",
+  "median": 1596,
+  "fiab": "fiable",
+  "n": 11,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97402000AO0010",
+  "etat": "non_mesure",
+  "type_prix": "appartement",
+  "median": 1750,
+  "fiab": "fragile",
+  "n": 107,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97402000AD0456",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2455,
+  "fiab": "fragile",
+  "n": 10,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97402000AD0416",
+  "etat": "bati_max",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2348,
+  "fiab": "fragile",
+  "n": 8,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97424000AE0394",
+  "etat": "nu",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2116,
+  "fiab": "fragile",
+  "n": 30,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97424000AE2278",
+  "etat": "bati_encore",
+  "type_prix": "mixte (appart+maison)",
+  "median": 1978,
+  "fiab": "fragile",
+  "n": 24,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97424000AL0072",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2294,
+  "fiab": "fragile",
+  "n": 38,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97424000AI1476",
+  "etat": "bati_encore",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2131,
+  "fiab": "fragile",
+  "n": 26,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97424000AC0699",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 1840,
+  "fiab": "fragile",
+  "n": 83,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97403000AM0767",
+  "etat": "nu",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2665,
+  "fiab": "fragile",
+  "n": 22,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97403000AM0246",
+  "etat": "bati_encore",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2389,
+  "fiab": "fragile",
+  "n": 23,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97403000AS0721",
+  "etat": "bati_encore",
+  "type_prix": "mixte (appart+maison)",
+  "median": 3469,
+  "fiab": "fragile",
+  "n": 20,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97403000AR1412",
+  "etat": "nu",
+  "type_prix": "mixte (appart+maison)",
+  "median": 3764,
+  "fiab": "fragile",
+  "n": 13,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97403000AM0580",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2678,
+  "fiab": "fragile",
+  "n": 14,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97404000AD1107",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 5022,
+  "fiab": "fragile",
+  "n": 9,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97404000AT0769",
+  "etat": "bati_max",
+  "type_prix": "appartement",
+  "median": 3324,
+  "fiab": "fiable",
+  "n": 14,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97404000AD1113",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2758,
+  "fiab": "fragile",
+  "n": 8,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97404000AY0542",
+  "etat": "non_mesure",
+  "type_prix": "appartement",
+  "median": 3321,
+  "fiab": "fiable",
+  "n": 10,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97404000AD0014",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 3129,
+  "fiab": "fragile",
+  "n": 13,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97406000AV1338",
+  "etat": "nu",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2324,
+  "fiab": "fragile",
+  "n": 36,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97406000AE0592",
+  "etat": "bati_max",
+  "type_prix": "mixte (appart+maison)",
+  "median": 1935,
+  "fiab": "fragile",
+  "n": 32,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97406000AI0590",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2194,
+  "fiab": "fragile",
+  "n": 25,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97406000AP0252",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2376,
+  "fiab": "fragile",
+  "n": 11,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97406000AT0703",
+  "etat": "bati_encore",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2111,
+  "fiab": "fragile",
+  "n": 8,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97408000AP1631",
+  "etat": "nu",
+  "type_prix": "appartement",
+  "median": 3001,
+  "fiab": "fiable",
+  "n": 70,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97408000BI0378",
+  "etat": "bati_max",
+  "type_prix": "appartement",
+  "median": 2727,
+  "fiab": "fiable",
+  "n": 73,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97408000BE0054",
+  "etat": "non_mesure",
+  "type_prix": "appartement",
+  "median": 2720,
+  "fiab": "fragile",
+  "n": 510,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97408000BM0204",
+  "etat": "bati_encore",
+  "type_prix": "appartement",
+  "median": 2869,
+  "fiab": "fiable",
+  "n": 85,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97408000AR1032",
+  "etat": "bati_encore",
+  "type_prix": "appartement",
+  "median": 3057,
+  "fiab": "fiable",
+  "n": 12,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97407000AX0193",
+  "etat": "bati_encore",
+  "type_prix": "appartement",
+  "median": 2006,
+  "fiab": "fragile",
+  "n": 88,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97407000AE0739",
+  "etat": "non_mesure",
+  "type_prix": "appartement",
+  "median": 2556,
+  "fiab": "fiable",
+  "n": 31,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97407000AD0086",
+  "etat": "non_mesure",
+  "type_prix": "appartement",
+  "median": 1884,
+  "fiab": "fiable",
+  "n": 14,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97407000AI1794",
+  "etat": "non_mesure",
+  "type_prix": "appartement",
+  "median": 2552,
+  "fiab": "fiable",
+  "n": 26,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97407000AM0148",
+  "etat": "nu",
+  "type_prix": "appartement",
+  "median": 1812,
+  "fiab": "fiable",
+  "n": 29,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97422000BI1097",
+  "etat": "nu",
+  "type_prix": "appartement",
+  "median": 1662,
+  "fiab": "fiable",
+  "n": 25,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97422000EL0342",
+  "etat": "bati_encore",
+  "type_prix": "appartement",
+  "median": 2228,
+  "fiab": "fiable",
+  "n": 64,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97422000BS1632",
+  "etat": "non_mesure",
+  "type_prix": "appartement",
+  "median": 1962,
+  "fiab": "fiable",
+  "n": 22,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97422000BT0027",
+  "etat": "non_mesure",
+  "type_prix": "appartement",
+  "median": 2408,
+  "fiab": "fiable",
+  "n": 40,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97422000CI0650",
+  "etat": "bati_encore",
+  "type_prix": "appartement",
+  "median": 2000,
+  "fiab": "fiable",
+  "n": 88,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97401000AT0727",
+  "etat": "bati_encore",
+  "type_prix": "appartement",
+  "median": 3175,
+  "fiab": "fiable",
+  "n": 71,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97401000AR1377",
+  "etat": "non_mesure",
+  "type_prix": "appartement",
+  "median": 3526,
+  "fiab": "fiable",
+  "n": 45,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97401000AC0379",
+  "etat": "non_mesure",
+  "type_prix": "appartement",
+  "median": 3247,
+  "fiab": "fragile",
+  "n": 109,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97401000AM1492",
+  "etat": "bati_max",
+  "type_prix": "appartement",
+  "median": 3247,
+  "fiab": "fiable",
+  "n": 11,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97401000AL0289",
+  "etat": "bati_encore",
+  "type_prix": "appartement",
+  "median": 2414,
+  "fiab": "fiable",
+  "n": 10,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97423000AB0338",
+  "etat": "bati_max",
+  "type_prix": "appartement",
+  "median": 6692,
+  "fiab": "insuffisant",
+  "n": 3,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97423000AB0956",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 4259,
+  "fiab": "fragile",
+  "n": 8,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97423000AE1039",
+  "etat": "bati_max",
+  "type_prix": "appartement",
+  "median": 6692,
+  "fiab": "insuffisant",
+  "n": 3,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97423000AH1544",
+  "etat": "bati_encore",
+  "type_prix": "appartement",
+  "median": 2337,
+  "fiab": "fiable",
+  "n": 16,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97423000AH0867",
+  "etat": "bati_max",
+  "type_prix": "appartement",
+  "median": 2337,
+  "fiab": "fiable",
+  "n": 16,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97405000AX0036",
+  "etat": "bati_max",
+  "type_prix": "mixte (appart+maison)",
+  "median": 3039,
+  "fiab": "insuffisant",
+  "n": 3,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97405000AH0844",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2283,
+  "fiab": "fragile",
+  "n": 22,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97405000AK1424",
+  "etat": "bati_max",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2537,
+  "fiab": "fragile",
+  "n": 43,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97405000BH0941",
+  "etat": "bati_encore",
+  "type_prix": "mixte (appart+maison)",
+  "median": 3046,
+  "fiab": "fragile",
+  "n": 38,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97405000BI0567",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2513,
+  "fiab": "fragile",
+  "n": 28,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97409000AS1236",
+  "etat": "nu",
+  "type_prix": "appartement",
+  "median": 2173,
+  "fiab": "fiable",
+  "n": 22,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97409000AD0083",
+  "etat": "bati_max",
+  "type_prix": "appartement",
+  "median": 1641,
+  "fiab": "fiable",
+  "n": 34,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97409000AB0577",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2087,
+  "fiab": "fragile",
+  "n": 8,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97409000BD0418",
+  "etat": "bati_encore",
+  "type_prix": "appartement",
+  "median": 1830,
+  "fiab": "fiable",
+  "n": 51,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97409000BD0447",
+  "etat": "bati_encore",
+  "type_prix": "appartement",
+  "median": 1475,
+  "fiab": "fiable",
+  "n": 33,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97410000AT1066",
+  "etat": "bati_encore",
+  "type_prix": "mixte (appart+maison)",
+  "median": 1934,
+  "fiab": "fragile",
+  "n": 11,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97410000AS1467",
+  "etat": "non_mesure",
+  "type_prix": "appartement",
+  "median": 1555,
+  "fiab": "fiable",
+  "n": 18,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97410000CE0005",
+  "etat": "non_mesure",
+  "type_prix": "appartement",
+  "median": 1545,
+  "fiab": "fragile",
+  "n": 65,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97410000AH0660",
+  "etat": "bati_encore",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2734,
+  "fiab": "fragile",
+  "n": 10,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97410000AI0554",
+  "etat": "nu",
+  "type_prix": "appartement",
+  "median": 1563,
+  "fiab": "fiable",
+  "n": 26,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97411000EP0106",
+  "etat": "non_mesure",
+  "type_prix": "appartement",
+  "median": 2910,
+  "fiab": "fiable",
+  "n": 88,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97411000EP0285",
+  "etat": "bati_max",
+  "type_prix": "appartement",
+  "median": 2520,
+  "fiab": "fiable",
+  "n": 173,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97411000HW0340",
+  "etat": "non_mesure",
+  "type_prix": "appartement",
+  "median": 2967,
+  "fiab": "fiable",
+  "n": 22,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97411000EZ0178",
+  "etat": "non_mesure",
+  "type_prix": "appartement",
+  "median": 3170,
+  "fiab": "fiable",
+  "n": 8,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97411000HY0039",
+  "etat": "bati_max",
+  "type_prix": "appartement",
+  "median": 3128,
+  "fiab": "fiable",
+  "n": 23,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97412000AN0155",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2364,
+  "fiab": "fragile",
+  "n": 17,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97412000AM1955",
+  "etat": "bati_encore",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2193,
+  "fiab": "fragile",
+  "n": 12,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97412000AL0089",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2325,
+  "fiab": "fragile",
+  "n": 24,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97412000BX0071",
+  "etat": "bati_max",
+  "type_prix": "appartement",
+  "median": 1923,
+  "fiab": "fiable",
+  "n": 23,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97412000BX1294",
+  "etat": "nu",
+  "type_prix": "appartement",
+  "median": 1892,
+  "fiab": "fiable",
+  "n": 30,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97413000CU0804",
+  "etat": "bati_encore",
+  "type_prix": "appartement",
+  "median": 4910,
+  "fiab": "fiable",
+  "n": 48,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97413000DE0811",
+  "etat": "non_mesure",
+  "type_prix": "appartement",
+  "median": 3148,
+  "fiab": "fiable",
+  "n": 29,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97413000CG0716",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2290,
+  "fiab": "fragile",
+  "n": 10,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97413000CI0683",
+  "etat": "bati_max",
+  "type_prix": "mixte (appart+maison)",
+  "median": 4020,
+  "fiab": "fragile",
+  "n": 11,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97413000CA0244",
+  "etat": "nu",
+  "type_prix": "appartement",
+  "median": 6376,
+  "fiab": "fiable",
+  "n": 8,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97414000DY0170",
+  "etat": "non_mesure",
+  "type_prix": "appartement",
+  "median": 2053,
+  "fiab": "fragile",
+  "n": 8,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97414000EW0697",
+  "etat": "bati_max",
+  "type_prix": "appartement",
+  "median": 1961,
+  "fiab": "fiable",
+  "n": 14,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97414000HE0022",
+  "etat": "non_mesure",
+  "type_prix": "appartement",
+  "median": 2301,
+  "fiab": "fiable",
+  "n": 18,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97414000CR0018",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 1737,
+  "fiab": "fragile",
+  "n": 11,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97414000EL0158",
+  "etat": "non_mesure",
+  "type_prix": "appartement",
+  "median": 1991,
+  "fiab": "fragile",
+  "n": 13,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97415000CT2791",
+  "etat": "bati_encore",
+  "type_prix": "appartement",
+  "median": null,
+  "fiab": "insuffisant",
+  "n": 0,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97415000BR0139",
+  "etat": "non_mesure",
+  "type_prix": "appartement",
+  "median": 2513,
+  "fiab": "insuffisant",
+  "n": 7,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97415000DE0516",
+  "etat": "bati_encore",
+  "type_prix": "appartement",
+  "median": 5349,
+  "fiab": "fiable",
+  "n": 91,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97415000CH2905",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2661,
+  "fiab": "fragile",
+  "n": 30,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97415000DE0845",
+  "etat": "bati_encore",
+  "type_prix": "appartement",
+  "median": 5575,
+  "fiab": "fiable",
+  "n": 102,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97417000BC0095",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2153,
+  "fiab": "fragile",
+  "n": 22,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97417000BC1199",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 1744,
+  "fiab": "fragile",
+  "n": 14,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97417000AT1352",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 1636,
+  "fiab": "fragile",
+  "n": 13,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97417000BO0007",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2158,
+  "fiab": "fragile",
+  "n": 98,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97417000AO0332",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2604,
+  "fiab": "fragile",
+  "n": 10,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97416000CS1636",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 3937,
+  "fiab": "fragile",
+  "n": 23,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97416000DT0804",
+  "etat": "bati_encore",
+  "type_prix": "appartement",
+  "median": 3732,
+  "fiab": "fiable",
+  "n": 69,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97416000IA1264",
+  "etat": "bati_max",
+  "type_prix": "appartement",
+  "median": 2781,
+  "fiab": "fiable",
+  "n": 8,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97416000DR0281",
+  "etat": "bati_encore",
+  "type_prix": "appartement",
+  "median": 3172,
+  "fiab": "fiable",
+  "n": 198,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97416000CD0735",
+  "etat": "non_mesure",
+  "type_prix": "appartement",
+  "median": 3061,
+  "fiab": "fragile",
+  "n": 948,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97418000AP3309",
+  "etat": "bati_encore",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2472,
+  "fiab": "fragile",
+  "n": 24,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97418000BH0624",
+  "etat": "nu",
+  "type_prix": "appartement",
+  "median": 2141,
+  "fiab": "fiable",
+  "n": 10,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97418000AY0267",
+  "etat": "nu",
+  "type_prix": "appartement",
+  "median": 3840,
+  "fiab": "fragile",
+  "n": 34,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97418000AC1203",
+  "etat": "non_mesure",
+  "type_prix": "appartement",
+  "median": 3694,
+  "fiab": "fragile",
+  "n": 35,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97418000AR1414",
+  "etat": "bati_encore",
+  "type_prix": "appartement",
+  "median": 2303,
+  "fiab": "fiable",
+  "n": 9,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97419000AC0457",
+  "etat": "bati_max",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2080,
+  "fiab": "fragile",
+  "n": 11,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97419000AI0925",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2079,
+  "fiab": "fragile",
+  "n": 77,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97419000AR0791",
+  "etat": "bati_encore",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2090,
+  "fiab": "fragile",
+  "n": 19,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97419000AL0771",
+  "etat": "bati_max",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2689,
+  "fiab": "fragile",
+  "n": 11,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97419000AL0180",
+  "etat": "bati_encore",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2689,
+  "fiab": "fragile",
+  "n": 9,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97420000AI0562",
+  "etat": "bati_encore",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2614,
+  "fiab": "fragile",
+  "n": 10,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97420000BC1587",
+  "etat": "non_mesure",
+  "type_prix": "appartement",
+  "median": 2143,
+  "fiab": "fiable",
+  "n": 17,
+  "perimetre": 500.0
+ },
+ {
+  "idu": "97420000AO0601",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 2168,
+  "fiab": "fragile",
+  "n": 13,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97420000BH1139",
+  "etat": "non_mesure",
+  "type_prix": "appartement",
+  "median": 2160,
+  "fiab": "fragile",
+  "n": 70,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97420000AO0583",
+  "etat": "bati_max",
+  "type_prix": "mixte (appart+maison)",
+  "median": 1667,
+  "fiab": "fragile",
+  "n": 11,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97421000AL0156",
+  "etat": "nu",
+  "type_prix": "mixte (appart+maison)",
+  "median": 1975,
+  "fiab": "fragile",
+  "n": 10,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97421000AP0396",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 1848,
+  "fiab": "fragile",
+  "n": 59,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97421000BD0396",
+  "etat": "bati_max",
+  "type_prix": "mixte (appart+maison)",
+  "median": 1478,
+  "fiab": "fragile",
+  "n": 13,
+  "perimetre": 1000.0
+ },
+ {
+  "idu": "97421000AX0135",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 1822,
+  "fiab": "fragile",
+  "n": 10,
+  "perimetre": 1500.0
+ },
+ {
+  "idu": "97421000BD0405",
+  "etat": "non_mesure",
+  "type_prix": "mixte (appart+maison)",
+  "median": 1478,
+  "fiab": "fragile",
+  "n": 13,
+  "perimetre": 1000.0
+ }
+]
