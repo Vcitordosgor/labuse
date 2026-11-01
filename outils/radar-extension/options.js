@@ -32,4 +32,18 @@ document.getElementById("save").addEventListener("click", async () => {
   setTimeout(() => { s.textContent = ""; }, 2000);
 });
 
+// RADAR-FIX-NU3-4 (M-T18) — recette déplacée du popup de prod vers les Options (repliée sous « Recette »).
+const testBtn = document.getElementById("testalarm");
+if (testBtn) {
+  testBtn.addEventListener("click", async () => {
+    const msg = document.getElementById("testalarm-msg");
+    try {
+      const res = await chrome.runtime.sendMessage({ type: "test-alarm" });
+      msg.textContent = res && res.ok
+        ? "Déclenchement programmé dans 2 min — laissez Chrome ouvert."
+        : "Erreur : " + (res && res.error ? res.error : "inconnue");
+    } catch (err) { msg.textContent = "Erreur : " + String(err); }
+  });
+}
+
 load();

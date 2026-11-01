@@ -141,6 +141,18 @@ class ConfirmationBatchIn(BaseModel):
     captured_at: str | None = None   # défaut = jour Réunion (clé d'idempotence de la passe)
 
 
+class JournalIn(BaseModel):
+    """RADAR-FIX-NU3-4 (K-RAD-04) — COMPTE-RENDU de fin de soirée posté par l'extension (succès, échec,
+    ou veille du Mac détectée). Jusqu'ici le journal de passe ne vivait que dans le `chrome.storage` du
+    navigateur : une nuit RATÉE ne laissait aucune trace active côté serveur. Désormais chaque soirée,
+    même échouée, dépose son compte-rendu — lisible dans l'admin Radar."""
+    captured_at: str
+    statut: str = "ok"            # ok | echec
+    source: str = "auto"          # auto | manuel | test
+    resume: str = ""              # la ligne lisible (identique au popup de l'extension)
+    veille_minutes: int = 0       # > 0 = le Mac a dormi pendant la fenêtre (durée estimée)
+
+
 _SOURCES = ("auto", "manuel", "test")
 
 # RADAR-FIX-3 — un retrait EXIGE une de ces preuves positives. Sans preuve, on ne retire jamais :
@@ -484,6 +496,26 @@ def radar_retiree(body: BienIn, request: Request) -> dict:
     return {"ok": True, "bien_id": body.bien_id, "statut": "retiree"}
 
 
+@router.post("/admin/radar/journal")
+def radar_journal(body: JournalIn, request: Request) -> dict:
+    """RADAR-FIX-NU3-4 (K-RAD-04) — reçoit le compte-rendu de la soirée de l'extension et le grave dans
+    l'event_log (kind EV_CAPTURE, dedup `pige:soiree:<jour Réunion>` — UNE ligne par soir, rafraîchie, via
+    `journaliser_passe`). Une soirée qui échoue ou tombe sur un Mac endormi laisse ainsi une trace active,
+    servie par `/admin/radar/check` (`dernier_journal`). Même porte/jeton que les autres endpoints Radar."""
+    from .tables import journaliser_passe
+    _exiger_radar(request)
+    statut = "echec" if (body.statut or "").strip() == "echec" else "ok"
+    jour = (body.captured_at or "")[:10] or "?"
+    titre = "Radar — compte-rendu de la soirée" + (" ⚠ échec" if statut == "echec" else "")
+    detail = (body.resume or "").strip() or ("échec de la passe" if statut == "echec" else "passe terminée")
+    if body.veille_minutes and body.veille_minutes > 0:
+        detail += f" · Mac en veille ~{int(body.veille_minutes)} min"
+    with session_scope() as db:
+        journaliser_passe(db, "soiree", titre, detail, dedup=f"pige:soiree:{jour}")
+        db.commit()
+    return {"ok": True, "statut": statut, "jour": jour}
+
+
 @router.get("/admin/radar/check")
 def radar_check(request: Request) -> dict:
     """Arbre de check quotidien : compteurs du rituel + drapeau intake vide depuis 48 h."""
@@ -534,6 +566,11 @@ def radar_check(request: Request) -> dict:
         cap = c.execute(text(
             "SELECT captured_at, sum(n_pages) AS pages, sum(n_nouvelles) AS nouv, sum(n_maj) AS maj "
             "FROM pige_passes GROUP BY captured_at ORDER BY captured_at DESC LIMIT 1")).mappings().first()
+        # RADAR-FIX-NU3-4 (K-RAD-04) — dernier COMPTE-RENDU de soirée déposé par l'extension (succès,
+        # échec, ou veille du Mac). C'est la trace qui manquait à une nuit ratée (/admin/radar/journal).
+        journal = c.execute(text(
+            "SELECT ts, titre, detail FROM event_log WHERE dedup LIKE 'pige:soiree:%' "
+            "ORDER BY ts DESC LIMIT 1")).mappings().first()
         # DASHBOARD-2 (Lot 4) — « Le flux » : rattachées / total biens / paires DVF / copros non servies.
         # rattachées & paires lisent la MÊME source que Pilotage/Circuit (pige_biens) — compteur unique.
         biens = q("SELECT count(*) FROM pige_biens")
@@ -579,6 +616,11 @@ def radar_check(request: Request) -> dict:
         # RADAR-FIX-1 (3) — dernière capture AUTOMATIQUE (extension) + drapeau « À faire : Déposer Radar ».
         "capture_auto": capture_auto,
         "capture_auto_en_retard": bool(capture_auto_en_retard),
+        # RADAR-FIX-NU3-4 (K-RAD-04) — dernier compte-rendu de soirée (succès/échec/veille), lisible à l'écran.
+        "dernier_journal": None if not journal else {
+            "ts": journal["ts"].isoformat() if journal["ts"] else None,
+            "titre": journal["titre"], "detail": journal["detail"],
+        },
     }
 
 # ══════════════ RADAR P3 · C1 — endpoints CLIENT (lecture : faits + lien, jamais le contenu) ══════════════

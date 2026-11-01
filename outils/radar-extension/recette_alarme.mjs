@@ -11,8 +11,8 @@ const store = { searchUrl: "https://www.leboncoin.fr/recherche?x", bieniciSearch
 // Page Leboncoin « riche » simulée (une seule page, pas de suivante).
 function fakeInspect() {
   return { hasNext: false, hasAditemContainer: true, looksBlocked: false,
-           outerHTML: "<html><!--leboncoin--></html>", indexDates: ["2026-10-28T20:00:00+04:00"],
-           nextData: { props: { pageProps: { searchData: { ads: [{ index_date: "2026-10-28T20:00:00+04:00" }] } } } } };
+           searchAds: [{ index_date: "2026-10-28T20:00:00+04:00" }], vignettes: [],
+           indexDates: ["2026-10-28T20:00:00+04:00"] };
 }
 
 globalThis.chrome = {

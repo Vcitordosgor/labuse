@@ -2707,6 +2707,8 @@ export interface RadarCheck {
   // RADAR-FIX-1 (3) — dernière capture AUTOMATIQUE de l'extension + drapeau « Déposer Radar » (> 26 h).
   capture_auto: { captured_at: string | null; pages: number; nouvelles: number } | null
   capture_auto_en_retard: boolean
+  // RADAR-FIX-NU3-4 (K-RAD-04) — dernier compte-rendu de soirée posté par l'extension (succès/échec/veille).
+  dernier_journal: { ts: string | null; titre: string; detail: string } | null
 }
 export const radarDeposer = (lien: string, image_b64: string, media_type: string) =>
   j<RadarProposition>('/admin/radar/deposer', {
