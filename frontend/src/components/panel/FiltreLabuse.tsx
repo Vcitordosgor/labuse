@@ -319,9 +319,19 @@ export function AffinerRecherche() {
   // descendus de la façade (copro, hauteur, emprise, SDP, déjà bâti). Le compteur du repli les
   // recense (sinon, section fermée, un filtre actif serait invisible) — ce n'est PAS le badge
   // « Filtres (N) » global (inchangé), juste l'indicateur local de cette section.
+  // FIX-NU3-2 (G-001) — filtre « Risques (PPR / aléa) » : avec / sans, exclusifs. Le token client
+  // `risques` recouvre les couches ppr+georisque_alea (expand client ET serveur) — le besoin #1 du
+  // promoteur (« zone U SANS PPR ») est enfin réalisable, cohérent avec le signal commune « PPR N % ».
+  const risqueAvec = filters.flags.includes('risques')
+  const risqueSans = filters.flagsExclus.includes('risques')
+  const setRisque = (mode: 'off' | 'avec' | 'sans') => {
+    setFilter('flags', filters.flags.filter((f) => f !== 'risques').concat(mode === 'avec' ? ['risques'] : []))
+    setFilter('flagsExclus', filters.flagsExclus.filter((f) => f !== 'risques').concat(mode === 'sans' ? ['risques'] : []))
+  }
   const nAffiner = nSig + (filters.horsCopro ? 1 : 0)   // RECETTE-1 E2 — plus de SDP/Déjà bâti (Capacité retirée)
     + (filters.hauteurMin != null || filters.hauteurMax != null ? 1 : 0)
     + (filters.empriseMin != null || filters.empriseMax != null ? 1 : 0)
+    + (risqueAvec || risqueSans ? 1 : 0)
   return (
     <div data-affiner className="mt-4">
       <button data-affiner-toggle aria-expanded={ouvert} onClick={() => setOuvert((v) => !v)}
@@ -342,6 +352,25 @@ export function AffinerRecherche() {
               onChange={(e) => setFilter('horsCopro', e.target.checked)}
               label="Sans copropriété" />
             <p className="mt-1 text-[10px] leading-snug text-txt-dim">Écarte les parcelles en copropriété (immatriculation RNIC ou copro DVF).</p>
+          </div>
+          {/* FIX-NU3-2 (G-001) — RISQUES (PPR / aléa) : trois états exclusifs. « Sans risque » répond au
+              besoin promoteur « zone U sans PPR » ; le groupe recouvre PPR + aléa Géorisques. */}
+          <div data-filtre-risques>
+            <p className="label-caps text-txt-dim">Risques (PPR / aléa)</p>
+            <div className="mt-1 flex flex-wrap gap-1">
+              {([['off', 'Peu importe'], ['avec', 'Avec un risque'], ['sans', 'Sans risque']] as const).map(([k, l]) => {
+                const on = k === 'avec' ? risqueAvec : k === 'sans' ? risqueSans : (!risqueAvec && !risqueSans)
+                return (
+                  <button key={k} type="button" data-risque={k} aria-pressed={on} onClick={() => setRisque(k)}
+                    className={`rounded-full border px-2.5 py-0.5 text-[11px] transition-colors duration-quick ${
+                      on ? 'border-mint bg-mint/20 font-medium text-txt-hi'
+                        : 'border-line-2 bg-surface-3 text-txt-mut hover:border-mint/50 hover:text-txt'}`}>
+                    {l}
+                  </button>
+                )
+              })}
+            </div>
+            <p className="mt-1 text-[10px] leading-snug text-txt-dim">PPR (zones rouge/bleue) et aléas Géorisques. « Sans risque » écarte toute parcelle portant un de ces signaux.</p>
           </div>
           {/* KELFONCIER-FIX-1 (Lot D) — FILTRES BÂTI : la MÊME donnée que la fiche §3 Bâti. Hauteur LiDAR
               faîtage (batiment_hauteur_lidar, id registre le_bien.hauteur_bati_m) et emprise bâtie en %
@@ -775,15 +804,16 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
         <div className="gcard mt-2 p-3">
         <div className="flex flex-wrap gap-1">
           {CP_COMMUNES.map(([cp, nom]) => (
-            // RECETTE-1 (E4, Vic 04/10) : au survol d'un code commune, l'infobulle (D1 — `garder` →
-            // survol) nomme la commune sous la forme « <code> — <commune> ». La valeur filtrée reste le `nom`.
+            // FIX-NU3-2 (G-002) — la chip affiche le NOM de la commune (comme la carte), plus le code
+            // postal nu : un utilisateur neuf ne devine pas que 97460 = Saint-Paul. Le CP reste au survol
+            // (infobulle « <code> — <commune> »). La valeur filtrée reste le `nom`.
             <Tip key={cp} garder side="top" tip={`${cp} — ${nom}`}>
               <button onClick={() => setCommunesFilter(
                   filters.communes.includes(nom) ? filters.communes.filter((c) => c !== nom) : [...filters.communes, nom])}
-                className={`rounded-full border px-2 py-0.5 text-[10.5px] tabular-nums transition-colors duration-quick ${
+                className={`rounded-full border px-2 py-0.5 text-[10.5px] transition-colors duration-quick ${
                   filters.communes.includes(nom) ? 'border-mint bg-mint/20 font-medium text-txt-hi'
                     : 'border-line-2 bg-surface-3 text-txt-mut hover:border-mint/50 hover:text-txt'}`}>
-                {cp}
+                {nom}
               </button>
             </Tip>
           ))}

@@ -190,7 +190,10 @@ export function Omnibox() {
   }
 
   return (
-    <div className="flex h-10 w-[360px] items-center gap-2 rounded-md border border-line-2 bg-surface-3 px-3 transition-colors duration-quick focus-within:border-mint">
+    // FIX-NU3-2 (H-m03) — le champ de recherche RÉTRÉCIT au lieu de déborder : largeur idéale 360 px,
+    // mais min-w-0 + max-w le laissent se contracter quand la fenêtre de bureau est en demi-écran
+    // (la porte appareil.ts ne filtre que l'écran PHYSIQUE, pas la fenêtre).
+    <div className="flex h-10 w-full min-w-0 max-w-[360px] items-center gap-2 rounded-md border border-line-2 bg-surface-3 px-3 transition-colors duration-quick focus-within:border-mint">
       {/* DA §10 — LA LOUPE EST DANS LE CHAMP (leading). Elle reste cliquable (lance la recherche
           sur le texte courant) ; pendant la résolution elle devient un spinner sobre (M55-B). */}
       <button
@@ -282,8 +285,10 @@ function CommuneSelect() {
 
 // M55-D stage 3 : le header ne porte aucun filtre. RECETTE-4 — ne reste que le bouton « Fiche commune ▾ ».
 function FilterChips() {
+  // FIX-NU3-2 (H-m03) — le badge « Fiche commune » (secondaire, aussi atteignable par la fiche commune)
+  // est masqué sous ~560 px pour qu'une fenêtre de bureau rétrécie ne chevauche plus la recherche.
   return (
-    <div className="flex min-w-0 items-center gap-2">
+    <div className="hidden min-[560px]:flex min-w-0 items-center gap-2">
       <CommuneSelect />
     </div>
   )
@@ -778,7 +783,7 @@ export function Header() {
       </div>
       <Omnibox />
       <FilterChips />
-      <div className="ml-auto flex items-center gap-3">
+      <div className="ml-auto flex shrink-0 items-center gap-3">
         <SignalerButton />
         <NotifBell />
         <AccountMenu />

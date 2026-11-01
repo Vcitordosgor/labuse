@@ -138,8 +138,10 @@ CATALOGUE = [
      "COMPTE, pas un délai.", "params": {"commune": "str", "mois": "int (défaut 24)"}},
     {"nom": "marche", "desc": "Marché immobilier d'une commune : terrain nu "
      "(prix_terrain_nu_par_zone), NEUF (prix_sortie_neuf), tendance (tendance_12m), loyer "
-     "(loyer_median). Le prix de l'ANCIEN est PARCELLAIRE (sector_price — demander une parcelle), "
-     "plus une ligne commune. Les grandeurs sont NOMMÉES dans data.valeurs — sers celle demandée.",
+     "(loyer_median), et la MÉDIANE PAR TYPE de bien (prix_median_maison, prix_median_appartement, "
+     "prix_median_terrain — « prix médian des maisons/appartements à X »). Le prix de l'ANCIEN est "
+     "PARCELLAIRE (sector_price — demander une parcelle), plus une ligne commune. Les grandeurs sont "
+     "NOMMÉES dans data.valeurs — sers celle demandée.",
      "params": {"commune": "str"}},
     {"nom": "compter_piscines", "desc": "Compter les PISCINES détectées (île entière ou une commune) — "
      "détection ortho/IA gelée. « combien de piscines à X », « piscines détectées ».",
@@ -792,6 +794,15 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
                     return rep
             if _est_question_regle_plu(message):
                 res = OUTILS["regles_plu_zone"](db, idu=idu_cible)
+                if res.ok:
+                    rep = _reply_compte(db, message, res, faits_fil, "QUESTION")
+                    rep["_route"] = {"intent": "QUESTION", "params": {"idu": idu_cible}, "voie": prior_voie}
+                    return rep
+            # FIX-NU3-2 (G-013) — LOYER d'une parcelle NOMMÉE → loyer OLL de la fiche (bonne commune par
+            # construction), jamais `marche` d'une commune par défaut avec une valeur DHUP contredisant
+            # la fiche. Déterministe, AVANT le flux normal ; si indisponible, on laisse suivre.
+            if _est_question_loyer(message):
+                res = OUTILS["loyer_parcelle"](db, idu=idu_cible)
                 if res.ok:
                     rep = _reply_compte(db, message, res, faits_fil, "QUESTION")
                     rep["_route"] = {"intent": "QUESTION", "params": {"idu": idu_cible}, "voie": prior_voie}
@@ -1924,6 +1935,16 @@ def _quel_champ_fiche(message: str):
 # pas être happé : le chemin résumé prime (traité en amont via _RESUME_FICHE_KW).
 _PPR_KW = ("ppr", "zone rouge", "zone bleue", "plan de prevention des risques",
            "plan de prévention des risques")
+
+
+# FIX-NU3-2 (G-013) — QUESTION DE LOYER sur une parcelle : servie par `loyer_parcelle` (OLL de la
+# fiche), jamais par `marche` d'une commune par défaut. Mots-clés loyer, hors « acheter/prix de vente ».
+_LOYER_KW = ("loyer", "louer", "locatif", "location", "rendement locatif")
+
+
+def _est_question_loyer(message: str) -> bool:
+    m = _fold_py(message.lower())
+    return any(k in m for k in (_fold_py(x) for x in _LOYER_KW))
 
 
 def _est_question_ppr(message: str) -> bool:

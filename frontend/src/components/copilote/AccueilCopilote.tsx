@@ -105,7 +105,10 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
   }, [briefOpen])
   const briefN = brief?.n ?? 0
   const briefDate = brief?.genere_le
-    ? new Date(brief.genere_le).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+    // FIX-NU3-2 (I-TPS-04) — en heure de La Réunion : un brief « lundi » (généré 7 h Réunion = dim. 21 h
+    // UTC) s'affichait « dimanche » à l'ouest d'UTC. On fige le fuseau (doctrine « tout en heure Réunion »).
+    ? new Date(brief.genere_le).toLocaleDateString('fr-FR',
+        { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Indian/Reunion' })
     : ''
   const [toutHisto, setToutHisto] = useState(false)   // #2 — « voir tout » au-delà de 4
 

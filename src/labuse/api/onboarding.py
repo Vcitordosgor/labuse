@@ -275,13 +275,18 @@ def flash_omnibox_js():
 
 # CORRECTIFS-1 A5 — pied de page PROPRE au Flash (texte fourni par Vic) : vendeur, mention fiscale
 # 293 B (franchise en base, une seule fois en pied, jamais « HT »), et clause d'aide à la décision.
-_FLASH_PIED = (
-    'Vendu par LABUSE (CLOSING CREST) · <a href="mailto:contact@labuse.immo">contact@labuse.immo</a><br>'
-    'Prix total, sans TVA à ajouter — TVA non applicable, article 293 B du CGI.<br>'
-    # CHASSE-APP-FIX-2 (point 4 J) — la clause nomme LABUSE comme sujet (« LABUSE ne remplace ni… »),
-    # plus « Document d'aide à la décision… Il ne remplace ni… » (sujet flou).
-    "Document d'aide à la décision établi à partir des données publiques. LABUSE ne remplace ni le "
-    "certificat d'urbanisme délivré par la mairie, ni le conseil d'un notaire.")
+# FIX-NU3-2 (M-P05) — la MENTION FISCALE est désormais LUE de `config.facture_mention` (source UNIQUE,
+# la même que le pied de facture Stripe), au lieu d'être figée « sans TVA à ajouter — art. 293 B ». Le
+# jour de l'assujettissement TVA, Vic change `facture_mention` → la page /flash suit, sans mentir.
+def _flash_pied() -> str:
+    mention = get_settings().facture_mention
+    return (
+        'Vendu par LABUSE (CLOSING CREST) · <a href="mailto:contact@labuse.immo">contact@labuse.immo</a><br>'
+        f'Prix total. {mention}<br>'
+        # CHASSE-APP-FIX-2 (point 4 J) — la clause nomme LABUSE comme sujet (« LABUSE ne remplace ni… »),
+        # plus « Document d'aide à la décision… Il ne remplace ni… » (sujet flou).
+        "Document d'aide à la décision établi à partir des données publiques. LABUSE ne remplace ni le "
+        "certificat d'urbanisme délivré par la mairie, ni le conseil d'un notaire.")
 
 
 def _page(titre: str, corps: str, large: bool = False, head: str = "", pied: bool = True,
@@ -846,7 +851,16 @@ def moi(request: Request, db: Session = Depends(get_db)):
     o = offre_integral()
     plan_label = {"integral": o["label"], PLAN_INTERNE: "Interne"}.get(plan, plan.capitalize())
     _iso = lambda d: d.date().isoformat() if d is not None else None   # noqa: E731 — date seule (jour)
+    # FIX-NU3-2 (I-CPT-01 — décision Vic) — `acces` : « complet » (normal, ou grâce en cours avec
+    # bandeau) ou « lecture_seule » (grâce de 7 j dépassée → écritures refusées). Quand le compte est
+    # en défaut de paiement, on sert aussi le LIEN DE RÉGULARISATION (page de bascule Checkout).
+    acces = u.get("acces", "complet")
+    lien_regularisation = None
+    if u["statut_compte"] == "paiement_requis":
+        from . import coffre_ui
+        lien_regularisation = f"/onboarding/paiement?t={coffre_ui.pay_token(u['compte_id'])}"
     return {"mode": "compte", "role": u["role"], "statut_compte": u["statut_compte"],
+            "acces": acces, "lien_regularisation": lien_regularisation,
             "email": row["email"] if row else None,
             "nom": row["nom"] if row else None,
             "depuis": _iso(row["created_at"]) if row else None,
@@ -1076,7 +1090,7 @@ def flash_page(idu: str = "", q: str = "", annule: int = 0, cgv: str = "",
 <input type="checkbox" name="cgv" value="1" required style="margin-top:2px;flex:0 0 auto;accent-color:var(--mint);width:16px;height:16px">
 <span>J'agis pour les besoins de mon activité professionnelle et j'accepte les <a href="/cgv" target="_blank" rel="noopener" style="color:var(--mint)">conditions générales de vente</a>.</span></label>
 <button type="submit">Payer {of['eur']} € et recevoir mon rapport →</button></form>
-<p class="linkrow"><a href="/flash">← changer de parcelle</a></p>""", gate=False, foot=_FLASH_PIED))
+<p class="linkrow"><a href="/flash">← changer de parcelle</a></p>""", gate=False, foot=_flash_pied()))
     introuvable = ('<p class="err">Parcelle introuvable — vérifiez l\'IDU (14 caractères).</p>'
                    if idu and not parcelle else "")
     return HTMLResponse(_page("rapport Flash", f"""
@@ -1113,7 +1127,7 @@ def flash_page(idu: str = "", q: str = "", annule: int = 0, cgv: str = "",
 <button type="submit">Voir ma parcelle <span class="arr" aria-hidden="true">→</span></button>
 </form>
 <p class="note">Vous verrez la parcelle avant de payer. Rien n'est débité à cette étape.</p>
-<script src="/flash-omnibox.js" defer></script>""", gate=False, foot=_FLASH_PIED))
+<script src="/flash-omnibox.js" defer></script>""", gate=False, foot=_flash_pied()))
 
 
 # CORRECTIFS-1 A2 — la barre finale `/flash/` renvoie en 308 (permanent, méthode préservée)

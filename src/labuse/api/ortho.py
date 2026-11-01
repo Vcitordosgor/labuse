@@ -45,7 +45,7 @@ def equipements(idu: str, db: Session = Depends(get_db)) -> dict:
     from ..sources_catalog import source_active
     if not source_active(db, "%ortho%"):
         return {"desactivee": True, "millesime": None,
-                "source": "Source ortho désactivée au dashboard — badges non servis."}
+                "source": "Source ortho désactivée au tableau de bord — badges non servis."}
     # CONNEXIONS-2 Lot 6.4 — millésime LU dans data_sources (centralisé), plus en dur.
     mil = millesime_servi(db)
     return {**dict(row), "millesime": mil,

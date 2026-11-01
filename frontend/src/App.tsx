@@ -404,7 +404,14 @@ export default function App() {
     // (Alias d'URL #pg=vues / pg=segments retiré avec le spin-off « Vues » — M12 Lot C-bis.)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+  // FIX-NU3-2 (G-015) — l'effet de LECTURE du hash (ci-dessus, []) pose les filtres via setFilters ;
+  // cet effet d'ÉCRITURE se déclenche AUSSI au premier rendu, AVANT que ce setFilters ne soit appliqué
+  // → il réécrivait le hash depuis des filtres encore VIDES et EFFAÇAIT la recherche partagée/rechargée
+  // (le symptôme « retour à 433 229 »). On saute donc la toute première exécution : le hash lu reste
+  // autoritaire ; dès le premier vrai changement de filtre, l'écriture reprend normalement.
+  const hashEcritAmorce = useRef(false)
   useEffect(() => {
+    if (!hashEcritAmorce.current) { hashEcritAmorce.current = true; return }
     let h = filtersToHash(filters, zone)
     const add = (kv: string) => { h = (h ? `${h}&` : '#f=1&') + kv }
     if (commune) add(`c=${encodeURIComponent(commune)}`)
@@ -513,9 +520,10 @@ export default function App() {
 }
 
 
-/** PREMIER EURO · E2 — l'état d'abonnement AFFICHÉ, jamais un 500 : « paiement requis »
- *  en bandeau st-creuser (l'accès continue pendant les relances Stripe) ; suspension =
- *  la session meurt côté serveur, ce bandeau n'a donc jamais à la dire. Session locale (dev) : rien. */
+/** PREMIER EURO · E2 — l'état d'abonnement AFFICHÉ, jamais un 500. FIX-NU3-2 (I-CPT-01, décision Vic) :
+ *  défaut de paiement → 7 jours de GRÂCE (accès complet, bandeau ambre), puis LECTURE SEULE (bandeau
+ *  corail + bouton « Régulariser » vers la page de bascule Checkout). Suspension = session morte côté
+ *  serveur, ce bandeau n'a donc jamais à la dire. Session locale (dev) : rien. */
 function CompteBandeau() {
   const moi = useQuery({
     queryKey: ['moi'],
@@ -523,11 +531,30 @@ function CompteBandeau() {
     staleTime: 300_000, retry: false,
   })
   if (moi.data?.mode !== 'compte' || moi.data?.statut_compte !== 'paiement_requis') return null
+  const lectureSeule = moi.data?.acces === 'lecture_seule'
+  const lien = moi.data?.lien_regularisation || '/facturation'
+  if (lectureSeule) {
+    return (
+      <div data-compte-bandeau role="alert"
+           className="flex shrink-0 items-center gap-3 border-b border-coral/40 bg-coral/10 px-4 py-1.5 text-[11.5px] text-coral">
+        <span aria-hidden>▲</span>
+        <span>Accès en lecture seule — votre abonnement est à régulariser. Les modifications sont
+          suspendues jusqu'au paiement.</span>
+        <a href={lien} className="ml-auto shrink-0 rounded border border-coral/60 px-2 py-0.5 font-medium hover:bg-coral/20">
+          Régulariser
+        </a>
+      </div>
+    )
+  }
   return (
-    <div data-compte-bandeau className="flex shrink-0 items-center gap-2 border-b border-st-creuser/40 bg-st-creuser/10 px-4 py-1.5 text-[11.5px] text-st-creuser">
+    <div data-compte-bandeau role="status"
+         className="flex shrink-0 items-center gap-3 border-b border-st-creuser/40 bg-st-creuser/10 px-4 py-1.5 text-[11.5px] text-st-creuser">
       <span aria-hidden>▲</span>
-      Paiement requis — le dernier prélèvement n'a pas abouti. Mettez à jour votre moyen de
-      paiement depuis la facture Stripe reçue par email ; l'accès sera suspendu sans régularisation.
+      <span>Paiement requis — le dernier prélèvement n'a pas abouti. Mettez à jour votre moyen de
+        paiement sous 7 jours ; passé ce délai, l'accès passe en lecture seule.</span>
+      <a href={lien} className="ml-auto shrink-0 rounded border border-st-creuser/60 px-2 py-0.5 font-medium hover:bg-st-creuser/20">
+        Régulariser
+      </a>
     </div>
   )
 }

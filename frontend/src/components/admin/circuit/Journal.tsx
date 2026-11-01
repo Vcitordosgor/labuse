@@ -39,7 +39,7 @@ function repartition(e: any): { txt: string; couleur: string } {
 }
 
 const quand = (ts: string) =>
-  new Date(ts).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+  new Date(ts).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Indian/Reunion' })
 
 export function Journal({ data, onOpen, onAujourdhui }:
   { data: CircuitData; onOpen: Ouvrir; onAujourdhui?: (n: number) => void }) {

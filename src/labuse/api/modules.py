@@ -1845,7 +1845,7 @@ def _hyp_modifiables(commune: str | None) -> list[dict]:
 @router.get("/faisabilite/{idu}")
 def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
     """SENS 1 (parcelle → programme) : « que peut accueillir ce terrain ? » + bilan économique."""
-    _check_idu(idu)   # M-K (P2-31)
+    idu = _check_idu(idu)   # M-K (P2-31)
     from ..faisabilite.au_ouverture import DELAISSE_MAX_M2
     from ..faisabilite.bilan import compute_bilan_servi
     from ..faisabilite.db import parcel_faisabilite
@@ -1960,7 +1960,7 @@ def faisabilite_recalcul(idu: str, body: RecalculIn, db: Session = Depends(get_d
     surchargées. UN SEUL moteur : `parcel_faisabilite(hyp_overrides=…)` (aucune reimplémentation),
     donc « recalcul immédiat de tout ce qui suit » sans divergence. Renvoie le même bloc `capacite`
     que sens1 + `overrides_retenus` (ce qui a été accepté, bornes appliquées)."""
-    _check_idu(idu)
+    idu = _check_idu(idu)
     from ..faisabilite.db import parcel_faisabilite
     from ..faisabilite.engine import Hypotheses, appliquer_overrides_hypotheses, hypotheses_modifiables
 
@@ -2000,7 +2000,7 @@ def faisabilite_scenario_route(idu: str, body: ScenarioIn, db: Session = Depends
     """FAISABILITE-3 — UN SEUL appel sert le panneau (maquette validée). UN SEUL moteur :
     `faisabilite_scenario` (parcel_faisabilite + compute_residuel, aucune reimplémentation). None
     si la parcelle est hors PLU → `{scenario: None}` (le front dit « capacité non calculable »)."""
-    _check_idu(idu)
+    idu = _check_idu(idu)
     from ..faisabilite.scenarios import faisabilite_scenario
 
     row = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).mappings().first()
@@ -2265,7 +2265,7 @@ def etude_parcelles(body: EtudeParcellesIn, db: Session = Depends(get_db)) -> di
     from ..implantation.assiette import valider_parcelles
 
     for idu in (body.idus or []):
-        _check_idu(idu)
+        idu = _check_idu(idu)
     try:
         return valider_parcelles(db, body.idus)
     except ValueError as exc:
@@ -2286,7 +2286,7 @@ def etude_stationnement(body: EtudeStationnementIn, db: Session = Depends(get_db
     from ..implantation.service import stationnement_payload
 
     for idu in (body.idus or []):
-        _check_idu(idu)
+        idu = _check_idu(idu)
     try:
         return stationnement_payload(db, body.idus, body.type_projet)
     except ValueError as exc:
@@ -2300,7 +2300,7 @@ def etude_jauge(body: EtudeStationnementIn, db: Session = Depends(get_db)) -> di
     from ..implantation.service import jauge_payload
 
     for idu in (body.idus or []):
-        _check_idu(idu)
+        idu = _check_idu(idu)
     try:
         return jauge_payload(db, body.idus, body.type_projet)
     except ValueError as exc:
@@ -2317,7 +2317,7 @@ def etude_implantation(body: EtudeIn, db: Session = Depends(get_db)) -> dict:
     processus séparé TUABLE : au-delà de la borne (LABUSE_ETUDE_TIMEOUT_S, 60 s) → 503 honnête « relancez »
     et le processus est tué (plus jamais de thread fantôme qui affame les autres requêtes)."""
     for idu in (body.idus or []):
-        _check_idu(idu)
+        idu = _check_idu(idu)
     try:
         # ETUDE-ASYNC-1 — calcul ET enrichissements (_attach_*) dans le processus enfant tuable : la boucle
         # de l'API ne porte plus aucun travail lourd d'étude. Mêmes chiffres qu'avant (même code, même DB).
@@ -2379,7 +2379,7 @@ def etude_pdf(body: EtudePdfIn, request: Request, db: Session = Depends(get_db))
     from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (D-13) — « généré le » au jour Réunion
 
     for idu in (body.idus or []):
-        _check_idu(idu)
+        idu = _check_idu(idu)
     data = body.model_dump()
     scenario_ref = data.pop("scenario_ref", None)
     empreinte = data.pop("empreinte", None)   # Lot 5.1 — hors moteur, rangée dans la recette archivée
@@ -2428,7 +2428,7 @@ def faisabilite_charge(idu: str, body: ChargeIn, db: Session = Depends(get_db)) 
     (capacité) + prix de sortie (DVF) sont SOURCÉS ; le coût de construction et la marge viennent
     du corps de requête (hypothèses du promoteur). Cas limites honnêtes : capacité non résolue ou
     prix DVF insuffisant → `calculable:false` + raison, jamais un faux chiffre."""
-    _check_idu(idu)   # M-K (P2-31)
+    idu = _check_idu(idu)   # M-K (P2-31)
     from ..faisabilite.bilan import (
         CALCULETTE_COUT_DEFAUT_M2,
         CALCULETTE_MARGE_FRAIS_DEFAUT_PCT,
@@ -2574,7 +2574,7 @@ def faisabilite_explain(idu: str, db: Session = Depends(get_db)) -> dict:
     """M11 Surface C : explication EN CLAIR de la dérivation du chiffrage, ancrée sur les STEPS du
     moteur (déterministes). L'IA narre, elle ne recalcule pas ; la couche 2 du socle rejette tout
     chiffre absent des étapes. Sur clic uniquement (coût) ; caché par (idu, run, question)."""
-    _check_idu(idu)   # M-K (P2-31)
+    idu = _check_idu(idu)   # M-K (P2-31)
     from ..ai import core
     QUESTION = "explication_faisabilite"
 
@@ -2632,7 +2632,7 @@ def verif_procedure(idu: str, db: Session = Depends(get_db)) -> dict:
     # « Parcelle inconnue » sur un IDU VALIDE venait d'un lookup `WHERE idu = :i` sur l'IDU BRUT : un IDU
     # collé avec un espace/retour en queue, ou saisi en minuscules (97413000cj0096), ne matchait pas.
     idu = (idu or "").strip().upper()
-    _check_idu(idu)   # M-K (P2-31)
+    idu = _check_idu(idu)   # M-K (P2-31)
     from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — « consulté le » au jour Réunion
     from ..verdict_servi import verdict_servi
     from .. import veille_plu as V

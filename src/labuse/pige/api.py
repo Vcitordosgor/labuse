@@ -8,8 +8,9 @@ from __future__ import annotations
 
 import base64
 import logging
+import math
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel
 from sqlalchemy import text
 
@@ -1594,7 +1595,10 @@ def _surface_pour_total(db, idu: str, emprise, mut: dict | None, insee: str,
          maisons de la commune (ratio + assise JOURNALISÉS).
     Plus JAMAIS l'emprise brute × un prix habitable. Le libellé dit quelle surface a servi.
     Renvoie (surface_m2, source) ou (None, None) si aucune surface n'est disponible."""
-    if isinstance(surface_hab, (int, float)) and surface_hab > 0:
+    # FIX-NU3-2 (H-M01) — le garde testait le SIGNE (`> 0`) mais jamais la FINITUDE : `inf`/`1e309`
+    # passaient `> 0` puis faisaient lever `round(inf)` (OverflowError → 500 brut). On exige désormais
+    # une valeur FINIE (ceinture interne, en plus du bornage `Query(gt=0, le=100000)` des routes).
+    if isinstance(surface_hab, (int, float)) and math.isfinite(surface_hab) and surface_hab > 0:
         s = round(surface_hab)
         return s, {"source": "surface_saisie",
                    "ligne": f"Surface habitable saisie ({s} m²)",
@@ -1798,7 +1802,10 @@ def estimation_annonce(db, idu: str, fiche: dict, surface_hab: float | None = No
 
 
 @router.get("/radar/annonce/estimation/{idu}")
-def radar_annonce_estimation(idu: str, surface_hab: float | None = None) -> dict:
+def radar_annonce_estimation(
+    idu: str,
+    surface_hab: float | None = Query(None, gt=0, le=100000),
+) -> dict:
     """ANNONCE-3-FIX — l'estimation du prix d'une parcelle, selon sa NATURE (nue → terrain nu, bâtie →
     bâti). Lit la fiche SERVIE (lecture seule) puis `estimation_annonce` (point unique). L'écran et le
     PDF lisent exactement ce rapport → mêmes chiffres, même règle."""
@@ -2160,7 +2167,10 @@ def rapport_parcelle(db, idu: str, fiche: dict | None = None, surface_hab: float
 
 
 @router.get("/radar/annonce/rapport/{idu}")
-def radar_annonce_rapport(idu: str, surface_hab: float | None = None) -> dict:
+def radar_annonce_rapport(
+    idu: str,
+    surface_hab: float | None = Query(None, gt=0, le=100000),
+) -> dict:
     """ANNONCE-5 — le rapport PARCELLE complet (adresse) servi à l'écran ET au PDF (même point).
     Lecture seule de la fiche servie. Parcelle inconnue → structure minimale, jamais un 500.
     ESTIMER-PRECISION-1 — `surface_hab` (facultatif) : surface habitable saisie → le total l'utilise."""

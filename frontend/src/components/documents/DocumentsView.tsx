@@ -12,6 +12,7 @@ import { Bouton } from '../ui/Bouton'
 import { Chip } from '../ui/Chip'
 import { Chargement } from '../Loading'
 import { ParcelInput } from '../ParcelInput'
+import { usePiegeFocus } from '../../lib/usePiegeFocus'
 // RECETTE-4 — DestinationSelect retiré de la fenêtre Docs Étude de zone (menu Activité supprimé).
 import { BilanEcran } from '../fiche/BilanEcran'
 import {
@@ -22,7 +23,7 @@ import {
   listerDocuments, enregistrerDocument, rafraichirDocument,
   type DocType, type DocGenereRow, type EtudePdfIn,
 } from '../../lib/api'
-import { fmtM2, iduComplet } from '../../lib/format'
+import { fmtDateNum, fmtM2, iduComplet } from '../../lib/format'
 import { editeurDiffere } from '../../lib/empreinteDoc'
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'
 import { supprimerDocument, getMoteursConfig } from '../../lib/api'
@@ -152,6 +153,9 @@ function ParcelleResolue({ idu, onFiche, showFiche = true }: { idu: string; onFi
 
 // ── la porte (fenêtre centrée) : ✕ / Échap / clic hors fenêtre ferment. ──
 function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
+  // FIX-NU3-2 (M-A04) — piège de focus + Échap + restitution au déclencheur sur la modale « document ».
+  const dialogRef = useRef<HTMLDivElement | null>(null)
+  usePiegeFocus(true, dialogRef, onClose)
   const select = useApp((s) => s.select)
   const setView = useApp((s) => s.setView)
   const ouvrirEtude = useApp((s) => s.ouvrirEtude)   // IMPLANTATION-4 (LOT A) — la carte Étude ouvre l'overlay
@@ -227,7 +231,7 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(6,10,8,0.72)] p-4" onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-label={d.nom}
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={d.nom}
         className="w-[420px] max-w-full rounded-md border border-line-2 bg-surface-1 p-4" onClick={(e) => e.stopPropagation()}>
         <header className="mb-3 flex items-center justify-between">
           <div className="text-[16px] font-bold text-txt">{d.nom}</div>
@@ -363,7 +367,9 @@ const FILTRES: { label: string; type: DocType | null }[] = [
   { label: 'Étude de zone', type: 'etude-zone' }, { label: 'Étude de faisabilité', type: 'etude-faisabilite' },
   { label: 'Estimer un bien', type: 'analyse-annonce' },   // RECETTE-4 — libellé (type interne inchangé)
 ]
-const dateFr = (iso: string) => { const d = new Date(iso); return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}` }
+// FIX-NU3-2 (I-TPS-04) — « Document généré le … » en heure de La Réunion (le dérivé getDate()/getMonth()
+// local rendait J-1 à l'ouest d'UTC). Un seul formateur pour toute l'app (lib/format, fuseau figé).
+const dateFr = (iso: string) => fmtDateNum(iso)
 
 function sur(r: DocGenereRow): string {
   if (r.doc_type === 'etude-zone') return `Rayon ${r.rayon_km ?? 2} km autour de ${iduComplet(r.idus[0] ?? '')}`

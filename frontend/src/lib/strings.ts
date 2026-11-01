@@ -58,8 +58,9 @@ export const CLIENT = {
     // réserve d'honnêteté ; le sourcing détaillé vit sur la page Sources. Chaînes supprimées.
     commencer: 'Commencer →',
     // M65 P2c — second bouton (mauve) : ouvre l'onglet Copilote (« IA »).
-    // M61 P6b : verbe retiré → « LABUSE IA » (tient sur une ligne à côté de « Commencer »).
-    decouvrir: 'LABUSE IA',
+    // FIX-NU3-2 (M-T05) — un seul nom : « Copilote » partout (le CTA disait « LABUSE IA », deux noms
+    // sur le parcours d'entrée). « IA » reste la mention de NATURE (surface mauve), pas le nom.
+    decouvrir: 'Copilote',
   },
   // ── M55-D stage 7 · COMPTEUR VIVANT — le funnel en bas de la section Filtres. Toujours la
   //    réponse /filtre réelle (debounce 400 ms, appels obsolètes annulés), jamais une estimation. ──

@@ -15,7 +15,7 @@ import {
 import type { CircuitData, CockpitEtape } from './types'
 
 const quand = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'
+  iso ? new Date(iso).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Indian/Reunion' }) : '—'
 
 const resultat = (s: string | null) =>
   s === 'ok' ? 'ok' : s === 'dry-run' ? 'ok (à vide)' : s === 'echec' ? 'échec'

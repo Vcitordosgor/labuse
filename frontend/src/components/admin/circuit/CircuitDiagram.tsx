@@ -127,7 +127,7 @@ export function CircuitDiagram({ data, groupe, onOpen, elements = [], onInjecter
     return () => { window.removeEventListener('resize', bump); window.removeEventListener('scroll', bump); ro?.disconnect() }
   }, [])
 
-  const dateFr = (s: string | null) => s ? new Date(s).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : ''
+  const dateFr = (s: string | null) => s ? new Date(s).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', timeZone: 'Indian/Reunion' }) : ''
   const parentNom = (rid: string | null) => rid ? (maps.robinetById.get(rid)?.nom || rid) : ''
 
   const famOuverte = (nom: string, aMatch: boolean) => openFam === nom || ((!!q || enGroupe) && aMatch)

@@ -24,11 +24,13 @@ export const fmtEur = (n: number | null | undefined, _chiffreId?: string): strin
 export const fmtM2 = (m2: number | null | undefined, _chiffreId?: string): string =>
   m2 == null ? '—' : m2 >= 10_000 ? `${fmtDec(m2 / 10_000, 2)} ha` : `${fmtInt(m2)} m²`
 
-/** montant compact (cartes, badges) : 450 k€ / 2 M€ / 2,4 M€ */
+/** montant compact (cartes, badges) : 450 k€ / 2 M€ / 2,4 M€.
+ *  FIX-NU3-2 (M-T13) — espace INSÉCABLE (U+00A0) avant « M€ »/« k€ », comme `fmtEur` avant « € »
+ *  (le format compact cassait la règle que le commentaire de `fmtEur` promet → césure « 2,4 ⏎ M€ »). */
 export const fmtEurCompact = (n: number | null | undefined): string => {
   if (n == null) return '—'
-  if (n >= 1_000_000) return `${fmtDec(n / 1_000_000, n % 1_000_000 === 0 ? 0 : 1)} M€`
-  if (n >= 10_000) return `${fmtInt(n / 1000)} k€`
+  if (n >= 1_000_000) return `${fmtDec(n / 1_000_000, n % 1_000_000 === 0 ? 0 : 1)} M€`
+  if (n >= 10_000) return `${fmtInt(n / 1000)} k€`
   return fmtEur(n)
 }
 
@@ -54,39 +56,56 @@ export const fmtTauxEmprise = (n: number | null | undefined): string => {
   return r > 100 ? TAUX_EMPRISE_SATURE : `${r} %`
 }
 
-/** date courte lisible : 12 juil. 2026 (jamais un ISO brut à l'écran) */
+/** FIX-NU3-2 (I-TPS-01/04 — doctrine « tout en heure de La Réunion ») — LE fuseau d'affichage des
+ *  dates. `new Date("AAAA-MM-JJ")` parse à MINUIT UTC ; un `toLocaleDateString` SANS fuseau rendait
+ *  alors J-1 pour tout navigateur à l'ouest d'UTC. On fige `Indian/Reunion` dans TOUS les formateurs
+ *  de date (et on dérive jour/mois/année dans ce fuseau là où la logique teste une date). */
+const TZ_REUNION = 'Indian/Reunion'
+
+/** jour/mois/année d'une date DANS le fuseau de La Réunion (pour toute logique qui compare une date). */
+const partsReunion = (dt: Date): { y: number; m: number; d: number } => {
+  const p = new Intl.DateTimeFormat('fr-CA',
+    { timeZone: TZ_REUNION, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(dt)
+  const g = (t: string) => parseInt(p.find((x) => x.type === t)?.value ?? '0', 10)
+  return { y: g('year'), m: g('month'), d: g('day') }
+}
+
+/** date courte lisible : 12 juil. 2026 (jamais un ISO brut à l'écran), en heure de La Réunion */
 export const fmtDate = (d: string | Date | null | undefined): string => {
   if (!d) return '—'
   const dt = typeof d === 'string' ? new Date(d) : d
   return Number.isNaN(dt.getTime()) ? '—'
-    : dt.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+    : dt.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', timeZone: TZ_REUNION })
 }
 
-/** date numérique compacte (tables) : 12/07/2026 */
+/** date numérique compacte (tables) : 12/07/2026, en heure de La Réunion */
 export const fmtDateNum = (d: string | Date | null | undefined): string => {
   if (!d) return '—'
   const dt = typeof d === 'string' ? new Date(d) : d
-  return Number.isNaN(dt.getTime()) ? '—' : dt.toLocaleDateString('fr-FR')
+  return Number.isNaN(dt.getTime()) ? '—' : dt.toLocaleDateString('fr-FR', { timeZone: TZ_REUNION })
 }
 
 /** OUTILS-FIX-4 A3 — date Sit@del à granularité VARIABLE : la source ne connaît souvent que l'ANNÉE,
  *  stockée « AAAA-01-01 » (83 % des permits). La rendre « 01/01/2024 » ment sur la précision. Quand la
  *  date tombe au 1ᵉʳ janvier (= année seule connue), on affiche l'ANNÉE (« 2024 ») ; sinon la date réelle
- *  (jour/mois de mesure, format numérique). Présentation pure — aucune valeur inventée. */
+ *  (jour/mois de mesure, format numérique). Présentation pure — aucune valeur inventée. Détection du
+ *  1ᵉʳ janvier et rendu FIGÉS en heure de La Réunion (sinon le test J-1 basculait le 31/12 à l'ouest). */
 export const fmtDateSitadel = (d: string | Date | null | undefined): string => {
   if (!d) return '—'
   const dt = typeof d === 'string' ? new Date(d) : d
   if (Number.isNaN(dt.getTime())) return '—'
-  return dt.getMonth() === 0 && dt.getDate() === 1 ? String(dt.getFullYear()) : dt.toLocaleDateString('fr-FR')
+  const { y, m, d: jour } = partsReunion(dt)
+  return m === 1 && jour === 1 ? String(y) : dt.toLocaleDateString('fr-FR', { timeZone: TZ_REUNION })
 }
 
 /** FICHE-FIX-4 (Lot B) — Date SIRENE : la valeur « 1900 » (souvent 1900-01-01) = date de création
- *  INCONNUE chez l'INSEE, pas une vraie création → « n.c. ». Sinon JJ/MM/AAAA. Présentation pure. */
+ *  INCONNUE chez l'INSEE, pas une vraie création → « n.c. ». Sinon JJ/MM/AAAA. Présentation pure,
+ *  année et rendu en heure de La Réunion. */
 export const fmtDateSirene = (d: string | Date | null | undefined): string => {
   if (!d) return 'n.c.'
   const dt = typeof d === 'string' ? new Date(d) : d
-  if (Number.isNaN(dt.getTime()) || dt.getFullYear() <= 1901) return 'n.c.'
-  return dt.toLocaleDateString('fr-FR')
+  if (Number.isNaN(dt.getTime()) || partsReunion(dt).y <= 1901) return 'n.c.'
+  return dt.toLocaleDateString('fr-FR', { timeZone: TZ_REUNION })
 }
 
 /** FICHE-FIX-4 (Lot B) — ANNÉE de création SIRENE (tuile « Créée · état ») : « 2005 », ou « n.c. »

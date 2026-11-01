@@ -32,7 +32,7 @@ export function ContactEdit({ init, onCancel, onSave, busy }: {
         {champ('nom', 'Nom (ex. Mme Gwenaëlle Serveau)')}
         {champ('role', 'Rôle (ex. resp. PLU)')}
         {champ('telephone', 'Téléphone')}
-        {champ('email', 'Email')}
+        {champ('email', 'E-mail')}{/* FIX-NU3-2 (M-T10) — graphie unique « E-mail » (plus d'« Email » anglicisé) */}
       </div>
       {champ('note', 'Note (ex. joignable le matin — zone AU nord)')}
       <div className="mt-2 flex items-center gap-2">
