@@ -1,0 +1,62 @@
+====================================================================== 
+5 COPROPRIÉTÉS — actionnable → Sans signal (E-010)
+ ======================================================================
+
+1. 97401000AM0380
+   palier q_v20='À suivre' -> q_v21='Sans signal'  (tier stocké a_suivre->sans_signal)
+   p_raw identique : 0.10221==0.10221 -> True  (classement inchangé, seul le palier change)
+   copro: stocké=True  source p_model_ext_copro=True  (mult_base q_v20 stocké=7.51, NON servi)
+
+2. 97401000AM0853
+   palier q_v20='À suivre' -> q_v21='Sans signal'  (tier stocké a_suivre->sans_signal)
+   p_raw identique : 0.10221==0.10221 -> True  (classement inchangé, seul le palier change)
+   copro: stocké=True  source p_model_ext_copro=True  (mult_base q_v20 stocké=7.51, NON servi)
+
+3. 97401000AM1532
+   palier q_v20='À suivre' -> q_v21='Sans signal'  (tier stocké priorite->sans_signal)
+   p_raw identique : 0.2==0.2 -> True  (classement inchangé, seul le palier change)
+   copro: stocké=True  source p_model_ext_copro=True  (mult_base q_v20 stocké=14.69, NON servi)
+
+4. 97401000AN0684
+   palier q_v20='À suivre' -> q_v21='Sans signal'  (tier stocké a_suivre->sans_signal)
+   p_raw identique : 0.10221==0.10221 -> True  (classement inchangé, seul le palier change)
+   copro: stocké=True  source p_model_ext_copro=True  (mult_base q_v20 stocké=7.51, NON servi)
+
+5. 97401000AS0397
+   palier q_v20='À suivre' -> q_v21='Sans signal'  (tier stocké priorite->sans_signal)
+   p_raw identique : 0.2==0.2 -> True  (classement inchangé, seul le palier change)
+   copro: stocké=True  source p_model_ext_copro=True  (mult_base q_v20 stocké=14.69, NON servi)
+
+====================================================================== 
+5 PPR code « i » (Saint-Philippe) — → Écartée (zone rouge)
+ ======================================================================
+
+1. 97417000AE0016
+   palier q_v20='Sans signal' -> q_v21='Écartée'  (tier stocké sans_signal->ecartee)
+   couverture zone rouge « i » = 74.6 %  (seuil exclusion 50 %)
+   cascade status : q_v19_sources='a_creuser' -> q_v21_sources='exclue'
+   p_raw identique : 0.017317==0.017317 -> True
+
+2. 97417000AE0024
+   palier q_v20='Sans signal' -> q_v21='Écartée'  (tier stocké sans_signal->ecartee)
+   couverture zone rouge « i » = 94.8 %  (seuil exclusion 50 %)
+   cascade status : q_v19_sources='a_creuser' -> q_v21_sources='exclue'
+   p_raw identique : 0.010667==0.010667 -> True
+
+3. 97417000AE0091
+   palier q_v20='Sans signal' -> q_v21='Écartée'  (tier stocké sans_signal->ecartee)
+   couverture zone rouge « i » = 100.0 %  (seuil exclusion 50 %)
+   cascade status : q_v19_sources='a_creuser' -> q_v21_sources='exclue'
+   p_raw identique : 0.011666==0.011666 -> True
+
+4. 97417000AE0092
+   palier q_v20='Sans signal' -> q_v21='Écartée'  (tier stocké sans_signal->ecartee)
+   couverture zone rouge « i » = 95.1 %  (seuil exclusion 50 %)
+   cascade status : q_v19_sources='a_creuser' -> q_v21_sources='exclue'
+   p_raw identique : 0.011666==0.011666 -> True
+
+5. 97417000AH0026
+   palier q_v20='Sans signal' -> q_v21='Écartée'  (tier stocké sans_signal->ecartee)
+   couverture zone rouge « i » = 100.0 %  (seuil exclusion 50 %)
+   cascade status : q_v19_sources='a_creuser' -> q_v21_sources='exclue'
+   p_raw identique : 0.007178==0.007178 -> True

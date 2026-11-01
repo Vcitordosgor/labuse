@@ -6,7 +6,7 @@ import inspect
 from pathlib import Path
 
 from labuse.cascade.context import Intersection, ParcelRef
-from labuse.cascade.layers.phase1 import RisquesLayer, SRC_DEAL_PPR, SRC_SUP_GPU
+from labuse.cascade.layers.phase1 import RisquesLayer, SRC_DEAL_PPR
 from labuse.enums import CascadeVerdict, Severity
 from labuse.scoring import score_v_constants as C
 
@@ -69,18 +69,24 @@ def test_ppr_deal_bleu_source_deal_zone_connue():
     assert "bleue" in v.detail.lower()              # zonage connu, pas « périmètre inconnu »
 
 
-def test_ppr_pm1_assiette_source_gpu_jamais_exclusion():
-    """Validation #3 : l'assiette PM1 nomme le flux GPU, dit le zonage interne INCONNU, jamais d'exclusion."""
-    v = [x for x in _run("i_mvt", {"suptype": "PM1", "statut": "reglementaire", "risque": "inondation"})
-         if x.result == CascadeVerdict.SOFT_FLAG][0]
-    assert v.data_source_name == SRC_SUP_GPU        # P4/P2 : assiette API Carto GPU
-    assert v.result != CascadeVerdict.HARD_EXCLUDE   # jamais une exclusion
-    assert "n'est pas connu" in v.detail.lower()
-    assert "jamais une exclusion" in v.detail.lower()
+def test_ppr_pm1_repli_code_inconnu_traite_rouge_d001():
+    """SCORING-COPRO-1 (PPR-UNIQUE-1, NU-D-001) — DOCTRINE RÉVISÉE. Dans la couche `kind='ppr'`, un
+    repli PM1 à CODE NON CLASSÉ (le code hérité `i` de Saint-Philippe : seul PM1 réellement présent en
+    `ppr`) n'est plus « périmètre, zonage inconnu, jamais une exclusion » (c'était D-001 : 42 logements
+    dessinés sur 100 % rouge). La couleur est lue par le module UNIQUE `labuse.ppr` : couleur incertaine
+    → ROUGE par prudence. ≥ 50 % de surface → ÉCARTÉE, comme toute zone rouge. (Les VRAIES assiettes SUP
+    GPU — enveloppes sans couleur des autres communes — vivent en `kind='sup'`, couche `sup`, en INFO :
+    cette couche-ci ne les voit pas.)"""
+    hx = [x for x in _run("i", {"suptype": "PM1", "statut": "reglementaire", "code_risque": "i"},
+                          coverage=0.80) if x.result == CascadeVerdict.HARD_EXCLUDE]
+    assert hx and hx[0].data_source_name == SRC_DEAL_PPR   # jugé par la lecture couleur unique
+    assert "rouge" in hx[0].detail.lower() and "80 %" in hx[0].detail
 
 
-def test_ppr_pm1_marginal_reste_faible():
-    """La sévérité (score) est INCHANGÉE : une intersection PM1 marginale reste FAIBLE."""
-    v = [x for x in _run("i_mvt", {"suptype": "PM1", "risque": "inondation"}, coverage=0.05)
-         if x.result == CascadeVerdict.SOFT_FLAG][0]
-    assert v.severity == Severity.FAIBLE and "marginale" in v.detail.lower()
+def test_ppr_pm1_repli_marginal_rouge_vigilance_fort():
+    """Un repli PM1 non classé (rouge par prudence) à faible couverture (2–50 %) → vigilance FORTE,
+    jamais une exclusion (3 paliers rouges). Avant D-001 il restait FAIBLE (périmètre inconnu)."""
+    out = _run("i", {"suptype": "PM1", "code_risque": "i"}, coverage=0.05)
+    v = [x for x in out if x.result == CascadeVerdict.SOFT_FLAG][0]
+    assert v.severity == Severity.FORT and "rouge" in v.detail.lower()
+    assert not any(x.result == CascadeVerdict.HARD_EXCLUDE for x in out)

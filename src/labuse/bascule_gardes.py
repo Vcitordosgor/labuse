@@ -758,6 +758,64 @@ def check_coherence_run_fiche(session=None) -> dict:
     return out
 
 
+def check_etage0_aligne(session=None) -> dict:
+    """Garde NU-E-015 (SCORING-COPRO-1) — L'ÉTAGE 0 SERVI EST CELUI SUR LEQUEL LE RUN A ÉTÉ SCORÉ.
+
+    Le scoring v2 lit l'étage 0 (parcelles écartées) sur une cascade (`dryrun_parcel_evaluations`),
+    et GRAVE laquelle dans `p_score_v2_runs.params->>'etage0_run'`. La fiche/carte/filtres servent, eux,
+    la cascade du manifeste (`runs.cascade()`). Si ces deux pointeurs DIVERGENT, les parcelles écartées
+    affichées (carte, filtres) ne sont PAS celles qui ont fondé le classement servi : une parcelle peut
+    être « Écartée » au classement mais peinte comme active (ou l'inverse). Cette garde CRIE au lieu de
+    compter sur la coïncidence d'ordre. Bruyante, NON bloquante (régime check_fraicheur).
+    Statuts : OK / DÉSALIGNÉ / INDÉTERMINÉ (run absent de p_score_v2_runs / base de test)."""
+    import json as _json
+
+    from labuse import runs
+    servi = runs.current()
+    cascade_servie = runs.cascade()
+    out: dict[str, object] = {"scoring_run": servi, "cascade_servie": cascade_servie}
+
+    def _run(conn):
+        if not conn.execute(text("SELECT to_regclass('p_score_v2_runs')")).scalar():
+            out["statut"] = "INDETERMINE"
+            print(f"{_ts()} · étage 0 [INDÉTERMINÉ] — p_score_v2_runs absente, garde non applicable.", flush=True)
+            return
+        params = conn.execute(text("SELECT params FROM p_score_v2_runs WHERE run_id = :r"),
+                              {"r": servi}).scalar()
+        if params is None:
+            out["statut"] = "INDETERMINE"
+            print(f"{_ts()} ⚠ étage 0 [INDÉTERMINÉ] — run servi « {servi} » absent de p_score_v2_runs.",
+                  flush=True)
+            return
+        if isinstance(params, str):
+            params = _json.loads(params)
+        etage0_score = (params or {}).get("etage0_run")
+        out["etage0_score"] = etage0_score
+        if etage0_score is None:
+            # run ancien, sans traçage de l'étage 0 : on se rabat sur l'égalité cascade==scoring (paire).
+            out["statut"] = "INDETERMINE"
+            print(f"{_ts()} · étage 0 [INDÉTERMINÉ] — « {servi} » ne grave pas son etage0_run (run ancien).",
+                  flush=True)
+            return
+        if etage0_score == cascade_servie:
+            out["statut"] = "OK"
+            print(f"{_ts()} ✓ étage 0 aligné : « {servi} » scoré sur la cascade « {etage0_score} », "
+                  f"qui est bien la cascade servie.", flush=True)
+        else:
+            out["statut"] = "DESALIGNE"
+            print(f"{_ts()} ⚠ étage 0 [DÉSALIGNÉ] — « {servi} » a été scoré sur la cascade « {etage0_score} » "
+                  f"mais le manifeste sert la cascade « {cascade_servie} » : les parcelles écartées à la "
+                  f"carte/aux filtres ne sont PAS celles du classement servi. Rejouer le scoring sur la "
+                  f"cascade servie, ou aligner cascade_run. NON bloquant.", flush=True)
+
+    if session is not None:
+        _run(session)
+    else:
+        with _connect() as c:
+            _run(c)
+    return out
+
+
 def check_coherence_tables_run_scopees(session=None) -> dict:
     """Garde M50 — assertion « aucune table SERVIE run-scopée silencieusement périmée ». Pour CHAQUE
     table servie portant `run_label`, compare son/ses run(s) au run servi (`config/served_run.txt`).

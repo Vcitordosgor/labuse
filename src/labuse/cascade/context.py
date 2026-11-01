@@ -389,6 +389,33 @@ class EvalContext:
         area = float(row[0] or 0.0)
         return (area / float(row[1]), area)
 
+    def union_coverage_interdit(self, parcel_id: int, kind: str) -> tuple[float, float]:
+        """SCORING-COPRO-1 (PPR-UNIQUE-1) — couverture UNIONNÉE (fraction, m² 2975) de la parcelle
+        par les zones PPR de couleur INTERDITE (rouge réglementaire ∪ code non classé), via le
+        prédicat UNIQUE `labuse_ppr_couleur(subtype, attrs) <> 'bleu'` — la MÊME lecture que la fiche,
+        l'Étude et le Gabarit (module `labuse.ppr`). Remplace le filtre par liste de subtypes
+        (`ppr_red_subtypes`), qui ne reconnaissait pas le code hérité `i` de Saint-Philippe
+        (NU-D-001). ST_Union AVANT le ratio (polygones superposés comptés une fois). (0,0) si rien."""
+        from ..ppr import interdit_sql
+        row = self.session.execute(
+            text(
+                f"""
+                SELECT ST_Area(ST_Union(ST_Intersection(sl.geom_2975, p.geom_2975))),
+                       ST_Area(p.geom_2975)
+                FROM parcels p
+                JOIN spatial_layers sl ON sl.kind = :kind AND {interdit_sql('sl')}
+                  AND ST_Intersects(p.geom_2975, sl.geom_2975)
+                WHERE p.id = :pid
+                GROUP BY p.geom_2975
+                """
+            ),
+            {"kind": kind, "pid": parcel_id},
+        ).first()
+        if not row or not row[1]:
+            return (0.0, 0.0)
+        area = float(row[0] or 0.0)
+        return (area / float(row[1]), area)
+
     def min_distance_m(self, parcel_id: int, kind: str) -> float | None:
         """Distance min (m, 2975) de la parcelle à une entité de ce `kind`, ou None si au-delà
         du rayon de garde (cf. prime). Pour les couches linéaires (ravine) où la PROXIMITÉ

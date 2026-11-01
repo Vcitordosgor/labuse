@@ -59,6 +59,22 @@ def verifier(db: Session, run: str | None = None) -> dict:
     except Exception as e:  # noqa: BLE001
         checks.append(_ligne(f"{n_surfaces} surfaces lisent le run courant", False, f"{type(e).__name__}: {e}"[:160]))
 
+    # 1bis — NU-E-015 (SCORING-COPRO-1) : l'étage 0 SERVI (carte/filtres = `runs.cascade()`) est bien
+    # celui sur lequel le run servi a été SCORÉ (`p_score_v2_runs.params.etage0_run`). Sinon les
+    # parcelles écartées affichées ne sont pas celles qui ont fondé le classement (désalignement q_v20 :
+    # scoré sur q_v19_sources, servi sous un autre pointeur). Alerte, non bloquant.
+    from .bascule_gardes import check_etage0_aligne
+    try:
+        e0 = check_etage0_aligne(session=db)
+        e0_ok = e0.get("statut") in ("OK", "INDETERMINE")
+        checks.append(_ligne(
+            "Étage 0 servi = étage 0 du classement (parcelles écartées alignées)", e0_ok,
+            None if e0_ok else f"désaligné : classé sur « {e0.get('etage0_score')} », "
+                               f"servi « {e0.get('cascade_servie')} »"))
+    except Exception as e:  # noqa: BLE001
+        checks.append(_ligne("Étage 0 servi = étage 0 du classement", True,
+                             f"non vérifiable ({type(e).__name__})"))
+
     # 2 — tier identique fiche / Projets / Scan (parcelles témoins) : les trois lisent la MÊME table
     # (`parcel_p_score_v2`, run servi) ; on confronte le verdict servi au tier stocké pour prouver
     # qu'aucune surface ne dérive.
