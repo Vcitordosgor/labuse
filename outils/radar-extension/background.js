@@ -725,7 +725,7 @@ async function runEvening(source) {
     const msg = e && e.message ? e.message : "erreur réseau";
     await setOpts({ lastRun: capturedAt, lastResult: `Échec (${source}) — ${msg}. Déposez à la main si ça dure.` });
     if (e instanceof BlockError) {
-      await notify("Radar bloqué, dépose à la main");
+      await notify("Radar bloqué, déposez à la main");
     } else {
       await notify("Radar arrêté : " + msg);
     }

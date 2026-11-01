@@ -48,7 +48,7 @@ export function Resume({ data, onCible, verrousTache, onRejouerVerrous, rejouerE
             {vt.resultat.bloquants.length === 0
               ? `Tout va bien — ${vt.resultat.joues} verrous joués, aucun bloquant.`
               : `À corriger : ${vt.resultat.bloquants.join(', ')} cassé(s).`}
-            {vt.maj ? ` Dernier passage ${new Date(vt.maj).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}.` : ''}
+            {vt.maj ? ` Dernier passage ${new Date(vt.maj).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Indian/Reunion' })}.` : ''}
           </div>
         )}
         {(lignesVerrous ?? garanties)?.map((g: any) => (
@@ -75,7 +75,7 @@ export function Resume({ data, onCible, verrousTache, onRejouerVerrous, rejouerE
           ? "Tout le reste est branché sur le moteur, sert la dernière version et dit la même chose partout."
           : "Tout est branché sur le moteur, sert la dernière version et dit la même chose partout."}
         {data.dernier_controle
-          ? ` Dernier contrôle ${new Date(data.dernier_controle.ts).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}.`
+          ? ` Dernier contrôle ${new Date(data.dernier_controle.ts).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Indian/Reunion' })}.`
           : ''}
       </div>
 

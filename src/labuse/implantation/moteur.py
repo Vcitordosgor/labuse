@@ -548,12 +548,16 @@ def etudier_complet(session=None, *, idus: Optional[list[str]] = None, zone: Opt
             page_pdf=None, citation=_cite151 or f"plafond {stationnement_ratio:g} place / logement sous condition d'éligibilité"))
     zi = terrain.zone_implantation
     if zi is None or zi.is_empty or terrain.aire_zone_m2 < 60:
-        return [], [], None, _message_impossible(terrain, regles, [], conv), terrain, regles, conv, None
+        return ([], [], None,
+                _message_impossible(terrain, regles, [], conv, stationnement_mode),
+                terrain, regles, conv, None)
     faisables, candidats = _rechercher(terrain, regles, conv, objectif, repartition=repartition,
                                        stationnement_mode=stationnement_mode,
                                        niveaux_sous_sol=niveaux_sous_sol)
     if not faisables:
-        return [], [], None, _message_impossible(terrain, regles, candidats, conv), terrain, regles, conv, None
+        return ([], [], None,
+                _message_impossible(terrain, regles, candidats, conv, stationnement_mode),
+                terrain, regles, conv, None)
 
     message, depassement = None, None
     couvrants = faisables
@@ -744,7 +748,10 @@ def _contient(cap: cap_mod.Capacite, programme: dict[str, int]) -> bool:
     return all(cap.par_type.get(t, 0) >= n for t, n in programme.items() if n > 0)
 
 
-def _message_impossible(terrain, regles, candidats, conv=None) -> str:
+def _message_impossible(terrain, regles, candidats, conv=None, stationnement_mode="aerien") -> str:
+    # FIX-NU3-2 (G-006) — le message d'échec nomme le stationnement RÉELLEMENT choisi (le figé
+    # « aérien » apparaissait même quand l'utilisateur avait pris le sous-sol).
+    _statio = "en sous-sol" if stationnement_mode == "sous_sol" else "aérien"
     r = regles.hauteur_plafond
     # RECETTE-4 — on ne stoppe plus l'étude pour « aucune voie classée » : terrain.charger promeut une
     # arête en accès hypothétique (voie_hypothese). Ce message ne vaut que si AUCUNE arête n'existe du tout.
@@ -763,7 +770,7 @@ def _message_impossible(terrain, regles, candidats, conv=None) -> str:
             return (f"simulation impossible : la hauteur réglementaire ({ctrl_mod._fr(r.valeur)} m {base}) "
                     f"n'autorise même pas un rez-de-chaussée ({ctrl_mod._fr(h_rdc)} m).")
     return ("simulation impossible : aucune implantation ne passe tous les contrôles durs sur cette "
-            "assiette (zone trop étroite, reculs, ou stationnement aérien impossible).")
+            f"assiette (zone trop étroite, reculs, ou stationnement {_statio} impossible).")
 
 
 def _message_ne_tient_pas(faisables, programme, regles, conv) -> str:

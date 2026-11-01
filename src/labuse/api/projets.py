@@ -70,6 +70,7 @@ _COLS = (
     ("projets", "shortlist_perimee", "boolean NOT NULL DEFAULT false"),
     ("projets", "cadrage_total", "integer"),
     ("projets", "cadrage_total_at", "timestamptz"),
+    ("projets", "version", "integer NOT NULL DEFAULT 1"),   # FIX-NU3-2 (H-D03) — verrou optimiste
     ("pipeline_entries", "projet_id", "integer REFERENCES projets(id) ON DELETE SET NULL"),
 )
 
@@ -429,6 +430,7 @@ def _projet_dict(p: models.Projet) -> dict:
         "id": p.id, "nom": p.nom, "statut": p.statut,
         "cadrage": p.filtres or {}, "identite": p.identite or {},
         "shortlist_perimee": bool(p.shortlist_perimee),
+        "version": p.version or 1,       # FIX-NU3-2 (H-D03) — verrou optimiste (à renvoyer au PATCH)
         "created_at": p.created_at.isoformat() if p.created_at else None,
         "updated_at": p.updated_at.isoformat() if p.updated_at else None,
         "derniere_execution_at": (p.derniere_execution_at.isoformat()
@@ -593,6 +595,7 @@ class ProjetPatchIn(BaseModel):
     statut: str | None = None          # actif | archive
     cadrage: dict | None = None        # M120 : modifier le cadrage → shortlist PÉRIMÉE (rejeu proposé)
     identite: dict | None = None       # M120 : infos éditables (n'invalide pas la shortlist)
+    version: int | None = None         # FIX-NU3-2 (H-D03) : version attendue (verrou optimiste) ; None = pas de contrôle
 
 
 #: M120 — l'identité informative : les seules clés servies (budget/type). Le budget est AFFICHÉ tel
@@ -878,6 +881,12 @@ def projet_patch(pid: int, body: ProjetPatchIn, request: Request, db: Session = 
     marquée PÉRIMÉE (`shortlist_perimee`) et le front propose un rejeu explicite (jamais un run
     automatique). L'identité (infos) et le nom n'affectent pas la shortlist."""
     p = _projet_or_404(db, pid, current_compte(request))
+    # FIX-NU3-2 (H-D03) — VERROU OPTIMISTE : si le client annonce la version qu'il croit éditer et
+    # qu'elle ne correspond plus (un autre onglet/utilisateur du même compte a écrit entre-temps),
+    # on refuse par un 409 (le front recharge et rejoue) au lieu d'écraser sa maj en silence.
+    if body.version is not None and (p.version or 1) != body.version:
+        raise HTTPException(409, "Le projet a été modifié ailleurs — rechargez avant d'enregistrer.")
+    _avant = (p.nom, p.statut, dict(p.identite or {}), dict(p.filtres or {}))
     if body.nom is not None:
         nom = body.nom.strip()[:160]
         if not nom:
@@ -897,6 +906,10 @@ def projet_patch(pid: int, body: ProjetPatchIn, request: Request, db: Session = 
             p.filtres = nouveau
             p.shortlist_perimee = True          # la shortlist ne bouge pas seule — rejeu proposé
             _refresh_cadrage_total(db, p)        # FIX-PROJETS — le cache VIF suit le nouveau cadrage
+    # FIX-NU3-2 (H-D03) — n'incrémente la version QUE si l'édition a réellement changé quelque chose
+    # (un PATCH no-op ne fait pas invalider la version d'un éditeur concurrent légitime).
+    if (p.nom, p.statut, dict(p.identite or {}), dict(p.filtres or {})) != _avant:
+        p.version = (p.version or 1) + 1
     db.flush()
     return {"ok": True, "projet": _projet_dict(p)}
 

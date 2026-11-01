@@ -444,7 +444,7 @@ function Controle3D({ map }: { map: React.RefObject<maplibregl.Map | null> }) {
         {/* moyeu central */}
         <span className="pointer-events-none absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-txt-mut" />
       </div>
-      <button data-c3d-recentrer className={btn} title="Recentrer sur la parcelle" onClick={() => useApp.getState().recentrer3d()}>◎</button>
+      <button data-c3d-recentrer className={btn} title="Recentrer sur la parcelle" aria-label="Recentrer sur la parcelle" onClick={() => useApp.getState().recentrer3d()}>◎</button>
     </div>
   )
 }

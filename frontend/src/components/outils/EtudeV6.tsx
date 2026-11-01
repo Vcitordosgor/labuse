@@ -844,7 +844,7 @@ function EtapeParcelles({ sel, v, chargement, erreur, onAjouter, onRetirer }: {
       <label className="mb-1 block text-[9px] uppercase tracking-wide text-txt-dim">Référence de parcelle — adresse, IDU ou référence cadastrale</label>
       <div className="max-w-[560px]">
         {/* ETUDE-V6-2 (Lot 5) — le champ est VIDÉ après chaque ajout (remontage via la clé) : prêt pour la suivante. */}
-        <ParcelInput key={sel.length} dataAttr="etude-v6-parcelle" withCarte={false} onPick={onAjouter} placeholder="Adresse, IDU ou référence (ex. 97404000AW0099)" />
+        <ParcelInput key={sel.length} dataAttr="etude-v6-parcelle" withCarte={false} onPick={onAjouter} placeholder="Adresse, IDU ou référence (BW0917)" />
       </div>
 
       <div className="mt-3 flex items-center justify-between">
@@ -1106,7 +1106,7 @@ function EtapeProgramme({ nb, setNb, totalLogts, surfaceProg, surfaceVar, surfac
         <div className="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-line-2 bg-surface-1 px-3 py-2 text-[10.5px] text-txt-mut">
           <span>Stationnement</span>
           <div className="inline-flex overflow-hidden rounded border border-line-2" role="group" aria-label="Mode de stationnement">
-            {([['aerien', 'Aérien', true], ['sous_sol', 'Sous-sol 1 niveau', ssDispo]] as const).map(([c, lib, actif]) => (
+            {([['aerien', 'Aérien', true], ['sous_sol', 'Sous-sol', ssDispo]] as const).map(([c, lib, actif]) => (
               <button key={c} type="button" data-statio-etape3={c} disabled={!actif}
                 onClick={() => actif && onStatioChoix(c)}
                 className={`px-2 py-0.5 text-[10.5px] ${statioChoix === c && actif ? 'bg-mint font-semibold text-mint-on' : actif ? 'text-txt-mut hover:bg-surface-2' : 'cursor-not-allowed text-txt-dim/50 line-through'}`}>{lib}</button>

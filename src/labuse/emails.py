@@ -144,16 +144,31 @@ def maintenance_email(titre: str, corps: str, *, debut: str = "", fin: str = "",
                       duree: str = "") -> tuple[str, str, str]:
     """Retourne (sujet, texte, html). Fenêtre de coupure MISE EN AVANT. Pas de désinscription."""
     sujet = f"LABUSE — maintenance programmée : {titre}"
+
+    def _fr_dt(s: str) -> str:
+        """FIX-NU3-2 (I-TPS-05 / « maintenance en heure Réunion ») — reformate un horodatage ISO
+        (« 2026-11-02 22:00 ») en français (« 02/11/2026 à 22h00 ») ; laisse tel quel si non ISO.
+        L'exploitant saisit l'heure de La Réunion (doctrine tz) — le libellé de fuseau est ajouté
+        une seule fois sur la fenêtre, pas sur chaque borne."""
+        from datetime import datetime as _dt
+        try:
+            d = _dt.fromisoformat(s.strip().replace("Z", "+00:00"))
+        except (ValueError, AttributeError):
+            return s
+        return d.strftime("%d/%m/%Y à %Hh%M")
+
     fenetre = ""
     if debut or fin or duree:
         parts = []
         if debut:
-            parts.append(f"début {debut}")
+            parts.append(f"début {_fr_dt(debut)}")
         if fin:
-            parts.append(f"fin {fin}")
+            parts.append(f"fin {_fr_dt(fin)}")
         if duree:
             parts.append(f"durée estimée {duree}")
-        fenetre = "Fenêtre de coupure : " + ", ".join(parts) + "."
+        # FIX-NU3-2 — fuseau explicite (les autres e-mails horodatés disent déjà « heure Réunion »).
+        suffixe = " (heure de La Réunion)" if (debut or fin) else ""
+        fenetre = "Fenêtre de coupure : " + ", ".join(parts) + suffixe + "."
     txt = ("Bonjour,\n\n" + (fenetre + "\n\n" if fenetre else "") + corps.strip()
            + "\n\nCe message concerne le fonctionnement de votre service — il n'est pas désactivable."
            + _SIGNATURE)
@@ -194,7 +209,9 @@ def digest_html_email(evenements: list[dict], marche: dict | None, top_chaudes: 
     if mr.get("total"):
         cadre = (f", dont {mr['dans_vos_communes']} dans vos communes"
                  if mr.get("dans_vos_communes") is not None else "")
-        corps += _ligne(f"{mr['total']} mouvement(s) de marché{cadre}", "détail dans l'application")
+        # FIX-NU3-2 (M-T21) — accord du pluriel (comme la version texte l.47), plus de « mouvement(s) ».
+        corps += _ligne(f"{mr['total']} mouvement{'s' if mr['total'] > 1 else ''} de marché{cadre}",
+                        "détail dans l'application")
     if not corps:
         corps = "<p style='margin:0'>Rien de nouveau sur vos suivis.</p>"
     if secteurs_ligne:                                   # M85 P3 — « depuis hier sur vos secteurs »

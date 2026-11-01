@@ -796,6 +796,15 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
                     rep = _reply_compte(db, message, res, faits_fil, "QUESTION")
                     rep["_route"] = {"intent": "QUESTION", "params": {"idu": idu_cible}, "voie": prior_voie}
                     return rep
+            # FIX-NU3-2 (G-013) — LOYER d'une parcelle NOMMÉE → loyer OLL de la fiche (bonne commune par
+            # construction), jamais `marche` d'une commune par défaut avec une valeur DHUP contredisant
+            # la fiche. Déterministe, AVANT le flux normal ; si indisponible, on laisse suivre.
+            if _est_question_loyer(message):
+                res = OUTILS["loyer_parcelle"](db, idu=idu_cible)
+                if res.ok:
+                    rep = _reply_compte(db, message, res, faits_fil, "QUESTION")
+                    rep["_route"] = {"intent": "QUESTION", "params": {"idu": idu_cible}, "voie": prior_voie}
+                    return rep
             # NU-E-046 — COPROPRIÉTÉ : OUI/NON déterministe lu de la fiche servie (RNIC), AVANT tout
             # LLM. Sans ça la question tombait dans le formuler qui INVENTAIT (« pas en copropriété »
             # sur une copro avérée, 97404000AV0167). Source RNIC, jamais « cadastre ».
@@ -1924,6 +1933,16 @@ def _quel_champ_fiche(message: str):
 # pas être happé : le chemin résumé prime (traité en amont via _RESUME_FICHE_KW).
 _PPR_KW = ("ppr", "zone rouge", "zone bleue", "plan de prevention des risques",
            "plan de prévention des risques")
+
+
+# FIX-NU3-2 (G-013) — QUESTION DE LOYER sur une parcelle : servie par `loyer_parcelle` (OLL de la
+# fiche), jamais par `marche` d'une commune par défaut. Mots-clés loyer, hors « acheter/prix de vente ».
+_LOYER_KW = ("loyer", "louer", "locatif", "location", "rendement locatif")
+
+
+def _est_question_loyer(message: str) -> bool:
+    m = _fold_py(message.lower())
+    return any(k in m for k in (_fold_py(x) for x in _LOYER_KW))
 
 
 def _est_question_ppr(message: str) -> bool:

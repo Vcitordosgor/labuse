@@ -68,7 +68,7 @@ _LABEL = {
     # RECETTE-5 V17). La clé interne reste « financier » (route, builder, questionnaire) ; seul le
     # LIBELLÉ humain change (titre de garde + nom de fichier). Moteur/ratios/Excel → BILAN-1.
     "financier": ("Bilan", ""),
-    "apporteur": ("Brief apporteur", ""),
+    "apporteur": ("Note apporteur", ""),   # FIX-NU3-2 (M-T09) — « Note apporteur » (plus d'anglicisme « Brief »), écran==PDF
     # DOCS-1 (Lot C) — les 3 nouveaux documents (miroirs des outils Gabarit, Comparer, Étude de zone).
     "gabarit": ("Gabarit", "L'enveloppe réglementaire de la parcelle : zone d'implantation, plafond d'emprise, hauteur."),
     "comparatif": ("Comparatif", "Deux à trois parcelles côte à côte, sur les lignes de Comparer."),

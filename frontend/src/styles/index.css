@@ -13,9 +13,13 @@
   /* surfaces et filets */
   --bg-0:#0A0C0B; --bg-1:#0C0F0D; --bg-2:#111614; --bg-stat:#141A17; --bg-3:#161C19;
   --line:#1A211D; --line-2:#212A25; --line-3:#2C3630; --line-btn:#263029; --line-card:#1E2622;
-  /* texte — 7 niveaux + labels */
-  --txt-hi:#E8EFEA; --txt:#B8C4BC; --txt-dim:#8A968F; --txt-mut:#6B776F;
-  --txt-off:#5E6B64; --txt-faint:#4E5A53; --txt-ghost:#3E4A44; --lab:#7C8A82;
+  /* texte — 7 niveaux + labels.
+     FIX-NU3-2 (M-A01) — txt-mut/off/faint RELEVÉS au-dessus du seuil AA 4,5:1 (mesuré WCAG sur le fond
+     le plus clair bg-3 : mut #879389=5,41 · off/faint #7C8A82=4,79) : ils portaient du texte secondaire,
+     du texte de champ et le texte LÉGAL sous le seuil (faint était à ~2,4). Hiérarchie resserrée mais
+     conforme ; txt-ghost reste décoratif (jamais seul porteur d'une information). */
+  --txt-hi:#E8EFEA; --txt:#B8C4BC; --txt-dim:#8A968F; --txt-mut:#879389;
+  --txt-off:#7C8A82; --txt-faint:#7C8A82; --txt-ghost:#3E4A44; --lab:#7C8A82;
   /* sémantique */
   --mint:#4ADE80; --mint-bg:#12291D; --mint-on:#06301A; --mint-sub:#0B4526;
   /* mauve = surface IA (Copilote) — miroir du token Tailwind `violet`/`cp-ia` #B497F0 (RETOURS-3 R1). */
@@ -296,7 +300,9 @@
   .b-danger { font-size:12.5px; color:var(--danger); border-bottom:0.5px solid var(--danger-line); }
 
   /* champ — DA-FIX-3 Lot 4 (DA-019/023) : 32 px, rayon 6, même contour que l'omnibox ; focus = contour vert, PAS d'anneau. */
-  .field { height:32px; background:var(--bg-2); border:0.5px solid var(--line-2); border-radius:var(--r-sm); padding:0 12px; font-size:13px; color:var(--txt-off); }
+  /* FIX-NU3-2 (M-A01) — le texte SAISI dans un champ passe à --txt (≈10:1) : une valeur tapée doit être
+     pleinement lisible, pas au seuil. (La bordure/focus restent inchangés.) */
+  .field { height:32px; background:var(--bg-2); border:0.5px solid var(--line-2); border-radius:var(--r-sm); padding:0 12px; font-size:13px; color:var(--txt); }
   .field:focus, .field:focus-visible { outline:none; border-color:var(--mint); }
 
   /* bandeau de statistiques */

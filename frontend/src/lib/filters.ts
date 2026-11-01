@@ -66,6 +66,18 @@ export const FLAG_DEFS: { key: string; label: string }[] = [
   { key: 'prescription_plu', label: 'Prescription PLU' },
 ]
 
+// FIX-NU3-2 (G-001) — GROUPES de flags : un flag client peut recouvrir plusieurs couches cascade.
+// « risques » = PPR + aléa Géorisques (cohérent avec le groupe serveur CRITICAL_LAYERS['risques']).
+export const FLAG_GROUPES: Record<string, string[]> = {
+  risques: ['ppr', 'georisque_alea'],
+}
+
+//: un flag (client) est-il porté par la parcelle ? Expand les groupes vers leurs couches cascade.
+export const flagPorte = (flag: string, portes: string[] | null | undefined): boolean => {
+  const couches = FLAG_GROUPES[flag] ?? [flag]
+  return couches.some((c) => (portes ?? []).includes(c))
+}
+
 // M45 (P1) : filtre « par signal » (Score V) RETIRÉ — anti-filtre acté au cadrage. Score V est
 // retiré du scoring (RR 0,51, M11 Phase 0) et de l'affichage (M35) ; filtrer sur un signal mort
 // est un vestige. `V_SIGNAL_DEFS`/`vSignalCodes`/`f.vSignals` supprimés (front + API). L'option
@@ -93,8 +105,11 @@ export function matchScope(p: ParcelProps, f: Filters, zone: LngLat[] | null): b
   if (f.evenement && p.evenement !== 'rouge') return false
   if (f.veille && !p.veille) return false
   if (f.horsCopro && p.copro_v2) return false
-  if (f.flags.length && !f.flags.some((fl) => p.flags?.includes(fl))) return false
-  if (f.flagsExclus.length && f.flagsExclus.some((fl) => p.flags?.includes(fl))) return false
+  // FIX-NU3-2 (G-001) — le filtre « Risques (PPR/aléa) » est un GROUPE : le flag client `risques`
+  // recouvre les couches cascade `ppr` et `georisque_alea` (le geojson porte ces tokens bruts, pas
+  // « risques »). On expand donc au match (le serveur fait la même expansion pour le compteur).
+  if (f.flags.length && !f.flags.some((fl) => flagPorte(fl, p.flags))) return false
+  if (f.flagsExclus.length && f.flagsExclus.some((fl) => flagPorte(fl, p.flags))) return false
   if (zone && (!p.centroid || !pointInPolygon(p.centroid, zone))) return false
   return true
 }

@@ -1067,7 +1067,17 @@ def _params_licence(db, key: str, row, override: dict | None = None) -> dict:
         if key == "essai":
             p["FIN_ESSAI"] = _fmt_reunion(row.get("essai_expire_at")) or "à l'échéance de votre essai"
     elif key == "souscription":
-        p["LIEN_SOUSCRIPTION"] = f"{base}/souscrire"
+        # FIX-NU3-2 (I-CPT-04) — `/souscrire` n'est PAS une route servie (lien mort). La vraie entrée de
+        # souscription est le tunnel d'INVITATION (mot de passe → CGV → Checkout). On génère donc un lien
+        # d'invitation frais ; repli sur /login si le compte est déjà actif (pas d'invite à (re)créer).
+        lien = f"{base}/login"
+        if db is not None:
+            try:
+                from .. import comptes as _comptes
+                lien = _comptes.creer_invitation(db, email, nom=row.get("nom"))["lien"]
+            except Exception:  # noqa: BLE001 — compte déjà actif / sans invite : repli login
+                lien = f"{base}/login"
+        p["LIEN_SOUSCRIPTION"] = lien
     elif key in ("relance_carte", "suspension"):
         p["LIEN_PAIEMENT"] = f"{base}/facturation"
     elif key == "onboarding2":
@@ -1087,10 +1097,12 @@ def _params_licence(db, key: str, row, override: dict | None = None) -> dict:
     merged = {**p, **(override or {})}
     # PARCOURS-FIX-1 (Lot 2.6) — ANTI « le le » : les sujets Brevo disent déjà « …prend fin le
     # {{DATE_FIN_ACCES}} », or `_fmt_reunion` PRÉFIXE « le » → doublon « le le 12 octobre » (finding G5).
-    # On retire un « le » en tête de DATE_FIN_ACCES, quel que soit le caller (défense unique, idempotente).
-    d = merged.get("DATE_FIN_ACCES")
-    if isinstance(d, str) and d.lower().startswith("le "):
-        merged["DATE_FIN_ACCES"] = d[3:]
+    # FIX-NU3-2 (I-CPT-03) — même garde étendue à FIN_ESSAI (le template « fin d'essai le {{FIN_ESSAI}} »
+    # produisait aussi « le le »). Défense unique, idempotente, appliquée à TOUTE date préfixable.
+    for _cle in ("DATE_FIN_ACCES", "FIN_ESSAI"):
+        d = merged.get(_cle)
+        if isinstance(d, str) and d.lower().startswith("le "):
+            merged[_cle] = d[3:]
     return merged
 
 

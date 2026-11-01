@@ -35,7 +35,7 @@ type Ouvrir = (type: 'reservoir' | 'robinet' | 'pompe' | 'compteur' | 'destinati
 type Props = { type: 'reservoir' | 'robinet' | 'pompe' | 'compteur'; id: number | string; data: CircuitData; onClose: () => void; onOpen: Ouvrir; retour?: string }
 
 const dateFr = (s: string | null | undefined) =>
-  s ? new Date(s).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''
+  s ? new Date(s).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Indian/Reunion' }) : ''
 const cl = (c: Couleur) => (c === 'mint' ? 'mint' : c)
 
 export function Detail({ type, id, data, onClose, onOpen, retour }: Props) {

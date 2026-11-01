@@ -755,7 +755,9 @@ export function Fiche({ idu }: { idu: string }) {
   // remplaçantes (ouverte depuis un projet / le CRM / un suivi, elle ne doit JAMAIS donner une erreur).
   return (
     <FicheAccordionCtx.Provider value={accValueF}>
-    <aside className="fiche-v6 apparition absolute right-0 top-0 z-10 flex h-full w-[400px] max-w-full flex-col border-l border-line shadow-2xl">
+    <aside aria-label="Fiche de la parcelle" className="fiche-v6 apparition absolute right-0 top-0 z-10 flex h-full w-[400px] max-w-full flex-col border-l border-line shadow-2xl">
+      {/* FIX-NU3-2 (M-A05) — la fiche est une région NOMMÉE (aria-label) et son IDU porte un rôle de
+          titre de niveau 1 (plus bas) : le lecteur d'écran a enfin un point de repère + un titre. */}
       {/* C1 : le bandeau « écartée » séparé est retiré — le motif s'affiche à côté du badge
           (en-tête, plus bas) et « voir pourquoi » ouvre l'onglet « Pourquoi pas ». Les motifs
           sourcés y restent intégralement (R1 : rien n'est supprimé). */}
@@ -890,7 +892,7 @@ export function Fiche({ idu }: { idu: string }) {
           </div>
           {/* IDU complet (mono) en grand + copier, sous la ligne de boutons (RETOURS-15 : l'adresse
               et le secteur suivent en rangées pleine largeur). */}
-          <div className="ref ref-sous-actions" data-fiche-idu>{iduComplet(idu) || 'Absent'}{iduComplet(idu) && <CopyIdu value={iduComplet(idu)} />}</div>
+          <div className="ref ref-sous-actions" data-fiche-idu role="heading" aria-level={1}>{iduComplet(idu) || 'Absent'}{iduComplet(idu) && <CopyIdu value={iduComplet(idu)} />}</div>
 
           {/* RETOURS-15 U7 — ADRESSE en rangée PLEINE LARGEUR (moins l'icône copier) : une ligne
               tant que ça tient, ellipse avec l'adresse complète au survol (title) sinon. Elle ne

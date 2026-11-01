@@ -452,10 +452,23 @@ def traiter_webhook(db: Session, payload: bytes, signature: str | None) -> dict:
                 log.error("compte %s : annulation doublon %s impossible : %s", cid, nouveau, e)
         db.execute(text("UPDATE comptes SET statut = 'actif', stripe_customer_id = :cu,"
                         " stripe_subscription_id = COALESCE(stripe_subscription_id, :su),"
+                        " paiement_requis_at = NULL,"   # FIX-NU3-2 — compte réglé : l'horloge de grâce repart à zéro
                         " updated_at = now() WHERE id = :c"),
                    {"cu": obj.get("customer"), "su": nouveau, "c": cid})
         audit(db, "stripe_activation", cid, None, "checkout.session.completed")
         db.commit()
+        # FIX-NU3-2 (I-CPT-07) — mention fiscale sur les factures d'ABONNEMENT. Le Checkout mode
+        # `subscription` ne prend pas `invoice_creation` (réservé au one-shot), et les factures
+        # récurrentes héritent du pied du CLIENT Stripe. On pose donc le pied du client = la source
+        # unique `facture_mention` (293 B aujourd'hui, TVA au jour de l'assujettissement) → toutes les
+        # factures d'abonnement la portent, comme le Flash. Best-effort : un échec Stripe ne casse
+        # jamais l'activation (déjà actée et committée). Sauté si aucune clé API (tests/dry-run).
+        if s.stripe_secret_key and obj.get("customer"):
+            try:
+                _stripe().Customer.modify(obj.get("customer"),
+                                          invoice_settings={"footer": s.facture_mention})
+            except Exception as e:  # noqa: BLE001 — pied best-effort ; l'activation prime
+                log.warning("compte %s : pied de facture abonnement non posé : %s", cid, e)
         action = "activation"
     elif t == "invoice.paid" and cid:
         row = db.execute(text("SELECT statut FROM comptes WHERE id = :c"), {"c": cid}).scalar()
@@ -466,8 +479,12 @@ def traiter_webhook(db: Session, payload: bytes, signature: str | None) -> dict:
             mail_cycle_de_vie_auto(db, cid, "retablissement", "job:stripe-webhook")
         action = "paiement_ok"
     elif t == "invoice.payment_failed" and cid:
-        # relances Stripe d'abord — l'app passe « paiement requis » (bandeau, pas un 500)
-        db.execute(text("UPDATE comptes SET statut = 'paiement_requis', updated_at = now()"
+        # relances Stripe d'abord — l'app passe « paiement requis » (bandeau, pas un 500).
+        # FIX-NU3-2 (I-CPT-01, décision Vic) — on ANCRE l'horloge de grâce (7 j complet + bandeau, puis
+        # lecture seule). COALESCE : un échec rejoué (Stripe réémet le même invoice sur plusieurs jours)
+        # ne remet jamais l'horloge à zéro — le compte à rebours part du PREMIER échec.
+        db.execute(text("UPDATE comptes SET statut = 'paiement_requis',"
+                        " paiement_requis_at = COALESCE(paiement_requis_at, now()), updated_at = now()"
                         " WHERE id = :c AND statut = 'actif'"), {"c": cid})
         audit(db, "stripe_paiement_echec", cid, None)
         db.commit()
@@ -494,11 +511,44 @@ def traiter_webhook(db: Session, payload: bytes, signature: str | None) -> dict:
             log.warning("webhook past_due : relance carte (template 9) non enfilée pour compte %s", cid)
         action = "paiement_requis"   # relances = Stripe ; PLUS la relance LABUSE (template 9) par la file
     elif t == "customer.subscription.deleted" and cid:
-        suspendre_compte(db, cid, "subscription.deleted")
-        # A-07-5 — l'abonnement supprimé côté Stripe = RÉSILIATION : mail `resiliation` (template 16),
-        # best-effort comme relance_carte (un envoi qui ne part pas ne casse jamais le webhook).
-        mail_cycle_de_vie_auto(db, cid, "resiliation", "job:stripe-webhook")
-        action = "suspension"
+        # FIX-NU3-2 (M-P01 — CGV art. 5 : « accès maintenu jusqu'au terme de la période déjà payée »).
+        # Si Stripe signale une période courante qui court ENCORE (résiliation immédiate d'un mois déjà
+        # payé), on HONORE ce terme : on programme la fin d'accès (`acces_fin_at`) au lieu de couper
+        # sur-le-champ ; `session_utilisateur` suspendra à l'échéance. Sinon (pas de période future —
+        # ex. résiliation en fin de période, ou aucun terme connu), coupure immédiate, inchangée.
+        import datetime as _dt
+        fin_unix = obj.get("current_period_end") or obj.get("cancel_at")
+        fin_dt = None
+        if fin_unix:
+            try:
+                fin_dt = _dt.datetime.fromtimestamp(int(fin_unix), tz=_dt.timezone.utc)
+            except (TypeError, ValueError, OSError):
+                fin_dt = None
+        if fin_dt is not None and fin_dt > _dt.datetime.now(_dt.timezone.utc):
+            db.execute(text("UPDATE comptes SET acces_fin_at = :f, updated_at = now() WHERE id = :c"),
+                       {"f": fin_dt, "c": cid})
+            db.commit()
+            mail_cycle_de_vie_auto(db, cid, "resiliation", "job:stripe-webhook", date_fin=fin_dt)
+            action = "resiliation_fin_periode"
+        else:
+            suspendre_compte(db, cid, "subscription.deleted")
+            # A-07-5 — l'abonnement supprimé côté Stripe = RÉSILIATION : mail `resiliation` (template 16),
+            # best-effort comme relance_carte (un envoi qui ne part pas ne casse jamais le webhook).
+            mail_cycle_de_vie_auto(db, cid, "resiliation", "job:stripe-webhook")
+            action = "suspension"
+    elif t == "charge.refunded" and cid:
+        # FIX-NU3-2 (M-P03 — CGV : remboursement de la période non servie). Un remboursement Stripe est
+        # purement comptable : il NE révoque rien côté app. On traite donc l'effet d'accès ICI. Les
+        # charges d'ABONNEMENT portent une `invoice` (facture de souscription) → on révoque l'accès
+        # (suspension). Les charges FLASH (paiement one-shot, SANS invoice) n'ouvrent aucun accès à
+        # révoquer → on ne touche à rien (journalisé). Idempotent (dédup par event).
+        if obj.get("invoice"):
+            suspendre_compte(db, cid, "charge.refunded")
+            mail_cycle_de_vie_auto(db, cid, "resiliation", "job:stripe-webhook")
+            action = "rembourse_suspension"
+        else:
+            log.info("charge.refunded sans invoice (Flash one-shot) compte %s : rien à révoquer", cid)
+            action = "rembourse_flash"
     # P2-41 — flush FINAL : commite la marque de dédup AVEC l'effet, pour les branches qui n'ont
     # pas committé elles-mêmes (invoice.paid sans transition, event ignoré…). No-op là où une
     # branche a déjà committé. Si une exception a sauté avant ici, la marque n'est jamais committée

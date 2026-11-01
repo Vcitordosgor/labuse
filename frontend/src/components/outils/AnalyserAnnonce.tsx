@@ -180,7 +180,9 @@ function RapportParcelle({ idu }: { idu: string }) {
           « Le foncier » qui le portait est supprimée). */}
       <Bouton niveau="lien" ton="vert" onClick={() => focusParcelle(idu, { fiche: true })}>Ouvrir la fiche parcelle →</Bouton>
 
-      <section className={SECTION}>
+      {/* FIX-NU3-2 (M-A02) — le résultat d'estimation est une RÉGION LIVE : quand il se construit (après
+          « Estimer »), le lecteur d'écran l'annonce au lieu de rester muet après « Lecture… ». */}
+      <section className={SECTION} role="status" aria-live="polite">
         <h3 className="text-sm font-medium text-txt-hi">Estimation du prix</h3>
         {estim.isLoading ? (
           <p className="mt-1 text-[12px] text-txt-dim">…</p>
@@ -548,20 +550,26 @@ export function AnalyserAnnonce() {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <p className="text-[11px] font-medium text-txt-dim">Un lien d’annonce</p>
+          {/* FIX-NU3-2 (M-A03) — le champ « lien d'annonce » a un vrai libellé programmatique (htmlFor),
+              et l'erreur lui est RATTACHÉE (aria-describedby + aria-invalid) et annoncée (role=alert). */}
+          <label htmlFor="estimer-lien" className="text-[11px] font-medium text-txt-dim">Un lien d’annonce</label>
           <input
+            id="estimer-lien"
             className={INPUT_CLS}
             placeholder="https://www.leboncoin.fr/ventes_immobilieres/…"
             value={lien}
+            aria-invalid={erreur ? true : undefined}
+            aria-describedby={erreur ? 'estimer-lien-err' : undefined}
             onChange={(e) => { setLien(e.target.value); setErreur(null) }}
             onKeyDown={(e) => { if (e.key === 'Enter' && lien.trim() && !analyse.isPending) analyse.mutate(lien.trim()) }}
           />
           <Bouton niveau="primaire" ton="vert" className="self-start"
             disabled={!lien.trim() || analyse.isPending}
             onClick={() => analyse.mutate(lien.trim())}>
-            {analyse.isPending ? 'Lecture…' : 'Analyser l’annonce'}
+            {/* FIX-NU3-2 (M-T04) — un seul nom pour le geste : « Estimer » (l'écran s'appelle « Estimer un bien »). */}
+            {analyse.isPending ? 'Lecture…' : 'Estimer ce bien'}
           </Bouton>
-          {erreur && <p className="text-[12px] leading-snug text-coral">{erreur}</p>}
+          {erreur && <p id="estimer-lien-err" role="alert" className="text-[12px] leading-snug text-coral">{erreur}</p>}
           <p className="text-[11px] leading-snug text-txt-mut">Leboncoin pour l’instant. SeLoger et Bien’ici à venir.</p>
         </div>
       </Corps>

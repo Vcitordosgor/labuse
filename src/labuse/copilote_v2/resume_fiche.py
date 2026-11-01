@@ -27,7 +27,7 @@ from .outils import _fold_py
 # (id du registre, libellé, fmt) — fmt appliqué à la valeur BRUTE, jamais recalculée.
 _TUILES = [
     ("surface_parcelle_m2", "Surface", "m2"),
-    ("zone_plu_famille", "Zone", "classe"),
+    ("zone_plu_famille", "Zone PLU", "classe"),   # FIX-NU3-2 (M-T06) — un seul libellé « Zone PLU »
     ("pente_deg", "Pente", "degre"),
     ("exposition_versant", "Exposition", "classe"),
     ("tfpb_taux_pct", "Taxe foncière", "pct"),

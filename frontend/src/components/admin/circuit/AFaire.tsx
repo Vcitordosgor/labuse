@@ -6,7 +6,7 @@
 import type { AFaireLigne, CircuitData } from './types'
 
 const jour = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'
+  iso ? new Date(iso).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Indian/Reunion' }) : '—'
 
 export function AFaire({ data, onGeste, onOuvrirSources }: {
   data: CircuitData
