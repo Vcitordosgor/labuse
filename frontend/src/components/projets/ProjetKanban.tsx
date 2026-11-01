@@ -377,8 +377,8 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
       {/* ÉTAGE 3 — PROGRESSION (une ligne : 3 compteurs + barre à deux segments). */}
       <div data-kanban-progression className={`shrink-0 grid grid-cols-[auto_1fr] items-center gap-4 ${carte} px-4 py-2.5`}>
         <div className="flex gap-5 font-mono text-[12px] text-txt-mut">
-          <span><b className="mr-1 text-[15px] text-mint">{c.retenue}</b>retenues</span>
-          <span><b className="mr-1 text-[15px] text-st-ecartee">{c.ecartee}</b>écartées</span>
+          <span><b className="mr-1 text-[15px] text-mint">{c.retenue}</b>{c.retenue > 1 ? 'retenues' : 'retenue'}</span>
+          <span><b className="mr-1 text-[15px] text-st-ecartee">{c.ecartee}</b>{c.ecartee > 1 ? 'écartées' : 'écartée'}</span>
           <span><b className="mr-1 text-[15px] text-txt">{(analyse ? Math.max(0, analyse.total - c.retenue - c.ecartee) : c.proposee).toLocaleString('fr-FR')}</b>à trier</span>
         </div>
         <div className="flex h-1.5 overflow-hidden rounded-full bg-surface-3">

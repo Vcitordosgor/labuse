@@ -320,7 +320,7 @@ def assemblage_voisines(idu: str, db: Session = Depends(get_db)) -> dict:
     propriétaire sous la règle privacy de l'assemblage. Tri : même propriétaire d'abord."""
     from ..assemblage import ADJ_BUFFER_M
     from .app import _check_idu
-    _check_idu(idu)
+    idu = _check_idu(idu)
     ref = db.execute(text("SELECT p.id, pm.siren FROM parcels p "
                           "LEFT JOIN parcelle_personne_morale pm ON pm.idu = p.idu "
                           "WHERE p.idu = :i"), {"i": idu.strip().upper()}).mappings().first()
@@ -400,7 +400,7 @@ def histoire_parcelle(idu: str, db: Session = Depends(get_db)) -> dict:
     Parcelle sans fait : réponse vide explicite, jamais une erreur (B3). Aucune lecture
     run-scopée (aucun score servi ici) ; aucune écriture."""
     from .app import _check_idu
-    _check_idu(idu)
+    idu = _check_idu(idu)
     idu = idu.strip().upper()
     if not db.execute(text("SELECT 1 FROM parcels WHERE idu = :i"), {"i": idu}).scalar():
         raise HTTPException(404, "Parcelle inconnue")
@@ -574,7 +574,7 @@ def parcellaire_epoque(idu: str, db: Session = Depends(get_db)) -> dict:
     quand la mère n'est pas captée (le front dit alors « pas de parcellaire d'époque pour cette
     parcelle » — jamais un contour inventé)."""
     from .app import _check_idu
-    _check_idu(idu)
+    idu = _check_idu(idu)
     idu = idu.strip().upper()
     if not db.execute(text("SELECT 1 FROM parcels WHERE idu = :i"), {"i": idu}).scalar():
         raise HTTPException(404, "Parcelle inconnue")

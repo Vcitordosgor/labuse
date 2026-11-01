@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState, type ReactNode } from 'react'
 import { getCalculetteDefaults, getFaisabilite, getModeB, getPipelineForParcel, patchPipeline, postChargeFonciere, postFaisabiliteScenario, type CalculetteDefaults } from '../../lib/api'
 import { fmtEurCompact, fmtInt, fmtDec, fmtM2, fmtPctConsomme, fmtSup } from '../../lib/format'
+import { FOURCHETTE_DEMI_LARGEUR_PCT } from '../../lib/fourchette'   // FIX-NU3-2 (M-T20) — constante unique
 import { Chevron } from '../ui/Chevron'
 import { PERIM_POTENTIEL_COURT } from '../../lib/perimetres'
 import { CAPACITE_MAX_MENTION, CAPACITE_MAX_MENTION_COURTE } from '../../lib/capaciteMax'
@@ -901,7 +902,7 @@ export function ModeBBody({ idu, initial }: { idu: string; initial: import('../.
             // d'incertitude mesurée (backtest VT2) en title. Repli sur l'ancien libellé si absent.
             <p data-mode-b-terrain-nu style={{ margin: 0, fontSize: 10.5, color: '#8FA69A' }} title={mb.terrain_nu.incertitude}>
               terrain nu au prix du secteur : <b style={{ color: 'var(--txt-hi)' }}>~{mb.terrain_nu.valeur_fourchette_libelle ?? mb.terrain_nu.valeur_libelle}</b>{' '}
-              <span style={{ fontSize: 10 }}>({fmtInt(mb.terrain_nu.prix_m2)} €/m² × {fmtInt(mb.terrain_nu.surface_m2)} m² · Estimé, fourchette ±30 %)</span>
+              <span style={{ fontSize: 10 }}>({fmtInt(mb.terrain_nu.prix_m2)} €/m² × {fmtInt(mb.terrain_nu.surface_m2)} m² · Estimé, fourchette ±{FOURCHETTE_DEMI_LARGEUR_PCT} %)</span>
             </p>
           )}
           {mb.porte_par_terrain && (

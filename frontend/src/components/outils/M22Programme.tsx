@@ -306,7 +306,7 @@ export function M22({ embedded = false, initialIdus, onBilan, onClose }: {
 
           <Lbl>Stationnement</Lbl>
           <Seg value="aerien" onChange={() => {}}
-            options={[{ key: 'aerien', label: 'Aérien' }, { key: 'ouvrage', label: 'En ouvrage', bientot: true }]} />
+            options={[{ key: 'aerien', label: 'Aérien' }, { key: 'ouvrage', label: 'Sous-sol', bientot: true }]} />
 
           <Lbl>Terrain étudié</Lbl>
           <Seg value="libere" onChange={() => {}}
@@ -518,7 +518,7 @@ export function M22({ embedded = false, initialIdus, onBilan, onClose }: {
           <div className="mb-6">
             <Lbl>Terrain — 1 à {ASM_MAX} parcelles contiguës</Lbl>
             <ParcelInput dataAttr="etude-parcelle" withCarte={false} onPick={(i) => ajouter(i)}
-              placeholder="Ajouter une parcelle : adresse, IDU ou référence (AW0451)" />
+              placeholder="Ajouter une parcelle : adresse, IDU ou référence (BW0917)" />
             <div className="mt-2 flex flex-wrap gap-1">
               {sel.map((i) => (
                 <button key={i} data-etude-chip onClick={() => { setSel(sel.filter((x) => x !== i)); setMax8(false) }}
@@ -589,7 +589,7 @@ export function M22({ embedded = false, initialIdus, onBilan, onClose }: {
           <div className="mb-6">
             <Lbl>Stationnement</Lbl>
             <Seg value="aerien" onChange={() => {}}
-              options={[{ key: 'aerien', label: 'Aérien' }, { key: 'ouvrage', label: 'En ouvrage', bientot: true }]} />
+              options={[{ key: 'aerien', label: 'Aérien' }, { key: 'ouvrage', label: 'Sous-sol', bientot: true }]} />
           </div>
 
           <div className="mb-6">

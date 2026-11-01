@@ -8,8 +8,9 @@ from __future__ import annotations
 
 import base64
 import logging
+import math
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel
 from sqlalchemy import text
 
@@ -139,6 +140,18 @@ class ConfirmationBatchIn(BaseModel):
     des 30 %. L'extension ouvre chaque lien, classe la page, puis dépose le lot entier."""
     items: list[ConfirmationIn]
     captured_at: str | None = None   # défaut = jour Réunion (clé d'idempotence de la passe)
+
+
+class JournalIn(BaseModel):
+    """RADAR-FIX-NU3-4 (K-RAD-04) — COMPTE-RENDU de fin de soirée posté par l'extension (succès, échec,
+    ou veille du Mac détectée). Jusqu'ici le journal de passe ne vivait que dans le `chrome.storage` du
+    navigateur : une nuit RATÉE ne laissait aucune trace active côté serveur. Désormais chaque soirée,
+    même échouée, dépose son compte-rendu — lisible dans l'admin Radar."""
+    captured_at: str
+    statut: str = "ok"            # ok | echec
+    source: str = "auto"          # auto | manuel | test
+    resume: str = ""              # la ligne lisible (identique au popup de l'extension)
+    veille_minutes: int = 0       # > 0 = le Mac a dormi pendant la fenêtre (durée estimée)
 
 
 _SOURCES = ("auto", "manuel", "test")
@@ -484,6 +497,26 @@ def radar_retiree(body: BienIn, request: Request) -> dict:
     return {"ok": True, "bien_id": body.bien_id, "statut": "retiree"}
 
 
+@router.post("/admin/radar/journal")
+def radar_journal(body: JournalIn, request: Request) -> dict:
+    """RADAR-FIX-NU3-4 (K-RAD-04) — reçoit le compte-rendu de la soirée de l'extension et le grave dans
+    l'event_log (kind EV_CAPTURE, dedup `pige:soiree:<jour Réunion>` — UNE ligne par soir, rafraîchie, via
+    `journaliser_passe`). Une soirée qui échoue ou tombe sur un Mac endormi laisse ainsi une trace active,
+    servie par `/admin/radar/check` (`dernier_journal`). Même porte/jeton que les autres endpoints Radar."""
+    from .tables import journaliser_passe
+    _exiger_radar(request)
+    statut = "echec" if (body.statut or "").strip() == "echec" else "ok"
+    jour = (body.captured_at or "")[:10] or "?"
+    titre = "Radar — compte-rendu de la soirée" + (" ⚠ échec" if statut == "echec" else "")
+    detail = (body.resume or "").strip() or ("échec de la passe" if statut == "echec" else "passe terminée")
+    if body.veille_minutes and body.veille_minutes > 0:
+        detail += f" · Mac en veille ~{int(body.veille_minutes)} min"
+    with session_scope() as db:
+        journaliser_passe(db, "soiree", titre, detail, dedup=f"pige:soiree:{jour}")
+        db.commit()
+    return {"ok": True, "statut": statut, "jour": jour}
+
+
 @router.get("/admin/radar/check")
 def radar_check(request: Request) -> dict:
     """Arbre de check quotidien : compteurs du rituel + drapeau intake vide depuis 48 h."""
@@ -534,6 +567,11 @@ def radar_check(request: Request) -> dict:
         cap = c.execute(text(
             "SELECT captured_at, sum(n_pages) AS pages, sum(n_nouvelles) AS nouv, sum(n_maj) AS maj "
             "FROM pige_passes GROUP BY captured_at ORDER BY captured_at DESC LIMIT 1")).mappings().first()
+        # RADAR-FIX-NU3-4 (K-RAD-04) — dernier COMPTE-RENDU de soirée déposé par l'extension (succès,
+        # échec, ou veille du Mac). C'est la trace qui manquait à une nuit ratée (/admin/radar/journal).
+        journal = c.execute(text(
+            "SELECT ts, titre, detail FROM event_log WHERE dedup LIKE 'pige:soiree:%' "
+            "ORDER BY ts DESC LIMIT 1")).mappings().first()
         # DASHBOARD-2 (Lot 4) — « Le flux » : rattachées / total biens / paires DVF / copros non servies.
         # rattachées & paires lisent la MÊME source que Pilotage/Circuit (pige_biens) — compteur unique.
         biens = q("SELECT count(*) FROM pige_biens")
@@ -579,6 +617,11 @@ def radar_check(request: Request) -> dict:
         # RADAR-FIX-1 (3) — dernière capture AUTOMATIQUE (extension) + drapeau « À faire : Déposer Radar ».
         "capture_auto": capture_auto,
         "capture_auto_en_retard": bool(capture_auto_en_retard),
+        # RADAR-FIX-NU3-4 (K-RAD-04) — dernier compte-rendu de soirée (succès/échec/veille), lisible à l'écran.
+        "dernier_journal": None if not journal else {
+            "ts": journal["ts"].isoformat() if journal["ts"] else None,
+            "titre": journal["titre"], "detail": journal["detail"],
+        },
     }
 
 # ══════════════ RADAR P3 · C1 — endpoints CLIENT (lecture : faits + lien, jamais le contenu) ══════════════
@@ -1552,7 +1595,10 @@ def _surface_pour_total(db, idu: str, emprise, mut: dict | None, insee: str,
          maisons de la commune (ratio + assise JOURNALISÉS).
     Plus JAMAIS l'emprise brute × un prix habitable. Le libellé dit quelle surface a servi.
     Renvoie (surface_m2, source) ou (None, None) si aucune surface n'est disponible."""
-    if isinstance(surface_hab, (int, float)) and surface_hab > 0:
+    # FIX-NU3-2 (H-M01) — le garde testait le SIGNE (`> 0`) mais jamais la FINITUDE : `inf`/`1e309`
+    # passaient `> 0` puis faisaient lever `round(inf)` (OverflowError → 500 brut). On exige désormais
+    # une valeur FINIE (ceinture interne, en plus du bornage `Query(gt=0, le=100000)` des routes).
+    if isinstance(surface_hab, (int, float)) and math.isfinite(surface_hab) and surface_hab > 0:
         s = round(surface_hab)
         return s, {"source": "surface_saisie",
                    "ligne": f"Surface habitable saisie ({s} m²)",
@@ -1756,7 +1802,10 @@ def estimation_annonce(db, idu: str, fiche: dict, surface_hab: float | None = No
 
 
 @router.get("/radar/annonce/estimation/{idu}")
-def radar_annonce_estimation(idu: str, surface_hab: float | None = None) -> dict:
+def radar_annonce_estimation(
+    idu: str,
+    surface_hab: float | None = Query(None, gt=0, le=100000),
+) -> dict:
     """ANNONCE-3-FIX — l'estimation du prix d'une parcelle, selon sa NATURE (nue → terrain nu, bâtie →
     bâti). Lit la fiche SERVIE (lecture seule) puis `estimation_annonce` (point unique). L'écran et le
     PDF lisent exactement ce rapport → mêmes chiffres, même règle."""
@@ -2118,7 +2167,10 @@ def rapport_parcelle(db, idu: str, fiche: dict | None = None, surface_hab: float
 
 
 @router.get("/radar/annonce/rapport/{idu}")
-def radar_annonce_rapport(idu: str, surface_hab: float | None = None) -> dict:
+def radar_annonce_rapport(
+    idu: str,
+    surface_hab: float | None = Query(None, gt=0, le=100000),
+) -> dict:
     """ANNONCE-5 — le rapport PARCELLE complet (adresse) servi à l'écran ET au PDF (même point).
     Lecture seule de la fiche servie. Parcelle inconnue → structure minimale, jamais un 500.
     ESTIMER-PRECISION-1 — `surface_hab` (facultatif) : surface habitable saisie → le total l'utilise."""

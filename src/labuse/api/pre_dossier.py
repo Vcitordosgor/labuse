@@ -1114,9 +1114,21 @@ def pre_dossier_zip(idu: str, request: Request, db: Session = Depends(get_db)) -
         enveloppe = None
         log.warning("pré-dossier %s : enveloppe réglementaire en échec (%s)", idu, exc)
     buf = io.BytesIO()
+    # FIX-NU3-2 (I-TPS-02) — TOUTES les pièces du ZIP portent la MÊME date, en heure de La Réunion.
+    # Avant : `writestr(str, …)` horodatait à `time.localtime()` (CET machine) et le LISEZMOI, écrit
+    # via `ZipInfo` sans `date_time`, tombait au 01/01/1980 → un livrable aux dates incohérentes. On
+    # fabrique chaque entrée via un `ZipInfo` daté `now_reunion()` (source unique du module).
+    from ..tz import now_reunion
+    _zdt = now_reunion().timetuple()[:6]
+
+    def _zi(nom: str, compress: int = zipfile.ZIP_DEFLATED) -> zipfile.ZipInfo:
+        zi = zipfile.ZipInfo(nom, date_time=_zdt)
+        zi.compress_type = compress
+        return zi
+
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
         if cerfa is not None:
-            z.writestr(f"{pfx}-CERFA-{cerfa_meta['version'].replace('*', '-')}-prerempli.pdf", cerfa)
+            z.writestr(_zi(f"{pfx}-CERFA-{cerfa_meta['version'].replace('*', '-')}-prerempli.pdf"), cerfa)
         pieces_gen = [
             (f"{pfx}-PCMI1-plan-situation.pdf", lambda: _pcmi1(parcelle)),
             (f"{pfx}-PCMI2-plan-masse-existant.pdf", lambda: _pcmi2(db, parcelle, fiche)),
@@ -1128,13 +1140,12 @@ def pre_dossier_zip(idu: str, request: Request, db: Session = Depends(get_db)) -
             pieces_gen.append((f"{pfx}-enveloppe-reglementaire.pdf", lambda: enveloppe))
         for nom, gen in pieces_gen:
             try:
-                z.writestr(nom, gen())
+                z.writestr(_zi(nom), gen())
             except Exception as exc:  # noqa: BLE001 — une pièce en échec ne casse jamais le pack
                 log.warning("pré-dossier %s : pièce %s en échec (%s)", idu, nom, exc)
-        z.writestr(zipfile.ZipInfo(f"{pfx}-LISEZMOI.txt"),
+        z.writestr(_zi(f"{pfx}-LISEZMOI.txt", zipfile.ZIP_STORED),   # non compressé : libellé vérifiable tel quel
                    _lisezmoi(idu, parcelle["commune"], adresse is not None, cerfa is not None, scen,
-                            enveloppe is not None),
-                   compress_type=zipfile.ZIP_STORED)   # non compressé : libellé vérifiable tel quel
+                            enveloppe is not None))
     log.info("pré-dossier PC %s généré", idu)
     return Response(buf.getvalue(), media_type="application/zip",
                     headers={"Content-Disposition": f'attachment; filename="{pfx}-predossier-pc.zip"'})

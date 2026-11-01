@@ -842,6 +842,11 @@ class Projet(Base, TimestampMixin):
     cadrage_total_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     fiche: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")  # M120 legacy (migration, EN EXTINCTION — lu une fois au backfill identite, jamais après)
     programme: Mapped[dict | None] = mapped_column(JSONB)     # M120 legacy EN EXTINCTION — jamais lu ni écrit (conservé, non-destructif)
+    # FIX-NU3-2 (H-D03) — VERROU OPTIMISTE : compteur de version incrémenté à chaque édition. Le PATCH
+    # peut porter la version qu'il croit éditer ; si elle ne correspond plus (un autre utilisateur du
+    # même compte a écrit entre-temps), on répond 409 Conflit au lieu d'écraser en silence (« dernier
+    # qui écrit gagne »). Colonne aussi posée hors ORM (ADD COLUMN IF NOT EXISTS, _COLS).
+    version: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
 
 
 class ProjetParcelle(Base, TimestampMixin):

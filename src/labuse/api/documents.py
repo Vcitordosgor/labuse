@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import RedirectResponse, Response
 from sqlalchemy.orm import Session
 
@@ -246,7 +246,8 @@ def _zone_map_html(db, zone: dict) -> str:
 #    chemins que l'outil « Analyser une annonce ». Le PDF sorti de l'outil et celui sorti de Docs sont
 #    identiques (mêmes routes, mêmes endpoints, mêmes chiffres que l'écran).
 @router.get("/analyse-annonce/{idu}.pdf")
-def analyse_annonce_parcelle_pdf(idu: str, request: Request, surface_hab: float | None = None,
+def analyse_annonce_parcelle_pdf(idu: str, request: Request,
+                                 surface_hab: float | None = Query(None, gt=0, le=100000),
                                  db: Session = Depends(get_db)) -> Response:
     """Variante PARCELLE (entrée adresse) : rapport parcelle (tuiles + estimation + foncier + plan de
     situation). Lit les MÊMES endpoints que l'écran (fiche, exposition, classement du run servi).

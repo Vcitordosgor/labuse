@@ -158,7 +158,9 @@ export function CopiloteView() {
                 onVoir={(p) => { setProjetForm(null); setOpenProjet(p) }}
                 onFermer={() => setProjetForm(null)} />)
             : (fil.length > 0 || dispatching) ? (
-              <div data-fil className="flex flex-col gap-3 text-left">
+              // FIX-NU3-2 (M-A02) — le fil de réponses du Copilote est une RÉGION LIVE : chaque réponse
+              // qui arrive est annoncée au lecteur d'écran (avant, silence total après « cherche… »).
+              <div data-fil role="log" aria-live="polite" aria-relevant="additions text" className="flex flex-col gap-3 text-left">
                 {ttlNotice}
                 <div className={filExpire ? 'flex flex-col gap-3 opacity-50' : 'flex flex-col gap-3'}>
                   {fil.map((t, i) => (

@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import { useEffect } from 'react'
+import { useRef } from 'react'
 import { getSources } from '../../lib/api'
 import { layerLabel } from '../../lib/layers'
+import { usePiegeFocus } from '../../lib/usePiegeFocus'
 import { useApp } from '../../store/useApp'
 import { Chargement } from '../Loading'
 
@@ -12,12 +13,9 @@ export function SourceDrawer() {
   const { sourceLine, closeSourceDrawer, openSources } = useApp()
   const sources = useQuery({ queryKey: ['sources'], queryFn: getSources, enabled: !!sourceLine })
 
-  useEffect(() => {
-    if (!sourceLine) return
-    const h = (e: KeyboardEvent) => e.key === 'Escape' && closeSourceDrawer()
-    window.addEventListener('keydown', h)
-    return () => window.removeEventListener('keydown', h)
-  }, [sourceLine, closeSourceDrawer])
+  // FIX-NU3-2 (M-A04) — piège de focus + Échap + restitution au déclencheur (généralisé).
+  const panelRef = useRef<HTMLElement | null>(null)
+  usePiegeFocus(!!sourceLine, panelRef, closeSourceDrawer)
 
   if (!sourceLine) return null
   const meta = sources.data?.find((s) => s.name === sourceLine.source)
@@ -27,7 +25,8 @@ export function SourceDrawer() {
     <>
       {/* clic-extérieur */}
       <div className="fixed inset-0 z-30 bg-black/40" onClick={closeSourceDrawer} />
-      <aside className="fixed right-0 top-0 z-40 flex h-full w-[340px] max-w-full flex-col border-l border-line-2 bg-surface-2 shadow-2xl">
+      <aside ref={panelRef} role="dialog" aria-modal="true" aria-label="Source de la donnée"
+        className="fixed right-0 top-0 z-40 flex h-full w-[340px] max-w-full flex-col border-l border-line-2 bg-surface-2 shadow-2xl">
         <div className="flex shrink-0 items-start justify-between border-b border-line px-5 py-4">
           <div className="min-w-0">
             <p className="font-mono text-[10px] tracking-widest text-txt-dim">SOURCE</p>

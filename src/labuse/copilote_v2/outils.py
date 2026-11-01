@@ -451,7 +451,7 @@ def delais_instruction(db: Session, *, commune: str) -> ToolResult:
 # ───────────────────────── marche ─────────────────────────
 def marche(db: Session, *, commune: str) -> ToolResult:
     """Marché commune via `build_marche_commune` (point de calcul unique, terrain nu M79 inclus)."""
-    from ..faisabilite.marche_commune import build_marche_commune
+    from ..faisabilite.marche_commune import build_marche_commune, marche_commune_bloc
     resolue = resoudre_commune(commune)              # M103 P4 — filet toponyme
     if resolue is None:
         return _refus_commune("marche", commune)
@@ -472,6 +472,22 @@ def marche(db: Session, *, commune: str) -> ToolResult:
                        "fiabilite": l.get("fiabilite"), "etiquette": l.get("etiquette")})
         if cle and prim is not None:
             valeurs[cle] = prim
+    # FIX-NU3-2 (G-012) — SEGMENTATION PAR TYPE : la médiane MAISON / APPARTEMENT / TERRAIN NU existe
+    # déjà dans `marche_commune_bloc` (point unique `mediane_commune`, la MÊME que la fiche commune,
+    # l'Estimer et le Radar) mais n'était pas exposée au Copilote → il répondait « pas de segmentation
+    # par type ». On ajoute ces grandeurs (lignes + valeurs) pour que « prix médian des maisons au
+    # Tampon » soit servi, au même chiffre que les autres écrans.
+    bloc = marche_commune_bloc(db, commune) or {}
+    for cle, med, n, lib in (
+        ("prix_median_maison", bloc.get("median_maison_eur_m2"), bloc.get("n_maison"), "Prix médian maison (DVF)"),
+        ("prix_median_appartement", bloc.get("median_appartement_eur_m2"), bloc.get("n_appartement"), "Prix médian appartement (DVF)"),
+        ("prix_median_terrain", bloc.get("median_terrain_eur_m2"), bloc.get("n_terrain"), "Prix médian terrain nu (DVF)"),
+    ):
+        if med is not None:
+            lignes.append({"cle": cle, "libelle": lib, "valeur": med,
+                           "detail": {"median_eur_m2": med, "n": n},
+                           "source": "DVF (ventes, médiane par type)", "millesime": bloc.get("millesime")})
+            valeurs[cle] = med
     return ToolResult("marche", data={"commune": commune, "lignes": lignes, "valeurs": valeurs},
                       source="DVF, Sitadel, DHUP (terrain nu)",
                       millesime="par ligne (fraîcheur = source amont)")
@@ -824,6 +840,20 @@ def statut_ppr(db: Session, *, idu: str) -> ToolResult:
     liste = ((f.get("aleas") or {}).get("liste")) or []
     rouge = next((a for a in liste if "zone rouge" in (a.get("nature") or "").lower()), None)
     bleue = next((a for a in liste if "zone bleue" in (a.get("nature") or "").lower()), None)
+    # FIX-NU3-2 (G-011) — « pas de PPR » ne veut PAS dire « hors zones d'aléas ». La fiche, l'Estimer et
+    # le Dossier affichent les aléas GÉORISQUES (mouvement de terrain, inondation…) même sans PPR
+    # réglementaire. On distingue donc les deux : réponse PPR = oui/non, MAIS on NOMME toujours les
+    # aléas non-PPR présents (mêmes items que la fiche) pour ne jamais nier un risque qu'elle affiche.
+    autres = [a for a in liste if not (a.get("nature") or "").upper().startswith("PPR")]
+
+    def _mention_alea(a: dict) -> str:
+        bout = (a.get("nature") or "").strip()
+        if a.get("niveau"):
+            bout += f" — {a['niveau']}"
+        if a.get("part_pct") is not None:
+            bout += f" — {round(float(a['part_pct']))} %"
+        return bout
+
     if rouge:
         statut, reponse = "rouge", "oui"
         txt = rouge.get("libelle") or "Parcelle en zone rouge du PPR."
@@ -832,15 +862,64 @@ def statut_ppr(db: Session, *, idu: str) -> ToolResult:
         txt = bleue.get("libelle") or "Parcelle en zone bleue du PPR."
     else:
         statut, reponse = "hors", "non"
-        txt = "Cette parcelle n'est PAS classée en zone PPR (ni rouge, ni bleue) d'après la couche servie."
+        if autres:
+            noms = " ; ".join(_mention_alea(a) for a in autres)
+            txt = ("Cette parcelle n'est PAS classée en zone PPR réglementaire (ni rouge, ni bleue) "
+                   f"d'après la couche servie. En revanche, la fiche signale {len(autres)} aléa(s) "
+                   f"(Géorisques) : {noms}.")
+        else:
+            txt = ("Cette parcelle n'est PAS classée en zone PPR réglementaire (ni rouge, ni bleue), "
+                   "et aucun aléa n'est signalé sur la fiche.")
     ppr_docs = (rouge or bleue or {}).get("ppr")
     return ToolResult("statut_ppr", valeur=reponse,
                       data={"idu": idu, "commune": f.get("commune"), "reponse": reponse,
                             "statut_ppr": statut, "libelle": txt,
                             "part_pct": (rouge or bleue or {}).get("part_pct"),
+                            # G-011 — les aléas non-PPR explicitement portés (n + libellés), comme la fiche.
+                            "n_aleas_non_ppr": len(autres),
+                            "aleas_non_ppr": [_mention_alea(a) for a in autres],
                             "ppr_documents": ppr_docs},
                       source="DEAL Réunion — PPR / aléas",
                       millesime=(rouge or bleue or {}).get("millesime"))
+
+
+def loyer_parcelle(db: Session, *, idu: str) -> ToolResult:
+    """FIX-NU3-2 (G-013) — LOYER autour d'une PARCELLE, lu de la MÊME source que la fiche : le bloc
+    `loyers_oll` (Observatoire Local des Loyers, maille zone OLL). Avant, une question de loyer sur un
+    IDU tombait dans l'outil `marche` d'une COMMUNE par défaut (Saint-Denis) avec une valeur DHUP — donc
+    mauvaise commune ET valeur contredisant la fiche (OLL). Ici la commune est celle de l'IDU (par
+    construction), la valeur est l'OLL de la fiche, et la source est nommée « Loyers OLL », jamais
+    « DHUP (terrain nu) »."""
+    from fastapi import HTTPException
+
+    from ..api.app import _q_v2_fiche
+    try:
+        f = _q_v2_fiche(db, idu, run_label=runs.current())
+    except HTTPException:
+        return ToolResult("loyer_parcelle", ok=False, refus=f"parcelle {idu} introuvable")
+    if not f or f.get("commune") is None:
+        return ToolResult("loyer_parcelle", ok=False, refus=f"parcelle {idu} introuvable")
+    commune = f.get("commune")
+    oll = f.get("loyers_oll") or {}
+    if not oll.get("disponible") or oll.get("loyer_median_eur_m2") is None:
+        return ToolResult("loyer_parcelle", ok=False,
+                          refus=f"Pas de loyer OLL disponible pour la zone de {commune} (parcelle {idu}).")
+    med = oll.get("loyer_median_eur_m2")
+    par_type = oll.get("par_type") or {}
+    zone = oll.get("zone")
+    bouts = []
+    if par_type.get("maison") is not None:
+        bouts.append(f"maison {str(par_type['maison']).replace('.', ',')} €/m²")
+    if par_type.get("appartement") is not None:
+        bouts.append(f"appartement {str(par_type['appartement']).replace('.', ',')} €/m²")
+    detail = (" (" + " · ".join(bouts) + ")") if bouts else ""
+    txt = (f"Le loyer médian OLL autour de la parcelle {idu} (à {commune}, zone OLL {zone}) est de "
+           f"{str(med).replace('.', ',')} €/m²{detail}.")
+    return ToolResult("loyer_parcelle", valeur=med,
+                      data={"idu": idu, "commune": commune, "zone_oll": zone,
+                            "loyer_median_eur_m2": med, "par_type": par_type or None, "libelle": txt},
+                      source=oll.get("source") or "Loyers OLL — ADIL / AGORAH",
+                      millesime=oll.get("millesime"))
 
 
 OUTILS = {
@@ -855,5 +934,6 @@ OUTILS = {
     "destination_zone": destination_zone,
     "regles_plu_zone": regles_plu_zone,
     "statut_ppr": statut_ppr,
+    "loyer_parcelle": loyer_parcelle,
     "recherche_web": recherche_web,
 }

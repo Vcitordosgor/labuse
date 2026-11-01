@@ -34,7 +34,7 @@ export type Portee = 'sans_amont' | 'g8' | 'tous'
 
 // la date d'un contrôle / passage, lisible (« 24/09 02:05 »).
 const quandCourt = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'
+  iso ? new Date(iso).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Indian/Reunion' }) : '—'
 
 export function CircuitSection() {
   const qc = useQueryClient()

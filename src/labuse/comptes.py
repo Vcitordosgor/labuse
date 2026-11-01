@@ -28,6 +28,11 @@ from .config import get_settings
 log = logging.getLogger("labuse.comptes")
 _ph = PasswordHasher()  # argon2id par défaut (time_cost=3, memory=64 MiB, parallelism=4)
 
+#: FIX-NU3-2 (I-CPT-01 / H-M02 — décision Vic) — fenêtre de GRÂCE après un échec de paiement : accès
+#: COMPLET + bandeau visible pendant 7 jours, puis bascule en LECTURE SEULE (login & lecture OK, écritures
+#: refusées) jusqu'à régularisation. Source unique de la durée (back + calcul d'accès).
+PAIEMENT_GRACE_JOURS = 7
+
 # Refonte commerciale (Vic 22/07 ; parcours d'entrée E1, 27/08) : UN SEUL plan commercial —
 # INTÉGRAL, source de vérité `offres.py` (prix en config). 1 licence = 1 accès (plus d'Indé/Pro,
 # plus de sièges multiples, plus de founding, PLUS d'« Illimité 499 € » : offre fantôme retirée).
@@ -90,6 +95,18 @@ def ensure_tables(db: Session) -> None:
     if not db.execute(text("SELECT 1 FROM information_schema.columns "
                            "WHERE table_name = 'comptes' AND column_name = 'essai_expire_at'")).scalar():
         db.execute(text("ALTER TABLE comptes ADD COLUMN essai_expire_at timestamptz"))
+    # FIX-NU3-2 (I-CPT-01 / H-M02 — décision Vic) — INSTANT du 1er échec de paiement. Ancre la fenêtre
+    # de GRÂCE de 7 jours (accès complet + bandeau) ; passé ce délai, l'accès passe en LECTURE SEULE
+    # (régularisation). NULL = pas en défaut de paiement. Posée à chaque échec, effacée au rétablissement.
+    if not db.execute(text("SELECT 1 FROM information_schema.columns "
+                           "WHERE table_name = 'comptes' AND column_name = 'paiement_requis_at'")).scalar():
+        db.execute(text("ALTER TABLE comptes ADD COLUMN paiement_requis_at timestamptz"))
+    # FIX-NU3-2 (M-P01 — CGV art. 5) — FIN D'ACCÈS PROGRAMMÉE : quand un abonnement est résilié mais
+    # que la période déjà PAYÉE court encore, on maintient l'accès jusqu'à ce terme (comme l'essai).
+    # NULL = pas de fin programmée. À l'échéance, `session_utilisateur` suspend (aucun cron à attendre).
+    if not db.execute(text("SELECT 1 FROM information_schema.columns "
+                           "WHERE table_name = 'comptes' AND column_name = 'acces_fin_at'")).scalar():
+        db.execute(text("ALTER TABLE comptes ADD COLUMN acces_fin_at timestamptz"))
     db.execute(text("""
         CREATE TABLE IF NOT EXISTS utilisateurs (
             id serial PRIMARY KEY,
@@ -449,7 +466,8 @@ def session_utilisateur(db: Session, token: str) -> dict | None:
     """Session valide → {utilisateur_id, compte_id, role, statut_compte} (sinon None)."""
     r = db.execute(text(
         "SELECT s.utilisateur_id, u.compte_id, u.role, u.statut, c.statut AS statut_compte,"
-        "       c.essai_expire_at"
+        "       c.essai_expire_at, c.paiement_requis_at, c.updated_at AS compte_updated_at,"
+        "       c.acces_fin_at"
         " FROM sessions_auth s JOIN utilisateurs u ON u.id = s.utilisateur_id"
         " JOIN comptes c ON c.id = u.compte_id"
         " WHERE s.token_hash = :h AND s.expire_at > now()"), {"h": _sha(token)}).mappings().first()
@@ -460,12 +478,30 @@ def session_utilisateur(db: Session, token: str) -> dict | None:
     if _essai_echu(r):
         basculer_essai_expire(db, r["compte_id"])
         return None
+    # FIX-NU3-2 (M-P01) — FIN D'ACCÈS PROGRAMMÉE atteinte (résiliation en fin de période payée) :
+    # même bascule à la requête que l'essai — l'accès promis jusqu'au terme est honoré, pas au-delà.
+    if (r.get("acces_fin_at") is not None
+            and r["acces_fin_at"] <= datetime.now(timezone.utc)):
+        suspendre_compte(db, r["compte_id"], "fin-periode-payee")
+        return None
     # défense en profondeur (durcie aux tests Vic) : le statut du COMPTE se vérifie à
     # chaque requête — suspendu/résilié = coupé ; `invite` (jamais payé) = pas d'accès
     # non plus : l'app ne s'ouvre qu'à un abonnement réellement activé par Stripe.
     if r["statut_compte"] in ("suspendu", "resilie", "invite"):
         return None
-    return {k: v for k, v in dict(r).items() if k != "essai_expire_at"}
+    # FIX-NU3-2 (I-CPT-01 / H-M02 — décision Vic) — un compte en DÉFAUT DE PAIEMENT garde l'accès
+    # (login + lecture) : pendant 7 jours COMPLET + bandeau, puis LECTURE SEULE (écritures refusées
+    # au middleware) jusqu'à régularisation. `acces` est servi ici et porté jusqu'à l'endpoint.
+    acces = "complet"
+    if r["statut_compte"] == "paiement_requis":
+        ancre = r["paiement_requis_at"] or r["compte_updated_at"]
+        if ancre is not None and (datetime.now(timezone.utc) - ancre
+                                  > timedelta(days=PAIEMENT_GRACE_JOURS)):
+            acces = "lecture_seule"
+    out = {k: v for k, v in dict(r).items()
+           if k not in ("essai_expire_at", "paiement_requis_at", "compte_updated_at", "acces_fin_at")}
+    out["acces"] = acces
+    return out
 
 
 def detruire_session(db: Session, token: str) -> None:
@@ -718,7 +754,8 @@ def _prenom_titulaire(nom: str | None, email: str) -> str:
     return base.split()[0] if base and "@" not in base else "client"
 
 
-def mail_cycle_de_vie_auto(db: Session, compte_id: int, key: str, demandeur: str) -> None:
+def mail_cycle_de_vie_auto(db: Session, compte_id: int, key: str, demandeur: str,
+                           date_fin=None) -> None:
     """A-07-5 — ÉMISSION AUTOMATIQUE d'un mail de cycle de vie (résiliation/suspension/rétablissement)
     SUR une transition d'état déclenchée par le système (webhook Stripe, bascule d'essai), au contraire
     des envois MANUELS admin (dashboard). Best-effort EXACTEMENT comme `relance_carte` (facturation.py) :
@@ -740,7 +777,10 @@ def mail_cycle_de_vie_auto(db: Session, compte_id: int, key: str, demandeur: str
         if key == "suspension":
             params["LIEN_PAIEMENT"] = f"{base}/facturation"
         elif key == "resiliation":
-            d = row.get("essai_expire_at")
+            # FIX-NU3-2 (I-CPT-02) — date de fin d'accès RÉELLE : la fin de période payée (abonné
+            # résilié) quand elle est fournie, sinon l'échéance d'essai, sinon vide. Plus de « prend
+            # fin le  » (chaîne vide) pour un abonné payant qui n'a jamais eu d'essai.
+            d = date_fin or row.get("essai_expire_at")
             params["DATE_FIN_ACCES"] = (
                 d.astimezone(ZoneInfo("Indian/Reunion")).strftime("%d/%m/%Y") if d else "")
         from .mail import envoyer_mail
@@ -768,7 +808,9 @@ def deconnecter_compte(db: Session, compte_id: int, motif: str = "admin") -> int
 
 
 def reactiver_compte(db: Session, compte_id: int, motif: str = "manuel") -> None:
-    db.execute(text("UPDATE comptes SET statut = 'actif', updated_at = now() WHERE id = :c"),
+    # FIX-NU3-2 — rétablissement : efface l'ancre de grâce (l'accès redevient complet immédiatement).
+    db.execute(text("UPDATE comptes SET statut = 'actif', paiement_requis_at = NULL,"
+                    " updated_at = now() WHERE id = :c"),
                {"c": compte_id})
     audit(db, "compte_reactive", compte_id, None, motif); db.commit()
 

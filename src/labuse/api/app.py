@@ -568,6 +568,21 @@ from .protection import garde_protection as _garde_protection  # noqa: E402
 app.middleware("http")(_garde_protection)
 
 
+def _est_chemin_admin(path: str) -> bool:
+    """FIX-NU3-2 (H-D02) — vrai pour toute route d'administration, repérée par son SEGMENT d'URL
+    `/admin` (dashboard `/admin/*`, ops `/admin/*`, promo `/admin/programmes/*`, courrier
+    `/courrier/admin/*`, protection `/protection/admin*`). Segment exact : jamais un faux positif
+    sur un mot contenant « admin » (aucune route métier n'a ce segment). Sert de fail-safe au gate."""
+    return path == "/admin" or path.endswith("/admin") or "/admin/" in path
+
+
+def _chemin_regularisation(path: str) -> bool:
+    """FIX-NU3-2 (I-CPT-01) — chemins TOUJOURS ouverts même en lecture seule : régularisation du
+    paiement (onboarding/Stripe/facturation), déconnexion, et lecture du propre statut (/moi).
+    Tout le reste des écritures est refusé (402) tant que l'abonnement n'est pas réglé."""
+    return path.startswith(("/onboarding", "/stripe", "/facturation", "/logout", "/login", "/moi"))
+
+
 @app.middleware("http")
 async def _auth_guard(request, call_next):
     """Garde d'authentification PILOTE (cf. api/auth.py) — protège TOUTES les routes métier.
@@ -601,8 +616,30 @@ async def _auth_guard(request, call_next):
     _ia_core.poser_compte(request.state.compte_id)
     if not auth.enabled() or auth.is_public(path):
         return await call_next(request)
-    if info is not None or await run_in_threadpool(auth.token_ok, cookie):
+    if info is not None:
+        # FIX-NU3-2 (H-D02) — FAIL-SAFE ADMIN STRUCTUREL. Les ~95 routes admin portent chacune un
+        # `exiger_admin()` EN LIGNE (couverture complète aujourd'hui) ; mais une seule ligne oubliée
+        # rouvrirait une route admin. Les routeurs étant MIXTES (admin + public dans le même routeur),
+        # une dépendance de routeur gaterait aussi le public. On ferme donc le trou ICI, par segment
+        # d'URL : toute route au segment `/admin` exige le rôle admin, même si le handler l'oubliait.
+        # Les gardes en ligne RESTENT (défense en profondeur) — ceci ne retire rien, il ajoute un filet.
+        if _est_chemin_admin(path) and info.get("role") != "admin":
+            return JSONResponse(status_code=403,
+                                content={"detail": "Action réservée aux administrateurs LABUSE."})
+        # FIX-NU3-2 (I-CPT-01 / H-M02 — décision Vic) — ACCÈS EN LECTURE SEULE après la grâce de 7 j
+        # d'un compte en défaut de paiement : la LECTURE (GET/HEAD/OPTIONS) et la connexion restent
+        # ouvertes, mais toute ÉCRITURE est refusée (402) — sauf les chemins de RÉGULARISATION et de
+        # déconnexion. Le front lit `acces` via /moi et affiche la page/bandeau de régularisation.
+        request.state.acces = info.get("acces", "complet")
+        if (info.get("acces") == "lecture_seule"
+                and request.method not in ("GET", "HEAD", "OPTIONS")
+                and not _chemin_regularisation(path)):
+            return JSONResponse(status_code=402, content={
+                "detail": "Abonnement à régulariser — accès en lecture seule.",
+                "acces": "lecture_seule"})
         return await call_next(request)
+    if await run_in_threadpool(auth.token_ok, cookie):
+        return await call_next(request)   # session pilote (mot de passe partagé) = admin de fait
     # RADAR-FIX-2 (serveur) — l'extension de capture s'authentifie par en-tête X-Radar-Token (pas de
     # session). On laisse passer SES 3 endpoints UNIQUEMENT si le jeton est valide (temps constant) ;
     # sans jeton / jeton faux → on tombe dans le 401 habituel ci-dessous. La route garde _exiger_radar.
@@ -800,6 +837,21 @@ async def _data_error_422(request: Request, exc: _SA_DataError):
         request.method, request.url.path)
     return JSONResponse(status_code=422,
                         content={"detail": "Paramètre invalide ou hors bornes."})
+
+
+@app.exception_handler(Exception)
+async def _catch_all_500(request: Request, exc: Exception):
+    """FIX-NU3-2 (H-D01) — LA CEINTURE GÉNÉRIQUE. La promesse « jamais un 500 brut » était tenue
+    cas par cas (StarletteHTTPException / UnicodeError / DataError) ; une seule exception Python
+    imprévue oubliée (OverflowError sur `round(inf)`, OperationalError d'une coupure de base en
+    plein calcul, etc.) remontait nue → corps texte « Internal Server Error ». Ce handler attrape
+    TOUTE exception non gérée par les trois handlers ci-dessus, journalise la trace complète CÔTÉ
+    SERVEUR (jamais exposée au client) et rend un 500 JSON neutre. C'est la ceinture qui ferme la
+    famille « entrée/incident imprévu → 500 brut », pas seulement le cas du jour."""
+    from fastapi.responses import JSONResponse
+    logging.getLogger("labuse.api").exception(
+        "Exception non gérée sur %s %s", request.method, request.url.path)
+    return JSONResponse(status_code=500, content={"detail": "Erreur interne."})
 
 
 # ───────────────────────────── Connexion pilote ─────────────────────────────
@@ -1826,14 +1878,22 @@ def _q_v2_where(run_label: str,
     # M45 (P2) : les filtres de vigilance PROBENT `parcel_flags` (dénormalisée au geste de bascule,
     # non-francs déjà résolus, indexée) — le seq-scan de dryrun_cascade_results (4-7 s île entière)
     # devient un probe indexé. Table run-scopée cohérente-par-construction (garde au build).
+    # FIX-NU3-2 (G-001) — EXPANSION des flags de GROUPE vers leurs couches cascade : le flag « risques »
+    # (filtre carte PPR/aléa) recouvre `ppr` + `georisque_alea` (parcel_flags ne connaît que ces couches
+    # brutes). Même expansion que le client (lib/filters.FLAG_GROUPES) → compteur == carte.
+    def _expand_flags(toks: list[str]) -> list[str]:
+        out: list[str] = []
+        for t in toks:
+            out.extend(CRITICAL_LAYERS[t][1] if t in CRITICAL_LAYERS else [t])
+        return out
     if flags:
-        fl = [f.strip() for f in flags.split(",") if f.strip()]
+        fl = _expand_flags([f.strip() for f in flags.split(",") if f.strip()])
         _guard_flags_rgpd(fl)
         conds.append("EXISTS (SELECT 1 FROM parcel_flags c1 WHERE c1.parcel_id = p.id"
                      " AND c1.run_label = :runf AND c1.layer_name = ANY(:f_flags))")
         params["f_flags"] = fl
     if flags_exclus:   # contraintes RÉDHIBITOIRES (copilote-projet) : écarter les parcelles portant le flag
-        flx = [f.strip() for f in flags_exclus.split(",") if f.strip()]
+        flx = _expand_flags([f.strip() for f in flags_exclus.split(",") if f.strip()])
         _guard_flags_rgpd(flx)
         conds.append("NOT EXISTS (SELECT 1 FROM parcel_flags c2 WHERE c2.parcel_id = p.id"
                      " AND c2.run_label = :runf AND c2.layer_name = ANY(:f_flags_x))")
@@ -7208,7 +7268,25 @@ def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_
                            {"idu": idu}).mappings().first()
         if _disp:
             return _fiche_cadastre_disparue(db, idu, _disp)
-    run = source if (source and source.startswith("q_v")) else runs.current()
+    if source and source.startswith("q_v"):
+        run = source
+        # FIX-NU3-2 (H-m02) — un run `q_v*` explicitement demandé mais INEXISTANT était servi en
+        # SILENCE comme le run courant (un partenaire croyant épingler le run X recevait le courant,
+        # octet pour octet). On le refuse désormais par un 404 « run inconnu ». Le run servi et le
+        # précédent sont toujours acceptés (valides même en dev/test où la table de runs peut manquer).
+        if db is not None and run != runs.current():
+            try:
+                _autorises = {runs.current(), runs.precedent()}
+            except Exception:
+                _autorises = {runs.current()}
+            if run not in _autorises:
+                _connu = db.execute(
+                    text("SELECT 1 FROM p_score_v2_runs WHERE run_id = :r LIMIT 1"),
+                    {"r": run}).first()
+                if not _connu:
+                    raise HTTPException(404, f"Run inconnu : {run}")
+    else:
+        run = runs.current()
     # VITESSE-2 (Lot 3) — fiche servie via le point d'accès UNIQUE `_fiche_servie` (cache _FICHE_CACHE),
     # partagé avec /compare. La copie `dict(...)` interne protège l'entrée cachée (ajout `_trace`).
     payload = _fiche_servie(db, idu, run)
@@ -8205,16 +8283,23 @@ def permits_geojson(commune: str | None = None, db: Session = Depends(get_db)) -
 def _check_idu(idu: str) -> str:
     """Valide la forme d'un IDU avant tout accès DB : un octet nul ou un caractère de
     contrôle dans le chemin provoquait un 500 (erreur driver) au lieu d'un 404 propre
-    (audit O5). Alphanumérique ≤ 20 caractères, sinon 404 — jamais d'erreur serveur."""
+    (audit O5). Alphanumérique ≤ 20 caractères, sinon 404 — jamais d'erreur serveur.
+
+    FIX-NU3-2 (H-m01) — NORMALISE la casse et les espaces AVANT de valider : les IDU en base
+    sont en MAJUSCULES, donc un lien collé/saisi en minuscules (`97411000ie0241`) ou avec un
+    espace de bord passait la regex puis ne matchait plus → « inconnue » à tort. On `strip()`
+    puis `upper()` ; la regex reste la ceinture contre les caractères hostiles. L'appelant DOIT
+    utiliser la valeur RETOURNÉE (normalisée) pour sa requête."""
     import re as _re
 
-    if not _re.fullmatch(r"[0-9A-Za-z]{1,20}", idu or ""):
+    idu = (idu or "").strip().upper()
+    if not _re.fullmatch(r"[0-9A-Z]{1,20}", idu):
         raise HTTPException(404, "Parcelle inconnue")
     return idu
 
 
 def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
-    _check_idu(idu)
+    idu = _check_idu(idu)   # FIX-NU3-2 (H-m01) — utiliser l'IDU NORMALISÉ (casse/espaces) pour la requête
     p = db.execute(select(models.Parcel).where(models.Parcel.idu == idu)).scalar_one_or_none()
     if not p:
         raise HTTPException(404, "Parcelle inconnue")

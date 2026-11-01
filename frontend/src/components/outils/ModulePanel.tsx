@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { usePiegeFocus } from '../../lib/usePiegeFocus'
 import {
   courrierPdf, getCommunes, getCourrierStatut, getFiche, modBailleur,
   modDueDiligence, modFantome, modParcellePermis, modPatrimoine, modPermis, modPermisCount,
@@ -381,6 +382,9 @@ const NATURES = [['PC', 'PC'], ['DP', 'DP'], ['PA', 'PA'], ['PD', 'PD'], ['', 'T
 
 /** Tiroir « fiche permis » (M10 lot 1.1) — s'ouvre au clic sur un permis, partagé radar/fiche. */
 export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose: () => void }) {
+  // FIX-NU3-2 (M-A04) — le tiroir Permis n'avait ni rôle, ni piège, ni Échap : on les généralise.
+  const drawerRef = useRef<HTMLDivElement | null>(null)
+  usePiegeFocus(true, drawerRef, onClose)
   const q = useQuery({ queryKey: ['permis-fiche', permitId], queryFn: () => modPermisFiche(permitId) })
   const d = q.data as Record<string, any> | undefined
   const select = useApp((s) => s.select)      // Fix LOT 2 : localiser la parcelle du permis
@@ -407,7 +411,8 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
     )
   return (
     <div data-permis-drawer className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center" onClick={onClose}>
-      <div className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-t-2xl border border-mint/40 bg-surface-1 p-4 shadow-elev-3 sm:rounded-2xl"
+      <div ref={drawerRef} role="dialog" aria-modal="true" aria-label="Fiche du permis"
+        className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-t-2xl border border-mint/40 bg-surface-1 p-4 shadow-elev-3 sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}>
         {q.isLoading && <Squelette lignes={5} />}
         {/* audit-promesses — un permis INTROUVABLE (404) dit clairement pourquoi (avant : drawer vide). */}

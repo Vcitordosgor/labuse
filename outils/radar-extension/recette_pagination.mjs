@@ -17,8 +17,7 @@ function reset(o = {}) {
 
 function fakeInspect() {   // page Leboncoin « riche » : toujours une page suivante
   return { hasNext: true, hasAditemContainer: true, looksBlocked: false,
-           outerHTML: "<html><!--lbc--></html>", indexDates: [],
-           nextData: { props: { pageProps: { searchData: { ads: [] } } } } };
+           searchAds: [], vignettes: [], indexDates: [] };
 }
 const fakeAds = (n) => Array.from({ length: n }, (_, i) => ({ id: "x" + i, modificationDate: "2026-10-30T10:00:00+04:00" }));
 

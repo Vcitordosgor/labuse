@@ -88,6 +88,14 @@ async function getOpts() {
     todayTargetDate: "",    // jour pour lequel la minute-cible ci-dessous a été tirée
     todayTargetTs: 0,       // instant-cible (dans la fenêtre du soir) tiré une fois par jour
     running: false,         // un run est en cours (garde anti double-déclenchement entre réveils du worker)
+    // RADAR-FIX-NU3-4 (K-RAD-02) — instant (epoch ms) de PRISE du verrou `running`. Un verrou plus vieux
+    // que RUN_STALE_MIN = reliquat d'une passe TUÉE (le `finally` n'a pas tourné) → considéré LIBRE.
+    runningSince: 0,
+    // RADAR-FIX-NU3-4 (K-RAD-01) — dernier battement d'alarme reçu (epoch ms). Un écart bien plus grand
+    // que la cadence du battement = le Mac s'est ENDORMI (les alarmes ne sonnent pas pendant le sommeil).
+    lastHeartbeatTs: 0,
+    veilleSoir: "",         // date Réunion (YYYY-MM-DD) d'une veille détectée ce soir-là
+    veilleMinutes: 0,       // durée estimée du dernier sommeil (minutes), pour le compte-rendu de passe
     // RADAR-FIX-2 (Lot B) — hôte LABUSE de la dernière capture réussie : un changement = BASCULE → rattrapage.
     lastCaptureHost: ""
   });
@@ -156,6 +164,28 @@ function reunionWallToEpoch(now, h, m) {
 
 async function setOpts(patch) {
   await chrome.storage.local.set(patch);
+}
+
+// RADAR-FIX-NU3-4 (K-RAD-02) — le verrou `running` porte un horodatage. Un verrou plus vieux que
+// RUN_STALE_MIN minutes est le reliquat d'une passe TUÉE (sommeil du Mac, fermeture de Chrome, éviction
+// du service worker MV3 pendant un délai « rythme humain ») dont le `finally` n'a jamais relâché le
+// verrou : on le considère LIBRE, et la passe repart. Pure (testable hors navigateur).
+const RUN_STALE_MIN = 45;   // une passe dure 10-30 min ; au-delà de 45 min « en cours » = passe morte
+function verrouActif(opts, nowMs) {
+  if (!opts || !opts.running) return false;
+  const since = opts.runningSince || 0;
+  if (!since) return true;                       // verrou legacy sans date : on le respecte (prudence)
+  return (nowMs - since) < RUN_STALE_MIN * 60 * 1000;
+}
+
+// RADAR-FIX-NU3-4 (K-RAD-01) — le battement passe toutes les HEARTBEAT_MIN minutes. Un écart NETTEMENT
+// plus grand entre deux battements signe un Mac qui a DORMI (chrome.alarms ne sonne pas pendant le
+// sommeil système). On le détecte pour le DIRE dans le compte-rendu de passe. Pure (testable).
+const SEUIL_VEILLE_MIN = 15;   // > 2 battements manqués + marge
+function veilleDetectee(lastHeartbeatTs, nowMs) {
+  if (!lastHeartbeatTs) return { endormi: false, minutes: 0 };
+  const minutes = Math.round((nowMs - lastHeartbeatTs) / 60000);
+  return { endormi: minutes >= SEUIL_VEILLE_MIN, minutes };
 }
 
 // Badge d'action : ✓ + heure au succès, ✗ au blocage/erreur.
@@ -250,22 +280,25 @@ function waitTabComplete(tabId, timeoutMs = 25000) {
 }
 
 // Fonction injectée DANS la page vivante. Ne lit que le DOM live.
+// RADAR-FIX-NU3-4 (L-EXT-01) — on N'EXTRAIT PLUS `outerHTML` (le DOM complet d'une page de SESSION
+// CONNECTÉE embarque l'identité/la messagerie/parfois des jetons de Vic). On ne retient QUE les annonces :
+//   · variante A → `searchData.ads` (le seul nœud utile de __NEXT_DATA__) ;
+//   · variante B (searchData absent) → les seules cartes <article>.
+// Le worker reconstruit ensuite le payload envoyé (payloadDeCapture) à partir de ces champs.
 function inspectPage() {
   const out = {
     hasNext: false,
-    nextData: null,
+    searchAds: null,          // props.pageProps.searchData.ads (variante A), ou null
+    vignettes: [],            // cartes <article> (variante B) — ad cards, jamais le reste de la page
     hasAditemContainer: false,
     looksBlocked: false,
-    outerHTML: "",
     bodyText: "",
     title: "",
     indexDates: []
   };
   try {
-    out.outerHTML = document.documentElement.outerHTML;
-    // RADAR-FIX-3 — on garde le TEXTE VISIBLE (innerText) à part : la reconnaissance « annonce
-    // expirée » doit se faire sur ce que l'utilisateur voit, pas sur le HTML/JS complet (où « 404 »,
-    // « expirée »… traînent dans les scripts et déclenchaient de fausses suppressions).
+    // RADAR-FIX-3 — le TEXTE VISIBLE (innerText) sert à reconnaître « annonce expirée » sur ce que
+    // l'utilisateur voit (jamais le HTML/JS complet où « 404 »/« expirée » traînent dans les scripts).
     out.bodyText = (document.body ? document.body.innerText : "");
     out.title = document.title || "";
 
@@ -275,27 +308,32 @@ function inspectPage() {
     const blockers = ["datadome", "captcha", "verification", "vérification", "challenge", "access denied"];
     if (blockers.some((b) => hay.includes(b))) out.looksBlocked = true;
 
-    // __NEXT_DATA__ (page riche).
+    // __NEXT_DATA__ (page riche) — on n'en garde QUE les annonces (searchData.ads), rien d'autre.
+    let nextData = null;
     const nd = document.querySelector("#__NEXT_DATA__");
     if (nd && nd.textContent) {
-      try {
-        out.nextData = JSON.parse(nd.textContent);
-      } catch (_) { out.nextData = null; }
+      try { nextData = JSON.parse(nd.textContent); } catch (_) { nextData = null; }
+    }
+    const ads = nextData
+      && nextData.props && nextData.props.pageProps
+      && nextData.props.pageProps.searchData
+      && nextData.props.pageProps.searchData.ads;
+    if (Array.isArray(ads)) {
+      out.searchAds = ads;
+      // Dates d'annonces (max = index_date le plus récent).
+      for (const a of ads) {
+        const d = a && (a.index_date || a.first_publication_date);
+        if (d) out.indexDates.push(String(d));
+      }
     }
 
     // Cartes DOM (page dégradée).
     out.hasAditemContainer = !!document.querySelector('[data-test-id="aditem_container"], [data-qa-id="aditem_container"], .aditem_container');
 
-    // Dates d'annonces (max = index_date le plus récent).
-    const ads = out.nextData
-      && out.nextData.props
-      && out.nextData.props.pageProps
-      && out.nextData.props.pageProps.searchData
-      && out.nextData.props.pageProps.searchData.ads;
-    if (Array.isArray(ads)) {
-      for (const a of ads) {
-        const d = a && (a.index_date || a.first_publication_date);
-        if (d) out.indexDates.push(String(d));
+    // Variante B (searchData absent) : on ne retient QUE les cartes d'annonces <article>, pas la page.
+    if (out.searchAds === null) {
+      for (const a of document.querySelectorAll("article")) {
+        if (a.outerHTML) out.vignettes.push(a.outerHTML);
       }
     }
 
@@ -333,6 +371,26 @@ async function inject(tabId, fn) {
 // Appels back LABUSE (chaque appel porte X-Radar-Token)
 // =========================================================================
 
+// RADAR-FIX-NU3-4 (L-EXT-01) — ce qu'on ENVOIE au serveur pour une page Leboncoin : UNIQUEMENT les
+// annonces, remises dans la forme que le parseur serveur attend (props.pageProps.searchData.ads), ou —
+// pages A/B sans searchData — les seules cartes <article>. Plus jamais l'`outerHTML` d'une page de
+// session connectée → aucune donnée personnelle de Vic dans le POST ni dans l'archive serveur.
+function scriptNextData(obj) {
+  // `<` échappé en < : empêche une fausse fermeture </script> et reste du JSON valide.
+  return '<script id="__NEXT_DATA__" type="application/json">'
+       + JSON.stringify(obj).replace(/</g, "\\u003c") + "</script>";
+}
+function payloadDeCapture(info) {
+  if (info && Array.isArray(info.searchAds)) {
+    return scriptNextData({ props: { pageProps: { searchData: { ads: info.searchAds } } } });
+  }
+  if (info && Array.isArray(info.vignettes) && info.vignettes.length) {
+    // stub __NEXT_DATA__ (ni searchData ni ad) + cartes → le serveur retombe sur l'extraction vignettes.
+    return scriptNextData({ props: { pageProps: {} } }) + "\n" + info.vignettes.join("\n");
+  }
+  return "";
+}
+
 async function apiCapture(opts, passe, url, page, html, capturedAt, source) {
   const r = await fetch(opts.labuseUrl.replace(/\/$/, "") + "/admin/radar/capture", {
     method: "POST",
@@ -365,6 +423,21 @@ async function apiConfirmationBatch(opts, items) {
   return r.json();
 }
 
+// RADAR-FIX-NU3-4 (K-RAD-04) — COMPTE-RENDU de fin de soirée posté au serveur (succès, échec, ou veille
+// du Mac détectée). Jusqu'ici le journal de passe ne vivait que dans chrome.storage : une nuit ratée ne
+// laissait AUCUNE trace côté serveur. Désormais chaque soirée (même échouée) dépose son compte-rendu,
+// lisible dans l'admin Radar. Ne lève JAMAIS : le journal ne doit pas casser la passe.
+async function apiJournal(opts, payload) {
+  try {
+    const r = await fetch(opts.labuseUrl.replace(/\/$/, "") + "/admin/radar/journal", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Radar-Token": opts.token },
+      body: JSON.stringify(payload)
+    });
+    return !!(r && r.ok);
+  } catch (_) { return false; }
+}
+
 // =========================================================================
 // Lecture d'une page + garde-fous blocage
 // =========================================================================
@@ -374,10 +447,7 @@ async function readPage(tabId) {
   if (!info) throw new BlockError("Lecture impossible");
   if (info.looksBlocked) throw new BlockError("Page de vérification détectée");
   // Ni searchData ni cartes DOM = page inutilisable → blocage.
-  const hasSearchData = !!(info.nextData
-    && info.nextData.props
-    && info.nextData.props.pageProps
-    && info.nextData.props.pageProps.searchData);
+  const hasSearchData = Array.isArray(info.searchAds);
   if (!hasSearchData && !info.hasAditemContainer) {
     throw new BlockError("Ni searchData ni cartes d'annonces");
   }
@@ -404,7 +474,7 @@ async function passeNouvelles(opts, tabId, capturedAt, etat, budget, source, rat
   const maxPages = Math.min(plafond, budget);
   while (page <= maxPages) {
     const info = await readPage(tabId);
-    const rep = await apiCapture(opts, "nouvelles", opts.searchUrl, page, info.outerHTML, capturedAt, source);
+    const rep = await apiCapture(opts, "nouvelles", opts.searchUrl, page, payloadDeCapture(info), capturedAt, source);
     used++;
     const nouv = rep && typeof rep.nb_nouvelles === "number" ? rep.nb_nouvelles : 0;
     if (nouv < 1) break;                        // page sans nouveauté → fin de la passe
@@ -430,7 +500,7 @@ async function passeRelecture(opts, tabId, capturedAt, budget, source) {
   while (used < maxPages && page <= CAP_TOTAL_PAGES) {
     const info = await readPage(tabId);
     if (page > cursor) {
-      await apiCapture(opts, "relecture", opts.searchUrl, page, info.outerHTML, capturedAt, source);
+      await apiCapture(opts, "relecture", opts.searchUrl, page, payloadDeCapture(info), capturedAt, source);
       used++;
     }
     if (!info.hasNext) {
@@ -463,7 +533,11 @@ const RE_PRIX_VISIBLE = /\d[\d  .]*€/;   // un prix affiché = signe fort d'un
 // on ne retire QUE sur PREUVE POSITIVE (phrase d'expiration reconnue, ou page d'erreur 404 reconnue).
 // Bloquée / vide / illisible / redirigée ailleurs = « inconnue » → non vérifiée (zéro retrait).
 function classifierConfirmation(info, finalUrl, listId) {
-  if (!info || !info.outerHTML) return { verdict: "inconnue", preuve: null, httpStatus: null };
+  // Présence : on a lu quelque chose d'exploitable (texte visible, titre, ou cartes). RADAR-FIX-NU3-4 —
+  // `outerHTML` n'est plus capturé ; la présence se juge sur le texte visible (ce qu'on classe de toute façon).
+  if (!info || (!info.bodyText && !info.title && !info.hasAditemContainer)) {
+    return { verdict: "inconnue", preuve: null, httpStatus: null };
+  }
   if (info.looksBlocked) return { verdict: "inconnue", preuve: null, httpStatus: null };
 
   const vis = ((info.bodyText || "") + "\n" + (info.title || ""));
@@ -568,9 +642,22 @@ async function biCapturePage(opts, tabId, passe, page, capturedAt, source) {
     || { status: 0, body: "" };
   if (res.status === 429) throw new BlockError("Bien'ici 429 (trop vite) — on se calme");
   if (res.status !== 200 || !res.body) throw new BlockError("Bien'ici : réponse vide (HTTP " + res.status + ")");
-  let ads = [];
-  try { ads = (JSON.parse(res.body).realEstateAds) || []; } catch (_) { throw new BlockError("Bien'ici : JSON illisible"); }
-  if (!ads.length) return { nouvelles: 0, empty: true };   // page au-delà du dernier résultat : fin propre
+  // RADAR-FIX-NU3-4 (L-EXT-02) — un JSON tronqué OU un schéma changé ne doit JAMAIS passer pour une
+  // « fin d'inventaire ». On distingue trois cas, là où l'ancien `.realEstateAds || []` les confondait :
+  let parsed;
+  try { parsed = JSON.parse(res.body); }
+  catch (_) { throw new BlockError("Bien'ici : JSON illisible (tronqué ?)"); }
+  const ads = parsed ? parsed.realEstateAds : undefined;
+  if (!Array.isArray(ads)) {
+    // HTTP 200 + JSON valide mais la clé attendue manque / est renommée / vaut null → SCHÉMA changé.
+    throw new BlockError("Bien'ici : clé « realEstateAds » absente ou inattendue (structure changée)");
+  }
+  if (!ads.length) {
+    // Tableau présent mais vide : page > 1 = au-delà du dernier résultat (fin propre) ; page 1 = aucune
+    // annonce du tout = filtre vide ou schéma changé → erreur visible, jamais une fin silencieuse.
+    if (page <= 1) throw new BlockError("Bien'ici : 0 annonce en page 1 (filtre vide ou structure changée)");
+    return { nouvelles: 0, empty: true };
+  }
   // On poste le CORPS JSON brut (le serveur reconnaît `realEstateAds` et le traduit). Même route que LBC.
   const rep = await apiCapture(opts, passe, opts.bieniciSearchUrl, page, res.body, capturedAt, source);
   const nouvelles = rep && typeof rep.nb_nouvelles === "number" ? rep.nb_nouvelles : 0;
@@ -673,10 +760,18 @@ async function runEvening(source) {
   const host = hostOf(opts.labuseUrl);
   const rattrapage = host !== (opts.lastCaptureHost || "");
   const capturedAt = nowIso();
+  const today = reunionParts(new Date()).dateStr;
+  // RADAR-FIX-NU3-4 (K-RAD-01) — si une veille (sommeil du Mac) a été détectée ce soir, on le DIT dans
+  // le compte-rendu : la soirée a pu commencer en retard, ou un battement a été manqué.
+  const veilleNote = (opts.veilleSoir === today && (opts.veilleMinutes || 0) >= SEUIL_VEILLE_MIN)
+    ? ` · ⚠ Mac en veille détectée ce soir (réveil après ~${opts.veilleMinutes} min)` : "";
+  const veilleMin = veilleNote ? (opts.veilleMinutes || 0) : 0;
   let tabId = null;
   let budget = CAP_TOTAL_PAGES;
   const parts = [];
-  await setOpts({ running: true });
+  // RADAR-FIX-NU3-4 (K-RAD-02) — verrou HORODATÉ : une passe tuée (finally jamais atteint) se libère
+  // seule au bout de RUN_STALE_MIN (cf. verrouActif), au lieu de bloquer toutes les passes suivantes.
+  await setOpts({ running: true, runningSince: Date.now() });
   try {
     // État courant du back (seuil "nouvelles" + liste à confirmer), partagé par les deux portails.
     const etat = await apiEtat(opts);
@@ -699,7 +794,8 @@ async function runEvening(source) {
         budget -= nRel;
       }
       const nConf = await passeConfirmation(opts, tabId, confLbc);
-      parts.push(`LBC nouv ${nNouv}, relec ${nRel}, conf ${nConf}`);
+      // RADAR-FIX-NU3-4 (M-T19) — libellé humain, sans abréviations.
+      parts.push(`Leboncoin : ${nNouv} nouvelle(s), ${nRel} revue(s), ${nConf} vérifiée(s)`);
       try { await chrome.tabs.remove(tabId); } catch (_) {}
       tabId = null;
     }
@@ -707,30 +803,44 @@ async function runEvening(source) {
     // ── Bloc Bien'ici (RADAR-SOURCES-2 : appel API même-origine, pas de lecture de page) ──
     if (opts.bieniciSearchUrl) {
       const bi = await runSoireeBienici(opts, capturedAt, etat, confBi, source);
-      parts.push(`BI nouv ${bi.nNouv}, relec ${bi.nRel}, conf ${bi.nConf}`);
+      parts.push(`Bien'ici : ${bi.nNouv} nouvelle(s), ${bi.nRel} revue(s), ${bi.nConf} vérifiée(s)`);
     }
 
     // RADAR-COUVERTURE-1 — horodatage en HEURE RÉUNION (le Mac est à Paris ; on affiche l'heure du terrain).
     const stamp = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: RADAR_TZ });
+    const resume = `OK ${stamp} Réunion (${source}${rattrapage ? ", rattrapage" : ""}) — ${parts.join(" · ")} → ${host}${veilleNote}`;
     await setBadge("✓", "#27ae60");
-    await setOpts({
+    // RADAR-FIX-NU3-4 (K-RAD-03) — on marque « fait ce soir » (autoRunDate) APRÈS le succès (jamais avant) :
+    // un échec transitoire plus tôt dans la soirée laisse ainsi la reprise AUTO possible la nuit même. On
+    // ne pose la marque que pour la passe AUTO (le bouton manuel reste un geste délibéré, non-gaté).
+    const patch = {
       lastRun: capturedAt,
       lastCaptureHost: host,     // la bascule est consommée : les soirs suivants ne rattrapent plus
-      lastResult: `OK ${stamp} Réunion (${source}${rattrapage ? ", rattrapage" : ""}) — ${parts.join(" · ")} → ${host}`
-    });
+      lastResult: resume
+    };
+    if (source === "auto") patch.autoRunDate = today;
+    await setOpts(patch);
+    // RADAR-FIX-NU3-4 (K-RAD-04) — compte-rendu de la soirée au serveur (lisible dans l'admin).
+    await apiJournal(opts, { captured_at: capturedAt, statut: "ok", source, resume, veille_minutes: veilleMin });
   } catch (e) {
     // Blocage OU erreur réseau : on arrête net, on prévient, on n'insiste pas. Message LISIBLE dans le
     // popup (lastResult) ; côté back, l'absence de capture fait apparaître « Déposer Radar » dans À faire.
     await setBadge("✗", "#c0392b");
     const msg = e && e.message ? e.message : "erreur réseau";
-    await setOpts({ lastRun: capturedAt, lastResult: `Échec (${source}) — ${msg}. Déposez à la main si ça dure.` });
+    const resume = `Échec (${source}) — ${msg}. Déposez à la main si ça dure.${veilleNote}`;
+    // RADAR-FIX-NU3-4 (K-RAD-03) — autoRunDate VOLONTAIREMENT non posé : un battement ultérieur dans la
+    // fenêtre du soir retentera la capture (reprise la nuit même sur un simple hoquet réseau).
+    await setOpts({ lastRun: capturedAt, lastResult: resume });
+    // RADAR-FIX-NU3-4 (K-RAD-04) — même une soirée ÉCHOUÉE dépose son compte-rendu (sinon, aucune trace).
+    await apiJournal(opts, { captured_at: capturedAt, statut: "echec", source, resume, veille_minutes: veilleMin });
     if (e instanceof BlockError) {
-      await notify("Radar bloqué, dépose à la main");
+      // RADAR-FIX-NU3-4 (M-T11) — vouvoiement uniforme (la ligne d'état dit déjà « Déposez à la main »).
+      await notify("Radar bloqué — déposez à la main");
     } else {
       await notify("Radar arrêté : " + msg);
     }
   } finally {
-    await setOpts({ running: false });
+    await setOpts({ running: false, runningSince: 0 });
     if (tabId !== null) {
       try { await chrome.tabs.remove(tabId); } catch (_) {}
     }
@@ -771,8 +881,20 @@ function fenetreSoir(opts, now) {
 async function maybeRunTonight(force) {
   const opts = await getOpts();
   const now = new Date();
+  const nowMs = now.getTime();
   const today = reunionParts(now).dateStr;   // le « soir » se compte par DATE Réunion (pas date OS)
   const { debut, fin } = fenetreSoir(opts, now);
+
+  // RADAR-FIX-NU3-4 (K-RAD-01) — DÉTECTION DU SOMMEIL DU MAC. Le battement est attendu toutes les
+  // HEARTBEAT_MIN minutes ; un écart nettement plus grand = l'OS a dormi (les alarmes ne sonnent pas
+  // pendant le sommeil système). On ne peut pas rejouer la capture pendant le sommeil — on la NOTE pour
+  // le compte-rendu de la soirée. Les runs forcés (recette) ne comptent pas comme un battement réel.
+  if (!force) {
+    const v = veilleDetectee(opts.lastHeartbeatTs, nowMs);
+    const patch = { lastHeartbeatTs: nowMs };
+    if (v.endormi) { patch.veilleSoir = today; patch.veilleMinutes = v.minutes; }
+    await setOpts(patch);
+  }
 
   // Minute-cible du jour : tirée UNE fois par date, dans la fenêtre (le jitter « humain » d'autrefois).
   let targetTs = opts.todayTargetTs;
@@ -782,13 +904,27 @@ async function maybeRunTonight(force) {
   }
 
   if (!force) {
-    if (opts.autoRunDate === today) return;          // déjà capturé ce soir
-    if (now.getTime() < targetTs) return;            // pas encore l'heure tirée
-    if (now.getTime() > fin) return;                 // fenêtre du soir passée (réveil après minuit) → on s'abstient
+    if (opts.autoRunDate === today) return;          // déjà capturé AVEC SUCCÈS ce soir
+    if (nowMs < targetTs) return;                    // pas encore l'heure tirée
+    if (nowMs > fin) return;                          // fenêtre du soir passée (réveil après minuit) → on s'abstient
   }
-  if (opts.running) return;                          // un run est déjà en cours (entre deux réveils du worker)
-  await setOpts({ autoRunDate: today });             // marque AVANT de lancer : une seule capture auto par soir
+  // RADAR-FIX-NU3-4 (K-RAD-02) — un run réellement en cours bloque ; un verrou PÉRIMÉ (passe tuée) est
+  // considéré libre et se relâche seul, au lieu de bloquer indéfiniment toutes les passes suivantes.
+  if (verrouActif(opts, nowMs)) return;
+  // RADAR-FIX-NU3-4 (K-RAD-03) — on NE pose plus autoRunDate ici (avant le run) : il est posé APRÈS le
+  // succès (dans runEvening). Un échec transitoire laisse donc la reprise possible la nuit même.
   await runEvening("auto");
+}
+
+// RADAR-FIX-NU3-4 (K-RAD-02) — au (re)chargement du worker, un verrou `running` PÉRIMÉ (reliquat d'une
+// passe tuée avant son `finally`) est relâché : un worker qui démarre ne peut pas être « en capture ».
+async function relacherVerrouPerime() {
+  try {
+    const o = await getOpts();
+    if (o.running && !verrouActif(o, Date.now())) {
+      await setOpts({ running: false, runningSince: 0 });
+    }
+  } catch (_) { /* storage indisponible : rien à faire */ }
 }
 
 // Le battement périodique. Idempotent : (re)créer avec le même nom remplace proprement.
@@ -800,8 +936,9 @@ async function ensureHeartbeat() {
 
 // Au CHARGEMENT du worker (démarrage de Chrome, réveil, reprise après déchargement) et aux événements.
 ensureHeartbeat();
+relacherVerrouPerime();   // RADAR-FIX-NU3-4 (K-RAD-02) — libère un verrou périmé laissé par une passe tuée
 chrome.runtime.onInstalled.addListener(() => { ensureHeartbeat(); });
-chrome.runtime.onStartup.addListener(() => { ensureHeartbeat(); });
+chrome.runtime.onStartup.addListener(() => { ensureHeartbeat(); relacherVerrouPerime(); });
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === ALARM_NAME) { await maybeRunTonight(false); return; }
@@ -839,5 +976,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 // N'expose rien en production (le drapeau n'est posé que par la recette avant l'import).
 if (globalThis.__RADAR_TEST__) {
   globalThis.__radar = { classifierConfirmation, classifierConfirmationBienici, bieniciIdFromUrl,
-                         isBienici, isLeboncoin, fenetreSoir, reunionParts, reunionWallToEpoch };
+                         isBienici, isLeboncoin, fenetreSoir, reunionParts, reunionWallToEpoch,
+                         // RADAR-FIX-NU3-4 — surfaces pures testables hors navigateur.
+                         payloadDeCapture, scriptNextData, verrouActif, veilleDetectee,
+                         RUN_STALE_MIN, SEUIL_VEILLE_MIN };
 }

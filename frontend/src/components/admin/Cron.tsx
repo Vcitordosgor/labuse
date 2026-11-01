@@ -13,7 +13,7 @@ const TON: Record<string, { c: string; l: string }> = {
   timeout: { c: 'text-amber bg-amber/12', l: 'TIMEOUT' },
   en_cours: { c: 'text-amber bg-amber/12', l: 'EN COURS' },
 }
-const fmtDate = (s: string | null) => (s ? new Date(s).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—')
+const fmtDate = (s: string | null) => (s ? new Date(s).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Indian/Reunion' }) : '—')
 const compteursCourts = (c: Record<string, unknown> | null) => {
   if (!c || !Object.keys(c).length) return '—'
   return Object.entries(c).slice(0, 4).map(([k, v]) => `${k}=${typeof v === 'object' ? '…' : v}`).join(' · ')
