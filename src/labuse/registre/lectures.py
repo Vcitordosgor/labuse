@@ -580,6 +580,8 @@ LECTURES: tuple[Lecture, ...] = (
       "état interne du Radar : dernier passage et compteurs de pige (n_pages/nouvelles/maj) pour l'écran admin — état de collecte, aucune donnée de fiche servie."),
     L("pige_passes", "api/dashboard.py", None, None,
       "carte « Radar » du Tableau de bord (RADAR-FIX-2) : dernière capture AUTO (max captured_at source='auto', nb nouvelles/pages) pour l'orange > 48 h — état de collecte, aucune donnée de fiche servie."),
+    L("pige_passes", "ops_alertes.py", None, None,
+      "FIX-NU3-3 (K-RAD-01, escalade Vic) — vigie « Radar muet » : lit max(created_at) FROM pige_passes pour l'ÂGE de la dernière passe et ouvre l'alerte `radar-muet` au-delà du seuil (escalade mail à 2 nuits) — machinerie de surveillance, aucune donnée de fiche servie."),
 
     # ── REGISTRE-DETTE-1 — les 12 arêtes restées en dette (CI-1 : scan statique vs registre) ont été
     #    RELUES une à une : celles qui SERVENT un chiffre du registre portent (chiffre, robinet, au plus
