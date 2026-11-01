@@ -1,0 +1,1288 @@
+[
+ {
+  "id": "OUT-COMMUNE-001",
+  "verdict": "juste",
+  "n_cas": 8,
+  "cas": [
+   "Saint-Pierre",
+   "Saint-Paul",
+   "Saint-Denis",
+   "Cilaos",
+   "Le Tampon",
+   "Salazie",
+   "La Plaine-des-Palmistes",
+   "Saint-Benoît"
+  ],
+  "preuve": "Noms API .communes[].commune == parcels.commune (base CTE DISTINCT commune FROM parcels, commune.py:28). 24 communes. 8/8 concordent (ex 'La Plaine-des-Palmistes','Saint-Benoît').",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Nom canonique = colonne parcels.commune.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-COMMUNE-001 8/8 noms API==parcels.commune"
+ },
+ {
+  "id": "OUT-COMMUNE-002",
+  "verdict": "juste",
+  "n_cas": 8,
+  "cas": [
+   "8 communes littoral+Hauts"
+  ],
+  "preuve": "velocite=percentile_cont(0.5) m10_permit_delais.delai_mois WHERE valide AND famille='logements' AND delai>=0. recalc==API 8/8 (StP 8.0, StPaul/StDenis/Cilaos/Tampon/Salazie 9.0, Plaine 7.0, StBenoit 8.0).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'Instruction (mois)' = délai médian dépôt→autorisation.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-COMMUNE-002 velocite recalc==API 8/8"
+ },
+ {
+  "id": "OUT-COMMUNE-003",
+  "verdict": "juste",
+  "n_cas": 8,
+  "cas": [
+   "8 communes"
+  ],
+  "preuve": "permis=count sitadel_permits WHERE date>=CURRENT_DATE-INTERVAL '5 years'. Critère 5 ANS confirmé (pas 12 mois). recalc==API 8/8 (StP 1803, StPaul 1953, StDenis 1254, Cilaos 140, Tampon 1293, Salazie 171, Plaine 337, StBenoit 891).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'Permis (5 ans)' correct ; maquette '12 m' corrigée (blocB.tsx:160).",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-COMMUNE-003 permis 5 ans recalc==API 8/8"
+ },
+ {
+  "id": "OUT-COMMUNE-008",
+  "verdict": "juste",
+  "n_cas": 8,
+  "cas": [
+   "8 communes"
+  ],
+  "preuve": "stock=count tiers brulante/chaude/priorite/a_suivre parcel_p_score_v2 run q_v20. Dans le payload API (.communes[].stock) mais colonne RETIRÉE de l'écran (blocB.tsx:163). recalc==API 8/8 (StDenis 196, StP 134, StPaul 122, Tampon 42, StBenoit 20, Plaine 10, Cilaos 1, Salazie 0).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Code vivant sans lecteur : stock servi dans l'API, invisible à l'écran.",
+  "ecran_a_verifier": true,
+  "col12": "vérifié nu-3-O OUT-COMMUNE-008 stock dans API 8/8 mais colonne retirée écran"
+ },
+ {
+  "id": "OUT-COMMUNE-009",
+  "verdict": "juste",
+  "n_cas": 8,
+  "cas": [
+   "8 communes"
+  ],
+  "preuve": "Rejeu complet min-max [0-100] par axe (directions +stock/+permis/+sru/+neuf, -velocite/-zan) + moyenne pondérée axes présents (renormalisation), poids défaut. recalc==API 8/8 score ET rang (StP 54.3/r1, StDenis 49.8/2, StPaul 47.0/3…).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Avertissement 'aide à la comparaison pas score de rendement' servi ; renormalisation conforme (commune.py:91-93).",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-COMMUNE-009 composite+rang recalc==API 8/8"
+ },
+ {
+  "id": "OUT-COMMUNE-010",
+  "verdict": "ecart",
+  "n_cas": 8,
+  "cas": [
+   "8 communes"
+  ],
+  "preuve": "Seuil NEUF : légende 'sous 8 ventes VEFA' == code (neuf_vefa_seuil=8) JUSTE (StBenoit n=6<8→null, StP n=158→servi). Seuil TERRAIN NU : légende dit 'sous 5 ventes' mais le code supprime à n<10 (SEUIL_TERRAIN_CELLULE_N=10, config terrain_cellule_commune:10, marche_commune.py:137 motif 'n<10'). Écart libellé : 5 affiché vs 10 réel.",
+  "cause": "frontend/src/components/outils/blocB.tsx:294 (légende '€/m² terrain nu sous 5 ventes') vs config/dvf_profils.yaml terrain_cellule_commune:10 via marche_commune.py:43,134",
+  "reglementaire": "",
+  "libelle_ok": false,
+  "libelle_note": "Légende terrain nu annonce 5 ventes ; suppression réelle à n<10. Un client lisant '<5' croira qu'une cellule 6-9 ventes serait servie — elle est masquée.",
+  "ecran_a_verifier": false,
+  "col12": "écart nu-3-O OUT-COMMUNE-010 légende terrain nu '<5 ventes' mais seuil réel n<10 (neuf <8 juste)"
+ },
+ {
+  "id": "OUT-COMMUNE-011",
+  "verdict": "juste",
+  "n_cas": 2,
+  "cas": [
+   "Saint-Pierre",
+   "Cilaos"
+  ],
+  "preuve": "Trimestre=to_char(date_trunc('quarter',date_mutation),'YYYY\"T\"Q') (moteurs.py:880). API rend '2025T4'… format conforme.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Format 'YYYY T#' exact.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-COMMUNE-011 format trimestre YYYYT# conforme"
+ },
+ {
+  "id": "OUT-COMMUNE-012",
+  "verdict": "juste",
+  "n_cas": 2,
+  "cas": [
+   "Saint-Pierre",
+   "Cilaos"
+  ],
+  "preuve": "Médiane €/m² bâti=percentile_cont(0.5) valeur_fonciere/surface_reelle_bati FILTER(_BAROMETRE_RETENUE), n par trimestre. recalc==API 10/10 (StP 2025T4 3235/n139…, Cilaos 2025T4 1868/n12…).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'Ancien €/m² (n)'=médiane ventes strictes + volume.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-COMMUNE-012 ancien €/m² trimestriel recalc==API 10/10"
+ },
+ {
+  "id": "OUT-COMMUNE-013",
+  "verdict": "juste",
+  "n_cas": 2,
+  "cas": [
+   "Saint-Pierre",
+   "Cilaos"
+  ],
+  "preuve": "Terrain nu=médiane val/terr_tot dédupliquée par mutation (ratio 5-5000), n par trimestre. recalc==API (StP 2025T4 400/n63…). Déduplication max OVER confirmée.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'Terrain €/m² (n)' exact. NB série baromètre n'applique PAS le seuil n>=10 du comparateur (série honnête, trous dits).",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-COMMUNE-013 terrain €/m² trimestriel recalc==API"
+ },
+ {
+  "id": "OUT-COMMUNE-014",
+  "verdict": "juste",
+  "n_cas": 2,
+  "cas": [
+   "Saint-Pierre",
+   "Cilaos"
+  ],
+  "preuve": "Permis=count(*) sitadel_permits par date_trunc('quarter',date). API StP 2026T3 68/2026T2 66… ; Cilaos 2026T3 3/2026T2 6… Cohérent (Sitadel en avance, axe commun).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'Permis' comptage trimestriel Sitadel.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-COMMUNE-014 permis trimestriel cohérent API"
+ },
+ {
+  "id": "OUT-COMMUNE-015",
+  "verdict": "juste",
+  "n_cas": 2,
+  "cas": [
+   "Cilaos permis 2026T3",
+   "Saint-Pierre"
+  ],
+  "preuve": "_marque_partiel : serie[0] partiel si volume<60% médiane 4 trim précédents (moteurs.py:783-797). Cilaos permis 2026T3 vol=3, médiane prior4=6.5, 60%=3.9, 3<3.9→partiel==API True. StP dvf 2025T4 vol139 vs médiane ~140→pas partiel==API False.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'·partiel' sur trimestre récent sous 60% — règle reproduite.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-COMMUNE-015 partiel Cilaos 2026T3 (3<3.9)==API True"
+ },
+ {
+  "id": "OUT-COMMUNE-016",
+  "verdict": "juste",
+  "n_cas": 8,
+  "cas": [
+   "8 communes"
+  ],
+  "preuve": "Neuf=médiane €/m² VEFA (appart+maison, 5 ans ancré, ratio 50-20000), null si n<8. recalc==API 8/8 (StP 4931/n158, StDenis 4878/n355… ; StBenoit n=6<8→null, Salazie n=1→null, Cilaos/Plaine n=0→null). Témoin fort : StBenoit 6 VEFA 1304 €/m² correctement MASQUÉES.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'Neuf ~X €/m²'=médiane VEFA, '—' sous 8.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-COMMUNE-016 neuf VEFA recalc==API 8/8 + seuil 8 prouvé"
+ },
+ {
+  "id": "OUT-COMMUNE-017",
+  "verdict": "juste",
+  "n_cas": 8,
+  "cas": [
+   "8 communes"
+  ],
+  "preuve": "horizon=round(reste/rythme,1), 0 si reste<=0, None si rythme<=0. recalc (commune_conso_enaf brut)==API 8/8 (Cilaos 0.0 reste-6.2, StDenis 1.1, Salazie 1.4, Tampon 2.3, Plaine 3.2, StPaul/StP 4.2, StBenoit 9.4). rythme/budget/reste recalc==API.",
+  "cause": "",
+  "reglementaire": "BUDGET ZAN = interprétation −50% (budget=50% conso 2011-2021) NON publiée par le SAR/SCOT ; caveat loi TRACE servi (rarete.py:31-32). Projection doctrine, pas une date couperet réglementaire.",
+  "libelle_ok": true,
+  "libelle_note": "'Horizon d'épuisement budget ZAN (estimé)' — 'estimé' présent + caveat −50% servi.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-COMMUNE-017 horizon ZAN recalc==API 8/8 (reglementaire: budget −50% non SAR)"
+ },
+ {
+  "id": "OUT-COMMUNE-018",
+  "verdict": "ecart",
+  "n_cas": 8,
+  "cas": [
+   "8 communes"
+  ],
+  "preuve": "Barre calculée UNIQUEMENT au front (blocB.tsx:414-415) : pct=depasse?100:max(4,min(100,reste/budget*100)) — largeur=pct_RESTANT clampé [4,100], PAS pct_consomme. L'API expose pct_budget_restant=100-pct_consomme (non clampé, Cilaos -37). Le clamp 4-100 N'EXISTE PAS dans rarete.py (106 lignes) : la réf brief 'rarete.py:414-415' est ERRONÉE (c'est blocB.tsx:414-415).",
+  "cause": "frontend/src/components/outils/blocB.tsx:414-415 (clamp front-only), ABSENT de src/labuse/api/rarete.py",
+  "reglementaire": "Hérite du caveat ZAN −50%.",
+  "libelle_ok": true,
+  "libelle_note": "Barre graphe % RESTANT (plancher 4% visuel), pas % consommé ; dépassé=barre pleine. API pct_budget_restant juste. Clamp front vérifié dans le code, rendu non observé (app non bootée Playwright).",
+  "ecran_a_verifier": true,
+  "col12": "écart nu-3-O OUT-COMMUNE-018 brief cite rarete.py:414 (inexistant) ; clamp max(4,min(100,reste/budget*100)) FRONT-only blocB.tsx:415, graphe pct_restant"
+ },
+ {
+  "id": "OUT-COMMUNE-019",
+  "verdict": "ecart",
+  "n_cas": 8,
+  "cas": [
+   "8 communes"
+  ],
+  "preuve": "L'API .statut renvoie labels CODE (rarete.py:86-89) : 'budget dépassé'(h==0),'non projetable'(None),'tension forte'(<=5),'tension modérée'(<=15),'détendu'. recalc==API 8/8 (Cilaos 'budget dépassé', 6 communes 'tension forte', StBenoit 'tension modérée'). Labels du FAIT brief ('dépassé/creuser/détendu') ≠ API. Écran n'affiche NI l'un NI l'autre : seulement 'dépassé' ou '{N} ans' ou '—' (blocB.tsx:434), couleur 'creuser' si horizon<5 (blocB.tsx:426).",
+  "cause": "frontend/src/components/outils/blocB.tsx:413,426,434 (3 vocabulaires) vs src/labuse/api/rarete.py:86-89 vs libellé fait brief",
+  "reglementaire": "Idem caveat ZAN −50%.",
+  "libelle_ok": false,
+  "libelle_note": "Triple divergence : brief 'dépassé/creuser/détendu' ≠ API 'tension forte/modérée…' ≠ écran '{N} ans'. Seuil couleur écran horizon<5 ≠ paliers statut API <=5/<=15. Libellé fait registre périmé.",
+  "ecran_a_verifier": true,
+  "col12": "écart nu-3-O OUT-COMMUNE-019 statut API 'tension forte/modérée'≠fait brief 'creuser'≠écran '{N} ans' ; seuil <5 vs <=5/<=15"
+ },
+ {
+  "id": "OUT-COMMUNE-020",
+  "verdict": "juste",
+  "n_cas": 8,
+  "cas": [
+   "8 communes"
+  ],
+  "preuve": "Payload /pipeline-rarete porte caveat=CAVEAT (rarete.py:31-32) contenant '−50%'+'loi TRACE assouplie'+'Hiérarchisation, pas une date couperet'. Vérifié présent + écran Banner blocB.tsx:404-407.",
+  "cause": "",
+  "reglementaire": "Caveat −50% bien exposé (API+écran) ; règle budget=−50% reste interprétation doctrine (SAR/SCOT non territorialisés), dit 'Estimé'. Transparence réglementaire conforme.",
+  "libelle_ok": true,
+  "libelle_note": "Caveat figé présent payload+bannière, mention −50% et loi TRACE.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-COMMUNE-020 caveat −50%/TRACE présent API+écran"
+ },
+ {
+  "id": "OUT-COMMUNE-021",
+  "verdict": "juste",
+  "n_cas": 8,
+  "cas": [
+   "8 communes"
+  ],
+  "preuve": "RadarMarche=GET /radar/marche (pige/marche.py JOIN pige_faits WHERE valide_at NOT NULL AND a_qualifier=false). Recalc MÊME jointure==API 8/8 pour 'actives' (Tampon 18, StDenis 36, StPaul 28, StP 30, StBenoit 1, Cilaos 0, Salazie 0, Plaine 2). prix_m2_bati StP recalc 3540/n64==API. seuil_n=5, capture 2026-10-27.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Chiffres DEMANDÉS (annonces pige) ≠ acté DVF ; MINIMUM (pige partielle), pas marché total. Reproductible avec la jointure exacte.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-COMMUNE-021 /radar/marche actives+bati recalc==API 8/8"
+ },
+ {
+  "id": "OUT-PLU-001",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "île entière /modules/plu-annuaire/communes"
+  ],
+  "preuve": "n_plu_vigueur = n_communes - n_rnu = 24-1 = 23 (app.py:2715). Invariant servables+revision+rnu+non_ingere = 21+2+1+0 = 24 = n_communes (vérifié). servables=21 recalculé indépendamment = COUNT(DISTINCT insee) plu_reglement_extrait = 21 (exact).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": false,
+  "libelle_note": "Le doute du brief est fondé : 'PLU en vigueur' = communes−RNU (23) compte une commune en RÉVISION (règlement non servi par GPU) comme 'en vigueur'. C'est honnête réglementairement (un PLU en révision reste opposable) mais le mot peut laisser croire que les 23 ont un règlement servi, alors que 21 seulement sont servables (2 en révision non servies).",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-PLU-001 n_plu_vigueur=23=24-1, servables=21==COUNT(DISTINCT insee) DB ; libellé 'en vigueur' inclut 2 révisions non servies"
+ },
+ {
+  "id": "OUT-PLU-002",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "île entière"
+  ],
+  "preuve": "n_communes=24 (len liste), n_rnu=1 (Saint-Philippe). Recompte des statuts depuis la liste communes: servable 21, revision 2 (Saint-André, Saint-Leu), rnu 1 (Saint-Philippe), non_ingere 0. Somme=24. Conforme.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'({n} communes, {n_rnu} au RNU)' exact ; liste 24 communes figée (config plu_millesimes.yaml).",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-PLU-002 24 communes/1 RNU exacts, statuts recomptés 21/2/1/0"
+ },
+ {
+  "id": "OUT-PLU-003",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "île entière"
+  ],
+  "preuve": "n_procedures=3 (API) recomputé indépendamment depuis la liste = count(communes avec procedure_active) = 3 (Saint-André révision générale 2022-06-22, Saint-Leu 2022-05-17, Les Trois-Bassins 2022-06-02). procedures_par_etat={'révision générale':3}. n_revision (statut GPU, ≠ procédures) = 2. Source veille_plu (Sudocuh) non confrontable à un recalcul SQL indépendant (snapshot live externe) mais le DÉCOMPTE depuis la liste servie est exact.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Attention : 2 compteurs distincts cohabitent — n_revision=2 (disponibilité règlement GPU) et n_procedures=3 (procédures actives veille_plu, inclut Les Trois-Bassins servie par le radar). Réconciliation O4 documentée ; libellé correct mais la double numérotation 2/3 peut dérouter.",
+  "ecran_a_verifier": true,
+  "col12": "vérifié nu-3-O OUT-PLU-003 n_procedures=3 recompté exact ; source Sudocuh live non recalculable, décompte servi juste"
+ },
+ {
+  "id": "OUT-PLU-004",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "île entière"
+  ],
+  "preuve": "non_servis = sorted(communes statut in (revision,non_ingere)) (app.py:2716) = ['Saint-André','Saint-Leu'] (les 2 en révision, 0 non_ingere). Recompté depuis la liste: exact. Ces 2 communes ont bien statut='revision' et extraits=0.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'{n} règlement(s) non servi(s) par le Géoportail ({liste})' = liste nominative exacte des communes sans PDF GPU servi.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-PLU-004 non_servis=[Saint-André,Saint-Leu] recompté exact"
+ },
+ {
+  "id": "OUT-PLU-005",
+  "verdict": "juste",
+  "n_cas": 21,
+  "cas": [
+   "21 communes servables (97401..97415..)"
+  ],
+  "preuve": "Pour les 21 servables, millésime config (API .communes[].millesime) comparé à max(millesime) ingéré en DB (plu_reglement_extrait) : 0 mismatch sur 21. Le millésime affiché == le millésime du corpus réellement ingéré (ex 97401→2024-12-06, 97402→2026-04-28, 97415→2025-12-17).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'{commune} · PLU du {millesime}' : le doute du brief ('config curée à la main peut dériver du GPU') n'est PAS avéré sur cette base — config == corpus ingéré (0 écart/21).",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-PLU-005 millésime config==max(millesime) DB 21/21 (0 dérive)"
+ },
+ {
+  "id": "OUT-PLU-006",
+  "verdict": "impossible",
+  "n_cas": 0,
+  "cas": [
+   "/modules/plu-annuaire/pack/97415"
+  ],
+  "preuve": "Le pack .zip (OUT-PLU-006) est résolu EN DIRECT sur le GPU (geoportail-urbanisme.gouv.fr/api/document, modules.py:2738) — réseau externe INJOIGNABLE depuis l'environnement (curl pack/97415 → http=000, exit 52). Le lien 'Télécharger le PLU intégral (.zip)' dépend donc d'un service live externe non testable ici ; le brief note lui-même que le bouton peut devenir '#' si GPU injoignable.",
+  "cause": "src/labuse/api/modules.py:2736-2763 (dépendance live GPU)",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Dégradé honnête prévu (3 issues distinctes trouvé/GPU vide/injoignable) mais la résolution réelle du lien dépend du GPU live — non vérifiable hors ligne.",
+  "ecran_a_verifier": true,
+  "col12": "impossible nu-3-O OUT-PLU-006 pack .zip résolu live GPU (injoignable ici, http=000) ; bouton peut devenir '#'"
+ },
+ {
+  "id": "OUT-PLU-007",
+  "verdict": "impossible",
+  "n_cas": 0,
+  "cas": [
+   "pack sous-titre"
+  ],
+  "preuve": "Même dépendance live GPU que OUT-PLU-006 : le 'contient {document}' du pack vient de la résolution GPU en direct. Toutefois, pour les communes SERVABLES, corpus_status fournit déjà 'document' (nom du PDF règlement, ex '97415_reglement_20251217.pdf') depuis plu_reglement_extrait — cette partie est sourcée. La composition complète du pack reste live.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Le nom de document servable vient de la base (vérifiable) ; la description complète du pack dépend du GPU live.",
+  "ecran_a_verifier": true,
+  "col12": "impossible nu-3-O OUT-PLU-007 composition pack live GPU ; nom document servable sourcé en base (OK partiel)"
+ },
+ {
+  "id": "OUT-PLU-008",
+  "verdict": "ecart",
+  "n_cas": 3,
+  "cas": [
+   "q=construction île (limit 25)",
+   "q=construction (limit 200)",
+   "q=emprise insee=97415"
+  ],
+  "preuve": "'{n} extrait(s)' = len(resultats) = nombre de lignes RETOURNÉES, plafonné par limit (defaut 25, max 200) — PAS le total des correspondances. Recalc: q='construction' île → vrais matchs = 2340 (count tsv @@ websearch_to_tsquery) mais API n=25 (limit défaut) / n=200 (limit=200). Pour requête sous le plafond (q='emprise' insee=97415 → 68 matchs, limit 200) API n=68 == recalc (exact).",
+  "cause": "src/labuse/api/modules.py:2813 (n=len(res)) + ingestion/plu_ingest.py:search_reglement (LIMIT :lim sans count total)",
+  "reglementaire": "",
+  "libelle_ok": false,
+  "libelle_note": "'{n} extrait(s) trouvés' est TRONQUÉ au plafond quand les correspondances dépassent limit (2340 réels → '25' ou '200' affichés) sans indicateur 'N+'/'affichés'. Juste quand le total est sous le plafond.",
+  "ecran_a_verifier": true,
+  "col12": "écart nu-3-O OUT-PLU-008 '{n} extraits' = page LIMIT-plafonnée (construction: 2340 réels vs n=25/200 affichés), pas le total"
+ },
+ {
+  "id": "OUT-PLU-009",
+  "verdict": "juste",
+  "n_cas": 3,
+  "cas": [
+   "q=emprise insee=97415 (3 résultats)"
+  ],
+  "preuve": "article_ref vient directement de plu_reglement_extrait.article_ref (search_reglement SELECT ... article_ref), servi tel quel ('Article 6-'…). Repli 'Extrait du règlement' géré au front si absent. Verbatim non reformulé (texte_verbatim brut servi).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Référence d'article relayée depuis le corpus indexé, sans reformulation.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-PLU-009 article_ref servi tel quel depuis plu_reglement_extrait"
+ },
+ {
+  "id": "OUT-PLU-010",
+  "verdict": "juste",
+  "n_cas": 3,
+  "cas": [
+   "q=emprise insee=97415 (zones U2E…)"
+  ],
+  "preuve": "'zone {zone}' = plu_reglement_extrait.zone servi tel quel (ex 'U2E', 'U4a'). Code de zone du corpus GPU, non calculé. Omis si absent.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Badge zone = code du corpus, relais fidèle.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-PLU-010 badge zone = colonne .zone du corpus"
+ },
+ {
+  "id": "OUT-PLU-011",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "colonne doute plu_reglement_extrait"
+  ],
+  "preuve": "'doute — vérifier au PDF' = plu_reglement_extrait.doute (booléen) servi tel quel par search_reglement. Recalc DB: count(*) FILTER(WHERE doute)=11 extraits portent le drapeau sur tout le corpus. Badge omis si faux. Le chiffre reste affiché avec l'avertissement (comportement attendu, M57-P1 Q3).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Drapeau d'extraction incertaine relayé ; signale l'incertitude sans masquer l'extrait (choix assumé).",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-PLU-011 doute=booléen corpus (11 extraits flaggés), badge relayé"
+ },
+ {
+  "id": "OUT-PLU-012",
+  "verdict": "juste",
+  "n_cas": 3,
+  "cas": [
+   "q=emprise insee=97415 (page_pdf 110…)"
+  ],
+  "preuve": "'page PDF {page_pdf}' = plu_reglement_extrait.page_pdf servi tel quel (ex 110) + source_url. Deep link #page= construit côté front. Repli accueil GPU si page inconnue. Valeurs relayées du corpus, non recalculées.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Numéro de page PDF relayé du corpus indexé ; lien source conservé.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-PLU-012 page_pdf relayée du corpus + source_url"
+ },
+ {
+  "id": "OUT-PLU-013",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "pagination_ambigue corpus"
+  ],
+  "preuve": "'⚠ {pagination_note}' servi quand plu_reglement_extrait.pagination_ambigue=true (modules.py:2794-2796, texte fixe 'pagination du document ambiguë…'). Recalc DB: count(*) FILTER(WHERE pagination_ambigue)=359 extraits concernés. Note relayée, non inventée.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Avertissement de pagination relayé quand le flag est posé (359 extraits).",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-PLU-013 pagination_note sur flag pagination_ambigue (359 extraits)"
+ },
+ {
+  "id": "OUT-PLU-015",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "97415000AY1152 zone U4b (via traducteur-plu)"
+  ],
+  "preuve": "'Emprise au sol max {pct}%' = rules.emprise_sol_pct (plu_reglement.py:89), lu du YAML calibré config/plu_zonage.yaml. Fait de type RELAIS config (pas un recalcul DB). Sur U4b (Saint-Paul) l'emprise n'est pas servie (non calibrée pour cette zone) → repli 'non réglementé' correct (code _fmt_valeur None→'non réglementé'). Les valeurs calibrées servies (recul 3m, pleine terre 30%, stat 2 places/logt) correspondent aux notes YAML (ex pleine terre 'CORRIGÉ 20→30% au 13.1').",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Valeur CES relayée du YAML calibré (source de vérité règlement), None→'non réglementé'. Non recalculable depuis une table DB — relais config vérifié conforme.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-PLU-015 emprise = YAML calibré relayé, None→'non réglementé' (relais config)"
+ },
+ {
+  "id": "OUT-PLU-016",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "97415000AY1152 U4b recul voirie 3m"
+  ],
+  "preuve": "'Recul sur voie {m} m' = rules.recul_voirie_m (plu_reglement.py:90). traducteur-plu U4b sert 'Recul sur voirie 3.0 m (Art.6 p.172)' — conforme à la note YAML U4b 'retrait 3 m min'. Relais config, source article/page citée.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Recul relayé du YAML avec citation article/page ; conforme aux notes de calibration.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-PLU-016 recul voirie = YAML (U4b 3m, Art.6 p.172) relais conforme"
+ },
+ {
+  "id": "OUT-PLU-018",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "97415000AY1152 U4b pleine terre 30%"
+  ],
+  "preuve": "'Pleine terre min {pct}%' = rules.pleine_terre_pct. traducteur-plu U4b sert 'Pleine terre minimale 13 m² (30% de 44 m²)' — le 30% correspond exactement à la note YAML U4b 'CORRIGÉ (consolidation 27/07/2026): 20 gravé à tort → 30% au 13.1'. Calcul 30%×44=13.2→13 m² correct.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Pleine terre 30% relayée du YAML corrigé (traçabilité 20→30%), appliquée à la surface parcelle exactement.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-PLU-018 pleine terre 30% = YAML corrigé (30%×44=13 m²) exact"
+ },
+ {
+  "id": "OUT-PLU-019",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "97415000AY1152 U4b stationnement"
+  ],
+  "preuve": "'Stationnement {valeur}' = rules.stat_logement (plu_reglement.py:93). traducteur-plu U4b sert 'Stationnement 2 places / logement (Art.12.2 p.182)'. Texte relayé du YAML calibré, citation source.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Exigence stationnement relayée telle quelle du YAML (2 places/logt, Art.12.2).",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-PLU-019 stationnement = YAML (U4b 2 places/logt, Art.12.2) relais"
+ },
+ {
+  "id": "OUT-PLU-020",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "pied reglement_block"
+  ],
+  "preuve": "Texte figé présent plu_reglement.py:198-199 : 'Le règlement PLU fait foi ; les valeurs affichées sont une aide à la lecture, non un certificat d'urbanisme.' Toujours affiché quand le bloc règlement est présent. Avertissement légal correct.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Disclaimer légal fixe conforme.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-PLU-020 disclaimer 'règlement fait foi' présent (plu_reglement.py:198-199)"
+ },
+ {
+  "id": "OUT-PLU-021",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "repli zones A/N non indexées"
+  ],
+  "preuve": "Texte figé présent plu_reglement.py:169-170 : 'Le règlement des zones agricoles et naturelles n'est pas indexé article par article dans LABUSE. Consultez le document complet.' Affiché quand calibree=False (zone A/N sans articles indexés). Repli légitime (M57-P1 Q3).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Le doute du brief est réel : en zone A/N le client n'a aucune valeur chiffrée — mais c'est un repli HONNÊTE (jamais une valeur inventée), pas un défaut.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-PLU-021 repli A/N présent (plu_reglement.py:169-170), honnête (0 valeur inventée)"
+ },
+ {
+  "id": "OUT-PLU-022",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "ProcedureChangement (code mort)"
+  ],
+  "preuve": "CONFIRMÉ CODE MORT : <ProcedureChangement> n'est JAMAIS rendu comme tag JSX ni importé dans frontend/src (grep 0 hit de '<ProcedureChangement' et 'import.*ProcedureChangement' — uniquement mentionné en commentaires). Le composant existe mais n'est monté nulle part → '{n} commune(s) en procédure PLU' n'est affiché à AUCUN client. L'endpoint source /moteurs/simulplu/procedures était HS au test (http=000). Le doute du brief ('composant non monté : code mort affiché nulle part') est VÉRIFIÉ VRAI.",
+  "cause": "frontend/src/components/outils/ProcedureChangement.tsx jamais importé/monté (RECETTE-OUTILS-2 R4)",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Fait inexistant à l'écran : composant non monté. Le compteur n'est servi à personne.",
+  "ecran_a_verifier": true,
+  "col12": "vérifié nu-3-O OUT-PLU-022 CODE MORT confirmé : ProcedureChangement jamais monté (0 JSX/import), affiché nulle part"
+ },
+ {
+  "id": "OUT-PLU-023",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "ProcedureChangement item (code mort)"
+  ],
+  "preuve": "Même cause que OUT-PLU-022 : l'item '▲ {type} · {etat} · Prescrite le {date}' (ProcedureChangement.tsx:23-31 etatClient()) appartient à un composant jamais monté → jamais rendu. Non affiché à aucun client.",
+  "cause": "frontend/src/components/outils/ProcedureChangement.tsx non monté",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Code mort (composant non monté).",
+  "ecran_a_verifier": true,
+  "col12": "vérifié nu-3-O OUT-PLU-023 CODE MORT confirmé (item ProcedureChangement jamais rendu)"
+ },
+ {
+  "id": "OUT-SECTEUR-002",
+  "verdict": "juste",
+  "n_cas": 6,
+  "cas": [
+   "97416000CS1372",
+   "97415000AH0487",
+   "97411000HB0274",
+   "97413000CS0163",
+   "97424000AK0042",
+   "97422000AX1320"
+  ],
+  "preuve": "rayon_m servi ∈ {500,1000,1500} adaptatif 6/6 (StPierre 1500, StPaul 1500, StDenis 500, StLeu 500, Cilaos 1500, Tampon 500). commune_seule (sp.commune_fallback) FALSE sur 5, TRUE sur Cilaos (repli commune). Mécanique rayon croissant jusqu'à n>=8 confirmée.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Front sous-label 'repli commune' si commune_seule sinon 'adaptatif' — cohérent.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-SECTEUR-002 rayon adaptatif 500/1000/1500 + repli commune Cilaos, 6/6"
+ },
+ {
+  "id": "OUT-SECTEUR-003",
+  "verdict": "juste",
+  "n_cas": 6,
+  "cas": [
+   "97416000CS1372",
+   "97415000AH0487",
+   "97411000HB0274",
+   "97413000CS0163",
+   "97424000AK0042",
+   "97422000AX1320"
+  ],
+  "preuve": "n servi (sp.n post-trim) 20/17/206/73/83/22, tous >=SEUIL_N=8 quand bloc présent. periode [2022,2025]. Comptage DVF indépendant (dédoublonné, hors trim/VEFA) systématiquement supérieur (brut>retenu) — ordre de grandeur cohérent. Plausibilité OK.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'Ventes {n} ({periode})' : n=échantillon RETENU post-trim (apres.n==n).",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-SECTEUR-003 Ventes n>=8 + periode [2022,2025], n retenu plausible 6/6"
+ },
+ {
+  "id": "OUT-SECTEUR-004",
+  "verdict": "juste",
+  "n_cas": 6,
+  "cas": [
+   "97416000CS1372",
+   "97415000AH0487",
+   "97411000HB0274",
+   "97413000CS0163",
+   "97424000AK0042",
+   "97422000AX1320"
+  ],
+  "preuve": "tendance_pct servi +36/+29/+10/+16/+15/+36%, tendance='hausse' (signe+seuil ±2% cohérents bilan.py:112). Recalc indépendant StDenis +8% vs API +10% (écart dû au trim 5% non répliqué) — mécanique+signe honnêtes.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": false,
+  "libelle_note": "Libellé 'Tendance 12 m' IMPRÉCIS : le calcul (bilan.py:105) n'est PAS 12 mois mais médiane moitié RÉCENTE vs moitié ANCIENNE de l'échantillon 5 ans (pivot année médiane). Mineur (indicatif).",
+  "ecran_a_verifier": false,
+  "col12": "écart nu-3-O OUT-SECTEUR-004 tendance signe/mécanique honnête mais libellé '12 m'=split demi-années sur 5 ans, pas 12 mois"
+ },
+ {
+  "id": "OUT-SECTEUR-005",
+  "verdict": "ecart",
+  "n_cas": 6,
+  "cas": [
+   "97416000CS1372",
+   "97415000AH0487",
+   "97411000HB0274",
+   "97413000CS0163",
+   "97424000AK0042",
+   "97422000AX1320"
+  ],
+  "preuve": "ARITHMÉTIQUE ecart_pct=round(100*(sec-cv)/cv), sens, phrase : 6/6 EXACTS (StPierre 2653/2904→-9 sous, StLeu 4905/4773→+3 au_dessus…). MAIS commune_eur_m2 n'est PAS la médiane commune entière : c'est _dvf_bati (signaux.py:127)=sector_price au CENTROÏDE commune → médiane de voisinage (n_commune 44/10/35/40/29/22, pas les milliers de ventes). Médiane DVF VRAIE commune : StPaul 4487 (API 3633, -19%), StLeu 4119 (API 4773, +16%), Tampon 2337 (API 1693, -28%) divergent fortement.",
+  "cause": "src/labuse/pige/signaux.py:127 (_dvf_bati=sector_price au centroïde, servi comme 'commune entière' via mon_secteur.py:98,110)",
+  "reglementaire": "",
+  "libelle_ok": false,
+  "libelle_note": "'commune entière' FAUX : valeur=médiane de voisinage autour du centroïde géométrique, pas la médiane de toute la commune. Sur communes étalées l'écart est trompeur (Tampon -28%, StPaul -19%, StLeu +16%). Arithmétique juste, référentiel mal nommé.",
+  "ecran_a_verifier": false,
+  "col12": "écart nu-3-O OUT-SECTEUR-005 ecart_pct/sens/phrase exacts 6/6 MAIS 'commune entière'=sector_price au centroïde (signaux.py:127), pas médiane commune"
+ },
+ {
+  "id": "OUT-SECTEUR-007",
+  "verdict": "ecart",
+  "n_cas": 6,
+  "cas": [
+   "97416000CS1372",
+   "97415000AH0487",
+   "97411000HB0274",
+   "97413000CS0163",
+   "97424000AK0042",
+   "97422000AX1320"
+  ],
+  "preuve": "Cohérence interne avant-apres==n_exclus_extremes 6/6 EXACTE (21-20=1, 216-206=10, 101-83=18…). Plages se resserrent. MAIS n_exclus≈5% FAUX pour petits échantillons/queue-lourde : StPierre 4.8% OK, StDenis 4.6% OK, mais Cilaos 17.8%, Tampon 12%.",
+  "cause": "src/labuse/faisabilite/bilan.py:149 _trim_aberrants (bornes domaine [1000;12000] + trim 5% comptés ensemble dans n_exclus) ; libellé '(5 %)' MonSecteur.tsx:19",
+  "reglementaire": "",
+  "libelle_ok": false,
+  "libelle_note": "'{n} extrêmes (5 %) exclus' IMPRÉCIS : n_exclus agrège le trim 5% ET le garde-fou domaine [1000;12000] (artefacts DVF<1000). Cilaos 18 exclus (17.8%, min 288→1000) et Tampon 3 (12%) = retraits DOMAINE, pas la queue 5%. Cohérence avant-apres=n_exclus intacte.",
+  "ecran_a_verifier": false,
+  "col12": "écart nu-3-O OUT-SECTEUR-007 avant-apres==n_exclus 6/6 mais '(5%)' faux : inclut garde-fou domaine [1000;12000] (Cilaos 17.8%, Tampon 12%)"
+ },
+ {
+  "id": "OUT-SECTEUR-009",
+  "verdict": "ecart",
+  "n_cas": 6,
+  "cas": [
+   "97416000CS1372",
+   "97415000AH0487",
+   "97411000HB0274",
+   "97413000CS0163",
+   "97424000AK0042",
+   "97422000AX1320"
+  ],
+  "preuve": "SEUIL_N=8 confirmé (config/dvf_profils.yaml 'mediane_generique:8'), servi dans la note API 'sous 8 ventes, ABSENT' 6/6. Sources conformes. INCOHÉRENCE : front MonSecteur.tsx:43 affiche pour une cellule par-type ABSENTE le sous-label hardcodé 'échantillon < 5' (Cilaos/Tampon/StDenis cellules null) ALORS que la note dit 'sous 8 ventes'. '5' aussi en dur signaux.py:158. La note parle de 8, l'écran par-type affiche 5.",
+  "cause": "frontend/src/components/outils/MonSecteur.tsx:43 ('échantillon < 5' en dur) vs note back mon_secteur.py:163 (SEUIL_N=8)",
+  "reglementaire": "",
+  "libelle_ok": false,
+  "libelle_note": "Double incohérence : (1) cellules par-type vides affichent 'échantillon < 5' alors que seuil réel=8 (client voit '5' et '8' sur le même écran) ; (2) '5% extrêmes' (trim) ≠ seuil n. Vestige de l'ancien seuil 5 remplacé par 8 (CHASSE-FIX-1 C25) non propagé au libellé front.",
+  "ecran_a_verifier": true,
+  "col12": "écart nu-3-O OUT-SECTEUR-009 note=SEUIL_N 8 mais front cellule vide hardcode 'échantillon < 5' (MonSecteur.tsx:43), seuil incohérent écran"
+ },
+ {
+  "id": "OUT-ZONE-003",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "97410000AB0003",
+   "97414000CD0013",
+   "97415000AY1152",
+   "97411000AK0182",
+   "97418000AC0002"
+  ],
+  "preuve": "sum(ind) carreaux Filosofi centroïde-dans-zone, geom identique API/recalc. StPierre recalc=2225 API=2225 ; Cilaos inhabitee(0) ; StPaul 4742==4742 ; StDenis 9052==9052 ; Tampon 457==457. 5/5 exact.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Filosofi 2021 millésime annoncé ; zone sans carreau rendue 'inhabitee' (0 inventé).",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-ZONE-003 habitants==sum(ind) exact 5/5"
+ },
+ {
+  "id": "OUT-ZONE-004",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "97410000AB0003",
+   "97414000CD0013",
+   "97415000AY1152",
+   "97411000AK0182",
+   "97418000AC0002"
+  ],
+  "preuve": "sum(men) même filtre. StPierre 811==811 ; Cilaos inhabitee ; StPaul 1729==1729 ; StDenis 3969==3969 ; Tampon 160==160. 5/5 exact.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "sum(men) Filosofi cohérent avec habitants.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-ZONE-004 ménages==sum(men) exact 5/5"
+ },
+ {
+  "id": "OUT-ZONE-006",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "97410000AB0003",
+   "97415000AY1152",
+   "97411000AK0182",
+   "97418000AC0002",
+   "97414000CD0013"
+  ],
+  "preuve": "age_structure_zone iris_rp pondéré par part de surface IRIS. n et pct par tranche recalc==API 5/5 (StPierre pop913 pct[22,16,18,24,16,4], StDenis n_iris11 pop9176, Tampon, StPaul, Cilaos). Pondération surface confirmée.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "RP2022 par IRIS pondéré surface ; évolution 2016→2022 honnêtement non servie. pct arrondis individuellement peuvent ne pas sommer exactement 100 (cosmétique). Cilaos s'affiche (IRIS) alors que population='inhabitee' (carreaux 0) — maille IRIS≠carreau, cohérent mais pop_iris=5 faible.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-ZONE-006 structure d'âge pondérée exacte 5/5"
+ },
+ {
+  "id": "OUT-ZONE-007",
+  "verdict": "ecart",
+  "n_cas": 5,
+  "cas": [
+   "97410000AB0003",
+   "97414000CD0013",
+   "97415000AY1152",
+   "97411000AK0182",
+   "97418000AC0002"
+  ],
+  "preuve": "postes_min=sum(lo*n),postes_max=sum(hi*n) sur TRANCHE_BORNES. StPierre 219/418==219/418 ; Cilaos 3/5 ; StPaul 261/500 ; StDenis 13205/27177 ; Tampon 2625/5301. 5/5 arithmétique exacte. TRANCHE_BORNES conforme nomenclature INSEE. '53'(10000+) absent de toute la base → '+' jamais affiché.",
+  "cause": "libellé zone.py:274 'postes salariés déclarés dans la zone'",
+  "reglementaire": "",
+  "libelle_ok": false,
+  "libelle_note": "Arithmétique juste mais libellé trompeur (doute brief confirmé) : 'postes salariés déclarés' = somme des BORNES de tranches d'effectif des établissements domiciliés dans la zone, pas de l'emploi localisé déclaré. Un établissement dans la zone peut avoir ses salariés ailleurs ; les bornes min-max sont une fourchette théorique de taille. Suggestion: 'effectif salarié estimé (fourchette de taille des établissements)'.",
+  "ecran_a_verifier": false,
+  "col12": "écart nu-3-O OUT-ZONE-007 chiffres exacts 5/5 mais libellé 'postes salariés déclarés'=somme bornes-tranches, pas emploi localisé"
+ },
+ {
+  "id": "OUT-ZONE-008",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "97410000AB0003",
+   "97414000CD0013",
+   "97415000AY1152",
+   "97411000AK0182",
+   "97418000AC0002"
+  ],
+  "preuve": "n_sans_tranche=count(tranche NULL/'NN'/hors dict). StPierre 263==263 ; Cilaos 5 ; StPaul 475 ; StDenis 2767 ; Tampon 544. 5/5 exact. 'NN'=131522 lignes base.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'sans effectif renseigné' compté à part (honnête). Note: la MAJORITÉ des étab sont sans effectif (263/295, 2767/3514) — les 'postes' reposent sur une minorité, non dit par 007.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-ZONE-008 n_sans_tranche exact 5/5 (~90% des étab sans effectif)"
+ },
+ {
+  "id": "OUT-ZONE-009",
+  "verdict": "impossible",
+  "n_cas": 5,
+  "cas": [
+   "97410000AB0003",
+   "97414000CD0013",
+   "97415000AY1152",
+   "97411000AK0182",
+   "97418000AC0002"
+  ],
+  "preuve": "emplois_couverture='non_couverte' seulement si sirene_etablissements vide (zone.py:1020). Or table=155505 lignes → les 5 zones renvoient 'servie'. État 'non couvert — postes salariés' INATTEIGNABLE avec la base actuelle (jamais rendu).",
+  "cause": "src/labuse/zone.py:1020",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Garde correcte (dégradé honnête si SIRENE absente) mais latente : table peuplée → toujours 'servie'.",
+  "ecran_a_verifier": true,
+  "col12": "vérifié nu-3-O OUT-ZONE-009 état non_couverte LATENT (sirene 155505 lignes → toujours 'servie')"
+ },
+ {
+  "id": "OUT-ZONE-010",
+  "verdict": "juste",
+  "n_cas": 2,
+  "cas": [
+   "97410000AB0003",
+   "97411000AK0182"
+  ],
+  "preuve": "POST /outils/etude-zone/entreprises total=count actif ∩ zone. StPierre 295==295 ; StDenis 3514==3514 (n_charges plafonné 1000 mais total exact par GROUP BY sur toute l'emprise). Cohérent avec emplois.n_etablissements.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "N=count exact (cap carte 1000 ne touche pas le compte). Nuance: ÉTABLISSEMENTS pas entreprises/SIREN distincts.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-ZONE-010 total entreprises==count(*) actif exact 2/2"
+ },
+ {
+  "id": "OUT-ZONE-011",
+  "verdict": "juste",
+  "n_cas": 2,
+  "cas": [
+   "97410000AB0003",
+   "97411000AK0182"
+  ],
+  "preuve": "familles[].n par section NAF. Recalc GROUP BY naf→section (même mapping) == API ligne à ligne. StPierre 17 sections, StDenis 19 sections, somme=total 295/3514. 2/2 exact.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Comptes exacts (GROUP BY emprise), libellés depuis naf_nomenclature.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-ZONE-011 familles par section NAF exactes 2/2"
+ },
+ {
+  "id": "OUT-ZONE-012",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "97410000AB0003",
+   "97414000CD0013",
+   "97415000AY1152",
+   "97411000AB0006",
+   "97418000AC0002"
+  ],
+  "preuve": "ventes_12m recalc==API 5/5 : 13/0/27/12/1. SQL identique (nature ILIKE 'vente%', fenêtre ancrée max(date_mutation) à minuit, ST_Contains).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Fenêtre ancrée (max date DVF) non calendaire.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-ZONE-012 ventes_12m exact 5/5 (13/0/27/12/1)"
+ },
+ {
+  "id": "OUT-ZONE-013",
+  "verdict": "ecart",
+  "n_cas": 5,
+  "cas": [
+   "97410000AB0003 API=1875 recalc=1909",
+   "97414 null==null",
+   "97415000AY1152 API=3525 recalc=3570",
+   "97411000AB0006 API=3025 recalc=2857",
+   "97418 null"
+  ],
+  "preuve": "prix_m2_median_bati : la source DVF SERVIE par :9360 diverge de dvf_mutations live. Recalc exact du code mediane_bati sur geom identique + base identique : 1875≠1909, 3525≠3570, 3025≠2857. CORROBORÉ par le chef : StDenis appartement API n=27/2857 vs recalc live n=43/2791 (identique geom). Filtre nature=Vente vs ILIKE écarté (même n sur ce geom). Le COMPTE de ventes bâties servi est ~37% inférieur au live → médiane déplacée. Non reproductible depuis dvf_mutations (classe 'instantané servi ≠ table live', cf PROD-VERIF-1).",
+  "cause": "src/labuse/dvf_mediane.py:58-77 — l'instantané DVF servi par le process diverge de dvf_mutations interrogé en psql",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Libellé 'médian €/m² bâti' correct sur le principe ; c'est la VALEUR+COMPTE qui ne sont pas reproductibles depuis la base live.",
+  "ecran_a_verifier": true,
+  "col12": "écart nu-3-O OUT-ZONE-013 médian bâti NON reproductible : API 1875/3525/3025 vs recalc live 1909/3570/2857, compte ventes servi ~37% < live"
+ },
+ {
+  "id": "OUT-ZONE-014",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "97410000AB0003=0",
+   "97414000CD0013=0",
+   "97415000AY1152=0",
+   "97411000AB0006=0",
+   "97418000AC0002=0"
+  ],
+  "preuve": "annonces_actives recalc==API 5/5 tous 0 (pige manuelle/partielle, aucune annonce rattachée aux 5 zones). Formule exacte mais cas non discriminants.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Réserve honnête servie ('un minimum, pas un total') ; 0 non présenté comme total.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-ZONE-014 annonces_actives==0 recalc==API 5/5 (formule exacte, cas nuls)"
+ },
+ {
+  "id": "OUT-ZONE-015",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "97410000AB0003=25",
+   "97414000CD0013=0",
+   "97415000AY1152=65",
+   "97411000AB0006=13",
+   "97418000AC0002=22"
+  ],
+  "preuve": "permis_36m recalc==API 5/5 : 25/0/65/13/22. SQL identique (ancre SITADEL 2026-08-31 -36m, ST_Contains).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Compte brut tous permis géolocalisés (y compris annulés, contrairement à 017).",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-ZONE-015 permis_36m exact 5/5 (25/0/65/13/22)"
+ },
+ {
+  "id": "OUT-ZONE-016",
+  "verdict": "ecart",
+  "n_cas": 5,
+  "cas": [
+   "StPierre maison API n19/2000 recalc n26/2185",
+   "Cilaos 0",
+   "StPaul maison n30/3533 recalc n47/3598",
+   "StDenis appart n27/2857 recalc n43/2791",
+   "Tampon"
+  ],
+  "preuve": "prix_par_type maison/appart : le COMPTE de ventes servi est SYSTÉMATIQUEMENT < recalc live (maison 19<26,30<47 ; appart 8<11,16<19,27<43) → médiane déplacée. Même cause que OUT-ZONE-013. Terrain nu exact (n==API). NU-A-002 NON reproduit (médiane maison vient de lignes MAISON, ≠ médiane appart de la même zone — libellé maison↔maison OK).",
+  "cause": "src/labuse/dvf_mediane.py:58-77 (instantané DVF servi ≠ live) ; + champ JSON 'seuil:5' (zone.py:677) TROMPEUR — seuil réel=8 (SEUIL_N dvf_mediane.py:31, confirmé StDenis maison n=6→null). CORROBORÉ par le chef : API seuil=5 servi mais maison n=6→None.",
+  "reglementaire": "",
+  "libelle_ok": false,
+  "libelle_note": "maison↔maison OK (pas NU-A-002) MAIS le 'seuil':5 servi dans le JSON ≠ seuil réel appliqué (8). Valeurs non reproductibles (instantané servi).",
+  "ecran_a_verifier": true,
+  "col12": "écart nu-3-O OUT-ZONE-016 compte ventes servi < live (maison 19/30 vs 26/47, appart 27 vs 43) ; maison↔maison OK ; 'seuil 5' JSON ≠ réel 8"
+ },
+ {
+  "id": "OUT-ZONE-017",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "StPierre log15/18lgt,loc8,amng1,ann1",
+   "Cilaos 0",
+   "StPaul log65/68lgt",
+   "StDenis log4/28lgt,loc8",
+   "Tampon log3/4lgt,loc16"
+  ],
+  "preuve": "permis_par_type recalc==API 5/5 sur TOUS compteurs (n_log,nb_lgt,n_loc,n_amng,n_annules). FILTER par famille excluant etat='4', ancre -36m, ST_Contains. Annulés comptés à part et exclus — exact.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Familles Sitadel relayées ; annulés exclus et affichés à part.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-ZONE-017 permis_par_type exact 5/5 (tous compteurs, etat=4 exclu)"
+ },
+ {
+  "id": "OUT-ZONE-018",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "StPierre=19",
+   "Cilaos=0",
+   "StPaul=68",
+   "StDenis=28",
+   "Tampon=4"
+  ],
+  "preuve": "logements_autorises_36m recalc==API 5/5 : 19/0/68/28/4. sum(nb_lgt) sur TOUS permis -36m ST_Contains. StPierre 19≥18 des logements-famille non-annulés de 017 (1 lgt hors-famille/annulé).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Nuance périmètre : zone_demain somme nb_lgt sur TOUS permis ; permis_par_type ne somme que famille 'logements' non annulée → léger décalage (StPierre 19 vs 18) au même écran, arithmétiquement correct.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-ZONE-018 logements_autorises exact 5/5 (périmètre ≠ nb_lgt de 017)"
+ },
+ {
+  "id": "OUT-ZONE-019",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "StPierre n4/20ha",
+   "Cilaos 0/0",
+   "StPaul n1/3ha",
+   "StDenis 0/0",
+   "Tampon 0/0"
+  ],
+  "preuve": "au_zones_n/au_zones_ha recalc==API 5/5 : 4&20, 0, 1&3, 0, 0. count polygones + ST_Area(ST_Union)/10000 subtype LIKE 'AU%'. ST_Union anti-double-compte vérifié.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "n=nb polygones, ha=aire union (footprint réel), pas de double compte.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-ZONE-019 zones AU exact 5/5 (4/20ha,1/3ha,0)"
+ },
+ {
+  "id": "OUT-ZONE-020",
+  "verdict": "juste",
+  "n_cas": 3,
+  "cas": [
+   "97410000AB0003 top5",
+   "97415000AY1152 top5",
+   "97411000AB0006 top5"
+  ],
+  "preuve": "proprietaires_pm recalc==API : siren+dénomination+n_parcelles+surface_m2+ordre top-5 identiques 3 zones. parcelle_personne_morale JOIN parcels, centroid∈zone, GROUP BY siren ORDER BY surface DESC. AUCUN particulier nommé (15 entrées toutes PM : communes/Dept/État/ONF/SA/SCEA/SIDR).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Pas de fuite RGPD (contrairement à Blocs nu-1/D) : table parcelle_personne_morale ne porte que des PM.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-ZONE-020 top5 PM exact 3 zones, 0 particulier nommé"
+ },
+ {
+  "id": "OUT-ZONE-021",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "97410000AB0003",
+   "97415000AY1152",
+   "97414000CD0013",
+   "97411000HB0274",
+   "97418000AC0002"
+  ],
+  "preuve": "Recalc (token=1er mot libelle/name/subtype, part=round(100*ST_Area(ST_Union(ST_Intersection))/aire) grouped zone,commune,document)==API. Toutes parts individuelles <=100% (97414 Npnr=100 max) → ST_Union avant aire (CALCULS-FIX-1) prouvé. Aucun token '?' ; 0 lignes plu_gpu_zone sans libelle ET name → fallback '?' mort.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Parts groupées par (zone,commune,document) : une zone apparaît 2x si 2 communes/docs recouvrent — honnête.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-ZONE-021 PLU zones/parts recalc==API 5/5, union-avant-aire OK (max 100%), 0 token '?'"
+ },
+ {
+  "id": "OUT-ZONE-022",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "5 zones"
+  ],
+  "preuve": "cdac_vigilance présent identique 5/5 (texte fixe zone.py:541). Seuil 1000 m² surface de vente.",
+  "cause": "",
+  "reglementaire": "CDAC — Code de commerce L752-1 : autorisation d'exploitation commerciale au-delà de 1000 m² surface de vente. Seuil exact ; formulation prudente correcte.",
+  "libelle_ok": true,
+  "libelle_note": "Note de vigilance fixe, marquée non instruite.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-ZONE-022 note CDAC fixe 5/5, seuil 1000m² L752-1 exact"
+ },
+ {
+  "id": "OUT-ZONE-024",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "97410000AB0003",
+   "97414000CD0013",
+   "97415000AY1152",
+   "97411000HB0274",
+   "97418000AC0002"
+  ],
+  "preuve": "ALEAS recalc (georisque_alea subtype+niveau, ST_Union(clip)/aire)==API 5/5 (97410 inond fort22/moy3, mvt fort13/moy5/faible54…). PPR (INTERDICTION=rouge,PRESCRIPTION=bleu)==API (97410 interd30/presc8, 97414 interd100…).",
+  "cause": "",
+  "reglementaire": "PPR INTERDICTION=rouge L562-1 inconstructible, PRESCRIPTION=bleu — mapping correct.",
+  "libelle_ok": true,
+  "libelle_note": "Exact. Note mineure : 97411 sert 'inondation moyen — 0%' (aire>0 arrondie 0) — ligne à 0% affichée.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-ZONE-024 aléas+PPR recalc==API 5/5 (union/aire, rouge/bleu)"
+ },
+ {
+  "id": "OUT-ZONE-025",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "97410000AB0003",
+   "97414000CD0013",
+   "97415000AY1152",
+   "97411000HB0274",
+   "97418000AC0002"
+  ],
+  "preuve": "collectif_pct recalc==API : 97415=91, 97411=85, autres=0 (couvert=false). couvert=(coll+anc)>0 ; 0→'non couvert' pas 0 trompeur.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'non couvert' honnête hors SIG.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-ZONE-025 assainissement collectif recalc==API 5/5 (91/85/0/0/0)"
+ },
+ {
+  "id": "OUT-ZONE-026",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "97410000AB0003",
+   "97414000CD0013",
+   "97415000AY1152",
+   "97411000HB0274",
+   "97418000AC0002"
+  ],
+  "preuve": "anc_pct recalc==API : 97411=6, autres=0. Même CTE union/aire.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Exact.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-ZONE-026 ANC recalc==API 5/5 (6/0/0/0/0)"
+ },
+ {
+  "id": "OUT-ZONE-027",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "97410000AB0003",
+   "97415000AY1152",
+   "97411000HB0274",
+   "97414000CD0013",
+   "97418000AC0002"
+  ],
+  "preuve": "espaces_zonages recalc (znieff/ens/parc_national/zfang/frr/qpv, ST_Union∩zone/aire, 0% omis)==API 5/5 (97410 znieff4/parc14/zfang72/frr72 ; 97411 parc8/zfang100/frr100/qpv6…). Catégories 0 absentes.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Exact, 0% omis.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-ZONE-027 espaces protégés/zonages recalc==API 5/5"
+ },
+ {
+  "id": "OUT-ZONE-028",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "97410000AB0003",
+   "97415000AY1152",
+   "97411000HB0274",
+   "97418000AC0002",
+   "97414000CD0013(vide)"
+  ],
+  "preuve": "BPE n par domaine (DISTINCT ON lower(name), drop A4-alimentaire) recalc==API exact (97411 A181/B34/C14/D147/E7/F15/G2…). Dédup reproduite ; Cilaos vide.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Réserve non bloquante : n=len(liste) inclut lignes name NULL (non dédoublonnées) ; 0 null observé donc pas d'écart.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-ZONE-028 BPE A→G dédup+dropA4 recalc==API 5/5"
+ },
+ {
+  "id": "OUT-ZONE-029",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "97410000AB0003",
+   "97415000AY1152",
+   "97411000HB0274",
+   "97418000AC0002",
+   "97414000CD0013"
+  ],
+  "preuve": "generateurs_flux recalc (ens=count amenite_bpe C, poles=count pole_echange/transport_arret, ST_Contains)==API 5/5 (97411 ens14/poles60…). Enseignement omis si 0.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Exact.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-ZONE-029 générateurs flux recalc==API 5/5"
+ },
+ {
+  "id": "OUT-ZONE-030",
+  "verdict": "juste",
+  "n_cas": 2,
+  "cas": [
+   "97411000HB0274 (N6 2011 17500)",
+   "zone large StDenis (N0102/N2/N6)"
+  ],
+  "preuve": "trafic_zone recalc DISTINCT ON(route) ST_DWithin 30m==API exact (97411→N6/2011/17500). 4/5 zones sans RN à <30m → couverte:True axes:[] ('aucun axe national'). DOUTE CONFIRMÉ : par route le + récent servi (correct) mais max-année diffère (N6 2011, N2/N1A/N5 2023, N4 1992) → millésimes MIXTES côte à côte dans une zone multi-RN, ancienneté non signalée.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Exact + 'aucun axe' pour zones sans RN. Réserve : millésimes anciens (jusqu'à 2011/1992) et mixtes entre axes, sans mention 'donnée ancienne'.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-ZONE-030 trafic RN recalc==API (N6 2011 17500) ; DOUTE millésimes mixtes/anciens non signalés"
+ },
+ {
+  "id": "OUT-ZONE-031",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "97410000AB0003",
+   "97415000AY1152",
+   "97411000HB0274",
+   "97418000AC0002",
+   "97414000CD0013(vide)"
+  ],
+  "preuve": "acquisitions_pm recalc (SIREN cur=2024 absent prev=2023, centroïde∈zone)==API exact. n_parcelles 97410=8,97415=63,97411=22,97418=64,97414=0. Top acquéreurs identiques. 6 millésimes dans la table (>=2).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'entre 2023 et 2024' exact ; particuliers jamais nommés (table PM).",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-ZONE-031 acquisitions PM 2023→2024 n+top recalc==API 5/5"
+ },
+ {
+  "id": "OUT-ZONE-032",
+  "verdict": "ecart",
+  "n_cas": 5,
+  "cas": [
+   "97411000HB0274",
+   "97418000AC0002",
+   "97415000AY1152",
+   "97410000AB0003",
+   "97414000CD0013"
+  ],
+  "preuve": "Valeur servie == requête code (recalc identique : 97411=9.2, 97418=9.2…) donc le code fait ce qu'il dit, MAIS la requête est fausse pour un 'loyer médian commune' : oll_zonage.insee → N secteurs OLL (St-Denis 97411 = 6 secteurs 9.2→13.7), le code fait 'ORDER BY z.annee DESC LIMIT 1' SANS tie-break secteur → renvoie UN secteur arbitraire (en pratique le MOINS cher, zone 6=9.2). CORROBORÉ par le chef : St-Denis secteurs {13.7,12.2,11.5,11.0,10.3,9.2}, servi=9.2 (le plus bas) ; vrai médian secteurs=11.5 (−20%). OLL n'est PAS mort ici (contrairement prod-verif).",
+  "cause": "src/labuse/zone.py:958-961 (jointure oll_zonage/oll_loyers sans agrégation ni sélection secteur, ORDER BY annee DESC LIMIT 1 sur insee multi-secteurs)",
+  "reglementaire": "",
+  "libelle_ok": false,
+  "libelle_note": "'Loyer médian · commune — X €/m²' et 'à l'échelle de la commune' TROMPEURS : valeur = loyer du secteur OLL le plus bas, pas un médian/agrégat communal.",
+  "ecran_a_verifier": true,
+  "col12": "écart nu-3-O OUT-ZONE-032 'loyer médian commune'=secteur OLL le + bas : St-Denis 9.2 servi vs médian secteurs 11.5, zone.py:958-961"
+ },
+ {
+  "id": "OUT-ZONE-033",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "97410(St-Benoît)",
+   "97415(St-Paul)",
+   "97411",
+   "97414",
+   "97418"
+  ],
+  "preuve": "dispositif_ort recalc (ort_commune)==API : 97410 ort_signee/2021-10-05, 97415 /2022-04-25. Autres absents→None (non affiché). Statut 'autre'+ort_signee→libellé ORT (ni PVD ni ACV) correct.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'ORT signée {date}' exact ; None propre hors programme.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-ZONE-033 dispositif ORT recalc==API (St-Benoît 2021-10-05, St-Paul 2022-04-25)"
+ },
+ {
+  "id": "OUT-ZONE-034",
+  "verdict": "juste",
+  "n_cas": 4,
+  "cas": [
+   "97410000AB0003",
+   "97415000AY1152",
+   "97411000HB0274",
+   "97418000AC0002"
+  ],
+  "preuve": "arcep_immeubles existe. fibre recalc (count, FILTER ftth, round(100*ftth/n,1), ST_Intersects)==API exact : 97410 985/975/99.0 ; 97415 2012/1982/98.5 ; 97411 1791/1768/98.7 ; 97418 372/338/90.9. Cilaos 0 immeuble → clé 'fibre' omise.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'FttH X% (ftth/immeubles)' exact, source Arcep ; servi zonalement par l'endpoint, omis si vide.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-ZONE-034 fibre FttH %+compte recalc==API 4/4 (arcep_immeubles ST_Intersects)"
+ },
+ {
+  "id": "OUT-ZONE-035",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "GET /etude-zone.pdf?idu=97415000AY1152&rayon=1"
+  ],
+  "preuve": "HTTP 200, content-type application/pdf, 146 Ko. Route documents.py:189. PDF non vide.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'Exporter en PDF' → PDF réel.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O OUT-ZONE-035 /etude-zone.pdf 200 application/pdf 146 Ko"
+ },
+ {
+  "id": "OUT-ZONE-036",
+  "verdict": "impossible",
+  "n_cas": 0,
+  "cas": [],
+  "preuve": "Code-correct non déclenchable en déterministe : zone.py:1006-1009 renvoie {zone_disponible:False,detail} sans geom quand isochrone retourne None (IGN KO) ; atteint UNIQUEMENT via idu/lon-lat (le geom court-circuite l'isochrone zone.py:999-1003). Front EtudeZone.tsx:212-215 affiche 'Zone atteignable indisponible … Aucun cercle approximatif'. Non forçable via geom.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Dégradé honnête, nommé, sans cercle inventé — conforme.",
+  "ecran_a_verifier": true,
+  "col12": "impossible nu-3-O OUT-ZONE-036 dégradé isochrone-KO code-correct (zone.py:1008) mais non forçable via geom"
+ }
+]

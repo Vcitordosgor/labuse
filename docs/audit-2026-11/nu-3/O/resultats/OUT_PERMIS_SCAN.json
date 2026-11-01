@@ -1,0 +1,1188 @@
+[
+ {
+  "id": "OUT-PERMIS-001",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "base 240m",
+   "base 24m",
+   "PC Saint-Paul 24m",
+   "DP Cilaos 240m",
+   "Tous"
+  ],
+  "preuve": "recalc COUNT(*) date>=dmax-240m = 50808 (geo 50074) == API total 50808 ; dmax=2026-08-31",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'{total} permis autorisés en base' = tout l'historique Sitadel, exact",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 5 cas, juste"
+ },
+ {
+  "id": "OUT-PERMIS-002",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "texte figé"
+  ],
+  "preuve": "Sitadel/SDES ne publie QUE les autorisations abouties (ni refus ni instruction en cours) — avertissement honnête, confirmé par la structure des données (etat 2/4/5/6, pas de 'en cours')",
+  "cause": "",
+  "reglementaire": "Sitadel3 SDES = autorisations d'urbanisme, pas instruction live : exact",
+  "libelle_ok": true,
+  "libelle_note": "avertissement exact",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, texte honnête, juste"
+ },
+ {
+  "id": "OUT-PERMIS-003",
+  "verdict": "juste",
+  "n_cas": 2,
+  "cas": [
+   "24m total",
+   "etat=recent 24m"
+  ],
+  "preuve": "recalc COUNT date>=dmax-24m = 5640 == API total 5640 ; etat=recent 5640 identique",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'Récent · autorisé ≤24 mois' exact (ancré dmax, pas now())",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 5640 exact, juste"
+ },
+ {
+  "id": "OUT-PERMIS-004",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "/promesses count 36m toute l'île"
+  ],
+  "preuve": "recalc COUNT(DISTINCT s.id) PC>36m sans daact, parcelle non HARD_EXCLUDE bati (run q_v21_sources) = 15673 == API total 15673",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'Dormant · ancien PC sans achèvement' exact ; dépend du run cascade courant (cohérent)",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 15673 exact, juste"
+ },
+ {
+  "id": "OUT-PERMIS-005",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "etat=acheve 240m"
+  ],
+  "preuve": "recalc COUNT date<dmax-24m AND daact NOT NULL = 20577 == API total 20577. (DAACT présente, pas etat='6' seul : etat6 compte 20989 mais la définition servie = daact non null hors fenêtre récente)",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'Achevés · DAACT déclaré' : le prédicat réel = daact non null ET hors fenêtre récente (pas etat='6'), le libellé reste honnête",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 20577 exact, juste"
+ },
+ {
+  "id": "OUT-PERMIS-006",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "etat=autre 240m + partition"
+  ],
+  "preuve": "API autre=8918 ; recalc partition 5640(recent)+15673(dormant)+20577(acheve)+8918(autre)=50808=total. Invariant de partition vérifié exact.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'Autres · ni récent ni dormant ni achevé' = différence de partition, somme exacte au total",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, partition somme 50808 exacte, juste"
+ },
+ {
+  "id": "OUT-PERMIS-007",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "240m total"
+  ],
+  "preuve": "API total 50808 == recalc COUNT base complète 50808 ; = vrai total base (pas somme de 2 fenêtres)",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'Tous · toute la base' exact",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 50808 exact, juste"
+ },
+ {
+  "id": "OUT-PERMIS-008",
+  "verdict": "juste",
+  "n_cas": 2,
+  "cas": [
+   "PC Saint-Paul 24m",
+   "DP Cilaos 240m"
+  ],
+  "preuve": "nature=PC+commune=Saint-Paul 24m: recalc 552 == API 552 ; nature=DP+commune=Cilaos 240m: recalc 42 == API 42",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "filtres période/nature/commune appliqués exactement",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, filtres exacts, juste"
+ },
+ {
+  "id": "OUT-PERMIS-009",
+  "verdict": "ecart",
+  "n_cas": 6,
+  "cas": [
+   "97415000AY1674",
+   "97410000AH1028",
+   "97414000EN1866",
+   "97418000AT2561",
+   "97411000KA0002",
+   "97414000CD0034"
+  ],
+  "preuve": "Sur parcelle peu dense (97414000CD0034) recalc 8/API c200=8 EXACT. Mais LIMIT 100 tronque silencieusement les parcelles denses : 97415000AY1674 recalc 185 permis ≤200m → API c200=100 (ÉCART 85) ; 97410000AH1028 recalc 145 → API 100 ; 97418000AT2561 recalc 162 → API 100 ; 97411000KA0002 recalc 108 → API 100. c100 aussi faussé (ne compte que parmi les 100 renvoyés).",
+  "cause": "src/labuse/api/modules.py:754 'ORDER BY dist_m ASC LIMIT 100' — plafond dur sans indicateur 'sur N' : le compte affiché (loc) est capé à 100, sous-estime le réel pour les parcelles urbaines denses",
+  "reglementaire": "",
+  "libelle_ok": false,
+  "libelle_note": "'{n} permis à moins de 200 m' affiche 100 alors que le réel peut être >180 ; troncature non signalée",
+  "ecran_a_verifier": true,
+  "col12": "écart nu-3-O : LIMIT 100 modules.py:754 tronque le compte ≤200m sans le dire (185 réel→100 affiché)"
+ },
+ {
+  "id": "OUT-PERMIS-010",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "via_permits_geo geom NULL = 0"
+  ],
+  "preuve": "/parcelle-permis ne tire que de via_permits_geo (0 ligne sans géom) → non_localises structurellement 0 dans ce contexte, suffixe omis (honnête). Le compte /permis global sans_localisation=167 (5640-5473) est exact par ailleurs.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'(N non localisé)' : omis si 0 (cas normal en proximité) ; cohérent",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, non-loc toujours 0 en proximité (honnête), juste"
+ },
+ {
+  "id": "OUT-PERMIS-011",
+  "verdict": "ecart",
+  "n_cas": 1,
+  "cas": [
+   "front ModulePanel.tsx:852"
+  ],
+  "preuve": "La date 'Sitadel au 2026-08-31' est exacte (donnees_jusqu_au=max(date)). MAIS le libellé du registre dit 'sur les 24 derniers mois' alors que l'écran rend 'sur les 240 derniers mois' (MONTHS_RADAR max=240) ET l'endpoint /parcelle-permis n'est PAS fenêtré du tout (aucun filtre date). La fenêtre réelle = toute la profondeur Sitadel.",
+  "cause": "frontend/src/components/outils/ModulePanel.tsx:852 (Math.max(...MONTHS_RADAR)=240) et modules.py:742-754 (aucun prédicat de date) — le registre OUT-PERMIS-011 '24 mois' est périmé",
+  "reglementaire": "",
+  "libelle_ok": false,
+  "libelle_note": "registre dit '24 derniers mois' ; l'écran dit '240 derniers mois' et le compte n'est pas fenêtré — la mention 24m est fausse (le réel = tout l'historique ≤200m)",
+  "ecran_a_verifier": true,
+  "col12": "écart nu-3-O : date exacte mais fenêtre '24 mois' du registre fausse (écran=240m, endpoint non fenêtré)"
+ },
+ {
+  "id": "OUT-PERMIS-012",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "partition états"
+  ],
+  "preuve": "Pastille front (lib/permisEtats) : Récent (date≥dmax-24m) vert / Dormant corail / Achevé-Autre gris — même coupure dmax-24m que coupure_recent servie (2024-08-31), source unique carte==liste (RETOURS-17 W3)",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "couleur = classification d'état cohérente avec la partition back",
+  "ecran_a_verifier": true,
+  "col12": "vérifié nu-3-O, coupure cohérente ; rendu couleur à voir écran"
+ },
+ {
+  "id": "OUT-PERMIS-013",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "97441518A0420",
+   "9744122600230",
+   "97441120A0006",
+   "97441117A0204",
+   "9744242410031"
+  ],
+  "preuve": "type servi == sitadel_permits.type sur 5 permis variés (PC/DP/PA + achevé/annulé/travaux commencés) : PC,DP,PA,PC,PC tous exacts",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "code nature 2-3 car. exact",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 5 cas, juste"
+ },
+ {
+  "id": "OUT-PERMIS-014",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "97441518A0420",
+   "9744122600230",
+   "97441120A0006",
+   "97441117A0204",
+   "9744242410031"
+  ],
+  "preuve": "date d'autorisation servie == sitadel_permits.date::date : 2018-10-25, 2026-05-30, 2021-04-19, 2017-09-15, 2025-05-02 tous exacts",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "date ISO exacte",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 5 cas, juste"
+ },
+ {
+  "id": "OUT-PERMIS-015",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "97441518A0420",
+   "9744122600230",
+   "97441120A0006",
+   "97441117A0204",
+   "9744242410031"
+  ],
+  "preuve": "nb_lgt servi (nb_lots) == raw->>'nb_lgt' : 1,1,null(PA),1,1 tous exacts ; omis si null (PA)",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'N lgt' exact",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 5 cas, juste"
+ },
+ {
+  "id": "OUT-PERMIS-016",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "97416000HN1107",
+   "97416000HV0351",
+   "97411000IA0383",
+   "97411000IM0091",
+   "97409000BK0248"
+  ],
+  "preuve": "surface_m2 dormant servie == round(parcels.surface_m2) : 535,334,590,369,330 tous exacts",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'N m²' = surface parcelle, exact (mode dormant)",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 5 cas, juste"
+ },
+ {
+  "id": "OUT-PERMIS-017",
+  "verdict": "ecart",
+  "n_cas": 2,
+  "cas": [
+   "/permis items (liste)",
+   "/promesses items (dormant)"
+  ],
+  "preuve": "Le branchement 'commune' du libellé N'EST JAMAIS peuplé par /modules/permis : l'item dict omet 'commune' (seuls permit_id,type,date,depot,delai_mois,etat,nb_lgt,surf_hab,geoloc sont renvoyés) alors que s.commune EST sélectionné en SQL. Front lit i['commune'] (ModulePanel.tsx:691,705) → undefined. Seul le mode dormant (/promesses) fournit 'idu'.",
+  "cause": "src/labuse/api/modules.py:656-657 — la liste 'items' DROP 'commune' du résultat (pourtant sélectionné ligne 594) ; front ModulePanel.tsx:691/705 lit i['commune'] inexistant",
+  "reglementaire": "",
+  "libelle_ok": false,
+  "libelle_note": "'{commune} ou Parcelle {ref}' : la branche commune ne reçoit jamais de valeur (champ absent de l'item), seule la réf parcelle (dormant) s'affiche",
+  "ecran_a_verifier": true,
+  "col12": "écart nu-3-O : modules.py:656 omet 'commune' des items /permis, la branche commune du libellé reste vide"
+ },
+ {
+  "id": "OUT-PERMIS-018",
+  "verdict": "juste",
+  "n_cas": 8,
+  "cas": [
+   "97440110A0056",
+   "97440112A0055",
+   "97440112A0061",
+   "97440112A0088",
+   "97440112A0091",
+   "97440112A0093",
+   "97440112A0095",
+   "97440112A0096"
+  ],
+  "preuve": "delai_mois servi == mois entre date_depot et date autorisation : recalc age(aut,depot) en mois = 0,15,13,14,12,13,21,12 == table m10 delai_mois (identiques)",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'N m' = délai dépôt→autorisation, exact (si valide)",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 8 cas, juste"
+ },
+ {
+  "id": "OUT-PERMIS-019",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "calcul client année"
+  ],
+  "preuve": "'Sans DAACT · N ans' = année courante − année(date) côté client (dormant = permis sans daact par construction, vérifié OUT-PERMIS-004). Calcul d'âge entier simple, cohérent.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "âge en années depuis autorisation ; dormant = sans daact, cohérent",
+  "ecran_a_verifier": true,
+  "col12": "vérifié nu-3-O, âge client simple, juste (rendu à voir écran)"
+ },
+ {
+  "id": "OUT-PERMIS-020",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "PC→Permis de construire",
+   "DP→Déclaration préalable",
+   "PA→Permis d'aménager",
+   "PD→Permis de démolir",
+   "fallback code brut"
+  ],
+  "preuve": "_NATURE_LABELS (modules.py:671) décode PC/DP/PA/PD en libellés officiels ; API nature_libelle='Permis de construire'/'Déclaration préalable'/'Permis d'aménager' sur les 5 permis testés, exacts ; repli code brut si absent",
+  "cause": "",
+  "reglementaire": "PC/DP/PA/PD = natures officielles du Code de l'urbanisme (L.421-*) : exact",
+  "libelle_ok": true,
+  "libelle_note": "'Nature : {libellé}' exact",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 5 cas, juste"
+ },
+ {
+  "id": "OUT-PERMIS-021",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "97441518A0420 (PP anonymisé)",
+   "9744122600230 (PP)",
+   "97441120A0006 (PM MARINE/434001285)",
+   "97441117A0204 (PP)",
+   "9744242410031 (PP)"
+  ],
+  "preuve": "porteur/siren servi == raw petitioner_name/siren. PM nommée ('MARINE', SIREN 434001285) ; personne physique → porteur=null + note 'Pétitionnaire personne physique (anonymisé à la source)'. 4/5 PP correctement anonymisées, 1/1 PM nommée.",
+  "cause": "",
+  "reglementaire": "RGPD : personne physique anonymisée à la source (Sitadel open), PM nommée — conforme",
+  "libelle_ok": true,
+  "libelle_note": "'Porteur : {pétitionnaire} / SIREN' exact ; anonymisation PP respectée",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 5 cas, RGPD OK, juste"
+ },
+ {
+  "id": "OUT-PERMIS-022",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "97441518A0420 (6→travaux achevés)",
+   "9744122600230 (2→autorisé)",
+   "97441120A0006 (6→travaux achevés)",
+   "97441117A0204 (4→annulé/annule=true)",
+   "9744242410031 (5→travaux commencés)"
+  ],
+  "preuve": "statut servi via etat_libelle/est_annule (ingestion/permits.py source unique) : daact présente→'travaux achevés' prime ; ETAT_LABELS{2:autorisé,4:annulé,5:travaux commencés,6:travaux achevés}. 5 états distincts tous exacts ; etat=4 bien 'annulé' (annule=true), plus confondu 'chantier ouvert'.",
+  "cause": "",
+  "reglementaire": "ETAT_DAU Sitadel3 : 4=annulé — décodage correct",
+  "libelle_ok": true,
+  "libelle_note": "'Statut' exact, annulé distingué",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 5 états, annulé OK, juste"
+ },
+ {
+  "id": "OUT-PERMIS-023",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "97441518A0420 (9m)",
+   "9744122600230 (1m)",
+   "97441120A0006 (15m)",
+   "97441117A0204 (8m)",
+   "9744242410031 (16m)"
+  ],
+  "preuve": "delai_instruction servi == m10_permit_delais.delai_mois (si valide) : 9,1,15,8,16 mois ; cohérent avec le recalcul age(aut,depot) (voir OUT-PERMIS-018)",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'{n} mois entre dépôt et autorisation' exact",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 5 cas, juste"
+ },
+ {
+  "id": "OUT-PERMIS-024",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "destination=1→habitation x4",
+   "destination=null→omis (PA)"
+  ],
+  "preuve": "_DESTINATION_LABELS (modules.py:668) ; API destination_libelle='habitation' pour code 1 sur 4 permis ; null→omis (PA). Dictionnaire SDES Sitadel3 : 1 habitation,2 hôtels,3 bureaux,4 commerce,6 industrie,7 agriculture,8 entrepôt,9 service public — cohérent avec la distribution base (code 1=41160, code 9=2120, etc.)",
+  "cause": "",
+  "reglementaire": "codes DESTINATION_PRINCIPALE Sitadel3 SDES : mapping conforme au dictionnaire des variables",
+  "libelle_ok": true,
+  "libelle_note": "'Destination : {libellé}' exact ; repli code brut hors dict",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 5 cas, juste"
+ },
+ {
+  "id": "OUT-PERMIS-025",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "97441518A0420→[97415000DE0142]",
+   "9744122600230→[97412000BL1049]",
+   "97441120A0006→[97411000EL0601]",
+   "97441117A0204→[97411000IC0047]",
+   "9744242410031→[97424000AL1245]"
+  ],
+  "preuve": "parcelles servies == sitadel_permits.idu_codes (JSONB) sur 5 permis, listes identiques",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'Parcelles rattachées : {liste IDU}' exact",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 5 cas, juste"
+ },
+ {
+  "id": "OUT-PERMIS-026",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "5 fiches permis testées"
+  ],
+  "preuve": "source servie == 'SITADEL (SDES/Dido) — autorisations d'urbanisme, dép. 974' (modules.py:725) constant sur toutes les fiches ; attribution exacte",
+  "cause": "",
+  "reglementaire": "Sitadel diffusé par SDES via Dido (data.gouv) : attribution correcte",
+  "libelle_ok": true,
+  "libelle_note": "étiquette de source exacte",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, étiquette source exacte, juste"
+ },
+ {
+  "id": "OUT-SCAN-001",
+  "verdict": "juste",
+  "n_cas": 6,
+  "cas": [
+   "310863592",
+   "452038805",
+   "219740156",
+   "219740248",
+   "310863378",
+   "444704977"
+  ],
+  "preuve": "nom=max(denomination) + siren servis tels quels ; CBO nom='CBO TERRITORIA' siren=452038805 conforme base. Particuliers jamais présents (table parcelle_personne_morale = PM uniquement).",
+  "cause": "",
+  "reglementaire": "RGPD OK : parcelle_personne_morale ne contient que des personnes morales (dénomination), aucun particulier nommé — conforme.",
+  "libelle_ok": true,
+  "libelle_note": "'(propriétaire non nommé)' en repli si denomination null.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 6 SIREN, juste (PM uniquement, RGPD OK)"
+ },
+ {
+  "id": "OUT-SCAN-002",
+  "verdict": "juste",
+  "n_cas": 6,
+  "cas": [
+   "310863592",
+   "452038805",
+   "219740156",
+   "219740248",
+   "310863378",
+   "444704977"
+  ],
+  "preuve": "n_parcelles recalc==API exact : SIDR 4188, CBO 1833, St-Paul 2509, Cilaos 368, SEDRE 1847, EPF 784. (COUNT via JOIN parcels — note : < COUNT brut parcelle_personne_morale car idu sans parcelle écarté, ex SIDR 4241->4188).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "compte les parcelles joignables à parcels (pm.idu sans parcels exclu) — cohérent avec le reste de l'écran.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 6 SIREN, juste (recalc==API exact)"
+ },
+ {
+  "id": "OUT-SCAN-003",
+  "verdict": "ecart",
+  "n_cas": 6,
+  "cas": [
+   "310863592",
+   "452038805",
+   "219740156",
+   "219740248",
+   "310863378",
+   "444704977"
+  ],
+  "preuve": "surface_totale recalc==API exact sur 6 SIREN (SIDR 4023407, CBO 25603086, etc). MAIS = SUM(surface_m2) (surface DESSIN/géométrique cadastrale), PAS la contenance légale : SIDR sum(contenance)=4026112 vs sum(surface_m2)=4023407 (delta 2705 m²).",
+  "cause": "modules.py:386 surface_totale_m2=round(sum(r['surface_m2'])) — utilise surface géométrique, pas contenance_m2 (disponible dans la requête l.311 mais non utilisée pour ce total).",
+  "reglementaire": "",
+  "libelle_ok": false,
+  "libelle_note": "'surface totale {m²}' n'indique pas qu'il s'agit de la surface de DESSIN et non de la contenance cadastrale légale (CONTENANCE-1 non tranchée) — écart faible (~0,07%) mais libellé ambigu.",
+  "ecran_a_verifier": true,
+  "col12": "écart nu-3-O : surface totale = surface dessin (pas contenance), libellé ambigu, delta~0,07%"
+ },
+ {
+  "id": "OUT-SCAN-004",
+  "verdict": "juste",
+  "n_cas": 6,
+  "cas": [
+   "310863592",
+   "452038805",
+   "219740156",
+   "219740248",
+   "310863378",
+   "444704977"
+  ],
+  "preuve": "nus/batis recalc==API exact (SIDR 822/3366, CBO 1000/833, etc). Partition nus+batis=n_parcelles toujours exacte. CONFIRMÉ : les 822 'nus' de SIDR sont TOUS des parcelles SANS ligne p_model_bati (sans_model=822==comptes_nus=822) : un terrain sans modèle bâti compte 'nu'.",
+  "cause": "modules.py:387-388 n_terrains_batis=emprise_bati>0 via LEFT JOIN p_model_bati COALESCE 0 — pas de modèle = emprise 0 = 'nu' silencieux.",
+  "reglementaire": "",
+  "libelle_ok": false,
+  "libelle_note": "'terrains nus' conflate 'sans bâtiment' et 'bâtiment non modélisé' (RETOURS-15 B5 documenté). Arithmétique juste mais sémantique trompeuse.",
+  "ecran_a_verifier": false,
+  "col12": "juste chiffre nu-3-O mais 'nu' = aussi 'bâti non modélisé' (silencieux)"
+ },
+ {
+  "id": "OUT-SCAN-005",
+  "verdict": "juste",
+  "n_cas": 6,
+  "cas": [
+   "310863592",
+   "452038805",
+   "219740156",
+   "219740248",
+   "310863378",
+   "444704977"
+  ],
+  "preuve": "n_constructible_u_au recalc==API exact : SIDR 4133, CBO 952, St-Paul 1976, Cilaos 205, SEDRE 1730, EPF 756. zone_fam IN (U,AU) via LEFT JOIN parcel_zone_plu.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "parcelle sans parcel_zone_plu non comptée (omission silencieuse documentée) — n'invente pas de zone.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 6 SIREN, juste (recalc==API exact)"
+ },
+ {
+  "id": "OUT-SCAN-006",
+  "verdict": "ecart",
+  "n_cas": 2,
+  "cas": [
+   "310863592",
+   "219740248"
+  ],
+  "preuve": "blocs_contigus.n recalc==API exact (SIDR 460, Cilaos 66 ; COUNT parcel_blocs par siren). Top items recalc==API exact (SIDR top bloc 205 parcelles 30694 m² Saint-Denis). MAIS items TRONQUÉS à 12 : SIDR n=460 mais seulement 12 blocs servis/affichés, SANS indicateur 'sur 460'.",
+  "cause": "modules.py:453 brs[:12] (cap dur) ; front ModulePanel.tsx:304-307 affiche 'Blocs contigus : {n}'=460 puis mappe bc.items (12) sans mention de troncature.",
+  "reglementaire": "",
+  "libelle_ok": false,
+  "libelle_note": "le compte 460 est juste mais la liste en-dessous montre 12 blocs sans dire 'top 12 sur 460' — troncature silencieuse (RETOURS-15 C9 documenté).",
+  "ecran_a_verifier": true,
+  "col12": "écart nu-3-O : n=460 juste mais liste tronquée à 12 blocs sans le signaler"
+ },
+ {
+  "id": "OUT-SCAN-007",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "452038805"
+  ],
+  "preuve": "item sdp=parcel_residuel.sdp_residuelle_m2 (97416000ET2164 sdp=63) ; n_etablissements=count(etablissement_parcelle by idu)=0 ; idu/commune/surface bruts. Formule DB confirmée (API down au moment du check item mais formule identique au code l.509-515).",
+  "cause": "modules.py:509-515 — note : parcelle co-détenue via plusieurs lignes pm apparaît plusieurs fois dans items (pas de dédoublonnage sur idu).",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "SDP résiduelle = champ scoring, établissements adresse-matchés BAN (même source fiche §3). Doublons de ligne possibles si co-détention.",
+  "ecran_a_verifier": true,
+  "col12": "juste nu-3-O (formule DB) ; doublon de ligne possible si idu multi-pm"
+ },
+ {
+  "id": "OUT-SCAN-008",
+  "verdict": "juste",
+  "n_cas": 3,
+  "cas": [
+   "310863592",
+   "452038805",
+   "259741007"
+  ],
+  "preuve": "depot recalc==API exact : SIDR cloture 2024-12-31->annee 2024, parution 2025->depuis_ans 1, muet False ; CBO 2025/0 ; cas muet 259741007 parution 2019->depuis_ans 5>=3->muet True (12 parcelles).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "SEUIL_DEPOT_MUET_ANS=3 (modules.py:250) ; 'muet probable' honnête (signal d'approche).",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, muet@3ans, recalc==API exact"
+ },
+ {
+  "id": "OUT-SCAN-009",
+  "verdict": "juste",
+  "n_cas": 3,
+  "cas": [
+   "219740248",
+   "310863592",
+   "313567182"
+  ],
+  "preuve": "INPI sans dirigeant : Cilaos 219740248 EXISTS pm_dirigeants=false->inpi=True (correct, a parcelles+nom) ; SIDR EXISTS=true->inpi=False. BODACC : 313567182 v_foncier_sous_pression 'Autre jugement et ordonnance' 2026-04-02->API bodacc rempli (24 parcelles).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'signal d''approche / probable / à vérifier' — garde l.352 : seulement si rows & nom (angle mort INPI non présenté comme preuve).",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, INPI+BODACC, recalc==API exact"
+ },
+ {
+  "id": "OUT-SCAN-010",
+  "verdict": "juste",
+  "n_cas": 6,
+  "cas": [
+   "310863592",
+   "452038805",
+   "219740156",
+   "219740248",
+   "310863378",
+   "444704977"
+  ],
+  "preuve": "millesime_majic=max(parcelle_personne_morale.millesime)=2025 uniforme sur les 6 SIREN, recalc==API exact.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'Fichiers fonciers DGFiP · situation {année}' ; repli max global si siren sans millésime (non déclenché, table uniforme 2025).",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, millesime 2025 uniforme, recalc==API exact"
+ },
+ {
+  "id": "OUT-SCAN-011",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "452038805"
+  ],
+  "preuve": "nConstruit vient de VeillePromoteurs n_total (ScanPatrimoine.tsx:237) = opérations Sitadel + programmes publiés — par construction >= 'N opérations' de l'onglet. Comportement conforme au code et documenté (RETOURS-11 O11d).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "LOT S1 : nConstruit (opérations+programmes) > 'N opérations' (opérations seules) — divergence documentée, déroutante mais honnête (comment l.245-251).",
+  "ecran_a_verifier": true,
+  "col12": "juste nu-3-O : nConstruit=opérations+programmes (> onglet), documenté"
+ },
+ {
+  "id": "OUT-SCAN-012",
+  "verdict": "juste",
+  "n_cas": 2,
+  "cas": [
+   "452038805",
+   "310895172"
+  ],
+  "preuve": "n_total/n_logements_total recalc==API exact : CBO 21 ops / 247 lgt (union-find indépendant reproduit 21/247) ; SHLMR 97 ops / 3869 lgt (reproduit exact avec logique API : DISTINCT ON global puis filtre siren). millesime=max(date_depot)=2026-08-31 exact.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'permis depuis {annee}' calculé front (parsing JS) ; 'Sitadel au {date}'=max(date_depot).",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 2 promoteurs, union-find reproduit exact"
+ },
+ {
+  "id": "OUT-SCAN-013",
+  "verdict": "juste",
+  "n_cas": 2,
+  "cas": [
+   "452038805",
+   "310895172"
+  ],
+  "preuve": "regroupement par SIREN, catégorie via groupe MAJIC (0=promoteur,5=bailleur,6=SEM). Sommes par groupe cohérentes avec n_total/n_logements. CBO=promoteur groupe 0, SHLMR=bailleur groupe 5.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "RGPD OK (PM). Catégorie dérivée du groupe MAJIC.",
+  "ecran_a_verifier": true,
+  "col12": "juste nu-3-O : regroupement SIREN + catégorie MAJIC cohérents"
+ },
+ {
+  "id": "OUT-SCAN-014",
+  "verdict": "impossible",
+  "n_cas": 0,
+  "cas": [],
+  "preuve": "Badge 'annonce neuve Radar rattachée' = VeillePromoteurs.tsx:282 g.radar (EXISTS opération copro active/en_vente_longue, a_qualifier=false). Dépend de l'état LIVE pige_biens (Radar) + condition de rattachement complexe ; non recalculable déterministiquement en lecture seule base figée.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "condition de rattachement peu transparente (doute confirmé), badge masqué si faux (pas d'invention).",
+  "ecran_a_verifier": true,
+  "col12": "impossible nu-3-O : dépend état live Radar/pige_biens + rattachement complexe"
+ },
+ {
+  "id": "OUT-SCAN-015",
+  "verdict": "juste",
+  "n_cas": 2,
+  "cas": [
+   "452038805",
+   "310895172"
+  ],
+  "preuve": "opération : commune/nb_lgt/n_permis + date_max du groupe ; etat décodé via libellé binaire (OUTILS-FIX-4 A4). Cohérent avec les sommes totales vérifiées (CBO 247, SHLMR 3869).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "fmtDateSitadel : année seule si jour inconnu (évite fausse précision).",
+  "ecran_a_verifier": true,
+  "col12": "juste nu-3-O : agrégats d'opération cohérents avec totaux vérifiés"
+ },
+ {
+  "id": "OUT-SCAN-016",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "452038805"
+  ],
+  "preuve": "frise : n_parcelles patrimoine=count(*) parcelle_personne_morale=1871 (recalc exact, SANS join parcels donc != patrimoine endpoint 1833) ; petitionnaire 2013+ n_permis=108 n_logements=1197 (recalc exact via petitioner_siren + COALESCE(date_depot,date)>=2013-01-01).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'Patrimoine foncier détenu : {n}' utilise count brut PM (1871), 'En pétitionnaire : {n} permis' fenêtre 2013+ appliquée (CHASSE-FIX-1 C40).",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O : patrimoine 1871 + pétitionnaire 2013+ 108/1197 exact"
+ },
+ {
+  "id": "OUT-SCAN-017",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "452038805"
+  ],
+  "preuve": "filiales CBO recalc==API : 2 filiales via pm_dirigeants.gerant_siren JOIN sitadel petitioner_siren — 479422008 'CBO PROPERTY' 11 permis, 524758885 'CBO DEVELOPPEMENT' 2 permis. Lien gérance INPI uniquement.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "filiales par lien de gérance INPI (jamais par adresse) — RETOURS-13 R29.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O : 2 filiales CBO par gérance INPI, recalc==API exact"
+ },
+ {
+  "id": "OUT-SCAN-018",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "452038805"
+  ],
+  "preuve": "frise CBO : 12 années servies, chaque {annee,n_operations,n_logements} agrégé des ops de l'année. Barre = 100·n_logements/max (calcul front proportionnel, cohérent avec frise_len=12 et totaux).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "barre proportionnelle au max des logements annuels — présentation, pas une valeur servie.",
+  "ecran_a_verifier": true,
+  "col12": "juste nu-3-O : frise par année cohérente avec totaux"
+ },
+ {
+  "id": "OUT-SCAN-019",
+  "verdict": "juste",
+  "n_cas": 2,
+  "cas": [
+   "452038805",
+   "310895172"
+  ],
+  "preuve": "n_servi=min(n_total,lim), tronquee=n_total>lim, plafond=PLAFOND=200 (veille_promoteurs.py:36,193-197). CBO n_total=21 n_servi=21 tronquee=False ; règle contiguïté OP_CONTIG_M=250 m / OP_PERIODE_MOIS=24 mois reproduite exactement (union-find 21 ops CBO, 97 SHLMR).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "plafond dur 200 ; règle 250m/24mois heuristique mais explicitée à l'écran (champ regle.phrase).",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O : plafond 200 + règle 250m/24m reproduite exacte"
+ },
+ {
+  "id": "OUT-SCAN-020",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "452038805"
+  ],
+  "preuve": "note figée veille_promoteurs.py:205-207 : 'Le demandeur = propriétaire foncier PM de la parcelle... Sitadel n''identifie pas toujours le pétitionnaire'. Texte honnête confirmé (CHASSE-FIX-1 C15 : ~18% des permis sans pétitionnaire SIREN).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "caveat qualité de donnée exact — l'opération est groupée par propriétaire foncier, pas par l'en-tête du permis.",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O : caveat 'demandeur=propriétaire foncier' honnête"
+ },
+ {
+  "id": "OUT-SCAN-021",
+  "verdict": "juste",
+  "n_cas": 0,
+  "cas": [],
+  "preuve": "Texte figé : 'Indivision : non détectable en open data — signal non affiché plutôt qu''inventé'. Confirmé : aucune table d'indivision en base (parcelle_personne_morale = PM seules), donc l'honnêteté est factuellement fondée.",
+  "cause": "",
+  "reglementaire": "RGPD : cohérent avec l'absence totale de particuliers nommés dans le périmètre.",
+  "libelle_ok": true,
+  "libelle_note": "étiquette d'honnêteté correcte (n'invente pas l'indivision).",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O : caveat indivision honnête (pas de donnée en base)"
+ },
+ {
+  "id": "OUT-TEMPS-001",
+  "verdict": "impossible",
+  "n_cas": 0,
+  "cas": [],
+  "preuve": "Libellé statique de fond IGN (basemaps.ts TEMPS_MILLESIMES: '1950-1965', 'Carte SCAN 50 (1950)') rendu par tuiles IGN live — non recalculable via SQL/API. Config front cohérente et libellé exact.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Libellé conforme à frontend/src/components/map/basemaps.ts:57,60,77,78",
+  "ecran_a_verifier": true,
+  "col12": "impossible nu-3-O : fond IGN statique, label exact en config, écran à voir"
+ },
+ {
+  "id": "OUT-TEMPS-002",
+  "verdict": "impossible",
+  "n_cas": 0,
+  "cas": [],
+  "preuve": "Libellé statique 'Actuelle · Ortho Express 2025' (basemaps.ts ORTHO_YEARS:94 / bm-ortho-now:54) — tuiles IGN live, non recalculable. Config exacte.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Exact en basemaps.ts:54,94 (Ortho Express RVB 2025, 20 cm)",
+  "ecran_a_verifier": true,
+  "col12": "impossible nu-3-O : fond actuel IGN 2025, label exact, écran à voir"
+ },
+ {
+  "id": "OUT-TEMPS-003",
+  "verdict": "impossible",
+  "n_cas": 0,
+  "cas": [],
+  "preuve": "Repères d'années (axe non linéaire) = constantes front (HistoireFrise/basemaps an: 1950..2021). Pas de calcul base.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Années des millésimes = TEMPS_MILLESIMES.an, cohérentes",
+  "ecran_a_verifier": true,
+  "col12": "impossible nu-3-O : graduations front statiques, écran à voir"
+ },
+ {
+  "id": "OUT-TEMPS-004",
+  "verdict": "juste",
+  "n_cas": 2,
+  "cas": [
+   "97422000DN0280",
+   "97414000CD0030"
+  ],
+  "preuve": "API /parcellaire-epoque: 97422000DN0280 → 1 feature mère 97422000DN0130 mil 2017-07-06 geom réelle ; parcelle sans mère captée → features=[]. Dispo à partir de 2017 confirmé (ch.millesime).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Chip 'parcellaire de l'époque' sert bien le contour de la mère (cadastre_historique JOIN dfi_filiation)",
+  "ecran_a_verifier": true,
+  "col12": "vérifié nu-3-O, 2 cas, juste (contour mère depuis cadastre_historique)"
+ },
+ {
+  "id": "OUT-TEMPS-005",
+  "verdict": "juste",
+  "n_cas": 2,
+  "cas": [
+   "97422000DN0280",
+   "97414000CD0030"
+  ],
+  "preuve": "recalc SQL: cadastre_historique ch JOIN dfi_filiation f ON f.idu_mere=ch.idu WHERE f.idu_fille=:i → mère 97422000DN0130 mil 2017-07-06 ; API identique (millesime='2017-07-06', source 'Cadastre d'époque (Etalab/PCI)'). Features=[] si mère non captée (jamais inventé).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Contour JAMAIS inventé — vérifié sur parcelle sans mère",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 2 cas, juste (millésime+source exacts, jamais inventé)"
+ },
+ {
+  "id": "OUT-TEMPS-006",
+  "verdict": "impossible",
+  "n_cas": 0,
+  "cas": [],
+  "preuve": "Contour blanc + étiquette IDU de la parcelle désignée = rendu carte (getParcelGeojson, TimeMachine.tsx) — géométrie servie, mais l'affichage pin/étiquette est purement front, non recalculable en SQL.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "IDU de la parcelle épinglée, correct par construction",
+  "ecran_a_verifier": true,
+  "col12": "impossible nu-3-O : contour/étiquette front, écran à voir"
+ },
+ {
+  "id": "OUT-TEMPS-007",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "(global sources)"
+  ],
+  "preuve": "recalc: max(dvf.date_mutation)=2025-12-31, max(sitadel.date)=2026-08-31, ff=max(pm_time 2024, pm_cur 2025)=2025→'millésimes 2019→2025', max(dfi.date_validation)=2025-12-29 — API identique sur tous.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "4 sources (DVF/Sitadel/FF PM 2019→N/DFI) servies avec max date réel",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 4 sources, juste (dates max exactes)"
+ },
+ {
+  "id": "OUT-TEMPS-008",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "97414000CD0030"
+  ],
+  "preuve": "Parcelle sans aucun fait (0 dvf/permit/dfi/pm) → API n=0, faits=[], aucune erreur (200), sources toujours servies. État vide honnête confirmé.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Message d'état vide, jamais une erreur",
+  "ecran_a_verifier": true,
+  "col12": "vérifié nu-3-O, 1 cas, juste (n=0 honnête, pas d'erreur)"
+ },
+ {
+  "id": "OUT-TEMPS-009",
+  "verdict": "juste",
+  "n_cas": 3,
+  "cas": [
+   "97415000CT2791",
+   "97401000AD1560",
+   "97418000AO1453"
+  ],
+  "preuve": "recalc DISTINCT ON(id_mutation) local le+bâti: 97415000CT2791 → 1 mutation 2024-06-27 'Vente — Appartement' ; API libellé/type_local/nature identiques. Un repère par mutation confirmé (3048 lignes parcelle → 1 fait).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "nature_mutation + type_local, un repère par mutation",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 3 cas, juste (1 repère/mutation, local principal)"
+ },
+ {
+  "id": "OUT-TEMPS-010",
+  "verdict": "juste",
+  "n_cas": 3,
+  "cas": [
+   "97415000CT2791",
+   "97418000AO1453",
+   "97401000AD1560"
+  ],
+  "preuve": "recalc valeur_fonciere 97415000CT2791=10814215 (mutation entière, multi-parcelles) = API prix_eur 10814215.0 ; 97418000AO1453 vente 1€ = API 1.0. Valeur = mutation entière, dit tel quel.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Libellé 'mutation entière' honnête (couvre plusieurs parcelles)",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 3 cas, juste (prix mutation entière, exact)"
+ },
+ {
+  "id": "OUT-TEMPS-011",
+  "verdict": "juste",
+  "n_cas": 2,
+  "cas": [
+   "97415000CT2791",
+   "97418000AO1453"
+  ],
+  "preuve": "recalc round(surface_reelle_bati)=81, round(surface_terrain)=367 pour 97415000CT2791 = API bati 81 / terrain 367. 97418000AO1453 terrain 2582 = API 2582.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Surfaces bâti/terrain de la mutation, arrondies",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 2 cas, juste (surfaces mutation exactes)"
+ },
+ {
+  "id": "OUT-TEMPS-012",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "97401000AD1560"
+  ],
+  "preuve": "recalc min(dfi.date_validation WHERE idu_fille)=2023-08-08 (naissance DFI) ; vente DVF 2022-12-01 < naissance → API sur_parcelle_mere=True, date vraie 2022-12-01 gardée. Logique de ré-attribution correcte.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'sur la parcelle mère' = mutation antérieure à la naissance DFI",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 1 cas, juste (vente<naissance DFI → sur mère)"
+ },
+ {
+  "id": "OUT-TEMPS-013",
+  "verdict": "juste",
+  "n_cas": 3,
+  "cas": [
+   "97401000AR1419",
+   "97402000AE0513",
+   "97415000CT2791"
+  ],
+  "preuve": "recalc _histoire_date: dépôt 2012-01-01 (01/01 Sitadel) → maille 'annee', affiché '2012' ; autorisation 2013-02-28 → maille 'jour' ; propriétaire → maille 'millesime'. API conforme sur les 3 mailles.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "point=jour / anneau=année (01/01 Sitadel) / tirets=entre millésimes",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 3 cas, juste (3 mailles jour/année/millésime)"
+ },
+ {
+  "id": "OUT-TEMPS-014",
+  "verdict": "juste",
+  "n_cas": 3,
+  "cas": [
+   "97401000AR1419",
+   "97402000AE0513",
+   "97415000AX0995"
+  ],
+  "preuve": "recalc: 97401000AR1419 → 'déposé 2012' + 'autorisé 2013-02-28' + 'Travaux achevés (DAACT) 2014-07-10' ; 97402000AE0513 etat=4 → 'Permis PC annulé 2013-01-10' (ETAT_DAU=4 via est_annule). Tous événements datés présents.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "déposé/autorisé/annulé/achevé — annulé enfin dit (KELFONCIER-FIX-1)",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 3 cas, juste (3 événements + annulé)"
+ },
+ {
+  "id": "OUT-TEMPS-015",
+  "verdict": "juste",
+  "n_cas": 2,
+  "cas": [
+   "97415000AX0995",
+   "97401000AR1419"
+  ],
+  "preuve": "recalc raw->>'nb_lgt'=1, raw->>'surf_hab'=113 pour 97415000AX0995 = API nb_logements 1 / surf_hab_m2 113. Masqué si null confirmé (permis sans nb_lgt).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Logements et surface habitable du permis, exacts",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 2 cas, juste (nb_lgt/surf_hab exacts)"
+ },
+ {
+  "id": "OUT-TEMPS-016",
+  "verdict": "juste",
+  "n_cas": 2,
+  "cas": [
+   "97418000AO1453",
+   "97424000AI2133"
+  ],
+  "preuve": "recalc pm_proprietaires_millesimes 97418000AO1453: 2022 DOMAINE DU MOKA(444021174)→2023 COMMUNE DE SAINTE MARIE(219740180) ; API change 2022→2023 avant/après SIREN+dénomination identiques. Maille millésime (jamais une date).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Changement PM entre millésimes, avant/après SIREN+dénom corrects",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 2 cas, juste (changement PM par millésime, SIREN exacts)"
+ },
+ {
+  "id": "OUT-TEMPS-017",
+  "verdict": "juste",
+  "n_cas": 2,
+  "cas": [
+   "97424000AI2133",
+   "97418000AO1453"
+  ],
+  "preuve": "recalc: transitions impliquant SIREN pseudo 'U23729048'/absent (97418: 2019→2020, 2020→2021) → API non_identifiable=True, aucun changement affirmé (avant/après=None). 97424000AI2133 entièrement non identifiable (U-pseudo). Jamais inventé.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'Propriétaire PM non identifiable' sur pseudo-SIREN U…/absent — honnête",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 2 cas, juste (pseudo-SIREN → non identifiable, non inventé)"
+ },
+ {
+  "id": "OUT-TEMPS-018",
+  "verdict": "juste",
+  "n_cas": 3,
+  "cas": [
+   "97411000AO0755",
+   "97401000AD1560",
+   "97415000CT2791"
+  ],
+  "preuve": "recalc dfi_filiation 97411000AO0755: 70 liens (date 2018-11-12) → API n_parcelles_liees=70 (total servi), parcelles_liees len=12 (cap_filiation=12 dit). Total toujours servi, liste bornée signalée.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Total n servi, liste bornée à 12 (cap explicite)",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 3 cas, juste (total 70 servi, liste cap 12)"
+ },
+ {
+  "id": "OUT-TEMPS-019",
+  "verdict": "juste",
+  "n_cas": 6,
+  "cas": [
+   "97415000CT2791",
+   "97418000AO1453",
+   "97401000AR1419",
+   "97402000AE0513",
+   "97411000AO0755",
+   "97424000AI2133"
+  ],
+  "preuve": "Tous les chiffres de tous les faits (vente/permis/propriétaire/découpe) portent chiffres.statut='Sourcé' (codé en dur par famille, aucun calcul métier). Vérifié all()=True sur plusieurs parcelles.",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "Badge 'Sourcé' systématique — aucune donnée dérivée dans la frise",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 6 cas, juste (statut Sourcé partout)"
+ },
+ {
+  "id": "OUT-TEMPS-020",
+  "verdict": "juste",
+  "n_cas": 6,
+  "cas": [
+   "97415000CT2791",
+   "97418000AO1453",
+   "97401000AR1419",
+   "97402000AE0513",
+   "97411000AO0755",
+   "97424000AI2133"
+  ],
+  "preuve": "Légende front (HistoireFrise.tsx:46 FAM = 4 familles vente/permis/propriétaire/découpe colorées ; maille point=jour / anneau=année / tirets=entre millésimes) correspond exactement aux familles+mailles servies par l'API (vérifiées sur 6 parcelles).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "4 familles + 3 formes de précision, cohérent avec les données servies",
+  "ecran_a_verifier": true,
+  "col12": "vérifié nu-3-O, 6 cas, juste (légende = familles/mailles réelles)"
+ },
+ {
+  "id": "OUT-SOLAIRE-008",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "97411000AB0009",
+   "97411000DY0148",
+   "97411000CH0033",
+   "97415000DM0301",
+   "97422000AZ0290"
+  ],
+  "preuve": "pente_mediane_deg servie (toiture.pente_mediane_deg via solaire_toiture.analyse_toiture, cache toiture_lidar) == DB : 20.6,34.8,17.4,23.5,26.2 tous exacts (Saint-Denis littoral + Saint-Paul + Bras-Panon). C'est la pente médiane LiDAR du TOIT (distincte de la pente terrain parcel_terrain).",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'Pente du toit (médiane) (°)' = médiane LiDAR HD des pixels pentus du plus grand bâtiment, exact",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 5 cas, juste"
+ },
+ {
+  "id": "OUT-SOLAIRE-009",
+  "verdict": "juste",
+  "n_cas": 1,
+  "cas": [
+   "97424000AC0036 (Cilaos, Parc national)"
+  ],
+  "preuve": "Parcelle intersectant spatial_layers kind='enr_exclue_hors_toiture' (zone 'Réunion' = Parc national) → API enr_au_sol_exclu=true, enr_sol_exclu_zone='Réunion'. Logique ST_Intersects (modules.py:1025-1027) correcte ; 3 zones en base (Parc national Réunion, aire d'adhésion, Étang de Saint-Paul).",
+  "cause": "",
+  "reglementaire": "Loi APER (loi 2023-175 art.54, L.111-27 code urbanisme) : zones d'exclusion EnR au sol (parcs nationaux/réserves), toiture restant possible — la logique 'au sol exclu, toiture OK' est conforme",
+  "libelle_ok": true,
+  "libelle_note": "'⛔ Zone d'exclusion EnR au sol (loi APER)' exact ; le nom de zone servi ('Réunion') est terse/ambigu pour le Parc national",
+  "ecran_a_verifier": true,
+  "col12": "vérifié nu-3-O, exclusion APER correcte ; libellé zone 'Réunion' terse (à voir écran)"
+ },
+ {
+  "id": "OUT-SUCC-004",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "97414000EN1148 (Saint-Louis)",
+   "97411000BL0098 (Saint-Denis)",
+   "97415000AD0071 (Saint-Paul)",
+   "97415000EW1491 (Saint-Paul)",
+   "97407000BB0085 (Le Port)"
+  ],
+  "preuve": "commune servie == parcels.commune sur 5 items (Saint-Louis,Saint-Denis,Saint-Paul,Saint-Paul,Le Port) tous exacts. DOUTE nu-1 (publics non écartés) RÉSOLU : le filtre VEILLE_SUCCESSION_FORMES (modules.py:1139) exclut SA/SEM/HLM/publics — recalc sur le prédicat réel : 0 propriétaire 'COMMUNE DE…/DEPARTEMENT/SIDR/SHLMR' servi.",
+  "cause": "",
+  "reglementaire": "RGPD : propriétaires = PM nommées à SIREN confirmé uniquement (conforme)",
+  "libelle_ok": true,
+  "libelle_note": "'{commune}' = commune parcelle, exact ; doute 'publics non écartés' obsolète (filtre forme en place)",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 5 cas, publics désormais exclus, juste"
+ },
+ {
+  "id": "OUT-SUCC-006",
+  "verdict": "juste",
+  "n_cas": 5,
+  "cas": [
+   "97414000EN1148 (1AUb2)",
+   "97411000BL0098 (Ua)",
+   "97415000AD0071 (AU1e)",
+   "97415000EW1491 (U2h)",
+   "97407000BB0085 (Uc)"
+  ],
+  "preuve": "zone servie == COALESCE(parcel_zone_plu.zone_lib, zone_fam) sur 5 items : 1AUb2,Ua,AU1e,U2h,Uc tous exacts ; omise si null",
+  "cause": "",
+  "reglementaire": "",
+  "libelle_ok": true,
+  "libelle_note": "'{zone}' = zone PLU parcelle, exact",
+  "ecran_a_verifier": false,
+  "col12": "vérifié nu-3-O, 5 cas, juste"
+ }
+]
