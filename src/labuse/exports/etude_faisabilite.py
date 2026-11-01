@@ -1039,6 +1039,46 @@ def rendu_lotissement(payload: dict, *, genere_le: str) -> dict:
     return {"html": html, "numero": numero, "retenu_ref": "lotissement"}
 
 
+def rendu_hors_perimetre(payload: dict, *, genere_le: str) -> dict:
+    """FIX-FINAL-1 (régression NU-E-055 / NU-D-001) — PDF de REFUS « hors périmètre » : une parcelle au
+    RNU (aucune zone PLU opposable) ou en zone non constructible (A/N dominante) n'a pas de programme à
+    chiffrer. Au lieu d'un 500 (ou d'un 400 muet), le document DIT le refus, comme l'écran : verdict +
+    motif + éventuelles contraintes signalées. Aucun chiffre inventé (seules les contraintes du payload,
+    déjà texte, apparaissent). Même cartouche que l'étude normale."""
+    ent = payload.get("entrees") or {}
+    idus = ent.get("idus") or []
+    commune = (payload.get("terrain") or {}).get("commune") or ent.get("commune") or ""
+    zone = ent.get("zone") or (payload.get("regles") or {}).get("zone") or ""
+    numero = _numero_document(payload)
+    verdict = payload.get("verdict") or "Étude hors périmètre"
+    message = payload.get("message") or "Cette parcelle est hors du périmètre chiffrable de l'étude."
+    cart = Cartouche(
+        doc_title=f"LABUSE — Étude de faisabilité · {commune}",
+        doc_ref=f"{idus[0][8:] if idus else ''} · {numero}",
+        doc_foot=(f"Étude de faisabilité · {esc(', '.join(idus))} · Généré via LABUSE le {genere_le} · "
+                  f"pré-faisabilité, non contractuel · Données LABUSE au {_donnees_labuse_au_etude(genere_le)}."))
+    # contraintes signalées (texte du payload) — « signalées, non interprétées », comme l'étude normale.
+    t = payload.get("terrain") or {}
+    crows = "".join(f"<li>{esc(lib)}</li>" for lib in (t.get("contraintes_signalees") or []))
+    contr_html = (f"<h2>Contraintes signalées</h2><ul>{crows}</ul>"
+                  "<p class='note'>Signalées depuis les sources cartographiques ; non interprétées ici "
+                  "(l'étude ne chiffre pas de programme sur cette parcelle).</p>") if crows else ""
+    zone_html = f" · zone {esc(zone)}" if zone else ""
+    corps = (
+        f"<style>{_STYLE}</style>"
+        f"<section class='page'><h1>Étude hors périmètre — {esc(commune)}{zone_html}</h1>"
+        f"<div class='verdict warn'>{esc(verdict)}</div>"
+        f"<p>{esc(message)}</p>"
+        "<p class='note'>Aucun programme n'est chiffré : il n'existe pas de règle de constructibilité "
+        "opposable permettant de dimensionner une capacité sur cette parcelle. Ce n'est ni un refus "
+        "d'urbanisme, ni une affirmation d'inconstructibilité — c'est l'absence de base réglementaire "
+        "chiffrable. Le détail s'apprécie auprès du service instructeur.</p>"
+        + contr_html
+        + "</section>")
+    html = page_html("Étude de faisabilité — hors périmètre", cart, corps)
+    return {"html": html, "numero": numero, "retenu_ref": "hors_perimetre"}
+
+
 # ── verrou « toute ligne du PDF est une ligne de l'outil » ────────────────────────────────────
 #: un nombre = groupes de 3 chiffres séparés par une espace de MILLIERS (« 1 746 »), OU un entier/décimal.
 #: Ne franchit pas une espace ordinaire autre qu'un groupe de 3 → deux cellules adjacentes (« AW 99 »

@@ -387,7 +387,9 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     events = load_events(session)
     df = df.merge(events, on="idu", how="left")
     asof = pd.Timestamp(date(annee, 1, 1))
-    now = pd.Timestamp.today()
+    # FIX-FINAL-1 (NU-E-016) — « aujourd'hui » à l'heure de La Réunion (comme tout le reste du produit),
+    # pas l'horloge OS du poste qui calcule. tz_localize(None) pour rester naïf face à event_date naïf.
+    now = pd.Timestamp.now(tz="Indian/Reunion").tz_localize(None)
     df["event_age_mois"] = (now - pd.to_datetime(df["event_date"])).dt.days / 30.44
     _ = asof  # l'âge des événements est relatif à AUJOURD'HUI (fraîcheur produit)
 
@@ -565,8 +567,14 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     try:
         from ...flux import snapshot_source_millesimes
         source_millesimes = snapshot_source_millesimes(session)
-    except Exception:  # noqa: BLE001 — l'enregistrement des sources ne doit jamais casser un run
+    except Exception as _src_err:  # noqa: BLE001 — l'enregistrement des sources ne casse jamais un run
         source_millesimes = []
+        # FIX-FINAL-1 (NU-E-018) — on ne l'avale plus en silence : un run SANS instantané de millésimes
+        # est un état dégradé (la fraîcheur ne pourra pas être recoupée). On le DIT (même famille
+        # d'avertissement que les backfills ICD/potentiel ci-dessous), jamais un tiroir muet.
+        import warnings
+        warnings.warn(f"snapshot_source_millesimes ignoré — {type(_src_err).__name__}: {_src_err}. "
+                      "Le run ne portera pas l'instantané des millésimes sources.", stacklevel=2)
     # SCORING-3 (L1.3) — le run q_v12 enregistre sa recette, son protocole, ses
     # métriques K0 (2025) et SA NOTE DE VERSION (composée depuis les chiffres,
     # lue depuis Données › Circuit › Basculer). Le manifeste de gel fait foi.

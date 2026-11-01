@@ -1541,7 +1541,8 @@ def _ratio_surf_emprise_commune(db, insee: str) -> tuple[float | None, int]:
 
 
 def _surface_pour_total(db, idu: str, emprise, mut: dict | None, insee: str,
-                        surface_hab: float | None = None) -> tuple[int | None, dict | None]:
+                        surface_hab: float | None = None,
+                        bati_mesure: bool = True) -> tuple[int | None, dict | None]:
     """ESTIMER-2 (D-009, E-021) — la surface du TOTAL indicatif d'un bien bâti, DANS CET ORDRE :
       0. ESTIMER-PRECISION-1 — la SURFACE HABITABLE SAISIE par l'utilisateur, si elle est fournie
          (champ facultatif de l'entrée par adresse) : le total la prend telle quelle, libellé « surface
@@ -1565,6 +1566,11 @@ def _surface_pour_total(db, idu: str, emprise, mut: dict | None, insee: str,
                              else f"Surface bâtie de la dernière vente DVF ({s} m²)"),
                    "note": ("Surface bâtie de la dernière vente DVF de la parcelle. "
                             "Ordre de grandeur, pas un calcul exact.")}
+    # FIX-FINAL-1 (NU-D-012) — bâti NON MESURÉ (taux d'emprise inconnu, aucune vente) : on ne FABRIQUE
+    # PAS un total par emprise × ratio. « Non mesuré » et « voici le total » se contredisent ; sans
+    # vente ni surface saisie, on ne sert aucune valeur indicative (le marché €/m² reste servi à côté).
+    if not bati_mesure:
+        return None, None
     if isinstance(emprise, (int, float)) and emprise > 0:
         ratio, assise = _ratio_surf_emprise_commune(db, insee)
         if ratio:
@@ -1653,7 +1659,12 @@ def estimation_annonce(db, idu: str, fiche: dict, surface_hab: float | None = No
     # CHASSE-4-FIX (C4-003) — flag copropriété du run servi (même indicateur que le verdict fiche).
     copro = bool(((fiche or {}).get("score_v2") or {}).get("copro"))
     repere_tn = _terrain_repere(db, idu)
-    surface_parc = (fiche or {}).get("surface_m2") or (fiche or {}).get("contenance_m2")
+    # FIX-FINAL-1 (NU-D-040) — surface du terrain CANONIQUE (doctrine CONTENANCE-1) : la CONTENANCE
+    # cadastrale si on l'a (= ce que sert le Dossier/la fiche), le dessin seulement en repli. Avant,
+    # Estimer lisait `surface_m2` (dessin) EN PREMIER → 630 m² ici là où le Dossier servait 625 m²
+    # (contenance), deux surfaces pour le même bien. Une seule vérité, les documents concordent.
+    surface_parc = ((fiche or {}).get("surface_terrain_m2")
+                    or (fiche or {}).get("contenance_m2") or (fiche or {}).get("surface_m2"))
     insee = idu[:5]
 
     # 1 — COPROPRIÉTÉ (E-026) : la branche copropriété passe AVANT la branche terrain nu. Un lot de copro
@@ -1721,7 +1732,8 @@ def estimation_annonce(db, idu: str, fiche: dict, surface_hab: float | None = No
     emprise = _emprise_bati_m2(db, idu)
     # ESTIMER-2 (D-009, E-021) — la SURFACE du total : surface bâtie de la dernière vente DVF si elle
     # existe, sinon emprise × ratio médian de la commune. Jamais l'emprise brute × un prix habitable.
-    surface_tot, src_surf = _surface_pour_total(db, idu, emprise, mut, insee, surface_hab)
+    surface_tot, src_surf = _surface_pour_total(db, idu, emprise, mut, insee, surface_hab,
+                                                 bati_mesure=not non_mesure)
     vi = _valeur_indicative(surface_tot, cb.get("median"), ecart, source=src_surf)
     # ESTIMER-PRECISION-1 — surface habitable de la dernière vente DVF, exposée pour PRÉREMPLIR le champ
     # facultatif « surface habitable » de l'écran (prérempli quand la dernière vente DVF la donne).

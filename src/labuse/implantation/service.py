@@ -931,7 +931,18 @@ def _payload_hors_perimetre(session, idus: list[str], entree: dict, exc) -> dict
                     "type_projet": entree.get("type_projet") or "collectif",
                     "objectif": entree.get("objectif") or "equilibre"},
         "regles": {"zone": zone_dom, "insee": insee, "commune": commune, "lignes": []},
-        "terrain": None,
+        # FIX-FINAL-1 (régression NU-E-055 / NU-D-001) — le refus hors périmètre porte un `terrain`
+        # DICT (jamais None) : un None était un piège — les enrichissements aval (_attach_contraintes_
+        # signalees, _attach_zone_gabarit) et le PDF font `terrain[...]`/`payload["terrain"]` et levaient
+        # un TypeError ressorti en 500 dès qu'une parcelle RNU/zone rouge portait un aléa. Le refus n'est
+        # PAS une étude : aucune capacité, listes vides ; le `terrain` n'expose que les faits connus et
+        # reste clairement « hors périmètre ». Les consommateurs sont par ailleurs durcis (défense en
+        # profondeur). L'absence d'étude se LIT sur `scenarios`/`variantes`/`capacite_maximale` (vides),
+        # jamais sur `terrain`.
+        "terrain": {
+            "commune": commune, "insee": insee, "zone": zone_dom,
+            "parcelles": [], "contraintes": [], "hors_perimetre": True,
+        },
         "study_id": _study_id(entree),
         "statut_global": statut,
         "verdict": verdict,

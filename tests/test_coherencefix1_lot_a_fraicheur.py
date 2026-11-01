@@ -154,9 +154,14 @@ def test_etat_liste_les_perimes(monkeypatch):
     # (règles gravées = code) → la liste des périmés ne change pas. Monkeypatché pour rester déterministe.
     monkeypatch.setattr(fraicheur_caches, "_etat_derives_regle",
                         lambda db: {"cache": "tables dérivées (version de règle)", "perime": False})
+    # FIX-FINAL-1 (NU-E-032) — contrôle ajouté : médianes DVF par secteur (détecteur caches_marche_perimes
+    # enfin branché). NON bloquant (perime False) → la liste des périmés ne change pas. Monkeypatché pour
+    # rester déterministe (il lit la base sinon).
+    monkeypatch.setattr(fraicheur_caches, "_etat_marche_medianes",
+                        lambda db: {"cache": "dvf_secteur_medianes (médianes DVF par secteur)", "perime": False})
     e = fraicheur_caches.etat(None)
     assert e["perimes"] == ["commune_contexte_cache"]
-    assert len(e["caches"]) == 9
+    assert len(e["caches"]) == 10
 
 
 # ── PRE-DEPLOY-1 (lot C) — le manifeste ne peut plus mentir ──────────────────────────────────

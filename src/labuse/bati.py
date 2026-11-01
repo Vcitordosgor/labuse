@@ -282,7 +282,13 @@ def le_bien_block(session: Session, idu: str) -> dict | None:
     cosia_m2 = round(float(emprise_cosia)) if emprise_cosia and float(emprise_cosia) > emprise + 50 else None
     from .faisabilite.potentiel import _hauteur_bati_m
     hauteur = _hauteur_bati_m(session, pid)
-    surface_libre = (max(0, round(surface - emprise)) if surface is not None else None)
+    # FIX-FINAL-1 (NU-A-010) — « surface libre » = contenance − emprise IMPERMÉABILISÉE réelle, soit le
+    # max(BD TOPO, CoSIA détecté). Avant, on ne retirait QUE l'emprise BD TOPO ; une parcelle que CoSIA
+    # voit couverte mais que BD TOPO ignore (AM0893 : CoSIA 143 m², BD TOPO ~0) affichait « 465 m² libres
+    # (100 %) » sous 30 % d'imperméabilisation. `cosia_m2` (gardé ≥ 50 m² au-delà de BD TOPO) fait foi
+    # quand il existe — même valeur que le bloc `cosia_couverture` servi à côté.
+    emprise_impermeable = cosia_m2 if cosia_m2 else emprise
+    surface_libre = (max(0, round(surface - emprise_impermeable)) if surface is not None else None)
     from . import solaire_toiture
     toit = solaire_toiture.toiture_depuis_cache(session, idu)
     # RECETTE-9 T9 — POINT UNIQUE de la hauteur : quand le LiDAR HD a été mesuré sur cette parcelle,

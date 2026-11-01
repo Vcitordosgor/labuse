@@ -288,8 +288,12 @@ DONNEES = [
     ("date des données", _date),
 ]
 
+# FIX-FINAL-1 (NU-D-043) — « Estimer un bien » était GÉNÉRÉ (documents()) mais ABSENT d'ORDRE_DOCS →
+# jamais confronté : la divergence de surface (NU-D-040, corrigée) restait invisible à cette
+# confrontation. On l'ajoute : ses valeurs (surface contenance, SDP restante, prix) sont désormais
+# comparées aux huit autres documents, au moindre écart la table le montre.
 ORDRE_DOCS = ["Dossier", "Apporteur", "Pré-dossier PC", "Étude de zone", "Gabarit",
-              "Comparatif", "Étude de faisabilité", "Bilan"]
+              "Comparatif", "Étude de faisabilité", "Bilan", "Estimer un bien"]
 
 
 def comparer(textes):

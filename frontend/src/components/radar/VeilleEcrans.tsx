@@ -54,7 +54,13 @@ export function VeilleEcran() {
   // additionne ce que la veille détecte DÉJÀ (parcelles suivies bougées ces 7 jours + annonces d'alerte
   // tombées depuis hier) ; aucune fenêtre fausse n'est promise — il n'existe PAS de suivi de « dernier
   // passage », et le compte n'est pas sur « cette semaine ».
-  const nEvenements = suivis.filter((s) => s.nouveau).length + alertes.reduce((n, a) => n + (a.en_pause ? 0 : a.nouveaux), 0)
+  // FIX-FINAL-1 (NU-F-033) — on NE SOMME PLUS deux fenêtres différentes en un seul nombre : les parcelles
+  // suivies qui ont bougé (fenêtre 7 jours) et les alertes tombées (depuis hier) sont DISTINCTES et dites
+  // séparément dans le sous-titre, chacune avec sa fenêtre. `nEvenements` ne sert plus qu'au test « y a-t-il
+  // du neuf ? ».
+  const nSuivisBouges = suivis.filter((s) => s.nouveau).length
+  const nAlertesNouvelles = alertes.reduce((n, a) => n + (a.en_pause ? 0 : a.nouveaux), 0)
+  const nEvenements = nSuivisBouges + nAlertesNouvelles
 
   // chips du mail — même source/mutation que Mon compte.
   const freq = prefs.data?.frequence ?? 'quotidien'
@@ -76,7 +82,9 @@ export function VeilleEcran() {
           <h1 className="mt-1.5 text-[28px] font-semibold leading-tight text-txt-hi">Ce que vous surveillez</h1>
           <p data-veille-soustitre className="mt-1.5 text-[13px] leading-snug text-txt-mut">
             {nEvenements > 0
-              ? `${nEvenements} événement${nEvenements > 1 ? 's' : ''} récent${nEvenements > 1 ? 's' : ''} sur vos secteurs`
+              ? [nSuivisBouges > 0 ? `${nSuivisBouges} parcelle${nSuivisBouges > 1 ? 's' : ''} suivie${nSuivisBouges > 1 ? 's' : ''} bougée${nSuivisBouges > 1 ? 's' : ''} (7 jours)` : null,
+                 nAlertesNouvelles > 0 ? `${nAlertesNouvelles} alerte${nAlertesNouvelles > 1 ? 's' : ''} depuis hier` : null]
+                  .filter(Boolean).join(' · ')
               : 'Vos parcelles suivies et vos alertes, au même endroit — prévenu dès que quelque chose bouge.'}
           </p>
         </div>
@@ -194,7 +202,7 @@ function LigneParcelle({ s, onOuvrir, onRetirer }: { s: SuiviItem; onOuvrir: () 
         ) : <span className="text-[11.5px] text-txt-dim">Rien de nouveau</span>}
         <button data-suivi-retirer aria-label="Ne plus suivre cette parcelle"
           onClick={(e) => { e.stopPropagation(); onRetirer() }}
-          className="grid h-7 w-7 place-items-center rounded-md text-txt-dim transition-colors hover:bg-line-1 hover:text-coral">
+          className="grid h-8 w-8 place-items-center rounded-md text-txt-dim transition-colors hover:bg-line-1 hover:text-coral">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
         </button>
       </div>
@@ -269,7 +277,7 @@ function ColonneAlertes({ alertes, isLoading }: { alertes: RadarAlerte[]; isLoad
                   « Surveillé » suive les critères SANS vide. */}
               <div className="absolute right-3.5 top-3.5">
                 <button data-alerte-menu aria-label="Actions de l’alerte" onClick={() => setMenu(menu === a.id ? null : a.id)}
-                  className="grid h-7 w-7 place-items-center rounded-md text-txt-mut transition-colors hover:bg-line-1 hover:text-txt">
+                  className="grid h-8 w-8 place-items-center rounded-md text-txt-mut transition-colors hover:bg-line-1 hover:text-txt">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="19" cy="12" r="1.6" /></svg>
                 </button>
                 {menu === a.id && (

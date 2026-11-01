@@ -763,6 +763,9 @@ export interface GabaritResult {
   surfaceParcelleM2?: number | null
   // FRONT-CHIFFRES-2 (F57/F50) — % de la parcelle en zone dominante « à cheval », servi (plus recalculé au front).
   pctPortionZone?: number | null
+  // FIX-FINAL-1 (NU-D-027) — % de la parcelle en zone d'exclusion (PPR rouge & autres). > 50 % ⇒ bandeau
+  // « majoritairement inconstructible » et coche « risques intégrés » retirée. null si aucune exclusion.
+  partExcluePct?: number | null
   zoneImplantationM2?: number | null
   batiDeduitM2?: number | null   // RECETTE-OUTILS-3 (S7) — emprise bâti retranchée de la zone d'implantation
   plafondEmpriseM2?: number | null

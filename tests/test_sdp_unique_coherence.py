@@ -31,6 +31,11 @@ def test_docs_coherence_couvre_estimer():
     # dans la fonction documents() : une entrée « Estimer un bien » sur la route analyse-annonce.
     assert "Estimer un bien" in txt and "/analyse-annonce/" in txt, (
         "docs_coherence.documents() ne couvre pas « Estimer un bien » (analyse-annonce) — D-042")
+    # FIX-FINAL-1 (NU-D-043) — et surtout dans ORDRE_DOCS : généré NE SUFFIT PAS, il doit être
+    # CONFRONTÉ. On isole l'affectation d'ORDRE_DOCS et on vérifie qu'« Estimer un bien » y figure.
+    bloc = txt.split("ORDRE_DOCS", 1)[1].split("]", 1)[0]
+    assert "Estimer un bien" in bloc, (
+        "« Estimer un bien » généré mais absent d'ORDRE_DOCS → jamais confronté (NU-D-043)")
 
 
 def _rien(x) -> bool:

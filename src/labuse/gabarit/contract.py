@@ -163,6 +163,10 @@ class GabaritResult(BaseModel):
     # (round(portion / cadastre × 100)), calculé UNE fois au service. Deux sites front (GabaritLine +
     # panneau Gabarit) le recomputaient à l'identique → divergence possible ; ils lisent ce champ. None si non « à cheval ».
     pctPortionZone: Optional[int] = None
+    # FIX-FINAL-1 (NU-D-027) — part de la parcelle en zone d'EXCLUSION (PPR rouge & autres interdictions),
+    # mesurée sur le dessin. > 50 % ⇒ « majoritairement inconstructible » (bandeau écran/PDF, coche
+    # « risques intégrés » retirée). None si aucune exclusion.
+    partExcluePct: Optional[float] = None
     # CHASSE-DOCS-FIX-1 (Lot 5) — sur parcelle à cheval, la surface servie EST la contenance cadastrale ;
     # cette note dit la part en zone constructible (« dont ~X m² en zone Ud »). None hors à-cheval.
     surfaceNote: Optional[str] = None
