@@ -254,12 +254,23 @@ def assign_paliers(df: pd.DataFrame, cfg: PaliersConfig | None = None,
     """Le palier v2 par parcelle — fonction PURE de p (hors copropriété), sans DB.
 
     Colonnes requises : `p` (proba calibrée = p_raw), `ecartee_etage0` (bool).
+    Colonne OPTIONNELLE `copro` (bool) : une copropriété est masquée HORS des paliers
+    actionnables (cf. ci-dessous). Absente = aucun masque (rétro-compatible, golden intact).
     `prev_palier` : paliers v2 du run précédent (index aligné) → anti-churn ; None =
     premier calcul (entrée stricte). L'Écartée (cascade étage 0) prime sur tout.
 
     Anti-churn SIMPLE (mandat) : l'ENTRÉE est stricte (≥ 0,20 / ≥ 0,10) ; une parcelle
     ne DESCEND d'un palier que si sa p passe SOUS le seuil de sortie (0,18 / 0,09).
     La promotion est immédiate ; seule la descente est tamponnée, un cran à la fois.
+
+    COPROPRIÉTÉ HORS PALIER (NU-E-010, décision SCORING-COPRO-1) : un lot de copropriété
+    n'est pas un terrain à prospecter — il n'entre JAMAIS dans un palier actionnable
+    (« Priorité » / « À suivre »). Il est masqué vers « Sans signal » ; son LIBELLÉ propre
+    (déjà gravé dans le vocabulaire client : verdict_servi.COPRO_MOTIF, « Copropriété — hors
+    univers de classement ») est servi sur la fiche à la place du rang. Même doctrine que
+    rang/percentile (pipeline : copro → rang NULL). Le masque s'applique APRÈS l'anti-churn
+    (une copro ne « se maintient » jamais en tête) et AVANT l'étage 0 (une copro écartée au
+    titre de l'étage 0 reste « Écartée », motif plus spécifique). p_raw INTACT.
     """
     cfg = cfg or charger_paliers_config()
     p = pd.to_numeric(df["p"], errors="coerce")
@@ -273,6 +284,11 @@ def assign_paliers(df: pd.DataFrame, cfg: PaliersConfig | None = None,
         # maintien Priorité : était Priorité et p ≥ sortie_priorite
         maintien_prio = (prev == PALIER_PRIORITE) & (p >= cfg.sortie_priorite)
         tier = tier.mask(maintien_prio & (tier == PALIER_A_SUIVRE), PALIER_PRIORITE)
+
+    # NU-E-010 — copropriété hors palier actionnable → « Sans signal » (libellé propre en fiche).
+    copro = (df["copro"].fillna(False).astype(bool) if "copro" in df.columns
+             else pd.Series(False, index=df.index))
+    tier = tier.mask(copro, PALIER_SANS_SIGNAL)
 
     ecartee = df["ecartee_etage0"].fillna(False).astype(bool) if "ecartee_etage0" in df.columns \
         else pd.Series(False, index=df.index)

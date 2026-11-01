@@ -81,10 +81,14 @@ def _row_payload(r, run: dict) -> dict:
     if isinstance(top5, str):
         top5 = json.loads(top5)
     from ..scoring.fraction_client import fraction_humaine as _fh   # M135 P2
+    # NU-E-011 — une COPROPRIÉTÉ est hors univers de classement : ni multiple (×N vs un taux de base
+    # dont elle est exclue), ni fraction de vente. On ne sert donc NI mult_base NI fraction pour une
+    # copro (le motif `hors_classement` dit pourquoi). Vaut pour tout run, neuf comme ancien.
+    _copro = bool(r["copro"])
     return {
         "parcelle_id": r["parcelle_id"],
-        "mult_base": r["mult_base"],              # gardé pour l'audit interne (jamais affiché nu)
-        "fraction": (_fh(r["p_raw"]) or {}).get("texte"),   # M135 P2 — la fraction humaine servie
+        "mult_base": None if _copro else r["mult_base"],   # audit interne ; jamais pour une copro
+        "fraction": None if _copro else (_fh(r["p_raw"]) or {}).get("texte"),   # M135 P2 — jamais pour une copro
         "percentile": r["percentile"],
         "rang": r["rang"],
         # M89 — copropriété sans rang : on DIT pourquoi (hors univers de classement), jamais un vide.

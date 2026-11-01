@@ -501,6 +501,11 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     top5 = top5_lisibles(model, contrib, df, libelles=libelles)
 
     event_dates = pd.to_datetime(df["event_date"], errors="coerce")
+    # NU-E-011 — `mult_base` (colonne NOT NULL) reste calculé et STOCKÉ pour TOUTE parcelle (audit
+    # interne), copropriété comprise, MAIS il n'est JAMAIS servi pour une copro : le service
+    # (`api.score_v2._row_payload`, `api.app._q_v2_fiche`) le force à None dès que `copro` est vrai,
+    # et avec lui la fraction humaine et le ×N verbal/réglette. Une copropriété est hors du taux de
+    # base (`taux_base = p[hors copro].mean()`) : « Écartée » et « 1 chance sur 20 » ne coexistent plus.
     rows = pd.DataFrame({
         "run_id": run_id, "parcelle_id": df["idu"],
         "p_raw": np.round(p, 6),

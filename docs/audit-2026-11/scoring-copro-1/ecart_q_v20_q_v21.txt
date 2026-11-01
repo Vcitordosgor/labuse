@@ -1,0 +1,24 @@
+parcelles communes q_v20∩q_v21: 433229
+changements de TIER stocké: 746
+  sans_signal  -> ecartee      : 352
+  a_suivre     -> sans_signal  : 323
+  priorite     -> sans_signal  : 70
+  a_suivre     -> ecartee      : 1
+
+PALIER CLIENT (code_palier) — crosstab complet:
+  sans_signal  -> sans_signal  : 278792
+  ecartee      -> ecartee      : 153283
+  a_suivre     -> a_suivre     : 408
+  a_suivre     -> sans_signal  : 393  <-- CHANGE
+  sans_signal  -> ecartee      : 352  <-- CHANGE
+  a_suivre     -> ecartee      : 1  <-- CHANGE
+
+CAUSES des changements de palier:
+     393  COPRO: actionnable -> sans_signal (E-010)
+          ex: 97401000AS1532(a_suivre->sans_signal), 97401000AN0684(a_suivre->sans_signal), 97402000AI0266(a_suivre->sans_signal), 97404000BA0131(priorite->sans_signal)
+     353  PPR: nouvellement écartée (i-zone)
+          ex: 97417000AT0572(sans_signal->ecartee), 97417000AX0068(sans_signal->ecartee), 97417000AX0062(sans_signal->ecartee), 97417000AT0535(sans_signal->ecartee)
+
+TOTAUX palier client:
+  q_v20: {'a_suivre': 802, 'ecartee': 153283, 'sans_signal': 279144}
+  q_v21: {'a_suivre': 408, 'ecartee': 153636, 'sans_signal': 279185}

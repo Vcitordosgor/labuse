@@ -38,18 +38,21 @@ def test_intersection_ppr_sans_crash_geos(db_session):
     assert n >= 0   # le seul fait de ne pas lever GEOS suffit
 
 
-def test_cascade_lit_ppr_assiette_flag_prudent(cascade_live_layers):
-    """Bout en bout : une assiette PPR (servitude) → flag FORT « prescriptions », JAMAIS
-    une exclusion (zonage interne inconnu). La cascade lit la couche PPR sans erreur."""
+def test_cascade_lit_ppr_code_inconnu_ecarte(cascade_live_layers):
+    """Bout en bout : une zone PPR `kind='ppr'` à CODE NON CLASSÉ (ex. le code hérité `i`) couvrant
+    la parcelle → ÉCARTÉE (rouge par prudence, lecture couleur unique `labuse.ppr`). La cascade lit
+    la couche PPR sans erreur géométrique. SCORING-COPRO-1 (PPR-UNIQUE-1, NU-D-001) : avant, un tel
+    code tombait en « périmètre, zonage inconnu, jamais une exclusion » (la parcelle restait servie
+    alors qu'elle est 100 % rouge). Les vraies enveloppes SUP GPU sans couleur sont en `kind='sup'`."""
     db_session = cascade_live_layers   # VITESSE-2 (Lot 5) — cascade sur `spatial_layers` live (pas le sub figé)
     from labuse.cascade import evaluate_parcels
-    from labuse.enums import CascadeVerdict, EvaluationStatus, Severity
+    from labuse.enums import CascadeVerdict, EvaluationStatus
     par = "POLYGON((55.300 -21.000,55.310 -21.000,55.310 -20.990,55.300 -20.990,55.300 -21.000))"
     ppr = "POLYGON((55.290 -21.010,55.320 -21.010,55.320 -20.980,55.290 -20.980,55.290 -21.010))"
     db_session.execute(text(
         "INSERT INTO spatial_layers (kind, subtype, commune, geom, attrs) VALUES "
-        "('ppr','i_mvt','TESTVILLE', ST_GeomFromText(:w,4326), "
-        "'{\"risque\":\"inondation + mouvement de terrain\",\"statut\":\"reglementaire\"}'::jsonb)"), {"w": ppr})
+        "('ppr','i','TESTVILLE', ST_GeomFromText(:w,4326), "
+        "'{\"risque\":\"inondation + mouvement de terrain\",\"statut\":\"reglementaire\",\"code_risque\":\"i\"}'::jsonb)"), {"w": ppr})
     pid = db_session.execute(text(
         "INSERT INTO parcels (idu, commune, section, numero, geom, surface_m2, centroid, bbox) VALUES "
         "('TESTPPR01','TESTVILLE','T','1', ST_GeomFromText(:p,4326), 1000, "
@@ -57,9 +60,9 @@ def test_cascade_lit_ppr_assiette_flag_prudent(cascade_live_layers):
         {"p": par}).scalar()
     outs = evaluate_parcels([pid], db_session, persist=False)
     v = next((x for x in outs[0].verdicts if x.layer_name == "risques"), None)
-    assert v is not None and "PPR" in v.detail and "prescriptions" in v.detail
-    assert v.result == CascadeVerdict.SOFT_FLAG and v.severity == Severity.FORT   # flag, PAS exclusion
-    assert outs[0].status == EvaluationStatus.A_CREUSER.value                     # jamais « opportunité »
+    assert v is not None and "PPR" in v.detail and "rouge" in v.detail.lower()
+    assert v.result == CascadeVerdict.HARD_EXCLUDE                                # couleur incertaine → rouge
+    assert outs[0].status == EvaluationStatus.EXCLUE.value                        # écartée, pas servie
 
 
 def test_index_gist_geom_2975(engine):

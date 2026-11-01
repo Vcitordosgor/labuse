@@ -4600,9 +4600,14 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
     if s2:
         from ..scoring.echelle_verbale import enrichir_verbal
         from ..scoring.p_v2.libelles_client import enrichir_contributions
-        _mult = float(s2["mult_base"]) if s2["mult_base"] is not None else None
+        # NU-E-011 — une COPROPRIÉTÉ est hors univers de classement : pas de ×N (taux de base dont
+        # elle est exclue) ni de fraction de vente. On les supprime pour une copro → `enrichir_verbal`
+        # ne porte alors ni mot ni réglette, et la fiche ne montre plus « 1/20 … » à côté de
+        # « hors univers de classement ». Vaut pour tout run (neuf comme ancien).
+        _copro = bool(s2["copro"])
+        _mult = None if _copro else (float(s2["mult_base"]) if s2["mult_base"] is not None else None)
         # M135 P2 — MÊME fraction que la carte de tri (calcul unique fraction_client)
-        _fraction = (_fh(s2["p_raw"]) or {}).get("texte")
+        _fraction = None if _copro else (_fh(s2["p_raw"]) or {}).get("texte")
         _top5 = s2["top5_contributions"]
         if isinstance(_top5, str):
             _top5 = json.loads(_top5)

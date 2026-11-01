@@ -659,9 +659,16 @@ class RisquesLayer(Layer):
                             "(PPR DEAL / aléas Géorisques non ingérés ici).", source=SRC_GEORISQUES)]
 
         verdicts: list[Verdict] = []
-        # CHASSE-INVARIANTS-FIX-1 Lot 2 (E-03/E-11) — on uppercase pour coller à la fiche
-        # (api/servitudes.py `upper(sl.subtype)`), sinon un 'interdiction' minuscule échapperait au seuil.
-        red = {str(s).upper() for s in params.get("ppr_red_subtypes", [])}
+        # SCORING-COPRO-1 (PPR-UNIQUE-1, décision Vic 31/10) — la COULEUR rouge est désormais lue par
+        # le module UNIQUE `labuse.ppr` (miroir de `labuse_ppr_couleur`), PLUS par la liste figée
+        # `ppr_red_subtypes` (= ['INTERDICTION']) : celle-ci ne reconnaissait pas le code hérité `i`
+        # de Saint-Philippe (NU-D-001 : 1 237 parcelles dessinées « constructibles » en zone 100 %
+        # rouge). « Rouge » = rouge réglementaire ∪ code non classé (prudence). Cascade == fiche ==
+        # Étude == Gabarit : une seule lecture du PPR.
+        from ...ppr import est_interdit_ligne
+        def _interdit(i) -> bool:
+            a = i.attrs or {}
+            return est_interdit_ligne(i.subtype, a.get("code_degre"), a.get("code_risque"))
         inters = [i for i in ctx.intersections(parcel.id, kind_ppr) if i.coverage > 0]
 
         # CHASSE-INVARIANTS-FIX-1 Lot 2 (E-03/E-11) — le PPR ROUGE se juge sur l'UNION des polygones
@@ -673,14 +680,14 @@ class RisquesLayer(Layer):
         #   < marginal (2 %)   : servi NORMALEMENT + mention discrète ;
         #   marginal..exclusion: FLAG FORT (vigilance, jamais une exclusion) ;
         #   >= exclusion (50 %): ÉCARTÉE (motif + % de surface).
-        red_inters = [i for i in inters if (i.subtype or "").upper() in red]
+        red_inters = [i for i in inters if _interdit(i)]
         if red_inters:
             marg_pct = float(params.get("ppr_red_marginal_pct", 2))
             excl_pct = float(params.get("ppr_red_exclude_pct", 50))
             # un seul polygone rouge → l'union EST sa couverture (aucune requête de plus) ; sinon on
-            # unionne en base (borné aux ~rares parcelles multi-rouges).
+            # unionne en base (borné aux ~rares parcelles multi-rouges), par le prédicat couleur UNIQUE.
             red_cov = (red_inters[0].coverage if len(red_inters) == 1
-                       else ctx.union_coverage(parcel.id, kind_ppr, red)[0])
+                       else ctx.union_coverage_interdit(parcel.id, kind_ppr)[0])
             cov_pct = red_cov * 100
             red_m2 = round((parcel.surface_m2 or 0) * red_cov)
             if cov_pct >= excl_pct:
@@ -701,8 +708,8 @@ class RisquesLayer(Layer):
                     Severity.INFO, source=SRC_DEAL_PPR))
 
         for i in inters:
-            if (i.subtype or "").upper() in red:
-                continue  # zone rouge DEAL : jugée EN UNION ci-dessus (E-03/E-11)
+            if _interdit(i):
+                continue  # couleur interdite (rouge ∪ code non classé) : jugée EN UNION ci-dessus (E-03/E-11)
             attrs = i.attrs or {}
             # M-G : distinguer l'ASSIETTE SUP PM1 (API Carto GPU, périmètre — zonage interne inconnu)
             # du PPR ZONÉ réglementaire DEAL (rouge INTERDICTION / bleu PRESCRIPTION). Le zoné DEAL a

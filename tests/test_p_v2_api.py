@@ -76,6 +76,19 @@ def test_brulantes_et_badges(db_session):
     assert copro_row["badges"]["copro"] is True
 
 
+def test_copropriete_sans_fraction_ni_multiple(db_session):
+    """NU-E-011 — une copropriété (hors univers de classement) ne reçoit NI fraction de vente NI
+    multiple ×N : « hors classement » et « 1 chance sur 20 » ne peuvent coexister. Le motif
+    `hors_classement` dit pourquoi (le p_raw interne reste, jamais servi nu)."""
+    _seed(db_session)
+    copro = api_v2.score_parcelle("97411000AB0003", db_session)   # copro, p=0,4, mult_base=18
+    assert copro["fraction"] is None            # pas de « X/N de vente sous 1 an »
+    assert copro["mult_base"] is None           # pas de ×N vs un taux dont la copro est exclue
+    assert copro["hors_classement"]             # le motif copro est servi à la place
+    non_copro = api_v2.score_parcelle("97411000AB0001", db_session)   # non copro
+    assert non_copro["fraction"] is not None and non_copro["mult_base"] == 21.0
+
+
 def test_job_refuse_run_existant(db_session):
     """Idempotence (lot 1.2/6.1) : un run_id déjà présent est REFUSÉ avant tout
     calcul — aucun écrasement silencieux."""

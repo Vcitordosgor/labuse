@@ -58,6 +58,24 @@ def test_promotion_immediate_sans_hysterese():
     assert list(S.assign_paliers(df, _cfg(), prev).values) == ["priorite", "a_suivre"]
 
 
+def test_copropriete_hors_palier_actionnable():
+    """NU-E-010 — une copropriété n'entre JAMAIS en Priorité / À suivre, même à p élevé :
+    masquée vers « Sans signal » (son libellé propre = motif copro, servi en fiche). L'étage 0
+    prime encore (copro écartée → Écartée)."""
+    df = pd.DataFrame({
+        "p":              [0.99,  0.15,  0.05,  0.99],
+        "ecartee_etage0": [False, False, False, True],
+        "copro":          [True,  True,  False, True]})
+    got = list(S.assign_paliers(df, _cfg()).values)
+    assert got == ["sans_signal", "sans_signal", "sans_signal", "ecartee"]
+
+
+def test_copropriete_colonne_absente_sans_effet():
+    """Rétro-compat : sans colonne `copro`, assign_paliers est inchangé (golden intact)."""
+    df = pd.DataFrame({"p": [0.99, 0.05], "ecartee_etage0": [False, False]})
+    assert list(S.assign_paliers(df, _cfg()).values) == ["priorite", "sans_signal"]
+
+
 def test_motifs_copropriete_hors_palier_puis_declassements():
     df = pd.DataFrame({
         "copro": [True, False, False, False],

@@ -1,0 +1,16 @@
+{
+ "scoring_run": "q_v20",
+ "cascade_run": "q_v19_sources",
+ "mvt_run": "q_v20",
+ "division_run": "q_v19",
+ "residuel_run_seq": 17,
+ "promoted_at": "2026-10-21T20:01:48.268480+00:00",
+ "par": "Vic — bascule q_v20 (RPG en U/AU)",
+ "precedent": {
+  "scoring_run": "q_v19",
+  "mvt_run": "q_v19",
+  "division_run": "q_v19",
+  "residuel_run_seq": 17,
+  "cascade_run": "q_v19_sources"
+ }
+}

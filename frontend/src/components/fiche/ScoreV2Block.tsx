@@ -111,19 +111,24 @@ export function ScoreV2Block({ idu, montreRang = false }: { idu: string; montreR
       </div>
 
       <div className="mt-2 flex items-baseline gap-3">
-        {/* M135 — la probabilité en FRACTION humaine (« 1/5 sous 1 an »), jamais un ×N. */}
-        <span className="font-mono text-xl font-semibold text-txt-hi">{data.fraction ?? '—'}</span>
-        <span className="text-[11px] text-txt-dim">{data.fraction ? 'de vente sous 1 an' : 'peu probable sous 1 an'}</span>
-        {/* URGENCE-1 (NU-A-009) — percentile/rang BRUTS seulement pour un tier ACTIONNABLE (priorité /
-            à suivre), derrière la MÊME condition que le verdict d'en-tête (`montreRang` ← montreMultiple).
-            Pour « sans signal » / « écartée » : fausse précision pour une parcelle non actionnable, masquée. */}
-        {montreRang && data.percentile != null && (
-          <span className="font-mono text-xs text-txt">percentile {data.percentile.toFixed(1)}</span>
-        )}
-        {montreRang && data.rang != null && <span className="font-mono text-xs text-txt-dim">rang {data.rang}</span>}
-        {/* M89 — copropriété sans rang : on DIT pourquoi (hors univers de classement), jamais un vide. */}
-        {data.rang == null && data.hors_classement && (
+        {/* NU-E-011 — une copropriété est HORS univers de classement : on ne lui sert NI fraction NI
+            « vente sous 1 an » (le back renvoie déjà fraction=null). On montre son motif seul, jamais
+            « 1/20 de vente » à côté de « hors univers de classement » (contradiction corrigée). */}
+        {data.hors_classement ? (
           <span className="text-[11px] text-txt-mut">{data.hors_classement}</span>
+        ) : (
+          <>
+            {/* M135 — la probabilité en FRACTION humaine (« 1/5 sous 1 an »), jamais un ×N. */}
+            <span className="font-mono text-xl font-semibold text-txt-hi">{data.fraction ?? '—'}</span>
+            <span className="text-[11px] text-txt-dim">{data.fraction ? 'de vente sous 1 an' : 'peu probable sous 1 an'}</span>
+            {/* URGENCE-1 (NU-A-009) — percentile/rang BRUTS seulement pour un tier ACTIONNABLE (priorité /
+                à suivre), derrière la MÊME condition que le verdict d'en-tête (`montreRang` ← montreMultiple).
+                Pour « sans signal » / « écartée » : fausse précision pour une parcelle non actionnable, masquée. */}
+            {montreRang && data.percentile != null && (
+              <span className="font-mono text-xs text-txt">percentile {data.percentile.toFixed(1)}</span>
+            )}
+            {montreRang && data.rang != null && <span className="font-mono text-xs text-txt-dim">rang {data.rang}</span>}
+          </>
         )}
       </div>
 
