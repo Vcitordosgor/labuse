@@ -29,8 +29,9 @@
   <input id="labuseUrl" type="url" placeholder="https://app.labuse.immo" />
   <div class="hint">Prod par défaut (https://app.labuse.immo). N'utiliser localhost qu'en recette (déjà autorisé).</div>
 
-  <label for="token">Jeton (X-Radar-Token)</label>
-  <input id="token" type="text" placeholder="jeton partagé" />
+  <label for="token">Jeton de connexion Radar</label>
+  <input id="token" type="password" placeholder="jeton partagé" autocomplete="off" />
+  <div class="hint">Secret partagé qui autorise l'envoi au back LABUSE. Masqué à la saisie ; ne le partagez pas.</div>
 
   <div class="row">
     <div>
@@ -38,12 +39,21 @@
       <input id="hour" type="number" min="0" max="23" />
     </div>
     <div>
-      <label for="jitterMaxMin">Jitter max (minutes)</label>
+      <label for="jitterMaxMin">Décalage aléatoire maximum (minutes)</label>
       <input id="jitterMaxMin" type="number" min="0" max="600" />
     </div>
   </div>
+  <div class="hint">La capture part à une minute tirée au hasard entre l'heure de base et +décalage (fenêtre du soir, heure de La Réunion).</div>
 
   <button id="save">Enregistrer</button><span id="saved"></span>
+
+  <hr style="margin:26px 0 0;border:0;border-top:1px solid #eee" />
+  <details style="margin-top:14px">
+    <summary style="cursor:pointer;font-size:12px;color:#666">Recette (vérification technique)</summary>
+    <p class="hint" style="margin-top:8px">Programme une capture automatique dans 2 minutes pour vérifier que le déclenchement du soir part tout seul. Laissez Chrome ouvert.</p>
+    <button id="testalarm" type="button" style="background:#555">Tester le déclenchement automatique (+2 min)</button>
+    <span id="testalarm-msg" class="hint"></span>
+  </details>
 
   <script src="options.js"></script>
 </body>

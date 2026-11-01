@@ -18,8 +18,8 @@ function reset(overrides = {}) {
 // sous le seuil index_date) → l'arrêt ne vient QUE du plafond de pages.
 function fakeInspect() {
   return { hasNext: true, hasAditemContainer: true, looksBlocked: false,
-           outerHTML: "<html><!--lbc--></html>", indexDates: ["2026-10-28T20:00:00+04:00"],
-           nextData: { props: { pageProps: { searchData: { ads: [{ index_date: "2026-10-28T20:00:00+04:00" }] } } } } };
+           searchAds: [{ index_date: "2026-10-28T20:00:00+04:00" }], vignettes: [],
+           indexDates: ["2026-10-28T20:00:00+04:00"] };
 }
 
 globalThis.chrome = {

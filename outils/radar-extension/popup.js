@@ -35,21 +35,7 @@ optsLink.addEventListener("click", (e) => {
   chrome.runtime.openOptionsPage();
 });
 
-// RADAR-FIX-2 (Lot A) — recette : alarme +2 min qui déclenche une capture AUTO (pas le bouton), pour
-// vérifier que le chemin automatique part TOUT SEUL et laisse la trace « auto » dans le journal.
-const testAlarmLink = document.getElementById("testalarm");
-if (testAlarmLink) {
-  testAlarmLink.addEventListener("click", async (e) => {
-    e.preventDefault();
-    try {
-      const res = await chrome.runtime.sendMessage({ type: "test-alarm" });
-      statusEl.textContent = res && res.ok
-        ? "Alarme auto programmée dans 2 min — laissez Chrome ouvert, la capture partira seule."
-        : "Erreur : " + (res && res.error ? res.error : "inconnue");
-    } catch (err) {
-      statusEl.textContent = "Erreur : " + String(err);
-    }
-  });
-}
+// RADAR-FIX-NU3-4 (M-T18) — la recette « Tester le déclenchement » a quitté le popup de PROD : elle vit
+// désormais dans les Options, repliée sous « Recette », hors de portée d'un clic client au quotidien.
 
 refreshStatus();

@@ -110,6 +110,21 @@ function CaptureAuto({ cap, enRetard }: { cap: RadarCheck['capture_auto']; enRet
   )
 }
 
+// RADAR-FIX-NU3-4 (K-RAD-04) — dernier COMPTE-RENDU de soirée posté par l'extension (succès, échec, ou
+// veille du Mac). Lecture seule : une nuit ratée laisse enfin une trace lisible, pas juste « rien reçu ».
+function JournalSoiree({ j }: { j: RadarCheck['dernier_journal'] }) {
+  if (!j) return null
+  const echec = /échec/i.test(j.titre) || /^échec/i.test(j.detail)
+  return (
+    <div data-radar-journal
+      className={`flex flex-wrap items-center gap-2 rounded-lg border px-3.5 py-2 text-[12px] ${echec ? 'border-st-attention/50 bg-st-attention/10' : 'border-line bg-surface-2'}`}>
+      <span className="font-mono text-[10px] uppercase tracking-wider text-txt-dim">Compte-rendu de la dernière soirée</span>
+      <span className={echec ? 'text-st-attention' : 'text-txt'}>{j.detail}</span>
+      {j.ts && <span className="ml-auto font-mono text-[10px] text-txt-dim">{fmtReu(j.ts)}</span>}
+    </div>
+  )
+}
+
 // ── À valider : fiche pré-remplie, champs à vérifier en mauve, Valider ──
 function Champ({ nom, valeur, aVerifier }: { nom: string; valeur: React.ReactNode; aVerifier: boolean }) {
   return (
@@ -294,6 +309,9 @@ export function RadarSection() {
 
       {/* RADAR-FIX-1 (3) — l'automate tourne-t-il ? Dernière capture automatique + retard éventuel. */}
       <CaptureAuto cap={d?.capture_auto ?? null} enRetard={!!d?.capture_auto_en_retard} />
+
+      {/* RADAR-FIX-NU3-4 (K-RAD-04) — compte-rendu de la dernière soirée (succès / échec / veille du Mac). */}
+      <JournalSoiree j={d?.dernier_journal ?? null} />
 
       {/* Section 2 — À faire (à valider · à re-vérifier), listes dépliables */}
       <div>
