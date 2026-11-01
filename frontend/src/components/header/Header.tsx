@@ -332,7 +332,10 @@ function NotifBell() {
     <div key={e.id} className={`hover-fill rounded-lg border px-3 py-2 ${e.lu ? 'border-line-2 opacity-55' : 'border-line-2 bg-bg-2'}`}>
       {/* DA §15 — non-lue en PORTE (fond bg-2) + pastille AMBRE ; lues estompées à 55 %. */}
       <div className="flex items-center gap-2">
-        <span className="dot shrink-0" style={{ background: e.lu ? 'var(--line-3)' : 'var(--amber)' }} />
+        {/* FIX-FINAL-1 (NU-F-039) — l'état lu/non-lu ne tenait qu'à la COULEUR de la pastille : on ajoute
+            une étiquette accessible (role img + aria-label) pour les lecteurs d'écran / le daltonisme. */}
+        <span className="dot shrink-0" role="img" aria-label={e.lu ? 'Lue' : 'Non lue'}
+              style={{ background: e.lu ? 'var(--line-3)' : 'var(--amber)' }} />
         {e.demo && <span className="rounded-full bg-surface-3 px-1.5 py-0.5 text-[8.5px] font-medium text-txt-dim">DÉMO</span>}
         <button onClick={() => {
             if (e.idu) { setView('cartes'); select(e.idu) }
