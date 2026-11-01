@@ -1,0 +1,20 @@
+fait,dossier,export-fiche,apporteur,estimer,flash,etude-zone,comparatif
+contenance_m2,,,110,,110,,
+zone,Ud3,Ud3,Ud3,Ud3,Ud3,,
+zone_rnu,,,,,,,
+sdp_restante_m2,,,,10,10,,10
+sdp_libelle,restante,restante,,restante,résiduelle,,restante+résiduelle
+emprise_bati_m2,1,1,1,1,,,
+hauteur_faitage_m,,,,,,,
+hauteur_egout_m,,,,,,,
+hauteur_bati_m,,,,,,,
+aleas_count,1,1,,1,,,
+aleas_mot,vigilance,vigilance,,alea,,,
+derniere_vente_eur,,,,,,,
+derniere_vente_date,,,,,,,
+prix_median_maison_m2,2308,2308,,2337,2308,,
+taxe_amenagement_eur,,,,,,,
+proprietaire,non déterminé,non déterminé,,,,,
+date_donnees,,,,21/10/2026,,,21/10/2026
+date_genere,,,,,,,
+ref_rapport,DP-20261102-0095,DP-20261102-0095,,AA-20261102-0095,,EZ-20261102-0095,CO-20261102-0095

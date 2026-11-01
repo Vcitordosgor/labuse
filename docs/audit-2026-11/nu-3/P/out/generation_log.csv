@@ -1,0 +1,101 @@
+idu,doc,status,ctype,ok,note
+97416000HS0478,dossier,200,application/pdf,True,263833o
+97416000HS0478,export-fiche,200,application/pdf,True,263833o
+97416000HS0478,apporteur,200,application/pdf,True,160948o
+97416000HS0478,pre-dossier,200,application/zip,True,"zip:labuse-CERFA-13406-17-pr,labuse-PCMI1-plan-situat,labuse-PCMI2-plan-masse-,labuse-PCMI4-notice-terr,labuse-PCMI7-8-prises-de,labuse-regles-zonage.pdf,labuse-enveloppe-regleme,labuse-LISEZMOI.txt"
+97416000HS0478,gabarit,200,application/pdf,True,33308o
+97416000HS0478,etude-zone,200,application/pdf,True,179782o
+97416000HS0478,estimer,200,application/pdf,True,128253o
+97416000HS0478,financier,422,application/json,False,422 application/json :: Ce document ne peut pas être établi : il manque des éléments indispensables.
+97416000HS0478,comparatif,200,application/pdf,True,20712o
+97416000HS0478,etude-faisabilite,422,application/json,False,"422 application/json :: [{'type': 'dict_type', 'loc': ['body', 'programme'], 'msg': 'Input should be a valid dictionary', 'input': 'libre'}]"
+97409000AC0102,dossier,200,application/pdf,True,278250o
+97409000AC0102,export-fiche,200,application/pdf,True,278251o
+97409000AC0102,apporteur,200,application/pdf,True,173106o
+97409000AC0102,pre-dossier,200,application/zip,True,"zip:labuse-CERFA-13406-17-pr,labuse-PCMI1-plan-situat,labuse-PCMI2-plan-masse-,labuse-PCMI4-notice-terr,labuse-PCMI7-8-prises-de,labuse-regles-zonage.pdf,labuse-enveloppe-regleme,labuse-LISEZMOI.txt"
+97409000AC0102,gabarit,200,application/pdf,True,34121o
+97409000AC0102,etude-zone,200,application/pdf,True,148295o
+97409000AC0102,estimer,200,application/pdf,True,146861o
+97409000AC0102,financier,422,application/json,False,422 application/json :: Ce document ne peut pas être établi : il manque des éléments indispensables.
+97409000AC0102,comparatif,200,application/pdf,True,20349o
+97409000AC0102,etude-faisabilite,422,application/json,False,"422 application/json :: [{'type': 'dict_type', 'loc': ['body', 'programme'], 'msg': 'Input should be a valid dictionary', 'input': 'libre'}]"
+97401000AM0380,dossier,200,application/pdf,True,309217o
+97401000AM0380,export-fiche,200,application/pdf,True,309217o
+97401000AM0380,apporteur,200,application/pdf,True,176635o
+97401000AM0380,pre-dossier,200,application/zip,True,"zip:labuse-CERFA-13406-17-pr,labuse-PCMI1-plan-situat,labuse-PCMI2-plan-masse-,labuse-PCMI4-notice-terr,labuse-PCMI7-8-prises-de,labuse-regles-zonage.pdf,labuse-LISEZMOI.txt"
+97401000AM0380,gabarit,422,application/json,False,422 application/json :: Ce document ne peut pas être établi : il manque des éléments indispensables.
+97401000AM0380,etude-zone,200,application/pdf,True,127825o
+97401000AM0380,estimer,200,application/pdf,True,146253o
+97401000AM0380,financier,422,application/json,False,422 application/json :: Ce document ne peut pas être établi : il manque des éléments indispensables.
+97401000AM0380,comparatif,200,application/pdf,True,20375o
+97401000AM0380,etude-faisabilite,422,application/json,False,"422 application/json :: [{'type': 'dict_type', 'loc': ['body', 'programme'], 'msg': 'Input should be a valid dictionary', 'input': 'libre'}]"
+97421000AC0444,dossier,200,application/pdf,True,251093o
+97421000AC0444,export-fiche,200,application/pdf,True,251095o
+97421000AC0444,apporteur,200,application/pdf,True,156503o
+97421000AC0444,pre-dossier,200,application/zip,True,"zip:labuse-CERFA-13406-17-pr,labuse-PCMI1-plan-situat,labuse-PCMI2-plan-masse-,labuse-PCMI4-notice-terr,labuse-PCMI7-8-prises-de,labuse-regles-zonage.pdf,labuse-LISEZMOI.txt"
+97421000AC0444,gabarit,422,application/json,False,422 application/json :: Ce document ne peut pas être établi : il manque des éléments indispensables.
+97421000AC0444,etude-zone,200,application/pdf,True,101384o
+97421000AC0444,estimer,200,application/pdf,True,121364o
+97421000AC0444,financier,422,application/json,False,422 application/json :: Ce document ne peut pas être établi : il manque des éléments indispensables.
+97421000AC0444,comparatif,200,application/pdf,True,20221o
+97421000AC0444,etude-faisabilite,422,application/json,False,"422 application/json :: [{'type': 'dict_type', 'loc': ['body', 'programme'], 'msg': 'Input should be a valid dictionary', 'input': 'libre'}]"
+97415000CY0419,dossier,200,application/pdf,True,294493o
+97415000CY0419,export-fiche,200,application/pdf,True,294496o
+97415000CY0419,apporteur,200,application/pdf,True,152556o
+97415000CY0419,pre-dossier,200,application/zip,True,"zip:labuse-CERFA-13406-17-pr,labuse-PCMI1-plan-situat,labuse-PCMI2-plan-masse-,labuse-PCMI4-notice-terr,labuse-PCMI7-8-prises-de,labuse-regles-zonage.pdf,labuse-enveloppe-regleme,labuse-LISEZMOI.txt"
+97415000CY0419,gabarit,200,application/pdf,True,34082o
+97415000CY0419,etude-zone,200,application/pdf,True,112504o
+97415000CY0419,estimer,200,application/pdf,True,119111o
+97415000CY0419,financier,422,application/json,False,422 application/json :: Ce document ne peut pas être établi : il manque des éléments indispensables.
+97415000CY0419,comparatif,200,application/pdf,True,20400o
+97415000CY0419,etude-faisabilite,422,application/json,False,"422 application/json :: [{'type': 'dict_type', 'loc': ['body', 'programme'], 'msg': 'Input should be a valid dictionary', 'input': 'libre'}]"
+97417000BD0225,dossier,200,application/pdf,True,262557o
+97417000BD0225,export-fiche,200,application/pdf,True,262560o
+97417000BD0225,apporteur,200,application/pdf,True,175399o
+97417000BD0225,pre-dossier,200,application/zip,True,"zip:labuse-CERFA-13406-17-pr,labuse-PCMI1-plan-situat,labuse-PCMI2-plan-masse-,labuse-PCMI4-notice-terr,labuse-PCMI7-8-prises-de,labuse-regles-zonage.pdf,labuse-LISEZMOI.txt"
+97417000BD0225,gabarit,422,application/json,False,422 application/json :: Ce document ne peut pas être établi : il manque des éléments indispensables.
+97417000BD0225,etude-zone,200,application/pdf,True,82150o
+97417000BD0225,estimer,200,application/pdf,True,138370o
+97417000BD0225,financier,422,application/json,False,422 application/json :: Ce document ne peut pas être établi : il manque des éléments indispensables.
+97417000BD0225,comparatif,200,application/pdf,True,19927o
+97417000BD0225,etude-faisabilite,422,application/json,False,"422 application/json :: [{'type': 'dict_type', 'loc': ['body', 'programme'], 'msg': 'Input should be a valid dictionary', 'input': 'libre'}]"
+97416000CS1048,dossier,200,application/pdf,True,265402o
+97416000CS1048,export-fiche,200,application/pdf,True,265402o
+97416000CS1048,apporteur,200,application/pdf,True,172646o
+97416000CS1048,pre-dossier,200,application/zip,True,"zip:labuse-CERFA-13406-17-pr,labuse-PCMI1-plan-situat,labuse-PCMI2-plan-masse-,labuse-PCMI4-notice-terr,labuse-PCMI7-8-prises-de,labuse-regles-zonage.pdf,labuse-LISEZMOI.txt"
+97416000CS1048,gabarit,422,application/json,False,422 application/json :: Ce document ne peut pas être établi : il manque des éléments indispensables.
+97416000CS1048,etude-zone,200,application/pdf,True,149224o
+97416000CS1048,estimer,200,application/pdf,True,133629o
+97416000CS1048,financier,422,application/json,False,422 application/json :: Ce document ne peut pas être établi : il manque des éléments indispensables.
+97416000CS1048,comparatif,200,application/pdf,True,20209o
+97416000CS1048,etude-faisabilite,422,application/json,False,"422 application/json :: [{'type': 'dict_type', 'loc': ['body', 'programme'], 'msg': 'Input should be a valid dictionary', 'input': 'libre'}]"
+97401000AD0095,dossier,200,application/pdf,True,253379o
+97401000AD0095,export-fiche,200,application/pdf,True,253379o
+97401000AD0095,apporteur,200,application/pdf,True,159675o
+97401000AD0095,pre-dossier,200,application/zip,True,"zip:labuse-CERFA-13406-17-pr,labuse-PCMI1-plan-situat,labuse-PCMI2-plan-masse-,labuse-PCMI4-notice-terr,labuse-PCMI7-8-prises-de,labuse-regles-zonage.pdf,labuse-LISEZMOI.txt"
+97401000AD0095,gabarit,422,application/json,False,422 application/json :: Ce document ne peut pas être établi : il manque des éléments indispensables.
+97401000AD0095,etude-zone,200,application/pdf,True,116284o
+97401000AD0095,estimer,200,application/pdf,True,122779o
+97401000AD0095,financier,422,application/json,False,422 application/json :: Ce document ne peut pas être établi : il manque des éléments indispensables.
+97401000AD0095,comparatif,200,application/pdf,True,20541o
+97401000AD0095,etude-faisabilite,422,application/json,False,"422 application/json :: [{'type': 'dict_type', 'loc': ['body', 'programme'], 'msg': 'Input should be a valid dictionary', 'input': 'libre'}]"
+97415000AZ1645,dossier,200,application/pdf,True,262772o
+97415000AZ1645,export-fiche,200,application/pdf,True,262770o
+97415000AZ1645,apporteur,200,application/pdf,True,157808o
+97415000AZ1645,pre-dossier,200,application/zip,True,"zip:labuse-CERFA-13406-17-pr,labuse-PCMI1-plan-situat,labuse-PCMI2-plan-masse-,labuse-PCMI4-notice-terr,labuse-PCMI7-8-prises-de,labuse-regles-zonage.pdf,labuse-enveloppe-regleme,labuse-LISEZMOI.txt"
+97415000AZ1645,gabarit,200,application/pdf,True,33276o
+97415000AZ1645,etude-zone,200,application/pdf,True,148678o
+97415000AZ1645,estimer,200,application/pdf,True,123068o
+97415000AZ1645,financier,422,application/json,False,422 application/json :: Ce document ne peut pas être établi : il manque des éléments indispensables.
+97415000AZ1645,comparatif,200,application/pdf,True,20569o
+97415000AZ1645,etude-faisabilite,422,application/json,False,"422 application/json :: [{'type': 'dict_type', 'loc': ['body', 'programme'], 'msg': 'Input should be a valid dictionary', 'input': 'libre'}]"
+97411000CM0169,dossier,200,application/pdf,True,250897o
+97411000CM0169,export-fiche,200,application/pdf,True,250903o
+97411000CM0169,apporteur,200,application/pdf,True,154963o
+97411000CM0169,pre-dossier,200,application/zip,True,"zip:labuse-CERFA-13406-17-pr,labuse-PCMI1-plan-situat,labuse-PCMI2-plan-masse-,labuse-LISEZMOI.txt"
+97411000CM0169,gabarit,422,application/json,False,422 application/json :: Ce document ne peut pas être établi : il manque des éléments indispensables.
+97411000CM0169,etude-zone,200,application/pdf,True,125051o
+97411000CM0169,estimer,200,application/pdf,True,129179o
+97411000CM0169,financier,422,application/json,False,422 application/json :: Ce document ne peut pas être établi : il manque des éléments indispensables.
+97411000CM0169,comparatif,200,application/pdf,True,20552o
+97411000CM0169,etude-faisabilite,422,application/json,False,"422 application/json :: [{'type': 'dict_type', 'loc': ['body', 'programme'], 'msg': 'Input should be a valid dictionary', 'input': 'libre'}]"

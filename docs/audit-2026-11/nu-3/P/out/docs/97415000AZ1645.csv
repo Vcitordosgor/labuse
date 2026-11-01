@@ -1,0 +1,20 @@
+fait,dossier,export-fiche,apporteur,gabarit,estimer,flash,etude-zone,comparatif,etude-faisabilite
+contenance_m2,,,986,,,986,,,
+zone,U4c,U4c,U4c,,U4c,U4c,,,U4c
+zone_rnu,,,,,,,,,
+sdp_restante_m2,,,,,,385,,385,
+sdp_libelle,restante,restante,,,restante,résiduelle,,restante,
+emprise_bati_m2,143,143,143,,270,,,,143
+hauteur_faitage_m,9,9,,9,,,,,9
+hauteur_egout_m,,,,,,,,,
+hauteur_bati_m,,,,,,,,,
+aleas_count,5,5,,,2,,,,
+aleas_mot,vigilance,vigilance,,,alea,,,,
+derniere_vente_eur,455000,455000,455000,,,,,,
+derniere_vente_date,,,décembre 2025,,,,,,
+prix_median_maison_m2,3361,3361,,,3664,3361,,,
+taxe_amenagement_eur,,,,,,,,,
+proprietaire,non déterminé,non déterminé,,,,,,,
+date_donnees,,,,21/10/2026,21/10/2026,,21/10/2026,21/10/2026,21/10/2026
+date_genere,,,,,,,,,02/11/2026
+ref_rapport,DP-20261102-1645,DP-20261102-1645,,GA-20261102-1645,AA-20261102-1645,,EZ-20261102-1645,CO-20261102-1645,
