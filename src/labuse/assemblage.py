@@ -218,16 +218,27 @@ def _capacite_union(session: Session, parcels: list) -> dict | None:
         "dpf_m": float(dpfp.get("marchepied_m", 3.25)),
         "rav_m": float(ravp.get("buffer_m", 10)),
     }).one()
-    surface_union = float(row.surface or 0.0)
-    emprise = max(0.0, float(row.assiette_area or 0.0) - float(row.greve_area or 0.0))
+    surface_union = float(row.surface or 0.0)             # union DESSINÉE totale (toute l'assiette)
+    inset_total = float(row.full_area or 0.0)             # union insetée (après recul), toutes zones
+    inset_uau = float(row.assiette_area or 0.0)           # union insetée ∩ zone constructible U/AU
+    emprise = max(0.0, inset_uau - float(row.greve_area or 0.0))
     if surface_union <= 0 or emprise <= 0:
         return None
+    # NU-G-007 — la SDP cumulée est BORNÉE à la part de l'assiette EN ZONE CONSTRUCTIBLE, comme le
+    # `bilan_surfacique` de l'Étude du même assemblage. L'emprise géométrique est déjà clippée U/AU ;
+    # restait le plafond CES (= surface × CES%) calculé sur l'assiette TOTALE. On passe donc à
+    # `estimate_capacity` la surface de la PART CONSTRUCTIBLE (= union totale × part U/AU de l'assiette
+    # insetée) : une assiette 100 % U est inchangée (part = 1), une assiette à 40 % hors zone voit son
+    # plafond CES — et donc sa SDP — réduit d'autant. Le % hors zone est servi et DIT à l'écran.
+    part_constructible = (inset_uau / inset_total) if inset_total > 0 else 1.0
+    surface_constructible = surface_union * part_constructible
+    pct_hors_zone = round(100.0 * (1.0 - part_constructible))
     # capacité de l'union : MÊME moteur que le résiduel (assiette réelle = union insetée)
-    f_union = estimate_capacity(rules, surface_union, ctx_dom.contraintes, hyp=hyp,
+    f_union = estimate_capacity(rules, surface_constructible, ctx_dom.contraintes, hyp=hyp,
                                 emprise_geo=(emprise, recul), extras={})
     if not f_union.constructible:
         return None
-    ctx_union = dataclasses.replace(ctx_dom, surface_m2=surface_union, idu="ASSEMBLAGE",
+    ctx_union = dataclasses.replace(ctx_dom, surface_m2=surface_constructible, idu="ASSEMBLAGE",
                                     parcel_id=p_dom.id)
     # bilan de l'union : UNE charge foncière (VRD sur l'emprise aménagée de l'ENSEMBLE, une fois),
     # prix de sortie du secteur de la parcelle dominante (même secteur pour des parcelles contiguës).
@@ -238,6 +249,9 @@ def _capacite_union(session: Session, parcels: list) -> dict | None:
     # l'Étude de faisabilité (moteurs.tsx), on cesse de servir le chiffre sans lecteur.
     return {
         "surface_m2": round(surface_union),
+        # NU-G-007 — la part constructible servie à côté de la SDP (comme le `bilan_surfacique` de l'Étude).
+        "surface_constructible_m2": round(surface_constructible),
+        "pct_hors_zone": pct_hors_zone,
         "emprise_m2": round(emprise),
         "sdp_m2": round(float(fr.get("surface_plancher_m2") or 0.0)),
         "ca": (b.ca if (b and b.fiable) else None),
@@ -253,7 +267,9 @@ def aggregate_assiette(session: Session, parcels: list) -> dict:
     /moteurs/assemblage. `parcels` = objets Parcel (id, surface_m2, idu, commune). Renvoie aussi la
     SDP PAR PARCELLE (gain vs la meilleure seule) et les zones (valorisation)."""
     from .faisabilite.db import fiche_payload
-    surface = round(sum(p.surface_m2 or 0 for p in parcels))
+    # OUT-ASSEMB-001/002 (CONTENANCE-1) — surface d'assiette cumulée = somme des CONTENANCES cadastrales
+    # (acte) si présentes, sinon dessin : homogène avec la fiche / le prefill taxe, jamais le dessin seul.
+    surface = round(sum((getattr(p, "contenance_m2", None) or p.surface_m2 or 0) for p in parcels))
     par_parcelle: dict[int, float] = {}
     zones: list[tuple[str | None, str | None]] = []
     for p in parcels:
@@ -273,6 +289,10 @@ def aggregate_assiette(session: Session, parcels: list) -> dict:
     cf_out = ({**cf, "par_m2_terrain": round(cf["central"] / surface)} if cf and surface else cf)
     return {
         "surface_cumulee_m2": surface,
+        # NU-G-007 — surface d'assiette EN ZONE CONSTRUCTIBLE + part hors zone (alignés sur l'Étude du
+        # même assemblage) : la SDP cumulée est bornée à cette part, le % hors zone est DIT.
+        "surface_constructible_m2": u.get("surface_constructible_m2"),
+        "pct_hors_zone": u.get("pct_hors_zone"),
         "sdp_m2": u["sdp_m2"],
         "ca": u["ca"],
         "charge_fonciere": cf_out,

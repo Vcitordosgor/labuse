@@ -21,7 +21,9 @@
   </div>
   {% if data.marque_client_html %}{{ data.marque_client_html | safe }}{% endif %}
   <h1>{{ produit }}</h1>
-  <div class="cover-note">Étude de faisabilité indicative d'une parcelle</div>
+  {# NU-3-M-T02 — le Flash livre le Dossier complet (décision Vic) mais ne REPREND PAS le nom du produit
+     premium « Étude de faisabilité » : sous-titre propre, pour ne pas laisser croire à l'étude 8 pages. #}
+  <div class="cover-note">Pré-analyse d'une parcelle</div>
   {% if data.adresse %}<div class="adresse">{{ data.adresse }}</div>
   {% else %}<div class="adresse adresse-nd">Adresse non disponible</div>{% endif %}
   <div class="refs">Parcelle <b>{{ p.idu }}</b> · {{ p.commune }} · section {{ p.section }} n° {{ p.numero }}</div>

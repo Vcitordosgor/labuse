@@ -295,6 +295,14 @@ export function M16() {
                   <div data-asm-kpi="surface" className="rounded-md bg-surface-3 px-2 py-1.5">
                     <div className="text-[9px] text-txt-dim">Surface d'assiette</div>
                     <div className="tnum text-[14px] font-semibold text-txt">{fmt(d.surface_totale_m2)} m²</div>
+                    {/* NU-G-007 — la SDP cumulée est bornée à la PART EN ZONE CONSTRUCTIBLE (comme l'Étude
+                        du même assemblage) : on DIT la part constructible et le % hors zone, pour ne pas
+                        laisser croire que toute l'assiette se bâtit (ex. 40 % hors zone → Étude « Impossible »). */}
+                    {d.pct_hors_zone != null && d.pct_hors_zone > 0 && (
+                      <div data-asm-hors-zone className="mt-0.5 text-[9px] leading-tight text-amber">
+                        dont {fmt(d.surface_constructible_m2)} m² en zone constructible · {d.pct_hors_zone} % hors zone
+                      </div>
+                    )}
                   </div>
                   {/* FIX-INTEGRATION I1 — « SDP estimée » (par analogie DVF, cf. ratio ci-dessus) cumulée
                       sur l'assiette. ≠ « SDP gabarit » de la Faisabilité (capacité PLU) ≠ « SHAB vendable »

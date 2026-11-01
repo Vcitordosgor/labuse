@@ -296,14 +296,17 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
               (même moteur que l'outil Blocs, table parcel_blocs). Ligne « Blocs contigus : N » + les
               groupes cliquables (→ fiche de leur parcelle représentative). */}
           {(() => {
-            const bc = d['blocs_contigus'] as { n: number; items: { bloc_id: number; n_parcelles: number; surface_m2: number; communes: string[]; sdp_residuelle_m2: number; idu_repr: string | null }[] } | undefined
+            const bc = d['blocs_contigus'] as { n: number; affiches?: number; items: { bloc_id: number; n_parcelles: number; surface_m2: number; communes: string[]; sdp_residuelle_m2: number; idu_repr: string | null }[] } | undefined
             if (!bc || bc.n === 0) return null
             // RECETTE-1 (H4, Vic) — le bloc « Blocs contigus » se REPLIE (disparaît) quand la liste des
             // parcelles s'ouvre (fusion ScanPatrimoine, bandeau replié) : il reprend sa place au retour.
             if (embedded && bandeauReplie) return null
+            // OUT-SCAN-006 — la liste des blocs est plafonnée (12) : on DIT « N affichés sur M » plutôt
+            // qu'une troncature silencieuse (`affiches` servi par le back).
+            const bcAff = bc.affiches ?? bc.items.length
             return (
               <div data-m02-blocs className="rounded-lg border border-line-2 bg-surface-2 px-2.5 py-1.5">
-                <div className="text-[11px] font-medium text-txt-mut">Blocs contigus : <b className="text-txt">{fmt(bc.n)}</b></div>
+                <div className="text-[11px] font-medium text-txt-mut">Blocs contigus : <b className="text-txt">{fmt(bc.n)}</b>{bcAff < bc.n ? <span className="text-txt-dim"> · {fmt(bcAff)} affichés</span> : null}</div>
                 <div className="mt-1 flex flex-col gap-0.5">
                   {bc.items.map((bl) => (
                     <button key={bl.bloc_id} data-m02-bloc
@@ -854,7 +857,10 @@ export function M03() {
                 className={`mt-1 rounded-lg border px-3 py-2 text-[11px] leading-snug ${ton}`}>
                 <span>{titre} — </span>
                 {vide
-                  ? <>sur les {Math.max(...MONTHS_RADAR)} derniers mois{donneesJusquAu ? ` (Sitadel au ${donneesJusquAu})` : ''}.</>
+                  /* OUT-PERMIS-011 — /modules/parcelle-permis n'est PAS fenêtré : il rend tous les permis
+                     géolocalisés ≤ 200 m, sur TOUTE la profondeur Sitadel. L'ancien « 240 derniers mois »
+                     (max(MONTHS_RADAR) = 20 ans) se lisait comme un faux fenêtrage. */
+                  ? <>sur toute la profondeur Sitadel servie{donneesJusquAu ? ` (Sitadel au ${donneesJusquAu})` : ''}.</>
                   : loc === 0
                     ? <>aucun point à afficher.</>
                     : <>cliquez les points sur la carte{nonLocTxt}.</>}

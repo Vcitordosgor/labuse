@@ -93,8 +93,9 @@ export function ScoreV2Block({ idu, montreRang = false }: { idu: string; montreR
           <span className="rounded-full px-2 py-0.5 text-[10.5px] font-semibold"
             style={{ backgroundColor: `${tier.color}22`, color: tier.color }}>{tier.label}</span>
         </Trace>
+        {/* NU-3-M-H03 — l'exclusion copro est INCONDITIONNELLE (statuts.py : ~df["copro"]), pas « par défaut ». */}
         {data.badges.copro && (
-          <Tip tip="Copropriété — hors du classement foncier par défaut">
+          <Tip tip="Hors univers de classement (copropriété)">
             <span className="rounded-full bg-[#2A2438] px-2 py-0.5 text-[10.5px] text-[#B7A8E0]">copro</span>
           </Tip>
         )}

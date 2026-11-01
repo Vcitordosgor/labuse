@@ -81,8 +81,11 @@ def _calculer(mnt: Path) -> dict | None:
     ok &= aspect >= 0
     pente_moy = float(np.mean(slope[ok])) if ok.any() else 0.0
     porteuses = ok & (slope >= PENTE_MIN_CELL_DEG)
+    # NU-3-J#6 — on ne sert PLUS de « pente moyenne » depuis l'exposition : cette seconde pente (dalle
+    # MNT WMS live) contredisait la pente SOURCE de la fiche (`parcel_terrain.pente_moy_deg`) sur 115/117
+    # parcelles. L'exposition ne porte que l'ORIENTATION ; la pente a un point de vérité unique ailleurs.
     if not porteuses.any():
-        return {"orientation": "plat", "aspect_deg": None, "pente_moyenne_deg": round(pente_moy, 1)}
+        return {"orientation": "plat", "aspect_deg": None}
     # moyenne VECTORIELLE des orientations (aspect 0°=N horaire), pondérée par la pente.
     rad = np.deg2rad(aspect[porteuses])
     w = slope[porteuses]
@@ -90,10 +93,10 @@ def _calculer(mnt: Path) -> dict | None:
     vy = float(np.sum(w * np.cos(rad)))   # composante Nord
     aspect_moy = (math.degrees(math.atan2(vx, vy))) % 360.0
     plat = pente_moy < PENTE_PLATE_DEG
+    # NU-3-J#6 — l'exposition ne sert QUE l'orientation (plus de « pente moyenne » contradictoire).
     return {
         "orientation": "plat" if plat else _octant(aspect_moy),
         "aspect_deg": None if plat else round(aspect_moy, 1),
-        "pente_moyenne_deg": round(pente_moy, 1),
     }
 
 

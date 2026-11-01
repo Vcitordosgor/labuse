@@ -253,12 +253,13 @@ def calculer(
 
     # 1) surface de construction : valeur forfaitaire, avec abattement 50 % (100 premiers m² par logement RP / aidé).
     surf = max(0.0, float(surface_taxable_m2 or 0))
-    if surf > 0 and seuil_exo and surf < seuil_exo:
+    if surf > 0 and seuil_exo and surf <= seuil_exo:
         # RV2-V2 — exonération de PLEIN DROIT des petites surfaces (CGI art. 1635 quater D, 10°) :
-        # une construction < 5 m² de surface taxable n'est pas soumise à la part surface.
+        # une construction « inférieure OU ÉGALE à 5 m² » de surface taxable n'est pas soumise à la
+        # part surface (borne INCLUSIVE : à 5 m² pile l'exonération s'applique — BOFiP BOI-IF-TU-10-20-30-160).
         assiette_surf = 0.0
         lignes.append({"poste": "Surface de construction",
-                       "detail": f"{surf:g} m² < {seuil_exo:g} m² — exonérée (CGI 1635 quater D, 10°)",
+                       "detail": f"{surf:g} m² ≤ {seuil_exo:g} m² — exonérée (CGI 1635 quater D, 10°)",
                        "assiette_eur": 0.0})
     elif surf > 0:
         abattue = 0.0

@@ -512,6 +512,7 @@ export interface Fiche {
   // FICHE-1 lot 3 — aléas en détail (dérivés de la cascade servie, accord avec Pièges et risques).
   aleas?: {
     n: number
+    n_hazards?: number   // NU-3-J#4 — familles d'aléas distinctes (compteur partagé fiche/Estimer/PDF)
     liste: {
       nature: string; niveau: string | null; libelle: string
       part_pct: number | null; redhibitoire: boolean

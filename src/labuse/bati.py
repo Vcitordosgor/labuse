@@ -288,7 +288,23 @@ def le_bien_block(session: Session, idu: str) -> dict | None:
     # (100 %) » sous 30 % d'imperméabilisation. `cosia_m2` (gardé ≥ 50 m² au-delà de BD TOPO) fait foi
     # quand il existe — même valeur que le bloc `cosia_couverture` servi à côté.
     emprise_impermeable = cosia_m2 if cosia_m2 else emprise
-    surface_libre = (max(0, round(surface - emprise_impermeable)) if surface is not None else None)
+    # NU-3-J#5 (NU-A-010) — la part en PPR zone ROUGE (interdiction, légalement INCONSTRUCTIBLE,
+    # C. env. L562-1) n'est pas « libre » : on la retranche comme l'emprise imperméabilisée. Avant,
+    # 97402000AO0010 (100 % rouge, emprise 0) affichait « 696 563 m² libres (100 %) » — le mot « libre »
+    # disait « disponible » sur une emprise interdite. Union des zones interdites (pas de double-compte) ;
+    # requête gardée (jamais une 500 : échec → 0 retranché, comportement historique).
+    interdit_m2 = 0.0
+    try:
+        from .ppr import interdit_sql
+        interdit_m2 = float(session.execute(text(
+            "SELECT COALESCE(ST_Area(ST_Union(ST_Intersection(p.geom_2975, sl.geom_2975))), 0) "
+            "FROM parcels p JOIN spatial_layers sl ON sl.kind = 'ppr' AND "
+            + interdit_sql("sl") + " AND ST_Intersects(p.geom_2975, sl.geom_2975) "
+            "WHERE p.id = :pid"), {"pid": pid}).scalar() or 0.0)
+    except Exception:  # noqa: BLE001 — la part PPR est un bonus de prudence, jamais un échec de fiche
+        interdit_m2 = 0.0
+    surface_libre = (max(0, round(surface - emprise_impermeable - interdit_m2))
+                     if surface is not None else None)
     from . import solaire_toiture
     toit = solaire_toiture.toiture_depuis_cache(session, idu)
     # RECETTE-9 T9 — POINT UNIQUE de la hauteur : quand le LiDAR HD a été mesuré sur cette parcelle,

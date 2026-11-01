@@ -92,10 +92,12 @@ def mon_secteur(idu: str = Query(..., description="IDU de la parcelle (résolu d
     sp = sector_price(db, pid, Hypotheses.charger(commune))
     secteur_bati = None
     if sp.get("fiable") and sp.get("n") and int(sp["n"]) >= SEUIL_N:
-        # Écart avec la médiane bâti de la COMMUNE ENTIÈRE (référentiel unique `_dvf_bati`) — une
-        # ligne d'explication : le secteur (rayon serré) n'est pas la commune (SECTEUR-2 T1).
-        from ..pige.signaux import _dvf_bati
-        com = _dvf_bati(db, commune)
+        # OUT-SECTEUR-005 — « commune entière » qui l'est VRAIMENT : la référence est la médiane DVF
+        # ACTÉE de la COMMUNE (point unique `mediane_commune` via `_dvf_bati_type`, par type du bien),
+        # et non plus `_dvf_bati` (un `sector_price` autour du centroïde, qui n'était PAS commune-wide).
+        from ..pige.signaux import _dvf_bati_type
+        _tp = sp.get("type_prix")
+        com = _dvf_bati_type(db, commune, _tp if _tp in ("maison", "appartement") else None)
         ecart_commune = None
         if com.get("eur_m2") and sp.get("median"):
             cv = round(float(com["eur_m2"]))

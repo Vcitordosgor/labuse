@@ -274,5 +274,10 @@ def scot(db: Session, idu: str) -> dict:
         "disponible": True, "nom": r["title"], "statut": r["statut"],
         "date_approbation": r["date_approbation"],
         "source": r["source"] or "SCOT — Géoportail de l'urbanisme (GPU)",
-        "millesime": (f"approuvé le {r['date_approbation']}" if r["date_approbation"] else "GPU"),
+        # DOC-DOSSIER-045 — le millésime ne dit « approuvé le … » que si le statut est approuvé ;
+        # sinon il reflète le statut réel (ex. « en projet »), jamais une opposabilité trompeuse.
+        "millesime": (
+            f"approuvé le {r['date_approbation']}"
+            if (r["statut"] or "").strip().lower().startswith("approuv") and r["date_approbation"]
+            else (r["statut"] or "GPU")),
     }

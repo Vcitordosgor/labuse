@@ -383,7 +383,10 @@ def patrimoine(siren: str, fmt: str = "json",
     # apporteurs, pas promoteurs) : surface totale détenue, terrains nus vs bâtis (emprise bâtie DGFiP
     # p_model_bati), et parcelles en zone constructible U ou AU (zone_fam servi). Remplacent
     # « actionnables » et « valorisation » (langage promoteur) en TITRE — sans nouvelle donnée lourde.
-    surface_totale_m2 = round(sum(r["surface_m2"] or 0 for r in rows))
+    # OUT-SCAN-003 — « surface totale » = somme des CONTENANCES cadastrales (acte), pas des surfaces
+    # de dessin géométrique : homogène avec la fiche / le prefill taxe / Comparer (CONTENANCE-1).
+    surface_totale_m2 = round(sum((_surface.surface_terrain(r["surface_m2"], r["contenance_m2"]).valeur or 0)
+                                  for r in rows))
     n_terrains_batis = sum(1 for r in rows if (r["emprise_bati"] or 0) > 0)
     n_terrains_nus = len(rows) - n_terrains_batis
     n_constructible_u_au = sum(1 for r in rows if r["zone_fam"] in ("U", "AU"))
@@ -447,10 +450,13 @@ def patrimoine(siren: str, fmt: str = "json",
                    (SELECT min(m.idu) FROM parcel_bloc_membres m WHERE m.bloc_id = b.id) AS idu_repr
             FROM parcel_blocs b WHERE b.siren = :s
             ORDER BY b.n_parcelles DESC, b.surface_totale_m2 DESC"""), {"s": siren}).mappings().all()
-        blocs_contigus = {"n": len(brs), "items": [
+        # OUT-SCAN-006 — la liste est plafonnée à 12 mais `n` = total réel (460…) : on sert `affiches`
+        # pour que l'écran dise « N affichés sur M » plutôt qu'une troncature silencieuse.
+        _items = [
             {"bloc_id": r["bloc_id"], "n_parcelles": r["n_parcelles"], "surface_m2": r["surface_totale_m2"],
              "communes": r["communes"], "sdp_residuelle_m2": r["sdp_residuelle_m2"], "idu_repr": r["idu_repr"]}
-            for r in brs[:12]]}
+            for r in brs[:12]]
+        blocs_contigus = {"n": len(brs), "affiches": len(_items), "items": _items}
     # GB-017/018 — EXPORT CSV du portefeuille (raison sociale ENTIÈRE ; notice GB-016 si plafond).
     if fmt == "csv":
         import csv as _csv
@@ -653,7 +659,7 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
         # par le `_ETAT_LABELS` local qui DIVERGEAIT (il rendait l'état 4 « Chantier ouvert » alors que
         # 4 = ANNULÉ ; KELFONCIER-FIX-1 Lot C avait déjà corrigé la fiche). Le front en fait une pastille
         # 3 tons : autorisé / travaux commencés / achevés → vert, annulé → rouge. `etat` (code) reste servi.
-        "items": [{**{k: r[k] for k in ("permit_id", "type", "date", "depot", "delai_mois",
+        "items": [{**{k: r[k] for k in ("permit_id", "type", "date", "commune", "depot", "delai_mois",
                                         "etat", "nb_lgt", "surf_hab", "geoloc")},
                    "etat_libelle": etat_libelle({"etat": r["etat"], "daact": r["daact"]}),
                    "annule": est_annule({"etat": r["etat"], "daact": r["daact"]}),
@@ -751,7 +757,17 @@ def parcelle_permis(idu: str, db: Session = Depends(get_db)) -> dict:
                CASE WHEN s.geom IS NOT NULL THEN ST_AsGeoJSON(s.geom) END AS g
         FROM p JOIN via_permits_geo w ON ST_DWithin(p.g, w.g, 200)
                JOIN sitadel_permits s ON s.permit_id = w.permit_id
-        ORDER BY dist_m ASC LIMIT 100"""), {"idu": idu}).mappings().all()
+        ORDER BY dist_m ASC LIMIT 500"""), {"idu": idu}).mappings().all()
+    # OUT-PERMIS-009 — les COMPTES c100/c200 sont des COUNT EXACTS (jamais le len() d'une liste
+    # plafonnée) : une parcelle dense à 185 permis réels doit compter 185, pas 100. La liste peut
+    # rester bornée (payload) mais le compte servi à l'écran dit le vrai total (et `tronque` le signale).
+    cnt = db.execute(text("""
+        WITH p AS (SELECT geom_2975 AS g FROM parcels WHERE idu = :idu)
+        SELECT count(*) FILTER (WHERE ST_DWithin(p.g, w.g, 100)) AS c100, count(*) AS c200
+        FROM p JOIN via_permits_geo w ON ST_DWithin(p.g, w.g, 200)"""),
+        {"idu": idu}).mappings().first()
+    c100 = int(cnt["c100"] or 0)
+    c200 = int(cnt["c200"] or 0)
     items = [{"permit_id": r["permit_id"], "nature": r["type"],
               "nature_libelle": _NATURE_LABELS.get(r["type"], r["type"]),
               "date": r["date"], "etat": r["etat"], "nb_lgt": r["nb_lgt"],
@@ -760,8 +776,10 @@ def parcelle_permis(idu: str, db: Session = Depends(get_db)) -> dict:
               "geom": json.loads(r["g"]) if r["g"] else None} for r in rows]
     return {
         "idu": idu,
-        "c100": sum(1 for i in items if i["distance_m"] <= 100),
-        "c200": len(items),
+        "c100": c100,
+        "c200": c200,
+        "affiches": len(items),
+        "tronque": c200 > len(items),
         # PERMIS-CHECK-2 pt 1 — la source ne renvoie que des permis GÉOLOCALISÉS (via_permits_geo) :
         # `localises` = ceux avec une géom dessinable ; `non_localises` = le reste (rare, s.geom nul).
         "localises": sum(1 for i in items if i["geom"]),
@@ -1870,16 +1888,22 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
         # CHASSE-DOCS-FIX-1 (E-09) — sur parcelle à cheval, `f.zone` est la zone CONSTRUCTIBLE (celle
         # où la capacité est calculée, ≠ dominante). On la nomme AVEC sa part (« Ud sur 46 % ») pour
         # ne pas prétendre que toute la parcelle est en Ud (le libellé disait « Ud » nu, la fiche « N »).
+        # NU-3-J#1 — le drapeau `a_cheval` (dominante < 90 %) NE suffit pas : une parcelle à 93 % N / 7 %
+        # Uf a une dominante à 93 % (donc `a_cheval=False`) alors que le verdict est bâti sur le sliver
+        # de 7 % et titré « Uf » nu. Dès que la zone du VERDICT ne couvre pas toute la parcelle, on
+        # affiche « {zone} sur {pct} % » ET on lève le drapeau à cheval si cette part est minoritaire —
+        # indépendamment du seuil 90 % — pour ne jamais déclarer constructible un sliver sans le dire.
+        from ..faisabilite.zone_servie import SEUIL_A_CHEVAL_PCT as _SEUIL_AC
         _zone_lbl = f.zone
-        if _ctx.a_cheval and _ctx.zone_parts:
-            _pct = next((p.get("pct") for p in _ctx.zone_parts
-                         if (p.get("zone") == f.zone and p.get("pct") is not None)), None)
-            if _pct is not None:
-                _zone_lbl = f"{f.zone} sur {round(_pct)} %"
+        _pct = next((p.get("pct") for p in (_ctx.zone_parts or [])
+                     if (p.get("zone") == f.zone and p.get("pct") is not None)), None)
+        if _pct is not None and round(_pct) < 100:
+            _zone_lbl = f"{f.zone} sur {round(_pct)} %"
+        _a_cheval = bool(_ctx.a_cheval) or (_pct is not None and _pct < _SEUIL_AC)
         out["capacite"] = {"zone": _zone_lbl, "verdict": f.verdict, "calibree": f.calibree,
                            # ZONE-1 : zone = DOMINANTE PAR SURFACE (la même que l'écran) ;
                            # sur parcelle à cheval, drapeau + parts servis avec la capacité.
-                           "a_cheval": _ctx.a_cheval, "zone_parts": _ctx.zone_parts,
+                           "a_cheval": _a_cheval, "zone_parts": _ctx.zone_parts,
                            "fourchette": f.fourchette, "hypotheses": f.hypotheses,
                            "bandeau": f.bandeau,
                            # M11 Surface C : les 11 étapes TRACÉES du moteur, exposées telles quelles
@@ -2459,7 +2483,7 @@ def faisabilite_charge(idu: str, body: ChargeIn, db: Session = Depends(get_db)) 
     defaults = {"cout_construction_m2": CALCULETTE_COUT_DEFAUT_M2,
                 "marge_frais_pct": CALCULETTE_MARGE_FRAIS_DEFAUT_PCT,
                 "vrd_m2": CALCULETTE_VRD_DEFAUT_M2}
-    row = db.execute(text("SELECT id, commune, round(surface_m2) AS s FROM parcels WHERE idu = :i"), {"i": idu}).mappings().first()
+    row = db.execute(text("SELECT id, commune, round(surface_m2) AS s, contenance_m2 FROM parcels WHERE idu = :i"), {"i": idu}).mappings().first()
     if not row:
         raise HTTPException(404, "Parcelle inconnue")
     fz = parcel_faisabilite(db, row["id"])
@@ -2469,10 +2493,19 @@ def faisabilite_charge(idu: str, body: ChargeIn, db: Session = Depends(get_db)) 
         return {"calculable": False, "raison": "capacite_non_resolue", "defaults": defaults,
                 "message": "Capacité constructible non résolue pour cette parcelle (zone PLU "
                            "non résolue / non constructible) — charge foncière non calculable."}
-    # MANDAT PRIX SORTIE CONSOMMATEURS (Vic 28/07/2026) — le prix de sortie de la calculette est un
-    # prix NEUF (point de résolution partagé), plus jamais sector_price/existant. Non calculable
-    # (social-dominant) → réponse honnête, jamais un faux chiffre.
-    ps = resolve_prix_sortie_servi(db, row["id"])
+    # OUT-COMPARER-009 (décision Vic) — méthode canonique = le BILAN CALIBRÉ de Comparer. On réutilise
+    # EXACTEMENT le contexte de `compute_bilan_servi` (secteur, prix de sortie NEUF, hypothèses calibrées,
+    # contexte éco mixité/pluvial/VRD) via `contexte_bilan_servi` (lecteur unique des champs logements) :
+    # saisir les hypothèses de Comparer y redonne sa charge foncière. Les coût/marge/VRD SAISIS ne font
+    # que surcharger ces hypothèses calibrées — l'écran les présente comme « hypothèses par défaut ».
+    from ..faisabilite.bilan import compute_bilan_servi, contexte_bilan_servi
+    _cx = contexte_bilan_servi(db, row["id"], fz=fz) or {}
+    _hyp = _cx.get("hyp") or Hypotheses.charger(row["commune"])
+    _eco = _cx.get("eco")
+    _bp = _cx.get("base_params")
+    # MANDAT PRIX SORTIE CONSOMMATEURS (Vic 28/07/2026) — prix de sortie NEUF (même point, même secteur
+    # que le bilan servi). Non calculable (social-dominant) → réponse honnête, jamais un faux chiffre.
+    ps = _cx.get("ps") or resolve_prix_sortie_servi(db, row["id"])
     if ps["non_calculable"]:
         return {"calculable": False, "raison": "prix_sortie_non_calculable", "defaults": defaults,
                 "message": ps["motif"]}
@@ -2480,9 +2513,27 @@ def faisabilite_charge(idu: str, body: ChargeIn, db: Session = Depends(get_db)) 
     prix = marche_service.marche_dvf(db, idu, profil=marche_service.DVF_BANQUIER_ADAPTATIF)
     prix = {**prix, "q1": ps["prix"], "median": ps["prix"], "q3": ps["prix"],   # prix de sortie NEUF
             "niveau_prix_neuf": ps["niveau"], "prix_neuf_label": ps["label"]}
-    res = compute_calculette(float(shab), float(row["s"] or 0), prix,
+    # OUT-CALC-003 — la surface de TERRAIN de la calculette = CONTENANCE cadastrale (comme Comparer /
+    # Estimer / Dossier), plus la surface de dessin : surface homogène inter-outils (CONTENANCE-1).
+    _terrain_m2 = _surface.surface_terrain(row["s"], row["contenance_m2"]).valeur or float(row["s"] or 0)
+    res = compute_calculette(float(shab), float(_terrain_m2), prix,
                              body.cout_construction_m2, body.marge_frais_pct, body.prix_demande_eur,
-                             mode=body.mode, vrd_m2=body.vrd_m2)
+                             mode=body.mode, vrd_m2=body.vrd_m2,
+                             base_params=_bp, contexte_eco=_eco, prix_neuf=ps, hyp=_hyp)
+    # OUT-COMPARER-009 — la RÉFÉRENCE canonique (bilan calibré de Comparer, même parcelle) servie à côté
+    # de la charge « selon vos hypothèses » : l'écran montre les deux et dit laquelle fait foi.
+    try:
+        _b_ref, _ = compute_bilan_servi(db, row["id"], fz=fz)
+        if _b_ref and _b_ref.fiable and _b_ref.charge_fonciere:
+            res["reference_comparer"] = {
+                "par_m2_terrain": _b_ref.charge_fonciere.get("par_m2_terrain"),
+                "central": _b_ref.charge_fonciere.get("central"),
+                # les hypothèses CALIBRÉES à saisir pour retrouver ce chiffre (coût 0 = fourchette auditée).
+                "hypotheses": {"marge_frais_pct": (_bp or {}).get("marge_cible_pct"),
+                               "vrd_m2": (_bp or {}).get("cout_vrd_base")},
+                "source": "bilan calibré de Comparer (méthode canonique)"}
+    except Exception:  # noqa: BLE001 — la référence est un bonus, ne casse jamais la charge
+        pass
     res["prix_neuf_label"] = ps["label"]
     res["prix_neuf_repli_ile"] = ps["repli_ile"]
     # MANDAT PRIX-SORTIE-1 — même objet source-unique que la fiche (resolve_prix_sortie_servi) :
@@ -2788,7 +2839,7 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
     commune, document, article, PAGE PDF, millésime, lien. Aucun résumé, aucun reformulé. `doute` et
     `pagination_ambigue` sont RENDUS. `insee` absent = île entière. RNU / commune non ingérée =
     réponse honnête."""
-    from ..ingestion.plu_ingest import corpus_status, search_reglement
+    from ..ingestion.plu_ingest import corpus_status, count_reglement, search_reglement
     q = (q or "").strip()
     if not q:
         raise HTTPException(400, "Requête vide.")
@@ -2806,6 +2857,9 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
                                (f"{nm} : règlement non ingéré (hors corpus) — rien à servir. "
                                 f"Voir /plu-annuaire/communes.")}
     res = search_reglement(db, q, insee, limit=limit, zone=zone)
+    # OUT-PLU-008 — `n_total` = total des correspondances (sans plafond) ; `affiches` = page servie.
+    # L'écran dit « N affichés sur M » plutôt que de présenter le compte plafonné comme le total.
+    n_total = count_reglement(db, q, insee, zone=zone)
     for r in res:
         r["gpu_consult"] = "https://www.geoportail-urbanisme.gouv.fr/"
         if r.get("pagination_ambigue"):
@@ -2827,7 +2881,10 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
                                                 "porte": e.get("porte")})
         except Exception:  # noqa: BLE001
             exceptions_zone = []
-    return {"query": q, "insee": insee, "n": len(res), "resultats": res,
+    # OUT-PLU-008 — `n` = extraits AFFICHÉS (page servie, plafonnée par `limit`), `n_total` = total réel
+    # des correspondances. L'écran dit « N affichés sur M » (jamais le compte plafonné pris pour le total).
+    return {"query": q, "insee": insee, "n": len(res), "n_total": n_total,
+            "tronque": n_total > len(res), "resultats": res,
             "exceptions_zone": exceptions_zone,
             "avis": "Verbatim du règlement opposable (source GPU). Vérifiez toujours au document "
                     "(lien) ; ceci n'est pas un conseil juridique."}

@@ -87,13 +87,13 @@ const ROWS: Row[] = [
   // trois), suffixée de SA CAUSE (« terrain exigu », etc.). Plus de libellé qui ment.
   { label: 'Zone constructible', prov: 'source',
     val: (r) => r.zone_constructible == null ? '—' : r.zone_constructible ? 'oui' : 'non',
-    title: 'La ZONE du PLU autorise-t-elle de construire (famille U/AU) ? Distinct du potentiel résiduel restant (ligne SDP résiduelle) : une zone constructible peut n\'avoir aucun potentiel si la parcelle est déjà saturée ou trop exiguë.' },
+    title: 'La ZONE du PLU autorise-t-elle de construire (famille U/AU) ? Distinct du potentiel résiduel restant (ligne SDP restante) : une zone constructible peut n\'avoir aucun potentiel si la parcelle est déjà saturée ou trop exiguë.' },
   // O2-5 — chaque capacité porte son périmètre (source unique lib/perimetres) : la « max » suppose le
   // terrain libéré, la « résiduelle » suppose le bâti conservé — sinon les deux se contredisent à l'œil.
   // IMPLANTATION-4 (LOT C) — SDP de l'ancien moteur = « SDP maximale réglementaire » (jamais « du
   // scénario », réservé à l'Étude) : les deux libellés ne se croisent jamais.
   { label: `SDP maximale réglementaire · ${PERIM_POTENTIEL_COURT}`, prov: 'estime', val: (r) => r.sdp_max_m2 != null ? `${fmtInt(r.sdp_max_m2)} m²` : '—', num: (r) => r.sdp_max_m2 ?? null, best: 'hi' },
-  { label: `SDP résiduelle · ${PERIM_RESIDUEL_COURT}`, prov: 'estime',
+  { label: `SDP restante · ${PERIM_RESIDUEL_COURT}`, prov: 'estime',
     // RECETTE-PROD-1 (12) — potentiel résiduel + CAUSE COURTE quand il n'y a pas de potentiel (0/—) :
     // le client voit POURQUOI (terrain exigu, zone non constructible…), pas un « 0 » muet. La phrase
     // longue reste dans l'infobulle (title) ; la cellule porte un tag court.
@@ -140,7 +140,9 @@ const ROWS: Row[] = [
   // COMPARER-2 §3 — le verdict d'assainissement est souvent une STATISTIQUE de secteur (« 59 % non
   // raccordés »), pas un raccordement constaté à la parcelle → badge Estimé.
   { label: 'Assainissement', prov: 'estime', val: (r) => r.assainissement ?? '—', title: 'Desserte d\'assainissement — souvent un constat de secteur (statistique), pas un raccordement vérifié à la parcelle.' },
-  { label: 'Propriétaire', prov: 'source', val: (r) => r.proprietaire === 'morale' ? 'personne morale' : r.proprietaire === 'particulier' ? 'particulier' : '—', title: 'Personne morale (société) ou particulier — issu du fichier DGFiP.' },
+  // NU-3-J#7 — vocabulaire partagé : le PUBLIC (commune/État/collectivité) n'est plus perdu en « — » ;
+  // succession/indivision disent leur nature (le patronyme n'est jamais exposé ici — décision Vic).
+  { label: 'Propriétaire', prov: 'source', val: (r) => ({ morale: 'personne morale', public: 'public', particulier: 'particulier', succession: 'succession', indivision: 'indivision' } as Record<string, string>)[r.proprietaire as string] ?? '—', title: 'Public / personne morale / succession / indivision / particulier — issu du fichier DGFiP.' },
   { label: 'Contrainte majeure', prov: 'source', val: (r) => r.contrainte_majeure ?? (r.n_contraintes ? `${r.n_contraintes} signalée(s)` : 'aucune') },
 ]
 

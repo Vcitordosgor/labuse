@@ -201,7 +201,9 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
     # tier SERVI (parcel_p_score_v2) + étage 0 (dry-run servi) + propriétaire moral — plus de vestige
     # de matrice (opportunity_score retiré) ni de champ `statut` doublon (= tier_v2).
     rows = db.execute(text("""
-        SELECT p.id, p.idu, round(p.surface_m2) AS surface_m2, p.commune,
+        -- OUT-ASSEMB-013/001 (CONTENANCE-1) — surface de TERRAIN = contenance cadastrale (acte) si
+        -- présente, sinon dessin : homogène avec la fiche / le prefill taxe (jamais la surface de dessin seule).
+        SELECT p.id, p.idu, round(COALESCE(p.contenance_m2, p.surface_m2)) AS surface_m2, p.commune,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
                pm.denomination, pm.siren, pm.groupe_label
@@ -274,6 +276,10 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
         # l'étape 2 les nomme quand « pas d'assemblage possible » (elles ne se touchent pas).
         "isolees": [r["idu"] for r in rows if r["id"] not in seen],
         "surface_totale_m2": agg["surface_cumulee_m2"],
+        # NU-G-007 — part de l'assiette EN ZONE CONSTRUCTIBLE + % hors zone (alignés sur l'Étude du même
+        # assemblage) : la SDP combinée est bornée à cette part, le % hors zone est DIT à l'écran.
+        "surface_constructible_m2": agg.get("surface_constructible_m2"),
+        "pct_hors_zone": agg.get("pct_hors_zone"),
         "tronquee": tronquee, "cap": cap,
         # #1 — capacité + bilan cumulés RÉELS (fiche_payload agrégé)
         "sdp_combinee_m2": sdp, "sdp_max_seule_m2": sdp_max_seule,

@@ -250,7 +250,7 @@ _CHAMPS = [
     (("exposition", "versant", "orientation"), ("exposition_versant", "Exposition")),
     (("surface", "superficie", "taille"), ("surface_parcelle_m2", "Surface")),
     (("sdp", "surface de plancher", "constructible restant", "capacite"),
-     ("sdp_residuelle_m2", "SDP résiduelle")),
+     ("sdp_residuelle_m2", "SDP restante")),  # NU-3-M-T01 : « SDP restante » partout (cf. :34)
 ]
 
 

@@ -120,21 +120,23 @@ def _c_pente(db, idu, f):
 
 @extracteur("exposition_versant")
 def _c_exposition(db, idu, f):
-    t = f.get("terrain") or {}
-    val = t.get("exposition") or t.get("exposition_versant")
-    # EXPORTS-FIX-1 C7 — l'exposition est un calcul PARESSEUX (MNT RGE ALTI + gdaldem) que la fiche
-    # récupère par un endpoint dédié ; il est absent du payload de base, d'où une garde « — » alors
-    # que la pente, elle, sort. On la calcule ici par LE MÊME moteur (aucune valeur inventée : si le
-    # calcul échoue faute de réseau/altimétrie, on rend None et la tuile est omise, jamais « — »).
+    # DOC-ESTIMER-009 / NU-3-J — UNE SEULE exposition dans tout le produit : `exposition_parcelle`
+    # (MNT RGE ALTI + gdaldem), la MÊME que la tuile « Exposition » de l'écran (endpoint
+    # /parcels/{idu}/exposition) et que l'outil « Estimer » (`parcel_exposition`). On ne lit PLUS le
+    # calcul d'azimut 4-points d'`enrichment` servi dans le payload (`terrain.exposition_versant`), qui
+    # divergeait sur 3/5 cas. Repli sur le payload seulement si le calcul live échoue (jamais « — » faux).
+    val = None
+    try:
+        from sqlalchemy import text as _text
+        from ..faisabilite.exposition import exposition_parcelle
+        pid = db.execute(_text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+        res = exposition_parcelle(db, pid) if pid else None
+        val = (res or {}).get("orientation")
+    except Exception:  # noqa: BLE001 — un calcul paresseux ne fait jamais échouer un document
+        val = None
     if not val:
-        try:
-            from sqlalchemy import text as _text
-            from ..faisabilite.exposition import exposition_parcelle
-            pid = db.execute(_text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
-            res = exposition_parcelle(db, pid) if pid else None
-            val = (res or {}).get("orientation")
-        except Exception:  # noqa: BLE001 — un calcul paresseux ne fait jamais échouer un document
-            val = None
+        t = f.get("terrain") or {}
+        val = t.get("exposition") or t.get("exposition_versant")
     return _nz(val)
 
 
@@ -292,8 +294,15 @@ def _c_scot(db, idu, f):
     if not isinstance(d, dict) or not d.get("disponible"):
         return None
     bits = [d.get("nom") or "SCOT"]
-    if d.get("date_approbation"):
-        bits.append(f"approuvé le {d['date_approbation']}")
+    statut = (d.get("statut") or "").strip().lower()
+    date = d.get("date_approbation")
+    # DOC-DOSSIER-045 — « approuvé le {date} » SEULEMENT si le statut l'est. Un SCOT « en projet »
+    # porte une date prévisionnelle, pas une approbation : l'afficher « approuvé » est une fausse
+    # opposabilité. On lit `statut` (approuvé / en projet) au lieu de le supposer depuis la date.
+    if statut.startswith("approuv"):
+        bits.append(f"approuvé le {date}" if date else "approuvé")
+    elif statut:
+        bits.append(f"{statut} (échéance prévue {date})" if date else statut)
     return " — ".join(bits)
 
 
@@ -652,7 +661,14 @@ def _c_tfpb(db, idu, f):
 def _c_prix_ancien(db, idu, f):
     # la distribution du secteur (médiane + points retenus/écartés) — le rendeur en tire le nuage.
     pa = f.get("prix_ancien") or {}
-    return pa if pa.get("median") is not None else None
+    if pa.get("median") is None:
+        return None
+    # G-010 / NU-G-004 — sur un bien NU (aucun bâti), le « prix ancien médian » bâti n'est PAS le prix
+    # du bien : on ne le met pas en tête d'un dossier de terrain nu (le prix du terrain tient ce rôle,
+    # via `prix_terrain_secteur_eur_m2`), comme « Estimer un bien » qui refuse d'estimer un terrain nu au bâti.
+    if (f.get("etat_bien") or "") == "nu":
+        return None
+    return pa
 
 
 @extracteur("prix_terrain_secteur_eur_m2")

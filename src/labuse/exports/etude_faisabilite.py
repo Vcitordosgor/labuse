@@ -673,7 +673,10 @@ def _p5_plan_masse(payload: dict, retenu: dict, *, titre: str = None) -> str:
         f'<td class="n"><span class="chip e">Estimé</span></td></tr>',
         f'<tr><td class="k">Places dessinées</td><td>{sc["stationnement"]["places"]}</td>'
         f'<td class="n"><span class="chip e">Estimé</span></td></tr>',
-        f'<tr><td class="k">Espaces libres · dont pleine terre</td><td>{_m2(sc.get("pleine_terre_m2"))}</td>'
+        # DOC-ETUDE-029 — le libellé dit ce que la valeur EST : `pleine_terre_m2` (la part pleine terre
+        # perméable), pas le total des espaces libres. Plus de « Espaces libres · dont pleine terre » qui
+        # laissait croire que le chiffre était l'ensemble des espaces libres.
+        f'<tr><td class="k">Pleine terre (espace libre perméable)</td><td>{_m2(sc.get("pleine_terre_m2"))}</td>'
         f'<td class="n"><span class="chip d">Dérivé</span></td></tr>',
     ]
     acces = sc["stationnement"].get("acces")

@@ -536,7 +536,7 @@ export const getParcelGeojson = (idu: string) =>
 export const getFiche = (idu: string) => j<Fiche>(`/parcels/${idu}?source=${SOURCE}`)
 // RECETTE-8 W22 — l'exposition (orientation du versant + pente) calculée sur le MNT RGE ALTI,
 // lazy (fetch WMS + gdaldem ~0,5 s). Remplace la vue mer abandonnée dans la tête de fiche.
-export interface Exposition { idu: string; orientation: string | null; aspect_deg?: number | null; pente_moyenne_deg?: number | null; erreur?: string }
+export interface Exposition { idu: string; orientation: string | null; aspect_deg?: number | null; erreur?: string }
 export const getParcelExposition = (idu: string) =>
   j<Exposition>(`/parcels/${encodeURIComponent(idu)}/exposition`)
 // RETOURS-13 P6 — PROFIL ALTIMÉTRIQUE (coupe le long d'une ligne), lu LIVE dans le RGE ALTI.
@@ -610,7 +610,7 @@ export interface PluExtrait {
   pagination_ambigue: boolean; pagination_note?: string; source_url: string; gpu_consult?: string
 }
 export interface PluSearch {
-  query: string; insee: string | null; n: number; resultats: PluExtrait[]; message?: string; avis?: string
+  query: string; insee: string | null; n: number; n_total?: number; tronque?: boolean; resultats: PluExtrait[]; message?: string; avis?: string
   // PLU-EXCEPTIONS-1 — exceptions calibrées de la zone filtrée (verbatim + article/page), sous l'article.
   exceptions_zone?: { regle: string; texte: string; article: string | null; page_pdf: number | null; porte: string | null }[]
 }

@@ -66,10 +66,13 @@ def test_f14_radar_badges_nouveau_et_vente_longue_servis():
 def test_f31_blocb_zan_horizon_sans_defaut_fabrique():
     """F31 — la ligne ZAN ne fabrique plus un horizon d'épuisement de 99 ans quand il est absent
     (`?? 99`) : un horizon ABSENT est neutre (ton mint), jamais faussement « > 5 ans » via un 99
-    inventé. Le palier de COULEUR (< 5 ans) reste de la présentation d'une valeur servie."""
+    inventé. OUT-COMMUNE-019 : le palier de COULEUR suit désormais le `statut` SERVI par l'API
+    (« tension forte » ≤ 5 ans), plus un seuil `horizon < 5` re-dérivé au front (qui ne collait pas
+    au ≤ 5 de l'API) — une seule source de palier."""
     bb = (SRC / "components/outils/blocB.tsx").read_text(encoding="utf-8")
     assert "?? 99" not in bb, "défaut 99 fabriqué revenu (F31)"
-    assert "horizon != null && horizon < 5" in bb
+    assert "c.statut === 'tension forte'" in bb, "palier de couleur non aligné sur le statut API (OUT-COMMUNE-019)"
+    assert "horizon != null && horizon < 5" not in bb, "seuil horizon re-dérivé au front revenu (doit lire le statut API)"
 
 
 def test_f25_radar_corpus_jeune_servi():

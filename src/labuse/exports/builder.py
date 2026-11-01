@@ -508,9 +508,10 @@ def _apporteur_contexte(db, idu: str, fiche: dict, jour: date, compte_id: int | 
         "is_bati": bool(lb.get("nb_batiments") or lb.get("emprise_batie_m2")),
         "is_pm": isinstance(pm, dict) and bool(pm),
         "industriel_proche": industriel,
-        # §6 — questions d'observation conditionnelles (imprimées si la couche touche). La ligne
-        # HTA/HTB (< 50 m) n'a pas de couche fiable dans le socle → question omise tant qu'elle manque.
-        "obs_eau": obs_eau, "obs_mouvement": obs_mouvement, "obs_pollution": obs_pollution, "obs_ligne_ht": False,
+        # §6 — questions d'observation conditionnelles (imprimées si la couche touche). DOC-APPORTEUR-017 :
+        # la ligne HTA/HTB (< 50 m) n'a AUCUNE couche fiable dans le socle → le drapeau `obs_ligne_ht`
+        # (toujours False) et sa question morte ont été retirés (cf. blocs/apporteur.py §6).
+        "obs_eau": obs_eau, "obs_mouvement": obs_mouvement, "obs_pollution": obs_pollution,
         "icpe_detail": icpe_detail,   # RECETTE-11 D7 — description/distance de l'ICPE relevée
         "voisines": voisines,
         "plan": _apporteur_plan(db, idu, voisines),

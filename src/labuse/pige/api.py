@@ -1815,10 +1815,10 @@ def radar_annonce_estimation(
             fiche = parcel_fiche(idu, db=db)
         except ValueError:
             return {"idu": idu, "median": None, "type_comparateur": None, "note": "Parcelle inconnue."}
-        # CHASSE-4-FIX (C4-002) — nombre d'aléas = la liste DÉDUPLIQUÉE `_risques_rows` (une ligne par
-        # aléa, sans doublon DEAL/PPR), la MÊME que le PDF compte. Servi ici pour que la tuile « Risques »
-        # de l'écran lise EXACTEMENT ce que le document imprime (fin de l'écart 1≠2 / 4≠2).
-        n_aleas = len(_risques_rows(fiche, (fiche or {}).get("commune")))
+        # CHASSE-4-FIX (C4-002) + NU-3-J#4 — nombre d'aléas = les familles d'aléas DISTINCTES
+        # (`distinct_hazards`), compteur UNIQUE partagé par la tuile « Aléas » de la fiche (`aleas.n_hazards`)
+        # et le PDF (`_risques_rows`, une ligne par hazard) : fiche == Estimer == PDF, fin de l'écart 6≠2.
+        n_aleas = len(distinct_hazards(((fiche or {}).get("aleas") or {}).get("liste")))
         return {"idu": idu, "n_aleas": n_aleas,
                 **estimation_annonce(db, idu, fiche, surface_hab=surface_hab)}
 
@@ -1950,6 +1950,20 @@ _HAZARDS = (("inondation", "Inondation"), ("mouvement", "Mouvement de terrain"),
             ("houle", "Houle / recul du trait de côte"))
 
 
+def distinct_hazards(aleas_liste: list[dict] | None) -> list[str]:
+    """NU-3-J#4 / NU-G-014 — familles d'aléas DISTINCTES d'une liste `aleas.liste` : on FUSIONNE les
+    entrées « Aléa X » (intensité Géorisques), « PPR — zone … » (règlement) et les niveaux multiples
+    d'un même aléa → UN hazard compté une seule fois. Compteur d'aléas UNIQUE, partagé par la tuile
+    « Aléas » de la fiche, l'outil « Estimer » et le PDF — plus jamais « 6 » d'un côté et « 2 » de l'autre."""
+    out: list[str] = []
+    for e in aleas_liste or []:
+        txt = f"{e.get('nature') or ''} {e.get('libelle') or ''}".lower()
+        for frag, lab in _HAZARDS:
+            if frag in txt and lab not in out:
+                out.append(lab)
+    return out
+
+
 def _risques_rows(fiche: dict, commune: str | None) -> list[dict]:
     """ANNONCE-5-FIX — table des risques : UNE LIGNE PAR ALÉA (inondation, mouvement de terrain…), sans
     doublon DEAL/PPR. Chaque ligne : niveau d'aléa (Géorisques), zone PPR + part de la parcelle, et
@@ -2008,6 +2022,9 @@ def _risques_rows(fiche: dict, commune: str | None) -> list[dict]:
                     "pluviales)." if doc else "Zone bleue du PPR — constructible sous prescriptions.")
         return "Aléa signalé (Géorisques), hors zonage PPR réglementaire sur la parcelle."
 
+    # NU-3-J#4 — la LISTE des hazards vient du compteur UNIQUE `distinct_hazards` (même scan que la
+    # tuile « Aléas » de la fiche `aleas.n_hazards`) : `len(_risques_rows) == aleas.n_hazards`, garanti.
+    hazards = distinct_hazards(liste)
     rows = []
     for lab in hazards:
         it = intensite.get(lab) or {}
@@ -2151,7 +2168,11 @@ def rapport_parcelle(db, idu: str, fiche: dict | None = None, surface_hab: float
                       if _dm.get("date_mutation") else None)
     return {
         "idu": idu, "adresse": (fiche or {}).get("adresse"), "commune": commune,
-        "zone": zone, "surface_m2": (fiche or {}).get("surface_m2"), "nature_label": nature_label,
+        # NU-G-003 — surface de TERRAIN = contenance cadastrale (comme la fiche/Comparer : 907, pas le
+        # dessin 913), repli dessin si la contenance manque. Une seule notion de surface entre écrans.
+        "zone": zone, "surface_m2": ((fiche or {}).get("surface_terrain_m2")
+                                     if (fiche or {}).get("surface_terrain_m2") is not None
+                                     else (fiche or {}).get("surface_m2")), "nature_label": nature_label,
         "exposition": expo,
         "estimation": est,
         "derniere_vente": derniere_vente,
