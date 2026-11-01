@@ -690,19 +690,29 @@ def config_run() -> dict:
 
 
 @app.get("/version")
-def version() -> dict:
-    """COCKPIT-1 (Lot A) — ÉTAT SERVI, lecture seule et PUBLIQUE : la version (run) que cette app sert
-    réellement, la date de sa mise en ligne et l'environnement. Sert au Tableau de bord LOCAL à lire
-    « où en sont les clients » : le Mac interroge /version de l'app en ligne (serveur à serveur, pas
-    d'URL dans le front) pour comparer le run servi en prod au run calculé localement. Zéro écriture,
-    zéro secret. Le `promu_le`/`par` viennent du manifeste servi (le point de vérité de la bascule)."""
+def version(request: Request) -> dict:
+    """COCKPIT-1 (Lot A) — ÉTAT SERVI, lecture seule : la version (run) que cette app sert réellement et
+    la date de sa mise en ligne. Sert au Tableau de bord LOCAL (le Mac interroge /version de l'app en
+    ligne, serveur à serveur) à comparer le run servi en prod au run calculé localement — il n'y lit que
+    `run`/`promu_le`.
+
+    FIX-FINAL-1 (NU-F-031) — `env` (nom d'environnement) et `par` (qui a déployé) ne sont PLUS servis à
+    tout le monde : ce sont des détails d'exploitation (pas des secrets, mais inutiles au public). Ils ne
+    sortent qu'à un admin authentifié. Le cœur public (run/run_precedent/promu_le) est inchangé — le Mac
+    ne lisant que run/promu_le n'est pas affecté."""
     from .. import config, manifeste
     m = manifeste.lire() or {}
-    return {"run": runs.current(),
-            "run_precedent": runs.precedent(),
-            "promu_le": m.get("promoted_at"),
-            "par": m.get("par"),
-            "env": config.get_settings().env}
+    out = {"run": runs.current(),
+           "run_precedent": runs.precedent(),
+           "promu_le": m.get("promoted_at")}
+    try:
+        from .auth import exiger_admin
+        exiger_admin(request)            # lève si non-admin → on ne révèle pas env/par
+        out["par"] = m.get("par")
+        out["env"] = config.get_settings().env
+    except Exception:  # noqa: BLE001 — appel public (dont le Mac) : détails d'exploitation omis
+        pass
+    return out
 
 
 @app.get("/vocabulaire/paliers")
@@ -6818,7 +6828,10 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
     if sdp_servie is not None and not estimation_simplifiee and cause is None and not capacite_differee:
         try:
             from ..faisabilite.residuel import compute_residuel as _compute_residuel
-            _br = _compute_residuel(db, row["pid"])
+            # FIX-FINAL-1 (NU-E-003) — le run servi (q_v15+) est calculé assiette CLIPPÉE (Vic 24/09) ;
+            # ce recalcul d'intermédiaires doit l'être AUSSI, sinon il divergeait du chiffre de tête et
+            # était écarté par la garde 1 m² (intermédiaires tus). Même doctrine de bout en bout.
+            _br = _compute_residuel(db, row["pid"], assiette_clippee=True)
             if (_br.get("disponible") and _br.get("sdp_residuelle_m2") is not None
                     and abs(float(_br["sdp_residuelle_m2"]) - float(sdp_servie)) <= 1.0):
                 _empr = _br.get("emprise_constructible_m2")

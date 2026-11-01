@@ -232,7 +232,7 @@ export function ProjetsPanel() {
                 (filtre actif = vert plein + coche), plus des Bouton. */}
             <div className="mb-5 flex flex-wrap gap-2">
               <Chip data-tab-actifs on={!showArchived && !showCourriers} onClick={() => { setShowArchived(false); setShowCourriers(false); setMontre(4) }}>Actifs {actifs.length}</Chip>
-              <Chip data-tab-archives on={showArchived && !showCourriers} onClick={() => { setShowArchived(true); setShowCourriers(false); setMontre(4) }}>Archivées {archives.length}</Chip>
+              <Chip data-tab-archives on={showArchived && !showCourriers} onClick={() => { setShowArchived(true); setShowCourriers(false); setMontre(4) }}>Archivés {archives.length}</Chip>
               <Chip data-tab-courriers on={showCourriers} onClick={() => { setShowCourriers(true); setMontre(4) }}>Mes courriers {courriers.length}</Chip>
             </div>
 

@@ -778,9 +778,13 @@ def events_count(request: Request, db: Session = Depends(get_db)) -> dict:
     mk = list(_BROADCAST_KINDS)
     # CIRCUIT-2 lot 1.6 — même moteur `plateforme_compteurs` que list_events (n_notifications).
     from ..registre.moteurs.plateforme import notifications_non_lues
-    n = notifications_non_lues(db, cid)
+    # FIX-FINAL-1 (NU-F-025) — MÊME filtre cloche que `list_events` : sans lui, /events/count comptait
+    # les types MIS EN SOURDINE que /events masque → pastille « N non lues » qui ne correspond à rien
+    # dans la liste. Le compteur et la liste disent désormais le même nombre.
+    cf = _cloche_filter_sql(prefs_compte(db, cid)) + _cloche_closed_sql(cid)
+    n = notifications_non_lues(db, cid, cloche_filter_sql=cf)
     per = db.execute(text(f"SELECT idu, count(*) FROM event_log e WHERE idu IS NOT NULL"
-                          f" AND {_visible('e')} AND NOT {_seen('e')}{_cloche_closed_sql(cid)} GROUP BY idu"),
+                          f" AND {_visible('e')} AND NOT {_seen('e')}{cf} GROUP BY idu"),
                      {"cid": cid, "market": mk, "cloche": list(_CLOCHE_KINDS)}).all()
     return {"unread": n, "par_parcelle": {r[0]: r[1] for r in per}}
 

@@ -265,23 +265,42 @@ def _selection_secteur(sales: list[dict], base_plans: list[tuple], min_n: int) -
     return None
 
 
-def sector_price(db: Session, parcel_id: int, hyp: Hypotheses) -> dict:
+def sector_price(db: Session, parcel_id: int, hyp: Hypotheses,
+                 type_prioritaire: str | None = None) -> dict:
     """Prix de sortie €/m² HABITABLE, fiabilisé (type prioritaire, rayon adaptatif, aberrants
-    exclus, récence, indice de fiabilité)."""
+    exclus, récence, indice de fiabilité).
+
+    FIX-FINAL-1 (NU-A-002 / NU-D-010) — `type_prioritaire` (nature réelle du bien, lue sur la
+    dernière mutation DVF comme « Estimer un bien ») force la médiane du BON type :
+      · "maison"      → médiane MAISONS seules (secteur puis commune entière), JAMAIS d'appartements
+                        empruntés → plus de prix d'appartement imprimé en tête d'un dossier de maison ;
+      · "appartement" → médiane appartements seuls (secteur puis commune) ;
+      · None          → comportement « prix de sortie » promoteur historique inchangé (appartement,
+                        comparable d'un collectif neuf → repli mixte appart+maison → commune).
+    Quand le type demandé manque d'effectif jusqu'à la commune, on sert « insuffisant » (honnête),
+    on n'emprunte pas l'autre type. Appelé sans `type_prioritaire` par le bilan promoteur et « Mon
+    secteur » (inchangés) ; avec, par la tête de fiche / le Dossier (point d'appel `marche_dvf`)."""
     sales, n_dup = _ventes_bati_dedup(db, parcel_id)
     min_n = MIN_N_SECTEUR   # n minimum visé (constante SECTEUR-2 T1 ; = hyp.dvf_min_ventes = 8)
 
     # SECTEUR-2 (T1) — segments HOMOGÈNES période × type, rayon adaptatif jusqu'à n min.
-    # Type : appartement (comparable d'un collectif neuf) → mixte appart+maison → commune entière.
-    base_plans = ([("appartement", {"appartement"}, r, False) for r in RAYONS_SECTEUR_M]
-                  + [("mixte (appart+maison)", {"appartement", "maison"}, r, False) for r in RAYONS_SECTEUR_M]
-                  + [("appartement", {"appartement"}, 1500.0, True),
-                     ("mixte (appart+maison)", {"appartement", "maison"}, 1500.0, True)])
+    tp = type_prioritaire if type_prioritaire in ("maison", "appartement") else None
+    if tp:
+        # type RÉEL du bien : ce type SEUL, du plus proche à la commune entière (jamais l'autre type).
+        base_plans = [(tp, {tp}, r, False) for r in RAYONS_SECTEUR_M] + [(tp, {tp}, 1500.0, True)]
+    else:
+        # Type : appartement (comparable d'un collectif neuf) → mixte appart+maison → commune entière.
+        base_plans = ([("appartement", {"appartement"}, r, False) for r in RAYONS_SECTEUR_M]
+                      + [("mixte (appart+maison)", {"appartement", "maison"}, r, False) for r in RAYONS_SECTEUR_M]
+                      + [("appartement", {"appartement"}, 1500.0, True),
+                         ("mixte (appart+maison)", {"appartement", "maison"}, 1500.0, True)])
     chosen = _selection_secteur(sales, base_plans, min_n)
     if chosen is None:
-        sub = sales
+        # repli du dernier ressort : pour un type demandé, on reste sur CE type (jamais de mélange) ;
+        # sinon le mixte historique. Sous le seuil → `fiable: False` plus bas (honnête).
+        sub = [s for s in sales if s["cat"] == tp] if tp else sales
         kept, ecartees = _trim_aberrants(sub)
-        chosen = ("mixte (appart+maison)", kept, ecartees, 1500.0, True, sub, "élargie")
+        chosen = (tp or "mixte (appart+maison)", kept, ecartees, 1500.0, True, sub, "élargie")
 
     label, kept, ecartees, radius, commune, sub, periode_seg = chosen
     # MARCHE-UNIQUE-1 (NU-A-012 / NU-E-030) — la médiane SERVIE (lue comme « Prix ancien médian » par

@@ -144,13 +144,17 @@ def _pente_lidar(session, parcelles: list[Parcelle]) -> Optional[dict]:
     """Dénivelé/pente via le profil altimétrique LiDAR (RGE ALTI). Réseau requis ; None si indisponible."""
     try:
         from labuse.faisabilite.profil_altimetrique import profil_parcelle
-    except Exception:
+    except Exception:  # noqa: BLE001 — module profil absent (install partielle) : LiDAR non disponible
         return None
     idu = max(parcelles, key=lambda p: p.aire_dessin_m2).idu
     try:
         prof = profil_parcelle(session, idu)
-    except Exception:
-        return None
+    except Exception as _lidar_err:  # noqa: BLE001
+        # FIX-FINAL-1 (NU-E-063) — on ne l'avale plus en silence : l'échec du profil LiDAR est journalisé
+        # (visibilité ops) et renvoyé comme « indisponible » AVEC un motif, jamais un None muet.
+        import logging
+        logging.getLogger("labuse").warning("profil LiDAR %s indisponible : %s", idu, _lidar_err)
+        return {"disponible": False, "motif": "profil altimétrique indisponible (erreur technique)"}
     if not prof or not prof.get("disponible"):
         return {"disponible": False, "motif": (prof or {}).get("motif")}
     return {"disponible": True, "source": prof.get("source"),

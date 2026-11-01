@@ -2090,8 +2090,14 @@ def _worker_etude_pdf(data: dict, idus: list[str], scenario_ref: str | None, gen
         _attach_au_ouverture(s, payload, idus)
         _attach_contraintes_signalees(s, payload, idus)
         _attach_zone_gabarit(s, payload, idus)
-    rendu = (ef.rendu_lotissement(payload, genere_le=genere_le) if payload.get("lotissement")
-             else ef.rendu_etude(payload, genere_le=genere_le, scenario_ref=scenario_ref))
+    # FIX-FINAL-1 (régression NU-E-055 / NU-D-001) — refus « hors périmètre » : document de refus honnête
+    # (jamais un 500 technique ni un 400 muet), comme l'écran sert le verdict sans planter.
+    if payload.get("hors_perimetre"):
+        rendu = ef.rendu_hors_perimetre(payload, genere_le=genere_le)
+    elif payload.get("lotissement"):
+        rendu = ef.rendu_lotissement(payload, genere_le=genere_le)
+    else:
+        rendu = ef.rendu_etude(payload, genere_le=genere_le, scenario_ref=scenario_ref)
     pdf = render_pdf(rendu["html"])
     return {"pdf": pdf, "numero": rendu["numero"], "retenu_ref": rendu["retenu_ref"],
             "payload": payload}   # payload complet → archivage identique côté parent
@@ -2195,7 +2201,15 @@ def _attach_contraintes_signalees(db: Session, payload: dict, idus) -> None:
         except Exception:  # noqa: BLE001
             pass
     if items:
-        payload.setdefault("terrain", {})["contraintes_signalees"] = items
+        # FIX-FINAL-1 (régression NU-E-055 / NU-D-001) — `payload["terrain"]` peut être None sur un
+        # refus hors périmètre ; `setdefault` renvoyait alors None et `None[...] = …` levait un
+        # TypeError ressorti en 500. On get-or-crée un DICT sûr (défense en profondeur ; la source
+        # service.py sert déjà un dict).
+        t = payload.get("terrain")
+        if not isinstance(t, dict):
+            t = {}
+            payload["terrain"] = t
+        t["contraintes_signalees"] = items
 
 
 def _attach_zone_gabarit(db: Session, payload: dict, idus) -> None:
@@ -2209,7 +2223,11 @@ def _attach_zone_gabarit(db: Session, payload: dict, idus) -> None:
     try:
         v = collecte(db, idus[0], ["gabarit_zone_libere_m2", "gabarit_implantation_m2"])
         x, y = v.get("gabarit_zone_libere_m2"), v.get("gabarit_implantation_m2")
-        t = payload.setdefault("terrain", {})
+        # FIX-FINAL-1 — même garde que _attach_contraintes_signalees : terrain peut être None (refus).
+        t = payload.get("terrain")
+        if not isinstance(t, dict):
+            t = {}
+            payload["terrain"] = t
         if x is not None and x.valeur is not None:
             t["zone_gabarit_libere_m2"] = float(x.valeur)
             if y is not None and y.valeur is not None:

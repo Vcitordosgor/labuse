@@ -194,7 +194,8 @@ def vefa_fenetre_predicat(col: str = "date_mutation") -> str:
 
 def neuf_vefa_commune(session: Session, insee: str) -> dict:
     """M101 B2 (arbitrage Vic) — le NEUF que l'ACTE déclare : médiane €/m² bâti des ventes
-    « Vente en l'état futur d'achèvement » de la COMMUNE, fenêtre 3 ans. Jamais une inférence
+    « Vente en l'état futur d'achèvement » de la COMMUNE, fenêtre `NEUF_VEFA_FENETRE_ANS` (= 5 ans ;
+    FIX-FINAL-1/NU-E-037 : la docstring disait « 3 ans » là où le code en applique 5). Jamais une inférence
     (DVF ne porte aucune année de construction — AUDIT_M101 §B1.2) ; le complément non-VEFA ne
     s'appelle JAMAIS « ancien ». Grain commune : la VEFA n'atteint le seuil que dans 11/24
     communes (§B1.3) — l'absence est un état normal du profil, dite, pas un trou. Le SEUIL

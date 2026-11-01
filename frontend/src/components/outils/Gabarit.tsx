@@ -241,6 +241,10 @@ export function Gabarit() {
   // (géométriques, appliquées) de l'analyse du règlement PPR (non intégrée, listée ci-dessous).
   const pprNonIntegre = (res?.nonIntegratedRules ?? []).some(
     (n) => /PPR/i.test(String(n.label ?? '')) || /PPR/i.test(String(n.source?.document ?? '')))
+  // FIX-FINAL-1 (NU-D-027) — part de la parcelle en zone d'exclusion ; > 50 % ⇒ « majoritairement
+  // inconstructible » : le gabarit tient sur une portion résiduelle, « risques intégrés ✓ » serait trompeur.
+  const partExclue = res?.partExcluePct ?? null
+  const exclusionMajoritaire = partExclue != null && partExclue > 50
   const familles = res?.coverage
     ? [
         { k: 'reculs', ok: res.coverage.reculs, label: 'Reculs vérifiés' },
@@ -249,7 +253,9 @@ export function Gabarit() {
         { k: 'emprise', ok: res.coverage.emprise,
           label: res.plafondEmpriseStatus === 'absent' ? 'Emprise vérifiée — sans plafond' : 'Emprise vérifiée' },
         { k: 'risques', ok: res.coverage.risques && !pprNonIntegre,
-          label: pprNonIntegre
+          label: exclusionMajoritaire
+            ? `Parcelle majoritairement inconstructible — ${partExclue} % en zone d’exclusion (gabarit sur la portion restante)`
+            : pprNonIntegre
             ? 'Aléas : zones d’exclusion intégrées — analyse du règlement PPR non intégrée (ci-dessous)'
             : 'Risques intégrés' },
       ]
@@ -307,6 +313,16 @@ export function Gabarit() {
       {auDiffere && (
         <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] leading-snug text-amber-300">
           {auDiffere.libelle ?? 'Potentiel différé — ouverture de la zone requise'}
+        </p>
+      )}
+
+      {/* FIX-FINAL-1 (NU-D-027) — majorité de la parcelle en zone d'exclusion (PPR rouge & autres) :
+          l'enveloppe ne tient que sur la portion restante. Mise en garde explicite, jamais « risques ✓ ». */}
+      {exclusionMajoritaire && (
+        <p data-gabarit-exclusion-majoritaire
+           className="rounded-lg border border-coral/50 bg-coral/10 px-3 py-2 text-[11px] leading-snug text-coral">
+          Parcelle majoritairement inconstructible : {partExclue} % en zone d'exclusion (PPR zone rouge et autres
+          interdictions). Le gabarit n'est calculé que sur la portion restante — à confirmer au règlement.
         </p>
       )}
 

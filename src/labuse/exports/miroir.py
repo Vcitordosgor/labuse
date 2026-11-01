@@ -1173,7 +1173,11 @@ def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, V
         # contenance cadastrale ; sinon « surface (plan) » (dessin, repli). Jamais « contenance »
         # sur une parcelle dont la contenance est absente (BC9999 : 600 m² source=plan).
         f'<div><b>{fmt_m2(valeurs["surface_parcelle_m2"].valeur) if valeurs.get("surface_parcelle_m2") else "—"}</b>'
-        f'{"contenance" if (valeurs.get("surface_source") and valeurs["surface_source"].valeur == "cadastre") else "surface (plan)"}</div>'
+        # FIX-FINAL-1 (NU-D-041) — `surface_source` n'est PAS un id déclaré de la fiche, donc jamais
+        # collecté dans `valeurs` → le ternaire tombait TOUJOURS en « surface (plan) », même sur une
+        # contenance cadastrale (IE0241 : 625 m² étiquetés « surface (plan) »). On lit la source
+        # CANONIQUE directement sur la fiche (`champs_terrain` la pose : cadastre/plan).
+        f'{"contenance" if (fiche.get("surface_source") == "cadastre") else "surface (plan)"}</div>'
         # EXPORTS-FIX-1 A2 — plus de « Modèle 3.0 · miroir de la fiche » en page de garde.
         '</div>'
         f'<div class="cover-tiles">{"".join(tuiles_html)}</div>'

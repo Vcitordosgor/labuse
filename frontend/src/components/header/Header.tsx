@@ -542,7 +542,7 @@ function MarqueForm() {
     <div data-marque-form className="flex flex-col gap-2 p-3 text-[12px]">
       <div className="flex items-center gap-3">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md border border-line-2 bg-surface-3">
-          {d?.logo_data_uri ? <img data-marque-logo src={d.logo_data_uri} alt="logo" className="max-h-full max-w-full" /> : <span className="text-[9px] text-txt-dim">logo</span>}
+          {d?.logo_data_uri ? <img data-marque-logo src={d.logo_data_uri} alt={d.raison_sociale ? `Logo ${d.raison_sociale}` : 'Logo de la marque'} className="max-h-full max-w-full" /> : <span className="text-[9px] text-txt-dim">logo</span>}
         </div>
         <div className="flex flex-col gap-1">
           <label className="cursor-pointer text-[11px] text-mint hover:underline">

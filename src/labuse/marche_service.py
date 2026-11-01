@@ -134,7 +134,22 @@ def marche_dvf(db: Session, idu: str, *, profil: str, avail: set[str] | None = N
         from .faisabilite.bilan import sector_price
         from .faisabilite.engine import Hypotheses
         pid = _parcel_id(db, idu)
-        return sector_price(db, pid, Hypotheses.charger()) if pid else None
+        if not pid:
+            return None
+        # FIX-FINAL-1 (NU-A-002 / NU-D-010) — « prix de l'ancien » de la TÊTE DE FICHE : la médiane du
+        # BON type de bien. On lit la nature réelle sur la dernière mutation DVF (même règle qu'« Estimer
+        # un bien », `_derniere_mutation_dvf`) et on la passe à `sector_price` → plus jamais un prix
+        # d'appartement servi en tête d'un dossier de maison. Point d'appel UNIQUE : tous les lecteurs de
+        # ce profil (fiche, Dossier, Comparatif, documents, Radar) deviennent type-exacts d'un coup.
+        tp = None
+        try:
+            from .pige.api import _derniere_mutation_dvf
+            mut = _derniere_mutation_dvf(db, idu)
+            nat = (mut or {}).get("nature")
+            tp = nat if nat in ("maison", "appartement") else None
+        except Exception:  # noqa: BLE001 — nature indéterminée : comportement historique (sans type)
+            tp = None
+        return sector_price(db, pid, Hypotheses.charger(), type_prioritaire=tp)
     if profil == DVF_VOISINAGE_100M:
         from .api.site_voisinage import voisinage_proche
         return voisinage_proche(db, idu)

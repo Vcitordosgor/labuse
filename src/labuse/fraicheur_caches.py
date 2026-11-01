@@ -30,8 +30,16 @@ from . import runs
 
 _RACINE = Path(__file__).resolve().parents[2]
 
-#: sha du code : figé par process (le code d'un process ne change pas). Prod : deploiement.json
-#: (écrit par deploy.sh) ; dev : git rev-parse. Jamais d'échec : « inconnu » plutôt qu'un crash.
+#: sha du code : figé par process (le code d'un process ne change pas — un déploiement redémarre
+#: le process). FIX-FINAL-1 (cache fiches servies périmées, NU-A-005/A-013/E-011) : on lit
+#: `git rev-parse HEAD` D'ABORD, `config/deploiement.json` ENSUITE en repli.
+#: Pourquoi cet ordre : le marqueur `deploiement.json` n'est réécrit QUE par `deploy.sh`. Sur un
+#: poste (ou toute machine où deploy.sh n'a pas tourné) il reste figé à une baseline → la clé de
+#: fraîcheur ne bougeait JAMAIS quand le code changeait, et le `fiche_cache` resservait des fiches
+#: calculées par un code antérieur. En prod, `git HEAD` == le sha que `deploy.sh` écrit dans le
+#: marqueur (même commit), donc l'ordre ne change rien là-bas ; le repli couvre les images sans
+#: `.git`. Résultat : un changement de code (nouveau commit, local comme prod) OU de run invalide
+#: le cache de lui-même, sans dépendre de deploy.sh.
 _CODE_SHA: dict = {"v": None}
 
 
@@ -40,18 +48,18 @@ def code_sha() -> str:
     if _CODE_SHA["v"] is not None:
         return _CODE_SHA["v"]
     sha = None
-    dep = _RACINE / "config" / "deploiement.json"
-    if dep.exists():
-        try:
-            sha = (json.loads(dep.read_text()).get("sha") or "")[:12] or None
-        except Exception:  # noqa: BLE001
-            sha = None
-    if sha is None:
-        try:
-            sha = subprocess.run(["git", "rev-parse", "--short=12", "HEAD"], cwd=_RACINE,
-                                 capture_output=True, text=True, timeout=5).stdout.strip() or None
-        except Exception:  # noqa: BLE001
-            sha = None
+    try:  # git HEAD D'ABORD — reflète le code réellement en place (commit courant), local comme prod
+        sha = subprocess.run(["git", "rev-parse", "--short=12", "HEAD"], cwd=_RACINE,
+                             capture_output=True, text=True, timeout=5).stdout.strip() or None
+    except Exception:  # noqa: BLE001 — git indisponible (image sans .git) : on passe au marqueur
+        sha = None
+    if sha is None:  # repli : marqueur de déploiement (écrit par deploy.sh = git HEAD au déploiement)
+        dep = _RACINE / "config" / "deploiement.json"
+        if dep.exists():
+            try:
+                sha = (json.loads(dep.read_text()).get("sha") or "")[:12] or None
+            except Exception:  # noqa: BLE001
+                sha = None
     _CODE_SHA["v"] = sha or "inconnu"
     return _CODE_SHA["v"]
 
@@ -382,13 +390,43 @@ def _etat_derives_regle(db) -> dict:
             "remede": "rejouer le geste de rebuild de la table signalée (labuse pc-caducs / score-v-compute)"}
 
 
+def _etat_marche_medianes(db) -> dict:
+    """FIX-FINAL-1 (NU-E-032) — branche enfin le détecteur `caches_marche_perimes` (il n'avait AUCUN
+    appelant → diagnostic mort). Un cache de médianes DVF (`dvf_secteur_medianes`) bâti sur un millésime
+    DVF antérieur au courant est DIT ici (page Données / `/sante/fraicheur`), avec son remède.
+
+    NON bloquant (`perime` False, précédent `_etat_intersections`) : les lecteurs servis lisent la médiane
+    LIVE (`marche_dvf_commune`), le cache secteur n'est pas sur le chemin servi — sa péremption est une
+    dette de DONNÉE à recalculer, pas une erreur qui doit refuser un déploiement. Mais elle ne reste plus
+    invisible : `labuse rebuild` (builder stampant le millésime) la résorbe."""
+    try:
+        from .marche_dvf_commune import caches_marche_perimes
+        perimes = caches_marche_perimes(db)
+    except Exception as e:  # noqa: BLE001 — base nue / table absente : rien à dire
+        try:
+            db.rollback()
+        except Exception:  # noqa: BLE001
+            pass
+        return {"cache": "dvf_secteur_medianes (médianes DVF par secteur)", "perime": False,
+                "detail": f"non vérifiable ({str(e)[:80]})", "remede": "labuse rebuild"}
+    detail = ("à jour" if not perimes
+              else " ; ".join(f"{c['cache']}: {c.get('motif', '')}" for c in perimes))
+    return {"cache": "dvf_secteur_medianes (médianes DVF par secteur)",
+            "cle_attendue": "millésime DVF courant", "cle_reelle": detail,
+            "perime": False,   # dette de donnée VISIBLE, non bloquante (lecteurs servis = médiane live)
+            "diagnostic_perimes": perimes,
+            "detail": detail,
+            "remede": "labuse rebuild (recalcule les médianes de secteur et stampe le millésime DVF)"}
+
+
 def etat(db) -> dict:
     """L'ÉTAT DE FRAÎCHEUR de chaque cache : clé attendue / clé réelle / périmé. Servi par
     `/sante/fraicheur`, affiché page Données, joué par `labuse rebuild --dry-run` (fumée)."""
     attendue = empreinte_attendue(db)
     caches = [_etat_manifeste(db), _etat_commune_cache(db, attendue), _etat_tuiles(db),
               _etat_tile_cache(db), _etat_spatial_sub(db), _etat_ia_cache(db, empreinte_courte(db)),
-              _etat_intersections(db), _etat_defisc_bareme(), _etat_derives_regle(db)]
+              _etat_intersections(db), _etat_defisc_bareme(), _etat_derives_regle(db),
+              _etat_marche_medianes(db)]
     return {"empreinte_attendue": attendue,
             "perimes": [c["cache"] for c in caches if c.get("perime")],
             "caches": caches}

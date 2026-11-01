@@ -107,10 +107,20 @@ def compute_gabarit(inp: GabaritInput) -> GabaritResult:
     plafond_m2 = None if footprint_absent else surface_parcelle * mf.percent / 100.0
     hauteur = None if hauteur_non_integree else float(mh.meters)
 
+    # FIX-FINAL-1 (NU-D-027) — PART de la parcelle en zone d'EXCLUSION (PPR rouge & autres interdictions,
+    # retranchée du gabarit). Mesurée sur le dessin (même repère que l'emprise). Sert à dire, quand elle
+    # domine, que la parcelle est « majoritairement inconstructible » plutôt que « risques intégrés ✓ ».
+    part_exclue_pct = (round(excl_in_parcel_m.area / parcel_m.area * 100)
+                       if excl_in_parcel_m is not None and parcel_m.area > 0 else None)
+    exclusion_majoritaire = bool(part_exclue_pct is not None and part_exclue_pct > 50)
+
     # --- couverture réglementaire ---------------------
     # emprise absente = « vérifiée — sans plafond » (le silence est une donnée) ; hauteur prospect = non intégrée.
+    # FIX-FINAL-1 (NU-D-027) — « risques intégrés » n'est PAS un ✓ serein quand la majorité de la parcelle
+    # est en zone d'exclusion : le gabarit tient sur une portion résiduelle. On retire la coche dans ce cas
+    # (l'écran/PDF affichent alors la mise en garde « majoritairement inconstructible »).
     risk_ok = any(ar.category == "exclusion" and ar.source and ar.source.document
-                  for ar in inp.applicableRules)
+                  for ar in inp.applicableRules) and not exclusion_majoritaire
     coverage = Coverage(reculs=bool(inp.setbacks), hauteur=not hauteur_non_integree,
                         emprise=True, risques=risk_ok)
 
@@ -169,6 +179,7 @@ def compute_gabarit(inp: GabaritInput) -> GabaritResult:
         hauteurEstimee=bool(getattr(mh, "estimee", False)),   # RECETTE-PROD-1 (A7) — étiquette « Estimé »
         hauteurEgoutM=None if mh.egoutMeters is None else _round(mh.egoutMeters),
         coverage=coverage,
+        partExcluePct=part_exclue_pct,
         appliedRules=applied,
         nonIntegratedRules=non_integ,
         contourGeoJSON=_gj(parcel_m),

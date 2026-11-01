@@ -834,6 +834,13 @@ def _gabarit(db, idu: str) -> dict:
         # EXPORTS-FIX-1 A8 — plus de « 4 familles vérifiées sur 4 … non intégrée(s) » (jargon QA) :
         # on dit en clair ce qui est vérifié et ce qui n'est pas modélisé.
         txt = ("Vérifié : " + ", ".join(fam)) if fam else "Aucune règle vérifiée"
+        # FIX-FINAL-1 (NU-D-027) — majorité de la parcelle en zone d'exclusion : le gabarit tient sur une
+        # portion résiduelle. Le moteur a déjà retiré « risques » de `fam` (coverage.risques=False) ; on
+        # DIT en clair pourquoi, au lieu de laisser croire « risques intégrés ✓ ».
+        _pe = getattr(res, "partExcluePct", None)
+        if _pe is not None and _pe > 50:
+            txt += (f" · Parcelle majoritairement inconstructible — {int(_pe)} % en zone d'exclusion "
+                    "(PPR zone rouge et autres interdictions) ; gabarit sur la portion restante")
         if ppr_non_integre:
             txt += " · Aléas : zones d'exclusion intégrées — analyse du règlement PPR non intégrée"
         # Les AUTRES règles non modélisées restent nommées. PPR est déjà dit par la clause « Aléas »

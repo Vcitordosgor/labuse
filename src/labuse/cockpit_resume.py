@@ -119,15 +119,21 @@ def _lignes_par_type(a_faire: dict, type_: str) -> list[dict]:
 
 # COCKPIT-1b (retour recette, point 4) — chaque cache périmé devient une carte EN FRANÇAIS (aucun code
 # run/cascade/hash à l'écran : il ne sort que dans « Voir le détail »). Libellé humain par cache.
+# FIX-FINAL-1 (NU-F-052) — les clés sont des SOUS-CHAÎNES des noms de cache RÉELLEMENT émis par
+# `fraicheur_caches.etat()` (ex. « tables dérivées (version de règle) », « mvt_tile_cache (z9-11…) »,
+# « served_manifest.json … »), et le filtre ci-dessous matche par `in` (plus par `startswith`). Avant,
+# `startswith("derives_regle")` / `startswith("tile_cache")` / `startswith("manifeste")` échouaient →
+# `noun = "un cache"` → « Les un cache sont en retard » (grammaire cassée) pour la MOITIÉ des caches.
 _CACHE_NOM = {
     "commune_contexte_cache": "fiches communes",
     "mvt_parcels": "couches subdivisées de la carte",
     "spatial_layers_sub": "couches découpées de la carte",
     "tile_cache": "tuiles pré-rendues",
     "ia_cache": "réponses IA pré-calculées",
-    "manifeste": "pointeurs du run servi",
-    "defisc_bareme": "barème de défiscalisation",
-    "derives_regle": "dérivés des règles",
+    "manifest": "pointeurs du run servi",
+    "défiscalisation": "barème de défiscalisation",
+    "tables dérivées": "dérivés des règles",
+    "médianes DVF": "médianes de marché par secteur",
     "parcel_couche_intersection": "servitudes matérialisées",
 }
 
@@ -136,7 +142,7 @@ def _carte_cache(cache: dict) -> dict:
     """Une carte « Reconstruire » pour un cache périmé : titre en français (+ compte si le détail en
     porte un), bouton Reconstruire ; les faits techniques (clé attendue/réelle, run) → « Voir le détail »."""
     nom_tech = str(cache.get("cache") or "cache")
-    noun = next((v for k, v in _CACHE_NOM.items() if nom_tech.startswith(k)), None) or "un cache"
+    noun = next((v for k, v in _CACHE_NOM.items() if k in nom_tech), None) or "un cache"
     det = str(cache.get("detail") or "")
     import re
     m = re.match(r"\s*(\d+)\s+périmée", det)
@@ -177,6 +183,13 @@ def _titre_incident_generique(cle: str, sujet: str):
     if cle.startswith("job-echec:"):
         nom = cle.split(":", 1)[1]
         return ("rouge", f"Un automate a échoué : {nom}",
+                {"label": "Réessayer", "action": "lancer-job", "nom": nom})
+    # FIX-FINAL-1 (NU-F-054) — `ops_alertes` ouvre aussi des incidents « job-retard:<nom> » (automate en
+    # retard sur sa cadence) : ils n'avaient AUCUN traitement ici → titre générique sans bouton. On les
+    # nomme et on sert le même « Réessayer » (relance le job) qu'un échec.
+    if cle.startswith("job-retard:"):
+        nom = cle.split(":", 1)[1]
+        return ("ambre", f"Un automate a du retard : {nom}",
                 {"label": "Réessayer", "action": "lancer-job", "nom": nom})
     if cle == "verite-sources":
         return ("rouge", "Des valeurs servies divergent des sources officielles", None)
