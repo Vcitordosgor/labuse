@@ -4461,7 +4461,10 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
             GROUP BY sl.bande
             """), {**params, "sl_run": _score_labuse_run()}).mappings().all()
         vb = {r["bande"]: int(r["n"]) for r in bandes}
-    out["bandes"] = {k: vb.get(k, 0) for k in ("A", "B", "C", "D", "0", "NC")}
+    # CF-013 — « Hors classement » (HC : forêt publique, voirie, domaine public écartés en dur par la
+    # cascade) est une catégorie À PART mais DOIT figurer dans la ventilation et le total, sinon
+    # `bande_total` sous-compte (425 691 au lieu du vrai 432 350) et contredit « rien n'est masqué ».
+    out["bandes"] = {k: vb.get(k, 0) for k in ("A", "B", "C", "D", "0", "NC", "HC")}
     out["bande_total"] = sum(out["bandes"].values())
     # ANALYSE-2/3 — le CROISEMENT bande × Signal de mutation sur TOUTES les bandes (A-D + Non retenue 0
     # + NC), pour un compteur filtré COHÉRENT (« X / Y » = le vrai total du couple Classement+Signal) ET
@@ -4483,7 +4486,7 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
         for r in cr:
             xtab.setdefault(r["bande"], {})[r["signal"] or "faible"] = int(r["n"])
     out["bandes_signal"] = {b: {s: xtab.get(b, {}).get(s, 0) for s in ("fort", "moyen", "faible")}
-                            for b in ("A", "B", "C", "D", "0", "NC")}
+                            for b in ("A", "B", "C", "D", "0", "NC", "HC")}
     if legacy:  # M129-B : la matrice est MORTE — la ventilation legacy est retirée, DIT.
         out["legacy"] = {"mort": "matrice retirée (M129) — statut cascade + tier v2 la remplacent"}
     return out
@@ -4900,6 +4903,14 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         _marche_synthese = _msvc.phrase_prix_ancien(_prix_ancien)
     except Exception:  # noqa: BLE001 — le marché ne casse jamais la fiche
         _prix_ancien, _marche_synthese = None, None
+    # FP-B-039 — le « Signal de marché » (DVF liquidité + offre Sitadel) EST servi par la fiche
+    # premium : `marche.tsx:187` lit `f.market_signal`. Il était calculé par `_build_fiche` (legacy)
+    # mais absent de `_q_v2_fiche` (servi depuis FIX-FICHE F3) → le bloc ne s'affichait jamais.
+    try:
+        from ..faisabilite.marche_commune import market_signal as _mkt_signal
+        _market_signal = _mkt_signal(db, head["commune"])
+    except Exception:  # noqa: BLE001 — indicateur marché optionnel, jamais bloquant
+        _market_signal = None
     # EXPORTS-1 (6.5, Q12) : drapeau « prescriptions non vérifiables » — point de vérité unique
     # (zone_servie), lu par l'écran et tous les documents.
     from ..faisabilite.zone_servie import prescriptions_verifiables as _presc_verif
@@ -4909,6 +4920,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
     return {
         "idu": head["idu"], "commune": head["commune"],
         "prix_ancien": _prix_ancien, "marche_synthese": _marche_synthese,
+        "market_signal": _market_signal,   # FP-B-039 — signal marché DVF (actes) + Sitadel (autorisations)
         "prescriptions_verifiables": _presc_ok,
         "prescriptions_non_verifiables_motif": _presc_motif,
         # M6 2a (§1.8) : la meilleure adresse BAN rattachée — None si aucune (le front
@@ -5483,7 +5495,13 @@ def _aleas_block(db: Session, idu: str, lines: list[dict] | None = None) -> dict
     synthese = ("redhibitoire" if any(a["redhibitoire"] for a in items)
                 else "fort" if any(_est_fort(a["niveau"]) for a in items)
                 else None)
-    return {"n": len(items), "liste": items, "synthese": synthese}
+    # NU-3-J#4 / NU-G-014 — `n_hazards` = nombre de familles d'aléas DISTINCTES (fusion PPR + aléa +
+    # niveaux multiples d'un même aléa), le MÊME compteur que l'outil « Estimer » et le PDF
+    # (`distinct_hazards`). `n` (= nb de lignes, décomposition par niveau conservée pour le détail NU-A-007)
+    # reste servi pour la liste ; la tuile « Aléas » affiche `n_hazards` pour ne plus diverger d'Estimer.
+    from ..pige.api import distinct_hazards as _distinct_hazards
+    return {"n": len(items), "n_hazards": len(_distinct_hazards(items)),
+            "liste": items, "synthese": synthese}
 
 
 def _dpe_connu_block(db: Session, idu: str) -> dict | None:
@@ -8710,13 +8728,21 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
     # DOCS-COHERENCE-1 (A1) — type lu par le classifieur UNIQUE du registre (succession/indivision ne
     # sont PAS « morale ») ; sinon particulier (doctrine fiche F11).
     if pm.get("denomination") or pm.get("siren"):
-        from ..proprietaire_type import tete_denomination
-        proprietaire = {"Succession": "succession", "Indivision": "indivision"}.get(
-            tete_denomination(pm.get("denomination")), "morale")
+        from ..proprietaire_type import PUBLIC_DGFIP_GROUPES, tete_denomination
+        # NU-3-J#7 — le caractère PUBLIC (État/collectivité/commune/EPF/ét. public) ne disparaît plus
+        # sur le comparateur : MÊME règle unique que le badge « Propriétaire public » de la liste/carte
+        # et du filtre (PUBLIC_DGFIP_GROUPES). Il prime sur « morale ».
+        if pm.get("groupe") in PUBLIC_DGFIP_GROUPES:
+            proprietaire = "public"
+        else:
+            proprietaire = {"Succession": "succession", "Indivision": "indivision"}.get(
+                tete_denomination(pm.get("denomination")), "morale")
     else:
         proprietaire = "particulier"
     # bâti existant % = emprise bâtie (BD TOPO/CoSIA) ÷ surface terrain — jamais un « 0 » inventé.
-    surf = qv2.get("surface_m2") or 0
+    # NU-3-J#8 — MÊME dénominateur que la fiche : la surface de TERRAIN servie (contenance|dessin),
+    # pas la surface de dessin brute — sinon le taux divergeait de la fiche de ±1 à 4 points.
+    surf = qv2.get("surface_terrain_m2") or qv2.get("surface_m2") or 0
     bati_pct = (round(100 * res["emprise_batie_m2"] / surf)
                 if res.get("disponible") and res.get("emprise_batie_m2") is not None and surf else None)
     # FIX-ORFEVRE-1 (décision Vic 18/10/2026) — logements_min/logements_possibles NE SONT PLUS SERVIS :

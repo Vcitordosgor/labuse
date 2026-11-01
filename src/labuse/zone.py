@@ -271,7 +271,10 @@ def emplois_zone(session: Session, geom_geojson: dict) -> dict:
             hi += bornes[1] * n
     return {"postes_min": lo, "postes_max": hi, "postes_max_ouvert": hi_ouvert,
             "n_etablissements": n_etab, "n_avec_tranche": n_avec, "n_sans_tranche": n_sans,
-            "libelle": "postes salariés déclarés dans la zone"}
+            # OUT-ZONE-007 — ce n'est PAS l'emploi localisé : c'est une fourchette ESTIMÉE à partir des
+            # tranches d'effectif SIRENE (somme des bornes basse/haute × nb d'établissements). Le libellé
+            # le dit, plus de « postes salariés déclarés » qui sur-promet un décompte réel.
+            "libelle": "postes salariés estimés (tranches d'effectif SIRENE) dans la zone"}
 
 
 #: F2 (OUTILS-4) — SEUIL d'ancienneté du dernier traitement SIRENE au-delà duquel on invite à vérifier
@@ -644,7 +647,8 @@ def prix_par_type_zone(session: Session, geom_geojson: dict) -> dict:
     RÉUTILISE le point de calcul du bloc Marché de la fiche (flash.data._marche) : table dvf_mutations
     (maille MUTATION, pas la table éclatée par parcelle → pas d'artefact du 100 888), ventes seules,
     €/m² BÂTI (surface_reelle_bati≥20) pour maison/appartement, €/m² TERRAIN (surface_terrain≥100 et
-    bâti<20) pour le terrain nu. Sous 5 ventes → médiane « — » (échantillon insuffisant, dit)."""
+    bâti<20) pour le terrain nu. Sous le seuil d'effectif (SEUIL_N) → médiane « — » (échantillon
+    insuffisant, dit) — MÊME seuil pour tous les types (OUT-ZONE-016)."""
     if session.execute(text("SELECT to_regclass('dvf_mutations')")).scalar() is None:
         return {"types": []}
     z = _zone2975()
@@ -671,10 +675,14 @@ def prix_par_type_zone(session: Session, geom_geojson: dict) -> dict:
               AND ST_Contains({z}, ST_Transform(dm.geom, 2975))"""),
         {"zone": json.dumps(geom_geojson)}).mappings().first()
     nt = int(rt["n"] or 0)
+    from .dvf_mediane import SEUIL_N
     rows.append({"type": "terrain", "label": "Terrain nu", "base": "terrain", "n": nt,
-                 "median_eur_m2": int(rt["med"]) if (nt >= 5 and rt["med"] is not None) else None,
+                 "median_eur_m2": int(rt["med"]) if (nt >= SEUIL_N and rt["med"] is not None) else None,
                  "periode": [rt["d0"], rt["d1"]] if nt else None})
-    return {"types": rows, "seuil": 5,
+    # OUT-ZONE-016/013 — le seuil d'effectif SERVI est le VRAI seuil appliqué aux médianes (SEUIL_N,
+    # config = 8, le même que maison/appartement via `dvf_mediane` et désormais le terrain nu) : plus
+    # de « seuil: 5 » trompeur pendant qu'une maison à 6 ventes était écartée au seuil 8.
+    return {"types": rows, "seuil": SEUIL_N,
             "millesime": "DVF (DGFiP/Etalab) — ventes 36 mois, même lecture que le bloc Marché de la fiche"}
 
 
@@ -783,7 +791,12 @@ def risques_zone(session: Session, geom_geojson: dict) -> dict:
         [{"risque": r["subtype"], "label": _ALEA_LABEL.get(r["subtype"], (r["subtype"] or "").replace("_", " ").capitalize()),
           "niveau": r["niveau"], "pct": int(r["pct"])} for r in alea_rows],
         key=lambda a: (-_NIVEAU_RANG.get(a["niveau"], 0), -a["pct"]))
-    return {"ppr": ppr, "aleas": aleas, "source": "DEAL Réunion — PPR / aléas (Lizmap)"}
+    # DOC-ETUDEZONE-013 — `libelle` lisible (le PDF Étude de zone lit CETTE clé) : PPR + aléas par
+    # niveau et %. Avant, la clé était absente → la ligne « Risques » du PDF ne s'imprimait JAMAIS.
+    _bits = [f"{p['label']} {p['pct']} %" for p in ppr]
+    _bits += [f"{a['label']} — {a['niveau']} {a['pct']} %" for a in aleas]
+    return {"ppr": ppr, "aleas": aleas, "libelle": (" · ".join(_bits) or None),
+            "source": "DEAL Réunion — PPR / aléas (Lizmap)"}
 
 
 def assainissement_zone(session: Session, geom_geojson: dict) -> dict:
@@ -802,7 +815,11 @@ def assainissement_zone(session: Session, geom_geojson: dict) -> dict:
                 FROM spatial_layers WHERE kind='zonage_assainissement' AND subtype=:st
                   AND ST_Intersects(geom_2975, {z})"""), {**p, "st": st}).scalar() or 0)
     couvert = (out["collectif"] + out["anc"]) > 0
+    # DOC-ETUDEZONE-013 — `libelle` lisible (clé lue par le PDF Étude de zone). Sans couverture SIG :
+    # pas de libellé (la ligne est omise, jamais un 0 trompeur).
+    libelle = f"Collectif {out['collectif']} % · ANC {out['anc']} %" if couvert else None
     return {"couvert": couvert, "collectif_pct": out["collectif"], "anc_pct": out["anc"],
+            "libelle": libelle,
             "millesime": "Zonage d'assainissement (GPU) — communes dotées d'un SIG"}
 
 
@@ -955,10 +972,19 @@ def commune_contexte_zone(session: Session, geom_geojson: dict) -> dict | None:
     loyer = None
     if (session.execute(text("SELECT to_regclass('oll_loyers')")).scalar() is not None
             and session.execute(text("SELECT to_regclass('oll_zonage')")).scalar() is not None):
+        # OUT-ZONE-032 — « loyer médian · commune » : une commune peut couvrir PLUSIEURS secteurs OLL.
+        # L'ancien `ORDER BY annee DESC LIMIT 1` renvoyait UN secteur (souvent le plus bas), pas la
+        # médiane communale. On prend désormais la MÉDIANE des loyers des secteurs distincts de la
+        # commune pour l'année la plus récente → le chiffre est bien « médian » et « commune ».
         loyer = session.execute(text(
-            """SELECT l.loyer_median FROM oll_zonage z JOIN oll_loyers l ON l.zone = z.zone AND l.annee = z.annee
-               WHERE z.insee = :insee AND l.type_habitat = 'tous' AND l.pieces = 'tous'
-               ORDER BY z.annee DESC LIMIT 1"""), {"insee": insee}).scalar()
+            """WITH sect AS (
+                   SELECT DISTINCT z.zone, l.annee, l.loyer_median
+                   FROM oll_zonage z JOIN oll_loyers l ON l.zone = z.zone AND l.annee = z.annee
+                   WHERE z.insee = :insee AND l.type_habitat = 'tous' AND l.pieces = 'tous'),
+                 derniere AS (SELECT max(annee) AS annee FROM sect)
+               SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY sect.loyer_median)
+               FROM sect, derniere WHERE sect.annee = derniere.annee"""),
+            {"insee": insee}).scalar()
     # KELFONCIER-FIX-1 (Lot F) — dispositif de commune (Petites Villes de Demain / ACV / ORT),
     # à l'échelle de la commune, lu par la MÊME fonction que la fiche §7 et la fiche commune
     # (ingestion.ort.ort_commune). None si la commune n'est dans aucun programme.
@@ -981,7 +1007,7 @@ def commune_contexte_zone(session: Session, geom_geojson: dict) -> dict | None:
     return {"commune": commune, "insee": insee, "echelle": "commune",
             "loyer_median_eur_m2": float(loyer) if loyer is not None else None,
             "dispositif_ort": dispositif_ort,
-            "millesime": "OLL 2024 — loyer médian €/m² (tous logements, secteur OLL) — à l'échelle de la commune"}
+            "millesime": "OLL 2024 — loyer médian €/m² (tous logements) — médiane des secteurs OLL de la commune"}
 
 
 def etude_de_zone(session: Session, lon: float, lat: float, minutes: int, mode: str, *,

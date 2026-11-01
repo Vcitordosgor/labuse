@@ -149,10 +149,11 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
         <Lignes>
           {/* MERGE FICHE-ORFEVRERIE-1 × FIX-PRIX-ET-OPPORTUNITES — la ligne « Prix de l'ancien (secteur) »
               reste RETIRÉE (pt 15 : elle répétait la tuile « Appartement ») ; la « Valeur au prix du
-              secteur » est servie EN FOURCHETTE ±30 % + mention d'incertitude mesurée (lot 1). */}
+              secteur » est servie EN FOURCHETTE indicative ±30 % (lot 1). */}
           {f.dvf_parcelle?.valeur_terrain_secteur_eur != null && (() => {
-            // FIX-PRIX-ET-OPPORTUNITES (lot 1) — jamais un chiffre sec : fourchette ±30 % + mention
-            // d'incertitude mesurée (backtest VERITE-TERRAIN-2). Source unique lib/fourchette.ts.
+            // NU-3-M-H05 — jamais un chiffre sec : fourchette INDICATIVE ±30 % (marge forfaitaire
+            // uniforme, PAS une dispersion mesurée par bien — l'Estimer calibre, lui, par IQR).
+            // Source unique lib/fourchette.ts (FOURCHETTE_MENTION, déjà « Estimation indicative »).
             const fr = fourchette(f.dvf_parcelle.valeur_terrain_secteur_eur)!
             return (
               <Ligne label={<>Valeur au prix du secteur<InfoI aria="Méthode de la valeur" tip={`Contenance × prix médian du terrain nu au m² du secteur. ${FOURCHETTE_MENTION}`} /></>}
@@ -269,8 +270,9 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
       {/* FICHE-FIX-4 (Lot J) — loyers OLL + acquéreur PM voisin en Lignes, méthode en « i ». */}
       {(f.loyers_oll || (f.pm_voisines?.disponible && f.pm_voisines.acquereurs.length > 0)) && (
         <Lignes>
+          {/* NU-3-M-H04 — la maille OLL est la ZONE (6 zones couvrent l'île), pas la commune : on le DIT. */}
           {f.loyers_oll?.disponible ? (
-            <Ligne label={<>Loyers (OLL)<InfoI aria="Sur les loyers OLL" tip={`${f.loyers_oll.par_type && (f.loyers_oll.par_type.maison != null || f.loyers_oll.par_type.appartement != null) ? `Maison ${f.loyers_oll.par_type.maison ?? '—'} · appart. ${f.loyers_oll.par_type.appartement ?? '—'} €/m². ` : ''}${f.loyers_oll.source} · ${f.loyers_oll.millesime}`} /></>}
+            <Ligne label={<>Loyers (OLL)<InfoI aria="Sur les loyers OLL" tip={`${f.loyers_oll.par_type && (f.loyers_oll.par_type.maison != null || f.loyers_oll.par_type.appartement != null) ? `Maison ${f.loyers_oll.par_type.maison ?? '—'} · appart. ${f.loyers_oll.par_type.appartement ?? '—'} €/m². ` : ''}Médiane par ZONE OLL (6 zones couvrent l'île), pas par commune. ${f.loyers_oll.source} · ${f.loyers_oll.millesime}`} /></>}
               valeur={<>{f.loyers_oll.loyer_median_eur_m2} <small>€/m²/mois · zone {f.loyers_oll.zone}</small></>} />
           ) : f.loyers_oll ? (
             <Ligne label="Loyers (OLL)" ton="gris" valeur="zone non couverte" />

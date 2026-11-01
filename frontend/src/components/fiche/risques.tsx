@@ -38,6 +38,9 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
   // 'risques') : nature, niveau, part, référence PPR. Les AUTRES vigilances (accès, sol, SUP…)
   // restent affichées telles quelles. Même moteur que Pièges et risques (cascade servie).
   const aleas = f.aleas?.liste ?? []
+  // NU-3-J#4 / NU-G-014 — le COMPTE d'aléas affiché = familles DISTINCTES (`n_hazards`), le MÊME
+  // compteur que l'outil « Estimer » et le PDF ; la liste détaillée garde ses lignes par niveau.
+  const nHazards = f.aleas?.n_hazards ?? aleas.length
   const sols = f.sols
   // FICHE-ORFEVRERIE-1 (Lot B, pt 14) — les SERVITUDES d'utilité publique (SUP, layer 'sup') vivent
   // UNE fois, en §Urbanisme (« Dispositifs et périmètres ») : ici on ne les répète pas, on RENVOIE.
@@ -62,7 +65,7 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
             : `${vigilances.length} vigilance${vigilances.length > 1 ? 's' : ''}`
           const ctx = [
             cs ? `ancien site industriel ${cs.sur_place ? 'sur la parcelle' : `à ${cs.distance_m} m`}` : null,
-            aleas.length > 1 ? `${aleas.length} aléas au total` : null,
+            nHazards > 1 ? `${nHazards} aléas au total` : null,
           ].filter(Boolean).join(' · ') || undefined
           return <Verdict ton={vigilances.length === 0 ? 'vert' : 'ambre'} reponse={reponse} contexte={ctx} />
         })()}
@@ -71,7 +74,7 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
             PPR + sources consolidées en note (aucune donnée perdue). Compte n_vigilances au-dessus. */}
         {aleas.length > 0 && (
           <div data-aleas-detail>
-            <GroupLabel>Aléas ({aleas.length})</GroupLabel>
+            <GroupLabel>Aléas ({nHazards})</GroupLabel>
             {aleas.map((a, i) => a.niveau != null || a.redhibitoire ? (
               <Jauge3 key={i} niveau={aleaCran(a.niveau, a.redhibitoire)}
                 label={<>{fmtAlea(a.nature)}{a.niveau ? <small className="ml-1 text-txt-mut"> niveau {fmtIntensite(a.niveau)}</small> : null}{a.redhibitoire && <Badge ton="ambre" className="ml-1.5">rédhibitoire</Badge>}</>}

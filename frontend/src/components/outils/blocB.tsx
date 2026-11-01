@@ -170,7 +170,9 @@ const O6_COLS: { k: string; head: string; title: string; tip?: string; best?: 'm
     title: 'Déficit SRU — objectif légal − taux de logement social, en points' },
   { k: 'prix_ancien', head: '€/m² ancien',
     title: '€/m² ANCIEN — médiane DVF de la commune entière (tous types bâti, ventes strictes, n ≥ 100). Vue MACRO : la même série que le Baromètre.',
-    tip: '€/m² ANCIEN — médiane DVF COMMUNE ENTIÈRE (tous types bâti, ventes strictes, n ≥ 100). Vue macro, série du Baromètre. ⚠ La FICHE d’une commune affiche un prix LOCAL (secteur autour de la parcelle centrale, appartements priorisés) — plus fin, souvent inférieur : c’est normal qu’il diffère de cette colonne.' },
+    // NU-3-M-H02 — depuis FIX-FINAL-1 (NU-A-002), le prix LOCAL de la fiche est typé par la NATURE
+    // réelle du bien (dernière mutation DVF), plus de « appartements priorisés ».
+    tip: '€/m² ANCIEN — médiane DVF COMMUNE ENTIÈRE (tous types bâti, ventes strictes, n ≥ 100). Vue macro, série du Baromètre. ⚠ La FICHE d’une commune affiche un prix LOCAL (secteur autour de la parcelle centrale, par type du bien) — plus fin, souvent inférieur : c’est normal qu’il diffère de cette colonne.' },
   { k: 'prix_neuf', head: '€/m² VEFA',
     // RECETTE-2 (D3) — on DIT le seuil dans le « i » : « — » = moins de 8 ventes VEFA (médiane instable).
     // PRIX-SORTIE-1 (Vic 05/10/2026) — « prix VEFA commune » (prix observé à l'acte), JAMAIS « prix de
@@ -182,7 +184,9 @@ const O6_COLS: { k: string; head: string; title: string; tip?: string; best?: 'm
   // AU). Sous le seuil de cellule → « — ». 23/24 communes servables (mesuré base réelle).
   { k: 'prix_terrain_nu', head: '€/m² terrain nu',
     title: '€/m² TERRAIN NU — médiane DVF des ventes de terrain nu de la commune, par zone PLU calibrée (U de préférence, sinon AU). C’est la valeur foncière brute que vise un promoteur — le chiffre le plus direct pour arbitrer un achat.',
-    tip: '€/m² TERRAIN NU — médiane DVF terrain nu par zone PLU (U sinon AU). La valeur foncière brute (« le chiffre du promoteur »). « — » = moins de 5 ventes de terrain nu (médiane instable sous le seuil).' },
+    // OUT-COMMUNE-010 — seuil réel de la cellule commune terrain nu = 10 (config/dvf_profils.yaml
+    // terrain_cellule_commune), pas 5.
+    tip: '€/m² TERRAIN NU — médiane DVF terrain nu par zone PLU (U sinon AU). La valeur foncière brute (« le chiffre du promoteur »). « — » = moins de 10 ventes de terrain nu (médiane instable sous le seuil).' },
 ]
 // Rendu en GRAND (overlay ≤ 1100 px) : colonnes larges, tout lisible, zéro scroll horizontal. Dernière
 // piste = affordance de clic (chevron › / « Ouvrir la fiche → » au survol).
@@ -290,7 +294,8 @@ export function CommunesLegende() {
       <span className="mt-0.5 block">Meilleure valeur en <span className="font-semibold text-mint">vert</span> (foncier / rapidité d’instruction).
         Une donnée absente reste « — », jamais un zéro inventé.</span>
       {/* RECETTE-2 (D3) — on DIT le seuil : « — » n'est pas une absence mais une insuffisance de volume. */}
-      <span className="mt-0.5 block"><b className="text-txt-mut">« — » = sous le seuil de fiabilité</b> : €/m² neuf sous <b>8 ventes</b> VEFA · €/m² terrain nu sous <b>5 ventes</b> (médiane instable en deçà).</span>
+      {/* OUT-COMMUNE-010 — seuil terrain nu = 10 ventes (config terrain_cellule_commune), pas 5. */}
+      <span className="mt-0.5 block"><b className="text-txt-mut">« — » = sous le seuil de fiabilité</b> : €/m² neuf sous <b>8 ventes</b> VEFA · €/m² terrain nu sous <b>10 ventes</b> (médiane instable en deçà).</span>
     </div>
   )
 }
@@ -394,6 +399,7 @@ export function O7Carnet() {
 
 type Rarete = { communes: { insee: string; commune: string; rythme_conso_ha_an: number | null
   budget_zan_ha: number | null; reste_zan_ha: number | null; horizon_epuisement_ans: number | null
+  pct_budget_restant: number | null  // OUT-COMMUNE-018 — % restant SERVI (rarete.py), lu tel quel par la barre
   statut: string; stock_opportunites_ha: number | null; source: string }[] }
 
 export function O9Rarete() {
@@ -411,8 +417,11 @@ export function O9Rarete() {
         <p className="label-caps sticky top-0 bg-surface-1 py-1 text-[9.5px]">Horizon d'épuisement du budget ZAN (estimé)</p>
         {rows.map((c) => {
           const depasse = c.statut === 'budget dépassé'
-          const pct = depasse ? 100 : c.budget_zan_ha && c.reste_zan_ha != null
-            ? Math.max(4, Math.min(100, (c.reste_zan_ha / c.budget_zan_ha) * 100)) : 0
+          // OUT-COMMUNE-018 — la barre lit le % de budget ZAN RESTANT **servi** par l'API
+          // (`pct_budget_restant`), plus de recalcul front `reste/budget` ni de plancher trompeur à
+          // 4 % : 0 reste → barre vide. Sémantique alignée sur « Horizon d'épuisement » (plus plein = plus de marge).
+          const pct = depasse ? 100 : c.pct_budget_restant != null
+            ? Math.max(0, Math.min(100, c.pct_budget_restant)) : 0
           // classes LITTÉRALES (le JIT Tailwind ne voit pas les interpolations)
           const TONES = {
             ecartee: { bar: 'bg-st-ecartee', txt: 'text-st-ecartee' },
@@ -422,8 +431,11 @@ export function O9Rarete() {
           // FRONT-CHIFFRES-2 (F31) — plus de défaut 99 fabriqué : un horizon d'épuisement ABSENT
           // n'est pas « > 5 ans » (sain) mais INCONNU → ton neutre (mint), jamais un 99 inventé. Le
           // palier de COULEUR (< 5 ans = à creuser) reste de la présentation d'une valeur servie.
-          const horizon = c.horizon_epuisement_ans
-          const tone = TONES[depasse ? 'ecartee' : (horizon != null && horizon < 5) ? 'creuser' : 'mint']
+          // OUT-COMMUNE-019 — le TON suit le `statut` SERVI par l'API (rarete.py : budget dépassé /
+          // non projetable / tension forte ≤5 ans / tension modérée ≤15 / détendu), plus de seuil
+          // re-dérivé au front (l'ancien `horizon < 5` ne collait pas au ≤5 de l'API).
+          const tone = TONES[depasse ? 'ecartee'
+            : c.statut === 'tension forte' ? 'creuser' : 'mint']
           return (
             <div key={c.insee} data-o9-commune={c.insee} className="flex items-center gap-2 overflow-hidden border-b border-line py-1.5 text-[11px]">
               <span className="min-w-0 flex-1 truncate text-txt">{c.commune}</span>

@@ -2065,7 +2065,7 @@ export function Fiche({ idu }: { idu: string }) {
                   const pourquoi = f.au_ouverture?.motif
                     || (zoneFamille === 'A' ? 'Zone agricole — construction de logements non autorisée.'
                       : zoneFamille === 'N' ? 'Zone naturelle — construction non autorisée.'
-                      : sdpNulle ? 'Aucune SDP résiduelle exploitable sur cette parcelle — le détail du calcul (terrain libéré, hypothèses, gabarit) est dans « Étudier quand même ».' : null)
+                      : sdpNulle ? 'Aucune SDP restante exploitable sur cette parcelle — le détail du calcul (terrain libéré, hypothèses, gabarit) est dans « Étudier quand même ».' : null)
                   const outils: OutilSection[] = []
                   // IMPLANTATION-4 (LOT A) — l'étude de faisabilité vit maintenant dans Docs (overlay) : le
                   // bouton OUVRE l'écran d'étude sur cette parcelle (ouvrirEtude), plus aucun calcul dans la fiche.
@@ -2097,7 +2097,7 @@ export function Fiche({ idu }: { idu: string }) {
                       <Verdict ton={inconstructible ? 'rouge' : (reglesSdp != null && reglesSdp > 0 ? 'vert' : 'ambre')}
                         reponse={inconstructible
                           ? `Construction neuve non autorisée${reglesZone ? ` en ${reglesZone}` : ''}`
-                          : (reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m² de SDP constructible restante${bati ? ' · bâti conservé' : ''}` : 'Pas de SDP résiduelle exploitable')}
+                          : (reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m² de SDP constructible restante${bati ? ' · bâti conservé' : ''}` : 'Pas de SDP restante exploitable')}
                         contexte={!inconstructible && fo?.niveaux ? `capacité ${fo.niveaux}` : undefined} />
                       <ChiffreDissous l="SDP restante" t={tuileSdp} />
                       {/* FICHE-ORFEVRERIE-1 (Lot B, pt 16) — « Prix de sortie retenu » : une LIGNE du

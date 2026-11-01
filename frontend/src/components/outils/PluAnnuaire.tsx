@@ -213,7 +213,11 @@ export function PluAnnuaire() {
           {d && !d.message && (
             <div data-plu-results className="flex flex-col gap-2">
               <div className="text-[11px] text-txt-mut">
-                {d.n} extrait{d.n > 1 ? 's' : ''} — {nomInsee(insee)}
+                {/* OUT-PLU-008 — « N affichés sur M » quand la page est plafonnée (jamais le compte
+                    plafonné pris pour le total des correspondances). */}
+                {d.tronque && d.n_total != null
+                  ? <>{d.n} extrait{d.n > 1 ? 's' : ''} affiché{d.n > 1 ? 's' : ''} sur {d.n_total} — {nomInsee(insee)}</>
+                  : <>{d.n} extrait{d.n > 1 ? 's' : ''} — {nomInsee(insee)}</>}
               </div>
               {/* PLU-EXCEPTIONS-1 — exceptions calibrées de la zone filtrée, sous l'article : le texte
                   verbatim du règlement + son article/page. Aide à la lecture (aucun calcul). */}

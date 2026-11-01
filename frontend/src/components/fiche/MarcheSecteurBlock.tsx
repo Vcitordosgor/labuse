@@ -50,9 +50,9 @@ export function MarcheSecteurBlock({ ms }: { ms: MarcheSecteur }) {
               l'échelle (« maille commune »), qui n'est pas une date. */}
           <FactRow label="Parc social" value={<>{r.nb_logements.toLocaleString('fr-FR')} <small>logements</small></>}
             src={<>maille commune</>} />
-          {r.pct_qpv != null && (
-            <FactRow label="En QPV — commune" value={<>{r.pct_qpv} <small>%</small></>} />
-          )}
+          {/* FP-B-060 — le « % QPV » du parc social n'est PAS servi (`pct_qpv` vaut 100 % sur les 24
+              communes = champ mal ingéré, non discriminant ; retiré côté back). On ne promet donc plus
+              un « % QPV » à l'écran : ligne supprimée (plus un libellé décrivant un champ jamais servi). */}
         </>
       )}
       <FactNote>Contexte informatif. Revenus et pauvreté au carreau 200 m ; parc social à la commune.</FactNote>

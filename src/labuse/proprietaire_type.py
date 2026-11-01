@@ -30,6 +30,13 @@ OWNER_TYPES: dict[str, tuple[str, bool | None, str]] = {
     "inconnu": ("Propriétaire à identifier", None, "demande au SPF (voie légale)"),
 }
 
+def est_public(owner_type: str | None) -> bool:
+    """NU-3-J#7 — vrai si ce type de propriétaire est PUBLIC (commune, État, collectivité, EPF,
+    établissement public, SEM). Source UNIQUE du caractère public : le drapeau d'`OWNER_TYPES`,
+    partagé par la fiche, la liste/carte et le comparateur (plus de « public » perdu sur un écran)."""
+    return bool(OWNER_TYPES.get(owner_type or "", (None, None, None))[1])
+
+
 # Groupe de personne morale DGFiP (champ « Groupe personne », 0-9) → owner_type (1.A).
 _DGFIP_GROUPE: dict[int, str] = {
     1: "etat", 2: "collectivite", 3: "collectivite", 4: "commune",

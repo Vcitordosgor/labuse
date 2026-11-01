@@ -229,6 +229,23 @@ def search_reglement(session: Session, q: str, insee: str | None = None, limit: 
     return [dict(r) for r in rows]
 
 
+def count_reglement(session: Session, q: str, insee: str | None = None,
+                    zone: str | None = None) -> int:
+    """OUT-PLU-008 — nombre TOTAL d'extraits correspondant à la requête (sans le plafond `limit`),
+    pour que l'écran dise « N affichés sur M » et non le simple compte de la page servie."""
+    where = ["tsv @@ websearch_to_tsquery('french', :q)"]
+    params: dict = {"q": q}
+    if insee:
+        where.append("insee = :insee")
+        params["insee"] = insee
+    if zone:
+        where.append("upper(zone) = upper(:zone)")
+        params["zone"] = zone
+    return int(session.execute(text(
+        f"SELECT count(*) FROM plu_reglement_extrait WHERE {' AND '.join(where)}"),
+        params).scalar() or 0)
+
+
 def corpus_status(session: Session) -> dict[str, dict]:
     """État INGÉRÉ par INSEE (extraits, doutes, pagination ambiguë). L'API le croise avec
     plu_millesimes pour dire RNU / révision en cours / non ingéré."""

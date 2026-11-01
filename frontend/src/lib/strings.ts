@@ -193,9 +193,11 @@ export const CLIENT = {
   tri: {
     // M55-I point 3 (arbitrage Vic, option A) : le tri « Mutation » (×N seul) est RETIRÉ —
     // doublon prouvé du classement (top-50 identiques, aucune inversion sur 431 663, mesuré
-    // M55-H). Restent deux tris ; « Opportunités » se renomme « Probabilité de vente » : c'est
-    // honnêtement ce qu'il trie (la probabilité apprise, ex æquo départagés par la qualité).
-    rang: 'Probabilité de vente sous 1 an',
+    // M55-H). Restent deux tris. NU-3-M-H01 — le classement LABUSE trie D'ABORD par potentiel
+    // constructible (la BANDE A→D, `_cle_classement` : BANDE_RANG en tête), la probabilité de vente
+    // ne départageant qu'à bande égale : le libellé dit donc « Classement LABUSE », pas « probabilité »
+    // (qui inversait qualité foncière et probabilité).
+    rang: 'Classement LABUSE',
     surface: 'Surface',
     // RECETTE-3 (T3, décision Vic) — tri par défaut du listing FACTUEL : les parcelles adressées
     // d'abord, puis celles où il reste le plus à bâtir (l'ancien défaut « surface » remontait des
@@ -207,7 +209,7 @@ export const CLIENT = {
     // résiduelle du tri « Potentiel » reste dans l'analyse, nulle part ailleurs).
     adresse: 'Adresse',
     adresseTip: 'Les parcelles avec une adresse renseignée d’abord, puis les plus grandes surfaces — rien que le fait cadastral, sans calcul LABUSE',
-    rangTip: 'Le classement LABUSE — la probabilité de vente sous 1 an, apprise sur les ventes réelles 2017-2023, calibrée sur 2024 et vérifiée sur 2025 (année tenue à l’écart), les ex æquo départagés par la qualité du terrain ; copropriétés en queue',
+    rangTip: 'Le classement LABUSE — d’abord le potentiel constructible (bande A→D), puis, à bande égale, la probabilité de vente sous 1 an (apprise sur les ventes réelles 2017-2023, calibrée sur 2024, vérifiée sur 2025, année tenue à l’écart) ; copropriétés en queue',
     surfaceTip: 'Trie par surface de parcelle',
     // M69 A — le tri « Probabilité de vente » (défaut, analyse) groupe la liste par tier ; les
     // tris de colonne (Surface) s'appliquent GLOBALEMENT. Ce libellé dit l'état pour lever le
@@ -363,8 +365,11 @@ export const CLIENT = {
     corps: (d = 50, paliers: number[] = [2, 3, 4, 5, 10, 20, 50]) => [
       {
         h: 'Ce que mesure le classement',
-        p: 'Une seule chose : la probabilité qu’une parcelle change de main à court terme. ' +
-          'Pas sa valeur, pas sa beauté — sa probabilité de vente.',
+        // NU-3-M-H01 — l'ordre réel est BANDE (potentiel foncier) d'abord, probabilité ensuite
+        // (_cle_classement). L'ancien texte « une seule chose : la probabilité » inversait les deux.
+        p: 'Deux choses, dans cet ordre : d’abord le POTENTIEL CONSTRUCTIBLE — la bande (A→D), ' +
+          'ce que le terrain peut porter ; puis, à bande égale, la PROBABILITÉ DE VENTE à court terme ' +
+          'départage. Le potentiel foncier d’abord, le signal de mutation ensuite — pas la valeur, pas la beauté.',
       },
       {
         h: 'Comment',
@@ -585,7 +590,7 @@ export const CLIENT = {
         risques: { nom: 'Risques', desc: 'signaux PPR, ABF et couches de risques' },
         marche_dvf: { nom: 'Charge foncière', desc: 'prix probable du foncier · comparables DVF' },
         filtre_budget: { nom: 'Filtre budget', desc: 'retenues confrontées au budget du brief' },
-        mutation: { nom: 'Probabilité de vente', desc: 'classement par probabilité de vente sous 1 an' },
+        mutation: { nom: 'Signal de mutation', desc: 'probabilité de vente sous 1 an — départage à bande égale (NU-3-M-H01)' },
         assemblage: { nom: 'Assemblage', desc: 'restitution motivée · journal joint' },
         assemblage_court: { nom: 'Assemblage', desc: 'restitution courte · journal joint' },
         scoreur_unitaire: { nom: 'Scoreur unitaire', desc: 'références retrouvées et scorées' },

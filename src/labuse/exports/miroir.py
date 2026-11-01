@@ -539,8 +539,12 @@ def _r_anc(v):
 
 
 def _r_fibre(v):
+    # DOC-DOSSIER-063 — plus d'enum technique brut (« aucun_immeuble ») servi au client : on sert le
+    # libellé, sinon le `detail` lisible (« aucun immeuble Arcep à moins de 100 m »), jamais `str(etat)`.
     e = v.get("etat")
-    return esc({"servi": "Immeuble raccordable (Arcep)"}.get(e, v.get("libelle") or str(e)))
+    return esc({"servi": "Immeuble raccordable (Arcep)"}.get(e)
+               or v.get("libelle") or v.get("detail")
+               or (str(e).replace("_", " ").capitalize() if e else "—"))
 
 
 def _rayon_ventes(d: dict) -> str:
@@ -1024,8 +1028,16 @@ def _verdict_factuel(sec_id: str, valeurs: dict[str, Valeur]) -> tuple[str, str,
         pa = _v(valeurs, "prix_sortie_bati_eur_m2")
         if isinstance(pa, dict) and pa.get("median") is not None:
             t = f"Prix ancien médian {fmt_eur_m2(pa['median'])}"
+            # NU-G-005 — le TYPE du prix (maison / appartement / mixte) voyage avec le chiffre, comme
+            # la phrase de la fiche (`phrase_prix_ancien`), plus jamais un médian « mixte » muet en tête.
+            if pa.get("type_prix"):
+                t += f" — {pa['type_prix']}"
             if pa.get("n"):
                 t += f" ({groupe(pa['n'])} ventes {_rayon_ventes(pa)})"
+            # NU-G-005 / NU-3-J#2 — jamais un prix FRAGILE en tête sans le dire : le qualificatif de
+            # fiabilité (déjà calculé par `sector_price`) accompagne le chiffre, comme à l'écran.
+            if pa.get("fiabilite") in ("fragile", "insuffisant"):
+                t += f" — fiabilité {pa['fiabilite']}"
             return (esc(t) + ".", "neutral", "prix_sortie_bati_eur_m2")
         return None
     if sec_id == "quartier":

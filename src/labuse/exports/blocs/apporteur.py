@@ -398,12 +398,19 @@ def rendu(valeurs, ctx=None) -> str:
         # DOCS-COHERENCE-1 (C2) — aléa de mouvement de terrain relevé : on pose la question qui va avec.
         q += _q(nm, "Mouvements de sol : fissures, glissements, murs qui penchent ?",
                 "La parcelle est concernée par un aléa de mouvement de terrain.", zone=True)
-    if ctx.get("obs_ligne_ht"):
-        q += _boxes(nm, "Ligne électrique, pylône, transformateur sur ou au bord ?", ["Non", "Oui"])
+    # DOC-APPORTEUR-017 — la question « Ligne électrique, pylône, transformateur » était gardée par
+    # `obs_ligne_ht`, drapeau HARDCODÉ False au builder (aucune couche HTA/HTB fiable dans le socle) :
+    # la question ne pouvait JAMAIS s'imprimer (0/6 PDF). On retire la branche morte plutôt que de
+    # porter un embranchement perpétuellement faux ; à rebrancher le jour où une couche ligne HT existe.
     if ctx.get("obs_pollution"):
-        q += _q(nm, "Remblais, déchets, cuves, dépôt, odeur ?",
-                "Un ancien site industriel ou un sol pollué est signalé à proximité (analyse de risques).",
-                zone=True)
+        # DOC-APPORTEUR-018 (RECETTE-11 D7) — quand la cascade RELÈVE une ICPE, on imprime sa
+        # description/distance (« …SCI MILHAC, régime Enregistrement, 93 m »), plus seulement la
+        # phrase générique ; l'`icpe_detail` était calculé par le builder mais jamais consommé ici.
+        _aide_poll = "Un ancien site industriel ou un sol pollué est signalé à proximité (analyse de risques)."
+        _icpe = ctx.get("icpe_detail")
+        if _icpe:
+            _aide_poll += f" {_icpe}"
+        q += _q(nm, "Remblais, déchets, cuves, dépôt, odeur ?", _aide_poll, zone=True)
     q += _q(nm, "Arbres remarquables, boisement, clôtures, limites incertaines ?", zone=True)
 
     # ── §7 — À demander au propriétaire (renommé de « Ce que les papiers diraient ») ──

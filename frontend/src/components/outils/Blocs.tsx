@@ -129,7 +129,7 @@ function Carte({ it, ouvert, onToggle }: { it: BlocItem; ouvert: boolean; onTogg
         {/* RECETTE-OUTILS-2 (R22) — tuile SDP : « SDP résiduelle » sur UNE ligne (libellé), valeur, puis
             le badge « Estimé » SOUS la valeur, aligné à gauche — il ne chevauche plus le libellé. */}
         <div className="rounded-md border border-line-2 bg-surface-2 px-2 py-1.5">
-          <div className="whitespace-nowrap text-[9px] uppercase tracking-wide text-txt-dim">SDP résiduelle</div>
+          <div className="whitespace-nowrap text-[9px] uppercase tracking-wide text-txt-dim">SDP restante</div>
           <div className="mt-0.5 tnum text-[12px] font-medium text-mint">{fmtM2(it.sdp_residuelle_m2)}</div>
           <div className="mt-0.5"><Estime /></div>
           {it.sdp_couverture < it.n_parcelles && (
@@ -226,7 +226,7 @@ export function Blocs() {
             périmètre, nature des chiffres) vit dans le « i ». */}
         Les parcelles <b className="text-txt">contiguës d'un même propriétaire</b> (personne morale) regroupées
         en une assiette.
-        <Tip garder tip="Le regroupement : un bloc = des parcelles cadastrales en contact (≤ 0,5 m) appartenant au MÊME propriétaire personne morale (SIREN confirmé, fichiers des personnes morales DGFiP), à partir de 2 parcelles. Contiguïté purement géométrique (PostGIS), jamais un rapprochement par nom. Ce qu'il ne dit pas : les particuliers sont hors périmètre (identité non stable d'une parcelle à l'autre) ; un bloc n'affirme ni la constructibilité, ni un accord de vente. Les chiffres : surface, communes et zonages Sourcés (cadastre, PLU) ; SDP résiduelle Estimée — somme des résiduels de la fiche (enveloppe PLU moins bâti existant), une parcelle hors PLU n'a pas de résiduel connu (le compteur « résiduel sur n/N » le dit). Tri par SDP résiduelle agrégée décroissante.">
+        <Tip garder tip="Le regroupement : un bloc = des parcelles cadastrales en contact (≤ 0,5 m) appartenant au MÊME propriétaire personne morale (SIREN confirmé, fichiers des personnes morales DGFiP), à partir de 2 parcelles. Contiguïté purement géométrique (PostGIS), jamais un rapprochement par nom. Ce qu'il ne dit pas : les particuliers sont hors périmètre (identité non stable d'une parcelle à l'autre) ; un bloc n'affirme ni la constructibilité, ni un accord de vente. Les chiffres : surface, communes et zonages Sourcés (cadastre, PLU) ; SDP restante Estimée — somme des résiduels de la fiche (enveloppe PLU moins bâti existant), une parcelle hors PLU n'a pas de résiduel connu (le compteur « résiduel sur n/N » le dit). Tri par SDP restante agrégée décroissante.">
           <span className="ml-1 cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
         </Tip>
       </div>

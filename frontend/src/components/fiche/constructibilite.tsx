@@ -361,7 +361,9 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne, 
             </div>
             {d.vrd_total_eur != null && (
               <p data-calc-vrd className="mt-1 text-[9.5px] leading-snug text-txt-dim">
-                VRD/aménagements : hypothèse par défaut {fmtInt(Number(d.vrd_m2))} €/m² de terrain (soit {fmtEurCompact(Number(d.vrd_total_eur))} sur {fmtInt(Number(d.terrain_m2))} m²) — à ajuster par devis local, jamais un coût à zéro masqué.
+                {/* OUT-CALC-006 — le total VRD = base × EMPRISE AMÉNAGÉE (bilan.py), PAS base × terrain :
+                    l'ancien « sur {terrain} m² » laissait croire 90 €/m² × toute la contenance (×34 d'écart apparent). */}
+                VRD/aménagements : hypothèse par défaut {fmtInt(Number(d.vrd_m2))} €/m² d'emprise aménagée (total {fmtEurCompact(Number(d.vrd_total_eur))}, appliqué à l'emprise aménagée du projet et non à toute la contenance) — à ajuster par devis local, jamais un coût à zéro masqué.
               </p>
             )}
             {/* M60 P1b — garde-fou IMMÉDIAT : coût de construction > prix de sortie DVF du secteur. */}

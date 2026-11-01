@@ -16,7 +16,9 @@ function DistribNote({ d }: { d: Distribution | null | undefined }) {
   return (
     <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">
       Méthode : {d.avant.n} vente{d.avant.n > 1 ? 's' : ''} → {d.apres.n} retenues
-      {d.n_exclus_extremes > 0 ? ` · ${d.n_exclus_extremes} extrême${d.n_exclus_extremes > 1 ? 's' : ''} (5 %) exclus` : ' · aucun extrême à exclure'}
+      {/* OUT-SECTEUR-007 — `n_exclus_extremes` compte les extrêmes 5 % ET le garde-fou de domaine
+          [1 000 ; 12 000] €/m² ; le « (5 %) » était faux sur petits échantillons (Cilaos 17,8 %). */}
+      {d.n_exclus_extremes > 0 ? ` · ${d.n_exclus_extremes} écarté${d.n_exclus_extremes > 1 ? 's' : ''} (extrêmes + hors domaine)` : ' · aucun écart à exclure'}
       {d.avant.min != null && d.avant.max != null && d.apres.min != null && d.apres.max != null
         ? ` · plage ${fmtInt(d.avant.min)}–${fmtInt(d.avant.max)} → ${fmtInt(d.apres.min)}–${fmtInt(d.apres.max)} €/m²` : ''}
     </p>
@@ -39,8 +41,9 @@ function typeCell(titre: string, m: LocalMed | null) {
   // ce détail par type est mesuré sur un RAYON adaptatif autour de la parcelle (mono-type, toutes années),
   // là où le « Prix du secteur » ci-dessus est bâti multi-type sur 5 ans récents. C'est pourquoi les deux
   // chiffres appartement diffèrent — l'écart est désormais lisible (fenêtre + périmètre à l'écran).
+  // OUT-SECTEUR-009 — cellule vide = sous le seuil réel SEUIL_N=8 (mediane_generique), pas 5.
   return <Cell l={titre} v={m ? `${fmtInt(m.eur_m2)} €/m²` : '—'}
-    sub={m ? `${m.n} vente${(m.n ?? 0) > 1 ? 's' : ''}${m.rayon_m != null ? ` · ${fmtInt(m.rayon_m)} m` : ''}${m.millesime ? ` · ${m.millesime}` : ''}` : 'échantillon < 5'} />
+    sub={m ? `${m.n} vente${(m.n ?? 0) > 1 ? 's' : ''}${m.rayon_m != null ? ` · ${fmtInt(m.rayon_m)} m` : ''}${m.millesime ? ` · ${m.millesime}` : ''}` : 'échantillon < 8'} />
 }
 
 // RETOURS-3 R5 — le CŒUR « prix du secteur » extrait en composant réutilisable : « Mon secteur » l'enveloppe
@@ -73,7 +76,10 @@ export function SecteurResultats({ idu, embedded }: { idu: string; embedded?: bo
                   <Cell l="Bâti secteur" v={sb.median_eur_m2 != null ? `${fmtInt(sb.median_eur_m2)} €/m²` : '—'} sub={sb.type_prix ?? undefined} />
                   <Cell l="Rayon" v={sb.rayon_m != null ? `${fmtInt(sb.rayon_m)} m` : '—'} sub={sb.commune_seule ? 'repli commune' : 'adaptatif'} />
                   <Cell l="Ventes" v={sb.n != null ? fmtInt(sb.n) : '—'} sub={sb.periode ? `${sb.periode[0]}–${sb.periode[1]}` : undefined} />
-                  <Cell l="Tendance 12 m" v={sb.tendance_pct != null ? `${sb.tendance_pct > 0 ? '+' : ''}${sb.tendance_pct} %` : '—'} sub={sb.tendance ?? undefined} />
+                  {/* OUT-SECTEUR-004 — la tendance compare la médiane des ventes RÉCENTES à celle des
+                      ANCIENNES (pivot = année médiane de l'échantillon retenu), pas une fenêtre de 12
+                      mois glissants : le libellé ne dit plus « 12 m ». */}
+                  <Cell l="Tendance (récent vs ancien)" v={sb.tendance_pct != null ? `${sb.tendance_pct > 0 ? '+' : ''}${sb.tendance_pct} %` : '—'} sub={sb.tendance ?? undefined} />
                 </div>
                 {/* l'écart avec la commune entière, expliqué en une ligne (le secteur n'est pas la commune) */}
                 {sb.ecart_commune && (
@@ -142,7 +148,7 @@ export function MonSecteur() {
     <div data-mon-secteur className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-1 text-[12.5px]">
       <div>
         <h2 className="font-display text-base font-bold text-txt-hi">Mon secteur</h2>
-        <p className="mt-0.5 text-[11.5px] text-txt-mut">Les prix DU SECTEUR autour d'une parcelle — médiane locale DVF par type (5 % extrêmes exclus, rayon adaptatif), tendance 12 mois, annonces Radar dans le rayon. La même méthode que « Marché et secteur » de la fiche.</p>
+        <p className="mt-0.5 text-[11.5px] text-txt-mut">Les prix DU SECTEUR autour d'une parcelle — médiane locale DVF par type (5 % extrêmes exclus, rayon adaptatif), tendance (récent vs ancien), annonces Radar dans le rayon. La même méthode que « Marché et secteur » de la fiche.</p>
       </div>
       <ParcelInput onPick={(i) => setIdu(i)} placeholder="Adresse, IDU ou référence (BW0917)" dataAttr="mon-secteur-input" />
       {idu && <SecteurResultats idu={idu} />}

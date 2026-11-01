@@ -201,7 +201,9 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
     # tier SERVI (parcel_p_score_v2) + étage 0 (dry-run servi) + propriétaire moral — plus de vestige
     # de matrice (opportunity_score retiré) ni de champ `statut` doublon (= tier_v2).
     rows = db.execute(text("""
-        SELECT p.id, p.idu, round(p.surface_m2) AS surface_m2, p.commune,
+        -- OUT-ASSEMB-013/001 (CONTENANCE-1) — surface de TERRAIN = contenance cadastrale (acte) si
+        -- présente, sinon dessin : homogène avec la fiche / le prefill taxe (jamais la surface de dessin seule).
+        SELECT p.id, p.idu, round(COALESCE(p.contenance_m2, p.surface_m2)) AS surface_m2, p.commune,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
                pm.denomination, pm.siren, pm.groupe_label

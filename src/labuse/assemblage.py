@@ -253,7 +253,9 @@ def aggregate_assiette(session: Session, parcels: list) -> dict:
     /moteurs/assemblage. `parcels` = objets Parcel (id, surface_m2, idu, commune). Renvoie aussi la
     SDP PAR PARCELLE (gain vs la meilleure seule) et les zones (valorisation)."""
     from .faisabilite.db import fiche_payload
-    surface = round(sum(p.surface_m2 or 0 for p in parcels))
+    # OUT-ASSEMB-001/002 (CONTENANCE-1) — surface d'assiette cumulée = somme des CONTENANCES cadastrales
+    # (acte) si présentes, sinon dessin : homogène avec la fiche / le prefill taxe, jamais le dessin seul.
+    surface = round(sum((getattr(p, "contenance_m2", None) or p.surface_m2 or 0) for p in parcels))
     par_parcelle: dict[int, float] = {}
     zones: list[tuple[str | None, str | None]] = []
     for p in parcels:
