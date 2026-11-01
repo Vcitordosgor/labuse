@@ -1,0 +1,72 @@
+{
+ "json": {
+  "cellules_non_vides": 5129,
+  "lignes_fait_parcelle": 2412,
+  "couples_compares": 4637,
+  "couples_en_ecart": 659,
+  "ecart_par_notion": {
+   "mediane_bati_eur_m2": 184,
+   "proprietaire_type": 179,
+   "pente_moy_deg": 117,
+   "zone_plu": 91,
+   "n_aleas": 57,
+   "bati_existant_pct": 31
+  },
+  "couples_par_notion": {
+   "surface_contenance_m2": 1192,
+   "surface_dessin_m2": 118,
+   "zone_plu": 1138,
+   "sdp_residuelle_m2": 426,
+   "sdp_max_regl_m2": 65,
+   "emprise_ces_pct": 49,
+   "bati_existant_pct": 51,
+   "pente_moy_deg": 120,
+   "n_aleas": 115,
+   "mediane_bati_eur_m2": 307,
+   "proprietaire_type": 179,
+   "palier_tier": 356,
+   "classement_bande": 120,
+   "rang_v2": 283,
+   "copro": 118
+  },
+  "ecart_par_surface": {
+   "fiche": 381,
+   "compare": 295,
+   "estimer": 241,
+   "map": 170,
+   "exposition": 117,
+   "faisa": 91,
+   "gabarit": 23
+  },
+  "presence_par_surface": {
+   "fiche": 1653,
+   "compare": 1204,
+   "map": 863,
+   "gabarit": 361,
+   "exposition": 240,
+   "estimer": 215,
+   "faisa": 179,
+   "fiche_terrain": 120,
+   "classement": 120,
+   "fiche_potentiel": 111,
+   "fiche_labuse": 63
+  }
+ },
+ "docs": {
+  "parcelles": 24,
+  "couples_compares": 814,
+  "lignes_fait_avec_ecart": 8,
+  "ecart_par_fait": {
+   "surface terrain (m²)": 4,
+   "zone impl. libérée (m²)": 3,
+   "hauteur faît./égout": 1
+  }
+ },
+ "externe": {
+  "parcelles": 20,
+  "couples_compares": 57,
+  "ecarts": 0
+ },
+ "TOTAL_couples": 5508,
+ "TOTAL_ecarts": 667
+}

@@ -1,0 +1,5529 @@
+{
+ "97402000AE0617": {
+  "idu": "97402000AE0617",
+  "contenance_m2": 4996,
+  "aire_dessin_m2": 5504.5,
+  "zone_lib": "1AUd",
+  "zone_fam": "AU",
+  "pente_moy_deg": 2.3,
+  "pente_max_deg": 5.4,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 98.7
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 1.3
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 98.7,
+     "moyen": 1.3
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": {
+   "d": "2025-09-22",
+   "nat": "Vente",
+   "val": 749400.0,
+   "sb": null,
+   "st": 4000.0,
+   "type_local": null
+  },
+  "labuse_bande": "A",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 69417,
+  "rnic_present": false,
+  "sdp_labuse": 1850.0,
+  "sdp_residuel_live": 1850.0,
+  "pm": {
+   "denomination": "ETS PUBLIC FONCIER DE LA REUNION",
+   "siren": "444704977",
+   "groupe": 9,
+   "groupe_label": "Établissements publics ou organismes associés"
+  }
+ },
+ "97402000AH1282": {
+  "idu": "97402000AH1282",
+  "contenance_m2": 15,
+  "aire_dessin_m2": 14.1,
+  "zone_lib": "Ua",
+  "zone_fam": "U",
+  "pente_moy_deg": 2.5,
+  "pente_max_deg": 2.5,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": true,
+  "v2_rang": null,
+  "rnic_present": true,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97402000AO0010": {
+  "idu": "97402000AO0010",
+  "contenance_m2": 697688,
+  "aire_dessin_m2": 696562.9,
+  "zone_lib": "Npnr",
+  "zone_fam": "N",
+  "pente_moy_deg": 39.8,
+  "pente_max_deg": 82.7,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 9.5
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 9.5,
+    "niveaux": {
+     "fort": 9.5
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "fort": 100.0
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 100.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 427179,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": {
+   "denomination": "SELARL FRANKLIN BACH",
+   "siren": "810061713",
+   "groupe": 0,
+   "groupe_label": "Personnes morales non remarquables"
+  }
+ },
+ "97402000AD0456": {
+  "idu": "97402000AD0456",
+  "contenance_m2": 138,
+  "aire_dessin_m2": 128.4,
+  "zone_lib": "Uc",
+  "zone_fam": "U",
+  "pente_moy_deg": 5.1,
+  "pente_max_deg": 7.7,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 83702,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": {
+   "denomination": "ETAT PAR DIRECTION DE L IMMOBILIER DE L ETAT",
+   "siren": "U23691569",
+   "groupe": 1,
+   "groupe_label": "État"
+  }
+ },
+ "97402000AD0416": {
+  "idu": "97402000AD0416",
+  "contenance_m2": 515,
+  "aire_dessin_m2": 509.8,
+  "zone_lib": "Uc",
+  "zone_fam": "U",
+  "pente_moy_deg": 2.3,
+  "pente_max_deg": 5.7,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 196777,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97424000AE0394": {
+  "idu": "97424000AE0394",
+  "contenance_m2": 6800,
+  "aire_dessin_m2": 6848.1,
+  "zone_lib": "AUb",
+  "zone_fam": "AU",
+  "pente_moy_deg": 10.0,
+  "pente_max_deg": 30.4,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 67.2
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 7.4
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 25.3
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 99.9,
+    "niveaux": {
+     "faible": 67.2,
+     "fort": 7.4,
+     "moyen": 25.3
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 32.8,
+  "derniere_vente": {
+   "d": "2025-01-16",
+   "nat": "Vente",
+   "val": 530400.0,
+   "sb": null,
+   "st": 6800.0,
+   "type_local": null
+  },
+  "labuse_bande": "B",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 1092,
+  "rnic_present": false,
+  "sdp_labuse": 3034.0,
+  "sdp_residuel_live": 3034.0,
+  "pm": null
+ },
+ "97424000AE2278": {
+  "idu": "97424000AE2278",
+  "contenance_m2": 619,
+  "aire_dessin_m2": 586.7,
+  "zone_lib": "Ub",
+  "zone_fam": "U",
+  "pente_moy_deg": 7.9,
+  "pente_max_deg": 18.3,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": {
+   "d": "2021-03-11",
+   "nat": "Vente",
+   "val": 208000.0,
+   "sb": 175.0,
+   "st": 619.0,
+   "type_local": "Appartement"
+  },
+  "labuse_bande": "D",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": true,
+  "v2_rang": null,
+  "rnic_present": false,
+  "sdp_labuse": 48.0,
+  "sdp_residuel_live": 48.0,
+  "pm": null
+ },
+ "97424000AL0072": {
+  "idu": "97424000AL0072",
+  "contenance_m2": 170,
+  "aire_dessin_m2": 164.6,
+  "zone_lib": "N",
+  "zone_fam": "N",
+  "pente_moy_deg": 30.5,
+  "pente_max_deg": 42.2,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "fort": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 100.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 388464,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97424000AI1476": {
+  "idu": "97424000AI1476",
+  "contenance_m2": 519,
+  "aire_dessin_m2": 436.6,
+  "zone_lib": "Ub",
+  "zone_fam": "U",
+  "pente_moy_deg": 8.0,
+  "pente_max_deg": 21.0,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 77.1
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 22.9
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 77.1,
+     "moyen": 22.9
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "D",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 53048,
+  "rnic_present": false,
+  "sdp_labuse": 69.0,
+  "sdp_residuel_live": 69.0,
+  "pm": null
+ },
+ "97424000AC0699": {
+  "idu": "97424000AC0699",
+  "contenance_m2": 877,
+  "aire_dessin_m2": 916.7,
+  "zone_lib": "Anc",
+  "zone_fam": "A",
+  "pente_moy_deg": 10.5,
+  "pente_max_deg": 23.3,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 56.5
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 43.5
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "fort": 56.5,
+     "moyen": 43.5
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 100.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 370015,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97403000AM0767": {
+  "idu": "97403000AM0767",
+  "contenance_m2": 1478,
+  "aire_dessin_m2": 1439.8,
+  "zone_lib": "AUb",
+  "zone_fam": "AU",
+  "pente_moy_deg": 5.7,
+  "pente_max_deg": 12.0,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 0.1
+   },
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 84.8
+   },
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 0.1
+   },
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 15.1
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 0.1,
+    "niveaux": {
+     "fort": 0.1
+    }
+   },
+   "MOUVEMENTS_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 84.8,
+     "fort": 0.1,
+     "moyen": 15.1
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 0.1,
+  "derniere_vente": {
+   "d": "2024-07-22",
+   "nat": "Vente",
+   "val": 305000.0,
+   "sb": null,
+   "st": 1478.0,
+   "type_local": null
+  },
+  "labuse_bande": "HC",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 39295,
+  "rnic_present": false,
+  "sdp_labuse": 1082.0,
+  "sdp_residuel_live": 1082.0,
+  "pm": null
+ },
+ "97403000AM0246": {
+  "idu": "97403000AM0246",
+  "contenance_m2": 514,
+  "aire_dessin_m2": 501.9,
+  "zone_lib": "Ub",
+  "zone_fam": "U",
+  "pente_moy_deg": 10.0,
+  "pente_max_deg": 15.6,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENTS_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": {
+   "d": "2023-03-21",
+   "nat": "Vente",
+   "val": 132000.0,
+   "sb": 60.0,
+   "st": null,
+   "type_local": "Maison"
+  },
+  "labuse_bande": "D",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": true,
+  "v2_rang": null,
+  "rnic_present": true,
+  "sdp_labuse": 186.0,
+  "sdp_residuel_live": 186.0,
+  "pm": null
+ },
+ "97403000AS0721": {
+  "idu": "97403000AS0721",
+  "contenance_m2": 3360,
+  "aire_dessin_m2": 3370.5,
+  "zone_lib": "N",
+  "zone_fam": "N",
+  "pente_moy_deg": 10.6,
+  "pente_max_deg": 22.5,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 12.9
+   },
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 68.6
+   },
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 12.9
+   },
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 18.5
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 12.9,
+    "niveaux": {
+     "fort": 12.9
+    }
+   },
+   "MOUVEMENTS_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 68.6,
+     "fort": 12.9,
+     "moyen": 18.5
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 12.9,
+  "derniere_vente": null,
+  "labuse_bande": "B",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 127940,
+  "rnic_present": false,
+  "sdp_labuse": 1395.0,
+  "sdp_residuel_live": 1395.0,
+  "pm": null
+ },
+ "97403000AR1412": {
+  "idu": "97403000AR1412",
+  "contenance_m2": 118,
+  "aire_dessin_m2": 119.0,
+  "zone_lib": "Ub",
+  "zone_fam": "U",
+  "pente_moy_deg": 6.9,
+  "pente_max_deg": 7.5,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENTS_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "D",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 169340,
+  "rnic_present": false,
+  "sdp_labuse": 10.0,
+  "sdp_residuel_live": 10.0,
+  "pm": null
+ },
+ "97403000AM0580": {
+  "idu": "97403000AM0580",
+  "contenance_m2": 1614,
+  "aire_dessin_m2": 1566.2,
+  "zone_lib": "N",
+  "zone_fam": "N",
+  "pente_moy_deg": 28.2,
+  "pente_max_deg": 46.2,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 88.8
+   },
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 11.2
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENTS_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "fort": 88.8,
+     "moyen": 11.2
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 100.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 332163,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97404000AD1107": {
+  "idu": "97404000AD1107",
+  "contenance_m2": 39514,
+  "aire_dessin_m2": 39795.5,
+  "zone_lib": "A",
+  "zone_fam": "A",
+  "pente_moy_deg": 10.0,
+  "pente_max_deg": 37.4,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 8.7
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 82.7
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 8.7
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 8.5
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 8.7,
+    "niveaux": {
+     "fort": 8.7
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 99.9,
+    "niveaux": {
+     "faible": 82.7,
+     "fort": 8.7,
+     "moyen": 8.5
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 8.7,
+  "derniere_vente": {
+   "d": "2025-02-17",
+   "nat": "Vente",
+   "val": 340000.0,
+   "sb": 75.0,
+   "st": 1442.0,
+   "type_local": "Appartement"
+  },
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": true,
+  "v2_rang": null,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97404000AT0769": {
+  "idu": "97404000AT0769",
+  "contenance_m2": 154,
+  "aire_dessin_m2": 157.9,
+  "zone_lib": "AUb",
+  "zone_fam": "AU",
+  "pente_moy_deg": 11.2,
+  "pente_max_deg": 15.3,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 99.8
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 0.2
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 99.8,
+     "moyen": 0.2
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": {
+   "d": "2022-06-27",
+   "nat": "Vente terrain à bâtir",
+   "val": 128100.0,
+   "sb": null,
+   "st": 154.0,
+   "type_local": null
+  },
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 425401,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97404000AD1113": {
+  "idu": "97404000AD1113",
+  "contenance_m2": 64529,
+  "aire_dessin_m2": 64006.5,
+  "zone_lib": "Nce",
+  "zone_fam": "N",
+  "pente_moy_deg": 37.8,
+  "pente_max_deg": 74.7,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 9.5
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 99.0
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 1.0
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 9.5,
+    "niveaux": {
+     "fort": 9.5
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "fort": 99.0,
+     "moyen": 1.0
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 100.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 414313,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97404000AY0542": {
+  "idu": "97404000AY0542",
+  "contenance_m2": 13,
+  "aire_dessin_m2": 13.2,
+  "zone_lib": "UA",
+  "zone_fam": "U",
+  "pente_moy_deg": 2.2,
+  "pente_max_deg": 2.2,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 156174,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97404000AD0014": {
+  "idu": "97404000AD0014",
+  "contenance_m2": 200,
+  "aire_dessin_m2": 179.1,
+  "zone_lib": "N",
+  "zone_fam": "N",
+  "pente_moy_deg": 22.9,
+  "pente_max_deg": 33.7,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 78.5
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 97.7
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 2.3
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 78.5,
+    "niveaux": {
+     "fort": 78.5
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "fort": 97.7,
+     "moyen": 2.3
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 100.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 377076,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97406000AV1338": {
+  "idu": "97406000AV1338",
+  "contenance_m2": 6971,
+  "aire_dessin_m2": 6985.4,
+  "zone_lib": "AUb",
+  "zone_fam": "AU",
+  "pente_moy_deg": 4.4,
+  "pente_max_deg": 13.8,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": {
+   "d": "2025-08-06",
+   "nat": "Vente",
+   "val": 129290.45,
+   "sb": null,
+   "st": 6971.0,
+   "type_local": null
+  },
+  "labuse_bande": "A",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 609,
+  "rnic_present": false,
+  "sdp_labuse": 3056.0,
+  "sdp_residuel_live": 3056.0,
+  "pm": null
+ },
+ "97406000AE0592": {
+  "idu": "97406000AE0592",
+  "contenance_m2": 1340,
+  "aire_dessin_m2": 1341.6,
+  "zone_lib": "Ub",
+  "zone_fam": "U",
+  "pente_moy_deg": 3.8,
+  "pente_max_deg": 11.1,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": true,
+  "v2_rang": null,
+  "rnic_present": true,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97406000AI0590": {
+  "idu": "97406000AI0590",
+  "contenance_m2": 19,
+  "aire_dessin_m2": 15.7,
+  "zone_lib": "Nco",
+  "zone_fam": "N",
+  "pente_moy_deg": 13.6,
+  "pente_max_deg": 13.6,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 100.0
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 84.5
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 15.5
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "fort": 100.0
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "fort": 84.5,
+     "moyen": 15.5
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 100.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 101733,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": {
+   "denomination": "COMMUNE DE LA PLAINE DES PALMISTES",
+   "siren": "219740065",
+   "groupe": 4,
+   "groupe_label": "Commune"
+  }
+ },
+ "97406000AP0252": {
+  "idu": "97406000AP0252",
+  "contenance_m2": 131876,
+  "aire_dessin_m2": 131139.3,
+  "zone_lib": "A",
+  "zone_fam": "A",
+  "pente_moy_deg": 5.1,
+  "pente_max_deg": 35.7,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 1.3
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 92.4
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 2.6
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 5.0
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 1.3,
+    "niveaux": {
+     "fort": 1.3
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 92.4,
+     "fort": 2.6,
+     "moyen": 5.0
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 2.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 368126,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97406000AT0703": {
+  "idu": "97406000AT0703",
+  "contenance_m2": 450,
+  "aire_dessin_m2": 430.6,
+  "zone_lib": "Uc",
+  "zone_fam": "U",
+  "pente_moy_deg": 2.6,
+  "pente_max_deg": 4.7,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "D",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 150587,
+  "rnic_present": false,
+  "sdp_labuse": 51.0,
+  "sdp_residuel_live": 51.0,
+  "pm": null
+ },
+ "97408000AP1631": {
+  "idu": "97408000AP1631",
+  "contenance_m2": 4932,
+  "aire_dessin_m2": 4866.0,
+  "zone_lib": "AUBm",
+  "zone_fam": "AU",
+  "pente_moy_deg": 12.1,
+  "pente_max_deg": 20.2,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENTS DE TERRAIN",
+    "niveau": "faible",
+    "pct": 96.6
+   },
+   {
+    "risque": "MOUVEMENTS DE TERRAIN",
+    "niveau": "moyen",
+    "pct": 3.4
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENTS DE TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 96.6,
+     "moyen": 3.4
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": {
+   "d": "2025-09-11",
+   "nat": "Vente",
+   "val": 9543711.62,
+   "sb": null,
+   "st": 4932.0,
+   "type_local": null
+  },
+  "labuse_bande": "A",
+  "labuse_non_calculable": false,
+  "v2_tier": "priorite",
+  "v2_copro": false,
+  "v2_rang": 41,
+  "rnic_present": false,
+  "sdp_labuse": 2367.0,
+  "sdp_residuel_live": 2367.0,
+  "pm": {
+   "denomination": "SOCIETE D'EQUIPEMENT DU DEPARTEMENT DE LA REUNION",
+   "siren": "310863378",
+   "groupe": 6,
+   "groupe_label": "Personnes morales représentant des sociétés d’économie mixte"
+  }
+ },
+ "97408000BI0378": {
+  "idu": "97408000BI0378",
+  "contenance_m2": 159,
+  "aire_dessin_m2": 163.7,
+  "zone_lib": "UB",
+  "zone_fam": "U",
+  "pente_moy_deg": 15.2,
+  "pente_max_deg": 23.8,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENTS DE TERRAIN",
+    "niveau": "faible",
+    "pct": 135.1
+   },
+   {
+    "risque": "MOUVEMENTS DE TERRAIN",
+    "niveau": "moyen",
+    "pct": 9.1
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENTS DE TERRAIN": {
+    "total_pct": 144.2,
+    "niveaux": {
+     "faible": 135.1,
+     "moyen": 9.1
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": true,
+  "v2_rang": null,
+  "rnic_present": true,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97408000BE0054": {
+  "idu": "97408000BE0054",
+  "contenance_m2": 72,
+  "aire_dessin_m2": 71.0,
+  "zone_lib": "Npnr",
+  "zone_fam": "N",
+  "pente_moy_deg": 1.6,
+  "pente_max_deg": 2.3,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "moyen": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 85526,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": {
+   "denomination": "ETAT PAR DIRECTION DE L IMMOBILIER DE L ETAT",
+   "siren": "U23691569",
+   "groupe": 1,
+   "groupe_label": "État"
+  }
+ },
+ "97408000BM0204": {
+  "idu": "97408000BM0204",
+  "contenance_m2": 522,
+  "aire_dessin_m2": 522.1,
+  "zone_lib": "UA",
+  "zone_fam": "U",
+  "pente_moy_deg": 3.6,
+  "pente_max_deg": 5.0,
+  "aleas_detail": [],
+  "aleas_par_risque": {},
+  "n_risques": 0,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "C",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 199679,
+  "rnic_present": false,
+  "sdp_labuse": 383.0,
+  "sdp_residuel_live": 383.0,
+  "pm": null
+ },
+ "97408000AR1032": {
+  "idu": "97408000AR1032",
+  "contenance_m2": 272,
+  "aire_dessin_m2": 275.7,
+  "zone_lib": "UB",
+  "zone_fam": "U",
+  "pente_moy_deg": 6.4,
+  "pente_max_deg": 10.5,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENTS DE TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENTS DE TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "D",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 178033,
+  "rnic_present": false,
+  "sdp_labuse": 79.0,
+  "sdp_residuel_live": 79.0,
+  "pm": null
+ },
+ "97407000AX0193": {
+  "idu": "97407000AX0193",
+  "contenance_m2": 7778,
+  "aire_dessin_m2": 8406.4,
+  "zone_lib": "1AUe",
+  "zone_fam": "AU",
+  "pente_moy_deg": 7.5,
+  "pente_max_deg": 34.9,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "A",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 5757,
+  "rnic_present": false,
+  "sdp_labuse": 6671.0,
+  "sdp_residuel_live": 6671.0,
+  "pm": {
+   "denomination": "BAMY AUTOMOBILES",
+   "siren": "389798026",
+   "groupe": 0,
+   "groupe_label": "Personnes morales non remarquables"
+  }
+ },
+ "97407000AE0739": {
+  "idu": "97407000AE0739",
+  "contenance_m2": 28,
+  "aire_dessin_m2": 28.1,
+  "zone_lib": "Ub",
+  "zone_fam": "U",
+  "pente_moy_deg": 1.9,
+  "pente_max_deg": 1.9,
+  "aleas_detail": [],
+  "aleas_par_risque": {},
+  "n_risques": 0,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": {
+   "d": "2025-07-30",
+   "nat": "Vente",
+   "val": 115000.0,
+   "sb": 132.0,
+   "st": null,
+   "type_local": "Local industriel. commercial ou assimilé"
+  },
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": true,
+  "v2_rang": null,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97407000AD0086": {
+  "idu": "97407000AD0086",
+  "contenance_m2": 45103,
+  "aire_dessin_m2": 44614.7,
+  "zone_lib": "N",
+  "zone_fam": "N",
+  "pente_moy_deg": 5.8,
+  "pente_max_deg": 32.4,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 27.9
+   },
+   {
+    "risque": "INONDATION",
+    "niveau": "moyen",
+    "pct": 28.8
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 4.6
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 85.9
+   },
+   {
+    "risque": "SUBMERSION_MARINE",
+    "niveau": "faible",
+    "pct": 7.8
+   },
+   {
+    "risque": "SUBMERSION_MARINE",
+    "niveau": "fort",
+    "pct": 51.6
+   },
+   {
+    "risque": "SUBMERSION_MARINE",
+    "niveau": "moyen",
+    "pct": 4.8
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 56.7,
+    "niveaux": {
+     "fort": 27.9,
+     "moyen": 28.8
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 90.5,
+    "niveaux": {
+     "fort": 4.6,
+     "moyen": 85.9
+    }
+   },
+   "SUBMERSION_MARINE": {
+    "total_pct": 64.2,
+    "niveaux": {
+     "faible": 7.8,
+     "fort": 51.6,
+     "moyen": 4.8
+    }
+   }
+  },
+  "n_risques": 3,
+  "ppr_rouge_pct": 42.9,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 101792,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": {
+   "denomination": "GRAND PORT MARITIME DE LA REUNION",
+   "siren": "789401858",
+   "groupe": 9,
+   "groupe_label": "Établissements publics ou organismes associés"
+  }
+ },
+ "97407000AI1794": {
+  "idu": "97407000AI1794",
+  "contenance_m2": 183,
+  "aire_dessin_m2": 183.4,
+  "zone_lib": "Uc",
+  "zone_fam": "U",
+  "pente_moy_deg": 3.0,
+  "pente_max_deg": 4.3,
+  "aleas_detail": [],
+  "aleas_par_risque": {},
+  "n_risques": 0,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 43028,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97407000AM0148": {
+  "idu": "97407000AM0148",
+  "contenance_m2": 373,
+  "aire_dessin_m2": 374.8,
+  "zone_lib": "Uoap",
+  "zone_fam": "U",
+  "pente_moy_deg": 2.1,
+  "pente_max_deg": 4.5,
+  "aleas_detail": [],
+  "aleas_par_risque": {},
+  "n_risques": 0,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "C",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 70338,
+  "rnic_present": false,
+  "sdp_labuse": 163.0,
+  "sdp_residuel_live": 163.0,
+  "pm": {
+   "denomination": "COMMUNE DU PORT",
+   "siren": "219740073",
+   "groupe": 4,
+   "groupe_label": "Commune"
+  }
+ },
+ "97422000BI1097": {
+  "idu": "97422000BI1097",
+  "contenance_m2": 6516,
+  "aire_dessin_m2": 6517.4,
+  "zone_lib": "1AUe",
+  "zone_fam": "AU",
+  "pente_moy_deg": 11.1,
+  "pente_max_deg": 29.2,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 19.5
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 53.3
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 15.6
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 31.1
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 19.5,
+    "niveaux": {
+     "fort": 19.5
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 53.3,
+     "fort": 15.6,
+     "moyen": 31.1
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 19.5,
+  "derniere_vente": {
+   "d": "2025-11-27",
+   "nat": "Vente",
+   "val": 1481025.0,
+   "sb": null,
+   "st": 6516.0,
+   "type_local": null
+  },
+  "labuse_bande": "A",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 1014,
+  "rnic_present": false,
+  "sdp_labuse": 6520.0,
+  "sdp_residuel_live": 6520.0,
+  "pm": {
+   "denomination": "ETS PUBLIC FONCIER DE LA REUNION",
+   "siren": "444704977",
+   "groupe": 9,
+   "groupe_label": "Établissements publics ou organismes associés"
+  }
+ },
+ "97422000EL0342": {
+  "idu": "97422000EL0342",
+  "contenance_m2": 157,
+  "aire_dessin_m2": 157.0,
+  "zone_lib": "Ua",
+  "zone_fam": "U",
+  "pente_moy_deg": 7.9,
+  "pente_max_deg": 11.4,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": {
+   "d": "2021-11-15",
+   "nat": "Vente",
+   "val": 262500.0,
+   "sb": 89.0,
+   "st": 157.0,
+   "type_local": "Appartement"
+  },
+  "labuse_bande": "D",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": true,
+  "v2_rang": null,
+  "rnic_present": false,
+  "sdp_labuse": 90.0,
+  "sdp_residuel_live": 90.0,
+  "pm": null
+ },
+ "97422000BS1632": {
+  "idu": "97422000BS1632",
+  "contenance_m2": 1006,
+  "aire_dessin_m2": 986.7,
+  "zone_lib": "Nco",
+  "zone_fam": "N",
+  "pente_moy_deg": 7.1,
+  "pente_max_deg": 13.5,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 42.3
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 41.5
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 42.3
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 16.2
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 42.3,
+    "niveaux": {
+     "fort": 42.3
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 41.5,
+     "fort": 42.3,
+     "moyen": 16.2
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 42.3,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 380095,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97422000BT0027": {
+  "idu": "97422000BT0027",
+  "contenance_m2": 3220,
+  "aire_dessin_m2": 3204.0,
+  "zone_lib": "A",
+  "zone_fam": "A",
+  "pente_moy_deg": 9.4,
+  "pente_max_deg": 22.7,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 382210,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97422000CI0650": {
+  "idu": "97422000CI0650",
+  "contenance_m2": 648,
+  "aire_dessin_m2": 639.8,
+  "zone_lib": "Ua",
+  "zone_fam": "U",
+  "pente_moy_deg": 5.8,
+  "pente_max_deg": 8.3,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "B",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 350375,
+  "rnic_present": false,
+  "sdp_labuse": 1021.0,
+  "sdp_residuel_live": 1021.0,
+  "pm": null
+ },
+ "97401000AT0727": {
+  "idu": "97401000AT0727",
+  "contenance_m2": 4687,
+  "aire_dessin_m2": 4687.7,
+  "zone_lib": "AUa",
+  "zone_fam": "AU",
+  "pente_moy_deg": 8.8,
+  "pente_max_deg": 35.5,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 5.8
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 85.5
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 5.8
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 8.7
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 5.8,
+    "niveaux": {
+     "fort": 5.8
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 85.5,
+     "fort": 5.8,
+     "moyen": 8.7
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 5.8,
+  "derniere_vente": {
+   "d": "2024-10-31",
+   "nat": "Vente",
+   "val": 999485.7,
+   "sb": null,
+   "st": 4687.0,
+   "type_local": null
+  },
+  "labuse_bande": "D",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 4592,
+  "rnic_present": false,
+  "sdp_labuse": 183.0,
+  "sdp_residuel_live": 183.0,
+  "pm": {
+   "denomination": "SOCIETE ANONYME D'HABITATIONS A LOYER MODERE DE LA REUNION",
+   "siren": "310895172",
+   "groupe": 5,
+   "groupe_label": "Office HLM"
+  }
+ },
+ "97401000AR1377": {
+  "idu": "97401000AR1377",
+  "contenance_m2": 1,
+  "aire_dessin_m2": 0.5,
+  "zone_lib": "Ud",
+  "zone_fam": "U",
+  "pente_moy_deg": 10.8,
+  "pente_max_deg": 10.8,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": true,
+  "v2_rang": null,
+  "rnic_present": true,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97401000AC0379": {
+  "idu": "97401000AC0379",
+  "contenance_m2": 2650,
+  "aire_dessin_m2": 2523.7,
+  "zone_lib": "Npnr",
+  "zone_fam": "N",
+  "pente_moy_deg": 14.2,
+  "pente_max_deg": 38.4,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 89.6
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 10.4
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 89.6,
+     "moyen": 10.4
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 10.4,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 82663,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": {
+   "denomination": "ETAT PAR LA TRESORERIE GENERALE",
+   "siren": "U23628399",
+   "groupe": 1,
+   "groupe_label": "État"
+  }
+ },
+ "97401000AM1492": {
+  "idu": "97401000AM1492",
+  "contenance_m2": 190,
+  "aire_dessin_m2": 191.3,
+  "zone_lib": "Ub2",
+  "zone_fam": "U",
+  "pente_moy_deg": 6.1,
+  "pente_max_deg": 8.7,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": {
+   "d": "2025-03-26",
+   "nat": "Vente",
+   "val": 262000.0,
+   "sb": 76.0,
+   "st": 190.0,
+   "type_local": "Maison"
+  },
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 39650,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97401000AL0289": {
+  "idu": "97401000AL0289",
+  "contenance_m2": 818,
+  "aire_dessin_m2": 841.8,
+  "zone_lib": "Ud",
+  "zone_fam": "U",
+  "pente_moy_deg": 14.8,
+  "pente_max_deg": 27.3,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "D",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 167050,
+  "rnic_present": false,
+  "sdp_labuse": 4.0,
+  "sdp_residuel_live": 4.0,
+  "pm": null
+ },
+ "97423000AB0338": {
+  "idu": "97423000AB0338",
+  "contenance_m2": 2222,
+  "aire_dessin_m2": 2276.9,
+  "zone_lib": "1AUb",
+  "zone_fam": "AU",
+  "pente_moy_deg": 5.1,
+  "pente_max_deg": 10.8,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 91.0
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 9.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 91.0,
+     "moyen": 9.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": {
+   "d": "2024-07-17",
+   "nat": "Vente",
+   "val": 450000.0,
+   "sb": 111.0,
+   "st": null,
+   "type_local": "Maison"
+  },
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": true,
+  "v2_rang": null,
+  "rnic_present": true,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97423000AB0956": {
+  "idu": "97423000AB0956",
+  "contenance_m2": 7787,
+  "aire_dessin_m2": 7609.5,
+  "zone_lib": "N",
+  "zone_fam": "N",
+  "pente_moy_deg": 18.9,
+  "pente_max_deg": 49.0,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 5.2
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 0.3
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 8.3
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 91.4
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 5.2,
+    "niveaux": {
+     "fort": 5.2
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 0.3,
+     "fort": 8.3,
+     "moyen": 91.4
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 99.7,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 208983,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": {
+   "denomination": "REGION REUNION",
+   "siren": "239740012",
+   "groupe": 1,
+   "groupe_label": "État"
+  }
+ },
+ "97423000AE1039": {
+  "idu": "97423000AE1039",
+  "contenance_m2": 175,
+  "aire_dessin_m2": 175.1,
+  "zone_lib": "Ub",
+  "zone_fam": "U",
+  "pente_moy_deg": 15.3,
+  "pente_max_deg": 22.3,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 141126,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97423000AH1544": {
+  "idu": "97423000AH1544",
+  "contenance_m2": 457,
+  "aire_dessin_m2": 463.5,
+  "zone_lib": "Ub",
+  "zone_fam": "U",
+  "pente_moy_deg": 11.9,
+  "pente_max_deg": 16.1,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "HC",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 229929,
+  "rnic_present": false,
+  "sdp_labuse": 158.0,
+  "sdp_residuel_live": 158.0,
+  "pm": null
+ },
+ "97423000AH0867": {
+  "idu": "97423000AH0867",
+  "contenance_m2": 845,
+  "aire_dessin_m2": 802.2,
+  "zone_lib": "Ub",
+  "zone_fam": "U",
+  "pente_moy_deg": 14.3,
+  "pente_max_deg": 32.3,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 17.7
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 42.3
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 17.7
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 40.0
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 17.7,
+    "niveaux": {
+     "fort": 17.7
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 42.3,
+     "fort": 17.7,
+     "moyen": 40.0
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 57.7,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 261359,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97405000AX0036": {
+  "idu": "97405000AX0036",
+  "contenance_m2": 9920,
+  "aire_dessin_m2": 9904.2,
+  "zone_lib": "1AUa",
+  "zone_fam": "AU",
+  "pente_moy_deg": 10.8,
+  "pente_max_deg": 37.6,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 73.3
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 18.1
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 8.5
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 99.9,
+    "niveaux": {
+     "faible": 73.3,
+     "fort": 18.1,
+     "moyen": 8.5
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 26.7,
+  "derniere_vente": {
+   "d": "2025-08-02",
+   "nat": "Vente en l'état futur d'achèvement",
+   "val": 342000.0,
+   "sb": 64.0,
+   "st": null,
+   "type_local": "Appartement"
+  },
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "a_suivre",
+  "v2_copro": false,
+  "v2_rang": 287,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": {
+   "denomination": "SCCV D2 PROMOTION",
+   "siren": "828426445",
+   "groupe": 0,
+   "groupe_label": "Personnes morales non remarquables"
+  }
+ },
+ "97405000AH0844": {
+  "idu": "97405000AH0844",
+  "contenance_m2": 120,
+  "aire_dessin_m2": 120.3,
+  "zone_lib": "N",
+  "zone_fam": "N",
+  "pente_moy_deg": 19.0,
+  "pente_max_deg": 23.3,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 100.0
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "fort": 100.0
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "fort": 100.0
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 100.0,
+  "derniere_vente": {
+   "d": "2025-05-28",
+   "nat": "Vente",
+   "val": 240.0,
+   "sb": null,
+   "st": 120.0,
+   "type_local": null
+  },
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 209793,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97405000AK1424": {
+  "idu": "97405000AK1424",
+  "contenance_m2": 477,
+  "aire_dessin_m2": 482.0,
+  "zone_lib": "UC",
+  "zone_fam": "U",
+  "pente_moy_deg": 6.1,
+  "pente_max_deg": 9.5,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": {
+   "d": "2021-09-07",
+   "nat": "Vente",
+   "val": 130000.0,
+   "sb": 85.0,
+   "st": 477.0,
+   "type_local": "Appartement"
+  },
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": true,
+  "v2_rang": null,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97405000BH0941": {
+  "idu": "97405000BH0941",
+  "contenance_m2": 450,
+  "aire_dessin_m2": 447.8,
+  "zone_lib": "UB",
+  "zone_fam": "U",
+  "pente_moy_deg": 11.6,
+  "pente_max_deg": 21.7,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "D",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 181680,
+  "rnic_present": false,
+  "sdp_labuse": 173.0,
+  "sdp_residuel_live": 173.0,
+  "pm": null
+ },
+ "97405000BI0567": {
+  "idu": "97405000BI0567",
+  "contenance_m2": 111,
+  "aire_dessin_m2": 106.6,
+  "zone_lib": "UB",
+  "zone_fam": "U",
+  "pente_moy_deg": 7.7,
+  "pente_max_deg": 8.7,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 216017,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97409000AS1236": {
+  "idu": "97409000AS1236",
+  "contenance_m2": 8228,
+  "aire_dessin_m2": 8278.3,
+  "zone_lib": "1AUc",
+  "zone_fam": "AU",
+  "pente_moy_deg": 2.6,
+  "pente_max_deg": 6.3,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "faible",
+    "pct": 100.0
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": {
+   "d": "2025-11-21",
+   "nat": "Vente",
+   "val": 14250000.01,
+   "sb": null,
+   "st": 8228.0,
+   "type_local": null
+  },
+  "labuse_bande": "A",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 2170,
+  "rnic_present": false,
+  "sdp_labuse": 6665.0,
+  "sdp_residuel_live": 6665.0,
+  "pm": null
+ },
+ "97409000AD0083": {
+  "idu": "97409000AD0083",
+  "contenance_m2": 185,
+  "aire_dessin_m2": 183.1,
+  "zone_lib": "UC",
+  "zone_fam": "U",
+  "pente_moy_deg": 2.4,
+  "pente_max_deg": 5.2,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "faible",
+    "pct": 100.0
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": {
+   "d": "2022-09-20",
+   "nat": "Vente",
+   "val": 438000.0,
+   "sb": 54.0,
+   "st": null,
+   "type_local": "Appartement"
+  },
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": true,
+  "v2_rang": null,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97409000AB0577": {
+  "idu": "97409000AB0577",
+  "contenance_m2": 1399,
+  "aire_dessin_m2": 1438.6,
+  "zone_lib": "Nli",
+  "zone_fam": "N",
+  "pente_moy_deg": 1.8,
+  "pente_max_deg": 4.8,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 60.4
+   },
+   {
+    "risque": "INONDATION",
+    "niveau": "moyen",
+    "pct": 39.6
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 39.6
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 60.4
+   },
+   {
+    "risque": "SUBMERSION_MARINE",
+    "niveau": "fort",
+    "pct": 98.4
+   },
+   {
+    "risque": "SUBMERSION_MARINE",
+    "niveau": "moyen",
+    "pct": 1.6
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "fort": 60.4,
+     "moyen": 39.6
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 39.6,
+     "moyen": 60.4
+    }
+   },
+   "SUBMERSION_MARINE": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "fort": 98.4,
+     "moyen": 1.6
+    }
+   }
+  },
+  "n_risques": 3,
+  "ppr_rouge_pct": 100.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 417261,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97409000BD0418": {
+  "idu": "97409000BD0418",
+  "contenance_m2": 364,
+  "aire_dessin_m2": 361.4,
+  "zone_lib": "UB",
+  "zone_fam": "U",
+  "pente_moy_deg": 0.9,
+  "pente_max_deg": 1.3,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "faible",
+    "pct": 100.0
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "D",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 144754,
+  "rnic_present": false,
+  "sdp_labuse": 71.0,
+  "sdp_residuel_live": 71.0,
+  "pm": null
+ },
+ "97409000BD0447": {
+  "idu": "97409000BD0447",
+  "contenance_m2": 390,
+  "aire_dessin_m2": 363.8,
+  "zone_lib": "UB",
+  "zone_fam": "U",
+  "pente_moy_deg": 1.1,
+  "pente_max_deg": 1.6,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "faible",
+    "pct": 100.0
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": {
+   "d": "2023-03-15",
+   "nat": "Vente",
+   "val": 182000.0,
+   "sb": 73.0,
+   "st": 390.0,
+   "type_local": "Maison"
+  },
+  "labuse_bande": "D",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 123228,
+  "rnic_present": false,
+  "sdp_labuse": 22.0,
+  "sdp_residuel_live": 22.0,
+  "pm": null
+ },
+ "97410000AT1066": {
+  "idu": "97410000AT1066",
+  "contenance_m2": 9099,
+  "aire_dessin_m2": 9053.8,
+  "zone_lib": "Ub",
+  "zone_fam": "U",
+  "pente_moy_deg": 3.7,
+  "pente_max_deg": 25.9,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 29.8
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 60.7
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 29.8
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 9.5
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 29.8,
+    "niveaux": {
+     "fort": 29.8
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 60.7,
+     "fort": 29.8,
+     "moyen": 9.5
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 29.8,
+  "derniere_vente": {
+   "d": "2024-08-13",
+   "nat": "Vente",
+   "val": 4991765.5,
+   "sb": 60.0,
+   "st": 9099.0,
+   "type_local": "Appartement"
+  },
+  "labuse_bande": "A",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": true,
+  "v2_rang": null,
+  "rnic_present": false,
+  "sdp_labuse": 5075.0,
+  "sdp_residuel_live": 5075.0,
+  "pm": {
+   "denomination": "SOCIETE D'ECONOMIE MIXTE D'AMENAGEMENT ET DE CONSTRUCTION",
+   "siren": "380572453",
+   "groupe": 6,
+   "groupe_label": "Personnes morales représentant des sociétés d’économie mixte"
+  }
+ },
+ "97410000AS1467": {
+  "idu": "97410000AS1467",
+  "contenance_m2": 40,
+  "aire_dessin_m2": 39.4,
+  "zone_lib": "AUa5",
+  "zone_fam": "AU",
+  "pente_moy_deg": 2.7,
+  "pente_max_deg": 2.7,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 21039,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": {
+   "denomination": "BLEU CONARDEL",
+   "siren": "912933710",
+   "groupe": 0,
+   "groupe_label": "Personnes morales non remarquables"
+  }
+ },
+ "97410000CE0005": {
+  "idu": "97410000CE0005",
+  "contenance_m2": 67512,
+  "aire_dessin_m2": 67466.7,
+  "zone_lib": "Npnr",
+  "zone_fam": "N",
+  "pente_moy_deg": 23.3,
+  "pente_max_deg": 54.3,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 16.3
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 16.2
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 83.8
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 16.3,
+    "niveaux": {
+     "fort": 16.3
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "fort": 16.2,
+     "moyen": 83.8
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 100.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 427728,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": {
+   "denomination": "ETAT PAR DIRECTION DE L IMMOBILIER DE L ETAT",
+   "siren": "U23691569",
+   "groupe": 1,
+   "groupe_label": "État"
+  }
+ },
+ "97410000AH0660": {
+  "idu": "97410000AH0660",
+  "contenance_m2": 738,
+  "aire_dessin_m2": 748.0,
+  "zone_lib": "Ub",
+  "zone_fam": "U",
+  "pente_moy_deg": 12.4,
+  "pente_max_deg": 22.2,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": {
+   "d": "2025-02-13",
+   "nat": "Vente",
+   "val": 160000.0,
+   "sb": 158.0,
+   "st": 738.0,
+   "type_local": "Maison"
+  },
+  "labuse_bande": "C",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 45086,
+  "rnic_present": false,
+  "sdp_labuse": 621.0,
+  "sdp_residuel_live": 621.0,
+  "pm": null
+ },
+ "97410000AI0554": {
+  "idu": "97410000AI0554",
+  "contenance_m2": 378,
+  "aire_dessin_m2": 375.1,
+  "zone_lib": "Ub",
+  "zone_fam": "U",
+  "pente_moy_deg": 9.8,
+  "pente_max_deg": 14.8,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "B",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 219652,
+  "rnic_present": false,
+  "sdp_labuse": 408.0,
+  "sdp_residuel_live": 408.0,
+  "pm": null
+ },
+ "97411000EP0106": {
+  "idu": "97411000EP0106",
+  "contenance_m2": 409,
+  "aire_dessin_m2": 405.1,
+  "zone_lib": "AUm",
+  "zone_fam": "AU",
+  "pente_moy_deg": 29.0,
+  "pente_max_deg": 32.1,
+  "aleas_detail": [],
+  "aleas_par_risque": {},
+  "n_risques": 0,
+  "ppr_rouge_pct": 99.9,
+  "derniere_vente": {
+   "d": "2025-09-17",
+   "nat": "Vente",
+   "val": 50000.0,
+   "sb": null,
+   "st": 409.0,
+   "type_local": null
+  },
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": true,
+  "v2_rang": null,
+  "rnic_present": true,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97411000EP0285": {
+  "idu": "97411000EP0285",
+  "contenance_m2": 8809,
+  "aire_dessin_m2": 8663.7,
+  "zone_lib": "N",
+  "zone_fam": "N",
+  "pente_moy_deg": 27.5,
+  "pente_max_deg": 41.3,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 7.8
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 7.8,
+    "niveaux": {
+     "fort": 7.8
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 69.9,
+  "derniere_vente": {
+   "d": "2024-10-28",
+   "nat": "Vente",
+   "val": 155350.0,
+   "sb": 52.0,
+   "st": null,
+   "type_local": "Appartement"
+  },
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": true,
+  "v2_rang": null,
+  "rnic_present": true,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97411000HW0340": {
+  "idu": "97411000HW0340",
+  "contenance_m2": 3,
+  "aire_dessin_m2": 5.6,
+  "zone_lib": "Um",
+  "zone_fam": "U",
+  "pente_moy_deg": 12.6,
+  "pente_max_deg": 12.6,
+  "aleas_detail": [],
+  "aleas_par_risque": {},
+  "n_risques": 0,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 68349,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": {
+   "denomination": "COMMUNE DE SAINT DENIS",
+   "siren": "219740115",
+   "groupe": 4,
+   "groupe_label": "Commune"
+  }
+ },
+ "97411000EZ0178": {
+  "idu": "97411000EZ0178",
+  "contenance_m2": 93,
+  "aire_dessin_m2": 96.4,
+  "zone_lib": "Um",
+  "zone_fam": "U",
+  "pente_moy_deg": 19.1,
+  "pente_max_deg": 23.8,
+  "aleas_detail": [],
+  "aleas_par_risque": {},
+  "n_risques": 0,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 13887,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": {
+   "denomination": "ASSOCIATION SYNDICALE DE MONTGAILLARD",
+   "siren": "U23678897",
+   "groupe": 0,
+   "groupe_label": "Personnes morales non remarquables"
+  }
+ },
+ "97411000HY0039": {
+  "idu": "97411000HY0039",
+  "contenance_m2": 560,
+  "aire_dessin_m2": 553.4,
+  "zone_lib": "Um",
+  "zone_fam": "U",
+  "pente_moy_deg": 11.3,
+  "pente_max_deg": 15.2,
+  "aleas_detail": [],
+  "aleas_par_risque": {},
+  "n_risques": 0,
+  "ppr_rouge_pct": 1.5,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 8169,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": {
+   "denomination": "SCI RAMASSAMY R DOMENJOD",
+   "siren": "830742391",
+   "groupe": 0,
+   "groupe_label": "Personnes morales non remarquables"
+  }
+ },
+ "97412000AN0155": {
+  "idu": "97412000AN0155",
+  "contenance_m2": 4650,
+  "aire_dessin_m2": 4753.7,
+  "zone_lib": "A",
+  "zone_fam": "A",
+  "pente_moy_deg": 15.1,
+  "pente_max_deg": 43.6,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 50.0
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 41.2
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 50.1
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 8.6
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 50.0,
+    "niveaux": {
+     "fort": 50.0
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 99.9,
+    "niveaux": {
+     "faible": 41.2,
+     "fort": 50.1,
+     "moyen": 8.6
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 50.1,
+  "derniere_vente": {
+   "d": "2024-11-07",
+   "nat": "Vente",
+   "val": 6900.0,
+   "sb": 80.0,
+   "st": 4650.0,
+   "type_local": "Appartement"
+  },
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": true,
+  "v2_rang": null,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97412000AM1955": {
+  "idu": "97412000AM1955",
+  "contenance_m2": 187,
+  "aire_dessin_m2": 190.9,
+  "zone_lib": "1AU5",
+  "zone_fam": "AU",
+  "pente_moy_deg": 12.4,
+  "pente_max_deg": 15.6,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "D",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 41617,
+  "rnic_present": false,
+  "sdp_labuse": 11.0,
+  "sdp_residuel_live": 11.0,
+  "pm": null
+ },
+ "97412000AL0089": {
+  "idu": "97412000AL0089",
+  "contenance_m2": 62975,
+  "aire_dessin_m2": 62863.2,
+  "zone_lib": "Nco",
+  "zone_fam": "N",
+  "pente_moy_deg": 15.8,
+  "pente_max_deg": 60.3,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 1.5
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 0.5
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 75.4
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 24.1
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 1.5,
+    "niveaux": {
+     "fort": 1.5
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 0.5,
+     "fort": 75.4,
+     "moyen": 24.1
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 99.5,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 374052,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97412000BX0071": {
+  "idu": "97412000BX0071",
+  "contenance_m2": 665,
+  "aire_dessin_m2": 648.9,
+  "zone_lib": "U3a",
+  "zone_fam": "U",
+  "pente_moy_deg": 4.7,
+  "pente_max_deg": 7.0,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 261650,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97412000BX1294": {
+  "idu": "97412000BX1294",
+  "contenance_m2": 460,
+  "aire_dessin_m2": 468.6,
+  "zone_lib": "U3a",
+  "zone_fam": "U",
+  "pente_moy_deg": 10.2,
+  "pente_max_deg": 14.9,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "C",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 112544,
+  "rnic_present": false,
+  "sdp_labuse": 209.0,
+  "sdp_residuel_live": 209.0,
+  "pm": null
+ },
+ "97413000CU0804": {
+  "idu": "97413000CU0804",
+  "contenance_m2": 9687,
+  "aire_dessin_m2": 9622.3,
+  "zone_lib": "AUB",
+  "zone_fam": "AU",
+  "pente_moy_deg": 9.8,
+  "pente_max_deg": 28.1,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   },
+   {
+    "risque": "SUBMERSION_MARINE",
+    "niveau": "faible",
+    "pct": 0.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   },
+   "SUBMERSION_MARINE": {
+    "total_pct": 0.0,
+    "niveaux": {
+     "faible": 0.0
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": {
+   "d": "2025-06-30",
+   "nat": "Vente",
+   "val": 355000.0,
+   "sb": null,
+   "st": null,
+   "type_local": "Dépendance"
+  },
+  "labuse_bande": "B",
+  "labuse_non_calculable": false,
+  "v2_tier": "a_suivre",
+  "v2_copro": true,
+  "v2_rang": null,
+  "rnic_present": true,
+  "sdp_labuse": 2385.0,
+  "sdp_residuel_live": 2385.0,
+  "pm": null
+ },
+ "97413000DE0811": {
+  "idu": "97413000DE0811",
+  "contenance_m2": 175,
+  "aire_dessin_m2": 202.4,
+  "zone_lib": null,
+  "zone_fam": null,
+  "pente_moy_deg": 16.1,
+  "pente_max_deg": 20.3,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "NC",
+  "labuse_non_calculable": true,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 304348,
+  "rnic_present": false,
+  "sdp_labuse": null,
+  "sdp_residuel_live": null,
+  "pm": null
+ },
+ "97413000CG0716": {
+  "idu": "97413000CG0716",
+  "contenance_m2": 1460,
+  "aire_dessin_m2": 1371.1,
+  "zone_lib": "N",
+  "zone_fam": "N",
+  "pente_moy_deg": 29.4,
+  "pente_max_deg": 45.3,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 42.3
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 81.0
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 19.0
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 42.3,
+    "niveaux": {
+     "fort": 42.3
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "fort": 81.0,
+     "moyen": 19.0
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 100.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 403656,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97413000CI0683": {
+  "idu": "97413000CI0683",
+  "contenance_m2": 496,
+  "aire_dessin_m2": 479.6,
+  "zone_lib": "UD",
+  "zone_fam": "U",
+  "pente_moy_deg": 17.5,
+  "pente_max_deg": 24.8,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 122979,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97413000CA0244": {
+  "idu": "97413000CA0244",
+  "contenance_m2": 1040,
+  "aire_dessin_m2": 1031.8,
+  "zone_lib": "AUE",
+  "zone_fam": "AU",
+  "pente_moy_deg": 9.5,
+  "pente_max_deg": 11.7,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "B",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 19206,
+  "rnic_present": false,
+  "sdp_labuse": 842.0,
+  "sdp_residuel_live": 842.0,
+  "pm": {
+   "denomination": "COMMUNAUTE AGGLO TERRITOIRE COTE OUEST",
+   "siren": "249740101",
+   "groupe": 4,
+   "groupe_label": "Commune"
+  }
+ },
+ "97414000DY0170": {
+  "idu": "97414000DY0170",
+  "contenance_m2": 13940,
+  "aire_dessin_m2": 13603.4,
+  "zone_lib": "2AUst",
+  "zone_fam": "AU",
+  "pente_moy_deg": 6.4,
+  "pente_max_deg": 19.1,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 94.2
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 1.2
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 4.6
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 94.2,
+     "fort": 1.2,
+     "moyen": 4.6
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 5.8,
+  "derniere_vente": {
+   "d": "2024-05-17",
+   "nat": "Vente",
+   "val": 1221250.0,
+   "sb": null,
+   "st": 13940.0,
+   "type_local": null
+  },
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 1003,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": {
+   "denomination": "LES POIVRIERS",
+   "siren": "983400466",
+   "groupe": 0,
+   "groupe_label": "Personnes morales non remarquables"
+  }
+ },
+ "97414000EW0697": {
+  "idu": "97414000EW0697",
+  "contenance_m2": 193,
+  "aire_dessin_m2": 197.0,
+  "zone_lib": "UC",
+  "zone_fam": "U",
+  "pente_moy_deg": 10.7,
+  "pente_max_deg": 19.2,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "moyen",
+    "pct": 30.8
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 30.8,
+    "niveaux": {
+     "moyen": 30.8
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": {
+   "d": "2021-03-24",
+   "nat": "Vente",
+   "val": 158730.0,
+   "sb": 75.0,
+   "st": 193.0,
+   "type_local": "Appartement"
+  },
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": true,
+  "v2_rang": null,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97414000HE0022": {
+  "idu": "97414000HE0022",
+  "contenance_m2": 861,
+  "aire_dessin_m2": 874.4,
+  "zone_lib": "N",
+  "zone_fam": "N",
+  "pente_moy_deg": 21.1,
+  "pente_max_deg": 30.7,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 12.7
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 87.3
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 12.7,
+     "moyen": 87.3
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 87.3,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 391358,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97414000CR0018": {
+  "idu": "97414000CR0018",
+  "contenance_m2": 1000,
+  "aire_dessin_m2": 1012.2,
+  "zone_lib": "A",
+  "zone_fam": "A",
+  "pente_moy_deg": 7.6,
+  "pente_max_deg": 9.7,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 392533,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97414000EL0158": {
+  "idu": "97414000EL0158",
+  "contenance_m2": 44,
+  "aire_dessin_m2": 40.1,
+  "zone_lib": "UA",
+  "zone_fam": "U",
+  "pente_moy_deg": 0.9,
+  "pente_max_deg": 1.2,
+  "aleas_detail": [],
+  "aleas_par_risque": {},
+  "n_risques": 0,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 325153,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97415000CT2791": {
+  "idu": "97415000CT2791",
+  "contenance_m2": 8877,
+  "aire_dessin_m2": 8856.4,
+  "zone_lib": "AU3c",
+  "zone_fam": "AU",
+  "pente_moy_deg": 7.5,
+  "pente_max_deg": 27.1,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "moyen",
+    "pct": 0.3
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 0.3,
+    "niveaux": {
+     "moyen": 0.3
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": {
+   "d": "2024-06-27",
+   "nat": "Vente",
+   "val": 10814215.0,
+   "sb": null,
+   "st": 200.0,
+   "type_local": "Dépendance"
+  },
+  "labuse_bande": "D",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": true,
+  "v2_rang": null,
+  "rnic_present": false,
+  "sdp_labuse": 49.0,
+  "sdp_residuel_live": 49.0,
+  "pm": {
+   "denomination": "SOCIETE ANONYME D'HABITATIONS A LOYER MODERE DE LA REUNION",
+   "siren": "310895172",
+   "groupe": 5,
+   "groupe_label": "Office HLM"
+  }
+ },
+ "97415000BR0139": {
+  "idu": "97415000BR0139",
+  "contenance_m2": 2,
+  "aire_dessin_m2": 1.9,
+  "zone_lib": "Nerl",
+  "zone_fam": "N",
+  "pente_moy_deg": 0.6,
+  "pente_max_deg": 0.6,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 0.3
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 0.3
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 99.7
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 0.3,
+    "niveaux": {
+     "fort": 0.3
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "fort": 0.3,
+     "moyen": 99.7
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 100.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 73976,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": {
+   "denomination": "SOCIETE D'EQUIPEMENT DU DEPARTEMENT DE LA REUNION",
+   "siren": "310863378",
+   "groupe": 6,
+   "groupe_label": "Personnes morales représentant des sociétés d’économie mixte"
+  }
+ },
+ "97415000DE0516": {
+  "idu": "97415000DE0516",
+  "contenance_m2": 2690,
+  "aire_dessin_m2": 2706.1,
+  "zone_lib": "U2h",
+  "zone_fam": "U",
+  "pente_moy_deg": 1.6,
+  "pente_max_deg": 7.3,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 87.2
+   },
+   {
+    "risque": "INONDATION",
+    "niveau": "moyen",
+    "pct": 12.8
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 79.2
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 0.4
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 5.3
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "fort": 87.2,
+     "moyen": 12.8
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 84.9,
+    "niveaux": {
+     "faible": 79.2,
+     "fort": 0.4,
+     "moyen": 5.3
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 87.2,
+  "derniere_vente": null,
+  "labuse_bande": "HC",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 97284,
+  "rnic_present": false,
+  "sdp_labuse": 155.0,
+  "sdp_residuel_live": 155.0,
+  "pm": {
+   "denomination": "COMMUNE DE SAINT PAUL",
+   "siren": "219740156",
+   "groupe": 4,
+   "groupe_label": "Commune"
+  }
+ },
+ "97415000CH2905": {
+  "idu": "97415000CH2905",
+  "contenance_m2": 1924,
+  "aire_dessin_m2": 1890.1,
+  "zone_lib": "A",
+  "zone_fam": "A",
+  "pente_moy_deg": 4.5,
+  "pente_max_deg": 7.1,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "NC",
+  "labuse_non_calculable": true,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 370529,
+  "rnic_present": false,
+  "sdp_labuse": null,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97415000DE0845": {
+  "idu": "97415000DE0845",
+  "contenance_m2": 549,
+  "aire_dessin_m2": 550.0,
+  "zone_lib": "U2c",
+  "zone_fam": "U",
+  "pente_moy_deg": 5.0,
+  "pente_max_deg": 13.1,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "D",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 10281,
+  "rnic_present": false,
+  "sdp_labuse": 44.0,
+  "sdp_residuel_live": 44.0,
+  "pm": {
+   "denomination": "SCI WHALER POP",
+   "siren": "831762562",
+   "groupe": 0,
+   "groupe_label": "Personnes morales non remarquables"
+  }
+ },
+ "97417000BC0095": {
+  "idu": "97417000BC0095",
+  "contenance_m2": 11160,
+  "aire_dessin_m2": 11089.2,
+  "zone_lib": null,
+  "zone_fam": null,
+  "pente_moy_deg": 7.6,
+  "pente_max_deg": 22.4,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 41.6
+   },
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 37.8
+   },
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 41.6
+   },
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 20.6
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 41.6,
+    "niveaux": {
+     "fort": 41.6
+    }
+   },
+   "MOUVEMENTS_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 37.8,
+     "fort": 41.6,
+     "moyen": 20.6
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": {
+   "d": "2025-11-13",
+   "nat": "Vente",
+   "val": 128220.0,
+   "sb": null,
+   "st": 3280.0,
+   "type_local": null
+  },
+  "labuse_bande": "NC",
+  "labuse_non_calculable": true,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 1715,
+  "rnic_present": false,
+  "sdp_labuse": null,
+  "sdp_residuel_live": null,
+  "pm": {
+   "denomination": "SOCIETE D'AMENAGEMENT FONCIER ET D'ETABLISSEMENT RURAL DE LA",
+   "siren": "310836309",
+   "groupe": 0,
+   "groupe_label": "Personnes morales non remarquables"
+  }
+ },
+ "97417000BC1199": {
+  "idu": "97417000BC1199",
+  "contenance_m2": 339,
+  "aire_dessin_m2": 349.6,
+  "zone_lib": null,
+  "zone_fam": null,
+  "pente_moy_deg": 2.4,
+  "pente_max_deg": 4.4,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENTS_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": {
+   "d": "2025-10-29",
+   "nat": "Vente",
+   "val": 85000.0,
+   "sb": 103.0,
+   "st": null,
+   "type_local": "Appartement"
+  },
+  "labuse_bande": "NC",
+  "labuse_non_calculable": true,
+  "v2_tier": "sans_signal",
+  "v2_copro": true,
+  "v2_rang": null,
+  "rnic_present": false,
+  "sdp_labuse": null,
+  "sdp_residuel_live": null,
+  "pm": null
+ },
+ "97417000AT1352": {
+  "idu": "97417000AT1352",
+  "contenance_m2": 146,
+  "aire_dessin_m2": 146.1,
+  "zone_lib": null,
+  "zone_fam": null,
+  "pente_moy_deg": 3.9,
+  "pente_max_deg": 6.3,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENTS_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "NC",
+  "labuse_non_calculable": true,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 97643,
+  "rnic_present": false,
+  "sdp_labuse": null,
+  "sdp_residuel_live": null,
+  "pm": {
+   "denomination": "SOCIETE DE DEVELOPPEMENT ET DE GESTION D'IMMOBILIER SOCIAL",
+   "siren": "380177170",
+   "groupe": 5,
+   "groupe_label": "Office HLM"
+  }
+ },
+ "97417000BO0007": {
+  "idu": "97417000BO0007",
+  "contenance_m2": 247750,
+  "aire_dessin_m2": 248087.6,
+  "zone_lib": "Npnr",
+  "zone_fam": "N",
+  "pente_moy_deg": 41.2,
+  "pente_max_deg": 75.8,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 3.7
+   },
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 100.0
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 0.0
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 3.7,
+    "niveaux": {
+     "fort": 3.7
+    }
+   },
+   "MOUVEMENTS_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "fort": 100.0
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 0.0,
+    "niveaux": {
+     "fort": 0.0
+    }
+   }
+  },
+  "n_risques": 3,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 208218,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": {
+   "denomination": "ETAT PAR DIRECTION DE L IMMOBILIER DE L ETAT",
+   "siren": "U23691569",
+   "groupe": 1,
+   "groupe_label": "État"
+  }
+ },
+ "97417000AO0332": {
+  "idu": "97417000AO0332",
+  "contenance_m2": 2137,
+  "aire_dessin_m2": 2125.3,
+  "zone_lib": null,
+  "zone_fam": null,
+  "pente_moy_deg": 13.0,
+  "pente_max_deg": 20.3,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENTS_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "NC",
+  "labuse_non_calculable": true,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 282745,
+  "rnic_present": false,
+  "sdp_labuse": null,
+  "sdp_residuel_live": null,
+  "pm": null
+ },
+ "97416000CS1636": {
+  "idu": "97416000CS1636",
+  "contenance_m2": 122,
+  "aire_dessin_m2": 120.2,
+  "zone_lib": "AUazi",
+  "zone_fam": "AU",
+  "pente_moy_deg": 7.3,
+  "pente_max_deg": 12.1,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "moyen",
+    "pct": 100.0
+   },
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "moyen": 100.0
+    }
+   },
+   "MOUVEMENTS_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "moyen": 100.0
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": {
+   "d": "2024-04-16",
+   "nat": "Vente",
+   "val": 1587026.5,
+   "sb": null,
+   "st": 122.0,
+   "type_local": null
+  },
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 16962,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": {
+   "denomination": "COMMUNAUTE INTERCOMMUNALE DES VILLES SOLIDAIRES",
+   "siren": "249740077",
+   "groupe": 4,
+   "groupe_label": "Commune"
+  }
+ },
+ "97416000DT0804": {
+  "idu": "97416000DT0804",
+  "contenance_m2": 6087,
+  "aire_dessin_m2": 6114.6,
+  "zone_lib": "Ucv",
+  "zone_fam": "U",
+  "pente_moy_deg": 3.0,
+  "pente_max_deg": 16.2,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENTS_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": {
+   "d": "2024-07-26",
+   "nat": "Vente",
+   "val": 154000.0,
+   "sb": null,
+   "st": null,
+   "type_local": "Dépendance"
+  },
+  "labuse_bande": "B",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": true,
+  "v2_rang": null,
+  "rnic_present": false,
+  "sdp_labuse": 2774.0,
+  "sdp_residuel_live": 2774.0,
+  "pm": null
+ },
+ "97416000IA1264": {
+  "idu": "97416000IA1264",
+  "contenance_m2": 1310,
+  "aire_dessin_m2": 1354.3,
+  "zone_lib": "N",
+  "zone_fam": "N",
+  "pente_moy_deg": 17.1,
+  "pente_max_deg": 61.2,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 77.4
+   },
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 22.6
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENTS_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 77.4,
+     "moyen": 22.6
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 22.6,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 304298,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97416000DR0281": {
+  "idu": "97416000DR0281",
+  "contenance_m2": 410,
+  "aire_dessin_m2": 418.5,
+  "zone_lib": "Ud",
+  "zone_fam": "U",
+  "pente_moy_deg": 1.9,
+  "pente_max_deg": 4.0,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENTS_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "C",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 147553,
+  "rnic_present": false,
+  "sdp_labuse": 327.0,
+  "sdp_residuel_live": 327.0,
+  "pm": null
+ },
+ "97416000CD0735": {
+  "idu": "97416000CD0735",
+  "contenance_m2": 295,
+  "aire_dessin_m2": 294.2,
+  "zone_lib": "A",
+  "zone_fam": "A",
+  "pente_moy_deg": 14.9,
+  "pente_max_deg": 21.0,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENTS_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "moyen": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 227014,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97418000AP3309": {
+  "idu": "97418000AP3309",
+  "contenance_m2": 4162,
+  "aire_dessin_m2": 4087.6,
+  "zone_lib": "N",
+  "zone_fam": "N",
+  "pente_moy_deg": 20.0,
+  "pente_max_deg": 41.5,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 28.0
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 20.0
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 31.0
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 49.0
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 28.0,
+    "niveaux": {
+     "fort": 28.0
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 20.0,
+     "fort": 31.0,
+     "moyen": 49.0
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 59.6,
+  "derniere_vente": {
+   "d": "2025-08-27",
+   "nat": "Vente",
+   "val": 130000.0,
+   "sb": 60.0,
+   "st": 1000.0,
+   "type_local": "Appartement"
+  },
+  "labuse_bande": "C",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": true,
+  "v2_rang": null,
+  "rnic_present": false,
+  "sdp_labuse": 232.0,
+  "sdp_residuel_live": 232.0,
+  "pm": null
+ },
+ "97418000BH0624": {
+  "idu": "97418000BH0624",
+  "contenance_m2": 100,
+  "aire_dessin_m2": 136.7,
+  "zone_lib": "1AUb",
+  "zone_fam": "AU",
+  "pente_moy_deg": 5.0,
+  "pente_max_deg": 7.8,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "D",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 211799,
+  "rnic_present": false,
+  "sdp_labuse": 117.0,
+  "sdp_residuel_live": 117.0,
+  "pm": null
+ },
+ "97418000AY0267": {
+  "idu": "97418000AY0267",
+  "contenance_m2": 471,
+  "aire_dessin_m2": 500.2,
+  "zone_lib": "UA",
+  "zone_fam": "U",
+  "pente_moy_deg": 2.1,
+  "pente_max_deg": 3.7,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "B",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 220088,
+  "rnic_present": false,
+  "sdp_labuse": 566.0,
+  "sdp_residuel_live": 566.0,
+  "pm": null
+ },
+ "97418000AC1203": {
+  "idu": "97418000AC1203",
+  "contenance_m2": 1827,
+  "aire_dessin_m2": 1848.9,
+  "zone_lib": "UEm",
+  "zone_fam": "U",
+  "pente_moy_deg": 10.8,
+  "pente_max_deg": 18.5,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 357095,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97418000AR1414": {
+  "idu": "97418000AR1414",
+  "contenance_m2": 531,
+  "aire_dessin_m2": 533.0,
+  "zone_lib": "UD",
+  "zone_fam": "U",
+  "pente_moy_deg": 14.7,
+  "pente_max_deg": 21.5,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "D",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 180789,
+  "rnic_present": false,
+  "sdp_labuse": 93.0,
+  "sdp_residuel_live": 93.0,
+  "pm": null
+ },
+ "97419000AC0457": {
+  "idu": "97419000AC0457",
+  "contenance_m2": 352,
+  "aire_dessin_m2": 346.5,
+  "zone_lib": "1AUa",
+  "zone_fam": "AU",
+  "pente_moy_deg": 4.6,
+  "pente_max_deg": 7.3,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 57.8
+   },
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 42.2
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENTS_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 57.8,
+     "moyen": 42.2
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 42.2,
+  "derniere_vente": {
+   "d": "2025-10-24",
+   "nat": "Vente",
+   "val": 280000.0,
+   "sb": null,
+   "st": 352.0,
+   "type_local": null
+  },
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 39525,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97419000AI0925": {
+  "idu": "97419000AI0925",
+  "contenance_m2": 3867,
+  "aire_dessin_m2": 3942.4,
+  "zone_lib": "Npnr",
+  "zone_fam": "N",
+  "pente_moy_deg": 15.1,
+  "pente_max_deg": 29.6,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENTS_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "moyen": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 100.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 394700,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97419000AR0791": {
+  "idu": "97419000AR0791",
+  "contenance_m2": 646,
+  "aire_dessin_m2": 645.3,
+  "zone_lib": "Ub",
+  "zone_fam": "U",
+  "pente_moy_deg": 3.9,
+  "pente_max_deg": 6.0,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENTS_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": {
+   "d": "2024-10-04",
+   "nat": "Vente",
+   "val": 110000.0,
+   "sb": 25.0,
+   "st": 646.0,
+   "type_local": "Appartement"
+  },
+  "labuse_bande": "D",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": true,
+  "v2_rang": null,
+  "rnic_present": false,
+  "sdp_labuse": 9.0,
+  "sdp_residuel_live": 9.0,
+  "pm": null
+ },
+ "97419000AL0771": {
+  "idu": "97419000AL0771",
+  "contenance_m2": 185,
+  "aire_dessin_m2": 185.0,
+  "zone_lib": "Ua",
+  "zone_fam": "U",
+  "pente_moy_deg": 2.2,
+  "pente_max_deg": 3.5,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENTS_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 298626,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97419000AL0180": {
+  "idu": "97419000AL0180",
+  "contenance_m2": 4670,
+  "aire_dessin_m2": 4631.5,
+  "zone_lib": "Uc",
+  "zone_fam": "U",
+  "pente_moy_deg": 3.4,
+  "pente_max_deg": 7.3,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENTS_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENTS_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "B",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 368342,
+  "rnic_present": false,
+  "sdp_labuse": 1882.0,
+  "sdp_residuel_live": 1882.0,
+  "pm": null
+ },
+ "97420000AI0562": {
+  "idu": "97420000AI0562",
+  "contenance_m2": 4260,
+  "aire_dessin_m2": 4195.2,
+  "zone_lib": "1AUa",
+  "zone_fam": "AU",
+  "pente_moy_deg": 3.0,
+  "pente_max_deg": 12.0,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 24.5
+   },
+   {
+    "risque": "INONDATION",
+    "niveau": "moyen",
+    "pct": 13.7
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 25.2
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 24.5
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 38.2,
+    "niveaux": {
+     "fort": 24.5,
+     "moyen": 13.7
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 49.7,
+    "niveaux": {
+     "faible": 25.2,
+     "moyen": 24.5
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 24.5,
+  "derniere_vente": null,
+  "labuse_bande": "A",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 143348,
+  "rnic_present": false,
+  "sdp_labuse": 3425.0,
+  "sdp_residuel_live": 3425.0,
+  "pm": null
+ },
+ "97420000BC1587": {
+  "idu": "97420000BC1587",
+  "contenance_m2": 11,
+  "aire_dessin_m2": 11.1,
+  "zone_lib": "UA",
+  "zone_fam": "U",
+  "pente_moy_deg": 2.4,
+  "pente_max_deg": 2.4,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": true,
+  "v2_rang": null,
+  "rnic_present": true,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97420000AO0601": {
+  "idu": "97420000AO0601",
+  "contenance_m2": 457,
+  "aire_dessin_m2": 458.9,
+  "zone_lib": "N",
+  "zone_fam": "N",
+  "pente_moy_deg": 16.3,
+  "pente_max_deg": 21.3,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 13.1
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 5.2
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 13.1
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 81.6
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 13.1,
+    "niveaux": {
+     "fort": 13.1
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 99.9,
+    "niveaux": {
+     "faible": 5.2,
+     "fort": 13.1,
+     "moyen": 81.6
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 94.8,
+  "derniere_vente": {
+   "d": "2025-12-03",
+   "nat": "Vente",
+   "val": 14246.35,
+   "sb": null,
+   "st": 457.0,
+   "type_local": null
+  },
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 70137,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": {
+   "denomination": "DOMAINE DE LA REUNION",
+   "siren": "444841241",
+   "groupe": 0,
+   "groupe_label": "Personnes morales non remarquables"
+  }
+ },
+ "97420000BH1139": {
+  "idu": "97420000BH1139",
+  "contenance_m2": 681,
+  "aire_dessin_m2": 678.4,
+  "zone_lib": "UC1",
+  "zone_fam": "U",
+  "pente_moy_deg": 21.6,
+  "pente_max_deg": 33.6,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 25.9
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 27.6
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 46.5
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 25.9,
+     "fort": 27.6,
+     "moyen": 46.5
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 74.1,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 328761,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97420000AO0583": {
+  "idu": "97420000AO0583",
+  "contenance_m2": 291,
+  "aire_dessin_m2": 290.8,
+  "zone_lib": "UC",
+  "zone_fam": "U",
+  "pente_moy_deg": 5.4,
+  "pente_max_deg": 5.9,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": {
+   "d": "2023-10-31",
+   "nat": "Vente terrain à bâtir",
+   "val": 100104.0,
+   "sb": null,
+   "st": 291.0,
+   "type_local": null
+  },
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 32775,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97421000AL0156": {
+  "idu": "97421000AL0156",
+  "contenance_m2": 3030,
+  "aire_dessin_m2": 2789.3,
+  "zone_lib": "AUb",
+  "zone_fam": "AU",
+  "pente_moy_deg": 21.0,
+  "pente_max_deg": 34.2,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 14.0
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 86.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 14.0,
+     "moyen": 86.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 0.0,
+  "derniere_vente": {
+   "d": "2024-08-27",
+   "nat": "Vente",
+   "val": 80000.0,
+   "sb": null,
+   "st": 3030.0,
+   "type_local": null
+  },
+  "labuse_bande": "B",
+  "labuse_non_calculable": false,
+  "v2_tier": "sans_signal",
+  "v2_copro": false,
+  "v2_rang": 27939,
+  "rnic_present": false,
+  "sdp_labuse": 4099.0,
+  "sdp_residuel_live": 4099.0,
+  "pm": null
+ },
+ "97421000AP0396": {
+  "idu": "97421000AP0396",
+  "contenance_m2": 8,
+  "aire_dessin_m2": 4.7,
+  "zone_lib": "UB",
+  "zone_fam": "U",
+  "pente_moy_deg": 2.7,
+  "pente_max_deg": 2.7,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "moyen": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 100.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": true,
+  "v2_rang": null,
+  "rnic_present": true,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97421000BD0396": {
+  "idu": "97421000BD0396",
+  "contenance_m2": 668,
+  "aire_dessin_m2": 680.9,
+  "zone_lib": "N",
+  "zone_fam": "N",
+  "pente_moy_deg": 24.2,
+  "pente_max_deg": 36.2,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 23.7
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 29.3
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 23.7
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 47.0
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 23.7,
+    "niveaux": {
+     "fort": 23.7
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 29.3,
+     "fort": 23.7,
+     "moyen": 47.0
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 62.5,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 346465,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97421000AX0135": {
+  "idu": "97421000AX0135",
+  "contenance_m2": 838,
+  "aire_dessin_m2": 810.7,
+  "zone_lib": "UC",
+  "zone_fam": "U",
+  "pente_moy_deg": 8.7,
+  "pente_max_deg": 15.4,
+  "aleas_detail": [
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 100.0
+   }
+  ],
+  "aleas_par_risque": {
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "fort": 100.0
+    }
+   }
+  },
+  "n_risques": 1,
+  "ppr_rouge_pct": 100.0,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 305632,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ },
+ "97421000BD0405": {
+  "idu": "97421000BD0405",
+  "contenance_m2": 299,
+  "aire_dessin_m2": 281.9,
+  "zone_lib": "N",
+  "zone_fam": "N",
+  "pente_moy_deg": 18.0,
+  "pente_max_deg": 24.0,
+  "aleas_detail": [
+   {
+    "risque": "INONDATION",
+    "niveau": "fort",
+    "pct": 30.2
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "faible",
+    "pct": 15.6
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "fort",
+    "pct": 30.2
+   },
+   {
+    "risque": "MOUVEMENT_DE_TERRAIN",
+    "niveau": "moyen",
+    "pct": 54.2
+   }
+  ],
+  "aleas_par_risque": {
+   "INONDATION": {
+    "total_pct": 30.2,
+    "niveaux": {
+     "fort": 30.2
+    }
+   },
+   "MOUVEMENT_DE_TERRAIN": {
+    "total_pct": 100.0,
+    "niveaux": {
+     "faible": 15.6,
+     "fort": 30.2,
+     "moyen": 54.2
+    }
+   }
+  },
+  "n_risques": 2,
+  "ppr_rouge_pct": 84.4,
+  "derniere_vente": null,
+  "labuse_bande": "0",
+  "labuse_non_calculable": false,
+  "v2_tier": "ecartee",
+  "v2_copro": false,
+  "v2_rang": 376069,
+  "rnic_present": false,
+  "sdp_labuse": 0.0,
+  "sdp_residuel_live": 0.0,
+  "pm": null
+ }
+}
