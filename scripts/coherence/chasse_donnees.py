@@ -22,7 +22,12 @@ import psycopg
 
 RACINE = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(RACINE / "scripts"))
-from coherence.lib import _dsn_defaut  # noqa: E402 — même DSN que le banc COHERENCE-1
+sys.path.insert(0, str(RACINE))
+# ROUGES-7 — import QUALIFIÉ `scripts.coherence.lib` : depuis COHERENCE-HOOK-1, `tests/coherence/` est un
+# PAQUET nommé `coherence` ; dans le banc complet il peut occuper `sys.modules['coherence']` avant nous, et
+# un `from coherence.lib import …` nu échouait alors (ModuleNotFoundError). `scripts.coherence` est sans
+# ambiguïté (scripts/__init__.py), comme circuit_verrous l'importe déjà.
+from scripts.coherence.lib import _dsn_defaut  # noqa: E402 — même DSN que le banc COHERENCE-1
 
 API = "http://127.0.0.1:8740"
 

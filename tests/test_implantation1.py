@@ -230,18 +230,21 @@ def test_hauteur_sous_regle(scenario):
     assert cap.niveaux * scenario.conventions.hauteur_etage_m <= r.valeur + 1e-9
 
 
-# ----------------------------------------------------------- ratios sur contenance
+# ----------------------------------------------------- ratios sur la surface dessinée (E-058)
 def test_ratios_sur_contenance(scenario):
-    """Emprise et perméabilité, quand Réussi, se mesurent contre la CONTENANCE (pas le dessin)."""
+    """ROUGES-7 — aligné sur FAISA-REGLES-1 (E-058). AVANT, le plafond d'emprise/perméabilité se mesurait
+    contre la CONTENANCE cadastrale ; DÉSORMAIS il se calcule sur la surface DESSINÉE constructible
+    (`terrain.aire_dessin_m2`), dans le MÊME repère que l'emprise mesurée (EPSG:2975) — le ratio réel ne peut
+    plus dépasser le CES par le seul écart cadastre↔dessin. Le libellé servi dit « surface du terrain »."""
     t = scenario.terrain
     assert t.contenance_totale_m2 > 0
-    # l'écart contenance/dessin est exposé
+    # l'écart contenance/dessin reste exposé (la contenance cadastrale est toujours rappelée)
     assert abs(t.ecart_contenance_dessin_m2 - (t.contenance_totale_m2 - t.aire_dessin_m2)) < 0.1
     par_nom = {c.nom: c for c in scenario.controles}
     for nom in ("Emprise au sol", "Perméabilité (pleine terre)"):
         c = par_nom.get(nom)
         if c and c.resultat == REUSSI:
-            assert "contenance" in c.regle
+            assert "surface du terrain" in c.regle   # E-058 : plafond sur le dessin, plus la contenance
 
 
 # ----------------------------------------------------------- réglementaires (4 états)

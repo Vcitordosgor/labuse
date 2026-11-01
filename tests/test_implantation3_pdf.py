@@ -45,10 +45,22 @@ def _base_reelle():
     ancien_eng, ancien_sess = db_mod._engine, db_mod._Session
     db_mod._engine = db_mod.make_engine(app_url)
     db_mod._Session = None
+    # COHERENCE-HOOK-1 / ROUGES-7 — la route `etude_pdf` calcule + rend dans un PROCESSUS SÉPARÉ « spawn »
+    # (ETUDE-ASYNC-1) : le fils ne voit PAS `db_mod._engine` rebranché en mémoire, il relit
+    # `LABUSE_DATABASE_URL` dans l'environnement — que conftest a épinglé sur `labuse_test` (vide des
+    # parcelles témoins). Le moteur n'y trouve alors AUCUNE zone PLU → il lève « Commune au RNU » (faux).
+    # On pointe donc AUSSI l'environnement (hérité par le fils) sur la base réelle le temps du test, puis on
+    # restaure. Même patron que test_implantation2._base_reelle.
+    ancien_url = os.environ.get("LABUSE_DATABASE_URL")
+    os.environ["LABUSE_DATABASE_URL"] = app_url
     try:
         yield
     finally:
         db_mod._engine, db_mod._Session = ancien_eng, ancien_sess
+        if ancien_url is None:
+            os.environ.pop("LABUSE_DATABASE_URL", None)
+        else:
+            os.environ["LABUSE_DATABASE_URL"] = ancien_url
 
 
 @pytest.fixture(scope="module")

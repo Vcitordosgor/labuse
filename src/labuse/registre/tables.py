@@ -594,6 +594,13 @@ TABLES_EXPLOITATION: dict[str, str] = {
     "bilan_ratios": "ratios de bilan maison par compte (models.ensure_bilan_ratios, BILAN-1)",
     "parcel_zone_plu_version": "cache — signature de version du zonage PLU des tuiles (api/tiles.py)",
     "parcel_couche_intersection_build": "cache — build des intersections parcelle×couche (api/tiles.py)",
+    # ROUGES-7 (V1c) — deux tables du code servi, absentes de la carte (même recette : écriveur +
+    # lecteur dans le code servi, jamais une orpheline à purger). `parcel_cadastre_remplacement` est
+    # LUE par la garde « parcelle disparue » (cadastre_disparue.py, FAISA-REGLES-1 D-028) — présente
+    # en prod (3007 lignes), importée sur le Mac par COHERENCE-HOOK-1. `verite_sources_runs` est le
+    # rapport ÉCRIT+LU par le banc vérité-sources (verite_sources.py).
+    "parcel_cadastre_remplacement": "cadastre — parcelles de remplacement (lues par la garde « parcelle disparue »)",
+    "verite_sources_runs": "rapport du banc vérité-sources (verite_sources.py)",
     # CIRCUIT-5b lot 1 — rpls_commune (→ rpls_sdes) et commune_conso_enaf (→ enaf_cerema) sont
     # désormais des RÉSERVOIRS de première classe (voir RESERVOIR_TABLES), plus des tables
     # d'exploitation « servies sans réservoir » : une source = une ligne data_sources.

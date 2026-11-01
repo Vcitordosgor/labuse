@@ -159,15 +159,20 @@ def test_ecart_par_type_sur_paires(db_session, seed_radar):
 
 
 def test_ecrire_releve_puis_courbe(db_session, seed_radar):
+    # ROUGES-7 — le JOUR du relevé est le jour RÉUNION (FIX-ORFEVRE-1 ORF-17 : `ecrire_releve`/`courbe`
+    # utilisent `today_reunion()`, plus la date du process). Le test comparait à `date.today()` (process) →
+    # faux rouge sur la frontière de date (31/10 Paris ≠ 01/11 Réunion). On compare au MÊME jour que le code.
+    from labuse.tz import today_reunion
+    jour_reunion = today_reunion()
     r = releves.ecrire_releve(db_session)
     assert r["paires"] >= 1
     # idempotent : ré-écrire le même jour ne duplique pas (upsert)
     releves.ecrire_releve(db_session)
     n = db_session.execute(text("SELECT count(*) FROM radar_releves WHERE jour = :j"),
-                           {"j": date.today()}).scalar()
+                           {"j": jour_reunion}).scalar()
     assert n == 1
     courbe = releves.courbe(db_session)
-    assert courbe["depuis_le"] == date.today().isoformat()
+    assert courbe["depuis_le"] == jour_reunion.isoformat()
 
 
 def test_purger_caches_a6_ne_leve_jamais():
