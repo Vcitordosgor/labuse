@@ -55,19 +55,22 @@ def _no_fuite(tag: str, res) -> None:
 
 
 def test_gabarit_ecran_egale_pdf_et_verrou():
+    # ROUGES-7 — L'ÉCRAN, c'est l'ENDPOINT `/outils/gabarit/{idu}` (ce que la fiche React affiche), PAS le
+    # résultat BRUT de `compute_gabarit`. L'endpoint applique, APRÈS le calcul brut, la mise à l'échelle
+    # CONTENANCE de l'aire (CHASSE-CALCULS-FIX-1 : zoneImplantationM2 × contenance/dessin), la note à-cheval
+    # et la déduction du bâti — EXACTEMENT ce que `construire_gabarit` refait pour le PDF (helper partagé
+    # `_gabarit`). Sur une parcelle à cheval comme BW0102, le brut (5867 m²) n'est servi NI à l'écran NI au
+    # PDF, qui montrent tous deux 4244 m² : comparer au brut faisait un faux « écran ≠ PDF ». On lit donc
+    # l'écran par son vrai point d'entrée → écran == PDF reste strictement vérifié.
+    from labuse.api.gabarit import gabarit_detail
     from labuse.db import session_scope
-    from labuse.gabarit.builder import build_gabarit_input
-    from labuse.gabarit.engine import compute_gabarit
     with session_scope() as s:
-        b = build_gabarit_input(s, GABARIT_SERVIE)
-        if b is None or b.blocking:
-            pytest.skip("témoin gabarit non calculable aujourd'hui (données évoluées)")
-        gr = compute_gabarit(b.input)
-        if gr.status != "ok":
+        gr = gabarit_detail(GABARIT_SERVIE, db=s)
+        if getattr(gr, "status", None) != "ok":
             pytest.skip("témoin gabarit incomplet aujourd'hui (données évoluées)")
         res = builder.construire_gabarit(s, GABARIT_SERVIE)
     _no_fuite(f"{GABARIT_SERVIE}/gabarit", res)              # VERROU
-    nums = _printed(res.html)                                 # ÉCRAN = PDF
+    nums = _printed(res.html)                                 # ÉCRAN (endpoint) = PDF
     if gr.zoneImplantationM2 is not None:
         assert round(gr.zoneImplantationM2) in nums, "zone d'implantation absente du PDF"
     if isinstance(gr.hauteurReglementaireM, (int, float)):

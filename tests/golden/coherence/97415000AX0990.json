@@ -22,7 +22,7 @@
  "hauteur_faitage_m": {
   "lecteur": "fiche:le_bien.hauteur_faitage_m",
   "tolerance": "1 %",
-  "valeur": 8.1
+  "valeur": null
  },
  "pente_deg": {
   "lecteur": "fiche:terrain.pente_moy_deg",
@@ -47,7 +47,7 @@
  "rang_score": {
   "lecteur": "fiche:score_v2.rang",
   "tolerance": "0",
-  "valeur": 3674
+  "valeur": 3663
  },
  "sdp_residuelle_m2": {
   "lecteur": "fiche:potentiel_transformation.sdp_residuelle_m2",

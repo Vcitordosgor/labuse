@@ -1097,6 +1097,12 @@ def nombres_hors_payload(payload: dict, html: str, *, genere_le: str = "") -> li
     c'est le verrou « toute ligne du PDF est une ligne de l'outil » (extension V5d/V5f)."""
     ancres: set = set()
     _ancres(payload, ancres)
+    # DOCS-COHERENCE-1 (A4) — la pente du terrain est imprimée « X° (Y %) » par pente_courte ; le « % »
+    # est une CONVERSION DÉTERMINISTE du degré servi (terrain.pente_fiche_deg), ancrée au même titre que lui.
+    _pf = (payload.get("terrain") or {}).get("pente_fiche_deg")
+    if isinstance(_pf, (int, float)) and not isinstance(_pf, bool):
+        from ..pente_fmt import pente_pct
+        ancres.add(_canon(str(pente_pct(float(_pf)))))
     # jetons de structure tolérés : pagination 1..9, date du jour, n° de document, codes EPSG, année.
     struct = {str(i) for i in range(0, 10)}                       # pagination + petits indices de texte
     struct |= set(_nombres(genere_le)) | set(_nombres(numero_etude(payload["entrees"].get("idus") or [], genere_le)))

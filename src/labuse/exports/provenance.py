@@ -132,6 +132,13 @@ def nombres_ancres(valeurs: dict[str, Valeur], ctx: dict | None = None) -> dict[
     for cid, v in valeurs.items():
         for x in _scalaires(v.valeur):
             _poser(x, cid)
+        # DOCS-COHERENCE-1 (A4) — la pente est imprimée « 20,8° (38 %) » (format UNIQUE pente_courte, lu à
+        # l'identique par le Dossier, l'Étude et le Gabarit) : le « % » est une CONVERSION DÉTERMINISTE du
+        # degré servi (pente_fmt.pente_pct), rattachée au MÊME chiffre — comme les formes €/k€ du bilan.
+        if "pente" in cid and "deg" in cid:
+            from ..pente_fmt import pente_pct
+            for x in _scalaires(v.valeur):
+                _poser(float(pente_pct(x)), cid)
         # la trace de source (pied) imprime le millésime/couverture de chaque réservoir servi
         # (ex. « Arcep 2026_T1 — 330 051 immeubles 974 ») : ces nombres décrivent la SOURCE, pas
         # la parcelle — rattachés au chiffre dont ils portent la provenance, jamais une fuite.
@@ -176,6 +183,14 @@ def nombres_ancres(valeurs: dict[str, Valeur], ctx: dict | None = None) -> dict[
         # outil_etude_zone + chiffres parcelle de Comparer). Sur-rattacher un nombre non imprimé est bénin.
         for x in _scalaires(ctx.get("gabarit")):
             _poser(x, "gabarit_hauteur_m")
+        # FAISA-REGLES-1 (D-026) — la mise en garde « parcelle à cheval » imprime la part NON constructible
+        # « ~X % » = 100 − pctPortionZone (part constructible servie, déjà ancrée ci-dessus) : grandeur
+        # DÉRIVÉE de la part de zone, rattachée au domaine gabarit (comme « R+(n-1) » du gabarit max).
+        _g = ctx.get("gabarit")
+        if isinstance(_g, dict):
+            _pz = _g.get("pctPortionZone")
+            if isinstance(_pz, (int, float)) and not isinstance(_pz, bool) and _pz < 100:
+                _poser(float(round(100 - _pz)), "gabarit_part_non_constructible_pct")
         for x in _scalaires(ctx.get("comparatif")):
             _poser(x, "sdp_residuelle_m2")
             _poser(abs(x), "sdp_residuelle_m2")   # charge foncière négative affichée « -94 €/m² »
