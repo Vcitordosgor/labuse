@@ -202,7 +202,11 @@ run q_v21 / au code de la session SCORING-COPRO-1, pas au mien.
     `test_enrichment`, **flaky pré-existant** (pollution d'ordre par un test TIERS qui *commit* dans
     `labuse_test` — `db_session` est pourtant transactionnel ; verts en isolation ET au passage 2). Non
     masqués : racine identifiée (committeur tiers à bisecter), hors des 7 et hors périmètre, non causés par mes
-    éditions (prouvé `git stash`). Un dernier passage de banc confirme le compte final (ci-dessous).
+    éditions (prouvé `git stash`).
+  - **Passage 3** (commit `324b5f961`, `flux` + `solidite1` corrigés) : **4346 passés, 0 rouge, 88 skipped**
+    (33 min). Le couple `dpe`/`enrichment` a tourné VERT ce passage — **banc complet à 0 rouge atteint.**
+    (Ce couple reste flaky par nature ; son unique risque de reparaître est la pollution d'ordre tierce
+    décrite ci-dessus, pré-existante et hors des 7.)
 
 ## Fichiers touchés
 
