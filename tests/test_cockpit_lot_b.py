@@ -75,7 +75,11 @@ def test_boutons():
 
 
 def test_resume():
-    assert ck.composer_usine(_jobs())["resume"] == {"postes": 6, "vert": 2, "echec": 1, "arret": 3}
+    # FIX-NU3-3 (I-ADM-05) — un poste qui TRAVAILLE (en_cours sain, ici fiche-commune-cache) n'est plus
+    # compté « à l'arrêt » : la grille le peint « travaille » (violet), l'en-tête ne doit plus le
+    # contredire en le comptant à l'arrêt. Il rejoint la flotte saine (vert). Restent « à l'arrêt » :
+    # agents-sources (jamais parti) et digest (gelé).
+    assert ck.composer_usine(_jobs())["resume"] == {"postes": 6, "vert": 3, "echec": 1, "arret": 2}
 
 
 # ─────────────── le registre réel (import) ───────────────

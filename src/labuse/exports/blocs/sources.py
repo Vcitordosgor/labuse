@@ -1,6 +1,9 @@
 """Bloc « 10. Sources, limites et mentions ». Ce que le document ne peut pas dire (renvois vers
-les tiers compétents) + les sources RÉELLEMENT servies (data_sources de la fiche) — NOMS seuls,
-aucun millésime ni date côté client (EXPORTS-REBRANCHEMENT-1 lot 2, doctrine PAGE-SOURCES-1 18/09)."""
+les tiers compétents) + les sources RÉELLEMENT servies (data_sources de la fiche), avec leur
+MILLÉSIME. FIX-NU3-3 (L-CHN-02) revient sur la doctrine « noms seuls » (EXPORTS-REBRANCHEMENT-1
+lot 2 / PAGE-SOURCES-1 18/09) : le client doit voir de quand datent cadastre/DVF/PLU/PPR, et une
+source avancée doit se voir au PDF comme en fiche. Le millésime affiché est celui, déjà composé et
+nettoyé, de la fiche (millesime_source.composer) — une source, une seule vérité écran↔PDF."""
 from __future__ import annotations
 
 from ..lignes import val
@@ -50,9 +53,15 @@ def corps_sources(valeurs) -> str:
         if s["nom"] not in _servies and nom not in _servies:
             continue
         _vus.add(nom)
-        # lot 2 — le NOM de la source et son producteur, jamais le millésime (ni « s['millesime'] »
-        # ni date) : la fraîcheur est une lecture admin (Circuit), pas une ligne cliente.
-        lignes.append(ligne_kv(nom, esc(s.get("fournisseur") or ""), ""))
+        # FIX-NU3-3 (L-CHN-02) — le PDF montre désormais le MILLÉSIME de chaque source, pas seulement
+        # son nom : le client exportait un document sans savoir de quand datent cadastre/DVF/PLU/PPR,
+        # et une source AVANCÉE (nouveau millésime) restait invisible au PDF alors que la fiche la
+        # montre. On sert le millésime DÉJÀ COMPOSÉ par la fiche (millesime_source.composer, notes
+        # internes nettoyées) — même source, même vérité écran↔PDF. Cellule vide si pas de millésime.
+        mill = s.get("millesime")
+        fournisseur = esc(s.get("fournisseur") or "")
+        droite = f"{fournisseur} — {esc(mill)}" if mill else fournisseur
+        lignes.append(ligne_kv(nom, droite, ""))
     # RECETTE-11 A3 — quand une hauteur a été MESURÉE au LiDAR HD, la source doit être citée ici
     # (elle n'y était pas). On l'ajoute avec son survol si elle n'apparaît pas déjà.
     pv = val(valeurs, "potentiel_verdict") or {}

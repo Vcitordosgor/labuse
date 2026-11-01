@@ -25,10 +25,13 @@ router = APIRouter(tags=["ops"])
 # cadence déclarée du job (+ marge de détection de cron mort). La TRACE reste par source quand
 # elle existe (ingestion_runs / data_sources.last_sync_at), sinon l'état JSON du wrapper.
 
-#: cadence du registre → périodicité attendue en jours (cadence + marge).
-_CADENCE_JOURS = {"quotidien": 2, "15 min": 1, "hebdo (dim)": 9, "hebdo (lun)": 9,
-                  "mensuel (5)": 35, "mensuel (7)": 35, "mensuel (10)": 35, "mensuel (12)": 35,
-                  "mensuel (15)": 35, "mensuel (1er)": 35, "trimestriel (1er)": 100}
+#: cadence du registre → périodicité attendue en jours (cadence + marge). FIX-NU3-3 (I-ADM-02) — les
+#: cadences SOUS la journée (mail-queue toutes les 5 min, sondes toutes les 15/30 min) ont un seuil en
+#: heures, pas « 1 jour » : un worker de mails mort depuis 2 h doit se voir, pas au bout d'une journée.
+_CADENCE_JOURS = {"quotidien": 2, "5 min": 2 / 24, "15 min": 3 / 24, "hebdo (dim)": 9, "hebdo (lun)": 9,
+                  "hebdo (mar)": 9, "tous les 15 j (dim)": 20, "mensuel (5)": 35, "mensuel (7)": 35,
+                  "mensuel (10)": 35, "mensuel (12)": 35, "mensuel (15)": 35, "mensuel (1er)": 35,
+                  "trimestriel (1er)": 100}
 
 #: job → où lire son dernier passage RÉEL en base (repli : état JSON du wrapper).
 _TRACES = {
@@ -40,16 +43,19 @@ _TRACES = {
 
 
 def _crons_du_registre() -> dict:
-    from ..jobs import JOBS, TOUCHE_EAU
+    # FIX-NU3-3 (I-ADM-02 / L-JOB-02) — TOUS les jobs planifiés sont exposés, plus seulement ceux qui
+    # « touchent l'eau » + backup. Avant, 20 des 31 (dont mail-queue-consommer, digest, healthcheck,
+    # purge-sessions, radar-cycle…) étaient ABSENTS de l'endpoint que le monitoring VPS curle pour
+    # `"ok": true` : il pouvait être vert alors que l'envoi des mots de passe était mort.
+    from ..jobs import JOBS
     out = {}
     for nom, job in JOBS.items():
-        if nom not in TOUCHE_EAU and nom != "backup-postgres":
-            continue
-        if not job.planifie:          # job manuel-seul (ex. agents-sources) : hors monitoring healthz
+        if not job.planifie:          # job manuel-seul (ex. futur planifie=False) : hors monitoring healthz
             continue
         trace, motif = _TRACES.get(nom, ("etat_json", None))
         out[nom] = {"trace": trace, "motif": motif,
                     "attendu_jours": _CADENCE_JOURS.get(job.cadence, 9),
+                    "timeout_s": job.timeout_s,
                     # CRON-PROD-1 — gel VOLONTAIRE (ex. ingest-dvf, Phase 8) : porté depuis le registre
                     # pour que /healthz/crons le classe « gele » sans dégrader (jamais une fausse alerte
                     # « jamais_vu » sur un cron qu'on a sciemment commenté).
@@ -77,6 +83,17 @@ def healthz_crons(db: Session = Depends(get_db)) -> dict:
             # Le monitoring VPS lit `statut` ≠ panne ; `ok` global n'est pas dégradé par un gel assumé.
             out[nom] = {"statut": "gele", "motif_gel": c["gele"], "note": c["note"]}
             continue
+        # FIX-NU3-3 (I-ADM-03) — un job TUÉ en plein run (état « en_cours » figé au-delà de son timeout)
+        # est BLOQUÉ : même verdict ici que dans la vigie et le cockpit (plus jamais vert/silencieux).
+        try:
+            from .. import jobs as _jobs
+            _e = _jobs.lire_etat(nom) or {}
+            if _jobs.bloque_depuis(_e.get("statut"), _e.get("debut"), c.get("timeout_s")) is not None:
+                out[nom] = {"statut": "bloque", "debut": _e.get("debut"), "note": c["note"]}
+                degrade = True
+                continue
+        except Exception:  # noqa: BLE001 — l'observabilité ne casse jamais
+            pass
         if c["trace"] == "aucune":
             out[nom] = {"statut": "non_trace_db", "note": c["note"]}
             continue

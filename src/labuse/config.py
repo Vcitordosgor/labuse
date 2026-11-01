@@ -63,6 +63,15 @@ class Settings(BaseSettings):
     # message honnête « étude trop lourde, relancez ». Réglable en prod par LABUSE_ETUDE_TIMEOUT_S ; une
     # valeur basse (recette) force un dépassement pour prouver la mise à mort.
     etude_timeout_s: float = 60.0
+    # FIX-NU3-3 (K-CHG-01/02/03, décision Vic) — SOUS CHARGE, deux goulots CPU/RAM écrasaient « fiche &
+    # carte < 1 s » à 25 users (weasyprint à 26 s, 26 processus d'étude, swap saturé). On les met en FILE :
+    #   · `pdf_rendu_max` : nb de rendus PDF (weasyprint) simultanés — les suivants ATTENDENT (deux à la fois) ;
+    #   · `etude_processus_max` : plafond de processus d'étude simultanés — au-delà, la file est pleine → 503
+    #     honnête (« trop de monde, réessayez ») plutôt que de faire tomber fiche/carte pour tout le monde.
+    # Bornes volontairement basses sur le Mac 8 c/8 Go ; relevables en prod (VPS 6 c/11 Go) par env.
+    pdf_rendu_max: int = 2                     # LABUSE_PDF_RENDU_MAX
+    etude_processus_max: int = 3              # LABUSE_ETUDE_PROCESSUS_MAX
+    etude_file_attente_s: float = 20.0        # attente max d'une place avant 503 (LABUSE_ETUDE_FILE_ATTENTE_S)
 
     # ── Mode de déploiement : local (démo dev) | pilot (client encadré) | production ──
     # Pilote/production : cookies Secure, CORS restreint, /docs protégés, auth OBLIGATOIRE
@@ -71,6 +80,12 @@ class Settings(BaseSettings):
     # Authentification pilote (compte unique) : mot de passe en clair OU "sha256:<hexdigest>".
     # JAMAIS en dur dans le code ; activer en local en posant simplement la variable.
     auth_password: str | None = None
+    # FIX-NU3-3 (I-ADM-08, décision Vic) — SECOND FACTEUR obligatoire sur le compte « pilote » partagé.
+    # Secret TOTP base32 (généré par `labuse.totp.generer_secret`). Posé → le mot de passe pilote
+    # n'ouvre plus la session, il ouvre un défi 2FA (comme les admins) ; code TOTP exigé avant l'accès.
+    # ABSENT → le login pilote est REFUSÉ (fail-closed) : « second facteur, ou suppression du compte
+    # partagé » (I-ADM-08). Les admins nominatifs gardent leur 2FA par compte. LABUSE_PILOTE_TOTP_SECRET.
+    pilote_totp_secret: str | None = None
     # Clé de signature des cookies de session ; absente → clé éphémère (sessions perdues au
     # redémarrage — acceptable en local, à définir en pilote).
     secret_key: str | None = None
@@ -227,6 +242,20 @@ class Settings(BaseSettings):
     # dépose un marqueur `.copie-externe.json` dans backup_dir après chaque copie vérifiée ; au-delà de
     # ce seuil (jours), le récap ouvre l'incident « branche le disque ». LABUSE_COPIE_EXTERNE_SEUIL_J.
     copie_externe_seuil_j: int = 10
+    # FIX-NU3-3 (K-SAV + OPS-SAUVEGARDE-1 §7) — la vigie « sauvegarde » juge désormais la FRAÎCHEUR du
+    # dernier dump, pas seulement sa présence (le dump du 29/10 restait « OK » 3 jours alors que plus
+    # rien n'était produit). Alerte au-delà de `sauvegarde_seuil_h` (30 h = un cycle quotidien + marge) ;
+    # une panne durable (> 24 h après le 1er seuil) ESCALADE d'un cran (mail explicite à Vic, 1/jour).
+    sauvegarde_seuil_h: int = 30                       # LABUSE_SAUVEGARDE_SEUIL_H
+    sauvegarde_escalade_h: int = 24                    # panne > ce délai après le 1er seuil → escalade
+    # FIX-NU3-3 (K-RAD-01, escalade Vic) — vigie SERVEUR du silence Radar : si aucune passe (pige_passes)
+    # n'est arrivée depuis `radar_muet_seuil_h`, l'ingestion depuis l'extension s'est tue (Mac endormi,
+    # verrou figé). Deux nuits sans passe (2× ~24 h) → escalade mail à Vic. Ne touche PAS l'extension.
+    radar_muet_seuil_h: int = 30                       # LABUSE_RADAR_MUET_SEUIL_H (1 nuit ratée + marge)
+    radar_muet_escalade_h: int = 48                    # 2 nuits muettes → escalade
+    # FIX-NU3-3 (K-SAV-03) — une restauration de contrôle plus vieille que ce seuil (ou jamais jouée)
+    # ouvre un incident : une sauvegarde non testée n'est pas une sauvegarde.
+    restore_test_seuil_j: int = 35                     # LABUSE_RESTORE_TEST_SEUIL_J (mensuel + marge)
     # VP-001 (mandat VPS) — dossier des binaires pg_dump/pg_restore quand le PATH sert une
     # MAUVAISE version (Mac : Homebrew 16 devant le client 18). Absent → PATH, avec garde de
     # version (backup-db refuse un pg_dump plus vieux que le serveur au lieu d'échouer cryptique).

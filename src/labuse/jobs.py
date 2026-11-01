@@ -77,8 +77,10 @@ class Job:
     envoie_mail: bool = False       # concerné par la règle dry-run
     besoin_db: bool = True
     # planifie=False : job RETIRÉ du crontab généré ET du monitoring healthz, mais toujours
-    # exécutable (bouton admin / `labuse jobs run`). Ex. agents-sources (pas de crédit API, choix
-    # assumé — le bouton manuel reste). Décision 13/10.
+    # exécutable (bouton admin / `labuse jobs run`). FIX-NU3-3 (L-JOB-07) : AUCUN job du registre
+    # n'est aujourd'hui `planifie=False` — `agents-sources`, longtemps cité ici en exemple, a été
+    # REMIS au crontab (dimanche, 1 semaine sur 2, plafond de dépense), cf. son déclaration. Le
+    # drapeau reste disponible pour un futur job manuel-seul.
     planifie: bool = True
     # CRON-PROD-1 — GEL VOLONTAIRE (motif court, ex. « Phase 8 Stéphanie »). Un job gelé RESTE au
     # registre (connu, exécutable à la main, monitoré), mais : (1) le crontab généré l'émet COMMENTÉ
@@ -264,6 +266,31 @@ def exec_one(nom: str) -> int:
     return 0 if ok else 1
 
 
+def bloque_depuis(statut: str | None, debut: str | None, timeout_s: int | None) -> datetime | None:
+    """FIX-NU3-3 (I-ADM-03 / L-JOB-03) — un job dont le fichier d'état est resté « en_cours » PLUS
+    longtemps que son timeout + une marge a été TUÉ en plein travail (OOM, SIGKILL, redémarrage du
+    conteneur) : le `finally` du runner n'a jamais réécrit d'état terminal, le verrou reste pris et
+    aucune passe suivante ne repart. On le dit BLOQUÉ (rouge), partout, de façon cohérente — plus
+    jamais « travaille en ce moment » / vert à vie.
+
+    Retourne l'instant de début (tz-aware) si le job est bloqué, sinon None. Un run légitimement long
+    (encore sous son timeout + marge) n'est PAS bloqué : le SIGALRM du runner l'arrêterait avant."""
+    if statut != "en_cours" or not debut:
+        return None
+    try:
+        d = datetime.fromisoformat(str(debut))
+    except (ValueError, TypeError):
+        return None
+    if d.tzinfo is None:
+        d = d.replace(tzinfo=timezone.utc)
+    # marge = 5 min au-delà du timeout, le temps que le finally écrive l'état + journalise. Au-delà,
+    # un « en_cours » ne peut QUE venir d'un process mort sans trace terminale.
+    grace = int(timeout_s or 900) + 300
+    if (datetime.now(timezone.utc) - d).total_seconds() > grace:
+        return d
+    return None
+
+
 def _champ_match(val: int, champ: str) -> bool:
     """Un champ cron (minute/heure/jour/mois/jour-semaine) matche-t-il une valeur ?
 
@@ -324,11 +351,22 @@ def prochaine(cron_utc: str, *, horizon_jours: int = 40) -> datetime | None:
 def liste() -> list[dict]:
     """Pour `labuse jobs list` + la page admin : chaque job avec sa planif, sa prochaine exécution et son
     dernier état."""
+    from .cockpit_resume import _job_perime
     from .tz import REUNION_TZ
     out = []
     for j in JOBS.values():
         e = lire_etat(j.nom) or {}
         p = prochaine(j.cron_utc)
+        dernier = {"statut": e.get("statut"), "fin": e.get("fin"), "debut": e.get("debut"),
+                   "duree_s": e.get("duree_s"), "dry_run": e.get("dry_run"),
+                   "compteurs": e.get("compteurs"), "erreur": e.get("erreur")}
+        # FIX-NU3-3 (I-ADM-03/04, L-JOB-03) — la page Horloge peint les mêmes verdicts que L'usine :
+        # `bloque` (en_cours tué en plein run) et `perime` (dernier succès trop vieux = en retard),
+        # calculés CÔTÉ SERVEUR avec le même prédicat partagé (plus de pastille verte sur un retard,
+        # plus de « prochaine » mensongère sur un gelé — géré au front à partir de `gel`).
+        bloque = bloque_depuis(e.get("statut"), e.get("debut"), j.timeout_s) is not None
+        job_like = {"gel": j.gel, "cron_utc": j.cron_utc, "dernier": dernier}
+        perime = (not j.gel) and (not bloque) and _job_perime(job_like)
         out.append({
             "nom": j.nom, "titre": j.titre, "cadence": j.cadence,
             "cron_utc": j.cron_utc, "heure_reunion": j.heure_reunion,
@@ -339,11 +377,10 @@ def liste() -> list[dict]:
             "famille": j.famille, "libelle": j.libelle, "role": j.role, "lancable": j.lancable,
             "planifie": j.planifie,
             "timeout_s": j.timeout_s, "envoie_mail": j.envoie_mail, "gel": j.gel,
+            "bloque": bloque, "perime": bool(perime),
             "prochaine_utc": p.isoformat() if p else None,
             "prochaine_reunion": p.astimezone(REUNION_TZ).strftime("%d/%m %H:%M") if p else None,
-            "dernier": {"statut": e.get("statut"), "fin": e.get("fin"),
-                        "duree_s": e.get("duree_s"), "dry_run": e.get("dry_run"),
-                        "compteurs": e.get("compteurs"), "erreur": e.get("erreur")},
+            "dernier": dernier,
         })
     return out
 

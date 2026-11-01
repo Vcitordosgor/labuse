@@ -15,8 +15,13 @@ import type { CircuitData } from './types'
 type Ouvrir = (type: 'reservoir' | 'robinet' | 'pompe', id: number | string) => void
 
 // résultat → couleur (mint ça va, ambre à regarder, rouge échec/refus).
+// FIX-NU3-3 (I-ADM-07) — un résultat INCONNU n'est PLUS peint en vert par défaut (il se lisait « tout va
+// bien » alors que personne ne l'avait reconnu) : seul « ok » est vert ; l'inconnu passe en ambre.
+const _RES_OK = new Set(['ok', 'termine', 'succes'])
 const couleurResultat = (r: string) =>
-  r === 'echec' || r === 'refuse' ? 'rouge' : (r === 'dry-run' || r === 'lance') ? 'ambre' : 'mint'
+  r === 'echec' || r === 'refuse' ? 'rouge'
+    : (r === 'dry-run' || r === 'lance') ? 'ambre'
+      : _RES_OK.has(r) ? 'mint' : 'ambre'
 // verdict d'un filtre → couleur.
 const couleurVerdict = (v: string) =>
   v === 'quarantaine' ? 'rouge' : v === 'avertissements' ? 'ambre' : 'mint'
@@ -34,7 +39,9 @@ function repartition(e: any): { txt: string; couleur: string } {
   }
   const r = e.resultats || {}
   const parts = Object.keys(r).map((k) => `${r[k]} ${k}`)
-  const couleur = r.echec || r.refuse ? 'rouge' : (r['dry-run'] || r.lance) ? 'ambre' : 'mint'
+  // FIX-NU3-3 (I-ADM-07) — un résultat inconnu (clé non reconnue) ne vire plus au vert : ambre.
+  const inconnu = Object.keys(r).some((k) => !_RES_OK.has(k) && !['echec', 'refuse', 'dry-run', 'lance'].includes(k))
+  const couleur = r.echec || r.refuse ? 'rouge' : (r['dry-run'] || r.lance) ? 'ambre' : inconnu ? 'ambre' : 'mint'
   return { txt: parts.join(', '), couleur }
 }
 

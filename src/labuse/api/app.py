@@ -977,9 +977,18 @@ réglages vous attendent tels quels.</p>
         auth.log_event("login_failed", request)
         auth.slow_failure()
         return HTMLResponse(auth.login_page(error=True), status_code=401)
-    auth.log_event("login_ok", request)
-    resp = RedirectResponse("/", status_code=303)   # B2 : la racine (Caddy en prod, /socle/ en local)
-    resp.set_cookie(value=auth.make_token(hours=souvenir_h), **auth.cookie_kwargs(hours=souvenir_h))
+    # FIX-NU3-3 (I-ADM-08, décision Vic) — SECOND FACTEUR obligatoire sur le compte pilote partagé.
+    # Le mot de passe pilote n'ouvre PLUS la session : s'il est bon, on ouvre un DÉFI 2FA (comme les
+    # admins) et /login/2fa exige un code TOTP contre le secret pilote. Si AUCUN secret pilote n'est
+    # configuré, le login pilote est REFUSÉ (fail-closed) : « second facteur, OU suppression du compte
+    # partagé ». Un mot de passe partagé compromis ne suffit plus à ouvrir tout l'admin.
+    if not auth.pilote_2fa_exige():
+        auth.log_event("login_pilote_sans_2fa_refuse", request)
+        auth.slow_failure()
+        return HTMLResponse(auth.login_page(error=True), status_code=401)
+    auth.log_event("login_pilote_2fa_defi", request)
+    resp = RedirectResponse("/login/2fa", status_code=303)
+    resp.set_cookie(value=auth.defi_2fa(auth.PILOTE_2FA_UID), **auth.cookie_2fa_kwargs())
     return resp
 
 
@@ -1005,6 +1014,12 @@ def login_2fa_page(request: Request):
     if defi is None:
         return RedirectResponse("/login", status_code=302)
     uid, _ = defi
+    # FIX-NU3-3 (I-ADM-08) — défi PILOTE (uid sentinelle) : le secret TOTP est pré-provisionné en
+    # config (pas d'enrôlement QR ici) → on sert directement l'écran de saisie du code.
+    if uid == auth.PILOTE_2FA_UID:
+        if not auth.pilote_2fa_exige():
+            return _2fa_redirect_login()
+        return HTMLResponse(auth.page_2fa_code())
     with session_scope() as db:
         ensure_tables(db)                      # première install : les tables 2FA naissent ici
         etat = totp_etat(db, uid)
@@ -1039,6 +1054,28 @@ async def login_2fa_submit(request: Request):
     uid, tentatives = defi
     q = parse_qs((await request.body()).decode("utf-8", "replace"))
     code = (q.get("code") or [""])[0].strip()
+
+    # FIX-NU3-3 (I-ADM-08) — défi PILOTE : code TOTP vérifié contre le secret pilote (config), pas une
+    # ligne utilisateur. Succès → session pilote (make_token, cookie signé) ; échec → compté comme pour
+    # l'admin (5 → re-login). Pas de codes de secours : le compte pilote est une voie de repli assumée.
+    if uid == auth.PILOTE_2FA_UID:
+        from ..config import get_settings as _gs
+        from .. import totp as _totp
+        secret = (_gs().pilote_totp_secret or "").strip()
+        if secret and _totp.verifier_code(secret, code) is not None:
+            auth.log_event("2fa_pilote_ok", request)
+            resp = RedirectResponse("/", status_code=303)
+            resp.set_cookie(value=auth.make_token(), **auth.cookie_kwargs())
+            resp.delete_cookie(auth.COOKIE_2FA, path="/")
+            return resp
+        auth.log_event("2fa_pilote_echec", request)
+        auth.slow_failure()
+        tentatives += 1
+        if tentatives >= auth.DEFI_2FA_ESSAIS_MAX:
+            return _2fa_redirect_login()
+        resp = HTMLResponse(auth.page_2fa_code(error="Code incorrect."), status_code=401)
+        resp.set_cookie(value=auth.defi_2fa(auth.PILOTE_2FA_UID, tentatives), **auth.cookie_2fa_kwargs())
+        return resp
 
     # même empreinte hachée que /login (A5 : observer le partage de compte, jamais l'IP en clair)
     import hashlib as _hl
@@ -3707,11 +3744,28 @@ def _data_sources_fiche(db: Session, parcel_id: int, run_label: str) -> list[dic
     # RECETTE-8 W16 — le millésime affichable vient du PRODUCTEUR UNIQUE (millesime_source.composer),
     # le même que le pied de section (registre/valeur.py) → une source, une seule vérité par document.
     from ..millesime_source import composer as _composer_mill, nettoyer_notes_internes
+    # FIX-NU3-3 (L-MIL-01) — l'INSEE de la parcelle, pour dater le PPR par SA commune (pas la date la
+    # plus récente d'AILLEURS). Dérivé de l'IDU (5 premiers car.), lecture légère en savepoint.
+    _insee_fiche = None
+    try:
+        with db.begin_nested():
+            _idu_fiche = db.execute(text("SELECT idu FROM parcels WHERE id = :pid"),
+                                    {"pid": parcel_id}).scalar()
+        _insee_fiche = str(_idu_fiche)[:5] if _idu_fiche else None
+    except Exception:  # noqa: BLE001
+        _insee_fiche = None
+    from .. import ppr as _ppr
+    _PPR_SOURCE_NOM = "DEAL Réunion — PPR / aléas"
     for r in rows:
         # composer nettoie déjà le millésime (D6) ; on nettoie aussi le fournisseur (« propre non
         # public ») — le catalogue data_sources partagé n'est PAS modifié (nettoyage au bord).
         mill = _composer_mill(r["source_millesime"], source_horizon_at=r["source_horizon_at"],
                               dernier_vu=r["dernier_vu"], last_sync_at=r["last_sync_at"])
+        # FIX-NU3-3 (L-MIL-01) — le PPR est COMMUNAL : on date par la commune de la parcelle.
+        if r["name"] == _PPR_SOURCE_NOM:
+            _mc = _ppr.libelle_millesime_commune(db, _insee_fiche)
+            if _mc:
+                mill = _mc
         out.append({
             "nom": r["name"], "categorie": r["category"],
             "fournisseur": nettoyer_notes_internes(r["provider"]),
@@ -4726,6 +4780,12 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
     # M124-B (audit) — nettoyage CLIENT des libellés (RGPD personne physique + codes techniques
     # bruts), au POINT UNIQUE de service de la fiche : écran ET pdf premium lisent ces `lines`.
     from .export_commun import nettoyer_libelle_client
+    # FIX-NU3-3 (L-MIL-02) — le MÊME nettoyeur de notes internes que « Les données » (fiche) pour le
+    # millésime amont des lignes de cascade (plus de « édition non enregistrée », « proxy », « typeinf »).
+    from ..millesime_source import nettoyer_notes_internes as _nettoyer_notes_millesime
+    # FIX-NU3-3 (L-MIL-01) — date PPR par commune pour les lignes de cascade PPR (idu → insee).
+    from .. import ppr as _ppr_mod
+    _mill_ppr_commune = _ppr_mod.libelle_millesime_commune(db, str(idu)[:5])
     for r in rows:
         # M46 (Lot D) : DÉDUP des contraintes servies — une même contrainte peut être produite en
         # double par la cascade (intersections multiples d'une même source, ex. « PPR zone rouge
@@ -4751,7 +4811,14 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
             "date": r["created_at"].date().isoformat() if r["created_at"] else None,
             # M73 E : millésime AMONT réel de la source (data_sources.source_millesime) — c'est LUI
             # la fraîcheur par ligne, pas la date de run (uniforme = date pipeline, trompeuse).
-            "millesime_amont": r["source_millesime"],
+            # FIX-NU3-3 (L-MIL-02) — NETTOYÉ comme « Les données » de la même fiche : la cascade
+            # affichait le BRUT (« BD TOPO® V3 — édition non enregistrée », « GPU typeinf 04 —
+            # partiel, non-publiées listées », « proxy RPG.LATEST »…) alors que « Les données »
+            # servait la version nettoyée → jargon interne au client + divergence intra-écran.
+            "millesime_amont": (_mill_ppr_commune if (_mill_ppr_commune and r["source_millesime"]
+                                                       and "PPR" in str(r["source_millesime"])
+                                                       and "approuvé" in str(r["source_millesime"]))
+                                else _nettoyer_notes_millesime(r["source_millesime"])),
         }
         lines.append(line)
         if r["evenement"] == "rouge":

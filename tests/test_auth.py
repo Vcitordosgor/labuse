@@ -22,21 +22,39 @@ def client(engine):
     return TestClient(app, base_url="https://testserver")
 
 
+# FIX-NU3-3 (I-ADM-08) — secret TOTP pilote de test (base32 valide, stable).
+PILOTE_TOTP_SECRET = "JBSWY3DPEHPK3PXP"
+
+
 @pytest.fixture
 def pilot(monkeypatch):
-    """Active le mode pilote : auth obligatoire, cookie Secure, docs protégés."""
+    """Active le mode pilote : auth obligatoire, cookie Secure, docs protégés.
+    FIX-NU3-3 (I-ADM-08) — un secret TOTP pilote est configuré : le mot de passe seul n'ouvre plus
+    la session, il ouvre un défi 2FA (cf. `_login` qui enchaîne les deux étapes)."""
     from labuse import config
 
     monkeypatch.setenv("LABUSE_ENV", "pilot")
     monkeypatch.setenv("LABUSE_AUTH_PASSWORD", "mot-de-passe-pilote")
     monkeypatch.setenv("LABUSE_SECRET_KEY", "clef-de-test-stable")
+    monkeypatch.setenv("LABUSE_PILOTE_TOTP_SECRET", PILOTE_TOTP_SECRET)
     config.get_settings.cache_clear()
     yield
     config.get_settings.cache_clear()
 
 
 def _login(client, password="mot-de-passe-pilote"):
-    return client.post("/login", content=f"password={password}",
+    """FIX-NU3-3 (I-ADM-08) — connexion pilote en DEUX étapes : mot de passe → défi 2FA → code TOTP.
+    Enchaîne de façon transparente (le jar de cookies du TestClient porte le cookie de défi) et
+    renvoie la réponse FINALE (303 + session, comme avant le second facteur)."""
+    r = client.post("/login", content=f"password={password}",
+                    headers={"content-type": "application/x-www-form-urlencoded"},
+                    follow_redirects=False)
+    # mot de passe refusé OU pilote sans 2FA → on renvoie tel quel (pas de défi émis).
+    if r.status_code != 303 or r.headers.get("location") != "/login/2fa":
+        return r
+    from labuse import totp as _totp
+    code = _totp.code_totp(PILOTE_TOTP_SECRET)
+    return client.post("/login/2fa", content=f"code={code}",
                        headers={"content-type": "application/x-www-form-urlencoded"},
                        follow_redirects=False)
 
@@ -134,12 +152,49 @@ def test_mot_de_passe_hash_sha256_supporte(client, monkeypatch):
     monkeypatch.setenv("LABUSE_ENV", "pilot")
     monkeypatch.setenv("LABUSE_AUTH_PASSWORD", f"sha256:{digest}")
     monkeypatch.setenv("LABUSE_SECRET_KEY", "clef-de-test-stable")
+    monkeypatch.setenv("LABUSE_PILOTE_TOTP_SECRET", PILOTE_TOTP_SECRET)   # FIX-NU3-3 (I-ADM-08)
     config.get_settings.cache_clear()
     try:
         assert _login(client, "mauvais").status_code == 401
-        assert _login(client, "secret-hashe").status_code == 303    # le hash matche le mot de passe
+        assert _login(client, "secret-hashe").status_code == 303    # hash OK + 2FA → session
     finally:
         config.get_settings.cache_clear()
+
+
+def test_pilote_sans_2fa_refuse_fail_closed(client, monkeypatch):
+    """FIX-NU3-3 (I-ADM-08, décision Vic) — SANS secret TOTP pilote configuré, le mot de passe pilote
+    (même correct) est REFUSÉ : « second facteur obligatoire, ou suppression du compte partagé ».
+    Un mot de passe partagé seul n'ouvre plus l'admin complet."""
+    from labuse import config
+
+    monkeypatch.setenv("LABUSE_ENV", "pilot")
+    monkeypatch.setenv("LABUSE_AUTH_PASSWORD", "mot-de-passe-pilote")
+    monkeypatch.setenv("LABUSE_SECRET_KEY", "clef-de-test-stable")
+    monkeypatch.delenv("LABUSE_PILOTE_TOTP_SECRET", raising=False)
+    config.get_settings.cache_clear()
+    try:
+        r = client.post("/login", content="password=mot-de-passe-pilote",
+                        headers={"content-type": "application/x-www-form-urlencoded"},
+                        follow_redirects=False)
+        assert r.status_code == 401          # bon mot de passe mais pas de 2nd facteur → fermé
+        # et aucune session n'est posée (pas de cookie de session dans la réponse)
+        assert "labuse_session" not in r.headers.get("set-cookie", "")
+    finally:
+        config.get_settings.cache_clear()
+
+
+def test_pilote_2fa_mauvais_code_refuse(client, pilot):
+    """FIX-NU3-3 (I-ADM-08) — mot de passe pilote OK mais code TOTP FAUX → pas de session
+    (le défi reste, 401). Seul un code TOTP valide ouvre la session pilote."""
+    r = client.post("/login", content="password=mot-de-passe-pilote",
+                    headers={"content-type": "application/x-www-form-urlencoded"},
+                    follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"] == "/login/2fa"   # défi émis
+    r2 = client.post("/login/2fa", content="code=000000",
+                     headers={"content-type": "application/x-www-form-urlencoded"},
+                     follow_redirects=False)
+    assert r2.status_code == 401
+    assert client.get("/pipeline/meta").status_code == 401                  # toujours sans accès
 
 
 # ───────────── RADAR-FIX-2 (serveur, Option 2) : jeton X-Radar-Token au garde ─────────────

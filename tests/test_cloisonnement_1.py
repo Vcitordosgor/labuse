@@ -33,6 +33,7 @@ _POLY_GEOJSON = {"type": "Polygon", "coordinates": [[[55.45, -20.9], [55.451, -2
 def app_client(engine, monkeypatch):
     monkeypatch.setenv("LABUSE_ENV", "pilot")
     monkeypatch.setenv("LABUSE_AUTH_PASSWORD", "pilote-cloison-1")
+    monkeypatch.setenv("LABUSE_PILOTE_TOTP_SECRET", "JBSWY3DPEHPK3PXP")   # FIX-NU3-3 (I-ADM-08) : 2FA pilote
     monkeypatch.setenv("LABUSE_SECRET_KEY", "secret-cloison-1-00000000000000000000")
     # jamais un envoi réel pendant l'épreuve (SMTP/Brevo absents → mail journalisé/dry-run)
     monkeypatch.setenv("LABUSE_SMTP_HOST", "")
@@ -411,7 +412,10 @@ def test_admin_voit_les_deux(app_client):
     _compte_actif(ea); _compte_actif(eb)
     try:
         admin = TestClient(app_client.app, base_url="https://testserver")
-        admin.post("/login", data={"password": "pilote-cloison-1"}, follow_redirects=False)  # session pilote = admin
+        # FIX-NU3-3 (I-ADM-08) — session pilote = admin, EN DEUX ÉTAPES (mot de passe → code TOTP).
+        admin.post("/login", data={"password": "pilote-cloison-1"}, follow_redirects=False)
+        from labuse import totp as _totp
+        admin.post("/login/2fa", data={"code": _totp.code_totp("JBSWY3DPEHPK3PXP")}, follow_redirects=False)
         r = admin.get("/admin/licences")
         assert r.status_code == 200, r.text
     finally:

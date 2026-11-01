@@ -4954,8 +4954,18 @@ def _crontab_du_registre(tz: str) -> str:
 
     def _h_reunion(cron_utc: str) -> str:
         champs = cron_utc.split()
-        h = champs[1]
+        _m, h, dom, _mon, dow = champs
         if h.isdigit():                       # heure simple → +4 (modulo 24) ; '*'/listes intacts
+            # FIX-NU3-3 (L-JOB-04) — le +4 h fait parfois FRANCHIR minuit (ex. `0 21 15 * *` → 01:00).
+            # Pour un cron quotidien (dom=dow=*) c'est sans effet. Mais sur un cron à jour-du-mois ou
+            # jour-de-semaine SPÉCIFIQUE, décaler l'heure sans décaler le jour poserait le job le MAUVAIS
+            # jour (le 15 au lieu du 16). Aucun job du registre ne franchit minuit aujourd'hui ; si un
+            # futur job le faisait, on ÉCHOUE BRUYAMMENT à la génération plutôt que de poser un jour faux.
+            if int(h) + 4 >= 24 and (dom != "*" or dow != "*"):
+                raise ValueError(
+                    f"cron '{cron_utc}' : +4 h (Réunion) franchit minuit sur un jour spécifique "
+                    f"(dom={dom}, dow={dow}) → décalage de jour latent. Exprimer l'heure Réunion "
+                    "directement dans le registre, ou générer en UTC (--tz utc).")
             champs[1] = str((int(h) + 4) % 24)
         return " ".join(champs)
 

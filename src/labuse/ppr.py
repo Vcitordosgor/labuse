@@ -142,6 +142,37 @@ def inventaire(session) -> list[dict]:
     return [dict(r) for r in rows]
 
 
+def date_approbation_commune(session, insee: str | None) -> str | None:
+    """FIX-NU3-3 (L-MIL-01) — la date d'approbation PPR de LA COMMUNE de la parcelle (ISO AAAA-MM-JJ),
+    lue dans `spatial_layers kind='ppr_etat'` (une entité par commune, `attrs.code_insee` +
+    `ppr_littoral_date` / `ppr_inond_mvt_date`). Un PPR est COMMUNAL : afficher la date globale (la
+    plus récente de TOUTES les communes, Saint-André 2026-04-16) sur chaque fiche faussait la
+    perception de l'opposabilité (Le Tampon 2017-10-20, Saint-Leu 2015-11-23…). Retourne la plus
+    récente des dates PPR de la commune, ou None si la commune n'a pas de PPR daté."""
+    if not insee:
+        return None
+    from sqlalchemy import text
+    try:
+        rows = session.execute(text(
+            "SELECT attrs->>'ppr_littoral_date' AS d1, attrs->>'ppr_inond_mvt_date' AS d2 "
+            "FROM spatial_layers WHERE kind='ppr_etat' AND attrs->>'code_insee' = :insee"),
+            {"insee": str(insee)[:5]}).mappings().all()
+    except Exception:  # noqa: BLE001 — table/colonne absente : pas de date communale, jamais un crash
+        return None
+    dates = [d for r in rows for d in (r["d1"], r["d2"]) if d and str(d)[:4].isdigit()]
+    return max(dates) if dates else None
+
+
+def libelle_millesime_commune(session, insee: str | None) -> str | None:
+    """FIX-NU3-3 (L-MIL-01) — le libellé PPR daté PAR COMMUNE pour « Les données » / la cascade :
+    « PPR approuvé le JJ/MM/AAAA (commune) » si la commune a un PPR daté ; « pas de PPR approuvé sur
+    la commune » sinon (jamais la date d'une AUTRE commune). None → l'appelant garde le libellé global."""
+    d = date_approbation_commune(session, insee)
+    if d:
+        return f"PPR approuvé le {d[8:10]}/{d[5:7]}/{d[0:4]} (commune)"
+    return None
+
+
 def codes_non_classes(session) -> list[str]:
     """Liste (journalisable) des subtypes/codes PPR tombant en 'autre' (traités en rouge par prudence)."""
     inv = inventaire(session)

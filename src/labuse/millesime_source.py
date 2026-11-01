@@ -98,7 +98,19 @@ def composer(source_millesime, *, source_horizon_at=None, dernier_vu=None,
     if "édition non enregistrée" in str(mill):
         base = str(mill).split(" — ")[0]
         return f"{base} — édition courante"
-    return nettoyer_notes_internes(mill)
+    mill = nettoyer_notes_internes(mill)
+    # FIX-NU3-3 (L-CHN-01) — quand l'amont a RÉELLEMENT avancé (source_horizon_at porte une année
+    # STRICTEMENT plus récente que la plus récente citée dans le libellé figé), on surface l'avance :
+    # « … — à jour au AAAA ». Avant, le libellé descriptif figé (« PPR approuvés 2011–2026 », « OLL
+    # 2024 ») ignorait toute nouvelle livraison → le client ne voyait JAMAIS le nouveau millésime.
+    # On ne touche QUE les libellés déjà datés (un libellé sans année — « extraction annuelle » — ne
+    # se voit PAS inventer une date depuis l'horizon, qui peut n'être que la date d'ingestion LABUSE).
+    an_hz = getattr(source_horizon_at, "year", None)
+    if an_hz and mill:
+        annees = [int(a) for a in re.findall(r"\b(?:19|20)\d{2}\b", str(mill))]
+        if annees and an_hz > max(annees):
+            mill = f"{mill} — à jour au {an_hz}"
+    return mill
 
 
 def libelle_date_source(source_millesime, *, source_horizon_at=None, ingere_le=None) -> str | None:

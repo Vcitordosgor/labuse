@@ -163,6 +163,15 @@ def signaler(db, cle: str, sujet: str, detail: str) -> str:
     return "rappel"
 
 
+def _escalade(db, cle: str, sujet: str, detail: str) -> str:
+    """FIX-NU3-3 (décision Vic) — l'ESCALADE d'une alerte critique (sauvegarde HS > 24 h, automate jamais
+    réussi, Radar muet 2 nuits). Passe par la MÊME porte que `signaler` (mail à l'adresse de Vic +
+    cloche, un envoi puis au plus un rappel par jour tant que ça dure) mais avec un sujet EXPLICITE
+    préfixé « ESCALADE — » : Vic reçoit un mail clairement critique, distinct de l'incident ordinaire,
+    au moment où la panne franchit le cran du dessus. `cle` préfixée `escalade:` (titre rouge dédié)."""
+    return signaler(db, cle, f"ESCALADE — {sujet}", detail)
+
+
 def resoudre(db, cle: str) -> bool:
     """Referme l'incident `cle` s'il était ouvert (→ True, un mail « résolu » part). Sinon rien (→ False :
     on n'envoie JAMAIS un « résolu » pour un incident qui n'existait pas — pas de bruit)."""
@@ -309,33 +318,63 @@ def _prochaine_apres(cron_utc: str, apres: datetime) -> datetime | None:
 
 
 def _jobs_en_retard(db) -> list[dict]:
-    """Jobs dont le dernier SUCCÈS est plus vieux que 1,5 × leur cadence (ils ont tourné, puis se sont
-    tus — exactement le cas des 19 tâches mortes). Un job jamais réussi n'est PAS compté ici (il serait
-    « en retard » dès la première installation) : son absence est dite par le récap, pas une alerte."""
-    from .jobs import JOBS
+    """Les jobs planifiés qui ne sont pas à l'heure. FIX-NU3-3 (I-ADM-01/03, L-JOB-01) — trois motifs,
+    plus seulement « a tourné puis s'est tu » :
+
+      · `bloque`  — dernier état « en_cours » dépassé (tué en plein run, verrou figé) : I-ADM-03 ;
+      · `jamais`  — planifié, jamais réussi, alors que le SYSTÈME tourne depuis plus d'une cadence
+                    (cron jamais tiré OU premier passage qui échoue en boucle) : I-ADM-01/L-JOB-01 ;
+      · `stale`   — dernier succès > 1,5 × cadence (les 19 tâches mortes historiques).
+
+    Un job GELÉ (gel volontaire) ou NON planifié (manuel seul) n'est jamais compté : son silence est
+    voulu. Chaque entrée porte `motif` pour que la vigie choisisse la bonne clé d'incident + escalade."""
+    from .jobs import JOBS, bloque_depuis, lire_etat
     succes = {}
+    premiere = None
     try:
         from . import jobs_journal
         succes = jobs_journal.dernier_succes(db)
+        premiere = jobs_journal.premiere_activite(db)
     except Exception as exc:  # noqa: BLE001
         log.warning("retards : historique job_runs illisible (%s)", exc)
+    if premiere is not None and premiere.tzinfo is None:
+        premiere = premiere.replace(tzinfo=timezone.utc)
     now = datetime.now(timezone.utc)
     retards = []
     for nom, j in JOBS.items():
-        if j.gel:                          # CRON-PROD-1 — gel volontaire : ne jamais alerter « en retard »
-            continue
-        le = succes.get(nom)
-        if le is None:
+        if j.gel or not j.planifie:        # gel volontaire / manuel-seul : silence voulu
             continue
         inter = _intervalle_s(j.cron_utc)
         if inter is None:
             continue
+        seuil_h = round(1.5 * inter / 3600, 1)
+        # (a) BLOQUÉ — tué en plein run (prioritaire : un en_cours figé masque tout le reste).
+        e = lire_etat(nom) or {}
+        bl = bloque_depuis(e.get("statut"), e.get("debut"), j.timeout_s)
+        if bl is not None:
+            retards.append({"nom": nom, "titre": j.titre, "cadence": j.cadence, "motif": "bloque",
+                            "dernier_succes": None, "depuis": bl.isoformat(),
+                            "age_h": round((now - bl).total_seconds() / 3600, 1), "seuil_h": seuil_h})
+            continue
+        le = succes.get(nom)
+        if le is None:
+            # (b) JAMAIS RÉUSSI — en retard dès que le système vit depuis plus d'une cadence entière
+            # (réf = plus ancien passage de N'IMPORTE quel job). Base vierge (premiere None) → silence.
+            if premiere is None:
+                continue
+            age = (now - premiere).total_seconds()
+            if age > inter:
+                retards.append({"nom": nom, "titre": j.titre, "cadence": j.cadence, "motif": "jamais",
+                                "dernier_succes": None, "age_h": round(age / 3600, 1),
+                                "seuil_h": round(inter / 3600, 1)})
+            continue
+        # (c) A TOURNÉ PUIS S'EST TU — dernier succès trop vieux.
         le_utc = le if le.tzinfo else le.replace(tzinfo=timezone.utc)
         age = (now - le_utc).total_seconds()
         if age > 1.5 * inter:
-            retards.append({"nom": nom, "titre": j.titre, "cadence": j.cadence,
+            retards.append({"nom": nom, "titre": j.titre, "cadence": j.cadence, "motif": "stale",
                             "dernier_succes": le_utc.isoformat(),
-                            "age_h": round(age / 3600, 1), "seuil_h": round(1.5 * inter / 3600, 1)})
+                            "age_h": round(age / 3600, 1), "seuil_h": seuil_h})
     return retards
 
 
@@ -375,19 +414,45 @@ def verifier_declencheurs(db) -> dict:
     else:
         resoudre(db, "readyz")
 
-    # 3) sauvegarde présente + pas rétrécie de plus de 30 %
+    # 3) sauvegarde : présente + FRAÎCHE (pas seulement présente) + pas rétrécie de plus de 30 %.
+    # FIX-NU3-3 (K-SAV + OPS-SAUVEGARDE-1 §7) — l'incident du 30/10 n'a alerté personne parce que la
+    # vigie ne testait que l'EXISTENCE d'un .dump (le vieux du 29/10 était là) et son non-rétrécissement,
+    # jamais son ÂGE. On juge désormais la fraîcheur : > 30 h = alerte ; panne durable (> 24 h après) = escalade.
     dumps = _dumps(s.backup_dir)
     if not dumps:
         out["sauvegarde"] = {"present": False}
         signaler(db, "sauvegarde-absente", "Aucune sauvegarde présente",
                  f"Aucun dump labuse-*.dump dans {s.backup_dir} — la sauvegarde ne tourne plus.")
+        resoudre(db, "sauvegarde-perimee")
+        resoudre(db, "escalade:sauvegarde")
     else:
         taille = dumps[0].stat().st_size
         prec = dumps[1].stat().st_size if len(dumps) > 1 else None
-        out["sauvegarde"] = {"present": True, "dernier": dumps[0].name,
-                             "taille_mo": round(taille / 1e6, 1),
+        age_h = round((datetime.now(timezone.utc).timestamp() - dumps[0].stat().st_mtime) / 3600, 1)
+        seuil_h = getattr(s, "sauvegarde_seuil_h", 30)
+        escal_h = seuil_h + getattr(s, "sauvegarde_escalade_h", 24)
+        out["sauvegarde"] = {"present": True, "dernier": dumps[0].name, "age_h": age_h,
+                             "seuil_h": seuil_h, "taille_mo": round(taille / 1e6, 1),
                              "precedent_mo": round(prec / 1e6, 1) if prec else None}
         resoudre(db, "sauvegarde-absente")
+        # fraîcheur : le dernier dump a-t-il moins de `seuil_h` heures ?
+        if age_h > seuil_h:
+            signaler(db, "sauvegarde-perimee",
+                     f"Sauvegarde périmée ({age_h} h, seuil {seuil_h} h)",
+                     f"Le dernier dump ({dumps[0].name}) date d'il y a {age_h} h (seuil {seuil_h} h). "
+                     "La sauvegarde ne tourne plus — vérifier le job backup-postgres et pg_dump.")
+            if age_h > escal_h:
+                _escalade(db, "escalade:sauvegarde",
+                          "Sauvegarde HS depuis plus de 24 h",
+                          f"Plus aucune sauvegarde fraîche depuis {age_h} h "
+                          f"(dernier dump : {dumps[0].name}). La panne dure depuis plus de 24 h : "
+                          "intervention nécessaire — un incident disque ou une table illisible "
+                          "(pg_dump LOCK TABLE) bloque sans doute le dump.")
+            else:
+                resoudre(db, "escalade:sauvegarde")
+        else:
+            resoudre(db, "sauvegarde-perimee")
+            resoudre(db, "escalade:sauvegarde")
         if prec and taille < 0.70 * prec:
             signaler(db, "sauvegarde-retrecie",
                      f"Sauvegarde rétrécie ({round(taille/1e6,1)} Mo vs {round(prec/1e6,1)} Mo)",
@@ -419,19 +484,119 @@ def verifier_declencheurs(db) -> dict:
         else:
             resoudre(db, "copie-externe-ancienne")
 
-    # 5) jobs en retard (ont tourné, se sont tus)
+    # 4 bis) test de restauration de contrôle MENSUEL (K-SAV-03) — jadis seulement une carte passive :
+    # une restauration de contrôle jamais enregistrée (ou vieille de plus de ~35 j) devient un incident
+    # ACTIF. Le marqueur est écrit par l'agent Mac (deploy/mac/restore_test.sh) ; absent = jamais joué.
+    rt = lire_restore_test(s.backup_dir)
+    seuil_rt_j = getattr(s, "restore_test_seuil_j", 35)
+    if rt is None:
+        out["restore_test"] = {"present": False, "seuil_j": seuil_rt_j}
+        signaler(db, "restore-test-ancien", "Aucune restauration de contrôle enregistrée",
+                 "Aucun test de restauration mensuel n'a jamais été enregistré (.restore-test.json "
+                 f"absent de {s.backup_dir}). Une sauvegarde non testée n'est pas une sauvegarde : "
+                 "brancher l'agent Mac restore_test.sh (mensuel).")
+    else:
+        statut_rt = (rt.get("statut") or "").lower()
+        age_rt_j = None
+        try:
+            ta = datetime.fromisoformat(str(rt.get("test_at")).replace("Z", "+00:00"))
+            if ta.tzinfo is None:
+                ta = ta.replace(tzinfo=timezone.utc)
+            age_rt_j = (datetime.now(timezone.utc) - ta).days
+        except (ValueError, TypeError):
+            pass
+        out["restore_test"] = {"present": True, "statut": statut_rt, "age_j": age_rt_j,
+                               "seuil_j": seuil_rt_j}
+        if statut_rt == "ko":
+            signaler(db, "restore-test-ancien", "La dernière restauration de contrôle a ÉCHOUÉ",
+                     rt.get("message") or "Le dernier test de restauration a échoué — la sauvegarde "
+                     "ne se restaure pas correctement.")
+        elif age_rt_j is not None and age_rt_j > seuil_rt_j:
+            signaler(db, "restore-test-ancien",
+                     f"Restauration de contrôle ancienne ({age_rt_j} j)",
+                     f"Le dernier test de restauration date de {age_rt_j} j (seuil {seuil_rt_j} j) : "
+                     "la restauration mensuelle n'est plus jouée (agent Mac à relancer).")
+        else:
+            resoudre(db, "restore-test-ancien")
+
+    # 5) jobs pas à l'heure — trois motifs (bloque / jamais / stale), chacun sa clé + son escalade.
+    # FIX-NU3-3 (I-ADM-01/03, L-JOB-01) : un job BLOQUÉ (tué en plein run) et un job JAMAIS réussi
+    # étaient invisibles — ils apparaissent désormais, et « jamais réussi » escalade (mail Vic).
     retards = _jobs_en_retard(db)
     out["retards"] = retards
-    noms_retard = {r["nom"] for r in retards}
+    par_nom = {r["nom"]: r for r in retards}
     for r in retards:
-        signaler(db, f"job-retard:{r['nom']}", f"Job en retard : {r['nom']}",
-                 f"« {r['titre']} » ({r['cadence']}) n'a plus réussi depuis {r['dernier_succes']} "
-                 f"(âge {r['age_h']} h > seuil {r['seuil_h']} h). Le cron est-il posé ? le job échoue-t-il ?")
-    # referme les retards résolus (un job redevenu à l'heure)
+        nom, titre, cad, motif = r["nom"], r["titre"], r["cadence"], r.get("motif")
+        if motif == "bloque":
+            signaler(db, f"job-bloque:{nom}", f"Job bloqué : {nom}",
+                     f"« {titre} » ({cad}) est « en_cours » depuis {r['age_h']} h sans fin — il a été "
+                     "tué en plein travail (OOM, redémarrage) : le verrou reste pris et aucune passe "
+                     "ne repart. Relancer le job (« Lancer maintenant ») relâche le verrou.")
+        elif motif == "jamais":
+            signaler(db, f"job-retard:{nom}", f"Job jamais réussi : {nom}",
+                     f"« {titre} » ({cad}) n'a JAMAIS réussi, alors que le serveur tourne depuis "
+                     f"{r['age_h']} h (> cadence {r['seuil_h']} h). Le cron est-il posé ? le premier "
+                     "passage échoue-t-il en boucle ?")
+            _escalade(db, f"escalade:job-jamais:{nom}", f"Automate jamais réussi : {nom}",
+                      f"« {titre} » ({cad}) n'a jamais réussi depuis la mise en service du serveur "
+                      f"(il y a {r['age_h']} h). À vérifier d'urgence (cron absent ou cassé).")
+        else:   # stale
+            signaler(db, f"job-retard:{nom}", f"Job en retard : {nom}",
+                     f"« {titre} » ({cad}) n'a plus réussi depuis {r['dernier_succes']} "
+                     f"(âge {r['age_h']} h > seuil {r['seuil_h']} h). Le cron est-il posé ? le job échoue-t-il ?")
+    # referme les incidents des jobs redevenus à l'heure (chaque clé selon le motif courant).
     from .jobs import JOBS
     for nom in JOBS:
-        if nom not in noms_retard:
+        r = par_nom.get(nom)
+        motif = r.get("motif") if r else None
+        if motif != "bloque":
+            resoudre(db, f"job-bloque:{nom}")
+        if motif not in ("jamais", "stale"):
             resoudre(db, f"job-retard:{nom}")
+        if motif != "jamais":
+            resoudre(db, f"escalade:job-jamais:{nom}")
+
+    # 6) RADAR MUET — vigie SERVEUR du silence de l'ingestion Radar (K-RAD-01 + escalade Vic). Si aucune
+    # passe (pige_passes) n'est arrivée depuis le seuil, l'extension du Mac ne nourrit plus la prod
+    # (Mac endormi, verrou `running` figé). Ne touche PAS l'extension : c'est le serveur qui constate
+    # son propre silence et le dit. 2 nuits muettes → escalade mail à Vic. Table absente → pas de vigie.
+    out["radar_muet"] = _vigie_radar_muet(db, s)
 
     out["incidents_ouverts"] = incidents_ouverts(db)
+    return out
+
+
+def _vigie_radar_muet(db, s) -> dict:
+    """FIX-NU3-3 (K-RAD-01, escalade Vic) — l'âge de la dernière passe Radar (pige_passes). Ouvre
+    `radar-muet` au-delà du seuil, escalade à 2 nuits. Jamais d'exception (table absente → inactif)."""
+    try:
+        with db.begin_nested():
+            dernier = db.execute(text("SELECT max(created_at) FROM pige_passes")).scalar()
+    except Exception:  # noqa: BLE001 — table absente (env sans Radar) : vigie inactive, jamais un crash
+        return {"actif": False}
+    seuil_h = getattr(s, "radar_muet_seuil_h", 30)
+    escal_h = getattr(s, "radar_muet_escalade_h", 48)
+    if dernier is None:
+        # aucune passe DU TOUT : en env prod c'est anormal, mais en base neuve c'est normal — on ne
+        # crie pas (comme pour « jamais lancé » sur une base vierge). Résout tout incident résiduel.
+        resoudre(db, "radar-muet")
+        resoudre(db, "escalade:radar")
+        return {"actif": True, "derniere_passe": None}
+    d = dernier if dernier.tzinfo else dernier.replace(tzinfo=timezone.utc)
+    age_h = round((datetime.now(timezone.utc) - d).total_seconds() / 3600, 1)
+    out = {"actif": True, "derniere_passe": d.isoformat(), "age_h": age_h, "seuil_h": seuil_h}
+    if age_h > seuil_h:
+        signaler(db, "radar-muet", f"Radar muet depuis {age_h} h",
+                 f"Aucune passe Radar depuis {age_h} h (seuil {seuil_h} h) : l'extension du Mac ne "
+                 "nourrit plus la prod (Mac endormi la nuit, ou verrou « running » figé après un run "
+                 "tué). Réveiller le Mac / relancer une capture manuelle.")
+        if age_h > escal_h:
+            _escalade(db, "escalade:radar", "Radar muet depuis deux nuits",
+                      f"Aucune passe Radar depuis {age_h} h (plus de deux nuits). La collecte s'est "
+                      "tue : brancher le Mac sur secteur (scommeil) et relâcher le verrou « running ».")
+        else:
+            resoudre(db, "escalade:radar")
+    else:
+        resoudre(db, "radar-muet")
+        resoudre(db, "escalade:radar")
     return out

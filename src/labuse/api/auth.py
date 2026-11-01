@@ -276,6 +276,18 @@ def souvenir_heures(souvenir: bool) -> float | None:
 # ré-émet le cookie avec n+1 ; un client qui rejoue un vieux cookie ne « gagne » que les
 # tentatives déjà comptées de CE jeton, l'expiration à 5 min borne le tout.
 
+#: FIX-NU3-3 (I-ADM-08) — le défi 2FA du PILOTE partagé n'a pas de compte utilisateur : uid sentinelle
+#: 0 (les comptes réels commencent à 1). /login/2fa reconnaît ce défi et vérifie le code contre le
+#: secret TOTP pilote (config.pilote_totp_secret), pas contre une ligne `utilisateurs`.
+PILOTE_2FA_UID = 0
+
+
+def pilote_2fa_exige() -> bool:
+    """Le second facteur pilote est-il exigible ? True dès qu'un secret TOTP pilote est configuré.
+    (Quand il ne l'est PAS, le login pilote est refusé en amont — fail-closed, I-ADM-08.)"""
+    return bool((get_settings().pilote_totp_secret or "").strip())
+
+
 def defi_2fa(utilisateur_id: int, tentatives: int = 0) -> str:
     exp = int(time.time() + DEFI_2FA_TTL_S)
     payload = f"{exp}.{utilisateur_id}.{tentatives}"

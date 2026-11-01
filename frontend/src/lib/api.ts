@@ -2950,8 +2950,11 @@ export const getRadarBienVsMarche = (bienId: number) => j<RadarBienVsMarche>(`/r
 export interface CronJob {
   nom: string; titre: string; cadence: string; cron_utc: string; heure_reunion: string
   timeout_s: number; envoie_mail: boolean
+  // FIX-NU3-3 (L-JOB-03 / I-ADM-03/04) — verdicts composés CÔTÉ SERVEUR (même prédicat que L'usine) :
+  // gel = gel volontaire (pas de « prochaine » menteuse) · bloque = tué en plein run · perime = en retard.
+  gel: string | null; planifie: boolean; bloque: boolean; perime: boolean
   prochaine_utc: string | null; prochaine_reunion: string | null
-  dernier: { statut: string | null; fin: string | null; duree_s: number | null; dry_run: boolean | null; compteurs: Record<string, unknown> | null; erreur: string | null }
+  dernier: { statut: string | null; fin: string | null; debut: string | null; duree_s: number | null; dry_run: boolean | null; compteurs: Record<string, unknown> | null; erreur: string | null }
 }
 export interface Mairie { insee: string | null; commune: string; nom: string | null; adresse: string | null; code_postal: string | null; telephone: string | null; email: string | null; site_officiel: string | null; url_annuaire: string | null; source: string; date_import: string | null; contacts?: CommuneContact[] }
 export interface Epci { code: string; nom: string | null; communes: string[] }
