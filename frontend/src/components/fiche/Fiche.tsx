@@ -946,16 +946,17 @@ export function Fiche({ idu }: { idu: string }) {
           // FRONT-CHIFFRES-2 (F01b) — bande de pente SERVIE (terrain.pente_bande) ; le front ne
           // classe plus par seuils 5/15/30° codés en dur.
           const penteSous = f.terrain?.pente_bande ?? undefined
-          // Risques — compteur (vigilances de l'onglet risques) + niveau, EXACTEMENT comme le badge de
-          // §5 (RisquesSection) et la tuile « Risques » du Dossier PDF : PPR-UNIQUE-1 (A-011) un seul
-          // compteur partout. Le BASSIN VERSANT est un contexte hydrographique, pas une vigilance — exclu
-          // ici comme en §5 (sinon la tuile comptait 3 là où la section et le PDF comptaient 2).
-          const vigils = f.lines.filter((l) => l.onglet === 'risques' && l.layer !== 'bassin_versant' && (l.result === 'SOFT_FLAG' || l.result === 'HARD_EXCLUDE'))
+          // FIX-P-1 (P-02 / J#4) — la tuile « Risques » compte les ALÉAS DISTINCTS (`aleas.n_hazards`,
+          // fonction unique `distinct_hazards`), le MÊME compteur et le MÊME mot (« aléa ») que l'outil
+          // « Estimer » et le Dossier PDF — fin de « 5 vigilances » ici vs « 2 aléas » à l'Estimer. Les
+          // VIGILANCES (notion plus large : servitudes, sols, SUP…) gardent leur libellé propre dans la
+          // section §5 « Risques et environnement » (badge « N vigilances ») et ne s'affichent jamais ici.
+          const nHazards = f.aleas?.n_hazards ?? 0
           // FRONT-CHIFFRES-2 (F01e) — la synthèse aléa (« rédhibitoire »/« fort ») est DÉCIDÉE au back
           // (aleas.synthese, moteur qui ordonne la sévérité) ; le front n'inspecte plus les niveaux.
           const risqueNiveau = f.aleas?.synthese === 'redhibitoire' ? 'aléa rédhibitoire'
             : f.aleas?.synthese === 'fort' ? 'aléa fort'
-            : vigils.length > 0 ? `vigilance${vigils.length > 1 ? 's' : ''}` : 'rien à signaler'
+            : nHazards > 0 ? `aléa${nHazards > 1 ? 's' : ''}` : 'rien à signaler'
           type Tuile = { l: string; v: string; s?: string; i?: string; vide?: boolean }
           const tuiles: Tuile[] = [
             (() => {
@@ -997,8 +998,8 @@ export function Fiche({ idu }: { idu: string }) {
               return { l: 'Exposition', v, s, vide: !orient,
                 i: 'Orientation du versant de la parcelle (Nord, Sud-Est…), calculée sur le modèle d’altitude RGE ALTI (IGN) dans une fenêtre autour du centroïde. La PENTE affichée est celle de l’emprise (tuile « Pente ») — l’exposition n’en montre pas une seconde. Remplace la « vue mer » (abandonnée). « — » : relief non disponible sur la parcelle.' } as Tuile
             })(),
-            { l: 'Risques', v: vigils.length > 0 ? `${vigils.length}` : '—', s: risqueNiveau, vide: vigils.length === 0,
-              i: 'Vigilances évaluées sur la parcelle (aléas, servitudes, sols…) — compteur et niveau, comme le badge de §5. Le détail est dans « Risques et environnement ».' },
+            { l: 'Risques', v: nHazards > 0 ? `${nHazards}` : '—', s: risqueNiveau, vide: nHazards === 0,
+              i: 'Aléas naturels distincts sur la parcelle (inondation, mouvement de terrain, submersion…) — le même compteur que l’outil « Estimer » et le Dossier. Les vigilances réglementaires plus larges (servitudes, sols, SUP…) sont détaillées dans « Risques et environnement ».' },
             // CONTENANCE-1 (garde-fou) : surface incertaine → aucune capacité affichée.
             f.surface_incertaine
               ? { l: 'SDP restante', v: '—', s: 'surface incertaine', vide: true,

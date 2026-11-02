@@ -66,10 +66,14 @@ export const FLAG_DEFS: { key: string; label: string }[] = [
   { key: 'prescription_plu', label: 'Prescription PLU' },
 ]
 
-// FIX-NU3-2 (G-001) — GROUPES de flags : un flag client peut recouvrir plusieurs couches cascade.
-// « risques » = PPR + aléa Géorisques (cohérent avec le groupe serveur CRITICAL_LAYERS['risques']).
+// FIX-P-1 (régression G-001) — GROUPES de flags : un flag client peut recouvrir plusieurs couches
+// cascade. Le geojson porte le token cascade BRUT (dryrun_cascade_results.layer_name en SOFT_FLAG) :
+// pour les risques ce token est « risques » lui-même (1,8 M lignes), PAS « ppr »/« georisque_alea »
+// (ceux-là sont des `kind` de spatial_layers, page Couverture — absents du geojson et de parcel_flags).
+// L'ancien mapping vers ['ppr','georisque_alea'] faisait que le filtre « Risques » ne retenait AUCUNE
+// parcelle. Miroir EXACT du serveur `app.PARCEL_FLAG_GROUPES`.
 export const FLAG_GROUPES: Record<string, string[]> = {
-  risques: ['ppr', 'georisque_alea'],
+  risques: ['risques'],
 }
 
 //: un flag (client) est-il porté par la parcelle ? Expand les groupes vers leurs couches cascade.

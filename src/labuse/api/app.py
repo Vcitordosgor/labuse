@@ -72,6 +72,19 @@ RELIABLE_REQUIRED = ("sar", "risques", "foret_publique", "trait_de_cote")
 # DÉCOUVERTE (restent en base et dans les compteurs de volumétrie).
 MIN_DISPLAY_SURFACE_M2 = 2.0
 
+# FIX-P-1 (régression G-001) — GROUPES de flags du FILTRE CARTE (vocabulaire `parcel_flags` /
+# `dryrun_cascade_results.layer_name`, PAS `spatial_layers.kind`). Un flag client peut recouvrir
+# plusieurs couches cascade ; aujourd'hui chacun des flags proposés (sol_pollue, abf, icpe, risques,
+# prescription_plu) EST son propre token dans `parcel_flags` → expansion identité. ⚠ NE PAS confondre
+# avec CRITICAL_LAYERS, dont les `kind` (`ppr`, `georisque_alea`) décrivent les SOURCES ingérées dans
+# `spatial_layers` (page Couverture) et n'existent PAS dans `parcel_flags`. FIX-NU3-2 avait mappé par
+# erreur `risques → ['ppr','georisque_alea']` → le filtre carte renvoyait 0 parcelle sur toute l'île
+# (le token réel de la couche cascade « risques » est `risques`). Doit rester le miroir EXACT du client
+# `frontend/src/lib/filters.FLAG_GROUPES`.
+PARCEL_FLAG_GROUPES: dict[str, list[str]] = {
+    "risques": ["risques"],
+}
+
 def _journaliser_heal_echec(module: str, exc: Exception) -> None:
     """FIX-GB-011 — journalise un échec de heal de schéma dans event_log (kind `systeme`, compte NULL =
     visible admin/pilote, jamais aux clients). Best-effort : si event_log lui-même est indisponible, on
@@ -1915,13 +1928,16 @@ def _q_v2_where(run_label: str,
     # M45 (P2) : les filtres de vigilance PROBENT `parcel_flags` (dénormalisée au geste de bascule,
     # non-francs déjà résolus, indexée) — le seq-scan de dryrun_cascade_results (4-7 s île entière)
     # devient un probe indexé. Table run-scopée cohérente-par-construction (garde au build).
-    # FIX-NU3-2 (G-001) — EXPANSION des flags de GROUPE vers leurs couches cascade : le flag « risques »
-    # (filtre carte PPR/aléa) recouvre `ppr` + `georisque_alea` (parcel_flags ne connaît que ces couches
-    # brutes). Même expansion que le client (lib/filters.FLAG_GROUPES) → compteur == carte.
+    # FIX-P-1 (régression G-001) — EXPANSION des flags de GROUPE vers leurs couches cascade, via
+    # PARCEL_FLAG_GROUPES (vocabulaire `parcel_flags`, PAS CRITICAL_LAYERS/`spatial_layers.kind`).
+    # Le flag « risques » EST le token `risques` de la couche cascade (405 764 parcelles) : identité.
+    # Même table/mêmes tokens que le geojson servi au client (dryrun_cascade_results.SOFT_FLAG) →
+    # compteur serveur == carte client. L'ancien mapping `risques → ['ppr','georisque_alea']` ne
+    # matchait AUCUNE ligne de parcel_flags → filtre vide sur toute l'île.
     def _expand_flags(toks: list[str]) -> list[str]:
         out: list[str] = []
         for t in toks:
-            out.extend(CRITICAL_LAYERS[t][1] if t in CRITICAL_LAYERS else [t])
+            out.extend(PARCEL_FLAG_GROUPES.get(t, [t]))
         return out
     if flags:
         fl = _expand_flags([f.strip() for f in flags.split(",") if f.strip()])

@@ -42,9 +42,9 @@ function methodeTip(maj?: string | null, rne?: string | null): string {
     + 'CE QU’IL NE DIT PAS — ni une succession ouverte, ni un décès, ni une mise en vente : un signal '
     + 'd’état à horizon 3-7 ans. Aucune date « depuis » par parcelle (le registre ne publie pas '
     + `d’historique) ; le signal est daté du calcul${date}.\n\n`
-    + 'LES CHIFFRES — surface et zonage : Sourcés (cadastre, PLU). SDP résiduelle : Estimé, moteur de '
+    + 'LES CHIFFRES — surface et zonage : Sourcés (cadastre, PLU). SDP restante : Estimé, moteur de '
     + 'la fiche (enveloppe : capacité PLU moins bâti existant ; « — » = hors PLU, réellement '
-    + 'inconnaissable). Le tri suit la SDP résiduelle décroissante.'
+    + 'inconnaissable). Le tri suit la SDP restante décroissante.'
   )
 }
 

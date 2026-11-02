@@ -636,7 +636,7 @@ export function ContextePanel() {
                       <div className="mb-2 flex gap-5">
                         <div><p className="font-mono text-lg font-bold text-txt-hi">{fmt(d.densifiables.parcelles)}</p><p className="text-[11px] text-txt-dim">densifiables<i className="block not-italic text-[10px]">capacité résiduelle</i></p></div>
                         {/* RECETTE-2 (B5) — « 7 M m² » → « 700 ha » (hectares, lisibles par un client). */}
-                        {d.densifiables.sdp_residuelle_m2 != null && <div><p className="font-mono text-lg font-bold text-txt-hi">{fmt(Math.round(d.densifiables.sdp_residuelle_m2 / 1e4))} ha</p><p className="text-[11px] text-txt-dim">SDP résiduelle théorique</p></div>}
+                        {d.densifiables.sdp_residuelle_m2 != null && <div><p className="font-mono text-lg font-bold text-txt-hi">{fmt(Math.round(d.densifiables.sdp_residuelle_m2 / 1e4))} ha</p><p className="text-[11px] text-txt-dim">SDP restante théorique</p></div>}
                       </div>
                     )}
                   </>

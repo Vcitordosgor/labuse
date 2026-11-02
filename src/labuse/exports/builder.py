@@ -720,6 +720,7 @@ h2 { font-size:12pt; margin:8pt 0 4pt; }
 .kicker { font-size:7.3pt; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-weight:600; margin-bottom:3pt; }
 .estgrid { display:grid; grid-template-columns:1.1fr 1fr; gap:9pt; align-items:start; page-break-inside:avoid; }
 .estleft { background:var(--mint-bg); border-radius:4pt; padding:8pt 11pt; }
+.estkicker { font-size:8pt; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin-bottom:2pt; }
 .estbig { font-size:20pt; font-weight:700; color:var(--mint-ink); line-height:1; }
 .estbig .estrange { font-size:9pt; font-weight:400; color:var(--muted); margin-left:5pt; }
 .estmeta { margin:5pt 0 3pt; font-size:8.3pt; }

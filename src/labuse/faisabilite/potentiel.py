@@ -171,7 +171,7 @@ def bloc_potentiel(session: Session, parcel_id: int, fz=None) -> dict | None:
     morceaux: list[str] = []
     if sdp_servie is not None:
         morceaux.append("au sol : rien à construire" if sdp_servie <= 0
-                        else f"au sol : ~{round(sdp_servie)} m² de SDP résiduelle")
+                        else f"au sol : ~{round(sdp_servie)} m² de SDP restante")
     # RECETTE-11 A6 — plus de verdict de faisabilité (« possible »/« pas de marge ») : on énonce la
     # marge mesurée sous la règle de hauteur et la contrainte, le lecteur conclut.
     if en_hauteur.get("marge_m") is not None and en_hauteur.get("base"):

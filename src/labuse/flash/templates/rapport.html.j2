@@ -169,7 +169,7 @@
   <h3>Potentiel constructible</h3>
   <table class="donnees">
     <tr><th>Scénario</th><th>Valeur</th></tr>
-    <tr><td>Au sol (SDP résiduelle du run servi)</td>
+    <tr><td>Au sol (SDP restante du run servi)</td>
         <td class="num-cell">{% if c.potentiel.au_sol.sdp_residuelle_m2 is not none
           %}{{ c.potentiel.au_sol.sdp_residuelle_m2|round|int }} m²{% else %}non calculée{% endif %}</td></tr>
     <tr><td>En hauteur (surélévation, hauteur {{ c.potentiel.en_hauteur.base or "—" }})</td>
