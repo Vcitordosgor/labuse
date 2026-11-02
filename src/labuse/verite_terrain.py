@@ -20,7 +20,7 @@ n'avait pas :
     au lieu de cinq.
 
 LECTURE SEULE : aucune écriture en base, rien sur le VPS. La fiche SERVIE est lue EN-PROCESS
-(TestClient + session pilote) — comme le banc — pour que l'auth de prod ne bloque pas la sonde ;
+(TestClient + session banc en-process) — comme le banc — pour que l'auth de prod ne bloque pas la sonde ;
 les appels aux sources officielles partent en direct (curl), séquentiels et espacés.
 
     python -m labuse.verite_terrain echantillon            # (re)tire les 500 → ECHANTILLON.md

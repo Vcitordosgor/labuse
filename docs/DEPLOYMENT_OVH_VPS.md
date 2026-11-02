@@ -206,7 +206,7 @@ Contenu réel (les valeurs sont sur le VPS, jamais ici) :
 | Bloc | Variables | Note |
 |---|---|---|
 | Cœur | `LABUSE_DATABASE_URL`, `LABUSE_ENV=production`, `LABUSE_SECRET_KEY` (openssl rand -hex 32), `LABUSE_AUTH_PASSWORD`, `LABUSE_PUBLIC_URL` / `LABUSE_PUBLIC_BASE_URL=https://app.labuse.immo` | fail-closed : sans mot de passe, routes métier en 503 |
-| Login pilote | `LABUSE_LOGIN_PILOTE_ACTIF=0` | **AC-020 : le login pilote partagé est MORT** — l'auth passe par les comptes nominatifs |
+| Login pilote | *(aucune variable)* | **POST-DEPLOY-1 : le login pilote partagé est SUPPRIMÉ du code** (plus de `LABUSE_LOGIN_PILOTE_ACTIF` ni `LABUSE_PILOTE_TOTP_SECRET`) — l'auth passe UNIQUEMENT par les comptes nominatifs (email + mot de passe + 2FA par compte) |
 | IA | `ANTHROPIC_API_KEY`, `LABUSE_AI_PROVIDER=anthropic` | jamais dans un log ; retrait de la clé = retour au mode règles |
 | Stripe (**placeholders — Vic pose les clés LIVE**) | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_RESTRICTED_KEY`, `STRIPE_PRICE_*` | voir §12 (webhook) |
 | Brevo | `BREVO_API_KEY`, `LABUSE_BREVO_TPL_*` (8 templates transactionnels) | e-mails transactionnels (digest, invitations…) |
@@ -294,8 +294,9 @@ Caddy (sinon l'émission du certificat échoue et retente).
 
 ## 11. Comptes, 2FA admin (AC-025) et création d'un admin
 
-- Le login pilote partagé est **mort** (`LABUSE_LOGIN_PILOTE_ACTIF=0`, AC-020). Chaque
-  utilisateur a un compte nominatif.
+- Le login pilote partagé est **supprimé du code** (POST-DEPLOY-1, décision Vic : plus de
+  `LABUSE_LOGIN_PILOTE_ACTIF` ni `LABUSE_PILOTE_TOTP_SECRET`). Chaque utilisateur a un compte
+  nominatif ; `LABUSE_AUTH_PASSWORD` ne fait plus qu'ACTIVER l'authentification.
 - **Tout compte de rôle admin passe par `/login/2fa`** (TOTP) : au **premier login**,
   enrôlement par QR code (application d'authentification) + **8 codes de secours affichés
   une seule fois** (à ranger dans le gestionnaire de mots de passe). Tables `totp_2fa` /

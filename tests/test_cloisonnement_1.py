@@ -32,8 +32,7 @@ _POLY_GEOJSON = {"type": "Polygon", "coordinates": [[[55.45, -20.9], [55.451, -2
 @pytest.fixture
 def app_client(engine, monkeypatch):
     monkeypatch.setenv("LABUSE_ENV", "pilot")
-    monkeypatch.setenv("LABUSE_AUTH_PASSWORD", "pilote-cloison-1")
-    monkeypatch.setenv("LABUSE_PILOTE_TOTP_SECRET", "JBSWY3DPEHPK3PXP")   # FIX-NU3-3 (I-ADM-08) : 2FA pilote
+    monkeypatch.setenv("LABUSE_AUTH_PASSWORD", "interrupteur-cloison-1")   # POST-DEPLOY-1 : active l'auth (plus de login pilote)
     monkeypatch.setenv("LABUSE_SECRET_KEY", "secret-cloison-1-00000000000000000000")
     # jamais un envoi réel pendant l'épreuve (SMTP/Brevo absents → mail journalisé/dry-run)
     monkeypatch.setenv("LABUSE_SMTP_HOST", "")
@@ -412,10 +411,23 @@ def test_admin_voit_les_deux(app_client):
     _compte_actif(ea); _compte_actif(eb)
     try:
         admin = TestClient(app_client.app, base_url="https://testserver")
-        # FIX-NU3-3 (I-ADM-08) — session pilote = admin, EN DEUX ÉTAPES (mot de passe → code TOTP).
-        admin.post("/login", data={"password": "pilote-cloison-1"}, follow_redirects=False)
+        # POST-DEPLOY-1 — l'admin est NOMINATIF (email + mot de passe + SON 2FA), plus de compte
+        # pilote partagé : on crée l'admin, on l'enrôle puis on ouvre sa session en deux étapes.
+        import re as _re
+
         from labuse import totp as _totp
-        admin.post("/login/2fa", data={"code": _totp.code_totp("JBSWY3DPEHPK3PXP")}, follow_redirects=False)
+        eadm = f"adm-{uuid.uuid4().hex[:8]}@x.test"
+        with session_scope() as s:
+            inv = comptes.creer_invitation(s, eadm)
+            tok = inv["lien"].split("token=")[1]
+            comptes.activer_par_invitation(s, tok, "motdepasse-admin-1", "2026-07-22")
+            s.execute(text("UPDATE comptes SET statut='actif' WHERE id=:c"), {"c": inv["compte_id"]})
+            s.execute(text("UPDATE utilisateurs SET role='admin' WHERE id=:i"), {"i": inv["utilisateur_id"]})
+            s.commit()
+        admin.post("/login", data={"identifiant": eadm, "password": "motdepasse-admin-1"}, follow_redirects=False)
+        page = admin.get("/login/2fa").text
+        secret = _re.search(r'id="totp-secret"[^>]*>([^<]+)<', page).group(1).replace(" ", "").strip()
+        admin.post("/login/2fa", data={"code": _totp.code_totp(secret)}, follow_redirects=False)
         r = admin.get("/admin/licences")
         assert r.status_code == 200, r.text
     finally:

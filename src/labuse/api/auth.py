@@ -1,15 +1,19 @@
-"""Authentification PILOTE — compte unique, session cookie signée. Pas un SaaS.
+"""Authentification LABUSE — comptes NOMINATIFS (email + argon2id + 2FA TOTP par compte).
 
-Choix assumés (pilote encadré, un promoteur) :
-- UN mot de passe global, fourni par variable d'environnement (LABUSE_AUTH_PASSWORD,
-  en clair ou « sha256:<hexdigest> ») — jamais en dur, jamais committé ;
-- session = cookie « labuse_session » signé HMAC-SHA256 (clé LABUSE_SECRET_KEY, sinon
-  clé éphémère → sessions perdues au redémarrage, documenté) ; httpOnly, SameSite=Lax,
-  Secure hors local ; expiration LABUSE_SESSION_HOURS (12 h par défaut) ;
-- pas de création de compte, pas de multi-tenant, message d'échec NEUTRE, petit délai
-  anti-force-brute, événements journalisés (logger « labuse.auth ») ;
-- fail-closed : en pilote/production SANS mot de passe configuré, les routes métier
-  répondent 503 (jamais « ouvert par accident »).
+POST-DEPLOY-1 (décision Vic) : le compte « pilote » PARTAGÉ (mot de passe unique, second facteur
+partagé) est SUPPRIMÉ. Plus aucune connexion par mot de passe partagé ni par TOTP partagé — seuls
+les comptes nominatifs se connectent, chacun avec son 2FA.
+
+Choix assumés :
+- `LABUSE_AUTH_PASSWORD` n'est PLUS une identité : c'est l'INTERRUPTEUR qui active l'authentification
+  (présent, ou env ≠ local → auth OBLIGATOIRE ; absent hors local → 503 fail-closed) ;
+- session utilisateur = cookie « labuse_session » valeur « u.<token> », vérifiée EN BASE à chaque
+  requête (une suspension coupe l'accès au rechargement suivant) ; httpOnly, SameSite=Lax, Secure
+  hors local ; expiration LABUSE_SESSION_HOURS (12 h par défaut, 30 j « se souvenir ») ;
+- un jeton signé « v1.… » (make_token) reste frappé EN-PROCESS par les bancs/golden (TestClient,
+  hôte réservé) pour franchir l'auth de prod sans login — il n'est émis par AUCUNE route HTTP ;
+- message d'échec NEUTRE, petit délai anti-force-brute, événements journalisés (« labuse.auth ») ;
+- fail-closed : hors local SANS mot de passe configuré, les routes métier répondent 503.
 """
 from __future__ import annotations
 
@@ -220,7 +224,9 @@ def exiger_admin(request) -> dict:
       TOUJOURS vrai (fail-closed), donc le gate est actif en pilot/production ;
     - session UTILISATEUR de rôle 'admin' → OK ;
     - session UTILISATEUR non-admin (titulaire/membre/qa = client payant) → 403 ;
-    - session PILOTE (mot de passe partagé, pas de compte utilisateur) → OK (admin de fait) ;
+    - session BANC EN-PROCESS (jeton « v1.… » signé, frappé par les bancs/golden, jamais par une
+      route HTTP) → OK (admin de fait) — POST-DEPLOY-1 : ce n'est PLUS le compte pilote partagé
+      (supprimé), aucun mot de passe ni login ne la produit ;
     - aucune session valide → 401.
 
     Double-vérifie la session (ne suppose pas la garde globale) pour rester correct même
@@ -234,21 +240,9 @@ def exiger_admin(request) -> dict:
         if info.get("role") != "admin":
             raise HTTPException(403, "Action réservée aux administrateurs LABUSE.")
         return info
-    if token_ok(cookie):          # session pilote (mot de passe partagé) = admin de fait
-        return {"role": "pilote"}
+    if token_ok(cookie):          # session banc en-process (jeton signé) = admin de fait
+        return {"role": "banc"}
     raise HTTPException(401, "Session administrateur requise.")
-
-
-def password_ok(candidate: str) -> bool:
-    """Compare en temps constant ; supporte « sha256:<hex> » pour ne pas mettre le
-    mot de passe en clair dans l'environnement si l'opérateur préfère un hash."""
-    expected = get_settings().auth_password or ""
-    if not expected or not candidate:
-        return False
-    if expected.startswith("sha256:"):
-        digest = hashlib.sha256(candidate.encode("utf-8")).hexdigest()
-        return hmac.compare_digest(digest, expected[len("sha256:"):].lower())
-    return hmac.compare_digest(candidate, expected)
 
 
 def cookie_kwargs(hours: float | None = None) -> dict:
@@ -275,18 +269,6 @@ def souvenir_heures(souvenir: bool) -> float | None:
 # infalsifiable (HMAC clé app), court (5 min). Le compteur vit DANS le jeton — chaque échec
 # ré-émet le cookie avec n+1 ; un client qui rejoue un vieux cookie ne « gagne » que les
 # tentatives déjà comptées de CE jeton, l'expiration à 5 min borne le tout.
-
-#: FIX-NU3-3 (I-ADM-08) — le défi 2FA du PILOTE partagé n'a pas de compte utilisateur : uid sentinelle
-#: 0 (les comptes réels commencent à 1). /login/2fa reconnaît ce défi et vérifie le code contre le
-#: secret TOTP pilote (config.pilote_totp_secret), pas contre une ligne `utilisateurs`.
-PILOTE_2FA_UID = 0
-
-
-def pilote_2fa_exige() -> bool:
-    """Le second facteur pilote est-il exigible ? True dès qu'un secret TOTP pilote est configuré.
-    (Quand il ne l'est PAS, le login pilote est refusé en amont — fail-closed, I-ADM-08.)"""
-    return bool((get_settings().pilote_totp_secret or "").strip())
-
 
 def defi_2fa(utilisateur_id: int, tentatives: int = 0) -> str:
     exp = int(time.time() + DEFI_2FA_TTL_S)
@@ -373,9 +355,8 @@ def login_page(error: bool = False) -> str:
     """La PORTE — nuit « Coffre » portée au design system validé (AUDIT PAIEMENT, partie E,
     verdict Vic sur docs/mockups/auth/login.html) : deux champs (identifiant + mot de passe),
     l'oiseau doré, 4 états (défaut/focus/erreur de couple/chargement). Zéro hex local : tout
-    naît des tokens de `coffre_ui`. FAÇADE inchangée : le moteur d'auth pilote ignore
-    `identifiant`, le futur backend d'identité lira les deux champs du même POST /login.
-    La MÉCANIQUE d'authentification n'est pas touchée ici (design ≠ mécanique)."""
+    naît des tokens de `coffre_ui`. POST-DEPLOY-1 : le POST /login n'accepte QUE le couple
+    nominatif (identifiant + mot de passe) — le login pilote partagé a été supprimé."""
     etat = "erreur" if error else "defaut"
     head = ("<style>"
             "body[data-state=erreur] #loginerr{display:flex}"
