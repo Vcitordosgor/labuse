@@ -858,10 +858,33 @@ def _declencheur_entree(db, depuis: datetime | None) -> tuple[bool, str]:
     return (n or 0) > 0, f"{n} source(s) avancée(s) depuis la dernière promotion"
 
 
+# DEPLOY-AUTONOMIE — paliers « actionnables » : le vocabulaire SERVI (`parcel_p_score_v2.tier`) porte
+# DEUX générations (anciens runs par rang : brulante/chaude ; runs récents par domaine : priorite/
+# a_suivre). La définition « promues » fait foi — `golden_ops._distribution` : brulante ∪ chaude ∪
+# priorite ∪ a_suivre. On la réutilise telle quelle (pas de 3ᵉ vocabulaire qui divergerait).
+_TIERS_ACTIONNABLES = ("brulante", "chaude", "priorite", "a_suivre")
+#: fragment SQL `IN (...)` dérivé de la constante (valeurs figées dans le code — jamais une entrée
+#: utilisateur ; interpolation sûre, pas de bind-param « expanding » à déclarer dans chaque text()).
+_IN_ACTIONNABLES = "(" + ", ".join(f"'{t}'" for t in _TIERS_ACTIONNABLES) + ")"
+
+
 def _mesures_run(db, candidat: str, precedent: str) -> dict:
-    """Rassemble les mesures de controler_run contre la base, chaque mesure isolée (une requête qui
-    rate laisse la mesure à None → controler_run REFUSE, jamais un faux vert). Lecture seule."""
-    from . import autonomie  # noqa: F401 — documentaire (les clés attendues sont décrites là)
+    """Rassemble les mesures de controler_run contre la base RÉELLE, chaque mesure isolée (une requête
+    qui rate laisse la mesure à None → controler_run REFUSE, jamais un faux vert). Lecture seule.
+
+    DEPLOY-AUTONOMIE — les requêtes d'AUTONOMIE-1 visaient des colonnes INEXISTANTES en prod (code_palier,
+    parcel_id, parcel_flags.run_id/entierement_rouge, coherence_runs.ecarts/cree_at) — la couche DB du
+    calcul de nuit n'avait jamais tourné contre le schéma servi. Elles sont réécrites ici sur les
+    colonnes réelles (tier, parcelle_id=IDU) et les lectures CANONIQUES déjà servies :
+      · complétude   → `bascule_flux._run_complet` (score v2 + cascade résolue, même garde que la bascule) ;
+      · entièrement rouge → fraction PPR lue dans la cascade (`dryrun_cascade_results`, motif « N % de la
+        surface »), MÊME source que `renouvellement.ppr_x` ; la cascade du run se résout via
+        `bascule_flux.resoudre_cascade_run` (run propre ou étage 0 emprunté — ex. q_v21 sur q_v19_sources) ;
+      · cohérence    → dernier passage du banc (`coherence_runs`), signal « vert » = `faux_client`
+        (un client lit une valeur FAUSSE) + `erreurs_lecteur` (banc qui n'a pas pu lire). Le `n_ecarts`
+        brut (écarts tolérables/incohérences connues du balayage île) n'est PAS un gate de promotion.
+    Chaque requête a été validée en lecture seule contre la prod (cf. reports/DEPLOY-AUTONOMIE.md)."""
+    from . import bascule_flux
     m: dict = {}
 
     def _scal(sql: str, params: dict | None = None):
@@ -871,13 +894,14 @@ def _mesures_run(db, candidat: str, precedent: str) -> dict:
             log.warning("calcul-nuit mesure illisible [%s] : %s", sql[:40], exc)
             return None
 
-    # complétude : score v2 + cascade présents pour le candidat (verify_completude en version lecture)
+    # complétude : la garde CANONIQUE de bascule (score v2 présent ET cascade résoluble). Un run
+    # incomplet est plus dangereux qu'un run qui échoue — _run_complet le dit sans servir.
     try:
-        from . import bascule_gardes
-        bascule_gardes.verify_completude(db, candidat)  # lève si incomplet
-        m["run_complet"] = True
+        complet, motif = bascule_flux._run_complet(db, candidat)
+        m["run_complet"] = bool(complet)
+        m["run_complet_motif"] = motif
     except Exception as exc:  # noqa: BLE001
-        log.warning("calcul-nuit : complétude KO (%s)", exc)
+        log.warning("calcul-nuit : complétude illisible (%s)", exc)
         m["run_complet"] = False
     # le manifeste du candidat est écrit par le flux-run ; sa présence est vérifiée par le gatherer appelant.
     m["comptes_parcelles"] = _scal("SELECT count(*) FROM parcel_p_score_v2 WHERE run_id = :r", {"r": candidat})
@@ -885,26 +909,40 @@ def _mesures_run(db, candidat: str, precedent: str) -> dict:
     # copropriétés en palier actionnable (doctrine E-010 : doit être 0)
     m["copro_actionnables"] = _scal(
         "SELECT count(*) FROM parcel_p_score_v2 WHERE run_id = :r AND copro IS TRUE "
-        "AND code_palier IN ('brulante','chaude','a_creuser','a_suivre')", {"r": candidat})
-    # parcelles ENTIÈREMENT en zone rouge en palier actionnable (doit être 0) — via la cascade du run
-    m["rouge_actionnables"] = _scal(
-        "SELECT count(*) FROM parcel_p_score_v2 s WHERE s.run_id = :r "
-        "AND s.code_palier IN ('brulante','chaude','a_creuser','a_suivre') "
-        "AND s.parcel_id IN (SELECT parcel_id FROM parcel_flags WHERE run_id = :r AND entierement_rouge IS TRUE)",
-        {"r": candidat})
-    # écart de paliers vs précédent (parcelles communes qui changent de palier)
+        f"AND tier IN {_IN_ACTIONNABLES}", {"r": candidat})
+    # parcelles ENTIÈREMENT en zone rouge PPR (fraction = 100 %) en palier actionnable (doit être 0).
+    # La cascade se résout (run propre ou étage 0 emprunté) ; non résolue → mesure manquante → REFUS.
+    try:
+        cascade_run, _motif = bascule_flux.resoudre_cascade_run(db, candidat)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("calcul-nuit : cascade du candidat non résolue (%s)", exc)
+        cascade_run = None
+    if cascade_run:
+        m["rouge_actionnables"] = _scal(
+            "WITH rouge AS ("
+            "  SELECT p.idu, max((regexp_match(cr.detail, '([0-9]+) % de la surface'))[1]::int) AS pct "
+            "  FROM dryrun_cascade_results cr JOIN parcels p ON p.id = cr.parcel_id "
+            "  WHERE cr.run_label = :c AND cr.layer_name = 'risques' AND cr.result = 'HARD_EXCLUDE' "
+            "    AND cr.detail LIKE '%PPR zone rouge%' GROUP BY p.idu) "
+            "SELECT count(*) FROM parcel_p_score_v2 s JOIN rouge ON rouge.idu = s.parcelle_id "
+            f"WHERE s.run_id = :r AND s.tier IN {_IN_ACTIONNABLES} AND rouge.pct >= 100",
+            {"c": cascade_run, "r": candidat})
+    else:
+        m["rouge_actionnables"] = None   # cascade non résolue : on NE conclut pas → controler_run refuse
+    # écart de paliers vs précédent (parcelles communes qui changent de tier) — requête canonique bascule.
     m["paliers_total"] = _scal(
-        "SELECT count(*) FROM parcel_p_score_v2 a JOIN parcel_p_score_v2 b USING (parcel_id) "
+        "SELECT count(*) FROM parcel_p_score_v2 a JOIN parcel_p_score_v2 b ON a.parcelle_id = b.parcelle_id "
         "WHERE a.run_id = :a AND b.run_id = :b", {"a": candidat, "b": precedent})
     m["paliers_change"] = _scal(
-        "SELECT count(*) FROM parcel_p_score_v2 a JOIN parcel_p_score_v2 b USING (parcel_id) "
-        "WHERE a.run_id = :a AND b.run_id = :b AND a.code_palier IS DISTINCT FROM b.code_palier",
+        "SELECT count(*) FROM parcel_p_score_v2 a JOIN parcel_p_score_v2 b ON a.parcelle_id = b.parcelle_id "
+        "WHERE a.run_id = :a AND b.run_id = :b AND a.tier IS DISTINCT FROM b.tier",
         {"a": candidat, "b": precedent})
-    # cohérence : lue du DERNIER passage coherence-banc (coherence_runs), pas rejouée ici (trop lourd)
+    # cohérence : dernier passage du banc (coherence_runs, mode « île »). Vert = 0 FAUX-CLIENT et 0 erreur
+    # lecteur ; les écarts tolérables/incohérences connues du balayage ne bloquent pas une promotion.
     try:
         row = db.execute(text(
-            "SELECT ecarts, COALESCE(erreurs_lecteur, 0) FROM coherence_runs "
-            "ORDER BY cree_at DESC LIMIT 1")).first()
+            "SELECT faux_client, COALESCE(erreurs_lecteur, 0) FROM coherence_runs "
+            "ORDER BY ts DESC LIMIT 1")).first()
         m["coherence_ecarts"] = row[0] if row else None
         m["coherence_erreurs"] = row[1] if row else None
     except Exception as exc:  # noqa: BLE001
@@ -981,6 +1019,31 @@ def calcul_nuit(ctx: JobContext) -> None:
     mesures["manifeste_present"] = _manifeste_candidat_present(label)
 
     par = f"calcul-nuit (automatique) — {label}"
+
+    # DEPLOY-AUTONOMIE (décision Vic, première nuit) — GATE DE PROMOTION. Par défaut le calcul de nuit
+    # promeut seul si tous les contrôles passent (pleine autonomie). Mais la PREMIÈRE mise en service de
+    # q_v21 se fait « sous l'œil de Vic » (AUTONOMIE-1) : poser LABUSE_CALCUL_NUIT_PROMEUT=0 fait CALCULER
+    # + CONTRÔLER + MAILER le verdict SANS basculer — Vic promeut à la main après lecture (`labuse golden
+    # promote <run>` / page Circuit). Le run candidat reste en base (non servi), rejouable.
+    promeut = os.environ.get(
+        "LABUSE_CALCUL_NUIT_PROMEUT", "1" if getattr(s, "calcul_nuit_promeut", True) else "0") != "0"
+
+    if not promeut:
+        from . import ops_alertes
+        v = autonomie.controler_run(mesures, palier_delta_max_pct=s.calcul_nuit_palier_delta_max_pct)
+        verdict_txt = "OK — contrôles passés" if v.ok else v.resume()
+        corps = (f"Le run candidat {label} est CALCULÉ et CONTRÔLÉ, mais la promotion attend TON geste "
+                 f"(première mise en service sous ton œil).\n\nVerdict des contrôles : {verdict_txt}\n"
+                 f"Écart de paliers : {v.details.get('palier_delta_pct')} %\nMesures : {mesures}\n\n"
+                 f"Pour servir ce run aux clients : labuse golden promote {label} (ou page Circuit → Basculer).\n"
+                 "Il reste en base (non servi) tant que tu ne l'as pas promu.")
+        ops_alertes.signaler(db, f"calcul-nuit:{label}",
+                             f"Calcul de nuit {label} : {'contrôles OK' if v.ok else 'contrôles en échec'} "
+                             f"— promotion en attente de ton geste", corps)
+        ctx.compte(label=label, recette=recette, promu=False, promotion_en_attente=True,
+                   controles_ok=v.ok, verdict=verdict_txt, mesures=mesures,
+                   palier_delta_pct=v.details.get("palier_delta_pct"))
+        return
 
     def _promouvoir():
         from . import bascule_flux

@@ -267,6 +267,11 @@ class Settings(BaseSettings):
     # Contrôle AVANT promotion d'un run de nuit : l'écart de paliers CLIENT avec le run précédent ne
     # doit pas dépasser ce pourcentage, sinon on NE PROMEUT PAS et on alerte (dérive anormale).
     calcul_nuit_palier_delta_max_pct: float = 3.0      # LABUSE_CALCUL_NUIT_PALIER_DELTA_MAX_PCT
+    # DEPLOY-AUTONOMIE (décision Vic) — GATE DE PROMOTION du calcul de nuit. True (défaut) = pleine
+    # autonomie : un run dont TOUS les contrôles passent est promu seul. False (ou LABUSE_CALCUL_NUIT_
+    # PROMEUT=0) = le run est CALCULÉ + CONTRÔLÉ + le verdict MAILÉ, mais la bascule attend le geste de
+    # Vic (« première mise en service sous l'œil de Vic », AUTONOMIE-1). Posé à 0 en prod la 1ʳᵉ nuit.
+    calcul_nuit_promeut: bool = True                   # LABUSE_CALCUL_NUIT_PROMEUT
     # AUTONOMIE-1 — injection AUTOMATIQUE des sources de classe A (référence à faible risque) la nuit,
     # avec contrôles (comptes, géométries valides, couverture 974) et RETOUR ARRIÈRE si un contrôle
     # échoue. L'écart de comptes avec la version précédente ne doit pas dépasser ce pourcentage.
