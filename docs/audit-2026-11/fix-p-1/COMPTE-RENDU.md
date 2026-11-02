@@ -163,7 +163,7 @@ Filtre Risques/PPR : compte cohérent sur 3 communes (Saint-Paul 49 532 / 51 597
     passait par le CONTEXTE (`ctx["icpe_detail"]`), non ancré par le crible de provenance. **Impression
     voulue** → on ANCRE la distance à `n_vigilances` (donnée-tête qui agrège les ICPE), comme le bilan
     Financier ancre ses postes (`exports/provenance.py`). Aucun chiffre caché, aucune liste blanche.
-  → banc complet re-joué : **0 rouge** (voir fin).
+  → banc complet re-joué : **4 378 passed, 0 failed, 88 skipped** (0 rouge).
 - Hook pre-push (`scripts/git-hooks/pre-push`) : secret-scan ✓ · front tsc 0 / vitest 301 ✓ · famille
   unitaire Python ✓ · cohérence 6/0 ✓.
 
