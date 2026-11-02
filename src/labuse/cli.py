@@ -127,6 +127,29 @@ def init_db() -> None:
     typer.echo("✓ Schéma PostGIS prêt (référentiel communes + FK posés).")
 
 
+@app.command("schema-heal")
+def schema_heal_cmd() -> None:
+    """AUTONOMIE-2 — joue le heal de schéma EN SÉRIE, une fois, AVANT l'ouverture du port.
+
+    Posée en `ExecStartPre` du service systemd : à chaque (re)démarrage, le heal tourne pendant que
+    l'ANCIEN service est déjà arrêté (aucun trafic, aucune écriture `event_log` concurrente) → plus
+    de `lock_timeout` sur l'`ALTER event_log` → fin de la récurrence `/readyz` 503 (DEPLOY-1028b).
+    Les workers, eux, SAUTENT le heal (`LABUSE_SKIP_BOOT_HEAL=1`). Idempotent (DDL `IF NOT EXISTS`).
+
+    SORT EN CODE 1 si un step échoue : `ExecStartPre` échoue → le service NE démarre PAS. Un heal
+    raté est BRUYANT (service down + alerte systemd), jamais un `/readyz` 503 silencieux sur un worker."""
+    import logging
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s — %(message)s")
+    from .api.app import _executer_heal_schema
+    res = _executer_heal_schema(logging.getLogger("labuse"), pose_fk=True)  # pré-service → pose les FK commune (V4a)
+    if res["ok"]:
+        typer.echo(f"✓ heal schéma OK ({res['total']} steps, en série, hors service)")
+        return
+    for f in res["failures"]:
+        typer.echo(f"✗ heal schéma — {f['module']} : {f['error']}", err=True)
+    raise typer.Exit(1)
+
+
 @app.command("suggestions")
 def suggestions_cmd(nouvelles: bool = typer.Option(False, "--nouvelles", help="Seulement les non traitées")) -> None:
     """M16-C : lit les retours « Proposer une amélioration » envoyés depuis le menu compte."""

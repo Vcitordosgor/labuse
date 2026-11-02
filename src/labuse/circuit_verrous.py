@@ -79,11 +79,18 @@ def table_declaree(champ: str) -> str | None:
 
 
 def relations_schema(db) -> set[str]:
-    """Toutes les relations du schéma public (tables, vues, matérialisations, partitions)."""
+    """Toutes les relations du schéma public (tables, vues, matérialisations, partitions) —
+    HORS objets appartenant à une EXTENSION. AUTONOMIE-2 (V1c) : `pg_stat_statements` /
+    `pg_stat_statements_info` (vues de l'extension de monitoring, en prod mais pas sur le poste
+    de dev) sortaient en orphelines « sans action » et cassaient V1c. Ce ne sont pas des objets de
+    LA BUSE (comme les objets PostGIS) : une extension est curée par `CREATE/DROP EXTENSION`, jamais
+    par la carte des réservoirs. On les exclut à la source (pg_depend deptype='e')."""
     rows = db.execute(text(
         "SELECT c.relname FROM pg_class c "
         "JOIN pg_namespace n ON n.oid = c.relnamespace AND n.nspname = 'public' "
-        "WHERE c.relkind IN ('r', 'm', 'v', 'p')")).scalars().all()
+        "WHERE c.relkind IN ('r', 'm', 'v', 'p') "
+        "  AND NOT EXISTS (SELECT 1 FROM pg_depend d "
+        "                  WHERE d.objid = c.oid AND d.deptype = 'e')")).scalars().all()
     return {r.lower() for r in rows}
 
 

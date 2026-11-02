@@ -1707,8 +1707,13 @@ MODE_ET_CADENCE: dict[str, tuple[str, int | None, str]] = {
     "Zones exclues EnR sauf toiture (OFB/APER)": ("one_shot", 365, "proposee"),
     "Contraintes EnR près des habitations (Géoplateforme)": ("one_shot", 365, "proposee"),
     "BD NYME — lieux-dits (IGN)": ("one_shot", 365, "proposee"),
-    "SCAN 50 historique 1950 (IGN)": ("one_shot", None, "sans_objet"),
-    "EduGéo Réunion 1980 (IGN)": ("one_shot", None, "sans_objet"),
+    # AUTONOMIE-2 (fix G5) — cartes historiques FIGÉES (SCAN 50 1950, EduGéo 1980) servies en WMTS :
+    # millésime IMMUABLE, AUCUN flux amont à surveiller (cf. sentinelle.py : « millésime immuable »).
+    # Elles étaient `one_shot` SANS date de contrôle → G5 les flaggait « aucune date ni mention jamais »
+    # (cassé en prod). Leur vraie nature est `sans_millesime` = « à jour par construction, aucun
+    # producteur amont à contrôler » (même bucket qu'OSM/INPI) → G5 les exempte, à juste titre.
+    "SCAN 50 historique 1950 (IGN)": ("sans_millesime", None, "sans_objet"),
+    "EduGéo Réunion 1980 (IGN)": ("sans_millesime", None, "sans_objet"),
     "ZNIEFF (INPN / Région)": ("absente", None, "sans_objet"),
     "CoSIA (couverture du sol IA, IGN)": ("one_shot", 800, "declaree"),
     "Radar (pige d'annonces)": ("depot_manuel", 3, "declaree"),
