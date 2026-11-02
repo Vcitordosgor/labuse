@@ -10,7 +10,7 @@ export const LAYER_LABEL: Record<string, string> = {
   foncier_public: 'Foncier public',
   emprise_lineaire: 'Emprise linéaire',
   emprise_routiere: 'Emprise routière',
-  residuel_socle: 'SDP résiduelle',
+  residuel_socle: 'SDP restante',
   safer: 'Parcelle déclarée agricole (RPG)',
   sar: 'Potentiel foncier Région (indicatif)',
   surface: 'Surface parcelle',

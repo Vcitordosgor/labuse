@@ -1642,9 +1642,13 @@ def _fiabilite_mot(niveau: str | None, commune_fallback: bool = False) -> str:
     return {"fiable": "Élevée", "moyen": "Moyenne", "limitee": "Limitée"}.get(niveau or "", "Moyenne")
 
 
-def _emprise_bati_m2(db, idu: str) -> int | None:
-    """Emprise au sol du bâti existant (BD TOPO, `p_model_bati`), m². None si pas de bâti servi."""
-    emp = db.execute(text("SELECT emprise_bati_m2 FROM p_model_bati WHERE idu = :i"), {"i": idu}).scalar()
+def _emprise_bati_fiche_m2(fiche: dict | None) -> int | None:
+    """FIX-P-1 (P-03) — emprise au sol du bâti existant = la SEULE valeur de la fiche
+    (`le_bien.emprise_batie_m2`, BD TOPO unionnée et CLIPPÉE à la parcelle, producteur unique
+    `bati.emprise_bati_bdtopo_m2`, décision SDP-UNIQUE). Estimer NE recalcule PLUS l'emprise :
+    l'ancien `p_model_bati.emprise_bati_m2` n'était pas clippé à la parcelle (empreintes entières)
+    → 136 m² à l'Estimer là où le Dossier/la fiche servaient 105 m². Désormais écran == PDF == Dossier."""
+    emp = ((fiche or {}).get("le_bien") or {}).get("emprise_batie_m2")
     return round(float(emp)) if emp and float(emp) > 0 else None
 
 
@@ -1775,7 +1779,7 @@ def estimation_annonce(db, idu: str, fiche: dict, surface_hab: float | None = No
                 "note": "Pas assez de ventes comparables dans le secteur."}
     niveau, ecart = _fiabilite_bien(cb.get("n"), cb.get("median"), cb.get("q1"), cb.get("q3"),
                                     cb.get("commune_fallback"), type_bien=cb.get("type_bien"))
-    emprise = _emprise_bati_m2(db, idu)
+    emprise = _emprise_bati_fiche_m2(fiche)
     # ESTIMER-2 (D-009, E-021) — la SURFACE du total : surface bâtie de la dernière vente DVF si elle
     # existe, sinon emprise × ratio médian de la commune. Jamais l'emprise brute × un prix habitable.
     surface_tot, src_surf = _surface_pour_total(db, idu, emprise, mut, insee, surface_hab,
@@ -1901,9 +1905,9 @@ def _parcelle_mesures(db, idu: str, fiche: dict) -> list[dict]:
     ass = _assiette_alea_deduite(db, idu)
     if ass:
         out.append({"cle": "Assiette constructible, aléa déduit", "valeur": f"{_fmt_m2_fr(ass)}"})
-    emp = db.execute(text("SELECT emprise_bati_m2 FROM p_model_bati WHERE idu = :i"), {"i": idu}).scalar()
-    if emp and float(emp) > 0:
-        out.append({"cle": "Bâti existant, emprise", "valeur": f"{_fmt_m2_fr(round(float(emp)))}"})
+    emp = _emprise_bati_fiche_m2(fiche)   # FIX-P-1 (P-03) — emprise UNIQUE de la fiche (BD TOPO clippée)
+    if emp:
+        out.append({"cle": "Bâti existant, emprise", "valeur": f"{_fmt_m2_fr(emp)}"})
     hf, he = pot.get("hauteur_faitage_lidar_m"), pot.get("hauteur_egout_lidar_m")
     if isinstance(hf, (int, float)) and isinstance(he, (int, float)):
         out.append({"cle": "Hauteur mesurée, faîtage / égout", "valeur": f"{_num(hf)} m / {_num(he)} m"})
@@ -2053,7 +2057,7 @@ def _contrainte_limitante(db, idu: str, fiche: dict, zone: str | None, commune: 
         zr = None
     pot = (fiche or {}).get("potentiel_transformation") or {}
     surface = (fiche or {}).get("surface_m2") or (fiche or {}).get("contenance_m2")
-    emprise = _emprise_bati_m2(db, idu)
+    emprise = _emprise_bati_fiche_m2(fiche)   # FIX-P-1 (P-03) — emprise UNIQUE de la fiche (BD TOPO clippée)
     faitage = pot.get("hauteur_faitage_lidar_m")
     hf_max = getattr(zr, "hf_m", None) if zr else None
     emp_max = getattr(zr, "emprise_sol_pct", None) if zr else None

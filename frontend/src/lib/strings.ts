@@ -587,7 +587,7 @@ export const CLIENT = {
       moteurs: {
         criblage: { nom: 'Criblage', desc: 'pool servi · zones et contraintes du brief' },
         filtre_geometrique: { nom: 'Filtre géométrique', desc: 'SDP cible inatteignable écartée par la géométrie' },
-        faisabilite: { nom: 'Faisabilité', desc: 'SDP résiduelle par parcelle' },
+        faisabilite: { nom: 'Faisabilité', desc: 'SDP restante par parcelle' },
         risques: { nom: 'Risques', desc: 'signaux PPR, ABF et couches de risques' },
         marche_dvf: { nom: 'Charge foncière', desc: 'prix probable du foncier · comparables DVF' },
         filtre_budget: { nom: 'Filtre budget', desc: 'retenues confrontées au budget du brief' },
@@ -607,7 +607,7 @@ export const CLIENT = {
       autresRetenuesFort: 'autres retenues',
       autresRetenuesSuite: (rang: number) =>
         `, non restituées — classées après le rang ${rang}.`,
-      sdp: 'SDP résiduelle',
+      sdp: 'SDP restante',
       surface: 'surface parcelle',
       prixProbable: 'Prix probable du foncier',
       chargeSupportable: 'Charge foncière supportable',

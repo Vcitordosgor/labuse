@@ -356,7 +356,7 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
                   sub={`${i['commune']} · ${fmt(i['surface_m2'] as number)} m² · SDP ${fmt(i['sdp'] as number)}`
                     + (Number(i['n_etablissements']) > 0 ? ` · occupé par ${fmt(i['n_etablissements'] as number)} établissement${Number(i['n_etablissements']) > 1 ? 's' : ''}` : '')}
                   fiche={[['Propriétaire', String(d['nom'])], ['SIREN', String(d['siren'])],
-                    ['Patrimoine', `${d['n_parcelles']} parcelles · SDP résiduelle ${fmt(d['sdp_residuelle_m2'] as number)} m²`]]} />
+                    ['Patrimoine', `${d['n_parcelles']} parcelles · SDP restante ${fmt(d['sdp_residuelle_m2'] as number)} m²`]]} />
               </div>
             )})}
           </div>
@@ -1176,7 +1176,7 @@ export function M06() {
             sub={`${fmt(i['surface_m2'] as number)} m² · SDP ${fmt(i['sdp'] as number)} m²${i['carencee'] ? ' · SRU carencée' : ''}`}
             right={<TierBadge tier={i['tier_v2'] as string | null} etage0={i['etage0'] as boolean | null} statut={i['statut'] as string | null} />}
             fiche={[['Mode bailleur', 'Parcelle en QPV'], ['SRU commune', i['carencee'] ? 'Carencée — forte demande LLS' : '—'],
-              ['Leviers LLS', 'TVA 2,1 % · abattement TFPB 30 %'], ['SDP résiduelle', `${fmt(i['sdp'] as number)} m²`]]} />
+              ['Leviers LLS', 'TVA 2,1 % · abattement TFPB 30 %'], ['SDP restante', `${fmt(i['sdp'] as number)} m²`]]} />
         ))}
       </div>
     </>

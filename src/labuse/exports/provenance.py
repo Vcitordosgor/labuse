@@ -205,6 +205,13 @@ def nombres_ancres(valeurs: dict[str, Valeur], ctx: dict | None = None) -> dict[
         # rattachée pour ne pas la compter comme fuite quand un document l'imprime hors Valeur.
         for x in _scalaires(ctx.get("adresse")):
             _poser(x, "adresse_ban")
+        # DOC-APPORTEUR-018 (FIX-NU3-1) — l'Apporteur imprime la description de l'ICPE relevée par la
+        # cascade (« Installation (ICPE) à proximité — … régime Autorisation, 249 m. »). La DISTANCE est
+        # une mesure SOURCÉE (ST_Distance à l'installation ICPE, cf. registre `georisques_icpe`) du
+        # domaine des vigilances — `n_vigilances` agrège justement les ICPE (reservoir georisques_icpe).
+        # Rattachée à cette donnée-tête, faute d'un id propre par poste (même logique que le bilan).
+        for x in _scalaires(ctx.get("icpe_detail")):
+            _poser(x, "n_vigilances")
     return ancres
 
 

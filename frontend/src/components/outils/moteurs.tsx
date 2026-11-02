@@ -814,7 +814,7 @@ export function M19() {
       ['Correspond au profil', String(active.nom)],
       ['Surface', `${fmt(active.surface_min ?? 0)}–${fmt(active.surface_max ?? 0)} m² ✓`],
     ]
-    if (active.sdp_min) lines.push(['SDP résiduelle', `≥ ${fmt(active.sdp_min)} m² ✓`])
+    if (active.sdp_min) lines.push(['SDP restante', `≥ ${fmt(active.sdp_min)} m² ✓`])
     if (active.commune) lines.push(['Commune', `${active.commune} ✓`])
     const mf: Record<string, { module: string; lines: [string, string][] }> = {}
     for (const i of items) mf[i.idu as string] = { module: 'matching', lines }

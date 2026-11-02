@@ -194,7 +194,11 @@ function RapportParcelle({ idu }: { idu: string }) {
           </p>
         ) : (
           <>
-            <p className="mt-1 text-xl font-semibold leading-none text-txt-hi">{fmtInt(Math.round(median))} €/m²</p>
+            {/* FIX-P-1 (P-04) — libellé propre « Prix estimé au m² » : c'est une ESTIMATION pondérée
+                (comparables de précision), jamais une médiane. La « médiane » de marché reste le module
+                unique marche_dvf_commune (bloc « La commune », « Prix médian … »). */}
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-txt-dim">Prix estimé au m²</p>
+            <p className="mt-0.5 text-xl font-semibold leading-none text-txt-hi">{fmtInt(Math.round(median))} €/m²</p>
             {p25 != null && p75 != null && (
               <p className="mt-0.5 text-[12px] text-txt-dim">de {fmtInt(Math.round(p25))} à {fmtInt(Math.round(p75))} €/m²</p>
             )}

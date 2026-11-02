@@ -231,7 +231,11 @@ def _estimation(est: dict) -> str:
         pl = est.get("type_label_pluriel") or "biens bâtis anciens"
         note = (f"{(est.get('type_bien') or 'Bâti').capitalize()} — comparé aux ventes de <b>{esc(pl)}</b> "
                 "autour de la parcelle. État et prestations du bien non connus du modèle." + prec_txt)
-    gauche = (f'<div class="estbig">{_int(median)} €/m²'
+    # FIX-P-1 (P-04) — le prix au m² d'Estimer est une ESTIMATION pondérée (comparables de précision),
+    # JAMAIS une médiane : il porte son propre libellé « Prix estimé au m² ». La « médiane » de marché
+    # reste exclusivement le module unique marche_dvf_commune (bloc « La commune », « Prix médian … »).
+    gauche = ('<div class="estkicker">Prix estimé au m²</div>'
+              + f'<div class="estbig">{_int(median)} €/m²'
               + (f' <span class="estrange">{esc(fourch)}</span>' if fourch else "") + "</div>"
               + f'<div class="estmeta">{_chip(chip_cls, "Fiabilité " + niv)}'
               + (f' <span class="muted">{esc(source)}</span>' if source else "") + "</div>"

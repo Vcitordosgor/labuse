@@ -1118,7 +1118,13 @@ _COVER_TUILES = [
     ("zone_plu_famille", "Zone", lambda v: esc(v)),
     ("pente_deg", "Pente", lambda v: esc(pente_courte(float(v)))),
     ("exposition_versant", "Exposition", lambda v: esc(v)),
-    ("n_vigilances", "Risques", lambda v: esc(f"{groupe(v)} vigilance{'s' if v and v > 1 else ''}")),
+    # FIX-P-1 (P-02 / J#4) — la tuile « Risques » compte les ALÉAS DISTINCTS (`aleas.n_hazards`,
+    # fonction unique `distinct_hazards`), le MÊME compteur et le MÊME mot (« aléa ») que la fiche
+    # écran, l'outil « Estimer » et son PDF — plus jamais « 5 vigilances » au Dossier et « 2 aléas »
+    # à l'Estimer sur la même parcelle. Les « vigilances » (notion plus large : servitudes, sols, SUP…)
+    # gardent leur propre libellé en §5 (ligne « Vigilances », n_vigilances) et ne s'affichent jamais
+    # sous « Risques ». Rendu spécialement dans la boucle (valeur lue sur la fiche, pas via `valeurs`).
+    ("n_hazards", "Risques", lambda v: esc("aucun aléa" if not v else f"{int(v)} aléa{'s' if v > 1 else ''}")),
     ("sdp_residuelle_m2", "SDP restante (bâti conservé)", lambda v: fmt_m2(v)),
 ]
 
@@ -1137,6 +1143,17 @@ def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, V
     _reg = valeurs.get("reglement_plu_bloc")
     _zone_code = (_reg.valeur.get("zone") if _reg is not None and isinstance(_reg.valeur, dict) else None)
     for cid, lib, fmt in _COVER_TUILES:
+        # FIX-P-1 (P-02) — la tuile « Risques » lit les aléas DISTINCTS directement sur la fiche
+        # (`aleas.n_hazards`), pas via `valeurs` : même compteur `distinct_hazards` que l'écran/Estimer.
+        # None (aucun bloc aléas servi) → tuile omise ; 0 → « aucun aléa » (valeur honnête, jamais « — »).
+        if cid == "n_hazards":
+            nh = (fiche.get("aleas") or {}).get("n_hazards")
+            aff = fmt(nh) if nh is not None else None
+            if aff is None:
+                continue
+            tuiles_html.append(f'<div class="tile" data-quoi="{esc(cid)}"><div class="v">{aff}</div>'
+                               f'<div class="l">{esc(lib)}</div></div>')
+            continue
         v = valeurs.get(cid)
         try:
             aff = fmt(v.valeur) if v is not None and v.valeur is not None else None
@@ -1144,9 +1161,6 @@ def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, V
             aff = None
         if cid == "zone_plu_famille" and _zone_code:
             aff = esc(_zone_code)
-        # PPR-UNIQUE-1 (A-011) — la tuile « Risques » affiche le COMPTEUR UNIQUE `n_vigilances`
-        # (= tuile d'en-tête == badge §5, bassin versant exclu, cf. robinet_fiche._c_vigilances) ;
-        # plus de divergence tuile/section/PDF. Le rendu normal (lambda _COVER_TUILES) suffit.
         # EXPORTS-FIX-1 C7 — SDP en zone A/N : « 0 m² — zone A » (arbitrage Q6), jamais « — ».
         if aff is None and cid == "sdp_residuelle_m2" and _zone_v in ("A", "N"):
             aff = f'0 m² — zone {esc(_zone_v)}'
