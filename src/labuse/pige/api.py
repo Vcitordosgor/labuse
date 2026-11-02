@@ -1881,8 +1881,16 @@ def _regles_zone(zone: str | None, commune: str | None) -> list[dict]:
             suff = " ou H/2" if formule and "h/2" in str(formule).lower() else ""
             return f"{_num(m)} m{suff}"
         return None
-    if isinstance(zr.hf_m, (int, float)):
-        out.append({"cle": "Hauteur maximale", "valeur": f"{_num(zr.hf_m)} m"})
+    if isinstance(zr.hf_m, (int, float)) or isinstance(zr.he_m, (int, float)):
+        # POST-DEPLOY-1 — hauteur réglementaire UNIFORME « N m au faîtage · M m à l'égout » (même voix
+        # que le Dossier / robinet_fiche via plu_reglement). Le document « Estimer un bien » ne tronque
+        # plus l'égout : la fiche, l'écran et TOUS les documents disent la même hauteur (docs_coherence).
+        _hparts = []
+        if isinstance(zr.hf_m, (int, float)):
+            _hparts.append(f"{_num(zr.hf_m)} m au faîtage")
+        if isinstance(zr.he_m, (int, float)):
+            _hparts.append(f"{_num(zr.he_m)} m à l'égout")
+        out.append({"cle": "Hauteur maximale", "valeur": " · ".join(_hparts)})
     if isinstance(zr.emprise_sol_pct, (int, float)):
         out.append({"cle": "Emprise au sol maximale", "valeur": f"{_num(zr.emprise_sol_pct)} %"})
     rv = _recul(zr.recul_voirie_m, zr.recul_voirie_alignement, None)

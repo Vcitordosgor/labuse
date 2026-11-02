@@ -1,7 +1,7 @@
 """SOLIDITE-1 (Lot 2) — joue les 25 gardes CHASSE-DONNÉES EN-PROCESS, contre la prod.
 
 Comme le banc de cohérence nocturne (`scripts.coherence.banc` en mode en-process), on ne tape PAS l'API
-publique : un TestClient FastAPI en interne, authentifié par une session pilote mintée (auth active, hôte
+publique : un TestClient FastAPI en interne, authentifié par une session banc en-process mintée (auth active, hôte
 réservé exempté du rate-limit). Les gardes de `chasse_donnees` appellent `_api(path)` (qui attend du JSON
 OU du texte brut selon la route) et `_db()` (psycopg lecture seule, DSN = LABUSE_DATABASE_URL → la prod) :
 on redirige `_api` vers le client en-process, on laisse `_db` lire la prod directement.
@@ -33,7 +33,7 @@ def jouer_gardes_en_process() -> list[tuple[str, str, str]]:
     from scripts.coherence import chasse_donnees as cd
 
     client = TestClient(app, client=(HOTE_INTERNE, 0))
-    client.cookies.set(auth.COOKIE, auth.make_token())    # session pilote (auth active hors 'local')
+    client.cookies.set(auth.COOKIE, auth.make_token())    # session banc en-process (auth active hors 'local')
 
     def _api_ep(path: str):
         """Même contrat que chasse_donnees._api : JSON si parsable, sinon texte ; lève sur statut >= 400

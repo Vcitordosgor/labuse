@@ -77,15 +77,12 @@ class Settings(BaseSettings):
     # Pilote/production : cookies Secure, CORS restreint, /docs protégés, auth OBLIGATOIRE
     # (sans LABUSE_AUTH_PASSWORD, les routes métier répondent 503 — fail-closed, jamais ouvert).
     env: str = "local"
-    # Authentification pilote (compte unique) : mot de passe en clair OU "sha256:<hexdigest>".
-    # JAMAIS en dur dans le code ; activer en local en posant simplement la variable.
+    # POST-DEPLOY-1 (décision Vic) — le COMPTE « pilote » PARTAGÉ est SUPPRIMÉ : plus aucune connexion
+    # par mot de passe partagé, plus de second facteur partagé. Seuls les comptes NOMINATIFS (email +
+    # argon2id + 2FA TOTP par compte) se connectent. `auth_password` ne sert PLUS à se connecter : il
+    # reste l'INTERRUPTEUR qui ACTIVE l'authentification (présent → routes métier gardées ; absent hors
+    # 'local' → 503 fail-closed). Mot de passe en clair OU "sha256:<hexdigest>" ; jamais en dur.
     auth_password: str | None = None
-    # FIX-NU3-3 (I-ADM-08, décision Vic) — SECOND FACTEUR obligatoire sur le compte « pilote » partagé.
-    # Secret TOTP base32 (généré par `labuse.totp.generer_secret`). Posé → le mot de passe pilote
-    # n'ouvre plus la session, il ouvre un défi 2FA (comme les admins) ; code TOTP exigé avant l'accès.
-    # ABSENT → le login pilote est REFUSÉ (fail-closed) : « second facteur, ou suppression du compte
-    # partagé » (I-ADM-08). Les admins nominatifs gardent leur 2FA par compte. LABUSE_PILOTE_TOTP_SECRET.
-    pilote_totp_secret: str | None = None
     # Clé de signature des cookies de session ; absente → clé éphémère (sessions perdues au
     # redémarrage — acceptable en local, à définir en pilote).
     secret_key: str | None = None
@@ -337,10 +334,9 @@ class Settings(BaseSettings):
     # Verrouillage login : N échecs → verrou temporaire (minutes).
     login_echecs_max: int = 5
     login_verrou_minutes: int = 15
-    # VPS · go-live — MORT du login pilote PARTAGÉ : à False, le chemin « identifiant vide »
-    # de POST /login répond en échec NEUTRE (401, même page — rien ne révèle que la voie
-    # existe). Défaut True pour la compat locale/QA ; la prod pose LABUSE_LOGIN_PILOTE_ACTIF=0.
-    login_pilote_actif: bool = True
+    # POST-DEPLOY-1 (décision Vic) — le login pilote PARTAGÉ est SUPPRIMÉ pour de bon : POST /login
+    # n'accepte QUE le login nominatif (identifiant requis). Un POST sans identifiant répond en échec
+    # NEUTRE (401, même page). L'ancien interrupteur LABUSE_LOGIN_PILOTE_ACTIF n'existe plus.
 
     # ── M26-A — Copilote (socle agentique) ──
     # Quota provisoire (la vraie valeur sera fixée avec l'offre) ; compté kind='agent'

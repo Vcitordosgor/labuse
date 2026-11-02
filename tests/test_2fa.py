@@ -218,10 +218,10 @@ def test_non_admin_flux_inchange(client, pilot):
     assert client.get("/pipeline/meta").status_code == 200
 
 
-def test_login_pilote_desactive(client, pilot, monkeypatch):
-    from labuse import config
-    monkeypatch.setenv("LABUSE_LOGIN_PILOTE_ACTIF", "0")
-    config.get_settings.cache_clear()
+def test_login_pilote_supprime(client, pilot):
+    """POST-DEPLOY-1 (décision Vic) — le login pilote PARTAGÉ est SUPPRIMÉ : un POST /login SANS
+    identifiant (ancienne voie « mot de passe partagé »), même mot de passe, → 401 NEUTRE, aucune
+    session. Plus aucun interrupteur LABUSE_LOGIN_PILOTE_ACTIF. Seul le login nominatif vit."""
     r = client.post("/login", content="password=mot-de-passe-pilote",
                     headers={"content-type": "application/x-www-form-urlencoded"},
                     follow_redirects=False)

@@ -258,8 +258,19 @@ def _rechauffer_worker() -> None:
                 log.warning("réchauffage Successions impossible : %s", e)
     except Exception as e:  # noqa: BLE001 — le réchauffage ne doit jamais faire tomber le worker
         log.warning("réchauffage worker impossible : %s", e)
-    # Stripe (hors requête) + contexte des 24 communes : sessions dédiées, best-effort.
+    # Stripe (hors requête) : session dédiée, best-effort.
     _prechauffer_stripe(log)
+    # POST-DEPLOY-1 — le tableau de bord Pilotage (agrège ~13 lectures, 5–7 s à froid) est pré-calculé
+    # pour que le premier admin tape déjà chaud (< 1 s). Placé AVANT le contexte des 24 communes (lent,
+    # ~12 min) dont le Pilotage ne dépend pas, pour ne pas en retarder le réchauffage. Best-effort.
+    try:
+        from .dashboard import _pilotage_rafraichir
+        t1 = time.monotonic()
+        _pilotage_rafraichir()
+        log.info("réchauffage : Pilotage chaud en %.1fs", time.monotonic() - t1)
+    except Exception as e:  # noqa: BLE001
+        log.warning("réchauffage Pilotage impossible : %s", e)
+    # Contexte des 24 communes (NU-C-003) : session dédiée, best-effort (le plus lent, en dernier).
     _prechauffer_contexte_communes(log)
 
 
@@ -598,11 +609,11 @@ def _chemin_regularisation(path: str) -> bool:
 
 @app.middleware("http")
 async def _auth_guard(request, call_next):
-    """Garde d'authentification PILOTE (cf. api/auth.py) — protège TOUTES les routes métier.
+    """Garde d'authentification (cf. api/auth.py) — protège TOUTES les routes métier.
 
     Publiques : /healthz, /health, /readyz (détails réduits sans session), /login, /logout
     (+ /docs en local uniquement). Navigation sans session → redirection /login ;
-    appel API sans session → 401 JSON ; pilote sans mot de passe configuré → 503 (fail-closed)."""
+    appel API sans session → 401 JSON ; hors local sans mot de passe configuré → 503 (fail-closed)."""
     from fastapi.responses import JSONResponse
 
     from . import auth
@@ -652,7 +663,7 @@ async def _auth_guard(request, call_next):
                 "acces": "lecture_seule"})
         return await call_next(request)
     if await run_in_threadpool(auth.token_ok, cookie):
-        return await call_next(request)   # session pilote (mot de passe partagé) = admin de fait
+        return await call_next(request)   # session banc en-process (jeton signé) = admin de fait
     # RADAR-FIX-2 (serveur) — l'extension de capture s'authentifie par en-tête X-Radar-Token (pas de
     # session). On laisse passer SES 3 endpoints UNIQUEMENT si le jeton est valide (temps constant) ;
     # sans jeton / jeton faux → on tombe dans le 401 habituel ci-dessous. La route garde _exiger_radar.
@@ -913,8 +924,9 @@ async def login_submit(request: Request):
     # PARCOURS-FIX-1 (Lot 2.4) — « Se souvenir de moi » : None = défaut (12 h), sinon 30 j.
     souvenir_h = auth.souvenir_heures(souvenir)
 
-    # PREMIER EURO · E1 — identifiant fourni = LOGIN UTILISATEUR (email + argon2id, verrou
-    # après N échecs) ; identifiant vide = mot de passe PILOTE (compat — meurt à la bascule).
+    # PREMIER EURO · E1 — identifiant fourni = LOGIN UTILISATEUR NOMINATIF (email + argon2id, verrou
+    # après N échecs, puis défi 2FA). POST-DEPLOY-1 (décision Vic) : le login PILOTE partagé (identifiant
+    # vide + mot de passe partagé) est SUPPRIMÉ — seuls les comptes nominatifs se connectent.
     if identifiant:
         from ..comptes import creer_session, verifier_login
         from ..db import session_scope
@@ -979,30 +991,12 @@ réglages vous attendent tels quels.</p>
         resp.set_cookie(value=f"u.{tok}", **auth.cookie_kwargs(hours=souvenir_h))
         return resp
 
-    # VPS · go-live — le login pilote PARTAGÉ peut être ÉTEINT (LABUSE_LOGIN_PILOTE_ACTIF=0) :
-    # réponse d'échec NEUTRE (même page, même 401) — rien ne révèle que la voie a existé.
-    from ..config import get_settings as _gs
-    if not _gs().login_pilote_actif:
-        auth.log_event("login_pilote_refuse", request)
-        auth.slow_failure()
-        return HTMLResponse(auth.login_page(error=True), status_code=401)
-    if not auth.configured() or not auth.password_ok(password):
-        auth.log_event("login_failed", request)
-        auth.slow_failure()
-        return HTMLResponse(auth.login_page(error=True), status_code=401)
-    # FIX-NU3-3 (I-ADM-08, décision Vic) — SECOND FACTEUR obligatoire sur le compte pilote partagé.
-    # Le mot de passe pilote n'ouvre PLUS la session : s'il est bon, on ouvre un DÉFI 2FA (comme les
-    # admins) et /login/2fa exige un code TOTP contre le secret pilote. Si AUCUN secret pilote n'est
-    # configuré, le login pilote est REFUSÉ (fail-closed) : « second facteur, OU suppression du compte
-    # partagé ». Un mot de passe partagé compromis ne suffit plus à ouvrir tout l'admin.
-    if not auth.pilote_2fa_exige():
-        auth.log_event("login_pilote_sans_2fa_refuse", request)
-        auth.slow_failure()
-        return HTMLResponse(auth.login_page(error=True), status_code=401)
-    auth.log_event("login_pilote_2fa_defi", request)
-    resp = RedirectResponse("/login/2fa", status_code=303)
-    resp.set_cookie(value=auth.defi_2fa(auth.PILOTE_2FA_UID), **auth.cookie_2fa_kwargs())
-    return resp
+    # POST-DEPLOY-1 (décision Vic) — le login PILOTE partagé est SUPPRIMÉ. Un POST sans identifiant
+    # (ancienne voie « mot de passe partagé ») n'a plus AUCUN chemin d'authentification : échec NEUTRE
+    # (401, même page) — identique à un couple email/mot de passe faux, rien ne révèle une voie disparue.
+    auth.log_event("login_failed", request)
+    auth.slow_failure()
+    return HTMLResponse(auth.login_page(error=True), status_code=401)
 
 
 # ─────────────────── VPS · AC-025 — seconde étape ADMIN (TOTP) ───────────────────
@@ -1027,12 +1021,8 @@ def login_2fa_page(request: Request):
     if defi is None:
         return RedirectResponse("/login", status_code=302)
     uid, _ = defi
-    # FIX-NU3-3 (I-ADM-08) — défi PILOTE (uid sentinelle) : le secret TOTP est pré-provisionné en
-    # config (pas d'enrôlement QR ici) → on sert directement l'écran de saisie du code.
-    if uid == auth.PILOTE_2FA_UID:
-        if not auth.pilote_2fa_exige():
-            return _2fa_redirect_login()
-        return HTMLResponse(auth.page_2fa_code())
+    # POST-DEPLOY-1 — plus de défi PILOTE sentinelle : seuls les comptes NOMINATIFS (uid réel ≥ 1)
+    # ouvrent un défi 2FA, par enrôlement/code contre leur propre secret TOTP (table `utilisateurs`).
     with session_scope() as db:
         ensure_tables(db)                      # première install : les tables 2FA naissent ici
         etat = totp_etat(db, uid)
@@ -1068,28 +1058,9 @@ async def login_2fa_submit(request: Request):
     q = parse_qs((await request.body()).decode("utf-8", "replace"))
     code = (q.get("code") or [""])[0].strip()
 
-    # FIX-NU3-3 (I-ADM-08) — défi PILOTE : code TOTP vérifié contre le secret pilote (config), pas une
-    # ligne utilisateur. Succès → session pilote (make_token, cookie signé) ; échec → compté comme pour
-    # l'admin (5 → re-login). Pas de codes de secours : le compte pilote est une voie de repli assumée.
-    if uid == auth.PILOTE_2FA_UID:
-        from ..config import get_settings as _gs
-        from .. import totp as _totp
-        secret = (_gs().pilote_totp_secret or "").strip()
-        if secret and _totp.verifier_code(secret, code) is not None:
-            auth.log_event("2fa_pilote_ok", request)
-            resp = RedirectResponse("/", status_code=303)
-            resp.set_cookie(value=auth.make_token(), **auth.cookie_kwargs())
-            resp.delete_cookie(auth.COOKIE_2FA, path="/")
-            return resp
-        auth.log_event("2fa_pilote_echec", request)
-        auth.slow_failure()
-        tentatives += 1
-        if tentatives >= auth.DEFI_2FA_ESSAIS_MAX:
-            return _2fa_redirect_login()
-        resp = HTMLResponse(auth.page_2fa_code(error="Code incorrect."), status_code=401)
-        resp.set_cookie(value=auth.defi_2fa(auth.PILOTE_2FA_UID, tentatives), **auth.cookie_2fa_kwargs())
-        return resp
-
+    # POST-DEPLOY-1 — le défi PILOTE partagé (uid sentinelle, secret TOTP de config) est SUPPRIMÉ :
+    # tout défi porte désormais un uid de compte NOMINATIF, vérifié contre son propre secret TOTP
+    # (ou un code de secours à usage unique) en base. Un uid ≤ 0 n'existe pas → traité comme un échec.
     # même empreinte hachée que /login (A5 : observer le partage de compte, jamais l'IP en clair)
     import hashlib as _hl
     from .protection import ip_reelle

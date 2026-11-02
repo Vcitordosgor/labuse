@@ -20,6 +20,9 @@ from __future__ import annotations
 
 import functools
 import logging
+import os
+import threading
+import time
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Request
@@ -389,12 +392,77 @@ def _apres(a_iso: str, b_iso: str) -> bool:
         return a_iso > b_iso
 
 
+# POST-DEPLOY-1 — Pilotage À CHAUD < 1 s. Le tableau de bord ne recalcule AUCUN chiffre métier (tout
+# est LU), mais il agrège ~13 requêtes/sondes → 5–7 s à froid. On mémorise le dict COMPLET quelques
+# minutes et on le rafraîchit EN FOND (même doctrine que l'aperçu Stripe, VITESSE-3 F-005) : la réponse
+# servie à chaud est le MÊME dict qu'un calcul frais (mêmes champs, même code, même valeurs du
+# snapshot) — seulement issu de la mémoire. Pré-chauffé au boot (réchauffage worker) → le premier
+# admin tape déjà chaud. SOUS PYTEST le cache est COURT-CIRCUITÉ (calcul frais à chaque appel) : les
+# tests voient toujours l'état réel de leur base (aucune fuite inter-tests).
+_PILOTAGE_TTL_S = 90.0
+_PILOTAGE_CACHE: dict = {"ts": 0.0, "data": None}
+_PILOTAGE_LOCK = threading.Lock()
+_PILOTAGE_REFRESHING = threading.Event()
+_log_pilotage = logging.getLogger("labuse.pilotage")
+
+
+def _pilotage_rafraichir() -> dict:
+    """Calcule le dict Pilotage et le pose en cache, sérialisé par verrou (une seule recompute à la
+    fois ; les appels concurrents réutilisent le résultat frais plutôt que de recalculer)."""
+    with _PILOTAGE_LOCK:
+        data = _PILOTAGE_CACHE.get("data")
+        if data is not None and (time.monotonic() - _PILOTAGE_CACHE["ts"]) < _PILOTAGE_TTL_S:
+            return data   # un autre thread vient de rafraîchir pendant l'attente du verrou
+        data = _pilotage_calculer()
+        _PILOTAGE_CACHE["data"] = data
+        _PILOTAGE_CACHE["ts"] = time.monotonic()
+        return data
+
+
+def _pilotage_rafraichir_en_fond() -> None:
+    """Rafraîchit le cache dans un thread démon (jamais bloquant) ; au plus UN rafraîchissement en vol."""
+    if _PILOTAGE_REFRESHING.is_set():
+        return
+    _PILOTAGE_REFRESHING.set()
+
+    def _run() -> None:
+        try:
+            _pilotage_rafraichir()
+        except Exception as e:  # noqa: BLE001 — best-effort, ne casse jamais
+            _log_pilotage.warning("rafraîchissement Pilotage en fond impossible : %s", e)
+        finally:
+            _PILOTAGE_REFRESHING.clear()
+
+    threading.Thread(target=_run, name="pilotage-refresh", daemon=True).start()
+
+
+def _pilotage_servi() -> dict:
+    """Sert le Pilotage à chaud : cache frais → immédiat ; périmé mais présent → dernier connu +
+    rafraîchissement EN FOND ; absent (froid, avant réchauffage) → un seul calcul synchrone."""
+    if os.environ.get("PYTEST_CURRENT_TEST"):
+        return _pilotage_calculer()                 # tests : jamais de cache (état réel de la base)
+    data = _PILOTAGE_CACHE.get("data")
+    if data is not None and (time.monotonic() - _PILOTAGE_CACHE["ts"]) < _PILOTAGE_TTL_S:
+        return data                                 # chaud → immédiat (< 1 s)
+    if data is not None:
+        _pilotage_rafraichir_en_fond()              # périmé → fond, on sert le dernier connu tout de suite
+        return data
+    return _pilotage_rafraichir()                   # froid → un calcul synchrone (puis chaud pour tous)
+
+
 @router.get("/admin/pilotage")
 def admin_pilotage(request: Request) -> dict:
     """L'état de LABUSE en cinq secondes (héros + tuiles + LED du rail). AUCUN chiffre métier
-    recalculé : tout est LU (Stripe lecture, ledgers, event_log, /readyz du process)."""
+    recalculé : tout est LU (Stripe lecture, ledgers, event_log, /readyz du process).
+    POST-DEPLOY-1 — servi depuis un cache daté rafraîchi en fond (chaud < 1 s, réponse identique)."""
     from .auth import exiger_admin
     exiger_admin(request)
+    return _pilotage_servi()
+
+
+def _pilotage_calculer() -> dict:
+    """Calcul COMPLET du tableau de bord Pilotage (agrège les ~13 lectures). Indépendant de la requête
+    (les chiffres sont globaux, pas par compte) → mémorisable (cf. `_pilotage_servi`)."""
     from ..db import engine
     # VITESSE-3 (NU-F-005) — Stripe hors du thread de requête (voir apercu_affichage).
     from ..stripe_lecture import apercu_affichage

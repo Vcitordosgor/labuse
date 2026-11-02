@@ -368,11 +368,16 @@ def _risques(rows: list[dict]) -> str:
 def _marche(m: dict, *, titre_lieu: str | None = None) -> str:
     if not m:
         return ""
+    # POST-DEPLOY-1 — variante PARCELLE : le repère foncier de CETTE parcelle est le terrain nu DU
+    # SECTEUR (« Lecture foncière · valeur du terrain », = écran + Dossier). On ne surcharge plus « Le
+    # marché » d'une médiane terrain COMMUNALE (notion plus large, absente de l'écran parcelle) qui
+    # affichait deux prix de terrain pour une seule parcelle — c'était la divergence docs_coherence
+    # « prix terrain ». La médiane terrain communale reste dans la variante LIEN (`_la_commune`), où
+    # l'écran la montre. Les médianes BÂTIES (maison/appartement) restent : contexte marché, sans collision.
     lignes = [
         ("Ventes de maisons, 12 mois", _int(m.get("ventes_maison_12m"))),
         ("Prix médian maison", _eur_m2(m.get("median_maison_eur_m2"))),
         ("Prix médian appartement", _eur_m2(m.get("median_appartement_eur_m2"))),
-        ("Terrain nu, médiane", _eur_m2(m.get("median_terrain_eur_m2"))),
         ("Évolution maisons sur 12 mois", _pct_signe(m.get("evolution_maison_12m_pct"))),
     ]
     gauche = _kv(lignes)

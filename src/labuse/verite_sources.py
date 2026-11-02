@@ -6,7 +6,7 @@ les sources officielles EN LIGNE : cadastre IGN (API Carto), GPU/Géorisques, DV
 l'oracle ORACLE-1 (`scripts.coherence.oracles`), qui sait déjà interroger ces sources (curl, backoff,
 respect des cadences) et rendre des lignes {notion, objet, valeur_labuse, valeur_oracle, verdict}.
 
-La fiche servie est lue EN-PROCESS (TestClient + session pilote) — comme le banc — pour que l'auth de prod
+La fiche servie est lue EN-PROCESS (TestClient + session banc en-process) — comme le banc — pour que l'auth de prod
 ne bloque pas la sonde. Les appels aux sources officielles, eux, partent en direct (curl), séquentiels et
 espacés : aucun quota maltraité. AUCUNE écriture en base hors le rapport (`verite_sources_runs`)."""
 from __future__ import annotations
@@ -114,7 +114,7 @@ def jouer(n: int = 20) -> dict:
     if not sample:
         return {"lignes": [], "echantillon": [], "bilan": {"vrai": 0, "faux": 0, "non_verifiable": 0}}
 
-    # la fiche SERVIE est lue en-process (auth active, session pilote) — pas d'HTTP public ni de quota.
+    # la fiche SERVIE est lue en-process (auth active, session banc en-process) — pas d'HTTP public ni de quota.
     from fastapi.testclient import TestClient
     from .api import auth
     from .api.app import app
