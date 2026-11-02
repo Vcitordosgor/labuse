@@ -94,7 +94,9 @@ def test_lot2_emplois_zone_fourchette_et_sans_tranche():
     # 01 = 1–2, 12 = 20–49 → min 1+20=21, max 2+49=51 ; NN compté à part (1)
     assert e["postes_min"] == 21 and e["postes_max"] == 51
     assert e["n_sans_tranche"] == 1 and e["n_avec_tranche"] == 2
-    assert e["libelle"] == "postes salariés déclarés dans la zone"
+    # OUT-ZONE-007 (FIX-NU3-1) — le libellé DIT que c'est une fourchette ESTIMÉE (tranches d'effectif
+    # SIRENE), plus de « déclarés » qui sur-promettait un décompte réel.
+    assert e["libelle"] == "postes salariés estimés (tranches d'effectif SIRENE) dans la zone"
 
 
 def test_lot3_filosofi_imputation_pilotee_par_i_est_200():

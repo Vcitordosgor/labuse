@@ -244,7 +244,8 @@ TRANCHE_BORNES = {
 
 
 def emplois_zone(session: Session, geom_geojson: dict) -> dict:
-    """LOT 2 — « postes salariés déclarés dans la zone » (remplace MOBPRO, ABANDONNÉ : l'INSEE ne traite
+    """LOT 2 — « postes salariés estimés (tranches d'effectif SIRENE) dans la zone » (remplace MOBPRO,
+    ABANDONNÉ : l'INSEE ne traite
     pas l'emploi au lieu de travail à une maille infracommunale — un nombre d'actifs sur 86 ha serait une
     invention). On somme les TRANCHES d'effectif SIRENE des établissements de la zone → une FOURCHETTE
     (jamais un point). Les établissements SANS tranche renseignée sont comptés à part et dits."""

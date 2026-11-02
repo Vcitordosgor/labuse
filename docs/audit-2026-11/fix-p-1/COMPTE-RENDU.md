@@ -150,13 +150,20 @@ Filtre Risques/PPR : compte cohérent sur 3 communes (Saint-Paul 49 532 / 51 597
   ne collecte que 266 : artefact connu, non lié au code.)
 - Suite de cohérence `tests/coherence_ecrans/` (`scripts/ci/coherence_run.sh`, base réelle run 17) :
   **6 passed, 0 écart** (1 €/1 m²).
-- Banc complet (`pytest`, base app branchée) : **4 374 passed, 88 skipped, 4 failed**. Les **4 échecs
-  sont PRÉ-EXISTANTS** — reproduits à l'identique sur la base propre (`git stash` du correctif) donc
-  **0 nouveau rouge** :
-  - `test_zone_donnees::test_lot2_emplois_zone_fourchette_et_sans_tranche` — libellé SIRENE « postes
-    salariés **estimés (tranches)** » vs test attendant « **déclarés** » (`labuse/zone.py`, non touché).
-  - `test_circuit_provenance::…[BO0852 / AD0554 / DY0106]` — un « 249 m » (ligne LTM, régime
-    Autorisation) de l'Apporteur hors registre (proximités, non touchées).
+- Banc complet (`pytest`, base app branchée) : premier passage **4 374 passed / 4 failed**. Les 4 rouges
+  n'étaient PAS anciens (banc à 0 vendredi — ROUGES-7/FIX-FINAL) : ils venaient de **FIX-NU3-1**
+  (`aa6c0f5b7`), confirmé par `git log -S`. Résolus selon la raison écrite par l'audit :
+  - `test_zone_donnees::test_lot2_emplois_zone_fourchette_et_sans_tranche` — FIX-NU3-1 (OUT-ZONE-007) a
+    renommé le libellé « postes salariés **déclarés** » → « **estimés (tranches d'effectif SIRENE)** »
+    (il sur-promettait un décompte réel ; SIRENE ne donne qu'une fourchette d'effectif). **Comportement
+    voulu** → test aligné sur la nouvelle chaîne (+ docstring `zone.py:247` rafraîchie).
+  - `test_circuit_provenance::…[BO0852 / AD0554 / DY0106]` — FIX-NU3-1 (DOC-APPORTEUR-018) imprime
+    désormais la description ICPE de la cascade dans l'Apporteur (« … régime Autorisation, 249 m »). La
+    **distance est une mesure sourcée** (ST_Distance à l'ICPE, registre `georisques_icpe`) mais elle
+    passait par le CONTEXTE (`ctx["icpe_detail"]`), non ancré par le crible de provenance. **Impression
+    voulue** → on ANCRE la distance à `n_vigilances` (donnée-tête qui agrège les ICPE), comme le bilan
+    Financier ancre ses postes (`exports/provenance.py`). Aucun chiffre caché, aucune liste blanche.
+  → banc complet re-joué : **0 rouge** (voir fin).
 - Hook pre-push (`scripts/git-hooks/pre-push`) : secret-scan ✓ · front tsc 0 / vitest 301 ✓ · famille
   unitaire Python ✓ · cohérence 6/0 ✓.
 
