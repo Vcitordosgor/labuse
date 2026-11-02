@@ -22,6 +22,17 @@ WorkingDirectory=/opt/labuse/app
 # Secrets & configuration (LABUSE_* + ANTHROPIC_API_KEY) — hors du dépôt git.
 EnvironmentFile=/etc/labuse/labuse.env
 
+# AUTONOMIE-2 — le heal de schéma ne tourne PLUS dans les workers pendant le service. Les workers le
+# SAUTENT (LABUSE_SKIP_BOOT_HEAL=1) ; il est joué EN SÉRIE, AVANT l'ouverture du port, par l'ExecStartPre
+# ci-dessous. Sur `systemctl restart`, l'ancien service est DÉJÀ arrêté quand l'ExecStartPre tourne →
+# aucune écriture `event_log` concurrente → plus de `lock_timeout` sur l'`ALTER event_log …` → fin de la
+# récurrence `/readyz` 503 (DEPLOY-1028b / DEPLOY-FINAL / DEPLOY-AUTONOMIE).
+Environment=LABUSE_SKIP_BOOT_HEAL=1
+
+# Heal PRÉ-SERVICE (en série, hors trafic). Échec → `ExecStartPre` échoue → le service NE démarre PAS :
+# un heal raté est BRUYANT (unit en failed + alerte), jamais un /readyz 503 silencieux sur un worker.
+ExecStartPre=/opt/labuse/venv/bin/labuse schema-heal
+
 # Uvicorn, 5 workers (mandat VPS V4 : 6 vCores, 12 Go — marge laissée à PostgreSQL).
 # --proxy-headers : on est derrière Caddy ; --forwarded-allow-ips limite la confiance au proxy local.
 ExecStart=/opt/labuse/venv/bin/uvicorn labuse.api.app:app \
@@ -34,7 +45,10 @@ ExecStart=/opt/labuse/venv/bin/uvicorn labuse.api.app:app \
 # l'uvicorn local 2 fois — jamais de service mort silencieux, même sur exit 0 anormal).
 Restart=always
 RestartSec=3
-TimeoutStartSec=60
+# AUTONOMIE-2 — couvre le heal PRÉ-SERVICE (ExecStartPre `labuse schema-heal` : ensure_schema + 18
+# steps + VALIDATE des FK commune, qui scanne de grosses tables) EN PLUS du boot uvicorn. 60 s était
+# juste pour le seul uvicorn ; 180 s laisse la marge au heal sérialisé (mesuré « quelques s » hors charge).
+TimeoutStartSec=180
 # Garde-fou mémoire : 5 workers × ~700 Mo max + marge ; au-delà, l'OOM killer systemd
 # redémarre le service PLUTÔT que de laisser le noyau tuer PostgreSQL.
 MemoryMax=6G

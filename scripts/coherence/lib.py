@@ -20,7 +20,7 @@ import csv
 import json
 import math
 import pathlib
-import subprocess
+import struct
 import time
 import urllib.error
 import urllib.parse
@@ -109,6 +109,139 @@ class Erreur:
 
     def __repr__(self):
         return f"ERREUR({self.msg})"
+
+
+# ─────────────────────────── décodeur MVT des PROPRIÉTÉS (sans dépendance) ───────────────────────────
+# AUTONOMIE-2 — le lecteur « tuile: » du banc lisait la tuile via un sous-processus node
+# (`decode_tile.mjs` → @mapbox/vector-tile), qui exige les node_modules du front. En prod (et sur
+# tout poste où le front n'est pas installé) node renvoyait un corps VIDE → `json.loads('')` →
+# « Expecting value: line 1 column 1 » sur CHAQUE parcelle (1198 erreurs_lecteur au DEPLOY-AUTONOMIE),
+# ce qui bloque le contrôle de cohérence (il exige erreurs_lecteur=0). Depuis la vague couches_tuyau
+# la carte sert du protobuf MVT (`/map/tiles/z/x/y.pbf`) : on le décode ICI, en Python pur, sur les
+# octets RÉELLEMENT servis — même philosophie « décodeur sans dépendance » que `circuit_tuiles.py`
+# (qui décode la GÉOMÉTRIE). Celui-ci décode les PROPRIÉTÉS (clés/valeurs MVT) d'où le banc tire
+# `idu`/`surface_m2`/`zone_lib`/`zone_fam`. La carte n'est PAS touchée.
+def _mvt_varint(buf: bytes, pos: int) -> tuple[int, int]:
+    shift = result = 0
+    while True:
+        b = buf[pos]
+        pos += 1
+        result |= (b & 0x7F) << shift
+        if not (b & 0x80):
+            return result, pos
+        shift += 7
+
+
+def _mvt_skip(buf: bytes, wire: int, pos: int) -> int:
+    if wire == 0:
+        _, pos = _mvt_varint(buf, pos)
+    elif wire == 2:
+        ln, pos = _mvt_varint(buf, pos)
+        pos += ln
+    elif wire == 5:
+        pos += 4
+    elif wire == 1:
+        pos += 8
+    else:
+        raise ValueError(f"wire type {wire} non géré")
+    return pos
+
+
+def _mvt_value(buf: bytes, pos: int, end: int):
+    """Un message Value MVT → valeur Python (string/float/double/int/uint/sint/bool)."""
+    val = None
+    while pos < end:
+        key, pos = _mvt_varint(buf, pos)
+        field, wire = key >> 3, key & 0x7
+        if field == 1 and wire == 2:                         # string_value
+            ln, pos = _mvt_varint(buf, pos)
+            val = buf[pos:pos + ln].decode("utf-8"); pos += ln
+        elif field == 2 and wire == 5:                       # float_value
+            val = struct.unpack("<f", buf[pos:pos + 4])[0]; pos += 4
+        elif field == 3 and wire == 1:                       # double_value
+            val = struct.unpack("<d", buf[pos:pos + 8])[0]; pos += 8
+        elif field == 4 and wire == 0:                       # int_value
+            val, pos = _mvt_varint(buf, pos)
+        elif field == 5 and wire == 0:                       # uint_value
+            val, pos = _mvt_varint(buf, pos)
+        elif field == 6 and wire == 0:                       # sint_value (zigzag)
+            v, pos = _mvt_varint(buf, pos); val = (v >> 1) ^ -(v & 1)
+        elif field == 7 and wire == 0:                       # bool_value
+            v, pos = _mvt_varint(buf, pos); val = bool(v)
+        else:
+            pos = _mvt_skip(buf, wire, pos)
+    return val
+
+
+def _mvt_layer(buf: bytes, pos: int, end: int) -> tuple[str | None, list[dict]]:
+    """Décode une couche MVT : (nom, [propriétés par feature]). Les clés (field 3) et valeurs
+    (field 4) sont collectées, puis chaque feature résout ses tags (paires index-clé/index-valeur)."""
+    name: str | None = None
+    keys: list[str] = []
+    values: list = []
+    feats_tags: list[list[int]] = []
+    while pos < end:
+        key, pos = _mvt_varint(buf, pos)
+        field, wire = key >> 3, key & 0x7
+        if field == 1 and wire == 2:                         # name
+            ln, pos = _mvt_varint(buf, pos)
+            name = buf[pos:pos + ln].decode("utf-8"); pos += ln
+        elif field == 3 and wire == 2:                       # key (string)
+            ln, pos = _mvt_varint(buf, pos)
+            keys.append(buf[pos:pos + ln].decode("utf-8")); pos += ln
+        elif field == 4 and wire == 2:                       # value (message)
+            ln, pos = _mvt_varint(buf, pos)
+            values.append(_mvt_value(buf, pos, pos + ln)); pos += ln
+        elif field == 2 and wire == 2:                       # feature
+            ln, pos = _mvt_varint(buf, pos)
+            fend = pos + ln
+            tags: list[int] = []
+            q = pos
+            while q < fend:
+                k2, q = _mvt_varint(buf, q)
+                f2, w2 = k2 >> 3, k2 & 0x7
+                if f2 == 2 and w2 == 2:                      # tags (packed varint)
+                    tl, q = _mvt_varint(buf, q)
+                    tend = q + tl
+                    while q < tend:
+                        v, q = _mvt_varint(buf, q)
+                        tags.append(v)
+                else:
+                    q = _mvt_skip(buf, w2, q)
+            feats_tags.append(tags)
+            pos = fend
+        else:
+            pos = _mvt_skip(buf, wire, pos)
+    props: list[dict] = []
+    for tags in feats_tags:
+        d: dict = {}
+        for i in range(0, len(tags) - 1, 2):
+            ki, vi = tags[i], tags[i + 1]
+            if ki < len(keys) and vi < len(values):
+                d[keys[ki]] = values[vi]
+        props.append(d)
+    return name, props
+
+
+def decode_tile_props(data: bytes) -> dict[str, list[dict]]:
+    """{nom_couche: [propriétés par feature]} — l'équivalent Python pur de l'ancien
+    `decode_tile.mjs` (feature.properties), sur les octets MVT réellement servis. Un corps vide
+    (parcelle hors tuile) rend {} → le lecteur conclut ABSENT, jamais une fausse erreur."""
+    out: dict[str, list[dict]] = {}
+    pos, n = 0, len(data)
+    while pos < n:
+        key, pos = _mvt_varint(data, pos)
+        field, wire = key >> 3, key & 0x7
+        if field == 3 and wire == 2:                         # layer
+            ln, pos = _mvt_varint(data, pos)
+            end = pos + ln
+            name, props = _mvt_layer(data, pos, end)
+            if name is not None:
+                out[name] = props
+            pos = end
+        else:
+            pos = _mvt_skip(data, wire, pos)
+    return out
 
 
 class Contexte:
@@ -217,10 +350,9 @@ class Contexte:
                 else:
                     with urllib.request.urlopen(f"{API}/map/tiles/{z}/{x}/{y}.pbf", timeout=120) as r:
                         pbf.write_bytes(r.read())
-            out = subprocess.run(
-                ["node", str(RACINE / "scripts/coherence/decode_tile.mjs"), str(pbf)],
-                capture_output=True, text=True, timeout=60)
-            couches = json.loads(out.stdout)
+            # AUTONOMIE-2 — décodage MVT EN PYTHON PUR sur les octets servis (plus de sous-processus
+            # node ni de node_modules du front : c'est ce qui faisait 1198 erreurs_lecteur en prod).
+            couches = decode_tile_props(pbf.read_bytes())
             feat = None
             for feats in couches.values():
                 for f in feats:

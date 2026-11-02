@@ -274,27 +274,38 @@ def _rechauffer_worker() -> None:
     _prechauffer_contexte_communes(log)
 
 
-@asynccontextmanager
-async def _lifespan(app: FastAPI):
-    """Auto-réconciliation LÉGÈRE du schéma au démarrage (recyclage d'environnement).
+#: AUTONOMIE-2 — nombre de steps du heal PRÉ-SERVICE (17 de base + 1 FK commune, cf. `pose_fk`), affiché
+#: par la tuile « santé serveur » quand le worker saute le heal (LABUSE_SKIP_BOOT_HEAL=1). À garder EN
+#: PHASE avec le tuple `_heal_steps` de `_executer_heal_schema`.
+_NB_HEAL_STEPS = 18
 
-    Répare en quelques secondes : tables, colonnes critiques (geom_2975, prospection),
-    triggers, index, cache enrichment. NE lance JAMAIS d'ingestion ni de backfill lourd
-    (cf. models.ensure_schema). Best-effort : si la DB est injoignable, l'app démarre
-    quand même (l'état est exposé par /readyz, jamais masqué)."""
-    import logging
 
-    # uvicorn ne configure pas le logger racine : sans ce basicConfig, les événements INFO
-    # de LA BUSE (démarrage, connexions réussies) seraient invisibles. No-op si déjà configuré.
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s — %(message)s")
-    log = logging.getLogger("labuse")
+def _executer_heal_schema(log, pose_fk: bool = False) -> dict:
+    """AUTONOMIE-2 — LE heal de schéma, EXTRAIT du lifespan pour être jouable EN SÉRIE, UNE fois,
+    AVANT l'ouverture du port (CLI `labuse schema-heal`, posée en `ExecStartPre` systemd).
+
+    `pose_fk` (fix V4a) : pose+valide les clés étrangères de maille commune. UNIQUEMENT au
+    PRÉ-SERVICE (CLI `schema-heal` → `pose_fk=True`), JAMAIS dans le heal de boot du worker ni en
+    test (`pose_fk=False`) : poser cette FK ajoute une contrainte qui REJETTE l'entrée de communes
+    hors référentiel — correct en prod, mais les fixtures de test insèrent des communes fictives
+    (97499) ; la poser au boot cassait la base de test. C'est une opération de DÉPLOIEMENT (jadis
+    `init-db` seul), pas de démarrage.
+
+    Pourquoi : le heal tournait DANS CHAQUE worker uvicorn pendant que le service démarrait. Son
+    `ALTER TABLE event_log ADD COLUMN IF NOT EXISTS …` (no-op quand la colonne existe, mais qui
+    exige quand même un verrou ACCESS EXCLUSIVE) percutait les écritures `event_log` concurrentes
+    du réchauffage/des sondes → `lock_timeout` → `heal_failed` → `/readyz` 503 FIGÉ sur ce worker
+    (récurrence DEPLOY-1028b / DEPLOY-FINAL / DEPLOY-AUTONOMIE). Joué AVANT le port, en série, sans
+    trafic : aucune contention → le heal aboutit, et les workers ne touchent plus au schéma pendant
+    le service (cf. `LABUSE_SKIP_BOOT_HEAL` dans `_lifespan`). Rend le dict d'état (ok/failures/total).
+
+    Réutilisé tel quel par le lifespan en dev/test (flag absent) : comportement inchangé localement."""
     from ..db import engine as _engine
-    # M6-A5 : la remédiation de schéma est sérialisée entre les workers uvicorn par un VERROU
-    # CONSULTATIF Postgres. Au 1er boot après une migration, les 2 workers lançaient `CREATE TYPE`
-    # en même temps → l'un tombait sur une violation d'unicité pg_type (schéma=échec bénin mais
-    # bruyant, faux positif d'alerte à chaque migration). Le lock fait ATTENDRE le 2e worker ;
-    # il ne voit ensuite que des objets existants (checkfirst les saute) → les deux finissent
-    # `schéma=ok`. Clé arbitraire stable propre à LA BUSE.
+    from ..db import make_engine as _make_engine
+    from sqlalchemy import event as _sa_event
+    from sqlalchemy.orm import sessionmaker as _sessionmaker
+    # M6-A5 : la remédiation de schéma est sérialisée entre workers par un VERROU CONSULTATIF Postgres
+    # (sans effet quand le heal est joué seul en pré-service — il prend le verrou pour lui).
     _SCHEMA_LOCK = 0x1ABE5C
     _lock_conn = None
     try:
@@ -302,9 +313,6 @@ async def _lifespan(app: FastAPI):
         _lock_conn.execute(text("SELECT pg_advisory_lock(:k)"), {"k": _SCHEMA_LOCK})
         _lock_conn.commit()
         models.ensure_schema(_engine())
-        # tables des routeurs (modules/ia/events/partners/projets) : l'ancien
-        # @app.on_event("startup") était MORT depuis le passage au lifespan (FastAPI
-        # ignore on_event quand lifespan est fourni) — les ensures vivent ICI.
         from .courrier import ensure_tables as _courrier_ens
         from .events import ensure_tables as _events_ens
         from .ia import ensure_tables as _ia_ens
@@ -312,42 +320,19 @@ async def _lifespan(app: FastAPI):
         from .partners import ensure_tables as _partners_ens
         from .projets import ensure_tables as _projets_ens
         from .protection import ensure_tables as _protection_ens
-        # C-bis : segments (Vues) retiré. H : crm_columns conservé.
         from .crm_columns import ensure_tables as _crm_columns_ens
-        # FIX-VEILLE — veilles ensure au BOOT (n'y était pas) : crée la table + désactive les veilles
-        # fantômes de type non évaluable (idempotent). Les veilles `permis` restent évaluées.
         from ..copilote_v2.veilles import ensure_tables as _veilles_ens
-        # FIX-C6 (GB-049 étendu) — Copilote v2 : historique (conversations/messages) + télémétrie
-        # n'étaient ensurés NULLE PART au boot → /api/copilote-v2/missions|telemetrie 500 sur base
-        # neuve (UndefinedTable). Ajoutés au heal (idempotents).
         from ..copilote_v2.historique import ensure_tables as _copv2_hist_ens
         from ..copilote_v2.telemetrie import ensure_tables as _copv2_tel_ens
-        # AUDIT PAIEMENT · SEC-IDOR — comptes + cloison multi-tenant (compte_id sur les tables à
-        # données client). M26-A — Copilote : après comptes (FK agent_runs.compte_id).
         from ..comptes import ensure_tables as _comptes_ens
         from .tenant import ensure_scoping as _scoping_ens
-        # COPILOTE-2 lot 4 — le moteur de missions lourdes v1 (copilote/, tables agent_*) est RETIRÉ :
-        # RECHERCHE/VERIFICATION sont des passerelles vers les outils (answering._mission_*), plus un run.
-        # DASHBOARD-V1 · D1 — capteurs de la Tour de contrôle
         from .dashboard import ensure_tables as _dashboard_ens
-        # RADAR (pige) · P0 — schéma isolé pige_* (domaine transactionnel, hors runs)
         from ..pige.tables import ensure_tables as _pige_ens
-        # PROMO-1 · P1 — référentiel des programmes publiés par les promoteurs (table `programmes`)
         from ..promo.tables import ensure_tables as _promo_ens
-        from .recherche import ensure_index as _recherche_ens   # RETOURS-16 V5
-        from ..registre.remplissage import ensure_perf_indexes as _remplissage_perf_ens  # VITESSE-2 Lot 2
-        # REMISE-1 (Lot A) — MOTEUR DE HEAL DÉDIÉ, avec un `lock_timeout` COURT sur CHACUNE de ses
-        # connexions. Les `ensure_tables` ouvrent leur propre `engine.begin()` : impossible de leur
-        # injecter un `SET lock_timeout` après coup → on le pose sur CHAQUE connexion neuve de CE moteur
-        # (événement `connect`). Un `SET` session survit au rollback (contrairement à `SET LOCAL`), donc
-        # il tient pour tout le DDL du step. Moteur ISOLÉ du moteur de service + DISPOSÉ en `finally` :
-        # le `lock_timeout` ne fuit JAMAIS vers les requêtes d'API après le boot. Couplé au retry de
-        # `_run_heal_steps`, un ALTER qui percute un verrou tenu par un lecteur concurrent (le job de
-        # réchauffage de l'étape 6, incident DEPLOY-1028b) échoue en 5 s puis on réessaie — au lieu de
-        # rester bloqué → `heal_failed` définitif → `readyz` 503.
-        from sqlalchemy import event as _sa_event
-        from sqlalchemy.orm import sessionmaker as _sessionmaker
-        from ..db import make_engine as _make_engine
+        from .recherche import ensure_index as _recherche_ens
+        from ..registre.remplissage import ensure_perf_indexes as _remplissage_perf_ens
+        # REMISE-1 (Lot A) — MOTEUR DE HEAL DÉDIÉ avec `lock_timeout` COURT sur CHAQUE connexion :
+        # un ALTER qui percute un verrou concurrent échoue en 5 s (puis retry) au lieu de bloquer.
         _heal_eng = _make_engine()
 
         @_sa_event.listens_for(_heal_eng, "connect")
@@ -372,26 +357,27 @@ async def _lifespan(app: FastAPI):
             finally:
                 _s.close()
 
-        # ÉTUDE DE ZONE Z1 — tables sirene_etablissements + mobpro_commune (idempotentes).
         def _zone_ens():
             with _heal_scope() as _s:
                 from ..ingestion.sirene_etablissements import ensure_tables as _se_ens
                 from ..ingestion.mobpro import ensure_tables as _mo_ens
-                from ..zone import ensure_tables as _iso_ens   # Z2 — cache d'isochrones
+                from ..zone import ensure_tables as _iso_ens
                 _se_ens(_s); _mo_ens(_s); _iso_ens(_s)
 
         def _heal_comptes_scoping():
-            with _heal_scope() as _s:        # session (pas engine) ; après les modules (tables créées)
+            with _heal_scope() as _s:
                 _comptes_ens(_s)
                 _scoping_ens(_s)
 
-        # FIX-GB-011 — heal RÉSILIENT : un try PAR module. AVANT, la boucle n'avait qu'un try/except
-        # GLOBAL : l'échec d'UN module (courrier, dont le DDL cassait sur un `;` de commentaire)
-        # AVORTAIT tous les suivants (crm_columns, veilles, comptes, scoping IDOR, copilote) → migrations
-        # gelées à chaque boot ET /readyz menteur. Désormais chaque module est ISOLÉ : son échec est
-        # loggé + journalisé en event_log (kind système, visible admin) et n'empêche plus les autres.
-        # REMISE-1 (Lot A) — tous les steps passent par `_heal_eng` (lock_timeout court) et non plus
-        # par `_engine()` (moteur de service) : le DDL échoue vite sur conflit de verrou, puis retry.
+        # AUTONOMIE-2 (fix V4a) — les clés étrangères de maille commune (référentiel des 24) n'étaient
+        # posées QUE par `labuse init-db` (jamais au déploiement) : en prod 21 tables sans FK → V4a
+        # cassé. Posées ICI (heal pré-service, en série, sans contention) : `ADD CONSTRAINT NOT VALID`
+        # (verrou bref) puis `VALIDATE CONSTRAINT`. Idempotent (saute les contraintes déjà là).
+        def _referentiel_fk():
+            with _heal_scope() as _s:
+                from ..referentiel_communes import poser_fks
+                poser_fks(_s)
+
         _heal_steps = (
             ("modules", lambda: _modules_ens(_heal_eng)),
             ("ia", lambda: _ia_ens(_heal_eng)),
@@ -400,31 +386,20 @@ async def _lifespan(app: FastAPI):
             ("projets", lambda: _projets_ens(_heal_eng)),
             ("protection", lambda: _protection_ens(_heal_eng)),
             ("courrier", lambda: _courrier_ens(_heal_eng)),
-            # FIX-C6 (GB-048) — `comptes` AVANT `crm_columns` : ce dernier porte une FK
-            # crm_columns.compte_id → comptes(id). Sur une base NEUVE, l'ancien ordre
-            # (crm_columns d'abord) échouait « relation "comptes" does not exist » et ne
-            # convergeait qu'au 2ᵉ boot. `scoping` ajoute compte_id aux tables client (dont
-            # celles des modules/projets déjà ensurées au-dessus) → reste après elles.
             ("comptes+scoping", _heal_comptes_scoping),
             ("crm_columns", lambda: _crm_columns_ens(_heal_eng)),
             ("veilles", lambda: _veilles_ens(_heal_eng)),
             ("copilote_v2", lambda: (_copv2_hist_ens(_heal_eng), _copv2_tel_ens(_heal_eng))),
-            # DASHBOARD-V1 · D1 — capteurs (usage_events, retours, ia_log.compte_id, quota
-            # Copilote par licence). Après « comptes+scoping » (ALTER comptes.copilote_quota_jour).
             ("dashboard", lambda: _dashboard_ens(_heal_eng)),
             ("pige", lambda: _pige_ens(_heal_eng)),
-            ("promo", lambda: _promo_ens(_heal_eng)),   # PROMO-1 P1 — table programmes
-            # ÉTUDE DE ZONE Z1 — tables SIRENE établissements + MOBPRO (interrogées par le moteur de
-            # zone même vides ; l'ingestion réelle vient des CLI ingest-sirene-etab / ingest-mobpro).
+            ("promo", lambda: _promo_ens(_heal_eng)),
             ("zone", lambda: _zone_ens()),
-            # RETOURS-16 V5 — index (section, numéro) : la référence courte du suggest unifié
-            # se résout indexée (799 ms seq-scan → < 5 ms mesuré).
             ("recherche", lambda: _recherche_ens(_heal_eng)),
-            # VITESSE-2 (Lot 2) — index fonctionnels left(idu,14) sur les grosses tables PM : le
-            # test de présence du bloc « Les données » de la fiche (remplissage_source) passait en
-            # Parallel Seq Scan (84 ms × fiche) → Bitmap Index Scan (0,13 ms mesuré).
             ("fiche_perf_index", lambda: _remplissage_perf_ens(_heal_eng)),
         )
+        if pose_fk:   # fix V4a — pré-service uniquement (jamais au boot worker/test, cf. docstring)
+            _heal_steps += (("referentiel_communes_fk", _referentiel_fk),)
+
         def _on_echec(_mod, _mexc):
             log.error("heal schéma — module « %s » a ÉCHOUÉ (après réessais) : %s", _mod, _mexc)
             _journaliser_heal_echec(_mod, _mexc)
@@ -437,11 +412,9 @@ async def _lifespan(app: FastAPI):
             _heal_failures = _run_heal_steps(_heal_steps, on_echec=_on_echec, on_retry=_on_retry)
         finally:
             _heal_eng.dispose()   # moteur de heal jeté : son lock_timeout ne fuit pas vers le service
-        # `total` (DASHBOARD-V1 · D3) — la tuile « santé serveur » affiche N/N modules OK.
-        app.state.schema_heal = {"ok": not _heal_failures, "failures": _heal_failures,
-                                 "total": len(_heal_steps)}
+        return {"ok": not _heal_failures, "failures": _heal_failures, "total": len(_heal_steps)}
     except Exception as exc:  # noqa: BLE001 — verrou/ensure_schema KO : l'app doit démarrer ; /readyz dira la vérité
-        app.state.schema_heal = {"ok": False, "failures": [
+        return {"ok": False, "total": 0, "failures": [
             {"module": "verrou/ensure_schema", "error": f"{type(exc).__name__}: {exc}"}]}
     finally:
         if _lock_conn is not None:
@@ -451,6 +424,34 @@ async def _lifespan(app: FastAPI):
             except Exception:  # noqa: BLE001 — le verrou tombe de toute façon à la fermeture de session
                 pass
             _lock_conn.close()
+
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    """Auto-réconciliation LÉGÈRE du schéma au démarrage (recyclage d'environnement).
+
+    Répare en quelques secondes : tables, colonnes critiques (geom_2975, prospection),
+    triggers, index, cache enrichment. NE lance JAMAIS d'ingestion ni de backfill lourd
+    (cf. models.ensure_schema). Best-effort : si la DB est injoignable, l'app démarre
+    quand même (l'état est exposé par /readyz, jamais masqué)."""
+    import logging
+
+    # uvicorn ne configure pas le logger racine : sans ce basicConfig, les événements INFO
+    # de LA BUSE (démarrage, connexions réussies) seraient invisibles. No-op si déjà configuré.
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s — %(message)s")
+    log = logging.getLogger("labuse")
+    # AUTONOMIE-2 — LE HEAL DE SCHÉMA NE TOURNE PLUS PENDANT LE SERVICE. En prod (`LABUSE_SKIP_BOOT_HEAL=1`
+    # posé par le unit systemd), il est joué AVANT l'ouverture du port, EN SÉRIE, par `ExecStartPre`
+    # (`labuse schema-heal`) : plus aucun `ALTER event_log …` concurrent du réchauffage/des sondes, donc
+    # fin de la récurrence `/readyz` 503 (DEPLOY-1028b / DEPLOY-FINAL / DEPLOY-AUTONOMIE). Un échec
+    # pré-service fait échouer `ExecStartPre` → le service NE démarre PAS (heal raté = BRUYANT, jamais un
+    # 503 silencieux) ; quand on arrive ici, le schéma est donc forcément sain. En dev/test (flag absent)
+    # on garde le heal au boot du worker — aucune contention locale, comportement inchangé.
+    if os.environ.get("LABUSE_SKIP_BOOT_HEAL") == "1":
+        app.state.schema_heal = {"ok": True, "pre_service": True, "failures": [], "total": _NB_HEAL_STEPS}
+        log.info("heal schéma : joué AVANT le port (ExecStartPre `labuse schema-heal`) — worker ne touche pas au schéma")
+    else:
+        app.state.schema_heal = _executer_heal_schema(log)
     # RV2-V1 — vérif AU DÉMARRAGE du répertoire de captures Radar (écriture). Pas un crash (l'app
     # doit démarrer) : log.error BRUYANT + état exposé à l'admin (radar_check) pour que le défaut se
     # sache AVANT le premier dépôt. En prod le répertoire vit hors de l'app ; s'il manque et que

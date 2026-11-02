@@ -507,6 +507,12 @@ TABLES_EXPLOITATION: dict[str, str] = {
     # Table d'EXPLOITATION active (jamais une orpheline à purger) — même raison que coherence_runs :
     # matérialisée en prod dès que le banc tourne, elle a un écriveur ET un lecteur dans le code servi.
     "chasse_runs": "journal des passages du banc de chasse (chasse_journal.py)",
+    # AUTONOMIE-2 (V1c) — instantanés du Signal marché (signal_instantane.py : CREATE TABLE IF NOT
+    # EXISTS signal_instantanes ; écrit par le job de snapshot, lu par l'app). Même catégorie que
+    # coherence_runs/chasse_runs : table d'EXPLOITATION active (écriveur + lecteur dans le code servi),
+    # matérialisée en prod dès que le Signal tourne → la déclarer éteint V1c sans rien désactiver
+    # (elle sortait en orpheline « sans action » au 1ᵉʳ passage des verrous post-DEPLOY-AUTONOMIE).
+    "signal_instantanes": "instantanés du Signal marché (signal_instantane.py)",
     "circuit_candidat_assume": "candidat assumé (V3a — déclaration journalisée, réversible)",
     "circuit_ecarts": "sonde — fuites",
     "circuit_eau_ancienne": "sonde — eau ancienne",
@@ -632,6 +638,11 @@ ACTIONS_PROPOSEES: dict[str, str] = {
     "agent_runs": "purger (moteur Copilote v1 retiré — COPILOTE-2)",
     "agent_events": "purger (moteur Copilote v1 retiré — COPILOTE-2)",
     "agent_run_parcels": "purger (moteur Copilote v1 retiré — COPILOTE-2)",
+    # AUTONOMIE-2 (V1c) — orphelines de PROD révélées au 1ᵉʳ passage des verrous post-DEPLOY-AUTONOMIE.
+    "mvt_overlays": "purger (overlay MVT V1 zonage/PPR île RETIRÉ — COUCHES-RETRAIT-1 lot 3, plus aucun lecteur)",
+    "_cad_sm1_disparues": "archiver (table de travail — audit intersections cadastre SM1, scripts/audit/intersections)",
+    "_cad_sm1_geommodif": "archiver (table de travail — audit intersections cadastre SM1, scripts/audit/intersections)",
+    "_cad_sm1_nouvelles": "archiver (table de travail — audit intersections cadastre SM1, scripts/audit/intersections)",
     "_lota_grave_parcels": "purger (photo de travail LOT A)",
     "algo2_prop_features": "purger (features d'essai algo2)",
     "backup_sp_ppr_avant_littoral": "purger (backup PPR avant littoral — Saint-Pierre)",
