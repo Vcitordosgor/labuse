@@ -253,6 +253,28 @@ class Settings(BaseSettings):
     # FIX-NU3-3 (K-SAV-03) — une restauration de contrôle plus vieille que ce seuil (ou jamais jouée)
     # ouvre un incident : une sauvegarde non testée n'est pas une sauvegarde.
     restore_test_seuil_j: int = 35                     # LABUSE_RESTORE_TEST_SEUIL_J (mensuel + marge)
+    # AUTONOMIE-1 — le CALCUL DE NUIT tourne désormais sur le serveur (plus sur le Mac). Fenêtre
+    # [debut_h, fin_h[ en heure RÉUNION ; le job s'abstient hors fenêtre et s'ABANDONNE proprement si
+    # la fenêtre est dépassée pendant qu'il tourne. nice/ionice le mettent sous les requêtes servies ;
+    # un plafond mémoire (setrlimit AS) protège les 8 Go de la prod. Cadence : il ne se relance QUE si
+    # une entrée a changé (injection, source avancée) ET au plus une fois par semaine sinon.
+    calcul_nuit_debut_h: int = 1                        # LABUSE_CALCUL_NUIT_DEBUT_H (01h Réunion)
+    calcul_nuit_fin_h: int = 5                          # LABUSE_CALCUL_NUIT_FIN_H  (05h Réunion)
+    calcul_nuit_cadence_min_jours: int = 7             # au plus 1×/semaine sans déclencheur d'entrée
+    calcul_nuit_mem_mo: int = 6000                     # plafond mémoire du calcul (RLIMIT_AS), Mo
+    calcul_nuit_nice: int = 15                         # priorité CPU (0=normal, 19=idle)
+    calcul_nuit_ionice: int = 7                        # classe best-effort la plus basse (0-7)
+    # Contrôle AVANT promotion d'un run de nuit : l'écart de paliers CLIENT avec le run précédent ne
+    # doit pas dépasser ce pourcentage, sinon on NE PROMEUT PAS et on alerte (dérive anormale).
+    calcul_nuit_palier_delta_max_pct: float = 3.0      # LABUSE_CALCUL_NUIT_PALIER_DELTA_MAX_PCT
+    # AUTONOMIE-1 — injection AUTOMATIQUE des sources de classe A (référence à faible risque) la nuit,
+    # avec contrôles (comptes, géométries valides, couverture 974) et RETOUR ARRIÈRE si un contrôle
+    # échoue. L'écart de comptes avec la version précédente ne doit pas dépasser ce pourcentage.
+    injection_nuit_delta_max_pct: float = 15.0         # LABUSE_INJECTION_NUIT_DELTA_MAX_PCT
+    injection_nuit_couverture_974_min: int = 20        # communes 974 minimales couvertes (sur 24)
+    # AUTONOMIE-1 — incidents vivants : tout incident ouvert depuis plus de ce nombre de jours remonte
+    # (escalade `escalade:ancien:*`) dans le mail quotidien tant qu'il demande une décision humaine.
+    incident_ancien_seuil_j: int = 3                   # LABUSE_INCIDENT_ANCIEN_SEUIL_J
     # VP-001 (mandat VPS) — dossier des binaires pg_dump/pg_restore quand le PATH sert une
     # MAUVAISE version (Mac : Homebrew 16 devant le client 18). Absent → PATH, avec garde de
     # version (backup-db refuse un pg_dump plus vieux que le serveur au lieu d'échouer cryptique).

@@ -123,6 +123,35 @@ def promu_at():
         return None
 
 
+def pointeurs() -> dict:
+    """AUTONOMIE-1 — « 3 pointeurs de run au lieu d'un ». Le run servi vit à TROIS endroits :
+    l'override DEV `LABUSE_SERVED_RUN`, le manifeste (`scoring_run`, FAIT FOI), et la vue dérivée
+    `config/served_run.txt` (lue par le bundle front au build). `current()` tranche déjà en faveur du
+    manifeste — mais rien ne SIGNALE quand les trois divergent (ex. manifeste q_v21 mais served_run.txt
+    resté q_v20 → le front étiquette le mauvais run). Cette fonction expose les trois + `coherents`
+    (dict booléen), pour que la vigie ouvre un incident de divergence (living incident) et que la
+    bascule les écrive ENSEMBLE. Lecture seule, jamais d'exception."""
+    from . import manifeste as _manifeste
+    env = os.environ.get("LABUSE_SERVED_RUN")
+    man = None
+    try:
+        if _manifeste.chemin().parent == _SERVED_FILE.parent:
+            man = (_manifeste.lire() or {}).get("scoring_run")
+    except Exception:  # noqa: BLE001
+        man = None
+    fich = None
+    try:
+        fich = _lire_fichier()
+    except Exception:  # noqa: BLE001
+        fich = None
+    # cohérence : parmi les pointeurs RÉELLEMENT posés (non None), tous doivent être égaux.
+    poses = [v for v in (man, fich) if v]   # l'override DEV est volontairement hors cohérence (test/dev)
+    coherents = len(set(poses)) <= 1
+    return {"env_override": env, "manifeste": man, "served_run_txt": fich,
+            "servi": current(), "coherents": coherents,
+            "divergence": None if coherents else f"manifeste={man} ≠ served_run.txt={fich}"}
+
+
 def invalidate() -> None:
     """À appeler juste après une bascule (réécriture du manifeste et de ses vues dérivées) : la
     prochaine lecture relit tout. Rend la bascule effective SANS redémarrage."""

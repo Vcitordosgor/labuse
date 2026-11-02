@@ -53,6 +53,16 @@ rsync -a --delete --rsync-path="sudo rsync" \
   --exclude /data/tcsp --exclude /data/dvf --exclude /data/plu_reglements \
   --exclude /config/served_manifest.json --exclude /config/served_run.txt \
   "$REPO/" "$HOST":/opt/labuse/app/
+# AUTONOMIE-1 — le banc de cohérence NOCTURNE (coherence-banc) lit à l'exécution des ÉCHANTILLONS gelés
+# rangés sous docs/ (produit, pas doc d'audit). docs/ est exclu du rsync ci-dessus → ces fichiers
+# manquaient en prod depuis un déploiement « frais » (FileNotFoundError ECHANTILLON.csv, job rouge
+# depuis le 28/10). On les REDÉPOSE explicitement (`-R` recrée le chemin relatif), sans lever
+# l'exclusion générale de docs/. (Relocalisation durable hors docs/ = dette tracée au compte-rendu.)
+rsync -a --rsync-path="sudo rsync" -R \
+  "$REPO/./docs/audit-2026-09/COHERENCE-1/ECHANTILLON.csv" \
+  "$REPO/./docs/audit-2026-10/CHASSE-1/ECHANTILLON.csv" \
+  "$REPO/./docs/audit-2026-10/CHASSE-2/ECHANTILLON.csv" \
+  "$HOST":/opt/labuse/app/
 ssh -o BatchMode=yes "$HOST" 'sudo chown -R labuse:labuse /opt/labuse/app'
 
 echo "── 2. venv + dépendances (sur le VPS, en labuse) ──"
@@ -69,6 +79,17 @@ ssh -o BatchMode=yes "$HOST" 'sudo -u labuse bash -c "
   ./venv/bin/pip install -q -r ./app/requirements.lock
   ./venv/bin/pip install -q -e ./app --no-deps
   ./venv/bin/python -c \"import labuse.api.app, labuse.comptes, labuse.api.tenant, labuse.api.events; print(\\\"chaîne de démarrage importable ✓\\\")\"
+"'
+
+echo "── 2bis. Dépendances du CALCUL DE NUIT (AUTONOMIE-1 — tracées, sous-ensemble scoring, PAS torch) ──"
+# Le mandat AUTONOMIE-1 calcule le classement la NUIT sur le serveur : le scoring v2 a besoin de
+# sklearn/joblib/pandas. On les installe AU VENV PROD de façon tracée (deploy/requirements-calcul.txt),
+# et on VÉRIFIE l'import — le job calcul-nuit refuse de tourner sans (jamais un faux vert).
+ssh -o BatchMode=yes "$HOST" 'sudo -u labuse bash -c "
+  set -e
+  cd /opt/labuse
+  ./venv/bin/pip install -q -r ./app/deploy/requirements-calcul.txt
+  ./venv/bin/python -c \"import pandas, numpy, joblib, sklearn; print(\\\"deps calcul-nuit importables ✓\\\")\"
 "'
 
 echo "── 3. Front (dist se CONSTRUIT sur le VPS, ne se copie pas ; --base=/ : Caddy le sert à la RACINE) ──"

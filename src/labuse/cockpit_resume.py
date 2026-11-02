@@ -229,7 +229,15 @@ def _cartes_incidents(incidents: list[dict]) -> list[dict]:
     Les détails (seuils, dates, les écarts parcelle↔source…) ne sortent que dans « Voir le détail » ;
     sans action spécifique, un bouton « Accepter » acquitte l'incident (il rouvrira au prochain
     contrôle s'il est toujours réel). DONNEES-ETAT-FIX-2 (Lot C) : plus de `continue` qui masquait
-    les incidents inconnus (vérité-sources, job-echec:*)."""
+    les incidents inconnus (vérité-sources, job-echec:*).
+
+    AUTONOMIE-1 — FUSION « retard / échec » d'un même job : `job-echec:<nom>` (échec direct) et
+    `job-retard:<nom>`/`job-bloque:<nom>` (vigie) décrivent la MÊME panne → une SEULE carte par job.
+    Les escalades d'ancienneté (`escalade:ancien:*`), doublon d'un incident déjà listé, sont masquées
+    (la carte de l'incident sous-jacent porte déjà son âge)."""
+    from . import autonomie
+    incidents = [i for i in (incidents or []) if not (i.get("cle") or "").startswith("escalade:ancien:")]
+    incidents = autonomie.fusionner_retard_echec(incidents)
     out = []
     for inc in incidents or []:
         cle = inc.get("cle") or ""
