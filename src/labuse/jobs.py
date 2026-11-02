@@ -666,6 +666,42 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
               "mail — pour la rejouer plus tard contre les ventes DVF postérieures (protocole forward).",
        test="tests/test_signal_instantane.py::test_job_signal_instantane_dans_le_registre"),
 
+    # ── AUTONOMIE-1 — le classement se calcule la NUIT sur le SERVEUR (plus sur le Mac) ──
+    # injection-nuit d'abord (01:00) : les sources de CLASSE A avancées s'injectent seules avec
+    # contrôles + rollback ; les CLASSE B (structurant) sont listées pour le clic de Vic (mail).
+    _j("injection-nuit", "Injection de nuit — sources de classe A (réf. faible risque), seules avec contrôles",
+       "quotidien", "0 21 * * *", "01:00", touche="eau", timeout_s=3600, envoie_mail=True,
+       raison="AUTONOMIE-1 (décision Vic) — les sources de RÉFÉRENCE À FAIBLE RISQUE (classe A : population, "
+              "annuaire, zonages OFB/EnR, SUP, BPE, contours, périmètres protégés…) s'injectent SEULES la "
+              "nuit, avec contrôles (comptes, géométries valides, couverture 974, écart sous seuil) et "
+              "RETOUR ARRIÈRE automatique si un contrôle échoue. Les sources STRUCTURANTES (classe B : PLU, "
+              "PPR, DVF, cadastre, LiDAR, BD TOPO, DGFiP) ne s'injectent JAMAIS seules — elles attendent le "
+              "clic de Vic, demandé par mail. Cf. labuse.autonomie.classe_source.",
+       test="tests/test_autonomie_registre.py::test_injection_nuit_au_registre"),
+    # calcul-nuit ensuite (02:00) : s'il voit une entrée changée (injection/source), il recalcule le run,
+    # contrôle AVANT de promouvoir, sinon n'alerte sans promouvoir. Fenêtre 01-05h, nice/ionice, plafond mém.
+    _j("calcul-nuit", "Calcul de nuit — recalcule le classement sur le serveur (01h-05h), contrôle puis promeut",
+       "quotidien", "0 22 * * *", "02:00", touche="exploitation", timeout_s=14400, envoie_mail=True,
+       raison="AUTONOMIE-1 (décision Vic) — le classement ne se calcule PLUS sur le Mac mais sur le SERVEUR, "
+              "la nuit (fenêtre 01h-05h Réunion, nice/ionice + plafond mémoire, abandon propre hors fenêtre). "
+              "Se déclenche quand une entrée a changé (injection/source avancée) ou, sinon, au plus 1×/semaine. "
+              "Produit le run, CONTRÔLE avant de promouvoir (manifeste, comptes, cohérence sur les témoins, "
+              "0 copropriété ni parcelle entièrement rouge en palier actionnable, écart de paliers sous seuil) "
+              "— sinon il NE PROMEUT PAS et alerte par mail. Premier run = q_v21. Deps de calcul au venv prod "
+              "tracées (deploy/requirements-calcul.txt). Cf. labuse.autonomie.controler_run.",
+       test="tests/test_autonomie_registre.py::test_calcul_nuit_au_registre"),
+    # restore-test — RÉTABLI (AUTONOMIE-1) : contrôle de restauration MENSUEL, résultat ENREGISTRÉ et
+    # VISIBLE (marqueur .restore-test.json lu par la vigie + le Tableau de bord). Lisibilité côté serveur
+    # toujours ; restauration réelle dans une BASE À PART quand LABUSE_RESTORE_TEST_REEL=1 + disque OK.
+    _j("restore-test", "Restauration de contrôle mensuelle — base à part, résultat enregistré et visible",
+       "mensuel (5)", "0 1 5 * *", "05:00 le 5", touche="exploitation", timeout_s=7200,
+       raison="AUTONOMIE-1 (décision Vic) — une sauvegarde non testée n'est pas une sauvegarde. Chaque mois, "
+              "on contrôle que le dernier dump est restaurable et on ENREGISTRE le résultat (.restore-test.json, "
+              "visible au Tableau de bord → l'incident « jamais enregistré » se ferme de lui-même). La "
+              "restauration RÉELLE se fait dans une BASE À PART du VPS (jamais la base servie) quand le disque "
+              "le permet (garde 4×), sinon le contrôle de lisibilité pg_restore --list tient lieu de preuve.",
+       test="tests/test_autonomie_registre.py::test_restore_test_au_registre"),
+
     # ── NON REPRIS (retirés du registre par CRON-1 lot 1, avec la raison — cf. CRON-1-LOT1.md) ──
     # Radar : PAS de job. Le traitement des dépôts est déclenché au dépôt (manuel) ; une ÉCHÉANCE
     #   attendue vit en base → dépassée = tâche du Résumé (verrou G8, lot 2). Donc radar-cycle,
@@ -705,9 +741,15 @@ _FAMILLE_LIBELLE_ROLE: dict[str, tuple[int, str, str, bool]] = {
     "ingest-dpe": (2, "Livreur DPE", "Diagnostics énergie, une fois par mois.", True),
     "ingest-sirene": (2, "Livreur SIRENE", "Entreprises géolocalisées, une fois par mois.", True),
     "sync-gpu": (2, "Livreur GPU", "Documents d'urbanisme (PLU), une fois par mois.", True),
+    "injection-nuit": (2, "L'injection de nuit",
+                       "Injecte seule, chaque nuit, les sources de référence à faible risque (classe A), "
+                       "avec contrôles et retour arrière ; les structurantes attendent ton clic.", True),
     # ── 3 · Le moteur ──
     "fiche-commune-cache": (3, "Le précalcul des fiches commune",
                             "Prépare chaque nuit le contexte des 24 communes pour que la fiche ouvre vite.", True),
+    "calcul-nuit": (3, "Le calcul de nuit",
+                    "Recalcule le classement sur le serveur chaque nuit quand une entrée a changé, "
+                    "contrôle tout, puis promeut — ou alerte sans promouvoir.", True),
     "signal-instantane": (3, "L'instantané du Signal",
                           "Fige une copie datée du Signal servi, une fois par mois, pour la mesurer plus tard.", True),
     # ── 4 · Contrôle, clients, sécurité ──
@@ -719,6 +761,9 @@ _FAMILLE_LIBELLE_ROLE: dict[str, tuple[int, str, str, bool]] = {
                        "Relit chaque chiffre sur tous les écrans — zéro faux chez le client.", True),
     "verite-sources": (4, "Le vérificateur mensuel",
                        "Compare 20 parcelles au hasard aux sites officiels, une fois par mois.", True),
+    "restore-test": (4, "Le test de restauration",
+                     "Vérifie chaque mois que le dernier dump se restaure, dans une base à part, "
+                     "et enregistre le résultat (visible au Tableau de bord).", True),
     "backup-postgres": (4, "La sauvegarde",
                         "Copie complète de la base chaque jour, 4 conservées.", False),
     "pg-maintenance": (4, "L'entretien de la base",

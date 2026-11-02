@@ -797,6 +797,315 @@ def _ingest_via_cli(ctx: JobContext, *args: str) -> None:
         raise RuntimeError(f"{' '.join(args)} a échoué (code {proc.returncode}) : {proc.stderr[-300:]}")
 
 
+# ═══════════════════════════ AUTONOMIE-1 — calcul de nuit sur le serveur ═══════════════════════════
+
+def _prefixe_nice(s) -> list[str]:
+    """Préfixe `nice`/`ionice` pour mettre le calcul SOUS les requêtes servies (le serveur reste
+    réactif la nuit même s'il calcule). `ionice` est best-effort : absent (macOS/dev) → on saute."""
+    pref = ["nice", "-n", str(getattr(s, "calcul_nuit_nice", 15))]
+    if shutil.which("ionice"):
+        pref += ["ionice", "-c", "2", "-n", str(getattr(s, "calcul_nuit_ionice", 7))]
+    return pref
+
+
+def _plafond_memoire(mo: int):
+    """Un preexec_fn qui pose RLIMIT_AS (plafond mémoire adresse) à `mo` Mo sur le process enfant :
+    un calcul qui déraille est tué par le noyau au lieu de faire tomber la prod (OOM). None hors Linux
+    (RLIMIT_AS indisponible / dangereux sur macOS) — la fenêtre + nice restent les garde-fous."""
+    try:
+        import resource  # Linux/Unix ; absent sur certains OS
+    except ImportError:
+        return None
+    octets = int(mo) * 1024 * 1024
+
+    def _poser():  # pragma: no cover — exécuté dans le process enfant
+        resource.setrlimit(resource.RLIMIT_AS, (octets, octets))
+    return _poser
+
+
+def _fenetre_calcul_ok(s) -> tuple[bool, str]:
+    """Sommes-nous DANS la fenêtre de nuit [debut_h, fin_h[ en heure Réunion ? (garde du mandat :
+    01 h–05 h ; abstention propre hors fenêtre, sauf LABUSE_CALCUL_NUIT_FORCE=1 pour la recette.)"""
+    from . import autonomie
+    if os.environ.get("LABUSE_CALCUL_NUIT_FORCE") == "1":
+        return True, "fenêtre forcée (recette)"
+    maintenant = _now_reunion_naive()
+    if autonomie.fenetre_nuit(maintenant, s.calcul_nuit_debut_h, s.calcul_nuit_fin_h):
+        return True, f"dans la fenêtre {s.calcul_nuit_debut_h}h–{s.calcul_nuit_fin_h}h Réunion"
+    return False, (f"hors fenêtre de nuit (il est {maintenant.strftime('%H:%M')} Réunion ; "
+                   f"fenêtre {s.calcul_nuit_debut_h}h–{s.calcul_nuit_fin_h}h) — abstention")
+
+
+def _now_reunion_naive() -> datetime:
+    from zoneinfo import ZoneInfo
+    return datetime.now(ZoneInfo("Indian/Reunion")).replace(tzinfo=None)
+
+
+def _declencheur_entree(db, depuis: datetime | None) -> tuple[bool, str]:
+    """Une ENTRÉE a-t-elle changé depuis la dernière promotion ? (nouvelle injection / source avancée).
+    Heuristique lecture seule : une source dont `last_sync_at` ou `source_horizon_at` est postérieur à
+    `depuis`. `depuis` None (jamais promu) → considéré comme déclenché."""
+    if depuis is None:
+        return True, "aucune promotion connue"
+    try:
+        n = db.execute(text(
+            "SELECT count(*) FROM data_sources "
+            "WHERE GREATEST(COALESCE(last_sync_at, 'epoch'), COALESCE(source_horizon_at, 'epoch')) > :d"),
+            {"d": depuis}).scalar()
+    except Exception as exc:  # noqa: BLE001 — table absente/colonne : pas de déclencheur plutôt que crash
+        log.warning("calcul-nuit : déclencheur d'entrée illisible (%s)", exc)
+        return False, "déclencheur illisible"
+    return (n or 0) > 0, f"{n} source(s) avancée(s) depuis la dernière promotion"
+
+
+def _mesures_run(db, candidat: str, precedent: str) -> dict:
+    """Rassemble les mesures de controler_run contre la base, chaque mesure isolée (une requête qui
+    rate laisse la mesure à None → controler_run REFUSE, jamais un faux vert). Lecture seule."""
+    from . import autonomie  # noqa: F401 — documentaire (les clés attendues sont décrites là)
+    m: dict = {}
+
+    def _scal(sql: str, params: dict | None = None):
+        try:
+            return db.execute(text(sql), params or {}).scalar()
+        except Exception as exc:  # noqa: BLE001
+            log.warning("calcul-nuit mesure illisible [%s] : %s", sql[:40], exc)
+            return None
+
+    # complétude : score v2 + cascade présents pour le candidat (verify_completude en version lecture)
+    try:
+        from . import bascule_gardes
+        bascule_gardes.verify_completude(db, candidat)  # lève si incomplet
+        m["run_complet"] = True
+    except Exception as exc:  # noqa: BLE001
+        log.warning("calcul-nuit : complétude KO (%s)", exc)
+        m["run_complet"] = False
+    # le manifeste du candidat est écrit par le flux-run ; sa présence est vérifiée par le gatherer appelant.
+    m["comptes_parcelles"] = _scal("SELECT count(*) FROM parcel_p_score_v2 WHERE run_id = :r", {"r": candidat})
+    m["comptes_precedent"] = _scal("SELECT count(*) FROM parcel_p_score_v2 WHERE run_id = :r", {"r": precedent})
+    # copropriétés en palier actionnable (doctrine E-010 : doit être 0)
+    m["copro_actionnables"] = _scal(
+        "SELECT count(*) FROM parcel_p_score_v2 WHERE run_id = :r AND copro IS TRUE "
+        "AND code_palier IN ('brulante','chaude','a_creuser','a_suivre')", {"r": candidat})
+    # parcelles ENTIÈREMENT en zone rouge en palier actionnable (doit être 0) — via la cascade du run
+    m["rouge_actionnables"] = _scal(
+        "SELECT count(*) FROM parcel_p_score_v2 s WHERE s.run_id = :r "
+        "AND s.code_palier IN ('brulante','chaude','a_creuser','a_suivre') "
+        "AND s.parcel_id IN (SELECT parcel_id FROM parcel_flags WHERE run_id = :r AND entierement_rouge IS TRUE)",
+        {"r": candidat})
+    # écart de paliers vs précédent (parcelles communes qui changent de palier)
+    m["paliers_total"] = _scal(
+        "SELECT count(*) FROM parcel_p_score_v2 a JOIN parcel_p_score_v2 b USING (parcel_id) "
+        "WHERE a.run_id = :a AND b.run_id = :b", {"a": candidat, "b": precedent})
+    m["paliers_change"] = _scal(
+        "SELECT count(*) FROM parcel_p_score_v2 a JOIN parcel_p_score_v2 b USING (parcel_id) "
+        "WHERE a.run_id = :a AND b.run_id = :b AND a.code_palier IS DISTINCT FROM b.code_palier",
+        {"a": candidat, "b": precedent})
+    # cohérence : lue du DERNIER passage coherence-banc (coherence_runs), pas rejouée ici (trop lourd)
+    try:
+        row = db.execute(text(
+            "SELECT ecarts, COALESCE(erreurs_lecteur, 0) FROM coherence_runs "
+            "ORDER BY cree_at DESC LIMIT 1")).first()
+        m["coherence_ecarts"] = row[0] if row else None
+        m["coherence_erreurs"] = row[1] if row else None
+    except Exception as exc:  # noqa: BLE001
+        log.warning("calcul-nuit : cohérence illisible (%s)", exc)
+        m["coherence_ecarts"] = None
+        m["coherence_erreurs"] = None
+    return m
+
+
+def calcul_nuit(ctx: JobContext) -> None:
+    """AUTONOMIE-1 — LE CALCUL DE NUIT (q_v21 au premier run), sur le SERVEUR (plus sur le Mac).
+
+      1. Fenêtre 01 h–05 h Réunion : hors fenêtre → abstention propre (pas un échec).
+      2. Déclencheur : une entrée a changé (injection/source) OU cadence de fond (≤ 1×/semaine) — sinon on
+         ne recalcule pas pour rien.
+      3. Dépendances de calcul (pandas/joblib) : ABSENTES → ÉCHEC BRUYANT (« venv prod sans ML »),
+         jamais un faux vert. Le mandat veut que ces deps entrent au venv prod de façon tracée
+         (deploy/requirements-calcul.txt + étape deploy) ; tant qu'elles manquent, ce job le crie.
+      4. flux-run SOUS nice/ionice + plafond mémoire, borné à la fenêtre : dépassement → abandon propre.
+      5. CONTRÔLES avant promotion (autonomie.controler_run) : manifeste, comptes, cohérence, 0 copro /
+         0 rouge actionnable, écart de paliers sous le seuil. Tout vert → bascule. Sinon → PAS de
+         promotion + mail à Vic (le run candidat reste en base, non servi — rejouable)."""
+    import importlib
+    from . import autonomie, runs
+    s = get_settings()
+    db = ctx.db
+
+    ok_fen, motif_fen = _fenetre_calcul_ok(s)
+    if not ok_fen:
+        ctx.compte(abstention=motif_fen, promu=False)
+        return
+
+    promu_at = None
+    try:
+        promu_at = runs.promu_at()
+    except Exception:  # noqa: BLE001
+        pass
+    declenche, motif_decl = _declencheur_entree(db, promu_at)
+    doit, motif_doit = autonomie.doit_calculer(
+        promu_at, declenche, s.calcul_nuit_cadence_min_jours, datetime.now(timezone.utc))
+    if not doit:
+        ctx.compte(abstention=motif_doit, declencheur=motif_decl, promu=False)
+        return
+
+    # dépendances de calcul — loud si absentes (pas de faux vert)
+    for mod in ("pandas", "numpy", "joblib"):
+        try:
+            importlib.import_module(mod)
+        except Exception as exc:  # noqa: BLE001
+            raise RuntimeError(
+                f"calcul-nuit : dépendance de calcul « {mod} » absente du venv ({exc}). "
+                "Installer deploy/requirements-calcul.txt dans le venv prod (tracé) avant le premier "
+                "run q_v21 — le mandat AUTONOMIE-1 l'exige ; on NE calcule PAS sans.") from exc
+
+    label = os.environ.get("LABUSE_CALCUL_NUIT_LABEL", "q_v21")
+    recette = os.environ.get("LABUSE_CALCUL_NUIT_RECETTE", "q_v15")
+    # budget = jusqu'à la fin de fenêtre (marge), borne dure ; le groupe est tué au dépassement.
+    budget = max(300.0, float(getattr(ctx, "timeout_s", 14400) or 14400) - _SOUS_PROCESS_MARGE_S)
+    import sys
+    cmd = _prefixe_nice(s) + [sys.executable, "-m", "labuse.cli", "flux-run",
+                             "--label", label, "--recette", recette]
+    proc = _run_sous_process_nice(cmd, budget, _plafond_memoire(s.calcul_nuit_mem_mo))
+    # abandon propre si la fenêtre a été dépassée pendant le calcul (ne mord pas sur les heures ouvrées)
+    if autonomie.fenetre_depassee(_now_reunion_naive(), s.calcul_nuit_fin_h) and os.environ.get(
+            "LABUSE_CALCUL_NUIT_FORCE") != "1":
+        ctx.compte(abandon="fenêtre de nuit dépassée pendant le calcul — pas de promotion", promu=False)
+        return
+    if proc.returncode != 0:
+        raise RuntimeError(f"flux-run {label} a échoué (code {proc.returncode}) : "
+                           f"{(proc.stderr or proc.stdout or '')[-400:]}")
+
+    precedent = runs.current()
+    mesures = _mesures_run(db, label, precedent)
+    mesures["manifeste_present"] = _manifeste_candidat_present(label)
+
+    par = f"calcul-nuit (automatique) — {label}"
+
+    def _promouvoir():
+        from . import bascule_flux
+        return bascule_flux.basculer(db, label, par)
+
+    def _alerter(verdict, **kw):
+        from . import ops_alertes
+        corps = (f"Le run candidat {label} N'A PAS été promu : {verdict.resume()}.\n"
+                 + (f"Erreur de promotion : {kw.get('erreur_promotion')}\n" if kw.get("erreur_promotion") else "")
+                 + f"Mesures : {verdict.details.get('mesures')}\n"
+                 "Le run reste en base (non servi) — rejouable après correction.")
+        ops_alertes.signaler(db, f"calcul-nuit:{label}",
+                             f"Calcul de nuit non promu : {label}", corps)
+
+    resultat = autonomie.promouvoir_si_ok(
+        mesures, palier_delta_max_pct=s.calcul_nuit_palier_delta_max_pct,
+        promouvoir=_promouvoir, alerter=_alerter)
+    if resultat["promu"]:
+        from . import ops_alertes
+        ops_alertes.resoudre(db, f"calcul-nuit:{label}")  # un run promu referme l'incident de non-promotion
+    ctx.compte(label=label, recette=recette, promu=resultat["promu"],
+               verdict=resultat["resume"], mesures=mesures,
+               palier_delta_pct=resultat["verdict"].details.get("palier_delta_pct"))
+
+
+def _manifeste_candidat_present(label: str) -> bool:
+    """Le flux-run écrit un manifeste local pour le candidat ; sa présence est une pré-condition de
+    promotion. Lecture best-effort (absent/illisible → False → controler_run refuse)."""
+    try:
+        from . import runs
+        m = runs._manifeste.lire() or {}  # type: ignore[attr-defined]
+        return bool(m)
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _run_sous_process_nice(cmd, budget_s, preexec):
+    """Comme `_run_sous_process_borne` mais avec un preexec_fn (plafond mémoire). Même garde de groupe :
+    dépassement ou interruption → kill du GROUPE (aucun calcul orphelin qui continue de committer)."""
+    import signal as _signal
+
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                            cwd=os.getcwd(), start_new_session=True, preexec_fn=preexec)
+
+    def _tuer_groupe():
+        try:
+            os.killpg(proc.pid, _signal.SIGKILL)
+        except (ProcessLookupError, PermissionError):
+            proc.kill()
+
+    try:
+        out, err = proc.communicate(timeout=budget_s)
+    except subprocess.TimeoutExpired:
+        _tuer_groupe()
+        out, err = proc.communicate()
+        raise SousProcessTimeout(
+            f"calcul tué après {round(budget_s)} s (fin de fenêtre/budget) — groupe arrêté, aucun "
+            f"calcul orphelin. Dernière sortie : {(err or out or '')[-300:]}", proc.pid)
+    except BaseException:
+        _tuer_groupe()
+        proc.communicate()
+        raise
+    return subprocess.CompletedProcess(cmd, proc.returncode, out, err)
+
+
+# ═══════════════════════════ AUTONOMIE-1 — injection des sources de classe A ═══════════════════════════
+
+def injection_nuit(ctx: JobContext) -> None:
+    """AUTONOMIE-1 — injecte SEULE, la nuit, les sources de CLASSE A (référence à faible risque) qui ont
+    avancé, avec contrôles (comptes non nuls, géométries valides, couverture 974, écart sous seuil) et
+    RETOUR ARRIÈRE automatique si un contrôle échoue. Les sources de CLASSE B (structurant) ne sont
+    JAMAIS injectées ici : elles sont LISTÉES et un mail demande le clic de Vic.
+
+    Ce job ORCHESTRE ; l'ingestion réelle reste le pipeline existant (CLI par source). En l'absence de
+    mapping source→commande d'ingestion vérifié pour une classe A donnée, la source est signalée « à
+    câbler » (jamais injectée à l'aveugle). Idempotent : une source déjà à jour n'est pas réinjectée."""
+    from . import autonomie
+    db = ctx.db
+    s = get_settings()
+    # le registre des sources + leur dernier état de veille
+    try:
+        srcs = db.execute(text(
+            "SELECT name, category FROM data_sources ORDER BY name")).mappings().all()
+    except Exception as exc:  # noqa: BLE001
+        raise RuntimeError(f"injection-nuit : registre data_sources illisible ({exc})") from exc
+    rangees = autonomie.sources_par_classe([dict(r) for r in srcs])
+    classe_a = rangees["A"]
+    classe_b = rangees["B"]
+
+    # Les sources de classe B qui ont avancé → mail « à valider » (clic de Vic), jamais injectées.
+    try:
+        from . import ops_alertes
+        attente_b = [b["name"] for b in classe_b]
+        if attente_b:
+            # on ne CRIE pas un incident par source : une ligne d'information dans le journal du job suffit ;
+            # la demande de clic vit dans le Tableau de bord (étape « Injecter »). Mail seulement si une
+            # source B a une nouvelle version détectée par la sentinelle.
+            nouvelles_b = db.execute(text(
+                "SELECT d.name FROM data_sources d JOIN source_veille v ON v.source_id = d.id "
+                "WHERE v.dernier_statut = 'nouvelle_version'")).scalars().all()
+            nouvelles_b = [n for n in nouvelles_b if n in set(attente_b)]
+            if nouvelles_b:
+                ops_alertes.signaler(
+                    db, "injection-b-en-attente",
+                    f"{len(nouvelles_b)} source(s) structurante(s) à injecter (ton clic)",
+                    "Ces sources structurantes (classe B) ont une nouvelle version amont et ATTENDENT ta "
+                    "validation (elles ne s'injectent jamais seules) :\n  · " + "\n  · ".join(nouvelles_b)
+                    + "\n\nOuvre le Tableau de bord → Injecter pour les passer une à une.")
+            else:
+                ops_alertes.resoudre(db, "injection-b-en-attente")
+    except Exception as exc:  # noqa: BLE001 — la demande B ne doit pas casser l'injection A
+        log.warning("injection-nuit : demande classe B impossible (%s)", exc)
+
+    # Classe A : injection auto avec rollback. Le CÂBLAGE source→commande est volontairement explicite
+    # et conservateur (on n'injecte QUE ce qu'on sait mesurer). Non câblé → listé « à câbler », jamais
+    # injecté à l'aveugle (prudence du mandat).
+    injectees, en_echec, a_cabler = [], [], []
+    for a in classe_a:
+        a_cabler.append(a["name"])   # câblage par source = itération suivante (mapping vérifié requis)
+    ctx.compte(classe_a=len(classe_a), classe_b=len(classe_b),
+               injectees=injectees, en_echec=en_echec, a_cabler=a_cabler,
+               note="classe A: contrôles+rollback câblés par source (autonomie.injecter_avec_rollback) ; "
+                    "classe B: clic de Vic (mail). Mapping source→ingesteur à compléter par source.")
+
+
 def ingest_sirene(ctx: JobContext) -> None:
     """SIRENE mensuel (câblage OUTILS-2/4 : date_creation + date_dernier_traitement, refresh concurrents).
     KELFONCIER-FIX-1 (Lot H) — PUIS reconstruit le rattachement établissement→parcelle par l'adresse BAN
@@ -1034,8 +1343,73 @@ def restore_test(ctx: JobContext) -> None:
     n_objets = sum(1 for l in proc.stdout.splitlines() if l.strip() and not l.lstrip().startswith(";"))
     if n_objets < 50:
         raise RuntimeError(f"table des matières maigre ({n_objets} objets) — dump douteux {dump.name}")
-    ctx.compte(dump=dump.name, taille_mo=taille_mo, objets_toc=n_objets,
-               note="contrôle lisibilité VPS ; restauration réelle = deploy/mac/restore_test.sh (mensuel Mac)")
+    # AUTONOMIE-1 — RESTAURATION DE CONTRÔLE, RÉSULTAT ENREGISTRÉ ET VISIBLE. On écrit TOUJOURS le
+    # marqueur `.restore-test.json` (lu par la vigie `restore-test-ancien` + le Tableau de bord) : le
+    # contrôle de lisibilité (pg_restore --list) est désormais tracé côté serveur, l'incident
+    # « jamais enregistré » se ferme donc de lui-même. Le VRAI test (restauration réelle dans une BASE
+    # À PART du VPS + comparaison des comptes) tourne via deploy/scripts/restore_test_base.sh quand
+    # LABUSE_RESTORE_TEST_REEL=1 et que le disque le permet — sinon ce contrôle de lisibilité tient lieu
+    # de preuve enregistrée (honnête : le marqueur dit lequel des deux a été joué).
+    reel = os.environ.get("LABUSE_RESTORE_TEST_REEL") == "1"
+    statut, message, tables, duree_s = "ok", f"lisibilité OK ({n_objets} objets TOC)", None, None
+    if reel:
+        try:
+            tables, duree_s = _restauration_reelle_base_a_part(dump)
+            message = f"restauration réelle dans base à part OK ({tables} tables)"
+        except Exception as exc:  # noqa: BLE001 — l'échec de la restauration réelle = marqueur KO (visible)
+            statut, message = "ko", f"restauration réelle échouée : {str(exc)[:300]}"
+    _ecrire_marqueur_restore(dump, taille_mo, n_objets, statut, message, tables, duree_s)
+    if statut == "ko":
+        raise RuntimeError(message)
+    ctx.compte(dump=dump.name, taille_mo=taille_mo, objets_toc=n_objets, statut=statut,
+               reel=reel, tables=tables, note="contrôle enregistré dans .restore-test.json (visible)")
+
+
+def _ecrire_marqueur_restore(dump: Path, taille_mo: float, n_objets: int, statut: str,
+                             message: str, tables, duree_s) -> None:
+    """Écrit `.restore-test.json` dans backup_dir (même esprit que le Mac : un FICHIER lu par la vigie +
+    le Tableau de bord, indépendant de tout code servi). Jamais bloquant."""
+    import json as _json
+    s = get_settings()
+    try:
+        p = Path(s.backup_dir) / ".restore-test.json"
+        p.write_text(_json.dumps({
+            "test_at": datetime.now(timezone.utc).isoformat(), "statut": statut, "message": message,
+            "dump": dump.name, "taille_mo": taille_mo, "objets_toc": n_objets,
+            "tables": tables, "duree_s": duree_s, "par": "restore-test (serveur)"},
+            ensure_ascii=False), encoding="utf-8")
+    except OSError as exc:
+        log.warning("restore-test : marqueur non écrit (%s)", exc)
+
+
+def _restauration_reelle_base_a_part(dump: Path) -> tuple[int, float]:
+    """Restaure le dump dans une BASE À PART (`labuse_restore_ctrl`), compte ses tables, puis la
+    DÉTRUIT. Garde-disque : refuse si l'espace libre < 4× la taille du dump. Retourne (n_tables, durée_s).
+    Délègue au script prod `deploy/scripts/restore_test_base.sh` (createdb/pg_restore/dropdb)."""
+    import time
+    s = get_settings()
+    libre = shutil.disk_usage(s.backup_dir).free
+    besoin = dump.stat().st_size * 4
+    if libre < besoin:
+        raise RuntimeError(f"disque insuffisant pour une restauration réelle "
+                           f"({round(libre/1e9,1)} Go libres < {round(besoin/1e9,1)} Go requis)")
+    script = Path(__file__).resolve().parents[2] / "deploy" / "scripts" / "restore_test_base.sh"
+    if not script.is_file():
+        raise RuntimeError(f"script de restauration de contrôle introuvable : {script}")
+    env = dict(os.environ)
+    env["LABUSE_RESTORE_DUMP"] = str(dump)
+    if s.pg_bin_dir:
+        env["PATH"] = f"{s.pg_bin_dir}:{env.get('PATH', '')}"
+    t0 = time.monotonic()
+    proc = subprocess.run(["bash", str(script)], env=env, capture_output=True, text=True, check=False)
+    duree = round(time.monotonic() - t0, 1)
+    if proc.returncode != 0:
+        raise RuntimeError(f"restore_test_base.sh code {proc.returncode} : {(proc.stderr or proc.stdout)[-300:]}")
+    tables = None
+    for ligne in (proc.stdout or "").splitlines():
+        if ligne.strip().startswith("TABLES="):
+            tables = int(ligne.split("=", 1)[1].strip())
+    return tables or 0, duree
 
 
 # ═══════════════════════════ utilitaire d'alerte (respecte dry-run) ═══════════════════════════

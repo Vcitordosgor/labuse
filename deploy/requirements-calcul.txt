@@ -1,0 +1,16 @@
+# AUTONOMIE-1 — dépendances du CALCUL DE NUIT sur le serveur (job calcul-nuit → flux-run → scoring v2).
+#
+# Le mandat change la doctrine « aucun calcul de classement sur la prod » (DEPLOY-FINAL §q_v21) :
+# le classement se calcule désormais la NUIT sur le serveur. Ces dépendances entrent donc au venv prod
+# DE FAÇON TRACÉE (ce fichier + l'étape deploy_app.sh « 2bis »), et SEULEMENT ce sous-ensemble —
+# le SCORING (pipeline p_v2) n'importe que sklearn / joblib / pandas / numpy / scipy.
+#
+# Volontairement ABSENTS (restent hors prod, cf. pyproject [ml]) : torch, segmentation-models-pytorch
+# (détection ortho), openpyxl/py7zr/matplotlib (ingestion hors-ligne, analyses) — le serveur ne les
+# utilise pas pour calculer un run. On garde la venv prod aussi mince que possible.
+#
+# Pins alignés sur pyproject [ml] (bornes minimales testées). Le lock de prod (requirements.lock) fige
+# déjà numpy/scipy (dépendances de série via rasterio) ; ici on n'ajoute que l'étage scoring.
+scikit-learn>=1.4
+joblib>=1.3
+pandas>=2.0

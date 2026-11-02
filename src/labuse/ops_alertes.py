@@ -562,7 +562,52 @@ def verifier_declencheurs(db) -> dict:
     # son propre silence et le dit. 2 nuits muettes → escalade mail à Vic. Table absente → pas de vigie.
     out["radar_muet"] = _vigie_radar_muet(db, s)
 
-    out["incidents_ouverts"] = incidents_ouverts(db)
+    # 6 bis) AUTONOMIE-1 — « 3 pointeurs de run au lieu d'un » : si le manifeste et served_run.txt
+    # divergent (le front étiquetterait le mauvais run), on OUVRE un incident ; cohérents → résolu.
+    try:
+        from . import runs
+        p = runs.pointeurs()
+        out["pointeurs_run"] = p
+        if not p["coherents"]:
+            signaler(db, "pointeurs-run-divergents",
+                     "Pointeurs de run divergents (manifeste ≠ served_run.txt)",
+                     f"Le run servi est pointé à deux valeurs différentes : {p['divergence']}. Le backend "
+                     "sert le manifeste, mais le bundle front lit served_run.txt → étiquette possiblement "
+                     "fausse. Rejouer la bascule (qui réécrit les deux ensemble) ou aligner served_run.txt.")
+        else:
+            resoudre(db, "pointeurs-run-divergents")
+    except Exception as exc:  # noqa: BLE001 — la vigie pointeurs ne doit jamais faire tomber le reste
+        log.warning("vigie pointeurs run impossible (%s)", exc)
+
+    # 7) AUTONOMIE-1 — INCIDENTS VIVANTS : tout incident ouvert depuis plus de 3 jours REMONTE dans le
+    # mail quotidien (escalade `escalade:ancien:<cle>`, un rappel/jour via la porte unique). Les
+    # incidents d'escalade eux-mêmes ne ré-escaladent pas (pas de boucle). Un incident qui se referme
+    # (cause disparue) voit son escalade d'ancienneté se refermer avec lui au passage suivant.
+    ouverts = incidents_ouverts(db)
+    out["incidents_ouverts"] = ouverts
+    seuil_anc = getattr(s, "incident_ancien_seuil_j", 3)
+    try:
+        from . import autonomie
+        anciens = autonomie.incidents_anciens(ouverts, seuil_anc, datetime.now(timezone.utc))
+    except Exception:  # noqa: BLE001 — jamais faire tomber la vigie pour la remontée d'ancienneté
+        anciens = []
+    cles_anciennes = set()
+    for inc in anciens:
+        cle = inc.get("cle", "")
+        if cle.startswith("escalade:"):
+            continue   # on n'escalade pas une escalade (anti-boucle)
+        cles_anciennes.add(cle)
+        _escalade(db, f"escalade:ancien:{cle}",
+                  f"Incident non résolu depuis {inc.get('age_jours')} j : {inc.get('sujet')}",
+                  f"L'incident « {inc.get('sujet')} » (clé {cle}) est ouvert depuis "
+                  f"{inc.get('age_jours')} jours (seuil {seuil_anc} j) — il demande une décision. "
+                  f"Détail : {inc.get('detail') or ''}")
+    # referme les escalades d'ancienneté dont l'incident sous-jacent n'est plus ni ouvert ni ancien
+    for inc in ouverts:
+        cle = inc.get("cle", "")
+        if cle.startswith("escalade:ancien:") and cle[len("escalade:ancien:"):] not in cles_anciennes:
+            resoudre(db, cle)
+    out["incidents_anciens"] = [{"cle": i["cle"], "age_jours": i.get("age_jours")} for i in anciens]
     return out
 
 

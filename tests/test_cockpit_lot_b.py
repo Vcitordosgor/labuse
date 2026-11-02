@@ -99,8 +99,9 @@ def test_familles_attendues():
         par_fam[j["famille"]] = par_fam.get(j["famille"], 0) + 1
     # COCKPIT-1 Lot C : restore-test + recap-matin retirés du registre → 29 jobs, F4 passe de 21 à 19.
     # MENAGE-1 (geste 10) : + purge-runs (famille 4, gelé) → 30 jobs, F4 passe de 19 à 20.
-    assert par_fam == {1: 2, 2: 6, 3: 2, 4: 20}
-    assert sum(par_fam.values()) == 30
+    # AUTONOMIE-1 : + injection-nuit (F2), + calcul-nuit (F3), + restore-test RÉTABLI (F4) → 33 jobs.
+    assert par_fam == {1: 2, 2: 7, 3: 3, 4: 21}
+    assert sum(par_fam.values()) == 33
 
 
 # ─────────────── endpoints (db) ───────────────
