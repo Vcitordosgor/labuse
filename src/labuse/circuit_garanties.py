@@ -461,6 +461,12 @@ LECTEURS_ASSUMES_G6: dict[str, str] = {
     # VERITE-TERRAIN-2 — modules d'AUDIT (lecture seule, hors produit servi) mergés dans main : ils
     # lisent les tables du produit pour COMPARER le servi aux sources officielles, ne servent aucun
     # chiffre de fiche ni robinet. Déclarés assumés ici (le scan G6 les voyait « non déclarés »).
+    # JOHN-TAYLOR-1 — l'agent d'exploitation (le second de bord) lit l'état réel (jobs, incidents,
+    # sources, runs, contrôles, sauvegardes, Radar, journaux) pour répondre à Vic. Lecture seule,
+    # aucun chiffre de fiche servi : la lecture de pige_passes (radar_pige) est de la supervision.
+    "john/contexte.py":
+        "lectures d'EXPLOITATION de John Taylor (chat admin) : lit pige_passes pour dire si le Radar "
+        "a tourné — supervision read-only, aucun chiffre de fiche ni robinet servi au client.",
     "verite_terrain_capacite.py":
         "audit volet D : lit parcels + sitadel_permits pour confronter la capacité LABUSE aux "
         "permis réellement autorisés — comparateur read-only, aucun chiffre servi.",

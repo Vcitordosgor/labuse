@@ -714,6 +714,17 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
               "(point 6a) ; sujet [URGENT] s'il y a un geste attendu, sinon [INFO].",
        test="tests/test_autonomie_registre.py::test_resume_matin_au_registre"),
 
+    # JOHN-TAYLOR-1 — LA VEILLE DE NUIT de John (informe, n'injecte rien). Un passage IA (Haiku +
+    # web_search), plafonné par le budget mensuel de John ; résultats dans l'onglet + le résumé.
+    _j("john-veille", "Veille de nuit (John Taylor) — réglementaire · sources · concurrence",
+       "quotidien", "0 23 * * *", "03:00", touche="exploitation", timeout_s=1800, envoie_mail=False,
+       raison="JOHN-TAYLOR-1 — chaque nuit, John passe la veille sur trois axes (réglementaire "
+              "Légifrance/BOFiP + PLU/SCOT/PPR 974 ; nouveaux millésimes et changements d'API des "
+              "sources ; concurrence KelFoncier/Capaciti). Chaque élément porte sa source, sa date et "
+              "un libellé (à intégrer / source B à valider / info / concurrence). La veille INFORME, "
+              "elle n'injecte rien ; elle s'arrête proprement si le plafond mensuel de John est atteint.",
+       test="tests/test_john_registre.py::test_john_veille_au_registre"),
+
     # ── NON REPRIS (retirés du registre par CRON-1 lot 1, avec la raison — cf. CRON-1-LOT1.md) ──
     # Radar : PAS de job. Le traitement des dépôts est déclenché au dépôt (manuel) ; une ÉCHÉANCE
     #   attendue vit en base → dépassée = tâche du Résumé (verrou G8, lot 2). Donc radar-cycle,
@@ -781,6 +792,9 @@ _FAMILLE_LIBELLE_ROLE: dict[str, tuple[int, str, str, bool]] = {
     "resume-matin": (4, "Le résumé du matin",
                      "Un mail chaque matin : calcul de nuit, sauvegardes, Radar, verrous, cohérence, "
                      "incidents ouverts et résolus — même « rien à signaler ».", True),
+    "john-veille": (1, "La veille de John",
+                    "Chaque nuit, John repère les nouveautés (réglementaire, sources, concurrence) et "
+                    "les affiche dans l'onglet ; il informe, n'injecte rien. Démarré par son bouton (IA, plafond).", False),
     "pg-maintenance": (4, "L'entretien de la base",
                        "Réaligne le moteur PostgreSQL chaque dimanche pour garder les requêtes rapides.", True),
     "purge-runs": (4, "La purge des vieux runs",

@@ -294,6 +294,16 @@ class Settings(BaseSettings):
     # AUTONOMIE-1 — incidents vivants : tout incident ouvert depuis plus de ce nombre de jours remonte
     # (escalade `escalade:ancien:*`) dans le mail quotidien tant qu'il demande une décision humaine.
     incident_ancien_seuil_j: int = 3                   # LABUSE_INCIDENT_ANCIEN_SEUIL_J
+    # ── JOHN-TAYLOR-1 — le second de bord (agent d'exploitation, onglet « John Taylor », admin seul) ──
+    # John lit tout en LECTURE, agit sur ordre de Vic dans une LISTE FERMÉE d'actions, écrit le résumé
+    # du matin et mène la veille. Désactivé par défaut (comme toute surface IA sans clé : repli propre).
+    john_actif: bool = True                            # LABUSE_JOHN_ACTIF (0 = onglet présent, chat en repli)
+    # PLAFOND MENSUEL de coût IA de John (euros). Au plafond, John répond qu'il est en pause jusqu'au mois
+    # prochain : AUCUN appel modèle n'est lancé tant que le mois n'a pas tourné (coupure propre, pas une
+    # erreur). Le coût est lu du ledger `ia_log` sur les surfaces `john-*` du mois courant (Réunion).
+    john_plafond_eur: float = 50.0                     # LABUSE_JOHN_PLAFOND_EUR (configurable)
+    # Rétention des conversations du chat (jours). Au-delà, elles sont purgées (RGPD + hygiène).
+    john_conversations_jours: int = 90                 # LABUSE_JOHN_CONVERSATIONS_JOURS
     # VP-001 (mandat VPS) — dossier des binaires pg_dump/pg_restore quand le PATH sert une
     # MAUVAISE version (Mac : Homebrew 16 devant le client 18). Absent → PATH, avec garde de
     # version (backup-db refuse un pg_dump plus vieux que le serveur au lieu d'échouer cryptique).

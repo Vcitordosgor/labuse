@@ -20,8 +20,9 @@ import {
 
 import type { CircuitData, CockpitCarte, CockpitEtape } from './types'
 
-export function TableauDeBord({ data, onVoirUsine, onDepotManuel }:
-  { data: CircuitData; onVoirUsine: () => void; onDepotManuel: () => void }) {
+export function TableauDeBord({ data, onVoirUsine, onDepotManuel, onDemanderJohn }:
+  { data: CircuitData; onVoirUsine: () => void; onDepotManuel: () => void
+    onDemanderJohn?: (c: CockpitCarte) => void }) {
   const qc = useQueryClient()
   const ck = data.cockpit
   const [detail, setDetail] = useState<CockpitCarte | null>(null)
@@ -129,6 +130,10 @@ export function TableauDeBord({ data, onVoirUsine, onDepotManuel }:
               <div className="acts">
                 {c.voir_detail && c.detail && (
                   <button className="btn" onClick={() => { setDetail(c); setCopie(false) }}>Voir le détail</button>)}
+                {/* JOHN-TAYLOR-1 — sur une carte « ça casse » (ou « demande du code »), demander à John
+                    de lire les journaux : cause probable + correction (ou mandat Claude Code prêt à coller). */}
+                {onDemanderJohn && (c.pastille === 'rouge' || c.code) && (
+                  <button className="btn mauve" onClick={() => onDemanderJohn(c)}>Demander à John</button>)}
                 {c.bouton && (
                   <button className="btn solid" disabled={enCours} onClick={() => lancerCarte(c)}>{c.bouton.label}</button>)}
               </div>

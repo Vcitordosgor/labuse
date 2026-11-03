@@ -33,3 +33,4 @@ injection-nuit;quotidien;01:00;eau;deploy.sh → /etc/cron.d/labuse (généré d
 calcul-nuit;quotidien;02:00;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run calcul-nuit
 restore-test;mensuel (5);05:00 le 5;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run restore-test
 resume-matin;quotidien;07:30;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run resume-matin
+john-veille;quotidien;03:00;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run john-veille
