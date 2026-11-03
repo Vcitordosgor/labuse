@@ -29,6 +29,17 @@ def test_restore_test_au_registre():
     assert prochaine(j.cron_utc) is not None
 
 
+def test_resume_matin_au_registre():
+    """OPS-NUIT-1 — le résumé du matin est un job quotidien, à mail, lancable à la main, après la nuit."""
+    j = _job("resume-matin")
+    assert j.planifie and not j.gel
+    assert j.cadence == "quotidien" and j.heure_reunion == "07:30"   # après verrous 07:25 + Radar de nuit
+    assert j.envoie_mail and j.touche == "exploitation"
+    assert prochaine(j.cron_utc) is not None
+    from labuse.jobs import _FAMILLE_LIBELLE_ROLE
+    assert _FAMILLE_LIBELLE_ROLE["resume-matin"][3] is True          # lancable (lecture seule, sans risque)
+
+
 def test_les_trois_ont_une_famille():
     from labuse import jobs
     fam = {d["nom"]: d["famille"] for d in jobs.liste()}

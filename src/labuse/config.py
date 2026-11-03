@@ -235,6 +235,9 @@ class Settings(BaseSettings):
     # n'a ni /var/log/labuse ni /run/lock écrivables — sinon le job échoue silencieusement).
     jobs_lock_dir: str = ".local/lock"               # LABUSE_JOBS_LOCK_DIR (env_prefix + nom de champ)
     disque_seuil_pct: int = 85                        # K9 — alerte disque au-delà (constante nommée)
+    # OPS-NUIT-1 point 6(e) (décision Vic) — PLANCHER du seuil « job en retard » : un job fréquent
+    # (healthcheck, 15 min) ne crie plus après 22 min ; retard réel au-delà de 1 h. LABUSE_JOB_RETARD_SEUIL_MIN_H.
+    job_retard_seuil_min_h: float = 1.0
     # DISQUE-EXTERNE-1 (14/10) — fraîcheur de la copie hors-VPS sur le disque externe du Mac. Le Mac
     # dépose un marqueur `.copie-externe.json` dans backup_dir après chaque copie vérifiée ; au-delà de
     # ce seuil (jours), le récap ouvre l'incident « branche le disque ». LABUSE_COPIE_EXTERNE_SEUIL_J.

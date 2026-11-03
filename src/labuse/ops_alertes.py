@@ -50,7 +50,37 @@ CREATE TABLE IF NOT EXISTS ops_incidents (
 DDL_INDEX = ("CREATE UNIQUE INDEX IF NOT EXISTS ux_ops_incidents_cle_ouvert "
              "ON ops_incidents (cle) WHERE resolu_at IS NULL")
 
+# OPS-NUIT-1 (décision Vic) — SUJETS PRÉFIXÉS, tout en français : [URGENT] pour une panne / un geste
+# attendu, [INFO] pour l'informatif (le résumé du matin « rien à signaler »). Un incident qui s'ouvre
+# ou se rappelle est toujours URGENT ; les « résolu » ne partent plus en mail (ils vont au résumé).
+URGENT = "[URGENT]"
+INFO = "[INFO]"
+#: ancien préfixe, conservé pour le nettoyage du titre de cloche (compat anciens incidents).
 PREFIX = "[LABUSE]"
+
+
+def _sans_prefixe(sujet: str) -> str:
+    """Retire le préfixe de sévérité (ou l'ancien [LABUSE]) pour le TITRE de cloche (déjà catégorisé)."""
+    for p in (URGENT, INFO, PREFIX):
+        if sujet.startswith(p):
+            return sujet[len(p):].strip()
+    return sujet.strip()
+
+
+def _lien_action(cle: str, lien: str | None) -> str:
+    """OPS-NUIT-1 point 6(d) — le LIEN d'action du mail. Explicite s'il est fourni, sinon dérivé de la
+    clé d'incident (pas de colonne en base : la carte clé→page suffit). Tout mène à la console admin."""
+    if lien:
+        return lien
+    return "/admin"
+
+
+def _url_absolue(s, lien: str) -> str:
+    """URL cliquable complète (base publique + chemin). Base absente → chemin relatif (mieux que rien)."""
+    base = (getattr(s, "public_base_url", None) or "").rstrip("/")
+    if lien.startswith("http"):
+        return lien
+    return f"{base}{lien}" if base else lien
 
 
 def ensure_table(db) -> None:
@@ -99,25 +129,27 @@ def _destinataire(s) -> str | None:
 
 # ─────────────────────────────── la porte d'envoi unique ───────────────────────────────
 
-def _sink(db, sujet: str, corps: str, *, dedup: str) -> str:
+def _sink(db, sujet: str, corps: str, *, dedup: str, lien: str = "/admin") -> str:
     """Envoie l'alerte par les DEUX canaux : mail (Brevo/SMTP via la façade `mail`) + cloche admin.
-    Retourne le détail d'envoi mail ('ok' | 'dry-run' | 'no-config' | 'error: …'). Jamais bloquant :
-    la cloche qui rate ne doit pas empêcher le mail, et inversement."""
+    `lien` = chemin de l'action (OPS-NUIT-1 point 6(d)) : ajouté au corps du mail en URL cliquable ET
+    porté par la cloche. Retourne le détail d'envoi mail ('ok' | 'dry-run' | 'no-config' | 'error: …').
+    Jamais bloquant : la cloche qui rate ne doit pas empêcher le mail, et inversement."""
     s = get_settings()
+    corps_mail = f"{corps}\n\n→ Agir : {_url_absolue(s, lien)}" if lien else corps
     detail_mail = "pas-de-destinataire"
     dest = _destinataire(s)
     if dest:
         try:
             from .mail import envoyer_ops
-            detail_mail = envoyer_ops(dest, sujet, corps, settings=s).detail
+            detail_mail = envoyer_ops(dest, sujet, corps_mail, settings=s).detail
         except Exception as exc:  # noqa: BLE001 — l'échec d'envoi ne casse pas la vigie
             detail_mail = f"error: {type(exc).__name__}"
             log.warning("alerte ops : mail impossible (%s)", exc)
     try:
         from .api.events import creer_notification
         creer_notification(db, kind="systeme", compte_id=None, source="Exploitation",
-                           titre=sujet.replace(PREFIX, "").strip(), detail=(corps or "")[:500],
-                           lien="/admin", dedup=dedup)
+                           titre=_sans_prefixe(sujet), detail=(corps or "")[:500],
+                           lien=lien or "/admin", dedup=dedup)
     except Exception as exc:  # noqa: BLE001 — la cloche qui rate ne casse pas l'alerte mail
         log.warning("alerte ops : cloche impossible (%s)", exc)
     log.info("alerte ops « %s » — mail=%s", sujet, detail_mail)
@@ -126,20 +158,22 @@ def _sink(db, sujet: str, corps: str, *, dedup: str) -> str:
 
 # ─────────────────────────────── incidents (ouvrir / rappeler / résoudre) ───────────────────────────────
 
-def signaler(db, cle: str, sujet: str, detail: str) -> str:
+def signaler(db, cle: str, sujet: str, detail: str, lien: str | None = None) -> str:
     """Ouvre l'incident `cle` s'il n'existe pas (→ 'ouvert', une alerte part), ou le rappelle AU PLUS une
     fois par jour (→ 'rappel'), sinon met juste à jour le détail sans rien envoyer (→ 'silence').
-    Le `sujet`/`detail` reçus rafraîchissent toujours l'incident (dernier état connu)."""
+    Le `sujet`/`detail` reçus rafraîchissent toujours l'incident (dernier état connu). `lien` = chemin de
+    l'action à mener (OPS-NUIT-1 point 6(d)) ; dérivé de la clé si absent. Sujet préfixé [URGENT]."""
     ensure_table(db)
     row = db.execute(text(
         "SELECT id, dernier_envoi_at FROM ops_incidents WHERE cle = :c AND resolu_at IS NULL"),
         {"c": cle}).mappings().first()
-    sujet_mail = f"{PREFIX} {sujet}"
+    sujet_mail = f"{URGENT} {sujet}"
+    lien = _lien_action(cle, lien)
     if row is None:
         db.execute(text(
             "INSERT INTO ops_incidents (cle, sujet, detail, premier_envoi_at, dernier_envoi_at, rappels) "
             "VALUES (:c, :s, :d, now(), now(), 0)"), {"c": cle, "s": sujet, "d": detail})
-        _sink(db, sujet_mail, detail + "\n\n— LABUSE, exploitation", dedup=f"ops:{cle}:ouvert")
+        _sink(db, sujet_mail, detail + "\n\n— LABUSE, exploitation", dedup=f"ops:{cle}:ouvert", lien=lien)
         return "ouvert"
     # FIX-ORFEVRE-1 pt 3 (D-04) — UNE SEULE définition du « jour » de dédup des alertes : le jour
     # RÉUNION (comme protection._aujourdhui et les clés de jobs_impl). Avant : jour UTC ici, jour
@@ -159,7 +193,7 @@ def signaler(db, cle: str, sujet: str, detail: str) -> str:
     jour = today_reunion().isoformat()   # FIX-ORFEVRE-1 pt 3 (D-04) — même jour que le test SQL ci-dessus
     _sink(db, f"{sujet_mail} (toujours ouvert)",
           detail + "\n\nIncident non résolu depuis l'ouverture — rappel quotidien.\n— LABUSE, exploitation",
-          dedup=f"ops:{cle}:{jour}")
+          dedup=f"ops:{cle}:{jour}", lien=lien)
     return "rappel"
 
 
@@ -173,22 +207,19 @@ def _escalade(db, cle: str, sujet: str, detail: str) -> str:
 
 
 def resoudre(db, cle: str) -> bool:
-    """Referme l'incident `cle` s'il était ouvert (→ True, un mail « résolu » part). Sinon rien (→ False :
-    on n'envoie JAMAIS un « résolu » pour un incident qui n'existait pas — pas de bruit)."""
+    """Referme l'incident `cle` s'il était ouvert (→ True). Sinon rien (→ False).
+
+    OPS-NUIT-1 point 6(a) (décision Vic) — PLUS AUCUN mail « résolu » : il faisait du bruit (un mail
+    par retour au vert). La résolution est désormais tracée en base (`resolu_at`) et REMONTE dans le
+    RÉSUMÉ DU MATIN (section « rentré dans l'ordre depuis hier »). Seule l'OUVERTURE d'un incident part
+    en mail immédiat (URGENT) ; le retour au vert attend le résumé."""
     ensure_table(db)
     row = db.execute(text(
-        "SELECT id, sujet, ouvert_at FROM ops_incidents WHERE cle = :c AND resolu_at IS NULL"),
+        "SELECT id FROM ops_incidents WHERE cle = :c AND resolu_at IS NULL"),
         {"c": cle}).mappings().first()
     if row is None:
         return False
     db.execute(text("UPDATE ops_incidents SET resolu_at = now() WHERE id = :i"), {"i": row["id"]})
-    ouvert = row["ouvert_at"]
-    if ouvert is not None:
-        ouvert = (ouvert if ouvert.tzinfo else ouvert.replace(tzinfo=timezone.utc)).astimezone(timezone.utc)
-    depuis = ouvert.strftime("%d/%m %H:%M") if ouvert else "?"
-    _sink(db, f"{PREFIX} résolu — {row['sujet']}",
-          f"L'incident ouvert le {depuis} (UTC) est résolu.\n— LABUSE, exploitation",
-          dedup=f"ops:{cle}:resolu")
     return True
 
 
@@ -201,6 +232,19 @@ def incidents_ouverts(db) -> list[dict]:
     return [{**dict(r), "ouvert_at": r["ouvert_at"].isoformat(),
              "dernier_envoi_at": r["dernier_envoi_at"].isoformat() if r["dernier_envoi_at"] else None}
             for r in rows]
+
+
+def incidents_resolus_depuis(db, heures: int = 26) -> list[dict]:
+    """OPS-NUIT-1 point 6(a) — les incidents RÉSOLUS dans les `heures` dernières (fenêtre du résumé du
+    matin : 26 h pour couvrir d'un résumé à l'autre sans trou). Remplace le mail « résolu » immédiat."""
+    ensure_table(db)
+    rows = db.execute(text(
+        "SELECT cle, sujet, ouvert_at, resolu_at FROM ops_incidents "
+        "WHERE resolu_at IS NOT NULL AND resolu_at >= now() - make_interval(hours => :h) "
+        "ORDER BY resolu_at DESC"), {"h": heures}).mappings().all()
+    return [{"cle": r["cle"], "sujet": r["sujet"],
+             "ouvert_at": r["ouvert_at"].isoformat() if r["ouvert_at"] else None,
+             "resolu_at": r["resolu_at"].isoformat() if r["resolu_at"] else None} for r in rows]
 
 
 # ─────────────────────────────── les vigies sans point d'appel naturel ───────────────────────────────
@@ -329,6 +373,11 @@ def _jobs_en_retard(db) -> list[dict]:
     Un job GELÉ (gel volontaire) ou NON planifié (manuel seul) n'est jamais compté : son silence est
     voulu. Chaque entrée porte `motif` pour que la vigie choisisse la bonne clé d'incident + escalade."""
     from .jobs import JOBS, bloque_depuis, lire_etat
+    # OPS-NUIT-1 point 6(e) — PLANCHER de retard : un job FRÉQUENT (healthcheck toutes les 15 min) ne doit
+    # pas crier « en retard » après 22 min (1,5 × cadence). Vic : « seuil de retard du healthcheck à 1 h ».
+    # On plancher le seuil à `job_retard_seuil_min_h` (défaut 1 h) pour « stale » et « jamais » (le motif
+    # « bloqué » reste jugé sur le timeout propre du job : un run tué en plein vol se voit tout de suite).
+    seuil_min_s = float(getattr(get_settings(), "job_retard_seuil_min_h", 1.0)) * 3600
     succes = {}
     premiere = None
     try:
@@ -347,7 +396,8 @@ def _jobs_en_retard(db) -> list[dict]:
         inter = _intervalle_s(j.cron_utc)
         if inter is None:
             continue
-        seuil_h = round(1.5 * inter / 3600, 1)
+        seuil_stale_s = max(1.5 * inter, seuil_min_s)     # plancher 1 h (OPS-NUIT-1)
+        seuil_h = round(seuil_stale_s / 3600, 1)
         # (a) BLOQUÉ — tué en plein run (prioritaire : un en_cours figé masque tout le reste).
         e = lire_etat(nom) or {}
         bl = bloque_depuis(e.get("statut"), e.get("debut"), j.timeout_s)
@@ -362,16 +412,17 @@ def _jobs_en_retard(db) -> list[dict]:
             # (réf = plus ancien passage de N'IMPORTE quel job). Base vierge (premiere None) → silence.
             if premiere is None:
                 continue
+            seuil_jamais_s = max(inter, seuil_min_s)      # plancher 1 h (OPS-NUIT-1)
             age = (now - premiere).total_seconds()
-            if age > inter:
+            if age > seuil_jamais_s:
                 retards.append({"nom": nom, "titre": j.titre, "cadence": j.cadence, "motif": "jamais",
                                 "dernier_succes": None, "age_h": round(age / 3600, 1),
-                                "seuil_h": round(inter / 3600, 1)})
+                                "seuil_h": round(seuil_jamais_s / 3600, 1)})
             continue
         # (c) A TOURNÉ PUIS S'EST TU — dernier succès trop vieux.
         le_utc = le if le.tzinfo else le.replace(tzinfo=timezone.utc)
         age = (now - le_utc).total_seconds()
-        if age > 1.5 * inter:
+        if age > seuil_stale_s:
             retards.append({"nom": nom, "titre": j.titre, "cadence": j.cadence, "motif": "stale",
                             "dernier_succes": le_utc.isoformat(),
                             "age_h": round(age / 3600, 1), "seuil_h": seuil_h})

@@ -479,10 +479,11 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
        test="tests/test_cron1_registre.py::test_job_a_une_raison"),   # dégel prod 20/10 : gel= retiré (job actif)
 
     # ══════════════════ L'EXPLOITATION — faire tourner le serveur ══════════════════
-    _j("backup-postgres", "Sauvegarde PostgreSQL (dump + rotation, 4 conservés)", "quotidien",
+    _j("backup-postgres", "Sauvegarde PostgreSQL (dump + rotation, 2 conservés)", "quotidien",
        "30 9 * * *", "13:30", touche="exploitation", timeout_s=1800, besoin_db=False,
-       raison="La seule sauvegarde : sans elle, une panne disque perd toute la base. Quotidien, 4 dumps "
-              "conservés. RECOUPEMENT tranché : l'expression LEGACY (`30 9 * * *`) est reprise à "
+       raison="La seule sauvegarde : sans elle, une panne disque perd toute la base. Quotidien, 2 dumps "
+              "conservés (garde anti-rétrécissement OPS-NUIT-1 : un dump 30 % plus petit n'en remplace "
+              "jamais un bon). RECOUPEMENT tranché : l'expression LEGACY (`30 9 * * *`) est reprise à "
               "l'identique — c'est le job réellement actif en prod ; garder l'horaire exact garantit un "
               "remplacement SANS TROU (le nouveau tourne au même instant que l'ancien ; deploy.sh pose "
               "avant de retirer le legacy).",
@@ -702,6 +703,17 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
               "le permet (garde 4×), sinon le contrôle de lisibilité pg_restore --list tient lieu de preuve.",
        test="tests/test_autonomie_registre.py::test_restore_test_au_registre"),
 
+    # OPS-NUIT-1 (décision Vic) — LE RÉSUMÉ DU MATIN : un seul mail chaque matin (07:30, après la sonde
+    # des verrous de 07:25 et la passe Radar de la nuit), MÊME « rien à signaler ».
+    _j("resume-matin", "Résumé du matin — état d'exploitation (un mail/jour, même « rien à signaler »)",
+       "quotidien", "30 3 * * *", "07:30", touche="exploitation", timeout_s=300, envoie_mail=True,
+       raison="OPS-NUIT-1 (décision Vic) — UN SEUL mail chaque matin fait le point : verdict du calcul de "
+              "nuit, sauvegardes (VPS + hors-VPS), Radar, verrous, cohérence, incidents ouverts (avec lien "
+              "d'action) et ce qui est rentré dans l'ordre DEPUIS HIER. Part TOUS les jours, même « rien à "
+              "signaler » (son absence est elle-même un signal). Remplace les mails « résolu » un-par-un "
+              "(point 6a) ; sujet [URGENT] s'il y a un geste attendu, sinon [INFO].",
+       test="tests/test_autonomie_registre.py::test_resume_matin_au_registre"),
+
     # ── NON REPRIS (retirés du registre par CRON-1 lot 1, avec la raison — cf. CRON-1-LOT1.md) ──
     # Radar : PAS de job. Le traitement des dépôts est déclenché au dépôt (manuel) ; une ÉCHÉANCE
     #   attendue vit en base → dépassée = tâche du Résumé (verrou G8, lot 2). Donc radar-cycle,
@@ -765,7 +777,10 @@ _FAMILLE_LIBELLE_ROLE: dict[str, tuple[int, str, str, bool]] = {
                      "Vérifie chaque mois que le dernier dump se restaure, dans une base à part, "
                      "et enregistre le résultat (visible au Tableau de bord).", True),
     "backup-postgres": (4, "La sauvegarde",
-                        "Copie complète de la base chaque jour, 4 conservées.", False),
+                        "Copie complète de la base chaque jour, 2 conservées (garde anti-rétrécissement).", False),
+    "resume-matin": (4, "Le résumé du matin",
+                     "Un mail chaque matin : calcul de nuit, sauvegardes, Radar, verrous, cohérence, "
+                     "incidents ouverts et résolus — même « rien à signaler ».", True),
     "pg-maintenance": (4, "L'entretien de la base",
                        "Réaligne le moteur PostgreSQL chaque dimanche pour garder les requêtes rapides.", True),
     "purge-runs": (4, "La purge des vieux runs",
