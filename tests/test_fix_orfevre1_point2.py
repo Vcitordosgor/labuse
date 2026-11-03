@@ -177,6 +177,12 @@ def test_orf02_repli_local_quand_la_base_est_indisponible(monkeypatch, etat_jobs
     du = types.SimpleNamespace(total=100, used=99, free=1)            # 99 % ≥ seuil (85)
     monkeypatch.setattr(jobs_impl.shutil, "disk_usage", lambda p: du)
 
+    # OPS-NUIT-2 — /readyz est désormais DÉBOUNCÉ (une coupure < 2 min de redéploiement n'ouvre rien).
+    # Une base verrouillée par pg_dump est une panne DURABLE : on pré-ancre le « pas prêt » au-delà de la
+    # tolérance pour simuler le sustained → le repli DOIT alors porter readyz (pas juste un blip toléré).
+    from datetime import datetime as _dt, timedelta as _td, timezone as _tz
+    ops_alertes._ecrire_readyz_depuis(_dt.now(_tz.utc) - _td(seconds=300))
+
     def _scope_ko():
         raise RuntimeError("base verrouillée (pg_dump en cours)")
 

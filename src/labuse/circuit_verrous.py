@@ -886,14 +886,14 @@ def verrou_coherence_banc(db=None) -> ResultatVerrou:
         from scripts.coherence import golden as _g
         from scripts.coherence.lib import Contexte as _Ctx
         if any((_g.GOLDEN_DIR / f"{idu}.json").exists() for idu in _g.TEMOINS):
-            import json as _json
-            from fastapi.testclient import TestClient
-            from .api.app import app as _app
-            client = TestClient(_app)
-            def _fetch(path):
-                r = client.get(path)
-                r.raise_for_status()
-                return _json.loads(r.content)
+            # OPS-NUIT-2 (DEPLOY-AUTONOMIE-2, dette fermée) — LE MÊME LECTEUR QUE LE BANC : client
+            # EN-PROCESS AUTHENTIFIÉ (session « banc »), pas un TestClient(app) NU. Avant, le golden lisait
+            # /parcels sans session → sur la prod servie (auth active) chaque appel renvoyait 401 →
+            # `raise_for_status` levait → golden « cassé » (taxe « disparue », hauteur SQL ≠ fiche) alors
+            # que le client voit la bonne donnée. `client_en_process` pose HOTE_INTERNE + le jeton
+            # `make_token` : lecteur IDENTIQUE au banc de 03h45 → 0 dérive déterministe.
+            from scripts.coherence.lib import client_en_process as _cep
+            _client, _fetch = _cep()
             ctx = _Ctx(fetch=_fetch)
             derives = _g.comparer_tous(ctx)
             pbs.extend(f"golden : {d}" for d in derives)

@@ -436,7 +436,12 @@ def healthcheck(ctx: JobContext) -> None:
     except OSError:
         pct = None
     from . import ops_alertes
-    ready, motif = ops_alertes._readyz_local()
+    # OPS-NUIT-2 — /readyz DÉBOUNCÉ : la décision (ouvrir seulement si « pas prêt » persiste au-delà de
+    # la tolérance) est partagée avec `verifier_declencheurs` via `_readyz_decision` (sans base). On la
+    # calcule ICI aussi pour garder le REPLI local quand la base est indisponible (pg_dump) : une coupure
+    # COURTE de redéploiement ne descend pas dans a_signaler ; une vraie panne, si.
+    rz = ops_alertes._readyz_decision(s)
+    ready, motif = rz["ready"], rz["motif"]
     # ORF-02 — on DÉCIDE d'abord quoi signaler/résoudre, puis on écrit par la porte unique. Si la base
     # est indisponible (ex. : verrouillée pendant le pg_dump — précisément quand le disque franchit le
     # seuil), chaque alerte décidée part en REPLI local (fichier + journald) : la sonde n'est plus
@@ -449,11 +454,12 @@ def healthcheck(ctx: JobContext) -> None:
                            "Faire de la place (cf. inventaire SOLIDITE-1 Lot 3)."))
     elif pct is not None:
         a_resoudre.append("disque")
-    if not ready:
+    if rz["ouvrir"]:
         a_signaler.append(("readyz", "/readyz répond « pas prêt »",
-                           f"La sonde /readyz locale dit le service NON prêt : {motif}."))
+                           f"La sonde /readyz locale dit le service NON prêt depuis {round(rz['age_s'])} s "
+                           f"(> tolérance {round(rz['tol_s'])} s) : {motif}."))
     else:
-        a_resoudre.append("readyz")
+        a_resoudre.append("readyz")   # prêt OU coupure courte tolérée → pas d'incident
     vigies: dict = {}
     try:
         from .db import session_scope
@@ -949,18 +955,33 @@ def _mesures_run(db, candidat: str, precedent: str) -> dict:
         "SELECT count(*) FROM parcel_p_score_v2 a JOIN parcel_p_score_v2 b ON a.parcelle_id = b.parcelle_id "
         "WHERE a.run_id = :a AND b.run_id = :b AND a.tier IS DISTINCT FROM b.tier",
         {"a": candidat, "b": precedent})
-    # cohérence : dernier passage du banc (coherence_runs, mode « île »). Vert = 0 FAUX-CLIENT et 0 erreur
-    # lecteur ; les écarts tolérables/incohérences connues du balayage ne bloquent pas une promotion.
+    # cohérence : dernier passage du BANC (coherence_runs, mode « île » = coherence-banc de 03h45), JAMAIS
+    # une mesure relancée ici. Vert = 0 FAUX-CLIENT et 0 erreur lecteur ; les écarts tolérables/incohérences
+    # connues du balayage ne bloquent pas une promotion. OPS-NUIT-2 (piège cron DEPLOY-AUTONOMIE-2) : le
+    # banc tourne à 03h45, APRÈS le début du calcul (02h) → la dernière ligne peut être celle d'HIER. On
+    # exige qu'elle soit FRAÎCHE (ts ≥ now − max_age) ; sinon la cohérence est « en attente » du banc —
+    # `coherence_frais=False` dit à controler_run de NE PAS conclure (pas de faux « contrôles en échec »).
     try:
+        max_age_h = float(getattr(get_settings(), "calcul_nuit_coherence_max_age_h", 12.0))
         row = db.execute(text(
-            "SELECT faux_client, COALESCE(erreurs_lecteur, 0) FROM coherence_runs "
-            "ORDER BY ts DESC LIMIT 1")).first()
-        m["coherence_ecarts"] = row[0] if row else None
-        m["coherence_erreurs"] = row[1] if row else None
+            "SELECT faux_client, COALESCE(erreurs_lecteur, 0), ts FROM coherence_runs "
+            "WHERE mode = 'ile' ORDER BY ts DESC LIMIT 1")).first()
+        if row is None:
+            m["coherence_ecarts"], m["coherence_erreurs"], m["coherence_frais"] = None, None, False
+        else:
+            ts = row[2]
+            if ts is not None and ts.tzinfo is None:
+                ts = ts.replace(tzinfo=timezone.utc)
+            frais = ts is not None and (datetime.now(timezone.utc) - ts).total_seconds() <= max_age_h * 3600
+            m["coherence_ecarts"] = row[0]
+            m["coherence_erreurs"] = row[1]
+            m["coherence_frais"] = bool(frais)
+            m["coherence_ts"] = ts.isoformat() if ts else None
     except Exception as exc:  # noqa: BLE001
         log.warning("calcul-nuit : cohérence illisible (%s)", exc)
         m["coherence_ecarts"] = None
         m["coherence_erreurs"] = None
+        m["coherence_frais"] = False
     return m
 
 
@@ -1062,10 +1083,13 @@ def calcul_nuit(ctx: JobContext) -> None:
 
         if not promeut:
             v = autonomie.controler_run(mesures, palier_delta_max_pct=s.calcul_nuit_palier_delta_max_pct)
-            verdict_txt = "OK — contrôles passés" if v.ok else v.resume()
-            if v.ok:
+            verdict_txt = v.resume()
+            # OPS-NUIT-2 — TROIS issues, pas deux : OK (à promouvoir), EN ATTENTE (banc de cohérence pas
+            # encore passé — PAS un incident, verdict au prochain résumé), ÉCHEC (problème actionnable).
+            en_attente_seul = bool(v.en_attente) and not v.echecs
+            if v.ok or en_attente_seul:
                 # Rien de cassé : le RÉSUMÉ DU MATIN annonce « run calculé, contrôles OK, à promouvoir »
-                # (lien d'action vers Circuit). Pas de mail d'incident dédié (OPS-NUIT-1 point 6).
+                # (ou « cohérence en attente du banc »). Pas de mail d'incident (OPS-NUIT-1 point 6).
                 ops_alertes.resoudre(db, f"calcul-nuit:{label}")
             else:
                 # Contrôles en ÉCHEC = problème actionnable → incident URGENT avec lien d'action.
@@ -1077,7 +1101,8 @@ def calcul_nuit(ctx: JobContext) -> None:
                     "Le run reste en base (non servi) — à corriger puis rejouer.", lien="/admin")
             db.commit()
             ctx.compte(label=label, recette=recette, promu=False, promotion_en_attente=v.ok,
-                       controles_ok=v.ok, verdict=verdict_txt, mesures=mesures,
+                       controles_ok=v.ok, controles_en_attente=en_attente_seul,
+                       verdict=verdict_txt, mesures=mesures,
                        palier_delta_pct=v.details.get("palier_delta_pct"))
             return
 
@@ -1148,6 +1173,10 @@ def _resume_matin_texte(db, s) -> tuple[bool, str, str]:
             elif c.get("promotion_en_attente"):
                 L.append(f"• Calcul de nuit : {lbl} calculé, contrôles OK — À PROMOUVOIR : "
                          f"{ops_alertes._url_absolue(s, '/admin')}")
+            elif c.get("controles_en_attente"):
+                # OPS-NUIT-2 — cohérence pas encore mesurée cette nuit (banc 03h45) : INFO, pas URGENT.
+                L.append(f"• Calcul de nuit : {lbl} calculé — cohérence EN ATTENTE du banc de 03h45 "
+                         "(verdict au prochain résumé).")
             elif c.get("controles_ok") is False:
                 urgent = True
                 L.append(f"• Calcul de nuit : {lbl} contrôles EN ÉCHEC — {c.get('verdict')}")
@@ -1156,12 +1185,16 @@ def _resume_matin_texte(db, s) -> tuple[bool, str, str]:
     except Exception as exc:  # noqa: BLE001
         L.append(f"• Calcul de nuit : état illisible ({type(exc).__name__}).")
 
-    # 2 — sauvegardes : dernier dump (VPS) + copie hors-VPS.
+    # 2 — sauvegardes : dernier dump TERMINÉ (VPS) + copie hors-VPS. OPS-NUIT-2 : `_dumps_termines`
+    # écarte un dump en cours d'écriture (sinon le résumé afficherait sa taille partielle « 1,2 Mo »).
     try:
-        dumps = ops_alertes._dumps(s.backup_dir)
+        dumps = ops_alertes._dumps_termines(s.backup_dir)
         if not dumps:
-            urgent = True
-            L.append("• Sauvegarde : AUCUN dump présent — la sauvegarde ne tourne plus.")
+            if ops_alertes._backup_en_cours():
+                L.append("• Sauvegarde : en cours d'écriture (dump pas encore terminé).")
+            else:
+                urgent = True
+                L.append("• Sauvegarde : AUCUN dump présent — la sauvegarde ne tourne plus.")
         else:
             d = dumps[0]
             age_h = round((datetime.now(timezone.utc).timestamp() - d.stat().st_mtime) / 3600, 1)
@@ -1176,16 +1209,22 @@ def _resume_matin_texte(db, s) -> tuple[bool, str, str]:
     except Exception as exc:  # noqa: BLE001
         L.append(f"• Sauvegarde : état illisible ({type(exc).__name__}).")
 
-    # 3 — Radar : dernière passe reçue de l'extension.
+    # 3 — Radar : LE compteur canonique de la nuit, par portail (OPS-NUIT-2) — le MÊME chiffre que le
+    # Tableau de bord et l'admin Radar. Avant : la DERNIÈRE ligne pige_passes (ORDER BY id) seule → 119,
+    # alors que le Tableau de bord sommait les passes → 152, pour la même nuit : trois nombres pour une
+    # notion. Désormais « annonces nouvelles », par portail, lues de pige_annonces (vérité par portail).
     try:
-        row = db.execute(text("SELECT passe, captured_at, n_nouvelles, n_maj, source FROM pige_passes "
-                              "ORDER BY id DESC LIMIT 1")).mappings().first()
-        if row:
-            L.append(f"• Radar : passe « {row['passe']} » le "
-                     f"{row['captured_at'].astimezone().strftime('%d/%m %H:%M') if row['captured_at'] else '?'} "
-                     f"({row['n_nouvelles']} nouvelles, {row['n_maj']} maj, {row['source']}).")
+        from .pige.comptage_nuit import comptage_nuit as _comptage_nuit, ligne_resume as _ligne_resume
+        cn = _comptage_nuit(db)
+        if cn.get("captured_at"):
+            try:
+                quand = datetime.fromisoformat(cn["captured_at"]).astimezone().strftime("%d/%m %H:%M")
+            except (ValueError, TypeError):
+                quand = cn.get("jour") or "?"
+            L.append(f"• Radar : capture auto du {quand} — {_ligne_resume(cn)} · "
+                     f"{int(cn.get('pages') or 0)} page(s) lue(s).")
         else:
-            L.append("• Radar : aucune passe enregistrée.")
+            L.append("• Radar : aucune capture automatique enregistrée.")
     except Exception as exc:  # noqa: BLE001
         L.append(f"• Radar : état illisible ({type(exc).__name__}).")
 

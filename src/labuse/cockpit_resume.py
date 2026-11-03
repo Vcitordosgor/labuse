@@ -732,8 +732,11 @@ def _carte_radar(radar: dict | None) -> dict | None:
         ligne_cap = "Aucune capture automatique"
     else:
         quand = cap_at.astimezone().strftime("%d/%m %H:%M")
-        ligne_cap = (f"Dernière capture auto {quand} · {int(cap.get('nouvelles') or 0)} annonce(s), "
-                     f"{int(cap.get('pages') or 0)} page(s)")
+        # OPS-NUIT-2 — annonces NOUVELLES par portail (compteur canonique, pige_annonces) via la ligne
+        # partagée ; les PAGES lues (activité de capture) sont dites à part, jamais confondues.
+        from .pige.comptage_nuit import ligne_resume
+        ligne_cap = (f"Dernière capture auto {quand} · {ligne_resume(cap)} · "
+                     f"{int(cap.get('pages') or 0)} page(s) lue(s)")
     cyc = radar.get("cycle") or None
     ligne_cyc = f"radar-cycle : {_hhmm(cyc.get('fin'))}" if cyc else "radar-cycle : jamais"
     donnees_on, notifs_on = bool(radar.get("donnees_on")), bool(radar.get("notifs_on"))

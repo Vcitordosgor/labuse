@@ -561,12 +561,11 @@ def radar_check(request: Request) -> dict:
             "nom_fichier": dep["nom_fichier"], "nb_annonces": dep["nb_annonces"],
             "nb_nouvelles": dep["nb_nouvelles"], "nb_maj": dep["nb_maj"], "nb_a_qualifier": dep["nb_a_qualifier"],
         }
-        # RADAR-FIX-1 (3) — DERNIÈRE CAPTURE AUTOMATIQUE (l'extension) : `pige_passes` n'est alimentée QUE
-        # par /admin/radar/capture (jamais un dépôt manuel), donc c'est bien la trace de l'AUTOMATE. On
-        # agrège la dernière soirée (un `captured_at`) : pages + annonces (nouvelles + MAJ).
-        cap = c.execute(text(
-            "SELECT captured_at, sum(n_pages) AS pages, sum(n_nouvelles) AS nouv, sum(n_maj) AS maj "
-            "FROM pige_passes GROUP BY captured_at ORDER BY captured_at DESC LIMIT 1")).mappings().first()
+        # OPS-NUIT-2 — LE compteur canonique de la nuit, par portail (pige_annonces, vérité par portail) :
+        # le MÊME chiffre que le Tableau de bord et le résumé du matin. Avant, `capture_auto.nouvelles`
+        # sommait pige_passes.n_nouvelles sur TOUTES les sources → un nombre divergent du reste.
+        from .comptage_nuit import comptage_nuit as _comptage_nuit
+        _cn = _comptage_nuit(c)
         # RADAR-FIX-NU3-4 (K-RAD-04) — dernier COMPTE-RENDU de soirée déposé par l'extension (succès,
         # échec, ou veille du Mac). C'est la trace qui manquait à une nuit ratée (/admin/radar/journal).
         journal = c.execute(text(
@@ -586,13 +585,21 @@ def radar_check(request: Request) -> dict:
     vide_48h = derniere is None or derniere < datetime.now(tz=timezone.utc) - timedelta(hours=48)
     # RADAR-FIX-1 (3) — « aucune capture automatique depuis 26 h » → la tâche « Déposer Radar » (le Mac de
     # Vic était éteint, ou l'extension bloquée). 26 h = un jour + la marge du jitter du soir (0-3 h).
-    # « nombre d'annonces » = les NOUVELLES de la soirée (les MAJ d'une relecture re-voient les mêmes
-    # biens page après page → les sommer gonflerait le chiffre) ; le nombre de pages dit l'ampleur.
-    capture_auto = None if not cap else {
-        "captured_at": cap["captured_at"].isoformat() if cap["captured_at"] else None,
-        "pages": int(cap["pages"] or 0), "nouvelles": int(cap["nouv"] or 0),
+    # OPS-NUIT-2 — « nouvelles » = le compteur canonique de la nuit (pige_annonces, par portail), identique
+    # partout ; les PAGES lues restent à part (activité de capture, jamais additionnée aux annonces).
+    _cap_at = _cn.get("captured_at")
+    capture_auto = None if not _cap_at else {
+        "captured_at": _cap_at,
+        "pages": int(_cn.get("pages") or 0),
+        "nouvelles": int(_cn.get("nouvelles") or 0),
+        "par_portail": _cn.get("par_portail") or [],
+        "jour": _cn.get("jour"),
     }
-    capture_auto_en_retard = cap is None or cap["captured_at"] < datetime.now(tz=timezone.utc) - timedelta(hours=26)
+    try:
+        _cap_at_dt = datetime.fromisoformat(_cap_at) if _cap_at else None
+    except (ValueError, TypeError):
+        _cap_at_dt = None
+    capture_auto_en_retard = _cap_at_dt is None or _cap_at_dt < datetime.now(tz=timezone.utc) - timedelta(hours=26)
     # RV2-V1 — état du répertoire de captures (écriture) exposé à l'admin : le défaut prod se voit
     # AVANT le premier dépôt, avec le chemin fautif nommé.
     from .tables import captures_dir_writable
