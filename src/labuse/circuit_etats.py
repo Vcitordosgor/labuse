@@ -306,8 +306,20 @@ def etat_reservoir(r: dict) -> tuple[str, str]:
     # (3) SONDE EN PANNE — signal TECHNIQUE (rouge), 3 échecs NON-SSL consécutifs. Pas un état de
     #     la source : une panne de sonde n'a jamais rendu la donnée fausse. Un échec SSL (env local
     #     non branché sur un faisceau de CA) n'y entre pas — le lot 0 le rend impossible en prod.
+    #
+    #     TABLEAU-1 (point 3) — on SÉPARE les deux causes d'échec amont :
+    #       · « illisible » = l'amont répond mais le FORMAT/URL a changé → c'est NOTRE lecteur qui est
+    #         cassé : « en panne » dès 3 échecs (il faut recâbler la sonde).
+    #       · « injoignable » = réseau/502/timeout → l'amont est SIMPLEMENT EN PANNE (ex. Overpass public
+    #         saturé) : on ne crie pas tant que la panne a MOINS DE 7 JOURS. Le veilleur passe ~1×/jour
+    #         (cadence_heures), donc l'âge de la panne ≈ echecs × cadence. Sous 7 j → on garde le dernier
+    #         état confirmé (« à jour »), sans carte ni rouge. Au-delà → « en panne » (persistant).
     if (statut in ("injoignable", "illisible") and echecs >= 3
             and "CERTIFICATE_VERIFY_FAILED" not in message):
+        cadence_h = int(veille.get("cadence_heures") or 24)
+        panne_jours = echecs * cadence_h / 24.0
+        if statut == "injoignable" and panne_jours < 7:
+            return ("mint", "à jour")
         return ("rouge", "sonde en panne")
 
     # (4) JAMAIS VÉRIFIÉE — une source SURVEILLÉE (vraie sonde amont câblée et active) dont aucun

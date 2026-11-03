@@ -15,18 +15,20 @@ def _res(nom, libelle):
     return {"id": nom, "nom": nom, "etat": [couleur, libelle], "vanne": {}, "veille": {}}
 
 
+# TABLEAU-1 — noms NON classés explicitement → classe B par défaut → font une ligne « Injecter ».
 RESERVOIRS = [
-    _res("A", "nouvelle version"),   # → Injecter (ambre, compte)
-    _res("B", "nouvelle version"),   # → Injecter
+    _res("A", "nouvelle version"),   # classe B (défaut) → Injecter (ambre, compte)
+    _res("B", "nouvelle version"),   # classe B (défaut) → Injecter
     _res("C", "échue"),              # → Déposer (ambre, compte)
     _res("D", "jamais vérifiée"),    # gris → PAS de ligne (appelle l'agent depuis Sources)
     _res("E", "à jour"),             # mint → rien
-    _res("F", "sonde en panne"),     # rouge → Décider (compte)
+    _res("F", "sonde en panne"),     # TABLEAU-1 : non bloquant → PLUS de ligne (va en « tout tourne »)
 ]
 FUITES_ROB = [{"id": "exports_recette", "nom": "Recette des exports"}]   # 1 robinet lit hors moteur
 ECARTS = [{"chiffre_id": "parcelles_potentiel", "robinet_a": "table communes", "valeur_a": 1812,
            "robinet_b": "fiche commune", "valeur_b": 1790, "robinet_a_id": None}]              # 1 écart ouvert
-VERROUS = {"casses": ["G8"]}         # 1 verrou cassé → Décider
+# 1 verrou BLOQUANT (V1c) → Décider ; G8 (avertissement) ne compte PAS (TABLEAU-1 → section santé).
+VERROUS = {"casses": ["V1c", "G8"]}
 
 
 def _compose(**kw):
@@ -54,9 +56,10 @@ def test_invariant_compteur_egale_lignes_egale_formule():
     af = _compose()
     # 1) compteur = nombre de lignes
     assert af["total"] == len(af["lignes"])
-    # 2) = pastilles non vertes (Sources : 2 nouvelle + 1 échue + 1 panne) + Circuit (1 fuite + 1
-    #    écart + 1 verrou) + actions (Calculer 0 + Basculer 1) = 4 + 3 + 1 = 8
-    attendu = (2 + 1 + 1) + (1 + 1 + 1) + (0 + 1)
+    # 2) = pastilles non vertes (Sources : 2 nouvelle version CLASSE B + 1 échue ; la sonde en panne ne
+    #    compte plus — TABLEAU-1) + Circuit (1 fuite + 1 écart + 1 verrou BLOQUANT ; G8 exclu)
+    #    + actions (Calculer 0 + Basculer 1) = 3 + 3 + 1 = 7
+    attendu = (2 + 1) + (1 + 1 + 1) + (0 + 1)
     assert af["total"] == attendu
     # 3) = la fonction unique total_a_faire (celle que lit la tuile Pilotage) sur les MÊMES entrées
     assert af["total"] == R.total_a_faire(
@@ -93,6 +96,33 @@ def test_tuiles_perimees_comptent_dans_invariant():
         candidat="q_v15", residuel=None, tuiles=tuiles)
     # une ligne de plus que sans tuiles périmées
     assert af["total"] == _compose()["total"] + 1
+
+
+def test_classe_a_en_nouvelle_version_ne_fait_pas_de_ligne_injecter():
+    """TABLEAU-1 (point 1) — une source de CLASSE A (ex. « Population légale (INSEE via geo.api.gouv) »)
+    en nouvelle version s'injecte SEULE la nuit : elle ne doit JAMAIS faire de ligne « Injecter »
+    (décision de Vic) ni compter dans total_a_faire. Une source structurante (classe B) en fait une."""
+    res_a = {"id": 1, "nom": "Population légale (INSEE via geo.api.gouv)",
+             "etat": ["ambre", "nouvelle version"], "vanne": {}, "veille": {}}
+    res_b = {"id": 2, "nom": "DVF / valeurs foncières", "categorie": "marche",
+             "etat": ["ambre", "nouvelle version"], "vanne": {}, "veille": {}}
+    af = R.composer_a_faire([res_a, res_b], residuel=None, candidat=None, run_servi="q",
+                            verrous={}, fuites_robinets=[], ecarts=[], etats_compte={"total": 2})
+    titres = [l["titre"] for l in af["lignes"]]
+    assert "Injecter Population légale (INSEE via geo.api.gouv)" not in titres   # classe A : auto nuit
+    assert any("Injecter DVF" in t for t in titres)                             # classe B : clic de Vic
+    assert af["total"] == 1
+    assert af["total"] == R.total_a_faire([res_a, res_b], residuel=None, candidat=None)
+
+
+def test_sonde_en_panne_ne_fait_plus_de_ligne():
+    """TABLEAU-1 (point 3+5) — une sonde en panne (signal non bloquant) ne fait plus de carte « décider » :
+    elle vit dans « Est-ce que tout tourne ? ». Donc 0 ligne, 0 dans total_a_faire."""
+    res_f = {"id": 9, "nom": "OCS GE", "etat": ["rouge", "sonde en panne"], "vanne": {}, "veille": {}}
+    af = R.composer_a_faire([res_f], residuel=None, candidat=None, run_servi="q",
+                            verrous={}, fuites_robinets=[], ecarts=[], etats_compte={"total": 1})
+    assert af["total"] == 0 and af["lignes"] == []
+    assert R.total_a_faire([res_f]) == 0
 
 
 def test_tout_coule_zero_ligne():

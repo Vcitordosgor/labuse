@@ -5,7 +5,10 @@
 //      (Injecter · Reconstruire · Réessayer · Accepter), « demande du code » + « Voir le détail » pour
 //      ce qui n'est pas un clic. Plus aucun bouton « Décider ».
 //   2. « Est-ce que tout tourne ? »  — 4 tuiles + « Voir l'usine ».
-//   3. « Où en est la mise à jour ? »  — 4 étapes (Injecter → Calculer → Basculer → Envoyer en prod).
+//   3. « Où en est la mise à jour ? »  — 4 étapes (Injecter → Calculer → Promotion → Envoyer en prod).
+//      TABLEAU-1 (point 5) : ce bloc DIT la vérité du moment (version servie, calcul en cours ou non,
+//      promotion automatique ou en attente du clic de Vic). Plus de bouton « Injecter »/« Calculer »
+//      pour ce qui tourne seul la nuit ; plus de « se fait depuis le Mac » (le calcul est sur le serveur).
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
 
@@ -42,7 +45,7 @@ export function TableauDeBord({ data, onVoirUsine, onDepotManuel }:
   const accepter = useMutation({ mutationFn: postCockpitAccepterEcarts,
     onSuccess: () => apres('Écarts acceptés (témoins regénérés) — suivi dans le Journal.'), onError: surErreur })
   const calculer = useMutation({ mutationFn: () => postAdminFluxLancerRun('m36'),
-    onSuccess: () => apres('Calcul lancé sur le Mac — suivi dans le Journal.'), onError: surErreur })
+    onSuccess: () => apres('Calcul lancé — suivi dans le Journal.'), onError: surErreur })
   const basculer = useMutation({ mutationFn: (run: string) => postAdminFluxBascule(run),
     onSuccess: () => apres('Bascule faite — l\'app sert la nouvelle version.'), onError: surErreur })
   const envoyer = useMutation({ mutationFn: postCockpitEnvoyerProd,
@@ -141,8 +144,10 @@ export function TableauDeBord({ data, onVoirUsine, onDepotManuel }:
       <div className="ck-sect">
         <div className="ck-head">
           <h2>Est-ce que tout tourne&nbsp;?</h2>
+          {/* TABLEAU-1 (point 5) — l'en-tête n'alarme que sur les VRAIS échecs ; un poste dont la date
+              n'est pas venue est « pas encore dû », jamais « à l'arrêt ». */}
           <span className="sub">{r.postes} postes dans l'usine · {r.vert} au vert
-            {r.echec ? ` · ${r.echec} en échec` : ''}{r.arret ? ` · ${r.arret} à l'arrêt` : ''}</span>
+            {r.echec ? ` · ${r.echec} en échec` : ''}{r.pas_encore_du ? ` · ${r.pas_encore_du} pas encore dû${r.pas_encore_du > 1 ? 's' : ''}` : ''}{r.arret ? ` · ${r.arret} à l'arrêt` : ''}</span>
           <span className="right"><button className="btn" onClick={onVoirUsine}>Voir l'usine</button></span>
         </div>
         <div className="ck-tuiles">
@@ -178,7 +183,6 @@ export function TableauDeBord({ data, onVoirUsine, onDepotManuel }:
                 <div className="ln">{e.ligne}{prodRun ? ` (${prodRun})` : ''}</div>
                 <div className={`fa ${e.fait ? '' : 'todo'}`}><i />{e.fait ? 'fait' : 'à faire'}</div>
                 {e.bouton && <button className="btn solid" disabled={enCours} onClick={() => lancerEtape(e)}>{e.bouton.label}</button>}
-                {e.id === 'envoyer-prod' && e.local === false && <span className="muted" style={{ fontSize: 12 }}>se fait depuis le Mac</span>}
               </div>
             )
           })}

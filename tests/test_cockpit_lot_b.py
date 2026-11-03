@@ -79,7 +79,10 @@ def test_resume():
     # compté « à l'arrêt » : la grille le peint « travaille » (violet), l'en-tête ne doit plus le
     # contredire en le comptant à l'arrêt. Il rejoint la flotte saine (vert). Restent « à l'arrêt » :
     # agents-sources (jamais parti) et digest (gelé).
-    assert ck.composer_usine(_jobs())["resume"] == {"postes": 6, "vert": 3, "echec": 1, "arret": 2}
+    # TABLEAU-1 (point 5) — `pas_encore_du` s'ajoute (0 ici : agents-sources n'est pas planifié → reste
+    # « à l'arrêt » ; seul un job PLANIFIÉ jamais parti serait « pas encore dû »).
+    assert ck.composer_usine(_jobs())["resume"] == {
+        "postes": 6, "vert": 3, "echec": 1, "arret": 2, "pas_encore_du": 0}
 
 
 # ─────────────── le registre réel (import) ───────────────
