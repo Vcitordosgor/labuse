@@ -795,7 +795,10 @@ async function runEvening(source) {
       }
       const nConf = await passeConfirmation(opts, tabId, confLbc);
       // RADAR-FIX-NU3-4 (M-T19) — libellé humain, sans abréviations.
-      parts.push(`Leboncoin : ${nNouv} nouvelle(s), ${nRel} revue(s), ${nConf} vérifiée(s)`);
+      // OPS-NUIT-2 — ces nombres sont l'ACTIVITÉ DE CAPTURE (PAGES lues / annonces vérifiées), PAS le
+      // compte d'« annonces nouvelles » : celui-là est le compteur canonique du serveur (pige_annonces,
+      // par portail), affiché au Tableau de bord / résumé du matin / admin Radar. On nomme donc des PAGES.
+      parts.push(`Leboncoin : ${nNouv} page(s) de nouveautés, ${nRel} page(s) revues, ${nConf} annonce(s) vérifiée(s)`);
       try { await chrome.tabs.remove(tabId); } catch (_) {}
       tabId = null;
     }
@@ -803,7 +806,7 @@ async function runEvening(source) {
     // ── Bloc Bien'ici (RADAR-SOURCES-2 : appel API même-origine, pas de lecture de page) ──
     if (opts.bieniciSearchUrl) {
       const bi = await runSoireeBienici(opts, capturedAt, etat, confBi, source);
-      parts.push(`Bien'ici : ${bi.nNouv} nouvelle(s), ${bi.nRel} revue(s), ${bi.nConf} vérifiée(s)`);
+      parts.push(`Bien'ici : ${bi.nNouv} page(s) de nouveautés, ${bi.nRel} page(s) revues, ${bi.nConf} annonce(s) vérifiée(s)`);
     }
 
     // RADAR-COUVERTURE-1 — horodatage en HEURE RÉUNION (le Mac est à Paris ; on affiche l'heure du terrain).

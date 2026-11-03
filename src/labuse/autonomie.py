@@ -124,17 +124,23 @@ def sources_par_classe(sources: list[dict]) -> dict[str, list[dict]]:
 
 @dataclass
 class Verdict:
-    """Le résultat d'une batterie de contrôles. `ok` est vrai SEULEMENT si tous passent. `echecs` liste
-    les contrôles tombés (une phrase chacun, pour le mail) ; `details` garde les mesures brutes."""
+    """Le résultat d'une batterie de contrôles. `ok` est vrai SEULEMENT si tous passent ET rien n'est en
+    attente. `echecs` liste les contrôles TOMBÉS (une phrase chacun, pour le mail URGENT) ; `en_attente`
+    liste les contrôles qu'on ne peut pas encore CONCLURE sans faux-négatif (OPS-NUIT-2 : le banc de
+    cohérence de 03h45 pas encore passé) — ni vert ni rouge : le run n'est pas promu (prudence) mais ce
+    n'est PAS une panne (résumé en INFO, pas d'incident URGENT). `details` garde les mesures brutes."""
     ok: bool
     echecs: list[str] = field(default_factory=list)
     reussis: list[str] = field(default_factory=list)
+    en_attente: list[str] = field(default_factory=list)
     details: dict = field(default_factory=dict)
 
     def resume(self) -> str:
-        if self.ok:
-            return f"OK — {len(self.reussis)} contrôle(s) passé(s)"
-        return "REFUS — " + " ; ".join(self.echecs)
+        if self.echecs:
+            return "REFUS — " + " ; ".join(self.echecs)
+        if self.en_attente:
+            return "EN ATTENTE — " + " ; ".join(self.en_attente)
+        return f"OK — {len(self.reussis)} contrôle(s) passé(s)"
 
 
 # ════════════════════════════════ 1. CALCUL DE NUIT — fenêtre, cadence, contrôles ═══════════════
@@ -203,8 +209,17 @@ def controler_run(mesures: dict, *, palier_delta_max_pct: float) -> Verdict:
            f"compte de parcelles divergent (candidat {cp} ≠ précédent {cprec})")
 
     ec, erl = mesures.get("coherence_ecarts"), mesures.get("coherence_erreurs")
-    _exige(ec == 0 and (erl or 0) == 0, "cohérence",
-           f"suite de cohérence non verte ({ec} écart(s), {erl} lecteur(s) en erreur)")
+    if not mesures.get("coherence_frais", True):
+        # OPS-NUIT-2 (DEPLOY-AUTONOMIE-2, piège cron) — le banc de cohérence tourne à 03h45, APRÈS le
+        # démarrage du calcul (02h) : tant qu'il n'a pas produit de passage FRAIS pour cette nuit, la
+        # dernière ligne `coherence_runs` est celle d'HIER (ou aucune). On NE conclut PAS dessus — ni
+        # faux vert, ni faux rouge « contrôles en échec ». La cohérence est EN ATTENTE du banc : le run
+        # n'est pas promu (prudence) mais ce n'est PAS un incident (le verdict part au résumé en INFO).
+        v.en_attente.append("cohérence : le banc de 03h45 n'a pas encore produit de passage frais "
+                            "pour cette nuit — verdict au prochain résumé")
+    else:
+        _exige(ec == 0 and (erl or 0) == 0, "cohérence",
+               f"suite de cohérence non verte ({ec} écart(s), {erl} lecteur(s) en erreur)")
 
     _exige(mesures.get("copro_actionnables") == 0, "copro-hors-palier",
            f"{mesures.get('copro_actionnables')} copropriété(s) en palier actionnable (doctrine E-010)")
@@ -222,6 +237,10 @@ def controler_run(mesures: dict, *, palier_delta_max_pct: float) -> Verdict:
                f"écart de paliers {pct}% > seuil {palier_delta_max_pct}% "
                f"({chg}/{tot} parcelles) — dérive anormale")
 
+    # un contrôle EN ATTENTE (cohérence pas encore mesurée cette nuit) bloque la promotion par prudence,
+    # sans être un échec : `ok` tombe, mais `echecs` reste vide → le résumé le dit en INFO, pas en URGENT.
+    if v.en_attente:
+        v.ok = False
     v.details["mesures"] = mesures
     return v
 
@@ -348,7 +367,11 @@ def promouvoir_si_ok(mesures: dict, *, palier_delta_max_pct: float,
     v = controler_run(mesures, palier_delta_max_pct=palier_delta_max_pct)
     out: dict = {"promu": False, "verdict": v, "resume": v.resume()}
     if not v.ok:
-        alerter(v)
+        # OPS-NUIT-2 — un run NON promu seulement parce qu'un contrôle est EN ATTENTE (banc de cohérence
+        # pas encore passé) n'est PAS une panne : pas de mail « non promu » (il repartira la nuit suivante,
+        # ou le banc l'aura mesuré d'ici là). On n'alerte que sur un VRAI échec de contrôle.
+        if v.echecs:
+            alerter(v)
         return out
     try:
         out["resultat_promotion"] = promouvoir()

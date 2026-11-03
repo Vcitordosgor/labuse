@@ -3035,20 +3035,25 @@ def admin_circuit(request: Request) -> dict:
     #    (pige_passes.source='auto'), dernier passage de radar-cycle. ORANGE si pas de capture depuis 48 h. ──
     _radar = None
     try:
+        # OPS-NUIT-2 — « dernière capture » = LE compteur canonique de la nuit, PAR PORTAIL
+        # (pige_annonces, vérité par portail), identique au résumé du matin et à l'admin Radar. `pages` =
+        # l'activité de capture (pige_passes auto) du même soir, exposée à part (diagnostic), jamais
+        # additionnée aux nouvelles. Fini les 3 nombres divergents (152 / 119 / pages) pour une même nuit.
+        from ..pige.comptage_nuit import comptage_nuit as _comptage_nuit
         with session_scope() as _sr:
-            _cap = _sr.execute(text(
-                "SELECT captured_at, sum(n_pages) AS pages, sum(n_nouvelles) AS nouv "
-                "FROM pige_passes WHERE source = 'auto' "
-                "GROUP BY captured_at ORDER BY captured_at DESC LIMIT 1")).mappings().first()
+            _cn = _comptage_nuit(_sr)
         _cyc = next((j for j in _jobs_list if j.get("nom") == "radar-cycle"), None)
         _cyc_dernier = (_cyc or {}).get("dernier") or {}
         _notifs_on = (_config.get_settings().radar_notifs or "off").strip().lower() == "on"
         _radar = {
             "donnees_on": True,   # les 3 jobs de cycle sont dégelés (Lot C) + la capture alimente pige_passes
             "notifs_on": _notifs_on,
-            "capture": None if not _cap else {
-                "captured_at": _cap["captured_at"].isoformat() if _cap["captured_at"] else None,
-                "pages": int(_cap["pages"] or 0), "nouvelles": int(_cap["nouv"] or 0)},
+            "capture": None if not _cn.get("captured_at") else {
+                "captured_at": _cn["captured_at"],
+                "pages": int(_cn.get("pages") or 0),
+                "nouvelles": int(_cn.get("nouvelles") or 0),
+                "par_portail": _cn.get("par_portail") or [],
+                "jour": _cn.get("jour")},
             "cycle": _cyc_dernier if _cyc_dernier.get("fin") else None,
         }
     except Exception:  # noqa: BLE001 — table pige absente/illisible : pas de carte (jamais un crash)

@@ -578,8 +578,10 @@ LECTURES: tuple[Lecture, ...] = (
       "geom_2975 de la parcelle pour dériver les limites (voie/fond/séparatives) du gabarit — machinerie de géométrie du moteur gabarit."),
     L("pige_passes", "pige/api.py", None, None,
       "état interne du Radar : dernier passage et compteurs de pige (n_pages/nouvelles/maj) pour l'écran admin — état de collecte, aucune donnée de fiche servie."),
-    L("pige_passes", "api/dashboard.py", None, None,
-      "carte « Radar » du Tableau de bord (RADAR-FIX-2) : dernière capture AUTO (max captured_at source='auto', nb nouvelles/pages) pour l'orange > 48 h — état de collecte, aucune donnée de fiche servie."),
+    L("pige_passes", "pige/comptage_nuit.py", None, None,
+      "OPS-NUIT-2 — compteur canonique de la nuit : lit la dernière capture AUTO (max captured_at source='auto') et ses pages pour la carte Radar / le résumé du matin / l'admin Radar — état de collecte, aucune donnée de fiche servie. (Le read a quitté api/dashboard.py, qui appelle désormais ce module.)"),
+    L("pige_annonces", "pige/comptage_nuit.py", None, None,
+      "OPS-NUIT-2 — compteur canonique de la nuit : compte les annonces NOUVELLES par portail (created_at du jour Réunion) depuis pige_annonces, vérité par portail du Radar — état de collecte, aucune donnée de fiche servie."),
     L("pige_passes", "ops_alertes.py", None, None,
       "FIX-NU3-3 (K-RAD-01, escalade Vic) — vigie « Radar muet » : lit max(created_at) FROM pige_passes pour l'ÂGE de la dernière passe et ouvre l'alerte `radar-muet` au-delà du seuil (escalade mail à 2 nuits) — machinerie de surveillance, aucune donnée de fiche servie."),
 

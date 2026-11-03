@@ -73,6 +73,48 @@ def premiere_activite(db):
     return db.execute(text("SELECT min(debut) FROM job_runs")).scalar()
 
 
+# OPS-NUIT-2 — ANCRE « premier passage prévu » : l'instant où un job planifié devient CONNU (déployé).
+# Avant, « jamais réussi » se jugeait sur l'âge du SYSTÈME (premiere_activite) : un job NEUF (resume-matin,
+# ajouté en journée) était crié « jamais réussi » dès son déploiement, bien AVANT son premier passage
+# prévu (07h30). Désormais la vigie ancre le délai sur la 1ʳᵉ fois qu'elle VOIT le job : son premier
+# passage cron se calcule à partir de là, et on n'alerte qu'une fois ce passage + marge dépassé. Un job
+# qui a DÉJÀ un historique s'ancre sur son tout premier run (il existait bien avant d'être « vu »).
+DDL_PREMIERE_VUE = """
+CREATE TABLE IF NOT EXISTS job_premiere_vue (
+  nom varchar(64) PRIMARY KEY,
+  vue_at timestamptz NOT NULL DEFAULT now()
+)
+"""
+
+
+def _ensure_premiere_vue(db) -> None:
+    present = db.execute(text("SELECT to_regclass('job_premiere_vue') IS NOT NULL")).scalar()
+    if not present:
+        db.execute(text(DDL_PREMIERE_VUE))
+
+
+def premiere_vue(db) -> dict[str, object]:
+    """Pour chaque job connu : l'instant où il a été vu pour la première fois (ancre du 1er passage prévu)."""
+    _ensure_premiere_vue(db)
+    rows = db.execute(text("SELECT nom, vue_at FROM job_premiere_vue")).all()
+    return {r[0]: r[1] for r in rows}
+
+
+def marquer_vues(db, noms) -> None:
+    """Enregistre la 1ʳᵉ vue des jobs encore inconnus. Un job qui a DÉJÀ tourné s'ancre sur son plus
+    ancien run (il existait avant d'être « vu ») ; sinon sur maintenant. Idempotent (ON CONFLICT DO
+    NOTHING) : la valeur n'est jamais écrasée une fois posée. Jamais bloquant."""
+    _ensure_premiere_vue(db)
+    for nom in noms:
+        # CAST explicite : `:n` sert deux fois (valeur insérée + filtre du sous-SELECT) → sans type forcé,
+        # Postgres hésite entre text et varchar (AmbiguousParameter) et AVORTE la transaction.
+        db.execute(text(
+            "INSERT INTO job_premiere_vue (nom, vue_at) "
+            "SELECT CAST(:n AS varchar), "
+            "       COALESCE((SELECT min(debut) FROM job_runs WHERE nom = CAST(:n AS varchar)), now()) "
+            "ON CONFLICT (nom) DO NOTHING"), {"n": nom})
+
+
 def dernier_passage(db) -> dict[str, dict]:
     """Pour chaque job : son DERNIER passage quel qu'en soit le statut (le plus récent par `debut`)."""
     ensure_table(db)
