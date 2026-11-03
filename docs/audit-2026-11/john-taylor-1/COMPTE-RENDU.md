@@ -9,8 +9,8 @@
 > **résumé du matin**, mène la **veille de nuit** et **enquête** sur un incident. Il est bâti sur le socle
 > IA existant (`ai/core`, `ai_models`), avec le **même verrou anti-invention que le Copilote**, un
 > **plafond de coût mensuel** (50 € par défaut) qui coupe proprement, et un **carnet de bord** en base.
-> Recette : **22/22** tests John (10 questions sourcées, ordre exécuté / ordre confirmé / ordre refusé
-> journalisés, résumé, veille, enquête, plafond), **banc unitaire 2882/0**, cohérence **6/0**, tsc **0**,
+> Recette : **23/23** tests John (10 questions sourcées, ordre exécuté / ordre confirmé / ordre refusé
+> journalisés, résumé, veille, enquête, plafond), **banc unitaire 2883/0**, cohérence **6/0**, tsc **0**,
 > vitest **268/0** (8 suites carte non chargées = artefact symlink node_modules, cf. recette), secrets 0.
 > Vérifié **en direct contre l'API réelle** : enquête et chat répondent, sourcés (copie d'écran plus bas).
 
@@ -29,26 +29,29 @@ liste fermée**, aucun secret ni donnée client envoyé à l'API (le contexte es
 
 ---
 
-## Les modèles — « 5.5 » n'existe pas à l'API ; on sert le plus haut réellement disponible
+## Les modèles — « 5.5 » RÉPOND à l'API : il est servi par défaut (repli 4.x en filet)
 
-Le mandat demande **Opus 5.5** (chat/résumé/enquêtes) et **Haiku 5.5** (veille/lectures de masse). L'API
-Anthropic **ne sert PAS de « 5.5 »** — l'appeler échouerait en `not_found`, exactement le genre de panne
-silencieuse que le dépôt interdit (`ai_models.check_model`, incident `claude-3-5-haiku` du 30/08). On
-**mappe donc sur le plus capable réellement servi** :
+Le mandat demande **Opus 5.5** (chat/résumé/enquêtes) et **Haiku 5.5** (veille/lectures de masse).
+**Vérifié par un appel réel le 2026-11-03** : `claude-opus-5-5` ET `claude-haiku-5-5` (sans suffixe de
+date) **répondent (200, `usage` renvoyé)**. Ce sont donc les **défauts** :
 
-| Usage mandat | Surface (`ia_log`) | Modèle servi |
-|---|---|---|
-| chat / résumé / enquête (Opus 5.5) | `john-chat`, `john-resume`, `john-enquete` | **`claude-opus-4-8`** |
-| veille / lectures de masse (Haiku 5.5) | `john-veille` | **`claude-haiku-4-5`** |
+| Usage mandat | Surface (`ia_log`) | Modèle servi (défaut) | Repli si `not_found` |
+|---|---|---|---|
+| chat / résumé / enquête | `john-chat`, `john-resume`, `john-enquete` | **`claude-opus-5-5`** | `claude-opus-4-8` |
+| veille / lectures de masse | `john-veille` | **`claude-haiku-5-5`** | `claude-haiku-4-5` |
 
-`MODEL_OPUS` entre au registre `ai_models` (+ `ACTIVE_MODELS`, + tarif au ledger `PRICE`). Overridable par
-surface (`LABUSE_IA_MODELE_JOHN_CHAT=…`) comme le reste.
+`MODEL_OPUS`/`MODEL_HAIKU` (les 5.5) entrent au registre `ai_models` (+ `ACTIVE_MODELS`, + tarif `PRICE`).
+Overridable par surface (`LABUSE_IA_MODELE_JOHN_CHAT=…`). **Repli automatique, jamais silencieux** : si un
+de ces identifiants tombait un jour en `not_found`, l'appel **rejoue UNE fois sur la lignée 4.x**
+(`REPLI_MODELES` + `repli_pour`/`est_not_found`), câblé dans `ai/core.complete` ET dans les clients propres
+de John (chat, veille) — un `log.warning` nomme le repli (même leçon que l'incident `claude-3-5-haiku`).
 
-**Correctif réel découvert en vol (vérifié contre l'API) : Opus 4.8 REFUSE le paramètre `temperature`**
-(« temperature is deprecated for this model » → 400). `ai/core.complete` l'envoyait toujours → le chemin
-Opus tombait en « dégradé ». Fix à la source : `core` **omet `temperature`** pour les modèles de
-`NO_TEMPERATURE_MODELS` (`{MODEL_OPUS}`). Même leçon que le pin anthropic 1.1.0 : un paramètre non
-supporté ne doit pas dégrader l'appel en silence. Le chat (client propre) ne l'envoyait déjà pas.
+**Correctif réel vérifié contre l'API : les 5.5 — comme Opus 4.8 — REFUSENT le paramètre `temperature`**
+(« temperature is deprecated for this model » → 400 ; Haiku 4.5, lui, l'accepte encore). `ai/core.complete`
+l'envoyait toujours → le chemin tombait en « dégradé ». Fix à la source : `core` **omet `temperature`**
+pour `NO_TEMPERATURE_MODELS` (`{opus-5-5, haiku-5-5, opus-4-8}`). Les clients propres de John (chat, veille)
+ne l'envoyaient déjà pas. **Testé en direct** : enquête `ok=True` et chat (boucle d'outils) tournent sur
+`claude-opus-5-5` sans erreur, coût tracé au ledger.
 
 **Cache de prompt** : le contexte fixe de John (persona + doctrine + carnet + liste d'actions) est assemblé
 une fois par tour et envoyé en `system` — stable d'un tour à l'autre d'une conversation, donc éligible au
@@ -139,8 +142,8 @@ des cartes « ça casse » bascule sur l'onglet et lance l'enquête.
 | Une **veille de nuit produite** | ✅ `::test_veille_de_nuit_produite` (2 items datés gardés, 1 non daté **écarté**, libellés valides) |
 | Une **enquête sur incident simulé** | ✅ `::test_enquete_sur_incident_simule` (cause + correction + **mandat Claude Code** en mode code) |
 | Le **plafond atteint coupe proprement** | ✅ `::test_plafond_de_cout_coupe_proprement` (pause, **aucun appel modèle**, message honnête) |
-| **Banc complet 0 rouge** | ✅ unitaires **2882 / 0** ; db (John + cockpit) **15 / 0** |
-| **Hook vert** | ✅ secrets **0** · tsc **0** · vitest **268/0** (8 suites carte non chargées = artefact symlink node_modules inter-worktree, `maplibre-gl-worker`, **pas une régression** — cf. TABLEAU-1) · unitaires **2882/0** · cohérence **6/0** |
+| **Banc complet 0 rouge** | ✅ unitaires **2883 / 0** ; db (John + cockpit) **15 / 0** |
+| **Hook vert** | ✅ secrets **0** · tsc **0** · vitest **268/0** (8 suites carte non chargées = artefact symlink node_modules inter-worktree, `maplibre-gl-worker`, **pas une régression** — cf. TABLEAU-1) · unitaires **2883/0** · cohérence **6/0** |
 | **Compte-rendu** | ✅ ce fichier |
 
 **Vérifié en direct contre l'API réelle** (clé présente) : `/admin/john/enquete` rend `ok=True` avec une

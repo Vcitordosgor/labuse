@@ -37,14 +37,17 @@ log = logging.getLogger("labuse.ai")   # SECTEUR-1 (S6) — une erreur d'appel m
 # ── Modèles (routeur par TÂCHE, jamais codé en dur chez l'appelant) ───────────────────────────
 # SECTEUR-1 (S6) — les NOMS vivent dans labuse/ai_models.py (UN seul endroit + garde des modèles retirés).
 from ..ai_models import (  # noqa: E402,F401
-    MODEL_FACTUAL, MODEL_REASONING, MODEL_VISION, MODEL_OPUS, check_model,
-    model_for, SURFACES, surfaces_table,   # RETOURS-7 Z7 — le modèle PAR USAGE (surface)
+    MODEL_FACTUAL, MODEL_REASONING, MODEL_VISION, MODEL_OPUS, MODEL_HAIKU,
+    MODEL_OPUS_REPLI, check_model, est_not_found, model_for, repli_pour,
+    SURFACES, surfaces_table,   # RETOURS-7 Z7 — le modèle PAR USAGE (surface)
 )
 #: €/Mtoken (approx, log indicatif — pas la tarification officielle live)
 PRICE = {MODEL_FACTUAL: (1.0, 5.0), MODEL_REASONING: (3.0, 15.0), MODEL_VISION: (1.0, 5.0),
-         MODEL_OPUS: (15.0, 75.0)}       # JOHN-TAYLOR-1 — Opus (chat/résumé/enquête), tarif indicatif
-#: modèles qui REFUSENT le paramètre `temperature` (l'API rend 400 sinon). Opus 4.8 le déprécie.
-NO_TEMPERATURE_MODELS = frozenset({MODEL_OPUS})
+         # JOHN-TAYLOR-1 — Opus/Haiku 5.5 (chat/résumé/enquête/veille) + replis 4.x, tarif indicatif par tier.
+         MODEL_OPUS: (15.0, 75.0), MODEL_OPUS_REPLI: (15.0, 75.0), MODEL_HAIKU: (1.0, 5.0)}
+#: modèles qui REFUSENT le paramètre `temperature` (l'API rend 400 sinon). Vérifié 2026-11-03 :
+#: opus-5-5, haiku-5-5 ET opus-4-8 le dépriment ; haiku-4-5 (MODEL_FACTUAL) l'accepte encore.
+NO_TEMPERATURE_MODELS = frozenset({MODEL_OPUS, MODEL_HAIKU, MODEL_OPUS_REPLI})
 ENV_KEY = "ANTHROPIC_API_KEY"
 
 # ── Vision (RADAR P1) : formats acceptés par l'API Messages + garde-fou taille (limite Anthropic ~5 Mo/image) ──
@@ -464,21 +467,38 @@ def complete(db: Session | None, *, kind: str, system: str, context: dict[str, A
     import anthropic
     client = anthropic.Anthropic(timeout=timeout, max_retries=DEFAULT_RETRIES)
     msgs = list(history or []) + [{"role": "user", "content": contenu}]
-    # JOHN-TAYLOR-1 — certains modèles récents (Opus 4.8) REFUSENT le paramètre `temperature`
-    # (« temperature is deprecated for this model » → 400). On l'omet pour ceux-là (même leçon que le
-    # pin anthropic 1.1.0 : un paramètre non supporté ne doit pas dégrader l'appel en silence).
-    kw = {"model": model, "max_tokens": max_tokens, "system": system, "messages": msgs}
-    if model not in NO_TEMPERATURE_MODELS:
-        kw["temperature"] = temperature
+
+    def _tenter(m: str):
+        # JOHN-TAYLOR-1 — certains modèles récents (Opus/Haiku 5.5, Opus 4.8) REFUSENT le paramètre
+        # `temperature` (« temperature is deprecated for this model » → 400). On l'omet pour ceux-là
+        # (même leçon que le pin anthropic 1.1.0 : un paramètre non supporté ne dégrade pas en silence).
+        kw = {"model": m, "max_tokens": max_tokens, "system": system, "messages": msgs}
+        if m not in NO_TEMPERATURE_MODELS:
+            kw["temperature"] = temperature
+        return client.messages.create(**kw)
+
     try:
-        msg = client.messages.create(**kw)
+        msg = _tenter(model)
     except Exception as exc:  # noqa: BLE001
-        # SECTEUR-1 (S6) — CAUSE PROFONDE : un échec d'appel modèle ne doit JAMAIS être silencieux (le
-        # not_found_error d'un modèle retiré échouait depuis février dans un mode dégradé invisible). On
-        # JOURNALISE explicitement (modèle + erreur) EN PLUS du bandeau ; un « not_found » nomme la piste.
-        log.error("appel modèle %s échoué (kind=%s) : %s: %s", model, kind, type(exc).__name__, exc)
-        _note_error(exc, model)
-        return IAResult(text="", model=model, degraded=True, reason=last_error())
+        # JOHN-TAYLOR-1 — REPLI AUTOMATIQUE : si l'identifiant tombe en `not_found` (ex. un « 5.5 » retiré
+        # un jour), on rejoue UNE fois sur le modèle de repli (lignée 4.x) au lieu de dégrader. Le repli
+        # est journalisé (jamais silencieux). Toute autre erreur reste une dégradation nommée.
+        rep = repli_pour(model)
+        if rep and est_not_found(exc):
+            log.warning("modèle %s introuvable (kind=%s) → repli %s", model, kind, rep)
+            model = rep
+            try:
+                msg = _tenter(model)
+            except Exception as exc2:  # noqa: BLE001
+                log.error("repli %s échoué (kind=%s) : %s: %s", model, kind, type(exc2).__name__, exc2)
+                _note_error(exc2, model)
+                return IAResult(text="", model=model, degraded=True, reason=last_error())
+        else:
+            # SECTEUR-1 (S6) — un échec d'appel modèle ne doit JAMAIS être silencieux ; un « not_found »
+            # nomme la piste (modèle retiré). On JOURNALISE explicitement (modèle + erreur).
+            log.error("appel modèle %s échoué (kind=%s) : %s: %s", model, kind, type(exc).__name__, exc)
+            _note_error(exc, model)
+            return IAResult(text="", model=model, degraded=True, reason=last_error())
     _note_success()
     prose = "".join(getattr(b, "text", "") for b in msg.content).strip()
     tin, tout = msg.usage.input_tokens, msg.usage.output_tokens

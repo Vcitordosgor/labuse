@@ -13,9 +13,12 @@ Le modèle est appelé via `appel(...)` — INJECTABLE : les tests passent un fa
 from __future__ import annotations
 
 import json
+import logging
 import re
 
 from sqlalchemy import text
+
+log = logging.getLogger("labuse.john.chat")
 
 from . import actions as _actions
 from . import budget, carnet, journal
@@ -96,10 +99,24 @@ def construire_system(db) -> str:
 
 # ════════════════════════════════ Appel modèle (injectable) ════════════════════════════════
 def _appel_reel(*, model, system, messages, tools, max_tokens):
+    # NB : on n'envoie PAS `temperature` (opus-5-5/haiku-5-5 la refusent). REPLI automatique si
+    # l'identifiant tombe en not_found (ex. un « 5.5 » retiré) → lignée 4.x, jamais silencieux.
     import anthropic
+
+    from ..ai_models import est_not_found, repli_pour
     client = anthropic.Anthropic(timeout=60, max_retries=1)
-    return client.messages.create(model=model, max_tokens=max_tokens, system=system,
-                                  tools=tools, messages=messages)
+
+    def _tenter(m):
+        return client.messages.create(model=m, max_tokens=max_tokens, system=system,
+                                      tools=tools, messages=messages)
+    try:
+        return _tenter(model)
+    except Exception as exc:  # noqa: BLE001
+        rep = repli_pour(model)
+        if rep and est_not_found(exc):
+            log.warning("john-chat : modèle %s introuvable → repli %s", model, rep)
+            return _tenter(rep)
+        raise
 
 
 def _bloc_to_dict(b) -> dict:

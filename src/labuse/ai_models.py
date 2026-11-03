@@ -21,10 +21,17 @@ MODEL_FACTUAL = "claude-haiku-4-5-20251001"     # extraction, factuel, acronymes
 MODEL_REASONING = "claude-sonnet-4-6"           # raisonnement explicite (faisabilité expliquée, synthèse)
 MODEL_VISION = "claude-haiku-4-5-20251001"      # RADAR P1 — lecture d'image (Haiku 4.5 voit)
 # JOHN-TAYLOR-1 — l'agent d'exploitation parle avec Vic, écrit le résumé du matin et mène les enquêtes :
-# ces tâches EXIGENT le modèle le plus capable (raisonnement sur des journaux, prudence anti-invention).
-# Le mandat demande « Opus 5.5 » ; l'API ne sert PAS de 5.5 (elle refuserait en not_found) — on prend
-# donc le plus haut réellement servi, Opus 4.8. `check_model` garde cet invariant (jamais un nom mort).
-MODEL_OPUS = "claude-opus-4-8"                  # JOHN-TAYLOR-1 — chat/résumé/enquête (le plus capable servi)
+# ces tâches EXIGENT le modèle le plus capable (raisonnement sur des journaux, prudence anti-invention) ;
+# la veille / les lectures de masse prennent le Haiku le moins cher. Le mandat demande « Opus 5.5 » et
+# « Haiku 5.5 » : VÉRIFIÉS SERVIS par l'API le 2026-11-03 (appel réel 200) → ce sont les DÉFAUTS. Si un
+# jour un de ces identifiants tombe en `not_found`, on REPLIE automatiquement sur la lignée 4.x (cf.
+# REPLI_MODELES + `repli_pour`/`est_not_found`, utilisés par le socle `ai.core` et les appels de John).
+MODEL_OPUS = "claude-opus-5-5"                  # JOHN-TAYLOR-1 — chat/résumé/enquête (le plus capable)
+MODEL_HAIKU = "claude-haiku-5-5"               # JOHN-TAYLOR-1 — veille / lectures de masse (le moins cher)
+MODEL_OPUS_REPLI = "claude-opus-4-8"           # repli si opus-5-5 → not_found
+MODEL_HAIKU_REPLI = MODEL_FACTUAL              # repli si haiku-5-5 → not_found (= claude-haiku-4-5)
+#: repli par identifiant si l'API rend `not_found` (défensif : les 5.5 répondent aujourd'hui).
+REPLI_MODELES: dict[str, str] = {MODEL_OPUS: MODEL_OPUS_REPLI, MODEL_HAIKU: MODEL_HAIKU_REPLI}
 DEFAULT_AGENT_MODEL = MODEL_REASONING           # défaut du Copilote (`config.ai_model`)
 
 # ── Modèles RETIRÉS de l'API Anthropic — un appel les utilisant échoue en `not_found_error`. ──────
@@ -39,8 +46,22 @@ RETIRED_MODELS = frozenset({
     "claude-2.1", "claude-2.0", "claude-instant-1.2",
 })
 
-#: tous les modèles ACTIFS servis par LABUSE (pour la garde + le test).
-ACTIVE_MODELS = frozenset({MODEL_FACTUAL, MODEL_REASONING, MODEL_VISION, MODEL_OPUS, DEFAULT_AGENT_MODEL})
+#: tous les modèles ACTIFS servis par LABUSE (pour la garde + le test). Inclut les 5.5 (défauts John)
+#: ET leurs replis 4.x (encore servis, utilisés si le 5.5 tombe en not_found).
+ACTIVE_MODELS = frozenset({MODEL_FACTUAL, MODEL_REASONING, MODEL_VISION, MODEL_OPUS, MODEL_HAIKU,
+                           MODEL_OPUS_REPLI, DEFAULT_AGENT_MODEL})
+
+
+def repli_pour(model: str) -> str | None:
+    """Le modèle de REPLI si `model` tombe en `not_found` à l'API, sinon None (JOHN-TAYLOR-1)."""
+    return REPLI_MODELES.get(model)
+
+
+def est_not_found(exc: Exception) -> bool:
+    """Vrai si l'exception d'appel modèle est un « modèle introuvable » (404 / not_found_error)."""
+    name = type(exc).__name__
+    s = str(exc)
+    return "NotFound" in name or "not_found" in s or "404" in s
 
 
 def check_model(model: str) -> str:
@@ -108,7 +129,7 @@ SURFACES: dict[str, dict] = {
     "john-chat":         {"label": "John Taylor — chat d'exploitation",  "model": MODEL_OPUS},
     "john-resume":       {"label": "John Taylor — résumé du matin",       "model": MODEL_OPUS},
     "john-enquete":      {"label": "John Taylor — enquête sur incident",  "model": MODEL_OPUS},
-    "john-veille":       {"label": "John Taylor — veille de nuit",        "model": MODEL_FACTUAL},
+    "john-veille":       {"label": "John Taylor — veille de nuit",        "model": MODEL_HAIKU},
 }
 
 

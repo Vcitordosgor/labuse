@@ -14,11 +14,14 @@ Jamais d'injection : la veille pose des FAITS à lire, pas des actions.
 from __future__ import annotations
 
 import json
+import logging
 import re
 
 from sqlalchemy import text
 
 from . import budget
+
+log = logging.getLogger("labuse.john.veille")
 
 DDL = """
 CREATE TABLE IF NOT EXISTS john_veille (
@@ -64,13 +67,25 @@ def _appel_reel(db) -> str:
     import anthropic
 
     from ..ai import core
-    from ..ai_models import model_for
+    from ..ai_models import est_not_found, model_for, repli_pour
     model = model_for("john-veille")
     client = anthropic.Anthropic(timeout=120, max_retries=1)
-    msg = client.messages.create(
-        model=model, max_tokens=1500, system=SYSTEME,
-        tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 6}],
-        messages=[{"role": "user", "content": "Fais la veille de cette nuit pour LABUSE (les 3 axes)."}])
+
+    def _tenter(m):
+        # pas de `temperature` (haiku-5-5 la refuse) ; repli 4.x si not_found.
+        return client.messages.create(
+            model=m, max_tokens=1500, system=SYSTEME,
+            tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 6}],
+            messages=[{"role": "user", "content": "Fais la veille de cette nuit pour LABUSE (les 3 axes)."}])
+    try:
+        msg = _tenter(model)
+    except Exception as exc:  # noqa: BLE001
+        rep = repli_pour(model)
+        if not (rep and est_not_found(exc)):
+            raise
+        log.warning("john-veille : modèle %s introuvable → repli %s", model, rep)
+        model = rep
+        msg = _tenter(model)
     texte = "".join(b.text for b in msg.content if getattr(b, "type", None) == "text")
     try:
         core._log_cost(db, "john-veille", model, False, msg.usage.input_tokens, msg.usage.output_tokens)

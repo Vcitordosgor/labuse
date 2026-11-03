@@ -22,22 +22,38 @@ def test_famille_couvre_tous_les_jobs():
 
 
 def test_surfaces_ia_de_john():
-    from labuse.ai_models import MODEL_OPUS, MODEL_FACTUAL, model_for, SURFACES, INTERNE_KINDS
-    assert MODEL_OPUS == "claude-opus-4-8"
-    # chat / résumé / enquête = Opus ; veille = Haiku (factuel, pas cher).
+    from labuse.ai_models import (MODEL_OPUS, MODEL_HAIKU, model_for, SURFACES, INTERNE_KINDS)
+    # DÉFAUTS = les « 5.5 » (vérifiés servis par l'API 2026-11-03). Chat/résumé/enquête = Opus 5.5 ;
+    # veille = Haiku 5.5.
+    assert MODEL_OPUS == "claude-opus-5-5"
+    assert MODEL_HAIKU == "claude-haiku-5-5"
     assert model_for("john-chat") == MODEL_OPUS
     assert model_for("john-resume") == MODEL_OPUS
     assert model_for("john-enquete") == MODEL_OPUS
-    assert model_for("john-veille") == MODEL_FACTUAL
+    assert model_for("john-veille") == MODEL_HAIKU
     # tout le coût de John est « interne » (jamais facturé à un client).
     for k in ("john-chat", "john-resume", "john-enquete", "john-veille"):
         assert k in SURFACES and k in INTERNE_KINDS
 
 
+def test_repli_4x_si_not_found():
+    """Si un « 5.5 » tombait en not_found, on replie sur la lignée 4.x (jamais un dégradé muet)."""
+    from labuse.ai_models import (MODEL_OPUS, MODEL_HAIKU, MODEL_OPUS_REPLI, MODEL_HAIKU_REPLI,
+                                  repli_pour, est_not_found)
+    assert repli_pour(MODEL_OPUS) == MODEL_OPUS_REPLI == "claude-opus-4-8"
+    assert repli_pour(MODEL_HAIKU) == MODEL_HAIKU_REPLI == "claude-haiku-4-5-20251001"
+    assert repli_pour("claude-sonnet-4-6") is None      # pas de repli hors John
+    assert est_not_found(Exception("Error code: 404 - not_found_error"))
+    assert not est_not_found(Exception("Error code: 400 - invalid_request_error"))
+
+
 def test_opus_ajoute_au_pricing_du_ledger():
-    from labuse.ai.core import PRICE
-    from labuse.ai_models import MODEL_OPUS
-    assert MODEL_OPUS in PRICE          # sinon le coût d'Opus serait compté 0 au ledger
+    from labuse.ai.core import PRICE, NO_TEMPERATURE_MODELS
+    from labuse.ai_models import MODEL_OPUS, MODEL_HAIKU, MODEL_OPUS_REPLI, MODEL_FACTUAL
+    assert MODEL_OPUS in PRICE and MODEL_HAIKU in PRICE   # sinon leur coût serait compté 0 au ledger
+    # les 5.5 + opus-4.8 refusent `temperature` ; haiku-4.5 (repli veille) l'accepte encore.
+    assert MODEL_OPUS in NO_TEMPERATURE_MODELS and MODEL_HAIKU in NO_TEMPERATURE_MODELS
+    assert MODEL_OPUS_REPLI in NO_TEMPERATURE_MODELS and MODEL_FACTUAL not in NO_TEMPERATURE_MODELS
 
 
 def test_catalogue_actions_liste_fermee():
