@@ -161,11 +161,21 @@ export function ReponseInline({ v2 }: { v2: CopiloteV2Reponse }) {
       )}
       {/* RECETTE-1 (D5, Vic 04/10) — le tag interne « SOURCE · FICHE LABUSE (RUN SERVI) » est retiré de
           l'affichage (le sourçage INTERNE de la réponse ne change pas : on ne filtre que l'affichage,
-          `v2.sources` reste intact pour le choix de variante). Les sources EXTERNES restent affichées. */}
+          `v2.sources` reste intact pour le choix de variante). Les sources EXTERNES restent affichées.
+          COPILOTE-4 (maquette « en conversation ») — chaque source est une ÉTIQUETTE mono (le millésime
+          qu'elle PORTE est montré tel quel : « cadastre · 2026-09 », « PLU Saint-Paul · 2025-11 »).
+          Jamais de millésime inventé : on affiche la chaîne servie, rien d'ajouté. */}
       {(() => {
         const srcs = (v2.sources ?? []).filter((s) => !/FICHE\s+LABUSE/i.test(s))
         return srcs.length > 0 ? (
-          <p className="mt-3 font-mono text-[10.5px] uppercase tracking-[.06em] text-cp-faint">SOURCE · {srcs.join(' · ')}</p>
+          <div data-sources className="mt-3 flex flex-wrap gap-1.5">
+            {srcs.map((s, i) => (
+              <span key={i} data-source-chip
+                className="rounded-md border border-cp-line2 bg-cp-card2 px-2 py-0.5 font-mono text-[10.5px] text-cp-muted">
+                {s}
+              </span>
+            ))}
+          </div>
         ) : null
       })()}
     </div>

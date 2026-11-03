@@ -1076,6 +1076,9 @@ export interface CopiloteConversation extends CopiloteMission {
 // RETOURS-8 (R11) — `retention_jours` accompagne la liste pour le bandeau « conservées N jours ».
 export const copiloteV2Missions = () => j<{ missions: CopiloteMission[]; retention_jours: number }>('/api/copilote-v2/missions')
 export const copiloteV2Mission = (id: number) => j<CopiloteConversation>(`/api/copilote-v2/missions/${id}`)
+// COPILOTE-4 — supprimer une conversation de la liste (geste explicite ; cloisonné serveur).
+export const copiloteV2MissionSupprimer = (id: number) =>
+  j<{ ok: boolean }>(`/api/copilote-v2/missions/${id}`, { method: 'DELETE' })
 
 // §2e — le héros : phrase (pourquoi cette parcelle gagne, faiblesses comprises) avec verrou
 // anti-invention côté serveur (tout nombre ∈ JSON parcelle, sinon gabarit).
