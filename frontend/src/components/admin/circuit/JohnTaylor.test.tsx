@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
-const chatSpy = vi.fn(() =>
+const chatSpy = vi.fn((_message: string) =>
   Promise.resolve({ conversation_id: 7, texte: 'Tous les jobs tournent, aucun en échec.', sources: [] }))
 
 vi.mock('../../../lib/api', () => ({
@@ -37,7 +37,8 @@ describe('JOHN-TAYLOR-1 — l’onglet', () => {
     const { container } = wrap()
     await waitFor(() => expect(container.textContent).toContain('Coût du mois'))
     const txt = container.textContent || ''
-    expect(txt).toContain('1.23') && expect(txt).toContain('/ 50')
+    expect(txt).toContain('1.23')
+    expect(txt).toContain('/ 50')
     expect(txt).toContain('Rien à signaler')          // résumé du matin
     expect(txt).toContain('KelFoncier bouge')         // veille
     expect(txt).toContain('BDNB retirée')             // carnet de bord
