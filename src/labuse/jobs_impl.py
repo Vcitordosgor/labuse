@@ -1290,13 +1290,35 @@ def resume_matin(ctx: JobContext) -> None:
     mails « résolu » un-par-un (point 6a). Sujet préfixé [URGENT] s'il y a un geste attendu, sinon [INFO]."""
     from . import ops_alertes
     s = get_settings()
-    urgent, sujet, corps = _resume_matin_texte(ctx.db, s)
+    # JOHN-TAYLOR-1 — c'est John qui ÉCRIT le résumé (à partir des faits du résumé actuel). S'il échoue
+    # (plafond, dégradé, anti-invention), le résumé actuel part tel quel (meta.par = 'repli').
+    par = "repli"
+    if getattr(s, "john_actif", True):
+        try:
+            from .john import resume as _john_resume
+            urgent, sujet, corps, meta = _john_resume.composer_resume_matin(ctx.db, s)
+            par = meta.get("par", "repli")
+            _john_resume.enregistrer_resume(ctx.db, urgent=urgent, sujet=sujet, corps=corps, par=par)
+        except Exception:  # noqa: BLE001 — jamais John ne doit empêcher le mail de partir
+            urgent, sujet, corps = _resume_matin_texte(ctx.db, s)
+    else:
+        urgent, sujet, corps = _resume_matin_texte(ctx.db, s)
     dest = ops_alertes._destinataire(s)
     envoi = "pas-de-destinataire"
     if dest:
         from .mail import envoyer_ops
         envoi = envoyer_ops(dest, sujet, corps, settings=s).detail
-    ctx.compte(urgent=urgent, sujet=sujet, destinataire=dest or None, envoi=envoi)
+    ctx.compte(urgent=urgent, sujet=sujet, destinataire=dest or None, envoi=envoi, resume_par=par)
+
+
+def john_veille(ctx: JobContext) -> None:
+    """JOHN-TAYLOR-1 — LA VEILLE DE NUIT (informe, n'injecte rien). Un passage IA plafonné ; les items
+    (sourcés + datés) sont rangés dans `john_veille`. En pause (plafond) ou dégradé = passage à vide
+    propre (aucun échec)."""
+    from .john import veille as _john_veille
+    out = _john_veille.lancer(ctx.db, settings=get_settings())
+    ctx.compte(ok=out.get("ok"), pause=out.get("pause", False), n_items=out.get("n", 0),
+               erreur=out.get("erreur"))
 
 
 def _run_sous_process_nice(cmd, budget_s, preexec):

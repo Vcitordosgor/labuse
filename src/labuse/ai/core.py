@@ -37,11 +37,14 @@ log = logging.getLogger("labuse.ai")   # SECTEUR-1 (S6) — une erreur d'appel m
 # ── Modèles (routeur par TÂCHE, jamais codé en dur chez l'appelant) ───────────────────────────
 # SECTEUR-1 (S6) — les NOMS vivent dans labuse/ai_models.py (UN seul endroit + garde des modèles retirés).
 from ..ai_models import (  # noqa: E402,F401
-    MODEL_FACTUAL, MODEL_REASONING, MODEL_VISION, check_model,
+    MODEL_FACTUAL, MODEL_REASONING, MODEL_VISION, MODEL_OPUS, check_model,
     model_for, SURFACES, surfaces_table,   # RETOURS-7 Z7 — le modèle PAR USAGE (surface)
 )
 #: €/Mtoken (approx, log indicatif — pas la tarification officielle live)
-PRICE = {MODEL_FACTUAL: (1.0, 5.0), MODEL_REASONING: (3.0, 15.0), MODEL_VISION: (1.0, 5.0)}
+PRICE = {MODEL_FACTUAL: (1.0, 5.0), MODEL_REASONING: (3.0, 15.0), MODEL_VISION: (1.0, 5.0),
+         MODEL_OPUS: (15.0, 75.0)}       # JOHN-TAYLOR-1 — Opus (chat/résumé/enquête), tarif indicatif
+#: modèles qui REFUSENT le paramètre `temperature` (l'API rend 400 sinon). Opus 4.8 le déprécie.
+NO_TEMPERATURE_MODELS = frozenset({MODEL_OPUS})
 ENV_KEY = "ANTHROPIC_API_KEY"
 
 # ── Vision (RADAR P1) : formats acceptés par l'API Messages + garde-fou taille (limite Anthropic ~5 Mo/image) ──
@@ -461,9 +464,14 @@ def complete(db: Session | None, *, kind: str, system: str, context: dict[str, A
     import anthropic
     client = anthropic.Anthropic(timeout=timeout, max_retries=DEFAULT_RETRIES)
     msgs = list(history or []) + [{"role": "user", "content": contenu}]
+    # JOHN-TAYLOR-1 — certains modèles récents (Opus 4.8) REFUSENT le paramètre `temperature`
+    # (« temperature is deprecated for this model » → 400). On l'omet pour ceux-là (même leçon que le
+    # pin anthropic 1.1.0 : un paramètre non supporté ne doit pas dégrader l'appel en silence).
+    kw = {"model": model, "max_tokens": max_tokens, "system": system, "messages": msgs}
+    if model not in NO_TEMPERATURE_MODELS:
+        kw["temperature"] = temperature
     try:
-        msg = client.messages.create(model=model, max_tokens=max_tokens, temperature=temperature,
-                                     system=system, messages=msgs)
+        msg = client.messages.create(**kw)
     except Exception as exc:  # noqa: BLE001
         # SECTEUR-1 (S6) — CAUSE PROFONDE : un échec d'appel modèle ne doit JAMAIS être silencieux (le
         # not_found_error d'un modèle retiré échouait depuis février dans un mode dégradé invisible). On

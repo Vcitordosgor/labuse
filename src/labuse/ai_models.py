@@ -20,6 +20,11 @@ import os
 MODEL_FACTUAL = "claude-haiku-4-5-20251001"     # extraction, factuel, acronymes, filtres NL (ex-3-5-haiku)
 MODEL_REASONING = "claude-sonnet-4-6"           # raisonnement explicite (faisabilité expliquée, synthèse)
 MODEL_VISION = "claude-haiku-4-5-20251001"      # RADAR P1 — lecture d'image (Haiku 4.5 voit)
+# JOHN-TAYLOR-1 — l'agent d'exploitation parle avec Vic, écrit le résumé du matin et mène les enquêtes :
+# ces tâches EXIGENT le modèle le plus capable (raisonnement sur des journaux, prudence anti-invention).
+# Le mandat demande « Opus 5.5 » ; l'API ne sert PAS de 5.5 (elle refuserait en not_found) — on prend
+# donc le plus haut réellement servi, Opus 4.8. `check_model` garde cet invariant (jamais un nom mort).
+MODEL_OPUS = "claude-opus-4-8"                  # JOHN-TAYLOR-1 — chat/résumé/enquête (le plus capable servi)
 DEFAULT_AGENT_MODEL = MODEL_REASONING           # défaut du Copilote (`config.ai_model`)
 
 # ── Modèles RETIRÉS de l'API Anthropic — un appel les utilisant échoue en `not_found_error`. ──────
@@ -35,7 +40,7 @@ RETIRED_MODELS = frozenset({
 })
 
 #: tous les modèles ACTIFS servis par LABUSE (pour la garde + le test).
-ACTIVE_MODELS = frozenset({MODEL_FACTUAL, MODEL_REASONING, MODEL_VISION, DEFAULT_AGENT_MODEL})
+ACTIVE_MODELS = frozenset({MODEL_FACTUAL, MODEL_REASONING, MODEL_VISION, MODEL_OPUS, DEFAULT_AGENT_MODEL})
 
 
 def check_model(model: str) -> str:
@@ -97,6 +102,13 @@ SURFACES: dict[str, dict] = {
     # service-public, ADEME, DEAL…) et ramène l'extrait daté ; même anti-invention qu'agent_source.
     "agent_regle":       {"label": "Agent de règle (références des calculs)", "model": MODEL_REASONING},
     "juge_vlm":          {"label": "Juge VLM (ML, hors service)",        "model": MODEL_VISION},
+    # JOHN-TAYLOR-1 — le second de bord. Chat/résumé/enquête = raisonnement sur l'exploitation →
+    # Opus (le plus capable) ; la veille de nuit et les lectures de masse = Haiku (factuel, pas cher).
+    # Overridables par surface (LABUSE_IA_MODELE_JOHN_CHAT, …) comme le reste.
+    "john-chat":         {"label": "John Taylor — chat d'exploitation",  "model": MODEL_OPUS},
+    "john-resume":       {"label": "John Taylor — résumé du matin",       "model": MODEL_OPUS},
+    "john-enquete":      {"label": "John Taylor — enquête sur incident",  "model": MODEL_OPUS},
+    "john-veille":       {"label": "John Taylor — veille de nuit",        "model": MODEL_FACTUAL},
 }
 
 
@@ -109,6 +121,8 @@ SURFACES: dict[str, dict] = {
 # Le `kind` journalisé dans `ia_log` est la clé : facturation et registre parlent le même langage.
 INTERNE_KINDS = frozenset({
     "agent_source", "agent_regle", "promo_collecte", "vision_pige", "juge_vlm",
+    # JOHN-TAYLOR-1 — John sert l'EXPLOITATION (Vic), jamais un client : tout son coût est « interne ».
+    "john-chat", "john-resume", "john-enquete", "john-veille",
 })
 
 

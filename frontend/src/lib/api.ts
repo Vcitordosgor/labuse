@@ -3050,6 +3050,25 @@ export const postJobLancer = (nom: string) =>
   j<{ ok: boolean; nom: string; reveil: boolean }>(`/admin/jobs/${encodeURIComponent(nom)}/lancer`, { method: 'POST' })
 
 export const postAdminCircuitVerifier = () => j<any>('/admin/circuit/verifier', { method: 'POST' })
+
+// JOHN-TAYLOR-1 — le second de bord (onglet « John Taylor » de la page Données, admin seul).
+export const getAdminJohn = () => j<any>('/admin/john')
+export const postJohnChat = (message: string, conversationId?: number | null) =>
+  j<any>('/admin/john/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, conversation_id: conversationId ?? null }) })
+export const postJohnAction = (action: string, args: Record<string, unknown> = {}, confirme = false) =>
+  j<any>('/admin/john/action', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action, args, confirme }) })
+export const postJohnEnquete = (opts: { cle?: string; titre?: string; mode?: 'casse' | 'code' }) =>
+  j<any>('/admin/john/enquete', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ cle: opts.cle ?? null, titre: opts.titre ?? null, mode: opts.mode ?? 'casse' }) })
+export const postJohnCarnetProposer = (type: string, titre: string, corps: string) =>
+  j<any>('/admin/john/carnet/proposer', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type, titre, corps }) })
+export const postJohnCarnetValider = (id: number) =>
+  j<any>(`/admin/john/carnet/${id}/valider`, { method: 'POST' })
+export const postJohnCarnetRejeter = (id: number) =>
+  j<any>(`/admin/john/carnet/${id}/rejeter`, { method: 'POST' })
 // CIRCUIT-P2 (lot 3.2/3.3) / CIRCUIT-P7 — tâches longues : lancer l'agent LLM (une source via
 // `sourceId`, ou une portée « sans_amont » (défaut) / « g8 » / « tous » depuis la carte Agents).
 export const postAdminCircuitAgents = (opts?: { sourceId?: number; portee?: 'sans_amont' | 'g8' | 'tous' }) => {
