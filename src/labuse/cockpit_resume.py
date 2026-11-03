@@ -363,7 +363,10 @@ def _cartes_aujourdhui(a_faire: dict, *, noms_source: dict, ecarts_toleres: int,
             cartes.append(_carte_cache(cache))
 
     # (3) VERROUS CASSÉS — « N contrôles de sécurité échouent » : DEMANDE DU CODE (pas un clic ici).
-    casses = list((verrous or {}).get("casses", []))
+    # TABLEAU-1 (point 5) — seuls les BLOQUANTS sont une décision ; G8 (avertissement non bloquant)
+    # sort d'ici et vit dans « Est-ce que tout tourne ? ».
+    from .circuit_resume import VERROUS_AVERTISSEMENT
+    casses = [v for v in (verrous or {}).get("casses", []) if v not in VERROUS_AVERTISSEMENT]
     if casses:
         n = len(casses)
         # COCKPIT-1b (point 5) — UNE seule date de dernier contrôle des verrous, partout : `dernier_ts`
@@ -380,22 +383,10 @@ def _cartes_aujourdhui(a_faire: dict, *, noms_source: dict, ecarts_toleres: int,
             "Pas un clic : à confier à Claude Code. Le détail est prêt à copier.",
             code=True, detail={"texte": texte}, tri=2))
 
-    # (4) SONDES EN PANNE — « N sources ne répondent plus au veilleur de nuit » : Réessayer.
-    sondes = _lignes_par_type(a_faire, "decider")
-    sondes = [l for l in sondes if l.get("bouton", {}).get("source")
-              and "sonde en panne" in (l.get("titre") or "")]
-    if sondes:
-        ids = [l["bouton"]["source"] for l in sondes]
-        noms = [noms_source.get(i) or f"source {i}" for i in ids]
-        n = len(sondes)
-        cartes.append(_carte(
-            "sondes", "rouge",
-            f"{n} source{'s' if n > 1 else ''} ne répond{'ent' if n > 1 else ''} plus au veilleur de nuit",
-            (", ".join(noms[:6]) + " — trois passages ratés d'affilée. "
-             "Souvent un site amont qui a changé d'adresse."),
-            bouton={"label": "Réessayer maintenant", "action": "reessayer"},
-            detail={"texte": "Sources dont la sonde amont est en panne :\n- " + "\n- ".join(noms)},
-            tri=3))
+    # (4) SONDES EN PANNE — TABLEAU-1 (point 3+5) : signal NON BLOQUANT (une panne de sonde ne rend
+    # jamais la donnée fausse). Ce n'est pas une décision de Vic → plus de carte ici ; l'état des sondes
+    # amont vit dans « Est-ce que tout tourne ? » (tuile Veille). Un amont injoignable depuis moins de
+    # 7 jours n'y est même pas « en panne » (circuit_etats.etat_reservoir).
 
     # (5) FUITES / ÉCARTS OUVERTS entre lectures — DEMANDE DU CODE (un robinet lit hors moteur).
     if fuites_rob:
@@ -449,16 +440,29 @@ def _job(jobs_par_nom: dict, nom: str) -> dict:
     return jobs_par_nom.get(nom) or {}
 
 
-def _tuiles_tout_tourne(jobs_par_nom: dict, etats_sources: dict) -> list[dict]:
+def _tuiles_tout_tourne(jobs_par_nom: dict, etats_sources: dict, sante: dict | None = None) -> list[dict]:
+    sante = sante or {}
     def tuile(cid, titre, nom_job, ligne_ok, *, gel_from=None):
         j = _job(jobs_par_nom, nom_job)
         pastille = _pastille_job(j)
         return {"id": cid, "titre": titre, "pastille": pastille, "ligne": ligne_ok(j)}
 
-    veille = tuile(
-        "veille", "Veille des sources", "sonde-sources",
-        lambda j: (f"Le veilleur est passé à {_hhmm((j.get('dernier') or {}).get('fin'))} · "
-                   f"{(etats_sources or {}).get('total', '—')} sources suivies"))
+    # TABLEAU-1 (point 3+5) — les sondes amont en panne (signal non bloquant) remontent ICI, pas en
+    # carte. Un amont injoignable < 7 j n'est pas compté « en panne » (grace, circuit_etats).
+    sondes_panne = sante.get("sondes_panne") or []
+    n_sp = len(sondes_panne)
+
+    def _ligne_veille(j):
+        base = (f"Le veilleur est passé à {_hhmm((j.get('dernier') or {}).get('fin'))} · "
+                f"{(etats_sources or {}).get('total', '—')} sources suivies")
+        if n_sp:
+            base += (f" · {n_sp} amont ne répond{'ent' if n_sp > 1 else ''} plus "
+                     f"({', '.join(sondes_panne[:3])}{'…' if n_sp > 3 else ''})")
+        return base
+
+    veille = tuile("veille", "Veille des sources", "sonde-sources", _ligne_veille)
+    if n_sp and veille["pastille"] == "vert":
+        veille["pastille"] = "ambre"   # dégradé (non bloquant), jamais rouge : la donnée reste juste
 
     # Livraisons : état agrégé des 6 livreurs + ceux qui sont ok. NU-F-050 — un livreur périmé (ambre)
     # ne compte plus comme « ok » : la tuile passe en ambre s'il n'y a pas déjà un rouge.
@@ -473,11 +477,18 @@ def _tuiles_tout_tourne(jobs_par_nom: dict, etats_sources: dict) -> list[dict]:
     livraisons = {"id": "livraisons", "titre": "Livraisons du jour", "pastille": past_liv,
                   "ligne": oks}
 
-    controle = tuile(
-        "controle", "Contrôle de nuit", "coherence-banc",
-        lambda j: "0 chiffre faux chez le client" if _pastille_job(j) == "vert"
-        else "dernier passage trop ancien (en retard)" if _pastille_job(j) == "ambre"
-        else "dernier passage à revoir")
+    # TABLEAU-1 (point 5) — G8 (verrou d'AVERTISSEMENT, non bloquant : sources sans contrôle récent)
+    # vit ici, pas en carte. Il nuance la ligne sans jamais faire passer la tuile au rouge.
+    g8 = sante.get("verrous_avert") or []
+    def _ligne_controle(j):
+        p = _pastille_job(j)
+        base = ("0 chiffre faux chez le client" if p == "vert"
+                else "dernier passage trop ancien (en retard)" if p == "ambre"
+                else "dernier passage à revoir")
+        if g8:
+            base += f" · {', '.join(g8)} : avertissement non bloquant (sources sans contrôle récent)"
+        return base
+    controle = tuile("controle", "Contrôle de nuit", "coherence-banc", _ligne_controle)
 
     courrier = tuile(
         "courrier", "Courrier aux clients", "mail-queue-consommer",
@@ -489,10 +500,12 @@ def _tuiles_tout_tourne(jobs_par_nom: dict, etats_sources: dict) -> list[dict]:
 
 
 def _resume_usine(jobs_list: list[dict]) -> dict:
-    """Le compteur « N postes · X au vert · Y en échec · Z à l'arrêt » affiché en tête de section 2
-    (et repris par L'usine, Lot B). On ne compte QUE les jobs planifiés+non gelés comme « postes
-    actifs » ; les gelés et le job non planifié (agents) comptent « à l'arrêt »."""
-    vert = echec = arret = 0
+    """Le compteur « N postes · X au vert · Y en échec · Z à l'arrêt · W pas encore dûs » affiché en tête
+    de section 2 (et repris par L'usine, Lot B). TABLEAU-1 (point 5) : « le compte en tête ne compte que
+    les vrais échecs » et « un job dont la date n'est pas venue est pas encore dû, jamais à l'arrêt ».
+    Donc un poste PLANIFIÉ qui n'est encore JAMAIS parti (sa 1ʳᵉ échéance n'est pas atteinte) compte
+    « pas encore dû », pas « à l'arrêt » ; seuls les gelés / non planifiés restent « à l'arrêt »."""
+    vert = echec = arret = pas_encore_du = 0
     for j in jobs_list:
         if j.get("gel"):
             arret += 1
@@ -510,64 +523,89 @@ def _resume_usine(jobs_list: list[dict]) -> dict:
             # avant, l'en-tête le comptait « à l'arrêt » alors que la grille le peignait « travaille »
             # (violet). On le compte au vert (flotte saine) → plus de contradiction en-tête↔grille.
             vert += 1
+        elif statut in (None, "") and j.get("planifie"):
+            # TABLEAU-1 (point 5) — jamais parti MAIS planifié (sa date n'est pas venue) → « pas encore
+            # dû », pas « à l'arrêt » (ex. un job neuf ajouté le jour même). Pas un échec.
+            pas_encore_du += 1
         else:
             arret += 1
-    # NU-F-050 — le résumé garde son contrat historique (4 clés) ; le « en retard » (postes ok mais
-    # périmés) se LIT sur les PASTILLES (ambre, côté grille/tuiles/légende) et est recompté au front à
-    # partir d'elles — pas besoin d'un 5ᵉ compteur ici (qui romprait les compteurs verrouillés par test).
-    return {"postes": len(jobs_list), "vert": vert, "echec": echec, "arret": arret}
+    # Les 4 clés historiques sont conservées (compteurs verrouillés par test) ; `pas_encore_du` s'ajoute
+    # sans les rompre. Le « en tête » n'alarme que sur `echec`.
+    return {"postes": len(jobs_list), "vert": vert, "echec": echec, "arret": arret,
+            "pas_encore_du": pas_encore_du}
 
 
 # ══════════════════════ section 3 — « Où en est la mise à jour ? » ══════════════════════
 
 def _etapes_mise_a_jour(a_faire: dict, *, run_servi: str, candidat: str | None,
                         calculer_present: bool, dernier_calcul: str | None,
-                        env: str, prod_run: str | None) -> list[dict]:
-    inj = _lignes_par_type(a_faire, "injecter")
+                        env: str, prod_run: str | None, promotion_auto: bool = True,
+                        calcul_en_cours: bool = False) -> list[dict]:
+    """TABLEAU-1 (point 5) — « Où en est la mise à jour ? » dit la VÉRITÉ DU MOMENT, il n'offre plus de
+    bouton pour ce qui tourne SEUL la nuit (plus d'« Injecter »/« Calculer » ici) :
+      · Injecter  — les sources de référence (classe A) s'injectent seules la nuit ; seules les sources
+        structurantes (classe B) attendent le clic de Vic, et ce clic vit dans « à faire » (on y renvoie).
+      · Calculer  — le calcul tourne la NUIT sur le SERVEUR (plus « sur le Mac ») : on dit s'il tourne en
+        ce moment ou la date du dernier, jamais un bouton.
+      · Promotion — AUTOMATIQUE (contrôles verts → servi sans geste) ou EN ATTENTE DU CLIC de Vic (gate) :
+        le bouton n'apparaît que dans le second cas, pour la vraie décision.
+      · Envoyer en prod — la version servie aux clients et sa fraîcheur ; plus de « se fait depuis le Mac »."""
+    inj = _lignes_par_type(a_faire, "injecter")   # déjà filtré CLASSE B (circuit_resume)
     n_inj = len(inj)
 
-    # Étape 1 — Injecter.
+    # Étape 1 — Injecter : rien à cliquer pour la référence (auto nuit) ; renvoi vers « à faire » pour la
+    # structurante qui attend Vic.
     e1 = {"id": "injecter", "titre": "Injecter", "ordre": 1,
           "fait": n_inj == 0,
-          "ligne": "Rien en attente" if n_inj == 0
-                   else f"{n_inj} source{'s' if n_inj > 1 else ''} attend{'ent' if n_inj > 1 else ''}",
-          "bouton": None if n_inj == 0 else {"label": "Injecter", "action": "voir-cartes"}}
+          "ligne": ("Les sources de référence s'injectent seules la nuit — rien de structurant en attente"
+                    if n_inj == 0
+                    else f"{n_inj} source{'s' if n_inj > 1 else ''} structurante{'s' if n_inj > 1 else ''} "
+                         f"attend{'ent' if n_inj > 1 else ''} ton clic (voir « à faire »)"),
+          "bouton": None if n_inj == 0 else {"label": "Voir", "action": "voir-cartes"}}
 
-    # Étape 2 — Calculer (sur le Mac). « à faire » si des entrées ont changé.
+    # Étape 2 — Calculer : la nuit, sur le SERVEUR. Pas de bouton (automatique). On dit la vérité du moment.
+    if calcul_en_cours:
+        ligne2 = "Calcul en cours sur le serveur, cette nuit"
+    elif dernier_calcul:
+        ligne2 = (f"Dernier calcul {_jour(dernier_calcul)} · le calcul tourne la nuit sur le serveur"
+                  + (" ; des entrées ont changé → il recalculera" if calculer_present else ""))
+    else:
+        ligne2 = "Le calcul tourne la nuit sur le serveur, quand une source a avancé"
     e2 = {"id": "calculer", "titre": "Calculer", "ordre": 2,
-          "fait": not calculer_present,
-          "ligne": (f"Dernier calcul {_jour(dernier_calcul)}" if dernier_calcul else "sur le Mac, à ta demande")
-                   + (" · des entrées ont changé" if calculer_present else ""),
-          "bouton": {"label": "Calculer", "action": "calculer"} if calculer_present else None}
+          "fait": not calculer_present, "ligne": ligne2, "bouton": None}
 
-    # Étape 3 — Basculer (chez toi). « à faire » s'il y a un candidat prêt.
-    e3 = {"id": "basculer", "titre": "Basculer", "ordre": 3,
-          "fait": candidat is None,
-          "ligne": (f"Un candidat est prêt" if candidat else "L'app affiche la dernière version"),
-          "bouton": {"label": "Basculer", "action": "basculer", "candidat": candidat} if candidat else None}
+    # Étape 3 — Promotion : automatique (gate) ou en attente du clic de Vic.
+    if promotion_auto:
+        ligne3 = ("Promotion automatique : contrôles verts → le nouveau calcul est servi sans geste de ta part"
+                  + (f" (candidat prêt : {candidat})" if candidat else ""))
+        bouton3 = None
+        fait3 = True
+    elif candidat:
+        ligne3 = f"Un calcul contrôlé ({candidat}) attend TON clic pour être servi"
+        bouton3 = {"label": "Basculer", "action": "basculer", "candidat": candidat}
+        fait3 = False
+    else:
+        ligne3 = "Promotion en attente de ton clic — aucun candidat prêt pour l'instant"
+        bouton3 = None
+        fait3 = True
+    e3 = {"id": "basculer", "titre": "Promotion", "ordre": 3,
+          "fait": fait3, "ligne": ligne3, "bouton": bouton3}
 
-    # Étape 4 — Envoyer en prod. « à faire » si la prod sert un autre run que le local.
+    # Étape 4 — Envoyer en prod : la vérité servie, sans « se fait depuis le Mac ».
     local_env = (env or "local") == "local"
     retard = prod_run is not None and prod_run != run_servi
     if not local_env:
-        ligne4 = "se fait depuis le Mac"
-        bouton4 = None
-        fait4 = True
+        # on REGARDE la prod (c'est elle qui tourne) : on dit juste la version servie.
+        ligne4, bouton4, fait4 = f"Les clients sont servis en {run_servi}", None, True
     elif prod_run is None:
-        ligne4 = "état de la prod en cours de lecture…"
-        bouton4 = None
-        fait4 = False
+        ligne4, bouton4, fait4 = "état de la prod en cours de lecture…", None, False
     elif retard:
         ligne4 = "Les clients sont encore sur la version précédente"
-        bouton4 = {"label": "Envoyer en prod", "action": "envoyer-prod"}
-        fait4 = False
+        bouton4, fait4 = {"label": "Envoyer en prod", "action": "envoyer-prod"}, False
     else:
-        ligne4 = "Les clients ont la dernière version"
-        bouton4 = None
-        fait4 = True
+        ligne4, bouton4, fait4 = "Les clients ont la dernière version", None, True
     e4 = {"id": "envoyer-prod", "titre": "Envoyer en prod", "ordre": 4,
-          "fait": fait4, "ligne": ligne4, "bouton": bouton4,
-          "local": local_env}
+          "fait": fait4, "ligne": ligne4, "bouton": bouton4, "local": local_env}
 
     return [e1, e2, e3, e4]
 
@@ -688,6 +726,7 @@ def composer_cockpit(*, a_faire: dict, etats_sources: dict | None, reservoirs: l
                      ecarts_toleres: int, jobs_list: list[dict],
                      run_servi: str, candidat: str | None, calculer_present: bool,
                      dernier_calcul: str | None, env: str, prod_run: str | None,
+                     promotion_auto: bool = True, calcul_en_cours: bool = False,
                      dates: dict | None = None, copie_externe: dict | None = None,
                      restore_test: dict | None = None, radar: dict | None = None) -> dict:
     """Compose le payload du Tableau de bord (trois sections). Tout est déjà calculé en amont par
@@ -695,6 +734,14 @@ def composer_cockpit(*, a_faire: dict, etats_sources: dict | None, reservoirs: l
     None quand l'état prod n'est pas encore lu (le front le complète via /admin/cockpit/etat-prod)."""
     noms_source = {r["id"]: r.get("nom") for r in (reservoirs or [])}
     jobs_par_nom = {j["nom"]: j for j in (jobs_list or [])}
+
+    # TABLEAU-1 (point 3+5) — la SANTÉ non bloquante (sondes amont en panne, G8) alimente « tout tourne »,
+    # jamais les cartes de décision.
+    from .circuit_resume import VERROUS_AVERTISSEMENT
+    sondes_panne = [r.get("nom") for r in (reservoirs or [])
+                    if (r.get("etat") or ["", ""])[1] == "sonde en panne" and r.get("nom")]
+    verrous_avert = [v for v in (verrous or {}).get("casses", []) if v in VERROUS_AVERTISSEMENT]
+    sante = {"sondes_panne": sondes_panne, "verrous_avert": verrous_avert}
 
     cartes = _cartes_aujourdhui(
         a_faire, noms_source=noms_source, ecarts_toleres=ecarts_toleres, verrous=verrous,
@@ -704,10 +751,11 @@ def composer_cockpit(*, a_faire: dict, etats_sources: dict | None, reservoirs: l
     return {
         "aujourdhui": {"n": len(cartes), "cartes": cartes},
         "tout_tourne": {"resume": _resume_usine(jobs_list),
-                        "tuiles": _tuiles_tout_tourne(jobs_par_nom, etats_sources or {})},
+                        "tuiles": _tuiles_tout_tourne(jobs_par_nom, etats_sources or {}, sante)},
         "mise_a_jour": {"etapes": _etapes_mise_a_jour(
             a_faire, run_servi=run_servi, candidat=candidat, calculer_present=calculer_present,
-            dernier_calcul=dernier_calcul, env=env, prod_run=prod_run)},
+            dernier_calcul=dernier_calcul, env=env, prod_run=prod_run,
+            promotion_auto=promotion_auto, calcul_en_cours=calcul_en_cours)},
         "radar": _carte_radar(radar),   # RADAR-FIX-2 (Lot D) — Données ON / Notifications OFF + fraîcheur capture
     }
 
@@ -732,8 +780,11 @@ def _carte_radar(radar: dict | None) -> dict | None:
         ligne_cap = "Aucune capture automatique"
     else:
         quand = cap_at.astimezone().strftime("%d/%m %H:%M")
-        ligne_cap = (f"Dernière capture auto {quand} · {int(cap.get('nouvelles') or 0)} annonce(s), "
-                     f"{int(cap.get('pages') or 0)} page(s)")
+        # OPS-NUIT-2 — annonces NOUVELLES par portail (compteur canonique, pige_annonces) via la ligne
+        # partagée ; les PAGES lues (activité de capture) sont dites à part, jamais confondues.
+        from .pige.comptage_nuit import ligne_resume
+        ligne_cap = (f"Dernière capture auto {quand} · {ligne_resume(cap)} · "
+                     f"{int(cap.get('pages') or 0)} page(s) lue(s)")
     cyc = radar.get("cycle") or None
     ligne_cyc = f"radar-cycle : {_hhmm(cyc.get('fin'))}" if cyc else "radar-cycle : jamais"
     donnees_on, notifs_on = bool(radar.get("donnees_on")), bool(radar.get("notifs_on"))

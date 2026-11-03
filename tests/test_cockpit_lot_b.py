@@ -79,7 +79,10 @@ def test_resume():
     # compté « à l'arrêt » : la grille le peint « travaille » (violet), l'en-tête ne doit plus le
     # contredire en le comptant à l'arrêt. Il rejoint la flotte saine (vert). Restent « à l'arrêt » :
     # agents-sources (jamais parti) et digest (gelé).
-    assert ck.composer_usine(_jobs())["resume"] == {"postes": 6, "vert": 3, "echec": 1, "arret": 2}
+    # TABLEAU-1 (point 5) — `pas_encore_du` s'ajoute (0 ici : agents-sources n'est pas planifié → reste
+    # « à l'arrêt » ; seul un job PLANIFIÉ jamais parti serait « pas encore dû »).
+    assert ck.composer_usine(_jobs())["resume"] == {
+        "postes": 6, "vert": 3, "echec": 1, "arret": 2, "pas_encore_du": 0}
 
 
 # ─────────────── le registre réel (import) ───────────────
@@ -100,8 +103,9 @@ def test_familles_attendues():
     # COCKPIT-1 Lot C : restore-test + recap-matin retirés du registre → 29 jobs, F4 passe de 21 à 19.
     # MENAGE-1 (geste 10) : + purge-runs (famille 4, gelé) → 30 jobs, F4 passe de 19 à 20.
     # AUTONOMIE-1 : + injection-nuit (F2), + calcul-nuit (F3), + restore-test RÉTABLI (F4) → 33 jobs.
-    assert par_fam == {1: 2, 2: 7, 3: 3, 4: 21}
-    assert sum(par_fam.values()) == 33
+    # OPS-NUIT-1 : + resume-matin (F4, le résumé du matin) → 34 jobs, F4 passe de 21 à 22.
+    assert par_fam == {1: 2, 2: 7, 3: 3, 4: 22}
+    assert sum(par_fam.values()) == 34
 
 
 # ─────────────── endpoints (db) ───────────────

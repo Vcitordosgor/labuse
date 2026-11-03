@@ -165,9 +165,17 @@ def sonder_entete(url: str, dernier_entete: str | None) -> Sonde:
         status, entetes, _ = _http(url, methode_http="GET")
     if status >= 400:
         return Sonde("injoignable", message=f"HTTP {status}")
-    val = entetes.get("etag") or entetes.get("last-modified")
+    val = (entetes.get("etag") or entetes.get("last-modified") or "").strip()
     if not val:
-        return Sonde("illisible", message="ni ETag ni Last-Modified sur l'en-tête amont")
+        # TABLEAU-1 (point 3) — certains serveurs de téléchargement (ex. dossier SIS de la préfecture)
+        # n'exposent NI ETag NI Last-Modified utile (header vide) mais TOUJOURS un Content-Length : un
+        # dossier mis à jour change de taille. On s'en sert comme empreinte de version (signal de veille,
+        # pas une garantie à l'octet près). Dernier repli seulement.
+        cl = (entetes.get("content-length") or "").strip()
+        if cl:
+            val = f"taille:{cl}"
+    if not val:
+        return Sonde("illisible", message="ni ETag ni Last-Modified ni Content-Length sur l'en-tête amont")
     val = val.strip()
     if dernier_entete and val != dernier_entete:
         return Sonde("nouvelle_version", vu=val, entete=val,
@@ -188,18 +196,58 @@ def _empreinte(val) -> str:
     return f"{n}:{h}"
 
 
+#: TABLEAU-1 (point 3) — miroirs Overpass (l'endpoint public overpass-api.de est régulièrement saturé :
+#: 502/timeout). On réessaie la MÊME requête sur un miroir avant de conclure « injoignable ». Best-effort.
+_OVERPASS_MIROIRS = ("overpass.kumi.systems", "overpass.private.coffee")
+
+
+def _http_temoin(url: str) -> tuple[int, dict, str]:
+    """GET d'un témoin, avec REPLI SUR MIROIR pour Overpass (amont public souvent en 502/timeout). On
+    tente l'URL d'origine ; si c'est un endpoint Overpass et qu'il échoue (réseau ou HTTP), on rejoue la
+    même requête sur un miroir connu (hôte différent). Hors Overpass : aucun repli (comportement W3.2)."""
+    try:
+        return _http(url)
+    except Exception:  # noqa: BLE001
+        if "overpass" not in url.lower():
+            raise
+        for host in _OVERPASS_MIROIRS:
+            miroir = re.sub(r"https?://[^/]+/", f"https://{host}/", url, count=1)
+            try:
+                return _http(miroir)
+            except Exception:  # noqa: BLE001 — miroir aussi en panne : on essaie le suivant
+                continue
+        raise
+
+
 def _lire_temoin(url: str, selecteur: str | None):
     """Lit UN témoin : (valeur extraite, None) si OK, sinon (None, Sonde d'échec). Facteur commun aux
     témoins mono- et bi-commune (S4.2)."""
-    status, _, corps = _http(url)
+    status, _, corps = _http_temoin(url)
     if status >= 400:
         return None, Sonde("injoignable", message=f"HTTP {status}")
+    # TABLEAU-1 (point 3) — témoin sur réponse NON-JSON (atom/xml/texte) : un sélecteur « re:<motif> »
+    # extrait la valeur témoin par regex sur le corps BRUT (ex. OCS GE : le <updated> du flux atom amont).
+    # Pas de json.loads — c'est ainsi qu'on lit un amont qui ne sert pas du JSON.
+    if selecteur and selecteur.startswith("re:"):
+        try:
+            trouves = re.findall(selecteur[3:], corps)
+        except re.error as exc:
+            return None, Sonde("illisible", message=f"regex témoin invalide : {exc}")
+        if not trouves:
+            return None, Sonde("illisible", message=f"motif témoin introuvable : {selecteur[3:]}")
+        plats = [t if isinstance(t, str) else "".join(t) for t in trouves]
+        return max(plats).strip(), None
     try:
         data = json.loads(corps)
     except ValueError:
         return None, Sonde("illisible", message="réponse non-JSON")
     val = _json_pointe(data, selecteur) if selecteur else data
     if val is None:
+        # TABLEAU-1 (point 3) — JSON valide mais FeatureCollection VIDE : c'est un creux amont MOMENTANÉ
+        # (ex. WFS geopf qui renvoie 0 feature pour le bbox sous charge), pas notre lecteur qui est cassé
+        # → injoignable (transitoire, couvert par le grace < 7 j), jamais illisible.
+        if isinstance(data, dict) and isinstance(data.get("features"), list) and not data["features"]:
+            return None, Sonde("injoignable", message="réponse sans feature (amont momentané)")
         return None, Sonde("illisible", message=f"chemin JSON introuvable : {selecteur}")
     return val, None
 
@@ -435,13 +483,15 @@ SEED: list[dict] = [
     # sonde fige DEUX bâtiments témoins 974 (Saint-Denis + Entre-Deux) : toute modification RNB
     # sur l'un d'eux change l'empreinte → « la donnée amont a changé » (jamais un faux signal
     # national). URLs réellement appelées (probe 13/09/2026).
-    # REPARATIONS-1 lot 5 — OCS GE : le catalogue de téléchargement IGN est l'amont réel ; la
-    # page atom du produit D974 2022 porte sa date de publication — une nouvelle livraison
-    # (millésime ou correctif) change l'empreinte. URL réellement appelée (probe 13/09/2026).
+    # REPARATIONS-1 lot 5 + TABLEAU-1 (point 3) — OCS GE : le catalogue de téléchargement IGN sert
+    # désormais un flux ATOM (application/atom+xml), PAS du JSON — d'où l'ancien « réponse non-JSON ».
+    # La date <updated> du flux porte la publication du produit D974 : une nouvelle livraison (millésime
+    # ou correctif) la change. On lit donc le témoin par REGEX sur le corps atom (selecteur « re:… »),
+    # sur les DEUX produits (OCS-GE + artificialisation). Probe 03/11/2026 : <updated>2025-04-10…</updated>.
     {"name": "OCS GE (IGN) — occupation du sol et artificialisation", "methode": "temoin",
      "url": "https://data.geopf.fr/telechargement/resource/OCSGE/OCS-GE_2-0__GPKG_RGR92UTM40S_D974_2022-01-01",
      "url2": "https://data.geopf.fr/telechargement/resource/OCSGE-ARTIFICIALISATION/OCS-GE-ARTIFICIALISATION_2-0_DIFF-2017-2022_GPKG_RGR92UTM40S_D974_2025-09-16",
-     "selecteur": None},
+     "selecteur": "re:<updated>([^<]+)</updated>"},
     {"name": "RNB — Référentiel National des Bâtiments", "methode": "temoin",
      "url": "https://rnb-api.beta.gouv.fr/api/alpha/buildings/B74TG4FPXST4/",
      "url2": "https://rnb-api.beta.gouv.fr/api/alpha/buildings/1126R7BCDWR1/",
@@ -454,14 +504,17 @@ SEED: list[dict] = [
              "&OUTPUTFORMAT=application/json&SORTBY=date_decision%20D"
              "&BBOX=55.20,-21.42,55.90,-20.85,EPSG:4326"),
      "selecteur": "features.0.properties.date_decision"},
-    # GEOPF-3 — SCOT (GPU) : WFS sans millésime nommé. Témoin = le gpu_timestamp du SCOT le plus
-    # récent — une nouvelle publication GPU change l'empreinte.
+    # GEOPF-3 + TABLEAU-1 (point 3) — SCOT (GPU) : WFS sans millésime nommé. L'ancienne URL triait par
+    # `SORTBY=gpu_timestamp D` + COUNT=1 : geopf renvoyait un ordre NON DÉTERMINISTE (parfois un SCOT au
+    # gpu_timestamp null en tête) → « chemin JSON introuvable ». On ne trie plus : on demande les
+    # gpu_timestamp de TOUS les SCOT du 974 (PROPERTYNAME → réponse ~0,4 ko, sans géométrie) et on garde
+    # le PLUS RÉCENT par regex (témoin « re: », robuste à l'ordre et aux nulls). Une nouvelle publication
+    # GPU change le max → l'empreinte change. (Une FeatureCollection vide → injoignable transitoire.)
     {"name": "SCOT (GPU)", "methode": "temoin",
      "url": ("https://data.geopf.fr/wfs/ows?SERVICE=WFS&REQUEST=GetFeature&VERSION=2.0.0"
-             "&TYPENAMES=wfs_scot:scot&SRSNAME=EPSG:4326&COUNT=1"
-             "&OUTPUTFORMAT=application/json&SORTBY=gpu_timestamp%20D"
-             "&BBOX=55.20,-21.42,55.90,-20.85,EPSG:4326"),
-     "selecteur": "features.0.properties.gpu_timestamp"},
+             "&TYPENAMES=wfs_scot:scot&SRSNAME=EPSG:4326&COUNT=50&PROPERTYNAME=gpu_timestamp"
+             "&OUTPUTFORMAT=application/json&BBOX=55.20,-21.42,55.90,-20.85,EPSG:4326"),
+     "selecteur": "re:\"gpu_timestamp\":\"([^\"]+)\""},
     # GEOPF-3 — zones exclues EnR sauf toiture (OFB/APER) : WFS sans millésime nommé. Témoin = empreinte
     # de la 1re zone 974 (une révision du zonage APER change la réponse).
     {"name": "Zones exclues EnR sauf toiture (OFB/APER)", "methode": "temoin",

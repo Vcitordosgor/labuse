@@ -44,6 +44,15 @@ commandes:
   - motif: "Annuaire de l'administration%"
     label: annuaire_services
     argv: ["labuse", "ingest-annuaire-services"]
+  # TABLEAU-1 (point 1) — câblage des 2 sources de CLASSE A qui manquaient leur commande : sans
+  # elles, injection-nuit ne pouvait PAS les injecter (listées « à câbler ») et elles remontaient à
+  # tort dans la carte « à valider » de Vic. Commandes idempotentes, mêmes que la CLI/le cron.
+  - motif: "Population légale (INSEE via geo.api.gouv)"
+    label: population_legale
+    argv: ["labuse", "population-legale-sync"]
+  - motif: "Zones exclues EnR sauf toiture (OFB/APER)"
+    label: enr_exclue_toiture
+    argv: ["labuse", "enr-exclue-toiture-build"]
   - motif: "Géorisques — sites et sols pollués"
     label: georisques_ssp
     argv: ["labuse", "ingest-georisques"]

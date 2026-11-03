@@ -1,0 +1,71 @@
+id;source;gravite;statut;disposition;raison
+C01;CHASSE-1;bloquant;deja-corrige;accepter;ventes/mediane comptent mutations distinctes (GROUP BY id_mutation) — CHASSE-FIX-1
+C02;CHASSE-1;bloquant;deja-corrige;accepter;Flash sert le drapeau multi_parcelles — CHASSE-FIX-1
+C03;CHASSE-1;a_corriger;deja-corrige;accepter;courrier compte count(DISTINCT) — resolu
+C04;CHASSE-1;a_corriger;deja-corrige;accepter;terrain = sum() des bouts — resolu
+C05;CHASSE-1;a_corriger;deja-corrige;accepter;batiments dedupliques par geometrie (DISTINCT geom)
+C06;CHASSE-1;bloquant;deja-corrige;accepter;doctrine changee (decision Vic) : capacite differee, pas exclue ; residuel lit parcel_au_statut
+C07;CHASSE-1;a_corriger;deja-corrige;accepter;accueil TRAIN (2017,2023) aligne front/back
+C08;CHASSE-1;a_corriger;deja-corrige;accepter;compteur fige 33622 retire du client
+C09;CHASSE-1;a_corriger;deja-corrige;accepter;compteur 227545 retire
+C10;CHASSE-1;a_corriger;deja-corrige;accepter;VEFA libelle 60 mois/8 ventes aligne
+C11;CHASSE-1;a_corriger;deja-corrige;accepter;PDF dit niveau de vie moyen (plus median)
+C12;CHASSE-1;a_corriger;deja-corrige;accepter;miroir nomme le vrai perimetre (section cadastrale)
+C13;CHASSE-1;a_corriger;ouvert;accepter-a-confirmer-Vic;regime_tva_saisi = HT/TTC pas un taux ; 8,5/2,1% via part_sociale_pct ; libelle exact. Confirmer avec Vic si un selecteur de taux par regime est voulu
+C14;CHASSE-1;a_corriger;deja-corrige;accepter;copilote dit des parcelles de la commune (= valeur)
+C15;CHASSE-1;a_corriger;deja-corrige;accepter;chiffre Sitadel faux retire
+C16;CHASSE-1;cosmetique;ouvert;accepter;compteurs SIS/CASIAS retires du client ; reste surface interne/doc
+C17;CHASSE-1;a_corriger;deja-corrige;accepter;export affiche la formule /1,15
+C18;CHASSE-1;a_corriger;deja-corrige;accepter;partners dit AUTORISES (date autorisation)
+C19;CHASSE-1;a_corriger;deja-corrige;accepter;RAP recodifie 0,40% assiette TA (CGI 1635 quater F)
+C20;CHASSE-1;cosmetique;deja-corrige;accepter;piscines bande de confiance, plus de % de fiabilite promis
+C21;CHASSE-1;cosmetique;deja-corrige;accepter;sonde fuseau converti 03:00 UTC (07:00 Reunion)
+C22;CHASSE-1;bloquant;deja-corrige;accepter;Aucun risque PPR teste par commune (couvre_commune) — CHASSE-FIX-1
+C23;CHASSE-1;bloquant;deja-corrige;accepter;Aucune SUP teste par commune (couvre_commune)
+C24;CHASSE-1;a_corriger;deja-corrige;accepter;en-tete proprio non identifie (front lit owner_identifiable)
+C25;CHASSE-1;a_corriger;deja-corrige;accepter;seuil mediane DVF = 8 (config), le 5 Radar est un indicatif distinct
+C26;CHASSE-1;a_corriger;ouvert;accepter;fillna(0) SDP inconnue = fail-closed VOULU (fiche recalcule null)
+C27;CHASSE-1;a_corriger;deja-corrige;accepter;statut PLU depublie existe et est dit
+C28;CHASSE-1;cosmetique;deja-corrige;accepter;VRD 0 EUR convention dite dans le portage
+C29;CHASSE-1;a_corriger;ouvert;accepter;7086 groupes DVF dupliques = dette ingestion DATA ; consommateurs (C01/C03) corriges = 0 faux client
+C30;CHASSE-1;a_corriger;ouvert;accepter;emprise>surface = choix documente (max BDTOPO/CoSIA non clippe) ; aucun lecteur ne sert le ratio brut
+C31;CHASSE-1;cosmetique;ouvert;accepter;58 hauteurs LiDAR <=0 servies AVEC badge Sources discordantes ; nettoyage data
+C32;CHASSE-1;cosmetique;ouvert;accepter;7 medianes secteur hors [min,max] de 0,2 EUR = arrondi a l'euro, dans la tolerance
+C33;CHASSE-1;cosmetique;ouvert;accepter;dates futures = ouvertures programmees declarees INSEE/BODACC, pas une erreur
+C34;CHASSE-1;cosmetique;ouvert;accepter;754 "50 pas" >200 m = delimitation legale peut depasser 81,2 m (suit couche DEAL)
+C35;CHASSE-1;cosmetique;ouvert;accepter;10 proprios publics top-200 types public (V NULL+badge), filtre PM separe existe
+C36;CHASSE-1;a_corriger;partiel;accepter;dates perissables corrigees ; 90,7% = constante de precision GELEE mandatee (RETOURS-14) ; 417 SUP scoped commune
+C37;CHASSE-1;a_corriger;ouvert;accepter;SDP 2 temporalites = design M139 (fraicheur cote projet), meme table, divergence bornee
+C38;CHASSE-1;a_corriger;deja-corrige;accepter;miroir sert le vrai radius_m, 3 perimetres legitimes etiquetes
+C39;CHASSE-1;cosmetique;deja-corrige;accepter;PDF etude-zone cles alignees, sections impriment
+C40;CHASSE-1;cosmetique;deja-corrige;accepter;veille date_depot parametree, filtre reel
+C41;CHASSE-1;cosmetique;deja-corrige;accepter;digest "depuis dernier passage", admin-only
+C42;CHASSE-1;cosmetique;deja-corrige;accepter;taxe yaml exo "10°" corrige
+C43;CHASSE-1;cosmetique;deja-corrige;accepter;mon_secteur repli "secteur 0 m" supprime
+C44;CHASSE-1;cosmetique;ouvert;accepter;surface arrondie 0/2 m2 micro-parcelles = arrondi d'affichage (<2 m2 masques des listes) = TOLERABLE
+C45;CHASSE-1;cosmetique;partiel;accepter;cle memo inclut le run ; lag residuel <=30 s intra-run, cosmetique auto-corrige
+D01;CHASSE-2;moyenne;deja-corrige;accepter;Flash retry 3x backoff sur 400 IGN transitoire
+D02;CHASSE-2;faible;deja-corrige;accepter;recette libelle de diff precis (harnais, pas client)
+D03;CHASSE-2;moyenne;deja-corrige;accepter;fiche "Marge non calculee" vs SDP=0 contradiction fermee
+D04;CHASSE-2;bloquant;deja-corrige;accepter;terrain_exigu cause nommee au client (exigu_raison)
+D05;CHASSE-2;bloquant;deja-corrige;accepter;/filtre cascade resolue (_cascade_run) carte==compteur
+D06;CHASSE-2;faible;deja-corrige;accepter;Densifier etage-0 via _cascade_run (meme fix)
+D07;CHASSE-2;moyenne;deja-corrige;accepter;radar "retirees 30j" definition unique partagee (_AGG)
+D08;CHASSE-2;faible;deja-corrige;accepter;harnais CHASSE decodeur python pur (AUTONOMIE-2), defaut harnais pas app
+D09;CHASSE-2;faible;ouvert;accepter;cibles invraisemblables = limite produit a arbitrer ; calculs corrects, pas un faux
+D10;CHASSE-2;faible;ouvert;accepter;parcel_filtre_bati.etage = etage-FILTRE interne (1/2/3), pas un "N etages" client (naming)
+D11;CHASSE-2;faible;deja-corrige;accepter;IGN WMTS instable = meme retry que D01
+C3-01;CHASSE-3;bloquant;deja-corrige;accepter;/readyz resout la cascade (resoudre_cascade_run)
+C3-02;CHASSE-3;moyen;ouvert;accepter;4 sources vitrine sans date = G5 diagnostique AUTONOMIE-2 (seed sans_millesime) ; re-validation live = geste humain
+C3-03;CHASSE-3;grave;deja-corrige;accepter;bloc Marche "Prix du neuf observe" desambiguise VEFA — CHASSE-FIX-3
+C3-04;CHASSE-3;moyen;ouvert;accepter;10778 parcelles SDP=0 stockee ; fiche sert null + "Analyse incomplete" ; reecrit au prochain run
+C3-05;CHASSE-3;faible;ouvert;accepter;2 parcelles bord cosmetique (meme famille C3-04), reecrit au run
+C3-06;CHASSE-3;bloquant;deja-corrige;accepter;"Permis dormants" regle corrigee (pc_caducs) + rebuild version-gated
+C3-07;CHASSE-3;moyen;deja-corrige;accepter;Successions exclut SA/SAS + rebuild sous gate de regle
+C3-08;CHASSE-3;moyen;deja-corrige;accepter;PM siege deterministe (ORDER BY+siret) + relabel "Etablissement"
+COH-cache_fiche_commune;COHERENCE-1;INCOHERENT;deja-corrige;accepter;job fiche-commune-cache quotidien rearme (COMMUNE-FIX-1), s'arme au deploy
+COH-vigilance_cinquante_pas;COHERENCE-1;INCOHERENT;ouvert;accepter;dual-source by-design : parcel_flags=snapshot carte vs fiche=live arbitre ; vigilance molle (poids 0)
+COH-copro_presente;COHERENCE-1;INCOHERENT;ouvert;accepter;dual-source : RNIC autoritatif vs geometrie inferee ; absence RNIC honnete
+COH-surface_parcelle_m2;COHERENCE-1;TOLERABLE;ouvert;accepter;fiche int vs sql float = arrondi au m2 (== C44)
+COH-prix_neuf_eur_m2;COHERENCE-1;mixte;deja-corrige;accepter;2 notions marche distinctes (VEFA comparable vs revente observee) labellisees (C3-03)
+COH-taxe_amenagement_taux;COHERENCE-1;INCOHERENT;ouvert;accepter;champs differents : valeur SAISIE calculette vs taux public ; ecart expose (ecart_saisi_public), comparer input vs reference n'est pas une incoherence

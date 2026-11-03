@@ -235,6 +235,14 @@ class Settings(BaseSettings):
     # n'a ni /var/log/labuse ni /run/lock écrivables — sinon le job échoue silencieusement).
     jobs_lock_dir: str = ".local/lock"               # LABUSE_JOBS_LOCK_DIR (env_prefix + nom de champ)
     disque_seuil_pct: int = 85                        # K9 — alerte disque au-delà (constante nommée)
+    # OPS-NUIT-1 point 6(e) (décision Vic) — PLANCHER du seuil « job en retard » : un job fréquent
+    # (healthcheck, 15 min) ne crie plus après 22 min ; retard réel au-delà de 1 h. LABUSE_JOB_RETARD_SEUIL_MIN_H.
+    job_retard_seuil_min_h: float = 1.0
+    # OPS-NUIT-2 — TOLÉRANCE /readyz : un redéploiement redémarre le service ; /readyz répond « pas
+    # prêt » quelques secondes le temps que le port rouvre. La vigie ne doit PAS ouvrir d'incident pour
+    # cette coupure courte : elle n'alerte que si /readyz reste « pas prêt » AU-DELÀ de ce délai (preuve
+    # prod 03/11 14h15 Paris : incident ouvert puis refermé en ~2 min = le restart du déploiement).
+    readyz_tolerance_s: float = 120.0                  # LABUSE_READYZ_TOLERANCE_S (coupure < 2 min tolérée)
     # DISQUE-EXTERNE-1 (14/10) — fraîcheur de la copie hors-VPS sur le disque externe du Mac. Le Mac
     # dépose un marqueur `.copie-externe.json` dans backup_dir après chaque copie vérifiée ; au-delà de
     # ce seuil (jours), le récap ouvre l'incident « branche le disque ». LABUSE_COPIE_EXTERNE_SEUIL_J.
@@ -267,6 +275,12 @@ class Settings(BaseSettings):
     # Contrôle AVANT promotion d'un run de nuit : l'écart de paliers CLIENT avec le run précédent ne
     # doit pas dépasser ce pourcentage, sinon on NE PROMEUT PAS et on alerte (dérive anormale).
     calcul_nuit_palier_delta_max_pct: float = 3.0      # LABUSE_CALCUL_NUIT_PALIER_DELTA_MAX_PCT
+    # OPS-NUIT-2 (DEPLOY-AUTONOMIE-2, piège cron) — le contrôle de cohérence du calcul de nuit LIT le
+    # dernier passage du banc (coherence-banc, 03h45). Comme le banc tourne APRÈS le début du calcul
+    # (02h), la ligne `coherence_runs` doit être FRAÎCHE (≤ ce seuil) pour être probante : au-delà,
+    # c'est celle d'hier → cohérence « en attente », PAS un faux « contrôles en échec ». 12 h sépare
+    # proprement le banc de cette nuit de celui de la veille. LABUSE_CALCUL_NUIT_COHERENCE_MAX_AGE_H.
+    calcul_nuit_coherence_max_age_h: float = 12.0
     # DEPLOY-AUTONOMIE (décision Vic) — GATE DE PROMOTION du calcul de nuit. True (défaut) = pleine
     # autonomie : un run dont TOUS les contrôles passent est promu seul. False (ou LABUSE_CALCUL_NUIT_
     # PROMEUT=0) = le run est CALCULÉ + CONTRÔLÉ + le verdict MAILÉ, mais la bascule attend le geste de

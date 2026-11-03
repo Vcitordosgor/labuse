@@ -4,7 +4,8 @@
 # -----------------------------------------------------------------------------
 # - Dump format custom compressé (pg_dump -Fc), nommage daté.
 # - Écrit HORS du dossier applicatif (/var/backups/labuse par défaut).
-# - Rotation : ne garde que les N plus récents (défaut 4) + garde-disque structurel (DISQUE-VPS-1).
+# - Rotation : ne garde que les N plus récents (défaut 2) + garde-disque structurel (DISQUE-VPS-1)
+#   + garde anti-rétrécissement (OPS-NUIT-1 : un dump 30 % plus petit n'évince jamais un bon).
 # - Recommandation : pousser ensuite vers OVH Object Storage (voir fin de script).
 # - AUCUNE suppression autre que la rotation des dumps datés de CE script.
 #
@@ -124,6 +125,30 @@ if [ ! -s "$OUT" ] || ! pg_restore --list "$OUT" >/dev/null 2>&1; then
 fi
 SIZE="$(du -h "$OUT" | cut -f1)"
 echo "✓ Sauvegarde OK ($SIZE)"
+
+# OPS-NUIT-1 (mandat Vic) — GARDE ANTI-RÉTRÉCISSEMENT : « un dump plus petit de 30 % que le précédent
+# n'en remplace JAMAIS un bon ». Les gardes ci-dessus (non vide + pg_restore --list) laissent passer un
+# dump « petit mais valide » (filet par table qui exclut trop, base tronquée, coupure en plein COPY
+# récoltée partielle) : il réussissait les contrôles, PUIS la rotation ci-dessous évinçait un bon dump.
+# Ici, AVANT toute rotation, on compare le neuf au dernier BON dump existant (hors celui qu'on vient
+# d'écrire, hors préfixes GARDE-/hebdo- qui ne sont pas dans le glob de rotation). S'il fait moins de
+# SEUIL_PCT % : la rotation est ANNULÉE (les bons dumps restent), le suspect est mis de côté sous
+# SUSPECT- (hors du glob → il ne peut pas se faire passer pour la dernière bonne sauvegarde) et le
+# script échoue BRUYAMMENT → le job backup-postgres pose un incident (mail résumé du matin).
+SEUIL_PCT="${LABUSE_BACKUP_MIN_PCT:-70}"
+REF="$(ls -1t "$BACKUP_DIR"/labuse-"${DB}"-*.dump 2>/dev/null | grep -vxF "$OUT" | head -1)"
+if [ -n "$REF" ]; then
+    NEW_KB=$(du -k "$OUT" | cut -f1)
+    REF_KB=$(du -k "$REF" | cut -f1)
+    if [ "$REF_KB" -gt 0 ] && [ "$(( NEW_KB * 100 / REF_KB ))" -lt "$SEUIL_PCT" ]; then
+        SUSPECT="$BACKUP_DIR/SUSPECT-$(basename "$OUT")"
+        mv -f -- "$OUT" "$SUSPECT"
+        echo "✗ GARDE ANTI-RÉTRÉCISSEMENT : le dump neuf ($((NEW_KB/1024)) Mo) fait moins de ${SEUIL_PCT} % du" >&2
+        echo "  dernier bon ($((REF_KB/1024)) Mo, $(basename "$REF")) — ROTATION ANNULÉE, les bons dumps sont" >&2
+        echo "  CONSERVÉS. Suspect mis de côté : $(basename "$SUSPECT") (à examiner, PAS servi comme sauvegarde)." >&2
+        exit 1
+    fi
+fi
 
 # --- Rotation : supprime les dumps de CE script au-delà des KEEP plus récents ---
 mapfile -t OLD < <(ls -1t "$BACKUP_DIR"/labuse-"${DB}"-*.dump 2>/dev/null | tail -n +"$((KEEP + 1))")

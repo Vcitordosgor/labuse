@@ -240,18 +240,26 @@ def total_a_faire(reservoirs: list[dict], *, fuites_robinets=(), ecarts=(),
     """CIRCUIT-P7 (lot 4) — L'INVARIANT, une fonction : le compteur « À faire » = la somme EXACTE des
     pastilles non vertes (Sources + Circuit) et des actions en attente. C'est ce que rend la tuile
     « tâches à effectuer » du Pilotage (lecture) ET la longueur de la liste de `composer_a_faire`.
-      · Sources non vertes qui font une ligne : nouvelle version (Injecter) · échue (Déposer) · sonde
-        en panne (Décider). « jamais vérifiée » (gris) et « à jour » (mint) n'en font pas.
+      · Sources non vertes qui font une ligne : nouvelle version de CLASSE B (Injecter — les A s'injectent
+        seules la nuit, TABLEAU-1) · échue (Déposer). « jamais vérifiée » (gris), « à jour » (mint) et
+        « sonde en panne » (non bloquant, TABLEAU-1 → section santé) n'en font pas.
       · Circuit non vert : chaque robinet qui lit hors moteur (fuite) · chaque écart ouvert · chaque
-        verrou cassé (Décider).
+        verrou cassé BLOQUANT (Décider). G8 (avertissement) ne compte pas — il vit dans « tout tourne ».
       · Actions en attente : Calculer (des entrées ont changé) · Basculer (un candidat est prêt).
       · Tuiles périmées (DASHBOARD-FIX-1 point 5) : la ligne BLOQUANTE « Reconstruire les tuiles » de
         composer_a_faire compte aussi ici — sans elle l'invariant tuile Pilotage = onglet se brisait
         dès qu'une bascule laissait les tuiles en arrière."""
+    from . import autonomie
     def lib(r):
         return (r.get("etat") or ["", ""])[1]
-    n_src = sum(1 for r in reservoirs if lib(r) in ("nouvelle version", "échue", "sonde en panne"))
-    n_circuit = len(list(fuites_robinets)) + len(list(ecarts)) + len((verrous or {}).get("casses", []))
+
+    def _injectable_b(r):
+        if lib(r) != "nouvelle version":
+            return False
+        return autonomie.classe_source(r.get("nom") or "", r.get("categorie"))[0] == "B"
+    n_src = sum(1 for r in reservoirs if _injectable_b(r) or lib(r) == "échue")
+    casses_bloquants = [v for v in (verrous or {}).get("casses", []) if v not in VERROUS_AVERTISSEMENT]
+    n_circuit = len(list(fuites_robinets)) + len(list(ecarts)) + len(casses_bloquants)
     n_actions = (1 if _calculer_present(calculer, residuel) else 0) + (1 if candidat else 0)
     n_tuiles = 1 if (tuiles or {}).get("perime") else 0
     return n_src + n_circuit + n_actions + n_tuiles
@@ -313,14 +321,10 @@ def composer_a_faire(reservoirs: list[dict], *, residuel: dict | None, candidat:
             ghost={"label": "voir dans le Circuit", "action": "voir_circuit"},
             cible=({"type": "robinet", "ids": [rid]} if rid else {"type": "compteur", "ids": []})))
 
-    # (R4) SONDE EN PANNE — 3 échecs non-SSL : signal technique rouge, à décider.
-    for r in reservoirs:
-        if lib(r) == "sonde en panne":
-            lignes.append(_ligne_af(
-                "decider", "rouge", f"Décider — sonde en panne : {r['nom']}",
-                "Trois passages ratés d'affilée (hors SSL) : la sonde amont ne répond plus.",
-                {"label": "Décider", "action": "decider", "source": r["id"]},
-                cible={"type": "reservoir", "ids": [r["id"]]}))
+    # (R4) SONDE EN PANNE — TABLEAU-1 (point 3+5) : signal NON BLOQUANT (une panne de sonde n'a jamais
+    # rendu la donnée fausse). Ce n'est pas une décision de Vic → PLUS de carte rouge ici ; l'état
+    # remonte dans « Est-ce que tout tourne ? » (tuile Veille). Le grace injoignable < 7 j est posé en
+    # amont (circuit_etats.etat_reservoir) : un amont simplement en panne n'est même pas « en panne ».
 
     # (R5) RECONSTRUIRE LES TUILES — ALGO-FIX-1 (point 4) : les tuiles matérialisées (mvt_parcels) sont
     # PÉRIMÉES vs le run/résiduel servi (une bascule trop longue pour être enchaînée, ou un re-score
@@ -343,27 +347,28 @@ def composer_a_faire(reservoirs: list[dict], *, residuel: dict | None, candidat:
             {"label": "Reconstruire", "action": "reconstruire"},
             cible={"type": "compteur", "ids": []}))
 
-    # ── AMBRE ensuite : verrou d'avertissement → injecter → calculer → basculer → déposer ─────
-    # (A0) VERROU D'AVERTISSEMENT (G8) — cassé mais NON bloquant : le déploiement passe (deploy -w).
-    # Présenté en ambre, sans « le déploiement refuse » — cohérent avec son exclusion de « À corriger ».
-    for verrou in verrous_avert:
-        lignes.append(_ligne_af(
-            "decider", "ambre", f"Décider — verrou {verrou} (avertissement, non bloquant)",
-            f"Le verrou {verrou} est un avertissement de fraîcheur de veille : le déploiement PASSE "
-            "(deploy -w). Il pointe des sources sans contrôle récent — cf. « sources sans contrôle ». "
-            "À décider quand tu veux, sans urgence.",
-            {"label": "Décider", "action": "decider", "verrou": verrou},
-            cible={"type": "compteur", "ids": []}))
+    # ── AMBRE ensuite : injecter → calculer → basculer → déposer ───────────────────────────────
+    # TABLEAU-1 (point 5) — le VERROU D'AVERTISSEMENT (G8) ne fait PLUS de carte « à décider » : c'est un
+    # signal NON BLOQUANT (fraîcheur de veille), il vit désormais dans « Est-ce que tout tourne ? ». On ne
+    # met devant Vic que de vraies décisions. (`verrous_avert` reste calculé pour la section santé.)
 
-    # (1) INJECTER — une ligne par source en nouvelle version (chacune a sa vanne).
+    # (1) INJECTER — une ligne par source de CLASSE B en nouvelle version (celles qui attendent le clic de
+    # Vic). TABLEAU-1 (point 1) : les sources de CLASSE A (référence à faible risque — Population INSEE,
+    # Annuaire, SUP, OFB/APER…) s'injectent SEULES la nuit (job injection-nuit) → elles ne sont JAMAIS une
+    # décision de Vic et ne remontent plus ici. Classe lue par nom (toutes les A visées y sont nommées).
+    from . import autonomie
     for r in reservoirs:
         if lib(r) == "nouvelle version":
+            classe, _ = autonomie.classe_source(r.get("nom") or "", r.get("categorie"))
+            if classe != "B":
+                continue
             vanne = r.get("vanne") or {}
             vu = (r.get("veille") or {}).get("vu")
             lignes.append(_ligne_af(
                 "injecter", "ambre", f"Injecter {r['nom']}",
                 (f"Le producteur a publié {('« ' + str(vu) + ' »') if vu else 'plus récent'} que "
-                 f"ce que sert l'app ({r.get('millesime') or 'version inconnue'})."),
+                 f"ce que sert l'app ({r.get('millesime') or 'version inconnue'}). Source structurante : "
+                 "elle ne s'injecte jamais seule — à toi de valider."),
                 {"label": "Injecter", "action": "injecter", "source": r["id"],
                  "vanne": vanne.get("label")},
                 cible={"type": "reservoir", "ids": [r["id"]]}))

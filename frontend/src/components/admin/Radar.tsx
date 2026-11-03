@@ -103,7 +103,12 @@ function CaptureAuto({ cap, enRetard }: { cap: RadarCheck['capture_auto']; enRet
       className={`flex flex-wrap items-center gap-2 rounded-lg border px-3.5 py-2 text-[12px] ${enRetard ? 'border-st-attention/50 bg-st-attention/10' : 'border-line bg-surface-2'}`}>
       <span className="font-mono text-[10px] uppercase tracking-wider text-txt-dim">Dernière capture automatique</span>
       {cap?.captured_at
-        ? <span className="text-txt">{fmtReu(cap.captured_at)} · <b className="font-medium">{cap.pages}</b> page{cap.pages > 1 ? 's' : ''} · {cap.nouvelles} nouvelle{cap.nouvelles > 1 ? 's' : ''}</span>
+        ? <span className="text-txt">{fmtReu(cap.captured_at)} · <b className="font-medium">{cap.nouvelles}</b> annonce{cap.nouvelles > 1 ? 's' : ''} nouvelle{cap.nouvelles > 1 ? 's' : ''}
+            {cap.par_portail && cap.par_portail.length > 0 && (
+              <span className="text-txt-mut"> ({cap.par_portail.map((p) => `${p.portail === 'leboncoin' ? 'Leboncoin' : p.portail === 'bienici' ? "Bien'ici" : p.portail} ${p.nouvelles}`).join(' · ')})</span>
+            )}
+            <span className="text-txt-mut"> · {cap.pages} page{cap.pages > 1 ? 's' : ''} lue{cap.pages > 1 ? 's' : ''}</span>
+          </span>
         : <span className="text-txt-mut">aucune capture automatique encore reçue de l’extension</span>}
       {enRetard && <span data-radar-capture-retard className="ml-auto font-medium text-st-attention">⚠ rien depuis plus de 26 h — Déposer Radar</span>}
     </div>

@@ -41,13 +41,25 @@ def test_jobs_en_retard_bloque_et_jamais(db_session, monkeypatch, tmp_path):
     config.get_settings.cache_clear()
 
     jobs_journal.ensure_table(db_session)
+    # base de test PARTAGÉE : un test antérieur a pu COMMITER des ancres `job_premiere_vue` (healthcheck
+    # réel) ; on repart d'ardoise propre (rollback de fin de test → aucun effet durable).
+    from sqlalchemy import text as _text
+    jobs_journal._ensure_premiere_vue(db_session)
+    db_session.execute(_text("DELETE FROM job_premiere_vue"))
     now = datetime.now(timezone.utc)
 
-    # le système « vit depuis » 3 jours (un vieux passage, peu importe lequel) → les quotidiens jamais
-    # réussis sont en retard. Et un job A a un succès RÉCENT → il ne doit PAS être en retard.
+    # un job A a un succès RÉCENT → il ne doit PAS être en retard.
     jobs_journal.enregistrer(db_session, {"nom": "sonde-sources", "statut": "ok",
                                           "debut": (now - timedelta(days=3)).isoformat(),
                                           "fin": (now - timedelta(minutes=10)).isoformat()})
+
+    # OPS-NUIT-2 — « jamais réussi » se juge sur le PREMIER PASSAGE PRÉVU du job, pas sur l'âge du
+    # système. backup-postgres est CONNU depuis 3 jours (une tentative RATÉE il y a 3 jours l'ancre) mais
+    # n'a jamais réussi : son premier passage prévu est largement dépassé → motif « jamais ».
+    jobs_journal.enregistrer(db_session, {"nom": "backup-postgres", "statut": "echec",
+                                          "debut": (now - timedelta(days=3)).isoformat(),
+                                          "fin": (now - timedelta(days=3)).isoformat(),
+                                          "erreur": "pg_dump KO"})
 
     # job B « tué en plein run » : état en_cours figé il y a 2 h (healthcheck timeout 120 s → bloqué)
     jobs._ecrire_etat("healthcheck", {"nom": "healthcheck", "statut": "en_cours",
@@ -58,7 +70,7 @@ def test_jobs_en_retard_bloque_et_jamais(db_session, monkeypatch, tmp_path):
 
     # bloqué : healthcheck, motif « bloque »
     assert "healthcheck" in retards and retards["healthcheck"]["motif"] == "bloque"
-    # jamais réussi : un quotidien sans aucun succès (backup-postgres) → motif « jamais »
+    # jamais réussi : connu depuis 3 jours, aucun succès (backup-postgres) → motif « jamais »
     assert "backup-postgres" in retards and retards["backup-postgres"]["motif"] == "jamais"
     # le job à succès récent n'est PAS en retard
     assert "sonde-sources" not in retards

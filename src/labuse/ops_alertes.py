@@ -23,7 +23,7 @@ import json
 import logging
 import os
 import shutil
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from sqlalchemy import text
@@ -50,7 +50,37 @@ CREATE TABLE IF NOT EXISTS ops_incidents (
 DDL_INDEX = ("CREATE UNIQUE INDEX IF NOT EXISTS ux_ops_incidents_cle_ouvert "
              "ON ops_incidents (cle) WHERE resolu_at IS NULL")
 
+# OPS-NUIT-1 (décision Vic) — SUJETS PRÉFIXÉS, tout en français : [URGENT] pour une panne / un geste
+# attendu, [INFO] pour l'informatif (le résumé du matin « rien à signaler »). Un incident qui s'ouvre
+# ou se rappelle est toujours URGENT ; les « résolu » ne partent plus en mail (ils vont au résumé).
+URGENT = "[URGENT]"
+INFO = "[INFO]"
+#: ancien préfixe, conservé pour le nettoyage du titre de cloche (compat anciens incidents).
 PREFIX = "[LABUSE]"
+
+
+def _sans_prefixe(sujet: str) -> str:
+    """Retire le préfixe de sévérité (ou l'ancien [LABUSE]) pour le TITRE de cloche (déjà catégorisé)."""
+    for p in (URGENT, INFO, PREFIX):
+        if sujet.startswith(p):
+            return sujet[len(p):].strip()
+    return sujet.strip()
+
+
+def _lien_action(cle: str, lien: str | None) -> str:
+    """OPS-NUIT-1 point 6(d) — le LIEN d'action du mail. Explicite s'il est fourni, sinon dérivé de la
+    clé d'incident (pas de colonne en base : la carte clé→page suffit). Tout mène à la console admin."""
+    if lien:
+        return lien
+    return "/admin"
+
+
+def _url_absolue(s, lien: str) -> str:
+    """URL cliquable complète (base publique + chemin). Base absente → chemin relatif (mieux que rien)."""
+    base = (getattr(s, "public_base_url", None) or "").rstrip("/")
+    if lien.startswith("http"):
+        return lien
+    return f"{base}{lien}" if base else lien
 
 
 def ensure_table(db) -> None:
@@ -99,25 +129,27 @@ def _destinataire(s) -> str | None:
 
 # ─────────────────────────────── la porte d'envoi unique ───────────────────────────────
 
-def _sink(db, sujet: str, corps: str, *, dedup: str) -> str:
+def _sink(db, sujet: str, corps: str, *, dedup: str, lien: str = "/admin") -> str:
     """Envoie l'alerte par les DEUX canaux : mail (Brevo/SMTP via la façade `mail`) + cloche admin.
-    Retourne le détail d'envoi mail ('ok' | 'dry-run' | 'no-config' | 'error: …'). Jamais bloquant :
-    la cloche qui rate ne doit pas empêcher le mail, et inversement."""
+    `lien` = chemin de l'action (OPS-NUIT-1 point 6(d)) : ajouté au corps du mail en URL cliquable ET
+    porté par la cloche. Retourne le détail d'envoi mail ('ok' | 'dry-run' | 'no-config' | 'error: …').
+    Jamais bloquant : la cloche qui rate ne doit pas empêcher le mail, et inversement."""
     s = get_settings()
+    corps_mail = f"{corps}\n\n→ Agir : {_url_absolue(s, lien)}" if lien else corps
     detail_mail = "pas-de-destinataire"
     dest = _destinataire(s)
     if dest:
         try:
             from .mail import envoyer_ops
-            detail_mail = envoyer_ops(dest, sujet, corps, settings=s).detail
+            detail_mail = envoyer_ops(dest, sujet, corps_mail, settings=s).detail
         except Exception as exc:  # noqa: BLE001 — l'échec d'envoi ne casse pas la vigie
             detail_mail = f"error: {type(exc).__name__}"
             log.warning("alerte ops : mail impossible (%s)", exc)
     try:
         from .api.events import creer_notification
         creer_notification(db, kind="systeme", compte_id=None, source="Exploitation",
-                           titre=sujet.replace(PREFIX, "").strip(), detail=(corps or "")[:500],
-                           lien="/admin", dedup=dedup)
+                           titre=_sans_prefixe(sujet), detail=(corps or "")[:500],
+                           lien=lien or "/admin", dedup=dedup)
     except Exception as exc:  # noqa: BLE001 — la cloche qui rate ne casse pas l'alerte mail
         log.warning("alerte ops : cloche impossible (%s)", exc)
     log.info("alerte ops « %s » — mail=%s", sujet, detail_mail)
@@ -126,20 +158,22 @@ def _sink(db, sujet: str, corps: str, *, dedup: str) -> str:
 
 # ─────────────────────────────── incidents (ouvrir / rappeler / résoudre) ───────────────────────────────
 
-def signaler(db, cle: str, sujet: str, detail: str) -> str:
+def signaler(db, cle: str, sujet: str, detail: str, lien: str | None = None) -> str:
     """Ouvre l'incident `cle` s'il n'existe pas (→ 'ouvert', une alerte part), ou le rappelle AU PLUS une
     fois par jour (→ 'rappel'), sinon met juste à jour le détail sans rien envoyer (→ 'silence').
-    Le `sujet`/`detail` reçus rafraîchissent toujours l'incident (dernier état connu)."""
+    Le `sujet`/`detail` reçus rafraîchissent toujours l'incident (dernier état connu). `lien` = chemin de
+    l'action à mener (OPS-NUIT-1 point 6(d)) ; dérivé de la clé si absent. Sujet préfixé [URGENT]."""
     ensure_table(db)
     row = db.execute(text(
         "SELECT id, dernier_envoi_at FROM ops_incidents WHERE cle = :c AND resolu_at IS NULL"),
         {"c": cle}).mappings().first()
-    sujet_mail = f"{PREFIX} {sujet}"
+    sujet_mail = f"{URGENT} {sujet}"
+    lien = _lien_action(cle, lien)
     if row is None:
         db.execute(text(
             "INSERT INTO ops_incidents (cle, sujet, detail, premier_envoi_at, dernier_envoi_at, rappels) "
             "VALUES (:c, :s, :d, now(), now(), 0)"), {"c": cle, "s": sujet, "d": detail})
-        _sink(db, sujet_mail, detail + "\n\n— LABUSE, exploitation", dedup=f"ops:{cle}:ouvert")
+        _sink(db, sujet_mail, detail + "\n\n— LABUSE, exploitation", dedup=f"ops:{cle}:ouvert", lien=lien)
         return "ouvert"
     # FIX-ORFEVRE-1 pt 3 (D-04) — UNE SEULE définition du « jour » de dédup des alertes : le jour
     # RÉUNION (comme protection._aujourdhui et les clés de jobs_impl). Avant : jour UTC ici, jour
@@ -159,7 +193,7 @@ def signaler(db, cle: str, sujet: str, detail: str) -> str:
     jour = today_reunion().isoformat()   # FIX-ORFEVRE-1 pt 3 (D-04) — même jour que le test SQL ci-dessus
     _sink(db, f"{sujet_mail} (toujours ouvert)",
           detail + "\n\nIncident non résolu depuis l'ouverture — rappel quotidien.\n— LABUSE, exploitation",
-          dedup=f"ops:{cle}:{jour}")
+          dedup=f"ops:{cle}:{jour}", lien=lien)
     return "rappel"
 
 
@@ -173,22 +207,19 @@ def _escalade(db, cle: str, sujet: str, detail: str) -> str:
 
 
 def resoudre(db, cle: str) -> bool:
-    """Referme l'incident `cle` s'il était ouvert (→ True, un mail « résolu » part). Sinon rien (→ False :
-    on n'envoie JAMAIS un « résolu » pour un incident qui n'existait pas — pas de bruit)."""
+    """Referme l'incident `cle` s'il était ouvert (→ True). Sinon rien (→ False).
+
+    OPS-NUIT-1 point 6(a) (décision Vic) — PLUS AUCUN mail « résolu » : il faisait du bruit (un mail
+    par retour au vert). La résolution est désormais tracée en base (`resolu_at`) et REMONTE dans le
+    RÉSUMÉ DU MATIN (section « rentré dans l'ordre depuis hier »). Seule l'OUVERTURE d'un incident part
+    en mail immédiat (URGENT) ; le retour au vert attend le résumé."""
     ensure_table(db)
     row = db.execute(text(
-        "SELECT id, sujet, ouvert_at FROM ops_incidents WHERE cle = :c AND resolu_at IS NULL"),
+        "SELECT id FROM ops_incidents WHERE cle = :c AND resolu_at IS NULL"),
         {"c": cle}).mappings().first()
     if row is None:
         return False
     db.execute(text("UPDATE ops_incidents SET resolu_at = now() WHERE id = :i"), {"i": row["id"]})
-    ouvert = row["ouvert_at"]
-    if ouvert is not None:
-        ouvert = (ouvert if ouvert.tzinfo else ouvert.replace(tzinfo=timezone.utc)).astimezone(timezone.utc)
-    depuis = ouvert.strftime("%d/%m %H:%M") if ouvert else "?"
-    _sink(db, f"{PREFIX} résolu — {row['sujet']}",
-          f"L'incident ouvert le {depuis} (UTC) est résolu.\n— LABUSE, exploitation",
-          dedup=f"ops:{cle}:resolu")
     return True
 
 
@@ -201,6 +232,19 @@ def incidents_ouverts(db) -> list[dict]:
     return [{**dict(r), "ouvert_at": r["ouvert_at"].isoformat(),
              "dernier_envoi_at": r["dernier_envoi_at"].isoformat() if r["dernier_envoi_at"] else None}
             for r in rows]
+
+
+def incidents_resolus_depuis(db, heures: int = 26) -> list[dict]:
+    """OPS-NUIT-1 point 6(a) — les incidents RÉSOLUS dans les `heures` dernières (fenêtre du résumé du
+    matin : 26 h pour couvrir d'un résumé à l'autre sans trou). Remplace le mail « résolu » immédiat."""
+    ensure_table(db)
+    rows = db.execute(text(
+        "SELECT cle, sujet, ouvert_at, resolu_at FROM ops_incidents "
+        "WHERE resolu_at IS NOT NULL AND resolu_at >= now() - make_interval(hours => :h) "
+        "ORDER BY resolu_at DESC"), {"h": heures}).mappings().all()
+    return [{"cle": r["cle"], "sujet": r["sujet"],
+             "ouvert_at": r["ouvert_at"].isoformat() if r["ouvert_at"] else None,
+             "resolu_at": r["resolu_at"].isoformat() if r["resolu_at"] else None} for r in rows]
 
 
 # ─────────────────────────────── les vigies sans point d'appel naturel ───────────────────────────────
@@ -229,6 +273,83 @@ def _readyz_local() -> tuple[bool, str]:
     return ready, motif
 
 
+#: OPS-NUIT-2 — état DÉBOUNCE de /readyz : l'instant du PREMIER « pas prêt » d'une série, persisté hors
+#: base (comme le repli) pour survivre d'un passage de vigie à l'autre. Tant que « pas prêt » dure moins
+#: que `readyz_tolerance_s`, on NE signale PAS (coupure courte d'un redéploiement). Effacé dès « prêt ».
+FICHIER_READYZ = "readyz_etat.json"
+
+
+def _readyz_etat_path() -> Path:
+    return Path(get_settings().jobs_state_dir) / FICHIER_READYZ
+
+
+def _lire_readyz_depuis() -> datetime | None:
+    try:
+        p = _readyz_etat_path()
+        if not p.exists():
+            return None
+        d = json.loads(p.read_text(encoding="utf-8"))
+        q = datetime.fromisoformat(str(d.get("depuis")).replace("Z", "+00:00"))
+        return q if q.tzinfo else q.replace(tzinfo=timezone.utc)
+    except (OSError, ValueError, TypeError):
+        return None
+
+
+def _ecrire_readyz_depuis(quand: datetime) -> None:
+    try:
+        p = _readyz_etat_path()
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(json.dumps({"depuis": quand.isoformat()}), encoding="utf-8")
+    except OSError:
+        pass
+
+
+def _effacer_readyz_depuis() -> None:
+    try:
+        _readyz_etat_path().unlink()
+    except OSError:
+        pass
+
+
+def _readyz_decision(s=None) -> dict:
+    """OPS-NUIT-2 — sonde /readyz + DÉBOUNCE, SANS toucher la base (utilisable sur le chemin de repli).
+    Gère l'état persisté (premier « pas prêt » d'une série) et retourne
+    `{ready, motif, ouvrir, age_s}` où `ouvrir` = « pas prêt » au-delà de la tolérance → il faut signaler.
+    Un redéploiement redémarre le service : /readyz répond « pas prêt » le temps que le port rouvre
+    (preuve prod 03/11 14h15 Paris : incident ouvert puis refermé en ~2 min = le restart). On tolère
+    cette coupure COURTE (< `readyz_tolerance_s`, défaut 120 s) ; au-delà, c'est une vraie panne."""
+    s = s or get_settings()
+    ready, motif = _readyz_local()
+    tol_s = float(getattr(s, "readyz_tolerance_s", 120.0))
+    now = datetime.now(timezone.utc)
+    if ready:
+        _effacer_readyz_depuis()
+        return {"ready": True, "motif": motif, "ouvrir": False, "age_s": 0.0, "tol_s": tol_s}
+    depuis = _lire_readyz_depuis() or now
+    _ecrire_readyz_depuis(depuis)
+    age_s = (now - depuis).total_seconds()
+    return {"ready": False, "motif": motif, "ouvrir": age_s >= tol_s, "age_s": age_s, "tol_s": tol_s}
+
+
+def vigie_readyz(db, s=None) -> dict:
+    """La vigie /readyz débouncée (point d'appel des vigies). Ouvre l'incident SEULEMENT si « pas prêt »
+    persiste au-delà de la tolérance ; prêt → efface l'état + referme. Décision partagée avec le
+    healthcheck via `_readyz_decision` (lui garde le repli local quand la base est indisponible)."""
+    d = _readyz_decision(s)
+    if d["ready"]:
+        resoudre(db, "readyz")
+        return {"ready": True, "motif": d["motif"]}
+    if d["ouvrir"]:
+        signaler(db, "readyz", "/readyz répond « pas prêt »",
+                 f"La sonde /readyz locale répond que le service n'est pas prêt depuis {round(d['age_s'])} s "
+                 f"(> tolérance {round(d['tol_s'])} s) : {d['motif']}. Une coupure plus longue qu'un simple "
+                 "redéploiement — vérifier le service (journalctl -u labuse).")
+        return {"ready": False, "motif": d["motif"], "depuis_s": round(d["age_s"]), "incident": True}
+    # coupure encore COURTE (sans doute un restart de déploiement) : on attend, pas d'incident.
+    return {"ready": False, "motif": d["motif"], "depuis_s": round(d["age_s"]), "incident": False,
+            "tolere": True}
+
+
 def _dumps(backup_dir: str) -> list[Path]:
     """Les dumps de sauvegarde présents, du plus récent au plus ancien (formats .dump et .sql.gz).
     Dossier absent ou illisible (poste de dev sans /var/backups) → liste vide, jamais d'exception."""
@@ -240,6 +361,32 @@ def _dumps(backup_dir: str) -> list[Path]:
         return sorted(fichiers, key=lambda f: f.stat().st_mtime, reverse=True)
     except OSError:
         return []
+
+
+def _backup_en_cours() -> bool:
+    """OPS-NUIT-2 — vrai si le job `backup-postgres` est en train d'ÉCRIRE un dump (état « en_cours »).
+    pg_dump écrit DIRECTEMENT dans `labuse-<db>-<ts>.dump` (pas de fichier temporaire) : pendant les
+    ~18 min d'écriture, ce fichier PARTIEL est le plus récent du glob et grossit — le mesurer donne le
+    fameux « 1,2 Mo » et déclenche une fausse alerte « rétrécie ». On ne juge donc QUE des dumps d'un
+    job FINI. Un « en_cours » FIGÉ (process tué) compte aussi : son fichier n'est pas un dump terminé."""
+    try:
+        from .jobs import JOBS, lire_etat
+        e = lire_etat("backup-postgres") or {}
+        return (e.get("statut") or "") == "en_cours"
+    except Exception:  # noqa: BLE001 — l'absence du registre/état ne doit jamais faire tomber la vigie
+        return False
+
+
+def _dumps_termines(backup_dir: str) -> list[Path]:
+    """Les dumps TERMINÉS, du plus récent au plus ancien (OPS-NUIT-2). Comme `_dumps`, mais écarte le
+    dump EN COURS d'écriture quand `backup-postgres` tourne : son fichier le plus récent est partiel, la
+    vigie ne doit jamais le juger (taille ni fraîcheur). Les dumps ratés sont supprimés par le script, et
+    les suspects/gardes (préfixes SUSPECT-/GARDE-/hebdo-) sont hors du glob : le seul fichier non terminé
+    possible est celui du run en cours."""
+    dumps = _dumps(backup_dir)
+    if dumps and _backup_en_cours():
+        return dumps[1:]
+    return dumps
 
 
 # DISQUE-EXTERNE-1 (14/10) — la copie hors-VPS vit sur le disque externe du Mac. Après chaque copie
@@ -329,17 +476,26 @@ def _jobs_en_retard(db) -> list[dict]:
     Un job GELÉ (gel volontaire) ou NON planifié (manuel seul) n'est jamais compté : son silence est
     voulu. Chaque entrée porte `motif` pour que la vigie choisisse la bonne clé d'incident + escalade."""
     from .jobs import JOBS, bloque_depuis, lire_etat
+    # OPS-NUIT-1 point 6(e) — PLANCHER de retard : un job FRÉQUENT (healthcheck toutes les 15 min) ne doit
+    # pas crier « en retard » après 22 min (1,5 × cadence). Vic : « seuil de retard du healthcheck à 1 h ».
+    # On plancher le seuil à `job_retard_seuil_min_h` (défaut 1 h) pour « stale » et « jamais » (le motif
+    # « bloqué » reste jugé sur le timeout propre du job : un run tué en plein vol se voit tout de suite).
+    seuil_min_s = float(getattr(get_settings(), "job_retard_seuil_min_h", 1.0)) * 3600
     succes = {}
-    premiere = None
+    vues: dict = {}
+    now = datetime.now(timezone.utc)
     try:
         from . import jobs_journal
         succes = jobs_journal.dernier_succes(db)
-        premiere = jobs_journal.premiere_activite(db)
+        # OPS-NUIT-2 — ancre « premier passage prévu » : on ENREGISTRE d'abord la 1ʳᵉ vue des jobs planifiés
+        # encore inconnus (un job neuf s'ancre à MAINTENANT, un job déjà passé à son 1er run), PUIS on relit
+        # toutes les ancres. « Jamais réussi » se juge désormais sur CETTE ancre, pas sur l'âge du système
+        # (sinon un job tout juste déployé crie avant même son premier passage prévu). Marquer AVANT lire
+        # pour que l'ancre d'un job à historique soit disponible dès ce passage-ci.
+        jobs_journal.marquer_vues(db, [n for n, jj in JOBS.items() if not jj.gel and jj.planifie])
+        vues = jobs_journal.premiere_vue(db)
     except Exception as exc:  # noqa: BLE001
         log.warning("retards : historique job_runs illisible (%s)", exc)
-    if premiere is not None and premiere.tzinfo is None:
-        premiere = premiere.replace(tzinfo=timezone.utc)
-    now = datetime.now(timezone.utc)
     retards = []
     for nom, j in JOBS.items():
         if j.gel or not j.planifie:        # gel volontaire / manuel-seul : silence voulu
@@ -347,7 +503,8 @@ def _jobs_en_retard(db) -> list[dict]:
         inter = _intervalle_s(j.cron_utc)
         if inter is None:
             continue
-        seuil_h = round(1.5 * inter / 3600, 1)
+        seuil_stale_s = max(1.5 * inter, seuil_min_s)     # plancher 1 h (OPS-NUIT-1)
+        seuil_h = round(seuil_stale_s / 3600, 1)
         # (a) BLOQUÉ — tué en plein run (prioritaire : un en_cours figé masque tout le reste).
         e = lire_etat(nom) or {}
         bl = bloque_depuis(e.get("statut"), e.get("debut"), j.timeout_s)
@@ -358,20 +515,29 @@ def _jobs_en_retard(db) -> list[dict]:
             continue
         le = succes.get(nom)
         if le is None:
-            # (b) JAMAIS RÉUSSI — en retard dès que le système vit depuis plus d'une cadence entière
-            # (réf = plus ancien passage de N'IMPORTE quel job). Base vierge (premiere None) → silence.
-            if premiere is None:
+            # (b) JAMAIS RÉUSSI — OPS-NUIT-2 : on n'alerte qu'APRÈS le PREMIER PASSAGE PRÉVU du job (sa
+            # 1ʳᵉ occurrence cron après qu'il a été vu/déployé) PLUS SA MARGE (plancher 1 h). Un job tout
+            # juste ajouté attend sereinement son heure (resume-matin ajouté à 14h n'est plus crié « jamais
+            # réussi » avant son 07h30) ; un cron posé mais jamais tiré finit par franchir ce premier
+            # passage et se signale. Plus d'escalade immédiate : l'incident seul, l'escalade vient de la
+            # vigie « incident ancien > 3 j » s'il perdure.
+            vue = vues.get(nom) or now
+            if vue.tzinfo is None:
+                vue = vue.replace(tzinfo=timezone.utc)
+            premier_passage = _prochaine_apres(j.cron_utc, vue)   # 1ʳᵉ occurrence cron après la découverte
+            if premier_passage is None:
                 continue
-            age = (now - premiere).total_seconds()
-            if age > inter:
+            echeance = premier_passage + timedelta(seconds=seuil_min_s)   # premier passage prévu + marge
+            if now > echeance:
                 retards.append({"nom": nom, "titre": j.titre, "cadence": j.cadence, "motif": "jamais",
-                                "dernier_succes": None, "age_h": round(age / 3600, 1),
-                                "seuil_h": round(inter / 3600, 1)})
+                                "dernier_succes": None, "depuis": premier_passage.isoformat(),
+                                "age_h": round((now - premier_passage).total_seconds() / 3600, 1),
+                                "seuil_h": round(seuil_min_s / 3600, 1)})
             continue
         # (c) A TOURNÉ PUIS S'EST TU — dernier succès trop vieux.
         le_utc = le if le.tzinfo else le.replace(tzinfo=timezone.utc)
         age = (now - le_utc).total_seconds()
-        if age > 1.5 * inter:
+        if age > seuil_stale_s:
             retards.append({"nom": nom, "titre": j.titre, "cadence": j.cadence, "motif": "stale",
                             "dernier_succes": le_utc.isoformat(),
                             "age_h": round(age / 3600, 1), "seuil_h": seuil_h})
@@ -405,26 +571,31 @@ def verifier_declencheurs(db) -> dict:
     elif pct is not None:
         resoudre(db, "disque")
 
-    # 2) /readyz
-    ready, motif = _readyz_local()
-    out["readyz"] = {"ready": ready, "motif": motif}
-    if not ready:
-        signaler(db, "readyz", "/readyz répond « pas prêt »",
-                 f"La sonde /readyz locale répond que le service n'est pas prêt : {motif}.")
-    else:
-        resoudre(db, "readyz")
+    # 2) /readyz — DÉBOUNCÉ (OPS-NUIT-2) : tolère la coupure courte d'un redéploiement (< 2 min), n'ouvre
+    # l'incident que si « pas prêt » PERSISTE. Point d'appel unique (le healthcheck ne décide plus ici).
+    out["readyz"] = vigie_readyz(db, s)
 
     # 3) sauvegarde : présente + FRAÎCHE (pas seulement présente) + pas rétrécie de plus de 30 %.
     # FIX-NU3-3 (K-SAV + OPS-SAUVEGARDE-1 §7) — l'incident du 30/10 n'a alerté personne parce que la
     # vigie ne testait que l'EXISTENCE d'un .dump (le vieux du 29/10 était là) et son non-rétrécissement,
     # jamais son ÂGE. On juge désormais la fraîcheur : > 30 h = alerte ; panne durable (> 24 h après) = escalade.
-    dumps = _dumps(s.backup_dir)
+    # OPS-NUIT-2 — ne juger QUE d'un dump TERMINÉ (job fini et réussi) : pendant l'écriture de pg_dump,
+    # le fichier le plus récent est partiel (« 1,2 Mo ») → `_dumps_termines` l'écarte quand le backup
+    # tourne. Si le SEUL dump est celui en cours (première sauvegarde), on ne crie ni « absente » ni
+    # « rétrécie » : on attend qu'il soit fini.
+    backup_en_cours = _backup_en_cours()
+    dumps = _dumps_termines(s.backup_dir)
     if not dumps:
-        out["sauvegarde"] = {"present": False}
-        signaler(db, "sauvegarde-absente", "Aucune sauvegarde présente",
-                 f"Aucun dump labuse-*.dump dans {s.backup_dir} — la sauvegarde ne tourne plus.")
-        resoudre(db, "sauvegarde-perimee")
-        resoudre(db, "escalade:sauvegarde")
+        if backup_en_cours:
+            out["sauvegarde"] = {"present": False, "backup_en_cours": True}
+            # sauvegarde en cours d'écriture, aucun dump terminé encore : silence (pas d'alerte sur un
+            # fichier à moitié écrit). Les incidents se régleront au prochain passage, dump terminé.
+        else:
+            out["sauvegarde"] = {"present": False}
+            signaler(db, "sauvegarde-absente", "Aucune sauvegarde présente",
+                     f"Aucun dump labuse-*.dump dans {s.backup_dir} — la sauvegarde ne tourne plus.")
+            resoudre(db, "sauvegarde-perimee")
+            resoudre(db, "escalade:sauvegarde")
     else:
         taille = dumps[0].stat().st_size
         prec = dumps[1].stat().st_size if len(dumps) > 1 else None
@@ -433,7 +604,8 @@ def verifier_declencheurs(db) -> dict:
         escal_h = seuil_h + getattr(s, "sauvegarde_escalade_h", 24)
         out["sauvegarde"] = {"present": True, "dernier": dumps[0].name, "age_h": age_h,
                              "seuil_h": seuil_h, "taille_mo": round(taille / 1e6, 1),
-                             "precedent_mo": round(prec / 1e6, 1) if prec else None}
+                             "precedent_mo": round(prec / 1e6, 1) if prec else None,
+                             "backup_en_cours": backup_en_cours}
         resoudre(db, "sauvegarde-absente")
         # fraîcheur : le dernier dump a-t-il moins de `seuil_h` heures ?
         if age_h > seuil_h:
@@ -519,9 +691,11 @@ def verifier_declencheurs(db) -> dict:
         else:
             resoudre(db, "restore-test-ancien")
 
-    # 5) jobs pas à l'heure — trois motifs (bloque / jamais / stale), chacun sa clé + son escalade.
+    # 5) jobs pas à l'heure — trois motifs (bloque / jamais / stale), chacun sa clé.
     # FIX-NU3-3 (I-ADM-01/03, L-JOB-01) : un job BLOQUÉ (tué en plein run) et un job JAMAIS réussi
-    # étaient invisibles — ils apparaissent désormais, et « jamais réussi » escalade (mail Vic).
+    # étaient invisibles — ils apparaissent désormais. OPS-NUIT-2 : « jamais réussi » ne se juge qu'APRÈS
+    # le premier passage prévu du job + marge (plus d'alerte dès le déploiement) et n'escalade PLUS
+    # immédiatement (l'escalade éventuelle vient de la vigie « incident ancien > 3 j », section 7).
     retards = _jobs_en_retard(db)
     out["retards"] = retards
     par_nom = {r["nom"]: r for r in retards}
@@ -533,13 +707,13 @@ def verifier_declencheurs(db) -> dict:
                      "tué en plein travail (OOM, redémarrage) : le verrou reste pris et aucune passe "
                      "ne repart. Relancer le job (« Lancer maintenant ») relâche le verrou.")
         elif motif == "jamais":
+            # OPS-NUIT-2 — l'incident seul (pas d'escalade immédiate) : son premier passage prévu est
+            # passé depuis `age_h` h (marge `seuil_h` h) sans succès. Si ça perdure, la vigie « incident
+            # ancien > 3 j » (section 7) escaladera — pas avant.
             signaler(db, f"job-retard:{nom}", f"Job jamais réussi : {nom}",
-                     f"« {titre} » ({cad}) n'a JAMAIS réussi, alors que le serveur tourne depuis "
-                     f"{r['age_h']} h (> cadence {r['seuil_h']} h). Le cron est-il posé ? le premier "
+                     f"« {titre} » ({cad}) n'a pas encore réussi : son premier passage prévu est dépassé "
+                     f"depuis {r['age_h']} h (marge {r['seuil_h']} h). Le cron est-il posé ? le premier "
                      "passage échoue-t-il en boucle ?")
-            _escalade(db, f"escalade:job-jamais:{nom}", f"Automate jamais réussi : {nom}",
-                      f"« {titre} » ({cad}) n'a jamais réussi depuis la mise en service du serveur "
-                      f"(il y a {r['age_h']} h). À vérifier d'urgence (cron absent ou cassé).")
         else:   # stale
             signaler(db, f"job-retard:{nom}", f"Job en retard : {nom}",
                      f"« {titre} » ({cad}) n'a plus réussi depuis {r['dernier_succes']} "
@@ -553,8 +727,9 @@ def verifier_declencheurs(db) -> dict:
             resoudre(db, f"job-bloque:{nom}")
         if motif not in ("jamais", "stale"):
             resoudre(db, f"job-retard:{nom}")
-        if motif != "jamais":
-            resoudre(db, f"escalade:job-jamais:{nom}")
+        # OPS-NUIT-2 — « jamais réussi » n'escalade plus immédiatement : on referme TOUTE escalade
+        # job-jamais résiduelle (ex. celle ouverte à tort sur resume-matin au déploiement précédent).
+        resoudre(db, f"escalade:job-jamais:{nom}")
 
     # 6) RADAR MUET — vigie SERVEUR du silence de l'ingestion Radar (K-RAD-01 + escalade Vic). Si aucune
     # passe (pige_passes) n'est arrivée depuis le seuil, l'extension du Mac ne nourrit plus la prod

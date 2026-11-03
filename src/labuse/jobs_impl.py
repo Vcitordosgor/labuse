@@ -436,7 +436,12 @@ def healthcheck(ctx: JobContext) -> None:
     except OSError:
         pct = None
     from . import ops_alertes
-    ready, motif = ops_alertes._readyz_local()
+    # OPS-NUIT-2 — /readyz DÉBOUNCÉ : la décision (ouvrir seulement si « pas prêt » persiste au-delà de
+    # la tolérance) est partagée avec `verifier_declencheurs` via `_readyz_decision` (sans base). On la
+    # calcule ICI aussi pour garder le REPLI local quand la base est indisponible (pg_dump) : une coupure
+    # COURTE de redéploiement ne descend pas dans a_signaler ; une vraie panne, si.
+    rz = ops_alertes._readyz_decision(s)
+    ready, motif = rz["ready"], rz["motif"]
     # ORF-02 — on DÉCIDE d'abord quoi signaler/résoudre, puis on écrit par la porte unique. Si la base
     # est indisponible (ex. : verrouillée pendant le pg_dump — précisément quand le disque franchit le
     # seuil), chaque alerte décidée part en REPLI local (fichier + journald) : la sonde n'est plus
@@ -449,11 +454,12 @@ def healthcheck(ctx: JobContext) -> None:
                            "Faire de la place (cf. inventaire SOLIDITE-1 Lot 3)."))
     elif pct is not None:
         a_resoudre.append("disque")
-    if not ready:
+    if rz["ouvrir"]:
         a_signaler.append(("readyz", "/readyz répond « pas prêt »",
-                           f"La sonde /readyz locale dit le service NON prêt : {motif}."))
+                           f"La sonde /readyz locale dit le service NON prêt depuis {round(rz['age_s'])} s "
+                           f"(> tolérance {round(rz['tol_s'])} s) : {motif}."))
     else:
-        a_resoudre.append("readyz")
+        a_resoudre.append("readyz")   # prêt OU coupure courte tolérée → pas d'incident
     vigies: dict = {}
     try:
         from .db import session_scope
@@ -841,6 +847,18 @@ def _now_reunion_naive() -> datetime:
     return datetime.now(ZoneInfo("Indian/Reunion")).replace(tzinfo=None)
 
 
+def _secondes_avant_fin_fenetre(s) -> float:
+    """OPS-NUIT-1 — secondes restantes AVANT la fin de fenêtre (fin_h Réunion, aujourd'hui). Le calcul
+    de nuit démarre à 02:00 mais budgétait 4 h (timeout du job) → il débordait à ~06:00, PASSÉ la
+    fenêtre 01 h–05 h (incident 03/11 : run jusqu'à 05:59). Le budget du sous-process est désormais
+    borné par ce reste : flux-run ne mord jamais sur les heures ouvrées ; s'il ne finit pas, il
+    REPREND la nuit suivante (flux-run --resume saute les parcelles déjà faites). 0 si déjà passé."""
+    now = _now_reunion_naive()
+    fin = now.replace(hour=int(s.calcul_nuit_fin_h), minute=0, second=0, microsecond=0)
+    reste = (fin - now).total_seconds()
+    return reste if reste > 0 else 0.0
+
+
 def _declencheur_entree(db, depuis: datetime | None) -> tuple[bool, str]:
     """Une ENTRÉE a-t-elle changé depuis la dernière promotion ? (nouvelle injection / source avancée).
     Heuristique lecture seule : une source dont `last_sync_at` ou `source_horizon_at` est postérieur à
@@ -937,18 +955,33 @@ def _mesures_run(db, candidat: str, precedent: str) -> dict:
         "SELECT count(*) FROM parcel_p_score_v2 a JOIN parcel_p_score_v2 b ON a.parcelle_id = b.parcelle_id "
         "WHERE a.run_id = :a AND b.run_id = :b AND a.tier IS DISTINCT FROM b.tier",
         {"a": candidat, "b": precedent})
-    # cohérence : dernier passage du banc (coherence_runs, mode « île »). Vert = 0 FAUX-CLIENT et 0 erreur
-    # lecteur ; les écarts tolérables/incohérences connues du balayage ne bloquent pas une promotion.
+    # cohérence : dernier passage du BANC (coherence_runs, mode « île » = coherence-banc de 03h45), JAMAIS
+    # une mesure relancée ici. Vert = 0 FAUX-CLIENT et 0 erreur lecteur ; les écarts tolérables/incohérences
+    # connues du balayage ne bloquent pas une promotion. OPS-NUIT-2 (piège cron DEPLOY-AUTONOMIE-2) : le
+    # banc tourne à 03h45, APRÈS le début du calcul (02h) → la dernière ligne peut être celle d'HIER. On
+    # exige qu'elle soit FRAÎCHE (ts ≥ now − max_age) ; sinon la cohérence est « en attente » du banc —
+    # `coherence_frais=False` dit à controler_run de NE PAS conclure (pas de faux « contrôles en échec »).
     try:
+        max_age_h = float(getattr(get_settings(), "calcul_nuit_coherence_max_age_h", 12.0))
         row = db.execute(text(
-            "SELECT faux_client, COALESCE(erreurs_lecteur, 0) FROM coherence_runs "
-            "ORDER BY ts DESC LIMIT 1")).first()
-        m["coherence_ecarts"] = row[0] if row else None
-        m["coherence_erreurs"] = row[1] if row else None
+            "SELECT faux_client, COALESCE(erreurs_lecteur, 0), ts FROM coherence_runs "
+            "WHERE mode = 'ile' ORDER BY ts DESC LIMIT 1")).first()
+        if row is None:
+            m["coherence_ecarts"], m["coherence_erreurs"], m["coherence_frais"] = None, None, False
+        else:
+            ts = row[2]
+            if ts is not None and ts.tzinfo is None:
+                ts = ts.replace(tzinfo=timezone.utc)
+            frais = ts is not None and (datetime.now(timezone.utc) - ts).total_seconds() <= max_age_h * 3600
+            m["coherence_ecarts"] = row[0]
+            m["coherence_erreurs"] = row[1]
+            m["coherence_frais"] = bool(frais)
+            m["coherence_ts"] = ts.isoformat() if ts else None
     except Exception as exc:  # noqa: BLE001
         log.warning("calcul-nuit : cohérence illisible (%s)", exc)
         m["coherence_ecarts"] = None
         m["coherence_erreurs"] = None
+        m["coherence_frais"] = False
     return m
 
 
@@ -966,21 +999,28 @@ def calcul_nuit(ctx: JobContext) -> None:
          0 rouge actionnable, écart de paliers sous le seuil. Tout vert → bascule. Sinon → PAS de
          promotion + mail à Vic (le run candidat reste en base, non servi — rejouable)."""
     import importlib
-    from . import autonomie, runs
+    import sys
+    from . import autonomie, ops_alertes, runs
+    from .db import session_scope
     s = get_settings()
-    db = ctx.db
 
     ok_fen, motif_fen = _fenetre_calcul_ok(s)
     if not ok_fen:
         ctx.compte(abstention=motif_fen, promu=False)
         return
 
+    # OPS-NUIT-1 — pré-vol en SESSION COURTE, refermée AVANT le calcul. Le bug du 03/11 : calcul_nuit
+    # tenait `ctx.db` (transaction ouverte par les lectures de pré-vol) pendant les ~4 h du sous-process
+    # flux-run ; Postgres tuait la connexion à `idle_in_transaction_session_timeout` (2 min) →
+    # IdleInTransactionSessionTimeout au premier usage d'après. Règle (décision Vic) : AUCUNE transaction
+    # ouverte pendant le calcul Python — une session courte par phase. On n'utilise plus `ctx.db` ici.
     promu_at = None
     try:
         promu_at = runs.promu_at()
     except Exception:  # noqa: BLE001
         pass
-    declenche, motif_decl = _declencheur_entree(db, promu_at)
+    with session_scope() as db:
+        declenche, motif_decl = _declencheur_entree(db, promu_at)
     doit, motif_doit = autonomie.doit_calculer(
         promu_at, declenche, s.calcul_nuit_cadence_min_jours, datetime.now(timezone.utc))
     if not doit:
@@ -999,74 +1039,94 @@ def calcul_nuit(ctx: JobContext) -> None:
 
     label = os.environ.get("LABUSE_CALCUL_NUIT_LABEL", "q_v21")
     recette = os.environ.get("LABUSE_CALCUL_NUIT_RECETTE", "q_v15")
-    # budget = jusqu'à la fin de fenêtre (marge), borne dure ; le groupe est tué au dépassement.
-    budget = max(300.0, float(getattr(ctx, "timeout_s", 14400) or 14400) - _SOUS_PROCESS_MARGE_S)
-    import sys
+    # OPS-NUIT-1 — budget BORNÉ PAR LA FIN DE FENÊTRE (plus le timeout brut) : le calcul ne déborde
+    # jamais passé fin_h. Le run est REPRENABLE (flux-run --resume) : s'il ne tient pas dans la nuit, il
+    # reprend la suivante. En recette (LABUSE_CALCUL_NUIT_FORCE=1) on garde le timeout brut, pas de borne.
+    budget_job = float(getattr(ctx, "timeout_s", 14400) or 14400)
+    if os.environ.get("LABUSE_CALCUL_NUIT_FORCE") == "1":
+        budget = max(300.0, budget_job - _SOUS_PROCESS_MARGE_S)
+    else:
+        budget = max(300.0, min(budget_job, _secondes_avant_fin_fenetre(s)) - _SOUS_PROCESS_MARGE_S)
     cmd = _prefixe_nice(s) + [sys.executable, "-m", "labuse.cli", "flux-run",
                              "--label", label, "--recette", recette]
-    proc = _run_sous_process_nice(cmd, budget, _plafond_memoire(s.calcul_nuit_mem_mo))
-    # abandon propre si la fenêtre a été dépassée pendant le calcul (ne mord pas sur les heures ouvrées)
-    if autonomie.fenetre_depassee(_now_reunion_naive(), s.calcul_nuit_fin_h) and os.environ.get(
-            "LABUSE_CALCUL_NUIT_FORCE") != "1":
-        ctx.compte(abandon="fenêtre de nuit dépassée pendant le calcul — pas de promotion", promu=False)
+    # AUCUNE connexion DB tenue pendant le sous-process (voir pré-vol ci-dessus).
+    try:
+        proc = _run_sous_process_nice(cmd, budget, _plafond_memoire(s.calcul_nuit_mem_mo))
+    except SousProcessTimeout:
+        # Fin de fenêtre atteinte AVANT la fin du calcul : abandon PROPRE, PAS un échec. flux-run a
+        # persisté ce qu'il a fait (cascade commitée par commune) et REPREND la nuit suivante (--resume).
+        with session_scope() as db:
+            ops_alertes.resoudre(db, f"calcul-nuit:{label}")  # ni promotion en attente, ni échec cette nuit
+            db.commit()
+        ctx.compte(label=label, recette=recette, promu=False,
+                   abandon=f"fin de fenêtre {s.calcul_nuit_fin_h}h atteinte avant la fin du calcul — "
+                           "reprise la nuit prochaine (reprenable, flux-run --resume)",
+                   budget_s=round(budget))
         return
     if proc.returncode != 0:
         raise RuntimeError(f"flux-run {label} a échoué (code {proc.returncode}) : "
                            f"{(proc.stderr or proc.stdout or '')[-400:]}")
 
-    precedent = runs.current()
-    mesures = _mesures_run(db, label, precedent)
-    mesures["manifeste_present"] = _manifeste_candidat_present(label)
-
     par = f"calcul-nuit (automatique) — {label}"
-
     # DEPLOY-AUTONOMIE (décision Vic, première nuit) — GATE DE PROMOTION. Par défaut le calcul de nuit
     # promeut seul si tous les contrôles passent (pleine autonomie). Mais la PREMIÈRE mise en service de
-    # q_v21 se fait « sous l'œil de Vic » (AUTONOMIE-1) : poser LABUSE_CALCUL_NUIT_PROMEUT=0 fait CALCULER
-    # + CONTRÔLER + MAILER le verdict SANS basculer — Vic promeut à la main après lecture (`labuse golden
-    # promote <run>` / page Circuit). Le run candidat reste en base (non servi), rejouable.
+    # q_v21 se fait « sous l'œil de Vic » (AUTONOMIE-1) : LABUSE_CALCUL_NUIT_PROMEUT=0 fait CALCULER +
+    # CONTRÔLER ; le VERDICT part dans le RÉSUMÉ DU MATIN (plus de mail dédié), Vic promeut à la main.
     promeut = os.environ.get(
         "LABUSE_CALCUL_NUIT_PROMEUT", "1" if getattr(s, "calcul_nuit_promeut", True) else "0") != "0"
 
-    if not promeut:
-        from . import ops_alertes
-        v = autonomie.controler_run(mesures, palier_delta_max_pct=s.calcul_nuit_palier_delta_max_pct)
-        verdict_txt = "OK — contrôles passés" if v.ok else v.resume()
-        corps = (f"Le run candidat {label} est CALCULÉ et CONTRÔLÉ, mais la promotion attend TON geste "
-                 f"(première mise en service sous ton œil).\n\nVerdict des contrôles : {verdict_txt}\n"
-                 f"Écart de paliers : {v.details.get('palier_delta_pct')} %\nMesures : {mesures}\n\n"
-                 f"Pour servir ce run aux clients : labuse golden promote {label} (ou page Circuit → Basculer).\n"
-                 "Il reste en base (non servi) tant que tu ne l'as pas promu.")
-        ops_alertes.signaler(db, f"calcul-nuit:{label}",
-                             f"Calcul de nuit {label} : {'contrôles OK' if v.ok else 'contrôles en échec'} "
-                             f"— promotion en attente de ton geste", corps)
-        ctx.compte(label=label, recette=recette, promu=False, promotion_en_attente=True,
-                   controles_ok=v.ok, verdict=verdict_txt, mesures=mesures,
-                   palier_delta_pct=v.details.get("palier_delta_pct"))
-        return
+    # mesures + verdict/promotion — SESSION FRAÎCHE (la pré-vol est refermée depuis des heures).
+    with session_scope() as db:
+        precedent = runs.current()
+        mesures = _mesures_run(db, label, precedent)
+        mesures["manifeste_present"] = _manifeste_candidat_present(label)
 
-    def _promouvoir():
-        from . import bascule_flux
-        return bascule_flux.basculer(db, label, par)
+        if not promeut:
+            v = autonomie.controler_run(mesures, palier_delta_max_pct=s.calcul_nuit_palier_delta_max_pct)
+            verdict_txt = v.resume()
+            # OPS-NUIT-2 — TROIS issues, pas deux : OK (à promouvoir), EN ATTENTE (banc de cohérence pas
+            # encore passé — PAS un incident, verdict au prochain résumé), ÉCHEC (problème actionnable).
+            en_attente_seul = bool(v.en_attente) and not v.echecs
+            if v.ok or en_attente_seul:
+                # Rien de cassé : le RÉSUMÉ DU MATIN annonce « run calculé, contrôles OK, à promouvoir »
+                # (ou « cohérence en attente du banc »). Pas de mail d'incident (OPS-NUIT-1 point 6).
+                ops_alertes.resoudre(db, f"calcul-nuit:{label}")
+            else:
+                # Contrôles en ÉCHEC = problème actionnable → incident URGENT avec lien d'action.
+                ops_alertes.signaler(
+                    db, f"calcul-nuit:{label}",
+                    f"Calcul de nuit {label} : contrôles en échec — promotion bloquée",
+                    f"Le run candidat {label} est calculé mais les contrôles ÉCHOUENT : {verdict_txt}.\n"
+                    f"Écart de paliers : {v.details.get('palier_delta_pct')} %\nMesures : {mesures}\n"
+                    "Le run reste en base (non servi) — à corriger puis rejouer.", lien="/admin")
+            db.commit()
+            ctx.compte(label=label, recette=recette, promu=False, promotion_en_attente=v.ok,
+                       controles_ok=v.ok, controles_en_attente=en_attente_seul,
+                       verdict=verdict_txt, mesures=mesures,
+                       palier_delta_pct=v.details.get("palier_delta_pct"))
+            return
 
-    def _alerter(verdict, **kw):
-        from . import ops_alertes
-        corps = (f"Le run candidat {label} N'A PAS été promu : {verdict.resume()}.\n"
-                 + (f"Erreur de promotion : {kw.get('erreur_promotion')}\n" if kw.get("erreur_promotion") else "")
-                 + f"Mesures : {verdict.details.get('mesures')}\n"
-                 "Le run reste en base (non servi) — rejouable après correction.")
-        ops_alertes.signaler(db, f"calcul-nuit:{label}",
-                             f"Calcul de nuit non promu : {label}", corps)
+        def _promouvoir():
+            from . import bascule_flux
+            return bascule_flux.basculer(db, label, par)
 
-    resultat = autonomie.promouvoir_si_ok(
-        mesures, palier_delta_max_pct=s.calcul_nuit_palier_delta_max_pct,
-        promouvoir=_promouvoir, alerter=_alerter)
-    if resultat["promu"]:
-        from . import ops_alertes
-        ops_alertes.resoudre(db, f"calcul-nuit:{label}")  # un run promu referme l'incident de non-promotion
-    ctx.compte(label=label, recette=recette, promu=resultat["promu"],
-               verdict=resultat["resume"], mesures=mesures,
-               palier_delta_pct=resultat["verdict"].details.get("palier_delta_pct"))
+        def _alerter(verdict, **kw):
+            corps = (f"Le run candidat {label} N'A PAS été promu : {verdict.resume()}.\n"
+                     + (f"Erreur de promotion : {kw.get('erreur_promotion')}\n" if kw.get("erreur_promotion") else "")
+                     + f"Mesures : {verdict.details.get('mesures')}\n"
+                     "Le run reste en base (non servi) — rejouable après correction.")
+            ops_alertes.signaler(db, f"calcul-nuit:{label}",
+                                 f"Calcul de nuit non promu : {label}", corps, lien="/admin")
+
+        resultat = autonomie.promouvoir_si_ok(
+            mesures, palier_delta_max_pct=s.calcul_nuit_palier_delta_max_pct,
+            promouvoir=_promouvoir, alerter=_alerter)
+        if resultat["promu"]:
+            ops_alertes.resoudre(db, f"calcul-nuit:{label}")  # un run promu referme l'incident de non-promotion
+        db.commit()
+        ctx.compte(label=label, recette=recette, promu=resultat["promu"],
+                   verdict=resultat["resume"], mesures=mesures,
+                   palier_delta_pct=resultat["verdict"].details.get("palier_delta_pct"))
 
 
 def _manifeste_candidat_present(label: str) -> bool:
@@ -1078,6 +1138,165 @@ def _manifeste_candidat_present(label: str) -> bool:
         return bool(m)
     except Exception:  # noqa: BLE001
         return False
+
+
+# ═══════════════════════════ OPS-NUIT-1 — le RÉSUMÉ DU MATIN (mail quotidien) ═══════════════════════════
+
+def _resume_matin_texte(db, s) -> tuple[bool, str, str]:
+    """Construit le résumé du matin : (urgent, sujet, corps). Part TOUS les jours, même « rien à
+    signaler » (décision Vic, point 6b). Chaque source est best-effort — une lecture qui rate n'empêche
+    pas le reste : le résumé DOIT toujours partir. `urgent` = il y a une panne ou un geste attendu."""
+    from . import jobs_journal, ops_alertes
+    jour = _now_reunion_naive().strftime("%d/%m/%Y")
+    L: list[str] = []
+    urgent = False
+
+    # 1 — calcul de nuit : le verdict de la nuit (ce que Vic attend le matin).
+    try:
+        h = jobs_journal.historique(db, "calcul-nuit", 1)
+        if not h:
+            L.append("• Calcul de nuit : aucun passage enregistré.")
+        else:
+            r = h[0]
+            c = r.get("compteurs") or {}
+            statut = r.get("statut")
+            lbl = c.get("label", "q_v21")
+            if statut == "echec":
+                urgent = True
+                L.append(f"• Calcul de nuit : ÉCHEC — {(r.get('erreur') or '')[:200]}")
+            elif c.get("abandon"):
+                L.append(f"• Calcul de nuit : {c['abandon']}")
+            elif c.get("abstention"):
+                L.append(f"• Calcul de nuit : abstention — {c['abstention']}")
+            elif c.get("promu"):
+                L.append(f"• Calcul de nuit : {lbl} PROMU et servi aux clients.")
+            elif c.get("promotion_en_attente"):
+                L.append(f"• Calcul de nuit : {lbl} calculé, contrôles OK — À PROMOUVOIR : "
+                         f"{ops_alertes._url_absolue(s, '/admin')}")
+            elif c.get("controles_en_attente"):
+                # OPS-NUIT-2 — cohérence pas encore mesurée cette nuit (banc 03h45) : INFO, pas URGENT.
+                L.append(f"• Calcul de nuit : {lbl} calculé — cohérence EN ATTENTE du banc de 03h45 "
+                         "(verdict au prochain résumé).")
+            elif c.get("controles_ok") is False:
+                urgent = True
+                L.append(f"• Calcul de nuit : {lbl} contrôles EN ÉCHEC — {c.get('verdict')}")
+            else:
+                L.append(f"• Calcul de nuit : {statut} ({lbl}).")
+    except Exception as exc:  # noqa: BLE001
+        L.append(f"• Calcul de nuit : état illisible ({type(exc).__name__}).")
+
+    # 2 — sauvegardes : dernier dump TERMINÉ (VPS) + copie hors-VPS. OPS-NUIT-2 : `_dumps_termines`
+    # écarte un dump en cours d'écriture (sinon le résumé afficherait sa taille partielle « 1,2 Mo »).
+    try:
+        dumps = ops_alertes._dumps_termines(s.backup_dir)
+        if not dumps:
+            if ops_alertes._backup_en_cours():
+                L.append("• Sauvegarde : en cours d'écriture (dump pas encore terminé).")
+            else:
+                urgent = True
+                L.append("• Sauvegarde : AUCUN dump présent — la sauvegarde ne tourne plus.")
+        else:
+            d = dumps[0]
+            age_h = round((datetime.now(timezone.utc).timestamp() - d.stat().st_mtime) / 3600, 1)
+            L.append(f"• Sauvegarde : {d.name} — {round(d.stat().st_size / 1e6, 1)} Mo, il y a {age_h} h "
+                     f"({len(dumps)} conservé(s)).")
+        ce = ops_alertes.lire_copie_externe(s.backup_dir)
+        if ce:
+            age_j = (datetime.now(timezone.utc) - ce["copie_at"]).days
+            L.append(f"• Copie hors-VPS : {ce['copie_at'].astimezone().strftime('%d/%m')} ({age_j} j).")
+        else:
+            L.append("• Copie hors-VPS : aucune enregistrée — branche le disque externe.")
+    except Exception as exc:  # noqa: BLE001
+        L.append(f"• Sauvegarde : état illisible ({type(exc).__name__}).")
+
+    # 3 — Radar : LE compteur canonique de la nuit, par portail (OPS-NUIT-2) — le MÊME chiffre que le
+    # Tableau de bord et l'admin Radar. Avant : la DERNIÈRE ligne pige_passes (ORDER BY id) seule → 119,
+    # alors que le Tableau de bord sommait les passes → 152, pour la même nuit : trois nombres pour une
+    # notion. Désormais « annonces nouvelles », par portail, lues de pige_annonces (vérité par portail).
+    try:
+        from .pige.comptage_nuit import comptage_nuit as _comptage_nuit, ligne_resume as _ligne_resume
+        cn = _comptage_nuit(db)
+        if cn.get("captured_at"):
+            try:
+                quand = datetime.fromisoformat(cn["captured_at"]).astimezone().strftime("%d/%m %H:%M")
+            except (ValueError, TypeError):
+                quand = cn.get("jour") or "?"
+            L.append(f"• Radar : capture auto du {quand} — {_ligne_resume(cn)} · "
+                     f"{int(cn.get('pages') or 0)} page(s) lue(s).")
+        else:
+            L.append("• Radar : aucune capture automatique enregistrée.")
+    except Exception as exc:  # noqa: BLE001
+        L.append(f"• Radar : état illisible ({type(exc).__name__}).")
+
+    # 4 — verrous : dernier contrôle (sonde de nuit).
+    try:
+        row = db.execute(text("SELECT ts, resultat, details FROM circuit_journal WHERE cible='verrous' "
+                              "ORDER BY id DESC LIMIT 1")).mappings().first()
+        if row:
+            det = row["details"] if isinstance(row["details"], dict) else {}
+            casses = det.get("casses") or []
+            a_decider = det.get("a_decider") or []
+            L.append(f"• Verrous : {row['resultat']} ({det.get('joues', '?')} joués ; "
+                     f"cassés : {', '.join(casses) or 'aucun'} ; à décider : {', '.join(a_decider) or 'aucun'}).")
+        else:
+            L.append("• Verrous : aucun contrôle enregistré.")
+    except Exception as exc:  # noqa: BLE001
+        L.append(f"• Verrous : état illisible ({type(exc).__name__}).")
+
+    # 5 — cohérence : dernier passage du banc.
+    try:
+        row = db.execute(text("SELECT ts, faux_client, COALESCE(erreurs_lecteur,0) AS el, n_ecarts "
+                              "FROM coherence_runs ORDER BY ts DESC LIMIT 1")).mappings().first()
+        if row:
+            L.append(f"• Cohérence : {row['faux_client']} faux-client, {row['el']} erreur(s) lecteur "
+                     f"({row['n_ecarts']} écart(s) connus).")
+        else:
+            L.append("• Cohérence : aucun passage du banc.")
+    except Exception as exc:  # noqa: BLE001
+        L.append(f"• Cohérence : état illisible ({type(exc).__name__}).")
+
+    # 6 — incidents OUVERTS (avec lien d'action) et 7 — rentrés dans l'ordre depuis hier.
+    try:
+        ouverts = ops_alertes.incidents_ouverts(db)
+        if ouverts:
+            urgent = True
+            L.append(f"\nIncidents ouverts ({len(ouverts)}) — à traiter :")
+            for i in ouverts:
+                lien = ops_alertes._url_absolue(s, ops_alertes._lien_action(i["cle"], None))
+                L.append(f"  - {i['sujet']}  → {lien}")
+        else:
+            L.append("\nIncidents ouverts : aucun. 👍")
+    except Exception as exc:  # noqa: BLE001
+        L.append(f"\nIncidents ouverts : illisibles ({type(exc).__name__}).")
+    try:
+        resolus = ops_alertes.incidents_resolus_depuis(db, 26)
+        if resolus:
+            L.append(f"\nRentré dans l'ordre depuis hier ({len(resolus)}) :")
+            for i in resolus:
+                L.append(f"  - {i['sujet']}")
+    except Exception as exc:  # noqa: BLE001
+        L.append(f"\nRésolutions illisibles ({type(exc).__name__}).")
+
+    tete = ops_alertes.URGENT if urgent else ops_alertes.INFO
+    sujet = f"{tete} Résumé du matin — {'à regarder' if urgent else 'rien à signaler'} ({jour})"
+    corps = f"Résumé d'exploitation LABUSE — {jour}\n\n" + "\n".join(L) + "\n\n— LABUSE, exploitation"
+    return urgent, sujet, corps
+
+
+def resume_matin(ctx: JobContext) -> None:
+    """OPS-NUIT-1 point 6(b) (décision Vic) — LE RÉSUMÉ DU MATIN. UN mail, TOUS les jours (même « rien à
+    signaler ») : verdict du calcul de nuit, sauvegardes (VPS + hors-VPS), Radar, verrous, cohérence,
+    incidents ouverts (avec lien d'action) et ce qui est rentré dans l'ordre depuis hier. Remplace les
+    mails « résolu » un-par-un (point 6a). Sujet préfixé [URGENT] s'il y a un geste attendu, sinon [INFO]."""
+    from . import ops_alertes
+    s = get_settings()
+    urgent, sujet, corps = _resume_matin_texte(ctx.db, s)
+    dest = ops_alertes._destinataire(s)
+    envoi = "pas-de-destinataire"
+    if dest:
+        from .mail import envoyer_ops
+        envoi = envoyer_ops(dest, sujet, corps, settings=s).detail
+    ctx.compte(urgent=urgent, sujet=sujet, destinataire=dest or None, envoi=envoi)
 
 
 def _run_sous_process_nice(cmd, budget_s, preexec):
@@ -1133,40 +1352,70 @@ def injection_nuit(ctx: JobContext) -> None:
     classe_a = rangees["A"]
     classe_b = rangees["B"]
 
+    # Les sources qui ont AVANCÉ amont (sentinelle) — une seule lecture, partagée A/B.
+    try:
+        nouvelles = set(db.execute(text(
+            "SELECT d.name FROM data_sources d JOIN source_veille v ON v.source_id = d.id "
+            "WHERE v.dernier_statut = 'nouvelle_version'")).scalars().all())
+    except Exception as exc:  # noqa: BLE001
+        raise RuntimeError(f"injection-nuit : lecture de la veille impossible ({exc})") from exc
+
     # Les sources de classe B qui ont avancé → mail « à valider » (clic de Vic), jamais injectées.
     try:
         from . import ops_alertes
-        attente_b = [b["name"] for b in classe_b]
-        if attente_b:
-            # on ne CRIE pas un incident par source : une ligne d'information dans le journal du job suffit ;
-            # la demande de clic vit dans le Tableau de bord (étape « Injecter »). Mail seulement si une
-            # source B a une nouvelle version détectée par la sentinelle.
-            nouvelles_b = db.execute(text(
-                "SELECT d.name FROM data_sources d JOIN source_veille v ON v.source_id = d.id "
-                "WHERE v.dernier_statut = 'nouvelle_version'")).scalars().all()
-            nouvelles_b = [n for n in nouvelles_b if n in set(attente_b)]
-            if nouvelles_b:
-                ops_alertes.signaler(
-                    db, "injection-b-en-attente",
-                    f"{len(nouvelles_b)} source(s) structurante(s) à injecter (ton clic)",
-                    "Ces sources structurantes (classe B) ont une nouvelle version amont et ATTENDENT ta "
-                    "validation (elles ne s'injectent jamais seules) :\n  · " + "\n  · ".join(nouvelles_b)
-                    + "\n\nOuvre le Tableau de bord → Injecter pour les passer une à une.")
-            else:
-                ops_alertes.resoudre(db, "injection-b-en-attente")
+        nouvelles_b = sorted(b["name"] for b in classe_b if b["name"] in nouvelles)
+        if nouvelles_b:
+            ops_alertes.signaler(
+                db, "injection-b-en-attente",
+                f"{len(nouvelles_b)} source(s) structurante(s) à injecter (ton clic)",
+                "Ces sources structurantes (classe B) ont une nouvelle version amont et ATTENDENT ta "
+                "validation (elles ne s'injectent jamais seules) :\n  · " + "\n  · ".join(nouvelles_b)
+                + "\n\nOuvre le Tableau de bord → Injecter pour les passer une à une.")
+        else:
+            ops_alertes.resoudre(db, "injection-b-en-attente")
     except Exception as exc:  # noqa: BLE001 — la demande B ne doit pas casser l'injection A
         log.warning("injection-nuit : demande classe B impossible (%s)", exc)
 
-    # Classe A : injection auto avec rollback. Le CÂBLAGE source→commande est volontairement explicite
-    # et conservateur (on n'injecte QUE ce qu'on sait mesurer). Non câblé → listé « à câbler », jamais
-    # injecté à l'aveugle (prudence du mandat).
-    injectees, en_echec, a_cabler = [], [], []
+    # Classe A : injection SEULE la nuit (mandat AUTONOMIE / TABLEAU-1 point 1). On ne lance QUE les
+    # sources de classe A qui ont AVANCÉ amont et dont la commande d'ingestion est CONNUE (le MÊME
+    # chemin que le bouton « Injecter » / le cron, via `lancer_ingestion_source`) ; l'ingestion détachée
+    # enchaîne son filtre, et la cohérence de nuit + le résumé du matin contrôlent le résultat. Une source
+    # de classe A sans commande mappée est listée « à câbler » — JAMAIS injectée à l'aveugle (prudence).
+    #
+    # POURQUOI ça n'avait jamais injecté avant : ce job se contentait d'EMPILER les noms dans `a_cabler`
+    # (aucun appel d'ingestion) ET 2 des 4 sources A visées (Population légale INSEE, OFB/APER) n'avaient
+    # pas de ligne dans config/sources_ingestion.yaml. Résultat : elles restaient « nouvelle version »
+    # et remontaient à tort dans la carte « à valider » de Vic. Ce n'était ni un contrôle échoué, ni une
+    # mauvaise classe, ni la fenêtre : le câblage source→commande n'avait simplement pas été écrit.
+    from .api.dashboard import lancer_ingestion_source
+    injectees, en_echec, a_cabler, deja = [], [], [], []
     for a in classe_a:
-        a_cabler.append(a["name"])   # câblage par source = itération suivante (mapping vérifié requis)
-    ctx.compte(classe_a=len(classe_a), classe_b=len(classe_b),
-               injectees=injectees, en_echec=en_echec, a_cabler=a_cabler,
-               note="classe A: contrôles+rollback câblés par source (autonomie.injecter_avec_rollback) ; "
-                    "classe B: clic de Vic (mail). Mapping source→ingesteur à compléter par source.")
+        nom = a["name"]
+        if nom not in nouvelles:
+            deja.append(nom)          # rien de neuf amont → rien à faire (idempotent)
+            continue
+        try:
+            lance = lancer_ingestion_source(nom)
+        except Exception as exc:  # noqa: BLE001 — un lancement raté n'arrête pas les autres sources
+            en_echec.append(nom)
+            log.warning("injection-nuit : lancement %r échoué (%s)", nom, exc)
+            continue
+        if lance is None:
+            a_cabler.append(nom)      # classe A mais aucune commande connue → listée, jamais à l'aveugle
+            continue
+        injectees.append(nom)
+        # trace du lancement (idempotence : la sentinelle repassera « ok » après ingestion) — best-effort.
+        try:
+            db.execute(text(
+                "UPDATE source_veille SET injection_lancee_at = now(), injection_vu = dernier_vu "
+                "WHERE source_id = (SELECT id FROM data_sources WHERE name = :n)"), {"n": nom})
+        except Exception as exc:  # noqa: BLE001
+            log.warning("injection-nuit : trace injection_lancee_at %r impossible (%s)", nom, exc)
+    ctx.compte(classe_a=len(classe_a), classe_b=len(classe_b), nouvelles_a=len(injectees) + len(en_echec)
+               + len(a_cabler), injectees=injectees, en_echec=en_echec, a_cabler=a_cabler,
+               attente_b=sorted(b["name"] for b in classe_b if b["name"] in nouvelles),
+               note="classe A avancée : injectée seule (commande connue) ou listée « à câbler » (sans "
+                    "commande) ; classe B avancée : clic de Vic (carte « à valider »).")
 
 
 def ingest_sirene(ctx: JobContext) -> None:
