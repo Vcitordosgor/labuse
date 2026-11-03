@@ -219,6 +219,14 @@ def mission(conversation_id: int, request: Request, db: Session = Depends(get_db
     return conv
 
 
+@router.delete("/missions/{conversation_id}")
+def mission_supprimer(conversation_id: int, request: Request, db: Session = Depends(get_db)) -> dict:
+    """COPILOTE-4 — l'utilisateur supprime une conversation de sa liste (geste explicite). Cloison
+    lot 6 (compte_id OU sujet de session) : un id étranger ne supprime rien → {ok: false}."""
+    ok = historique.supprimer(db, current_compte(request), conversation_id, sujet=_sujet_memoire(request))
+    return {"ok": ok}
+
+
 class FeedbackIn(BaseModel):
     conversation_id: int | None = None
     pouce: str                          # 'haut' | 'bas'

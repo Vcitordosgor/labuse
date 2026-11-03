@@ -146,6 +146,22 @@ def charger(db: Session, compte_id: int | None, conversation_id: int, sujet: str
     return {**dict(conv), "messages": [dict(m) for m in msgs]}
 
 
+def supprimer(db: Session, compte_id: int | None, conversation_id: int, sujet: str | None = None) -> bool:
+    """COPILOTE-4 — l'utilisateur SUPPRIME une conversation (geste explicite, bouton de la liste).
+    MÊME cloison que `charger`/`fil` (lot 6) : un id étranger (autre compte OU autre session anonyme)
+    ne supprime RIEN → False (jamais le fil d'un autre). Les messages tombent par CASCADE (FK
+    ON DELETE CASCADE). La suppression ne casse jamais l'appelant (try/except + rollback)."""
+    try:
+        n = db.execute(text("DELETE FROM copilote_conversations c "
+                            "WHERE c.id = :i AND " + _cloison("c")),
+                       {"i": conversation_id, "c": compte_id, "s": sujet}).rowcount
+        db.commit()
+        return bool(n)
+    except Exception:
+        db.rollback()
+        return False
+
+
 def purger(db: Session, jours: int) -> int:
     """Rétention : supprime les conversations plus vieilles que N jours (cron J+1, Train 8).
     RETOURS-8 (R11) — appelée par le job quotidien `copilote-purge`, avec la rétention effective

@@ -127,8 +127,8 @@ def set_str(cle: str, valeur: str) -> None:
 
 
 def copilote_retention_jours() -> int:
-    """RETOURS-8 (R11) — la rétention EFFECTIVE des conversations Copilote : réglage base s'il existe,
-    sinon défaut config (7 jours). Lue par le job de purge ET par le bandeau front (via /copilote-v2)."""
+    """RETOURS-8 (R11) → COPILOTE-4 — la rétention EFFECTIVE des conversations Copilote : réglage base
+    s'il existe, sinon défaut config (30 jours). Lue par le job de purge ET par le bandeau front."""
     from .config import get_settings
     return get_int(CLE_COPILOTE_RETENTION, int(get_settings().copilote_v2_retention_jours))
 
