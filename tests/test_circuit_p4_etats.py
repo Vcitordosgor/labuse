@@ -16,8 +16,17 @@ CAS = [
     ({"mode": "depot_manuel", "a_verifier": False, "dernier_controle": "2026-09-20"}, ("mint", "à jour")),
     # manuelle jamais alimentée → jamais vérifiée (gris)
     ({"mode": "depot_manuel", "a_verifier": False, "dernier_controle": None}, ("gris", "jamais vérifiée")),
-    # sonde en panne : 3 échecs NON-SSL consécutifs → rouge
+    # TABLEAU-1 (point 3) — « injoignable » (amont simplement en panne, ex. Overpass 502) depuis MOINS de
+    # 7 jours : on ne crie pas, on garde le dernier état confirmé → à jour. Le veilleur passe ~1×/jour
+    # (cadence_heures=24), donc 3 échecs ≈ 3 jours < 7.
     ({"veille": {"statut": "injoignable", "passage": "2026-09-20", "echecs_consecutifs": 3}},
+     ("mint", "à jour")),
+    # … mais une panne injoignable PERSISTANTE (≥ 7 jours ≈ 7 échecs à 24 h) → sonde en panne (rouge).
+    ({"veille": {"statut": "injoignable", "passage": "2026-09-20", "echecs_consecutifs": 7,
+                 "cadence_heures": 24}}, ("rouge", "sonde en panne")),
+    # « illisible » = l'amont répond mais le FORMAT/URL a changé → NOTRE lecteur est cassé : en panne
+    # dès 3 échecs, sans grace (il faut recâbler la sonde).
+    ({"veille": {"statut": "illisible", "passage": "2026-09-20", "echecs_consecutifs": 3}},
      ("rouge", "sonde en panne")),
     # échec SSL (env local) n'est PAS une panne : garde le dernier état confirmé → à jour
     ({"veille": {"statut": "injoignable", "passage": "2026-09-20", "echecs_consecutifs": 9,

@@ -80,7 +80,7 @@ export type CockpitRadar = {
 }
 export type Cockpit = {
   aujourdhui: { n: number; cartes: CockpitCarte[] }
-  tout_tourne: { resume: { postes: number; vert: number; echec: number; arret: number }; tuiles: CockpitTuile[] }
+  tout_tourne: { resume: { postes: number; vert: number; echec: number; arret: number; pas_encore_du?: number }; tuiles: CockpitTuile[] }
   mise_a_jour: { etapes: CockpitEtape[] }
   radar?: CockpitRadar | null
 }

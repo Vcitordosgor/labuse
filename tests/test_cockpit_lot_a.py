@@ -40,7 +40,9 @@ def _entrees(**over):
             {"nom": "coherence-banc", "gel": None, "dernier": {"statut": "ok"}},
             {"nom": "mail-queue-consommer", "gel": None, "dernier": {"statut": "echec"}},
             {"nom": "digest", "gel": "Phase 8", "dernier": None},
-            {"nom": "ingest-sitadel", "gel": None, "dernier": None},
+            # TABLEAU-1 (point 5) — planifié mais jamais encore parti (sa date n'est pas venue) :
+            # « pas encore dû », PAS « à l'arrêt ».
+            {"nom": "ingest-sitadel", "gel": None, "planifie": True, "dernier": None},
         ],
         run_servi="q_v19", candidat=None, calculer_present=True, dernier_calcul="2026-10-18T00:00:00+00:00",
         env="local", prod_run="q_v18",
@@ -54,14 +56,17 @@ def test_cartes_groupees_par_probleme_et_triees():
     cartes = {x["id"]: x for x in c["aujourdhui"]["cartes"]}
     # UNE carte par problème (pas par occurrence) : 2 sources en nouvelle version = 1 carte ;
     # un cache périmé = 1 carte « cache:… » (COCKPIT-1b point 4).
-    assert set(cartes) == {"injecter", "cache:commune_contexte_cache", "verrous", "sondes", "fuites",
+    # TABLEAU-1 (point 3+5) — plus de carte « sondes » : une sonde en panne (non bloquant) vit dans
+    # « Est-ce que tout tourne ? », jamais en décision de Vic.
+    assert set(cartes) == {"injecter", "cache:commune_contexte_cache", "verrous", "fuites",
                            "ecarts-toleres", "deposer"}
+    assert "sondes" not in cartes
     # les données à injecter d'abord (tri=0), puis le reste.
     assert c["aujourdhui"]["cartes"][0]["id"] == "injecter"
     assert [x["id"] for x in c["aujourdhui"]["cartes"]] == [
-        "injecter", "cache:commune_contexte_cache", "verrous", "sondes", "fuites",
+        "injecter", "cache:commune_contexte_cache", "verrous", "fuites",
         "ecarts-toleres", "deposer"]
-    assert c["aujourdhui"]["n"] == 7
+    assert c["aujourdhui"]["n"] == 6
 
 
 def test_carte_sauvegarde_en_retard():
@@ -114,10 +119,15 @@ def test_verrous_et_fuites_demandent_du_code_sans_bouton():
     assert f["code"] is True and "bouton" not in f
 
 
-def test_sondes_reessayer_et_ecarts_accepter():
-    c = ck.composer_cockpit(**_entrees())
-    s = next(x for x in c["aujourdhui"]["cartes"] if x["id"] == "sondes")
-    assert s["pastille"] == "rouge" and s["bouton"]["action"] == "reessayer"
+def test_sondes_ne_sont_plus_une_carte_et_vont_dans_tout_tourne():
+    """TABLEAU-1 (point 3+5) — une sonde en panne n'est PLUS une carte de décision ; elle remonte dans
+    « Est-ce que tout tourne ? » (tuile Veille). La carte « écarts tolérés » (acceptation) reste."""
+    # un réservoir « sonde en panne » → aucune carte « sondes », mais la tuile Veille le dit.
+    reservoirs = [{"id": 30, "nom": "OSM transport", "etat": ["rouge", "sonde en panne"]}]
+    c = ck.composer_cockpit(**_entrees(reservoirs=reservoirs))
+    assert not any(x["id"] == "sondes" for x in c["aujourdhui"]["cartes"])
+    veille = next(t for t in c["tout_tourne"]["tuiles"] if t["id"] == "veille")
+    assert "OSM transport" in veille["ligne"] and veille["pastille"] in ("ambre", "rouge")
     e = next(x for x in c["aujourdhui"]["cartes"] if x["id"] == "ecarts-toleres")
     assert e["pastille"] == "gris" and e["bouton"]["action"] == "accepter-ecarts"
     assert e["bouton"]["label"] == "Accepter les 48"
@@ -148,8 +158,10 @@ def test_tuiles_tout_tourne():
 
 def test_resume_usine():
     r = ck.composer_cockpit(**_entrees())["tout_tourne"]["resume"]
-    # 6 jobs : 3 ok (sonde/bodacc/coherence) + mail echec + digest gelé + sitadel jamais → 3/1/2.
-    assert r == {"postes": 6, "vert": 3, "echec": 1, "arret": 2}
+    # TABLEAU-1 (point 5) — 6 jobs : 3 ok (sonde/bodacc/coherence) + mail echec + digest GELÉ (à l'arrêt)
+    # + sitadel planifié jamais parti (« pas encore dû », plus « à l'arrêt »). L'en-tête n'alarme que sur
+    # le vrai échec (1).
+    assert r == {"postes": 6, "vert": 3, "echec": 1, "arret": 1, "pas_encore_du": 1}
 
 
 def test_envoyer_prod_local_en_retard_a_un_bouton():
@@ -164,10 +176,12 @@ def test_envoyer_prod_a_jour_pas_de_bouton():
     assert env4["fait"] is True and env4["bouton"] is None
 
 
-def test_envoyer_prod_sur_le_vps_est_inactif():
+def test_envoyer_prod_sur_le_vps_dit_la_version_servie_sans_mac():
+    # TABLEAU-1 (point 5) — sur le VPS : plus de « se fait depuis le Mac » ; on dit la version servie.
     e = ck.composer_cockpit(**_entrees(env="production", prod_run="q_v19"))["mise_a_jour"]["etapes"]
     env4 = next(x for x in e if x["id"] == "envoyer-prod")
-    assert env4["local"] is False and env4["bouton"] is None and "Mac" in env4["ligne"]
+    assert env4["local"] is False and env4["bouton"] is None
+    assert "Mac" not in env4["ligne"] and "q_v19" in env4["ligne"]
 
 
 def test_etape_prod_en_cours_de_lecture_quand_run_inconnu():

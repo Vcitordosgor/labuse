@@ -1352,40 +1352,70 @@ def injection_nuit(ctx: JobContext) -> None:
     classe_a = rangees["A"]
     classe_b = rangees["B"]
 
+    # Les sources qui ont AVANCÉ amont (sentinelle) — une seule lecture, partagée A/B.
+    try:
+        nouvelles = set(db.execute(text(
+            "SELECT d.name FROM data_sources d JOIN source_veille v ON v.source_id = d.id "
+            "WHERE v.dernier_statut = 'nouvelle_version'")).scalars().all())
+    except Exception as exc:  # noqa: BLE001
+        raise RuntimeError(f"injection-nuit : lecture de la veille impossible ({exc})") from exc
+
     # Les sources de classe B qui ont avancé → mail « à valider » (clic de Vic), jamais injectées.
     try:
         from . import ops_alertes
-        attente_b = [b["name"] for b in classe_b]
-        if attente_b:
-            # on ne CRIE pas un incident par source : une ligne d'information dans le journal du job suffit ;
-            # la demande de clic vit dans le Tableau de bord (étape « Injecter »). Mail seulement si une
-            # source B a une nouvelle version détectée par la sentinelle.
-            nouvelles_b = db.execute(text(
-                "SELECT d.name FROM data_sources d JOIN source_veille v ON v.source_id = d.id "
-                "WHERE v.dernier_statut = 'nouvelle_version'")).scalars().all()
-            nouvelles_b = [n for n in nouvelles_b if n in set(attente_b)]
-            if nouvelles_b:
-                ops_alertes.signaler(
-                    db, "injection-b-en-attente",
-                    f"{len(nouvelles_b)} source(s) structurante(s) à injecter (ton clic)",
-                    "Ces sources structurantes (classe B) ont une nouvelle version amont et ATTENDENT ta "
-                    "validation (elles ne s'injectent jamais seules) :\n  · " + "\n  · ".join(nouvelles_b)
-                    + "\n\nOuvre le Tableau de bord → Injecter pour les passer une à une.")
-            else:
-                ops_alertes.resoudre(db, "injection-b-en-attente")
+        nouvelles_b = sorted(b["name"] for b in classe_b if b["name"] in nouvelles)
+        if nouvelles_b:
+            ops_alertes.signaler(
+                db, "injection-b-en-attente",
+                f"{len(nouvelles_b)} source(s) structurante(s) à injecter (ton clic)",
+                "Ces sources structurantes (classe B) ont une nouvelle version amont et ATTENDENT ta "
+                "validation (elles ne s'injectent jamais seules) :\n  · " + "\n  · ".join(nouvelles_b)
+                + "\n\nOuvre le Tableau de bord → Injecter pour les passer une à une.")
+        else:
+            ops_alertes.resoudre(db, "injection-b-en-attente")
     except Exception as exc:  # noqa: BLE001 — la demande B ne doit pas casser l'injection A
         log.warning("injection-nuit : demande classe B impossible (%s)", exc)
 
-    # Classe A : injection auto avec rollback. Le CÂBLAGE source→commande est volontairement explicite
-    # et conservateur (on n'injecte QUE ce qu'on sait mesurer). Non câblé → listé « à câbler », jamais
-    # injecté à l'aveugle (prudence du mandat).
-    injectees, en_echec, a_cabler = [], [], []
+    # Classe A : injection SEULE la nuit (mandat AUTONOMIE / TABLEAU-1 point 1). On ne lance QUE les
+    # sources de classe A qui ont AVANCÉ amont et dont la commande d'ingestion est CONNUE (le MÊME
+    # chemin que le bouton « Injecter » / le cron, via `lancer_ingestion_source`) ; l'ingestion détachée
+    # enchaîne son filtre, et la cohérence de nuit + le résumé du matin contrôlent le résultat. Une source
+    # de classe A sans commande mappée est listée « à câbler » — JAMAIS injectée à l'aveugle (prudence).
+    #
+    # POURQUOI ça n'avait jamais injecté avant : ce job se contentait d'EMPILER les noms dans `a_cabler`
+    # (aucun appel d'ingestion) ET 2 des 4 sources A visées (Population légale INSEE, OFB/APER) n'avaient
+    # pas de ligne dans config/sources_ingestion.yaml. Résultat : elles restaient « nouvelle version »
+    # et remontaient à tort dans la carte « à valider » de Vic. Ce n'était ni un contrôle échoué, ni une
+    # mauvaise classe, ni la fenêtre : le câblage source→commande n'avait simplement pas été écrit.
+    from .api.dashboard import lancer_ingestion_source
+    injectees, en_echec, a_cabler, deja = [], [], [], []
     for a in classe_a:
-        a_cabler.append(a["name"])   # câblage par source = itération suivante (mapping vérifié requis)
-    ctx.compte(classe_a=len(classe_a), classe_b=len(classe_b),
-               injectees=injectees, en_echec=en_echec, a_cabler=a_cabler,
-               note="classe A: contrôles+rollback câblés par source (autonomie.injecter_avec_rollback) ; "
-                    "classe B: clic de Vic (mail). Mapping source→ingesteur à compléter par source.")
+        nom = a["name"]
+        if nom not in nouvelles:
+            deja.append(nom)          # rien de neuf amont → rien à faire (idempotent)
+            continue
+        try:
+            lance = lancer_ingestion_source(nom)
+        except Exception as exc:  # noqa: BLE001 — un lancement raté n'arrête pas les autres sources
+            en_echec.append(nom)
+            log.warning("injection-nuit : lancement %r échoué (%s)", nom, exc)
+            continue
+        if lance is None:
+            a_cabler.append(nom)      # classe A mais aucune commande connue → listée, jamais à l'aveugle
+            continue
+        injectees.append(nom)
+        # trace du lancement (idempotence : la sentinelle repassera « ok » après ingestion) — best-effort.
+        try:
+            db.execute(text(
+                "UPDATE source_veille SET injection_lancee_at = now(), injection_vu = dernier_vu "
+                "WHERE source_id = (SELECT id FROM data_sources WHERE name = :n)"), {"n": nom})
+        except Exception as exc:  # noqa: BLE001
+            log.warning("injection-nuit : trace injection_lancee_at %r impossible (%s)", nom, exc)
+    ctx.compte(classe_a=len(classe_a), classe_b=len(classe_b), nouvelles_a=len(injectees) + len(en_echec)
+               + len(a_cabler), injectees=injectees, en_echec=en_echec, a_cabler=a_cabler,
+               attente_b=sorted(b["name"] for b in classe_b if b["name"] in nouvelles),
+               note="classe A avancée : injectée seule (commande connue) ou listée « à câbler » (sans "
+                    "commande) ; classe B avancée : clic de Vic (carte « à valider »).")
 
 
 def ingest_sirene(ctx: JobContext) -> None:

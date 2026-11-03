@@ -1685,21 +1685,20 @@ def admin_source_affichage(source_id: int, body: AffichageIn, request: Request) 
     return {"ok": True, "actif": body.actif, "affichage_desactive": not body.actif}
 
 
-def _lancer_ingestion(nom: str) -> dict:
-    """Lance — détaché, depuis la racine du repo — la commande d'ingestion EXISTANTE d'une source (la
-    MÊME que le cron), journalisée dans un log fichier. Point de sortie UNIQUE du lancement d'ingestion
-    (réutilisé par « Relancer » et par « Injecter cette version », X6). Lève HTTPException si aucune
-    commande n'est connue (404) ou si le lancement échoue (500). NE fait AUCUNE ingestion en propre :
-    il délègue au job existant."""
+def lancer_ingestion_source(nom: str) -> dict | None:
+    """TABLEAU-1 (point 1) — variante SANS FastAPI de `_lancer_ingestion`, pour les JOBS (injection-nuit) :
+    lance détaché la commande d'ingestion EXISTANTE d'une source (la MÊME que le cron) et enchaîne le
+    filtre. Retourne le dict de lancement, ou **None si aucune commande n'est connue** (jamais une
+    exception pour « pas de mapping » : l'appelant liste alors « à câbler »). Lève RuntimeError si le
+    lancement lui-même échoue. NE fait AUCUNE ingestion en propre : délègue au job existant."""
     import os
     import shlex
     import subprocess
     import sys
     from pathlib import Path
-    from fastapi import HTTPException
     cmd = _relance_pour(nom)
     if not cmd:
-        raise HTTPException(404, "Aucune commande d'ingestion connue pour cette source.")
+        return None
     argv = list(cmd["argv"])
     if argv and argv[0] == "python":
         argv[0] = sys.executable          # le python du process (venv), jamais un python du PATH
@@ -1723,8 +1722,22 @@ def _lancer_ingestion(nom: str) -> dict:
             subprocess.Popen(wrapper, cwd=str(racine), stdout=fh, stderr=fh,
                              start_new_session=True, env=env)
     except Exception as exc:  # noqa: BLE001
-        raise HTTPException(500, f"Lancement impossible ({type(exc).__name__}).") from exc
+        raise RuntimeError(f"Lancement impossible ({type(exc).__name__}).") from exc
     return {"label": cmd["label"], "log": log_path, "filtre_enchaine": True}
+
+
+def _lancer_ingestion(nom: str) -> dict:
+    """Point de sortie HTTP du lancement d'ingestion (bouton « Relancer » / « Injecter cette version »,
+    X6). Délègue à `lancer_ingestion_source` et traduit en HTTPException : 404 si aucune commande connue,
+    500 si le lancement échoue. La doctrine est intacte : rien ne s'ingère sans le geste humain."""
+    from fastapi import HTTPException
+    try:
+        r = lancer_ingestion_source(nom)
+    except RuntimeError as exc:
+        raise HTTPException(500, str(exc)) from exc
+    if r is None:
+        raise HTTPException(404, "Aucune commande d'ingestion connue pour cette source.")
+    return r
 
 
 @router.post("/admin/sources/{source_id}/relancer")
@@ -2330,7 +2343,7 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
         "       d.last_sync_at, d.status,"
         "       d.mode_remplissage, d.cadence_attendue_jours, d.cadence_statut,"
         "       v.methode, v.dernier_statut, v.dernier_passage_at, v.dernier_vu, v.actif,"
-        "       v.echecs_consecutifs, v.dernier_message,"
+        "       v.echecs_consecutifs, v.dernier_message, v.cadence_heures,"
         "       v.cadence_attendue_jours AS rappel_jours"
         f" FROM data_sources d LEFT JOIN source_veille v ON v.source_id = d.id"
         f" WHERE {where} ORDER BY COALESCE(d.category,'zzz'), d.name"), params).mappings().all()
@@ -2398,6 +2411,7 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
                         "passage": r["dernier_passage_at"].isoformat() if r["dernier_passage_at"] else None,
                         "vu": r["dernier_vu"], "actif": r["actif"],
                         "echecs_consecutifs": r["echecs_consecutifs"],
+                        "cadence_heures": r["cadence_heures"],
                         "dernier_message": r["dernier_message"],
                         "rappel_jours": r["rappel_jours"]} if r["methode"] else None),
             "filtre": _filtre_du(r["name"]),
@@ -3058,12 +3072,23 @@ def admin_circuit(request: Request) -> dict:
         }
     except Exception:  # noqa: BLE001 — table pige absente/illisible : pas de carte (jamais un crash)
         _radar = None
+    # TABLEAU-1 (point 5) — la VÉRITÉ du moment pour « Où en est la mise à jour ? » :
+    #  · promotion automatique ou en attente du clic de Vic = le gate LABUSE_CALCUL_NUIT_PROMEUT ;
+    #  · calcul en cours = le poste `calcul-nuit` est `en_cours`.
+    import os as _os
+    _promotion_auto = _os.environ.get(
+        "LABUSE_CALCUL_NUIT_PROMEUT",
+        "1" if getattr(_config.get_settings(), "calcul_nuit_promeut", True) else "0") != "0"
+    _calcul_en_cours = any(
+        (j.get("dernier") or {}).get("statut") == "en_cours"
+        for j in _jobs_list if j.get("nom") == "calcul-nuit")
     cockpit = _cockpit.composer_cockpit(
         a_faire=a_faire, etats_sources=_etats_compte, reservoirs=reservoirs,
         verrous=_verrous, fuites_rob=_fuites_rob, caches_perimes=_caches_perimes, incidents=_incidents,
         ecarts_toleres=_ecarts_toleres, jobs_list=_jobs_list, run_servi=runs.current(),
         candidat=_candidat, calculer_present=_resume._calculer_present(_calculer_af, residuel),
         dernier_calcul=_run_date, env=_config.get_settings().env, prod_run=None,
+        promotion_auto=_promotion_auto, calcul_en_cours=_calcul_en_cours,
         dates=_dates_af, copie_externe=_copie_externe, restore_test=_restore_test, radar=_radar)
     return {
         "cockpit": cockpit,   # COCKPIT-1 Lot A — l'onglet « Tableau de bord » (3 sections)
