@@ -105,4 +105,25 @@ CREATE TABLE IF NOT EXISTS john_messages (
 
 COMMIT;
 
+-- ---------------------------------------------------------------------------
+-- APPARTENANCE — les tables (et leurs séquences) DOIVENT appartenir au rôle
+-- applicatif `labuse` : l'app s'y connecte comme `labuse` et y écrit (carnet,
+-- journal, conversations…). Si cette migration est jouée par `postgres`
+-- (superuser), les objets naîtraient `postgres` et l'app aurait « permission
+-- denied ». On réassigne donc explicitement à `labuse` (idempotent : c'est déjà
+-- le cas si l'app les a créés paresseusement). N'affecte QUE les objets `john_*`.
+-- ---------------------------------------------------------------------------
+DO $$
+DECLARE r record;
+BEGIN
+  FOR r IN SELECT tablename FROM pg_tables
+           WHERE schemaname = 'public' AND tablename LIKE 'john\_%' LOOP
+    EXECUTE format('ALTER TABLE public.%I OWNER TO labuse', r.tablename);
+  END LOOP;
+  FOR r IN SELECT sequencename FROM pg_sequences
+           WHERE schemaname = 'public' AND sequencename LIKE 'john\_%' LOOP
+    EXECUTE format('ALTER SEQUENCE public.%I OWNER TO labuse', r.sequencename);
+  END LOOP;
+END $$;
+
 \timing off

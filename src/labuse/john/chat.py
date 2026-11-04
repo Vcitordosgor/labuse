@@ -122,11 +122,19 @@ def _appel_reel(*, model, system, messages, tools, max_tokens):
 def _bloc_to_dict(b) -> dict:
     """Normalise un bloc de réponse (objet SDK OU stub de test) → dict pour le ré-envoyer en historique."""
     t = getattr(b, "type", None) or (b.get("type") if isinstance(b, dict) else None)
+    g = (lambda k: getattr(b, k, None)) if not isinstance(b, dict) else (lambda k: b.get(k))
     if t == "text":
-        return {"type": "text", "text": getattr(b, "text", None) if not isinstance(b, dict) else b.get("text", "")}
+        return {"type": "text", "text": g("text") or ""}
     if t == "tool_use":
-        g = (lambda k: getattr(b, k, None)) if not isinstance(b, dict) else (lambda k: b.get(k))
         return {"type": "tool_use", "id": g("id"), "name": g("name"), "input": g("input") or {}}
+    # opus-5-5 renvoie des blocs de réflexion ; quand on REJOUE le tour assistant (boucle d'outils),
+    # ils DOIVENT être réinjectés TELS QUELS, avec `thinking`+`signature` (sinon l'API rejette :
+    # « messages.N.content.0.thinking.thinking: Field required »). Non affichés (anti-invention/_texte_de
+    # ne lisent que les blocs `text`) : ils ne servent qu'à la continuité du round-trip modèle.
+    if t == "thinking":
+        return {"type": "thinking", "thinking": g("thinking") or "", "signature": g("signature") or ""}
+    if t == "redacted_thinking":
+        return {"type": "redacted_thinking", "data": g("data") or ""}
     return {"type": t}
 
 
