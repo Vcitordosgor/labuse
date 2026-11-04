@@ -592,6 +592,10 @@ interface AppState {
   // l'entrée LIEN de l'outil (consommé-puis-reset au montage, comme les autres prefills).
   annonceLienPrefill: string | null
   setAnnonceLienPrefill: (s: string | null) => void
+  // RETOURS-16 (point 4) — fiche → bouton « Estimer » : ouvre « Estimer un bien » directement sur la
+  // PARCELLE courante (écran rapport parcelle), consommé-puis-reset au montage comme les autres prefills.
+  annonceParcellePrefill: string | null
+  setAnnonceParcellePrefill: (s: string | null) => void
   // Assemblage → Courrier : une parcelle de l'assiette ouvre l'outil Courrier prérempli sur SON IDU
   // (consommé-puis-reset au montage). Le « N particuliers » devient un geste, plus un cul-de-sac.
   courrierPrefill: string | null
@@ -1096,6 +1100,8 @@ export const useApp = create<AppState>((set, get) => ({
   setSolairePrefill: (solairePrefill) => set({ solairePrefill }),
   annonceLienPrefill: null,
   setAnnonceLienPrefill: (annonceLienPrefill) => set({ annonceLienPrefill }),
+  annonceParcellePrefill: null,
+  setAnnonceParcellePrefill: (annonceParcellePrefill) => set({ annonceParcellePrefill }),
   courrierPrefill: null,
   setCourrierPrefill: (courrierPrefill) => set({ courrierPrefill }),
   courrierPrefillIdus: null,

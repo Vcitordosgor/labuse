@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import {
-  getCadrageCompteur, getParcoursEtat, getProjet, patchProjet, setStatutParcelle,
+  getCadrageCompteur, getParcoursEtat, getProjet, patchProjet, projetVersCrm, setStatutParcelle,
   type Cadrage, type PalierDA, type ParcoursEtat, type ParcoursItem, type StatutParcelle,
 } from '../../lib/api'
 import { palierDe, usePaliersDA } from '../../lib/usePaliers'
@@ -247,6 +247,21 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
     mutationFn: (body: { nom?: string; statut?: string }) => patchProjet(pid, body),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['projet', pid] }); qc.invalidateQueries({ queryKey: ['projets'] }) },
   })
+  // RETOURS-16 (point 9) — « → CRM » POUSSE d'abord toutes les retenues dans le pipeline (idempotent,
+  // sans doublon), confirme par un toast chiffré, PUIS ouvre le CRM. Le bug : le bouton ne faisait que
+  // naviguer, les retenues non synchronisées n'arrivaient jamais.
+  const versCrm = useMutation({
+    mutationFn: () => projetVersCrm(pid),
+    onSuccess: (r) => {
+      qc.invalidateQueries({ queryKey: ['pipeline'] })
+      const s = useApp.getState()
+      const msg = r.ajoutees > 0
+        ? `${r.ajoutees} parcelle${r.ajoutees > 1 ? 's' : ''} ajoutée${r.ajoutees > 1 ? 's' : ''} au CRM${r.deja > 0 ? ` · ${r.deja} déjà présente${r.deja > 1 ? 's' : ''}` : ''}.`
+        : r.total > 0 ? `${r.total} retenue${r.total > 1 ? 's' : ''} déjà dans le CRM.` : 'Aucune retenue à envoyer.'
+      s.setToast(msg); s.setOpenProjet(null); s.setView('crm')
+    },
+    onError: () => { useApp.getState().setToast('Envoi vers le CRM échoué — réessayez.') },
+  })
 
   const etat = etatQ.data
   const projet = projetQ.data
@@ -491,8 +506,9 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                 )}
                 {col.key === 'retenue' && (etat?.counts?.retenue ?? 0) > 0 && (
                   <div data-kanban-retenues-actions className="flex shrink-0 gap-2 border-t border-line-2 bg-surface-2 px-3.5 py-2.5">
-                    <Bouton niveau="secondaire" ton="vert" data-kanban-crm onClick={() => { const s = useApp.getState(); s.setOpenProjet(null); s.setView('crm') }}
-                      className="flex-1">→ CRM</Bouton>
+                    <Bouton niveau="secondaire" ton="vert" data-kanban-crm disabled={versCrm.isPending}
+                      onClick={() => versCrm.mutate()}
+                      className="flex-1">{versCrm.isPending ? 'Envoi…' : '→ CRM'}</Bouton>
                     <Bouton niveau="secondaire" ton="vert" data-kanban-courrier onClick={() => {
                       const idus = (etat?.retenues ?? []).map((r) => r.idu)
                       const s = useApp.getState(); s.setCourrierPrefillIdus(idus); s.setOpenProjet(null); s.setView('cartes'); s.setModule('courriers')

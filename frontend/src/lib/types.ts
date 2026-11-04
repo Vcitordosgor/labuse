@@ -142,7 +142,9 @@ export interface PipelineEntry {
   // comme la fiche. Le back renvoie désormais les champs de surface.ts (champs_terrain).
   parcel: { commune: string; section: string; surface_m2: number | null
     surface_terrain_m2?: number | null; surface_source?: 'cadastre' | 'plan' | null
-    surface_dessin_m2?: number | null; contenance_m2?: number | null }
+    surface_dessin_m2?: number | null; contenance_m2?: number | null
+    // RETOURS-16 (point 10) — zone PLU servie pour le « secteur » de la carte CRM (commune · zone).
+    zone_plu?: string | null }
   // M137 Lot 2 — `premium` (score/rang : q_score/a_score/rang_v2…) RETIRÉ du payload CRM et du type
   // (M133 B.6 ; plus rien ne le rend depuis P1 ; type `q_score`/`a_score` était mensonger).
   // Phase 2 : d'où vient la piste (projet) + contact proprio (PRIVACY : PM publique OU particulier masqué)

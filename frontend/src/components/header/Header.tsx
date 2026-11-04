@@ -272,7 +272,11 @@ function CommuneSelect() {
           <div className="floating absolute left-0 top-9 z-20 flex max-h-[70vh] w-[320px] flex-col overflow-y-auto p-1.5">
             {(communes.data ?? []).map((c) => (
               <button key={c.insee} data-fiche-commune onClick={() => pick(c.commune)}
-                className="hover-fill min-w-0 truncate whitespace-nowrap rounded-md px-3 py-1.5 text-left text-xs text-txt">
+                /* RETOURS-16 (point 6) — le menu « Fiche commune » suit la DA des AUTRES déroulants
+                   (menu compte Header.tsx) : même hauteur de ligne (px-3 py-2, rounded-lg) et même
+                   SURVOL subtil (hover:bg-surface-3, texte clair conservé). Fini le `hover-fill`
+                   (aplat vert plein + encre sombre) et l'espacement serré (py-1.5). */
+                className="flex min-w-0 items-center gap-2 truncate whitespace-nowrap rounded-lg px-3 py-2 text-left text-xs text-txt transition-colors duration-quick hover:bg-surface-3 hover:text-txt-hi">
                 {communePastille(c.commune)} <span className="font-mono text-[11px] tabular-nums text-txt-dim">{CP_PAR_COMMUNE[c.commune] ?? c.insee}</span>
               </button>
             ))}

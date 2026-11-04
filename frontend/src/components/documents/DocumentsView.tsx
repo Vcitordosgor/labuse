@@ -407,7 +407,10 @@ function LigneDoc({ r, onChange }: { r: DocGenereRow; onChange: () => void }) {
       .then(() => { setToast('Document retiré de « Mes documents ».'); onChange() })
       .catch(() => setToast('Suppression échouée — réessayez.'))
   }
-  const btn = 'h-[26px] px-[9px] text-[12px]'
+  // RETOURS-16 (point 5) — `shrink-0` + `whitespace-nowrap` : chaque bouton garde sa taille et son
+  // libellé sur une ligne ; combiné au conteneur `flex-nowrap` + colonne élargie, les 4 boutons
+  // (Ouvrir/Excel/Régénérer/Supprimer) restent sur UNE SEULE LIGNE, alignés à droite, sur toute ligne.
+  const btn = 'h-[26px] shrink-0 whitespace-nowrap px-[9px] text-[12px]'
   // CHASSE-DOCS-FIX-1 (Lot 5.1) — « Sources modifiées depuis » s'allume AUSSI quand l'éditeur (Bilan/
   // Étude) a changé ses saisies depuis la génération : on compare l'empreinte STOCKÉE AVEC LE DOCUMENT
   // (serveur, `hypotheses._empreinte` — cross-poste) à l'empreinte de l'éditeur vivant (local).
@@ -427,10 +430,11 @@ function LigneDoc({ r, onChange }: { r: DocGenereRow; onChange: () => void }) {
           : <Badge ton="vert">À jour</Badge>}
       </td>
       <td className="px-2.5">
-        {/* CHASSE-DOCS-FIX-1 — flex-wrap : sur la ligne « modifiée » (3 boutons Ouvrir/Régénérer/
-            Supprimer) ou en écran étroit, les boutons PASSENT À LA LIGNE au lieu de déborder sur le
-            badge d'état (plus de chevauchement). La colonne actions est aussi élargie (colgroup). */}
-        <div className="flex flex-wrap justify-end gap-1.5">
+        {/* RETOURS-16 (point 5, remplace CHASSE-DOCS-FIX-1) — les boutons d'une ligne restent sur UNE
+            SEULE LIGNE, alignés à droite (`flex-nowrap justify-end`), quelle que soit la ligne. La
+            colonne actions est élargie (colgroup, 320 px) pour tenir les 4 boutons sans chevaucher le
+            badge « Sources modifiées depuis » (colonne distincte, place conservée). */}
+        <div className="flex flex-nowrap justify-end gap-1.5">
           <Bouton niveau="secondaire" ton="vert" className={btn} disabled={busy} onClick={ouvrir}>{busy ? <Chargement variant="inline" accent="courant" label="Ouverture…" /> : 'Ouvrir'}</Bouton>
           {/* Excel : seulement sur les lignes Bilan ET si l'export existe (sinon absent, pas grisé). */}
           {r.doc_type === 'bilan' && r.excel && r.idus[0] && (
@@ -484,7 +488,9 @@ function Bibliotheque() {
       ) : (
         <table className="w-full table-fixed border-collapse">
           <colgroup>
-            <col style={{ width: '110px' }} /><col style={{ width: '150px' }} /><col /><col style={{ width: '160px' }} /><col style={{ width: '190px' }} /><col style={{ width: '270px' }} />
+            {/* RETOURS-16 (point 5) — colonne actions élargie 270 → 320 px : les 4 boutons tiennent
+                sur une seule ligne sans rogner le badge « Sources modifiées depuis » (col. 190 px). */}
+            <col style={{ width: '110px' }} /><col style={{ width: '150px' }} /><col /><col style={{ width: '160px' }} /><col style={{ width: '190px' }} /><col style={{ width: '320px' }} />
           </colgroup>
           <thead>
             <tr className="border-b border-line text-left text-[12px] font-semibold text-txt-mut">

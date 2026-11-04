@@ -117,11 +117,13 @@ describe('PERMIS — double entrée + densité', () => {
     fireEvent.click(document.querySelector('[data-permis-bloc-toggle="affiner"]')!)
     await waitFor(() => expect(document.querySelector('[data-permis-geo="geo"]')).toBeTruthy())
     expect(document.querySelector('[data-permis-segment]')).toBeNull()         // état refermé
-    // la barre repliée « Filtrer par état » DIT son état actif + compte (défaut permis = Récent)
+    // la barre repliée « Filtrer par état » DIT son état actif + compte
     const barreEtat = document.querySelector('[data-permis-bloc-toggle="etat"]')?.textContent
-    // RECETTE-2 (D2) — défaut permis = « Tous » (toute la base), plus « Récent ».
-    expect(barreEtat).toContain('Tous')
-    expect(barreEtat).toContain('412')
+    // RETOURS-16 (point 11) — l'outil Permis OUVRE sur « Récent » = 90 derniers jours (fenêtre 3 mois),
+    // plus « Tous » (240 mois) qui chargeait toute la base à l'ouverture. Le résumé de la barre dit donc
+    // l'état « Récent » + son compte (compteur radar-entry du mock).
+    expect(barreEtat).toContain('Récent')
+    expect(barreEtat).toMatch(/5\s*613/)   // espace fine insécable (fr-FR) : on ne fige pas le séparateur
   })
 
   it('accordéon : Échap referme le bloc ouvert', async () => {

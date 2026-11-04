@@ -583,7 +583,12 @@ class SitadelPermit(Base):
     """
 
     __tablename__ = "sitadel_permits"
-    __table_args__ = (Index("ix_sitadel_commune", "commune"),)
+    # RETOURS-16 (point 11) — l'outil Permis filtre toujours sur une FENÊTRE de `date`
+    # (`date >= dmax - :m months`) ; l'ouverture par défaut sur 90 jours interroge peu de lignes,
+    # mais l'index sur `date` accélère ce filtre + le tri `ORDER BY date DESC` (btree parcouru à
+    # l'envers) sur ~50 k permis. Index ascendant (suffit pour l'ordre descendant côté Postgres).
+    __table_args__ = (Index("ix_sitadel_commune", "commune"),
+                      Index("ix_sitadel_permits_date", "date"))
 
     id: Mapped[int] = mapped_column(primary_key=True)
     permit_id: Mapped[str | None] = mapped_column(String(64))

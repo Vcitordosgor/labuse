@@ -5,7 +5,7 @@ import { Badge } from '../ui/Badge'
 import { Chevron } from '../ui/Chevron'
 import { Select } from '../ui/Select'   // U3 (RECETTE-OUTILS-4) — menu déroulant partagé
 import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, archivePipeline, createProjet, docApporteurUrl, docDossierUrl, docPreDossierUrl, getDossierStatut, getFaisabilite, getFiche, getGabarit, getMoi, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, projetsPourParcelle, SOURCE, toggleWatch } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, archivePipeline, createProjet, docDossierUrl, getDossierStatut, getFaisabilite, getFiche, getGabarit, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, projetsPourParcelle, SOURCE, toggleWatch } from '../../lib/api'
 // DOCS-FIX-1 (P3/P4) — ouverture propre des documents de la fiche (fetch + blob + attente + erreur FR
 // au toast), le MÊME comportement que la page Docs et que le Bilan. Plus de lien <a> qui ouvre un
 // onglet blanc puis du JSON sur erreur. P11 — URLs par les builders encodés (docDossierUrl…), plus de littéral.
@@ -20,7 +20,6 @@ import { Chargement, Squelette } from '../Loading'
 import { EmptyState, ErrorState } from '../States'
 import { DeplacerMenu } from '../crm/DeplacerMenu'   // DA-FIX-5c — menu « Déplacer vers… » partagé (kanban CRM)
 import { AskBar } from './AskBar'
-import { BilanEcran } from './BilanEcran'   // BILAN-1 — le bilan promoteur remplace l'ancien écran d'hypothèses
 import { GabaritLine } from './GabaritLine'
 import { cadastreGeoportailUrl, errialUrl, googleEarthKmzUrl, googleMapsUrl, pagesJaunes } from './liensExternes'
 import { LogoCadastre, LogoPagesJaunes, LogoGoogleMaps, LogoGeorisques, LogoGoogleEarth } from './logosServices'
@@ -245,16 +244,20 @@ function PipelineButton({ idu }: { idu: string }) {
     // ADMIN-1 AD1 — « + CRM » = VERT (contour --mint via .act-mint, survol plein vert via .hover-fill),
     // largeur ÉGALE à « + Projet » (flex-1). Le choix de colonne reste APRÈS le clic (menu ci-dessous).
     // RETOURS-11 T3 — bouton OPAQUE (act-cmp) tant que le menu est ouvert.
-    <div ref={wrap} className="relative flex-1">
+    <div ref={wrap} className="relative min-w-0 flex-1">
       <button
         onClick={() => !inPipe && setOpen((o) => !o)}
         disabled={!!inPipe || add.isPending}
         aria-disabled={!!inPipe}
-        className={`act w-full whitespace-nowrap ${inPipe ? 'act-cmp cursor-default' : open ? 'act-cmp' : 'act-mint hover-fill'}`}
+        className={`act w-full ${inPipe ? 'act-cmp cursor-default' : open ? 'act-cmp' : 'act-mint hover-fill'}`}
       > {/* RECETTE-1 R28 — infobulle au survol retirée (le bouton porte déjà son libellé) */}
-        {add.isPending ? 'Ajout…'
-          : inPipe ? `${CLIENT.fiche.crmDedans}${etapeLabel ? ` · ${etapeLabel}` : ''}`
-          : CLIENT.fiche.crmAjouter}
+        {/* RETOURS-16 (point 1) — libellé en span `.truncate` : avec les marges intérieures de `.act`
+            (index.css) il ne touche plus les bords et se coupe en « … » si l'étape est longue. */}
+        <span className="min-w-0 truncate">
+          {add.isPending ? 'Ajout…'
+            : inPipe ? `${CLIENT.fiche.crmDedans}${etapeLabel ? ` · ${etapeLabel}` : ''}`
+            : CLIENT.fiche.crmAjouter}
+        </span>
       </button>
       {open && !inPipe && (
         <div data-crm-menu className="absolute right-0 z-30 mt-1 min-w-[190px] rounded-lg border border-line bg-surface-2 p-1 shadow-lg">
@@ -292,15 +295,18 @@ function PipelineButton({ idu }: { idu: string }) {
 function ProjetButton({ idu }: { idu: string }) {
   const qc = useQueryClient()
   const setOpenProjet = useApp((s) => s.setOpenProjet)
+  // RETOURS-16 (point 2) — la confirmation « Ajoutée à … » passe par le TOAST GLOBAL de la DA
+  // (App.tsx, bas-centre, auto-disparition) au lieu d'une bulle `absolute` qui RECOUVRAIT le bouton
+  // « ✓ N projets ». Elle apparaît donc à un endroit qui ne masque rien, puis disparaît.
+  const setToast = useApp((s) => s.setToast)
   const [open, setOpen] = useState(false)
-  const [confirmMsg, setConfirmMsg] = useState<string | null>(null)
   const attache = useQuery({ queryKey: ['projets-parcelle', idu], queryFn: () => projetsPourParcelle(idu) })
   // RETOURS-12 J2 — le menu lit la liste À L'OUVERTURE, TOUJOURS FRAÎCHE : `staleTime 0` +
   // `refetchOnMount:'always'` → un projet créé juste avant (ailleurs, sans invalidation garantie du
   // cache) apparaît immédiatement, sans rechargement de page (bug « le projet n'apparaissait pas »).
   const projetsQ = useQuery({ queryKey: ['projets'], queryFn: getProjets, enabled: open,
     staleTime: 0, refetchOnMount: 'always' })
-  const flash = (nom: string) => { setOpen(false); setConfirmMsg(nom); window.setTimeout(() => setConfirmMsg((m) => (m === nom ? null : m)), 2800) }
+  const flash = (nom: string) => { setOpen(false); setToast(`✓ Ajoutée à « ${nom} »`) }
   const invalider = () => {
     qc.invalidateQueries({ queryKey: ['projets-parcelle', idu] })
     qc.invalidateQueries({ queryKey: ['projets'] })
@@ -338,7 +344,7 @@ function ProjetButton({ idu }: { idu: string }) {
     return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey) }
   }, [open])
   return (
-    <div ref={wrap} className="relative flex-1">
+    <div ref={wrap} className="relative min-w-0 flex-1">
       <button
         data-projet-fiche onClick={() => setOpen((o) => !o)} aria-expanded={open}
         /* ADMIN-1 AD1 — « + Projet » = JAUNE (contour + texte --amber, famille de la chip « Fiche commune »),
@@ -348,12 +354,6 @@ function ProjetButton({ idu }: { idu: string }) {
         >
         {inProjet ? (attaches.length > 1 ? `✓ ${attaches.length} projets` : `✓ ${attaches[0].nom}`) : '+ Projet'}
       </button>
-
-      {confirmMsg && (
-        <div data-projet-confirm className="absolute bottom-10 left-0 z-30 whitespace-nowrap rounded-md border border-mint/40 bg-mint/10 px-2.5 py-1.5 text-[11px] text-mint">
-          ✓ Ajoutée à « {confirmMsg} »
-        </div>
-      )}
 
       {open && (
         <div data-projet-fiche-menu className="floating absolute bottom-10 left-0 z-30 w-72 p-2 text-[11px]">
@@ -368,7 +368,11 @@ function ProjetButton({ idu }: { idu: string }) {
               return (
                 <button key={p.id} data-projet-fiche-cible={p.id} disabled={add.isPending}
                   onClick={() => (deja ? (setOpenProjet({ id: p.id, nom: p.nom }), setOpen(false)) : add.mutate(p.id))}
-                  className="hover-fill-amber flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-txt transition-colors duration-quick"
+                  /* RETOURS-16 (point 3) — survol comme les AUTRES menus déroulants de l'app (menu
+                     compte, etc.) : seul le FOND change (hover:bg-surface-3), le texte reste CLAIR.
+                     L'ancien `hover-fill-amber` passait le nom en encre sombre sur fond quasi
+                     transparent → noir sur fond sombre, illisible. */
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-txt transition-colors duration-quick hover:bg-surface-3 hover:text-txt-hi"
                   >
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-mint" />
                   <span className="min-w-0 flex-1 truncate">{p.nom}</span>
@@ -379,7 +383,7 @@ function ProjetButton({ idu }: { idu: string }) {
           </div>
           <div className="my-1.5 h-px bg-line/40" />
           <button data-projet-fiche-nouveau disabled={nouveau.isPending} onClick={() => nouveau.mutate()}
-            className="hover-fill-amber flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-mint transition-colors duration-quick"
+            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-mint transition-colors duration-quick hover:bg-surface-3"
             >
             <span aria-hidden>＋</span><span className="flex-1">{nouveau.isPending ? 'Création…' : 'Nouveau projet avec cette parcelle'}</span>
           </button>
@@ -419,6 +423,10 @@ export function Fiche({ idu }: { idu: string }) {
   const setM02Prefill = useApp((s) => s.setM02Prefill)     // M60 P1c — porte Scan patrimoine (SIREN)
   const setCourrierPrefill = useApp((s) => s.setCourrierPrefill)  // CONNEXIONS-2 Lot 3 (KO-5) — Courrier pré-rempli sur la parcelle
   const setParcelPrefill = useApp((s) => s.setParcelPrefill)  // RECETTE-6 (D2) — porte « Remonter le temps »
+  // RETOURS-16 (point 4) — portes des nouveaux boutons de la fiche : Étude de zone (sur la parcelle)
+  // et Estimer un bien (rapport parcelle). Gabarit lit la parcelle sélectionnée (selectedIdu).
+  const setEtudeZonePrefill = useApp((s) => s.setEtudeZonePrefill)
+  const setAnnonceParcellePrefill = useApp((s) => s.setAnnonceParcellePrefill)
   const setFlyToF = useApp((s) => s.setFlyTo)
   const setPluPrefillF = useApp((s) => s.setPluPrefill)    // M60 P1c — porte Annuaire PLU (insee+zone)
   const setPluVueF = useApp((s) => s.setPluVue)            // M137-P — porte directe vers une vue de l'outil PLU
@@ -2175,23 +2183,30 @@ export function Fiche({ idu }: { idu: string }) {
                   (PDF, Dossier, Financier, Pré-dossier…) sont conservées. */}
               {/* RECETTE-6 (D1, décision Vic) — le titre « EXPORTS » est RETIRÉ : ce ne sont pas que des
                   exports (Courrier, Remonter le temps sont des OUTILS). La grille reste, sans en-tête. */}
-              {/* EXPORTS-2 lot 8 — documents (builder unique) : Dossier · Financier · Apporteur ·
-                  Pré-dossier PC · Courrier · Remonter le temps (RECETTE-6 D2). */}
+              {/* RETOURS-16 (point 4, décision Vic) — SIX boutons, dans cet ordre : Dossier · Étude
+                  (de zone) · Gabarit · Estimer · Remonter le temps · Courrier. Bilan (Financier),
+                  Apporteur et Pré-dossier PC QUITTENT la fiche : ils restent accessibles depuis la page
+                  Docs (filtres Bilan/Apporteur/Pré-dossier PC) et, pour le Financier, l'onglet Outils.
+                  Étude ouvre l'outil SUR LA PARCELLE (même pont que la §Quartier) ; Gabarit lit la
+                  parcelle sélectionnée (selectedIdu) ; Estimer ouvre le rapport parcelle. */}
               <GrilleOutils cols={3}>
                 <DossierTile idu={idu} />
-                {/* RECETTE-1 R28 — infobulles au survol retirées des tuiles d'export (le nom suffit). */}
-                <BanquierButton idu={idu} />
-                <ApporteurTile idu={idu} />
-                <PreDossierTile idu={idu} />
-                <OutilCase nom={CLIENT.fiche.export.courrier} data-courrier-tile onClick={() => { setCourrierPrefill(idu); setModule('courriers') }}
-                  ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>} />
-                {/* RECETTE-6 (D2, décision Vic) — 6e bouton « Remonter le temps » : ouvre l'outil PRÉ-REMPLI
-                    sur la parcelle (setParcelPrefill + recentrage) ; le fil de retour vers la fiche est
-                    inhérent (setModule préserve selectedIdu → fermer l'outil ramène la fiche). Retiré de
-                    l'accueil (cf. AccueilPreuves). */}
+                <OutilCase nom="Étude de zone" data-etude-tile
+                  onClick={() => { setEtudeZonePrefill({ idu, commune: f?.commune ?? null, zone: null, sous_destination: '' }); setModule('etude-zone') }}
+                  ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><circle cx="12" cy="12" r="8.5" /><path d="M12 1v2M12 21v2M1 12h2M21 12h2" /></svg>} />
+                <OutilCase nom="Gabarit" data-gabarit-tile
+                  onClick={() => { setParcelPrefill(idu); if (f?.coords) setFlyToF({ center: f.coords, zoom: 18 }); setModule('gabarit') }}
+                  ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18M6 21V9l6-4 6 4v12M10 21v-5h4v5" /></svg>} />
+                <OutilCase nom="Estimer" data-estimer-tile
+                  onClick={() => { setAnnonceParcellePrefill(idu); setModule('analyser-annonce') }}
+                  ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>} />
+                {/* RECETTE-6 (D2) — « Remonter le temps » : ouvre l'outil PRÉ-REMPLI sur la parcelle
+                    (setParcelPrefill + recentrage) ; fermer l'outil ramène la fiche (selectedIdu préservé). */}
                 <OutilCase nom="Remonter le temps" data-temps-tile
                   onClick={() => { setParcelPrefill(idu); if (f?.coords) setFlyToF({ center: f.coords, zoom: 18 }); setModule('temps') }}
                   ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.3V12l3.1 1.9" /></svg>} />
+                <OutilCase nom={CLIENT.fiche.export.courrier} data-courrier-tile onClick={() => { setCourrierPrefill(idu); setModule('courriers') }}
+                  ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>} />
               </GrilleOutils>
               {/* M70 déc. 12 — la grille terminale « OUTILS SUR CETTE PARCELLE » est SUPPRIMÉE
                   (elle recréait une page Outils bis). Chaque outil est désormais une PORTE
@@ -2263,59 +2278,9 @@ function DossierTile({ idu }: { idu: string }) {
 }
 
 
-/** DOCS-FIX-1 (P3/P4/P11) — tuile « Apporteur » : ouverture propre (fetch+blob) via le builder
- *  encodé `docApporteurUrl` (plus de lien `<a href={`/apporteur/${idu}.pdf`}>` littéral non encodé
- *  qui ouvrait un onglet blanc puis du JSON sur erreur). « … » pendant la génération, erreur au toast. */
-function ApporteurTile({ idu }: { idu: string }) {
-  const setToast = useApp((s) => s.setToast)
-  const { ouvrir, enCours } = useOuvrirDocument(setToast)
-  const busy = enCours === 'apporteur'
-  const icon = <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /><path d="M8 9h8" /><path d="M8 13h5" /></svg>
-  return (
-    <OutilCase nom="Apporteur" data-apporteur ic={icon} disabled={busy}
-      onClick={() => void ouvrir(docApporteurUrl(idu), 'apporteur')} chiffre={busy ? '…' : undefined} />
-  )
-}
-
-
-/** M54-EXPO — tuile « Pré-dossier PC » (ZIP CERFA). Réservée au plan Intégral (backend :
- *  pre_dossier.py → plans.acces('pre_dossier_pc') = 403 sinon + quota M-K). Le front lit le plan
- *  (getMoi) et grise la tuile hors Intégral (pas de téléchargement d'un 403). */
-function PreDossierTile({ idu }: { idu: string }) {
-  const moi = useQuery({ queryKey: ['moi'], queryFn: getMoi })
-  const integral = moi.data?.plan === 'integral'
-  const setToast = useApp((s) => s.setToast)
-  const { ouvrir, enCours } = useOuvrirDocument(setToast)   // DOCS-FIX-1 (P3/P4) — ouverture propre
-  const busy = enCours === 'pre-dossier'
-  const icon = <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M21 8v13H3V3h10" /><path d="M16 3h5v5" /><path d="M8 13h6M8 17h4" /></svg>
-  if (!integral) return (
-    <OutilCase nom={CLIENT.fiche.export.preDossier} ic={icon} disabled data-predossier-gate
-      title={`${CLIENT.fiche.export.preDossierTip} — ${CLIENT.fiche.export.preDossierGate}`} />
-  )
-  // DOCS-FIX-1 (P3/P4/P11) — onClick (fetch+blob) + builder encodé ; « … » pendant la génération, erreur au toast.
-  return (
-    <OutilCase nom={CLIENT.fiche.export.preDossier} ic={icon} onClick={() => void ouvrir(docPreDossierUrl(idu), 'pre-dossier')}
-      disabled={busy} title={CLIENT.fiche.export.preDossierTip} data-predossier chiffre={busy ? '…' : undefined} />
-  )
-}
-
-
-/** B1.5 — bouton Dossier banquier à ÉTATS : clic → préparation asynchrone côté serveur
- *  (le PDF pesait 9,3 s bloquants), sonde /statut toutes les 1,5 s, puis « prêt — ouvrir »
- *  (cache serveur : ouverture ~ms). Erreur : message court + réessai. Si le cache est déjà
- *  chaud, le premier clic ouvre directement (même geste utilisateur → pas de popup bloquée). */
-// EXPORTS-2 lot 4 — le bouton « Financier » ouvre le QUESTIONNAIRE (4 écrans) ; le questionnaire
-// rempli alimente le document Financier (le bouton bascule sur le document au lot 8).
-function BanquierButton({ idu }: { idu: string }) {
-  const [open, setOpen] = useState(false)
-  const icon = <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="6" width="18" height="12" rx="2" /><circle cx="12" cy="12" r="2.5" /></svg>
-  return (
-    <>
-      <OutilCase nom={CLIENT.fiche.export.finance} ic={icon} onClick={() => setOpen(true)}
-        data-banquier-btn title={CLIENT.fiche.export.banquierTip} />
-      {open && <BilanEcran idu={idu} onClose={() => setOpen(false)} />}
-    </>
-  )
-}
+// RETOURS-16 (point 4) — ApporteurTile · PreDossierTile · BanquierButton (Financier/Bilan) RETIRÉS
+// de la fiche (décision Vic) : ces trois documents restent générables depuis la page Docs (cartes
+// Apporteur / Pré-dossier PC / Bilan), et le Financier depuis l'onglet Outils. Les fonctions sont
+// donc supprimées ici (plus aucun appel côté fiche).
 
 
