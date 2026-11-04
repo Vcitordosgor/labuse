@@ -103,7 +103,10 @@ SURFACES: dict[str, dict] = {
     # la synthèse WEB : Haiku PAR DÉFAUT, relevée à Sonnet via `LABUSE_IA_MODELE_COPILOTE_WEB` SI la
     # mesure l'exige (mandat : « Sonnet seulement si la qualité du chemin WEB l'exige, mesuré » — mesure
     # différée, clé à créditer). Router inchangé (Haiku).
-    "copilote-route":    {"label": "Copilote v2 — routage (3 chemins)",     "model": MODEL_FACTUAL},
+    # COPILOTE-5 — le ROUTAGE passe à `claude-haiku-5-5` (repli auto `claude-haiku-4-5` si not_found,
+    # via REPLI_MODELES ; `temperature` omise, haiku-5-5 ∈ NO_TEMPERATURE_MODELS). Le tri reste une
+    # EXTRACTION (intent + params), pas de la rédaction — Haiku, mais la génération 5.5. Overridable env.
+    "copilote-route":    {"label": "Copilote v2 — routage (3 chemins)",     "model": MODEL_HAIKU},
     "copilote-select":   {"label": "Copilote v2 — chemin OUTIL (sélection)", "model": MODEL_FACTUAL},
     # COPILOTE-5 — la FORMULATION (la phrase servie au client, par-dessus des faits déjà calculés)
     # prend le modèle le plus capable, comme John : `claude-opus-5-5` (VÉRIFIÉ servi, défaut John),

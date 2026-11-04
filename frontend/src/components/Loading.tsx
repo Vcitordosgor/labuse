@@ -32,16 +32,16 @@ export function Chargement({
   variant?: 'inline' | 'bloc'
   label?: string
   className?: string
-  // Les points sont TOUJOURS menthe (le vert de marque) — Outils et Copilote compris. Seul 'courant'
-  // existe en plus : la couleur du texte courant, pour que les points restent visibles DANS un bouton
-  // plein (ex. menthe foncé sur fond menthe).
-  accent?: 'mint' | 'courant'
+  // Les points sont menthe (le vert de marque) partout — SAUF le Copilote, dont l'attente prend le
+  // mauve de marque (`ia`, = le bouton Envoyer, cp-ia) : sa surface EST mauve (COPILOTE-5, capture Vic).
+  // 'courant' = la couleur du texte courant (points visibles DANS un bouton plein menthe/mauve).
+  accent?: 'mint' | 'courant' | 'ia'
   delai?: number
 }) {
   const pret = useDelai(delai)
   if (!pret) return null
 
-  const tone = accent === 'courant' ? 'bg-current' : 'bg-mint'
+  const tone = accent === 'courant' ? 'bg-current' : accent === 'ia' ? 'bg-cp-ia' : 'bg-mint'
   const dots = (
     <span className="inline-flex items-center gap-1" aria-hidden>
       {[0, 1, 2].map((i) => (

@@ -248,6 +248,9 @@ _CHAMPS = [
     (("taxe d'amenagement", "taxe damenagement", "taxe amenagement", "ta communale", "taux de ta"),
      ("taxe_amenagement_estimee_eur", "Taxe d'aménagement")),
     (("taxe fonciere", "tfpb", "taxe fonciere batie"), ("tfpb_taux_pct", "Taxe foncière (bâti)")),
+    # COPILOTE-5 — outil ÉTUDE DE ZONE / chalandise AVANT la zone (« étude de zone » contient « zone »).
+    (("etude de zone", "chalandise", "a moins de 100 m", "autour a 100", "ventes a proximite"),
+     ("voisinage_100m_liste", "Autour (100 m)")),
     (("zone", "zonage", "plu"), ("zone_plu_famille", "Zone PLU")),
     (("risque", "risques", "alea", "aleas", "ppr", "inondation"), ("aleas_parcelle_liste", "Risques et aléas")),
     # COPILOTE-5 — pollution des sols (CASIAS), distincte des aléas PPR.
@@ -293,11 +296,30 @@ _CHAMPS = [
       "prix de l'ancien", "transactions", "prix de vente"), ("dvf_parcelle_liste", "Marché — ventes")),
     (("prix d'achat", "achetee pour", "acquise pour", "dernier prix paye", "prix paye"),
      ("prix_achat_historique_eur", "Dernier prix d'achat")),
-    # §11 Potentiel
+    # §11 Potentiel · outil ÉTUDE DE FAISABILITÉ (verdict + SDP) — lu du moteur de la fiche.
     (("potentiel constructible", "potentiel de la parcelle", "capacite constructible",
-      "capacite de la parcelle"), ("potentiel_verdict", "Potentiel constructible")),
+      "capacite de la parcelle", "faisabilite", "etude de faisabilite", "que peut-on construire",
+      "densifier"), ("potentiel_verdict", "Potentiel constructible")),
     (("combien de logements", "capacite en logements", "nombre de logements constructibles",
       "combien de lots"), ("capacite_logements", "Capacité en logements")),
+    # outil GABARIT (implantation/hauteur/emprise constructibles) — résultat graphique : on donne les
+    # CHIFFRES (même moteur que l'écran) et on propose d'ouvrir le Gabarit.
+    (("gabarit", "jusqu'ou", "ou puis-je construire", "implantation",
+      "ou construire sur", "ou batir"), ("gabarit_implantation_m2", "Gabarit — implantation")),
+    # outil ESTIMER (prix de sortie du bâti au secteur) — graphique : chiffres + proposer d'ouvrir.
+    (("estimer", "estimation", "valeur du bien", "prix de sortie", "combien vaut ce bien",
+      "combien vaut le bien", "valeur venale", "prix de revente"),
+     ("prix_sortie_bati_eur_m2", "Estimation — prix de sortie")),
+    # outil PROSPECTION SOLAIRE — pente/orientation du toit + productible.
+    (("solaire", "photovoltaique", "panneaux", "productible", "potentiel solaire", "toit expose"),
+     ("pente_toit_deg", "Potentiel solaire (toiture)")),
+    # outil SUCCESSIONS À VENIR — timeline de propriété (PM).
+    (("succession", "heritage", "heritier", "mutation de propriete", "historique de propriete",
+      "changement de proprietaire", "ancien proprietaire"),
+     ("proprietaire_timeline_liste", "Historique de propriété / succession")),
+    # RADAR — annonces détectées sur la parcelle.
+    (("annonce", "a vendre", "en vente", "mise en vente", "radar", "annonces immobilieres"),
+     ("radar_annonces_liste", "Annonces (Radar)")),
     # §10 Quartier
     (("quartier", "iris", "voisinage", "habitants du quartier", "population du quartier",
       "environnement urbain"), ("iris_quartier", "Quartier")),
@@ -341,6 +363,12 @@ _SOURCE_CHAMP = {
     "iris_quartier": "INSEE — IRIS (quartier)",
     "equipements_proximite_liste": "BPE INSEE / IGN — équipements de proximité",
     "dpe_connu": "ADEME — DPE",
+    "gabarit_implantation_m2": "LABUSE — gabarit réglementaire (reculs/emprise/hauteur)",
+    "prix_sortie_bati_eur_m2": "DVF — prix de sortie du bâti (secteur)",
+    "pente_toit_deg": "CoSIA / LiDAR — toiture (pente, orientation)",
+    "proprietaire_timeline_liste": "DGFiP — historique de propriété (personnes morales)",
+    "radar_annonces_liste": "Radar LABUSE — annonces détectées",
+    "voisinage_100m_liste": "DVF / Sitadel — autour à 100 m",
 }
 
 
@@ -541,6 +569,74 @@ def _rendre_champ(cid: str, libelle: str, valeur: Any, valeurs: dict) -> str:
         return "À proximité : " + " ; ".join(bouts) + "." if bouts else "Aucun équipement relevé à proximité."
     if cid == "dpe_connu":
         return f"DPE : {valeur}." if isinstance(valeur, (str, int, float)) else f"{libelle} : connu."
+    # outil FAISABILITÉ — verdict + SDP (calcul null → on sert le libellé/niveau du moteur).
+    if cid == "potentiel_verdict" and isinstance(valeur, dict):
+        calc = valeur.get("calcul") or {}
+        sdp = calc.get("sdp_max_m2")
+        lib = valeur.get("libelle")
+        if sdp is not None:
+            return (f"Potentiel constructible : jusqu'à {fmt_m2(sdp)} de surface de plancher "
+                    f"(dont {fmt_m2(calc.get('sdp_residuelle_m2'))} résiduels après le bâti conservé) — "
+                    "voir l'Étude de faisabilité pour le détail.")
+        return ((lib or "Potentiel constructible : voir l'Étude de faisabilité").rstrip(".")
+                + " — voir l'Étude de faisabilité pour le détail.")
+    # outil GABARIT (graphique) — chiffres servis + proposer d'ouvrir le plan.
+    if cid == "gabarit_implantation_m2":
+        if valeur in (None, 0):
+            mb = (valeurs.get("gabarit_motif_blocage").valeur
+                  if valeurs.get("gabarit_motif_blocage") else None)
+            return (f"Gabarit non modélisé : {mb}." if mb
+                    else "Gabarit : emprise implantable non calculée pour cette parcelle.")
+        def _g(k):
+            v = valeurs.get(k)
+            return v.valeur if v else None
+        emp, libre, haut = _g("gabarit_emprise_plafond_m2"), _g("gabarit_zone_libere_m2"), _g("gabarit_hauteur_m")
+        bouts = [f"~{fmt_m2(valeur)} implantables au sol"]
+        if emp is not None:
+            bouts.append(f"plafond d'emprise {fmt_m2(emp)}")
+        if libre is not None:
+            bouts.append(f"{fmt_m2(libre)} libérés")
+        txt = "Gabarit : " + ", ".join(bouts) + "."
+        if haut:
+            txt += f" Hauteur : {haut}."
+        return txt + " Ouvrez le Gabarit pour le plan d'implantation."
+    # outil ESTIMER (graphique) — prix de sortie du bâti au secteur.
+    if cid == "prix_sortie_bati_eur_m2" and isinstance(valeur, dict):
+        med, typ, n = valeur.get("median"), valeur.get("type_prix"), valeur.get("n")
+        fia = "fiable" if valeur.get("fiable") else "indicatif"
+        return (f"Estimation — prix de sortie du secteur : {med} €/m² ({typ}, {n} ventes, {fia}). "
+                "Pour estimer un bien précis (adresse/annonce), ouvrez Estimer un bien.")
+    # outil PROSPECTION SOLAIRE — toiture + productible.
+    if cid == "pente_toit_deg":
+        nat = valeurs.get("nature_toit")
+        prod = valeurs.get("prod_spec_kwh_kwc")
+        txt = f"Toiture : pente {str(valeur).replace('.', ',')}°"
+        if nat and nat.valeur:
+            txt += f", {nat.valeur}"
+        if prod and prod.valeur is not None:
+            txt += f" ; productible ~{prod.valeur} kWh/kWc·an"
+        return txt + ". Ouvrez la Prospection solaire pour le détail."
+    # outil SUCCESSIONS — timeline de propriété (PM).
+    if cid == "proprietaire_timeline_liste" and isinstance(valeur, list):
+        bouts = [f"{e.get('millesime')} : {e.get('denomination')}"
+                 + (f" ({e.get('forme_juridique')})" if e.get("forme_juridique") else "")
+                 for e in valeur[:3] if isinstance(e, dict) and e.get("denomination")]
+        return ("Historique de propriété : " + " · ".join(bouts) + "." if bouts
+                else "Historique de propriété : non renseigné.")
+    # RADAR — annonces détectées.
+    if cid == "radar_annonces_liste":
+        if isinstance(valeur, list) and valeur:
+            return f"{len(valeur)} annonce(s) détectée(s) par le Radar sur cette parcelle — ouvrez le Radar."
+        return "Aucune annonce détectée par le Radar sur cette parcelle."
+    # outil ÉTUDE DE ZONE — autour à 100 m.
+    if cid == "voisinage_100m_liste" and isinstance(valeur, dict):
+        v = valeur.get("ventes_dvf")
+        p = valeur.get("permis")
+        med = valeur.get("prix_median_eur")
+        txt = f"Autour à 100 m (sur {valeur.get('fenetre_mois')} mois) : {v} vente(s) DVF, {p} permis"
+        if med is not None:
+            txt += f", prix médian {f'{int(med):,}'.replace(',', ' ')} €"
+        return txt + ". Ouvrez l'Étude de zone pour la chalandise complète."
     # SÉCURITÉ COPILOTE-5 — jamais un dict/list brut au client : on renvoie à la fiche plutôt que du JSON.
     if isinstance(valeur, (dict, list)):
         return f"{libelle} : voir la fiche parcelle pour le détail."

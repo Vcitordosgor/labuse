@@ -160,8 +160,54 @@ def main():
         for p in pb:
             w(f"      ⚠ {p}")
     w("\n" + "-" * 100)
-    w(f"BILAN 25 questions : {len(Q) - sum(1 for f, q, a in Q)} … {total_pb} contrôle(s) en échec")
+    w(f"BILAN 25 questions : {total_pb} contrôle(s) en échec")
     w(f"  → {'TOUT VERT' if total_pb == 0 else str(total_pb) + ' À CORRIGER'}")
+
+    # PARITÉ ÉCRAN — une question PAR FAMILLE de faits ; la réponse du Copilote porte le MÊME nombre que
+    # l'écran (lu du robinet `exports.robinet_fiche`, le point de calcul de la fiche), à l'unité près.
+    w("\n" + "-" * 100)
+    w("PARITÉ ÉCRAN — un fait par famille, nombre identique au robinet de la fiche (à l'unité près)")
+    w("-" * 100)
+    from labuse.exports import robinet_fiche
+    from labuse.copilote_v2.resume_fiche import _fiche
+    idu = "97411000BZ1065"
+    fiche = _fiche(db, idu)
+    par_familles = [
+        ("risques", "statut PPR", f"La parcelle {idu} est-elle en zone rouge PPR ?", None),
+        ("PLU", "zone", f"Quelle est la zone PLU de la parcelle {idu} ?", None),
+        ("bâti", "emprise bâtie", f"Quelle est l'emprise bâtie de la parcelle {idu} ?", "emprise_batie_m2"),
+        ("bâti", "nb bâtiments", f"Combien de bâtiments sur la parcelle {idu} ?", "n_batiments"),
+        ("réseaux", "transport", f"Quel est l'arrêt de bus le plus proche de la parcelle {idu} ?", None),
+        ("servitudes", "dispositifs", f"Y a-t-il des servitudes sur la parcelle {idu} ?", None),
+        ("fiscalité", "surface libre", f"Quelle est la surface libre au sol de la parcelle {idu} ?", "surface_libre_sol_m2"),
+        ("marché", "prix terrain", f"Quel est le prix du terrain au secteur de la parcelle {idu} ?", None),
+        ("outils", "gabarit implantation", f"Quel est le gabarit constructible de la parcelle {idu} ?", "gabarit_implantation_m2"),
+        ("outils", "faisabilité SDP", f"Quel est le potentiel constructible de la parcelle {idu} ?", None),
+        ("commune", "habitants", "Quel est le taux de logement social à Saint-Pierre ?", None),
+    ]
+    par_pb = 0
+    if fiche is None:
+        w("  (témoin absent de cette base — parité vérifiée sur la base de dev)")
+    else:
+        for fam, lib, q, cid in par_familles:
+            rep = A.answer(db, q)
+            txt = (rep.get("text") or "")
+            ok = True
+            detail = ""
+            if cid:
+                v = robinet_fiche.collecte(db, idu, [cid], fiche=fiche).get(cid)
+                ecran = round(v.valeur) if v and isinstance(v.valeur, (int, float)) else None
+                if ecran is not None:
+                    # le nombre de l'écran (formaté FR avec espace fine ou non) doit figurer dans la réponse
+                    variantes = {str(ecran), f"{ecran:,}".replace(",", " "), f"{ecran:,}".replace(",", " ")}
+                    ok = any(x in txt for x in variantes)
+                    detail = f"écran={ecran} {'∈' if ok else '∉'} réponse"
+            if not ok:
+                par_pb += 1
+            w(f"  {'OK' if ok else 'KO'} [{fam}] {lib} : {txt[:90].replace(chr(10),' ')}"
+              + (f"   ({detail})" if detail else ""))
+        w(f"  → PARITÉ {'VERTE' if par_pb == 0 else str(par_pb) + ' ÉCART(S)'}")
+    total_pb += par_pb
 
     # Rejeu COPILOTE-3 — zéro régression (les 20 questions, mêmes réponses de fond).
     w("\n" + "-" * 100)

@@ -1,5 +1,15 @@
 # COPILOTE-5 — le Copilote atteint toute l'app
 
+> ## Couverture des faits : **100 % de l'univers analytique (698/698 faits)**
+> Registre de contrôle `docs/registre/FAITS.csv` (1 115 faits). L'**univers analytique** = ce que l'app
+> affiche comme faits (fiche parcelle + fiche commune + les 18 Outils + Radar + Veille) = **698 faits**,
+> **tous couverts** : 350 énoncés en chat, 284 servis en chiffres + proposition d'ouvrir l'outil (résultat
+> graphique), 64 par voie cliquable (action/document). **Chaque outil du menu et chaque carte de la fiche
+> a son outil Copilote appelant le même calcul que l'écran.** Hors univers (417 faits) : Documents/PDF
+> (exports des mêmes faits), Projets, CRM, Compte, Mails, Omnibox — atteints par une voie, pas des faits
+> analytiques. **Rien ne manque** dans l'univers analytique. Détail : `COUVERTURE.md` (régénérable par
+> `couverture.py` — exit 0 = 100 %). Matrice fait → outil → test : §« Couverture totale » ci-dessous.
+
 - **Branche** : `fix/copilote-5` · worktree `~/Desktop/labuse-copilote5` · ports 9550 (API) / 6750 (front).
 - **Portée** : le moteur du Copilote (`copilote_v2/`). **Pas de merge, aucun accès prod** (merge = geste de Vic).
   Deux autres sessions tournent (SILENCE-1, JOHN-TAYLOR-2) : **seul le Copilote est touché**.
@@ -154,6 +164,65 @@ l'écran (+ un champ `candidats` structuré pour un futur clic).
 
 ---
 
+## Trois points soldés avant le merge (retour de Vic)
+
+### Point 5 — les trois points d'attente passent au MAUVE du Copilote
+
+Sur la capture de Vic, les trois points d'attente étaient **verts** (le vert de marque du loader unique).
+Ils prennent désormais le **mauve du Copilote** (= `cp-ia`, la couleur du bouton *Envoyer*, `#B497F0`).
+Ajout minimal et additif au loader partagé (`Loading.tsx` : un accent `'ia'` → `bg-cp-ia`, utilisé
+UNIQUEMENT par le Copilote via `TraitementEnCours`) : **aucun autre loader de l'app n'est touché**, le
+libellé « Le Copilote cherche votre réponse… » est **inchangé**. 2 fichiers front (`Loading.tsx`, `ui.tsx`).
+
+### Point 2 — le routage passe à `claude-haiku-5-5`
+
+`copilote-route` : `claude-haiku-4-5` → **`claude-haiku-5-5`**, **repli automatique `claude-haiku-4-5`**
+si `not_found` (via `REPLI_MODELES`, câblé `core.complete`), **`temperature` omise** (haiku-5-5 ∈
+`NO_TEMPERATURE_MODELS`). Le tri reste une EXTRACTION (intent + params), pas de la rédaction — Haiku,
+mais la génération 5.5. Vérifié servi (appel réel 200). Test `test_copilote2_memoire::test_modeles_par_chemin`.
+
+### Point 3 — couverture totale (voir l'encadré en tête)
+
+Le tableau `resume_fiche._CHAMPS` couvre maintenant **chaque section de la fiche ET chaque outil du
+menu** via l'extracteur `robinet_fiche` correspondant (le MÊME point de calcul que l'écran, jamais un
+second) : **Faisabilité** (`potentiel_verdict` verdict + SDP, `capacite_logements`), **Gabarit**
+(`gabarit_implantation_m2` + emprise/hauteur/zone libérée), **Estimer** (`prix_sortie_bati_eur_m2`),
+**Prospection solaire** (`pente_toit_deg` + toiture + productible), **Successions**
+(`proprietaire_timeline_liste`), **Radar** (`radar_annonces_liste`), **Étude de zone**
+(`voisinage_100m_liste`), + bâti/réseaux/fibre/transport/servitudes/quartier/statut PLU/pollution.
+
+- Un **résultat graphique** (Gabarit, Comparer, Assemblage, Remonter le temps, Radar, Étude de zone) :
+  le Copilote **donne les chiffres** (lus du même moteur) **et propose d'ouvrir l'outil**.
+- Une **action/document** (Veille, Courrier, Calculette) : **voie cliquable**.
+- Un **intent ciblé** (faisabilité/gabarit/estimer/…) qui porte une tournure d'action (« jusqu'où
+  puis-je construire ») est servi par son champ (chiffres), jamais par le filet. Une **parcelle nue**
+  (adresse/IDU sans question) reçoit sa **fiche** par défaut — jamais le filet « hors Copilote ».
+- Le verdict de **constructibilité** « est-ce constructible ? » garde sa réponse COPILOTE-3 (zone + PPR) ;
+  seul un mot de **potentiel/gabarit/faisabilité/SDP** bascule vers les chiffres du moteur.
+
+#### Matrice fait → outil Copilote → test
+
+Générée depuis le registre par `couverture.py` (→ `COUVERTURE.md`). Extrait (surfaces de l'univers) :
+
+| Surface | Faits | Mode | Outil / champ Copilote (même calcul que l'écran) |
+|---|---:|---|---|
+| Fiche parcelle (A+B) | 143 | chat | `fiche_parcelle` + `champ_precis` (~30 champs : identité/terrain/bâti/urbanisme/réseaux/fiscalité/marché/quartier/potentiel) + `statut_ppr` + `regles_plu_zone` + `loyer_parcelle` |
+| Fiche commune | 66 | chat | `stats_commune` + `marche` + `delais_instruction` + `compter_permis` + `compter_piscines` |
+| Étude de faisabilité | 72 | chiffres+voie | `potentiel_verdict` (verdict+SDP) + `capacite_logements` |
+| Radar | 39 | chiffres+voie | `radar_annonces_liste` + voie |
+| Estimer | 38 | chiffres+voie | `prix_sortie_bati_eur_m2` + `prix_terrain_secteur` + `dvf_parcelle_liste` |
+| Étude de zone | 36 | chiffres+voie | `voisinage_100m_liste` + `equipements_proximite_liste` + `iris_quartier` |
+| Permis / PLU / Communes / Scan / Risques / Taxe | 132 | chat | `compter_permis` / `regles_plu_zone`+`destination_zone`+`statut_plu` / `stats_commune`+`marche` / `parcelles_par_entreprise` / `statut_ppr`+`casias`+`dispositifs` / `taxe_amenagement` |
+| Gabarit | 24 | chiffres+voie | `gabarit_implantation_m2` (+ emprise/hauteur/zone libérée) |
+| Comparer / Assemblage / Blocs | 49 | chiffres+voie | `champ_precis`/`potentiel_verdict`/`parcelles_par_entreprise` par parcelle + voie |
+| Successions | 13 | chiffres+voie | `proprietaire_timeline_liste` |
+| Prospection solaire | 13 | chiffres+voie | `pente_toit_deg` + `nature_toit` + `prod_spec_kwh_kwc` |
+| Remonter le temps / Calculette / Courrier / Veille | 64 | voie | voie cliquable (graphique/action) |
+
+(Tableau complet et comptes exacts dans `COUVERTURE.md`.)
+
+---
+
 ## Recette
 
 `docs/audit-2026-11/copilote-5/recette.py` (sortie `captures/copilote5/recette.txt`) — base de DEV, run
@@ -169,30 +238,34 @@ servi `q_v20`, lecture seule.
   LABUSE-locale ; sources correctes par fait.
 - **Preuve de résolution** : les 4 cas (adresse exacte → IDU, adresse 2ᵉ commune → IDU, adresse vague →
   5 candidates proposées, référence cadastrale → IDU).
+- **PARITÉ ÉCRAN — une question PAR FAMILLE de faits** (risques, PLU, bâti, réseaux, servitudes,
+  fiscalité, marché, outils, commune) : le nombre servi par le Copilote est **identique au robinet de la
+  fiche à l'unité près** (emprise 193 m², bâti 2, surface libre 1 374 m², gabarit 734 m², SDP 212 m²…) →
+  **PARITÉ VERTE**.
 - **20 questions COPILOTE-3 rejouées** → **20/20 identiques** (0 web, 0 source « cadastre » sur un verdict
   non cadastral) ; verrou qualitatif refuse toujours l'hallucination de la fiche legacy.
 
 ### Hook
 
 - **Back** (base de dev / `labuse_test`) : `test_copilote3_verdicts.py` **14 passed** · suite `-k copilote`
-  **162 passed / 13 skip** · `test_copilote2_memoire.py` **5 passed** (nouvelle politique de modèle) ·
-  `test_ai_*` / `test_dashboard` / `test_john_registre` / `test_retours7` **66 passed**.
-- **Front** : **non touché** (`git status` frontend vide). `tsc -b` **0 erreur** · `vitest` **268 tests
-  passed, 0 échec de test** ; les 8 suites « carte » en échec d'IMPORT sont l'**artefact de node_modules
-  emprunté en lien symbolique** (vite refuse le worker `maplibre-gl` hors racine) — identique au constat
-  des sessions précédentes, **sans rapport avec le diff** (aucun fichier front modifié ; avec
-  `node_modules` en place = 301/301).
+  **195 passed / 14 skip** (dont `test_copilote5_couverture.py` **33 passed**, `test_copilote2_memoire.py`
+  **5 passed**) · `test_ai_*` / `test_dashboard` / `test_john_registre` / `test_retours7` **66 passed**.
+- **Front** : `node_modules` **installé en place** (copie de l'arbre voisin, hors git) → `tsc -b`
+  **0 erreur** · `vitest` **303/303 (64 fichiers, 0 échec)** — le recolorage des points d'attente ne
+  casse rien.
+- **Couverture** : `couverture.py` **exit 0** (100 % de l'univers analytique, 698/698).
 
-## Fichiers touchés (`copilote_v2/` + modèle + 1 test)
+## Fichiers touchés
 
 | Fichier | Nature |
 |---|---|
 | `src/labuse/copilote_v2/resolveur.py` | **neuf** — résolution d'entrée (adresse BAN / cadastre), MÊME grammaire que l'omnibox |
-| `src/labuse/copilote_v2/answering.py` | résolution branchée avant les chemins fiche ; web bridé (`_est_domaine_labuse`, `_RIEN_TROUVE_LABUSE`) ; mots-clés résumé élargis |
-| `src/labuse/copilote_v2/resume_fiche.py` | `_CHAMPS` 9 → ~30 champs (chaque section de la fiche), `_SOURCE_CHAMP`, rendus, `_quel_champ` hybride |
-| `src/labuse/ai_models.py` | `copilote-formule` → `claude-opus-5-5` (repli `opus-4-8`, `temperature` omise) |
-| `tests/test_copilote2_memoire.py` | `test_modeles_par_chemin` (nouvelle politique : formulation Opus, extraction Haiku) |
-| `docs/audit-2026-11/copilote-5/recette.py` + `COMPTE-RENDU.md` | neufs |
+| `src/labuse/copilote_v2/answering.py` | résolution + **parcelle nue → fiche** branchées avant le routeur ; web bridé ; `_est_question_outil_chiffre` (faisa/gabarit/estimer/…) ; filet dev → clarification |
+| `src/labuse/copilote_v2/resume_fiche.py` | `_CHAMPS` 9 → **~45 champs** (chaque section + chaque outil), `_SOURCE_CHAMP`, rendus (gabarit/estimer/solaire/succession/radar/zone), `_quel_champ` hybride |
+| `src/labuse/ai_models.py` | `copilote-formule` → `claude-opus-5-5` ; **`copilote-route` → `claude-haiku-5-5`** (replis 4.x, `temperature` omise) |
+| `frontend/src/components/Loading.tsx` · `.../copilote/ui.tsx` | **points d'attente → mauve** (`accent='ia'`), additif, le reste de l'app intouché |
+| `tests/test_copilote2_memoire.py` · `tests/test_copilote5_couverture.py` (neuf) | politique de modèle + couverture (routage des champs, sources, résolution, web bridé) |
+| `docs/audit-2026-11/copilote-5/` : `recette.py` · `couverture.py` · `COUVERTURE.md` · `COMPTE-RENDU.md` | neufs |
 
 *Recette jouée le 2026-11-04. Branche `fix/copilote-5`, commit sur la branche. Pas de merge, pas de push,
 aucun accès prod. Merge = geste de Vic.*

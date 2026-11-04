@@ -784,7 +784,8 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
     # une 2e source. Une seule parcelle → on l'injecte dans le contexte et le flux fiche reprend (PPR/
     # règle/loyer/copro/constructibilité/résumé) ; plusieurs candidates → on les PROPOSE (jamais un tir
     # au hasard). C'est ce qui faisait partir « 3 chemin de la Citerne… » en « réponse générale » (web).
-    if not scenario and not (contexte or {}).get("idu") and not _idu_dans(message):
+    idu_du_message = _idu_dans(message)   # COPILOTE-5 — IDU venu du MESSAGE (explicite ou résolu ci-dessous)
+    if not scenario and not (contexte or {}).get("idu") and not idu_du_message:
         from . import resolveur as _RES
         reso = _RES.resoudre(db, message)
         if reso is not None and reso.kind == "candidats":
@@ -794,6 +795,7 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
             return rep
         if reso is not None and reso.kind == "idu":
             contexte = {**(contexte or {}), "idu": reso.idu}   # le flux fiche le relit comme un IDU embarqué
+            idu_du_message = reso.idu
     # A-06-2 / A-06-3 — QUESTIONS CIBLÉES PPR et RÈGLES PLU CALIBRÉES, déterministes, AVANT le chemin
     # fiche (qui, sinon, esquiverait : « ppr » → liste d'aléas générique, « hauteur zone X » → famille de
     # zone). Une parcelle NOMMÉE (IDU) + une question sur le PPR → réponse OUI/NON (statut_ppr) ; + une
@@ -845,6 +847,20 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
                 if rep is not None:
                     rep["_route"] = {"intent": "QUESTION", "params": {"idu": idu_cible}, "voie": prior_voie}
                     return rep
+            # COPILOTE-5 — OUTILS À CHIFFRES (faisabilité/gabarit/estimer/solaire/succession/radar/étude
+            # de zone/capacité) servis par leur champ dédié (MÊME moteur que l'écran), AVANT le garde
+            # d'action : « jusqu'où puis-je construire » porte « puis-je » (action) mais demande des
+            # CHIFFRES, pas une exécution. Le champ lit le robinet ; si le champ ne matche pas, on suit.
+            if _est_question_outil_chiffre(message):
+                from . import resume_fiche as _RF
+                ch = _RF.champ_precis(db, idu_cible, message)
+                if ch is not None:
+                    rep = _reply(ch["texte"], "QUESTION", tool="fiche_parcelle", sources=[ch["source"]],
+                                 champ_id=ch.get("champ_id"),
+                                 voie={"cible": "fiche", "libelle": "Voir la fiche parcelle complète",
+                                       "idu": idu_cible})
+                    rep["_route"] = {"intent": "QUESTION", "params": {"idu": idu_cible}, "voie": prior_voie}
+                    return rep
     # COPILOTE-2 lot 1 — LE CHEMIN FICHE, DÉTERMINISTE ET SANS MODÈLE : une parcelle NOMMÉE (IDU dans
     # le message ou le contexte embarqué) avec une demande de résumé ou de champ précis est servie AVANT
     # le routeur — le résumé se construit sans appel modèle (preuve du mandat, mode dégradé compris).
@@ -858,6 +874,19 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
                 if rep is not None:
                     rep["_route"] = {"intent": "QUESTION", "params": {"idu": idu_fiche}, "voie": prior_voie}
                     return rep
+    # COPILOTE-5 — DERNIER RECOURS AVANT LE ROUTEUR : une PARCELLE NUE citée DANS LE MESSAGE (IDU
+    # explicite ou adresse/référence résolue) SANS question précise (« la parcelle BZ 1065 à
+    # Saint-Denis », « 97404000AV0167 ») → sa FICHE complète par défaut. Toutes les questions ciblées
+    # (copro/PPR/règle/loyer/constructibilité/champ/résumé) ont déjà eu leur chance ci-dessus ; une
+    # parcelle identifiée ne tombe donc JAMAIS dans le filet « hors Copilote ». On EXCLUT l'IDU d'un
+    # contexte EMBARQUÉ (fiche ouverte) : là, un message nu garde son chemin (VERIFICATION…).
+    if not scenario:
+        idu_nu = idu_du_message or _idu_dans(message)
+        if idu_nu and _est_entree_nue(message):
+            rep = _chemin_fiche(db, "dis-moi tout", {"idu": idu_nu}, contexte)
+            if rep is not None:
+                rep["_route"] = {"intent": "QUESTION", "params": {"idu": idu_nu}, "voie": prior_voie}
+                return rep
     route = classify(db, message, history=history, contexte=contexte, prior_params=prior_params)
     if scenario and scenario in SCENARIOS and not route.degraded:
         # le chip lève l'ambiguïté d'INTENTION : intent forcé, clarification d'intention retirée. La
@@ -1718,7 +1747,11 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
 
     # M118 — OUTIL/RECHERCHE/VERIFICATION/PROJET/VEILLE sont interceptés PLUS HAUT (refus-voie). Il ne
     # reste ici que QUESTION (missions 1/2), EXPLIQUER (3), PREPARER (4) — déjà traités. Filet.
-    return _reply(f"(Mission {intent} — hors du Copilote resserré.)", intent, en_construction=True)
+    # COPILOTE-5 — un intent VIDE/inconnu (routeur qui rend un JSON invalide après re-demande, rare) ne
+    # montre plus le gabarit de dev « (Mission … hors du Copilote resserré) » : une clarification honnête.
+    return _reply("Je n'ai pas bien saisi votre demande. Reformulez-la — une parcelle (adresse ou "
+                  "identifiant), une commune, ou ce que vous cherchez (prix, risques, zone, potentiel…).",
+                  intent or "QUESTION", clarification=True)
 
 
 # ───────────────────────── Aiguillage OUTIL (1c) ─────────────────────────
@@ -2003,9 +2036,48 @@ _CONSTR_KW = ("constructible", "inconstructible", "constructibilite", "batissabl
               "terrain a batir", "est-elle batissable")
 
 
+# COPILOTE-5 — une demande qui vise un OUTIL À CHIFFRES de la fiche (faisabilité, gabarit, estimer,
+# solaire, succession, radar, étude de zone, capacité) : servie par le champ dédié, même si une tournure
+# d'action (« jusqu'où puis-je construire ») l'accompagne. Mots-clés SPÉCIFIQUES (pas de collision avec
+# les questions COPILOTE-3 copro/ppr/zone/constructible/surface/proprio/résumé).
+_OUTIL_CHIFFRE_KW = ("potentiel", "gabarit", "faisabilite", "jusqu'ou", "implantation", "sdp max",
+                     "estimer", "estimation", "valeur du bien", "prix de sortie", "valeur venale",
+                     "solaire", "photovoltaique", "panneaux", "productible", "succession", "heritage",
+                     "historique de propriete", "annonce", "a vendre", "en vente", "etude de zone",
+                     "chalandise", "capacite en logements", "combien de logements", "combien de lots")
+
+
+def _est_question_outil_chiffre(message: str) -> bool:
+    m = _fold_py(message.lower())
+    return any(k in m for k in _OUTIL_CHIFFRE_KW)
+
+
+_VERIF_KW = ("verifie", "verification", "raisonnable", "juste prix", "bon prix", "surpaye",
+             "sur-paye", "negoci", "vaut-", "vaut ", "est-ce correct", "prix correct")
+
+
+def _est_entree_nue(message: str) -> bool:
+    """Le message ne porte-t-il AUCUNE question précise (ni champ, ni PPR/règle/loyer/constructibilité/
+    outil, ni action, ni vérification de prix, ni mot de résumé) ? Alors une parcelle identifiée reçoit
+    sa FICHE par défaut. Un prix (« € »), un verbe de vérification ou une action EXCLUENT la nudité."""
+    ml = _fold_py((message or "").lower())
+    if "€" in (message or "") or "euro" in ml or any(k in ml for k in _VERIF_KW):
+        return False
+    return (_quel_champ_fiche(message) is None and not _est_question_outil_chiffre(message)
+            and not _est_question_ppr(message) and not _est_question_regle_plu(message)
+            and not _est_question_loyer(message) and not _est_question_constructibilite(message)
+            and not any(k in ml for k in _ACTION_KW)
+            and not any(k in ml for k in _RESUME_FICHE_KW))
+
+
 def _est_question_constructibilite(message: str) -> bool:
     m = _fold_py(message.lower())
     if any(k in m for k in ("c'est quoi", "c est quoi", "qu'est-ce", "qu est-ce", "definition")):
+        return False
+    # COPILOTE-5 — une demande de POTENTIEL / GABARIT / FAISABILITÉ / SDP cède au champ dédié (qui sert
+    # les CHIFFRES du moteur), au lieu du verdict factuel zone+PPR de « est-ce constructible ? ».
+    if any(k in m for k in ("potentiel", "gabarit", "faisabilite", "sdp", "jusqu'ou", "implantation",
+                            "capacite", "combien de m")):
         return False
     return any(k in m for k in _CONSTR_KW)
 

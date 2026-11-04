@@ -72,18 +72,23 @@ def test_faits_ne_fuient_pas_entre_anonymes(db):
 
 def test_modeles_par_chemin():
     """Lot 6 (mis à jour COPILOTE-5) — l'EXTRACTION reste sur Haiku (route/sélection/web/général/
-    préparer = le moins cher) ; seule la FORMULATION (la phrase servie) passe à Opus (`claude-opus-5-5`,
-    repli 4.x comme John). Le modèle ne calcule ni ne choisit aucun chiffre — verrou anti-invention
-    inchangé. WEB relevable par env (test suivant)."""
+    préparer) mais le ROUTAGE prend la génération 5.5 (`claude-haiku-5-5`, repli 4.5) ; la FORMULATION
+    (la phrase servie) passe à Opus (`claude-opus-5-5`, repli 4.x comme John). Le modèle ne calcule ni
+    ne choisit aucun chiffre — verrou anti-invention inchangé. WEB relevable par env (test suivant)."""
     from labuse import ai_models
-    for kind in ("copilote-route", "copilote-select", "copilote-general",
-                 "copilote-web", "copilote-prepare"):
+    from labuse.ai import core
+    # Routage → Haiku 5.5 (repli 4.5, temperature omise).
+    assert ai_models.model_for("copilote-route") == ai_models.MODEL_HAIKU
+    assert ai_models.repli_pour(ai_models.MODEL_HAIKU) == ai_models.MODEL_HAIKU_REPLI
+    assert ai_models.MODEL_HAIKU_REPLI == ai_models.MODEL_FACTUAL        # 4.5 = le filet
+    assert ai_models.MODEL_HAIKU in core.NO_TEMPERATURE_MODELS
+    # Sélection / web / préparer restent sur Haiku 4.5 (extraction pure, le moins cher).
+    for kind in ("copilote-select", "copilote-general", "copilote-web", "copilote-prepare"):
         assert ai_models.model_for(kind) == ai_models.MODEL_FACTUAL, kind
-    # COPILOTE-5 — la formulation prend le modèle le plus capable (Opus), repli 4.x câblé (core.complete).
+    # Formulation → Opus, repli 4.x câblé (core.complete).
     assert ai_models.model_for("copilote-formule") == ai_models.MODEL_OPUS
     assert ai_models.repli_pour(ai_models.MODEL_OPUS) == ai_models.MODEL_OPUS_REPLI
-    # Opus REFUSE `temperature` → omis par le socle (core.NO_TEMPERATURE_MODELS).
-    from labuse.ai import core
+    # Opus ET Haiku 5.5 REFUSENT `temperature` → omis par le socle (core.NO_TEMPERATURE_MODELS).
     assert ai_models.MODEL_OPUS in core.NO_TEMPERATURE_MODELS
     assert ai_models.MODEL_OPUS_REPLI in core.NO_TEMPERATURE_MODELS
 
