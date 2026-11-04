@@ -170,7 +170,7 @@ seule ; une zone sans parcelle ne sélectionne rien.
 |-------|----------|
 | Scan de secrets | ✓ rien trouvé |
 | Front `tsc -b` | ✓ 0 erreur |
-| Front `vitest run` | ✓ **304 tests** (303 + 1 verrou ajouté), 65 fichiers |
+| Front `vitest run` | ✓ **304 tests** (303 + 1 verrou ajouté), 64 fichiers |
 | Verrou ajouté `basemaps.test.ts` | ✓ `bm-plan.maxzoom === 18` |
 | Python unitaires (sans base) | **2882 passés**, 49 ignorés ; 1 échec isolé-vert
   (`test_disque_externe_1::test_vigie_copie_externe…`) = **pollution d'ordre pré-existante**
