@@ -1,0 +1,25 @@
+compte 139 : souscription doublon sub_1UYCQq8hkDMCAoENrcGbcOl9 annulée (garde sub_ANCIENNE_impayee)
+{
+  "sous_neuve": {
+    "id": "sub_1UYCQq8hkDMCAoENrcGbcOl9",
+    "status_initial": "active",
+    "1re_facture_payee_eur": 349.0
+  },
+  "compte_id": 139,
+  "statut_avant": "paiement_requis",
+  "webhook_action": {
+    "type": "checkout.session.completed",
+    "action": "doublon_annule",
+    "compte_id": 139
+  },
+  "compte_apres": {
+    "statut": "paiement_requis",
+    "stripe_subscription_id": "sub_ANCIENNE_impayee"
+  },
+  "sous_neuve_apres": {
+    "id": "sub_1UYCQq8hkDMCAoENrcGbcOl9",
+    "status": "canceled",
+    "canceled_at": 1793830407
+  },
+  "verdict": "BUG CONFIRMÉ : la souscription NEUVE (1re facture payée) est canceled, le compte reste « paiement_requis » et garde l'ancienne souscription « sub_ANCIENNE_impayee » (impayée). → le client a payé via « Régulariser » mais reste bloqué / non régularisé."
+}

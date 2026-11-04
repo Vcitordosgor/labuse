@@ -1,0 +1,208 @@
+{
+  "trace": [
+    {
+      "etape": "1. Premier paiement (checkout.session.completed)",
+      "compte": 131,
+      "event": "checkout.session.completed",
+      "reponse_app": {
+        "ok": true,
+        "type": "checkout.session.completed",
+        "action": "activation"
+      },
+      "avant": {
+        "statut": "invite",
+        "stripe_customer_id": null,
+        "stripe_subscription_id": null,
+        "essai_expire_at": null,
+        "paiement_requis_at": null,
+        "acces_fin_at": null
+      },
+      "apres": {
+        "statut": "actif",
+        "stripe_customer_id": "cus_nu4b_1_1793829967",
+        "stripe_subscription_id": "sub_nu4b_1_1793829967",
+        "essai_expire_at": null,
+        "paiement_requis_at": null,
+        "acces_fin_at": null
+      }
+    },
+    {
+      "etape": "2. Carte refusée (invoice.payment_failed)",
+      "compte": 132,
+      "event": "invoice.payment_failed",
+      "reponse_app": {
+        "ok": true,
+        "type": "invoice.payment_failed",
+        "action": "paiement_requis"
+      },
+      "avant": {
+        "statut": "actif",
+        "stripe_customer_id": "cus_nu4b_2_1793829967",
+        "stripe_subscription_id": "sub_nu4b_2_1793829967",
+        "essai_expire_at": null,
+        "paiement_requis_at": null,
+        "acces_fin_at": null
+      },
+      "apres": {
+        "statut": "paiement_requis",
+        "stripe_customer_id": "cus_nu4b_2_1793829967",
+        "stripe_subscription_id": "sub_nu4b_2_1793829967",
+        "essai_expire_at": null,
+        "paiement_requis_at": "2026-11-05T02:06:07.877667+04:00",
+        "acces_fin_at": null
+      }
+    },
+    {
+      "etape": "3. Régularisation (invoice.paid)",
+      "compte": 132,
+      "event": "invoice.paid",
+      "reponse_app": {
+        "ok": true,
+        "type": "invoice.paid",
+        "action": "paiement_ok"
+      },
+      "avant": {
+        "statut": "paiement_requis",
+        "stripe_customer_id": "cus_nu4b_2_1793829967",
+        "stripe_subscription_id": "sub_nu4b_2_1793829967",
+        "essai_expire_at": null,
+        "paiement_requis_at": "2026-11-05T02:06:07.877667+04:00",
+        "acces_fin_at": null
+      },
+      "apres": {
+        "statut": "actif",
+        "stripe_customer_id": "cus_nu4b_2_1793829967",
+        "stripe_subscription_id": "sub_nu4b_2_1793829967",
+        "essai_expire_at": null,
+        "paiement_requis_at": null,
+        "acces_fin_at": null
+      }
+    },
+    {
+      "etape": "4. Résiliation en fin de période (subscription.deleted, période future)",
+      "compte": 133,
+      "event": "customer.subscription.deleted",
+      "reponse_app": {
+        "ok": true,
+        "type": "customer.subscription.deleted",
+        "action": "resiliation_fin_periode"
+      },
+      "avant": {
+        "statut": "actif",
+        "stripe_customer_id": "cus_nu4b_4_1793829967",
+        "stripe_subscription_id": "sub_nu4b_4_1793829967",
+        "essai_expire_at": null,
+        "paiement_requis_at": null,
+        "acces_fin_at": null
+      },
+      "apres": {
+        "statut": "actif",
+        "stripe_customer_id": "cus_nu4b_4_1793829967",
+        "stripe_subscription_id": "sub_nu4b_4_1793829967",
+        "essai_expire_at": null,
+        "paiement_requis_at": null,
+        "acces_fin_at": "2026-11-25T02:06:07+04:00"
+      }
+    },
+    {
+      "etape": "5. Résiliation immédiate (subscription.deleted, pas de période)",
+      "compte": 134,
+      "event": "customer.subscription.deleted",
+      "reponse_app": {
+        "ok": true,
+        "type": "customer.subscription.deleted",
+        "action": "suspension"
+      },
+      "avant": {
+        "statut": "actif",
+        "stripe_customer_id": "cus_nu4b_5_1793829967",
+        "stripe_subscription_id": "sub_nu4b_5_1793829967",
+        "essai_expire_at": null,
+        "paiement_requis_at": null,
+        "acces_fin_at": null
+      },
+      "apres": {
+        "statut": "suspendu",
+        "stripe_customer_id": "cus_nu4b_5_1793829967",
+        "stripe_subscription_id": "sub_nu4b_5_1793829967",
+        "essai_expire_at": null,
+        "paiement_requis_at": null,
+        "acces_fin_at": null
+      }
+    },
+    {
+      "etape": "6. PIÈGE essai-expiré qui paie (checkout.session.completed)",
+      "compte": 135,
+      "event": "checkout.session.completed",
+      "reponse_app": {
+        "ok": true,
+        "type": "checkout.session.completed",
+        "action": "activation"
+      },
+      "avant": {
+        "statut": "suspendu",
+        "stripe_customer_id": null,
+        "stripe_subscription_id": null,
+        "essai_expire_at": "2026-11-04T02:06:07+04:00",
+        "paiement_requis_at": null,
+        "acces_fin_at": null
+      },
+      "apres": {
+        "statut": "actif",
+        "stripe_customer_id": "cus_nu4b_6_1793829967",
+        "stripe_subscription_id": "sub_nu4b_6_1793829967",
+        "essai_expire_at": "2026-11-04T02:06:07+04:00",
+        "paiement_requis_at": null,
+        "acces_fin_at": null
+      }
+    },
+    {
+      "etape": "7. PIÈGE ré-souscription (checkout.session.completed) avec acces_fin_at futur présent",
+      "compte": 136,
+      "event": "checkout.session.completed",
+      "reponse_app": {
+        "ok": true,
+        "type": "checkout.session.completed",
+        "action": "activation"
+      },
+      "avant": {
+        "statut": "actif",
+        "stripe_customer_id": "cus_nu4b_7_1793829967",
+        "stripe_subscription_id": "sub_nu4b_7old_1793829967",
+        "essai_expire_at": null,
+        "paiement_requis_at": null,
+        "acces_fin_at": "2026-11-25T02:06:07+04:00"
+      },
+      "apres": {
+        "statut": "actif",
+        "stripe_customer_id": "cus_nu4b_7_1793829967",
+        "stripe_subscription_id": "sub_nu4b_7old_1793829967",
+        "essai_expire_at": null,
+        "paiement_requis_at": null,
+        "acces_fin_at": "2026-11-25T02:06:07+04:00"
+      }
+    },
+    {
+      "etape": "8. Rejeu même event (idempotence)",
+      "compte": 137,
+      "reponse_1": {
+        "ok": true,
+        "type": "checkout.session.completed",
+        "action": "activation"
+      },
+      "reponse_2": {
+        "ok": true,
+        "type": "checkout.session.completed",
+        "action": "rejeu_ignore"
+      },
+      "apres": {
+        "statut": "actif",
+        "stripe_customer_id": "cus_nu4b_8_1793829967",
+        "stripe_subscription_id": "sub_nu4b_8_1793829967",
+        "essai_expire_at": null,
+        "paiement_requis_at": null,
+        "acces_fin_at": null
+      }
+    }
+  ]
+}
