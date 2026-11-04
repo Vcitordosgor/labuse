@@ -56,12 +56,12 @@ def _pct_couche(kind, subtype=None):
 #: (notion, tolérance, [(étiquette, getter)…], cause déclarée, geo_lourd)
 CHECKS: list[tuple] = [
     # ── le cas fondateur ──
-    ("alea_mvt_commune_pct", "0,5 point", [
+    ("alea_mvt_commune_pct", "1", [
         ("ctx:risques.mouvement_terrain_pct", _c("risques.mouvement_terrain_pct")),
         ("recalc:georisque_alea[mouvement_terrain]", _pct_couche("georisque_alea", "mouvement_terrain")),
     ], "cache_perime(definition changee SOURCES-FIX-2)", True),
 
-    ("ppr_commune_pct", "0,5 point", [
+    ("ppr_commune_pct", "1", [
         ("ctx:risques.ppr_pct", _c("risques.ppr_pct")),
         ("recalc:ppr", _pct_couche("ppr")),
     ], "cache_perime", True),
@@ -91,13 +91,13 @@ CHECKS: list[tuple] = [
     ], "calcul_different", False),
 
     # ── SRU ──
-    ("taux_lls_pct", "0,5 point", [
+    ("taux_lls_pct", "1", [
         ("ctx:sru.taux_lls", _c("sru.taux_lls")),
         ("sql:commune_contexte_sru.taux_lls",
          _sql_insee("SELECT taux_lls FROM commune_contexte_sru WHERE insee=%(insee)s")),
     ], "cache_perime", False),
 
-    ("deficit_sru_pts", "0,5 point", [
+    ("deficit_sru_pts", "1", [
         ("ctx:sru.deficit", _c("sru.deficit")),
         ("recalc:greatest(objectif-taux,0)",
          _sql_insee("SELECT round(greatest(objectif_pct - taux_lls, 0)::numeric, 2) "
@@ -145,12 +145,16 @@ CHECKS: list[tuple] = [
     ], "cache_perime", False),
 
     # ── classement servi ──
+    # ECARTS-ZERO-1 — `classement.tiers_hauts` = compte des parcelles VIVANTES dont le tier servi est
+    # dans {brulante, chaude, priorite, a_suivre} au run courant (app._communes_data, FILTER … chaudes).
+    # L'ancien jumeau ne comptait que {brulante, chaude} sans filtre vivant → 0 partout (faux écart).
     ("tiers_hauts_n", "0 (entier)", [
         ("ctx:classement.tiers_hauts", _c("classement.tiers_hauts")),
-        ("sql:parcel_p_score_v2[brulante+chaude]",
+        ("sql:parcel_p_score_v2[tiers hauts, vivant]",
          _sql("SELECT count(*) FROM parcel_p_score_v2 s JOIN parcels p ON p.idu=s.parcelle_id "
               "WHERE p.commune=%(commune)s AND s.run_id=%(run)s "
-              "AND s.tier IN ('brulante','chaude')")),
+              "AND p.cadastre_disparue_le IS NULL "
+              "AND s.tier IN ('brulante','chaude','priorite','a_suivre')")),
     ], "run_different", False),
 
     ("stock_opportunites_n", "0 (entier)", [
@@ -160,15 +164,23 @@ CHECKS: list[tuple] = [
     ], "calcul_different", False),
 
     # ── foncier ──
+    # ECARTS-ZERO-1 — `foncier.n_parcelles` compte le parc VIVANT (cadastre_disparue_le IS NULL),
+    # comme l'accueil, la carte et le run servi (CHASSE-DONNEES-FIX-1). Le jumeau applique le MÊME
+    # filtre (sinon il comptait aussi les parcelles disparues → +10 à +40, faux écart).
     ("n_parcelles_commune", "0 (entier)", [
         ("ctx:foncier.n_parcelles", _c("foncier.n_parcelles")),
-        ("sql:parcels.count", _sql("SELECT count(*) FROM parcels WHERE commune=%(commune)s")),
-    ], "cache_perime", False),
+        ("sql:parcels.count(vivant)",
+         _sql("SELECT count(*) FROM parcels WHERE commune=%(commune)s "
+              "AND cadastre_disparue_le IS NULL")),
+    ], "source_differente", False),
 
-    ("prix_neuf_eur_m2", "1 %", [
-        ("ctx:comparable.neuf_eur_m2", _c("comparable.neuf_eur_m2")),
-        ("ctx:prix_neuf_observe.eur_m2", _c("prix_neuf_observe.eur_m2")),
-    ], "calcul_different", False),
+    # ECARTS-ZERO-1 — PLUS de comparaison croisée « prix du neuf » : `comparable.neuf_eur_m2` et
+    # `prix_neuf_observe.eur_m2` sont DEUX FAITS DISTINCTS, étiquetés comme tels (C3-03/CHASSE-FIX-3) :
+    # le premier = médiane VEFA (prix du neuf DÉCLARÉ, avant achèvement), le second = médiane des
+    # reventes OBSERVÉES ≤ 3 ans après achèvement. Deux moments du marché, deux libellés à l'écran —
+    # ce n'est pas « un fait servi deux fois », donc pas un écart. Chacun n'a qu'UN producteur (un seul
+    # lecteur), donc rien à comparer ici ; leur détermination est couverte par passe_determinisme
+    # (le contexte commune relu deux fois = même valeur).
 ]
 
 #: croisements parcelle ↔ commune (une parcelle témoin de la commune doit dire pareil)

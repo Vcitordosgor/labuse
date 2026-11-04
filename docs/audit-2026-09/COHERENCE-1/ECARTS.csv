@@ -1,45 +1,7 @@
 notion,objet,lecteur_a,valeur_a,lecteur_b,valeur_b,ecart,cause,gravite
-vigilance_cinquante_pas,97402000AK0252,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
-copro_presente,97411000DT0159,fiche:coproprietes(non vide),False,sql:p_model_ext_copro,True,False ≠ True,label,INCOHERENT
-vigilance_cinquante_pas,97413000AV1535,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
-copro_presente,97415000DI0636,fiche:coproprietes(non vide),False,sql:p_model_ext_copro,True,False ≠ True,label,INCOHERENT
-copro_presente,97415000EW1626,fiche:coproprietes(non vide),False,sql:p_model_ext_copro,True,False ≠ True,label,INCOHERENT
-surface_parcelle_m2,97416000ES2026,fiche:surface_m2,11,sql:parcels.surface_m2,11.306016164114688,0.306016,arrondi,TOLERABLE
-surface_parcelle_m2,97416000ES2026,fiche:surface_m2,11,sql:ST_Area(geom_2975),11.306016164114688,0.306016,arrondi,TOLERABLE
-surface_parcelle_m2,97416000ES2026,fiche:surface_m2,11,tuile:surface_m2,11.306016164114688,0.306016,arrondi,TOLERABLE
-vigilance_cinquante_pas,97417000AY0130,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
-surface_parcelle_m2,97418000BE0449,fiche:surface_m2,13,sql:parcels.surface_m2,12.687673840289772,0.312326,arrondi,TOLERABLE
-surface_parcelle_m2,97418000BE0449,fiche:surface_m2,13,sql:ST_Area(geom_2975),12.687673840289772,0.312326,arrondi,TOLERABLE
-surface_parcelle_m2,97418000BE0449,fiche:surface_m2,13,tuile:surface_m2,12.687673840289772,0.312326,arrondi,TOLERABLE
-vigilance_cinquante_pas,97419000AL0891,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
-vigilance_cinquante_pas,97420000AI0679,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
-cache_fiche_commune_fraicheur,Bras-Panon,ctx:cache_calcule_le,2026-09-28T22:23:50.975671+04:00,attendu,rafraîchi chaque nuit,140 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Cilaos,ctx:cache_calcule_le,2026-09-28T22:24:02.176726+04:00,attendu,rafraîchi chaque nuit,140 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Entre-Deux,ctx:cache_calcule_le,2026-09-28T22:24:07.293024+04:00,attendu,rafraîchi chaque nuit,140 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,L'Étang-Salé,ctx:cache_calcule_le,2026-09-28T22:24:11.628236+04:00,attendu,rafraîchi chaque nuit,140 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,La Plaine-des-Palmistes,ctx:cache_calcule_le,2026-09-28T22:24:17.444192+04:00,attendu,rafraîchi chaque nuit,140 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,La Possession,ctx:cache_calcule_le,2026-09-28T22:24:33.761892+04:00,attendu,rafraîchi chaque nuit,140 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Le Port,ctx:cache_calcule_le,2026-09-28T22:24:40.742808+04:00,attendu,rafraîchi chaque nuit,140 h,cache_perime,INCOHERENT
-prix_neuf_eur_m2,Le Tampon,ctx:comparable.neuf_eur_m2,4891,ctx:prix_neuf_observe.eur_m2,4318,573,calcul_ou_source,INCOHERENT
-cache_fiche_commune_fraicheur,Le Tampon,ctx:cache_calcule_le,2026-09-28T22:24:45.307318+04:00,attendu,rafraîchi chaque nuit,140 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Les Avirons,ctx:cache_calcule_le,2026-09-28T22:25:25.072262+04:00,attendu,rafraîchi chaque nuit,140 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Les Trois-Bassins,ctx:cache_calcule_le,2026-09-28T22:25:32.629114+04:00,attendu,rafraîchi chaque nuit,140 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Petite-Île,ctx:cache_calcule_le,2026-09-28T22:25:37.502716+04:00,attendu,rafraîchi chaque nuit,140 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Saint-André,ctx:cache_calcule_le,2026-09-28T22:25:43.672012+04:00,attendu,rafraîchi chaque nuit,140 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Saint-Benoît,ctx:cache_calcule_le,2026-09-28T22:25:54.436393+04:00,attendu,rafraîchi chaque nuit,140 h,cache_perime,INCOHERENT
-prix_neuf_eur_m2,Saint-Denis,ctx:comparable.neuf_eur_m2,5000,ctx:prix_neuf_observe.eur_m2,4275,725,calcul_ou_source,INCOHERENT
-cache_fiche_commune_fraicheur,Saint-Denis,ctx:cache_calcule_le,2026-09-28T22:26:35.567948+04:00,attendu,rafraîchi chaque nuit,140 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Saint-Joseph,ctx:cache_calcule_le,2026-09-28T22:26:58.198615+04:00,attendu,rafraîchi chaque nuit,140 h,cache_perime,INCOHERENT
-prix_neuf_eur_m2,Saint-Leu,ctx:comparable.neuf_eur_m2,4789,ctx:prix_neuf_observe.eur_m2,4953,164,arrondi,TOLERABLE
-cache_fiche_commune_fraicheur,Saint-Leu,ctx:cache_calcule_le,2026-09-28T22:27:17.750476+04:00,attendu,rafraîchi chaque nuit,140 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Saint-Louis,ctx:cache_calcule_le,2026-09-28T22:27:49.069732+04:00,attendu,rafraîchi chaque nuit,140 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Saint-Paul,ctx:cache_calcule_le,2026-09-28T22:28:05.057210+04:00,attendu,rafraîchi chaque nuit,140 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Saint-Philippe,ctx:cache_calcule_le,2026-09-28T22:28:22.798105+04:00,attendu,rafraîchi chaque nuit,140 h,cache_perime,INCOHERENT
-prix_neuf_eur_m2,Saint-Pierre,ctx:comparable.neuf_eur_m2,4958,ctx:prix_neuf_observe.eur_m2,4258,700,calcul_ou_source,INCOHERENT
-cache_fiche_commune_fraicheur,Saint-Pierre,ctx:cache_calcule_le,2026-09-28T22:28:27.779711+04:00,attendu,rafraîchi chaque nuit,140 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Sainte-Marie,ctx:cache_calcule_le,2026-09-28T22:28:48.201681+04:00,attendu,rafraîchi chaque nuit,140 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Sainte-Rose,ctx:cache_calcule_le,2026-09-28T22:28:56.770064+04:00,attendu,rafraîchi chaque nuit,140 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Sainte-Suzanne,ctx:cache_calcule_le,2026-09-28T22:29:04.844386+04:00,attendu,rafraîchi chaque nuit,140 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Salazie,ctx:cache_calcule_le,2026-09-28T22:29:11.817495+04:00,attendu,rafraîchi chaque nuit,140 h,cache_perime,INCOHERENT
-taxe_amenagement_taux_communal_pct,97423000AB1824↔Les Trois-Bassins,fiche:taxe_amenagement.taux_communal_pct (97423000AB1824),20.0,ctx:taxe_amenagement.part_communale_pct,3.0,17,calcul_ou_source,INCOHERENT
-taxe_amenagement_taux_communal_pct,97413000AV1535↔Saint-Leu,fiche:taxe_amenagement.taux_communal_pct (97413000AV1535),14.0,ctx:taxe_amenagement.part_communale_pct,5.0,9,calcul_ou_source,INCOHERENT
+sdp_residuelle_m2,97404000AI2280,fiche:potentiel_transformation.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,77,valeur contre absence,absence,INCOHERENT
+sdp_residuelle_m2,97410000AP0527,fiche:potentiel_transformation.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,22,valeur contre absence,absence,INCOHERENT
+sdp_residuelle_m2,97411000CE1095,fiche:potentiel_transformation.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,22037,valeur contre absence,absence,INCOHERENT
+sdp_residuelle_m2,97411000CI0085,fiche:potentiel_transformation.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,1986,valeur contre absence,absence,INCOHERENT
+sdp_residuelle_m2,97411000CP0367,fiche:potentiel_transformation.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,19,valeur contre absence,absence,INCOHERENT
+sdp_residuelle_m2,97415000EH0304,fiche:potentiel_transformation.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,57,valeur contre absence,absence,INCOHERENT

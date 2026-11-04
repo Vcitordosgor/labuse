@@ -401,7 +401,18 @@ def _num(v):
 
 
 def comparer(va, vb, tol: str):
-    """→ (ok, ecart, cause_probable). tol : '0', '0,5 point', '1 %', 'n %'."""
+    """→ (ok, ecart, cause_probable).
+
+    ECARTS-ZERO-1 (décision Vic) — PLUS DE MARGE FLOUE. `tol` ne dit plus « combien on tolère »,
+    il dit la PRÉCISION D'AFFICHAGE du fait = le nombre de décimales de son arrondi UNIQUE :
+      · "0" / "0 (entier)" → le fait s'affiche à l'entier (m², €, compte) ;
+      · "1"                → le fait s'affiche à une décimale (hauteur en m, pourcentage, pente).
+    On arrondit LES DEUX lecteurs à cette précision puis on exige l'ÉGALITÉ STRICTE : une différence
+    d'un m² / d'un euro / d'un dixième EST un écart rouge ; le bruit flottant SOUS l'unité affichée
+    (float32 d'une tuile vs float64 d'une colonne, ST_Area recalculé) n'est jamais montré à l'écran,
+    donc n'est pas un écart entre deux écrans. L'arrondi se fait UNE fois, au point de calcul/au bord ;
+    le banc ne fait que lire chaque écran à sa précision servie.
+    """
     if isinstance(va, Erreur) or isinstance(vb, Erreur):
         return False, "erreur lecteur", "erreur"
     if va is ABSENT or vb is ABSENT:
@@ -416,30 +427,21 @@ def comparer(va, vb, tol: str):
             return False, "0 contre absence", "zero_pour_absence"
         return False, "valeur contre absence", "absence"
     if na is not None and nb is not None:
-        if na == nb:
+        ndec = 1 if tol.strip().startswith("1") else 0     # précision d'affichage du fait
+        ra, rb = round(na, ndec), round(nb, ndec)
+        if ra == rb:
             return True, "0", ""
-        ecart = abs(na - nb)
-        rel = ecart / max(abs(na), abs(nb))
-        if tol.startswith("0,5 point"):
-            ok = ecart <= 0.5
-        elif tol.strip().startswith("0"):
-            ok = na == nb
-        else:                                     # 'n %'
-            pct = float(tol.replace("%", "").replace(",", ".").strip() or 1) / 100
-            ok = rel <= pct
-        cause = ""
-        if not ok:
-            ratio = (max(abs(na), abs(nb)) / min(abs(na), abs(nb))
-                     if min(abs(na), abs(nb)) > 0 else 0)
-            if 90 <= ratio <= 110:
-                cause = "fraction_vs_pourcentage"
-            elif 9000 <= ratio <= 11000:
-                cause = "ha_vs_m2"
-            elif rel <= 0.05:
-                cause = "arrondi"
-            else:
-                cause = "calcul_ou_source"
-        return ok, f"{ecart:g}", cause
+        ecart = abs(ra - rb)
+        # l'écart est RÉEL à la précision affichée → cause (jamais « arrondi toléré » : il n'existe plus)
+        mn = min(abs(na), abs(nb))
+        ratio = (max(abs(na), abs(nb)) / mn) if mn > 0 else 0
+        if 90 <= ratio <= 110:
+            cause = "fraction_vs_pourcentage"
+        elif 9000 <= ratio <= 11000:
+            cause = "ha_vs_m2"
+        else:
+            cause = "calcul_ou_source"
+        return False, f"{ecart:g}", cause
     ok = str(va) == str(vb)
     return ok, "" if ok else f"{va!r} ≠ {vb!r}", "" if ok else "label"
 
@@ -463,8 +465,11 @@ class Ecarts:
         gravite = gravite_si_ecart
         if cause == "zero_pour_absence":
             gravite = "FAUX-CLIENT"
-        elif cause == "arrondi":
-            gravite = "TOLERABLE"
+        # ECARTS-ZERO-1 (décision Vic) — la gravité « TOLERABLE » n'existe plus : un fait a une
+        # seule fonction de lecture, un seul arrondi, un seul format, partout. Le moindre écart
+        # (même un euro, même un arrondi) est ROUGE. L'arrondi reste une CAUSE lisible dans la
+        # colonne `cause`, mais ne dégrade plus la gravité. Le correctif se fait à la SOURCE
+        # (arrondi unique au point de calcul ; format au bord via lib/format + registre_fmt).
         self.lignes.append({"notion": notion, "objet": objet,
                             "lecteur_a": la, "valeur_a": _bref(va),
                             "lecteur_b": lb, "valeur_b": _bref(vb),
