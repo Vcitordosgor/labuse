@@ -234,6 +234,16 @@ def incidents_ouverts(db) -> list[dict]:
             for r in rows]
 
 
+def incidents_a_traiter(ouverts: list[dict]) -> list[dict]:
+    """SILENCE-1 (point 3) — la liste « à traiter » du résumé du matin : les incidents ouverts SANS les
+    escalades d'ancienneté « escalade:ancien:<base> » qui DOUBLENT un incident <base> déjà listé. Une
+    escalade d'ancienneté est un rappel interne du MÊME incident, pas un second geste de Vic — un seul
+    incident, un seul lien. (Une escalade orpheline, dont la base n'est plus ouverte, reste listée.)"""
+    cles = {i["cle"] for i in ouverts}
+    return [i for i in ouverts if not (
+        i["cle"].startswith("escalade:ancien:") and i["cle"][len("escalade:ancien:"):] in cles)]
+
+
 def incidents_resolus_depuis(db, heures: int = 26) -> list[dict]:
     """OPS-NUIT-1 point 6(a) — les incidents RÉSOLUS dans les `heures` dernières (fenêtre du résumé du
     matin : 26 h pour couvrir d'un résumé à l'autre sans trou). Remplace le mail « résolu » immédiat."""
@@ -450,9 +460,17 @@ def _intervalle_s(cron_utc: str) -> float | None:
 
 
 def _prochaine_apres(cron_utc: str, apres: datetime) -> datetime | None:
+    # SILENCE-1 (point 2) — l'expression cron est EN UTC (« cron_utc »). `apres` arrive souvent en heure
+    # LOCALE (`job_premiere_vue.vue_at` relu depuis Postgres, dont le fuseau de session est Indian/Reunion
+    # = +04) : il FAUT comparer les champs cron à l'heure UTC, pas à l'heure locale. Sans cette conversion,
+    # `t.hour` valait l'heure RÉUNION → « 30 3 » (=03:30 UTC=07:30 Réunion) était évalué à 03:30 Réunion
+    # (=23:30 UTC la veille), et l'échéance « 1er passage + marge » tombait à 04:30 Réunion → resume-matin
+    # criait « jamais réussi » 3 h AVANT son vrai passage de 07:30. `prochaine()` y échappait déjà car elle
+    # part de `datetime.now(timezone.utc)`. On aligne : on itère en UTC.
     from datetime import timedelta
     from .jobs import _champ_match
     m, h, dom, mon, dow = cron_utc.split()
+    apres = apres.astimezone(timezone.utc) if apres.tzinfo else apres.replace(tzinfo=timezone.utc)
     t = apres.replace(second=0, microsecond=0) + timedelta(minutes=1)
     fin = t + timedelta(days=60)
     while t < fin:
@@ -742,15 +760,29 @@ def verifier_declencheurs(db) -> dict:
     try:
         from . import runs
         p = runs.pointeurs()
-        out["pointeurs_run"] = p
         if not p["coherents"]:
-            signaler(db, "pointeurs-run-divergents",
-                     "Pointeurs de run divergents (manifeste ≠ served_run.txt)",
-                     f"Le run servi est pointé à deux valeurs différentes : {p['divergence']}. Le backend "
-                     "sert le manifeste, mais le bundle front lit served_run.txt → étiquette possiblement "
-                     "fausse. Rejouer la bascule (qui réécrit les deux ensemble) ou aligner served_run.txt.")
+            # SILENCE-1 (point 5) — on CORRIGE À LA SOURCE au lieu de seulement signaler : le manifeste
+            # fait foi, on réaligne la vue dérivée served_run.txt dessus, puis on relit. Si le
+            # réalignement suffit (cas quasi systématique : vue en retard sur le manifeste), aucun
+            # incident n'est ouvert — la divergence est RÉSOLUE, pas juste constatée.
+            from . import golden_ops
+            heal = golden_ops.realigner_vue_depuis_manifeste()
+            p = runs.pointeurs()
+            p["realignement"] = heal
+            if p["coherents"]:
+                resoudre(db, "pointeurs-run-divergents")
+            else:
+                # réalignement impossible (manifeste absent, disque en lecture seule) → là, c'est un vrai
+                # incident qui demande une main.
+                signaler(db, "pointeurs-run-divergents",
+                         "Pointeurs de run divergents (manifeste ≠ served_run.txt)",
+                         f"Le run servi est pointé à deux valeurs différentes : {p['divergence']}. Le "
+                         "réalignement automatique de served_run.txt sur le manifeste a échoué "
+                         f"({heal.get('erreur') or heal.get('motif')}). Rejouer la bascule ou aligner "
+                         "served_run.txt à la main.")
         else:
             resoudre(db, "pointeurs-run-divergents")
+        out["pointeurs_run"] = p
     except Exception as exc:  # noqa: BLE001 — la vigie pointeurs ne doit jamais faire tomber le reste
         log.warning("vigie pointeurs run impossible (%s)", exc)
 

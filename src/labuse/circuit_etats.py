@@ -297,6 +297,12 @@ def etat_reservoir(r: dict) -> tuple[str, str]:
     # (2) MANUELLE — pas de producteur à sonder : échéance dépassée ⇒ « Échue » (→ Déposer),
     #     dans l'échéance ⇒ « à jour », jamais alimentée ⇒ « jamais vérifiée ».
     if mode == "depot_manuel":
+        # SILENCE-1 (point 7) — une manuelle JAMAIS alimentée (aucun contrôle) est « jamais vérifiée »
+        # (gris, benin) = EN ATTENTE DE FICHIER : pas « échue », donc AUCUNE carte « Déposer » ni mail
+        # tant qu'aucun fichier n'existe. C'est garanti en amont par `a_verifier` (dashboard) qui n'est
+        # vrai QUE si un dépôt a déjà eu lieu ET que la cadence est dépassée ; la sous-ligne de la page
+        # Sources dit explicitement « en attente de fichier ». Un rappel TRIMESTRIEL (cadence 91 j)
+        # suffit une fois qu'un premier fichier aura été posé.
         if r.get("a_verifier"):
             return ("ambre", "échue")
         if not r.get("dernier_controle"):

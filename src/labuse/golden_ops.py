@@ -139,3 +139,33 @@ def promote(run: str) -> dict:
     _SERVED_FILE.write_text(entete + run + "\n", encoding="utf-8")
     runs.invalidate()   # SUITE-1 S3 — bascule EFFECTIVE À CHAUD : la prochaine lecture relit le pointeur.
     return {"ok": True, "ancien": ancien, "nouveau": run}
+
+
+def realigner_vue_depuis_manifeste() -> dict:
+    """SILENCE-1 (point 5) — « 3 pointeurs de run au lieu d'un », corrigé À LA SOURCE. Le MANIFESTE
+    (`served_manifest.json`) FAIT FOI ; la vue dérivée `config/served_run.txt` (lue par le bundle front)
+    peut diverger si une bascule a été coupée entre les deux écritures, ou éditée à la main. Au lieu de
+    SEULEMENT signaler la divergence (ancienne vigie), on RÉÉCRIT la vue depuis le manifeste — la seule
+    vérité — puis on relit. Sans manifeste dans l'arbre (dev/test fichier pur) : no-op. Jamais d'exception
+    (la vigie ne doit pas tomber). Retourne {realigne, de, vers} ou {realigne: False, motif/erreur}."""
+    from . import manifeste as _manifeste
+    from . import runs
+    try:
+        if _manifeste.chemin().parent != _SERVED_FILE.parent:
+            return {"realigne": False, "motif": "manifeste hors arbre (dev/test fichier pur)"}
+        man = (_manifeste.lire() or {}).get("scoring_run")
+        if not man:
+            return {"realigne": False, "motif": "manifeste sans scoring_run"}
+        try:
+            actuel = runs._lire_fichier()
+        except Exception:  # noqa: BLE001 — fichier absent/vide : on le (ré)écrit depuis le manifeste
+            actuel = None
+        if actuel == man:
+            return {"realigne": False}
+        entete = ("# config/served_run.txt — VUE DÉRIVÉE du run servi (le point de vérité est\n"
+                  "# config/served_manifest.json). Réaligné par la vigie SILENCE-1 (self-heal).\n")
+        _SERVED_FILE.write_text(entete + man + "\n", encoding="utf-8")
+        runs.invalidate()
+        return {"realigne": True, "de": actuel, "vers": man}
+    except Exception as exc:  # noqa: BLE001
+        return {"realigne": False, "erreur": f"{type(exc).__name__}: {str(exc)[:200]}"}

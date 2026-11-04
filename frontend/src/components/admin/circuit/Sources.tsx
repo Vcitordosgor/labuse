@@ -47,7 +47,10 @@ const modeEntree = (r: Reservoir): string => {
 const controleLabel = (r: Reservoir): string => {
   if (r.veille && estSonde(r.veille.methode)) return 'sonde'
   if (r.veille?.methode === 'agent') return 'agent'
-  if (r.mode === 'depot_manuel') return r.etat[1] === 'échue' ? 'échéance dépassée' : 'échéance'
+  // SILENCE-1 (point 7) — une manuelle JAMAIS alimentée est « en attente de fichier » (ni carte ni mail) ;
+  // échue = un fichier existe mais la cadence (trimestrielle) est dépassée ; sinon l'échéance court.
+  if (r.mode === 'depot_manuel') return r.etat[1] === 'échue' ? 'échéance dépassée'
+    : r.etat[1] === 'jamais vérifiée' ? 'en attente de fichier' : 'échéance'
   if (r.mode === 'sans_millesime') return 'sans objet'
   return '—'
 }

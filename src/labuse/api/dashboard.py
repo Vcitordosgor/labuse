@@ -1714,7 +1714,13 @@ def lancer_ingestion_source(nom: str) -> dict | None:
     # tardives (dont `filtre`). On appelle donc `app()` directement.
     filtre = (f"{shlex.quote(sys.executable)} -c 'from labuse.cli import app; app()' "
               f"filtre jouer {shlex.quote(cmd['label'])} --par vanne")
-    wrapper = ["sh", "-c", f"{ingest} && {filtre}"]
+    # SILENCE-1 (point 1) — LA VANNE ACQUITTE AUSSI LA VEILLE. Une fois l'ingestion ET le filtre réussis
+    # (`&&`), on remet la source à « ok » et on avance la version servie (`source-acquitter <nom>`) : sans
+    # ça, `source_veille.dernier_statut` restait « nouvelle_version » et la carte « à injecter » ne
+    # disparaissait JAMAIS (témoins ré-affichés chaque passage ; source par agent plus jamais sondée).
+    acquit = (f"{shlex.quote(sys.executable)} -c 'from labuse.cli import app; app()' "
+              f"source-acquitter {shlex.quote(nom)}")
+    wrapper = ["sh", "-c", f"{ingest} && {filtre} && {acquit}"]
     env = {**os.environ, "PYTHONPATH": os.pathsep.join(
         [str(racine / "src"), os.environ.get("PYTHONPATH", "")]).rstrip(os.pathsep)}
     try:
@@ -1723,7 +1729,7 @@ def lancer_ingestion_source(nom: str) -> dict | None:
                              start_new_session=True, env=env)
     except Exception as exc:  # noqa: BLE001
         raise RuntimeError(f"Lancement impossible ({type(exc).__name__}).") from exc
-    return {"label": cmd["label"], "log": log_path, "filtre_enchaine": True}
+    return {"label": cmd["label"], "log": log_path, "filtre_enchaine": True, "acquit_enchaine": True}
 
 
 def _lancer_ingestion(nom: str) -> dict:
@@ -2382,8 +2388,14 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
         _derniers = [d for d in (r["dernier_passage_at"], r["last_sync_at"]) if d is not None]
         _dernier_controle = max(_derniers) if _derniers else None
         _cad = r["cadence_attendue_jours"]
-        a_verifier = bool(_cad) and mode not in ("en_direct", "absente", "sans_millesime") and (
-            _dernier_controle is None or (_now - _dernier_controle).days > int(_cad))
+        # SILENCE-1 (point 7) — une source n'est « échue » (à redéposer/revérifier) que si elle a DÉJÀ
+        # été alimentée au moins une fois ET que sa cadence est dépassée. Une manuelle JAMAIS alimentée
+        # (aucun dépôt, aucun contrôle) n'est pas « échue » : elle est « en attente de fichier » (état
+        # gris, sans carte ni mail). Avant, `_dernier_controle is None` la rendait « à vérifier » → carte
+        # « Déposer » pour un fichier qui n'a jamais existé (VRD/SPANC). On exige donc un contrôle antérieur.
+        a_verifier = (bool(_cad) and mode not in ("en_direct", "absente", "sans_millesime")
+                      and _dernier_controle is not None
+                      and (_now - _dernier_controle).days > int(_cad))
         # millésime AFFICHABLE unique : vérité (source_millesime, composée) → sinon repli registre (compat).
         _mill_verite = _composer_mill(r["source_millesime"], source_horizon_at=r["source_horizon_at"],
                                       dernier_vu=r["dernier_vu"], last_sync_at=r["last_sync_at"])
