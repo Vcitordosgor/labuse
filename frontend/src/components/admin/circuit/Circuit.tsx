@@ -13,10 +13,11 @@ import {
 
 import { DestinationsDetail } from '../Destinations'
 
+import { useApp } from '../../../store/useApp'
+
 import { CircuitDiagram } from './CircuitDiagram'
 import { Detail as DetailPage } from './Detail'
 import { ecrireCx, parseCx } from './hash'
-import { JohnTaylor, type EnqueteDemande } from './JohnTaylor'
 import { Journal } from './Journal'
 import { Sources } from './Sources'
 import { CIRCUIT_CSS } from './style'
@@ -26,7 +27,9 @@ import { type CircuitData } from './types'
 
 // COCKPIT-1b (retour recette) — « L'usine » devient un ONGLET à part entière (plus de page cachée
 // derrière « Voir l'usine ») : Tableau de bord · Usine · Sources · Circuit · Journal.
-type Onglet = 'tableau' | 'usine' | 'sources' | 'circuit' | 'journal' | 'john'
+// JOHN-TAYLOR-2 — « John Taylor » a quitté les onglets de Données : c'est désormais une PAGE à part
+// entière du rail admin. La carte « Demander à John » du Tableau de bord y mène (store.demanderAJohn).
+type Onglet = 'tableau' | 'usine' | 'sources' | 'circuit' | 'journal'
 // CIRCUIT-P5 — « destinations » : le détail du calibrage PLU par commune (composant Destinations),
 // atteint depuis la page de détail de la source GPU (plus par un lien en bas de la page).
 type DetailType = 'reservoir' | 'robinet' | 'pompe' | 'compteur' | 'destinations'
@@ -45,7 +48,7 @@ export function CircuitSection() {
   const [srcDetail, setSrcDetail] = useState<number | null>(null)   // CIRCUIT-P7 (lot 2) — la fiche source (page Sources)
   const [groupe, setGroupe] = useState<(number | string)[] | null>(null)
   const [nJour, setNJour] = useState<number | null>(null)
-  const [enqueteJohn, setEnqueteJohn] = useState<EnqueteDemande | null>(null)   // JOHN-TAYLOR-1
+  const demanderAJohn = useApp((s) => s.demanderAJohn)   // JOHN-TAYLOR-2 — vers la page « John Taylor »
   const [msgLocal, setMsgLocal] = useState<string | null>(null)   // crédit absent / rien à envoyer / rien à sonder
   const [ferme, setFerme] = useState<string | null>(null)         // message de fin déjà refermé
 
@@ -159,8 +162,6 @@ export function CircuitSection() {
         <button className={onglet === 'journal' ? 'on' : ''} onClick={() => setOnglet('journal')}>
           Journal{nJour ? <span className="n neutre">{nJour}</span> : ''}
         </button>
-        {/* JOHN-TAYLOR-1 — le second de bord : chat + résumé du matin + veille + carnet + coût. */}
-        <button className={onglet === 'john' ? 'on' : ''} onClick={() => setOnglet('john')}>John Taylor</button>
       </div>
 
       {barre && (
@@ -173,7 +174,7 @@ export function CircuitSection() {
 
       <section className={`tab ${onglet === 'tableau' ? 'on' : ''}`}>
         <TableauDeBord data={d} onVoirUsine={() => setOnglet('usine')} onDepotManuel={() => setOnglet('sources')}
-          onDemanderJohn={(c) => { setEnqueteJohn({ cle: c.id, titre: c.titre, mode: c.code ? 'code' : 'casse' }); setOnglet('john') }} />
+          onDemanderJohn={(c) => demanderAJohn({ cle: c.id, titre: c.titre, mode: c.code ? 'code' : 'casse' })} />
       </section>
 
       <section className={`tab ${onglet === 'usine' ? 'on' : ''}`}>
@@ -217,10 +218,6 @@ export function CircuitSection() {
 
       <section className={`tab ${onglet === 'journal' ? 'on' : ''}`}>
         <Journal data={d} onOpen={ouvrirDetail} onAujourdhui={setNJour} />
-      </section>
-
-      <section className={`tab ${onglet === 'john' ? 'on' : ''}`}>
-        {onglet === 'john' && <JohnTaylor enquete={enqueteJohn} />}
       </section>
     </div>
   )

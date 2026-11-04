@@ -298,7 +298,9 @@ export default function App() {
   useEffect(() => {
     // IMPLANTATION-4 (LOT A) — `ouvrirEtude` exposé au hook d'auto-QA (comme setModule/select) pour
     // piloter l'overlay Étude dans les captures ; aucun effet produit (même action que les portes UI).
-    ;(window as unknown as Record<string, unknown>).__labuse = { select, setView, setZone, setModule, setFlyTo, setCommune, setVerdict, setMsel, setPermitToOpen, setIaRestitution, setContexteCommune, togglePanel, setFilters, getFilters: () => filters, setTuyauActives, toggleTuyau, setModuleMap, ouvrirEtude: useApp.getState().ouvrirEtude }
+    // JOHN-TAYLOR-2 — `demanderAJohn` exposé au hook d'auto-QA (comme ouvrirEtude) : piloter l'enquête
+    // de John dans les captures ; aucun effet produit (même action que « Demander à John » d'une carte).
+    ;(window as unknown as Record<string, unknown>).__labuse = { select, setView, setZone, setModule, setFlyTo, setCommune, setVerdict, setMsel, setPermitToOpen, setIaRestitution, setContexteCommune, togglePanel, setFilters, getFilters: () => filters, setTuyauActives, toggleTuyau, setModuleMap, ouvrirEtude: useApp.getState().ouvrirEtude, demanderAJohn: useApp.getState().demanderAJohn, goAdminSection: useApp.getState().goAdminSection }
   }, [select, setView, setZone, setModule, setFlyTo, setCommune, setVerdict, setMsel, setPermitToOpen, setIaRestitution, setContexteCommune, togglePanel, setFilters, filters, setTuyauActives, toggleTuyau, setModuleMap])
 
   // DASHBOARD-V1 · D1 — capteurs d'usage (Tour de contrôle) : heartbeat de session au boot,

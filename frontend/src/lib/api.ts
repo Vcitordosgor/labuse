@@ -3072,6 +3072,15 @@ export const postJohnCarnetValider = (id: number) =>
   j<any>(`/admin/john/carnet/${id}/valider`, { method: 'POST' })
 export const postJohnCarnetRejeter = (id: number) =>
   j<any>(`/admin/john/carnet/${id}/rejeter`, { method: 'POST' })
+// JOHN-TAYLOR-2 — l'historique conversationnel (colonne de gauche) : lister, rouvrir, supprimer.
+export type JohnConversation = { id: number; titre: string; maj_at: string; cree_at: string }
+export type JohnMessage = { role: 'user' | 'assistant'; texte: string; ts: string; meta?: any }
+export const getJohnConversations = () =>
+  j<{ conversations: JohnConversation[]; retention_jours: number }>('/admin/john/conversations')
+export const getJohnConversation = (id: number) =>
+  j<{ id: number; titre: string; messages: JohnMessage[] }>(`/admin/john/conversations/${id}`)
+export const deleteJohnConversation = (id: number) =>
+  j<{ ok: boolean }>(`/admin/john/conversations/${id}`, { method: 'DELETE' })
 // CIRCUIT-P2 (lot 3.2/3.3) / CIRCUIT-P7 — tâches longues : lancer l'agent LLM (une source via
 // `sourceId`, ou une portée « sans_amont » (défaut) / « g8 » / « tous » depuis la carte Agents).
 export const postAdminCircuitAgents = (opts?: { sourceId?: number; portee?: 'sans_amont' | 'g8' | 'tous' }) => {

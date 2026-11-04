@@ -18,6 +18,8 @@ export type View = 'cartes' | 'crm' | 'sources' | 'projets' | 'copilote' | 'admi
 // RADAR-2 (Lot 1) — les écrans du hub Radar plein écran (SANS carte). La Veille n'est plus une entrée
 // du rail : on l'atteint par la porte « Veille » du hub Radar (view:'radar'). 'veille' = ses deux portes.
 export type RadarEcran = 'portes' | 'radar' | 'veille' | 'veille-foncier' | 'veille-annonces'
+// JOHN-TAYLOR-2 — une enquête à poser à John depuis une carte « ça casse » du Tableau de bord.
+export type JohnEnquete = { cle?: string; titre?: string; mode?: 'casse' | 'code' }
 
 // FIX-FILTRES F6 (choix assumé, non un bug) : ces couches sont du CONTEXTE — elles s'affichent
 // ENTIÈRES, DÉCOUPLÉES des filtres du panneau (qui, eux, ne pilotent que la couche Parcelles).
@@ -336,6 +338,11 @@ interface AppState {
   adminSection: string | null
   goAdminSection: (s: string) => void
   clearAdminSection: () => void
+  // JOHN-TAYLOR-2 — une enquête à poser à John depuis une carte « ça casse » du Tableau de bord : on
+  // bascule sur la page « John Taylor » et John ouvre lui-même la conversation. null = rien à poser.
+  adminJohnEnquete: JohnEnquete | null
+  demanderAJohn: (e: JohnEnquete) => void
+  clearJohnEnquete: () => void
   // SECTEUR-2b (U1) — commune sélectionnée sur la couche VEFA (clic carte) → panneau de détail. null = fermé.
   vefaCommune: string | null
   setVefaCommune: (c: string | null) => void
@@ -749,6 +756,12 @@ export const useApp = create<AppState>((set, get) => ({
     module: null, contexteCommune: null, iaRestitution: null, parcours: null, openProjet: null,
     entretienDirect: null, surveillanceOpen: false, ...CLOSE_OVERLAYS }),
   clearAdminSection: () => set({ adminSection: null }),
+  // JOHN-TAYLOR-2 — « Demander à John » (carte du Tableau de bord) : pose l'enquête ET ouvre la page John.
+  adminJohnEnquete: null,
+  demanderAJohn: (e) => set({ view: 'admin', adminSection: 'john-taylor', adminJohnEnquete: e,
+    outilsOpen: false, selectedIdu: null, module: null, contexteCommune: null, iaRestitution: null,
+    parcours: null, openProjet: null, entretienDirect: null, surveillanceOpen: false, ...CLOSE_OVERLAYS }),
+  clearJohnEnquete: () => set({ adminJohnEnquete: null }),
   vefaCommune: null,
   setVefaCommune: (vefaCommune) => set({ vefaCommune }),
   // M65 P4 : « Décrire un projet » bascule sur le Copilote ET arme l'amorce (même nettoyage

@@ -205,6 +205,123 @@ def _set_pending(db, conv_id, pending):
                {"p": json.dumps(pending, ensure_ascii=False) if pending else None, "i": conv_id})
 
 
+# ════════════════════════════════ Historique (liste / reprise / suppression) ════════════════════════════════
+# JOHN-TAYLOR-2 — la colonne de gauche de la page : lister les conversations du compte (la plus récente
+# en haut), en rouvrir une d'un clic, en supprimer une. Cloisonné au compte (jamais celle d'un autre),
+# messages par CASCADE. Même doctrine que le Copilote (`copilote_v2/historique.py`).
+_CLOISON = "(compte_id = :c OR (:c IS NULL AND compte_id IS NULL))"
+
+
+def _titre_de(contenu: str | None) -> str:
+    """Le titre d'une conversation = sa première question, abrégée."""
+    t = " ".join((contenu or "").split())
+    return (t[:58].rstrip() + "…") if len(t) > 58 else (t or "Nouvelle conversation")
+
+
+def lister_conversations(db, compte_id, limite: int = 200) -> list[dict]:
+    """Les conversations du compte, la plus récemment utilisée en tête. Ne garde que celles qui portent
+    au moins une question (on ne montre pas les coquilles vides créées puis abandonnées)."""
+    ensure(db)
+    rows = db.execute(text(
+        "SELECT c.id, c.maj_at, c.cree_at,"
+        " (SELECT m.contenu FROM john_messages m WHERE m.conv_id = c.id AND m.role = 'user'"
+        "  ORDER BY m.id ASC LIMIT 1) AS premier"
+        f" FROM john_conversations c WHERE {_CLOISON}"
+        " ORDER BY c.maj_at DESC, c.id DESC LIMIT :n"),   # id = départage les ex æquo (même seconde)
+        {"c": compte_id, "n": max(1, limite)}).mappings().all()
+    out = []
+    for r in rows:
+        if not r["premier"]:
+            continue
+        out.append({"id": r["id"], "titre": _titre_de(r["premier"]),
+                    "maj_at": r["maj_at"].isoformat(), "cree_at": r["cree_at"].isoformat()})
+    return out
+
+
+def charger_conversation(db, conv_id, compte_id) -> dict | None:
+    """Le fil complet d'une conversation (messages + la méta d'affichage rangée dans `sources`),
+    ou None si elle n'existe pas / n'appartient pas au compte."""
+    ensure(db)
+    c = db.execute(text(f"SELECT id FROM john_conversations WHERE id = :i AND {_CLOISON}"),
+                   {"i": conv_id, "c": compte_id}).first()
+    if not c:
+        return None
+    rows = db.execute(text(
+        "SELECT role, contenu, sources, ts FROM john_messages WHERE conv_id = :i ORDER BY id ASC"),
+        {"i": conv_id}).mappings().all()
+    msgs = [{"role": r["role"], "texte": r["contenu"], "meta": r["sources"] or {},
+             "ts": r["ts"].isoformat()} for r in rows]
+    premier = next((m["texte"] for m in msgs if m["role"] == "user"), "")
+    return {"id": conv_id, "titre": _titre_de(premier), "messages": msgs}
+
+
+def supprimer_conversation(db, conv_id, compte_id) -> bool:
+    """Supprime une conversation du compte (messages par CASCADE). Vrai si une ligne est partie."""
+    ensure(db)
+    n = db.execute(text(f"DELETE FROM john_conversations WHERE id = :i AND {_CLOISON}"),
+                   {"i": conv_id, "c": compte_id}).rowcount or 0
+    return n > 0
+
+
+# ════════════════════════════════ Sources & boutons d'une réponse (lectures réelles) ════════════════════════════════
+# JOHN-TAYLOR-2 — « sources en étiquettes avec leur date, boutons vers l'écran concerné quand il existe ».
+# Les sources de John, ce sont les LECTURES qu'il a réellement faites pendant le tour (jamais inventées) :
+# on les montre en puces (label + heure de lecture), et on propose un bouton vers l'écran admin concerné
+# quand il en existe un. `ecran` = clé de section d'AdminView (null = pas d'écran dédié → pas de bouton).
+_LECTURE_META: dict[str, tuple[str, str | None]] = {
+    "lire_jobs": ("Jobs", "cron"),
+    "lire_job": ("Jobs", "cron"),
+    "lire_incidents": ("Incidents", "donnees"),
+    "lire_sources": ("Sources", "donnees"),
+    "lire_runs": ("Runs", "donnees"),
+    "lire_controles": ("Contrôles", "donnees"),
+    "lire_sauvegardes": ("Sauvegardes", "donnees"),
+    "lire_radar": ("Radar", "radar"),
+    "lire_journaux": ("Journaux", "donnees"),
+    "lire_carnet": ("Carnet", None),
+    "lire_rapports": ("Rapports", "donnees"),
+    "lire_rapport": ("Rapports", "donnees"),
+}
+_ECRAN_LABEL = {"cron": "Voir les jobs", "radar": "Voir le Radar", "donnees": "Voir les données"}
+
+
+def _sources_et_boutons(db, noms_lus: list[str]) -> tuple[list[dict], list[dict]]:
+    """À partir des outils de lecture réellement appelés : les puces de sources (label + heure) et les
+    boutons d'écran (dédoublonnés)."""
+    if not noms_lus:
+        return [], []
+    try:
+        heure = db.execute(text("SELECT to_char(now(), 'HH24:MI')")).scalar() or ""
+    except Exception:  # noqa: BLE001
+        heure = ""
+    sources, boutons = [], []
+    vus_label, vus_ecran = set(), set()
+    for nom in noms_lus:
+        meta = _LECTURE_META.get(nom)
+        if not meta:
+            continue
+        label, ecran = meta
+        if label not in vus_label:
+            vus_label.add(label)
+            sources.append({"label": label, "heure": heure})
+        if ecran and ecran not in vus_ecran:
+            vus_ecran.add(ecran)
+            boutons.append({"ecran": ecran, "label": _ECRAN_LABEL.get(ecran, f"Voir {ecran}")})
+    return sources, boutons
+
+
+def _phrase_echec(exc: Exception) -> str:
+    """Une phrase simple qui dit CE QUI a échoué (jamais la trace brute — elle part au journal)."""
+    n = type(exc).__name__.lower()
+    if "timeout" in n:
+        return "le service a mis trop de temps à répondre"
+    if "connection" in n or "operational" in n or "disconnect" in n:
+        return "la base n'a pas répondu"
+    if "ratelimit" in n or "overloaded" in n or "apistatus" in n or "apiconnection" in n:
+        return "le fournisseur du modèle n'était pas joignable"
+    return "une lecture a échoué"
+
+
 # ════════════════════════════════ LE TOUR DE CHAT ════════════════════════════════
 def repondre(db, message: str, *, conversation_id=None, compte_id=None, compte=None,
              appel=None, backend=None, settings=None, max_tours=6) -> dict:
@@ -239,69 +356,87 @@ def repondre(db, message: str, *, conversation_id=None, compte_id=None, compte=N
     if pending and not _AFFIRMATIF.match(message):
         _set_pending(db, conv_id, None)   # tout autre message annule l'attente de confirmation
 
-    # (2) boucle d'outils menée par le modèle.
+    # (2) boucle d'outils menée par le modèle. Tout y est enveloppé : une panne d'outil, de base ou du
+    # fournisseur modèle ne remonte JAMAIS brute à l'écran — John dit en une phrase ce qui a échoué et ce
+    # qu'il propose, le détail technique part au journal (log.exception).
     system = construire_system(db)
     tools = _tools_modele()
     msgs = _historique_messages(db, conv_id, 10) + [{"role": "user", "content": message}]
     outils_vus: list[dict] = []
+    noms_lus: list[str] = []
     action_faite = None
     texte = ""
-    for _ in range(max_tours):
-        # max_tokens GÉNÉREUX : opus-5-5 pense (adaptive thinking déclenché par le gros system
-        # prompt) et les jetons de réflexion S'IMPUTENT sur max_tokens. À 1200, la réflexion finale
-        # épuisait le budget → tour sans texte (stop=max_tokens) → repli « rien à dire ». 8000 laisse
-        # la place à la réflexion ET à la réponse (non-streaming, sous le garde-fou timeout du SDK).
-        reponse = appel(model=_core.model_for("john-chat"), system=system, messages=msgs,
-                        tools=tools, max_tokens=8000)
-        # coût au ledger (best-effort — ne bloque jamais le chat)
-        try:
-            u = getattr(reponse, "usage", None)
-            if u is not None:
-                _core._log_cost(db, "john-chat", _core.model_for("john-chat"), False,
-                                getattr(u, "input_tokens", 0), getattr(u, "output_tokens", 0))
-        except Exception:  # noqa: BLE001
-            pass
-        blocs = list(getattr(reponse, "content", []))
-        tool_uses = [b for b in blocs if getattr(b, "type", None) == "tool_use"]
-        if not tool_uses:
-            texte = _texte_de(reponse)
-            break
-        # rejoue l'assistant (avec ses tool_use) puis les résultats
-        msgs.append({"role": "assistant", "content": [_bloc_to_dict(b) for b in blocs]})
-        resultats = []
-        for tu in tool_uses:
-            nom = getattr(tu, "name", "")
-            entree = getattr(tu, "input", None) or {}
-            res, stop = _executer_outil(db, nom, entree, compte_id, compte, backend)
-            outils_vus.append(res)
-            if stop is not None:            # action en attente de confirmation
-                _set_pending(db, conv_id, stop)
-                q = stop["question"]
-                _poser_message(db, conv_id, "assistant", q)
-                return {"conversation_id": conv_id, "texte": q, "sources": [],
-                        "besoin_confirmation": True, "action": stop["action"],
-                        "cout": budget.etat(db, settings).to_json()}
-            if res.get("_action"):
-                action_faite = res["_action"]
-            resultats.append({"type": "tool_result", "tool_use_id": getattr(tu, "id", None),
-                              "content": json.dumps(res, ensure_ascii=False, default=str)})
-        msgs.append({"role": "user", "content": resultats})
-    else:
-        texte = texte or "Je me suis arrêté après plusieurs lectures sans conclure. Reformule ta question ?"
+    try:
+        for _ in range(max_tours):
+            # max_tokens GÉNÉREUX : opus-5-5 pense (adaptive thinking déclenché par le gros system
+            # prompt) et les jetons de réflexion S'IMPUTENT sur max_tokens. À 1200, la réflexion finale
+            # épuisait le budget → tour sans texte (stop=max_tokens) → repli « rien à dire ». 8000 laisse
+            # la place à la réflexion ET à la réponse (non-streaming, sous le garde-fou timeout du SDK).
+            reponse = appel(model=_core.model_for("john-chat"), system=system, messages=msgs,
+                            tools=tools, max_tokens=8000)
+            # coût au ledger (best-effort — ne bloque jamais le chat)
+            try:
+                u = getattr(reponse, "usage", None)
+                if u is not None:
+                    _core._log_cost(db, "john-chat", _core.model_for("john-chat"), False,
+                                    getattr(u, "input_tokens", 0), getattr(u, "output_tokens", 0))
+            except Exception:  # noqa: BLE001
+                pass
+            blocs = list(getattr(reponse, "content", []))
+            tool_uses = [b for b in blocs if getattr(b, "type", None) == "tool_use"]
+            if not tool_uses:
+                texte = _texte_de(reponse)
+                break
+            # rejoue l'assistant (avec ses tool_use) puis les résultats
+            msgs.append({"role": "assistant", "content": [_bloc_to_dict(b) for b in blocs]})
+            resultats = []
+            for tu in tool_uses:
+                nom = getattr(tu, "name", "")
+                entree = getattr(tu, "input", None) or {}
+                res, stop = _executer_outil(db, nom, entree, compte_id, compte, backend)
+                outils_vus.append(res)
+                if nom in _LECTURE_META and nom not in noms_lus:
+                    noms_lus.append(nom)           # trace des LECTURES réelles → sources + boutons
+                if stop is not None:            # action en attente de confirmation
+                    _set_pending(db, conv_id, stop)
+                    q = stop["question"]
+                    _poser_message(db, conv_id, "assistant", q)
+                    return {"conversation_id": conv_id, "texte": q, "sources": [], "boutons": [],
+                            "besoin_confirmation": True, "action": stop["action"],
+                            "cout": budget.etat(db, settings).to_json()}
+                if res.get("_action"):
+                    action_faite = res["_action"]
+                resultats.append({"type": "tool_result", "tool_use_id": getattr(tu, "id", None),
+                                  "content": json.dumps(res, ensure_ascii=False, default=str)})
+            msgs.append({"role": "user", "content": resultats})
+        else:
+            texte = texte or "Je me suis arrêté après plusieurs lectures sans conclure. Reformule ta question ?"
 
-    # (3) anti-invention sur la réponse finale.
-    if texte:
-        ok, raison = anti_invention(texte, outils_vus)
-        if not ok:
-            # on N'AFFICHE PAS la prose douteuse ni le chiffre fautif (le `raison` reste pour le log) :
-            # « en cas de doute, on n'affiche pas ».
-            texte = ("Je préfère ne pas répondre là-dessus : je n'ai pas de donnée qui le porte "
-                     "(un chiffre de ma réponse n'était pas sourcé).")
-    else:
-        texte = "Je n'ai rien à dire de sourcé sur ce point pour l'instant."
+        # (3) anti-invention sur la réponse finale.
+        if texte:
+            ok, raison = anti_invention(texte, outils_vus)
+            if not ok:
+                # on N'AFFICHE PAS la prose douteuse ni le chiffre fautif (le `raison` reste pour le log) :
+                # « en cas de doute, on n'affiche pas ».
+                log.info("john-chat : repli anti-invention (%s)", raison)
+                texte = ("Je préfère ne pas répondre là-dessus : je n'ai pas de donnée qui le porte "
+                         "(un chiffre de ma réponse n'était pas sourcé).")
+        else:
+            texte = "Je n'ai rien à dire de sourcé sur ce point pour l'instant."
+    except Exception as exc:  # noqa: BLE001 — JOHN-TAYLOR-2 : plus jamais d'erreur brute à l'écran.
+        log.exception("john-chat : tour en échec (conv %s)", conv_id)
+        texte = (f"Je n'ai pas pu aboutir : {_phrase_echec(exc)}. Réessaie dans un instant — "
+                 "j'ai mis le détail technique au journal.")
+        _poser_message(db, conv_id, "assistant", texte, {"erreur": True})
+        return {"conversation_id": conv_id, "texte": texte, "sources": [], "boutons": [],
+                "erreur": True, "cout": budget.etat(db, settings).to_json()}
 
-    _poser_message(db, conv_id, "assistant", texte)
-    return {"conversation_id": conv_id, "texte": texte, "sources": [],
+    sources, boutons = _sources_et_boutons(db, noms_lus)
+    meta = {"lectures": sources, "boutons": boutons}
+    if action_faite:
+        meta["action"] = action_faite
+    _poser_message(db, conv_id, "assistant", texte, meta)
+    return {"conversation_id": conv_id, "texte": texte, "sources": sources, "boutons": boutons,
             "action": action_faite, "cout": budget.etat(db, settings).to_json()}
 
 
