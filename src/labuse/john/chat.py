@@ -241,8 +241,12 @@ def repondre(db, message: str, *, conversation_id=None, compte_id=None, compte=N
     action_faite = None
     texte = ""
     for _ in range(max_tours):
+        # max_tokens GÉNÉREUX : opus-5-5 pense (adaptive thinking déclenché par le gros system
+        # prompt) et les jetons de réflexion S'IMPUTENT sur max_tokens. À 1200, la réflexion finale
+        # épuisait le budget → tour sans texte (stop=max_tokens) → repli « rien à dire ». 8000 laisse
+        # la place à la réflexion ET à la réponse (non-streaming, sous le garde-fou timeout du SDK).
         reponse = appel(model=_core.model_for("john-chat"), system=system, messages=msgs,
-                        tools=tools, max_tokens=1200)
+                        tools=tools, max_tokens=8000)
         # coût au ledger (best-effort — ne bloque jamais le chat)
         try:
             u = getattr(reponse, "usage", None)
