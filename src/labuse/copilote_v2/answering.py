@@ -778,6 +778,22 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
             rep = _reply(clarif, "QUESTION", clarification=True)
             rep["_route"] = {"intent": "QUESTION", "params": {}, "voie": prior_voie}
             return rep
+    # COPILOTE-5 — RÉSOLUTION D'ENTRÉE (la première étape) : si le message NOMME une adresse ou une
+    # référence cadastrale (et qu'aucun IDU explicite n'est déjà en jeu), on la RÉSOUT en parcelle
+    # AVANT toute réponse — MÊME grammaire que l'omnibox (resolveur → api.recherche._sugg_*), jamais
+    # une 2e source. Une seule parcelle → on l'injecte dans le contexte et le flux fiche reprend (PPR/
+    # règle/loyer/copro/constructibilité/résumé) ; plusieurs candidates → on les PROPOSE (jamais un tir
+    # au hasard). C'est ce qui faisait partir « 3 chemin de la Citerne… » en « réponse générale » (web).
+    if not scenario and not (contexte or {}).get("idu") and not _idu_dans(message):
+        from . import resolveur as _RES
+        reso = _RES.resoudre(db, message)
+        if reso is not None and reso.kind == "candidats":
+            rep = _reply(_RES.message_candidats(reso), "QUESTION", clarification=True,
+                         candidats=[{"idu": c["idu"], "label": c["label"]} for c in reso.candidats])
+            rep["_route"] = {"intent": "QUESTION", "params": {}, "voie": prior_voie}
+            return rep
+        if reso is not None and reso.kind == "idu":
+            contexte = {**(contexte or {}), "idu": reso.idu}   # le flux fiche le relit comme un IDU embarqué
     # A-06-2 / A-06-3 — QUESTIONS CIBLÉES PPR et RÈGLES PLU CALIBRÉES, déterministes, AVANT le chemin
     # fiche (qui, sinon, esquiverait : « ppr » → liste d'aléas générique, « hauteur zone X » → famille de
     # zone). Une parcelle NOMMÉE (IDU) + une question sur le PPR → réponse OUI/NON (statut_ppr) ; + une
@@ -1907,7 +1923,11 @@ def _match_concept(message: str):
 _RESUME_FICHE_KW = ("dis-moi tout", "dis moi tout", "dis moi ce que", "tout sur", "tout ce que tu sais",
               "resume", "résumé", "synthese", "synthèse", "parle-moi", "parle moi", "presente",
               "présente", "que sais-tu", "que sais tu", "analyse cette", "analyse la parcelle",
-              "fiche de", "fiche complete", "fais le point", "donne-moi la fiche", "brief")
+              "fiche de", "fiche complete", "fais le point", "donne-moi la fiche", "brief",
+              # COPILOTE-5 — « donne-moi toutes les infos sur la parcelle … » = demande de résumé.
+              "toutes les infos", "toutes les informations", "infos sur", "informations sur",
+              "tout savoir", "que peux-tu me dire", "que peux tu me dire", "peux-tu me dire",
+              "qu'est-ce que tu sais", "dis m'en plus")
 # un verbe d'ACTION / de destination ne doit pas être happé comme une question de champ (il a sa voie).
 _ACTION_KW = ("ouvrir", "implanter", "restaurant", "commerce", "hotel", "hôtel", "bureau", "entrepot",
               "usine", "peut-on", "peut on", "puis-je", "puis je", "autorise", "construire un",
@@ -2127,8 +2147,46 @@ def _sans_outil(db: Session, message: str, params: dict, intent: str, motif: str
                else "Je n'ai pas de mesure LABUSE dédiée à cette demande précise. " + _COUVRE)
         return _reply(txt, intent, refus="aucun_outil",
                       voie={"cible": "fiche", "libelle": "Ouvrir la fiche", "idu": idu})
-    # ni parcelle ni donnée : c'est une question de CONNAISSANCE GÉNÉRALE → voie b (honnête, badgée).
+    # COPILOTE-5 — WEB BRIDÉ : une question qui porte sur une PARCELLE, une ADRESSE, un PROPRIÉTAIRE ou
+    # une COMMUNE de La Réunion NE PART JAMAIS sur le web. Si aucun outil LABUSE n'a répondu, on le DIT
+    # honnêtement — ce qu'on a cherché et où — au lieu de basculer en « réponse générale » (web). La
+    # recherche web ne sert que pour une question HORS données LABUSE (un maire, une loi — routée en
+    # amont vers recherche_web par le sélecteur, elle n'atteint pas ce point).
+    if _est_domaine_labuse(message, params):
+        telemetrie.refus(db, "labuse_rien_trouve", message, intent)
+        return _reply(_RIEN_TROUVE_LABUSE, intent, refus="labuse_rien_trouve")
+    # ni parcelle ni donnée LABUSE : question de CONNAISSANCE GÉNÉRALE → voie b (honnête, badgée, web).
     return _general(db, message, history)
+
+
+# COPILOTE-5 — le message honnête quand une question LABUSE-locale ne trouve pas (jamais le web).
+_RIEN_TROUVE_LABUSE = (
+    "Je n'ai pas trouvé de réponse à cette question dans les données LABUSE. J'ai cherché côté fiche "
+    "parcelle, PLU/zonage, risques, marché et contexte commune — rien ne répond précisément à votre "
+    "demande. Je ne pars pas sur le web pour une question qui porte sur une parcelle, une adresse, un "
+    "propriétaire ou une commune de La Réunion : donnez-moi l'identifiant (14 caractères), l'adresse "
+    "exacte, ou ouvrez la fiche / l'outil concerné.")
+
+
+# COPILOTE-5 — le message porte-t-il sur le DOMAINE LABUSE (parcelle, adresse, propriétaire, commune
+# de La Réunion) ? Si oui, il ne bascule JAMAIS sur le web (recherche générale) : LABUSE répond, ou le
+# dit honnêtement. Détection déterministe (lieux des 24 communes, voie, référence parcelle, société).
+def _est_domaine_labuse(message: str, params: dict | None) -> bool:
+    m = _fold_py((message or "").lower())
+    p = params or {}
+    if _idu_dans(message) or p.get("idu") or p.get("commune") or p.get("entreprise"):
+        return True
+    if any(k in m for k in ("parcelle", "cette parcelle", "ce terrain", "ce bien", "cadastr")):
+        return True
+    if _nomme_un_lieu(message):
+        return True
+    from .resolveur import _VOIE_KW, _tokens
+    if set(_tokens(message)) & _VOIE_KW:
+        return True
+    if any(k in m for k in ("proprietaire", "proprio", "appartient", "possede", "patrimoine",
+                            " sci ", " scp ", " sarl ", " sas ", "personne morale", "societe")):
+        return True
+    return False
 
 
 def _division(db: Session, idu: str | None, intent: str) -> dict:

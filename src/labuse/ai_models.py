@@ -105,7 +105,13 @@ SURFACES: dict[str, dict] = {
     # différée, clé à créditer). Router inchangé (Haiku).
     "copilote-route":    {"label": "Copilote v2 — routage (3 chemins)",     "model": MODEL_FACTUAL},
     "copilote-select":   {"label": "Copilote v2 — chemin OUTIL (sélection)", "model": MODEL_FACTUAL},
-    "copilote-formule":  {"label": "Copilote v2 — chemin FICHE (formulation)", "model": MODEL_FACTUAL},
+    # COPILOTE-5 — la FORMULATION (la phrase servie au client, par-dessus des faits déjà calculés)
+    # prend le modèle le plus capable, comme John : `claude-opus-5-5` (VÉRIFIÉ servi, défaut John),
+    # repli automatique `claude-opus-4-8` si not_found (REPLI_MODELES, câblé core.complete). Opus
+    # REFUSE `temperature` → omis via NO_TEMPERATURE_MODELS (opus-5-5 ET opus-4-8 y sont). Le modèle
+    # ne CALCULE ni ne CHOISIT aucun chiffre (verrou anti-invention COPILOTE-3 inchangé) : il tourne la
+    # phrase. Routage/sélection restent sur Haiku (extraction, pas rédaction). Overridable env.
+    "copilote-formule":  {"label": "Copilote v2 — formulation (phrase servie)", "model": MODEL_OPUS},
     "copilote-general":  {"label": "Copilote v2 — chemin WEB (connaissance)", "model": MODEL_FACTUAL},
     "copilote-prepare":  {"label": "Copilote v2 — préparer un script",       "model": MODEL_FACTUAL},
     "copilote-web":      {"label": "Copilote v2 — chemin WEB (recherche)",    "model": MODEL_FACTUAL},
