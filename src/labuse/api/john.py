@@ -6,10 +6,13 @@ ici (la production coûte un appel modèle, elle ne se déclenche pas à l'ouver
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
+import logging
+
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from ..db import session_scope
+from ..john import accueil as _accueil
 from ..john import actions as _actions
 from ..john import budget as _budget
 from ..john import carnet as _carnet
@@ -18,6 +21,7 @@ from ..john import enquete as _enquete
 from ..john import resume as _resume
 from ..john import veille as _veille
 
+log = logging.getLogger("labuse.api.john")
 router = APIRouter(tags=["john"])
 
 
@@ -43,6 +47,7 @@ def admin_john(request: Request) -> dict:
         _carnet.semer(db)       # idempotent : garantit le carnet de bord au premier affichage
         return {
             "actif": bool(getattr(s, "john_actif", True)),
+            "accueil": _accueil.etat(db),   # JOHN-TAYLOR-2 — « rien n'attend ta décision » / « N choses t'attendent »
             "cout": etat.to_json(),
             "resume_matin": _resume.dernier_resume(db),
             "veille": _veille.recentes(db, 20),
@@ -64,11 +69,57 @@ def admin_john_chat(body: ChatIn, request: Request) -> dict:
     from .auth import exiger_admin
     info = exiger_admin(request)
     cid, label = _qui(info)
+    # JOHN-TAYLOR-2 — dernier filet : même si le tour de chat échoue AVANT d'avoir pu se rattraper
+    # lui-même (panne base à l'ouverture de la conversation…), John répond une phrase, pas un 500.
+    try:
+        with session_scope() as db:
+            out = _chat.repondre(db, body.message, conversation_id=body.conversation_id,
+                                 compte_id=cid, compte=label)
+            db.commit()
+            return out
+    except Exception:  # noqa: BLE001
+        log.exception("admin/john/chat : échec serveur")
+        return {"conversation_id": body.conversation_id, "sources": [], "boutons": [], "erreur": True,
+                "texte": "Je n'ai pas pu traiter ta demande : un souci technique côté serveur. "
+                         "Réessaie dans un instant — j'ai noté l'erreur au journal."}
+
+
+# ════════════════════════════════ Historique (liste / reprise / suppression) ════════════════════════════════
+@router.get("/admin/john/conversations")
+def admin_john_conversations(request: Request) -> dict:
+    """La colonne de gauche : les conversations du compte (la plus récente en tête) + la rétention."""
+    from .auth import exiger_admin
+    info = exiger_admin(request)
+    cid, _ = _qui(info)
+    from ..config import get_settings
     with session_scope() as db:
-        out = _chat.repondre(db, body.message, conversation_id=body.conversation_id,
-                             compte_id=cid, compte=label)
+        return {"conversations": _chat.lister_conversations(db, cid),
+                "retention_jours": int(getattr(get_settings(), "john_conversations_jours", 90))}
+
+
+@router.get("/admin/john/conversations/{conv_id}")
+def admin_john_conversation(conv_id: int, request: Request) -> dict:
+    """Le fil complet d'une conversation — reprise d'un clic (cloisonné au compte)."""
+    from .auth import exiger_admin
+    info = exiger_admin(request)
+    cid, _ = _qui(info)
+    with session_scope() as db:
+        conv = _chat.charger_conversation(db, conv_id, cid)
+        if conv is None:
+            raise HTTPException(status_code=404, detail="conversation introuvable")
+        return conv
+
+
+@router.delete("/admin/john/conversations/{conv_id}")
+def admin_john_conversation_supprimer(conv_id: int, request: Request) -> dict:
+    """Supprime une conversation du compte (messages par CASCADE)."""
+    from .auth import exiger_admin
+    info = exiger_admin(request)
+    cid, _ = _qui(info)
+    with session_scope() as db:
+        ok = _chat.supprimer_conversation(db, conv_id, cid)
         db.commit()
-        return out
+        return {"ok": ok}
 
 
 # ════════════════════════════════ Action directe (bouton / « oui ») ════════════════════════════════
@@ -103,10 +154,15 @@ class EnqueteIn(BaseModel):
 def admin_john_enquete(body: EnqueteIn, request: Request) -> dict:
     from .auth import exiger_admin
     exiger_admin(request)
-    with session_scope() as db:
-        out = _enquete.enqueter(db, cle=body.cle, titre=body.titre, mode=body.mode)
-        db.commit()
-        return out
+    try:
+        with session_scope() as db:
+            out = _enquete.enqueter(db, cle=body.cle, titre=body.titre, mode=body.mode)
+            db.commit()
+            return out
+    except Exception:  # noqa: BLE001 — JOHN-TAYLOR-2 : une phrase, pas un 500.
+        log.exception("admin/john/enquete : échec serveur")
+        return {"ok": False, "message": "Je n'ai pas pu mener l'enquête : un souci technique côté "
+                "serveur. Réessaie dans un instant — j'ai noté l'erreur au journal."}
 
 
 # ════════════════════════════════ Carnet de bord ════════════════════════════════

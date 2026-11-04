@@ -16,13 +16,14 @@ import { CourrierSection } from './Courrier'
 import { RadarSection } from './Radar'
 import { ContactsSection } from './Contacts'
 import { CronSection } from './Cron'
+import { JohnTaylor } from './circuit/JohnTaylor'
 import { Chargement } from '../Loading'
 
 // ADMIN-1 (AD2) — « sources »/« flux » ne sont plus des sections de menu : elles sont FUSIONNÉES
 // dans « donnees » (= le Circuit). CIRCUIT-P2 (lot 1.2) — « cron » redevient une page à part
 // (lien dans Pilotage). Les valeurs restent dans le type pour REDIRIGER les anciens deep-links
 // (voir `_rediriger` plus bas).
-export type AdminSection = 'pilotage' | 'licences' | 'ia' | 'donnees' | 'destinations' | 'sources' | 'flux' | 'produit' | 'courrier' | 'radar' | 'cron' | 'contacts' | 'programmes'
+export type AdminSection = 'pilotage' | 'licences' | 'ia' | 'donnees' | 'destinations' | 'sources' | 'flux' | 'produit' | 'courrier' | 'radar' | 'cron' | 'contacts' | 'programmes' | 'john-taylor'
 
 // ADMIN-1 (AD2) — redirection des anciennes routes vers la page fusionnée « Données ».
 // LOT S1 — `programmes` n'a plus de section admin : le deep-link sort vers l'outil « Scan patrimoine »
@@ -367,6 +368,8 @@ const SECTIONS: { key: AdminSection; label: string; ic: string; ia?: boolean }[]
   { key: 'produit', label: 'Produit', ic: '◫' },
   { key: 'ia', label: 'IA', ic: '✦', ia: true },
   { key: 'contacts', label: 'Contacts', ic: '☎' },
+  // JOHN-TAYLOR-2 — le second de bord : une page conversationnelle à part entière, un clic depuis le rail.
+  { key: 'john-taylor', label: 'John Taylor', ic: '⚓' },
   // LOT S1 — « Programmes » n'est plus une section de menu : la collecte a été REPLIÉE dans l'outil
   // « Scan patrimoine » (onglet « Ce qu'ils construisent », geste admin discret). Les anciens
   // deep-links `programmes` atterrissent désormais sur le Scan (voir `_rediriger`).
@@ -477,6 +480,11 @@ export function AdminView() {
       </aside>
 
       {/* contenu */}
+      {/* JOHN-TAYLOR-2 — John prend tout le volet (pas d'en-tête générique, pas de cap 1120, il gère son
+          propre défilement) : une page conversationnelle pleine hauteur, comme le Copilote. */}
+      {section === 'john-taylor' ? (
+        <div className="min-w-0 overflow-hidden"><JohnTaylor /></div>
+      ) : (
       <div className="min-w-0 overflow-y-auto px-9 py-7">
         <div className="mx-auto max-w-[1120px]">
           <header className="mb-6 flex flex-wrap items-baseline gap-3.5">
@@ -497,6 +505,7 @@ export function AdminView() {
           {section === 'contacts' && <ContactsSection />}
         </div>
       </div>
+      )}
     </div>
   )
 }
