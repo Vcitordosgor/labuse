@@ -156,6 +156,12 @@ def anti_invention(prose: str, outils_vus: list[dict]) -> tuple[bool, str | None
     """Vrai si tout nombre de la réponse figure dans un résultat d'outil lu (tolérance format + petits
     entiers de tournure, comme le socle). Sinon (False, raison) → on remplace par un repli honnête."""
     allowed = _nombres_autorises(outils_vus)
+    # Décimales FR : « 18,7 » doit se lire comme UN SEUL nombre. Le scanner du socle (`_NUM_RE`) ne
+    # met pas la virgule dans sa classe → « 18,7 » se scinderait en « 18 » et « 7 », et « 18 » (absent
+    # des lectures) ferait un FAUX refus anti-invention sur un fait pourtant sourcé (tailles « 6 559,8
+    # Mo », âges « 18,7 h », pourcentages…). On convertit la virgule décimale (chiffre,chiffre) en point
+    # AVANT le scan. Isolé à John : le socle `_core` (partagé avec le Copilote) n'est PAS touché.
+    prose = re.sub(r"(\d),(\d)", r"\1.\2", prose)
     for m in _core._NUM_RE.finditer(prose):
         n = _core._norm_number(m.group())
         if n is None:
