@@ -53,7 +53,10 @@ export function PillStatut({ ton, children }: { ton: 'mint' | 'violet' | 'ambre'
 export function TraitementEnCours() {
   return (
     <div data-traitement className="rounded-2xl border border-violet/25 bg-cp-card px-5 py-4 text-left">
-      <Chargement variant="inline" label="Le Copilote cherche votre réponse…" />
+      {/* COPILOTE-5 (point 5 du mandat) — les trois points d'attente prennent le MAUVE du Copilote
+          (accent `ia` = cp-ia, le bouton Envoyer), plus le vert : sa surface est mauve. Le libellé
+          reste inchangé. */}
+      <Chargement variant="inline" accent="ia" label="Le Copilote cherche votre réponse…" />
     </div>
   )
 }

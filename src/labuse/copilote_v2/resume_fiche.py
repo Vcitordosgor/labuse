@@ -241,16 +241,93 @@ _CHAMPS = [
     (("proprietaire", "proprio", "a qui appartient", "appartient-elle", "appartient elle",
       "appartient a", "qui possede", "qui detient", "personne morale", "detenue par", "detenu par"),
      ("type_proprietaire", "Propriétaire")),
+    # COPILOTE-5 — le STATUT du PLU AVANT la zone (« plu » nu est happé par la zone sinon).
+    (("statut du plu", "plu a jour", "plu approuve", "plu opposable", "date du plu", "a jour",
+      "document d'urbanisme opposable", "le plu est-il", "plu en vigueur", "opposable"),
+     ("statut_plu", "Statut du PLU")),
     (("taxe d'amenagement", "taxe damenagement", "taxe amenagement", "ta communale", "taux de ta"),
      ("taxe_amenagement_estimee_eur", "Taxe d'aménagement")),
     (("taxe fonciere", "tfpb", "taxe fonciere batie"), ("tfpb_taux_pct", "Taxe foncière (bâti)")),
+    # COPILOTE-5 — outil ÉTUDE DE ZONE / chalandise AVANT la zone (« étude de zone » contient « zone »).
+    (("etude de zone", "chalandise", "a moins de 100 m", "autour a 100", "ventes a proximite"),
+     ("voisinage_100m_liste", "Autour (100 m)")),
     (("zone", "zonage", "plu"), ("zone_plu_famille", "Zone PLU")),
     (("risque", "risques", "alea", "aleas", "ppr", "inondation"), ("aleas_parcelle_liste", "Risques et aléas")),
+    # COPILOTE-5 — pollution des sols (CASIAS), distincte des aléas PPR.
+    (("pollution", "pollue", "polluee", "site pollue", "sol pollue", "casias", "ancien site industriel"),
+     ("casias_statut", "Pollution des sols (CASIAS)")),
     (("pente", "denivele"), ("pente_deg", "Pente")),
     (("exposition", "versant", "orientation"), ("exposition_versant", "Exposition")),
+    # COPILOTE-5 — surface LIBRE au sol AVANT la surface de parcelle (« surface » happerait sinon).
+    (("surface libre", "sol libre", "terrain libre", "espace libre", "surface disponible au sol"),
+     ("surface_libre_sol_m2", "Surface libre au sol")),
     (("surface", "superficie", "taille"), ("surface_parcelle_m2", "Surface")),
     (("sdp", "surface de plancher", "constructible restant", "capacite"),
      ("sdp_residuelle_m2", "SDP restante")),  # NU-3-M-T01 : « SDP restante » partout (cf. :34)
+    # ═══ COPILOTE-5 — COUVERTURE COMPLÈTE : chaque section de la fiche a son champ, LU du MÊME
+    # robinet (robinet_fiche) que l'écran et le Dossier — jamais une 2e source. ═══
+    # §1 Identité
+    (("adresse", "ou se trouve", "localisation", "ou est-elle situee", "quelle adresse",
+      "quelle est l'adresse"), ("adresse_ban", "Adresse")),
+    # §3 Bâti
+    (("emprise batie", "emprise du bati", "surface batie", "emprise bâtie", "surface au sol du bati"),
+     ("emprise_batie_m2", "Emprise bâtie")),
+    (("hauteur du bati", "hauteur du batiment", "hauteur existante", "hauteur construite",
+      "hauteur batie"), ("hauteur_bati_m", "Hauteur du bâti")),
+    (("combien de batiments", "nombre de batiments", "parcelle batie", "deja bati",
+      "est-elle batie", "y a-t-il un batiment", "y a-t-il des batiments", "batie ou non"),
+     ("n_batiments", "Bâti")),
+    (("toiture", "nature du toit", "type de toit", "pente du toit", "toit en"), ("nature_toit", "Toiture")),
+    (("piscine",), ("piscine_m2", "Piscine")),
+    # §6 Réseaux et desserte
+    (("fibre", "ftth", "internet", "tres haut debit"), ("fibre_parcelle", "Fibre optique")),
+    (("viabilis", "raccord", "reseaux", "vrd", "eau potable", "assainissement", "electricite",
+      "desserte en reseaux"), ("viabilisation_verdict", "Viabilisation / réseaux")),
+    (("arret de bus", "transport en commun", "arret de transport", "tcsp", "ligne de bus",
+      "transports en commun"), ("distance_arret_m", "Transport en commun")),
+    # §4/7 Urbanisme — servitudes & dispositifs
+    (("servitude", "dispositif", "emplacement reserve", "droit de preemption", "dpu",
+      "monument historique", "batiment de france", "abf"), ("dispositifs_parcelle", "Dispositifs et servitudes")),
+    (("rtaa", "reglementation thermique", "confort thermique dom"), ("rtaa_exigences", "RTAA DOM")),
+    # §9 Marché
+    (("prix du terrain", "prix au m2 du terrain", "valeur du terrain", "combien vaut le terrain",
+      "prix du foncier", "prix du m2 de terrain"), ("prix_terrain_secteur_eur_m2", "Prix du terrain (secteur)")),
+    (("derniere vente", "deja vendu", "ventes autour", "dvf", "prix du marche", "prix au m2",
+      "prix de l'ancien", "transactions", "prix de vente"), ("dvf_parcelle_liste", "Marché — ventes")),
+    (("prix d'achat", "achetee pour", "acquise pour", "dernier prix paye", "prix paye"),
+     ("prix_achat_historique_eur", "Dernier prix d'achat")),
+    # §11 Potentiel · outil ÉTUDE DE FAISABILITÉ (verdict + SDP) — lu du moteur de la fiche.
+    (("potentiel constructible", "potentiel de la parcelle", "capacite constructible",
+      "capacite de la parcelle", "faisabilite", "etude de faisabilite", "que peut-on construire",
+      "densifier"), ("potentiel_verdict", "Potentiel constructible")),
+    (("combien de logements", "capacite en logements", "nombre de logements constructibles",
+      "combien de lots"), ("capacite_logements", "Capacité en logements")),
+    # outil GABARIT (implantation/hauteur/emprise constructibles) — résultat graphique : on donne les
+    # CHIFFRES (même moteur que l'écran) et on propose d'ouvrir le Gabarit.
+    (("gabarit", "jusqu'ou", "ou puis-je construire", "implantation",
+      "ou construire sur", "ou batir"), ("gabarit_implantation_m2", "Gabarit — implantation")),
+    # outil ESTIMER (prix de sortie du bâti au secteur) — graphique : chiffres + proposer d'ouvrir.
+    (("estimer", "estimation", "valeur du bien", "prix de sortie", "combien vaut ce bien",
+      "combien vaut le bien", "valeur venale", "prix de revente"),
+     ("prix_sortie_bati_eur_m2", "Estimation — prix de sortie")),
+    # outil PROSPECTION SOLAIRE — pente/orientation du toit + productible.
+    (("solaire", "photovoltaique", "panneaux", "productible", "potentiel solaire", "toit expose"),
+     ("pente_toit_deg", "Potentiel solaire (toiture)")),
+    # outil SUCCESSIONS À VENIR — timeline de propriété (PM).
+    (("succession", "heritage", "heritier", "mutation de propriete", "historique de propriete",
+      "changement de proprietaire", "ancien proprietaire"),
+     ("proprietaire_timeline_liste", "Historique de propriété / succession")),
+    # RADAR — annonces détectées sur la parcelle.
+    (("annonce", "a vendre", "en vente", "mise en vente", "radar", "annonces immobilieres"),
+     ("radar_annonces_liste", "Annonces (Radar)")),
+    # §10 Quartier
+    (("quartier", "iris", "voisinage", "habitants du quartier", "population du quartier",
+      "environnement urbain"), ("iris_quartier", "Quartier")),
+    (("ecole", "commerce", "equipements a proximite", "commodites", "services a proximite",
+      "a proximite", "autour de la parcelle"), ("equipements_proximite_liste", "Équipements à proximité")),
+    # §3/9 DPE
+    (("dpe", "diagnostic de performance", "classe energetique", "performance energetique"),
+     ("dpe_connu", "DPE")),
 ]
 
 
@@ -263,6 +340,35 @@ _SOURCE_CHAMP = {
     "type_proprietaire": "DGFiP — propriétaire (personnes morales : SIREN public)",
     "surface_parcelle_m2": "cadastre",
     "taxe_amenagement_estimee_eur": "barème taxe d'aménagement (service-public.gouv.fr)",
+    # COPILOTE-5 — la vraie source de chaque section (le même producteur que la fiche écran).
+    "statut_plu": "GPU — document d'urbanisme opposable",
+    "casias_statut": "BASIAS / CASIAS — sites et sols pollués",
+    "surface_libre_sol_m2": "LABUSE — surface libre au sol (CoSIA / BD TOPO)",
+    "adresse_ban": "BAN — Base Adresse Nationale",
+    "emprise_batie_m2": "BD TOPO / CoSIA — emprise bâtie",
+    "hauteur_bati_m": "BD TOPO — hauteur du bâti",
+    "n_batiments": "BD TOPO — bâti",
+    "nature_toit": "CoSIA / BD ORTHO — toiture",
+    "piscine_m2": "CoSIA — détection piscine",
+    "fibre_parcelle": "ARCEP — déploiement fibre (FTTH)",
+    "viabilisation_verdict": "LABUSE — faisceau viabilisation (faits réseaux)",
+    "distance_arret_m": "Réseaux de transport (Citalis / Car Jaune…)",
+    "dispositifs_parcelle": "GPU — servitudes et dispositifs (SUP)",
+    "rtaa_exigences": "RTAA DOM (arrêté)",
+    "prix_terrain_secteur_eur_m2": "DVF — terrains du secteur",
+    "dvf_parcelle_liste": "DVF — ventes du secteur",
+    "prix_achat_historique_eur": "DVF — dernière mutation",
+    "potentiel_verdict": "LABUSE — potentiel (moteur de la fiche)",
+    "capacite_logements": "Étude de faisabilité",
+    "iris_quartier": "INSEE — IRIS (quartier)",
+    "equipements_proximite_liste": "BPE INSEE / IGN — équipements de proximité",
+    "dpe_connu": "ADEME — DPE",
+    "gabarit_implantation_m2": "LABUSE — gabarit réglementaire (reculs/emprise/hauteur)",
+    "prix_sortie_bati_eur_m2": "DVF — prix de sortie du bâti (secteur)",
+    "pente_toit_deg": "CoSIA / LiDAR — toiture (pente, orientation)",
+    "proprietaire_timeline_liste": "DGFiP — historique de propriété (personnes morales)",
+    "radar_annonces_liste": "Radar LABUSE — annonces détectées",
+    "voisinage_100m_liste": "DVF / Sitadel — autour à 100 m",
 }
 
 
@@ -311,10 +417,21 @@ def reponse_copro(db: Session, idu: str) -> dict | None:
     return {"texte": texte, "champ_id": "copro", "valeur": copro, "source": src}
 
 
+def _mot_present(m: str, k: str) -> bool:
+    """COPILOTE-5 — un mot-clé COURT acronymique (≤ 3 car. : « plu », « dpu », « ppr », « dpe ») est
+    cherché avec BORNES DE MOT (sinon « plu » est happé par « plus proche ») ; un mot-clé plus long
+    reste en sous-chaîne (pour attraper les pluriels/accords : « servitude » → « servitudes »,
+    « viabilis » → « viabilisée »)."""
+    if len(k.replace(" ", "")) <= 3:
+        return re.search(r"\b" + re.escape(k) + r"\b", m) is not None
+    return k in m
+
+
 def _quel_champ(message: str) -> tuple[str, str] | None:
+    # L'ordre du tableau reste la priorité (le plus spécifique d'abord).
     m = _fold_py(message.lower())
     for kws, cible in _CHAMPS:
-        if any(k in m for k in kws):
+        if any(_mot_present(m, k) for k in kws):
             return cible
     return None
 
@@ -386,4 +503,141 @@ def _rendre_champ(cid: str, libelle: str, valeur: Any, valeurs: dict) -> str:
         return f"{libelle} : non renseigné."
     if cid == "pente_deg":
         return f"Pente : {str(valeur).replace('.', ',')}°."
+    # ═══ COPILOTE-5 — rendu des sections ajoutées (lu du MÊME robinet que la fiche) ═══
+    if cid == "adresse_ban":
+        return f"Adresse : {valeur}."
+    if cid == "statut_plu" and isinstance(valeur, dict):
+        return (valeur.get("libelle") or "Statut du PLU : non précisé").rstrip(".") + "."
+    if cid == "surface_libre_sol_m2":
+        return f"Surface libre au sol : {fmt_m2(valeur)}."
+    if cid == "emprise_batie_m2":
+        return f"Emprise bâtie : {fmt_m2(valeur)} au sol."
+    if cid == "hauteur_bati_m":
+        return f"Hauteur du bâti : {str(valeur).replace('.', ',')} m (faîtage)."
+    if cid == "n_batiments":
+        n = int(valeur) if isinstance(valeur, (int, float)) else 0
+        return (f"{n} bâtiment{'s' if n > 1 else ''} sur la parcelle." if n
+                else "Parcelle non bâtie (aucun bâtiment cartographié).")
+    if cid == "nature_toit":
+        return f"Toiture : {valeur}."
+    if cid == "piscine_m2":
+        return f"Piscine détectée — environ {fmt_m2(valeur)}."
+    if cid == "fibre_parcelle" and isinstance(valeur, dict):
+        if valeur.get("ftth"):
+            ops = ", ".join(valeur.get("operateurs") or [])
+            return "Fibre optique (FTTH) disponible" + (f" — opérateurs : {ops}." if ops else ".")
+        return f"Fibre : {valeur.get('etat') or 'non desservie'}."
+    if cid == "viabilisation_verdict" and isinstance(valeur, dict):
+        return (valeur.get("libelle") or "Viabilisation : à confirmer").rstrip(".") + "."
+    if cid == "distance_arret_m" and isinstance(valeur, dict):
+        a = valeur.get("arret") or {}
+        if a.get("nom"):
+            res = f" ({a['reseau']})" if a.get("reseau") else ""
+            return f"Arrêt le plus proche : {a['nom']}{res} à {a.get('distance_m')} m."
+        return "Transport en commun : aucun arrêt relevé à proximité."
+    if cid == "dispositifs_parcelle" and isinstance(valeur, list):
+        bouts = [f"{d.get('categorie')} sur {str(d.get('part_pct')).replace('.0', '')} %"
+                 for d in valeur[:3] if isinstance(d, dict) and d.get("categorie")]
+        return ("Dispositifs / servitudes : " + " ; ".join(bouts) + "."
+                if bouts else "Aucun dispositif ni servitude relevé sur la parcelle.")
+    if cid == "prix_terrain_secteur_eur_m2" and isinstance(valeur, dict):
+        p = valeur.get("prix_m2")
+        return (f"Prix du terrain au secteur : {p} €/m² (médiane de {valeur.get('n')} ventes, "
+                f"{valeur.get('perimetre')}, {valeur.get('fenetre')}).")
+    if cid == "dvf_parcelle_liste" and isinstance(valeur, list) and valeur:
+        d = valeur[0]
+        return (f"Marché du secteur : médiane {d.get('mediane_prix_m2')} €/m² — {d.get('type_bien')} "
+                f"({d.get('n_ventes')} ventes, {d.get('fenetre')}).")
+    if cid == "prix_achat_historique_eur":
+        v = _scalaire(valeur)
+        return (f"Dernier prix d'achat connu : {f'{int(v):,}'.replace(',', ' ')} €."
+                if isinstance(v, (int, float)) else f"{libelle} : {valeur}.")
+    if cid == "potentiel_verdict" and isinstance(valeur, dict):
+        calc = valeur.get("calcul") or {}
+        sdp = calc.get("sdp_max_m2")
+        return (f"Potentiel constructible : jusqu'à {fmt_m2(sdp)} de surface de plancher (indicatif) — "
+                "voir l'Étude de faisabilité pour le détail." if sdp is not None
+                else "Potentiel constructible : voir l'Étude de faisabilité.")
+    if cid == "capacite_logements" and isinstance(valeur, dict):
+        return "Capacité en logements : " + (valeur.get("texte") or "voir l'Étude de faisabilité") + "."
+    if cid == "iris_quartier" and isinstance(valeur, dict):
+        return (f"Quartier (IRIS) : {valeur.get('nom')} — {valeur.get('logements')} logements "
+                f"({valeur.get('millesime')}).")
+    if cid == "equipements_proximite_liste" and isinstance(valeur, list):
+        bouts = [f"{e.get('nom')} ({e.get('distance_m')} m)"
+                 for e in valeur[:3] if isinstance(e, dict) and e.get("nom")]
+        return "À proximité : " + " ; ".join(bouts) + "." if bouts else "Aucun équipement relevé à proximité."
+    if cid == "dpe_connu":
+        return f"DPE : {valeur}." if isinstance(valeur, (str, int, float)) else f"{libelle} : connu."
+    # outil FAISABILITÉ — verdict + SDP (calcul null → on sert le libellé/niveau du moteur).
+    if cid == "potentiel_verdict" and isinstance(valeur, dict):
+        calc = valeur.get("calcul") or {}
+        sdp = calc.get("sdp_max_m2")
+        lib = valeur.get("libelle")
+        if sdp is not None:
+            return (f"Potentiel constructible : jusqu'à {fmt_m2(sdp)} de surface de plancher "
+                    f"(dont {fmt_m2(calc.get('sdp_residuelle_m2'))} résiduels après le bâti conservé) — "
+                    "voir l'Étude de faisabilité pour le détail.")
+        return ((lib or "Potentiel constructible : voir l'Étude de faisabilité").rstrip(".")
+                + " — voir l'Étude de faisabilité pour le détail.")
+    # outil GABARIT (graphique) — chiffres servis + proposer d'ouvrir le plan.
+    if cid == "gabarit_implantation_m2":
+        if valeur in (None, 0):
+            mb = (valeurs.get("gabarit_motif_blocage").valeur
+                  if valeurs.get("gabarit_motif_blocage") else None)
+            return (f"Gabarit non modélisé : {mb}." if mb
+                    else "Gabarit : emprise implantable non calculée pour cette parcelle.")
+        def _g(k):
+            v = valeurs.get(k)
+            return v.valeur if v else None
+        emp, libre, haut = _g("gabarit_emprise_plafond_m2"), _g("gabarit_zone_libere_m2"), _g("gabarit_hauteur_m")
+        bouts = [f"~{fmt_m2(valeur)} implantables au sol"]
+        if emp is not None:
+            bouts.append(f"plafond d'emprise {fmt_m2(emp)}")
+        if libre is not None:
+            bouts.append(f"{fmt_m2(libre)} libérés")
+        txt = "Gabarit : " + ", ".join(bouts) + "."
+        if haut:
+            txt += f" Hauteur : {haut}."
+        return txt + " Ouvrez le Gabarit pour le plan d'implantation."
+    # outil ESTIMER (graphique) — prix de sortie du bâti au secteur.
+    if cid == "prix_sortie_bati_eur_m2" and isinstance(valeur, dict):
+        med, typ, n = valeur.get("median"), valeur.get("type_prix"), valeur.get("n")
+        fia = "fiable" if valeur.get("fiable") else "indicatif"
+        return (f"Estimation — prix de sortie du secteur : {med} €/m² ({typ}, {n} ventes, {fia}). "
+                "Pour estimer un bien précis (adresse/annonce), ouvrez Estimer un bien.")
+    # outil PROSPECTION SOLAIRE — toiture + productible.
+    if cid == "pente_toit_deg":
+        nat = valeurs.get("nature_toit")
+        prod = valeurs.get("prod_spec_kwh_kwc")
+        txt = f"Toiture : pente {str(valeur).replace('.', ',')}°"
+        if nat and nat.valeur:
+            txt += f", {nat.valeur}"
+        if prod and prod.valeur is not None:
+            txt += f" ; productible ~{prod.valeur} kWh/kWc·an"
+        return txt + ". Ouvrez la Prospection solaire pour le détail."
+    # outil SUCCESSIONS — timeline de propriété (PM).
+    if cid == "proprietaire_timeline_liste" and isinstance(valeur, list):
+        bouts = [f"{e.get('millesime')} : {e.get('denomination')}"
+                 + (f" ({e.get('forme_juridique')})" if e.get("forme_juridique") else "")
+                 for e in valeur[:3] if isinstance(e, dict) and e.get("denomination")]
+        return ("Historique de propriété : " + " · ".join(bouts) + "." if bouts
+                else "Historique de propriété : non renseigné.")
+    # RADAR — annonces détectées.
+    if cid == "radar_annonces_liste":
+        if isinstance(valeur, list) and valeur:
+            return f"{len(valeur)} annonce(s) détectée(s) par le Radar sur cette parcelle — ouvrez le Radar."
+        return "Aucune annonce détectée par le Radar sur cette parcelle."
+    # outil ÉTUDE DE ZONE — autour à 100 m.
+    if cid == "voisinage_100m_liste" and isinstance(valeur, dict):
+        v = valeur.get("ventes_dvf")
+        p = valeur.get("permis")
+        med = valeur.get("prix_median_eur")
+        txt = f"Autour à 100 m (sur {valeur.get('fenetre_mois')} mois) : {v} vente(s) DVF, {p} permis"
+        if med is not None:
+            txt += f", prix médian {f'{int(med):,}'.replace(',', ' ')} €"
+        return txt + ". Ouvrez l'Étude de zone pour la chalandise complète."
+    # SÉCURITÉ COPILOTE-5 — jamais un dict/list brut au client : on renvoie à la fiche plutôt que du JSON.
+    if isinstance(valeur, (dict, list)):
+        return f"{libelle} : voir la fiche parcelle pour le détail."
     return f"{libelle} : {valeur}."
