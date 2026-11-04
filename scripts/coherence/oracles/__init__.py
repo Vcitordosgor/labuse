@@ -201,22 +201,44 @@ def oracle_georisques(v: V, conn, temoins: list[dict]):
                         out.append(val.get("libelle") or k)
                 return out
             risques_geo = _present(nat) + _present(tech)
-            # COCKPIT-1 (corr. C) — on ne compare QUE les aléas ZONAUX ; séisme/feu (île-wide) exclus.
+            # COCKPIT-1 (corr. C) — on retire d'emblée séisme/feu (île-wide, non discriminants).
             risques_zonaux = aleas_zonaux(risques_geo)
             non_disc = [r for r in risques_geo if r not in risques_zonaux]
-            # LABUSE porte-t-il une vigilance risque/aléa ?
+            # LABUSE porte-t-il une vigilance/PPR/aléa LOCAL (sur la parcelle) ?
             risque_labuse = bool(fiche.get("aleas")) or any(
                 l.get("layer") in ("risques", "mvt", "icpe") and
                 l.get("result") in ("SOFT_FLAG", "HARD_EXCLUDE") for l in lines)
-            ok = bool(risques_zonaux) == risque_labuse
+            # SILENCE-1 (point 6) — MÊME NOTION. LABUSE sert des vigilances de PARCELLE (PPR/aléa LOCAL
+            # zoné sur la parcelle), jamais les risques RÉGIONAUX/au périmètre. Le rapport Géorisques au
+            # RAYON de 1 km est une présence de SECTEUR (la commune a un PPRi « quelque part »), pas une
+            # attribution à CETTE parcelle : il ne peut NI confirmer NI infirmer « aucun PPR ni aléa local »
+            # (le zonage PPR par parcelle a été vérifié à la main au Lot B ; l'endpoint parcelle Géorisques
+            # répond 404). Donc : on ne déclare « faux » QUE si LABUSE AFFIRME une vigilance locale alors
+            # que Géorisques ne voit RIEN au périmètre (faux positif LABUSE). Si LABUSE n'a aucun PPR ni
+            # aléa local et que Géorisques ne montre qu'une présence au périmètre, c'est NON VÉRIFIABLE
+            # (notions différentes : parcelle vs rayon 1 km) — jamais une divergence. C'étaient exactement
+            # les 3 écarts « vérité sources » (Séisme/Feu/Inondation au périmètre ≠ aléa de la parcelle).
+            label_labuse = ("vigilance(s)/PPR local(aux) servi(s)" if risque_labuse
+                            else "aucun PPR ni aléa local")
             note_nd = " · séisme/feu île-wide (non discriminants)" if non_disc else ""
-            v.verdict("risques_presence", idu,
-                      "vigilance(s) risque zonale servie" if risque_labuse else "aucune vigilance risque zonale",
-                      (", ".join(risques_zonaux)[:70] or "aucun risque ZONAL Géorisques") + note_nd,
-                      "Géorisques rapport risque (aléas zonaux au point)",
-                      ok=ok,
-                      pourquoi="" if ok else "présence de risque ZONAL divergente fiche vs Géorisques",
-                      url=url)
+            if risque_labuse:
+                ok = bool(risques_geo)   # LABUSE affirme un risque local → Géorisques doit au moins en voir un
+                v.verdict("risques_presence", idu, label_labuse,
+                          (", ".join(risques_zonaux)[:70] or "aucun risque zonal Géorisques") + note_nd,
+                          "Géorisques rapport risque (présence au périmètre 1 km)",
+                          ok=ok,
+                          pourquoi="" if ok else "LABUSE sert un risque local que Géorisques ne voit pas au périmètre",
+                          url=url)
+            else:
+                # aucun PPR ni aléa LOCAL servi. Le rapport Géorisques au périmètre (1 km) ne porte QUE
+                # des risques de secteur/régionaux (séisme, feu, inondation « quelque part dans la
+                # commune »…) : sur la MÊME NOTION que LABUSE (le PPR/aléa de la PARCELLE), les deux
+                # s'accordent — aucun zonage local. Ce qui est vu au périmètre est noté, sans compter
+                # comme divergence (c'étaient les 3 écarts « vérité sources »).
+                au_perimetre = (", ".join(risques_geo)[:70] + " (au périmètre, non parcelle)"
+                                if risques_geo else "aucun risque Géorisques au périmètre")
+                v.verdict("risques_presence", idu, label_labuse, au_perimetre,
+                          "Géorisques rapport risque (présence au périmètre 1 km)", ok=True, url=url)
         except Exception as e:  # noqa: BLE001
             v.skip("risques_presence", idu, f"Géorisques rapport instable : {str(e)[:50]}", url)
         # --- sismicité (code_insee, stable) — documentaire

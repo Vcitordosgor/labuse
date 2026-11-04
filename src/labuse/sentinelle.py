@@ -130,7 +130,13 @@ def sonder_api(url: str, selecteur: str | None) -> Sonde:
     try:
         data = json.loads(corps)
     except ValueError:
-        return Sonde("illisible", message="réponse non-JSON")
+        # SILENCE-1 (point 5) — une réponse NON-JSON d'une API JSON est quasi toujours un hoquet SERVEUR
+        # (page d'erreur/maintenance HTML, 429/Cloudflare rendu en 200, coupure) : c'est la SOURCE qui a
+        # bronché, pas notre lecteur. On classe donc « injoignable » (transitoire, couvert par la grâce
+        # `circuit_etats` < 7 j) et non « illisible » (= notre contrat est faux, en panne dès 3). C'est ce
+        # qui faisait « tomber » BODACC un matin sur un simple hoquet opendatasoft (3 non-JSON d'affilée).
+        # Un chemin JSON introuvable DANS un corps JSON valide reste « illisible » (vrai contrat cassé).
+        return Sonde("injoignable", message="réponse non-JSON (hoquet serveur)")
     val = _json_pointe(data, selecteur) if selecteur else data
     if val is None:
         return Sonde("illisible", message=f"chemin JSON introuvable : {selecteur}")
@@ -413,6 +419,50 @@ def passer(db, *, source_ids=None, forcer: bool = False, http=None, notifier: bo
     return recap
 
 
+def acquitter_apres_injection(db, nom: str) -> dict:
+    """SILENCE-1 (point 1) — APRÈS UNE INJECTION RÉUSSIE d'une source (appelée par la chaîne détachée
+    `ingest && filtre && source-acquitter`, donc UNIQUEMENT si ingestion + filtre ont réussi), on ACQUITTE
+    la veille ET on met à jour la VERSION SERVIE pour que la carte « nouvelle version » DISPARAISSE.
+
+    POURQUOI c'était bloqué : rien ne remettait la veille à « ok » après injection. L'injection ne posait
+    que `injection_lancee_at`/`injection_vu` à l'amorçage ; `data_sources.source_millesime` (le servi)
+    n'était jamais avancé, et `source_veille.dernier_statut` restait « nouvelle_version ». Les témoins
+    (annuaire DILA, OFB) le ré-affichaient à chaque passage ; la source par agent (Population INSEE) n'est
+    même PLUS sondée (`passer` n'interroge que api/page/entete/temoin) → le latch ne tombait jamais.
+
+    On remet donc, idempotemment :
+      · `dernier_statut = 'ok'`, `dernier_notifie_vu = injection_vu = dernier_vu` (plus ré-annoncé) ;
+      · `echecs_consecutifs = 0`, `injection_lancee_at = now()` ;
+      · méthode `temoin` : `dernier_entete = dernier_vu` (baseline → le prochain passage compare la MÊME
+        valeur, reste « ok ») ;
+      · méthodes À VERSION (`api`/`page`) : `data_sources.source_millesime = dernier_vu` (le servi suit
+        l'amont injecté, sinon `evaluer()` re-déclencherait « nouvelle_version »). `agent`/`entete`
+        n'utilisent pas `source_millesime` comme version → on n'y touche pas.
+    Retourne {nom, trouve, statut_avant, vu, servi_maj}."""
+    row = db.execute(text(
+        "SELECT v.id, v.source_id, v.methode, v.dernier_vu, v.dernier_statut "
+        "FROM source_veille v JOIN data_sources d ON d.id = v.source_id WHERE d.name = :n"),
+        {"n": nom}).mappings().first()
+    if not row:
+        return {"nom": nom, "trouve": False}
+    vu = row["dernier_vu"]
+    methode = (row["methode"] or "").strip()
+    # CAST(:vu AS varchar) partout : le même paramètre réutilisé sans cast fait inférer à psycopg des
+    # types incohérents (varchar vs text) → AmbiguousParameter (même piège qu'OPS-NUIT-2 sur :n).
+    set_entete = ", dernier_entete = CAST(:vu AS varchar)" if methode == "temoin" else ""
+    db.execute(text(
+        "UPDATE source_veille SET dernier_statut = 'ok', dernier_notifie_vu = CAST(:vu AS varchar), "
+        "injection_vu = CAST(:vu AS varchar), injection_lancee_at = now(), echecs_consecutifs = 0, "
+        "updated_at = now()" + set_entete + " WHERE id = :id"), {"vu": vu, "id": row["id"]})
+    servi_maj = False
+    if methode in ("api", "page") and vu:
+        db.execute(text("UPDATE data_sources SET source_millesime = CAST(:vu AS varchar) WHERE id = :sid"),
+                   {"vu": vu, "sid": row["source_id"]})
+        servi_maj = True
+    return {"nom": nom, "trouve": True, "statut_avant": row["dernier_statut"], "vu": vu,
+            "servi_maj": servi_maj}
+
+
 # ─────────────────────────────── W5 · peuplement de la table ───────────────────────────────
 # Une entrée = (nom EXACT de la source en base) → méthode + URL amont RÉELLE (déjà portée par
 # data_sources, jamais inventée) + sélecteur. Choix conservateur (W5.3 : une URL non vérifiée est
@@ -574,9 +624,14 @@ SEED: list[dict] = [
     {"name": "CoSIA (couverture du sol IA, IGN)", "methode": "api",   # le .7z Géoplateforme n'a pas d'en-tête
      "url": "https://www.data.gouv.fr/api/1/datasets/cosia/", "selecteur": "last_update"},
     # ── Famille Opendatasoft v2.1 → `metas.default.modified` (Région Réunion + DILA). ──
-    {"name": "BODACC (procédures collectives)", "methode": "api",   # CORRIGE le chemin JSON de SENTINELLE-1
-     "url": "https://bodacc-datadila.opendatasoft.com/api/explore/v2.1/catalog/datasets/annonces-commerciales",
-     "selecteur": "metas.default.modified"},
+    # SILENCE-1 (point 5) — on lit la FRAÎCHEUR RÉELLE (dernière date de parution des annonces), pas la
+    # date de modification du dataset (`metas.default.modified` restait figée à 2021 → aucune fraîcheur) :
+    # l'endpoint `records` trié par `dateparution desc` rend la dernière parution (contrat JSON stable,
+    # `results.0.dateparution`). Même source, millésime qui bouge vraiment chaque jour.
+    {"name": "BODACC (procédures collectives)", "methode": "api",
+     "url": ("https://bodacc-datadila.opendatasoft.com/api/explore/v2.1/catalog/datasets/"
+             "annonces-commerciales/records?select=dateparution&order_by=dateparution%20desc&limit=1"),
+     "selecteur": "results.0.dateparution"},
     {"name": "Parc National de La Réunion (INPN)", "methode": "api",
      "url": "https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/pnrun_2021", "selecteur": "metas.default.modified"},
     {"name": "data.regionreunion.com — Potentiel foncier", "methode": "api",
@@ -873,7 +928,8 @@ RAISONS_NON_SURVEILLEES: dict[str, str] = {
 #: est exclu (abandonné, aucun rafraîchissement attendu).
 RAPPELS_MANUELS: list[dict] = [
     {"name": "Radar (pige d'annonces)", "cadence_jours": 7, "convention_echeance": None},
-    {"name": "VRD / assainissement (SPANC)", "cadence_jours": 365, "convention_echeance": None},
+    # SILENCE-1 (point 7) — rappel TRIMESTRIEL (une manuelle en attente de fichier : gentil rappel, pas d'alerte).
+    {"name": "VRD / assainissement (SPANC)", "cadence_jours": 91, "convention_echeance": None},
     {"name": "Fichiers fonciers (Cerema)", "cadence_jours": 365, "convention_echeance": None},
     {"name": "Office de l'eau Réunion — Chroniques de l'eau", "cadence_jours": 365, "convention_echeance": None},
     # SOURCES-1 lot 1 — re-tester l'Atlas des patrimoines (ZPPA 974) : injoignable au 06/09/2026.

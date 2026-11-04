@@ -1659,7 +1659,9 @@ MODE_ET_CADENCE: dict[str, tuple[str, int | None, str]] = {
     "IGN BD CARTO V5 — occupation du sol": ("one_shot", 365, "proposee"),
     "ABF / Monuments historiques": ("one_shot", 365, "proposee"),
     "INPN / patrinat — espaces protégés": ("one_shot", 365, "proposee"),
-    "VRD / assainissement (SPANC)": ("depot_manuel", 365, "proposee"),
+    # SILENCE-1 (point 7) — VRD/SPANC : manuelle « en attente de fichier » tant qu'aucun fichier n'existe
+    # (ni carte ni mail) ; un rappel TRIMESTRIEL (91 j) suffit une fois qu'un premier fichier aura été posé.
+    "VRD / assainissement (SPANC)": ("depot_manuel", 91, "proposee"),
     "Fichiers fonciers (Cerema)": ("absente", None, "sans_objet"),
     "Cerema / GéoLittoral — indicateur d'érosion côtière": ("one_shot", 365, "proposee"),
     "BODACC (procédures collectives)": ("job_sur_clic", 3, "proposee"),

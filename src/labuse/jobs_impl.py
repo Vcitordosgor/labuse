@@ -1236,8 +1236,11 @@ def _resume_matin_texte(db, s) -> tuple[bool, str, str]:
             det = row["details"] if isinstance(row["details"], dict) else {}
             casses = det.get("casses") or []
             a_decider = det.get("a_decider") or []
+            avert = det.get("avertissements") or []   # SILENCE-1 (point 5) : G8 à part des cassés
+            avert_txt = f" ; avertissements : {', '.join(avert)}" if avert else ""
             L.append(f"• Verrous : {row['resultat']} ({det.get('joues', '?')} joués ; "
-                     f"cassés : {', '.join(casses) or 'aucun'} ; à décider : {', '.join(a_decider) or 'aucun'}).")
+                     f"cassés : {', '.join(casses) or 'aucun'} ; à décider : "
+                     f"{', '.join(a_decider) or 'aucun'}{avert_txt}).")
         else:
             L.append("• Verrous : aucun contrôle enregistré.")
     except Exception as exc:  # noqa: BLE001
@@ -1256,12 +1259,19 @@ def _resume_matin_texte(db, s) -> tuple[bool, str, str]:
         L.append(f"• Cohérence : état illisible ({type(exc).__name__}).")
 
     # 6 — incidents OUVERTS (avec lien d'action) et 7 — rentrés dans l'ordre depuis hier.
+    # SILENCE-1 (point 3) — la liste « à traiter » ne contient QUE de vraies cartes de Vic : on retire
+    # les escalades d'ancienneté « escalade:ancien:<base> » quand leur incident <base> est DÉJÀ listé
+    # (c'est un rappel interne, pas un second geste → un seul incident, un seul lien). [URGENT] ne se
+    # décide que sur ces incidents réellement actionnables (+ panne de nuit/sauvegarde ci-dessus) :
+    # plus de « à regarder » déclenché par un doublon d'escalade ou par un incident déjà refermé (la
+    # requête `incidents_ouverts` ne rend que `resolu_at IS NULL`, donc jamais un « vient d'être résolu »).
     try:
         ouverts = ops_alertes.incidents_ouverts(db)
-        if ouverts:
+        a_traiter = ops_alertes.incidents_a_traiter(ouverts)
+        if a_traiter:
             urgent = True
-            L.append(f"\nIncidents ouverts ({len(ouverts)}) — à traiter :")
-            for i in ouverts:
+            L.append(f"\nIncidents ouverts ({len(a_traiter)}) — à traiter :")
+            for i in a_traiter:
                 lien = ops_alertes._url_absolue(s, ops_alertes._lien_action(i["cle"], None))
                 L.append(f"  - {i['sujet']}  → {lien}")
         else:
@@ -1792,14 +1802,25 @@ def coherence_robinets(ctx: JobContext) -> None:
         ctx.compte(remplissage_mesures=len(_mes), remplissage_vides=len(_vides))
     except Exception:  # noqa: BLE001 — la mesure ne casse pas la sonde
         pass
-    casses = [r.id for r in resultats if r.verdict == "casse"]
+    # SILENCE-1 (point 5) — G8 est un AVERTISSEMENT non bloquant (VERROUS_AVERTISSEMENT, source unique) :
+    # il ne doit PLUS s'écrire « échec » dans le journal chaque matin, ni ouvrir une notification « verrous
+    # cassés ». On sépare les vrais cassés (bloquants) des avertissements : le résultat journalisé est
+    # « echec » seulement s'il reste un cassé BLOQUANT, « avertissement » s'il n'y a que des avertissements
+    # (G8), « ok » sinon. Le détail porte `avertissements` à part de `casses` pour que le Résumé et le front
+    # les distinguent (le front colore « avertissement » en ambre, jamais en rouge).
+    from .circuit_resume import VERROUS_AVERTISSEMENT
+    casses_tous = [r.id for r in resultats if r.verdict == "casse"]
+    casses = [c for c in casses_tous if c not in VERROUS_AVERTISSEMENT]
+    avertissements = [c for c in casses_tous if c in VERROUS_AVERTISSEMENT]
+    resultat = "echec" if casses else ("avertissement" if avertissements else "ok")
     circuit_journal.journaliser(
-        ctx.db, "controle", "verrous", "cron", "echec" if casses else "ok",
-        {"joues": len(resultats), "casses": casses,
+        ctx.db, "controle", "verrous", "cron", resultat,
+        {"joues": len(resultats), "casses": casses, "avertissements": avertissements,
          "a_decider": [r.id for r in resultats if r.verdict == "a_decider"],
          "preuves": {r.id: r.preuve for r in resultats}})
-    ctx.compte(verrous_joues=len(resultats), verrous_casses=len(casses))
-    if casses:
+    ctx.compte(verrous_joues=len(resultats), verrous_casses=len(casses),
+               verrous_avertissements=len(avertissements))
+    if casses:   # SILENCE-1 : seuls les cassés BLOQUANTS sonnent (G8 n'ouvre plus de notification)
         from .api.events import creer_notification
         creer_notification(
             ctx.db, kind="systeme", compte_id=None, source="Circuit",

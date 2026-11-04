@@ -97,9 +97,16 @@ def test_api_millesime_amont_posterieur_au_servi_est_nouvelle_version():
 def test_injoignable_est_distinct_d_illisible():
     row = {"methode": "api", "url_version": "http://x/down", "selecteur": "v"}
     assert sentinelle.sonder_ligne(row, servi=None, http=_fake_http({})).statut == "injoignable"
+    # SILENCE-1 (point 5) — une réponse NON-JSON = hoquet SERVEUR (page d'erreur/maintenance HTML en
+    # 200) → « injoignable » (transitoire, couvert par la grâce), PLUS « illisible ». C'est ce qui
+    # faisait tomber BODACC un matin. « illisible » reste réservé au vrai contrat cassé (JSON valide
+    # mais chemin absent) — ci-dessous.
     bad = _fake_http({"http://x/bad": (200, {}, "pas du json")})
     row2 = {"methode": "api", "url_version": "http://x/bad", "selecteur": "v"}
-    assert sentinelle.sonder_ligne(row2, servi=None, http=bad).statut == "illisible"
+    assert sentinelle.sonder_ligne(row2, servi=None, http=bad).statut == "injoignable"
+    missing = _fake_http({"http://x/nopath": (200, {}, '{"autre": 1}')})
+    row_m = {"methode": "api", "url_version": "http://x/nopath", "selecteur": "v"}
+    assert sentinelle.sonder_ligne(row_m, servi=None, http=missing).statut == "illisible"
     row3 = {"methode": "api", "url_version": "http://x/500", "selecteur": "v"}
     assert sentinelle.sonder_ligne(row3, servi=None, http=_fake_http({"http://x/500": (503, {}, "")})).statut == "injoignable"
 

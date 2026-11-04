@@ -213,6 +213,23 @@ def seed_sources_cmd() -> None:
     typer.echo(f"✓ Catalogue de sources : {n} sources.")
 
 
+@app.command("source-acquitter")
+def source_acquitter_cmd(nom: str) -> None:
+    """SILENCE-1 (point 1) — ACQUITTE la veille d'une source APRÈS une injection réussie : remet
+    `dernier_statut='ok'` et avance la version servie, pour que la carte « nouvelle version » disparaisse.
+    Dernier maillon de la chaîne détachée `ingest && filtre && source-acquitter <nom>` (donc exécuté
+    SEULEMENT si l'ingestion et le filtre ont réussi). Idempotent."""
+    from . import sentinelle
+
+    with session_scope() as s:
+        r = sentinelle.acquitter_apres_injection(s, nom)
+    if not r.get("trouve"):
+        typer.echo(f"∅ Aucune veille pour « {nom} » — rien à acquitter.")
+        return
+    typer.echo(f"✓ Veille acquittée : « {nom} » → ok (vu={r.get('vu')}"
+               f"{', servi mis à jour' if r.get('servi_maj') else ''}).")
+
+
 @app.command("transport-reseaux")
 def transport_reseaux_cmd() -> None:
     """M106 P4 — ingère transport public (7 GTFS PAN), pôles d'échange (OSM + dérivés GTFS,
