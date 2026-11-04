@@ -1,0 +1,635 @@
+{
+ "Bras-Panon": {
+  "contenance": {
+   "comparable": 19,
+   "exact": 19,
+   "taux_pct": 100.0
+  },
+  "zone_plu": {
+   "comparable": 20,
+   "exact": 20,
+   "taux_pct": 100.0
+  },
+  "adresse": {
+   "comparable": 14,
+   "exact": 14,
+   "taux_pct": 100.0
+  },
+  "aleas_familles": {
+   "comparable": 20,
+   "exact": 20,
+   "taux_pct": 100.0
+  },
+  "derniere_vente": {
+   "comparable": 2,
+   "exact": 1,
+   "taux_pct": 50.0
+  }
+ },
+ "Cilaos": {
+  "contenance": {
+   "comparable": 20,
+   "exact": 20,
+   "taux_pct": 100.0
+  },
+  "zone_plu": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "adresse": {
+   "comparable": 11,
+   "exact": 11,
+   "taux_pct": 100.0
+  },
+  "aleas_familles": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "derniere_vente": {
+   "comparable": 3,
+   "exact": 3,
+   "taux_pct": 100.0
+  }
+ },
+ "Entre-Deux": {
+  "contenance": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "zone_plu": {
+   "comparable": 21,
+   "exact": 20,
+   "taux_pct": 95.24
+  },
+  "adresse": {
+   "comparable": 13,
+   "exact": 13,
+   "taux_pct": 100.0
+  },
+  "aleas_familles": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "derniere_vente": {
+   "comparable": 4,
+   "exact": 4,
+   "taux_pct": 100.0
+  }
+ },
+ "L'Étang-Salé": {
+  "contenance": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "zone_plu": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "adresse": {
+   "comparable": 13,
+   "exact": 13,
+   "taux_pct": 100.0
+  },
+  "aleas_familles": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "derniere_vente": {
+   "comparable": 3,
+   "exact": 3,
+   "taux_pct": 100.0
+  }
+ },
+ "La Plaine-des-Palmistes": {
+  "contenance": {
+   "comparable": 20,
+   "exact": 20,
+   "taux_pct": 100.0
+  },
+  "zone_plu": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "adresse": {
+   "comparable": 12,
+   "exact": 12,
+   "taux_pct": 100.0
+  },
+  "aleas_familles": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "derniere_vente": {
+   "comparable": 2,
+   "exact": 1,
+   "taux_pct": 50.0
+  }
+ },
+ "La Possession": {
+  "contenance": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "zone_plu": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "aleas_familles": {
+   "comparable": 19,
+   "exact": 19,
+   "taux_pct": 100.0
+  },
+  "adresse": {
+   "comparable": 16,
+   "exact": 16,
+   "taux_pct": 100.0
+  },
+  "derniere_vente": {
+   "comparable": 4,
+   "exact": 4,
+   "taux_pct": 100.0
+  }
+ },
+ "Le Port": {
+  "contenance": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "zone_plu": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "adresse": {
+   "comparable": 14,
+   "exact": 14,
+   "taux_pct": 100.0
+  },
+  "aleas_familles": {
+   "comparable": 6,
+   "exact": 6,
+   "taux_pct": 100.0
+  },
+  "derniere_vente": {
+   "comparable": 3,
+   "exact": 2,
+   "taux_pct": 66.67
+  }
+ },
+ "Le Tampon": {
+  "contenance": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "zone_plu": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "adresse": {
+   "comparable": 14,
+   "exact": 14,
+   "taux_pct": 100.0
+  },
+  "aleas_familles": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "derniere_vente": {
+   "comparable": 4,
+   "exact": 4,
+   "taux_pct": 100.0
+  }
+ },
+ "Les Avirons": {
+  "contenance": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "zone_plu": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "aleas_familles": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "derniere_vente": {
+   "comparable": 4,
+   "exact": 4,
+   "taux_pct": 100.0
+  },
+  "adresse": {
+   "comparable": 9,
+   "exact": 9,
+   "taux_pct": 100.0
+  }
+ },
+ "Les Trois-Bassins": {
+  "contenance": {
+   "comparable": 20,
+   "exact": 20,
+   "taux_pct": 100.0
+  },
+  "zone_plu": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "aleas_familles": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "derniere_vente": {
+   "comparable": 4,
+   "exact": 4,
+   "taux_pct": 100.0
+  },
+  "adresse": {
+   "comparable": 8,
+   "exact": 8,
+   "taux_pct": 100.0
+  }
+ },
+ "Petite-Île": {
+  "contenance": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "zone_plu": {
+   "comparable": 21,
+   "exact": 20,
+   "taux_pct": 95.24
+  },
+  "adresse": {
+   "comparable": 8,
+   "exact": 8,
+   "taux_pct": 100.0
+  },
+  "aleas_familles": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "derniere_vente": {
+   "comparable": 3,
+   "exact": 2,
+   "taux_pct": 66.67
+  }
+ },
+ "Saint-André": {
+  "contenance": {
+   "comparable": 20,
+   "exact": 20,
+   "taux_pct": 100.0
+  },
+  "adresse": {
+   "comparable": 14,
+   "exact": 14,
+   "taux_pct": 100.0
+  },
+  "aleas_familles": {
+   "comparable": 20,
+   "exact": 20,
+   "taux_pct": 100.0
+  },
+  "derniere_vente": {
+   "comparable": 2,
+   "exact": 1,
+   "taux_pct": 50.0
+  }
+ },
+ "Saint-Benoît": {
+  "contenance": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "zone_plu": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "derniere_vente": {
+   "comparable": 4,
+   "exact": 4,
+   "taux_pct": 100.0
+  },
+  "adresse": {
+   "comparable": 15,
+   "exact": 15,
+   "taux_pct": 100.0
+  },
+  "aleas_familles": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  }
+ },
+ "Saint-Denis": {
+  "contenance": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "zone_plu": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "derniere_vente": {
+   "comparable": 3,
+   "exact": 2,
+   "taux_pct": 66.67
+  },
+  "adresse": {
+   "comparable": 16,
+   "exact": 16,
+   "taux_pct": 100.0
+  },
+  "aleas_familles": {
+   "comparable": 1,
+   "exact": 1,
+   "taux_pct": 100.0
+  }
+ },
+ "Saint-Joseph": {
+  "contenance": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "zone_plu": {
+   "comparable": 21,
+   "exact": 20,
+   "taux_pct": 95.24
+  },
+  "aleas_familles": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "adresse": {
+   "comparable": 7,
+   "exact": 7,
+   "taux_pct": 100.0
+  },
+  "derniere_vente": {
+   "comparable": 3,
+   "exact": 3,
+   "taux_pct": 100.0
+  }
+ },
+ "Saint-Leu": {
+  "contenance": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "adresse": {
+   "comparable": 10,
+   "exact": 10,
+   "taux_pct": 100.0
+  },
+  "aleas_familles": {
+   "comparable": 20,
+   "exact": 20,
+   "taux_pct": 100.0
+  },
+  "derniere_vente": {
+   "comparable": 1,
+   "exact": 1,
+   "taux_pct": 100.0
+  }
+ },
+ "Saint-Louis": {
+  "contenance": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "zone_plu": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "adresse": {
+   "comparable": 13,
+   "exact": 13,
+   "taux_pct": 100.0
+  },
+  "aleas_familles": {
+   "comparable": 20,
+   "exact": 20,
+   "taux_pct": 100.0
+  },
+  "derniere_vente": {
+   "comparable": 5,
+   "exact": 4,
+   "taux_pct": 80.0
+  }
+ },
+ "Saint-Paul": {
+  "contenance": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "zone_plu": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "aleas_familles": {
+   "comparable": 20,
+   "exact": 20,
+   "taux_pct": 100.0
+  },
+  "adresse": {
+   "comparable": 12,
+   "exact": 12,
+   "taux_pct": 100.0
+  },
+  "derniere_vente": {
+   "comparable": 3,
+   "exact": 3,
+   "taux_pct": 100.0
+  }
+ },
+ "Saint-Philippe": {
+  "contenance": {
+   "comparable": 20,
+   "exact": 20,
+   "taux_pct": 100.0
+  },
+  "aleas_familles": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "adresse": {
+   "comparable": 12,
+   "exact": 12,
+   "taux_pct": 100.0
+  },
+  "derniere_vente": {
+   "comparable": 2,
+   "exact": 2,
+   "taux_pct": 100.0
+  }
+ },
+ "Saint-Pierre": {
+  "contenance": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "zone_plu": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "adresse": {
+   "comparable": 14,
+   "exact": 14,
+   "taux_pct": 100.0
+  },
+  "aleas_familles": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "derniere_vente": {
+   "comparable": 3,
+   "exact": 2,
+   "taux_pct": 66.67
+  }
+ },
+ "Sainte-Marie": {
+  "contenance": {
+   "comparable": 20,
+   "exact": 20,
+   "taux_pct": 100.0
+  },
+  "zone_plu": {
+   "comparable": 20,
+   "exact": 19,
+   "taux_pct": 95.0
+  },
+  "adresse": {
+   "comparable": 10,
+   "exact": 10,
+   "taux_pct": 100.0
+  },
+  "aleas_familles": {
+   "comparable": 20,
+   "exact": 20,
+   "taux_pct": 100.0
+  },
+  "derniere_vente": {
+   "comparable": 2,
+   "exact": 2,
+   "taux_pct": 100.0
+  }
+ },
+ "Sainte-Rose": {
+  "contenance": {
+   "comparable": 20,
+   "exact": 20,
+   "taux_pct": 100.0
+  },
+  "zone_plu": {
+   "comparable": 20,
+   "exact": 20,
+   "taux_pct": 100.0
+  },
+  "aleas_familles": {
+   "comparable": 20,
+   "exact": 20,
+   "taux_pct": 100.0
+  },
+  "adresse": {
+   "comparable": 8,
+   "exact": 8,
+   "taux_pct": 100.0
+  },
+  "derniere_vente": {
+   "comparable": 3,
+   "exact": 2,
+   "taux_pct": 66.67
+  }
+ },
+ "Sainte-Suzanne": {
+  "contenance": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "zone_plu": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "adresse": {
+   "comparable": 15,
+   "exact": 15,
+   "taux_pct": 100.0
+  },
+  "aleas_familles": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "derniere_vente": {
+   "comparable": 2,
+   "exact": 2,
+   "taux_pct": 100.0
+  }
+ },
+ "Salazie": {
+  "contenance": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "zone_plu": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "adresse": {
+   "comparable": 6,
+   "exact": 6,
+   "taux_pct": 100.0
+  },
+  "aleas_familles": {
+   "comparable": 21,
+   "exact": 21,
+   "taux_pct": 100.0
+  },
+  "derniere_vente": {
+   "comparable": 3,
+   "exact": 3,
+   "taux_pct": 100.0
+  }
+ }
+}

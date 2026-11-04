@@ -1,0 +1,49 @@
+{
+ "n_parcelles": 500,
+ "n_ecarts": 13,
+ "par_gravite": {
+  "MAJEUR": 10,
+  "MINEUR": 3
+ },
+ "par_fait": {
+  "zone_plu": 4,
+  "derniere_vente": 9
+ },
+ "accuracy_by_fait": {
+  "adresse": {
+   "comparable": 284,
+   "exact": 284,
+   "taux_pct": 100.0,
+   "labuse_present": 284,
+   "src_present": 475
+  },
+  "aleas_familles": {
+   "comparable": 460,
+   "exact": 460,
+   "taux_pct": 100.0,
+   "labuse_present": 473,
+   "src_present": 500
+  },
+  "contenance": {
+   "comparable": 495,
+   "exact": 495,
+   "taux_pct": 100.0,
+   "labuse_present": 500,
+   "src_present": 495
+  },
+  "derniere_vente": {
+   "comparable": 72,
+   "exact": 63,
+   "taux_pct": 87.5,
+   "labuse_present": 71,
+   "src_present": 67
+  },
+  "zone_plu": {
+   "comparable": 438,
+   "exact": 434,
+   "taux_pct": 99.09,
+   "labuse_present": 479,
+   "src_present": 438
+  }
+ }
+}

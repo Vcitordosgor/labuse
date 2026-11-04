@@ -1,0 +1,156 @@
+{
+ "horizon_dvf_labuse": "2025-12-31",
+ "n_parcelles": 500,
+ "contenance": {
+  "comparable": 495,
+  "exact": 495,
+  "taux_pct": 100.0,
+  "ecarts": []
+ },
+ "zone_plu": {
+  "comparable": 438,
+  "exact_dominante": 434,
+  "taux_exact_pct": 99.09,
+  "containment": 438,
+  "taux_containment_pct": 100.0,
+  "cheval": [
+   {
+    "idu": "97412000AR0304",
+    "commune": "Saint-Joseph",
+    "labuse_dominante": "A",
+    "zones_all": [
+     "A",
+     "N"
+    ],
+    "gpu_centroide": "N",
+    "gpu_dans_zones_all": true,
+    "part_dominante": 0.8244
+   },
+   {
+    "idu": "97418000BL0173",
+    "commune": "Sainte-Marie",
+    "labuse_dominante": "A",
+    "zones_all": [
+     "A",
+     "N",
+     "UD1"
+    ],
+    "gpu_centroide": "UD1",
+    "gpu_dans_zones_all": true,
+    "part_dominante": 0.5509
+   },
+   {
+    "idu": "97405000AI1075",
+    "commune": "Petite-Île",
+    "labuse_dominante": "A",
+    "zones_all": [
+     "A",
+     "N"
+    ],
+    "gpu_centroide": "N",
+    "gpu_dans_zones_all": true,
+    "part_dominante": 0.6089
+   },
+   {
+    "idu": "97403000AL0187",
+    "commune": "Entre-Deux",
+    "labuse_dominante": "Nr",
+    "zones_all": [
+     "Nr",
+     "A"
+    ],
+    "gpu_centroide": "A",
+    "gpu_dans_zones_all": true,
+    "part_dominante": 0.5864
+   }
+  ]
+ },
+ "derniere_vente": {
+  "both_none": 428,
+  "match": 63,
+  "etalab_incomplete": 5,
+  "fraicheur_manquante": 1,
+  "fraicheur_date": 3,
+  "autre": 0
+ },
+ "derniere_vente_detail": [
+  {
+   "idu": "97411000BL0026",
+   "commune": "Saint-Denis",
+   "cause": "fraicheur_manquante",
+   "labuse": null,
+   "dvf_live": "2026-02-11",
+   "horizon_labuse": "2025-12-31"
+  },
+  {
+   "idu": "97406000AM0852",
+   "commune": "La Plaine-des-Palmistes",
+   "cause": "etalab_incomplete",
+   "labuse": "2021-02-03",
+   "dvf_live": null,
+   "note": "mutation DGFiP présente côté LABUSE, non servie par la geo-API app.dvf.etalab"
+  },
+  {
+   "idu": "97409000AO0534",
+   "commune": "Saint-André",
+   "cause": "fraicheur_date",
+   "labuse": "2024-12-26",
+   "dvf_live": "2026-02-19",
+   "horizon_labuse": "2025-12-31"
+  },
+  {
+   "idu": "97407000AO1199",
+   "commune": "Le Port",
+   "cause": "etalab_incomplete",
+   "labuse": "2021-02-24",
+   "dvf_live": null,
+   "note": "mutation DGFiP présente côté LABUSE, non servie par la geo-API app.dvf.etalab"
+  },
+  {
+   "idu": "97402000AI0640",
+   "commune": "Bras-Panon",
+   "cause": "etalab_incomplete",
+   "labuse": "2021-03-30",
+   "dvf_live": null,
+   "note": "mutation DGFiP présente côté LABUSE, non servie par la geo-API app.dvf.etalab"
+  },
+  {
+   "idu": "97419000AP0408",
+   "commune": "Sainte-Rose",
+   "cause": "etalab_incomplete",
+   "labuse": "2021-05-24",
+   "dvf_live": null,
+   "note": "mutation DGFiP présente côté LABUSE, non servie par la geo-API app.dvf.etalab"
+  },
+  {
+   "idu": "97416000IE0152",
+   "commune": "Saint-Pierre",
+   "cause": "fraicheur_date",
+   "labuse": "2025-09-22",
+   "dvf_live": "2026-02-20",
+   "horizon_labuse": "2025-12-31"
+  },
+  {
+   "idu": "97414000DS0385",
+   "commune": "Saint-Louis",
+   "cause": "etalab_incomplete",
+   "labuse": "2021-06-21",
+   "dvf_live": null,
+   "note": "mutation DGFiP présente côté LABUSE, non servie par la geo-API app.dvf.etalab"
+  },
+  {
+   "idu": "97405000AX0036",
+   "commune": "Petite-Île",
+   "cause": "fraicheur_date",
+   "labuse": "2025-08-02",
+   "dvf_live": "2025-12-23",
+   "horizon_labuse": "2025-12-31"
+  }
+ ],
+ "aleas_familles": {
+  "comparable": 460,
+  "containment": 460,
+  "taux_pct": 100.0,
+  "inventes": []
+ }
+}

@@ -1,0 +1,14 @@
+idu,commune,fait,labuse,officiel,source,gravite,cause
+97405000AX0036,Petite-Île,derniere_vente,2025-08-02,2025-12-23,DVF Etalab,MINEUR,DVF live porte une mutation plus récente que l'instantané LABUSE (horizon 2025-12-31) — fraîcheur / distribution DVF distincte
+97409000AO0534,Saint-André,derniere_vente,2024-12-26,2026-02-19,DVF Etalab,MINEUR,DVF live porte une mutation plus récente que l'instantané LABUSE (horizon 2025-12-31) — fraîcheur / distribution DVF distincte
+97411000BL0026,Saint-Denis,derniere_vente,,2026-02-11,DVF Etalab,MINEUR,vente postérieure à l'horizon DVF de LABUSE (2025-12-31) — fraîcheur de l'instantané DVF
+97416000IE0152,Saint-Pierre,derniere_vente,2025-09-22,2026-02-20,DVF Etalab,MINEUR,DVF live porte une mutation plus récente que l'instantané LABUSE (horizon 2025-12-31) — fraîcheur / distribution DVF distincte
+97403000AL0187,Entre-Deux,zone_plu,Nr,A,GPU zone-urba,MINEUR,"parcelle à cheval : LABUSE sert la zone dominante en surface ; GPU interroge le centroïde (zone GPU présente dans zones_all=['Nr', 'A'])"
+97405000AI1075,Petite-Île,zone_plu,A,N,GPU zone-urba,MINEUR,"parcelle à cheval : LABUSE sert la zone dominante en surface ; GPU interroge le centroïde (zone GPU présente dans zones_all=['A', 'N'])"
+97412000AR0304,Saint-Joseph,zone_plu,A,N,GPU zone-urba,MINEUR,"parcelle à cheval : LABUSE sert la zone dominante en surface ; GPU interroge le centroïde (zone GPU présente dans zones_all=['A', 'N'])"
+97418000BL0173,Sainte-Marie,zone_plu,A,UD1,GPU zone-urba,MINEUR,"parcelle à cheval : LABUSE sert la zone dominante en surface ; GPU interroge le centroïde (zone GPU présente dans zones_all=['A', 'N', 'UD1'])"
+97402000AI0640,Bras-Panon,derniere_vente,2021-03-30,,DVF Etalab,À DÉCHARGE,"mutation DGFiP présente côté LABUSE, non servie par la geo-API app.dvf.etalab (LABUSE plus complet)"
+97406000AM0852,La Plaine-des-Palmistes,derniere_vente,2021-02-03,,DVF Etalab,À DÉCHARGE,"mutation DGFiP présente côté LABUSE, non servie par la geo-API app.dvf.etalab (LABUSE plus complet)"
+97407000AO1199,Le Port,derniere_vente,2021-02-24,,DVF Etalab,À DÉCHARGE,"mutation DGFiP présente côté LABUSE, non servie par la geo-API app.dvf.etalab (LABUSE plus complet)"
+97414000DS0385,Saint-Louis,derniere_vente,2021-06-21,,DVF Etalab,À DÉCHARGE,"mutation DGFiP présente côté LABUSE, non servie par la geo-API app.dvf.etalab (LABUSE plus complet)"
+97419000AP0408,Sainte-Rose,derniere_vente,2021-05-24,,DVF Etalab,À DÉCHARGE,"mutation DGFiP présente côté LABUSE, non servie par la geo-API app.dvf.etalab (LABUSE plus complet)"
