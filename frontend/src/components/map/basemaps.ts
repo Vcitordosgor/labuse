@@ -47,7 +47,17 @@ export const BASEMAP_SOURCES: Record<string, BasemapDef> = {
   // Décision F4 : « Actuelle » = Ortho Express 2025 (au lieu de la mosaïque 2022) ; le libellé de l'outil
   // Solaire (« 20 cm 2025 ») est désormais VRAI côté fond. Plan IGN v2 = couche courante (rien de plus récent).
   // Historiques : les 6 orthos-période servent au 974 ; 1965-1980 et 1980-1995 → 404 (métropole seule, exclus).
-  'bm-plan': { tiles: [WMTS('GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', 'image/png')], attribution: '© IGN Géoplateforme — Plan IGN v2' },
+  // CARTE-TRAITS-1 — `maxzoom: 18` : UN SEUL tracé de cadastre à l'écran (celui de LABUSE).
+  // Le raster Plan IGN v2 dessine SON PROPRE parcellaire (traits mauves + numéros de parcelle) À SON
+  // DERNIER NIVEAU, z19 UNIQUEMENT (vérifié GetTile réel : z17/z18 = bâti+voirie sans parcellaire, même
+  // en centre dense ; z19 = parcellaire mauve). Ce tracé IGN ne coïncide PAS avec le nôtre (le nôtre ≡
+  // cadastre.gouv, Hausdorff 7 mm) → à z19 les deux lignes se décalaient en « fines bandes » entre une
+  // parcelle et ses voisines (constat Vic, 3 chemin de la Citerne). En bornant la source à z18, MapLibre
+  // SUR-ZOOME la tuile z18 (sans parcellaire) au-delà → le fond n'affiche plus jamais ses traits de
+  // parcelles, à AUCUN zoom ; seul subsiste notre tracé vectoriel (net, vecteur). Le bâti/voirie/numéros
+  // de voie du z18 restent (léger sur-zoom ×2 au seul z19, acceptable). Ortho = photo, aucun cadastre :
+  // non concernée. maxBounds/maxZoom(19) de la carte inchangés.
+  'bm-plan': { tiles: [WMTS('GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', 'image/png')], attribution: '© IGN Géoplateforme — Plan IGN v2', maxzoom: 18 },
   // V1 — l'Express (comme tous les fonds ortho) passe par le proxy : blanc no-data rogné en
   // fondu, mer photo limitée à la bande côtière, aplat unique dessous. Jamais de blanc, jamais
   // de marche de dalles.
