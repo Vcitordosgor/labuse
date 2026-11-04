@@ -25,7 +25,7 @@ def test_surfaces_table_couvre_chaque_kind_avec_un_modele_actif():
 
 def test_model_for_defaut_registre():
     # défauts gravés au registre : routage/factuel sur Haiku, raisonnement sur Sonnet
-    assert ai_models.model_for("copilote-route") == ai_models.MODEL_FACTUAL
+    assert ai_models.model_for("copilote-route") == ai_models.MODEL_HAIKU  # COPILOTE-5 : routage sur haiku-5-5
     assert ai_models.model_for("copilote-select") == ai_models.MODEL_FACTUAL  # COPILOTE-2 lot 6 : un seul modèle, Haiku
     assert ai_models.model_for("vision_pige") == ai_models.MODEL_VISION
     # kind inconnu → défaut agent, jamais une exception
