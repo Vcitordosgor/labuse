@@ -61,6 +61,15 @@ describe('FIX-FONDS — fonds de carte', () => {
     expect(ORTHO_MONDE.tiles[0]).toContain('/map/tiles/ortho/monde/')
   })
 
+  // CARTE-TRAITS-1 — le fond Plan IGN v2 est borné à maxzoom 18 : son parcellaire (traits mauves +
+  // numéros) n'apparaît qu'à son dernier niveau z19 et se DÉCALAIT du nôtre (« fines bandes », constat
+  // Vic). En plafonnant la source à z18, MapLibre sur-zoome z18 (sans parcellaire) au-delà → un seul
+  // tracé de cadastre à l'écran (le nôtre), à tous les zooms. Seul le Plan porte un cadastre dans son
+  // raster (l'ortho est une photo) → c'est le SEUL fond à borner. Verrou : la régression se verrait ici.
+  it('CARTE-TRAITS-1 : bm-plan borné à maxzoom 18 (un seul tracé de cadastre ; fond n\'affiche plus le sien)', () => {
+    expect(BASEMAP_SOURCES['bm-plan'].maxzoom).toBe(18)
+  })
+
   // FOND-SOMBRE : plus AUCUNE source CARTO (clé requise) — le Sombre est rendu sans raster.
   it('FOND-SOMBRE : aucun fond ne pointe vers cartocdn/carto.com', () => {
     expect(BASEMAP_SOURCES['bm-carto']).toBeUndefined()
