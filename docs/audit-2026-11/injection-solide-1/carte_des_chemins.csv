@@ -1,0 +1,119 @@
+source,famille,mode_ingestion,effet,rafraichissement,moteurs,surfaces,cablee
+Annuaire de l'administration (service-public.fr / DILA),acces,cron_mensuel,direct,lecture directe / cache(empreinte),—,—,non
+Base Adresse Nationale,acces,job_sur_clic,direct,lecture directe / cache(empreinte),rattachement,scoreur-adresse,oui
+EDF Réunion — lignes moyenne tension HTA (open data),acces,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+OSM — transport (pôles d'échange & téléphérique),acces,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+Réunion Express — hypothèses de tracé (débat public CNDP),acces,absente,direct,lecture directe / cache(empreinte),—,—,non
+TCSP — voies bus en site propre (OSM),acces,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+"Transport public — GTFS (PAN, 7 réseaux)",acces,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+"Communes La Réunion — contours (IGN ADMIN EXPRESS via geo.api.gouv, seed)",administratif,,direct,lecture directe / cache(empreinte),—,—,non
+RPG — déclarations agricoles (IGN/ASP),agricole,en_direct,classement,run (calcul de nuit),—,—,non
+INSEE RP2022 — fichier détail Logements (EGOUL),assainissement,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+BPE INSEE,attractivite,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+Contours IRIS (IGN/INSEE),attractivite,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+Filosofi INSEE (carreaux 200 m),attractivite,one_shot,classement,run (calcul de nuit),—,—,non
+"INSEE RP2022 — bases IRIS (logement, population)",attractivite,job_sur_clic,direct,lecture directe / cache(empreinte),—,—,non
+BAN PLUS — lien adresse ↔ bâtiment (IGN),cadastre,cron_mensuel,direct,lecture directe / cache(empreinte),scoring;capacite;rattachement,scoreur-adresse;programme;taxe-amenagement;plu;comparer;assemblage;patrimoine;courriers;prospection-solaire;communes;renouvellement;etude-zone;fiche;projets;carte;exports;copilote,oui
+Cadastre (API Carto PCI),cadastre,one_shot,classement,run (calcul de nuit),sector_price;capacite;rattachement,scoreur-adresse;programme;taxe-amenagement;plu;comparer;assemblage;prospection-solaire;communes;renouvellement;etude-zone;fiche;radar;exports;copilote,oui
+DFI — documents de filiation informatisés (DGFiP),cadastre,job_sur_clic,direct,lecture directe / cache(empreinte),—,—,non
+Population légale (INSEE via geo.api.gouv),demographie,,direct,lecture directe / cache(empreinte),—,—,non
+ACV / PVD / ORT (DGALN — liste des communes),dispositifs,job_sur_clic,direct,lecture directe / cache(empreinte),—,—,non
+SITADEL (autorisations d'urbanisme),dynamique,cron_mensuel,classement,run (calcul de nuit),scoring;rattachement;signaux,scoreur-adresse;comparer;patrimoine;courriers;communes;permis;renouvellement;fiche;projets;carte;exports;copilote,oui
+BODACC (procédures collectives),economie,job_sur_clic,direct,lecture directe / cache(empreinte),scoring;signaux,scoreur-adresse;comparer;patrimoine;courriers;communes;permis;renouvellement;fiche;projets;carte;exports;copilote,oui
+INPI RNE (dirigeants),economie,sans_millesime,direct,lecture directe / cache(empreinte),scoring,scoreur-adresse;comparer;patrimoine;courriers;communes;renouvellement;fiche;projets;carte;exports;copilote,oui
+Inventaires ZAE (EPCI — loi Climat et résilience),economie,absente,direct,lecture directe / cache(empreinte),—,—,non
+Recherche d'entreprises (DINUM),economie,en_direct,direct,lecture directe / cache(empreinte),—,—,non
+SIRENE établissements géolocalisés,economie,cron_mensuel,direct,lecture directe / cache(empreinte),—,—,non
+Trafic RN (Région Réunion — SIR),economie,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+Contraintes EnR près des habitations (Géoplateforme),energie,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+DPE ADEME (logements existants),energie,cron_mensuel,direct,lecture directe / cache(empreinte),signaux,patrimoine;permis,oui
+PVGIS (Commission européenne),energie,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+Parkings OSM (loi APER),energie,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+Zones exclues EnR sauf toiture (OFB/APER),energie,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+ENS du Département (Conseil départemental),environnement,absente,direct,lecture directe / cache(empreinte),—,—,non
+"Espaces protégés complémentaires — Ramsar, sites classés/inscrits (DEAL Carmen)",environnement,job_sur_clic,classement,run (calcul de nuit),—,—,non
+Forêts publiques (ONF),environnement,one_shot,classement,run (calcul de nuit),—,—,non
+GéoMCE — mesures compensatoires,environnement,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+INPN / patrinat — espaces protégés,environnement,one_shot,classement,run (calcul de nuit),—,—,non
+Parc National de La Réunion (INPN),environnement,one_shot,classement,run (calcul de nuit),—,—,non
+ZNIEFF (INPN/MNHN),environnement,one_shot,classement,run (calcul de nuit),cascade,scoreur-adresse;programme;risques;plu;etude-zone;fiche;carte;exports;copilote,oui
+Zones humides — inventaires DEAL (Carmen),environnement,job_sur_clic,classement,run (calcul de nuit),—,—,non
+FRR ex-ZRR — zone spéciale d'action rurale (Légifrance),fiscal,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+QPV 2024 (ANCT),fiscal,one_shot,classement,run (calcul de nuit),—,—,non
+ZFANG — zone franche d'activité nouvelle génération (Légifrance),fiscal,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+Coût de construction (EPTB SDES + choix LABUSE),fiscalite,sans_millesime,direct,lecture directe / cache(empreinte),—,—,non
+Taux de taxe foncière — fichier REI (DGFiP),fiscalite,job_sur_clic,direct,lecture directe / cache(empreinte),—,—,non
+Taxe d'aménagement — taux communaux (délibérations),fiscalite,job_sur_clic,direct,lecture directe / cache(empreinte),—,—,non
+Cartofriches (Cerema),foncier,one_shot,classement,run (calcul de nuit),—,—,non
+DEAL Réunion (WMS/WFS),hub,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+Géoplateforme IGN,hub,absente,direct,lecture directe / cache(empreinte),—,—,non
+PEIGEO (hub régional),hub,absente,direct,lecture directe / cache(empreinte),—,—,non
+Région Réunion Open Data (Opendatasoft),hub,absente,direct,lecture directe / cache(empreinte),—,—,non
+BD ORTHO 20 cm (IGN),imagerie,one_shot,classement,run (calcul de nuit),—,—,non
+BD ORTHO IRC (IGN),imagerie,one_shot,classement,run (calcul de nuit),—,—,non
+INSEE RP Logement 2023,logement,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+Inventaire SRU (DHUP),logement,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+LOVAC (logements vacants),logement,absente,direct,lecture directe / cache(empreinte),—,—,non
+Micro-données OLL (ADIL / AGORAH),logement,absente,direct,lecture directe / cache(empreinte),—,—,non
+NPNRU (DEAL Réunion / ANCT),logement,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+OPAH / PIG (Anah / EPCI),logement,absente,direct,lecture directe / cache(empreinte),—,—,non
+PLH des 5 EPCI (extraction documentaire),logement,depot_manuel,direct,lecture directe / cache(empreinte),—,—,non
+Périmètres ORT infra-communaux (EPCI),logement,absente,direct,lecture directe / cache(empreinte),—,—,non
+RNIC — registre national des copropriétés (Anah),logement,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+RPLS — répertoire des logements locatifs sociaux (SDES),logement,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+Zonage ABC des communes (DHUP),logement,job_sur_clic,direct,lecture directe / cache(empreinte),cascade,scoreur-adresse;programme;risques;plu;etude-zone;fiche;carte;exports;copilote,oui
+DV3F (Cerema),marche,absente,direct,lecture directe / cache(empreinte),—,—,non
+DVF / valeurs foncières,marche,job_sur_clic,classement,run (calcul de nuit),sector_price;scoring;signaux,scoreur-adresse;programme;comparer;assemblage;patrimoine;courriers;communes;permis;renouvellement;fiche;radar;projets;carte;exports;copilote,oui
+Loyers DHUP — carte des loyers (annonces),marche,depot_manuel,direct,lecture directe / cache(empreinte),—,—,non
+Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires),marche,job_sur_clic,direct,lecture directe / cache(empreinte),—,—,non
+Radar (pige d'annonces),marche,auto_quotidien,direct,lecture directe / cache(empreinte),sector_price,scoreur-adresse;programme;comparer;assemblage;communes;fiche;radar;exports;copilote,oui
+"CoSIA (couverture du sol IA, IGN)",occupation_sol,one_shot,classement,run (calcul de nuit),—,—,non
+IGN BD CARTO V5 — occupation du sol,occupation_sol,one_shot,classement,run (calcul de nuit),—,—,non
+ABF / Monuments historiques,patrimoine,one_shot,classement,run (calcul de nuit),cascade,scoreur-adresse;programme;risques;plu;etude-zone;fiche;carte;exports;copilote,oui
+ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines),patrimoine,absente,direct,lecture directe / cache(empreinte),—,—,non
+data.regionreunion.com — Potentiel foncier,potentiel,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+DGFiP — parcelles des personnes morales,proprietaire,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+Fichiers fonciers (Cerema),proprietaire,absente,direct,lecture directe / cache(empreinte),—,—,non
+EduGéo Réunion 1980 (IGN),reference,sans_millesime,direct,lecture directe / cache(empreinte),—,—,non
+SCAN 50 historique 1950 (IGN),reference,sans_millesime,direct,lecture directe / cache(empreinte),—,—,non
+50 pas géométriques — limite haute (DEAL),reglement,one_shot,classement,run (calcul de nuit),—,—,non
+Classement sonore ITT (Cerema),reglement,one_shot,classement,run (calcul de nuit),—,—,non
+SUP — assiettes GPU (API Carto),reglement,cron_mensuel,classement,run (calcul de nuit),scoring;cascade;capacite,scoreur-adresse;programme;taxe-amenagement;risques;plu;comparer;assemblage;patrimoine;courriers;prospection-solaire;communes;renouvellement;etude-zone;fiche;projets;carte;exports;copilote,oui
+RTAA DOM (textes réglementaires),reglementaire,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+Fibre Arcep — Ma connexion internet (immeuble),reseaux,job_sur_clic,direct,lecture directe / cache(empreinte),scoring,scoreur-adresse;comparer;patrimoine;courriers;communes;renouvellement;fiche;projets;carte;exports;copilote,oui
+VRD / assainissement (SPANC),reseaux,depot_manuel,direct,lecture directe / cache(empreinte),—,—,non
+Zonages d'assainissement SIG complets (EPCI / régies),reseaux,absente,direct,lecture directe / cache(empreinte),cascade,scoreur-adresse;programme;risques;plu;etude-zone;fiche;carte;exports;copilote,oui
+AZI / TRI — inondation (Géorisques GASPAR),risques,job_sur_clic,classement,run (calcul de nuit),cascade,scoreur-adresse;programme;risques;plu;etude-zone;fiche;carte;exports;copilote,oui
+Carte hypsométrique du littoral (DEAL Lizmap),risques,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+CatNat (arrêtés GASPAR / Géorisques),risques,job_sur_clic,direct,lecture directe / cache(empreinte),cascade,scoreur-adresse;programme;risques;plu;etude-zone;fiche;carte;exports;copilote,oui
+Cerema / GéoLittoral — indicateur d'érosion côtière,risques,one_shot,classement,run (calcul de nuit),—,—,non
+DEAL Réunion — PPR / aléas,risques,one_shot,classement,run (calcul de nuit),cascade,scoreur-adresse;programme;risques;plu;etude-zone;fiche;carte;exports;copilote,oui
+DEAL — cartes de bruit stratégiques (CBS),risques,job_sur_clic,classement,run (calcul de nuit),cascade,scoreur-adresse;programme;risques;plu;etude-zone;fiche;carte;exports;copilote,oui
+Géorisques,risques,one_shot,direct,lecture directe / cache(empreinte),cascade,scoreur-adresse;programme;risques;plu;etude-zone;fiche;carte;exports;copilote,oui
+Géorisques — CASIAS (anciens sites industriels),risques,en_direct,classement,run (calcul de nuit),cascade,scoreur-adresse;programme;risques;plu;etude-zone;fiche;carte;exports;copilote,oui
+Géorisques — ICPE,risques,one_shot,classement,run (calcul de nuit),cascade,scoreur-adresse;programme;risques;plu;etude-zone;fiche;carte;exports;copilote,oui
+Géorisques — cavités souterraines,risques,one_shot,classement,run (calcul de nuit),cascade,scoreur-adresse;programme;risques;plu;etude-zone;fiche;carte;exports;copilote,oui
+Géorisques — mouvements de terrain,risques,one_shot,classement,run (calcul de nuit),cascade,scoreur-adresse;programme;risques;plu;etude-zone;fiche;carte;exports;copilote,oui
+Géorisques — secteurs d'information sur les sols (SIS),risques,en_direct,classement,run (calcul de nuit),cascade,scoreur-adresse;programme;risques;plu;etude-zone;fiche;carte;exports;copilote,oui
+Géorisques — sites et sols pollués,risques,one_shot,classement,run (calcul de nuit),cascade,scoreur-adresse;programme;risques;plu;etude-zone;fiche;carte;exports;copilote,oui
+PEB — plans d'exposition au bruit (DGAC via annexes GPU),risques,job_sur_clic,classement,run (calcul de nuit),scoring;cascade;capacite,scoreur-adresse;programme;taxe-amenagement;risques;plu;comparer;assemblage;patrimoine;courriers;prospection-solaire;communes;renouvellement;etude-zone;fiche;projets;carte;exports;copilote,oui
+Ravines — domaine public fluvial (DEAL Carmen),risques,job_sur_clic,classement,run (calcul de nuit),—,—,non
+Systèmes d'endiguement et zones protégées (DEAL Lizmap),risques,one_shot,classement,run (calcul de nuit),—,—,non
+OpenStreetMap / Overpass,signal,sans_millesime,classement,run (calcul de nuit),—,—,non
+LiDAR HD — MNH 50 cm (IGN),terrain,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+BD NYME — lieux-dits (IGN),topographie,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+BD TOPO IGN,topographie,one_shot,classement,run (calcul de nuit),scoring;capacite,scoreur-adresse;programme;taxe-amenagement;plu;comparer;assemblage;patrimoine;courriers;prospection-solaire;communes;renouvellement;etude-zone;fiche;projets;carte;exports;copilote,oui
+Cadastre d'époque (Etalab / PCI vecteur DGFiP),topographie,one_shot,direct,lecture directe / cache(empreinte),sector_price;capacite;rattachement,scoreur-adresse;programme;taxe-amenagement;plu;comparer;assemblage;prospection-solaire;communes;renouvellement;etude-zone;fiche;radar;exports;copilote,oui
+OCS GE (IGN) — occupation du sol et artificialisation,topographie,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+RGE ALTI (altimétrie),topographie,one_shot,classement,run (calcul de nuit),—,—,non
+RNB — Référentiel National des Bâtiments,topographie,cron_mensuel,direct,lecture directe / cache(empreinte),capacite,scoreur-adresse;programme;taxe-amenagement;plu;assemblage;prospection-solaire;renouvellement;etude-zone;fiche;exports,oui
+Consommation d'espaces NAF (Cerema — portail de l'artificialisation),urbanisme,one_shot,direct,lecture directe / cache(empreinte),—,—,non
+GPU — droit de préemption urbain (info-surf),urbanisme,job_sur_clic,classement,run (calcul de nuit),scoring;capacite,scoreur-adresse;programme;taxe-amenagement;plu;comparer;assemblage;patrimoine;courriers;prospection-solaire;communes;renouvellement;etude-zone;fiche;projets;carte;exports;copilote,oui
+GPU — emplacements réservés (prescriptions CNIG),urbanisme,en_direct,classement,run (calcul de nuit),scoring;capacite,scoreur-adresse;programme;taxe-amenagement;plu;comparer;assemblage;patrimoine;courriers;prospection-solaire;communes;renouvellement;etude-zone;fiche;projets;carte;exports;copilote,oui
+GPU — espaces boisés classés (prescriptions CNIG),urbanisme,en_direct,classement,run (calcul de nuit),scoring;capacite,scoreur-adresse;programme;taxe-amenagement;plu;comparer;assemblage;patrimoine;courriers;prospection-solaire;communes;renouvellement;etude-zone;fiche;projets;carte;exports;copilote,oui
+GPU — zonages d'assainissement,urbanisme,one_shot,direct,lecture directe / cache(empreinte),scoring;cascade;capacite,scoreur-adresse;programme;taxe-amenagement;risques;plu;comparer;assemblage;patrimoine;courriers;prospection-solaire;communes;renouvellement;etude-zone;fiche;projets;carte;exports;copilote,oui
+Périmètres de ZAC (EPCI / communes / EPF Réunion),urbanisme,absente,direct,lecture directe / cache(empreinte),—,—,non
+SAR — schéma d'aménagement régional (Région/DEAL),urbanisme,absente,classement,run (calcul de nuit),—,—,non
+SCOT (GPU),urbanisme,one_shot,direct,lecture directe / cache(empreinte),scoring;capacite,scoreur-adresse;programme;taxe-amenagement;plu;comparer;assemblage;patrimoine;courriers;prospection-solaire;communes;renouvellement;etude-zone;fiche;projets;carte;exports;copilote,oui
+Sudocuh (procédures d'urbanisme),urbanisme,depot_manuel,direct,lecture directe / cache(empreinte),rattachement,scoreur-adresse,oui
+Urbanisme PLU/GPU (API Carto),urbanisme,en_direct,classement,run (calcul de nuit),scoring;capacite;rattachement,scoreur-adresse;programme;taxe-amenagement;plu;comparer;assemblage;patrimoine;courriers;prospection-solaire;communes;renouvellement;etude-zone;fiche;projets;carte;exports;copilote,oui

@@ -2333,6 +2333,7 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
     de détail (un appel focalisé sur une source, `only_id`, reste rapide)."""
     from datetime import datetime as _dt, timezone as _tz
     from .. import circuit_etats as _cetats
+    from .. import circuit_maj as _maj
     from .. import filtres as _filtres
     from ..sources_catalog import WHERE_AFFICHEES, masquees_param
     _now = _dt.now(tz=_tz.utc)
@@ -2431,6 +2432,9 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
             # millésime, portée à part de la vanne (une source ré-ingérable garde son bouton Injecter).
             "sans_millesime": (_cetats.raison_sans_millesime(r["name"])
                                if mode == "sans_millesime" else None),
+            # INJECTION-SOLIDE-1 — l'EFFET par défaut = « lue directement » ; relevé à « entre dans le
+            # classement » plus bas pour les sources du score/cascade (liste fermée sources_du_score).
+            "effet": _maj.effet(False),
         })
     # ── CIRCUIT-6 lot 2 (G2) — le REMPLISSAGE mesuré sur les 12 témoins du jour : chaque
     # réservoir porte sa mesure, et une source branchée mais VIDE (signature DPE) porte le
@@ -2451,6 +2455,8 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
                     rv["invisible"] = True
             if _slug in _score:
                 rv["score"] = _score[_slug]
+                # INJECTION-SOLIDE-1 — source du classement : son effet le dit (déclenche un calcul).
+                rv["effet"] = _maj.effet(True)
         # CIRCUIT-6 lot 6 (G6) — le sens source → app : les fichiers lecteurs, calculés.
         from ..circuit_garanties import lecteurs_par_slug as _lps
         _lect = _lps()
@@ -2461,6 +2467,31 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
     except Exception:  # noqa: BLE001 — la page ne casse jamais sur la mesure
         pass
     return reservoirs
+
+
+def _sources_changees_depuis(reservoirs: list[dict], run_date: str | None) -> list[dict]:
+    """INJECTION-SOLIDE-1 — les sources dont la version a AVANCÉ depuis le calcul du run servi
+    (`ingere_le` postérieur à `run_date`). Chacune `{nom, dans_le_score}` : dans_le_score = la source
+    nourrit le classement (score/cascade — `rv["score"]` posé par _assembler_reservoirs). Sans date de
+    run (base de test) : liste vide — jamais de faux positif. Comparaison par datetime (pas de tri
+    lexical fragile sur des fuseaux différents)."""
+    from datetime import datetime as _dt
+    if not run_date:
+        return []
+    def _parse(s):
+        try:
+            return _dt.fromisoformat(str(s).replace("Z", "+00:00"))
+        except (ValueError, TypeError):
+            return None
+    ref = _parse(run_date)
+    if ref is None:
+        return []
+    out: list[dict] = []
+    for rv in reservoirs:
+        ing = _parse(rv.get("ingere_le"))
+        if ing is not None and ing > ref:
+            out.append({"nom": rv.get("nom"), "dans_le_score": bool(rv.get("score"))})
+    return out
 
 
 #: CIRCUIT-P4 (lot 3) — statut technique → libellé français du segment « Hors vitrine ».
@@ -3094,6 +3125,12 @@ def admin_circuit(request: Request) -> dict:
     _calcul_en_cours = any(
         (j.get("dernier") or {}).get("statut") == "en_cours"
         for j in _jobs_list if j.get("nom") == "calcul-nuit")
+    # INJECTION-SOLIDE-1 — les sources qui ont CHANGÉ depuis le calcul du run servi (version avancée
+    # après `_run_date`), chacune étiquetée « entre dans le classement » (rv["score"] posé) ou non ;
+    # et le PROCHAIN passage de `calcul-nuit` — le bloc « Où en est la mise à jour ? » les met en mots.
+    _sources_changees = _sources_changees_depuis(reservoirs, _run_date)
+    _prochain_calcul = next((j.get("prochaine_reunion") or j.get("heure_reunion")
+                             for j in _jobs_list if j.get("nom") == "calcul-nuit"), None)
     cockpit = _cockpit.composer_cockpit(
         a_faire=a_faire, etats_sources=_etats_compte, reservoirs=reservoirs,
         verrous=_verrous, fuites_rob=_fuites_rob, caches_perimes=_caches_perimes, incidents=_incidents,
@@ -3101,7 +3138,8 @@ def admin_circuit(request: Request) -> dict:
         candidat=_candidat, calculer_present=_resume._calculer_present(_calculer_af, residuel),
         dernier_calcul=_run_date, env=_config.get_settings().env, prod_run=None,
         promotion_auto=_promotion_auto, calcul_en_cours=_calcul_en_cours,
-        dates=_dates_af, copie_externe=_copie_externe, restore_test=_restore_test, radar=_radar)
+        dates=_dates_af, copie_externe=_copie_externe, restore_test=_restore_test, radar=_radar,
+        sources_changees=_sources_changees, prochain_calcul=_prochain_calcul)
     return {
         "cockpit": cockpit,   # COCKPIT-1 Lot A — l'onglet « Tableau de bord » (3 sections)
         "run_servi": runs.current(), "candidat": _candidat, "manifeste": m,

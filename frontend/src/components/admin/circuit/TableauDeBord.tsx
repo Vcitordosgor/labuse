@@ -178,6 +178,12 @@ export function TableauDeBord({ data, onVoirUsine, onDepotManuel, onDemanderJohn
       {/* ─────────── 3. Où en est la mise à jour ? ─────────── */}
       <div className="ck-sect">
         <div className="ck-head"><h2>Où en est la mise à jour&nbsp;?</h2></div>
+        {/* INJECTION-SOLIDE-1 — les 3 phrases qui disent la vérité du moment, avant les étapes. */}
+        {ck.mise_a_jour.resume && ck.mise_a_jour.resume.length > 0 && (
+          <div className="ck-maj-resume">
+            {ck.mise_a_jour.resume.map((p, i) => (<p key={i}>{p}</p>))}
+          </div>
+        )}
         <div className="ck-etapes">
           {ck.mise_a_jour.etapes.map((e) => {
             const prodRun = e.id === 'envoyer-prod' && prod.data?.run

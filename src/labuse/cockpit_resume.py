@@ -20,6 +20,8 @@ techniques (V1c, q_v…, noms de table) ne figurent jamais dans les titres/phras
 """
 from __future__ import annotations
 
+from . import circuit_maj as _circuit_maj
+
 
 # ── les quatre « livreurs » des livraisons quotidiennes (famille 2), pour la tuile « Livraisons » ──
 LIVRAISONS = ("ingest-bodacc", "ingest-dvf", "ingest-sitadel", "ingest-dpe", "ingest-sirene", "sync-gpu")
@@ -728,7 +730,9 @@ def composer_cockpit(*, a_faire: dict, etats_sources: dict | None, reservoirs: l
                      dernier_calcul: str | None, env: str, prod_run: str | None,
                      promotion_auto: bool = True, calcul_en_cours: bool = False,
                      dates: dict | None = None, copie_externe: dict | None = None,
-                     restore_test: dict | None = None, radar: dict | None = None) -> dict:
+                     restore_test: dict | None = None, radar: dict | None = None,
+                     sources_changees: list[dict] | None = None,
+                     prochain_calcul: str | None = None) -> dict:
     """Compose le payload du Tableau de bord (trois sections). Tout est déjà calculé en amont par
     l'endpoint — ici on ne fait que GROUPER par problème et formuler en français. `prod_run` est
     None quand l'état prod n'est pas encore lu (le front le complète via /admin/cockpit/etat-prod)."""
@@ -752,10 +756,17 @@ def composer_cockpit(*, a_faire: dict, etats_sources: dict | None, reservoirs: l
         "aujourdhui": {"n": len(cartes), "cartes": cartes},
         "tout_tourne": {"resume": _resume_usine(jobs_list),
                         "tuiles": _tuiles_tout_tourne(jobs_par_nom, etats_sources or {}, sante)},
-        "mise_a_jour": {"etapes": _etapes_mise_a_jour(
-            a_faire, run_servi=run_servi, candidat=candidat, calculer_present=calculer_present,
-            dernier_calcul=dernier_calcul, env=env, prod_run=prod_run,
-            promotion_auto=promotion_auto, calcul_en_cours=calcul_en_cours)},
+        "mise_a_jour": {
+            "etapes": _etapes_mise_a_jour(
+                a_faire, run_servi=run_servi, candidat=candidat, calculer_present=calculer_present,
+                dernier_calcul=dernier_calcul, env=env, prod_run=prod_run,
+                promotion_auto=promotion_auto, calcul_en_cours=calcul_en_cours),
+            # INJECTION-SOLIDE-1 — les TROIS phrases du mandat : version servie + date ; sources
+            # changées depuis + recalcul requis ou non ; prochain calcul ou « rien à recalculer ».
+            "resume": _circuit_maj.resume_mise_a_jour(
+                run_servi=run_servi, run_date=dernier_calcul,
+                sources_changees=sources_changees or [], prochain_calcul=prochain_calcul,
+                calcul_en_cours=calcul_en_cours)},
         "radar": _carte_radar(radar),   # RADAR-FIX-2 (Lot D) — Données ON / Notifications OFF + fraîcheur capture
     }
 

@@ -229,7 +229,7 @@ export function Sources({ data, onOpen, tacheSonde, tacheAgents, onSonder, onAge
           <div className="svt">
             <div className="svt-h">
               <div>Source</div><div>Servi</div><div>Chez le producteur</div>
-              <div>Dernier contrôle</div><div>État</div><div />
+              <div>Dernier contrôle</div><div>Effet</div><div>État</div><div />
             </div>
             {vitrine.map((r) => {
               const v = r.veille
@@ -250,6 +250,10 @@ export function Sources({ data, onOpen, tacheSonde, tacheAgents, onSonder, onAge
                     <small>{v?.passage ? `vu le ${jour(v.passage)}` : (r.sans_millesime ? 'sans millésime' : '—')}</small></div>
                   <div className={`cel ${r.dernier_controle ? '' : 'vide'}`}>{r.dernier_controle ? jour(r.dernier_controle) : 'jamais'}
                     <small>{controleLabel(r)}</small></div>
+                  <div className="cel svt-effet" title={r.effet?.phrase}>
+                    <span className={`effet ${r.effet?.code ?? 'direct'}`}>
+                      {r.effet?.code === 'classement' ? 'Classement' : 'Lecture directe'}</span>
+                    <small>{r.effet?.phrase ?? 'lue directement, visible le lendemain matin'}</small></div>
                   <div><span className={`stt ${r.etat[0]}`}><i />{r.etat[1]}</span></div>
                   <div className="act">
                     {act && <button className="btn" onClick={(e) => { e.stopPropagation(); onOpen(r.id) }}>{act}</button>}
