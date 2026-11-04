@@ -83,6 +83,20 @@ def test_cout_raccordement_qualitatif_jamais_en_euros():
     assert "autonome" in anc["assainissement"].lower()
 
 
+def test_badge_replie_confirmee_dit_le_voisinage_pas_le_branchement():
+    """CHASSE-FIX-1 (CH-B-m4) — le mot COURT du badge (servi, FRONT-CHIFFRES-2 BANDE_DA) ne doit pas
+    sur-promettre : le score est INFÉRÉ du voisinage, pas du raccordement réel. Le repli dit donc
+    « confirmée au voisinage » (jamais « confirmée » seul, lu comme « la parcelle EST raccordée »)."""
+    ind = V.build_indicateur(_sig(zone_fam="U", c100=8, c200=20, c100_recent=4, c100_acheve=3,
+                                  voie10=True, voie75=True, bati10=True, bati30=True, bati75=True))
+    assert ind["band"] == "confirmee"
+    assert ind["mot"] == "confirmée au voisinage"
+    assert ind["mot"] != "confirmée"                  # rouge avant le correctif
+    assert ind["ton"] == "vert"
+    # le DÉPLIÉ garde la formule « par les faits » (BANDES) — nuance conservée.
+    assert V.band(100)[1] == "Viabilisation confirmée par les faits"
+
+
 def test_indicateur_porte_disclaimer_et_est_un_indicateur():
     ind = V.build_indicateur(_sig(zone_fam="U", c100=6))
     assert "indicateur" in ind["disclaimer"].lower() or "probabilité" in ind["disclaimer"].lower()

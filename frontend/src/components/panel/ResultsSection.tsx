@@ -4,7 +4,7 @@ import { getAnalyse, getAnalyseStats, getCommunes, getFiltre, getParcelsGeojson,
 import { hasScopeFilters, matchAll, type ParcelProps } from '../../lib/filters'
 import { surfaceTerrain } from '../../lib/surface'
 import { roughCentroid } from '../../lib/geo'
-import { fmtInt as fmt } from '../../lib/format'
+import { fmtInt as fmt, fmtDateNum } from '../../lib/format'
 import { ALL_TIER_META, BANDE_META, bandeMeta, etatBienMeta, signalMeta, type Bande, verdictMeta } from '../../lib/status'
 import { raisonDominante } from '../../lib/raison'
 import { CLIENT } from '../../lib/strings'
@@ -98,10 +98,10 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
             </Tip>
           )}
           {p.evenement === 'rouge' && (
-            <Tip tip={`Événement — procédure BODACC ouverte${p.evenement_date ? ` (${new Date(p.evenement_date).toLocaleDateString('fr-FR')})` : ''}`}
+            <Tip tip={`Événement — procédure BODACC ouverte${p.evenement_date ? ` (${fmtDateNum(p.evenement_date)})` : ''}`}
               className="shrink-0">
               <span className="rounded-full bg-[#3a1614] px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee">
-                ● ÉVÉNEMENT{p.evenement_date ? ` · ${new Date(p.evenement_date).toLocaleDateString('fr-FR')}` : ''}
+                ● ÉVÉNEMENT{p.evenement_date ? ` · ${fmtDateNum(p.evenement_date)}` : ''}
               </span>
             </Tip>
           )}

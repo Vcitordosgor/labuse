@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { getAdminCircuitJournal } from '../../../lib/api'
 import { Chargement } from '../../Loading'
+import { fmtHorodatage } from '../../../lib/format'   // CHASSE-FIX-1 (A-3) — horodatage unique (fuseau Réunion)
 
 import type { CircuitData } from './types'
 
@@ -45,8 +46,7 @@ function repartition(e: any): { txt: string; couleur: string } {
   return { txt: parts.join(', '), couleur }
 }
 
-const quand = (ts: string) =>
-  new Date(ts).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Indian/Reunion' })
+const quand = (ts: string) => fmtHorodatage(ts)
 
 export function Journal({ data, onOpen, onAujourdhui }:
   { data: CircuitData; onOpen: Ouvrir; onAujourdhui?: (n: number) => void }) {

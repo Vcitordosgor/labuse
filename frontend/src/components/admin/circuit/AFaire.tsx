@@ -3,10 +3,10 @@
 // recalcule rien. Cinq types de lignes seulement (Injecter · Déposer · Calculer · Basculer ·
 // Décider), chacune avec un verbe et UN bouton d'action (plus, parfois, un lien discret « voir »/
 // « lire »). Vide → « Rien à faire » + la phrase de contexte. Le bouton grisé porte SA raison.
+import { fmtHorodatage } from '../../../lib/format'   // CHASSE-FIX-1 (A-3) — horodatage unique (fuseau Réunion)
 import type { AFaireLigne, CircuitData } from './types'
 
-const jour = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Indian/Reunion' }) : '—'
+const jour = fmtHorodatage
 
 export function AFaire({ data, onGeste, onOuvrirSources }: {
   data: CircuitData

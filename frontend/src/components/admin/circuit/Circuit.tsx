@@ -15,6 +15,7 @@ import { DestinationsDetail } from '../Destinations'
 
 import { useApp } from '../../../store/useApp'
 
+import { fmtHorodatage } from '../../../lib/format'   // CHASSE-FIX-1 (A-3) — horodatage unique (fuseau Réunion)
 import { CircuitDiagram } from './CircuitDiagram'
 import { Detail as DetailPage } from './Detail'
 import { ecrireCx, parseCx } from './hash'
@@ -36,9 +37,8 @@ type DetailType = 'reservoir' | 'robinet' | 'pompe' | 'compteur' | 'destinations
 type Detail = { type: DetailType; id: number | string } | null
 export type Portee = 'sans_amont' | 'g8' | 'tous'
 
-// la date d'un contrôle / passage, lisible (« 24/09 02:05 »).
-const quandCourt = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Indian/Reunion' }) : '—'
+// la date d'un contrôle / passage, lisible (« 24/09 02:05 »). CHASSE-FIX-1 (A-3) — horodatage unique.
+const quandCourt = fmtHorodatage
 
 export function CircuitSection() {
   const qc = useQueryClient()

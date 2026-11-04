@@ -519,11 +519,34 @@ def comparateur_bien(db: Session, idu: str, *, type_bien: str | None = None,
         "prix_m2": v.get("prix_m2"), "distance_m": v.get("distance_m"),
     } for v in proches]
     label_pl = {"maison": "maisons", "appartement": "appartements"}.get(type_bien or "", "biens bâtis anciens")
+    periode = [min(annees), max(annees)] if annees else None
+    # ── CHASSE-FIX-1 (B-3 / CH-B-M3 / MARCHE-UNIQUE) — la MÉDIANE servie à l'écran est celle du POINT
+    # DE CALCUL UNIQUE `reference_locale` (le même moteur de secteur que la carte Marché de la fiche et
+    # l'Étude de zone). Avant, l'Estimer calculait sa propre médiane (échantillon/fenêtre distincts :
+    # « maison 4 747 €/m² · 16 ventes » ici vs « 4 265 €/m² · 13 ventes » sur la fiche). Désormais, pour
+    # un type maison/appartement, le chiffre de tête (médiane, quartiles, n, rayon, période) est repris
+    # de `reference_locale` → UN SEUL €/m² pour le même bien. Les 8 comparables restent illustratifs
+    # (sélectionnés par ressemblance, ESTIMER-PRECISION-1) ; en secteur mixte (type None), pas de
+    # référence mono-type → l'Estimer garde sa médiane bâti combinée. ──
+    if type_bien in ("maison", "appartement"):
+        try:
+            from .faisabilite.bilan import reference_locale as _ref_sec
+            rl = _ref_sec(db, idu, type_bien, return_echantillon=True)
+        except Exception:  # noqa: BLE001 — le marché ne casse jamais l'estimation
+            rl = None
+        if rl and rl.get("eur_m2") is not None:
+            median = round(float(rl["eur_m2"]))
+            q1 = rl.get("q1") if rl.get("q1") is not None else q1
+            q3 = rl.get("q3") if rl.get("q3") is not None else q3
+            n = int(rl.get("n") or n)
+            radius = int(rl["rayon_m"]) if rl.get("rayon_m") is not None else radius
+            periode = rl.get("periode") or periode
+            commune_fallback = False
     return {
         "type_bien": type_bien or "bati", "type_label_pluriel": label_pl,
         "median": median, "q1": q1, "q3": q3, "n": n,
         "radius_m": radius, "commune_fallback": commune_fallback,
-        "periode": [min(annees), max(annees)] if annees else None,
+        "periode": periode,
         "fiable": n >= seuil, "fiabilite": "fiable" if n >= seuil else "moyen",
         "seuil_effectif": seuil, "comparables": comparables, "n_total": n,
         "reserve": reserve_methode(),

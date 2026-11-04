@@ -4,6 +4,7 @@
 // DASHBOARD-4 (D1) — les compteurs de la page = ceux des verrous ; (D2) — les verrous joués à la
 // demande, résultat persistant (30 lignes phrase + état + preuve), un cassé = une ligne « à corriger ».
 import type { Cible, CircuitData, VerrousTache } from './types'
+import { fmtHorodatage } from '../../../lib/format'   // CHASSE-FIX-1 (A-3) — horodatage unique (fuseau Réunion)
 
 export function Resume({ data, onCible, verrousTache, onRejouerVerrous, rejouerEnCours }: {
   data: CircuitData; onCible: (c: Cible) => void
@@ -48,7 +49,7 @@ export function Resume({ data, onCible, verrousTache, onRejouerVerrous, rejouerE
             {vt.resultat.bloquants.length === 0
               ? `Tout va bien — ${vt.resultat.joues} verrous joués, aucun bloquant.`
               : `À corriger : ${vt.resultat.bloquants.join(', ')} cassé(s).`}
-            {vt.maj ? ` Dernier passage ${new Date(vt.maj).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Indian/Reunion' })}.` : ''}
+            {vt.maj ? ` Dernier passage ${fmtHorodatage(vt.maj)}.` : ''}
           </div>
         )}
         {(lignesVerrous ?? garanties)?.map((g: any) => (
@@ -75,7 +76,7 @@ export function Resume({ data, onCible, verrousTache, onRejouerVerrous, rejouerE
           ? "Tout le reste est branché sur le moteur, sert la dernière version et dit la même chose partout."
           : "Tout est branché sur le moteur, sert la dernière version et dit la même chose partout."}
         {data.dernier_controle
-          ? ` Dernier contrôle ${new Date(data.dernier_controle.ts).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Indian/Reunion' })}.`
+          ? ` Dernier contrôle ${fmtHorodatage(data.dernier_controle.ts)}.`
           : ''}
       </div>
 

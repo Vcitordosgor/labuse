@@ -5,16 +5,11 @@
 // colonne devient un tiroir (menu), ouvert depuis l'en-tête du fil — pas de défilement horizontal.
 import { useState } from 'react'
 import type { CopiloteMission } from '../../lib/api'
+import { ageConversation } from '../../lib/format'
 
-// Âge court d'une conversation. La rétention est de 30 jours (COPILOTE-4) : on garde « il y a N j »
-// jusqu'au bout, sans basculer sur une date absolue (le `ilYA` global le fait au-delà de 7 j).
-function ageConv(iso: string): string {
-  const t = new Date(iso).getTime()
-  if (Number.isNaN(t)) return ''
-  const j = Math.floor((Date.now() - t) / 86_400_000)
-  if (j <= 0) return "aujourd'hui"
-  return `il y a ${j} j`
-}
+// Âge court d'une conversation (« aujourd'hui » / « hier » / « il y a N j »). La rétention est de 30 j
+// (COPILOTE-4). CHASSE-FIX-1 (A-3) — via le formateur unique (fuseau Réunion), plus de calcul local.
+const ageConv = ageConversation
 
 export function ConversationsSidebar({ conversations, activeId, retentionJours, onNouvelle, onOuvrir,
   onSupprimer, onFermerMenu, mobile = false }: {

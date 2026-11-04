@@ -6,7 +6,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { fusionnerProjets, getCourrierDemandes, getProjets, postCourrierClientStatut, type Cadrage, type Projet } from '../../lib/api'
-import { fmtEurCompact } from '../../lib/format'
+import { fmtEurCompact, fmtDateCourt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { Chargement, Skeleton } from '../Loading'
 import { EmptyState } from '../States'
@@ -56,7 +56,7 @@ function ProjetRow({ p }: { p: Projet }) {
   // proposee_at (date du cadrage = aujourd'hui). La liste dit maintenant la même date que le projet
   // ouvert et le PDF. Repli sur proposee_at si le run servi n'est pas connu.
   const valeursDate = p.valeurs_run?.date ?? p.proposee_at
-  const valeurs = valeursDate ? `valeurs au ${new Date(valeursDate).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}` : null
+  const valeurs = valeursDate ? `valeurs au ${fmtDateCourt(valeursDate)}` : null
   const pct = vivier > 0 ? Math.round((decidees / vivier) * 100) : 0
   const barLabel = vivierZero ? '—'
     : deZero && vivier === 0 ? 'aucune parcelle pour l’instant'

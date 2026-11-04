@@ -373,6 +373,11 @@ export function LeftPanel() {
   // M55-D stage 6 : tiroir mobile piloté par le store (le header-reflet l'ouvre aussi)
   const mobileOpen = useApp((st) => st.mobilePanelOpen)
   const setMobileOpen = useApp((st) => st.setMobilePanelOpen)
+  // CHASSE-FIX-1 (CH-B-m3) — sur mobile (< 640 px), la fiche parcelle s'ouvre PLEINE LARGEUR par-dessus
+  // la carte ; le bouton flottant « Couches » (bas-gauche) se superposait alors au texte de la fiche
+  // (section « Logement neuf (VEFA) », 390 px). On le masque tant qu'une fiche est ouverte : on choisit
+  // des couches sur la CARTE, pas en lisant une fiche. Il revient dès la fiche fermée.
+  const ficheOuverte = useApp((st) => st.selectedIdu != null)
   // M14 B3 (QA-64) : « Couches » OUVERT PAR DÉFAUT tant que l'analyse LABUSE n'est pas affichée.
   // État partagé desktop/mobile. Plus d'auto-fermeture 10 s : c'est la BASCULE vers l'analyse
   // (`verdict` false→true) qui replie les couches, une seule fois — l'utilisateur peut rouvrir.
@@ -476,7 +481,7 @@ export function LeftPanel() {
       )}
 
       {/* ── mobile < 640 px : carte plein écran, panneau en tiroir ── */}
-      {!mobileOpen && (
+      {!mobileOpen && !ficheOuverte && (
         <button
           data-couches-mobile
           onClick={() => setMobileOpen(true)}

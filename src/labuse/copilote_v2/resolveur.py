@@ -38,6 +38,12 @@ _RE_LEAD_NUM = re.compile(r"^\s*(\d{1,4})\b")
 _RE_REF = re.compile(r"\b([A-Za-z]{1,2})\s?(\d{1,4})\b")
 # Un IDU complet (14 car.) : traité en amont (`_idu_dans`) — on ne le re-résout pas ici.
 _RE_IDU = re.compile(r"\b\d{5}[0-9A-Za-z]{9}\b")
+# CHASSE-FIX-1 (B-5) — articles/prépositions à IGNORER quand on juge si une VOIE et une COMMUNE
+# saisies correspondent vraiment à une candidate (ne comptent pas comme des mots de voie significatifs).
+_ARTICLES_PREP = frozenset((
+    "a", "au", "aux", "le", "la", "les", "l", "de", "du", "des", "d", "et", "sur", "sous", "en",
+))
+_RE_CP5 = re.compile(r"^\d{5}$")
 
 MAX_CANDIDATS = 5
 
@@ -86,27 +92,63 @@ def _extraire_adresse(message: str) -> tuple[str, int | None] | None:
     return " ".join(frag), num
 
 
+def _mots_adresse(adresse: str) -> tuple[list[str], list[str], str | None]:
+    """CHASSE-FIX-1 (B-5) — sépare les mots SIGNIFICATIFS de la VOIE et de la COMMUNE saisies, et le
+    code postal. Sert à vérifier qu'une candidate correspond VRAIMENT (sa voie ET sa commune), et pas
+    au seul mot-type « avenue » + numéro. Significatif = longueur ≥ 3, hors articles/prépositions, hors
+    mots-types de voie (chemin/rue/avenue…), hors code postal. `adresse` = fragment déjà plié (tokens
+    [0-9a-z] séparés par des espaces, cf. `_extraire_adresse`)."""
+    toks = adresse.split()
+    cp = next((t for t in toks if _RE_CP5.match(t)), None)
+    vi = next((i for i, t in enumerate(toks) if t in _VOIE_KW), None)
+    if cp is not None:                                   # frontière voie|commune = le code postal
+        bound = toks.index(cp)
+        commune_raw = toks[bound + 1:]
+    else:                                                # sinon un « a »/« au » isolé après la voie
+        debut = (vi + 2) if vi is not None else 1
+        sep = next((i for i in range(debut, len(toks)) if toks[i] in ("a", "au", "aux")), None)
+        if sep is not None:
+            bound, commune_raw = sep, toks[sep + 1:]
+        else:
+            bound, commune_raw = len(toks), []
+    voie_raw = toks[((vi + 1) if vi is not None else 0):bound]
+
+    def _sig(ts: list[str]) -> list[str]:
+        return [t for t in ts if len(t) >= 3 and t not in _ARTICLES_PREP
+                and t not in _VOIE_KW and not _RE_CP5.match(t)]
+    return _sig(voie_raw), _sig(commune_raw), cp
+
+
 def _resoudre_adresse(db: Session, message: str) -> Resolution | None:
     """Résout une adresse en parcelle(s) via la MÊME grammaire que l'omnibox (`_sugg_adresse`), avec
     relaxe par jetons : on retire le dernier jeton tant que la recherche ne rend rien (un quartier
-    hors toponyme officiel — « La Montagne » pour 97417 Saint-Denis — ne doit pas tout faire échouer)."""
+    hors toponyme officiel — « La Montagne » pour 97417 Saint-Denis — ne doit pas tout faire échouer).
+
+    CHASSE-FIX-1 (B-5) — la relaxe dépouillait jusqu'au seul mot-type « avenue » + numéro, puis
+    matchait des voies ARBITRAIRES d'une autre commune sur le seul numéro, présentées comme des
+    correspondances sûres (« 777 avenue bidon à Gotham » → 781 Avenue de Bourbon, 97440 Saint-André).
+    Désormais une candidate n'est RETENUE que si la VOIE **et** la COMMUNE saisies correspondent ;
+    sinon « adresse introuvable », avec les candidates PROCHES (voie seule) proposées, jamais imposées."""
     from ..api.recherche import _sugg_adresse
     extrait = _extraire_adresse(message)
     if extrait is None:
         return None
     adresse, num = extrait
+    voie_sig, commune_sig, cp = _mots_adresse(adresse)
     toks = adresse.split()
     cands: list[dict] = []
     needle = adresse
     while len(toks) >= 2:
-        r = [x for x in _sugg_adresse(db, " ".join(toks), 6) if x.get("idu")]
+        r = [x for x in _sugg_adresse(db, " ".join(toks), 8) if x.get("idu")]
         if r:
             cands, needle = r, " ".join(toks)
             break
         toks = toks[:-1]
     if not cands:
-        return None
-    # dédup par idu (l'ordre de l'omnibox = la pertinence), cap MAX_CANDIDATS.
+        # rien ne matche : si un numéro de voie était donné (vraie tentative d'adresse) → introuvable ;
+        # sinon (simple mention de voie dans une phrase) → None, le flux normal reprend la main.
+        return _introuvable(needle) if num is not None else None
+    # dédup par idu (l'ordre de l'omnibox = la pertinence).
     vus: set[str] = set()
     uniques: list[dict] = []
     for c in cands:
@@ -114,16 +156,45 @@ def _resoudre_adresse(db: Session, message: str) -> Resolution | None:
             continue
         vus.add(c["idu"])
         uniques.append({"idu": c["idu"], "label": c.get("label") or c["idu"], "sub": c.get("sub") or ""})
+
+    # CHASSE-FIX-1 (B-5) — valide VOIE et COMMUNE. `voie_ok` : tous les mots significatifs de la voie
+    # figurent dans le libellé de la candidate. `commune_ok` : aucune commune/CP nommé, OU la commune/CP
+    # de la candidate correspond. `proches` = voie seule (candidates à PROPOSER) ; `retenues` = voie ET
+    # commune (une correspondance sûre).
+    def _voie_ok(c: dict) -> bool:
+        lab = set(_tokens(c["label"] + " " + c["sub"]))
+        return all(t in lab for t in voie_sig) if voie_sig else True
+
+    def _commune_ok(c: dict) -> bool:
+        if not commune_sig and not cp:
+            return True
+        sub = set(_tokens(c["sub"]))
+        if cp and cp in sub:
+            return True
+        return bool(commune_sig) and all(t in sub for t in commune_sig)
+
+    proches = [c for c in uniques if _voie_ok(c)]
+    retenues = [c for c in proches if _commune_ok(c)]
+    if not retenues:
+        if num is not None:
+            return _introuvable(needle, candidats=proches[:MAX_CANDIDATS])
+        return None
     # numéro demandé → les candidates qui le PORTENT exactement (le reste = voisins de numéro).
     if num is not None:
-        exacts = [c for c in uniques if _lead_num(c["label"]) == num]
+        exacts = [c for c in retenues if _lead_num(c["label"]) == num]
         if len(exacts) == 1:
             return Resolution("idu", idu=exacts[0]["idu"], requete=needle, famille="adresse")
         if len(exacts) > 1:
-            return Resolution("candidats", candidats=exacts[:MAX_CANDIDATS], requete=needle, famille="adresse")
-    if len(uniques) == 1:
-        return Resolution("idu", idu=uniques[0]["idu"], requete=needle, famille="adresse")
-    return Resolution("candidats", candidats=uniques[:MAX_CANDIDATS], requete=needle, famille="adresse")
+            retenues = exacts
+    if len(retenues) == 1:
+        return Resolution("idu", idu=retenues[0]["idu"], requete=needle, famille="adresse")
+    return Resolution("candidats", candidats=retenues[:MAX_CANDIDATS], requete=needle, famille="adresse")
+
+
+def _introuvable(needle: str, candidats: list[dict] | None = None) -> Resolution:
+    """CHASSE-FIX-1 (B-5) — la voie/commune saisies ne correspondent à aucune parcelle. Honnête :
+    « adresse introuvable », avec les candidates proches (voie seule) à PROPOSER si on en a."""
+    return Resolution("introuvable", candidats=candidats or [], requete=needle, famille="adresse")
 
 
 def _lead_num(label: str) -> int | None:
@@ -187,3 +258,17 @@ def message_candidats(res: Resolution) -> str:
                        for c in res.candidats)
     return (f"Plusieurs parcelles correspondent à cette {quoi} — laquelle ?\n{lignes}\n"
             "Donnez le numéro exact, le code postal, ou l'identifiant (14 caractères).")
+
+
+def message_introuvable(res: Resolution) -> str:
+    """CHASSE-FIX-1 (B-5) — la voie et la commune saisies ne désignent aucune parcelle. On le DIT,
+    sans imposer une parcelle au hasard. Si des voies PROCHES existent (même nom, autre commune ou
+    numéro voisin), on les PROPOSE explicitement comme pistes à confirmer, jamais comme la réponse."""
+    if res.candidats:
+        lignes = "\n".join(f"• {c['label']}" + (f" — {c['sub']}" if c["sub"] else "") + f"  ({c['idu']})"
+                           for c in res.candidats)
+        return ("Adresse introuvable — aucune parcelle ne correspond à cette voie dans cette commune.\n"
+                "Vouliez-vous dire l'une de celles-ci ?\n" + lignes + "\n"
+                "Donnez l'adresse complète (voie + commune), le code postal, ou l'identifiant (14 caractères).")
+    return ("Adresse introuvable — aucune parcelle ne correspond à cette voie dans cette commune. "
+            "Vérifiez la voie et la commune, ou donnez l'identifiant de la parcelle (14 caractères).")

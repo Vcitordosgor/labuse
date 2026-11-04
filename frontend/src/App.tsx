@@ -334,6 +334,12 @@ export default function App() {
   // URL partageable : filtres + zone + commune sérialisés dans le hash (#f=…&c=…). Lecture au
   // chargement, écriture à chaque changement (replaceState : pas de pollution de l'historique).
   useEffect(() => {
+    // CHASSE-FIX-1 (B-1 / CH-B-M1) — l'écran est RE-DÉRIVÉ du hash à CHAQUE navigation (montage +
+    // Back/Forward + tout changement de hash sans rechargement). Avant : lecture au SEUL montage
+    // (`useEffect(…, [])`) sans écouteur popstate/hashchange → le Retour changeait l'URL (ex. revenir
+    // sur `#idu=…`) mais l'écran restait figé (fiche fermée sous une URL de fiche). On factorise la
+    // lecture en `appliquer()` et on la rejoue sur popstate/hashchange (comme Circuit.tsx).
+    const appliquer = () => {
     const hash = window.location.hash          // lu AVANT toute écriture (l'effet d'écriture suit)
     const parsed = filtersFromHash(hash)
     if (parsed) {
@@ -394,6 +400,11 @@ export default function App() {
       // de la fiche (setCourrierPrefill(idu)), sinon l'outil Courrier s'ouvre vide alors qu'une
       // parcelle est en contexte. Même état/porte que la tuile fiche (ModulePanel lit courrierPrefill).
       if (m === 'courriers') useApp.getState().setCourrierPrefill(pidu)
+    } else if (useApp.getState().selectedIdu) {
+      // CHASSE-FIX-1 (B-1) — l'URL ne décrit PLUS de fiche (Retour depuis une fiche) → on la ferme
+      // pour que l'écran corresponde au hash (symétrie de `select(pidu)` ci-dessus). `select(null)`
+      // ne touche que `selectedIdu` (store), inoffensif au montage (déjà null).
+      select(null)
     }
     // M104 — lien profond des notifications de Veille (#surveillance=parcelles|criteres) : ouvre la
     // section unifiée sur le bon volet. A-08-3 — le volet 'secteurs' a été retiré : on n'accepte que
@@ -404,6 +415,17 @@ export default function App() {
     // DASHBOARD-V1 — deep-link de la Tour de contrôle (#admin=1) ; la garde reste au backend.
     if (p.get('admin') === '1') setView('admin')
     // (Alias d'URL #pg=vues / pg=segments retiré avec le spin-off « Vues » — M12 Lot C-bis.)
+    }
+    appliquer()                                        // montage / rechargement (deep-link)
+    // Back/Forward et tout changement de fragment rejouent `appliquer` : l'URL redevient autoritaire
+    // sur l'écran. `replaceState` (effet d'écriture) ne déclenche NI popstate NI hashchange → pas de
+    // boucle ; `appliquer` est idempotent (rejouer le même hash ne change rien).
+    window.addEventListener('popstate', appliquer)
+    window.addEventListener('hashchange', appliquer)
+    return () => {
+      window.removeEventListener('popstate', appliquer)
+      window.removeEventListener('hashchange', appliquer)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   // FIX-NU3-2 (G-015) — l'effet de LECTURE du hash (ci-dessus, []) pose les filtres via setFilters ;

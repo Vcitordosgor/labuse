@@ -6,6 +6,7 @@
 // aperçu réel. Compteur de licences actives = source unique backend. Plafond IA affiché en EUROS.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
+import { ageConversation, ageEnJours } from '../../lib/format'   // CHASSE-FIX-1 (A-3) — âge relatif unique
 import {
   getAdminLicences, getAdminMailApercu, getAdminMails, getOffres, postAdminLicenceCreer,
   postAdminLicenceCreerEssai, postAdminLicenceConvertir, postAdminLicenceProlonger, postAdminLicenceMail,
@@ -31,14 +32,10 @@ const essaiHeuresRestantes = (l: AdminLicence) =>
   l.essai_expire_at ? Math.round((new Date(l.essai_expire_at).getTime() - Date.now()) / 3_600_000) : null
 
 // « dernière visite » en relatif (aujourd'hui / hier / il y a N j / jamais), heure Réunion pour le jour.
+// CHASSE-FIX-1 (A-3) — via le formateur unique (jours calendaires, fuseau Réunion).
 function fmtVisite(iso?: string | null): string {
   if (!iso) return 'jamais'
-  try {
-    const j = new Intl.DateTimeFormat('fr-CA', { timeZone: 'Indian/Reunion' })
-    const d0 = new Date(j.format(new Date())), dv = new Date(j.format(new Date(iso)))
-    const n = Math.round((d0.getTime() - dv.getTime()) / 86_400_000)
-    return n <= 0 ? "aujourd'hui" : n === 1 ? 'hier' : `il y a ${n} j`
-  } catch { return '—' }
+  return ageConversation(iso) || '—'
 }
 function initiales(l: AdminLicence): string {
   const base = (l.nom || l.email || '?').replace(/\[CT-TEST\]\s*/i, '').trim()
@@ -160,8 +157,7 @@ export function estAToucher(l: AdminLicence): boolean {
   const h = essaiHeuresRestantes(l)
   if (l.essai_expire_at != null && !abonne && h != null && h > 0 && h < 6) return true   // essai < 6 h
   if (l.statut === 'invite' && !l.kpi.derniere_connexion && l.created_at) {              // invitation sans réponse > 7 j
-    const ageJ = (Date.now() - new Date(l.created_at).getTime()) / 86_400_000
-    if (ageJ > 7) return true
+    if ((ageEnJours(l.created_at) ?? 0) > 7) return true   // CHASSE-FIX-1 (A-3) — âge en jours, fuseau Réunion
   }
   return false
 }

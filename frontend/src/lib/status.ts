@@ -1,3 +1,4 @@
+import { ageEnMois, ageMoisLabel } from './format'   // CHASSE-FIX-1 (A-3) — âge relatif unique (fuseau Réunion)
 import type { Statut } from './types'
 
 // Statuts de la matrice premium v2 (SCHEMA_SCORING_LABUSE). Couleurs : cf. DERIVATIONS.md.
@@ -302,10 +303,10 @@ export const SCORE_TIP = {
 // ambre 6-18, rouge > 18. Affichage seulement : aucune re-pondération.
 export function ageSignal(dateIso: string | null | undefined): { mois: number; color: string; label: string } | null {
   if (!dateIso) return null
-  const mois = Math.max(0, Math.floor((Date.now() - new Date(dateIso).getTime()) / (30.44 * 86_400_000)))
+  const mois = Math.max(0, ageEnMois(dateIso) ?? 0)
   return {
     mois,
     color: mois < 6 ? '#5CE6A1' : mois <= 18 ? '#E8B44C' : '#E8695A',
-    label: mois < 1 ? 'ce mois-ci' : mois === 1 ? 'il y a 1 mois' : `il y a ${mois} mois`,
+    label: ageMoisLabel(dateIso),
   }
 }

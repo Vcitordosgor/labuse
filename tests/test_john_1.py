@@ -90,6 +90,22 @@ def test_verrou_anti_invention_refuse_un_chiffre_non_source(db_session):
         or "ne pas répondre" in out["texte"]
 
 
+def test_cardinalite_dune_liste_lue_passe_lanti_invention():
+    """CHASSE-FIX-1 (CH-B-m6) — compter ce qu'on a LU n'est pas inventer. Le NOMBRE d'éléments d'une
+    collection rendue par un outil (> 12, hors tolérance des petits entiers) doit passer le verrou ;
+    avant, « 47 parcelles surveillées » était refusé « non sourcé » alors que l'outil en avait rendu 47.
+    Un compte INVENTÉ reste refusé — l'anti-invention tient."""
+    # 47 incidents (ids 100..146) : AUCUN champ ne vaut « 47 », seule la cardinalité de la liste le porte.
+    outils = [{"incidents": [{"id": 100 + k} for k in range(47)]}]
+    ok, raison = chat.anti_invention("Il y a 47 incidents ouverts.", outils)
+    assert ok, raison
+    ok0, _ = chat.anti_invention("0 job en échec, tout est vert.", [{"jobs": []}])
+    assert ok0
+    # garde-fou anti-invention : un grand nombre ni lu ni cardinalité reste refusé.
+    ko, motif = chat.anti_invention("Il y a 999 incidents ouverts.", outils)
+    assert not ko and motif
+
+
 # ════════════════════════════════ 2) Les ordres ════════════════════════════════
 def _fake_backend(**kw):
     return actions.Backend(**kw)

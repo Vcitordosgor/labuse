@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { getAdminCron, getAdminCronLog, postAdminCronRun, type CronJob } from '../../lib/api'
 import { Chargement } from '../Loading'
+import { fmtHorodatage } from '../../lib/format'   // CHASSE-FIX-1 (A-3) — horodatage unique (fuseau Réunion)
 
 const TON: Record<string, { c: string; l: string }> = {
   ok: { c: 'text-mint bg-mint/12', l: 'OK' },
@@ -31,7 +32,7 @@ function badge(j: CronJob): { c: string; l: string } {
   if (s && TON[s]) return TON[s]
   return { c: 'text-txt-dim bg-surface-3', l: (s ?? 'jamais').toUpperCase() }
 }
-const fmtDate = (s: string | null) => (s ? new Date(s).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Indian/Reunion' }) : '—')
+const fmtDate = fmtHorodatage   // CHASSE-FIX-1 (A-3) — horodatage unique (fuseau Réunion)
 const compteursCourts = (c: Record<string, unknown> | null) => {
   if (!c || !Object.keys(c).length) return '—'
   return Object.entries(c).slice(0, 4).map(([k, v]) => `${k}=${typeof v === 'object' ? '…' : v}`).join(' · ')

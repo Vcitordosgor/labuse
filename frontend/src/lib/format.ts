@@ -133,6 +133,96 @@ export const ilYA = (d: string | Date | null | undefined): string => {
   return fmtDate(d)
 }
 
+// CHASSE-FIX-1 (A-3) — LES formateurs de date/durée restants, centralisés ICI (fuseau Réunion),
+// pour qu'AUCUN composant ne fasse de `toLocaleDateString`/`toLocaleString`-de-date ni de calcul
+// d'âge relatif à la main (navigateur) : c'était la grappe de bugs « J-1 » (classe SILENCE-1). Un
+// test (`__tests__/format-dates.test.ts`) refuse ces appels hors de ce fichier.
+
+/** date numérique « JJ/MM » (sans année), heure de La Réunion (badges, pastilles de date courtes). */
+export const fmtDateCourt = (d: string | Date | null | undefined): string => {
+  if (!d) return '—'
+  const dt = typeof d === 'string' ? new Date(d) : d
+  return Number.isNaN(dt.getTime()) ? '—'
+    : dt.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', timeZone: TZ_REUNION })
+}
+
+/** « juillet 2026 » (mois en toutes lettres + année), heure de La Réunion (ventes DVF, millésimes). */
+export const fmtMoisAn = (d: string | Date | null | undefined): string => {
+  if (!d) return '—'
+  const dt = typeof d === 'string' ? new Date(d) : d
+  return Number.isNaN(dt.getTime()) ? '—'
+    : dt.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric', timeZone: TZ_REUNION })
+}
+
+/** « 4 septembre 2026 » (jour + mois en toutes lettres + année), heure de La Réunion (échéances). */
+export const fmtDateLong = (d: string | Date | null | undefined): string => {
+  if (!d) return '—'
+  const dt = typeof d === 'string' ? new Date(d) : d
+  return Number.isNaN(dt.getTime()) ? '—'
+    : dt.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: TZ_REUNION })
+}
+
+/** « lundi 4 septembre » (jour de semaine + jour + mois), heure de La Réunion (brief du Copilote). */
+export const fmtJourSemaine = (d: string | Date | null | undefined): string => {
+  if (!d) return '—'
+  const dt = typeof d === 'string' ? new Date(d) : d
+  return Number.isNaN(dt.getTime()) ? '—'
+    : dt.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: TZ_REUNION })
+}
+
+/** horodatage « JJ/MM HH:MM », heure de La Réunion (journaux/ops admin : Circuit, Journal, Cron…). */
+export const fmtHorodatage = (d: string | Date | null | undefined): string => {
+  if (!d) return '—'
+  const dt = typeof d === 'string' ? new Date(d) : d
+  return Number.isNaN(dt.getTime()) ? '—'
+    : dt.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit',
+                                    minute: '2-digit', timeZone: TZ_REUNION })
+}
+
+/** numéro de jour calendaire DANS le fuseau de La Réunion (pour comparer deux dates SANS dérive). */
+const jourReunion = (dt: Date): number => {
+  const { y, m, d } = partsReunion(dt)
+  return Math.floor(Date.UTC(y, m - 1, d) / 86_400_000)
+}
+
+/** Âge en JOURS calendaires (fuseau Réunion) depuis `d` jusqu'à aujourd'hui ; `null` si absent/NaN.
+ *  Calculé sur les jours calendaires des DEUX dates (pas un delta de millisecondes brut) → pas de
+ *  dérive navigateur/UTC. Remplace les `(Date.now() - …) / 86_400_000` éparpillés dans les écrans. */
+export const ageEnJours = (d: string | Date | null | undefined): number | null => {
+  if (!d) return null
+  const dt = typeof d === 'string' ? new Date(d) : d
+  if (Number.isNaN(dt.getTime())) return null
+  return jourReunion(new Date()) - jourReunion(dt)
+}
+
+/** Âge en MOIS (≈ 30,44 j) depuis `d` ; `null` si absent/NaN. */
+export const ageEnMois = (d: string | Date | null | undefined): number | null => {
+  const j = ageEnJours(d)
+  return j == null ? null : Math.floor(j / 30.44)
+}
+
+/** Âge d'une conversation/visite : « aujourd'hui » / « hier » / « il y a N j » ; '' si absent. */
+export const ageConversation = (d: string | Date | null | undefined): string => {
+  const j = ageEnJours(d)
+  if (j == null) return ''
+  if (j <= 0) return "aujourd'hui"
+  if (j === 1) return 'hier'
+  return `il y a ${j} j`
+}
+
+/** Libellé d'âge en mois : « ce mois-ci » / « il y a 1 mois » / « il y a N mois » ; '' si absent. */
+export const ageMoisLabel = (d: string | Date | null | undefined): string => {
+  const m = ageEnMois(d)
+  if (m == null) return ''
+  if (m < 1) return 'ce mois-ci'
+  if (m === 1) return 'il y a 1 mois'
+  return `il y a ${m} mois`
+}
+
+/** Libellé d'âge en jours à partir d'un NOMBRE déjà fourni (ex. `age_jours` servi par le backend). */
+export const labelJours = (n: number | null | undefined): string =>
+  n == null ? '?' : `il y a ${Math.floor(n)} j`
+
 /** IDU cadastral = code INSEE(5) + préfixe de section(3) + section(2) + numéro(4) = 14 car.
  *  LE SEUL formateur d'IDU de l'app (LOI-3 : un dessin, un seul endroit). Deux formes :
  *  - `iduComplet` : la chaîne BRUTE 14 car., sans espace ni séparateur. C'est elle qu'on

@@ -13,6 +13,7 @@ import {
   type RadarBrouillon, type RadarCheck, type RadarDepotHtml, type RadarReverif,
 } from '../../lib/api'
 import { Chip, Panel, PHead } from './AdminView'
+import { ageEnJours } from '../../lib/format'   // CHASSE-FIX-1 (A-3) — âge en jours, fuseau Réunion
 
 const NIV: Record<string, { label: string; tone: 'ok' | 'warn' | 'off' }> = {
   source: { label: 'Sourcé', tone: 'ok' }, estime: { label: 'Estimé', tone: 'warn' },
@@ -184,8 +185,8 @@ function Extraction() {
 
 // ── Re-vérification : groupée par commune, la plus ancienne d'abord ──
 function joursDepuis(iso: string | null): number {
-  if (!iso) return Number.POSITIVE_INFINITY
-  return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
+  // CHASSE-FIX-1 (A-3) — âge en jours via le formateur unique (jours calendaires, fuseau Réunion).
+  return ageEnJours(iso) ?? Number.POSITIVE_INFINITY
 }
 function LigneReverif({ r, onInval }: { r: RadarReverif; onInval: () => void }) {
   const [ratt, setRatt] = useState(false)

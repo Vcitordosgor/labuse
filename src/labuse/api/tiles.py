@@ -29,6 +29,7 @@ from sqlalchemy.orm import Session
 router = APIRouter(tags=["tiles"])
 
 from .. import runs
+from .. import surface as _surface   # CHASSE-FIX-1 (A-2) — seuil anti-sliver sur la surface servie
 _PROMUES = ("chaude", "a_surveiller", "a_creuser")
 
 
@@ -216,7 +217,7 @@ def build_mvt_table(db: Session, run_label: str | None = None) -> int:
         raise RuntimeError(
             f"run servi « {run_label} » absent de p_score_v2_runs — "
             "lancer `labuse score-v2` ou vérifier LABUSE_SERVED_RUN.")
-    db.execute(text("""
+    db.execute(text(f"""
         CREATE TABLE mvt_parcels AS
         SELECT p.id, p.idu, p.commune,
                -- CHASSE-DONNEES-FIX-1 (Lot 1) — la tuile bake la surface de TERRAIN servie
@@ -267,6 +268,10 @@ def build_mvt_table(db: Session, run_label: str | None = None) -> int:
                          OR (layer_name = 'abf' AND result = 'UNKNOWN'))
                    GROUP BY parcel_id) fl ON fl.parcel_id = p.id
         WHERE p.cadastre_disparue_le IS NULL   -- SOURCES-MAJ-1 : une parcelle sortie du cadastre ne peint plus
+          -- CHASSE-FIX-1 (A-2) : plancher anti-sliver sur la surface SERVIE (contenance|dessin), le
+          -- MÊME seuil que le compteur/liste/stats/geojson (_surface.SLIVER_MASK_SQL) → la carte et le
+          -- compteur montrent le même total. Avant : AUCUN plancher ici → 638 slivers peints au z19.
+          AND {_surface.SLIVER_MASK_SQL('p', str(_surface.MIN_DISPLAY_SURFACE_M2))}
     """), {"run": cascade_run, "v2run": v2run})  # C1 : :run = cascade (étage 0/flags), :v2run = score
     db.execute(text("CREATE INDEX mvt_parcels_gix ON mvt_parcels USING GIST (geom_3857)"))
     # M-L : index `mvt_parcels_status` SUPPRIMÉ — la colonne `status` n'est plus bakée depuis M48

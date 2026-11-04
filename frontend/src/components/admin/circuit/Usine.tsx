@@ -13,9 +13,9 @@ import {
 } from '../../../lib/api'
 
 import type { CircuitData, CockpitEtape } from './types'
+import { fmtHorodatage } from '../../../lib/format'   // CHASSE-FIX-1 (A-3) — horodatage unique (fuseau Réunion)
 
-const quand = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Indian/Reunion' }) : '—'
+const quand = fmtHorodatage
 
 const resultat = (s: string | null) =>
   s === 'ok' ? 'ok' : s === 'dry-run' ? 'ok (à vide)' : s === 'echec' ? 'échec'
