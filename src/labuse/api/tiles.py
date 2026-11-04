@@ -240,7 +240,15 @@ def build_mvt_table(db: Session, run_label: str | None = None) -> int:
                -- zone non constructible…) ne bake plus son 0 dans la tuile pendant que la fiche
                -- dit « non calculée » — 6 lignes FAUX-CLIENT « ∅ contre 0 » de l'audit.
                d.completeness_score,
-               CASE WHEN r.cause IS NULL THEN r.sdp_residuelle_m2 END AS sdp_residuelle_m2,
+               -- ECARTS-ZERO-1 — MÊME double porte que la fiche (_potentiel_transformation_block) :
+               -- (1) cause résiduelle (M125, déjà là) ET (2) PRÉCÉDENCE DU SCORING — si score_labuse
+               -- porte une cause (hors_classement : forêt publique, DPF, domaine inacquérable…) et que
+               -- la cause résiduelle est nulle, la fiche sert ∅ : la tuile ne bake plus 77 m² de SDP là
+               -- où la fiche n'en montre aucune (carte ↔ fiche, une seule valeur). Prend effet au
+               -- prochain `rebuild_mvt_servies` (bascule / `labuse build-mvt`).
+               CASE WHEN r.cause IS NULL
+                         AND NOT (sl.cause IS NOT NULL AND r.sdp_residuelle_m2 > 0)
+                    THEN r.sdp_residuelle_m2 END AS sdp_residuelle_m2,
                CASE WHEN r.cause IS NULL THEN r.sous_densite END AS sous_densite,
                CASE WHEN ev.parcel_id IS NOT NULL THEN 'rouge' END AS evenement,
                COALESCE(fl.flags, '') AS flags,
@@ -248,6 +256,7 @@ def build_mvt_table(db: Session, run_label: str | None = None) -> int:
         FROM parcels p
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
+        LEFT JOIN score_labuse sl ON sl.parcel_id = p.id AND sl.run_label = :v2run
         LEFT JOIN parcel_zone_plu zp ON zp.idu = p.idu
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
         LEFT JOIN (SELECT DISTINCT parcel_id FROM dryrun_cascade_results

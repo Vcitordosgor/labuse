@@ -88,6 +88,16 @@ def passe_croisements(ctx, ec, parcelles):
         par_commune.setdefault(row["commune"], row["idu"])
     for com, idu in sorted(par_commune.items()):
         for notion, tol, la, chemin_fiche, lb, chemin_ctx in CROISEMENTS_PARCELLE:
+            # ECARTS-ZERO-1 — le taux d'aménagement SERVI sur la fiche (taux_parcelle) est celui du
+            # SECTEUR À TAUX MAJORÉ quand la parcelle en relève, étiqueté comme tel
+            # (`taux_communal_secteur_majore=true`, millésime « Secteur à taux majoré »). C'est un
+            # FAIT DISTINCT du taux communal GÉNÉRAL de la fiche commune (part_communale_pct) : on ne
+            # croise donc PAS les deux quand un secteur majoré s'applique (sinon faux écart 20 % vs 3 %).
+            # Hors secteur majoré, taux_parcelle == taux communal général → le croisement tient à 0.
+            if notion == "taxe_amenagement_taux_communal_pct":
+                majore = chemin(ctx.fiche(idu), "taxe_amenagement.taux_communal_secteur_majore")
+                if majore is True:
+                    continue
             va = chemin(ctx.fiche(idu), chemin_fiche)
             vb = chemin(ctx.commune_ctx(com), chemin_ctx)
             if va is ABSENT or vb is ABSENT:

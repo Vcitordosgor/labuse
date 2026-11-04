@@ -5050,7 +5050,11 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         "proprietaire_historique": pm_historique,   # L1 KF-2 : timeline millésimes + diff (constat)
         "anru": {"quartier": anru["name"], "interet": anru["interet"],
                  "position": "dans" if anru["dans"] else "adjacente"} if anru else None,
-        "surface_m2": round(head["surface_m2"]) if head["surface_m2"] else None,  # DESSIN (compat)
+        # ECARTS-ZERO-1 (décision Vic) — surface DESSIN servie BRUTE (plus d'arrondi dans le
+        # producteur) : la tuile MVT et la colonne parcels.surface_m2 la servent déjà brute, l'arrondir
+        # ici créait le seul écart fiche↔carte↔SQL (11 vs 11,306). L'arrondi d'affichage se fait UNE
+        # fois au bord, via lib/format `fmtM2` (front) et `registre_fmt.fmt_m2` (PDF).
+        "surface_m2": head["surface_m2"] if head["surface_m2"] else None,  # DESSIN (compat)
         # CONTENANCE-1 (Lot B) : la surface de terrain affichée = contenance si présente, sinon
         # dessin. `surface_dessin_m2` sert la ligne discrète « Dessin du plan » (B3).
         **_surface.champs_terrain(head["surface_m2"], head["contenance_m2"]),
