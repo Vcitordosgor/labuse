@@ -1,0 +1,2652 @@
+{
+ "base": "http://127.0.0.1:9730",
+ "parcelles": {
+  "nue_zone_U": {
+   "idu": "97416000EI1048",
+   "commune": "Saint-Pierre",
+   "fiche": {
+    "surface_terrain_m2": 2995,
+    "surface_dessin_m2": 2995,
+    "contenance_m2": 2995,
+    "etat_bien": "nu",
+    "zone_lib": "Ud",
+    "zone_fam": "U",
+    "constructible": true,
+    "rien_a_batir": false,
+    "sdp_restante_m2": 4043,
+    "aleas": [
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "faible",
+      "part_pct": 100,
+      "redhibitoire": false
+     }
+    ],
+    "pm_denomination": "COMMUNE DE SAINT PIERRE",
+    "pm_siren": "219740164",
+    "taux_communal_pct": 5.0,
+    "pente_moy_deg": 6.0,
+    "coproprietes_n": 0,
+    "prix_ancien_median": 2601,
+    "prix_ancien_fiable": true
+   },
+   "outils": {
+    "risques": {
+     "status": 200,
+     "n": 2,
+     "categories": [
+      "Classement sonore des voies (isolement acoustique)",
+      "Risque naturel (PPR / aléa)"
+     ]
+    },
+    "gabarit": {
+     "status": 200,
+     "etat": "ok",
+     "message": null,
+     "zoneImplantationM2": 2366.6,
+     "hauteur": 20.0,
+     "coverage": {
+      "reculs": true,
+      "hauteur": true,
+      "emprise": true,
+      "risques": true
+     },
+     "multizone": null
+    },
+    "taxe_prefill": {
+     "status": 200,
+     "zone_plu": "Ud",
+     "surface_terrain_m2": 2995.0,
+     "sdp_gabarit_m2": 4043,
+     "taux_communal_pct": 5.0
+    },
+    "estimation": {
+     "status": 200,
+     "median": 336,
+     "n": 12,
+     "fiabilite": "Moyenne",
+     "type": "terrain_nu",
+     "note": null,
+     "valeur_indicative": {
+      "surface_m2": 2995,
+      "eur_m2": 336,
+      "valeur_eur": 1006000,
+      "valeur_basse": 815000,
+      "valeur_haute": 1198000,
+      "surface_source": null,
+      "ligne": null,
+      "note": null
+     }
+    },
+    "solaire": {
+     "status": 200,
+     "ok": true,
+     "productible": 1432,
+     "abf": false
+    },
+    "temps": {
+     "status": 200,
+     "n_features": 0,
+     "millesimes": []
+    },
+    "parcelle_permis": {
+     "status": 200,
+     "n": 20
+    },
+    "comparer": {
+     "status": 200,
+     "count": 1,
+     "p0": {
+      "surface_m2": 2995,
+      "zone": "Ud",
+      "sdp_max_m2": 4043,
+      "sdp_residuelle_m2": 4043.0,
+      "proprietaire": "public",
+      "constructible": true
+     }
+    },
+    "etude_zone": {
+     "status": 200,
+     "zone_disponible": true,
+     "rayon_km": 1.0,
+     "habitants": 6722
+    },
+    "calculette": {
+     "status": 200,
+     "calculable": true,
+     "charge_central": 649090,
+     "par_m2": 217
+    },
+    "patrimoine": {
+     "status": 200,
+     "nom": "COMMUNE DE SAINT PIERRE"
+    },
+    "assemblage_seule": {
+     "status": 422
+    },
+    "communes_acq": {
+     "status": 200,
+     "n": 50
+    }
+   }
+  },
+  "batie_saturee": {
+   "idu": "97414000CT1094",
+   "commune": "Saint-Louis",
+   "fiche": {
+    "surface_terrain_m2": 743,
+    "surface_dessin_m2": 734,
+    "contenance_m2": 743,
+    "etat_bien": "bati_max",
+    "zone_lib": "UD",
+    "zone_fam": "U",
+    "constructible": true,
+    "rien_a_batir": true,
+    "sdp_restante_m2": 0,
+    "aleas": [
+     {
+      "nature": "PPR — zone rouge",
+      "niveau": null,
+      "part_pct": 62,
+      "redhibitoire": true
+     },
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "moyen",
+      "part_pct": 100,
+      "redhibitoire": false
+     },
+     {
+      "nature": "PPR — zone bleue",
+      "niveau": null,
+      "part_pct": 38,
+      "redhibitoire": false
+     }
+    ],
+    "pm_denomination": null,
+    "pm_siren": null,
+    "taux_communal_pct": 5.0,
+    "pente_moy_deg": 20.5,
+    "coproprietes_n": 0,
+    "prix_ancien_median": 2305,
+    "prix_ancien_fiable": true
+   },
+   "outils": {
+    "risques": {
+     "status": 200,
+     "n": 3,
+     "categories": [
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)"
+     ]
+    },
+    "gabarit": {
+     "status": 200,
+     "etat": "ok",
+     "message": null,
+     "zoneImplantationM2": 138.0,
+     "hauteur": 10.0,
+     "coverage": {
+      "reculs": true,
+      "hauteur": true,
+      "emprise": true,
+      "risques": false
+     },
+     "multizone": null
+    },
+    "taxe_prefill": {
+     "status": 200,
+     "zone_plu": "UD",
+     "surface_terrain_m2": 743.0,
+     "sdp_gabarit_m2": null,
+     "taux_communal_pct": 5.0
+    },
+    "estimation": {
+     "status": 200,
+     "median": 2305,
+     "n": 18,
+     "fiabilite": "Limitée",
+     "type": "bati",
+     "note": null,
+     "valeur_indicative": {
+      "surface_m2": 76,
+      "eur_m2": 2305,
+      "valeur_eur": 175000,
+      "valeur_basse": 112000,
+      "valeur_haute": 238000,
+      "surface_source": "emprise_ratio",
+      "ligne": "Surface habitable estimée d'après l'emprise au sol (76 m²)",
+      "note": "Surface habitable estimée d'après l'emprise au sol : total indicatif (ratio médian surface vendue / emprise au sol des ventes de maisons de la commune : 0,52 sur 1 002 ventes)."
+     }
+    },
+    "solaire": {
+     "status": 200,
+     "ok": true,
+     "productible": 1355,
+     "abf": false
+    },
+    "temps": {
+     "status": 200,
+     "n_features": 0,
+     "millesimes": []
+    },
+    "parcelle_permis": {
+     "status": 200,
+     "n": 1
+    },
+    "comparer": {
+     "status": 200,
+     "count": 1,
+     "p0": {
+      "surface_m2": 743,
+      "zone": "UD",
+      "sdp_max_m2": 135,
+      "sdp_residuelle_m2": 0.0,
+      "proprietaire": "particulier",
+      "constructible": true
+     }
+    },
+    "etude_zone": {
+     "status": 200,
+     "zone_disponible": true,
+     "rayon_km": 1.0,
+     "habitants": 1315
+    },
+    "calculette": {
+     "status": 200,
+     "calculable": true,
+     "charge_central": 0,
+     "par_m2": 0
+    },
+    "patrimoine": "skip",
+    "assemblage_seule": {
+     "status": 422
+    },
+    "communes_acq": {
+     "status": 200,
+     "n": 50
+    }
+   }
+  },
+  "batie_reste_constructible": {
+   "idu": "97422000EH0128",
+   "commune": "Le Tampon",
+   "fiche": {
+    "surface_terrain_m2": 1020,
+    "surface_dessin_m2": 1019,
+    "contenance_m2": 1020,
+    "etat_bien": "bati_encore",
+    "zone_lib": "Uc",
+    "zone_fam": "U",
+    "constructible": true,
+    "rien_a_batir": false,
+    "sdp_restante_m2": 600,
+    "aleas": [
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "faible",
+      "part_pct": 100,
+      "redhibitoire": false
+     }
+    ],
+    "pm_denomination": null,
+    "pm_siren": null,
+    "taux_communal_pct": 5.0,
+    "pente_moy_deg": 14.8,
+    "coproprietes_n": 0,
+    "prix_ancien_median": 3100,
+    "prix_ancien_fiable": true
+   },
+   "outils": {
+    "risques": {
+     "status": 200,
+     "n": 5,
+     "categories": [
+      "Classement sonore des voies (isolement acoustique)",
+      "Classement sonore des voies (isolement acoustique)",
+      "Classement sonore des voies (isolement acoustique)",
+      "Droit de préemption (DPU)",
+      "Risque naturel (PPR / aléa)"
+     ]
+    },
+    "gabarit": {
+     "status": 200,
+     "etat": "ok",
+     "message": null,
+     "zoneImplantationM2": 368.0,
+     "hauteur": 13.0,
+     "coverage": {
+      "reculs": true,
+      "hauteur": true,
+      "emprise": true,
+      "risques": true
+     },
+     "multizone": null
+    },
+    "taxe_prefill": {
+     "status": 200,
+     "zone_plu": "Uc",
+     "surface_terrain_m2": 1020.0,
+     "sdp_gabarit_m2": 600,
+     "taux_communal_pct": 5.0
+    },
+    "estimation": {
+     "status": 200,
+     "median": 3100,
+     "n": 18,
+     "fiabilite": "Moyenne",
+     "type": "bati",
+     "note": null,
+     "valeur_indicative": {
+      "surface_m2": 120,
+      "eur_m2": 3100,
+      "valeur_eur": 372000,
+      "valeur_basse": 275000,
+      "valeur_haute": 469000,
+      "surface_source": "dvf_vente",
+      "ligne": "Surface bâtie de la dernière vente DVF (2025, 120 m²)",
+      "note": "Surface bâtie de la dernière vente DVF de la parcelle. Ordre de grandeur, pas un calcul exact."
+     }
+    },
+    "solaire": {
+     "status": 200,
+     "ok": true,
+     "productible": 1321,
+     "abf": true
+    },
+    "temps": {
+     "status": 200,
+     "n_features": 0,
+     "millesimes": []
+    },
+    "parcelle_permis": {
+     "status": 200,
+     "n": 9
+    },
+    "comparer": {
+     "status": 200,
+     "count": 1,
+     "p0": {
+      "surface_m2": 1020,
+      "zone": "Uc",
+      "sdp_max_m2": 845,
+      "sdp_residuelle_m2": 600.0,
+      "proprietaire": "particulier",
+      "constructible": true
+     }
+    },
+    "etude_zone": {
+     "status": 200,
+     "zone_disponible": true,
+     "rayon_km": 1.0,
+     "habitants": 7272
+    },
+    "calculette": {
+     "status": 200,
+     "calculable": true,
+     "charge_central": 143892,
+     "par_m2": 141
+    },
+    "patrimoine": "skip",
+    "assemblage_seule": {
+     "status": 422
+    },
+    "communes_acq": {
+     "status": 200,
+     "n": 50
+    }
+   }
+  },
+  "pente_forte": {
+   "idu": "97403000AV0009",
+   "commune": "Entre-Deux",
+   "fiche": {
+    "surface_terrain_m2": 2670,
+    "surface_dessin_m2": 2647,
+    "contenance_m2": 2670,
+    "etat_bien": "non_mesure",
+    "zone_lib": "Nstep",
+    "zone_fam": "N",
+    "constructible": false,
+    "rien_a_batir": true,
+    "sdp_restante_m2": 0,
+    "aleas": [
+     {
+      "nature": "PPR — zone rouge",
+      "niveau": null,
+      "part_pct": 100,
+      "redhibitoire": true
+     },
+     {
+      "nature": "Aléa inondation",
+      "niveau": "fort",
+      "part_pct": 12,
+      "redhibitoire": false
+     },
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "fort",
+      "part_pct": 100,
+      "redhibitoire": false
+     }
+    ],
+    "pm_denomination": null,
+    "pm_siren": null,
+    "taux_communal_pct": 5.0,
+    "pente_moy_deg": 65.8,
+    "coproprietes_n": 0,
+    "prix_ancien_median": 2991,
+    "prix_ancien_fiable": true
+   },
+   "outils": {
+    "risques": {
+     "status": 200,
+     "n": 7,
+     "categories": [
+      "Classement sonore des voies (isolement acoustique)",
+      "Prescription du PLU (constructibilité)",
+      "Prescription du PLU (constructibilité)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "ZNIEFF — zone naturelle d'intérêt écologique"
+     ]
+    },
+    "gabarit": {
+     "status": 200,
+     "etat": "incomplete",
+     "message": "Calcul incomplet — donnée réglementaire manquante",
+     "zoneImplantationM2": null,
+     "hauteur": null,
+     "coverage": null,
+     "multizone": null
+    },
+    "taxe_prefill": {
+     "status": 200,
+     "zone_plu": "Nstep",
+     "surface_terrain_m2": 2670.0,
+     "sdp_gabarit_m2": null,
+     "taux_communal_pct": 5.0
+    },
+    "estimation": {
+     "status": 200,
+     "median": 3289,
+     "n": 87,
+     "fiabilite": "Moyenne",
+     "type": "bati",
+     "note": null,
+     "valeur_indicative": null
+    },
+    "solaire": {
+     "status": 200,
+     "ok": true,
+     "productible": 1369,
+     "abf": true
+    },
+    "temps": {
+     "status": 200,
+     "n_features": 0,
+     "millesimes": []
+    },
+    "parcelle_permis": {
+     "status": 200,
+     "n": 0
+    },
+    "comparer": {
+     "status": 200,
+     "count": 1,
+     "p0": {
+      "surface_m2": 2670,
+      "zone": "Nstep",
+      "sdp_max_m2": null,
+      "sdp_residuelle_m2": 0.0,
+      "proprietaire": "particulier",
+      "constructible": false
+     }
+    },
+    "etude_zone": {
+     "status": 200,
+     "zone_disponible": true,
+     "rayon_km": 1.0,
+     "habitants": 2796
+    },
+    "calculette": {
+     "status": 200,
+     "calculable": false,
+     "charge_central": null,
+     "par_m2": null
+    },
+    "patrimoine": "skip",
+    "assemblage_seule": {
+     "status": 422
+    },
+    "communes_acq": {
+     "status": 200,
+     "n": 50
+    }
+   }
+  },
+  "deux_zones_plu": {
+   "idu": "97410000AY0201",
+   "commune": "Saint-Benoit",
+   "fiche": {
+    "surface_terrain_m2": 8275,
+    "surface_dessin_m2": 8000,
+    "contenance_m2": 8275,
+    "etat_bien": "non_mesure",
+    "zone_lib": "Acor",
+    "zone_fam": "A",
+    "constructible": false,
+    "rien_a_batir": true,
+    "sdp_restante_m2": 0,
+    "aleas": [
+     {
+      "nature": "PPR — zone rouge",
+      "niveau": null,
+      "part_pct": 63,
+      "redhibitoire": true
+     },
+     {
+      "nature": "Aléa inondation",
+      "niveau": "fort",
+      "part_pct": 4,
+      "redhibitoire": false
+     },
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "fort",
+      "part_pct": 25,
+      "redhibitoire": false
+     },
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "moyen",
+      "part_pct": 40,
+      "redhibitoire": false
+     },
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "faible",
+      "part_pct": 34,
+      "redhibitoire": false
+     },
+     {
+      "nature": "PPR — zone bleue",
+      "niveau": null,
+      "part_pct": 2,
+      "redhibitoire": false
+     }
+    ],
+    "pm_denomination": null,
+    "pm_siren": null,
+    "taux_communal_pct": 5.0,
+    "pente_moy_deg": 15.4,
+    "coproprietes_n": 0,
+    "prix_ancien_median": 2702,
+    "prix_ancien_fiable": true
+   },
+   "outils": {
+    "risques": {
+     "status": 200,
+     "n": 6,
+     "categories": [
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)"
+     ]
+    },
+    "gabarit": {
+     "status": 200,
+     "etat": "incomplete",
+     "message": "Calcul incomplet — donnée réglementaire manquante",
+     "zoneImplantationM2": null,
+     "hauteur": null,
+     "coverage": null,
+     "multizone": null
+    },
+    "taxe_prefill": {
+     "status": 200,
+     "zone_plu": "Acor",
+     "surface_terrain_m2": 8275.0,
+     "sdp_gabarit_m2": null,
+     "taux_communal_pct": 5.0
+    },
+    "estimation": {
+     "status": 200,
+     "median": 179,
+     "n": 11,
+     "fiabilite": "Moyenne",
+     "type": "terrain_nu",
+     "note": null,
+     "valeur_indicative": {
+      "surface_m2": 8275,
+      "eur_m2": 179,
+      "valeur_eur": 1481000,
+      "valeur_basse": 1200000,
+      "valeur_haute": 1763000,
+      "surface_source": null,
+      "ligne": null,
+      "note": null
+     }
+    },
+    "solaire": {
+     "status": 200,
+     "ok": true,
+     "productible": 1501,
+     "abf": false
+    },
+    "temps": {
+     "status": 200,
+     "n_features": 0,
+     "millesimes": []
+    },
+    "parcelle_permis": {
+     "status": 200,
+     "n": 8
+    },
+    "comparer": {
+     "status": 200,
+     "count": 1,
+     "p0": {
+      "surface_m2": 8275,
+      "zone": "Acor",
+      "sdp_max_m2": null,
+      "sdp_residuelle_m2": 0.0,
+      "proprietaire": "particulier",
+      "constructible": false
+     }
+    },
+    "etude_zone": {
+     "status": 200,
+     "zone_disponible": true,
+     "rayon_km": 1.0,
+     "habitants": 392
+    },
+    "calculette": {
+     "status": 200,
+     "calculable": false,
+     "charge_central": null,
+     "par_m2": null
+    },
+    "patrimoine": "skip",
+    "assemblage_seule": {
+     "status": 422
+    },
+    "communes_acq": {
+     "status": 200,
+     "n": 0
+    }
+   }
+  },
+  "deux_communes": {
+   "idu": "97404000AC0006",
+   "commune": "L-Etang-Sale",
+   "fiche": {
+    "surface_terrain_m2": 2275,
+    "surface_dessin_m2": 2083,
+    "contenance_m2": 2275,
+    "etat_bien": "non_mesure",
+    "zone_lib": "A",
+    "zone_fam": "A",
+    "constructible": false,
+    "rien_a_batir": true,
+    "sdp_restante_m2": 0,
+    "aleas": [
+     {
+      "nature": "PPR — zone rouge",
+      "niveau": null,
+      "part_pct": 100,
+      "redhibitoire": true
+     },
+     {
+      "nature": "Aléa inondation",
+      "niveau": "fort",
+      "part_pct": 14,
+      "redhibitoire": false
+     },
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "fort",
+      "part_pct": 14,
+      "redhibitoire": false
+     },
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "moyen",
+      "part_pct": 86,
+      "redhibitoire": false
+     }
+    ],
+    "pm_denomination": null,
+    "pm_siren": null,
+    "taux_communal_pct": 5.0,
+    "pente_moy_deg": 26.9,
+    "coproprietes_n": 0,
+    "prix_ancien_median": 3762,
+    "prix_ancien_fiable": true
+   },
+   "outils": {
+    "risques": {
+     "status": 200,
+     "n": 5,
+     "categories": [
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "ZNIEFF — zone naturelle d'intérêt écologique"
+     ]
+    },
+    "gabarit": {
+     "status": 200,
+     "etat": "incomplete",
+     "message": "Calcul incomplet — donnée réglementaire manquante",
+     "zoneImplantationM2": null,
+     "hauteur": null,
+     "coverage": null,
+     "multizone": null
+    },
+    "taxe_prefill": {
+     "status": 200,
+     "zone_plu": "A",
+     "surface_terrain_m2": 2275.0,
+     "sdp_gabarit_m2": null,
+     "taux_communal_pct": 5.0
+    },
+    "estimation": {
+     "status": 200,
+     "median": 3728,
+     "n": 67,
+     "fiabilite": "Moyenne",
+     "type": "bati",
+     "note": null,
+     "valeur_indicative": null
+    },
+    "solaire": {
+     "status": 200,
+     "ok": true,
+     "productible": 1337,
+     "abf": false
+    },
+    "temps": {
+     "status": 200,
+     "n_features": 0,
+     "millesimes": []
+    },
+    "parcelle_permis": {
+     "status": 200,
+     "n": 0
+    },
+    "comparer": {
+     "status": 200,
+     "count": 1,
+     "p0": {
+      "surface_m2": 2275,
+      "zone": "A",
+      "sdp_max_m2": null,
+      "sdp_residuelle_m2": 0.0,
+      "proprietaire": "particulier",
+      "constructible": false
+     }
+    },
+    "etude_zone": {
+     "status": 200,
+     "zone_disponible": true,
+     "rayon_km": 1.0,
+     "habitants": 116
+    },
+    "calculette": {
+     "status": 200,
+     "calculable": false,
+     "charge_central": null,
+     "par_m2": null
+    },
+    "patrimoine": "skip",
+    "assemblage_seule": {
+     "status": 422
+    },
+    "communes_acq": {
+     "status": 200,
+     "n": 0
+    }
+   }
+  },
+  "ppr_rouge_partielle": {
+   "idu": "97407000AV0337",
+   "commune": "Le Port",
+   "fiche": {
+    "surface_terrain_m2": 8069,
+    "surface_dessin_m2": 7983,
+    "contenance_m2": 8069,
+    "etat_bien": "non_mesure",
+    "zone_lib": "Uem",
+    "zone_fam": "U",
+    "constructible": false,
+    "rien_a_batir": true,
+    "sdp_restante_m2": 0,
+    "aleas": [
+     {
+      "nature": "PPR — zone rouge",
+      "niveau": null,
+      "part_pct": 60,
+      "redhibitoire": true
+     },
+     {
+      "nature": "Aléa inondation",
+      "niveau": "fort",
+      "part_pct": 60,
+      "redhibitoire": false
+     },
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "moyen",
+      "part_pct": 60,
+      "redhibitoire": false
+     }
+    ],
+    "pm_denomination": "COMMUNE DU PORT",
+    "pm_siren": "219740073",
+    "taux_communal_pct": 3.0,
+    "pente_moy_deg": 2.4,
+    "coproprietes_n": 0,
+    "prix_ancien_median": 2200,
+    "prix_ancien_fiable": true
+   },
+   "outils": {
+    "risques": {
+     "status": 200,
+     "n": 5,
+     "categories": [
+      "50 pas géométriques (bande littorale)",
+      "Classement sonore des voies (isolement acoustique)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)"
+     ]
+    },
+    "gabarit": {
+     "status": 200,
+     "etat": "ok",
+     "message": null,
+     "zoneImplantationM2": 763.2,
+     "hauteur": 18.0,
+     "coverage": {
+      "reculs": true,
+      "hauteur": true,
+      "emprise": true,
+      "risques": false
+     },
+     "multizone": null
+    },
+    "taxe_prefill": {
+     "status": 200,
+     "zone_plu": "Uem",
+     "surface_terrain_m2": 8069.0,
+     "sdp_gabarit_m2": null,
+     "taux_communal_pct": 3.0
+    },
+    "estimation": {
+     "status": 200,
+     "median": 2467,
+     "n": 21,
+     "fiabilite": "Moyenne",
+     "type": "bati",
+     "note": null,
+     "valeur_indicative": null
+    },
+    "solaire": {
+     "status": 200,
+     "ok": true,
+     "productible": 1261,
+     "abf": false
+    },
+    "temps": {
+     "status": 200,
+     "n_features": 0,
+     "millesimes": []
+    },
+    "parcelle_permis": {
+     "status": 200,
+     "n": 15
+    },
+    "comparer": {
+     "status": 200,
+     "count": 1,
+     "p0": {
+      "surface_m2": 8069,
+      "zone": "Uem",
+      "sdp_max_m2": null,
+      "sdp_residuelle_m2": 0.0,
+      "proprietaire": "public",
+      "constructible": false
+     }
+    },
+    "etude_zone": {
+     "status": 200,
+     "zone_disponible": true,
+     "rayon_km": 1.0,
+     "habitants": 6994
+    },
+    "calculette": {
+     "status": 200,
+     "calculable": false,
+     "charge_central": null,
+     "par_m2": null
+    },
+    "patrimoine": {
+     "status": 200,
+     "nom": "COMMUNE DU PORT"
+    },
+    "assemblage_seule": {
+     "status": 422
+    },
+    "communes_acq": {
+     "status": 200,
+     "n": 50
+    }
+   }
+  },
+  "ppr_bleue": {
+   "idu": "97415000AB0316",
+   "commune": "Saint-Paul",
+   "fiche": {
+    "surface_terrain_m2": 5410,
+    "surface_dessin_m2": 5241,
+    "contenance_m2": 5410,
+    "etat_bien": "non_mesure",
+    "zone_lib": "AU1st",
+    "zone_fam": "AU",
+    "constructible": false,
+    "rien_a_batir": true,
+    "sdp_restante_m2": 0,
+    "aleas": [
+     {
+      "nature": "Aléa inondation",
+      "niveau": "faible",
+      "part_pct": 100,
+      "redhibitoire": false
+     },
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "faible",
+      "part_pct": 100,
+      "redhibitoire": false
+     },
+     {
+      "nature": "PPR — zone bleue",
+      "niveau": null,
+      "part_pct": 100,
+      "redhibitoire": false
+     }
+    ],
+    "pm_denomination": null,
+    "pm_siren": null,
+    "taux_communal_pct": 5.0,
+    "pente_moy_deg": 2.5,
+    "coproprietes_n": 0,
+    "prix_ancien_median": 3900,
+    "prix_ancien_fiable": true
+   },
+   "outils": {
+    "risques": {
+     "status": 200,
+     "n": 6,
+     "categories": [
+      "Classement sonore des voies (isolement acoustique)",
+      "Droit de préemption (DPU)",
+      "Prescription du PLU (constructibilité)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)"
+     ]
+    },
+    "gabarit": {
+     "status": 200,
+     "etat": "incomplete",
+     "message": "Calcul incomplet — donnée réglementaire manquante",
+     "zoneImplantationM2": null,
+     "hauteur": null,
+     "coverage": null,
+     "multizone": null
+    },
+    "taxe_prefill": {
+     "status": 200,
+     "zone_plu": "AU1st",
+     "surface_terrain_m2": 5410.0,
+     "sdp_gabarit_m2": null,
+     "taux_communal_pct": 5.0
+    },
+    "estimation": {
+     "status": 200,
+     "median": 3857,
+     "n": 8,
+     "fiabilite": "Moyenne",
+     "type": "bati",
+     "note": null,
+     "valeur_indicative": null
+    },
+    "solaire": {
+     "status": 200,
+     "ok": true,
+     "productible": 1341,
+     "abf": false
+    },
+    "temps": {
+     "status": 200,
+     "n_features": 0,
+     "millesimes": []
+    },
+    "parcelle_permis": {
+     "status": 200,
+     "n": 0
+    },
+    "comparer": {
+     "status": 200,
+     "count": 1,
+     "p0": {
+      "surface_m2": 5410,
+      "zone": "AU1st",
+      "sdp_max_m2": null,
+      "sdp_residuelle_m2": 0.0,
+      "proprietaire": "particulier",
+      "constructible": false
+     }
+    },
+    "etude_zone": {
+     "status": 200,
+     "zone_disponible": true,
+     "rayon_km": 1.0,
+     "habitants": 116
+    },
+    "calculette": {
+     "status": 200,
+     "calculable": false,
+     "charge_central": null,
+     "par_m2": null
+    },
+    "patrimoine": "skip",
+    "assemblage_seule": {
+     "status": 422
+    },
+    "communes_acq": {
+     "status": 200,
+     "n": 50
+    }
+   }
+  },
+  "minuscule": {
+   "idu": "97413000DD1338",
+   "commune": "Saint-Leu",
+   "fiche": {
+    "surface_terrain_m2": 6,
+    "surface_dessin_m2": 6,
+    "contenance_m2": 6,
+    "etat_bien": "non_mesure",
+    "zone_lib": "UCA",
+    "zone_fam": "U",
+    "constructible": false,
+    "rien_a_batir": true,
+    "sdp_restante_m2": 0,
+    "aleas": [
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "faible",
+      "part_pct": 100,
+      "redhibitoire": false
+     }
+    ],
+    "pm_denomination": "SOCIETE IMMOBILIERE DEPARTEMENT REUNION",
+    "pm_siren": "310863592",
+    "taux_communal_pct": 14.0,
+    "pente_moy_deg": 4.8,
+    "coproprietes_n": 0,
+    "prix_ancien_median": null,
+    "prix_ancien_fiable": false
+   },
+   "outils": {
+    "risques": {
+     "status": 200,
+     "n": 2,
+     "categories": [
+      "Classement sonore des voies (isolement acoustique)",
+      "Risque naturel (PPR / aléa)"
+     ]
+    },
+    "gabarit": {
+     "status": 200,
+     "etat": "ok",
+     "message": null,
+     "zoneImplantationM2": 0.0,
+     "hauteur": null,
+     "coverage": {
+      "reculs": true,
+      "hauteur": true,
+      "emprise": true,
+      "risques": true
+     },
+     "multizone": null
+    },
+    "taxe_prefill": {
+     "status": 200,
+     "zone_plu": "UCA",
+     "surface_terrain_m2": 6.0,
+     "sdp_gabarit_m2": null,
+     "taux_communal_pct": 14.0
+    },
+    "estimation": {
+     "status": 200,
+     "median": 3688,
+     "n": 11,
+     "fiabilite": "Moyenne",
+     "type": "bati",
+     "note": null,
+     "valeur_indicative": null
+    },
+    "solaire": {
+     "status": 200,
+     "ok": true,
+     "productible": 1301,
+     "abf": false
+    },
+    "temps": {
+     "status": 200,
+     "n_features": 0,
+     "millesimes": []
+    },
+    "parcelle_permis": {
+     "status": 200,
+     "n": 27
+    },
+    "comparer": {
+     "status": 200,
+     "count": 1,
+     "p0": {
+      "surface_m2": 6,
+      "zone": "UCA",
+      "sdp_max_m2": null,
+      "sdp_residuelle_m2": 0.0,
+      "proprietaire": "morale",
+      "constructible": false
+     }
+    },
+    "etude_zone": {
+     "status": 200,
+     "zone_disponible": true,
+     "rayon_km": 1.0,
+     "habitants": 2612
+    },
+    "calculette": {
+     "status": 200,
+     "calculable": false,
+     "charge_central": null,
+     "par_m2": null
+    },
+    "patrimoine": {
+     "status": 200,
+     "nom": "SOCIETE IMMOBILIERE DEPARTEMENT REUNION"
+    },
+    "assemblage_seule": {
+     "status": 422
+    },
+    "communes_acq": {
+     "status": 200,
+     "n": 50
+    }
+   }
+  },
+  "geante": {
+   "idu": "97417000BN0004",
+   "commune": "Saint-Philippe",
+   "fiche": {
+    "surface_terrain_m2": 27506974,
+    "surface_dessin_m2": 28174868,
+    "contenance_m2": 27506974,
+    "etat_bien": "non_mesure",
+    "zone_lib": null,
+    "zone_fam": null,
+    "constructible": false,
+    "rien_a_batir": true,
+    "sdp_restante_m2": 0,
+    "aleas": [
+     {
+      "nature": "PPR — zone rouge",
+      "niveau": null,
+      "part_pct": 4,
+      "redhibitoire": true
+     },
+     {
+      "nature": "Aléa inondation",
+      "niveau": "fort",
+      "part_pct": 6,
+      "redhibitoire": false
+     },
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "fort",
+      "part_pct": 30,
+      "redhibitoire": false
+     },
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "moyen",
+      "part_pct": 56,
+      "redhibitoire": false
+     },
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "faible",
+      "part_pct": 14,
+      "redhibitoire": false
+     }
+    ],
+    "pm_denomination": "ETAT PAR DIRECTION DE L IMMOBILIER DE L ETAT",
+    "pm_siren": "U23691569",
+    "taux_communal_pct": 5.0,
+    "pente_moy_deg": 18.0,
+    "coproprietes_n": 0,
+    "prix_ancien_median": 2158,
+    "prix_ancien_fiable": true
+   },
+   "outils": {
+    "risques": {
+     "status": 200,
+     "n": 14,
+     "categories": [
+      "Espace naturel protégé",
+      "Espace naturel protégé",
+      "Ravines et reculs (domaine public fluvial)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "Secteur d'information sur les sols",
+      "Servitude d'Utilité Publique",
+      "ZNIEFF — zone naturelle d'intérêt écologique",
+      "ZNIEFF — zone naturelle d'intérêt écologique",
+      "Zone humide",
+      "Zone humide"
+     ]
+    },
+    "gabarit": {
+     "status": 200,
+     "etat": "incomplete",
+     "message": "Calcul incomplet — donnée réglementaire manquante",
+     "zoneImplantationM2": null,
+     "hauteur": null,
+     "coverage": null,
+     "multizone": null
+    },
+    "taxe_prefill": {
+     "status": 200,
+     "zone_plu": null,
+     "surface_terrain_m2": 27506974.0,
+     "sdp_gabarit_m2": null,
+     "taux_communal_pct": 5.0
+    },
+    "estimation": {
+     "status": 200,
+     "median": 2682,
+     "n": 128,
+     "fiabilite": "Limitée",
+     "type": "bati",
+     "note": null,
+     "valeur_indicative": null
+    },
+    "solaire": {
+     "status": 200,
+     "ok": true,
+     "productible": 1381,
+     "abf": false
+    },
+    "temps": {
+     "status": 200,
+     "n_features": 0,
+     "millesimes": []
+    },
+    "parcelle_permis": {
+     "status": 200,
+     "n": 0
+    },
+    "comparer": {
+     "status": 200,
+     "count": 1,
+     "p0": {
+      "surface_m2": 27506974,
+      "zone": null,
+      "sdp_max_m2": null,
+      "sdp_residuelle_m2": null,
+      "proprietaire": "public",
+      "constructible": null
+     }
+    },
+    "etude_zone": {
+     "status": 200,
+     "zone_disponible": true,
+     "rayon_km": 1.0,
+     "habitants": null
+    },
+    "calculette": {
+     "status": 200,
+     "calculable": false,
+     "charge_central": null,
+     "par_m2": null
+    },
+    "patrimoine": {
+     "status": 200,
+     "nom": "ETAT PAR DIRECTION DE L IMMOBILIER DE L ETAT"
+    },
+    "assemblage_seule": {
+     "status": 422
+    },
+    "communes_acq": {
+     "status": 200,
+     "n": 18
+    }
+   }
+  },
+  "copropriete": {
+   "idu": "97411000ES0054",
+   "commune": "Saint-Denis",
+   "fiche": {
+    "surface_terrain_m2": 885,
+    "surface_dessin_m2": 889,
+    "contenance_m2": 885,
+    "etat_bien": "bati_max",
+    "zone_lib": "Ui",
+    "zone_fam": "U",
+    "constructible": true,
+    "rien_a_batir": true,
+    "sdp_restante_m2": 0,
+    "aleas": [
+     {
+      "nature": "PPR — zone bleue",
+      "niveau": null,
+      "part_pct": 100,
+      "redhibitoire": false
+     }
+    ],
+    "pm_denomination": null,
+    "pm_siren": null,
+    "taux_communal_pct": 3.0,
+    "pente_moy_deg": 22.4,
+    "coproprietes_n": 1,
+    "prix_ancien_median": 2490,
+    "prix_ancien_fiable": true
+   },
+   "outils": {
+    "risques": {
+     "status": 200,
+     "n": 4,
+     "categories": [
+      "Assainissement non collectif (ANC)",
+      "Classement sonore des voies (isolement acoustique)",
+      "Droit de préemption (DPU)",
+      "Risque naturel (PPR / aléa)"
+     ]
+    },
+    "gabarit": {
+     "status": 200,
+     "etat": "ok",
+     "message": null,
+     "zoneImplantationM2": 81.7,
+     "hauteur": 18.0,
+     "coverage": {
+      "reculs": true,
+      "hauteur": true,
+      "emprise": true,
+      "risques": true
+     },
+     "multizone": null
+    },
+    "taxe_prefill": {
+     "status": 200,
+     "zone_plu": "Ui",
+     "surface_terrain_m2": 885.0,
+     "sdp_gabarit_m2": null,
+     "taux_communal_pct": 3.0
+    },
+    "estimation": {
+     "status": 200,
+     "median": 2490,
+     "n": 280,
+     "fiabilite": "Élevée",
+     "type": "bati",
+     "note": null,
+     "valeur_indicative": null
+    },
+    "solaire": {
+     "status": 200,
+     "ok": true,
+     "productible": 1534,
+     "abf": false
+    },
+    "temps": {
+     "status": 200,
+     "n_features": 0,
+     "millesimes": []
+    },
+    "parcelle_permis": {
+     "status": 200,
+     "n": 2
+    },
+    "comparer": {
+     "status": 200,
+     "count": 1,
+     "p0": {
+      "surface_m2": 885,
+      "zone": "Ui",
+      "sdp_max_m2": 184,
+      "sdp_residuelle_m2": 0.0,
+      "proprietaire": "particulier",
+      "constructible": true
+     }
+    },
+    "etude_zone": {
+     "status": 200,
+     "zone_disponible": true,
+     "rayon_km": 1.0,
+     "habitants": 16312
+    },
+    "calculette": {
+     "status": 200,
+     "calculable": true,
+     "charge_central": 17651,
+     "par_m2": 20
+    },
+    "patrimoine": "skip",
+    "assemblage_seule": {
+     "status": 422
+    },
+    "communes_acq": {
+     "status": 200,
+     "n": 50
+    }
+   }
+  },
+  "littoral": {
+   "idu": "97412000BW0702",
+   "commune": "Saint-Joseph",
+   "fiche": {
+    "surface_terrain_m2": 20071,
+    "surface_dessin_m2": 19996,
+    "contenance_m2": 20071,
+    "etat_bien": "non_mesure",
+    "zone_lib": "Nli",
+    "zone_fam": "N",
+    "constructible": false,
+    "rien_a_batir": true,
+    "sdp_restante_m2": 0,
+    "aleas": [
+     {
+      "nature": "PPR — zone rouge",
+      "niveau": null,
+      "part_pct": 100,
+      "redhibitoire": true
+     },
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "moyen",
+      "part_pct": 100,
+      "redhibitoire": false
+     }
+    ],
+    "pm_denomination": "COMMUNE DE SAINT JOSEPH",
+    "pm_siren": "219740123",
+    "taux_communal_pct": 3.0,
+    "pente_moy_deg": 22.9,
+    "coproprietes_n": 0,
+    "prix_ancien_median": 1905,
+    "prix_ancien_fiable": true
+   },
+   "outils": {
+    "risques": {
+     "status": 200,
+     "n": 5,
+     "categories": [
+      "50 pas géométriques (bande littorale)",
+      "Prescription du PLU (constructibilité)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "ZNIEFF — zone naturelle d'intérêt écologique"
+     ]
+    },
+    "gabarit": {
+     "status": 200,
+     "etat": "incomplete",
+     "message": "Calcul incomplet — donnée réglementaire manquante",
+     "zoneImplantationM2": null,
+     "hauteur": null,
+     "coverage": null,
+     "multizone": null
+    },
+    "taxe_prefill": {
+     "status": 200,
+     "zone_plu": "Nli",
+     "surface_terrain_m2": 20071.0,
+     "sdp_gabarit_m2": null,
+     "taux_communal_pct": 3.0
+    },
+    "estimation": {
+     "status": 200,
+     "median": 2922,
+     "n": 15,
+     "fiabilite": "Moyenne",
+     "type": "bati",
+     "note": null,
+     "valeur_indicative": null
+    },
+    "solaire": {
+     "status": 200,
+     "ok": true,
+     "productible": 1429,
+     "abf": true
+    },
+    "temps": {
+     "status": 200,
+     "n_features": 0,
+     "millesimes": []
+    },
+    "parcelle_permis": {
+     "status": 200,
+     "n": 7
+    },
+    "comparer": {
+     "status": 200,
+     "count": 1,
+     "p0": {
+      "surface_m2": 20071,
+      "zone": "Nli",
+      "sdp_max_m2": null,
+      "sdp_residuelle_m2": 0.0,
+      "proprietaire": "public",
+      "constructible": false
+     }
+    },
+    "etude_zone": {
+     "status": 200,
+     "zone_disponible": true,
+     "rayon_km": 1.0,
+     "habitants": 6408
+    },
+    "calculette": {
+     "status": 200,
+     "calculable": false,
+     "charge_central": null,
+     "par_m2": null
+    },
+    "patrimoine": {
+     "status": 200,
+     "nom": "COMMUNE DE SAINT JOSEPH"
+    },
+    "assemblage_seule": {
+     "status": 422
+    },
+    "communes_acq": {
+     "status": 200,
+     "n": 50
+    }
+   }
+  },
+  "au_ouverte": {
+   "idu": "97415000HN0015",
+   "commune": "Saint-Paul",
+   "fiche": {
+    "surface_terrain_m2": 19880,
+    "surface_dessin_m2": 19856,
+    "contenance_m2": 19880,
+    "etat_bien": "non_mesure",
+    "zone_lib": "AU1est",
+    "zone_fam": "AU",
+    "constructible": false,
+    "rien_a_batir": true,
+    "sdp_restante_m2": 0,
+    "aleas": [
+     {
+      "nature": "Aléa inondation",
+      "niveau": "faible",
+      "part_pct": 100,
+      "redhibitoire": false
+     },
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "faible",
+      "part_pct": 100,
+      "redhibitoire": false
+     },
+     {
+      "nature": "PPR — zone bleue",
+      "niveau": null,
+      "part_pct": 100,
+      "redhibitoire": false
+     }
+    ],
+    "pm_denomination": "ETS PUBLIC FONCIER DE LA REUNION",
+    "pm_siren": "444704977",
+    "taux_communal_pct": 5.0,
+    "pente_moy_deg": 2.8,
+    "coproprietes_n": 0,
+    "prix_ancien_median": 3900,
+    "prix_ancien_fiable": true
+   },
+   "outils": {
+    "risques": {
+     "status": 200,
+     "n": 7,
+     "categories": [
+      "Classement sonore des voies (isolement acoustique)",
+      "Classement sonore des voies (isolement acoustique)",
+      "Droit de préemption (DPU)",
+      "Prescription du PLU (constructibilité)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)"
+     ]
+    },
+    "gabarit": {
+     "status": 200,
+     "etat": "incomplete",
+     "message": "Calcul incomplet — donnée réglementaire manquante",
+     "zoneImplantationM2": null,
+     "hauteur": null,
+     "coverage": null,
+     "multizone": null
+    },
+    "taxe_prefill": {
+     "status": 200,
+     "zone_plu": "AU1est",
+     "surface_terrain_m2": 19880.0,
+     "sdp_gabarit_m2": null,
+     "taux_communal_pct": 5.0
+    },
+    "estimation": {
+     "status": 200,
+     "median": 3900,
+     "n": 10,
+     "fiabilite": "Moyenne",
+     "type": "bati",
+     "note": null,
+     "valeur_indicative": null
+    },
+    "solaire": {
+     "status": 200,
+     "ok": true,
+     "productible": 1341,
+     "abf": true
+    },
+    "temps": {
+     "status": 200,
+     "n_features": 0,
+     "millesimes": []
+    },
+    "parcelle_permis": {
+     "status": 200,
+     "n": 5
+    },
+    "comparer": {
+     "status": 200,
+     "count": 1,
+     "p0": {
+      "surface_m2": 19880,
+      "zone": "AU1est",
+      "sdp_max_m2": null,
+      "sdp_residuelle_m2": null,
+      "proprietaire": "public",
+      "constructible": false
+     }
+    },
+    "etude_zone": {
+     "status": 200,
+     "zone_disponible": true,
+     "rayon_km": 1.0,
+     "habitants": 400
+    },
+    "calculette": {
+     "status": 200,
+     "calculable": false,
+     "charge_central": null,
+     "par_m2": null
+    },
+    "patrimoine": {
+     "status": 200,
+     "nom": "ETS PUBLIC FONCIER DE LA REUNION"
+    },
+    "assemblage_seule": {
+     "status": 422
+    },
+    "communes_acq": {
+     "status": 200,
+     "n": 50
+    }
+   }
+  },
+  "au_fermee": {
+   "idu": "97410000AD0552",
+   "commune": "Saint-Benoit",
+   "fiche": {
+    "surface_terrain_m2": 17500,
+    "surface_dessin_m2": 17527,
+    "contenance_m2": 17500,
+    "etat_bien": "nu",
+    "zone_lib": "AUp1",
+    "zone_fam": "AU",
+    "constructible": false,
+    "rien_a_batir": true,
+    "sdp_restante_m2": 0,
+    "aleas": [
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "faible",
+      "part_pct": 100,
+      "redhibitoire": false
+     }
+    ],
+    "pm_denomination": "SOCIETE ANONYME ADRIEN BELLIER",
+    "pm_siren": "310862131",
+    "taux_communal_pct": 5.0,
+    "pente_moy_deg": 5.3,
+    "coproprietes_n": 0,
+    "prix_ancien_median": 2139,
+    "prix_ancien_fiable": true
+   },
+   "outils": {
+    "risques": {
+     "status": 200,
+     "n": 5,
+     "categories": [
+      "Classement sonore des voies (isolement acoustique)",
+      "Prescription du PLU (constructibilité)",
+      "Risque naturel (PPR / aléa)",
+      "ZNIEFF — zone naturelle d'intérêt écologique",
+      "Zone à urbaniser (AU)"
+     ]
+    },
+    "gabarit": {
+     "status": 200,
+     "etat": "incomplete",
+     "message": "Calcul incomplet — donnée réglementaire manquante",
+     "zoneImplantationM2": null,
+     "hauteur": null,
+     "coverage": null,
+     "multizone": null
+    },
+    "taxe_prefill": {
+     "status": 200,
+     "zone_plu": "AUp1",
+     "surface_terrain_m2": 17500.0,
+     "sdp_gabarit_m2": 21353,
+     "taux_communal_pct": 5.0
+    },
+    "estimation": {
+     "status": 200,
+     "median": 476,
+     "n": 32,
+     "fiabilite": "Moyenne",
+     "type": "terrain_nu",
+     "note": null,
+     "valeur_indicative": {
+      "surface_m2": 17500,
+      "eur_m2": 476,
+      "valeur_eur": 8330000,
+      "valeur_basse": 6747000,
+      "valeur_haute": 9913000,
+      "surface_source": null,
+      "ligne": null,
+      "note": null
+     }
+    },
+    "solaire": {
+     "status": 200,
+     "ok": true,
+     "productible": 1501,
+     "abf": false
+    },
+    "temps": {
+     "status": 200,
+     "n_features": 0,
+     "millesimes": []
+    },
+    "parcelle_permis": {
+     "status": 200,
+     "n": 1
+    },
+    "comparer": {
+     "status": 200,
+     "count": 1,
+     "p0": {
+      "surface_m2": 17500,
+      "zone": "AUp1",
+      "sdp_max_m2": 21353,
+      "sdp_residuelle_m2": 21353.0,
+      "proprietaire": "morale",
+      "constructible": true
+     }
+    },
+    "etude_zone": {
+     "status": 200,
+     "zone_disponible": true,
+     "rayon_km": 1.0,
+     "habitants": 2604
+    },
+    "calculette": {
+     "status": 200,
+     "calculable": true,
+     "charge_central": 2313000,
+     "par_m2": 132
+    },
+    "patrimoine": {
+     "status": 200,
+     "nom": "SOCIETE ANONYME ADRIEN BELLIER"
+    },
+    "assemblage_seule": {
+     "status": 422
+    },
+    "communes_acq": {
+     "status": 200,
+     "n": 0
+    }
+   }
+  },
+  "zone_A": {
+   "idu": "97418000AI0533",
+   "commune": "Sainte-Marie",
+   "fiche": {
+    "surface_terrain_m2": 30314,
+    "surface_dessin_m2": 29991,
+    "contenance_m2": 30314,
+    "etat_bien": "non_mesure",
+    "zone_lib": "A",
+    "zone_fam": "A",
+    "constructible": false,
+    "rien_a_batir": true,
+    "sdp_restante_m2": 0,
+    "aleas": [
+     {
+      "nature": "PPR — zone rouge",
+      "niveau": null,
+      "part_pct": 32,
+      "redhibitoire": true
+     },
+     {
+      "nature": "Aléa inondation",
+      "niveau": "fort",
+      "part_pct": 4,
+      "redhibitoire": false
+     },
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "fort",
+      "part_pct": 23,
+      "redhibitoire": false
+     },
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "moyen",
+      "part_pct": 9,
+      "redhibitoire": false
+     },
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "faible",
+      "part_pct": 68,
+      "redhibitoire": false
+     }
+    ],
+    "pm_denomination": null,
+    "pm_siren": null,
+    "taux_communal_pct": 5.0,
+    "pente_moy_deg": 14.5,
+    "coproprietes_n": 0,
+    "prix_ancien_median": 2720,
+    "prix_ancien_fiable": true
+   },
+   "outils": {
+    "risques": {
+     "status": 200,
+     "n": 6,
+     "categories": [
+      "Prescription du PLU (constructibilité)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)"
+     ]
+    },
+    "gabarit": {
+     "status": 200,
+     "etat": "incomplete",
+     "message": "Calcul incomplet — donnée réglementaire manquante",
+     "zoneImplantationM2": null,
+     "hauteur": null,
+     "coverage": null,
+     "multizone": {
+      "constructibles": [],
+      "non_constructibles": [
+       [
+        "A",
+        70.7
+       ],
+       [
+        "N",
+        29.3
+       ]
+      ],
+      "bandes_ignorees": []
+     }
+    },
+    "taxe_prefill": {
+     "status": 200,
+     "zone_plu": "A",
+     "surface_terrain_m2": 30314.0,
+     "sdp_gabarit_m2": null,
+     "taux_communal_pct": 5.0
+    },
+    "estimation": {
+     "status": 200,
+     "median": 2720,
+     "n": 34,
+     "fiabilite": "Moyenne",
+     "type": "bati",
+     "note": null,
+     "valeur_indicative": null
+    },
+    "solaire": {
+     "status": 200,
+     "ok": true,
+     "productible": 1501,
+     "abf": false
+    },
+    "temps": {
+     "status": 200,
+     "n_features": 0,
+     "millesimes": []
+    },
+    "parcelle_permis": {
+     "status": 200,
+     "n": 14
+    },
+    "comparer": {
+     "status": 200,
+     "count": 1,
+     "p0": {
+      "surface_m2": 30314,
+      "zone": "A",
+      "sdp_max_m2": null,
+      "sdp_residuelle_m2": 0.0,
+      "proprietaire": "particulier",
+      "constructible": false
+     }
+    },
+    "etude_zone": {
+     "status": 200,
+     "zone_disponible": true,
+     "rayon_km": 1.0,
+     "habitants": 2792
+    },
+    "calculette": {
+     "status": 200,
+     "calculable": false,
+     "charge_central": null,
+     "par_m2": null
+    },
+    "patrimoine": "skip",
+    "assemblage_seule": {
+     "status": 422
+    },
+    "communes_acq": {
+     "status": 200,
+     "n": 50
+    }
+   }
+  },
+  "zone_N": {
+   "idu": "97421000BE0062",
+   "commune": "Salazie",
+   "fiche": {
+    "surface_terrain_m2": 30200,
+    "surface_dessin_m2": 29996,
+    "contenance_m2": 30200,
+    "etat_bien": "non_mesure",
+    "zone_lib": "Npnr",
+    "zone_fam": "N",
+    "constructible": false,
+    "rien_a_batir": true,
+    "sdp_restante_m2": 0,
+    "aleas": [
+     {
+      "nature": "PPR — zone rouge",
+      "niveau": null,
+      "part_pct": 46,
+      "redhibitoire": true
+     },
+     {
+      "nature": "Aléa inondation",
+      "niveau": "fort",
+      "part_pct": 17,
+      "redhibitoire": false
+     },
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "fort",
+      "part_pct": 17,
+      "redhibitoire": false
+     },
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "moyen",
+      "part_pct": 30,
+      "redhibitoire": false
+     },
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "faible",
+      "part_pct": 54,
+      "redhibitoire": false
+     }
+    ],
+    "pm_denomination": "DEPARTEMENT DE LA REUNION",
+    "pm_siren": "229740014",
+    "taux_communal_pct": 3.0,
+    "pente_moy_deg": 15.2,
+    "coproprietes_n": 0,
+    "prix_ancien_median": 1848,
+    "prix_ancien_fiable": true
+   },
+   "outils": {
+    "risques": {
+     "status": 200,
+     "n": 9,
+     "categories": [
+      "Prescription du PLU (constructibilité)",
+      "Ravines et reculs (domaine public fluvial)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "Servitude d'Utilité Publique",
+      "ZNIEFF — zone naturelle d'intérêt écologique"
+     ]
+    },
+    "gabarit": {
+     "status": 200,
+     "etat": "incomplete",
+     "message": "Calcul incomplet — donnée réglementaire manquante",
+     "zoneImplantationM2": null,
+     "hauteur": null,
+     "coverage": null,
+     "multizone": null
+    },
+    "taxe_prefill": {
+     "status": 200,
+     "zone_plu": "Npnr",
+     "surface_terrain_m2": 30200.0,
+     "sdp_gabarit_m2": null,
+     "taux_communal_pct": 3.0
+    },
+    "estimation": {
+     "status": 200,
+     "median": 1785,
+     "n": 72,
+     "fiabilite": "Limitée",
+     "type": "bati",
+     "note": null,
+     "valeur_indicative": null
+    },
+    "solaire": {
+     "status": 200,
+     "ok": true,
+     "productible": 1227,
+     "abf": false
+    },
+    "temps": {
+     "status": 200,
+     "n_features": 0,
+     "millesimes": []
+    },
+    "parcelle_permis": {
+     "status": 200,
+     "n": 0
+    },
+    "comparer": {
+     "status": 200,
+     "count": 1,
+     "p0": {
+      "surface_m2": 30200,
+      "zone": "Npnr",
+      "sdp_max_m2": null,
+      "sdp_residuelle_m2": 0.0,
+      "proprietaire": "public",
+      "constructible": false
+     }
+    },
+    "etude_zone": {
+     "status": 200,
+     "zone_disponible": true,
+     "rayon_km": 1.0,
+     "habitants": null
+    },
+    "calculette": {
+     "status": 200,
+     "calculable": false,
+     "charge_central": null,
+     "par_m2": null
+    },
+    "patrimoine": {
+     "status": 200,
+     "nom": "DEPARTEMENT DE LA REUNION"
+    },
+    "assemblage_seule": {
+     "status": 422
+    },
+    "communes_acq": {
+     "status": 200,
+     "n": 50
+    }
+   }
+  },
+  "sans_adresse": {
+   "idu": "97407000BB0009",
+   "commune": "Le Port",
+   "fiche": {
+    "surface_terrain_m2": 2340,
+    "surface_dessin_m2": 2998,
+    "contenance_m2": 2340,
+    "etat_bien": "nu",
+    "zone_lib": "Uc",
+    "zone_fam": "U",
+    "constructible": true,
+    "rien_a_batir": false,
+    "sdp_restante_m2": 3194,
+    "aleas": [],
+    "pm_denomination": "COMMUNE DU PORT",
+    "pm_siren": "219740073",
+    "taux_communal_pct": 3.0,
+    "pente_moy_deg": 2.5,
+    "coproprietes_n": 0,
+    "prix_ancien_median": 1754,
+    "prix_ancien_fiable": true
+   },
+   "outils": {
+    "risques": {
+     "status": 200,
+     "n": 0,
+     "categories": []
+    },
+    "gabarit": {
+     "status": 200,
+     "etat": "ok",
+     "message": null,
+     "zoneImplantationM2": 1422.0,
+     "hauteur": 16.0,
+     "coverage": {
+      "reculs": true,
+      "hauteur": true,
+      "emprise": true,
+      "risques": true
+     },
+     "multizone": null
+    },
+    "taxe_prefill": {
+     "status": 200,
+     "zone_plu": "Uc",
+     "surface_terrain_m2": 2340.0,
+     "sdp_gabarit_m2": 3194,
+     "taux_communal_pct": 3.0
+    },
+    "estimation": {
+     "status": 200,
+     "median": null,
+     "n": null,
+     "fiabilite": null,
+     "type": "terrain_nu",
+     "note": "Pas assez de ventes de terrain nu comparables dans le secteur.",
+     "valeur_indicative": null
+    },
+    "solaire": {
+     "status": 200,
+     "ok": true,
+     "productible": 1261,
+     "abf": false
+    },
+    "temps": {
+     "status": 200,
+     "n_features": 0,
+     "millesimes": []
+    },
+    "parcelle_permis": {
+     "status": 200,
+     "n": 16
+    },
+    "comparer": {
+     "status": 200,
+     "count": 1,
+     "p0": {
+      "surface_m2": 2340,
+      "zone": "Uc",
+      "sdp_max_m2": 3200,
+      "sdp_residuelle_m2": 3194.0,
+      "proprietaire": "public",
+      "constructible": true
+     }
+    },
+    "etude_zone": {
+     "status": 200,
+     "zone_disponible": true,
+     "rayon_km": 1.0,
+     "habitants": 13592
+    },
+    "calculette": {
+     "status": 200,
+     "calculable": false,
+     "charge_central": null,
+     "par_m2": null
+    },
+    "patrimoine": {
+     "status": 200,
+     "nom": "COMMUNE DU PORT"
+    },
+    "assemblage_seule": {
+     "status": 422
+    },
+    "communes_acq": {
+     "status": 200,
+     "n": 50
+    }
+   }
+  },
+  "sans_proprio_connu": {
+   "idu": "97420000BE0704",
+   "commune": "Sainte-Suzanne",
+   "fiche": {
+    "surface_terrain_m2": 1986,
+    "surface_dessin_m2": 2000,
+    "contenance_m2": 1986,
+    "etat_bien": "bati_encore",
+    "zone_lib": "UB",
+    "zone_fam": "U",
+    "constructible": true,
+    "rien_a_batir": false,
+    "sdp_restante_m2": 1455,
+    "aleas": [
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "faible",
+      "part_pct": 100,
+      "redhibitoire": false
+     }
+    ],
+    "pm_denomination": null,
+    "pm_siren": null,
+    "taux_communal_pct": 5.0,
+    "pente_moy_deg": 2.3,
+    "coproprietes_n": 0,
+    "prix_ancien_median": 2663,
+    "prix_ancien_fiable": true
+   },
+   "outils": {
+    "risques": {
+     "status": 200,
+     "n": 1,
+     "categories": [
+      "Risque naturel (PPR / aléa)"
+     ]
+    },
+    "gabarit": {
+     "status": 200,
+     "etat": "incomplete",
+     "message": "Calcul incomplet — donnée réglementaire manquante",
+     "zoneImplantationM2": null,
+     "hauteur": null,
+     "coverage": null,
+     "multizone": null
+    },
+    "taxe_prefill": {
+     "status": 200,
+     "zone_plu": "UB",
+     "surface_terrain_m2": 1986.0,
+     "sdp_gabarit_m2": 1455,
+     "taux_communal_pct": 5.0
+    },
+    "estimation": {
+     "status": 200,
+     "median": 2663,
+     "n": 13,
+     "fiabilite": "Moyenne",
+     "type": "bati",
+     "note": null,
+     "valeur_indicative": {
+      "surface_m2": 194,
+      "eur_m2": 2663,
+      "valeur_eur": 517000,
+      "valeur_basse": 382000,
+      "valeur_haute": 651000,
+      "surface_source": "emprise_ratio",
+      "ligne": "Surface habitable estimée d'après l'emprise au sol (194 m²)",
+      "note": "Surface habitable estimée d'après l'emprise au sol : total indicatif (ratio médian surface vendue / emprise au sol des ventes de maisons de la commune : 0,51 sur 277 ventes)."
+     }
+    },
+    "solaire": {
+     "status": 200,
+     "ok": true,
+     "productible": 1529,
+     "abf": false
+    },
+    "temps": {
+     "status": 200,
+     "n_features": 0,
+     "millesimes": []
+    },
+    "parcelle_permis": {
+     "status": 200,
+     "n": 33
+    },
+    "comparer": {
+     "status": 200,
+     "count": 1,
+     "p0": {
+      "surface_m2": 1986,
+      "zone": "UB",
+      "sdp_max_m2": 1818,
+      "sdp_residuelle_m2": 1455.0,
+      "proprietaire": "particulier",
+      "constructible": true
+     }
+    },
+    "etude_zone": {
+     "status": 200,
+     "zone_disponible": true,
+     "rayon_km": 1.0,
+     "habitants": 3982
+    },
+    "calculette": {
+     "status": 200,
+     "calculable": true,
+     "charge_central": 210000,
+     "par_m2": 106
+    },
+    "patrimoine": "skip",
+    "assemblage_seule": {
+     "status": 422
+    },
+    "communes_acq": {
+     "status": 200,
+     "n": 50
+    }
+   }
+  },
+  "sans_vente_voisinage": {
+   "idu": "97424000AR0021",
+   "commune": "Cilaos",
+   "fiche": {
+    "surface_terrain_m2": 20050,
+    "surface_dessin_m2": 19903,
+    "contenance_m2": 20050,
+    "etat_bien": "non_mesure",
+    "zone_lib": "N",
+    "zone_fam": "N",
+    "constructible": false,
+    "rien_a_batir": true,
+    "sdp_restante_m2": 0,
+    "aleas": [
+     {
+      "nature": "PPR — zone rouge",
+      "niveau": null,
+      "part_pct": 100,
+      "redhibitoire": true
+     },
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "fort",
+      "part_pct": 100,
+      "redhibitoire": false
+     }
+    ],
+    "pm_denomination": "DEPARTEMENT DE LA REUNION",
+    "pm_siren": "229740014",
+    "taux_communal_pct": 5.0,
+    "pente_moy_deg": 24.4,
+    "coproprietes_n": 0,
+    "prix_ancien_median": 1840,
+    "prix_ancien_fiable": true
+   },
+   "outils": {
+    "risques": {
+     "status": 200,
+     "n": 6,
+     "categories": [
+      "Espace naturel protégé",
+      "Prescription du PLU (constructibilité)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "Servitude d'Utilité Publique",
+      "ZNIEFF — zone naturelle d'intérêt écologique"
+     ]
+    },
+    "gabarit": {
+     "status": 200,
+     "etat": "incomplete",
+     "message": "Calcul incomplet — donnée réglementaire manquante",
+     "zoneImplantationM2": null,
+     "hauteur": null,
+     "coverage": null,
+     "multizone": null
+    },
+    "taxe_prefill": {
+     "status": 200,
+     "zone_plu": "N",
+     "surface_terrain_m2": 20050.0,
+     "sdp_gabarit_m2": null,
+     "taux_communal_pct": 5.0
+    },
+    "estimation": {
+     "status": 200,
+     "median": 1198,
+     "n": 95,
+     "fiabilite": "Limitée",
+     "type": "bati",
+     "note": null,
+     "valeur_indicative": null
+    },
+    "solaire": {
+     "status": 200,
+     "ok": true,
+     "productible": 1423,
+     "abf": false
+    },
+    "temps": {
+     "status": 200,
+     "n_features": 0,
+     "millesimes": []
+    },
+    "parcelle_permis": {
+     "status": 200,
+     "n": 0
+    },
+    "comparer": {
+     "status": 200,
+     "count": 1,
+     "p0": {
+      "surface_m2": 20050,
+      "zone": "N",
+      "sdp_max_m2": null,
+      "sdp_residuelle_m2": 0.0,
+      "proprietaire": "public",
+      "constructible": false
+     }
+    },
+    "etude_zone": {
+     "status": 200,
+     "zone_disponible": true,
+     "rayon_km": 1.0,
+     "habitants": null
+    },
+    "calculette": {
+     "status": 200,
+     "calculable": false,
+     "charge_central": null,
+     "par_m2": null
+    },
+    "patrimoine": {
+     "status": 200,
+     "nom": "DEPARTEMENT DE LA REUNION"
+    },
+    "assemblage_seule": {
+     "status": 422
+    },
+    "communes_acq": {
+     "status": 200,
+     "n": 46
+    }
+   }
+  },
+  "monument_historique": {
+   "idu": "97418000BD0016",
+   "commune": "Sainte-Marie",
+   "fiche": {
+    "surface_terrain_m2": 9442,
+    "surface_dessin_m2": 9407,
+    "contenance_m2": 9442,
+    "etat_bien": "non_mesure",
+    "zone_lib": "N",
+    "zone_fam": "N",
+    "constructible": false,
+    "rien_a_batir": true,
+    "sdp_restante_m2": 0,
+    "aleas": [
+     {
+      "nature": "PPR — zone rouge",
+      "niveau": null,
+      "part_pct": 100,
+      "redhibitoire": true
+     },
+     {
+      "nature": "Aléa inondation",
+      "niveau": "fort",
+      "part_pct": 53,
+      "redhibitoire": false
+     },
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "fort",
+      "part_pct": 90,
+      "redhibitoire": false
+     },
+     {
+      "nature": "Aléa mouvement_terrain",
+      "niveau": "moyen",
+      "part_pct": 9,
+      "redhibitoire": false
+     }
+    ],
+    "pm_denomination": "CBO TERRITORIA",
+    "pm_siren": "452038805",
+    "taux_communal_pct": 5.0,
+    "pente_moy_deg": 19.4,
+    "coproprietes_n": 0,
+    "prix_ancien_median": 1925,
+    "prix_ancien_fiable": true
+   },
+   "outils": {
+    "risques": {
+     "status": 200,
+     "n": 12,
+     "categories": [
+      "Classement sonore des voies (isolement acoustique)",
+      "Droit de préemption (DPU)",
+      "Plan d'exposition au bruit (PEB, aérodrome)",
+      "Plan d'exposition au bruit (PEB, aérodrome)",
+      "Prescription du PLU (constructibilité)",
+      "Prescription du PLU (constructibilité)",
+      "Prescription du PLU (constructibilité)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "Risque naturel (PPR / aléa)",
+      "Servitude d'Utilité Publique"
+     ]
+    },
+    "gabarit": {
+     "status": 200,
+     "etat": "incomplete",
+     "message": "Calcul incomplet — donnée réglementaire manquante",
+     "zoneImplantationM2": null,
+     "hauteur": null,
+     "coverage": null,
+     "multizone": null
+    },
+    "taxe_prefill": {
+     "status": 200,
+     "zone_plu": "N",
+     "surface_terrain_m2": 9442.0,
+     "sdp_gabarit_m2": null,
+     "taux_communal_pct": 5.0
+    },
+    "estimation": {
+     "status": 200,
+     "median": 1925,
+     "n": 33,
+     "fiabilite": "Élevée",
+     "type": "bati",
+     "note": null,
+     "valeur_indicative": null
+    },
+    "solaire": {
+     "status": 200,
+     "ok": true,
+     "productible": 1565,
+     "abf": true
+    },
+    "temps": {
+     "status": 200,
+     "n_features": 0,
+     "millesimes": []
+    },
+    "parcelle_permis": {
+     "status": 200,
+     "n": 17
+    },
+    "comparer": {
+     "status": 200,
+     "count": 1,
+     "p0": {
+      "surface_m2": 9442,
+      "zone": "N",
+      "sdp_max_m2": null,
+      "sdp_residuelle_m2": 0.0,
+      "proprietaire": "morale",
+      "constructible": false
+     }
+    },
+    "etude_zone": {
+     "status": 200,
+     "zone_disponible": true,
+     "rayon_km": 1.0,
+     "habitants": 5988
+    },
+    "calculette": {
+     "status": 200,
+     "calculable": false,
+     "charge_central": null,
+     "par_m2": null
+    },
+    "patrimoine": {
+     "status": 200,
+     "nom": "CBO TERRITORIA"
+    },
+    "assemblage_seule": {
+     "status": 422
+    },
+    "communes_acq": {
+     "status": 200,
+     "n": 50
+    }
+   }
+  }
+ }
+}
