@@ -203,7 +203,7 @@ export function Omnibox() {
           if (el) onEnterRaw(el.value.trim())
         }}
         aria-label="Lancer la recherche" aria-busy={searching}
-        className="flex h-5 w-5 shrink-0 items-center justify-center text-txt-faint transition-colors duration-quick hover:text-mint disabled:cursor-wait">
+        className="flex h-6 w-6 shrink-0 items-center justify-center text-txt-faint transition-colors duration-quick hover:text-mint disabled:cursor-wait">
         {searching ? (
           /* CHARGEMENT-1 — l'indicateur unique (points menthe) pendant la résolution de la recherche. */
           <Chargement variant="inline" />
@@ -396,7 +396,7 @@ function NotifBell() {
       {/* NU5-FIX-1 (F4) — label-in-name : le nom accessible CONTIENT le texte visible (« 99+ ») pour que
           la commande vocale (« clique 99+ ») marche et que le lecteur d'écran annonce le compte. */}
       <button onClick={() => setOpen((o) => !o)}
-        aria-label={unread ? `Notifications (${unread > 99 ? '99+' : unread} non lues)` : 'Notifications'}
+        aria-label={unread ? `Notifications ${unread > 99 ? '99+' : unread} non lues` : 'Notifications'}
         aria-pressed={open}
         className={`relative flex h-9 w-9 items-center justify-center rounded-full border transition-colors duration-quick ${
           open ? 'border-mint bg-mint text-mint-ink' : 'border-line-2 bg-surface-3 text-txt-mut hover:text-txt'}`}>
@@ -405,7 +405,10 @@ function NotifBell() {
           <path d="M8.5 15 a1.5 1.5 0 0 0 3 0" fill="none" stroke="currentColor" strokeWidth="1.4" />
         </svg>
         {unread > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber px-1 font-mono text-[9px] font-bold text-[#2A2113]">
+          // NU5-FIX-1 (F4) — le compte est DÉCORATIF (déjà porté par l'aria-label « Notifications (N
+          // non lues) ») : aria-hidden pour que le texte visible du bouton n'entre pas en conflit avec
+          // son nom accessible (label-in-name) et ne soit pas annoncé deux fois.
+          <span aria-hidden className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber px-1 font-mono text-[9px] font-bold text-[#2A2113]">
             {unread > 99 ? '99+' : unread}{/* GB-002 : badge capé (le dropdown garde le vrai compte) */}
           </span>
         )}

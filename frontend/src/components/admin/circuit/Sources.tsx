@@ -272,8 +272,8 @@ export function Sources({ data, onOpen, tacheSonde, tacheAgents, onSonder, onAge
         <>
           <table className="src">
             <thead><tr>
-              <th style={{ width: '32%' }}>Source</th><th>Statut</th>
-              <th>Pourquoi elle n'est pas en vitrine</th><th>Depuis</th>
+              <th scope="col" style={{ width: '32%' }}>Source</th><th scope="col">Statut</th>
+              <th scope="col">Pourquoi elle n'est pas en vitrine</th><th scope="col">Depuis</th>
             </tr></thead>
             <tbody>
               {hv.filter((h) => cherche(`${h.nom} ${h.famille}`)).map((h) => (

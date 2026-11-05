@@ -17,7 +17,7 @@ export function DeplacerMenu({ columns, currentStatus, onMove, onRetirer, classN
       value=""
       onChange={(ev) => { const v = ev.target.value; if (v === RETIRER) onRetirer(); else if (v) onMove(v) }}
       aria-label="Déplacer la parcelle vers une autre colonne du CRM"
-      className={`w-full cursor-pointer rounded-md border border-line-2 bg-surface-2 px-1.5 py-1 text-[10.5px] text-txt-dim focus:outline-none focus:ring-1 focus:ring-mint/50 ${className}`.trim()}
+      className={`min-h-[24px] w-full cursor-pointer rounded-md border border-line-2 bg-surface-2 px-1.5 py-1 text-[10.5px] text-txt-dim focus:outline-none focus:ring-1 focus:ring-mint/50 ${className}`.trim()}
     >
       <option value="">Déplacer vers…</option>
       {columns.map((c) => (

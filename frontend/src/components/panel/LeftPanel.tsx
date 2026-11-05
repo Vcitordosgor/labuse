@@ -334,7 +334,8 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
       {/* RETOURS-5 T1 — la LIGNE de chiffres est RETIRÉE (« 64 sources » passait à la ligne, et une donnée
           coupée est pire qu'absente). Le titre est suivi directement de « PAR OÙ COMMENCER ». L'appel
           /accueil/chiffres est supprimé du front (endpoint utilisé UNIQUEMENT ici — cf. compte-rendu). */}
-      <p className="mb-2 font-mono text-[9px] uppercase tracking-[.14em] text-[#5C6A63]">Par où commencer</p>
+      {/* NU5-FIX-1 (F1) — #5C6A63 (3,6:1) → #7E8B82 (5,5:1 sur bg-0). */}
+      <p className="mb-2 font-mono text-[9px] uppercase tracking-[.14em] text-[#7E8B82]">Par où commencer</p>
       <div className="mb-5 flex flex-col gap-2">
         <AccEntry ton="mint" icone="carte" titre="Explorer la carte" sous="couches, filtres, parcelles"
           onClick={onCommencer} />

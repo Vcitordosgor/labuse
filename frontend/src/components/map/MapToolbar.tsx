@@ -84,7 +84,7 @@ export function MapToolbar() {
             <polygon points="10,9.5 17,13.5 10,17.5 3,13.5" fill="none" stroke="currentColor" strokeWidth="1.4" opacity="0.5" />
           </svg>
           {BASEMAPS.find((b) => b.key === basemap)?.label}
-          {basemap === 'ortho' && orthoYear !== 'now' && <span className={bmOpen ? 'text-mint-ink/80' : 'text-mint'}>· {ORTHO_YEARS.find((y) => y.an === orthoYear)?.label}</span>}
+          {basemap === 'ortho' && orthoYear !== 'now' && <span aria-hidden className={bmOpen ? 'text-mint-ink/80' : 'text-mint'}>· {ORTHO_YEARS.find((y) => y.an === orthoYear)?.label}</span>}
         </button>
         {bmOpen && (
           <>
@@ -131,7 +131,7 @@ export function MapToolbar() {
           aria-label="Relief 3D"
         >
           3D
-          {terrain3d && <span className={terrainOpen ? 'text-mint-ink/80' : 'text-mint'}>· {batiVisible ? 'bâtiments' : 'relief'}</span>}
+          {terrain3d && <span aria-hidden className={terrainOpen ? 'text-mint-ink/80' : 'text-mint'}>· {batiVisible ? 'bâtiments' : 'relief'}</span>}
         </button>
         {terrainOpen && (
           <>

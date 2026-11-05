@@ -538,6 +538,25 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
        raison="Supprime les sessions_auth EXPIRÉES (expire_at < now) : minimisation des données et "
               "hygiène de la table de sessions. Aucune session active touchée.",
        test="tests/test_cron1_registre.py::test_job_a_une_raison"),
+    # NU5-FIX-1 (C-F7) — avertissement de fin d'essai + bascule à l'échéance, INDÉPENDANTE DU LOGIN.
+    _j("essai-fin-proche", "Essai — avertit à J-1 et bascule à l'échéance (sans attendre un login)",
+       "quotidien", "0 5 * * *", "09:00", touche="exploitation", timeout_s=300, envoie_mail=True,
+       raison="Avant NU5-FIX-1, l'essai expiré n'était détecté qu'AU LOGIN (le client qui ne revient "
+              "pas ne recevait aucun mail et n'était jamais basculé). Ce job NOCTURNE (1) envoie un "
+              "avertissement « votre essai se termine demain » aux essais à J-1, et (2) bascule en "
+              "suspension les essais ÉCHUS, indépendamment de toute connexion. Idempotent (dédup par "
+              "compte × échéance).",
+       test="tests/test_cron1_registre.py::test_job_a_une_raison"),
+    # NU5-FIX-1 (point 8 du mandat) — VÉRITÉ-PERMANENTE-1 (début) : les harnais des six lots de NU-5.
+    _j("verite-permanente", "Vérité permanente — rejoue les harnais des 6 lots NU-5 (régression)",
+       "quotidien", "0 2 * * *", "06:00", touche="exploitation", timeout_s=3600, envoie_mail=True,
+       besoin_db=True,
+       raison="VÉRITÉ-PERMANENTE-1 : chaque nuit, rejoue les harnais rejouables des audits NU5-A..F "
+              "(outils, documents, mails, Radar, fiches communes, accessibilité) via un runner unique "
+              "(scripts/verite_permanente). Un harnais sans prérequis (API/node/Brevo) est sauté avec "
+              "motif ; un harnais lancé qui échoue rougit le job → incident. But : qu'une régression "
+              "sur l'un des six axes devienne visible sans ré-audit manuel.",
+       test="tests/test_cron1_registre.py::test_job_a_une_raison"),
     # VEILLE-2 (Lot 5) — plus d'ALERTE Radar séparée : le Radar alimente la CLOCHE (kind radar), et le
     # digest du matin (07:15) l'e-maile avec le reste. Ce job (07:05) POSE les événements Radar à la cloche
     # AVANT le digest ; il n'envoie AUCUN mail lui-même.
@@ -809,6 +828,10 @@ _FAMILLE_LIBELLE_ROLE: dict[str, tuple[int, str, str, bool]] = {
                    "Repère chaque jour les usages anormaux (partage de compte). Informatif.", True),
     "purge-sessions": (4, "Le ménage des sessions",
                        "Supprime chaque jour les sessions de connexion expirées.", True),
+    "essai-fin-proche": (4, "La fin d'essai",
+                         "Avertit à J-1 la fin d'essai et bascule à l'échéance (sans attendre un login).", True),
+    "verite-permanente": (4, "La vérité permanente",
+                          "Rejoue chaque nuit les harnais des 6 lots NU-5 (régression des 6 axes).", True),
     "mail-queue-consommer": (4, "Le courrier aux clients",
                              "Envoie les mails en attente toutes les 5 min ; cède à la sauvegarde.", True),
     "evaluer-suivis": (4, "La veille des parcelles suivies",

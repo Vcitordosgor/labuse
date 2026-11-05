@@ -59,10 +59,10 @@ export function DestinationsDetail({ onBack }: { onBack?: () => void }) {
         <table className="w-full text-[12.5px]">
           <thead>
             <tr className="border-b border-line font-mono text-[10px] uppercase tracking-[0.12em] text-txt-dim">
-              <th className="px-4 py-2 text-left font-medium">Commune</th>
-              <th className="px-4 py-2 text-left font-medium">État</th>
-              <th className="px-4 py-2 text-left font-medium">Millésime</th>
-              <th className="px-4 py-2 text-left font-medium">Règlement</th>
+              <th scope="col" className="px-4 py-2 text-left font-medium">Commune</th>
+              <th scope="col" className="px-4 py-2 text-left font-medium">État</th>
+              <th scope="col" className="px-4 py-2 text-left font-medium">Millésime</th>
+              <th scope="col" className="px-4 py-2 text-left font-medium">Règlement</th>
             </tr>
           </thead>
           <tbody>

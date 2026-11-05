@@ -37,11 +37,18 @@ async function messageDErreur(r: Response): Promise<string> {
 export function useOuvrirDocument(onErreur?: (msg: string) => void) {
   const [enCours, setEnCours] = useState<string | null>(null)
   const [erreur, setErreur] = useState<string | null>(null)
-  // IMPLANTATION-3 — `init` optionnel : certains documents (l'Étude de faisabilité) se génèrent par
-  // POST (la configuration voyage dans le corps), pas par une URL GET. Le reste (blob, erreurs FR,
-  // état d'attente) est IDENTIQUE — les deux portes se comportent comme les 7 autres documents.
+  // NU5-FIX-1 (C-F11) — PROGRESSION VISIBLE pendant la génération (le Dossier met ~14 s ; un simple
+  // spinner laisse croire que ça a planté). `progres` (0→100) est une ESTIMATION fondée sur le temps
+  // écoulé (le serveur ne diffuse pas d'avancement réel) : une courbe asymptotique rassurante jusqu'à
+  // ~92 %, puis 100 % à l'ouverture du PDF. L'appelant affiche une barre tant que `enCours`.
+  const [progres, setProgres] = useState(0)
   const ouvrir = async (url: string, cle: string = url, init?: RequestInit): Promise<boolean> => {
-    setErreur(null); setEnCours(cle)
+    setErreur(null); setEnCours(cle); setProgres(6)
+    const t0 = Date.now()
+    const timer = setInterval(() => {
+      const s = (Date.now() - t0) / 1000
+      setProgres(Math.min(92, Math.round(100 * (1 - Math.exp(-s / 7)))))   // ~63 % à 7 s, ~92 % à ~18 s
+    }, 200)
     try {
       const r = await fetch(url, init)
       if (!r.ok) { const m = await messageDErreur(r); (onErreur ?? setErreur)(m); return false }
@@ -51,8 +58,8 @@ export function useOuvrirDocument(onErreur?: (msg: string) => void) {
       const m = "Le document n'a pas pu être généré — vérifiez votre connexion et réessayez."
       ;(onErreur ?? setErreur)(m); return false
     } finally {
-      setEnCours(null)
+      clearInterval(timer); setProgres(100); setEnCours(null)
     }
   }
-  return { ouvrir, enCours, erreur, effacerErreur: () => setErreur(null) }
+  return { ouvrir, enCours, erreur, progres, effacerErreur: () => setErreur(null) }
 }

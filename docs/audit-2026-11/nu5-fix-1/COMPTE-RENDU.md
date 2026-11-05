@@ -141,6 +141,50 @@ mail). Repro D-F2 : `test_df2_*`.
 - **Pre-commit hook** (garde gros fichiers > 2 Mio, `scripts/git-hooks/pre-commit`) : vert (tous les
   fichiers ajoutés sont du texte source/docs).
 
+## 10. Deuxième passe — suite du mandat (points 1–8)
+
+Après la première passe, 8 points demandés explicitement, finis dans la même branche :
+
+1. **F-2 — CRM nested-interactive** : la carte Kanban n'est plus un `role="button"` focalisable
+   contenant d'autres contrôles (×187 supprimés). Conteneur simple + bouton dédié « Ouvrir » (accès
+   clavier/lecteur d'écran) ; glisser-déposer conservé, alternative « Déplacer vers… ». → axe
+   `nested-interactive` **0**.
+2. **F-3 — cibles ≥ 24 px** : icône de recherche 20→24, pastilles de commune 21→24 (min-height),
+   boutons de carte du CRM (`min-h-[24px]`, IDU, Ouvrir, +Note, sélecteur « Déplacer vers… »). Au
+   bureau (1440) : **0** `target-size`.
+3. **F-8 — `scope` sur les en-têtes de tableau** : `scope="col"` ajouté à tous les `<th>` des tableaux
+   (Analyser une annonce, Marché, Comparatif, Bilan, admin : Courrier/Produit/Ia/Destinations/Sources).
+4. **C-F7 — fin d'essai** : job nocturne `essai-fin-proche` (1) avertit à J-1 (template `essai_fin_proche`,
+   id 20 — geste Brevo) et (2) **bascule à l'échéance indépendamment du login**. Enregistré au registre
+   des crons + habillage cockpit.
+5. **B-F8 — badge « Sources modifiées depuis »** : l'instantané ne fige plus TOUTES les sources mais
+   **les sources du document** (`data_sources` de la fiche de la parcelle, la liste même imprimée en
+   section « Sources ») — fin du sur-signalement par une source sans rapport. Repli sûr sur toutes les
+   sources si indéterminable.
+6. **C-F11 — progression du Dossier** : le hook `useOuvrirDocument` expose `progres` (estimation fondée
+   sur le temps écoulé, courbe asymptotique → 92 % puis 100 %) ; une barre de progression visible
+   remplace le spinner nu pendant la génération (Docs).
+7. **Point 4 — expéditeur unique** : `brevo.envoyer_template` force désormais `sender = mail_from`
+   (`contact@labuse.immo`) sur CHAQUE envoi de template → tous les envois **du code** partent de
+   contact@ (cycle de vie compris), pas seulement les mails techniques. (Régler aussi l'expéditeur côté
+   Brevo reste un geste console pour l'aperçu.)
+8. **Point 8 — VÉRITÉ-PERMANENTE-1** : runner unique `scripts/verite_permanente.py` qui rejoue les
+   harnais des 6 lots NU-5 (saut-avec-motif si prérequis absents, rouge si un harnais lancé échoue),
+   branché au banc de nuit via le job `verite-permanente`.
+
+E-4, E-6, E-9 restent **documentés** (non livrés), comme demandé.
+
+### Recette (deuxième passe)
+- **Harnais F (axe) rejoué** : **32 → 2** échecs durs (au départ de l'audit) ; les 2 restants sont
+  `target-size` à **390 px** (fenêtre de bureau rétrécie) — l'app étant réservée à l'ordinateur et, à la
+  largeur réelle 1440, **0** `target-size`. Contraste généralisé, label-in-name, CRM nested-interactive :
+  **tous à 0**.
+- **vitest complet (vraies dépendances installées)** : **309 tests / 65 suites — 0 rouge** (les 8 suites
+  jadis bloquées par le symlink passent). **tsc 0 erreur.**
+- Repros `test_nu5_fix_1.py` : **11/11**. Tests ciblés backend (cron registre, brevo, bibliothèque,
+  digests, sécurité des routes) : **verts** (après classement de `/compte` en tenant-scopé, ajout de
+  `/compte` au proxy dev, et exclusion du template Brevo 20 — geste console — des vérifications live).
+
 ## 9. Dette / suites
 
 - Brancher formellement les harnais A/B/D/F au banc de nuit (VÉRITÉ-PERMANENTE-1).

@@ -181,7 +181,7 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
   // DOCS-FIX-1 (P3/P4) — ouverture propre (fetch + blob + attente + erreur FR), comme le Bilan :
   // plus de window.open qui laisse l'onglet blanc puis affiche du JSON. L'erreur est rendue INLINE
   // dans la porte (modèle FinancierQuestionnaire) ; la porte reste ouverte tant qu'il y a une erreur.
-  const { ouvrir, enCours, erreur } = useOuvrirDocument()
+  const { ouvrir, enCours, erreur, progres } = useOuvrirDocument()
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -256,6 +256,17 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
             <Bouton niveau="primaire" ton="vert" className="w-full" disabled={!idu || gabaritBloque || !!enCours} onClick={generer}>
               {enCours ? <Chargement variant="inline" accent="courant" label="Génération…" /> : d.cta}
             </Bouton>
+            {/* NU5-FIX-1 (C-F11) — barre de progression VISIBLE pendant la génération (le Dossier met
+                ~14 s) : estimation fondée sur le temps écoulé, jamais un simple spinner figé. */}
+            {enCours && (
+              <div className="mt-2" aria-hidden>
+                <div className="h-1 w-full overflow-hidden rounded-full bg-surface-3">
+                  <div className="h-full rounded-full bg-mint transition-[width] duration-200"
+                       style={{ width: `${progres}%` }} />
+                </div>
+                <p className="mt-1 text-[11px] text-txt-mut">Génération du document en cours…</p>
+              </div>
+            )}
           </div>
         )}
 

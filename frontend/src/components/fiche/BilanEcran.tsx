@@ -333,8 +333,8 @@ export function BilanEcran({ idu, onClose, onGenerated, depuisEtude }:
             </div>
             <table className="w-full text-[13px]">
               <thead><tr className="border-b border-line text-left text-txt-mut">
-                <th className="p-2">Produit</th><th className="p-2 text-right">Lots</th><th className="p-2 text-right">SUV m²</th>
-                <th className="p-2 text-right">Prix TTC / m²</th><th className="p-2 text-right">TVA</th><th className="p-2 text-right">CA TTC</th>
+                <th scope="col" className="p-2">Produit</th><th scope="col" className="p-2 text-right">Lots</th><th scope="col" className="p-2 text-right">SUV m²</th>
+                <th scope="col" className="p-2 text-right">Prix TTC / m²</th><th scope="col" className="p-2 text-right">TVA</th><th scope="col" className="p-2 text-right">CA TTC</th>
               </tr></thead>
               <tbody>
                 {entrees.produits.map((p, i) => {
@@ -423,8 +423,8 @@ export function BilanEcran({ idu, onClose, onGenerated, depuisEtude }:
               <col className="w-[11%]" /><col className="w-[10%]" /><col className="w-[11%]" /><col className="w-[10%]" />
             </colgroup>
             <thead><tr className="border-b border-line text-left text-txt-mut">
-              <th className="p-2">Libellé</th><th className="p-2">Assiette</th><th className="p-2 text-right">Taux ou montant</th>
-              <th className="p-2 text-right">HT</th><th className="p-2 text-right">TVA</th><th className="p-2 text-right">TTC</th><th className="p-2">État</th>
+              <th scope="col" className="p-2">Libellé</th><th scope="col" className="p-2">Assiette</th><th scope="col" className="p-2 text-right">Taux ou montant</th>
+              <th scope="col" className="p-2 text-right">HT</th><th scope="col" className="p-2 text-right">TVA</th><th scope="col" className="p-2 text-right">TTC</th><th scope="col" className="p-2">État</th>
             </tr></thead>
             <tbody>
               {modele.blocs.map((b) => {

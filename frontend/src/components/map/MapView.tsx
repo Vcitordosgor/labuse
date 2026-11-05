@@ -1535,7 +1535,9 @@ export function MapView() {
       const nameSpan = document.createElement('span'); nameSpan.textContent = name; el.appendChild(nameSpan)
       // RETOURS-11 T8 — taille de police et padding +20 %.
       const size = Math.min(13, 10 + (opinion ? Math.log10(Math.max(1, c.chaudes)) * 2 : 0)) * 1.2
+      // NU5-FIX-1 (F-3) — cible tactile ≥ 24 px (WCAG 2.2 §2.5.8) : la pastille faisait ~21 px de haut.
       el.style.cssText = `cursor:pointer;white-space:nowrap;border-radius:9999px;padding:2.4px 10.8px;` +
+        `min-height:24px;box-sizing:border-box;` +
         `display:inline-flex;align-items:center;gap:4px;` +
         `font:600 ${size}px Inter,sans-serif;border:1px solid ${PAST_BORDER};` +
         `background:${PAST_BG};color:${PAST_TXT};` +
