@@ -54,47 +54,59 @@ def ensure_tables(engine) -> None:
 
 def ingest_ban_plus(session: Session, log=print, client: httpx.Client | None = None) -> dict:
     """Moisson WFS paginée (count/startIndex) → ban_plus_liens, puis résolution rnb_id par
-    `rnb_batiments.ext_bdtopo`. ⚠ ÉCRIT + RÉSEAU (Géoplateforme seule)."""
+    `rnb_batiments.ext_bdtopo`. ⚠ ÉCRIT + RÉSEAU (Géoplateforme seule).
+
+    INJECTION-SOLIDE-2 — passe par `remplacer_servie` : la moisson WFS remplit une STAGING puis swap
+    ATOMIQUE (plus de `TRUNCATE ban_plus_liens` à vif). Une moisson vide / interrompue (réseau) est
+    REFUSÉE → la version servie est conservée. Unicité (id_adr, id_bat)."""
+    from . import injection_sure
     own = client is None
     c = client or httpx.Client(timeout=max(get_settings().http_timeout_s, 300.0),
                                headers={"User-Agent": constants.USER_AGENT},
                                follow_redirects=True)
-    session.execute(text("TRUNCATE ban_plus_liens"))
-    n = hors_974 = 0
-    start = 0
-    try:
-        while True:
-            r = c.get(WFS, params={
-                "SERVICE": "WFS", "VERSION": "2.0.0", "REQUEST": "GetFeature",
-                "TYPENAMES": TYPENAME, "COUNT": PAGE, "STARTINDEX": start,
-                "OUTPUTFORMAT": "application/json", "BBOX": BBOX_974})
-            r.raise_for_status()
-            feats = r.json().get("features") or []
-            if not feats:
-                break
-            rows = []
-            for f in feats:
-                p = f.get("properties") or {}
-                idu = p.get("idu")
-                if idu and not idu.startswith("974"):
-                    hors_974 += 1        # bbox déborde l'île ? jamais servi — filtre au plus tôt
-                    continue
-                rows.append({"a": p.get("id_adr"), "b": p.get("id_bat"), "i": idu,
-                             "t": p.get("type_lien"), "na": p.get("nb_adr"),
-                             "nb": p.get("nb_bat")})
-            if rows:
-                session.execute(text(
-                    "INSERT INTO ban_plus_liens (id_adr, id_bat, idu, type_lien, nb_adr, nb_bat) "
-                    "VALUES (:a, :b, :i, :t, :na, :nb) ON CONFLICT (id_adr, id_bat) DO NOTHING"),
-                    rows)
-                n += len(rows)
-            log(f"  page {start}-{start + len(feats)} : {len(rows)} lien(s)")
-            if len(feats) < PAGE:
-                break
-            start += PAGE
-    finally:
-        if own:
-            c.close()
+    stats = {"n": 0, "hors_974": 0}
+
+    def charger(conn, staging):
+        start = 0
+        try:
+            while True:
+                r = c.get(WFS, params={
+                    "SERVICE": "WFS", "VERSION": "2.0.0", "REQUEST": "GetFeature",
+                    "TYPENAMES": TYPENAME, "COUNT": PAGE, "STARTINDEX": start,
+                    "OUTPUTFORMAT": "application/json", "BBOX": BBOX_974})
+                r.raise_for_status()
+                feats = r.json().get("features") or []
+                if not feats:
+                    break
+                rows = []
+                for f in feats:
+                    p = f.get("properties") or {}
+                    idu = p.get("idu")
+                    if idu and not idu.startswith("974"):
+                        stats["hors_974"] += 1    # bbox déborde l'île ? jamais servi — filtre au plus tôt
+                        continue
+                    rows.append({"a": p.get("id_adr"), "b": p.get("id_bat"), "i": idu,
+                                 "t": p.get("type_lien"), "na": p.get("nb_adr"),
+                                 "nb": p.get("nb_bat")})
+                if rows:
+                    conn.execute(text(
+                        f'INSERT INTO "{staging}" (id_adr, id_bat, idu, type_lien, nb_adr, nb_bat) '
+                        "VALUES (:a, :b, :i, :t, :na, :nb) ON CONFLICT (id_adr, id_bat) DO NOTHING"),
+                        rows)
+                    stats["n"] += len(rows)
+                log(f"  page {start}-{start + len(feats)} : {len(rows)} lien(s)")
+                if len(feats) < PAGE:
+                    break
+                start += PAGE
+        finally:
+            if own:
+                c.close()
+
+    injection_sure.remplacer_servie(
+        session, table="ban_plus_liens", charger_staging=charger, a_geometrie=False,
+        couverture_974_min=0, delta_max_pct=50.0, like_including="ALL",
+        alerter=injection_sure.alerte_injection("ban_plus_liens", SOURCE_BAN_PLUS))
+    n, hors_974 = stats["n"], stats["hors_974"]
     # rnb_id : le bâtiment BD TOPO du lien est rattaché à son ID-RNB par le réservoir RNB local.
     n_rnb = 0
     if session.execute(text("SELECT to_regclass('rnb_batiments')")).scalar() is not None:

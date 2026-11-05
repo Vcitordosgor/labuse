@@ -247,7 +247,8 @@ def controler_run(mesures: dict, *, palier_delta_max_pct: float) -> Verdict:
 
 # ════════════════════════════════ 2. INJECTION CLASSE A — contrôles + rollback ═══════════════════
 
-def controler_injection(mesures: dict, *, delta_max_pct: float, couverture_974_min: int) -> Verdict:
+def controler_injection(mesures: dict, *, delta_max_pct: float, couverture_974_min: int,
+                        autoriser_vide: bool = False) -> Verdict:
     """Les contrôles d'une injection de source de CLASSE A, AVANT de valider (sinon RETOUR ARRIÈRE).
     `mesures` :
       · comptes_apres    (int)   — lignes après injection (doit être > 0)
@@ -269,8 +270,16 @@ def controler_injection(mesures: dict, *, delta_max_pct: float, couverture_974_m
 
     apres = mesures.get("comptes_apres")
     avant = mesures.get("comptes_avant") or 0
-    _exige(apres is not None and apres > 0, "comptes-non-nuls",
-           f"injection vide ou illisible (comptes après = {apres})")
+    # `autoriser_vide` : pour les tables DÉRIVÉES qui peuvent légitimement être vides (aucun événement
+    # datable, aucun candidat) — on exige alors seulement que le compte soit LISIBLE (non-None), pas
+    # strictement positif. Les sources EXTERNES (fichier/API) gardent le défaut strict (vide = mauvais
+    # téléchargement → refus).
+    if autoriser_vide:
+        _exige(apres is not None, "comptes-lisibles",
+               f"injection illisible (comptes après = {apres})")
+    else:
+        _exige(apres is not None and apres > 0, "comptes-non-nuls",
+               f"injection vide ou illisible (comptes après = {apres})")
 
     if mesures.get("a_geometrie", True):
         inval = mesures.get("geometries_invalides")

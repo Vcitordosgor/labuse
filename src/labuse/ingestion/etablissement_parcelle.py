@@ -37,31 +37,46 @@ def ensure_tables(engine) -> None:
 
 def build_etablissement_parcelle(session: Session, *, rayon_m: float = RAYON_ACCROCHE_M) -> dict:
     """(Re)construit la table par accroche BAN. Renvoie {n_etab_adresse, rattaches, non_rattaches}.
-    Idempotent : TRUNCATE + INSERT. Le nearest-neighbour est accéléré par l'index GiST de `adresses`."""
-    for stmt in DDL.strip().split(";"):
-        if stmt.strip():
-            session.execute(text(stmt))
-    session.execute(text("TRUNCATE etablissement_parcelle"))
+    Le nearest-neighbour est accéléré par l'index GiST de `adresses`.
+
+    INJECTION-SOLIDE-2 — passe par `remplacer_servie` : la reconstruction écrit dans une STAGING, est
+    contrôlée (non vide : si `adresses`/`sirene_etablissements` sont momentanément vides, on REFUSE et
+    on garde l'ancienne table) puis échangée ATOMIQUEMENT. Plus de `TRUNCATE etablissement_parcelle` à
+    vif. Table sans géométrie ; unicité (siret)."""
+    from . import injection_sure
+
+    def preparer(conn):
+        for stmt in DDL.strip().split(";"):
+            if stmt.strip():
+                conn.execute(text(stmt))
+
     n_source = session.execute(text(
         "SELECT count(*) FROM sirene_etablissements WHERE actif AND qualite_xy = ANY(:q)"),
         {"q": list(QUALITE_ADRESSE)}).scalar() or 0
-    session.execute(text(
-        """
-        INSERT INTO etablissement_parcelle (siret, idu, precision, distance_m)
-        SELECT s.siret, a.idu, s.qualite_xy, a.d
-        FROM sirene_etablissements s
-        CROSS JOIN LATERAL (
-            SELECT ad.idu, ad.geom_2975 <-> ST_Transform(s.geom, 2975) AS d
-            FROM adresses ad
-            WHERE ad.idu IS NOT NULL
-            ORDER BY ad.geom_2975 <-> ST_Transform(s.geom, 2975)
-            LIMIT 1
-        ) a
-        WHERE s.actif AND s.qualite_xy = ANY(:q) AND s.geom IS NOT NULL
-          AND a.d <= :r
-        ON CONFLICT (siret) DO NOTHING
-        """), {"q": list(QUALITE_ADRESSE), "r": rayon_m})
-    rattaches = session.execute(text("SELECT count(*) FROM etablissement_parcelle")).scalar() or 0
+
+    def charger(conn, staging):
+        conn.execute(text(
+            f"""
+            INSERT INTO "{staging}" (siret, idu, precision, distance_m)
+            SELECT s.siret, a.idu, s.qualite_xy, a.d
+            FROM sirene_etablissements s
+            CROSS JOIN LATERAL (
+                SELECT ad.idu, ad.geom_2975 <-> ST_Transform(s.geom, 2975) AS d
+                FROM adresses ad
+                WHERE ad.idu IS NOT NULL
+                ORDER BY ad.geom_2975 <-> ST_Transform(s.geom, 2975)
+                LIMIT 1
+            ) a
+            WHERE s.actif AND s.qualite_xy = ANY(:q) AND s.geom IS NOT NULL
+              AND a.d <= :r
+            ON CONFLICT (siret) DO NOTHING
+            """), {"q": list(QUALITE_ADRESSE), "r": rayon_m})
+
+    res = injection_sure.remplacer_servie(
+        session, table="etablissement_parcelle", preparer=preparer, charger_staging=charger,
+        a_geometrie=False, couverture_974_min=0, delta_max_pct=50.0, like_including="ALL",
+        alerter=injection_sure.alerte_injection("etablissement_parcelle", "SIRENE → parcelle (BAN)"))
+    rattaches = int(res["mesures"]["comptes_apres"])
     session.commit()
-    return {"n_etab_adresse": int(n_source), "rattaches": int(rattaches),
-            "non_rattaches": int(n_source) - int(rattaches)}
+    return {"n_etab_adresse": int(n_source), "rattaches": rattaches,
+            "non_rattaches": int(n_source) - rattaches}

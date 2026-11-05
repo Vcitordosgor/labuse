@@ -209,16 +209,27 @@ def resolve_prix_neuf_marche(session: Session, parcel_id: int,
 
 
 def build_prix_neuf(session: Session, *, commit: bool = True, log=lambda *_: None) -> dict:
-    """Construit/rafraîchit `dvf_prix_sortie_neuf` (rebuild complet idempotent). Renvoie {'secteurs','communes'}."""
-    # M-O P2-59 — TRUNCATE au lieu de DROP (build rapide ~0,05 s, schéma stable ; table lue en direct
-    # par resolve_prix_neuf_marche) : garde schéma/index/OID, verrou bien plus court.
-    session.execute(text(DDL))                           # CREATE … IF NOT EXISTS
-    # NU-E-032 — migration douce d'une table préexistante (prod) sans la colonne millésime.
-    session.execute(text("ALTER TABLE dvf_prix_sortie_neuf ADD COLUMN IF NOT EXISTS millesime_dvf date"))
-    session.execute(text("TRUNCATE dvf_prix_sortie_neuf"))
-    session.execute(text(_BUILD),
-                    {"nmin": N_MIN, "nfragile": N_FRAGILE, "seuil": SEUIL_BASCULE,
-                     "social": list(SOCIAL_SIREN)})
+    """Construit/rafraîchit `dvf_prix_sortie_neuf` (rebuild complet idempotent). Renvoie {'secteurs','communes'}.
+
+    INJECTION-SOLIDE-2 — passe par `remplacer_servie` : calcul dans une STAGING puis swap ATOMIQUE
+    (plus de `TRUNCATE dvf_prix_sortie_neuf` à vif). Table DÉRIVÉE qui peut être vide (aucun prix neuf
+    calculable) → `autoriser_vide=True`."""
+    from . import injection_sure
+
+    def preparer(conn):
+        conn.execute(text(DDL))                          # CREATE … IF NOT EXISTS
+        # NU-E-032 — migration douce d'une table préexistante (prod) sans la colonne millésime.
+        conn.execute(text("ALTER TABLE dvf_prix_sortie_neuf ADD COLUMN IF NOT EXISTS millesime_dvf date"))
+
+    def charger(conn, staging):
+        conn.execute(text(_BUILD.replace("INTO dvf_prix_sortie_neuf", f'INTO "{staging}"')),
+                     {"nmin": N_MIN, "nfragile": N_FRAGILE, "seuil": SEUIL_BASCULE,
+                      "social": list(SOCIAL_SIREN)})
+
+    injection_sure.remplacer_servie(
+        session, table="dvf_prix_sortie_neuf", preparer=preparer, charger_staging=charger,
+        a_geometrie=False, couverture_974_min=0, delta_max_pct=90.0, autoriser_vide=True,
+        alerter=injection_sure.alerte_injection("dvf_prix_sortie_neuf", "DVF — prix de sortie neuf"))
     if commit:
         session.commit()
     r = session.execute(text(

@@ -1420,7 +1420,9 @@ def injection_nuit(ctx: JobContext) -> None:
     # et remontaient à tort dans la carte « à valider » de Vic. Ce n'était ni un contrôle échoué, ni une
     # mauvaise classe, ni la fenêtre : le câblage source→commande n'avait simplement pas été écrit.
     from .api.dashboard import lancer_ingestion_source
+    from .ingestion import garde_injection
     injectees, en_echec, a_cabler, deja = [], [], [], []
+    injectees_sures, injectees_heritees = [], []
     for a in classe_a:
         nom = a["name"]
         if nom not in nouvelles:
@@ -1436,6 +1438,12 @@ def injection_nuit(ctx: JobContext) -> None:
             a_cabler.append(nom)      # classe A mais aucune commande connue → listée, jamais à l'aveugle
             continue
         injectees.append(nom)
+        # INJECTION-SOLIDE-2 — par source lancée, sur le CHEMIN SÛR (injection_sure : un échec garde la
+        # version servie + alerte immédiate) ou HÉRITÉE (chemin direct, à convertir — filet = cohérence
+        # du lendemain). On ne BLOQUE pas l'héritée (la couper d'un coup stopperait les sources pas
+        # encore converties) : on la REND VISIBLE pour que la dette se résorbe et ne grossisse plus.
+        (injectees_sures if garde_injection.source_sur_chemin_sur(nom)
+         else injectees_heritees).append(nom)
         # trace du lancement (idempotence : la sentinelle repassera « ok » après ingestion) — best-effort.
         try:
             db.execute(text(
@@ -1443,11 +1451,30 @@ def injection_nuit(ctx: JobContext) -> None:
                 "WHERE source_id = (SELECT id FROM data_sources WHERE name = :n)"), {"n": nom})
         except Exception as exc:  # noqa: BLE001
             log.warning("injection-nuit : trace injection_lancee_at %r impossible (%s)", nom, exc)
+    # INJECTION-SOLIDE-2 — si des sources héritées ont été injectées cette nuit, une alerte CLAIRE (non
+    # urgente, rappelée une fois/jour) les liste : elles passent encore par le chemin direct, à router
+    # vers injection_sure (SOLIDE-3). Les sources sûres, elles, se protègent seules (verdict + rollback
+    # + alerte immédiate au moindre échec de livraison).
+    if injectees_heritees:
+        try:
+            from . import ops_alertes
+            ops_alertes.signaler(
+                db, "injection-heritee",
+                f"{len(injectees_heritees)} source(s) injectée(s) par le chemin direct (à sécuriser)",
+                "Ces sources de classe A ont été injectées cette nuit SANS passer par l'injection sûre "
+                "(staging + contrôles + swap atomique) — leur filet reste la cohérence du lendemain :\n  · "
+                + "\n  · ".join(injectees_heritees)
+                + "\n\nÀ router vers injection_sure.remplacer_servie (INJECTION-SOLIDE-3).",
+                lien="/admin/sources")
+        except Exception as exc:  # noqa: BLE001 — la transparence ne doit pas casser l'injection
+            log.warning("injection-nuit : alerte « héritée » impossible (%s)", exc)
     ctx.compte(classe_a=len(classe_a), classe_b=len(classe_b), nouvelles_a=len(injectees) + len(en_echec)
-               + len(a_cabler), injectees=injectees, en_echec=en_echec, a_cabler=a_cabler,
+               + len(a_cabler), injectees=injectees, injectees_sures=injectees_sures,
+               injectees_heritees=injectees_heritees, en_echec=en_echec, a_cabler=a_cabler,
                attente_b=sorted(b["name"] for b in classe_b if b["name"] in nouvelles),
                note="classe A avancée : injectée seule (commande connue) ou listée « à câbler » (sans "
-                    "commande) ; classe B avancée : clic de Vic (carte « à valider »).")
+                    "commande) ; classe B avancée : clic de Vic (carte « à valider »). Injection sûre "
+                    "(injection_sure) vs héritée tracée par source.")
 
 
 def ingest_sirene(ctx: JobContext) -> None:

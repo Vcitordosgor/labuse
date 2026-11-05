@@ -209,25 +209,35 @@ def precalcul_parcelles(session, *, log_fn=print) -> dict:
           AND ST_Intersects(v.geom_2975, p.geom_2975)
         WHERE p.geom_2975 IS NOT NULL
         GROUP BY p.idu"""))
-    session.execute(text("TRUNCATE parcel_ocsge"))
-    session.execute(text("""
-        INSERT INTO parcel_ocsge (idu, part_artif_pct, cs_dominant, us_dominant, artif_m2,
-                                  evol_artif_m2, evol_renat_m2, millesime)
-        SELECT a.idu,
-               LEAST(100.0, GREATEST(0.0,
-                   100.0 * a.artif_m2 / NULLIF(ST_Area(p.geom_2975), 0)))::real,
-               a.cs_dominant, a.us_dominant, a.artif_m2::real,
-               COALESCE(e.artif_m2, 0)::real, COALESCE(e.renat_m2, 0)::real, :mil
-        FROM (SELECT idu,
-                     sum(aire) FILTER (WHERE artif) AS artif_m2,
-                     (array_agg(code_cs ORDER BY aire DESC))[1] AS cs_dominant,
-                     (array_agg(code_us ORDER BY aire DESC))[1] AS us_dominant
-              FROM tmp_ocsge_x GROUP BY idu) a
-        JOIN parcels p ON p.idu = a.idu
-        LEFT JOIN tmp_ocsge_evol e ON e.idu = a.idu"""), {"mil": mil})
-    session.execute(text("""
-        UPDATE parcel_ocsge SET artif_m2 = COALESCE(artif_m2, 0),
-                                part_artif_pct = COALESCE(part_artif_pct, 0)"""))
+    # INJECTION-SOLIDE-2 — swap ATOMIQUE via staging (plus de `TRUNCATE parcel_ocsge` à vif). Table
+    # DÉRIVÉE sans géométrie, peut être vide si OCS GE absente → `autoriser_vide=True`. Les tables
+    # temporaires (tmp_ocsge_x/_evol) sont dans la MÊME session → visibles du chargeur.
+    from . import injection_sure
+
+    def charger(conn, staging):
+        conn.execute(text(f"""
+            INSERT INTO "{staging}" (idu, part_artif_pct, cs_dominant, us_dominant, artif_m2,
+                                      evol_artif_m2, evol_renat_m2, millesime)
+            SELECT a.idu,
+                   LEAST(100.0, GREATEST(0.0,
+                       100.0 * a.artif_m2 / NULLIF(ST_Area(p.geom_2975), 0)))::real,
+                   a.cs_dominant, a.us_dominant, a.artif_m2::real,
+                   COALESCE(e.artif_m2, 0)::real, COALESCE(e.renat_m2, 0)::real, :mil
+            FROM (SELECT idu,
+                         sum(aire) FILTER (WHERE artif) AS artif_m2,
+                         (array_agg(code_cs ORDER BY aire DESC))[1] AS cs_dominant,
+                         (array_agg(code_us ORDER BY aire DESC))[1] AS us_dominant
+                  FROM tmp_ocsge_x GROUP BY idu) a
+            JOIN parcels p ON p.idu = a.idu
+            LEFT JOIN tmp_ocsge_evol e ON e.idu = a.idu"""), {"mil": mil})
+        conn.execute(text(f"""
+            UPDATE "{staging}" SET artif_m2 = COALESCE(artif_m2, 0),
+                                    part_artif_pct = COALESCE(part_artif_pct, 0)"""))
+
+    injection_sure.remplacer_servie(
+        session, table="parcel_ocsge", charger_staging=charger, a_geometrie=False,
+        couverture_974_min=0, delta_max_pct=90.0, autoriser_vide=True,
+        alerter=injection_sure.alerte_injection("parcel_ocsge", "OCS GE — part artificialisée/parcelle"))
     session.commit()
     n = session.execute(text("SELECT count(*) FROM parcel_ocsge")).scalar()
     n_art = session.execute(text(

@@ -49,31 +49,41 @@ def _int(v) -> int | None:
 
 
 def build_trafic_rn(session: Session, *, url: str = EXPORT_URL, log=lambda *_: None) -> dict:
-    """Télécharge l'export GeoJSON de la Région et ingère les tronçons de comptage RN."""
-    ensure_tables(session)
+    """Télécharge l'export GeoJSON de la Région et ingère les tronçons de comptage RN.
+
+    INJECTION-SOLIDE-2 — passe par `remplacer_servie` : le GeoJSON est chargé dans une STAGING,
+    contrôlé (non vide, géométries valides, dans La Réunion, écart sous seuil) puis échangé
+    ATOMIQUEMENT. Une livraison vide/à moitié/hors territoire est REFUSÉE et la version servie est
+    conservée (`InjectionRefusee`). Plus de `DELETE FROM trafic_rn` à vif."""
+    from . import injection_sure
     sid = session.execute(text("SELECT id FROM data_sources WHERE name = :n"), {"n": SOURCE_NAME}).scalar()
     with httpx.Client(timeout=120.0, headers={"User-Agent": "labuse/zone-donnees"}) as c:
         r = c.get(url)
         r.raise_for_status()
         fc = r.json()
     feats = fc.get("features", [])
-    session.execute(text("DELETE FROM trafic_rn"))
-    n = 0
     annees: set[int] = set()
-    for f in feats:
-        geom = f.get("geometry")
-        if not geom or geom.get("type") != "LineString":
-            continue
-        pr = f.get("properties", {})
-        annee = _int(pr.get("annee"))
-        if annee:
-            annees.add(annee)
-        session.execute(text(
-            "INSERT INTO trafic_rn (route, annee, tmja, nb_pl, geom, data_source_id) VALUES "
-            "(:rt, :an, :tm, :pl, ST_SetSRID(ST_GeomFromGeoJSON(:g),4326), :sid)"),
-            {"rt": (pr.get("route") or None), "an": annee, "tm": _int(pr.get("tmja")),
-             "pl": _int(pr.get("nb_pl")), "g": json.dumps(geom), "sid": sid})
-        n += 1
+
+    def charger(conn, staging):
+        for f in feats:
+            geom = f.get("geometry")
+            if not geom or geom.get("type") != "LineString":
+                continue
+            pr = f.get("properties", {})
+            annee = _int(pr.get("annee"))
+            if annee:
+                annees.add(annee)
+            conn.execute(text(
+                f'INSERT INTO "{staging}" (route, annee, tmja, nb_pl, geom, data_source_id) VALUES '
+                "(:rt, :an, :tm, :pl, ST_SetSRID(ST_GeomFromGeoJSON(:g),4326), :sid)"),
+                {"rt": (pr.get("route") or None), "an": annee, "tm": _int(pr.get("tmja")),
+                 "pl": _int(pr.get("nb_pl")), "g": json.dumps(geom), "sid": sid})
+
+    res = injection_sure.remplacer_servie(
+        session, table="trafic_rn", preparer=ensure_tables, charger_staging=charger,
+        a_geometrie=True, geom_col="geom", couverture_974_min=0, delta_max_pct=60.0,
+        alerter=injection_sure.alerte_injection("trafic_rn", SOURCE_NAME), log=log)
+    n = res["mesures"]["comptes_apres"]
     mill = f"comptages {min(annees)}–{max(annees)}" if annees else "millésime non renseigné"
     session.execute(text(
         "UPDATE data_sources SET last_sync_at = now(), source_millesime = :m WHERE name = :n"),

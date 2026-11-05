@@ -79,24 +79,38 @@ _SOURCES = {
 
 
 def build_events(session: Session, *, commit: bool = True, log=lambda *_: None) -> dict:
-    """(Re)construit `surface_d_events` depuis les signaux datés déjà en base. Rebuild complet idempotent."""
-    # M-O P2-59 — TRUNCATE au lieu de DROP (build rapide ~0,3 s, schéma stable) : garde schéma, index
-    # et OID (pas d'invalidation des plans lecteurs), verrou bien plus court que DROP+CREATE.
-    for stmt in DDL.strip().split(";\n"):
-        if stmt.strip():
-            session.execute(text(stmt))                  # CREATE … IF NOT EXISTS (table + index)
-    session.execute(text("TRUNCATE surface_d_events"))
+    """(Re)construit `surface_d_events` depuis les signaux datés déjà en base. Rebuild complet idempotent.
+
+    INJECTION-SOLIDE-2 — passe par `remplacer_servie` : les événements sont reconstruits dans une
+    STAGING puis échangés ATOMIQUEMENT (plus de `TRUNCATE surface_d_events` à vif). Table DÉRIVÉE qui
+    peut légitimement être vide (aucun signal datable) → `autoriser_vide=True` (on exige seulement un
+    compte lisible, pas strictement positif). Unicité (idu, type, date_evenement)."""
+    from . import injection_sure
+
+    def preparer(conn):
+        for stmt in DDL.strip().split(";\n"):
+            if stmt.strip():
+                conn.execute(text(stmt))                 # CREATE … IF NOT EXISTS (table + index)
+
     counts: dict[str, int] = {}
-    for typ, (table, sql) in _SOURCES.items():
-        if session.execute(text("SELECT to_regclass(:t)"), {"t": table}).scalar() is None:
-            counts[typ] = 0
-            log(f"surface_d {typ} : source {table} absente — 0")
-            continue
-        session.execute(text(sql))
-        counts[typ] = session.execute(text(
-            "SELECT count(*) FROM surface_d_events WHERE type = :t"), {"t": typ}).scalar()
-        log(f"surface_d {typ} : {counts[typ]}")
-    total = session.execute(text("SELECT count(*) FROM surface_d_events")).scalar()
+
+    def charger(conn, staging):
+        for typ, (table, sql) in _SOURCES.items():
+            if conn.execute(text("SELECT to_regclass(:t)"), {"t": table}).scalar() is None:
+                counts[typ] = 0
+                log(f"surface_d {typ} : source {table} absente — 0")
+                continue
+            conn.execute(text(sql.replace("INTO surface_d_events", f'INTO "{staging}"')))
+            counts[typ] = conn.execute(text(
+                f'SELECT count(*) FROM "{staging}" WHERE type = :t'), {"t": typ}).scalar()
+            log(f"surface_d {typ} : {counts[typ]}")
+
+    res = injection_sure.remplacer_servie(
+        session, table="surface_d_events", preparer=preparer, charger_staging=charger,
+        a_geometrie=False, couverture_974_min=0, delta_max_pct=90.0, like_including="ALL",
+        autoriser_vide=True, alerter=injection_sure.alerte_injection(
+            "surface_d_events", "Surface D (signaux datés)"))
+    total = int(res["mesures"]["comptes_apres"])
     if commit:
         session.commit()
     log(f"surface_d_events : {total} événements datés")

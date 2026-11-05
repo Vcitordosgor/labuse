@@ -68,12 +68,10 @@ def _int(v) -> int | None:
         return None
 
 
-def ingest_rnic(session: Session, csv_path: str, log=print) -> dict:
-    """Filtre le CSV national sur le 974 et charge rnic_coproprietes (rebuild idempotent)."""
-    for stmt in DDL.text.split(";"):
-        if stmt.strip():
-            session.execute(text(stmt))
-    session.execute(text("TRUNCATE rnic_coproprietes"))
+def _charger_csv_974(session, staging, csv_path: str) -> int:
+    """Remplit la STAGING `rnic_coproprietes` depuis le CSV national filtré sur le 974 (RGPD inclus).
+    Retourne le nombre de lignes 974 lues. `staging` a la clé primaire (LIKE … INCLUDING ALL) → le
+    `ON CONFLICT` dédoublonne par immatriculation comme sur la table servie (keep-first)."""
     n = 0
     with open(csv_path, newline="", encoding="utf-8") as f:
         for row in csv.DictReader(f):
@@ -84,8 +82,8 @@ def ingest_rnic(session: Session, csv_path: str, log=print) -> dict:
             lon, lat = row.get("long"), row.get("lat")
             styp = (row.get("type_de_syndic_benevole_professionnel_non_connu") or "")[:16] or None
             pro = (styp or "").lower() == "professionnel"   # RGPD : nom/SIRET seulement si pro
-            session.execute(text("""
-                INSERT INTO rnic_coproprietes
+            session.execute(text(f"""
+                INSERT INTO "{staging}"
                   (numero_immatriculation, insee, commune, nom_usage, adresse, nb_lots_total,
                    nb_lots_habitation, periode_construction, syndic_type, syndic_nom,
                    syndic_siret, mandat_en_cours, idu_codes, geom, raw)
@@ -114,6 +112,35 @@ def ingest_rnic(session: Session, csv_path: str, log=print) -> dict:
                                    if v and (pro or k not in _CLES_REPRESENTANT)},
                                   ensure_ascii=False)})
             n += 1
+    return n
+
+
+def ingest_rnic(session: Session, csv_path: str, log=print) -> dict:
+    """Filtre le CSV national sur le 974 et charge rnic_coproprietes (rebuild idempotent).
+
+    INJECTION-SOLIDE-2 — passe par `remplacer_servie` : le CSV est chargé dans une STAGING, contrôlé
+    (non vide, points dans La Réunion, écart sous seuil) puis échangé ATOMIQUEMENT. Un CSV vide / à
+    moitié téléchargé / d'un autre territoire est REFUSÉ → la version servie est conservée et une
+    alerte part. Plus de `TRUNCATE rnic_coproprietes` à vif. Le rattachement parcelle suit, idempotent,
+    sur la table servie (dans la même transaction)."""
+    from . import injection_sure
+
+    def preparer(conn):
+        for stmt in DDL.text.split(";"):
+            if stmt.strip():
+                conn.execute(text(stmt))
+
+    lus = {"n": 0}
+
+    def charger(conn, staging):
+        lus["n"] = _charger_csv_974(conn, staging, csv_path)
+
+    res = injection_sure.remplacer_servie(
+        session, table="rnic_coproprietes", preparer=preparer, charger_staging=charger,
+        a_geometrie=True, geom_col="geom", couverture_974_min=0, delta_max_pct=35.0,
+        like_including="ALL", alerter=injection_sure.alerte_injection(SOURCE_NAME))
+    n = lus["n"]
+    log(f"RNIC : {res['mesures']['comptes_apres']} copros 974 en base")
     # Rattachement parcelle : réf cadastrale directe, sinon point dans la parcelle.
     session.execute(text("""
         UPDATE rnic_coproprietes r SET parcelle_idu = sub.idu, rattachement = 'cadastre'

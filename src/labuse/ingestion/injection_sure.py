@@ -38,6 +38,19 @@ from .. import autonomie
 REUNION_BBOX_4326 = (55.15, -21.45, 55.95, -20.80)  # (min_lon, min_lat, max_lon, max_lat)
 
 
+class InjectionRefusee(Exception):
+    """INJECTION-SOLIDE-2 — levée par `remplacer_servie` quand une livraison est REFUSÉE (contrôle en
+    échec) ou INTERROMPUE (exception pendant le chargement). Portée : faire ROULER EN ARRIÈRE la
+    transaction de l'appelant (via `session_scope`), donc laisser la table servie RIGOUREUSEMENT
+    INTACTE, et porter le `verdict` pour l'alerte/mail. Le verdict a déjà été passé à `alerter` (si
+    fourni) AVANT la levée (sur une connexion indépendante, pour qu'il survive au rollback)."""
+
+    def __init__(self, verdict: "autonomie.Verdict", table: str):
+        self.verdict = verdict
+        self.table = table
+        super().__init__(f"injection « {table} » refusée — {verdict.resume()}")
+
+
 def _staging_nom(table: str) -> str:
     return f"{table}__inj_staging"
 
@@ -96,10 +109,12 @@ def mesurer_staging(conn, table: str, staging: str, *, a_geometrie: bool,
     return m
 
 
-def controler(mesures: dict, *, delta_max_pct: float, couverture_974_min: int) -> autonomie.Verdict:
+def controler(mesures: dict, *, delta_max_pct: float, couverture_974_min: int,
+              autoriser_vide: bool = False) -> autonomie.Verdict:
     """`autonomie.controler_injection` + les deux contrôles du mandat (hors Réunion, doublons)."""
     v = autonomie.controler_injection(mesures, delta_max_pct=delta_max_pct,
-                                      couverture_974_min=couverture_974_min)
+                                      couverture_974_min=couverture_974_min,
+                                      autoriser_vide=autoriser_vide)
     hr = mesures.get("hors_reunion") or 0
     if hr:
         v.ok = False
@@ -118,7 +133,8 @@ def controler(mesures: dict, *, delta_max_pct: float, couverture_974_min: int) -
 def injecter_table_sure(engine, *, table: str, charger_staging,
                         a_geometrie: bool = True, geom_col: str = "geom_2975",
                         couverture_974_min: int = 0, delta_max_pct: float = 35.0,
-                        dedup_cols: list[str] | None = None,
+                        dedup_cols: list[str] | None = None, preparer=None,
+                        like_including: str = "DEFAULTS", autoriser_vide: bool = False,
                         alerter=None, log=lambda *_: None) -> dict:
     """Injecte `table` de façon SÛRE (voir le module). `charger_staging(conn, staging)` DOIT remplir la
     table de travail `staging` (déjà créée `LIKE table INCLUDING DEFAULTS`) — il ne touche JAMAIS la
@@ -144,16 +160,21 @@ def injecter_table_sure(engine, *, table: str, charger_staging,
                 alerter(v)
             return out
 
-        # (2) staging neuve, remplie par l'appelant (jamais la table servie).
+        # (2) DDL idempotente de l'appelant (CREATE TABLE IF NOT EXISTS…) DANS la transaction, avant la
+        #     staging : la servie doit exister pour un `LIKE`, y compris à la toute première injection.
+        if preparer is not None:
+            preparer(conn)
+        # staging neuve, remplie par l'appelant (jamais la table servie).
         conn.execute(text(f'DROP TABLE IF EXISTS "{staging}"'))
-        conn.execute(text(f'CREATE TABLE "{staging}" (LIKE "{table}" INCLUDING DEFAULTS)'))
+        conn.execute(text(f'CREATE TABLE "{staging}" (LIKE "{table}" INCLUDING {like_including})'))
         charger_staging(conn, staging)
 
         # (3) contrôles sur la staging.
         mesures = mesurer_staging(conn, table, staging, a_geometrie=a_geometrie,
                                   geom_col=geom_col, dedup_cols=dedup_cols)
         out["mesures"] = mesures
-        v = controler(mesures, delta_max_pct=delta_max_pct, couverture_974_min=couverture_974_min)
+        v = controler(mesures, delta_max_pct=delta_max_pct, couverture_974_min=couverture_974_min,
+                      autoriser_vide=autoriser_vide)
         out["verdict"] = v
         out["resume"] = v.resume()
 
@@ -192,3 +213,93 @@ def injecter_table_sure(engine, *, table: str, charger_staging,
         return out
     finally:
         conn.close()
+
+
+def remplacer_servie(session, *, table: str, charger_staging, preparer=None,
+                     a_geometrie: bool = True, geom_col: str = "geom_2975",
+                     couverture_974_min: int = 0, delta_max_pct: float = 35.0,
+                     dedup_cols: list[str] | None = None, like_including: str = "DEFAULTS",
+                     autoriser_vide: bool = False, alerter=None, log=lambda *_: None) -> dict:
+    """INJECTION-SOLIDE-2 — variante de `injecter_table_sure` qui travaille DANS la transaction de
+    l'appelant (une `Session` ouverte par `session_scope`), au lieu d'ouvrir sa propre connexion.
+
+    C'est le point d'ADOPTION pour les ingestions existantes : elles remplaçaient leur table servie
+    par `TRUNCATE … ; INSERT …` ; elles appellent désormais ceci avec un `charger_staging(conn, staging)`
+    qui remplit la table de travail (jamais la servie). Mêmes garanties que la primitive :
+
+      1. verrou consultatif par table (2ᵉ injection concurrente → REFUSÉE) ;
+      2. `preparer(conn)` (DDL idempotente), puis STAGING `LIKE table` remplie par l'appelant ;
+      3. CONTRÔLES sur la staging (comptes, géométries, couverture 974, écart, hors Réunion, doublons) ;
+      4. si tout passe → SWAP ATOMIQUE `DELETE servie ; INSERT servie SELECT staging` dans LA MÊME
+         transaction (ROW EXCLUSIVE, jamais de table à moitié remplie, lecteurs non bloqués) ;
+      5. sinon → `alerter(verdict)` (connexion indépendante) puis **lève `InjectionRefusee`** : la
+         transaction de l'appelant ROULE EN ARRIÈRE (`session_scope`) → table servie INTACTE.
+
+    Rend `{injecte: True, verdict, mesures, resume}` en cas de succès. Ne commit PAS : c'est l'appelant
+    (`session_scope`) qui valide la transaction, avec tout post-traitement idempotent qui suit."""
+    staging = _staging_nom(table)
+
+    def _refuser(v: "autonomie.Verdict"):
+        if alerter:
+            try:
+                alerter(v)          # connexion indépendante → survit au rollback de l'appelant
+            except Exception as exc:  # noqa: BLE001 — une alerte qui rate ne doit pas masquer le refus
+                log(f"(alerte injection {table} impossible : {type(exc).__name__}: {exc})")
+        raise InjectionRefusee(v, table)
+
+    # (1) verrou consultatif lié à la transaction de l'appelant — libéré au commit/rollback.
+    pris = session.execute(text("SELECT pg_try_advisory_xact_lock(:k)"),
+                           {"k": _cle_verrou(table)}).scalar()
+    if not pris:
+        _refuser(autonomie.Verdict(
+            ok=False, echecs=[f"une autre injection de « {table} » est déjà en cours"]))
+
+    # (2) DDL idempotente puis staging neuve, remplie par l'appelant (jamais la servie).
+    if preparer is not None:
+        preparer(session)
+    session.execute(text(f'DROP TABLE IF EXISTS "{staging}"'))
+    session.execute(text(f'CREATE TABLE "{staging}" (LIKE "{table}" INCLUDING {like_including})'))
+    try:
+        charger_staging(session, staging)
+    except InjectionRefusee:
+        raise
+    except Exception as exc:  # noqa: BLE001 — coupure réseau / disque plein / colonne absente → refus
+        _refuser(autonomie.Verdict(ok=False, echecs=[f"{type(exc).__name__}: {exc}"]))
+
+    # (3) contrôles sur la staging.
+    mesures = mesurer_staging(session, table, staging, a_geometrie=a_geometrie,
+                              geom_col=geom_col, dedup_cols=dedup_cols)
+    v = controler(mesures, delta_max_pct=delta_max_pct, couverture_974_min=couverture_974_min,
+                  autoriser_vide=autoriser_vide)
+    if not v.ok:
+        log(f"✗ injection {table} REFUSÉE — {v.resume()}")
+        _refuser(v)
+
+    # (4) SWAP ATOMIQUE dans la transaction de l'appelant (voir `injecter_table_sure`).
+    session.execute(text(f'DELETE FROM "{table}"'))
+    session.execute(text(f'INSERT INTO "{table}" SELECT * FROM "{staging}"'))
+    session.execute(text(f'DROP TABLE IF EXISTS "{staging}"'))
+    log(f"✓ injection {table} servie — {mesures['comptes_avant']} → {mesures['comptes_apres']} lignes")
+    return {"injecte": True, "verdict": v, "mesures": mesures, "resume": v.resume()}
+
+
+def alerte_injection(table: str, source: str = "", *, engine_factory=None):
+    """Fabrique un `alerter(verdict)` qui OUVRE un incident ops (`ops_alertes.signaler`) sur une
+    connexion INDÉPENDANTE — il doit survivre au rollback de l'injection refusée. Clé stable par table
+    (`injection-refusee:<table>`) : une alerte claire, rappelée au plus une fois par jour, qui pointe le
+    Tableau de bord. La version servie reste celle d'avant (le refus n'écrit rien)."""
+    def _alerter(verdict):
+        from .. import ops_alertes
+        from ..db import engine as _engine
+        eng = (engine_factory or _engine)()
+        quoi = source or table
+        with eng.begin() as c:
+            ops_alertes.signaler(
+                c, f"injection-refusee:{table}",
+                f"Injection refusée : {quoi} — version servie conservée",
+                f"La livraison de « {quoi} » (table {table}) a été REFUSÉE par le contrôle d'injection "
+                f"sûre ; la version servie précédente est CONSERVÉE (rien n'a été remplacé).\n\n"
+                f"Motif : {verdict.resume()}\n\n"
+                "Ouvre le Tableau de bord → Sources pour voir l'état, puis relance quand la livraison "
+                "amont est correcte.", lien="/admin/sources")
+    return _alerter
