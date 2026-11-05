@@ -33,6 +33,7 @@ const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/filtre
   '/proprietaires',
   '/moteurs',   // M-U : outil Marché (+ baromètre/simulplu/zan) — JSON proxifié en dev
   '/moi', '/events',   // compte (menu VL) + cloche de notifs — MANQUAIENT → 404 rouges en `npm run dev`
+  '/compte',   // NU5-FIX-1 (C-F5/F6) — export + suppression libre-service du compte
                        // (les seules erreurs console rouges ; sans effet sur la carte, régression NI de M-W
                        //  ni de la carte — présentes aussi en vite 5, comblées ici pour un dev honnête)
   '/adresses',  // M55-B point 1 : autocomplétion de l'omnibox (/adresses/autocomplete) — MANQUAIT

@@ -2211,11 +2211,18 @@ def ingest_georisques_cmd(
                         tot[k] += v
                     typer.echo(f"  ✓ {nom} API : {counts}")
                 if alea:
+                    # NU5-FIX-1 (E-2) — la complétion DEAL était sautée dès qu'une commune portait UN
+                    # aléa : Saint-Denis avait l'inondation/submersion (PPR) → le WFS DEAL, qui porte
+                    # AUSSI le mouvement de terrain, n'a jamais été appelé pour elle → trou de couche
+                    # « mouvement de terrain » (0,04 % de la commune vs ~100 % chez les voisines). On ne
+                    # considère la commune « faite » que si elle porte DÉJÀ du mouvement de terrain
+                    # (toujours présent en 974, relief volcanique) : sinon on (re)complète, sans --force.
                     has_alea = s.execute(text(
-                        "SELECT count(*) FROM spatial_layers WHERE commune=:c AND kind='georisque_alea'"),
+                        "SELECT count(*) FROM spatial_layers WHERE commune=:c AND kind='georisque_alea' "
+                        "AND lower(coalesce(attrs->>'type', subtype)) LIKE '%mouvement%'"),
                         {"c": nom}).scalar()
                     if has_alea and not force:
-                        typer.echo(f"     aléas déjà là ({has_alea}), sauté.")
+                        typer.echo(f"     aléas (mvt terrain) déjà là ({has_alea}), sauté.")
                     else:
                         bbox = _commune_bbox(s, nom)
                         if bbox is None:

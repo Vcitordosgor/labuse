@@ -2925,6 +2925,9 @@ def _compute_commune_contexte(db: Session, commune: str) -> dict:
             "ort": blocs["ort"],                        # SOURCES-1 lot 5 — ACV/PVD/ORT (Denormandie)
             "zfang_frr": blocs["zfang_frr"],            # COUCHES-2 point 4 — ZFANG/FRR (source unique territoire_fiscal)
             "outils": blocs["outils"],                  # C6 — compteurs des passerelles
+            "scot": blocs.get("scot"),                  # NU5-FIX-1 (E-1) — SCOT calculé par build() mais
+            #   JAMAIS remis au payload → la ligne SCOT ne s'affichait sur aucune fiche. Servi avec son
+            #   vrai statut (données SCOT corrigées : geste prod docs/.../gestes-prod/scot.sql).
             "classement": classement,
             "qualite": _qualite_commune(_cd.get("insee") if _cd else None),   # M52 L4 — encart qualité commune DITE
             "sru": sru, "anru": anru, "qpv": qpv, "plh": plh, "marche": insee_log,
@@ -3532,12 +3535,24 @@ def taxe_amenagement_prefill(idu: str, db: Session = Depends(get_db)) -> dict:
 
 @app.get("/outils/taxe-amenagement")
 def taxe_amenagement(
-    surface_taxable_m2: float = 0.0, residence_principale: bool = False, logement_aide: bool = False,
-    nb_logements: int | None = None,
-    surface_exoneree_m2: float = 0.0, motif_exoneration: str | None = None,
-    piscine_m2: float = 0.0, pv_sol_m2: float = 0.0, stationnement_ext_places: int = 0,
-    eoliennes_mats: int = 0, taux_communal_pct: float | None = None,
-    taux_departemental_pct: float | None = None, insee: str | None = None,
+    # NU5-FIX-1 (A-O4) — SAISIES BORNÉES, comme la Calculette foncière (strictement bornée, 422).
+    # Le calcul DIRECT acceptait toute valeur (statut 200) : surface 1e9 → 66,9 Md€, taux −5 % →
+    # taxe NÉGATIVE, taux 9999 → 8,9 M€. On borne à la SOURCE (FastAPI rend 422 hors bornes) :
+    # surfaces ≥ 0 et plafonnées (1 000 000 m² = 100 ha de plancher, déjà absurde) ; taux communal
+    # 0–20 % (plafond légal du secteur majoré, CGI art. 1635 quater F) ; part départementale 0–2,5 %
+    # (plafond légal). Une surface négative n'est plus « ramenée à 0 » en silence : elle est refusée.
+    surface_taxable_m2: float = Query(0.0, ge=0, le=1_000_000),
+    residence_principale: bool = False, logement_aide: bool = False,
+    nb_logements: int | None = Query(None, ge=1, le=100_000),
+    surface_exoneree_m2: float = Query(0.0, ge=0, le=1_000_000),
+    motif_exoneration: str | None = None,
+    piscine_m2: float = Query(0.0, ge=0, le=100_000),
+    pv_sol_m2: float = Query(0.0, ge=0, le=1_000_000),
+    stationnement_ext_places: int = Query(0, ge=0, le=100_000),
+    eoliennes_mats: int = Query(0, ge=0, le=10_000),
+    taux_communal_pct: float | None = Query(None, ge=0, le=20),
+    taux_departemental_pct: float | None = Query(None, ge=0, le=2.5),
+    insee: str | None = None,
     idu: str | None = None,
     db: Session = Depends(get_db)) -> dict:
     """Estimation INDICATIVE, détaillée ligne par ligne. CIRCUIT-3 lot 6.2 : si un taux communal
@@ -3546,7 +3561,7 @@ def taxe_amenagement(
     TAXE-FIX-1 point 1 — `surface_exoneree_m2` + `motif_exoneration` portent une exonération de
     plein droit (CGI 1635 quater D) : cette surface ne produit aucune part. TAXE-FIX-1 point 3 —
     `idu` fourni → le taux résolu PAR PARCELLE (secteur à taux majoré prioritaire) ; sinon `insee`
-    → taux communal général."""
+    → taux communal général. NU5-FIX-1 (A-O4) : saisies bornées (422 hors bornes, comme la Calculette)."""
     from ..taxe_amenagement import calculer, taux_communal_public, taux_parcelle
     pub = taux_parcelle(db, idu) if idu else (taux_communal_public(db, insee) if insee else None)
     return calculer(
@@ -7685,6 +7700,13 @@ def _calcul_etude_zone(db: Session, inp: EtudeZoneIn) -> dict:
     adresse = inp.titre    # LOT D — libellé d'entrée (adresse) pour l'en-tête qui ne ment pas
     if inp.idu:
         idu = _check_idu(inp.idu)
+        # NU5-FIX-1 (B-F1) — Étude de zone (outil) centrée sur une parcelle : REFUS si elle est
+        # disparue du cadastre (même garde que le document et les autres outils).
+        from .. import cadastre_disparue as _cd
+        _disp = _cd.info_disparue(db, idu)
+        if _disp:
+            raise HTTPException(status_code=422, detail={
+                "erreur": "parcelle_disparue", "message": _cd.phrase_disparue(_disp)})
         pt = db.execute(text(
             "SELECT ST_X(ST_Centroid(centroid)) AS lon, ST_Y(ST_Centroid(centroid)) AS lat "
             "FROM parcels WHERE idu = :idu"), {"idu": idu}).mappings().first()
@@ -7708,7 +7730,17 @@ def _calcul_etude_zone(db: Session, inp: EtudeZoneIn) -> dict:
     # mètres via geography) autour du point et on le passe comme zone (court-circuite l'isochrone, comme
     # un polygone dessiné) → même moteur, aucun cercle « approximatif » masqué. Sans rayon → isochrone.
     from .moteurs import rayons_etude_zone as _rayons_ez  # FIX-1 E-77 : source unique config
-    rayon_km = inp.rayon_km if inp.rayon_km in set(_rayons_ez()) else None
+    _rayons_ok = set(_rayons_ez())
+    # NU5-FIX-1 (A-O6) — un rayon INVALIDE (−1, 0, 999…) est REFUSÉ, pas remplacé en silence par
+    # l'isochrone. On ne refuse que lorsqu'un rayon est réellement demandé (pas de polygone dessiné,
+    # où le rayon est sans objet) : `rayon_km = None` (défaut) reste l'isochrone, légitime.
+    if inp.rayon_km is not None and geom is None and inp.rayon_km not in _rayons_ok:
+        raise HTTPException(422, detail={
+            "erreur": "rayon_invalide",
+            "message": (f"Rayon {inp.rayon_km:g} km invalide — valeurs acceptées : "
+                        + ", ".join(f"{r:g}" for r in sorted(_rayons_ok))
+                        + " km (ou aucun rayon pour une isochrone de temps de trajet).")})
+    rayon_km = inp.rayon_km if inp.rayon_km in _rayons_ok else None
     is_rayon = rayon_km is not None and geom is None
     if is_rayon:
         gj = db.execute(text(
@@ -9364,8 +9396,22 @@ def financier_questionnaire_valider(idu: str, body: QuestionnaireFinancierIn, re
 def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des virgules"),
             db: Session = Depends(get_db)) -> dict:
     """Comparateur de parcelles (Lot D2) : 2-3 parcelles côte à côte (verdict, capacité,
-    résiduel, bilan, contraintes). Ignore silencieusement un IDU introuvable."""
-    ids = [x.strip() for x in idus.split(",") if x.strip()][:3]
+    résiduel, bilan, contraintes). NU5-FIX-1 (A-O5) : les IDU ignorés (introuvables), en trop
+    (au-delà de 3) et les doublons sont RENVOYÉS explicitement (`ignores`/`tronques`/`doublons`)
+    pour que l'écran dise pourquoi la table est plus courte, au lieu de les perdre en silence."""
+    # NU5-FIX-1 (A-O5) — on garde la trace de la demande brute pour la restituer : doublons retirés,
+    # surnuméraires au-delà de 3, puis introuvables (après résolution PK ci-dessous).
+    _bruts = [x.strip() for x in idus.split(",") if x.strip()]
+    _vus: set[str] = set()
+    _dedup: list[str] = []
+    _doublons: list[str] = []
+    for _i in _bruts:
+        if _i in _vus:
+            _doublons.append(_i)
+        else:
+            _vus.add(_i); _dedup.append(_i)
+    tronques = _dedup[3:]          # au-delà de la limite de 3 colonnes (annoncés, pas perdus)
+    ids = _dedup[:3]
     from ..faisabilite.db import fiche_payload
     from ..faisabilite.marche_commune import build_marche_commune
     from ..faisabilite.zonage import resolve_zone
@@ -9465,7 +9511,14 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
                 row["bande"] = ("NC" if sl["non_calculable"] else sl["bande"])
                 row["signal_niveau"] = sl["signal_niveau"]
         out.append(row)
-    return {"count": len(out), "parcels": out}
+    # NU5-FIX-1 (A-O5) — IDU demandés mais non rendus : introuvables (ignores), surnuméraires
+    # (tronques, au-delà de 3), doublons retirés. L'écran les affiche (« X non trouvée(s), Y au-delà
+    # de la limite de 3 ») au lieu d'une table silencieusement plus courte.
+    _rendus = {r.get("idu") for r in out}
+    ignores = [i for i in ids if i not in _rendus and pid_of.get(i) is None]
+    return {"count": len(out), "parcels": out, "demandes": _bruts,
+            "ignores": ignores, "tronques": tronques, "doublons": _doublons,
+            "limite": 3}
 
 
 @app.post("/parcels/{idu}/evaluate")
@@ -10123,6 +10176,8 @@ app.include_router(_dossier_router)
 app.include_router(_pre_dossier_router)
 app.include_router(_documents_router)   # EXPORTS-2 lot 8 — Financier/Apporteur/Résumé + redirections
 app.include_router(_documents_biblio_router)   # DOCS-1 Lot B — bibliothèque « Mes documents »
+from .compte_rgpd import router as _compte_rgpd_router   # NU5-FIX-1 (C-F5/F6) — export + suppression libre-service
+app.include_router(_compte_rgpd_router)
 app.include_router(_bilan_router)   # BILAN-1 — bilan promoteur (ratios · calcul · sorties)
 app.include_router(_scoreur_router)
 app.include_router(_anti_fiche_router)

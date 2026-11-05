@@ -409,6 +409,23 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 }
 :focus:not(:focus-visible) { outline: none; }
 
+/* NU5-FIX-1 (F6) — le composeur du Copilote avait une bordure menthe PERMANENTE (état de repos) et
+   rien ne changeait au focus clavier (anneau global retiré). On pose un anneau de focus net sur la
+   zone de saisie (spécificité supérieure à la règle `textarea:focus-visible` ci-dessus → l'emporte). */
+textarea[data-copilote-saisie]:focus-visible,
+input[data-copilote-saisie]:focus-visible {
+  outline: 2px solid var(--mint); outline-offset: 2px; border-color: var(--mint);
+}
+
+/* NU5-FIX-1 (F5) — lien d'évitement : hors écran jusqu'au focus clavier, puis visible en haut à gauche. */
+.skip-link {
+  position: fixed; left: 8px; top: -48px; z-index: 2000;
+  background: var(--mint); color: #0A0C0B;
+  padding: 8px 14px; border-radius: 6px; font-size: 13px; font-weight: 600;
+  text-decoration: none; transition: top .15s ease;
+}
+.skip-link:focus { top: 8px; outline: 2px solid var(--mint); outline-offset: 2px; }
+
 /* UX V1 — page « Sources & fraîcheur » IMPRIMABLE. */
 @media print {
   body * { visibility: hidden; }

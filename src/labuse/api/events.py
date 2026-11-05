@@ -1404,6 +1404,9 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str | None = None,
         "FROM comptes c LEFT JOIN utilisateurs u ON u.compte_id = c.id "
         "LEFT JOIN notif_prefs np ON np.compte_id = c.id "
         "WHERE c.statut = 'actif' AND (c.essai_expire_at IS NULL OR c.essai_expire_at > now()) "
+        # NU5-FIX-1 (C-F2) — même borne que l'essai pour la fin d'accès programmée (résilié non
+        # reconnecté) : plus de digest quotidien à un compte dont la période payée est écoulée.
+        "AND (c.acces_fin_at IS NULL OR c.acces_fin_at > now()) "
         "GROUP BY c.id ORDER BY c.id")).mappings().all()
     envoyes = ignores = echecs = simules = 0
     details: list[dict] = []

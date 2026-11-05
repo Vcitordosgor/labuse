@@ -227,6 +227,7 @@ export function Omnibox() {
           if ((it.type === 'siren' || it.type === 'proprietaire') && it.siren) ouvrirScan(it.siren)
         }}
         placeholder="Rechercher : IDU, SIREN, propriétaire, adresse…"
+        aria-label="Rechercher une parcelle, une adresse, un propriétaire ou un SIREN"
         className="w-full min-w-0 bg-transparent text-xs text-txt placeholder:text-txt-mut focus:outline-none"
       />
     </div>
@@ -392,7 +393,11 @@ function NotifBell() {
   return (
     <div className="relative">
       {/* RETOURS-9 (Q9) — la cloche OUVERTE devient pleine de sa couleur (vert, encre sombre), pas un liseré. */}
-      <button onClick={() => setOpen((o) => !o)} aria-label="Notifications" aria-pressed={open}
+      {/* NU5-FIX-1 (F4) — label-in-name : le nom accessible CONTIENT le texte visible (« 99+ ») pour que
+          la commande vocale (« clique 99+ ») marche et que le lecteur d'écran annonce le compte. */}
+      <button onClick={() => setOpen((o) => !o)}
+        aria-label={unread ? `Notifications (${unread > 99 ? '99+' : unread} non lues)` : 'Notifications'}
+        aria-pressed={open}
         className={`relative flex h-9 w-9 items-center justify-center rounded-full border transition-colors duration-quick ${
           open ? 'border-mint bg-mint text-mint-ink' : 'border-line-2 bg-surface-3 text-txt-mut hover:text-txt'}`}>
         <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]">

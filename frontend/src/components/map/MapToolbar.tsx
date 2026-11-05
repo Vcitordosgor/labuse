@@ -77,7 +77,7 @@ export function MapToolbar() {
              opaque, contenu inversé sombre) au lieu du simple éclaircissement du texte. */
           className={`flex h-9 items-center gap-2 rounded-lg border px-3 text-xs shadow-elev-1 transition-colors duration-quick ${
             bmOpen ? 'border-mint bg-mint text-mint-ink' : 'border-line-2 bg-surface-2 text-txt hover-fill'}`}
-          aria-label="Fond de plan"
+          aria-label={`Fond de plan : ${BASEMAPS.find((b) => b.key === basemap)?.label ?? ''}`}
         >
           <svg viewBox="0 0 20 20" className="h-4 w-4">
             <polygon points="10,3 17,7 10,11 3,7" fill="none" stroke="currentColor" strokeWidth="1.4" />

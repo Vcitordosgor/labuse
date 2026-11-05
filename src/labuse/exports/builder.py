@@ -86,27 +86,33 @@ def titre_document(document: str) -> str:
     pour le nom de fichier téléchargé (« Bilan — FI-….pdf »)."""
     return _LABEL.get(document, (document, ""))[0]
 
-_FOOT_DOSSIER = ("Document d'information établi à partir de données publiques. Ne remplace ni un "
-                 "certificat d'urbanisme, ni une étude de faisabilité réglementaire, ni un conseil "
-                 "juridique. Données LABUSE au {au}.")
+# NU5-FIX-1 (B-F2 / B-F4) — AVERTISSEMENT JURIDIQUE UNIQUE, servi en pied de CHAQUE document (il
+# manquait sur l'Étude de zone et le Comparatif ; la formule « ni garantie de constructibilité »
+# n'était écrite nulle part). Point de vérité unique concaténé à chaque pied spécifique.
+_CLAUSE_JURIDIQUE = ("Ne remplace ni un certificat d'urbanisme, ni une étude de faisabilité "
+                     "réglementaire, ni un conseil juridique, et ne garantit pas la constructibilité.")
+_FOOT_DOSSIER = ("Document d'information établi à partir de données publiques. " + _CLAUSE_JURIDIQUE
+                 + " Données LABUSE au {au}.")
 _FOOT = {
     "dossier": _FOOT_DOSSIER, "flash": _FOOT_DOSSIER,
     "financier": ("Bilan indicatif établi sur des données publiques et sur les hypothèses saisies "
-                  "par le porteur (en ambre). Ni un prix, ni une promesse, ni un conseil. Il ne "
-                  "remplace pas un bilan promoteur professionnel. Données LABUSE au {au}."),
+                  "par le porteur (en ambre). Ni un prix, ni une promesse. Il ne remplace pas un "
+                  "bilan promoteur professionnel. " + _CLAUSE_JURIDIQUE + " Données LABUSE au {au}."),
     "apporteur": ("Document confidentiel remis par l'émetteur à son apporteur d'affaires. Ne pas "
-                  "transmettre au propriétaire. Ne vaut pas mandat. Données publiques LABUSE au {au}."),
+                  "transmettre au propriétaire. Ne vaut pas mandat. " + _CLAUSE_JURIDIQUE
+                  + " Données publiques LABUSE au {au}."),
     # DOCS-1 (Lot C)
-    "gabarit": ("Gabarit réglementaire 2D, pré-faisabilité sur règlement public. Ne remplace ni un "
-                "certificat d'urbanisme, ni une étude de faisabilité réglementaire. Données LABUSE au {au}."),
+    "gabarit": ("Gabarit réglementaire 2D, pré-faisabilité sur règlement public. " + _CLAUSE_JURIDIQUE
+                + " Données LABUSE au {au}."),
     "comparatif": ("Comparatif indicatif de parcelles établi sur des données publiques. Ni un prix, "
-                   "ni un conseil. Données LABUSE au {au}."),
+                   "ni un avis de valeur. " + _CLAUSE_JURIDIQUE + " Données LABUSE au {au}."),
     "etude-zone": ("Agrégats de données publiques dans le périmètre indiqué. Les mailles « à l'échelle "
-                   "de la commune » portent sur toute la commune. Données LABUSE au {au}."),
+                   "de la commune » portent sur toute la commune. " + _CLAUSE_JURIDIQUE
+                   + " Données LABUSE au {au}."),
     # ANNONCE-3 — l'estimation est COMPARATIVE (prix observés au m², DVF), jamais un avis de valeur.
     "analyse-annonce": ("Estimation comparative établie sur des données publiques (prix observés au m², "
-                        "DVF) — ce n'est pas un avis de valeur. Sources : DVF · Radar LABUSE. "
-                        "Données LABUSE au {au}."),
+                        "DVF) — ce n'est pas un avis de valeur. " + _CLAUSE_JURIDIQUE
+                        + " Sources : DVF · Radar LABUSE. Données LABUSE au {au}."),
 }
 
 #: composition de chaque document. EXPORTS-REBRANCHEMENT-1 lot 1 : le Dossier n'est PLUS une
@@ -182,6 +188,13 @@ def _cover(document: str, idu: str, fiche: dict, numero: str, jour: date,
     commune = fiche.get("commune") or ""
     surf = valeurs.get("surface_parcelle_m2")
     contenance = fmt_m2(surf.valeur) if surf is not None else '<span class="none">non chiffré</span>'
+    # NU5-FIX-1 (B-F6) — surface INCERTAINE (plan et cadastre discordants) : le qualifier est servi
+    # À CÔTÉ du chiffre de tête (plus seulement enfoui p. ~13), pour qu'un lecteur qui survole ne lise
+    # pas « 1 m² » comme un fait établi.
+    if fiche.get("surface_incertaine"):
+        contenance += (' <span class="chip e">surface incertaine</span>'
+                       '<br><span class="none" style="font-size:8pt">le plan et le cadastre ne '
+                       'concordent pas — chiffre à confirmer</span>')
     return (
         '<div class="cover">'
         f'<div class="brand"><span class="wordmark">LABUSE</span>'
@@ -627,6 +640,14 @@ def construire_gabarit(db, idu: str, *, jour: date | None = None) -> ResultatDoc
     # FAISA-REGLES-1 (D-026) — on attache le raccordement (zone, à-cheval) comme le fait l'endpoint outil,
     # pour que la mise en garde « parcelle à cheval » soit disponible au PDF (appliquer_note_a_cheval).
     gr.raccordement = build.raccordement
+    # NU5-FIX-1 (A-O1/O2) — garde de constructibilité (via potentiel_batir, même robinet que la
+    # fiche), appliquée AVANT de composer : une parcelle inconstructible (habitat interdit en Uem,
+    # zone fermée A/N, AU non ouverte, terrain exigu, PPR rédhibitoire) ne compose PAS d'enveloppe
+    # réglementaire dans le PDF — refus honnête 422 + motif, comme pour « Calcul incomplet ».
+    from ..gabarit.builder import appliquer_verdict_constructibilite
+    appliquer_verdict_constructibilite(db, idu, gr)
+    if gr.status == "inconstructible":
+        raise DocumentNonEtablissable([{"libelle": gr.message or "Parcelle inconstructible"}])
     # RECETTE-OUTILS-2 (R16) — le bâti EXISTANT n'est peuplé que par l'endpoint outil ; on l'attache
     # ici aussi (best-effort) pour que la vue 3D du PDF montre le MÊME contexte bâti que l'écran.
     try:
@@ -654,9 +675,11 @@ def construire_gabarit(db, idu: str, *, jour: date | None = None) -> ResultatDoc
                        contexte={"gabarit": gr.model_dump() if hasattr(gr, "model_dump") else dict(gr)})
 
 
-def construire_comparatif(idus: list[str], rows: list[dict], *, jour: date | None = None) -> ResultatDoc:
+def construire_comparatif(idus: list[str], rows: list[dict], *, jour: date | None = None,
+                          note_limite: str | None = None) -> ResultatDoc:
     """Le Comparatif, miroir de l'outil Comparer (/compare) : 2-3 parcelles en colonnes sur les lignes
-    de Comparer, EN PAGE PAYSAGE. `rows` sont les CompareRow servis (aucun recalcul ici)."""
+    de Comparer, EN PAGE PAYSAGE. `rows` sont les CompareRow servis (aucun recalcul ici).
+    NU5-FIX-1 (B-F3) : `note_limite` annonce le plafond de 3 parcelles quand plus ont été demandées."""
     from .blocs import comparatif as bloc_comparatif
     j = jour or today_reunion()
     ids = [i.strip() for i in idus if i and i.strip()][:3]
@@ -664,7 +687,9 @@ def construire_comparatif(idus: list[str], rows: list[dict], *, jour: date | Non
     numero = numeros.numero_rapport("comparatif", ref0, j)
     suffixe = f"{len(rows)} parcelles"
     cart = _cart("comparatif", suffixe, " · ".join(ids), numero, j)
-    corps = _entete_doc("comparatif", suffixe, numero, j) + bloc_comparatif.rendu(rows)
+    _note_html = (f'<p class="notice" style="color:#b06a2c">{esc(note_limite)}</p>'
+                  if note_limite else "")
+    corps = _entete_doc("comparatif", suffixe, numero, j) + _note_html + bloc_comparatif.rendu(rows)
     html = page_html(_LABEL["comparatif"][0], cart, corps, paysage=True)
     return ResultatDoc(html=html, valeurs={}, numero=numero, cartouche=cart,
                        contexte={"comparatif": rows})

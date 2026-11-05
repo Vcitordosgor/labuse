@@ -29,6 +29,8 @@ export interface AddressSelection {
 interface Props {
   onSelect: (sel: AddressSelection) => void
   placeholder?: string
+  /** NU5-FIX-1 (F9) — nom accessible persistant (le placeholder disparaît à la saisie). */
+  'aria-label'?: string
   autoFocus?: boolean
   className?: string           // classes de l'<input>
   /** appelé quand le champ est vidé / la sélection invalidée (l'appelant peut réinitialiser) */

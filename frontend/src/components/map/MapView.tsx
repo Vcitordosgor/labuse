@@ -635,6 +635,12 @@ export function MapView() {
       maxZoom: 19,
     })
     map.current = m
+    // NU5-FIX-1 (F10) — MapLibre nomme sa région « Map » (anglais, générique) dans une app française :
+    // on pose un nom accessible explicite en français sur le conteneur ET le canvas.
+    try {
+      ref.current.setAttribute('aria-label', 'Carte interactive du foncier de La Réunion')
+      m.getCanvas().setAttribute('aria-label', 'Carte interactive du foncier de La Réunion')
+    } catch { /* noop */ }
     // tuiles hors-emprise (océan) : l'IGN répond 400 → bruit inévitable, avalé ici pour que la
     // console ne montre que les VRAIES erreurs (règle d'inspection : zéro ligne rouge parasite)
     m.on('error', (e) => {

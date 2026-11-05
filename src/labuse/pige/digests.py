@@ -122,7 +122,9 @@ def _carte_item(base_url: str, r: dict) -> dict:
     surface = (f"{float(surf_h):.0f} m² hab." if surf_h else
                f"{float(surf_t):.0f} m² terrain" if surf_t else None)
     base_surf = float(surf_h) if surf_h else float(surf_t) if surf_t else None
-    prix_m2 = (_fmt_prix(round(r["prix"] / base_surf), "€/m²") if r.get("prix") and base_surf else None)
+    # NU5-FIX-1 (D-F8) — le €/m² DIT sa base (habitable ou terrain) dans la carte mail.
+    _base_lbl = "€/m² hab." if surf_h else "€/m² terrain"
+    prix_m2 = (_fmt_prix(round(r["prix"] / base_surf), _base_lbl) if r.get("prix") and base_surf else None)
     baisse = (_fmt_prix(r["ancien_prix"] - r["nouveau_prix"]) if r.get("ancien_prix") and r.get("nouveau_prix")
               and r["ancien_prix"] > r["nouveau_prix"] else None)
     d = r.get("date_releve")
@@ -293,6 +295,10 @@ def _clients_actifs(db: Session) -> list[dict]:
         " min(u.email) FILTER (WHERE u.role='titulaire') AS email "
         "FROM comptes c LEFT JOIN utilisateurs u ON u.compte_id = c.id "
         "WHERE c.statut = 'actif' AND (c.essai_expire_at IS NULL OR c.essai_expire_at > now()) "
+        # NU5-FIX-1 (C-F2) — un compte RÉSILIÉ en fin de période payée (acces_fin_at passé) qui ne se
+        # reconnecte pas restait `statut='actif'` (la bascule n'a lieu qu'au login) et continuait à
+        # recevoir les alertes Radar. On applique la même borne que l'essai, à la source.
+        "AND (c.acces_fin_at IS NULL OR c.acces_fin_at > now()) "
         "GROUP BY c.id, c.nom ORDER BY c.id")).mappings()]
 
 
@@ -367,7 +373,8 @@ def _idus_suivis(db: Session) -> dict:
     rows = db.execute(text(
         "SELECT w.idu, w.compte_id FROM watched_parcels w JOIN comptes c ON c.id = w.compte_id "
         "WHERE w.idu IS NOT NULL AND c.statut = 'actif' "
-        "AND (c.essai_expire_at IS NULL OR c.essai_expire_at > now())")).all()
+        "AND (c.essai_expire_at IS NULL OR c.essai_expire_at > now()) "
+        "AND (c.acces_fin_at IS NULL OR c.acces_fin_at > now())")).all()  # NU5-FIX-1 (C-F2)
     out: dict[str, list[int]] = {}
     for idu, cid in rows:
         out.setdefault(idu, []).append(cid)

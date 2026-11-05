@@ -130,8 +130,19 @@ def page_html(titre_html: str, cartouche: Cartouche, corps_html: str, *, lang: s
     # compteur de pages en `white-space:nowrap`). Vide par défaut → les documents existants (servis)
     # produisent EXACTEMENT le même HTML qu'avant.
     extra = f"<style>{page_extra_css}</style>" if page_extra_css else ""
+    # NU5-FIX-1 (B-F7) — WeasyPrint n'estampillait aucune CreationDate dans les métadonnées PDF
+    # (un archivage/outil tiers ne trouvait pas de date). On pose `dcterms.created`/`dcterms.modified`
+    # au fuseau Réunion : WeasyPrint les porte en CreationDate/ModDate du PDF. La date de génération
+    # reste aussi dans le corps (pied @bottom) — ceci ne change que les métadonnées.
+    # Granularité au JOUR (fuseau Réunion), comme la mention « Généré le JJ/MM/AAAA » du corps : la
+    # régénération reste DÉTERMINISTE (deux passes le même jour → HTML identique), tout en posant une
+    # CreationDate archivable. (Un datetime à la microseconde casserait la régénération déterministe.)
+    from ..tz import today_reunion
+    _jour = today_reunion().isoformat()
+    _meta_date = (f'<meta name="dcterms.created" content="{_jour}">'
+                  f'<meta name="dcterms.modified" content="{_jour}">')
     return (f'<!doctype html><html lang="{lang}"><head><meta charset="utf-8">'
-            f'<title>{esc(titre_html)}</title>'
+            f'<title>{esc(titre_html)}</title>{_meta_date}'
             f'<link rel="stylesheet" href="theme.css">'
             f'<style>{_FONT_FACE}</style><style>{foot_css}</style>{extra}</head><body>'
             f'{_spans_cartouche(cartouche)}{corps}</body></html>')
