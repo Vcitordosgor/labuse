@@ -1,0 +1,10 @@
+{
+  "compte_choisi": {
+    "compte_id": 135,
+    "statut_avant": "actif",
+    "essai_expire_at": "2026-11-04T02:06:07+04:00"
+  },
+  "session_utilisateur_retour": null,
+  "statut_apres_1er_acces": "suspendu",
+  "verdict": "BUG CONFIRMÉ : compte PAYÉ (actif) → session_utilisateur renvoie None et le statut retombe à 'suspendu' dès le 1er accès."
+}

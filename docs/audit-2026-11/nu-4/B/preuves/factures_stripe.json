@@ -1,0 +1,71 @@
+{
+  "mode": "test",
+  "livemode": false,
+  "integral": {
+    "premiere_facture_AVANT_pied_client": {
+      "id": "in_1UYCGR8hkDMCAoENjcTPXcBg",
+      "number": "X9O8EEGC-0021",
+      "status": "paid",
+      "created": 1793829756,
+      "footer": null,
+      "amount_due": 34900,
+      "amount_paid": 34900,
+      "currency": "eur",
+      "customer_email": "nu4b-integral@labuse.test",
+      "hosted_invoice_url": true,
+      "invoice_pdf": true,
+      "tax": null,
+      "total_tax_amounts": null
+    },
+    "nb_factures_apres_cycle": 2,
+    "factures_apres_pied_client": [
+      {
+        "id": "in_1UYCGW8hkDMCAoENGoK8OhQt",
+        "number": "X9O8EEGC-0022",
+        "status": "paid",
+        "created": 1796421756,
+        "footer": "TVA non applicable, art. 293 B du CGI. LABUSE — pré-analyse foncière sur données publiques.",
+        "amount_due": 34900,
+        "amount_paid": 34900,
+        "currency": "eur",
+        "customer_email": "nu4b-integral@labuse.test",
+        "hosted_invoice_url": true,
+        "invoice_pdf": true,
+        "tax": null,
+        "total_tax_amounts": null
+      },
+      {
+        "id": "in_1UYCGR8hkDMCAoENjcTPXcBg",
+        "number": "X9O8EEGC-0021",
+        "status": "paid",
+        "created": 1793829756,
+        "footer": null,
+        "amount_due": 34900,
+        "amount_paid": 34900,
+        "currency": "eur",
+        "customer_email": "nu4b-integral@labuse.test",
+        "hosted_invoice_url": true,
+        "invoice_pdf": true,
+        "tax": null,
+        "total_tax_amounts": null
+      }
+    ]
+  },
+  "flash": {
+    "facture_flash": {
+      "id": "in_1UYCGf8hkDMCAoENUamAlLzk",
+      "number": "X9O8EEGC-0023",
+      "status": "open",
+      "created": 1793829773,
+      "footer": "TVA non applicable, art. 293 B du CGI. LABUSE — pré-analyse foncière sur données publiques.",
+      "amount_due": 7900,
+      "amount_paid": 0,
+      "currency": "eur",
+      "customer_email": "nu4b-flash@labuse.test",
+      "hosted_invoice_url": true,
+      "invoice_pdf": true,
+      "tax": null,
+      "total_tax_amounts": null
+    }
+  }
+}
