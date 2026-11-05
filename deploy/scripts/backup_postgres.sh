@@ -113,11 +113,33 @@ echo "▶ [$(date '+%F %T')] pg_dump $DB (lean) → $OUT"
 # J+2 (incident 22/07 : un échec d'auth laissait un dump de 0 octet, silencieux jusqu'au pull) :
 # le fichier raté est SUPPRIMÉ et le script échoue BRUYAMMENT ; un dump vide/illisible ne survit pas.
 # shellcheck disable=SC2086 — $EXCLUDES / $EXCLUDE_TABLES sont des listes d'options construites ci-dessus.
-if ! pg_dump -Fc --no-owner "$EXCLUDE_SCHEMAS" $EXCLUDES $EXCLUDE_TABLES -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB" -f "$OUT"; then
+# OPS-URGENCE-2 (mandat Vic) — RÉSILIENCE AU VERROU. Les 30/10→02/11, 4 nuits de backup ÉCHEC :
+# pg_dump pose un LOCK TABLE ACCESS SHARE sur TOUTES les tables au démarrage ; pendant la fenêtre
+# déploiement/heal, un ACCESS EXCLUSIVE concurrent (ALTER/build/bascule, ex. surface_d_events /
+# spatial_layers_sub / tuyau_subdivise) le bloquait → le timeout externe du job tuait le dump →
+# nuit perdue. La collision est TRANSITOIRE (le dump rejoué à la main le 02/11 à 16h33 passait).
+# Désormais : (1) --lock-wait-timeout borne l'attente du verrou → échec PROPRE et rapide plutôt
+# qu'un blocage jusqu'au couperet ; (2) on RÉESSAIE avec backoff → une collision passagère ne perd
+# plus la sauvegarde de la nuit.
+LOCK_WAIT="${LABUSE_BACKUP_LOCK_WAIT:-120s}"
+RETRIES="${LABUSE_BACKUP_RETRIES:-3}"
+BACKOFF_S="${LABUSE_BACKUP_BACKOFF_S:-180}"
+dump_once() {
+    # shellcheck disable=SC2086 — $EXCLUDES / $EXCLUDE_TABLES sont des listes d'options construites ci-dessus.
+    pg_dump -Fc --no-owner --lock-wait-timeout="$LOCK_WAIT" "$EXCLUDE_SCHEMAS" $EXCLUDES $EXCLUDE_TABLES \
+        -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB" -f "$OUT"
+}
+attempt=1
+until dump_once; do
     rm -f -- "$OUT"
-    echo "✗ pg_dump A ÉCHOUÉ — dump supprimé, rien de corrompu ne reste" >&2
-    exit 1
-fi
+    if [ "$attempt" -ge "$RETRIES" ]; then
+        echo "✗ pg_dump A ÉCHOUÉ après $RETRIES tentative(s) — dump supprimé, rien de corrompu ne reste" >&2
+        exit 1
+    fi
+    echo "⚠ pg_dump tentative $attempt/$RETRIES échouée (verrou/collision probable) — nouvelle tentative dans ${BACKOFF_S}s" >&2
+    attempt=$((attempt + 1))
+    sleep "$BACKOFF_S"
+done
 if [ ! -s "$OUT" ] || ! pg_restore --list "$OUT" >/dev/null 2>&1; then
     rm -f -- "$OUT"
     echo "✗ dump vide ou illisible (pg_restore --list) — supprimé, échec bruyant" >&2

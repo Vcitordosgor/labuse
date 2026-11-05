@@ -234,7 +234,9 @@ class Settings(BaseSettings):
     # Passé au wrapper run-job.sh par « Lancer maintenant » pour que le bouton marche EN LOCAL (le Mac
     # n'a ni /var/log/labuse ni /run/lock écrivables — sinon le job échoue silencieusement).
     jobs_lock_dir: str = ".local/lock"               # LABUSE_JOBS_LOCK_DIR (env_prefix + nom de champ)
-    disque_seuil_pct: int = 85                        # K9 — alerte disque au-delà (constante nommée)
+    disque_seuil_pct: int = 80                        # K9 — alerte disque au-delà (constante nommée ;
+    # OPS-URGENCE-2 (mandat Vic) : seuil abaissé 85→80 pour prévenir AVANT la zone rouge (le disque a
+    # atteint 94,6 % le 05/11 ; alerter à 80 laisse de la marge pour agir — rotation filets/journaux).
     # OPS-NUIT-1 point 6(e) (décision Vic) — PLANCHER du seuil « job en retard » : un job fréquent
     # (healthcheck, 15 min) ne crie plus après 22 min ; retard réel au-delà de 1 h. LABUSE_JOB_RETARD_SEUIL_MIN_H.
     job_retard_seuil_min_h: float = 1.0

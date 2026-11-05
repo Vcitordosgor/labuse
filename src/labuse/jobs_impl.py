@@ -1027,6 +1027,21 @@ def calcul_nuit(ctx: JobContext) -> None:
         ctx.compte(abstention=motif_doit, declencheur=motif_decl, promu=False)
         return
 
+    # OPS-URGENCE-2 (mandat Vic) — GARDE ANTI-DOUBLON. Un flux-run peut DÉJÀ tourner : reprise lancée
+    # à la main en journée (fenêtre élargie pour finir q_v21), ou passage précédent pas encore fini.
+    # Deux flux-run concurrents sur le MÊME label = course sur dryrun_parcel_evaluations (INSERT du
+    # même parcel_id) + double CPU. On s'ABSTIENT proprement (pas un échec) : le run en cours continue.
+    from . import run_progress
+    try:
+        deja = run_progress.en_cours()
+    except Exception:  # noqa: BLE001
+        deja = None
+    if deja:
+        ctx.compte(abstention=f"un calcul est déjà en cours (label {deja.get('label')}, "
+                              f"pid {deja.get('pid')}) — pas de second passage concurrent",
+                   promu=False)
+        return
+
     # dépendances de calcul — loud si absentes (pas de faux vert)
     for mod in ("pandas", "numpy", "joblib"):
         try:
@@ -1055,12 +1070,25 @@ def calcul_nuit(ctx: JobContext) -> None:
     except SousProcessTimeout:
         # Fin de fenêtre atteinte AVANT la fin du calcul : abandon PROPRE, PAS un échec. flux-run a
         # persisté ce qu'il a fait (cascade commitée par commune) et REPREND la nuit suivante (--resume).
+        # OPS-URGENCE-2 — SURFACER L'AVANCEMENT. R4 décrivait « la reprise repart sans avancer » : en
+        # fait elle AVANCE (parcelles cumulées par nuit, sans doublon) mais la fenêtre ~3 h est trop
+        # courte pour les communes lourdes restantes. On reporte donc faites/total/% dans les compteurs
+        # pour que le résumé du matin montre la PROGRESSION, pas un faux « bloqué ».
+        faits = total = None
         with session_scope() as db:
             ops_alertes.resoudre(db, f"calcul-nuit:{label}")  # ni promotion en attente, ni échec cette nuit
+            try:
+                faits = db.execute(text("SELECT count(*) FROM dryrun_parcel_evaluations WHERE run_label=:r"),
+                                   {"r": label}).scalar() or 0
+                total = db.execute(text("SELECT count(*) FROM parcels")).scalar() or 0
+            except Exception:  # noqa: BLE001
+                faits = total = None
             db.commit()
+        pct = round(100.0 * faits / total, 1) if (faits and total) else None
         ctx.compte(label=label, recette=recette, promu=False,
                    abandon=f"fin de fenêtre {s.calcul_nuit_fin_h}h atteinte avant la fin du calcul — "
                            "reprise la nuit prochaine (reprenable, flux-run --resume)",
+                   parcelles_faites=faits, parcelles_total=total, avancement_pct=pct,
                    budget_s=round(budget))
         return
     if proc.returncode != 0:

@@ -318,9 +318,24 @@ def _appliquer_confirmations(db, items: list[ConfirmationIn], jour: str,
             {"b": bien["bien_id"]})
 
     n_retires = 0
+    n_gardes_multi = 0
     if ecrire_retraits:
         for it, bien in retraits:
             bid = bien["bien_id"]
+            # OPS-URGENCE-2 (mandat Vic) — GARDE MULTI-ANNONCES. Un bien listé sur plusieurs portails
+            # (ou ré-listé) ne doit PAS être retiré parce qu'UNE de ses annonces a disparu : l'audit a
+            # trouvé 18 biens « retiree » ayant pourtant une annonce RE-VUE après le retrait (ex.
+            # #141/#146/#147 le 04/11 — annonce leboncoin partie, annonce bienici toujours active). Si
+            # une AUTRE annonce du bien a été revue récemment, seule CETTE annonce est partie : on ne
+            # retire pas le bien (il reste en vente). Un vrai retrait total sera confirmé quand TOUTES
+            # ses annonces auront disparu.
+            autre = db.execute(text(
+                "SELECT 1 FROM pige_annonces WHERE bien_id = :b AND list_id <> :l "
+                "  AND date_saisie > now() - interval '14 days' LIMIT 1"),
+                {"b": bid, "l": it.list_id}).first()
+            if autre:
+                n_gardes_multi += 1
+                continue
             db.execute(text("UPDATE pige_biens SET statut = 'retiree', retiree_le = COALESCE(retiree_le, now()) "
                             "WHERE bien_id = :b AND statut NOT IN ('vendue','retiree_sans_vente')"), {"b": bid})
             journaliser(db, EV_STATUT_CHANGE, f"Bien retiré (preuve positive) — #{bid} ({bien['commune']})",
@@ -350,6 +365,7 @@ def _appliquer_confirmations(db, items: list[ConfirmationIn], jour: str,
     db.commit()
     return {"ok": True, "n_verifies": n_verifies, "n_retires": n_retires,
             "n_non_verifiees": n_non_verifiees, "list_id_inconnus": inconnus,
+            "n_gardes_multi_annonces": n_gardes_multi,
             "anomalie": anomalie, "taux_retrait": round(taux, 4)}
 
 

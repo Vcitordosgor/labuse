@@ -165,6 +165,41 @@ def test_garde_fou_laisse_passer_a_30pct(client, seed):
     assert all(_statut(bid) == "retiree" for bid, _lid in paires[:3])
 
 
+# ── GARDE MULTI-ANNONCES (OPS-URGENCE-2) ─────────────────────────────────────────────────────────────
+
+def test_garde_multi_annonces_ne_retire_pas(client, seed):
+    """OPS-URGENCE-2 — un bien qui garde une AUTRE annonce vue récemment n'est PAS retiré sur la
+    disparition d'une seule (bug des 18 biens « retiree » re-vus après coup : #141/#146/#147 le 04/11,
+    annonce leboncoin partie mais bienici toujours active). 1 retrait / 10 (10 % < 30 %) : le garde-fou
+    des 30 % ne joue pas, mais la garde multi-annonces RETIENT le retrait du bien multi-portail."""
+    paires = seed(10)
+    bid0, lid0 = paires[0]
+    with session_scope() as db:
+        db.execute(text(
+            "INSERT INTO pige_annonces (bien_id, list_id, portail, url_sortante, date_saisie) "
+            "VALUES (:b, :l, 'bienici', :u, now())"),
+            {"b": bid0, "l": 9_800_000_001, "u": "https://www.bienici.com/annonce/x"})
+        db.commit()
+    items = [{"list_id": lid0, "verdict": "supprimee", "preuve": "http_404"}]
+    items += [{"list_id": lid, "verdict": "presente"} for _bid, lid in paires[1:]]
+    r = _batch(client, "2026-01-09", items)
+    assert r["anomalie"] is False                       # 1/10 = 10 % < 30 %
+    assert r["n_retires"] == 0                          # retrait RETENU par la garde multi-annonces
+    assert r["n_gardes_multi_annonces"] == 1
+    assert _statut(bid0) == "active"                    # le bien reste en vente (autre annonce active)
+
+
+def test_garde_multi_annonces_retire_si_seule_annonce(client, seed):
+    """Symétrique : un bien MONO-annonce (pas d'autre annonce fraîche) est bien retiré sur preuve."""
+    paires = seed(10)
+    bid0, lid0 = paires[0]
+    items = [{"list_id": lid0, "verdict": "supprimee", "preuve": "http_404"}]
+    items += [{"list_id": lid, "verdict": "presente"} for _bid, lid in paires[1:]]
+    r = _batch(client, "2026-01-10", items)
+    assert r["n_retires"] == 1 and r.get("n_gardes_multi_annonces", 0) == 0
+    assert _statut(bid0) == "retiree"
+
+
 # ── VOIE HISTORIQUE (un lien) : ne retire PLUS jamais ───────────────────────────────────────────────
 
 def test_endpoint_simple_ne_retire_jamais(client, seed):
