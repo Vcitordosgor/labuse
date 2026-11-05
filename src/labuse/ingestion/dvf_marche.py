@@ -101,14 +101,23 @@ DDL_MEDIANES = text(
 
 
 def compute_medianes_secteur(session: Session) -> dict:
-    """Médianes €/m² par secteur × type de bien — grain MUTATION, ventes seules, idempotent."""
-    session.execute(DDL_MEDIANES)
-    # NU-E-032 — migration douce d'une table préexistante (prod) sans la colonne millésime.
-    session.execute(text("ALTER TABLE dvf_secteur_medianes ADD COLUMN IF NOT EXISTS millesime_dvf date"))
-    session.execute(text("TRUNCATE dvf_secteur_medianes"))
-    session.execute(text(
-        """
-        INSERT INTO dvf_secteur_medianes
+    """Médianes €/m² par secteur × type de bien — grain MUTATION, ventes seules, idempotent.
+
+    INJECTION-SOLIDE-2 — passe par `remplacer_servie` : le calcul écrit dans une STAGING, est contrôlé
+    (non vide : si la source DVF a été vidée, on REFUSE et on garde l'ancienne table) puis échangé
+    ATOMIQUEMENT. Plus de `TRUNCATE dvf_secteur_medianes` à vif (fenêtre où un lecteur voit une table
+    vide). Table sans géométrie ; unicité (secteur, type_bien)."""
+    from . import injection_sure
+
+    def preparer(conn):
+        conn.execute(DDL_MEDIANES)
+        # NU-E-032 — migration douce d'une table préexistante (prod) sans la colonne millésime.
+        conn.execute(text("ALTER TABLE dvf_secteur_medianes ADD COLUMN IF NOT EXISTS millesime_dvf date"))
+
+    def charger(conn, staging):
+        conn.execute(text(
+        f"""
+        INSERT INTO "{staging}"
           (secteur, type_bien, n_ventes, mediane_valeur, mediane_prix_m2, fenetre, millesime_dvf)
         WITH mutations AS (            -- 1 vente = 1 observation (toutes lignes agrégées)
           -- M101 B2 (arbitrage Vic) : « Vente terrain à bâtir » (995 actes) ENTRE dans la médiane
@@ -157,6 +166,12 @@ def compute_medianes_secteur(session: Session) -> dict:
                (SELECT max(date_mutation) FROM dvf_mutations_parcelle)   -- NU-E-032 : millésime source
         FROM secteurs GROUP BY secteur, type_bien
         """), {"fenetre": FENETRE})
+
+    injection_sure.remplacer_servie(
+        session, table="dvf_secteur_medianes", preparer=preparer, charger_staging=charger,
+        a_geometrie=False, dedup_cols=["secteur", "type_bien"], couverture_974_min=0,
+        delta_max_pct=90.0, alerter=injection_sure.alerte_injection(
+            "dvf_secteur_medianes", "DVF — médianes secteur"))
     session.flush()
     row = session.execute(text(
         "SELECT count(*), count(DISTINCT secteur), sum(n_ventes) FROM dvf_secteur_medianes")).one()
