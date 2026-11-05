@@ -612,8 +612,12 @@ def test_taxe_deux_injections_concurrentes(engine):
 
 def test_injection_nuit_ne_lance_que_les_sources_sures(engine, monkeypatch):
     """Bout-en-bout sur la base saine (transaction ANNULÉE) : une source SÛRE avancée est LANCÉE
-    (injectees_sures) ; une source de classe A NON sûre avancée n'est PAS lancée → elle remonte comme
-    « décision à prendre » (a_decider). La voie « héritée » a DISPARU (plus de clé injectees_heritees)."""
+    (injectees_sures) ; une source NON sûre avancée n'est PAS lancée → elle remonte comme « décision à
+    prendre » (a_decider). La voie « héritée » a DISPARU (plus de clé injectees_heritees).
+
+    Toutes les sources de classe A du registre sont désormais SÛRES (cf.
+    test_toutes_les_sources_classe_a_sont_couvertes) : pour exercer la branche a_decider (le cliquet qui
+    vise de FUTURES sources non vettées), on RETIRE temporairement une source de `SOURCES_SURES`."""
     from sqlalchemy.orm import Session
 
     import labuse.api.dashboard as dash
@@ -622,7 +626,9 @@ def test_injection_nuit_ne_lance_que_les_sources_sures(engine, monkeypatch):
     from labuse.jobs import JobContext
 
     sure = "Trafic RN (Région Réunion — SIR)"          # sûre (injection_sure) + commande → lancée
-    non_sure = "Filosofi INSEE (carreaux 200 m)"        # classe A, PAS dans SOURCES_SURES → décision
+    non_sure = "Filosofi INSEE (carreaux 200 m)"        # simulée « non vettée » (retirée ci-dessous)
+    # simule une source de classe A pas encore sur le chemin sûr (future ingestion non convertie) :
+    monkeypatch.setattr(gi, "SOURCES_SURES", gi.SOURCES_SURES - {non_sure})
     assert gi.source_sur_chemin_sur(sure) and not gi.source_sur_chemin_sur(non_sure)
 
     lancees: list[str] = []
@@ -647,3 +653,19 @@ def test_injection_nuit_ne_lance_que_les_sources_sures(engine, monkeypatch):
     finally:
         s.rollback()
         s.close()
+
+
+def test_toutes_les_sources_classe_a_sont_couvertes(engine):
+    """INJECTION-SOLIDE-3 (suivi) — TOUTE source de classe A du registre figure dans SOURCES_SURES :
+    aucune ne remonte en « décision à prendre » à tort. a_decider ne vise plus que de FUTURES sources
+    non vettées (le cliquet reste armé)."""
+    from labuse import autonomie
+    from labuse.ingestion import garde_injection as gi
+    with engine.connect() as c:
+        srcs = [dict(r) for r in c.execute(
+            text("SELECT name, category FROM data_sources")).mappings().all()]
+    classe_a = [s["name"] for s in autonomie.sources_par_classe(srcs)["A"]]
+    manquantes = sorted(n for n in classe_a if not gi.source_sur_chemin_sur(n))
+    assert not manquantes, (
+        "sources de classe A HORS SOURCES_SURES (remonteraient en décision à tort) :\n  · "
+        + "\n  · ".join(manquantes))

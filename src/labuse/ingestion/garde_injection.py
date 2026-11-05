@@ -198,6 +198,28 @@ SOURCES_SURES: frozenset[str] = frozenset({
     "SUP — assiettes GPU (API Carto)",
     "Transport public — GTFS (PAN, 7 réseaux)",
     "ZNIEFF (INPN/MNHN)",
+    # Le RESTE des sources de classe A (sans commande d'ingestion-nuit mappée) — AUCUNE ne fait de
+    # remplacement-en-place (garde = 0 violation) : soit écriture partielle `DELETE … WHERE kind`
+    # sur spatial_layers (périmètres/zonages), soit upsert/agrégat, soit source en direct/dépôt sans
+    # ingestion batch. Elles sont donc SÛRES. Listées ici pour qu'injection-nuit ne les classe PAS en
+    # « décision à prendre » à tort : sans commande, une source avancée retombe en « à câbler » (et non
+    # « à sécuriser »). La classe A entière est ainsi couverte → a_decider ne vise plus que de FUTURES
+    # sources non vettées (le cliquet reste armé).
+    "Annuaire de l'administration (service-public.fr / DILA)",
+    "BODACC (procédures collectives)",
+    "Cerema / GéoLittoral — indicateur d'érosion côtière",
+    "Contours IRIS (IGN/INSEE)",
+    "Contraintes EnR près des habitations (Géoplateforme)",
+    "Filosofi INSEE (carreaux 200 m)",
+    "Forêts publiques (ONF)",
+    "GéoMCE — mesures compensatoires",
+    "INPN / patrinat — espaces protégés",
+    "INSEE RP Logement 2023",
+    "Inventaires ZAE (EPCI — loi Climat et résilience)",
+    "Parc National de La Réunion (INPN)",
+    "Recherche d'entreprises (DINUM)",
+    "SIRENE",
+    "ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)",
 })
 
 

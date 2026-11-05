@@ -126,11 +126,22 @@ swap, dans la même transaction — il ne s'exécute pas si l'injection est refu
 - sûre **sans** commande mappée → `a_cabler` (inchangé).
 
 La clé `injectees_heritees` et l'alerte `injection-heritee` sont **supprimées**. `SOURCES_SURES` =
-l'ensemble VÉRIFIÉ des sources de classe A dont l'ingestion de nuit ne peut pas laisser une table servie
-cassée : soit routées par `injection_sure`, soit prouvées sans remplacement-en-place (la garde = 0
-violation). Tenu aligné sur les sources de classe A outillées d'une commande
-(`config/sources_ingestion.yaml`). Prouvé bout-en-bout sur la base saine
-(`test_injection_nuit_ne_lance_que_les_sources_sures` : Trafic RN lancée, Filosofi → décision, pas
+l'ensemble VÉRIFIÉ des sources dont l'ingestion de nuit ne peut pas laisser une table servie cassée :
+soit routées par `injection_sure`, soit prouvées sans remplacement-en-place (la garde = 0 violation).
+
+**Couverture : les 35 sources de classe A du registre y figurent toutes** (prouvé par
+`test_toutes_les_sources_classe_a_sont_couvertes`). Au premier jet, 15 sources de classe A manquaient —
+**toutes sans commande d'ingestion-nuit** (donc jamais lançables), mais le gardage « sûreté d'abord »
+les aurait classées « décision à prendre » À TORT. Elles sont ajoutées : aucune ne fait de
+remplacement-en-place (écriture partielle `DELETE … WHERE kind` sur `spatial_layers`, upsert/agrégat, ou
+source en direct/dépôt sans ingestion batch) → toutes SÛRES. Résultat : `a_decider` ne vise plus que de
+FUTURES sources non vettées (le cliquet reste armé). Les 15 ajoutées : Annuaire de l'administration,
+BODACC, Cerema/GéoLittoral érosion, Contours IRIS, Contraintes EnR près des habitations, Filosofi INSEE,
+Forêts publiques (ONF), GéoMCE, INPN/patrinat, INSEE RP Logement 2023, Inventaires ZAE, Parc National,
+Recherche d'entreprises (DINUM), SIRENE, ZPPA.
+
+Prouvé bout-en-bout sur la base saine (`test_injection_nuit_ne_lance_que_les_sources_sures` : une source
+sûre avancée est lancée ; une source retirée de `SOURCES_SURES` → décision, jamais lancée ; pas
 d'`injectees_heritees`).
 
 ---
