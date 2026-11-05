@@ -434,6 +434,26 @@ def _bloc_image(img: ImagePart) -> dict:
                                         "data": base64.standard_b64encode(img.data).decode("ascii")}}
 
 
+def _liberer_connexion(db: "Session | None") -> None:
+    """NU4-FIX-1 (E/R3) — libère la connexion DB (retour au pool) AVANT l'appel réseau au modèle.
+
+    Les handlers synchrones (/parcels/{idu}/ask, /explain, Copilote, /ia/*) construisent la fiche
+    (lectures DB) PUIS appellent le modèle (11–27 s) sur la MÊME session : sans ceci, la connexion reste
+    « idle in transaction » pendant tout l'appel (jusqu'à 43 simultanées mesurées, tx 50–135 s → pool
+    épuisé + risque d'`idle_in_transaction_session_timeout`, le mode d'échec qui a tué calcul-nuit).
+    Un COMMIT clôt la transaction de lecture → la connexion repart au pool ; `_log_cost`/`cache_put`
+    ré-acquièrent une connexion APRÈS la réponse. Best-effort : ne casse jamais l'appel modèle."""
+    if db is None:
+        return
+    try:
+        db.commit()
+    except Exception:  # noqa: BLE001 — libération best-effort ; l'appel modèle prime
+        try:
+            db.rollback()
+        except Exception:  # noqa: BLE001
+            pass
+
+
 def complete(db: Session | None, *, kind: str, system: str, context: dict[str, Any] | str,
              model: str = MODEL_FACTUAL, max_tokens: int = 700,
              temperature: float = DEFAULT_TEMPERATURE, timeout: float = DEFAULT_TIMEOUT,
@@ -463,6 +483,8 @@ def complete(db: Session | None, *, kind: str, system: str, context: dict[str, A
             return IAResult(text="", model=model, degraded=True, reason=f"image: {exc}")
     else:
         contenu = user_content
+
+    _liberer_connexion(db)   # NU4-FIX-1 (E/R3) — rendre la connexion DB au pool AVANT l'appel réseau
 
     import anthropic
     client = anthropic.Anthropic(timeout=timeout, max_retries=DEFAULT_RETRIES)

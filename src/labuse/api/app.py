@@ -313,7 +313,22 @@ def _executer_heal_schema(log, pose_fk: bool = False) -> dict:
         _lock_conn = _engine().connect()
         _lock_conn.execute(text("SELECT pg_advisory_lock(:k)"), {"k": _SCHEMA_LOCK})
         _lock_conn.commit()
-        models.ensure_schema(_engine())
+        # REMISE-1 + NU4-FIX-1 (E/R6) — moteur de heal dédié à `lock_timeout` COURT, construit AVANT
+        # tout DDL de boot. Même `models.ensure_schema` (ses `ALTER … ADD COLUMN IF NOT EXISTS` sur
+        # event_log/parcels/sirene…, no-op mais ACCESS EXCLUSIVE) passe désormais par lui : un ALTER qui
+        # percute un lecteur échoue en 5 s (puis retry du heal), au lieu de convoyer-bloquer les lectures
+        # en local. En prod ce heal tourne de toute façon AVANT le port (SKIP_BOOT_HEAL + pré-service).
+        _heal_eng = _make_engine()
+
+        @_sa_event.listens_for(_heal_eng, "connect")
+        def _heal_lock_timeout(_dbapi_conn, _rec):  # noqa: ANN001 — signature imposée par SQLAlchemy
+            _cur = _dbapi_conn.cursor()
+            try:
+                _cur.execute("SET lock_timeout = '5s'")
+            finally:
+                _cur.close()
+
+        models.ensure_schema(_heal_eng)
         from .courrier import ensure_tables as _courrier_ens
         from .events import ensure_tables as _events_ens
         from .ia import ensure_tables as _ia_ens
@@ -332,18 +347,9 @@ def _executer_heal_schema(log, pose_fk: bool = False) -> dict:
         from ..promo.tables import ensure_tables as _promo_ens
         from .recherche import ensure_index as _recherche_ens
         from ..registre.remplissage import ensure_perf_indexes as _remplissage_perf_ens
-        # REMISE-1 (Lot A) — MOTEUR DE HEAL DÉDIÉ avec `lock_timeout` COURT sur CHAQUE connexion :
-        # un ALTER qui percute un verrou concurrent échoue en 5 s (puis retry) au lieu de bloquer.
-        _heal_eng = _make_engine()
-
-        @_sa_event.listens_for(_heal_eng, "connect")
-        def _heal_lock_timeout(_dbapi_conn, _rec):  # noqa: ANN001 — signature imposée par SQLAlchemy
-            _cur = _dbapi_conn.cursor()
-            try:
-                _cur.execute("SET lock_timeout = '5s'")
-            finally:
-                _cur.close()
-
+        # REMISE-1 (Lot A) — toutes les étapes de heal passent par le moteur dédié `_heal_eng`
+        # (lock_timeout 5 s, construit plus haut) : un ALTER qui percute un verrou concurrent échoue
+        # en 5 s (puis retry) au lieu de bloquer les lectures.
         _heal_sess = _sessionmaker(bind=_heal_eng, expire_on_commit=False, future=True)
 
         @contextmanager
@@ -537,6 +543,12 @@ async def _security_headers(request, call_next):
     resp.headers.setdefault("X-Content-Type-Options", "nosniff")
     resp.headers.setdefault("X-Frame-Options", "DENY")
     resp.headers.setdefault("Referrer-Policy", "same-origin")
+    # NU4-FIX-1 (A/m4) — deux durcissements manquants signalés par l'audit : Permissions-Policy
+    # (coupe l'accès aux API navigateur sensibles que l'app n'utilise pas) et COOP (isole le
+    # contexte de navigation des fenêtres ouvertes). Pas de COEP (casserait les tuiles cross-origin).
+    resp.headers.setdefault("Permissions-Policy",
+                            "geolocation=(), microphone=(), camera=(), payment=(), usb=()")
+    resp.headers.setdefault("Cross-Origin-Opener-Policy", "same-origin")
     # REVUE · R4 — Content-Security-Policy RAISONNABLE (le front est servi same-origin ; seules
     # sources externes RÉELLES : tuiles IGN data.geopf.fr et MNT 3D S3 terrarium en img/connect ;
     # maplibre crée ses workers via blob:). CORRECTIFS-1 C7 : polices auto-hébergées (@fontsource),
@@ -942,7 +954,7 @@ async def login_submit(request: Request):
             u = verifier_login(db, identifiant, password)
             if not u:
                 auth.log_event("login_failed", request)
-                auth.slow_failure()
+                await run_in_threadpool(auth.slow_failure)
                 return HTMLResponse(auth.login_page(error=True), status_code=401)
             # REPRISE DE PAIEMENT (né du test Vic) : identifiants corrects mais compte
             # jamais payé (Checkout refusé/abandonné) → on relance un Checkout NEUF au
@@ -997,7 +1009,7 @@ réglages vous attendent tels quels.</p>
     # (ancienne voie « mot de passe partagé ») n'a plus AUCUN chemin d'authentification : échec NEUTRE
     # (401, même page) — identique à un couple email/mot de passe faux, rien ne révèle une voie disparue.
     auth.log_event("login_failed", request)
-    auth.slow_failure()
+    await run_in_threadpool(auth.slow_failure)
     return HTMLResponse(auth.login_page(error=True), status_code=401)
 
 
@@ -1049,8 +1061,9 @@ async def login_2fa_submit(request: Request):
     from fastapi.responses import HTMLResponse
 
     from . import auth
-    from ..comptes import (creer_session, ensure_tables, totp_confirmer, totp_etat,
-                           totp_secours_consommer, totp_verifier)
+    from ..comptes import (creer_session, enregistrer_echec_2fa, ensure_tables, reinit_echec_2fa,
+                           totp_confirmer, totp_etat, totp_secours_consommer, totp_verifier,
+                           verrou_2fa_restant)
     from ..db import session_scope
 
     defi = auth.defi_2fa_lire(request.cookies.get(auth.COOKIE_2FA))
@@ -1071,12 +1084,22 @@ async def login_2fa_submit(request: Request):
 
     with session_scope() as db:
         ensure_tables(db)
+        # NU4-FIX-1 (A/M1) — verrou EN BASE : au-delà de N échecs 2FA, plus aucune saisie acceptée
+        # jusqu'à expiration, quel que soit le cookie `n` renvoyé. On tue le défi (retour à la porte).
+        if verrou_2fa_restant(db, uid):
+            auth.log_event("2fa_verrou", request)
+            await run_in_threadpool(auth.slow_failure)
+            resp = HTMLResponse(auth.page_2fa_code(
+                error="Trop de tentatives. Réessayez dans quelques minutes."), status_code=429)
+            resp.delete_cookie(auth.COOKIE_2FA, path="/")
+            return resp
         etat = totp_etat(db, uid)
         enrolement = not (etat and etat["confirme"])
         ok_totp = totp_verifier(db, uid, code)                     # anti-rejeu inclus
         ok_secours = (not enrolement and not ok_totp
                       and totp_secours_consommer(db, uid, code))   # secours : jamais à l'enrôlement
         if ok_totp or ok_secours:
+            reinit_echec_2fa(db, uid)                              # succès → compteur/verrou à zéro
             codes = totp_confirmer(db, uid) if enrolement else None
             tok = creer_session(db, uid, ip_hash=_iph, ua_hash=_uah)
             auth.log_event("2fa_enrole" if enrolement else
@@ -1090,10 +1113,12 @@ async def login_2fa_submit(request: Request):
             resp.set_cookie(value=f"u.{tok}", **auth.cookie_kwargs())
             resp.delete_cookie(auth.COOKIE_2FA, path="/")
             return resp
-        # échec — compté DANS le jeton ; au 5ᵉ le défi meurt (retour à la porte, re-login)
+        # échec — compté EN BASE (NU4-FIX-1 A/M1 : verrou serveur) ET dans le jeton (UX). Au
+        # Nᵉ échec base le compte est gelé ; le cookie reste un garde-fou UX secondaire.
+        enregistrer_echec_2fa(db, uid)
         secret = etat["secret"] if etat else None
     auth.log_event("2fa_echec", request)
-    auth.slow_failure()
+    await run_in_threadpool(auth.slow_failure)
     tentatives += 1
     if tentatives >= auth.DEFI_2FA_ESSAIS_MAX:
         return _2fa_redirect_login()
@@ -1591,7 +1616,13 @@ def _connector_names() -> set[str]:
 
 
 @app.post("/sources/{source_id}/test")
-def test_source(source_id: int, db: Session = Depends(get_db)) -> dict:
+def test_source(source_id: int, request: Request, db: Session = Depends(get_db)) -> dict:
+    # NU4-FIX-1 (A/Y2) — GATE ADMIN : énumère le catalogue de sources GLOBAL (404 vs résultat
+    # distingue l'existence) et déclenche un appel sortant de connecteur (effet SSRF). Toutes les
+    # autres routes de gestion de sources vivent sous /admin/sources/* (fail-safe) ; celle-ci était
+    # la route égarée, montée sur `app`. Le garde doit être EN LIGNE (hors segment /admin).
+    from . import auth
+    auth.exiger_admin(request)
     src = db.get(models.DataSource, source_id)
     if not src:
         raise HTTPException(404, "Source inconnue")
@@ -9424,24 +9455,37 @@ class AuditPolygonIn(BaseModel):
 
 
 @app.post("/audit/reference")
-def audit_reference(body: AuditRefIn, db: Session = Depends(get_db)) -> dict:
+def audit_reference(body: AuditRefIn, request: Request, db: Session = Depends(get_db)) -> dict:
     """Auditer un terrain par référence cadastrale (section + numéro). Fetch cadastre à la
-    volée → ingestion (origine='audit') → cascade → renvoie l'idu pour ouvrir la fiche."""
+    volée → ingestion (origine='audit') → cascade → renvoie l'idu pour ouvrir la fiche.
+
+    NU4-FIX-1 (A/M2) — GATE ADMIN : écrivain lourd sur le référentiel PARTAGÉ `parcels`
+    (origine='audit') + cascade de scoring globale, exactement comme la route sœur
+    `/parcels/{idu}/evaluate`. Oubli du garde comblé (monté hors /admin → pas de fail-safe
+    middleware ; le contrôle doit être EN LIGNE)."""
     from .. import audit
+    from . import auth
+    auth.exiger_admin(request)
     return audit.audit_by_reference(db, body.section, body.numero, body.code_insee)
 
 
 @app.post("/audit/adresse")
-def audit_adresse(body: AuditAddressIn, db: Session = Depends(get_db)) -> dict:
-    """Auditer un terrain par adresse (géocodage BAN → parcelle cadastrale)."""
+def audit_adresse(body: AuditAddressIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    """Auditer un terrain par adresse (géocodage BAN → parcelle cadastrale).
+    NU4-FIX-1 (A/M2) — GATE ADMIN (écrivain global `parcels` + cascade)."""
     from .. import audit
+    from . import auth
+    auth.exiger_admin(request)
     return audit.audit_by_address(db, body.q)
 
 
 @app.post("/audit/polygone")
-def audit_polygone(body: AuditPolygonIn, db: Session = Depends(get_db)) -> dict:
-    """Auditer un terrain par polygone dessiné sur la carte."""
+def audit_polygone(body: AuditPolygonIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    """Auditer un terrain par polygone dessiné sur la carte.
+    NU4-FIX-1 (A/M2) — GATE ADMIN (écrivain global `parcels` + cascade ; géométrie arbitraire)."""
     from .. import audit
+    from . import auth
+    auth.exiger_admin(request)
     return audit.audit_by_polygon(db, body.geometry)
 
 
@@ -9562,12 +9606,17 @@ class FeedbackIn(BaseModel):
 
 
 @app.post("/feedback")
-def post_feedback(body: FeedbackIn, db: Session = Depends(get_db)) -> dict:
+def post_feedback(body: FeedbackIn, request: Request, db: Session = Depends(get_db)) -> dict:
     _check_idu(body.idu)
     p = db.execute(select(models.Parcel).where(models.Parcel.idu == body.idu)).scalar_one_or_none()
     if not p:
         raise HTTPException(404, "Parcelle inconnue")
-    fb = models.ParcelFeedback(parcel_id=p.id, verdict=body.verdict, user_id=body.user_id, comment=body.comment)
+    # NU4-FIX-1 (A/m1) — attribution NON forgeable : quand une session existe, l'auteur est le
+    # compte authentifié (request.state), jamais le `user_id` que le corps prétend. Sans session
+    # (local/anonyme), on retombe sur le corps. Un client ne peut plus signer au nom d'un autre.
+    compte_id = getattr(getattr(request, "state", None), "compte_id", None)
+    user_id = f"compte:{compte_id}" if compte_id is not None else body.user_id
+    fb = models.ParcelFeedback(parcel_id=p.id, verdict=body.verdict, user_id=user_id, comment=body.comment)
     db.add(fb)
     db.flush()
     return {"ok": True, "id": fb.id}

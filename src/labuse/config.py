@@ -51,6 +51,7 @@ class Settings(BaseSettings):
     db_max_overflow: int = 10
     db_pool_recycle_s: int = 1800          # 30 min ; -1 = jamais recyclé
     db_pool_pre_ping: bool = True
+    db_pool_timeout_s: float = 30.0        # NU4-FIX-1 (E/R2) — attente max d'une connexion du pool
     # `statement_timeout` appliqué UNIQUEMENT aux requêtes de l'API (SET LOCAL par requête via get_db) —
     # JAMAIS au moteur partagé, car les batchs CLI (ingestion, scoring, résiduel) tournent légitimement
     # des minutes/heures. 0 = désactivé. 60 s : plafond « anti-emballement » qui ne coupe AUCUNE requête
@@ -72,6 +73,13 @@ class Settings(BaseSettings):
     pdf_rendu_max: int = 2                     # LABUSE_PDF_RENDU_MAX
     etude_processus_max: int = 3              # LABUSE_ETUDE_PROCESSUS_MAX
     etude_file_attente_s: float = 20.0        # attente max d'une place avant 503 (LABUSE_ETUDE_FILE_ATTENTE_S)
+    # NU4-FIX-1 (E/R1) — le rendu PDF (weasyprint/Cairo/Pango) tourne HORS-PROCESS (pool de processus
+    # enfants, spawn) : un crash natif ou un OOM tue l'ENFANT, jamais le worker API. Mémoire bornée par
+    # enfant (RLIMIT_AS) et enfant recyclé après N rendus (fuites fonts/cairo non cumulées). Timeout dur.
+    pdf_process_isole: bool = True             # LABUSE_PDF_PROCESS_ISOLE (0 = rendu in-process, legacy/CI)
+    pdf_mem_max_mo: int = 1536                 # borne mémoire d'un process de rendu (0 = pas de borne)
+    pdf_recycle_tasks: int = 40                # rendus avant recyclage d'un process enfant
+    pdf_rendu_timeout_s: float = 120.0         # délai dur d'un rendu avant abandon propre (RenderError)
 
     # ── Mode de déploiement : local (démo dev) | pilot (client encadré) | production ──
     # Pilote/production : cookies Secure, CORS restreint, /docs protégés, auth OBLIGATOIRE

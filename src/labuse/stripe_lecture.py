@@ -35,9 +35,35 @@ _CACHE: dict = {"ts": 0.0, "data": None}
 _REFRESH_LOCK = threading.Lock()
 
 
+def _mode_cle(k: str | None) -> str | None:
+    """Mode d'une clé Stripe d'après son préfixe : 'live' | 'test' | None."""
+    if not k:
+        return None
+    if k.startswith(("sk_live_", "rk_live_", "pk_live_")):
+        return "live"
+    if k.startswith(("sk_test_", "rk_test_", "pk_test_")):
+        return "test"
+    return None
+
+
 def cle_restreinte() -> str | None:
+    """NU4-FIX-1 (B/T5) — l'admin lit Stripe dans le MÊME MODE que l'app. La clé restreinte (lecture
+    seule) n'est utilisée que si elle est du même mode que la clé d'écriture de l'app ; sinon (ex. app
+    en TEST, clé restreinte en LIVE) on lit avec la clé de l'app — même mode garanti, aucune écriture
+    tentée (le code ne fait que lister). Avant, l'admin voyait le LIVE pendant que l'app facturait en
+    TEST : MRR/CA/rapprochement tous faux (comptes de test « sans abo », abonnés live « sans compte »)."""
     s = get_settings()
-    return (s.stripe_restricted_key or os.environ.get("STRIPE_RESTRICTED_KEY", "").strip() or None)
+    app_key = s.stripe_secret_key
+    rk = s.stripe_restricted_key or os.environ.get("STRIPE_RESTRICTED_KEY", "").strip() or None
+    if not rk:
+        return None                            # clé restreinte ABSENTE → « non configuré » (contrat D2)
+    if _mode_cle(rk) == _mode_cle(app_key) or not app_key:
+        return rk                              # même mode (ou pas de clé app pour comparer) → restreinte
+    # clé restreinte PRÉSENTE mais d'un AUTRE mode que l'app (ex. rk_live alors que l'app facture en
+    # TEST) → on lit avec la clé de l'app pour refléter le MÊME mode que la facturation (lecture seule).
+    log.warning("stripe_lecture : clé restreinte en mode %s ≠ app en mode %s → lecture via la clé de "
+                "l'app (lecture seule)", _mode_cle(rk), _mode_cle(app_key))
+    return app_key
 
 
 def _non_configure() -> dict:

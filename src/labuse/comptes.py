@@ -33,6 +33,11 @@ _ph = PasswordHasher()  # argon2id par défaut (time_cost=3, memory=64 MiB, para
 #: refusées) jusqu'à régularisation. Source unique de la durée (back + calcul d'accès).
 PAIEMENT_GRACE_JOURS = 7
 
+#: NU4-FIX-1 (B/T7) — l'accès en LECTURE SEULE après non-paiement n'est plus sans fin : passé ce délai
+#: APRÈS la bascule lecture seule (soit J+7 + 30 = J+37 depuis le 1ᵉʳ échec), le compte est suspendu
+#: (plus de login/lecture) même si Stripe n'a jamais émis `subscription.deleted`. Borne côté app.
+PAIEMENT_LECTURE_SEULE_JOURS = 30
+
 # Refonte commerciale (Vic 22/07 ; parcours d'entrée E1, 27/08) : UN SEUL plan commercial —
 # INTÉGRAL, source de vérité `offres.py` (prix en config). 1 licence = 1 accès (plus d'Indé/Pro,
 # plus de sièges multiples, plus de founding, PLUS d'« Illimité 499 € » : offre fantôme retirée).
@@ -107,6 +112,12 @@ def ensure_tables(db: Session) -> None:
     if not db.execute(text("SELECT 1 FROM information_schema.columns "
                            "WHERE table_name = 'comptes' AND column_name = 'acces_fin_at'")).scalar():
         db.execute(text("ALTER TABLE comptes ADD COLUMN acces_fin_at timestamptz"))
+    # NU4-FIX-1 (B/T6) — INSTANT où le client a été AVERTI du passage en lecture seule (J+7). NULL =
+    # pas encore averti → l'avertissement part UNE fois (session_utilisateur), puis cette ancre évite
+    # de ré-enfiler le mail à chaque requête. Remise à NULL au rétablissement (reactiver_compte).
+    if not db.execute(text("SELECT 1 FROM information_schema.columns "
+                           "WHERE table_name = 'comptes' AND column_name = 'lecture_seule_avertie_at'")).scalar():
+        db.execute(text("ALTER TABLE comptes ADD COLUMN lecture_seule_avertie_at timestamptz"))
     db.execute(text("""
         CREATE TABLE IF NOT EXISTS utilisateurs (
             id serial PRIMARY KEY,
@@ -162,6 +173,15 @@ def ensure_tables(db: Session) -> None:
             dernier_pas bigint,
             created_at timestamptz NOT NULL DEFAULT now()
         )"""))
+    # NU4-FIX-1 (A/M1) — la limite d'essais 2FA est tenue EN BASE (plus dans le cookie client, que
+    # l'attaquant rejouait à n=0). Compteur + verrou par utilisateur, comme le mot de passe
+    # (echecs_login / verrouille_jusqu_a). Garde-catalogue (pas d'ADD COLUMN no-op à chaque passage).
+    for _col, _ddl in (("echecs_2fa", "ADD COLUMN echecs_2fa int NOT NULL DEFAULT 0"),
+                       ("verrouille_jusqu_a", "ADD COLUMN verrouille_jusqu_a timestamptz")):
+        if not db.execute(text("SELECT 1 FROM information_schema.columns "
+                               "WHERE table_name = 'totp_2fa' AND column_name = :c"),
+                          {"c": _col}).scalar():
+            db.execute(text(f"ALTER TABLE totp_2fa {_ddl}"))
     # Codes de SECOURS (téléphone perdu) : 8 à l'enrôlement, usage unique, montrés UNE fois
     # — en base : le SHA-256 seulement (contrairement au secret TOTP, on n'a jamais besoin
     # de les relire en clair).
@@ -467,7 +487,7 @@ def session_utilisateur(db: Session, token: str) -> dict | None:
     r = db.execute(text(
         "SELECT s.utilisateur_id, u.compte_id, u.role, u.statut, c.statut AS statut_compte,"
         "       c.essai_expire_at, c.paiement_requis_at, c.updated_at AS compte_updated_at,"
-        "       c.acces_fin_at"
+        "       c.acces_fin_at, c.lecture_seule_avertie_at"
         " FROM sessions_auth s JOIN utilisateurs u ON u.id = s.utilisateur_id"
         " JOIN comptes c ON c.id = u.compte_id"
         " WHERE s.token_hash = :h AND s.expire_at > now()"), {"h": _sha(token)}).mappings().first()
@@ -495,11 +515,27 @@ def session_utilisateur(db: Session, token: str) -> dict | None:
     acces = "complet"
     if r["statut_compte"] == "paiement_requis":
         ancre = r["paiement_requis_at"] or r["compte_updated_at"]
-        if ancre is not None and (datetime.now(timezone.utc) - ancre
-                                  > timedelta(days=PAIEMENT_GRACE_JOURS)):
-            acces = "lecture_seule"
+        if ancre is not None:
+            age = datetime.now(timezone.utc) - ancre
+            # NU4-FIX-1 (B/T7) — borne de fin de l'accès en lecture : au-delà de grâce + lecture seule,
+            # on suspend (plus de login/lecture) même sans `subscription.deleted` de Stripe.
+            if age > timedelta(days=PAIEMENT_GRACE_JOURS + PAIEMENT_LECTURE_SEULE_JOURS):
+                suspendre_compte(db, r["compte_id"], "fin-lecture-seule-non-paye")
+                return None
+            if age > timedelta(days=PAIEMENT_GRACE_JOURS):
+                acces = "lecture_seule"
+                # NU4-FIX-1 (B/T6) — la bascule en lecture seule est ANNONCÉE au client, UNE fois :
+                # on pose l'ancre d'avertissement et on enfile le mail (best-effort, file mail_queue —
+                # ne touche pas cette transaction ; dédup par l'ancre → jamais ré-enfilé).
+                if r["lecture_seule_avertie_at"] is None:
+                    db.execute(text("UPDATE comptes SET lecture_seule_avertie_at = now()"
+                                    " WHERE id = :c AND lecture_seule_avertie_at IS NULL"),
+                               {"c": r["compte_id"]})
+                    db.commit()
+                    _avertir_lecture_seule(db, r["compte_id"])
     out = {k: v for k, v in dict(r).items()
-           if k not in ("essai_expire_at", "paiement_requis_at", "compte_updated_at", "acces_fin_at")}
+           if k not in ("essai_expire_at", "paiement_requis_at", "compte_updated_at", "acces_fin_at",
+                        "lecture_seule_avertie_at")}
     out["acces"] = acces
     return out
 
@@ -551,6 +587,40 @@ def totp_verifier(db: Session, utilisateur_id: int, code: str) -> bool:
                {"p": pas, "u": utilisateur_id})
     db.commit()
     return True
+
+
+def verrou_2fa_restant(db: Session, utilisateur_id: int) -> bool:
+    """NU4-FIX-1 (A/M1) — le compte est-il actuellement GELÉ pour excès d'échecs 2FA ? Vérité EN
+    BASE (pas un compteur porté par le client). True = refuser la saisie du code jusqu'à expiration."""
+    r = db.execute(text("SELECT verrouille_jusqu_a FROM totp_2fa WHERE utilisateur_id = :u"),
+                   {"u": utilisateur_id}).scalar()
+    return bool(r and r > datetime.now(timezone.utc))
+
+
+def enregistrer_echec_2fa(db: Session, utilisateur_id: int) -> int:
+    """NU4-FIX-1 (A/M1) — compte un échec 2FA EN BASE et pose le verrou au Nᵉ (mêmes seuils que le
+    mot de passe : `login_echecs_max` / `login_verrou_minutes`). Renvoie le nombre d'échecs. Un
+    attaquant qui rejoue un vieux cookie `n=0` est désormais gelé après N échecs, quel que soit le
+    cookie renvoyé — la limite ne vit plus côté client."""
+    s = get_settings()
+    r = db.execute(text("SELECT echecs_2fa FROM totp_2fa WHERE utilisateur_id = :u"),
+                   {"u": utilisateur_id}).scalar()
+    if r is None:                      # pas de ligne TOTP (uid absent/jamais préparé) : rien à gérer
+        return 0
+    n = int(r) + 1
+    verrou = (datetime.now(timezone.utc) + timedelta(minutes=s.login_verrou_minutes)
+              if n >= s.login_echecs_max else None)
+    db.execute(text("UPDATE totp_2fa SET echecs_2fa = :n, verrouille_jusqu_a = :v"
+                    " WHERE utilisateur_id = :u"), {"n": n, "v": verrou, "u": utilisateur_id})
+    db.commit()
+    return n
+
+
+def reinit_echec_2fa(db: Session, utilisateur_id: int) -> None:
+    """NU4-FIX-1 (A/M1) — remet le compteur/verrou 2FA à zéro (sur succès, comme echecs_login)."""
+    db.execute(text("UPDATE totp_2fa SET echecs_2fa = 0, verrouille_jusqu_a = NULL"
+                    " WHERE utilisateur_id = :u"), {"u": utilisateur_id})
+    db.commit()
 
 
 def totp_confirmer(db: Session, utilisateur_id: int) -> list[str]:
@@ -789,6 +859,30 @@ def mail_cycle_de_vie_auto(db: Session, compte_id: int, key: str, demandeur: str
         log.warning("mail cycle de vie « %s » (auto) non enfilé pour le compte %s", key, compte_id)
 
 
+def _avertir_lecture_seule(db: Session, compte_id: int) -> None:
+    """NU4-FIX-1 (B/T6) — AVERTIT le client que son accès passe en LECTURE SEULE (J+7 d'un défaut de
+    paiement) : jusqu'ici la bascule était SILENCIEUSE (seul `relance_carte` partait à J0). On ré-enfile
+    le rappel de paiement (template 9 `relance_carte`, PRENOM + LIEN_PAIEMENT) avec un dédup DISTINCT
+    (`lecture_seule:{compte}`) → un seul envoi à ce palier, séparé de la relance J0. Best-effort (file
+    mail_queue, ne touche pas la transaction appelante) : l'avertissement est un confort, jamais bloquant."""
+    try:
+        row = db.execute(text(
+            "SELECT k.nom, (SELECT u.email FROM utilisateurs u WHERE u.compte_id = k.id"
+            " ORDER BY u.id LIMIT 1) AS email FROM comptes k WHERE k.id = :c"),
+            {"c": compte_id}).mappings().first()
+        if not row or not row["email"]:
+            return
+        base = (get_settings().public_base_url or "https://app.labuse.immo").rstrip("/")
+        from .mail import envoyer_mail
+        envoyer_mail(key="relance_carte", to=row["email"], compte_id=compte_id,
+                     demandeur="job:lecture-seule",
+                     params={"PRENOM": _prenom_titulaire(row["nom"], row["email"]),
+                             "LIEN_PAIEMENT": f"{base}/facturation"},
+                     dedup=f"lecture_seule:{compte_id}")
+    except Exception:  # noqa: BLE001 — avertissement best-effort ; la bascule d'accès prime
+        log.warning("avertissement lecture seule non enfilé pour le compte %s", compte_id)
+
+
 def suspendre_compte(db: Session, compte_id: int, motif: str = "manuel") -> None:
     db.execute(text("UPDATE comptes SET statut = 'suspendu', updated_at = now() WHERE id = :c"),
                {"c": compte_id})
@@ -809,7 +903,10 @@ def deconnecter_compte(db: Session, compte_id: int, motif: str = "admin") -> int
 
 def reactiver_compte(db: Session, compte_id: int, motif: str = "manuel") -> None:
     # FIX-NU3-2 — rétablissement : efface l'ancre de grâce (l'accès redevient complet immédiatement).
+    # NU4-FIX-1 (B/T4) — efface aussi `acces_fin_at` (une fin d'accès programmée ne doit pas resuspendre
+    # un compte redevenu payant) ET `lecture_seule_avertie_at` (le cycle d'avertissement repart propre).
     db.execute(text("UPDATE comptes SET statut = 'actif', paiement_requis_at = NULL,"
+                    " acces_fin_at = NULL, lecture_seule_avertie_at = NULL,"
                     " updated_at = now() WHERE id = :c"),
                {"c": compte_id})
     audit(db, "compte_reactive", compte_id, None, motif); db.commit()
