@@ -1,0 +1,487 @@
+{
+    "ort": {
+        "insee": "97402",
+        "source": "DGALN — communes ORT (table vivante) ; périmètres conventionnés non publiés",
+        "statut": "pvd",
+        "commune": "Bras-Panon",
+        "millesime": "table DGALN vivante (grist) — lecture 07/09/2026",
+        "ort_signee": true,
+        "denormandie": "éligible sous conditions — commune en ORT signée (logement DANS le périmètre conventionné requis, périmètre non publié ; travaux ≥ 25 % du coût total ; jusqu'au 31/12/2027)",
+        "date_signature": "2021-10-05"
+    },
+    "plh": {
+        "epci": "CIREST",
+        "refs": [
+            {
+                "doc": "Rapport CDHH — DEAL Réunion, décembre 2019",
+                "url": "https://www.reunion.developpement-durable.gouv.fr/IMG/pdf/20191205_rapport-cdhh-091219.pdf",
+                "page": 46
+            },
+            {
+                "doc": "Tableau de suivi PLOM 3 — avril 2026 (DEAL)",
+                "url": "https://www.reunion.developpement-durable.gouv.fr/IMG/pdf/suvi_mesures_plom3_avril_2026.pdf",
+                "page": 1
+            }
+        ],
+        "detail": {
+            "note": "déclinaison communale du social non publiée (colonnes vides au CDHH)",
+            "libres_an": 391,
+            "communes_an": {
+                "Salazie": 26,
+                "Bras-Panon": 145,
+                "Sainte-Rose": 60,
+                "Saint-André": 264,
+                "Saint-Benoît": 230,
+                "La Plaine-des-Palmistes": 75
+            },
+            "accession_an": 178,
+            "social_locatif_an": "230 LLTS/LLS/PLS"
+        },
+        "statut": "révision engagée (délib. 02/10/2025) — prorogation 2 ans en préparation",
+        "periode": "2019-2024 (PLH 2)",
+        "obj_logements_an": 800,
+        "part_sociale_pct": null
+    },
+    "qpv": [
+    ],
+    "rnu": null,
+    "sru": {
+        "insee": "97402",
+        "detail": {
+            "epci": "CA Intercommunale de la Réunion Est (CIREST)",
+            "nb_lls": 1657.0,
+            "uu_sru": "0",
+            "epci_sru": "1",
+            "population_2025": 13131.0,
+            "soumise_sru_2025": "1",
+            "nom_unite_urbaine": "Bras-Panon",
+            "commune_isolee_l302_5": "0"
+        },
+        "statut": "conforme",
+        "commune": "Bras-Panon",
+        "taux_lls": 33.42,
+        "millesime": "inventaire LLS 01/01/2024 · périmètre 01/01/2025 · prélèvement 2025",
+        "source_nom": "Communes et inventaire SRU (DHUP) — inventaire au 01/01/2024, v2 du 18/12/2025",
+        "source_url": "https://static.data.gouv.fr/resources/communes-et-inventaire-sru/20251219-143258/donnees-sru-data-gouv-2025-v2.csv",
+        "objectif_pct": 20.0,
+        "prelevement_eur": 0.0
+    },
+    "anru": [
+    ],
+    "epci": "CIREST",
+    "insee": "97402",
+    "loyer": {
+        "type": "tous types",
+        "source": "Sourcé · OLL 2024 (zone 5)",
+        "median_eur_m2": 10.3
+    },
+    "notes": [
+        "ZUS et ZFU sont des zonages abrogés (réforme 2014), devenus QPV — déjà couverts par la couche QPV. Volet fiscal ZFU-Territoires Entrepreneurs : pas de source spécifique à La Réunion identifiée à ce jour.",
+        "Données de CONTEXTE : aucune n'entre dans le scoring."
+    ],
+    "mairie": {
+        "nom": "Mairie - Bras-Panon",
+        "email": "courrier@braspanon.re",
+        "source": "Annuaire de l'administration (service-public.fr)",
+        "adresse": "89 route nationale 2",
+        "commune": "Bras-Panon",
+        "telephone": "02 62 51 50 50",
+        "code_postal": "97412",
+        "date_import": "2026-08-27",
+        "url_annuaire": "https://lannuaire.service-public.gouv.fr/la-reunion/la-reunion/ddb044ae-b297-41ee-a265-f1b1663f24c2",
+        "site_officiel": "https://www.braspanon.re"
+    },
+    "marche": {
+        "insee": "97402",
+        "commune": "Bras-Panon",
+        "vacants": 360,
+        "logements": 5622,
+        "millesime": "RP 2023 (exploitation principale, géographie 01/01/2026)",
+        "typologie": {
+            "p1": 152,
+            "p2": 615,
+            "p3": 1023,
+            "p4": 1547,
+            "p5p": 1881,
+            "libelle": "répartition des résidences principales par nombre de pièces (proxy T1…T5+, l'INSEE ne publie pas la typologie Tn à la commune)",
+            "vacance_pct": 6.4,
+            "hlm_louees_vides": 1275
+        },
+        "source_nom": "INSEE RP 2023 — base comparateur logement (publié 25/06/2026)",
+        "source_url": "https://www.insee.fr/fr/statistiques/8997194?sommaire=9003154",
+        "apparts_pct": 33.7,
+        "maisons_pct": 66.0,
+        "locataires_pct": 42.6,
+        "res_principales": 5218,
+        "res_secondaires": 45,
+        "autres_loges_pct": 4.9,
+        "proprietaires_pct": 52.5
+    },
+    "outils": {
+        "scan_pm": 1183,
+        "radar_biens": 2,
+        "densifiables": 2558,
+        "permis_en_cours": 47,
+        "solaire_piscines": 111,
+        "permis_point_mort": 231
+    },
+    "commune": "Bras-Panon",
+    "foncier": {
+        "classement": {
+            "evaluees": 6056,
+            "sans_zonage": 0,
+            "raison_sans_zonage": "zonage non publié au GPU"
+        },
+        "permis_12m": {
+            "n": 47,
+            "reserve": "accordés seulement (les refus et abandons ne sont pas publiés)"
+        },
+        "surface_ha": 8354,
+        "n_parcelles": 6056,
+        "mutations_12m": 61,
+        "prix_terrain_nu": {
+            "motif": null,
+            "seuil_n": 10,
+            "par_zone": {
+                "U": {
+                    "n": 115,
+                    "calculable": true,
+                    "median_eur_m2": 375
+                },
+                "AU": {
+                    "n": 64,
+                    "calculable": true,
+                    "median_eur_m2": 271
+                }
+            },
+            "etiquette": "Sourcé · millésime DVF terrain · zonage calibré",
+            "calculable": true
+        },
+        "repartition_zonage": {
+            "base": "surface",
+            "familles": {
+                "A": {
+                    "n": 781,
+                    "ha": 1416,
+                    "pct": 16.9
+                },
+                "N": {
+                    "n": 483,
+                    "ha": 6538,
+                    "pct": 78.2
+                },
+                "U": {
+                    "n": 4551,
+                    "ha": 305,
+                    "pct": 3.6
+                },
+                "AU": {
+                    "n": 251,
+                    "ha": 101,
+                    "pct": 1.2
+                }
+            },
+            "total_ha": 8360
+        },
+        "stock_opportunites": {
+            "n": 8,
+            "ha": 2
+        }
+    },
+    "qualite": {
+        "insee": "97402",
+        "rr_ile": 6.73,
+        "source": "audit RR fold 2025 (out-of-sample) · mesure seule",
+        "commune": "Bras-Panon",
+        "fragile": true,
+        "libelle": "Bras-Panon : marché peu actif (6 016 parcelles analysées, base 0.96 %) — le classement reste fiable, la fréquence exacte est indicative (échantillon limité : pouvoir discriminant mesuré sur moins de 5 ventes dans le haut du classement).",
+        "degradee": true,
+        "rr_intra": 0.0,
+        "rr_ile_dit": "~6,7",
+        "echantillon": 6016,
+        "taux_base_pct": 0.96
+    },
+    "risques": {
+        "source": "DEAL Réunion — PPR / aléas (zones PPR, aléa mouvement de terrain) · GASPAR (arrêtés CatNat, AZI/TRI) · BD TOPO (Parc National).",
+        "azi_tri": {
+            "azi": [
+                {
+                    "dates": {
+                        "date_diffusion": "23/03/2004",
+                        "date_fin_programmation": "23/03/2004",
+                        "date_debut_programmation": "23/03/2004"
+                    },
+                    "libelle": "Cirque de salazie",
+                    "risques": "Inondation",
+                    "type_doc": "azi",
+                    "bassin_risques": "Cirque de salazie",
+                    "date_diffusion": "23/03/2004"
+                },
+                {
+                    "dates": {
+                        "date_diffusion": "23/03/2004",
+                        "date_fin_programmation": "23/03/2004",
+                        "date_debut_programmation": "23/03/2004"
+                    },
+                    "libelle": "Planèzes Est",
+                    "risques": "Inondation",
+                    "type_doc": "azi",
+                    "bassin_risques": "Planèzes Est",
+                    "date_diffusion": "23/03/2004"
+                }
+            ],
+            "tri": [
+            ]
+        },
+        "ppr_pct": 26.8,
+        "catnat_detail": [
+            {
+                "date_fin": "2025-02-28",
+                "date_debut": "2025-02-26",
+                "type_peril": "Vents Cycloniques",
+                "date_arrete": "2025-03-20",
+                "code_national": "INTE2508630A",
+                "date_publication_jo": "31/03/2025"
+            },
+            {
+                "date_fin": "2024-01-15",
+                "date_debut": "2024-01-13",
+                "type_peril": "Chocs Mécaniques liés à l'action des Vagues",
+                "date_arrete": "2024-01-19",
+                "code_national": "IOME2401804A",
+                "date_publication_jo": "23/01/2024"
+            },
+            {
+                "date_fin": "2024-01-15",
+                "date_debut": "2024-01-13",
+                "type_peril": "Inondations et/ou Coulées de Boue",
+                "date_arrete": "2024-01-19",
+                "code_national": "IOME2401804A",
+                "date_publication_jo": "23/01/2024"
+            },
+            {
+                "date_fin": "2018-04-24",
+                "date_debut": "2018-04-24",
+                "type_peril": "Inondations et/ou Coulées de Boue",
+                "date_arrete": "2018-05-23",
+                "code_national": "INTE1813670A",
+                "date_publication_jo": "22/06/2018"
+            },
+            {
+                "date_fin": "2006-03-06",
+                "date_debut": "2006-03-04",
+                "type_peril": "Inondations et/ou Coulées de Boue",
+                "date_arrete": "2006-11-10",
+                "code_national": "INTE0600904A",
+                "date_publication_jo": "23/11/2006"
+            },
+            {
+                "date_fin": "2006-02-19",
+                "date_debut": "2006-02-17",
+                "type_peril": "Inondations et/ou Coulées de Boue",
+                "date_arrete": "2006-11-10",
+                "code_national": "INTE0600904A",
+                "date_publication_jo": "23/11/2006"
+            },
+            {
+                "date_fin": "2005-02-18",
+                "date_debut": "2005-02-16",
+                "type_peril": "Inondations et/ou Coulées de Boue",
+                "date_arrete": "2005-08-02",
+                "code_national": "INTE0500534A",
+                "date_publication_jo": "10/08/2005"
+            },
+            {
+                "date_fin": "2002-01-23",
+                "date_debut": "2002-01-22",
+                "type_peril": "Chocs Mécaniques liés à l'action des Vagues",
+                "date_arrete": "2002-04-08",
+                "code_national": "INTE0200152A",
+                "date_publication_jo": "18/04/2002"
+            },
+            {
+                "date_fin": "1998-02-25",
+                "date_debut": "1998-02-24",
+                "type_peril": "Inondations et/ou Coulées de Boue",
+                "date_arrete": "1998-05-26",
+                "code_national": "INTE9800200A",
+                "date_publication_jo": "11/06/1998"
+            },
+            {
+                "date_fin": "1995-12-09",
+                "date_debut": "1995-12-08",
+                "type_peril": "Inondations et/ou Coulées de Boue",
+                "date_arrete": "1996-02-20",
+                "code_national": "INTE9600038A",
+                "date_publication_jo": "23/03/1996"
+            },
+            {
+                "date_fin": "1994-02-12",
+                "date_debut": "1994-02-10",
+                "type_peril": "Inondations et/ou Coulées de Boue",
+                "date_arrete": "1994-04-12",
+                "code_national": "INTE9400172A",
+                "date_publication_jo": "23/04/1994"
+            },
+            {
+                "date_fin": "1993-03-03",
+                "date_debut": "1993-02-27",
+                "type_peril": "Inondations et/ou Coulées de Boue",
+                "date_arrete": "1993-10-07",
+                "code_national": "INTE9300537A",
+                "date_publication_jo": "24/10/1993"
+            }
+        ],
+        "parc_national": true,
+        "catnat_arretes": 17,
+        "mouvement_terrain_pct": 100.0
+    },
+    "signaux": [
+        {
+            "ton": "orange",
+            "code": "zan",
+            "libelle": "ZAN épuisé dans 0,8 an"
+        }
+    ],
+    "epci_nom": "Communauté intercommunale Réunion Est",
+    "fiscalite": {
+        "lignes": [
+            {
+                "label": "Taxe foncière (bâti)",
+                "ligne": "Taxe foncière (bâti) — part communale 46,26 % · TEOM 17,90 % · hors part départementale et taxes spéciales",
+                "detail": "part communale 46,26 % · TEOM 17,90 % · hors part départementale et taxes spéciales"
+            },
+            {
+                "label": "Taxe foncière (non bâti)",
+                "ligne": "Taxe foncière (non bâti) — part communale 42,62 % · hors part départementale et taxes spéciales",
+                "detail": "part communale 42,62 % · hors part départementale et taxes spéciales"
+            }
+        ],
+        "maj_at": "2026-09-14T16:32:17.600926+04:00",
+        "perime": false,
+        "source": "DGFiP — fichier REI (impositions primitives)",
+        "teom_pct": 17.9,
+        "millesime": "REI 2025 (impositions primitives)",
+        "tfpb_epci_pct": 2.0,
+        "tfpnb_epci_pct": 1.79,
+        "tfpb_commune_pct": 46.26,
+        "tfpnb_commune_pct": 42.62
+    },
+    "zfang_frr": {
+        "frr": {
+            "lien": "https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000049746820",
+            "libelle": "Commune classée en partie seulement — la zone spéciale d'action rurale (les Hauts) est infra-communale : la situation dépend de la localisation exacte du terrain.",
+            "classement": "partie",
+            "source_ref": "ZSAR 1978 · FRR 01/07/2024 · réf. ZRR 2017 (Région)"
+        },
+        "zfang": {
+            "lien": "https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000054153903",
+            "regime": "renforce",
+            "libelle": "Régime renforcé (ZFANG, art. 44 quaterdecies CGI ; liste des communes éligibles fixée par le décret n° 2026-421 du 29 mai 2026) — sous réserve d'éligibilité de l'activité, abattements majorés pouvant atteindre 80 % sur les bénéfices et la taxe foncière bâtie et 100 % sur la CFE, jusqu'en 2030 — à confirmer auprès d'un fiscaliste.",
+            "source_ref": "Décret n° 2026-421 du 29 mai 2026 (LF 2026, art. 18)"
+        },
+        "avertissement": "Fait territorial sourcé et daté. Les taux cités sont les taux LÉGAUX du dispositif (décret / CGI), pas un calcul de votre avantage : l'éligibilité et l'effet réel relèvent de votre expert-comptable ou avocat fiscaliste."
+    },
+    "classement": {
+        "source": "Classement servi LABUSE (tiers brûlante + chaude) — recalculé à chaque bascule, jamais figé",
+        "libelle": "8 parcelles brûlantes ou chaudes au classement servi",
+        "dossiers": 1,
+        "tiers_hauts": 8
+    },
+    "comparable": {
+        "source": "DVF (baromètre commune entière) + SITADEL (autorisations et délais d'instruction) — même moteur que le comparateur des 24 communes.",
+        "ancien_n": 295,
+        "permis_5a": 261,
+        "neuf_eur_m2": null,
+        "delai_median_mois": 9.0,
+        "ancien_median_eur_m2": 1880,
+        "stock_opportunites_n": 8
+    },
+    "plu_statut": {
+        "source": "Sudocuh 31/12/2024 (aucune procédure lourde)",
+        "statut": "à jour",
+        "libelle": "aucune",
+        "confiance": "SOURCE",
+        "procedure": "aucune",
+        "date_reglement": null,
+        "procedure_sudocuh": {
+            "etat": "PLU approuvé - aucune procédure en cours - Compétence commune",
+            "document": "Aucun",
+            "millesime": "31/12/2024",
+            "prescription": null
+        },
+        "recherche_verbatim": true
+    },
+    "population": {
+        "source": "INSEE — population municipale légale (recensement, via Sudocuh) · INSEE RP (ménages, logements) · INSEE Filosofi (niveau de vie).",
+        "menages": 5218,
+        "vacants": 360,
+        "habitants": 13012,
+        "logements": 5622,
+        "quartiers": {
+            "n_iris": 5,
+            "source": "INSEE RP2022 par IRIS — l'affinage par quartier de la vérité communale",
+            "vacance_max_pct": 8.1,
+            "vacance_min_pct": 0.0,
+            "vacance_mediane_pct": 6.0
+        },
+        "vacance_pct": 6.4,
+        "parc_ancien_pct": 33.3,
+        "menages_millesime": "RP 2023 (exploitation principale, géographie 01/01/2026)",
+        "habitants_etiquette": "Population légale 2023 (INSEE)",
+        "habitants_millesime": "2023",
+        "habitants_pop_totale": null,
+        "niveau_vie_moyen_eur": 19635
+    },
+    "zonage_abc": {
+        "zone": "B1",
+        "source": "DHUP — zonage ABC (arrêté du 1er août 2014 modifié, D. 304-1 CCH)",
+        "millesime": "arrêté du 23/06/2026 — en vigueur 26/06/2026"
+    },
+    "parc_social": {
+        "source": "SDES — Répertoire des logements locatifs sociaux (RPLS)",
+        "logements": 1679,
+        "millesime": "RPLS 01/01/2025",
+        "construct_median": 2009
+    },
+    "permis_bloc": {
+        "source": "SITADEL (autorisations) · SITADEL — délais d'instruction · permis au point mort (36 mois sans DAACT, run servi).",
+        "permis_5a": 261,
+        "permis_12m": 47,
+        "point_mort": 231,
+        "logements_12m": 139,
+        "permis_type_12m": {
+            "DP": 6,
+            "PC": 40,
+            "PD": 1
+        },
+        "delai_median_mois": 9.0,
+        "permis_annules_12m": 0
+    },
+    "densifiables": {
+        "source": "Analyse LABUSE · run servi",
+        "parcelles": 2558,
+        "sdp_residuelle_m2": 958263
+    },
+    "marche_annonces": {
+        "biens": 2,
+        "source": "Radar LABUSE (annonces relevées) · écart mesuré contre le baromètre DVF commune entière.",
+        "seuil_n": 5,
+        "sous_seuil": true,
+        "prix_demande_n": 3,
+        "demande_seuil_n": 5,
+        "prix_acte_eur_m2": 1880,
+        "derniere_collecte": "2026-10-29",
+        "demande_sous_seuil": false,
+        "ecart_demande_acte_pct": null,
+        "prix_demande_median_eur_m2": null
+    },
+    "taxe_amenagement": {
+        "perime": false,
+        "source": "DGFiP — taxe d'aménagement (application DELTA), délibération communale",
+        "millesime": "Taux communal en vigueur depuis le 01/01/2022 (délibération communale)",
+        "delib_date": "2022-01-01",
+        "part_communale_pct": 5.0
+    },
+    "prix_neuf_observe": null
+}

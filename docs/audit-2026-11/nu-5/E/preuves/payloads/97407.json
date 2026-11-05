@@ -1,0 +1,486 @@
+{
+    "ort": {
+        "insee": "97407",
+        "source": "DGALN — communes ORT (table vivante) ; périmètres conventionnés non publiés",
+        "statut": "acv",
+        "commune": "Le Port",
+        "millesime": "table DGALN vivante (grist) — lecture 07/09/2026",
+        "ort_signee": true,
+        "denormandie": "éligible sous conditions — commune en ORT signée (logement DANS le périmètre conventionné requis, périmètre non publié ; travaux ≥ 25 % du coût total ; jusqu'au 31/12/2027)",
+        "date_signature": "2022-04-25"
+    },
+    "plh": {
+        "epci": "TCO",
+        "refs": [
+            {
+                "doc": "Résumé du 3e PLH (Eohs, nov. 2019)",
+                "url": "https://www.tco.re/wp-content/uploads/2020/01/resume-plh3-cc.16.12.19.pdf",
+                "page": "8, 9, 12"
+            },
+            {
+                "doc": "Délibération n°2025_046_CC_21 (lancement PLH 4)",
+                "url": "https://www.tco.re/wp-content/uploads/2025/07/2025_046_cc_21-lancement-de-la-procedure-delaboration-du-4eme-programme-local-de-lhabitat-du-territoire-de-louest-1.pdf",
+                "page": "2, 5"
+            }
+        ],
+        "detail": {
+            "lls_6_ans": 5050,
+            "total_6_ans": 10800,
+            "communes_6_ans": {
+                "Le Port": {
+                    "lls": 360,
+                    "total": 1200
+                },
+                "Saint-Leu": {
+                    "lls": 990,
+                    "total": 2100
+                },
+                "Saint-Paul": {
+                    "lls": 2300,
+                    "total": 4800
+                },
+                "La Possession": {
+                    "lls": 1210,
+                    "total": 2300
+                },
+                "Les Trois-Bassins": {
+                    "lls": 190,
+                    "total": 400
+                }
+            },
+            "accession_6_ans": 1430
+        },
+        "statut": "PLH 4 lancé (délib. n°2025_046_CC_21 du 25/06/2025) — prorogation 2 ans demandée au préfet",
+        "periode": "2019-2025 (PLH 3, délib. n°2019-109-CC-18)",
+        "obj_logements_an": 1800,
+        "part_sociale_pct": 47.0
+    },
+    "qpv": [
+        {
+            "nom": "Le Port - Secteur Ouest",
+            "code": "QN97418M"
+        }
+    ],
+    "rnu": null,
+    "sru": {
+        "insee": "97407",
+        "detail": {
+            "epci": "CA Territoire de la Côte Ouest (TCO)",
+            "nb_lls": 7416.0,
+            "uu_sru": "1",
+            "epci_sru": "1",
+            "population_2025": 33670.0,
+            "soumise_sru_2025": "1",
+            "nom_unite_urbaine": "Saint-Paul",
+            "commune_isolee_l302_5": "0"
+        },
+        "statut": "conforme",
+        "commune": "Le Port",
+        "taux_lls": 60.71,
+        "millesime": "inventaire LLS 01/01/2024 · périmètre 01/01/2025 · prélèvement 2025",
+        "source_nom": "Communes et inventaire SRU (DHUP) — inventaire au 01/01/2024, v2 du 18/12/2025",
+        "source_url": "https://static.data.gouv.fr/resources/communes-et-inventaire-sru/20251219-143258/donnees-sru-data-gouv-2025-v2.csv",
+        "objectif_pct": 25.0,
+        "prelevement_eur": 0.0
+    },
+    "anru": [
+        {
+            "nom": "1ère et 2ème Couronne",
+            "interet": "national",
+            "code_qpv": "QP974018",
+            "source_nom": "NPNRU — DEAL Réunion (WFS Carmen, périmètres QPV 2015) · liste ANCT 2022 (LOv2)",
+            "source_url": "http://ws.carmen.developpement-durable.gouv.fr/WFS/29/DEAL_REUNION_2020?request=GetFeature&service=WFS&typename=NPNRU&outputFormat=SHAPE&version=1.0.0"
+        }
+    ],
+    "epci": "TCO",
+    "insee": "97407",
+    "loyer": {
+        "type": "tous types",
+        "source": "Sourcé · OLL 2024 (zone 4)",
+        "median_eur_m2": 11.0
+    },
+    "notes": [
+        "ZUS et ZFU sont des zonages abrogés (réforme 2014), devenus QPV — déjà couverts par la couche QPV. Volet fiscal ZFU-Territoires Entrepreneurs : pas de source spécifique à La Réunion identifiée à ce jour.",
+        "Données de CONTEXTE : aucune n'entre dans le scoring."
+    ],
+    "mairie": {
+        "nom": "Mairie - Le Port (La Réunion)",
+        "email": "internet@ville-port.re",
+        "source": "Annuaire de l'administration (service-public.fr)",
+        "adresse": "9 rue Renaudière-Devaux",
+        "commune": "Le Port",
+        "telephone": "02 62 42 87 00",
+        "code_postal": "97420",
+        "date_import": "2026-08-27",
+        "url_annuaire": "https://lannuaire.service-public.gouv.fr/la-reunion/la-reunion/62564faf-e545-40b9-b466-21d023a6ad52",
+        "site_officiel": "https://www.ville-port.re/"
+    },
+    "marche": {
+        "insee": "97407",
+        "commune": "Le Port",
+        "vacants": 567,
+        "logements": 13426,
+        "millesime": "RP 2023 (exploitation principale, géographie 01/01/2026)",
+        "typologie": {
+            "p1": 480,
+            "p2": 1986,
+            "p3": 3724,
+            "p4": 3832,
+            "p5p": 2735,
+            "libelle": "répartition des résidences principales par nombre de pièces (proxy T1…T5+, l'INSEE ne publie pas la typologie Tn à la commune)",
+            "vacance_pct": 4.2,
+            "hlm_louees_vides": 6370
+        },
+        "source_nom": "INSEE RP 2023 — base comparateur logement (publié 25/06/2026)",
+        "source_url": "https://www.insee.fr/fr/statistiques/8997194?sommaire=9003154",
+        "apparts_pct": 50.4,
+        "maisons_pct": 48.7,
+        "locataires_pct": 64.4,
+        "res_principales": 12757,
+        "res_secondaires": 103,
+        "autres_loges_pct": 2.0,
+        "proprietaires_pct": 33.6
+    },
+    "outils": {
+        "scan_pm": 4681,
+        "radar_biens": 0,
+        "densifiables": 3265,
+        "permis_en_cours": 64,
+        "solaire_piscines": 54,
+        "permis_point_mort": 299
+    },
+    "commune": "Le Port",
+    "foncier": {
+        "classement": {
+            "evaluees": 10242,
+            "sans_zonage": 0,
+            "raison_sans_zonage": "zonage non publié au GPU"
+        },
+        "permis_12m": {
+            "n": 64,
+            "reserve": "accordés seulement (les refus et abandons ne sont pas publiés)"
+        },
+        "surface_ha": 1398,
+        "n_parcelles": 10242,
+        "mutations_12m": 121,
+        "prix_terrain_nu": {
+            "motif": null,
+            "seuil_n": 10,
+            "par_zone": {
+                "U": {
+                    "n": 262,
+                    "calculable": true,
+                    "median_eur_m2": 371
+                },
+                "AU": {
+                    "n": 4,
+                    "motif": "n < 10",
+                    "calculable": false
+                }
+            },
+            "etiquette": "Sourcé · millésime DVF terrain · zonage calibré",
+            "calculable": true
+        },
+        "repartition_zonage": {
+            "base": "surface",
+            "familles": {
+                "A": {
+                    "n": 35,
+                    "ha": 66,
+                    "pct": 4.7
+                },
+                "N": {
+                    "n": 28,
+                    "ha": 117,
+                    "pct": 8.3
+                },
+                "U": {
+                    "n": 10066,
+                    "ha": 1023,
+                    "pct": 72.8
+                },
+                "AU": {
+                    "n": 148,
+                    "ha": 199,
+                    "pct": 14.2
+                }
+            },
+            "total_ha": 1405
+        },
+        "stock_opportunites": {
+            "n": 21,
+            "ha": 8
+        }
+    },
+    "qualite": {
+        "insee": "97407",
+        "rr_ile": 6.73,
+        "source": "audit RR fold 2025 (out-of-sample) · mesure seule",
+        "commune": "Le Port",
+        "fragile": false,
+        "libelle": "Le Port : pouvoir discriminant RR 16.1 mesuré sur 10 114 parcelles (robuste, ≥ 5 ventes dans le haut du classement) — île ~6,7.",
+        "degradee": false,
+        "rr_intra": 16.1,
+        "rr_ile_dit": "~6,7",
+        "echantillon": 10114,
+        "taux_base_pct": 1.84
+    },
+    "risques": {
+        "source": "DEAL Réunion — PPR / aléas (zones PPR, aléa mouvement de terrain) · GASPAR (arrêtés CatNat, AZI/TRI) · BD TOPO (Parc National).",
+        "azi_tri": {
+            "azi": [
+                {
+                    "dates": {
+                        "date_diffusion": "23/03/2004",
+                        "date_fin_programmation": "23/03/2004",
+                        "date_debut_programmation": "23/03/2004"
+                    },
+                    "libelle": "Cirque de Mafate",
+                    "risques": "Inondation",
+                    "type_doc": "azi",
+                    "bassin_risques": "Cirque de Mafate",
+                    "date_diffusion": "23/03/2004"
+                }
+            ],
+            "tri": [
+            ]
+        },
+        "ppr_pct": 8.2,
+        "catnat_detail": [
+            {
+                "date_fin": "2024-01-15",
+                "date_debut": "2024-01-13",
+                "type_peril": "Chocs Mécaniques liés à l'action des Vagues",
+                "date_arrete": "2024-01-19",
+                "code_national": "IOME2401804A",
+                "date_publication_jo": "23/01/2024"
+            },
+            {
+                "date_fin": "2024-01-15",
+                "date_debut": "2024-01-13",
+                "type_peril": "Inondations et/ou Coulées de Boue",
+                "date_arrete": "2024-01-19",
+                "code_national": "IOME2401804A",
+                "date_publication_jo": "23/01/2024"
+            },
+            {
+                "date_fin": "2022-02-04",
+                "date_debut": "2022-02-02",
+                "type_peril": "Inondations et/ou Coulées de Boue",
+                "date_arrete": "2022-02-09",
+                "code_national": "INTE2204344A",
+                "date_publication_jo": "13/02/2022"
+            },
+            {
+                "date_fin": "2014-01-03",
+                "date_debut": "2014-01-02",
+                "type_peril": "Chocs Mécaniques liés à l'action des Vagues",
+                "date_arrete": "2014-05-13",
+                "code_national": "INTE1409887A",
+                "date_publication_jo": "18/05/2014"
+            },
+            {
+                "date_fin": "2014-01-03",
+                "date_debut": "2014-01-02",
+                "type_peril": "Inondations et/ou Coulées de Boue",
+                "date_arrete": "2014-01-17",
+                "code_national": "INTE1401216A",
+                "date_publication_jo": "18/01/2014"
+            },
+            {
+                "date_fin": "2007-02-28",
+                "date_debut": "2007-02-23",
+                "type_peril": "Chocs Mécaniques liés à l'action des Vagues",
+                "date_arrete": "2007-03-23",
+                "code_national": "INTE0700250A",
+                "date_publication_jo": "28/03/2007"
+            },
+            {
+                "date_fin": "2002-01-23",
+                "date_debut": "2002-01-22",
+                "type_peril": "Vents Cycloniques",
+                "date_arrete": "2002-02-05",
+                "code_national": "INTE0200056A",
+                "date_publication_jo": "08/02/2002"
+            },
+            {
+                "date_fin": "1994-02-12",
+                "date_debut": "1994-02-10",
+                "type_peril": "Inondations et/ou Coulées de Boue",
+                "date_arrete": "1994-04-12",
+                "code_national": "INTE9400172A",
+                "date_publication_jo": "23/04/1994"
+            },
+            {
+                "date_fin": "1993-01-20",
+                "date_debut": "1993-01-18",
+                "type_peril": "Chocs Mécaniques liés à l'action des Vagues",
+                "date_arrete": "1993-05-18",
+                "code_national": "INTE9300213A",
+                "date_publication_jo": "12/06/1993"
+            },
+            {
+                "date_fin": "1993-01-20",
+                "date_debut": "1993-01-18",
+                "type_peril": "Mouvement de Terrain",
+                "date_arrete": "1993-05-18",
+                "code_national": "INTE9300213A",
+                "date_publication_jo": "12/06/1993"
+            },
+            {
+                "date_fin": "1993-01-20",
+                "date_debut": "1993-01-18",
+                "type_peril": "Inondations et/ou Coulées de Boue",
+                "date_arrete": "1993-05-18",
+                "code_national": "INTE9300213A",
+                "date_publication_jo": "12/06/1993"
+            }
+        ],
+        "parc_national": true,
+        "catnat_arretes": 11,
+        "mouvement_terrain_pct": 7.0
+    },
+    "signaux": [
+    ],
+    "epci_nom": "Territoire de la Côte Ouest",
+    "fiscalite": {
+        "lignes": [
+            {
+                "label": "Taxe foncière (bâti)",
+                "ligne": "Taxe foncière (bâti) — part communale 47,43 % · TEOM 16,00 % · hors part départementale et taxes spéciales",
+                "detail": "part communale 47,43 % · TEOM 16,00 % · hors part départementale et taxes spéciales"
+            },
+            {
+                "label": "Taxe foncière (non bâti)",
+                "ligne": "Taxe foncière (non bâti) — part communale 30,17 % · hors part départementale et taxes spéciales",
+                "detail": "part communale 30,17 % · hors part départementale et taxes spéciales"
+            }
+        ],
+        "maj_at": "2026-09-14T16:32:17.600926+04:00",
+        "perime": false,
+        "source": "DGFiP — fichier REI (impositions primitives)",
+        "teom_pct": 16.0,
+        "millesime": "REI 2025 (impositions primitives)",
+        "tfpb_epci_pct": 0.0,
+        "tfpnb_epci_pct": 1.43,
+        "tfpb_commune_pct": 47.43,
+        "tfpnb_commune_pct": 30.17
+    },
+    "zfang_frr": {
+        "frr": {
+            "lien": "https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000049746820",
+            "libelle": "Commune hors zone (non classée).",
+            "classement": "hors",
+            "source_ref": "ZSAR 1978 · FRR 01/07/2024 · réf. ZRR 2017 (Région)"
+        },
+        "zfang": {
+            "lien": "https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000054153903",
+            "regime": "standard",
+            "libelle": "Régime standard (ZFANG, art. 44 quaterdecies CGI) — sous réserve d'éligibilité de l'activité, abattement d'environ 50 % sur les bénéfices — à confirmer auprès d'un fiscaliste.",
+            "source_ref": "Décret n° 2026-421 du 29 mai 2026 (LF 2026, art. 18)"
+        },
+        "avertissement": "Fait territorial sourcé et daté. Les taux cités sont les taux LÉGAUX du dispositif (décret / CGI), pas un calcul de votre avantage : l'éligibilité et l'effet réel relèvent de votre expert-comptable ou avocat fiscaliste."
+    },
+    "classement": {
+        "source": "Classement servi LABUSE (tiers brûlante + chaude) — recalculé à chaque bascule, jamais figé",
+        "libelle": "21 parcelles brûlantes ou chaudes au classement servi",
+        "dossiers": 7,
+        "tiers_hauts": 21
+    },
+    "comparable": {
+        "source": "DVF (baromètre commune entière) + SITADEL (autorisations et délais d'instruction) — même moteur que le comparateur des 24 communes.",
+        "ancien_n": 510,
+        "permis_5a": 383,
+        "neuf_eur_m2": null,
+        "delai_median_mois": 8.0,
+        "ancien_median_eur_m2": 1943,
+        "stock_opportunites_n": 21
+    },
+    "plu_statut": {
+        "source": "Sudocuh 31/12/2024 (aucune procédure lourde)",
+        "statut": "à jour",
+        "libelle": "aucune",
+        "confiance": "SOURCE",
+        "procedure": "aucune",
+        "date_reglement": null,
+        "procedure_sudocuh": {
+            "etat": "PLU approuvé - aucune procédure en cours - Compétence commune",
+            "document": "Aucun",
+            "millesime": "31/12/2024",
+            "prescription": null
+        },
+        "recherche_verbatim": true
+    },
+    "population": {
+        "source": "INSEE — population municipale légale (recensement, via Sudocuh) · INSEE RP (ménages, logements) · INSEE Filosofi (niveau de vie).",
+        "menages": 12757,
+        "vacants": 567,
+        "habitants": 33969,
+        "logements": 13426,
+        "quartiers": {
+            "n_iris": 16,
+            "source": "INSEE RP2022 par IRIS — l'affinage par quartier de la vérité communale",
+            "vacance_max_pct": 17.1,
+            "vacance_min_pct": 0.0,
+            "vacance_mediane_pct": 4.4
+        },
+        "vacance_pct": 4.2,
+        "parc_ancien_pct": 55.3,
+        "menages_millesime": "RP 2023 (exploitation principale, géographie 01/01/2026)",
+        "habitants_etiquette": "Population légale 2023 (INSEE)",
+        "habitants_millesime": "2023",
+        "habitants_pop_totale": null,
+        "niveau_vie_moyen_eur": 17288
+    },
+    "zonage_abc": {
+        "zone": "B1",
+        "source": "DHUP — zonage ABC (arrêté du 1er août 2014 modifié, D. 304-1 CCH)",
+        "millesime": "arrêté du 23/06/2026 — en vigueur 26/06/2026"
+    },
+    "parc_social": {
+        "source": "SDES — Répertoire des logements locatifs sociaux (RPLS)",
+        "logements": 7203,
+        "millesime": "RPLS 01/01/2025",
+        "construct_median": 1993
+    },
+    "permis_bloc": {
+        "source": "SITADEL (autorisations) · SITADEL — délais d'instruction · permis au point mort (36 mois sans DAACT, run servi).",
+        "permis_5a": 383,
+        "permis_12m": 64,
+        "point_mort": 299,
+        "logements_12m": 38,
+        "permis_type_12m": {
+            "DP": 5,
+            "PC": 47,
+            "PD": 11
+        },
+        "delai_median_mois": 8.0,
+        "permis_annules_12m": 1
+    },
+    "densifiables": {
+        "source": "Analyse LABUSE · run servi",
+        "parcelles": 3265,
+        "sdp_residuelle_m2": 3991529
+    },
+    "marche_annonces": {
+        "biens": 0,
+        "source": "Radar LABUSE (annonces relevées) · écart mesuré contre le baromètre DVF commune entière.",
+        "seuil_n": 5,
+        "sous_seuil": true,
+        "prix_demande_n": 3,
+        "demande_seuil_n": 5,
+        "prix_acte_eur_m2": 1943,
+        "derniere_collecte": "2026-10-29",
+        "demande_sous_seuil": false,
+        "ecart_demande_acte_pct": null,
+        "prix_demande_median_eur_m2": null
+    },
+    "taxe_amenagement": {
+        "perime": false,
+        "source": "DGFiP — taxe d'aménagement (application DELTA), délibération communale",
+        "millesime": "Taux communal en vigueur depuis le 01/01/2025 (délibération communale)",
+        "delib_date": "2025-01-01",
+        "part_communale_pct": 3.0
+    },
+    "prix_neuf_observe": null
+}
