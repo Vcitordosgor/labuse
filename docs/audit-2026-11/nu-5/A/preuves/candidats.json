@@ -1,0 +1,748 @@
+{
+ "nue_zone_U": [
+  {
+   "idu": "97407000BB0009",
+   "commune": "Le Port",
+   "surface_m2": 2998.346369051395,
+   "zone_lib": "Uc",
+   "taux_emprise_pct": 0,
+   "sdp_residuelle_m2": 3194
+  },
+  {
+   "idu": "97415000CK0369",
+   "commune": "Saint-Paul",
+   "surface_m2": 2997.1633728777156,
+   "zone_lib": "U6c",
+   "taux_emprise_pct": 0,
+   "sdp_residuelle_m2": 2021
+  },
+  {
+   "idu": "97416000EI1048",
+   "commune": "Saint-Pierre",
+   "surface_m2": 2994.7921079974085,
+   "zone_lib": "Ud",
+   "taux_emprise_pct": 0,
+   "sdp_residuelle_m2": 4043
+  },
+  {
+   "idu": "97410000BX0093",
+   "commune": "Saint-Benoît",
+   "surface_m2": 2994.263235892384,
+   "zone_lib": "Ub",
+   "taux_emprise_pct": 0,
+   "sdp_residuelle_m2": 1718
+  },
+  {
+   "idu": "97421000AL0603",
+   "commune": "Salazie",
+   "surface_m2": 2993.0527204071814,
+   "zone_lib": "UB",
+   "taux_emprise_pct": 0,
+   "sdp_residuelle_m2": 3393
+  }
+ ],
+ "batie_saturee": [
+  {
+   "idu": "97411000AY0015",
+   "commune": "Saint-Denis",
+   "surface_m2": 6794.411749953527,
+   "zone_lib": "Uvl",
+   "taux_emprise_pct": 19569,
+   "sdp_residuelle_m2": 0,
+   "capacite_estimee": false
+  },
+  {
+   "idu": "97411000AY0338",
+   "commune": "Saint-Denis",
+   "surface_m2": 3495.7159919330365,
+   "zone_lib": "Uvl",
+   "taux_emprise_pct": 7765,
+   "sdp_residuelle_m2": 0,
+   "capacite_estimee": false
+  },
+  {
+   "idu": "97411000CY0250",
+   "commune": "Saint-Denis",
+   "surface_m2": 3369.9293074125403,
+   "zone_lib": "Uh",
+   "taux_emprise_pct": 6285,
+   "sdp_residuelle_m2": 0,
+   "capacite_estimee": false
+  },
+  {
+   "idu": "97410000AE1192",
+   "commune": "Saint-Benoît",
+   "surface_m2": 450.75337521886195,
+   "zone_lib": "Ub",
+   "taux_emprise_pct": 5449,
+   "sdp_residuelle_m2": 0,
+   "capacite_estimee": true
+  },
+  {
+   "idu": "97402000AK0306",
+   "commune": "Bras-Panon",
+   "surface_m2": 1473.0904834256937,
+   "zone_lib": "Uba",
+   "taux_emprise_pct": 5412,
+   "sdp_residuelle_m2": 0,
+   "capacite_estimee": true
+  }
+ ],
+ "batie_reste_constructible": [
+  {
+   "idu": "97415000AD0044",
+   "commune": "Saint-Paul",
+   "surface_m2": 76788.67256731956,
+   "zone_lib": "U1pso",
+   "taux_emprise_pct": 22,
+   "sdp_residuelle_m2": 197925
+  },
+  {
+   "idu": "97416000CR0845",
+   "commune": "Saint-Pierre",
+   "surface_m2": 609613.3936842863,
+   "zone_lib": "Uemi",
+   "taux_emprise_pct": 13,
+   "sdp_residuelle_m2": 197766
+  },
+  {
+   "idu": "97407000AZ0163",
+   "commune": "Le Port",
+   "surface_m2": 240600.96213994225,
+   "zone_lib": "Uv",
+   "taux_emprise_pct": 15,
+   "sdp_residuelle_m2": 173781
+  },
+  {
+   "idu": "97418000AY0381",
+   "commune": "Sainte-Marie",
+   "surface_m2": 105834.35753386171,
+   "zone_lib": "UA",
+   "taux_emprise_pct": 19,
+   "sdp_residuelle_m2": 159919
+  },
+  {
+   "idu": "97422000BT1137",
+   "commune": "Le Tampon",
+   "surface_m2": 104086.46543286637,
+   "zone_lib": "Ua",
+   "taux_emprise_pct": 40,
+   "sdp_residuelle_m2": 143993
+  }
+ ],
+ "pente_forte": [
+  {
+   "idu": "97403000AV0009",
+   "commune": "Entre-Deux",
+   "surface_m2": 2647.3193425493923,
+   "pente_moy_deg": 65.8,
+   "pente_max_deg": 76.6,
+   "flag_terrassement_lourd": true
+  },
+  {
+   "idu": "97403000AL0241",
+   "commune": "Entre-Deux",
+   "surface_m2": 1530.8240484673904,
+   "pente_moy_deg": 64.1,
+   "pente_max_deg": 81.0,
+   "flag_terrassement_lourd": true
+  },
+  {
+   "idu": "97403000AV0254",
+   "commune": "Entre-Deux",
+   "surface_m2": 862.9673790726387,
+   "pente_moy_deg": 64.0,
+   "pente_max_deg": 80.5,
+   "flag_terrassement_lourd": true
+  },
+  {
+   "idu": "97424000AD0002",
+   "commune": "Cilaos",
+   "surface_m2": 2440.6971408201007,
+   "pente_moy_deg": 63.0,
+   "pente_max_deg": 75.7,
+   "flag_terrassement_lourd": true
+  },
+  {
+   "idu": "97403000AS0283",
+   "commune": "Entre-Deux",
+   "surface_m2": 1786.1274673392948,
+   "pente_moy_deg": 62.9,
+   "pente_max_deg": 75.4,
+   "flag_terrassement_lourd": true
+  }
+ ],
+ "deux_zones_plu": [
+  {
+   "idu": "97410000AY0201",
+   "commune": "Saint-Benoît",
+   "surface_m2": 7999.972263739168,
+   "nz": 2,
+   "zones": "A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles | Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la protection de la biodiversite"
+  },
+  {
+   "idu": "97422000CM0471",
+   "commune": "Le Tampon",
+   "surface_m2": 7999.731379614706,
+   "nz": 2,
+   "zones": "A | Nco"
+  },
+  {
+   "idu": "97411000CX1364",
+   "commune": "Saint-Denis",
+   "surface_m2": 7998.375067026433,
+   "nz": 2,
+   "zones": "A : Zone correspond à l'espace agricole avec un objectif de protection forte | Ac : Secteur de taille et de capacité d'accueil limitée, qui correspond à une stricte délimitation des constructions existantes stricte délimitation des constructions existantes"
+  },
+  {
+   "idu": "97416000ET1404",
+   "commune": "Saint-Pierre",
+   "surface_m2": 7998.353913182224,
+   "nz": 2,
+   "zones": "Zone liée aux espaces de parcs où une valorisation sportive et culturelle est autorisée | Zone urbaine mixte de faible densité"
+  },
+  {
+   "idu": "97416000EP0120",
+   "commune": "Saint-Pierre",
+   "surface_m2": 7997.793369658851,
+   "nz": 2,
+   "zones": "Zone agricole | Zone correspondant aux coupures d'urbanisation au sens de la Loi Littoral"
+  },
+  {
+   "idu": "97416000CS0134",
+   "commune": "Saint-Pierre",
+   "surface_m2": 7997.670826204779,
+   "nz": 2,
+   "zones": "Zone agricole | Zone correspondant aux coupures d'urbanisation au sens de la Loi Littoral"
+  }
+ ],
+ "deux_communes": [
+  {
+   "idu": "97404000AC0006",
+   "commune": "L'Étang-Salé",
+   "surface_m2": 2082.6431808578754,
+   "autre": "Les Avirons",
+   "dist_m": "0.00"
+  },
+  {
+   "idu": "97404000AC0010",
+   "commune": "L'Étang-Salé",
+   "surface_m2": 1728.4706595788261,
+   "autre": "Les Avirons",
+   "dist_m": "0.00"
+  },
+  {
+   "idu": "97404000AC0009",
+   "commune": "L'Étang-Salé",
+   "surface_m2": 2329.732996968431,
+   "autre": "Les Avirons",
+   "dist_m": "0.00"
+  },
+  {
+   "idu": "97404000AC1003",
+   "commune": "L'Étang-Salé",
+   "surface_m2": 5420.064497878172,
+   "autre": "Les Avirons",
+   "dist_m": "0.00"
+  },
+  {
+   "idu": "97404000AC1072",
+   "commune": "L'Étang-Salé",
+   "surface_m2": 2581.8821805805974,
+   "autre": "Les Avirons",
+   "dist_m": "0.00"
+  },
+  {
+   "idu": "97404000AC1004",
+   "commune": "L'Étang-Salé",
+   "surface_m2": 4157.468986813799,
+   "autre": "Les Avirons",
+   "dist_m": "0.00"
+  }
+ ],
+ "ppr_rouge_partielle": [
+  {
+   "ERREUR": "(psycopg.errors.InternalError_) lwgeom_intersection_prec: GEOS Error: InterruptedException: Interrupted!\n[SQL: \n   WITH inter AS (\n     SELECT p.id, p.idu, p.commune, p.surface_m2, ST_Area(p.geom_2975"
+  }
+ ],
+ "ppr_bleue": [
+  {
+   "ERREUR": "(psycopg.errors.InternalError_) lwgeom_intersection_prec: GEOS Error: InterruptedException: Interrupted!\n[SQL: \n   WITH inter AS (\n     SELECT p.id, p.idu, p.commune, p.surface_m2, ST_Area(p.geom_2975"
+  }
+ ],
+ "minuscule": [
+  {
+   "idu": "97416000EK0429",
+   "commune": "Saint-Pierre",
+   "surface_m2": 4.9420907406124925,
+   "contenance_m2": 6,
+   "zone_fam": "U"
+  },
+  {
+   "idu": "97413000DD1338",
+   "commune": "Saint-Leu",
+   "surface_m2": 6.134924686015711,
+   "contenance_m2": 6,
+   "zone_fam": "U"
+  },
+  {
+   "idu": "97414000DI0892",
+   "commune": "Saint-Louis",
+   "surface_m2": 6.3285245818111315,
+   "contenance_m2": 6,
+   "zone_fam": "U"
+  },
+  {
+   "idu": "97403000AS1138",
+   "commune": "Entre-Deux",
+   "surface_m2": 14.806570097683563,
+   "contenance_m2": 6,
+   "zone_fam": "U"
+  },
+  {
+   "idu": "97414000DI0893",
+   "commune": "Saint-Louis",
+   "surface_m2": 5.77510313053982,
+   "contenance_m2": 6,
+   "zone_fam": "U"
+  },
+  {
+   "idu": "97422000DO0840",
+   "commune": "Le Tampon",
+   "surface_m2": 6.462615729039247,
+   "contenance_m2": 6,
+   "zone_fam": "A"
+  }
+ ],
+ "geante": [
+  {
+   "idu": "97417000BN0004",
+   "commune": "Saint-Philippe",
+   "surface_m2": 28174867.973611657,
+   "contenance_m2": 27506974,
+   "zone_fam": null
+  },
+  {
+   "idu": "97422000AC0004",
+   "commune": "Le Tampon",
+   "surface_m2": 13518225.73124748,
+   "contenance_m2": 13617550,
+   "zone_fam": "N"
+  },
+  {
+   "idu": "97418000AM0010",
+   "commune": "Sainte-Marie",
+   "surface_m2": 12074798.443408905,
+   "contenance_m2": 12125000,
+   "zone_fam": "N"
+  },
+  {
+   "idu": "97419000BC0006",
+   "commune": "Sainte-Rose",
+   "surface_m2": 11820451.122440008,
+   "contenance_m2": 11824875,
+   "zone_fam": "N"
+  },
+  {
+   "idu": "97406000AX0069",
+   "commune": "La Plaine-des-Palmistes",
+   "surface_m2": 10405126.35633135,
+   "contenance_m2": 10411750,
+   "zone_fam": "N"
+  },
+  {
+   "idu": "97402000AS0002",
+   "commune": "Bras-Panon",
+   "surface_m2": 10097132.608235952,
+   "contenance_m2": 10125250,
+   "zone_fam": "N"
+  },
+  {
+   "idu": "97413000AE0022",
+   "commune": "Saint-Leu",
+   "surface_m2": 10017350.121550461,
+   "contenance_m2": 10034250,
+   "zone_fam": "N"
+  },
+  {
+   "idu": "97402000AS0005",
+   "commune": "Bras-Panon",
+   "surface_m2": 8538899.2535904,
+   "contenance_m2": 8563500,
+   "zone_fam": "N"
+  }
+ ],
+ "copropriete": [
+  {
+   "idu": "97411000ES0054",
+   "commune": "Saint-Denis",
+   "surface_m2": 889.3869392262873,
+   "nom_usage": "LES TOURTEREAUX",
+   "nb_lots_total": 860
+  },
+  {
+   "idu": "97411000ID0002",
+   "commune": "Saint-Denis",
+   "surface_m2": 2555.6175754411424,
+   "nom_usage": "LES JARDINS DE LA ROSERAIE",
+   "nb_lots_total": 765
+  },
+  {
+   "idu": "97411000BH0048",
+   "commune": "Saint-Denis",
+   "surface_m2": 1934.7452678377495,
+   "nom_usage": "OISEAU DU PARADIS",
+   "nb_lots_total": 529
+  },
+  {
+   "idu": "97409000AP1537",
+   "commune": "Saint-André",
+   "surface_m2": 496.97427312147295,
+   "nom_usage": "DOMAINE DE LA VANILLE",
+   "nb_lots_total": 504
+  },
+  {
+   "idu": "97416000DN0232",
+   "commune": "Saint-Pierre",
+   "surface_m2": 354.86348919410153,
+   "nom_usage": "LES PORTES DU LAGON",
+   "nb_lots_total": 461
+  },
+  {
+   "idu": "97409000AE0571",
+   "commune": "Saint-André",
+   "surface_m2": 9080.847370853538,
+   "nom_usage": "LES SERINS",
+   "nb_lots_total": 439
+  },
+  {
+   "idu": "97411000AC0204",
+   "commune": "Saint-Denis",
+   "surface_m2": 10511.289808807322,
+   "nom_usage": "JARDINS DE LA PLAGE",
+   "nb_lots_total": 424
+  },
+  {
+   "idu": "97422000CE0129",
+   "commune": "Le Tampon",
+   "surface_m2": 198.6890039405892,
+   "nom_usage": "LE FLEMMING",
+   "nb_lots_total": 403
+  }
+ ],
+ "littoral": [
+  {
+   "idu": "97412000BW0702",
+   "commune": "Saint-Joseph",
+   "surface_m2": 19996.139829864842
+  },
+  {
+   "idu": "97415000HK0117",
+   "commune": "Saint-Paul",
+   "surface_m2": 19961.580082004137
+  },
+  {
+   "idu": "97404000AN0305",
+   "commune": "L'Étang-Salé",
+   "surface_m2": 19934.30947974782
+  },
+  {
+   "idu": "97409000AB0672",
+   "commune": "Saint-André",
+   "surface_m2": 19907.488093290263
+  },
+  {
+   "idu": "97409000AS0135",
+   "commune": "Saint-André",
+   "surface_m2": 19888.23720890123
+  },
+  {
+   "idu": "97413000CK0253",
+   "commune": "Saint-Leu",
+   "surface_m2": 19855.498657857177
+  }
+ ],
+ "au_ouverte": [
+  {
+   "idu": "97415000HK0117",
+   "commune": "Saint-Paul",
+   "surface_m2": 19961.580082004137,
+   "zone_lib": "AU2h",
+   "classe": "conditionnelle_operation"
+  },
+  {
+   "idu": "97415000HK0566",
+   "commune": "Saint-Paul",
+   "surface_m2": 19936.30097159406,
+   "zone_lib": "AU2h",
+   "classe": "conditionnelle_operation"
+  },
+  {
+   "idu": "97415000HN0015",
+   "commune": "Saint-Paul",
+   "surface_m2": 19856.1320415848,
+   "zone_lib": "AU1est",
+   "classe": "conditionnelle_operation"
+  },
+  {
+   "idu": "97407000BI0445",
+   "commune": "Le Port",
+   "surface_m2": 19824.0082660134,
+   "zone_lib": "1AUs",
+   "classe": "conditionnelle_operation"
+  },
+  {
+   "idu": "97416000CR0016",
+   "commune": "Saint-Pierre",
+   "surface_m2": 19823.903637967,
+   "zone_lib": "AU0c-1",
+   "classe": "conditionnelle_operation"
+  },
+  {
+   "idu": "97407000BA0316",
+   "commune": "Le Port",
+   "surface_m2": 19709.074780487736,
+   "zone_lib": "1AUc",
+   "classe": "conditionnelle_operation"
+  }
+ ],
+ "au_fermee": [
+  {
+   "idu": "97411000IY0079",
+   "commune": "Saint-Denis",
+   "surface_m2": 18997.017839062857,
+   "zone_lib": "AUx",
+   "classe": "declasse_au_fermee"
+  },
+  {
+   "idu": "97411000IY0081",
+   "commune": "Saint-Denis",
+   "surface_m2": 18721.212456512385,
+   "zone_lib": "AUx",
+   "classe": "declasse_au_fermee"
+  },
+  {
+   "idu": "97410000AD0552",
+   "commune": "Saint-Benoît",
+   "surface_m2": 17526.501371348713,
+   "zone_lib": "AUp1",
+   "classe": "declasse_au_fermee"
+  },
+  {
+   "idu": "97406000AV0237",
+   "commune": "La Plaine-des-Palmistes",
+   "surface_m2": 15069.931115997497,
+   "zone_lib": "AUs2",
+   "classe": "declasse_au_fermee"
+  },
+  {
+   "idu": "97406000AT0021",
+   "commune": "La Plaine-des-Palmistes",
+   "surface_m2": 15039.033298966273,
+   "zone_lib": "AUs1",
+   "classe": "declasse_au_fermee"
+  },
+  {
+   "idu": "97411000IX0011",
+   "commune": "Saint-Denis",
+   "surface_m2": 14410.283333772164,
+   "zone_lib": "AUx",
+   "classe": "declasse_au_fermee"
+  }
+ ],
+ "zone_A": [
+  {
+   "idu": "97422000AR0643",
+   "commune": "Le Tampon",
+   "surface_m2": 29996.109249562134,
+   "zone_lib": "A"
+  },
+  {
+   "idu": "97418000AI0533",
+   "commune": "Sainte-Marie",
+   "surface_m2": 29990.79652431655,
+   "zone_lib": "A"
+  },
+  {
+   "idu": "97418000AT1767",
+   "commune": "Sainte-Marie",
+   "surface_m2": 29990.017930218997,
+   "zone_lib": "A"
+  },
+  {
+   "idu": "97410000BD0300",
+   "commune": "Saint-Benoît",
+   "surface_m2": 29989.64832167611,
+   "zone_lib": "Acu"
+  },
+  {
+   "idu": "97407000AY0123",
+   "commune": "Le Port",
+   "surface_m2": 29971.43824399924,
+   "zone_lib": "A"
+  },
+  {
+   "idu": "97413000BM0161",
+   "commune": "Saint-Leu",
+   "surface_m2": 29961.240582077295,
+   "zone_lib": "APF"
+  }
+ ],
+ "zone_N": [
+  {
+   "idu": "97421000BE0062",
+   "commune": "Salazie",
+   "surface_m2": 29996.069469086502,
+   "zone_lib": "Npnr"
+  },
+  {
+   "idu": "97419000AZ0021",
+   "commune": "Sainte-Rose",
+   "surface_m2": 29986.560827861245,
+   "zone_lib": "Npnr"
+  },
+  {
+   "idu": "97418000BK0025",
+   "commune": "Sainte-Marie",
+   "surface_m2": 29979.935864501862,
+   "zone_lib": "N"
+  },
+  {
+   "idu": "97401000AC0698",
+   "commune": "Les Avirons",
+   "surface_m2": 29979.001439830317,
+   "zone_lib": "Npnr"
+  },
+  {
+   "idu": "97410000CI0223",
+   "commune": "Saint-Benoît",
+   "surface_m2": 29966.076584967283,
+   "zone_lib": "N"
+  },
+  {
+   "idu": "97423000AB0095",
+   "commune": "Les Trois-Bassins",
+   "surface_m2": 29958.879434653398,
+   "zone_lib": "Nco"
+  }
+ ],
+ "sans_adresse": [
+  {
+   "idu": "97407000BB0009",
+   "commune": "Le Port",
+   "surface_m2": 2998.346369051395,
+   "zone_fam": "U"
+  },
+  {
+   "idu": "97407000BA0202",
+   "commune": "Le Port",
+   "surface_m2": 2998.315157901803,
+   "zone_fam": "U"
+  },
+  {
+   "idu": "97415000CK0369",
+   "commune": "Saint-Paul",
+   "surface_m2": 2997.1633728777156,
+   "zone_fam": "U"
+  },
+  {
+   "idu": "97416000EI1048",
+   "commune": "Saint-Pierre",
+   "surface_m2": 2994.7921079974085,
+   "zone_fam": "U"
+  },
+  {
+   "idu": "97410000BX0093",
+   "commune": "Saint-Benoît",
+   "surface_m2": 2994.263235892384,
+   "zone_fam": "U"
+  },
+  {
+   "idu": "97409000AC0015",
+   "commune": "Saint-André",
+   "surface_m2": 2993.914284994023,
+   "zone_fam": "U"
+  }
+ ],
+ "sans_proprio_connu": [
+  {
+   "idu": "97415000DP0043",
+   "commune": "Saint-Paul",
+   "surface_m2": 1999.9695293904783,
+   "zone_fam": "U"
+  },
+  {
+   "idu": "97404000AH0453",
+   "commune": "L'Étang-Salé",
+   "surface_m2": 1999.9082436165534,
+   "zone_fam": "U"
+  },
+  {
+   "idu": "97420000BE0704",
+   "commune": "Sainte-Suzanne",
+   "surface_m2": 1999.8242430634223,
+   "zone_fam": "U"
+  },
+  {
+   "idu": "97411000HM0027",
+   "commune": "Saint-Denis",
+   "surface_m2": 1999.6919651962962,
+   "zone_fam": "U"
+  },
+  {
+   "idu": "97413000CI0394",
+   "commune": "Saint-Leu",
+   "surface_m2": 1999.5182990576168,
+   "zone_fam": "U"
+  },
+  {
+   "idu": "97422000BW1426",
+   "commune": "Le Tampon",
+   "surface_m2": 1999.4471528835804,
+   "zone_fam": "U"
+  }
+ ],
+ "sans_vente_voisinage": [
+  {
+   "ERREUR": "(psycopg.errors.UndefinedColumn) column dm.idu does not exist\nLINE 4:    LEFT JOIN dvf_mutations_parcelle dm ON dm.idu=p.idu\n                                                  ^\nHINT:  Perhaps you mean"
+  }
+ ],
+ "monument_historique": [
+  {
+   "idu": "97418000BD0016",
+   "commune": "Sainte-Marie",
+   "surface_m2": 9407.03883569387,
+   "subtype": "ac1"
+  },
+  {
+   "idu": "97418000BD0016",
+   "commune": "Sainte-Marie",
+   "surface_m2": 9407.03883569387,
+   "subtype": "ac1"
+  },
+  {
+   "idu": "97407000AH0580",
+   "commune": "Le Port",
+   "surface_m2": 9122.809565650232,
+   "subtype": "ac1"
+  },
+  {
+   "idu": "97418000AC0654",
+   "commune": "Sainte-Marie",
+   "surface_m2": 9102.145322259164,
+   "subtype": "ac1"
+  },
+  {
+   "idu": "97418000AD0276",
+   "commune": "Sainte-Marie",
+   "surface_m2": 9079.733524539866,
+   "subtype": "ac1"
+  },
+  {
+   "idu": "97418000AD0276",
+   "commune": "Sainte-Marie",
+   "surface_m2": 9079.733524539866,
+   "subtype": "ac1"
+  }
+ ]
+}

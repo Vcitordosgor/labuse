@@ -1,0 +1,22 @@
+{
+ "nue_zone_U":            {"idu": "97416000EI1048", "commune": "Saint-Pierre",  "preuve": "zone Ud, taux_emprise 0, sdp_residuelle 4043 m2"},
+ "batie_saturee":         {"idu": "97414000CT1094", "commune": "Saint-Louis",   "preuve": "zone UD, taux_emprise 100%, sdp_residuelle 0, capacite_estimee false, 734 m2"},
+ "batie_reste_constructible": {"idu": "97422000EH0128", "commune": "Le Tampon", "preuve": "zone Uc, taux_emprise 41%, sdp_residuelle 600 m2, 1019 m2"},
+ "pente_forte":           {"idu": "97403000AV0009", "commune": "Entre-Deux",    "preuve": "pente_moy 65.8 deg, pente_max 76.6, flag_terrassement_lourd true"},
+ "deux_zones_plu":        {"idu": "97410000AY0201", "commune": "Saint-Benoit",  "preuve": "recoupe 2 zones PLU distinctes (A | Acor), 8000 m2"},
+ "deux_communes":         {"idu": "97404000AC0006", "commune": "L-Etang-Sale",  "preuve": "parcelle sur la limite communale (dist 0.00 m du territoire Les Avirons)"},
+ "ppr_rouge_partielle":   {"idu": "97407000AV0337", "commune": "Le Port",       "preuve": "PPR zone rouge sur ~60% de la parcelle (labuse_ppr_couleur=rouge), 7983 m2"},
+ "ppr_bleue":             {"idu": "97415000AB0316", "commune": "Saint-Paul",    "preuve": "PPR zone bleue sur ~100% (labuse_ppr_couleur=bleu), 5241 m2"},
+ "minuscule":             {"idu": "97413000DD1338", "commune": "Saint-Leu",     "preuve": "contenance 6 m2 (< 100 m2)"},
+ "geante":                {"idu": "97417000BN0004", "commune": "Saint-Philippe","preuve": "surface 28 174 868 m2 (> 5 ha), zone_fam NULL"},
+ "copropriete":           {"idu": "97411000ES0054", "commune": "Saint-Denis",   "preuve": "RNIC LES TOURTEREAUX, 860 lots"},
+ "littoral":              {"idu": "97412000BW0702", "commune": "Saint-Joseph",  "preuve": "intersecte la bande des 50 pas geometriques (spatial_layers cinquante_pas), 20000 m2"},
+ "au_ouverte":            {"idu": "97415000HN0015", "commune": "Saint-Paul",    "preuve": "zone AU1est, classe=conditionnelle_operation (ouverte conditionnelle)"},
+ "au_fermee":             {"idu": "97410000AD0552", "commune": "Saint-Benoit",  "preuve": "zone AUp1, parcel_au_statut.classe=declasse_au_fermee"},
+ "zone_A":                {"idu": "97418000AI0533", "commune": "Sainte-Marie",  "preuve": "zone A, 29990 m2"},
+ "zone_N":                {"idu": "97421000BE0062", "commune": "Salazie",       "preuve": "zone Npnr, 29996 m2"},
+ "sans_adresse":          {"idu": "97407000BB0009", "commune": "Le Port",       "preuve": "aucune ligne parcel_adresse (ban_voie absent), zone U"},
+ "sans_proprio_connu":    {"idu": "97420000BE0704", "commune": "Sainte-Suzanne","preuve": "aucune ligne parcelle_personne_morale (proprietaire particulier/non nominatif)"},
+ "sans_vente_voisinage":  {"idu": "97424000AR0021", "commune": "Cilaos",        "preuve": "aucune mutation DVF rattachee (id_parcelle), zone N, 19903 m2 (cirque isole)"},
+ "monument_historique":   {"idu": "97418000BD0016", "commune": "Sainte-Marie",  "preuve": "abords de monument historique (couche SUP ac1), 9407 m2"}
+}
