@@ -1,0 +1,84 @@
+LABUSE           Comparatif
+
+
+
+
+Comparatif
+Deux à trois parcelles côte à côte, sur les lignes de Comparer.
+
+2 parcelles · CO-20261105-0133 · 05/11/2026
+
+
+
+   Comparatif
+                                                      AB 0133                                                                  BZ 1065
+                                                      Salazie                                                                  Saint-Denis
+
+  Surface      sourcé                                 2 266 m²                                                                 1 567 m²
+
+  Zone PLU      sourcé                                N                                                                        Uh
+
+  Classement LABUSE                                   0 · Non retenue · Signal faible                                          D · Faible · Signal faible
+
+  Zone constructible         sourcé                   non                                                                      oui
+
+  SDP maximale réglementaire, terrain                 —                                                                        212 m²
+  libéré    estimé
+
+
+  SDP restante, bâti conservé           estimé        0 m²                                                                     35 m²
+
+  Emprise au sol max (PLU)            sourcé          non réglementée                                                          30 %
+
+  Taux d'occupation du gabarit                                                                                                 40 %
+     estimé
+
+
+  Sous-densité        estimé                          —                                                                        non
+
+
+                                                                                                                                                        Généré via LABUSE
+
+
+
+
+Comparatif indicatif de parcelles établi sur des données publiques. Ni un prix, ni un conseil. Données LABUSE au 21/10/2026.                                        1/2
+                                                      AB 0133                                                                                    BZ 1065
+                                                      Salazie                                                                                    Saint-Denis
+
+  Charge foncière /m² terrain            estimé       —                                                                                          -20 €/m² — Bilan déficitaire : à ces
+                                                                                                                                                 hypothèses, le foncier ne se paie
+                                                                                                                                                 pas
+
+  Prix du terrain (secteur)        estimé             —                                                                                          369 €/m² — 15 ventes
+
+  Prix du bâti (secteur)        estimé                1 848 €/m² — 59 ventes à moins de 1 500 m                                                  2 365 €/m² — 34 ventes à moins
+                                                                                                                                                 de 1 000 m
+
+  Logements possibles                                 voir l'Étude de faisabilité                                                                voir l'Étude de faisabilité
+
+  Bâti existant      sourcé                           —                                                                                          12 % du terrain
+
+  Gabarit max       sourcé                            —                                                                                          R+0
+
+  Accès & réseaux        sourcé                       Viabilisation confirmée par les faits                                                      Viabilisation confirmée par les
+                                                                                                                                                 faits
+
+  Assainissement        estimé                        100 % des logements du secteur ne sont pas raccordés au réseau collectif                   Assainissement non collectif
+
+  Propriétaire     sourcé                             particulier                                                                                particulier
+
+  Contrainte majeure          sourcé                  Domaine public fluvial (DPF à ~2.5 m) — servitude de marchepied de 3,25 m (art. L2131-2    SDP résiduelle 35 m² — rien à
+                                                      CGPPP) : bande grevée d'un passage public, inconstructible ; lit du cours d'eau domanial   construire.
+                                                      inaliénable (arrêté préfectoral n°06-3077 du 21/08/2006).
+
+
+
+
+                                                                                                                                                                         Généré via LABUSE
+
+
+
+
+Comparatif indicatif de parcelles établi sur des données publiques. Ni un prix, ni un conseil. Données LABUSE au 21/10/2026.                                                         2/2
+

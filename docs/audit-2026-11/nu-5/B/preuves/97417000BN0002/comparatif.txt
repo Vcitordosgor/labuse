@@ -1,0 +1,82 @@
+LABUSE           Comparatif
+
+
+
+
+Comparatif
+Deux à trois parcelles côte à côte, sur les lignes de Comparer.
+
+2 parcelles · CO-20261105-0002 · 05/11/2026
+
+
+
+   Comparatif
+                                                      BN 0002                                                                  BZ 1065
+                                                      Saint-Philippe                                                           Saint-Denis
+
+  Surface      sourcé                                 515 500 m²                                                               1 567 m²
+
+  Zone PLU      sourcé                                hors zonage PLU                                                          Uh
+
+  Classement LABUSE                                   NC · Analyse incomplète · Signal faible                                  D · Faible · Signal faible
+
+  Zone constructible         sourcé                   —                                                                        oui
+
+  SDP maximale réglementaire, terrain                 —                                                                        212 m²
+  libéré    estimé
+
+
+  SDP restante, bâti conservé           estimé        — · hors PLU                                                             35 m²
+
+  Emprise au sol max (PLU)            sourcé          non réglementée                                                          30 %
+
+  Taux d'occupation du gabarit                                                                                                 40 %
+     estimé
+
+
+  Sous-densité        estimé                          —                                                                        non
+
+
+                                                                                                                                                            Généré via LABUSE
+
+
+
+
+Comparatif indicatif de parcelles établi sur des données publiques. Ni un prix, ni un conseil. Données LABUSE au 21/10/2026.                                            1/2
+                                                      BN 0002                                                                            BZ 1065
+                                                      Saint-Philippe                                                                     Saint-Denis
+
+  Charge foncière /m² terrain            estimé       —                                                                                  -20 €/m² — Bilan déficitaire : à ces
+                                                                                                                                         hypothèses, le foncier ne se paie pas
+
+  Prix du terrain (secteur)        estimé             —                                                                                  369 €/m² — 15 ventes
+
+  Prix du bâti (secteur)        estimé                2 158 €/m² — 98 ventes à moins de 1 500 m                                          2 365 €/m² — 34 ventes à moins de
+                                                                                                                                         1 000 m
+
+  Logements possibles                                 voir l'Étude de faisabilité                                                        voir l'Étude de faisabilité
+
+  Bâti existant      sourcé                           —                                                                                  12 % du terrain
+
+  Gabarit max       sourcé                            —                                                                                  R+0
+
+  Accès & réseaux        sourcé                       Viabilisation lourde probable                                                      Viabilisation confirmée par les faits
+
+  Assainissement        estimé                        95 % des logements du secteur ne sont pas raccordés au réseau collectif            Assainissement non collectif
+
+  Propriétaire     sourcé                             —                                                                                  particulier
+
+  Contrainte majeure          sourcé                  Espace protégé à protection forte : Réserve biologique — Hauts de Saint-Philippe   SDP résiduelle 35 m² — rien à
+                                                      (des) (réserve biologique, 100 % de la parcelle) — construction exclue (réserve    construire.
+                                                      naturelle / arrêté de protection de biotope).
+
+
+
+
+                                                                                                                                                                       Généré via LABUSE
+
+
+
+
+Comparatif indicatif de parcelles établi sur des données publiques. Ni un prix, ni un conseil. Données LABUSE au 21/10/2026.                                                       2/2
+

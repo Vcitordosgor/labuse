@@ -1,0 +1,80 @@
+LABUSE           Comparatif
+
+
+
+
+Comparatif
+Deux à trois parcelles côte à côte, sur les lignes de Comparer.
+
+2 parcelles · CO-20261105-0893 · 05/11/2026
+
+
+
+   Comparatif
+                                                      AM 0893                                                                  BZ 1065
+                                                      Cilaos                                                                   Saint-Denis
+
+  Surface      sourcé                                 465 m²                                                                   1 567 m²
+
+  Zone PLU      sourcé                                AUb                                                                      Uh
+
+  Classement LABUSE                                   D · Faible · Signal faible                                               D · Faible · Signal faible
+
+  Zone constructible         sourcé                   oui                                                                      oui
+
+  SDP maximale réglementaire, terrain                 209 m²                                                                   212 m²
+  libéré    estimé
+
+
+  SDP restante, bâti conservé           estimé        73 m²                                                                    35 m²
+
+  Emprise au sol max (PLU)            sourcé          50 %                                                                     30 %
+
+  Taux d'occupation du gabarit                        62 %                                                                     40 %
+     estimé
+
+
+  Sous-densité        estimé                          non                                                                      non
+
+
+                                                                                                                                                            Généré via LABUSE
+
+
+
+
+Comparatif indicatif de parcelles établi sur des données publiques. Ni un prix, ni un conseil. Données LABUSE au 21/10/2026.                                            1/2
+                                                      AM 0893                                                                  BZ 1065
+                                                      Cilaos                                                                   Saint-Denis
+
+  Charge foncière /m² terrain            estimé       —                                                                        -20 €/m² — Bilan déficitaire : à ces hypothèses, le foncier ne
+                                                                                                                               se paie pas
+
+  Prix du terrain (secteur)        estimé             132 €/m² — 52 ventes                                                     369 €/m² — 15 ventes
+
+  Prix du bâti (secteur)        estimé                1 840 €/m² — 21 ventes à moins de 500 m                                  2 365 €/m² — 34 ventes à moins de 1 000 m
+
+  Logements possibles                                 voir l'Étude de faisabilité                                              voir l'Étude de faisabilité
+
+  Bâti existant      sourcé                           31 % du terrain                                                          12 % du terrain
+
+  Gabarit max       sourcé                            R+1                                                                      R+0
+
+  Accès & réseaux        sourcé                       Viabilisation confirmée par les faits                                    Viabilisation confirmée par les faits
+
+  Assainissement        estimé                        42 % des logements du secteur ne sont pas raccordés au                   Assainissement non collectif
+                                                      réseau collectif
+
+  Propriétaire     sourcé                             particulier                                                              particulier
+
+  Contrainte majeure          sourcé                  SDP résiduelle 73 m² — rien à construire.                                SDP résiduelle 35 m² — rien à construire.
+
+
+
+
+                                                                                                                                                                                 Généré via LABUSE
+
+
+
+
+Comparatif indicatif de parcelles établi sur des données publiques. Ni un prix, ni un conseil. Données LABUSE au 21/10/2026.                                                                 2/2
+

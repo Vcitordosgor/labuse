@@ -1,0 +1,80 @@
+LABUSE           Comparatif
+
+
+
+
+Comparatif
+Deux à trois parcelles côte à côte, sur les lignes de Comparer.
+
+3 parcelles · CO-20261105-0004 · 05/11/2026
+
+
+
+   Comparatif
+                                                      AB 0004                                                       AB 0020                           AB 0295
+                                                      Saint-Paul                                                    Saint-Paul                        Saint-Paul
+
+  Surface      sourcé                                 647 m²                                                        1 821 m²                          1 226 m²
+
+  Zone PLU      sourcé                                AU1st                                                         AU1st                             AU1e
+
+  Classement LABUSE                                   0 · Non retenue · Signal faible                               0 · Non retenue · Signal faible   0 · Non retenue · Signal faible
+
+  Zone constructible         sourcé                   oui                                                           oui                               oui
+
+  SDP maximale réglementaire, terrain                 —                                                             —                                 834 m²
+  libéré    estimé
+
+
+  SDP restante, bâti conservé           estimé        0 m²                                                          0 m²                              0 m²
+
+  Emprise au sol max (PLU)            sourcé          non réglementée                                               non réglementée                   non réglementée
+
+  Taux d'occupation du gabarit                                                                                                                        95 %
+     estimé
+
+
+  Sous-densité        estimé                          —                                                             —                                 non
+
+  Charge foncière /m² terrain           estimé        —                                                             —                                 115 €/m²
+                                                                                                                                                                        Généré via LABUSE
+
+
+
+
+Comparatif indicatif de parcelles établi sur des données publiques. Ni un prix, ni un conseil. Données LABUSE au 21/10/2026.                                                        1/2
+                                                      AB 0004                                                       AB 0020                                     AB 0295
+                                                      Saint-Paul                                                    Saint-Paul                                  Saint-Paul
+
+  Prix du terrain (secteur)        estimé             272 €/m² — 19 ventes                                          272 €/m² — 19 ventes                        272 €/m² — 19 ventes
+
+  Prix du bâti (secteur)        estimé                3 522 €/m² — 45 ventes à moins de 1 500 m                     3 522 €/m² — 16 ventes à moins de 1 500 m   4 889 €/m² — 1 021 ventes à
+                                                                                                                                                                moins de 1 500 m
+
+  Logements possibles                                 voir l'Étude de faisabilité                                   voir l'Étude de faisabilité                 voir l'Étude de faisabilité
+
+  Bâti existant      sourcé                           —                                                             —                                           48 % du terrain
+
+  Gabarit max       sourcé                            —                                                             —                                           R+2
+
+  Accès & réseaux        sourcé                       Viabilisation lourde probable                                 Viabilisation lourde probable               Viabilisation confirmée par les
+                                                                                                                                                                faits
+
+  Assainissement        estimé                        19 % des logements du secteur ne sont pas                     19 % des logements du secteur ne sont pas   Tout-à-l'égout (collectif)
+                                                      raccordés au réseau collectif                                 raccordés au réseau collectif
+
+  Propriétaire     sourcé                             personne morale                                               personne morale                             personne morale
+
+  Contrainte majeure          sourcé                  Exclue : forêt domaniale (domaine public —                    SDP résiduelle 0 m² — rien à construire.    SDP résiduelle 0 m² — rien à
+                                                      terrain inacquérable).                                                                                    construire.
+
+
+
+
+                                                                                                                                                                                   Généré via LABUSE
+
+
+
+
+Comparatif indicatif de parcelles établi sur des données publiques. Ni un prix, ni un conseil. Données LABUSE au 21/10/2026.                                                                   2/2
+
