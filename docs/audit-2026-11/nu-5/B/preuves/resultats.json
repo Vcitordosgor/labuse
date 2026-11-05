@@ -1,0 +1,2350 @@
+{
+ "97415000BO0852": {
+  "categorie": "batie",
+  "docs": {
+   "dossier": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 255646,
+    "pages": "10",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": true,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "01/01/2022",
+     "01/01/2024",
+     "03/10/2022",
+     "05/11/2026",
+     "05/12/2016",
+     "14/09/2026",
+     "16/10/2025",
+     "17/12/2025",
+     "19/12/2018",
+     "21/10/2026",
+     "25/04/2022",
+     "27/09/2012"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "financier": {
+    "http": 422,
+    "ct": "application/json",
+    "bytes": 490,
+    "body": "{\"detail\":{\"erreur\":\"document_non_etablissable\",\"message\":\"Ce document ne peut pas être établi : il manque des éléments indispensables.\",\"manques\":[{\"champ\":null,\"libelle\":\"Programme constructible\",\"raison\":\"cette parcelle n'a pas de surface vendable chiffrable — renseignez un nombre de logements visés et une typologie, ou vérifiez le potentiel de la parcelle.\"},{\"champ\":\"regime_tva_saisi\",\"libell"
+   },
+   "apporteur": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 154790,
+    "pages": "4",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": false,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [
+     "03/02/2027",
+     "05/11/2026",
+     "21/10/2026",
+     "27/09/2012"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "gabarit": {
+    "http": 422,
+    "ct": "application/json",
+    "bytes": 245,
+    "body": "{\"detail\":{\"erreur\":\"document_non_etablissable\",\"message\":\"Ce document ne peut pas être établi : il manque des éléments indispensables.\",\"manques\":[{\"libelle\":\"Gabarit non calculable sur cette parcelle : donnée réglementaire manquante\"}]}}"
+   },
+   "etude_zone": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 156694,
+    "pages": "26",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "analyse": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 119551,
+    "pages": "2",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "pre_dossier": {
+    "http": 200,
+    "ct": "application/zip",
+    "bytes": 1507907,
+    "zip_members": [
+     "97415000BO0852-labuse-CERFA-13406-17-prerempli.pdf",
+     "97415000BO0852-labuse-PCMI1-plan-situation.pdf",
+     "97415000BO0852-labuse-PCMI2-plan-masse-existant.pdf",
+     "97415000BO0852-labuse-PCMI4-notice-terrain.pdf",
+     "97415000BO0852-labuse-PCMI7-8-prises-de-vue.pdf",
+     "97415000BO0852-labuse-regles-zonage.pdf",
+     "97415000BO0852-labuse-LISEZMOI.txt"
+    ],
+    "zip_dates": [
+     [
+      "97415000BO0852-labuse-CERFA-13406-17-prerempli.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97415000BO0852-labuse-PCMI1-plan-situation.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97415000BO0852-labuse-PCMI2-plan-masse-existant.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97415000BO0852-labuse-PCMI4-notice-terrain.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97415000BO0852-labuse-PCMI7-8-prises-de-vue.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97415000BO0852-labuse-regles-zonage.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97415000BO0852-labuse-LISEZMOI.txt",
+      "2026-11-05"
+     ]
+    ],
+    "leaks": [
+     "doctrine"
+    ],
+    "forbidden": [],
+    "placeholders": [
+     "{IDU}"
+    ],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [
+     "21/08/2026"
+    ]
+   },
+   "comparatif": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 20347,
+    "paire": [
+     "97415000BO0852",
+     "97411000BZ1065"
+    ],
+    "pages": "2",
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ]
+   }
+  }
+ },
+ "97415000CW0658": {
+  "categorie": "nue_a_cheval",
+  "docs": {
+   "dossier": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 262201,
+    "pages": "10",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": true,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "01/01/2022",
+     "01/01/2024",
+     "03/10/2022",
+     "05/11/2026",
+     "16/10/2025",
+     "17/12/2025",
+     "21/10/2026",
+     "25/04/2022",
+     "27/09/2012",
+     "30/05/2005"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "financier": {
+    "http": 422,
+    "ct": "application/json",
+    "bytes": 490,
+    "body": "{\"detail\":{\"erreur\":\"document_non_etablissable\",\"message\":\"Ce document ne peut pas être établi : il manque des éléments indispensables.\",\"manques\":[{\"champ\":null,\"libelle\":\"Programme constructible\",\"raison\":\"cette parcelle n'a pas de surface vendable chiffrable — renseignez un nombre de logements visés et une typologie, ou vérifiez le potentiel de la parcelle.\"},{\"champ\":\"regime_tva_saisi\",\"libell"
+   },
+   "apporteur": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 161235,
+    "pages": "4",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": false,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [
+     "03/02/2027",
+     "05/11/2026",
+     "21/10/2026",
+     "27/09/2012"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "gabarit": {
+    "http": 422,
+    "ct": "application/json",
+    "bytes": 245,
+    "body": "{\"detail\":{\"erreur\":\"document_non_etablissable\",\"message\":\"Ce document ne peut pas être établi : il manque des éléments indispensables.\",\"manques\":[{\"libelle\":\"Gabarit non calculable sur cette parcelle : donnée réglementaire manquante\"}]}}"
+   },
+   "etude_zone": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 127002,
+    "pages": "8",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "analyse": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 125509,
+    "pages": "2",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "pre_dossier": {
+    "http": 200,
+    "ct": "application/zip",
+    "bytes": 1448519,
+    "zip_members": [
+     "97415000CW0658-labuse-CERFA-13406-17-prerempli.pdf",
+     "97415000CW0658-labuse-PCMI1-plan-situation.pdf",
+     "97415000CW0658-labuse-PCMI2-plan-masse-existant.pdf",
+     "97415000CW0658-labuse-PCMI4-notice-terrain.pdf",
+     "97415000CW0658-labuse-PCMI7-8-prises-de-vue.pdf",
+     "97415000CW0658-labuse-regles-zonage.pdf",
+     "97415000CW0658-labuse-LISEZMOI.txt"
+    ],
+    "zip_dates": [
+     [
+      "97415000CW0658-labuse-CERFA-13406-17-prerempli.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97415000CW0658-labuse-PCMI1-plan-situation.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97415000CW0658-labuse-PCMI2-plan-masse-existant.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97415000CW0658-labuse-PCMI4-notice-terrain.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97415000CW0658-labuse-PCMI7-8-prises-de-vue.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97415000CW0658-labuse-regles-zonage.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97415000CW0658-labuse-LISEZMOI.txt",
+      "2026-11-05"
+     ]
+    ],
+    "leaks": [
+     "doctrine"
+    ],
+    "forbidden": [],
+    "placeholders": [
+     "{IDU}"
+    ],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [
+     "21/08/2026"
+    ]
+   },
+   "comparatif": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 20439,
+    "paire": [
+     "97415000CW0658",
+     "97411000BZ1065"
+    ],
+    "pages": "2",
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ]
+   }
+  }
+ },
+ "97421000AB0133": {
+  "categorie": "ppr_rouge_a_cheval",
+  "docs": {
+   "dossier": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 255285,
+    "pages": "9",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": true,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "01/01/2022",
+     "01/01/2024",
+     "01/08/2019",
+     "05/10/2021",
+     "05/11/2026",
+     "14/09/2026",
+     "16/10/2025",
+     "21/10/2026",
+     "24/05/2022"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "financier": {
+    "http": 422,
+    "ct": "application/json",
+    "bytes": 490,
+    "body": "{\"detail\":{\"erreur\":\"document_non_etablissable\",\"message\":\"Ce document ne peut pas être établi : il manque des éléments indispensables.\",\"manques\":[{\"champ\":null,\"libelle\":\"Programme constructible\",\"raison\":\"cette parcelle n'a pas de surface vendable chiffrable — renseignez un nombre de logements visés et une typologie, ou vérifiez le potentiel de la parcelle.\"},{\"champ\":\"regime_tva_saisi\",\"libell"
+   },
+   "apporteur": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 162715,
+    "pages": "4",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": false,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [
+     "03/02/2027",
+     "05/11/2026",
+     "21/10/2026",
+     "24/05/2022"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "gabarit": {
+    "http": 422,
+    "ct": "application/json",
+    "bytes": 245,
+    "body": "{\"detail\":{\"erreur\":\"document_non_etablissable\",\"message\":\"Ce document ne peut pas être établi : il manque des éléments indispensables.\",\"manques\":[{\"libelle\":\"Gabarit non calculable sur cette parcelle : donnée réglementaire manquante\"}]}}"
+   },
+   "etude_zone": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 101552,
+    "pages": "3",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "analyse": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 126071,
+    "pages": "2",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "pre_dossier": {
+    "http": 200,
+    "ct": "application/zip",
+    "bytes": 1466660,
+    "zip_members": [
+     "97421000AB0133-labuse-CERFA-13406-17-prerempli.pdf",
+     "97421000AB0133-labuse-PCMI1-plan-situation.pdf",
+     "97421000AB0133-labuse-PCMI2-plan-masse-existant.pdf",
+     "97421000AB0133-labuse-PCMI4-notice-terrain.pdf",
+     "97421000AB0133-labuse-PCMI7-8-prises-de-vue.pdf",
+     "97421000AB0133-labuse-regles-zonage.pdf",
+     "97421000AB0133-labuse-LISEZMOI.txt"
+    ],
+    "zip_dates": [
+     [
+      "97421000AB0133-labuse-CERFA-13406-17-prerempli.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97421000AB0133-labuse-PCMI1-plan-situation.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97421000AB0133-labuse-PCMI2-plan-masse-existant.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97421000AB0133-labuse-PCMI4-notice-terrain.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97421000AB0133-labuse-PCMI7-8-prises-de-vue.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97421000AB0133-labuse-regles-zonage.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97421000AB0133-labuse-LISEZMOI.txt",
+      "2026-11-05"
+     ]
+    ],
+    "leaks": [
+     "doctrine"
+    ],
+    "forbidden": [],
+    "placeholders": [
+     "{IDU}"
+    ],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [
+     "21/08/2026"
+    ]
+   },
+   "comparatif": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 20638,
+    "paire": [
+     "97421000AB0133",
+     "97411000BZ1065"
+    ],
+    "pages": "2",
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/08/2006",
+     "21/10/2026"
+    ]
+   }
+  }
+ },
+ "97411000DN0183": {
+  "categorie": "copropriete",
+  "docs": {
+   "dossier": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 289133,
+    "pages": "10",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": true,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "01/01/2022",
+     "01/01/2024",
+     "05/08/2026",
+     "05/11/2026",
+     "06/12/2022",
+     "14/09/2026",
+     "16/10/2025",
+     "17/10/2012",
+     "21/10/2026",
+     "26/10/2013",
+     "29/11/2013"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "financier": {
+    "http": 422,
+    "ct": "application/json",
+    "bytes": 490,
+    "body": "{\"detail\":{\"erreur\":\"document_non_etablissable\",\"message\":\"Ce document ne peut pas être établi : il manque des éléments indispensables.\",\"manques\":[{\"champ\":null,\"libelle\":\"Programme constructible\",\"raison\":\"cette parcelle n'a pas de surface vendable chiffrable — renseignez un nombre de logements visés et une typologie, ou vérifiez le potentiel de la parcelle.\"},{\"champ\":\"regime_tva_saisi\",\"libell"
+   },
+   "apporteur": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 190644,
+    "pages": "4",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": false,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [
+     "03/02/2027",
+     "05/11/2026",
+     "21/10/2026",
+     "26/10/2013"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "gabarit": {
+    "http": 422,
+    "ct": "application/json",
+    "bytes": 245,
+    "body": "{\"detail\":{\"erreur\":\"document_non_etablissable\",\"message\":\"Ce document ne peut pas être établi : il manque des éléments indispensables.\",\"manques\":[{\"libelle\":\"Gabarit non calculable sur cette parcelle : donnée réglementaire manquante\"}]}}"
+   },
+   "etude_zone": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 181416,
+    "pages": "16",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "analyse": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 158757,
+    "pages": "2",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "pre_dossier": {
+    "http": 200,
+    "ct": "application/zip",
+    "bytes": 1589304,
+    "zip_members": [
+     "97411000DN0183-labuse-CERFA-13406-17-prerempli.pdf",
+     "97411000DN0183-labuse-PCMI1-plan-situation.pdf",
+     "97411000DN0183-labuse-PCMI2-plan-masse-existant.pdf",
+     "97411000DN0183-labuse-PCMI4-notice-terrain.pdf",
+     "97411000DN0183-labuse-PCMI7-8-prises-de-vue.pdf",
+     "97411000DN0183-labuse-regles-zonage.pdf",
+     "97411000DN0183-labuse-LISEZMOI.txt"
+    ],
+    "zip_dates": [
+     [
+      "97411000DN0183-labuse-CERFA-13406-17-prerempli.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97411000DN0183-labuse-PCMI1-plan-situation.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97411000DN0183-labuse-PCMI2-plan-masse-existant.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97411000DN0183-labuse-PCMI4-notice-terrain.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97411000DN0183-labuse-PCMI7-8-prises-de-vue.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97411000DN0183-labuse-regles-zonage.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97411000DN0183-labuse-LISEZMOI.txt",
+      "2026-11-05"
+     ]
+    ],
+    "leaks": [
+     "doctrine"
+    ],
+    "forbidden": [],
+    "placeholders": [
+     "{IDU}"
+    ],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [
+     "21/08/2026"
+    ]
+   },
+   "comparatif": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 20688,
+    "paire": [
+     "97411000DN0183",
+     "97411000BZ1065"
+    ],
+    "pages": "2",
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/08/2006",
+     "21/10/2026"
+    ]
+   }
+  }
+ },
+ "97424000AM0893": {
+  "categorie": "au_proprio_long",
+  "docs": {
+   "dossier": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 264958,
+    "pages": "10",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": true,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "01/01/2022",
+     "01/01/2024",
+     "02/09/2024",
+     "05/11/2026",
+     "06/02/2008",
+     "06/03/2008",
+     "13/02/2024",
+     "16/10/2025",
+     "21/10/2026",
+     "28/12/2012",
+     "30/03/2022"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "financier": {
+    "http": 422,
+    "ct": "application/json",
+    "bytes": 633,
+    "body": "{\"detail\":{\"erreur\":\"document_non_etablissable\",\"message\":\"Ce document ne peut pas être établi : il manque des éléments indispensables.\",\"manques\":[{\"champ\":null,\"libelle\":\"Programme constructible\",\"raison\":\"cette parcelle n'a pas de surface vendable chiffrable — renseignez un nombre de logements visés et une typologie, ou vérifiez le potentiel de la parcelle.\"},{\"champ\":\"prix_sortie_saisi_eur_m2\""
+   },
+   "apporteur": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 159009,
+    "pages": "4",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": false,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [
+     "03/02/2027",
+     "05/11/2026",
+     "06/02/2008",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "gabarit": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 31435,
+    "pages": "3",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": true,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "etude_zone": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 122078,
+    "pages": "8",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "analyse": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 123083,
+    "pages": "2",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "pre_dossier": {
+    "http": 200,
+    "ct": "application/zip",
+    "bytes": 1538570,
+    "zip_members": [
+     "97424000AM0893-labuse-CERFA-13406-17-prerempli.pdf",
+     "97424000AM0893-labuse-PCMI1-plan-situation.pdf",
+     "97424000AM0893-labuse-PCMI2-plan-masse-existant.pdf",
+     "97424000AM0893-labuse-PCMI4-notice-terrain.pdf",
+     "97424000AM0893-labuse-PCMI7-8-prises-de-vue.pdf",
+     "97424000AM0893-labuse-regles-zonage.pdf",
+     "97424000AM0893-labuse-enveloppe-reglementaire.pdf",
+     "97424000AM0893-labuse-LISEZMOI.txt"
+    ],
+    "zip_dates": [
+     [
+      "97424000AM0893-labuse-CERFA-13406-17-prerempli.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97424000AM0893-labuse-PCMI1-plan-situation.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97424000AM0893-labuse-PCMI2-plan-masse-existant.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97424000AM0893-labuse-PCMI4-notice-terrain.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97424000AM0893-labuse-PCMI7-8-prises-de-vue.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97424000AM0893-labuse-regles-zonage.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97424000AM0893-labuse-enveloppe-reglementaire.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97424000AM0893-labuse-LISEZMOI.txt",
+      "2026-11-05"
+     ]
+    ],
+    "leaks": [
+     "doctrine"
+    ],
+    "forbidden": [],
+    "placeholders": [
+     "{IDU}"
+    ],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [
+     "21/08/2026"
+    ]
+   },
+   "comparatif": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 20377,
+    "paire": [
+     "97424000AM0893",
+     "97411000BZ1065"
+    ],
+    "pages": "2",
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ]
+   }
+  }
+ },
+ "97417000BN0002": {
+  "categorie": "foret_sans_zone_grande",
+  "docs": {
+   "dossier": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 191328,
+    "pages": "9",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": true,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "01/01/2022",
+     "01/01/2024",
+     "02/09/2024",
+     "05/11/2026",
+     "14/09/2026",
+     "16/10/2025",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "financier": {
+    "http": 422,
+    "ct": "application/json",
+    "bytes": 633,
+    "body": "{\"detail\":{\"erreur\":\"document_non_etablissable\",\"message\":\"Ce document ne peut pas être établi : il manque des éléments indispensables.\",\"manques\":[{\"champ\":null,\"libelle\":\"Programme constructible\",\"raison\":\"cette parcelle n'a pas de surface vendable chiffrable — renseignez un nombre de logements visés et une typologie, ou vérifiez le potentiel de la parcelle.\"},{\"champ\":\"prix_sortie_saisi_eur_m2\""
+   },
+   "apporteur": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 97496,
+    "pages": "4",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": false,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [
+     "03/02/2027",
+     "05/11/2026",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "gabarit": {
+    "http": 422,
+    "ct": "application/json",
+    "bytes": 245,
+    "body": "{\"detail\":{\"erreur\":\"document_non_etablissable\",\"message\":\"Ce document ne peut pas être établi : il manque des éléments indispensables.\",\"manques\":[{\"libelle\":\"Gabarit non calculable sur cette parcelle : donnée réglementaire manquante\"}]}}"
+   },
+   "etude_zone": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 70121,
+    "pages": "2",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "analyse": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 76366,
+    "pages": "2",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "pre_dossier": {
+    "http": 200,
+    "ct": "application/zip",
+    "bytes": 1356854,
+    "zip_members": [
+     "97417000BN0002-labuse-CERFA-13406-17-prerempli.pdf",
+     "97417000BN0002-labuse-PCMI1-plan-situation.pdf",
+     "97417000BN0002-labuse-PCMI2-plan-masse-existant.pdf",
+     "97417000BN0002-labuse-PCMI4-notice-terrain.pdf",
+     "97417000BN0002-labuse-PCMI7-8-prises-de-vue.pdf",
+     "97417000BN0002-labuse-regles-zonage.pdf",
+     "97417000BN0002-labuse-LISEZMOI.txt"
+    ],
+    "zip_dates": [
+     [
+      "97417000BN0002-labuse-CERFA-13406-17-prerempli.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97417000BN0002-labuse-PCMI1-plan-situation.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97417000BN0002-labuse-PCMI2-plan-masse-existant.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97417000BN0002-labuse-PCMI4-notice-terrain.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97417000BN0002-labuse-PCMI7-8-prises-de-vue.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97417000BN0002-labuse-regles-zonage.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97417000BN0002-labuse-LISEZMOI.txt",
+      "2026-11-05"
+     ]
+    ],
+    "leaks": [
+     "doctrine"
+    ],
+    "forbidden": [],
+    "placeholders": [
+     "{IDU}"
+    ],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [
+     "21/08/2026"
+    ]
+   },
+   "comparatif": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 20353,
+    "paire": [
+     "97417000BN0002",
+     "97411000BZ1065"
+    ],
+    "pages": "2",
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ]
+   }
+  }
+ },
+ "97416000DV0285": {
+  "categorie": "surface_incertaine",
+  "docs": {
+   "dossier": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 280465,
+    "pages": "11",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": true,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "01/01/2022",
+     "02/09/2024",
+     "05/11/2026",
+     "14/09/2026",
+     "19/11/2021",
+     "21/10/2026",
+     "24/09/2018",
+     "25/06/2024",
+     "28/05/2002"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "financier": {
+    "http": 422,
+    "ct": "application/json",
+    "bytes": 490,
+    "body": "{\"detail\":{\"erreur\":\"document_non_etablissable\",\"message\":\"Ce document ne peut pas être établi : il manque des éléments indispensables.\",\"manques\":[{\"champ\":null,\"libelle\":\"Programme constructible\",\"raison\":\"cette parcelle n'a pas de surface vendable chiffrable — renseignez un nombre de logements visés et une typologie, ou vérifiez le potentiel de la parcelle.\"},{\"champ\":\"regime_tva_saisi\",\"libell"
+   },
+   "apporteur": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 178116,
+    "pages": "4",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": false,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [
+     "03/02/2027",
+     "05/11/2026",
+     "21/10/2026",
+     "25/06/2024"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "gabarit": {
+    "http": 422,
+    "ct": "application/json",
+    "bytes": 245,
+    "body": "{\"detail\":{\"erreur\":\"document_non_etablissable\",\"message\":\"Ce document ne peut pas être établi : il manque des éléments indispensables.\",\"manques\":[{\"libelle\":\"Gabarit non calculable sur cette parcelle : donnée réglementaire manquante\"}]}}"
+   },
+   "etude_zone": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 177953,
+    "pages": "36",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "analyse": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 138194,
+    "pages": "2",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "pre_dossier": {
+    "http": 200,
+    "ct": "application/zip",
+    "bytes": 1464337,
+    "zip_members": [
+     "97416000DV0285-labuse-CERFA-13406-17-prerempli.pdf",
+     "97416000DV0285-labuse-PCMI1-plan-situation.pdf",
+     "97416000DV0285-labuse-PCMI2-plan-masse-existant.pdf",
+     "97416000DV0285-labuse-PCMI4-notice-terrain.pdf",
+     "97416000DV0285-labuse-PCMI7-8-prises-de-vue.pdf",
+     "97416000DV0285-labuse-regles-zonage.pdf",
+     "97416000DV0285-labuse-LISEZMOI.txt"
+    ],
+    "zip_dates": [
+     [
+      "97416000DV0285-labuse-CERFA-13406-17-prerempli.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97416000DV0285-labuse-PCMI1-plan-situation.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97416000DV0285-labuse-PCMI2-plan-masse-existant.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97416000DV0285-labuse-PCMI4-notice-terrain.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97416000DV0285-labuse-PCMI7-8-prises-de-vue.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97416000DV0285-labuse-regles-zonage.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97416000DV0285-labuse-LISEZMOI.txt",
+      "2026-11-05"
+     ]
+    ],
+    "leaks": [
+     "doctrine"
+    ],
+    "forbidden": [],
+    "placeholders": [
+     "{IDU}"
+    ],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [
+     "21/08/2026",
+     "21/10/2024"
+    ]
+   },
+   "comparatif": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 20231,
+    "paire": [
+     "97416000DV0285",
+     "97411000BZ1065"
+    ],
+    "pages": "2",
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ]
+   }
+  }
+ },
+ "97418000AV2114": {
+  "categorie": "sans_donnees",
+  "docs": {
+   "dossier": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 8267,
+    "pages": "1",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": false,
+     "tva_293b": false,
+     "coord_labuse": false
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "financier": {
+    "http": 422,
+    "ct": "application/json",
+    "bytes": 490,
+    "body": "{\"detail\":{\"erreur\":\"document_non_etablissable\",\"message\":\"Ce document ne peut pas être établi : il manque des éléments indispensables.\",\"manques\":[{\"champ\":null,\"libelle\":\"Programme constructible\",\"raison\":\"cette parcelle n'a pas de surface vendable chiffrable — renseignez un nombre de logements visés et une typologie, ou vérifiez le potentiel de la parcelle.\"},{\"champ\":\"regime_tva_saisi\",\"libell"
+   },
+   "apporteur": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 153638,
+    "pages": "3",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": false,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [
+     "03/02/2027",
+     "05/11/2026",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "gabarit": {
+    "http": 422,
+    "ct": "application/json",
+    "bytes": 269,
+    "body": "{\"detail\":{\"erreur\":\"parcelle_disparue\",\"message\":\"Parcelle disparue du cadastre (version du 2026-09-01). Remplacée par : 97418000AV2932, 97418000AV2930, 97418000AV2931. Aucune donnée n'est servie pour cette parcelle ; les documents ne peuvent pas être composés.\"}}"
+   },
+   "etude_zone": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 150111,
+    "pages": "9",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "analyse": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 121681,
+    "pages": "2",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "pre_dossier": {
+    "http": 200,
+    "ct": "application/zip",
+    "bytes": 1538156,
+    "zip_members": [
+     "97418000AV2114-labuse-CERFA-13406-17-prerempli.pdf",
+     "97418000AV2114-labuse-PCMI1-plan-situation.pdf",
+     "97418000AV2114-labuse-PCMI2-plan-masse-existant.pdf",
+     "97418000AV2114-labuse-PCMI4-notice-terrain.pdf",
+     "97418000AV2114-labuse-PCMI7-8-prises-de-vue.pdf",
+     "97418000AV2114-labuse-regles-zonage.pdf",
+     "97418000AV2114-labuse-enveloppe-reglementaire.pdf",
+     "97418000AV2114-labuse-LISEZMOI.txt"
+    ],
+    "zip_dates": [
+     [
+      "97418000AV2114-labuse-CERFA-13406-17-prerempli.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97418000AV2114-labuse-PCMI1-plan-situation.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97418000AV2114-labuse-PCMI2-plan-masse-existant.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97418000AV2114-labuse-PCMI4-notice-terrain.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97418000AV2114-labuse-PCMI7-8-prises-de-vue.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97418000AV2114-labuse-regles-zonage.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97418000AV2114-labuse-enveloppe-reglementaire.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97418000AV2114-labuse-LISEZMOI.txt",
+      "2026-11-05"
+     ]
+    ],
+    "leaks": [
+     "doctrine"
+    ],
+    "forbidden": [],
+    "placeholders": [
+     "{IDU}"
+    ],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [
+     "21/08/2026"
+    ]
+   },
+   "comparatif": {
+    "http": 422,
+    "ct": "application/json",
+    "bytes": 152,
+    "paire": [
+     "97418000AV2114",
+     "97411000BZ1065"
+    ]
+   }
+  }
+ },
+ "97411000BZ1065": {
+  "categorie": "bati_temoin",
+  "docs": {
+   "dossier": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 268073,
+    "pages": "11",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": true,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "01/01/2022",
+     "01/01/2024",
+     "05/07/1994",
+     "05/08/2026",
+     "05/11/2026",
+     "14/09/2026",
+     "16/10/2025",
+     "17/10/2012",
+     "21/10/2026",
+     "26/10/2013",
+     "29/11/2013"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "financier": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 36331,
+    "pages": "5",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": true,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "apporteur": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 162069,
+    "pages": "4",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": false,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [
+     "03/02/2027",
+     "05/11/2026",
+     "21/10/2026",
+     "26/10/2013"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "gabarit": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 37602,
+    "pages": "3",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": true,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "etude_zone": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 127450,
+    "pages": "7",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "analyse": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 126662,
+    "pages": "2",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "pre_dossier": {
+    "http": 200,
+    "ct": "application/zip",
+    "bytes": 1558148,
+    "zip_members": [
+     "97411000BZ1065-labuse-CERFA-13406-17-prerempli.pdf",
+     "97411000BZ1065-labuse-PCMI1-plan-situation.pdf",
+     "97411000BZ1065-labuse-PCMI2-plan-masse-existant.pdf",
+     "97411000BZ1065-labuse-PCMI4-notice-terrain.pdf",
+     "97411000BZ1065-labuse-PCMI7-8-prises-de-vue.pdf",
+     "97411000BZ1065-labuse-regles-zonage.pdf",
+     "97411000BZ1065-labuse-enveloppe-reglementaire.pdf",
+     "97411000BZ1065-labuse-LISEZMOI.txt"
+    ],
+    "zip_dates": [
+     [
+      "97411000BZ1065-labuse-CERFA-13406-17-prerempli.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97411000BZ1065-labuse-PCMI1-plan-situation.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97411000BZ1065-labuse-PCMI2-plan-masse-existant.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97411000BZ1065-labuse-PCMI4-notice-terrain.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97411000BZ1065-labuse-PCMI7-8-prises-de-vue.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97411000BZ1065-labuse-regles-zonage.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97411000BZ1065-labuse-enveloppe-reglementaire.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97411000BZ1065-labuse-LISEZMOI.txt",
+      "2026-11-05"
+     ]
+    ],
+    "leaks": [
+     "doctrine"
+    ],
+    "forbidden": [],
+    "placeholders": [
+     "{IDU}"
+    ],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [
+     "21/08/2026"
+    ]
+   },
+   "comparatif": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 20387,
+    "paire": [
+     "97411000BZ1065",
+     "97411000AW0692"
+    ],
+    "pages": "2",
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ]
+   }
+  }
+ },
+ "97409000AK0804": {
+  "categorie": "nue_constructible_ppr",
+  "docs": {
+   "dossier": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 298941,
+    "pages": "11",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": true,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "01/01/2022",
+     "01/01/2024",
+     "05/10/2021",
+     "05/11/2026",
+     "14/09/2026",
+     "16/04/2026",
+     "16/10/2025",
+     "21/10/2026",
+     "25/10/2005",
+     "28/02/2019"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "financier": {
+    "http": 422,
+    "ct": "application/json",
+    "bytes": 490,
+    "body": "{\"detail\":{\"erreur\":\"document_non_etablissable\",\"message\":\"Ce document ne peut pas être établi : il manque des éléments indispensables.\",\"manques\":[{\"champ\":null,\"libelle\":\"Programme constructible\",\"raison\":\"cette parcelle n'a pas de surface vendable chiffrable — renseignez un nombre de logements visés et une typologie, ou vérifiez le potentiel de la parcelle.\"},{\"champ\":\"regime_tva_saisi\",\"libell"
+   },
+   "apporteur": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 181987,
+    "pages": "4",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": false,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [
+     "03/02/2027",
+     "05/11/2026",
+     "21/10/2026",
+     "28/02/2019"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "gabarit": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 54191,
+    "pages": "3",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": true,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "etude_zone": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 132856,
+    "pages": "8",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "analyse": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 142102,
+    "pages": "2",
+    "pdf_date": null,
+    "font_non_embedded": false,
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ],
+    "blank_pages": [],
+    "regen_identique": true
+   },
+   "pre_dossier": {
+    "http": 200,
+    "ct": "application/zip",
+    "bytes": 1508773,
+    "zip_members": [
+     "97409000AK0804-labuse-CERFA-13406-17-prerempli.pdf",
+     "97409000AK0804-labuse-PCMI1-plan-situation.pdf",
+     "97409000AK0804-labuse-PCMI2-plan-masse-existant.pdf",
+     "97409000AK0804-labuse-PCMI4-notice-terrain.pdf",
+     "97409000AK0804-labuse-PCMI7-8-prises-de-vue.pdf",
+     "97409000AK0804-labuse-regles-zonage.pdf",
+     "97409000AK0804-labuse-enveloppe-reglementaire.pdf",
+     "97409000AK0804-labuse-LISEZMOI.txt"
+    ],
+    "zip_dates": [
+     [
+      "97409000AK0804-labuse-CERFA-13406-17-prerempli.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97409000AK0804-labuse-PCMI1-plan-situation.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97409000AK0804-labuse-PCMI2-plan-masse-existant.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97409000AK0804-labuse-PCMI4-notice-terrain.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97409000AK0804-labuse-PCMI7-8-prises-de-vue.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97409000AK0804-labuse-regles-zonage.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97409000AK0804-labuse-enveloppe-reglementaire.pdf",
+      "2026-11-05"
+     ],
+     [
+      "97409000AK0804-labuse-LISEZMOI.txt",
+      "2026-11-05"
+     ]
+    ],
+    "leaks": [
+     "doctrine"
+    ],
+    "forbidden": [],
+    "placeholders": [
+     "{IDU}"
+    ],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [],
+    "genere_le": [],
+    "dates_distinctes": [
+     "21/08/2026"
+    ]
+   },
+   "comparatif": {
+    "http": 200,
+    "ct": "application/pdf",
+    "bytes": 20492,
+    "paire": [
+     "97409000AK0804",
+     "97411000BZ1065"
+    ],
+    "pages": "2",
+    "leaks": [],
+    "forbidden": [],
+    "placeholders": [],
+    "mentions": {
+     "avert_juridique": false,
+     "garantie_constructib": false,
+     "sources": true,
+     "tva_293b": false,
+     "coord_labuse": true
+    },
+    "data_au": [
+     "21/10/2026"
+    ],
+    "genere_le": [],
+    "dates_distinctes": [
+     "05/11/2026",
+     "21/10/2026"
+    ]
+   }
+  }
+ },
+ "_meta": {
+  "today_reunion": "05/11/2026",
+  "base": "http://127.0.0.1:9740",
+  "generated_at": "2026-11-05T21:25:41.509720+04:00"
+ }
+}

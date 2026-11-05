@@ -1,0 +1,118 @@
+LABUSE           Gabarit
+
+
+
+
+Gabarit
+L'enveloppe réglementaire de la parcelle : zone d'implantation, plafond d'emprise, hauteur.
+
+97424000AM0893 · GA-20261105-0893 · 05/11/2026
+
+
+
+   Enveloppe réglementaire (gabarit)
+
+   Vérifié : reculs, emprise, hauteur · Aléas : zones d'exclusion intégrées — analyse
+   du règlement PPR non intégrée · non modélisé : Stationnement, Espaces libres
+
+
+
+
+         Zone d'implantation réglementaire (schéma — pas un plan de masse)
+
+              Zone d'implantation                                                  Retraits
+              Contour cadastral
+
+
+
+
+Zone d'implantation, terrain libéré                  235 m²                                                                               sourcé
+
+
+Plafond d'emprise                                    232 m²                                                                               sourcé
+
+
+Hauteur réglementaire                                11 m au faîtage · 7 m à l'égout (le gabarit extrude le                               sourcé
+                                                     faîtage)
+
+
+
+
+                                                                                                                                  Généré via LABUSE
+
+
+
+Gabarit réglementaire 2D, pré-faisabilité sur règlement public. Ne remplace ni un certificat d'urbanisme, ni une étude de faisabilité           1/
+réglementaire. Données LABUSE au 21/10/2026.                                                                                                     3
+Règles appliquées
+
+Recul voie : 3,0 m
+BD TOPO® — troncon_de_route (voirie) + cadastre · BD TOPO® V3 (IGN) — édition non enregistrée · LABUSE — adjacence cadastre +
+BD TOPO
+
+
+Limites séparatives : 3,0 m
+BD TOPO® — troncon_de_route (voirie) + cadastre · BD TOPO® V3 (IGN) — édition non enregistrée · LABUSE — adjacence cadastre +
+BD TOPO
+
+
+Emprise maximale : 50 %
+PLU — Cilaos · AUb · LABUSE — règlement PLU validé (config/plu_destinations)
+
+
+Hauteur maximale : 11,0 m
+PLU — Cilaos · AUb · LABUSE — règlement PLU validé (config/plu_destinations)
+
+
+Servitudes d'utilité publique — Aucune SUP sur la parcelle
+SUP — servitudes d'utilité publique · GPU / API Carto — servitudes d'utilité publique (assiettes)
+
+
+
+Règles non intégrées
+
+Stationnement — 1.5 place / logement — non intégrée au gabarit (art. Ub 12.2)
+PLU — Cilaos · AUb · Ub 12.2 · LABUSE — règlement PLU validé (config/plu_destinations)
+
+
+Espaces libres — 40 % de pleine terre — non intégrée au gabarit (art. Ub 13.1)
+PLU — Cilaos · AUb · Ub 13.1 · LABUSE — règlement PLU validé (config/plu_destinations)
+
+
+PPR — analyse — Aléa mouvement_terrain — niveau faible.
+PPR — zonage réglementaire · DEAL Réunion — PPR (zonage réglementaire)
+
+
+
+
+                                                                                                                                  Généré via LABUSE
+
+
+
+Gabarit réglementaire 2D, pré-faisabilité sur règlement public. Ne remplace ni un certificat d'urbanisme, ni une étude de faisabilité           2/
+réglementaire. Données LABUSE au 21/10/2026.                                                                                                     3
+Vue 3D du gabarit
+
+
+
+
+   Volume indicatif — terrain supposé plat
+      Enveloppe réglementaire (hauteur 11 m)
+
+
+
+
+Gabarit réglementaire 2D, pré-faisabilité sur règlement public. Une étude par un professionnel peut modifier ces valeurs.
+
+Sources : Cadastre (API Carto PCI) · Urbanisme PLU/GPU (API Carto) · DEAL Réunion — PPR / aléas
+
+
+
+
+                                                                                                                                  Généré via LABUSE
+
+
+
+Gabarit réglementaire 2D, pré-faisabilité sur règlement public. Ne remplace ni un certificat d'urbanisme, ni une étude de faisabilité           3/
+réglementaire. Données LABUSE au 21/10/2026.                                                                                                     3
+

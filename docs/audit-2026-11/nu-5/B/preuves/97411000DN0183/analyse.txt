@@ -1,0 +1,130 @@
+LABUSE Estimer un bien                                                                                 AA-20261105-0183 · 05/11/2026
+
+
+
+Parcelle DN0183 · Saint-Denis
+97411000DN0183 · Zone Ui · 4,33 ha · Copropriété
+
+                                                                             Ui
+
+
+
+
+                                                                             Inondation · Fort
+ Orthophoto · la parcelle (contour) et ses voisines · © IGN — BD ORTHO     Cadastre, zonage PLU et aléas · DGFiP, commune, Géorisques
+
+
+ 4,33 ha                   Ui                        0 m²                  12/2025 ·                2 aléas                   Nord
+ SURFACE                   ZONE PLU                  (estimation           70 000 €                 RISQUES                   EXPOSITION
+                                                     simplifiée)           DERNIÈRE VENTE
+                                                     SDP RESTANTE
+
+
+
+   Estimation du prix
+
+   PRIX ESTIMÉ AU M²
+
+   2 504 €/m² de 2 208 à 2 855 €/m²
+    Fiabilité Élevée    360 ventes · rayon 500 m · 2022–2025
+   Copropriété — comparée aux ventes d'appartements de la
+   commune (repère €/m²). Le lot exact (étage, surface) n'est pas
+   connu du modèle. Précision mesurée sur les ventes 2025 : ±15
+   %.
+
+
+
+   Les 8 ventes les plus proches retenues
+DATE                     TYPE                                             SURFACE                       PRIX           €/M²             DISTANCE
+
+12/2025                  Appartement                                         66 m²               160 000 €           2 424                    64 m
+
+12/2025                  Appartement                                         25 m²                70 000 €           2 800                    64 m
+
+12/2025                  Appartement                                         61 m²                99 500 €            1 631                   79 m
+
+12/2025                  Appartement                                         37 m²               124 920 €           3 376                    79 m
+
+10/2025                  Appartement                                         25 m²                88 000 €           3 520                    64 m
+
+10/2025                  Appartement                                         25 m²                62 500 €           2 500                    64 m
+
+10/2025                  Appartement                                        108 m²               170 000 €            1 574                   64 m
+
+10/2025                  Appartement                                         69 m²               165 000 €            2 391                   79 m
+352 autres ventes d'appartements à moins de 500 m. Source : DVF, ventes d'appartements, 2022–2025.
+
+
+
+
+                                                                                                                                Généré via LABUSE
+
+
+
+Estimation comparative établie sur des données publiques (prix observés au m², DVF) — ce n'est pas un avis de valeur. Sources : DVF · Radar
+                                                                                                                                               1/2
+LABUSE. Données LABUSE au 21/10/2026.
+   Le foncier
+R ÈGLES DE LA ZONE UI · PLU DE SAINT-DENIS                                 S UR CETTE PARCELLE
+
+Hauteur maximale                                   18 m au faîtage         Assiette constructible,                                    37 916 m²
+                                                                           aléa déduit
+Emprise au sol maximale                                         60 %
+                                                                           Bâti existant, emprise                                      5 923 m²
+Recul par rapport à la voie                                      3m
+                                                                           Hauteur mesurée, faîtage /                            17,1 m / 15,4 m
+Recul par rapport aux limites                            4 m ou H/2
+                                                                           égout
+Stationnement                                  1 place / logement
+                                                                           Survol LiDAR                                      septembre 2023
+
+                                                                           SDP restante estimée                0 m² (estimation simplifiée)
+Classement 0 · Non retenue : aucune règle réglementaire ne mord nettement ; la marge restante tient à la configuration de la parcelle
+(forme, accès, bâti en place).
+
+   Risques et contraintes
+ALÉA                                 NIVEAU       ZONE PPR · PART               CE QUE ÇA IMPLIQUE
+
+Inondation                           Fort         Zone rouge · 2 %              Zone rouge du PPR Saint-Denis (2012) — secteur
+                                                                                très contraint : construction neuve exclue,
+                                                                                extension sous prescriptions strictes (étude
+                                                                                géotechnique).
+
+Mouvement de terrain                 Fort         Zone rouge · 12 %             Zone rouge du PPR Saint-Denis (2012) — secteur
+                                                                                très contraint : construction neuve exclue,
+                                                                                extension sous prescriptions strictes (étude
+                                                                                géotechnique).
+
+
+   Le marché · Saint-Denis
+Ventes de maisons, 12 mois                                       289          P RIX MÉDIAN MAISON, €/M²
+
+Prix médian maison                                      3 263 €/m²                3 031        3 442        3 320       3 345        3 235
+
+Prix médian appartement                                 2 380 €/m²
+
+Évolution maisons sur 12 mois                                 -3,3 %
+
+
+
+
+                                                                                   2021        2022         2023         2024        2025
+
+
+
+   Ce qu'il reste à vérifier
+  • L'état du bâti et les travaux récents, non connus du modèle.
+  • La conformité du bâti existant (permis, déclarations) avant tout projet d'extension.
+  • Le règlement écrit de la zone Ui pour les prescriptions du PPR (étude géotechnique, eaux pluviales).
+
+
+
+
+                                                                                                                                Généré via LABUSE
+
+
+
+Estimation comparative établie sur des données publiques (prix observés au m², DVF) — ce n'est pas un avis de valeur. Sources : DVF · Radar
+                                                                                                                                              2/2
+LABUSE. Données LABUSE au 21/10/2026.
+

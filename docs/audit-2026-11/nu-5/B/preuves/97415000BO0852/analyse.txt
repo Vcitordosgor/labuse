@@ -1,0 +1,136 @@
+LABUSE Estimer un bien                                                                                 AA-20261105-0852 · 05/11/2026
+
+
+
+103 Chaussée Royale, 97460 Saint-Paul
+97415000BO0852 · Zone U1a · 745 m² · Parcelle bâtie
+
+                                                                             U1a
+
+
+
+
+                                                                             Inondation · Moyen
+ Orthophoto · la parcelle (contour) et ses voisines · © IGN — BD ORTHO     Cadastre, zonage PLU et aléas · DGFiP, commune, Géorisques
+
+
+ 745 m²                    U1a                       0 m²                  aucune                   2 aléas                  plat
+ SURFACE                   ZONE PLU                  (estimation           depuis 2014              RISQUES                  EXPOSITION
+                                                     simplifiée)           DERNIÈRE VENTE
+                                                     SDP RESTANTE
+
+
+
+   Estimation du prix
+
+   PRIX ESTIMÉ AU M²                                                            O RDRE DE GRANDEUR DU BIEN
+
+
+   4 354 €/m² de 2 909 à 5 450 €/m²                                             Surface habitable
+                                                                                estimée d'après l'emprise
+                                                                                                                                1 202 000 €
+
+    Fiabilité Moyenne      46 ventes · rayon 500 m · 2021–2025                  au sol (276 m²) × 4 354 €/
+   Bati — comparé aux ventes de biens bâtis anciens autour de la                m²
+   parcelle. État et prestations du bien non connus du modèle.
+   Précision mesurée sur les ventes 2025 : ±26 %.                               Fourchette                         889 000 – 1 514 000 €
+                                                                                Surface habitable estimée d'après l'emprise au sol : total
+                                                                                indicatif (ratio médian surface vendue / emprise au sol
+                                                                                des ventes de maisons de la commune : 0,51 sur 1 827
+                                                                                ventes).
+
+
+
+                                                                                L ECTURE FONCIÈRE · VALEUR DU TERRAIN
+
+                                                                                572 000 €
+                                                                                745 m² × 768 €/m² de terrain nu · secteur
+                                                                                soit 48 % de l'ordre de grandeur bâti.
+
+
+   Les 8 ventes les plus proches retenues
+DATE                     TYPE                                            SURFACE                          PRIX          €/M²            DISTANCE
+
+08/2025                  Appartement                                       32 m²                   130 670 €          4 083               179 m
+
+03/2025                  Appartement                                       47 m²                   112 500 €          2 394                   59 m
+
+02/2025                  Appartement                                       57 m²                  246 800 €           4 330               179 m
+
+02/2025                  Appartement                                       61 m²                  100 000 €            1 639              240 m
+
+06/2025                  Immeuble                                        750 m²                 4 500 000 €           6 000               381 m
+
+10/2024                  Maison                                           120 m²                   241 000 €          2 008               252 m
+
+12/2024                  Maison                                           50 m²                    233 100 €          4 662               314 m
+
+04/2024                  Appartement                                       37 m²                   176 636 €          4 774               223 m
+38 autres ventes de biens bâtis anciens à moins de 500 m. Source : DVF, ventes de biens bâtis anciens, 2021–2025.               Généré via LABUSE
+
+
+
+Estimation comparative établie sur des données publiques (prix observés au m², DVF) — ce n'est pas un avis de valeur. Sources : DVF · Radar
+                                                                                                                                               1/2
+LABUSE. Données LABUSE au 21/10/2026.
+   Le foncier
+R ÈGLES DE LA ZONE U1A · PLU DE SAINT-PAUL                                 S UR CETTE PARCELLE
+
+Hauteur maximale                16 m au faîtage · 12 m à l'égout           Assiette constructible,                                       742 m²
+                                                                           aléa déduit
+Recul par rapport aux                                            3m
+limites                                                                    Bâti existant, emprise                                        540 m²
+
+Stationnement                                  1 place / logement          Hauteur mesurée, faîtage /                            12,7 m / 11,4 m
+                                                                           égout
+
+                                                                           Survol LiDAR                                              août 2023
+
+                                                                           SDP restante estimée                0 m² (estimation simplifiée)
+Classement 0 · Non retenue : aucune règle réglementaire ne mord nettement ; la marge restante tient à la configuration de la parcelle
+(forme, accès, bâti en place).
+
+   Risques et contraintes
+ALÉA                                NIVEAU        ZONE PPR · PART               CE QUE ÇA IMPLIQUE
+
+Inondation                          Moyen         Zone bleue · 100 %            Zone bleue du PPR Saint-Paul (2018) —
+                                                                                constructible sous prescriptions (étude
+                                                                                géotechnique, eaux pluviales).
+
+Mouvement de terrain                Modéré        Zone bleue · 100 %            Zone bleue du PPR Saint-Paul (2018) —
+                                                                                constructible sous prescriptions (étude
+                                                                                géotechnique, eaux pluviales).
+
+
+   Le marché · Saint-Paul
+Ventes de maisons, 12 mois                                       268          P RIX MÉDIAN MAISON, €/M²
+
+Prix médian maison                                      3 944 €/m²                3 738        4 176        4 216       3 925        3 918
+
+Prix médian appartement                                 4 694 €/m²
+
+Évolution maisons sur 12 mois                                 -0,2 %
+
+
+
+
+                                                                                   2021        2022         2023         2024        2025
+
+
+
+   Ce qu'il reste à vérifier
+  • L'état du bâti et les travaux récents, non connus du modèle.
+  • La conformité du bâti existant (permis, déclarations) avant tout projet d'extension.
+  • Le règlement écrit de la zone U1a pour les prescriptions du PPR (étude géotechnique, eaux pluviales).
+
+
+
+
+                                                                                                                                Généré via LABUSE
+
+
+
+Estimation comparative établie sur des données publiques (prix observés au m², DVF) — ce n'est pas un avis de valeur. Sources : DVF · Radar
+                                                                                                                                              2/2
+LABUSE. Données LABUSE au 21/10/2026.
+

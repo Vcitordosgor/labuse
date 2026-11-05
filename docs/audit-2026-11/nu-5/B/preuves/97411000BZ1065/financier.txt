@@ -1,0 +1,276 @@
+LABUSE           Bilan
+
+
+
+
+3 Chemin de la Citerne, 97417 Saint-Denis
+97411000BZ1065 · 1 567 m² · FI-20261105-1065 · 05/11/2026
+
+
+
+   Bilan de l'opération
+
+   Au prix demandé de 300 000 €, l'opération ne tient pas. Dans ces hypothèses,
+   l'opération ne peut supporter aucun achat de terrain : il lui manque 127 211 € pour
+   seulement atteindre l'équilibre à un prix de terrain nul.
+   Bilan en maximum : des postes ne sont pas chiffrés — ils ne peuvent que réduire ce résultat.
+
+
+
+
+   aucune                                            -267 k€ → 12 k€                                    -427 k€
+   charge foncière — manque 127 k€                   plancher et plafond (coût × prix                   écart au prix demandé
+   à terrain nul                                     de sortie)
+
+
+
+
+                                                                                                                                   Généré via LABUSE
+
+
+
+Bilan indicatif établi sur des données publiques et sur les hypothèses saisies par le porteur (en ambre). Ni un prix, ni une promesse, ni un     1/
+conseil. Il ne remplace pas un bilan promoteur professionnel. Données LABUSE au 21/10/2026.                                                       5
+   Hypothèses du porteur
+
+   Prix de vente prévu                                4 275 €/m² — prix de sortie NEUF servi (médiane du neuf                            sourcé
+                                                      de marché, DVF) — même chiffre que la fiche
+
+   Prix de vente au bailleur social                   non chiffré
+
+   Part de logement social                            non chiffré
+
+   Régime de TVA                                      TVA sur marge                                                                       projet
+
+
+   Nombre de logements visés                          4                                                                                   projet
+
+
+   Typologie moyenne                                  T3                                                                                  projet
+
+
+   Coût de construction                               2 550 €/m² — médiane régionale 2021-2025, EPTB 2024 /                              sourcé
+                                                      dataset CDC (2 300 à 2 800 €/m²)
+
+   Honoraires techniques                              12 % — usage promoteur : maîtrise d'œuvre, BET, contrôle                           sourcé
+                                                      technique
+
+   VRD et raccordements                               90 €/m² — base VRD des hypothèses LABUSE, modulée par                              sourcé
+                                                      la viabilisation
+
+   Coût par place de stationnement                    non chiffré
+
+   Provision pour aléas                               4 % — usage chantier : provision pour aléas (3 à 5 %)                              sourcé
+
+
+   Taxe d'aménagement                                 15 944 € — taxe d'aménagement sur la surface taxable (≈                            sourcé
+                                                      SDP du projet 325 m², garages/annexes non modélisés) au
+                                                      taux communal — config datée, service-public.gouv.fr
+
+   Marge visée                                        9 % — usage promoteur : marge cible sur le chiffre d'affaires                      sourcé
+
+
+   Frais d'acquisition                                7 % — usage standard : notaire et droits de mutation (7 à 8                        sourcé
+                                                      %)
+
+   Prix demandé pour le terrain                       300 000 €                                                                           projet
+
+
+   Coût de démolition                                 non chiffré
+
+   Dépollution / étude de sol                         non chiffré
+
+   Durée de portage                                   29 mois — délai d'instruction médian (~9 mois) + 20 mois                           sourcé
+                                                      de chantier
+
+   Taux d'emprunt                                     non chiffré
+
+
+
+
+   Régime de TVA retenu : TVA sur marge. Le bilan travaille HT (prix de sortie ramené HT au taux du régime). À
+   confirmer avec votre expert-comptable.
+
+
+
+
+                                                                                                                                   Généré via LABUSE
+
+
+
+Bilan indicatif établi sur des données publiques et sur les hypothèses saisies par le porteur (en ambre). Ni un prix, ni une promesse, ni un       2/
+conseil. Il ne remplace pas un bilan promoteur professionnel. Données LABUSE au 21/10/2026.                                                         5
+   Le programme
+Surface de plancher (maximum)                        ~325 m²                                                                                   estimé
+
+
+Surface habitable vendable                           ~260 m²                                                                                   estimé
+
+
+Logements (projet)                                   4                                                                                         projet
+
+
+Mixité sociale                                       déclenchement selon le programme (aucun programme                                         sourcé
+                                                     saisi)
+
+Maximum réglementaire (gabarit) : le total que la parcelle peut porter selon les règles, pas le programme qui sera déposé.
+Face aux permis réellement autorisés (volet D VERITE-TERRAIN-2), les projets en utilisent en médiane environ la moitié (0,46 en
+surface, 0,40 en logements).
+
+
+
+   Le bilan à rebours (HT)
+Poste                                                                                                                  Montant
+
+Chiffre d'affaires HT                                1 024 k€                                                                              ƒ dérivé
+
+
+Coût de construction                                 -829 k€ HT                                                                            ƒ dérivé
+
+
+Honoraires techniques                                -99 k€ HT                                                                             ƒ dérivé
+
+
+VRD et viabilisation                                 -29 k€ HT                                                                             ƒ dérivé
+
+
+Stationnement                                        non chiffré HT                                                                        ƒ dérivé
+
+
+Démolition                                           non chiffré HT                                                                            projet
+
+
+Dépollution et étude de sol                          non chiffré HT                                                                            projet
+
+
+Aléas                                                -33 k€ HT                                                                             ƒ dérivé
+
+
+Taxe d'aménagement                                   -16 k€ HT                                                                             ƒ dérivé
+
+
+Redevance d'archéologie préventive                   -1 k€ HT                                                                              ƒ dérivé
+(0,40 %)
+
+Portage financier                                    -31 k€ HT                                                                             ƒ dérivé
+
+
+Frais d'acquisition                                  -21 k€ HT                                                                             ƒ dérivé
+
+
+Taxe foncière (portage)                              non chiffré                                                                           ƒ dérivé
+
+
+Marge visée                                          -92 k€                                                                                ƒ dérivé
+
+
+Charge foncière supportable                          -127 k€                                                                               ƒ dérivé
+
+
+Taxe d'aménagement — non pris en compte : les exonérations facultatives votées par la commune (abris de jardin, petits
+commerces — CGI art. 1635 quater E) et le stationnement extérieur au tarif majoré sur délibération. À vérifier dans la
+délibération de la commune.
+
+
+
+
+                                                                                                                                   Généré via LABUSE
+
+
+
+Bilan indicatif établi sur des données publiques et sur les hypothèses saisies par le porteur (en ambre). Ni un prix, ni une promesse, ni un        3/
+conseil. Il ne remplace pas un bilan promoteur professionnel. Données LABUSE au 21/10/2026.                                                          5
+Sensibilité double — charge foncière selon coût et prix de sortie
+
+Coût \ Prix de sortie                                bas                              retenu                          haut
+
+bas                                                                         -78 k€                         -33 k€                              12 k€
+
+retenu                                                                     -172 k€                        -127 k€                          -82 k€
+
+haut                                                                      -267 k€                         -221 k€                         -176 k€
+
+Coût de construction en lignes (bas/retenu/haut de la fourchette EPTB), prix de sortie en colonnes (±5 %). La charge foncière
+varie sur les deux axes.
+
+
+
+   Face au prix demandé
+Prix demandé                                         300 000 €                                                                                 projet
+
+
+Ce que l'opération supporte                          aucune — manque 127 211 € pour l'équilibre à terrain nul                              ƒ dérivé
+
+
+Écart                                                -427 211 €                                                                            ƒ dérivé
+
+
+Marge résiduelle au prix demandé                     négative (-32,7 %) — au prix demandé, l'opération perd                                ƒ dérivé
+                                                     de l'argent
+
+Seuil de rentabilité (prix d'achat)                  aucun prix d'achat viable — il manque 127 211 € même à                                ƒ dérivé
+                                                     un terrain nul
+
+Prix de revient                                      5 229 €/m² vendable                                                                   ƒ dérivé
+
+
+
+
+   Fiscalité locale et régime applicable
+Taxe foncière (TFPB) — part                          36,73 %                                                                                   sourcé
+communale
+
+Part intercommunale (EPCI)                           1,00 %                                                                                    sourcé
+
+
+Ordures ménagères (TEOM, taux plein) 15,80 %                                                                                                   sourcé
+
+
+Zone d'investissement (A/B/C)                        B1                                                                                        sourcé
+
+
+Pendant les 29 mois de portage, le porteur acquitte la taxe foncière sur le bien. Elle se calcule sur la valeur locative cadastrale
+du bien × le taux communal (36,73 %, part départementale et TEOM en sus). LABUSE n'invente pas de valeur locative :
+reportez-la de l'avis de taxe foncière du bien pour la chiffrer.
+
+Zone B1 (DHUP) : elle fixe l'éligibilité au PTZ dans le neuf, les plafonds de loyer et de ressources des dispositifs, et le prix de
+vente au bailleur social. À La Réunion, la TVA du logement neuf est de 8,5 % (2,1 % en locatif social).
+
+Sources : DGFiP — fichier REI · DHUP — zonage A/B/C.
+
+
+Calendrier sommaire
+Acquisition → études et instruction (~9 mois) → chantier (~20 mois) → livraison. Durée de portage retenue : 29 mois.
+
+
+Ce que ce document n'établit pas
+
+Plan de financement, apport, taux                    Établissement prêteur                                                         Généré via LABUSE
+
+
+
+Bilan indicatif établi sur des données publiques et sur les hypothèses saisies par le porteur (en ambre). Ni un prix, ni une promesse, ni un       4/
+conseil. Il ne remplace pas un bilan promoteur professionnel. Données LABUSE au 21/10/2026.                                                         5
+Valeur vénale                                        Avis de valeur — notaire, expert
+
+Coûts de démolition et de dépollution Devis d'entreprise
+réels
+
+Constructibilité définitive                          Certificat d'urbanisme
+
+Bilan indicatif : données publiques (cadastre, DVF, Sitadel, PLU) et hypothèses saisies par le porteur. Il ne remplace ni un bilan
+promoteur professionnel, ni une étude de faisabilité, ni une expertise.
+
+Sources : BD TOPO IGN · CoSIA (couverture du sol IA, IGN) · Urbanisme PLU/GPU (API Carto) · Cadastre (API Carto PCI) · DVF /
+valeurs foncières
+
+
+
+
+                                                                                                                                   Généré via LABUSE
+
+
+
+Bilan indicatif établi sur des données publiques et sur les hypothèses saisies par le porteur (en ambre). Ni un prix, ni une promesse, ni un     5/
+conseil. Il ne remplace pas un bilan promoteur professionnel. Données LABUSE au 21/10/2026.                                                       5
+

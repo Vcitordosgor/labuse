@@ -1,0 +1,80 @@
+LABUSE           Comparatif
+
+
+
+
+Comparatif
+Deux à trois parcelles côte à côte, sur les lignes de Comparer.
+
+2 parcelles · CO-20261105-0658 · 05/11/2026
+
+
+
+   Comparatif
+                                                      CW 0658                                                                  BZ 1065
+                                                      Saint-Paul                                                               Saint-Denis
+
+  Surface      sourcé                                 25 633 m²                                                                1 567 m²
+
+  Zone PLU      sourcé                                AU3a                                                                     Uh
+
+  Classement LABUSE                                   A · Excellente · Signal faible                                           D · Faible · Signal faible
+
+  Zone constructible         sourcé                   oui                                                                      oui
+
+  SDP maximale réglementaire, terrain                 38 619 m²                                                                212 m²
+  libéré    estimé
+
+
+  SDP restante, bâti conservé           estimé        38 619 m²                                                                35 m²
+
+  Emprise au sol max (PLU)            sourcé          non réglementée                                                          30 %
+
+  Taux d'occupation du gabarit                        0%                                                                       40 %
+     estimé
+
+
+  Sous-densité        estimé                          oui                                                                      non
+
+
+                                                                                                                                                            Généré via LABUSE
+
+
+
+
+Comparatif indicatif de parcelles établi sur des données publiques. Ni un prix, ni un conseil. Données LABUSE au 21/10/2026.                                            1/2
+                                                      CW 0658                                                                          BZ 1065
+                                                      Saint-Paul                                                                       Saint-Denis
+
+  Charge foncière /m² terrain            estimé       -94 €/m² — Bilan déficitaire : à ces hypothèses, le foncier ne se paie pas       -20 €/m² — Bilan déficitaire : à ces
+                                                                                                                                       hypothèses, le foncier ne se paie pas
+
+  Prix du terrain (secteur)        estimé             394 €/m² — 8 ventes                                                              369 €/m² — 15 ventes
+
+  Prix du bâti (secteur)        estimé                3 035 €/m² — 13 ventes à moins de 500 m                                          2 365 €/m² — 34 ventes à moins de 1 000 m
+
+  Logements possibles                                 voir l'Étude de faisabilité                                                      voir l'Étude de faisabilité
+
+  Bâti existant      sourcé                           0 % du terrain                                                                   12 % du terrain
+
+  Gabarit max       sourcé                            R+4                                                                              R+0
+
+  Accès & réseaux        sourcé                       Viabilisation confirmée par les faits                                            Viabilisation confirmée par les faits
+
+  Assainissement        estimé                        6 % des logements du secteur ne sont pas raccordés au réseau collectif           Assainissement non collectif
+
+  Propriétaire     sourcé                             personne morale                                                                  particulier
+
+  Contrainte majeure          sourcé                  Secteur affecté par le bruit routier (classement sonore cat. 1, bande 300 m) —   SDP résiduelle 35 m² — rien à construire.
+                                                      isolement acoustique renforcé obligatoire (R.571-32 CE).
+
+
+
+
+                                                                                                                                                                          Généré via LABUSE
+
+
+
+
+Comparatif indicatif de parcelles établi sur des données publiques. Ni un prix, ni un conseil. Données LABUSE au 21/10/2026.                                                          2/2
+

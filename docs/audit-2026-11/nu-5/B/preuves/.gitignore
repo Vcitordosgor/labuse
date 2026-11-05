@@ -1,0 +1,7 @@
+# NU5-B — on ne versionne que les artefacts TEXTE (extractions .txt / fiches .json / resultats.json).
+# Les blobs binaires régénérables (PDF, ZIP pré-dossier, PNG) sont exclus (politique MENAGE).
+*.zip
+*.pdf
+*.pdf.2
+*.png
+pd_*
