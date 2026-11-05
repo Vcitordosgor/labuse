@@ -1,0 +1,521 @@
+{
+    "ort": {
+        "source": "DGALN — communes ORT (table vivante) ; périmètres conventionnés non publiés",
+        "statut": "hors",
+        "ort_signee": false,
+        "denormandie": "non éligible (commune hors ACV/PVD/ORT)"
+    },
+    "plh": {
+        "epci": "CINOR",
+        "refs": [
+            {
+                "doc": "Évaluation à mi-parcours du PLH 3 (Espacité)",
+                "url": "https://www.cinor.re/PDF/Phase1_Eval_VF.pdf",
+                "page": "18, 22, 24, 41"
+            },
+            {
+                "doc": "Rapport CINOR n°2022/1-09 (CC 10/02/2022)",
+                "url": "https://www.cinor.re/PDF/CC_100222/Rapport-2022-AME-1-09-CIL.pdf",
+                "page": 1
+            },
+            {
+                "doc": "Rapport Développement Durable CINOR 2025 (prorogation + PLH 4)",
+                "url": "https://www.cinor.re/wp-content/uploads/2025/12/RDD-2025-ANNEXE-1.pdf",
+                "page": 10
+            }
+        ],
+        "detail": {
+            "note": "1 729/an et 680 locatifs = version PROJET (CDHH) ; 1 725/an et 620+80 = PLH adopté (évaluation mi-parcours)",
+            "total_6_ans": 10373,
+            "communes_6_ans": {
+                "Saint-Denis": 7202,
+                "Sainte-Marie": 2291,
+                "Sainte-Suzanne": 880
+            },
+            "social_locatif_an": "620 LLS/LLTS + 80 PLS",
+            "accession_aidee_an": 235,
+            "social_an_communes": {
+                "Saint-Denis": 412,
+                "Sainte-Marie": 132,
+                "Sainte-Suzanne": 54
+            }
+        },
+        "statut": "prorogé 2 ans — PLH 4 en élaboration (approbation visée début 2027)",
+        "periode": "2019-2025 (PLH 3)",
+        "obj_logements_an": 1725,
+        "part_sociale_pct": null
+    },
+    "qpv": [
+        {
+            "nom": "Gaspard La Réserve",
+            "code": "QN97416I"
+        },
+        {
+            "nom": "Le Verger-La Découverte",
+            "code": "QN97415I"
+        }
+    ],
+    "rnu": null,
+    "sru": {
+        "insee": "97418",
+        "detail": {
+            "epci": "CA Intercommunale du Nord de la Réunion (CINOR)",
+            "nb_lls": 4110.0,
+            "uu_sru": "1",
+            "epci_sru": "1",
+            "population_2025": 35584.0,
+            "soumise_sru_2025": "1",
+            "nom_unite_urbaine": "Saint-Denis",
+            "commune_isolee_l302_5": "0"
+        },
+        "statut": "conforme",
+        "commune": "Sainte-Marie",
+        "taux_lls": 29.67,
+        "millesime": "inventaire LLS 01/01/2024 · périmètre 01/01/2025 · prélèvement 2025",
+        "source_nom": "Communes et inventaire SRU (DHUP) — inventaire au 01/01/2024, v2 du 18/12/2025",
+        "source_url": "https://static.data.gouv.fr/resources/communes-et-inventaire-sru/20251219-143258/donnees-sru-data-gouv-2025-v2.csv",
+        "objectif_pct": 20.0,
+        "prelevement_eur": 0.0
+    },
+    "anru": [
+    ],
+    "epci": "CINOR",
+    "insee": "97418",
+    "loyer": {
+        "type": "appartement",
+        "source": "Sourcé · DHUP 2025",
+        "median_eur_m2": 13.46
+    },
+    "notes": [
+        "ZUS et ZFU sont des zonages abrogés (réforme 2014), devenus QPV — déjà couverts par la couche QPV. Volet fiscal ZFU-Territoires Entrepreneurs : pas de source spécifique à La Réunion identifiée à ce jour.",
+        "Données de CONTEXTE : aucune n'entre dans le scoring."
+    ],
+    "mairie": {
+        "nom": "Mairie - Sainte-Marie",
+        "email": "infomairie@ville-saintemarie.re",
+        "source": "Annuaire de l'administration (service-public.fr)",
+        "adresse": "3 rue de la République",
+        "commune": "Sainte-Marie",
+        "telephone": "02 62 53 41 15",
+        "code_postal": "97438",
+        "date_import": "2026-08-27",
+        "url_annuaire": "https://lannuaire.service-public.gouv.fr/la-reunion/la-reunion/cf4f0841-c2d6-4934-8266-53f02663128a",
+        "site_officiel": "https://www.ville-saintemarie.re/"
+    },
+    "marche": {
+        "insee": "97418",
+        "commune": "Sainte-Marie",
+        "vacants": 1007,
+        "logements": 15595,
+        "millesime": "RP 2023 (exploitation principale, géographie 01/01/2026)",
+        "typologie": {
+            "p1": 395,
+            "p2": 1415,
+            "p3": 3429,
+            "p4": 4402,
+            "p5p": 4701,
+            "libelle": "répartition des résidences principales par nombre de pièces (proxy T1…T5+, l'INSEE ne publie pas la typologie Tn à la commune)",
+            "vacance_pct": 6.5,
+            "hlm_louees_vides": 3018
+        },
+        "source_nom": "INSEE RP 2023 — base comparateur logement (publié 25/06/2026)",
+        "source_url": "https://www.insee.fr/fr/statistiques/8997194?sommaire=9003154",
+        "apparts_pct": 34.9,
+        "maisons_pct": 64.7,
+        "locataires_pct": 44.5,
+        "res_principales": 14342,
+        "res_secondaires": 247,
+        "autres_loges_pct": 4.8,
+        "proprietaires_pct": 50.7
+    },
+    "outils": {
+        "scan_pm": 4275,
+        "radar_biens": 4,
+        "densifiables": 7870,
+        "permis_en_cours": 109,
+        "solaire_piscines": 385,
+        "permis_point_mort": 777
+    },
+    "commune": "Sainte-Marie",
+    "foncier": {
+        "classement": {
+            "evaluees": 16784,
+            "sans_zonage": 0,
+            "raison_sans_zonage": "zonage non publié au GPU"
+        },
+        "permis_12m": {
+            "n": 109,
+            "reserve": "accordés seulement (les refus et abandons ne sont pas publiés)"
+        },
+        "surface_ha": 8586,
+        "n_parcelles": 16784,
+        "mutations_12m": 152,
+        "prix_terrain_nu": {
+            "motif": null,
+            "seuil_n": 10,
+            "par_zone": {
+                "U": {
+                    "n": 426,
+                    "calculable": true,
+                    "median_eur_m2": 479
+                },
+                "AU": {
+                    "n": 4,
+                    "motif": "n < 10",
+                    "calculable": false
+                }
+            },
+            "etiquette": "Sourcé · millésime DVF terrain · zonage calibré",
+            "calculable": true
+        },
+        "repartition_zonage": {
+            "base": "surface",
+            "familles": {
+                "A": {
+                    "n": 1622,
+                    "ha": 2800,
+                    "pct": 32.5
+                },
+                "N": {
+                    "n": 2066,
+                    "ha": 4442,
+                    "pct": 51.6
+                },
+                "U": {
+                    "n": 13062,
+                    "ha": 1315,
+                    "pct": 15.3
+                },
+                "AU": {
+                    "n": 82,
+                    "ha": 55,
+                    "pct": 0.6
+                }
+            },
+            "total_ha": 8612
+        },
+        "stock_opportunites": {
+            "n": 28,
+            "ha": 6
+        }
+    },
+    "qualite": {
+        "insee": "97418",
+        "rr_ile": 6.73,
+        "source": "audit RR fold 2025 (out-of-sample) · mesure seule",
+        "commune": "Sainte-Marie",
+        "fragile": true,
+        "libelle": "Sainte-Marie : marché peu actif (16 646 parcelles analysées, base 1.32 %) — le classement reste fiable, la fréquence exacte est indicative (échantillon limité : pouvoir discriminant mesuré sur moins de 5 ventes dans le haut du classement).",
+        "degradee": true,
+        "rr_intra": 6.7,
+        "rr_ile_dit": "~6,7",
+        "echantillon": 16646,
+        "taux_base_pct": 1.32
+    },
+    "risques": {
+        "source": "DEAL Réunion — PPR / aléas (zones PPR, aléa mouvement de terrain) · GASPAR (arrêtés CatNat, AZI/TRI) · BD TOPO (Parc National).",
+        "azi_tri": {
+            "azi": [
+                {
+                    "dates": {
+                        "date_diffusion": "23/03/2004",
+                        "date_fin_programmation": "23/03/2004",
+                        "date_debut_programmation": "23/03/2004"
+                    },
+                    "libelle": "Cirque de salazie",
+                    "risques": "Inondation",
+                    "type_doc": "azi",
+                    "bassin_risques": "Cirque de salazie",
+                    "date_diffusion": "23/03/2004"
+                },
+                {
+                    "dates": {
+                        "date_diffusion": "23/03/2004",
+                        "date_fin_programmation": "23/03/2004",
+                        "date_debut_programmation": "23/03/2004"
+                    },
+                    "libelle": "La Montagne",
+                    "risques": "Inondation",
+                    "type_doc": "azi",
+                    "bassin_risques": "La Montagne",
+                    "date_diffusion": "23/03/2004"
+                },
+                {
+                    "dates": {
+                        "date_diffusion": "23/03/2004",
+                        "date_fin_programmation": "23/03/2004",
+                        "date_debut_programmation": "23/03/2004"
+                    },
+                    "libelle": "Planèzes Nord-Est",
+                    "risques": "Inondation",
+                    "type_doc": "azi",
+                    "bassin_risques": "Planèzes Nord-Est",
+                    "date_diffusion": "23/03/2004"
+                }
+            ],
+            "tri": [
+                {
+                    "dates": {
+                        "date_arrete_pcb": "25/01/2013",
+                        "date_arrete_carte": "26/12/2013"
+                    },
+                    "libelle": "FRL_TRI_SAINT_DENIS_SAINTE_MARIE",
+                    "risques": "Inondation ; Par une crue torrentielle ou à montée rapide de cours d'eau ; Par lave torrentielle (torrent et talweg)",
+                    "type_doc": "tri",
+                    "bassin_risques": null,
+                    "date_diffusion": "25/01/2013"
+                }
+            ]
+        },
+        "ppr_pct": 37.3,
+        "catnat_detail": [
+            {
+                "date_fin": "2024-01-15",
+                "date_debut": "2024-01-13",
+                "type_peril": "Inondations et/ou Coulées de Boue",
+                "date_arrete": "2024-01-19",
+                "code_national": "IOME2401804A",
+                "date_publication_jo": "23/01/2024"
+            },
+            {
+                "date_fin": "2024-01-15",
+                "date_debut": "2024-01-13",
+                "type_peril": "Chocs Mécaniques liés à l'action des Vagues",
+                "date_arrete": "2024-01-19",
+                "code_national": "IOME2401804A",
+                "date_publication_jo": "23/01/2024"
+            },
+            {
+                "date_fin": "2023-01-26",
+                "date_debut": "2023-01-25",
+                "type_peril": "Inondations et/ou Coulées de Boue",
+                "date_arrete": "2023-03-20",
+                "code_national": "IOME2307448A",
+                "date_publication_jo": "13/04/2023"
+            },
+            {
+                "date_fin": "2018-04-24",
+                "date_debut": "2018-04-24",
+                "type_peril": "Inondations et/ou Coulées de Boue",
+                "date_arrete": "2018-05-23",
+                "code_national": "INTE1813670A",
+                "date_publication_jo": "22/06/2018"
+            },
+            {
+                "date_fin": "2014-01-03",
+                "date_debut": "2014-01-02",
+                "type_peril": "Mouvement de Terrain",
+                "date_arrete": "2014-04-22",
+                "code_national": "INTE1406754A",
+                "date_publication_jo": "26/04/2014"
+            },
+            {
+                "date_fin": "2011-01-30",
+                "date_debut": "2011-01-29",
+                "type_peril": "Inondations et/ou Coulées de Boue",
+                "date_arrete": "2011-03-30",
+                "code_national": "IOCE1109178A",
+                "date_publication_jo": "06/04/2011"
+            },
+            {
+                "date_fin": "2007-02-27",
+                "date_debut": "2007-02-24",
+                "type_peril": "Chocs Mécaniques liés à l'action des Vagues",
+                "date_arrete": "2007-03-23",
+                "code_national": "INTE0700250A",
+                "date_publication_jo": "28/03/2007"
+            },
+            {
+                "date_fin": "2007-02-25",
+                "date_debut": "2007-02-24",
+                "type_peril": "Inondations et/ou Coulées de Boue",
+                "date_arrete": "2007-03-23",
+                "code_national": "INTE0700250A",
+                "date_publication_jo": "28/03/2007"
+            },
+            {
+                "date_fin": "2006-03-05",
+                "date_debut": "2006-03-04",
+                "type_peril": "Inondations et/ou Coulées de Boue",
+                "date_arrete": "2006-11-10",
+                "code_national": "INTE0600904A",
+                "date_publication_jo": "23/11/2006"
+            },
+            {
+                "date_fin": "2006-02-19",
+                "date_debut": "2006-02-17",
+                "type_peril": "Inondations et/ou Coulées de Boue",
+                "date_arrete": "2006-11-10",
+                "code_national": "INTE0600904A",
+                "date_publication_jo": "23/11/2006"
+            },
+            {
+                "date_fin": "2004-12-26",
+                "date_debut": "2004-12-26",
+                "type_peril": "Raz de Marée",
+                "date_arrete": "2005-04-15",
+                "code_national": "INTE0500145A",
+                "date_publication_jo": "03/05/2005"
+            },
+            {
+                "date_fin": "2003-02-12",
+                "date_debut": "2003-02-11",
+                "type_peril": "Inondations et/ou Coulées de Boue",
+                "date_arrete": "2003-06-19",
+                "code_national": "INTE0300301A",
+                "date_publication_jo": "27/06/2003"
+            }
+        ],
+        "parc_national": true,
+        "catnat_arretes": 22,
+        "mouvement_terrain_pct": 100.0
+    },
+    "signaux": [
+        {
+            "ton": "orange",
+            "code": "ppr",
+            "libelle": "PPR sur 37,3 % des parcelles"
+        }
+    ],
+    "epci_nom": "Communauté intercommunale du Nord de La Réunion",
+    "fiscalite": {
+        "lignes": [
+            {
+                "label": "Taxe foncière (bâti)",
+                "ligne": "Taxe foncière (bâti) — part communale 43,90 % · TEOM 15,80 % · hors part départementale et taxes spéciales",
+                "detail": "part communale 43,90 % · TEOM 15,80 % · hors part départementale et taxes spéciales"
+            },
+            {
+                "label": "Taxe foncière (non bâti)",
+                "ligne": "Taxe foncière (non bâti) — part communale 49,75 % · hors part départementale et taxes spéciales",
+                "detail": "part communale 49,75 % · hors part départementale et taxes spéciales"
+            }
+        ],
+        "maj_at": "2026-09-14T16:32:17.600926+04:00",
+        "perime": false,
+        "source": "DGFiP — fichier REI (impositions primitives)",
+        "teom_pct": 15.8,
+        "millesime": "REI 2025 (impositions primitives)",
+        "tfpb_epci_pct": 1.0,
+        "tfpnb_epci_pct": 1.29,
+        "tfpb_commune_pct": 43.9,
+        "tfpnb_commune_pct": 49.75
+    },
+    "zfang_frr": {
+        "frr": {
+            "lien": "https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000049746820",
+            "libelle": "Commune classée en partie seulement — la zone spéciale d'action rurale (les Hauts) est infra-communale : la situation dépend de la localisation exacte du terrain.",
+            "classement": "partie",
+            "source_ref": "ZSAR 1978 · FRR 01/07/2024 · réf. ZRR 2017 (Région)"
+        },
+        "zfang": {
+            "lien": "https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000054153903",
+            "regime": "standard",
+            "libelle": "Régime standard (ZFANG, art. 44 quaterdecies CGI) — sous réserve d'éligibilité de l'activité, abattement d'environ 50 % sur les bénéfices — à confirmer auprès d'un fiscaliste.",
+            "source_ref": "Décret n° 2026-421 du 29 mai 2026 (LF 2026, art. 18)"
+        },
+        "avertissement": "Fait territorial sourcé et daté. Les taux cités sont les taux LÉGAUX du dispositif (décret / CGI), pas un calcul de votre avantage : l'éligibilité et l'effet réel relèvent de votre expert-comptable ou avocat fiscaliste."
+    },
+    "classement": {
+        "source": "Classement servi LABUSE (tiers brûlante + chaude) — recalculé à chaque bascule, jamais figé",
+        "libelle": "28 parcelles brûlantes ou chaudes au classement servi",
+        "dossiers": 2,
+        "tiers_hauts": 28
+    },
+    "comparable": {
+        "source": "DVF (baromètre commune entière) + SITADEL (autorisations et délais d'instruction) — même moteur que le comparateur des 24 communes.",
+        "ancien_n": 867,
+        "permis_5a": 643,
+        "neuf_eur_m2": 4190,
+        "delai_median_mois": 9.0,
+        "ancien_median_eur_m2": 2481,
+        "stock_opportunites_n": 28
+    },
+    "plu_statut": {
+        "source": "Sudocuh 31/12/2024 (procédure) + GPU — millésime du PLU opposable (26/11/2025)",
+        "statut": "à jour",
+        "libelle": "approuvee_probable",
+        "confiance": "DEDUIT",
+        "procedure": "cloturee",
+        "date_reglement": null,
+        "procedure_sudocuh": {
+            "etat": "PLU approuvé - révision de PLU - Compétence commune",
+            "document": "PLU",
+            "millesime": "31/12/2024",
+            "prescription": "03/06/2021"
+        },
+        "recherche_verbatim": true
+    },
+    "population": {
+        "source": "INSEE — population municipale légale (recensement, via Sudocuh) · INSEE RP (ménages, logements) · INSEE Filosofi (niveau de vie).",
+        "menages": 14342,
+        "vacants": 1007,
+        "habitants": 37093,
+        "logements": 15595,
+        "quartiers": {
+            "n_iris": 13,
+            "source": "INSEE RP2022 par IRIS — l'affinage par quartier de la vérité communale",
+            "vacance_max_pct": 13.8,
+            "vacance_min_pct": 0.0,
+            "vacance_mediane_pct": 7.8
+        },
+        "vacance_pct": 6.5,
+        "parc_ancien_pct": 27.4,
+        "menages_millesime": "RP 2023 (exploitation principale, géographie 01/01/2026)",
+        "habitants_etiquette": "Population légale 2023 (INSEE)",
+        "habitants_millesime": "2023",
+        "habitants_pop_totale": null,
+        "niveau_vie_moyen_eur": 21982
+    },
+    "zonage_abc": {
+        "zone": "B1",
+        "source": "DHUP — zonage ABC (arrêté du 1er août 2014 modifié, D. 304-1 CCH)",
+        "millesime": "arrêté du 23/06/2026 — en vigueur 26/06/2026"
+    },
+    "parc_social": {
+        "source": "SDES — Répertoire des logements locatifs sociaux (RPLS)",
+        "logements": 4197,
+        "millesime": "RPLS 01/01/2025",
+        "construct_median": 2013
+    },
+    "permis_bloc": {
+        "source": "SITADEL (autorisations) · SITADEL — délais d'instruction · permis au point mort (36 mois sans DAACT, run servi).",
+        "permis_5a": 643,
+        "permis_12m": 109,
+        "point_mort": 777,
+        "logements_12m": 390,
+        "permis_type_12m": {
+            "DP": 7,
+            "PA": 3,
+            "PC": 98
+        },
+        "delai_median_mois": 9.0,
+        "permis_annules_12m": 1
+    },
+    "densifiables": {
+        "source": "Analyse LABUSE · run servi",
+        "parcelles": 7870,
+        "sdp_residuelle_m2": 3833432
+    },
+    "marche_annonces": {
+        "biens": 4,
+        "source": "Radar LABUSE (annonces relevées) · écart mesuré contre le baromètre DVF commune entière.",
+        "seuil_n": 5,
+        "sous_seuil": true,
+        "prix_demande_n": 16,
+        "demande_seuil_n": 5,
+        "prix_acte_eur_m2": 2481,
+        "derniere_collecte": "2026-10-29",
+        "demande_sous_seuil": false,
+        "ecart_demande_acte_pct": 15.6,
+        "prix_demande_median_eur_m2": 2868
+    },
+    "taxe_amenagement": {
+        "perime": false,
+        "source": "DGFiP — taxe d'aménagement (application DELTA), délibération communale",
+        "millesime": "Taux communal en vigueur depuis le 01/01/2022 (délibération communale)",
+        "delib_date": "2022-01-01",
+        "part_communale_pct": 5.0
+    },
+    "prix_neuf_observe": null
+}
