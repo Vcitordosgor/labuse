@@ -2371,8 +2371,19 @@ class FiltreCriteres:
     emprise_min: int | None = None
     emprise_max: int | None = None
     emprise_sature: bool = False   # CHASSE-INVARIANTS-FIX-1 (Lot 1, E-01) — « Saturé » (taux > 100 %)
+    # CLASSEMENT-USAGE-1 — tri par usage « À construire » : ne garde que les parcelles où l'on peut
+    # RÉELLEMENT bâtir (zone ouverte ET SDP restante > 0, MÊME règle que `potentiel_batir`). Exprimé
+    # en prédicat (EXISTS) → coule dans le compteur, la page ET la liste d'IDU de la carte à l'identique.
+    a_construire: bool = False
 
     def where(self) -> tuple[str, dict]:
+        w, p = self._where_base()
+        if self.a_construire:
+            from ..faisabilite.potentiel_batir import where_a_construire
+            w = f"{w}{where_a_construire('p')}"
+        return w, p
+
+    def _where_base(self) -> tuple[str, dict]:
         return _q_v2_where(self.source, self.surface_min, self.surface_max,
                            self.sdp_min, self.evenement, self.flags, self.communes, self.flags_exclus,
                            self.tiers, self.hors_copro, self.veille, self.personne_morale,
@@ -2407,7 +2418,7 @@ class FiltreCriteres:
                 self.modeb_travaux_m2, self.modeb_loyer_m2, self.modeb_rendement_pct,
                 self.signaux, self.droits_residuels,
                 self.pm_denom, self.pm_siren, self.pm_forme, self.pm_ape,
-                self.pm_dirig_min, self.pm_dirig_max, self.pm_age, self.zfang, self.frr,
+                self.pm_dirig_min, self.pm_dirig_max, self.pm_age, self.zfang, self.frr, self.a_construire,
                 self.hauteur_min, self.hauteur_max, self.emprise_min, self.emprise_max,   # KELFONCIER-FIX-1 Lot D
                 self.emprise_sature,   # CHASSE-INVARIANTS-FIX-1 (Lot 1, E-01) — « Saturé »
                 self.destination)   # FAISABILITE-1 lot B — la destination reste le DERNIER élément de la clé (test faisabilite1_capacite)
@@ -4005,6 +4016,11 @@ _Q_V2_ORDERS = {
     # même clé, ordre ASC (les slivers < 2 m² restent masqués par MIN_DISPLAY_SURFACE_M2).
     "surface_asc": "COALESCE(p.contenance_m2, p.surface_m2) ASC NULLS LAST, s2.rang ASC NULLS LAST",
     "commune": "p.commune ASC, s2.rang ASC NULLS LAST",
+    # CLASSEMENT-USAGE-1 — tri « À construire » : on ne GARDE en tête que les parcelles où l'on peut
+    # bâtir (filtre `sql_a_construire` injecté dans le WHERE) ; À L'INTÉRIEUR, on les classe par
+    # PROBABILITÉ DE VENTE (= le rang servi). Même ordre que « rang » ; seul le périmètre change.
+    "a_construire": "s2.rang ASC NULLS LAST, s2.mult_base DESC NULLS LAST, "
+                    "(ev.parcel_id IS NOT NULL) DESC, d.opportunity_score DESC",
     # RECETTE-3 (T3, décision Vic) — le tri « Potentiel » du listing FACTUEL : les parcelles
     # ADRESSÉES d'abord (l'ancien « surface » remontait des emprises géantes sans adresse), puis
     # celles où il RESTE le plus à bâtir (SDP résiduelle), puis surface. Mesuré (top 30) : 30/30
@@ -4028,6 +4044,9 @@ _Q_V2_ORDERS_PAGE = {
     "surface": "COALESCE(pg.contenance_m2, pg.surface_m2) DESC NULLS LAST, pg.rang_v2 ASC NULLS LAST",
     "surface_asc": "COALESCE(pg.contenance_m2, pg.surface_m2) ASC NULLS LAST, pg.rang_v2 ASC NULLS LAST",
     "commune": "pg.commune ASC, pg.rang_v2 ASC NULLS LAST",
+    # CLASSEMENT-USAGE-1 — « À construire » au niveau page : classé par probabilité de vente (rang).
+    "a_construire": "pg.rang_v2 ASC NULLS LAST, pg.mult_v2 DESC NULLS LAST, "
+                    "pg.evenement_rouge DESC, pg.opportunity_score DESC",
     # RECETTE-3 (T3) — même ordre au niveau page (adresse via parcel_adresse `pa_o`, résiduel via `rb`).
     "potentiel": "(pa_o.idu IS NOT NULL) DESC, COALESCE(rb.sdp_residuelle_m2, 0) DESC NULLS LAST, "
                  "pg.surface_m2 DESC NULLS LAST",
@@ -5081,6 +5100,10 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         "historique_site": _historique_site(db, idu),      # M42 — « Sur cette parcelle » (permis + caduc)
         "voisinage_proche": _voisinage_proche(db, idu),    # M42 — « Autour, à moins de 100 m »
         "potentiel_transformation": _potentiel_transformation_block(db, idu, head["commune"]),
+        # CLASSEMENT-USAGE-1 — « POTENTIEL À BÂTIR », l'information à part servie partout de la même
+        # façon (UNE fonction de lecture) : SDP restante bornée à 0 en zone fermée, zone ouverte/fermée,
+        # constructibilité, « rien à bâtir » quand la SDP est nulle. Jamais présenté comme le palier.
+        "potentiel_a_batir": _potentiel_a_batir(db, idu),
         # KELFONCIER-FIX-1 (Lot H) — « Établissements sur la parcelle » (§3 Bâti), rattachement BAN.
         "etablissements": _etablissements_block(db, idu),
         "completeness_score": head["completeness_score"],  # M129-B : a_completude (matrice) retiré
@@ -6720,6 +6743,18 @@ def _reglement_plu_block(db: Session, idu: str, commune: str) -> dict | None:
         return _bloc_indisponible("reglement_plu")   # M125 — panne ≠ absence (même classe que les 7)
 
 
+def _potentiel_a_batir(db: Session, idu: str) -> dict | None:
+    """CLASSEMENT-USAGE-1 — le bloc « potentiel à bâtir » servi À LA FICHE, lu par la SEULE fonction
+    `faisabilite.potentiel_batir` (la même pour listes/carte/Copilote/PDF). Jamais un re-calcul ici."""
+    from ..faisabilite.potentiel_batir import potentiel_batir, POTENTIEL_ABSENT
+    try:
+        v = potentiel_batir(db, idu)
+    except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche (caches absents)
+        db.rollback()
+        return None
+    return None if v == POTENTIEL_ABSENT else v
+
+
 def _potentiel_transformation_block(db: Session, idu: str, commune: str | None = None) -> dict | None:
     """M9 lot 4 — indicateur « Potentiel de transformation » (fond de l'ancien outil Mutabilité).
 
@@ -6862,6 +6897,25 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
         niveau = "exclu"
         sdp_servie = None
         libelle = _cause_libelle_sl(cause) or libelle
+    # CLASSEMENT-USAGE-1 — RÉCONCILIATION finale avec le « potentiel à bâtir » (règle UNIQUE
+    # `faisabilite.potentiel_batir`) : une zone FERMÉE à l'urbanisation ne sert JAMAIS de SDP sur la
+    # fiche, même quand ni la cause résiduelle ni `au_differe` ne l'avaient attrapée. Cas 97422000AX1253
+    # (2AUe, declasse_zone_fermee au cache de constructibilité, mais résiduel SANS cause et AU
+    # `conditionnelle_operation`) : le run servi lui stockait 25 426 m² — bornés à 0 ici, à la lecture.
+    try:
+        from ..faisabilite.potentiel_batir import potentiel_batir as _pab_fn
+        _pab = _pab_fn(db, idu)
+    except Exception:  # noqa: BLE001 — réconciliation best-effort, jamais une 500
+        _pab = None
+    # On ne borne QUE les cas NON déjà traités : pas le « différé » AU (`au_differe` présente sa
+    # capacité « ≈ N m² après ouverture », décision C06) ni le « exclu » (cause résiduelle, déjà ∅/0).
+    # Reste le vrai angle mort du NU4-D : constructibilité FERMÉE (declasse_zone_fermee/non_constructible)
+    # sur une parcelle SANS cause résiduelle — ex. 97422000AX1253 (2AUe). ∅ comme la tuile/le jumeau.
+    if (_pab and _pab.get("rien_a_batir") and (sdp_servie or 0) > 0
+            and niveau not in ("exclu", "differe")):
+        sdp_servie = None
+        niveau = "nul"
+        libelle = _pab.get("libelle") or libelle
     # CHASSE-DOCS-FIX-1 (E-06) — sous un verdict de SATURATION (densité consommée), on ne sert PAS de
     # marge de surélévation positive : elle contredirait « déjà consommée » pour le lecteur (§10 tranche
     # une seule histoire). La hauteur du bâti reste dans « Le bien » ; c'est la MARGE qui est masquée ici.

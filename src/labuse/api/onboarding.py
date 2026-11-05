@@ -1306,26 +1306,33 @@ def moi_prefs_carte_get(request: Request, db: Session = Depends(get_db)) -> dict
     """Préférences de carte du compte (fond + couches actives) pour rouvrir la carte comme le client
     l'avait laissée — MÊME sur un autre poste (avant : localStorage, perdues au changement de poste).
     ORF-21 — en mode local (pas de compte), 200 avec des prefs vides (le front garde sa session)."""
-    from ..comptes import lire_prefs_carte
+    from ..comptes import lire_prefs_carte, TRI_USAGE_DEFAUT
     cid = _compte_prefs_ou_local(request)
     if cid is None:
-        return {"basemap": None, "couches": None, "mode": "local"}
-    return lire_prefs_carte(db, cid) or {"basemap": None, "couches": None}
+        return {"basemap": None, "couches": None, "tri_usage": TRI_USAGE_DEFAUT, "mode": "local"}
+    return lire_prefs_carte(db, cid) or {"basemap": None, "couches": None,
+                                         "tri_usage": TRI_USAGE_DEFAUT}
 
 
 @router.post("/moi/prefs-carte", include_in_schema=False)
 def moi_prefs_carte_set(payload: dict, request: Request, db: Session = Depends(get_db)) -> dict:
-    """Enregistre le fond de carte et les couches actives du compte (upsert). Best-effort côté client :
-    un enregistrement qui rate ne casse jamais la carte (le front continue en session).
-    ORF-21 — en mode local (pas de compte), no-op 200 (il n'y a pas de compte où mémoriser)."""
-    from ..comptes import ecrire_prefs_carte
+    """Enregistre le fond de carte, les couches actives ET le tri par usage du compte (upsert).
+    Best-effort côté client : un enregistrement qui rate ne casse jamais la carte (le front continue
+    en session). ORF-21 — en mode local (pas de compte), no-op 200 (il n'y a pas de compte où mémoriser).
+    CLASSEMENT-USAGE-1 — `tri_usage` est écrit À PART (il ne nécessite ni fond ni couches) : un POST qui
+    ne porte QUE `tri_usage` ne remet pas basemap/couches à NULL."""
+    from ..comptes import ecrire_prefs_carte, ecrire_tri_usage
     cid = _compte_prefs_ou_local(request)
     if cid is None:
         return {"ok": True, "mode": "local"}
-    basemap = payload.get("basemap")
-    basemap = str(basemap)[:16] if basemap else None
-    couches = payload.get("couches")
-    if not isinstance(couches, dict):
-        couches = None
-    ecrire_prefs_carte(db, cid, basemap, couches)
-    return {"ok": True}
+    out = {"ok": True}
+    if "tri_usage" in payload:
+        out["tri_usage"] = ecrire_tri_usage(db, cid, str(payload.get("tri_usage") or ""))
+    if "basemap" in payload or "couches" in payload:
+        basemap = payload.get("basemap")
+        basemap = str(basemap)[:16] if basemap else None
+        couches = payload.get("couches")
+        if not isinstance(couches, dict):
+            couches = None
+        ecrire_prefs_carte(db, cid, basemap, couches)
+    return out

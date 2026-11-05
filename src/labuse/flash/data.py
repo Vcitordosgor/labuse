@@ -283,6 +283,15 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
                 out["potentiel"] = _pot
         except Exception as exc:  # noqa: BLE001 — potentiel indisponible → section omise
             log.warning("bloc potentiel %s : %s", idu, exc)
+        # CLASSEMENT-USAGE-1 — le « potentiel à bâtir » (SDP restante / zone ouverte-fermée /
+        # constructibilité / rien à bâtir) imprimé au PDF, lu par la MÊME fonction que fiche/Copilote.
+        try:
+            from ..faisabilite.potentiel_batir import potentiel_batir, POTENTIEL_ABSENT
+            _pab = potentiel_batir(db, idu)
+            if _pab != POTENTIEL_ABSENT:
+                out["potentiel_a_batir"] = _pab
+        except Exception as exc:  # noqa: BLE001 — jamais bloquant pour le PDF
+            log.warning("potentiel à bâtir %s : %s", idu, exc)
     # M145 — la lecture du résiduel BRUT plein gabarit (`parcel_residuel.sdp_residuelle_m2`) est
     # SUPPRIMÉE : elle pilotait le héros parallèle (9 844 m² + coefficient ~15 % local). Le potentiel
     # constructible vient désormais du moteur commun (`out["faisa"]`, en tête de fonction).

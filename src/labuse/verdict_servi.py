@@ -93,6 +93,7 @@ NON_EVALUEE = {
     "rang": None, "servable": False, "declasse": False,
     "badge_division": False, "badge_division_libelle": None,
     "motif": None, "exception_registre": False, "run": None,
+    "avertissement": None,
 }
 
 #: repli quand une exception du registre n'a pas (encore) de motif client — on dit le fait
@@ -135,11 +136,25 @@ def _sql(db: Session) -> str:
     zp_cols = ("zp.zone_fam AS zone_fam, zp.zone_lib AS zone_lib" if has_zp else
                "NULL AS zone_fam, NULL AS zone_lib")
     zp_join = "LEFT JOIN parcel_zone_plu zp ON zp.idu = s.parcelle_id" if has_zp else ""
-    return (f"SELECT s.parcelle_id AS idu, s.tier, s.rang, rsd.sdp_residuelle_m2, "
-            f"{zp_cols}, {fb_cols}, {ex_col} "
+    # CLASSEMENT-USAGE-1 (défaut 3) — une parcelle SERVABLE mais non constructible / en zone fermée
+    # doit porter un AVERTISSEMENT clair (fin des pièges silencieux du NU4-D §2.2 : `verdict_servi`
+    # ne lisait ni la constructibilité ni le statut AU). On joint les mêmes caches que le gate
+    # `potentiel_batir` (constructibilité, statut AU, cause résiduelle) — une seule règle.
+    has_pc = bool(db.execute(text(
+        "SELECT to_regclass('parcel_constructibilite') IS NOT NULL")).scalar())
+    has_au = bool(db.execute(text(
+        "SELECT to_regclass('parcel_au_statut') IS NOT NULL")).scalar())
+    pc_cols = "pc.label AS constr_label" if has_pc else "NULL AS constr_label"
+    pc_join = "LEFT JOIN parcel_constructibilite pc ON pc.parcel_id = prc.id" if has_pc else ""
+    au_cols = "au.classe AS au_classe" if has_au else "NULL AS au_classe"
+    au_join = "LEFT JOIN parcel_au_statut au ON au.parcel_id = prc.id" if has_au else ""
+    return (f"SELECT s.parcelle_id AS idu, s.tier, s.rang, rsd.sdp_residuelle_m2, rc.cause AS resid_cause, "
+            f"{zp_cols}, {pc_cols}, {au_cols}, {fb_cols}, {ex_col} "
             f"FROM parcel_p_score_v2 s {fb_join} {ex_join} {zp_join} "
             "LEFT JOIN parcels prc ON prc.idu = s.parcelle_id "
             "LEFT JOIN parcel_residuel rsd ON rsd.parcel_id = prc.id AND rsd.cause IS NULL "
+            "LEFT JOIN parcel_residuel rc ON rc.parcel_id = prc.id "
+            f"{pc_join} {au_join} "
             f"WHERE s.run_id = :run AND s.parcelle_id = ANY(:idus)")
 
 
@@ -160,6 +175,32 @@ def _label_bati(tier: str, row) -> str | None:
     # tout-ou-rien la contredisait.
     return ("Bâtie — on peut encore construire" if float(sdp) > 0
             else "Bâtie — construite au maximum")
+
+
+def _avertissement_non_constructible(constr_label, au_classe, resid_cause,
+                                     zone_lib) -> str | None:
+    """CLASSEMENT-USAGE-1 (défaut 3) — l'avertissement client d'une parcelle servable mais sans
+    droit à bâtir, MÊME règle que `faisabilite.potentiel_batir` (verdict-driven, jamais le préfixe
+    de zone nu). None si rien ne ferme. Importe les constantes à l'appel (pas de cycle au module)."""
+    from .faisabilite.au_differe import AU_CLASSES_DIFFEREES
+    from .faisabilite.constructibilite import (
+        DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE)
+    z = f" ({zone_lib})" if zone_lib else ""
+    if constr_label == DECLASSE_ZONE_FERMEE:
+        return f"Zone fermée à l'urbanisation{z} — rien à bâtir en l'état."
+    if constr_label == DECLASSE_NON_CONSTRUCTIBLE:
+        return "Parcelle non constructible (surface ou reculs insuffisants) — rien à bâtir."
+    if au_classe in AU_CLASSES_DIFFEREES:
+        return f"Zone AU non ouverte à l'urbanisation{z} — rien à bâtir tant qu'elle n'est pas ouverte."
+    if resid_cause is not None:
+        if str(resid_cause).startswith("zone_non_constructible"):
+            return f"Zone non constructible{z} — rien à bâtir."
+        if str(resid_cause).startswith("terrain_exigu"):
+            return "Terrain trop exigu pour un projet — rien à bâtir."
+        if str(resid_cause).startswith("habitat_interdit"):
+            return f"Habitat interdit dans cette zone{z} — rien à bâtir."
+        return f"Pas de potentiel constructible résiduel{z} — rien à bâtir."
+    return None
 
 
 def _traduire(idu: str, row, run: str) -> dict:
@@ -190,6 +231,17 @@ def _traduire(idu: str, row, run: str) -> dict:
         motif = row["ex_motif_client"] or MOTIF_CLIENT_FALLBACK
     elif tier == "declasse_bati_sature" or bati_sature:
         motif = row["fb_motif"]
+    # CLASSEMENT-USAGE-1 (défaut 3) — AVERTISSEMENT sur une parcelle SERVABLE mais non
+    # constructible / en zone fermée (AU non ouverte). On lit les MÊMES caches que le gate
+    # `potentiel_batir` (constructibilité A/B, statut AU différé, cause résiduelle). Une parcelle
+    # « À suivre » inconstructible n'arrive plus propre à l'écran : elle porte son motif, et elle
+    # est traitée en déclassée (le palier de probabilité ne bouge pas — c'est un motif, pas un tier).
+    avertissement = _avertissement_non_constructible(
+        row["constr_label"], row["au_classe"], row["resid_cause"], row["zone_lib"])
+    if servable and avertissement:
+        declasse = True
+        if motif is None:
+            motif = avertissement
     return {
         # M135 — le label du tier suit l'ÉCHELLE D'ACTION (tiers_client) ; l'état du bâti
         # (« construite au maximum » / « on peut encore construire ») n'est plus dans le tier,
@@ -198,6 +250,7 @@ def _traduire(idu: str, row, run: str) -> dict:
         "rang": row["rang"], "servable": servable, "declasse": declasse,
         "badge_division": badge, "badge_division_libelle": badge_lib,
         "motif": motif, "exception_registre": ex_present,
+        "avertissement": avertissement if servable else None,
         "run": run,
     }
 

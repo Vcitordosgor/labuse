@@ -349,10 +349,23 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     # (la pondération dérive du même cache parcel_au_statut).
     p = _pondere_au_sous_plancher(session, df, p)
 
-    # rangs et percentiles HORS copro, ties départagés seedés 974
+    # CLASSEMENT-USAGE-1 (défaut 2) — l'étage 0 (écartée dure) est lu AVANT le rang pour en être
+    # EXCLU : une parcelle écartée ne doit plus occuper un rang d'élite (NU4-D §2.3 : rang 5 sur une
+    # zone A écartée, « rang 5 / 428 239 » affiché à côté de « Écartée »). L'étage 0 est lu sur le
+    # run SERVI (Q_A_RUN_LABEL, source unique / bascule centralisée), PAS un run gelé en dur.
+    # M8a — override NON DESTRUCTIF pour scorer un run CANDIDAT sur SA propre cascade (`LABUSE_ETAGE0_RUN`,
+    # défaut = run servi). Utilisé uniquement en batch candidat, jamais en prod.
+    etage0_run = os.environ.get("LABUSE_ETAGE0_RUN", runs.current())
+    etage0 = pd.read_sql(text("""
+        SELECT p.idu FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
+        WHERE d.run_label = :run AND d.status IN ('exclue', 'faux_positif_probable')
+    """), session.connection(), params={"run": etage0_run})
+    df["ecartee_etage0"] = df["idu"].isin(set(etage0["idu"]))
+
+    # rangs et percentiles HORS copro ET hors étage 0, ties départagés seedés 974
     rng = np.random.RandomState(SEED)
     tie = rng.random(len(df))
-    hors = ~df["copro"].to_numpy()
+    hors = (~df["copro"] & ~df["ecartee_etage0"]).to_numpy()
     rang = np.full(len(df), np.nan)
     # DÉPARTAGE EXPLICITE (M28, arbitrage Vic : D desc → SDP desc → surface desc → IDU).
     # Le seed persisté (3.3) reste le fallback ULTIME documenté — inatteignable en pratique,
@@ -372,18 +385,7 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     pct[hors] = 100.0 * (1 - (rang_h - 1) / hors.sum())
     taux_base = float(p[hors].mean())
 
-    # étage 0 + événements datés — l'étage 0 est lu sur le run SERVI (Q_A_RUN_LABEL,
-    # source unique / bascule centralisée), PAS un run gelé en dur (ANO-1 : « q_v2 »
-    # codé en dur = dette, le servi ré-appliquait déjà q_v5_m6b → on aligne le calcul interne).
-    # M8a — override NON DESTRUCTIF pour scorer un run CANDIDAT sur SA propre cascade sans
-    # toucher la constante servie : `LABUSE_ETAGE0_RUN` (défaut = Q_A_RUN_LABEL, comportement
-    # inchangé pour l'app et les tests). Utilisé uniquement en batch candidat, jamais en prod.
-    etage0_run = os.environ.get("LABUSE_ETAGE0_RUN", runs.current())
-    etage0 = pd.read_sql(text("""
-        SELECT p.idu FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
-        WHERE d.run_label = :run AND d.status IN ('exclue', 'faux_positif_probable')
-    """), session.connection(), params={"run": etage0_run})
-    df["ecartee_etage0"] = df["idu"].isin(set(etage0["idu"]))
+    # événements datés (l'étage 0 ci-dessus a déjà été lu avant le rang, CLASSEMENT-USAGE-1 défaut 2).
     events = load_events(session)
     df = df.merge(events, on="idu", how="left")
     asof = pd.Timestamp(date(annee, 1, 1))

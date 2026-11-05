@@ -148,6 +148,10 @@ export interface Filters {
   // CHASSE-INVARIANTS-FIX-1 (Lot 1, E-01) — « Saturé » (bâti dépasse le plafond d'emprise, taux > 100 %)
   // est une VALEUR à part entière : le range 0–100 ne peut pas l'atteindre, cette case la retrouve.
   empriseSature: boolean         // emprise bâtie saturée (> 100 %) → emprise_sature
+  // CLASSEMENT-USAGE-1 — tri par usage « À construire » : ne garde que les parcelles où l'on peut
+  // RÉELLEMENT bâtir (zone ouverte ET SDP restante > 0, règle unique back) → a_construire=1. Classées
+  // par probabilité de vente (rang). Coule dans la liste ET la carte (mêmes filterParams). Mémorisé compte.
+  aConstruire: boolean
 }
 
 export const EMPTY_FILTERS: Filters = {
@@ -166,6 +170,7 @@ export const EMPTY_FILTERS: Filters = {
   pmDenom: null, pmSiren: null, pmForme: [], pmApe: [], pmDirigMin: null, pmDirigMax: null,
   pmAge: [],
   hauteurMin: null, hauteurMax: null, empriseMin: null, empriseMax: null, empriseSature: false,
+  aConstruire: false,   // CLASSEMENT-USAGE-1 — tri par usage « Va se vendre » par défaut
 }
 
 // M45-B (Lot 2) — curseur mode B PARTAGÉ (session unique, rien persisté) : travaux + loyer +
@@ -406,7 +411,7 @@ interface AppState {
   setTuyauError: (k: string, v: boolean) => void
   // COMPTE-2 (Lot 6) — hydrate le fond + les couches depuis les préférences EN BASE du compte (à
   // l'ouverture, y compris sur un autre poste). N'écrit que des valeurs connues (jamais de clé pirate).
-  appliquerPrefsCarte: (p: { basemap?: string | null; couches?: Record<string, boolean> | null }) => void
+  appliquerPrefsCarte: (p: { basemap?: string | null; couches?: Record<string, boolean> | null; tri_usage?: string | null }) => void
   // M137-V — filtre par domaine de la couche « Équipements (INSEE BPE) » : codes A..G visibles.
   // Défaut = tous. Sans lui, à l'échelle île les ~16 k services (A) noient les autres domaines.
   bpeDomains: string[]
@@ -419,6 +424,9 @@ interface AppState {
   setFilter: <K extends keyof Filters>(k: K, v: Filters[K]) => void
   setFilters: (f: Filters) => void
   resetFilters: () => void
+  // CLASSEMENT-USAGE-1 — tri par usage (listes + carte), mémorisé par compte (prefs-carte).
+  triUsage: 'va_se_vendre' | 'a_construire'
+  setTriUsage: (mode: 'va_se_vendre' | 'a_construire') => void
   modeB: ModeBParams                                   // M45-B (L2) : curseur session partagé fiche/filtre
   setModeB: (p: Partial<ModeBParams>) => void
   sourcesFocus: string | null // nom de source à surligner sur la page Sources
@@ -853,9 +861,14 @@ export const useApp = create<AppState>((set, get) => ({
   // COMPTE-2 (Lot 6) — applique les préférences EN BASE : fond validé (liste blanche) + couches connues
   // uniquement (on ignore toute clé inconnue et toute valeur non booléenne).
   appliquerPrefsCarte: (p) => set((s) => {
-    const out: Partial<{ basemap: Basemap; layers: LayerToggles }> = {}
+    const out: Partial<{ basemap: Basemap; layers: LayerToggles; triUsage: 'va_se_vendre' | 'a_construire'; filters: Filters }> = {}
     if (p.basemap && (['dark', 'clair', 'plan', 'ortho'] as string[]).includes(p.basemap)) {
       out.basemap = p.basemap as Basemap
+    }
+    // CLASSEMENT-USAGE-1 — restaure le tri par usage du compte (et le filtre `aConstruire` qui en découle).
+    if (p.tri_usage === 'a_construire' || p.tri_usage === 'va_se_vendre') {
+      out.triUsage = p.tri_usage
+      out.filters = { ...s.filters, aConstruire: p.tri_usage === 'a_construire' }
     }
     if (p.couches) {
       const next = { ...s.layers }
@@ -880,7 +893,19 @@ export const useApp = create<AppState>((set, get) => ({
   filters: EMPTY_FILTERS,
   setFilter: (k, v) => set((s) => ({ filters: { ...s.filters, [k]: v } })),
   setFilters: (filters) => set({ filters }),
-  resetFilters: () => set({ filters: EMPTY_FILTERS, zone: null }),
+  resetFilters: () => set((s) => ({
+    // CLASSEMENT-USAGE-1 — la remise à zéro des filtres GARDE le tri par usage choisi (préférence de
+    // présentation mémorisée, pas un critère de recherche) : on réinjecte aConstruire depuis triUsage.
+    filters: { ...EMPTY_FILTERS, aConstruire: s.triUsage === 'a_construire' }, zone: null,
+  })),
+  // CLASSEMENT-USAGE-1 — tri par usage : « va_se_vendre » (défaut, classement actuel) / « a_construire »
+  // (ne garde que le constructible, classé par probabilité de vente). Pose le filtre `aConstruire` (liste
+  // + carte) ET mémorise le choix par compte (best-effort : un échec réseau ne casse pas la session).
+  triUsage: 'va_se_vendre',
+  setTriUsage: (mode) => {
+    set((s) => ({ triUsage: mode, filters: { ...s.filters, aConstruire: mode === 'a_construire' } }))
+    import('../lib/api').then(({ postPrefsCarte }) => postPrefsCarte({ tri_usage: mode })).catch(() => {})
+  },
   modeB: MODE_B_DEFAUT,
   setModeB: (p) => set((s) => ({ modeB: { ...s.modeB, ...p } })),
   sourcesFocus: null,

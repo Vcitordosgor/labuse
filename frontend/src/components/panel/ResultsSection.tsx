@@ -491,6 +491,9 @@ function BandeHeader({ bande }: { bande: Bande }) {
 
 export function ResultsSection() {
   const { filters, query, zone, resetFilters, commune, setCommune } = useApp()
+  // CLASSEMENT-USAGE-1 — tri par usage (listes + carte), mémorisé par compte.
+  const triUsage = useApp((s) => s.triUsage)
+  const setTriUsage = useApp((s) => s.setTriUsage)
   // FRONT-CHIFFRES-2 (F26) — seuil bas « peu probable » servi (config scoring_client) pour le « i ».
   const dPeuProbable = useQuery({ queryKey: ['scoring-fraction'], queryFn: getScoringFraction, staleTime: 60 * 60 * 1000 }).data?.seuil_bas_denominateur ?? 50
   const ile = commune == null   // mode « Toute l'île » : liste + compteurs servis en SQL
@@ -660,6 +663,25 @@ export function ResultsSection() {
             mint/15 flottant), « i » aligné sur la ligne de base du libellé TRIER. */}
         {/* ANALYSE-1 — la barre de tri ne s'affiche QU'EN mode factuel : l'Analyse a UN ordre fixe
             (bande de Score puis Signal de mutation, lexicographique), jamais un tri chiffré au choix. */}
+        {/* CLASSEMENT-USAGE-1 — TRI PAR USAGE : « Va se vendre » (classement actuel, par probabilité de
+            vente) / « À construire » (ne garde que le constructible — SDP restante > 0, zone ouverte —,
+            classé par probabilité de vente). Mémorisé par compte. Visible en mode analyse (le classement
+            vit là) ; coule aussi dans la carte (mêmes filtres). Le palier reste la probabilité de vente —
+            ce tri ne le change jamais, il filtre le périmètre. */}
+        <div data-tri-usage className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+          <span className="flex h-[15px] shrink-0 items-center text-[10px] uppercase tracking-wide text-txt-dim">Usage</span>
+          <div className="inline-flex overflow-hidden rounded-full border border-line-2">
+            {([['va_se_vendre', 'Va se vendre'], ['a_construire', 'À construire']] as const).map(([key, label]) => (
+              <button key={key} type="button" data-tri-usage-opt={key}
+                aria-pressed={triUsage === key}
+                onClick={() => setTriUsage(key)}
+                className={`px-3 py-1 text-[11px] font-medium transition-colors duration-quick ${
+                  triUsage === key ? 'bg-mint text-ink' : 'text-txt-dim hover:text-mint'}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
         {!analyse && <div data-tri-bar className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
           <span className="flex h-[15px] shrink-0 items-center gap-1.5 text-[10px] uppercase tracking-wide text-txt-dim">Trier
             {/* M55-F point 6 : le « i » des deux lunettes (opportunité globale vs probabilité seule) */}

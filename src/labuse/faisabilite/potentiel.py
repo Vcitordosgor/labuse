@@ -151,6 +151,16 @@ def bloc_potentiel(session: Session, parcel_id: int, fz=None) -> dict | None:
         "SELECT sdp_residuelle_m2, cause FROM parcel_residuel WHERE parcel_id = :p"),
         {"p": parcel_id}).mappings().first()
     sdp_servie = float(row["sdp_residuelle_m2"]) if row and row["sdp_residuelle_m2"] is not None else None
+    # CLASSEMENT-USAGE-1 — zone FERMÉE à l'urbanisation (règle unique `potentiel_batir`, verdict-driven :
+    # cause résiduelle / constructibilité / statut AU — jamais la famille de zone nue, l'assiette clippée
+    # des parcelles à cheval reste intacte). On BORNE la SDP au sol à 0 ET on ferme le scénario table rase,
+    # même quand le run servi stocke un chiffre SANS cause et que le moteur live diverge du cache
+    # (ex. 97422000AX1253, 2AUe declasse_zone_fermee = 25 426 m²). Le PDF ne sert aucun potentiel sur une
+    # zone fermée — la ligne « potentiel à bâtir » dit « rien à bâtir », les scénarios suivent.
+    from .potentiel_batir import est_ferme_parcel
+    _ferme = est_ferme_parcel(session, parcel_id)
+    if _ferme and sdp_servie is not None and sdp_servie > 0:
+        sdp_servie = 0.0
     au_sol = {"sdp_residuelle_m2": sdp_servie,
               "cause": row["cause"] if row else None,
               "source": "run résiduel servi (assiette clippée)"}
@@ -163,9 +173,11 @@ def bloc_potentiel(session: Session, parcel_id: int, fz=None) -> dict | None:
     # LOGEMENTS-SOURCE-UNIQUE — `logements` (fourchette de l'ancien calcul de capacité,
     # SDP ÷ logement moyen) RETIRÉ du bloc et du verdict : le nombre de logements ne se lit que
     # dans l'Étude de faisabilité (moteur d'implantation) — les lecteurs (Flash) impriment le renvoi.
-    table_rase = {"constructible": bool(f.constructible) if f else False,
-                  "vendable_m2": fo.get("shab_vendable_m2"),
-                  "plancher_m2": fo.get("surface_plancher_m2"),
+    # CLASSEMENT-USAGE-1 — en zone fermée, le scénario « table rase » est lui aussi fermé (sinon le PDF
+    # afficherait « ~N m² vendables » sous une parcelle dite « rien à bâtir » — contradiction interne).
+    table_rase = {"constructible": (bool(f.constructible) if f else False) and not _ferme,
+                  "vendable_m2": None if _ferme else fo.get("shab_vendable_m2"),
+                  "plancher_m2": None if _ferme else fo.get("surface_plancher_m2"),
                   "mention": "après plafond de densité et stationnement"}
     # verdict — une phrase, composée des trois lignes
     morceaux: list[str] = []

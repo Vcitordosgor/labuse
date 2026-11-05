@@ -87,6 +87,9 @@ const q = (extra: Record<string, string | number> = {}) => {
  *  M5.1 : `tiers` (v2) pilote. M45 (P1) : `v_signal` (Score V) retiré — anti-filtre acté. */
 export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.tiers.length ? { tiers: f.tiers.join(',') } : {}),
+  // CLASSEMENT-USAGE-1 — tri par usage « À construire » : filtre « il reste quelque chose à bâtir »
+  // (zone ouverte + SDP restante > 0, règle unique back). Coule dans la liste ET la carte (idus).
+  ...(f.aConstruire ? { a_construire: 1 } : {}),
   // M129-B : score_min (matrice morte) ne s'envoie plus — le rang/tier remplace.
   ...(f.surfaceMin != null ? { surface_min: f.surfaceMin } : {}),
   ...(f.surfaceMax != null ? { surface_max: f.surfaceMax } : {}),
@@ -1911,9 +1914,12 @@ export interface MailLigne {
 export const getAdminMails = (compteId: number) =>
   j<{ lignes: MailLigne[]; compteurs: unknown }>(`/admin/mails?compte_id=${compteId}`)
 // COMPTE-2 (Lot 6) — mémoire du compte : préférences de carte (fond + couches) en base (survivent au poste).
+// CLASSEMENT-USAGE-1 — `tri_usage` (« va_se_vendre » / « a_construire ») est mémorisé par compte, à
+// côté du fond/couches (même endpoint, même cycle de vie). Un POST qui ne porte que `tri_usage` ne
+// remet pas basemap/couches à NULL (écriture séparée côté back).
 export const getPrefsCarte = () =>
-  j<{ basemap: string | null; couches: Record<string, boolean> | null }>('/moi/prefs-carte')
-export const postPrefsCarte = (body: { basemap?: string; couches?: Record<string, boolean> }) =>
+  j<{ basemap: string | null; couches: Record<string, boolean> | null; tri_usage?: string | null }>('/moi/prefs-carte')
+export const postPrefsCarte = (body: { basemap?: string; couches?: Record<string, boolean>; tri_usage?: string }) =>
   j<{ ok: boolean }>('/moi/prefs-carte', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 // D5 — IA
 export interface AdminIa {

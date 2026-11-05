@@ -216,6 +216,19 @@ def build_mvt_table(db: Session, run_label: str | None = None) -> int:
         raise RuntimeError(
             f"run servi « {run_label} » absent de p_score_v2_runs — "
             "lancer `labuse score-v2` ou vérifier LABUSE_SERVED_RUN.")
+    # CLASSEMENT-USAGE-1 — 3e porte SDP (zone fermée au verdict), reproduite ICI pour que la carte
+    # serve la MÊME SDP que la fiche. Conditionnelle : si les caches de constructibilité / statut AU
+    # manquent (base de test nue), on n'ajoute ni jointure ni condition → comportement d'avant.
+    _has_gate = bool(db.execute(text(
+        "SELECT to_regclass('parcel_constructibilite') IS NOT NULL "
+        "AND to_regclass('parcel_au_statut') IS NOT NULL")).scalar())
+    if _has_gate:
+        from ..faisabilite.potentiel_batir import sql_zone_fermee_verdict
+        _fermee_join = ("LEFT JOIN parcel_constructibilite pc ON pc.parcel_id = p.id "
+                        "LEFT JOIN parcel_au_statut au ON au.parcel_id = p.id")
+        _fermee_cond = "AND NOT " + sql_zone_fermee_verdict("pc", "au")
+    else:
+        _fermee_join = _fermee_cond = ""
     db.execute(text("""
         CREATE TABLE mvt_parcels AS
         SELECT p.id, p.idu, p.commune,
@@ -246,8 +259,13 @@ def build_mvt_table(db: Session, run_label: str | None = None) -> int:
                -- la cause résiduelle est nulle, la fiche sert ∅ : la tuile ne bake plus 77 m² de SDP là
                -- où la fiche n'en montre aucune (carte ↔ fiche, une seule valeur). Prend effet au
                -- prochain `rebuild_mvt_servies` (bascule / `labuse build-mvt`).
+               -- CLASSEMENT-USAGE-1 — 3e porte : une ZONE FERMÉE à l'urbanisation (AU non ouverte,
+               -- declasse_zone_fermee/non_constructible) ne bake plus de SDP dans la tuile, comme la
+               -- fiche (`potentiel_batir`). Cas 97422000AX1253 (2AUe, 25 426 m²) + ses pareilles : la
+               -- carte ↔ la fiche servent une seule valeur (∅). Prend effet au prochain `labuse build-mvt`.
                CASE WHEN r.cause IS NULL
                          AND NOT (sl.cause IS NOT NULL AND r.sdp_residuelle_m2 > 0)
+                         """ + _fermee_cond + """
                     THEN r.sdp_residuelle_m2 END AS sdp_residuelle_m2,
                CASE WHEN r.cause IS NULL THEN r.sous_densite END AS sous_densite,
                CASE WHEN ev.parcel_id IS NOT NULL THEN 'rouge' END AS evenement,
@@ -259,6 +277,7 @@ def build_mvt_table(db: Session, run_label: str | None = None) -> int:
         LEFT JOIN score_labuse sl ON sl.parcel_id = p.id AND sl.run_label = :v2run
         LEFT JOIN parcel_zone_plu zp ON zp.idu = p.idu
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
+        """ + _fermee_join + """
         LEFT JOIN (SELECT DISTINCT parcel_id FROM dryrun_cascade_results
                    WHERE run_label = :run AND evenement = 'rouge') ev ON ev.parcel_id = p.id
         LEFT JOIN (SELECT parcel_id, string_agg(DISTINCT layer_name, ',') AS flags

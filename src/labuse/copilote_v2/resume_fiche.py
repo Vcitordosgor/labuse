@@ -262,6 +262,12 @@ _CHAMPS = [
     (("surface libre", "sol libre", "terrain libre", "espace libre", "surface disponible au sol"),
      ("surface_libre_sol_m2", "Surface libre au sol")),
     (("surface", "superficie", "taille"), ("surface_parcelle_m2", "Surface")),
+    # CLASSEMENT-USAGE-1 — « potentiel à bâtir » : peut-on construire, zone ouverte/fermée, rien à
+    # bâtir (AVANT le champ SDP brut, pour happer « peut-on construire / y a-t-il un potentiel »).
+    (("potentiel a batir", "potentiel à bâtir", "peut-on construire", "peut on construire",
+      "zone ouverte", "zone fermee", "zone fermée", "rien a batir", "rien à bâtir",
+      "constructible ou non", "y a-t-il un potentiel"),
+     ("potentiel_a_batir", "Potentiel à bâtir")),
     (("sdp", "surface de plancher", "constructible restant", "capacite"),
      ("sdp_residuelle_m2", "SDP restante")),  # NU-3-M-T01 : « SDP restante » partout (cf. :34)
     # ═══ COPILOTE-5 — COUVERTURE COMPLÈTE : chaque section de la fiche a son champ, LU du MÊME

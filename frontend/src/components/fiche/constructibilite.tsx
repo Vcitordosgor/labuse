@@ -34,6 +34,30 @@ const PT_COLORS: Record<string, string> = { fort: '#4ADE96', modere: '#F5C244', 
 // CHASSE-FIX-2 (D04) — « exclu » (parcelle à cause) porte le chip « non retenue » ; la vraie
 // raison est affichée en clair plus bas (plus jamais un « indéterminé » muet sur une bande 0).
 const PT_CHIP: Record<string, string> = { differe: 'différé', exclu: 'non retenue' }
+// CLASSEMENT-USAGE-1 — « Potentiel à bâtir » : information À PART (jamais le palier de vente), servie
+// par la SEULE fonction back `potentiel_batir`. SDP restante (0 en zone fermée), zone ouverte/fermée,
+// « rien à bâtir » quand la SDP est nulle. Vert = constructible avec SDP ; gris = rien à bâtir.
+export function PotentielABatirBlock({ pab }: { pab: import('../../lib/types').PotentielABatir }) {
+  const rien = pab.rien_a_batir === true || !(pab.sdp_restante_m2 && pab.sdp_restante_m2 > 0)
+  const color = rien ? '#9AA6A0' : '#4ADE96'
+  return (
+    <div data-potentiel-a-batir>
+      <GroupLabel right={
+        <span className="rounded-full px-2 py-0.5 text-[10.5px] font-medium" style={{ background: `${color}22`, color }}>
+          {rien ? 'rien à bâtir' : 'constructible'}
+        </span>
+      }>Potentiel à bâtir</GroupLabel>
+      <Lignes>
+        <Ligne label="SDP restante"
+          valeur={pab.sdp_restante_m2 != null ? <>{fmtInt(pab.sdp_restante_m2)} <small>m²</small></> : <small>non calculée</small>} />
+        <Ligne label="Zone"
+          valeur={<small>{pab.zone_lib ? `${pab.zone_lib} — ` : ''}{pab.zone_ouverte === false ? 'fermée à l’urbanisation' : 'ouverte'}</small>} />
+      </Lignes>
+      {pab.motif && <FactNote>{pab.libelle}</FactNote>}
+    </div>
+  )
+}
+
 export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
   if (pt.indisponible) return <BlocIndisponible titre="Potentiel de transformation" />   // M125 — panne ≠ absence
   const color = PT_COLORS[pt.niveau] ?? '#9AA6A0'
@@ -1194,6 +1218,9 @@ export function ConstructibiliteSection({ f, idu }: { f: Fiche; idu: string }) {
           {delaisse && (
             <div data-delaisse><Vigilance title={delaisse.libelle} /></div>
           )}
+          {/* CLASSEMENT-USAGE-1 — le « potentiel à bâtir » (information à part, règle unique back) en TÊTE
+              de la constructibilité : SDP restante bornée à 0 en zone fermée, « rien à bâtir » dit clair. */}
+          {f.potentiel_a_batir && <PotentielABatirBlock pab={f.potentiel_a_batir} />}
           {/* capacité + SDP + potentiel de transformation (SDP consommée/résiduelle/surélévation) reçu d'Urbanisme */}
           {f.potentiel_transformation && <TransformationBlock pt={f.potentiel_transformation} />}
           <FaisabiliteTab idu={idu} />
