@@ -1437,24 +1437,31 @@ def injection_nuit(ctx: JobContext) -> None:
         log.warning("injection-nuit : demande classe B impossible (%s)", exc)
 
     # Classe A : injection SEULE la nuit (mandat AUTONOMIE / TABLEAU-1 point 1). On ne lance QUE les
-    # sources de classe A qui ont AVANCÉ amont et dont la commande d'ingestion est CONNUE (le MÊME
-    # chemin que le bouton « Injecter » / le cron, via `lancer_ingestion_source`) ; l'ingestion détachée
-    # enchaîne son filtre, et la cohérence de nuit + le résumé du matin contrôlent le résultat. Une source
-    # de classe A sans commande mappée est listée « à câbler » — JAMAIS injectée à l'aveugle (prudence).
+    # sources de classe A qui ont AVANCÉ amont ET qui sont SÛRES (INJECTION-SOLIDE-3 : routées par
+    # `injection_sure`, ou vérifiées sans remplacement-en-place — `garde_injection.SOURCES_SURES`), par le
+    # MÊME chemin que le bouton « Injecter » / le cron (`lancer_ingestion_source`). La cohérence de nuit +
+    # le résumé du matin contrôlent le résultat. Une source de classe A sans commande mappée reste listée
+    # « à câbler » — jamais injectée à l'aveugle.
     #
-    # POURQUOI ça n'avait jamais injecté avant : ce job se contentait d'EMPILER les noms dans `a_cabler`
-    # (aucun appel d'ingestion) ET 2 des 4 sources A visées (Population légale INSEE, OFB/APER) n'avaient
-    # pas de ligne dans config/sources_ingestion.yaml. Résultat : elles restaient « nouvelle version »
-    # et remontaient à tort dans la carte « à valider » de Vic. Ce n'était ni un contrôle échoué, ni une
-    # mauvaise classe, ni la fenêtre : le câblage source→commande n'avait simplement pas été écrit.
+    # INJECTION-SOLIDE-3 — la voie « héritée » (injecter par le chemin direct sous le seul filet de la
+    # cohérence du lendemain) DISPARAÎT : une source de classe A avancée qui n'est PAS sûre n'est PLUS
+    # injectée. Elle remonte comme DÉCISION À PRENDRE (`injection-a-decider`) — à router par
+    # `injection_sure.remplacer_servie` puis à inscrire dans `SOURCES_SURES`. « Sur-protéger est bénin ».
+    #
+    # POURQUOI le câblage importe (TABLEAU-1) : 2 sources A (Population légale INSEE, OFB/APER) n'avaient
+    # pas de ligne dans config/sources_ingestion.yaml → elles restaient « nouvelle version » à tort.
     from .api.dashboard import lancer_ingestion_source
     from .ingestion import garde_injection
-    injectees, en_echec, a_cabler, deja = [], [], [], []
-    injectees_sures, injectees_heritees = [], []
+    from . import ops_alertes
+    injectees, en_echec, a_cabler, a_decider, deja = [], [], [], [], []
+    injectees_sures = []
     for a in classe_a:
         nom = a["name"]
         if nom not in nouvelles:
             deja.append(nom)          # rien de neuf amont → rien à faire (idempotent)
+            continue
+        if not garde_injection.source_sur_chemin_sur(nom):
+            a_decider.append(nom)     # non sûre → JAMAIS injectée seule ; décision à prendre (vetter + router)
             continue
         try:
             lance = lancer_ingestion_source(nom)
@@ -1463,15 +1470,10 @@ def injection_nuit(ctx: JobContext) -> None:
             log.warning("injection-nuit : lancement %r échoué (%s)", nom, exc)
             continue
         if lance is None:
-            a_cabler.append(nom)      # classe A mais aucune commande connue → listée, jamais à l'aveugle
+            a_cabler.append(nom)      # sûre mais aucune commande connue → listée, jamais à l'aveugle
             continue
         injectees.append(nom)
-        # INJECTION-SOLIDE-2 — par source lancée, sur le CHEMIN SÛR (injection_sure : un échec garde la
-        # version servie + alerte immédiate) ou HÉRITÉE (chemin direct, à convertir — filet = cohérence
-        # du lendemain). On ne BLOQUE pas l'héritée (la couper d'un coup stopperait les sources pas
-        # encore converties) : on la REND VISIBLE pour que la dette se résorbe et ne grossisse plus.
-        (injectees_sures if garde_injection.source_sur_chemin_sur(nom)
-         else injectees_heritees).append(nom)
+        injectees_sures.append(nom)   # SOLIDE-3 : toute source injectée la nuit est sûre (par construction)
         # trace du lancement (idempotence : la sentinelle repassera « ok » après ingestion) — best-effort.
         try:
             db.execute(text(
@@ -1479,30 +1481,31 @@ def injection_nuit(ctx: JobContext) -> None:
                 "WHERE source_id = (SELECT id FROM data_sources WHERE name = :n)"), {"n": nom})
         except Exception as exc:  # noqa: BLE001
             log.warning("injection-nuit : trace injection_lancee_at %r impossible (%s)", nom, exc)
-    # INJECTION-SOLIDE-2 — si des sources héritées ont été injectées cette nuit, une alerte CLAIRE (non
-    # urgente, rappelée une fois/jour) les liste : elles passent encore par le chemin direct, à router
-    # vers injection_sure (SOLIDE-3). Les sources sûres, elles, se protègent seules (verdict + rollback
-    # + alerte immédiate au moindre échec de livraison).
-    if injectees_heritees:
-        try:
-            from . import ops_alertes
+    # INJECTION-SOLIDE-3 — les sources A avancées NON sûres : alerte CLAIRE « décision à prendre » (non
+    # urgente). Elles ne s'injectent plus seules tant qu'elles ne passent pas par l'injection sûre ; leur
+    # veille reste « nouvelle version » (elles reviennent jusqu'à ce qu'on les route). Sinon, on résout.
+    try:
+        if a_decider:
             ops_alertes.signaler(
-                db, "injection-heritee",
-                f"{len(injectees_heritees)} source(s) injectée(s) par le chemin direct (à sécuriser)",
-                "Ces sources de classe A ont été injectées cette nuit SANS passer par l'injection sûre "
-                "(staging + contrôles + swap atomique) — leur filet reste la cohérence du lendemain :\n  · "
-                + "\n  · ".join(injectees_heritees)
-                + "\n\nÀ router vers injection_sure.remplacer_servie (INJECTION-SOLIDE-3).",
-                lien="/admin/sources")
-        except Exception as exc:  # noqa: BLE001 — la transparence ne doit pas casser l'injection
-            log.warning("injection-nuit : alerte « héritée » impossible (%s)", exc)
-    ctx.compte(classe_a=len(classe_a), classe_b=len(classe_b), nouvelles_a=len(injectees) + len(en_echec)
-               + len(a_cabler), injectees=injectees, injectees_sures=injectees_sures,
-               injectees_heritees=injectees_heritees, en_echec=en_echec, a_cabler=a_cabler,
+                db, "injection-a-decider",
+                f"{len(a_decider)} source(s) de classe A non sécurisée(s) — décision à prendre",
+                "Ces sources de classe A ont une nouvelle version amont mais NE sont PAS sur le chemin de "
+                "l'injection sûre (staging + swap atomique + retour arrière) — elles ne s'injectent donc "
+                "plus seules la nuit :\n  · " + "\n  · ".join(sorted(a_decider))
+                + "\n\nRoute chacune par injection_sure.remplacer_servie, ajoute-la à "
+                  "garde_injection.SOURCES_SURES, puis relance.", lien="/admin/sources")
+        else:
+            ops_alertes.resoudre(db, "injection-a-decider")
+    except Exception as exc:  # noqa: BLE001 — la transparence ne doit pas casser l'injection
+        log.warning("injection-nuit : alerte « à décider » impossible (%s)", exc)
+    ctx.compte(classe_a=len(classe_a), classe_b=len(classe_b),
+               nouvelles_a=len(injectees) + len(en_echec) + len(a_cabler) + len(a_decider),
+               injectees=injectees, injectees_sures=injectees_sures, en_echec=en_echec,
+               a_cabler=a_cabler, a_decider=sorted(a_decider),
                attente_b=sorted(b["name"] for b in classe_b if b["name"] in nouvelles),
-               note="classe A avancée : injectée seule (commande connue) ou listée « à câbler » (sans "
-                    "commande) ; classe B avancée : clic de Vic (carte « à valider »). Injection sûre "
-                    "(injection_sure) vs héritée tracée par source.")
+               note="classe A avancée : injectée seule UNIQUEMENT si sûre (injection_sure / sans "
+                    "remplacement-en-place) ; non sûre → décision à prendre ; sans commande → « à câbler ». "
+                    "La voie « héritée » a disparu (INJECTION-SOLIDE-3).")
 
 
 def ingest_sirene(ctx: JobContext) -> None:

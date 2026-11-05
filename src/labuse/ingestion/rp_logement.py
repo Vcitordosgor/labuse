@@ -85,15 +85,27 @@ def ingest_rp_logement(session: Session, *, fichier: str | None = None, log=prin
                     mod = row[j] if j < len(row) else ""
                     dv = e["d"].setdefault(v, {})
                     dv[mod] = dv.get(mod, 0.0) + w
-    session.execute(text("DELETE FROM rp_logement_commune"))
+    # INJECTION-SOLIDE-3 — passe par `remplacer_servie` : les 24 communes sont chargées dans une STAGING,
+    # contrôlée (non vide, écart sous seuil) puis échangée ATOMIQUEMENT. Un fichier détail vide / à moitié
+    # lu est REFUSÉ → la version servie est conservée (`InjectionRefusee`). Plus de `DELETE FROM
+    # rp_logement_commune` à vif. Table sans géométrie.
+    from . import injection_sure
     import json as _json
-    for com, e in acc.items():
-        dist = {v: {m: round(p, 1) for m, p in mods.items()} for v, mods in e["d"].items()}
-        session.execute(text(
-            "INSERT INTO rp_logement_commune (insee, n_logements, distributions, millesime) "
-            "VALUES (:i, :n, CAST(:d AS jsonb), :m)"),
-            {"i": com, "n": round(e["w"], 1), "d": _json.dumps(dist, ensure_ascii=False),
-             "m": cfg["millesime"]})
+
+    def charger(conn, staging):
+        for com, e in acc.items():
+            dist = {v: {m: round(p, 1) for m, p in mods.items()} for v, mods in e["d"].items()}
+            conn.execute(text(
+                f'INSERT INTO "{staging}" (insee, n_logements, distributions, millesime) '
+                "VALUES (:i, :n, CAST(:d AS jsonb), :m)"),
+                {"i": com, "n": round(e["w"], 1), "d": _json.dumps(dist, ensure_ascii=False),
+                 "m": cfg["millesime"]})
+
+    injection_sure.remplacer_servie(
+        session, table="rp_logement_commune", charger_staging=charger, a_geometrie=False,
+        couverture_974_min=0, delta_max_pct=50.0,
+        alerter=injection_sure.alerte_injection(
+            "rp_logement_commune", "INSEE RP — fichier détail Logements (EGOUL)"))
     session.flush()
     log(f"  RP logement : {len(acc)} communes 974, {n_974} logements lus, "
         f"{len(DWELLING_VARS)} variables agrégées")

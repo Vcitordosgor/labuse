@@ -113,49 +113,67 @@ def ingest_arcep(session: Session, *, url_imb: str = URL_BASE_IMB, url_elig: str
             debit_d.setdefault(imb, set()).add(dd)
         if (dm := (row.get("classe_debit_montant") or "").strip()):
             debit_m.setdefault(imb, set()).add(dm)
-    # 2) immeubles : purge + insertion par lots
-    session.execute(text("DELETE FROM arcep_immeubles"))
+    # 2) immeubles — INJECTION-SOLIDE-3 : passe par `remplacer_servie`. Les immeubles sont chargés par
+    # lots dans une STAGING, contrôlés (non vide, géométries valides, dans La Réunion, écart sous seuil)
+    # puis échangés ATOMIQUEMENT. Un téléchargement vide / à moitié / hors territoire est REFUSÉ → la
+    # version servie est conservée (`InjectionRefusee`). Plus de `DELETE FROM arcep_immeubles` à vif.
+    # Géométrie Point 4326 ; `like=ALL` pour l'`ON CONFLICT (imb_id)`.
+    from .injection_sure import remplacer_servie, alerte_injection
+
+    def preparer(conn):
+        for stmt in DDL.strip().split(";\n"):
+            if stmt.strip():
+                conn.execute(text(stmt))
+
     n = n_ftth = 0
     ops_vus: set[str] = set()
-    batch: list[dict] = []
 
-    def _flush():
-        if batch:
-            session.execute(text(
-                "INSERT INTO arcep_immeubles (imb_id, insee, commune, adresse, nb_logements, "
-                " ftth, operateurs_ftth, technos, debit_descendant_max, debit_montant_max, "
-                " geom, geom_2975, millesime) "
-                "VALUES (:id, :insee, :com, :adr, :nb, :ftth, :ops, :technos, :dd, :dm, "
-                " ST_Transform(ST_SetSRID(ST_MakePoint(:x, :y), 3857), 4326), "
-                " ST_Transform(ST_SetSRID(ST_MakePoint(:x, :y), 3857), 2975), :mil) "
-                "ON CONFLICT (imb_id) DO NOTHING"), batch)
-            batch.clear()
+    def charger(conn, staging):
+        nonlocal n, n_ftth
+        batch: list[dict] = []
 
-    r = csv.DictReader(io.TextIOWrapper(io.BytesIO(brut_imb), encoding="utf8"), delimiter=";")
-    for row in r:
-        imb = row["imb_id"]
-        ops = sorted(fo.get(imb, ()))
-        adr = " ".join(x for x in (row.get("addr_numero"), row.get("addr_rep"),
-                                   row.get("addr_nom_voie") or row.get("addr_nom_ld")) if x)
-        try:
-            x, y = float(row["imb_x"]), float(row["imb_y"])
-        except (TypeError, ValueError):
-            continue
-        batch.append({"id": imb, "insee": row.get("imb_code_insee") or "?",
-                      "com": row.get("addr_nom_commune"), "adr": adr or None,
-                      "nb": int(row["imb_nbr_logloc"]) if (row.get("imb_nbr_logloc") or "").isdigit() else None,
-                      "ftth": bool(ops), "ops": ops,
-                      "technos": sorted(technos.get(imb, ())),
-                      "dd": _meilleur_debit(debit_d.get(imb, set())),
-                      "dm": _meilleur_debit(debit_m.get(imb, set())),
-                      "x": x, "y": y, "mil": millesime})
-        n += 1
-        if ops:
-            n_ftth += 1
-            ops_vus.update(ops)
-        if len(batch) >= 5000:
-            _flush()
-    _flush()
+        def _flush():
+            if batch:
+                conn.execute(text(
+                    f'INSERT INTO "{staging}" (imb_id, insee, commune, adresse, nb_logements, '
+                    " ftth, operateurs_ftth, technos, debit_descendant_max, debit_montant_max, "
+                    " geom, geom_2975, millesime) "
+                    "VALUES (:id, :insee, :com, :adr, :nb, :ftth, :ops, :technos, :dd, :dm, "
+                    " ST_Transform(ST_SetSRID(ST_MakePoint(:x, :y), 3857), 4326), "
+                    " ST_Transform(ST_SetSRID(ST_MakePoint(:x, :y), 3857), 2975), :mil) "
+                    "ON CONFLICT (imb_id) DO NOTHING"), batch)
+                batch.clear()
+
+        r = csv.DictReader(io.TextIOWrapper(io.BytesIO(brut_imb), encoding="utf8"), delimiter=";")
+        for row in r:
+            imb = row["imb_id"]
+            ops = sorted(fo.get(imb, ()))
+            adr = " ".join(x for x in (row.get("addr_numero"), row.get("addr_rep"),
+                                       row.get("addr_nom_voie") or row.get("addr_nom_ld")) if x)
+            try:
+                x, y = float(row["imb_x"]), float(row["imb_y"])
+            except (TypeError, ValueError):
+                continue
+            batch.append({"id": imb, "insee": row.get("imb_code_insee") or "?",
+                          "com": row.get("addr_nom_commune"), "adr": adr or None,
+                          "nb": int(row["imb_nbr_logloc"]) if (row.get("imb_nbr_logloc") or "").isdigit() else None,
+                          "ftth": bool(ops), "ops": ops,
+                          "technos": sorted(technos.get(imb, ())),
+                          "dd": _meilleur_debit(debit_d.get(imb, set())),
+                          "dm": _meilleur_debit(debit_m.get(imb, set())),
+                          "x": x, "y": y, "mil": millesime})
+            n += 1
+            if ops:
+                n_ftth += 1
+                ops_vus.update(ops)
+            if len(batch) >= 5000:
+                _flush()
+        _flush()
+
+    remplacer_servie(
+        session, table="arcep_immeubles", preparer=preparer, charger_staging=charger,
+        a_geometrie=True, geom_col="geom", like_including="ALL", couverture_974_min=0,
+        delta_max_pct=60.0, alerter=alerte_injection("arcep_immeubles", SOURCE_NAME), log=log)
     session.flush()
     pct = round(100.0 * n_ftth / n, 1) if n else 0.0
     log(f"  arcep : {n} immeubles, {n_ftth} raccordables FttH ({pct} %), "

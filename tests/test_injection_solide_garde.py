@@ -25,12 +25,35 @@ def test_aucune_ingestion_ne_remplace_une_table_servie_a_vif():
 
 
 def test_les_modules_convertis_sont_propres():
-    """Cliquet : un module converti ne doit JAMAIS ré-introduire un TRUNCATE/DELETE-à-vif sur la
-    table qu'il a sécurisée (régression). (ocsge garde `ocsge_evolution` en dette — table distincte.)"""
+    """Cliquet : un module converti ne doit JAMAIS ré-introduire un TRUNCATE/DELETE-à-vif sur une
+    table qu'il a sécurisée (régression). SOLIDE-3 : tous les modules (8 de SOLIDE-2 + 18 de SOLIDE-3)."""
     sites = g.scanner(ING)
-    for module, table in g.MODULES_CONVERTIS.items():
-        assert not any(s.module == module and s.table == table for s in sites), (
-            f"{module} a ré-introduit un remplacement-en-place de {table} (régression)")
+    for module, tables in g.MODULES_CONVERTIS.items():
+        for table in tables:
+            assert not any(s.module == module and s.table == table for s in sites), (
+                f"{module} a ré-introduit un remplacement-en-place de {table} (régression)")
+
+
+def test_la_dette_est_vide_garde_strict():
+    """INJECTION-SOLIDE-3 — le garde est STRICT : plus AUCUNE tolérance (DETTE vide). Les 18
+    `DELETE`-sans-`WHERE` de SOLIDE-2 sont convertis ; seule reste EXCLUS (tables NON servies)."""
+    assert g.DETTE == {}, (
+        "DETTE doit rester VIDE (garde strict) — une ingestion non sûre ne se DÉCLARE plus, elle se "
+        "convertit à injection_sure.remplacer_servie ou échoue au garde.")
+    assert set(g.EXCLUS) == {("demo_saint_paul.py", "*"),
+                             ("division_or.py", "division_or_revue_snapshot")}
+
+
+def test_source_sur_chemin_sur_et_sources_sures():
+    """INJECTION-SOLIDE-3 — injection-nuit ne lance QUE les sources SÛRES. Les sources routées par
+    `injection_sure` sont dans `SOURCES_SURES` (donc `source_sur_chemin_sur` = True) ; une source
+    inconnue / non vettée est False → injection-nuit la tiendrait comme « décision à prendre »."""
+    for nom in ("Trafic RN (Région Réunion — SIR)", "Base Adresse Nationale",
+                "SIRENE établissements géolocalisés", "CatNat (arrêtés GASPAR / Géorisques)"):
+        assert g.source_sur_chemin_sur(nom), f"{nom} devrait être sûre (routée par injection_sure)"
+    assert not g.source_sur_chemin_sur("Une source neuve jamais vettée")
+    # toutes les entrées sont des chaînes non vides (noms data_sources.name)
+    assert all(isinstance(n, str) and n for n in g.SOURCES_SURES)
 
 
 def test_un_nouvel_offenseur_est_pris_truncate():

@@ -128,38 +128,111 @@ def scanner_texte(module: str, texte: str) -> list[Site]:
     return sites
 
 
-# ════════════════════════════════ LE REGISTRE (cliquet + dette bornée) ════════════════════════════
+# ════════════════════════════════ LE REGISTRE (cliquet STRICT) ════════════════════════════════════
 #
-# CONVERTIES (plus aucun motif ; passent par injection_sure.remplacer_servie) — pour mémoire/liste :
-MODULES_CONVERTIS = {
-    "trafic_rn.py": "trafic_rn",
-    "rnic.py": "rnic_coproprietes",
-    "dvf_marche.py": "dvf_secteur_medianes",
-    "etablissement_parcelle.py": "etablissement_parcelle",
-    "surface_d.py": "surface_d_events",
-    "dvf_prix_neuf.py": "dvf_prix_sortie_neuf",
-    "ban_plus.py": "ban_plus_liens",
-    "ocsge.py": "parcel_ocsge",
+# INJECTION-SOLIDE-3 — le garde passe en STRICT : **zéro remplacement-en-place d'une table SERVIE
+# n'est toléré**, sans liste d'exceptions. La DETTE de SOLIDE-2 (18 `DELETE`-sans-`WHERE`) est
+# RÉSORBÉE : les 18 ingestions passent désormais par `injection_sure.remplacer_servie` (staging +
+# contrôles + swap atomique + retour arrière) et ont DISPARU du scan. `DETTE` est donc VIDE —
+# toute nouvelle (ou ré-introduite) écriture directe dans une servie est une VIOLATION, tout de suite.
+#
+# CONVERTIES (plus aucun motif ; passent par injection_sure.remplacer_servie) — module → table(s) :
+MODULES_CONVERTIS: dict[str, tuple[str, ...]] = {
+    # — SOLIDE-2 (les 8 `TRUNCATE`-en-place) —
+    "trafic_rn.py": ("trafic_rn",),
+    "rnic.py": ("rnic_coproprietes",),
+    "dvf_marche.py": ("dvf_secteur_medianes",),
+    "etablissement_parcelle.py": ("etablissement_parcelle",),
+    "surface_d.py": ("surface_d_events",),
+    "dvf_prix_neuf.py": ("dvf_prix_sortie_neuf",),
+    "ban_plus.py": ("ban_plus_liens",),
+    # — SOLIDE-3 (les 18 `DELETE`-sans-`WHERE`) ; ocsge porte aussi parcel_ocsge (SOLIDE-2) —
+    "anc.py": ("anc_maille_taux",),
+    "arcep_fibre.py": ("arcep_immeubles",),
+    "azi_tri.py": ("azi_communes",),
+    "ban_adresses.py": ("adresses", "adresse_parcelles"),
+    "bd_nyme.py": ("lieux_dits",),
+    "catnat.py": ("catnat_arretes",),
+    "dfi.py": ("dfi_filiation",),
+    "mobpro.py": ("mobpro_commune",),
+    "ocsge.py": ("parcel_ocsge", "ocsge_evolution"),
+    "ort.py": ("commune_ort",),
+    "piscines_fusion.py": ("piscines",),
+    "rnb.py": ("rnb_rattachement_bdtopo",),
+    "rp_logement.py": ("rp_logement_commune",),
+    "sirene_etablissements.py": ("sirene_etablissements",),
+    "solaire.py": ("solar_grid",),
+    "taxe_amenagement_delta.py": ("taxe_amenagement_taux", "taxe_amenagement_secteur"),
 }
 
-#: SOURCES SÛRES — noms `data_sources.name` dont l'ingestion passe par `injection_sure` (staging + swap
-#: atomique + retour arrière + alerte). injection-nuit s'en sert pour annoncer, par source lancée, si
-#: elle est sur le CHEMIN SÛR (un échec gardera la version servie et ouvrira une alerte) ou HÉRITÉE
-#: (chemin direct, à convertir — SOLIDE-3, sous le filet de la cohérence du lendemain).
+#: SOURCES SÛRES — noms `data_sources.name` dont l'ingestion de nuit ne peut PAS laisser une table
+#: servie CASSÉE : soit elle passe par `injection_sure` (staging + swap atomique + retour arrière +
+#: alerte au moindre échec de livraison), soit elle n'a JAMAIS fait de remplacement-en-place (upsert /
+#: `DELETE … WHERE` partiel — le garde le PROUVE : 0 violation). injection-nuit ne lance QUE ces
+#: sources ; toute source de classe A avancée qui n'y figure PAS n'est PLUS injectée (la voie « héritée »
+#: a disparu) — elle remonte comme DÉCISION À PRENDRE (la vetter, puis l'ajouter ici).
+#: Tenu aligné sur les sources de classe A outillées d'une commande (config/sources_ingestion.yaml).
 SOURCES_SURES: frozenset[str] = frozenset({
-    "Trafic RN (Région Réunion — SIR)",          # trafic_rn.py (géométries)
-    "RNIC — copropriétés (ANAH)",                 # rnic.py (fichier manuel)
-    "BAN PLUS — lien adresse ↔ bâtiment (IGN)",   # ban_plus.py (moisson WFS)
+    # routées par injection_sure.remplacer_servie (SOLIDE-2/3)
+    "Trafic RN (Région Réunion — SIR)",                 # trafic_rn.py
+    "CatNat (arrêtés GASPAR / Géorisques)",             # catnat.py (remplacer=True → injection sûre)
+    "SIRENE établissements géolocalisés",               # sirene_etablissements.py
+    "RNIC — copropriétés (ANAH)",                       # rnic.py (fichier manuel)
+    "BAN PLUS — lien adresse ↔ bâtiment (IGN)",         # ban_plus.py
+    "Base Adresse Nationale",                           # ban_adresses.py
+    "BD NYME — lieux-dits (IGN)",                       # bd_nyme.py
+    "MOBPRO (mobilités domicile-travail, INSEE)",       # mobpro.py
+    "ACV / PVD / ORT (DGALN — liste des communes)",     # ort.py
+    "Zones exclues EnR sauf toiture (OFB/APER)",        # (incrémental/partiel — jamais de purge à vif)
+    # purement incrémentales / partielles (jamais de remplacement-en-place — garde = 0 violation)
+    "50 pas géométriques — limite haute (DEAL)",
+    "ABF / Monuments historiques",
+    "BPE INSEE",
+    "Cartofriches (Cerema)",
+    "Classement sonore ITT (Cerema)",
+    "Espaces protégés complémentaires — Ramsar, sites classés/inscrits (DEAL Carmen)",
+    "INPI RNE (dirigeants)",
+    "INSEE RP2022 — bases IRIS (logement, population)",
+    "Population légale (INSEE via geo.api.gouv)",
+    "QPV 2024 (ANCT)",
+    "SUP — assiettes GPU (API Carto)",
+    "Transport public — GTFS (PAN, 7 réseaux)",
+    "ZNIEFF (INPN/MNHN)",
+    # Le RESTE des sources de classe A (sans commande d'ingestion-nuit mappée) — AUCUNE ne fait de
+    # remplacement-en-place (garde = 0 violation) : soit écriture partielle `DELETE … WHERE kind`
+    # sur spatial_layers (périmètres/zonages), soit upsert/agrégat, soit source en direct/dépôt sans
+    # ingestion batch. Elles sont donc SÛRES. Listées ici pour qu'injection-nuit ne les classe PAS en
+    # « décision à prendre » à tort : sans commande, une source avancée retombe en « à câbler » (et non
+    # « à sécuriser »). La classe A entière est ainsi couverte → a_decider ne vise plus que de FUTURES
+    # sources non vettées (le cliquet reste armé).
+    "Annuaire de l'administration (service-public.fr / DILA)",
+    "BODACC (procédures collectives)",
+    "Cerema / GéoLittoral — indicateur d'érosion côtière",
+    "Contours IRIS (IGN/INSEE)",
+    "Contraintes EnR près des habitations (Géoplateforme)",
+    "Filosofi INSEE (carreaux 200 m)",
+    "Forêts publiques (ONF)",
+    "GéoMCE — mesures compensatoires",
+    "INPN / patrinat — espaces protégés",
+    "INSEE RP Logement 2023",
+    "Inventaires ZAE (EPCI — loi Climat et résilience)",
+    "Parc National de La Réunion (INPN)",
+    "Recherche d'entreprises (DINUM)",
+    "SIRENE",
+    "ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)",
 })
 
 
 def source_sur_chemin_sur(nom: str) -> bool:
-    """La source `nom` est-elle injectée par le CHEMIN SÛR (`injection_sure`) ?"""
+    """La source `nom` est-elle SÛRE à injecter seule la nuit ? (routée par `injection_sure`, ou
+    vérifiée sans remplacement-en-place). Sinon injection-nuit ne la lance PAS : elle devient une
+    DÉCISION à prendre (la vetter puis l'ajouter à `SOURCES_SURES`)."""
     return nom in SOURCES_SURES
 
 
-#: EXCLUS : la table n'est PAS servie au client (démo/test, ou snapshot de revue interne). Remplacer
-#: en place y est sans danger pour la donnée servie.
+#: EXCLUS : la table n'est PAS servie au client (jeu de démo, ou snapshot de revue interne). Ce n'est
+#: PAS une tolérance d'injection non sûre : remplacer EN PLACE y est sans danger car la donnée n'est
+#: jamais servie. (Distinct de la DETTE de SOLIDE-2, désormais VIDE.)
 EXCLUS: dict[tuple[str, str], str] = {
     ("demo_saint_paul.py", "*"): "jeu de DÉMO (reset_demo) — données fabriquées, jamais servies au client",
     ("division_or.py", "division_or_revue_snapshot"):
@@ -167,36 +240,15 @@ EXCLUS: dict[tuple[str, str], str] = {
         "photographier (garde `if not src`)",
 }
 
-#: DETTE assumée : remplacement-en-place d'une table SERVIE hérité, à convertir à injection_sure
-#: (INJECTION-SOLIDE-3). Le garde les TOLÈRE (cliquet : pas de régression) mais INTERDIT tout NOUVEAU
-#: motif non déclaré. Chaque entrée dit pourquoi elle n'a pas été convertie dans CE mandat.
-_RAISON_DELETE_DERIVEE = ("remplacement-en-place hérité (DELETE sans WHERE) d'une table dérivée/"
-                          "référentielle ; à router via injection_sure.remplacer_servie (SOLIDE-3)")
-DETTE: dict[tuple[str, str], str] = {
-    ("anc.py", "anc_maille_taux"): _RAISON_DELETE_DERIVEE,
-    ("arcep_fibre.py", "arcep_immeubles"): _RAISON_DELETE_DERIVEE + " — géométrie, moissonnée",
-    ("azi_tri.py", "azi_communes"): _RAISON_DELETE_DERIVEE,
-    ("ban_adresses.py", "adresse_parcelles"): _RAISON_DELETE_DERIVEE,
-    ("ban_adresses.py", "adresses"): _RAISON_DELETE_DERIVEE + " — gros volume, moissonnée",
-    ("bd_nyme.py", "lieux_dits"): _RAISON_DELETE_DERIVEE,
-    ("bdnb.py", "*"): "BDNB RETIRÉE (DEPLOY-TABLEAU-1) — DROP+to_sql dormant, source inactive",
-    ("catnat.py", "catnat_arretes"): _RAISON_DELETE_DERIVEE,
-    ("dfi.py", "dfi_filiation"): _RAISON_DELETE_DERIVEE,
-    ("mobpro.py", "mobpro_commune"): _RAISON_DELETE_DERIVEE,
-    ("ocsge.py", "ocsge_evolution"): _RAISON_DELETE_DERIVEE + " — géométrie (parcel_ocsge converti)",
-    ("ort.py", "commune_ort"): _RAISON_DELETE_DERIVEE,
-    ("piscines_fusion.py", "piscines"): _RAISON_DELETE_DERIVEE + " — géométrie, fusion",
-    ("rnb.py", "rnb_rattachement_bdtopo"): _RAISON_DELETE_DERIVEE,
-    ("rp_logement.py", "rp_logement_commune"): _RAISON_DELETE_DERIVEE,
-    ("sirene_etablissements.py", "sirene_etablissements"): _RAISON_DELETE_DERIVEE + " — moissonnée",
-    ("solaire.py", "solar_grid"): _RAISON_DELETE_DERIVEE + " — géométrie",
-    ("taxe_amenagement_delta.py", "taxe_amenagement_taux"): _RAISON_DELETE_DERIVEE,
-    ("taxe_amenagement_delta.py", "taxe_amenagement_secteur"): _RAISON_DELETE_DERIVEE,
-}
+#: DETTE — VIDE depuis INJECTION-SOLIDE-3 (les 18 `DELETE`-sans-`WHERE` sont convertis). Conservée
+#: (vide) pour la lisibilité du cliquet et le test d'hygiène : plus aucun remplacement-en-place d'une
+#: servie n'est toléré hors `injection_sure`. Un nouvel offenseur → VIOLATION immédiate, pas une entrée.
+DETTE: dict[tuple[str, str], str] = {}
 
 
 def _declare(site: Site) -> bool:
-    """Un site est DÉCLARÉ s'il est dans EXCLUS ou DETTE (clé exacte ou joker module `*`)."""
+    """Un site est DÉCLARÉ s'il est dans EXCLUS ou DETTE (clé exacte ou joker module `*`). DETTE est
+    VIDE (SOLIDE-3) : seules les tables NON servies (EXCLUS) échappent encore au scan."""
     for registre in (EXCLUS, DETTE):
         if (site.module, site.table) in registre or (site.module, "*") in registre:
             return True

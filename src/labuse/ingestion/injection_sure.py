@@ -62,6 +62,28 @@ def _cle_verrou(table: str) -> int:
     return int(h[:15], 16)  # 60 bits, positif
 
 
+def _swap(conn, table: str, staging: str) -> None:
+    """SWAP ATOMIQUE `DELETE servie ; INSERT servie SELECT staging` (voir le module). La liste des
+    colonnes est EXPLICITE et EXCLUT les colonnes `GENERATED ALWAYS` (identité ou expression STORED) :
+    Postgres REFUSE une insertion explicite dans une colonne `GENERATED ALWAYS AS IDENTITY` (`SELECT *`
+    plantait sur `dfi_filiation`), et une colonne calculée STORED se recalcule seule. Elles sont donc
+    régénérées à l'INSERT. Les colonnes ordinaires (y compris les `serial`/`DEFAULT nextval`) restent
+    copiées à l'identique. La staging (LIKE servie) porte toutes les colonnes → le SELECT reste valide."""
+    rows = conn.execute(text(
+        "SELECT column_name FROM information_schema.columns "
+        "WHERE table_schema = 'public' AND table_name = :t "
+        "  AND NOT (is_identity = 'YES' AND identity_generation = 'ALWAYS') "
+        "  AND COALESCE(is_generated, 'NEVER') <> 'ALWAYS' "
+        "ORDER BY ordinal_position"), {"t": table}).scalars().all()
+    cols = ", ".join(f'"{c}"' for c in rows)
+    conn.execute(text(f'DELETE FROM "{table}"'))
+    if cols:
+        conn.execute(text(f'INSERT INTO "{table}" ({cols}) SELECT {cols} FROM "{staging}"'))
+    else:                       # table sans colonne insertable (tout GENERATED) — cas théorique
+        conn.execute(text(f'INSERT INTO "{table}" DEFAULT VALUES'))
+    conn.execute(text(f'DROP TABLE IF EXISTS "{staging}"'))
+
+
 def mesurer_staging(conn, table: str, staging: str, *, a_geometrie: bool,
                     geom_col: str, dedup_cols: list[str] | None) -> dict:
     """Mesure la STAGING (et compare à la table servie) pour `autonomie.controler_injection`, plus
@@ -191,9 +213,7 @@ def injecter_table_sure(engine, *, table: str, charger_staging,
         #     jusqu'au COMMIT, la NOUVELLE ensuite — jamais une table à moitié pleine, et sans jamais
         #     BLOQUER les lectures (swap en ligne). La concurrence d'ÉCRITURE est déjà exclue par le
         #     verrou consultatif ci-dessus (une seule injection de cette table à la fois).
-        conn.execute(text(f'DELETE FROM "{table}"'))
-        conn.execute(text(f'INSERT INTO "{table}" SELECT * FROM "{staging}"'))
-        conn.execute(text(f'DROP TABLE IF EXISTS "{staging}"'))
+        _swap(conn, table, staging)
         trans.commit()
         out["injecte"] = True
         log(f"✓ injection {table} servie — {mesures['comptes_avant']} → {mesures['comptes_apres']} lignes")
@@ -275,10 +295,8 @@ def remplacer_servie(session, *, table: str, charger_staging, preparer=None,
         log(f"✗ injection {table} REFUSÉE — {v.resume()}")
         _refuser(v)
 
-    # (4) SWAP ATOMIQUE dans la transaction de l'appelant (voir `injecter_table_sure`).
-    session.execute(text(f'DELETE FROM "{table}"'))
-    session.execute(text(f'INSERT INTO "{table}" SELECT * FROM "{staging}"'))
-    session.execute(text(f'DROP TABLE IF EXISTS "{staging}"'))
+    # (4) SWAP ATOMIQUE dans la transaction de l'appelant (voir `injecter_table_sure` et `_swap`).
+    _swap(session, table, staging)
     log(f"✓ injection {table} servie — {mesures['comptes_avant']} → {mesures['comptes_apres']} lignes")
     return {"injecte": True, "verdict": v, "mesures": mesures, "resume": v.resume()}
 

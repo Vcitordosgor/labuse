@@ -68,51 +68,75 @@ def ingest_catnat(session, *, connector=None, insee_list: list[str] | None = Non
         connector = GeorisquesConnector()
     by_insee = dict(REUNION_COMMUNES)
     targets = insee_list or [i for i, _ in REUNION_COMMUNES]
-    if remplacer:
-        session.execute(text("DELETE FROM catnat_arretes"))
     total, communes_ok, erreurs, par_commune = 0, 0, {}, {}
-    for insee in targets:
-        try:
-            items = list(connector.catnat_arretes(insee))
-        except Exception as exc:  # noqa: BLE001 — une commune en panne n'arrête pas le lot
-            erreurs[insee] = f"{type(exc).__name__}: {exc}"
-            continue
-        n_commune = 0
-        # CHASSE-DONNEES-FIX-1 (D-53) — la clé de dédoublonnage inclut désormais date_debut_evt :
-        # un même code national (par péril, même date d'arrêté) peut couvrir PLUSIEURS événements à
-        # dates DISTINCTES (ex. INTE0600904A du 10/11/2006 couvre les inondations 17-18/02 ET 04-06/03
-        # 2006). L'ancienne clé (code, péril, date_arrete) SANS la date d'événement avalait le 2ᵉ
-        # événement → fiche 23 contre GASPAR 24 à Saint-Paul (vérifié : 0 doublon byte sur les 24
-        # communes, les « doublons » de COHERENCE-FIX-1 étaient TOUS des multi-événements légitimes).
-        # La clé = l'identité de ligne GASPAR = la contrainte DB (insee, péril, date_arrete, date_debut).
-        # Les vrais doublons byte (même date_debut) restent dédoublonnés — la date_fin la plus tardive gagne.
-        vus: dict[tuple, dict] = {}
-        for it in items:
-            cle = (it.get("code_national_catnat") or f"sans-code:{it.get('date_publication_arrete')}",
-                   it.get("libelle_risque_jo"), it.get("date_publication_arrete"),
-                   it.get("date_debut_evt"))
-            deja = vus.get(cle)
-            if deja is None or (it.get("date_fin_evt") or "") > (deja.get("date_fin_evt") or ""):
-                vus[cle] = it
-        for it in vus.values():
-            session.execute(text("""
-                INSERT INTO catnat_arretes (insee, commune, type_peril, date_arrete,
-                                            date_debut, date_fin, raw)
-                VALUES (:insee, :commune, :peril, :arrete, :debut, :fin, CAST(:raw AS jsonb))
-                ON CONFLICT (insee, type_peril, date_arrete, date_debut) DO UPDATE SET
-                  date_fin = EXCLUDED.date_fin, raw = EXCLUDED.raw"""), {
-                "insee": insee,
-                "commune": by_insee.get(insee) or it.get("libelle_commune"),
-                "peril": it.get("libelle_risque_jo"),
-                "arrete": _parse_date(it.get("date_publication_arrete")),
-                "debut": _parse_date(it.get("date_debut_evt")),
-                "fin": _parse_date(it.get("date_fin_evt")),
-                "raw": _json.dumps(it, ensure_ascii=False),
-            })
-            total += 1
-            n_commune += 1
-        par_commune[insee] = n_commune
-        communes_ok += 1
+
+    def _charger_dans(conn, cible: str) -> None:
+        """Moisson GASPAR → upsert dans `cible` (table servie en incrémental, STAGING en remplacement).
+        Une commune en panne n'arrête pas le lot (erreurs tracées) ; en mode remplacement le contrôle
+        d'injection sûre refuse une moisson vide / trop maigre."""
+        nonlocal total, communes_ok
+        for insee in targets:
+            try:
+                items = list(connector.catnat_arretes(insee))
+            except Exception as exc:  # noqa: BLE001 — une commune en panne n'arrête pas le lot
+                erreurs[insee] = f"{type(exc).__name__}: {exc}"
+                continue
+            n_commune = 0
+            # CHASSE-DONNEES-FIX-1 (D-53) — la clé de dédoublonnage inclut désormais date_debut_evt :
+            # un même code national (par péril, même date d'arrêté) peut couvrir PLUSIEURS événements à
+            # dates DISTINCTES (ex. INTE0600904A du 10/11/2006 couvre les inondations 17-18/02 ET 04-06/03
+            # 2006). L'ancienne clé (code, péril, date_arrete) SANS la date d'événement avalait le 2ᵉ
+            # événement → fiche 23 contre GASPAR 24 à Saint-Paul (vérifié : 0 doublon byte sur les 24
+            # communes, les « doublons » de COHERENCE-FIX-1 étaient TOUS des multi-événements légitimes).
+            # La clé = l'identité de ligne GASPAR = la contrainte DB (insee, péril, date_arrete, date_debut).
+            # Les vrais doublons byte (même date_debut) restent dédoublonnés — la date_fin la plus tardive gagne.
+            vus: dict[tuple, dict] = {}
+            for it in items:
+                cle = (it.get("code_national_catnat") or f"sans-code:{it.get('date_publication_arrete')}",
+                       it.get("libelle_risque_jo"), it.get("date_publication_arrete"),
+                       it.get("date_debut_evt"))
+                deja = vus.get(cle)
+                if deja is None or (it.get("date_fin_evt") or "") > (deja.get("date_fin_evt") or ""):
+                    vus[cle] = it
+            for it in vus.values():
+                conn.execute(text(f"""
+                    INSERT INTO "{cible}" (insee, commune, type_peril, date_arrete,
+                                                date_debut, date_fin, raw)
+                    VALUES (:insee, :commune, :peril, :arrete, :debut, :fin, CAST(:raw AS jsonb))
+                    ON CONFLICT (insee, type_peril, date_arrete, date_debut) DO UPDATE SET
+                      date_fin = EXCLUDED.date_fin, raw = EXCLUDED.raw"""), {
+                    "insee": insee,
+                    "commune": by_insee.get(insee) or it.get("libelle_commune"),
+                    "peril": it.get("libelle_risque_jo"),
+                    "arrete": _parse_date(it.get("date_publication_arrete")),
+                    "debut": _parse_date(it.get("date_debut_evt")),
+                    "fin": _parse_date(it.get("date_fin_evt")),
+                    "raw": _json.dumps(it, ensure_ascii=False),
+                })
+                total += 1
+                n_commune += 1
+            par_commune[insee] = n_commune
+            communes_ok += 1
+
+    if remplacer:
+        # INJECTION-SOLIDE-3 — `remplacer=True` (solder une version tronquée) passe par `remplacer_servie` :
+        # la moisson complète va dans une STAGING, est contrôlée (non vide, écart sous seuil) puis échangée
+        # ATOMIQUEMENT. Une moisson vide / à moitié (API GASPAR en panne) est REFUSÉE → la version servie
+        # est conservée. Plus de `DELETE FROM catnat_arretes` à vif. L'incrémental (défaut) upsert sans purge.
+        from .injection_sure import remplacer_servie, alerte_injection
+
+        def preparer(conn):
+            for stmt in DDL.split(";"):
+                if stmt.strip():
+                    conn.execute(text(stmt))
+
+        remplacer_servie(
+            session, table="catnat_arretes", preparer=preparer,
+            charger_staging=lambda conn, staging: _charger_dans(conn, staging),
+            a_geometrie=False, like_including="ALL", couverture_974_min=0, delta_max_pct=90.0,
+            alerter=alerte_injection("catnat_arretes", "CatNat (arrêtés GASPAR / Géorisques)"))
+    else:
+        _charger_dans(session, "catnat_arretes")
     session.flush()
     return {"communes_ok": communes_ok, "arretes": total, "erreurs": erreurs,
             "par_commune": par_commune}

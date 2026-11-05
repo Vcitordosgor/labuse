@@ -158,21 +158,33 @@ def ingest_ocsge(session, base_dir: str, *, log_fn=print) -> dict:
     diff = next(base.glob("artif/**/zan_evol_2017_2022_974.gpkg"))
     srid = _srid_inspecte(str(diff), "zan_evol_2017_2022_974")
     res["srid"]["diff"] = srid
-    session.execute(text("DELETE FROM ocsge_evolution"))
-    n = 0
-    for (artif, cs17, us17, a17, cs22, us22, a22, surf), wkb in _wkb_rows(
-            str(diff), "zan_evol_2017_2022_974",
-            ["artificialisation", "cs_2017", "us_2017", "artif_2017",
-             "cs_2022", "us_2022", "artif_2022", "surface"]):
-        session.execute(text(
-            "INSERT INTO ocsge_evolution (artificialisation, cs_2017, us_2017, artif_2017,"
-            " cs_2022, us_2022, artif_2022, surface_m2, geom_2975) VALUES"
-            " (:ar, :c1, :u1, :a1, :c2, :u2, :a2, :s, ST_SetSRID(ST_GeomFromWKB(:g), :srid))"),
-            {"ar": artif, "c1": cs17, "u1": us17, "a1": a17, "c2": cs22, "u2": us22,
-             "a2": a22, "s": surf, "g": wkb, "srid": srid})
-        n += 1
+    # INJECTION-SOLIDE-3 — passe par `remplacer_servie` : le produit DIFF officiel est chargé dans une
+    # STAGING, contrôlé (non vide, géométries valides, dans La Réunion, écart sous seuil) puis échangé
+    # ATOMIQUEMENT. Un GPKG vide / à moitié / hors territoire est REFUSÉ → la version servie est conservée
+    # (`InjectionRefusee`). Plus de `DELETE FROM ocsge_evolution` à vif. Géométrie 2975.
+    from .injection_sure import remplacer_servie, alerte_injection
+    n_evol = 0
+
+    def charger(conn, staging):
+        nonlocal n_evol
+        for (artif, cs17, us17, a17, cs22, us22, a22, surf), wkb in _wkb_rows(
+                str(diff), "zan_evol_2017_2022_974",
+                ["artificialisation", "cs_2017", "us_2017", "artif_2017",
+                 "cs_2022", "us_2022", "artif_2022", "surface"]):
+            conn.execute(text(
+                f'INSERT INTO "{staging}" (artificialisation, cs_2017, us_2017, artif_2017,'
+                " cs_2022, us_2022, artif_2022, surface_m2, geom_2975) VALUES"
+                " (:ar, :c1, :u1, :a1, :c2, :u2, :a2, :s, ST_SetSRID(ST_GeomFromWKB(:g), :srid))"),
+                {"ar": artif, "c1": cs17, "u1": us17, "a1": a17, "c2": cs22, "u2": us22,
+                 "a2": a22, "s": surf, "g": wkb, "srid": srid})
+            n_evol += 1
+
+    remplacer_servie(
+        session, table="ocsge_evolution", charger_staging=charger, a_geometrie=True,
+        geom_col="geom_2975", couverture_974_min=0, delta_max_pct=90.0,
+        alerter=alerte_injection("ocsge_evolution", "OCS GE — évolution 2017→2022"))
     session.commit()
-    res["evolution"] = n
+    res["evolution"] = n_evol
     log_fn(f"  évolution officielle 2017→2022 : {n} zones (CRS {srid} inspecté)")
     return res
 

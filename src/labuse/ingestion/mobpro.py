@@ -69,13 +69,24 @@ def build_mobpro(session: Session, *, file: str, millesime: str = "MOBPRO INSEE"
                 pond = 1.0
             emplois[dclt] = emplois.get(dclt, 0.0) + pond
 
-    session.execute(text("DELETE FROM mobpro_commune"))
-    for insee, n in emplois.items():
-        session.execute(text(
-            "INSERT INTO mobpro_commune (insee, commune, emplois_lieu_travail, millesime, data_source_id) "
-            "VALUES (:i, :c, :e, :m, :s) ON CONFLICT (insee) DO UPDATE SET "
-            "emplois_lieu_travail = EXCLUDED.emplois_lieu_travail, millesime = EXCLUDED.millesime"),
-            {"i": insee, "c": insee2nom.get(insee), "e": round(n), "m": millesime, "s": sid})
+    # INJECTION-SOLIDE-3 — passe par `remplacer_servie` : les communes sont chargées dans une STAGING,
+    # contrôlées (non vide, écart sous seuil) puis échangées ATOMIQUEMENT. Un fichier MOBPRO vide / à
+    # moitié est REFUSÉ → la version servie est conservée (`InjectionRefusee`). Plus de `DELETE FROM
+    # mobpro_commune` à vif. Table dérivée sans géométrie ; `like=ALL` pour l'`ON CONFLICT (insee)`.
+    from . import injection_sure
+
+    def charger(conn, staging):
+        for insee, n in emplois.items():
+            conn.execute(text(
+                f'INSERT INTO "{staging}" (insee, commune, emplois_lieu_travail, millesime, data_source_id) '
+                "VALUES (:i, :c, :e, :m, :s) ON CONFLICT (insee) DO UPDATE SET "
+                "emplois_lieu_travail = EXCLUDED.emplois_lieu_travail, millesime = EXCLUDED.millesime"),
+                {"i": insee, "c": insee2nom.get(insee), "e": round(n), "m": millesime, "s": sid})
+
+    injection_sure.remplacer_servie(
+        session, table="mobpro_commune", charger_staging=charger, a_geometrie=False,
+        like_including="ALL", couverture_974_min=0, delta_max_pct=50.0,
+        alerter=injection_sure.alerte_injection("mobpro_commune", SOURCE_NAME))
     session.execute(text("UPDATE data_sources SET last_sync_at = now() WHERE name = :n"), {"n": SOURCE_NAME})
     session.flush()
     log(f"MOBPRO 974 : {len(emplois)} communes (emplois au lieu de travail)")

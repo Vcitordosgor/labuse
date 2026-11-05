@@ -165,15 +165,25 @@ def ingest_taxe_amenagement(
                                 "def_prov": (row.get("def_prov") or "").strip() or "?",
                                 "libelle": (row.get("libelle_commune") or "").strip()}
 
-    # Purge + upsert : la table reflète EXACTEMENT le millésime servi (idempotent).
-    session.execute(text("DELETE FROM taxe_amenagement_taux"))
-    for insee, d in sorted(par_insee.items()):
-        session.execute(text(
-            "INSERT INTO taxe_amenagement_taux (insee, part_communale_pct, source, delib_date, maj_at) "
-            "VALUES (:i, :t, :s, :d, now())"),
-            {"i": insee, "t": d["taux"],
-             "s": _SOURCE_LABEL.format(def_prov=d["def_prov"]),
-             "d": d["date_effet"]})
+    # INJECTION-SOLIDE-3 — passe par `remplacer_servie` : les taux communaux vont dans une STAGING,
+    # contrôlés (non vide, écart sous seuil) puis échangés ATOMIQUEMENT. Un DELTA vide / en panne est
+    # REFUSÉ → la version servie est conservée (`InjectionRefusee`). Plus de `DELETE FROM
+    # taxe_amenagement_taux` à vif. Table sans géométrie.
+    from .injection_sure import remplacer_servie, alerte_injection
+
+    def _charger_taux(conn, staging):
+        for insee, d in sorted(par_insee.items()):
+            conn.execute(text(
+                f'INSERT INTO "{staging}" (insee, part_communale_pct, source, delib_date, maj_at) '
+                "VALUES (:i, :t, :s, :d, now())"),
+                {"i": insee, "t": d["taux"],
+                 "s": _SOURCE_LABEL.format(def_prov=d["def_prov"]),
+                 "d": d["date_effet"]})
+
+    remplacer_servie(
+        session, table="taxe_amenagement_taux", charger_staging=_charger_taux, a_geometrie=False,
+        couverture_974_min=0, delta_max_pct=50.0,
+        alerter=alerte_injection("taxe_amenagement_taux", "Taxe d'aménagement — taux (DELTA/DGFiP)"))
     session.flush()
 
     vus = set(par_insee)
@@ -211,13 +221,21 @@ def ingest_taxe_amenagement(
         if prev is None or (effet or "") > (prev.get("date_effet") or ""):
             par_idu[idu] = {"taux": taux, "date_effet": effet,
                             "def_prov": (row.get("def_prov") or "").strip() or "?"}
-    session.execute(text("DELETE FROM taxe_amenagement_secteur"))
-    for idu, d in sorted(par_idu.items()):
-        session.execute(text(
-            "INSERT INTO taxe_amenagement_secteur (idu, insee, part_communale_pct, source, delib_date, maj_at) "
-            "VALUES (:i, :n, :t, :s, :d, now())"),
-            {"i": idu, "n": idu[:5], "t": d["taux"],
-             "s": _SOURCE_LABEL.format(def_prov=d["def_prov"]), "d": d["date_effet"]})
+    # INJECTION-SOLIDE-3 — idem : STAGING + swap atomique. Plus de `DELETE FROM taxe_amenagement_secteur`
+    # à vif. La table est LÉGITIMEMENT vide si DELTA ne publie aucun secteur à taux majoré
+    # (`autoriser_vide=True` : on exige un compte LISIBLE, pas strictement positif).
+    def _charger_secteur(conn, staging):
+        for idu, d in sorted(par_idu.items()):
+            conn.execute(text(
+                f'INSERT INTO "{staging}" (idu, insee, part_communale_pct, source, delib_date, maj_at) '
+                "VALUES (:i, :n, :t, :s, :d, now())"),
+                {"i": idu, "n": idu[:5], "t": d["taux"],
+                 "s": _SOURCE_LABEL.format(def_prov=d["def_prov"]), "d": d["date_effet"]})
+
+    remplacer_servie(
+        session, table="taxe_amenagement_secteur", charger_staging=_charger_secteur, a_geometrie=False,
+        couverture_974_min=0, delta_max_pct=90.0, autoriser_vide=True,
+        alerter=alerte_injection("taxe_amenagement_secteur", "Taxe d'aménagement — secteurs majorés (DELTA)"))
     session.flush()
     secteurs_communes = sorted({idu[:5] for idu in par_idu})
     if par_idu:

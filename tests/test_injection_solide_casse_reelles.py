@@ -386,3 +386,286 @@ def test_rnic_deux_injections_concurrentes(engine, tmp_path):
     finally:
         ttx.rollback()
         tiers.close()
+
+
+# ══════════════ D. INJECTION-SOLIDE-3 — nouvelles conversions : bd_nyme (moisson WFS, géométrie) ═══
+#
+# Les 3 sections ci-dessous rejouent les 11 motifs de casse sur TROIS des conversions de SOLIDE-3,
+# chacune sur sa vraie table servie de la base saine (transaction annulée, « servie intacte » vérifiée
+# par connexion indépendante). Familles : géométrie moissonnée (bd_nyme), fichier (ort), dérivée à
+# records (taxe, + preuve `autoriser_vide`). Collectivement : nominal · vide · écart · hors Réunion ·
+# coupure réseau · concurrence · lecture pendant · retour arrière + `autoriser_vide`. Motifs
+# physiquement inapplicables ici (— dans la matrice) : géométrie INVALIDE (bd_nyme ne sert que des
+# POINTS, toujours valides — couvert par trafic_rn + la primitive), colonne PK absente (couvert par
+# rnic), doublons (dédoublonnés à la charge — ON CONFLICT / clés de dict — ou refusés par la primitive).
+
+class _Wfs:
+    """WfsConnector minimal : rend `pages` (payloads WFS) l'une après l'autre, ou lève `boom`."""
+
+    def __init__(self, pages=None, boom=None):
+        self._pages, self._boom, self._i = pages or [], boom, 0
+
+    def fetch_layer(self, *a, **k):
+        if self._boom:
+            raise self._boom
+        p = self._pages[min(self._i, len(self._pages) - 1)]
+        self._i += 1
+        return p
+
+
+def _bdnyme_page(points):
+    """points = liste de (lon, lat) → page WFS de lieux-dits (toponyme/cleabs/nature peuplés)."""
+    return {"features": [{"geometry": {"type": "Point", "coordinates": [lon, lat]},
+            "properties": {"toponyme": f"Lieu {i}", "cleabs": f"c{i}", "nature": "Lieu-dit"}}
+            for i, (lon, lat) in enumerate(points)]}
+
+
+def _run_bdnyme(eng, monkeypatch, *, pages=None, boom=None):
+    from labuse.ingestion import bd_nyme
+    monkeypatch.setattr(bd_nyme, "WfsConnector", lambda *a, **k: _Wfs(pages=pages, boom=boom))
+    with _Session(eng) as s:
+        return bd_nyme.build_bd_nyme(s, log=lambda *_: None), s
+
+
+@pytest.mark.parametrize("cas,attendu", [
+    ("vide", "injection vide"), ("ecart", "écart"), ("hors", "hors de La Réunion")])
+def test_bdnyme_livraisons_cassees_refusees(engine, monkeypatch, cas, attendu):
+    avant = _exige_peuplee(engine, "lieux_dits", 50)
+    reunion = [(55.50, -21.10)] * 5                   # peu de points → écart ~99 %
+    paris = [(2.35, 48.85)] * 5
+    pages = {
+        "vide": [{"features": []}, {"features": []}],
+        "ecart": [_bdnyme_page(reunion), {"features": []}],
+        "hors": [_bdnyme_page(paris), {"features": []}],
+    }[cas]
+    with pytest.raises(ijs.InjectionRefusee) as ei:
+        _run_bdnyme(engine, monkeypatch, pages=pages)
+    assert attendu in ei.value.verdict.resume()
+    assert _count(engine, "lieux_dits") == avant       # servie INTACTE
+
+
+def test_bdnyme_coupure_reseau_garde_la_version_servie(engine, monkeypatch):
+    avant = _exige_peuplee(engine, "lieux_dits", 50)
+    with pytest.raises(ijs.InjectionRefusee) as ei:
+        _run_bdnyme(engine, monkeypatch, boom=ConnectionError("WFS coupé"))
+    assert "ConnectionError" in ei.value.verdict.resume()
+    assert _count(engine, "lieux_dits") == avant
+
+
+def test_bdnyme_deux_injections_concurrentes(engine, monkeypatch):
+    avant = _exige_peuplee(engine, "lieux_dits", 50)
+    tiers = engine.connect()
+    ttx = tiers.begin()
+    try:
+        tiers.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": ijs._cle_verrou("lieux_dits")})
+        with pytest.raises(ijs.InjectionRefusee) as ei:
+            _run_bdnyme(engine, monkeypatch, pages=[_bdnyme_page([(55.5, -21.1)]), {"features": []}])
+        assert "déjà en cours" in ei.value.verdict.resume()
+        assert _count(engine, "lieux_dits") == avant
+    finally:
+        ttx.rollback()
+        tiers.close()
+
+
+def test_bdnyme_retour_arriere_garde_le_compte(engine, monkeypatch):
+    avant = _exige_peuplee(engine, "lieux_dits", 50)
+    with pytest.raises(ijs.InjectionRefusee):
+        _run_bdnyme(engine, monkeypatch, pages=[{"features": []}, {"features": []}])
+    assert _count(engine, "lieux_dits") == avant
+    with engine.connect() as c:
+        assert c.execute(text("SELECT to_regclass('lieux_dits__inj_staging')")).scalar() is None
+
+
+# ══════════════ E. INJECTION-SOLIDE-3 — nouvelles conversions : ort (fichier CSV) ═════════════════
+
+_ORT_COLS = ["Code commune", "Commune", "ACV", "PVD", "Signée ?",
+             "Si signée, date de signature", "Durée (en années)"]
+
+
+def _ort_csv(n):
+    """CSV ORT à `n` communes 974 distinctes (ACV signée) → `n` lignes servies."""
+    import io as _io
+    buf = _io.StringIO()
+    w = _csv.DictWriter(buf, fieldnames=_ORT_COLS)
+    w.writeheader()
+    for i in range(n):
+        w.writerow({"Code commune": f"974{i:02d}", "Commune": f"Ville-{i}", "ACV": "true",
+                    "PVD": "false", "Signée ?": "Signée",
+                    "Si signée, date de signature": "2024-01-01", "Durée (en années)": "5"})
+    return buf.getvalue()
+
+
+def _run_ort(eng, csv_text):
+    from labuse.ingestion.ort import ingest_ort
+    with _Session(eng) as s:
+        return ingest_ort(s, csv_text=csv_text, log=lambda *_: None), s
+
+
+def test_ort_nominal_sert_la_nouvelle_version(engine):
+    avant = _exige_peuplee(engine, "commune_ort", 5)
+    if avant > 100:
+        pytest.skip("commune_ort anormalement volumineuse")
+    res, s = _run_ort(engine, _ort_csv(avant))               # écart 0
+    assert res["n"] == avant
+    assert int(s.execute(text("SELECT count(*) FROM commune_ort")).scalar()) == avant
+    assert s.execute(text("SELECT to_regclass('commune_ort__inj_staging')")).scalar() is None
+    assert _count(engine, "commune_ort") == avant            # on annule → servie intacte
+
+
+def test_ort_lecture_pendant_remplacement_jamais_a_moitie(engine):
+    """Un lecteur tiers ne voit JAMAIS un décompte intermédiaire : la version servie entière tant que
+    le swap (non committé) n'a pas basculé."""
+    avant = _exige_peuplee(engine, "commune_ort", 5)
+    if avant > 100:
+        pytest.skip("commune_ort anormalement volumineuse")
+    from labuse.ingestion.ort import ingest_ort
+    with _Session(engine) as s:
+        ingest_ort(s, csv_text=_ort_csv(avant), log=lambda *_: None)   # swap fait EN session
+        assert int(s.execute(text("SELECT count(*) FROM commune_ort")).scalar()) == avant
+        assert _count(engine, "commune_ort") == avant                  # tierce : version servie entière
+
+
+@pytest.mark.parametrize("n,attendu", [(0, "injection vide"), (1, "écart")])
+def test_ort_livraisons_cassees_refusees(engine, n, attendu):
+    avant = _exige_peuplee(engine, "commune_ort", 10)
+    with pytest.raises(ijs.InjectionRefusee) as ei:
+        _run_ort(engine, _ort_csv(n))
+    assert attendu in ei.value.verdict.resume()
+    assert _count(engine, "commune_ort") == avant
+
+
+def test_ort_deux_injections_concurrentes(engine):
+    avant = _exige_peuplee(engine, "commune_ort", 5)
+    tiers = engine.connect()
+    ttx = tiers.begin()
+    try:
+        tiers.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": ijs._cle_verrou("commune_ort")})
+        with pytest.raises(ijs.InjectionRefusee) as ei:
+            _run_ort(engine, _ort_csv(avant))
+        assert "déjà en cours" in ei.value.verdict.resume()
+        assert _count(engine, "commune_ort") == avant
+    finally:
+        ttx.rollback()
+        tiers.close()
+
+
+# ══════════════ F. INJECTION-SOLIDE-3 — nouvelles conversions : taxe (dérivée + autoriser_vide) ═════
+
+def _taxe_records(n):
+    return [{"departement": "974", "commune": f"{i:02d}", "taux": "3.0",
+             "date_effet": "2024-01-01", "def_prov": "DEF", "libelle_commune": f"Ville-{i}"}
+            for i in range(1, n + 1)]
+
+
+def _run_taxe(eng, records_communaux, records_secteurs=None):
+    from labuse.ingestion.taxe_amenagement_delta import ingest_taxe_amenagement
+    with _Session(eng) as s:
+        return ingest_taxe_amenagement(
+            s, records_communaux=records_communaux, records_secteurs=records_secteurs,
+            log=lambda *_: None), s
+
+
+@pytest.mark.parametrize("n,attendu", [(0, "injection vide"), (1, "écart")])
+def test_taxe_taux_livraisons_cassees_refusees(engine, n, attendu):
+    """taxe_taux est traitée EN PREMIER : une livraison vide / trop maigre la REFUSE avant même de
+    toucher aux secteurs → les DEUX tables servies restent intactes (rollback)."""
+    avant = _exige_peuplee(engine, "taxe_amenagement_taux", 10)
+    avant_sect = _count(engine, "taxe_amenagement_secteur")
+    with pytest.raises(ijs.InjectionRefusee) as ei:
+        _run_taxe(engine, _taxe_records(n), records_secteurs=[])
+    assert attendu in ei.value.verdict.resume()
+    assert _count(engine, "taxe_amenagement_taux") == avant          # les DEUX tables intactes
+    assert _count(engine, "taxe_amenagement_secteur") == avant_sect
+
+
+def test_taxe_empty_delivery_ne_vide_pas_une_table_peuplee(engine):
+    """Le CONTRÔLE D'ÉCART protège même une table `autoriser_vide` : une livraison VIDE de secteurs
+    (DELTA en panne) ne remplace PAS 10 000+ secteurs servis par 0 — l'écart 100 % > seuil la REFUSE.
+    (`autoriser_vide` n'autorise le vide que là où il est LÉGITIME — avant = 0 / première injection —,
+    jamais pour effacer une table pleine.)"""
+    avant = _exige_peuplee(engine, "taxe_amenagement_taux", 5)
+    avant_sect = _exige_peuplee(engine, "taxe_amenagement_secteur", 50)
+    with pytest.raises(ijs.InjectionRefusee) as ei:
+        _run_taxe(engine, _taxe_records(avant), records_secteurs=[])      # taux OK, secteurs vides
+    assert "écart" in ei.value.verdict.resume()
+    assert _count(engine, "taxe_amenagement_taux") == avant              # rollback : les DEUX intactes
+    assert _count(engine, "taxe_amenagement_secteur") == avant_sect
+
+
+def test_taxe_deux_injections_concurrentes(engine):
+    avant = _exige_peuplee(engine, "taxe_amenagement_taux", 5)
+    tiers = engine.connect()
+    ttx = tiers.begin()
+    try:
+        tiers.execute(text("SELECT pg_advisory_xact_lock(:k)"),
+                      {"k": ijs._cle_verrou("taxe_amenagement_taux")})
+        with pytest.raises(ijs.InjectionRefusee) as ei:
+            _run_taxe(engine, _taxe_records(avant), records_secteurs=[])
+        assert "déjà en cours" in ei.value.verdict.resume()
+        assert _count(engine, "taxe_amenagement_taux") == avant
+    finally:
+        ttx.rollback()
+        tiers.close()
+
+
+# ══════════════ G. INJECTION-SOLIDE-3 — injection-nuit ne lance QUE les sources sûres ════════════
+
+def test_injection_nuit_ne_lance_que_les_sources_sures(engine, monkeypatch):
+    """Bout-en-bout sur la base saine (transaction ANNULÉE) : une source SÛRE avancée est LANCÉE
+    (injectees_sures) ; une source NON sûre avancée n'est PAS lancée → elle remonte comme « décision à
+    prendre » (a_decider). La voie « héritée » a DISPARU (plus de clé injectees_heritees).
+
+    Toutes les sources de classe A du registre sont désormais SÛRES (cf.
+    test_toutes_les_sources_classe_a_sont_couvertes) : pour exercer la branche a_decider (le cliquet qui
+    vise de FUTURES sources non vettées), on RETIRE temporairement une source de `SOURCES_SURES`."""
+    from sqlalchemy.orm import Session
+
+    import labuse.api.dashboard as dash
+    from labuse import jobs_impl
+    from labuse.ingestion import garde_injection as gi
+    from labuse.jobs import JobContext
+
+    sure = "Trafic RN (Région Réunion — SIR)"          # sûre (injection_sure) + commande → lancée
+    non_sure = "Filosofi INSEE (carreaux 200 m)"        # simulée « non vettée » (retirée ci-dessous)
+    # simule une source de classe A pas encore sur le chemin sûr (future ingestion non convertie) :
+    monkeypatch.setattr(gi, "SOURCES_SURES", gi.SOURCES_SURES - {non_sure})
+    assert gi.source_sur_chemin_sur(sure) and not gi.source_sur_chemin_sur(non_sure)
+
+    lancees: list[str] = []
+    monkeypatch.setattr(dash, "lancer_ingestion_source",
+                        lambda nom: (lancees.append(nom) or {"ok": True}))
+    s = Session(engine)
+    try:
+        for nom in (sure, non_sure):
+            n = s.execute(text("UPDATE source_veille SET dernier_statut='nouvelle_version' "
+                               "WHERE source_id=(SELECT id FROM data_sources WHERE name=:n)"),
+                          {"n": nom}).rowcount
+            if not n:
+                pytest.skip(f"pas de ligne de veille pour {nom} sur cette base")
+        ctx = JobContext(db=s, dry_run=True)
+        jobs_impl.injection_nuit(ctx)
+        c = ctx.compteurs
+        assert sure in c["injectees_sures"], c
+        assert sure in lancees                              # la sûre EST lancée (commande connue)
+        assert non_sure in c["a_decider"], c                # la non sûre → décision à prendre
+        assert non_sure not in lancees                      # JAMAIS lancée seule
+        assert "injectees_heritees" not in c                # la voie « héritée » a disparu (SOLIDE-3)
+    finally:
+        s.rollback()
+        s.close()
+
+
+def test_toutes_les_sources_classe_a_sont_couvertes(engine):
+    """INJECTION-SOLIDE-3 (suivi) — TOUTE source de classe A du registre figure dans SOURCES_SURES :
+    aucune ne remonte en « décision à prendre » à tort. a_decider ne vise plus que de FUTURES sources
+    non vettées (le cliquet reste armé)."""
+    from labuse import autonomie
+    from labuse.ingestion import garde_injection as gi
+    with engine.connect() as c:
+        srcs = [dict(r) for r in c.execute(
+            text("SELECT name, category FROM data_sources")).mappings().all()]
+    classe_a = [s["name"] for s in autonomie.sources_par_classe(srcs)["A"]]
+    manquantes = sorted(n for n in classe_a if not gi.source_sur_chemin_sur(n))
+    assert not manquantes, (
+        "sources de classe A HORS SOURCES_SURES (remonteraient en décision à tort) :\n  · "
+        + "\n  · ".join(manquantes))

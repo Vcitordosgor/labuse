@@ -92,26 +92,34 @@ def ensure_schema(session: Session) -> None:
 # ── 1. Grille PVGIS (ST_SquareGrid sur l'emprise cadastrale terrestre) ────────
 
 def build_grid(session: Session, *, rebuild: bool = False) -> int:
-    if rebuild:
-        session.execute(text("DELETE FROM solar_grid"))
-        session.commit()
     existing = session.execute(text("SELECT count(*) FROM solar_grid")).scalar_one()
-    if existing:
+    if existing and not rebuild:
         return existing
+    # INJECTION-SOLIDE-3 — la (re)construction de la grille passe par `remplacer_servie` : la grille est
+    # bâtie dans une STAGING (ST_SquareGrid sur l'emprise cadastrale) puis échangée ATOMIQUEMENT. Plus de
+    # `DELETE FROM solar_grid` à vif au `rebuild` (fenêtre où la grille était vide). Géométrie Point 4326.
+    from .injection_sure import remplacer_servie, alerte_injection
     step = float(_cfg()["pvgis"]["grid_step_m"])
-    n = session.execute(text("""
-        WITH grille AS (
-          SELECT (ST_SquareGrid(:step,
-                    ST_SetSRID(ST_Extent(geom_2975)::geometry, 2975))).geom AS cell
-          FROM parcels
-        ), centres AS (SELECT ST_Centroid(cell) AS pt FROM grille)
-        INSERT INTO solar_grid (geom, source)
-        SELECT ST_Transform(ST_SetSRID(pt, 2975), 4326), :src
-        FROM centres c
-        WHERE EXISTS (SELECT 1 FROM parcels p WHERE ST_DWithin(p.geom_2975, c.pt, :halo))
-    """), {"step": step, "src": PVGIS_SOURCE, "halo": step * 0.75}).rowcount
+
+    def charger(conn, staging):
+        conn.execute(text(f"""
+            WITH grille AS (
+              SELECT (ST_SquareGrid(:step,
+                        ST_SetSRID(ST_Extent(geom_2975)::geometry, 2975))).geom AS cell
+              FROM parcels
+            ), centres AS (SELECT ST_Centroid(cell) AS pt FROM grille)
+            INSERT INTO "{staging}" (geom, source)
+            SELECT ST_Transform(ST_SetSRID(pt, 2975), 4326), :src
+            FROM centres c
+            WHERE EXISTS (SELECT 1 FROM parcels p WHERE ST_DWithin(p.geom_2975, c.pt, :halo))
+        """), {"step": step, "src": PVGIS_SOURCE, "halo": step * 0.75})
+
+    remplacer_servie(
+        session, table="solar_grid", charger_staging=charger, a_geometrie=True, geom_col="geom",
+        couverture_974_min=0, delta_max_pct=90.0,
+        alerter=alerte_injection("solar_grid", "PVGIS (Commission européenne) — grille solaire"))
     session.commit()
-    return n
+    return session.execute(text("SELECT count(*) FROM solar_grid")).scalar_one()
 
 
 # ── 2. Fetch PVGIS (annuel E_y + GHI + 12 E_m), résumable, rate-limité ────────

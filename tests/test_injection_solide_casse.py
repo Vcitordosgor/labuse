@@ -259,3 +259,52 @@ def test_rollback_restaure_exactement_les_lignes(engine):
         reste = c.execute(text("SELECT to_regclass(:s)"),
                           {"s": ijs._staging_nom(TABLE)}).scalar()
     assert reste is None, "la staging a survécu au rollback"
+
+
+# ────────── 11. INJECTION-SOLIDE-3 : autoriser_vide (table légitimement vide) ──────────
+
+def test_autoriser_vide_accepte_une_premiere_injection_vide(engine):
+    """`autoriser_vide=True` : une table DÉRIVÉE légitimement vide (avant = 0, aucune ligne) accepte une
+    livraison vide (compte LISIBLE suffit). Le DÉFAUT strict, lui, la REFUSE (injection vide)."""
+    res = ijs.injecter_table_sure(engine, table=TABLE, a_geometrie=False,
+                                  autoriser_vide=True, charger_staging=_charger([]))
+    assert res["injecte"] is True, res["resume"]
+    assert _count(engine) == 0
+    res_strict = ijs.injecter_table_sure(engine, table=TABLE, a_geometrie=False,
+                                         charger_staging=_charger([]))
+    assert res_strict["injecte"] is False
+    assert "injection vide" in res_strict["verdict"].echecs[0]
+
+
+# ────────── 11b. INJECTION-SOLIDE-3 : le swap régénère les colonnes GENERATED ALWAYS ──────────
+
+def test_swap_regenere_une_identite_generated_always(engine):
+    """Le SWAP liste les colonnes EXPLICITEMENT et EXCLUT les `GENERATED ALWAYS AS IDENTITY` : Postgres
+    refuse une insertion explicite dans une telle colonne (`SELECT *` plantait sur dfi_filiation). Ici
+    la colonne `id` se RÉGÉNÈRE à l'INSERT ; les données servies sont bien remplacées."""
+    gtable = "zzz_injsure_genalways"
+    with engine.begin() as c:
+        c.execute(text(f'DROP TABLE IF EXISTS "{gtable}"'))
+        c.execute(text(f'DROP TABLE IF EXISTS "{ijs._staging_nom(gtable)}"'))
+        c.execute(text(f'CREATE TABLE "{gtable}" '
+                       '(id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY, cle text)'))
+        c.execute(text(f'INSERT INTO "{gtable}" (cle) VALUES (:k)'), {"k": "ancienne"})
+    try:
+        def charger(conn, staging):
+            for i in range(3):
+                conn.execute(text(f'INSERT INTO "{staging}" (cle) VALUES (:k)'), {"k": f"neuf-{i}"})
+        # `like=ALL` → la STAGING hérite de l'IDENTITÉ (charger insère sans `id`, elle se génère) ;
+        # le SWAP, lui, EXCLUT `id` (GENERATED ALWAYS) → la servie le régénère (cf. dfi_filiation).
+        res = ijs.injecter_table_sure(engine, table=gtable, a_geometrie=False, like_including="ALL",
+                                      delta_max_pct=1000.0, charger_staging=charger)
+        assert res["injecte"] is True, res["resume"]
+        with engine.connect() as c:
+            cles = c.execute(text(f'SELECT cle FROM "{gtable}" ORDER BY cle')).scalars().all()
+            ids = c.execute(text(f'SELECT id FROM "{gtable}" ORDER BY id')).scalars().all()
+        assert cles == ["neuf-0", "neuf-1", "neuf-2"]
+        assert len(ids) == 3 and all(isinstance(i, int) for i in ids)   # id régénéré par l'identité
+    finally:
+        with engine.begin() as c:
+            c.execute(text("SET lock_timeout = '10s'"))
+            c.execute(text(f'DROP TABLE IF EXISTS "{gtable}"'))
+            c.execute(text(f'DROP TABLE IF EXISTS "{ijs._staging_nom(gtable)}"'))
