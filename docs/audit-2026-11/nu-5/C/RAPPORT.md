@@ -15,7 +15,7 @@
 | **Mails à ne pas envoyer** | Lecture des requêtes de destinataires + gardes du worker (`mailfile.py`, `digests.py`, `events.py`, `comptes.py`). | Élevée |
 | **Pages légales** | Routes in-app rendues (fonctions pures, 0 base) ; pages externes `labuse.immo` **récupérées en direct** (WebFetch). | Élevée |
 | **Parcours — écrans publics** | Pages server-rendered (login, invitation, CGV, reset, retour paiement) **rendues et capturées** (`captures/`). 0 base, 0 serveur. | Élevée (live) |
-| **Parcours — app authentifiée** | **Analysé depuis la source** (carte, recherche, fiche, outils, PDF, Copilote, CRM). L'app n'a **pas** été bootée : son démarrage déclenche des heals/recalculs qui **écrivent** en base — incompatible avec « lecture seule ». Timing qualitatif (depuis le code), pas chronométré live. | Moyenne — **dette ouverte** (voir §9) |
+| **Parcours — app authentifiée** | **REJOUÉ EN LIVE** (addendum §11, après clarification Vic : écrire en base locale pour booter l'app et ouvrir des sessions est permis). App bootée (backend `:9750` + vite `:6950`), vrai compte créé (#140), inscription + Stripe **test** + login + journey complets, captures + temps réels. | Élevée (live) |
 
 **Pourquoi pas d'envoi réel ni de boot complet.** Le `.env` local porte une **clé Brevo de production**
 (expéditeur `victor@labuse.immo`) et des identifiants SMTP live. Déclencher un envoi réel, même vers une
@@ -38,6 +38,8 @@ explicite) mais **ne l'a pas tiré**. Le rendu read-only donne déjà le contenu
 | **F7** | 🟡 FAIBLE | **Aucun e-mail d'avertissement de fin d'essai** : l'essai expire → directement l'e-mail de **suspension**, basculé **au login** (pas de cron). Le client ne reçoit aucun « votre essai se termine demain » ; et s'il ne revient pas, **aucun mail ne part**. | `comptes.py:505,524` (`basculer_essai_expire` au login) |
 | **F8** | ⚪ INFO | **Pas de facture émise par LABUSE** (par conception : Stripe émet factures/reçus, CGV art. 4). Le mandat en attendait une — à clarifier. | pas de template « facture » ; `onboarding.py:4` « Facture émise automatiquement » (= Stripe) |
 | **F9** | ⚪ INFO | **Template `radar_digest` (id 12) actif chez Brevo mais mort dans le code** (retiré VEILLE-FIX-1). À nettoyer. | `digests.py:5` « ancien template 12 RETIRÉ » ; Brevo `actif=True` |
+| **F10** | 🟠 MOYEN | **Le marchand Stripe s'appelle « LASTONE »** (ancien nom de projet), pas LABUSE. Sur la page de paiement et dans l'autorisation (« vous autorisez **LASTONE** à vous débiter ») — donc sur le relevé bancaire du client. Les lignes produit disent bien « LABUSE Intégral ». | Capture live `captures/12_stripe_checkout_full.png` (checkout test) |
+| **F11** | 🟡 FAIBLE-MOYEN | **Premier PDF lent** : la génération du « Dossier » parcelle prend **≈ 13,8 s** (mesuré live), spinner seul, pas de barre de progression. Long pour une première heure. | `/dossier/97411000BZ1065.pdf` = 13 754 ms (perf live) |
 | — | 🟢 FORCES | File `mail_queue` robuste ; gardes « compte supprimé → annulé » et « dû > 7 j → annulé » ; revendication `parti` anti-double-envoi ; `_adresse_placeholder` bloque les domaines de test ; `List-Unsubscribe` one-click ; **alertes `[URGENT]` à l'admin seul** (jamais un client). | §5 |
 
 ---
@@ -61,7 +63,12 @@ l'exploitant → `/invitation?token=…` → choix du mot de passe (≥ 10 car.,
 dans l'e-mail** donne un paiement encaissé mais un accès inaccessible (le lien de connexion part à une
 mauvaise adresse). `onboarding.py`.
 
-### 2.2 App authentifiée (analysée source — à rejouer live, §9)
+### 2.2 App authentifiée (première lecture SOURCE — **corrigée en live au §11**)
+
+> ⚠️ Cette sous-section est la lecture *depuis le code* faite avant le rejeu. Le **§11 l'a rejouée en
+> live** et **corrige** plusieurs jugements (le premier écran EST onboardant ; la fiche EST groupée avec
+> sources). Lire le §11 pour la vérité observée ; ce tableau est conservé pour traçabilité.
+
 
 | Étape | Écran / fichier | Clarté | Jargon / impasse |
 |---|---|---|---|
@@ -241,10 +248,8 @@ Désactiver le template 12 chez Brevo ou le retirer du registre.
 
 ## 9. Dettes & limites
 
-- **Parcours authentifié non rejoué live** (carte/recherche/fiche/outils/PDF/Copilote/CRM) : analysé
-  depuis la source pour respecter « lecture seule » (le boot de l'app écrit en base). **Dette** : si Vic
-  autorise les écritures de session, rejouer la première heure en live (Playwright, compte de démo) pour
-  **chronométrer** chaque étape et capturer les écrans authentifiés.
+- **Parcours authentifié : REJOUÉ EN LIVE** (voir §11) après clarification du périmètre — 13 étapes
+  chronométrées, captures `10_*`→`30_*`. Deux findings live ajoutés (F10 « LASTONE », F11 PDF lent).
 - **Part texte des templates Brevo** et **rendu Gmail/Apple Mail/Outlook** non vérifiés (exigeraient un
   envoi test réel) : le harnais est prêt (`--envoyer-test`) ; à tirer vers une boîte de test contrôlée
   quand l'expéditeur F1 sera tranché.
@@ -252,6 +257,71 @@ Désactiver le template 12 chez Brevo ou le retirer du registre.
 
 ---
 
-*Livrables : ce rapport · `CATALOGUE.md` + `checks.json` + `mails/` (21 rendus) · `captures/` (écrans) ·
-`harnais_mails.py` + `render_public_pages.py`. Aucune écriture en prod, aucun mail réel envoyé, Stripe non
-sollicité.*
+---
+
+## 11. Addendum — la première heure REJOUÉE EN LIVE (navigateur)
+
+Après clarification (« écrire dans la base LOCALE pour booter l'app et ouvrir des sessions est permis »),
+le parcours authentifié a été **rejoué pour de vrai** : backend `:9750` + front vite `:6950`, **vrai compte
+créé** (`compte-invite` → #140, `qa-nu5c@cabinet-test.re`), inscription + **Stripe mode test** + login +
+toutes les étapes. Captures `captures/10_*`→`30_*`. Prod jamais touchée ; aucun mail réel ; carte Stripe
+de **test** uniquement.
+
+### 11.1 Déroulé & temps mesurés
+
+| # | Étape | Capture | Temps | Verdict |
+|---|---|---|---|---|
+| 1 | **Inscription — créer son accès** (mot de passe ≥10, CGV horodatée, e-mail verrouillé par l'invitation) | `10_inscription_creer_acces.png` | instantané | ✔ clair : « Intégral · 349 €/mois · sans engagement », bouton désactivé tant que le formulaire n'est pas valide |
+| 2 | **Page abonnement** (« Payer 349 € », « Facture émise automatiquement ») | `11_onboarding_paiement.png` | instantané | ✔ rassurant (« Rien n'est débité tant que vous n'avez pas confirmé ») |
+| 3 | **Stripe Checkout** (test) — 349 €/mois, e-mail pré-rempli, CB/Klarna/Satispay/Apple/Link | `12_stripe_checkout_full.png` | redirection ~1 s | ⚠ **marchand « LASTONE »** (F10) ; sinon FR, clair, disclaimer produit présent |
+| 4 | **Login** (après activation) → session scope compte #140 | `01_login.png` | `/moi` **1,2 s**, DOM 0,5 s | ✔ page sobre, « Se souvenir de moi », disclaimer + liens légaux |
+| 5 | **Premier écran** (carte + panneau d'accueil) | `20_premier_ecran.png` | < 3 s | ✔ **onboardant** : « Tout le foncier de La Réunion. Au même endroit. / Par où commencer » + 4 cartes (Explorer la carte · Suivre le marché — Radar · Demander au Copilote · Ouvrir un outil) |
+| 6 | **Recherche par ADRESSE** (« 3 chemin de la Citerne ») → fiche | `21_recherche_adresse.png` | suggestions < 2 s | ✔ autocomplétion BAN étiquetée « adresse » ; l'adresse résout **directement** la parcelle `97411000BZ1065` |
+| 7 | **Recherche par IDU** (`97408000AT0907`) → fiche | — | suggestion < 2 s | ✔ « parcelle AT 907 — La Possession 743 m² » |
+| 8 | **Recherche par NOM** (« CBO TERRITORIA ») → Scan patrimoine | `23_recherche_nom_patrimoine.png` | suggestion < 2 s | ✔ « propriétaire CBO TERRITORIA — 1833 parcelles » → portefeuille |
+| 9 | **Première fiche** (`97411000BZ1065`) | `22_premiere_fiche.png` | ~3 s | ✔ **bien structurée** (voir 11.2) |
+| 10 | **Premier outil — « Estimer »** | `24_outil_estimer.png` | ~2 s | ✔ s'ouvre en panneau |
+| 11 | **Premier PDF — « Dossier »** (11 pages brandées) | `25_*`, `26_pdf_dossier_rendu.png` | **≈ 13,8 s** (F11) | ✔ PDF superbe (nº rapport, pavés de synthèse, sommaire 12 sections, légende sourcé/dérivé/estimé) — mais **lent** |
+| 12 | **Première question Copilote** (« …97411000BZ1065 est-elle constructible ? ») | `27_*`, `28_copilote_reponse.png` | **≈ 8,2 s** (`/ask`) | ✔ accueil + 6 exemples ; réponse **ancrée** sur les données de la fiche + bouton « Voir la fiche » |
+| 13 | **Ajout au CRM** (« + CRM » → colonne « Repérée ») | `29_*`, `30_crm_kanban.png` | < 1 s | ✔ sélecteur de colonne clair → Kanban « pipeline de prospection », carte bien posée |
+
+### 11.2 Ce que le live CORRIGE de l'analyse source
+
+- **Le premier écran n'est pas une carte vide** : un panneau d'accueil guide (titre + « Par où commencer »
+  + 4 actions). L'onboarding existe.
+- **La fiche n'est pas un empilement indifférencié** : elle est **groupée** — *Le bien · Le droit du sol ·
+  Le marché · Le projet* — précédée d'un **bandeau de 6 chiffres** (Surface, Zone, Pente, Exposition,
+  Risques, SDP restante), **chacun avec un bouton « i » de source**, et close par un disclaimer clair. Les
+  3 recherches (adresse/IDU/nom) renvoient des suggestions **étiquetées** et résolvent juste.
+- **Le Copilote** a un accueil fort (salutation + 6 exemples + « Conservées 30 jours… La Réunion
+  uniquement ») et répond **sourcé et daté**, ancré sur la parcelle.
+- **Les états vides** sont amicaux (« Aucune parcelle — glissez-en une ici », « Aucune conversation… Posez
+  une question pour en démarrer une »).
+
+### 11.3 Ce qui surprend, bloque ou se contredit (live)
+
+- 🟠 **F10 — marchand « LASTONE »** sur le checkout et l'autorisation de prélèvement (donc le relevé
+  bancaire). Contradiction de marque directe vue par le client qui paie.
+- 🟡 **F11 — Dossier PDF ≈ 13,8 s**, spinner seul. Un primo-visiteur peut croire que ça a planté.
+- 🟡 **Jargon résiduel** dans la fiche (« Uh », « SDP », « DVF », « aléas », « Secteur : la Vigie ») —
+  atténué par le « i » de source sur chaque chiffre, mais **toujours pas de glossaire global**.
+- ⚪ **Pas de vérification d'e-mail** à l'inscription (le paiement fait foi). Pour l'invité l'e-mail est
+  verrouillé (sans risque) ; le risque est **à la création de l'invitation** (une faute de frappe = payé
+  mais injoignable). Déjà noté §2.1.
+- ✔ **Rien de bloquant** : aucune impasse rencontrée sur les 13 étapes ; disclaimers et liens légaux
+  présents partout (login, fiche, PDF, Copilote).
+
+### 11.4 Reproductibilité
+
+Backend : `PYTHONPATH=src LABUSE_DEV_MODE=1 LABUSE_AUTH_PASSWORD=… <venv>/uvicorn labuse.api.app:app
+--port 9750` (en local, `LABUSE_SECRET_KEY` est **refusée** — fail-closed ; la session signée est
+éphémère mais survit tant que le process vit — à lancer **détaché** via `nohup`). Front :
+`LABUSE_API_DEV=http://127.0.0.1:9750 npx vite --port 6950`. Le cookie de session (non-`Secure` en local,
+host-only) est **partagé entre les ports** 9750/6950 → login sur le backend, app sur vite. Compte de test
+#140 activé en base (le webhook Stripe n'est pas tunnelé en local ; en prod il active automatiquement, cf. §3).
+
+---
+
+*Livrables : ce rapport · `CATALOGUE.md` + `checks.json` + `mails/` (21 rendus) · `captures/` (écrans
+publics + **parcours authentifié live**) · `harnais_mails.py` + `render_public_pages.py`. Aucune écriture en
+prod, aucun mail réel envoyé, Stripe en **mode test** uniquement.*
