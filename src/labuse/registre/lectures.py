@@ -301,6 +301,8 @@ LECTURES: tuple[Lecture, ...] = (
       "geom_2975 de la parcelle pour les tests spatiaux de l'étage 1 de la cascade — moteur interne"),
     L("parcels", "copilote_v2/answering.py", None, None,
       "résolution « BZ1065 à Saint-Denis » → IDU 14 caractères (Q13) — identification ; les données servies viennent de copilote_v2/outils.py"),
+    L("parcels", "copilote_v2/resume_fiche.py", None, None,
+      "CHASSE-FIX-1 (B-6) : idu → parcel_id pour lire les zones à cheval via faisabilite.zone_servie.zone_dominante (mêmes parts que la fiche) — identification, aucun chiffre servi par cette lecture"),
     L("parcels", "courrier.py", None, None,
       "jointure parcels par idu pour cibler le destinataire du courrier — rattachement technique"),
     L("parcels", "demo.py", None, None,
