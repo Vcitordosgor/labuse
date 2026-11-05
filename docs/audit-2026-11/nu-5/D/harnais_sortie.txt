@@ -1,0 +1,164 @@
+SET
+══ 0. SOCLE — volumétrie ══
+                   obj                   |  n   
+-----------------------------------------+------
+ biens                                   |  991
+ annonces                                | 1151
+ faits                                   |  991
+ biens servis client (non copro, validé) |  685
+ copros embasées (jamais servies)        |  306
+ communes couvertes                      |   24
+
+
+══ 1. FIDÉLITÉ CAPTURE — champ servi vs source_brute (portail), par portail ══
+(mismatch = la valeur servie diffère du payload archivé — extraction infidèle)
+  portail  |      champ       | verifiables | concordants | taux_pct 
+-----------+------------------+-------------+-------------+----------
+ bienici   | pieces           |         517 |         517 |    100.0
+ bienici   | prix_m2(portail) |         515 |         515 |    100.0
+ bienici   | surface_hab      |         515 |         515 |    100.0
+ bienici   | surface_terrain  |         294 |         294 |    100.0
+ leboncoin | pieces           |         299 |         299 |    100.0
+ leboncoin | prix_m2(portail) |         363 |         363 |    100.0
+ leboncoin | surface_hab      |         354 |         354 |    100.0
+ leboncoin | surface_terrain  |         250 |         250 |    100.0
+
+
+══ 2. PRIX/m² SERVI — recalcul prix/surface (base = terrain pour terrain, sinon habitable) ══
+cohérence avec prix_m2 portail (écart > 3 % = base de surface différente du portail)
+  type_bien  | calculables | ecart_sup3pct_vs_portail 
+-------------+-------------+--------------------------
+ maison      |         580 |                       28
+ appartement |         305 |                       19
+ terrain     |          19 |                        0
+             |          12 |                        0
+
+
+══ 3. DÉDOUBLONNAGE — doublons EXACTS résiduels (même commune+type+prix+surface, biens distincts) ══
+VÉRITÉ : 0 (la dédup exact-only doit tout fusionner)
+ commune | type_bien | prix | surf | n_biens | ids 
+---------+-----------+------+------+---------+-----
+
+-- composition des biens multi-annonces (fusions réalisées)
+   portails_set    | biens 
+-------------------+-------
+ bienici           |    89
+ bienici+leboncoin |    37
+ leboncoin         |    14
+
+
+══ 4. RETRAITS — intégrité ══
+-- 4a. garde multi-annonces : AUCUN bien retiré ne doit avoir une annonce vue APRÈS son retrait (VÉRITÉ 0)
+ retiree_avec_annonce_revue_apres 
+----------------------------------
+                                0
+
+-- 4b. retraits par jour + tracés (event pige:retiree:) vs non tracés (hérités, hors garde 30 %)
+    jour    | n  | traces | non_traces 
+------------+----+--------+------------
+ 2026-09-26 | 88 |      0 |         88
+ 2026-11-02 | 15 |     15 |          0
+
+-- 4c. passes de confirmation : taux de retrait apparent + verdict garde 30 %
+    jour    | liens_verifies | retires_ecrits | n_non_verifiees |            note             
+------------+----------------+----------------+-----------------+-----------------------------
+ 2026-11-05 |             49 |              0 |               0 | rien retiré (bloqué ou RAS)
+ 2026-11-04 |             26 |              0 |               0 | rien retiré (bloqué ou RAS)
+ 2026-11-03 |             60 |              0 |               0 | rien retiré (bloqué ou RAS)
+ 2026-11-02 |            120 |             18 |               0 | retraits écrits
+ 2026-10-29 |              1 |              0 |               1 | —
+ 2026-10-28 |             60 |             60 |               0 | retraits écrits
+ 2026-09-27 |              1 |              1 |               0 | retraits écrits
+ 2026-09-26 |            107 |            107 |               0 | retraits écrits
+
+
+══ 5. RATTACHEMENT ══
+-- 5a. état des rattachements (auto retiré RADAR-4 : tout doit être idu NULL sauf geste humain)
+ etat_idu | rattachement_etat | rattachement_humain | count 
+----------+-------------------+---------------------+-------
+ idu NULL | non_rattachee     | f                   |   949
+ idu NULL | piste             | f                   |    42
+
+-- 5b. lifecycle DVF/Courrier EXIGE un idu → inerte si 0 rattaché
+                  k                  | v 
+-------------------------------------+---
+ biens rattachés (idu)               | 0
+ vendue (DVF)                        | 0
+ retiree_sans_vente (cible Courrier) | 0
+
+-- 5c. piste périmée : rattachement_etat=piste mais idu NULL (état hérité non nettoyé)
+ pistes_sans_idu 
+-----------------
+              42
+
+
+══ 6. QUALITÉ DES FAITS ══
+-- 6a. biens de type inconnu (NULL) servis au flux (ni médiane bâti ni terrain)
+ type_null_servis 
+------------------
+               24
+
+-- 6b. à-qualifier : motifs (exclus des stats et des veilles)
+                                             motif                                             | count 
+-----------------------------------------------------------------------------------------------+-------
+ « terrain » portant une surface habitable                                                     |    49
+ « terrain » portant 12 pièces                                                                 |     1
+ prix/m² 5 €/m² < ¼ du terrain nu de Saint-Benoît (236 €/m²) — incohérence à vérifier          |     1
+ prix/m² 54 €/m² < ¼ du terrain nu de Le Tampon (285 €/m²) — incohérence à vérifier            |     1
+ « terrain » portant un mode de chauffage (electric)                                           |     1
+ prix/m² 70 €/m² < ¼ du terrain nu de Saint-Denis (482 €/m²) — incohérence à vérifier          |     1
+ « terrain » portant une année de construction (1942)                                          |     1
+ prix/m² 6607 €/m² > 4× le terrain nu de Saint-Denis (485 €/m²) — probable bâti mal catégorisé |     1
+
+-- 6c. terrains perdus pour les stats à cause de surface_hab = surface_terrain (quirk Leboncoin square)
+  portail  | terrains_sains | terrains_a_qualifier 
+-----------+----------------+----------------------
+ leboncoin |             32 |                   49
+
+
+══ 7. COMPTEUR DE LA NUIT — un seul chiffre par nuit et par portail (pige_annonces.created_at) ══
+    nuit    |  portail  | nouvelles_annonces 
+------------+-----------+--------------------
+ 2026-11-05 | bienici   |                  5
+ 2026-11-05 | leboncoin |                 35
+ 2026-11-04 | bienici   |                130
+ 2026-11-04 | leboncoin |                 33
+ 2026-11-03 | bienici   |                 11
+ 2026-11-03 | leboncoin |                 34
+ 2026-11-02 | bienici   |                387
+ 2026-11-02 | leboncoin |                 72
+ 2026-10-30 | leboncoin |                 31
+ 2026-10-29 | bienici   |                100
+ 2026-10-28 | leboncoin |                 34
+ 2026-10-06 | leboncoin |                 33
+ 2026-09-27 | leboncoin |                 40
+ 2026-09-26 | leboncoin |                 98
+ 2026-08-30 | leboncoin |                 73
+ 2026-08-29 | leboncoin |                 35
+
+
+══ 8. NUITS — 14 dernières (passes auto/manuel/test) : présence, portée ══
+    nuit    | passes_distinctes |                                      detail                                       |     etat     
+------------+-------------------+-----------------------------------------------------------------------------------+--------------
+ 2026-11-05 |                 3 | confirmation/auto,nouvelles/auto,relecture/auto                                   | ok
+ 2026-11-04 |                 3 | confirmation/auto,nouvelles/auto,relecture/auto                                   | ok
+ 2026-11-03 |                 3 | confirmation/auto,nouvelles/auto,relecture/auto                                   | ok
+ 2026-11-02 |                 3 | confirmation/auto,nouvelles/auto,nouvelles/manuel,relecture/auto,relecture/manuel | ok
+ 2026-11-01 |                 0 |                                                                                   | NUIT MANQUÉE
+ 2026-10-31 |                 0 |                                                                                   | NUIT MANQUÉE
+ 2026-10-30 |                 1 | nouvelles/auto                                                                    | ok
+ 2026-10-29 |                 2 | confirmation/auto,nouvelles/auto                                                  | ok
+ 2026-10-28 |                 2 | confirmation/auto,nouvelles/manuel                                                | ok
+ 2026-10-27 |                 0 |                                                                                   | NUIT MANQUÉE
+ 2026-10-26 |                 0 |                                                                                   | NUIT MANQUÉE
+ 2026-10-25 |                 0 |                                                                                   | NUIT MANQUÉE
+ 2026-10-24 |                 0 |                                                                                   | NUIT MANQUÉE
+ 2026-10-23 |                 0 |                                                                                   | NUIT MANQUÉE
+
+-- 8b. comptes-rendus de soirée (K-RAD-04) : veille Mac détectée ?
+    jour    |               titre               |                                           detail                                           
+------------+-----------------------------------+--------------------------------------------------------------------------------------------
+ 2026-11-04 | Radar — compte-rendu de la soirée | OK 23:45 Réunion (auto) — Leboncoin : 2 nouvelle(s), 20 revue(s), 26 vérifiée(s) · Bien'ic
+ 2026-11-03 | Radar — compte-rendu de la soirée | OK 23:31 Réunion (auto) — Leboncoin : 2 nouvelle(s), 20 revue(s), 60 vérifiée(s) · Bien'ic
+ 2026-11-02 | Radar — compte-rendu de la soirée | OK 23:33 Réunion (auto) — Leboncoin : 2 nouvelle(s), 20 revue(s), 60 vérifiée(s) · Bien'ic
+
