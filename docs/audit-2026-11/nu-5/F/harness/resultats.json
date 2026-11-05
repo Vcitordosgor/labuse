@@ -1,0 +1,661 @@
+{
+  "base": "http://127.0.0.1:6980/socle/",
+  "verrouMobile": {
+    "iPhone 13 (390, portrait)": {
+      "ecranOrdinateur": true,
+      "appMontee": false,
+      "texte": "LABUSE\n\nLABUSE est disponible sur ordinateur.\n\nOuvrez app.labuse.immo depuis vot"
+    },
+    "iPad gen7 (810, portrait)": {
+      "ecranOrdinateur": true,
+      "appMontee": false,
+      "texte": "LABUSE\n\nLABUSE est disponible sur ordinateur.\n\nOuvrez app.labuse.immo depuis vot"
+    }
+  },
+  "pages": [
+    {
+      "vue": "Carte",
+      "viewport": "mobile-390",
+      "axeViolations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "n": 2,
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "cibles": [
+            "button[data-signaler=\"true\"]",
+            ".left-1\\/2"
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "n": 2,
+          "help": "Elements must have their visible text as part of their accessible name",
+          "cibles": [
+            "button[aria-label=\"Notifications\"]",
+            "button[aria-label=\"Fond de plan\"]"
+          ]
+        }
+      ],
+      "miseEnPage": {
+        "debordementHorizontal": 0,
+        "controles": 46,
+        "ciblesSous24": 25,
+        "ciblesSous44": 36,
+        "main": 0,
+        "h1": 0,
+        "roleHeading": 0,
+        "skipLink": false,
+        "inputsSansNom": 0,
+        "thSansScope": 0,
+        "regionsLive": 1
+      },
+      "axeSeriousPlus": 4
+    },
+    {
+      "vue": "Copilote",
+      "viewport": "mobile-390",
+      "axeViolations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "n": 1,
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "cibles": [
+            "button[data-signaler=\"true\"]"
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "n": 1,
+          "help": "Elements must have their visible text as part of their accessible name",
+          "cibles": [
+            ".h-9"
+          ]
+        }
+      ],
+      "miseEnPage": {
+        "debordementHorizontal": 0,
+        "controles": 22,
+        "ciblesSous24": 1,
+        "ciblesSous44": 7,
+        "main": 1,
+        "h1": 1,
+        "roleHeading": 0,
+        "skipLink": false,
+        "inputsSansNom": 0,
+        "thSansScope": 0,
+        "regionsLive": 0
+      },
+      "axeSeriousPlus": 2
+    },
+    {
+      "vue": "Docs",
+      "viewport": "mobile-390",
+      "axeViolations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "n": 5,
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "cibles": [
+            ".rounded-lg",
+            ".grid-cols-\\[56px_1fr\\].items-start.p-3:nth-child(1) > div > .text-\\[15px\\].flex-wrap.text-txt > .px-\\[7px\\].group-hover\\:border-mint-on.h-\\[18px\\]",
+            ".grid-cols-\\[56px_1fr\\].items-start.p-3:nth-child(2) > div > .text-\\[15px\\].flex-wrap.text-txt > .px-\\[7px\\].group-hover\\:border-mint-on.h-\\[18px\\]",
+            ".grid-cols-\\[56px_1fr\\].items-start.p-3:nth-child(3) > div > .text-\\[15px\\].flex-wrap.text-txt > .px-\\[7px\\].group-hover\\:border-mint-on.h-\\[18px\\]"
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "n": 1,
+          "help": "Elements must have their visible text as part of their accessible name",
+          "cibles": [
+            ".h-9"
+          ]
+        }
+      ],
+      "miseEnPage": {
+        "debordementHorizontal": 0,
+        "controles": 423,
+        "ciblesSous24": 1,
+        "ciblesSous44": 405,
+        "main": 0,
+        "h1": 1,
+        "roleHeading": 0,
+        "skipLink": false,
+        "inputsSansNom": 0,
+        "thSansScope": 6,
+        "regionsLive": 0
+      },
+      "axeSeriousPlus": 6
+    },
+    {
+      "vue": "Radar",
+      "viewport": "mobile-390",
+      "axeViolations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "n": 5,
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "cibles": [
+            ".py-1\\.5",
+            ".text-\\[10\\.5px\\]",
+            ".leading-snug",
+            "button[data-radar-porte-radar=\"true\"] > .mt-2.leading-relaxed"
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "n": 1,
+          "help": "Elements must have their visible text as part of their accessible name",
+          "cibles": [
+            ".h-9"
+          ]
+        }
+      ],
+      "miseEnPage": {
+        "debordementHorizontal": 0,
+        "controles": 15,
+        "ciblesSous24": 1,
+        "ciblesSous44": 4,
+        "main": 0,
+        "h1": 1,
+        "roleHeading": 0,
+        "skipLink": false,
+        "inputsSansNom": 0,
+        "thSansScope": 0,
+        "regionsLive": 0
+      },
+      "axeSeriousPlus": 6
+    },
+    {
+      "vue": "Projets",
+      "viewport": "mobile-390",
+      "axeViolations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "n": 6,
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "cibles": [
+            ".rounded-lg",
+            "button[data-tab-archives=\"true\"]",
+            "button[data-tab-courriers=\"true\"]",
+            "div[data-intensite=\"todo\"][data-projet-row=\"true\"][role=\"button\"]:nth-child(1) > div:nth-child(1) > h4 > span[data-projet-commune=\"true\"]"
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "n": 1,
+          "help": "Elements must have their visible text as part of their accessible name",
+          "cibles": [
+            ".h-9"
+          ]
+        }
+      ],
+      "miseEnPage": {
+        "debordementHorizontal": 0,
+        "controles": 26,
+        "ciblesSous24": 1,
+        "ciblesSous44": 8,
+        "main": 0,
+        "h1": 1,
+        "roleHeading": 0,
+        "skipLink": false,
+        "inputsSansNom": 0,
+        "thSansScope": 0,
+        "regionsLive": 0
+      },
+      "axeSeriousPlus": 7
+    },
+    {
+      "vue": "CRM",
+      "viewport": "mobile-390",
+      "axeViolations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "n": 2,
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "cibles": [
+            ".py-1\\.5",
+            ".text-txt-mut.whitespace-nowrap.text-\\[10\\.5px\\]"
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "n": 1,
+          "help": "Elements must have their visible text as part of their accessible name",
+          "cibles": [
+            ".h-9"
+          ]
+        },
+        {
+          "id": "nested-interactive",
+          "impact": "serious",
+          "n": 187,
+          "help": "Interactive controls must not be nested",
+          "cibles": [
+            ".max-h-full.basis-0.rounded-xl:nth-child(1) > .min-h-\\[72px\\].gap-2\\.5.px-2\\.5 > .group.p-3\\.5.ring-1:nth-child(1)",
+            ".max-h-full.basis-0.rounded-xl:nth-child(1) > .min-h-\\[72px\\].gap-2\\.5.px-2\\.5 > .group.p-3\\.5.ring-1:nth-child(2)",
+            ".max-h-full.basis-0.rounded-xl:nth-child(1) > .min-h-\\[72px\\].gap-2\\.5.px-2\\.5 > .group.p-3\\.5.ring-1:nth-child(3)",
+            ".max-h-full.basis-0.rounded-xl:nth-child(1) > .min-h-\\[72px\\].gap-2\\.5.px-2\\.5 > .group.p-3\\.5.ring-1:nth-child(4)"
+          ]
+        },
+        {
+          "id": "target-size",
+          "impact": "serious",
+          "n": 11,
+          "help": "All touch targets must be 24px large, or leave sufficient space",
+          "cibles": [
+            ".max-h-full.basis-0.rounded-xl:nth-child(1) > .min-h-\\[72px\\].gap-2\\.5.px-2\\.5 > .group.p-3\\.5.ring-1:nth-child(1) > .pt-2\\.5.border-t.gap-2 > .flex-1.min-w-0 > select",
+            ".max-h-full.basis-0.rounded-xl:nth-child(1) > .min-h-\\[72px\\].gap-2\\.5.px-2\\.5 > .group.p-3\\.5.ring-1:nth-child(2) > .pt-2\\.5.border-t.gap-2 > .flex-1.min-w-0 > select",
+            ".max-h-full.basis-0.rounded-xl:nth-child(1) > .min-h-\\[72px\\].gap-2\\.5.px-2\\.5 > .group.p-3\\.5.ring-1:nth-child(3) > .pt-2\\.5.border-t.gap-2 > .flex-1.min-w-0 > select",
+            ".max-h-full.basis-0.rounded-xl:nth-child(2) > .min-h-\\[72px\\].gap-2\\.5.px-2\\.5 > .group.p-3\\.5.ring-1:nth-child(1) > .pt-2\\.5.border-t.gap-2 > .flex-1.min-w-0 > select"
+          ]
+        }
+      ],
+      "miseEnPage": {
+        "debordementHorizontal": 0,
+        "controles": 576,
+        "ciblesSous24": 188,
+        "ciblesSous44": 380,
+        "main": 0,
+        "h1": 0,
+        "roleHeading": 0,
+        "skipLink": false,
+        "inputsSansNom": 0,
+        "thSansScope": 0,
+        "regionsLive": 0
+      },
+      "axeSeriousPlus": 201
+    },
+    {
+      "vue": "Sources",
+      "viewport": "mobile-390",
+      "axeViolations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "n": 3,
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "cibles": [
+            "button[data-signaler=\"true\"]",
+            "p > .text-txt-mut",
+            ".ml-1\\.5"
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "n": 1,
+          "help": "Elements must have their visible text as part of their accessible name",
+          "cibles": [
+            ".h-9"
+          ]
+        }
+      ],
+      "miseEnPage": {
+        "debordementHorizontal": 0,
+        "controles": 112,
+        "ciblesSous24": 1,
+        "ciblesSous44": 7,
+        "main": 0,
+        "h1": 1,
+        "roleHeading": 0,
+        "skipLink": false,
+        "inputsSansNom": 0,
+        "thSansScope": 0,
+        "regionsLive": 0
+      },
+      "axeSeriousPlus": 4
+    },
+    {
+      "vue": "Carte",
+      "viewport": "bureau-1440",
+      "axeViolations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "n": 3,
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "cibles": [
+            "button[data-signaler=\"true\"]",
+            ".mb-2",
+            ".left-1\\/2"
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "n": 2,
+          "help": "Elements must have their visible text as part of their accessible name",
+          "cibles": [
+            "button[aria-label=\"Notifications\"]",
+            "button[aria-label=\"Fond de plan\"]"
+          ]
+        }
+      ],
+      "miseEnPage": {
+        "debordementHorizontal": 0,
+        "controles": 56,
+        "ciblesSous24": 27,
+        "ciblesSous44": 42,
+        "main": 0,
+        "h1": 0,
+        "roleHeading": 0,
+        "skipLink": false,
+        "inputsSansNom": 1,
+        "thSansScope": 0,
+        "regionsLive": 0
+      },
+      "axeSeriousPlus": 5
+    },
+    {
+      "vue": "Copilote",
+      "viewport": "bureau-1440",
+      "axeViolations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "n": 1,
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "cibles": [
+            "button[data-signaler=\"true\"]"
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "n": 1,
+          "help": "Elements must have their visible text as part of their accessible name",
+          "cibles": [
+            ".h-9"
+          ]
+        }
+      ],
+      "miseEnPage": {
+        "debordementHorizontal": 0,
+        "controles": 104,
+        "ciblesSous24": 42,
+        "ciblesSous44": 49,
+        "main": 1,
+        "h1": 1,
+        "roleHeading": 0,
+        "skipLink": false,
+        "inputsSansNom": 1,
+        "thSansScope": 0,
+        "regionsLive": 0
+      },
+      "axeSeriousPlus": 2
+    },
+    {
+      "vue": "Docs",
+      "viewport": "bureau-1440",
+      "axeViolations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "n": 24,
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "cibles": [
+            ".rounded-lg",
+            ".grid-cols-\\[56px_1fr\\].items-start.p-3:nth-child(1) > div > .text-\\[15px\\].flex-wrap.text-txt > .px-\\[7px\\].group-hover\\:border-mint-on.h-\\[18px\\]",
+            ".grid-cols-\\[56px_1fr\\].items-start.p-3:nth-child(2) > div > .text-\\[15px\\].flex-wrap.text-txt > .px-\\[7px\\].group-hover\\:border-mint-on.h-\\[18px\\]",
+            ".grid-cols-\\[56px_1fr\\].items-start.p-3:nth-child(3) > div > .text-\\[15px\\].flex-wrap.text-txt > .px-\\[7px\\].group-hover\\:border-mint-on.h-\\[18px\\]"
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "n": 1,
+          "help": "Elements must have their visible text as part of their accessible name",
+          "cibles": [
+            ".h-9"
+          ]
+        }
+      ],
+      "miseEnPage": {
+        "debordementHorizontal": 0,
+        "controles": 425,
+        "ciblesSous24": 2,
+        "ciblesSous44": 407,
+        "main": 0,
+        "h1": 1,
+        "roleHeading": 0,
+        "skipLink": false,
+        "inputsSansNom": 1,
+        "thSansScope": 6,
+        "regionsLive": 0
+      },
+      "axeSeriousPlus": 25
+    },
+    {
+      "vue": "Radar",
+      "viewport": "bureau-1440",
+      "axeViolations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "n": 5,
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "cibles": [
+            ".py-1\\.5",
+            ".text-\\[10\\.5px\\]",
+            ".leading-snug",
+            "button[data-radar-porte-radar=\"true\"] > .mt-2.leading-relaxed"
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "n": 1,
+          "help": "Elements must have their visible text as part of their accessible name",
+          "cibles": [
+            ".h-9"
+          ]
+        }
+      ],
+      "miseEnPage": {
+        "debordementHorizontal": 0,
+        "controles": 17,
+        "ciblesSous24": 2,
+        "ciblesSous44": 6,
+        "main": 0,
+        "h1": 1,
+        "roleHeading": 0,
+        "skipLink": false,
+        "inputsSansNom": 1,
+        "thSansScope": 0,
+        "regionsLive": 0
+      },
+      "axeSeriousPlus": 6
+    },
+    {
+      "vue": "Projets",
+      "viewport": "bureau-1440",
+      "axeViolations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "n": 12,
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "cibles": [
+            ".rounded-lg",
+            "button[data-tab-archives=\"true\"]",
+            "button[data-tab-courriers=\"true\"]",
+            "div[data-intensite=\"todo\"][data-projet-row=\"true\"][role=\"button\"]:nth-child(1) > div:nth-child(1) > h4 > span[data-projet-commune=\"true\"]"
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "n": 1,
+          "help": "Elements must have their visible text as part of their accessible name",
+          "cibles": [
+            ".h-9"
+          ]
+        }
+      ],
+      "miseEnPage": {
+        "debordementHorizontal": 0,
+        "controles": 28,
+        "ciblesSous24": 2,
+        "ciblesSous44": 10,
+        "main": 0,
+        "h1": 1,
+        "roleHeading": 0,
+        "skipLink": false,
+        "inputsSansNom": 1,
+        "thSansScope": 0,
+        "regionsLive": 0
+      },
+      "axeSeriousPlus": 13
+    },
+    {
+      "vue": "CRM",
+      "viewport": "bureau-1440",
+      "axeViolations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "n": 3,
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "cibles": [
+            ".py-1\\.5",
+            ".text-txt-mut.whitespace-nowrap.text-\\[10\\.5px\\]",
+            ".max-w-\\[340px\\]"
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "n": 1,
+          "help": "Elements must have their visible text as part of their accessible name",
+          "cibles": [
+            ".h-9"
+          ]
+        },
+        {
+          "id": "nested-interactive",
+          "impact": "serious",
+          "n": 187,
+          "help": "Interactive controls must not be nested",
+          "cibles": [
+            ".max-h-full.basis-0.rounded-xl:nth-child(1) > .min-h-\\[72px\\].gap-2\\.5.px-2\\.5 > .group.p-3\\.5.ring-1:nth-child(1)",
+            ".max-h-full.basis-0.rounded-xl:nth-child(1) > .min-h-\\[72px\\].gap-2\\.5.px-2\\.5 > .group.p-3\\.5.ring-1:nth-child(2)",
+            ".max-h-full.basis-0.rounded-xl:nth-child(1) > .min-h-\\[72px\\].gap-2\\.5.px-2\\.5 > .group.p-3\\.5.ring-1:nth-child(3)",
+            ".max-h-full.basis-0.rounded-xl:nth-child(1) > .min-h-\\[72px\\].gap-2\\.5.px-2\\.5 > .group.p-3\\.5.ring-1:nth-child(4)"
+          ]
+        },
+        {
+          "id": "target-size",
+          "impact": "serious",
+          "n": 16,
+          "help": "All touch targets must be 24px large, or leave sufficient space",
+          "cibles": [
+            ".max-h-full.basis-0.rounded-xl:nth-child(1) > .min-h-\\[72px\\].gap-2\\.5.px-2\\.5 > .group.p-3\\.5.ring-1:nth-child(1) > .justify-between.gap-2.items-center > .min-w-0.gap-1\\.5.items-center > .text-txt-hi.text-\\[13px\\].truncate",
+            ".max-h-full.basis-0.rounded-xl:nth-child(1) > .min-h-\\[72px\\].gap-2\\.5.px-2\\.5 > .group.p-3\\.5.ring-1:nth-child(2) > .justify-between.gap-2.items-center > .min-w-0.gap-1\\.5.items-center > .text-txt-hi.text-\\[13px\\].truncate",
+            ".max-h-full.basis-0.rounded-xl:nth-child(1) > .min-h-\\[72px\\].gap-2\\.5.px-2\\.5 > .group.p-3\\.5.ring-1:nth-child(3) > .justify-between.gap-2.items-center > .min-w-0.gap-1\\.5.items-center > .text-txt-hi.text-\\[13px\\].truncate",
+            ".max-h-full.basis-0.rounded-xl:nth-child(1) > .min-h-\\[72px\\].gap-2\\.5.px-2\\.5 > .group.p-3\\.5.ring-1:nth-child(4) > .justify-between.gap-2.items-center > .min-w-0.gap-1\\.5.items-center > .text-txt-hi.text-\\[13px\\].truncate"
+          ]
+        }
+      ],
+      "miseEnPage": {
+        "debordementHorizontal": 0,
+        "controles": 772,
+        "ciblesSous24": 194,
+        "ciblesSous44": 575,
+        "main": 0,
+        "h1": 0,
+        "roleHeading": 0,
+        "skipLink": false,
+        "inputsSansNom": 1,
+        "thSansScope": 0,
+        "regionsLive": 0
+      },
+      "axeSeriousPlus": 207
+    },
+    {
+      "vue": "Sources",
+      "viewport": "bureau-1440",
+      "axeViolations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "n": 3,
+          "help": "Elements must meet minimum color contrast ratio thresholds",
+          "cibles": [
+            "button[data-signaler=\"true\"]",
+            "p > .text-txt-mut",
+            ".ml-1\\.5"
+          ]
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "impact": "serious",
+          "n": 1,
+          "help": "Elements must have their visible text as part of their accessible name",
+          "cibles": [
+            ".h-9"
+          ]
+        }
+      ],
+      "miseEnPage": {
+        "debordementHorizontal": 0,
+        "controles": 114,
+        "ciblesSous24": 2,
+        "ciblesSous44": 9,
+        "main": 0,
+        "h1": 1,
+        "roleHeading": 0,
+        "skipLink": false,
+        "inputsSansNom": 1,
+        "thSansScope": 0,
+        "regionsLive": 0
+      },
+      "axeSeriousPlus": 4
+    }
+  ],
+  "echecsDurs": [
+    "axe color-contrast (serious, 2) — Carte @mobile-390",
+    "axe label-content-name-mismatch (serious, 2) — Carte @mobile-390",
+    "axe color-contrast (serious, 1) — Copilote @mobile-390",
+    "axe label-content-name-mismatch (serious, 1) — Copilote @mobile-390",
+    "axe color-contrast (serious, 5) — Docs @mobile-390",
+    "axe label-content-name-mismatch (serious, 1) — Docs @mobile-390",
+    "axe color-contrast (serious, 5) — Radar @mobile-390",
+    "axe label-content-name-mismatch (serious, 1) — Radar @mobile-390",
+    "axe color-contrast (serious, 6) — Projets @mobile-390",
+    "axe label-content-name-mismatch (serious, 1) — Projets @mobile-390",
+    "axe color-contrast (serious, 2) — CRM @mobile-390",
+    "axe label-content-name-mismatch (serious, 1) — CRM @mobile-390",
+    "axe nested-interactive (serious, 187) — CRM @mobile-390",
+    "axe target-size (serious, 11) — CRM @mobile-390",
+    "axe color-contrast (serious, 3) — Sources @mobile-390",
+    "axe label-content-name-mismatch (serious, 1) — Sources @mobile-390",
+    "axe color-contrast (serious, 3) — Carte @bureau-1440",
+    "axe label-content-name-mismatch (serious, 2) — Carte @bureau-1440",
+    "axe color-contrast (serious, 1) — Copilote @bureau-1440",
+    "axe label-content-name-mismatch (serious, 1) — Copilote @bureau-1440",
+    "axe color-contrast (serious, 24) — Docs @bureau-1440",
+    "axe label-content-name-mismatch (serious, 1) — Docs @bureau-1440",
+    "axe color-contrast (serious, 5) — Radar @bureau-1440",
+    "axe label-content-name-mismatch (serious, 1) — Radar @bureau-1440",
+    "axe color-contrast (serious, 12) — Projets @bureau-1440",
+    "axe label-content-name-mismatch (serious, 1) — Projets @bureau-1440",
+    "axe color-contrast (serious, 3) — CRM @bureau-1440",
+    "axe label-content-name-mismatch (serious, 1) — CRM @bureau-1440",
+    "axe nested-interactive (serious, 187) — CRM @bureau-1440",
+    "axe target-size (serious, 16) — CRM @bureau-1440",
+    "axe color-contrast (serious, 3) — Sources @bureau-1440",
+    "axe label-content-name-mismatch (serious, 1) — Sources @bureau-1440"
+  ]
+}
