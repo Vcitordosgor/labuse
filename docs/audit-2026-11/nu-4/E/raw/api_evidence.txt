@@ -1,0 +1,42 @@
+# NU4-E — preuves serveur (extrait)
+# IMPORTANT : api.log a été ROTÉ au redémarrage propre mi-audit (avant la fenêtre calcul).
+# Le api.log courant (NON versionné, 3 Mio) ne couvre donc QUE la fenêtre + calcul de nuit.
+# Les compteurs par scénario ci-dessous ont été relevés EN DIRECT par grep pendant chaque run
+# (les CSV clients raw/*_load.csv & raw/*_sample.csv, eux, sont complets pour les 4 runs).
+
+## Compteurs serveur relevés en direct, par scénario
+scénario           morts_worker  pool-500(QueuePool)  (débit, 2xx% : voir RAPPORT §2.5)
+stress 30 min      13            388
+real contrôle      4             164
+real + injection   2             0
+real + calcul nuit 3             0
+cumul charge       22            552
+
+## api.log COURANT (fenêtre calcul de nuit uniquement)
+Started server process : 8
+Child process died      : 3
+QueuePool timeouts      : 0
+
+## R1 — morts de worker corrélées weasyprint/PDF (contexte, api.log courant)
+----- mort ligne 9317 -----
+INFO:     weasyprint.progress — Step 7 - Adding PDF metadata
+INFO:     fontTools.varLib.instancer — Restricted limits: {'wght': (700, 700, 700)}
+INFO:     fontTools.varLib.instancer — Normalized limits: {'wght': (1, 1, 1, 0, 400)}
+INFO:     fontTools.varLib.instancer — Instantiating glyf/gvar tables
+INFO:     Child process [71629] died
+----- mort ligne 11165 -----
+INFO:     weasyprint.progress — Step 2 - Fetching and parsing CSS - file:///Users/openclaw/Desktop/labuse-nu4e/src/labuse/exports/theme.css
+INFO:     Child process [71630] died
+----- mort ligne 37571 -----
+INFO:     Child process [71631] died
+
+## R2 — exemple d'épuisement de pool (capturé en direct pendant la référence)
+sqlalchemy.exc.TimeoutError: QueuePool limit of size 5 overflow 10 reached, connection timed out, timeout 30.00
+
+## R6 — heal sous contention -> lock timeout -> readyz 503 (api.log courant, récurrent)
+ERROR:     labuse — heal schéma — module « pige » a ÉCHOUÉ (après réessais) : (psycopg.errors.LockNotAvailable) canceling statement due to lock timeout
+ERROR:     labuse — heal schéma — module « pige » a ÉCHOUÉ (après réessais) : (psycopg.errors.LockNotAvailable) canceling statement due to lock timeout
+
+## R6 — convoi ACCESS EXCLUSIVE capturé en direct (blocking tree pg_locks, référence)
+blocker: ALTER TABLE sirene_etablissements ADD COLUMN IF NOT EXISTS tranche_effectif  (AccessExclusiveLock)
+bloqués: 8+ SELECT fiche sur sirene_etablissements (AccessShareLock), dont idle-in-tx 53 s
