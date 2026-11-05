@@ -1,0 +1,92 @@
+{
+  "apres": {
+    "colonne_effet": {
+      "distribution": {
+        "classement": 41,
+        "direct": 59,
+        "total": 100
+      },
+      "echantillon": [
+        {
+          "nom": "RPG — déclarations agricoles (IGN/ASP)",
+          "famille": "agricole",
+          "effet": {
+            "code": "classement",
+            "phrase": "entre dans le classement, déclenche un nouveau calcul"
+          }
+        },
+        {
+          "nom": "Filosofi INSEE (carreaux 200 m)",
+          "famille": "attractivite",
+          "effet": {
+            "code": "classement",
+            "phrase": "entre dans le classement, déclenche un nouveau calcul"
+          }
+        },
+        {
+          "nom": "Cadastre (API Carto PCI)",
+          "famille": "cadastre",
+          "effet": {
+            "code": "classement",
+            "phrase": "entre dans le classement, déclenche un nouveau calcul"
+          }
+        },
+        {
+          "nom": "SITADEL (autorisations d'urbanisme)",
+          "famille": "dynamique",
+          "effet": {
+            "code": "classement",
+            "phrase": "entre dans le classement, déclenche un nouveau calcul"
+          }
+        },
+        {
+          "nom": "Annuaire de l'administration (service-public.fr / DILA)",
+          "famille": "acces",
+          "effet": {
+            "code": "direct",
+            "phrase": "lue directement, visible le lendemain matin"
+          }
+        },
+        {
+          "nom": "Base Adresse Nationale",
+          "famille": "acces",
+          "effet": {
+            "code": "direct",
+            "phrase": "lue directement, visible le lendemain matin"
+          }
+        },
+        {
+          "nom": "EDF Réunion — lignes moyenne tension HTA (open data)",
+          "famille": "acces",
+          "effet": {
+            "code": "direct",
+            "phrase": "lue directement, visible le lendemain matin"
+          }
+        },
+        {
+          "nom": "OSM — transport (pôles d'échange & téléphérique)",
+          "famille": "acces",
+          "effet": {
+            "code": "direct",
+            "phrase": "lue directement, visible le lendemain matin"
+          }
+        }
+      ]
+    },
+    "ou_en_est_la_mise_a_jour": {
+      "run_servi": "q_v20",
+      "run_date": "2026-10-21T07:00:05.354582+04:00",
+      "sources_changees": [
+        {
+          "nom": "Radar (pige d'annonces)",
+          "dans_le_score": false
+        }
+      ],
+      "resume_3_phrases": [
+        "Les clients sont servis en q_v20, calculé le 2026-10-21.",
+        "1 source a changé depuis (Radar (pige d'annonces)), toutes lues directement → visibles sans recalcul.",
+        "Rien à recalculer."
+      ]
+    }
+  }
+}

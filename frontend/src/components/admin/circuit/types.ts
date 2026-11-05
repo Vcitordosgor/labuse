@@ -18,6 +18,8 @@ export type Reservoir = {
   vanne: { type: string; label?: string; motif?: string }
   veille: any | null; filtre: any
   sans_millesime?: string | null   // CIRCUIT-P6 : la raison écrite du « à jour par construction »
+  // INJECTION-SOLIDE-1 — l'EFFET d'une mise à jour de cette source (colonne « Effet » de l'onglet).
+  effet?: { code: 'classement' | 'direct'; phrase: string }
   // COCKPIT-1 (Lot D) — la propagation : par où passe la donnée, et si les robinets sont à jour.
   propagation?: {
     nouvelle: boolean; moteurs: number; en_retard: number; tuiles_perime: boolean
@@ -81,7 +83,9 @@ export type CockpitRadar = {
 export type Cockpit = {
   aujourdhui: { n: number; cartes: CockpitCarte[] }
   tout_tourne: { resume: { postes: number; vert: number; echec: number; arret: number; pas_encore_du?: number }; tuiles: CockpitTuile[] }
-  mise_a_jour: { etapes: CockpitEtape[] }
+  // INJECTION-SOLIDE-1 — `resume` : les 3 phrases « Où en est la mise à jour ? » (version servie + date ;
+  // sources changées depuis + recalcul requis ; prochain calcul ou « rien à recalculer »).
+  mise_a_jour: { etapes: CockpitEtape[]; resume?: string[] }
   radar?: CockpitRadar | null
 }
 
