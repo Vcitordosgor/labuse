@@ -1,0 +1,281 @@
+{
+  "total_mails": 21,
+  "ecarts_durs": 2,
+  "ecarts_mous": 0,
+  "expediteurs": [
+    "LABUSE <contact@labuse.immo>",
+    "victor@labuse.immo"
+  ],
+  "lignes": [
+    {
+      "key": "essai",
+      "sujet": "Vos accès d'essai LABUSE — 48 h pour juger sur pièces",
+      "expediteur": "victor@labuse.immo",
+      "liens": [
+        "https://app.labuse.immo",
+        "https://app.labuse.immo/invitation?t=TKTEST"
+      ],
+      "a_desinscription": false,
+      "ecarts_durs": [],
+      "ecarts_mous": [],
+      "transport": "Brevo (template)"
+    },
+    {
+      "key": "souscription",
+      "sujet": "LABUSE — votre lien d'abonnement",
+      "expediteur": "victor@labuse.immo",
+      "liens": [
+        "https://app.labuse.immo",
+        "https://app.labuse.immo/souscrire?t=TKTEST"
+      ],
+      "a_desinscription": false,
+      "ecarts_durs": [],
+      "ecarts_mous": [],
+      "transport": "Brevo (template)"
+    },
+    {
+      "key": "onboarding1",
+      "sujet": "Vos accès LABUSE",
+      "expediteur": "victor@labuse.immo",
+      "liens": [
+        "https://app.labuse.immo",
+        "https://app.labuse.immo/invitation?t=TKTEST"
+      ],
+      "a_desinscription": false,
+      "ecarts_durs": [],
+      "ecarts_mous": [],
+      "transport": "Brevo (template)"
+    },
+    {
+      "key": "onboarding2",
+      "sujet": "La méthode pour trouver ce que les autres ne voient pas",
+      "expediteur": "victor@labuse.immo",
+      "liens": [
+        "https://app.labuse.immo"
+      ],
+      "a_desinscription": false,
+      "ecarts_durs": [],
+      "ecarts_mous": [],
+      "transport": "Brevo (template)"
+    },
+    {
+      "key": "onboarding3",
+      "sujet": "10 jours de LABUSE — on fait le point ?",
+      "expediteur": "victor@labuse.immo",
+      "liens": [
+        "https://app.labuse.immo"
+      ],
+      "a_desinscription": false,
+      "ecarts_durs": [],
+      "ecarts_mous": [],
+      "transport": "Brevo (template)"
+    },
+    {
+      "key": "relance_carte",
+      "sujet": "LABUSE — un souci avec votre moyen de paiement",
+      "expediteur": "victor@labuse.immo",
+      "liens": [
+        "https://app.labuse.immo",
+        "https://app.labuse.immo/compte/paiement"
+      ],
+      "a_desinscription": false,
+      "ecarts_durs": [],
+      "ecarts_mous": [],
+      "transport": "Brevo (template)"
+    },
+    {
+      "key": "suspension",
+      "sujet": "LABUSE — votre accès est suspendu",
+      "expediteur": "victor@labuse.immo",
+      "liens": [
+        "https://app.labuse.immo",
+        "https://app.labuse.immo/compte/paiement"
+      ],
+      "a_desinscription": false,
+      "ecarts_durs": [],
+      "ecarts_mous": [],
+      "transport": "Brevo (template)"
+    },
+    {
+      "key": "retablissement",
+      "sujet": "LABUSE — votre accès est rétabli",
+      "expediteur": "victor@labuse.immo",
+      "liens": [
+        "https://app.labuse.immo"
+      ],
+      "a_desinscription": false,
+      "ecarts_durs": [],
+      "ecarts_mous": [],
+      "transport": "Brevo (template)"
+    },
+    {
+      "key": "radar_digest",
+      "sujet": "Radar — 3 nouveauté(s) le 05/11/2026",
+      "expediteur": "victor@labuse.immo",
+      "liens": [
+        "https://app.labuse.immo",
+        "https://app.labuse.immo/radar"
+      ],
+      "a_desinscription": false,
+      "ecarts_durs": [
+        "mail récurrent SANS lien/mention de désinscription"
+      ],
+      "ecarts_mous": [],
+      "transport": "Brevo (template)"
+    },
+    {
+      "key": "radar_alerte",
+      "sujet": "Veille « Saint-Denis — terrains > 400 m² » — 3 correspondance(s)",
+      "expediteur": "victor@labuse.immo",
+      "liens": [
+        "https://app.labuse.immo",
+        "https://app.labuse.immo/radar",
+        "https://app.labuse.immo/veilles"
+      ],
+      "a_desinscription": false,
+      "ecarts_durs": [
+        "mail récurrent SANS lien/mention de désinscription"
+      ],
+      "ecarts_mous": [],
+      "transport": "Brevo (template)"
+    },
+    {
+      "key": "mdp_oublie",
+      "sujet": "Réinitialisation de votre mot de passe",
+      "expediteur": "victor@labuse.immo",
+      "liens": [
+        "https://app.labuse.immo",
+        "https://app.labuse.immo/reset?t=TKTEST"
+      ],
+      "a_desinscription": false,
+      "ecarts_durs": [],
+      "ecarts_mous": [],
+      "transport": "Brevo (template)"
+    },
+    {
+      "key": "mdp_modifie",
+      "sujet": "Votre mot de passe LABUSE a été modifié",
+      "expediteur": "victor@labuse.immo",
+      "liens": [
+        "https://app.labuse.immo"
+      ],
+      "a_desinscription": false,
+      "ecarts_durs": [],
+      "ecarts_mous": [],
+      "transport": "Brevo (template)"
+    },
+    {
+      "key": "resiliation",
+      "sujet": "Votre abonnement LABUSE prend fin le 30/11/2026",
+      "expediteur": "victor@labuse.immo",
+      "liens": [
+        "https://app.labuse.immo"
+      ],
+      "a_desinscription": false,
+      "ecarts_durs": [],
+      "ecarts_mous": [],
+      "transport": "Brevo (template)"
+    },
+    {
+      "key": "flash_pret",
+      "sujet": "Votre rapport LABUSE — 97411000BZ1065",
+      "expediteur": "victor@labuse.immo",
+      "liens": [
+        "https://app.labuse.immo",
+        "https://app.labuse.immo/flash/97411000BZ1065.pdf"
+      ],
+      "a_desinscription": false,
+      "ecarts_durs": [],
+      "ecarts_mous": [],
+      "transport": "Brevo (template)"
+    },
+    {
+      "key": "email_change",
+      "sujet": "Votre adresse de connexion LABUSE a changé",
+      "expediteur": "victor@labuse.immo",
+      "liens": [
+        "https://app.labuse.immo"
+      ],
+      "a_desinscription": false,
+      "ecarts_durs": [],
+      "ecarts_mous": [],
+      "transport": "Brevo (template)"
+    },
+    {
+      "key": "retour_traite",
+      "sujet": "Votre retour a été traité",
+      "expediteur": "victor@labuse.immo",
+      "liens": [
+        "https://app.labuse.immo"
+      ],
+      "a_desinscription": false,
+      "ecarts_durs": [],
+      "ecarts_mous": [],
+      "transport": "Brevo (template)"
+    },
+    {
+      "key": "smtp_reset_password",
+      "sujet": "LABUSE — réinitialisation de votre mot de passe",
+      "expediteur": "LABUSE <contact@labuse.immo>",
+      "liens": [
+        "https://app.labuse.immo/reset?t=TKTEST"
+      ],
+      "a_desinscription": false,
+      "ecarts_durs": [],
+      "ecarts_mous": [],
+      "transport": "SMTP/Brevo-texte (emails.py)"
+    },
+    {
+      "key": "smtp_digest_notifications",
+      "sujet": "LABUSE — 2 changements sur vos suivis",
+      "expediteur": "LABUSE <contact@labuse.immo>",
+      "liens": [
+        "https://app.labuse.immo/compte/preferences",
+        "https://app.labuse.immo/desabo?t=TKTEST",
+        "https://app.labuse.immo/socle/#idu=97411000BZ1065"
+      ],
+      "a_desinscription": true,
+      "ecarts_durs": [],
+      "ecarts_mous": [],
+      "transport": "SMTP/Brevo-texte (emails.py)"
+    },
+    {
+      "key": "smtp_annonce",
+      "sujet": "LABUSE — nouvelle source : RNU",
+      "expediteur": "LABUSE <contact@labuse.immo>",
+      "liens": [
+        "https://app.labuse.immo/compte/preferences",
+        "https://app.labuse.immo/desabo?t=TKTEST",
+        "https://app.labuse.immo/sources"
+      ],
+      "a_desinscription": true,
+      "ecarts_durs": [],
+      "ecarts_mous": [],
+      "transport": "SMTP/Brevo-texte (emails.py)"
+    },
+    {
+      "key": "smtp_maintenance",
+      "sujet": "LABUSE — maintenance programmée : mise à jour serveur",
+      "expediteur": "LABUSE <contact@labuse.immo>",
+      "liens": [],
+      "a_desinscription": false,
+      "ecarts_durs": [],
+      "ecarts_mous": [],
+      "transport": "SMTP/Brevo-texte (emails.py)"
+    },
+    {
+      "key": "smtp_mise_en_vente",
+      "sujet": "LABUSE — votre parcelle BZ1065 est mise en vente",
+      "expediteur": "LABUSE <contact@labuse.immo>",
+      "liens": [
+        "https://app.labuse.immo/compte/preferences",
+        "https://app.labuse.immo/desabo?t=TKTEST",
+        "https://app.labuse.immo/socle/#idu=97411000BZ1065"
+      ],
+      "a_desinscription": true,
+      "ecarts_durs": [],
+      "ecarts_mous": [],
+      "transport": "SMTP/Brevo-texte (emails.py)"
+    }
+  ]
+}
