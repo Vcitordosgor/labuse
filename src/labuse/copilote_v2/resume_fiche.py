@@ -436,6 +436,29 @@ def _quel_champ(message: str) -> tuple[str, str] | None:
     return None
 
 
+def _ajouter_zones_a_cheval(db: Session, idu: str, texte: str) -> str:
+    """CHASSE-FIX-1 (B-6) — si la parcelle est à cheval sur plusieurs zones PLU, cite TOUTES les zones
+    avec leur part (comme la fiche et l'outil destination_zone), pas seulement la dominante. MÊME source
+    que la fiche : `faisabilite.zone_servie.zone_dominante` (drapeau a_cheval + parts par surface)."""
+    try:
+        from sqlalchemy import text as _text
+        pid = db.execute(_text("SELECT id FROM parcels WHERE idu = :idu"),
+                         {"idu": idu.strip().upper()}).first()
+        if not pid:
+            return texte
+        from ..faisabilite.zone_servie import zone_dominante
+        zs = zone_dominante(db, pid[0])
+        if zs and zs.a_cheval and zs.parts:
+            parts = " ; ".join(f"{p['zone']} {round(p['pct'])} %" for p in zs.parts
+                               if p.get("zone") and p.get("pct") is not None)
+            if parts:
+                return (f"{texte} Parcelle à cheval sur plusieurs zones ({parts}) : la partie en zone "
+                        "naturelle ou agricole n'est pas constructible — vérifier chaque partie.")
+    except Exception:  # noqa: BLE001 — l'enrichissement à cheval ne casse jamais la réponse
+        pass
+    return texte
+
+
 def champ_precis(db: Session, idu: str, message: str) -> dict | None:
     """Une question sur UN champ de la fiche → la ligne DÉCLARÉE et son id (jamais un champ jeté).
     Rend {texte, champ_id, valeur, source} ou None si la demande ne vise pas un champ connu."""
@@ -455,6 +478,12 @@ def champ_precis(db: Session, idu: str, message: str) -> dict | None:
         return {"texte": f"{libelle} : non renseigné pour la parcelle {idu} (donnée absente au run servi).",
                 "champ_id": cid, "valeur": None, "source": _source_champ(cid)}
     texte = _rendre_champ(cid, libelle, v.valeur, valeurs)
+    # CHASSE-FIX-1 (B-6) — « quelle zone PLU ? » sur une parcelle à cheval ne rendait que la zone
+    # DOMINANTE et cachait la part non constructible (N/Ncor) — alors que la fiche et l'outil
+    # destination_zone citent toutes les zones. On ajoute les zones + leur part, MÊME source que la
+    # fiche (`zone_servie.zone_dominante`).
+    if cid == "zone_plu_famille":
+        texte = _ajouter_zones_a_cheval(db, idu, texte)
     # FIX-PRIX-ET-OPPORTUNITES (lot 3) — une capacité constructible est un MAXIMUM réglementaire ; on
     # ajoute la mention mesurée (volet D : ~½ utilisé en médiane par les permis réels).
     if cid == "sdp_residuelle_m2":

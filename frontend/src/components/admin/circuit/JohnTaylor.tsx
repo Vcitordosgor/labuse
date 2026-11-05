@@ -15,6 +15,7 @@ import {
   postJohnCarnetRejeter, postJohnCarnetValider, postJohnChat, postJohnEnquete,
   type JohnConversation,
 } from '../../../lib/api'
+import { ageConversation } from '../../../lib/format'   // CHASSE-FIX-1 (A-3) — âge relatif unique
 import { useApp, type JohnEnquete } from '../../../store/useApp'
 import { CIRCUIT_CSS } from './style'
 
@@ -145,14 +146,9 @@ const JT_CSS = `
 const tgClass = (lib: string) =>
   lib === 'à intégrer' ? 'integrer' : lib === 'source B à valider' ? 'b' : lib === 'concurrence' ? 'conc' : ''
 
-// âge lisible d'une conversation (« aujourd'hui » / « il y a 3 j »).
-function ageConv(iso: string): string {
-  const d = new Date(iso); const now = new Date()
-  const jours = Math.floor((now.getTime() - d.getTime()) / 86_400_000)
-  if (jours <= 0) return "aujourd'hui"
-  if (jours === 1) return 'hier'
-  return `il y a ${jours} j`
-}
+// âge lisible d'une conversation (« aujourd'hui » / « hier » / « il y a 3 j »).
+// CHASSE-FIX-1 (A-3) — via le formateur unique (fuseau Réunion), plus de calcul d'âge local.
+const ageConv = ageConversation
 
 // réponses lisibles : les **gras** du modèle ET les nombres (+ unité) passent en gras. L'anti-invention
 // garantit déjà qu'un nombre affiché est sourcé — on ne fait que le mettre en valeur.

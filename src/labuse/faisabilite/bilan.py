@@ -339,7 +339,7 @@ def sector_price(db: Session, parcel_id: int, hyp: Hypotheses,
 
 
 def reference_locale(db: Session, idu: str | None, type_bien: str | None,
-                     seuil: int = MIN_N_SECTEUR) -> dict | None:
+                     seuil: int = MIN_N_SECTEUR, return_echantillon: bool = False) -> dict | None:
     """RETOURS-11F M3 — MÉDIANE LOCALE €/m² d'un SEUL type autour de la parcelle. C'est L'AUTRE face
     du moteur de secteur (`sector_price` sert le bâti multi-type du bilan ; celle-ci sert la référence
     mono-type du Radar / de Mon secteur). Les DEUX vivent désormais DANS CE MODULE et partagent la
@@ -379,13 +379,22 @@ def reference_locale(db: Session, idu: str | None, type_bien: str | None,
     # « 2025 » laissait croire à une médiane d'une seule année (comme signaux.py _periode_annees).
     _mill = (f"{min(annees)}–{max(annees)}" if annees and min(annees) != max(annees)
              else (str(max(annees)) if annees else None))
-    return {"eur_m2": float(statistics.median(prices)), "n": len(kept),
+    out = {"eur_m2": float(statistics.median(prices)), "n": len(kept),
             "millesime": _mill,
             "perimetre": f"{'maisons' if tl == 'maison' else 'appartements'} · {int(radius)} m autour de la parcelle",
             "meme_type": True, "locale": True, "rayon_m": int(radius),
             "distribution": {"avant": distribution_secteur([s["prix"] for s in sub]),
                              "apres": distribution_secteur(prices),
                              "n_exclus_extremes": len(sub) - len(kept), "n_min_vise": n_min}}
+    if return_echantillon:
+        # CHASSE-FIX-1 (B-3 / MARCHE-UNIQUE) — expose les quartiles et la période (min–max) du MÊME
+        # échantillon, pour que l'Estimer serve EXACTEMENT la médiane/quartiles de ce point de calcul
+        # unique (plus de « maison 4 747 » à l'Estimer vs « maison 4 265 » sur la carte Marché).
+        q1, _m, q3 = _quartiles(prices)
+        out["q1"] = round(q1)
+        out["q3"] = round(q3)
+        out["periode"] = [min(annees), max(annees)] if annees else None
+    return out
 
 
 # ── POINT DE RÉSOLUTION PARTAGÉ du prix de sortie neuf (mandat prix sortie consommateurs) ──────

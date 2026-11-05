@@ -199,7 +199,7 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
         <h2 className="font-display text-base font-bold text-txt-hi">{strict ? 'Ce qu\'ils construisent' : 'Veille promoteurs'}</h2>
         {strict
           ? <p className="mt-0.5 text-[11.5px] text-txt-mut">Uniquement les opérations de ce propriétaire (groupes de permis contigus, même période).</p>
-          : <p className="mt-0.5 text-[11.5px] text-txt-mut">Ce que les promoteurs, bailleurs sociaux et SEM CONSTRUISENT : leurs opérations (groupes de permis d'un même propriétaire moral, sur des parcelles contiguës et une même période).{d?.millesime ? ` Données Sitadel au ${new Date(d.millesime).toLocaleDateString('fr-FR')}.` : ''}</p>}
+          : <p className="mt-0.5 text-[11.5px] text-txt-mut">Ce que les promoteurs, bailleurs sociaux et SEM CONSTRUISENT : leurs opérations (groupes de permis d'un même propriétaire moral, sur des parcelles contiguës et une même période).{d?.millesime ? ` Données Sitadel au ${fmtDateSitadel(d.millesime)}.` : ''}</p>}
       </div>
 
       {/* LOT S1 — geste ADMIN discret : collecter les programmes du promoteur courant depuis son site.
@@ -256,7 +256,7 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
       {d && (
         <>
           {strict
-            ? <p className="text-[12px] text-txt"><b>{d.n_total.toLocaleString('fr-FR')}</b> opération{d.n_total > 1 ? 's' : ''} · <b>{d.n_logements_total.toLocaleString('fr-FR')}</b> logements <span className="text-txt-mut">— construit ou en cours{Number.isFinite(anneeDepuis) ? `, permis depuis ${anneeDepuis}` : ''}{d.millesime ? ` · Sitadel au ${new Date(d.millesime).toLocaleDateString('fr-FR')}` : ''}</span></p>
+            ? <p className="text-[12px] text-txt"><b>{d.n_total.toLocaleString('fr-FR')}</b> opération{d.n_total > 1 ? 's' : ''} · <b>{d.n_logements_total.toLocaleString('fr-FR')}</b> logements <span className="text-txt-mut">— construit ou en cours{Number.isFinite(anneeDepuis) ? `, permis depuis ${anneeDepuis}` : ''}{d.millesime ? ` · Sitadel au ${fmtDateSitadel(d.millesime)}` : ''}</span></p>
             : <>
                 <p className="text-[11px] text-txt-dim"><b className="text-txt-mut">{d.n_total.toLocaleString('fr-FR')}</b> opérations · <b className="text-txt-mut">{d.n_logements_total.toLocaleString('fr-FR')}</b> logements · {d.n_servi} affichées{d.tronquee ? ` (plafond ${d.plafond})` : ''}</p>
                 <p className="text-[10px] leading-snug text-txt-dim">{d.regle.phrase}.</p>

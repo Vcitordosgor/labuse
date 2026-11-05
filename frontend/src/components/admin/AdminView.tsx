@@ -6,6 +6,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { getAdminCircuit, getAdminLicences, getAdminPilotage, getMoi, postAdminDegeler, type AdminPilotage } from '../../lib/api'
+import { labelJours } from '../../lib/format'   // CHASSE-FIX-1 (A-3) — âge en jours servi par le backend
 import { usePagination, ListPaginationFooter } from '../ListPagination'
 import { useApp } from '../../store/useApp'
 import { LicencesSection, estAToucher } from './Licences'
@@ -296,7 +297,7 @@ function PilotageSection({ data, go, majAt }: { data: AdminPilotage | undefined;
     titre: 'Sauvegarder la base',
     phrase: bk.etat === 'non_configure' ? 'aucun répertoire de sauvegarde configuré'
       : bk.etat === 'absent' ? 'aucun dump connu — la base n\'est pas sauvegardée'
-        : `dernière sauvegarde il y a ${bk.age_jours != null ? Math.floor(bk.age_jours) : '?'} j — seuil 24 h`,
+        : `dernière sauvegarde ${labelJours(bk.age_jours)} — seuil 24 h`,
     verbe: 'Voir', cible: 'cron' })
   // Courriers déposables : rouge seulement au-delà du seuil ouvré, sinon simple tâche (P1/P2).
   if (deposables > 0) aFaire.push({ cle: 'courrier', tone: courrierRouge ? 'r' : 'a', poids: courrierRouge ? 84 : 60,

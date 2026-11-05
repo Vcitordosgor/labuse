@@ -793,6 +793,13 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
                          candidats=[{"idu": c["idu"], "label": c["label"]} for c in reso.candidats])
             rep["_route"] = {"intent": "QUESTION", "params": {}, "voie": prior_voie}
             return rep
+        if reso is not None and reso.kind == "introuvable":
+            # CHASSE-FIX-1 (B-5) — la voie/commune saisies ne correspondent à aucune parcelle : on le
+            # DIT (« adresse introuvable ») et on PROPOSE les candidates proches, sans en imposer une.
+            rep = _reply(_RES.message_introuvable(reso), "QUESTION", clarification=True,
+                         candidats=[{"idu": c["idu"], "label": c["label"]} for c in reso.candidats])
+            rep["_route"] = {"intent": "QUESTION", "params": {}, "voie": prior_voie}
+            return rep
         if reso is not None and reso.kind == "idu":
             contexte = {**(contexte or {}), "idu": reso.idu}   # le flux fiche le relit comme un IDU embarqué
             idu_du_message = reso.idu

@@ -100,10 +100,17 @@ def profile_add(body: ProfileIn, request: Request, db: Session = Depends(get_db)
     return {"ok": True}
 
 
-@router.post("/partners/match/run")
-def match_run(db: Session = Depends(get_db)) -> dict:
+@router.post("/admin/partners/match/run")
+def match_run(request: Request, db: Session = Depends(get_db)) -> dict:
     """Matche les BASCULES → chaude (event_log) contre les profils → événements kind='match'
-    (alimentent la cloche M11). Idempotent."""
+    (alimentent la cloche M11). Idempotent.
+
+    CHASSE-FIX-1 (B-4 / CH-B-M4) — recompute GLOBAL qui écrit dans `event_log` (cloche partagée de
+    tous les comptes). Était hors du segment `/admin` et SANS garde → un client authentifié la
+    lançait (200). Désormais : (1) `exiger_admin` explicite (comme sa jumelle `POST /partners/profiles`)
+    et (2) sous le segment `/admin` → le fail-safe structurel la couvre aussi (double garde)."""
+    from .auth import exiger_admin
+    exiger_admin(request)
     rows = db.execute(text("""
         SELECT e.idu, mp.id AS profile_id, mp.nom, e.demo
         FROM event_log e

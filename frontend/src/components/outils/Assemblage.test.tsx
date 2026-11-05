@@ -10,12 +10,18 @@ import { M16 } from './moteurs'
 // plus de section « parcelles voisines ».
 const IDUS = ['97415000CT1917', '97415000CT2565', '97415000CT3327']
 const STUDY_OK = {
-  n: 3, contigu: true, isolees: [], surface_totale_m2: 14111, sdp_combinee_m2: 11065, sdp_max_seule_m2: 10726,
-  gain_ratio: 1.03, gain_pct: 3, n_proprietaires: 3, n_personnes_morales: 1, n_particuliers: 2,
+  // CHASSE-FIX-1 (B-2) — SDP-UNIQUE : `sdp_combinee_m2`/`sdp_bati_conserve_m2` = SDP bâti conservé
+  // (défaut, comme la fiche) ; `sdp_terrain_libere_m2` = table rase (démolition supposée), dite à côté.
+  n: 3, contigu: true, isolees: [], surface_totale_m2: 14111,
+  sdp_combinee_m2: 11065, sdp_bati_conserve_m2: 11065, sdp_terrain_libere_m2: 12800,
+  sdp_existante_totale_m2: 1735, sdp_conserve_estimation: false,
+  sdp_max_seule_m2: 10726, sdp_max_seule_conserve_m2: 9000,
+  gain_ratio: 1.03, gain_pct: 3, gain_pct_libere: 19, n_proprietaires: 3, n_personnes_morales: 1, n_particuliers: 2,
   tous_personnes_morales: false, proprietaires_pm: [], sans_potentiel: false, n_chiffrables: 3,
   ca: { central: 5000000 }, charge_fonciere: { central: -1879117, par_m2_terrain: -133 },
   terrain_zone_eur_m2: 479, terrain_zone_fiabilite: 'moyenne', zones_mixtes: false, note_sdp: 'Indicatif.',
   items: IDUS.map((idu, k) => ({ idu, surface_m2: [619, 250, 13242][k], sdp_m2: [217, 122, 10726][k],
+    sdp_residuelle_m2: [200, 100, 9000][k], sdp_existante_m2: [17, 22, 1726][k],
     tier_v2: 'neutre', etage0: false, proprio: { type: k === 0 ? 'personne_morale' : 'particulier', denomination: 'SEDRE', siren: '1' } })),
 }
 // NON contigu : le backend sert contigu=false + la liste des parcelles isolées (hors du bloc d'un seul tenant).
@@ -68,6 +74,22 @@ describe('ASSEMBLAGE (H5) — étapes, contiguïté, isolées, plus de Courrier'
     // « rien d'autre » : aucun bilan (KPI/charge) quand l'assiette n'est pas d'un seul tenant.
     expect(document.querySelector('[data-asm-kpi="surface"]')).toBeFalsy()
     expect(document.querySelector('[data-asm-charge]')).toBeFalsy()
+  })
+
+  it('B-2 (SDP-UNIQUE) : SDP bâti conservé en tête + terrain libéré dit à côté (jamais seul, démolition nommée)', async () => {
+    renderM16(); await verifier('[data-asm-charge]')
+    const sdpKpi = document.querySelector('[data-asm-kpi="sdp"]') as HTMLElement
+    // chiffre de tête = bâti conservé (11 065), comme la fiche
+    expect(document.querySelector('[data-asm-sdp-conserve]')?.textContent).toContain('065')
+    expect(sdpKpi.textContent).toContain('bâti conservé')
+    // la table rase est servie À CÔTÉ, sous son nom, avec la mention de démolition — jamais seule
+    const libere = document.querySelector('[data-asm-sdp-libere]') as HTMLElement
+    expect(libere).toBeTruthy()
+    expect(libere.textContent).toContain('terrain libéré')
+    expect(libere.textContent).toContain('800')          // 12 800
+    expect(libere.textContent).toContain('démolition')
+    // item : SDP bâti conservé (= fiche) en tête, terrain libéré entre parenthèses
+    expect(document.body.textContent).toContain('(terrain libéré')
   })
 
   it('plus de bouton « Préparer les courriers » dans l\'Assemblage (H5)', async () => {

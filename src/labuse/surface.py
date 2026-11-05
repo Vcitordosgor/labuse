@@ -71,6 +71,24 @@ def SURFACE_TERRAIN_SQL(alias: str = "p") -> str:
     return f"COALESCE({alias}.contenance_m2, {alias}.surface_m2)"
 
 
+# CHASSE-FIX-1 (A-1/A-2) — seuil anti-micro-parcelle. En deçà de 2 m² de surface SERVIE, c'est un
+# sliver cadastral (artefact) : masqué du compteur, de la liste, de l'entonnoir, des stats, de la
+# Découverte, du GeoJSON ET des tuiles. UNE SEULE définition, testant la surface servie
+# COALESCE(contenance_m2, surface_m2) — jamais le dessin `surface_m2` seul. Avant ce correctif, les
+# masques testaient le dessin : 279 parcelles réelles (contenance ≥ 2 m², dessin < 2 m²) étaient hors
+# compteur mais peintes sur la carte → le compteur (432 350) ≠ la carte (433 229). Après : le seuil
+# porte sur la même surface des deux côtés → compteur == carte.
+MIN_DISPLAY_SURFACE_M2 = 2.0
+
+
+def SLIVER_MASK_SQL(alias: str = "p", param: str = ":minsurf") -> str:
+    """Prédicat SQL « cette parcelle n'est pas un sliver » sur la surface SERVIE (contenance|dessin).
+    `param` = un bind `:minsurf` (SQL paramétré, défaut) ou un littéral comme '2.0' (tuiles, build).
+    Une parcelle sans aucune surface (les deux NULL) est conservée (comportement historique)."""
+    s = SURFACE_TERRAIN_SQL(alias)
+    return f"({s} IS NULL OR {s} >= {param})"
+
+
 def champs_terrain(dessin_m2, contenance_m2) -> dict:
     """Les 3 champs additifs de surface de terrain, à `**`-spreader dans un dict de parcelle (SANS
     toucher `surface_m2`, qui reste le dessin). CONTENANCE-1."""

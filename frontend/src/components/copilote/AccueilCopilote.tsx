@@ -5,7 +5,7 @@
 // passe EN PREMIER, sous le hero. Titre/sous-titre/placeholder/aide + capacités SERVIS (jamais en dur).
 // Surface IA → accent MAUVE (cp-ia) ; le mint ne reste QUE sur le brief du matin (veille ≠ IA).
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { ilYA } from '../../lib/format'
+import { ilYA, fmtJourSemaine } from '../../lib/format'
 import { getAccueilCopilote, getBrief, type AccueilCopiloteMeta, type BriefMatin,
   type CopiloteMission } from '../../lib/api'
 
@@ -104,12 +104,9 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
     return () => { document.removeEventListener('keydown', onKey); window.clearTimeout(t); prev?.focus?.() }
   }, [briefOpen])
   const briefN = brief?.n ?? 0
-  const briefDate = brief?.genere_le
-    // FIX-NU3-2 (I-TPS-04) — en heure de La Réunion : un brief « lundi » (généré 7 h Réunion = dim. 21 h
-    // UTC) s'affichait « dimanche » à l'ouest d'UTC. On fige le fuseau (doctrine « tout en heure Réunion »).
-    ? new Date(brief.genere_le).toLocaleDateString('fr-FR',
-        { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Indian/Reunion' })
-    : ''
+  // FIX-NU3-2 (I-TPS-04) — en heure de La Réunion (doctrine « tout en heure Réunion ») ; CHASSE-FIX-1
+  // (A-3) : via le formateur unique `fmtJourSemaine` (« lundi 4 septembre »).
+  const briefDate = brief?.genere_le ? fmtJourSemaine(brief.genere_le) : ''
   const [toutHisto, setToutHisto] = useState(false)   // #2 — « voir tout » au-delà de 4
 
   // #2 — DÉDOUBLONNER par question (missions déjà triées updated_at DESC → 1re occurrence = plus récente).

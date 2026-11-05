@@ -830,15 +830,24 @@ def mark_all_read(request: Request, db: Session = Depends(get_db)) -> dict:
     return {"ok": True, "marques": n}
 
 
-@router.post("/detect")
-def api_detect(run_from: str | None = None, run_to: str = "q_v2_demo", db: Session = Depends(get_db)) -> dict:
+# CHASSE-FIX-1 (B-4 / CH-B-m1, m2) — `detect` (détection d'événements) et `demo` (seed) ÉCRIVENT
+# dans `event_log`, la cloche partagée de TOUS les comptes. Elles étaient hors du segment `/admin`
+# et sans garde → un client authentifié les pilotait (200, `run_to` query attaquable). Désormais
+# sous `/admin/` (fail-safe structurel) ET `exiger_admin` explicite (double garde, comme John).
+@router.post("/admin/detect")
+def api_detect(request: Request, run_from: str | None = None, run_to: str = "q_v2_demo",
+               db: Session = Depends(get_db)) -> dict:
+    from .auth import exiger_admin
+    exiger_admin(request)
     if run_from is None:
         run_from = runs.current()
     return detect_events(db, run_from, run_to, demo=run_to.endswith("_demo"))
 
 
-@router.post("/demo")
-def api_demo(db: Session = Depends(get_db)) -> dict:
+@router.post("/admin/demo")
+def api_demo(request: Request, db: Session = Depends(get_db)) -> dict:
+    from .auth import exiger_admin
+    exiger_admin(request)
     return seed_demo(db)
 
 

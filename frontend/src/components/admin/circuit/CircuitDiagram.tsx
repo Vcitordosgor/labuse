@@ -7,6 +7,7 @@
 // (deux lignes par élément). Redessin sur redimensionnement, dépliage, défilement.
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
+import { fmtDateCourt } from '../../../lib/format'
 import { cheminsAllumes, construireMaps } from './diagram'
 import type { CircuitData, Reservoir, Robinet } from './types'
 
@@ -127,7 +128,7 @@ export function CircuitDiagram({ data, groupe, onOpen, elements = [], onInjecter
     return () => { window.removeEventListener('resize', bump); window.removeEventListener('scroll', bump); ro?.disconnect() }
   }, [])
 
-  const dateFr = (s: string | null) => s ? new Date(s).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', timeZone: 'Indian/Reunion' }) : ''
+  const dateFr = (s: string | null) => s ? fmtDateCourt(s) : ''   // CHASSE-FIX-1 (A-3) — formateur unique
   const parentNom = (rid: string | null) => rid ? (maps.robinetById.get(rid)?.nom || rid) : ''
 
   const famOuverte = (nom: string, aMatch: boolean) => openFam === nom || ((!!q || enGroupe) && aMatch)

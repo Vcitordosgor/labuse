@@ -70,9 +70,16 @@ def test_endpoint_moteurs_assemblage_ne_leve_pas(db_session):
     # vestiges retirés (payload + items)
     for k in ("opportunity_score", "sdp_cumulee_m2", "m2_par_logement"):
         assert k not in out
+    # CHASSE-FIX-1 (B-2 / SDP-UNIQUE) — l'item porte désormais la SDP brute (`sdp_m2` = terrain libéré)
+    # ET la SDP bâti conservé (`sdp_residuelle_m2`, comme la fiche ; None si faisabilité absente).
     for it in out["items"]:
         assert "sdp_m2" in it and "tier_v2" in it
-        assert "opportunity_score" not in it and "statut" not in it and "sdp_residuelle_m2" not in it
+        assert "sdp_residuelle_m2" in it and "sdp_existante_m2" in it
+        assert "opportunity_score" not in it and "statut" not in it
+    # payload : les deux grandeurs SDP-UNIQUE, jamais la brute seule.
+    for k in ("sdp_bati_conserve_m2", "sdp_terrain_libere_m2", "sdp_conserve_estimation"):
+        assert k in out
+    assert out["sdp_combinee_m2"] == out["sdp_bati_conserve_m2"]   # le défaut = bâti conservé
 
 
 # ── ASSEMBLAGE-2 (RETOUCHES-1 lot B.4) — l'assiette est l'UNION des géométries, pas la somme ──

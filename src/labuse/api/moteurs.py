@@ -247,14 +247,26 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
     parcels_lite = [SimpleNamespace(id=r["id"], surface_m2=r["surface_m2"], idu=r["idu"], commune=r["commune"])
                     for r in rows]
     agg = aggregate_assiette(db, parcels_lite)
-    sdp = agg["sdp_m2"]
-    sdp_par = agg["sdp_par_parcelle"]
-    sdp_max_seule = max(sdp_par.values()) if sdp_par else 0
-    # CONNEXIONS-2 Lot 9.3 (KO-15) — le ratio de gain est calculé ET arrondi ICI (backend), à la
-    # précision servie à l'écran (2 déc. : « ×1,03 », plus le « ×1,0 » trompeur d'un arrondi à 1 déc.).
-    # Le pourcentage servi aussi → le front N'A PLUS À RE-DIVISER (fini les deux expressions du ratio).
-    gain_ratio = round(sdp / sdp_max_seule, 2) if sdp_max_seule else None
-    gain_pct = round((sdp / sdp_max_seule - 1) * 100) if sdp_max_seule else None
+    # CHASSE-FIX-1 (B-2 / CH-B-M2) — SDP-UNIQUE : la grandeur par DÉFAUT est la SDP BÂTI CONSERVÉ
+    # (résiduelle), comme la fiche ; la SDP terrain libéré (table rase, brute) est servie À CÔTÉ, sous
+    # ce nom, jamais seule. Avant : l'Assemblage additionnait la SDP brute (913+481→1 480 « +62 % »),
+    # contredisant les fiches « bâti conservé » (749+31) des mêmes parcelles sans dire la démolition.
+    sdp_libere = agg["sdp_terrain_libere_m2"]          # brute (table rase) — terrain libéré
+    sdp = agg["sdp_bati_conserve_m2"]                   # DÉFAUT : bâti conservé (comme la fiche)
+    sdp_par = agg["sdp_par_parcelle"]                   # brute par parcelle (= terrain libéré par parcelle)
+    sdp_res_par = agg["sdp_residuelle_par_parcelle"]    # conservé par parcelle (= fiche)
+    sdp_max_seule = max(sdp_par.values()) if sdp_par else 0          # meilleure seule, BRUTE
+    _res_connus = [v for v in sdp_res_par.values() if v is not None]
+    # meilleure seule CONSERVÉE (base du gain par défaut) : si aucune résiduelle connue (base de test
+    # sans faisabilité), on retombe sur la brute pour ne pas diviser par zéro.
+    sdp_max_seule_conserve = max(_res_connus) if _res_connus else sdp_max_seule
+    # CONNEXIONS-2 Lot 9.3 (KO-15) — ratio de gain calculé ET arrondi ICI (backend), à la précision
+    # servie (2 déc.). Le gain par DÉFAUT compare le conservé de l'union au MEILLEUR conservé seul (plus
+    # jamais la brute de l'union vs la brute d'une parcelle) : honnête vis-à-vis des fiches.
+    gain_ratio = round(sdp / sdp_max_seule_conserve, 2) if sdp_max_seule_conserve else None
+    gain_pct = round((sdp / sdp_max_seule_conserve - 1) * 100) if sdp_max_seule_conserve else None
+    # gain « terrain libéré » (brute vs brute), pour l'affichage secondaire de la table rase.
+    gain_pct_libere = round((sdp_libere / sdp_max_seule - 1) * 100) if sdp_max_seule else None
     # #2 — VALORISATION : prix du terrain nu de la zone (référentiel UNIQUE prix_terrain_nu_zone),
     # sur la zone dominante de l'assiette. None si hors U/AU ou pas de vente terrain.
     from collections import Counter
@@ -266,10 +278,12 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
         terrain_zone = prix_terrain_nu_zone(db, commune_dom, zone_dom)
     # #3 — le SCORE reste calculé mais DORMANT (jamais servi à l'écran : doctrine M120, pas de
     # « qualité N/100 »). Conservé pour un tri éventuel ; l'écran montre les FAITS qu'il agrégeait.
-    sans_potentiel = sdp <= 0 or all(bool(r["etage0"]) for r in rows)
+    # « sans potentiel » = aucune capacité MÊME terrain libéré (brute ≤ 0) ou tout étage 0 — sinon on
+    # rend le bloc (une assiette bâtie à 100 % garde une capacité « terrain libéré » à montrer, dite).
+    sans_potentiel = sdp_libere <= 0 or all(bool(r["etage0"]) for r in rows)
     score_dormant = 0 if sans_potentiel else round(min(100, (45 if contigu else 10)
                   + 20 * min(1, 2 / max(1, len(owners_pm) + n_particuliers))
-                  + (10 if tous_pm else 0) + 25 * min(1, sdp / 3000)))
+                  + (10 if tous_pm else 0) + 25 * min(1, sdp_libere / 3000)))
     return {
         "n": len(rows), "contigu": contigu,
         # RECETTE-1 (H5, Vic) — les parcelles ISOLÉES (hors du bloc d'un seul tenant de la 1ʳᵉ parcelle) :
@@ -281,9 +295,18 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
         "surface_constructible_m2": agg.get("surface_constructible_m2"),
         "pct_hors_zone": agg.get("pct_hors_zone"),
         "tronquee": tronquee, "cap": cap,
-        # #1 — capacité + bilan cumulés RÉELS (fiche_payload agrégé)
-        "sdp_combinee_m2": sdp, "sdp_max_seule_m2": sdp_max_seule,
-        "gain_ratio": gain_ratio, "gain_pct": gain_pct,
+        # #1 — capacité cumulée RÉELLE (fiche_payload agrégé). SDP-UNIQUE (CHASSE-FIX-1 B-2) :
+        # `sdp_combinee_m2` = SDP BÂTI CONSERVÉ (défaut, comme la fiche) ; `sdp_terrain_libere_m2` =
+        # SDP table rase (brute, démolition supposée), servie À CÔTÉ sous ce nom, jamais seule.
+        "sdp_combinee_m2": sdp,                                  # = bâti conservé (défaut)
+        "sdp_bati_conserve_m2": sdp,
+        "sdp_terrain_libere_m2": sdp_libere,
+        "sdp_existante_totale_m2": agg["sdp_existante_totale_m2"],
+        "sdp_conserve_estimation": agg["conserve_estimation"],
+        "sdp_max_seule_m2": sdp_max_seule,                       # meilleure seule BRUTE
+        "sdp_max_seule_conserve_m2": sdp_max_seule_conserve,     # meilleure seule CONSERVÉE
+        "gain_ratio": gain_ratio, "gain_pct": gain_pct,          # gain par défaut = base conservée
+        "gain_pct_libere": gain_pct_libere,                      # gain de la table rase (brute)
         # LOGEMENTS-SOURCE-UNIQUE — la fourchette de logements combinée (ancien calcul de capacité)
         # n'est plus servie : l'écran Assemblage renvoie déjà vers l'Étude de faisabilité (aucun
         # lecteur front depuis IMPLANTATION-4) — le nombre de logements n'a qu'une seule source.
@@ -291,8 +314,10 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
         "ca": agg["ca"], "charge_fonciere": agg["charge_fonciere"],
         "note_sdp": "Capacité et bilan calculés sur l'UNION des géométries (ASSEMBLAGE-2) : une seule "
                     "assiette (reculs INTERNES supprimés à la fusion), un seul moteur de capacité, une "
-                    "seule VRD sur l'emprise réellement aménagée de l'ensemble. Accords, propriétaires "
-                    "et faisabilité restent à vérifier.",
+                    "seule VRD sur l'emprise réellement aménagée de l'ensemble. La SDP « bâti conservé » "
+                    "garde les constructions existantes (comme les fiches) ; la SDP « terrain libéré » "
+                    "suppose la DÉMOLITION du bâti existant. Accords, propriétaires et faisabilité "
+                    "restent à vérifier.",
         # #2 — valorisation (référentiel unique prix terrain nu de zone)
         "terrain_zone_eur_m2": (terrain_zone or {}).get("eur_m2"),
         "terrain_zone_fiabilite": (terrain_zone or {}).get("fiabilite"),
@@ -304,7 +329,11 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
         # C — indivision : NON détectable en base (aucune structure de propriété physique en open data)
         "indivision_detectable": False,
         "score_assemblage": score_dormant, "sans_potentiel": sans_potentiel,
+        # items : `sdp_m2` = brute (terrain libéré) par parcelle ; `sdp_residuelle_m2` = bâti conservé
+        # par parcelle (= fiche), `sdp_existante_m2` = bâti déjà debout. None si faisabilité absente.
         "items": [{"idu": r["idu"], "surface_m2": r["surface_m2"], "sdp_m2": sdp_par.get(r["id"], 0),
+                   "sdp_residuelle_m2": sdp_res_par.get(r["id"]),
+                   "sdp_existante_m2": agg["sdp_existante_par_parcelle"].get(r["id"]),
                    "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
                    "proprio": pr}
                   for r, pr in zip(rows, proprios)],

@@ -144,11 +144,33 @@ def _texte_de(msg) -> str:
 
 
 # ════════════════════════════════ Anti-invention ════════════════════════════════
+def _cardinalites(obj) -> set[float]:
+    """CHASSE-FIX-1 (CH-B-m6) — les CARDINALITÉS de toute collection lue (longueur des listes/dicts,
+    récursif). Le NOMBRE d'éléments rendus par un outil est un fait SOURCÉ (« 47 parcelles surveillées »,
+    « 0 job en échec ») même quand le résultat ne porte pas de champ-compteur : seuls ses éléments sont
+    des valeurs, pas leur cardinalité. Avant, un compte > 12 (hors tolérance des petits entiers) faisait
+    un FAUX refus anti-invention sur une réponse « liste/combien » pourtant tirée des lectures."""
+    out: set[float] = set()
+    if isinstance(obj, dict):
+        out.add(float(len(obj)))
+        for v in obj.values():
+            out |= _cardinalites(v)
+    elif isinstance(obj, (list, tuple)):
+        out.add(float(len(obj)))
+        for v in obj:
+            out |= _cardinalites(v)
+    return out
+
+
 def _nombres_autorises(outils_vus: list[dict]) -> set[float]:
-    """Tous les nombres présents dans les résultats d'outils lus pendant le tour (+ actions)."""
+    """Tous les nombres présents dans les résultats d'outils lus pendant le tour (+ actions), PLUS la
+    cardinalité de chaque collection lue (CHASSE-FIX-1 CH-B-m6) : compter ce qu'on a lu n'est pas
+    inventer. Aucune autre valeur n'est ajoutée — un nombre absent des lectures reste refusé."""
     nums: set[float] = set()
     for r in outils_vus:
-        nums |= _core._numbers_in_context(r if isinstance(r, dict) else {"v": r})
+        ctx = r if isinstance(r, dict) else {"v": r}
+        nums |= _core._numbers_in_context(ctx)
+        nums |= _cardinalites(ctx)
     return nums
 
 

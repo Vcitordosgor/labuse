@@ -815,7 +815,10 @@ def regles_plu_zone(db: Session, *, idu: str | None = None, commune: str | None 
     etat = "règles calibrées" if r.calibree else "estimation générique (PLU non calibré pour cette zone)"
     source = f"PLU {commune} — zone {zone} ({etat})"
     return ToolResult("regles_plu_zone",
-                      valeur=(r.hf_m if r.hf_m is not None else r.he_m),
+                      # CHASSE-FIX-1 (CH-B-m7) — la VALEUR de tête porte l'unité (« 13 m (faîtage) »),
+                      # plus jamais le flottant nu « 13.0 » : le repli lisible et la reprise de fil
+                      # affichent une hauteur EN MÈTRES. Le chiffre brut reste dans data.regles.hauteur_m.
+                      valeur=(regles["hauteur_texte"] if hauteur_num else None),
                       data={"commune": commune, "zone": zone, "calibree": r.calibree,
                             "regles": regles, "citations": citations,
                             "via_renvoi": r.via_renvoi},

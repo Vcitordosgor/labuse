@@ -1033,6 +1033,26 @@ def test_idor_partners_share_et_profiles(app_client):
             s.commit()
 
 
+def test_mutateurs_ops_globaux_sous_admin(app_client):
+    """CHASSE-FIX-1 (B-4 / CH-B-M4, m1, m2) — les trois mutateurs d'ops qui écrivent dans la cloche
+    GLOBALE `event_log` (recompute du matcher, détection d'événements, seed démo) sont désormais sous
+    le segment `/admin` ET derrière `exiger_admin` : un client authentifié non-admin reçoit 403, un
+    admin passe. Avant, ces routes (hors `/admin`, sans garde) renvoyaient 200 à n'importe quel compte."""
+    ea, eadm = (f"cli-{uuid.uuid4().hex[:8]}@x.test", f"adm-{uuid.uuid4().hex[:8]}@x.test")
+    _compte_actif(ea); _compte_actif(eadm)
+    try:
+        ca = TestClient(app_client.app, base_url="https://testserver"); _login(ca, ea)
+        cadm = TestClient(app_client.app, base_url="https://testserver"); _login_admin(cadm, eadm)
+        for r in ("/admin/partners/match/run", "/admin/detect", "/admin/demo"):
+            assert ca.post(r).status_code == 403, f"{r} doit refuser un client (403)"
+            assert cadm.post(r).status_code != 403, f"{r} doit laisser passer un admin"
+        # les anciens chemins NON préfixés /admin n'existent plus (404) → plus de porte ouverte.
+        for ancien in ("/partners/match/run", "/events/detect", "/events/demo"):
+            assert ca.post(ancien).status_code == 404, f"{ancien} ne doit plus exister"
+    finally:
+        _purge(ea, eadm)
+
+
 def test_quota_ia_nl_429_au_depassement(app_client, monkeypatch):
     """RETOURS-8 (R3) : un COMPTE connecté est plafonné en EUROS/jour. Quand la dépense IA du jour
     (ledger ia_log) atteint le budget € du compte, /ia/search renvoie un 429 honnête « Plafond IA ».

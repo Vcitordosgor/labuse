@@ -7,13 +7,15 @@ import { getRadarMarche, type RadarMarcheLigne, type RadarMesure } from '../../l
 import { communePastille } from '../../lib/communes'   // RECETTE-OUTILS-1 (point 11) — règle d'article
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
+import { fmtDateNum } from '../../lib/format'
 
 const fmt = (v: number) => v.toLocaleString('fr-FR')
 // RECETTE-OUTILS-1 (point 11) — date de la dernière collecte Radar (ISO → jj/mm/aaaa).
+// CHASSE-FIX-1 (A-3) — passe par le formateur unique (fuseau Réunion) ; null si date absente/invalide.
 const fmtDate = (iso: string | null | undefined) => {
   if (!iso) return null
-  const d = new Date(iso)
-  return Number.isNaN(d.getTime()) ? null : d.toLocaleDateString('fr-FR')
+  const s = fmtDateNum(iso)
+  return s === '—' ? null : s
 }
 
 // une MESURE : valeur + unité si n≥seuil, sinon « — » (et le n est toujours dit, discrètement).

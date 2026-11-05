@@ -8,10 +8,10 @@ import { useMemo, useState } from 'react'
 
 import type { Portee } from './Circuit'
 import type { CircuitData, Reservoir } from './types'
+import { fmtHorodatage } from '../../../lib/format'   // CHASSE-FIX-1 (A-3) — horodatage unique (fuseau Réunion)
 
 const jour = (iso?: string | null) => (iso ? iso.slice(0, 10).split('-').reverse().join('/') : '—')
-const quandCourt = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Indian/Reunion' }) : '—'
+const quandCourt = fmtHorodatage
 const eur = (n?: number | null) =>
   n == null ? '—' : `${n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
 const ETATS = ['à jour', 'nouvelle version', 'échue', 'jamais vérifiée', 'sonde en panne'] as const

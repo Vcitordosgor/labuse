@@ -304,12 +304,17 @@ export function M16() {
                       </div>
                     )}
                   </div>
-                  {/* FIX-INTEGRATION I1 — « SDP estimée » (par analogie DVF, cf. ratio ci-dessus) cumulée
-                      sur l'assiette. ≠ « SDP gabarit » de la Faisabilité (capacité PLU) ≠ « SHAB vendable »
-                      (× rendement 0,8). Le titre le dit pour éviter toute comparaison entre outils. */}
+                  {/* CHASSE-FIX-1 (B-2) — SDP-UNIQUE : la grandeur de tête est la SDP BÂTI CONSERVÉ (comme
+                      la fiche), la SDP TERRAIN LIBÉRÉ (table rase) est dite juste dessous, sous ce nom, jamais
+                      seule. ≠ « SDP gabarit » (capacité PLU) ≠ « SHAB vendable » (× rendement 0,8). */}
                   <div data-asm-kpi="sdp" className="rounded-md bg-surface-3 px-2 py-1.5">
-                    <div className="text-[9px] text-txt-dim">SDP estimée cumulée · {PERIM_POTENTIEL_COURT}</div>
-                    <div className="tnum text-[14px] font-semibold text-mint">{fmt(d.sdp_combinee_m2)} m²</div>
+                    <div className="text-[9px] text-txt-dim">SDP bâti conservé · {PERIM_POTENTIEL_COURT}</div>
+                    <div data-asm-sdp-conserve className="tnum text-[14px] font-semibold text-mint">{fmt(d.sdp_bati_conserve_m2)} m²{d.sdp_conserve_estimation ? ' *' : ''}</div>
+                    {d.sdp_terrain_libere_m2 != null && d.sdp_terrain_libere_m2 > d.sdp_bati_conserve_m2 && (
+                      <div data-asm-sdp-libere className="mt-0.5 text-[9px] leading-tight text-amber">
+                        terrain libéré {fmt(d.sdp_terrain_libere_m2)} m² — si démolition du bâti existant
+                      </div>
+                    )}
                   </div>
                   {/* IMPLANTATION-4 (LOT B) — la tuile « Logements » (fourchette cumulée de l'ancien
                       moteur) est RETIRÉE : le nombre de logements se lit dans l'Étude de faisabilité
@@ -321,6 +326,9 @@ export function M16() {
                     </div>
                   )}
                 </div>
+                {d.sdp_conserve_estimation && (
+                  <p data-asm-sdp-estimation className="mt-1 text-[9px] leading-tight text-txt-dim">* SDP bâti conservé estimée — le bâti existant déduit repose sur une hypothèse de niveaux (comme la fiche) quand la mesure manque.</p>
+                )}
                 {/* RECETTE-OUTILS-1 (point 15) — le bloc rouge « Charge foncière cumulée (estimée) » ET le
                     paragraphe « Capacité et bilan calculés sur l'UNION… » (note_sdp) passent dans un
                     accordéon « Bilan » FERMÉ par défaut : l'écran d'arrivée ne montre que le descriptif
@@ -390,7 +398,8 @@ export function M16() {
               <div key={i.idu} className="rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-[11px]">
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-txt-hi">{i.idu.slice(8)}</span>
-                  <span className="text-txt-dim">{fmt(i.surface_m2)} m² · SDP {fmt(i.sdp_m2)} m² · {PERIM_POTENTIEL_COURT}</span>
+                  {/* CHASSE-FIX-1 (B-2) — SDP bâti conservé (= fiche) ; terrain libéré (table rase) dit à côté. */}
+                  <span className="text-txt-dim">{fmt(i.surface_m2)} m² · SDP {fmt(i.sdp_residuelle_m2 != null ? i.sdp_residuelle_m2 : i.sdp_m2)} m²{i.sdp_residuelle_m2 != null && i.sdp_m2 > i.sdp_residuelle_m2 ? ` (terrain libéré ${fmt(i.sdp_m2)})` : ''} · {PERIM_POTENTIEL_COURT}</span>
                   {/* RECETTE-1 R8 — pastille de palier (scoring q_v14) retirée de l'Assemblage. */}
                 </div>
                 <div className="mt-0.5 flex items-center gap-2">

@@ -13,7 +13,7 @@ import {
   type RadarAlerte, type SuiviItem,
 } from '../../lib/api'
 import { useApp } from '../../store/useApp'
-import { iduCourt, fmtEur, fmtM2, ilYA } from '../../lib/format'
+import { iduCourt, fmtEur, fmtM2, ilYA, fmtDateCourt } from '../../lib/format'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'
 import { trierCommunes } from '../../lib/communes'
 import { ParcelInput } from '../ParcelInput'
@@ -308,8 +308,8 @@ function ColonneAlertes({ alertes, isLoading }: { alertes: RadarAlerte[]; isLoad
                 </span>
                 <span className="text-txt-dim">
                   {a.en_pause
-                    ? (a.paused_at ? `En pause depuis le ${new Date(a.paused_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}` : '')
-                    : (a.created_at ? `Créée le ${new Date(a.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}` : '')}
+                    ? (a.paused_at ? `En pause depuis le ${fmtDateCourt(a.paused_at)}` : '')
+                    : (a.created_at ? `Créée le ${fmtDateCourt(a.created_at)}` : '')}
                 </span>
               </div>
             </div>

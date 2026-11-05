@@ -69,8 +69,9 @@ CRITICAL_LAYERS = {
 RELIABLE_REQUIRED = ("sar", "risques", "foret_publique", "trait_de_cote")
 
 # En deçà, ce sont des slivers cadastraux (artefacts) : masqués de la CARTE et de la
-# DÉCOUVERTE (restent en base et dans les compteurs de volumétrie).
-MIN_DISPLAY_SURFACE_M2 = 2.0
+# DÉCOUVERTE (restent en base et dans les compteurs de volumétrie). CHASSE-FIX-1 (A-1) : le seuil
+# teste la surface SERVIE (contenance|dessin) via `_surface.SLIVER_MASK_SQL`, plus le dessin seul.
+MIN_DISPLAY_SURFACE_M2 = _surface.MIN_DISPLAY_SURFACE_M2
 
 # FIX-P-1 (régression G-001) — GROUPES de flags du FILTRE CARTE (vocabulaire `parcel_flags` /
 # `dryrun_cascade_results.layer_name`, PAS `spatial_layers.kind`). Un flag client peut recouvrir
@@ -3360,7 +3361,7 @@ def filtre(c: FiltreCriteres = Depends(),
             LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
             {_idus_sl_join}
             WHERE d.run_label = :run AND (CAST(:c AS text) IS NULL OR p.commune = :c)
-              AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)
+              AND {_surface.SLIVER_MASK_SQL('p')}
               {extra} {_idus_base} {_idus_sl_where}
             LIMIT {_FILTRE_IDUS_CAP + 1}
             """), _idus_params).scalars().all()
@@ -3896,7 +3897,7 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str |
                          OR (cr.layer_name = 'abf' AND cr.result = 'UNKNOWN'))
                    GROUP BY cr.parcel_id) fl ON fl.parcel_id = p.id
         WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
-          AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)
+          AND {_surface.SLIVER_MASK_SQL('p')}
         LIMIT :lim
         )
         SELECT json_build_object('type', 'FeatureCollection', 'features',
@@ -4123,7 +4124,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
     # (MIN_DISPLAY_SURFACE_M2), masqués de la carte/geojson depuis toujours, l'étaient PAS de la
     # liste (asymétrie relevée à l'inventaire M30). Même plancher d'AFFICHAGE ici : les slivers
     # restent en base et dans les compteurs de volumétrie (comme la carte), simplement pas listés.
-    _sliver = "AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)"
+    _sliver = "AND " + _surface.SLIVER_MASK_SQL("p")
     # Adresse BAN (M6 2a) : jointure APRÈS pagination (page de :lim lignes seulement) —
     # 1 lookup indexé par ligne servie, mesuré +0,03 s sur la liste île (contrainte 1,5 s OK).
     ban_ok = _ban_ready(db)
@@ -4445,7 +4446,7 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
     # note Sources) ; `exclure_slivers=False` reste possible pour un usage interne explicite.
     sliver = ""
     if exclure_slivers:
-        sliver = "AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)"
+        sliver = "AND " + _surface.SLIVER_MASK_SQL("p")
         params["minsurf"] = MIN_DISPLAY_SURFACE_M2
     join_v2 = ("LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu"
                " AND s2.run_id = :v2run")

@@ -14,6 +14,7 @@ dire… ») re-classe SANS perdre les paramètres déjà extraits (fusion serveu
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -243,6 +244,26 @@ def _normalise(data: dict, prior_params: dict | None) -> Route | None:
                  confidence=clean.get("confidence"), nouveau_sujet=nouveau, herites=herites)
 
 
+# CHASSE-FIX-1 (CH-B-m5) — attributs de PARCELLE qu'une relance courte interroge : si le fil a une
+# parcelle établie, « et le prix au m2 ? »/« et les risques ? » continuent sur ELLE, comme « et SON prix ».
+_ATTR_PARCELLE = ("prix", "surface", "risque", "zone", "hauteur", "emprise", "recul", "copro",
+                  "proprietaire", "proprio", "pente", "bati", "bâti", "fibre", "viabilis", "loyer",
+                  "sdp", "constructib", "taxe", "pente", "aléa", "alea")
+
+
+def _est_relance_parcelle(message: str) -> bool:
+    """CHASSE-FIX-1 (CH-B-m5) — une RELANCE courte qui continue le fil sur la MÊME parcelle : commence
+    par un connecteur de suite (« et … »/« aussi … ») et interroge un attribut de parcelle. Déterministe."""
+    from .outils import _fold_py
+    m = _fold_py((message or "").strip().lower())
+    toks = m.split()
+    if not (0 < len(toks) <= 9) or toks[0] not in ("et", "aussi", "idem", "pareil"):
+        return False
+    if re.search(r"\b\d{5}[0-9a-z]{9}\b", m):     # la relance NOMME une autre parcelle → pas d'héritage
+        return False
+    return any(k in m for k in _ATTR_PARCELLE)
+
+
 def classify(db: Session | None, message: str, *, history: list[dict] | None = None,
              prior_params: dict | None = None, contexte: dict | None = None) -> Route:
     """Classe `message`. `history` = tours précédents [{role, content}] (session). `prior_params` =
@@ -272,4 +293,14 @@ def classify(db: Session | None, message: str, *, history: list[dict] | None = N
         if route is None:
             return Route(intent="", error="json_invalide", raw=(res.text or "")[:200])
     route.raw = (res.text or "")[:400]
+    # CHASSE-FIX-1 (CH-B-m5) — garde-fou déterministe : une relance de parcelle (« et le prix au m2 ? »)
+    # hérite de la parcelle du fil comme la forme possessive. Le routeur modèle classait parfois « et le
+    # prix » en NOUVEAU sujet (le prix existe aussi à la commune) et lâchait l'idu → « reformulez ». On
+    # réinjecte l'idu antérieur s'il manque, SAUF si la relance nomme elle-même une commune (nouveau lieu).
+    prior_idu = (prior_params or {}).get("idu")
+    commune_du_tour = route.params.get("commune") and "commune" not in (route.herites or {})
+    if prior_idu and not route.params.get("idu") and not commune_du_tour and _est_relance_parcelle(message):
+        route.params["idu"] = prior_idu
+        route.herites = {**(route.herites or {}), "idu": prior_idu}
+        route.nouveau_sujet = False
     return route

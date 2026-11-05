@@ -271,6 +271,13 @@ def aggregate_assiette(session: Session, parcels: list) -> dict:
     # (acte) si présentes, sinon dessin : homogène avec la fiche / le prefill taxe, jamais le dessin seul.
     surface = round(sum((getattr(p, "contenance_m2", None) or p.surface_m2 or 0) for p in parcels))
     par_parcelle: dict[int, float] = {}
+    # CHASSE-FIX-1 (B-2 / CH-B-M2) — règle SDP-UNIQUE : comme la fiche, l'assemblage part de la SDP
+    # BÂTI CONSERVÉ (résiduelle = capacité max − bâti existant déjà debout), jamais la SDP brute (qui
+    # suppose une table rase non dite). On collecte donc le bâti existant et la résiduelle PAR PARCELLE
+    # (même source que la fiche : `residuel` de `fiche_payload`) pour dériver la conservation à l'union.
+    existante_par: dict[int, float | None] = {}
+    residuelle_par: dict[int, float | None] = {}
+    conserve_estimation = False
     zones: list[tuple[str | None, str | None]] = []
     for p in parcels:
         try:
@@ -279,12 +286,30 @@ def aggregate_assiette(session: Session, parcels: list) -> dict:
             fa = None
         fr = (fa or {}).get("fourchette") or {}
         par_parcelle[p.id] = round(fr.get("surface_plancher_m2") or 0)
+        res = (fa or {}).get("residuel") or {}
+        if res.get("disponible") is not False and res.get("sdp_existante_m2") is not None:
+            existante_par[p.id] = round(float(res.get("sdp_existante_m2") or 0))
+            residuelle_par[p.id] = round(float(res.get("sdp_residuelle_m2") or 0))
+            conserve_estimation = conserve_estimation or bool(res.get("estimation_sdp"))
+        else:
+            existante_par[p.id] = None     # bâti existant inconnu → conservation incertaine, on le dira
+            residuelle_par[p.id] = None
+            conserve_estimation = True
         zones.append((getattr(p, "commune", None), (fa or {}).get("zone")))
+    sdp_existante_totale = round(sum(v for v in existante_par.values() if v))
     u = _capacite_union(session, parcels)
     if not u:
         return {"surface_cumulee_m2": surface, "sdp_m2": 0, "ca": None,
                 "charge_fonciere": None, "n_chiffrables": 0, "sdp_par_parcelle": par_parcelle,
+                "sdp_terrain_libere_m2": 0, "sdp_bati_conserve_m2": 0,
+                "sdp_existante_totale_m2": sdp_existante_totale,
+                "sdp_residuelle_par_parcelle": residuelle_par, "sdp_existante_par_parcelle": existante_par,
+                "conserve_estimation": conserve_estimation,
                 "zones": zones, "assiette": "aucune", "emprise_union_m2": None}
+    # SDP terrain libéré = capacité BRUTE de l'union (table rase du bâti) ; SDP bâti conservé = ce qui
+    # reste constructible en GARDANT le bâti existant (= brute − bâti existant total), comme la fiche.
+    sdp_libere = u["sdp_m2"]
+    sdp_conserve = max(0, sdp_libere - sdp_existante_totale)
     cf = u["charge_fonciere"]
     cf_out = ({**cf, "par_m2_terrain": round(cf["central"] / surface)} if cf and surface else cf)
     return {
@@ -293,7 +318,14 @@ def aggregate_assiette(session: Session, parcels: list) -> dict:
         # même assemblage) : la SDP cumulée est bornée à cette part, le % hors zone est DIT.
         "surface_constructible_m2": u.get("surface_constructible_m2"),
         "pct_hors_zone": u.get("pct_hors_zone"),
-        "sdp_m2": u["sdp_m2"],
+        "sdp_m2": u["sdp_m2"],   # BRUTE de l'union (back-compat) = SDP terrain libéré
+        # CHASSE-FIX-1 (B-2) — les deux grandeurs SDP-UNIQUE : conservé (défaut) et terrain libéré.
+        "sdp_terrain_libere_m2": sdp_libere,
+        "sdp_bati_conserve_m2": sdp_conserve,
+        "sdp_existante_totale_m2": sdp_existante_totale,
+        "sdp_residuelle_par_parcelle": residuelle_par,
+        "sdp_existante_par_parcelle": existante_par,
+        "conserve_estimation": conserve_estimation,
         "ca": u["ca"],
         "charge_fonciere": cf_out,
         "n_chiffrables": 1 if u["ca"] else 0,

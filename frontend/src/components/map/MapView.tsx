@@ -13,6 +13,7 @@ import { communePastille } from '../../lib/communes'
 import { useApp, type Filters, type MapTool } from '../../store/useApp'
 import { BASEMAP_SOURCES, ORTHO_MONDE, activeBasemapKey } from './basemaps'
 import { Legend } from './Legend'
+import { fmtDateNum, fmtDateSitadel } from '../../lib/format'   // CHASSE-FIX-1 (A-3) — dates fuseau Réunion
 import { CouchesTuyauLayers, paintParcellesParFond } from './CouchesTuyau'  // COUCHES-TUYAU-1 lot 2 · G1 lot 3
 import { VefaDetail } from './VefaDetail'
 import { MapToolbar } from './MapToolbar'
@@ -70,7 +71,7 @@ export function ouvrirBullePermis(m: maplibregl.Map, pid: string, lngLat: maplib
   }
   modPermisFiche(pid).then((f: Record<string, any>) => {
     load.remove()
-    const fmtD = (s: unknown) => { if (!s) return ''; const t = new Date(String(s)); return Number.isNaN(t.getTime()) ? '' : t.toLocaleDateString('fr-FR') }
+    const fmtD = (s: unknown) => { const r = fmtDateNum(s == null ? null : String(s)); return r === '—' ? '' : r }
     titre.textContent = String(f.nature_libelle ?? f.nature ?? 'Permis')
     sub.textContent = [f.permit_id ? String(f.permit_id) : pid, f.commune ? String(f.commune) : ''].filter(Boolean).join(' · ')
     if (f.statut) {
@@ -998,7 +999,7 @@ export function MapView() {
           const np = Number(props.n_permis) || 0
           const per = (() => {
             // OUTILS-FIX-4 A3 — date Sit@del : année seule au 1ᵉʳ janvier (année seule connue), sinon date réelle.
-            const fmtD = (s: string) => { const t = new Date(s); return Number.isNaN(t.getTime()) ? '' : (t.getMonth() === 0 && t.getDate() === 1 ? String(t.getFullYear()) : t.toLocaleDateString('fr-FR')) }
+            const fmtD = (s: string) => { const r = fmtDateSitadel(s); return r === '—' ? '' : r }
             const a = props.date_min ? fmtD(String(props.date_min)) : '', b = props.date_max ? fmtD(String(props.date_max)) : ''
             return a && b && a !== b ? `${a} → ${b}` : (b || a)
           })()

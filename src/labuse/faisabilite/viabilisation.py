@@ -62,7 +62,11 @@ BANDES = [
 # FRONT-CHIFFRES-2 (F23) — la DA de la bande (mot court + ton du badge), ICI une fois : le front
 # (reseaux) ne mappe plus band→libellé/ton en dur. `lourde` et `incertaine` se disent « à confirmer ».
 BANDE_DA: dict[str, dict[str, str]] = {
-    "confirmee":  {"mot": "confirmée",   "ton": "vert"},
+    # CHASSE-FIX-1 (CH-B-m4) — le badge REPLIÉ disait « confirmée » tout court : lu comme « la parcelle
+    # EST raccordée », alors que le score est INFÉRÉ du voisinage (permis achevés < 100 m, façade sur
+    # voie, FTTH), pas du branchement réel. « confirmée au voisinage » = honnête au repli ; le déplié
+    # garde « confirmée par les faits » (BANDES) + le détail des contributions.
+    "confirmee":  {"mot": "confirmée au voisinage", "ton": "vert"},
     "probable":   {"mot": "probable",    "ton": "ambre"},
     "incertaine": {"mot": "à confirmer", "ton": "neutre"},
     "lourde":     {"mot": "à confirmer", "ton": "ambre"},

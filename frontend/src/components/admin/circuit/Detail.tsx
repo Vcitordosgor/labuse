@@ -7,6 +7,7 @@
 // Les chips « alimente » / « alimenté par » naviguent d'une page à l'autre (4.2).
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
+import { fmtHorodatage } from '../../../lib/format'   // CHASSE-FIX-1 (A-3) — horodatage unique (fuseau Réunion)
 
 import {
   getAdminCircuitCompteur, getAdminCircuitNoteVersion, getAdminCircuitPompe,
@@ -34,8 +35,7 @@ type Ouvrir = (type: 'reservoir' | 'robinet' | 'pompe' | 'compteur' | 'destinati
 // « ← Retour au circuit » depuis le dessin). Le geste reste le même (onClose + Échap).
 type Props = { type: 'reservoir' | 'robinet' | 'pompe' | 'compteur'; id: number | string; data: CircuitData; onClose: () => void; onOpen: Ouvrir; retour?: string }
 
-const dateFr = (s: string | null | undefined) =>
-  s ? new Date(s).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Indian/Reunion' }) : ''
+const dateFr = (s: string | null | undefined) => (s ? fmtHorodatage(s) : '')   // CHASSE-FIX-1 (A-3)
 const cl = (c: Couleur) => (c === 'mint' ? 'mint' : c)
 
 export function Detail({ type, id, data, onClose, onOpen, retour }: Props) {

@@ -11,7 +11,7 @@
  */
 import { useQuery } from '@tanstack/react-query'
 import { getFaisabilite, getMonSecteur, radarClic } from '../../lib/api'
-import { fmtInt, fmtDateNum, casseSociete } from '../../lib/format'
+import { fmtInt, fmtDateNum, fmtMoisAn, casseSociete } from '../../lib/format'
 import { fourchette, FOURCHETTE_MENTION } from '../../lib/fourchette'   // FIX-PRIX-ET-OPPORTUNITES — fourchette ±30 %
 import { Siren } from '../shared/Siren'   // FICHE-ORFEVRERIE-1 (Lot D, pt 28) — SIREN cliquable Pappers
 import type { Fiche } from '../../lib/types'
@@ -28,7 +28,7 @@ export function DerniereVenteBlock({ f }: { f: Fiche }) {
   const dm = f.dvf_parcelle?.derniere_mutation as { date_mutation?: string | null; nature?: string | null; valeur?: number | null; multi_parcelles?: boolean; adresse?: string | null; nombre_pieces?: number | null; surface_carrez_m2?: number | null; nombre_lots?: number | null } | null | undefined
   if (!dm?.date_mutation) return null
   const d = new Date(dm.date_mutation)
-  const dateFmt = isNaN(d.getTime()) ? String(dm.date_mutation) : d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+  const dateFmt = isNaN(d.getTime()) ? String(dm.date_mutation) : fmtMoisAn(dm.date_mutation)
   const detail = [dm.adresse, dm.nombre_pieces ? `${dm.nombre_pieces} pièce${dm.nombre_pieces > 1 ? 's' : ''}` : null,
                   dm.surface_carrez_m2 ? `${fmtInt(dm.surface_carrez_m2)} m² Carrez` : null,
                   dm.nombre_lots && dm.nombre_lots > 1 ? `${dm.nombre_lots} lots` : null].filter(Boolean).join(' · ')

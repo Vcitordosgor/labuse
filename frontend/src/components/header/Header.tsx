@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Fragment, useEffect, useState } from 'react'
 import { banAutocomplete, deleteLogo, getCommunes, getEvents, getMarque, getMoi, getNotifPrefs, getParcelsGeojson, markAllEventsRead, markEventRead, modPatrimoineSearch, parcelAt, patchDigestFrequence, patchNotifPref, postLogo, postMarque, postRetour, searchParcels, type LabuseEvent } from '../../lib/api'
-import { estIdu, estSectionNumero, iduComplet, normSectionNumero } from '../../lib/format'
+import { estIdu, estSectionNumero, iduComplet, normSectionNumero, ilYA, fmtDateLong } from '../../lib/format'
 import { communePastille } from '../../lib/communes'
 import { Chargement } from '../Loading'
 
@@ -303,22 +303,17 @@ function FilterChips() {
 // parcelle (bloc « Potentiel de transformation »), alimenté par le ratio SDP consommée/
 // autorisée du bloc D + le signal surélévation. Cf. reports/m9-fiche/SYNTHESE-M9.md.
 
-// M85 — date relative sobre (sans dépendance) : « à l'instant / il y a 3 h / il y a 2 j / 14 août ».
+// M85 — date relative sobre. CHASSE-FIX-1 (A-3) — délègue au formateur unique `ilYA` (fuseau Réunion) ;
+// repli sur la chaîne brute si elle n'est pas une date lisible (comportement historique conservé).
 function tempsRelatif(iso: string): string {
-  const d = new Date(iso)
-  if (isNaN(d.getTime())) return iso
-  const s = Math.floor((Date.now() - d.getTime()) / 1000)
-  if (s < 60) return "à l'instant"
-  if (s < 3600) return `il y a ${Math.floor(s / 60)} min`
-  if (s < 86400) return `il y a ${Math.floor(s / 3600)} h`
-  if (s < 7 * 86400) return `il y a ${Math.floor(s / 86400)} j`
-  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+  return ilYA(iso) || iso
 }
 
-// RETOURS-11 A6 — date ISO (jour) → « 4 septembre 2026 » (échéances du compte).
+// RETOURS-11 A6 — date ISO (jour) → « 4 septembre 2026 » (échéances du compte). CHASSE-FIX-1 (A-3) —
+// via `fmtDateLong` (fuseau Réunion) ; repli brut si illisible.
 function dateFr(iso: string): string {
-  const d = new Date(iso)
-  return isNaN(d.getTime()) ? iso : d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+  const r = fmtDateLong(iso)
+  return r === '—' ? iso : r
 }
 
 function NotifBell() {
