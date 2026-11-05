@@ -1,0 +1,101 @@
+idu,label,tier,declasse,badge_division,motif
+97411000AL0497,À suivre,priorite,False,False,
+97416000ET2242,À suivre,priorite,False,False,
+97416000ET2243,À suivre,priorite,False,False,
+97408000BL0332,À suivre,priorite,True,False,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible"
+97416000CV0474,Écartée,ecartee,False,False,
+97407000BL0226,À suivre,priorite,True,False,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4
+97405000AK1003,À suivre,priorite,True,False,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible"
+97405000AO0556,À suivre,priorite,True,False,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4
+97418000AT2541,À suivre,priorite,False,False,
+97416000ET1152,À suivre,priorite,False,False,
+97411000HM0289,À suivre,priorite,False,False,
+97415000EL0495,À suivre,priorite,False,False,
+97414000EV0839,À suivre,priorite,False,False,
+97411000AL0496,À suivre,priorite,False,False,
+97416000CW1434,À suivre,priorite,False,False,
+97416000CW1433,À suivre,priorite,False,False,
+97403000AR1423,À suivre,priorite,False,False,
+97411000KA0312,À suivre,priorite,False,False,
+97416000HN1803,À suivre,priorite,False,False,
+97416000HY1705,À suivre,priorite,False,False,
+97415000CW1056,À suivre,priorite,False,False,
+97422000BS1761,À suivre,priorite,False,False,
+97418000AT2289,À suivre,priorite,False,False,
+97412000BC0823,À suivre,priorite,False,False,
+97401000AP0928,À suivre,priorite,False,False,
+97410000CD0905,À suivre,priorite,False,False,
+97408000AP1663,À suivre,priorite,False,False,
+97408000AP1647,À suivre,priorite,False,False,
+97422000AX1477,À suivre,priorite,False,False,
+97413000CA0242,À suivre,priorite,False,False,
+97409000AX1085,À suivre,priorite,False,False,
+97420000AO0654,À suivre,priorite,False,False,
+97412000CY1095,À suivre,priorite,False,False,
+97415000EO1102,À suivre,priorite,False,False,
+97408000AP1610,À suivre,priorite,False,False,
+97408000AP1603,À suivre,priorite,False,False,
+97408000AP1604,À suivre,priorite,False,False,
+97408000AP1609,À suivre,priorite,False,False,
+97408000AP1605,À suivre,priorite,False,False,
+97415000AB0408,Écartée,ecartee,False,False,
+97408000AP1631,À suivre,priorite,False,False,
+97415000AB0840,Écartée,ecartee,False,False,
+97415000AB0783,Écartée,ecartee,False,False,
+97416000CW1432,À suivre,priorite,True,False,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4
+97418000AY0476,À suivre,priorite,True,False,"bâtie saturée — ratio 53 % (emprise 170 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))"
+97420000BE0024,À suivre,priorite,True,False,"bâtie saturée — ratio 59 % (emprise 228 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))"
+97409000AK1283,À suivre,priorite,True,False,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4
+97416000EM0764,À suivre,priorite,True,False,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4
+97401000AS1378,À suivre,priorite,True,False,"bâtie saturée — ratio 82 % (emprise 35 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))"
+97405000AO0557,À suivre,priorite,True,False,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4
+97405000AK1006,À suivre,priorite,True,False,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4
+97422000BS1763,À suivre,priorite,True,False,"bâtie saturée — ratio 181 % (emprise 289 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))"
+97411000AN0069,À suivre,priorite,True,False,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4
+97411000AN0312,À suivre,priorite,True,False,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4
+97412000BW0952,À suivre,priorite,False,False,
+97414000DN0087,Écartée,ecartee,False,False,
+97422000AX1478,À suivre,priorite,False,False,
+97422000AX1479,À suivre,priorite,False,False,
+97411000HR0060,À suivre,priorite,True,False,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4
+97418000BT0758,À suivre,priorite,True,False,"bâtie saturée — ratio 46 % (emprise 139 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))"
+97423000AB0686,À suivre,priorite,True,False,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4
+97415000BW1978,À suivre,priorite,False,False,
+97411000AD0165,À suivre,priorite,True,False,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4
+97404000AY0600,Écartée,ecartee,True,False,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible"
+97415000HP0029,À suivre,priorite,False,True,
+97416000EP0960,À suivre,priorite,False,False,
+97404000AT0861,À suivre,priorite,True,False,"bâtie saturée — ratio 50 % (emprise 247 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))"
+97415000AS1918,À suivre,priorite,False,False,
+97414000ES1046,À suivre,priorite,True,False,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4
+97413000CX2824,À suivre,priorite,True,False,"bâtie 15-40 % à bâti d'année Absente (traitée récente — le doute ne profite jamais au classement), non divisible"
+97413000CX2822,À suivre,priorite,True,False,"bâtie saturée — ratio 55 % (emprise 58 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))"
+97411000HM0113,À suivre,priorite,True,False,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4
+97411000AE0798,À suivre,priorite,True,False,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4
+97408000AC2409,À suivre,priorite,False,False,
+97416000CS0269,À suivre,priorite,True,False,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4
+97415000CT2968,À suivre,priorite,False,False,
+97412000CY1098,À suivre,priorite,True,False,SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4
+97412000CY1047,À suivre,priorite,True,False,"bâtie saturée — ratio 56 % (emprise 242 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))"
+97422000AX1253,À suivre,priorite,False,False,
+97408000BO0374,À suivre,a_suivre,False,False,
+97420000AB1530,À suivre,a_suivre,False,False,
+97415000HM0075,À suivre,a_suivre,False,False,
+97409000AK0814,À suivre,a_suivre,False,False,
+97415000HL0033,À suivre,a_suivre,False,False,
+97406000AP0104,À suivre,a_suivre,False,False,
+97418000AC0150,À suivre,a_suivre,False,False,
+97411000HE0570,À suivre,a_suivre,False,False,
+97409000AZ0691,Écartée,ecartee,False,False,
+97418000AC1196,Écartée,ecartee,False,False,
+97403000AR1424,À suivre,a_suivre,False,False,
+97413000DD1355,À suivre,a_suivre,False,False,
+97411000HH0477,À suivre,a_suivre,False,False,
+97401000AS1377,À suivre,a_suivre,False,False,
+97411000HE0548,À suivre,a_suivre,False,False,
+97416000DX0082,À suivre,a_suivre,False,False,
+97415000CM1908,À suivre,a_suivre,False,False,
+97411000AS0185,À suivre,a_suivre,False,False,
+97411000AS0504,À suivre,a_suivre,False,False,
+97415000CZ1369,À suivre,a_suivre,False,False,
+97410000BM1383,À suivre,a_suivre,False,False,
