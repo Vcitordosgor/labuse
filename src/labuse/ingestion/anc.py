@@ -128,15 +128,25 @@ def ingest_insee_egoul(session: Session, *, fichier: str | None = None,
                     a = acc.setdefault(key, [0.0, 0.0])
                     a[0] += w
                     a[1] += non
-    session.execute(text("DELETE FROM anc_maille_taux"))
-    for (maille, code), (w_tot, w_non) in acc.items():
-        session.execute(text("""
-            INSERT INTO anc_maille_taux (maille, code, insee, taux_non_racc, n_logements,
-                                         millesime)
-            VALUES (:m, :c, :insee, :t, :n, :mil)
-        """), {"m": maille, "c": code, "insee": code[:5], "mil": cfg["millesime"],
-               "t": round(100.0 * w_non / w_tot, 2) if w_tot else 0.0,
-               "n": round(w_tot, 1)})
+    # INJECTION-SOLIDE-3 — passe par `remplacer_servie` : les taux par maille sont chargés dans une
+    # STAGING, contrôlés (non vide, écart sous seuil) puis échangés ATOMIQUEMENT. Un fichier détail vide /
+    # à moitié lu est REFUSÉ → la version servie est conservée (`InjectionRefusee`). Plus de `DELETE FROM
+    # anc_maille_taux` à vif. Table sans géométrie.
+    from .injection_sure import remplacer_servie, alerte_injection
+
+    def charger(conn, staging):
+        for (maille, code), (w_tot, w_non) in acc.items():
+            conn.execute(text(
+                f'INSERT INTO "{staging}" (maille, code, insee, taux_non_racc, n_logements, millesime) '
+                "VALUES (:m, :c, :insee, :t, :n, :mil)"),
+                {"m": maille, "c": code, "insee": code[:5], "mil": cfg["millesime"],
+                 "t": round(100.0 * w_non / w_tot, 2) if w_tot else 0.0,
+                 "n": round(w_tot, 1)})
+
+    remplacer_servie(
+        session, table="anc_maille_taux", charger_staging=charger, a_geometrie=False,
+        couverture_974_min=0, delta_max_pct=50.0,
+        alerter=alerte_injection("anc_maille_taux", "INSEE RP — raccordement (EGOUL/ANC)"))
     session.commit()
     n_com = sum(1 for (m, _) in acc if m == "commune")
     n_iris = sum(1 for (m, _) in acc if m == "iris")

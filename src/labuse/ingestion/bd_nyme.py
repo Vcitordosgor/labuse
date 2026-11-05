@@ -49,36 +49,47 @@ def build_bd_nyme(session: Session, log=lambda *_: None) -> dict:
             session.execute(text(stmt))
     sid = session.execute(text("SELECT id FROM data_sources WHERE name = :n"),
                           {"n": SOURCE_NAME}).scalar()
-    session.execute(text("DELETE FROM lieux_dits"))
+    # INJECTION-SOLIDE-3 — passe par `remplacer_servie` : la moisson WFS remplit une STAGING, contrôlée
+    # (non vide, géométries valides, dans La Réunion, écart sous seuil) puis échangée ATOMIQUEMENT. Une
+    # moisson vide / à moitié / hors territoire est REFUSÉE → la version servie est conservée
+    # (`InjectionRefusee`). Plus de `DELETE FROM lieux_dits` à vif. Géométrie Point 4326.
+    from .injection_sure import remplacer_servie, alerte_injection
     wfs = WfsConnector("geoplateforme_wfs")
     counts = {"habite": 0, "non_habite": 0}
-    for typename, habite in _LAYERS:
-        start, page = 0, 2000
-        while True:
-            fc = wfs.fetch_layer("geoplateforme_wfs", typename, bbox=ILE_BBOX,
-                                 max_features=page, start_index=start, sort_by="cleabs")
-            feats = fc.get("features", []) or []
-            for f in feats:
-                g = f.get("geometry")
-                p = f.get("properties") or {}
-                topo = (p.get("toponyme") or "").strip()
-                if not g or not topo:
-                    continue
-                # point représentatif (centroïde 4326) + commune = parcelle la plus proche.
-                session.execute(text(
-                    """INSERT INTO lieux_dits (cleabs, toponyme, nature, habite, commune, geom, geom_2975)
-                       SELECT :cl, :topo, :nat, :hab,
-                              (SELECT commune FROM parcels
-                               ORDER BY geom_2975 <-> ST_Transform(pt.g, 2975) LIMIT 1),
-                              pt.g, ST_Transform(pt.g, 2975)
-                       FROM (SELECT ST_PointOnSurface(
-                                 ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(:geo), 4326))) AS g) pt"""),
-                    {"cl": p.get("cleabs"), "topo": topo[:255], "nat": p.get("nature"),
-                     "hab": habite, "geo": json.dumps(g)})
-                counts["habite" if habite else "non_habite"] += 1
-            if len(feats) < page:
-                break
-            start += page
+
+    def charger(conn, staging):
+        for typename, habite in _LAYERS:
+            start, page = 0, 2000
+            while True:
+                fc = wfs.fetch_layer("geoplateforme_wfs", typename, bbox=ILE_BBOX,
+                                     max_features=page, start_index=start, sort_by="cleabs")
+                feats = fc.get("features", []) or []
+                for f in feats:
+                    g = f.get("geometry")
+                    p = f.get("properties") or {}
+                    topo = (p.get("toponyme") or "").strip()
+                    if not g or not topo:
+                        continue
+                    # point représentatif (centroïde 4326) + commune = parcelle la plus proche.
+                    conn.execute(text(
+                        f"""INSERT INTO "{staging}" (cleabs, toponyme, nature, habite, commune, geom, geom_2975)
+                           SELECT :cl, :topo, :nat, :hab,
+                                  (SELECT commune FROM parcels
+                                   ORDER BY geom_2975 <-> ST_Transform(pt.g, 2975) LIMIT 1),
+                                  pt.g, ST_Transform(pt.g, 2975)
+                           FROM (SELECT ST_PointOnSurface(
+                                     ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(:geo), 4326))) AS g) pt"""),
+                        {"cl": p.get("cleabs"), "topo": topo[:255], "nat": p.get("nature"),
+                         "hab": habite, "geo": json.dumps(g)})
+                    counts["habite" if habite else "non_habite"] += 1
+                if len(feats) < page:
+                    break
+                start += page
+
+    remplacer_servie(
+        session, table="lieux_dits", charger_staging=charger, a_geometrie=True, geom_col="geom",
+        couverture_974_min=0, delta_max_pct=60.0,
+        alerter=alerte_injection("lieux_dits", SOURCE_NAME))
     session.execute(text("UPDATE data_sources SET last_sync_at = now() WHERE name = :n"),
                     {"n": SOURCE_NAME})
     session.flush()

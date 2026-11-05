@@ -168,45 +168,58 @@ def _index_inverse(session: Session) -> dict[str, int]:
                         à cheval sur une parcelle adressée et une parcelle sans adresse →
                         même propriété, l'adresse vaut pour les deux.
     """
-    session.execute(text("DELETE FROM adresse_parcelles"))
+    # INJECTION-SOLIDE-3 — l'index inverse (3 sources) est reconstruit dans une STAGING puis échangé
+    # ATOMIQUEMENT. Plus de `DELETE FROM adresse_parcelles` à vif (fenêtre où la recherche d'adresse voit
+    # un index vide). Table dérivée sans géométrie, légitimement vide possible (base sans parcelles →
+    # `autoriser_vide=True`) ; écart large (reconstruction complète). `like=ALL` → la STAGING porte la
+    # contrainte d'unicité pour l'`ON CONFLICT DO NOTHING`. Les étapes 1-2 écrivent DANS la staging ; la
+    # passe « bâti partagé » lit donc ses prédécesseurs DANS la staging (pas la version servie d'avant).
+    from .injection_sure import remplacer_servie, alerte_injection
     out: dict[str, int] = {}
-    out["inv_principal"] = session.execute(text(
-        """INSERT INTO adresse_parcelles (id_ban, idu, source)
-           SELECT id_ban, idu, 'principal' FROM adresses WHERE idu IS NOT NULL
-           ON CONFLICT DO NOTHING""")).rowcount
-    out["inv_ban_cad"] = session.execute(text(
-        """INSERT INTO adresse_parcelles (id_ban, idu, source)
-           SELECT DISTINCT s.id, cad, 'ban_cad'
-           FROM ban_staging s
-           CROSS JOIN LATERAL unnest(string_to_array(s.cad_parcelles, '|')) AS cad
-           JOIN parcels p ON p.idu = cad
-           JOIN adresses a ON a.id_ban = s.id
-           WHERE s.cad_parcelles <> ''
-           ON CONFLICT DO NOTHING""")).rowcount
-    # Bâtiment à cheval : parcelle bâtie SANS adresse ← adresse de la parcelle voisine
-    # partageant le même bâtiment (seuil 15 m² des deux côtés : évite les débords de toit).
-    # Résilience : la passe est sautée si ses sources manquent (base partielle, tests).
-    sources_ok = session.execute(text(
-        "SELECT to_regclass('parcel_residuel_bati') IS NOT NULL"
-        " AND to_regclass('spatial_layers') IS NOT NULL")).scalar()
-    if not sources_ok:
-        out["inv_bati_partage"] = 0
-        return out
-    out["inv_bati_partage"] = session.execute(text(
-        """INSERT INTO adresse_parcelles (id_ban, idu, source)
-           SELECT DISTINCT ap.id_ban, s.idu, 'bati_partage'
-           FROM (SELECT p.idu, p.geom_2975 FROM parcel_residuel_bati rb
-                 JOIN parcels p ON p.idu = rb.idu
-                 WHERE rb.emprise_batie_m2 >= 20
-                   AND NOT EXISTS (SELECT 1 FROM adresse_parcelles x WHERE x.idu = rb.idu)) s
-           JOIN spatial_layers b ON b.kind = 'batiment'
-             AND ST_Intersects(b.geom_2975, s.geom_2975)
-             AND ST_Area(ST_Intersection(b.geom_2975, s.geom_2975)) > 15
-           JOIN parcels p2 ON p2.idu <> s.idu
-             AND ST_Intersects(b.geom_2975, p2.geom_2975)
-             AND ST_Area(ST_Intersection(b.geom_2975, p2.geom_2975)) > 15
-           JOIN adresse_parcelles ap ON ap.idu = p2.idu
-           ON CONFLICT DO NOTHING""")).rowcount
+
+    def charger(conn, staging):
+        out["inv_principal"] = conn.execute(text(
+            f"""INSERT INTO "{staging}" (id_ban, idu, source)
+               SELECT id_ban, idu, 'principal' FROM adresses WHERE idu IS NOT NULL
+               ON CONFLICT DO NOTHING""")).rowcount
+        out["inv_ban_cad"] = conn.execute(text(
+            f"""INSERT INTO "{staging}" (id_ban, idu, source)
+               SELECT DISTINCT s.id, cad, 'ban_cad'
+               FROM ban_staging s
+               CROSS JOIN LATERAL unnest(string_to_array(s.cad_parcelles, '|')) AS cad
+               JOIN parcels p ON p.idu = cad
+               JOIN adresses a ON a.id_ban = s.id
+               WHERE s.cad_parcelles <> ''
+               ON CONFLICT DO NOTHING""")).rowcount
+        # Bâtiment à cheval : parcelle bâtie SANS adresse ← adresse de la parcelle voisine
+        # partageant le même bâtiment (seuil 15 m² des deux côtés : évite les débords de toit).
+        # Résilience : la passe est sautée si ses sources manquent (base partielle, tests).
+        sources_ok = conn.execute(text(
+            "SELECT to_regclass('parcel_residuel_bati') IS NOT NULL"
+            " AND to_regclass('spatial_layers') IS NOT NULL")).scalar()
+        if not sources_ok:
+            out["inv_bati_partage"] = 0
+            return
+        out["inv_bati_partage"] = conn.execute(text(
+            f"""INSERT INTO "{staging}" (id_ban, idu, source)
+               SELECT DISTINCT ap.id_ban, s.idu, 'bati_partage'
+               FROM (SELECT p.idu, p.geom_2975 FROM parcel_residuel_bati rb
+                     JOIN parcels p ON p.idu = rb.idu
+                     WHERE rb.emprise_batie_m2 >= 20
+                       AND NOT EXISTS (SELECT 1 FROM "{staging}" x WHERE x.idu = rb.idu)) s
+               JOIN spatial_layers b ON b.kind = 'batiment'
+                 AND ST_Intersects(b.geom_2975, s.geom_2975)
+                 AND ST_Area(ST_Intersection(b.geom_2975, s.geom_2975)) > 15
+               JOIN parcels p2 ON p2.idu <> s.idu
+                 AND ST_Intersects(b.geom_2975, p2.geom_2975)
+                 AND ST_Area(ST_Intersection(b.geom_2975, p2.geom_2975)) > 15
+               JOIN "{staging}" ap ON ap.idu = p2.idu
+               ON CONFLICT DO NOTHING""")).rowcount
+
+    remplacer_servie(
+        session, table="adresse_parcelles", charger_staging=charger, a_geometrie=False,
+        like_including="ALL", autoriser_vide=True, couverture_974_min=0, delta_max_pct=1.0e9,
+        alerter=alerte_injection("adresse_parcelles", "BAN — index inverse adresse↔parcelle"))
     return out
 
 
@@ -234,19 +247,33 @@ def ingest_ban(session: Session, csv_path: Path | str, *, allow_shrink: bool = F
             f"({n_avant}) — CSV probablement tronqué. Ingestion REFUSÉE, référentiel PRÉSERVÉ "
             f"(adresse_parcelles inclus). Forcer avec allow_shrink=True si la baisse est légitime.")
 
-    session.execute(text("DELETE FROM adresses"))
-    session.execute(text(
-        """INSERT INTO adresses (id_ban, numero, rep, voie, code_postal, commune, insee,
-                                 geom, geom_2975)
-           SELECT id, NULLIF(numero, ''), NULLIF(rep, ''),
-                  COALESCE(NULLIF(nom_voie, ''), NULLIF(nom_ld, '')),
-                  NULLIF(code_postal, ''), nom_commune, code_insee,
-                  ST_SetSRID(ST_MakePoint(lon::float8, lat::float8), 4326),
-                  ST_Transform(ST_SetSRID(ST_MakePoint(lon::float8, lat::float8), 4326), 2975)
-           FROM ban_staging
-           WHERE lon <> '' AND lat <> ''
-             AND COALESCE(NULLIF(nom_voie, ''), NULLIF(nom_ld, '')) IS NOT NULL
-           ON CONFLICT (id_ban) DO NOTHING"""))
+    # INJECTION-SOLIDE-3 — passe par `remplacer_servie` : les adresses vont dans une STAGING, contrôlées
+    # (non vide, géométries valides, dans La Réunion) puis échangées ATOMIQUEMENT. Plus de `DELETE FROM
+    # adresses` à vif (fenêtre où le géocodage voit une table vide). La GARDE DE SHRINK ci-dessus (seuil
+    # de plausibilité, `allow_shrink`) reste le gardien de la BAISSE de volume ; on neutralise donc le
+    # contrôle d'écart de l'injection sûre (`delta_max_pct` très élevé) pour ne pas doubler ce gardien
+    # — l'apport propre ici est le swap atomique + la validité géométrique + le périmètre Réunion.
+    # Géométrie Point 4326 ; `like=ALL` pour l'`ON CONFLICT (id_ban)`.
+    from .injection_sure import remplacer_servie, alerte_injection
+
+    def _charger_adresses(conn, staging):
+        conn.execute(text(
+            f"""INSERT INTO "{staging}" (id_ban, numero, rep, voie, code_postal, commune, insee,
+                                     geom, geom_2975)
+               SELECT id, NULLIF(numero, ''), NULLIF(rep, ''),
+                      COALESCE(NULLIF(nom_voie, ''), NULLIF(nom_ld, '')),
+                      NULLIF(code_postal, ''), nom_commune, code_insee,
+                      ST_SetSRID(ST_MakePoint(lon::float8, lat::float8), 4326),
+                      ST_Transform(ST_SetSRID(ST_MakePoint(lon::float8, lat::float8), 4326), 2975)
+               FROM ban_staging
+               WHERE lon <> '' AND lat <> ''
+                 AND COALESCE(NULLIF(nom_voie, ''), NULLIF(nom_ld, '')) IS NOT NULL
+               ON CONFLICT (id_ban) DO NOTHING"""))
+
+    remplacer_servie(
+        session, table="adresses", charger_staging=_charger_adresses, a_geometrie=True,
+        geom_col="geom", like_including="ALL", couverture_974_min=0, delta_max_pct=1.0e9,
+        alerter=alerte_injection("adresses", "Base Adresse Nationale"))
     total = int(session.execute(text("SELECT count(*) FROM adresses")).scalar() or 0)
 
     stats = _rattacher(session)

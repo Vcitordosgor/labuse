@@ -142,26 +142,37 @@ def rattacher(session, *, seuil_pct: float = 30.0, log_fn=print) -> dict:
       → le RNB du bâtiment principal de la parcelle (plus grande emprise RNB ∩ parcelle).
     Idempotent : tout est recalculé (DELETE + INSERT / UPDATE en masse)."""
     ensure_tables(session)
-    session.execute(text("DELETE FROM rnb_rattachement_bdtopo"))
-    session.execute(text("""
-        INSERT INTO rnb_rattachement_bdtopo (layer_id, rnb_id, recouvrement_pct, cause)
-        SELECT b.id,
-               CASE WHEN m.pct >= :seuil THEN m.rnb_id END,
-               m.pct,
-               CASE WHEN m.rnb_id IS NULL THEN 'aucun_rnb_intersectant'
-                    WHEN m.pct < :seuil THEN 'recouvrement_insuffisant' END
-        FROM spatial_layers b
-        LEFT JOIN LATERAL (
-            SELECT r.rnb_id,
-                   (100.0 * ST_Area(ST_Intersection(r.shape_2975, b.geom_2975))
-                    / NULLIF(ST_Area(b.geom_2975), 0))::real AS pct
-            FROM rnb_batiments r
-            WHERE r.is_active AND r.shape_2975 && b.geom_2975
-              AND ST_Intersects(r.shape_2975, b.geom_2975)
-            ORDER BY ST_Area(ST_Intersection(r.shape_2975, b.geom_2975)) DESC
-            LIMIT 1) m ON true
-        WHERE b.kind = 'batiment' AND b.geom_2975 IS NOT NULL"""),
-        {"seuil": seuil_pct})
+    # INJECTION-SOLIDE-3 — passe par `remplacer_servie` : le rattachement (dérivé de spatial_layers ×
+    # rnb_batiments) est recalculé dans une STAGING puis échangé ATOMIQUEMENT. Plus de `DELETE FROM
+    # rnb_rattachement_bdtopo` à vif. Table dérivée sans géométrie, légitimement VIDE possible (base sans
+    # bâtiments → `autoriser_vide=True`) ; écart large (recalcul complet).
+    from .injection_sure import remplacer_servie, alerte_injection
+
+    def charger(conn, staging):
+        conn.execute(text(f"""
+            INSERT INTO "{staging}" (layer_id, rnb_id, recouvrement_pct, cause)
+            SELECT b.id,
+                   CASE WHEN m.pct >= :seuil THEN m.rnb_id END,
+                   m.pct,
+                   CASE WHEN m.rnb_id IS NULL THEN 'aucun_rnb_intersectant'
+                        WHEN m.pct < :seuil THEN 'recouvrement_insuffisant' END
+            FROM spatial_layers b
+            LEFT JOIN LATERAL (
+                SELECT r.rnb_id,
+                       (100.0 * ST_Area(ST_Intersection(r.shape_2975, b.geom_2975))
+                        / NULLIF(ST_Area(b.geom_2975), 0))::real AS pct
+                FROM rnb_batiments r
+                WHERE r.is_active AND r.shape_2975 && b.geom_2975
+                  AND ST_Intersects(r.shape_2975, b.geom_2975)
+                ORDER BY ST_Area(ST_Intersection(r.shape_2975, b.geom_2975)) DESC
+                LIMIT 1) m ON true
+            WHERE b.kind = 'batiment' AND b.geom_2975 IS NOT NULL"""),
+            {"seuil": seuil_pct})
+
+    remplacer_servie(
+        session, table="rnb_rattachement_bdtopo", charger_staging=charger, a_geometrie=False,
+        autoriser_vide=True, couverture_974_min=0, delta_max_pct=90.0,
+        alerter=alerte_injection("rnb_rattachement_bdtopo", "RNB — rattachement BD TOPO"))
     session.commit()
     if not session.execute(text("SELECT to_regclass('batiment_hauteur_lidar')")).scalar():
         session.commit()          # base sans LiDAR (test, base partielle) : le volet LiDAR est sauté

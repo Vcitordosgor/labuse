@@ -160,38 +160,53 @@ def build_sirene_etablissements(session: Session, *, geo_url: str | None = None,
     """).fetchall()
     log(f"  jointure : {len(rows)} établissements actifs géolocalisés — chargement…")
 
-    session.execute(text("DELETE FROM sirene_etablissements"))
-    raw = session.connection().connection            # DBAPI (psycopg) pour un executemany rapide
-    cur = raw.cursor()
-    sql = ("INSERT INTO sirene_etablissements (siret, siren, naf, denomination, enseigne, adresse, "
-           "commune, insee, geom, actif, diffusible, tranche_effectif, date_creation, date_dernier_traitement, qualite_xy, iris, qp24, "
-           "millesime, data_source_id) VALUES (%s,%s,%s,%s,%s,%s,%s,%s, "
-           "ST_SetSRID(ST_MakePoint(%s,%s),4326), true, %s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT (siret) DO NOTHING")
-    batch, n, n_masq, n_hors_ref = [], 0, 0, 0
-    for (siret, naf, diff, denom, enseigne, insee, tranche, date_creation, date_dernier_traitement, adresse, lon, lat, qualite, iris, qp24) in rows:
-        if not siret or len(siret) != 14:
-            continue
-        insee = corrections_insee.get((siret, insee), insee)
-        if insee not in insee_valides:            # FK communes : jamais un code hors référentiel
-            n_hors_ref += 1
-            continue
-        diffusible = (diff == "O")
-        if diffusible:
-            den = (denom or "").strip()[:255] or None
-            ens = (enseigne or "").strip()[:255] or None
-            adr = (adresse or "").strip()[:255] or None
-        else:                                        # diffusion partielle : ni nom ni adresse en clair
-            den = ens = adr = None
-            n_masq += 1
-        naf_n = (naf or "").replace(".", "").strip().upper()[:6] or None
-        batch.append((siret, siret[:9], naf_n, den, ens, adr, insee2nom.get(insee), insee,
-                      float(lon), float(lat), diffusible, (tranche or None), date_creation, date_dernier_traitement,
-                      (qualite or None), iris, (qp24 or None), f"SIRENE géolocalisé {mill} (INSEE)", sid))
-        n += 1
-        if len(batch) >= 5000:
-            cur.executemany(sql, batch); batch.clear(); log(f"  … {n}")
-    if batch:
-        cur.executemany(sql, batch)
+    # INJECTION-SOLIDE-3 — passe par `remplacer_servie` : les établissements sont chargés (executemany
+    # DBAPI rapide) dans une STAGING, contrôlés (non vide, géométries valides, dans La Réunion, écart sous
+    # seuil) puis échangés ATOMIQUEMENT. Une jointure vide / à moitié est REFUSÉE → la version servie est
+    # conservée (`InjectionRefusee`). Plus de `DELETE FROM sirene_etablissements` à vif. Géométrie Point
+    # 4326 ; `like=ALL` pour l'`ON CONFLICT (siret)`. La FK communes (jamais copiée par LIKE) est honorée
+    # au SWAP — le chargeur a déjà écarté tout code hors référentiel.
+    from .injection_sure import remplacer_servie, alerte_injection
+    n, n_masq, n_hors_ref = 0, 0, 0
+
+    def charger(conn, staging):
+        nonlocal n, n_masq, n_hors_ref
+        raw = conn.connection().connection            # DBAPI (psycopg) pour un executemany rapide
+        cur = raw.cursor()
+        sql = (f'INSERT INTO "{staging}" (siret, siren, naf, denomination, enseigne, adresse, '
+               "commune, insee, geom, actif, diffusible, tranche_effectif, date_creation, date_dernier_traitement, qualite_xy, iris, qp24, "
+               "millesime, data_source_id) VALUES (%s,%s,%s,%s,%s,%s,%s,%s, "
+               "ST_SetSRID(ST_MakePoint(%s,%s),4326), true, %s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT (siret) DO NOTHING")
+        batch = []
+        for (siret, naf, diff, denom, enseigne, insee, tranche, date_creation, date_dernier_traitement, adresse, lon, lat, qualite, iris, qp24) in rows:
+            if not siret or len(siret) != 14:
+                continue
+            insee = corrections_insee.get((siret, insee), insee)
+            if insee not in insee_valides:            # FK communes : jamais un code hors référentiel
+                n_hors_ref += 1
+                continue
+            diffusible = (diff == "O")
+            if diffusible:
+                den = (denom or "").strip()[:255] or None
+                ens = (enseigne or "").strip()[:255] or None
+                adr = (adresse or "").strip()[:255] or None
+            else:                                        # diffusion partielle : ni nom ni adresse en clair
+                den = ens = adr = None
+                n_masq += 1
+            naf_n = (naf or "").replace(".", "").strip().upper()[:6] or None
+            batch.append((siret, siret[:9], naf_n, den, ens, adr, insee2nom.get(insee), insee,
+                          float(lon), float(lat), diffusible, (tranche or None), date_creation, date_dernier_traitement,
+                          (qualite or None), iris, (qp24 or None), f"SIRENE géolocalisé {mill} (INSEE)", sid))
+            n += 1
+            if len(batch) >= 5000:
+                cur.executemany(sql, batch); batch.clear(); log(f"  … {n}")
+        if batch:
+            cur.executemany(sql, batch)
+
+    remplacer_servie(
+        session, table="sirene_etablissements", charger_staging=charger, a_geometrie=True,
+        geom_col="geom", like_including="ALL", couverture_974_min=0, delta_max_pct=60.0,
+        alerter=alerte_injection("sirene_etablissements", SOURCE_NAME), log=log)
     session.execute(text(
         "UPDATE data_sources SET last_sync_at = now(), source_millesime = :m WHERE name = :n"),
         {"m": f"SIRENE géolocalisé {mill} (INSEE)", "n": SOURCE_NAME})

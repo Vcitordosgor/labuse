@@ -62,24 +62,44 @@ def ingest_dfi(session: Session, *, url: str = PARQUET_URL, log=print) -> dict:
                   date_validation_dfi, parcelle_mere, parcelle_fille
            FROM read_parquet(?) WHERE code_departement = '974'""", [url]).fetchall()
     con.close()
-    session.execute(text("DELETE FROM dfi_filiation"))
+    # INJECTION-SOLIDE-3 — passe par `remplacer_servie` : la filiation est chargée dans une STAGING,
+    # contrôlée (non vide, écart sous seuil) puis échangée ATOMIQUEMENT. Un parquet vide / à moitié lu
+    # est REFUSÉ → la version servie est conservée (`InjectionRefusee`). Plus de `DELETE FROM
+    # dfi_filiation` à vif. Table sans géométrie. La colonne `id` est GENERATED ALWAYS AS IDENTITY :
+    # `like=ALL` la donne à la STAGING (le chargeur insère sans `id`, elle se génère), et le SWAP l'EXCLUT
+    # (Postgres refuse une insertion explicite dans une telle colonne) → la servie la régénère.
+    from . import injection_sure
+
+    def preparer(conn):
+        for stmt in DDL.strip().split(";"):
+            if stmt.strip():
+                conn.execute(text(stmt))
+
     n = 0
-    batch: list[dict] = []
-    ins = text(
-        "INSERT INTO dfi_filiation (insee, identifiant_dfi, nature, date_validation, "
-        "idu_mere, idu_fille) VALUES (:i, :d, :n, :dt, :m, :f)")
-    for insee, prefixe, ident, nature, dt, mere, fille in rows:
-        if not (insee and mere and fille):
-            continue
-        pref = (prefixe or "000").zfill(3)
-        batch.append({"i": insee, "d": ident, "n": nature, "dt": dt,
-                      "m": f"{insee}{pref}{mere}", "f": f"{insee}{pref}{fille}"})
-        n += 1
-        if len(batch) >= 5000:
-            session.execute(ins, batch)
-            batch = []
-    if batch:
-        session.execute(ins, batch)
+
+    def charger(conn, staging):
+        nonlocal n
+        batch: list[dict] = []
+        ins = text(
+            f'INSERT INTO "{staging}" (insee, identifiant_dfi, nature, date_validation, '
+            "idu_mere, idu_fille) VALUES (:i, :d, :n, :dt, :m, :f)")
+        for insee, prefixe, ident, nature, dt, mere, fille in rows:
+            if not (insee and mere and fille):
+                continue
+            pref = (prefixe or "000").zfill(3)
+            batch.append({"i": insee, "d": ident, "n": nature, "dt": dt,
+                          "m": f"{insee}{pref}{mere}", "f": f"{insee}{pref}{fille}"})
+            n += 1
+            if len(batch) >= 5000:
+                conn.execute(ins, batch)
+                batch = []
+        if batch:
+            conn.execute(ins, batch)
+
+    injection_sure.remplacer_servie(
+        session, table="dfi_filiation", preparer=preparer, charger_staging=charger,
+        a_geometrie=False, couverture_974_min=0, delta_max_pct=50.0, like_including="ALL",
+        alerter=injection_sure.alerte_injection("dfi_filiation", SOURCE_NAME))
     session.flush()
     d = session.execute(text(
         "SELECT count(DISTINCT insee), min(date_validation), max(date_validation), "

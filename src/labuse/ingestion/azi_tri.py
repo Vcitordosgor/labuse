@@ -56,7 +56,17 @@ def ensure_tables(engine) -> None:
 
 def ingest_azi_tri(session: Session, log=print, client: httpx.Client | None = None) -> dict:
     """Réingère AZI + TRI des 24 communes (remplacement complet, idempotent)."""
-    session.execute(text("DELETE FROM azi_communes"))
+    # INJECTION-SOLIDE-3 — passe par `remplacer_servie` : la moisson des 24 communes remplit une STAGING,
+    # contrôlée (non vide, écart sous seuil) puis échangée ATOMIQUEMENT. Une moisson vide / à moitié (API
+    # en panne en cours de route) est REFUSÉE → la version servie est conservée (`InjectionRefusee`). Plus
+    # de `DELETE FROM azi_communes` à vif. Sans géométrie ; `like=ALL` pour l'`ON CONFLICT`.
+    from .injection_sure import remplacer_servie, alerte_injection
+
+    def preparer(conn):
+        conn.execute(text(DDL))
+        for stmt in _ALTERS:
+            conn.execute(text(stmt))
+
     own = client is None
     c = client or httpx.Client(timeout=max(get_settings().http_timeout_s, 60.0),
                                headers={"User-Agent": constants.USER_AGENT},
@@ -64,7 +74,9 @@ def ingest_azi_tri(session: Session, log=print, client: httpx.Client | None = No
     n_azi = n_tri = 0
     communes_azi: set[str] = set()
     communes_tri: set[str] = set()
-    try:
+
+    def charger(conn, staging):
+        nonlocal n_azi, n_tri
         for insee, nom in REUNION_COMMUNES:
             for type_doc in ("azi", "tri"):
                 r = c.get(f"{BASE}/{type_doc}",
@@ -80,8 +92,8 @@ def ingest_azi_tri(session: Session, log=print, client: httpx.Client | None = No
                     # SOURCES-5 #8 : bassin de risques + tous les jalons datés (étude/réalisation
                     # pour l'AZI, arrêtés pour le TRI) + record brut. `dates` = tous les champs date_*.
                     dates = {k: v for k, v in d.items() if k.startswith("date_") and v}
-                    session.execute(text(
-                        "INSERT INTO azi_communes (insee, type_doc, code_national, libelle, "
+                    conn.execute(text(
+                        f'INSERT INTO "{staging}" (insee, type_doc, code_national, libelle, '
                         "risques, date_diffusion, bassin_risques, dates, raw, maj_at) "
                         "VALUES (:i, :t, :c, :l, :r, :d, :b, CAST(:dj AS jsonb), CAST(:rw AS jsonb), now()) "
                         "ON CONFLICT (insee, type_doc, code_national) DO UPDATE SET "
@@ -99,6 +111,12 @@ def ingest_azi_tri(session: Session, log=print, client: httpx.Client | None = No
                     else:
                         n_tri += 1
                         communes_tri.add(nom)
+
+    try:
+        remplacer_servie(
+            session, table="azi_communes", preparer=preparer, charger_staging=charger,
+            a_geometrie=False, like_including="ALL", couverture_974_min=0, delta_max_pct=60.0,
+            alerter=alerte_injection("azi_communes", SOURCE_NAME))
     finally:
         if own:
             c.close()

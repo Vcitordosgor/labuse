@@ -66,35 +66,47 @@ def ingest_ort(session: Session, *, url: str = URL_CSV, csv_text: str | None = N
         finally:
             if own:
                 c.close()
-    session.execute(text("DELETE FROM commune_ort"))
+    # INJECTION-SOLIDE-3 — passe par `remplacer_servie` : la table complète est chargée dans une STAGING,
+    # contrôlée (non vide, écart sous seuil) puis échangée ATOMIQUEMENT. Un CSV vide / tronqué est REFUSÉ
+    # → la version servie est conservée (`InjectionRefusee`). Plus de `DELETE FROM commune_ort` à vif.
+    # Table sans géométrie ; `like=ALL` pour l'`ON CONFLICT (insee)` (dédoublonnage keep-last à la charge).
+    from . import injection_sure
     n = signees = 0
     acv: list[str] = []
     pvd: list[str] = []
     vus: set[str] = set()
-    for row in csv.DictReader(io.StringIO(csv_text)):
-        insee = str(row.get("Code commune") or "").strip()
-        if not insee.startswith("974"):
-            continue
-        est_acv = (row.get("ACV") or "").strip().lower() == "true"
-        est_pvd = (row.get("PVD") or "").strip().lower() == "true"
-        statut = "acv" if est_acv else ("pvd" if est_pvd else "autre")
-        signee = (row.get("Signée ?") or "").strip().lower() == "signée"
-        date_sig = (row.get("Si signée, date de signature") or "").strip() or None
-        duree = (row.get("Durée (en années)") or "").strip()
-        nom = (row.get("Commune") or "").split("-", 1)[-1].strip() or insee
-        session.execute(text(
-            "INSERT INTO commune_ort (insee, commune, statut, ort_signee, date_signature, "
-            " duree_annees, millesime, maj_at) "
-            "VALUES (:i, :c, :s, :sig, :d, :du, :m, now()) "
-            "ON CONFLICT (insee) DO UPDATE SET commune = :c, statut = :s, ort_signee = :sig, "
-            " date_signature = :d, duree_annees = :du, millesime = :m, maj_at = now()"),
-            {"i": insee, "c": nom, "s": statut, "sig": signee, "d": date_sig,
-             "du": float(duree) if duree.replace(".", "", 1).isdigit() else None,
-             "m": MILLESIME})
-        vus.add(insee)
-        n += 1
-        signees += int(signee)
-        (acv if est_acv else pvd if est_pvd else []).append(nom)
+
+    def charger(conn, staging):
+        nonlocal n, signees
+        for row in csv.DictReader(io.StringIO(csv_text)):
+            insee = str(row.get("Code commune") or "").strip()
+            if not insee.startswith("974"):
+                continue
+            est_acv = (row.get("ACV") or "").strip().lower() == "true"
+            est_pvd = (row.get("PVD") or "").strip().lower() == "true"
+            statut = "acv" if est_acv else ("pvd" if est_pvd else "autre")
+            signee = (row.get("Signée ?") or "").strip().lower() == "signée"
+            date_sig = (row.get("Si signée, date de signature") or "").strip() or None
+            duree = (row.get("Durée (en années)") or "").strip()
+            nom = (row.get("Commune") or "").split("-", 1)[-1].strip() or insee
+            conn.execute(text(
+                f'INSERT INTO "{staging}" (insee, commune, statut, ort_signee, date_signature, '
+                " duree_annees, millesime, maj_at) "
+                "VALUES (:i, :c, :s, :sig, :d, :du, :m, now()) "
+                "ON CONFLICT (insee) DO UPDATE SET commune = :c, statut = :s, ort_signee = :sig, "
+                " date_signature = :d, duree_annees = :du, millesime = :m, maj_at = now()"),
+                {"i": insee, "c": nom, "s": statut, "sig": signee, "d": date_sig,
+                 "du": float(duree) if duree.replace(".", "", 1).isdigit() else None,
+                 "m": MILLESIME})
+            vus.add(insee)
+            n += 1
+            signees += int(signee)
+            (acv if est_acv else pvd if est_pvd else []).append(nom)
+
+    injection_sure.remplacer_servie(
+        session, table="commune_ort", charger_staging=charger, a_geometrie=False,
+        like_including="ALL", couverture_974_min=0, delta_max_pct=50.0,
+        alerter=injection_sure.alerte_injection("commune_ort", SOURCE_NAME))
     session.flush()
     ecart = sorted(f"{nom} ({insee}) attendue ACV, absente ou non-ACV dans la table"
                    for insee, nom in ACV_ATTENDUES.items()
