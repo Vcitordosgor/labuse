@@ -2659,6 +2659,11 @@ export const getCarteDecision = (id: number, idu: string) => j<CarteDecision>(`/
 export const setStatutParcelle = (id: number, idu: string, statut: StatutParcelle) =>
   j<{ ok: boolean; idu: string; statut: StatutParcelle; counts: ParcoursCounts }>(
     `/projets/${id}/parcelle/${idu}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ statut }) })
+// RETOURS-16 (point 9) — « → CRM » : pousse EXPLICITEMENT toutes les retenues du projet dans le
+// pipeline CRM (idempotent, dédup côté serveur). Retourne ajoutées / déjà présentes / total.
+export const projetVersCrm = (id: number) =>
+  j<{ ok: boolean; total: number; ajoutees: number; deja: number }>(
+    `/projets/${id}/vers-crm`, { method: 'POST' })
 // Phase 2 — chercher plus de parcelles (élargir / ajout manuel), dédupliqué côté serveur
 export const ajouterParcelle = (id: number, idu: string) =>
   j<{ ok: boolean; added: boolean; already: boolean; idu: string; counts: ParcoursCounts }>(

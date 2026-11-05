@@ -479,7 +479,17 @@ export function AnalyserAnnonce() {
   // LIEN et lance l'analyse au montage (consommé-puis-reset, comme les autres prefills).
   const annonceLienPrefill = useApp((s) => s.annonceLienPrefill)
   const setAnnonceLienPrefill = useApp((s) => s.setAnnonceLienPrefill)
+  // RETOURS-16 (point 4) — fiche → bouton « Estimer » : ouvre DIRECTEMENT l'écran rapport parcelle
+  // sur la parcelle courante (consommé-puis-reset au montage, comme le prefill LIEN du Radar).
+  const annonceParcellePrefill = useApp((s) => s.annonceParcellePrefill)
+  const setAnnonceParcellePrefill = useApp((s) => s.setAnnonceParcellePrefill)
   useEffect(() => {
+    if (annonceParcellePrefill) {
+      setParcelle(annonceParcellePrefill)
+      setEtape('parcelle')
+      setAnnonceParcellePrefill(null)
+      return
+    }
     if (!annonceLienPrefill) return
     setLien(annonceLienPrefill)
     analyse.mutate(annonceLienPrefill)

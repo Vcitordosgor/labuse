@@ -9582,9 +9582,18 @@ def _prio_keys() -> list[str]:
     return [p["key"] for p in _pipeline_cfg().get("priorities", [])]
 
 
+def _zone_plu(db: Session, idu: str) -> str | None:
+    """RETOURS-16 (point 10) — zone PLU courte d'une parcelle (ex. « Ua »), même source que la
+    fiche/outils (`parcel_zone_plu`). Repli mono-carte ; la liste passe un `zone_map` pré-chargé."""
+    r = db.execute(text("SELECT zone_libelle, zone_fam FROM parcel_zone_plu WHERE idu = :i"),
+                   {"i": idu}).mappings().first()
+    return (r["zone_libelle"] or r["zone_fam"]) if r else None
+
+
 def _entry_dict(db: Session, e: models.PipelineEntry, *,
                 adr_map: dict | None = None, pm_map: dict | None = None,
-                projet_map: dict | None = None, courrier_map: dict | None = None) -> dict:
+                projet_map: dict | None = None, courrier_map: dict | None = None,
+                zone_map: dict | None = None) -> dict:
     # M137 Lot 2 — les blocs `verdict` et `premium` (score/rang : rang_v2, opportunity_score,
     # verdict.rang, tier_v2, completeness_score…) sont RETIRÉS du payload CRM (M133 B.6 : zéro
     # verdict/score/rang hors application ; plus rien ne les rend depuis M136 P1).
@@ -9630,6 +9639,8 @@ def _entry_dict(db: Session, e: models.PipelineEntry, *,
                    # valeur principale (comme la fiche), plus le dessin ST_Area. champs_terrain()
                    # ajoute surface_terrain_m2 / surface_source / surface_dessin_m2 / contenance_m2.
                    **_surface.champs_terrain(p.surface_m2, p.contenance_m2),
+                   # RETOURS-16 (point 10) — zone PLU pour le « secteur » (commune · zone) de la carte.
+                   "zone_plu": zone_map.get(p.idu) if zone_map is not None else _zone_plu(db, p.idu),
                    # M6 2a (§1.8) : l'adresse BAN sur les cartes CRM (pipeline = volume faible)
                    "adresse": adresse},
         # d'où vient la piste (copilote-projet) — None si ajoutée hors projet
@@ -9639,14 +9650,24 @@ def _entry_dict(db: Session, e: models.PipelineEntry, *,
     }
 
 
-def _prefetch_maps(db: Session, entries: list) -> tuple[dict, dict, dict]:
-    """M137 Lot 4 (C4) — pré-charge adresse BAN / proprio public / projet pour un LOT d'entrées en
-    3 requêtes batch (au lieu de 3 PAR carte). Repli sain : maps vides si tables non prêtes."""
+def _prefetch_maps(db: Session, entries: list) -> tuple[dict, dict, dict, dict]:
+    """M137 Lot 4 (C4) — pré-charge adresse BAN / proprio public / projet (+ RETOURS-16 : zone PLU)
+    pour un LOT d'entrées en requêtes batch (au lieu de N PAR carte). Repli sain : maps vides si
+    tables non prêtes."""
     idus = list({e.parcel.idu for e in entries})
     pids = list({e.projet_id for e in entries if e.projet_id})
     adr: dict = {}
     pm: dict = {}
     projet: dict = {}
+    zone: dict = {}
+    if idus:
+        # RETOURS-16 (point 10) — zone PLU courte (« Ua ») par IDU, batch (même source que la fiche).
+        for r in db.execute(text(
+                "SELECT idu, zone_libelle, zone_fam FROM parcel_zone_plu WHERE idu = ANY(:idus)"),
+                {"idus": idus}).mappings():
+            lab = r["zone_libelle"] or r["zone_fam"]
+            if lab:
+                zone[r["idu"]] = lab
     if idus and _ban_ready(db):
         for r in db.execute(text(
                 "SELECT DISTINCT ON (ap.idu) ap.idu AS idu, "
@@ -9665,7 +9686,7 @@ def _prefetch_maps(db: Session, entries: list) -> tuple[dict, dict, dict]:
         for r in db.execute(text("SELECT id, nom FROM projets WHERE id = ANY(:pids)"),
                             {"pids": pids}).mappings():
             projet[r["id"]] = {"id": r["id"], "nom": r["nom"]}
-    return adr, pm, projet
+    return adr, pm, projet, zone
 
 
 def _projet_ref(db: Session, projet_id: int | None) -> dict | None:
@@ -9771,10 +9792,10 @@ def pipeline_list(request: Request, db: Session = Depends(get_db)) -> list[dict]
                 else models.PipelineEntry.compte_id == cid)   # SEC-IDOR
     q = q.where(models.PipelineEntry.archived_at.is_(None))   # M137 — actives seules (archivées cachées)
     entries = db.execute(q).scalars().all()
-    adr, pm, projet = _prefetch_maps(db, entries)   # M137 Lot 4 — batch (N+1 → O(1))
+    adr, pm, projet, zone = _prefetch_maps(db, entries)   # M137 Lot 4 — batch (N+1 → O(1))
     from .. import courrier as _courrier   # CONNEXIONS-2 Lot 4 — statut courrier par piste (batch)
     cmap = _courrier.statut_par_pipeline_entry(db, cid, [e.id for e in entries])
-    return [_entry_dict(db, e, adr_map=adr, pm_map=pm, projet_map=projet, courrier_map=cmap) for e in entries]
+    return [_entry_dict(db, e, adr_map=adr, pm_map=pm, projet_map=projet, courrier_map=cmap, zone_map=zone) for e in entries]
 
 
 @app.get("/pipeline/parcel/{idu}")
@@ -9930,9 +9951,9 @@ def pipeline_archived(request: Request, db: Session = Depends(get_db)) -> list[d
                 else models.PipelineEntry.compte_id == cid)   # SEC-IDOR
     q = q.where(models.PipelineEntry.archived_at.is_not(None))
     entries = db.execute(q).scalars().all()
-    adr, pm, projet = _prefetch_maps(db, entries)   # M137 Lot 4 — batch
+    adr, pm, projet, zone = _prefetch_maps(db, entries)   # M137 Lot 4 — batch
     # archivées : pas de statut courrier sur la carte (map vide → pas de requête N+1)
-    return [_entry_dict(db, e, adr_map=adr, pm_map=pm, projet_map=projet, courrier_map={}) for e in entries]
+    return [_entry_dict(db, e, adr_map=adr, pm_map=pm, projet_map=projet, courrier_map={}, zone_map=zone) for e in entries]
 
 
 # ───────────────────────────── Front statique (carte + dashboard + fiche §8) ─────────────────────────────

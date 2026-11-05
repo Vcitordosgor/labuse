@@ -521,22 +521,23 @@ export function M03() {
   const moduleKey = useApp((s) => s.module)
   // RETOURS-17 W2 — SEGMENT à CINQ états qui PARTITIONNENT la base (somme = total ; constat Vic 05/09 :
   // trois chips lues comme une répartition alors que deux étaient des fenêtres de temps et la 3e un total) :
-  //   Tous · Récent (autorisé ≤ 24 mois) · Dormant (PC ancien sans achèvement) · Achevé (DAACT) · Autre.
+  //   Tous · Récent (90 derniers jours) · Dormant (PC ancien sans achèvement) · Achevé (DAACT) · Autre.
   // `pointMort` = le Dormant (endpoint /promesses, jointure parcelle+run) ; `etatSeg` = le paramètre serveur
   // recent|acheve|autre pour les états servis par /permis. La couleur sépare la veille des opportunités.
-  // RECETTE-2 (D2) — « Tous » coché par défaut (avant : « Récent » = 0 point au démarrage alors que le
-  // bandeau annonçait « 11 permis … cliquez les points »).
-  const [seg, setSeg] = useState<'cours' | 'mort' | 'tous' | 'acheve' | 'autre'>(moduleKey === 'promesses' ? 'mort' : 'tous')
+  // RETOURS-16 (point 11) — l'outil OUVRE désormais sur « Récent » = 90 DERNIERS JOURS (et non « Tous »
+  // = 240 mois, qui chargeait les ~50 000 points géocodés de toute la base → ~1,2 s + 6,5 Mo). La
+  // pagination serveur (useInfiniteQuery + limit/offset, has_more) et les filtres serveur (nature,
+  // commune, état) existaient déjà ; c'est la FENÊTRE PAR DÉFAUT qui chargeait tout. Ouverture < 1 s.
+  const [seg, setSeg] = useState<'cours' | 'mort' | 'tous' | 'acheve' | 'autre'>(moduleKey === 'promesses' ? 'mort' : 'cours')
   const pointMort = seg === 'mort'
   // F2 (OUTILS-3) — « Tous » = tous les états SUPERPOSÉS sur la carte, chacun sa couleur (récent vert,
   // dormant corail, achevé/autre gris) — avant, tout était peint en vert (« 47 000 verts, lit 5 580 »).
   const tous = seg === 'tous'
   // RETOURS-17 W2 — état de cycle servi par /permis (dormant reste sur /promesses).
   const etatSeg = seg === 'acheve' ? 'acheve' : seg === 'autre' ? 'autre' : null
-  // RECETTE-4 — le segment par défaut est « Tous » (seg='tous'), dont la fenêtre est 240 mois (tout
-  // l'historique), comme `choisirSeg`. L'init était à 24 (fenêtre « Récent ») : d'où le constat Vic
-  // « Tous affiché actif mais Récent appliqué » à l'arrivée. On aligne l'init sur le segment par défaut.
-  const [months, setMonths] = useState(moduleKey === 'promesses' ? 36 : 240)
+  // RETOURS-16 (point 11) — l'init suit le segment par défaut « Récent » = 3 mois (≈ 90 jours). Avant,
+  // l'ouverture était « Tous » = 240 mois (toute la profondeur → carte = base entière).
+  const [months, setMonths] = useState(moduleKey === 'promesses' ? 36 : 3)
   const [nature, setNature] = useState('')
   // RECETTE-OUTILS-1 (points 6 & 7) — plus de drawer en colonne : la fiche permis s'ouvre en BULLE sur
   // la carte (ouvrirBullePermis, MapView), que le clic vienne d'un point carte OU d'une ligne de liste.
@@ -579,14 +580,16 @@ export function M03() {
   // défaut ; ensuite le toggle local est maître (un deep-link vers l'autre clé re-cale l'écran).
   // RECETTE-4 — même fenêtre que `choisirSeg` : 'tous' → 240 mois (pas 24, qui appliquait « Récent »
   // sous un chip « Tous » affiché actif).
-  useEffect(() => { const s = moduleKey === 'promesses' ? 'mort' : 'tous'; setSeg(s); setMonths(s === 'mort' ? 36 : 240) }, [moduleKey])
+  // RETOURS-16 (point 11) — ouverture (et re-cale par clé) sur « Récent » = 3 mois (≈ 90 jours).
+  useEffect(() => { const s = moduleKey === 'promesses' ? 'mort' : 'cours'; setSeg(s); setMonths(s === 'mort' ? 36 : 3) }, [moduleKey])
 
-  const MONTHS_RADAR = [12, 24, 48, 72, 240]   // 240 = « Tout » (≈ toute la profondeur Sitadel servie)
+  const MONTHS_RADAR = [3, 12, 24, 48, 72, 240]   // 3 = « 90 jours » (défaut) ; 240 = toute la profondeur Sitadel
   const MONTHS_PM = [24, 36, 48, 60]   // point mort : 36 = caducité légale du PC (défaut à l'ouverture)
   // RETOURS-17 — Dormant garde sa fenêtre de caducité (36 mois) ; Récent = 24 mois ; Tous/Achevé/Autre
   // travaillent sur toute la profondeur (240 mois), l'état de cycle fait le tri côté serveur.
   const choisirSeg = (s: 'cours' | 'mort' | 'tous' | 'acheve' | 'autre') => {
-    setSeg(s); setMonths(s === 'mort' ? 36 : s === 'cours' ? 24 : 240)
+    // RETOURS-16 (point 11) — « Récent » = 90 jours (3 mois) ; Dormant 36 ; le reste toute la profondeur.
+    setSeg(s); setMonths(s === 'mort' ? 36 : s === 'cours' ? 3 : 240)
   }
 
   // deux sources, une seule active à la fois (enabled) : RADAR = tous les permis ; POINT MORT = PC
@@ -620,9 +623,10 @@ export function M03() {
   // (cache react-query, chargée à l'arrivée = entrée par défaut) ; point mort = count fixe (caducité
   // 36 mois), toujours servi, indépendant de la fenêtre active.
   const qPmEntry = useQuery({ queryKey: ['pm-entry', commune], queryFn: () => modPromessesCount(36), staleTime: 60_000 })
-  // F2 — compteur « En cours » STABLE (fenêtre 24 m fixe), indépendant du segment actif : sinon le
-  // libellé du segment changeait quand « Tous » élargissait la fenêtre radar.
-  const qRadarEntry = useQuery({ queryKey: ['radar-entry', commune], queryFn: () => modPermis(24, null, 1, 0), staleTime: 60_000 })
+  // RETOURS-16 (point 11) — compteur « Récent » = 90 DERNIERS JOURS (3 mois), cohérent avec la fenêtre
+  // par défaut appliquée. (Sert aussi `donnees_jusqu_au` et `coupure_recent`, servis quelle que soit
+  // la fenêtre demandée.) Léger : limit=1, pas de carte.
+  const qRadarEntry = useQuery({ queryKey: ['radar-entry', commune], queryFn: () => modPermis(3, null, 1, 0), staleTime: 60_000 })
   const radarEntryTotal = (qRadarEntry.data as Record<string, any> | undefined)?.['total'] as number | undefined
   // RETOURS-16 V4 — le chip « Tous » disait la SOMME de deux fenêtres (Récent 24 m + Dormant 36 m+,
   // « Tous 21 038 ») quand le bas d'écran comptait la base entière (50 544) : deux totaux différents
@@ -757,7 +761,7 @@ export function M03() {
     ['autre', 'Autres', 'autre', perimCounts.autre, 'ni récent, ni achevé'],
     ['tous', 'Tous', null, perimCounts.tous, 'dans les 200 m'],
   ] as const) : ([
-    ['cours', 'Récent', 'recent', radarEntryTotal, 'autorisé ≤ 24 mois'],
+    ['cours', 'Récent', 'recent', radarEntryTotal, '90 derniers jours'],   // RETOURS-16 (point 11)
     ['mort', 'Dormant', 'dormant', pmEntryTotal, 'ancien PC sans achèvement'],
     ['acheve', 'Achevés', 'acheve', acheveEntryTotal, 'travaux déclarés (DAACT)'],
     ['autre', 'Autres', 'autre', autreEntryTotal, 'ni récent, ni dormant, ni achevé'],
@@ -767,7 +771,7 @@ export function M03() {
   // résumé « Filtrer par état » replié : l'état actif + son compte (« Tous — 50 544 »).
   const resumeEtat = `${actE[1]} — ${actE[3] != null ? fmt(actE[3]) : '…'}`
   // résumé « Affiner » replié : les filtres actifs, ou « aucun filtre » quand tout est au défaut.
-  const monthsDefaut = pointMort ? 36 : seg === 'cours' ? 24 : 240
+  const monthsDefaut = pointMort ? 36 : seg === 'cours' ? 3 : 240   // RETOURS-16 (point 11) — Récent = 90 j
   const aucunFiltre = nature === '' && !commune && geoFiltre === 'tous' && months === monthsDefaut
   const resumeAffiner = aucunFiltre ? 'aucun filtre' : [
     !pointMort && nature ? NATURES.find(([v]) => v === nature)?.[1] : null,

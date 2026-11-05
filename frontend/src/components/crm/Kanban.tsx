@@ -20,57 +20,6 @@ const TONE_ACCENT: Record<string, string> = {
   cold: '#5C7268', warm: '#E8B44C', hot: '#5CE6A1', reject: '#E8695A',
 }
 
-// DA-FIX-5 P7 — note libre par carte : zone repliée « + Note ». Enregistrée sur la parcelle suivie
-// (colonne `pipeline_entries.notes`, déjà existante — PATCH `{notes}`). DA-FIX-5b : la note ne
-// s'affiche PLUS dans la fiche parcelle (bloc CRM revenu à son état de main). Les événements sont
-// stoppés (stopPropagation) : cliquer/écrire dans la note n'ouvre PAS l'écran d'édition de la carte.
-function CardNote({ e, onNote }: { e: PipelineEntry; onNote: (notes: string) => void }) {
-  const [open, setOpen] = useState(false)
-  const [draft, setDraft] = useState(e.notes ?? '')
-  const note = (e.notes ?? '').trim()
-  const stop = (ev: React.SyntheticEvent) => ev.stopPropagation()
-  if (!open) {
-    return (
-      <div className="mt-1.5" onClick={stop}>
-        {note ? (
-          <button data-crm-note-edit onClick={() => { setDraft(e.notes ?? ''); setOpen(true) }}
-            /* DA-FIX-5b — largeur bornée (w-full) + coupure des chaînes sans espace ([overflow-wrap:anywhere]).
-               OUTILS-S2 Lot D (D.1) — HAUTEUR FIXE (~4 lignes) + défilement interne : une note très longue
-               ne peut plus étirer la carte ni casser la colonne ([GB-TEST]). La carte garde sa taille. */
-            className="block max-h-[4.5rem] w-full overflow-y-auto overscroll-contain whitespace-pre-wrap [overflow-wrap:anywhere] rounded-md border border-line-2 bg-surface-2 px-2 py-1.5 text-left text-[10.5px] text-txt-mut transition-colors duration-quick hover:border-mint/40 hover:text-txt">
-            {note}
-          </button>
-        ) : (
-          <button data-crm-note-add onClick={() => { setDraft(''); setOpen(true) }}
-            className="text-[10.5px] text-txt-dim transition-colors duration-quick hover:text-mint">
-            + Note
-          </button>
-        )}
-      </div>
-    )
-  }
-  return (
-    <div className="mt-1.5 space-y-1" onClick={stop} onKeyDown={stop}>
-      <textarea
-        data-crm-note
-        autoFocus
-        value={draft}
-        maxLength={4000}
-        rows={3}
-        onChange={(ev) => setDraft(ev.target.value)}
-        placeholder="Note libre sur cette parcelle…"
-        className="w-full resize-none rounded-md border border-mint/40 bg-surface-2 px-2 py-1.5 text-[10.5px] text-txt focus:border-mint focus:outline-none"
-        aria-label="Note libre sur la parcelle suivie"
-      />
-      <div className="flex justify-end gap-1.5">
-        <Bouton niveau="lien" onClick={() => setOpen(false)}>Annuler</Bouton>
-        <Bouton niveau="secondaire" ton="vert" data-crm-note-save
-          onClick={() => { onNote(draft.trim()); setOpen(false) }}>Enregistrer</Bouton>
-      </div>
-    </div>
-  )
-}
-
 function Card({ e, onDragStart, newEvents, onArchive, onEdit, columns, onMove, onNote }: {
   e: PipelineEntry; onDragStart: (ev: React.DragEvent) => void; newEvents: number
   onArchive: () => void; onEdit: () => void
@@ -87,6 +36,15 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, columns, onMove, o
   // FRONT-CHIFFRES-2 (F18) — l'échéance est SERVIE (jour Réunion, tz du back) ; le front ne compare
   // plus au fuseau du navigateur (drift d'un jour aux limites de fuseau).
   const reminderDue = !!e.relance_echeance
+  // RETOURS-16 (point 10) — carte parcelle refaite selon la maquette validée : IDU · surface ·
+  // secteur (commune · zone PLU) · note en entier (« + Note » si vide) · « Déplacer vers ». Le NOM
+  // DU PROJET et la MENTION PROPRIÉTAIRE quittent la carte (décision Vic). Glisser-déposer conservé.
+  const surf = surfaceTerrain(e.parcel)
+  const zone = e.parcel.zone_plu
+  const note = (e.notes ?? '').trim()
+  const [noteOpen, setNoteOpen] = useState(false)
+  const [draft, setDraft] = useState(e.notes ?? '')
+  const stop = (ev: React.SyntheticEvent) => ev.stopPropagation()
   return (
     <div
       draggable
@@ -106,8 +64,9 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, columns, onMove, o
         if ((ev.target as HTMLElement).closest('button, select, textarea, input')) return
         onEdit()
       }}
-      className="group cursor-pointer rounded-lg bg-surface-3 p-3 shadow-elev-1 ring-1 ring-transparent transition-shadow duration-quick active:cursor-grabbing hover:ring-mint/30 focus:outline-none focus:ring-2 focus:ring-mint/50"
+      className="group flex cursor-pointer flex-col gap-3 rounded-lg bg-surface-3 p-3.5 shadow-elev-1 ring-1 ring-transparent transition-shadow duration-quick active:cursor-grabbing hover:ring-mint/30 focus:outline-none focus:ring-2 focus:ring-mint/50"
     >
+      {/* IDU + poignée de glissement (affordance ; le glisser-déposer reste sur toute la carte) */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1.5">
           {reminderDue && (
@@ -120,62 +79,79 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, columns, onMove, o
           )}
           <button
             onClick={() => focusParcelle(e.idu, { fiche: true })}
-            className="truncate font-mono text-xs font-medium text-txt-hi transition-colors duration-quick hover:text-mint"
+            className="truncate font-mono text-[13px] font-medium text-txt-hi transition-colors duration-quick hover:text-mint"
           >
             {e.idu}
           </button>
         </div>
-        {newEvents > 0 && (
-          <Tip tip="Événements non lus sur cette parcelle (cloche)">
-            <span className="shrink-0 rounded-full bg-mint/15 px-1.5 py-0.5 text-[9px] font-medium text-mint">
-              {newEvents} nouveau{newEvents > 1 ? 'x' : ''}
-            </span>
-          </Tip>
-        )}
-        {/* DA-FIX-5 P8 — la croix rouge de coin est retirée : le retrait passe par « Retirer du CRM »
-            (menu « Déplacer vers… », P7). */}
-      </div>
-      <div className="tnum mt-1 truncate text-[11px] text-txt-mut">
-        {/* CHASSE-APP-FIX-2 (point 3) — contenance cadastrale en valeur principale (comme la fiche),
-            plus le dessin ST_Area. surfaceTerrain = contenance si présente, sinon dessin. */}
-        {surfaceTerrain(e.parcel) ? `${fmtM2(surfaceTerrain(e.parcel))} · ` : ''}{e.parcel.commune}
-      </div>
-      {/* Phase 2 : d'où vient la piste (projet) */}
-      {e.projet && (
-        <div className="mt-1 truncate text-[10.5px] text-mint">
-          ▸ {e.projet.nom}
-        </div>
-      )}
-      {/* Phase 2 : contact proprio — PRIVACY : personne morale publique OU particulier JAMAIS nommé */}
-      {e.proprietaire_public && (
-        e.proprietaire_public.type === 'personne_morale' ? (
-          // DA §8 — carte CRM sans SIREN (nom du tiers en casse normale, texte neutre).
-          <div className="mt-1 truncate text-[10.5px] text-txt-mut">
-            <span className="text-txt">{e.proprietaire_public.denomination}</span>
-          </div>
-        ) : (
-          <div className="mt-1 truncate text-[10.5px] italic text-txt-dim">
-            Propriétaire particulier — non communiqué
-          </div>
-        )
-      )}
-      {/* DA-FIX-5 P9 — le bouton « ✉ Courrier » de la carte est retiré (le pont vers Courrier reste
-          dans la fiche parcelle). On garde le statut relu du courrier de la piste (info, pas un pont). */}
-      {e.courrier && (
-        <div className="mt-1.5">
-          <span data-piste-courrier-statut
-            className={`inline-block rounded-[5px] border px-1.5 py-px text-[10px] ${clos ? 'border-mint/40 text-mint' : 'border-amber/40 text-amber'}`}>
-            ✉ {e.courrier.libelle}
+        <div className="flex shrink-0 items-center gap-1.5">
+          {newEvents > 0 && (
+            <Tip tip="Événements non lus sur cette parcelle (cloche)">
+              <span className="rounded-full bg-mint/15 px-1.5 py-0.5 text-[9px] font-medium text-mint">
+                {newEvents} nouveau{newEvents > 1 ? 'x' : ''}
+              </span>
+            </Tip>
+          )}
+          <span aria-hidden className="text-txt-dim/60" data-crm-grip>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+              <circle cx="5" cy="3" r="1.2" /><circle cx="9" cy="3" r="1.2" />
+              <circle cx="5" cy="7" r="1.2" /><circle cx="9" cy="7" r="1.2" />
+              <circle cx="5" cy="11" r="1.2" /><circle cx="9" cy="11" r="1.2" />
+            </svg>
           </span>
         </div>
-      )}
-      {/* DA-FIX-5 P7 / 5c — « Déplacer vers… » : le composant PARTAGÉ (mêmes colonnes, même rendu que
-          le bloc CRM de la fiche) — l'alternative au glisser-déposer. Dernière entrée « Retirer du CRM ». */}
-      <div className="mt-1.5">
-        <DeplacerMenu columns={columns} currentStatus={e.status} onMove={onMove} onRetirer={onArchive} />
       </div>
-      {/* DA-FIX-5 P7 — note libre par carte (repliée), enregistrée sur la parcelle suivie. */}
-      <CardNote e={e} onNote={onNote} />
+      {/* surface · secteur (commune · zone PLU) */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        {surf != null && (
+          <span className="rounded-full border border-line-2 bg-surface-2 px-2 py-0.5 text-[11px] text-txt">
+            <b className="tnum font-medium">{fmtM2(surf)}</b>
+          </span>
+        )}
+        <span className="rounded-full border border-line-2 bg-surface-2 px-2 py-0.5 text-[11px] text-txt">
+          {e.parcel.commune}{zone ? <span className="ml-1 font-mono text-[10px] text-mint">{zone}</span> : null}
+        </span>
+      </div>
+      {/* statut du courrier rattaché (info, pas un pont) */}
+      {e.courrier && (
+        <span data-piste-courrier-statut
+          className={`-mt-1 inline-block w-max rounded-[5px] border px-1.5 py-px text-[10px] ${clos ? 'border-mint/40 text-mint' : 'border-amber/40 text-amber'}`}>
+          ✉ {e.courrier.libelle}
+        </span>
+      )}
+      {/* note AFFICHÉE EN ENTIER (clic = éditer) ; « + Note » quand il n'y en a pas (RETOURS-16). La
+          hauteur est bornée + défilement interne : une note longue ne casse pas la colonne. */}
+      {note && !noteOpen && (
+        <button data-crm-note-edit onClick={(ev) => { stop(ev); setDraft(e.notes ?? ''); setNoteOpen(true) }}
+          className="max-h-[6rem] w-full overflow-y-auto overscroll-contain whitespace-pre-wrap [overflow-wrap:anywhere] rounded-md px-0 text-left text-[12.5px] leading-snug text-txt transition-colors duration-quick hover:text-txt-hi">
+          {note}
+        </button>
+      )}
+      {noteOpen && (
+        <div className="space-y-1" onClick={stop} onKeyDown={stop}>
+          <textarea data-crm-note autoFocus value={draft} maxLength={4000} rows={3}
+            onChange={(ev) => setDraft(ev.target.value)} placeholder="Note libre sur cette parcelle…"
+            className="w-full resize-none rounded-md border border-mint/40 bg-surface-2 px-2 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none"
+            aria-label="Note libre sur la parcelle suivie" />
+          <div className="flex justify-end gap-1.5">
+            <Bouton niveau="lien" onClick={() => setNoteOpen(false)}>Annuler</Bouton>
+            <Bouton niveau="secondaire" ton="vert" data-crm-note-save
+              onClick={() => { onNote(draft.trim()); setNoteOpen(false) }}>Enregistrer</Bouton>
+          </div>
+        </div>
+      )}
+      {/* pied : « Déplacer vers… » (alternative au glisser-déposer) + « + Note » si la carte n'en a pas */}
+      <div className="flex items-center gap-2 border-t border-line-2 pt-2.5">
+        <div className="min-w-0 flex-1">
+          <DeplacerMenu columns={columns} currentStatus={e.status} onMove={onMove} onRetirer={onArchive} />
+        </div>
+        {!note && !noteOpen && (
+          <button data-crm-note-add onClick={(ev) => { stop(ev); setDraft(''); setNoteOpen(true) }}
+            className="shrink-0 whitespace-nowrap rounded-md border border-line-2 bg-surface-2 px-2 py-1 text-[11px] text-txt-dim transition-colors duration-quick hover:border-mint/40 hover:text-mint">
+            + Note
+          </button>
+        )}
+      </div>
     </div>
   )
 }
@@ -505,10 +481,8 @@ export function Kanban() {
       <div className="flex shrink-0 flex-wrap items-baseline justify-between gap-2 px-4 pt-5 sm:px-6">
         <div>
           <h2 className="font-display text-lg font-bold text-txt-hi">CRM — pipeline de prospection</h2>
-          <p className="mt-0.5 text-[11px] text-txt-dim">
-            {(entries.data ?? []).length} parcelle{(entries.data ?? []).length > 1 ? 's' : ''} suivie{(entries.data ?? []).length > 1 ? 's' : ''} ·
-            glisser une carte pour changer d'étape · ajout depuis la fiche (+ CRM)
-          </p>
+          {/* RETOURS-16 (point 8) — la phrase « N parcelles suivies · glisser… · ajout depuis la
+              fiche (+ CRM) » est retirée (décision Vic). Le titre suffit. */}
         </div>
         {/* H (M12) : barre d'édition des colonnes (personnaliser/ajouter/réinitialiser). */}
         <div className="flex shrink-0 items-center gap-2">
@@ -560,10 +534,8 @@ export function Kanban() {
               <Bouton niveau="secondaire" ton="danger" onClick={() => setConfirmReset(true)}>Réinitialiser</Bouton>
             </>
           )}
-          {/* M137 — accès aux cartes archivées (consulter / restaurer). */}
-          {!editMode && (
-            <Bouton niveau="secondaire" ton="vert" onClick={() => setShowArchived(true)}>Archivées</Bouton>
-          )}
+          {/* RETOURS-16 (point 7) — bouton « Archivées » retiré du CRM (décision Vic). Le panneau
+              d'archives (restauration) reste au dépôt mais n'a plus d'entrée dans la barre. */}
           <Bouton niveau="secondaire" ton="vert"
             onClick={() => { setEditMode((v) => !v); setEditingId(null) }}
           >{editMode ? 'Terminé' : 'Personnaliser'}</Bouton>

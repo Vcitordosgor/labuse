@@ -662,7 +662,10 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 
 /* actions de pied */
 .fiche-v6 .actions { display:flex; gap:7px; margin-top:20px; }
-.fiche-v6 .act { flex:1; min-height:36px; border-radius:6px; display:flex; align-items:center; justify-content:center; gap:6px; font-size:12.5px; cursor:pointer; }
+/* RETOURS-16 (point 1) — marges intérieures (DA) : le libellé ne touche plus les bords du bouton
+   (ex. « ✓ Dans le CRM · Propriétaire à identifier »). `overflow:hidden` + un libellé `.truncate`
+   coupent proprement (…) si le nom d'étape dépasse, au lieu de rogner le texte au ras du bord. */
+.fiche-v6 .act { flex:1; min-width:0; min-height:36px; padding:0 10px; overflow:hidden; border-radius:6px; display:flex; align-items:center; justify-content:center; gap:6px; font-size:12.5px; cursor:pointer; }
 /* ADMIN-1 AD1 — « + CRM » = VERT (contour --mint, survol plein vert via .hover-fill), « + Projet » =
    JAUNE (contour + texte --amber, même famille que la chip « Fiche commune », survol plein ambre via
    .hover-fill-amber). DEUX boutons de largeur égale (flex:1 sur .act). Aucun mauve (réservé à l'IA).

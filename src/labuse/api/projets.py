@@ -1355,6 +1355,60 @@ def projet_parcelle_statut(pid: int, idu: str, body: StatutIn, request: Request,
     return {"ok": True, "idu": idu, "statut": body.statut, **_counts(db, pid)}
 
 
+@router.post("/{pid}/vers-crm")
+def projet_vers_crm(pid: int, request: Request, db: Session = Depends(get_db)) -> dict:
+    """RETOURS-16 (point 9) — « → CRM » POUSSE EXPLICITEMENT toutes les RETENUES du projet dans le
+    CRM. CAUSE du bug : le bouton NAVIGUAIT seulement vers le CRM ; la synchro auto (_sync_crm_retenue)
+    ne se déclenche qu'au geste Tinder (/parcelle/{idu}). Les retenues créées AUTREMENT (fusion de
+    doublons, reprise de cadrage, import, ou antérieures à la synchro) n'atterrissaient JAMAIS au
+    pipeline → « elles n'arrivent pas dans le CRM ». Ici on RÉCONCILIE : chaque retenue est upsertée
+    dans « Contact à préparer » (sinon 1re colonne du compte), IDEMPOTENT — clé (compte_id, parcel_id),
+    aucune parcelle en double même si elle y est déjà. Retourne ajoutées / déjà présentes / total."""
+    _projet_or_404(db, pid, current_compte(request))
+    cid = current_compte(request)
+    now = datetime.now(timezone.utc)
+    retenues = list(db.execute(text(
+        "SELECT parcel_id FROM projet_parcelles WHERE projet_id = :pid AND statut = 'retenue'"),
+        {"pid": pid}).scalars().all())
+    if not retenues:
+        return {"ok": True, "total": 0, "ajoutees": 0, "deja": 0}
+    # Cartes existantes (actives OU archivées) pour CE compte, par parcelle. On ne s'appuie PAS sur
+    # `ON CONFLICT (compte_id, parcel_id)` : en local/dev `compte_id` est NULL et Postgres traite NULL
+    # comme DISTINCT dans une contrainte unique → le conflit ne se déclenche pas et un DOUBLON serait
+    # créé. On réconcilie donc EXPLICITEMENT (sûr quel que soit le compte, NULL compris).
+    active = set()
+    archivees: dict[int, int] = {}
+    for r in db.execute(text(
+            "SELECT id, parcel_id, (archived_at IS NULL) AS active FROM pipeline_entries "
+            "WHERE compte_id IS NOT DISTINCT FROM :cid AND parcel_id = ANY(:ids)"),
+            {"cid": cid, "ids": retenues}).mappings():
+        if r["active"]:
+            active.add(r["parcel_id"])
+        else:
+            archivees.setdefault(r["parcel_id"], r["id"])
+    # colonne cible des NOUVELLES cartes : « Contact à préparer » si le compte la possède, sinon sa
+    # 1re colonne (M12 LOT H — colonnes par tenant). Cohérent avec la synchro auto (_sync_crm_retenue).
+    from . import crm_columns
+    keys = crm_columns.col_keys(db, cid)
+    st = _RETENUE_CRM_STATUS if _RETENUE_CRM_STATUS in keys else crm_columns.default_status(db, cid)
+    ajoutees = 0
+    for pc in retenues:
+        if pc in active:
+            continue                                   # déjà dans le CRM — on n'y touche pas (0 doublon)
+        if pc in archivees:                            # carte retirée du CRM → on la RESTAURE
+            db.execute(text("UPDATE pipeline_entries SET archived_at = NULL, updated_at = :now "
+                            "WHERE id = :id"), {"id": archivees[pc], "now": now})
+        else:                                          # aucune carte → on l'INSÈRE, rattachée à CE projet
+            db.execute(text(
+                "INSERT INTO pipeline_entries (parcel_id, status, priority, notes, prospection, "
+                "projet_id, compte_id, created_at, updated_at) VALUES (:pc, :st, 'moyenne', '', "
+                "'{}'::jsonb, :pid, :cid, :now, :now)"),
+                {"pc": pc, "st": st, "pid": pid, "cid": cid, "now": now})
+        ajoutees += 1
+    db.flush()
+    return {"ok": True, "total": len(retenues), "ajoutees": ajoutees, "deja": len(retenues) - ajoutees}
+
+
 # ─── Chercher plus (Phase 2) : élargir la recherche / ajouter une parcelle à la main ───
 
 def _upsert_proposee(db: Session, pid: int, parcel_id: int, rang: int, now: datetime) -> bool:
