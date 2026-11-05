@@ -339,6 +339,8 @@ LECTURES: tuple[Lecture, ...] = (
       "parcelle représentative (plus proche du centroïde commune) + jointure DVF↔parcels pour le bloc Marché commune — le robinet fiche commune marché n'est pas dans la liste"),
     L("parcels", "faisabilite/residuel.py", "classe_residuel", "couche_densifier",
       "potentiel résiduel : joint parcels au bâti (niveaux/hauteur) pour taux d'emprise, SDP résiduelle et classe de sous-densité — la classe servie par la couche Densifier l'existant"),
+    L("parcels", "faisabilite/potentiel_batir.py", None, None,
+      "CLASSEMENT-USAGE-1 — JOIN parcels↔(parcel_residuel/constructibilité/au_statut/zone_plu) par idu pour LIRE le « potentiel à bâtir » (SDP restante gatée, zone ouverte/fermée) — jointure de résolution, aucun chiffre du cadastre produit ici"),
     L("parcels", "faisabilite/viabilisation_build.py", None, None,
       "liste des communes et geom des parcelles pour construire la table viabilisation — batch interne"),
     L("parcels", "faisabilite/vue_mer.py", None, None,

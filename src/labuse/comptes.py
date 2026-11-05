@@ -182,21 +182,35 @@ def ensure_tables(db: Session) -> None:
             couches jsonb,
             updated_at timestamptz NOT NULL DEFAULT now()
         )"""))
+    # CLASSEMENT-USAGE-1 — le TRI PAR USAGE des listes/carte (« va_se_vendre » par défaut, ou
+    # « a_construire ») est MÉMORISÉ PAR COMPTE, ici, à côté des autres préférences de carte (même
+    # cycle de vie, même cascade RGPD). Colonne ajoutée en place (installs existantes).
+    db.execute(text("ALTER TABLE prefs_carte ADD COLUMN IF NOT EXISTS tri_usage text"))
     db.commit()
 
 
+#: les deux seuls tris par usage — « va_se_vendre » (défaut, le classement actuel) / « a_construire ».
+TRI_USAGE_DEFAUT = "va_se_vendre"
+TRIS_USAGE = (TRI_USAGE_DEFAUT, "a_construire")
+
+
 def lire_prefs_carte(db: Session, compte_id: int | None) -> dict | None:
-    """COMPTE-2 (Lot 6) — préférences de carte du compte ({basemap, couches}) ou None (jamais posées /
-    pilote). Lues à l'ouverture de l'app pour rouvrir la carte comme le client l'avait laissée."""
+    """COMPTE-2 (Lot 6) — préférences de carte du compte ({basemap, couches, tri_usage}) ou None
+    (jamais posées / pilote). Lues à l'ouverture de l'app pour rouvrir la carte comme le client
+    l'avait laissée — y compris son tri par usage (CLASSEMENT-USAGE-1)."""
     if compte_id is None:
         return None
-    r = db.execute(text("SELECT basemap, couches FROM prefs_carte WHERE compte_id = :c"),
+    r = db.execute(text("SELECT basemap, couches, tri_usage FROM prefs_carte WHERE compte_id = :c"),
                    {"c": compte_id}).mappings().first()
-    return {"basemap": r["basemap"], "couches": r["couches"]} if r else None
+    if not r:
+        return None
+    return {"basemap": r["basemap"], "couches": r["couches"],
+            "tri_usage": r["tri_usage"] or TRI_USAGE_DEFAUT}
 
 
 def ecrire_prefs_carte(db: Session, compte_id: int, basemap: str | None, couches: dict | None) -> None:
-    """COMPTE-2 (Lot 6) — enregistre (upsert) le fond de carte et les couches actives du compte."""
+    """COMPTE-2 (Lot 6) — enregistre (upsert) le fond de carte et les couches actives du compte.
+    Ne touche PAS `tri_usage` (préférence indépendante, cf. `ecrire_tri_usage`)."""
     import json
     db.execute(text(
         "INSERT INTO prefs_carte (compte_id, basemap, couches) VALUES (:c, :b, CAST(:j AS jsonb))"
@@ -204,6 +218,18 @@ def ecrire_prefs_carte(db: Session, compte_id: int, basemap: str | None, couches
         " updated_at = now()"),
         {"c": compte_id, "b": basemap, "j": json.dumps(couches) if couches is not None else None})
     db.commit()
+
+
+def ecrire_tri_usage(db: Session, compte_id: int, tri_usage: str) -> str:
+    """CLASSEMENT-USAGE-1 — mémorise le tri par usage du compte (upsert, sans toucher basemap/couches).
+    Valeur hors `TRIS_USAGE` → repli silencieux sur le défaut. Renvoie la valeur retenue."""
+    tri = tri_usage if tri_usage in TRIS_USAGE else TRI_USAGE_DEFAUT
+    db.execute(text(
+        "INSERT INTO prefs_carte (compte_id, tri_usage) VALUES (:c, :t)"
+        " ON CONFLICT (compte_id) DO UPDATE SET tri_usage = :t, updated_at = now()"),
+        {"c": compte_id, "t": tri})
+    db.commit()
+    return tri
 
 
 def _norm_email(email: str) -> str:

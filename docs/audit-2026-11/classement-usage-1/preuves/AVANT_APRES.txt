@@ -1,0 +1,23 @@
+==============================================================================
+CLASSEMENT-USAGE-1 — AVANT / APRÈS (run servi q_v20)
+==============================================================================
+
+[Défaut 1] SDP en zone fermée — 97422000AX1253 (2AUe)
+   AVANT  : SDP résiduelle servie = 25426 m²  (stockée sans cause au run)
+   APRÈS  : SDP restante servie   = 0 m²  · Rien à bâtir — Zone fermée à l'urbanisation (2AUe)
+
+[Défaut 3] Avertissement sur parcelle servable non constructible
+   97422000AX1253 : palier='À suivre'
+      AVANT  : aucun avertissement (piège silencieux NU4-D §2.2)
+      APRÈS  : Zone fermée à l'urbanisation (2AUe) — rien à bâtir en l'état.
+   97415000HL0033 : palier='À suivre'
+      AVANT  : aucun avertissement (piège silencieux NU4-D §2.2)
+      APRÈS  : Parcelle non constructible (surface ou reculs insuffisants) — rien à bâtir.
+
+[Tri par usage] Têtes de classement (île entière)
+   « Va se vendre » (défaut  classement actuel) : 432 350 parcelles
+   « À construire » (zone ouverte + SDP > 0)    : 194 344 parcelles
+
+[Top-100 lot D] en tri « À construire » :
+   AVANT  : 100 têtes dont 34 fausses affaires (NU4-D : 22 zone fermée + 12 rien à bâtir)
+   APRÈS  : 66 têtes, toutes réellement constructibles (0 zone fermée, 0 rien à bâtir)

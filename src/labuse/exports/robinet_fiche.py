@@ -476,6 +476,14 @@ def _c_sdp(db, idu, f):
     return round(float(v)) if v is not None else None
 
 
+@extracteur("potentiel_a_batir")
+def _c_potentiel_a_batir(db, idu, f):
+    """CLASSEMENT-USAGE-1 — le « potentiel à bâtir » (SDP restante / zone ouverte-fermée /
+    constructibilité / rien à bâtir), lu par le Copilote depuis le bloc SERVI (règle unique
+    `potentiel_batir`) : il dit « rien à bâtir » / « zone fermée » sans jamais inventer de SDP."""
+    return _nz(f.get("potentiel_a_batir"))
+
+
 #: mémo par session de la fourchette de capacité (une faisabilité par parcelle / document).
 _CAP_MEMO: "WeakKeyDictionary" = WeakKeyDictionary()
 

@@ -411,6 +411,9 @@ export interface Fiche {
   } | null
   // M9 lot 4 : potentiel de transformation (fond de l'ancien outil Mutabilité).
   potentiel_transformation?: PotentielTransformation | null
+  // CLASSEMENT-USAGE-1 : le « potentiel à bâtir » — information À PART (jamais le palier de vente),
+  // servie partout de la même façon (une seule fonction de lecture back `potentiel_batir`).
+  potentiel_a_batir?: PotentielABatir | null
   // M-VIA : indicateur de viabilisation (faisceau de preuves) + gestionnaires (contact admin).
   viabilisation?: Viabilisation | null
   // M88 : assainissement (ANC / tout-à-l'égout) — Sourcé / Sourcé secteur (taux INSEE) / Absent.
@@ -938,6 +941,18 @@ export interface MixiteRegle {
 // (moteur zone_servie, même valeur que le Pré-dossier et la garde SDP résiduelle) : le front lit le
 // verdict de constructibilité au lieu de le dériver par regex sur le libellé de zone.
 export interface ReglementPlu extends Indisponible { zones: ReglementZone[]; disclaimer: string; mixite?: MixiteRegle | null; zone_famille?: string | null; constructible_neuf?: boolean | null; a_cheval?: boolean | null }
+
+// CLASSEMENT-USAGE-1 — le « potentiel à bâtir » servi par le back (faisabilite/potentiel_batir).
+export interface PotentielABatir {
+  sdp_restante_m2: number | null
+  zone_ouverte: boolean | null
+  zone_fam: string | null
+  zone_lib: string | null
+  constructible: boolean | null
+  rien_a_batir: boolean | null
+  motif: string | null
+  libelle: string
+}
 
 export interface PotentielTransformation extends Indisponible {
   niveau: 'fort' | 'modere' | 'faible' | 'nul' | 'indetermine' | 'differe' | 'exclu'

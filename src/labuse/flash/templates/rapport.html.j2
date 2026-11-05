@@ -165,6 +165,12 @@
   {# EXPORTS-1 lot 3 (3.1/3.5) : l'ancien bloc « potentiel indicatif » lisait la table orpheline
      parcel_residuel_bati (bâtisseur retiré, données figées — les « 127 m² » de l'audit A3).
      Remplacé par LE bloc Potentiel unique (faisabilite/potentiel.bloc_potentiel — moteur commun). #}
+  {# CLASSEMENT-USAGE-1 : le « potentiel à bâtir » — information À PART (jamais le palier de vente),
+     SDP restante bornée à 0 en zone fermée, lue par la MÊME fonction que fiche/listes/carte/Copilote. #}
+  {% if c.potentiel_a_batir %}
+  <p class="note"><strong>Potentiel à bâtir :</strong> {{ c.potentiel_a_batir.libelle }}
+     {%- if c.potentiel_a_batir.zone_ouverte is false %} · zone fermée à l'urbanisation{% endif %}</p>
+  {% endif %}
   {% if c.potentiel %}
   <h3>Potentiel constructible</h3>
   <table class="donnees">

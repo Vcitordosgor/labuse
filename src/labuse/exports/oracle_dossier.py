@@ -46,6 +46,8 @@ ORACLE: dict[str, tuple[str, ...]] = {
     "ban_plus_adresses_bati": ("le_bien.adresses_bati.adresses", "le_bien.adresses_bati.liens"),
     "potentiel_verdict": ("potentiel_transformation.niveau", "potentiel_transformation.libelle"),
     "sdp_residuelle_m2": ("potentiel_transformation.sdp_residuelle_m2",),
+    # CLASSEMENT-USAGE-1 — le « potentiel à bâtir » (bloc du payload /parcels, lu par potentiel_batir).
+    "potentiel_a_batir": ("potentiel_a_batir.sdp_restante_m2", "potentiel_a_batir.libelle"),
     "surface_plancher_m2": ("potentiel_transformation.surface_plancher_m2",),
     "surface_vendable_m2": ("potentiel_transformation.surface_vendable_m2",),
     "marge_surelevation_m": ("potentiel_transformation.hauteur_marge_m",),

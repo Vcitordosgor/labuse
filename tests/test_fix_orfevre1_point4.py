@@ -299,7 +299,8 @@ def _req(cookies: dict | None = None):
 def test_orf21_prefs_carte_mode_local_200():
     from labuse.api.onboarding import moi_prefs_carte_get, moi_prefs_carte_set
     out = moi_prefs_carte_get(_req(), db=None)           # aucun cookie = mode local (comme /moi)
-    assert out == {"basemap": None, "couches": None, "mode": "local"}
+    # CLASSEMENT-USAGE-1 — le tri par usage est servi aussi en mode local (défaut « va_se_vendre »).
+    assert out == {"basemap": None, "couches": None, "tri_usage": "va_se_vendre", "mode": "local"}
     out = moi_prefs_carte_set({"basemap": "ortho"}, _req(), db=None)
     assert out == {"ok": True, "mode": "local"}
 

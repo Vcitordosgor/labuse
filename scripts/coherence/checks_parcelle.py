@@ -135,15 +135,22 @@ CHECKS: list[tuple] = [
         # forêt publique, DPF, domaine inacquérable…) ET que la cause résiduelle est nulle ET sdp>0,
         # la fiche sert ∅ (« une seule notion, une seule valeur : le scoring prime »). L'ancien jumeau
         # n'appliquait que la porte (1) → il servait 77 là où la fiche sert ∅ (parcelle inacquérable).
-        ("sql:parcel_residuel.sdp_residuelle_m2 (portes fiche : cause + scoring)",
+        # CLASSEMENT-USAGE-1 — 3e porte : ZONE FERMÉE au verdict (constructibilité declasse_zone_fermee/
+        # non_constructible OU statut AU différé) → ∅, comme la fiche (_potentiel_transformation_block
+        # défère à potentiel_batir) et la tuile (tiles.py). Cas 97422000AX1253 (2AUe) + pareilles.
+        ("sql:parcel_residuel.sdp_residuelle_m2 (portes fiche : cause + scoring + zone fermée)",
          _sql("SELECT CASE "
               "WHEN r.cause IS NOT NULL AND NOT (r.cause = 'terrain_exigu' "
               "  OR r.cause LIKE 'zone_non_constructible%%' OR r.cause LIKE 'habitat_interdit%%' "
               "  OR r.cause = 'redhibitoire' OR r.cause = 'capacite_nulle') THEN NULL "
               "WHEN r.cause IS NULL AND sl.cause IS NOT NULL AND r.sdp_residuelle_m2 > 0 THEN NULL "
+              "WHEN r.cause IS NULL AND COALESCE(pc.label IN ('declasse_zone_fermee','declasse_non_constructible'), false) "
+              "  AND NOT COALESCE(au.classe IN ('declasse_au_fermee','declasse_au_statut_inconnu','générique'), false) THEN NULL "
               "ELSE r.sdp_residuelle_m2 END "
               "FROM parcel_residuel r JOIN parcels p ON p.id=r.parcel_id "
               "LEFT JOIN score_labuse sl ON sl.parcel_id=p.id AND sl.run_label=%(run)s "
+              "LEFT JOIN parcel_constructibilite pc ON pc.parcel_id=p.id "
+              "LEFT JOIN parcel_au_statut au ON au.parcel_id=p.id "
               "WHERE p.idu=%(idu)s")),
         ("tuile:sdp_residuelle_m2", _tuile("sdp_residuelle_m2")),
     ], "run_different"),
