@@ -129,15 +129,39 @@ Corriger, **à la source**, les trouvailles des lots A et B de la chasse (`audit
 | B-3 Estimer == fiche (direct, `labuse` q_v20) | ER0783 **4 265 = 4 265** ✓ |
 | Tests de piste (base isolée) : B-2, B-4, m4, m6, B-5/B-6/m5/m7 | **86 passés / 1 skip** |
 | Suite Copilote complète (fork) | **206 passés, 13 skips, 0 échec** |
+| **Banc complet ensemencé** (`labuse_test`, `-m "not network"`) | **4 524 passés · 91 skips · 10 échecs** (38 min) → triés ci-dessous |
+
+### Banc complet — triage des 10 échecs (aucune régression nette de mes changements)
+Le banc a été joué dès que la session voisine a libéré la base ; chaque échec a été **rejoué en
+isolation** pour écarter la pollution de concurrence (base partagée mutée par les sessions sœurs).
+- **`test_reparations1_lot2::test_graphe_exact_dans_les_deux_sens`** — **la seule vraie régression** :
+  B-6 lisait `parcels` dans `resume_fiche.py` sans déclarer l'arête au registre → **corrigé**
+  (`registre/lectures.py`, commit `37f11d474`), **4/4 verts**.
+- **`test_copilote3_verdicts` (copro RNIC)** — passe en **isolation** (`degraded=None`, « Oui, en
+  copropriété — 9 lots RNIC ») : l'échec du banc = artefact de concurrence, pas B-5/B-6.
+- **`test_circuit_p3_lot2`, `test_simulplu`** — flaky : verts en isolation.
+- **`test_api::test_m137_tuiles`** — `relation "score_labuse" does not exist` : le `LEFT JOIN
+  score_labuse` **pré-existe** mon changement (mon A-2 n'ajoute qu'un `WHERE` valide) ; artefact de
+  base de test non scorée. Échoue à l'identique sans mes changements.
+- **`test_circuit_p3_lot3::coherence_globale`, `test_autonomie_1_db::controler_run`, `verrous/g7`,
+  `verrous/lot1_tables`** — **communs** avec le banc de la session voisine (qui n'a AUCUN de mes
+  changements) → pré-existants / dépendants de l'environnement (coherence pas « fraîche » dans la base,
+  sonde réseau, verrous sur base réelle).
+- **`test_circuit_p_lot1::rapides`** — test de **durée** (`perf_counter`), flaky sous charge.
+
+**Conclusion** : une seule régression imputable à la série (B-6, arête non déclarée) → corrigée et
+vérifiée. Les 9 autres échecs sont pré-existants, environnementaux ou flaky (rejoués verts en
+isolation ou partagés avec un banc dépourvu de mes changements).
 
 **Rouge avant / vert après** : chaque trouvaille porte une repro (test ou preuve SQL/direct) : m4
 (`mot != "confirmée"`), m6 (compte 47 d'une liste de 47), A-1/A-2 (comptage), B-2/B-4/B-5/B-6 (tests
 dédiés), B-3 (ER0783 4747→4265).
 
 ### Dettes de recette (restantes)
-- **Banc complet 0 rouge + suite de cohérence** sur le `labuse_test` **ensemencé** : à jouer dès que la
-  session voisine libère cette base (jouer le banc sur une base **vide** n'est pas représentatif — les
-  tests dépendants des données skippent/échouent, comme vu). Puis **commit**.
+- **Banc complet** : joué (4 524 passés), triage ci-dessus — la seule régression (B-6) corrigée. Reste
+  à **rejouer en fin de soirée hors concurrence** pour un « 0 rouge » net une fois que la base de test
+  n'est plus mutée par les sessions sœurs (les 9 échecs résiduels sont pré-existants/env/flaky, pas mes
+  changements) — et que `score_labuse` est présent dans la base de test (fragilité pré-existante).
 - **`build-mvt`** local + prod (go Vic) : matérialise le plancher anti-sliver dans `mvt_parcels` ;
   différé par convention (la preuve compteur==carte est indépendante du rebuild).
 - **Prod contre local (reste du lot A)** : après 05 h Réunion, rejouer `harness-cross-surface.py`
