@@ -1,0 +1,35 @@
+======================================================================
+TOP-100 (les mieux classées par rang, run servi q_v20)
+======================================================================
+Label CLIENT servi : {'À suivre': 92, 'Écartée': 8}
+
+Répartition promoteur :
+    66  AFFAIRE_PLAUSIBLE
+    20  SDP_RESIDUELLE_NULLE
+     8  ECARTEE_DANS_LE_RANG
+     6  NON_CONSTRUCTIBLE_PALIER_MAINTENU
+
+   => FAUSSES BONNES AFFAIRES : 34 / 100
+   => AFFAIRES PLAUSIBLES     : 66 / 100  (taux de pertinence 66%)
+
+   Parmi les 26 fausses affaires SERVIES en « À suivre » :
+      13 avec avertissement (déclassée/motif bâti saturé)
+      13 SANS aucun avertissement (piège silencieux)
+
+   Réserves sur les 66 plausibles : 11 en zone AU sous condition d'opération ;
+      24 sans accès propriétaire (ni SIREN ni adresse BAN).
+
+======================================================================
+BOTTOM-100 (100 au sort dans « Écartée », md5 déterministe)
+======================================================================
+Label CLIENT servi : {'Écartée': 100}
+Zone : {'AU': 1, 'U': 23, 'A': 54, 'N': 21, '': 1}
+Toutes ont un motif de cascade (HARD_EXCLUDE) : True
+
+Candidats « vraie affaire » (U/AU + SDP résiduelle>0) : 3
+   97416000ER0385 Saint-Pierre UD sdp=1710 -> exclu osm_faux_positif
+   97411000CH0196 Saint-Denis UH sdp=31 -> exclu risques
+   97411000IB0044 Saint-Denis UM sdp=62 -> exclu emprise_routiere
+   (tous vérifiés correctement exclus : PPR rouge 64% / emprise routière / foncier hospitalier public)
+
+   => VRAIES AFFAIRES mal écartées : 0 / 100  (étage 0 fiable sur l'échantillon)

@@ -1,0 +1,101 @@
+idu,tier,rang,p_raw,copro,event_date,mult_base,potentiel_sdp_m2,prix_commune_m2,valeur_creee,indice_opportunite,acces_pm_siren,acces_courrier,commune,surface_dessin,contenance,zone_fam,zone_lib,zone_filtre,sdp_resid,taux_emprise,sous_densite,resid_cause,pct_potentiel,constr_label,constr_motif,au_classe,bati_revele,filtre_bati,bati_ratio,pente_moy,pente_lourde,exclu_layers
+97415000CY1040,ecartee,5157,0.0437,f,,3.21,0,2964,0,0,f,f,Saint-Paul,25,26,AU,AU2c,AU2C,0,,,terrain_exigu,,,,conditionnelle_operation,,,,17.6,t,emprise_lineaire|surface
+97409000BE2180,ecartee,9094,0.0405,f,,2.97,0,1827,0,0,t,f,Saint-André,8,8,U,UB,UB,0,,,terrain_exigu,,,,,,,,8.3,f,surface
+97411000AZ0690,ecartee,21928,0.0386,f,,2.83,0,2688,0,0,t,f,Saint-Denis,68,69,U,Ud,UD,0,,,terrain_exigu,,,,,,,,3.8,f,emprise_lineaire
+97411000HO0740,ecartee,32099,0.0264,f,,1.94,0,2688,0,0,f,f,Saint-Denis,14,14,U,Um,UM,0,,,terrain_exigu,,,,,,,,10.5,f,emprise_lineaire|surface
+97408000AT2070,ecartee,38673,0.0217,f,,1.59,0,3417,0,0,f,f,La Possession,4,4,U,UB,UB,0,,,terrain_exigu,,,,,,,,35.4,t,emprise_lineaire|surface
+97416000HI0243,ecartee,43276,0.0195,f,,1.43,0,3354,0,0,f,t,Saint-Pierre,7888,7981,A,A,A,0,,,zone_non_constructible:A,,,,,,servie,9.72665509295587,22.5,t,dpf|risques|zonage_plu_gpu
+97416000ER0385,ecartee,73798,0.0173,f,,1.27,1710,3354,5734756,98.6,t,f,Saint-Pierre,1283,1296,U,Ud,UD,1710,4.0,t,,2.00,,,,adjudication,servie,2.549222280657841,1.2,f,osm_faux_positif
+97411000IR0368,ecartee,75826,0.0173,f,,1.27,0,2688,0,0,f,t,Saint-Denis,57554,58210,U,Uma,UMA,0,,,terrain_exigu,,,,,,divisible,16.71976097192548,7.2,t,prescription_plu
+97413000AH0071,ecartee,82363,0.0173,f,,1.27,0,3370,0,0,f,f,Saint-Leu,38031,38150,N,N,N,0,,,zone_non_constructible:N,,,,,,,,21.2,t,risques
+97410000BH0170,ecartee,82855,0.0173,f,,1.27,0,1762,0,0,f,f,Saint-Benoît,1466,1484,A,A,A,0,,,zone_non_constructible:A,,,,,,,,5.4,f,safer|zonage_plu_gpu
+97402000AH0754,ecartee,84278,0.0173,f,,1.27,0,2109,0,0,t,f,Bras-Panon,91,84,U,Uba,UBA,0,,,terrain_exigu,,,,,,,,1.9,f,emprise_lineaire
+97414000DI0423,ecartee,86272,0.0173,f,,1.27,0,2295,0,0,t,f,Saint-Louis,423,429,U,UA,UA,0,,,terrain_exigu,,,,,,saturee,35.715805576834775,2.4,f,risques
+97405000AH0802,ecartee,90431,0.0173,f,,1.27,0,2162,0,0,t,f,Petite-Île,696,697,A,A,A,0,,,zone_non_constructible:A,,,,,,,,38.3,t,risques|zonage_plu_gpu
+97414000DN0312,ecartee,95812,0.0173,f,,1.27,0,2295,0,0,t,f,Saint-Louis,4254,4310,N,Nco,NCO,0,,,zone_non_constructible:Nco,,,,,adjudication,servie,0.6957558780740368,7.7,f,risques|zonage_plu_gpu
+97409000BL0111,ecartee,95869,0.0173,f,,1.27,0,1827,0,0,t,t,Saint-André,3050,3166,A,A,A,0,,,zone_non_constructible:A,,,,,,saturee,21.08518590738747,9.0,f,zonage_plu_gpu
+97422000AB0043,ecartee,96714,0.0173,f,,1.27,0,2265,0,0,t,f,Le Tampon,22758,22250,A,A,A,0,,,zone_non_constructible:A,,,,,,,,4.8,f,zonage_plu_gpu
+97424000AR0097,ecartee,106863,0.0173,f,,1.27,0,1800,0,0,f,f,Cilaos,1967,2000,N,N,N,0,,,zone_non_constructible:N,,,,,,,,37.6,t,dpf|foret_publique|risques|zonage_plu_gpu
+97415000AR0003,ecartee,107595,0.0173,f,,1.27,0,2964,0,0,t,f,Saint-Paul,310382,311200,N,N,N,0,,,zone_non_resolue:N,,,,,,,,19.9,t,dpf|foret_publique|risques|zonage_plu_gpu
+97408000AT1392,ecartee,114492,0.0168,f,,1.23,0,3417,0,0,f,f,La Possession,3,5,U,UB,UB,0,,,terrain_exigu,,,,,,,,7.8,f,surface
+97404000AE1377,ecartee,155297,0.0132,f,,0.97,0,3793,0,0,f,f,L'Étang-Salé,310,310,U,UC,UC,0,,,terrain_exigu,,,,,,,,11.8,f,emprise_routiere
+97412000BY1025,ecartee,155948,0.0132,f,,0.97,0,2031,0,0,f,f,Saint-Joseph,23,13,U,U5,U5,0,,,terrain_exigu,,,,,,,,15.4,t,emprise_lineaire|surface
+97411000CH0196,ecartee,157423,0.0132,f,,0.97,31,2688,83331,68.1,f,f,Saint-Denis,765,775,U,Uh,UH,31,0.0,t,,0.00,,,,,,,19.5,t,risques
+97411000IB0044,ecartee,169558,0.0123,f,,0.90,62,2688,166662,71.6,f,f,Saint-Denis,1015,1031,U,Um,UM,62,0.0,t,,0.00,,,,,,,8.4,f,emprise_routiere
+97422000CS0458,ecartee,171900,0.0117,f,,0.86,0,2265,0,0,f,t,Le Tampon,717,630,U,Uc,UC,0,,,terrain_exigu,,,,,,servie,9.938850513868346,24.2,t,risques
+97418000AI0265,ecartee,205509,0.0116,f,,0.86,0,2182,0,0,t,f,Sainte-Marie,95005,94875,A,A,A,0,,,zone_non_constructible:A,,,,,,,,7.9,f,zonage_plu_gpu
+97413000AC0783,ecartee,205699,0.0116,f,,0.86,0,3370,0,0,t,f,Saint-Leu,39569,40307,A,A,A,0,,,zone_non_constructible:A,,,,,,servie,0.08918124307924537,15.1,t,zonage_plu_gpu
+97423000AL0191,ecartee,205743,0.0116,f,,0.86,0,3243,0,0,f,f,Les Trois-Bassins,33907,33782,N,N,N,0,,,zone_non_constructible:N,,,,,,,,22.6,t,dpf|foret_publique|zonage_plu_gpu
+97415000DS0155,ecartee,208836,0.0116,f,,0.86,0,2964,0,0,f,f,Saint-Paul,2154,2146,A,A,A,0,,,terrain_exigu,,,,,,,,10.1,f,zonage_plu_gpu
+97411000HK0106,ecartee,211652,0.0116,f,,0.85,0,2688,0,0,f,f,Saint-Denis,284,275,U,Ui,UI,0,,,terrain_exigu,,,,,,,,33.4,t,risques
+97411000DH0192,ecartee,214963,0.0116,f,,0.85,0,2688,0,0,f,f,Saint-Denis,1,1,U,Ui,UI,0,,,terrain_exigu,,,,,,,,6.7,f,surface
+97409000AL1354,ecartee,215240,0.0116,f,,0.85,0,1827,0,0,f,f,Saint-André,199,210,U,UB,UB,0,,,terrain_exigu,,,,,,,,2.5,f,emprise_lineaire|emprise_routiere
+97404000AI0210,ecartee,216908,0.0116,f,,0.85,0,3793,0,0,f,f,L'Étang-Salé,66,67,U,UC,UC,0,,,terrain_exigu,,,,,,,,4.9,f,risques
+97413000BW0384,ecartee,224353,0.0116,f,,0.85,0,3370,0,0,f,f,Saint-Leu,132,130,N,NSC,NSC,0,,,zone_non_constructible:NSC,,,,,,,,8.5,f,zonage_plu_gpu
+97403000AP0237,ecartee,224492,0.0116,f,,0.85,0,2365,0,0,f,f,Entre-Deux,245,260,N,N,N,0,,,terrain_exigu,,,,,,,,24.3,t,zonage_plu_gpu
+97405000AD0063,ecartee,224868,0.0116,f,,0.85,0,2162,0,0,f,f,Petite-Île,923,930,A,A,A,0,,,zone_non_constructible:A,,,,,,,,24.7,t,risques|zonage_plu_gpu
+97413000DF0105,ecartee,236370,0.0107,f,,0.78,0,3370,0,0,f,f,Saint-Leu,768,754,U,UD,UD,0,,,terrain_exigu,,,,,,,,9.6,t,risques
+97410000AS1085,ecartee,236635,0.0107,f,,0.78,0,1762,0,0,f,f,Saint-Benoît,914,974,N,N,N,0,,,terrain_exigu,,,,,,,,5.3,f,risques|zonage_plu_gpu
+97405000AO0522,ecartee,240643,0.0107,f,,0.78,0,2162,0,0,f,f,Petite-Île,58,60,A,A,A,0,,,zone_non_constructible:A,,,,,,,,11.8,f,zonage_plu_gpu
+97403000AP1395,ecartee,241109,0.0107,f,,0.78,0,2365,0,0,f,f,Entre-Deux,433,439,N,N,N,0,,,terrain_exigu,,,,,,,,24.8,t,risques|zonage_plu_gpu
+97406000AW0932,ecartee,242064,0.0107,f,,0.78,0,2000,0,0,f,f,La Plaine-des-Palmistes,634,634,A,A,A,0,,,terrain_exigu,,,,,,,,10.6,f,zonage_plu_gpu
+97409000AX0858,ecartee,243784,0.0107,f,,0.78,0,1827,0,0,f,f,Saint-André,1362,1370,A,A,A,0,,,terrain_exigu,,,,,,,,1.9,f,emprise_routiere
+97424000AM0168,ecartee,243966,0.0107,f,,0.78,0,1800,0,0,f,f,Cilaos,4938,4976,A,A,A,0,,,zone_non_constructible:A,,,,,,,,26.8,t,foret_publique|risques|zonage_plu_gpu
+97404000AX0316,ecartee,255383,0.0099,f,,0.73,0,3793,0,0,f,t,L'Étang-Salé,146,146,U,UA,UA,0,,,terrain_exigu,,,,,,saturee,38.321892880246466,3.3,f,emprise_lineaire
+97410000AK0430,ecartee,280287,0.0093,f,,0.68,0,1762,0,0,f,t,Saint-Benoît,116,117,U,Ua,UA,0,,,terrain_exigu,,,,,,saturee,66.10759450611188,1.2,f,risques
+97412000BR0351,ecartee,289267,0.0084,f,,0.61,0,2031,0,0,f,t,Saint-Joseph,414,412,U,U3a,U3A,0,,,terrain_exigu,,,,,,saturee,43.18648805720404,18.2,t,risques
+97414000EW0154,ecartee,289556,0.0084,f,,0.61,0,2295,0,0,f,t,Saint-Louis,279,271,U,UC,UC,0,,,terrain_exigu,,,,,,saturee,86.40174745745703,7.7,f,risques
+97409000AX0696,ecartee,301851,0.0084,f,,0.61,0,1827,0,0,f,f,Saint-André,715,726,A,A,A,0,,,zone_non_constructible:A,,,,,,saturee,25.998739315311962,3.2,f,risques|zonage_plu_gpu
+97410000AY0090,ecartee,301886,0.0084,f,,0.61,0,1762,0,0,f,t,Saint-Benoît,676,763,A,A,A,0,,,zone_non_constructible:A,,,,,,servie,5.445418619283285,10.7,f,zonage_plu_gpu
+97418000AP0574,ecartee,324689,0.0083,f,,0.61,0,2182,0,0,f,t,Sainte-Marie,397,292,N,N,N,0,,,zone_non_constructible:N,,,,,,servie,5.208474064602364,10.9,f,prescription_plu|risques|zonage_plu_gpu
+97416000CV0123,ecartee,330958,0.0083,f,,0.61,0,3354,0,0,f,t,Saint-Pierre,2645,2495,A,A,A,0,,,zone_non_constructible:A,,,,,,saturee,43.639235982146054,4.8,f,zonage_plu_gpu
+97417000BC0831,ecartee,333499,0.0083,f,,0.61,,1729,,,f,t,Saint-Philippe,1374,1348,,,,,,,hors_plu,,,,,,saturee,16.923048942164293,4.3,f,foret_publique
+97420000BH1305,ecartee,339105,0.0070,f,,0.51,0,2078,0,0,f,t,Sainte-Suzanne,335,319,A,A,A,0,,,zone_non_constructible:A,,,,,,saturee,59.809071066611644,8.4,f,dpf|zonage_plu_gpu
+97415000ER0884,ecartee,339783,0.0070,f,,0.51,0,2964,0,0,f,t,Saint-Paul,541,557,A,A,A,0,,,zone_non_resolue:A,,,,,,saturee,42.15739058884121,13.3,f,zonage_plu_gpu
+97405000AY0787,ecartee,339975,0.0070,f,,0.51,0,2162,0,0,f,f,Petite-Île,184,184,A,A,A,0,,,zone_non_constructible:A,,,,,,saturee,98.5013153444051,10.5,f,zonage_plu_gpu
+97412000AO0013,ecartee,349559,0.0070,f,,0.51,0,2031,0,0,f,t,Saint-Joseph,1069,1046,A,A,A,0,,,zone_non_constructible:A,,,,,adjudication,servie,1.9275595306075506,3.5,f,zonage_plu_gpu
+97415000DT0648,ecartee,351015,0.0070,f,,0.51,0,2964,0,0,f,t,Saint-Paul,1468,1447,A,A,A,0,,,zone_non_resolue:A,,,,,,saturee,17.85906308311791,11.6,f,zonage_plu_gpu
+97422000CZ0275,ecartee,352591,0.0070,f,,0.51,0,2265,0,0,f,t,Le Tampon,3159,3085,N,Nco,NCO,0,,,zone_non_constructible:Nco,,,,,,servie,4.84867792958351,6.0,f,zonage_plu_gpu
+97422000DO0506,ecartee,353091,0.0070,f,,0.51,0,2265,0,0,f,f,Le Tampon,2640,2548,N,Nco,NCO,0,,,zone_non_constructible:Nco,,,,,,servie,8.365357298700406,11.5,f,zonage_plu_gpu
+97421000BM0557,ecartee,354007,0.0070,f,,0.51,0,1542,0,0,f,t,Salazie,1993,1998,A,A,A,0,,,zone_non_constructible:A,,,,,,saturee,15.953015359729383,18.7,t,risques|zonage_plu_gpu
+97405000AM0825,ecartee,355381,0.0070,f,,0.51,0,2162,0,0,f,t,Petite-Île,1341,1342,A,A,A,0,,,zone_non_constructible:A,,,,,,saturee,32.766424733178674,20.6,t,risques|zonage_plu_gpu
+97416000HM0118,ecartee,358447,0.0070,f,,0.51,0,3354,0,0,f,t,Saint-Pierre,1703,1636,A,A,A,0,,,terrain_exigu,,,,,,saturee,69.8730501043753,5.1,f,zonage_plu_gpu
+97422000AS0136,ecartee,368815,0.0070,f,,0.51,0,2265,0,0,f,f,Le Tampon,32688,33150,A,A,A,0,,,zone_non_constructible:A,,,,,,servie,1.1667205184600282,15.4,t,zonage_plu_gpu
+97418000AT0387,ecartee,368892,0.0070,f,,0.51,0,2182,0,0,f,t,Sainte-Marie,25580,25783,A,A,A,0,,,zone_non_constructible:A,,,,,,servie,1.3001228731275847,12.0,t,zonage_plu_gpu
+97421000BM0479,ecartee,371558,0.0068,f,,0.50,0,1542,0,0,f,t,Salazie,1702,1769,A,A,A,0,,,zone_non_constructible:A,,,,,,servie,14.202231877016539,11.1,f,risques|zonage_plu_gpu
+97422000AZ0351,ecartee,372686,0.0068,f,,0.50,0,2265,0,0,f,t,Le Tampon,6969,6968,N,Nco,NCO,0,,,zone_non_constructible:Nco,,,,,,servie,8.01418222974327,17.2,t,risques|zonage_plu_gpu
+97412000CI0073,ecartee,374414,0.0068,f,,0.50,0,2031,0,0,f,f,Saint-Joseph,15759,15710,A,A,A,0,,,zone_non_constructible:A,,,,,,servie,0.6253178272008078,17.6,t,zonage_plu_gpu
+97402000AH0381,ecartee,374618,0.0068,f,,0.50,0,2109,0,0,f,t,Bras-Panon,15011,15080,A,A,A,0,,,terrain_exigu,,,,,,saturee,19.76475513434019,2.3,f,zonage_plu_gpu
+97414000CO0265,ecartee,376359,0.0061,f,,0.45,0,2295,0,0,f,f,Saint-Louis,45,46,A,A,A,0,,,zone_non_constructible:A,,,,,,,,13.4,f,zonage_plu_gpu
+97422000DZ0145,ecartee,376656,0.0061,f,,0.45,0,2265,0,0,f,f,Le Tampon,5,5,N,Nto5,NTO5,0,,,zone_non_constructible:Nto5,,,,,,,,7.0,f,surface|zonage_plu_gpu
+97413000DK0061,ecartee,379158,0.0061,f,,0.45,0,3370,0,0,f,f,Saint-Leu,774,795,A,APF,APF,0,,,zone_non_constructible:APF,,,,,,,,12.4,f,zonage_plu_gpu
+97412000AX0353,ecartee,379357,0.0061,f,,0.45,0,2031,0,0,f,f,Saint-Joseph,717,686,A,A,A,0,,,zone_non_constructible:A,,,,,,,,9.4,f,zonage_plu_gpu
+97412000BZ0383,ecartee,379564,0.0061,f,,0.45,0,2031,0,0,f,f,Saint-Joseph,663,638,A,A,A,0,,,zone_non_constructible:A,,,,,,,,7.1,f,zonage_plu_gpu
+97405000AE0688,ecartee,379701,0.0061,f,,0.45,0,2162,0,0,f,f,Petite-Île,625,678,N,N,N,0,,,zone_non_constructible:N,,,,,,,,28.3,t,risques|zonage_plu_gpu
+97414000HI0401,ecartee,384994,0.0061,f,,0.45,0,2295,0,0,f,f,Saint-Louis,5304,5225,A,A,A,0,,,zone_non_constructible:A,,,,,,,,5.7,t,zonage_plu_gpu
+97421000BN0191,ecartee,386024,0.0061,f,,0.45,0,1542,0,0,f,f,Salazie,408,400,A,A,A,0,,,zone_non_constructible:A,,,,,,,,23.6,t,risques|zonage_plu_gpu
+97419000AM0090,ecartee,386120,0.0061,f,,0.45,0,686,0,0,f,f,Sainte-Rose,373,275,N,Ntvb,NTVB,0,,,zone_non_constructible:Ntvb,,,,,,,,21.0,t,emprise_lineaire|prescription_plu|risques|zonage_plu_gpu
+97413000CC0225,ecartee,387221,0.0061,f,,0.45,0,3370,0,0,f,t,Saint-Leu,161,124,A,AD,AD,0,,,zone_non_constructible:AD,,,,,,,,25.6,t,zonage_plu_gpu
+97410000AM0319,ecartee,388286,0.0061,f,,0.45,0,1762,0,0,f,f,Saint-Benoît,244,252,N,N,N,0,,,terrain_exigu,,,,,,,,28.5,t,eau|risques|zonage_plu_gpu
+97415000AS1245,ecartee,388663,0.0061,f,,0.45,0,2964,0,0,f,f,Saint-Paul,750,731,A,A,A,0,,,zone_non_resolue:A,,,,,,,,11.2,f,zonage_plu_gpu
+97415000AS0233,ecartee,388732,0.0061,f,,0.45,0,2964,0,0,f,f,Saint-Paul,626,640,A,A,A,0,,,zone_non_resolue:A,,,,,,,,13.5,f,zonage_plu_gpu
+97413000BH1019,ecartee,392051,0.0061,f,,0.45,0,3370,0,0,f,f,Saint-Leu,1099,1098,A,APF,APF,0,,,zone_non_constructible:APF,,,,,,,,16.9,t,risques|safer|zonage_plu_gpu
+97421000AE0323,ecartee,392383,0.0061,f,,0.45,0,1542,0,0,f,f,Salazie,1036,1029,A,A,A,0,,,zone_non_constructible:A,,,,,,,,10.4,f,risques|zonage_plu_gpu
+97405000AZ0292,ecartee,393795,0.0061,f,,0.45,0,2162,0,0,f,f,Petite-Île,1126,1151,A,A,A,0,,,terrain_exigu,,,,,,,,7.4,f,zonage_plu_gpu
+97412000CE0305,ecartee,396976,0.0061,f,,0.45,0,2031,0,0,f,f,Saint-Joseph,2729,2837,A,A,A,0,,,zone_non_constructible:A,,,,,,,,14.1,f,safer|zonage_plu_gpu
+97405000AR0695,ecartee,402017,0.0061,f,,0.45,0,2162,0,0,f,f,Petite-Île,1300,1292,A,Ae,AE,0,,,zone_non_constructible:Ae,,,,,,,,7.8,f,zonage_plu_gpu
+97421000BE0049,ecartee,403110,0.0061,f,,0.45,0,1542,0,0,f,f,Salazie,2730,2650,N,N,N,0,,,terrain_exigu,,,,,,,,19.0,t,dpf|risques|zonage_plu_gpu
+97412000AY0307,ecartee,406183,0.0061,f,,0.45,0,2031,0,0,f,f,Saint-Joseph,6594,6548,A,A,A,0,,,zone_non_constructible:A,,,,,,,,14.0,t,safer|zonage_plu_gpu
+97405000AW0227,ecartee,408101,0.0061,f,,0.45,0,2162,0,0,f,f,Petite-Île,6562,6580,A,A,A,0,,,terrain_exigu,,,,,,,,7.2,f,zonage_plu_gpu
+97415000ER0932,ecartee,408126,0.0061,f,,0.45,0,2964,0,0,f,f,Saint-Paul,6211,6000,A,A,A,0,,,terrain_exigu,,,,,,,,4.8,f,zonage_plu_gpu
+97415000AR0144,ecartee,408871,0.0061,f,,0.45,0,2964,0,0,f,f,Saint-Paul,27376,27178,N,N,N,0,,,zone_non_resolue:N,,,,,,,,20.2,t,parc_national|prescription_plu|risques|zonage_plu_gpu
+97415000CE0031,ecartee,408916,0.0061,f,,0.45,0,2964,0,0,f,f,Saint-Paul,19545,19263,A,A,A,0,,,zone_non_resolue:A,,,,,,,,12.2,f,zonage_plu_gpu
+97410000CD0436,ecartee,409742,0.0061,f,,0.45,0,1762,0,0,f,f,Saint-Benoît,28986,28786,A,A,A,0,,,zone_non_constructible:A,,,,,,,,7.2,t,parc_national|safer|zonage_plu_gpu
+97422000DE0755,ecartee,411929,0.0056,f,,0.41,0,2265,0,0,f,f,Le Tampon,1842,1869,A,A,A,0,,,zone_non_constructible:A,,,,,,saturee,73.82085203460775,4.7,f,zonage_plu_gpu
+97421000BN0236,ecartee,415039,0.0056,f,,0.41,0,1542,0,0,f,t,Salazie,20325,20505,A,A,A,0,,,zone_non_constructible:A,,,,,,servie,6.3201667678627365,15.7,t,risques|zonage_plu_gpu
+97405000BC0282,ecartee,416171,0.0045,f,,0.33,0,2162,0,0,f,f,Petite-Île,1143,1105,A,A,A,0,,,zone_non_constructible:A,,,,,,,,9.5,f,zonage_plu_gpu
+97424000AC0263,ecartee,418190,0.0045,f,,0.33,0,1800,0,0,f,f,Cilaos,6590,6550,A,A,A,0,,,zone_non_constructible:A,,,,,,,,18.3,t,foret_publique|parc_national|risques|zonage_plu_gpu
+97412000CY0646,ecartee,419614,0.0045,f,,0.33,0,2031,0,0,f,f,Saint-Joseph,16727,16795,N,Nli,NLI,0,,,zone_non_constructible:Nli,,,,,,,,29.0,t,prescription_plu|risques|zonage_plu_gpu
+97419000AK0762,ecartee,421303,0.0033,f,,0.24,0,686,0,0,f,f,Sainte-Rose,1175,1213,A,A,A,0,,,zone_non_constructible:A,,,,,,,,8.7,f,zonage_plu_gpu
+97410000BO0198,ecartee,424837,0.0028,f,,0.21,0,1762,0,0,f,f,Saint-Benoît,12172,12198,A,A,A,0,,,zone_non_constructible:A,,,,,,,,4.2,f,zonage_plu_gpu
+97415000AM0079,ecartee,425837,0.0003,f,,0.03,0,2964,0,0,t,f,Saint-Paul,3219,3000,N,Ni,NI,0,,,zone_non_resolue:Ni,,,,,,,,9.8,f,foret_publique|parc_national|zonage_plu_gpu
