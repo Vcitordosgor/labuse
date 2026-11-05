@@ -65,6 +65,24 @@ rsync -a --rsync-path="sudo rsync" -R \
   "$HOST":/opt/labuse/app/
 ssh -o BatchMode=yes "$HOST" 'sudo chown -R labuse:labuse /opt/labuse/app'
 
+echo "── 1b. rotation automatique des filets de déploiement (OPS-URGENCE-2) ──"
+# Les filets `cp -al` (app-avant-<tag> / venv-avant-<tag>) posés AVANT ce déploiement s'accumulaient
+# (10 le 05/11, le disque a frôlé 95 %). On NE garde que les N plus récents (le filet de CE
+# déploiement — le plus récent — + une marge de retour arrière). Journaux : voir logrotate + le cap
+# journald posés sur le VPS (mandat Vic). KEEP surchargeable par LABUSE_FILETS_KEEP.
+FILETS_KEEP="${LABUSE_FILETS_KEEP:-2}"
+ssh -o BatchMode=yes "$HOST" "sudo bash -s" <<ROT || echo "   (rotation des filets non bloquante — ignorée)"
+set -e
+for base in app venv; do
+  mapfile -t vieux < <(ls -1dt /opt/labuse/\${base}-avant-* 2>/dev/null | tail -n +$((FILETS_KEEP + 1)))
+  if ((\${#vieux[@]})); then
+    printf '   %s : suppression de %d filet(s) ancien(s)\n' "\$base" "\${#vieux[@]}"
+    rm -rf -- "\${vieux[@]}"
+  fi
+done
+echo "   filets conservés : \$(ls -1dt /opt/labuse/app-avant-* 2>/dev/null | head -n $FILETS_KEEP | tr '\n' ' ')"
+ROT
+
 echo "── 2. venv + dépendances (sur le VPS, en labuse) ──"
 # Import-smoke de la CHAÎNE DE DÉMARRAGE (pas juste `import labuse`) : app servie + comptes +
 # tenant + events. Une dépendance cœur manquante (ex. argon2-cffi absent → comptes KO → cloison

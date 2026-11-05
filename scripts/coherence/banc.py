@@ -27,8 +27,46 @@ ECHANTILLON = SORTIE / "ECHANTILLON.csv"
 
 
 def charger_echantillon() -> list[dict]:
-    with open(ECHANTILLON, newline="") as f:
-        return list(csv.DictReader(f))
+    if ECHANTILLON.exists():
+        with open(ECHANTILLON, newline="") as f:
+            return list(csv.DictReader(f))
+    # OPS-URGENCE-2 (mandat Vic) — l'échantillon vit sous docs/ (EXCLU du rsync ; re-shippé
+    # explicitement par deploy_app.sh). Les 29/10→02/11, un trou de livraison l'a fait DISPARAÎTRE
+    # du VPS → 5 nuits de `coherence-banc` ÉCHEC sur FileNotFoundError, escaladé « non résolu ».
+    # Désormais, un fichier manquant ne fait PLUS tomber le banc : on le RÉGÉNÈRE depuis la base
+    # (même tirage que echantillon.py, DSN de l'ENVIRONNEMENT via lib — pas le DSN Mac en dur) et on
+    # le réécrit pour stabiliser les nuits suivantes.
+    print(f"⚠ ÉCHANTILLON absent ({ECHANTILLON}) — régénération depuis la base "
+          "(OPS-URGENCE-2 : un fichier manquant ne fait plus échouer le banc).", file=sys.stderr)
+    import psycopg
+    from .lib import DSN
+    from .echantillon import tirer
+    with psycopg.connect(DSN, options="-c statement_timeout=120000") as conn:
+        ech = tirer(conn)
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT p.idu, p.commune, round(p.surface_m2::numeric,1), z.zone_fam, z.zone_lib, "
+                "coalesce(b.emprise_bati_m2,0) > 20 AS batie "
+                "FROM parcels p LEFT JOIN parcel_zone_plu z ON z.idu=p.idu "
+                "LEFT JOIN p_model_bati b ON b.idu=p.idu WHERE p.idu = ANY(%s)",
+                ([i for i, _ in ech],))
+            infos = {r[0]: r[1:] for r in cur.fetchall()}
+    rows = []
+    for idu, strate in sorted(ech, key=lambda x: (x[1] != "temoin", x[0])):
+        c, s_, zf, zl, bt = infos.get(idu, ("?", "", "", "", ""))
+        rows.append({"idu": idu, "strate": strate, "commune": c, "surface_m2": s_,
+                     "zone_fam": zf, "zone_lib": zl, "batie": bt})
+    try:                                   # réécriture best-effort (stabilise les nuits suivantes)
+        ECHANTILLON.parent.mkdir(parents=True, exist_ok=True)
+        with open(ECHANTILLON, "w", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(["idu", "strate", "commune", "surface_m2", "zone_fam", "zone_lib", "batie"])
+            for r in rows:
+                w.writerow([r["idu"], r["strate"], r["commune"], r["surface_m2"],
+                            r["zone_fam"], r["zone_lib"], r["batie"]])
+    except OSError:
+        pass
+    return rows
 
 
 def _valeurs(ctx, objet, lecteurs):

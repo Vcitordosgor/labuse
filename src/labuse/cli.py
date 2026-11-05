@@ -1084,8 +1084,13 @@ def flux_run_cmd(
     # après l'entrée de couches neuves (peb, dpu, zone_humide…) les évaluait AVEUGLE
     # (PASS partout, constaté sur le premier passage de q_v13_sources1). Un run reconstruit
     # désormais le cache AVANT la cascade (quelques minutes, amorties sur des heures de run).
-    n_sub = models.ensure_spatial_layers_sub(engine(), force=True)
-    typer.echo(f"  cache spatial_layers_sub reconstruit : {n_sub} pièces")
+    # OPS-URGENCE-2 (mandat Vic) — en REPRISE (`--resume`, le calcul de nuit qui repart la nuit
+    # suivante sur le même label), on NE FORCE PLUS la reconstruction du cache : les sources sont
+    # figées pendant un run multi-nuits et `force=False` conserve la GARDE DE PÉREMPTION (il
+    # reconstruit quand même si une couche a changé). Un run FRAIS force encore (cache propre garanti).
+    # Gain : chaque nuit de reprise ne repaie plus les ~minutes de ST_Subdivide sur 1,5 M pièces.
+    n_sub = models.ensure_spatial_layers_sub(engine(), force=not resume)
+    typer.echo(f"  cache spatial_layers_sub {'vérifié' if resume else 'reconstruit'} : {n_sub} pièces")
     # DONNEES-2 (B3) — le run écrit sa PROGRESSION dans un fichier lu par l'API (barre + %, étape 2).
     # `total` = 24 communes (cascade) + 1 pas de scoring. L'API a pu ouvrir l'état au lancement ; on le
     # (ré)ouvre ici avec NOTRE pid (celui du process détaché) — c'est celui que « Arrêter » signalera.
