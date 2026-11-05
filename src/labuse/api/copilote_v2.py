@@ -180,9 +180,15 @@ def veille_supprimer(veille_id: int, request: Request, db: Session = Depends(get
 
 
 @router.post("/veilles/evaluer")
-def veilles_evaluer(db: Session = Depends(get_db)) -> dict:
+def veilles_evaluer(request: Request, db: Session = Depends(get_db)) -> dict:
     """§4 — point d'entrée du déclenchement (le CRON J+1 de prod appellera ceci après ingestion).
-    ZÉRO modèle : SQL + notifications. Exposé pour le déclenchement simulé du STOP Phase 4."""
+    ZÉRO modèle : SQL + notifications. Exposé pour le déclenchement simulé du STOP Phase 4.
+
+    NU4-FIX-1 (A/Y1) — GATE ADMIN : `evaluer_toutes` balaie les veilles de TOUS les comptes
+    (sans filtre compte_id), écrit des notifications et avance `last_evaluated_at` chez autrui
+    (fenêtre d'alerte consommée). Job global à effet cross-tenant → admin/CRON seulement."""
+    from . import auth
+    auth.exiger_admin(request)
     from ..copilote_v2 import veilles
     return veilles.evaluer_toutes(db)
 

@@ -492,9 +492,23 @@ async def paiement_lancer(request: Request, db: Session = Depends(get_db)):
         return RedirectResponse("/login", status_code=303)
     email = db.execute(_t("SELECT email FROM utilisateurs WHERE compte_id = :c LIMIT 1"),
                        {"c": cid}).scalar()
-    # mécanique de paiement INCHANGÉE (auditée) : creer_checkout → Stripe ; repli honnête sans clé
     try:
-        from ..facturation import creer_checkout
+        from ..facturation import a_abonnement, creer_checkout, lien_regularisation
+        # NU4-FIX-1 (B/T1) — RÉGULARISER ≠ RE-SOUSCRIRE. Si le compte porte DÉJÀ un abonnement (défaut
+        # de paiement), « Régulariser » doit PAYER LA FACTURE OUVERTE (comme le lien du mail
+        # `relance_carte`), jamais ouvrir un 2ᵉ abonnement (le webhook annulerait le neuf déjà payé →
+        # 349 € pris sans service). On n'ouvre un Checkout que pour une PREMIÈRE souscription (invité).
+        if a_abonnement(db, cid):
+            lien = lien_regularisation(db, cid)
+            if lien:
+                return RedirectResponse(lien, status_code=303)
+            # abonnement présent mais aucune facture ouverte récupérable : on NE crée PAS de doublon.
+            return HTMLResponse(_page("régularisation", """
+<h1>Régularisation</h1><p class="sub">on n'a pas retrouvé votre facture à régler en ligne</p>
+<p style="text-align:center;font-size:12.5px">Votre abonnement existe déjà — pour éviter un double
+prélèvement, nous ne réouvrons pas de paiement ici. Votre contact LABUSE vous renvoie le lien de la
+facture à régler.</p><p style="text-align:center"><a href="/login">retour à la porte</a></p>"""))
+        # PREMIÈRE souscription (invité sans abonnement) : Checkout → Stripe ; repli honnête sans clé.
         return RedirectResponse(creer_checkout(db, cid, email or ""), status_code=303)
     except Exception as e:  # noqa: BLE001 — ConfigError (pas de clé) ou indispo Stripe
         log.warning("checkout indisponible compte %s : %s", cid, e)

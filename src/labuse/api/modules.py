@@ -1477,6 +1477,11 @@ def piscine_pas_une(body: PasUnePiscineIn, request: Request, db: Session = Depen
     """RETOURS-11F M12 — « pas une piscine » : un signal HUMAIN qui retire la parcelle du service
     (compteur, carte) DÈS maintenant et sera repris au prochain calcul de détection. Idempotent
     (ON CONFLICT). Trace le compte émetteur (audit) ; l'exclusion est GLOBALE (qualité de donnée)."""
+    # NU4-FIX-1 (A/M3) — GATE ADMIN : l'exclusion est GLOBALE et cross-tenant (ON CONFLICT sur
+    # `idu` SEUL, compte_id = simple trace). Un signal de qualité de donnée qui retire une parcelle
+    # du service pour TOUS est une décision opérateur — pas un client non-admin avec un idu arbitraire.
+    from .auth import exiger_admin
+    exiger_admin(request)
     from ..ingestion.ortho_equipements import ensure_corrections
     ensure_corrections(db)
     compte_id = getattr(getattr(request, "state", None), "compte_id", None)

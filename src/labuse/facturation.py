@@ -132,17 +132,67 @@ def creer_checkout(db: Session, compte_id: int, email: str) -> str:
     if not s.stripe_price_integral:
         raise ConfigError("STRIPE_PRICE_INTEGRAL absent — lancer `labuse stripe-provisionne` puis poser l'ID en .env")
     _garde_coherence_prix(stripe, s.stripe_price_integral, offre_integral()["eur_mois"] * 100, "Intégral")
-    session = stripe.checkout.Session.create(
+    # NU4-FIX-1 (B/T3) — mention de franchise de TVA (art. 293 B) dès la PREMIÈRE facture. Le Checkout
+    # `subscription` finalise la 1ʳᵉ facture PENDANT la session ; si on ne pose le pied qu'après (via
+    # Customer.modify au webhook), elle sort `footer:null`. On pré-crée donc le CLIENT Stripe avec
+    # `invoice_settings.footer` AVANT la session et on le passe en `customer=` → la 1ʳᵉ facture hérite du
+    # pied comme les renouvellements. Réutilise le client déjà posé (retries) ; sans clé API, repli.
+    kwargs = dict(
         mode="subscription",
         line_items=[{"price": s.stripe_price_integral, "quantity": 1}],
         success_url=f"{s.public_base_url}/onboarding/retour?ok=1",
         cancel_url=f"{s.public_base_url}/onboarding/retour?ok=0",
         client_reference_id=str(compte_id),
-        customer_email=email,
         locale="fr")
+    cust_id = db.execute(text("SELECT stripe_customer_id FROM comptes WHERE id = :c"),
+                         {"c": compte_id}).scalar()
+    if s.stripe_secret_key:
+        if cust_id:
+            stripe.Customer.modify(cust_id, invoice_settings={"footer": s.facture_mention})
+        else:
+            cust = stripe.Customer.create(email=email or None,
+                                          invoice_settings={"footer": s.facture_mention},
+                                          preferred_locales=["fr"])
+            cust_id = cust.id
+            db.execute(text("UPDATE comptes SET stripe_customer_id = :cu, updated_at = now()"
+                            " WHERE id = :c"), {"cu": cust_id, "c": compte_id})
+            db.commit()
+        kwargs["customer"] = cust_id
+    else:
+        kwargs["customer_email"] = email   # tests/dry-run (pas de clé) : comportement historique
+    session = stripe.checkout.Session.create(**kwargs)
     audit(db, "checkout_cree", compte_id, None, "integral")
     db.commit()
     return session.url
+
+
+def lien_regularisation(db: Session, compte_id: int) -> str | None:
+    """NU4-FIX-1 (B/T1) — l'URL Stripe de la facture IMPAYÉE de l'abonnement EXISTANT (`hosted_invoice_url`),
+    exactement la cible du lien du mail `relance_carte`. C'est ce que « Régulariser » doit ouvrir : payer
+    la facture ouverte, JAMAIS créer un second abonnement (le webkook annulerait le doublon neuf déjà
+    payé → 349 € pris sans service). None si pas de client Stripe / pas de facture ouverte / pas de clé."""
+    s = get_settings()
+    if not s.stripe_secret_key:
+        return None
+    cust_id = db.execute(text("SELECT stripe_customer_id FROM comptes WHERE id = :c"),
+                         {"c": compte_id}).scalar()
+    if not cust_id:
+        return None
+    try:
+        ouvertes = _stripe().Invoice.list(customer=cust_id, status="open", limit=1)
+        data = getattr(ouvertes, "data", None) or (ouvertes.get("data") if isinstance(ouvertes, dict) else [])
+        if data:
+            inv = data[0]
+            return inv.get("hosted_invoice_url") if hasattr(inv, "get") else getattr(inv, "hosted_invoice_url", None)
+    except Exception as e:  # noqa: BLE001 — Stripe indispo : pas de lien (jamais un crash, jamais un doublon)
+        log.warning("compte %s : facture ouverte introuvable (%s)", compte_id, e)
+    return None
+
+
+def a_abonnement(db: Session, compte_id: int) -> bool:
+    """Le compte porte-t-il déjà un abonnement Stripe (→ régulariser, pas re-souscrire) ?"""
+    return bool(db.execute(text("SELECT stripe_subscription_id FROM comptes WHERE id = :c"),
+                           {"c": compte_id}).scalar())
 
 
 # ───────────── FLASH : 79 € one-shot, un rapport PDF sur UNE parcelle ─────────────
@@ -438,10 +488,18 @@ def traiter_webhook(db: Session, payload: bytes, signature: str | None) -> dict:
         # ROB-C · concurrence : double-clic / deux onglets → deux Checkout → deux souscriptions.
         # Si le compte a DÉJÀ une souscription différente, on annule le DOUBLON entrant chez
         # Stripe (une seule souscription active, pas de double facturation).
-        ancien = db.execute(text("SELECT stripe_subscription_id FROM comptes WHERE id = :c"),
-                            {"c": cid}).scalar()
+        etat = db.execute(text("SELECT stripe_subscription_id AS ancien, statut, acces_fin_at"
+                               " FROM comptes WHERE id = :c"), {"c": cid}).mappings().first()
+        ancien = etat["ancien"] if etat else None
         nouveau = obj.get("subscription")
-        if ancien and nouveau and ancien != nouveau:
+        # NU4-FIX-1 (B/T4) — distinguer le VRAI doublon (double-clic d'un compte actif, 2 abos vivants)
+        # d'une RÉ-SOUSCRIPTION légitime (ancien abo résilié/suspendu, ou résiliation programmée en fin
+        # de période `acces_fin_at`). Doublon → on annule le neuf (ROB-C). Ré-souscription → on ADOPTE le
+        # neuf (l'ancien est mort) et on efface `acces_fin_at`. Sans ce tri, un ré-abonné restait coupé
+        # au vieux terme et l'app pointait l'ancienne souscription résiliée.
+        reabo = bool(etat) and (etat["statut"] in ("suspendu", "resilie", "paiement_requis")
+                                or etat["acces_fin_at"] is not None)
+        if ancien and nouveau and ancien != nouveau and not reabo:
             try:
                 _stripe().Subscription.cancel(nouveau)
                 audit(db, "stripe_doublon_annule", cid, None, f"sub doublon {nouveau} annulée")
@@ -450,11 +508,15 @@ def traiter_webhook(db: Session, payload: bytes, signature: str | None) -> dict:
                 return {"type": t, "action": "doublon_annule", "compte_id": cid}
             except Exception as e:  # noqa: BLE001 — Stripe indispo : on garde l'ancienne, on n'écrase pas
                 log.error("compte %s : annulation doublon %s impossible : %s", cid, nouveau, e)
+        # Ré-souscription → on enregistre le NOUVEL abonnement ; première souscription → COALESCE garde
+        # l'existant-ou-neuf. T2 : on efface aussi `essai_expire_at` (un essai échu qui PAIE ne doit pas
+        # être re-suspendu au 1ᵉʳ accès). T4 : on efface `acces_fin_at` (plus de coupure au vieux terme).
         db.execute(text("UPDATE comptes SET statut = 'actif', stripe_customer_id = :cu,"
-                        " stripe_subscription_id = COALESCE(stripe_subscription_id, :su),"
-                        " paiement_requis_at = NULL,"   # FIX-NU3-2 — compte réglé : l'horloge de grâce repart à zéro
+                        " stripe_subscription_id = CASE WHEN :reabo THEN :su"
+                        "   ELSE COALESCE(stripe_subscription_id, :su) END,"
+                        " paiement_requis_at = NULL, essai_expire_at = NULL, acces_fin_at = NULL,"
                         " updated_at = now() WHERE id = :c"),
-                   {"cu": obj.get("customer"), "su": nouveau, "c": cid})
+                   {"cu": obj.get("customer"), "su": nouveau, "reabo": reabo, "c": cid})
         audit(db, "stripe_activation", cid, None, "checkout.session.completed")
         db.commit()
         # FIX-NU3-2 (I-CPT-07) — mention fiscale sur les factures d'ABONNEMENT. Le Checkout mode

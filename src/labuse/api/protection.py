@@ -153,7 +153,11 @@ PREFIXES_PROTEGES = ("/parcels", "/segments", "/discover", "/ia", "/moteurs", "/
                      "/pre-dossier", "/courrier", "/modules", "/v2", "/scoreur-adresse",
                      # M149 L3 (audit M148) : les deux routes document lourdes ET sans rate-limit
                      # rejoignent le régime 60/min (calcul résiduel/faisabilité + fpdf2 par appel).
-                     "/lettre-zonage", "/argumentaire")
+                     "/lettre-zonage", "/argumentaire",
+                     # NU4-FIX-1 (A/M1) — la soumission du 2ᵉ facteur passe sous rate-limit per-IP
+                     # (défense en profondeur par-dessus le verrou base `echecs_2fa`) : une force
+                     # brute du TOTP à ~2,5 essais/s (slow_failure) dépasse 60/min → défi puis gel.
+                     "/login/2fa")
 
 _FICHE_RE = re.compile(r"^/parcels/([0-9]{5}[0-9A-Z]{9})$")
 

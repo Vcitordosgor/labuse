@@ -1578,8 +1578,15 @@ def envoyer_annonce(db: Session, *, type_: str, titre: str, corps: str, lien: st
 
 
 def _token_ok(db: Session, c: int, t: str) -> bool:
+    # NU4-FIX-1 (A/Y3) — comparaison à TEMPS CONSTANT : ce jeton EST la seule sécurité des liens
+    # de désinscription/préférences (RFC 8058, un clic sans session). Un `==` fuit la position du
+    # premier octet divergent (timing) → `hmac.compare_digest`. Les deux opérandes sont normalisées
+    # en str non vides avant comparaison (compare_digest exige des types homogènes).
+    import hmac
     tok = db.execute(text("SELECT token FROM notif_prefs WHERE compte_id=:c"), {"c": c}).scalar()
-    return bool(tok and t and tok == t)
+    if not tok or not t:
+        return False
+    return hmac.compare_digest(str(tok), str(t))
 
 
 @router.get("/desabonner", response_class=HTMLResponse, include_in_schema=False)

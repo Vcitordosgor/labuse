@@ -84,9 +84,16 @@ def make_engine(url: str | None = None, echo: bool = False) -> Engine:
     # (robustesse connexions longues). AUCUN `statement_timeout` posé ici : le moteur est PARTAGÉ avec
     # les batchs CLI (ingestion/scoring/résiduel) qui tournent légitimement des heures — le plafond de
     # requête est appliqué par requête d'API (SET LOCAL dans get_db), jamais sur le moteur.
+    # NU4-FIX-1 (E/R2) — hygiène du pool sous charge : `pool_use_lifo` réutilise la connexion la PLUS
+    # récemment rendue (au lieu d'un round-robin FIFO) → sous rafale, moins de connexions distinctes
+    # restent ouvertes en même temps (les surplus `overflow` se referment plus vite), ce qui soulage la
+    # pression sur `max_connections`. `pool_timeout` borné et RÉGLABLE. La vraie cause d'épuisement
+    # (connexions « idle in transaction » pendant l'appel modèle) est traitée à la source par R3
+    # (ai.core.complete libère la connexion AVANT l'appel réseau).
     return create_engine(url or settings.database_url, echo=echo, future=True,
                          pool_size=settings.db_pool_size, max_overflow=settings.db_max_overflow,
                          pool_pre_ping=settings.db_pool_pre_ping, pool_recycle=settings.db_pool_recycle_s,
+                         pool_timeout=settings.db_pool_timeout_s, pool_use_lifo=True,
                          connect_args={"options": "-c idle_in_transaction_session_timeout=600000"
                                                   " -c timezone=Indian/Reunion"})
 

@@ -137,14 +137,101 @@ def page_html(titre_html: str, cartouche: Cartouche, corps_html: str, *, lang: s
             f'{_spans_cartouche(cartouche)}{corps}</body></html>')
 
 
+class RenderError(RuntimeError):
+    """NU4-FIX-1 (E/R1) — un rendu PDF a échoué PROPREMENT (crash natif de l'enfant, OOM borné, ou
+    dépassement de délai). Remonte comme erreur applicative — jamais la mort du worker API."""
+
+
+# ── NU4-FIX-1 (E/R1) — rendu HORS-PROCESS ──────────────────────────────────────────────────────
+# L'audit NU4-E a mesuré 22 morts de worker sous charge, TOUTES pendant un rendu weasyprint (crash
+# natif Cairo/Pango/fontTools ou tuerie mémoire OS), SANS trace Python : le rendu tournait DANS le
+# worker (threads) → sa mort emportait les requêtes en vol. On isole le rendu dans un POOL DE
+# PROCESSUS enfants (spawn) : un crash/OOM tue l'enfant, le worker API survit et sert une 500 propre.
+import concurrent.futures as _cf  # noqa: E402
+import multiprocessing as _mp  # noqa: E402
+import threading as _threading  # noqa: E402
+
+_PDF_POOL: _cf.ProcessPoolExecutor | None = None
+_PDF_POOL_LOCK = _threading.Lock()
+
+
+def _pdf_child_init() -> None:
+    """Exécuté une fois dans CHAQUE process enfant : borne sa mémoire (RLIMIT_AS). Un PDF pathologique
+    meurt alors DANS l'enfant (MemoryError/kill), pas en OOM-killant le worker API. Best-effort."""
+    try:
+        import resource
+
+        from ..config import get_settings
+        mo = int(get_settings().pdf_mem_max_mo)
+        if mo > 0:
+            octets = mo * 1024 * 1024
+            resource.setrlimit(resource.RLIMIT_AS, (octets, octets))
+    except Exception:  # noqa: BLE001 — plateformes sans `resource` / setrlimit refusé : on continue
+        pass
+
+
+def _pdf_pool() -> _cf.ProcessPoolExecutor:
+    global _PDF_POOL
+    with _PDF_POOL_LOCK:
+        if _PDF_POOL is None:
+            from ..config import get_settings
+            s = get_settings()
+            _PDF_POOL = _cf.ProcessPoolExecutor(
+                max_workers=max(1, int(s.pdf_rendu_max)),
+                mp_context=_mp.get_context("spawn"),
+                initializer=_pdf_child_init,
+                max_tasks_per_child=max(1, int(s.pdf_recycle_tasks)))  # recyclage → mémoire bornée
+        return _PDF_POOL
+
+
+def _reset_pdf_pool() -> None:
+    """Oublie le pool (après un BrokenProcessPool : un enfant est mort, on repart propre)."""
+    global _PDF_POOL
+    with _PDF_POOL_LOCK:
+        if _PDF_POOL is not None:
+            try:
+                _PDF_POOL.shutdown(wait=False, cancel_futures=True)
+            except Exception:  # noqa: BLE001
+                pass
+            _PDF_POOL = None
+
+
+def _execute_isole(fn, *args, timeout: float):
+    """Exécute `fn(*args)` dans le pool de processus et renvoie son résultat. Un crash de l'enfant
+    (SIGSEGV, OOM) → `BrokenProcessPool` → on réinitialise le pool et on lève `RenderError`. Un
+    dépassement de `timeout` → `RenderError`. Dans TOUS les cas, l'appelant (worker API) survit."""
+    try:
+        return _pdf_pool().submit(fn, *args).result(timeout=timeout)
+    except _cf.process.BrokenProcessPool as exc:
+        _reset_pdf_pool()
+        raise RenderError(f"processus de rendu terminé anormalement ({type(exc).__name__})") from exc
+    except _cf.TimeoutError as exc:
+        raise RenderError(f"rendu PDF trop long (> {timeout:.0f}s)") from exc
+
+
+def _render_worker(page_html_str: str, forms: bool) -> bytes:
+    """Fonction exécutée DANS l'enfant (picklable, module-level). Importe weasyprint à froid."""
+    from weasyprint import HTML  # import paresseux : pango requis au rendu seulement
+    return HTML(string=page_html_str, base_url=str(_PKG)).write_pdf(pdf_forms=forms)
+
+
 def render_pdf(page_html_str: str, *, forms: bool = False) -> bytes:
     """HTML complet → PDF (WeasyPrint 69). base_url = le paquet exports (theme.css relative).
-    `forms=True` : les <input>/<textarea> du gabarit deviennent des champs remplissables PDF
-    (Apporteur — lot 6)."""
-    from weasyprint import HTML  # import paresseux : pango requis au rendu seulement
-    # FIX-NU3-3 (K-CHG-02) — le rendu weasyprint est le goulot CPU sous charge : on le passe en FILE
-    # (au plus `pdf_rendu_max` à la fois) pour que fiche/carte restent < 1 s. Point de rendu UNIQUE des
-    # 5 documents premium → un seul endroit à borner.
+    `forms=True` : les <input>/<textarea> du gabarit deviennent des champs remplissables PDF.
+
+    NU4-FIX-1 (E/R1) : rendu HORS-PROCESS par défaut (un crash natif/OOM ne tue plus le worker).
+    `LABUSE_PDF_PROCESS_ISOLE=0` repasse en rendu in-process (CI/plateformes sans spawn). La FILE
+    `pdf_slot` (FIX-NU3-3) garde la concurrence bornée dans les deux modes."""
+    import os
+
+    from ..config import get_settings
     from ..perf_limits import pdf_slot
-    with pdf_slot():
-        return HTML(string=page_html_str, base_url=str(_PKG)).write_pdf(pdf_forms=forms)
+    s = get_settings()
+    # Sous pytest, rendu IN-PROCESS (spawn d'un enfant weasyprint à chaque PDF = lent/fragile en CI ;
+    # le mécanisme d'isolation est prouvé à part par `_execute_isole`). En service, isolé par défaut.
+    isole = s.pdf_process_isole and not os.environ.get("PYTEST_CURRENT_TEST")
+    with pdf_slot():                       # au plus `pdf_rendu_max` rendus à la fois (file d'attente)
+        if not isole:
+            return _render_worker(page_html_str, forms)   # legacy / CI : in-process
+        return _execute_isole(_render_worker, page_html_str, forms,
+                              timeout=float(s.pdf_rendu_timeout_s))
