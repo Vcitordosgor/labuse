@@ -1109,46 +1109,64 @@ def calcul_nuit(ctx: JobContext) -> None:
 
     label = os.environ.get("LABUSE_CALCUL_NUIT_LABEL", "q_v21")
     recette = os.environ.get("LABUSE_CALCUL_NUIT_RECETTE", "q_v15")
-    # OPS-NUIT-1 — budget BORNÉ PAR LA FIN DE FENÊTRE (plus le timeout brut) : le calcul ne déborde
-    # jamais passé fin_h. Le run est REPRENABLE (flux-run --resume) : s'il ne tient pas dans la nuit, il
-    # reprend la suivante. En recette (LABUSE_CALCUL_NUIT_FORCE=1) on garde le timeout brut, pas de borne.
-    budget_job = float(getattr(ctx, "timeout_s", 14400) or 14400)
-    if os.environ.get("LABUSE_CALCUL_NUIT_FORCE") == "1":
-        budget = max(300.0, budget_job - _SOUS_PROCESS_MARGE_S)
+
+    # OPS-URGENCE-3 (mandat Vic) — UN RUN DÉJÀ COMPLET N'EST PAS RELANCÉ. Si la cascade ET le scoring du
+    # label sont déjà faits (garde CANONIQUE de bascule `_run_complet` : score v2 présent + cascade
+    # résoluble, la même que `_mesures_run`), relancer `flux-run` ne ferait que RE-SCORER pour rien — et,
+    # tant que les artefacts q_v15 manquaient en prod, échouait à l'entrée du scoring (code 1 en 38 s),
+    # transformant un run FINI en « calcul-nuit en échec ». On passe DROIT aux contrôles + verdict.
+    from . import bascule_flux
+    with session_scope() as db:
+        try:
+            deja_complet, motif_complet = bascule_flux._run_complet(db, label)
+        except Exception as exc:  # noqa: BLE001 — complétude illisible → on calcule (jamais un faux « complet »)
+            log.warning("calcul-nuit : complétude du label %s illisible (%s) — on (re)calcule", label, exc)
+            deja_complet, motif_complet = False, None
+
+    if deja_complet:
+        log.info("calcul-nuit : run %s déjà complet (%s) — pas de recalcul, contrôles directs",
+                 label, motif_complet)
     else:
-        budget = max(300.0, min(budget_job, _secondes_avant_fin_fenetre(s)) - _SOUS_PROCESS_MARGE_S)
-    cmd = _prefixe_nice(s) + [sys.executable, "-m", "labuse.cli", "flux-run",
-                             "--label", label, "--recette", recette]
-    # AUCUNE connexion DB tenue pendant le sous-process (voir pré-vol ci-dessus).
-    try:
-        proc = _run_sous_process_nice(cmd, budget, _plafond_memoire(s.calcul_nuit_mem_mo))
-    except SousProcessTimeout:
-        # Fin de fenêtre atteinte AVANT la fin du calcul : abandon PROPRE, PAS un échec. flux-run a
-        # persisté ce qu'il a fait (cascade commitée par commune) et REPREND la nuit suivante (--resume).
-        # OPS-URGENCE-2 — SURFACER L'AVANCEMENT. R4 décrivait « la reprise repart sans avancer » : en
-        # fait elle AVANCE (parcelles cumulées par nuit, sans doublon) mais la fenêtre ~3 h est trop
-        # courte pour les communes lourdes restantes. On reporte donc faites/total/% dans les compteurs
-        # pour que le résumé du matin montre la PROGRESSION, pas un faux « bloqué ».
-        faits = total = None
-        with session_scope() as db:
-            ops_alertes.resoudre(db, f"calcul-nuit:{label}")  # ni promotion en attente, ni échec cette nuit
-            try:
-                faits = db.execute(text("SELECT count(*) FROM dryrun_parcel_evaluations WHERE run_label=:r"),
-                                   {"r": label}).scalar() or 0
-                total = db.execute(text("SELECT count(*) FROM parcels")).scalar() or 0
-            except Exception:  # noqa: BLE001
-                faits = total = None
-            db.commit()
-        pct = round(100.0 * faits / total, 1) if (faits and total) else None
-        ctx.compte(label=label, recette=recette, promu=False,
-                   abandon=f"fin de fenêtre {s.calcul_nuit_fin_h}h atteinte avant la fin du calcul — "
-                           "reprise la nuit prochaine (reprenable, flux-run --resume)",
-                   parcelles_faites=faits, parcelles_total=total, avancement_pct=pct,
-                   budget_s=round(budget))
-        return
-    if proc.returncode != 0:
-        raise RuntimeError(f"flux-run {label} a échoué (code {proc.returncode}) : "
-                           f"{(proc.stderr or proc.stdout or '')[-400:]}")
+        # OPS-NUIT-1 — budget BORNÉ PAR LA FIN DE FENÊTRE (plus le timeout brut) : le calcul ne déborde
+        # jamais passé fin_h. Le run est REPRENABLE (flux-run --resume) : s'il ne tient pas dans la nuit, il
+        # reprend la suivante. En recette (LABUSE_CALCUL_NUIT_FORCE=1) on garde le timeout brut, pas de borne.
+        budget_job = float(getattr(ctx, "timeout_s", 14400) or 14400)
+        if os.environ.get("LABUSE_CALCUL_NUIT_FORCE") == "1":
+            budget = max(300.0, budget_job - _SOUS_PROCESS_MARGE_S)
+        else:
+            budget = max(300.0, min(budget_job, _secondes_avant_fin_fenetre(s)) - _SOUS_PROCESS_MARGE_S)
+        cmd = _prefixe_nice(s) + [sys.executable, "-m", "labuse.cli", "flux-run",
+                                 "--label", label, "--recette", recette]
+        # AUCUNE connexion DB tenue pendant le sous-process (voir pré-vol ci-dessus).
+        try:
+            proc = _run_sous_process_nice(cmd, budget, _plafond_memoire(s.calcul_nuit_mem_mo))
+        except SousProcessTimeout:
+            # Fin de fenêtre atteinte AVANT la fin du calcul : abandon PROPRE, PAS un échec. flux-run a
+            # persisté ce qu'il a fait (cascade commitée par commune) et REPREND la nuit suivante (--resume).
+            # OPS-URGENCE-2 — SURFACER L'AVANCEMENT. R4 décrivait « la reprise repart sans avancer » : en
+            # fait elle AVANCE (parcelles cumulées par nuit, sans doublon) mais la fenêtre ~3 h est trop
+            # courte pour les communes lourdes restantes. On reporte donc faites/total/% dans les compteurs
+            # pour que le résumé du matin montre la PROGRESSION, pas un faux « bloqué ».
+            faits = total = None
+            with session_scope() as db:
+                ops_alertes.resoudre(db, f"calcul-nuit:{label}")  # ni promotion en attente, ni échec cette nuit
+                try:
+                    faits = db.execute(text("SELECT count(*) FROM dryrun_parcel_evaluations WHERE run_label=:r"),
+                                       {"r": label}).scalar() or 0
+                    total = db.execute(text("SELECT count(*) FROM parcels")).scalar() or 0
+                except Exception:  # noqa: BLE001
+                    faits = total = None
+                db.commit()
+            pct = round(100.0 * faits / total, 1) if (faits and total) else None
+            ctx.compte(label=label, recette=recette, promu=False,
+                       abandon=f"fin de fenêtre {s.calcul_nuit_fin_h}h atteinte avant la fin du calcul — "
+                               "reprise la nuit prochaine (reprenable, flux-run --resume)",
+                       parcelles_faites=faits, parcelles_total=total, avancement_pct=pct,
+                       budget_s=round(budget))
+            return
+        if proc.returncode != 0:
+            raise RuntimeError(f"flux-run {label} a échoué (code {proc.returncode}) : "
+                               f"{(proc.stderr or proc.stdout or '')[-400:]}")
 
     par = f"calcul-nuit (automatique) — {label}"
     # DEPLOY-AUTONOMIE (décision Vic, première nuit) — GATE DE PROMOTION. Par défaut le calcul de nuit
@@ -1185,7 +1203,7 @@ def calcul_nuit(ctx: JobContext) -> None:
             db.commit()
             ctx.compte(label=label, recette=recette, promu=False, promotion_en_attente=v.ok,
                        controles_ok=v.ok, controles_en_attente=en_attente_seul,
-                       verdict=verdict_txt, mesures=mesures,
+                       calcul_saute=deja_complet, verdict=verdict_txt, mesures=mesures,
                        palier_delta_pct=v.details.get("palier_delta_pct"))
             return
 

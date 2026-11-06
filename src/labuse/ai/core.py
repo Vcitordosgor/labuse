@@ -408,6 +408,12 @@ class IAResult:
     raw: str | None = None
     tokens_in: int = 0
     tokens_out: int = 0
+    stop_reason: str | None = None  # motif d'arrêt du modèle ('end_turn' | 'max_tokens' | …) — None si repli/dégradé
+
+    @property
+    def tronque(self) -> bool:
+        """La sortie a été COUPÉE au plafond de jetons (texte incomplet)."""
+        return self.stop_reason == "max_tokens"
 
 
 @dataclass
@@ -524,6 +530,7 @@ def complete(db: Session | None, *, kind: str, system: str, context: dict[str, A
     _note_success()
     prose = "".join(getattr(b, "text", "") for b in msg.content).strip()
     tin, tout = msg.usage.input_tokens, msg.usage.output_tokens
+    stop = getattr(msg, "stop_reason", None)
     _log_cost(db, kind, model, False, tin, tout)
 
     if validate:
@@ -533,7 +540,7 @@ def complete(db: Session | None, *, kind: str, system: str, context: dict[str, A
         if not chk.ok:
             return IAResult(text="Je ne peux pas répondre de façon sourcée sur ce point.",
                             model=model, reason=chk.reason, rejected=True, raw=prose,
-                            tokens_in=tin, tokens_out=tout)
+                            tokens_in=tin, tokens_out=tout, stop_reason=stop)
         return IAResult(text=chk.text, model=model, sources=chk.sources, raw=prose,
-                        tokens_in=tin, tokens_out=tout)
-    return IAResult(text=prose, model=model, tokens_in=tin, tokens_out=tout)
+                        tokens_in=tin, tokens_out=tout, stop_reason=stop)
+    return IAResult(text=prose, model=model, tokens_in=tin, tokens_out=tout, stop_reason=stop)
