@@ -1,86 +1,86 @@
 {
  "classe_residuel(sous_densite)": {
-  "lecteur": "fiche:potentiel_transformation.sous_densite",
+  "lecteur": "sql:parcel_residuel.sous_densite",
   "tolerance": "0",
   "valeur": false
  },
  "copro_presente": {
-  "lecteur": "fiche:coproprietes(non vide)",
+  "lecteur": "sql:rnic_coproprietes(parcelle_idu)",
   "tolerance": "0",
   "valeur": false
  },
  "emprise_batie_m2": {
-  "lecteur": "fiche:le_bien.emprise_batie_m2",
-  "tolerance": "1 %",
-  "valeur": 159
+  "lecteur": "sql:BD TOPO clippé ST_Union (emprise servie)",
+  "tolerance": "0",
+  "valeur": 159.0
  },
  "filiation_mere": {
-  "lecteur": "fiche:filiation.meres.0.idu",
+  "lecteur": "sql:dfi_filiation.idu_mere",
   "tolerance": "0",
   "valeur": "97415000EO0653"
  },
  "hauteur_faitage_m": {
-  "lecteur": "fiche:le_bien.hauteur_faitage_m",
-  "tolerance": "1 %",
-  "valeur": 3.3
+  "lecteur": "sql:faitage LiDAR si bâti significatif (≥10 m²)",
+  "tolerance": "1",
+  "valeur": "3.3"
  },
  "pente_deg": {
-  "lecteur": "fiche:terrain.pente_moy_deg",
-  "tolerance": "0,5 point",
+  "lecteur": "sql:parcel_terrain.pente_moy_deg",
+  "tolerance": "0",
   "valeur": 7.7
  },
  "pente_max_deg": {
-  "lecteur": "fiche:terrain.pente_max_deg",
-  "tolerance": "0,5 point",
+  "lecteur": "sql:parcel_terrain.pente_max_deg",
+  "tolerance": "0",
   "valeur": 11.5
  },
  "prix_maison_secteur_section_cadastrale": {
-  "lecteur": "fiche:dvf_parcelle.secteur[maison].mediane_prix_m2",
-  "tolerance": "1 %",
+  "lecteur": "sql:dvf_secteur_medianes[maison] (section cadastrale)",
+  "tolerance": "0",
   "valeur": 1750
  },
  "proprietaire_moral_denomination": {
-  "lecteur": "fiche:proprietaire_moral.denomination",
+  "lecteur": "sql:pm_proprietaires_millesimes.denomination",
   "tolerance": "0",
   "valeur": "SOCIETE IMMOBILIERE DEPARTEMENT REUNION"
  },
  "rang_score": {
-  "lecteur": "fiche:score_v2.rang",
+  "lecteur": "sql:parcel_p_score_v2.rang",
   "tolerance": "0",
   "valeur": 23185
  },
  "sdp_residuelle_m2": {
-  "lecteur": "fiche:potentiel_transformation.sdp_residuelle_m2",
-  "tolerance": "1 %",
-  "valeur": 185.0
- },
- "surface_parcelle_m2": {
-  "lecteur": "fiche:surface_m2",
-  "tolerance": "1 %",
-  "valeur": 479
- },
- "taxe_amenagement_taux_communal_pct": {
-  "lecteur": "fiche:taxe_amenagement.taux_communal_pct",
+  "lecteur": "sql:parcel_residuel.sdp_residuelle_m2 (portes fiche : cause + scoring + zone fermée)",
   "tolerance": "0",
-  "valeur": 5.0
+  "valeur": 185
+ },
+ "surface_dessin_m2": {
+  "lecteur": "sql:parcels.surface_m2",
+  "tolerance": "0",
+  "valeur": 479.0895827744382
+ },
+ "surface_terrain_m2(contenance servie)": {
+  "lecteur": "sql:COALESCE(contenance_m2,surface_m2)",
+  "tolerance": "0",
+  "valeur": 477.0
  },
  "tier_opportunite": {
-  "lecteur": "fiche:score_v2.tier",
+  "lecteur": "sql:parcel_p_score_v2.tier",
   "tolerance": "0",
   "valeur": "sans_signal"
  },
  "vigilance_cinquante_pas": {
-  "lecteur": "fiche:flags[cinquante_pas]",
+  "lecteur": "sql:parcel_flags[cinquante_pas]",
   "tolerance": "0",
   "valeur": false
  },
  "vigilance_ppr": {
-  "lecteur": "fiche:flags[ppr]",
+  "lecteur": "sql:parcel_flags[ppr]",
   "tolerance": "0",
   "valeur": false
  },
  "vigilance_ravine": {
-  "lecteur": "fiche:flags[ravine]",
+  "lecteur": "sql:parcel_flags[ravine]",
   "tolerance": "0",
   "valeur": false
  },
@@ -90,7 +90,7 @@
   "valeur": "U"
  },
  "zone_plu_lib": {
-  "lecteur": "fiche:reglement_plu.zones.0.zone",
+  "lecteur": "sql:parcel_zone_plu.zone_lib",
   "tolerance": "0",
   "valeur": "U5b"
  }
