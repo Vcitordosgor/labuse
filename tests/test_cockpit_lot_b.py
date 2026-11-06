@@ -105,8 +105,10 @@ def test_familles_attendues():
     # AUTONOMIE-1 : + injection-nuit (F2), + calcul-nuit (F3), + restore-test RÉTABLI (F4) → 33 jobs.
     # OPS-NUIT-1 : + resume-matin (F4, le résumé du matin) → 34 jobs, F4 passe de 21 à 22.
     # JOHN-TAYLOR-1 : + john-veille (F1, la veille de nuit de John) → 35 jobs, F1 passe de 2 à 3.
-    assert par_fam == {1: 3, 2: 7, 3: 3, 4: 22}
-    assert sum(par_fam.values()) == 35
+    # NU5-FIX-1 : + essai-fin-proche (C-F7) + verite-permanente (point 8), les deux en F4 → 37 jobs,
+    # F4 passe de 22 à 24.
+    assert par_fam == {1: 3, 2: 7, 3: 3, 4: 24}
+    assert sum(par_fam.values()) == 37
 
 
 # ─────────────── endpoints (db) ───────────────

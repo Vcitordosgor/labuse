@@ -101,6 +101,7 @@ def _app_session() -> Session | None:
         return None
 
 
+@pytest.mark.db
 @pytest.mark.parametrize("idu", INCERTAINES)
 def test_app_parcelles_incertaines_sans_capacite(idu: str):
     db = _app_session()
@@ -121,6 +122,7 @@ def test_app_parcelles_incertaines_sans_capacite(idu: str):
         db.close()
 
 
+@pytest.mark.db
 def test_app_parcelle_normale_reste_sur_contenance():
     db = _app_session()
     if db is None:

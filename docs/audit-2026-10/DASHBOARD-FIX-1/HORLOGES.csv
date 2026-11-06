@@ -34,3 +34,5 @@ calcul-nuit;quotidien;02:00;exploitation;deploy.sh → /etc/cron.d/labuse (gén�
 restore-test;mensuel (5);05:00 le 5;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run restore-test
 resume-matin;quotidien;07:30;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run resume-matin
 john-veille;quotidien;03:00;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run john-veille
+essai-fin-proche;quotidien;09:00;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run essai-fin-proche
+verite-permanente;quotidien;06:00;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run verite-permanente
