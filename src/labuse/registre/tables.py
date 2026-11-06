@@ -607,6 +607,20 @@ TABLES_EXPLOITATION: dict[str, str] = {
     # rapport ÉCRIT+LU par le banc vérité-sources (verite_sources.py).
     "parcel_cadastre_remplacement": "cadastre — parcelles de remplacement (lues par la garde « parcelle disparue »)",
     "verite_sources_runs": "rapport du banc vérité-sources (verite_sources.py)",
+    # OPS-URGENCE-3 (V1c) — HUIT tables créées par le code servi mais jamais déclarées à la carte
+    # (révélées orphelines au passage des verrous du 06/11). Même recette que job_runs/ops_incidents :
+    # tables d'EXPLOITATION actives (un écriveur + un lecteur dans le code servi), jamais des
+    # orphelines à purger. Sept portent la mémoire de JOHN (second de bord, feat/john-taylor-2),
+    # la huitième est l'ancre de vigie des jobs (OPS-NUIT-2). Les déclarer les fait appartenir à la
+    # carte → V1c vert (le trou venait d'avoir ajouté les tables sans les déclarer au registre).
+    "job_premiere_vue": "ancre du 1ᵉʳ passage vu de chaque job (jobs_journal.py, vigie « jamais réussi » OPS-NUIT-2)",
+    "john_carnet": "carnet de bord de John — décisions/notes (john/carnet.py)",
+    "john_conversations": "fils de conversation de John (john/chat.py)",
+    "john_ecarts_acceptes": "écarts de cohérence acceptés par John (john/actions.py)",
+    "john_journal": "journal des gestes de John (john/journal.py)",
+    "john_messages": "messages des conversations de John (john/chat.py)",
+    "john_resume": "résumés du matin écrits par John (john/resume.py)",
+    "john_veille": "résultats de la veille de John (john/veille.py)",
     # CIRCUIT-5b lot 1 — rpls_commune (→ rpls_sdes) et commune_conso_enaf (→ enaf_cerema) sont
     # désormais des RÉSERVOIRS de première classe (voir RESERVOIR_TABLES), plus des tables
     # d'exploitation « servies sans réservoir » : une source = une ligne data_sources.

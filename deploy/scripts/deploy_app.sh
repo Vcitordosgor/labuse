@@ -63,6 +63,43 @@ rsync -a --rsync-path="sudo rsync" -R \
   "$REPO/./docs/audit-2026-10/CHASSE-1/ECHANTILLON.csv" \
   "$REPO/./docs/audit-2026-10/CHASSE-2/ECHANTILLON.csv" \
   "$HOST":/opt/labuse/app/
+
+# ── OPS-URGENCE-3 — ARTEFACTS DE MODÈLE GELÉS (le CALCUL DE NUIT en a besoin) ─────────────────
+# Le SCORING d'un run (`flux-run --recette q_v15`, le calcul de nuit) LIT des artefacts de modèle
+# GELÉS, committés mais rangés sous reports/ (q-v15 = modèle du Signal ; m36-foncier = modèle de
+# base + fold2025 ; q-v12/q-v14 = recettes candidates). Or reports/ est EXCLU du rsync ci-dessus →
+# ces fichiers manquaient en prod : le scoring échouait à l'entrée (« Artefacts q_v15 absents »,
+# calcul-nuit du 06/11 tombé code 1 en 38 s). On les REDÉPOSE explicitement (comme les ECHANTILLON),
+# puis on REFUSE de déployer s'ils manquent — garde FAIL-LOUD : plus jamais un artefact dont le
+# calcul dépend silencieusement non livré. (Relocalisation durable hors reports/ = dette.)
+ARTEFACTS_CALCUL=(
+  reports/q-v15/FREEZE-q_v15.json
+  reports/q-v15/artifacts-q_v15-12m.joblib
+  reports/q-v15/artifacts-q_v15-24m.joblib
+  reports/m36-foncier/FREEZE-scoring2026.json
+  reports/m36-foncier/artifacts-m36-scoring2026.joblib
+  reports/m36-foncier/artifacts-m36-fold2025.joblib
+  reports/q-v12/FREEZE-q_v12.json
+  reports/q-v12/artifacts-q_v12-12m.joblib
+  reports/q-v12/artifacts-q_v12-24m.joblib
+  reports/q-v14/FREEZE-q_v14.json
+  reports/q-v14/artifacts-q_v14-12m.joblib
+  reports/q-v14/artifacts-q_v14-24m.joblib
+)
+manquants_local=()
+for f in "${ARTEFACTS_CALCUL[@]}"; do [ -f "$REPO/$f" ] || manquants_local+=("$f"); done
+if [ "${#manquants_local[@]}" -ne 0 ]; then
+  echo "✗ REFUS : artefact(s) de modèle absent(s) EN LOCAL (le calcul de nuit en a besoin) :" >&2
+  printf '    %s\n' "${manquants_local[@]}" >&2
+  exit 1
+fi
+rsync_src=(); for f in "${ARTEFACTS_CALCUL[@]}"; do rsync_src+=("$REPO/./$f"); done
+rsync -a --rsync-path="sudo rsync" -R "${rsync_src[@]}" "$HOST":/opt/labuse/app/
+if ! ssh -o BatchMode=yes "$HOST" "set -e; for f in ${ARTEFACTS_CALCUL[*]}; do [ -f /opt/labuse/app/\$f ] || { echo \"   artefact MANQUANT en prod : \$f\" >&2; exit 1; }; done; echo '   artefacts de modèle (${#ARTEFACTS_CALCUL[@]}) livrés et présents en prod ✓'"; then
+  echo "✗ REFUS : artefact(s) de modèle manquant(s) en prod après livraison — déploiement ARRÊTÉ." >&2
+  exit 1
+fi
+
 ssh -o BatchMode=yes "$HOST" 'sudo chown -R labuse:labuse /opt/labuse/app'
 
 echo "── 1b. rotation automatique des filets de déploiement (OPS-URGENCE-2) ──"
