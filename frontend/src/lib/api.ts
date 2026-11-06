@@ -759,7 +759,7 @@ export interface GabNonIntegratedRule { id?: string | null; label: string; detai
 export interface GabCoverage { reculs: boolean; hauteur: boolean; emprise: boolean; risques: boolean }
 export type GabGeom = { type: string; coordinates: unknown } | null
 export interface GabaritResult {
-  status: 'ok' | 'incomplete'
+  status: 'ok' | 'incomplete' | 'inconstructible'   // NU5-FIX-1 (A-O1/O2) — verdict distinct de « incomplete »
   message?: string | null
   validationErrors: string[]
   raccordement?: Record<string, unknown> | null

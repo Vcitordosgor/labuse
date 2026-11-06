@@ -113,14 +113,27 @@ def gabarit_detail(idu: str, db: Session = Depends(get_db)) -> GabaritResult:
         # cadastral + la référence/commune (via raccordement.parcelle) pour que la carte centre sur
         # la parcelle et que le panneau l'identifie AU-DESSUS du motif — jamais un écran vide.
         parcel = build.input.parcel if build.input else None
-        return GabaritResult(status="incomplete", message=INCOMPLETE_MESSAGE,
-                             validationErrors=build.blocking, raccordement=_racc,
-                             contourGeoJSON=parcel.geometry if parcel else None,
-                             surfaceParcelleM2=parcel.areaM2 if parcel else None,
-                             batiExistantGeoJSON=_bati_existant(db, idu))
+        res = GabaritResult(status="incomplete", message=INCOMPLETE_MESSAGE,
+                            validationErrors=build.blocking, raccordement=_racc,
+                            contourGeoJSON=parcel.geometry if parcel else None,
+                            surfaceParcelleM2=parcel.areaM2 if parcel else None,
+                            batiExistantGeoJSON=_bati_existant(db, idu))
+        # NU5-FIX-1 (A-O2) — « incomplete » devient « inconstructible » si la parcelle ne peut RIEN
+        # recevoir (N/A/AU fermée/habitat interdit) : « inconstructible », pas « donnée manquante ».
+        from ..gabarit.builder import appliquer_verdict_constructibilite
+        appliquer_verdict_constructibilite(db, idu, res)
+        return res
 
     res = compute_gabarit(build.input)
     res.raccordement = _racc
+    # NU5-FIX-1 (A-O1) — garde de constructibilité, lue via potentiel_batir (même robinet que la
+    # fiche) : une zone « habitat interdit » (Uem) ou tout verdict inconstructible ne sert JAMAIS
+    # d'enveloppe géométrique (« 763 m², R+5 »). Appliquée AVANT le travail 3D/bâti : on sort tôt.
+    from ..gabarit.builder import appliquer_verdict_constructibilite
+    appliquer_verdict_constructibilite(db, idu, res)
+    if res.status == "inconstructible":
+        res.batiExistantGeoJSON = _bati_existant(db, idu)
+        return res
     # CHASSE-CALCULS-FIX-1 Lot 4 (E-B2) — UNE SEULE zone d'implantation : son AIRE est servie dans le
     # MÊME repère que la Faisabilité (échelle CONTENANCE, règle CONTENANCE-1 C3 = contenance/dessin,
     # identique à ctx.terrain_sur_dessin). La FORME (GeoJSON, reculs, PPR découpé) reste sur le dessin ;

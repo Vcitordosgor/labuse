@@ -66,7 +66,7 @@ export default {
         'cp-tier': '#F0A87A',
         'cp-txt': '#EDF3EF',
         'cp-muted': '#8A9A92',
-        'cp-faint': '#57655E',
+        'cp-faint': '#79867D',   // NU5-FIX-1 (F1) — 3,20 → 5,16:1 sur bg-0 (porte du texte Copilote)
         'cp-line': 'rgba(255,255,255,.08)',
         'cp-line2': 'rgba(255,255,255,.14)',
         // LOI-0 · violet = l'exclusivité premium/IA/outils (remplace les #B497F0 en dur,
@@ -78,16 +78,19 @@ export default {
         txt: '#B8C4BC',
         lab: '#7C8A82',
         'txt-dim': '#8A968F',
-        'txt-mut': '#6B776F',
-        'txt-off': '#5E6B64',
-        'txt-faint': '#4E5A53',
-        'txt-ghost': '#3E4A44',
+        // NU5-FIX-1 (F1) — les étages de texte passaient sous le seuil AA 4,5:1 sur bg-0 #0A0C0B
+        // (txt-mut 4,20 ; txt-off 3,52). Remontés à ≥ 5:1. txt-faint/txt-ghost restent (bordures /
+        // désactivé, non-texte — vérifiés : ne portent pas de texte lisible).
+        'txt-mut': '#7E8B82',    // 4,20 → 5,51:1 (sous-titres, horodatages — très utilisé)
+        'txt-off': '#78857C',    // 3,52 → 5,09:1
+        'txt-faint': '#4E5A53',  // bordure / désactivé (non-texte)
+        'txt-ghost': '#3E4A44',  // bordure / désactivé (non-texte)
         // statuts matrice premium v2 (cf. DERIVATIONS)
         'st-chaude': '#5CE6A1',
         'st-surveiller': '#4ADE96',
         'st-creuser': '#E8B44C',
         'st-ecartee': '#E8695A',
-        'st-exclue': '#6B7A72',
+        'st-exclue': '#7B8A81',   // NU5-FIX-1 (F1) — 4,35 → 5,41:1 (libellé de statut)
         'st-none': '#39463F',
       },
       fontFamily: {

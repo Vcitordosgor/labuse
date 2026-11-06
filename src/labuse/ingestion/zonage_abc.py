@@ -26,7 +26,12 @@ from .run_all import REUNION_COMMUNES
 SOURCE_NAME = "Zonage ABC des communes (DHUP)"
 URL_CSV = ("https://static.data.gouv.fr/resources/liste-des-communes-selon-le-zonage-abc/"
            "20260703-091314/liste-ensemble-des-communes-zonage-abc-en-vigueur-26-juin-2026.csv")
-MILLESIME = "arrêté du 23/06/2026 — en vigueur 26/06/2026"
+# NU5-FIX-1 (E-7) — le millésime « arrêté du 23/06/2026 » renvoyait à un arrêté ne concernant
+# qu'Alfortville (94), trompeur lu comme la date de reclassement de l'île. Le classement A/B/C
+# découle de l'arrêté du 1er août 2014 (base, consolidée) ; le reclassement A des 4 communes de
+# l'Ouest réunionnais vient de l'arrêté du 02/10/2023. On sert ce fait, pas la date de la dernière
+# republication nationale du fichier.
+MILLESIME = "arrêté du 1er août 2014 consolidé — reclassement Réunion : arrêté du 02/10/2023"
 ZONES_CONNUES = {"Abis", "A", "B1", "B2", "C"}
 
 DDL = """

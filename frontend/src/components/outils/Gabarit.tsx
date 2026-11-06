@@ -326,6 +326,24 @@ export function Gabarit() {
         </p>
       )}
 
+      {/* NU5-FIX-1 (A-O1/O2) — INCONSTRUCTIBLE : verdict DÉFINITIF (habitat interdit, zone fermée A/N,
+          AU non ouverte, terrain exigu, PPR rédhibitoire), lu via potentiel_batir — jamais une
+          enveloppe géométrique, jamais « le calcul reprendra… ». Contour tracé, motif affiché. */}
+      {res && res.status === 'inconstructible' && (
+        <div data-gabarit-inconstructible className="flex flex-col gap-1.5 rounded-lg border border-coral/50 bg-coral/10 px-3 py-2.5">
+          {(parcelle?.idu || parcelle?.commune) && (
+            <p className="text-[11px] font-medium text-txt">
+              Parcelle {parcelle?.idu ?? '—'}{parcelle?.commune ? ` · ${parcelle.commune}` : ''}
+            </p>
+          )}
+          <p className="text-[12px] font-medium text-coral">Inconstructible — {res.message}</p>
+          <p className="text-[10px] leading-snug text-txt-dim">
+            Aucun gabarit d'implantation n'est calculé : le règlement n'autorise pas de construction
+            ici. Le contour de la parcelle est tracé sur la carte.
+          </p>
+        </div>
+      )}
+
       {/* CALCUL INCOMPLET — la parcelle reste VISIBLE (contour tracé, réf + commune au-dessus du motif).
           Aucune zone / métrique / 3D réglementaire (CDC §3). */}
       {res && res.status === 'incomplete' && (

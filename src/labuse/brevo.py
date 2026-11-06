@@ -95,6 +95,12 @@ REGISTRE: dict[str, Template] = {
     "retour_traite":  Template(19, "LABUSE-I-RETOUR-TRAITE", "Réponse à un signalement",
                                ("PRENOM", "SON_MESSAGE", "REPONSE"), (),
                                "brevo_tpl_retour_traite"),
+    # NU5-FIX-1 (C-F7) — avertissement J-1 de FIN D'ESSAI (envoyé par le job nocturne `essai-fin-proche`,
+    # indépendamment du login). Le template Brevo (id 20) est à créer côté console (geste brevo-stripe.md) ;
+    # le code l'enfile déjà. PRENOM + DATE_FIN (fin d'essai, fuseau Réunion) + LIEN_PAIEMENT (régulariser).
+    "essai_fin_proche": Template(20, "LABUSE-J-ESSAI-FIN-PROCHE", "Essai — se termine bientôt",
+                               ("PRENOM", "DATE_FIN", "LIEN_PAIEMENT"), (),
+                               "brevo_tpl_essai_fin_proche"),
 }
 
 # RENVOI (4/5) : passé UNIQUEMENT sur un RENVOI d'invitation (le premier envoi ne le passe pas).
@@ -317,7 +323,18 @@ def envoyer_template(to: str, key: str, params: dict | None = None) -> dict:
                          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click"}
     try:
         import httpx
+        # NU5-FIX-1 (point 4 du mandat / C-F1) — EXPÉDITEUR UNIQUE : on force le `sender` de CHAQUE
+        # envoi de template sur `mail_from` (contact@labuse.immo), au lieu de laisser Brevo retomber
+        # sur l'expéditeur par défaut du template (victor@). Ainsi TOUS les envois du code — cycle de
+        # vie compris — partent de contact@. (Régler aussi l'expéditeur côté Brevo reste recommandé
+        # pour l'aperçu/console : geste `gestes-prod/brevo-stripe.md`.)
+        import email.utils as _eu
+        _nom, _adr = _eu.parseaddr(getattr(get_settings(), "mail_from", "LABUSE <contact@labuse.immo>"))
+        _sender = {"email": _adr or "contact@labuse.immo"}
+        if _nom:
+            _sender["name"] = _nom
         payload = {"templateId": tpl, "to": [{"email": to}], "params": params or {},
+                   "sender": _sender,
                    # suivi de clic/ouverture OFF pour les transactionnels (délivrabilité entreprise).
                    "disableTracking": True}
         if extra_headers:

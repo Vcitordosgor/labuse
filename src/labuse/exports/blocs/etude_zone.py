@@ -144,17 +144,28 @@ def _equipements(z) -> str:
     doms = (z.get("bpe") or {}).get("domaines") or []
     if not doms:
         return ""
+    # NU5-FIX-1 (B-F5) — la liste nominative de TOUS les établissements d'une commune dense rendait
+    # 36 pages (chaque commerce nommé). On BORNE chaque catégorie aux plus proches (top-N) et on
+    # ANNONCE le reste (« + N autres »), au lieu d'une énumération exhaustive peu exploitable.
+    _MAX_PAR_CAT = 8
     lignes = []
     for d in doms:
         n = int(d.get("n") or 0)
         label = d.get("label") or d.get("domaine") or "Équipements"
         # en-tête de catégorie : libellé + compte
         lignes.append(_kv(label, f'<b>{n} établissement{"s" if n > 1 else ""}</b>'))
-        for x in (d.get("liste") or []):
+        liste = d.get("liste") or []
+        for x in liste[:_MAX_PAR_CAT]:
             nom = x.get("nom") or "Établissement (nom non renseigné)"
             typ = x.get("type") or ""
             # une ligne par établissement : nom · type (type en gris discret)
             lignes.append(_kv("", f'{esc(nom)} <span class="muted">· {esc(typ)}</span>'))
+        if len(liste) > _MAX_PAR_CAT:
+            # NU5-FIX-1 (B-F5) — on NE RÉIMPRIME PAS de nombre ici (le total est déjà la ligne
+            # d'en-tête de la catégorie, seul chiffre sourcé) : « verrou écran=PDF » refuse tout
+            # nombre imprimé hors registre. On dit seulement que la liste est bornée aux plus proches.
+            lignes.append(_kv("", f'<span class="muted">seuls les {_MAX_PAR_CAT} plus proches sont '
+                                  f'listés (total ci-dessus)</span>'))
     return _sec("Équipements", lignes)
 
 

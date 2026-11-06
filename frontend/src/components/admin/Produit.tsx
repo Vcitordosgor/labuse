@@ -146,7 +146,7 @@ export function ProduitSection() {
           <thead>
             <tr>
               {['Date', 'Client', 'Type', 'Où', 'Message', 'Statut'].map((h, i) => (
-                <th key={h} className={`border-b border-line px-4 py-2.5 font-mono text-[9.5px] font-medium uppercase tracking-[0.12em] text-txt-dim ${i === 5 ? 'text-right' : 'text-left'}`}>{h}</th>
+                <th scope="col" key={h} className={`border-b border-line px-4 py-2.5 font-mono text-[9.5px] font-medium uppercase tracking-[0.12em] text-txt-dim ${i === 5 ? 'text-right' : 'text-left'}`}>{h}</th>
               ))}
             </tr>
           </thead>

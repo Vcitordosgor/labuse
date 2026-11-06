@@ -123,7 +123,7 @@ export function CourrierSection() {
           <thead>
             <tr>
               {['Client', 'Parcelle', 'Propriétaire', 'Demandé le', 'Piste CRM', 'Statut', 'Prix (saisi)', 'Gestes'].map((h, i) => (
-                <th key={h} className={`border-b border-line px-4 py-2.5 font-mono text-[9.5px] font-medium uppercase tracking-[0.12em] text-txt-dim ${i >= 6 ? 'text-right' : 'text-left'}`}>{h}</th>
+                <th scope="col" key={h} className={`border-b border-line px-4 py-2.5 font-mono text-[9.5px] font-medium uppercase tracking-[0.12em] text-txt-dim ${i >= 6 ? 'text-right' : 'text-left'}`}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -284,7 +284,7 @@ function OppositionPanel() {
       {opps.length > 0 && (
         <table className="w-full text-[13px]">
           <thead><tr>{['Adresse', 'Parcelle', 'Référence', 'Origine', 'Enregistrée le', ''].map((h, i) => (
-            <th key={h} className={`border-b border-line px-4 py-2 font-mono text-[9.5px] font-medium uppercase tracking-[0.12em] text-txt-dim ${i === 5 ? 'text-right' : 'text-left'}`}>{h}</th>
+            <th scope="col" key={h} className={`border-b border-line px-4 py-2 font-mono text-[9.5px] font-medium uppercase tracking-[0.12em] text-txt-dim ${i === 5 ? 'text-right' : 'text-left'}`}>{h}</th>
           ))}</tr></thead>
           <tbody>
             {opps.map((o) => (

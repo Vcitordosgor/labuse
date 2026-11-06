@@ -123,11 +123,11 @@ export function IaSection() {
         <table className="w-full text-[13px]">
           <thead>
             <tr className="border-b border-line font-mono text-[9.5px] uppercase tracking-[0.14em] text-txt-dim">
-              <th className="px-4 py-2 text-left font-normal">Compte</th>
-              <th className="px-4 py-2 text-right font-normal">Aujourd'hui</th>
-              <th className="px-4 py-2 text-right font-normal">≈ questions</th>
-              <th className="px-4 py-2 text-right font-normal">Coût 30 j</th>
-              <th className="px-4 py-2 text-right font-normal">Plafond € / jour</th>
+              <th scope="col" className="px-4 py-2 text-left font-normal">Compte</th>
+              <th scope="col" className="px-4 py-2 text-right font-normal">Aujourd'hui</th>
+              <th scope="col" className="px-4 py-2 text-right font-normal">≈ questions</th>
+              <th scope="col" className="px-4 py-2 text-right font-normal">Coût 30 j</th>
+              <th scope="col" className="px-4 py-2 text-right font-normal">Plafond € / jour</th>
             </tr>
           </thead>
           <tbody>

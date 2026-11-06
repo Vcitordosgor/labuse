@@ -131,8 +131,14 @@ def aplatir(ad: dict) -> dict:
         "prix_m2": _num(at.get("price_per_square_meter")),
         "type_code": ret or None,
         "type": _RET.get(ret),                                   # None si code non listé (conservé dans brut)
-        "surface_hab": _num(at.get("square")),
-        "surface_terrain": _num(at.get("land_plot_surface")),
+        # NU5-FIX-1 (D-F2) — pour un TERRAIN, `square` = surface du TERRAIN (Leboncoin le renseigne
+        # dans `square` ET `land_plot_surface`), JAMAIS une surface habitable. Le recopier en
+        # `surface_hab` faisait flaguer 49/81 terrains « terrain portant une surface habitable »
+        # (coherence.py) → `a_qualifier` → hors médianes/veilles. On lit comme le chemin dégradé
+        # (type-aware) et le chemin Bien'ici (surfaceArea/landSurfaceArea séparés).
+        "surface_hab": (_num(at.get("square")) if _RET.get(ret) != "terrain" else None),
+        "surface_terrain": (_num(at.get("land_plot_surface")) if _RET.get(ret) != "terrain"
+                            else (_num(at.get("land_plot_surface")) or _num(at.get("square")))),
         "pieces": _num(at.get("rooms")),
         "chambres": _num(at.get("bedrooms")),
         "etages": _num(at.get("nb_floors_house")) or (1 if str(at.get("is_single_storey")) == "1" else None),

@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { createProjet, getPrefsCarte, postPrefsCarte } from './lib/api'
 import { AvisIA } from './components/AvisIA'
+import { CookieConsent } from './components/CookieConsent'
 import { Squelette } from './components/Loading'
 import { Bouton } from './components/ui/Bouton'
 import { SourceDrawer } from './components/fiche/SourceDrawer'
@@ -284,6 +285,17 @@ function Toast() {
   )
 }
 
+// NU5-FIX-1 (F5) — un titre de page (h1) pour le lecteur d'écran, dérivé de la vue courante.
+// La Carte et le CRM n'avaient pas de h1 ; chaque vue en porte désormais un (visuellement masqué).
+function titreVueA11y(view: string, module: string | null): string {
+  const vues: Record<string, string> = {
+    cartes: 'Carte du foncier', documents: 'Documents', sources: 'Sources',
+    copilote: 'Copilote', radar: 'Radar foncier', veille: 'Veille', projets: 'Projets', crm: 'CRM',
+  }
+  if (view === 'cartes' && module) return `Outil — ${module}`
+  return vues[view] || 'LABUSE — Radar foncier'
+}
+
 export default function App() {
   const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, flyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel, setPermitToOpen, setIaRestitution, compareOpen, contexteCommune, setContexteCommune, togglePanel, setTuyauActives, toggleTuyau, setModuleMap, etudeIdus } = useApp()
   // feat/ouverture — le voile d'ouverture (oiseau LABUSE) monté AU-DESSUS de l'app ; `montre` est vrai
@@ -463,6 +475,11 @@ export default function App() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-bg font-sans text-txt">
+      {/* NU5-FIX-1 (F5) — lien d'évitement (clavier/lecteur d'écran) : première cible de tabulation,
+          visible au focus, saute le rail + l'en-tête pour aller au contenu principal. */}
+      <a href="#contenu" className="skip-link">Aller au contenu principal</a>
+      {/* NU5-FIX-1 (C-F4) — bannière de consentement aux cookies. */}
+      <CookieConsent />
       {/* feat/ouverture — l'ouverture (oiseau) par-dessus l'app, retirée à la fin de l'animation. */}
       {montre && <LogoIntro onFini={fini} />}
       {/* CIRCUIT-1 lot 7.2 — le tiroir de trace (un seul, admin, invisible traçage éteint). */}
@@ -471,7 +488,10 @@ export default function App() {
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <CompteBandeau />
         <Header />
-        <div className="relative flex min-h-0 flex-1 overflow-hidden">
+        {/* NU5-FIX-1 (F5) — repère de contenu principal (un seul <main> par page) + un <h1> par vue
+            (lecteur-d'écran) : la Carte et le CRM n'en avaient pas. Titre dérivé de la vue courante. */}
+        <main id="contenu" role="main" className="relative flex min-h-0 flex-1 overflow-hidden">
+          <h1 className="sr-only">{titreVueA11y(view, module)}</h1>
           {view === 'cartes' && (
             <>
               {/* P1 : quand le tiroir Outils est ouvert, il REMPLACE le panneau Cartes (COUCHES/
@@ -534,7 +554,7 @@ export default function App() {
           <SourceDrawer />
           <Toast />
           <IaRestitution />
-        </div>
+        </main>
       </div>
       {/* IMPLANTATION-4 (LOT A) — l'overlay Étude de faisabilité par-dessus TOUTE l'app (fixed inset-0),
           monté seulement quand on l'ouvre (son chunk maplibre n'arrive qu'alors). */}

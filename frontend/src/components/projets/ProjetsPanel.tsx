@@ -75,7 +75,7 @@ function ProjetRow({ p }: { p: Projet }) {
       <div style={{ minWidth: 0 }}>
         <h4 style={{ display: 'flex', alignItems: 'baseline', gap: 9, fontSize: 15, fontWeight: 600, color: '#ECF5EF', margin: 0 }}>
           <span data-projet-titre style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nom}</span>
-          <span data-projet-commune style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '.16em', color: '#5F7267', flexShrink: 0 }}>{communeMono(p)}</span>
+          <span data-projet-commune style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '.16em', color: '#7E8E83', flexShrink: 0 }}>{communeMono(p)}</span>
         </h4>
         {vivierZero ? (
           <div data-projet-sub style={{ fontSize: 12, color: '#8FA69A', marginTop: 2 }}>
@@ -243,7 +243,7 @@ export function ProjetsPanel() {
                 <Bouton data-mes-courriers-nouveau niveau="primaire" ton="vert" className="mb-4"
                   onClick={() => { const s = useApp.getState(); s.setView('cartes'); s.setModule('courriers') }}>Nouveau courrier →</Bouton>
                 {courriers.length === 0 && (
-                  <p style={{ fontSize: 13, color: '#5F7267', padding: '16px 0' }}>Aucune demande de courrier pour l'instant.</p>
+                  <p style={{ fontSize: 13, color: '#7E8E83', padding: '16px 0' }}>Aucune demande de courrier pour l'instant.</p>
                 )}
                 {courriers.map((d) => {
                   const clos = d.statut === 'repondu' || d.statut === 'sans_reponse'
@@ -269,14 +269,14 @@ export function ProjetsPanel() {
                             style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, border: '1px solid #1E4D33', background: '#12251A', color: '#7FD6A6', cursor: 'pointer' }}>Répondu</button>
                           <button data-courrier-sansreponse={d.id} onClick={() => retour.mutate({ id: d.id, statut: 'sans_reponse' })}
                             disabled={retour.isPending}
-                            style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, border: '.5px solid #263A30', background: 'transparent', color: '#5F7267', cursor: 'pointer' }}>Sans réponse</button>
+                            style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, border: '.5px solid #263A30', background: 'transparent', color: '#7E8E83', cursor: 'pointer' }}>Sans réponse</button>
                         </>
                       )}
-                      <span style={{ fontFamily: MONO, fontSize: 11, color: '#5F7267' }}>{String(d.ts).slice(0, 10)}</span>
+                      <span style={{ fontFamily: MONO, fontSize: 11, color: '#7E8E83' }}>{String(d.ts).slice(0, 10)}</span>
                     </span>
                   </div>
                 )})}
-                <p style={{ fontSize: 11.5, color: '#5F7267', marginTop: 12 }}>
+                <p style={{ fontSize: 11.5, color: '#7E8E83', marginTop: 12 }}>
                   LABUSE vous rappelle sous 24 h ouvrées avec le tarif — impression, mise sous pli, affranchissement et suivi compris.
                 </p>
               </div>
@@ -286,7 +286,7 @@ export function ProjetsPanel() {
 
                 <div data-projets-liste>
                   {visibles.length === 0 && (
-                    <p style={{ fontSize: 13, color: '#5F7267', padding: '16px 0' }}>
+                    <p style={{ fontSize: 13, color: '#7E8E83', padding: '16px 0' }}>
                       {showArchived ? 'Aucun projet archivé.' : 'Aucun projet actif.'}
                     </p>
                   )}

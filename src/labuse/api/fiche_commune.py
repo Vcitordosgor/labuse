@@ -52,7 +52,12 @@ def marche_annonces(db: Session, commune: str) -> dict | None:
     cmp = comparable(db, commune) or {}
     acte = cmp.get("ancien_median_eur_m2")
     biens = int(row.get("actives") or 0)
-    robuste = demande is not None and demande_n is not None and demande_n >= SEUIL_N
+    # NU5-FIX-1 (E-5) — l'écart demandé/acté était calculé sur `prix_demande_n` (annonces avec prix
+    # bâti), une population DIFFÉRENTE des « biens en vente » affichés : +66 % sur 7 annonces alors que
+    # la carte disait « 2 biens ». On n'affiche l'écart QUE si les biens EN VENTE passent eux aussi le
+    # seuil (même effectif que le compteur affiché) — sinon masqué (signal trop fragile).
+    robuste = (demande is not None and demande_n is not None and demande_n >= SEUIL_N
+               and biens >= SEUIL_N)
     ecart = round(100.0 * (demande - acte) / acte, 1) if (robuste and acte) else None
     # RECETTE-PROD-1 (F) — date de la DERNIÈRE COLLECTE Radar (pige d'annonces) : dire quand la pige a
     # relevé pour la dernière fois (en pause depuis le 06/10 en prod). ISO → formaté FR côté front.
@@ -103,9 +108,14 @@ def risques(db: Session, commune: str, insee: str | None) -> dict:
         "FROM catnat_arretes WHERE insee = :i "
         "ORDER BY date_debut DESC NULLS LAST, date_arrete DESC NULLS LAST LIMIT 12"),
         {"i": insee}).mappings().all()] if insee else []
+    # NU5-FIX-1 (E-3) — « Parc national » ne vaut QUE pour le CŒUR (la vraie contrainte foncière),
+    # pas l'aire d'adhésion (aucune contrainte) : sans ce filtre, le flag ressortait pour les 24/24
+    # communes (presque toutes touchent les Hauts), y compris Le Port (6 parcelles de bord) — un
+    # indicateur non discriminant. On ne compte que `subtype='coeur'`.
     parc = db.execute(text(
         "SELECT EXISTS (SELECT 1 FROM parcels p JOIN spatial_layers sl ON sl.kind = 'parc_national' "
-        "AND ST_Intersects(p.geom_2975, sl.geom_2975) WHERE p.commune = :c)"), {"c": commune}).scalar()
+        "AND sl.subtype = 'coeur' AND ST_Intersects(p.geom_2975, sl.geom_2975) WHERE p.commune = :c)"),
+        {"c": commune}).scalar()
     # SOURCES-1 lot 2 — le fait AZI/TRI de la commune (GASPAR, table azi_communes) : quels
     # documents inondation couvrent la commune. None si la source n'est pas ingérée.
     azi_tri = None

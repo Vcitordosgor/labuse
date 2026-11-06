@@ -145,7 +145,12 @@ class GabaritResult(BaseModel):
     """Résultat du moteur. Aucun champ estimatif (logements/étages/sdp/coût/valeur/
     potentiel) — liste noire testée."""
 
-    status: Literal["ok", "incomplete"]
+    # NU5-FIX-1 (A-O1/O2) — « inconstructible » est un verdict DISTINCT de « incomplete » (donnée
+    # manquante) : la parcelle ne peut RIEN recevoir (zone fermée A/N, AU non ouverte, habitat
+    # interdit, terrain exigu, PPR rédhibitoire), lu via `faisabilite.potentiel_batir` (même robinet
+    # que la fiche). Aucun volume n'est servi ; `message` porte le motif. Le front l'affiche en
+    # « inconstructible » (jamais « le calcul reprendra… »).
+    status: Literal["ok", "incomplete", "inconstructible"]
     message: Optional[str] = None
     validationErrors: list[str] = Field(default_factory=list)
     # provenance/diagnostic du raccordement réel (jamais estimatif) — prouve d'où

@@ -34,8 +34,12 @@ function specsBien(b: RadarBienClient): string {
   if (b.faits.pieces) p.push(`${b.faits.pieces} pièce${b.faits.pieces > 1 ? 's' : ''}`)
   if (b.faits.surface_hab) p.push(`${fmtM2(b.faits.surface_hab)} hab`)
   if (b.faits.surface_terrain) p.push(`${fmtM2(b.faits.surface_terrain)} de terrain`)
-  const surf = b.type_bien === 'terrain' ? b.faits.surface_terrain : (b.faits.surface_hab || b.faits.surface_terrain)
-  if (b.faits.prix && surf) p.push(`${fmtEur(Math.round(b.faits.prix / surf))}/m²`)
+  // NU5-FIX-1 (D-F8) — le €/m² DIT sa base (habitable ou terrain) : un bien portant deux surfaces
+  // ne laisse plus deviner sur laquelle il est calculé.
+  const surfTerrain = b.type_bien === 'terrain'
+  const surf = surfTerrain ? b.faits.surface_terrain : (b.faits.surface_hab || b.faits.surface_terrain)
+  const baseLabel = surfTerrain || !b.faits.surface_hab ? '/m² terrain' : '/m² hab.'
+  if (b.faits.prix && surf) p.push(`${fmtEur(Math.round(b.faits.prix / surf))}${baseLabel}`)
   return p.join(' · ') || '—'
 }
 

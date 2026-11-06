@@ -273,10 +273,10 @@ export function ComparePanel() {
             <table className="w-full table-fixed border-collapse text-[12px]">
               <thead>
                 <tr>
-                  <th className="w-[120px] p-2" />
+                  <th scope="col" className="w-[120px] p-2" />
                   {parcels.map((r) => {
                     return (
-                      <th key={r.idu} data-compare-col className="border-l border-line p-2 align-top">
+                      <th scope="col" key={r.idu} data-compare-col className="border-l border-line p-2 align-top">
                         <div className="flex items-center justify-between gap-2">
                           <button onClick={() => select(r.idu)} className="font-mono text-[11px] tracking-tight text-txt-hi hover:underline">{r.idu}</button>
                           <button onClick={() => removeFromCompare(r.idu)} aria-label="Retirer" className="text-[11px] text-txt-dim hover:text-st-ecartee">✕</button>

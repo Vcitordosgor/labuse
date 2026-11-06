@@ -283,9 +283,9 @@ function RapportParcelle({ idu }: { idu: string }) {
             <table className="w-full table-fixed text-[10px] tabular-nums">
               <thead>
                 <tr className="text-left text-txt-dim">
-                  <th className="pb-1 pr-1 font-medium">Date</th><th className="pb-1 pr-1 font-medium">Type</th>
-                  <th className="pb-1 pr-1 text-right font-medium">Surf.</th><th className="pb-1 pr-1 text-right font-medium">Prix</th>
-                  <th className="pb-1 pr-1 text-right font-medium">€/m²</th><th className="pb-1 text-right font-medium">Dist.</th>
+                  <th scope="col" className="pb-1 pr-1 font-medium">Date</th><th scope="col" className="pb-1 pr-1 font-medium">Type</th>
+                  <th scope="col" className="pb-1 pr-1 text-right font-medium">Surf.</th><th scope="col" className="pb-1 pr-1 text-right font-medium">Prix</th>
+                  <th scope="col" className="pb-1 pr-1 text-right font-medium">€/m²</th><th scope="col" className="pb-1 text-right font-medium">Dist.</th>
                 </tr>
               </thead>
               <tbody>

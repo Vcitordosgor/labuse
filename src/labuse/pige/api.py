@@ -248,12 +248,17 @@ def radar_etat(request: Request) -> dict:
             "LEFT JOIN pige_annonces a ON a.bien_id = b.bien_id "
             "WHERE b.statut IN ('active','en_vente_longue') AND f.valide_at IS NOT NULL "
             "ORDER BY b.last_seen_at ASC NULLS FIRST LIMIT 5000")).mappings()]
+        # NU5-FIX-1 (D-F1) — les biens « à revérifier » (`a_reverifier`) sont AUSSI servis à la passe
+        # de confirmation, SANS condition d'ancienneté : c'est le chemin par lequel les 88 biens
+        # retirés à tort le 26/09 (remis en `a_reverifier` par le geste prod) seront re-vérifiés un à
+        # un — présents → réactivés (`active`), vraiment partis → retirés sous la garde des 30 %.
         a_confirmer = [dict(r) for r in c.execute(text(
             "SELECT a.list_id, a.url_sortante AS url FROM pige_biens b "
             "JOIN pige_annonces a ON a.bien_id = b.bien_id "
-            "WHERE b.statut IN ('active','en_vente_longue') "
-            "  AND (b.last_seen_at IS NULL OR b.last_seen_at < now() - interval '8 days') "
-            "ORDER BY b.last_seen_at ASC NULLS FIRST LIMIT 200")).mappings()]
+            "WHERE b.statut = 'a_reverifier' "
+            "   OR (b.statut IN ('active','en_vente_longue') "
+            "       AND (b.last_seen_at IS NULL OR b.last_seen_at < now() - interval '8 days')) "
+            "ORDER BY (b.statut = 'a_reverifier') DESC, b.last_seen_at ASC NULLS FIRST LIMIT 500")).mappings()]
     for r in actives:
         r["last_seen_at"] = r["last_seen_at"].isoformat() if r["last_seen_at"] else None
     return {"derniere_capture_at": derniere.isoformat() if derniere else None,
@@ -359,6 +364,25 @@ def _appliquer_confirmations(db, items: list[ConfirmationIn], jour: str,
                     f"Radar — passe de confirmation SUSPECTE ({taux:.0%} de retraits)",
                     detail=f"{len(retraits)}/{n_verifies} liens vus comme retirés — rien écrit, à re-vérifier",
                     dedup=f"pige:anomalie:confirmation:{jour}")
+        # NU5-FIX-1 (D-F3) — la garde protège des faux retraits, mais si elle bloque 3 NUITS de suite,
+        # les VRAIS retraits ne sont plus captés : on alerte l'exploitation ([URGENT] admin, une fois +
+        # rappel/jour via l'incident), signe d'un blocage portail (DataDome/captcha) à lever.
+        nuits_bloquees = db.execute(text(
+            "SELECT count(DISTINCT (ts AT TIME ZONE 'Indian/Reunion')::date) "
+            "FROM event_log WHERE dedup LIKE 'pige:anomalie:confirmation:%' "
+            "  AND ts > now() - interval '3 days'")).scalar() or 0
+        if nuits_bloquees >= 3:
+            try:
+                from .. import ops_alertes
+                ops_alertes.signaler(
+                    db, "radar:confirmation-bloquee",
+                    f"Radar — confirmation des retraits bloquée {nuits_bloquees} nuits de suite",
+                    f"La garde des 30 % refuse tout retrait depuis {nuits_bloquees} nuits "
+                    f"(dernière passe : {len(retraits)}/{n_verifies} liens vus retirés, {taux:.0%}). "
+                    "Les vrais retraits ne sont plus captés — vérifier l'accès aux portails "
+                    "(blocage DataDome / captcha probable).", lien="/admin")
+            except Exception:  # noqa: BLE001 — l'alerte qui rate ne casse pas la passe
+                log.warning("D-F3 : alerte « confirmation bloquée » impossible", exc_info=True)
     journaliser_passe(db, "confirmation",
                       f"Radar — confirmation · {p.get('n_pages',n_verifies)} lien(s) vérifié(s)",
                       detail, dedup=f"pige:passe:confirmation:{jour}")
@@ -1710,6 +1734,35 @@ def _lecture_fonciere_parcelle(surface_terrain_m2, repere_tn, valeur_bati_eur) -
 
 
 def estimation_annonce(db, idu: str, fiche: dict, surface_hab: float | None = None) -> dict:
+    """ANNONCE-5 + NU5-FIX-1 (A-O3) — l'estimation du prix d'une parcelle, POINT UNIQUE écran == PDF,
+    enrichie du VERDICT DE CONSTRUCTIBILITÉ. Estimer est un comparateur de SECTEUR honnête, mais sur
+    une parcelle qui ne peut rien recevoir (N/A/AU fermée/habitat interdit/PPR rédhibitoire), un €/m²
+    « bâti » + une fiabilité « Moyenne/Élevée » induisent en erreur. On ajoute donc `constructibilite`
+    (lu via la MÊME fonction que la fiche, `potentiel_batir`) et, si inconstructible, un
+    `avertissement_constructibilite` affiché à l'écran et dans le PDF."""
+    res = _estimation_annonce_core(db, idu, fiche, surface_hab=surface_hab)
+    try:
+        pot = (fiche or {}).get("potentiel_a_batir")
+        if not pot:
+            from ..faisabilite.potentiel_batir import potentiel_batir
+            pot = potentiel_batir(db, idu)
+    except Exception:  # noqa: BLE001 — caches absents → pas de verdict, jamais une 500
+        pot = None
+    if isinstance(pot, dict):
+        res["constructibilite"] = {
+            "constructible": pot.get("constructible"),
+            "rien_a_batir": pot.get("rien_a_batir"),
+            "motif": pot.get("motif"),
+            "zone_lib": pot.get("zone_lib"),
+        }
+        if pot.get("constructible") is False:
+            res["avertissement_constructibilite"] = (
+                (pot.get("motif") or "Parcelle non constructible")
+                + " — ce prix est un repère de marché du secteur, pas une valeur à bâtir.")
+    return res
+
+
+def _estimation_annonce_core(db, idu: str, fiche: dict, surface_hab: float | None = None) -> dict:
     """ANNONCE-5 — l'estimation du prix d'une parcelle, POINT UNIQUE lu par l'écran (endpoint) ET par le
     PDF (builder) → mêmes chiffres, mêmes comparables, même valeur indicative, aucun recalcul divergent.
 
@@ -1838,6 +1891,13 @@ def radar_annonce_estimation(
     PDF lisent exactement ce rapport → mêmes chiffres, même règle."""
     from ..api.app import parcel_fiche
     with session_scope() as db:
+        # NU5-FIX-1 (B-F1) — Analyser une annonce (outil) REFUSE une parcelle disparue du cadastre,
+        # comme le document : jamais un prix estimé sur une parcelle sortie du cadastre.
+        from .. import cadastre_disparue as _cd
+        _disp = _cd.info_disparue(db, idu)
+        if _disp:
+            return {"idu": idu, "median": None, "type_comparateur": None,
+                    "erreur": "parcelle_disparue", "note": _cd.phrase_disparue(_disp)}
         try:
             fiche = parcel_fiche(idu, db=db)
         except ValueError:

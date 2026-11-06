@@ -88,11 +88,11 @@ export function RadarMarche() {
         <table className="w-full border-collapse text-[11px]">
           <thead>
             <tr className="border-b border-line-3 font-mono text-[9px] uppercase tracking-wider text-txt-dim">
-              <th className="py-1 text-left">Commune</th>
-              <th className="text-right">Actives</th><th className="text-right">Nouv.30j</th>
-              <th className="text-right">Retir.30j</th>
-              <th className="text-right">€/m² terr.</th><th className="text-right">€/m² bâti</th>
-              <th className="text-right">Délai méd.</th><th className="text-right">Part.</th>
+              <th scope="col" className="py-1 text-left">Commune</th>
+              <th scope="col" className="text-right">Actives</th><th scope="col" className="text-right">Nouv.30j</th>
+              <th scope="col" className="text-right">Retir.30j</th>
+              <th scope="col" className="text-right">€/m² terr.</th><th scope="col" className="text-right">€/m² bâti</th>
+              <th scope="col" className="text-right">Délai méd.</th><th scope="col" className="text-right">Part.</th>
             </tr>
           </thead>
           <tbody>

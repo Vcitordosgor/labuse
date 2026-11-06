@@ -409,6 +409,61 @@ def copilote_purge(ctx: JobContext) -> None:
                mo=poids["mo"], croissance_jour=poids["croissance_jour"])
 
 
+def essai_fin_proche(ctx: JobContext) -> None:
+    """NU5-FIX-1 (C-F7) — (1) AVERTIT à J-1 les essais qui se terminent dans les 24 h, (2) BASCULE en
+    suspension les essais ÉCHUS — sans attendre un login (avant, l'essai échu n'était détecté qu'au
+    login : un client qui ne revient pas ne recevait rien et restait `actif`). Idempotent : le mail
+    d'avertissement est dédupliqué par compte × jour d'échéance ; la bascule ne touche qu'un compte
+    encore `actif` et réutilise la primitive existante `basculer_essai_expire` (qui envoie la
+    suspension). Le template Brevo de l'avertissement (id 20 `essai_fin_proche`) est un geste console."""
+    from zoneinfo import ZoneInfo
+    from .comptes import _prenom_titulaire, basculer_essai_expire
+    from .mail import envoyer_mail
+    db = ctx.db
+    base = (get_settings().public_base_url or "https://app.labuse.immo").rstrip("/")
+    # (1) AVERTISSEMENT J-1 : essais ACTIFS dont l'échéance tombe dans les prochaines 24 h.
+    proches = db.execute(text(
+        "SELECT c.id, c.nom, c.essai_expire_at AS fin, "
+        " (SELECT u.email FROM utilisateurs u WHERE u.compte_id = c.id AND u.role='titulaire' "
+        "  ORDER BY u.id LIMIT 1) AS email "
+        "FROM comptes c WHERE c.statut = 'actif' AND c.essai_expire_at IS NOT NULL "
+        "  AND c.essai_expire_at > now() AND c.essai_expire_at <= now() + interval '24 hours'")
+    ).mappings().all()
+    n_avertis = 0
+    for r in proches:
+        if not r["email"]:
+            continue
+        d = r["fin"]
+        date_fin = d.astimezone(ZoneInfo("Indian/Reunion")).strftime("%d/%m/%Y") if d else ""
+        envoyer_mail(key="essai_fin_proche", to=r["email"], compte_id=r["id"],
+                     demandeur="job:essai-fin-proche",
+                     params={"PRENOM": _prenom_titulaire(r["nom"], r["email"]),
+                             "DATE_FIN": date_fin, "LIEN_PAIEMENT": f"{base}/facturation"},
+                     dedup=f"essai-fin-proche:{r['id']}:{d.date().isoformat() if d else '?'}")
+        n_avertis += 1
+    # (2) BASCULE à l'échéance : essais ACTIFS échus → suspension (indépendante du login).
+    echus = db.execute(text(
+        "SELECT id FROM comptes WHERE statut = 'actif' AND essai_expire_at IS NOT NULL "
+        "  AND essai_expire_at <= now()")).scalars().all()
+    for cid in echus:
+        basculer_essai_expire(db, int(cid))
+    db.commit()
+    ctx.compte(avertis_j_moins_1=n_avertis, bascules_echeance=len(echus))
+
+
+def verite_permanente(ctx: JobContext) -> None:
+    """NU5-FIX-1 (point 8) — VÉRITÉ-PERMANENTE-1 : rejoue les harnais des 6 lots NU-5 via le runner
+    unique `scripts/verite_permanente`. Reporte vert/rouge/sauté par lot ; LÈVE si un harnais lancé
+    a échoué (le runner du cron ouvre alors l'incident `job-echec:verite-permanente`)."""
+    from scripts.verite_permanente import run
+    r = run()
+    ctx.compte(verts=r["verts"], rouges=r["rouges"], sautes=r["sautes"],
+               lots=[f"{x['lot']}:{x['etat']}" for x in r["lots"]])
+    if r["rouges"]:
+        raise RuntimeError(f"VÉRITÉ-PERMANENTE — {r['rouges']} harnais en échec : "
+                           + ", ".join(x["lot"] for x in r["lots"] if x["etat"] == "rouge"))
+
+
 def healthcheck(ctx: JobContext) -> None:
     """Dead-man LOCAL toutes les 15 min — la sonde rapide. Vérifie le process (/health), la disponibilité
     réelle (/readyz) et l'espace disque. SOLIDITE-1 (Lot 1.2) : DISQUE et /readyz passent par la PORTE

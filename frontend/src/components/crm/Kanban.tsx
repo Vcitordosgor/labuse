@@ -49,22 +49,16 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, columns, onMove, o
     <div
       draggable
       onDragStart={onDragStart}
-      // GB-027 (a11y) — la carte est FOCUSABLE et activable au CLAVIER (Entrée/Espace → édition, qui
-      // porte le sélecteur d'étape) : un utilisateur sans souris peut ouvrir la carte et la déplacer.
-      tabIndex={0}
-      role="button"
-      onKeyDown={(ev) => {
-        if ((ev.key === 'Enter' || ev.key === ' ') && !(ev.target as HTMLElement).closest('button, select, textarea, input')) {
-          ev.preventDefault(); onEdit()
-        }
-      }}
+      // NU5-FIX-1 (F-2) — la carte N'EST PLUS un `role="button"` focusable contenant d'autres
+      // contrôles focusables (nested-interactive ×187 : lecteur d'écran et clavier s'y perdaient).
+      // C'est un conteneur simple ; le clic sur le corps ouvre l'édition (confort SOURIS), et un bouton
+      // DÉDIÉ « Ouvrir le suivi » (pied) donne l'accès CLAVIER/lecteur d'écran. Le glisser-déposer reste
+      // sur toute la carte ; l'alternative clavier est « Déplacer vers… ».
       onClick={(ev) => {
-        // M137 — le CORPS de la carte ouvre l'ÉCRAN D'ÉDITION (note/priorité/relance/prospection).
-        // Le bouton IDU garde l'ouverture de la fiche. Menu « Déplacer vers… » et zone de note inertes ici.
-        if ((ev.target as HTMLElement).closest('button, select, textarea, input')) return
+        if ((ev.target as HTMLElement).closest('button, select, textarea, input, a')) return
         onEdit()
       }}
-      className="group flex cursor-pointer flex-col gap-3 rounded-lg bg-surface-3 p-3.5 shadow-elev-1 ring-1 ring-transparent transition-shadow duration-quick active:cursor-grabbing hover:ring-mint/30 focus:outline-none focus:ring-2 focus:ring-mint/50"
+      className="group flex cursor-pointer flex-col gap-3 rounded-lg bg-surface-3 p-3.5 shadow-elev-1 ring-1 ring-transparent transition-shadow duration-quick active:cursor-grabbing hover:ring-mint/30"
     >
       {/* IDU + poignée de glissement (affordance ; le glisser-déposer reste sur toute la carte) */}
       <div className="flex items-center justify-between gap-2">
@@ -79,7 +73,8 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, columns, onMove, o
           )}
           <button
             onClick={() => focusParcelle(e.idu, { fiche: true })}
-            className="truncate font-mono text-[13px] font-medium text-txt-hi transition-colors duration-quick hover:text-mint"
+            aria-label={`Ouvrir la fiche de la parcelle ${e.idu}`}
+            className="inline-flex min-h-[24px] items-center truncate font-mono text-[13px] font-medium text-txt-hi transition-colors duration-quick hover:text-mint"
           >
             {e.idu}
           </button>
@@ -140,14 +135,22 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, columns, onMove, o
           </div>
         </div>
       )}
-      {/* pied : « Déplacer vers… » (alternative au glisser-déposer) + « + Note » si la carte n'en a pas */}
+      {/* pied : « Ouvrir le suivi » (accès clavier/lecteur d'écran à l'édition) + « Déplacer vers… »
+          (alternative au glisser-déposer) + « + Note » si la carte n'en a pas. */}
       <div className="flex items-center gap-2 border-t border-line-2 pt-2.5">
+        {/* NU5-FIX-1 (F-2) — le point d'entrée FOCUSABLE de la carte (remplace l'ancien role=button
+            sur tout le conteneur) ; ≥ 24 px de haut (F-3). */}
+        <button data-crm-ouvrir onClick={(ev) => { stop(ev); onEdit() }}
+          aria-label={`Ouvrir le suivi de la parcelle ${e.idu}`}
+          className="shrink-0 whitespace-nowrap rounded-md border border-line-2 bg-surface-2 px-2 py-1 text-[11px] text-txt-dim transition-colors duration-quick hover:border-mint/40 hover:text-mint min-h-[24px]">
+          Ouvrir
+        </button>
         <div className="min-w-0 flex-1">
           <DeplacerMenu columns={columns} currentStatus={e.status} onMove={onMove} onRetirer={onArchive} />
         </div>
         {!note && !noteOpen && (
           <button data-crm-note-add onClick={(ev) => { stop(ev); setDraft(''); setNoteOpen(true) }}
-            className="shrink-0 whitespace-nowrap rounded-md border border-line-2 bg-surface-2 px-2 py-1 text-[11px] text-txt-dim transition-colors duration-quick hover:border-mint/40 hover:text-mint">
+            className="shrink-0 whitespace-nowrap rounded-md border border-line-2 bg-surface-2 px-2 py-1 text-[11px] text-txt-dim transition-colors duration-quick hover:border-mint/40 hover:text-mint min-h-[24px]">
             + Note
           </button>
         )}

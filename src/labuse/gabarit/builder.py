@@ -708,6 +708,41 @@ def appliquer_note_a_cheval(db: Session, idu: str, result) -> None:
         pass
 
 
+def appliquer_verdict_constructibilite(db: Session, idu: str, result) -> None:
+    """NU5-FIX-1 (A-O1/O2) — LA garde unique de constructibilité du Gabarit, lue via la MÊME
+    fonction que la fiche (`faisabilite.potentiel_batir`). Si la parcelle est DÉFINITIVEMENT
+    inconstructible (`constructible is False` : zone fermée A/N, AU non ouverte, habitat interdit,
+    terrain exigu, PPR rédhibitoire), le Gabarit NE DESSINE AUCUN VOLUME et rend le verdict
+    « inconstructible » + le motif — au lieu d'une enveloppe géométrique trompeuse (zone Uem
+    « habitat interdit » servait 763 m², R+5) ou d'un « Calcul incomplet » qui suggère une attente
+    de donnée (zone N / A / AU fermée / PPR rouge 100 %).
+
+    Ne touche RIEN quand `constructible` vaut True (gabarit servi) ou None (donnée absente →
+    « incomplete » reste « incomplete » : on ne transforme pas un trou de donnée en interdiction).
+    Les AU à ouverture CONDITIONNELLE servie (conditionnelle_operation…) restent `constructible`
+    → leur enveloppe « après ouverture » est conservée (décision CHASSE-FIX-1/C06). Appelée par
+    l'endpoint outil ET le builder PDF → écran et PDF portent le MÊME verdict. Best-effort."""
+    if result is None:
+        return
+    try:
+        from ..faisabilite.potentiel_batir import potentiel_batir
+        pot = potentiel_batir(db, idu)
+    except Exception:  # noqa: BLE001 — caches absents → pas de verdict, jamais une 500
+        return
+    if pot.get("constructible") is not False:
+        return
+    motif = pot.get("motif") or pot.get("libelle") or "Parcelle inconstructible"
+    result.status = "inconstructible"
+    result.message = motif
+    # aucun volume servi : ni zone d'implantation, ni plafond, ni hauteur, ni 3D, ni retraits.
+    for _champ in ("zoneImplantationM2", "zoneImplantationGeoJSON", "retraitsGeoJSON",
+                   "exclusionsGeoJSON", "plafondEmpriseM2", "hauteurReglementaireM",
+                   "hauteurEgoutM", "batiDeduitM2", "terrainNote"):
+        if hasattr(result, _champ):
+            setattr(result, _champ, None)
+    # on CONSERVE contourGeoJSON + surfaceParcelleM2 + raccordement + batiExistant (contexte carte).
+
+
 def deduire_bati_de_zone(result) -> None:
     """RECETTE-OUTILS-3 (S7 / S10) — rend la zone d'implantation et le bâti COHÉRENTS et UNIQUES pour
     l'app (2D/3D) et le PDF (p1 schéma, p3 3D). Deux opérations, in place sur un `GabaritResult` servi :

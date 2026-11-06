@@ -50,13 +50,33 @@ _EXCEL_DISPONIBLE: set[str] = {"bilan"}
 
 def millesimes_servis(db: Session) -> dict[str, str]:
     """{source → millésime} de TOUTES les sources servies aujourd'hui (data_sources.source_millesime).
-    C'est l'instantané pris à la génération ET la référence du jour pour l'état « À jour »."""
+    C'est la référence du jour pour l'état « À jour »."""
     try:
         rows = db.execute(text(
             "SELECT name, coalesce(source_millesime, '') FROM data_sources ORDER BY name")).all()
     except Exception:  # noqa: BLE001 — table absente (base nue) : instantané vide, jamais un 500
         return {}
     return {str(n): str(m) for n, m in rows}
+
+
+def sources_du_document(db: Session, idus: list[str]) -> dict[str, str]:
+    """NU5-FIX-1 (B-F8) — {source → millésime} des sources RÉELLEMENT utilisées par le document, pas
+    de TOUTES les sources servies. Avant, l'instantané figeait les ~90 sources → un document passait
+    « Sources modifiées depuis » parce qu'une source SANS RAPPORT avait changé de millésime. On fige
+    désormais le sous-ensemble = les `data_sources` de la fiche de la parcelle (la liste même que la
+    section « Sources » du document imprime). Repli sûr sur TOUTES les sources si indéterminable
+    (jamais un instantané vide, sinon le document ne pourrait jamais passer « modifié »)."""
+    tous = millesimes_servis(db)
+    if not idus:
+        return tous
+    try:
+        from .app import parcel_fiche
+        fiche = parcel_fiche(idus[0], db=db)
+        noms = {d.get("nom") for d in (fiche.get("data_sources") or []) if d.get("nom")}
+    except Exception:  # noqa: BLE001 — fiche indisponible → repli sur toutes les sources
+        return tous
+    sous = {k: v for k, v in tous.items() if k in noms}
+    return sous or tous
 
 
 class EnregistrerDoc(BaseModel):
@@ -82,7 +102,8 @@ def enregistrer(body: EnregistrerDoc, request: Request, db: Session = Depends(ge
         " VALUES (:cid, :t, :idus, :r, CAST(:hyp AS jsonb), CAST(:mil AS jsonb)) RETURNING id, created_at"),
         {"cid": cid, "t": body.doc_type, "idus": idus, "r": body.rayon_km,
          "hyp": json.dumps(body.hypotheses) if body.hypotheses is not None else None,
-         "mil": json.dumps(millesimes_servis(db))}).mappings().first()
+         # NU5-FIX-1 (B-F8) — n'instantanéise que les sources du document (pas toutes les sources).
+         "mil": json.dumps(sources_du_document(db, idus))}).mappings().first()
     db.commit()
     return {"id": row["id"], "created_at": row["created_at"].isoformat()}
 
@@ -157,10 +178,14 @@ def rafraichir(doc_id: int, request: Request, db: Session = Depends(get_db)) -> 
     (le document vient d'être régénéré sur les données du jour). Scopé compte — 404 si pas la sienne."""
     cid = compte_ou_401(request)
     import json
+    # NU5-FIX-1 (B-F8) — même instantané limité aux sources du document (ses cible_idus).
+    _idus = list(db.execute(text(
+        f"SELECT cible_idus FROM documents_generes WHERE id = :id AND {scope_clause()}"),
+        {"id": doc_id, "cid": cid}).scalar() or [])
     n = db.execute(text(
         "UPDATE documents_generes SET millesimes = CAST(:mil AS jsonb), created_at = now()"
         f" WHERE id = :id AND {scope_clause()}"),
-        {"id": doc_id, "cid": cid, "mil": json.dumps(millesimes_servis(db))}).rowcount
+        {"id": doc_id, "cid": cid, "mil": json.dumps(sources_du_document(db, _idus))}).rowcount
     db.commit()
     if not n:
         raise HTTPException(404, "document introuvable")

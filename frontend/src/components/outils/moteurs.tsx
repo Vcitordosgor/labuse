@@ -572,10 +572,10 @@ function M18Tableau({ d }: { d: Record<string, any> }) {
         <table className="w-full border-collapse text-[11px]">
           <thead>
             <tr className="border-b border-line-2">
-              <th className={`thead-sticky ${th}`}>Trimestre</th>
-              <th className={`thead-sticky ${th}`}>Ancien €/m² <span className="text-txt-off">(n)</span></th>
-              <th className={`thead-sticky ${th}`}>Terrain €/m² <span className="text-txt-off">(n)</span></th>
-              <th className={`thead-sticky ${th}`}>Permis</th>
+              <th scope="col" className={`thead-sticky ${th}`}>Trimestre</th>
+              <th scope="col" className={`thead-sticky ${th}`}>Ancien €/m² <span className="text-txt-off">(n)</span></th>
+              <th scope="col" className={`thead-sticky ${th}`}>Terrain €/m² <span className="text-txt-off">(n)</span></th>
+              <th scope="col" className={`thead-sticky ${th}`}>Permis</th>
             </tr>
           </thead>
           <tbody>

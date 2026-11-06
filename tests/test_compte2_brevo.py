@@ -31,11 +31,19 @@ ATTENDU = {
     "flash_pret":     (17, "LABUSE-G-FLASH-PRET",    {"LIEN_PDF", "VALIDITE", "IDU", "COMMUNE"}),
     "email_change":   (18, "LABUSE-H-EMAIL-CHANGE",  {"PRENOM", "ANCIEN_EMAIL", "NOUVEL_EMAIL"}),
     "retour_traite":  (19, "LABUSE-I-RETOUR-TRAITE", {"PRENOM", "SON_MESSAGE", "REPONSE"}),
+    # NU5-FIX-1 (C-F7) — avertissement J-1 de fin d'essai (template Brevo id 20 à créer, geste console).
+    "essai_fin_proche": (20, "LABUSE-J-ESSAI-FIN-PROCHE", {"PRENOM", "DATE_FIN", "LIEN_PAIEMENT"}),
 }
 
 
-def test_registre_couvre_les_seize_et_rien_de_plus():
-    assert set(brevo.REGISTRE) == set(ATTENDU), "le registre doit contenir EXACTEMENT les seize clés"
+#: NU5-FIX-1 (C-F7) — templates DONT LE CODE RÉFÈRE LA CLÉ mais dont le template Brevo est un geste
+#: console pas encore appliqué (brevo-stripe.md). Exclus des vérifications LIVE tant que non créés ;
+#: à retirer de ce set dès que le template existe côté Brevo (les tests `-m local` les couvriront alors).
+_PENDING_BREVO = {"essai_fin_proche"}
+
+
+def test_registre_couvre_exactement_les_cles_attendues():
+    assert set(brevo.REGISTRE) == set(ATTENDU), "le registre doit contenir EXACTEMENT les clés attendues"
 
 
 @pytest.mark.parametrize("key", list(ATTENDU))
@@ -105,6 +113,8 @@ def test_apercu_seize_rendus_sans_reste_brut():
            "NOUVEL_EMAIL": "b@x", "SON_MESSAGE": "m", "REPONSE": "r", "RENVOI": False,
            "JAMAIS_CONNECTE": True}
     for key in brevo.REGISTRE:
+        if key in _PENDING_BREVO:
+            continue   # template Brevo pas encore créé (geste console) — couvert dès qu'il existe
         a = brevo.apercu_template(key, ech)
         assert a.get("configure"), f"{key}: {a.get('raison')}"
         blob = a["subject"] + " " + a["html"]
@@ -123,6 +133,10 @@ def test_verification_api_brevo_reelle():
     assert res["api"] is True
     assert res["expediteur_unique"] == "victor@labuse.immo"
     ecarts = [l for l in res["lignes"]
-              if not (l.get("existe") and l.get("actif") and l.get("nom_ok") and not l.get("params_manquants"))]
+              if l.get("key") not in _PENDING_BREVO
+              and not (l.get("existe") and l.get("actif") and l.get("nom_ok") and not l.get("params_manquants"))]
     assert not ecarts, f"écarts Brevo : {ecarts}"
-    assert res["ok"] is True
+    # res["ok"] agrège TOUS les templates, y compris ceux en attente de création côté Brevo
+    # (geste console `brevo-stripe.md`) : on ne l'exige vrai QUE s'il n'y a aucun pending.
+    if not _PENDING_BREVO:
+        assert res["ok"] is True

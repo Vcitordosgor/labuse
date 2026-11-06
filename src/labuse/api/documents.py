@@ -38,9 +38,17 @@ def rendre_document(db, idu: str, request: Request, document: str, *,
     from ..exports import builder
     from ..exports.rendu import render_pdf
     from ..quota import porte_export
+    from .. import cadastre_disparue as _cd
     from .app import parcel_fiche
     from .tenant import current_compte
     porte_export(request, db)
+    # NU5-FIX-1 (B-F1) — LA garde unique « parcelle disparue » : tout document passant par le builder
+    # unique (Apporteur, Financier…) REFUSE une parcelle sortie du cadastre, comme le font déjà le
+    # Dossier, le Gabarit et le Comparatif. L'Apporteur composait un brief complet sur une disparue.
+    _disp = _cd.info_disparue(db, idu)
+    if _disp:
+        raise HTTPException(status_code=422, detail={
+            "erreur": "parcelle_disparue", "message": _cd.phrase_disparue(_disp)})
     try:
         fiche = parcel_fiche(idu, db=db, request=request)
     except ValueError as exc:
@@ -161,9 +169,16 @@ def comparatif_pdf(idus: str, request: Request, db: Session = Depends(get_db)) -
     from ..exports import builder
     from ..quota import porte_export
     from .. import cadastre_disparue as _cd
-    ids = [x.strip() for x in (idus or "").split(",") if x.strip()][:3]
+    _tous = [x.strip() for x in (idus or "").split(",") if x.strip()]
+    ids = _tous[:3]
     if len(ids) < 2:
         raise HTTPException(422, "au moins deux parcelles sont requises")
+    # NU5-FIX-1 (B-F3) — le Comparatif plafonne à 3 parcelles : il l'ANNONCE (note imprimée) au lieu
+    # d'abandonner les surnuméraires en silence (30 demandées → 3 affichées sans un mot).
+    _tronques = _tous[3:]
+    _note_limite = (f"{len(_tous)} parcelles demandées — le comparatif en affiche au maximum 3. "
+                    f"{len(_tronques)} non affichée(s) : {', '.join(_tronques)}."
+                    if _tronques else None)
     porte_export(request, db)
     # CHASSE-DONNEES-FIX-1 (Lot 2) — le Comparatif REFUSE de composer si l'une des parcelles est
     # disparue du cadastre (il la présentait comme vivante, ou servait sa remplaçante en silence).
@@ -176,7 +191,7 @@ def comparatif_pdf(idus: str, request: Request, db: Session = Depends(get_db)) -
     try:
         from .app import compare as _compare_fn
         data = _compare_fn(idus=",".join(ids), db=db)
-        res = builder.construire_comparatif(ids, data.get("parcels") or [])
+        res = builder.construire_comparatif(ids, data.get("parcels") or [], note_limite=_note_limite)
     except HTTPException:
         raise
     except Exception:  # noqa: BLE001
@@ -196,7 +211,14 @@ def etude_zone_pdf(idu: str, request: Request, rayon_km: float = 2.0,
     exactement comme l'outil — le menu « Activité » MODIFIE la lecture de la zone."""
     from ..exports import builder
     from ..quota import porte_export
+    from .. import cadastre_disparue as _cd
     porte_export(request, db)
+    # NU5-FIX-1 (B-F1) — Étude de zone centrée sur une parcelle disparue : REFUS (elle composait
+    # 9 pages centrées sur une parcelle sortie du cadastre). La garde manquait sur cette route.
+    _disp = _cd.info_disparue(db, idu)
+    if _disp:
+        raise HTTPException(status_code=422, detail={
+            "erreur": "parcelle_disparue", "message": _cd.phrase_disparue(_disp)})
     try:
         from .app import EtudeZoneIn, etude_zone as _etude_zone_fn
         zone = _etude_zone_fn(EtudeZoneIn(idu=idu, rayon_km=rayon_km,
@@ -254,7 +276,14 @@ def analyse_annonce_parcelle_pdf(idu: str, request: Request,
     `surface_hab` (ESTIMER-PRECISION-1, facultatif) : surface habitable saisie → total identique écran."""
     from ..exports import builder
     from ..quota import porte_export
+    from .. import cadastre_disparue as _cd
     porte_export(request, db)
+    # NU5-FIX-1 (B-F1) — Analyser une annonce (variante parcelle) : REFUS d'une parcelle disparue
+    # (elle composait carte + zone PLU inventée + prix estimé 2 917 €/m² sur une parcelle inexistante).
+    _disp = _cd.info_disparue(db, idu)
+    if _disp:
+        raise HTTPException(status_code=422, detail={
+            "erreur": "parcelle_disparue", "message": _cd.phrase_disparue(_disp)})
     try:
         res = builder.construire_analyse_annonce_parc(db, idu, request=request, surface_hab=surface_hab)
     except ValueError as exc:

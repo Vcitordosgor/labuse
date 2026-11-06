@@ -81,6 +81,9 @@ _PUBLIQUES = {
 #: préfixes des routes TENANT (scopées `compte_id` / outils analytiques du client, derrière la
 #: garde de session). Classées APRÈS les deux ensembles exacts ci-dessus/-dessous (priorité).
 _PREFIXES_TENANT = (
+    # NU5-FIX-1 (C-F5/F6) — /compte/export + /compte/supprimer agissent UNIQUEMENT sur le compte de la
+    # session (compte_ou_401, jamais cross-tenant) → tenant-scopées, pas des mutations globales.
+    "/compte",
     "/alertes", "/api/copilote-v2", "/bilan-ratios", "/bilan/", "/courrier",
     "/documents", "/events", "/feedback", "/filters", "/financier", "/ia",
     "/modules", "/moi", "/moteurs", "/onboarding", "/outils", "/parcels",
