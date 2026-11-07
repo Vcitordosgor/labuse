@@ -2,7 +2,7 @@
 # Au terme d'EXPORTS-1 : 56 occurrences → 0 sur les 24 PDF des 4 témoins. Cette liste est LA
 # référence : scripts/recette_exports1.py la lit, la sonde coherence-robinets la rejoue comme
 # contrôle DISTINCT (verdict séparé des divergences de grandeurs). Toute évolution = commit ici.
-version: "2026-10-26"
+version: "2026-11-07"
 mots:
   - "run m1"
   - "EPSG"
@@ -40,3 +40,24 @@ mots:
   - "à confirmer — à confirmer"
   - "&#x27;"
   - "parcelle(s)"
+  # DOCS-1 (décision Vic) — jetons de cuisine interne à bannir de TOUT document client. Le banc des
+  # documents (scripts/coherence/documents.py) et test_docs1_jetons.py rejouent cette liste sur le
+  # texte rendu de chaque document. Toute évolution = commit ici.
+  - "run servi"
+  - "volet D"
+  - "VERITE-TERRAIN"
+  - "config/"
+  - "troncon_de_route"
+  - "édition non enregistrée"
+  - "INONDATION_MOUVEMENT_DE_TERRAIN"
+  - "PM1_PPR_"
+  - "verrou de test"
+  - "géométrie servie"
+  - "sentinelle"
+  - "ingéré le"
+  - "Version du modèle de rapport"
+  - "Classement D"
+  - "0 · Non retenue"
+  - "périmètre zone souple"
+  - "règles calibrées"
+  - "art. Article"

@@ -1,6 +1,7 @@
-"""EXPORTS-2 lot 8 — LES ROUTES DES 5 DOCUMENTS servis par le BUILDER UNIQUE (src/labuse/exports) :
-Dossier · Résumé · Financier · Apporteur (le Pré-dossier PC garde sa route ZIP). Les routes
-anciennes (Banquier, Argumentaire, Projet) redirigent vers le document équivalent — le Financier.
+"""EXPORTS-2 lot 8 — LES ROUTES DES DOCUMENTS servis par le BUILDER UNIQUE (src/labuse/exports) :
+Dossier · Financier · Apporteur (le Pré-dossier PC garde sa route ZIP). DOCS-1 (décision Vic) :
+le Dossier banquier, l'Argumentaire et la Lettre de zonage sont supprimés — leurs routes
+n'existent plus, le Financier/Bilan est le seul document financier et le Courrier le seul courrier.
 La page publique Flash est inchangée côté paiement ; c'est sa LIVRAISON qui bascule sur le Dossier
 sans la section 9 (cf. facturation._flash_fulfill)."""
 from __future__ import annotations
@@ -341,12 +342,6 @@ def analyse_annonce_lien_pdf(url: str, request: Request, db: Session = Depends(g
 # vers le Dossier). Reste Dossier · Financier · Apporteur (+ Flash via facturation, Pré-dossier ZIP).
 
 
-# ── redirections des routes anciennes → le document équivalent (Banquier + Argumentaire → Financier).
-@router.get("/dossier-banquier/{idu}.pdf")
-def _redir_banquier(idu: str) -> RedirectResponse:
-    return RedirectResponse(f"/financier/{idu}.pdf", status_code=308)
-
-
-@router.get("/argumentaire/{idu}.pdf")
-def _redir_argumentaire(idu: str) -> RedirectResponse:
-    return RedirectResponse(f"/financier/{idu}.pdf", status_code=308)
+# DOCS-1 (décision Vic) — le Dossier banquier et l'Argumentaire sont SUPPRIMÉS : leurs routes de
+# redirection vers /financier n'existent plus (aucun document ne les appelle ; le Financier/Bilan
+# reste le seul document financier). Le Courrier garde son unique point d'entrée (api/courrier.py).

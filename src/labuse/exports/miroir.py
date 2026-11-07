@@ -40,6 +40,13 @@ def _fr_dates(s: str) -> str:
     return _re.sub(r"\b(\d{4})-(\d{2})-(\d{2})\b", lambda m: f"{m.group(3)}/{m.group(2)}/{m.group(1)}", str(s))
 
 
+def _mill_client(s) -> str:
+    """DOCS-1 — un millésime affiché au client : date en jj/mm/aaaa (jamais ISO), et « ingéré le »
+    (mot de cuisine interne) devient « au » (producteur unique `millesime_source.libelle_date_source`
+    corrigé à la source ; ceci nettoie aussi un libellé déjà composé et servi par un cache de fiche)."""
+    return _fr_dates(str(s)).replace("ingéré le ", "au ").replace("ingérée le ", "au ")
+
+
 #: EXPORTS-FIX-1-BIS point 1 — nomenclature d'USAGE du sol OCS GE (dimension US, IGN v2.0), reprise
 #: CODE PAR CODE de la nomenclature officielle (portail de l'artificialisation / IGN ; cf.
 #: src/labuse/ingestion/ocsge.py). L'ancienne table inversait US1.1 (agriculture, pas résidentiel) et
@@ -393,8 +400,8 @@ def _r_sup(v):
                 mills.append(m)
         libs = [_sup_libelle(c) for c in cats[:6]]
         s = f"{len(cats)} servitude{'s' if len(cats) > 1 else ''} — " + " · ".join(libs)
-        if mills:   # libellé daté déjà nommé (« millésime <X> » ou « ingéré le JJ/MM/AAAA »)
-            s += " · " + " · ".join(mills[:3])
+        if mills:   # libellé daté déjà nommé — DOCS-1 : jj/mm/aaaa, jamais « ingéré le »
+            s += " · " + " · ".join(_mill_client(m) for m in mills[:3])
         return esc(s)
     return esc(v)
 
@@ -455,7 +462,7 @@ def _r_aleas(v, val: Valeur):
         # « millésime <X> » si publié amont, sinon « ingéré le JJ/MM/AAAA ») s'imprime sur la ligne.
         mill = a.get("millesime")
         if mill:
-            lib += esc(f" · {mill}")
+            lib += esc(f" · {_mill_client(mill)}")   # DOCS-1 — jj/mm/aaaa, jamais « ingéré le »
         rows.append(f'<tr data-quoi="aleas_parcelle_liste"><td class="k">{nat}</td>'
                     f'<td>{lib}</td><td class="n">{chip(val)}</td></tr>')
     return '<table class="kv">' + "".join(rows) + "</table>"

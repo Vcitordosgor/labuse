@@ -402,19 +402,19 @@ ROBINETS: dict[str, Robinet] = {
     "/dossier/{idu}.pdf (builder exports EXPORTS-2)", "pdf",
     chiffres=("tier_opportunite", "potentiel_verdict", "sdp_residuelle_m2", "surface_vendable_m2",
               "prix_achat_historique_eur",)),
- "pdf_banquier": _r("pdf", "Dossier banquier", None,
-    "/dossier-banquier/{idu}.pdf", "pdf", chiffres=("charge_fonciere_eur", "prix_terrain_secteur_eur_m2", "prix_neuf_observe_eur_m2", "mixite_clause", "bilan_ca_eur", "bilan_cout_construction_eur", "bilan_vrd_eur", "bilan_marge_eur", "bilan_frais_eur",)),
  "pdf_pre_dossier_pc": _r("pdf", "Pré-dossier PC (ZIP CERFA 13406*17)", None,
     "/pre-dossier/zip", "pdf", chiffres=("zone_plu_famille", "zonage_plu_couche",)),
- "pdf_lettre_zonage": _r("pdf", "Lettre de zonage", None,
-    "/pdf (courrier)", "pdf", chiffres=("zone_plu_famille", "zonage_plu_couche",)),
- "pdf_argumentaire": _r("pdf", "Argumentaire", None,
-    "/argumentaire", "pdf", chiffres=("prix_terrain_secteur_eur_m2",)),
- # EXPORTS-2 lot 5 — le Financier (builder exports) sert les postes du bilan à rebours (en_attente
- # levée). Les postes déjà servis par le Banquier (bilan_ca/cout/vrd/marge/frais, charge_fonciere_eur,
- # mixite_clause, ecart_prix_demande_pct) restent à pdf_banquier jusqu'au lot 8 (bascule, V5c).
+ # DOCS-1 (décision Vic) — le Dossier banquier, l'Argumentaire et la Lettre de zonage sont SUPPRIMÉS
+ # (routes, cartes, menus, registre, tests). Leurs robinets `pdf_banquier` / `pdf_argumentaire` /
+ # `pdf_lettre_zonage` disparaissent. Les postes du bilan que le Banquier servait (charge_fonciere_eur,
+ # prix_terrain_secteur_eur_m2, prix_neuf_observe_eur_m2, mixite_clause, bilan_ca/cout/vrd/marge/frais)
+ # rejoignent le Financier — le seul document financier qui reste (bascule du lot 8 EXPORTS-2 achevée).
+ # zone_plu_famille/zonage_plu_couche de la Lettre restent servis par le Pré-dossier PC et le Courrier.
  "pdf_financier": _r("pdf", "Financier", None,
     "/financier/{idu}.pdf (builder exports, questionnaire)", "pdf", chiffres=(
+        "charge_fonciere_eur", "prix_terrain_secteur_eur_m2", "prix_neuf_observe_eur_m2",
+        "mixite_clause", "bilan_ca_eur", "bilan_cout_construction_eur", "bilan_vrd_eur",
+        "bilan_marge_eur", "bilan_frais_eur",
         "bilan_frais_acquisition_eur", "bilan_honoraires_techniques_eur", "bilan_stationnement_eur",
         "bilan_aleas_eur", "bilan_depollution_eur", "bilan_portage_eur", "redevance_archeologie_eur",
         "bilan_demolition_eur", "charge_fonciere_basse_eur", "charge_fonciere_haute_eur",

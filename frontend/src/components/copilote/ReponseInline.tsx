@@ -8,7 +8,7 @@ import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 
 function docUrl(kind: string, idu: string): string {
   if (kind === 'pre-dossier') return preDossierUrl(idu)
-  return `/${kind}/${idu}.pdf`   // dossier · dossier-banquier · argumentaire
+  return `/${kind}/${idu}.pdf`   // dossier
 }
 
 // refus → un kicker mono lisible (jamais un slug). L'absence = pas de kicker (réponse normale).

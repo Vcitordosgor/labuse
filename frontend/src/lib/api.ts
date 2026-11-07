@@ -2232,8 +2232,8 @@ export const faisabiliteExplain = (idu: string) =>
       sources?: string[]; provenance?: Record<string, string>; cached?: boolean }>(`/modules/faisabilite/${idu}/explain`)
 
 // M-Q P1-16 — défauts d'hypothèses de la calculette servis par l'API (source unique côté serveur,
-// dérivés du YAML). Le front ne grave plus 2500 : il seed ses champs depuis ici → calculette,
-// Dossier banquier et Note de financement portent le même coût par défaut sur la même parcelle.
+// dérivés du YAML). Le front ne grave plus 2500 : il seed ses champs depuis ici → la calculette
+// et le Bilan portent le même coût par défaut sur la même parcelle.
 // VRD servie en défaut DIT (jamais un 0 silencieux) — la calculette la seed comme le coût/la marge.
 export interface CalculetteDefaults { cout_construction_m2: number; marge_frais_pct: number; vrd_m2: number }
 export const getCalculetteDefaults = () =>

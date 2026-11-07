@@ -99,6 +99,9 @@ def composer(source_millesime, *, source_horizon_at=None, dernier_vu=None,
         base = str(mill).split(" — ")[0]
         return f"{base} — édition courante"
     mill = nettoyer_notes_internes(mill)
+    # DOCS-1 (décision Vic) — aucune date ISO (AAAA-MM-JJ) dans un millésime affiché au client :
+    # un millésime amont figé peut porter une date ISO (« PPR … approuvé le 2026-04-16 ») → jj/mm/aaaa.
+    mill = _ISO.sub(lambda m: f"{m.group()[8:10]}/{m.group()[5:7]}/{m.group()[0:4]}", mill)
     # FIX-NU3-3 (L-CHN-01) — quand l'amont a RÉELLEMENT avancé (source_horizon_at porte une année
     # STRICTEMENT plus récente que la plus récente citée dans le libellé figé), on surface l'avance :
     # « … — à jour au AAAA ». Avant, le libellé descriptif figé (« PPR approuvés 2011–2026 », « OLL
@@ -122,5 +125,7 @@ def libelle_date_source(source_millesime, *, source_horizon_at=None, ingere_le=N
     mill = composer(source_millesime, source_horizon_at=source_horizon_at)
     if mill:
         return f"millésime {mill}"
+    # DOCS-1 (décision Vic) — « ingéré le » est un mot de cuisine interne, banni des documents
+    # client. En repli (pas de millésime publié), on date la donnée sans dire comment : « au JJ/MM/AAAA ».
     d = _fr(ingere_le)
-    return f"ingéré le {d}" if d else None
+    return f"au {d}" if d else None

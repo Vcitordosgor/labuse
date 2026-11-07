@@ -696,8 +696,8 @@ def _p5_plan_masse(payload: dict, retenu: dict, *, titre: str = None) -> str:
         + fig + _legende(["batiment_emprise", "place", "allee", "espace_libre", "acces", "zone"])
         + '<table class="kv"><tr><th>Élément</th><th>Valeur</th><th class="n">Nature</th></tr>'
         + "".join(rows) + "</table>"
-        + '<p class="note">Chaque nombre de ce tableau = nombre d\'objets dans la géométrie '
-          '(verrou de test). Plan rendu depuis la géométrie servie.</p>'
+        + '<p class="note">Chaque nombre de ce tableau compte les objets dessinés sur le plan. '
+          'Plan établi à partir de la géométrie de la parcelle.</p>'
         + (_sous_sol_plan(sc) if sous_sol else '')
         + '</section>')
 

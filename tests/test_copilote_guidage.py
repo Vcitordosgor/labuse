@@ -2,7 +2,7 @@
 
   1. les 11 outils invisibles + les concepts fantôme/bailleur → une porte cliquable nommée ;
   2. le piège écarté : « qui gère le financement des bailleurs sociaux » ≠ l'outil bailleur (accueil #5) ;
-  3. les 4 documents → le bon kind (banquier avant « dossier » nu) ;
+  3. les documents → le bon kind (DOCS-1 : banquier et argumentaire supprimés, plus de porte) ;
   4. la traduction critère facette → filtres carte (camelCase), et la porte carte d'un comptage.
 """
 from __future__ import annotations
@@ -77,14 +77,23 @@ def test_hors_concept_ne_devine_pas():
 
 # ───────────────────────── 2. documents → kind ─────────────────────────
 @pytest.mark.parametrize("message, kind", [
-    ("edite le dossier banquier de la parcelle", "dossier-banquier"),
-    ("genere l argumentaire", "argumentaire"),
     ("sors moi le pre-dossier", "pre-dossier"),
-    ("sors moi le dossier", "dossier"),          # « dossier » nu, APRÈS banquier
+    ("sors moi le dossier", "dossier"),          # « dossier » nu
 ])
 def test_document_bon_kind(message, kind):
     got = _match_document(message)
     assert got is not None and got[0] == kind
+
+
+# DOCS-1 (décision Vic) — le Dossier banquier et l'Argumentaire sont SUPPRIMÉS : le Copilote ne
+# propose plus de porte-document vers eux (ni kind « dossier-banquier » ni « argumentaire »).
+@pytest.mark.parametrize("message", [
+    "edite le dossier banquier de la parcelle",
+    "genere l argumentaire",
+])
+def test_document_supprime_pas_de_kind(message):
+    got = _match_document(message)
+    assert got is None or got[0] not in ("dossier-banquier", "argumentaire")
 
 
 # ───────────────────────── 3. critère facette → filtres carte ─────────────────────────

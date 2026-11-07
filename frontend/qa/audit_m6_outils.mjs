@@ -75,16 +75,6 @@ results.push({ module: 'Vues — ouvrir « Foncier — Brûlantes & chaudes »',
 const vueTxt = await page.evaluate(() => document.body.innerText.slice(0, 1500))
 writeFileSync('../reports/m6-audit/vue-foncier-texte.txt', vueTxt)
 
-// argumentaire (lecture)
-try {
-  net = []
-  await page.locator('button[title="Vues"]').click(); await page.waitForTimeout(2000)
-  await page.locator('button:has-text("argumentaire")').first().click(); await page.waitForTimeout(2500)
-  await page.screenshot({ path: `${OUT}/vue-argumentaire.png` })
-  results.push({ module: 'Vues — argumentaire', statut: net.some((n) => n.status >= 400) ? 'CASSÉ' : 'OK', net: net.slice(0, 4) })
-  await page.keyboard.press('Escape')
-} catch (e) { results.push({ module: 'Vues — argumentaire', statut: 'CASSÉ (clic)', err: e.message.slice(0, 80) }) }
-
 // ── Projets : Ouvrir (rejouer, lecture) ──
 try {
   await page.locator('button[title="Projets"]').click(); await page.waitForTimeout(2200)

@@ -1,5 +1,6 @@
 """FIX-PRIX-ET-OPPORTUNITES lot 3 — la capacité constructible est présentée comme un MAXIMUM
-réglementaire, avec une mention mesurée (volet D : les permis réels en utilisent ~½ en médiane)."""
+réglementaire, avec une mention mesurée (les permis réels en utilisent ~½ en médiane).
+DOCS-1 : la mention client n'énonce plus sa provenance d'audit (« volet D », « VERITE-TERRAIN »)."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -13,12 +14,14 @@ def _lire(rel: str) -> str:
     return (RACINE / rel).read_text()
 
 
-def test_mention_cite_la_mesure_du_volet_d():
+def test_mention_cite_la_mesure():
     assert capacite_max.RATIO_MEDIAN_SDP == 0.46
     assert capacite_max.RATIO_MEDIAN_LOGEMENTS == 0.40
     assert "0,46" in capacite_max.MENTION and "0,40" in capacite_max.MENTION
     assert "maximum" in capacite_max.MENTION.lower()
-    assert "volet D" in capacite_max.MENTION
+    # DOCS-1 : la mention énonce le fait mesuré, jamais sa provenance interne.
+    assert "volet D" not in capacite_max.MENTION and "VERITE-TERRAIN" not in capacite_max.MENTION
+    assert "volet D" not in capacite_max.MENTION_COURTE
     assert "½" in capacite_max.MENTION_COURTE and "maximum" in capacite_max.MENTION_COURTE.lower()
 
 

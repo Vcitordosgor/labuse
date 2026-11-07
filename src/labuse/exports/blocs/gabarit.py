@@ -21,12 +21,37 @@ def _m_ou_texte(v):
     return esc(v) if isinstance(v, str) else fmt_m(v)
 
 
+def _clean_src(b):
+    """DOCS-1 — un fragment de source rendu au client : codes PPR/SUP bruts humanisés
+    (« INONDATION_MOUVEMENT_DE_TERRAIN », « PM1_PPR_… »), notes techniques retirées, « édition non
+    enregistrée » → « édition courante », date ISO → jj/mm/aaaa. Best-effort : jamais un 500 sur un PDF."""
+    if not b:
+        return None
+    import re as _re
+    s = str(b)
+    try:
+        from ...api.risques_arbitrage import libelle_client_detail
+        s = libelle_client_detail(s) or s
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        from ...millesime_source import nettoyer_notes_internes
+        s = nettoyer_notes_internes(s) or s
+    except Exception:  # noqa: BLE001
+        pass
+    s = s.replace("édition non enregistrée", "édition courante")
+    s = _re.sub(r"\b((?:19|20)\d{2})-(\d{2})-(\d{2})\b", lambda m: f"{m.group(3)}/{m.group(2)}/{m.group(1)}", s)
+    return s
+
+
 def _source(src) -> str:
-    """RegulatorySource → « document · zone · article · date · fournisseur » (ce qui est renseigné)."""
+    """RegulatorySource → « document · zone · article · date · fournisseur » (ce qui est renseigné),
+    chaque fragment nettoyé pour le client (DOCS-1, cf. `_clean_src`)."""
     if src is None:
         return ""
-    bits = [getattr(src, "document", None), getattr(src, "zone", None), getattr(src, "article", None),
-            getattr(src, "versionDate", None), getattr(src, "provider", None)]
+    bits = [_clean_src(getattr(src, "document", None)), _clean_src(getattr(src, "zone", None)),
+            _clean_src(getattr(src, "article", None)), _clean_src(getattr(src, "versionDate", None)),
+            _clean_src(getattr(src, "provider", None))]
     return " · ".join(esc(b) for b in bits if b)
 
 
@@ -63,7 +88,7 @@ def _fusion_voie(rules):
 def _regles(rules, *, appliquees: bool) -> str:
     out = []
     for r in _fusion_voie(list(rules or [])):
-        nom = esc(getattr(r, "label", "") or "")
+        nom = esc(_clean_src(getattr(r, "label", "")) or "")   # DOCS-1 — codes PPR bruts humanisés
         val = getattr(r, "value", None)
         unit = getattr(r, "unit", None)
         # CHASSE-DOCS-FIX-1 (E-12) — format FR par unité ; « % » passait en esc(str(val)) → « 40.0 »
@@ -80,7 +105,7 @@ def _regles(rules, *, appliquees: bool) -> str:
             chiffre = f" : {num}"
         else:
             chiffre = ""
-        detail = getattr(r, "detail", None)
+        detail = _clean_src(getattr(r, "detail", None))   # DOCS-1 — codes PPR/SUP bruts humanisés
         det = f" — {esc(detail)}" if detail else ""
         src_html = getattr(r, "_src_html", None)   # D1 — sources déjà combinées (ligne « Recul voie » fusionnée)
         if src_html is None:

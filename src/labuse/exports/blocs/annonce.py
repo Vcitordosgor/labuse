@@ -340,7 +340,14 @@ def _foncier(r: dict) -> str:
     t_reg = "Règles de la zone" + (f" {zone}" if zone else "") + (f" · PLU de {commune}" if commune else "")
     gauche = _kv([(x["cle"], esc(x["valeur"])) for x in regles], titre=t_reg)
     droite = _kv([(x["cle"], esc(x["valeur"])) for x in parcelle], titre="Sur cette parcelle")
+    # DOCS-1 (décision Vic) — la phrase de classement est servie « Classement <bande> · <signal> :
+    # <motif> » ; « Classement D » et « 0 · Non retenue » sont des mots de cuisine interne (le classement
+    # d'opportunité LABUSE n'a pas sa place dans un document d'ESTIMATION). On garde le MOTIF factuel
+    # (la contrainte réelle, après le premier « : ») et on retire le préfixe de classement interne.
     phrase = (r.get("classement") or {}).get("phrase")
+    if phrase and str(phrase).strip().startswith("Classement"):
+        tail = str(phrase).split(" : ", 1)
+        phrase = (tail[1][:1].upper() + tail[1][1:]) if len(tail) == 2 and tail[1] else ""
     note = f'<p class="anote">{esc(phrase)}</p>' if phrase else ""
     return ('<h2>Le foncier</h2>'
             f'<div class="fongrid"><div>{gauche}</div><div>{droite}</div></div>{note}')

@@ -156,7 +156,7 @@ export const CLIENT = {
   // ── EXPRESS-01 · Volet B — AVIS IA (au mot près). SOURCE UNIQUE, réutilisée par TOUTES
   //    les surfaces front où l'IA s'exprime (fiche AskBar/faisa/traducteur, recherche IA,
   //    entretien, Copilote) via <AvisIA>. Jumelle Python `AVIS_IA`, défini dans ai/avis.py
-  //    (source unique, importé par export.py et banquier.py) — à garder identique au mot
+  //    (source unique, importé par export.py) — à garder identique au mot
   //    près. Ne jamais recopier ce texte ailleurs. ──
   avisIa: "L'IA ne juge pas le sentiment d'une communauté, n'évalue pas le risque politique d'un processus d'autorisation, et ne remplace pas les éléments relationnels du sourcing.",
 
@@ -463,10 +463,6 @@ export const CLIENT = {
       syntheseErreur: 'Synthèse indisponible — réessayez.',
       syntheseStub: 'Synthèse automatique (repli déterministe — analyse IA enrichie non servie).',
     },
-    // C6 · « Banquier » renommé — 3 pistes étudiées, la 1re retenue :
-    //   1. « Note de financement » (RETENU — dit l'objet : un document pour financer)
-    //   2. « Dossier financeur »
-    //   3. « Présentation banque »
     export: {
       // M54-EXPO — exports « document » branchés (Pré-dossier PC, courrier SPF). M93 — one-pager retiré.
       preDossier: 'Pré-dossier PC',
@@ -482,13 +478,6 @@ export const CLIENT = {
       fbComment: 'Un mot (facultatif)…',
       fbSend: 'Envoyer',
       fbMerci: 'Merci — votre retour affine le moteur.',
-      banquier: 'Note de financement',
-      banquierPret: 'Note — prête',
-      banquierEnCours: 'Note…',
-      banquierErreur: 'Note — réessayer',
-      // BILAN-1 — la tuile « Bilan » ouvre le bilan promoteur (moteur + ratios + PDF/Excel).
-      banquierTip:
-        'Le bilan promoteur : charge foncière, coûts, chiffre d’affaires et marge — ou le prix maximum du terrain pour votre marge.',
       // C7 · ouvre le cadastre officiel externe, paramétré sur la parcelle
       cadastre: 'Cadastre ↗',
       cadastreTip:

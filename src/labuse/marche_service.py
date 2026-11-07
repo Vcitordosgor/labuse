@@ -304,7 +304,7 @@ def comparables(db: Session, idu: str, *, profil: str = COMPARABLES_PREMIUM) -> 
 #: Q1/Q3, n retenues, rayon effectif, période, fiabilité) ET les ventes LES PLUS PROCHES retenues. Ainsi
 #: l'estimation « 34 ventes · rayon 1 000 m », la valeur indicative et le tableau des « 8 ventes les
 #: plus proches » ne divergent JAMAIS (même échantillon, même filtre). `marche_service.py` est déjà un
-#: lecteur DÉCLARÉ de dvf_mutations (robinet pdf_banquier) — aucune nouvelle arête à déclarer.
+#: lecteur DÉCLARÉ de dvf_mutations (robinet pdf_financier) — aucune nouvelle arête à déclarer.
 _CMP_RAYONS = (500.0, 1000.0, 1500.0)   # rayon ADAPTATIF : on élargit jusqu'au seuil d'effectif
 
 # ── ESTIMER-PRECISION-1 — médiane PONDÉRÉE par la ressemblance (poids RÉGLÉS sur les ventes 2024,

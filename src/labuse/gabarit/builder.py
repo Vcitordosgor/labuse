@@ -39,7 +39,7 @@ from .contract import (
 from .limites import classify_parcel_limits
 
 CADASTRE_PROVIDER = "DGFiP — cadastre (PCI)"
-PLU_PROVIDER = "LABUSE — règlement PLU validé (config/plu_destinations)"
+PLU_PROVIDER = "LABUSE — règlement PLU validé"
 PPR_PROVIDER = "DEAL Réunion — PPR (zonage réglementaire)"
 SUP_PROVIDER = "GPU / API Carto — servitudes d'utilité publique (assiettes)"
 
@@ -524,7 +524,7 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
         # CHASSE-DOCS-FIX-1 (E-17) — le millésime (ex. « BD TOPO® V3 (IGN) … ») est DÉJÀ porté par
         # versionDate ; ne pas le recoller dans provider, sinon « …+ BD TOPO BD TOPO® V3 … » (doublon).
         bdtopo_src = RegulatorySource(
-            document="BD TOPO® — troncon_de_route (voirie) + cadastre",
+            document="BD TOPO® — voirie + cadastre",
             versionDate=mill, provider="LABUSE — adjacence cadastre + BD TOPO")
         # arête sur domaine public non cadastré, classée voie par la citation « voies et emprises publiques »
         empub_src = RegulatorySource(
