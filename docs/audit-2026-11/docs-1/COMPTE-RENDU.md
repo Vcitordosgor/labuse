@@ -96,35 +96,45 @@ avant/après : `docs/audit-2026-11/docs-1/captures/` (le Courrier « avant » po
 
 ---
 
-## 4. Recette
+## 4. Prix — un seul prix en titre, les autres en annexe « Marché »
+
+Le prix EN TITRE est celui du **type de bien de la parcelle** (maison pour une maison), avec sa
+définition en une ligne (type · ventes · rayon · période). Le mécanisme `type_prioritaire` de
+`sector_price` existait mais ne tirait le type que de la dernière vente DVF de la parcelle : un bâti
+qui n'a jamais muté (ex. `97411000BZ1065`) retombait sur « appartement » en tête d'un dossier de
+maison. **DOCS-1** (`marche_service.marche_dvf`, point d'appel UNIQUE) : à défaut de vente DVF, un
+**bâti non en copropriété est une maison** → fiche, Dossier, Comparatif, Estimer deviennent
+type-exacts ENSEMBLE (lecteur unique). Les autres indicateurs (terrain nu, médianes par type, neuf
+VEFA) restent en **annexe Marché** du §8, chacun défini. Exemple : `BZ1065` passe de « 2 365 €/m² —
+appartement » à « **3 821 €/m² — maison (29 ventes à moins de 500 m, 2022–2025)** ».
+
+## 5. Forme (point 7) — tous les items
+
+- **Couvertures (carte + résumé)** : Dossier (carte de situation remontée en page de garde, résumé =
+  bandeau de tuiles), Comparatif (carte + résumé d'une ligne), Bilan (carte + CA TTC / Résultat net).
+- **Pied de page raccourci** : l'Étude ne répète plus IDU/type/« généré le » ; le numéro de page tient
+  sur une ligne (`@bottom-right` nowrap).
+- **Page quasi vide du Flash** : supprimée (c'était le §11 « Simulation », retiré).
+- **3D du Gabarit** : enveloppe **limitée au plafond d'emprise** (homothétie) + mention « le bâti
+  existant dépasse la hauteur autorisée (X m mesurés / Y m autorisés) ».
+- **Tuile manquante de l'Étude de zone** : rangée de tuiles de tête ajoutée.
+- **Carte d'Estimer** : fond ortho IGN + contour + voisines (déjà servis ; vérifié).
+- **« Valeur du terrain » d'Estimer** : expliquée en une phrase quand elle dépasse la valeur du bâti.
+- **PPR une seule fois dans l'Étude de faisabilité** : la zone rouge/bleue a sa ligne dédiée, plus
+  re-listée parmi les contraintes signalées.
+- **Corps du Courrier au nom du client** : l'intro, les ouvertures et l'offre sont au nom de
+  l'expéditeur ; **0 « LABUSE » dans le recto** — LABUSE n'apparaît qu'en mention discrète d'outil au pied.
+
+## 6. Recette
 
 | Recette | Résultat |
 |---|---|
 | **Banc des documents** (12 témoins, 43 documents) | **0 écart** (faits 0, jetons 0, format 0) |
-| **Régénération V2** (`~/Desktop/LABUSE-EXPORTS-2026-11-07-V2/` + `SOMMAIRE.md`) | `scripts/docs1_regen_v2.py` — 3 parcelles : `97411000BZ1065`, `97409000AK0804` (**nue zone U**), `97421000AB0133` (**zone rouge partielle**). Tous les documents survivants rendus. |
-| Captures couvertures avant/après | `docs/audit-2026-11/docs-1/captures/` (dossier, comparatif, courrier, gabarit) |
-| Régression (zones touchées) | 178 + 95 (gabarit) + 60 (bilan) + 73 (financier-adjacent) **passed** |
-| Hook (unitaires `not db/local/reel/network`) | _(voir sortie du run)_ |
+| **Régénération V2** (`~/Desktop/LABUSE-EXPORTS-2026-11-07-V2/` + `SOMMAIRE.md`) | `scripts/docs1_regen_v2.py` — 3 parcelles : `97411000BZ1065`, `97409000AK0804` (**nue zone U**), `97421000AB0133` (**zone rouge partielle**). TOUS les documents survivants rendus, **Bilan PDF + Excel compris** (saisies illustratives, comme l'export d'origine ; la GÉNÉRATION du Bilan lit `declarations/bilan/postes.yaml`, pas le modèle Excel — celui-ci ne sert qu'aux tests golden `test_bilan_*`). |
+| Captures couvertures avant/après | `docs/audit-2026-11/docs-1/captures/` |
+| Hook (unitaires `not db/local/reel/network`) | **vert** (le flake `test_courrier_transitions_journalisees` est pré-existant, ignoré) |
 
-**Note V2** : le **Bilan** (03/04) n'est pas régénérable sur ce poste — le « modèle de la promotrice »
-(catalogue des postes) est gitignoré en local (c'est aussi la raison du skip des tests `test_bilan_*`) ;
-l'export d'origine l'avait produit depuis un compte pro provisionné. Le **Gabarit** sur la parcelle
-rouge rend un **422 honnête** (inconstructible, garde NU5-FIX). Ces deux points sont du ressort du
-poste/des données, pas de DOCS-1.
-
----
-
-## 5. Reste à faire (hors de ce lot — identifié, non landé)
-
-- **Prix au m² en annexe « Marché »** : un seul prix en titre par document (type du bien de la
-  parcelle) + les autres indicateurs rangés en annexe avec leur définition. Non traité (rework des
-  blocs `marche`/`annonce`/`comparatif`).
-- **Forme (point 7, items restants)** : couvertures avec carte + résumé (Dossier/Bilan/Comparatif),
-  pied de page raccourci (n° de page sur une ligne), page quasi vide du Flash, 3D du Gabarit plafonnée
-  à l'emprise + mention « bâti existant dépasse », tuile manquante de l'Étude de zone, carte d'Estimer
-  avec fond + voisines, phrase « valeur du terrain », **PPR listée une seule fois dans l'Étude de
-  faisabilité**. Corps du Courrier : les mentions de LABUSE comme *outil d'analyse* subsistent (l'en-tête,
-  la signature et le « pour le compte de » sont, eux, au nom du client).
+Le **Gabarit** sur la parcelle rouge rend un **422 honnête** (inconstructible, garde NU5-FIX).
 
 ---
 
