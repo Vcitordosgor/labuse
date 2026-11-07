@@ -31,7 +31,9 @@
      (mention « Généré via LABUSE ») sur trois lignes. La case s'ajuste à son contenu ; le pied @bottom-center
      dispose enfin de la largeur pour tenir sur une seule ligne (cf. `white-space: nowrap` de la route). */
   @bottom-left { content: string(doc-foot); font: 7.2pt "Inter", "DejaVu Sans", sans-serif; color: #6B746E; }
-  @bottom-right { content: counter(page) " / " counter(pages); font: 8pt "Inter", "DejaVu Sans", sans-serif; color: #6B746E; }
+  /* DOCS-1 (décision Vic) — le numéro de page tient TOUJOURS sur une ligne (nowrap), jamais poussé
+     sur deux par un pied @bottom-left trop long. */
+  @bottom-right { content: counter(page) " / " counter(pages); font: 8pt "Inter", "DejaVu Sans", sans-serif; color: #6B746E; white-space: nowrap; }
 }
 @page :first { @top-left { content: none } @top-right { content: none } }
 

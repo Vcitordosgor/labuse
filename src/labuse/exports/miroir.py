@@ -1142,10 +1142,12 @@ _COVER_TUILES = [
 
 
 def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, Valeur],
-                  modele: str) -> str:
+                  modele: str, *, plan_html: str = "") -> str:
     """La page de garde du Dossier (maquette v4) : cartouche 4 champs + bandeau des SIX chiffres
     de la fiche en 3 colonnes + sommaire des sections + légende. Chaque tuile porte data-quoi
-    (verrou V5d) ; une valeur absente s'affiche « — » (jamais un zéro inventé)."""
+    (verrou V5d) ; une valeur absente s'affiche « — » (jamais un zéro inventé).
+    DOCS-1 (décision Vic) — la COUVERTURE porte désormais la CARTE de situation (en plus du bandeau
+    des six chiffres, qui est le RÉSUMÉ) : elle tient la page au lieu de rester creuse."""
     adresse = fiche.get("adresse") or ""
     commune = fiche.get("commune") or ""
     tuiles_html = []
@@ -1219,8 +1221,11 @@ def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, V
         # EXPORTS-FIX-1 A2 — plus de « Modèle 3.0 · miroir de la fiche » en page de garde.
         '</div>'
         f'<div class="cover-tiles">{"".join(tuiles_html)}</div>'
+        # DOCS-1 — la carte de situation sur la page de garde (résumé = le bandeau de tuiles ci-dessus).
+        # Le fragment `.plan` est auto-stylé (image + légende) ; on le pose tel quel.
+        + (plan_html or "")
         # EXPORTS-FIX-1 A2 — plus de « Le bandeau des six chiffres de la fiche. »
-        f'<ul class="toc">{"".join(toc)}</ul>'
+        + f'<ul class="toc">{"".join(toc)}</ul>'
         + legende +
         '</div>')
 

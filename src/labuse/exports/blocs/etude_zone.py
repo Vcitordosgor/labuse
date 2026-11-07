@@ -203,9 +203,33 @@ def _echelle_label(z: dict, idu: str, rayon_km) -> str:
             else f"Périmètre autour de {esc(idu)}")
 
 
+def _tuiles(z, rayon_km) -> str:
+    """DOCS-1 (décision Vic) — la RANGÉE DE TUILES de tête de l'Étude de zone (comme le Dossier et
+    Estimer), qui manquait : périmètre, habitants, revenu médian, prix médian bâti, ventes 12 mois."""
+    t: list[str] = []
+
+    def tile(v, lib):
+        if v:
+            t.append(f'<div class="tile"><div class="v">{v}</div><div class="l">{esc(lib)}</div></div>')
+
+    sa = z.get("surface_ha")
+    tile(f"{_i(sa)} ha" if sa else (f"{_i(rayon_km)} km" if rayon_km else None), "Périmètre")
+    p = z.get("population") or {}
+    tile(_i(p.get("habitants")), "Habitants")
+    rm = p.get("revenu_median_eur")
+    tile(f"{_i(rm)} €" if rm is not None else None, "Revenu médian / an")
+    m = z.get("marche") or {}
+    pa = (m.get("prix_ancien") or {}).get("median") or m.get("prix_m2_median_bati")
+    tile(f"{_i(pa)} €/m²" if pa else None, "Prix médian bâti")
+    v12 = m.get("ventes_12m")
+    tile(_i(v12) if v12 is not None else None, "Ventes 12 mois")
+    return f'<div class="tiles">{"".join(t[:5])}</div>' if t else ""
+
+
 def rendu(zone, *, map_html: str, idu: str, rayon_km) -> str:
     z = zone or {}
     corps = map_html
+    corps += _tuiles(z, rayon_km)
     corps += f'<p class="zone-echelle">{_echelle_label(z, idu, rayon_km)}'
     sa = z.get("surface_ha")
     if sa:

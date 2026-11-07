@@ -143,6 +143,19 @@ def _bati_features(fc) -> list[tuple[dict, float]]:
     return out
 
 
+def _scale_geom(geom, k: float):
+    """Homothétie d'un GeoJSON (facteur k autour du centroïde ; aire × k²). Ramène l'enveloppe au
+    plafond d'emprise (DOCS-1). Rendu en MultiPolygon pour que `_rings`/`extrude` le déroulent."""
+    rings = [list(r) for r in _rings(geom)]
+    pts = [p for r in rings for p in r]
+    if not pts:
+        return geom
+    cx = sum(p[0] for p in pts) / len(pts)
+    cy = sum(p[1] for p in pts) / len(pts)
+    scaled = [[[cx + (p[0] - cx) * k, cy + (p[1] - cy) * k] for p in r] for r in rings]
+    return {"type": "MultiPolygon", "coordinates": [[r] for r in scaled]}
+
+
 def gabarit_svg_3d(result: Any, *, width: int = 560, height: int = 380) -> Optional[str]:
     """Vue 3D (axonométrie) du gabarit — None si l'on n'a pas de volume à montrer (hauteur absente)."""
     def g(name):
@@ -154,6 +167,18 @@ def gabarit_svg_3d(result: Any, *, width: int = 560, height: int = 380) -> Optio
     batis = _bati_features(g("batiExistantGeoJSON"))
     if not zone or not isinstance(haut, (int, float)) or haut <= 0:
         return None   # pas de hauteur sourcée → pas de volume (l'outil dit « 3D indisponible »)
+
+    # DOCS-1 (décision Vic) — l'ENVELOPPE est LIMITÉE AU PLAFOND D'EMPRISE : la zone d'implantation
+    # peut être plus large que l'emprise constructible (30 % du terrain). On réduit le socle extrudé à
+    # l'aire du plafond d'emprise (homothétie autour du centroïde) pour ne pas dessiner un volume plus
+    # gros que ce que les règles autorisent.
+    zone_env = zone
+    zone_m2, plaf_m2 = g("zoneImplantationM2"), g("plafondEmpriseM2")
+    if isinstance(zone_m2, (int, float)) and isinstance(plaf_m2, (int, float)) and 0 < plaf_m2 < zone_m2:
+        zone_env = _scale_geom(zone, (plaf_m2 / zone_m2) ** 0.5)
+    # bâti existant au-dessus de la hauteur autorisée ? (faîtage réglementaire vs hauteur mesurée)
+    bati_h_max = max((h for _, h in batis), default=0.0)
+    bati_depasse = bool(batis) and bati_h_max > float(haut) + 0.5
 
     # repère local en MÈTRES, centré sur la parcelle (pour que les hauteurs soient à l'échelle du plan)
     pts = [(p[0], p[1]) for geom in (contour, zone) for r in _rings(geom) for p in r]
@@ -177,7 +202,7 @@ def gabarit_svg_3d(result: Any, *, width: int = 560, height: int = 380) -> Optio
     for r in _rings(contour) or []:
         for p in r:
             proj_pts.append(iso(p[0], p[1], 0))
-    for r in _rings(zone):
+    for r in _rings(zone_env):
         for p in r:
             proj_pts += [iso(p[0], p[1], 0), iso(p[0], p[1], haut)]
     for geom, h in batis:
@@ -234,13 +259,20 @@ def gabarit_svg_3d(result: Any, *, width: int = 560, height: int = 380) -> Optio
     vols = []
     for geom, h in batis:
         vols.append(extrude(geom, h, "#9298a0", "#7c828a", "#5c6066"))
-    vols.append(extrude(zone, float(haut), C_ZONE, "#2c9f7c", "#1f6f57"))
+    vols.append(extrude(zone_env, float(haut), C_ZONE, "#2c9f7c", "#1f6f57"))
     for frag, d in sorted(vols, key=lambda v: v[1]):
         parts.append(frag)
     # légende R16
     parts.append(f'<text x="{PAD}" y="{plot_h + 14}" font-size="9" fill="#33383d" font-weight="600">'
                  f'Volume indicatif — terrain supposé plat</text>')
-    leg = [(C_ZONE, f"Enveloppe réglementaire (hauteur {haut:g} m)")]
+    # DOCS-1 — mention CLAIRE quand le bâti existant dépasse la hauteur autorisée.
+    if bati_depasse:
+        _hm = f"{bati_h_max:g}".replace(".", ",")   # DOCS-1 — décimale à la virgule (« 10,3 m »)
+        _hr = f"{haut:g}".replace(".", ",")
+        parts.append(f'<text x="{width - PAD}" y="{plot_h + 14}" text-anchor="end" font-size="8.5" '
+                     f'fill="#b23b3b" font-weight="600">Le bâti existant dépasse la hauteur autorisée '
+                     f'({_hm} m mesurés / {_hr} m autorisés)</text>')
+    leg = [(C_ZONE, f"Enveloppe réglementaire — plafond d'emprise (hauteur {f'{haut:g}'.replace('.', ',')} m)")]
     if batis:
         leg.append(("#7c828a", "Bâti existant"))
     for i, (col, lab) in enumerate(leg):

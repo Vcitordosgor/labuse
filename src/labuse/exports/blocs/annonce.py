@@ -286,8 +286,16 @@ def _lecture_fonciere_box(est: dict) -> str:
     sub = (f"{_m2(lf.get('surface_m2'))} × {_eur_m2(lf.get('eur_m2'))} de terrain nu"
            + (f" · {lf.get('perimetre')}" if lf.get("perimetre") else ""))
     pct = lf.get("pct_du_bati")
-    concl = (f'<p class="anote">soit {_int(pct)} % de l\'ordre de grandeur bâti.</p>'
-             if isinstance(pct, (int, float)) else "")
+    # DOCS-1 (décision Vic) — quand la valeur du terrain nu DÉPASSE l'ordre de grandeur du bâti
+    # (pct > 100 %), on l'EXPLIQUE en une phrase (sinon un « 140 % » nu intrigue sans éclairer).
+    if isinstance(pct, (int, float)) and pct > 100:
+        concl = (f'<p class="anote">La valeur du terrain nu dépasse l\'ordre de grandeur du bâti '
+                 f'({_int(pct)} %) : sur cette parcelle, le foncier porte l\'essentiel de la valeur — '
+                 'le bâti existant pèse peu (ancien, à rénover ou destiné à être démoli).</p>')
+    elif isinstance(pct, (int, float)):
+        concl = f'<p class="anote">soit {_int(pct)} % de l\'ordre de grandeur bâti.</p>'
+    else:
+        concl = ""
     return (f'<div class="lcard"><div class="kicker">Lecture foncière · valeur du terrain</div>'
             f'<div class="estbig pos">{esc(_eur(val))}</div>'
             f'<div class="lcsub">{esc(sub)}</div>{concl}</div>')

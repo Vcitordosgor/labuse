@@ -431,8 +431,10 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
         # l'Apporteur (ortho IGN + contour + voisines du même propriétaire). Best-effort : réseau
         # indisponible / parcelle sans géométrie → cadre neutre, jamais une erreur.
         plan_html = _plan_situation_html(db, idu)
-        corps = (miroir.cover_dossier(idu, f, numero, j, valeurs, MODELE_VERSION)
-                 + miroir.rendu_sections(valeurs, f, plan_html=plan_html))
+        # DOCS-1 (décision Vic) — la carte de situation remonte sur la PAGE DE GARDE (couverture avec
+        # carte + résumé) ; elle n'est plus répétée en §1 (une seule carte de situation par Dossier).
+        corps = (miroir.cover_dossier(idu, f, numero, j, valeurs, MODELE_VERSION, plan_html=plan_html)
+                 + miroir.rendu_sections(valeurs, f, plan_html=""))
         html = page_html(label, cart, corps)
         return ResultatDoc(html=html, valeurs=valeurs, numero=numero, cartouche=cart,
                            contexte={"adresse": adresse})

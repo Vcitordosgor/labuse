@@ -595,6 +595,10 @@ def _p3_regles(payload: dict, retenu: dict) -> str:
     # national…) que le moteur d'implantation ne modélise pas : listées « signalée, non interprétée ».
     # Plus jamais « aucune contrainte » quand le Dossier en relève une.
     for lib in (t.get("contraintes_signalees") or []):
+        # DOCS-1 (décision Vic) — PPR listé UNE SEULE FOIS : la zone rouge/bleue a déjà sa ligne dédiée
+        # ci-dessus (ppr_rouge/ppr_bleue) ; on ne la re-liste pas parmi les contraintes signalées.
+        if "PPR" in str(lib):
+            continue
         crows.append(f'<tr><td class="k">{esc(lib)}</td><td>signalée</td>'
                      f'<td>signalée, non interprétée (voir le Dossier §5)</td></tr>')
     contraintes = ("<h3>Contraintes cartographiées et signalées</h3>"
@@ -963,8 +967,9 @@ def rendu_etude(payload: dict, *, genere_le: str, scenario_ref: Optional[str] = 
     cart = Cartouche(
         doc_title=f"LABUSE — Étude de faisabilité · {payload['terrain'].get('commune') or ''}",
         doc_ref=f"{refs} · {numero}",
-        doc_foot=(f"Étude de faisabilité · {refs} · {_type_projet_label(payload['entrees'].get('type_projet'))} · "
-                  f"Généré via LABUSE le {genere_le} · pré-faisabilité, non contractuel · "
+        # DOCS-1 (décision Vic) — pied RACCOURCI (l'IDU, le type et le « généré le » sont déjà en tête) :
+        # le numéro de page tient sur une ligne.
+        doc_foot=(f"Étude de faisabilité · pré-faisabilité, non contractuel · "
                   f"Données LABUSE au {_donnees_labuse_au_etude(genere_le)}."))
     corps = (
         f"<style>{_STYLE}</style>"
@@ -1000,8 +1005,8 @@ def rendu_lotissement(payload: dict, *, genere_le: str) -> dict:
     cart = Cartouche(
         doc_title=f"LABUSE — Lotissement · {commune}",
         doc_ref=f"{idus[0][8:] if idus else ''} · {numero}",
-        doc_foot=(f"Lotissement · zone {zone} · Généré via LABUSE le {genere_le} · pré-faisabilité, "
-                  f"non contractuel · Données LABUSE au {_donnees_labuse_au_etude(genere_le)}."))
+        doc_foot=(f"Lotissement · pré-faisabilité, non contractuel · "
+                  f"Données LABUSE au {_donnees_labuse_au_etude(genere_le)}."))
     lignes = "".join(f"<tr><td>Lot {i}</td><td class='n'>{fr(s)} m²</td></tr>"
                      for i, s in enumerate(tl["surfaces_m2"], 1))
     racc = "".join(f"<tr><td>{r['reseau']}</td><td class='n'>{'non vérifié' if r['distance_m'] is None else fr(r['distance_m'])+' m'}</td></tr>"
@@ -1058,8 +1063,8 @@ def rendu_hors_perimetre(payload: dict, *, genere_le: str) -> dict:
     cart = Cartouche(
         doc_title=f"LABUSE — Étude de faisabilité · {commune}",
         doc_ref=f"{idus[0][8:] if idus else ''} · {numero}",
-        doc_foot=(f"Étude de faisabilité · {esc(', '.join(idus))} · Généré via LABUSE le {genere_le} · "
-                  f"pré-faisabilité, non contractuel · Données LABUSE au {_donnees_labuse_au_etude(genere_le)}."))
+        doc_foot=(f"Étude de faisabilité · pré-faisabilité, non contractuel · "
+                  f"Données LABUSE au {_donnees_labuse_au_etude(genere_le)}."))
     # contraintes signalées (texte du payload) — « signalées, non interprétées », comme l'étude normale.
     t = payload.get("terrain") or {}
     crows = "".join(f"<li>{esc(lib)}</li>" for lib in (t.get("contraintes_signalees") or []))
