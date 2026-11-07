@@ -46,7 +46,7 @@ donnees:
   - quoi:  tier_opportunite
     ou:    { rang: 10, etat: en_tete, section: "Classement" }
     comment: { libelle: "Classement servi", format: classe, i: "Tier du run servi (brûlante → froide) — lecture seule, aucun rescoring." }
-    absence: "Classement : parcelle hors run servi."
+    absence: "Classement : non évalué pour cette parcelle."
     absence_type: absente_ici
     pourquoi: "Le verdict du modèle ; en tête, lecture seule."
   - quoi:  rang_tier

@@ -452,7 +452,7 @@ class Moteur:
         vide (un bilan partiel affiche naturellement une marge proche de 100 %)."""
         out: list[dict[str, str]] = []
         suv = pt["suv"]
-        # Coût de construction au m² SUV (= le RATIO servi : construction + imprévus ÷ SUV)
+        # Coût de construction au m² de surface vendable (= le RATIO servi : construction + imprévus ÷ SUV)
         constr = next((ln for ln in lignes if ln.id == "constr"), None)
         aleaC = next((ln for ln in lignes if ln.id == "aleaC"), None)
         constr_saisie = constr is not None and not constr.manquant
@@ -461,14 +461,14 @@ class Moteur:
             if cout < 1000 or cout > 5000:
                 out.append({
                     "cible": "cout_const",
-                    "message": "Coût de construction inhabituel (hors 1 000–5 000 €/m² SUV), à vérifier.",
+                    "message": "Coût de construction inhabituel (hors 1 000–5 000 €/m² de surface vendable), à vérifier.",
                 })
-        # Surface taxable très basse par rapport à la SUV totale
+        # Surface taxable très basse par rapport à la surface vendable totale
         stax = programme.surface_taxable
         if stax is not None and suv and stax < 0.5 * suv:
             out.append({
                 "cible": "stax",
-                "message": "Surface taxable inhabituellement basse (< 50 % de la SUV totale), à vérifier.",
+                "message": "Surface taxable inhabituellement basse (< 50 % de la surface vendable totale), à vérifier.",
             })
         if complet and marge is not None and marge > 0.25:
             out.append({
@@ -516,18 +516,18 @@ class Moteur:
         aleaC = ht("aleaC") or 0.0
         rows.append(
             (
-                "Coût const. m² SUV HT",
+                "Coût const. m² de surface vendable HT",
                 euro((constr + aleaC) / suv) if suv else "—",
             )
         )
         rows.append(
-            ("Prix moyen au m² SUV HT", euro(pt["ca_ht"] / suv) if suv else "—")
+            ("Prix moyen au m² de surface vendable HT", euro(pt["ca_ht"] / suv) if suv else "—")
         )
         if suv:
             net = (pt["ca_ht"] - (ht("acte") or 0) - (ht("pack") or 0) - (ht("proc") or 0))
-            rows.append(("Net promoteur m² SUV TTC", euro(net / suv * (1 + self._tva_dom()))))
+            rows.append(("Net promoteur m² de surface vendable TTC", euro(net / suv * (1 + self._tva_dom()))))
         else:
-            rows.append(("Net promoteur m² SUV TTC", "—"))
+            rows.append(("Net promoteur m² de surface vendable TTC", "—"))
         rows.append(("CA TTC programme", euro(pt["ca_ttc"])))
         rows.append(
             (
@@ -543,7 +543,7 @@ class Moteur:
         )
         rows.append(
             (
-                "Charge foncière / m² SUV",
+                "Charge foncière / m² de surface vendable",
                 euro(blocs[0].ht / suv) if suv else "—",
             )
         )

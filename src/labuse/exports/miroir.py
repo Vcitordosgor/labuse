@@ -248,6 +248,11 @@ def structure() -> list[dict]:
                 par_section.setdefault(cle, []).append((s, l))
     out = []
     for sec in DEC.sections_fiche():
+        # DOCS-1 (décision Vic) — le §11 « Simulation » du Dossier DISPARAÎT (il renvoyait au Financier,
+        # supprimé). On le retire de LA structure unique → sommaire ET corps le perdent ensemble, et la
+        # numérotation des sections suivantes (Limites et sources) remonte d'un cran, sans décalage.
+        if sec["id"] == "simulation":
+            continue
         lignes = sorted(par_section.get(sec["id"], []),
                         key=lambda t: (t[1].etat != "en_tete", t[0].surface, t[1].rang))
         out.append({**sec, "lignes": lignes})
@@ -1229,11 +1234,12 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
     for sec in structure():
         if sec["id"] == "entete":
             continue                                   # rendu dans la page de garde (cover_dossier)
+        # DOCS-1 (décision Vic) — le §11 « Simulation » du Dossier DISPARAÎT : c'était un encart de
+        # renvoi vers le document Financier, lui-même supprimé. On ne le numérote ni ne le rend plus.
+        if sec["id"] == "simulation":
+            continue
         numero += 1
         titre = f"{numero}. {sec['titre']}" if sec.get("numerote", True) else sec["titre"]
-        if sec["id"] == "simulation":
-            corps.append(section(titre, _renvoi_financier()))
-            continue
         frags: list[str] = []
         frags.append(_bandeau(sec["id"], valeurs))
         # PPR-PARTIEL-FIX-1 (étape B) — sur une parcelle partiellement rouge servie 0 par prudence, le
@@ -1386,7 +1392,7 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
                 li = f'<li data-quoi="{esc(q)}">{esc(phc)}</li>'
                 (nondispo if _est_non_dispo(phc) else verifie).append(li)
             if verifie:
-                frags.append('<div class="sansobjet"><div class="t">Vérifié : rien</div>'
+                frags.append('<div class="sansobjet"><div class="t">Vérifié : rien à signaler</div>'
                              f'<ul>{"".join(verifie)}</ul></div>')
             if nondispo:
                 frags.append('<div class="sansobjet"><div class="t">Non disponible ici</div>'

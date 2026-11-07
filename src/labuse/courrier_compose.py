@@ -180,7 +180,9 @@ def _telephone(coordonnees: str | None) -> str | None:
 def expediteur_du_compte(marque: dict | None, commune: str | None) -> dict:
     """Signataire du courrier depuis la marque blanche du compte (jamais inventé)."""
     marque = marque or {}
-    societe = (marque.get("raison_sociale") or "").strip() or "LABUSE"
+    # DOCS-1 (décision Vic) — le courrier est au nom du CLIENT, jamais « LABUSE » : à défaut de raison
+    # sociale (repli posé sur le nom du compte en amont), on reste neutre (« l'expéditeur »).
+    societe = (marque.get("raison_sociale") or "").strip() or "l'expéditeur"
     return {"signataire": (marque.get("signataire") or "").strip() or None,
             "societe": societe,
             "commune": commune or None,

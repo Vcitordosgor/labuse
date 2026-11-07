@@ -441,13 +441,21 @@ class PdfIn(BaseModel):
 
 
 def _marque_du_compte(db: Session, request: Request) -> dict | None:
-    """Marque blanche du compte courant (raison sociale, coordonnées) — pour la signature du courrier."""
+    """Marque blanche du compte courant (raison sociale, coordonnées) — pour l'en-tête et la signature
+    du courrier. DOCS-1 (décision Vic) : le Courrier porte le nom du CLIENT qui l'envoie, JAMAIS
+    « LABUSE » ni « pour le compte de LABUSE ». À défaut de raison sociale saisie, on retombe sur le
+    nom du compte (jamais sur LABUSE)."""
     from .tenant import current_compte
     cid = current_compte(request)
     if cid is None:
         return None
-    m = db.execute(text("SELECT marque FROM comptes WHERE id = :c"), {"c": cid}).scalar()
-    return m if isinstance(m, dict) else None
+    row = db.execute(text("SELECT marque, nom FROM comptes WHERE id = :c"), {"c": cid}).mappings().first()
+    if row is None:
+        return None
+    m = dict(row["marque"]) if isinstance(row["marque"], dict) else {}
+    if not (m.get("raison_sociale") or "").strip() and (row["nom"] or "").strip():
+        m["raison_sociale"] = row["nom"].strip()
+    return m or None
 
 
 # RECETTE-1 R41 — palette DA LABUSE portée au PRINT (fonds blancs) : le mint d'écran (#4ADE80) est
@@ -464,14 +472,20 @@ def _pdf_safe(s: str) -> str:
     return s.translate(_LATIN1_PUNCT).encode("latin-1", "replace").decode("latin-1")
 
 
-def _pdf_header(pdf) -> None:
+def _pdf_header(pdf, expediteur: dict | None = None) -> None:
+    # DOCS-1 (décision Vic) — l'EN-TÊTE porte le nom du CLIENT qui envoie le courrier (sa raison
+    # sociale / son logo-texte), JAMAIS « LABUSE ». Repli neutre seulement hors parcours client (legacy).
     from fpdf.enums import XPos, YPos
+    societe = (expediteur or {}).get("societe") if expediteur else None
+    titre = societe if (societe and societe != "l'expéditeur") else "Courrier"
+    tel = (expediteur or {}).get("telephone") if expediteur else None
     pdf.set_text_color(*_DA_VERT)
     pdf.set_font("Helvetica", "B", 24)
-    pdf.cell(0, 11, "LABUSE", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-    pdf.set_text_color(*_DA_GRIS)
-    pdf.set_font("Helvetica", "", 9)
-    pdf.cell(0, 5, _pdf_safe("Intelligence foncière — La Réunion"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.cell(0, 11, _pdf_safe(titre), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    if tel:
+        pdf.set_text_color(*_DA_GRIS)
+        pdf.set_font("Helvetica", "", 9)
+        pdf.cell(0, 5, _pdf_safe(tel), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.ln(2.5)
     pdf.set_draw_color(*_DA_VERT_FILET)
     pdf.set_line_width(0.7)
@@ -525,7 +539,7 @@ def courrier_pdf(body: PdfIn, request: Request, db: Session = Depends(get_db)) -
     pdf.set_auto_page_break(True, margin=28)
     pdf.set_margins(22, 20, 22)
     pdf.add_page()
-    _pdf_header(pdf)
+    _pdf_header(pdf, comp["expediteur"] if idu else None)
 
     if not idu:                                   # ── repli LEGACY : texte brut ──
         pdf.set_text_color(*_DA_ENCRE)
@@ -569,7 +583,7 @@ def courrier_pdf(body: PdfIn, request: Request, db: Session = Depends(get_db)) -
 
     # ── VERSO (page 2) : synthèse factuelle ──
     pdf.add_page()
-    _pdf_header(pdf)
+    _pdf_header(pdf, comp["expediteur"])
     verso = comp["verso"]
     pdf.set_text_color(*_DA_VERT)
     pdf.set_font("Helvetica", "B", 13)

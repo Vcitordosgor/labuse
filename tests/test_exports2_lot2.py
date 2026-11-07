@@ -129,8 +129,10 @@ def test_flash_est_dossier_identique():
     d = _dossier().html
     f = builder.construire(_FakeDB(), "97415000BO0852", "flash", fiche=FICHE, jour=date(2026, 9, 5)).html
     assert f == d
-    assert "Renseignez votre opération" in f           # §11 Simulation (renvoi au Financier)
-    assert "12. Limites et sources" in f   # §12 numéroté (REBRANCHEMENT-2)
+    # DOCS-1 (décision Vic) — le §11 « Simulation » (renvoi au Financier supprimé) DISPARAÎT : plus
+    # d'encart « Renseignez votre opération », et « Limites et sources » remonte de §12 à §11.
+    assert "Renseignez votre opération" not in f
+    assert "11. Limites et sources" in f and "12. Limites et sources" not in f
     assert "Rapport Flash" not in f
 
 
