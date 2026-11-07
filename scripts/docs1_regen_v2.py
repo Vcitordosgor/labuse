@@ -27,20 +27,34 @@ ROUGE = "97421000AB0133"                 # Salazie — zone rouge PPR partielle
 
 def _compte_actif(db) -> int:
     from sqlalchemy import text
-    r = db.execute(text("SELECT id FROM comptes ORDER BY id LIMIT 1")).scalar()
+    r = (db.execute(text("SELECT id FROM comptes WHERE statut='actif' ORDER BY id LIMIT 1")).scalar()
+         or db.execute(text("SELECT id FROM comptes ORDER BY id LIMIT 1")).scalar())
     return int(r) if r else 1
+
+
+#: saisies ILLUSTRATIVES du Bilan (comme l'export du 07/11 : 1 logement SUV 65 m² à 4 500 €/m² TTC).
+#: Le programme est saisi ; les POSTES de charges restent vides → le Bilan imprime « — » (non renseigné),
+#: sauf les repères SOURCÉS (taxe d'aménagement, archéologie). Démontre « aucune hypothèse inventée ».
+_BILAN_ILLUSTRATIF = {
+    "programme": {"terrain": None, "surface_taxable": 65, "sdp": 35},
+    "produits": [{"libelle": "Logement", "lots": 1, "suv": 65, "prix_ttc_m2_suv": 4500, "tva": 0.021}],
+    "postes": {}, "mode": "marge", "marge_cible": 9, "calendrier": {},
+}
 
 
 def regen() -> list[str]:
     from fastapi.testclient import TestClient
 
-    from labuse.api import tenant
+    from labuse.api import bilan as _bilan, tenant
     from labuse.api.app import app
     from labuse.db import session_factory
 
     cid = _compte_actif(session_factory()())
     # session simulée : le Bilan, l'Apporteur (émetteur) et le Courrier (marque) exigent un compte.
-    tenant.current_compte = lambda request=None: cid  # type: ignore[assignment]
+    # `current_compte` est importé DANS api/bilan.py → il faut patcher les DEUX bindings (sinon la
+    # lecture du doc Bilan voit None et rend 404 « introuvable pour ce compte »).
+    tenant.current_compte = lambda request=None: cid     # type: ignore[assignment]
+    _bilan.current_compte = lambda request=None: cid      # type: ignore[assignment]
     client = TestClient(app)
     OUT.mkdir(parents=True, exist_ok=True)
     produits: list[str] = []
@@ -60,8 +74,8 @@ def regen() -> list[str]:
         tag = {CIBLE: "", NUE_U: " [nue zone U]", ROUGE: " [zone rouge partielle]"}[idu]
         _doc_get("01", f"Dossier{tag}", idu, f"/dossier/{idu}.pdf")
         _doc_get("02", f"Flash (= Dossier){tag}", idu, f"/dossier/{idu}.pdf")
-        # 03/04 Bilan (PDF + Excel) : généré depuis une saisie VIDE → repères sourcés + « — » (non renseigné)
-        g = client.post(f"/bilan/{idu}/generer", json={})
+        # 03/04 Bilan (PDF + Excel) : programme illustratif, postes vides → repères sourcés + « — ».
+        g = client.post(f"/bilan/{idu}/generer", json=_BILAN_ILLUSTRATIF)
         if g.status_code == 200 and g.json().get("doc_id"):
             did = g.json()["doc_id"]
             _doc_get("03", f"Bilan{tag}", idu, f"/bilan/{idu}.pdf?doc_id={did}")

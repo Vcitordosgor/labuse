@@ -22,9 +22,11 @@ SEUIL_SECTEUR_ACTIF = 8   # N ≥ 8 mutations → ouverture C (même seuil que m
 _RISK_LAYERS = ("risques", "ravine", "trait_de_cote")   # aléas « certains » = HARD_EXCLUDE
 
 # ─────────────────────────── TEXTES FIXES (Vic — ne pas reformuler) ───────────────────────────
-_INTRO = ("LABUSE est une plateforme d'intelligence foncière spécialisée sur La Réunion. Elle croise "
-          "des dizaines de sources cadastrales, réglementaires, immobilières et territoriales afin de mieux "
-          "comprendre les caractéristiques et les règles qui concernent chaque parcelle.")
+# DOCS-1 (décision Vic) — le CORPS du courrier est au nom du CLIENT (l'expéditeur) : il n'y nomme plus
+# « LABUSE », qui n'apparaît qu'en mention discrète d'OUTIL dans le pied (_PIED).
+_INTRO = ("{societe} suit le foncier à La Réunion et réunit, pour chaque parcelle, les informations "
+          "publiques — cadastrales, réglementaires et immobilières — qui la concernent, afin d'en "
+          "comprendre les caractéristiques et les règles applicables.")
 _PHRASE_OCCUPANT = ("Ce courrier est destiné au propriétaire de la parcelle {reference}. Si vous n'en êtes "
                     "pas le propriétaire, nous vous remercions de bien vouloir le lui transmettre.")
 _PARA_VERSO = ("Vous trouverez au dos une synthèse des principales informations dont nous disposons sur cette "
@@ -33,7 +35,7 @@ _PARA_VERSO = ("Vous trouverez au dos une synthèse des principales informations
 _PARA_OFFRE = ("Si vous souhaitez aller plus loin, nous pouvons vous adresser gratuitement une analyse plus "
                "complète de votre terrain : règles d'urbanisme identifiées, contraintes connues, "
                "caractéristiques de la parcelle et données immobilières disponibles autour de celle-ci. "
-               "Il suffit de la demander à contact@labuse.immo.")
+               "Il vous suffit de nous en faire la demande.")
 _PARA_MAJ = ("Les données foncières et réglementaires évoluent dans le temps. Vous pourrez donc demander une "
              "nouvelle analyse ultérieurement afin de disposer d'informations actualisées.")
 _PIED = ("Analyse réalisée avec LABUSE, plateforme d'intelligence foncière spécialisée sur La Réunion, pour "
@@ -48,16 +50,15 @@ _PIED_DROITS = ("D'où viennent ces informations et quels sont vos droits : "
 
 # ── OUVERTURES A→E (Vic — ne pas reformuler ; [adresse] manquante → « La parcelle [référence] ») ──
 _A = ("La parcelle {situee}, d'une surface cadastrale de {surface} m², est actuellement identifiée comme non "
-      "bâtie dans les données disponibles. Elle se situe en zone {zone} du document d'urbanisme actuellement "
-      "intégré par LABUSE.")
-_B = ("La parcelle {situee} est déjà bâtie. Les données réglementaires actuellement intégrées par LABUSE "
-      "indiquent qu'elle mérite néanmoins une analyse complémentaire de ses possibilités d'évolution.")
+      "bâtie dans les données disponibles. Elle se situe en zone {zone} du document d'urbanisme en vigueur.")
+_B = ("La parcelle {situee} est déjà bâtie. Les données réglementaires en vigueur indiquent qu'elle mérite "
+      "néanmoins une analyse complémentaire de ses possibilités d'évolution.")
 _C = ("Plusieurs mutations immobilières ont été publiées récemment autour de la parcelle {situee}. Elles "
       "permettent de disposer de repères récents sur l'activité immobilière du secteur : {n} mutations "
       "publiées dans le périmètre analysé sur les {x} dernières années.")
-_D = ("La parcelle {situee}, à {commune}, fait partie des biens analysés par LABUSE dans votre secteur. Elle "
-      "se situe en zone {zone} du document d'urbanisme actuellement intégré.")
-_E = ("La parcelle {situee}, à {commune}, fait partie des biens analysés par LABUSE dans votre secteur. Nous "
+_D = ("La parcelle {situee}, à {commune}, fait partie des biens que nous analysons dans votre secteur. Elle "
+      "se situe en zone {zone} du document d'urbanisme en vigueur.")
+_E = ("La parcelle {situee}, à {commune}, fait partie des biens que nous analysons dans votre secteur. Nous "
       "avons regroupé plusieurs informations cadastrales, réglementaires et immobilières disponibles à son sujet.")
 
 
@@ -227,8 +228,8 @@ def composer(db, idu: str, *, resolution: dict, marque: dict | None = None) -> d
     lignes = [f"Objet : Votre parcelle {ref}, à {commune}", ""]
     if resolution.get("type") == "occupant":     # phrase d'entrée UNIQUEMENT pour les plis « à l'occupant »
         lignes += [_PHRASE_OCCUPANT.format(reference=ref), ""]
-    lignes += ["Madame, Monsieur,", "", _INTRO, "", ouv, "", _PARA_VERSO, "", _PARA_OFFRE, "",
-               _PARA_MAJ, "", _signature(exp), "", "Cordialement,"]
+    lignes += ["Madame, Monsieur,", "", _INTRO.format(societe=exp["societe"]), "", ouv, "",
+               _PARA_VERSO, "", _PARA_OFFRE, "", _PARA_MAJ, "", _signature(exp), "", "Cordialement,"]
     recto = "\n".join(lignes)
 
     verso = composer_verso(d)
