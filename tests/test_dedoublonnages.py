@@ -38,13 +38,19 @@ def test_transport_mail_unique():
 
 
 def test_mail_facade_delegue_a_brevo(monkeypatch):
-    """KO-12 — `mail.envoyer_template` est LA façade : elle délègue à Brevo (une seule voie templatisée)."""
+    """KO-12 / MAILS-1 — `mail.envoyer_template` est LA façade. Pour une clé rendue par le gabarit
+    (les 21 mails), elle RELAIE le HTML rendu par l'app via `brevo.envoyer_html` (Brevo = transport,
+    plus de template Brevo)."""
     from labuse import brevo, mail
     vu = {}
-    monkeypatch.setattr(brevo, "envoyer_template",
-                        lambda to, key, params=None: vu.update(to=to, key=key) or {"envoye": True})
-    assert mail.envoyer_template("a@b.c", "essai", {"nom": "X"}) == {"envoye": True}
-    assert vu == {"to": "a@b.c", "key": "essai"}
+
+    def _html(to, subject, html, texte="", headers=None):
+        vu.update(to=to, subject=subject, a_html="LABUSE" in html)
+        return {"envoye": True, "message_id": "<x>"}
+    monkeypatch.setattr(brevo, "envoyer_html", _html)
+    r = mail.envoyer_template("a@b.c", "essai", {"PRENOM": "X", "LIEN_INVITATION": "https://x"})
+    assert r["envoye"] is True
+    assert vu["to"] == "a@b.c" and vu["a_html"] is True       # HTML du gabarit, pas un templateId Brevo
 
 
 def test_geocode_ban_unique_source():

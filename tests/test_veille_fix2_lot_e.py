@@ -32,7 +32,8 @@ def test_mise_en_vente_mail_porte_son_corps_pas_son_sujet():
     assert "Une annonce vient de paraître" in txt
     assert "CY0018" in txt and "Saint-Paul" in txt and "350 000 €" in txt
     assert "https://leboncoin.fr/x" in txt
-    assert txt.lstrip().startswith("Bonjour")
+    # MAILS-1 — mail AUTOMATIQUE : étiquette de nature en tête (pas de signature personnelle).
+    assert "[RADAR · MISE EN VENTE]" in txt
     # le HTML dit la même chose.
     assert "Une annonce vient de paraître" in html
 
@@ -45,8 +46,8 @@ def test_digest_ne_parle_plus_de_secteurs():
         evs, "https://d", periode="hier", base_url="https://app.labuse.immo",
         marche={"total": 0}, lien_prefs="https://p", secteurs_ligne="")
     assert "secteur" not in corps.lower()
-    assert "parcelles suivies et vos critères" in corps
-    assert "surveillez des critères Radar" in corps
+    assert "parcelles suivies" in corps and "veilles" in corps.lower()
+    assert "surveillez des critères" in corps
 
 
 # ── ordre de la grille (base réelle, dry-run, purgé) ─────────────────────────

@@ -44,8 +44,9 @@ def test_demander_reset_rend_compte_et_nom(compte_actif):
 
 
 def test_reset_email_enfile_template_14(compte_actif, engine, monkeypatch):
-    monkeypatch.setattr("labuse.brevo.envoyer_template",
-                        lambda to, key, params: {"envoye": True, "message_id": "<x>"})
+    # MAILS-1 — `mdp_oublie` est rendu par le gabarit → transport `brevo.envoyer_html` (plus de template).
+    monkeypatch.setattr("labuse.brevo.envoyer_html",
+                        lambda to, subject, html, texte="", headers=None: {"envoye": True, "message_id": "<x>"})
     from labuse.api.onboarding import _envoyer_reset_email
     from labuse.db import session_scope
     with session_scope() as db:

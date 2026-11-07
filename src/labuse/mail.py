@@ -140,7 +140,12 @@ def send_email(to: str, subject: str, body_text: str, *,
         # jamais sans SMTP — les mails RAW restaient bloqués alors que Brevo était dispo.)
         from . import brevo
         if brevo._api_key():
-            r = brevo.envoyer_texte(to, subject, body_text)
+            # MAILS-1 — si l'appelant fournit un HTML (gabarit unique), Brevo le PORTE tel quel
+            # (htmlContent + textContent) : plus de perte du HTML au repli Brevo. Sinon, texte brut.
+            if body_html:
+                r = brevo.envoyer_html(to, subject, body_html, body_text, headers=headers)
+            else:
+                r = brevo.envoyer_texte(to, subject, body_text)
             if r.get("envoye"):
                 log.info("MAIL envoyé (Brevo, sans SMTP) — to=%s subject=%r", to, subject)
                 return SendResult(True, "ok")
@@ -225,8 +230,15 @@ def envoyer_template(to: str, key: str, params: dict | None = None) -> dict:
     `brevo` n'est jamais appelé en direct ailleurs (garde test_transport_unique). Renvoie {envoye, raison?}.
 
     COMPTE-2 : conservé pour les envois BULK (digests Radar) qui n'ont pas à tracer une entrée par
-    destinataire. Le cycle de vie CLIENT (Lot 3) passe désormais par `envoyer_mail` (file + journal)."""
-    from . import brevo
+    destinataire. Le cycle de vie CLIENT (Lot 3) passe désormais par `envoyer_mail` (file + journal).
+
+    MAILS-1 — SI la clé est gérée par le gabarit unique (`mails_contenu`), le contenu est RENDU PAR
+    L'APP (HTML e-mail + texte) et poussé via `brevo.envoyer_html` : Brevo devient un simple transport,
+    plus de template Brevo. Sinon (legacy), on délègue au template Brevo historique."""
+    from . import brevo, mails_contenu
+    if mails_contenu.gere(key):
+        m = mails_contenu.rendre(key, params or {})
+        return brevo.envoyer_html(to, m.sujet, m.html, m.texte, headers=(m.headers or None))
     return brevo.envoyer_template(to, key, params)
 
 

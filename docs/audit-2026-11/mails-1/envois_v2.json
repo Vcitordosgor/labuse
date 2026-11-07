@@ -1,0 +1,170 @@
+[
+  {
+    "n": 1,
+    "cle": "essai",
+    "sujet": "[V2 01/21] Vos accès d'essai LABUSE — 48 h pour juger sur pièces",
+    "parti": true,
+    "message_id": "<202611071854.87621556257@smtp-relay.mailin.fr>",
+    "raison": null
+  },
+  {
+    "n": 2,
+    "cle": "souscription",
+    "sujet": "[V2 02/21] LABUSE — votre lien d'abonnement",
+    "parti": true,
+    "message_id": "<202611071854.80329762239@smtp-relay.mailin.fr>",
+    "raison": null
+  },
+  {
+    "n": 3,
+    "cle": "onboarding1",
+    "sujet": "[V2 03/21] Bienvenue sur LABUSE",
+    "parti": true,
+    "message_id": "<202611071854.25058496524@smtp-relay.mailin.fr>",
+    "raison": null
+  },
+  {
+    "n": 4,
+    "cle": "onboarding2",
+    "sujet": "[V2 04/21] La méthode pour trouver ce que les autres ne voient pas",
+    "parti": true,
+    "message_id": "<202611071854.48041498957@smtp-relay.mailin.fr>",
+    "raison": null
+  },
+  {
+    "n": 5,
+    "cle": "onboarding3",
+    "sujet": "[V2 05/21] 10 jours de LABUSE — on fait le point ?",
+    "parti": true,
+    "message_id": "<202611071854.61878595403@smtp-relay.mailin.fr>",
+    "raison": null
+  },
+  {
+    "n": 6,
+    "cle": "relance_carte",
+    "sujet": "[V2 06/21] LABUSE — un souci avec votre moyen de paiement",
+    "parti": true,
+    "message_id": "<202611071854.52291673148@smtp-relay.mailin.fr>",
+    "raison": null
+  },
+  {
+    "n": 7,
+    "cle": "suspension",
+    "sujet": "[V2 07/21] LABUSE — votre accès est suspendu",
+    "parti": true,
+    "message_id": "<202611071855.36562734982@smtp-relay.mailin.fr>",
+    "raison": null
+  },
+  {
+    "n": 8,
+    "cle": "retablissement",
+    "sujet": "[V2 08/21] LABUSE — votre accès est rétabli",
+    "parti": true,
+    "message_id": "<202611071855.47022106469@smtp-relay.mailin.fr>",
+    "raison": null
+  },
+  {
+    "n": 9,
+    "cle": "radar_digest",
+    "sujet": "[V2 09/21] Radar — 3 nouveautés le 07/11/2026",
+    "parti": true,
+    "message_id": "<202611071855.38464067212@smtp-relay.mailin.fr>",
+    "raison": null
+  },
+  {
+    "n": 10,
+    "cle": "radar_alerte",
+    "sujet": "[V2 10/21] Veille « Saint-Denis — terrains de plus de 400 m² » — 3 correspondances",
+    "parti": true,
+    "message_id": "<202611071855.77586992792@smtp-relay.mailin.fr>",
+    "raison": null
+  },
+  {
+    "n": 11,
+    "cle": "mdp_oublie",
+    "sujet": "[V2 11/21] Réinitialisation de votre mot de passe LABUSE",
+    "parti": true,
+    "message_id": "<202611071855.96854380854@smtp-relay.mailin.fr>",
+    "raison": null
+  },
+  {
+    "n": 12,
+    "cle": "mdp_modifie",
+    "sujet": "[V2 12/21] Votre mot de passe LABUSE a été modifié",
+    "parti": true,
+    "message_id": "<202611071855.72090101058@smtp-relay.mailin.fr>",
+    "raison": null
+  },
+  {
+    "n": 13,
+    "cle": "resiliation",
+    "sujet": "[V2 13/21] Votre abonnement LABUSE prend fin le 30/11/2026",
+    "parti": true,
+    "message_id": "<202611071856.65697120399@smtp-relay.mailin.fr>",
+    "raison": null
+  },
+  {
+    "n": 14,
+    "cle": "flash_pret",
+    "sujet": "[V2 14/21] Votre rapport LABUSE — 97411000BZ1065",
+    "parti": true,
+    "message_id": "<202611071856.15385592206@smtp-relay.mailin.fr>",
+    "raison": null
+  },
+  {
+    "n": 15,
+    "cle": "email_change",
+    "sujet": "[V2 15/21] Votre adresse de connexion LABUSE a changé",
+    "parti": true,
+    "message_id": "<202611071856.14444906294@smtp-relay.mailin.fr>",
+    "raison": null
+  },
+  {
+    "n": 16,
+    "cle": "retour_traite",
+    "sujet": "[V2 16/21] Votre retour a été traité",
+    "parti": true,
+    "message_id": "<202611071856.49321914555@smtp-relay.mailin.fr>",
+    "raison": null
+  },
+  {
+    "n": 17,
+    "cle": "smtp_reset_password",
+    "sujet": "[V2 17/21] Réinitialisation de votre mot de passe LABUSE",
+    "parti": true,
+    "message_id": "<202611071856.96664334633@smtp-relay.mailin.fr>",
+    "raison": null
+  },
+  {
+    "n": 18,
+    "cle": "smtp_digest_notifications",
+    "sujet": "[V2 18/21] LABUSE — 2 changements sur vos suivis",
+    "parti": true,
+    "message_id": "<202611071856.68703303659@smtp-relay.mailin.fr>",
+    "raison": null
+  },
+  {
+    "n": 19,
+    "cle": "smtp_annonce",
+    "sujet": "[V2 19/21] LABUSE — nouvelle source : RNU (règlement national d'urbanisme)",
+    "parti": true,
+    "message_id": "<202611071857.73156909612@smtp-relay.mailin.fr>",
+    "raison": null
+  },
+  {
+    "n": 20,
+    "cle": "smtp_maintenance",
+    "sujet": "[V2 20/21] LABUSE — maintenance programmée : mise à jour serveur",
+    "parti": true,
+    "message_id": "<202611071857.36478031508@smtp-relay.mailin.fr>",
+    "raison": null
+  },
+  {
+    "n": 21,
+    "cle": "smtp_mise_en_vente",
+    "sujet": "[V2 21/21] LABUSE — votre parcelle 97411000BZ1065 est mise en vente",
+    "parti": true,
+    "message_id": "<202611071857.59728926351@smtp-relay.mailin.fr>",
+    "raison": null
+  }
+]
