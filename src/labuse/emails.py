@@ -27,10 +27,8 @@ def _evs_params(evenements, base_url, marche, lien_desabo, lien_prefs):
             "LIEN_PREFS": lien_prefs or "", "LIEN_APP": base}
 
 
-# ── réinitialisation de mot de passe (UN SEUL mail de reset — mandat MAILS-1) ──
-def reset_password(lien: str) -> tuple[str, str]:
-    m = _mc.rendre("mdp_oublie", {"LIEN_RESET": lien, "VALIDITE": "1 heure"})
-    return m.sujet, m.texte
+# ── réinitialisation de mot de passe : UN SEUL chemin (mandat Vic) → `mail.envoyer_mail(key="mdp_oublie")`.
+#    L'ancienne fonction `reset_password` (second chemin) est supprimée — plus de doublon.
 
 
 # ── digest de notifications (suivis + veilles) ──
@@ -99,5 +97,14 @@ def maintenance_email(titre: str, corps: str, *, debut: str = "", fin: str = "",
             parts.append(f"durée estimée {duree}")
         suffixe = " (heure de La Réunion)" if (debut or fin) else ""
         fenetre = "Fenêtre de coupure : " + ", ".join(parts) + suffixe + "."
-    m = _mc.rendre("smtp_maintenance", {"TITRE": titre, "CORPS": corps, "FENETRE": fenetre})
+    # heure de REPRISE (fin du créneau, format court « 23h00 ») pour la phrase « réessayez après … ».
+    fin_heure = ""
+    if fin:
+        from datetime import datetime as _dt
+        try:
+            fin_heure = _dt.fromisoformat(fin.strip().replace("Z", "+00:00")).strftime("%Hh%M")
+        except (ValueError, AttributeError):
+            fin_heure = fin
+    m = _mc.rendre("smtp_maintenance", {"TITRE": titre, "CORPS": corps, "FENETRE": fenetre,
+                                        "FIN": fin_heure})
     return m.sujet, m.texte, m.html

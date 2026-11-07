@@ -29,8 +29,8 @@ GREEN_LOGO = "#7ee0a0"  # « BUSE » du logo + initiales de l'avatar (vert écra
 BASELINE_FG = "#98a39a"  # « Le trésor est sous vos pieds »
 TEXT = "#1c201d"        # texte courant
 SUB = "#5a665d"         # texte secondaire (sous-titres, détails)
-BTN_BG = "#1f7a46"      # bouton vert (vert « papier blanc », lisible sur blanc — cf. DA #1E9E58/#1F7A46)
-BTN_FG = "#ffffff"
+BTN_BG = "#4ade80"      # bouton vert = LE jeton de la charte (`--mint` / bg-mint de l'app)
+BTN_FG = "#06301a"      # texte du bouton = `mint-on` de l'app (contraste ≈ 8.9:1 sur #4ade80 → AA)
 STEP_BG = "#e6f6ec"     # pastille d'étape / étiquette verte (fond)
 STEP_FG = "#1f7a46"     # pastille d'étape / étiquette verte (encre)
 FOOT_BG = "#f6f7f6"
@@ -41,7 +41,9 @@ CARD_K = "#6b776f"
 FONT = "Helvetica, Arial, sans-serif"     # Inter dans la maquette, mais aucune police web en e-mail.
 BASELINE = "Le trésor est sous vos pieds"
 SIGNATAIRE = "Victor Lagane"
-SIGNATURE_LIGNE = "Fondateur de LABUSE · je lis chaque réponse · +262 693 51 71 53"
+SIGNATURE_TITRE = "Gestionnaire relation entreprise"
+TEL = "+262 693 51 71 53"
+SIGNATURE_LIGNE = f"{SIGNATURE_TITRE} · {TEL}"
 CONTACT = "contact@labuse.immo"
 URL_CONFID = "https://labuse.immo/confidentialite/"
 URL_MENTIONS = "https://labuse.immo/mentions-legales/"
@@ -61,6 +63,18 @@ def esc(s: object) -> str:
     return _html.escape(str(s if s is not None else ""), quote=True)
 
 
+def maj1(s: str) -> str:
+    """Majuscule en tête (titre ou phrase) — gère les lettres accentuées (« à » → « À »).
+    Idempotent ; laisse tel quel si ça commence déjà par une majuscule, un chiffre ou un symbole."""
+    s = s if s is not None else ""
+    i = 0
+    while i < len(s) and not s[i].isalpha():   # saute une éventuelle ouverture (« , guillemet…)
+        i += 1
+    if i >= len(s):
+        return s
+    return s[:i] + s[i].upper() + s[i + 1:]
+
+
 # ───────────────────────── BLOCS (chaque bloc = (html, texte)) ─────────────────────────
 Bloc = tuple[str, str]
 
@@ -72,20 +86,23 @@ def _p_style() -> str:
 def paragraphe(texte: str, *, html_brut: str | None = None) -> Bloc:
     """Un paragraphe. `texte` sert au repli texte ; `html_brut` (optionnel) autorise un <b>…</b> déjà
     échappé pour le HTML (sinon `texte` est échappé tel quel)."""
-    corps = html_brut if html_brut is not None else esc(texte)
-    return (f'<p style="{_p_style()}">{corps}</p>', texte)
+    # Majuscule en tête de phrase (mandat Vic). Pour un `html_brut`, l'appelant garantit la casse.
+    corps = html_brut if html_brut is not None else esc(maj1(texte))
+    return (f'<p style="{_p_style()}">{corps}</p>', maj1(texte))
 
 
 def note(texte: str) -> Bloc:
     """Petite note secondaire (style `.sub` de la maquette)."""
+    t = maj1(texte)
     return (f'<p style="margin:0 0 14px;font-family:{FONT};font-size:13px;line-height:1.55;'
-            f'color:{SUB};">{esc(texte)}</p>', texte)
+            f'color:{SUB};">{esc(t)}</p>', t)
 
 
 def titre_auto(texte: str) -> Bloc:
-    """Gros titre des mails automatiques (sous l'étiquette)."""
+    """Gros titre des mails automatiques (sous l'étiquette). Majuscule en tête (mandat Vic)."""
+    t = maj1(texte)
     return (f'<p style="margin:4px 0 14px;font-family:{FONT};font-size:20px;font-weight:bold;'
-            f'line-height:1.3;color:{TEXT};">{esc(texte)}</p>', texte.upper())
+            f'line-height:1.3;color:{TEXT};">{esc(t)}</p>', t.upper())
 
 
 def etiquette(label: str, nature: str = "radar") -> Bloc:
@@ -119,11 +136,13 @@ def lien_secondaire(label: str, href: str) -> Bloc:
             f"{label} : {href}")
 
 
-def etapes(items: list[tuple[str, str]]) -> Bloc:
-    """Liste numérotée « 1 / 2 / 3 » (pastille ronde + texte). `items` : (titre_gras, suite)."""
+def etapes(items: list[tuple[str, str]], *, deux_points: bool = False) -> Bloc:
+    """Liste numérotée « 1 / 2 / 3 » (pastille ronde + texte). `items` : (titre_gras, suite).
+    `deux_points` : un « : » après l'intitulé en gras (mandat Vic, mail 04)."""
     lignes_html = []
     lignes_txt = []
     for i, (titre, suite) in enumerate(items, 1):
+        titre_aff = f"{titre} :" if deux_points else titre
         lignes_html.append(
             f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" '
             f'style="margin:0 0 10px;"><tr>'
@@ -133,8 +152,8 @@ def etapes(items: list[tuple[str, str]]) -> Bloc:
             f'style="border-radius:12px;font-family:{FONT};font-size:12px;font-weight:bold;'
             f'color:{STEP_FG};">{i}</td></tr></table></td>'
             f'<td style="padding-left:12px;font-family:{FONT};font-size:15px;line-height:1.6;'
-            f'color:{TEXT};"><b>{esc(titre)}</b> {esc(suite)}</td></tr></table>')
-        lignes_txt.append(f"  {i}. {titre} {suite}")
+            f'color:{TEXT};"><b>{esc(titre_aff)}</b> {esc(suite)}</td></tr></table>')
+        lignes_txt.append(f"  {i}. {titre_aff} {suite}")
     return ("".join(lignes_html), "\n".join(lignes_txt))
 
 
@@ -143,8 +162,9 @@ def ligne_fait(titre: str, detail: str = "", lien: str | None = None, lien_label
     d = f' <span style="color:{SUB};">— {esc(detail)}</span>' if detail else ""
     a = (f' <a href="{esc(lien)}" target="_blank" style="color:{STEP_FG};text-decoration:none;">{esc(lien_label)}</a>'
          if lien else "")
-    html = f'<p style="{_p_style()}"><b>{esc(titre)}</b>{d}{a}</p>'
-    txt = f"• {titre}" + (f" — {detail}" if detail else "") + (f" ({lien})" if lien else "")
+    t = maj1(titre)
+    html = f'<p style="{_p_style()}"><b>{esc(t)}</b>{d}{a}</p>'
+    txt = f"• {t}" + (f" — {detail}" if detail else "") + (f" ({lien})" if lien else "")
     return (html, txt)
 
 
@@ -313,7 +333,7 @@ def rendre(*, sujet: str, registre: str, blocs: list[Bloc], pied: Pied,
     parts = [BASELINE]
     parts += [b[1] for b in blocs if b[1]]
     if registre == "personnel":
-        parts.append(f"— {SIGNATAIRE}, fondateur de LABUSE · +262 693 51 71 53")
+        parts.append(f"— {SIGNATAIRE}, {SIGNATURE_TITRE.lower()} · {TEL}")
     parts.append(pied_txt)
     texte = "\n\n".join(p for p in parts if p).strip() + "\n"
 

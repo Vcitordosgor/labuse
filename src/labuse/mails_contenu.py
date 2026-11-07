@@ -14,7 +14,7 @@ Deux REGISTRES (mandat) :
 Les mails de SÉCURITÉ (mot de passe, adresse) gardent le pied SANS désinscription.
 
 Corrections de fond appliquées (mandat) : plus de numéro factice (vrai numéro dans la signature) ;
-UN SEUL mail de réinitialisation (`mdp_oublie` == `smtp_reset_password`) ; prénom partout où on le
+UN SEUL mail de réinitialisation (`mdp_oublie` ; le doublon `smtp_reset_password` est supprimé) ; prénom partout où on le
 connaît ; aucune promesse dépassée (le Copilote a sa page dans le menu de gauche, aucune mention de
 « créole ») ; la maintenance dit quoi / quand / quoi faire ; l'alerte Radar liste chaque bien
 (commune, surface, zone, prix, portail, date) ; chaque mail finit sur un seul appel à l'action.
@@ -131,10 +131,10 @@ def _onboarding2(p: dict) -> g.Mail:
                      "constructible, ce qui bouge — et l'annonce n'est que la conséquence."),
         g.paragraphe("En trois minutes sur votre commune :"),
         g.etapes([
-            ("Partez de la carte", "les parcelles foncées sont les plus susceptibles de muter."),
+            ("Partez de la carte", "les parcelles foncées sont celles qui ont le plus de chances de se vendre."),
             ("Lisez la fiche", "surface constructible restante, zonage, prix de zone, propriétaire."),
             ("Demandez au Copilote", "une liste triée, sans quitter la page."),
-        ]),
+        ], deux_points=True),
         g.bouton("Ouvrir LABUSE", _lien(p, "LIEN_APP")),
         g.paragraphe("Une question sur la méthode ? Répondez, je vous montre sur votre commune."),
     ]
@@ -218,11 +218,11 @@ def _resiliation(p: dict) -> g.Mail:
 def _retour_traite(p: dict) -> g.Mail:
     blocs = [
         g.paragraphe(_greet(p)),
-        g.paragraphe("Vous nous aviez signalé ceci :"),
+        g.paragraphe("Vous m'aviez signalé ceci :"),
         g.carte("VOTRE MESSAGE", _s(p.get("SON_MESSAGE"))),
-        g.paragraphe("Voici notre réponse :"),
-        g.carte("NOTRE RÉPONSE", _s(p.get("REPONSE"))),
-        g.paragraphe("Merci de nous avoir aidés à améliorer LABUSE."),
+        g.paragraphe("Voici ma réponse :"),
+        g.carte("MA RÉPONSE", _s(p.get("REPONSE"))),
+        g.paragraphe("Merci de m'avoir aidé à améliorer LABUSE."),
         g.bouton("Ouvrir LABUSE", _lien(p, "LIEN_APP")),
         g.paragraphe("Une autre remarque ? Répondez à ce mail."),
     ]
@@ -366,7 +366,12 @@ def _radar_alerte(p: dict) -> g.Mail:
 def _flash_pret(p: dict) -> g.Mail:
     idu = _s(p.get("IDU")) or "votre parcelle"
     commune = _s(p.get("COMMUNE"))
-    validite = _s(p.get("VALIDITE")) or "quelques jours"
+    # VALIDITE réelle = `settings.flash_token_days` (un nombre de jours passé par facturation.py) :
+    # on l'écrit en toutes lettres (« 30 jours »), au lieu d'un nombre brut.
+    validite = _s(p.get("VALIDITE"))
+    if validite.isdigit():
+        validite = f"{validite} jour{'s' if int(validite) > 1 else ''}"
+    validite = validite or "quelques jours"
     blocs = [
         g.etiquette("RAPPORT · PRÊT", "rapport"),
         g.titre_auto(f"Votre rapport est prêt — {commune}" if commune else "Votre rapport est prêt"),
@@ -416,7 +421,7 @@ def _digest_notifications(p: dict) -> g.Mail:
 
 
 def _annonce(p: dict) -> g.Mail:
-    titre = _s(p.get("TITRE") or p.get("titre")) or "une nouveauté"
+    titre = g.maj1(_s(p.get("TITRE") or p.get("titre")) or "une nouveauté")
     corps = _s(p.get("CORPS") or p.get("corps"))
     blocs = [
         g.etiquette("LABUSE · NOUVEAUTÉ", "annonce"),
@@ -424,15 +429,16 @@ def _annonce(p: dict) -> g.Mail:
     ]
     if corps:
         blocs.append(g.paragraphe(corps))
-    blocs.append(g.bouton("Découvrir", _lien(p, "LIEN", "lien")))
+    blocs.append(g.bouton("Voir les communes concernées", _lien(p, "LIEN", "lien")))
     return g.rendre(sujet=f"LABUSE — {titre}", registre="auto", blocs=blocs,
                     apercu="Une nouveauté dans LABUSE.", pied=_pied(p, R_COMPTE))
 
 
 def _maintenance(p: dict) -> g.Mail:
-    titre = _s(p.get("TITRE") or p.get("titre")) or "maintenance programmée"
+    titre = g.maj1(_s(p.get("TITRE") or p.get("titre")) or "maintenance programmée")
     corps = _s(p.get("CORPS") or p.get("corps"))
     fenetre = _s(p.get("FENETRE") or p.get("fenetre"))
+    fin = _s(p.get("FIN") or p.get("fin"))   # heure de reprise (fin du créneau)
     blocs = [
         g.etiquette("SERVICE · MAINTENANCE", "maintenance"),
         g.titre_auto(titre),
@@ -441,11 +447,13 @@ def _maintenance(p: dict) -> g.Mail:
         blocs.append(g.encadre_info(fenetre, "maintenance"))
     if corps:
         blocs.append(g.paragraphe(corps))
-    blocs += [
-        g.paragraphe("Pendant cette fenêtre, l'application peut être brièvement indisponible. Il n'y a "
-                     "rien à faire de votre côté : tout reprend automatiquement à la fin de l'opération."),
-        g.bouton("Accéder à LABUSE", _lien(p, "LIEN_APP")),
-    ]
+    blocs.append(g.paragraphe("Pendant cette fenêtre, l'application peut être brièvement indisponible. "
+                              "Il n'y a rien à faire de votre côté : tout reprend automatiquement à la "
+                              "fin de l'opération."))
+    # Mandat Vic : PAS de bouton pendant une maintenance — une phrase de reprise à la place.
+    reprise = (f"Si l'app ne répond pas pendant ce créneau, réessayez après {fin}." if fin
+               else "Si l'app ne répond pas pendant ce créneau, réessayez une fois l'opération terminée.")
+    blocs.append(g.paragraphe(reprise))
     return g.rendre(sujet=f"LABUSE — maintenance programmée : {titre}", registre="auto", blocs=blocs,
                     apercu="Maintenance programmée — ce qu'il faut savoir.",
                     pied=_pied(p, "Ce message concerne le fonctionnement de votre service ; il n'est pas "
@@ -471,14 +479,16 @@ def _mise_en_vente(p: dict) -> g.Mail:
 
 # ════════════════════════════ registre & dispatch ════════════════════════════
 
-#: clé de mail → fonction de rendu. `smtp_reset_password` partage le rendu de `mdp_oublie`
-#: (UN SEUL mail de réinitialisation, mandat). `mise_en_vente` est la clé interne de la file.
+#: clé de mail → fonction de rendu. UN SEUL mail de réinitialisation (`mdp_oublie`) : le doublon
+#: `smtp_reset_password` est supprimé (mandat Vic). `mise_en_vente` est la clé interne de la file.
 _BUILDERS = {
     "essai": _essai, "souscription": _souscription,
     "onboarding1": _onboarding1, "onboarding2": _onboarding2, "onboarding3": _onboarding3,
     "relance_carte": _relance_carte, "suspension": _suspension, "retablissement": _retablissement,
     "resiliation": _resiliation, "retour_traite": _retour_traite, "essai_fin_proche": _essai_fin_proche,
-    "mdp_oublie": _mdp_oublie, "smtp_reset_password": _mdp_oublie,
+    # UN SEUL mail de réinitialisation (mandat Vic) : `mdp_oublie` est l'unique chemin ;
+    # la clé historique `smtp_reset_password` est supprimée (plus de doublon).
+    "mdp_oublie": _mdp_oublie,
     "mdp_modifie": _mdp_modifie, "email_change": _email_change,
     "radar_digest": _radar_digest, "radar_alerte": _radar_alerte, "flash_pret": _flash_pret,
     "smtp_digest_notifications": _digest_notifications, "smtp_annonce": _annonce,
@@ -500,13 +510,13 @@ def rendre(key: str, params: dict | None = None) -> g.Mail:
     return b(params or {})
 
 
-#: ORDRE DU CATALOGUE NU5-C (les 21 mails de la recette `[V2 nn/21]`).
+#: ORDRE DU CATALOGUE (recette `[V3 nn/NN]`). Le doublon de réinitialisation `smtp_reset_password`
+#: (ancien #17) est RETIRÉ — un seul mail de reset (`mdp_oublie`). Il reste donc 20 mails distincts.
 ORDRE_CATALOGUE = [
     "essai", "souscription", "onboarding1", "onboarding2", "onboarding3",
     "relance_carte", "suspension", "retablissement", "radar_digest", "radar_alerte",
     "mdp_oublie", "mdp_modifie", "resiliation", "flash_pret", "email_change", "retour_traite",
-    "smtp_reset_password", "smtp_digest_notifications", "smtp_annonce", "smtp_maintenance",
-    "smtp_mise_en_vente",
+    "smtp_digest_notifications", "smtp_annonce", "smtp_maintenance", "smtp_mise_en_vente",
 ]
 
 
@@ -539,13 +549,12 @@ SPECIMENS: dict[str, dict] = {
     "mdp_oublie": {**_COMMUN, "LIEN_RESET": f"{_B}/reset?token=TKTEST", "VALIDITE": "1 heure"},
     "mdp_modifie": {**_COMMUN, "DATE_HEURE": "07/11/2026 à 14h00", "LIEN_RESET": f"{_B}/reset?token=TKTEST"},
     "resiliation": {**_COMMUN, "DATE_FIN_ACCES": "30/11/2026", "LIEN_PAIEMENT": f"{_B}/facturation"},
-    "flash_pret": {"LIEN_PDF": f"{_B}/flash/97411000BZ1065.pdf", "VALIDITE": "7 jours",
+    "flash_pret": {"LIEN_PDF": f"{_B}/flash/97411000BZ1065.pdf", "VALIDITE": "30",
                    "IDU": "97411000BZ1065", "COMMUNE": "La Montagne"},
     "email_change": {**_COMMUN, "ANCIEN_EMAIL": "ancienne@exemple.fr", "NOUVEL_EMAIL": "nouvelle@exemple.fr"},
     "retour_traite": {**_COMMUN,
                       "SON_MESSAGE": "Bonjour, la zone PLU d'une de mes parcelles me semble fausse.",
                       "REPONSE": "Merci de votre signalement : c'est corrigé, la parcelle est bien en zone U."},
-    "smtp_reset_password": {**_COMMUN, "LIEN_RESET": f"{_B}/reset?token=TKTEST", "VALIDITE": "1 heure"},
     "smtp_digest_notifications": {
         **_COMMUN,
         "EVENEMENTS": [
@@ -561,7 +570,7 @@ SPECIMENS: dict[str, dict] = {
                      "LIEN": f"{_B}/sources"},
     "smtp_maintenance": {**_COMMUN, "TITRE": "mise à jour serveur",
                          "FENETRE": "Fenêtre de coupure : début 07/11/2026 à 22h00, fin 07/11/2026 à "
-                         "23h00, durée estimée 1 h (heure de La Réunion).",
+                         "23h00, durée estimée 1 h (heure de La Réunion).", "FIN": "23h00",
                          "CORPS": "Nous mettons à jour le serveur qui héberge LABUSE pour améliorer la "
                          "vitesse de la carte."},
     "smtp_mise_en_vente": {**_COMMUN, "IDU": "97411000BZ1065", "COMMUNE": "La Montagne",

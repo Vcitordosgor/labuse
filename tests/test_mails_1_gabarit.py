@@ -21,13 +21,17 @@ from labuse import gabarit_mail as g
 from labuse import mails_contenu as mc
 
 TOUS = mc.ORDRE_CATALOGUE + ["essai_fin_proche"]
-SECURITE = {"mdp_oublie", "mdp_modifie", "email_change", "smtp_reset_password"}
+SECURITE = {"mdp_oublie", "mdp_modifie", "email_change"}
 AUTO = {"radar_digest", "radar_alerte", "flash_pret", "smtp_digest_notifications",
         "smtp_annonce", "smtp_maintenance", "smtp_mise_en_vente"}
 # non-sécurité mais sans désinscription (transactionnel / service non désactivable)
 SANS_DESABO = {"flash_pret", "smtp_maintenance"}
+# mandat Vic : pas de bouton pendant une maintenance (une phrase de reprise à la place)
+SANS_BOUTON = {"smtp_maintenance"}
 
 HREF = re.compile(r'href="([^"]*)"')
+P_TEXTE = re.compile(r"<p\b[^>]*>(.*?)</p>", re.S)
+TAGS = re.compile(r"<[^>]+>")
 
 
 def _rendu(key):
@@ -55,7 +59,13 @@ def test_banniere_et_baseline(key):
 @pytest.mark.parametrize("key", TOUS)
 def test_bouton_vert_present_et_cliquable(key):
     m = _rendu(key)
-    assert g.BTN_BG in m.html, f"{key} : bouton vert (#1f7a46) absent"
+    if key in SANS_BOUTON:                       # maintenance : pas de bouton (mandat Vic)
+        assert g.BTN_BG not in m.html, f"{key} : ne doit PAS avoir de bouton"
+        assert "réessayez après" in m.html, f"{key} : phrase de reprise attendue à la place du bouton"
+        return
+    # le bouton reprend EXACTEMENT le jeton de la charte (bg #4ade80, texte #06301a)
+    assert g.BTN_BG == "#4ade80" and g.BTN_FG == "#06301a"
+    assert g.BTN_BG in m.html and g.BTN_FG in m.html, f"{key} : bouton (jeton charte) absent"
     # le bouton est un <a> cliquable (pas un lien brut dans le texte)
     assert re.search(r'<a [^>]*href="https?://[^"]+"[^>]*>', m.html), f"{key} : bouton sans lien http"
 
@@ -68,8 +78,14 @@ def test_registre_signature_ou_etiquette(key):
         assert "border-radius:10px" in m.html, f"{key} : étiquette de nature absente"
     else:  # personnel (y compris sécurité)
         assert "Victor Lagane" in m.html, f"{key} : signature absente"
-        assert "fondateur de labuse" in m.html.lower()
+        assert "gestionnaire relation entreprise" in m.html.lower(), f"{key} : titre de signature"
         assert "+262 693 51 71 53" in m.html, f"{key} : vrai numéro absent de la signature"
+
+
+def test_signature_sans_je_lis_chaque_reponse():
+    """Mandat Vic : « je lis chaque réponse » retiré de la LIGNE de signature (le corps peut le dire)."""
+    assert "je lis chaque réponse" not in g.SIGNATURE_LIGNE
+    assert g.SIGNATURE_TITRE == "Gestionnaire relation entreprise"
 
 
 @pytest.mark.parametrize("key", TOUS)
@@ -106,12 +122,27 @@ def test_corrections_de_fond(key):
     assert g.BASELINE in m.texte and "{{" not in m.texte
 
 
-def test_reset_unique_meme_contenu():
-    """UN SEUL mail de réinitialisation : `mdp_oublie` et `smtp_reset_password` rendent le MÊME corps."""
+def test_reset_unique_un_seul_chemin():
+    """UN SEUL mail de réinitialisation : `mdp_oublie` seul ; le doublon `smtp_reset_password` n'existe plus."""
+    assert mc.gere("mdp_oublie")
+    assert not mc.gere("smtp_reset_password"), "le doublon de reset doit être supprimé"
+    assert "smtp_reset_password" not in mc.ORDRE_CATALOGUE
+    reset = [k for k in mc.ORDRE_CATALOGUE if "mdp_oublie" == k or "reset" in k]
+    assert reset == ["mdp_oublie"], f"un seul chemin de reset attendu, vu {reset}"
     a = mc.rendre("mdp_oublie", mc.SPECIMENS["mdp_oublie"])
-    b = mc.rendre("smtp_reset_password", mc.SPECIMENS["smtp_reset_password"])
-    assert a.sujet == b.sujet
     assert "nouveau mot de passe" in a.html.lower()
+
+
+@pytest.mark.parametrize("key", TOUS)
+def test_titres_et_phrases_commencent_par_majuscule(key):
+    """Mandat Vic : chaque titre et chaque phrase (paragraphe) commence par une majuscule."""
+    m = _rendu(key)
+    for bloc in P_TEXTE.findall(m.html):
+        txt = TAGS.sub("", bloc).replace("&nbsp;", " ").strip()
+        # premier caractère alphabétique du paragraphe
+        prem = next((c for c in txt if c.isalpha()), "")
+        assert not prem or prem == prem.upper(), \
+            f"{key} : paragraphe commence par une minuscule → {txt[:50]!r}"
 
 
 def test_radar_alerte_liste_chaque_bien():
@@ -126,7 +157,27 @@ def test_radar_alerte_liste_chaque_bien():
 
 def test_maintenance_dit_quoi_quand_quoi_faire():
     m = mc.rendre("smtp_maintenance", mc.SPECIMENS["smtp_maintenance"])
+    assert "Mise à jour serveur" in m.html                # titre avec majuscule (mandat Vic)
     assert "Fenêtre de coupure" in m.html                 # QUAND
     assert "mettons à jour le serveur" in m.html.lower()  # QUOI
     assert "rien à faire" in m.html.lower()               # QUOI FAIRE
+    assert "réessayez après 23h00" in m.html              # phrase de reprise (pas de bouton)
+    assert g.BTN_BG not in m.html                         # AUCUN bouton pendant la maintenance
     assert "Me désinscrire" not in m.html                 # service non désactivable
+
+
+def test_annonce_bouton_communes():
+    m = mc.rendre("smtp_annonce", mc.SPECIMENS["smtp_annonce"])
+    assert "Voir les communes concernées" in m.html and "Découvrir" not in m.html
+    assert "Nouvelle source : RNU" in m.html              # titre avec majuscule
+
+
+def test_flash_validite_en_jours():
+    m = mc.rendre("flash_pret", mc.SPECIMENS["flash_pret"])
+    assert "valable 30 jours" in m.html                   # durée réelle (flash_token_days)
+
+
+def test_retour_traite_premiere_personne():
+    m = mc.rendre("retour_traite", mc.SPECIMENS["retour_traite"])
+    assert "aviez signalé" in m.html and "Voici ma réponse" in m.html   # 1re personne
+    assert "MA RÉPONSE" in m.html and "nous aviez" not in m.html and "notre réponse" not in m.html.lower()
