@@ -4986,6 +4986,22 @@ def jobs_exec_cmd(nom: str = typer.Argument(...)) -> None:
     raise typer.Exit(exec_one(nom))
 
 
+@jobs_app.command("selftest")
+def jobs_selftest_cmd() -> None:
+    """PROD-SUITE-1 — charge CHAQUE job du registre « à blanc » (sans l'exécuter) : callable présent,
+    imports `scripts.*` résolubles, fichiers lus (harnais NU-5) livrés. Code 1 si l'un ne charge pas.
+    Le déploiement s'y adosse (garde pré-restart : plus jamais un job rouge pour un fichier non livré)."""
+    from .jobs import JOBS, selftest
+    ok, problemes = selftest()
+    if ok:
+        typer.echo(f"✓ jobs selftest : les {len(JOBS)} jobs du registre chargent à blanc.")
+        return
+    for p in problemes:
+        typer.echo(f"  ✗ {p}")
+    typer.echo(f"✗ jobs selftest : {len(problemes)} problème(s) — déploiement à REFUSER.")
+    raise typer.Exit(1)
+
+
 @jobs_app.command("status")
 def jobs_status_cmd() -> None:
     """Tableau des états (dernier passage de chaque job)."""

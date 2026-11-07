@@ -455,6 +455,14 @@ def verite_permanente(ctx: JobContext) -> None:
     """NU5-FIX-1 (point 8) — VÉRITÉ-PERMANENTE-1 : rejoue les harnais des 6 lots NU-5 via le runner
     unique `scripts/verite_permanente`. Reporte vert/rouge/sauté par lot ; LÈVE si un harnais lancé
     a échoué (le runner du cron ouvre alors l'incident `job-echec:verite-permanente`)."""
+    # PROD-SUITE-1 — `scripts/` est livré en prod mais la RACINE du dépôt n'est pas sur sys.path
+    # quand le job tourne (le paquet `labuse` est installé, pas le dépôt) → `import scripts` échouait
+    # (« No module named 'scripts' »). On insère la racine AVANT l'import (même geste que coherence_banc).
+    import sys
+    from pathlib import Path
+    racine = Path(__file__).resolve().parents[2]
+    if str(racine) not in sys.path:
+        sys.path.insert(0, str(racine))
     from scripts.verite_permanente import run
     r = run()
     ctx.compte(verts=r["verts"], rouges=r["rouges"], sautes=r["sautes"],

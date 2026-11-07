@@ -100,6 +100,31 @@ if ! ssh -o BatchMode=yes "$HOST" "set -e; for f in ${ARTEFACTS_CALCUL[*]}; do [
   exit 1
 fi
 
+# ── PROD-SUITE-1 — HARNAIS NU-5 (le job `verite-permanente` LIT ces fichiers) ─────────────────
+# `scripts/verite_permanente` rejoue les 6 harnais d'audit NU-5, rangés sous docs/ (EXCLU du rsync).
+# MÊME CLASSE DE BUG que docs/ (ECHANTILLON) puis reports/ (artefacts) : un job a besoin d'un fichier
+# que ce script n'envoyait pas → « No module named 'scripts' » / harnais absent, job rouge en prod.
+# docs/ reste exclu (audit + 9,5 Mo de captures) ; on REDÉPOSE seulement le CODE des harnais (sans
+# les captures), par le même mécanisme -R. La garde `jobs selftest` (§2ter) refuse le déploiement
+# s'il en manque un. (Relocalisation durable hors docs/ = dette, comme ECHANTILLON/artefacts.)
+HARNAIS_NU5=(
+  docs/audit-2026-11/nu-5/A/harnais
+  docs/audit-2026-11/nu-5/B/harnais
+  docs/audit-2026-11/nu-5/C/harnais_mails.py
+  docs/audit-2026-11/nu-5/D/harnais.sql
+  docs/audit-2026-11/nu-5/E/harnais
+  docs/audit-2026-11/nu-5/F/harness/audit_a11y.mjs
+)
+manquants_h=(); for f in "${HARNAIS_NU5[@]}"; do [ -e "$REPO/$f" ] || manquants_h+=("$f"); done
+if [ "${#manquants_h[@]}" -ne 0 ]; then
+  echo "✗ REFUS : harnais NU-5 absent(s) EN LOCAL (verite-permanente les lit) :" >&2
+  printf '    %s\n' "${manquants_h[@]}" >&2
+  exit 1
+fi
+h_src=(); for f in "${HARNAIS_NU5[@]}"; do h_src+=("$REPO/./$f"); done
+rsync -a --rsync-path="sudo rsync" -R --exclude 'captures' --exclude '*.png' \
+  "${h_src[@]}" "$HOST":/opt/labuse/app/
+
 ssh -o BatchMode=yes "$HOST" 'sudo chown -R labuse:labuse /opt/labuse/app'
 
 echo "── 1b. rotation automatique des filets de déploiement (OPS-URGENCE-2) ──"
@@ -146,6 +171,16 @@ ssh -o BatchMode=yes "$HOST" 'sudo -u labuse bash -c "
   ./venv/bin/pip install -q -r ./app/deploy/requirements-calcul.txt
   ./venv/bin/python -c \"import pandas, numpy, joblib, sklearn; print(\\\"deps calcul-nuit importables ✓\\\")\"
 "'
+
+echo "── 2ter. selftest des jobs (PROD-SUITE-1 — « charge chaque job à blanc », garde de livraison) ──"
+# GARDE GÉNÉRIQUE de la classe « un job a besoin d'un fichier/paquet que ce script n'envoie pas »
+# (docs/ → reports/ → scripts). Charge CHAQUE job du registre à blanc (callable présent, imports
+# scripts.* résolubles, harnais NU-5 livrés) SANS exécuter aucun job. Tout échec ARRÊTE le
+# déploiement AVANT le restart — plus jamais un job rouge découvert à 01 h/03 h faute d'un fichier.
+if ! ssh -o BatchMode=yes "$HOST" 'sudo -u labuse bash -c "cd /opt/labuse/app && /opt/labuse/venv/bin/labuse jobs selftest"'; then
+  echo "✗ REFUS : un ou plusieurs jobs du registre ne chargent pas à blanc (cf. ci-dessus) — déploiement ARRÊTÉ." >&2
+  exit 1
+fi
 
 echo "── 3. Front (dist se CONSTRUIT sur le VPS, ne se copie pas ; --base=/ : Caddy le sert à la RACINE) ──"
 ssh -o BatchMode=yes "$HOST" 'sudo -u labuse bash -c "

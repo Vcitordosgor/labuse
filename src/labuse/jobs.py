@@ -193,6 +193,15 @@ def exec_one(nom: str) -> int:
     if job is None:
         raise SystemExit(f"job inconnu : {nom} (voir `labuse jobs list`)")
 
+    # PROD-SUITE-1 — FIX À LA SOURCE, une seule fois, pour TOUS les jobs : la RACINE du dépôt
+    # (où vit `scripts/`, livré mais hors du paquet installé `labuse`) est mise sur sys.path AVANT
+    # d'exécuter le job. Sans ça, tout job qui importe `scripts.*` paresseusement tombait sur
+    # « No module named 'scripts' » (verite-permanente). Désormais aucun job n'a à y penser.
+    import sys as _sys
+    _racine = str(Path(__file__).resolve().parents[2])
+    if _racine not in _sys.path:
+        _sys.path.insert(0, _racine)
+
     from .mail import mail_configured
     dry_run = job.envoie_mail and not mail_configured()
     debut = datetime.now(timezone.utc)
@@ -859,3 +868,55 @@ assert set(_FAMILLE_LIBELLE_ROLE) == set(JOBS), (
 for _nom, (_fam, _lib, _role, _lanc) in _FAMILLE_LIBELLE_ROLE.items():
     _j_obj = JOBS[_nom]
     _j_obj.famille, _j_obj.libelle, _j_obj.role, _j_obj.lancable = _fam, _lib, _role, _lanc
+
+
+def selftest() -> tuple[bool, list[str]]:
+    """PROD-SUITE-1 — « charger chaque job À BLANC » : refuser un déploiement où un job ne se
+    CHARGERAIT pas (dépendance non livrée), SANS exécuter aucun job. Attrape la classe de panne qui
+    s'est répétée trois fois (fichier/paquet qu'un job importe ou lit mais que `deploy_app.sh`
+    n'envoie pas — docs/, reports/, puis `scripts`). Contrôles :
+      1. `labuse.jobs_impl` s'importe (dépendances cœur partagées par les jobs) ;
+      2. chaque job du registre résout son callable (`jobs_impl.<nom_>`) ;
+      3. TOUT import `scripts.*` fait paresseusement dans jobs_impl est réellement importable (la
+         racine du dépôt sur sys.path → attrape « No module named 'scripts' », générique et durable) ;
+      4. les FICHIERS que `verite-permanente` LIT (les 6 harnais NU-5) sont présents (livrés).
+    Renvoie (ok, problèmes)."""
+    import importlib
+    import re
+    import sys
+    from pathlib import Path
+
+    problemes: list[str] = []
+    racine = Path(__file__).resolve().parents[2]
+    if str(racine) not in sys.path:
+        sys.path.insert(0, str(racine))
+    # 1. module d'implémentation
+    try:
+        import labuse.jobs_impl as impl
+    except Exception as e:  # noqa: BLE001
+        return False, [f"labuse.jobs_impl ne s'importe pas : {e!r}"]
+    # 2. chaque job résout son callable
+    for nom in JOBS:
+        fn = nom.replace("-", "_")
+        if not callable(getattr(impl, fn, None)):
+            problemes.append(f"{nom} : jobs_impl.{fn} absent ou non appelable")
+    # 3. imports `scripts.*` paresseux (la classe « No module named 'scripts' »)
+    src = Path(impl.__file__).read_text(encoding="utf-8")
+    mods = set(re.findall(r"^\s*from\s+(scripts[\w.]*)\s+import", src, re.M))
+    mods |= set(re.findall(r"^\s*import\s+(scripts[\w.]*)", src, re.M))
+    for m in sorted(mods):
+        try:
+            importlib.import_module(m)
+        except Exception as e:  # noqa: BLE001
+            problemes.append(f"import paresseux « {m} » échoue : {e!r}")
+    # 4. fichiers lus par verite-permanente (harnais NU-5 livrés avec le code)
+    try:
+        import scripts.verite_permanente as vp
+        for h in vp._harnais():
+            script = next((a for a in h["cmd"]
+                           if isinstance(a, str) and a.endswith((".py", ".sql", ".mjs"))), None)
+            if script and not Path(script).exists():
+                problemes.append(f"verite-permanente lot {h['lot']} : fichier non livré {script}")
+    except Exception as e:  # noqa: BLE001
+        problemes.append(f"verite-permanente : runner non chargeable : {e!r}")
+    return (not problemes), problemes
