@@ -528,7 +528,16 @@ def construire_gabarit(db, idu: str, *, jour: date | None = None) -> ResultatDoc
         deduire_bati_de_zone(gr)
     except Exception:  # noqa: BLE001
         pass
-    valeurs = collecte(db, idu, sorted(bloc_gabarit.IDS), fiche={})
+    # DOCS-1 (décision Vic) — le Gabarit LIT LES SERVITUDES D'UTILITÉ PUBLIQUE DE LA FICHE
+    # (dispositifs.sup), comme le Dossier : le moteur du gabarit ne « déduisait » la SUP que de la
+    # géométrie modélisée et écrivait « Aucune SUP » là où la fiche sert « 1 servitude PM1 » (PPR).
+    # On sert au bloc la même liste SUP que la fiche (producteur unique `_dispositifs_block`).
+    try:
+        from ..api.app import _dispositifs_block
+        fiche_sup = {"dispositifs": _dispositifs_block(db, idu) or {}}
+    except Exception:  # noqa: BLE001 — jamais un 500 sur un PDF : à défaut, le bloc retombe sur le moteur
+        fiche_sup = {}
+    valeurs = collecte(db, idu, sorted(bloc_gabarit.IDS), fiche=fiche_sup)
     numero = numeros.numero_rapport("gabarit", idu, j)
     cart = _cart("gabarit", idu, idu, numero, j)
     corps = _entete_doc("gabarit", idu, numero, j) + bloc_gabarit.rendu(valeurs, {"gabarit": gr})

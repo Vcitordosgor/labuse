@@ -49,16 +49,9 @@ def test_aucune_faute_de_format(rapport):
 
 
 def test_faits_a_une_seule_valeur(rapport):
-    """Un fait imprimé = une seule valeur d'un document à l'autre. DOCS-1 : deux unifications
-    restent au chantier (lecteur unique côté MOTEUR, non côté document) et sont explicitement
-    listées — le test échoue sur TOUTE nouvelle divergence, hors de cette liste connue.
-
-      · servitude_sup   : le Gabarit déduit les SUP de la zone (gabarit/engine) au lieu de lire
-                          les SUP servies par la fiche (dispositifs.sup) → « Aucune SUP » vs « 1 PM1 » ;
-      · sdp_max_terrain : le Financier compose un programme (logements) non saisi par le client →
-                          « SDP (maximum) 325 m² » vs la SDP maximale réglementaire de la fiche (212 m²).
-    """
-    CONNUES = {"servitude_sup", "sdp_max_terrain_m2"}
-    nouvelles = [d for d in rapport["divergences"] if d["fait"] not in CONNUES]
-    assert nouvelles == [], "NOUVEAUX faits à deux valeurs : " + "; ".join(
-        f"{d['idu']}·{d['fait']} ({d['valeurs']})" for d in nouvelles[:20])
+    """Un fait imprimé = UNE seule valeur d'un document à l'autre (DOCS-1, point cardinal). Les deux
+    chantiers moteur sont clos : le document Financier (qui inventait une SDP de programme) est
+    supprimé ; le Gabarit lit les SUP de la fiche (dispositifs.sup), comme le Dossier. Zéro toléré."""
+    div = rapport["divergences"]
+    assert div == [], "faits à deux valeurs : " + "; ".join(
+        f"{d['idu']}·{d['fait']} ({d['valeurs']})" for d in div[:20])

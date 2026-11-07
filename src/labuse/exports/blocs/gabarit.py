@@ -7,10 +7,27 @@ from __future__ import annotations
 
 from ..lignes import ligne, pied
 from ..registre_fmt import fmt_m, fmt_m2, fmt_pct
-from ..rendu import esc, note, section, table_kv, verdict
+from ..rendu import esc, ligne_kv, note, section, table_kv, verdict
 
 IDS = ("gabarit_zone_libere_m2", "gabarit_implantation_m2", "gabarit_bati_deduit_m2",
-       "gabarit_emprise_plafond_m2", "gabarit_hauteur_m", "gabarit_couverture_verdict", "gabarit_plan_2d")
+       "gabarit_emprise_plafond_m2", "gabarit_hauteur_m", "gabarit_couverture_verdict", "gabarit_plan_2d",
+       # DOCS-1 — les SUP de la FICHE (même lecteur que le Dossier), pour ne jamais contredire « 1 PM1 ».
+       "dispositifs_parcelle")
+
+
+def _sup_fiche_ligne(valeurs) -> str:
+    """DOCS-1 — la ligne « Servitudes d'utilité publique » du Gabarit, servie par la FICHE
+    (dispositifs.sup), rendue avec le MÊME libellé que le Dossier (miroir._r_sup). Absente si la
+    fiche n'a pas servi de SUP (on laisse alors le moteur dire la présence/absence géométrique)."""
+    v = valeurs.get("dispositifs_parcelle")
+    sup = getattr(v, "valeur", None) if v is not None else None
+    if not sup:
+        return ""
+    try:
+        from ..miroir import _r_sup
+        return table_kv([ligne_kv("Servitudes d'utilité publique", _r_sup(sup))])
+    except Exception:  # noqa: BLE001
+        return ""
 
 
 def _m2_ou_texte(v):
@@ -155,10 +172,23 @@ def rendu(valeurs, ctx=None) -> str:
     lignes = [x for x in lignes if x]
     if lignes:
         corps += table_kv(lignes)
-    ra = _regles(getattr(gr, "appliedRules", None), appliquees=True) if gr is not None else ""
+    # DOCS-1 — la SUP vient de la FICHE (même lecteur que le Dossier). Quand la fiche en sert une,
+    # on l'affiche ET on retire la règle « Servitudes d'utilité publique » du moteur (qui ne voit que
+    # la géométrie modélisée et écrirait « Aucune SUP » — la contradiction que le banc refusait).
+    sup_html = _sup_fiche_ligne(valeurs)
+    corps += sup_html
+    _sup_servie = bool(sup_html)
+
+    def _sans_sup(rules):
+        if not _sup_servie or not rules:
+            return rules
+        return [r for r in rules
+                if not str(getattr(r, "label", "") or "").startswith("Servitudes d'utilité publique")]
+
+    ra = _regles(_sans_sup(getattr(gr, "appliedRules", None)), appliquees=True) if gr is not None else ""
     if ra:
         corps += "<h3>Règles appliquées</h3>" + ra
-    rni = _regles(getattr(gr, "nonIntegratedRules", None), appliquees=False) if gr is not None else ""
+    rni = _regles(_sans_sup(getattr(gr, "nonIntegratedRules", None)), appliquees=False) if gr is not None else ""
     if rni:
         corps += "<h3>Règles non intégrées</h3>" + rni
     # CHASSE-FIX-1 (C06) — zone AU à ouverture bloquée : l'enveloppe est « après ouverture »
