@@ -363,6 +363,8 @@ LECTURES: tuple[Lecture, ...] = (
       "etudier_complet() [DOCS-COHERENCE-1, F6] : _tcsp_dist_m lit geom_2975 des parcelles (JOIN ST_Distance spatial_layers kind='tcsp_station') pour mesurer la distance au TCSP et appliquer le plafond de stationnement L151-35/36 quand il est plus restrictif que le PLU — machinerie géométrique de l'étude, aucun chiffre du registre servi."),
     L("parcels", "marche_service.py", "prix_terrain_secteur_eur_m2", "pdf_bilan",
       "point d'appel UNIQUE du marché des documents : geom de la parcelle ancre les comparables DVF (profil adaptatif = sector_price → prix terrain secteur des PDF). DOCS-1 : Banquier et Financier supprimés, le Bilan porte ce poste."),
+    L("rnic_coproprietes", "marche_service.py", None, None,
+      "DOCS-1 — marche_dvf : à défaut de vente DVF qui dise le type du bien, lit la PRÉSENCE d'une copropriété (RNIC) pour inférer maison (bâti non copro) vs appartement et servir le BON prix en titre. Jointure de type, aucun chiffre de rnic servi."),
     L("parcels", "pige/api.py", None, None,
       "existence/surface d'une parcelle (idu) pour instruire le rattachement Radar — machinerie de la pige"),
     L("parcels", "pige/client.py", None, None,
