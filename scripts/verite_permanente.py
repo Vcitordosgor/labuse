@@ -16,6 +16,7 @@ main : `python -m scripts.verite_permanente`.
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -25,6 +26,10 @@ RACINE = Path(__file__).resolve().parent.parent
 NU5 = RACINE / "docs" / "audit-2026-11" / "nu-5"
 PY = sys.executable
 DB_URL = os.environ.get("LABUSE_DATABASE_URL") or os.environ.get("LABUSE_TEST_DATABASE_URL")
+# PROD-SUITE-1 — psql ne comprend PAS le dialecte SQLAlchemy (`postgresql+psycopg://…`) : il
+# prendrait toute la chaîne pour un nom de base (« database … does not exist », lot D rouge en prod).
+# Le lot D (psql -f) reçoit donc une URL libpq (`postgresql://…`), le dialecte retiré.
+DB_URL_PSQL = re.sub(r"^postgresql\+\w+://", "postgresql://", DB_URL) if DB_URL else DB_URL
 BASE = os.environ.get("LABUSE_HARNAIS_BASE")        # ex. http://127.0.0.1:9790 (API déjà lancée)
 CHROMIUM = os.environ.get("LABUSE_CHROMIUM")        # binaire chromium pour Playwright (lot F)
 
@@ -51,7 +56,7 @@ def _harnais() -> list[dict]:
          "cmd": [PY, str(NU5 / "C/harnais_mails.py")], "cwd": RACINE, "env": _env_py()},
         {"lot": "D", "desc": "Radar annonce par annonce (SQL lecture seule)",
          "skip": None if (DB_URL and shutil.which("psql")) else "DB/psql indisponible",
-         "cmd": ["psql", DB_URL or "", "-X", "-v", "ON_ERROR_STOP=1", "-f", str(NU5 / "D/harnais.sql")],
+         "cmd": ["psql", DB_URL_PSQL or "", "-X", "-v", "ON_ERROR_STOP=1", "-f", str(NU5 / "D/harnais.sql")],
          "cwd": RACINE, "env": dict(os.environ)},
         {"lot": "E", "desc": "fiche commune 24 communes (recompute cohérence)",
          "skip": None if DB_URL else "DB indisponible (LABUSE_DATABASE_URL)",
