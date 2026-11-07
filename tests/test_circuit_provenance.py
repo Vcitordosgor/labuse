@@ -69,36 +69,6 @@ def test_aucun_nombre_hors_registre_dans_les_documents(idu):
         f"  {f['document']} : {f['nombre']:g} — « {f['contexte']} »" for f in fuites_tot)
 
 
-def test_financier_aucun_nombre_hors_registre():
-    """Le Financier (bilan à rebours) sur un témoin, avec un questionnaire synthétique COMPLET
-    (prix de sortie 4 500 €/m², régime TVA, 6 logements T3) — le bilan dérivé ne doit imprimer
-    aucun nombre hors registre. Le questionnaire de test est nettoyé après (compte sentinelle)."""
-    from sqlalchemy import text
-
-    from labuse import financier_questionnaire as qf
-    from labuse.db import session_scope
-    idu = "97411000AV0110"
-    fiche = _fiche(idu)
-    reponses = {"prix_sortie_saisi_eur_m2": 4500, "regime_tva_saisi": "assujetti",
-                "logements_vises_saisi": 6, "typologie_moyenne_saisi": "T3"}
-    try:
-        with session_scope() as s:
-            qf.enregistrer(s, idu, _COMPTE_TEST, reponses)
-        with session_scope() as s:
-            try:
-                res = builder.construire(s, idu, "financier", fiche=fiche, compte_id=_COMPTE_TEST)
-            except builder.DocumentNonEtablissable as e:
-                pytest.skip(f"Financier non établissable sur ce témoin ({[m['libelle'] for m in e.manques]}) "
-                            "— le programme n'est pas chiffrable ; couvert par la recette Lot C/E11.")
-        fu = provenance.fuites(f"{idu}/financier", res.valeurs, res.html, res.contexte)
-        assert not fu, "Financier — nombres imprimés SANS donnée du registre :\n" + "\n".join(
-            f"  {f['nombre']:g} — « {f['contexte']} »" for f in fu)
-    finally:
-        with session_scope() as s:
-            s.execute(text("DELETE FROM questionnaire_financier WHERE compte_id = :c"),
-                      {"c": _COMPTE_TEST})
-
-
 def test_le_crible_casse_bien_sur_un_nombre_invente():
     """Preuve que le verrou MORD : un HTML avec un nombre qu'aucune donnée ne porte est une fuite
     (sinon le test vert ne prouverait rien)."""

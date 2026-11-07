@@ -26,17 +26,9 @@ def test_mention_cite_la_mesure():
 
 
 def test_exports_portent_la_mention_capacite():
-    # Le Financier et le Potentiel portent la mention « capacité = maximum réglementaire ».
-    for rel in ("src/labuse/exports/blocs/financier.py",
-                "src/labuse/exports/blocs/potentiel.py"):
-        assert "capacite_max" in _lire(rel), rel
-    # libellés « maximum » posés — LOGEMENTS-SOURCE-UNIQUE : la ligne logements du Financier ne
-    # porte plus un « maximum » de l'ancien calcul : saisie du porteur (« Logements (projet) »)
-    # ou RENVOI vers l'Étude de faisabilité (le même que la fiche).
-    fin = _lire("src/labuse/exports/blocs/financier.py")
-    assert "Surface de plancher (maximum)" in fin
-    assert "Logements (maximum)" not in fin
-    assert "Logements (projet)" in fin and "RENVOI_ETUDE" in fin
+    # DOCS-1 : le document Financier est supprimé ; le Potentiel (Dossier §10) porte la mention
+    # « capacité = maximum réglementaire ».
+    assert "capacite_max" in _lire("src/labuse/exports/blocs/potentiel.py")
     # RECETTE-OUTILS-2 (R18, décision Vic) — le Comparatif ne porte PLUS la note « capacité = maximum
     # réglementaire … (0,46 / 0,40) », retirée pour être IDENTIQUE à l'outil (où elle l'a déjà été). Il
     # ne référence donc plus `capacite_max` du tout.
@@ -73,10 +65,10 @@ def test_ratios_declares_au_registre_et_ancres_sans_exception():
     assert provenance.fuites("note/capacite", {}, f"<p>{capacite_max.MENTION}</p>") == []
     # aucune entrée de liste blanche pour les ratios : c'est la déclaration qui les porte.
     assert 0.46 not in provenance.ALLOWLIST and 0.4 not in provenance.ALLOWLIST
-    # et le lecteur existe (V6b) : le Financier, qui imprime la note complète.
+    # et le lecteur existe (V6b) : le Bilan, qui imprime la note complète (DOCS-1 : ex-pdf_financier).
     from labuse.registre.robinets import ROBINETS
-    assert "capacite_ratio_median_sdp" in ROBINETS["pdf_financier"].chiffres
-    assert "capacite_ratio_median_logements" in ROBINETS["pdf_financier"].chiffres
+    assert "capacite_ratio_median_sdp" in ROBINETS["pdf_bilan"].chiffres
+    assert "capacite_ratio_median_logements" in ROBINETS["pdf_bilan"].chiffres
 
 
 def test_aucun_nombre_de_logements_ancien_moteur_fiche_et_comparatif():

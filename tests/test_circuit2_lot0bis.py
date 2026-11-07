@@ -116,8 +116,8 @@ def test_scission_neuf_robinets_sans_melange():
     qui_sert = lambda cid: {rid for rid, r in ROBINETS.items() if cid in r.chiffres}  # noqa: E731
     assert "fiche_parcelle_marche" not in qui_sert("prix_neuf_vefa_acte_eur_m2"), \
         "le VEFA à l'acte est SORTI de la fiche parcelle (Q3)"
-    # DOCS-1 : le Banquier supprimé, le neuf observé est servi par le Financier (ou la fiche).
-    assert qui_sert("prix_neuf_observe_eur_m2") & {"fiche_parcelle_constructibilite", "pdf_financier"}
+    # DOCS-1 : Banquier et Financier supprimés, le neuf observé est servi par le Bilan (ou la fiche).
+    assert qui_sert("prix_neuf_observe_eur_m2") & {"fiche_parcelle_constructibilite", "pdf_bilan"}
 
 
 def test_scission_neuf_scoring_lit_acte_bilan_lit_observe():

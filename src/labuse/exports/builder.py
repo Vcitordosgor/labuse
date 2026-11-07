@@ -43,8 +43,9 @@ def _donnees_labuse_au() -> str | None:
         return None
     return None
 # EXPORTS-REBRANCHEMENT-1 lot 1 — le Dossier miroir ne consomme plus les anciens blocs de
-# section ; restent les blocs-documents (financier, apporteur) et la clôture (sources).
-from .blocs import apporteur, financier
+# section ; reste le bloc-document Apporteur et la clôture (sources). DOCS-1 : le document
+# builder-exports « financier » est supprimé (le seul Bilan est l'écran Bilan, api/bilan.py).
+from .blocs import apporteur
 from .registre_fmt import fmt_m2
 from .rendu import Cartouche, esc, esc_noms, page_html, render_pdf
 
@@ -64,10 +65,8 @@ class DocumentNonEtablissable(Exception):
 _LABEL = {
     "dossier": ("Dossier parcelle", "Ce que cette parcelle est, ce qu'elle porte, ce que le règlement y permet."),
     "flash": ("Rapport Flash", "Ce que cette parcelle est, ce qu'elle porte, ce que le règlement y permet."),
-    # DOCS-1 §4 (décision Vic) — le document s'appelle « Bilan » côté client (ex « Dossier financier »,
-    # RECETTE-5 V17). La clé interne reste « financier » (route, builder, questionnaire) ; seul le
-    # LIBELLÉ humain change (titre de garde + nom de fichier). Moteur/ratios/Excel → BILAN-1.
-    "financier": ("Bilan", ""),
+    # DOCS-1 (décision Vic) — le document builder-exports « financier » est supprimé : le seul Bilan
+    # de l'app est l'écran Bilan (api/bilan.py, /bilan/{idu}.pdf), moteur/ratios/Excel propres.
     "apporteur": ("Note apporteur", ""),   # FIX-NU3-2 (M-T09) — « Note apporteur » (plus d'anglicisme « Brief »), écran==PDF
     # DOCS-1 (Lot C) — les 3 nouveaux documents (miroirs des outils Gabarit, Comparer, Étude de zone).
     "gabarit": ("Gabarit", "L'enveloppe réglementaire de la parcelle : zone d'implantation, plafond d'emprise, hauteur."),
@@ -95,9 +94,6 @@ _FOOT_DOSSIER = ("Document d'information établi à partir de données publiques
                  + " Données LABUSE au {au}.")
 _FOOT = {
     "dossier": _FOOT_DOSSIER, "flash": _FOOT_DOSSIER,
-    "financier": ("Bilan indicatif établi sur des données publiques et sur les hypothèses saisies "
-                  "par le porteur (en ambre). Ni un prix, ni une promesse. Il ne remplace pas un "
-                  "bilan promoteur professionnel. " + _CLAUSE_JURIDIQUE + " Données LABUSE au {au}."),
     "apporteur": ("Document confidentiel remis par l'émetteur à son apporteur d'affaires. Ne pas "
                   "transmettre au propriétaire. Ne vaut pas mandat. " + _CLAUSE_JURIDIQUE
                   + " Données publiques LABUSE au {au}."),
@@ -124,13 +120,12 @@ _MIROIR = "miroir"
 DOCUMENTS: dict[str, object] = {
     "dossier": _MIROIR,
     "flash": _MIROIR,
-    "financier": [financier],
     "apporteur": [apporteur],
 }
 
-#: documents servis avec un contexte (au-delà des Valeur) : Financier (questionnaire+bilan),
-#: Apporteur (émetteur, dates, blocs adaptatifs). Le bloc reçoit rendu(valeurs, ctx).
-_AVEC_CONTEXTE = {"financier", "apporteur"}
+#: documents servis avec un contexte (au-delà des Valeur) : Apporteur (émetteur, dates, blocs
+#: adaptatifs). Le bloc reçoit rendu(valeurs, ctx).
+_AVEC_CONTEXTE = {"apporteur"}
 
 
 @dataclass(frozen=True)
@@ -144,9 +139,9 @@ class ResultatDoc:
     contexte: dict | None = None
 
 
-#: documents « au fil » (pas de page de garde pleine) : en-tête compact (Résumé, Financier).
+#: documents « au fil » (pas de page de garde pleine) : en-tête compact.
 #: L'Apporteur rend son propre en-tête (confidentiel + « Un terrain à sonder ») → aucun en-tête ici.
-_COVER_COMPACTE = {"financier"}
+_COVER_COMPACTE: set[str] = set()
 _COVER_AUCUNE = {"apporteur"}
 
 
@@ -217,131 +212,6 @@ def _cover(document: str, idu: str, fiche: dict, numero: str, jour: date,
         'absente : ce document n\'imprime jamais un zéro pour une valeur qu\'il ne connaît pas.</p>'
         '</div>'
     )
-
-
-#: surface vendable moyenne par logement selon la typologie saisie (hypothèse déclarée, repli du
-#: programme quand le potentiel ne chiffre pas de reconstruction — le programme reste piloté par
-#: les logements visés du client).
-_TYPOLOGIE_SURFACE = {"T1": 30, "T2": 45, "T3": 65, "T4": 85, "T5": 105, "STUDIO": 25}
-
-
-def _financier_contexte(db, idu: str, fiche: dict, compte_id: int | None) -> dict:
-    """Charge le questionnaire, résout les hypothèses (avec pré-remplissages sourcés) et calcule le
-    bilan HT. Le programme vient du potentiel (reconstruction) ou, à défaut, des logements visés ×
-    surface de la typologie."""
-    from .. import financier_questionnaire as qf
-    from . import financier_bilan as fb
-    etat = qf.charger(db, idu, compte_id)
-    # PRIX-SORTIE-1 (Vic 05/10/2026) — pré-remplissage du prix de sortie = prix NEUF servi
-    # (source unique), identique à la fiche/calculette ; None si non calculable → non pré-rempli.
-    prefill = qf.prefill(fiche, qf.prix_sortie_neuf_servi(db, idu))
-    resolved = qf.resoudre(etat["reponses"], prefill)
-    rv = lambda fid: (resolved.get(fid) or {}).get("valeur")  # noqa: E731
-    # RECETTE-8 W13bis (C3) — le parcours « Revente en l'état » : calcul de marge SIMPLE (pas de
-    # bilan à rebours, pas de programme constructible). On dispatche AVANT tout le calcul construction.
-    if qf.usage_choisi(etat["reponses"]) == "revente":
-        hyp_rev = {"prix_achat": rv("prix_achat_revente_saisi_eur"),
-                   "prix_revente": rv("prix_revente_saisi_eur"),
-                   "frais_acq_pct": rv("frais_acquisition_saisi_pct"),
-                   "travaux": rv("travaux_revente_saisi_eur"),
-                   "duree_portage": rv("duree_portage_saisi_mois"),
-                   "taux_apport": rv("taux_apport_saisi_pct")}
-        return {"usage": "revente", "revente": fb.calculer_revente(hyp_rev),
-                "resolved": resolved, "prefill": prefill, "complet": etat["complet"],
-                "existe": etat["existe"], "bilan": None, "program": None,
-                "tfpb": None, "zonage_abc": None,
-                "manques": qf.manques_revente(resolved)}
-    hyp = {
-        "prix_sortie": rv("prix_sortie_saisi_eur_m2"), "prix_bailleur": rv("prix_vente_bailleur_saisi_eur_m2"),
-        "cout": rv("cout_construction_saisi_eur_m2"), "honoraires_pct": rv("honoraires_techniques_saisi_pct"),
-        "vrd_m2": rv("vrd_saisi_eur_m2"), "cout_place": rv("cout_place_stationnement_saisi_eur"),
-        "aleas_pct": rv("aleas_saisi_pct"), "marge_pct": rv("marge_visee_saisi_pct"),
-        "frais_acq_pct": rv("frais_acquisition_saisi_pct"), "prix_demande": rv("prix_demande_saisi_eur"),
-        "demolition": rv("bilan_demolition_eur"), "depollution": rv("bilan_depollution_eur"),
-        "taxe": rv("taxe_amenagement_saisi_eur"), "duree_portage": rv("duree_portage_saisi_mois"),
-        "taux_apport": rv("taux_apport_saisi_pct"), "part_sociale_pct": rv("part_sociale_saisi_pct") or 0,
-        "rap": None,   # TAXE-FIX-1 point 2 — RAP (0,40 % assiette), chiffrée ci-dessous par calculer()
-    }
-    pot = fiche.get("potentiel_transformation") or {}
-    # LOGEMENTS-SOURCE-UNIQUE — le programme ne tire PLUS un nombre de logements de l'ancien calcul
-    # de capacité (A-05-1 prenait la borne haute de `logements_au_sol`) : seule la SAISIE du porteur
-    # (logements_vises_saisi) porte un nombre ; sinon le Financier imprime le renvoi de la fiche
-    # (« voir l'Étude de faisabilité » — moteur d'implantation, seul à compter des logements).
-    program = {
-        # CONTENANCE-1 (Lot B) : surface de terrain = contenance si présente, sinon dessin.
-        "surface_terrain": fiche.get("surface_terrain_m2") or fiche.get("surface_m2"),
-        "logements": rv("logements_vises_saisi"),
-        "surface_vendable": pot.get("surface_vendable_m2"),
-        "surface_plancher": pot.get("surface_plancher_m2"),
-    }
-    if not program["surface_vendable"] and program["logements"]:
-        typo = str(rv("typologie_moyenne_saisi") or "T3").upper().strip()
-        surf = _TYPOLOGIE_SURFACE.get(typo, 60)
-        program["surface_vendable"] = program["logements"] * surf
-        program["surface_plancher"] = program["surface_vendable"] / 0.8
-    # RECETTE-8 W2 — la taxe d'aménagement du bilan porte sur la SDP du PROJET (`program`), au taux
-    # communal public. On ne la pré-calcule que si le porteur ne l'a NI saisie NI explicitement vidée
-    # (règle 2 : un champ vidé reste vide) et que le projet a une SDP. C'est le SEUL endroit où la
-    # taxe est chiffrée : sur une SDP de projet, jamais sur un scénario de fiche (W1/W2).
-    if program.get("surface_plancher"):
-        from .. import taxe_amenagement as _tax
-        # TAXE-FIX-1 point 3 — résolution PAR PARCELLE (secteur à taux majoré prioritaire).
-        _pub = _tax.taux_parcelle(db, idu) if idu else None
-        _res = _tax.calculer(
-            surface_taxable_m2=float(program["surface_plancher"]),
-            taux_communal_public_pct=(_pub["part_communale_pct"] if _pub else None),
-            taux_communal_public_source=(_pub["source"] if _pub else None),
-            taux_communal_public_millesime=(_pub["millesime"] if _pub else None),
-            taux_communal_public_delib_date=(_pub["delib_date"] if _pub else None),
-            taux_communal_public_perime=(_pub["perime"] if _pub else None),
-            taux_communal_secteur_majore=bool(_pub and _pub.get("secteur_majore")))
-        # TAXE-FIX-1 point 2 — la RAP (0,40 % de l'assiette TA) accompagne la taxe : toujours chiffrée
-        # dès qu'il y a une SDP, MÊME quand le porteur a saisi la taxe d'aménagement à la main.
-        hyp["rap"] = _res["rap_eur"]
-        # La taxe d'aménagement n'est pré-remplie que si le porteur ne l'a NI saisie NI vidée (W2).
-        if ("taxe_amenagement_saisi_eur" not in etat["reponses"]
-                and hyp["taxe"] is None and _res["total_eur"] is not None):
-            hyp["taxe"] = _res["total_eur"]
-            resolved["taxe_amenagement_saisi_eur"] = {
-                "valeur": round(float(_res["total_eur"])), "origine": "prefill",
-                # TAXE-FIX-1 point 4 — la taxe porte sur la SURFACE TAXABLE (close et couverte,
-                # garages et annexes inclus, CGI 1635 quater H) ; on l'approche ici par la SDP du
-                # projet (garages/annexes non modélisés → estimation plutôt basse).
-                "source": (f"taxe d'aménagement sur la surface taxable "
-                           f"(≈ SDP du projet {round(float(program['surface_plancher']))} m², "
-                           "garages/annexes non modélisés) au taux communal — config datée, "
-                           "service-public.gouv.fr")}
-    # RECETTE-4 U1/U2 — la fiscalité locale de la commune (taux TFPB, REI DGFiP) et sa zone A/B/C
-    # (DHUP) entrent au Financier : la taxe foncière pèse sur les charges de portage et la zone
-    # commande le régime applicable (TVA accession, PTZ, prix bailleur). Passe-plats sourcés + datés ;
-    # None si non ingérés (jamais devinés). L'insee vient de l'IDU.
-    insee = (idu or "")[:5]
-    tfpb = zonage = None
-    try:
-        from ..ingestion.rei import rei_commune
-        tfpb = rei_commune(db, insee)
-    except Exception:  # noqa: BLE001 — table absente = source non ingérée, jamais un 500
-        db.rollback()
-    try:
-        from ..ingestion.zonage_abc import zonage_commune
-        zonage = zonage_commune(db, insee)
-    except Exception:  # noqa: BLE001
-        db.rollback()
-    bilan = fb.calculer(program, hyp)
-    manques = qf.manques(resolved, program)
-    # RECETTE-11 B2 — DÉFENSE : une hypothèse hors marché ne produit PLUS un PDF « bilan non établi ».
-    # Le questionnaire la bloque en amont (valider_hors_marche) ; si malgré tout la génération est
-    # atteinte (saisie ancienne, URL directe), le document est REFUSÉ (422) — jamais imprimé sur le ton
-    # d'un bilan. Le garde reste le point de vérité unique (`_hors_marche`).
-    hm = bilan.get("hors_marche") if isinstance(bilan, dict) else None
-    if hm:
-        manques = [{"libelle": f"Hypothèse hors marché : {hm['champ']}",
-                    "raison": hm.get("raison", "valeur hors bornes de vraisemblance")}] + manques
-    return {"bilan": bilan, "resolved": resolved, "prefill": prefill,
-            "complet": etat["complet"], "existe": etat["existe"], "program": program,
-            "tfpb": tfpb, "zonage_abc": zonage,
-            # RECETTE-5 (V18b) — les éléments indispensables manquants pour établir le bilan (vide ⇒ OK).
-            "manques": manques}
 
 
 def _emetteur(db, compte_id: int | None) -> dict | None:
@@ -570,14 +440,7 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
     ids = sorted({cid for b in blocs for cid in b.IDS})
     valeurs = collecte(db, idu, ids, fiche=f)
     ctx = None
-    if document == "financier":
-        ctx = _financier_contexte(db, idu, f, compte_id)
-        # RECETTE-5 (V18b) — tant qu'un élément indispensable manque, le Financier NE SE GÉNÈRE PAS
-        # (l'écran dira lesquels). Fini les trois pages de tableau « non chiffré » sous un document qui
-        # annonce lui-même qu'il ne peut pas être établi.
-        if ctx.get("manques"):
-            raise DocumentNonEtablissable(ctx["manques"])
-    elif document == "apporteur":
+    if document == "apporteur":
         ctx = _apporteur_contexte(db, idu, f, j, compte_id)
     label, _ = _LABEL.get(document, (document, ""))
     adresse = f.get("adresse") or ""

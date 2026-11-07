@@ -54,7 +54,6 @@ def test_prix_sortie_unique_sur_toutes_les_surfaces(idu: str):
         from labuse.api import modules
         from labuse.api.app import _calculette_for_pdf
         from labuse.faisabilite.bilan import resolve_prix_sortie_servi
-        import labuse.financier_questionnaire as qf
 
         ref = resolve_prix_sortie_servi(db, int(pid))
         if ref["non_calculable"] or ref["prix"] is None:
@@ -62,12 +61,9 @@ def test_prix_sortie_unique_sur_toutes_les_surfaces(idu: str):
         attendu = round(float(ref["prix"]))
 
         # SOURCE UNIQUE côté serveur : chaque surface rebranchée doit porter `attendu`.
+        # DOCS-1 : le pré-remplissage du Financier (S4) a disparu avec le document Financier ;
+        # le prix de sortie servi reste le resolver unique (faisabilite.bilan.resolve_prix_sortie_servi).
         surfaces: dict[str, float] = {"resolver (source unique)": attendu}
-
-        # Pré-remplissage du Financier (S4) — toujours résolu dès que la commune a un prix neuf.
-        ps_neuf = qf.prix_sortie_neuf_servi(db, idu)
-        assert ps_neuf is not None, f"{idu} : prefill Financier non résolu alors que le neuf existe"
-        surfaces["financier prefill (S4)"] = round(float(ps_neuf))
 
         # Surfaces liées au bilan — présentes seulement si la parcelle est constructible.
         fa = modules.faisabilite_sens1(idu, db)

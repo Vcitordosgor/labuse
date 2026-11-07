@@ -91,7 +91,7 @@ def rendre_document(db, idu: str, request: Request, document: str, *,
     from urllib.parse import quote
     nom = f"{builder.titre_document(document)} — {res.numero}.pdf"
     dispo = f'inline; filename="{res.numero}.pdf"; filename*=UTF-8\'\'{quote(nom)}'
-    # RECETTE-8 W19 — 🔴 l'URL du document est STABLE (/financier/{idu}.pdf, sans jeton) : le
+    # RECETTE-8 W19 — 🔴 l'URL du document est STABLE (/dossier/{idu}.pdf, sans jeton) : le
     # navigateur (et tout proxy) mettait la PREMIÈRE réponse en cache et la resservait telle quelle
     # aux téléchargements suivants → une saisie modifiée ne changeait pas le PDF (le back, lui, relit
     # le questionnaire et régénère à chaque appel — prouvé, deux prix ⇒ deux HTML). `no-store`
@@ -102,11 +102,9 @@ def rendre_document(db, idu: str, request: Request, document: str, *,
                              "Pragma": "no-cache"})
 
 
-@router.get("/financier/{idu}.pdf")
-def financier_pdf(idu: str, request: Request, db: Session = Depends(get_db)) -> Response:
-    return rendre_document(db, idu, request, "financier")
-
-
+# DOCS-1 (décision Vic) — le document builder-exports « financier » est SUPPRIMÉ : il n'était plus
+# accessible depuis l'app (seul l'écran Bilan, /bilan/{idu}.pdf, rend un document financier). Route,
+# questionnaire, modules, robinet et tests retirés ; les postes restent servis par le Bilan.
 @router.get("/apporteur/{idu}.pdf")
 def apporteur_pdf(idu: str, request: Request, db: Session = Depends(get_db)) -> Response:
     return rendre_document(db, idu, request, "apporteur", forms=True, marque=False)

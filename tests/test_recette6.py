@@ -14,35 +14,6 @@ from pathlib import Path
 RACINE = Path(__file__).resolve().parents[1] / "src" / "labuse"
 
 
-# ── E2 : le garde de vraisemblance ────────────────────────────────────────────────────────────
-def test_e2_hors_marche_detecte_le_prix_en_total():
-    from labuse.exports.financier_bilan import _hors_marche
-    # 700 000 saisi comme prix de sortie « €/m² » (en fait le prix TOTAL d'un logement) : hors borne.
-    hm = _hors_marche(700_000, None, None)
-    assert hm is not None
-    assert hm["champ"]                      # le garde NOMME le champ fautif
-    assert hm["valeur"] == 700_000
-    assert hm["borne"] and hm["borne"] < 700_000
-
-
-def test_e2_prix_plausible_passe():
-    from labuse.exports.financier_bilan import _hors_marche
-    assert _hors_marche(4200, 2800, None) is None     # 4 200 €/m² de sortie : dans le marché
-
-
-# ── E5 : l'écran 0 ────────────────────────────────────────────────────────────────────────────
-def test_e5_un_seul_usage_servi_les_autres_grises_avec_raison():
-    # TESTS-1 lot 2 (B) — RECETTE-8 W13bis (8f84a994, 09/09/2026) a bâti et SERVI le parcours
-    # « Revente en l'état » : les usages servis sont désormais DEUX, nommés — l'invariant reste
-    # « rien de servi qui ne soit bâti, rien de grisé sans raison ».
-    from labuse.financier_questionnaire import USAGES
-    servis = [u for u in USAGES if u["servi"]]
-    assert {u["key"] for u in servis} == {"construction", "revente"}
-    for u in USAGES:
-        if not u["servi"]:
-            assert u.get("raison"), f"usage grisé sans raison : {u['key']}"
-
-
 # ── F1 : le titre de l'apporteur suit le contenu (bâti / nu) ────────────────────────────────────
 def test_f1_titre_apporteur_suit_le_contenu():
     from labuse.exports.blocs import apporteur

@@ -404,14 +404,14 @@ ROBINETS: dict[str, Robinet] = {
               "prix_achat_historique_eur",)),
  "pdf_pre_dossier_pc": _r("pdf", "Pré-dossier PC (ZIP CERFA 13406*17)", None,
     "/pre-dossier/zip", "pdf", chiffres=("zone_plu_famille", "zonage_plu_couche",)),
- # DOCS-1 (décision Vic) — le Dossier banquier, l'Argumentaire et la Lettre de zonage sont SUPPRIMÉS
- # (routes, cartes, menus, registre, tests). Leurs robinets `pdf_banquier` / `pdf_argumentaire` /
- # `pdf_lettre_zonage` disparaissent. Les postes du bilan que le Banquier servait (charge_fonciere_eur,
- # prix_terrain_secteur_eur_m2, prix_neuf_observe_eur_m2, mixite_clause, bilan_ca/cout/vrd/marge/frais)
- # rejoignent le Financier — le seul document financier qui reste (bascule du lot 8 EXPORTS-2 achevée).
- # zone_plu_famille/zonage_plu_couche de la Lettre restent servis par le Pré-dossier PC et le Courrier.
- "pdf_financier": _r("pdf", "Financier", None,
-    "/financier/{idu}.pdf (builder exports, questionnaire)", "pdf", chiffres=(
+ # DOCS-1 (décision Vic) — le Dossier banquier, l'Argumentaire, la Lettre de zonage ET le document
+ # builder-exports « Financier » sont SUPPRIMÉS (routes, cartes, menus, registre, tests). Le SEUL
+ # document financier qui reste est le Bilan (écran Bilan, `/bilan/{idu}.pdf`, moteur api/bilan.py).
+ # Les postes du bilan (que le Banquier puis le Financier servaient) RESTENT dans le Bilan : les deux
+ # robinets ci-dessous sont repointés sur le Bilan. zone_plu_famille/zonage_plu_couche de la Lettre
+ # restent servis par le Pré-dossier PC et le Courrier.
+ "pdf_bilan": _r("pdf", "Bilan", None,
+    "/bilan/{idu}.pdf (écran Bilan)", "pdf", chiffres=(
         "charge_fonciere_eur", "prix_terrain_secteur_eur_m2", "prix_neuf_observe_eur_m2",
         "mixite_clause", "bilan_ca_eur", "bilan_cout_construction_eur", "bilan_vrd_eur",
         "bilan_marge_eur", "bilan_frais_eur",
@@ -420,14 +420,12 @@ ROBINETS: dict[str, Robinet] = {
         "bilan_demolition_eur", "charge_fonciere_basse_eur", "charge_fonciere_haute_eur",
         "sensibilite_cout_construction", "sensibilite_prix_sortie", "seuil_rentabilite_eur",
         # FIX-ORFEVRE-1 (décision Vic 18/10/2026) — la note « capacité maximale » du programme
-        # (capacite_max.MENTION) imprime les deux ratios médians mesurés (volet D) : déclarés au
-        # registre, lus ici (le Financier imprime la note complète — le Comparatif la reprend).
+        # (capacite_max.MENTION) imprime les deux ratios médians mesurés : déclarés au registre, lus
+        # par le Bilan (la note complète ; le Comparatif la reprend).
         "prix_revient_eur_m2", "capacite_ratio_median_sdp", "capacite_ratio_median_logements",)),
- # EXPORTS-2 lot 4 — l'écran questionnaire du Financier (4 écrans) sert ses saisies client
- # (les 4 saisies déjà servies par la calculette — prix_demande/cout_construction/démolition/
- # dépollution — restent à leurs robinets ; on ne les redéclare pas ici, V5c).
- "ecran_questionnaire_financier": _r("page_client", "Questionnaire du Financier (4 écrans)", None,
-    "/financier/{idu}/questionnaire (GET/PUT)", "json_puis_js", chiffres=(
+ # Les saisies financières du client vivent désormais dans l'écran Bilan (questionnaire BilanEcran).
+ "ecran_bilan": _r("page_client", "Questionnaire du Bilan", None,
+    "/bilan/{idu} (saisies)", "json_puis_js", chiffres=(
         "scenario_saisi", "logements_vises_saisi", "typologie_moyenne_saisi", "part_sociale_saisi_pct",
         "stationnement_type_saisi", "prix_refuse_saisi_eur", "frais_acquisition_saisi_pct",
         "commission_apporteur_saisi_eur", "honoraires_techniques_saisi_pct", "vrd_saisi_eur_m2",

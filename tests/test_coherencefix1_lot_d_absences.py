@@ -41,21 +41,3 @@ def test_part_habitat_zan_absence_est_none():
     assert part is None
 
 
-def test_bilan_revente_maximum_couvre_tous_les_postes_non_chiffres():
-    from labuse.exports.financier_bilan import calculer_revente
-    r = calculer_revente({"prix_achat": 100000, "prix_revente": 150000,
-                          "frais_acq_pct": None, "travaux": None,
-                          "duree_portage": None, "taux_apport": None})
-    assert r["etablissable"] and r["maximum"] is True, \
-        "frais/travaux/portage non chiffrés → marge dite « maximum », jamais un faux exact"
-    r2 = calculer_revente({"prix_achat": 100000, "prix_revente": 150000,
-                           "frais_acq_pct": 8, "travaux": 10000,
-                           "duree_portage": 12, "taux_apport": 4})
-    assert r2["maximum"] is False
-
-
-def test_postes_bilan_non_chiffres_quand_surface_manque():
-    from labuse.exports.financier_bilan import _postes
-    p = _postes({"surface_plancher": None, "logements": None}, {"cout_place": 15000}, 2000.0, None)
-    assert p["construction"]["montant"] is None, "plancher absent → poste non chiffré, pas 0 €"
-    assert p["stationnement"]["montant"] is None, "logements absents → poste non chiffré, pas 0 €"
