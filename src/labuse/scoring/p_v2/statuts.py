@@ -290,6 +290,19 @@ def assign_paliers(df: pd.DataFrame, cfg: PaliersConfig | None = None,
              else pd.Series(False, index=df.index))
     tier = tier.mask(copro, PALIER_SANS_SIGNAL)
 
+    # QV21-PROMO-1 (doctrine E-010, arbitrage Vic) — UNE PARCELLE ENTIÈREMENT EN ZONE ROUGE N'EST
+    # JAMAIS ACTIONNABLE. La probabilité de VENTE (p) peut rester élevée — un terrain 100 % en PPR
+    # zone rouge peut se vendre — mais il ne doit JAMAIS porter un palier actionnable (« Priorité »/
+    # « À suivre ») : aucun projet n'y est possible (HARD_EXCLUDE risques, inconstructible total). On
+    # le masque vers « Sans signal » (comme la copropriété), APRÈS l'anti-churn (il ne « se maintient »
+    # jamais en tête) et AVANT l'étage 0 (une parcelle rouge aussi écartée au titre de l'étage 0 reste
+    # « Écartée », motif plus spécifique). p_raw INTACT — seule l'étiquette de palier change.
+    # Colonne OPTIONNELLE `risque_exclut` (bool, injectée par le pipeline depuis la cascade `risques` :
+    # fraction PPR rouge = 100 %) ; absente = aucun masque (rétro-compatible, golden intact).
+    risque_exclut = (df["risque_exclut"].fillna(False).astype(bool) if "risque_exclut" in df.columns
+                     else pd.Series(False, index=df.index))
+    tier = tier.mask(risque_exclut, PALIER_SANS_SIGNAL)
+
     ecartee = df["ecartee_etage0"].fillna(False).astype(bool) if "ecartee_etage0" in df.columns \
         else pd.Series(False, index=df.index)
     tier = tier.mask(ecartee, PALIER_ECARTEE)

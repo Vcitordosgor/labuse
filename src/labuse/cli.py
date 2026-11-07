@@ -1131,8 +1131,54 @@ def flux_run_cmd(
     with session_scope() as s:
         res = run_score_v2(s, run_id=label, rebuild=True, snapshot=True, recette=recette)
     run_progress.finish(label, n_parcelles=res["n"])
+    # QV21-PROMO-1 — le flux-run écrit le MANIFESTE DU CANDIDAT (attestation de gel lue par
+    # controler_run avant promotion). Jusqu'ici documenté mais jamais écrit → « manifeste absent ».
+    with session_scope() as s:
+        from . import bascule_flux
+        from .scoring.p_v2.recompute import ecrire_manifeste_candidat
+        cascade_run, _ = bascule_flux.resoudre_cascade_run(s, label)
+        man = ecrire_manifeste_candidat(s, label, cascade_run or label,
+                                        par=f"flux-run {label} (recette {recette})")
     typer.echo(f"✓ FLUX-RUN [{label}] : {res['n']} parcelles scorées, tiers {res['tiers']} "
-               f"({time.time() - t0:.0f}s total). NON servi — bascule manuelle.")
+               f"({time.time() - t0:.0f}s total). Manifeste candidat écrit (cascade {man['cascade_run']}). "
+               f"NON servi — bascule manuelle.")
+
+
+@app.command("recompute-paliers")
+def recompute_paliers_cmd(
+    run: str = typer.Option(..., help="run_label dont on recompose les STATUTS (paliers)."),
+    cascade: str = typer.Option(None, help="run de la cascade (étage 0 + zones rouges) ; défaut : "
+                                           "résolu comme à la bascule (run propre, sinon étage 0 emprunté)."),
+    ecrire: bool = typer.Option(True, "--ecrire/--dry-run", help="Écrire les tiers (sinon simulation)."),
+) -> None:
+    """QV21-PROMO-1 — RECOMPOSE LES STATUTS (paliers) d'un run DÉJÀ calculé, SANS relancer la cascade
+    ni le scoring de l'île. Rejoue `statuts.assign_paliers` (le seul juge du palier) sur p_raw/copro
+    en base + l'étage 0 et les zones rouges lus dans la cascade du run, et met `tier` à jour là où il
+    change. Écrit aussi le manifeste du candidat. Idempotent. Ne touche NI p_raw, NI rang, NI le run
+    servi (le candidat n'est pas promu)."""
+    from . import bascule_flux
+    from .scoring.p_v2.recompute import ecrire_manifeste_candidat, recompute_paliers
+
+    with session_scope() as s:
+        cascade_run = cascade
+        if not cascade_run:
+            cascade_run, motif = bascule_flux.resoudre_cascade_run(s, run)
+            if cascade_run is None:
+                raise typer.BadParameter(f"cascade du run « {run} » non résoluble : {motif}")
+            typer.echo(f"  cascade résolue : {cascade_run} — {motif}")
+        res = recompute_paliers(s, run, cascade_run)
+        typer.echo(f"  étage 0 : {res['e0']} parcelles · zones 100 % rouges : {res['rouge_total']}")
+        typer.echo(f"  avant : {res['avant']}")
+        typer.echo(f"  après : {res['apres']}  ({res['change']} changements)")
+        if ecrire:
+            man = ecrire_manifeste_candidat(s, run, cascade_run,
+                                            par=f"recompute-paliers {run}")
+            s.commit()
+            typer.echo(f"✓ RECOMPUTE-PALIERS [{run}] : {res['change']} statuts recomposés, "
+                       f"manifeste candidat écrit (cascade {man['cascade_run']}).")
+        else:
+            s.rollback()
+            typer.echo(f"• DRY-RUN [{run}] : {res['change']} statuts CHANGERAIENT (rien écrit).")
 
 
 @app.command("piscines-build")

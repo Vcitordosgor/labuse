@@ -127,6 +127,20 @@ def montre_multiple(tier: str | None) -> bool:
     return code_palier(tier) in PALIERS_AVEC_MULTIPLE
 
 
+def canon_sql(colonne: str) -> str:
+    """QV21-PROMO-1 — une expression SQL qui projette un tier STOCKÉ (nouveau ou ancien code) sur son
+    PALIER CANONIQUE, dérivée de `code_palier` (source unique). Sert au contrôle d'écart de paliers :
+    comparer `canon_sql('a.tier')` à `canon_sql('b.tier')` compte des NOTIONS IDENTIQUES — un run
+    servi en vocabulaire ancien (brulante/chaude/a_creuser/reserve_fonciere/declasse_*/exclue) et un
+    candidat en vocabulaire neuf (priorite/a_suivre/sans_signal/ecartee) ne « changent » plus de
+    palier par simple RENOMMAGE. Un code inconnu/NULL se projette sur lui-même (ELSE). La projection
+    `priorite → a_suivre` (Priorité non servie, lot 2b) est incluse via `code_palier`.
+    """
+    codes = {*PALIERS_CLIENT, *CORRESPONDANCE_LEGACY}
+    whens = " ".join(f"WHEN '{c}' THEN '{code_palier(c)}'" for c in sorted(codes))
+    return f"CASE {colonne} {whens} ELSE {colonne} END"
+
+
 #: rétro-compatibilité : d'anciens importeurs lisent `TIERS_CLIENT`. On la garde comme
 #: vue dérivée (code → (chip, long)) couvrant nouveaux ET anciens codes, même vocabulaire.
 #: dérivée VIA code_palier pour que « Priorité non servie » (lot 2b) s'applique partout.

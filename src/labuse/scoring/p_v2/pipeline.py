@@ -362,6 +362,22 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     """), session.connection(), params={"run": etage0_run})
     df["ecartee_etage0"] = df["idu"].isin(set(etage0["idu"]))
 
+    # QV21-PROMO-1 (doctrine E-010) — PARCELLE ENTIÈREMENT EN ZONE ROUGE (fraction PPR rouge = 100 %,
+    # HARD_EXCLUDE de la couche cascade `risques`, motif « N % de la surface ») : jamais actionnable
+    # (statuts.assign_paliers la masque vers « Sans signal »). MÊME source + MÊME motif que le gate de
+    # promotion (jobs_impl.rouge_actionnables) et `renouvellement.ppr_x`. Lue dans la cascade du run
+    # (etage0_run ci-dessus). Table/colonnes absentes (base de test) → colonne False partout.
+    df["risque_exclut"] = False
+    if session.execute(text("SELECT to_regclass('dryrun_cascade_results') IS NOT NULL")).scalar():
+        rouge = pd.read_sql(text(
+            "SELECT p.idu FROM dryrun_cascade_results cr JOIN parcels p ON p.id = cr.parcel_id "
+            "WHERE cr.run_label = :run AND cr.layer_name = 'risques' AND cr.result = 'HARD_EXCLUDE' "
+            "  AND cr.detail LIKE '%%PPR zone rouge%%' "
+            "GROUP BY p.idu "
+            "HAVING max((regexp_match(cr.detail, '([0-9]+) %% de la surface'))[1]::int) >= 100"),
+            session.connection(), params={"run": etage0_run})
+        df["risque_exclut"] = df["idu"].isin(set(rouge["idu"]))
+
     # rangs et percentiles HORS copro ET hors étage 0, ties départagés seedés 974
     rng = np.random.RandomState(SEED)
     tie = rng.random(len(df))

@@ -78,6 +78,25 @@ def marche_annonces(db: Session, commune: str) -> dict | None:
     }
 
 
+def _pct_ppr_mvt(db: Session, commune: str, total_parcelles: int) -> float | None:
+    """QV21-PROMO-1 (E-2) — REPLI « mouvement de terrain » : part des parcelles de la commune en zone
+    PPR dont le risque RÉGLEMENTAIRE porte le mouvement de terrain (`ppr.attrs->>'risque'` contenant
+    « MOUVEMENT »). N'est appelé QUE lorsque l'aléa ÉTUDES mvt (georisque_alea/mouvement_terrain) est
+    ABSENT de la source DEAL pour la commune : Saint-Denis (97411) a un PPR « inondation ET mouvement
+    de terrain » approuvé mais ses aléas études mvt ne sont PAS publiés dans `ALEA_MOUVEMENT_TERRAIN`
+    (vérifié live : 0 entité par code_insee ET par emprise). On lit alors « le bon type d'aléa » — le
+    zonage réglementaire PPR i+mvt, MÊME source DEAL — au lieu d'un mvt quasi nul (0,04 %) et trompeur.
+    (Helper DE FICHE, hors paquet registre/moteurs : c'est un calcul alternatif du MÊME chiffre
+    `mouvement_terrain_pct` déjà couvert par sa fiche de règle, pas un nouveau moteur.)"""
+    if not total_parcelles:
+        return None
+    n = db.execute(text(
+        "SELECT count(DISTINCT p.idu) FROM parcels p JOIN spatial_layers sl ON sl.kind = 'ppr' "
+        "AND sl.attrs->>'risque' ILIKE :r AND ST_Intersects(p.geom_2975, sl.geom_2975) "
+        "WHERE p.commune = :c"), {"r": "%MOUVEMENT%", "c": commune}).scalar() or 0
+    return round(100.0 * n / total_parcelles, 1)
+
+
 # ───────────────────────────── C5 — les risques (Géorisques / Pièges & risques) ─────────────────────────────
 def risques(db: Session, commune: str, insee: str | None) -> dict:
     """Part des parcelles de la commune exposées, par couche Géorisques déjà ingérée (mêmes couches
@@ -126,18 +145,36 @@ def risques(db: Session, commune: str, insee: str | None) -> dict:
         except Exception:  # noqa: BLE001 — table absente = source non ingérée, jamais un 500
             db.rollback()
             azi_tri = None
+    # SOURCES-FIX-2 lot A — aléa mouvement de terrain = l'aléa RÉGLEMENTAIRE zoné
+    # (kind='georisque_alea' subtype='mouvement_terrain', DEAL PPR/aléas source 30), MÊME
+    # donnée que la couche carte `alea_mvt` et la fiche §Pièges & risques.
+    mvt_pct = _pct_layer("georisque_alea", "mouvement_terrain")
+    mvt_repli = False
+    # QV21-PROMO-1 (E-2) — Saint-Denis (97411) : aléa ÉTUDES mvt ABSENT de la source DEAL
+    # (`ALEA_MOUVEMENT_TERRAIN` ne renvoie AUCUNE entité pour 97411, ni par code_insee ni par emprise ;
+    # seul commune des 24 dans ce cas), alors que son PPR « inondation + mouvement de terrain » EST
+    # approuvé et zoné. On lit alors « le bon type d'aléa » — le zonage réglementaire PPR i+mvt, MÊME
+    # source DEAL — plutôt que d'annoncer un mvt quasi nul (0,04 %) et trompeur sur une commune de
+    # montagne à risque majeur. Ne s'applique QUE si l'aléa études est absent (les 23 autres communes,
+    # qui ont `georisque_alea/mouvement_terrain`, sont INCHANGÉES).
+    if not mvt_pct:
+        ppr_mvt = _pct_ppr_mvt(db, commune, tot)
+        if ppr_mvt:
+            mvt_pct, mvt_repli = ppr_mvt, True
     return {
         "ppr_pct": _pct_layer("ppr"),
-        # SOURCES-FIX-2 lot A — aléa mouvement de terrain = l'aléa RÉGLEMENTAIRE zoné
-        # (kind='georisque_alea' subtype='mouvement_terrain', DEAL PPR/aléas source 30), MÊME
-        # donnée que la couche carte `alea_mvt` et la fiche §Pièges & risques. (Avant : kind='mvt'
-        # = inventaire d'événements BDMvt Géorisques source 36, une notion distincte non zonée.)
-        "mouvement_terrain_pct": _pct_layer("georisque_alea", "mouvement_terrain"),
+        "mouvement_terrain_pct": mvt_pct,
+        # E-2 — provenance honnête : True = lu du zonage PPR i+mvt (aléa études mvt non cartographié
+        # par la DEAL pour cette commune), False = aléa études réglementaire zoné (cas normal).
+        "mouvement_terrain_repli_ppr": mvt_repli,
         "catnat_arretes": int(catnat),
         "catnat_detail": catnat_detail,   # SOURCES-4 lot 1 — arrêtés détaillés (péril, dates, code national)
         "parc_national": bool(parc),
         "azi_tri": azi_tri,
-        "source": "DEAL Réunion — PPR / aléas (zones PPR, aléa mouvement de terrain) · GASPAR (arrêtés CatNat, AZI/TRI) · BD TOPO (Parc National).",
+        "source": ("DEAL Réunion — PPR / aléas (zones PPR, aléa mouvement de terrain" +
+                   (" ; mvt lu du zonage PPR i+mvt pour cette commune — aléa études mvt non cartographié"
+                    if mvt_repli else "") +
+                   ") · GASPAR (arrêtés CatNat, AZI/TRI) · BD TOPO (Parc National)."),
     }
 
 

@@ -28,6 +28,12 @@ import time
 from pathlib import Path
 
 _FICHIER = Path(__file__).resolve().parents[2] / "config" / "served_manifest.json"
+#: QV21-PROMO-1 — LE MANIFESTE DU CANDIDAT (distinct du manifeste de SERVICE ci-dessus). Un run
+#: candidat calculé mais non servi écrit ici son attestation de gel {scoring_run, cascade_run,
+#: model_version, model_sha256, n_parcelles, tiers, generated_at, par} ; `controler_run` exige sa
+#: présence (pour le bon label) avant toute promotion. Le flux-run l'écrit en fin de calcul ; une
+#: recomposition de statuts (recompute-paliers) le met à jour. Jamais le manifeste SERVI.
+_FICHIER_CANDIDAT = Path(__file__).resolve().parents[2] / "config" / "candidat_manifest.json"
 _CACHE_TTL_S = 3.0
 _cache: dict = {"val": None, "at": 0.0}
 
@@ -71,6 +77,31 @@ def ecrire(manifest: dict) -> None:
     tmp.write_text(json.dumps(manifest, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     os.replace(tmp, _FICHIER)
     invalidate()
+
+
+def chemin_candidat() -> Path:
+    return _FICHIER_CANDIDAT
+
+
+def lire_candidat() -> dict | None:
+    """Le manifeste du CANDIDAT (non servi) — None s'il n'existe pas / illisible. Sans cache : il est
+    lu une fois au contrôle de promotion, et réécrit par le calcul ; un cache mentirait."""
+    if not _FICHIER_CANDIDAT.exists():
+        return None
+    try:
+        return json.loads(_FICHIER_CANDIDAT.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001 — manifeste illisible = absent (controler_run refuse)
+        return None
+
+
+def ecrire_candidat(manifest: dict) -> None:
+    """Écrit ATOMIQUEMENT le manifeste du candidat (tmp + os.replace). `scoring_run` obligatoire :
+    sans lui, le contrôle ne peut pas vérifier qu'il concerne le bon run."""
+    if not manifest.get("scoring_run"):
+        raise ValueError("manifeste candidat incomplet — `scoring_run` manquant")
+    tmp = _FICHIER_CANDIDAT.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(manifest, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    os.replace(tmp, _FICHIER_CANDIDAT)
 
 
 def construire_depuis_pointeurs(db) -> dict:

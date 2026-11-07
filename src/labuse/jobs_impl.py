@@ -1010,13 +1010,20 @@ def _mesures_run(db, candidat: str, precedent: str) -> dict:
             {"c": cascade_run, "r": candidat})
     else:
         m["rouge_actionnables"] = None   # cascade non résolue : on NE conclut pas → controler_run refuse
-    # écart de paliers vs précédent (parcelles communes qui changent de tier) — requête canonique bascule.
+    # écart de paliers vs précédent (parcelles communes qui changent de PALIER). QV21-PROMO-1 — on
+    # compare des NOTIONS IDENTIQUES : chaque tier stocké (nouveau ou ancien code) est projeté sur son
+    # palier canonique (`tiers_client.canon_sql` ← `code_palier`, source unique) AVANT de compter. Sans
+    # cette projection, un candidat en vocabulaire PALIERS-1 (priorite/a_suivre/sans_signal/ecartee) vs
+    # un servi en vocabulaire ancien (ou l'inverse) « changeait » de palier par simple renommage →
+    # l'écart explosait (35,5 % mesuré sur q_v21) alors que le mouvement réel est minuscule.
+    from .scoring.tiers_client import canon_sql
+    _ca, _cb = canon_sql("a.tier"), canon_sql("b.tier")
     m["paliers_total"] = _scal(
         "SELECT count(*) FROM parcel_p_score_v2 a JOIN parcel_p_score_v2 b ON a.parcelle_id = b.parcelle_id "
         "WHERE a.run_id = :a AND b.run_id = :b", {"a": candidat, "b": precedent})
     m["paliers_change"] = _scal(
         "SELECT count(*) FROM parcel_p_score_v2 a JOIN parcel_p_score_v2 b ON a.parcelle_id = b.parcelle_id "
-        "WHERE a.run_id = :a AND b.run_id = :b AND a.tier IS DISTINCT FROM b.tier",
+        f"WHERE a.run_id = :a AND b.run_id = :b AND {_ca} IS DISTINCT FROM {_cb}",
         {"a": candidat, "b": precedent})
     # cohérence : dernier passage du BANC (coherence_runs, mode « île » = coherence-banc de 03h45), JAMAIS
     # une mesure relancée ici. Vert = 0 FAUX-CLIENT et 0 erreur lecteur ; les écarts tolérables/incohérences
@@ -1239,12 +1246,16 @@ def calcul_nuit(ctx: JobContext) -> None:
 
 
 def _manifeste_candidat_present(label: str) -> bool:
-    """Le flux-run écrit un manifeste local pour le candidat ; sa présence est une pré-condition de
-    promotion. Lecture best-effort (absent/illisible → False → controler_run refuse)."""
+    """Le flux-run (et recompute-paliers) écrit le MANIFESTE DU CANDIDAT (config/candidat_manifest.json) ;
+    sa présence POUR CE LABEL est une pré-condition de promotion. QV21-PROMO-1 — correction d'un faux
+    « manifeste absent » permanent : l'ancien code lisait `runs._manifeste` (import LOCAL dans les
+    fonctions de `runs`, jamais un attribut de module → AttributeError systématique → toujours False).
+    On lit désormais le vrai manifeste candidat et on exige qu'il concerne CE run. Best-effort :
+    absent/illisible/mauvais label → False → controler_run refuse."""
     try:
-        from . import runs
-        m = runs._manifeste.lire() or {}  # type: ignore[attr-defined]
-        return bool(m)
+        from . import manifeste
+        m = manifeste.lire_candidat() or {}
+        return bool(m) and m.get("scoring_run") == label
     except Exception:  # noqa: BLE001
         return False
 

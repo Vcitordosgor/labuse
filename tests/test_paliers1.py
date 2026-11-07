@@ -104,3 +104,35 @@ def test_declassement_garde_son_palier():
     df = pd.DataFrame({"p": [0.30], "ecartee_etage0": [False], "bati_sature": [True]})
     assert S.assign_paliers(df, _cfg()).iloc[0] == "priorite"
     assert S.motifs_parcelle(df).iloc[0] == ["declasse_bati_sature"]
+
+
+# ── QV21-PROMO-1 — une parcelle ENTIÈREMENT en zone rouge n'est JAMAIS actionnable ──────────────
+
+def test_zone_rouge_totale_jamais_actionnable():
+    """Doctrine E-010 (Vic) : `risque_exclut` (100 % PPR rouge) masque un palier actionnable vers
+    « Sans signal », même à p forte — un terrain 100 % rouge peut se vendre mais aucun projet n'y est
+    possible. p_raw intact (seule l'étiquette change). Reproduit les 2 fuites de q_v21 (p≈0,14/0,13)."""
+    df = pd.DataFrame({
+        "p":              [0.141844, 0.130065, 0.99,  0.05],
+        "ecartee_etage0": [False,    False,    False, False],
+        "risque_exclut":  [True,     True,     True,  True]})
+    got = list(S.assign_paliers(df, _cfg()).values)
+    assert got == ["sans_signal", "sans_signal", "sans_signal", "sans_signal"]
+
+
+def test_zone_rouge_etage0_prime():
+    """L'étage 0 (Écartée) prime sur le masque zone rouge (motif plus spécifique)."""
+    df = pd.DataFrame({"p": [0.99], "ecartee_etage0": [True], "risque_exclut": [True]})
+    assert S.assign_paliers(df, _cfg()).iloc[0] == "ecartee"
+
+
+def test_zone_rouge_colonne_absente_sans_effet():
+    """Rétro-compat : sans colonne `risque_exclut`, assign_paliers est inchangé (golden intact)."""
+    df = pd.DataFrame({"p": [0.99, 0.05], "ecartee_etage0": [False, False]})
+    assert list(S.assign_paliers(df, _cfg()).values) == ["priorite", "sans_signal"]
+
+
+def test_zone_rouge_n_affecte_pas_une_parcelle_saine():
+    """`risque_exclut=False` ne change rien : une parcelle à p≥0,20 reste Priorité."""
+    df = pd.DataFrame({"p": [0.30], "ecartee_etage0": [False], "risque_exclut": [False]})
+    assert S.assign_paliers(df, _cfg()).iloc[0] == "priorite"
