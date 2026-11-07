@@ -171,10 +171,11 @@ def test_annonce_et_maintenance_gabarits():
     fenêtre de coupure en évidence)."""
     from labuse.emails import annonce_email, maintenance_email
     s, txt = annonce_email("Titre", "Corps.", lien_desabo="/d", lien_prefs="/p")
-    assert s == "LABUSE — Titre" and "ne plus recevoir" in txt.lower()              # a une désinscription
+    # MAILS-1 — gabarit unique : la désinscription est le lien « Me désinscrire » du pied.
+    assert s == "LABUSE — Titre" and "me désinscrire" in txt.lower()                # a une désinscription
     ms, mtxt, mhtml = maintenance_email("Serveur", "Coupure planifiée.", debut="dim 3h", duree="30 min")
     assert "maintenance" in ms.lower() and "coupure" in mtxt.lower()
-    assert "pas désactivable" in mtxt.lower() and "ne plus recevoir" not in mtxt.lower()   # jamais de désinscription
+    assert "pas désactivable" in mtxt.lower() and "me désinscrire" not in mtxt.lower()   # jamais de désinscription
 
 
 @pytest.mark.db

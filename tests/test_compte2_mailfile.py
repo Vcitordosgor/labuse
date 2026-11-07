@@ -51,7 +51,7 @@ def _ko(raison="Brevo a refusé l'envoi (HTTP 400)."):
 
 
 def test_envoi_immediat_recu_avec_message_id(eng, monkeypatch):
-    monkeypatch.setattr("labuse.brevo.envoyer_template", _ok)
+    monkeypatch.setattr("labuse.brevo.envoyer_html", _ok)
     r = mailfile.envoyer_mail(eng, key="onboarding1", to="a@labuse.test",
                               params=_p("onboarding1"), compte_id=1, demandeur="vic")
     assert r["etat"] == "recu"
@@ -62,7 +62,7 @@ def test_envoi_immediat_recu_avec_message_id(eng, monkeypatch):
 
 def test_dry_run_clef_absente_non_date(eng, monkeypatch):
     # clé Brevo absente → le transport dit « aucun envoi », l'entrée n'est PAS datée (RV-013).
-    monkeypatch.setattr("labuse.brevo.envoyer_template",
+    monkeypatch.setattr("labuse.brevo.envoyer_html",
                         _ko("Brevo non configuré (BREVO_API_KEY absente) — aucun envoi."))
     r = mailfile.envoyer_mail(eng, key="onboarding1", to="a@labuse.test",
                               params=_p("onboarding1"), compte_id=1, demandeur="vic")
@@ -73,7 +73,7 @@ def test_dry_run_clef_absente_non_date(eng, monkeypatch):
 
 
 def test_echec_brevo_trois_tentatives_puis_echec(eng, monkeypatch):
-    monkeypatch.setattr("labuse.brevo.envoyer_template", _ko("Brevo a refusé l'envoi (HTTP 401)."))
+    monkeypatch.setattr("labuse.brevo.envoyer_html", _ko("Brevo a refusé l'envoi (HTTP 401)."))
     r = mailfile.envoyer_mail(eng, key="suspension", to="a@labuse.test",
                               params=_p("suspension"), compte_id=2, demandeur="vic")
     # VEILLE-FIX-2 (Lot D) — 1er échec → a_rejouer (backoff), puis rejeux jusqu'à l'échec définitif.
@@ -88,7 +88,7 @@ def test_echec_brevo_trois_tentatives_puis_echec(eng, monkeypatch):
 
 
 def test_anti_doublon_double_clic(eng, monkeypatch):
-    monkeypatch.setattr("labuse.brevo.envoyer_template", _ok)
+    monkeypatch.setattr("labuse.brevo.envoyer_html", _ok)
     a = mailfile.envoyer_mail(eng, key="onboarding1", to="a@labuse.test",
                               params=_p("onboarding1"), compte_id=3, demandeur="vic")
     b = mailfile.envoyer_mail(eng, key="onboarding1", to="a@labuse.test",
@@ -100,19 +100,19 @@ def test_anti_doublon_double_clic(eng, monkeypatch):
 
 
 def test_rejouer_un_echec(eng, monkeypatch):
-    monkeypatch.setattr("labuse.brevo.envoyer_template", _ko("Brevo injoignable (ConnectError)."))
+    monkeypatch.setattr("labuse.brevo.envoyer_html", _ko("Brevo injoignable (ConnectError)."))
     r = mailfile.envoyer_mail(eng, key="onboarding2", to="a@labuse.test",
                               params=_p("onboarding2"), compte_id=4, demandeur="vic")
     for _ in range(mailfile.TENTATIVES_MAX):
         r = mailfile._tenter_depart(eng, r["id"])
     assert r["etat"] == "echec"
-    monkeypatch.setattr("labuse.brevo.envoyer_template", _ok)   # Brevo revient
+    monkeypatch.setattr("labuse.brevo.envoyer_html", _ok)   # Brevo revient
     r2 = mailfile.rejouer(eng, r["id"], demandeur="vic")
     assert r2["etat"] == "recu" and r2["message_id"]
 
 
 def test_programme_en_attente_puis_annule(eng, monkeypatch):
-    monkeypatch.setattr("labuse.brevo.envoyer_template", _ok)
+    monkeypatch.setattr("labuse.brevo.envoyer_html", _ok)
     prevu = _now() + timedelta(days=3)
     r = mailfile.envoyer_mail(eng, key="onboarding2", to="a@labuse.test", compte_id=5,
                               params=_p("onboarding2"), demandeur="job:onboarding", prevu_at=prevu)
@@ -125,7 +125,7 @@ def test_programme_en_attente_puis_annule(eng, monkeypatch):
 
 
 def test_depart_des_programmes_quand_heure_venue(eng, monkeypatch):
-    monkeypatch.setattr("labuse.brevo.envoyer_template", _ok)
+    monkeypatch.setattr("labuse.brevo.envoyer_html", _ok)
     passe = _now() - timedelta(minutes=1)
     mailfile.enfiler(eng, key="onboarding3", to="a@labuse.test", compte_id=6,
                      params=_p("onboarding3"), demandeur="job:onboarding", prevu_at=passe)
@@ -136,7 +136,7 @@ def test_depart_des_programmes_quand_heure_venue(eng, monkeypatch):
 
 
 def test_journal_nomme_le_demandeur(eng, monkeypatch):
-    monkeypatch.setattr("labuse.brevo.envoyer_template", _ok)
+    monkeypatch.setattr("labuse.brevo.envoyer_html", _ok)
     mailfile.envoyer_mail(eng, key="retablissement", to="a@labuse.test",
                           params=_p("retablissement"), compte_id=7, demandeur="vic")
     with eng.begin() as c:
@@ -153,7 +153,7 @@ def test_garde_params_manquants_ne_part_jamais(eng, monkeypatch):
     def _spy(*a, **k):
         appele["n"] += 1
         return {"envoye": True, "message_id": "x"}
-    monkeypatch.setattr("labuse.brevo.envoyer_template", _spy)
+    monkeypatch.setattr("labuse.brevo.envoyer_html", _spy)
     r = mailfile.envoyer_mail(eng, key="onboarding1", to="a@labuse.test",
                               params={"PRENOM": "Vic", "EMAIL": "a@labuse.test"},
                               compte_id=9, demandeur="vic")
@@ -164,10 +164,10 @@ def test_garde_params_manquants_ne_part_jamais(eng, monkeypatch):
 
 
 def test_filtres_et_compteurs(eng, monkeypatch):
-    monkeypatch.setattr("labuse.brevo.envoyer_template", _ok)
+    monkeypatch.setattr("labuse.brevo.envoyer_html", _ok)
     mailfile.envoyer_mail(eng, key="onboarding1", to="a@labuse.test",
                           params=_p("onboarding1"), compte_id=8, demandeur="vic")
-    monkeypatch.setattr("labuse.brevo.envoyer_template", _ko())
+    monkeypatch.setattr("labuse.brevo.envoyer_html", _ko())
     r = mailfile.envoyer_mail(eng, key="onboarding2", to="b@labuse.test",
                               params=_p("onboarding2"), compte_id=8, demandeur="vic")
     for _ in range(mailfile.TENTATIVES_MAX):

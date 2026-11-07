@@ -358,6 +358,64 @@ def envoyer_template(to: str, key: str, params: dict | None = None) -> dict:
         return {"envoye": False, "raison": f"Brevo injoignable ({type(exc).__name__})."}
 
 
+def envoyer_html(to: str, subject: str, html: str, texte: str = "",
+                 headers: dict | None = None) -> dict:
+    """MAILS-1 — envoi transactionnel Brevo d'un mail HTML **rendu par l'app** (gabarit unique), avec
+    son repli texte. Brevo devient un SIMPLE TRANSPORT : plus de `templateId`, plus de modèle Brevo —
+    on pousse directement `htmlContent` + `textContent`. Mêmes gardes qu'`envoyer_texte` (étanchéité
+    dry-run .eml hors prod, clé absente = raison explicite, jamais de levée). N'est appelé QUE par la
+    façade `mail`. `headers` : en-têtes additionnels (ex. List-Unsubscribe des mails récurrents)."""
+    from .config import envoi_reel_autorise, get_settings
+    if not envoi_reel_autorise():
+        try:
+            from email.message import EmailMessage
+            from . import mail
+            msg = EmailMessage()
+            msg["From"] = getattr(get_settings(), "mail_from", "LABUSE <contact@labuse.immo>")
+            msg["To"] = to
+            msg["Subject"] = subject
+            for k, v in (headers or {}).items():
+                msg[k] = v
+            msg.set_content(texte or " ")
+            msg.add_alternative(html, subtype="html")
+            path = mail._ecrire_eml(msg)
+            log.info("BREVO-HTML DRY-RUN (.eml écrit, 0 réseau) → %s fichier=%s", to, path)
+        except Exception as exc:  # noqa: BLE001 — la trace ne doit jamais faire échouer l'appel
+            log.warning("BREVO-HTML DRY-RUN — trace .eml impossible (%s)", exc)
+        return {"envoye": False, "raison": "dry-run"}
+    api_key = _api_key()
+    if not api_key:
+        return {"envoye": False, "raison": "no-config"}
+    import email.utils as _eu
+    nom, adr = _eu.parseaddr(getattr(get_settings(), "mail_from", "LABUSE <contact@labuse.immo>"))
+    sender = {"email": adr or "contact@labuse.immo"}
+    if nom:
+        sender["name"] = nom
+    payload = {"sender": sender, "to": [{"email": to}], "subject": subject,
+               "htmlContent": html, "disableTracking": True}
+    if texte:
+        payload["textContent"] = texte
+    if headers:
+        payload["headers"] = headers
+    try:
+        import httpx
+        r = httpx.post(f"{_API}/smtp/email",
+                       headers={"api-key": api_key, "content-type": "application/json"},
+                       json=payload, timeout=15.0)
+        if r.status_code // 100 == 2:
+            mid = None
+            try:
+                mid = r.json().get("messageId")
+            except Exception:  # noqa: BLE001
+                pass
+            return {"envoye": True, "message_id": mid}
+        log.warning("Brevo html → HTTP %s : %s", r.status_code, r.text[:200])
+        return {"envoye": False, "raison": f"error: HTTP {r.status_code}"}
+    except Exception as exc:  # noqa: BLE001
+        log.warning("Brevo html injoignable : %s", exc)
+        return {"envoye": False, "raison": f"error: {type(exc).__name__}"}
+
+
 def envoyer_texte(to: str, subject: str, texte: str) -> dict:
     """SOLIDITE-1 (Lot 1) — envoi transactionnel Brevo d'un mail TEXTE BRUT (sans template), pour les
     alertes d'exploitation + le récap du matin : le VPS a BREVO_API_KEY mais PAS de relais SMTP. Mêmes

@@ -543,16 +543,29 @@ def envoyer(db: Session, *, base_url: str = "", dry_run: bool = False,
             if not matches:
                 continue
             cartes = cartes_html(matches, base_url)
+            # MAILS-1 — l'alerte Radar est rendue par le gabarit : on passe les biens STRUCTURÉS
+            # (commune, surface, zone si connue, portail, date du relevé, prix), un par ligne.
+            biens_struct = []
+            for _b in matches:
+                _it = _carte_item(base_url, _b)
+                _zone = (_b.get("zone_plu") or _b.get("zone") or "").strip()
+                _det = " · ".join(x for x in [
+                    _it.get("surface"), (f"zone {_zone}" if _zone else ""),
+                    f"vu {_it['date_releve']} sur {_it['portail']}"] if x)
+                biens_struct.append({"titre": _it["titre"], "detail": _det, "prix": _it["prix"]})
             # PARCOURS-FIX-1 (Lot 2.6) — l'alerte de veille est un mail RÉCURRENT : lien de désabonnement
             # (un clic, RFC 8058). `brevo.envoyer_template` pose l'en-tête List-Unsubscribe dès que
             # `LIEN_DESABO` est présent ; le lien reste aussi disponible au template ({{params.LIEN_DESABO}}).
             from ..api.events import _notif_token
             tok = _notif_token(db, c["compte_id"])
-            lien_desabo = f"{(base_url or '').rstrip('/')}/events/desabonner?c={c['compte_id']}&t={tok}"
+            _base = (base_url or '').rstrip('/')
+            lien_desabo = f"{_base}/events/desabonner?c={c['compte_id']}&t={tok}"
+            lien_prefs = f"{_base}/events/preferences?c={c['compte_id']}&t={tok}"
             params = {"PRENOM": c.get("prenom") or "", "VEILLE": _libelle_veille(v),
                       "NB_BIENS": len(matches), "CRITERES": _criteres_texte(cr), "CARTES": cartes,
+                      "BIENS": biens_struct,
                       "LIEN_RADAR": lien_radar, "LIEN_VEILLE": f"{lien_radar}&veille={v['id']}",
-                      "LIEN_DESABO": lien_desabo}
+                      "LIEN_PREFS": lien_prefs, "LIEN_DESABO": lien_desabo}
             _envoyer(db, compte_id=c["compte_id"], email=c["email"], template_key="radar_alerte",
                      dedup=f"pige:alerte:{c['compte_id']}:{v['id']}:{jour.isoformat()}", params=params,
                      n_biens=len(matches), cartes_html_str=cartes, type_envoi="alerte",

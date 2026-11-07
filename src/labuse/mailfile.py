@@ -219,6 +219,33 @@ def enfiler(engine, *, key: str, to: str, params: dict | None = None,
     return {**_ligne(row), "doublon": False}
 
 
+def _completer_liens(engine, key: str, params: dict, compte_id: int | None) -> dict:
+    """MAILS-1 — complète les liens de PIED (« Gérer mes notifications » / « Me désinscrire ») pour un
+    mail du cycle de vie quand l'appelant ne les a pas fournis. Les liens sont les MÊMES que ceux des
+    digests (`/events/preferences` et `/events/desabonner`, jetonisés par compte). Best-effort : une
+    erreur (pas de base, pas de compte) ne bloque JAMAIS l'envoi — le pied garde alors Confidentialité
+    et Mentions légales (éditeur identifiable)."""
+    params = dict(params or {})
+    if compte_id is None or params.get("LIEN_DESABO") or params.get("LIEN_PREFS"):
+        return params
+    try:
+        from .api.events import _notif_token
+        from .config import get_settings
+        from .db import session_scope
+        base = (get_settings().public_base_url or "").rstrip("/")
+        if not base:
+            return params
+        with session_scope() as db:
+            tok = _notif_token(db, compte_id)
+            db.commit()
+        params.setdefault("LIEN_PREFS", f"{base}/events/preferences?c={compte_id}&t={tok}")
+        params.setdefault("LIEN_DESABO", f"{base}/events/desabonner?c={compte_id}&t={tok}")
+        params.setdefault("LIEN_APP", base)
+    except Exception:  # noqa: BLE001 — jamais bloquant
+        log.debug("MAILS-1 — liens de pied non complétés pour %s (compte %s)", key, compte_id)
+    return params
+
+
 def _tenter_depart(engine, mail_id: int) -> dict:
     """Tente le DÉPART d'une entrée : appelle le transport Brevo, écrit l'état RÉEL. Idempotent sur
     `recu`/`annule` (ne renvoie pas un mail déjà parti). Retourne la ligne à jour.
@@ -251,15 +278,21 @@ def _tenter_depart(engine, mail_id: int) -> dict:
                             body_html=raw.get("html"), headers=raw.get("headers"))
         res = {"envoye": bool(r.ok), "raison": None if r.ok else (r.detail or "SMTP non configuré")}
     else:
-        # GARDE fail-closed (mandat Lot 2) : une variable attendue et non fournie sortirait en
-        # « {{ params.X }} » brut chez le client (🔴). On REFUSE de partir : tentative ratée, raison
-        # lisible, l'entrée reste visible dans la file (rejouable une fois le param fourni).
+        from . import mails_contenu
+        # MAILS-1 — le contenu des mails du cycle de vie est RENDU PAR L'APP (gabarit) : on complète
+        # au besoin les liens de pied (notifications / désinscription) depuis le compte. Le rendu +
+        # transport HTML (Brevo porteur) se fait dans `mail.envoyer_template`.
+        if mails_contenu.gere(key):
+            params = _completer_liens(engine, key, params, compte_id)
+        # GARDE fail-closed (mandat Lot 2) : un paramètre ATTENDU manquant (ex. le vrai lien
+        # d'invitation) ne doit jamais partir avec un repli — on refuse, l'entrée reste rejouable.
         manquants = [p for p in brevo.params_attendus(key) if p not in params]
         if manquants:
             res = {"envoye": False, "raison": "paramètres manquants : " + ", ".join(manquants)}
         else:
-            # appel transport HORS transaction (I/O réseau), PAR LA FAÇADE `mail` (transport unique :
-            # brevo.envoyer_template n'est appelé QUE depuis mail.py — garde test_transport_mail_unique).
+            # appel transport HORS transaction, PAR LA FAÇADE `mail` (transport unique). Pour une clé
+            # gérée par le gabarit, `mail.envoyer_template` rend le HTML et le pousse via
+            # `brevo.envoyer_html` ; sinon (legacy) via `brevo.envoyer_template`.
             from . import mail
             res = mail.envoyer_template(to, key, params)
     now = _now()
