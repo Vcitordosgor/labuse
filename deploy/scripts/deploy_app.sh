@@ -52,6 +52,9 @@ rsync -a --delete --rsync-path="sudo rsync" \
   --exclude /data/insee_rp --exclude /data/ban --exclude /data/edf_hta \
   --exclude /data/tcsp --exclude /data/dvf --exclude /data/plu_reglements \
   --exclude /config/served_manifest.json --exclude /config/served_run.txt \
+  --exclude /config/candidat_manifest.json \
+  `# QV21-PROMO-1 — manifeste du CANDIDAT : état runtime propre à la prod (écrit par flux-run /` \
+  `# recompute-paliers), au même titre que le manifeste servi — jamais écrasé/supprimé par un déploiement.` \
   "$REPO/" "$HOST":/opt/labuse/app/
 # AUTONOMIE-1 — le banc de cohérence NOCTURNE (coherence-banc) lit à l'exécution des ÉCHANTILLONS gelés
 # rangés sous docs/ (produit, pas doc d'audit). docs/ est exclu du rsync ci-dessus → ces fichiers

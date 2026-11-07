@@ -37,10 +37,10 @@ def _rouge_total_idus(session, cascade_run: str) -> set[str]:
     rows = session.execute(text(
         "SELECT p.idu FROM dryrun_cascade_results cr JOIN parcels p ON p.id = cr.parcel_id "
         "WHERE cr.run_label = :r AND cr.layer_name = 'risques' AND cr.result = 'HARD_EXCLUDE' "
-        "  AND cr.detail LIKE '%%PPR zone rouge%%' "
+        "  AND cr.detail LIKE :like_rouge "
         "GROUP BY p.idu "
-        "HAVING max((regexp_match(cr.detail, '([0-9]+) %% de la surface'))[1]::int) >= 100"),
-        {"r": cascade_run}).all()
+        "HAVING max((regexp_match(cr.detail, :re_pct))[1]::int) >= 100"),
+        {"r": cascade_run, "like_rouge": "%PPR zone rouge%", "re_pct": "([0-9]+) % de la surface"}).all()
     return {r[0] for r in rows}
 
 

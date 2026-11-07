@@ -372,10 +372,11 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
         rouge = pd.read_sql(text(
             "SELECT p.idu FROM dryrun_cascade_results cr JOIN parcels p ON p.id = cr.parcel_id "
             "WHERE cr.run_label = :run AND cr.layer_name = 'risques' AND cr.result = 'HARD_EXCLUDE' "
-            "  AND cr.detail LIKE '%%PPR zone rouge%%' "
+            "  AND cr.detail LIKE :like_rouge "
             "GROUP BY p.idu "
-            "HAVING max((regexp_match(cr.detail, '([0-9]+) %% de la surface'))[1]::int) >= 100"),
-            session.connection(), params={"run": etage0_run})
+            "HAVING max((regexp_match(cr.detail, :re_pct))[1]::int) >= 100"),
+            session.connection(), params={"run": etage0_run, "like_rouge": "%PPR zone rouge%",
+                                          "re_pct": "([0-9]+) % de la surface"})
         df["risque_exclut"] = df["idu"].isin(set(rouge["idu"]))
 
     # rangs et percentiles HORS copro ET hors étage 0, ties départagés seedés 974

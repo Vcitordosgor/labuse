@@ -154,10 +154,15 @@ def risques(db: Session, commune: str, insee: str | None) -> dict:
     # (`ALEA_MOUVEMENT_TERRAIN` ne renvoie AUCUNE entité pour 97411, ni par code_insee ni par emprise ;
     # seul commune des 24 dans ce cas), alors que son PPR « inondation + mouvement de terrain » EST
     # approuvé et zoné. On lit alors « le bon type d'aléa » — le zonage réglementaire PPR i+mvt, MÊME
-    # source DEAL — plutôt que d'annoncer un mvt quasi nul (0,04 %) et trompeur sur une commune de
-    # montagne à risque majeur. Ne s'applique QUE si l'aléa études est absent (les 23 autres communes,
-    # qui ont `georisque_alea/mouvement_terrain`, sont INCHANGÉES).
-    if not mvt_pct:
+    # source DEAL — plutôt que d'annoncer un mvt quasi nul (0,1 %, slivers de zones de communes
+    # voisines débordant sur quelques parcelles de bord) et trompeur sur une commune de montagne à
+    # risque majeur. Gate = la commune n'a AUCUNE zone d'aléa études mvt À ELLE (pas le pct, qui compte
+    # aussi les zones voisines par ST_Intersects) ; les 23 autres communes, qui ont leurs propres
+    # `georisque_alea/mouvement_terrain`, sont INCHANGÉES.
+    a_ses_zones_mvt = db.execute(text(
+        "SELECT EXISTS (SELECT 1 FROM spatial_layers WHERE commune = :c "
+        "AND kind = 'georisque_alea' AND subtype = 'mouvement_terrain')"), {"c": commune}).scalar()
+    if not a_ses_zones_mvt:
         ppr_mvt = _pct_ppr_mvt(db, commune, tot)
         if ppr_mvt:
             mvt_pct, mvt_repli = ppr_mvt, True

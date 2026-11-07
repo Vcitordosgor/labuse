@@ -205,3 +205,7 @@ docs/mandats/*.zip
 **/deck_*.html
 reports/**/DOSSIER-*.html
 reports/**/DOSSIER-*.pdf
+
+# QV21-PROMO-1 — manifeste du CANDIDAT : état runtime (écrit par flux-run/recompute-paliers),
+# propre à chaque environnement comme served_manifest.json — pas committé.
+config/candidat_manifest.json
