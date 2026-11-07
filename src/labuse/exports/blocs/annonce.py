@@ -347,7 +347,7 @@ def _foncier(r: dict) -> str:
     phrase = (r.get("classement") or {}).get("phrase")
     if phrase and str(phrase).strip().startswith("Classement"):
         tail = str(phrase).split(" : ", 1)
-        phrase = (tail[1][:1].upper() + tail[1][1:]) if len(tail) == 2 and tail[1] else ""
+        phrase = tail[1] if len(tail) == 2 and tail[1] else ""
     note = f'<p class="anote">{esc(phrase)}</p>' if phrase else ""
     return ('<h2>Le foncier</h2>'
             f'<div class="fongrid"><div>{gauche}</div><div>{droite}</div></div>{note}')
