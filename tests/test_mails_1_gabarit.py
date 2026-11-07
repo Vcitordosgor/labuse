@@ -24,8 +24,11 @@ TOUS = mc.ORDRE_CATALOGUE + ["essai_fin_proche"]
 SECURITE = {"mdp_oublie", "mdp_modifie", "email_change"}
 AUTO = {"radar_digest", "radar_alerte", "flash_pret", "smtp_digest_notifications",
         "smtp_annonce", "smtp_maintenance", "smtp_mise_en_vente"}
-# non-sécurité mais sans désinscription (transactionnel / service non désactivable)
-SANS_DESABO = {"flash_pret", "smtp_maintenance"}
+# FACTURATION / ACCÈS → transactionnels comme la sécurité (pas de désinscription) — mandat Vic V4.
+TRANSACTIONNEL = {"souscription", "relance_carte", "suspension", "retablissement", "resiliation",
+                  "flash_pret"}
+# sans désinscription : sécurité + facturation/accès + maintenance (service non désactivable)
+SANS_DESABO = TRANSACTIONNEL | {"smtp_maintenance"}
 # mandat Vic : pas de bouton pendant une maintenance (une phrase de reprise à la place)
 SANS_BOUTON = {"smtp_maintenance"}
 
@@ -94,9 +97,9 @@ def test_pied_de_page(key):
     assert g.CONTACT in m.html, f"{key} : contact absent du pied"
     assert g.URL_CONFID in m.html, f"{key} : Confidentialité absente"
     assert g.URL_MENTIONS in m.html, f"{key} : Mentions légales absentes"
-    if key in SECURITE:
-        assert "Me désinscrire" not in m.html, f"{key} (sécurité) : ne doit PAS avoir de désinscription"
-    elif key not in SANS_DESABO:
+    if key in SECURITE or key in SANS_DESABO:
+        assert "Me désinscrire" not in m.html, f"{key} : ne doit PAS avoir de désinscription"
+    else:
         assert "Me désinscrire" in m.html, f"{key} : désinscription attendue dans le pied"
 
 
@@ -153,6 +156,49 @@ def test_radar_alerte_liste_chaque_bien():
     assert "512 m²" in h and "zone Ua" in h and "Leboncoin" in h                 # surface/zone/portail
     assert "180 000 €" in h and "235 000 €" in h                                 # prix
     assert "VOS CRITÈRES" in h
+
+
+@pytest.mark.parametrize("key", sorted(TRANSACTIONNEL))
+def test_facturation_acces_transactionnel(key):
+    """Mandat Vic V4 : abonnement / paiement / accès / rapport acheté = transactionnels comme la
+    sécurité — pas de désinscription, pas d'en-tête List-Unsubscribe, pied « ...n'est pas désactivable »."""
+    m = _rendu(key)
+    assert "Me désinscrire" not in m.html, f"{key} : pas de désinscription"
+    # pied « Ce message concerne votre abonnement ; il n'est pas désactivable. » (apostrophe échappée en HTML)
+    assert "Ce message concerne votre abonnement" in m.html and "pas désactivable" in m.html, \
+        f"{key} : pied transactionnel attendu"
+    assert "Ce message concerne votre abonnement ; il n'est pas désactivable." in m.texte
+    # aucun en-tête de désinscription posé par le mail lui-même
+    assert not any(h.lower() == "list-unsubscribe" for h in (m.headers or {})), \
+        f"{key} : pas d'en-tête List-Unsubscribe"
+
+
+@pytest.mark.parametrize("nb,attendu", [("1", "<b>1 bien</b>"), ("3", "<b>3 biens</b>"),
+                                        ("12", "<b>12 biens</b>")])
+def test_radar_alerte_gras_mot_entier_et_pluriel(nb, attendu):
+    """Mandat Vic V4 : le gras couvre le MOT ENTIER, pluriel juste (« 1 bien » / « 3 biens »)."""
+    p = {**mc.SPECIMENS["radar_alerte"], "NB_BIENS": nb}
+    h = mc.rendre("radar_alerte", p).html
+    assert attendu in h, f"attendu {attendu!r}"
+    if nb == "1":
+        assert "1 biens" not in h          # pas de faux pluriel
+    assert "bien</b>s" not in h and "biens</b>s" not in h   # le « s » n'est jamais hors du gras
+
+
+def test_objets_pas_de_maj_apres_deux_points():
+    """Mandat Vic V4 : maj1 ne capitalise jamais un texte inséré après « : » au milieu d'un objet."""
+    m = mc.rendre("smtp_maintenance", mc.SPECIMENS["smtp_maintenance"])
+    assert m.sujet == "LABUSE — maintenance programmée : mise à jour serveur", m.sujet
+    # le TITRE du corps, lui, est bien capitalisé (début de titre)
+    assert "Mise à jour serveur" in m.html
+
+
+def test_flash_badge_vert():
+    """Mandat Vic V4 : le badge du rapport est au vert de la charte (comme les autres badges d'info)."""
+    m = mc.rendre("flash_pret", mc.SPECIMENS["flash_pret"])
+    import labuse.gabarit_mail as gm
+    bg, fg = gm.ETIQUETTES["radar"]          # vert de la charte (badge d'information)
+    assert f"background:{bg};color:{fg};" in m.html and "RAPPORT · PRÊT" in m.html
 
 
 def test_maintenance_dit_quoi_quand_quoi_faire():

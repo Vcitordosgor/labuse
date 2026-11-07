@@ -21,6 +21,14 @@ styles en ligne, 600 px, lisible sur téléphone) + la version texte **partent d
 > (« Vous m'aviez signalé… », « Voici ma réponse ») ; mail 19 (annonce) : bouton « Voir les communes
 > concernées » ; mail 20 (maintenance) : **pas de bouton**, phrase « Si l'app ne répond pas pendant ce
 > créneau, réessayez après 23h00 » ; relecture ponctuation / espaces / accents sur majuscules.
+>
+> **V4 (corrections Vic)** : mail 10 — **gras sur le mot entier** avec pluriel juste (« 1 bien » /
+> « 3 biens ») ; **`maj1` ne touche que le 1ᵉʳ caractère d'un titre/phrase**, jamais un texte inséré
+> après « : » dans un objet → mail 19 objet « LABUSE — maintenance programmée : mise à jour serveur » ;
+> les mails de **facturation / accès** (abonnement, paiement, suspension, rétablissement, fin
+> d'abonnement, **rapport acheté**) deviennent **transactionnels** comme la sécurité : pas de
+> List-Unsubscribe, pas de « Me désinscrire », pied « Ce message concerne votre abonnement ; il n'est
+> pas désactivable. » ; mail 14 — **badge au vert de la charte**. Un test par point.
 
 ### 1. Le gabarit — `src/labuse/gabarit_mail.py`
 
@@ -36,8 +44,8 @@ Reproduit la maquette au pixel, mais en **HTML e-mail sûr** (tables + styles en
 - **Deux registres** :
   - **personnel** — signature « **Victor Lagane**, gestionnaire relation entreprise ·
     **+262 693 51 71 53** » (avatar « VL ») ;
-  - **automatique** — **étiquette de couleur selon la nature** (vert Radar/veille/vente, bleu rapport,
-    ambre maintenance, ardoise nouveauté), faits en clair, **pas de signature**.
+  - **automatique** — **étiquette de couleur selon la nature** (vert charte pour Radar / veille / vente /
+    rapport, ambre maintenance, ardoise nouveauté), faits en clair, **pas de signature**.
 - **Pied** (décision Vic) : `LABUSE · contact@labuse.immo` puis **Gérer mes notifications · Me désinscrire ·
   Confidentialité · Mentions légales**. **Pas d'adresse postale** (non fournie) → remplacée par le lien
   **Mentions légales** (`labuse.immo/mentions-legales/`, page existante) pour que l'éditeur reste
@@ -118,11 +126,12 @@ mort** ni variable `{{ … }}` · **majuscule en tête de chaque titre et paragr
 fond. Plus : reset unique (un seul chemin), Radar liste chaque bien, maintenance quoi/quand/quoi-faire
 + phrase de reprise, annonce « Voir les communes concernées », flash « 30 jours », retour 1re personne.
 
-→ **175 cas, tous verts.**
+→ **186 cas, tous verts** (dont : facturation/accès transactionnels, gras du mot entier + pluriel,
+objets sans majuscule après « : », badge rapport vert).
 
 ### Suite unitaire (famille du hook)
 
-`pytest -m "not db and not local and not reel and not network"` → **3163 passés, 0 échec**
+`pytest -m "not db and not local and not reel and not network"` → **3174 passés, 0 échec**
 (50 ignorés = environnement : base live / front non bâti). Tests de contenu mis à jour pour le nouveau
 gabarit (annonce/maintenance/digest/mise-en-vente), tests de la file `mail_queue` mis à jour vers le
 transport `brevo.envoyer_html` (machine à états inchangée).
@@ -130,42 +139,43 @@ transport `brevo.envoyer_html` (machine à états inchangée).
 **Front : non concerné** — **0 fichier `frontend/` modifié** (le changement est 100 % back-end + mails).
 Le `node_modules` du front n'est pas installé dans ce worktree ; rien à rejouer côté front.
 
-### Envoi `[V3 nn/20]`
+### Envoi `[V4 nn/20]`
 
-Script `envoyer_mails_v3.py` : rend les 20 mails par le gabarit (après corrections Vic) et les pousse
-à Brevo, sujet préfixé `[V3 nn/20]`, **un toutes les 10 s**, destinataire **verrouillé** sur l'adresse
-de test (vérifié avant chaque appel réseau). Résultats bruts : `envois_v3.json`.
+Script `envoyer_mails_v4.py` : rend les 20 mails par le gabarit (après corrections V4) et les pousse
+à Brevo, sujet préfixé `[V4 nn/20]`, **un toutes les 10 s**, destinataire **verrouillé** sur l'adresse
+de test (vérifié avant chaque appel réseau). Résultats bruts : `envois_v4.json`.
 
-> **20 et non 21** : le mandat demandait `[V3 nn/21]`, mais la suppression du **doublon de
-> réinitialisation** (11 et 17) laisse **20 mails distincts** — on n'envoie plus deux fois le même reset.
+> **20 et non 21** : la suppression du **doublon de réinitialisation** (11 et 17) laisse **20 mails
+> distincts** — on n'envoie plus deux fois le même reset.
 
 **Résultat : 20 / 20 partis** ✅ (07/11/2026, Brevo `/smtp/email`, expéditeur `contact@labuse.immo`)
 
 | n | clé | sujet | messageId Brevo |
 |---:|---|---|---|
-| 01 | `essai` | [V3 01/20] Vos accès d'essai LABUSE — 48 h pour juger sur pièces | `<202611071938.51726235519@smtp-relay.mailin.fr>` |
-| 02 | `souscription` | [V3 02/20] LABUSE — votre lien d'abonnement | `<202611071938.58927131073@smtp-relay.mailin.fr>` |
-| 03 | `onboarding1` | [V3 03/20] Bienvenue sur LABUSE | `<202611071938.34583075828@smtp-relay.mailin.fr>` |
-| 04 | `onboarding2` | [V3 04/20] La méthode pour trouver ce que les autres ne voient pas | `<202611071938.72744795564@smtp-relay.mailin.fr>` |
-| 05 | `onboarding3` | [V3 05/20] 10 jours de LABUSE — on fait le point ? | `<202611071939.32565268227@smtp-relay.mailin.fr>` |
-| 06 | `relance_carte` | [V3 06/20] LABUSE — un souci avec votre moyen de paiement | `<202611071939.64021801996@smtp-relay.mailin.fr>` |
-| 07 | `suspension` | [V3 07/20] LABUSE — votre accès est suspendu | `<202611071939.82683499934@smtp-relay.mailin.fr>` |
-| 08 | `retablissement` | [V3 08/20] LABUSE — votre accès est rétabli | `<202611071939.86170365508@smtp-relay.mailin.fr>` |
-| 09 | `radar_digest` | [V3 09/20] Radar — 3 nouveautés le 07/11/2026 | `<202611071939.22664537989@smtp-relay.mailin.fr>` |
-| 10 | `radar_alerte` | [V3 10/20] Veille « Saint-Denis — terrains de plus de 400 m² » — 3 correspondances | `<202611071939.97891400616@smtp-relay.mailin.fr>` |
-| 11 | `mdp_oublie` | [V3 11/20] Réinitialisation de votre mot de passe LABUSE | `<202611071940.69604385830@smtp-relay.mailin.fr>` |
-| 12 | `mdp_modifie` | [V3 12/20] Votre mot de passe LABUSE a été modifié | `<202611071940.47324546220@smtp-relay.mailin.fr>` |
-| 13 | `resiliation` | [V3 13/20] Votre abonnement LABUSE prend fin le 30/11/2026 | `<202611071940.41141294502@smtp-relay.mailin.fr>` |
-| 14 | `flash_pret` | [V3 14/20] Votre rapport LABUSE — 97411000BZ1065 | `<202611071940.67327085822@smtp-relay.mailin.fr>` |
-| 15 | `email_change` | [V3 15/20] Votre adresse de connexion LABUSE a changé | `<202611071940.41000862302@smtp-relay.mailin.fr>` |
-| 16 | `retour_traite` | [V3 16/20] Votre retour a été traité | `<202611071940.68968350622@smtp-relay.mailin.fr>` |
-| 17 | `smtp_digest_notifications` | [V3 17/20] LABUSE — 2 changements sur vos suivis | `<202611071941.40940022951@smtp-relay.mailin.fr>` |
-| 18 | `smtp_annonce` | [V3 18/20] LABUSE — Nouvelle source : RNU (règlement national d'urbanisme) | `<202611071941.82561010216@smtp-relay.mailin.fr>` |
-| 19 | `smtp_maintenance` | [V3 19/20] LABUSE — maintenance programmée : Mise à jour serveur | `<202611071941.29748131292@smtp-relay.mailin.fr>` |
-| 20 | `smtp_mise_en_vente` | [V3 20/20] LABUSE — votre parcelle 97411000BZ1065 est mise en vente | `<202611071941.61820650759@smtp-relay.mailin.fr>` |
+| 01 | `essai` | [V4 01/20] Vos accès d'essai LABUSE — 48 h pour juger sur pièces | `<202611072002.39853176079@smtp-relay.mailin.fr>` |
+| 02 | `souscription` | [V4 02/20] LABUSE — votre lien d'abonnement | `<202611072002.47538226818@smtp-relay.mailin.fr>` |
+| 03 | `onboarding1` | [V4 03/20] Bienvenue sur LABUSE | `<202611072002.60687558640@smtp-relay.mailin.fr>` |
+| 04 | `onboarding2` | [V4 04/20] La méthode pour trouver ce que les autres ne voient pas | `<202611072003.35826426613@smtp-relay.mailin.fr>` |
+| 05 | `onboarding3` | [V4 05/20] 10 jours de LABUSE — on fait le point ? | `<202611072003.53447745597@smtp-relay.mailin.fr>` |
+| 06 | `relance_carte` | [V4 06/20] LABUSE — un souci avec votre moyen de paiement | `<202611072003.68454471662@smtp-relay.mailin.fr>` |
+| 07 | `suspension` | [V4 07/20] LABUSE — votre accès est suspendu | `<202611072003.79515719862@smtp-relay.mailin.fr>` |
+| 08 | `retablissement` | [V4 08/20] LABUSE — votre accès est rétabli | `<202611072003.38037987744@smtp-relay.mailin.fr>` |
+| 09 | `radar_digest` | [V4 09/20] Radar — 3 nouveautés le 07/11/2026 | `<202611072003.72996582352@smtp-relay.mailin.fr>` |
+| 10 | `radar_alerte` | [V4 10/20] Veille « Saint-Denis — terrains de plus de 400 m² » — 3 correspondances | `<202611072004.66681579108@smtp-relay.mailin.fr>` |
+| 11 | `mdp_oublie` | [V4 11/20] Réinitialisation de votre mot de passe LABUSE | `<202611072004.45244070773@smtp-relay.mailin.fr>` |
+| 12 | `mdp_modifie` | [V4 12/20] Votre mot de passe LABUSE a été modifié | `<202611072004.83389205753@smtp-relay.mailin.fr>` |
+| 13 | `resiliation` | [V4 13/20] Votre abonnement LABUSE prend fin le 30/11/2026 | `<202611072004.37825337275@smtp-relay.mailin.fr>` |
+| 14 | `flash_pret` | [V4 14/20] Votre rapport LABUSE — 97411000BZ1065 | `<202611072004.78589423340@smtp-relay.mailin.fr>` |
+| 15 | `email_change` | [V4 15/20] Votre adresse de connexion LABUSE a changé | `<202611072004.15756803335@smtp-relay.mailin.fr>` |
+| 16 | `retour_traite` | [V4 16/20] Votre retour a été traité | `<202611072005.24474128211@smtp-relay.mailin.fr>` |
+| 17 | `smtp_digest_notifications` | [V4 17/20] LABUSE — 2 changements sur vos suivis | `<202611072005.88252230425@smtp-relay.mailin.fr>` |
+| 18 | `smtp_annonce` | [V4 18/20] LABUSE — Nouvelle source : RNU (règlement national d'urbanisme) | `<202611072005.81807641647@smtp-relay.mailin.fr>` |
+| 19 | `smtp_maintenance` | [V4 19/20] LABUSE — maintenance programmée : mise à jour serveur | `<202611072005.83500335217@smtp-relay.mailin.fr>` |
+| 20 | `smtp_mise_en_vente` | [V4 20/20] LABUSE — votre parcelle 97411000BZ1065 est mise en vente | `<202611072005.16687160981@smtp-relay.mailin.fr>` |
 
 
-Un premier envoi `[V2 nn/21]` (avant corrections) avait été fait : 21/21 partis, traces dans `envois_v2.json`.
+Passes précédentes : `[V2 nn/21]` (avant corrections, 21/21, `envois_v2.json`) et `[V3 nn/20]`
+(20/20, `envois_v3.json`).
 
 ### Captures
 
@@ -175,7 +185,7 @@ Un premier envoi `[V2 nn/21]` (avant corrections) avait été fait : 21/21 parti
 
 > Les rendus ci-dessus sont produits à partir du **HTML exact** envoyé par Brevo. La vérification dans
 > **Gmail ordinateur et téléphone** se fait sur la boîte de test (`victorlaganepro+mails@gmail.com`) où
-> les mails `[V3 nn/20]` ont été livrés.
+> les mails `[V4 nn/20]` ont été livrés.
 
 ## Fichiers
 
@@ -185,4 +195,4 @@ Un premier envoi `[V2 nn/21]` (avant corrections) avait été fait : 21/21 parti
 - `src/labuse/brevo.py` — `envoyer_html` (transport HTML, NOUVEAU).
 - `src/labuse/mail.py`, `src/labuse/mailfile.py`, `src/labuse/pige/digests.py` — transport branché.
 - `tests/test_mails_1_gabarit.py` — test automatique (NOUVEAU).
-- `docs/audit-2026-11/mails-1/` — ce rapport, `envoyer_mails_v3.py` (+ v2), `envois_v3.json`, `rendus/`.
+- `docs/audit-2026-11/mails-1/` — ce rapport, `envoyer_mails_v4.py` (+ v2/v3), `envois_v4.json`, `rendus/`.

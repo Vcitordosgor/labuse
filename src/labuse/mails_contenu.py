@@ -57,6 +57,9 @@ def _pied(p: dict, raison: str, *, securite: bool = False, desabo: bool = True) 
 
 
 R_COMPTE = "Vous recevez ce mail parce que vous avez un compte LABUSE."
+# Mails de FACTURATION / ACCÈS (abonnement, paiement, suspension, rétablissement, résiliation, rapport
+# acheté) : TRANSACTIONNELS comme la sécurité — pas de désinscription (décision Vic, V4).
+R_ABONNEMENT = "Ce message concerne votre abonnement ; il n'est pas désactivable."
 R_RADAR = "Vous recevez ce mail parce que vous surveillez des critères dans le Radar LABUSE."
 R_SUIVIS = "Vous recevez ce mail parce que vous suivez des parcelles ou surveillez des critères dans LABUSE."
 R_SECU = "Ce mail de sécurité vous est envoyé parce que votre adresse est associée à un compte LABUSE."
@@ -93,7 +96,8 @@ def _souscription(p: dict) -> g.Mail:
         g.paragraphe("Activez votre abonnement pour garder vos accès."),
     ]
     return g.rendre(sujet="LABUSE — votre lien d'abonnement", registre="personnel", blocs=blocs,
-                    apercu="Activez votre abonnement en une minute.", pied=_pied(p, R_COMPTE))
+                    apercu="Activez votre abonnement en une minute.",
+                    pied=_pied(p, R_ABONNEMENT, desabo=False))
 
 
 def _onboarding1(p: dict) -> g.Mail:
@@ -170,7 +174,7 @@ def _relance_carte(p: dict) -> g.Mail:
     ]
     return g.rendre(sujet="LABUSE — un souci avec votre moyen de paiement", registre="personnel",
                     blocs=blocs, apercu="Votre accès reste ouvert — mettez votre carte à jour.",
-                    pied=_pied(p, R_COMPTE))
+                    pied=_pied(p, R_ABONNEMENT, desabo=False))
 
 
 def _suspension(p: dict) -> g.Mail:
@@ -183,7 +187,8 @@ def _suspension(p: dict) -> g.Mail:
                      "à ce mail."),
     ]
     return g.rendre(sujet="LABUSE — votre accès est suspendu", registre="personnel", blocs=blocs,
-                    apercu="Vos données sont conservées — réactivez en un clic.", pied=_pied(p, R_COMPTE))
+                    apercu="Vos données sont conservées — réactivez en un clic.",
+                    pied=_pied(p, R_ABONNEMENT, desabo=False))
 
 
 def _retablissement(p: dict) -> g.Mail:
@@ -196,7 +201,8 @@ def _retablissement(p: dict) -> g.Mail:
         g.paragraphe("Merci de votre confiance. Une question ? Répondez, c'est moi qui lis."),
     ]
     return g.rendre(sujet="LABUSE — votre accès est rétabli", registre="personnel", blocs=blocs,
-                    apercu="Tout est rétabli, comme vous l'aviez laissé.", pied=_pied(p, R_COMPTE))
+                    apercu="Tout est rétabli, comme vous l'aviez laissé.",
+                    pied=_pied(p, R_ABONNEMENT, desabo=False))
 
 
 def _resiliation(p: dict) -> g.Mail:
@@ -212,7 +218,8 @@ def _resiliation(p: dict) -> g.Mail:
                      "m'est utile."),
     ]
     return g.rendre(sujet=f"Votre abonnement LABUSE prend fin le {fin}", registre="personnel",
-                    blocs=blocs, apercu="Accès ouvert jusqu'à la date indiquée.", pied=_pied(p, R_COMPTE))
+                    blocs=blocs, apercu="Accès ouvert jusqu'à la date indiquée.",
+                    pied=_pied(p, R_ABONNEMENT, desabo=False))
 
 
 def _retour_traite(p: dict) -> g.Mail:
@@ -336,14 +343,16 @@ def _radar_alerte(p: dict) -> g.Mail:
     nb = _s(p.get("NB_BIENS")) or "0"
     criteres = _s(p.get("CRITERES"))
     greet = _prenom(p)
-    intro = (f"Bonjour {greet}, votre veille vient de trouver {nb} bien{'s' if nb != '1' else ''} "
-             "correspondant à vos critères.") if greet else \
-            (f"Votre veille vient de trouver {nb} bien{'s' if nb != '1' else ''} correspondant à vos "
-             "critères.")
+    # pluriel juste + gras sur le MOT ENTIER (« 1 bien » / « 3 biens »).
+    nb_bien = f"{nb} bien{'s' if nb != '1' else ''}"
+    intro = (f"Bonjour {greet}, votre veille vient de trouver {nb_bien} correspondant à vos critères."
+             if greet else
+             f"Votre veille vient de trouver {nb_bien} correspondant à vos critères.")
+    intro_html = g.esc(intro).replace(g.esc(nb_bien), f"<b>{g.esc(nb_bien)}</b>", 1)
     blocs = [
         g.etiquette("RADAR · ALERTE", "radar"),
         g.titre_auto(veille),
-        g.paragraphe(intro, html_brut=g.esc(intro).replace(f"{g.esc(nb)} bien", f"<b>{g.esc(nb)} bien</b>")),
+        g.paragraphe(intro, html_brut=intro_html),
     ]
     if criteres:
         blocs.append(g.carte("VOS CRITÈRES", criteres))
@@ -373,7 +382,7 @@ def _flash_pret(p: dict) -> g.Mail:
         validite = f"{validite} jour{'s' if int(validite) > 1 else ''}"
     validite = validite or "quelques jours"
     blocs = [
-        g.etiquette("RAPPORT · PRÊT", "rapport"),
+        g.etiquette("RAPPORT · PRÊT", "radar"),    # badge au vert de la charte (comme les autres badges d'info)
         g.titre_auto(f"Votre rapport est prêt — {commune}" if commune else "Votre rapport est prêt"),
         g.paragraphe(f"Le rapport LABUSE de la parcelle {idu}"
                      + (f" ({commune})" if commune else "") + " est généré et prêt à télécharger."),
@@ -381,10 +390,9 @@ def _flash_pret(p: dict) -> g.Mail:
         g.paragraphe(f"Ce lien est valable {validite}."),
         g.note("Le rapport reprend les données foncières publiques recoupées à la date de génération."),
     ]
+    # « rapport acheté » = transactionnel (comme la facturation) : pas de désinscription.
     return g.rendre(sujet=f"Votre rapport LABUSE — {idu}", registre="auto", blocs=blocs,
-                    apercu="Votre rapport est prêt à télécharger.",
-                    pied=_pied(p, "Vous recevez ce mail parce que vous avez demandé un rapport sur cette "
-                               "parcelle.", desabo=False))
+                    apercu="Votre rapport est prêt à télécharger.", pied=_pied(p, R_ABONNEMENT, desabo=False))
 
 
 def _digest_notifications(p: dict) -> g.Mail:
@@ -435,7 +443,9 @@ def _annonce(p: dict) -> g.Mail:
 
 
 def _maintenance(p: dict) -> g.Mail:
-    titre = g.maj1(_s(p.get("TITRE") or p.get("titre")) or "maintenance programmée")
+    # titre BRUT pour l'objet (inséré après « : » → casse d'origine) ; le TITRE du corps est
+    # capitalisé par `titre_auto` (maj1). Vic : « LABUSE — maintenance programmée : mise à jour serveur ».
+    titre = _s(p.get("TITRE") or p.get("titre")) or "maintenance programmée"
     corps = _s(p.get("CORPS") or p.get("corps"))
     fenetre = _s(p.get("FENETRE") or p.get("fenetre"))
     fin = _s(p.get("FIN") or p.get("fin"))   # heure de reprise (fin du créneau)
