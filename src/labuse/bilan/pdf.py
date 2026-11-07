@@ -170,6 +170,7 @@ def construire_html(
     etude_reliee: str | None = None,
     prix_demande: float | None = None,
     donnees_au: str | None = None,
+    map_html: str = "",
 ) -> tuple[str, Cartouche]:
     cat = cat or charger_catalogue()
     j = jour or today_reunion()
@@ -179,6 +180,10 @@ def construire_html(
     # comme à l'écran. « — » honnête quand une donnée n'est pas servie (jamais un zéro inventé).
     _etude = etude_reliee or "aucune Étude reliée"
     _prix = (f"{round(prix_demande):,}".replace(",", " ") + " €") if prix_demande else "non renseigné"
+    # DOCS-1 (décision Vic) — RÉSUMÉ de couverture : chiffre d'affaires et résultat net du programme.
+    _eur = lambda x: (f"{round(x):,}".replace(",", " ") + " €") if isinstance(x, (int, float)) else "—"  # noqa: E731
+    _resume = (f'<p class="tete-doc">CA TTC : {esc(_eur(r.ca_ttc))} · '
+               f'Résultat net : {esc(_eur(r.resultat_net))}</p>')
     tete = (
         f'<div class="brand"><span class="wordmark">LABUSE</span>'
         f'<span class="kind">Bilan</span></div>'
@@ -187,6 +192,8 @@ def construire_html(
         + (f" · {esc(adresse)}" if adresse else "")
         + f" · {esc(numero)} · {j:%d/%m/%Y}</p>"
         f'<p class="tete-doc">Programme : {esc(_etude)} · Prix demandé : {esc(_prix)}</p>'
+        + _resume
+        + (map_html or "")   # carte de situation sur la couverture (DOCS-1)
     )
 
     corps = ['<div class="bilan">', tete]

@@ -549,11 +549,37 @@ def construire_gabarit(db, idu: str, *, jour: date | None = None) -> ResultatDoc
                        contexte={"gabarit": gr.model_dump() if hasattr(gr, "model_dump") else dict(gr)})
 
 
+def _resume_comparatif(rows: list[dict]) -> str:
+    """DOCS-1 (décision Vic) — le RÉSUMÉ de couverture du Comparatif : combien de parcelles, où, et le
+    différenciateur en une ligne (la plus grande, la seule qui garde du potentiel résiduel)."""
+    rows = [r for r in (rows or []) if isinstance(r, dict)]
+    if not rows:
+        return ""
+    communes = sorted({str(r.get("commune")) for r in rows if r.get("commune")})
+    ou = communes[0] if len(communes) == 1 else (", ".join(communes) if communes else "")
+    bits = [f"{len(rows)} parcelles comparées" + (f" · {esc(ou)}" if ou else "")]
+    plus_grande = max(rows, key=lambda r: r.get("surface_m2") or 0)
+    if plus_grande.get("surface_m2"):
+        bits.append(f"la plus grande : {_ref_court(plus_grande.get('idu', ''))} "
+                    f"({fmt_m2(plus_grande['surface_m2'])})")
+    avec_pot = [r for r in rows if (r.get("sdp_residuelle_m2") or 0) > 0]
+    if len(avec_pot) == 1:
+        bits.append(f"seule à garder du potentiel résiduel : {_ref_court(avec_pot[0].get('idu', ''))}")
+    elif not avec_pot:
+        bits.append("aucune ne garde de potentiel résiduel (rien à construire)")
+    return f'<p class="cover-resume">{" · ".join(bits)}.</p>'
+
+
+def _ref_court(idu: str) -> str:
+    return f"{idu[8:10]} {idu[10:14]}" if idu and len(idu) >= 14 else (idu or "")
+
+
 def construire_comparatif(idus: list[str], rows: list[dict], *, jour: date | None = None,
-                          note_limite: str | None = None) -> ResultatDoc:
+                          note_limite: str | None = None, map_html: str = "") -> ResultatDoc:
     """Le Comparatif, miroir de l'outil Comparer (/compare) : 2-3 parcelles en colonnes sur les lignes
     de Comparer, EN PAGE PAYSAGE. `rows` sont les CompareRow servis (aucun recalcul ici).
-    NU5-FIX-1 (B-F3) : `note_limite` annonce le plafond de 3 parcelles quand plus ont été demandées."""
+    NU5-FIX-1 (B-F3) : `note_limite` annonce le plafond de 3 parcelles quand plus ont été demandées.
+    DOCS-1 : la couverture porte une carte de situation (map_html, parcelle de tête) + un résumé."""
     from .blocs import comparatif as bloc_comparatif
     j = jour or today_reunion()
     ids = [i.strip() for i in idus if i and i.strip()][:3]
@@ -563,7 +589,8 @@ def construire_comparatif(idus: list[str], rows: list[dict], *, jour: date | Non
     cart = _cart("comparatif", suffixe, " · ".join(ids), numero, j)
     _note_html = (f'<p class="notice" style="color:#b06a2c">{esc(note_limite)}</p>'
                   if note_limite else "")
-    corps = _entete_doc("comparatif", suffixe, numero, j) + _note_html + bloc_comparatif.rendu(rows)
+    _cover = _resume_comparatif(rows) + (map_html or "")
+    corps = _entete_doc("comparatif", suffixe, numero, j) + _cover + _note_html + bloc_comparatif.rendu(rows)
     html = page_html(_LABEL["comparatif"][0], cart, corps, paysage=True)
     return ResultatDoc(html=html, valeurs={}, numero=numero, cartouche=cart,
                        contexte={"comparatif": rows})

@@ -395,6 +395,12 @@ def bilan_pdf(
             e.postes[_pid] = _sp
     r = Moteur().calculer(e)
     _refuser_si_ca_nul(r)
+    # DOCS-1 — carte de situation sur la couverture du Bilan (best-effort : jamais un bloqueur).
+    try:
+        from ..exports.builder import _plan_situation_html
+        _map = _plan_situation_html(db, idu)
+    except Exception:  # noqa: BLE001
+        _map = ""
     octets = _pdf.construire_pdf(
         r,
         idu=idu,
@@ -403,6 +409,7 @@ def bilan_pdf(
         donnees_au=_pf.get("donnees_au"),
         programme=corps.programme.model_dump(),
         calendrier=dict(corps.calendrier),
+        map_html=_map,
     )
     return Response(
         content=octets,

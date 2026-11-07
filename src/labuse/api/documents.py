@@ -190,7 +190,10 @@ def comparatif_pdf(idus: str, request: Request, db: Session = Depends(get_db)) -
     try:
         from .app import compare as _compare_fn
         data = _compare_fn(idus=",".join(ids), db=db)
-        res = builder.construire_comparatif(ids, data.get("parcels") or [], note_limite=_note_limite)
+        # DOCS-1 — carte de situation de la parcelle de tête sur la couverture du Comparatif.
+        _map = builder._plan_situation_html(db, ids[0]) if ids else ""
+        res = builder.construire_comparatif(ids, data.get("parcels") or [],
+                                            note_limite=_note_limite, map_html=_map)
     except HTTPException:
         raise
     except Exception:  # noqa: BLE001
