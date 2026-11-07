@@ -1045,7 +1045,13 @@ def _verdict_factuel(sec_id: str, valeurs: dict[str, Valeur]) -> tuple[str, str,
             if pa.get("type_prix"):
                 t += f" — {pa['type_prix']}"
             if pa.get("n"):
-                t += f" ({groupe(pa['n'])} ventes {_rayon_ventes(pa)})"
+                # DOCS-1 (décision Vic) — le prix EN TITRE porte sa définition en UNE LIGNE :
+                # type de bien, nombre de ventes, rayon ET période (les autres indicateurs de marché
+                # — terrain nu, médianes par type, neuf — restent en annexe « Marché » du §8).
+                _per = pa.get("periode")
+                if isinstance(_per, (list, tuple)) and len(_per) == 2:
+                    _per = f"{_per[0]}–{_per[1]}"
+                t += f" ({groupe(pa['n'])} ventes {_rayon_ventes(pa)}" + (f", {_per}" if _per else "") + ")"
             # NU-G-005 / NU-3-J#2 — jamais un prix FRAGILE en tête sans le dire : le qualificatif de
             # fiabilité (déjà calculé par `sector_price`) accompagne le chiffre, comme à l'écran.
             if pa.get("fiabilite") in ("fragile", "insuffisant"):
