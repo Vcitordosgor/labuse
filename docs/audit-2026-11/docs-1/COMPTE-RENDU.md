@@ -286,7 +286,42 @@ moteur de faisabilité** écarte les faux positifs (zone N `97421000AB0133`, hor
 | **Régénération V6** (`~/Desktop/LABUSE-EXPORTS-2026-11-07-V6/`) | `scripts/docs1_regen_v6.py` — 4 parcelles (BZ1065, AK0804, **DH0076**, AB0133). |
 | Hook (unitaires) | **vert — 2953 passed**. |
 
+## 12. Capacité cohérente avec le verdict PPR-PARTIEL + V7
+
+La V6 corrigeait le VERDICT de `97415000DH0076` (« constructible sur la partie hors zone rouge »), mais
+les LIGNES DE CAPACITÉ écrivaient encore, juste en dessous, « SDP maximale non calculable (capacité
+nulle) », « surface vendable non calculable », « table rase non constructible », « au sol : rien à
+construire » — elles lisaient le run (qui ne chiffre pas la partie hors rouge). Contradiction interne.
+
+**Règle (décision Vic).** Quand le verdict est « constructible sur la partie hors zone rouge », TOUTES les
+lignes de capacité (SDP maximale, surface vendable, table rase, au sol) lisent le même moteur que l'Étude
+**ou renvoient « voir l'Étude de faisabilité »** — JAMAIS « capacité nulle » ni « rien à construire ». La
+marge de surélévation n'est imprimée que s'il y a un bâti (inchangé : la marge n'existe que si une hauteur
+de bâti est mesurée).
+
+| Lecteur | Correctif (quand `potentiel_transformation.ppr_partiel`) |
+|---|---|
+| `potentiel.bloc_potentiel` (Flash) | au sol / table rase → `renvoi_etude` ; verdict = « marge … · capacité à l'Étude de faisabilité (zone rouge retirée) ». Le renvoi n'est armé que si le run FERME la parcelle (`cause` présente) — une parcelle au run non fermé garde sa vraie capacité (AK0804 : 35 086 m²). |
+| `flash/data.py` + `rapport.html.j2` | cartouches SDP maximale / Surface vendable → « voir l'Étude de faisabilité », plus le forçage « vendable non calculable ». |
+| `miroir.py` (Dossier, lignes absentes) | « Surface de plancher maximale / Surface vendable : non chiffrée ici — la zone rouge du PPR est retirée, la capacité de la partie hors rouge relève de l'Étude de faisabilité. » |
+| `_potentiel_transformation_block` | expose `ppr_partiel` (drapeau lu par les trois ci-dessus). |
+
+| Recette (V7) | Résultat |
+|---|---|
+| **Nouveau contrôle de banc** — un document ne porte JAMAIS à la fois « constructible sur la partie hors zone rouge » ET « capacité nulle / rien à construire » | **VERT — 0** (13 témoins). Ne vise QUE ce verdict : une parcelle bâtie proche de sa densité garde sa « surface vendable (bâti conservé) nulle » légitime, table rase positive. |
+| Banc des documents (faits + jetons + format + cohérence) | **VERT — 0 écart**. |
+| **Régénération V7** (`~/Desktop/LABUSE-EXPORTS-2026-11-07-V7/`) | `scripts/docs1_regen_v7.py` — 4 parcelles. |
+| Hook (unitaires) | **vert — 2953 passed**. |
+
+**Note — la cause RACINE dans le run (lue en §13).** Le défaut vient de ce que le run résiduel
+(`parcel_residuel`, vue de `parcel_residuel_runs`) est calculé par `compute_residuel_batch` avec
+`assiette_clippee=False` → `parcel_faisabilite` prend sa branche HÉRITÉE (`db.py`), SANS la garde
+PPR-PARTIEL-A, et marque `redhibitoire`. Le même `parcel_faisabilite` appelé EN LIGNE par la fiche
+utilise `assiette_clippee=True` (défaut) → branche gabarit AVEC PPR-PARTIEL-A → constructible. Deux
+chemins, deux verdicts. Les correctifs DOCS-1 réconcilient à la LECTURE ; la vraie réparation est un
+run résiduel recalculé en assiette clippée (hors mandat de cohérence documentaire).
+
 ---
 
 *DOCS-1 — base locale, prod jamais touchée. Banc : `scripts/coherence/documents_banc.py` ;
-régénération : `scripts/docs1_regen_v2.py` (V2) … `_v6.py` (V6). Branche `fix/docs-1`, non mergée.*
+régénération : `scripts/docs1_regen_v2.py` (V2) … `_v7.py` (V7). Branche `fix/docs-1`, non mergée.*

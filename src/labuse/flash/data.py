@@ -280,6 +280,9 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
                 _vend_fiche = _pt.get("surface_vendable_m2")
                 _sdp_max = (_pt.get("calcul") or {}).get("sdp_max_m2") or _pt.get("surface_plancher_m2")
                 out["faisa"] = {
+                    # DOCS-1 (décision Vic) — PPR-PARTIEL : la capacité (découpée du rouge) est à l'Étude ;
+                    # le cartouche SDP/vendable RENVOIE, jamais « non calculable (capacité nulle) ».
+                    "renvoi_etude": bool(_pt.get("ppr_partiel")),
                     "vendable_m2": int(_vend_fiche) if _vend_fiche is not None else None,
                     "sdp_max_m2": int(_sdp_max) if _sdp_max is not None else None,
                     "plancher_m2": round(_vend_fiche / rend) if _vend_fiche else None,
@@ -305,7 +308,11 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
                 # rase » et le verdict : jamais un « 118 m² » quand la fiche sert « non calculable ».
                 _vf = (out.get("faisa") or {}).get("vendable_m2")   # None = non calculable (capacité nulle)
                 _tr = _pot.get("table_rase") or {}
-                if _tr.get("vendable_m2") != _vf:
+                # PPR-PARTIEL — le bloc a DÉJÀ renvoyé à l'Étude ; ne pas réintroduire « vendable non
+                # calculable (capacité nulle) » (ce serait le défaut exact à corriger).
+                if _pot.get("table_rase", {}).get("renvoi_etude"):
+                    pass
+                elif _tr.get("vendable_m2") != _vf:
                     _tr["vendable_m2"] = _vf
                     _tr["constructible"] = bool(_vf) and bool(_tr.get("constructible"))
                     _parts = [p for p in (_pot.get("verdict") or "").split(" · ")

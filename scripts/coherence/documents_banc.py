@@ -225,6 +225,30 @@ def _logements_max(t):
     return m.group(1) if m else None
 
 
+#: mentions de CAPACITÉ NULLE / RIEN À CONSTRUIRE qui NE DOIVENT PAS coexister avec un verdict
+#: constructible (PPR-PARTIEL : quand le reste hors rouge est constructible, toute ligne de capacité lit
+#: le moteur de l'Étude ou renvoie à l'Étude — jamais « nulle / rien »). On ne liste QUE des mentions de
+#: capacité (jamais le §risques « partie INCONSTRUCTIBLE » de la seule zone rouge).
+_MENTIONS_CAPACITE_NULLE = (
+    "rien à construire",
+    "capacité nulle",
+    "table rase non constructible",
+    "sdp maximale réglementaire non calculable",
+)
+
+
+def _incoherence_capacite(t):
+    """DOCS-1 (décision Vic) — PPR-PARTIEL : quand le verdict est « constructible sur la partie hors zone
+    rouge », AUCUNE ligne de capacité ne dit « nulle / rien à construire » (elles lisent l'Étude ou y
+    renvoient). Renvoie la liste des mentions fautives (ou []). On NE vise QUE ce verdict : une parcelle
+    bâtie proche de sa densité peut, elle, avoir une « surface vendable (bâti conservé) nulle » alors que
+    sa table rase est positive — distinction légitime, pas une contradiction."""
+    low = t.lower()
+    if "constructible sur la partie hors zone rouge" not in low:
+        return []
+    return [m for m in _MENTIONS_CAPACITE_NULLE if m in low]
+
+
 FAITS = {
     "verdict_potentiel": _verdict_potentiel,
     "logements_max": _logements_max,
@@ -300,6 +324,7 @@ def rejouer(idus: list[str]):
     divergences: list[dict] = []
     leaks: list[dict] = []
     fautes_fmt: list[dict] = []
+    incoherences: list[dict] = []
     n_docs = 0
     n = len(idus)
 
@@ -317,6 +342,9 @@ def rejouer(idus: list[str]):
             # 3. format
             for faute in _fautes_format(texte):
                 fautes_fmt.append({"idu": idu, "doc": nom, "faute": faute})
+            # 3bis. cohérence INTRA-document : verdict constructible + « capacité nulle / rien à construire »
+            for mention in _incoherence_capacite(texte):
+                incoherences.append({"idu": idu, "doc": nom, "mention": mention})
             # 1. faits
             for fait, fn in FAITS.items():
                 try:
@@ -332,7 +360,8 @@ def rejouer(idus: list[str]):
                 divergences.append({"idu": idu, "fait": fait,
                                     "valeurs": "  ".join(f"{d}={v}" for d, v in vals.items())})
 
-    return {"n_docs": n_docs, "divergences": divergences, "leaks": leaks, "fautes_fmt": fautes_fmt}
+    return {"n_docs": n_docs, "divergences": divergences, "leaks": leaks,
+            "fautes_fmt": fautes_fmt, "incoherences": incoherences}
 
 
 def main() -> int:
@@ -351,7 +380,11 @@ def main() -> int:
     print(f"\nFAUTES DE FORMAT : {len(rap['fautes_fmt'])}")
     for f in rap["fautes_fmt"][:40]:
         print(f"  ✗ {f['idu']} · {f['doc']} : {f['faute']}")
-    ko = len(rap["divergences"]) + len(rap["leaks"]) + len(rap["fautes_fmt"])
+    inc = rap.get("incoherences", [])
+    print(f"\nVERDICT CONSTRUCTIBLE + CAPACITÉ « NULLE / RIEN » : {len(inc)}")
+    for c in inc[:40]:
+        print(f"  ✗ {c['idu']} · {c['doc']} : « {c['mention']} »")
+    ko = len(rap["divergences"]) + len(rap["leaks"]) + len(rap["fautes_fmt"]) + len(inc)
     print(f"\n{'VERT — 0 écart' if ko == 0 else f'ROUGE — {ko} écarts'}")
     return 0 if ko == 0 else 1
 

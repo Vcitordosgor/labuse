@@ -7105,6 +7105,7 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
     # qu'à cause d'une zone rouge PPR PARTIELLE alors que le reste hors rouge est exploitable, le §10 ne
     # doit PAS dire « rédhibitoire couvrant toute la parcelle » : il dit la MÊME chose que l'Étude et que
     # le §risques (zone rouge retirée, le reste garde son potentiel). SOURCE UNIQUE verdict_ppr_partiel.
+    ppr_partiel = False
     if cause and row is not None and row["zone_fam"] in ("U", "AU"):
         try:
             from ..faisabilite.db import verdict_ppr_partiel
@@ -7112,6 +7113,7 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
         except Exception:  # noqa: BLE001 — correction best-effort (savepoints internes), jamais une 500
             _ppr = None
         if _ppr:
+            ppr_partiel = True
             cause = None
             niveau = "ppr_partiel"
             sdp_servie = None
@@ -7123,6 +7125,9 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
     return {
         "calcul": calcul,
         "niveau": niveau, "libelle": libelle,
+        # DOCS-1 (décision Vic) — PPR-PARTIEL : les lecteurs de capacité (Dossier §SDP/vendable, Flash,
+        # bloc_potentiel) RENVOIENT à l'Étude au lieu d'écrire « non calculable (capacité nulle) ».
+        "ppr_partiel": ppr_partiel,
         # CHASSE-CALCULS-FIX-1 Lot 3 (E-B1) — surface DU RUN servie à côté de la SDP + note de péremption.
         "surface_calcul_m2": (int(_surf_run) if _surf_run is not None else None),
         "surface_actuelle_m2": (int(_surf_live) if _surf_live is not None else None),

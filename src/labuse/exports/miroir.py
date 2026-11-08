@@ -1391,11 +1391,20 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
             _rp = fiche.get("reglement_plu") or {}
             _acheval_const = bool(_rp.get("a_cheval")) and any(
                 _fam_z(z.get("zone")) in ("U", "AU") for z in (_rp.get("zones") or []))
+            # DOCS-1 (décision Vic) — PPR-PARTIEL : sur une parcelle constructible hors zone rouge, AUCUNE
+            # ligne de capacité ne dit « non calculable (capacité nulle) » : la capacité (découpée du rouge)
+            # est celle de l'Étude de faisabilité. On renvoie, comme pour la parcelle à cheval.
+            _ppr_partiel = bool((fiche.get("potentiel_transformation") or {}).get("ppr_partiel"))
             verifie: list[str] = []
             nondispo: list[str] = []
             for q, ph in absents:
                 if _has_sdp and q == "surface_plancher_m2":
                     continue
+                if _ppr_partiel and q in ("surface_plancher_m2", "surface_vendable_m2"):
+                    _lbl = ("Surface de plancher maximale" if q == "surface_plancher_m2"
+                            else "Surface vendable")
+                    ph = (f"{_lbl} : non chiffrée ici — la zone rouge du PPR est retirée, la capacité "
+                          "de la partie hors rouge relève de l'Étude de faisabilité.")
                 if _acheval_const and q == "surface_plancher_m2":
                     ph = ("Surface de plancher : non chiffrée ici — la portion constructible de cette "
                           "parcelle à cheval relève de l'Étude de faisabilité.")

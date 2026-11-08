@@ -175,7 +175,7 @@
   <table class="donnees">
     <tr><th>Scénario</th><th>Valeur</th></tr>
     <tr><td>Au sol (SDP restante)</td>
-        <td class="num-cell">{% if c.potentiel.au_sol.sdp_residuelle_m2 is not none
+        <td class="num-cell">{% if c.potentiel.au_sol.renvoi_etude %}voir l'Étude de faisabilité{% elif c.potentiel.au_sol.sdp_residuelle_m2 is not none
           %}{{ c.potentiel.au_sol.sdp_residuelle_m2|round|int }} m²{% else %}non calculée{% endif %}</td></tr>
     {# DOCS-1 — base = « faîtage mesuré (LiDAR HD) » : pas de parenthèse EXTÉRIEURE (sinon « )) »). #}
     <tr><td>En hauteur — surélévation, hauteur {{ c.potentiel.en_hauteur.base or "—" }}</td>
@@ -184,7 +184,7 @@
             {% elif c.potentiel.en_hauteur.possible is false %}<span class="chip neutre">non envisageable</span>
             {% else %}<span class="chip neutre">non évaluable</span>{% endif %}</td></tr>
     <tr><td>Table rase ({{ c.potentiel.table_rase.mention }})</td>
-        <td class="num-cell">{% if c.potentiel.table_rase.vendable_m2
+        <td class="num-cell">{% if c.potentiel.table_rase.renvoi_etude %}voir l'Étude de faisabilité{% elif c.potentiel.table_rase.vendable_m2
           %}~{{ c.potentiel.table_rase.vendable_m2|round|int }} m² vendables{% else %}non constructible{% endif %}</td></tr>
   </table>
   <p class="note">{{ c.potentiel.verdict }}</p>
@@ -215,10 +215,15 @@
   {% if c.faisa.sdp_max_m2 is not none %}
   <div class="cartouche"><div class="titre">SDP maximale réglementaire, terrain</div>
     <div class="valeur">{{ c.faisa.sdp_max_m2 }} <small>m²</small></div></div>
+  {% elif c.faisa.renvoi_etude %}
+  <div class="cartouche"><div class="titre">SDP maximale réglementaire, terrain</div>
+    <div class="valeur"><small>voir l'Étude de faisabilité (zone rouge retirée)</small></div></div>
   {% endif %}
   <div class="cartouche"><div class="titre">Surface vendable</div>
     {% if c.faisa.vendable_m2 is not none %}
     <div class="valeur">{{ c.faisa.vendable_m2 }} <small>m² · plancher (SDP) ~{{ c.faisa.plancher_m2 }} m² = vendable ÷ rendement {{ c.faisa.rendement_pct }}&nbsp;%</small></div>
+    {% elif c.faisa.renvoi_etude %}
+    <div class="valeur"><small>voir l'Étude de faisabilité</small></div>
     {% else %}
     <div class="valeur"><small>non calculable (capacité nulle)</small></div>
     {% endif %}
