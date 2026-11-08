@@ -59,8 +59,8 @@ def test_opus_ajoute_au_pricing_du_ledger():
 def test_catalogue_actions_liste_fermee():
     from labuse.john import actions
     cles = {a["cle"] for a in actions.catalogue()}
-    assert cles == {"injecter_source", "relancer_job", "lancer_sauvegarde", "accepter_incident",
-                    "accepter_ecart", "promouvoir_run", "retirer_source"}
+    assert cles == {"injecter_source", "relancer_job", "lancer_sauvegarde", "diagnostiquer_app",
+                    "accepter_incident", "accepter_ecart", "promouvoir_run", "retirer_source"}
     a_confirmer = {a["cle"] for a in actions.catalogue() if a["confirme"]}
     assert a_confirmer == {"promouvoir_run", "retirer_source"}   # seules celles qui touchent les clients
 
