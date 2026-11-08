@@ -72,6 +72,12 @@ def _eur(x: float | None) -> str:
     return f"{round(x):,}".replace(",", " ") + " €"
 
 
+def _eur_nz(x: float | None) -> str:
+    """DOCS-1 (décision Vic) — un montant NUL (total d'un bloc vide, TVA de taxes…) s'écrit « — »,
+    jamais « 0 € » : on ne fait pas croire à un coût/produit renseigné à zéro."""
+    return "—" if not x else _eur(x)
+
+
 def _pct(x: float | None) -> str:
     return "—" if x is None else f"{x * 100:.1f} %".replace(".", ",")
 
@@ -118,15 +124,20 @@ def _tete(
     def eur0(x):
         return "—" if not x else _eur(x)
 
+    # DOCS-1 (décision Vic) — un ratio NON SAISISSABLE (coût de construction absent → 0) s'écrit « — »,
+    # jamais « 0 € » : on ne fait pas croire à un coût de zéro.
+    def _ratio(k):
+        v = str(ratios.get(k, "—") or "—").strip()
+        return "—" if v.replace(" ", " ").replace(" ", "") in ("0€", "0,0€", "0,00€", "") else v
     # Ordre du modèle (A4, A9, A10, A11, A14, A15, A16, A18, A21, A22).
     lignes_g = [
         ("Terrain", m2(programme.get("terrain"))),
         ("Surface de plancher", m2(programme.get("sdp"))),
         ("Surface taxable", m2(programme.get("surface_taxable"))),
         ("Surface vendable", m2(pt.get("suv"))),
-        ("Coût const. m² de surface vendable HT", ratios.get("Coût const. m² de surface vendable HT", "—")),
-        ("Prix moyen m² de surface vendable HT", ratios.get("Prix moyen au m² de surface vendable HT", "—")),
-        ("Net promoteur m² de surface vendable TTC", ratios.get("Net promoteur m² de surface vendable TTC", "—")),
+        ("Coût const. m² de surface vendable HT", _ratio("Coût const. m² de surface vendable HT")),
+        ("Prix moyen m² de surface vendable HT", _ratio("Prix moyen au m² de surface vendable HT")),
+        ("Net promoteur m² de surface vendable TTC", _ratio("Net promoteur m² de surface vendable TTC")),
         ("CA TTC programme", eur0(r.ca_ttc)),
         ("Renta nette / CA HT", _pct(r.marge_pct) if r.ca_ttc else "—"),
         ("Nombre de lots", str(round(pt.get("lots") or 0)) if pt.get("lots") else "—"),
@@ -229,30 +240,32 @@ def construire_html(
                 f"<td class='num'>{_assiette(ln, poste)}</td>"
                 f"<td class='num'>{_taux(ln, poste)}</td>"
                 f"<td class='num'>{'' if vide else _eur(ln.ht)}</td>"
-                f"<td class='num'>{'' if vide else _eur(ln.tva)}</td>"
+                # DOCS-1 (décision Vic) — une TVA nulle (taxes : 0 % de TVA) s'écrit « — », jamais « 0 € ».
+                f"<td class='num'>{'' if vide else (_eur(ln.tva) if ln.tva else '—')}</td>"
                 f"<td class='num'>{'' if vide else _eur(ln.ttc)}</td>"
                 f"<td>{f'<span class=badge>{esc(etat)}</span>' if etat else ''}</td></tr>"
             )
         lib_tot = f"Total {n} · {esc(b.titre)}" if n else f"Total — {esc(b.titre)}"
         corps.append(
             f"<tr class='tot'><td colspan='3'>{lib_tot}</td>"
-            f"<td class='num'>{_eur(tot.ht)}</td><td class='num'>{_eur(tot.tva)}</td>"
-            f"<td class='num'>{_eur(tot.ttc)}</td><td></td></tr>"
+            f"<td class='num'>{_eur_nz(tot.ht)}</td>"
+            f"<td class='num'>{_eur_nz(tot.tva)}</td>"
+            f"<td class='num'>{_eur_nz(tot.ttc)}</td><td></td></tr>"
         )
         corps.append("</tbody></table></div>")
 
     # Synthèse
     corps.append('<div class="synth"><h2>Synthèse</h2><table><tbody>')
     corps.append(
-        f"<tr><td>Dépenses totales</td><td class='num'>{_eur(r.depenses_ht)}</td>"
-        f"<td class='num'>{_eur(r.depenses_tva)}</td><td class='num'>{_eur(r.depenses_ttc)}</td></tr>"
+        f"<tr><td>Dépenses totales</td><td class='num'>{_eur_nz(r.depenses_ht)}</td>"
+        f"<td class='num'>{_eur_nz(r.depenses_tva)}</td><td class='num'>{_eur_nz(r.depenses_ttc)}</td></tr>"
     )
     corps.append(
-        f"<tr><td>Chiffre d'affaires</td><td class='num'>{_eur(r.ca_ht)}</td>"
-        f"<td class='num'>{_eur(r.ca_tva)}</td><td class='num'>{_eur(r.ca_ttc)}</td></tr>"
+        f"<tr><td>Chiffre d'affaires</td><td class='num'>{_eur_nz(r.ca_ht)}</td>"
+        f"<td class='num'>{_eur_nz(r.ca_tva)}</td><td class='num'>{_eur_nz(r.ca_ttc)}</td></tr>"
     )
     corps.append(
-        f"<tr><td>TVA résiduelle</td><td></td><td></td><td class='num'>{_eur(r.tva_residuelle)}</td></tr>"
+        f"<tr><td>TVA résiduelle</td><td></td><td></td><td class='num'>{_eur_nz(r.tva_residuelle)}</td></tr>"
     )
     # DOCS-1 (décision Vic) — tant qu'aucun coût majeur n'est saisi, le moteur laisse résultat/marge/
     # cash-flow à None : on écrit « non calculable — saisissez vos coûts », JAMAIS un bénéfice (= tout

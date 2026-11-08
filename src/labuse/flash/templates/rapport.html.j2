@@ -72,7 +72,7 @@
     {% if data.rnu %}
     <div class="cartouche"><div class="titre">Zonage PLU</div>
       <div class="valeur"><small>non applicable — RNU</small></div></div>
-    <div class="cartouche"><div class="titre">Hauteur max (règle calibrée)</div>
+    <div class="cartouche"><div class="titre">Hauteur max (PLU)</div>
       <div class="valeur"><small>non applicable — RNU</small></div></div>
     {% else %}
     {% if ident.zones %}
@@ -84,7 +84,7 @@
     {# M129-2 A : hauteur du PLU CALIBRÉ (source unique resolve_zone) — égout et faîtage NOMMÉS,
        jamais une « hauteur max » ambiguë ni le 9 m générique de parcel_residuel_bati. #}
     {% if ident.regles and ident.regles.hauteur_egout_m %}
-    <div class="cartouche"><div class="titre">Hauteur d'égout (PLU calibré)</div>
+    <div class="cartouche"><div class="titre">Hauteur d'égout (PLU)</div>
       <div class="valeur">{{ ident.regles.hauteur_egout_m | fr_dec }} <small>m</small></div></div>
     {% endif %}
     {% endif %}
@@ -110,7 +110,7 @@
   {% endif %}
 
   {% if ident.regles %}
-  <h3>Règles calibrées LABUSE (zone {{ ident.regles.zone or "—" }})</h3>
+  <h3>Règles du PLU (zone {{ ident.regles.zone or "—" }})</h3>
   <table class="donnees">
     <tr><th>Règle</th><th>Valeur</th></tr>
     {% if ident.regles.emprise_max_m2 %}
@@ -119,11 +119,11 @@
     {% endif %}
     {# M129-2 A/A.3 : hauteur du PLU CALIBRÉ, égout et faîtage nommés distinctement (source unique). #}
     {% if ident.regles.hauteur_egout_m %}
-    <tr><td>Hauteur d'égout (PLU calibré)</td>
+    <tr><td>Hauteur d'égout (PLU)</td>
         <td class="num-cell">{{ ident.regles.hauteur_egout_m | fr_dec }} m</td></tr>
     {% endif %}
     {% if ident.regles.hauteur_faitage_m %}
-    <tr><td>Hauteur au faîtage (PLU calibré)</td>
+    <tr><td>Hauteur au faîtage (PLU)</td>
         <td class="num-cell">{{ ident.regles.hauteur_faitage_m | fr_dec }} m</td></tr>
     {% endif %}
     {# PLU-EXCEPTIONS-1 — exceptions au règlement sous la règle, en note (verbatim + article/page).
@@ -135,7 +135,7 @@
     {# M129-2 D : « Confiance du calibrage » (indice interne) RETIRÉE — aucun exportable ne porte
        d'indice de complétude / score / verdict. #}
   </table>
-  <p class="note">Règles issues du calibrage fin des règlements PLU par LABUSE.
+  <p class="note">Règles lues dans le règlement du PLU de la commune.
      Les règles complètes du règlement (retraits, prospects, servitudes) peuvent
      modifier ces valeurs.</p>
   {% endif %}
@@ -208,12 +208,20 @@
   <p class="note avert"><strong>⚠ Ouverture à l'urbanisation non vérifiée</strong> — {{ c.au_statut.motif }}
      Le potentiel ci-dessous est <strong>conditionné</strong> à cette ouverture : il ne se lit pas comme un droit acquis.</p>
   {% endif %}
-  <div class="cartouche"><div class="titre">Surface vendable — scénario retenu</div>
+  {# DOCS-1 (décision Vic) — SDP maximale réglementaire + Surface vendable = les MÊMES valeurs que le
+     Dossier (bloc potentiel_transformation, point unique). Vendable « non calculable » quand la
+     capacité bâti-conservé est nulle — jamais un « scénario table rase » de 118 m² qui divergeait. #}
+  {% if c.faisa.sdp_max_m2 is not none %}
+  <div class="cartouche"><div class="titre">SDP maximale réglementaire, terrain</div>
+    <div class="valeur">{{ c.faisa.sdp_max_m2 }} <small>m²</small></div></div>
+  {% endif %}
+  <div class="cartouche"><div class="titre">Surface vendable</div>
+    {% if c.faisa.vendable_m2 is not none %}
     <div class="valeur">{{ c.faisa.vendable_m2 }} <small>m² · plancher (SDP) ~{{ c.faisa.plancher_m2 }} m² = vendable ÷ rendement {{ c.faisa.rendement_pct }}&nbsp;%</small></div>
-    {# LOGEMENTS-SOURCE-UNIQUE — plus de fourchette de logements de l'ancien calcul de capacité :
-       renvoi de la fiche (le nombre vit dans l'Étude de faisabilité) + mention « maximum
-       réglementaire » (volet D). La phrase silo (des m² vendables, pas des logements) reste. #}
-    <div class="note-sdp">Nombre de logements : {{ c.faisa.logements_renvoi }}.{% if c.faisa.vendable_silo_m2 and c.faisa.vendable_silo_m2 > c.faisa.vendable_m2 %} Un stationnement en ouvrage (sous-sol/silo) porterait le vendable à ~{{ c.faisa.vendable_silo_m2 }} m², au prix d'un coût de place enterrée non estimé ici.{% endif %}</div>
+    {% else %}
+    <div class="valeur"><small>non calculable (capacité nulle)</small></div>
+    {% endif %}
+    <div class="note-sdp">Nombre de logements : {{ c.faisa.logements_renvoi }}.{% if c.faisa.vendable_m2 is not none and c.faisa.vendable_silo_m2 and c.faisa.vendable_silo_m2 > c.faisa.vendable_m2 %} Un stationnement en ouvrage (sous-sol/silo) porterait le vendable à ~{{ c.faisa.vendable_silo_m2 }} m², au prix d'un coût de place enterrée non estimé ici.{% endif %}</div>
     {% if c.faisa.capacite_mention %}
     <div class="note-sdp">Surfaces : {{ c.faisa.capacite_mention }}.</div>
     {% endif %}

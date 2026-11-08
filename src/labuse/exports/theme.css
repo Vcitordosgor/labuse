@@ -231,6 +231,9 @@ dl.gloss dd { margin: 0 0 6pt; color: var(--muted); }
 @page paysage { size: A4 landscape; }
 .paysage { page: paysage; }
 /* Comparatif — parcelles en COLONNES (les lignes de Comparer). */
+/* DOCS-1 (décision Vic) — le titre + le tableau du Comparatif forment UN bloc qui ne se coupe pas :
+   s'il ne tient pas entier sous la carte de situation en page 1, l'ensemble commence en page 2. */
+.cmp-bloc { page-break-inside: avoid; break-inside: avoid; }
 table.cmp { width: 100%; border-collapse: collapse; font-size: 9pt; margin: 6pt 0 10pt; }
 table.cmp th, table.cmp td { padding: 4.5pt 8pt; border-bottom: 1px solid var(--line); vertical-align: top; text-align: left; }
 table.cmp thead th { font-weight: 700; font-size: 9.5pt; border-bottom: 1.5px solid var(--ink); }

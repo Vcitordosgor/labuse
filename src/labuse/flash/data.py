@@ -264,9 +264,25 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
                 if _run and _run.get("date"):  # DOCS-1 — date du run arrêté en jj/mm/aaaa, jamais l'ISO
                     _d = str(_run["date"])
                     _run = {**_run, "date": f"{_d[8:10]}/{_d[5:7]}/{_d[0:4]}" if len(_d) >= 10 else _d}
+                # DOCS-1 (décision Vic) — SDP maximale réglementaire ET surface vendable = les MÊMES
+                # valeurs que la fiche/Dossier : on lit le MÊME bloc (_potentiel_transformation_block,
+                # point unique) au lieu de re-dériver un « vendable » de la fourchette (qui divergeait —
+                # 118 m² « table rase » vs le « non calculable » de la fiche quand la capacité
+                # bâti-conservé est nulle). sdp_max = calcul.sdp_max_m2 (= Dossier § SDP maximale).
+                _pt = {}
+                try:
+                    from ..api.app import _potentiel_transformation_block
+                    _cm = db.execute(text("SELECT commune FROM parcels WHERE idu = :i"),
+                                     {"i": idu}).scalar()
+                    _pt = _potentiel_transformation_block(db, idu, _cm) or {}
+                except Exception as exc:  # noqa: BLE001
+                    log.warning("potentiel_transformation Flash %s : %s", idu, exc)
+                _vend_fiche = _pt.get("surface_vendable_m2")
+                _sdp_max = (_pt.get("calcul") or {}).get("sdp_max_m2") or _pt.get("surface_plancher_m2")
                 out["faisa"] = {
-                    "vendable_m2": int(vend),
-                    "plancher_m2": round(vend / rend),
+                    "vendable_m2": int(_vend_fiche) if _vend_fiche is not None else None,
+                    "sdp_max_m2": int(_sdp_max) if _sdp_max is not None else None,
+                    "plancher_m2": round(_vend_fiche / rend) if _vend_fiche else None,
                     "rendement_pct": round(rend * 100),
                     "logements_renvoi": RENVOI_ETUDE,
                     "capacite_mention": MENTION_COURTE,
@@ -746,8 +762,8 @@ def _aper(db: Session, idu: str, avail: set[str]) -> dict | None:
 _SECTION_SOURCES: list[tuple[str, str, str | None, str | None]] = [
     ("identite", "Cadastre Etalab (DGFiP)", "Cadastre Etalab (bulk DGFiP/Etalab)", None),
     ("identite", "PLU / GPU (API Carto, IGN)", "Urbanisme PLU/GPU (API Carto)", None),
-    ("identite", "Droits résiduels — calibrage LABUSE sur règlements PLU", None,
-     "calibrage continu 2026"),
+    ("identite", "Droits résiduels — analyse LABUSE des règlements PLU", None,
+     "analyse continue 2026"),
     ("risques", "Géorisques (BRGM / MTE)", "Géorisques", None),
     ("risques", "Géorisques — sites et sols pollués", "Géorisques — sites et sols pollués", None),
     ("risques", "Géorisques — cavités souterraines", "Géorisques — cavités souterraines", None),

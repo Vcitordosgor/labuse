@@ -143,7 +143,10 @@ def contributions(sig: dict[str, Any]) -> list[dict[str, Any]]:
     if p:
         recent = sig.get("c100_recent", 0) or 0
         acheve = sig.get("c100_acheve", 0) or 0
-        det = f"{c100} permis autorisé(s) < 100 m"
+        # DOCS-1 (décision Vic) — le faisceau de VIABILISATION compte les permis à moins de 100 m sur
+        # TOUTE la période (un permis ancien prouve autant la présence des réseaux) : on NOMME cette
+        # fenêtre, pour ne jamais la confondre avec le « permis (< 100 m, N mois) » daté du marché.
+        det = f"{c100} permis autorisé(s) à moins de 100 m (toute période)"
         extra = []
         if recent:
             extra.append(f"{recent} depuis {ANNEE_RECENTE} (secteur en développement actif)")

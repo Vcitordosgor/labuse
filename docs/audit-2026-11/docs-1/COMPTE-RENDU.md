@@ -169,6 +169,42 @@ Le **Gabarit** sur une parcelle **zone N** rend désormais un **document de refu
 
 ---
 
+## 9. 3ᵉ passe — « la V3 contenait encore ces défauts »
+
+Le banc est étendu à **3 faits de plus** du Flash (marge de surélévation, surface vendable, permis à
+moins de 100 m) et le Flash passe par **le même lecteur que la fiche**.
+
+| Défaut | Correctif (à la source) |
+|---|---|
+| **Flash — marge de surélévation** « ~2,6 m » vs fiche « −3,3 m » | `faisabilite.potentiel.bloc_potentiel` applique l'override LiDAR mesuré (comme la fiche) : la marge peut être NÉGATIVE (le bâti dépasse déjà) — plus la marge bornée à 0 du bâti BD TOPO. |
+| **Flash — SDP max & surface vendable** divergentes | le Flash lit le **même bloc** `_potentiel_transformation_block` que le Dossier : SDP maximale réglementaire (212 m²) et surface vendable « non calculable » quand la capacité bâti-conservé est nulle (plus un « 118 m² » table-rase). |
+| **Flash — « calibré / calibrage »** | retiré du gabarit de rapport (« Règles du PLU », « Hauteur d'égout (PLU) »…) et du tableau des sources. |
+| **Flash — codes bruts** (`MOUVEMENTS_DE_TERRAIN`, `tres_fort`, `zone_transition`) | en clair : `phase1` (pente), `bloc_potentiel` (cause), `nettoyer_libelle_client` (lignes de cascade déjà stockées). |
+| **Flash — format** `-0.3 %`, `3169 €`, `1234 ventes` | passe de sortie : signe moins « − », virgule décimale, séparateur de milliers (devant une unité) ; `marche_bloc` groupe les effectifs. |
+| **Permis à moins de 100 m** : viabilisation « 5 » vs marché « 0 (36 mois) » | le faisceau de viabilisation NOMME sa fenêtre (« toute période ») ; le banc ne confronte que la ligne datée du marché (même fenêtre). |
+| **Étude de zone** : tuile blanche en haut à gauche | le fond no-data se recolore de la teinte moyenne de la mosaïque (`plan_ortho`) — il se fond, plus de carré blanc. |
+| **Gabarit 3D** : légendes superposées, enveloppe = zone entière | légendes EMPILÉES (bande portée à 70 px) ; enveloppe RÉELLEMENT réduite au plafond d'emprise (érosion → socle compact, `_emprise_env`). |
+| **Comparatif** : tableau coupé sous la carte | titre + tableau forment un bloc `.cmp-bloc` insécable → page 2 s'ils ne tiennent pas sous la carte. |
+| **Bilan** : « TA parking », « 0 € » | « Taxe d'aménagement — parking extérieurs… » ; tout montant nul → « — » (`_eur_nz`, ratios, totaux, TVA). |
+| **Gabarit refus** : « donnée manquante » | la VRAIE raison (`potentiel_batir.motif` : « Zone non constructible (N) », « zone rouge du PPR »…). |
+| **Étude** : 400 sur « aucun scénario » | **document de refus propre** (`_etude_refus_pdf`) avec la raison (zone N, « zone trop étroite »…), comme le Gabarit. |
+
+**Captures avant/après** (regardées) : `docs/audit-2026-11/docs-1/captures-v4/` (Gabarit 3D, Comparatif,
+Étude de zone, Bilan).
+
+**Témoin zone U ∩ PPR rouge** (`97415000CY0275`) : le Gabarit s'y dessine (rouge déduit), le Dossier /
+Estimer / Flash / Bilan / Courrier aussi ; l'**Étude y refuse honnêtement** (« zone trop étroite »).
+Aucune parcelle zone U intersectée par une zone rouge de PPR de la base locale ne porte un scénario
+d'implantation (toutes trop contraintes) — documenté, pas masqué.
+
+| Recette (3ᵉ passe) | Résultat |
+|---|---|
+| **Banc élargi** (13 témoins + marge surélévation / surface vendable / permis < 100 m) | **0 écart** |
+| **Régénération V4** (`~/Desktop/LABUSE-EXPORTS-2026-11-07-V4/`) | `scripts/docs1_regen_v4.py` |
+| Hook (unitaires) | **vert — 2953 passed** |
+
+---
+
 *DOCS-1 — base locale, prod jamais touchée. Banc : `scripts/coherence/documents_banc.py` ;
-régénération : `scripts/docs1_regen_v2.py` (V2) et `scripts/docs1_regen_v3.py` (V3). Branche
+régénération : `scripts/docs1_regen_v2.py` (V2), `_v3.py` (V3), `_v4.py` (V4). Branche
 `fix/docs-1`, non mergée.*

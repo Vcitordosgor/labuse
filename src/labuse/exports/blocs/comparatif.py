@@ -208,5 +208,8 @@ def rendu(rows) -> str:
     # RECETTE-OUTILS-2 (R18) — la note de bas de page « Maximum réglementaire (gabarit) … (0,46 en
     # surface, 0,40 en logements) » est RETIRÉE du Comparatif PDF, pour être identique à l'outil où elle
     # a déjà été retirée (décision Vic). Le plafond réglementaire reste dit par la fiche / l'Étude.
+    # DOCS-1 (décision Vic) — titre + tableau forment UN bloc qui ne se coupe pas : s'il ne tient pas
+    # sous la carte en page 1, l'ensemble (jamais le titre seul) passe en page 2 (`.cmp-bloc`).
     corps = f'<table class="cmp"><thead>{thead}</thead><tbody>{body}</tbody></table>'
-    return _virgule_sortie(section("Comparatif", corps))
+    bloc = f'<section class="cmp-bloc"><h2>Comparatif</h2>{corps}</section>'
+    return _virgule_sortie(bloc)

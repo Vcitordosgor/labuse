@@ -145,6 +145,31 @@ def _date_donnees(t):
     return m.group(1) if m else None
 
 
+def _marge_surelevation(t):
+    # La marge de surélévation (sous la hauteur de zone) — « Marge de surélévation (…) −3,3 m »
+    # (Dossier) / « marge en hauteur ~−3,3 m » (Flash). Un fait = une valeur, la fiche fait foi.
+    m = re.search(r"(?:Marge de surélévation|marge en hauteur)[^\n]*?[~]?\s*([−-]?\d+(?:[,.]\d+)?)" + _SP + r"*m\b", t)
+    if not m:
+        return None
+    return _num(m.group(1).replace("−", "-"))
+
+
+def _surface_vendable(t):
+    # La surface vendable servie — un nombre (« 118 m² ») OU « non calculable » (capacité nulle).
+    if re.search(r"[Ss]urface vendable[^\n]*?non calculable|vendable non calculable", t):
+        return "non_calculable"
+    m = re.search(r"[Ss]urface vendable\D{0,30}?(\d[\d\s  ]*)" + _SP + r"*m²", t)
+    return _num(m.group(1)) if m else None
+
+
+def _permis_100m(t):
+    # Le permis à moins de 100 m AVEC SA FENÊTRE DATÉE (« < 100 m, N mois ») — la ligne du marché, seule
+    # autorité « même fenêtre, même valeur » entre documents. Le faisceau de viabilisation, lui, compte
+    # sur TOUTE la période (métrique distincte, nommée « toute période ») : on ne le confronte pas.
+    m = re.search(r"(\d+)" + _SP + r"*permis[^\n]{0,20}?<?" + _SP + r"*100" + _SP + r"*m,?" + _SP + r"*\d+" + _SP + r"*mois", t)
+    return m.group(1) if m else None
+
+
 def _date_ppr(t):
     """La DATE du PPR : l'ANNÉE d'APPROBATION du PPR qui s'applique (« approuvé le JJ/MM/AAAA »,
     « PPR … (AAAA) »). Un document qui en montre deux, ou deux documents qui divergent = écart.
@@ -173,6 +198,9 @@ FAITS = {
     "servitude_sup": _servitude_sup,
     "date_donnees": _date_donnees,
     "date_ppr": _date_ppr,
+    "marge_surelevation_m": _marge_surelevation,
+    "surface_vendable": _surface_vendable,
+    "permis_100m": _permis_100m,
 }
 
 

@@ -2423,6 +2423,42 @@ def _archiver_etude(db: Session, request: Request, body: dict, payload: dict,
         logging.getLogger("labuse").exception("étude de faisabilité : archivage documents_generes impossible")
 
 
+def _etude_refus_pdf(db: Session, idus: list, msg: str) -> Response:
+    """DOCS-1 (décision Vic) — document de REFUS de l'Étude : le moteur d'implantation n'a trouvé aucun
+    scénario. Rendu propre (même habillage que les documents servis), jamais une 400. Motif = la VRAIE
+    raison (zone N, PPR rouge…) quand `potentiel_batir` la connaît, sinon « aucune implantation »."""
+    from ..exports.rendu import Cartouche, esc, page_html, render_pdf
+    idu = (idus[0] if idus else "") or ""
+    raison = None
+    try:
+        from ..faisabilite.potentiel_batir import POTENTIEL_ABSENT, potentiel_batir
+        pb = potentiel_batir(db, idu)
+        if pb is not POTENTIEL_ABSENT and pb.get("constructible") is False and pb.get("motif"):
+            raison = pb["motif"]                     # « Zone non constructible (N) », etc.
+    except Exception:  # noqa: BLE001
+        pass
+    # À défaut d'une inconstructibilité de zone, la VRAIE raison du moteur (« zone trop étroite,
+    # reculs… ») est portée par le message — jamais un « donnée manquante » générique.
+    if not raison and msg and "aucun scénario" not in msg.lower():
+        raison = msg.rstrip(". ")
+    corps = (
+        '<section><h2>Étude de faisabilité</h2>'
+        "<div class=\"verdict\">Aucun scénario d'implantation n'a pu être établi sur cette parcelle"
+        + (f" : {esc(raison)}" if raison else "") + ".</div>"
+        "<p class=\"note\">L'Étude de faisabilité dessine un projet (plan masse, logements, "
+        "stationnement) sur une parcelle constructible. Quand la parcelle est inconstructible (zone "
+        "naturelle N, zone rouge d'un plan de prévention des risques…) ou que sa géométrie ne permet "
+        "aucune implantation réglementaire, il n'y a pas de projet à dessiner : le document le dit. "
+        "Les contraintes et le zonage détaillés figurent au Dossier de la parcelle.</p></section>")
+    cart = Cartouche(doc_title=f"LABUSE — Étude de faisabilité · {idu}", doc_ref=idu,
+                     doc_foot="Étude de faisabilité · pré-faisabilité, non contractuel.")
+    pdf = render_pdf(page_html("Étude de faisabilité", cart, corps))
+    return Response(pdf, media_type="application/pdf",
+                    headers={"Content-Disposition": 'inline; filename="etude-faisabilite.pdf"',
+                             "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+                             "Pragma": "no-cache"})
+
+
 @router.post("/etude/pdf")
 def etude_pdf(body: EtudePdfIn, request: Request, db: Session = Depends(get_db)) -> Response:
     """IMPLANTATION-3 — le document « Étude de faisabilité » (PDF 8 pages). UN SEUL calcul : on sert le
@@ -2446,8 +2482,10 @@ def etude_pdf(body: EtudePdfIn, request: Request, db: Session = Depends(get_db))
         # « relancez » (jamais un 504 ni un onglet figé), le processus est tué, rien ne reste en fond.
         res = _dans_processus(_worker_etude_pdf, (data, idus, scenario_ref, genere_le))
     except ValueError as exc:
-        # aucun scénario (ou entrée refusée) : le document n'a rien à montrer (400, jamais un PDF vide).
-        raise HTTPException(400, str(exc))
+        # DOCS-1 (décision Vic) — aucun scénario d'implantation : l'Étude rend un DOCUMENT DE REFUS
+        # propre (comme le Gabarit), avec la VRAIE raison quand elle est connue (zone N, PPR rouge…),
+        # jamais une 400 qui laisse l'utilisateur devant une erreur.
+        return _etude_refus_pdf(db, idus, str(exc))
     except HTTPException:
         raise
     except Exception:  # noqa: BLE001 — échec de rendu WeasyPrint (remonté de l'enfant) : dit comme technique.

@@ -59,20 +59,29 @@ def _fr_dec(v, n: int = 1) -> str:
 
 _env.filters["fr_dec"] = _fr_dec
 
-#: DOCS-1 (décision Vic) — un seul format de décimale : la virgule. On l'impose À LA SORTIE du rapport
-#: avec le MÊME motif que le banc des documents détecte (« \d.\d » suivi d'une unité m/€/%/m²), si bien
-#: qu'on ne retouche QUE ce qu'un document client ne doit pas porter — jamais un « 2.5mm » de CSS ni un
-#: data-uri (ni « % » détaché, que le motif ne prend pas). Couvre les décimales de prose (verdict de
-#: potentiel, tendance de marché…) sans traquer chaque producteur partagé.
-_RX_DEC_SORTIE = re.compile(r"\b(\d+)\.(\d+)([   ]*(?:m²|m|€|%))\b")
-#: DOCS-1 (décision Vic) — un seul format de DATE : jj/mm/aaaa. Toute date ISO (AAAA-MM-JJ) encore
-#: présente dans le rapport (millésime figé, date de source non convertie…) passe en jj/mm/aaaa à la
-#: sortie. (base64 des tuiles = sans tiret → jamais touché.)
+#: DOCS-1 (décision Vic) — UN SEUL format de nombre imposé à la SORTIE du rapport (le Flash agrège des
+#: prose et chiffres de producteurs variés). Chaque motif ne touche QUE ce qu'un document client ne doit
+#: pas porter, et rien d'autre (jamais un data-uri de tuile, une référence cadastrale ni une version) :
+#:   · décimale au point → virgule, UNIQUEMENT devant une unité (m/m²/€/%/°, ou « / ») ;
+#:   · signe « - » d'un nombre négatif (précédé d'une espace/paren/balise) → vrai signe moins « − » ;
+#:   · séparateur de milliers (espace) pour un entier de 4+ chiffres SUIVI d'une unité (m²/€/ventes…) —
+#:     la condition « suivi d'une unité » écarte années, codes INSEE et références (« BZ1065 ») ;
+#:   · date ISO (AAAA-MM-JJ) → jj/mm/aaaa.
+_RX_DEC_SORTIE = re.compile(r"(\d+)\.(\d+)(?=[   ]*(?:m²|m\b|€|%|°|/))")
+_RX_MOINS_SORTIE = re.compile(r"(?<=[\s(>])-(?=\d)")
+_RX_MILLE_SORTIE = re.compile(
+    r"(?<![\d.,])(\d{4,})(?=[   ]*(?:m²|€|ventes?|dossiers?|logements?|habitants?|ménages?|m\b|/m²|/an))")
 _RX_ISO_SORTIE = re.compile(r"\b(19|20)(\d{2})-(\d{2})-(\d{2})\b")
 
 
+def _grp_milliers(n: str) -> str:
+    return f"{int(n):,}".replace(",", " ")
+
+
 def _virgule_sortie(html: str) -> str:
-    html = _RX_DEC_SORTIE.sub(lambda m: f"{m.group(1)},{m.group(2)}{m.group(3)}", html)
+    html = _RX_MOINS_SORTIE.sub("−", html)
+    html = _RX_DEC_SORTIE.sub(lambda m: f"{m.group(1)},{m.group(2)}", html)
+    html = _RX_MILLE_SORTIE.sub(lambda m: _grp_milliers(m.group(1)), html)
     return _RX_ISO_SORTIE.sub(lambda m: f"{m.group(4)}/{m.group(3)}/{m.group(1)}{m.group(2)}", html)
 
 

@@ -180,7 +180,7 @@ def gabarit_pdf(idu: str, request: Request, db: Session = Depends(get_db)) -> Re
         # DOCS-1 (décision Vic) — sur une parcelle inconstructible (zone N/A fermée, habitat interdit,
         # zone rouge de PPR), le Gabarit rend un DOCUMENT de refus propre (comme l'Étude), JAMAIS un 422
         # qui laisse l'utilisateur devant une erreur : il n'y a pas d'enveloppe à dessiner, on le dit.
-        return _gabarit_refus_pdf(idu, exc.manques)
+        return _gabarit_refus_pdf(db, idu, exc.manques)
     except HTTPException:
         raise
     except Exception:  # noqa: BLE001
@@ -190,11 +190,22 @@ def gabarit_pdf(idu: str, request: Request, db: Session = Depends(get_db)) -> Re
     return _pdf_response(res, "gabarit")
 
 
-def _gabarit_refus_pdf(idu: str, manques: list) -> Response:
+def _gabarit_refus_pdf(db: Session, idu: str, manques: list) -> Response:
     """DOCS-1 (décision Vic) — document de REFUS du Gabarit : parcelle inconstructible, aucune
-    enveloppe à dessiner. Rendu propre (même habillage que les documents servis), jamais un 422."""
+    enveloppe à dessiner. Rendu propre (même habillage que les documents servis), jamais un 422.
+    Le motif est la VRAIE raison (« Zone non constructible (N) », « Zone rouge du PPR »…) lue au
+    producteur commun (`potentiel_batir`), jamais un « donnée manquante » générique quand la cause
+    réelle est connue."""
     from ..exports.rendu import Cartouche, esc, page_html, render_pdf
-    motif = (manques[0].get("libelle") if manques else None) or "Parcelle inconstructible"
+    motif = (manques[0].get("libelle") if manques else None)
+    try:
+        from ..faisabilite.potentiel_batir import POTENTIEL_ABSENT, potentiel_batir
+        pb = potentiel_batir(db, idu)
+        if pb is not POTENTIEL_ABSENT and pb.get("constructible") is False and pb.get("motif"):
+            motif = pb["motif"]                      # « Zone non constructible (N) », etc.
+    except Exception:  # noqa: BLE001 — la raison précise n'est jamais un bloqueur du document de refus
+        pass
+    motif = motif or "Parcelle inconstructible"
     cart = Cartouche(
         doc_title=f"LABUSE — Gabarit · {idu}",
         doc_ref=idu,

@@ -167,6 +167,24 @@ def bloc_potentiel(session: Session, parcel_id: int, fz=None) -> dict | None:
     # en hauteur — moteur commun (égout)
     rules = resolve_zone(ctx.zone, ctx.commune) if ctx.zone else None
     en_hauteur = surelevation(session, parcel_id, rules=rules, ctx=ctx)
+    # DOCS-1 (décision Vic) — MÊME lecteur que la fiche/Dossier : quand le LiDAR HD a mesuré l'égout et/
+    # ou le faîtage, la marge de surélévation est la MESURÉE (elle peut être NÉGATIVE — le bâti existant
+    # dépasse déjà la règle), jamais celle, bornée à 0, déduite du bâti BD TOPO. Même calcul que la fiche
+    # (app.py §surélévation → potentiel_transformation.hauteur_marge_m, lu par `marge_surelevation_m`).
+    try:
+        from .hauteur_lidar import hauteur_lidar_servie
+        _idu = session.execute(text("SELECT idu FROM parcels WHERE id = :p"),
+                               {"p": parcel_id}).scalar()
+        _lid = hauteur_lidar_servie(session, _idu) if _idu else None
+        if _lid and (_lid.get("egout_m") is not None or _lid.get("faitage_m") is not None):
+            _sm = surelevation_mesuree(en_hauteur.get("he_regle_m"), en_hauteur.get("hf_regle_m"),
+                                       _lid.get("egout_m"), _lid.get("faitage_m"))
+            if _sm:
+                en_hauteur = {**en_hauteur, "marge_m": _sm["marge_m"], "possible": _sm["possible"],
+                              "base": f"{_sm['contrainte']} mesuré (LiDAR HD)",
+                              "mesure_m": _sm["mesure_m"], "regle_m": _sm["regle_m"]}
+    except Exception:  # noqa: BLE001 — LiDAR indisponible (dev/test) : on garde la marge BD TOPO
+        pass
     # table rase — le scénario du moteur commun
     f = fz[1] if fz else None
     fo = (f.fourchette or {}) if f else {}
@@ -193,7 +211,14 @@ def bloc_potentiel(session: Session, parcel_id: int, fz=None) -> dict | None:
         morceaux.append(f"en table rase : ~{round(table_rase['vendable_m2'])} m² "
                         f"vendables ({table_rase['mention']})")
     elif f is not None and not table_rase["constructible"]:
-        morceaux.append(f"table rase non constructible ({f.cause or 'règles de zone'})")
+        # DOCS-1 (décision Vic) — jamais un code brut (« zone_transition ») dans un document client.
+        _cause_clair = {
+            "zone_transition": "zone de transition, fermée à l'urbanisation",
+            "habitat_interdit": "habitat interdit par le règlement de la zone",
+            "ppr_rouge": "zone rouge du PPR",
+            "emprise_pleine": "emprise déjà saturée",
+        }.get(f.cause, str(f.cause).replace("_", " ") if f.cause else "règles de zone")
+        morceaux.append(f"table rase non constructible ({_cause_clair})")
     if not morceaux:
         # rien d'évaluable (base vide, zone non résolue) : section OMISE — jamais un bloc creux
         return None

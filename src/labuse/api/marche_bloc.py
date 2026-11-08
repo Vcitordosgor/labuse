@@ -31,15 +31,15 @@ def phrase_ligne(lg: dict) -> str | None:
     if cle == "tendance_12m":
         # EXPORTS-1 (1.6) : « n 218/583 » n'était expliqué nulle part — les deux effectifs sont dits.
         return (f"Tendance {v['sens']} {v['delta_pct']:+.1f} % sur 12 mois "
-                f"({_grp(v['median_12m'])} vs {_grp(v['median_prec'])} €/m² — {v['n12']} ventes "
-                f"sur 12 mois, {v['nprev']} sur les 12 mois précédents){d}")
+                f"({_grp(v['median_12m'])} vs {_grp(v['median_prec'])} €/m² — {_grp(v['n12'])} ventes "
+                f"sur 12 mois, {_grp(v['nprev'])} sur les 12 mois précédents){d}")
     if cle == "liquidite":
         dl = v.get("delta_pct_an")
         dtxt = f", {dl:+d} % vs an−1" if dl is not None else ""
-        return f"Liquidité {v['mutations_dernier_trim']} ventes au dernier trimestre{dtxt}{d}"
+        return f"Liquidité {_grp(v['mutations_dernier_trim'])} ventes au dernier trimestre{dtxt}{d}"
     if cle == "offre_engagee":
-        return (f"Offre engagée {v['logements_12m']} logements autorisés / 12 mois "
-                f"({v['permis_12m']} permis){d}")
+        return (f"Offre engagée {_grp(v['logements_12m'])} logements autorisés / 12 mois "
+                f"({_grp(v['permis_12m'])} permis){d}")
     if cle == "gisement_constructible":
         return f"Gisement {_grp(v['sdp_residuelle_m2'])} m² SDP résiduelle sur {_grp(v['parcelles'])} parcelles servables{d}"
     if cle == "loyer_median":
