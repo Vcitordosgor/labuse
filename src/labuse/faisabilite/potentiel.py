@@ -208,10 +208,14 @@ def bloc_potentiel(session: Session, parcel_id: int, fz=None) -> dict | None:
     # DÉPASSE déjà la hauteur autorisée ; on le dit en clair.
     if en_hauteur.get("marge_m") is not None and en_hauteur.get("base"):
         _mg = float(en_hauteur["marge_m"])
+        # DOCS-1 (décision Vic) — UNE décimale, virgule française : MÊME format que la ligne « Marge de
+        # surélévation » du Dossier (« 11,0 m ») ; le `:g` d'avant servait « 11 » et divergeait d'« 11,0 »
+        # sur les marges entières (un fait = une valeur = un format).
+        _mg_fr = f"{abs(_mg):.1f}".replace(".", ",")
         if _mg < 0:
-            morceaux.append(f"le bâti existant dépasse la hauteur autorisée de {abs(_mg):g} m")
+            morceaux.append(f"le bâti existant dépasse la hauteur autorisée de {_mg_fr} m")
         else:
-            morceaux.append(f"marge en hauteur ~{_mg:g} m sous la hauteur {en_hauteur['base']}")
+            morceaux.append(f"marge en hauteur ~{_mg_fr} m sous la hauteur {en_hauteur['base']}")
     if table_rase["constructible"] and table_rase["vendable_m2"]:
         morceaux.append(f"en table rase : ~{round(table_rase['vendable_m2'])} m² "
                         f"vendables ({table_rase['mention']})")

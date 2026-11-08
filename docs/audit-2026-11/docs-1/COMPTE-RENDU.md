@@ -219,8 +219,39 @@ indépendant du PPR. **Rien corrigé** (hors mandat de cette passe).
 | **Régénération V4** (`~/Desktop/LABUSE-EXPORTS-2026-11-07-V4/`) | `scripts/docs1_regen_v4.py` |
 | Hook (unitaires) | **vert — 2953 passed** |
 
+## 10. Correction du défaut moteur + V5 — « jamais “zone trop étroite” sur une parcelle qui ne l'est pas »
+
+Le défaut PROUVÉ au §9 (faux « simulation impossible / zone trop étroite » sur une grande assiette, par
+manque de temps de la recherche, pas par géométrie) est **corrigé à la source** dans
+`implantation/moteur.py`, sans toucher au chemin qui marche (zéro régression).
+
+**Principe.** La recherche « objectif » (meilleure emprise d'abord) tourne **inchangée** en 1ᵉʳ passage :
+une parcelle qui réussissait garde son scénario au chiffre près. Le correctif n'ajoute un comportement
+que **lorsqu'elle échoue par le temps**.
+
+| Levier (décision Vic) | Mise en œuvre |
+|---|---|
+| **Grille ordonnée « faisable-probable d'abord »** | nouveau paramètre `ordre` de `_rechercher` : en repli, les fractions d'emprise sont triées **croissantes** (petite emprise d'abord — la plus susceptible de tenir reculs + stationnement). Le classement FINAL reste par objectif (on garde le meilleur faisable trouvé). Early-stop dès **3 faisables** : on cherche à PROUVER qu'une implantation tient, pas à tout énumérer → temps borné. |
+| **Budget adaptatif à la taille** | `_budget_repli(terrain, restant)` : budget du 2ᵉ passage proportionné à l'assiette (≈ 9 + aire/2500, plafonné 15 s) **et** borné par le temps `restant` sous une **enveloppe de calcul globale** (`_ENVELOPPE_CALCUL_S = 40 s`). 1ᵉʳ + 2ᵉ passage + rendu tiennent ainsi SOUS la borne API (60 s) : plus de 57,9 s mesurés — **max 45,4 s**. |
+| **Pas de stationnement en sous-sol en repli** | le 2ᵉ passage reste en stationnement **aérien** : il ne change pas l'économie du projet (décision produit, pas une correction). |
+| **Libellé HONNÊTE** | `_message_impossible` : le critère n'est plus la TAILLE mais le fait que la recherche a été **bornée par le temps** (`grille_budget_atteint`). Dans ce cas → « **recherche non aboutie — une étude d'architecte est recommandée** ». Le « zone trop étroite / reculs / stationnement » n'est servi que lorsque la grille a été **épuisée** (impossibilité géométrique réelle). |
+| **Kill-switch** | `LABUSE_ETUDE_REPLI=0` désactive le repli (retour au comportement antérieur) — utile en prod et pour l'A/B de la recette. |
+
+Le repli est branché sur les **deux chemins servis** — `etudier_multi` (scénarios de la fiche/worker) et
+`etudier_complet` (payload de l'Étude). L'API historique `etudier()` (tests `reel`) est laissée telle quelle.
+
+| Recette (passe moteur) | Résultat |
+|---|---|
+| **Zéro régression** — 9 témoins qui portaient déjà un scénario | **9/9 identiques** au chiffre près (l'ordre « objectif » est inchangé ; une dérive apparente DH0076/AY0773 était du bruit de charge CPU — revenue au repère hors charge). |
+| **5 gros refus connus** (§9 : EL0318, AS0135, CX2818, BY0819, AK0012) | **2 récupèrent un scénario** (AS0135 40/barre/2, AK0012 42/barre/2), **3 passent au libellé honnête** « recherche non aboutie » (EL0318, CX2818, BY0819). |
+| **Échantillon représentatif** — 130 parcelles zone U, 3 000–12 000 m², tirage pseudo-aléatoire | **26 refusaient** sous l'ancien code (20 %). Désormais : **1 produit un scénario**, **20 au libellé honnête** « recherche non aboutie » (plus de faux « zone trop étroite »), **5 en impossibilité GÉOMÉTRIQUE réelle** (grille épuisée, budget NON atteint → message géométrique correct). Le gain principal sur cette tranche est la **sincérité du refus** ; la récupération est plus fréquente sur les grandes assiettes. |
+| **Temps de calcul maximal mesuré** | **45,4 s** (recette ciblée) / **39,3 s** (sweep) — toujours **sous la borne API 60 s** (enveloppe 40 s + marge de rendu), contre **57,9 s** avant l'enveloppe globale. |
+| **Témoin PPR** passe à `97415000DH0076` (zone U ∩ PPR rouge **avec** scénario) | banc + V5 |
+| **Banc des documents** (13 témoins, 130 documents) | **VERT — 0 écart** (le nouveau témoin DH0076 a révélé un dernier format : la marge de surélévation ENTIÈRE « 11,0 » (Dossier, §Règles) vs « 11 » (Flash) → `bloc_potentiel` ET la ligne de potentiel du Flash alignés sur UNE décimale française (`fr_dec_fixe`), comme le Dossier ; la marge négative « −3,3 » reste inchangée). |
+| **Régénération V5** (`~/Desktop/LABUSE-EXPORTS-2026-11-07-V5/`) | `scripts/docs1_regen_v5.py` — 45 documents, DH0076 Étude = **scénario d'implantation réel** (logement collectif, barre, hors zone rouge ; le nombre exact de logements dépend de la charge CPU au rendu, via le budget horloge), AB0133 Étude = refus motivé. |
+| Hook (unitaires) | **vert — 2953 passed, 50 skipped** (`make test-unit`) ; front inchangé (aucune modification `frontend/`). |
+
 ---
 
 *DOCS-1 — base locale, prod jamais touchée. Banc : `scripts/coherence/documents_banc.py` ;
-régénération : `scripts/docs1_regen_v2.py` (V2), `_v3.py` (V3), `_v4.py` (V4). Branche
-`fix/docs-1`, non mergée.*
+régénération : `scripts/docs1_regen_v2.py` (V2) … `_v5.py` (V5). Branche `fix/docs-1`, non mergée.*

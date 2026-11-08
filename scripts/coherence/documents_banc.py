@@ -38,9 +38,9 @@ RACINE = Path(__file__).resolve().parents[2]
 TEMOINS = [
     "97411000IN0347", "97411000IE0241", "97411000HC0139", "97424000AE0050",
     # DOCS-1 (décision Vic) — témoin PPR : une parcelle en ZONE U partiellement touchée par la zone
-    # ROUGE d'un PPR (97415000CY0275, ~29 % en interdiction) : le Gabarit s'y dessine EN déduisant le
-    # rouge (constructible), là où l'ancien témoin (AB0133, zone N) était inconstructible.
-    "97424000AM0893", "97415000CY0275", "97411000AO0753", "97411000EY0173",
+    # ROUGE d'un PPR (97415000DH0076, ~458 m² en interdiction) sur laquelle l'Étude PRODUIT un scénario
+    # (le Gabarit déduit le rouge). Remplace CY0275 (trop étroite pour une implantation).
+    "97424000AM0893", "97415000DH0076", "97411000AO0753", "97411000EY0173",
     "97417000BI0076", "97411000AB0785", "97411000HN0074", "97411000BZ1065",
     # Témoin ZONE N (AB0133) conservé : le Gabarit doit y rendre un DOCUMENT de refus propre, jamais 422.
     "97421000AB0133",

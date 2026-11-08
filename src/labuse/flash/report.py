@@ -57,7 +57,21 @@ def _fr_dec(v, n: int = 1) -> str:
     return s.replace(".", ",")
 
 
+def _fr_dec_fixe(v, n: int = 1) -> str:
+    """Comme `_fr_dec` mais SANS retirer les zéros de queue : « 11,0 » reste « 11,0 ». Réservé aux faits
+    qu'un AUTRE document imprime déjà à une décimale fixe (la marge de surélévation = « 11,0 m » du
+    Dossier) — un fait, une valeur, UN format (DOCS-1)."""
+    if v is None:
+        return "—"
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return str(v)
+    return f"{f:.{n}f}".replace(".", ",")
+
+
 _env.filters["fr_dec"] = _fr_dec
+_env.filters["fr_dec_fixe"] = _fr_dec_fixe
 
 #: DOCS-1 (décision Vic) — UN SEUL format de nombre imposé à la SORTIE du rapport (le Flash agrège des
 #: prose et chiffres de producteurs variés). Chaque motif ne touche QUE ce qu'un document client ne doit

@@ -241,7 +241,7 @@ def _charger(session, idus, zone, conv, avec_pente):
 
 
 def _rechercher(terrain, regles, conv, objectif, *, repartition=None, stationnement_mode="aerien",
-                niveaux_sous_sol=1):
+                niveaux_sous_sol=1, ordre="objectif", budget_override=None):
     """Parcourt la grille ORDONNÉE forme×niveaux×fraction et renvoie (ranked, candidats) :
     `ranked` = liste des candidats FAISABLES, triée par la clef d'objectif décroissante, chaque
     item = (clef, paquet, forme, niveaux, fraction). `candidats` = la trace complète.
@@ -250,11 +250,20 @@ def _rechercher(terrain, regles, conv, objectif, *, repartition=None, stationnem
     FAISA-REGLES-1 (D-003/E-057) — deux garde-fous pour qu'une GRANDE assiette rende un RÉSULTAT dans la
     borne au lieu d'un 503 : (1) grille de fractions GROSSIÈRE au-delà de `_SEUIL_GRANDE_M2` (moitié moins de
     candidats) ; (2) BUDGET DE TEMPS (`LABUSE_ETUDE_GRILLE_BUDGET_S`) — la grille étant ordonnée meilleur
-    d'abord, on garde le meilleur candidat FAISABLE trouvé à l'échéance. On le DIT (`terrain.grille_*`)."""
+    d'abord, on garde le meilleur candidat FAISABLE trouvé à l'échéance. On le DIT (`terrain.grille_*`).
+
+    DOCS-1 (décision Vic) — `ordre` :
+      · « objectif » (défaut, INCHANGÉ) : plus grosse emprise d'abord (meilleur objectif) ;
+      · « faisable_probable » : PETITE emprise d'abord (plus susceptible de tenir reculs + stationnement) —
+        garantit qu'une implantation faisable est TROUVÉE sur une grande assiette avant l'échéance, là où
+        l'ordre objectif épuisait le budget sur des configurations trop grosses qui échouaient. Le classement
+        FINAL reste par objectif (on garde le meilleur faisable trouvé). `budget_override` : budget adapté."""
     import os
     import time
     grande = (terrain.aire_zone_m2 or 0.0) > _SEUIL_GRANDE_M2
     fractions = _FRACTIONS_GROSSIERES if grande else _FRACTIONS
+    if ordre == "faisable_probable":
+        fractions = sorted(fractions)          # petite emprise d'abord → faisable trouvé tôt
     terrain.grille_reduite = grande
     # FAISA-REGLES-1 (D-003/E-057) — grande assiette : on SIMPLIFIE le contour de la zone d'implantation
     # (tolérance 0,5 m, négligeable sur > 1 ha) pour accélérer chaque dessin de bâtiment/stationnement, qui
@@ -273,10 +282,13 @@ def _rechercher(terrain, regles, conv, objectif, *, repartition=None, stationnem
     frame = Frame.depuis(terrain.zone_implantation)
     # budget par défaut 22 s : laisse une marge confortable sous la borne API (etude_timeout_s=60) pour le
     # chargement (LiDAR), l'assemblage du payload, les planches SVG et les enrichissements du worker.
-    try:
-        budget_s = float(os.environ.get("LABUSE_ETUDE_GRILLE_BUDGET_S", "22"))
-    except (TypeError, ValueError):
-        budget_s = 22.0
+    if budget_override is not None:
+        budget_s = float(budget_override)
+    else:
+        try:
+            budget_s = float(os.environ.get("LABUSE_ETUDE_GRILLE_BUDGET_S", "22"))
+        except (TypeError, ValueError):
+            budget_s = 22.0
     t0 = time.monotonic()
     candidats: list[Candidat] = []
     faisables: list = []
@@ -296,6 +308,12 @@ def _rechercher(terrain, regles, conv, objectif, *, repartition=None, stationnem
                     _scene, cap, _ctrl, _chk, _geo, statut = paquet
                     clef = _clef(objectif, statut, cap, niveaux, forme, fraction)
                     faisables.append((clef, paquet, forme, niveaux, fraction))
+                    # DOCS-1 (décision Vic) — en 2ᵉ passage « faisable-probable », on cherche à PROUVER
+                    # qu'une implantation TIENT (jamais un faux « impossible »), pas à maximiser : dès
+                    # quelques faisables trouvés, on s'arrête → temps borné SOUS le timeout API.
+                    if ordre == "faisable_probable" and len(faisables) >= 3:
+                        coupe = True
+                        break
                 # BUDGET DE TEMPS (garde-fou DUR) — on borne la recherche INCONDITIONNELLEMENT : passé le
                 # budget, on s'arrête et on rend le MEILLEUR candidat trouvé (ou « simulation impossible » si
                 # aucun). La recherche ne franchit JAMAIS la borne de l'API → plus de 503 (D-003/E-057).
@@ -304,6 +322,51 @@ def _rechercher(terrain, regles, conv, objectif, *, repartition=None, stationnem
                     terrain.grille_budget_atteint = True
                     break
     faisables.sort(key=lambda it: it[0], reverse=True)
+    return faisables, candidats
+
+
+# ENVELOPPE DE CALCUL GLOBALE (1ᵉʳ passage + repli), bornée bien SOUS le timeout API (etude_timeout_s=60) :
+# il reste ~20 s pour le chargement LiDAR, l'assemblage du payload et le rendu des planches. Sur un très gros
+# contour, une SEULE évaluation peut coûter ~10 s ; le repli ne démarre que s'il reste de la marge, et son
+# budget est plafonné par ce qui RESTE sous l'enveloppe — jamais un 2ᵉ budget plein qui empilerait les
+# dépassements et ferait franchir la borne (c'était la cause du 57,9 s mesuré).
+_ENVELOPPE_CALCUL_S = 40.0
+
+
+def _budget_repli(terrain, restant: float) -> float:
+    """Budget du 2ᵉ passage « faisable-probable », ADAPTÉ à la taille d'assiette MAIS plafonné par le temps
+    `restant` sous l'enveloppe globale. Le repli s'arrête de toute façon dès 3 faisables (early-stop) : ce
+    budget ne borne QUE les assiettes vraiment non récupérables, qu'on veut faire échouer VITE et proprement
+    (libellé honnête), sans empiler un 2ᵉ budget plein sur le 1er."""
+    aire = terrain.aire_zone_m2 or 0.0
+    vise = min(15.0, 9.0 + aire / 2500.0)
+    return max(4.0, min(vise, restant))
+
+
+def _rechercher_avec_repli(terrain, regles, conv, objectif, **kw):
+    """DOCS-1 (décision Vic) — corrige le FAUX « simulation impossible » sur les grandes assiettes. La
+    recherche objectif (INCHANGÉE) tourne d'abord : une parcelle qui réussit garde EXACTEMENT son scénario
+    (zéro régression). Si — et seulement si — elle épuise le budget SANS aucun faisable sur une assiette
+    NON étroite (le défaut : le budget manque pour atteindre les configurations qui tiennent), un 2ᵉ passage
+    « faisable-probable » (petite emprise d'abord, budget adapté à la taille) récupère l'implantation.
+    Le repli ne démarre QUE s'il reste assez de temps sous l'enveloppe globale (sinon la parcelle est trop
+    lourde pour tenir dans la borne : on rend le libellé honnête « recherche non aboutie »)."""
+    import os
+    import time
+    t0 = time.monotonic()
+    faisables, candidats = _rechercher(terrain, regles, conv, objectif, **kw)
+    restant = _ENVELOPPE_CALCUL_S - (time.monotonic() - t0)
+    repli_actif = os.environ.get("LABUSE_ETUDE_REPLI", "1") != "0"  # kill-switch (1 = actif, défaut)
+    # Le repli se déclenche sur le CRITÈRE DE TEMPS (budget atteint sans faisable), pas sur la taille :
+    # une assiette de 1 200 m² peut aussi être affamée par la grille fine. Seule garde : qu'il reste assez
+    # de marge sous l'enveloppe globale pour tenter le 2ᵉ passage sans franchir la borne API.
+    if (repli_actif and not faisables and getattr(terrain, "grille_budget_atteint", False)
+            and restant >= 4.0):
+        terrain.repli_faisable_probable = True
+        f2, c2 = _rechercher(terrain, regles, conv, objectif,
+                             ordre="faisable_probable", budget_override=_budget_repli(terrain, restant), **kw)
+        if f2:
+            faisables, candidats = f2, candidats + c2
     return faisables, candidats
 
 
@@ -357,7 +420,7 @@ def etudier_multi(session=None, *, idus: Optional[list[str]] = None, zone: Optio
     zi = terrain.zone_implantation
     if zi is None or zi.is_empty or terrain.aire_zone_m2 < 60:
         return [], _message_impossible(terrain, regles, [], conv), terrain, regles, conv
-    faisables, candidats = _rechercher(terrain, regles, conv, objectif, repartition=repartition)
+    faisables, candidats = _rechercher_avec_repli(terrain, regles, conv, objectif, repartition=repartition)
 
     if not faisables:
         return [], _message_impossible(terrain, regles, candidats, conv), terrain, regles, conv
@@ -551,9 +614,9 @@ def etudier_complet(session=None, *, idus: Optional[list[str]] = None, zone: Opt
         return ([], [], None,
                 _message_impossible(terrain, regles, [], conv, stationnement_mode),
                 terrain, regles, conv, None)
-    faisables, candidats = _rechercher(terrain, regles, conv, objectif, repartition=repartition,
-                                       stationnement_mode=stationnement_mode,
-                                       niveaux_sous_sol=niveaux_sous_sol)
+    faisables, candidats = _rechercher_avec_repli(terrain, regles, conv, objectif, repartition=repartition,
+                                                  stationnement_mode=stationnement_mode,
+                                                  niveaux_sous_sol=niveaux_sous_sol)
     if not faisables:
         return ([], [], None,
                 _message_impossible(terrain, regles, candidats, conv, stationnement_mode),
@@ -769,6 +832,15 @@ def _message_impossible(terrain, regles, candidats, conv=None, stationnement_mod
         if r.valeur + 1e-9 < h_rdc:
             return (f"simulation impossible : la hauteur réglementaire ({ctrl_mod._fr(r.valeur)} m {base}) "
                     f"n'autorise même pas un rez-de-chaussée ({ctrl_mod._fr(h_rdc)} m).")
+    # DOCS-1 (décision Vic) — JAMAIS « zone trop étroite » sur une parcelle qui ne l'est PAS. Le critère
+    # n'est PAS la taille mais le fait que la recherche a été bornée par le TEMPS (`grille_budget_atteint`) :
+    # on n'a alors PAS épuisé la grille, donc on ne SAIT pas que c'est géométriquement impossible. Même après
+    # le 2ᵉ passage faisable-probable, si rien n'est trouvé, on le dit honnêtement — c'est une limite de
+    # calcul, pas une impossibilité. Si le budget n'a PAS été atteint (grille épuisée), le message générique
+    # « zone trop étroite / reculs / stationnement » est, lui, HONNÊTE.
+    if getattr(terrain, "grille_budget_atteint", False):
+        return ("recherche non aboutie — aucune implantation réglementaire n'a été trouvée dans le temps "
+                "imparti sur cette assiette ; une étude d'architecte est recommandée.")
     return ("simulation impossible : aucune implantation ne passe tous les contrôles durs sur cette "
             f"assiette (zone trop étroite, reculs, ou stationnement {_statio} impossible).")
 

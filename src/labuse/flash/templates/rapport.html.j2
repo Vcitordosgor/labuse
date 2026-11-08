@@ -180,7 +180,7 @@
     {# DOCS-1 — base = « faîtage mesuré (LiDAR HD) » : pas de parenthèse EXTÉRIEURE (sinon « )) »). #}
     <tr><td>En hauteur — surélévation, hauteur {{ c.potentiel.en_hauteur.base or "—" }}</td>
         <td>{% if c.potentiel.en_hauteur.possible %}<span class="chip">envisageable —
-            marge ~{{ c.potentiel.en_hauteur.marge_m | fr_dec }} m</span>
+            marge ~{{ c.potentiel.en_hauteur.marge_m | fr_dec_fixe }} m</span>
             {% elif c.potentiel.en_hauteur.possible is false %}<span class="chip neutre">non envisageable</span>
             {% else %}<span class="chip neutre">non évaluable</span>{% endif %}</td></tr>
     <tr><td>Table rase ({{ c.potentiel.table_rase.mention }})</td>
