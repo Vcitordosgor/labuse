@@ -183,6 +183,8 @@ def controler_run(mesures: dict, *, palier_delta_max_pct: float) -> Verdict:
       · comptes_precedent   (int)  — n parcelles du run servi (doit être égal)
       · coherence_ecarts    (int)  — écarts de la suite de cohérence sur les témoins (doit être 0)
       · coherence_erreurs   (int)  — lecteurs en erreur (banc non probant si > 0)
+      · coherence_acheve    (bool) — le passage du banc est allé AU BOUT (OPS-3 A) ; None = non lu
+        (vieille base) → ancien comportement. False = échec (vérification sautée / passage partiel)
       · copro_actionnables  (int)  — copropriétés en palier actionnable (doit être 0 — doctrine E-010)
       · rouge_actionnables  (int)  — parcelles ENTIÈREMENT en zone rouge en palier actionnable (doit 0)
       · paliers_change      (int)  — parcelles changeant de palier vs run précédent
@@ -218,6 +220,15 @@ def controler_run(mesures: dict, *, palier_delta_max_pct: float) -> Verdict:
         v.en_attente.append("cohérence : le banc de 03h45 n'a pas encore produit de passage frais "
                             "pour cette nuit — verdict au prochain résumé")
     else:
+        # OPS-3 (A) — un passage FRAIS mais NON ACHEVÉ (banc2 indisponible, gardes toutes en SKIP,
+        # balayage illisible, banc interrompu) est un ÉCHEC, jamais un vert : on ne promeut pas sur un
+        # contrôle qui n'est pas allé au bout. `coherence_acheve` absent (None, vieille base) = on
+        # retombe sur l'ancien comportement (True) pour ne pas bloquer à tort une base pas migrée.
+        acheve = mesures.get("coherence_acheve")
+        if acheve is not None:
+            _exige(bool(acheve), "cohérence-achevée",
+                   "banc de cohérence NON achevé — "
+                   + (mesures.get("coherence_incomplet_motif") or "passage partiel / vérification sautée"))
         _exige(ec == 0 and (erl or 0) == 0, "cohérence",
                f"suite de cohérence non verte ({ec} écart(s), {erl} lecteur(s) en erreur)")
 

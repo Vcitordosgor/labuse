@@ -211,19 +211,31 @@ def run(ile: bool = False, en_process: bool = False) -> dict:
     print(f"banc de cohérence — {len(parcelles)} parcelles, {len(communes)} communes, "
           f"mode {'île' if ile else 'échantillon'}"
           f"{' · EN-PROCESS (TestClient, sans API publique)' if en_process else ''}")
-    passe_parcelles(ctx, ec, parcelles)
+    # OPS-3 (A) — on trace les phases ACHEVÉES : un passage qui n'atteint pas la dernière, ou qui
+    # part sur un échantillon VIDE (base/app inatteignable → rien à comparer), n'est PAS un vert.
+    phases: list[str] = []
+    if not parcelles:
+        chemin_csv = ec.ecrire()
+        print("échantillon VIDE — base/app inatteignable, aucune comparaison possible.")
+        return {"comparaisons": 0, "ecarts": 0, "par_gravite": {}, "fichier": str(chemin_csv),
+                "phases": phases, "acheve": False,
+                "incomplet_motif": "échantillon vide (aucune parcelle témoin chargée)"}
+    passe_parcelles(ctx, ec, parcelles); phases.append("parcelles")
     print(f"parcelles faites ({time.time()-t0:.0f}s) ; communes…")
-    passe_communes(ctx, ec, communes, ile=ile)
-    passe_croisements(ctx, ec, parcelles)
-    passe_determinisme(ctx, ec, parcelles, communes, refetch=refetch)
+    passe_communes(ctx, ec, communes, ile=ile); phases.append("communes")
+    passe_croisements(ctx, ec, parcelles); phases.append("croisements")
+    passe_determinisme(ctx, ec, parcelles, communes, refetch=refetch); phases.append("determinisme")
     chemin_csv = ec.ecrire()
     par_gravite: dict[str, int] = {}
     for l in ec.lignes:
         par_gravite[l["gravite"]] = par_gravite.get(l["gravite"], 0) + 1
     print(f"\n{ec.n_comparaisons} comparaisons · {len(ec.lignes)} écarts : {par_gravite}")
     print(f"→ {chemin_csv} ({time.time()-t0:.0f}s)")
+    acheve = len(phases) == 4
     return {"comparaisons": ec.n_comparaisons, "ecarts": len(ec.lignes),
-            "par_gravite": par_gravite, "fichier": str(chemin_csv)}
+            "par_gravite": par_gravite, "fichier": str(chemin_csv),
+            "phases": phases, "acheve": acheve,
+            "incomplet_motif": None if acheve else f"phases achevées : {', '.join(phases) or 'aucune'}"}
 
 
 def main() -> None:

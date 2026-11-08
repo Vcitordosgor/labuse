@@ -14,7 +14,9 @@ Sorties : preuves/<idu>/<doc>.{pdf,txt} + resultats.json
 from __future__ import annotations
 import json, os, re, subprocess, sys, datetime, urllib.request, urllib.parse, hashlib, zipfile, io
 
-BASE = os.environ.get("NU5_BASE", "http://127.0.0.1:9740")
+BASE = os.environ.get("NU5_BASE") or os.environ.get("BASE") or "http://127.0.0.1:9740"
+# OPS-3 (C) — session de RECETTE partagée par le runner `verite_permanente` (header Cookie).
+COOKIE = os.environ.get("LABUSE_HARNAIS_COOKIE")
 ROOT = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.abspath(os.path.join(ROOT, "..", "preuves"))
 os.makedirs(OUT, exist_ok=True)
@@ -69,8 +71,9 @@ MENTIONS = {
 
 def fetch(path, binary=True):
     url = BASE + path
+    req = urllib.request.Request(url, headers={"Cookie": COOKIE} if COOKIE else {})
     try:
-        with urllib.request.urlopen(url, timeout=120) as r:
+        with urllib.request.urlopen(req, timeout=120) as r:
             return r.status, r.headers.get("content-type", ""), r.read()
     except urllib.error.HTTPError as e:
         return e.code, e.headers.get("content-type", ""), e.read()

@@ -28,9 +28,28 @@ CREATE TABLE IF NOT EXISTS coherence_runs (
   tolerable integer NOT NULL,
   erreurs_lecteur integer NOT NULL DEFAULT 0,
   faux_client_cles jsonb NOT NULL DEFAULT '[]'::jsonb,
-  fichier text
+  fichier text,
+  -- OPS-3 (A) — le résultat NOMME le run contrôlé (`run_servi`) et dit s'il est allé au bout
+  -- (`acheve`). Un passage qui n'a pas achevé ses phases, ou qui a sauté une vérification (banc2
+  -- indisponible, gardes toutes en SKIP, balayage illisible…) porte `acheve = false` + le motif :
+  -- les contrôles de promotion, le résumé et les incidents le lisent comme un ÉCHEC, jamais un vert.
+  run_servi text,
+  acheve boolean NOT NULL DEFAULT true,
+  incomplet_motif text
 )
 """
+#: colonnes ajoutées par OPS-3 sur une table déjà créée (CREATE IF NOT EXISTS ne les pose pas).
+_MIGRATIONS = (
+    "ALTER TABLE coherence_runs ADD COLUMN IF NOT EXISTS run_servi text",
+    "ALTER TABLE coherence_runs ADD COLUMN IF NOT EXISTS acheve boolean NOT NULL DEFAULT true",
+    "ALTER TABLE coherence_runs ADD COLUMN IF NOT EXISTS incomplet_motif text",
+)
+
+
+def _assurer_schema(db) -> None:
+    db.execute(text(DDL))
+    for sql in _MIGRATIONS:
+        db.execute(text(sql))
 
 
 def lire_ecarts(fichier: Path | None = None) -> list[dict]:
@@ -41,11 +60,17 @@ def lire_ecarts(fichier: Path | None = None) -> list[dict]:
         return list(csv.DictReader(f))
 
 
-def journaliser_passage(db, mode: str, fichier: Path | None = None) -> dict:
+def journaliser_passage(db, mode: str, fichier: Path | None = None, *,
+                        run_servi: str | None = None, acheve: bool = True,
+                        incomplet_motif: str | None = None) -> dict:
     """Résume ECARTS.csv du jour dans `coherence_runs` + cloche au premier FAUX-CLIENT nouveau.
     Les lignes « erreur lecteur » (API indisponible/limitée) sont comptées À PART : un banc qui
-    n'a pas pu lire ne fabrique pas de faux écarts — il le dit."""
-    db.execute(text(DDL))
+    n'a pas pu lire ne fabrique pas de faux écarts — il le dit.
+
+    OPS-3 (A) — le passage NOMME le run contrôlé (`run_servi`) et déclare s'il est allé au bout
+    (`acheve` + `incomplet_motif`). Renvoie en plus `id` (pour `marquer_incomplet`), `run_servi`,
+    `acheve`, `incomplet_motif`."""
+    _assurer_schema(db)
     lignes = lire_ecarts(fichier)
     erreurs = [l for l in lignes if l.get("cause") == "erreur"]
     reels = [l for l in lignes if l.get("cause") != "erreur"]
@@ -57,12 +82,13 @@ def journaliser_passage(db, mode: str, fichier: Path | None = None) -> dict:
         "SELECT faux_client_cles FROM coherence_runs ORDER BY id DESC LIMIT 1")).scalar()
     connues = set(precedent or [])
     nouvelles = [c for c in cles_fc if c not in connues]
-    db.execute(text(
+    rid = db.execute(text(
         "INSERT INTO coherence_runs (mode, n_ecarts, faux_client, incoherent, tolerable,"
-        " erreurs_lecteur, faux_client_cles, fichier) "
-        "VALUES (:m, :n, :f, :i, :t, :e, CAST(:c AS jsonb), :fp)"),
+        " erreurs_lecteur, faux_client_cles, fichier, run_servi, acheve, incomplet_motif) "
+        "VALUES (:m, :n, :f, :i, :t, :e, CAST(:c AS jsonb), :fp, :rs, :ac, :im) RETURNING id"),
         {"m": mode, "n": len(reels), "f": len(fc), "i": len(inco), "t": len(tol),
-         "e": len(erreurs), "c": json.dumps(cles_fc), "fp": str(fichier or ECARTS_CSV)})
+         "e": len(erreurs), "c": json.dumps(cles_fc), "fp": str(fichier or ECARTS_CSV),
+         "rs": run_servi, "ac": bool(acheve), "im": incomplet_motif}).scalar()
     if nouvelles:
         try:
             from .api.events import creer_notification
@@ -76,16 +102,28 @@ def journaliser_passage(db, mode: str, fichier: Path | None = None) -> dict:
                 lien="/admin", dedup=f"coherence-fc:{len(nouvelles)}:{cles_fc[:1]}")
         except Exception:  # noqa: BLE001 — une cloche qui rate ne casse pas le passage
             pass
-    return {"mode": mode, "ecarts": len(reels), "faux_client": len(fc),
+    return {"id": int(rid), "mode": mode, "ecarts": len(reels), "faux_client": len(fc),
             "incoherent": len(inco), "tolerable": len(tol),
-            "erreurs_lecteur": len(erreurs), "faux_client_nouveaux": len(nouvelles)}
+            "erreurs_lecteur": len(erreurs), "faux_client_nouveaux": len(nouvelles),
+            "run_servi": run_servi, "acheve": bool(acheve), "incomplet_motif": incomplet_motif}
+
+
+def marquer_incomplet(db, run_id: int, motif: str) -> None:
+    """OPS-3 (A) — scelle un passage déjà journalisé comme NON ACHEVÉ (banc2 indisponible, gardes
+    toutes en SKIP, banc interrompu…). Le passage n'est plus lu comme un vert nulle part."""
+    _assurer_schema(db)
+    db.execute(text(
+        "UPDATE coherence_runs SET acheve = false, "
+        "incomplet_motif = COALESCE(NULLIF(incomplet_motif, ''), :m) WHERE id = :id"),
+        {"m": motif, "id": int(run_id)})
 
 
 def derniers_passages(db, n: int = 14) -> list[dict]:
     """Les N derniers passages (onglet Cohérence de la page Données)."""
-    db.execute(text(DDL))
+    _assurer_schema(db)
     rows = db.execute(text(
         "SELECT ts, mode, n_ecarts, faux_client, incoherent, tolerable, erreurs_lecteur,"
-        " faux_client_cles, fichier FROM coherence_runs ORDER BY id DESC LIMIT :n"),
+        " faux_client_cles, fichier, run_servi, acheve, incomplet_motif "
+        "FROM coherence_runs ORDER BY id DESC LIMIT :n"),
         {"n": n}).mappings().all()
     return [{**dict(r), "ts": r["ts"].isoformat()} for r in rows]

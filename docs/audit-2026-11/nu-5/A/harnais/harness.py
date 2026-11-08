@@ -20,6 +20,9 @@ import os, json, time
 import urllib.request, urllib.error, urllib.parse
 
 BASE = os.environ.get("BASE", "http://127.0.0.1:9730")
+# OPS-3 (C) — session de RECETTE partagée par le runner `verite_permanente` (header Cookie) : le
+# harnais tape l'app AUTHENTIFIÉ (plus d'instance auth-off). Vide en local auth-off : sans effet.
+COOKIE = os.environ.get("LABUSE_HARNAIS_COOKIE")
 OUT = "docs/audit-2026-11/nu-5/A/preuves"
 
 # ── Les 20 parcelles-pièges (figées depuis select_parcelles.py) ───────────────────────
@@ -36,6 +39,8 @@ def _req(method, path, body=None, timeout=90):
     url = BASE + path
     data = None
     headers = {"Accept": "application/json"}
+    if COOKIE:
+        headers["Cookie"] = COOKIE
     if body is not None:
         data = json.dumps(body).encode()
         headers["Content-Type"] = "application/json"
