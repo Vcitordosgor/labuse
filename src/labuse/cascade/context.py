@@ -60,6 +60,7 @@ class EvalContext:
         self._bodacc: dict[int, dict] = {}
         self._bodacc_sondage: dict[int, dict] = {}   # M70 déc. 3 (journal bodacc_sondages par parcelle)
         self._propension: dict[int, dict] = {}
+        self._sub_present: bool | None = None   # cache subdivisé présent ? (mémoïsé, cf. union_coverage)
 
     # ───────────────────────── batch (commune entière) ─────────────────────────
 
@@ -89,6 +90,16 @@ class EvalContext:
         # = géométrie entière ; écart 0,0 mesuré). Absent → repli sur le découpage à la volée
         # (comportement historique inchangé). La table est un cache dérivé de la géométrie STATIQUE
         # de spatial_layers ; la reconstruire si les couches changent (drop → ensure).
+        # RESTRICTION AUX KINDS LUS PAR LA CASCADE (fix/saint-leu-1) : `_inter` n'est consulté que
+        # par `intersections(pid, kind)`, et SEULS les kinds de `cascade_intersection_kinds` y sont
+        # demandés. Un kind présent en base mais jamais lu (batiment_cosia ~37 k pièces/Saint-Leu,
+        # piscine_cosia, construction_*, transport_*…) faisait pourtant une intersection par pièce ×
+        # parcelle — le COÛT DOMINANT en tissu dense (Saint-Leu ~1,3 parc/s, worker bloqué). On le
+        # coupe à la source (filtre kind dans le JOIN, AVANT ST_Intersection). Verdicts STRICTEMENT
+        # identiques (ces kinds n'étaient lus par aucune couche). `batiment` reste exclu de fait
+        # (absent du set). (Autres communes : même set, surcoût nul — elles n'ont pas ces kinds denses.)
+        from .cablage import cascade_intersection_kinds
+        kinds = sorted(cascade_intersection_kinds(self.rules))
         _has_sub = self.session.execute(
             text("SELECT to_regclass('spatial_layers_sub') IS NOT NULL")).scalar()
         if _has_sub:
@@ -98,7 +109,8 @@ class EvalContext:
                          / NULLIF(MAX(ST_Area(b.geom_2975)), 0) AS coverage,
                        ds.name AS source_name
                 FROM parcels b
-                JOIN spatial_layers_sub s ON b.geom_2975 && s.g AND ST_Intersects(b.geom_2975, s.g)
+                JOIN spatial_layers_sub s ON s.kind = ANY(:kinds)
+                                         AND b.geom_2975 && s.g AND ST_Intersects(b.geom_2975, s.g)
                 LEFT JOIN data_sources ds ON ds.id = s.data_source_id
                 WHERE b.id = ANY(:ids)
                 GROUP BY b.id, s.lid, s.kind, s.subtype, s.name, s.attrs, ds.name
@@ -116,12 +128,12 @@ class EvalContext:
                     SELECT sl.id AS lid, sl.kind, sl.subtype, sl.name, sl.attrs,
                            sl.data_source_id, ST_Subdivide(sl.geom_2975, 256) AS g
                     FROM spatial_layers sl, bbox
-                    WHERE sl.kind <> 'batiment' AND sl.geom_2975 && bbox.g AND ST_Dimension(sl.geom_2975) = 2
+                    WHERE sl.kind = ANY(:kinds) AND sl.geom_2975 && bbox.g AND ST_Dimension(sl.geom_2975) = 2
                     UNION ALL
                     SELECT sl.id AS lid, sl.kind, sl.subtype, sl.name, sl.attrs,
                            sl.data_source_id, sl.geom_2975 AS g
                     FROM spatial_layers sl, bbox
-                    WHERE sl.kind <> 'batiment' AND sl.geom_2975 && bbox.g AND ST_Dimension(sl.geom_2975) < 2
+                    WHERE sl.kind = ANY(:kinds) AND sl.geom_2975 && bbox.g AND ST_Dimension(sl.geom_2975) < 2
                 )
                 SELECT b.id AS pid, parts.lid AS lid, parts.kind, parts.subtype, parts.name, parts.attrs,
                        SUM(ST_Area(ST_Intersection(b.geom_2975, parts.g)))
@@ -132,7 +144,7 @@ class EvalContext:
                 LEFT JOIN data_sources ds ON ds.id = parts.data_source_id
                 GROUP BY b.id, parts.lid, parts.kind, parts.subtype, parts.name, parts.attrs, ds.name
                 """
-        for r in self.session.execute(text(inter_sql), {"ids": ids}).mappings().all():
+        for r in self.session.execute(text(inter_sql), {"ids": ids, "kinds": kinds}).mappings().all():
             self._inter.setdefault((r["pid"], r["kind"]), []).append(
                 Intersection(r["subtype"], r["name"], float(r["coverage"] or 0.0), r["attrs"] or {},
                              r["source_name"], id=r["lid"]))
@@ -364,30 +376,57 @@ class EvalContext:
             for r in rows
         ]
 
+    def _spatial_sub_present(self) -> bool:
+        """Le cache pré-subdivisé `spatial_layers_sub` (pièces ≤256 sommets + GiST sur `g`) est-il en
+        base ? Mémoïsé une fois par contexte (un seul `to_regclass`)."""
+        if self._sub_present is None:
+            self._sub_present = bool(self.session.execute(
+                text("SELECT to_regclass('spatial_layers_sub') IS NOT NULL")).scalar())
+        return self._sub_present
+
+    def _union_coverage(self, parcel_id: int, kind: str, filtre_sql: str, params: dict) -> tuple[float, float]:
+        """Couverture UNIONNÉE (fraction, m² 2975) de la parcelle par les entités `kind` filtrées par
+        `filtre_sql` (prédicat sur l'alias `z`). ST_Union AVANT le ratio (polygones superposés comptés
+        une seule fois). (0,0) si rien n'intersecte.
+
+        fix/saint-leu-1 — lit le CACHE SUBDIVISÉ `spatial_layers_sub` (pièces ≤256 sommets + GiST)
+        quand il existe : c'est la MÊME aire que la géométrie entière (la subdivision partitionne, Σ
+        pièces = polygone d'origine ; écart mesuré ~10⁻¹¹ relatif), mais ST_Intersection est ~180×
+        moins cher sur les polygones PPR/aléa massifs (jusqu'à ~221 906 sommets). Ce `ST_Union(
+        ST_Intersection(...))` PAR PARCELLE sur la géométrie BRUTE était le coût DOMINANT de la
+        cascade en tissu dense (Saint-Leu : ~87 % des parcelles multi-rouges × ~1,1 s/appel → worker
+        bloqué ~1,3 parc/s). Repli sur `spatial_layers` si le cache est absent (résultat identique)."""
+        if self._spatial_sub_present():
+            table, geom, bbox = "spatial_layers_sub z", "z.g", "p.geom_2975 && z.g AND "
+        else:
+            table, geom, bbox = "spatial_layers z", "z.geom_2975", ""
+        row = self.session.execute(
+            text(
+                f"""
+                SELECT ST_Area(ST_Union(ST_Intersection({geom}, p.geom_2975))),
+                       ST_Area(p.geom_2975)
+                FROM parcels p
+                JOIN {table} ON z.kind = :kind AND {filtre_sql}
+                  AND {bbox}ST_Intersects(p.geom_2975, {geom})
+                WHERE p.id = :pid
+                GROUP BY p.geom_2975
+                """
+            ),
+            {"kind": kind, "pid": parcel_id, **params},
+        ).first()
+        if not row or not row[1]:
+            return (0.0, 0.0)
+        area = float(row[0] or 0.0)
+        return (area / float(row[1]), area)
+
     def union_coverage(self, parcel_id: int, kind: str, subtypes) -> tuple[float, float]:
         """CHASSE-INVARIANTS-FIX-1 Lot 2 (E-03/E-11) — couverture UNIONNÉE (fraction, m² 2975) de la
         parcelle par les entités `kind` dont le subtype ∈ `subtypes` : ST_Union AVANT le ratio, donc
         des polygones de même nature qui se chevauchent/jointoient comptent une SEULE fois. MÊME
         formule que la fiche (api/servitudes.py `ST_Area(ST_Union(ST_Intersection(...)))`) — fiche et
         cascade s'accordent enfin sur le PPR rouge. (0,0) si rien n'intersecte."""
-        row = self.session.execute(
-            text(
-                """
-                SELECT ST_Area(ST_Union(ST_Intersection(sl.geom_2975, p.geom_2975))),
-                       ST_Area(p.geom_2975)
-                FROM parcels p
-                JOIN spatial_layers sl ON sl.kind = :kind AND upper(sl.subtype) = ANY(:subtypes)
-                  AND ST_Intersects(p.geom_2975, sl.geom_2975)
-                WHERE p.id = :pid
-                GROUP BY p.geom_2975
-                """
-            ),
-            {"kind": kind, "subtypes": [str(s).upper() for s in subtypes], "pid": parcel_id},
-        ).first()
-        if not row or not row[1]:
-            return (0.0, 0.0)
-        area = float(row[0] or 0.0)
-        return (area / float(row[1]), area)
+        return self._union_coverage(parcel_id, kind, "upper(z.subtype) = ANY(:subtypes)",
+                                    {"subtypes": [str(s).upper() for s in subtypes]})
 
     def union_coverage_interdit(self, parcel_id: int, kind: str) -> tuple[float, float]:
         """SCORING-COPRO-1 (PPR-UNIQUE-1) — couverture UNIONNÉE (fraction, m² 2975) de la parcelle
@@ -397,24 +436,7 @@ class EvalContext:
         (`ppr_red_subtypes`), qui ne reconnaissait pas le code hérité `i` de Saint-Philippe
         (NU-D-001). ST_Union AVANT le ratio (polygones superposés comptés une fois). (0,0) si rien."""
         from ..ppr import interdit_sql
-        row = self.session.execute(
-            text(
-                f"""
-                SELECT ST_Area(ST_Union(ST_Intersection(sl.geom_2975, p.geom_2975))),
-                       ST_Area(p.geom_2975)
-                FROM parcels p
-                JOIN spatial_layers sl ON sl.kind = :kind AND {interdit_sql('sl')}
-                  AND ST_Intersects(p.geom_2975, sl.geom_2975)
-                WHERE p.id = :pid
-                GROUP BY p.geom_2975
-                """
-            ),
-            {"kind": kind, "pid": parcel_id},
-        ).first()
-        if not row or not row[1]:
-            return (0.0, 0.0)
-        area = float(row[0] or 0.0)
-        return (area / float(row[1]), area)
+        return self._union_coverage(parcel_id, kind, interdit_sql('z'), {})
 
     def min_distance_m(self, parcel_id: int, kind: str) -> float | None:
         """Distance min (m, 2975) de la parcelle à une entité de ce `kind`, ou None si au-delà
