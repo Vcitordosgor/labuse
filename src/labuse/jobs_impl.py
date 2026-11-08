@@ -224,47 +224,73 @@ def coherence_banc(ctx: JobContext) -> None:
         from scripts.coherence.banc import run as _run_banc
     except Exception as e:  # noqa: BLE001 — le banc fait partie du produit : introuvable = échec
         raise RuntimeError(f"banc introuvable : {e}") from e
-    _run_banc(ile=True, en_process=True)      # écrit ECARTS.csv (lecteurs en-process, sans réseau)
-    from .coherence_journal import journaliser_passage
-    res = journaliser_passage(ctx.db, mode="ile")
+    banc = _run_banc(ile=True, en_process=True)  # écrit ECARTS.csv ; renvoie phases/acheve (OPS-3 A)
+    from . import runs
+    from .coherence_journal import journaliser_passage, marquer_incomplet
+    # OPS-3 (A) — le passage NOMME le run contrôlé (celui que le banc a LU, = run servi) et déclare
+    # d'emblée s'il est allé au bout (balayage île). La ligne est écrite AVANT la chasse/banc2 : même
+    # si l'une d'elles plante ensuite, le gate/résumé/incident liront une ligne HONNÊTE (pas un vert).
+    try:
+        _run_servi = runs.current()
+    except Exception:  # noqa: BLE001
+        _run_servi = None
+    res = journaliser_passage(ctx.db, mode="ile", run_servi=_run_servi,
+                              acheve=bool(banc.get("acheve", True)),
+                              incomplet_motif=banc.get("incomplet_motif"))
     ctx.db.commit()
-    ctx.compte(**res)
-    # SOLIDITE-1 (Lot 2) — PUIS les 25 gardes CHASSE-DONNÉES, en-process contre la prod. Toute garde en
-    # écart ouvre un incident par la porte unique (chasse_journal → ops_alertes) ; retour au vert = résolu.
-    from . import chasse_banc, chasse_journal
-    resultats = chasse_banc.jouer_gardes_en_process()
-    res2 = chasse_journal.journaliser_passage(ctx.db, resultats)
-    ctx.db.commit()
-    ctx.compte(chasse_gardes=res2["n_gardes"], chasse_ok=res2["ok"], chasse_ecart=res2["ecart"],
-               chasse_skip=res2["skip"], chasse_ecart_nouveaux=res2["ecart_nouveaux"])
-    # un banc qui n'a rien pu lire (tout en « erreur lecteur ») est un ÉCHEC bruyant, jamais un
-    # passage vert par vacuité (app non démarrable, base coupée…).
+    row_id = res["id"]
+    ctx.compte(**{k: v for k, v in res.items() if k != "id"})
+    # motifs d'INACHÈVEMENT accumulés sur tout le passage (balayage île + chasse + invariants).
+    motifs: list[str] = []
+    if not banc.get("acheve", True):
+        motifs.append(banc.get("incomplet_motif") or "balayage île non achevé")
+    # un banc qui n'a rien pu lire (tout en « erreur lecteur ») est un ÉCHEC, jamais un vert par vacuité.
     if res["ecarts"] == 0 and res["erreurs_lecteur"] > 100:
-        raise RuntimeError(f"banc illisible : {res['erreurs_lecteur']} lecteurs en erreur "
-                           "(app non démarrable en-process ou base coupée) — passage non probant.")
-    # pareil pour la chasse : tout en SKIP = banc non probant (app/DB inatteignables en-process).
-    if res2["n_gardes"] and res2["skip"] == res2["n_gardes"]:
-        raise RuntimeError(f"banc chasse illisible : {res2['skip']}/{res2['n_gardes']} gardes en SKIP "
-                           "(app non démarrable en-process ou base coupée) — passage non probant.")
-    # CHASSE-INVARIANTS-FIX-2 (3) — PUIS le banc des 1 000+ invariants GÉNÉRÉS (vague 2). Chaque nuit
-    # le sous-ensemble RAPIDE (`--nuit` : SQL île + moteur, ~4 min, sans les 2 boucles API cadencées) ;
-    # le DIMANCHE, TOUT (`--tout`, ~18 min, inclut F2 valeur inter-surfaces et F5 API). Lecture seule.
+        motifs.append(f"balayage île illisible ({res['erreurs_lecteur']} lecteurs en erreur)")
     import os
     try:
-        from scripts.coherence.invariants2.banc2 import executer as _banc2
-    except Exception as e:  # noqa: BLE001 — le banc fait partie du produit : introuvable = échec
-        raise RuntimeError(f"banc2 (invariants générés) introuvable : {e}") from e
-    # FIX-ORFEVRE-1 pt 3 (D-02) — « dimanche » = dimanche RÉUNION, pas le fuseau du process : sur un
-    # serveur UTC (branche admise par deploy.sh), le naïf disait samedi 23:45 → l'intégrale glissait
-    # d'une nuit, silencieusement. Le cron vise 03:45 Réunion : le jour Réunion est LA référence.
-    _mode = "tout" if today_reunion().weekday() == 6 else "nuit"   # dimanche = l'intégrale hebdo
-    _api = os.environ.get("LABUSE_BANC2_API") or "http://127.0.0.1:8793"
-    _bil = _banc2(mode=_mode, api=_api, base=True)
-    ctx.compte(banc2_mode=_mode, banc2_ok=_bil["ok"], banc2_ecart=_bil["ecart"],
-               banc2_skip=_bil["skip"], banc2_regles=_bil["n"], banc2_duree_s=_bil["duree_s"])
-    # banc2 n'a rien pu exécuter (0 règle) = passage non probant (modules introuvables / DB coupée).
-    if _bil["n"] == 0:
-        raise RuntimeError("banc2 non probant : 0 règle exécutée (modules invariants2 ou base inatteignables).")
+        # SOLIDITE-1 (Lot 2) — les 25 gardes CHASSE-DONNÉES ; puis le banc des 1 000+ invariants
+        # GÉNÉRÉS (vague 2). Toute étape qui PLANTE scelle d'abord la ligne comme non achevée.
+        from . import chasse_banc, chasse_journal
+        resultats = chasse_banc.jouer_gardes_en_process()
+        res2 = chasse_journal.journaliser_passage(ctx.db, resultats)
+        ctx.db.commit()
+        ctx.compte(chasse_gardes=res2["n_gardes"], chasse_ok=res2["ok"], chasse_ecart=res2["ecart"],
+                   chasse_skip=res2["skip"], chasse_ecart_nouveaux=res2["ecart_nouveaux"])
+        # tout en SKIP = chasse non probante (app/DB inatteignables en-process).
+        if res2["n_gardes"] and res2["skip"] == res2["n_gardes"]:
+            motifs.append(f"25 gardes chasse illisibles ({res2['skip']}/{res2['n_gardes']} en SKIP)")
+        try:
+            from scripts.coherence.invariants2.banc2 import executer as _banc2
+        except Exception as e:  # noqa: BLE001 — le banc fait partie du produit : introuvable = échec
+            raise RuntimeError(f"banc2 (invariants générés) introuvable : {e}") from e
+        # FIX-ORFEVRE-1 pt 3 (D-02) — « dimanche » = dimanche RÉUNION. Le cron vise 03:45 Réunion :
+        # le jour Réunion est LA référence (sinon l'intégrale hebdo glisse d'une nuit en silence).
+        _mode = "tout" if today_reunion().weekday() == 6 else "nuit"
+        _api = os.environ.get("LABUSE_BANC2_API") or "http://127.0.0.1:8793"
+        _bil = _banc2(mode=_mode, api=_api, base=True)
+        ctx.compte(banc2_mode=_mode, banc2_ok=_bil["ok"], banc2_ecart=_bil["ecart"],
+                   banc2_skip=_bil["skip"], banc2_regles=_bil["n"], banc2_duree_s=_bil["duree_s"],
+                   banc2_indisponibles=_bil.get("indisponibles") or [])
+        # une VÉRIFICATION PRÉVUE qui n'a pas pu tourner (famille indisponible = import en échec) ou
+        # un banc2 non probant (0 règle, ou toutes les règles exécutées en SKIP) = passage NON achevé.
+        if _bil.get("indisponibles"):
+            motifs.append("invariants indisponibles : " + ", ".join(_bil["indisponibles"]))
+        if _bil["n"] == 0:
+            motifs.append("banc2 non probant (0 règle exécutée)")
+        elif _bil["skip"] == _bil["n"]:
+            motifs.append(f"banc2 non probant ({_bil['skip']}/{_bil['n']} règles non évaluables)")
+    except Exception as exc:  # noqa: BLE001 — scelle la ligne AVANT de propager (incident job-echec)
+        marquer_incomplet(ctx.db, row_id, f"banc interrompu : {type(exc).__name__}: {exc}")
+        ctx.db.commit()
+        raise
+    # OPS-3 (A) — passage NON ACHEVÉ : on scelle la ligne (gate/résumé/incidents la lisent comme un
+    # échec) PUIS on lève (incident `job-echec:coherence-banc`). Jamais un vert sur un passage partiel.
+    if motifs:
+        _motif = " ; ".join(motifs)
+        marquer_incomplet(ctx.db, row_id, _motif)
+        ctx.db.commit()
+        raise RuntimeError(f"banc de cohérence non achevé / non probant — {_motif}")
 
 
 def radar_cycle(ctx: JobContext) -> None:
@@ -1095,13 +1121,24 @@ def _mesures_run(db, candidat: str, precedent: str) -> dict:
     # banc tourne à 03h45, APRÈS le début du calcul (02h) → la dernière ligne peut être celle d'HIER. On
     # exige qu'elle soit FRAÎCHE (ts ≥ now − max_age) ; sinon la cohérence est « en attente » du banc —
     # `coherence_frais=False` dit à controler_run de NE PAS conclure (pas de faux « contrôles en échec »).
+    # OPS-3 (A) — on lit aussi si le passage est ALLÉ AU BOUT (`acheve`) et QUEL run il a contrôlé
+    # (`run_servi`). Un passage non achevé (banc2 indisponible, gardes toutes en SKIP, balayage
+    # illisible, banc interrompu) n'est PAS un vert : `controler_run` le refuse. La colonne peut
+    # manquer sur une base pas encore migrée → `COALESCE(acheve, true)` conserve l'ancien comportement.
+    try:
+        from . import coherence_journal
+        coherence_journal._assurer_schema(db)
+    except Exception:  # noqa: BLE001 — migration best-effort ; la lecture ci-dessous gère l'absence
+        pass
     try:
         max_age_h = float(getattr(get_settings(), "calcul_nuit_coherence_max_age_h", 12.0))
         row = db.execute(text(
-            "SELECT faux_client, COALESCE(erreurs_lecteur, 0), ts FROM coherence_runs "
+            "SELECT faux_client, COALESCE(erreurs_lecteur, 0), ts, COALESCE(acheve, true), "
+            "incomplet_motif, run_servi FROM coherence_runs "
             "WHERE mode = 'ile' ORDER BY ts DESC LIMIT 1")).first()
         if row is None:
             m["coherence_ecarts"], m["coherence_erreurs"], m["coherence_frais"] = None, None, False
+            m["coherence_acheve"] = None
         else:
             ts = row[2]
             if ts is not None and ts.tzinfo is None:
@@ -1111,11 +1148,15 @@ def _mesures_run(db, candidat: str, precedent: str) -> dict:
             m["coherence_erreurs"] = row[1]
             m["coherence_frais"] = bool(frais)
             m["coherence_ts"] = ts.isoformat() if ts else None
+            m["coherence_acheve"] = bool(row[3])
+            m["coherence_incomplet_motif"] = row[4]
+            m["coherence_run_servi"] = row[5]
     except Exception as exc:  # noqa: BLE001
         log.warning("calcul-nuit : cohérence illisible (%s)", exc)
         m["coherence_ecarts"] = None
         m["coherence_erreurs"] = None
         m["coherence_frais"] = False
+        m["coherence_acheve"] = None
     return m
 
 

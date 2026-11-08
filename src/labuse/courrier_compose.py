@@ -97,18 +97,27 @@ def _synthese(db, idu: str) -> dict:
                  surface_incertaine=_surface.surface_incertaine(row["surface_m2"], row["contenance_m2"]),
                  batie=bool(row["batie"]), pm=bool(row["pm"]))
     d["adresse"] = ca.courrier.adresse_ban_parcelle(db, idu)
-    # zone PLU + calibration
-    try:
-        z = db.execute(text("SELECT zone_lib, zone_libelle FROM parcel_zone_plu WHERE idu = :i"),
-                       {"i": idu}).mappings().first()
-        if z and z["zone_lib"]:
-            d["zone"] = z["zone_lib"]
-            d["zone_document"] = z["zone_libelle"]
-            from .plu_reglement import resolve_reglement
-            rg = resolve_reglement(d["commune"], z["zone_lib"])
-            d["zone_calibree"] = bool(rg and rg.get("calibree"))
-    except Exception:  # noqa: BLE001 — zone optionnelle
-        pass
+    # zone PLU + calibration. OPS-3 (B) — la zone est lue par LE lecteur de la fiche
+    # (`zone_servie.zone_dominante`, dominante par surface), JAMAIS en direct dans
+    # `parcel_zone_plu` : le Courrier doit servir EXACTEMENT la zone de l'écran et des autres
+    # documents (gabarit, flash, bilan…). L'écart « courrier-zone-bizone » venait de cette
+    # lecture directe, qui divergeait de la dominante sur les parcelles à cheval / nées après
+    # la dernière bascule de `parcel_zone_plu`. Le libellé n'est qu'une décoration APPARIÉE à la
+    # zone servie (pas une seconde vérité de zone).
+    if row:
+        try:
+            from .faisabilite.zone_servie import zone_dominante
+            zs = zone_dominante(db, int(row["id"]))
+            if zs.zone:
+                d["zone"] = zs.zone
+                d["zone_document"] = db.execute(
+                    text("SELECT zone_libelle FROM parcel_zone_plu WHERE idu = :i AND zone_lib = :z"),
+                    {"i": idu, "z": zs.zone}).scalar()
+                from .plu_reglement import resolve_reglement
+                rg = resolve_reglement(d["commune"], zs.zone)
+                d["zone_calibree"] = bool(rg and rg.get("calibree"))
+        except Exception:  # noqa: BLE001 — zone optionnelle
+            pass
     # DVF : mutations dans le périmètre sur X ans (secteur actif)
     if row:
         try:

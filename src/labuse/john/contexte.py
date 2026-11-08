@@ -156,9 +156,14 @@ def runs_etat(db) -> dict:
 def controles(db) -> dict:
     """Le dernier passage de la suite de cohérence (le banc) : écarts, faux-client, lecteurs en erreur,
     écarts tolérés. C'est le juge « aucun chiffre faux chez le client »."""
+    # OPS-3 (A) — un passage NON ACHEVÉ (balayage/invariants/gardes partiels, banc interrompu) n'est
+    # PAS « vert » : le contrôle n'est pas allé au bout. `acheve` peut manquer (vieille base) → True.
     try:
+        from .. import coherence_journal
+        coherence_journal._assurer_schema(db)
         r = db.execute(text(
-            "SELECT ts, mode, n_ecarts, faux_client, incoherent, tolerable, erreurs_lecteur "
+            "SELECT ts, mode, n_ecarts, faux_client, incoherent, tolerable, erreurs_lecteur, "
+            "COALESCE(acheve, true) AS acheve, incomplet_motif, run_servi "
             "FROM coherence_runs ORDER BY ts DESC LIMIT 1")).mappings().first()
     except Exception as exc:  # noqa: BLE001
         return _indispo(exc)
@@ -168,7 +173,9 @@ def controles(db) -> dict:
         "quand": r["ts"].isoformat(), "mode": r["mode"], "n_ecarts": r["n_ecarts"],
         "faux_client": r["faux_client"], "incoherent": r["incoherent"],
         "tolerable": r["tolerable"], "erreurs_lecteur": r["erreurs_lecteur"],
-        "vert": (r["faux_client"] or 0) == 0 and (r["erreurs_lecteur"] or 0) == 0}}
+        "acheve": bool(r["acheve"]), "incomplet_motif": r["incomplet_motif"],
+        "run_controle": r["run_servi"],
+        "vert": (r["faux_client"] or 0) == 0 and (r["erreurs_lecteur"] or 0) == 0 and bool(r["acheve"])}}
 
 
 # ════════════════════════════════ SAUVEGARDES & COPIE EXTERNE ════════════════════════════════

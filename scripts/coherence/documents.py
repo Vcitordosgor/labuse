@@ -75,6 +75,54 @@ def verifier_pdf(lignes, nature, idu, texte, fiche):
                        "verdict": "OK" if present else "ÉCART"})
 
 
+#: OPS-3 (B) — la bizone de l'incident « courrier-zone-bizone » (dominante A, à cheval).
+BIZONE = "97415000BZ0005"
+
+
+def _zone_fiche(fiche):
+    """LA zone servie par la fiche (dominante) — `reglement_plu.zones[0].zone`, la source unique
+    que tous les documents lisent (zone_servie.zone_dominante). None si la fiche n'en sert pas."""
+    zones = (fiche.get("reglement_plu") or {}).get("zones") or []
+    return (zones[0].get("zone") if zones and isinstance(zones[0], dict) else None)
+
+
+def courrier_zone(lignes):
+    """FAIT « le Courrier lit la zone par le lecteur de la fiche » : pour chaque témoin (dont la
+    bizone de l'incident), la zone servie par le Courrier composé (/courrier/composer → synthese.zone)
+    doit être EXACTEMENT celle de la fiche (zone_servie / dominante). Un seul document lisait la zone
+    en direct — le Courrier ; cette ligne le garde aligné (OPS-3 B). ÉCART = lecture directe revenue."""
+    import urllib.error
+    for idu in dict.fromkeys(TEMOINS + [BIZONE]):   # BZ0005 en plus, sans doublon
+        try:
+            fiche = json.loads(_fetch(f"/parcels/{idu}"))
+        except Exception as e:  # noqa: BLE001
+            lignes.append({"canal": "courrier:zone", "objet": idu, "notion": "zone",
+                           "valeur_fiche": "", "constat": str(e)[:80], "verdict": "ERREUR"})
+            continue
+        zf = _zone_fiche(fiche)
+        if zf is None:
+            continue   # parcelle hors PLU outillé : pas de zone à confronter (ni fiche ni courrier)
+        try:
+            req = urllib.request.Request(
+                API + "/courrier/composer", data=json.dumps({"idu": idu}).encode(),
+                headers={"Content-Type": "application/json"}, method="POST")
+            with urllib.request.urlopen(req, timeout=60) as r:
+                doc = json.loads(r.read())
+        except (urllib.error.HTTPError, urllib.error.URLError, ValueError) as e:
+            lignes.append({"canal": "courrier:zone", "objet": idu, "notion": "zone",
+                           "valeur_fiche": zf, "constat": f"courrier indisponible ({type(e).__name__})",
+                           "verdict": "NON VÉRIFIÉ (dit)"})
+            continue
+        zc = (doc.get("synthese") or {}).get("zone")
+        if zc is None:
+            # courrier qui ne sert pas de zone (disparue, hors PLU) : pas un écart s'il n'y a rien à servir
+            continue
+        lignes.append({"canal": "courrier:zone", "objet": idu, "notion": "zone",
+                       "valeur_fiche": zf,
+                       "constat": f"courrier « {zc} » / fiche « {zf} »",
+                       "verdict": "OK" if zc == zf else "ÉCART"})
+
+
 def copilote(lignes, n=10):
     """Chemin FICHE : la réponse à une question chiffrée porte le chiffre de la fiche."""
     questions = [("Quelle est la surface de la parcelle {idu} ?", "surface_m2",
@@ -166,6 +214,7 @@ def main() -> None:
                 lignes.append({"canal": f"pdf:{nature}", "objet": idu, "notion": "—",
                                "valeur_fiche": "", "constat": str(e)[:100],
                                "verdict": "NON VÉRIFIÉ (dit)"})
+    courrier_zone(lignes)
     digest_dry_run(lignes)
     if "--copilote" in sys.argv:
         copilote(lignes)

@@ -26,6 +26,22 @@ const AXE = require.resolve('axe-core/axe.min.js')
 const HERE = dirname(fileURLToPath(import.meta.url))
 const BASE = process.env.LABUSE_SOCLE ?? 'http://127.0.0.1:6980/socle/'
 
+// OPS-3 (C) — session de RECETTE partagée par le runner `verite_permanente` (LABUSE_HARNAIS_COOKIE,
+// « labuse_session=u.<token> ») : on l'injecte dans CHAQUE contexte pour que /socle/ rende l'app au
+// lieu de rediriger vers /login. Vide (instance auth-off) → sans effet.
+const COOKIE = process.env.LABUSE_HARNAIS_COOKIE || ''
+async function authentifier(ctx) {
+  if (!COOKIE) return
+  const i = COOKIE.indexOf('=')
+  if (i < 0) return
+  const name = COOKIE.slice(0, i).trim()
+  const value = COOKIE.slice(i + 1).trim()
+  try {
+    const u = new URL(BASE)
+    await ctx.addCookies([{ name, value, domain: u.hostname, path: '/', httpOnly: true, sameSite: 'Lax' }])
+  } catch { /* cookie non injectable : le harnais échouera franchement sur le login, pas en silence */ }
+}
+
 // Vues atteignables depuis le rail (libellé = nom accessible du bouton).
 const VUES = ['Carte', 'Copilote', 'Docs', 'Radar', 'Projets', 'CRM', 'Sources']
 const VIEWPORTS = [
@@ -82,6 +98,7 @@ async function main() {
   // ── 1. VERROU MOBILE : contexte vrai iPhone (écran < 1024 + UA mobile + tactile).
   for (const [dev, label] of [['iPhone 13', 'iPhone 13 (390, portrait)'], ['iPad (gen 7)', 'iPad gen7 (810, portrait)']]) {
     const ctx = await browser.newContext({ ...devices[dev] })
+    await authentifier(ctx)
     const page = await ctx.newPage()
     await page.goto(BASE, { waitUntil: 'domcontentloaded' })
     await page.waitForTimeout(600)
@@ -98,6 +115,7 @@ async function main() {
 
   // ── 2. APP RENDUE (fenêtre de bureau rétrécie — non verrouillée).
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } })
+  await authentifier(ctx)
   const page = await ctx.newPage()
   await page.goto(BASE, { waitUntil: 'domcontentloaded' })
   await page.waitForTimeout(1200)

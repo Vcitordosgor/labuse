@@ -79,6 +79,10 @@ def executer(mode: str = "nuit", api: str = "http://127.0.0.1:8793", base: bool 
     tot_ok = tot_ec = tot_sk = 0
     tous_ecarts: list[str] = []
     par_famille: dict[str, dict] = {}
+    # OPS-3 (A) — on sépare « SAUTÉ PAR SCOPE » (famille lourde hors mode nuit — légitime) de
+    # « INDISPONIBLE » (import en échec = une vérification PRÉVUE qui n'a pas pu tourner). La
+    # seconde rend le passage NON ACHEVÉ ; la première non (c'est le périmètre annoncé du mode).
+    indisponibles: list[str] = []
     try:
         if base and (vouloir is None):
             tb = time.time()
@@ -97,6 +101,7 @@ def executer(mode: str = "nuit", api: str = "http://127.0.0.1:8793", base: bool 
             try:
                 mod = importlib.import_module(modname)
             except Exception as e:  # noqa: BLE001
+                indisponibles.append(code)
                 if imprimer:
                     print(f"── {code} : INDISPONIBLE ({type(e).__name__}: {e})")
                 continue
@@ -116,7 +121,8 @@ def executer(mode: str = "nuit", api: str = "http://127.0.0.1:8793", base: bool 
     finally:
         cx.close()
     bil = {"ok": tot_ok, "ecart": tot_ec, "skip": tot_sk, "n": tot_ok + tot_ec + tot_sk,
-           "ecarts": tous_ecarts, "duree_s": round(time.time() - t0, 1), "par_famille": par_famille}
+           "ecarts": tous_ecarts, "duree_s": round(time.time() - t0, 1), "par_famille": par_famille,
+           "indisponibles": indisponibles}
     if imprimer:
         print(f"\nBILAN vague 2 : {tot_ok} OK · {tot_ec} ECART · {tot_sk} SKIP  "
               f"(règles exécutées : {bil['n']})  [{bil['duree_s']:.0f}s]")

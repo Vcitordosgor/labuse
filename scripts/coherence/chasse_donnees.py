@@ -151,20 +151,31 @@ def g05_partner_statut():
 
 
 def g06_courrier_zone():
-    """C : le Courrier lit parcel_zone_plu.zone_lib en direct (1re ligne) quand la fiche
-    sert la zone DOMINANTE — divergence sur bizone (courrier_compose._synthese)."""
+    """C : le Courrier doit servir LA zone de la fiche (zone_servie / dominante), jamais une
+    lecture directe de `parcel_zone_plu`. OPS-3 (B) — après correctif, `courrier_compose._synthese`
+    passe par `zone_servie.zone_dominante` ; cette garde interroge le VRAI courrier composé
+    (/courrier/composer → synthese.zone) et le confronte à la zone servie par la fiche sur la
+    bizone BZ0005. ÉCART = le Courrier a recommencé à diverger de la fiche."""
+    import urllib.error
+    import urllib.request
     fiche = _api(f"/parcels/{BZ0005}")
     dom = _chercher(fiche, lambda k, v: k in ("zone_dominante", "zone") and isinstance(v, str))
     if not dom:
         return "SKIP", "fiche sans zone_dominante"
     zone_fiche = dom[0][1]
-    with _db() as cx:
-        brut = cx.execute(
-            "SELECT zone_lib FROM parcel_zone_plu WHERE idu = %s LIMIT 1", (BZ0005,)).fetchone()
-    if brut is None:
-        return "SKIP", "BZ0005 sans ligne parcel_zone_plu"
-    return ("OK", f"zone unique « {zone_fiche} »") if brut[0] == zone_fiche else \
-        ("ECART", f"lecture directe courrier « {brut[0]} » vs fiche dominante « {zone_fiche} »")
+    req = urllib.request.Request(
+        API + "/courrier/composer", data=json.dumps({"idu": BZ0005}).encode(),
+        headers={"Content-Type": "application/json"}, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            doc = json.loads(r.read())
+    except (urllib.error.HTTPError, urllib.error.URLError, ValueError) as exc:
+        return "SKIP", f"courrier indisponible ({type(exc).__name__})"
+    zone_courrier = ((doc.get("synthese") or {}).get("zone"))
+    if zone_courrier is None:
+        return "SKIP", "courrier sans zone servie"
+    return ("OK", f"courrier sert la zone de la fiche « {zone_fiche} »") if zone_courrier == zone_fiche else \
+        ("ECART", f"courrier « {zone_courrier} » vs fiche dominante « {zone_fiche} »")
 
 
 def g07_compteurs_commune():
