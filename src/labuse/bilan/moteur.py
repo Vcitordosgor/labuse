@@ -417,6 +417,14 @@ class Moteur:
         ratios = self._ratios(lignes, blocs_tot, pt, ctx, res_net)
         vrais = self._vraisemblance(lignes, pt, e.programme, marge, not manquants)
 
+        # DOCS-1 (décision Vic) — tant qu'aucun COÛT MAJEUR (terrain OU construction) n'est saisi, le
+        # résultat SERVI reste « non calculable » : afficher res_net = CA (dépenses nulles) serait un
+        # bénéfice trompeur. Le calcul interne (ratios, vraisemblance) garde ses valeurs ; seuls les
+        # champs CLIENT (résultat, rentabilité, cash-flow, avec/sans aléas) sont masqués.
+        cout_majeur = ((ht_de("achat") or 0.0) > 0.0) or ((ht_de("constr") or 0.0) > 0.0)
+        if not cout_majeur:
+            res_net = marge = cash = res_sa = marge_sa = None
+
         return ResultatBilan(
             lignes=lignes,
             blocs=blocs_tot,

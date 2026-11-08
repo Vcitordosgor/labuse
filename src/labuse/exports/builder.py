@@ -238,7 +238,14 @@ def _emetteur(db, compte_id: int | None) -> dict | None:
             marque = json.loads(marque)
         except Exception:  # noqa: BLE001
             marque = {}
-    nom = (marque.get("raison_sociale") or row.get("nom") or "").strip() or None
+    # DOCS-1 (décision Vic) — le NOM de l'émetteur = société, à défaut prénom + nom (signataire) ;
+    # JAMAIS une adresse e-mail (le nom de compte est souvent l'e-mail de connexion). L'e-mail reste
+    # servi À PART, comme coordonnée de contact, jamais comme identité.
+    from ..courrier_compose import _est_email
+    _raison = (marque.get("raison_sociale") or "").strip()
+    _sign = (marque.get("signataire") or "").strip()
+    _comptenom = (row.get("nom") or "").strip()
+    nom = next((x for x in (_raison, _sign, _comptenom) if x and not _est_email(x)), None)
     coord = (marque.get("coordonnees") or "").strip() or None
     email = None
     try:

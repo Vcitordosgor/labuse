@@ -44,6 +44,38 @@ _FONTS = Path(__file__).resolve().parents[1] / "api" / "fonts"
 _env = Environment(loader=FileSystemLoader(str(_TEMPLATES)), autoescape=True)
 
 
+def _fr_dec(v, n: int = 1) -> str:
+    """DOCS-1 (décision Vic) — un seul format : la décimale s'imprime à la VIRGULE, jamais au point
+    (« 4,5 m », pas « 4.5 m »). Zéros de queue retirés (4,0 → 4). None → tiret."""
+    if v is None:
+        return "—"
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return str(v)
+    s = f"{f:.{n}f}".rstrip("0").rstrip(".")
+    return s.replace(".", ",")
+
+
+_env.filters["fr_dec"] = _fr_dec
+
+#: DOCS-1 (décision Vic) — un seul format de décimale : la virgule. On l'impose À LA SORTIE du rapport
+#: avec le MÊME motif que le banc des documents détecte (« \d.\d » suivi d'une unité m/€/%/m²), si bien
+#: qu'on ne retouche QUE ce qu'un document client ne doit pas porter — jamais un « 2.5mm » de CSS ni un
+#: data-uri (ni « % » détaché, que le motif ne prend pas). Couvre les décimales de prose (verdict de
+#: potentiel, tendance de marché…) sans traquer chaque producteur partagé.
+_RX_DEC_SORTIE = re.compile(r"\b(\d+)\.(\d+)([   ]*(?:m²|m|€|%))\b")
+#: DOCS-1 (décision Vic) — un seul format de DATE : jj/mm/aaaa. Toute date ISO (AAAA-MM-JJ) encore
+#: présente dans le rapport (millésime figé, date de source non convertie…) passe en jj/mm/aaaa à la
+#: sortie. (base64 des tuiles = sans tiret → jamais touché.)
+_RX_ISO_SORTIE = re.compile(r"\b(19|20)(\d{2})-(\d{2})-(\d{2})\b")
+
+
+def _virgule_sortie(html: str) -> str:
+    html = _RX_DEC_SORTIE.sub(lambda m: f"{m.group(1)},{m.group(2)}{m.group(3)}", html)
+    return _RX_ISO_SORTIE.sub(lambda m: f"{m.group(4)}/{m.group(3)}/{m.group(1)}{m.group(2)}", html)
+
+
 def _logo_svg_path() -> str:
     """Silhouette officielle de la buse — réutilise les points de pdf_premium (source unique)."""
     from ..api.pdf_premium import _LOGO_PTS
@@ -117,14 +149,14 @@ def render_report_html(db: Session, idu: str, *, order_ref: str, adresse: str | 
     # bloc PARTAGÉ (écrit une fois). Markup = HTML déjà échappé côté builder, on ne re-échappe pas.
     from ..api.blocs_documents import anc_bloc_html, rehab_bloc_html
     _terr = data.get("terrain") or {}                    # anc + mode_b sont collectés dans _terrain
-    return _env.get_template("rapport.html.j2").render(
+    return _virgule_sortie(_env.get_template("rapport.html.j2").render(
         data=data, carte=carte, carte_zone=carte_zone, css=Markup(css), order_ref=order_ref,
         produit=produit, produit_sous_titre=produit_sous_titre,
         watermark=watermark, template_version=TEMPLATE_VERSION,
         logo_path=_logo_svg_path(), sources_attribution=SOURCES_ATTRIBUTION,
         bloc_anc=Markup(anc_bloc_html(_terr.get("anc"))),
         bloc_rehab=Markup(rehab_bloc_html(_terr.get("mode_b"))),
-        limites=limites_document("dossier"), limites_titre=LIMITES_TITRE)
+        limites=limites_document("dossier"), limites_titre=LIMITES_TITRE))
 
 
 def generate_flash_report(idu: str, *, order_ref: str = "DEMO", adresse: str | None = None,

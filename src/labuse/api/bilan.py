@@ -401,13 +401,21 @@ def bilan_pdf(
         _map = _plan_situation_html(db, idu)
     except Exception:  # noqa: BLE001
         _map = ""
+    # DOCS-1 (décision Vic) — la ligne « Terrain » REPREND la contenance de la fiche : si le client n'a
+    # pas saisi la surface du terrain, on sert la contenance sourcée (jamais un « — » quand la fiche sait).
+    _prog = corps.programme.model_dump()
+    if _prog.get("terrain") is None:
+        try:
+            _prog["terrain"] = _rep.sources_parcelle(db, idu).get("terrain")
+        except Exception:  # noqa: BLE001 — contenance non résolue : la ligne reste « — », jamais un crash
+            pass
     octets = _pdf.construire_pdf(
         r,
         idu=idu,
         commune=_commune(db, idu),
         adresse=_pf.get("adresse") or "",
         donnees_au=_pf.get("donnees_au"),
-        programme=corps.programme.model_dump(),
+        programme=_prog,
         calendrier=dict(corps.calendrier),
         map_html=_map,
     )

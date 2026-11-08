@@ -260,6 +260,10 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
                 # le Flash imprime LE renvoi de la fiche (le nombre de logements vit dans l'Étude de
                 # faisabilité) + la mention « maximum réglementaire » (volet D), comme la fiche.
                 from ..capacite_max import MENTION_COURTE, RENVOI_ETUDE
+                _run = _residuel_run_servi(db)
+                if _run and _run.get("date"):  # DOCS-1 — date du run arrêté en jj/mm/aaaa, jamais l'ISO
+                    _d = str(_run["date"])
+                    _run = {**_run, "date": f"{_d[8:10]}/{_d[5:7]}/{_d[0:4]}" if len(_d) >= 10 else _d}
                 out["faisa"] = {
                     "vendable_m2": int(vend),
                     "plancher_m2": round(vend / rend),
@@ -267,7 +271,7 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
                     "logements_renvoi": RENVOI_ETUDE,
                     "capacite_mention": MENTION_COURTE,
                     "vendable_silo_m2": fo.get("shab_vendable_silo_m2"),
-                    "run": _residuel_run_servi(db),
+                    "run": _run,
                 }
         except Exception as exc:  # noqa: BLE001 — faisabilité indisponible → section sans héros de surface, jamais d'erreur
             log.warning("faisabilité commune %s : %s", idu, exc)
@@ -590,7 +594,7 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
         if last:
             dm = last["date_mutation"]
             out["derniere_mutation"] = {**dict(last),
-                                        "date": dm.isoformat()[:10] if dm else None}
+                                        "date": dm.strftime("%d/%m/%Y") if dm else None}
     if "dvf_secteur_medianes" in avail:
         sect = db.execute(text(
             "SELECT type_bien, n_ventes, mediane_valeur, mediane_prix_m2, fenetre "
@@ -851,23 +855,17 @@ def _sources(db: Session, avail: set[str], sections_rendues: set[str]) -> list[d
     # par la sentinelle (dernier_vu, quand c'est une date), sinon la date d'ingestion ÉTIQUETÉE
     # comme telle (jamais déguisée en millésime — doctrine M73 E respectée par le libellé).
     # 26/31 sources sans millésime retrouvent ainsi une date ; les orphelines masquent la cellule.
-    import re as _re_m
+    # DOCS-1 (décision Vic) — le millésime affiché passe par LE producteur unique
+    # (`millesime_source`), comme le Dossier : aucune note de cuisine interne (« (sentinelle) »,
+    # « ingéré le … », « « latest » ingérée ») ni date ISO ne fuit plus dans un document client.
+    from .. import millesime_source as _ms
     mill_amont: dict[str, str] = {}
     if "data_sources" in avail:
-        _has_sv = bool(db.execute(text("SELECT to_regclass('source_veille') IS NOT NULL")).scalar())
-        _q = ("SELECT ds.name, ds.source_millesime, sv.dernier_vu, ds.last_sync_at "
-              "FROM data_sources ds LEFT JOIN source_veille sv ON sv.source_id = ds.id"
-              if _has_sv else
-              "SELECT name, source_millesime, NULL AS dernier_vu, last_sync_at FROM data_sources")
+        _q = "SELECT name, source_millesime, last_sync_at FROM data_sources"
         for r in db.execute(text(_q)):
-            if r[1]:
-                mill_amont[r[0]] = r[1]
-            elif r[2] and _re_m.match(r"\d{4}-\d{2}-\d{2}", str(r[2])):
-                d = str(r[2])[:10]
-                mill_amont[r[0]] = f"amont à jour au {d[8:10]}/{d[5:7]}/{d[0:4]} (sentinelle)"
-            elif r[3]:
-                mill_amont[r[0]] = (f"ingéré le {r[3]:%d/%m/%Y} (date d'ingestion, "
-                                    "millésime amont non publié)")
+            lbl = _ms.libelle_date_source(r[1], ingere_le=r[2])
+            if lbl:
+                mill_amont[r[0]] = lbl
     out, vus = [], set()
     for section, label, src_name, statique in _SECTION_SOURCES:
         if section not in sections_rendues or label in vus:
@@ -983,7 +981,8 @@ def collect_report_data(db: Session, idu: str, adresse: str | None = None) -> di
         "contexte_commune": _contexte_commune(db, idu, parcelle["commune"], avail),
         # M75 — obligation APER (grand parking) : MÊME libellé que la fiche (point de calcul unique).
         "aper": _aper(db, idu, avail),
-        "date_generation": today_reunion().isoformat(),
+        # DOCS-1 (décision Vic) — un seul format de date : jj/mm/aaaa, jamais l'ISO.
+        "date_generation": today_reunion().strftime("%d/%m/%Y"),
         # FLASH-ZONE F2 — section « Autour de cette parcelle » (isochrone IGN + INSEE/BPE/SIRENE).
         # Consomme zone.etude_de_zone (calcul unique) ; toujours rendable (dégradé honnête).
         "zone": _zone(db, parcelle),

@@ -37,19 +37,69 @@ RACINE = Path(__file__).resolve().parents[2]
 #: 12 parcelles témoins — la liste canonique du banc de cohérence écran (coherence_ecrans/conftest).
 TEMOINS = [
     "97411000IN0347", "97411000IE0241", "97411000HC0139", "97424000AE0050",
-    "97424000AM0893", "97421000AB0133", "97411000AO0753", "97411000EY0173",
+    # DOCS-1 (décision Vic) — témoin PPR : une parcelle en ZONE U partiellement touchée par la zone
+    # ROUGE d'un PPR (97415000CY0275, ~29 % en interdiction) : le Gabarit s'y dessine EN déduisant le
+    # rouge (constructible), là où l'ancien témoin (AB0133, zone N) était inconstructible.
+    "97424000AM0893", "97415000CY0275", "97411000AO0753", "97411000EY0173",
     "97417000BI0076", "97411000AB0785", "97411000HN0074", "97411000BZ1065",
+    # Témoin ZONE N (AB0133) conservé : le Gabarit doit y rendre un DOCUMENT de refus propre, jamais 422.
+    "97421000AB0133",
 ]
 
 #: documents servis par un GET (le Courrier a son propre point d'entrée, hors de ce GET-loop ;
 #: l'Étude de faisabilité est un POST avec programme — couverte à part). Flash = Dossier (livraison).
+#: documents servis par un GET (le témoin est en tête des idus du Comparatif → sa colonne est lue
+#: la première). L'Étude de faisabilité, le Courrier et le Bilan sont des POST (rendus à part) ;
+#: le Flash 79 € est généré par `flash.report.generate_flash_report` (son propre moteur).
 DOCS = [
     ("dossier",    "/dossier/{idu}.pdf?carte=false"),
     ("gabarit",    "/gabarit/{idu}.pdf"),
     ("apporteur",  "/apporteur/{idu}.pdf"),
     ("estimer",    "/analyse-annonce/{idu}.pdf"),
-    ("financier",  "/financier/{idu}.pdf"),
+    ("comparatif", "/comparatif.pdf?idus={idu},{v1},{v2}"),
+    ("etude-zone", "/etude-zone.pdf?idu={idu}&rayon_km=1"),
 ]
+
+#: saisies illustratives du Bilan (comme l'export d'origine : 1 logement SUV 65 m² à 4 500 €/m²).
+_BILAN_SAISIES = {"programme": {"terrain": None, "surface_taxable": 65, "sdp": 35},
+                  "produits": [{"libelle": "Logement", "lots": 1, "suv": 65,
+                                "prix_ttc_m2_suv": 4500, "tva": 0.021}],
+                  "postes": {}, "mode": "marge", "marge_cible": 9, "calendrier": {}}
+
+
+def _rendre_tous(client, idu: str, voisines: list[str]):
+    """Rend TOUS les documents d'une parcelle : GET (DOCS) + POST (Étude, Courrier, Bilan) + le
+    Flash (moteur propre). Renvoie [(nom, octets_pdf)] pour les rendus réussis (%PDF)."""
+    out: list[tuple[str, bytes]] = []
+    v1 = voisines[0] if voisines else idu
+    v2 = voisines[1] if len(voisines) > 1 else idu
+    for nom, route in DOCS:
+        r = client.get(route.format(idu=idu, v1=v1, v2=v2))
+        if r.status_code == 200 and r.content[:4] == b"%PDF":
+            out.append((nom, r.content))
+    # POST — Étude de faisabilité (1 parcelle), Courrier, Bilan (saisies illustratives).
+    e = client.post("/modules/etude/pdf", json={"idus": [idu]})
+    if e.status_code == 200 and e.content[:4] == b"%PDF":
+        out.append(("etude-faisabilite", e.content))
+    co = client.post("/courrier/pdf", json={"idu": idu})
+    if co.status_code == 200 and co.content[:4] == b"%PDF":
+        out.append(("courrier", co.content))
+    g = client.post(f"/bilan/{idu}/generer", json=_BILAN_SAISIES)
+    if g.status_code == 200 and (g.json() or {}).get("doc_id"):
+        did = g.json()["doc_id"]
+        b = client.get(f"/bilan/{idu}.pdf?doc_id={did}")
+        if b.status_code == 200 and b.content[:4] == b"%PDF":
+            out.append(("bilan", b.content))
+    # Flash 79 € — moteur propre `generate_flash_report` (son template, pas le Dossier).
+    try:
+        from labuse.db import session_factory
+        from labuse.flash.report import generate_flash_report
+        p = generate_flash_report(idu, order_ref="BANC-DOCS", db=session_factory()(), force=True,
+                                  with_map=False)   # le banc lit le TEXTE, pas la carte (évite le réseau)
+        out.append(("flash", p.read_bytes()))
+    except Exception:  # noqa: BLE001 — le Flash est rendu best-effort dans le banc
+        pass
+    return out
 
 _SP = r"[\s  ]"   # espaces (ordinaire, insécable, fine)
 
@@ -95,6 +145,21 @@ def _date_donnees(t):
     return m.group(1) if m else None
 
 
+def _date_ppr(t):
+    """La DATE du PPR : l'ANNÉE d'APPROBATION du PPR qui s'applique (« approuvé le JJ/MM/AAAA »,
+    « PPR … (AAAA) »). Un document qui en montre deux, ou deux documents qui divergent = écart.
+    On exclut les dates d'INGESTION/millésime (« au JJ/MM/AAAA », « vue le … ») — jamais « la date du PPR »."""
+    yrs: set[str] = set()
+    for line in t.splitlines():
+        if "PPR" not in line and "prévention des risques" not in line:
+            continue
+        for m in re.finditer(r"approuvé le\s*\d{2}/\d{2}/((?:19|20)\d{2})", line):
+            yrs.add(m.group(1))
+        for m in re.finditer(r"PPR[^\n]{0,40}?\(((?:19|20)\d{2})\)", line):
+            yrs.add(m.group(1))
+    return ",".join(sorted(yrs)) if yrs else None
+
+
 FAITS = {
     "sdp_max_terrain_m2": lambda t: (
         _m2_apres(r"SDP maximale réglementaire,?\s*terrain(?:\s*libéré)?")(t)
@@ -107,6 +172,7 @@ FAITS = {
     "viabilisation": _viab,
     "servitude_sup": _servitude_sup,
     "date_donnees": _date_donnees,
+    "date_ppr": _date_ppr,
 }
 
 
@@ -135,10 +201,25 @@ def _fautes_format(texte: str) -> list[str]:
     return f
 
 
+def _auth_compte() -> int:
+    from sqlalchemy import text
+
+    from labuse.db import session_factory
+    db = session_factory()()
+    cid = (db.execute(text("SELECT id FROM comptes WHERE statut='actif' ORDER BY id LIMIT 1")).scalar()
+           or db.execute(text("SELECT id FROM comptes ORDER BY id LIMIT 1")).scalar())
+    return int(cid) if cid else 1
+
+
 def rejouer(idus: list[str]):
     from fastapi.testclient import TestClient
 
+    from labuse.api import bilan as _bilan, tenant
     from labuse.api.app import app
+    # Bilan et Courrier exigent un compte. `current_compte` est importé DANS api/bilan.py → patcher les deux.
+    cid = _auth_compte()
+    tenant.current_compte = lambda request=None: cid   # type: ignore[assignment]
+    _bilan.current_compte = lambda request=None: cid    # type: ignore[assignment]
     client = TestClient(app)
     jetons = _jetons()
 
@@ -146,16 +227,15 @@ def rejouer(idus: list[str]):
     leaks: list[dict] = []
     fautes_fmt: list[dict] = []
     n_docs = 0
+    n = len(idus)
 
-    for idu in idus:
+    for i, idu in enumerate(idus):
+        voisines = [idus[(i + 1) % n], idus[(i + 2) % n]] if n >= 3 else []
         # valeurs imprimées par chaque doc : {fait: {doc: valeur}}
         par_fait: dict[str, dict[str, str]] = {}
-        for nom, route in DOCS:
-            r = client.get(route.format(idu=idu))
-            if r.status_code != 200 or r.content[:4] != b"%PDF":
-                continue
+        for nom, contenu in _rendre_tous(client, idu, voisines):
             n_docs += 1
-            texte = _texte_pdf(r.content)
+            texte = _texte_pdf(contenu)
             # 2. jetons interdits
             for m in jetons:
                 if m in texte:

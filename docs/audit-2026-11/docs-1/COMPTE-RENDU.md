@@ -134,9 +134,41 @@ appartement » à « **3 821 €/m² — maison (29 ventes à moins de 500 m, 20
 | Captures couvertures avant/après | `docs/audit-2026-11/docs-1/captures/` |
 | Hook (unitaires `not db/local/reel/network`) | **vert** (le flake `test_courrier_transitions_journalisees` est pré-existant, ignoré) |
 
-Le **Gabarit** sur la parcelle rouge rend un **422 honnête** (inconstructible, garde NU5-FIX).
+---
+
+## 7. 2ᵉ passe — « la V2 contenait encore ces défauts, que le banc ne voyait pas »
+
+Le banc V2 ne rendait que `dossier/gabarit/apporteur/estimer` : il ne VOYAIT ni le Comparatif, ni
+l'Étude, ni le **Flash**, ni le Courrier, ni le Bilan. **Élargi** (`documents_banc.py`) à TOUS les
+documents (POST compris) et à deux faits de plus — **viabilisation** et **date du PPR** — sur
+**13 parcelles témoins** (dont une **zone U touchée par la zone rouge d'un PPR**, `97415000CY0275`, et
+la zone N `97421000AB0133`). Il a révélé **163 écarts**, tous corrigés **à la source** → **0 écart**.
+
+| Fait / jeton / forme | Avant | Correctif (à la source) |
+|---|---|---|
+| **Viabilisation** à deux valeurs | dossier « probable » vs comparatif/Flash « confirmée » | `viabilisation.build_indicateur` — **un seul libellé** (« probable ») lu par fiche, Dossier, Comparatif, Flash, Estimer. |
+| **Date du PPR** à deux valeurs | dossier « approuvé le 16/04/2026 » (édition DEAL de TOUTE l'île) vs Estimer « 2012 » | `deal_carmen` + `millesime_source` — le millésime de couche DEAL ne se lit plus « approuvé le … » ; seule la date du PPR **de la commune** s'affiche. |
+| **Flash = Dossier** | le Flash exporté était une copie du Dossier | le **vrai produit 79 €** (`generate_flash_report`) ; jargon retiré (« run servi », « sentinelle », « ingéré le », « Version du modèle »), dates jj/mm/aaaa, décimales à la virgule. |
+| **Étude** : plafond d'emprise 487 vs 470 | 30 % du DESSIN | le plafond **du Gabarit** (CES × contenance), lu dans le payload. |
+| **Étude** : 4 bâtiments vs 2 | `count(DISTINCT b.id)` (doublons d'ingestion) | `bati.stats_batch`/`emprise_bati_bdtopo_m2` — **mêmes producteurs que la fiche** (dédoublonnés). |
+| **Étude** : « art. Article Uh.9 », millésime ISO | — | `_art_label` (« art. Uh.9 »), `_fr_iso` (jj/mm/aaaa), décimales à la virgule à la sortie. |
+| **Courrier / Apporteur** : nom = e-mail | le nom de compte (souvent l'e-mail) servait de signataire | société, sinon prénom + nom ; **jamais l'e-mail** ; sans nom → le document **refuse** (« Renseignez le nom de votre société dans Compte »). Signature sous « Cordialement, ». |
+| **Bilan** : bénéfice sans coût | résultat = CA (dépenses nulles) | sans coût majeur saisi → **« non calculable — saisissez vos coûts »** ; ligne « Terrain » = **contenance** de la fiche. |
+| **Forme** | « Pack », « )) » | sous-groupe Bilan renommé ; parenthèses imbriquées supprimées (quartier, relief). |
+
+Le **Gabarit** sur une parcelle **zone N** rend désormais un **document de refus propre** (jamais un
+422) ; sur la **zone U + PPR rouge**, il se dessine EN déduisant le rouge.
+
+## 8. Recette (2ᵉ passe)
+
+| Recette | Résultat |
+|---|---|
+| **Banc des documents élargi** (13 témoins, 123 documents, Flash/Courrier/Bilan/Étude compris) | **0 écart** (faits 0, jetons 0, format 0) |
+| **Régénération V3** (`~/Desktop/LABUSE-EXPORTS-2026-11-07-V3/` + `SOMMAIRE.md`) | `scripts/docs1_regen_v3.py` — 4 parcelles ; **Flash réel**, Gabarit de refus (zone N), Bilan « non calculable ». 44 documents (l'Étude de `CY0275` refuse honnêtement : le moteur d'implantation ne produit pas de scénario sur cette géométrie). |
+| Hook (unitaires `not db/local/reel/network`) | **vert — 2953 passed** |
 
 ---
 
 *DOCS-1 — base locale, prod jamais touchée. Banc : `scripts/coherence/documents_banc.py` ;
-régénération : `scripts/docs1_regen_v2.py`. Branche `fix/docs-1`, non mergée.*
+régénération : `scripts/docs1_regen_v2.py` (V2) et `scripts/docs1_regen_v3.py` (V3). Branche
+`fix/docs-1`, non mergée.*

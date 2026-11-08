@@ -31,6 +31,12 @@ _NOTES_INTERNES = (
     (" — « latest » ingérée", ", édition courante"),
     ("« latest » ingérée", "édition courante"),
     ("« latest »", "édition courante"),
+    # DOCS-1 (décision Vic) — le millésime de la COUCHE DEAL cite la date d'approbation du PPR le plus
+    # récent de TOUTE l'île (« approuvé le 16/04/2026 ») : dans un dossier de parcelle, un client lit
+    # cela comme la date du PPR de SA commune (faux — c'est une édition de couche). On retire la mention
+    # d'approbation : la seule date d'approbation affichée reste celle du PPR applicable à la commune.
+    ("PPR le plus récent approuvé le ", "PPR — dernière édition DEAL du "),
+    (" (état DEAL)", ""),
     ("(IGN, proxy)", "(IGN)"),        # RECETTE-12 D5 — « proxy » entre parenthèses avec l'éditeur
 )
 

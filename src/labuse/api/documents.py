@@ -107,7 +107,36 @@ def rendre_document(db, idu: str, request: Request, document: str, *,
 # questionnaire, modules, robinet et tests retirés ; les postes restent servis par le Bilan.
 @router.get("/apporteur/{idu}.pdf")
 def apporteur_pdf(idu: str, request: Request, db: Session = Depends(get_db)) -> Response:
+    # DOCS-1 (décision Vic) — l'Apporteur est signé du CLIENT : sans nom exploitable (ni société, ni
+    # prénom + nom ; jamais l'e-mail), le document REFUSE de générer et dit quoi renseigner.
+    _refus = _refus_sans_nom(db, request)
+    if _refus is not None:
+        return _refus
     return rendre_document(db, idu, request, "apporteur", forms=True, marque=False)
+
+
+def _refus_sans_nom(db: Session, request: Request) -> Response | None:
+    """Refus partagé Courrier/Apporteur : aucun nom exploitable sur le compte → PDF d'une ligne
+    « Renseignez le nom de votre société dans Compte », jamais un document signé d'une adresse e-mail."""
+    from ..courrier_compose import MSG_SANS_NOM, expediteur_du_compte, ExpediteurSansNom
+    from .courrier import _marque_du_compte
+    try:
+        expediteur_du_compte(_marque_du_compte(db, request), None)
+        return None
+    except ExpediteurSansNom:
+        from fpdf import FPDF
+        from fpdf.enums import XPos, YPos
+        p = FPDF(format="A4")
+        p.set_auto_page_break(True, margin=28)
+        p.set_margins(22, 24, 22)
+        p.add_page()
+        p.set_font("Helvetica", "B", 13)
+        p.multi_cell(p.epw, 8, "Document non genere", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        p.ln(2)
+        p.set_font("Helvetica", "", 11)
+        p.multi_cell(p.epw, 6, MSG_SANS_NOM, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        return Response(content=bytes(p.output()), media_type="application/pdf",
+                        headers={"Content-Disposition": 'attachment; filename="apporteur.pdf"'})
 
 
 # ── DOCS-1 (Lot C) — les 3 nouveaux documents : miroirs des outils Gabarit, Comparer, Étude de zone. ──
@@ -148,10 +177,10 @@ def gabarit_pdf(idu: str, request: Request, db: Session = Depends(get_db)) -> Re
     try:
         res = builder.construire_gabarit(db, idu)
     except builder.DocumentNonEtablissable as exc:
-        raise HTTPException(status_code=422, detail={
-            "erreur": "document_non_etablissable",
-            "message": "Ce document ne peut pas être établi : il manque des éléments indispensables.",
-            "manques": exc.manques})
+        # DOCS-1 (décision Vic) — sur une parcelle inconstructible (zone N/A fermée, habitat interdit,
+        # zone rouge de PPR), le Gabarit rend un DOCUMENT de refus propre (comme l'Étude), JAMAIS un 422
+        # qui laisse l'utilisateur devant une erreur : il n'y a pas d'enveloppe à dessiner, on le dit.
+        return _gabarit_refus_pdf(idu, exc.manques)
     except HTTPException:
         raise
     except Exception:  # noqa: BLE001
@@ -159,6 +188,30 @@ def gabarit_pdf(idu: str, request: Request, db: Session = Depends(get_db)) -> Re
         raise HTTPException(status_code=500, detail={"erreur": "erreur_technique",
                             "message": "Le document n'a pas pu être généré (erreur technique)."})
     return _pdf_response(res, "gabarit")
+
+
+def _gabarit_refus_pdf(idu: str, manques: list) -> Response:
+    """DOCS-1 (décision Vic) — document de REFUS du Gabarit : parcelle inconstructible, aucune
+    enveloppe à dessiner. Rendu propre (même habillage que les documents servis), jamais un 422."""
+    from ..exports.rendu import Cartouche, esc, page_html, render_pdf
+    motif = (manques[0].get("libelle") if manques else None) or "Parcelle inconstructible"
+    cart = Cartouche(
+        doc_title=f"LABUSE — Gabarit · {idu}",
+        doc_ref=idu,
+        doc_foot="Gabarit · enveloppe réglementaire · pré-analyse, non contractuel.")
+    corps = (
+        '<section><h2>Enveloppe constructible</h2>'
+        f'<div class="verdict">Cette parcelle ne porte pas d\'enveloppe constructible : {esc(motif)}.</div>'
+        '<p class="note">Le Gabarit dessine l\'enveloppe réglementaire d\'une parcelle constructible. '
+        'Sur une parcelle inconstructible (zone naturelle N, zone agricole fermée, habitat interdit, '
+        'ou zone rouge d\'un plan de prévention des risques), il n\'y a pas de volume à dessiner : le '
+        'document le dit, il ne fabrique pas une enveloppe qui n\'existe pas. Les contraintes et le '
+        'zonage détaillés figurent au Dossier de la parcelle.</p></section>')
+    pdf = render_pdf(page_html("Gabarit", cart, corps))
+    return Response(pdf, media_type="application/pdf",
+                    headers={"Content-Disposition": f'inline; filename="gabarit-{idu}.pdf"',
+                             "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+                             "Pragma": "no-cache"})
 
 
 @router.get("/comparatif.pdf")

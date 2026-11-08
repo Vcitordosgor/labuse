@@ -512,6 +512,23 @@ def courrier_pdf(body: PdfIn, request: Request, db: Session = Depends(get_db)) -
         res = ca.resoudre_destinataire(db, idu)
         comp = cc.composer(db, idu, resolution=res, marque=_marque_du_compte(db, request))
         ref_pied = comp["reference"]
+        # DOCS-1 (décision Vic) — compte sans nom exploitable : le document REFUSE (message clair),
+        # jamais un courrier « au nom de rien » ni signé d'une adresse e-mail.
+        if (comp.get("synthese") or {}).get("sans_nom"):
+            _p = FPDF(format="A4")
+            _p.set_auto_page_break(True, margin=28)
+            _p.set_margins(22, 24, 22)
+            _p.add_page()
+            _p.set_text_color(*_DA_ENCRE)
+            _p.set_font("Helvetica", "B", 13)
+            _p.multi_cell(_p.epw, 8, _pdf_safe("Courrier non généré"),
+                          new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            _p.ln(2)
+            _p.set_font("Helvetica", "", 11)
+            _p.multi_cell(_p.epw, 6, _pdf_safe(comp["recto"]),
+                          new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            return Response(content=bytes(_p.output()), media_type="application/pdf",
+                            headers={"Content-Disposition": 'attachment; filename="courrier.pdf"'})
 
     class _Courrier(FPDF):
         def footer(self) -> None:

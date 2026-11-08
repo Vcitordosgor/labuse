@@ -6253,8 +6253,15 @@ def _viabilisation_block(db: Session, idu: str) -> dict | None:
     if not row:
         return None
     # M75 — PVGIS branché ici (volet PV, à côté du S3REnR) en INFORMATION seule.
-    return V.build_indicateur(dict(row), elec_pv=ilot_s3renr_note(db),
-                              solaire=solaire_note(db, idu))
+    ind = V.build_indicateur(dict(row), elec_pv=ilot_s3renr_note(db), solaire=solaire_note(db, idu))
+    # DOCS-1 (décision Vic) — UN SEUL libellé de viabilisation, celui de la FICHE, partout (écran,
+    # Dossier, Comparatif, documents). La viabilisation est un FAISCEAU d'indices (un score n'affirme
+    # rien) : le libellé SERVI dit « probable », jamais « confirmée par les faits » (langage interne).
+    # Le point de calcul V.band garde ses bandes ; seul l'AFFICHAGE est adouci, à la source unique.
+    if isinstance(ind, dict) and ind.get("libelle"):
+        ind["libelle"] = (str(ind["libelle"]).replace(" confirmée par les faits", " probable")
+                          .replace(" confirmée", " probable"))
+    return ind
 
 
 def _aper_block(db: Session, idu: str) -> dict | None:

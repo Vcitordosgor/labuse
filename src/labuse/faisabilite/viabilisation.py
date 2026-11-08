@@ -226,6 +226,11 @@ def build_indicateur(sig: dict[str, Any], elec_pv: dict[str, Any] | None = None,
                      solaire: dict[str, Any] | None = None) -> dict[str, Any]:
     score = compute_score(sig)
     code, libelle = band(score)
+    # DOCS-1 (décision Vic) — UN SEUL libellé de viabilisation, partout (fiche, Dossier, Comparatif,
+    # Flash, Estimer) : la viabilisation est un FAISCEAU d'indices, jamais une certitude. Le libellé
+    # SERVI dit « probable », jamais « confirmée par les faits » (langage interne). band() (code et
+    # seuils) reste intact — on ne touche QUE le texte affiché au client, à sa source unique.
+    libelle = libelle.replace(" confirmée par les faits", " probable")
     contribs = contributions(sig)
     _da = BANDE_DA.get(code, BANDE_DA["incertaine"])
     out: dict[str, Any] = {

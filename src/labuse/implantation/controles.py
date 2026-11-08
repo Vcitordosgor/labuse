@@ -320,13 +320,13 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
         elif egout_plat <= he.valeur + 1e-9:
             out.append(ControleReg(
                 "Hauteur sur terrain en pente", f"≤ {he.valeur:.0f} m à l'égout (toiture plate tenable)",
-                f"R+{cap.niveaux - 1}, relief sous bâti {relief_bati:.1f} m ({src}) → {egout_plat:.1f} m aval",
+                f"R+{cap.niveaux - 1}, relief sous bâti {relief_bati:.1f} m, {src} → {egout_plat:.1f} m aval",
                 REUSSI, he.citation))
         else:
             n_gradins = max(2, math.ceil(relief_bati / etage) + 1)
             out.append(ControleReg(
                 "Hauteur sur terrain en pente", f"≤ {he.valeur:.0f} m à l'égout — bâtiment EN GRADINS",
-                f"R+{cap.niveaux - 1} en {n_gradins} gradins (relief {relief_bati:.1f} m mesuré, {src})",
+                f"R+{cap.niveaux - 1} en {n_gradins} gradins — relief {relief_bati:.1f} m mesuré, {src}",
                 REUSSI, he.citation,
                 detail=(f"relief sous le bâti {relief_bati:.1f} m (pente moy. {pente.get('pente_moyenne_pct')} %) : "
                         f"une toiture plate dépasserait de {egout_plat - he.valeur:.1f} m à l'égout aval → le bâtiment "

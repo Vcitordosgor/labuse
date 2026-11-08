@@ -178,16 +178,55 @@ def _telephone(coordonnees: str | None) -> str | None:
     return m.group(1).strip() if m else None
 
 
+#: DOCS-1 (décision Vic) — message de REFUS quand le compte n'a ni société ni nom de signataire : le
+#: courrier ne se compose pas « au nom de » rien (et JAMAIS d'une adresse e-mail en guise de nom).
+MSG_SANS_NOM = "Renseignez le nom de votre société dans Compte"
+
+
+class ExpediteurSansNom(ValueError):
+    """Le compte n'a aucun nom exploitable (ni raison sociale, ni signataire) — le document refuse."""
+
+
+def _est_email(s: str | None) -> bool:
+    s = (s or "").strip()
+    return "@" in s and "." in s.rsplit("@", 1)[-1]
+
+
 def expediteur_du_compte(marque: dict | None, commune: str | None) -> dict:
-    """Signataire du courrier depuis la marque blanche du compte (jamais inventé)."""
+    """Signataire du courrier depuis la marque blanche du compte (jamais inventé).
+
+    DOCS-1 (décision Vic) — le courrier est au nom du CLIENT, jamais « LABUSE ». JAMAIS une adresse
+    e-mail en guise de nom (le nom de compte est souvent l'e-mail de connexion). On prend la raison
+    sociale ; à défaut, le prénom + nom du signataire ; à défaut des deux, le document REFUSE de se
+    composer (`ExpediteurSansNom`), avec le message qui dit quoi renseigner."""
     marque = marque or {}
-    # DOCS-1 (décision Vic) — le courrier est au nom du CLIENT, jamais « LABUSE » : à défaut de raison
-    # sociale (repli posé sur le nom du compte en amont), on reste neutre (« l'expéditeur »).
-    societe = (marque.get("raison_sociale") or "").strip() or "l'expéditeur"
-    return {"signataire": (marque.get("signataire") or "").strip() or None,
+    raison = (marque.get("raison_sociale") or "").strip()
+    signataire = (marque.get("signataire") or "").strip()
+    if _est_email(raison):
+        raison = ""
+    if _est_email(signataire):
+        signataire = ""
+    societe = raison or signataire        # société si renseignée, sinon prénom + nom
+    if not societe:
+        raise ExpediteurSansNom(MSG_SANS_NOM)
+    return {"signataire": signataire or None,
             "societe": societe,
+            "raison_sociale": raison or None,
             "commune": commune or None,
             "telephone": _telephone(marque.get("coordonnees"))}
+
+
+def bloc_signature(exp: dict) -> list[str]:
+    """DOCS-1 (décision Vic) — l'identité sous « Cordialement, » : prénom + nom, puis la société
+    (jamais deux fois la même ligne quand seul l'un des deux existe)."""
+    out: list[str] = []
+    if exp.get("signataire"):
+        out.append(exp["signataire"])
+    if exp.get("raison_sociale") and exp["raison_sociale"] != exp.get("signataire"):
+        out.append(exp["raison_sociale"])
+    elif not exp.get("signataire"):
+        out.append(exp["societe"])
+    return out
 
 
 def _signature(exp: dict) -> str:
@@ -221,7 +260,16 @@ def composer(db, idu: str, *, resolution: dict, marque: dict | None = None) -> d
                 "situee": idu, "expediteur": expediteur_du_compte(marque, _disp.get("commune")),
                 "synthese": {"idu": idu, "disparue": True}}
     d = _synthese(db, idu)
-    exp = expediteur_du_compte(marque, d.get("commune"))
+    # DOCS-1 (décision Vic) — sans nom exploitable (ni société ni signataire ; jamais l'e-mail),
+    # le courrier REFUSE de se composer et dit quoi renseigner — jamais un « au nom de l'expéditeur ».
+    try:
+        exp = expediteur_du_compte(marque, d.get("commune"))
+    except ExpediteurSansNom as _e:
+        return {"recto": str(_e), "verso": [str(_e)], "ouverture": None,
+                "reference": d["reference"], "situee": idu,
+                "expediteur": {"societe": "", "signataire": None, "commune": d.get("commune"),
+                               "telephone": None},
+                "synthese": {"idu": idu, "sans_nom": True}}
     ref, commune = d["reference"], d.get("commune") or ""
     _code, ouv = choisir_ouverture(d)
 
@@ -229,7 +277,9 @@ def composer(db, idu: str, *, resolution: dict, marque: dict | None = None) -> d
     if resolution.get("type") == "occupant":     # phrase d'entrée UNIQUEMENT pour les plis « à l'occupant »
         lignes += [_PHRASE_OCCUPANT.format(reference=ref), ""]
     lignes += ["Madame, Monsieur,", "", _INTRO.format(societe=exp["societe"]), "", ouv, "",
-               _PARA_VERSO, "", _PARA_OFFRE, "", _PARA_MAJ, "", _signature(exp), "", "Cordialement,"]
+               _PARA_VERSO, "", _PARA_OFFRE, "", _PARA_MAJ, "", _signature(exp), "",
+               # DOCS-1 (décision Vic) — l'identité (prénom, nom, société) vient SOUS « Cordialement, ».
+               "Cordialement,", "", *bloc_signature(exp)]
     recto = "\n".join(lignes)
 
     verso = composer_verso(d)
@@ -251,8 +301,9 @@ def composer_verso(d: dict) -> list[str]:
     if d.get("zone"):
         doc = d.get("zone_document")
         doc_txt = f" — {doc}" if doc and doc.strip() and doc.strip() != d["zone"] else ""
-        lignes.append(f"Zone d'urbanisme : {d['zone']}{doc_txt}"
-                      + (" (règles calibrées)" if d.get("zone_calibree") else ""))
+        # DOCS-1 (décision Vic) — « règles calibrées » est un mot de cuisine interne : le courrier
+        # cite la zone et son document, jamais l'état du calibrage LABUSE.
+        lignes.append(f"Zone d'urbanisme : {d['zone']}{doc_txt}")
     if d.get("risques"):
         lignes.append("Contraintes connues : " + " ; ".join(d["risques"][:4]))
     if (d.get("n_mutations") or 0) > 0:

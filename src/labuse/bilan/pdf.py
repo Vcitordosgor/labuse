@@ -182,8 +182,10 @@ def construire_html(
     _prix = (f"{round(prix_demande):,}".replace(",", " ") + " €") if prix_demande else "non renseigné"
     # DOCS-1 (décision Vic) — RÉSUMÉ de couverture : chiffre d'affaires et résultat net du programme.
     _eur = lambda x: (f"{round(x):,}".replace(",", " ") + " €") if isinstance(x, (int, float)) else "—"  # noqa: E731
+    # DOCS-1 (décision Vic) — pas de bénéfice annoncé en couverture tant qu'aucun coût n'est saisi.
+    _res_txt = esc(_eur(r.resultat_net)) if r.resultat_net is not None else "non calculable — saisissez vos coûts"
     _resume = (f'<p class="tete-doc">CA TTC : {esc(_eur(r.ca_ttc))} · '
-               f'Résultat net : {esc(_eur(r.resultat_net))}</p>')
+               f'Résultat net : {_res_txt}</p>')
     tete = (
         f'<div class="brand"><span class="wordmark">LABUSE</span>'
         f'<span class="kind">Bilan</span></div>'
@@ -252,13 +254,26 @@ def construire_html(
     corps.append(
         f"<tr><td>TVA résiduelle</td><td></td><td></td><td class='num'>{_eur(r.tva_residuelle)}</td></tr>"
     )
-    corps.append(
-        f"<tr class='tot'><td>Résultat net</td><td class='num res'>{_eur(r.resultat_net)}</td>"
-        f"<td colspan='2' class='num'>{_pct(r.marge_pct)} du CA HT</td></tr>"
-    )
-    corps.append(
-        f"<tr><td>Cash flow</td><td class='num'>{_eur(r.cash_flow)}</td><td colspan='2'></td></tr>"
-    )
+    # DOCS-1 (décision Vic) — tant qu'aucun coût majeur n'est saisi, le moteur laisse résultat/marge/
+    # cash-flow à None : on écrit « non calculable — saisissez vos coûts », JAMAIS un bénéfice (= tout
+    # le CA) trompeur.
+    if r.resultat_net is None:
+        corps.append(
+            "<tr class='tot'><td>Résultat net</td><td colspan='3' class='num'>"
+            "non calculable — saisissez vos coûts</td></tr>"
+        )
+        corps.append(
+            "<tr><td>Cash flow</td><td colspan='3' class='num'>"
+            "non calculable — saisissez vos coûts</td></tr>"
+        )
+    else:
+        corps.append(
+            f"<tr class='tot'><td>Résultat net</td><td class='num res'>{_eur(r.resultat_net)}</td>"
+            f"<td colspan='2' class='num'>{_pct(r.marge_pct)} du CA HT</td></tr>"
+        )
+        corps.append(
+            f"<tr><td>Cash flow</td><td class='num'>{_eur(r.cash_flow)}</td><td colspan='2'></td></tr>"
+        )
     corps.append("</tbody></table>")
     corps.append('<p style="color:#6b7a72;font-size:10px">Document non contractuel.</p>')
     corps.append("</div></div>")

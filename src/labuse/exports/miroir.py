@@ -1064,7 +1064,10 @@ def _verdict_factuel(sec_id: str, valeurs: dict[str, Valeur]) -> tuple[str, str,
             nom = iq.get("nom") or "le quartier IRIS"
             # COHERENCE-FIX-1 (lot E) — le millésime du recensement accompagne le chiffre (« vrai
             # hier, faux aujourd'hui, sans date pour le dire » — plus jamais).
-            mil = f" ({iq['millesime']})" if iq.get("millesime") else ""
+            # DOCS-1 (décision Vic) — un millésime qui porte déjà des parenthèses (« RP2022 (parution
+            # …) ») n'est PAS remis entre parenthèses (sinon « )) ») : on l'introduit par un tiret.
+            _m = str(iq.get("millesime") or "")
+            mil = (f" — {_m}" if "(" in _m else f" ({_m})") if _m else ""
             return (esc(f"{nom} — {groupe(iq['habitants'])} habitants{mil}") + ".", "neutral", "iris_quartier")
         return None
     return None
