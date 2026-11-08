@@ -62,6 +62,14 @@ def _retirer_source_defaut(db, source_id: int, raison: str) -> dict:
     return {"ok": True, "source_id": source_id}
 
 
+def _diagnostiquer_app_defaut() -> dict:
+    """MAILS-EXPLOIT-1 — diagnostic LECTURE SEULE de l'app : sonde /readyz EN LOCAL (pas d'URL publique,
+    aucun effet de bord — pas de restart, pas d'écriture d'état débounce). Rend {ready, motif}."""
+    from .. import ops_alertes
+    ready, motif = ops_alertes._readyz_local()
+    return {"ready": bool(ready), "motif": motif}
+
+
 def _accepter_incident_defaut(db, cle: str) -> bool:
     from .. import ops_alertes
     return ops_alertes.resoudre(db, cle)
@@ -89,6 +97,7 @@ class Backend:
     retirer_source: Callable[..., dict] = _retirer_source_defaut
     accepter_incident: Callable[..., bool] = _accepter_incident_defaut
     accepter_ecart: Callable[..., dict] = _accepter_ecart_defaut
+    diagnostiquer_app: Callable[[], dict] = _diagnostiquer_app_defaut
 
 
 # ════════════════════════════════ Le registre d'actions (liste fermée) ════════════════════════════════
@@ -144,6 +153,16 @@ def _act_relancer_job(db, args, par, backend: Backend):
 def _act_lancer_sauvegarde(db, args, par, backend: Backend):
     r = backend.lancer_job("backup-postgres")
     return True, "sauvegarde (backup-postgres) lancée", {"lancement": r}
+
+
+def _act_diagnostiquer_app(db, args, par, backend: Backend):
+    """MAILS-EXPLOIT-1 — « Diagnostique l'app » : sonde /readyz (lecture seule) et rend l'état. Ne
+    redémarre RIEN (le redémarrage reste un geste humain explicite) : John rapporte, Vic décide."""
+    d = backend.diagnostiquer_app()
+    if d.get("ready"):
+        return True, "l'app répond (readyz vert)", d
+    return (True, f"l'app NE répond PAS ({d.get('motif')}) — si ça persiste, redémarrer le service "
+            "« labuse » sur le serveur", d)
 
 
 def _act_accepter_incident(db, args, par, backend: Backend):
@@ -202,6 +221,8 @@ ACTIONS: dict[str, ActionDef] = {a.cle: a for a in [
     ActionDef("injecter_source", "Injecter une source (A ou B)", False, _act_injecter_source),
     ActionDef("relancer_job", "Relancer un job du registre", False, _act_relancer_job),
     ActionDef("lancer_sauvegarde", "Lancer une sauvegarde", False, _act_lancer_sauvegarde),
+    ActionDef("diagnostiquer_app", "Diagnostiquer l'app (readyz, lecture seule)", False,
+              _act_diagnostiquer_app),
     ActionDef("accepter_incident", "Accepter (fermer) un incident", False, _act_accepter_incident),
     ActionDef("accepter_ecart", "Accepter un écart avec raison", False, _act_accepter_ecart),
     ActionDef("promouvoir_run", "Promouvoir un run aux contrôles verts", True, _act_promouvoir_run),

@@ -1418,27 +1418,35 @@ def resume_matin(ctx: JobContext) -> None:
     signaler ») : verdict du calcul de nuit, sauvegardes (VPS + hors-VPS), Radar, verrous, cohérence,
     incidents ouverts (avec lien d'action) et ce qui est rentré dans l'ordre depuis hier. Remplace les
     mails « résolu » un-par-un (point 6a). Sujet préfixé [URGENT] s'il y a un geste attendu, sinon [INFO]."""
-    from . import ops_alertes
+    from . import mails_exploit, ops_alertes
     s = get_settings()
-    # JOHN-TAYLOR-1 — c'est John qui ÉCRIT le résumé (à partir des faits du résumé actuel). S'il échoue
-    # (plafond, dégradé, anti-invention), le résumé actuel part tel quel (meta.par = 'repli').
+    # JOHN-TAYLOR-1 — c'est John qui ÉCRIT le résumé TECHNIQUE affiché dans l'onglet /admin (à partir des
+    # faits). On le CONSERVE pour le détail de la console ; s'il échoue, le résumé factuel y part tel quel.
     par = "repli"
     if getattr(s, "john_actif", True):
         try:
             from .john import resume as _john_resume
-            urgent, sujet, corps, meta = _john_resume.composer_resume_matin(ctx.db, s)
+            u0, s0, c0, meta = _john_resume.composer_resume_matin(ctx.db, s)
             par = meta.get("par", "repli")
-            _john_resume.enregistrer_resume(ctx.db, urgent=urgent, sujet=sujet, corps=corps, par=par)
-        except Exception:  # noqa: BLE001 — jamais John ne doit empêcher le mail de partir
-            urgent, sujet, corps = _resume_matin_texte(ctx.db, s)
-    else:
-        urgent, sujet, corps = _resume_matin_texte(ctx.db, s)
+            _john_resume.enregistrer_resume(ctx.db, urgent=u0, sujet=s0, corps=c0, par=par)
+        except Exception:  # noqa: BLE001 — jamais l'onglet ne doit empêcher le mail de partir
+            log.warning("resume-matin : enregistrement onglet John impossible (le mail part quand même)")
+
+    # MAILS-EXPLOIT-1 (mandat Vic) — LE MAIL du matin est le RÉSUMÉ D'EXPLOITATION dans le gabarit
+    # MAILS-1 : une pastille + une phrase, au plus 5 points (ce qui s'est passé + l'action), « le reste
+    # va bien » en une ligne, un seul bouton « Ouvrir l'exploitation ». Plus de JSON, d'heures UTC ni de
+    # jargon dans le mail ; le détail technique reste dans /admin.
+    faits = mails_exploit.construire_faits(ctx.db, s)
+    base = (getattr(s, "public_base_url", None) or mails_exploit.APP_URL)
+    m = mails_exploit.rendre_resume(faits, base_url=base)
+    urgent = any(p["gravite"] == "rouge" for p in faits["points"])
     dest = ops_alertes._destinataire(s)
     envoi = "pas-de-destinataire"
     if dest:
-        from .mail import envoyer_ops
-        envoi = envoyer_ops(dest, sujet, corps, settings=s).detail
-    ctx.compte(urgent=urgent, sujet=sujet, destinataire=dest or None, envoi=envoi, resume_par=par)
+        from .mail import send_email
+        envoi = send_email(dest, m.sujet, m.texte, body_html=m.html, settings=s).detail
+    ctx.compte(urgent=urgent, sujet=m.sujet, destinataire=dest or None, envoi=envoi, resume_par=par,
+               points=len(faits["points"]))
 
 
 def john_veille(ctx: JobContext) -> None:

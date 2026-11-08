@@ -130,30 +130,41 @@ def _destinataire(s) -> str | None:
 # ─────────────────────────────── la porte d'envoi unique ───────────────────────────────
 
 def _sink(db, sujet: str, corps: str, *, dedup: str, lien: str = "/admin") -> str:
-    """Envoie l'alerte par les DEUX canaux : mail (Brevo/SMTP via la façade `mail`) + cloche admin.
-    `lien` = chemin de l'action (OPS-NUIT-1 point 6(d)) : ajouté au corps du mail en URL cliquable ET
-    porté par la cloche. Retourne le détail d'envoi mail ('ok' | 'dry-run' | 'no-config' | 'error: …').
-    Jamais bloquant : la cloche qui rate ne doit pas empêcher le mail, et inversement."""
-    s = get_settings()
-    corps_mail = f"{corps}\n\n→ Agir : {_url_absolue(s, lien)}" if lien else corps
-    detail_mail = "pas-de-destinataire"
-    dest = _destinataire(s)
-    if dest:
-        try:
-            from .mail import envoyer_ops
-            detail_mail = envoyer_ops(dest, sujet, corps_mail, settings=s).detail
-        except Exception as exc:  # noqa: BLE001 — l'échec d'envoi ne casse pas la vigie
-            detail_mail = f"error: {type(exc).__name__}"
-            log.warning("alerte ops : mail impossible (%s)", exc)
+    """Pose la CLOCHE admin de l'incident (une notification « systeme », dédoublonnée par `dedup`).
+
+    MAILS-EXPLOIT-1 (mandat Vic) — `_sink` NE FAIT PLUS PARTIR DE MAIL. Tout incident ouvert reste
+    VISIBLE à la cloche admin et REMONTE dans le résumé du matin (gabarit MAILS-1) ; seul un incident
+    NOUVEAU et GRAVE (app hors ligne, sauvegarde ratée, paiement Stripe) déclenche un mail immédiat,
+    envoyé à part par `_mail_alerte` depuis `signaler`. Fini les cinq « [URGENT] Job en échec » par jour
+    et le rappel quotidien par mail d'un incident déjà signalé. Jamais bloquant."""
     try:
         from .api.events import creer_notification
         creer_notification(db, kind="systeme", compte_id=None, source="Exploitation",
                            titre=_sans_prefixe(sujet), detail=(corps or "")[:500],
                            lien=lien or "/admin", dedup=dedup)
-    except Exception as exc:  # noqa: BLE001 — la cloche qui rate ne casse pas l'alerte mail
+    except Exception as exc:  # noqa: BLE001 — la cloche qui rate ne casse pas la vigie
         log.warning("alerte ops : cloche impossible (%s)", exc)
-    log.info("alerte ops « %s » — mail=%s", sujet, detail_mail)
-    return detail_mail
+    return "ok"
+
+
+def _mail_alerte(db, cle: str, sujet: str, detail: str, lien: str) -> str:
+    """MAILS-EXPLOIT-1 — le MAIL IMMÉDIAT d'un incident NOUVEAU et GRAVE, dans le gabarit d'exploitation
+    (court, même DA que le résumé). Appelé UNE fois, à l'ouverture, pour les seuls incidents graves
+    (`mails_exploit._est_grave`). Jamais bloquant : un échec d'envoi ne casse pas la vigie."""
+    s = get_settings()
+    dest = _destinataire(s)
+    if not dest:
+        return "pas-de-destinataire"
+    try:
+        from . import mails_exploit
+        alerte = mails_exploit.humaniser_alerte(cle, sujet, detail)
+        base = (getattr(s, "public_base_url", None) or mails_exploit.APP_URL)
+        m = mails_exploit.rendre_alerte(alerte, base_url=base)
+        from .mail import send_email
+        return send_email(dest, m.sujet, m.texte, body_html=m.html, settings=s).detail
+    except Exception as exc:  # noqa: BLE001 — l'échec d'envoi ne casse pas l'incident
+        log.warning("alerte ops : mail immédiat impossible (%s)", exc)
+        return f"error: {type(exc).__name__}"
 
 
 # ─────────────────────────────── incidents (ouvrir / rappeler / résoudre) ───────────────────────────────
@@ -173,7 +184,15 @@ def signaler(db, cle: str, sujet: str, detail: str, lien: str | None = None) -> 
         db.execute(text(
             "INSERT INTO ops_incidents (cle, sujet, detail, premier_envoi_at, dernier_envoi_at, rappels) "
             "VALUES (:c, :s, :d, now(), now(), 0)"), {"c": cle, "s": sujet, "d": detail})
+        # cloche TOUJOURS ; MAILS-EXPLOIT-1 — mail immédiat SEULEMENT si l'incident est nouveau ET grave
+        # (app hors ligne, sauvegarde ratée, paiement Stripe). Les autres attendent le résumé du matin.
         _sink(db, sujet_mail, detail + "\n\n— LABUSE, exploitation", dedup=f"ops:{cle}:ouvert", lien=lien)
+        try:
+            from . import mails_exploit
+            if mails_exploit._est_grave(cle):
+                _mail_alerte(db, cle, sujet, detail, lien)
+        except Exception as exc:  # noqa: BLE001 — l'alerte mail ne doit jamais casser l'ouverture
+            log.warning("alerte ops : classification grave impossible (%s)", exc)
         return "ouvert"
     # FIX-ORFEVRE-1 pt 3 (D-04) — UNE SEULE définition du « jour » de dédup des alertes : le jour
     # RÉUNION (comme protection._aujourdhui et les clés de jobs_impl). Avant : jour UTC ici, jour
