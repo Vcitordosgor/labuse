@@ -18,7 +18,8 @@ PY="${RESIDUEL_PY:-$ROOT/.venv/bin/python}"
 RS="$1"; LIST="$2"
 while IFS= read -r C; do
   [ -z "$C" ] && continue
+  # RESIDUEL-1 — plus de --assiette-clippee : le calcul est clippé par construction (chemin unique).
   PYTHONPATH="$ROOT/src" "$PY" -m labuse.cli compute-residuel \
-    --commune "$C" --into-run "$RS" --assiette-clippee
+    --commune "$C" --into-run "$RS"
 done < "$LIST"
 echo "shard $LIST terminé (run $RS)"

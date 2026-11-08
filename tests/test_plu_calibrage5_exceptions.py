@@ -96,6 +96,7 @@ def _faisa(regles_non_modelisees, calibree=True):
 
     class _Ctx:
         surface_m2 = 1000.0
+        zone_parts = []   # mono-zone (RESIDUEL-1 : clip toujours tenté, None hors à-cheval)
     ctx = _Ctx()
     ctx.regles_non_modelisees = regles_non_modelisees
     return (ctx, f)

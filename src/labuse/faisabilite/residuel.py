@@ -148,20 +148,20 @@ def _cause_indisponible(session: Session, parcel_id: int, f=None) -> tuple[str, 
 
 
 def compute_residuel(session: Session, parcel_id: int,
-                     faisa: tuple | None = None,
-                     assiette_clippee: bool = False) -> dict:
+                     faisa: tuple | None = None) -> dict:
     """Bloc « potentiel résiduel » d'une parcelle. `faisa` = (ctx, Faisabilite) déjà calculé
     (réutilisé par la fiche pour ne pas relancer le moteur). `disponible=False` quand la
     parcelle n'est pas constructible ou que le bâti n'est pas mesurable — M125 : chaque
     indisponible porte alors sa CAUSE structurée + la SDP à écrire (0 vrai / NULL inconnu).
 
-    SCORING-6 lot A — `assiette_clippee=True` : la capacité est calculée sur l'assiette clippée
-    (portion U/AU moins contraintes géométriques certaines) au lieu du tout-ou-rien. OPT-IN :
-    inutile pour le servi, requis pour le run résiduel q_v15 (geste de Vic)."""
+    RESIDUEL-1 (décision Vic 08/11/2026) — UN SEUL CHEMIN : la capacité est TOUJOURS calculée sur
+    l'assiette clippée (portion U/AU − contraintes certaines, PPR rouge découpé). L'ancien flag
+    `assiette_clippee` (False pour le batch, True pour la fiche) a disparu : le run de nuit et la
+    fiche lisent désormais la MÊME faisabilité → même verdict, même SDP, même emprise."""
     if not bati_mod.layer_available(session):
         return {"disponible": False, "raison": "Couche bâtiments (BD TOPO) non ingérée.",
                 "cause": "bati_non_ingere", "sdp_ecrite": None}
-    res = faisa or parcel_faisabilite(session, parcel_id, assiette_clippee=assiette_clippee)
+    res = faisa or parcel_faisabilite(session, parcel_id)
     if res is None:
         cause, sdp = _cause_indisponible(session, parcel_id)
         return {"disponible": False, "raison": "Zone hors PLU outillé — capacité non calculable.",
@@ -183,10 +183,10 @@ def compute_residuel(session: Session, parcel_id: int,
     surface = float(ctx.surface_m2 or 0.0)
     # SCORING-6 lot A — sur une parcelle A/N à cheval clippée, le bâti retranché se mesure sur LA
     # MÊME portion U/AU que la capacité (sinon on soustrait le bâti de la portion A/N d'un plafond
-    # U/AU → résiduel toujours 0). OPT-IN : hors assiette_clippee (servi) ou parcelle mono-zone,
-    # rien ne change — bâti du contour entier + révélé CoSIA.
+    # U/AU → résiduel toujours 0). RESIDUEL-1 — toujours clippé ; une parcelle mono-zone (parts
+    # vides → _pct_constructible None) garde le bâti du contour entier + révélé CoSIA.
     from .db import _pct_constructible
-    pct_c = _pct_constructible(ctx) if assiette_clippee else None
+    pct_c = _pct_constructible(ctx)   # RESIDUEL-1 — clip inconditionnel (chemin unique)
     if pct_c is not None and 0 < pct_c < 100:
         emprise_batie = _emprise_batie_assiette(session, parcel_id)   # bâti sur la portion U/AU
     else:
@@ -292,9 +292,14 @@ _UPSERT = text(
 
 
 def compute_residuel_batch(session: Session, parcel_ids: list[int], run_seq: int,
-                           log=None, assiette_clippee: bool = False) -> dict:
+                           log=None) -> dict:
     """Calcule et CACHE le résiduel dans le RUN `run_seq` (parcel_residuel_runs) pour alimenter
     le filtre carte ET le dataset M127.
+
+    RESIDUEL-1 — le batch calcule sur l'assiette CLIPPÉE, le MÊME chemin que la fiche en ligne
+    (`compute_residuel` n'a plus de variante non clippée). Un run neuf ne ferme donc plus en
+    « rédhibitoire » une parcelle que la zone rouge d'un PPR ne touche que partiellement : elle
+    reçoit la capacité de sa partie hors rouge, comme l'Étude de faisabilité.
 
     M135 — GARDE-FOU B.4 : écrire dans le run SERVI est une ERREUR (`ServedRunWriteError`), pas un
     warning. `compute_residuel()` (la LOGIQUE) reste byte-identique ; seul le chemin d'écriture
@@ -313,7 +318,7 @@ def compute_residuel_batch(session: Session, parcel_ids: list[int], run_seq: int
     res = {"calcules": 0, "causes": {}, "erreurs": 0, "erreurs_detail": []}
     for pid in parcel_ids:
         try:
-            r = compute_residuel(session, pid, assiette_clippee=assiette_clippee)
+            r = compute_residuel(session, pid)
         except Exception as exc:  # noqa: BLE001 - une parcelle ne casse pas le lot, mais SE DIT
             res["erreurs"] += 1
             if len(res["erreurs_detail"]) < 20:
