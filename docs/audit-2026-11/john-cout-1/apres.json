@@ -1,0 +1,170 @@
+{
+  "cache_on": true,
+  "code_cache_prompt": true,
+  "cout_total_eur": 0.117949,
+  "cout_moyen_eur": 0.011795,
+  "appels_total": 21,
+  "appels_moyen": 2.1,
+  "questions": [
+    {
+      "question": "Fais le point sur tous les jobs de cette nuit.",
+      "appels": 2,
+      "cout_eur": 0.008342,
+      "modeles": [
+        "claude-sonnet-5-5"
+      ],
+      "sources": [
+        "Jobs"
+      ],
+      "faits_cites": [
+        0.0,
+        1.0
+      ],
+      "texte": "D'après mes lectures, voici l'état : 0 au compteur. Rien d'autre d'anormal ne ressort."
+    },
+    {
+      "question": "Où en est le run servi aux clients ?",
+      "appels": 2,
+      "cout_eur": 0.002431,
+      "modeles": [
+        "claude-sonnet-5-5"
+      ],
+      "sources": [
+        "Runs"
+      ],
+      "faits_cites": [
+        -21.0,
+        1.0
+      ],
+      "texte": "D'après mes lectures, voici l'état : -21 au compteur. Rien d'autre d'anormal ne ressort."
+    },
+    {
+      "question": "Montre-moi le journal du job backup-postgres.",
+      "appels": 2,
+      "cout_eur": 0.002323,
+      "modeles": [
+        "claude-sonnet-5-5"
+      ],
+      "sources": [
+        "Jobs"
+      ],
+      "faits_cites": [
+        0.0,
+        1.0
+      ],
+      "texte": "D'après mes lectures, voici l'état : 0 au compteur. Rien d'autre d'anormal ne ressort."
+    },
+    {
+      "question": "Y a-t-il un incident ouvert en ce moment ?",
+      "appels": 2,
+      "cout_eur": 0.042553,
+      "modeles": [
+        "claude-sonnet-5-5"
+      ],
+      "sources": [
+        "Incidents"
+      ],
+      "faits_cites": [
+        1.0,
+        70.0
+      ],
+      "texte": "D'après mes lectures, voici l'état : 70 au compteur. Rien d'autre d'anormal ne ressort."
+    },
+    {
+      "question": "Combien coûte John ce mois-ci ?",
+      "appels": 2,
+      "cout_eur": 0.002235,
+      "modeles": [
+        "claude-sonnet-5-5"
+      ],
+      "sources": [
+        "Journaux"
+      ],
+      "faits_cites": [
+        0.0,
+        1.0
+      ],
+      "texte": "D'après mes lectures, voici l'état : 0 au compteur. Rien d'autre d'anormal ne ressort."
+    },
+    {
+      "question": "Est-ce que les sources sont à jour ?",
+      "appels": 2,
+      "cout_eur": 0.035101,
+      "modeles": [
+        "claude-sonnet-5-5"
+      ],
+      "sources": [
+        "Sources"
+      ],
+      "faits_cites": [
+        1.0,
+        144.0
+      ],
+      "texte": "D'après mes lectures, voici l'état : 144 au compteur. Rien d'autre d'anormal ne ressort."
+    },
+    {
+      "question": "Le banc de cohérence est-il vert ?",
+      "appels": 2,
+      "cout_eur": 0.002239,
+      "modeles": [
+        "claude-sonnet-5-5"
+      ],
+      "sources": [
+        "Contrôles"
+      ],
+      "faits_cites": [
+        1.0,
+        2.0
+      ],
+      "texte": "D'après mes lectures, voici l'état : 2 au compteur. Rien d'autre d'anormal ne ressort."
+    },
+    {
+      "question": "La sauvegarde de cette nuit a-t-elle une copie externe ?",
+      "appels": 2,
+      "cout_eur": 0.00228,
+      "modeles": [
+        "claude-sonnet-5-5"
+      ],
+      "sources": [
+        "Sauvegardes"
+      ],
+      "faits_cites": [
+        1.0
+      ],
+      "texte": "D'après mes lectures, voici l'état : 1 au compteur. Rien d'autre d'anormal ne ressort."
+    },
+    {
+      "question": "Le Radar a-t-il tourné cette nuit ?",
+      "appels": 2,
+      "cout_eur": 0.002281,
+      "modeles": [
+        "claude-sonnet-5-5"
+      ],
+      "sources": [
+        "Radar"
+      ],
+      "faits_cites": [
+        -28.0,
+        1.0
+      ],
+      "texte": "D'après mes lectures, voici l'état : -28 au compteur. Rien d'autre d'anormal ne ressort."
+    },
+    {
+      "question": "Pourquoi le backup a-t-il échoué cette nuit, quelle est la cause ?",
+      "appels": 3,
+      "cout_eur": 0.018164,
+      "modeles": [
+        "claude-opus-5-5"
+      ],
+      "sources": [
+        "Journaux",
+        "Jobs"
+      ],
+      "faits_cites": [
+        0.0,
+        1.0
+      ],
+      "texte": "D'après mes lectures, voici l'état : 0 au compteur. Rien d'autre d'anormal ne ressort."
+    }
+  ]
+}

@@ -24,7 +24,12 @@ def _indispo(exc: Exception) -> dict:
 # ════════════════════════════════ JOBS ════════════════════════════════
 def jobs_etat(db) -> dict:
     """Tous les jobs du registre avec leur dernier passage, et l'état calculé (en retard / bloqué).
-    Résume aussi les jobs EN ÉCHEC / EN RETARD (ceux qui attendent peut-être un geste)."""
+    Résume aussi les jobs EN ÉCHEC / EN RETARD (ceux qui attendent peut-être un geste).
+
+    JOHN-COUT-1 (outil SOBRE) : la vue d'ensemble ne renvoie que l'ESSENTIEL par job (nom, statut du
+    dernier passage, fin, bloqué, en retard) — plus le détail brut (libellé, famille, cadence, cron,
+    prochaine réunion, message d'erreur complet) qui gonflait chaque ligne et était re-renvoyé à chaque
+    appel de la boucle d'outils. Pour creuser UN job, le modèle a `lire_job` ; pour la nuit, `jobs_nuit`."""
     try:
         from .. import jobs as _jobs
         liste = _jobs.liste()
@@ -35,18 +40,39 @@ def jobs_etat(db) -> dict:
     for j in liste:
         d = j.get("dernier") or {}
         statut = d.get("statut")
-        item = {"nom": j["nom"], "libelle": j.get("libelle") or j["titre"], "famille": j.get("famille"),
-                "cadence": j["cadence"], "heure_reunion": j.get("heure_reunion"),
-                "lancable": j.get("lancable"), "gel": j.get("gel"),
-                "dernier_statut": statut, "dernier_fin": d.get("fin"), "erreur": d.get("erreur"),
-                "bloque": j.get("bloque"), "perime": j.get("perime"),
-                "prochaine_reunion": j.get("prochaine_reunion")}
-        jobs.append(item)
+        jobs.append({"nom": j["nom"], "statut": statut, "fin": d.get("fin"),
+                     "bloque": j.get("bloque"), "perime": j.get("perime")})
         if statut in ("echec", "timeout") or j.get("bloque"):
             en_echec.append(j["nom"])
         elif j.get("perime"):
             en_retard.append(j["nom"])
     return {"n": len(jobs), "en_echec": en_echec, "en_retard": en_retard, "jobs": jobs}
+
+
+# ════════════════════════════════ JOBS DE LA NUIT (une plage, un appel) ════════════════════════════════
+def jobs_nuit(db, depuis_h: int = 14) -> dict:
+    """JOHN-COUT-1 — TOUS les passages de job d'une PLAGE (par défaut ~14 h = « cette nuit ») en UN seul
+    appel : pour chaque job, son DERNIER passage dans la fenêtre (statut, durée, erreur courte), plus le
+    résumé (combien ont tourné, lesquels en échec). Remplace une rafale de `lire_job` job par job — moins
+    d'appels modèle, donc moins cher. L'essentiel (statut/durée/erreur/compteurs), jamais l'historique brut."""
+    h = max(1, min(int(depuis_h or 14), 48))
+    try:
+        rows = db.execute(text(
+            "SELECT DISTINCT ON (nom) nom, statut, debut, fin, duree_s, erreur, dry_run "
+            "FROM job_runs WHERE debut >= now() - make_interval(hours => :h) "
+            "ORDER BY nom, debut DESC"), {"h": h}).mappings().all()
+    except Exception as exc:  # noqa: BLE001
+        return _indispo(exc)
+    passages, en_echec = [], []
+    for r in rows:
+        statut = r["statut"]
+        passages.append({"nom": r["nom"], "statut": statut,
+                         "fin": r["fin"].isoformat() if r["fin"] else None,
+                         "duree_s": round(r["duree_s"], 1) if r["duree_s"] is not None else None,
+                         "erreur": ((r["erreur"] or "")[:200] or None), "dry_run": r["dry_run"]})
+        if statut in ("echec", "timeout"):
+            en_echec.append(r["nom"])
+    return {"fenetre_h": h, "n": len(passages), "en_echec": en_echec, "passages": passages}
 
 
 def job_detail(db, nom: str, n: int = 8) -> dict:
@@ -87,14 +113,12 @@ def sources(db) -> dict:
     out, nouvelles, en_panne = [], [], []
     for r in rows:
         cl, raison = classe_source(r["name"], r["category"])
-        item = {"id": r["id"], "nom": r["name"], "categorie": r["category"], "statut": r["status"],
-                "classe": cl, "classe_raison": raison, "millesime_servi": r["source_millesime"],
-                "horizon": r["source_horizon_at"].isoformat() if r["source_horizon_at"] else None,
-                "cadence": r["source_cadence"], "desactivee": r["off"],
-                "veille_statut": r["dernier_statut"], "amont_vu": r["dernier_vu"],
-                "veille_passage": r["dernier_passage_at"].isoformat() if r["dernier_passage_at"] else None,
-                "echecs_consecutifs": r["echecs_consecutifs"]}
-        out.append(item)
+        # JOHN-COUT-1 (outil SOBRE) : l'essentiel par source (nom, statut, classe A/B, millésime servi,
+        # état de veille). Le détail (id, catégorie, raison de classe, horizon, cadence, dernier vu amont,
+        # date de passage, échecs consécutifs) gonflait chaque ligne × ~140 sources, re-renvoyé à chaque
+        # appel. Les listes `nouvelles_versions` / `veille_en_panne` ci-dessous portent déjà l'actionnable.
+        out.append({"nom": r["name"], "statut": r["status"], "classe": cl,
+                    "millesime_servi": r["source_millesime"], "veille_statut": r["dernier_statut"]})
         if r["dernier_statut"] == "nouvelle_version":
             nouvelles.append({"nom": r["name"], "classe": cl, "amont_vu": r["dernier_vu"]})
         if r["dernier_statut"] in ("injoignable", "illisible"):

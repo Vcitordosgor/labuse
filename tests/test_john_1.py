@@ -82,12 +82,13 @@ def test_dix_questions_reelles_sourcees(db_session):
     assert n >= 20
 
 
-def test_verrou_anti_invention_refuse_un_chiffre_non_source(db_session):
-    """Même verrou que le Copilote : un chiffre absent des lectures fait refuser la réponse."""
+def test_garde_fou_retire_le_chiffre_non_source_et_garde_le_reste(db_session):
+    """JOHN-COUT-1 — le garde-fou ne REFUSE PLUS en bloc : un chiffre absent des lectures est RETIRÉ
+    (remplacé par « non sourcé ») et LE RESTE de la réponse est servi."""
     out = chat.repondre(db_session, "Combien d'incidents ?", appel=_auto_appel("lire_incidents", injecte_faux=True))
-    assert "987654" not in out["texte"]
-    assert "pas la donnée" in out["texte"] or "je ne sais pas" in out["texte"].lower() \
-        or "ne pas répondre" in out["texte"]
+    assert "987654" not in out["texte"]           # le chiffre inventé est bien retiré
+    assert "non sourcé" in out["texte"]            # avec la mention honnête
+    assert "incidents" in out["texte"]             # mais le reste de la phrase demeure (plus de refus en bloc)
 
 
 def test_cardinalite_dune_liste_lue_passe_lanti_invention():
