@@ -189,7 +189,49 @@ def _date_ppr(t):
     return ",".join(sorted(yrs)) if yrs else None
 
 
+def _verdict_potentiel(t):
+    """DOCS-1 — le VERDICT DE POTENTIEL, normalisé « constructible » | « rien » | None. Un seul lecteur
+    doit faire dire la MÊME chose au Dossier, au Flash, au Gabarit et à l'Étude : une zone rouge PPR
+    PARTIELLE ne retire que sa surface, la partie hors rouge garde son potentiel.
+
+    « rien » = NON-CONSTRUCTIBILITÉ de la parcelle entière (zonage fermé, rédhibitoire, exigu, AU
+    différée) — JAMAIS la SATURATION (« déjà construite au maximum » = constructible, table rase
+    possible). Signaux SPÉCIFIQUES au §potentiel (pas le §risques, qui dit « partie INCONSTRUCTIBLE »
+    de la seule zone rouge)."""
+    low = t.lower()
+    constr = ("constructible sur la partie hors zone rouge" in low
+              or "potentiel de construction :" in low                       # verdict §10 constructible (deux-points)
+              or re.search(r"maximum du terrain estimé\s*:\s*\d+" + _SP + r"*logements", t) is not None
+              or "m² encore constructibles" in low)                          # libellé positif potentiel_batir
+    # « rien » ANCRÉ sur le VERDICT, jamais une mention de règle (« habitat interdit en zone … »,
+    # « zone non constructible » d'une SUP) ni la saturation : les libellés de verdict de potentiel_batir
+    # (« Rien à bâtir — <motif de non-constructibilité> », SAUF « déjà construite au maximum ») et du §10.
+    incon = ("rédhibitoire couvrant toute la parcelle" in low
+             or "le potentiel de construction est nul" in low
+             or re.search(r"rien à bâtir\s*[—–-]\s*(?:zone non constructible|zone fermée|habitat interdit|"
+                          r"parcelle non constructible|pas de potentiel constructible|zone au non ouverte)",
+                          low) is not None)
+    if constr and not incon:
+        return "constructible"
+    if incon and not constr:
+        return "rien"
+    return None                                                # saturé / ambigu / non adressé → hors comparaison
+
+
+def _logements_max(t):
+    """Le NOMBRE DE LOGEMENTS MAXIMUM du terrain, servi par l'Étude (« maximum du terrain estimé :
+    N logements »). Le Dossier/Flash renvoient à l'Étude (pas de nombre) — source unique."""
+    m = re.search(r"maximum du terrain estimé\s*:\s*(\d+)" + _SP + r"*logements", t)
+    return m.group(1) if m else None
+
+
 FAITS = {
+    "verdict_potentiel": _verdict_potentiel,
+    "logements_max": _logements_max,
+    "sdp_maximale": lambda t: (
+        _m2_apres(r"SDP maximale réglementaire,?\s*terrain(?:\s*libéré)?")(t)
+        or _m2_apres(r"Surface de plancher\s*\(maximum\)")(t)
+        or _m2_apres(r"Surface de plancher maximale")(t)),
     "sdp_max_terrain_m2": lambda t: (
         _m2_apres(r"SDP maximale réglementaire,?\s*terrain(?:\s*libéré)?")(t)
         or _m2_apres(r"Surface de plancher\s*\(maximum\)")(t)),

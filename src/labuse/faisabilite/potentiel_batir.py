@@ -175,7 +175,7 @@ def _assemble(sdp_raw, cause, constr_label, au_classe, zone_fam, zone_lib) -> di
 
 
 _SELECT = text("""
-    SELECT p.idu AS idu,
+    SELECT p.idu AS idu, p.id AS pid,
            r.sdp_residuelle_m2 AS sdp_raw, r.cause AS resid_cause,
            pc.label AS constr_label, au.classe AS au_classe,
            zp.zone_fam AS zone_fam, zp.zone_lib AS zone_lib
@@ -187,19 +187,66 @@ _SELECT = text("""
     WHERE p.idu = ANY(:idus)
 """)
 
+#: familles de zone CONSTRUCTIBLES : seules elles sont éligibles à la correction PPR-PARTIEL (une A/N
+#: reste fermée même hors rouge). AU n'est éligible que si elle n'est pas différée (gate `au_classe`).
+_ZONES_CONSTRUCTIBLES = ("U", "AU")
+
+
+def _override_ppr_partiel(info: dict, zone_fam, zone_lib) -> dict:
+    """Le verdict de potentiel d'une parcelle PARTIELLEMENT rouge, servi IDENTIQUE partout (DOCS-1).
+    On n'invente PAS de SDP (la capacité chiffrée est à l'Étude, qui découpe le rouge) ; on dit la
+    vérité doctrinale : la part rouge est retirée, le reste garde son potentiel."""
+    return {
+        "sdp_restante_m2": None,
+        "zone_ouverte": True,
+        "zone_fam": zone_fam, "zone_lib": zone_lib,
+        "constructible": True,
+        "rien_a_batir": False,
+        "motif": None,
+        "ppr_partiel": info,
+        "libelle": (f"Constructible sur la partie hors zone rouge du PPR "
+                    f"({info['pct_hors_rouge']} %) — zone rouge ({info['pct_rouge']} %) retirée ; "
+                    f"capacité à l'Étude de faisabilité"),
+    }
+
 
 def potentiel_batir_batch(db: Session, idus: list[str]) -> dict[str, dict]:
     """{idu → potentiel à bâtir} en UNE requête. IDU sans donnée → POTENTIEL_ABSENT (présent).
 
     Lecture seule, tolérante : `parcel_residuel` (vue du run servi) / `parcel_constructibilite` /
     `parcel_au_statut` absentes (base de test nue) → la jointure rend NULL, le gate reste NULL-safe
-    (aucune de ces absences ne ferme une zone), jamais une 500."""
+    (aucune de ces absences ne ferme une zone), jamais une 500.
+
+    DOCS-1 (décision Vic) — PPR-PARTIEL : quand le run ferme une parcelle en zone CONSTRUCTIBLE par sa
+    SEULE cause résiduelle (ni déclassement, ni AU différée) ET que cette parcelle n'est que
+    PARTIELLEMENT rouge avec un reste hors rouge exploitable, on remplace le verdict « rien à bâtir —
+    rédhibitoire » par « constructible sur la partie hors rouge » — la MÊME lecture que l'Étude de
+    faisabilité (qui découpe le rouge). SOURCE UNIQUE `faisabilite.db.verdict_ppr_partiel`."""
     out: dict[str, dict] = {i: dict(POTENTIEL_ABSENT) for i in idus}
     if not idus:
         return out
-    for row in db.execute(_SELECT, {"idus": list(idus)}).mappings().all():
-        out[row["idu"]] = _assemble(row["sdp_raw"], row["resid_cause"], row["constr_label"],
-                                    row["au_classe"], row["zone_fam"], row["zone_lib"])
+    rows = {row["idu"]: row for row in db.execute(_SELECT, {"idus": list(idus)}).mappings().all()}
+    for idu, row in rows.items():
+        out[idu] = _assemble(row["sdp_raw"], row["resid_cause"], row["constr_label"],
+                             row["au_classe"], row["zone_fam"], row["zone_lib"])
+    # PPR-PARTIEL — correction à la lecture, UNIQUEMENT pour les parcelles fermées par leur seule cause
+    # résiduelle en zone constructible (candidat rare : ~cause présente, pas de déclassement/AU différée).
+    from .au_differe import AU_CLASSES_DIFFEREES
+    for idu, row in rows.items():
+        res = out[idu]
+        if not res.get("rien_a_batir"):
+            continue
+        if (row["resid_cause"] is None or row["constr_label"] in _CONSTR_FERME
+                or row["au_classe"] in AU_CLASSES_DIFFEREES
+                or row["zone_fam"] not in _ZONES_CONSTRUCTIBLES):
+            continue
+        try:
+            from .db import verdict_ppr_partiel
+            info = verdict_ppr_partiel(db, row["pid"])
+        except Exception:  # noqa: BLE001 — correction best-effort ; jamais une 500 sur la lecture
+            info = None
+        if info:
+            out[idu] = _override_ppr_partiel(info, row["zone_fam"], row["zone_lib"])
     return out
 
 
@@ -213,16 +260,31 @@ def est_ferme_parcel(db: Session, parcel_id: int) -> bool:
     verdict-driven, pour les lecteurs qui tiennent le parcel_id (PDF `bloc_potentiel`). Tolérant."""
     try:
         row = db.execute(text(
-            "SELECT r.cause AS resid_cause, pc.label AS constr_label, au.classe AS au_classe "
+            "SELECT r.cause AS resid_cause, pc.label AS constr_label, au.classe AS au_classe, "
+            "       zp.zone_fam AS zone_fam "
             "FROM parcels p "
             "LEFT JOIN parcel_residuel r ON r.parcel_id = p.id "
             "LEFT JOIN parcel_constructibilite pc ON pc.parcel_id = p.id "
             "LEFT JOIN parcel_au_statut au ON au.parcel_id = p.id "
+            "LEFT JOIN parcel_zone_plu zp ON zp.idu = p.idu "
             "WHERE p.id = :pid"), {"pid": parcel_id}).mappings().first()
     except Exception:  # noqa: BLE001 — caches absents → pas de fermeture (jamais une 500)
         return False
     if not row:
         return False
-    return (row["resid_cause"] is not None
-            or row["constr_label"] in _CONSTR_FERME
-            or row["au_classe"] in AU_CLASSES_DIFFEREES)
+    ferme = (row["resid_cause"] is not None
+             or row["constr_label"] in _CONSTR_FERME
+             or row["au_classe"] in AU_CLASSES_DIFFEREES)
+    # PPR-PARTIEL (DOCS-1) — une parcelle fermée par sa SEULE cause résiduelle en zone constructible,
+    # mais seulement PARTIELLEMENT rouge avec un reste exploitable, n'est PAS fermée (même lecture que
+    # `potentiel_batir` et l'Étude — le `bloc_potentiel` du Flash ne doit pas dire « rien à construire »).
+    if (ferme and row["resid_cause"] is not None and row["constr_label"] not in _CONSTR_FERME
+            and row["au_classe"] not in AU_CLASSES_DIFFEREES
+            and row["zone_fam"] in _ZONES_CONSTRUCTIBLES):
+        try:
+            from .db import verdict_ppr_partiel
+            if verdict_ppr_partiel(db, parcel_id):
+                return False
+        except Exception:  # noqa: BLE001 — correction best-effort, jamais une 500
+            pass
+    return ferme

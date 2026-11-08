@@ -7101,6 +7101,25 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
         except Exception:  # noqa: BLE001 — la chaîne explicative ne casse jamais la fiche
             db.rollback()
             calcul = None
+    # DOCS-1 (décision Vic) — PPR-PARTIEL, DERNIER MOT. Si la parcelle n'est fermée (cause résiduelle)
+    # qu'à cause d'une zone rouge PPR PARTIELLE alors que le reste hors rouge est exploitable, le §10 ne
+    # doit PAS dire « rédhibitoire couvrant toute la parcelle » : il dit la MÊME chose que l'Étude et que
+    # le §risques (zone rouge retirée, le reste garde son potentiel). SOURCE UNIQUE verdict_ppr_partiel.
+    if cause and row is not None and row["zone_fam"] in ("U", "AU"):
+        try:
+            from ..faisabilite.db import verdict_ppr_partiel
+            _ppr = verdict_ppr_partiel(db, row["pid"])
+        except Exception:  # noqa: BLE001 — correction best-effort (savepoints internes), jamais une 500
+            _ppr = None
+        if _ppr:
+            cause = None
+            niveau = "ppr_partiel"
+            sdp_servie = None
+            libelle = (f"Constructible sur la partie hors zone rouge du PPR "
+                       f"({_ppr['pct_hors_rouge']} %) — zone rouge ({_ppr['pct_rouge']} %) retirée ; "
+                       f"capacité à l'Étude de faisabilité")
+            # On NE pose PAS `hors_ppr_rouge` ici : sa note §risques (« droits servis à 0 par prudence »)
+            # contredirait « constructible », et le §risques porte déjà sa propre lecture PPR-partielle.
     return {
         "calcul": calcul,
         "niveau": niveau, "libelle": libelle,

@@ -251,7 +251,42 @@ Le repli est branché sur les **deux chemins servis** — `etudier_multi` (scén
 | **Régénération V5** (`~/Desktop/LABUSE-EXPORTS-2026-11-07-V5/`) | `scripts/docs1_regen_v5.py` — 45 documents, DH0076 Étude = **scénario d'implantation réel** (logement collectif, barre, hors zone rouge ; le nombre exact de logements dépend de la charge CPU au rendu, via le budget horloge), AB0133 Étude = refus motivé. |
 | Hook (unitaires) | **vert — 2953 passed, 50 skipped** (`make test-unit`) ; front inchangé (aucune modification `frontend/`). |
 
+## 11. PPR-PARTIEL + V6 — un seul lecteur du verdict de potentiel
+
+Sur `97415000DH0076` (zone U, **2 %** touchés par la zone ROUGE d'un PPR), quatre documents disaient
+quatre choses : le **Dossier** « contrainte rédhibitoire couvrant TOUTE la parcelle » + « SDP non
+calculable », le **Gabarit** refusait « pas de potentiel résiduel », le **Flash** « rien à bâtir », mais
+l'**Étude** posait un scénario sur les 98 % hors rouge (zone rouge de 458 m² retirée).
+
+**Cause.** Dossier / Flash / Gabarit / Comparatif lisent le **run stocké** (`parcel_residuel.cause =
+'redhibitoire'`, SDP 0) ; l'Étude seule découpe le rouge (moteur d'implantation) et bâtit sur le reste.
+Le run — périmé — traite une zone rouge PARTIELLE comme couvrant toute la parcelle. Le moteur de
+faisabilité LIVE, lui, dit déjà « constructible, R+4, zone d'implantation 17 370 m² » (rouge découpé).
+
+**Correction à la source — `faisabilite.db.verdict_ppr_partiel`, SOURCE UNIQUE.** Une parcelle fermée
+par le run à cause d'une zone rouge PPR, mais **partiellement** rouge (< 95 %) avec une partie hors rouge
+**exploitable** (≥ 200 m² d'un seul tenant touchant une voie — garde-fous PPR-PARTIEL-A) ET que le moteur
+de faisabilité **confirme constructible** (ni zone A/N, ni hors-PLU, ni ER/EBC couvrant tout), n'est plus
+« rédhibitoire » : elle est **« constructible sur la partie hors zone rouge (N %) — zone rouge (M %)
+retirée ; capacité à l'Étude de faisabilité »**. On n'invente **aucune** SDP (le chiffre vit dans
+l'Étude, qui découpe le rouge). Branché sur les lecteurs du verdict :
+
+| Lecteur | Document(s) | Correctif |
+|---|---|---|
+| `potentiel_batir` / `potentiel_batir_batch` | Flash (verdict), Gabarit (refus) | `_override_ppr_partiel` quand le gate n'est QUE la cause résiduelle en zone constructible. |
+| `est_ferme_parcel` | Flash (`bloc_potentiel` : « au sol / table rase ») | ne ferme plus → la table rase redevient constructible. |
+| `_potentiel_transformation_block` | Dossier §10, Comparatif (`/compare`) | dernier mot : cause → None, libellé PPR-partiel, SDP servie None. |
+
+Garde-fous : **zone U/AU seulement**, pas de déclassement, pas d'AU différée, et la **confirmation du
+moteur de faisabilité** écarte les faux positifs (zone N `97421000AB0133`, hors-PLU `97417000BI0076`).
+
+| Recette (PPR-PARTIEL) | Résultat |
+|---|---|
+| **Banc + 3 faits** : `verdict_potentiel`, `sdp_maximale`, `logements_max`, sur 13 témoins | **VERT — 0 écart** (DH0076 : Dossier, Flash, Gabarit, Étude disent tous « constructible hors rouge » ; la saturation « déjà construite au maximum » et les mentions de règle « habitat interdit » ne sont PAS prises pour de la non-constructibilité). |
+| **Régénération V6** (`~/Desktop/LABUSE-EXPORTS-2026-11-07-V6/`) | `scripts/docs1_regen_v6.py` — 4 parcelles (BZ1065, AK0804, **DH0076**, AB0133). |
+| Hook (unitaires) | **vert — 2953 passed**. |
+
 ---
 
 *DOCS-1 — base locale, prod jamais touchée. Banc : `scripts/coherence/documents_banc.py` ;
-régénération : `scripts/docs1_regen_v2.py` (V2) … `_v5.py` (V5). Branche `fix/docs-1`, non mergée.*
+régénération : `scripts/docs1_regen_v2.py` (V2) … `_v6.py` (V6). Branche `fix/docs-1`, non mergée.*
