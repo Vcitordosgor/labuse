@@ -639,6 +639,14 @@ def _c_fibre(db, idu, f):
 
 @extracteur("prod_spec_kwh_kwc")
 def _c_solaire(db, idu, f):
+    # DOCS-DA-1 (inventaire-dossier-1) — le Dossier imprimait « Productible solaire : non calculé »
+    # À TORT : la fiche détient la valeur dans `viabilisation.solaire.prod_kwh_kwc` (le MÊME lecteur
+    # que l'écran, qui en tire « Ensoleillement très favorable »). On lit cette source en priorité.
+    sol = (f.get("viabilisation") or {}).get("solaire")
+    if isinstance(sol, dict):
+        v = _nz(sol.get("prod_kwh_kwc") or sol.get("prod_spec_kwh_kwc") or sol.get("productible_kwh_kwc"))
+        if v is not None:
+            return v
     a = f.get("aper")
     if isinstance(a, dict):
         return _nz(a.get("prod_spec_kwh_kwc") or a.get("productible_kwh_kwc"))

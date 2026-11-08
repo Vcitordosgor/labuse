@@ -14,7 +14,10 @@ def test_svg_servi_porte_geometries_et_legende():
     res = compute_gabarit(demo_gabarit_input())
     assert res.status == "ok"
     svg = gabarit_svg(res)
-    assert svg and svg.startswith("<svg") and svg.rstrip().endswith("</svg>")
+    # DOCS-DA-1 — le fragment porte le SVG PUIS la légende HTML sous la figure (≥ 10,5 px, s'enroule) :
+    # il commence par <svg>…</svg> et se termine par le bloc `.fig-legende`.
+    assert svg and svg.startswith("<svg") and "</svg>" in svg and svg.rstrip().endswith("</div>")
+    assert 'class="fig-legende"' in svg
     # les couleurs des trois familles servies (zone / retrait / contour) sont présentes
     assert C_ZONE in svg and C_RETRAIT in svg and C_CONTOUR in svg
     # la légende dit explicitement que c'est un schéma, pas un plan de masse

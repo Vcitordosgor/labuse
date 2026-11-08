@@ -155,6 +155,23 @@ _ABSENCE_CLAIR = {
 # 2ᵉ/3ᵉ ligne « non renseigné » qui répète l'absence de la clause.
 _ABSENCE_MASQUEE = {"sar_divergence", "mixite_seuil_m2", "mixite_quota_pct"}
 
+#: DOCS-DA-1 (arbitrage Vic, inventaire-dossier-1) — RETRAITS CÔTÉ DOSSIER (l'écran garde ses lignes ;
+#: le Dossier épure). Ces faits sont techniques ou non pertinents pour l'opérateur foncier : on ne les
+#: imprime NI en valeur NI en absence dans le Dossier.
+_RETIRES_DOSSIER = {
+    "rnb_batiments_liste",            # identifiants RNB (référence technique sans valeur client)
+    "ban_plus_adresses_bati",         # adresses BAN PLUS (doublon de l'adresse principale)
+    "enr_exclue_parcelle",            # APER (hors sujet pour cette parcelle)
+    "mesures_compensatoires_parcelle",  # GéoMCE (donnée nationale rare, sur-détaillée)
+    "tcsp_stationnement_allege",      # « hors rayon TCSP » (absence peu signifiante)
+}
+#: Faits à GARDER quand ils sont servis, mais dont on N'IMPRIME PAS l'ABSENCE dans le Dossier (une
+#: absence non informative : échantillon insuffisant, aucun millésime connu).
+_RETIRES_ABSENCE_DOSSIER = {
+    "prix_neuf_vefa_acte_eur_m2",     # VEFA : retiré quand l'échantillon est insuffisant (absent)
+    "proprietaire_timeline_liste",    # historique de détention : retiré pour un particulier (nul)
+}
+
 #: EXPORTS-FIX-1 C6 — marqueurs d'une donnée NON DISPONIBLE (non calculée/déterminée), à distinguer
 #: d'un « vérifié : rien » (contrôle fait, rien trouvé). Deux encadrés distincts au rendu.
 _MARQUEURS_NON_DISPO = ("non calcul", "non détermin", "non estim", "non relev", "non renseign",
@@ -799,8 +816,9 @@ def _r_territoire(v, val: Valeur):
             _row(_cle_dom(dom, i), dom["libelle"])
     if (v.get("zfang") or {}).get("libelle"):
         _row("ZFANG", v["zfang"]["libelle"])
-    if (v.get("frr") or {}).get("libelle"):
-        _row("FRR (ex-ZRR)", _frr_libelle(v["frr"]))
+    # DOCS-DA-1 (arbitrage Vic, inventaire) — FRR (ex-ZRR) RETIRÉE du Dossier : à La Réunion elle
+    # n'ouvre que des mesures NON fiscales (FAQ FRR DGCL) — non applicable fiscalement, elle brouille
+    # le §Dispositifs. (`_frr_libelle` reste pour l'écran/usages éventuels.)
     for per in _perimetres_hors_piscine(v):   # EXPORTS-FIX-1 B2 — la piscine sort du §7 (elle est au §2)
         if per.get("libelle"):
             # EXPORTS-FIX-1 A9 — la bande QPV est nommée, jamais « Périmètre » nu.
@@ -1150,13 +1168,38 @@ _COVER_TUILES = [
 ]
 
 
+def _sous_titre_cover(fiche: dict, valeurs: dict[str, Valeur]) -> str:
+    """DOCS-DA-1 (maquette) — le sous-titre de la garde : lieu · type de bien · zone.
+    « La Montagne · parcelle bâtie, maison · zone Uh ». Composé des seules valeurs servies."""
+    bits: list[str] = []
+    lieu = (fiche.get("lieu_dit") or fiche.get("quartier") or fiche.get("commune") or "").strip()
+    if lieu:
+        bits.append(esc_noms(lieu))
+    nb = (fiche.get("bati") or {}).get("n_batiments")
+    etat = None
+    if isinstance(nb, (int, float)):
+        etat = "parcelle bâtie" if nb and nb > 0 else "parcelle nue"
+    type_bien = (fiche.get("marche") or {}).get("type_prioritaire") or fiche.get("type_bien")
+    if etat and type_bien and str(type_bien) not in etat:
+        bits.append(f"{etat}, {esc(type_bien)}")
+    elif etat:
+        bits.append(etat)
+    _reg = valeurs.get("reglement_plu_bloc")
+    _zcode = (_reg.valeur.get("zone") if _reg is not None and isinstance(_reg.valeur, dict) else None)
+    _zfam = valeurs.get("zone_plu_famille")
+    zone = _zcode or (_zfam.valeur if _zfam is not None else None)
+    if zone:
+        bits.append(f"zone {esc(zone)}")
+    return " · ".join(b for b in bits if b)
+
+
 def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, Valeur],
-                  modele: str, *, plan_html: str = "") -> str:
-    """La page de garde du Dossier (maquette v4) : cartouche 4 champs + bandeau des SIX chiffres
-    de la fiche en 3 colonnes + sommaire des sections + légende. Chaque tuile porte data-quoi
-    (verrou V5d) ; une valeur absente s'affiche « — » (jamais un zéro inventé).
-    DOCS-1 (décision Vic) — la COUVERTURE porte désormais la CARTE de situation (en plus du bandeau
-    des six chiffres, qui est le RÉSUMÉ) : elle tient la page au lieu de rester creuse."""
+                  modele: str, *, plan_html: str = "", donnees_au: str = "") -> str:
+    """La page de garde du Dossier (DOCS-DA-1, maquette validée par Vic) : bandeau noir LABUSE + nom du
+    document, référence en mono, adresse en 34 px, sous-titre (type de bien, zone), plan de situation,
+    six tuiles-chiffres, sommaire paginé, puis le cartouche du bas (n° de rapport · généré le · données
+    à jour au = date du run servi) et un disclaimer sur une ligne SANS date. Pas de légende des badges.
+    Chaque tuile porte data-quoi (verrou V5d) ; une valeur absente est OMISE (jamais un zéro inventé)."""
     adresse = fiche.get("adresse") or ""
     commune = fiche.get("commune") or ""
     tuiles_html = []
@@ -1201,41 +1244,35 @@ def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, V
         # EXPORTS-FIX-1 A3 — plus de clé technique (« fiche identite ») en colonne droite du sommaire.
         toc.append(f'<li>{n}. {esc(sec["titre"])}</li>')
     toc.append(f'<li>{n + 1}. Limites et sources</li>')
-    legende = (
-        '<div class="legend">'
-        '<span class="chip s">sourcé</span> lu dans la source · '
-        '<span class="chip d">dérivé</span> calculé · '
-        '<span class="chip e">estimé</span> hypothèse dite · '
-        '<span class="chip p">projet</span> saisi par vous</div>')
+    sous_titre = _sous_titre_cover(fiche, valeurs)
+    au = donnees_au or f"{jour:%d/%m/%Y}"
     return (
         '<div class="cover">'
-        '<div class="kicker">Dossier parcelle</div>'
-        # EXPORTS-FIX-1 F4 — l'IDU en police MONO (chiffre 0 pointé, distinct du O), jamais en
-        # SpaceGrotesk où « EO0796 » se lit « E00796 ».
-        f'<h1 class="idu-code">{esc(idu)}</h1>'
-        + (f'<p class="address">{esc_noms(adresse)}</p>' if adresse else "")
-        + f'<p class="idu">{esc(commune)}</p>'
-        '<div class="gm-meta">'
-        f'<div><b>{esc(numero)}</b>n° de rapport</div>'
-        f'<div><b>{jour:%d/%m/%Y}</b>généré le</div>'
-        # CHASSE-DONNEES-FIX-1 (Lot 1) — « contenance » UNIQUEMENT si la valeur servie est la
-        # contenance cadastrale ; sinon « surface (plan) » (dessin, repli). Jamais « contenance »
-        # sur une parcelle dont la contenance est absente (BC9999 : 600 m² source=plan).
-        f'<div><b>{fmt_m2(valeurs["surface_parcelle_m2"].valeur) if valeurs.get("surface_parcelle_m2") else "—"}</b>'
-        # FIX-FINAL-1 (NU-D-041) — `surface_source` n'est PAS un id déclaré de la fiche, donc jamais
-        # collecté dans `valeurs` → le ternaire tombait TOUJOURS en « surface (plan) », même sur une
-        # contenance cadastrale (IE0241 : 625 m² étiquetés « surface (plan) »). On lit la source
-        # CANONIQUE directement sur la fiche (`champs_terrain` la pose : cadastre/plan).
-        f'{"contenance" if (fiche.get("surface_source") == "cadastre") else "surface (plan)"}</div>'
-        # EXPORTS-FIX-1 A2 — plus de « Modèle 3.0 · miroir de la fiche » en page de garde.
+        # Le bandeau noir — le SEUL aplat sombre : marque LABUSE + nom du document à gauche, devise à droite.
+        '<div class="cover-banner">'
+        '<div><span class="wordmark">LA<em>BUSE</em></span>'
+        '<span class="kind">Dossier parcelle</span></div>'
+        '<span class="tag">Le trésor est sous vos pieds</span>'
         '</div>'
-        f'<div class="cover-tiles">{"".join(tuiles_html)}</div>'
-        # DOCS-1 — la carte de situation sur la page de garde (résumé = le bandeau de tuiles ci-dessus).
-        # Le fragment `.plan` est auto-stylé (image + légende) ; on le pose tel quel.
+        # Référence cadastrale en MONO (chiffre 0 pointé, distinct du O), puis adresse 34 px, sous-titre.
+        f'<p class="idu-ref">{esc(idu)}</p>'
+        + (f'<p class="address">{esc_noms(adresse)}</p>' if adresse else "")
+        + (f'<p class="subtitle">{sous_titre}</p>' if sous_titre else "")
+        # Le plan de situation (fragment `.plan` auto-stylé : image + légende).
         + (plan_html or "")
-        # EXPORTS-FIX-1 A2 — plus de « Le bandeau des six chiffres de la fiche. »
+        # Les six chiffres de la fiche (le résumé).
+        + f'<div class="cover-tiles">{"".join(tuiles_html)}</div>'
+        # Le sommaire paginé.
         + f'<ul class="toc">{"".join(toc)}</ul>'
-        + legende +
+        # Le cartouche du bas : n° de rapport · généré le · données à jour au (date du run servi).
+        '<div class="cover-cartouche">'
+        f'<div class="mono"><b>{esc(numero)}</b>n° de rapport</div>'
+        f'<div><b>{jour:%d/%m/%Y}</b>généré le</div>'
+        f'<div><b>{esc(au)}</b>données à jour au</div>'
+        '</div>'
+        # Le disclaimer — une ligne, SANS date (la date de donnée vit dans le cartouche ci-dessus).
+        '<p class="notice">Document d\'information sur données publiques — ne remplace ni un certificat '
+        'd\'urbanisme, ni une étude réglementaire, ni un conseil juridique.</p>'
         '</div>')
 
 
@@ -1282,8 +1319,22 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
             # le doublon du §9 (voisinage_100m_liste) est omis.
             if l.quoi == "voisinage_100m_liste":
                 continue
+            # DOCS-DA-1 (arbitrage Vic) — retraits CÔTÉ DOSSIER (l'écran garde ses lignes).
+            if l.quoi in _RETIRES_DOSSIER:
+                continue
+            # Piscine : retirée du Dossier quand elle est ABSENTE (non pertinente pour l'investisseur) ;
+            # conservée au §Terrain quand elle est détectée (_pisc, rendue plus bas).
+            if l.quoi == "piscine_m2" and not _pisc:
+                continue
             v = valeurs.get(l.quoi)
+            # Part de sol nu à 0,0 % : un zéro n'apprend rien ici — ligne omise (l'inventaire la retire).
+            if l.quoi == "part_sol_nu_cosia_pct" and v is not None and not v.valeur:
+                continue
             if v is None:
+                # Faits dont l'ABSENCE n'est pas imprimée dans le Dossier (échantillon insuffisant,
+                # aucun millésime connu) : ni valeur, ni phrase d'absence.
+                if l.quoi in _RETIRES_ABSENCE_DOSSIER:
+                    continue
                 if l.quoi == "rtaa_exigences":
                     # EXPORTS-FIX-1-BIS point 4 — la RTAA DOM est une RÈGLE APPLICABLE (tout logement
                     # neuf), pas une absence : ligne normale du §4, hors de l'encadré « Vérifié : rien ».
@@ -1420,8 +1471,9 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
             if nondispo:
                 frags.append('<div class="sansobjet"><div class="t">Non disponible ici</div>'
                              f'<ul>{"".join(nondispo)}</ul></div>')
-        if vals_lus:
-            frags.append(_pied_noms(vals_lus))
+        # DOCS-DA-1 (arbitrage Vic) — les sources ne figurent plus SOUS chaque section : elles sont
+        # rassemblées au §11 « Limites et sources » (bloc_sources), une seule fois. On NE rend plus le
+        # pied de noms par section (vals_lus reste collecté pour le verrou de provenance, non imprimé).
         corps.append(section(titre, "".join(x for x in frags if x)))
     # §12 — ce que ce document ne peut pas dire + les NOMS des sources (bloc dédié, sans millésime).
     from .blocs import sources as bloc_sources

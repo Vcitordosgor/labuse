@@ -27,7 +27,8 @@ def _mention_marque(html: str) -> str:
     from ..config import get_settings
     s = get_settings()
     pour = "" if (s.raison_sociale or "").strip() in ("", "Pilote LABUSE") else f" pour {s.raison_sociale}"
-    mention = (f'<div style="position:fixed;bottom:2mm;right:0;font-size:7pt;color:#5F6C65;'
+    # DOCS-DA-1 — aucune taille sous 10,5 px (--fs-xs) ; plus de 7 pt pour l'attribution.
+    mention = (f'<div style="position:fixed;bottom:2mm;right:0;font-size:10.5px;color:#5F6C65;'
                f'font-family:Inter,sans-serif;">Généré via LABUSE{pour}</div>')
     return html.replace("</body>", mention + "</body>")
 

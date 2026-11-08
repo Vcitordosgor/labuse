@@ -346,7 +346,8 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     pdf.set_auto_page_break(auto=True, margin=15)   # M126 — pied de page sur UNE seule ligne
     pdf.add_font("inter", fname=str(FONTS / "Inter-Regular.ttf"))
     pdf.add_font("mono", fname=str(FONTS / "JetBrainsMono-Regular.ttf"))
-    pdf.add_font("grotesk", fname=str(FONTS / "SpaceGrotesk-Bold.ttf"))
+    # DOCS-DA-1 — une seule famille d'affichage : Inter (gras). Plus de Space Grotesk.
+    pdf.add_font("grotesk", fname=str(FONTS / "Inter-Bold.ttf"))
     pdf.set_margins(14, 12, 14)
     pdf.add_page()
 

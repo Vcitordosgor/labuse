@@ -119,8 +119,9 @@ def dossier_pdf(idu: str, request: Request, carte: bool = True,
     _txt = ("Généré via LABUSE" + _pour).replace("\\", "").replace('"', "'")
     # RETOUCHES-1 point 1 — `white-space: nowrap` : la mention tient sur UNE ligne (elle se coupait en
     # « Généré / via / LABUSE » quand la case @bottom-left réservait 150 mm — largeur retirée à la feuille).
+    # DOCS-DA-1 — plus de taille sous 10,5 px (--fs-xs).
     style = ('<style>@page { @bottom-center { content: "' + _txt + '"; white-space: nowrap; '
-             'font: 7pt "Inter","DejaVu Sans",sans-serif; color: #5F6C65; } }</style>')
+             'font: 10.5px "Inter","DejaVu Sans",sans-serif; color: #5F6C65; } }</style>')
     pdf = render_pdf(res.html.replace("</head>", style + "</head>"))
 
     from .protection import _aujourdhui

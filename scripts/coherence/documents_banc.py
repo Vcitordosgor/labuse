@@ -174,6 +174,14 @@ def _permis_100m(t):
     return m.group(1) if m else None
 
 
+def _productible(t):
+    """DOCS-DA-1 — le productible solaire (kWh/kWc), lu du MÊME faisceau que la fiche
+    (`viabilisation.solaire.prod_kwh_kwc`). Le Dossier l'imprimait « non calculé » à tort ; désormais
+    une valeur. Fait comparé entre documents (un fait = une valeur)."""
+    m = re.search(r"Productible solaire\D{0,30}?(\d[\d\s  ]*)", t)
+    return _num(m.group(1)) if m else None
+
+
 def _date_ppr(t):
     """La DATE du PPR : l'ANNÉE d'APPROBATION du PPR qui s'applique (« approuvé le JJ/MM/AAAA »,
     « PPR … (AAAA) »). Un document qui en montre deux, ou deux documents qui divergent = écart.
@@ -335,9 +343,13 @@ def rejouer(idus: list[str]):
         for nom, contenu in _rendre_tous(client, idu, voisines):
             n_docs += 1
             texte = _texte_pdf(contenu)
-            # 2. jetons interdits
+            # 2. jetons interdits — DOCS-DA-1 : un jeton ALPHABÉTIQUE ne matche plus quand il est SUIVI
+            # d'une lettre (= partie d'un mot plus long) : « Excel » (le tableur) ne doit pas se déclencher
+            # sur « Excellente » (classement A d'une parcelle au Comparatif). Les jetons à préfixe
+            # technique (« PM1_PPR_… ») gardent leur match en sous-chaîne (dernier caractère non-alpha).
             for m in jetons:
-                if m in texte:
+                _guard = r"(?![A-Za-zÀ-ÿ])" if m[-1:].isalpha() else ""
+                if re.search(re.escape(m) + _guard, texte):
                     leaks.append({"idu": idu, "doc": nom, "jeton": m})
             # 3. format
             for faute in _fautes_format(texte):

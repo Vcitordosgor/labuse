@@ -7,16 +7,19 @@
 # `entete` est le bandeau de tuiles AVANT les sections (pas une section numérotée) ; `simulation`
 # est rendue au Dossier comme un renvoi au document Financier (lot 2).
 
+# DOCS-DA-1 (arbitrage Vic) — ORDRE : la réponse (le droit, puis le potentiel) remonte juste après
+# l'identité ; les contraintes, puis le physique ; la valeur et le contexte ferment. La fiche à
+# l'écran et le Dossier restent MIROIRS (même source d'ordre et de noms).
 sections:
   - { id: entete,     titre: "En-tête",                  numerote: false }
   - { id: identite,   titre: "Identité",                 numerote: true }
+  - { id: urbanisme,  titre: "Urbanisme",                numerote: true }
+  - { id: potentiel,  titre: "Potentiel",                numerote: true }
+  - { id: risques,    titre: "Risques et environnement", numerote: true }
   - { id: terrain,    titre: "Terrain",                  numerote: true }
   - { id: bati,       titre: "Bâti",                     numerote: true }
-  - { id: urbanisme,  titre: "Urbanisme",                numerote: true }
-  - { id: risques,    titre: "Risques et environnement", numerote: true }
   - { id: reseaux,    titre: "Réseaux et desserte",      numerote: true }
-  - { id: fiscalite,  titre: "Fiscalité et dispositifs", numerote: true }
   - { id: marche,     titre: "Marché",                   numerote: true }
+  - { id: fiscalite,  titre: "Fiscalité et dispositifs", numerote: true }
   - { id: quartier,   titre: "Quartier",                 numerote: true }
-  - { id: potentiel,  titre: "Potentiel",                numerote: true }
   - { id: simulation, titre: "Simulation",               numerote: true }
