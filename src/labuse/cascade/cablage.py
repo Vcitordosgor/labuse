@@ -68,6 +68,34 @@ def _emitted_bonus_key_literals() -> set[str]:
     return out
 
 
+def _emitted_intersection_kind_literals() -> set[str]:
+    """Kinds passés EN LITTÉRAL à `ctx.intersections(parcel_id, "<kind>")` dans les couches —
+    p. ex. `intersections(parcel.id, "pente")` (phase1), que le YAML ne porte PAS en `spatial_kind`.
+    Même best-effort que `_emitted_bonus_key_literals` : seuls les littéraux sont captés (les kinds
+    dynamiques `params["spatial_kind"]` sont déjà couverts par le YAML, cf. `_collect_yaml_values`)."""
+    out: set[str] = set()
+    layers_dir = Path(__file__).parent / "layers"
+    for f in layers_dir.glob("*.py"):
+        out.update(re.findall(r"""\.intersections\([^,]+,\s*["'](\w+)["']""",
+                              f.read_text(encoding="utf-8")))
+    return out
+
+
+def cascade_intersection_kinds(rules=None) -> set[str]:
+    """ENSEMBLE EXACT des kinds que la cascade lit via `ctx.intersections()` : tout kind référencé
+    au YAML (`_collect_yaml_values(rules, "kind")`, sur-ensemble sûr qui inclut aussi les kinds de
+    proximité/centroïde) UNION les kinds passés en littéral dans le code des couches (« pente »).
+
+    Sert à RESTREINDRE le prime() spatial à ces seuls kinds : une couche `spatial_layers`/`_sub`
+    d'un kind JAMAIS lu par la cascade (batiment_cosia, piscine_cosia, construction_*, transport_*,
+    pente exclue… les plus DENSES en tissu urbain) ne doit pas payer d'intersection — son résultat
+    ne serait lu par personne (`_inter` n'est consulté que par `intersections(pid, kind)`). Le set
+    est VOLONTAIREMENT large (inclut les kinds de proximité) : correctness d'abord, le gain vient de
+    l'exclusion des kinds hors-cascade, pas d'un élagage serré."""
+    rules = rules if rules is not None else cascade_rules()
+    return _collect_yaml_values(rules, "kind") | _emitted_intersection_kind_literals()
+
+
 def check_cablage_scoring(session=None) -> dict:
     """Vérifie le câblage du scoring. LÈVE `CablageError` (message itemisé) au moindre écart.
     Renvoie un résumé `{...: "OK"}` quand tout passe. `session` fourni → vérifie aussi les kinds
