@@ -147,7 +147,11 @@ def _date_donnees(t):
 
 def _marge_surelevation(t):
     # La marge de surélévation (sous la hauteur de zone) — « Marge de surélévation (…) −3,3 m »
-    # (Dossier) / « marge en hauteur ~−3,3 m » (Flash). Un fait = une valeur, la fiche fait foi.
+    # (Dossier) / « marge en hauteur ~−3,3 m » OU, quand elle est NÉGATIVE, « le bâti existant dépasse
+    # la hauteur autorisée de 3,3 m » (= −3,3, Flash). Un fait = une valeur, la fiche fait foi.
+    m = re.search(r"dépasse la hauteur autorisée de\s*(\d+(?:[,.]\d+)?)" + _SP + r"*m\b", t)
+    if m:
+        return "-" + _num(m.group(1))
     m = re.search(r"(?:Marge de surélévation|marge en hauteur)[^\n]*?[~]?\s*([−-]?\d+(?:[,.]\d+)?)" + _SP + r"*m\b", t)
     if not m:
         return None

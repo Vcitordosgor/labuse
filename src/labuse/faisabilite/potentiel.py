@@ -204,9 +204,14 @@ def bloc_potentiel(session: Session, parcel_id: int, fz=None) -> dict | None:
                         else f"au sol : ~{round(sdp_servie)} m² de SDP restante")
     # RECETTE-11 A6 — plus de verdict de faisabilité (« possible »/« pas de marge ») : on énonce la
     # marge mesurée sous la règle de hauteur et la contrainte, le lecteur conclut.
+    # DOCS-1 (décision Vic) — une marge NÉGATIVE n'est pas une « marge ~−3,3 m » : le bâti existant
+    # DÉPASSE déjà la hauteur autorisée ; on le dit en clair.
     if en_hauteur.get("marge_m") is not None and en_hauteur.get("base"):
-        morceaux.append(f"marge en hauteur ~{en_hauteur['marge_m']:g} m sous "
-                        f"la hauteur {en_hauteur['base']}")
+        _mg = float(en_hauteur["marge_m"])
+        if _mg < 0:
+            morceaux.append(f"le bâti existant dépasse la hauteur autorisée de {abs(_mg):g} m")
+        else:
+            morceaux.append(f"marge en hauteur ~{_mg:g} m sous la hauteur {en_hauteur['base']}")
     if table_rase["constructible"] and table_rase["vendable_m2"]:
         morceaux.append(f"en table rase : ~{round(table_rase['vendable_m2'])} m² "
                         f"vendables ({table_rase['mention']})")
@@ -222,5 +227,8 @@ def bloc_potentiel(session: Session, parcel_id: int, fz=None) -> dict | None:
     if not morceaux:
         # rien d'évaluable (base vide, zone non résolue) : section OMISE — jamais un bloc creux
         return None
+    # DOCS-1 (décision Vic) — capitalise la 1ʳᵉ lettre SANS abaisser le reste (sinon « LiDAR HD » →
+    # « lidar hd »). Le reste de la phrase garde sa casse d'origine.
+    _verdict = " · ".join(morceaux)
     return {"au_sol": au_sol, "en_hauteur": en_hauteur, "table_rase": table_rase,
-            "verdict": " · ".join(morceaux).capitalize()}
+            "verdict": (_verdict[:1].upper() + _verdict[1:]) if _verdict else _verdict}

@@ -193,9 +193,25 @@ moins de 100 m) et le Flash passe par **le même lecteur que la fiche**.
 Étude de zone, Bilan).
 
 **Témoin zone U ∩ PPR rouge** (`97415000CY0275`) : le Gabarit s'y dessine (rouge déduit), le Dossier /
-Estimer / Flash / Bilan / Courrier aussi ; l'**Étude y refuse honnêtement** (« zone trop étroite »).
-Aucune parcelle zone U intersectée par une zone rouge de PPR de la base locale ne porte un scénario
-d'implantation (toutes trop contraintes) — documenté, pas masqué.
+Estimer / Flash / Bilan / Courrier aussi.
+
+**CORRECTION (investigation du classement par surface hors rouge)** — ma réserve « aucune parcelle
+zone U ∩ PPR rouge ne porte de scénario » était **FAUSSE** : je n'avais testé que des petites parcelles
+(300–3000 m²). Sur les 10 plus grandes par surface hors rouge (toutes > 17 000 m²), **5 produisent un
+scénario** (97407000BK0084, 97416000DE0205, 97415000DH0076, 97409000AY0773, 97408000AO1520) et **5
+refusent** « simulation impossible / zone trop étroite » (97409000AS0135, 97413000CX2818, 97414000EL0318,
+97410000BY0819, 97411000AK0012) — dont **EL0318 (208×198 m, 0 m² de rouge)**, manifestement PAS « trop
+étroite ».
+
+**CAUSE du faux refus (défaut moteur, PROUVÉ, non corrigé)** : `moteur._rechercher` borne la recherche à
+un **budget de temps de 22 s** (`LABUSE_ETUDE_GRILLE_BUDGET_S`) ; sur une grande assiette chaque candidat
+coûte ~2,4 s, donc seuls ~8 des 144 candidats (forme×niveaux×fraction) sont essayés — et la grille étant
+ordonnée « le plus gros d'abord », ces premiers candidats échouent sur le **stationnement aérien**
+(barre + places ne tiennent pas) avant d'atteindre les configurations plus petites qui PASSENT. À budget
+300 s, EL0318 rend **125 candidats et 10 faisables**. Le message « zone trop étroite » est donc
+trompeur : la vraie situation est « la recherche de pré-faisabilité manque de temps pour atteindre les
+implantations faisables ». Défaut à part entière (performance du budget + ordre de la grille + libellé),
+indépendant du PPR. **Rien corrigé** (hors mandat de cette passe).
 
 | Recette (3ᵉ passe) | Résultat |
 |---|---|

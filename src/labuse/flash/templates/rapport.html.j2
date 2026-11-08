@@ -177,7 +177,8 @@
     <tr><td>Au sol (SDP restante)</td>
         <td class="num-cell">{% if c.potentiel.au_sol.sdp_residuelle_m2 is not none
           %}{{ c.potentiel.au_sol.sdp_residuelle_m2|round|int }} m²{% else %}non calculée{% endif %}</td></tr>
-    <tr><td>En hauteur (surélévation, hauteur {{ c.potentiel.en_hauteur.base or "—" }})</td>
+    {# DOCS-1 — base = « faîtage mesuré (LiDAR HD) » : pas de parenthèse EXTÉRIEURE (sinon « )) »). #}
+    <tr><td>En hauteur — surélévation, hauteur {{ c.potentiel.en_hauteur.base or "—" }}</td>
         <td>{% if c.potentiel.en_hauteur.possible %}<span class="chip">envisageable —
             marge ~{{ c.potentiel.en_hauteur.marge_m | fr_dec }} m</span>
             {% elif c.potentiel.en_hauteur.possible is false %}<span class="chip neutre">non envisageable</span>
@@ -225,8 +226,10 @@
     {% if c.faisa.capacite_mention %}
     <div class="note-sdp">Surfaces : {{ c.faisa.capacite_mention }}.</div>
     {% endif %}
-    {% if c.faisa.run and c.faisa.run.date %}
-    <div class="note-sdp">Valeurs : analyse LABUSE arrêtée au {{ c.faisa.run.date }}.</div>
+    {# DOCS-1 (décision Vic) — UNE seule date de données, celle de la fiche (« Données LABUSE au … »),
+       jamais une « analyse arrêtée au … » qui divergeait (date de run ≠ date des données servies). #}
+    {% if data.donnees_labuse_au %}
+    <div class="note-sdp">Valeurs : Données LABUSE au {{ data.donnees_labuse_au }}.</div>
     {% endif %}
   </div>
   {% else %}

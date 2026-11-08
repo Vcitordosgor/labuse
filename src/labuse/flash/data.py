@@ -300,6 +300,20 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
             from ..faisabilite.potentiel import bloc_potentiel
             _pot = bloc_potentiel(db, pid, fa)
             if _pot:
+                # DOCS-1 (décision Vic) — la surface vendable du Flash = celle de la fiche/Dossier
+                # (out["faisa"], lue de potentiel_transformation) partout, y compris la ligne « table
+                # rase » et le verdict : jamais un « 118 m² » quand la fiche sert « non calculable ».
+                _vf = (out.get("faisa") or {}).get("vendable_m2")   # None = non calculable (capacité nulle)
+                _tr = _pot.get("table_rase") or {}
+                if _tr.get("vendable_m2") != _vf:
+                    _tr["vendable_m2"] = _vf
+                    _tr["constructible"] = bool(_vf) and bool(_tr.get("constructible"))
+                    _parts = [p for p in (_pot.get("verdict") or "").split(" · ")
+                              if "table rase" not in p.lower() and "vendable" not in p.lower()]
+                    _parts.append(f"en table rase : ~{int(_vf)} m² vendables" if _vf is not None
+                                  else "surface vendable non calculable (capacité nulle)")
+                    _vtxt = " · ".join(_parts)
+                    _pot["verdict"] = (_vtxt[:1].upper() + _vtxt[1:]) if _vtxt else _vtxt
                 out["potentiel"] = _pot
         except Exception as exc:  # noqa: BLE001 — potentiel indisponible → section omise
             log.warning("bloc potentiel %s : %s", idu, exc)
@@ -979,6 +993,7 @@ def collect_report_data(db: Session, idu: str, adresse: str | None = None) -> di
     parcelle = _parcelle(db, idu)
     if not parcelle:
         raise ValueError(f"Parcelle {idu} inconnue.")
+    from ..exports.builder import _donnees_labuse_au    # LA date des données (manifeste servi), 1 source
     if adresse is None:
         # import paresseux (évite tout cycle flash ↔ api au chargement des modules)
         from ..api.export_commun import adresse_ban_texte
@@ -999,6 +1014,9 @@ def collect_report_data(db: Session, idu: str, adresse: str | None = None) -> di
         "aper": _aper(db, idu, avail),
         # DOCS-1 (décision Vic) — un seul format de date : jj/mm/aaaa, jamais l'ISO.
         "date_generation": today_reunion().strftime("%d/%m/%Y"),
+        # DOCS-1 (décision Vic) — LA date des données = celle de la fiche (« Données LABUSE au … »),
+        # même producteur que le Dossier (`builder._donnees_labuse_au`, manifeste servi).
+        "donnees_labuse_au": _donnees_labuse_au() or today_reunion().strftime("%d/%m/%Y"),
         # FLASH-ZONE F2 — section « Autour de cette parcelle » (isochrone IGN + INSEE/BPE/SIRENE).
         # Consomme zone.etude_de_zone (calcul unique) ; toujours rendable (dégradé honnête).
         "zone": _zone(db, parcelle),
