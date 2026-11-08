@@ -26,7 +26,7 @@ from .catalogue import Catalogue, assiette_unite, charger_catalogue
 from .moteur import EntreesBilan
 
 _EUR = '#,##0 €'
-_PCT = '0.00 %'
+_PCT = '0.0 %'   # DOCS-1 : les taux (TVA, marge) s'affichent « 8,5 % », jamais « 0.085 » ni « 8,50 % »
 _M2 = '#,##0 "m²"'
 _LOTS = '#,##0 "lots"'
 
@@ -81,13 +81,13 @@ def classeur_bilan(
     ws.cell(r, 2, entrees.programme.surface_taxable)
     r += 1
     cell_loyer = f"B{r}"
-    ws.cell(r, 1, "Loyer (€/m² SUV)")
+    ws.cell(r, 1, "Loyer (€/m² de surface vendable)")
     ws.cell(r, 2, entrees.programme.loyer)
     r += 2
 
     # ---- Produits ----
     entete("Produits")
-    hdr = ["Produit", "Lots", "SUV m²", "Prix TTC/m²", "TVA", "CA TTC", "CA HT"]
+    hdr = ["Produit", "Lots", "surface vendable (m²)", "Prix TTC/m²", "TVA", "CA TTC", "CA HT"]
     for i, h in enumerate(hdr, start=1):
         c = ws.cell(r, i, h)
         c.font = _ENTETE
@@ -275,11 +275,11 @@ def classeur_bilan(
         ("Terrain", f"={cell_terrain}", _M2),
         ("Surface de plancher", f"={cell_sdp}", _M2),
         ("Surface taxable", f"={cell_stax}", _M2),
-        ("SUV", f"={cell_suv}", _M2),
-        ("Coût const. m² SUV HT", f"=(D{d['constr']}+D{d['aleaC']})/{cell_suv}", _EUR),
-        ("Prix moyen m² SUV HT", f"={cell_ca_ht}/{cell_suv}", _EUR),
+        ("Surface vendable", f"={cell_suv}", _M2),
+        ("Coût const. m² de surface vendable HT", f"=(D{d['constr']}+D{d['aleaC']})/{cell_suv}", _EUR),
+        ("Prix moyen m² de surface vendable HT", f"={cell_ca_ht}/{cell_suv}", _EUR),
         (
-            "Net promoteur m² SUV TTC",
+            "Net promoteur m² de surface vendable TTC",
             f"=(({cell_ca_ht}-D{d['acte']}-D{d['pack']}-D{d['proc']})/{cell_suv})*(1+{tva_dom})",
             _EUR,
         ),

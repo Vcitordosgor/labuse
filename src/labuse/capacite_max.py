@@ -18,14 +18,15 @@ from __future__ import annotations
 RATIO_MEDIAN_SDP = 0.46
 RATIO_MEDIAN_LOGEMENTS = 0.40
 
-#: mention complète (survol / détail / PDF / Copilote).
+#: mention complète (survol / détail / PDF / Copilote). DOCS-1 : aucune référence de cuisine interne
+#: (« volet D », « VERITE-TERRAIN ») — la phrase client énonce le fait mesuré, pas sa provenance d'audit.
 MENTION = (
     "Maximum réglementaire (gabarit) : le total que la parcelle peut porter selon les règles, pas le "
-    "programme qui sera déposé. Face aux permis réellement autorisés (volet D VERITE-TERRAIN-2), les "
-    "projets en utilisent en médiane environ la moitié (0,46 en surface, 0,40 en logements)."
+    "programme qui sera déposé. Face aux permis réellement autorisés, les projets en utilisent en "
+    "médiane environ la moitié (0,46 en surface, 0,40 en logements)."
 )
 #: mention courte (chip / inline).
-MENTION_COURTE = "maximum réglementaire — les permis réels en utilisent ~½ en médiane (volet D)"
+MENTION_COURTE = "maximum réglementaire — les permis réels en utilisent ~½ en médiane"
 
 # LOGEMENTS-SOURCE-UNIQUE (décision Vic 18/10/2026, généralisée) — le NOMBRE de logements n'est
 # plus jamais tiré de l'ancien calcul de capacité (`estimate_capacity` : SDP ÷ logement moyen) :

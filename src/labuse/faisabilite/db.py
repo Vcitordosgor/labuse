@@ -974,6 +974,55 @@ def phrase_hors_ppr_rouge(hors: dict) -> str:
             f"partie hors zone rouge : {m2} m², à étudier.")
 
 
+#: part rouge AU-DELÀ de laquelle la parcelle est ~totalement rouge (vraiment rédhibitoire) : la doctrine
+#: PPR-PARTIEL ne s'y applique plus (il ne reste rien d'utile hors rouge).
+SEUIL_ROUGE_TOTAL_PCT = 95.0
+
+
+def verdict_ppr_partiel(session: Session, parcel_id: int) -> dict | None:
+    """DOCS-1 (décision Vic) — PPR-PARTIEL, SOURCE UNIQUE du verdict « la zone rouge ne retire QUE sa
+    surface ; la partie hors rouge garde son potentiel ».
+
+    Rend `{pct_rouge, pct_hors_rouge, hors_rouge_m2}` quand une parcelle est servie 0/rédhibitoire par le
+    run PARCE QU'elle touche une zone rouge PPR PARTIELLE, alors que le reste hors rouge est EXPLOITABLE
+    (≥ 200 m² d'un seul tenant touchant une voie — mêmes garde-fous PPR-PARTIEL-A que l'Étude). Rend None
+    quand il n'y a pas de rouge, quand la parcelle est ~totalement rouge (≥ 95 %, vraiment rédhibitoire),
+    ou quand la partie hors rouge est inexploitable (trop petite / enclavée).
+
+    Lue par TOUS les lecteurs du verdict de potentiel (`potentiel_batir`, le bloc de transformation de la
+    fiche, le Comparatif) pour qu'ils disent la MÊME chose que l'Étude de faisabilité, qui découpe déjà le
+    rouge et bâtit sur le reste. Lecture seule, tolérante : toute erreur géométrique → None (jamais 500)."""
+    try:
+        with session.begin_nested():
+            row = session.execute(_HORS_PPR_ROUGE, {"pid": parcel_id}).first()
+    except Exception:  # noqa: BLE001 — géométrie pathologique : pas de correction, jamais un crash
+        return None
+    if row is None or row.parcelle_m2 is None or float(row.parcelle_m2) <= 0:
+        return None                                   # ne touche AUCUNE zone rouge → rien à corriger
+    parcelle = float(row.parcelle_m2)
+    rouge = float(row.rouge_m2 or 0.0)
+    if rouge <= 0:
+        return None
+    pct_rouge = 100.0 * rouge / parcelle
+    if pct_rouge >= SEUIL_ROUGE_TOTAL_PCT:
+        return None                                   # ~totalement rouge → rédhibitoire RÉEL, on n'y touche pas
+    servable, _motif = _hors_rouge_fragment_servable(session, parcel_id)
+    if not servable:
+        return None                                   # partie hors rouge trop petite / enclavée : 0 correct
+    # DERNIER GARDE-FOU — le moteur de faisabilité (qui applique TOUTES les contraintes : zonage, ER, EBC,
+    # reculs, hauteur, PPR-PARTIEL-A) doit confirmer que la partie hors rouge est RÉELLEMENT constructible.
+    # Il écarte les faux positifs : zone A/N, hors PLU, emplacement réservé couvrant tout, etc. (la seule
+    # géométrie « il reste du hors-rouge » ne suffit pas). Le stored run, lui, peut être périmé/rédhibitoire.
+    try:
+        res = parcel_faisabilite(session, parcel_id)
+    except Exception:  # noqa: BLE001 — moteur indisponible : prudence, on ne corrige pas
+        return None
+    if res is None or not res[1].constructible or res[1].cause is not None:
+        return None
+    return {"pct_rouge": max(1, round(pct_rouge)), "pct_hors_rouge": min(99, round(100.0 - pct_rouge)),
+            "hors_rouge_m2": round(parcelle - rouge)}
+
+
 # ── PPR-PARTIEL-A lot 2 — garde-fous de la partie hors zone rouge ────────────────────────────────
 # La règle (lot 1) calcule la SDP sur la partie hors rouge ; mais les 588 ha de foncier BRUT ne sont
 # pas tous exploitables. On ne sert QUE si la partie hors rouge forme UN SEUL TENANT (ST_Dump, plus

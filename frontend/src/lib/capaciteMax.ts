@@ -9,12 +9,12 @@
 export const CAPACITE_RATIO_MEDIAN_SDP = 0.46
 export const CAPACITE_RATIO_MEDIAN_LOGEMENTS = 0.4
 
-/** mention complète (survol / détail). */
+/** mention complète (survol / détail). DOCS-1 : aucune référence interne (« volet D », « VERITE-TERRAIN »). */
 export const CAPACITE_MAX_MENTION =
   'Maximum réglementaire (gabarit) : le total que la parcelle peut porter selon les règles, pas le ' +
-  'programme qui sera déposé. Face aux permis réellement autorisés (volet D VERITE-TERRAIN-2), les ' +
-  'projets en utilisent en médiane environ la moitié (0,46 en surface, 0,40 en logements).'
+  'programme qui sera déposé. Face aux permis réellement autorisés, les projets en utilisent en ' +
+  'médiane environ la moitié (0,46 en surface, 0,40 en logements).'
 
 /** mention courte (chip / inline). */
 export const CAPACITE_MAX_MENTION_COURTE =
-  'maximum réglementaire — les permis réels en utilisent ~½ en médiane (volet D)'
+  'maximum réglementaire — les permis réels en utilisent ~½ en médiane'

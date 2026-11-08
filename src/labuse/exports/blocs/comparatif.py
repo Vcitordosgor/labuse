@@ -6,9 +6,20 @@ Badges Sourcé/Estimé par ligne et ligne « Classement LABUSE » comme à l'éc
 rendent donc la même chaîne."""
 from __future__ import annotations
 
+import re
+
 from ...faisabilite.residuel import fmt_taux_emprise
 from ..registre_fmt import groupe
 from ..rendu import chip_span, esc, section
+
+#: DOCS-1 (décision Vic) — un seul format de décimale (virgule) imposé à la sortie du bloc, même motif
+#: que le banc détecte (« \d.\d » suivi de m/€/%/m²) : couvre les chaînes SERVIES par /compare (accès &
+#: réseaux, assainissement, contrainte majeure) sans dupliquer un formateur par champ.
+_RX_DEC_SORTIE = re.compile(r"\b(\d+)\.(\d+)([   ]*(?:m²|m|€|%))\b")
+
+
+def _virgule_sortie(html: str) -> str:
+    return _RX_DEC_SORTIE.sub(lambda m: f"{m.group(1)},{m.group(2)}{m.group(3)}", html)
 
 
 def _i(v):   # entier groupé (séparateur de milliers)
@@ -33,7 +44,13 @@ def _classement(r) -> str | None:
         return None
     from ...scoring.signal_mutation import NIVEAU_LABELS
     lib = _libelle_bande(str(bande))
-    txt = f"{bande} · {lib}" if lib and lib != str(bande) else str(bande)
+    # DOCS-1 (décision Vic) — une bande « lettre » (A–D) s'écrit « lettre · libellé » ; une bande NON
+    # lettre (« 0 » = écartée) ne fait pas précéder son libellé d'un « 0 · » de cuisine (« 0 · Non
+    # retenue ») : on affiche le seul libellé client.
+    if str(bande).isdigit():
+        txt = lib or str(bande)
+    else:
+        txt = f"{bande} · {lib}" if lib and lib != str(bande) else str(bande)
     sig = NIVEAU_LABELS.get(str(r.get("signal_niveau") or ""))
     return esc(txt + (f" · {sig}" if sig else ""))
 
@@ -191,5 +208,8 @@ def rendu(rows) -> str:
     # RECETTE-OUTILS-2 (R18) — la note de bas de page « Maximum réglementaire (gabarit) … (0,46 en
     # surface, 0,40 en logements) » est RETIRÉE du Comparatif PDF, pour être identique à l'outil où elle
     # a déjà été retirée (décision Vic). Le plafond réglementaire reste dit par la fiche / l'Étude.
+    # DOCS-1 (décision Vic) — titre + tableau forment UN bloc qui ne se coupe pas : s'il ne tient pas
+    # sous la carte en page 1, l'ensemble (jamais le titre seul) passe en page 2 (`.cmp-bloc`).
     corps = f'<table class="cmp"><thead>{thead}</thead><tbody>{body}</tbody></table>'
-    return section("Comparatif", corps)
+    bloc = f'<section class="cmp-bloc"><h2>Comparatif</h2>{corps}</section>'
+    return _virgule_sortie(bloc)

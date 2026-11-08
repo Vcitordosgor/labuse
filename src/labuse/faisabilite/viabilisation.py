@@ -143,7 +143,10 @@ def contributions(sig: dict[str, Any]) -> list[dict[str, Any]]:
     if p:
         recent = sig.get("c100_recent", 0) or 0
         acheve = sig.get("c100_acheve", 0) or 0
-        det = f"{c100} permis autorisé(s) < 100 m"
+        # DOCS-1 (décision Vic) — le faisceau de VIABILISATION compte les permis à moins de 100 m sur
+        # TOUTE la période (un permis ancien prouve autant la présence des réseaux) : on NOMME cette
+        # fenêtre, pour ne jamais la confondre avec le « permis (< 100 m, N mois) » daté du marché.
+        det = f"{c100} permis autorisé(s) à moins de 100 m (toute période)"
         extra = []
         if recent:
             extra.append(f"{recent} depuis {ANNEE_RECENTE} (secteur en développement actif)")
@@ -226,6 +229,11 @@ def build_indicateur(sig: dict[str, Any], elec_pv: dict[str, Any] | None = None,
                      solaire: dict[str, Any] | None = None) -> dict[str, Any]:
     score = compute_score(sig)
     code, libelle = band(score)
+    # DOCS-1 (décision Vic) — UN SEUL libellé de viabilisation, partout (fiche, Dossier, Comparatif,
+    # Flash, Estimer) : la viabilisation est un FAISCEAU d'indices, jamais une certitude. Le libellé
+    # SERVI dit « probable », jamais « confirmée par les faits » (langage interne). band() (code et
+    # seuils) reste intact — on ne touche QUE le texte affiché au client, à sa source unique.
+    libelle = libelle.replace(" confirmée par les faits", " probable")
     contribs = contributions(sig)
     _da = BANDE_DA.get(code, BANDE_DA["incertaine"])
     out: dict[str, Any] = {

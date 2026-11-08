@@ -55,7 +55,6 @@
     {% else %}
     <tr><td>Surface (mesurée sur le plan)</td><td>{{ p.surface_terrain_m2 or p.surface_m2 }} m²</td></tr>
     {% endif %}
-    <tr><td>Version du modèle de rapport</td><td>{{ template_version }}</td></tr>
   </table>
 </section>
 
@@ -73,7 +72,7 @@
     {% if data.rnu %}
     <div class="cartouche"><div class="titre">Zonage PLU</div>
       <div class="valeur"><small>non applicable — RNU</small></div></div>
-    <div class="cartouche"><div class="titre">Hauteur max (règle calibrée)</div>
+    <div class="cartouche"><div class="titre">Hauteur max (PLU)</div>
       <div class="valeur"><small>non applicable — RNU</small></div></div>
     {% else %}
     {% if ident.zones %}
@@ -85,8 +84,8 @@
     {# M129-2 A : hauteur du PLU CALIBRÉ (source unique resolve_zone) — égout et faîtage NOMMÉS,
        jamais une « hauteur max » ambiguë ni le 9 m générique de parcel_residuel_bati. #}
     {% if ident.regles and ident.regles.hauteur_egout_m %}
-    <div class="cartouche"><div class="titre">Hauteur d'égout (PLU calibré)</div>
-      <div class="valeur">{{ (ident.regles.hauteur_egout_m | round(1)) | string | replace('.0', '') }} <small>m</small></div></div>
+    <div class="cartouche"><div class="titre">Hauteur d'égout (PLU)</div>
+      <div class="valeur">{{ ident.regles.hauteur_egout_m | fr_dec }} <small>m</small></div></div>
     {% endif %}
     {% endif %}
   </div>
@@ -111,7 +110,7 @@
   {% endif %}
 
   {% if ident.regles %}
-  <h3>Règles calibrées LABUSE (zone {{ ident.regles.zone or "—" }})</h3>
+  <h3>Règles du PLU (zone {{ ident.regles.zone or "—" }})</h3>
   <table class="donnees">
     <tr><th>Règle</th><th>Valeur</th></tr>
     {% if ident.regles.emprise_max_m2 %}
@@ -120,12 +119,12 @@
     {% endif %}
     {# M129-2 A/A.3 : hauteur du PLU CALIBRÉ, égout et faîtage nommés distinctement (source unique). #}
     {% if ident.regles.hauteur_egout_m %}
-    <tr><td>Hauteur d'égout (PLU calibré)</td>
-        <td class="num-cell">{{ (ident.regles.hauteur_egout_m | round(1)) | string | replace('.0', '') }} m</td></tr>
+    <tr><td>Hauteur d'égout (PLU)</td>
+        <td class="num-cell">{{ ident.regles.hauteur_egout_m | fr_dec }} m</td></tr>
     {% endif %}
     {% if ident.regles.hauteur_faitage_m %}
-    <tr><td>Hauteur au faîtage (PLU calibré)</td>
-        <td class="num-cell">{{ (ident.regles.hauteur_faitage_m | round(1)) | string | replace('.0', '') }} m</td></tr>
+    <tr><td>Hauteur au faîtage (PLU)</td>
+        <td class="num-cell">{{ ident.regles.hauteur_faitage_m | fr_dec }} m</td></tr>
     {% endif %}
     {# PLU-EXCEPTIONS-1 — exceptions au règlement sous la règle, en note (verbatim + article/page).
        Aide à la lecture : n'entrent dans aucun calcul (Lot C). #}
@@ -136,7 +135,7 @@
     {# M129-2 D : « Confiance du calibrage » (indice interne) RETIRÉE — aucun exportable ne porte
        d'indice de complétude / score / verdict. #}
   </table>
-  <p class="note">Règles issues du calibrage fin des règlements PLU par LABUSE.
+  <p class="note">Règles lues dans le règlement du PLU de la commune.
      Les règles complètes du règlement (retraits, prospects, servitudes) peuvent
      modifier ces valeurs.</p>
   {% endif %}
@@ -175,16 +174,17 @@
   <h3>Potentiel constructible</h3>
   <table class="donnees">
     <tr><th>Scénario</th><th>Valeur</th></tr>
-    <tr><td>Au sol (SDP restante du run servi)</td>
-        <td class="num-cell">{% if c.potentiel.au_sol.sdp_residuelle_m2 is not none
+    <tr><td>Au sol (SDP restante)</td>
+        <td class="num-cell">{% if c.potentiel.au_sol.renvoi_etude %}voir l'Étude de faisabilité{% elif c.potentiel.au_sol.sdp_residuelle_m2 is not none
           %}{{ c.potentiel.au_sol.sdp_residuelle_m2|round|int }} m²{% else %}non calculée{% endif %}</td></tr>
-    <tr><td>En hauteur (surélévation, hauteur {{ c.potentiel.en_hauteur.base or "—" }})</td>
+    {# DOCS-1 — base = « faîtage mesuré (LiDAR HD) » : pas de parenthèse EXTÉRIEURE (sinon « )) »). #}
+    <tr><td>En hauteur — surélévation, hauteur {{ c.potentiel.en_hauteur.base or "—" }}</td>
         <td>{% if c.potentiel.en_hauteur.possible %}<span class="chip">envisageable —
-            marge ~{{ c.potentiel.en_hauteur.marge_m }} m</span>
-            {% elif c.potentiel.en_hauteur.possible is false %}<span class="chip neutre">non identifiée</span>
+            marge ~{{ c.potentiel.en_hauteur.marge_m | fr_dec_fixe }} m</span>
+            {% elif c.potentiel.en_hauteur.possible is false %}<span class="chip neutre">non envisageable</span>
             {% else %}<span class="chip neutre">non évaluable</span>{% endif %}</td></tr>
     <tr><td>Table rase ({{ c.potentiel.table_rase.mention }})</td>
-        <td class="num-cell">{% if c.potentiel.table_rase.vendable_m2
+        <td class="num-cell">{% if c.potentiel.table_rase.renvoi_etude %}voir l'Étude de faisabilité{% elif c.potentiel.table_rase.vendable_m2
           %}~{{ c.potentiel.table_rase.vendable_m2|round|int }} m² vendables{% else %}non constructible{% endif %}</td></tr>
   </table>
   <p class="note">{{ c.potentiel.verdict }}</p>
@@ -209,17 +209,32 @@
   <p class="note avert"><strong>⚠ Ouverture à l'urbanisation non vérifiée</strong> — {{ c.au_statut.motif }}
      Le potentiel ci-dessous est <strong>conditionné</strong> à cette ouverture : il ne se lit pas comme un droit acquis.</p>
   {% endif %}
-  <div class="cartouche"><div class="titre">Surface vendable — scénario retenu</div>
+  {# DOCS-1 (décision Vic) — SDP maximale réglementaire + Surface vendable = les MÊMES valeurs que le
+     Dossier (bloc potentiel_transformation, point unique). Vendable « non calculable » quand la
+     capacité bâti-conservé est nulle — jamais un « scénario table rase » de 118 m² qui divergeait. #}
+  {% if c.faisa.sdp_max_m2 is not none %}
+  <div class="cartouche"><div class="titre">SDP maximale réglementaire, terrain</div>
+    <div class="valeur">{{ c.faisa.sdp_max_m2 }} <small>m²</small></div></div>
+  {% elif c.faisa.renvoi_etude %}
+  <div class="cartouche"><div class="titre">SDP maximale réglementaire, terrain</div>
+    <div class="valeur"><small>voir l'Étude de faisabilité (zone rouge retirée)</small></div></div>
+  {% endif %}
+  <div class="cartouche"><div class="titre">Surface vendable</div>
+    {% if c.faisa.vendable_m2 is not none %}
     <div class="valeur">{{ c.faisa.vendable_m2 }} <small>m² · plancher (SDP) ~{{ c.faisa.plancher_m2 }} m² = vendable ÷ rendement {{ c.faisa.rendement_pct }}&nbsp;%</small></div>
-    {# LOGEMENTS-SOURCE-UNIQUE — plus de fourchette de logements de l'ancien calcul de capacité :
-       renvoi de la fiche (le nombre vit dans l'Étude de faisabilité) + mention « maximum
-       réglementaire » (volet D). La phrase silo (des m² vendables, pas des logements) reste. #}
-    <div class="note-sdp">Nombre de logements : {{ c.faisa.logements_renvoi }}.{% if c.faisa.vendable_silo_m2 and c.faisa.vendable_silo_m2 > c.faisa.vendable_m2 %} Un stationnement en ouvrage (sous-sol/silo) porterait le vendable à ~{{ c.faisa.vendable_silo_m2 }} m², au prix d'un coût de place enterrée non estimé ici.{% endif %}</div>
+    {% elif c.faisa.renvoi_etude %}
+    <div class="valeur"><small>voir l'Étude de faisabilité</small></div>
+    {% else %}
+    <div class="valeur"><small>non calculable (capacité nulle)</small></div>
+    {% endif %}
+    <div class="note-sdp">Nombre de logements : {{ c.faisa.logements_renvoi }}.{% if c.faisa.vendable_m2 is not none and c.faisa.vendable_silo_m2 and c.faisa.vendable_silo_m2 > c.faisa.vendable_m2 %} Un stationnement en ouvrage (sous-sol/silo) porterait le vendable à ~{{ c.faisa.vendable_silo_m2 }} m², au prix d'un coût de place enterrée non estimé ici.{% endif %}</div>
     {% if c.faisa.capacite_mention %}
     <div class="note-sdp">Surfaces : {{ c.faisa.capacite_mention }}.</div>
     {% endif %}
-    {% if c.faisa.run and c.faisa.run.date %}
-    <div class="note-sdp">Valeurs : analyse LABUSE arrêtée au {{ c.faisa.run.date }}.</div>
+    {# DOCS-1 (décision Vic) — UNE seule date de données, celle de la fiche (« Données LABUSE au … »),
+       jamais une « analyse arrêtée au … » qui divergeait (date de run ≠ date des données servies). #}
+    {% if data.donnees_labuse_au %}
+    <div class="note-sdp">Valeurs : Données LABUSE au {{ data.donnees_labuse_au }}.</div>
     {% endif %}
   </div>
   {% else %}
@@ -439,7 +454,7 @@
   <h3>Leviers logement social / bailleur</h3>
   {% set s = cc.leviers.sru %}
   {% if s %}
-  <p>SRU : commune <b>{{ s.statut }}</b>{% if s.taux_lls is not none %} — {{ "%.1f"|format(s.taux_lls) }} % de
+  <p>SRU : commune <b>{{ s.statut }}</b>{% if s.taux_lls is not none %} — {{ s.taux_lls | fr_dec }} % de
      logements sociaux pour un objectif de {{ s.objectif_pct|int }} %{% endif %}{% if s.deficit_logements %} ·
      besoin estimé <b>~{{ "{:,}".format(s.deficit_logements).replace(",", " ") }}</b> logements sociaux{% endif %}.
      <span style="font-size:8pt;color:var(--txt-mut)">Sourcé DHUP{% if s.deficit_logements %} · besoin = Estimé (dérivé du taux et de l'objectif){% endif %} · {{ s.millesime }}.</span></p>
@@ -476,13 +491,13 @@
   <div class="cartouches">
     {% if t.pente %}
     <div class="cartouche"><div class="titre">Pente moyenne (RGE ALTI 5 m)</div>
-      <div class="valeur">{{ t.pente.moy_deg }}<small>° ≈ {{ t.pente.moy_pct }} % · {{ t.pente.label }}</small>
-        {% if t.pente.max_deg is not none %}<small> · max {{ t.pente.max_deg }}° ≈ {{ t.pente.max_pct }} %</small>{% endif %}
+      <div class="valeur">{{ t.pente.moy_deg | fr_dec }}<small>° ≈ {{ t.pente.moy_pct | fr_dec }} % · {{ t.pente.label }}</small>
+        {% if t.pente.max_deg is not none %}<small> · max {{ t.pente.max_deg | fr_dec }}° ≈ {{ t.pente.max_pct | fr_dec }} %</small>{% endif %}
       </div></div>
     {% endif %}
     {% if t.canopee %}
     <div class="cartouche"><div class="titre">Couverture canopée</div>
-      <div class="valeur">{{ t.canopee.ombrage_pct }} <small>%</small></div></div>
+      <div class="valeur">{{ t.canopee.ombrage_pct | fr_dec }} <small>%</small></div></div>
     {% endif %}
   </div>
   {% if t.pente and t.pente.terrassement_lourd %}
@@ -622,8 +637,7 @@
        potentiels indiqués.</p>
     <p>{{ sources_attribution }}</p>
     <p>Rapport {{ order_ref }} généré le {{ data.date_generation }} ·
-       modèle v{{ template_version }} · LABUSE — radar foncier de La Réunion ·
-       labuse.immo</p>
+       LABUSE — radar foncier de La Réunion · labuse.immo</p>
   </div>
 
   {# ══ M73 §5 — Ce que ce document ne peut pas dire ══ #}

@@ -27,28 +27,3 @@ def test_perime_date_absente_ou_illisible_jamais_de_fausse_alerte():
     assert _perime("pas-une-date") is False
 
 
-# ── U1/U2 — la section « Fiscalité locale et régime applicable » du Financier ──────────────────
-def test_fiscalite_locale_dit_le_taux_et_la_zone_sources():
-    from labuse.exports.blocs.financier import _fiscalite_locale
-    tfpb = {"tfpb_commune_pct": 41.77, "tfpb_epci_pct": 0.0, "teom_pct": 16.0,
-            "millesime": "REI 2025 (impositions primitives)"}
-    zonage = {"zone": "A", "millesime": "arrêté du 23/06/2026"}
-    html = _fiscalite_locale(tfpb, zonage, {"duree_portage_saisi_mois": {"valeur": 29}})
-    assert "Fiscalité locale et régime applicable" in html
-    # TESTS-1 lot 2 (B) — RECETTE-9 T4 (61f420aa) : la clé dit « Zone … », la valeur porte le SEUL
-    # code (« A ») — plus de « zone A » redondant. Le contrat reste : taux ET zone servis, sourcés.
-    assert "41,77 %" in html
-    assert "Zone d&#x27;investissement (A/B/C)" in html and "<td>A</td>" in html   # apostrophe échappée
-    # la taxe foncière de portage est DITE, jamais devinée : on exige la valeur locative cadastrale.
-    assert "valeur locative cadastrale" in html
-    assert "invente pas de valeur locative" in html   # l'apostrophe est échappée par note()
-    # EXPORTS-REBRANCHEMENT-1 lot 2 — la source est nommée SANS millésime côté client.
-    assert "DGFiP — fichier REI" in html and "REI 2025" not in html
-    # aucune balise HTML crue échappée ne fuit dans les notes (note() échappe son texte).
-    assert "&lt;strong&gt;" not in html
-
-
-def test_fiscalite_locale_rien_sans_source():
-    """Doctrine : sans donnée sourcée, aucune section (jamais un taux ou une zone inventés)."""
-    from labuse.exports.blocs.financier import _fiscalite_locale
-    assert _fiscalite_locale(None, None, {}) == ""

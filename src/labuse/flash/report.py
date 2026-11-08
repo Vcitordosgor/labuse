@@ -44,6 +44,61 @@ _FONTS = Path(__file__).resolve().parents[1] / "api" / "fonts"
 _env = Environment(loader=FileSystemLoader(str(_TEMPLATES)), autoescape=True)
 
 
+def _fr_dec(v, n: int = 1) -> str:
+    """DOCS-1 (décision Vic) — un seul format : la décimale s'imprime à la VIRGULE, jamais au point
+    (« 4,5 m », pas « 4.5 m »). Zéros de queue retirés (4,0 → 4). None → tiret."""
+    if v is None:
+        return "—"
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return str(v)
+    s = f"{f:.{n}f}".rstrip("0").rstrip(".")
+    return s.replace(".", ",")
+
+
+def _fr_dec_fixe(v, n: int = 1) -> str:
+    """Comme `_fr_dec` mais SANS retirer les zéros de queue : « 11,0 » reste « 11,0 ». Réservé aux faits
+    qu'un AUTRE document imprime déjà à une décimale fixe (la marge de surélévation = « 11,0 m » du
+    Dossier) — un fait, une valeur, UN format (DOCS-1)."""
+    if v is None:
+        return "—"
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return str(v)
+    return f"{f:.{n}f}".replace(".", ",")
+
+
+_env.filters["fr_dec"] = _fr_dec
+_env.filters["fr_dec_fixe"] = _fr_dec_fixe
+
+#: DOCS-1 (décision Vic) — UN SEUL format de nombre imposé à la SORTIE du rapport (le Flash agrège des
+#: prose et chiffres de producteurs variés). Chaque motif ne touche QUE ce qu'un document client ne doit
+#: pas porter, et rien d'autre (jamais un data-uri de tuile, une référence cadastrale ni une version) :
+#:   · décimale au point → virgule, UNIQUEMENT devant une unité (m/m²/€/%/°, ou « / ») ;
+#:   · signe « - » d'un nombre négatif (précédé d'une espace/paren/balise) → vrai signe moins « − » ;
+#:   · séparateur de milliers (espace) pour un entier de 4+ chiffres SUIVI d'une unité (m²/€/ventes…) —
+#:     la condition « suivi d'une unité » écarte années, codes INSEE et références (« BZ1065 ») ;
+#:   · date ISO (AAAA-MM-JJ) → jj/mm/aaaa.
+_RX_DEC_SORTIE = re.compile(r"(\d+)\.(\d+)(?=[   ]*(?:m²|m\b|€|%|°|/))")
+_RX_MOINS_SORTIE = re.compile(r"(?<=[\s(>])-(?=\d)")
+_RX_MILLE_SORTIE = re.compile(
+    r"(?<![\d.,])(\d{4,})(?=[   ]*(?:m²|€|ventes?|dossiers?|logements?|habitants?|ménages?|m\b|/m²|/an))")
+_RX_ISO_SORTIE = re.compile(r"\b(19|20)(\d{2})-(\d{2})-(\d{2})\b")
+
+
+def _grp_milliers(n: str) -> str:
+    return f"{int(n):,}".replace(",", " ")
+
+
+def _virgule_sortie(html: str) -> str:
+    html = _RX_MOINS_SORTIE.sub("−", html)
+    html = _RX_DEC_SORTIE.sub(lambda m: f"{m.group(1)},{m.group(2)}", html)
+    html = _RX_MILLE_SORTIE.sub(lambda m: _grp_milliers(m.group(1)), html)
+    return _RX_ISO_SORTIE.sub(lambda m: f"{m.group(4)}/{m.group(3)}/{m.group(1)}{m.group(2)}", html)
+
+
 def _logo_svg_path() -> str:
     """Silhouette officielle de la buse — réutilise les points de pdf_premium (source unique)."""
     from ..api.pdf_premium import _LOGO_PTS
@@ -117,14 +172,14 @@ def render_report_html(db: Session, idu: str, *, order_ref: str, adresse: str | 
     # bloc PARTAGÉ (écrit une fois). Markup = HTML déjà échappé côté builder, on ne re-échappe pas.
     from ..api.blocs_documents import anc_bloc_html, rehab_bloc_html
     _terr = data.get("terrain") or {}                    # anc + mode_b sont collectés dans _terrain
-    return _env.get_template("rapport.html.j2").render(
+    return _virgule_sortie(_env.get_template("rapport.html.j2").render(
         data=data, carte=carte, carte_zone=carte_zone, css=Markup(css), order_ref=order_ref,
         produit=produit, produit_sous_titre=produit_sous_titre,
         watermark=watermark, template_version=TEMPLATE_VERSION,
         logo_path=_logo_svg_path(), sources_attribution=SOURCES_ATTRIBUTION,
         bloc_anc=Markup(anc_bloc_html(_terr.get("anc"))),
         bloc_rehab=Markup(rehab_bloc_html(_terr.get("mode_b"))),
-        limites=limites_document("dossier"), limites_titre=LIMITES_TITRE)
+        limites=limites_document("dossier"), limites_titre=LIMITES_TITRE))
 
 
 def generate_flash_report(idu: str, *, order_ref: str = "DEMO", adresse: str | None = None,

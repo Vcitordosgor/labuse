@@ -12,35 +12,13 @@ ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "frontend" / "src"
 
 
-def test_f04_financier_bornes_hors_marche_servies():
-    """F04 — les bornes du garde « hors marché » (20000/8000/12000 €/m²) ne sont plus codées au
-    front : elles sont servies (hors_marche_bornes) depuis la SOURCE UNIQUE faisabilite/engine.py,
-    lue par financier_bilan (garde PDF) ET par le questionnaire (garde client) — un seul point."""
-    # 1) la source unique porte bien les trois bornes
+def test_f04_bornes_hors_marche_source_unique():
+    """F04 — les bornes de vraisemblance « hors marché » (20000/8000/12000 €/m²) vivent dans UNE
+    seule source, faisabilite/engine.py. DOCS-1 : le questionnaire/garde du Financier (qui servait
+    `hors_marche_bornes` au front) a disparu avec le document ; la source unique du moteur demeure."""
     from labuse.faisabilite.engine import (
         MAX_COUT_CONSTRUCTION_M2, MAX_PRIX_BAILLEUR_M2, MAX_PRIX_SORTIE_M2)
     assert (MAX_PRIX_SORTIE_M2, MAX_COUT_CONSTRUCTION_M2, MAX_PRIX_BAILLEUR_M2) == (20_000.0, 8_000.0, 12_000.0)
-
-    # 2) le garde du PDF lit la source unique (inchangé, on le verrouille)
-    from labuse.exports.financier_bilan import _hors_marche
-    assert _hors_marche(MAX_PRIX_SORTIE_M2 + 1, None, None) is not None   # au-dessus → hors marché
-    assert _hors_marche(MAX_PRIX_SORTIE_M2 - 1, None, None) is None        # en dessous → dans le marché
-
-    # 3) l'endpoint sert les bornes depuis les constantes du moteur (pas de littéral)
-    app = (ROOT / "src/labuse/api/app.py").read_text(encoding="utf-8")
-    assert '"hors_marche_bornes"' in app
-    assert "from ..faisabilite.engine import" in app and "MAX_PRIX_SORTIE_M2" in app
-
-    # 4) le front NE code plus les bornes : il les lit (hors_marche_bornes servi).
-    # CI-1 : le questionnaire « Financier » a été renommé/refactoré en Bilan (BILAN-1/2) ; la liaison des
-    # bornes servies est exposée au front par le type `hors_marche_bornes` dans lib/api.ts. On vérifie que
-    # la liaison existe et qu'aucune borne n'est codée en dur DANS LE CODE (les valeurs 20000/8000/12000
-    # n'y figurent qu'en commentaire explicatif — on retire les commentaires de ligne avant le contrôle).
-    api_ts = (SRC / "lib" / "api.ts").read_text(encoding="utf-8")
-    assert "hors_marche_bornes" in api_ts and "prix_sortie_saisi_eur_m2" in api_ts
-    code = "\n".join(l.split("//", 1)[0] for l in api_ts.splitlines())
-    for littéral in ("20000", "8000", "12000", "MAX_PRIX_SORTIE_M2", "MAX_COUT_M2", "MAX_BAILLEUR_M2"):
-        assert littéral not in code, f"borne codée en dur revenue au front : {littéral}"
 
 
 def test_f14_radar_badges_nouveau_et_vente_longue_servis():

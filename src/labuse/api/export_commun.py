@@ -77,6 +77,15 @@ _PURGES_TECH = [
     # affichée, seule la parenthèse technique tombe.
     (re.compile(r"\s*\(0\s*pt,?\s*anti-double-compte\)\.?"), ""),
     (re.compile(r"\s*Catégorie déjà couverte par une autre couche\.?"), ""),
+    # DOCS-1 (décision Vic) — jamais un CODE BRUT d'aléa en majuscules (« MOUVEMENTS_DE_TERRAIN ») dans
+    # un document client : il s'écrit en clair ; on recolle aussi le « + » des natures.
+    (re.compile(r"MOUVEMENTS?[ _]DE[ _]TERRAINS?", re.I), "mouvement de terrain"),
+    (re.compile(r"(inondation)\s*\+\s*", re.I), r"\1 et "),
+    # DOCS-1 (décision Vic) — libellé de pente en clair (la génération est corrigée en amont, phase1 ;
+    # ceci nettoie les lignes de cascade DÉJÀ STOCKÉES : « Pente forte tres_fort » → « Pente très forte »).
+    (re.compile(r"[Pp]ente\s+forte\s+tres[_ ]fort[e]?"), "Pente très forte"),
+    (re.compile(r"\btres[_ ]fort[e]?\b"), "très forte"),
+    (re.compile(r"\bzone[_ ]transition\b"), "zone de transition"),
 ]
 
 # M125-1ter — FAUX CONSTAT DE NOM : filet de sécurité read-time sur les DÉTAILS DÉJÀ STOCKÉS (runs

@@ -161,12 +161,44 @@ def bloc_potentiel(session: Session, parcel_id: int, fz=None) -> dict | None:
     _ferme = est_ferme_parcel(session, parcel_id)
     if _ferme and sdp_servie is not None and sdp_servie > 0:
         sdp_servie = 0.0
-    au_sol = {"sdp_residuelle_m2": sdp_servie,
+    # DOCS-1 (décision Vic) — PPR-PARTIEL : parcelle que le run FERME (cause résiduelle présente) mais qui
+    # est constructible sur la partie hors zone rouge. Le run ne chiffre PAS cette partie (il la disait
+    # rédhibitoire) : AUCUNE ligne de capacité ne doit dire « rien à construire / capacité nulle / non
+    # constructible ». On RENVOIE à l'Étude (qui découpe le rouge). Le gate `row.cause` est REQUIS : une
+    # parcelle au run NON fermé (cause None) garde sa vraie capacité (jamais un renvoi abusif). SOURCE
+    # UNIQUE verdict_ppr_partiel (touche du rouge partiel + hors-rouge exploitable + moteur constructible).
+    _ppr_partiel = False
+    if row is not None and row["cause"] is not None:
+        from .db import verdict_ppr_partiel as _vpp
+        try:
+            _ppr_partiel = bool(_vpp(session, parcel_id))
+        except Exception:  # noqa: BLE001 — best-effort, jamais une 500
+            _ppr_partiel = False
+    au_sol = {"sdp_residuelle_m2": None if _ppr_partiel else sdp_servie,
               "cause": row["cause"] if row else None,
+              "renvoi_etude": _ppr_partiel,
               "source": "run résiduel servi (assiette clippée)"}
     # en hauteur — moteur commun (égout)
     rules = resolve_zone(ctx.zone, ctx.commune) if ctx.zone else None
     en_hauteur = surelevation(session, parcel_id, rules=rules, ctx=ctx)
+    # DOCS-1 (décision Vic) — MÊME lecteur que la fiche/Dossier : quand le LiDAR HD a mesuré l'égout et/
+    # ou le faîtage, la marge de surélévation est la MESURÉE (elle peut être NÉGATIVE — le bâti existant
+    # dépasse déjà la règle), jamais celle, bornée à 0, déduite du bâti BD TOPO. Même calcul que la fiche
+    # (app.py §surélévation → potentiel_transformation.hauteur_marge_m, lu par `marge_surelevation_m`).
+    try:
+        from .hauteur_lidar import hauteur_lidar_servie
+        _idu = session.execute(text("SELECT idu FROM parcels WHERE id = :p"),
+                               {"p": parcel_id}).scalar()
+        _lid = hauteur_lidar_servie(session, _idu) if _idu else None
+        if _lid and (_lid.get("egout_m") is not None or _lid.get("faitage_m") is not None):
+            _sm = surelevation_mesuree(en_hauteur.get("he_regle_m"), en_hauteur.get("hf_regle_m"),
+                                       _lid.get("egout_m"), _lid.get("faitage_m"))
+            if _sm:
+                en_hauteur = {**en_hauteur, "marge_m": _sm["marge_m"], "possible": _sm["possible"],
+                              "base": f"{_sm['contrainte']} mesuré (LiDAR HD)",
+                              "mesure_m": _sm["mesure_m"], "regle_m": _sm["regle_m"]}
+    except Exception:  # noqa: BLE001 — LiDAR indisponible (dev/test) : on garde la marge BD TOPO
+        pass
     # table rase — le scénario du moteur commun
     f = fz[1] if fz else None
     fo = (f.fourchette or {}) if f else {}
@@ -175,27 +207,53 @@ def bloc_potentiel(session: Session, parcel_id: int, fz=None) -> dict | None:
     # dans l'Étude de faisabilité (moteur d'implantation) — les lecteurs (Flash) impriment le renvoi.
     # CLASSEMENT-USAGE-1 — en zone fermée, le scénario « table rase » est lui aussi fermé (sinon le PDF
     # afficherait « ~N m² vendables » sous une parcelle dite « rien à bâtir » — contradiction interne).
-    table_rase = {"constructible": (bool(f.constructible) if f else False) and not _ferme,
-                  "vendable_m2": None if _ferme else fo.get("shab_vendable_m2"),
-                  "plancher_m2": None if _ferme else fo.get("surface_plancher_m2"),
+    table_rase = {"constructible": True if _ppr_partiel
+                  else (bool(f.constructible) if f else False) and not _ferme,
+                  "vendable_m2": None if (_ferme or _ppr_partiel) else fo.get("shab_vendable_m2"),
+                  "plancher_m2": None if (_ferme or _ppr_partiel) else fo.get("surface_plancher_m2"),
+                  "renvoi_etude": _ppr_partiel,
                   "mention": "après plafond de densité et stationnement"}
     # verdict — une phrase, composée des trois lignes
     morceaux: list[str] = []
-    if sdp_servie is not None:
+    # PPR-PARTIEL — jamais « au sol : rien à construire » ni « table rase non constructible » (voir plus
+    # bas) : la capacité hors rouge est à l'Étude. On garde la marge de surélévation (si bâti), utile.
+    if sdp_servie is not None and not _ppr_partiel:
         morceaux.append("au sol : rien à construire" if sdp_servie <= 0
                         else f"au sol : ~{round(sdp_servie)} m² de SDP restante")
     # RECETTE-11 A6 — plus de verdict de faisabilité (« possible »/« pas de marge ») : on énonce la
     # marge mesurée sous la règle de hauteur et la contrainte, le lecteur conclut.
+    # DOCS-1 (décision Vic) — une marge NÉGATIVE n'est pas une « marge ~−3,3 m » : le bâti existant
+    # DÉPASSE déjà la hauteur autorisée ; on le dit en clair.
     if en_hauteur.get("marge_m") is not None and en_hauteur.get("base"):
-        morceaux.append(f"marge en hauteur ~{en_hauteur['marge_m']:g} m sous "
-                        f"la hauteur {en_hauteur['base']}")
-    if table_rase["constructible"] and table_rase["vendable_m2"]:
+        _mg = float(en_hauteur["marge_m"])
+        # DOCS-1 (décision Vic) — UNE décimale, virgule française : MÊME format que la ligne « Marge de
+        # surélévation » du Dossier (« 11,0 m ») ; le `:g` d'avant servait « 11 » et divergeait d'« 11,0 »
+        # sur les marges entières (un fait = une valeur = un format).
+        _mg_fr = f"{abs(_mg):.1f}".replace(".", ",")
+        if _mg < 0:
+            morceaux.append(f"le bâti existant dépasse la hauteur autorisée de {_mg_fr} m")
+        else:
+            morceaux.append(f"marge en hauteur ~{_mg_fr} m sous la hauteur {en_hauteur['base']}")
+    if _ppr_partiel:
+        # la capacité hors zone rouge est celle de l'Étude (qui découpe le rouge) — jamais « nulle ».
+        morceaux.append("capacité à l'Étude de faisabilité (zone rouge retirée)")
+    elif table_rase["constructible"] and table_rase["vendable_m2"]:
         morceaux.append(f"en table rase : ~{round(table_rase['vendable_m2'])} m² "
                         f"vendables ({table_rase['mention']})")
     elif f is not None and not table_rase["constructible"]:
-        morceaux.append(f"table rase non constructible ({f.cause or 'règles de zone'})")
+        # DOCS-1 (décision Vic) — jamais un code brut (« zone_transition ») dans un document client.
+        _cause_clair = {
+            "zone_transition": "zone de transition, fermée à l'urbanisation",
+            "habitat_interdit": "habitat interdit par le règlement de la zone",
+            "ppr_rouge": "zone rouge du PPR",
+            "emprise_pleine": "emprise déjà saturée",
+        }.get(f.cause, str(f.cause).replace("_", " ") if f.cause else "règles de zone")
+        morceaux.append(f"table rase non constructible ({_cause_clair})")
     if not morceaux:
         # rien d'évaluable (base vide, zone non résolue) : section OMISE — jamais un bloc creux
         return None
+    # DOCS-1 (décision Vic) — capitalise la 1ʳᵉ lettre SANS abaisser le reste (sinon « LiDAR HD » →
+    # « lidar hd »). Le reste de la phrase garde sa casse d'origine.
+    _verdict = " · ".join(morceaux)
     return {"au_sol": au_sol, "en_hauteur": en_hauteur, "table_rase": table_rase,
-            "verdict": " · ".join(morceaux).capitalize()}
+            "verdict": (_verdict[:1].upper() + _verdict[1:]) if _verdict else _verdict}

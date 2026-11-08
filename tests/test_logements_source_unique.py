@@ -84,9 +84,8 @@ def test_textes_uniques_renvoi_et_mention():
     """Chaque surface utilise LES constantes (`RENVOI_ETUDE`/`MENTION*`) — pas un 3ᵉ texte."""
     assert RENVOI_ETUDE == "voir l'Étude de faisabilité"
     assert RENVOI_ETUDE in RENVOI_ETUDE_PHRASE
-    # Financier : renvoi si non saisi, « Logements (projet) » si saisi — plus de « (maximum) ».
-    fin = _lire("src/labuse/exports/blocs/financier.py")
-    assert "RENVOI_ETUDE" in fin and "Logements (projet)" in fin and "Logements (maximum)" not in fin
+    # DOCS-1 : le document Financier builder-exports est supprimé — ses assertions tombent (le seul
+    # Bilan est l'écran Bilan, moteur propre). Le renvoi/mention restent vérifiés sur les surfaces ci-dessous.
     # builder : plus de lecture de la fourchette (saisie du porteur seule).
     assert "_fourchette_logements" not in _lire("src/labuse/exports/builder.py")
     # Flash : renvoi + mention servis, gabarit sans fourchette.
@@ -180,22 +179,8 @@ def test_chaque_ecran_egale_la_fiche(idu, _base_reelle):
         assert "Nombre de logements" in dossier and RENVOI_ETUDE in dossier
         assert "Capacité (logements)" not in dossier
 
-        # 2 · Financier — plus de « Logements (maximum) » : saisie du porteur (« Logements
-        #     (projet) », chip projet) OU renvoi. Le document exige un questionnaire complet —
-        #     non établissable (TVA/programme manquants) ⇒ rien d'imprimé, sous-contrôle sans objet.
-        try:
-            financier = builder.construire(s, idu, "financier", fiche=fiche).html.replace("&#x27;", "'")
-        except builder.DocumentNonEtablissable:
-            financier = None
-        if financier is not None:
-            assert "Logements (maximum)" not in financier
-            # la LIGNE du programme (cellule exacte, pas « Nombre de logements visés » des
-            # hypothèses saisies) : renvoi sans aucun nombre — sauf si le porteur a saisi.
-            if "Logements (projet)" not in financier:
-                assert "Nombre de logements</td>" in financier
-                seg = financier.split("Nombre de logements</td>", 1)[1][:160]
-                assert "Étude de faisabilité" in seg and not _RX_N_LOGTS.search(seg)
-            assert "maximum" in financier.lower()       # mention capacité maximale (volet D)
+        # 2 · DOCS-1 — le document Financier builder-exports est supprimé ; le seul Bilan est l'écran
+        #     Bilan (moteur propre, api/bilan.py), hors de ce contrôle écran==document.
 
         # 3 · Flash — payload : renvoi + mention, plus de fourchette.
         from labuse.flash.data import _constructibilite, _existing_tables

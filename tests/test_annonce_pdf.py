@@ -117,8 +117,11 @@ def test_parcelle_structure_maquette():
     assert "Zone UA" in html and "Parcelle bâtie, maison" in html
     # les deux cartes posées dans la grille
     assert '<div class="amaps">' in html and "<i>O</i>" in html and "<i>Z</i>" in html
-    # 6 tuiles + estimation + fiabilité RECALIBRÉE sur le segment (maison 32 % → Limitée) + précision
-    assert "Sud-Ouest" in html and "D · Faible" in html
+    # 6 tuiles + estimation + fiabilité RECALIBRÉE sur le segment (maison 32 % → Limitée) + précision.
+    # DOCS-1 (décision Vic) — l'Estimer ne porte plus le classement d'opportunité interne (« Classement
+    # D · Faible ») : on garde le MOTIF factuel (la contrainte réelle), sans le préfixe de classement.
+    assert "Sud-Ouest" in html
+    assert "Classement D" not in html and "hauteur limite" in html
     assert "3 602 €/m²" in html and "Fiabilité Limitée" in html
     assert "Précision mesurée sur les ventes 2025 : ±32 %" in html
     # ESTIMER-2 — ORDRE DE GRANDEUR : la SURFACE servie est dite (ici bâtie de la dernière vente DVF),

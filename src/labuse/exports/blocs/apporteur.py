@@ -379,7 +379,7 @@ def rendu(valeurs, ctx=None) -> str:
     if is_bati:
         q += '<h3>5. Le bâti et son occupation</h3>'
         q += _aide("Un bail commercial en cours peut geler l'opération plusieurs années.")
-        q += _boxes(nm, "Occupé ? Par qui ?", ["Vides", "Le propriétaire", "Des locataires", "Une activité"])
+        q += _boxes(nm, "Occupé ? Par qui ?", ["Vide", "Le propriétaire", "Des locataires", "Une activité"])
         q += _q(nm, "Si loué : sous quel bail ?", "Fin de bail, loyers perçus.", zone=True, cle="L'ESSENTIEL")
         q += _q(nm, "État apparent du bâti ; diagnostics disponibles (amiante, plomb) ?",
                 "Entretenu, dégradé, ruine, travaux récents.", zone=True)

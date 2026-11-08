@@ -103,7 +103,8 @@ def test_copilote_projette_une_fourchette():
 
 
 def test_pdf_blocs_servent_la_fourchette():
-    for rel in ("src/labuse/exports/blocs/marche.py", "src/labuse/exports/blocs/financier.py"):
+    # DOCS-1 : le bloc Financier est supprimé ; la fourchette est servie par le bloc Marché.
+    for rel in ("src/labuse/exports/blocs/marche.py",):
         src = _lire(rel)
         assert "valeur_fourchette_libelle" in src
         assert "incertitude" in src

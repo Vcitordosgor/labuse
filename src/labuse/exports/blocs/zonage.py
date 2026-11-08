@@ -3,6 +3,8 @@ calibrées, destinations + verrou CDAC, dispositifs (ER/EBC/DPU/PEB), drapeau «
 vérifiables » (Q12). Références nettoyées des notes internes (jamais un mot interdit imprimé)."""
 from __future__ import annotations
 
+import re
+
 from ..lignes import a, pied, val
 from ..rendu import aside, chip_span, esc, ligne_kv, note, section, table_kv
 from ..verdicts import rendu_verdict, verdict_zonage
@@ -35,6 +37,9 @@ def _regles(z: dict) -> str:
         valeur = r.get("valeur")
         if valeur in (None, ""):
             continue
+        # DOCS-1 — décimale à la virgule : une valeur calibrée figée (« 4.5 m à l'égout ») garde le
+        # point ; on le passe à la virgule UNIQUEMENT entre deux chiffres (« Art. Uh.10 », « p.73 » intacts).
+        valeur = re.sub(r"(?<=\d)\.(?=\d)", ",", str(valeur))
         ref = _ref_courte(r.get("reference"))
         v = esc(valeur) + (f' <span class="note" style="display:inline">{esc(ref)}</span>' if ref else "")
         lignes.append(ligne_kv(r.get("libelle") or r.get("cle") or "Règle", v,

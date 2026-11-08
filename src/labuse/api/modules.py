@@ -2267,7 +2267,8 @@ def _attach_zone_gabarit(db: Session, payload: dict, idus) -> None:
         return
     from ..exports.robinet_fiche import collecte
     try:
-        v = collecte(db, idus[0], ["gabarit_zone_libere_m2", "gabarit_implantation_m2"])
+        v = collecte(db, idus[0], ["gabarit_zone_libere_m2", "gabarit_implantation_m2",
+                                   "gabarit_emprise_plafond_m2"])
         x, y = v.get("gabarit_zone_libere_m2"), v.get("gabarit_implantation_m2")
         # FIX-FINAL-1 — même garde que _attach_contraintes_signalees : terrain peut être None (refus).
         t = payload.get("terrain")
@@ -2278,18 +2279,26 @@ def _attach_zone_gabarit(db: Session, payload: dict, idus) -> None:
             t["zone_gabarit_libere_m2"] = float(x.valeur)
             if y is not None and y.valeur is not None:
                 t["zone_gabarit_bati_deduit_m2"] = float(y.valeur)
+        # DOCS-1 (décision Vic) — le PLAFOND D'EMPRISE est celui du Gabarit (valeur canonique de la
+        # fiche/Dossier), lu ici pour que l'Étude imprime EXACTEMENT le même nombre (un fait, une valeur).
+        _ep = v.get("gabarit_emprise_plafond_m2")
+        if _ep is not None and _ep.valeur is not None:
+            t["gabarit_emprise_plafond_m2"] = float(_ep.valeur)
         # DOCS-COHERENCE-1 (F1) — bâti EXISTANT (emprise BD TOPO clippée + nombre, MÊME producteur que
         # la fiche/Dossier §3, bati.emprise_bati_bdtopo_m2) pour écrire « supposé démoli » sur une
         # étude « terrain libéré ».
+        # DOCS-1 (décision Vic) — emprise ET nombre de bâtiments = les MÊMES producteurs que la fiche/
+        # Dossier §3 (`bati.emprise_bati_bdtopo_m2` + `bati.stats_batch`, qui DÉDOUBLONNENT les géométries
+        # BD TOPO ré-ingérées, ORACLE-FIX-1). L'ancien `count(DISTINCT b.id)` comptait les doublons
+        # d'ingestion (4 au lieu de 2) → « 4 bâtiments » dans l'Étude vs « 2 » au Dossier.
         from sqlalchemy import text as _text
-        row = db.execute(_text(
-            "SELECT COALESCE(ST_Area(ST_Union(ST_Intersection(b.geom_2975, p.geom_2975))), 0) AS emprise, "
-            "count(DISTINCT b.id) AS n FROM parcels p "
-            "JOIN spatial_layers b ON b.kind='batiment' AND ST_Intersects(b.geom_2975, p.geom_2975) "
-            "WHERE p.idu = :i"), {"i": idus[0]}).mappings().first()
-        if row and (row["emprise"] or 0) > 0:
-            t["bati_existant_emprise_m2"] = round(float(row["emprise"]), 1)
-            t["bati_existant_nombre"] = int(row["n"] or 0)
+        from .. import bati as _bati
+        pid = db.execute(_text("SELECT id FROM parcels WHERE idu = :i"), {"i": idus[0]}).scalar()
+        if pid:
+            emp = _bati.emprise_bati_bdtopo_m2(db, pid)
+            if emp and emp > 0:
+                t["bati_existant_emprise_m2"] = round(float(emp), 1)
+                t["bati_existant_nombre"] = _bati.stats_batch(db, [pid]).get(pid, {}).get("bati_count", 0)
     except Exception:  # noqa: BLE001 — le Gabarit indisponible n'est jamais un 500 ; l'Étude garde sa zone
         pass
 
@@ -2414,6 +2423,42 @@ def _archiver_etude(db: Session, request: Request, body: dict, payload: dict,
         logging.getLogger("labuse").exception("étude de faisabilité : archivage documents_generes impossible")
 
 
+def _etude_refus_pdf(db: Session, idus: list, msg: str) -> Response:
+    """DOCS-1 (décision Vic) — document de REFUS de l'Étude : le moteur d'implantation n'a trouvé aucun
+    scénario. Rendu propre (même habillage que les documents servis), jamais une 400. Motif = la VRAIE
+    raison (zone N, PPR rouge…) quand `potentiel_batir` la connaît, sinon « aucune implantation »."""
+    from ..exports.rendu import Cartouche, esc, page_html, render_pdf
+    idu = (idus[0] if idus else "") or ""
+    raison = None
+    try:
+        from ..faisabilite.potentiel_batir import POTENTIEL_ABSENT, potentiel_batir
+        pb = potentiel_batir(db, idu)
+        if pb is not POTENTIEL_ABSENT and pb.get("constructible") is False and pb.get("motif"):
+            raison = pb["motif"]                     # « Zone non constructible (N) », etc.
+    except Exception:  # noqa: BLE001
+        pass
+    # À défaut d'une inconstructibilité de zone, la VRAIE raison du moteur (« zone trop étroite,
+    # reculs… ») est portée par le message — jamais un « donnée manquante » générique.
+    if not raison and msg and "aucun scénario" not in msg.lower():
+        raison = msg.rstrip(". ")
+    corps = (
+        '<section><h2>Étude de faisabilité</h2>'
+        "<div class=\"verdict\">Aucun scénario d'implantation n'a pu être établi sur cette parcelle"
+        + (f" : {esc(raison)}" if raison else "") + ".</div>"
+        "<p class=\"note\">L'Étude de faisabilité dessine un projet (plan masse, logements, "
+        "stationnement) sur une parcelle constructible. Quand la parcelle est inconstructible (zone "
+        "naturelle N, zone rouge d'un plan de prévention des risques…) ou que sa géométrie ne permet "
+        "aucune implantation réglementaire, il n'y a pas de projet à dessiner : le document le dit. "
+        "Les contraintes et le zonage détaillés figurent au Dossier de la parcelle.</p></section>")
+    cart = Cartouche(doc_title=f"LABUSE — Étude de faisabilité · {idu}", doc_ref=idu,
+                     doc_foot="Étude de faisabilité · pré-faisabilité, non contractuel.")
+    pdf = render_pdf(page_html("Étude de faisabilité", cart, corps))
+    return Response(pdf, media_type="application/pdf",
+                    headers={"Content-Disposition": 'inline; filename="etude-faisabilite.pdf"',
+                             "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+                             "Pragma": "no-cache"})
+
+
 @router.post("/etude/pdf")
 def etude_pdf(body: EtudePdfIn, request: Request, db: Session = Depends(get_db)) -> Response:
     """IMPLANTATION-3 — le document « Étude de faisabilité » (PDF 8 pages). UN SEUL calcul : on sert le
@@ -2437,8 +2482,10 @@ def etude_pdf(body: EtudePdfIn, request: Request, db: Session = Depends(get_db))
         # « relancez » (jamais un 504 ni un onglet figé), le processus est tué, rien ne reste en fond.
         res = _dans_processus(_worker_etude_pdf, (data, idus, scenario_ref, genere_le))
     except ValueError as exc:
-        # aucun scénario (ou entrée refusée) : le document n'a rien à montrer (400, jamais un PDF vide).
-        raise HTTPException(400, str(exc))
+        # DOCS-1 (décision Vic) — aucun scénario d'implantation : l'Étude rend un DOCUMENT DE REFUS
+        # propre (comme le Gabarit), avec la VRAIE raison quand elle est connue (zone N, PPR rouge…),
+        # jamais une 400 qui laisse l'utilisateur devant une erreur.
+        return _etude_refus_pdf(db, idus, str(exc))
     except HTTPException:
         raise
     except Exception:  # noqa: BLE001 — échec de rendu WeasyPrint (remonté de l'enfant) : dit comme technique.

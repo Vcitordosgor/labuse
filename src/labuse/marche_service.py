@@ -149,6 +149,20 @@ def marche_dvf(db: Session, idu: str, *, profil: str, avail: set[str] | None = N
             tp = nat if nat in ("maison", "appartement") else None
         except Exception:  # noqa: BLE001 — nature indéterminée : comportement historique (sans type)
             tp = None
+        if tp is None:
+            # DOCS-1 (décision Vic) — à défaut de vente DVF qui dise le type (la parcelle n'a jamais
+            # muté), un bâti NON en copropriété est une MAISON : plus jamais « appartement » en tête
+            # d'une parcelle bâtie d'une maison. Une copropriété garde le défaut (collectif).
+            try:
+                row = db.execute(text(
+                    "SELECT (fb.idu IS NOT NULL) AS batie, "
+                    "EXISTS(SELECT 1 FROM rnic_coproprietes rc WHERE rc.parcelle_idu = p.idu) AS copro "
+                    "FROM parcels p LEFT JOIN parcel_filtre_bati fb ON fb.idu = p.idu WHERE p.idu = :i"),
+                    {"i": idu}).mappings().first()
+                if row and row["batie"] and not row["copro"]:
+                    tp = "maison"
+            except Exception:  # noqa: BLE001 — table absente / base partielle : défaut historique
+                pass
         return sector_price(db, pid, Hypotheses.charger(), type_prioritaire=tp)
     if profil == DVF_VOISINAGE_100M:
         from .api.site_voisinage import voisinage_proche
@@ -304,7 +318,7 @@ def comparables(db: Session, idu: str, *, profil: str = COMPARABLES_PREMIUM) -> 
 #: Q1/Q3, n retenues, rayon effectif, période, fiabilité) ET les ventes LES PLUS PROCHES retenues. Ainsi
 #: l'estimation « 34 ventes · rayon 1 000 m », la valeur indicative et le tableau des « 8 ventes les
 #: plus proches » ne divergent JAMAIS (même échantillon, même filtre). `marche_service.py` est déjà un
-#: lecteur DÉCLARÉ de dvf_mutations (robinet pdf_banquier) — aucune nouvelle arête à déclarer.
+#: lecteur DÉCLARÉ de dvf_mutations (robinet pdf_bilan) — aucune nouvelle arête à déclarer.
 _CMP_RAYONS = (500.0, 1000.0, 1500.0)   # rayon ADAPTATIF : on élargit jusqu'au seuil d'effectif
 
 # ── ESTIMER-PRECISION-1 — médiane PONDÉRÉE par la ressemblance (poids RÉGLÉS sur les ventes 2024,

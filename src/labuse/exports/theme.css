@@ -31,7 +31,9 @@
      (mention « Généré via LABUSE ») sur trois lignes. La case s'ajuste à son contenu ; le pied @bottom-center
      dispose enfin de la largeur pour tenir sur une seule ligne (cf. `white-space: nowrap` de la route). */
   @bottom-left { content: string(doc-foot); font: 7.2pt "Inter", "DejaVu Sans", sans-serif; color: #6B746E; }
-  @bottom-right { content: counter(page) " / " counter(pages); font: 8pt "Inter", "DejaVu Sans", sans-serif; color: #6B746E; }
+  /* DOCS-1 (décision Vic) — le numéro de page tient TOUJOURS sur une ligne (nowrap), jamais poussé
+     sur deux par un pied @bottom-left trop long. */
+  @bottom-right { content: counter(page) " / " counter(pages); font: 8pt "Inter", "DejaVu Sans", sans-serif; color: #6B746E; white-space: nowrap; }
 }
 @page :first { @top-left { content: none } @top-right { content: none } }
 
@@ -93,6 +95,8 @@ h1.idu-code { font-family: "IBM Plex Mono", "DejaVu Sans Mono", monospace; font-
 .kicker { font-size: 8pt; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
 .gm-meta { display: flex; flex-wrap: wrap; gap: 22pt; margin: 14pt 0 4pt; font-size: 8.5pt; color: var(--muted); }
 .gm-meta b { color: var(--ink); display: block; font-size: 10.5pt; font-weight: 600; }
+/* DOCS-1 — résumé d'une ligne en couverture (Comparatif). */
+.cover-resume { font-size: 9.5pt; color: var(--muted); margin: 6pt 0 8pt; }
 .cover-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8pt; margin: 14pt 0 8pt; }
 .cover-tiles .tile { border: 1px solid var(--line); border-radius: 3pt; padding: 8pt 10pt; }
 .cover-tiles .tile .v { font-size: 15pt; font-weight: 700; line-height: 1.1; }
@@ -227,6 +231,9 @@ dl.gloss dd { margin: 0 0 6pt; color: var(--muted); }
 @page paysage { size: A4 landscape; }
 .paysage { page: paysage; }
 /* Comparatif — parcelles en COLONNES (les lignes de Comparer). */
+/* DOCS-1 (décision Vic) — le titre + le tableau du Comparatif forment UN bloc qui ne se coupe pas :
+   s'il ne tient pas entier sous la carte de situation en page 1, l'ensemble commence en page 2. */
+.cmp-bloc { page-break-inside: avoid; break-inside: avoid; }
 table.cmp { width: 100%; border-collapse: collapse; font-size: 9pt; margin: 6pt 0 10pt; }
 table.cmp th, table.cmp td { padding: 4.5pt 8pt; border-bottom: 1px solid var(--line); vertical-align: top; text-align: left; }
 table.cmp thead th { font-weight: 700; font-size: 9.5pt; border-bottom: 1.5px solid var(--ink); }

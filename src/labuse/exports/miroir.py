@@ -40,6 +40,13 @@ def _fr_dates(s: str) -> str:
     return _re.sub(r"\b(\d{4})-(\d{2})-(\d{2})\b", lambda m: f"{m.group(3)}/{m.group(2)}/{m.group(1)}", str(s))
 
 
+def _mill_client(s) -> str:
+    """DOCS-1 — un millésime affiché au client : date en jj/mm/aaaa (jamais ISO), et « ingéré le »
+    (mot de cuisine interne) devient « au » (producteur unique `millesime_source.libelle_date_source`
+    corrigé à la source ; ceci nettoie aussi un libellé déjà composé et servi par un cache de fiche)."""
+    return _fr_dates(str(s)).replace("ingéré le ", "au ").replace("ingérée le ", "au ")
+
+
 #: EXPORTS-FIX-1-BIS point 1 — nomenclature d'USAGE du sol OCS GE (dimension US, IGN v2.0), reprise
 #: CODE PAR CODE de la nomenclature officielle (portail de l'artificialisation / IGN ; cf.
 #: src/labuse/ingestion/ocsge.py). L'ancienne table inversait US1.1 (agriculture, pas résidentiel) et
@@ -241,6 +248,11 @@ def structure() -> list[dict]:
                 par_section.setdefault(cle, []).append((s, l))
     out = []
     for sec in DEC.sections_fiche():
+        # DOCS-1 (décision Vic) — le §11 « Simulation » du Dossier DISPARAÎT (il renvoyait au Financier,
+        # supprimé). On le retire de LA structure unique → sommaire ET corps le perdent ensemble, et la
+        # numérotation des sections suivantes (Limites et sources) remonte d'un cran, sans décalage.
+        if sec["id"] == "simulation":
+            continue
         lignes = sorted(par_section.get(sec["id"], []),
                         key=lambda t: (t[1].etat != "en_tete", t[0].surface, t[1].rang))
         out.append({**sec, "lignes": lignes})
@@ -393,8 +405,8 @@ def _r_sup(v):
                 mills.append(m)
         libs = [_sup_libelle(c) for c in cats[:6]]
         s = f"{len(cats)} servitude{'s' if len(cats) > 1 else ''} — " + " · ".join(libs)
-        if mills:   # libellé daté déjà nommé (« millésime <X> » ou « ingéré le JJ/MM/AAAA »)
-            s += " · " + " · ".join(mills[:3])
+        if mills:   # libellé daté déjà nommé — DOCS-1 : jj/mm/aaaa, jamais « ingéré le »
+            s += " · " + " · ".join(_mill_client(m) for m in mills[:3])
         return esc(s)
     return esc(v)
 
@@ -455,7 +467,7 @@ def _r_aleas(v, val: Valeur):
         # « millésime <X> » si publié amont, sinon « ingéré le JJ/MM/AAAA ») s'imprime sur la ligne.
         mill = a.get("millesime")
         if mill:
-            lib += esc(f" · {mill}")
+            lib += esc(f" · {_mill_client(mill)}")   # DOCS-1 — jj/mm/aaaa, jamais « ingéré le »
         rows.append(f'<tr data-quoi="aleas_parcelle_liste"><td class="k">{nat}</td>'
                     f'<td>{lib}</td><td class="n">{chip(val)}</td></tr>')
     return '<table class="kv">' + "".join(rows) + "</table>"
@@ -1033,7 +1045,13 @@ def _verdict_factuel(sec_id: str, valeurs: dict[str, Valeur]) -> tuple[str, str,
             if pa.get("type_prix"):
                 t += f" — {pa['type_prix']}"
             if pa.get("n"):
-                t += f" ({groupe(pa['n'])} ventes {_rayon_ventes(pa)})"
+                # DOCS-1 (décision Vic) — le prix EN TITRE porte sa définition en UNE LIGNE :
+                # type de bien, nombre de ventes, rayon ET période (les autres indicateurs de marché
+                # — terrain nu, médianes par type, neuf — restent en annexe « Marché » du §8).
+                _per = pa.get("periode")
+                if isinstance(_per, (list, tuple)) and len(_per) == 2:
+                    _per = f"{_per[0]}–{_per[1]}"
+                t += f" ({groupe(pa['n'])} ventes {_rayon_ventes(pa)}" + (f", {_per}" if _per else "") + ")"
             # NU-G-005 / NU-3-J#2 — jamais un prix FRAGILE en tête sans le dire : le qualificatif de
             # fiabilité (déjà calculé par `sector_price`) accompagne le chiffre, comme à l'écran.
             if pa.get("fiabilite") in ("fragile", "insuffisant"):
@@ -1046,7 +1064,10 @@ def _verdict_factuel(sec_id: str, valeurs: dict[str, Valeur]) -> tuple[str, str,
             nom = iq.get("nom") or "le quartier IRIS"
             # COHERENCE-FIX-1 (lot E) — le millésime du recensement accompagne le chiffre (« vrai
             # hier, faux aujourd'hui, sans date pour le dire » — plus jamais).
-            mil = f" ({iq['millesime']})" if iq.get("millesime") else ""
+            # DOCS-1 (décision Vic) — un millésime qui porte déjà des parenthèses (« RP2022 (parution
+            # …) ») n'est PAS remis entre parenthèses (sinon « )) ») : on l'introduit par un tiret.
+            _m = str(iq.get("millesime") or "")
+            mil = (f" — {_m}" if "(" in _m else f" ({_m})") if _m else ""
             return (esc(f"{nom} — {groupe(iq['habitants'])} habitants{mil}") + ".", "neutral", "iris_quartier")
         return None
     return None
@@ -1130,10 +1151,12 @@ _COVER_TUILES = [
 
 
 def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, Valeur],
-                  modele: str) -> str:
+                  modele: str, *, plan_html: str = "") -> str:
     """La page de garde du Dossier (maquette v4) : cartouche 4 champs + bandeau des SIX chiffres
     de la fiche en 3 colonnes + sommaire des sections + légende. Chaque tuile porte data-quoi
-    (verrou V5d) ; une valeur absente s'affiche « — » (jamais un zéro inventé)."""
+    (verrou V5d) ; une valeur absente s'affiche « — » (jamais un zéro inventé).
+    DOCS-1 (décision Vic) — la COUVERTURE porte désormais la CARTE de situation (en plus du bandeau
+    des six chiffres, qui est le RÉSUMÉ) : elle tient la page au lieu de rester creuse."""
     adresse = fiche.get("adresse") or ""
     commune = fiche.get("commune") or ""
     tuiles_html = []
@@ -1207,8 +1230,11 @@ def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, V
         # EXPORTS-FIX-1 A2 — plus de « Modèle 3.0 · miroir de la fiche » en page de garde.
         '</div>'
         f'<div class="cover-tiles">{"".join(tuiles_html)}</div>'
+        # DOCS-1 — la carte de situation sur la page de garde (résumé = le bandeau de tuiles ci-dessus).
+        # Le fragment `.plan` est auto-stylé (image + légende) ; on le pose tel quel.
+        + (plan_html or "")
         # EXPORTS-FIX-1 A2 — plus de « Le bandeau des six chiffres de la fiche. »
-        f'<ul class="toc">{"".join(toc)}</ul>'
+        + f'<ul class="toc">{"".join(toc)}</ul>'
         + legende +
         '</div>')
 
@@ -1222,11 +1248,12 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
     for sec in structure():
         if sec["id"] == "entete":
             continue                                   # rendu dans la page de garde (cover_dossier)
+        # DOCS-1 (décision Vic) — le §11 « Simulation » du Dossier DISPARAÎT : c'était un encart de
+        # renvoi vers le document Financier, lui-même supprimé. On ne le numérote ni ne le rend plus.
+        if sec["id"] == "simulation":
+            continue
         numero += 1
         titre = f"{numero}. {sec['titre']}" if sec.get("numerote", True) else sec["titre"]
-        if sec["id"] == "simulation":
-            corps.append(section(titre, _renvoi_financier()))
-            continue
         frags: list[str] = []
         frags.append(_bandeau(sec["id"], valeurs))
         # PPR-PARTIEL-FIX-1 (étape B) — sur une parcelle partiellement rouge servie 0 par prudence, le
@@ -1364,11 +1391,20 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
             _rp = fiche.get("reglement_plu") or {}
             _acheval_const = bool(_rp.get("a_cheval")) and any(
                 _fam_z(z.get("zone")) in ("U", "AU") for z in (_rp.get("zones") or []))
+            # DOCS-1 (décision Vic) — PPR-PARTIEL : sur une parcelle constructible hors zone rouge, AUCUNE
+            # ligne de capacité ne dit « non calculable (capacité nulle) » : la capacité (découpée du rouge)
+            # est celle de l'Étude de faisabilité. On renvoie, comme pour la parcelle à cheval.
+            _ppr_partiel = bool((fiche.get("potentiel_transformation") or {}).get("ppr_partiel"))
             verifie: list[str] = []
             nondispo: list[str] = []
             for q, ph in absents:
                 if _has_sdp and q == "surface_plancher_m2":
                     continue
+                if _ppr_partiel and q in ("surface_plancher_m2", "surface_vendable_m2"):
+                    _lbl = ("Surface de plancher maximale" if q == "surface_plancher_m2"
+                            else "Surface vendable")
+                    ph = (f"{_lbl} : non chiffrée ici — la zone rouge du PPR est retirée, la capacité "
+                          "de la partie hors rouge relève de l'Étude de faisabilité.")
                 if _acheval_const and q == "surface_plancher_m2":
                     ph = ("Surface de plancher : non chiffrée ici — la portion constructible de cette "
                           "parcelle à cheval relève de l'Étude de faisabilité.")
@@ -1379,7 +1415,7 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
                 li = f'<li data-quoi="{esc(q)}">{esc(phc)}</li>'
                 (nondispo if _est_non_dispo(phc) else verifie).append(li)
             if verifie:
-                frags.append('<div class="sansobjet"><div class="t">Vérifié : rien</div>'
+                frags.append('<div class="sansobjet"><div class="t">Vérifié : rien à signaler</div>'
                              f'<ul>{"".join(verifie)}</ul></div>')
             if nondispo:
                 frags.append('<div class="sansobjet"><div class="t">Non disponible ici</div>'

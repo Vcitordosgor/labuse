@@ -140,7 +140,8 @@ def _facteur_limitant_phrase(facteurs_limitants: list, variante: Optional[dict])
             and phrase and str(phrase).startswith("hauteur"):
         m = _relief_pente(variante)
         if m:
-            phrase = f"hauteur sur la pente (relief {m} m)"
+            # DOCS-1 (décision Vic) — décimale à la virgule, jamais au point (« relief 2,2 m »).
+            phrase = f"hauteur sur la pente (relief {str(m).replace('.', ',')} m)"
     return phrase
 
 

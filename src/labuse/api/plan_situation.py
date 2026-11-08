@@ -105,6 +105,22 @@ def plan_ortho(geojson_str: str | None, cache_dir: Path, *, timeout_s: float = 1
         except Exception:  # noqa: BLE001 — une tuile absente ne casse pas la mosaïque
             continue
 
+    # DOCS-1 (décision Vic) — un COIN sans imagerie (tuile no-data, hors couverture ortho) ne forme plus
+    # un carré clair tranché « en haut à gauche » : on recolore le fond no-data de la teinte MOYENNE de la
+    # mosaïque (échantillon rapide), si bien qu'il se FOND dans la carte au lieu d'un bloc blanc. Rendu
+    # vectoriel (masque = pixels restés au fond neutre) — jamais une boucle pixel à pixel.
+    try:
+        from PIL import ImageChops
+        _bg = (233, 231, 227)
+        _sample = [p for p in img.resize((48, 32)).getdata() if p != _bg]
+        if _sample:
+            _avg = tuple(sum(c[i] for c in _sample) // len(_sample) for i in range(3))
+            _mask = ImageChops.difference(img, Image.new("RGB", (w, h), _bg)).convert("L") \
+                .point(lambda p: 255 if p == 0 else 0)
+            img.paste(Image.new("RGB", (w, h), _avg), (0, 0), _mask)
+    except Exception:  # noqa: BLE001 — le lissage du fond n'est jamais un bloqueur de la carte
+        pass
+
     rings: list[list[tuple[float, float]]] = []
     for poly in (m.get("polygons") or []):
         pts = []

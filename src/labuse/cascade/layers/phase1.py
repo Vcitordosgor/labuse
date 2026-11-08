@@ -909,6 +909,10 @@ class PenteLayer(Layer):
         inter = ctx.intersections(parcel.id, "pente")
         slope = max(((i.attrs or {}).get("slope_pct", 0) for i in inter), default=0)
         label = self._label(float(slope), params.get("slope_labels", {}))
+        # DOCS-1 (décision Vic) — jamais un code brut (« tres_fort ») dans un document client.
+        label = {"tres_fort": "très forte", "tres_forte": "très forte", "fort": "forte",
+                 "forte": "forte", "moyen": "moyenne", "moyenne": "moyenne", "faible": "faible",
+                 "nul": "nulle", "nulle": "nulle"}.get(label, str(label).replace("_", " "))
         # ÉTAGE 0 (bloquant FRANC) : pente non aménageable → élimination en phase 1 (fusion du
         # déclassement). Testé AVANT le flag : au-delà du seuil franc, c'est un faux positif, pas
         # un simple surcoût. En deçà, la pente reste un flag/PASS (drivers de coût).
@@ -923,7 +927,7 @@ class PenteLayer(Layer):
             sev = Severity(params.get("severity", "moyen"))
             return soft_flag(
                 self.name,
-                f"Pente forte {label} (~{float(slope):.0f}% > seuil {seuil:.0f}%) — terrassement et "
+                f"Pente {label} (~{float(slope):.0f}% > seuil {seuil:.0f}%) — terrassement et "
                 "accès renchéris (majoration VRD du bilan), pas une exclusion.",
                 sev, source=SRC_ALTI)
         return passed(

@@ -226,7 +226,7 @@ def _stationnement_3lignes(payload: dict, retenu: dict) -> str:
             else "en aérien (au sol)")
     # DOCS-COHERENCE-1 (F6) — la règle RETENUE peut être la loi (Code de l'urbanisme L151-35/36) quand
     # elle plafonne sous le PLU : le texte le dit (jamais « le PLU exige » un article du Code national).
-    _art = g.get("article") or "—"
+    _art = _art_label(g.get("article")) or "—"
     _is_loi = str(_art).upper().startswith("L151")
     if _is_loi:
         lignes = [f"Le Code de l'urbanisme (art. {esc(_art)}) plafonne le stationnement à {esc(regleg)} "
@@ -246,7 +246,7 @@ def _stationnement_3lignes(payload: dict, retenu: dict) -> str:
         appl = retenu.get("programme", {}).get("mixite_applicable")
         etat = (f"Applicable : {int(aides)} logements aidés imposés." if appl and aides is not None
                 else "Non applicable (seuil non atteint).")
-        mix_html = (f'<p><b>Mixité sociale</b> (art. {esc(mx.get("article") or "—")}) : {_dec(mx.get("valeur"))} % '
+        mix_html = (f'<p><b>Mixité sociale</b> (art. {esc(_art_label(mx.get("article")) or "—")}) : {_dec(mx.get("valeur"))} % '
                     f'de logements aidés{" au-delà de " + _grp(mx.get("seuil_m2")) + " m² de SDP" if mx.get("seuil_m2") else ""}. {esc(etat)}</p>')
     return ('<section><h2>Stationnement &amp; mixité</h2>'
             + "".join(f'<p>{l}</p>' for l in lignes) + mix_html + '</section>')
@@ -360,10 +360,39 @@ def _cite(ligne: dict) -> str:
         return ""
     bits = []
     if art:
-        bits.append(f"art. {esc(str(art))}")
+        bits.append(f"art. {esc(_art_label(art))}")
     if pg is not None:
         bits.append(f"p. {esc(str(pg))}")
     return f'<span class="cite">PLU · {" · ".join(bits)}</span>'
+
+
+def _art_label(art) -> str:
+    """DOCS-1 (décision Vic) — « art. Uh.6 », jamais « art. Article Uh.6 » : l'article calibré stocke
+    parfois le mot « Article » en préfixe ; on ne le redouble pas après « art. »."""
+    return re.sub(r"^(?:article|art\.?)\s+", "", str(art or "").strip(), flags=re.I)
+
+
+def _fr_iso(s) -> str:
+    """DOCS-1 (décision Vic) — un seul format de date : toute date ISO (AAAA-MM-JJ) imprimée au client
+    passe en jj/mm/aaaa (un millésime figé peut porter une date ISO)."""
+    return re.sub(r"\b(19|20)\d{2}-(\d{2})-(\d{2})\b",
+                  lambda m: f"{m.group(3)}/{m.group(2)}/{m.group(0)[:4]}", str(s or ""))
+
+
+def _cit_propre(s) -> str:
+    """DOCS-1 (décision Vic) — la citation du règlement (bâtie en amont « PLU art. Article Uh.9 … »)
+    ne redouble pas « Article » après « art. », et porte ses dates en jj/mm/aaaa."""
+    return _fr_iso(re.sub(r"(art\.\s+)[Aa]rticle\s+", r"\1", str(s or "")))
+
+
+#: DOCS-1 (décision Vic) — un seul format de décimale : la virgule, jamais le point. On impose le format
+#: À LA SORTIE du document (le MÊME motif que le banc détecte : « \d.\d » SUIVI d'une unité m/€/%/m²),
+#: si bien qu'on ne touche QUE ce que le banc refuserait — jamais un « 2.5mm » de CSS ni un data-uri.
+_RX_DEC_SORTIE = re.compile(r"\b(\d+)\.(\d+)([   ]*(?:m²|m|€|%))\b")
+
+
+def _virgule_sortie(html: str) -> str:
+    return _RX_DEC_SORTIE.sub(lambda m: f"{m.group(1)},{m.group(2)}{m.group(3)}", html)
 
 
 def _num_de_regle(regle: str) -> Optional[str]:
@@ -573,7 +602,7 @@ def _p3_regles(payload: dict, retenu: dict) -> str:
         _srp = _g.get("ratio_par_logement")
         _sreg = _g.get("regle_courte") or (f"{_dec(_srp)} place{'s' if (_srp or 0) >= 2 else ''} / logement"
                                            if _srp is not None else "barème par typologie")
-        _sart = f" · art. {esc(str(_g['article']))}" if _g.get("article") else ""
+        _sart = f" · art. {esc(_art_label(_g['article']))}" if _g.get("article") else ""
         rows.append(f'<tr><td class="k">Stationnement{_sart}</td><td>{esc(_sreg)}</td>'
                     f'<td class="n"><span class="chip s">Sourcé</span></td></tr>')
     # contraintes cartographiées (lignes absentes quand la contrainte ne touche pas le terrain)
@@ -595,6 +624,10 @@ def _p3_regles(payload: dict, retenu: dict) -> str:
     # national…) que le moteur d'implantation ne modélise pas : listées « signalée, non interprétée ».
     # Plus jamais « aucune contrainte » quand le Dossier en relève une.
     for lib in (t.get("contraintes_signalees") or []):
+        # DOCS-1 (décision Vic) — PPR listé UNE SEULE FOIS : la zone rouge/bleue a déjà sa ligne dédiée
+        # ci-dessus (ppr_rouge/ppr_bleue) ; on ne la re-liste pas parmi les contraintes signalées.
+        if "PPR" in str(lib):
+            continue
         crows.append(f'<tr><td class="k">{esc(lib)}</td><td>signalée</td>'
                      f'<td>signalée, non interprétée (voir le Dossier §5)</td></tr>')
     contraintes = ("<h3>Contraintes cartographiées et signalées</h3>"
@@ -696,8 +729,8 @@ def _p5_plan_masse(payload: dict, retenu: dict, *, titre: str = None) -> str:
         + fig + _legende(["batiment_emprise", "place", "allee", "espace_libre", "acces", "zone"])
         + '<table class="kv"><tr><th>Élément</th><th>Valeur</th><th class="n">Nature</th></tr>'
         + "".join(rows) + "</table>"
-        + '<p class="note">Chaque nombre de ce tableau = nombre d\'objets dans la géométrie '
-          '(verrou de test). Plan rendu depuis la géométrie servie.</p>'
+        + '<p class="note">Chaque nombre de ce tableau compte les objets dessinés sur le plan. '
+          'Plan établi à partir de la géométrie de la parcelle.</p>'
         + (_sous_sol_plan(sc) if sous_sol else '')
         + '</section>')
 
@@ -830,7 +863,7 @@ def _p7_capacite(payload: dict, retenu: dict) -> str:
     for c in sc["controles"]:
         res = c["resultat"]
         rc = "ok" if res == "Réussi" else "ko" if res == "Échoué" else "ne"
-        cite = f'<span class="cite">{esc(c["citation"])}</span>' if (res == "Réussi" and c.get("citation")) else ""
+        cite = f'<span class="cite">{esc(_cit_propre(c["citation"]))}</span>' if (res == "Réussi" and c.get("citation")) else ""
         crows.append(f'<tr><td class="k">{esc(c["nom"])}{cite}</td><td>{esc(c["regle"])}</td>'
                      f'<td>{esc(c["mesure"])}</td>'
                      f'<td class="n"><span class="res {rc}">{esc(res)}</span></td></tr>')
@@ -913,9 +946,9 @@ def _annexe_reglement(payload: dict) -> str:
         art = l.get("article")
         pg = l.get("page_pdf")
         ref = " · ".join(x for x in (
-            f"art. {esc(str(art))}" if art else None,
+            f"art. {esc(_art_label(art))}" if art else None,
             f"p. {esc(str(pg))}" if pg is not None else None,
-            f"millésime {esc(str(l.get('millesime') or mill))}" if (l.get("millesime") or mill) else None,
+            f"millésime {esc(_fr_iso(l.get('millesime') or mill))}" if (l.get("millesime") or mill) else None,
         ) if x)
         blocs.append(
             f'<div class="art"><div class="art-ref">{esc(l.get("nom") or "")}{(" — " + ref) if ref else ""}</div>'
@@ -926,7 +959,7 @@ def _annexe_reglement(payload: dict) -> str:
         '<div class="pb"></div>'
         '<section><h2>Annexe — extraits du règlement</h2>'
         f'<div class="verdict">PLU de {esc(r.get("commune") or "")} · zone {esc(r.get("zone") or "")}'
-        f'{(" · millésime " + esc(str(mill))) if mill else ""}. Chaque règle appliquée est citée mot pour mot.</div>'
+        f'{(" · millésime " + esc(_fr_iso(mill))) if mill else ""}. Chaque règle appliquée est citée mot pour mot.</div>'
         + "".join(blocs) + lien + '</section>')
 
 
@@ -955,6 +988,24 @@ def rendu_etude(payload: dict, *, genere_le: str, scenario_ref: Optional[str] = 
     retenu = scenario_retenu(payload, scenario_ref)
     if retenu is None:
         raise ValueError(payload.get("message") or "aucun scénario : l'étude ne peut pas être rendue")
+    # DOCS-1 (décision Vic) — le PLAFOND D'EMPRISE AFFICHÉ = la valeur de la fiche (CES × CONTENANCE de
+    # l'acte), un fait = une valeur partout (fiche, Dossier, Gabarit, Étude). Le moteur d'implantation
+    # garde sa base géométrique interne (surface DESSINÉE, contrôle du plan masse, FAISA-REGLES-1) ; on
+    # n'aligne QUE le nombre imprimé, à sa source unique — ici, avant toute page.
+    _terr = payload.get("terrain") or {}
+    # Le plafond CANONIQUE est celui du Gabarit (collecté dans le payload) ; à défaut, CES × contenance.
+    _plaf_gab = _terr.get("gabarit_emprise_plafond_m2")
+    _conten = _terr.get("contenance_totale_m2")
+    for _c in retenu.get("controles") or []:
+        if _c.get("nom") == "Emprise au sol" and _c.get("regle"):
+            _mr = re.search(r"(\d+(?:[.,]\d+)?)\s*%", _c["regle"])
+            _plaf = None
+            if _plaf_gab is not None:
+                _plaf = round(float(_plaf_gab))
+            elif _conten and _mr:
+                _plaf = round(float(_conten) * float(_mr.group(1).replace(",", ".")) / 100)
+            if _plaf is not None:
+                _c["regle"] = re.sub(r"≤?\s*[\d\s  ]+\s*m²", f"≤ {_plaf} m²", _c["regle"], count=1)
     idus = payload["entrees"].get("idus") or []
     # ETUDE-V6-6 (item 10) — numéro de document UNIQUE par étude, dérivé du study_id (EF-<8>), identique à
     # l'écran et au cartouche ; deux études différentes = deux numéros (plus de n° daté).
@@ -963,8 +1014,9 @@ def rendu_etude(payload: dict, *, genere_le: str, scenario_ref: Optional[str] = 
     cart = Cartouche(
         doc_title=f"LABUSE — Étude de faisabilité · {payload['terrain'].get('commune') or ''}",
         doc_ref=f"{refs} · {numero}",
-        doc_foot=(f"Étude de faisabilité · {refs} · {_type_projet_label(payload['entrees'].get('type_projet'))} · "
-                  f"Généré via LABUSE le {genere_le} · pré-faisabilité, non contractuel · "
+        # DOCS-1 (décision Vic) — pied RACCOURCI (l'IDU, le type et le « généré le » sont déjà en tête) :
+        # le numéro de page tient sur une ligne.
+        doc_foot=(f"Étude de faisabilité · pré-faisabilité, non contractuel · "
                   f"Données LABUSE au {_donnees_labuse_au_etude(genere_le)}."))
     corps = (
         f"<style>{_STYLE}</style>"
@@ -981,7 +1033,8 @@ def rendu_etude(payload: dict, *, genere_le: str, scenario_ref: Optional[str] = 
         + _annexe_reglement(payload))
     # ETUDE-V6-8 (item 1) — plus d'annexe « autre implantation possible » : le document ne porte QU'UNE
     # implantation, celle du programme du client.
-    html = page_html("Étude de faisabilité", cart, corps)
+    # DOCS-1 (décision Vic) — un seul format de décimale imposé à la sortie : virgule, jamais le point.
+    html = _virgule_sortie(page_html("Étude de faisabilité", cart, corps))
     return {"html": html, "numero": numero, "retenu_ref": retenu["ref"]}
 
 
@@ -1000,8 +1053,8 @@ def rendu_lotissement(payload: dict, *, genere_le: str) -> dict:
     cart = Cartouche(
         doc_title=f"LABUSE — Lotissement · {commune}",
         doc_ref=f"{idus[0][8:] if idus else ''} · {numero}",
-        doc_foot=(f"Lotissement · zone {zone} · Généré via LABUSE le {genere_le} · pré-faisabilité, "
-                  f"non contractuel · Données LABUSE au {_donnees_labuse_au_etude(genere_le)}."))
+        doc_foot=(f"Lotissement · pré-faisabilité, non contractuel · "
+                  f"Données LABUSE au {_donnees_labuse_au_etude(genere_le)}."))
     lignes = "".join(f"<tr><td>Lot {i}</td><td class='n'>{fr(s)} m²</td></tr>"
                      for i, s in enumerate(tl["surfaces_m2"], 1))
     racc = "".join(f"<tr><td>{r['reseau']}</td><td class='n'>{'non vérifié' if r['distance_m'] is None else fr(r['distance_m'])+' m'}</td></tr>"
@@ -1058,8 +1111,8 @@ def rendu_hors_perimetre(payload: dict, *, genere_le: str) -> dict:
     cart = Cartouche(
         doc_title=f"LABUSE — Étude de faisabilité · {commune}",
         doc_ref=f"{idus[0][8:] if idus else ''} · {numero}",
-        doc_foot=(f"Étude de faisabilité · {esc(', '.join(idus))} · Généré via LABUSE le {genere_le} · "
-                  f"pré-faisabilité, non contractuel · Données LABUSE au {_donnees_labuse_au_etude(genere_le)}."))
+        doc_foot=(f"Étude de faisabilité · pré-faisabilité, non contractuel · "
+                  f"Données LABUSE au {_donnees_labuse_au_etude(genere_le)}."))
     # contraintes signalées (texte du payload) — « signalées, non interprétées », comme l'étude normale.
     t = payload.get("terrain") or {}
     crows = "".join(f"<li>{esc(lib)}</li>" for lib in (t.get("contraintes_signalees") or []))

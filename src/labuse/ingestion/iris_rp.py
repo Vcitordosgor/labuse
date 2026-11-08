@@ -32,7 +32,9 @@ SOURCE_NAME = "INSEE RP2022 — bases IRIS (logement, population)"
 URL_LOGEMENT = "https://www.insee.fr/fr/statistiques/fichier/8647012/base-ic-logement-2022_csv.zip"
 URL_POPULATION = ("https://www.insee.fr/fr/statistiques/fichier/8647014/"
                   "base-ic-evol-struct-pop-2022_csv.zip")
-MILLESIME = "RP2022 (parution 16/10/2025, géographie 01/01/2024)"
+# DOCS-1 (décision Vic) — pas de parenthèses DANS le millésime : il est affiché entre parenthèses
+# par les documents (« … habitants (RP2022 …) ») → des parens internes donnaient un « )) ».
+MILLESIME = "RP2022, parution 16/10/2025, géographie 01/01/2024"
 
 #: colonnes INSEE retenues (base logement) → colonne de la table
 _LOG_COLS = {

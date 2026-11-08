@@ -1855,13 +1855,11 @@ _CONCEPT_MAP = [
       "noter une adresse"), ("calculette-fonciere", "Calculette foncière")),
 ]
 
-# M112 P2.3 — les 4 DOCUMENTS du registre (porte vers l'export, IDU résolu). « banquier » avant
-# « dossier » nu (le plus spécifique gagne). Chaque kind = une URL PDF connue du front.
+# M112 P2.3 — les DOCUMENTS du registre (porte vers l'export, IDU résolu). Chaque kind = une URL PDF
+# connue du front. DOCS-1 (décision Vic) : le Dossier banquier et l'Argumentaire sont supprimés ; le
+# Copilote ne propose plus de porte vers eux (une demande « bilan »/« financement » relève du Financier,
+# proposé par ailleurs ; « prépare un argumentaire » reste une mission de script, pas un document).
 _DOC_MAP = [
-    (("dossier banquier", "dossier bancaire", "dossier pour la banque", "dossier pour le banquier",
-      "dossier de financement"), ("dossier-banquier", "dossier banquier")),
-    (("argumentaire", "argument de negociation", "argumentaire de negociation",
-      "lettre de negociation"), ("argumentaire", "argumentaire de négociation")),
     (("pre-dossier", "predossier", "pre dossier", "fiche flash", "note flash"),
      ("pre-dossier", "pré-dossier")),
     (("dossier complet", "le dossier", "faire le dossier", "editer le dossier", "sors le dossier",

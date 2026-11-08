@@ -17,7 +17,7 @@ donnees:
   - quoi:  n_vigilances
     ou:    { rang: 10, etat: en_tete, section: "Ce qui contraint" }
     comment: { libelle: "Points de risque", format: entier, i: "Nombre de signaux de risque servis pour la parcelle (rédhibitoires + vigilances de la cascade). 0 = parcelle sans point bloquant." }
-    absence: "Points de risque : non évalués (parcelle hors run servi)."
+    absence: "Points de risque : non évalués pour cette parcelle."
     absence_type: absente_ici
     pourquoi: "Le compte en tête donne la mesure immédiate de la contrainte."
 

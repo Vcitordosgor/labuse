@@ -1,7 +1,7 @@
 """COHERENCE-1 lot F — documents et canaux : le PDF dit ce que la fiche dit.
 
-Sur les 7 témoins : Dossier, Financier, Apporteur, Dossier banquier, Argumentaire —
-texte extrait (pdftotext), chaque chiffre-clé confronté au JSON de la fiche :
+Sur les 7 témoins : Dossier, Financier, Apporteur (DOCS-1 : le Dossier banquier et l'Argumentaire
+sont supprimés) — texte extrait (pdftotext), chaque chiffre-clé confronté au JSON de la fiche :
 surface (m²), pente (°), SDP restante (m²), zone. Le Pré-dossier (zip) est ouvert et
 son CERFA lu. Copilote chemin FICHE : questions chiffrées, la réponse doit porter le
 chiffre de la fiche (coût LLM réel — limité, jamais en boucle).
@@ -22,7 +22,8 @@ from .lib import API, SORTIE
 TEMOINS = ["97411000EM0174", "97415000AB0134", "97402000AB1117", "97411000DE0231",
            "97411000BZ1065", "97418000AC0198", "97415000CK0678"]
 
-#: Banquier et Argumentaire redirigent (308) vers Financier — pas re-testés à part.
+#: DOCS-1 : Banquier et Argumentaire supprimés. Le banc des documents complet (tous les documents,
+#: faits à une seule valeur, jetons, format) vit dans scripts/coherence/documents_banc.py.
 #: Flash = document d'achat (facturation Stripe), hors banc ; Pré-dossier = ZIP CERFA.
 DOCS = [("dossier", "/dossier/{idu}.pdf?carte=false"),
         ("financier", "/financier/{idu}.pdf"),

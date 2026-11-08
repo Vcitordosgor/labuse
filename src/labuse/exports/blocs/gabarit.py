@@ -7,10 +7,27 @@ from __future__ import annotations
 
 from ..lignes import ligne, pied
 from ..registre_fmt import fmt_m, fmt_m2, fmt_pct
-from ..rendu import esc, note, section, table_kv, verdict
+from ..rendu import esc, ligne_kv, note, section, table_kv, verdict
 
 IDS = ("gabarit_zone_libere_m2", "gabarit_implantation_m2", "gabarit_bati_deduit_m2",
-       "gabarit_emprise_plafond_m2", "gabarit_hauteur_m", "gabarit_couverture_verdict", "gabarit_plan_2d")
+       "gabarit_emprise_plafond_m2", "gabarit_hauteur_m", "gabarit_couverture_verdict", "gabarit_plan_2d",
+       # DOCS-1 — les SUP de la FICHE (même lecteur que le Dossier), pour ne jamais contredire « 1 PM1 ».
+       "dispositifs_parcelle")
+
+
+def _sup_fiche_ligne(valeurs) -> str:
+    """DOCS-1 — la ligne « Servitudes d'utilité publique » du Gabarit, servie par la FICHE
+    (dispositifs.sup), rendue avec le MÊME libellé que le Dossier (miroir._r_sup). Absente si la
+    fiche n'a pas servi de SUP (on laisse alors le moteur dire la présence/absence géométrique)."""
+    v = valeurs.get("dispositifs_parcelle")
+    sup = getattr(v, "valeur", None) if v is not None else None
+    if not sup:
+        return ""
+    try:
+        from ..miroir import _r_sup
+        return table_kv([ligne_kv("Servitudes d'utilité publique", _r_sup(sup))])
+    except Exception:  # noqa: BLE001
+        return ""
 
 
 def _m2_ou_texte(v):
@@ -21,12 +38,37 @@ def _m_ou_texte(v):
     return esc(v) if isinstance(v, str) else fmt_m(v)
 
 
+def _clean_src(b):
+    """DOCS-1 — un fragment de source rendu au client : codes PPR/SUP bruts humanisés
+    (« INONDATION_MOUVEMENT_DE_TERRAIN », « PM1_PPR_… »), notes techniques retirées, « édition non
+    enregistrée » → « édition courante », date ISO → jj/mm/aaaa. Best-effort : jamais un 500 sur un PDF."""
+    if not b:
+        return None
+    import re as _re
+    s = str(b)
+    try:
+        from ...api.risques_arbitrage import libelle_client_detail
+        s = libelle_client_detail(s) or s
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        from ...millesime_source import nettoyer_notes_internes
+        s = nettoyer_notes_internes(s) or s
+    except Exception:  # noqa: BLE001
+        pass
+    s = s.replace("édition non enregistrée", "édition courante")
+    s = _re.sub(r"\b((?:19|20)\d{2})-(\d{2})-(\d{2})\b", lambda m: f"{m.group(3)}/{m.group(2)}/{m.group(1)}", s)
+    return s
+
+
 def _source(src) -> str:
-    """RegulatorySource → « document · zone · article · date · fournisseur » (ce qui est renseigné)."""
+    """RegulatorySource → « document · zone · article · date · fournisseur » (ce qui est renseigné),
+    chaque fragment nettoyé pour le client (DOCS-1, cf. `_clean_src`)."""
     if src is None:
         return ""
-    bits = [getattr(src, "document", None), getattr(src, "zone", None), getattr(src, "article", None),
-            getattr(src, "versionDate", None), getattr(src, "provider", None)]
+    bits = [_clean_src(getattr(src, "document", None)), _clean_src(getattr(src, "zone", None)),
+            _clean_src(getattr(src, "article", None)), _clean_src(getattr(src, "versionDate", None)),
+            _clean_src(getattr(src, "provider", None))]
     return " · ".join(esc(b) for b in bits if b)
 
 
@@ -63,7 +105,7 @@ def _fusion_voie(rules):
 def _regles(rules, *, appliquees: bool) -> str:
     out = []
     for r in _fusion_voie(list(rules or [])):
-        nom = esc(getattr(r, "label", "") or "")
+        nom = esc(_clean_src(getattr(r, "label", "")) or "")   # DOCS-1 — codes PPR bruts humanisés
         val = getattr(r, "value", None)
         unit = getattr(r, "unit", None)
         # CHASSE-DOCS-FIX-1 (E-12) — format FR par unité ; « % » passait en esc(str(val)) → « 40.0 »
@@ -80,7 +122,7 @@ def _regles(rules, *, appliquees: bool) -> str:
             chiffre = f" : {num}"
         else:
             chiffre = ""
-        detail = getattr(r, "detail", None)
+        detail = _clean_src(getattr(r, "detail", None))   # DOCS-1 — codes PPR/SUP bruts humanisés
         det = f" — {esc(detail)}" if detail else ""
         src_html = getattr(r, "_src_html", None)   # D1 — sources déjà combinées (ligne « Recul voie » fusionnée)
         if src_html is None:
@@ -130,10 +172,23 @@ def rendu(valeurs, ctx=None) -> str:
     lignes = [x for x in lignes if x]
     if lignes:
         corps += table_kv(lignes)
-    ra = _regles(getattr(gr, "appliedRules", None), appliquees=True) if gr is not None else ""
+    # DOCS-1 — la SUP vient de la FICHE (même lecteur que le Dossier). Quand la fiche en sert une,
+    # on l'affiche ET on retire la règle « Servitudes d'utilité publique » du moteur (qui ne voit que
+    # la géométrie modélisée et écrirait « Aucune SUP » — la contradiction que le banc refusait).
+    sup_html = _sup_fiche_ligne(valeurs)
+    corps += sup_html
+    _sup_servie = bool(sup_html)
+
+    def _sans_sup(rules):
+        if not _sup_servie or not rules:
+            return rules
+        return [r for r in rules
+                if not str(getattr(r, "label", "") or "").startswith("Servitudes d'utilité publique")]
+
+    ra = _regles(_sans_sup(getattr(gr, "appliedRules", None)), appliquees=True) if gr is not None else ""
     if ra:
         corps += "<h3>Règles appliquées</h3>" + ra
-    rni = _regles(getattr(gr, "nonIntegratedRules", None), appliquees=False) if gr is not None else ""
+    rni = _regles(_sans_sup(getattr(gr, "nonIntegratedRules", None)), appliquees=False) if gr is not None else ""
     if rni:
         corps += "<h3>Règles non intégrées</h3>" + rni
     # CHASSE-FIX-1 (C06) — zone AU à ouverture bloquée : l'enveloppe est « après ouverture »

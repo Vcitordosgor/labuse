@@ -47,7 +47,7 @@ def tile_action():
 
 def heavy_action():
     return random.choices(
-        [f"/dossier-banquier/{random.choice(IDUS)}.pdf",
+        [f"/dossier/{random.choice(IDUS)}.pdf",
          "/parcels/export.csv?commune=Saint-Denis",
          "/map/parcels.geojson?commune=Saint-Denis&limit=60000&source=q_v7_defisc"],
         weights=[1, 1, 1])[0]
@@ -70,7 +70,7 @@ def label(path: str) -> str:
         return "fiche"
     if path.startswith("/map/tiles/"):
         return "tile"
-    if path.startswith("/dossier-banquier"):
+    if path.startswith("/dossier"):
         return "pdf"
     if path.startswith("/parcels/export"):
         return "csv"

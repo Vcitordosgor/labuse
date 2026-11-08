@@ -28,12 +28,12 @@ declarer(FicheRegle(
              "prix de sortie observé (fiche prix_sortie_bati_eur_m2)",
              "Hypotheses.charger() (fourchette de coût source unique, RAP 0,40 % assiette TA, taux TVA 8,5 %)"),
     classe="methode_standard",
-    fonction="src/labuse/exports/financier_bilan.py:calculer",
+    fonction="src/labuse/faisabilite/bilan.py (seuil de rentabilité — DOCS-1 : le Financier supprimé, le Bilan le porte)",
     verdict="reference_introuvable",
     choix=("Les pourcentages proposés (frais 7 %, honoraires 12 %, aléas 4 %, marge 9 %) et la "
            "fourchette de coût (source unique YAML) sont des HYPOTHÈSES LABUSE, saisissables au "
            "questionnaire et affichées avec le bilan ; le bilan est « indicatif, ne remplace pas un "
            "bilan professionnel ». La redevance d'archéologie préventive applique 0,40 % de l'assiette TA (CGI art. 1635 quater F, recodif. ord. 2022-883 — TEXTES-1) ; l'ancien forfait 0,68 €/m² était un régime périmé (TAXE-FIX-1)."),
-    exemple_temoin="tests/test_exports2_lot5.py::test_bilan_ht_au_centime",
+    exemple_temoin="tests/test_prix_sortie1_unique.py",
     verifie_le="2026-09-08",
 ))

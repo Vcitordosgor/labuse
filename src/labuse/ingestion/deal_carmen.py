@@ -239,7 +239,10 @@ def ingest_ppr_etat(session: Session, source_ids: dict[str, int | None] | None =
     if dates:
         session.execute(text(
             "UPDATE data_sources SET source_millesime = :m WHERE name = :n"),
-            {"m": f"PPR le plus récent approuvé le {max(dates)} (état DEAL)",  # varchar(64)
+            # DOCS-1 (décision Vic) — millésime de COUCHE (édition DEAL), jamais « approuvé le … » :
+            # la date d'approbation affichée au client reste celle du PPR de SA commune, pas le plus
+            # récent de l'île (qu'un dossier parcelle ferait lire comme la date de sa commune).
+            {"m": f"PPR — dernière édition DEAL du {max(dates)}",  # varchar(64)
              "n": SOURCE_PPR})
     session.flush()
     log(f"  état PPR/PAC : {n} commune(s), millésime producteur = {max(dates) if dates else '—'}")

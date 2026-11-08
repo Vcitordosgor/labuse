@@ -647,7 +647,7 @@ interface AppState {
   setCommunePrefill: (s: string | null) => void
   // calculette de charge foncière (mandat bilan-calculette) : les hypothèses courantes du
   // promoteur, partagées avec le bouton PDF (l'export reflète « selon vos hypothèses »)
-  // vrd_m2 optionnel (M144) : threadé vers l'argumentaire ; le PDF fiche l'ignore (typage structurel).
+  // vrd_m2 optionnel (M144) : hypothèse de la calculette ; le PDF fiche l'ignore (typage structurel).
   calculette: { cout_construction_m2: number; marge_frais_pct: number; vrd_m2?: number; prix_demande_eur: number | null } | null
   setCalculette: (c: { cout_construction_m2: number; marge_frais_pct: number; vrd_m2?: number; prix_demande_eur: number | null } | null) => void
 }

@@ -116,7 +116,8 @@ def test_scission_neuf_robinets_sans_melange():
     qui_sert = lambda cid: {rid for rid, r in ROBINETS.items() if cid in r.chiffres}  # noqa: E731
     assert "fiche_parcelle_marche" not in qui_sert("prix_neuf_vefa_acte_eur_m2"), \
         "le VEFA à l'acte est SORTI de la fiche parcelle (Q3)"
-    assert qui_sert("prix_neuf_observe_eur_m2") & {"fiche_parcelle_constructibilite", "pdf_banquier"}
+    # DOCS-1 : Banquier et Financier supprimés, le neuf observé est servi par le Bilan (ou la fiche).
+    assert qui_sert("prix_neuf_observe_eur_m2") & {"fiche_parcelle_constructibilite", "pdf_bilan"}
 
 
 def test_scission_neuf_scoring_lit_acte_bilan_lit_observe():
@@ -184,12 +185,18 @@ def test_mots_interdits_liste_versionnee():
     doc = yaml.safe_load((RACINE / "config/mots_interdits.yaml").read_text())
     # RECETTE-11 : +2 (A6 : « surélévation possible », « non identifiée ») +6 (D6 : marqueurs de source).
     # DOCS-COHERENCE-1 (Lot 0.2) : +6 (jargon Excel / renvois / artefacts de présentation).
-    assert doc["version"] and len(doc["mots"]) == 30
+    # DOCS-1 (décision Vic) : +18 jetons de cuisine interne bannis de tout document client.
+    assert doc["version"] and len(doc["mots"]) == 48
     assert "MOBPRO" in doc["mots"] and "n 11" in doc["mots"]
     assert "surélévation possible" in doc["mots"] and "non identifiée" in doc["mots"]
     assert "rpls_sdes" in doc["mots"] and "RPG.LATEST" in doc["mots"]
     for mot in ("Excel", "comme dans", "dont bâti", "à confirmer — à confirmer", "&#x27;", "parcelle(s)"):
         assert mot in doc["mots"], f"mot interdit manquant : {mot}"
+    # DOCS-1 — les jetons du mandat sont présents.
+    for mot in ("volet D", "VERITE-TERRAIN", "config/", "troncon_de_route", "édition non enregistrée",
+                "INONDATION_MOUVEMENT_DE_TERRAIN", "PM1_PPR_", "verrou de test", "géométrie servie",
+                "ingéré le", "Classement D", "0 · Non retenue", "art. Article", "règles calibrées"):
+        assert mot in doc["mots"], f"jeton DOCS-1 manquant : {mot}"
 
 
 def test_controle_exporte_seulement_la_nuit(db_session, monkeypatch):

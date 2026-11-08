@@ -16,8 +16,8 @@ import { getAccueilCopilote, getBrief, type AccueilCopiloteMeta, type BriefMatin
 // « Ce qu'il sait faire » est retirée. Seule l'étincelle générique reste (repli des exemples).
 const CAP_ICON_FALLBACK = <path d="M12 2.5 14 9l6.5 2L14 13l-2 6.5L10 13l-6.5-2L10 9l2-6.5Z" strokeLinejoin="round" />
 
-// RECETTE-OUTILS-2 (R24) — NEUF exemples en grille 3×3 (maquette « Copilote, exemples »), un par chemin
-// traité : parcelle · propriétaire · PLU · procédure · pièges · argumentaire · assemblage · blocs
+// RECETTE-OUTILS-2 (R24) — exemples en grille (maquette « Copilote, exemples »), un par chemin
+// traité : parcelle · propriétaire · PLU · procédure · pièges · assemblage · blocs
 // fonciers · successions. Chacun porte SON icône de type. Cliquer PRÉ-REMPLIT la barre (onChange + focus).
 // Un seul texte change (R24) : « Quel est le potentiel d'un assemblage… » → « Quel potentiel pour… ».
 const EXEMPLES_R12: { t: string; ic: string }[] = [
@@ -26,7 +26,6 @@ const EXEMPLES_R12: { t: string; ic: string }[] = [
   { t: 'Quelles sont les règles du PLU en zone Ua à Saint-Paul ?', ic: 'plu' },
   { t: 'Y a-t-il une procédure PLU en cours à Saint-Pierre ?', ic: 'procedure' },
   { t: 'Quels sont les pièges de la parcelle 97415000CV1186 ?', ic: 'pieges' },
-  { t: 'Prépare un argumentaire pour aborder ce propriétaire', ic: 'argumentaire' },
   { t: 'Quel potentiel pour un assemblage autour de 97411000AD0213 ?', ic: 'assemblage' },
   { t: "Montre les blocs fonciers d'un même propriétaire au Tampon", ic: 'blocs' },
   { t: 'Quelles successions à venir à Saint-Paul ?', ic: 'successions' },
@@ -42,7 +41,6 @@ const EX_ICONS: Record<string, ReactNode> = {
   plu: <><path d="M5 4a1 1 0 0 1 1-1h13v15H6a1 1 0 0 0-1 1V4Z" /><path d="M6 15h13" /></>,
   procedure: <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5v5l3.5 2" /></>,
   pieges: <><path d="M12 3.5 2.5 20h19L12 3.5Z" /><path d="M12 10v4" /><path d="M12 17h.01" /></>,
-  argumentaire: <><path d="M4 5h16v11H9l-5 4V5Z" /></>,
   assemblage: <><rect x="3.5" y="3.5" width="7" height="7" rx="1" /><rect x="13.5" y="3.5" width="7" height="7" rx="1" /><rect x="3.5" y="13.5" width="7" height="7" rx="1" /><rect x="13.5" y="13.5" width="7" height="7" rx="1" /></>,
   blocs: <><path d="m12 3 9 5-9 5-9-5 9-5Z" /><path d="m3 13 9 5 9-5" /></>,
   successions: <><path d="M6.5 3h11M6.5 21h11" /><path d="M7 3c0 4.5 10 5.5 10 9s-10 4.5-10 9" /><path d="M17 3c0 4.5-10 5.5-10 9s10 4.5 10 9" /></>,

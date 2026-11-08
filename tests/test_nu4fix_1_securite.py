@@ -85,7 +85,7 @@ _PREFIXES_TENANT = (
     # session (compte_ou_401, jamais cross-tenant) → tenant-scopées, pas des mutations globales.
     "/compte",
     "/alertes", "/api/copilote-v2", "/bilan-ratios", "/bilan/", "/courrier",
-    "/documents", "/events", "/feedback", "/filters", "/financier", "/ia",
+    "/documents", "/events", "/feedback", "/filters", "/ia",
     "/modules", "/moi", "/moteurs", "/onboarding", "/outils", "/parcels",
     "/partners/share", "/pipeline", "/projets", "/radar", "/retours",
     "/scoreur-adresse", "/signalements", "/suggestions", "/traducteur-plu",

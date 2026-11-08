@@ -63,22 +63,19 @@ def _pdf_text(content: bytes) -> str:
 
 def _docs(client, idu: str) -> dict[str, str]:
     """Texte des documents du builder unique + la fiche écran. Skip la parcelle si un endpoint clé
-    échoue (env). EXPORTS-2 lot 8 : Dossier · Financier · Apporteur (routes directes, pas les
-    anciennes redirections). RECETTE-3 (T2) — le Résumé est supprimé, retiré de la comparaison."""
+    échoue (env). DOCS-1 : le document builder-exports « Financier » est supprimé (seul l'écran Bilan
+    reste) ; la comparaison porte sur Dossier · Apporteur. Le Résumé était déjà supprimé (RECETTE-3)."""
     fiche = client.get(f"/parcels/{idu}", params={"source": RUN})
     if fiche.status_code != 200:
         pytest.skip(f"{idu} : fiche indisponible ({fiche.status_code})")
     dossier = client.get(f"/dossier/{idu}.pdf")
-    financier = client.get(f"/financier/{idu}.pdf")
     apporteur = client.get(f"/apporteur/{idu}.pdf")
-    for name, r in (("dossier", dossier),
-                    ("financier", financier), ("apporteur", apporteur)):
+    for name, r in (("dossier", dossier), ("apporteur", apporteur)):
         if r.status_code != 200:
             pytest.skip(f"{idu} : {name} indisponible ({r.status_code})")
     return {
         "fiche": _fiche_rendu(fiche.json()),
         "dossier": _pdf_text(dossier.content),
-        "financier": _pdf_text(financier.content),
         "apporteur": _pdf_text(apporteur.content),
     }
 

@@ -22,9 +22,11 @@ SEUIL_SECTEUR_ACTIF = 8   # N ≥ 8 mutations → ouverture C (même seuil que m
 _RISK_LAYERS = ("risques", "ravine", "trait_de_cote")   # aléas « certains » = HARD_EXCLUDE
 
 # ─────────────────────────── TEXTES FIXES (Vic — ne pas reformuler) ───────────────────────────
-_INTRO = ("LABUSE est une plateforme d'intelligence foncière spécialisée sur La Réunion. Elle croise "
-          "des dizaines de sources cadastrales, réglementaires, immobilières et territoriales afin de mieux "
-          "comprendre les caractéristiques et les règles qui concernent chaque parcelle.")
+# DOCS-1 (décision Vic) — le CORPS du courrier est au nom du CLIENT (l'expéditeur) : il n'y nomme plus
+# « LABUSE », qui n'apparaît qu'en mention discrète d'OUTIL dans le pied (_PIED).
+_INTRO = ("{societe} suit le foncier à La Réunion et réunit, pour chaque parcelle, les informations "
+          "publiques — cadastrales, réglementaires et immobilières — qui la concernent, afin d'en "
+          "comprendre les caractéristiques et les règles applicables.")
 _PHRASE_OCCUPANT = ("Ce courrier est destiné au propriétaire de la parcelle {reference}. Si vous n'en êtes "
                     "pas le propriétaire, nous vous remercions de bien vouloir le lui transmettre.")
 _PARA_VERSO = ("Vous trouverez au dos une synthèse des principales informations dont nous disposons sur cette "
@@ -33,7 +35,7 @@ _PARA_VERSO = ("Vous trouverez au dos une synthèse des principales informations
 _PARA_OFFRE = ("Si vous souhaitez aller plus loin, nous pouvons vous adresser gratuitement une analyse plus "
                "complète de votre terrain : règles d'urbanisme identifiées, contraintes connues, "
                "caractéristiques de la parcelle et données immobilières disponibles autour de celle-ci. "
-               "Il suffit de la demander à contact@labuse.immo.")
+               "Il vous suffit de nous en faire la demande.")
 _PARA_MAJ = ("Les données foncières et réglementaires évoluent dans le temps. Vous pourrez donc demander une "
              "nouvelle analyse ultérieurement afin de disposer d'informations actualisées.")
 _PIED = ("Analyse réalisée avec LABUSE, plateforme d'intelligence foncière spécialisée sur La Réunion, pour "
@@ -48,16 +50,15 @@ _PIED_DROITS = ("D'où viennent ces informations et quels sont vos droits : "
 
 # ── OUVERTURES A→E (Vic — ne pas reformuler ; [adresse] manquante → « La parcelle [référence] ») ──
 _A = ("La parcelle {situee}, d'une surface cadastrale de {surface} m², est actuellement identifiée comme non "
-      "bâtie dans les données disponibles. Elle se situe en zone {zone} du document d'urbanisme actuellement "
-      "intégré par LABUSE.")
-_B = ("La parcelle {situee} est déjà bâtie. Les données réglementaires actuellement intégrées par LABUSE "
-      "indiquent qu'elle mérite néanmoins une analyse complémentaire de ses possibilités d'évolution.")
+      "bâtie dans les données disponibles. Elle se situe en zone {zone} du document d'urbanisme en vigueur.")
+_B = ("La parcelle {situee} est déjà bâtie. Les données réglementaires en vigueur indiquent qu'elle mérite "
+      "néanmoins une analyse complémentaire de ses possibilités d'évolution.")
 _C = ("Plusieurs mutations immobilières ont été publiées récemment autour de la parcelle {situee}. Elles "
       "permettent de disposer de repères récents sur l'activité immobilière du secteur : {n} mutations "
       "publiées dans le périmètre analysé sur les {x} dernières années.")
-_D = ("La parcelle {situee}, à {commune}, fait partie des biens analysés par LABUSE dans votre secteur. Elle "
-      "se situe en zone {zone} du document d'urbanisme actuellement intégré.")
-_E = ("La parcelle {situee}, à {commune}, fait partie des biens analysés par LABUSE dans votre secteur. Nous "
+_D = ("La parcelle {situee}, à {commune}, fait partie des biens que nous analysons dans votre secteur. Elle "
+      "se situe en zone {zone} du document d'urbanisme en vigueur.")
+_E = ("La parcelle {situee}, à {commune}, fait partie des biens que nous analysons dans votre secteur. Nous "
       "avons regroupé plusieurs informations cadastrales, réglementaires et immobilières disponibles à son sujet.")
 
 
@@ -177,14 +178,55 @@ def _telephone(coordonnees: str | None) -> str | None:
     return m.group(1).strip() if m else None
 
 
+#: DOCS-1 (décision Vic) — message de REFUS quand le compte n'a ni société ni nom de signataire : le
+#: courrier ne se compose pas « au nom de » rien (et JAMAIS d'une adresse e-mail en guise de nom).
+MSG_SANS_NOM = "Renseignez le nom de votre société dans Compte"
+
+
+class ExpediteurSansNom(ValueError):
+    """Le compte n'a aucun nom exploitable (ni raison sociale, ni signataire) — le document refuse."""
+
+
+def _est_email(s: str | None) -> bool:
+    s = (s or "").strip()
+    return "@" in s and "." in s.rsplit("@", 1)[-1]
+
+
 def expediteur_du_compte(marque: dict | None, commune: str | None) -> dict:
-    """Signataire du courrier depuis la marque blanche du compte (jamais inventé)."""
+    """Signataire du courrier depuis la marque blanche du compte (jamais inventé).
+
+    DOCS-1 (décision Vic) — le courrier est au nom du CLIENT, jamais « LABUSE ». JAMAIS une adresse
+    e-mail en guise de nom (le nom de compte est souvent l'e-mail de connexion). On prend la raison
+    sociale ; à défaut, le prénom + nom du signataire ; à défaut des deux, le document REFUSE de se
+    composer (`ExpediteurSansNom`), avec le message qui dit quoi renseigner."""
     marque = marque or {}
-    societe = (marque.get("raison_sociale") or "").strip() or "LABUSE"
-    return {"signataire": (marque.get("signataire") or "").strip() or None,
+    raison = (marque.get("raison_sociale") or "").strip()
+    signataire = (marque.get("signataire") or "").strip()
+    if _est_email(raison):
+        raison = ""
+    if _est_email(signataire):
+        signataire = ""
+    societe = raison or signataire        # société si renseignée, sinon prénom + nom
+    if not societe:
+        raise ExpediteurSansNom(MSG_SANS_NOM)
+    return {"signataire": signataire or None,
             "societe": societe,
+            "raison_sociale": raison or None,
             "commune": commune or None,
             "telephone": _telephone(marque.get("coordonnees"))}
+
+
+def bloc_signature(exp: dict) -> list[str]:
+    """DOCS-1 (décision Vic) — l'identité sous « Cordialement, » : prénom + nom, puis la société
+    (jamais deux fois la même ligne quand seul l'un des deux existe)."""
+    out: list[str] = []
+    if exp.get("signataire"):
+        out.append(exp["signataire"])
+    if exp.get("raison_sociale") and exp["raison_sociale"] != exp.get("signataire"):
+        out.append(exp["raison_sociale"])
+    elif not exp.get("signataire"):
+        out.append(exp["societe"])
+    return out
 
 
 def _signature(exp: dict) -> str:
@@ -218,15 +260,26 @@ def composer(db, idu: str, *, resolution: dict, marque: dict | None = None) -> d
                 "situee": idu, "expediteur": expediteur_du_compte(marque, _disp.get("commune")),
                 "synthese": {"idu": idu, "disparue": True}}
     d = _synthese(db, idu)
-    exp = expediteur_du_compte(marque, d.get("commune"))
+    # DOCS-1 (décision Vic) — sans nom exploitable (ni société ni signataire ; jamais l'e-mail),
+    # le courrier REFUSE de se composer et dit quoi renseigner — jamais un « au nom de l'expéditeur ».
+    try:
+        exp = expediteur_du_compte(marque, d.get("commune"))
+    except ExpediteurSansNom as _e:
+        return {"recto": str(_e), "verso": [str(_e)], "ouverture": None,
+                "reference": d["reference"], "situee": idu,
+                "expediteur": {"societe": "", "signataire": None, "commune": d.get("commune"),
+                               "telephone": None},
+                "synthese": {"idu": idu, "sans_nom": True}}
     ref, commune = d["reference"], d.get("commune") or ""
     _code, ouv = choisir_ouverture(d)
 
     lignes = [f"Objet : Votre parcelle {ref}, à {commune}", ""]
     if resolution.get("type") == "occupant":     # phrase d'entrée UNIQUEMENT pour les plis « à l'occupant »
         lignes += [_PHRASE_OCCUPANT.format(reference=ref), ""]
-    lignes += ["Madame, Monsieur,", "", _INTRO, "", ouv, "", _PARA_VERSO, "", _PARA_OFFRE, "",
-               _PARA_MAJ, "", _signature(exp), "", "Cordialement,"]
+    lignes += ["Madame, Monsieur,", "", _INTRO.format(societe=exp["societe"]), "", ouv, "",
+               _PARA_VERSO, "", _PARA_OFFRE, "", _PARA_MAJ, "", _signature(exp), "",
+               # DOCS-1 (décision Vic) — l'identité (prénom, nom, société) vient SOUS « Cordialement, ».
+               "Cordialement,", "", *bloc_signature(exp)]
     recto = "\n".join(lignes)
 
     verso = composer_verso(d)
@@ -248,8 +301,9 @@ def composer_verso(d: dict) -> list[str]:
     if d.get("zone"):
         doc = d.get("zone_document")
         doc_txt = f" — {doc}" if doc and doc.strip() and doc.strip() != d["zone"] else ""
-        lignes.append(f"Zone d'urbanisme : {d['zone']}{doc_txt}"
-                      + (" (règles calibrées)" if d.get("zone_calibree") else ""))
+        # DOCS-1 (décision Vic) — « règles calibrées » est un mot de cuisine interne : le courrier
+        # cite la zone et son document, jamais l'état du calibrage LABUSE.
+        lignes.append(f"Zone d'urbanisme : {d['zone']}{doc_txt}")
     if d.get("risques"):
         lignes.append("Contraintes connues : " + " ; ".join(d["risques"][:4]))
     if (d.get("n_mutations") or 0) > 0:

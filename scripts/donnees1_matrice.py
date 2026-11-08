@@ -44,11 +44,10 @@ OUTIL_ROBINET = {
     "outil_remonter_temps": "temps", "outil_blocs_fonciers": "blocs",
     "outil_successions": "successions",
 }
-# robinets pdf -> colonne document (banquier légal redirigé vers financier ; flash/lettre = autres)
+# robinets pdf -> colonne document. DOCS-1 : banquier/argumentaire/lettre supprimés (plus de robinet).
 PDF_ROBINET = {
     "pdf_dossier_expert": "doc_dossier", "pdf_financier": "doc_financier",
-    "pdf_banquier": "doc_financier",                  # 308 → /financier (EXPORTS-2 lot 8)
-    "pdf_argumentaire": "doc_apporteur", "pdf_pre_dossier_pc": "doc_predossier",
+    "pdf_pre_dossier_pc": "doc_predossier",
 }
 
 

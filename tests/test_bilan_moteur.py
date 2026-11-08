@@ -147,10 +147,12 @@ def test_calcul_en_continu_moitie_rempli():
     assert topo.ht == 0 and topo.manquant
 
 
-def test_bilan_totalement_vide_vaut_zero():
-    """Rien saisi → CA 0, dépenses 0, résultat 0 (comme l'Excel à blanc)."""
+def test_bilan_totalement_vide_non_calculable():
+    """DOCS-1 (décision Vic) — rien saisi → CA 0, dépenses 0, et résultat NON CALCULABLE (None), jamais
+    un « 0 » (ni, pire, un bénéfice = tout le CA quand un prix de vente est saisi sans coût majeur)."""
     r = Moteur().calculer(EntreesBilan())
-    assert r.ca_ht == 0 and r.depenses_ht == 0 and r.resultat_net == 0
+    assert r.ca_ht == 0 and r.depenses_ht == 0
+    assert r.resultat_net is None and r.cash_flow is None  # aucun coût majeur → non calculable
     assert r.marge_pct is None  # CA nul → pas de pourcentage
     assert r.lignes_vides == r.total_postes  # toutes les lignes sont vides
 

@@ -151,9 +151,8 @@ _TUILE_FLUSH = 25          # écritures DB par lots (les tuiles sont volumineuse
 PREFIXES_PROTEGES = ("/parcels", "/segments", "/discover", "/ia", "/moteurs", "/map/parcels",
                      "/map/mutation", "/map/permits", "/map/layers", "/map/bati", "/dossier",
                      "/pre-dossier", "/courrier", "/modules", "/v2", "/scoreur-adresse",
-                     # M149 L3 (audit M148) : les deux routes document lourdes ET sans rate-limit
-                     # rejoignent le régime 60/min (calcul résiduel/faisabilité + fpdf2 par appel).
-                     "/lettre-zonage", "/argumentaire",
+                     # DOCS-1 — « /lettre-zonage » et « /argumentaire » retirés du régime 60/min :
+                     # ces documents sont supprimés, leurs routes n'existent plus (préfixes morts).
                      # NU4-FIX-1 (A/M1) — la soumission du 2ᵉ facteur passe sous rate-limit per-IP
                      # (défense en profondeur par-dessus le verrou base `echecs_2fa`) : une force
                      # brute du TOTP à ~2,5 essais/s (slow_failure) dépasse 60/min → défi puis gel.

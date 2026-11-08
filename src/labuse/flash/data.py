@@ -260,14 +260,37 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
                 # le Flash imprime LE renvoi de la fiche (le nombre de logements vit dans l'Étude de
                 # faisabilité) + la mention « maximum réglementaire » (volet D), comme la fiche.
                 from ..capacite_max import MENTION_COURTE, RENVOI_ETUDE
+                _run = _residuel_run_servi(db)
+                if _run and _run.get("date"):  # DOCS-1 — date du run arrêté en jj/mm/aaaa, jamais l'ISO
+                    _d = str(_run["date"])
+                    _run = {**_run, "date": f"{_d[8:10]}/{_d[5:7]}/{_d[0:4]}" if len(_d) >= 10 else _d}
+                # DOCS-1 (décision Vic) — SDP maximale réglementaire ET surface vendable = les MÊMES
+                # valeurs que la fiche/Dossier : on lit le MÊME bloc (_potentiel_transformation_block,
+                # point unique) au lieu de re-dériver un « vendable » de la fourchette (qui divergeait —
+                # 118 m² « table rase » vs le « non calculable » de la fiche quand la capacité
+                # bâti-conservé est nulle). sdp_max = calcul.sdp_max_m2 (= Dossier § SDP maximale).
+                _pt = {}
+                try:
+                    from ..api.app import _potentiel_transformation_block
+                    _cm = db.execute(text("SELECT commune FROM parcels WHERE idu = :i"),
+                                     {"i": idu}).scalar()
+                    _pt = _potentiel_transformation_block(db, idu, _cm) or {}
+                except Exception as exc:  # noqa: BLE001
+                    log.warning("potentiel_transformation Flash %s : %s", idu, exc)
+                _vend_fiche = _pt.get("surface_vendable_m2")
+                _sdp_max = (_pt.get("calcul") or {}).get("sdp_max_m2") or _pt.get("surface_plancher_m2")
                 out["faisa"] = {
-                    "vendable_m2": int(vend),
-                    "plancher_m2": round(vend / rend),
+                    # DOCS-1 (décision Vic) — PPR-PARTIEL : la capacité (découpée du rouge) est à l'Étude ;
+                    # le cartouche SDP/vendable RENVOIE, jamais « non calculable (capacité nulle) ».
+                    "renvoi_etude": bool(_pt.get("ppr_partiel")),
+                    "vendable_m2": int(_vend_fiche) if _vend_fiche is not None else None,
+                    "sdp_max_m2": int(_sdp_max) if _sdp_max is not None else None,
+                    "plancher_m2": round(_vend_fiche / rend) if _vend_fiche else None,
                     "rendement_pct": round(rend * 100),
                     "logements_renvoi": RENVOI_ETUDE,
                     "capacite_mention": MENTION_COURTE,
                     "vendable_silo_m2": fo.get("shab_vendable_silo_m2"),
-                    "run": _residuel_run_servi(db),
+                    "run": _run,
                 }
         except Exception as exc:  # noqa: BLE001 — faisabilité indisponible → section sans héros de surface, jamais d'erreur
             log.warning("faisabilité commune %s : %s", idu, exc)
@@ -280,6 +303,24 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
             from ..faisabilite.potentiel import bloc_potentiel
             _pot = bloc_potentiel(db, pid, fa)
             if _pot:
+                # DOCS-1 (décision Vic) — la surface vendable du Flash = celle de la fiche/Dossier
+                # (out["faisa"], lue de potentiel_transformation) partout, y compris la ligne « table
+                # rase » et le verdict : jamais un « 118 m² » quand la fiche sert « non calculable ».
+                _vf = (out.get("faisa") or {}).get("vendable_m2")   # None = non calculable (capacité nulle)
+                _tr = _pot.get("table_rase") or {}
+                # PPR-PARTIEL — le bloc a DÉJÀ renvoyé à l'Étude ; ne pas réintroduire « vendable non
+                # calculable (capacité nulle) » (ce serait le défaut exact à corriger).
+                if _pot.get("table_rase", {}).get("renvoi_etude"):
+                    pass
+                elif _tr.get("vendable_m2") != _vf:
+                    _tr["vendable_m2"] = _vf
+                    _tr["constructible"] = bool(_vf) and bool(_tr.get("constructible"))
+                    _parts = [p for p in (_pot.get("verdict") or "").split(" · ")
+                              if "table rase" not in p.lower() and "vendable" not in p.lower()]
+                    _parts.append(f"en table rase : ~{int(_vf)} m² vendables" if _vf is not None
+                                  else "surface vendable non calculable (capacité nulle)")
+                    _vtxt = " · ".join(_parts)
+                    _pot["verdict"] = (_vtxt[:1].upper() + _vtxt[1:]) if _vtxt else _vtxt
                 out["potentiel"] = _pot
         except Exception as exc:  # noqa: BLE001 — potentiel indisponible → section omise
             log.warning("bloc potentiel %s : %s", idu, exc)
@@ -590,7 +631,7 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
         if last:
             dm = last["date_mutation"]
             out["derniere_mutation"] = {**dict(last),
-                                        "date": dm.isoformat()[:10] if dm else None}
+                                        "date": dm.strftime("%d/%m/%Y") if dm else None}
     if "dvf_secteur_medianes" in avail:
         sect = db.execute(text(
             "SELECT type_bien, n_ventes, mediane_valeur, mediane_prix_m2, fenetre "
@@ -742,8 +783,8 @@ def _aper(db: Session, idu: str, avail: set[str]) -> dict | None:
 _SECTION_SOURCES: list[tuple[str, str, str | None, str | None]] = [
     ("identite", "Cadastre Etalab (DGFiP)", "Cadastre Etalab (bulk DGFiP/Etalab)", None),
     ("identite", "PLU / GPU (API Carto, IGN)", "Urbanisme PLU/GPU (API Carto)", None),
-    ("identite", "Droits résiduels — calibrage LABUSE sur règlements PLU", None,
-     "calibrage continu 2026"),
+    ("identite", "Droits résiduels — analyse LABUSE des règlements PLU", None,
+     "analyse continue 2026"),
     ("risques", "Géorisques (BRGM / MTE)", "Géorisques", None),
     ("risques", "Géorisques — sites et sols pollués", "Géorisques — sites et sols pollués", None),
     ("risques", "Géorisques — cavités souterraines", "Géorisques — cavités souterraines", None),
@@ -851,23 +892,17 @@ def _sources(db: Session, avail: set[str], sections_rendues: set[str]) -> list[d
     # par la sentinelle (dernier_vu, quand c'est une date), sinon la date d'ingestion ÉTIQUETÉE
     # comme telle (jamais déguisée en millésime — doctrine M73 E respectée par le libellé).
     # 26/31 sources sans millésime retrouvent ainsi une date ; les orphelines masquent la cellule.
-    import re as _re_m
+    # DOCS-1 (décision Vic) — le millésime affiché passe par LE producteur unique
+    # (`millesime_source`), comme le Dossier : aucune note de cuisine interne (« (sentinelle) »,
+    # « ingéré le … », « « latest » ingérée ») ni date ISO ne fuit plus dans un document client.
+    from .. import millesime_source as _ms
     mill_amont: dict[str, str] = {}
     if "data_sources" in avail:
-        _has_sv = bool(db.execute(text("SELECT to_regclass('source_veille') IS NOT NULL")).scalar())
-        _q = ("SELECT ds.name, ds.source_millesime, sv.dernier_vu, ds.last_sync_at "
-              "FROM data_sources ds LEFT JOIN source_veille sv ON sv.source_id = ds.id"
-              if _has_sv else
-              "SELECT name, source_millesime, NULL AS dernier_vu, last_sync_at FROM data_sources")
+        _q = "SELECT name, source_millesime, last_sync_at FROM data_sources"
         for r in db.execute(text(_q)):
-            if r[1]:
-                mill_amont[r[0]] = r[1]
-            elif r[2] and _re_m.match(r"\d{4}-\d{2}-\d{2}", str(r[2])):
-                d = str(r[2])[:10]
-                mill_amont[r[0]] = f"amont à jour au {d[8:10]}/{d[5:7]}/{d[0:4]} (sentinelle)"
-            elif r[3]:
-                mill_amont[r[0]] = (f"ingéré le {r[3]:%d/%m/%Y} (date d'ingestion, "
-                                    "millésime amont non publié)")
+            lbl = _ms.libelle_date_source(r[1], ingere_le=r[2])
+            if lbl:
+                mill_amont[r[0]] = lbl
     out, vus = [], set()
     for section, label, src_name, statique in _SECTION_SOURCES:
         if section not in sections_rendues or label in vus:
@@ -965,6 +1000,7 @@ def collect_report_data(db: Session, idu: str, adresse: str | None = None) -> di
     parcelle = _parcelle(db, idu)
     if not parcelle:
         raise ValueError(f"Parcelle {idu} inconnue.")
+    from ..exports.builder import _donnees_labuse_au    # LA date des données (manifeste servi), 1 source
     if adresse is None:
         # import paresseux (évite tout cycle flash ↔ api au chargement des modules)
         from ..api.export_commun import adresse_ban_texte
@@ -983,7 +1019,11 @@ def collect_report_data(db: Session, idu: str, adresse: str | None = None) -> di
         "contexte_commune": _contexte_commune(db, idu, parcelle["commune"], avail),
         # M75 — obligation APER (grand parking) : MÊME libellé que la fiche (point de calcul unique).
         "aper": _aper(db, idu, avail),
-        "date_generation": today_reunion().isoformat(),
+        # DOCS-1 (décision Vic) — un seul format de date : jj/mm/aaaa, jamais l'ISO.
+        "date_generation": today_reunion().strftime("%d/%m/%Y"),
+        # DOCS-1 (décision Vic) — LA date des données = celle de la fiche (« Données LABUSE au … »),
+        # même producteur que le Dossier (`builder._donnees_labuse_au`, manifeste servi).
+        "donnees_labuse_au": _donnees_labuse_au() or today_reunion().strftime("%d/%m/%Y"),
         # FLASH-ZONE F2 — section « Autour de cette parcelle » (isochrone IGN + INSEE/BPE/SIRENE).
         # Consomme zone.etude_de_zone (calcul unique) ; toujours rendable (dégradé honnête).
         "zone": _zone(db, parcelle),

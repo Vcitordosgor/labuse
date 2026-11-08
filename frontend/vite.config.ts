@@ -45,8 +45,8 @@ const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/filtre
   // M55-L point 13 (audit traducteur) : /traducteur-plu MANQUAIT → 404 en dev, d'où le message
   // « Traduction indisponible — réessayer » (le fetch relatif tombait sur vite, pas sur FastAPI ;
   //  l'endpoint répond 200 à :8000). Même famille que /moi,/events,/adresses. Prod OK (même origine).
-  // /courrier et /dossier-banquier comblés au passage (mêmes 404 dev : module Courrier, tuile Financier).
-  '/traducteur-plu', '/courrier', '/dossier-banquier',
+  // /courrier comblé au passage (même 404 dev : module Courrier).
+  '/traducteur-plu', '/courrier',
   // M55-N point 1 (diagnostic) : /anti-fiche MANQUAIT → 404 en dev = « Motifs momentanément
   // indisponibles » sur le tiroir « Pourquoi pas ? ». L'endpoint répond 200 à :8000 (motifs réels
   // sur declasse_* ET ecartee) ; ce n'est PAS une donnée absente mais un proxy dev manquant. Prod OK
@@ -73,15 +73,14 @@ const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/filtre
   // DASHBOARD-V1 — capteurs (usage/retours) + Tour de contrôle admin
   '/usage', '/retours', '/admin',
   // EXPORTS-1 (6.3, audit D5) : routes backend qui MANQUAIENT encore au proxy dev — même famille
-  // que /bilan (M58) / /pre-dossier (M70). /argumentaire était le cas de départ de l'audit
-  // (l'export répondait 200 à :8000 mais 404 en dev). ⚠ TRAIN 8 Caddy : à router aussi.
-  '/argumentaire', '/lettre-zonage', '/pipeline-rarete', '/ortho', '/shortlist',
+  // que /bilan (M58) / /pre-dossier (M70). ⚠ TRAIN 8 Caddy : à router aussi.
+  '/pipeline-rarete', '/ortho', '/shortlist',
   '/audit', '/feedback', '/readyz', '/protection',
   // RECETTE-1 R1/R2/R3 : les TROIS documents servis par le builder EXPORTS-2 (routes racine
   // `/resume/{idu}.pdf`, `/apporteur/{idu}.pdf`, `/financier/{idu}.pdf` + `/financier/{idu}/
   // questionnaire`) MANQUAIENT au proxy dev → en `npm run dev` le lien PDF sortait de la base
   // '/socle/' (« public base URL of /socle/ ») et le questionnaire tombait sur vite (« Impossible
-  // de charger le questionnaire »). MÊME famille que /dossier, /pre-dossier (M70), /argumentaire.
+  // de charger le questionnaire »). MÊME famille que /dossier, /pre-dossier (M70).
   // Prod OK (FastAPI même origine). ⚠ TRAIN 8 Caddy : à router aussi.
   '/apporteur', '/financier',   // RECETTE-3 (T2) : '/resume' retiré (document Résumé supprimé)
   // COHERENCE-FIX-1 (lot A) : /sante/fraicheur (page Données — état des caches) — même famille
