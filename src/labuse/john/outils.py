@@ -21,6 +21,11 @@ TOOLS: list[dict] = [
     {"name": "lire_job",
      "description": "L'historique récent d'UN job précis (par son nom technique, ex. 'backup-postgres').",
      "input_schema": {"type": "object", "properties": {"nom": {"type": "string"}}, "required": ["nom"]}},
+    {"name": "jobs_de_la_nuit",
+     "description": "TOUS les passages de job d'une plage (par défaut ~14 h, « cette nuit ») en UN appel : "
+                    "pour chaque job son dernier passage (statut, durée, erreur courte) + lesquels en échec. "
+                    "À préférer à plusieurs 'lire_job' quand on veut le bilan de la nuit. 'depuis_h' optionnel.",
+     "input_schema": {"type": "object", "properties": {"depuis_h": {"type": "integer"}}}},
     {"name": "lire_incidents",
      "description": "Les incidents ouverts et ceux rentrés dans l'ordre depuis 26 h.",
      "input_schema": {"type": "object", "properties": {}}},
@@ -70,6 +75,8 @@ def dispatch(db, nom: str, entree: dict[str, Any] | None) -> dict:
             return contexte.jobs_etat(db)
         if nom == "lire_job":
             return contexte.job_detail(db, str(entree.get("nom", "")))
+        if nom == "jobs_de_la_nuit":
+            return contexte.jobs_nuit(db, int(entree.get("depuis_h") or 14))
         if nom == "lire_incidents":
             return contexte.incidents(db)
         if nom == "lire_sources":

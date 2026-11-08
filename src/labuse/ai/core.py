@@ -37,17 +37,25 @@ log = logging.getLogger("labuse.ai")   # SECTEUR-1 (S6) — une erreur d'appel m
 # ── Modèles (routeur par TÂCHE, jamais codé en dur chez l'appelant) ───────────────────────────
 # SECTEUR-1 (S6) — les NOMS vivent dans labuse/ai_models.py (UN seul endroit + garde des modèles retirés).
 from ..ai_models import (  # noqa: E402,F401
-    MODEL_FACTUAL, MODEL_REASONING, MODEL_VISION, MODEL_OPUS, MODEL_HAIKU,
+    MODEL_FACTUAL, MODEL_REASONING, MODEL_VISION, MODEL_OPUS, MODEL_HAIKU, MODEL_SONNET,
     MODEL_OPUS_REPLI, check_model, est_not_found, model_for, repli_pour,
     SURFACES, surfaces_table,   # RETOURS-7 Z7 — le modèle PAR USAGE (surface)
 )
 #: €/Mtoken (approx, log indicatif — pas la tarification officielle live)
 PRICE = {MODEL_FACTUAL: (1.0, 5.0), MODEL_REASONING: (3.0, 15.0), MODEL_VISION: (1.0, 5.0),
          # JOHN-TAYLOR-1 — Opus/Haiku 5.5 (chat/résumé/enquête/veille) + replis 4.x, tarif indicatif par tier.
-         MODEL_OPUS: (15.0, 75.0), MODEL_OPUS_REPLI: (15.0, 75.0), MODEL_HAIKU: (1.0, 5.0)}
+         MODEL_OPUS: (15.0, 75.0), MODEL_OPUS_REPLI: (15.0, 75.0), MODEL_HAIKU: (1.0, 5.0),
+         # JOHN-COUT-1 — Sonnet 5.5 (chat de lecture routé), même tier que sonnet-4-6 (≈ 5× moins qu'Opus).
+         MODEL_SONNET: (3.0, 15.0)}
+# JOHN-COUT-1 — multiplicateurs du CACHE DE PROMPT (barème Anthropic, sur le prix d'ENTRÉE) : un jeton
+# lu du cache coûte 0,10× ; un jeton écrit au cache (création ephemeral 5 min) coûte 1,25×. Sert à
+# facturer au plus juste le coût réel d'un appel caché (sinon le ledger sous-estime l'écriture du cache).
+CACHE_READ_MULT = 0.10
+CACHE_WRITE_MULT = 1.25
 #: modèles qui REFUSENT le paramètre `temperature` (l'API rend 400 sinon). Vérifié 2026-11-03 :
 #: opus-5-5, haiku-5-5 ET opus-4-8 le dépriment ; haiku-4-5 (MODEL_FACTUAL) l'accepte encore.
-NO_TEMPERATURE_MODELS = frozenset({MODEL_OPUS, MODEL_HAIKU, MODEL_OPUS_REPLI})
+#: JOHN-COUT-1 — sonnet-5-5 suit la même règle 5.5 (temperature omise).
+NO_TEMPERATURE_MODELS = frozenset({MODEL_OPUS, MODEL_HAIKU, MODEL_OPUS_REPLI, MODEL_SONNET})
 ENV_KEY = "ANTHROPIC_API_KEY"
 
 # ── Vision (RADAR P1) : formats acceptés par l'API Messages + garde-fou taille (limite Anthropic ~5 Mo/image) ──
@@ -132,7 +140,16 @@ def compte_courant() -> int | None:
     return _COMPTE_COURANT.get()
 
 
-def _log_cost(db: Session | None, kind: str, model: str, stub: bool, tin: int = 0, tout: int = 0) -> None:
+def _log_cost(db: Session | None, kind: str, model: str, stub: bool, tin: int = 0, tout: int = 0,
+              *, cache_read: int = 0, cache_write: int = 0) -> None:
+    """Écrit une ligne au ledger `ia_log` avec le COÛT réel de l'appel.
+
+    JOHN-COUT-1 — `cache_read`/`cache_write` (défaut 0, donc tous les appelants existants inchangés) sont
+    les jetons d'ENTRÉE servis depuis / écrits dans le cache de prompt. Le barème Anthropic les facture à
+    0,10× (lecture) et 1,25× (écriture) le prix d'entrée ; `tin` ne compte alors que l'entrée NON cachée
+    (jetons frais à 1×). Sans ceci, activer le cache ferait apparaître un coût faussement nul (les jetons
+    cachés sortent de `input_tokens`) : on les reprend ici pour que le ledger — et donc le plafond — reste
+    juste. `tokens_in` journalisé = total des jetons d'entrée (frais + cache) pour l'observabilité."""
     if db is None:
         return
     pin, pout = PRICE.get(model, (0, 0))
@@ -141,10 +158,12 @@ def _log_cost(db: Session | None, kind: str, model: str, stub: bool, tin: int = 
                     " stub boolean, tokens_in integer, tokens_out integer, cout_eur numeric(8,5))"))
     # colonne d'attribution (D1) — idempotent, couvre une base d'avant le dashboard
     db.execute(text("ALTER TABLE ia_log ADD COLUMN IF NOT EXISTS compte_id integer"))
+    eur = (tin * pin + cache_read * pin * CACHE_READ_MULT
+           + cache_write * pin * CACHE_WRITE_MULT + tout * pout) / 1_000_000
     db.execute(text("INSERT INTO ia_log (kind, model, stub, tokens_in, tokens_out, cout_eur, compte_id) "
                     "VALUES (:k, :m, :s, :ti, :to, :c, :cid)"),
-               {"k": kind[:24], "m": model[:64], "s": stub, "ti": tin, "to": tout,
-                "c": (tin * pin + tout * pout) / 1_000_000, "cid": compte_courant()})
+               {"k": kind[:24], "m": model[:64], "s": stub, "ti": tin + cache_read + cache_write,
+                "to": tout, "c": eur, "cid": compte_courant()})
 
 
 # ═════════════════════════ 2. Contrat de GROUNDING (entrée) ═════════════════════════

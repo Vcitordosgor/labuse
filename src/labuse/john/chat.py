@@ -48,6 +48,42 @@ _AFFIRMATIF = re.compile(r"^\s*(oui|ok|okay|d'accord|daccord|vas[- ]?y|confirme|
 # anti-invention : on réutilise les utilitaires de nombres du socle IA (format FR, tolérances).
 from ..ai import core as _core  # noqa: E402
 
+# ════════════════════════════════ JOHN-COUT-1 — le cache de prompt ════════════════════════════════
+# Vrai = le system prompt + les définitions d'outils + l'historique sont posés derrière des POINTS DE
+# CACHE (cache_control ephemeral) à chaque appel. La boucle d'outils peut enchaîner jusqu'à 6 appels Opus
+# dans UN tour, chacun re-renvoyant tout le system+tools+historique ; sans cache, c'est plein tarif à
+# chaque fois. Avec cache, le préfixe stable est LU à 0,10× (et écrit une fois à 1,25×). Flag lisible par
+# le banc de coût pour mesurer l'effet. Décoration faite dans `_appel_reel` (l'appel réel) uniquement :
+# les tests injectent leur propre `appel` et voient donc system/tools/msgs INCHANGÉS.
+CACHE_PROMPT = True
+
+
+# ════════════════════════════════ JOHN-COUT-1 — le ROUTEUR (invisible pour Vic) ════════════════════════════════
+# Une QUESTION DE LECTURE (état d'un job/run/incident/source/contrôle/sauvegarde/Radar/coût) part sur
+# Sonnet 5.5 (`john-lecture`, ≈ 5× moins cher). Un DIAGNOSTIC (cause d'une panne) ou une ACTION sur ordre
+# de Vic restent sur Opus 5.5 (`john-chat`, le plus capable). Par défaut : LECTURE (le moins cher) ; on
+# n'escalade vers Opus que sur un signal NET. Le routage ne change RIEN à ce que voit Vic (même onglet,
+# mêmes sources, même ton) ni au plafond (les deux surfaces sont `john-%`, bloc interne).
+_INTENT_DIAGNOSTIC = re.compile(
+    r"\b(pourquoi|pour quelle raison|cause[sr]?|caus[ée]e?s?|diagnosti\w*|analyse[rz]?|analyser|"
+    r"explique[rz]?\w*|expliqu\w*|d['’]?où vient|qu['’]est[- ]ce qui (a|s['’]est)|que s['’]est[- ]il pass|"
+    r"origine de|raison de|enquête\w*|enquêter|investigu\w*|déconn\w*|debug)\b", re.I)
+# ACTIONS : des VERBES à l'impératif/infinitif (jamais un nom seul — « la sauvegarde de cette nuit ? » est
+# une LECTURE, pas un ordre). Alignés sur la liste fermée d'`actions.py`.
+_INTENT_ACTION = re.compile(
+    r"\b(relance[rz]?|redémarre[rz]?|redemarre[rz]?|réinjecte[rz]?|reinjecte[rz]?|injecte[rz]?|"
+    r"prom(?:eus|eut|ouvoir|euvent)|retire[rz]?|accepte[rz]?|bascule[rz]?|déclenche[rz]?|declenche[rz]?|"
+    r"ferme[rz]?)\b|\blance[rz]?\b|\bfais (?:une|la|moi) (?:sauvegarde|copie|injection)", re.I)
+
+
+def model_du_tour(message: str) -> tuple[str, str]:
+    """(kind, model) pour CE tour : Opus (`john-chat`) si DIAGNOSTIC ou ACTION, sinon Sonnet
+    (`john-lecture`). Les surfaces restent overridables par env (`LABUSE_IA_MODELE_JOHN_CHAT`, …)."""
+    m = message or ""
+    if _INTENT_ACTION.search(m) or _INTENT_DIAGNOSTIC.search(m):
+        return "john-chat", _core.model_for("john-chat")
+    return "john-lecture", _core.model_for("john-lecture")
+
 
 # ════════════════════════════════ Tables / rétention ════════════════════════════════
 def ensure(db) -> None:
@@ -106,17 +142,47 @@ def construire_system(db) -> str:
 
 
 # ════════════════════════════════ Appel modèle (injectable) ════════════════════════════════
+_EPHEMERE = {"type": "ephemeral"}
+
+
+def _poser_cache(system, tools, messages):
+    """JOHN-COUT-1 — pose les POINTS DE CACHE (cache_control ephemeral) sur des COPIES de system/tools/
+    dernier message, sans toucher aux originaux (l'historique `msgs` reste propre, pas d'accumulation de
+    breakpoints au fil des 6 appels). 3 breakpoints ≤ 4 : (1) le system complet, (2) les définitions
+    d'outils (marqueur sur le dernier outil = tout le bloc tools est caché), (3) le dernier message
+    (breakpoint GLISSANT → l'historique grandissant de la boucle d'outils est lu du cache au tour suivant)."""
+    sys_c = [{"type": "text", "text": system, "cache_control": _EPHEMERE}] if system else system
+    tools_c = list(tools)
+    if tools_c:
+        tools_c[-1] = {**tools_c[-1], "cache_control": _EPHEMERE}
+    msgs_c = list(messages)
+    if msgs_c:
+        dernier = dict(msgs_c[-1])
+        contenu = dernier.get("content")
+        if isinstance(contenu, str):
+            dernier["content"] = [{"type": "text", "text": contenu, "cache_control": _EPHEMERE}]
+        elif isinstance(contenu, list) and contenu:
+            blocs = list(contenu)
+            if isinstance(blocs[-1], dict):
+                blocs[-1] = {**blocs[-1], "cache_control": _EPHEMERE}
+                dernier["content"] = blocs
+        msgs_c[-1] = dernier
+    return sys_c, tools_c, msgs_c
+
+
 def _appel_reel(*, model, system, messages, tools, max_tokens):
-    # NB : on n'envoie PAS `temperature` (opus-5-5/haiku-5-5 la refusent). REPLI automatique si
+    # NB : on n'envoie PAS `temperature` (opus-5-5/sonnet-5-5/haiku-5-5 la refusent). REPLI automatique si
     # l'identifiant tombe en not_found (ex. un « 5.5 » retiré) → lignée 4.x, jamais silencieux.
     import anthropic
 
     from ..ai_models import est_not_found, repli_pour
     client = anthropic.Anthropic(timeout=60, max_retries=1)
+    # JOHN-COUT-1 — le cache de prompt : décoration SUR L'APPEL seulement (les tests injectent leur appel).
+    sys_a, tools_a, msgs_a = _poser_cache(system, tools, messages) if CACHE_PROMPT else (system, tools, messages)
 
     def _tenter(m):
-        return client.messages.create(model=m, max_tokens=max_tokens, system=system,
-                                      tools=tools, messages=messages)
+        return client.messages.create(model=m, max_tokens=max_tokens, system=sys_a,
+                                      tools=tools_a, messages=msgs_a)
     try:
         return _tenter(model)
     except Exception as exc:  # noqa: BLE001
@@ -199,6 +265,43 @@ def anti_invention(prose: str, outils_vus: list[dict]) -> tuple[bool, str | None
         if not _core._number_ok(n, allowed):
             return False, f"chiffre non sourcé « {m.group().strip()} » (absent des lectures)"
     return True, None
+
+
+# nombre écrit FR, EN UN SEUL token : l'espace (ou espace insécable) n'est admis qu'ENTRE deux
+# chiffres (milliers « 1 640 »), jamais consommé en fin de jeton → « 987654 incidents » garde son
+# espace après le retrait. UNE partie décimale (« 18,7 », « 72,2 ») ; « 1, 2, 3 » reste trois jetons.
+_NUM_FR_TOKEN = re.compile(r"-?\d(?:[   ]?\d)*(?:[.,]\d+)?")
+_MARQUE_NON_SOURCE = "« non sourcé »"
+
+
+def expurger_non_source(prose: str, outils_vus: list[dict]) -> tuple[str, list[str]]:
+    """JOHN-COUT-1 (garde-fou) — RETIRE de la réponse chaque chiffre non sourcé en le remplaçant par
+    « non sourcé », et REND LE RESTE. Plus de refus en bloc : une réponse de 5 faits dont 1 chiffre
+    douteux garde ses 4 faits sourcés + la mention honnête sur le 5ᵉ. Même jeu de nombres autorisés que
+    `anti_invention` (valeurs lues + cardinalités, tolérances format/petits entiers du socle).
+
+    Retourne (texte_nettoyé, [chiffres retirés tels qu'écrits]). Opère sur le texte D'ORIGINE (on ne
+    corrompt pas la typo affichée) ; la virgule décimale est gérée par le motif, pas par une réécriture."""
+    allowed = _nombres_autorises(outils_vus)
+    retires: list[str] = []
+
+    def _remplace(m: re.Match) -> str:
+        brut = m.group()
+        # un token purement « espaces/pas de chiffre » ne devrait pas matcher ; garde-fou quand même.
+        noyau = brut.strip()
+        if not noyau:
+            return brut
+        n = _core._norm_number(noyau.replace(",", "."))
+        if n is None or _core._number_ok(n, allowed):
+            return brut
+        retires.append(noyau)
+        return _MARQUE_NON_SOURCE
+
+    nettoye = _NUM_FR_TOKEN.sub(_remplace, prose)
+    if retires:
+        # un éventuel « non sourcé » «  non sourcé » doublé par des espaces → on replie les espaces.
+        nettoye = re.sub(r"[   ]{2,}", " ", nettoye).strip()
+    return nettoye, retires
 
 
 # ════════════════════════════════ Anti-fuite du prompt (NU4-FIX-1 / F) ════════════════════════════════
@@ -348,6 +451,7 @@ def supprimer_conversation(db, conv_id, compte_id) -> bool:
 _LECTURE_META: dict[str, tuple[str, str | None]] = {
     "lire_jobs": ("Jobs", "cron"),
     "lire_job": ("Jobs", "cron"),
+    "jobs_de_la_nuit": ("Jobs", "cron"),   # JOHN-COUT-1 — même source/écran que les jobs
     "lire_incidents": ("Incidents", "donnees"),
     "lire_sources": ("Sources", "donnees"),
     "lire_runs": ("Runs", "donnees"),
@@ -439,6 +543,9 @@ def repondre(db, message: str, *, conversation_id=None, compte_id=None, compte=N
     system = construire_system(db)
     tools = _tools_modele()
     msgs = _historique_messages(db, conv_id, 10) + [{"role": "user", "content": message}]
+    # JOHN-COUT-1 — routage INVISIBLE : lecture → Sonnet (`john-lecture`), diagnostic/action → Opus
+    # (`john-chat`). Choisi UNE fois pour tout le tour (le modèle ne change pas en cours de boucle).
+    kind_tour, modele_tour = model_du_tour(message)
     outils_vus: list[dict] = []
     noms_lus: list[str] = []
     action_faite = None
@@ -459,14 +566,17 @@ def repondre(db, message: str, *, conversation_id=None, compte_id=None, compte=N
             # prompt) et les jetons de réflexion S'IMPUTENT sur max_tokens. À 1200, la réflexion finale
             # épuisait le budget → tour sans texte (stop=max_tokens) → repli « rien à dire ». 8000 laisse
             # la place à la réflexion ET à la réponse (non-streaming, sous le garde-fou timeout du SDK).
-            reponse = appel(model=_core.model_for("john-chat"), system=system, messages=msgs,
-                            tools=tools, max_tokens=8000)
-            # coût au ledger (best-effort — ne bloque jamais le chat)
+            reponse = appel(model=modele_tour, system=system, messages=msgs, tools=tools, max_tokens=8000)
+            # coût au ledger (best-effort — ne bloque jamais le chat). JOHN-COUT-1 : on impute au `kind` du
+            # tour (john-lecture/john-chat, tous deux `john-%` → plafond) et on reprend les jetons de CACHE
+            # (lus 0,10× / écrits 1,25×) pour que le coût journalisé reflète le cache de prompt.
             try:
                 u = getattr(reponse, "usage", None)
                 if u is not None:
-                    _core._log_cost(db, "john-chat", _core.model_for("john-chat"), False,
-                                    getattr(u, "input_tokens", 0), getattr(u, "output_tokens", 0))
+                    _core._log_cost(db, kind_tour, modele_tour, False,
+                                    getattr(u, "input_tokens", 0), getattr(u, "output_tokens", 0),
+                                    cache_read=getattr(u, "cache_read_input_tokens", 0) or 0,
+                                    cache_write=getattr(u, "cache_creation_input_tokens", 0) or 0)
             except Exception:  # noqa: BLE001
                 pass
             blocs = list(getattr(reponse, "content", []))
@@ -505,15 +615,13 @@ def repondre(db, message: str, *, conversation_id=None, compte_id=None, compte=N
         if texte and fuite_prompt(texte, system):
             log.info("john-chat : repli anti-fuite de prompt (consignes récitées/traduites)")
             texte = _REFUS_FUITE
-        # (4) anti-invention sur la réponse finale.
+        # (4) garde-fou anti-invention sur la réponse finale (JOHN-COUT-1) : on ne REFUSE PLUS en bloc —
+        # chaque chiffre non sourcé est retiré (remplacé par « non sourcé ») et LE RESTE de la réponse est
+        # donné. Une réponse de plusieurs faits dont un chiffre douteux garde ses faits sourcés.
         if texte:
-            ok, raison = anti_invention(texte, outils_vus)
-            if not ok:
-                # on N'AFFICHE PAS la prose douteuse ni le chiffre fautif (le `raison` reste pour le log) :
-                # « en cas de doute, on n'affiche pas ».
-                log.info("john-chat : repli anti-invention (%s)", raison)
-                texte = ("Je préfère ne pas répondre là-dessus : je n'ai pas de donnée qui le porte "
-                         "(un chiffre de ma réponse n'était pas sourcé).")
+            texte, retires = expurger_non_source(texte, outils_vus)
+            if retires:
+                log.info("john-chat : %d chiffre(s) non sourcé(s) retiré(s) : %s", len(retires), retires)
         else:
             texte = "Je n'ai rien à dire de sourcé sur ce point pour l'instant."
     except Exception as exc:  # noqa: BLE001 — JOHN-TAYLOR-2 : plus jamais d'erreur brute à l'écran.
