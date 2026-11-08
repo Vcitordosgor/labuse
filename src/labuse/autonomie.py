@@ -245,6 +245,27 @@ def controler_run(mesures: dict, *, palier_delta_max_pct: float) -> Verdict:
     return v
 
 
+def candidat_refuse(verdict: Verdict) -> bool:
+    """QV22-1 — le candidat est-il REFUSÉ pour de bon (échec DUR), par opposition à « en attente » ?
+
+    `echecs` non vide = au moins un contrôle est TOMBÉ (comptes divergents, paliers hors seuil, zone
+    rouge actionnable…) : rien ne le fera passer sans un NOUVEAU calcul → on l'archive et on recalcule.
+    `en_attente` SEUL (banc de cohérence de 03h45 pas encore passé) n'est PAS un refus : le run est bon,
+    on attend juste le banc — surtout ne pas l'archiver (sinon on jetterait un run sain chaque nuit)."""
+    return bool(verdict.echecs)
+
+
+def label_suivant(label: str) -> str:
+    """QV22-1 — le label du run FRAIS qui succède à un candidat archivé : incrémente le DERNIER groupe de
+    chiffres. `q_v21`→`q_v22`, `q_v9`→`q_v10`, `q_v21_sources`→`q_v22_sources`. Sans chiffre → suffixe
+    `_2` (jamais deux runs du même nom : run_score_v2 REFUSE un run_id existant)."""
+    import re
+    m = re.search(r"(\d+)(\D*)$", label)
+    if not m:
+        return f"{label}_2"
+    return f"{label[:m.start(1)]}{int(m.group(1)) + 1}{m.group(2)}"
+
+
 # ════════════════════════════════ 2. INJECTION CLASSE A — contrôles + rollback ═══════════════════
 
 def controler_injection(mesures: dict, *, delta_max_pct: float, couverture_974_min: int,

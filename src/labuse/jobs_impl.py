@@ -199,6 +199,22 @@ def coherence_banc(ctx: JobContext) -> None:
     EN-PROCESS, jamais l'API publique : plus de HTTP vers le port servi, donc PLUS de quota
     anti-scraping ni de `LABUSE_DEV_MODE` (l'API refuse même de démarrer avec ce flag hors 'local').
     L'auth reste active — le banc mint une session pilote en interne (cf. lib.client_en_process)."""
+    # QV22-1 (alerte Vic) — NE JAMAIS tourner PENDANT un calcul. Le banc monte un TestClient FastAPI
+    # complet EN-PROCESS ; cumulé aux workers de cascade il a SATURÉ la RAM le 08/11 (11,4 Go, ZÉRO swap)
+    # → l'OOM-killer a pris le banc, dont l'état est resté « en_cours » (verrou). On s'ABSTIENT proprement
+    # si un flux-run/cascade tourne (même garde partagée `run_progress` que calcul-nuit) : le banc repasse
+    # à 03h45 (hors fenêtre de calcul 01h-05h ? non — mais le calcul de nuit vise la MÊME fenêtre ; en
+    # pratique l'un ou l'autre tourne, jamais les deux) ou au rejeu manuel, SEUL. Abstention ≠ échec.
+    from . import run_progress
+    try:
+        _calc = run_progress.en_cours()
+    except Exception:  # noqa: BLE001
+        _calc = None
+    if _calc:
+        ctx.compte(banc_saute=True,
+                   abstention=f"un calcul est en cours (label {_calc.get('label')}, pid {_calc.get('pid')}) "
+                              "— banc reporté pour ne pas saturer la RAM (0 swap) et finir OOM-killé")
+        return
     import sys
     from pathlib import Path
     racine = Path(__file__).resolve().parents[2]
@@ -922,6 +938,54 @@ def _secondes_avant_fin_fenetre(s) -> float:
     return reste if reste > 0 else 0.0
 
 
+def _reconstruire_socle_si_perime(s, log) -> dict | None:
+    """QV22-1 (mandat Vic) — AVANT un run FRAIS, remettre le SOCLE du Signal à l'univers VIVANT.
+
+    L'univers du Signal, c'est `p_model_frame` (bâti par `build_frame` = parcelles vivantes dédupliquées).
+    `rebuild=True` du scoring ne refait QUE les features ext — JAMAIS le frame/static. Donc, après un
+    différentiel cadastre (parcelles gagnées/perdues), un run frais hériterait d'un frame PÉRIMÉ : les
+    nouvelles parcelles n'ont pas de frame → pas scorées, les disparues restent scorées → c'est exactement
+    le « 431663 ≠ 433229 » qui a fait ÉCHOUER le contrôle `comptes` de q_v21 nuit après nuit. On RECONSTRUIT
+    donc le socle (`scripts/m3-p-model/build_dataset.py` = build_all : frame→static→dataset) QUAND il est
+    périmé — et SEULEMENT là : une nuit sans différentiel cadastre ne paie pas les ~2 h de build_static.
+
+    Peut lever SousProcessTimeout (fin de fenêtre atteinte pendant build_all) : l'appelant la traite comme
+    l'abandon propre de flux-run (le socle est reconstruit par étapes commitées, la nuit suivante reprend).
+    """
+    import sys
+    from pathlib import Path
+
+    from .db import session_scope
+    with session_scope() as db:
+        try:
+            n_frame = db.execute(text("SELECT count(*) FROM p_model_frame")).scalar()
+            n_vivant = db.execute(text(
+                "SELECT count(DISTINCT idu) FROM parcels WHERE cadastre_disparue_le IS NULL")).scalar()
+        except Exception as exc:  # noqa: BLE001 — table socle absente (base neuve) : on laisse le run faire
+            log.warning("calcul-nuit : fraîcheur du socle illisible (%s) — on calcule sans reconstruire", exc)
+            return None
+    if n_frame == n_vivant:
+        log.info("calcul-nuit : socle du Signal à jour (p_model_frame = %s = univers vivant).", n_frame)
+        return {"reconstruit": False, "n_frame": n_frame}
+
+    log.info("calcul-nuit : socle PÉRIMÉ (p_model_frame %s ≠ univers vivant %s) — reconstruction "
+             "build_all (frame→static→dataset)…", n_frame, n_vivant)
+    script = Path(__file__).resolve().parents[2] / "scripts" / "m3-p-model" / "build_dataset.py"
+    if os.environ.get("LABUSE_CALCUL_NUIT_FORCE") == "1":
+        budget = 7200.0   # recette : build_static spatial ~2 h, pas de borne de fenêtre
+    else:
+        budget = max(300.0, _secondes_avant_fin_fenetre(s) - _SOUS_PROCESS_MARGE_S)
+    cmd = _prefixe_nice(s) + [sys.executable, str(script)]
+    proc = _run_sous_process_nice(cmd, budget, _plafond_memoire(s.calcul_nuit_mem_mo))
+    if proc.returncode != 0:
+        raise RuntimeError(f"reconstruction du socle (build_all) a échoué (code {proc.returncode}) : "
+                           f"{(proc.stderr or proc.stdout or '')[-400:]}")
+    with session_scope() as db:
+        n2 = db.execute(text("SELECT count(*) FROM p_model_frame")).scalar()
+    log.info("calcul-nuit : socle reconstruit — p_model_frame = %s parcelles (univers du run frais).", n2)
+    return {"reconstruit": True, "n_frame": n2}
+
+
 def _declencheur_entree(db, depuis: datetime | None) -> tuple[bool, str]:
     """Une ENTRÉE a-t-elle changé depuis la dernière promotion ? (nouvelle injection / source avancée).
     Heuristique lecture seule : une source dont `last_sync_at` ou `source_horizon_at` est postérieur à
@@ -1122,7 +1186,13 @@ def calcul_nuit(ctx: JobContext) -> None:
                 "Installer deploy/requirements-calcul.txt dans le venv prod (tracé) avant le premier "
                 "run q_v21 — le mandat AUTONOMIE-1 l'exige ; on NE calcule PAS sans.") from exc
 
-    label = os.environ.get("LABUSE_CALCUL_NUIT_LABEL", "q_v21")
+    # QV22-1 (mandat Vic) — le label VISÉ n'est plus FIXE : c'est le POINTEUR du candidat
+    # (`candidat_nuit`), initialisé depuis LABUSE_CALCUL_NUIT_LABEL (la graine) puis AVANCÉ
+    # automatiquement quand un candidat est refusé (plus bas) — ainsi un candidat refusé ne reste
+    # jamais le candidat visé, il ne bloque pas la nuit suivante.
+    from . import candidat_nuit
+    graine = os.environ.get("LABUSE_CALCUL_NUIT_LABEL", "q_v21")
+    label = candidat_nuit.label_courant(graine)
     recette = os.environ.get("LABUSE_CALCUL_NUIT_RECETTE", "q_v15")
 
     # OPS-URGENCE-3 (mandat Vic) — UN RUN DÉJÀ COMPLET N'EST PAS RELANCÉ. Si la cascade ET le scoring du
@@ -1138,6 +1208,23 @@ def calcul_nuit(ctx: JobContext) -> None:
             log.warning("calcul-nuit : complétude du label %s illisible (%s) — on (re)calcule", label, exc)
             deja_complet, motif_complet = False, None
 
+    # QV22-1 — un candidat déjà complet mais REFUSÉ ne doit PAS bloquer la nuit : on le MESURE, et si les
+    # contrôles ont un échec DUR (comptes, paliers, zone rouge… — pas seulement « cohérence en attente »),
+    # on l'ARCHIVE (il reste en base, non servi — on ne touche à aucune table, on décroche le pointeur) et
+    # on avance au label suivant → run FRAIS. Un candidat SAIN ou simplement EN ATTENTE est gardé tel quel.
+    mesures = None   # réutilisée au bloc verdict : un candidat complet non refusé n'est pas re-mesuré.
+    if deja_complet:
+        with session_scope() as db:
+            mesures = _mesures_run(db, label, runs.current())
+            mesures["manifeste_present"] = _manifeste_candidat_present(label)
+        v_complet = autonomie.controler_run(
+            mesures, palier_delta_max_pct=s.calcul_nuit_palier_delta_max_pct)
+        if autonomie.candidat_refuse(v_complet):
+            nouveau = candidat_nuit.archiver_et_avancer(label, v_complet.resume())
+            log.info("calcul-nuit : candidat %s REFUSÉ (%s) — archivé (reste en base) ; "
+                     "run frais %s", label, v_complet.resume(), nouveau)
+            label, deja_complet, mesures = nouveau, False, None
+
     if deja_complet:
         log.info("calcul-nuit : run %s déjà complet (%s) — pas de recalcul, contrôles directs",
                  label, motif_complet)
@@ -1150,10 +1237,20 @@ def calcul_nuit(ctx: JobContext) -> None:
             budget = max(300.0, budget_job - _SOUS_PROCESS_MARGE_S)
         else:
             budget = max(300.0, min(budget_job, _secondes_avant_fin_fenetre(s)) - _SOUS_PROCESS_MARGE_S)
+        # QV22-1 — le run FRAIS est scoré sur SA PROPRE cascade (étage 0 = ce label), jamais sur le run
+        # servi : sans ce réglage, `run_score_v2` lit `LABUSE_ETAGE0_RUN` défaut `runs.current()` (le
+        # servi) → étage 0 VIDE pour un label neuf (c'est la cause racine QV21-PROMO-1 du q_v21 raté).
+        os.environ["LABUSE_ETAGE0_RUN"] = label
         cmd = _prefixe_nice(s) + [sys.executable, "-m", "labuse.cli", "flux-run",
                                  "--label", label, "--recette", recette]
         # AUCUNE connexion DB tenue pendant le sous-process (voir pré-vol ci-dessus).
         try:
+            # QV22-1 — AVANT de scorer : si le cadastre a bougé (univers vivant ≠ `p_model_frame`), on
+            # RECONSTRUIT le socle (build_all), sinon le run frais hérite du frame périmé et rejouerait
+            # « 431663 ≠ 433229 » nuit après nuit (`rebuild=True` ne refait QUE les features ext). Guardé :
+            # une nuit sans différentiel cadastre ne paie pas les ~2 h de build_static. Même garde de
+            # fenêtre que flux-run : un dépassement tombe dans l'abandon PROPRE ci-dessous (reprenable).
+            _reconstruire_socle_si_perime(s, log)
             proc = _run_sous_process_nice(cmd, budget, _plafond_memoire(s.calcul_nuit_mem_mo))
         except SousProcessTimeout:
             # Fin de fenêtre atteinte AVANT la fin du calcul : abandon PROPRE, PAS un échec. flux-run a
@@ -1194,8 +1291,11 @@ def calcul_nuit(ctx: JobContext) -> None:
     # mesures + verdict/promotion — SESSION FRAÎCHE (la pré-vol est refermée depuis des heures).
     with session_scope() as db:
         precedent = runs.current()
-        mesures = _mesures_run(db, label, precedent)
-        mesures["manifeste_present"] = _manifeste_candidat_present(label)
+        # QV22-1 — on NE re-mesure PAS un candidat complet non refusé : ses mesures viennent du bloc de
+        # détection de refus ci-dessus. Un run (re)calculé a `mesures=None` → on mesure le label courant.
+        if mesures is None:
+            mesures = _mesures_run(db, label, precedent)
+            mesures["manifeste_present"] = _manifeste_candidat_present(label)
 
         if not promeut:
             v = autonomie.controler_run(mesures, palier_delta_max_pct=s.calcul_nuit_palier_delta_max_pct)

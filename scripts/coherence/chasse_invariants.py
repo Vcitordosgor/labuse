@@ -41,6 +41,17 @@ class Cx:
 
     def __init__(self, dsn: str):
         self.conn = psycopg.connect(dsn, options=f"-c statement_timeout={TIMEOUT_MS}")
+        # QV22-1 (mandat Vic) — AUTOCOMMIT obligatoire. Sans lui, psycopg ouvre une transaction au
+        # PREMIER SELECT et la tient tant qu'on ne commit/rollback pas : le banc2 garde `cx` ouverte sur
+        # TOUTE la boucle des familles (banc2.executer : une seule Cx du début à la fin). En mode `--tout`
+        # (dimanche), les familles cadencées/lourdes (boucles API temporisées) laissent cette connexion
+        # IDLE IN TRANSACTION plusieurs minutes entre deux requêtes ; le serveur la tue à son
+        # `idle_in_transaction_session_timeout` (défaut PROD = 120 s — le moteur SQLAlchemy l'allonge à
+        # 600 s, mais cette connexion psycopg BRUTE prend le défaut serveur), d'où le
+        # `IdleInTransactionSessionTimeout` du 08/11 à 04:08 (comme le calcul-nuit du 03/11). Règle Vic :
+        # AUCUNE transaction ouverte pendant un calcul long côté Python. En autocommit chaque SELECT est sa
+        # propre micro-transaction — rien ne reste idle. (La soeur `coherence.lib.Contexte` le fait déjà.)
+        self.conn.autocommit = True
         self.conn.read_only = True
 
     def scalar(self, sql: str, params=None):
