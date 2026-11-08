@@ -77,7 +77,7 @@ def main() -> None:
         apres = {}
         for pid in ids:
             try:
-                apres[pid] = residuel.compute_residuel(s, pid, assiette_clippee=True)
+                apres[pid] = residuel.compute_residuel(s, pid)   # RESIDUEL-1 — clippé par construction
             except Exception as e:  # noqa: BLE001
                 apres[pid] = {"disponible": False, "raison": str(e)[:80]}
 
@@ -96,7 +96,7 @@ def main() -> None:
         try:
             for pid in ids:
                 try:
-                    avant[pid] = residuel.compute_residuel(s, pid, assiette_clippee=True)
+                    avant[pid] = residuel.compute_residuel(s, pid)   # RESIDUEL-1 — clippé par construction
                 except Exception as e:  # noqa: BLE001
                     avant[pid] = {"disponible": False, "raison": str(e)[:80]}
         finally:

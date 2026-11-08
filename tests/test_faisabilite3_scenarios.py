@@ -54,7 +54,7 @@ def _stub(monkeypatch):
     monkeypatch.setattr("labuse.faisabilite.db.parcel_faisabilite",
                         lambda s, pid, hyp_overrides=None: (_Ctx(), f))
     monkeypatch.setattr("labuse.faisabilite.residuel.compute_residuel",
-                        lambda s, pid, faisa=None, assiette_clippee=False: _residuel())
+                        lambda s, pid, faisa=None: _residuel())
     monkeypatch.setattr("labuse.faisabilite.zonage.resolve_zone",
                         lambda code, commune=None: _rules_uh())
     monkeypatch.setattr("labuse.faisabilite.zonage.reglement_source",
@@ -115,7 +115,7 @@ def test_panneau_sans_fourchette_logements_et_renvoi_etude():
 # ── PARCELLE NUE : un seul scénario ──
 def test_parcelle_nue_un_seul_scenario(monkeypatch):
     monkeypatch.setattr("labuse.faisabilite.residuel.compute_residuel",
-                        lambda s, pid, faisa=None, assiette_clippee=False:
+                        lambda s, pid, faisa=None:
                         _residuel(emprise_batie=0, taux=0, sdp_residuelle=0))
     r = scenarios.faisabilite_scenario(None, 1, "bati_garde")   # demande bâti gardé…
     assert r["bati_present"] is False

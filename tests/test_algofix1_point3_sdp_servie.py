@@ -77,7 +77,7 @@ def _stub(monkeypatch):
 def test_bati_garde_hors_saisie_lit_le_servi(monkeypatch):
     """Bâti présent, aucune saisie : bati_garde.sdp_possible == SERVI (179), PAS le live (26)."""
     monkeypatch.setattr("labuse.faisabilite.residuel.compute_residuel",
-                        lambda s, pid, faisa=None, assiette_clippee=False: _residuel(bati=True))
+                        lambda s, pid, faisa=None: _residuel(bati=True))
     r = scenarios.faisabilite_scenario(_FakeSession(179), 1, "bati_garde")
     assert r["sdp_possible_m2"] == 179, "hors saisie, la SDP résiduelle vient du run servi (parcel_residuel)"
 
@@ -85,7 +85,7 @@ def test_bati_garde_hors_saisie_lit_le_servi(monkeypatch):
 def test_bati_garde_avec_saisie_repasse_au_live(monkeypatch):
     """Avec un override (chiffre saisi) : le moteur LIVE reprend la main → 26, pas le servi 179."""
     monkeypatch.setattr("labuse.faisabilite.residuel.compute_residuel",
-                        lambda s, pid, faisa=None, assiette_clippee=False: _residuel(bati=True))
+                        lambda s, pid, faisa=None: _residuel(bati=True))
     r = scenarios.faisabilite_scenario(_FakeSession(179), 1, "bati_garde",
                                        hyp_overrides={"coef_occupation": 0.9})
     assert r["sdp_possible_m2"] == 26, "avec saisie, le moteur live recalcule (pas le servi)"
@@ -94,7 +94,7 @@ def test_bati_garde_avec_saisie_repasse_au_live(monkeypatch):
 def test_terrain_nu_hors_saisie_lit_le_servi(monkeypatch):
     """Terrain NU, aucune saisie : terrain_libere EST le résiduel → SDP SERVIE (1619), pas l'enveloppe live."""
     monkeypatch.setattr("labuse.faisabilite.residuel.compute_residuel",
-                        lambda s, pid, faisa=None, assiette_clippee=False: _residuel(bati=False))
+                        lambda s, pid, faisa=None: _residuel(bati=False))
     r = scenarios.faisabilite_scenario(_FakeSession(1619), 1, "terrain_libere")
     assert r["sdp_possible_m2"] == 1619, "terrain nu hors saisie : la SDP servie fait foi"
 
@@ -102,6 +102,6 @@ def test_terrain_nu_hors_saisie_lit_le_servi(monkeypatch):
 def test_repli_live_quand_pas_de_residuel_servi(monkeypatch):
     """Chaîne résiduel absente (SDP servie None) : on garde le calcul live (aucune régression base test)."""
     monkeypatch.setattr("labuse.faisabilite.residuel.compute_residuel",
-                        lambda s, pid, faisa=None, assiette_clippee=False: _residuel(bati=True))
+                        lambda s, pid, faisa=None: _residuel(bati=True))
     r = scenarios.faisabilite_scenario(_FakeSession(None), 1, "bati_garde")
     assert r["sdp_possible_m2"] == 26, "sans SDP servie, repli sur le live"

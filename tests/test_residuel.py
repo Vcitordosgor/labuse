@@ -19,6 +19,7 @@ def _faisa(constructible=True, emprise=500, sdp_max=1000, niveaux_max=2):
 
     class _Ctx:  # ParcelContext-like
         surface_m2 = 1000.0
+        zone_parts = []   # mono-zone (RESIDUEL-1 : le clip est toujours tenté, None hors à-cheval)
     return (_Ctx(), f)
 
 
@@ -100,7 +101,7 @@ def test_assiette_clippee_bati_mesure_sur_la_portion_uau(monkeypatch):
                                     {"zone": "Uc", "fam": "U", "pct": 5.0}])
     faisa = _faisa(emprise=90, sdp_max=81, niveaux_max=1)
     faisa = (ctx, faisa[1])
-    r = residuel.compute_residuel(None, 1, faisa=faisa, assiette_clippee=True)
+    r = residuel.compute_residuel(None, 1, faisa=faisa)   # RESIDUEL-1 — clip inconditionnel
     # bâti retenu = 20 m² (portion U/AU), niveaux 1 × 0,95 → SDP existante 19 → résiduelle 81 − 19 = 62.
     # (avec le bâti du contour entier : 81 − 600 = 0 → faux tout-ou-rien.)
     assert r["disponible"] and r["emprise_batie_m2"] == 20
@@ -108,8 +109,9 @@ def test_assiette_clippee_bati_mesure_sur_la_portion_uau(monkeypatch):
 
 
 def test_assiette_clippee_ignoree_hors_a_cheval(monkeypatch):
-    """Parcelle mono-zone (parts vides) : le clip ne s'applique pas — bâti du contour entier,
-    comportement servi identique même quand --assiette-clippee est demandé."""
+    """Parcelle mono-zone (parts vides) : le clip de bâti ne s'applique pas — bâti du contour
+    entier. RESIDUEL-1 — le chemin est toujours clippé, mais `_pct_constructible` rend None hors
+    à-cheval, donc rien ne change pour une mono-zone."""
     from labuse.faisabilite.db import ParcelContext
     from labuse.faisabilite.engine import Contraintes
     _ratio(monkeypatch, 0.20)
@@ -117,8 +119,7 @@ def test_assiette_clippee_ignoree_hors_a_cheval(monkeypatch):
     monkeypatch.setattr("labuse.faisabilite.residuel._emprise_batie_assiette",
                         lambda s, pid: called.__setitem__("n", called["n"] + 1) or 999.0)
     ctx = ParcelContext(1, "x", "Bras-Panon", 1000.0, "U", Contraintes(), zone_parts=[])
-    r = residuel.compute_residuel(None, 1, faisa=(ctx, _faisa(emprise=500, sdp_max=1000)[1]),
-                                  assiette_clippee=True)
+    r = residuel.compute_residuel(None, 1, faisa=(ctx, _faisa(emprise=500, sdp_max=1000)[1]))
     # parts vides → _pct_constructible None → clip ignoré → bâti = 0.20×1000 = 200 ×1×0,95 = 190 → résiduelle 810.
     assert called["n"] == 0 and r["emprise_batie_m2"] == 200 and r["sdp_residuelle_m2"] == 810
 

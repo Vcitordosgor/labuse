@@ -408,18 +408,24 @@ def _pct_constructible(ctx: ParcelContext) -> float | None:
 
 
 def parcel_faisabilite(session: Session, parcel_id: int,
-                       assiette_clippee: bool = True,
                        hyp_overrides: dict | None = None) -> tuple[ParcelContext, Faisabilite] | None:
     """Contexte + pré-faisabilité d'une parcelle, EMPRISE SUR GÉOMÉTRIE RÉELLE
     (ST_Buffer du contour cadastral par le recul séparatif, EPSG:2975), clippée à la
     portion U/AU si zonage mixte (Décision 1) et amputée des emplacements réservés
     (Décision 3.a). None si parcelle/zone introuvable.
 
-    FAISABILITE-clip (Vic 24/09/2026) — `assiette_clippee=True` PAR DÉFAUT : le moteur LIVE
-    (fiche §capacité, outil Faisabilité, bilan, potentiel) calcule sur l'assiette CLIPPÉE, comme
-    le RUN RÉSIDUEL SERVI (run 8, `--assiette-clippee`). Sur une parcelle A/N à cheval, la zone
-    dominante non constructible n'annule plus la portion U/AU : la capacité est celle de la portion.
-    (Le calcul d'un RUN reste piloté par le flag explicite de `compute_residuel_batch` — inchangé.)"""
+    RESIDUEL-1 (décision Vic 08/11/2026) — UN SEUL CHEMIN, assiette CLIPPÉE pour TOUS les lecteurs.
+    Le flag `assiette_clippee` a disparu : la fiche, l'outil Faisabilité, le bilan, le potentiel ET
+    le run résiduel de nuit (`compute_residuel_batch`) calculent sur la MÊME assiette — zone
+    d'implantation du gabarit, reculs par côté, **PPR zone rouge découpée**. Avant RESIDUEL-1, le
+    batch appelait ce moteur avec `assiette_clippee=False` → branche héritée SANS découpe du rouge →
+    toute parcelle touchée par une zone rouge fermée « rédhibitoire », alors que la fiche (clippée)
+    la disait constructible sur la partie hors rouge. Deux chemins, deux verdicts : supprimés.
+
+    Quand le moteur gabarit ne sert pas la parcelle (`_assiette_gabarit` → None : gabarit bloquant,
+    zone non constructible), le calcul retombe sur la branche legacy ci-dessous — qui applique
+    DÉSORMAIS inconditionnellement la découpe des contraintes certaines (PPR rouge compris) et le
+    clip de surface à la portion U/AU. La provenance est écrite (`assiette_source`)."""
     from .engine import Hypotheses, SEUIL_EXIGU_M2
 
     ctx = parcel_context(session, parcel_id)
@@ -434,9 +440,9 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     rules = resolve_zone(ctx.zone, ctx.commune)
     # SCORING-6 lot A — assiette clippée : si la zone DOMINANTE n'est pas constructible mais
     # qu'une portion U/AU subsiste, on résout la sous-zone U/AU et on calcule la capacité sur
-    # cette portion (fini le tout-ou-rien). Chemin OPT-IN — servi inchangé quand désactivé.
-    if assiette_clippee and (rules is None or not rules.constructible_neuf
-                             or rules.habitat == "interdit"):
+    # cette portion (fini le tout-ou-rien). RESIDUEL-1 — toujours actif (chemin unique).
+    if (rules is None or not rules.constructible_neuf
+            or rules.habitat == "interdit"):
         alt = _sous_zone_constructible(ctx)
         if alt is not None:
             rules = alt
@@ -503,7 +509,7 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     # ZONE D'IMPLANTATION du gabarit (reculs par côté, PPR rouge découpé, morceau constructible
     # si à cheval) quand le gabarit sert la parcelle ; sinon chemin legacy inchangé, et la
     # provenance est ÉCRITE (`assiette_source`) — pas de trou, pas de mensonge.
-    gab = _assiette_gabarit(session, ctx.idu) if assiette_clippee else None
+    gab = _assiette_gabarit(session, ctx.idu)
     assiette_source = "gabarit" if gab is not None else "residuel_legacy"
     # CONTENANCE-1 (Lot C3) — toute aire tirée du DESSIN (zone d'implantation, déductions ER/EBC/
     # greve) est ramenée à l'échelle de la CONTENANCE par ce facteur, pour que rien ne dépasse la
@@ -624,15 +630,15 @@ def parcel_faisabilite(session: Session, parcel_id: int,
 
         # SCORING-6 lot A — assiette clippée : soustraire les contraintes géométriques certaines
         # (PPR rouge, PEB A/B, marchepied DPF, ravine, 50 pas) et ramener la surface au sol servant
-        # aux plafonds CES/pleine terre à la seule portion U/AU. OPT-IN — servi inchangé sinon.
-        greve_cert = 0.0
-        if assiette_clippee:
-            greve_cert = _greve_certaine_m2(session, parcel_id, recul, ctx.commune) * k_cont  # C3
-            if greve_cert > 0.5:
-                emprise = max(0.0, emprise - greve_cert)
-                ctx.contraintes.libelles.append(
-                    f"Assiette clippée : {greve_cert:.0f} m² de contraintes géométriques certaines "
-                    "(PPR rouge, PEB A/B, marchepied DPF, ravine, 50 pas) soustraits de l'emprise.")
+        # aux plafonds CES/pleine terre à la seule portion U/AU. RESIDUEL-1 — inconditionnel (chemin
+        # unique) : ce repli legacy (gabarit non servant) découpe lui aussi le PPR rouge, jamais plus
+        # la « branche héritée » qui fermait toute parcelle rouge.
+        greve_cert = _greve_certaine_m2(session, parcel_id, recul, ctx.commune) * k_cont  # C3
+        if greve_cert > 0.5:
+            emprise = max(0.0, emprise - greve_cert)
+            ctx.contraintes.libelles.append(
+                f"Assiette clippée : {greve_cert:.0f} m² de contraintes géométriques certaines "
+                "(PPR rouge, PEB A/B, marchepied DPF, ravine, 50 pas) soustraits de l'emprise.")
         # RECETTE-1 A1 — raison réelle du vidage (chemin legacy).
         vide_raison = None
         if emprise < SEUIL_EXIGU_M2:
@@ -650,11 +656,11 @@ def parcel_faisabilite(session: Session, parcel_id: int,
                 vide_raison = "reculs"
 
     # Surface au sol servant aux plafonds CES/pleine terre : la seule portion U/AU (à cheval).
+    # RESIDUEL-1 — inconditionnel (chemin unique).
     surface_assiette = ctx.surface_m2
-    if assiette_clippee:
-        pct_c = _pct_constructible(ctx)
-        if pct_c is not None and 0 < pct_c < 100:
-            surface_assiette = ctx.surface_m2 * pct_c / 100.0
+    pct_c = _pct_constructible(ctx)
+    if pct_c is not None and 0 < pct_c < 100:
+        surface_assiette = ctx.surface_m2 * pct_c / 100.0
 
     # ZONE-1 : sur parcelle à cheval, le bilan LE DIT — parts servies (modulation + contexte éco).
     if ctx.a_cheval and ctx.zone_parts:
@@ -786,13 +792,13 @@ def fiche_payload(session: Session, parcel_id: int) -> dict | None:
     c = ctx.contraintes
 
     # Potentiel résiduel (Lot B) — réutilise la faisabilité déjà calculée ; isolé/défensif.
-    # FAISABILITE-clip — `res` est clippé (défaut) → le bâti retranché DOIT l'être sur la même
-    # portion U/AU (assiette_clippee=True), sinon on soustrait le bâti de la portion A/N d'un plafond
-    # U/AU (résiduel faussement nul — piège SCORING-6). Cohérent avec le run servi.
+    # RESIDUEL-1 — `res` est clippé (chemin unique) → le bâti retranché l'est sur la même portion
+    # U/AU, sinon on soustrait le bâti de la portion A/N d'un plafond U/AU (résiduel faussement nul —
+    # piège SCORING-6). Identique au run résiduel de nuit (même moteur, même assiette).
     residuel = None
     try:
         from .residuel import compute_residuel
-        residuel = compute_residuel(session, parcel_id, faisa=res, assiette_clippee=True)
+        residuel = compute_residuel(session, parcel_id, faisa=res)
     except Exception:  # noqa: BLE001 - n'empêche jamais la fiche
         residuel = None
 

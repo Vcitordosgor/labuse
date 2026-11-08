@@ -7073,10 +7073,10 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
     if sdp_servie is not None and not estimation_simplifiee and cause is None and not capacite_differee:
         try:
             from ..faisabilite.residuel import compute_residuel as _compute_residuel
-            # FIX-FINAL-1 (NU-E-003) — le run servi (q_v15+) est calculé assiette CLIPPÉE (Vic 24/09) ;
-            # ce recalcul d'intermédiaires doit l'être AUSSI, sinon il divergeait du chiffre de tête et
-            # était écarté par la garde 1 m² (intermédiaires tus). Même doctrine de bout en bout.
-            _br = _compute_residuel(db, row["pid"], assiette_clippee=True)
+            # FIX-FINAL-1 (NU-E-003) — le run servi est calculé assiette CLIPPÉE ; ce recalcul
+            # d'intermédiaires l'est AUSSI, sinon il divergeait du chiffre de tête et était écarté par
+            # la garde 1 m². RESIDUEL-1 — plus de flag : `compute_residuel` est clippé par construction.
+            _br = _compute_residuel(db, row["pid"])
             if (_br.get("disponible") and _br.get("sdp_residuelle_m2") is not None
                     and abs(float(_br["sdp_residuelle_m2"]) - float(sdp_servie)) <= 1.0):
                 _empr = _br.get("emprise_constructible_m2")

@@ -168,7 +168,7 @@ def faisabilite_scenario(session: Session, parcel_id: int, scenario: str | None 
 
     # ── Bâti existant (résiduel servi) — présence + numéros du scénario « bâti gardé » ──
     try:
-        residuel = compute_residuel(session, parcel_id, faisa=res, assiette_clippee=True)
+        residuel = compute_residuel(session, parcel_id, faisa=res)   # RESIDUEL-1 — clippé par construction
     except Exception:  # noqa: BLE001 — le résiduel ne casse jamais le panneau
         residuel = {"disponible": False}
     emprise_batie = residuel.get("emprise_batie_m2") if residuel.get("disponible") else None
