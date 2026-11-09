@@ -192,7 +192,7 @@ export function CompareModule() {
           « Réinitialiser » en tête. */}
       <p className="text-[11px] font-medium text-txt">Jusqu'à 3 parcelles — barre ou clic carte.</p>
       {n < 3 && (
-        <EntreeParcelle source={null}
+        <EntreeParcelle source={null} viderApresPick
           onPick={(idu) => { if (!compareIdus.includes(idu)) addToCompare(idu) }} />
       )}
       {n > 0 && (

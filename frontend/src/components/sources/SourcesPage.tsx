@@ -130,20 +130,9 @@ export function SourcesPage() {
             </div>
           </div>
         )}
-        {/* RETOURS-14 P6 — RÉCONCILIATION des deux comptes de parcelles. « parcelles couvertes » = total
-            ingéré (431 663) ; le bouton « Voir les N parcelles » du panneau Filtre affiche 430 813 =
-            parcelles explorables (le filtre masque les micro-parcelles « sliver » < 2 m²). L'écart est
-            légitime et volontaire : on l'ÉCRIT ici, là où le grand nombre apparaît, plutôt que de laisser
-            deux totaux muets se contredire. */}
-        {couverture?.parcelles != null && couverture?.parcelles_filtrables != null
-          && couverture.parcelles !== couverture.parcelles_filtrables && (
-          <p data-sources-parcelles-note className="mb-3.5 -mt-1.5 text-[11.5px] leading-snug text-txt-dim">
-            {couverture.parcelles.toLocaleString('fr-FR')} parcelles couvertes, dont{' '}
-            <b className="text-txt-mut">{couverture.parcelles_filtrables.toLocaleString('fr-FR')}</b> d’au moins 2 m²
-            explorables au filtre — les {(couverture.parcelles - couverture.parcelles_filtrables).toLocaleString('fr-FR')} micro-parcelles
-            (moins de 2 m²) sont écartées de l’exploration.
-          </p>
-        )}
+        {/* RETOURS-17 — la phrase de réconciliation « N parcelles couvertes, dont … micro-parcelles … »
+            est RETIRÉE (demande Vic). La tuile « parcelles couvertes » du bandeau reste ; le détail
+            micro-parcelles ne s'affiche plus sous le grand nombre. */}
 
         {/* RECETTE-1 (D7, Vic 04/10) — toute la section « Réserve » (retard de publication DVF) est
             RETIRÉE de la page Sources côté client. Les données ne bougent pas, seul l'affichage. */}

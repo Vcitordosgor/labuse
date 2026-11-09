@@ -5,7 +5,7 @@ import { Badge } from '../ui/Badge'
 import { Chevron } from '../ui/Chevron'
 import { Select } from '../ui/Select'   // U3 (RECETTE-OUTILS-4) — menu déroulant partagé
 import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, archivePipeline, createProjet, docDossierUrl, getDossierStatut, getFaisabilite, getFiche, getGabarit, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, projetsPourParcelle, SOURCE, toggleWatch } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, archivePipeline, createProjet, docDossierUrl, getDossierStatut, getFaisabilite, getFiche, getGabarit, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, projetsPourParcelle, toggleWatch } from '../../lib/api'
 // DOCS-FIX-1 (P3/P4) — ouverture propre des documents de la fiche (fetch + blob + attente + erreur FR
 // au toast), le MÊME comportement que la page Docs et que le Bilan. Plus de lien <a> qui ouvre un
 // onglet blanc puis du JSON sur erreur. P11 — URLs par les builders encodés (docDossierUrl…), plus de littéral.
@@ -21,7 +21,7 @@ import { EmptyState, ErrorState } from '../States'
 import { DeplacerMenu } from '../crm/DeplacerMenu'   // DA-FIX-5c — menu « Déplacer vers… » partagé (kanban CRM)
 import { AskBar } from './AskBar'
 import { GabaritLine } from './GabaritLine'
-import { cadastreGeoportailUrl, errialUrl, googleEarthKmzUrl, googleMapsUrl, pagesJaunes } from './liensExternes'
+import { cadastreGeoportailUrl, errialUrl, googleEarthUrl, googleMapsUrl, pagesJaunes } from './liensExternes'
 import { LogoCadastre, LogoPagesJaunes, LogoGoogleMaps, LogoGeorisques, LogoGoogleEarth } from './logosServices'
 import { PourquoiPasTab } from './PourquoiPas'
 import { ScoreV2Block } from './ScoreV2Block'
@@ -347,10 +347,10 @@ function ProjetButton({ idu }: { idu: string }) {
     <div ref={wrap} className="relative min-w-0 flex-1">
       <button
         data-projet-fiche onClick={() => setOpen((o) => !o)} aria-expanded={open}
-        /* ADMIN-1 AD1 — « + Projet » = JAUNE (contour + texte --amber, famille de la chip « Fiche commune »),
-           survol plein ambre via .hover-fill-amber ; rattaché = accent ambre (.act-amber-on). Aucun mauve.
-           RETOURS-11 T3 — bouton OPAQUE (act-amber-on) tant que le menu est ouvert. */
-        className={`act w-full whitespace-nowrap ${inProjet || open ? 'act-amber-on' : 'act-amber hover-fill-amber'}`}
+        /* RETOURS-17 — « + Projet » passe en VERT (comme « + CRM ») : contour + texte --mint, survol
+           plein vert (.hover-fill), rattaché/ouvert = vert opaque (.act-cmp). L'AMBRE n'est plus
+           porté par un bouton — il reste réservé aux BADGES « projet » (pastilles). */
+        className={`act w-full whitespace-nowrap ${inProjet || open ? 'act-cmp' : 'act-mint hover-fill'}`}
         >
         {inProjet ? (attaches.length > 1 ? `✓ ${attaches.length} projets` : `✓ ${attaches[0].nom}`) : '+ Projet'}
       </button>
@@ -745,12 +745,8 @@ export function Fiche({ idu }: { idu: string }) {
         /* not_integrated = hauteur en prospect (L≥H) ; la table graphique est désormais servie « Estimé » (branche ci-dessus). */
         ? <span className="t-val absent" style={{ maxWidth: 'none' }}>Non chiffrée (prospect)</span>
         : nonConstructible
-          ? <span className="t-val absent" style={{ maxWidth: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              constructibilité très limitée
-              <Tip side="top" tip="Les zones A et N interdisent la construction neuve à usage d'habitation, sauf exceptions non évaluées par LABUSE : STECAL, extension d'un bâtiment existant, construction agricole. À vérifier au règlement.">
-                <span role="button" tabIndex={0} aria-label="Exceptions à la constructibilité" style={{ color: 'var(--txt-ghost)', fontSize: 11, cursor: 'help', flexShrink: 0 }}>ⓘ</span>
-              </Tip>
-            </span>
+          /* RETOURS-17 — le « i » (infobulle exceptions) est RETIRÉ du badge : libellé seul. */
+          ? <span className="t-val absent" style={{ maxWidth: 'none' }}>constructibilité très limitée</span>
           : undefined
   // FICHE-RANGEMENT-1 Lot 1 (doublon #5) — `presc` (drapeaux EBC/ER) alimentait le bloc Signaux du
   // haut, retiré (doublon du tiroir « Dispositifs et périmètres »). Plus de lecteur → const retirée.
@@ -808,7 +804,10 @@ export function Fiche({ idu }: { idu: string }) {
           voyait les boutons de carte derrière. (Annule le pt-2.5 flottant de FIX-4 A1.) */}
       {/* RECETTE-PROD-1 (A4) — pt-2 : petit espace (fond du panneau) au-dessus de la carte d'en-tête ;
           la carte se recolle à top:8px (.tete-collee) → pas de contenu qui défile dans l'interstice. */}
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pt-2 pb-4">
+      {/* RETOURS-17 — plus de pt-2 : le petit espace noir au-dessus de la carte grise vit DANS le bloc
+          collant (.tete-collee padding-top), qui se colle à top:0 — sinon la bande de 8 px laissait voir
+          le contenu défiler au-dessus de l'en-tête. */}
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pb-4">
       {/* RETOURS-13 P7 — EN-TÊTE COLLÉ. SEUL le bloc identité (PARCELLE·commune, IDU, adresse, icônes,
           croix de fermeture) reste collé en haut au défilement — un client ferme la fiche sans remonter.
           Les 6 tuiles NE collent PAS (carte séparée dessous). Le bloc est un ENFANT DIRECT du conteneur
@@ -816,6 +815,9 @@ export function Fiche({ idu }: { idu: string }) {
           clipperait le sticky) : fond opaque + ombre pour couvrir ce qui passe dessous. FINITIONS-2 avait
           annulé un sticky qui embarquait AUSSI les tuiles et recouvrait le contenu ; ici, identité seule. */}
       <div className="tete-collee" data-fiche-tete-collee>
+        {/* RETOURS-17 — la CARTE GRISE à bords arrondis (.tete-carte) est un enfant du bloc collant
+            opaque (.tete-collee, fond --bg-0) : elle reste telle quelle, le fond noir la coiffe. */}
+        <div className="tete-carte">
           {/* LIENS-1 (maquette Vic) — UNE ligne de boutons sur TOUTE la largeur, en deux groupes :
               à GAUCHE les liens vers l'extérieur (nouvel onglet) Cadastre · Pages Jaunes · Google Maps ·
               État des risques (Errial) · Google Earth ; à DROITE, séparées par un trait vertical fin,
@@ -866,21 +868,22 @@ export function Fiche({ idu }: { idu: string }) {
                         </a>
                       </Tip>
                     )}
-                    {/* Google Earth — contour SERVI en KMZ (endpoint back /parcels/{idu}.kmz, même
-                        géométrie que la carte), téléchargé au clic. Globe. */}
-                    <Tip side="bottom" tip="Ouvrir dans Google Earth" garder>
-                      <a data-earth-link className="hbtn" target="_blank" rel="noreferrer noopener"
-                        href={googleEarthKmzUrl(idu)} aria-label="Ouvrir dans Google Earth">
-                        <LogoGoogleEarth />
-                      </a>
-                    </Tip>
+                    {/* RETOURS-17 — Google Earth EN LIGNE, centré sur la parcelle (plus de KMZ) :
+                        ouvre earth.google.com/web positionné sur le centroïde. Globe. */}
+                    {f.coords && (
+                      <Tip side="bottom" tip="Ouvrir dans Google Earth" garder>
+                        <a data-earth-link className="hbtn" target="_blank" rel="noreferrer noopener"
+                          href={googleEarthUrl(f.coords)} aria-label="Ouvrir dans Google Earth">
+                          <LogoGoogleEarth />
+                        </a>
+                      </Tip>
+                    )}
                   </>
                 )
               })()}
             </div>
             <div className="hbtns hbtns-act">
-              {/* trait vertical fin : sépare les liens externes (gauche) des actions sur la fiche (droite). */}
-              <span className="hsep" aria-hidden />
+              {/* RETOURS-17 — le trait vertical (.hsep) à côté de la cloche est RETIRÉ (demande Vic). */}
               <Tip side="bottom" tip="Suivre cette parcelle" garder>
                 <WatchButton idu={idu} />
               </Tip>
@@ -925,6 +928,7 @@ export function Fiche({ idu }: { idu: string }) {
               Secteur : <b>{f.secteur}</b>
             </div>
           )}
+        </div>{/* /.tete-carte — RETOURS-17 : la carte grise arrondie */}
       </div>{/* /.tete-collee — RETOURS-13 P7 : bloc identité COLLÉ (les 6 tuiles ne collent pas) */}
 
       {/* RETOURS-13 P7 — les 6 tuiles vivent dans leur PROPRE carte, sous l'en-tête collé : elles
@@ -1104,7 +1108,7 @@ export function Fiche({ idu }: { idu: string }) {
                 )}
                 <Bouton onClick={() => setIaOuvert('question')} data-askbar-open niveau="secondaire" ton="ia" className="flex-1">
                   <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M20 4H4v13h5l3 3 3-3h2z" /></svg>
-                  Poser une question
+                  Copilote
                 </Bouton>
               </div>
             )}
@@ -1117,10 +1121,10 @@ export function Fiche({ idu }: { idu: string }) {
             ce qui baisse). Aucun chiffre brut de score ni de probabilité. « Analyse incomplète » montre
             sa cause. Le score ne s'affiche QUE sur la fiche et dans l'Analyse (mandat §4). */}
         {f?.analyse_labuse?.bande && verdictRevele && (
-          // RETOURS-14 P1 — carte extraite. `version={SOURCE}` = le run servi (config/served_run.txt,
-          // injecté au build), JAMAIS une version codée en dur ; la fiche a lu ce même run via
-          // getFiche(idu) = `/parcels/{idu}?source=${SOURCE}` (cf. commentaire en-tête à deux boutons).
-          <AnalyseLabuseCard analyse={f.analyse_labuse!} version={SOURCE} />
+          // RETOURS-17 — la carte n'affiche plus l'identifiant de run : plus de prop `version`.
+          // La fiche lit toujours le run servi via getFiche(idu) = `/parcels/{idu}?source=${SOURCE}`,
+          // mais ce détail serveur n'est jamais montré côté client.
+          <AnalyseLabuseCard analyse={f.analyse_labuse!} />
         )}
         {/* CARTE VERDICT (ancien moteur, run servi) — teintée selon le tier. ANALYSE-1 : MASQUÉE dès que
             le nouveau moteur porte un verdict (`analyse_labuse`), pour qu'aucun ancien mot (Priorité / À
@@ -2199,7 +2203,8 @@ export function Fiche({ idu }: { idu: string }) {
                   ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18M6 21V9l6-4 6 4v12M10 21v-5h4v5" /></svg>} />
                 <OutilCase nom="Estimer" data-estimer-tile
                   onClick={() => { setAnnonceParcellePrefill(idu); setModule('analyser-annonce') }}
-                  ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>} />
+                  /* RETOURS-17 — icône € (Euro) au lieu de $ (Dollar) : LABUSE est en euros. */
+                  ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 10h12" /><path d="M4 14h9" /><path d="M19 6a7.7 7.7 0 0 0-5.2-2A8 8 0 0 0 6 12a8 8 0 0 0 7.8 8 7.7 7.7 0 0 0 5.2-2" /></svg>} />
                 {/* RECETTE-6 (D2) — « Remonter le temps » : ouvre l'outil PRÉ-REMPLI sur la parcelle
                     (setParcelPrefill + recentrage) ; fermer l'outil ramène la fiche (selectedIdu préservé). */}
                 <OutilCase nom="Remonter le temps" data-temps-tile

@@ -1319,21 +1319,16 @@ export function MapView() {
           return
         }
       }
-      // RECETTE-PROD-1 (6b) — en entrant en 3D avec une fiche ouverte, RECENTRER sur la parcelle avec
-      // le MÊME décalage que le vol 2D (−200 px pour la fiche de 400 px) : sinon le seul changement de
-      // pitch la laisse « décalée vers la droite », sous le panneau. Sans fiche/centroïde : simple pitch.
-      const centroid = selCentroidRef.current
-      const ficheOuverte = useApp.getState().selectedIdu != null
+      // RETOURS-17 — activer le relief GARDE le ZOOM et le CENTRE courants. L'ancien recentrage sur la
+      // parcelle (easeTo center=centroïde, RECETTE-PROD-1 6b) déplaçait la vue à l'entrée en 3D : on le
+      // RETIRE. Seul le pitch s'incline (pour révéler le relief) quand la vue est encore à plat — le
+      // centre et le zoom ne bougent pas. Le Gabarit garde son propre cadrage (fitBounds) → on n'y touche pas.
       if (useApp.getState().module === 'gabarit') {
         // RECETTE-OUTILS-2 (R13) — le cadrage 3D du Gabarit est piloté par SON `fitBounds` (pitch 55,
-        // bearing 0 sur l'emprise de la parcelle), identique à « Vue par défaut ». On NE recentre PLUS
-        // ici : deux animations caméra concurrentes (easeTo centroïde + fitBounds sans pitch) se
-        // battaient → la parcelle finissait hors champ (point 32 non tenu, « écran noir à côté »).
-        // Un seul propriétaire de caméra = le fitBounds du Gabarit. MapView ne fait que poser le relief.
-      } else if (centroid && ficheOuverte) {
-        m.easeTo({ center: centroid, pitch: Math.max(m.getPitch(), 55), offset: [-200, 0], duration: 800 })
+        // bearing 0 sur l'emprise de la parcelle). Un seul propriétaire de caméra = le fitBounds du
+        // Gabarit ; MapView ne fait que poser le relief.
       } else if (m.getPitch() < 20) {
-        m.easeTo({ pitch: 55, duration: 800 })
+        m.easeTo({ pitch: 55, duration: 800 })   // inclinaison seule : center/zoom inchangés
       }
       chargerBati()
       m.on('moveend', chargerBati)

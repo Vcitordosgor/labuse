@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   archivePipeline, createCrmColumn, deleteCrmColumn, getArchivedPipeline, getEventsCount, getPipeline,
   getPipelineMeta, patchPipeline, renameCrmColumn, reorderCrmColumns, resetCrmColumns, restorePipeline,
@@ -20,14 +20,16 @@ const TONE_ACCENT: Record<string, string> = {
   cold: '#5C7268', warm: '#E8B44C', hot: '#5CE6A1', reject: '#E8695A',
 }
 
-function Card({ e, onDragStart, newEvents, onArchive, onEdit, columns, onMove, onNote }: {
+function Card({ e, onDragStart, newEvents, onArchive, onEdit, onEditNote, columns, onMove }: {
   e: PipelineEntry; onDragStart: (ev: React.DragEvent) => void; newEvents: number
   onArchive: () => void; onEdit: () => void
   // DA-FIX-5 P7 — « Déplacer vers… » = les colonnes du kanban (même source que les colonnes), +
-  // « Retirer du CRM » en ton danger ; note libre par carte.
+  // « Retirer du CRM » en ton danger.
+  // RETOURS-17 — le champ de note INLINE du kanban est retiré : la note s'édite dans le détail de la
+  // carte. `onEditNote` ouvre ce détail DIRECTEMENT sur la section « Notes ». `onNote` supprimé.
+  onEditNote: () => void
   columns: { key: string; label: string }[]
   onMove: (status: string) => void
-  onNote: (notes: string) => void
 }) {
   const { focusParcelle } = useApp()   // CHASSE-NAV-FIX-1 (C-obs1) — ouvrir une fiche = recentrer la carte + fiche
   const clos = e.courrier?.statut === 'repondu' || e.courrier?.statut === 'sans_reponse'
@@ -42,8 +44,6 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, columns, onMove, o
   const surf = surfaceTerrain(e.parcel)
   const zone = e.parcel.zone_plu
   const note = (e.notes ?? '').trim()
-  const [noteOpen, setNoteOpen] = useState(false)
-  const [draft, setDraft] = useState(e.notes ?? '')
   const stop = (ev: React.SyntheticEvent) => ev.stopPropagation()
   return (
     <div
@@ -114,29 +114,17 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, columns, onMove, o
           ✉ {e.courrier.libelle}
         </span>
       )}
-      {/* note AFFICHÉE EN ENTIER (clic = éditer) ; « + Note » quand il n'y en a pas (RETOURS-16). La
-          hauteur est bornée + défilement interne : une note longue ne casse pas la colonne. */}
-      {note && !noteOpen && (
-        <button data-crm-note-edit onClick={(ev) => { stop(ev); setDraft(e.notes ?? ''); setNoteOpen(true) }}
+      {/* RETOURS-17 — note AFFICHÉE EN ENTIER, en LECTURE SEULE (clic = ouvrir le détail de la carte,
+          section « Notes »). Plus de champ de saisie inline : l'édition vit dans le panneau onEdit.
+          Hauteur bornée + défilement interne : une note longue ne casse pas la colonne. */}
+      {note && (
+        <button data-crm-note-edit onClick={(ev) => { stop(ev); onEditNote() }}
           className="max-h-[6rem] w-full overflow-y-auto overscroll-contain whitespace-pre-wrap [overflow-wrap:anywhere] rounded-md px-0 text-left text-[12.5px] leading-snug text-txt transition-colors duration-quick hover:text-txt-hi">
           {note}
         </button>
       )}
-      {noteOpen && (
-        <div className="space-y-1" onClick={stop} onKeyDown={stop}>
-          <textarea data-crm-note autoFocus value={draft} maxLength={4000} rows={3}
-            onChange={(ev) => setDraft(ev.target.value)} placeholder="Note libre sur cette parcelle…"
-            className="w-full resize-none rounded-md border border-mint/40 bg-surface-2 px-2 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none"
-            aria-label="Note libre sur la parcelle suivie" />
-          <div className="flex justify-end gap-1.5">
-            <Bouton niveau="lien" onClick={() => setNoteOpen(false)}>Annuler</Bouton>
-            <Bouton niveau="secondaire" ton="vert" data-crm-note-save
-              onClick={() => { onNote(draft.trim()); setNoteOpen(false) }}>Enregistrer</Bouton>
-          </div>
-        </div>
-      )}
-      {/* pied : « Ouvrir le suivi » (accès clavier/lecteur d'écran à l'édition) + « Déplacer vers… »
-          (alternative au glisser-déposer) + « + Note » si la carte n'en a pas. */}
+      {/* pied : « Ouvrir » (accès au détail/édition) + « Déplacer » (alternative au glisser-déposer)
+          + « + Note » (ouvre le détail à la section Notes) si la carte n'en a pas. */}
       <div className="flex items-center gap-2 border-t border-line-2 pt-2.5">
         {/* NU5-FIX-1 (F-2) — le point d'entrée FOCUSABLE de la carte (remplace l'ancien role=button
             sur tout le conteneur) ; ≥ 24 px de haut (F-3). */}
@@ -148,8 +136,8 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, columns, onMove, o
         <div className="min-w-0 flex-1">
           <DeplacerMenu columns={columns} currentStatus={e.status} onMove={onMove} onRetirer={onArchive} />
         </div>
-        {!note && !noteOpen && (
-          <button data-crm-note-add onClick={(ev) => { stop(ev); setDraft(''); setNoteOpen(true) }}
+        {!note && (
+          <button data-crm-note-add onClick={(ev) => { stop(ev); onEditNote() }}
             className="shrink-0 whitespace-nowrap rounded-md border border-line-2 bg-surface-2 px-2 py-1 text-[11px] text-txt-dim transition-colors duration-quick hover:border-mint/40 hover:text-mint min-h-[24px]">
             + Note
           </button>
@@ -205,15 +193,30 @@ function DeleteColumnDialog({ col, others, onCancel, onConfirm }: {
 /* M137 — écran d'édition d'une carte : câble ce que le modèle + le PATCH portaient déjà mais que
    AUCUNE UI n'exposait (note, priorité, date de relance, prospection). Tout passe par le PATCH
    existant (cloison compte_id en place). */
-function CardEditPanel({ e, meta, onCancel, onSave, onMove, saving }: {
+function CardEditPanel({ e, meta, onCancel, onSave, onMove, saving, focusNotes }: {
   e: PipelineEntry; meta: PipelineMeta | undefined; onCancel: () => void
   onSave: (body: Record<string, unknown>) => void; onMove: (status: string) => void; saving: boolean
+  focusNotes?: boolean   // RETOURS-17 — ouvert depuis « Note » : focus + scroll direct sur la section Notes
 }) {
   const { focusParcelle } = useApp()   // CHASSE-NAV-FIX-1 (C-obs1) — ouvrir une fiche = recentrer la carte + fiche
   const pr = e.prospection ?? {}
   const [priority, setPriority] = useState(e.priority)
   const [reminder, setReminder] = useState(e.reminder_date ?? '')
   const [notes, setNotes] = useState(e.notes ?? '')
+  // RETOURS-17 — quand le panneau est ouvert via « Note »/« + Note », on amène la section Notes à
+  // l'écran et on y place le curseur (fin de texte) : « ouvre la fiche à la section note ».
+  const notesRef = useRef<HTMLTextAreaElement>(null)
+  useEffect(() => {
+    if (!focusNotes) return
+    const t = setTimeout(() => {
+      const el = notesRef.current
+      if (!el) return
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      el.focus()
+      el.setSelectionRange(el.value.length, el.value.length)
+    }, 60)
+    return () => clearTimeout(t)
+  }, [focusNotes])
   const [statutProp, setStatutProp] = useState(pr.statut_proprietaire ?? 'inconnu')
   const [action, setAction] = useState(pr.prochaine_action ?? '')
   const [nom, setNom] = useState(pr.contact_nom ?? '')
@@ -271,7 +274,7 @@ function CardEditPanel({ e, meta, onCancel, onSave, onMove, saving }: {
             <input value={mail} maxLength={2000} onChange={(ev) => setMail(ev.target.value)} className={inputCls} />
           </label>
           <label className="block text-[11px] text-txt-dim">Notes
-            <textarea value={notes} maxLength={4000} rows={3} onChange={(ev) => setNotes(ev.target.value)}
+            <textarea ref={notesRef} data-crm-notes value={notes} maxLength={4000} rows={3} onChange={(ev) => setNotes(ev.target.value)}
               className={`${inputCls} resize-none`} />
           </label>
           <p className="text-[10px] leading-snug text-txt-faint">
@@ -304,6 +307,7 @@ export function Kanban() {
   const [pendingArchive, setPendingArchive] = useState<PipelineEntry | null>(null)
   const [showArchived, setShowArchived] = useState(false)
   const [editingEntry, setEditingEntry] = useState<PipelineEntry | null>(null)   // M137 — écran d'édition de carte
+  const [editToNotes, setEditToNotes] = useState(false)                           // RETOURS-17 — ouvert via « Note » → section Notes
   const [search, setSearch] = useState('')                                        // GB-027 — recherche CRM
   const archived = useQuery({ queryKey: ['pipeline-archived'], queryFn: getArchivedPipeline, enabled: showArchived })
   // QA-46 (M13-C) : le kanban NE DÉFILE PLUS horizontalement (barre de scroll proscrite). Les
@@ -608,10 +612,10 @@ export function Kanban() {
                   <Card key={e.id} e={e} onDragStart={() => setDragId(e.id)}
                     newEvents={evCount.data?.par_parcelle[e.idu] ?? 0}
                     onArchive={() => setPendingArchive(e)}
-                    onEdit={() => setEditingEntry(e)}
+                    onEdit={() => { setEditToNotes(false); setEditingEntry(e) }}
+                    onEditNote={() => { setEditToNotes(true); setEditingEntry(e) }}
                     columns={meta.data?.columns ?? []}
-                    onMove={(status) => moveAndReveal(e.id, status)}
-                    onNote={(notes) => patch.mutate({ id: e.id, body: { notes } })} />
+                    onMove={(status) => moveAndReveal(e.id, status)} />
                 ))}
                 {items.length === 0 && (
                   /* DA §8 — colonne vide PARLANTE (dit quoi faire), pas un « vide » muet. */
@@ -655,6 +659,7 @@ export function Kanban() {
           e={editingEntry}
           meta={meta.data}
           saving={patch.isPending}
+          focusNotes={editToNotes}
           onCancel={() => setEditingEntry(null)}
           onSave={(body) => patch.mutate({ id: editingEntry.id, body })}
           onMove={(status) => { moveAndReveal(editingEntry.id, status); setEditingEntry((c) => c ? { ...c, status } : c) }}

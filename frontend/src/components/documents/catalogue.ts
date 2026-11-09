@@ -28,6 +28,9 @@ export interface DocCatalogue {
   cta: string
   /** ligne d'explication sous la parcelle résolue (variante parcelle). */
   explication: string
+  /** RETOURS-17 — nom du document dans le fichier exporté (« <IDU> — <fichier>.pdf »). Défaut = `nom`.
+   *  Sert quand le nom de carte diffère du nom d'export (ex. « Estimer un bien » → « Estimation »). */
+  fichier?: string
   /** « Comparables DVF » — carte présente mais grisée/non cliquable (hors mandat). */
   bientot?: boolean
 }
@@ -49,25 +52,25 @@ export const CATALOGUE: DocCatalogue[] = [
     key: 'bilan', nom: 'Bilan', kind: 'parcelle', formats: ['PDF'],
     desc: 'Charge foncière, coûts, CA et marge, avec vos propres ratios. Prix connu, ou prix maximum du terrain pour votre marge.',
     cta: 'Générer le bilan',
-    explication: 'Se calcule sur les données de la fiche et vos ratios.',
+    explication: '',   // RETOURS-17 — petite phrase retirée des fenêtres Docs
   },
   {
     key: 'apporteur', nom: 'Apporteur', kind: 'parcelle', formats: ['PDF'],
     desc: 'Présenter un terrain à un acheteur en une page : plan, faits, dernière vente, contact.',
     cta: 'Générer l’apporteur',
-    explication: 'Une page depuis la fiche.',
+    explication: '',   // RETOURS-17 — petite phrase retirée des fenêtres Docs
   },
   {
     key: 'pre-dossier', nom: 'Pré-dossier PC', kind: 'parcelle', formats: ['PDF'],
     desc: 'Ce que le PLU permet et exige ici, l’enveloppe réglementaire et la liste des pièces à joindre.',
     cta: 'Générer le pré-dossier PC',
-    explication: 'Règles du PLU, enveloppe réglementaire, pièces à joindre.',
+    explication: '',   // RETOURS-17 — petite phrase retirée des fenêtres Docs
   },
   {
     key: 'gabarit', nom: 'Gabarit', kind: 'parcelle', formats: ['PDF'],
     desc: 'Zone d’implantation, plafond d’emprise, hauteur : le plan, les règles appliquées et celles non intégrées.',
     cta: 'Générer le gabarit',
-    explication: 'Le plan et les règles, depuis l’outil Gabarit. Absent si le calcul est incomplet.',
+    explication: '',   // RETOURS-17 — petite phrase retirée des fenêtres Docs
   },
   // RECETTE-OUTILS-1 (point 50) — carte « Comparables DVF » (jamais faite, `bientot`) RETIRÉE du catalogue.
   {
@@ -80,7 +83,7 @@ export const CATALOGUE: DocCatalogue[] = [
     key: 'etude-zone', nom: 'Étude de zone', kind: 'zone', formats: ['PDF'],
     desc: 'Population, économie, immobilier, foncier, contraintes, équipements, dynamique — autour d’une parcelle, dans le rayon choisi.',
     cta: 'Générer l’étude de zone',
-    explication: 'Les 7 sections et la carte du périmètre.',
+    explication: '',   // RETOURS-17 — petite phrase retirée des fenêtres Docs
   },
   {
     // IMPLANTATION-4 (LOT A) — 9e carte : l'Étude de faisabilité a QUITTÉ les Outils, elle vit ICI. La
@@ -90,15 +93,16 @@ export const CATALOGUE: DocCatalogue[] = [
     key: 'etude-faisabilite', nom: 'Étude de faisabilité', kind: 'parcelle', formats: ['PDF'],
     desc: 'Scénarios d’implantation collectif : fourchette de logements, plan masse dessiné, contrôles des règles du PLU — pré-faisabilité.',
     cta: 'Ouvrir l’étude de faisabilité',
-    explication: 'Ouvre l’écran d’étude : configuration, scénarios A/B/C, plan masse, puis « Générer le PDF ».',
+    explication: '',   // RETOURS-17 — petite phrase retirée des fenêtres Docs
   },
   {
     // ANNONCE-3 — miroir de l'outil « Analyser une annonce » : une adresse (rapport parcelle) OU un
     // lien d'annonce Leboncoin (rapport commune). Le PDF Docs est identique à celui de l'outil.
     // RECETTE-4 — nom affiché « Estimer un bien » (clé/kind internes inchangés).
     key: 'analyse-annonce', nom: 'Estimer un bien', kind: 'annonce', formats: ['PDF'],
+    fichier: 'Estimation',   // RETOURS-17 — nom d'export (ex. « 97411000BZ1065 — Estimation.pdf »)
     desc: 'Une adresse ou un lien d’annonce : LABUSE croise le bien avec le marché et le foncier.',
     cta: 'Générer l’estimation',
-    explication: 'Une adresse → rapport parcelle (tuiles, prix, foncier) ; un lien → rapport commune.',
+    explication: '',   // RETOURS-17 — petite phrase retirée des fenêtres Docs
   },
 ]

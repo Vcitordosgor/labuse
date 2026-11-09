@@ -16,6 +16,8 @@ import { useApp } from '../../store/useApp'
 import type { FicheLine } from '../../lib/types'
 
 const SEV_COLOR: Record<string, string> = { fort: '#E8695A', moyen: '#E8B44C', faible: '#C9DCD1', info: '#8FA69A' }
+// RETOURS-17 — la puce de sévérité (Situation) dit « impact fort/moyen/faible », pas le mot nu.
+const SEV_LABEL: Record<string, string> = { fort: 'impact fort', moyen: 'impact moyen', faible: 'impact faible', info: 'info' }
 
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -131,8 +133,9 @@ function RefDrawer({ id, name, context, value, valueColor, accent, icon, micro, 
               : <span className={`t-val${absent ? ' absent' : ''}`} style={!absent && valueColor ? { color: valueColor } : undefined}>{value}</span>)
             : <span className="t-val absent">—</span>}
           {/* RECETTE-2 (T8) — chevron UNIQUE partagé (fermé = ◀, ouvert = ▼ vert), comme la fiche commune
-              (remplace le glyphe texte ⌄/›). */}
-          {children && <Chevron open={open} />}
+              (remplace le glyphe texte ⌄/›). RETOURS-17 — classe `t-chev` : au survol de la carte, le
+              chevron passe en NOIR (--ink), plus en gris (règle index.css). */}
+          {children && <Chevron open={open} className="t-chev" />}
         </div>
       </button>
       {/* L'intérieur reste plat : paires libellé-valeur (children). Le micro riche (jauge/
@@ -305,7 +308,7 @@ function Line({ line, hideWeight, hideDate }: { line: FicheLine; hideWeight?: bo
           </Tip>
           {line.severity && line.weight == null && (
             <span className="rounded-full px-1.5 text-[9px]" style={{ background: `${SEV_COLOR[line.severity]}22`, color: SEV_COLOR[line.severity] }}>
-              {line.severity}
+              {SEV_LABEL[line.severity] ?? line.severity}
             </span>
           )}
           {line.result === 'UNKNOWN' && <span className="text-[9px] text-txt-dim">inconnu</span>}

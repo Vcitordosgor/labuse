@@ -19,11 +19,13 @@ import { iduCourt } from '../../lib/format'
 
 export type SourceParcelle = 'adresse' | 'carte' | null
 
-export function EntreeParcelle({ source, onPick, placeholder, titre, picked, adresse, onChanger }: {
+export function EntreeParcelle({ source, onPick, placeholder, titre, picked, adresse, onChanger, viderApresPick }: {
   source: SourceParcelle
   onPick: (idu: string, src: 'adresse' | 'carte') => void
   placeholder?: string
   titre?: string
+  /** RETOURS-17 — outil multi-parcelles (Comparer) : le champ se vide après chaque ajout. */
+  viderApresPick?: boolean
   /** RECETTE-OUTILS-1 (T5) — IDU de la parcelle choisie : si fourni, on affiche la ligne « adresse ·
    *  Changer de parcelle » au lieu du bloc de recherche. */
   picked?: string | null
@@ -61,7 +63,7 @@ export function EntreeParcelle({ source, onPick, placeholder, titre, picked, adr
       {titre && <p className="text-[10.5px] text-txt-mut">{titre}</p>}
       <div className={champGrise ? 'pointer-events-none select-none opacity-40' : ''}
         aria-disabled={champGrise || undefined}>
-        <ParcelInput dataAttr="entree-parcelle" withCarte={false} onPick={(idu) => { if (!champGrise) onPick(idu, 'adresse') }}
+        <ParcelInput dataAttr="entree-parcelle" withCarte={false} viderApresPick={viderApresPick} onPick={(idu) => { if (!champGrise) onPick(idu, 'adresse') }}
           placeholder={placeholder ?? 'Adresse, IDU ou référence (BW0917)'} />
       </div>
       <div data-entree-carte

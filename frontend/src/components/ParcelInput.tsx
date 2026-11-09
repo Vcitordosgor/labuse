@@ -40,7 +40,7 @@ type Candidate = { idu: string; commune: string; surface_m2: number | null
 // GEOPF-3 — 5ᵉ grammaire « lieu_dit » (BD NYME) active par défaut dans toutes les barres.
 const GRAMMAIRES_DEFAUT: SuggestType[] = ['adresse', 'cadastre', 'proprietaire', 'siren', 'lieu_dit']
 
-export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, autoFocus, withCarte = true, inviteCarte, dataAttr, grammaires = GRAMMAIRES_DEFAUT }: {
+export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, autoFocus, withCarte = true, inviteCarte, dataAttr, grammaires = GRAMMAIRES_DEFAUT, viderApresPick }: {
   onPick: (idu: string) => void
   onAddress?: (label: string) => void
   // RECHERCHE-2 Lot 1 — remonte un pick PROPRIÉTAIRE (SIREN) au niveau propriétaire (Scan patrimoine).
@@ -55,6 +55,9 @@ export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, au
   inviteCarte?: boolean
   dataAttr?: string                 // hook QA : pose data-<dataAttr> sur le champ (ex. « courrier-idu »)
   grammaires?: SuggestType[]        // défaut = les 4 familles ; un appelant peut restreindre/étendre.
+  // RETOURS-17 — outils MULTI-parcelles (Comparer) : après chaque parcelle désignée, le champ se VIDE
+  // « pour la suivante » (et ne passe pas en état « résolu »). Défaut = false (outils mono-parcelle).
+  viderApresPick?: boolean
 }) {
   const selectedIdu = useApp((s) => s.selectedIdu)
   const commune = useApp((s) => s.commune)
@@ -68,6 +71,7 @@ export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, au
   // DISPARAÎT (elle réapparaît quand le champ est vidé). `seed` impose le libellé affiché (S1).
   const [resolu, setResolu] = useState(false)
   const [seed, setSeed] = useState<string | undefined>(undefined)
+  const [resetTick, setResetTick] = useState(0)   // RETOURS-17 — signal de vidage « pour la suivante »
   const attr = dataAttr ? { [`data-${dataAttr}`]: '' } : {}
 
   const clearRepliques = () => { setMsg(null); setCandidats(null); setOwner(null) }
@@ -76,8 +80,15 @@ export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, au
   // RETOURS-15 S2/S4 — chemin de résolution UNIQUE : marque « résolu », affiche le libellé, remonte
   // l'IDU. `seedText` alimente le champ pour les chemins HORS suggestion (le clic de suggestion
   // recopie déjà son libellé) ; sans lui on laisse le texte tel quel (IDU/adresse déjà saisi).
+  // RETOURS-17 — en mode `viderApresPick` (Comparer), on NE passe PAS en « résolu » et on VIDE le champ
+  // (incrément du signal de reset) : le même champ sert à ajouter la parcelle suivante.
   const resoudre = (idu: string, seedText?: string) => {
     clearRepliques()
+    if (viderApresPick) {
+      onPick(idu)
+      setResetTick((t) => t + 1)
+      return
+    }
     setResolu(true)
     if (seedText != null) setSeed(seedText)
     onPick(idu)
@@ -133,6 +144,7 @@ export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, au
         placeholder={placeholder ?? 'Propriétaire, adresse, IDU ou référence (BW0917)'}
         grammaires={grammaires}
         seed={seed}
+        resetSignal={viderApresPick ? resetTick : undefined}
         onClear={oublier}
         // Un pick PROPRIÉTAIRE / SIREN (type ≠ adresse/cadastre → onPick d'AddressAutocomplete) :
         // remonté à onProprietaire s'il existe (outil propriétaire), sinon sous-panneau de ses parcelles.

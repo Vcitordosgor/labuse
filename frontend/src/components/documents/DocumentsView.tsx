@@ -114,7 +114,8 @@ function DocCard({ d, onOpen }: { d: DocCatalogue; onOpen: () => void }) {
 }
 
 // ── la parcelle résolue (lit la fiche) : IDU, adresse+CP, zone + surface « à cheval ». ──
-function ParcelleResolue({ idu, onFiche, showFiche = true }: { idu: string; onFiche: () => void; showFiche?: boolean }) {
+// RETOURS-17 — le lien « Fiche → » est RETIRÉ des fenêtres Docs (props onFiche/showFiche supprimées).
+function ParcelleResolue({ idu }: { idu: string }) {
   const q = useQuery({ queryKey: ['fiche', idu], queryFn: () => getFiche(idu) })
   const f = q.data
   // zone dominante + part « à cheval » (comme la fiche) : la plus grande part des zones du règlement.
@@ -145,8 +146,6 @@ function ParcelleResolue({ idu, onFiche, showFiche = true }: { idu: string; onFi
           )}
         </>
       )}
-      {/* RECETTE-PROD-1 (B2) — le lien « Fiche → » est masqué dans la fenêtre Bilan (showFiche=false). */}
-      {showFiche && <button onClick={onFiche} className="absolute right-3 top-2.5 text-[13px] font-semibold text-amber hover:text-mint-on hover:rounded hover:bg-amber hover:px-1">Fiche →</button>}
     </div>
   )
 }
@@ -156,8 +155,6 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
   // FIX-NU3-2 (M-A04) — piège de focus + Échap + restitution au déclencheur sur la modale « document ».
   const dialogRef = useRef<HTMLDivElement | null>(null)
   usePiegeFocus(true, dialogRef, onClose)
-  const select = useApp((s) => s.select)
-  const setView = useApp((s) => s.setView)
   const ouvrirEtude = useApp((s) => s.ouvrirEtude)   // IMPLANTATION-4 (LOT A) — la carte Étude ouvre l'overlay
   const qc = useQueryClient()
   // enregistre la génération dans « Mes documents » (best-effort : la bibliothèque n'empêche jamais
@@ -189,7 +186,6 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
     return () => window.removeEventListener('keydown', h)
   }, [onClose])
 
-  const ouvrirFiche = (i: string) => { select(i); setView('cartes'); onClose() }
 
   // Gabarit : « Absent si calcul incomplet » — on interroge l'outil AVANT de proposer la génération.
   const gab = useQuery({
@@ -197,6 +193,11 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
     enabled: d.key === 'gabarit' && !!idu, retry: false,
   })
   const gabaritBloque = d.key === 'gabarit' && !!idu && gab.data?.status === 'incomplete'
+
+  // RETOURS-17 — nom du fichier exporté : « <IDU> — <Nom du document>.<ext> » (ex. « 97411000BZ1065
+  // — Estimation.pdf »). Le pré-dossier est un ZIP ; le reste des portes ci-dessous est en PDF.
+  const extDoc = d.key === 'pre-dossier' ? 'zip' : 'pdf'
+  const nomExport = (i: string) => `${iduComplet(i)} — ${d.fichier ?? d.nom}.${extDoc}`
 
   const generer = async () => {
     if (d.key === 'bilan') {
@@ -223,7 +224,7 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
     if (!url) return
     // DOCS-FIX-1 (P3/P4) — on n'inscrit dans « Mes documents » et on ne ferme la porte qu'au SUCCÈS ;
     // sur erreur la porte reste ouverte et affiche le message (plus de ligne pour un doc jamais produit).
-    if (await ouvrir(url, d.key)) { enregistrer(d.key as DocType, [idu]); onClose() }
+    if (await ouvrir(url, d.key, undefined, nomExport(idu))) { enregistrer(d.key as DocType, [idu]); onClose() }
   }
 
   const idusValides = idus.filter((x): x is string => !!x)
@@ -244,14 +245,14 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
           <div>
             <div className="mb-2 font-semibold text-txt">Sur quelle parcelle ?</div>
             <ParcelInput placeholder={placeholder} withCarte={false} onPick={setIdu} autoFocus />
-            {idu && <ParcelleResolue idu={idu} onFiche={() => ouvrirFiche(idu)} showFiche={d.key !== 'bilan'} />}
+            {idu && <ParcelleResolue idu={idu} />}
             {gabaritBloque ? (
               <p className="my-3 border-l-2 border-amber pl-2.5 text-[13px] text-amber">
                 Gabarit non calculable sur cette parcelle : donnée réglementaire manquante.
               </p>
-            ) : (
+            ) : d.explication ? (
               <p className="my-3 border-l-2 border-line-2 pl-2.5 text-[13px] text-txt-dim">{d.explication}</p>
-            )}
+            ) : <div className="my-3" />}
             {erreur && <p className="my-3 border-l-2 border-amber pl-2.5 text-[13px] text-amber">{erreur}</p>}
             <Bouton niveau="primaire" ton="vert" className="w-full" disabled={!idu || gabaritBloque || !!enCours} onClick={generer}>
               {enCours ? <Chargement variant="inline" accent="courant" label="Génération…" /> : d.cta}
@@ -273,16 +274,17 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
         {/* ── variante 2–3 parcelles (Comparatif) ── */}
         {d.kind === 'multi' && (
           <div>
-            <div className="mb-2 font-semibold text-txt">Quelles parcelles ? (2 à 3)</div>
+            {/* RETOURS-17 — « (2 à 3) » → « (jusqu'à 3) » ; le 3ᵉ champ porte le MÊME libellé que les deux autres. */}
+            <div className="mb-2 font-semibold text-txt">Quelles parcelles ? (jusqu’à 3)</div>
             <div className="grid gap-2">
               <ParcelInput placeholder={placeholder} withCarte={false} autoFocus onPick={(i) => setIdus((a) => [i, a[1], a[2]])} />
               <ParcelInput placeholder={placeholder} withCarte={false} onPick={(i) => setIdus((a) => [a[0], i, a[2]])} />
-              <ParcelInput placeholder="Troisième parcelle (facultatif)" withCarte={false} onPick={(i) => setIdus((a) => [a[0], a[1], i])} />
+              <ParcelInput placeholder={placeholder} withCarte={false} onPick={(i) => setIdus((a) => [a[0], a[1], i])} />
             </div>
-            <p className="my-3 border-l-2 border-line-2 pl-2.5 text-[13px] text-txt-dim">{d.explication}</p>
+            {d.explication && <p className="my-3 border-l-2 border-line-2 pl-2.5 text-[13px] text-txt-dim">{d.explication}</p>}
             {erreur && <p className="my-3 border-l-2 border-amber pl-2.5 text-[13px] text-amber">{erreur}</p>}
             <Bouton niveau="primaire" ton="vert" className="w-full" disabled={idusValides.length < 2 || !!enCours}
-              onClick={async () => { if (await ouvrir(docComparatifUrl(idusValides), 'comparatif')) { enregistrer('comparatif', idusValides); onClose() } }}>
+              onClick={async () => { if (await ouvrir(docComparatifUrl(idusValides), 'comparatif', undefined, `${idusValides.map(iduComplet).join(', ')} — ${d.fichier ?? d.nom}.pdf`)) { enregistrer('comparatif', idusValides); onClose() } }}>
               {enCours ? <Chargement variant="inline" accent="courant" label="Génération…" /> : d.cta}
             </Bouton>
           </div>
@@ -293,7 +295,7 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
           <div>
             <div className="mb-2 font-semibold text-txt">Autour d’une parcelle</div>
             <ParcelInput placeholder={placeholder} withCarte={false} autoFocus onPick={setIdu} />
-            {idu && <ParcelleResolue idu={idu} onFiche={() => ouvrirFiche(idu)} />}
+            {idu && <ParcelleResolue idu={idu} />}
             <div className="mb-2 mt-2 text-[13px] font-medium text-txt-mut">Rayon autour de la parcelle</div>
             {/* CHASSE-DONNEES-FIX-1 (E-77) — rayons SERVIS (discrets), plus un stepper 1..20 divergent du back. */}
             <div className="flex items-center gap-1.5">
@@ -304,10 +306,10 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
             </div>
             {/* RECETTE-4 — le menu « Activité (destination) » est retiré de la fenêtre Docs Étude de zone
                 (comme de l'outil et du PDF). */}
-            <p className="my-3 border-l-2 border-line-2 pl-2.5 text-[13px] text-txt-dim">{d.explication}</p>
+            {d.explication && <p className="my-3 border-l-2 border-line-2 pl-2.5 text-[13px] text-txt-dim">{d.explication}</p>}
             {erreur && <p className="my-3 border-l-2 border-amber pl-2.5 text-[13px] text-amber">{erreur}</p>}
             <Bouton niveau="primaire" ton="vert" className="w-full" disabled={!idu || !!enCours}
-              onClick={async () => { if (idu && await ouvrir(docEtudeZoneUrl(idu, rayon), 'etude-zone')) { enregistrer('etude-zone', [idu], rayon); onClose() } }}>
+              onClick={async () => { if (idu && await ouvrir(docEtudeZoneUrl(idu, rayon), 'etude-zone', undefined, nomExport(idu))) { enregistrer('etude-zone', [idu], rayon); onClose() } }}>
               {enCours ? <Chargement variant="inline" accent="courant" label="Génération…" /> : d.cta}
             </Bouton>
           </div>
@@ -321,7 +323,7 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
           <div>
             <div className="mb-2 font-semibold text-txt">Une adresse</div>
             <ParcelInput placeholder={placeholder} withCarte={false} autoFocus onPick={setIdu} />
-            {idu && <ParcelleResolue idu={idu} onFiche={() => ouvrirFiche(idu)} />}
+            {idu && <ParcelleResolue idu={idu} />}
             {/* ESTIMER-PRECISION-1 — surface habitable facultative : si renseignée, le total du rapport
                 l'utilise (« surface saisie »), à l'identique de l'écran de l'outil (écran == PDF == Doc). */}
             {idu && (
@@ -333,7 +335,7 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
               </div>
             )}
             <Bouton niveau="primaire" ton="vert" className="mt-2 w-full" disabled={!idu || !!enCours}
-              onClick={async () => { const sh = surfaceHab.trim() ? Math.round(Number(surfaceHab)) : null; const shv = sh != null && Number.isFinite(sh) && sh > 0 ? sh : null; if (idu && await ouvrir(docAnalyseAnnonceUrl(idu, shv), 'analyse-annonce')) { enregistrer('analyse-annonce', [idu]); onClose() } }}>
+              onClick={async () => { const sh = surfaceHab.trim() ? Math.round(Number(surfaceHab)) : null; const shv = sh != null && Number.isFinite(sh) && sh > 0 ? sh : null; if (idu && await ouvrir(docAnalyseAnnonceUrl(idu, shv), 'analyse-annonce', undefined, nomExport(idu))) { enregistrer('analyse-annonce', [idu]); onClose() } }}>
               {enCours === 'analyse-annonce' ? <Chargement variant="inline" accent="courant" label="Génération…" /> : d.cta}
             </Bouton>
             <div className="my-3 flex items-center gap-2 text-[13px] text-txt-mut">
@@ -344,12 +346,12 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
               className="h-10 w-full rounded-md border border-line-2 bg-surface-3 px-3 text-[13px] text-txt-hi placeholder:text-txt-mut focus:border-mint focus:outline-none"
               placeholder="https://www.leboncoin.fr/ventes_immobilieres/…"
               value={lien} onChange={(e) => setLien(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter' && lien.trim() && !enCours) void ouvrir(docAnalyseAnnonceLienUrl(lien.trim()), 'analyse-annonce').then((ok) => { if (ok) onClose() }) }}
+              onKeyDown={(e) => { if (e.key === 'Enter' && lien.trim() && !enCours) void ouvrir(docAnalyseAnnonceLienUrl(lien.trim()), 'analyse-annonce', undefined, `${d.fichier ?? d.nom}.pdf`).then((ok) => { if (ok) onClose() }) }}
             />
-            <p className="my-3 border-l-2 border-line-2 pl-2.5 text-[13px] text-txt-dim">{d.explication}</p>
+            {d.explication && <p className="my-3 border-l-2 border-line-2 pl-2.5 text-[13px] text-txt-dim">{d.explication}</p>}
             {erreur && <p className="my-3 border-l-2 border-amber pl-2.5 text-[13px] text-amber">{erreur}</p>}
             <Bouton niveau="secondaire" ton="vert" className="w-full" disabled={!lien.trim() || !!enCours}
-              onClick={async () => { if (await ouvrir(docAnalyseAnnonceLienUrl(lien.trim()), 'analyse-annonce')) onClose() }}>
+              onClick={async () => { if (await ouvrir(docAnalyseAnnonceLienUrl(lien.trim()), 'analyse-annonce', undefined, `${d.fichier ?? d.nom}.pdf`)) onClose() }}>
               {enCours ? <Chargement variant="inline" accent="courant" label="Génération…" /> : 'Générer depuis le lien'}
             </Bouton>
           </div>
@@ -401,15 +403,21 @@ function LigneDoc({ r, onChange }: { r: DocGenereRow; onChange: () => void }) {
   const { ouvrir: ouvrirDoc, enCours } = useOuvrirDocument(setToast)
   const [confirmSuppr, setConfirmSuppr] = useState(false)
   const busy = enCours === String(r.id)
+  // RETOURS-17 — nom du fichier exporté depuis « Mes documents » : « <IDU> — <Nom du document>.<ext> ».
+  const nomRow = (ext: string) => {
+    const idus = (r.idus ?? []).filter(Boolean).map(iduComplet)
+    return `${idus.length ? `${idus.join(', ')} — ` : ''}${r.document}.${ext}`
+  }
+  const nomPdf = () => nomRow(r.doc_type === 'pre-dossier' ? 'zip' : 'pdf')
   const ouvrir = () => {
-    if (r.doc_type === 'etude-faisabilite') { const i = etudeInitDe(r); if (i) void ouvrirDoc(ETUDE_PDF_URL, String(r.id), i); return }
-    const u = urlDocument(r); if (u) void ouvrirDoc(u, String(r.id))
+    if (r.doc_type === 'etude-faisabilite') { const i = etudeInitDe(r); if (i) void ouvrirDoc(ETUDE_PDF_URL, String(r.id), i, nomPdf()); return }
+    const u = urlDocument(r); if (u) void ouvrirDoc(u, String(r.id), undefined, nomPdf())
   }
   const regenerer = async () => {
     if (r.doc_type === 'etude-faisabilite') {
-      const i = etudeInitDe(r); if (i && await ouvrirDoc(ETUDE_PDF_URL, String(r.id), i)) rafraichirDocument(r.id).then(onChange).catch(() => {}); return
+      const i = etudeInitDe(r); if (i && await ouvrirDoc(ETUDE_PDF_URL, String(r.id), i, nomPdf())) rafraichirDocument(r.id).then(onChange).catch(() => {}); return
     }
-    const u = urlDocument(r); if (u && await ouvrirDoc(u, String(r.id))) rafraichirDocument(r.id).then(onChange).catch(() => {})
+    const u = urlDocument(r); if (u && await ouvrirDoc(u, String(r.id), undefined, nomPdf())) rafraichirDocument(r.id).then(onChange).catch(() => {})
   }
   // DOCS-FIX-1 (P6) — « Supprimer » : la route DELETE et supprimerDocument existaient, mais AUCUN
   // bouton ne les appelait. Deux temps (Supprimer → Confirmer) pour éviter la suppression accidentelle.
@@ -450,7 +458,7 @@ function LigneDoc({ r, onChange }: { r: DocGenereRow; onChange: () => void }) {
           {/* Excel : seulement sur les lignes Bilan ET si l'export existe (sinon absent, pas grisé). */}
           {r.doc_type === 'bilan' && r.excel && r.idus[0] && (
             <Bouton niveau="secondaire" ton="vert" className={btn} disabled={busy}
-              onClick={() => void ouvrirDoc(docBilanExcelUrl(r.idus[0], r.id), `xls-${r.id}`)}>Excel</Bouton>
+              onClick={() => void ouvrirDoc(docBilanExcelUrl(r.idus[0], r.id), `xls-${r.id}`, undefined, nomRow('xlsx'))}>Excel</Bouton>
           )}
           {modifie && (
             <Bouton niveau="secondaire" ton="vert" className={btn} disabled={busy} onClick={regenerer}>Régénérer</Bouton>

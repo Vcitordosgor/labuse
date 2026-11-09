@@ -32,8 +32,11 @@ export function pagesJaunes(adresse: string | null | undefined, commune: string 
   // CHASSE-NAV-FIX-1 (N-3) — n'ajouter la commune QUE si l'adresse ne la contient pas déjà : l'adresse
   // servie par l'API inclut souvent la commune (« … 97417 Saint-Denis ») → sinon « … Saint-Denis Saint-Denis ».
   const ou = a ? (c && !a.includes(c) ? `${a} ${c}` : a) : c
+  // RETOURS-17 — RÉPARATION : sans le paramètre `quoiqui` (même vide), PagesJaunes renvoie 404
+  // (« Aucun résultat … Commerces »). `quoiqui=` présent → page de résultats valide (HTTP 200) sur
+  // l'adresse/la commune. Vérifié en navigateur : `?ou=<adresse>` seul = 404 ; `?quoiqui=&ou=<adresse>` = 200.
   return {
-    url: `https://www.pagesjaunes.fr/annuaire/chercherlespros?ou=${encodeURIComponent(ou)}`,
+    url: `https://www.pagesjaunes.fr/annuaire/chercherlespros?quoiqui=&ou=${encodeURIComponent(ou)}`,
     commune_seule: !a,
   }
 }
@@ -55,8 +58,10 @@ export function errialUrl(adresse: string | null | undefined, commune: string | 
   }
 }
 
-// LIENS-1 — Google Earth : le contour SERVI de la parcelle en KMZ (endpoint back `/parcels/{idu}.kmz`,
-// même géométrie que la carte). Lien relatif (même origine, comme export.pdf) téléchargé au clic.
-export function googleEarthKmzUrl(idu: string): string {
-  return `/parcels/${encodeURIComponent(idu)}.kmz`
+// RETOURS-17 — Google Earth EN LIGNE, centré sur la parcelle (plus de téléchargement KMZ). On ouvre
+// earth.google.com/web avec la caméra positionnée sur le centroïde (`@lat,lon,<alt>a,<range>d,…`).
+// Vérifié en navigateur : l'URL charge Google Earth et centre sur la parcelle. `coords` = [lon, lat].
+export function googleEarthUrl(coords: Coords): string {
+  const [lon, lat] = coords
+  return `https://earth.google.com/web/@${lat},${lon},150a,600d,35y,0h,0t,0r`
 }

@@ -50,6 +50,10 @@ interface Props {
    *  recherche. Les clics de suggestion recopient déjà leur libellé (pick) — seed sert aux AUTRES
    *  chemins de résolution, pour que « l'adresse/l'IDU choisi » s'affiche en entier dans la barre. */
   seed?: string
+  /** RETOURS-17 — signal de RÉINITIALISATION : à chaque changement de cette valeur, le champ se VIDE
+   *  (outils multi-parcelles : « le champ se vide pour la suivante »). L'appelant l'incrémente après
+   *  chaque parcelle ajoutée. `undefined` = jamais de vidage automatique (comportement historique). */
+  resetSignal?: number
   'data-testid'?: string
 }
 
@@ -65,7 +69,7 @@ const DEFAUT: SuggestType[] = ['adresse', 'cadastre']
 
 export function AddressAutocomplete({
   onSelect, placeholder = 'Saisissez une adresse…', autoFocus, className,
-  onClear, onEnterRaw, grammaires = DEFAUT, onPick, onTextChange, seed, ...rest
+  onClear, onEnterRaw, grammaires = DEFAUT, onPick, onTextChange, seed, resetSignal, ...rest
 }: Props) {
   const [text, setText] = useState('')
   const [items, setItems] = useState<SuggestItem[]>([])
@@ -151,6 +155,17 @@ export function AddressAutocomplete({
     setItems([]); setOpen(false); setActive(-1); setNoResults(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seed])
+
+  // RETOURS-17 — vidage du champ « pour la suivante » (outils multi-parcelles) : au 1ᵉʳ montage
+  // resetSignal vaut 0 (ou undefined) → on ne vide rien ; à chaque incrément ultérieur, le champ se vide.
+  const resetVu = useRef(resetSignal)
+  useEffect(() => {
+    if (resetSignal == null || resetSignal === resetVu.current) return
+    resetVu.current = resetSignal
+    skipSearchRef.current = true
+    setText(''); setItems([]); setOpen(false); setActive(-1); setNoResults(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetSignal])
 
   const pick = (it: SuggestItem) => {
     if (it.note) return   // RECHERCHE-2 Lot 3 (b) — ligne d'information : rien à ouvrir, on ne fait rien.
