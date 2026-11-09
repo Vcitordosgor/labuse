@@ -147,4 +147,4 @@ def test_eh0043_au_non_etabli_a_verifier(db_session):
     assert r.band is None and r.band_provisional is not None   # pas de bande ferme ; provisoire au détail
     assert r.quantities["additional"] is not None       # capacité provisoire CONSULTABLE
     assert r.zone_portion and r.zone_portion["zone"] == "AUm"   # portion productive exposée (D9)
-    assert any("régime" in m for m in r.vigilance)
+    assert any("égime" in m.lower() or "RÉGIME" in m for m in r.vigilance)

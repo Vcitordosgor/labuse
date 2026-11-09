@@ -158,9 +158,34 @@ def _contraintes_partielles(motifs) -> dict:
     return out
 
 
+def _famille_portion_productive(motifs) -> str | None:
+    """Famille (U / AU) de la portion CONSTRUCTIBLE, lue des motifs de cascade — DISPONIBLE dans le
+    chemin rapide COMME dans le chemin enrichi (avis Astra passe-3 §3 : contrôle AU uniforme). Le
+    motif `zonage_plu_gpu` POSITIVE nomme la zone retenue (« Zone PLU « AUc »… constructible… »).
+    Renvoie 'AU', 'U' ou None (zonage non lisible dans les motifs)."""
+    if not isinstance(motifs, list):
+        return None
+    fam = None
+    for m in motifs:
+        if not isinstance(m, dict) or m.get("layer") != "zonage_plu_gpu":
+            continue
+        if m.get("result") != "POSITIVE":
+            continue
+        import re
+        mo = re.search(r"Zone PLU «\s*([A-Za-z]+)", m.get("detail") or "")
+        if mo:
+            code = mo.group(1).upper()
+            f = "AU" if code.startswith("AU") else "U" if code.startswith("U") else None
+            if f == "AU":
+                return "AU"          # l'AU prime : une portion AU au régime non établi commande
+            fam = fam or f
+    return fam
+
+
 def record_from_rows(sig: dict, ent: dict | None, geom: dict | None,
                      residuel: dict | None = None, assiette_source: str | None = None,
-                     zone_parts: list | None = None) -> tuple[v2.ScenarioRecord, str]:
+                     zone_parts: list | None = None, enrich_state: str = "not_requested"
+                     ) -> tuple[v2.ScenarioRecord, str]:
     """Construit un `ScenarioRecord` (+ bande V1 servie, pour la comparaison avant/après) depuis :
       · `sig`   — ligne `score_labuse` (Signal servi, cascade, bande V1) ;
       · `ent`   — ligne d'entrées de score (pente, aire, périmètre, accès, AU, cause résiduel) ;
@@ -176,11 +201,12 @@ def record_from_rows(sig: dict, ent: dict | None, geom: dict | None,
     # ── PROVENANCE UNIQUE (avis Astra §5.B / P2) : cause, assiette et quantités du MÊME calcul ──
     # Enrichi ⇒ tout vient du calcul LIVE `compute_residuel` (jamais mélangé au cache). Rapide ⇒
     # tout vient du cache servi. Le drapeau `prov` tracé est servi au résultat.
+    # Précision complète pour le calcul/barème (arrondi seulement à l'affichage — avis Astra §5).
     C = E = None
     if residuel is not None and residuel.get("disponible"):
-        C = residuel.get("sdp_max_m2")
-        E = residuel.get("sdp_existante_m2")
-        R = residuel.get("sdp_residuelle_m2")
+        C = residuel.get("sdp_max_m2_precis", residuel.get("sdp_max_m2"))
+        E = residuel.get("sdp_existante_m2_precis", residuel.get("sdp_existante_m2"))
+        R = residuel.get("sdp_residuelle_m2_precis", residuel.get("sdp_residuelle_m2"))
         cause = None
         eff_assiette = residuel.get("assiette_source")
         prov = "live"
@@ -189,7 +215,7 @@ def record_from_rows(sig: dict, ent: dict | None, geom: dict | None,
         R = residuel.get("sdp_ecrite")
         eff_assiette = residuel.get("assiette_source") or assiette_source
         prov = "live"
-    else:                                         # cache servi
+    else:                                         # cache servi (R déjà arrondi au run)
         cause = (ent or {}).get("cause") if ent else sig.get("cause")
         R = (ent or {}).get("sdp") if ent else sig.get("sdp_residuelle_m2")
         eff_assiette = assiette_source
@@ -209,11 +235,15 @@ def record_from_rows(sig: dict, ent: dict | None, geom: dict | None,
         if constr:
             prod_fam = max(constr, key=lambda p: p["area_m2"])["fam"]
 
-    # ── HORIZON (avis Astra §4/§3 — P4/P5) ──────────────────────────────────────────────────────
-    #  · `declasse_au_fermee` (AU fermée établie) → À différer.
-    #  · `declasse_au_statut_inconnu` → horizon INCONNU (jamais « À différer » ; reste à vérifier).
-    #  · capacité portée par une portion AU SANS régime établi (pas de `parcel_au_statut`, ouverture
-    #    / OAP / conditions d'équipement non prouvées) → horizon INCONNU (cas EH0043).
+    # ── HORIZON — contrôle AU UNIFORME (avis Astra passe-3 §3 / P1b) ────────────────────────────
+    # La famille de la portion productive est lue des MOTIFS de cascade (disponibles en chemin
+    # rapide COMME enrichi), pas de `zone_parts` (absents en rapide). Le régime se lit sur cette
+    # portion :
+    #  · `declasse_au_fermee` → À différer ;
+    #  · `declasse_au_statut_inconnu` → horizon INCONNU ;
+    #  · portion AU dont le régime n'est PAS ÉTABLI (aucune classe AU connue) → horizon INCONNU
+    #    (« régime non établi » : on ne prétend ni fermeture ni ouverture — à établir sur la portion).
+    fam_prod = prod_fam or _famille_portion_productive(sig.get("cascade_motifs"))
     horizon = el["horizon"]
     future = None
     if au_classe == "declasse_au_fermee":
@@ -221,10 +251,11 @@ def record_from_rows(sig: dict, ent: dict | None, geom: dict | None,
         future = C if C is not None else R
     elif au_classe == "declasse_au_statut_inconnu":
         horizon = "unknown"
-    elif prod_fam == "AU" and not au_classe and horizon == "now":
+    elif fam_prod == "AU" and not au_classe and horizon == "now":
         horizon = "unknown"
-        notes.append("La capacité repose sur une portion AU (à urbaniser) dont le régime (ouverture, "
-                     "OAP, conditions d'équipement) n'est pas établi — disponibilité actuelle à vérifier.")
+        notes.append("La capacité repose sur une portion AU (à urbaniser) dont le RÉGIME n'est pas "
+                     "établi sur la portion (ouverture, OAP, conditions d'équipement non prouvées ; "
+                     "l'absence de classement AU ne prouve rien) — disponibilité actuelle à vérifier.")
 
     # ── GÉOMÉTRIE : un défaut DUR (invalide) est traité QUELLE QUE SOIT la cause (P4) ───────────
     geometry_status = el["geometry_status"]
@@ -256,14 +287,15 @@ def record_from_rows(sig: dict, ent: dict | None, geom: dict | None,
         notes.append(f"Pente forte signalée (~{round(contr['pente_forte_pct'])} % en cascade) — "
                      "difficulté physique, pas une exclusion ; à rapprocher de la pente moyenne du Score.")
 
-    # ── Legacy (P3, avis Astra §2) : TOUTE capacité d'assiette de repli NON QUALIFIÉE est À
-    # VÉRIFIER (chiffre provisoire consultable). L'absence de PPR/EBC dans les motifs ne prouve PAS
-    # que le repli est correct ; seule une assiette `gabarit` (ou une version qualifiée) qualifie. ─
-    if eff_assiette == "residuel_legacy" and (R or 0) > 0 and calc_reliable:
-        calc_reliable = False
-        calc_doubt = ("Assiette calculée par un chemin de repli non qualifié (`residuel_legacy`) — "
-                      "capacité provisoire à confirmer (version et opérations réellement appliquées "
-                      "non établies ici).")
+    # ── Legacy (P1a, avis Astra passe-3 §2) : une assiette de repli NON QUALIFIÉE rend douteuse
+    # TOUTE capacité positive du SCÉNARIO — R en conservation, C en reconstruction. Le drapeau
+    # `assiette_qualifiee` est porté au record ; le moteur applique le doute PAR SCÉNARIO (une
+    # reconstruction saturée R=0 mais C>0 ne doit pas hériter d'un feu vert obtenu parce que R=0). ─
+    assiette_qualifiee = eff_assiette != "residuel_legacy"
+    if not assiette_qualifiee:
+        notes.append("Assiette calculée par un chemin de repli non qualifié (`residuel_legacy`) — "
+                     "la capacité servie au scénario (R en conservation, C en reconstruction) reste "
+                     "à confirmer (version et opérations réellement appliquées non établies ici).")
 
     rec = v2.ScenarioRecord(
         id=sig["idu"],
@@ -293,6 +325,8 @@ def record_from_rows(sig: dict, ent: dict | None, geom: dict | None,
         notes=notes,
         provenance=prov,
         assiette_source=eff_assiette,
+        assiette_qualifiee=assiette_qualifiee,
+        enrich_state=enrich_state,
         **_signal_state(sig))
     return rec, (sig.get("bande") or "")
 
@@ -321,14 +355,19 @@ def records_for_parcels(session: Session, parcel_ids: list[int], *, run_label: s
                  for r in session.execute(_GEOM_SQL, {"ids": parcel_ids})}
     assiette = {r._mapping["parcel_id"]: r._mapping["assiette_source"]
                 for r in session.execute(_ASSIETTE_SQL, {"ids": parcel_ids})}
+    # Échec du calcul live NON silencieux (avis Astra passe-3 §5) : état PAR PARCELLE —
+    # not_requested / ok / failed. Un échec ne retombe pas discrètement sur le cache.
     residuel = {}
+    etat = {}
     if enrich:
         from ..faisabilite.residuel import compute_residuel
         for pid in parcel_ids:
             try:
                 residuel[pid] = compute_residuel(session, pid)
+                etat[pid] = "ok"
             except Exception:
                 residuel[pid] = None
+                etat[pid] = "failed"
     zones = {}
     if with_zone:
         from ..faisabilite.zone_servie import zone_dominante
@@ -343,13 +382,23 @@ def records_for_parcels(session: Session, parcel_ids: list[int], *, run_label: s
         if sig is None:
             continue
         out.append(record_from_rows(sig, ent_rows.get(pid), geom_rows.get(pid), residuel.get(pid),
-                                    assiette_source=assiette.get(pid), zone_parts=zones.get(pid)))
+                                    assiette_source=assiette.get(pid), zone_parts=zones.get(pid),
+                                    enrich_state=etat.get(pid, "not_requested")))
     return out
+
+
+def _arrondi_affichage(q: dict) -> dict:
+    """Arrondi des quantités À L'AFFICHAGE seulement (le calcul/barème a utilisé la précision
+    complète — avis Astra passe-3 §5). Les valeurs invalides restent None (sérialisable)."""
+    return {k: (round(v) if v2._finite(v) else None) for k, v in q.items()}
 
 
 def _result_to_dict(res) -> dict:
     """Contrat de sortie par parcelle (D9, spec §11.1) : statut + cause, bande + score, quantités,
     points de vigilance, portion productive, Signal et son état."""
+    zp = res.zone_portion
+    if zp and v2._finite(zp.get("area_m2")):
+        zp = {**zp, "area_m2": round(zp["area_m2"])}
     return {
         "idu": res.id,
         "statut": res.status,
@@ -360,10 +409,10 @@ def _result_to_dict(res) -> dict:
         "score": res.score,
         "bande_provisoire": res.band_provisional,
         "horizon": res.horizon,
-        "quantites": res.quantities,
+        "quantites": _arrondi_affichage(res.quantities),
         "bornes": res.bounds,
         "vigilance": res.vigilance,
-        "zone_productive": res.zone_portion,
+        "zone_productive": zp,
         "signal": {k: res.signal.get(k) for k in ("status", "p", "niveau", "label", "reason")},
         "tri_valeur": res.rank_value,
         "details": res.details,
@@ -390,18 +439,29 @@ def analyse_scenarios_payload(session: Session, parcel_ids: list[int], *, mode: 
     rows = v2.order(records, opts)
     eff = v2.effectifs(rows)
     page = rows[offset:offset + limit]
+    recette = session.execute(text(
+        "SELECT signal_version FROM score_labuse WHERE run_label=:r AND signal_version IS NOT NULL "
+        "LIMIT 1"), {"r": run_label}).scalar()
+    parcelles = [_result_to_dict(r) for r in page]
+    # Contrat UNIQUE live = persisté (P3) : en vente, le statut foncier passe en champ séparé (le
+    # statut porte déjà l'état de Signal SIGNAL_*, comme le chemin persisté).
+    if mode == "sale":
+        for d in parcelles:
+            d["statut_foncier"] = None       # non calculé en vente live (le Signal domine)
     return {
         "analysis_version": v2.VERSION,
         "scenario_engine_version": score_version,       # barème/coefficients réutilisés (gravés)
-        "signal_recette": "q_v15",                       # modèle gelé relayé (D6) — jamais recalculé
+        "signal_recette": recette,                       # LUE du run servi (pas codée en dur, P3)
         "signal_run": run_label,
         "run_servi": run_label,
+        "source_donnees": "live", "provenance": "live",
+        "reference": "calculs V2 actuels comparés au Signal servi " + str(run_label),
         "mode": mode, "scenario": scenario, "sort": opts.get("sort"),
         "as_of": as_of,
         "n_selection": eff["n"],
         "effectifs": {"par_statut": eff["par_statut"], "par_bande": eff["par_bande"]},
         "page": {"limit": limit, "offset": offset, "n": len(page)},
-        "parcelles": [_result_to_dict(r) for r in page],
+        "parcelles": parcelles,
     }
 
 

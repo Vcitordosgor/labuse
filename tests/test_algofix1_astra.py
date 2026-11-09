@@ -103,10 +103,11 @@ def test_au_inconnu_distinct_de_au_ferme():
 
 # ── « probabilité Signal invalide jamais disponible » (P6) ──────────────────
 def test_signal_invalide_jamais_disponible():
-    assert persist._signal_persiste(1.2, "fort", False)["status"] == "NOT_AVAILABLE"
-    assert persist._signal_persiste(float("nan"), "fort", False)["status"] == "NOT_AVAILABLE"
-    assert persist._signal_persiste(float("inf"), "fort", False)["status"] == "NOT_AVAILABLE"
-    assert persist._signal_persiste(-0.1, "faible", False)["status"] == "NOT_AVAILABLE"
+    # Harmonisé avec le moteur pur (passe-4) : invalide → TO_VERIFY, JAMAIS AVAILABLE/en tête.
+    for bad in (1.2, float("nan"), float("inf"), -0.1):
+        st = persist._signal_persiste(bad, "fort", False)
+        assert st["status"] == "TO_VERIFY" and st["p"] is None
+        assert st["reason"] == "PROBABILITE_SERVIE_INVALIDE"
     ok = persist._signal_persiste(0.5, "moyen", False)
     assert ok["status"] == "AVAILABLE" and ok["p"] == 0.5
     assert persist._signal_persiste(None, None, True)["reason"] == "ECARTEE_ETAGE_0"
@@ -128,3 +129,85 @@ def test_arrondi_palier_non_franchi_silencieusement():
         {"mode": "potential", "scenario": "keep"})
     assert r_sous.quantities["additional"] == 199        # 1 m² de moins → palier inférieur, visible
     assert r_juste.band != r_sous.band or r_juste.score != r_sous.score
+
+
+# ══ Reproductions de la SECONDE revue d'Astra (passe-4) ══════════════════════
+
+# [1] Legacy par scénario : aucune reconstruction estimée sur assiette non qualifiée, SATURÉE ou non.
+def test_legacy_reconstruction_saturee_a_verifier():
+    # R=0 (saturée), C>0, assiette non qualifiée : conservation = Aucun ajout (R=0 réel) ;
+    # reconstruction = À vérifier (la capacité du scénario est C, pas R).
+    rec = v2.ScenarioRecord(id="SAT", area_m2=300, perimeter_m=70, capacity_rebuild_m2=142,
+                            existing_m2=169, residual_m2=0, slope_deg=10, eligibility="allowed",
+                            horizon="now", assiette_qualifiee=False)
+    keep = v2.evaluate(rec, {"mode": "potential", "scenario": "keep"})
+    reb = v2.evaluate(rec, {"mode": "potential", "scenario": "rebuild"})
+    assert keep.status == "NO_MARGIN"                   # R=0 : zéro réel du scénario conservation
+    assert reb.status == "TO_VERIFY"
+    assert reb.cause_codes == ["ASSIETTE_A_CONFIRMER"]  # C>0 sur legacy → à confirmer, même saturée
+    assert reb.band is None and reb.band_provisional is not None
+
+
+def test_legacy_conservation_positive_a_verifier():
+    rec = v2.ScenarioRecord(id="L", area_m2=1000, perimeter_m=130, capacity_rebuild_m2=800,
+                            existing_m2=100, residual_m2=700, slope_deg=8, eligibility="allowed",
+                            horizon="now", assiette_qualifiee=False)
+    assert v2.evaluate(rec, {"mode": "potential", "scenario": "keep"}).cause_codes == ["ASSIETTE_A_CONFIRMER"]
+    assert v2.evaluate(rec, {"mode": "potential", "scenario": "rebuild"}).cause_codes == ["ASSIETTE_A_CONFIRMER"]
+    # Qualifiée (gabarit) : estimée.
+    rec.assiette_qualifiee = True
+    assert v2.evaluate(rec, {"mode": "potential", "scenario": "keep"}).status == "ESTIMATED"
+
+
+# [1b] Contrôle AU uniforme : lu des motifs (chemin rapide comme enrichi), absence de classe ≠ preuve.
+def test_au_uniforme_depuis_motifs():
+    motifs_au = [{"layer": "zonage_plu_gpu", "result": "POSITIVE",
+                  "detail": "Zone PLU « AUm » (à urbaniser — constructible sur ~40 %)."}]
+    rec_au, _ = build.record_from_rows(_sig(cascade_motifs=motifs_au),
+                                       _ent(au_classe=None, sdp=500), None)   # chemin RAPIDE (cache)
+    assert rec_au.horizon == "unknown"                  # portion AU, régime non établi
+    motifs_u = [{"layer": "zonage_plu_gpu", "result": "POSITIVE",
+                 "detail": "Zone PLU « Uh » (urbaine — constructible sur ~90 %)."}]
+    rec_u, _ = build.record_from_rows(_sig(cascade_motifs=motifs_u), _ent(au_classe=None, sdp=500), None)
+    assert rec_u.horizon == "now"
+
+
+# [2] Bande provisoire = quantité du SCÉNARIO (C en reconstruction), pas R.
+def test_bande_provisoire_reconstruction_utilise_C():
+    rec = v2.ScenarioRecord(id="B", area_m2=2200, perimeter_m=190, capacity_rebuild_m2=2100,
+                            existing_m2=2100, residual_m2=0, slope_deg=9, eligibility="allowed",
+                            horizon="unknown")           # À vérifier (horizon inconnu)
+    reb = v2.evaluate(rec, {"mode": "potential", "scenario": "rebuild"})
+    assert reb.status == "TO_VERIFY"
+    assert reb.band_provisional not in (None, "0")      # bande sur C=2100 (pas « 0 » sur R=0)
+
+
+# [2] Précision complète : R issu de C/E précis, arrondi seulement à l'affichage.
+def test_precision_complete_pas_de_double_arrondi():
+    # C=384,4 E=184,6 → R=199,8 (< 200 → palier 35), PAS 200 (palier 55). Précision gardée.
+    rec = v2.ScenarioRecord(id="P", area_m2=1000, perimeter_m=130, capacity_rebuild_m2=384.4,
+                            existing_m2=184.6, residual_m2=None, slope_deg=5, eligibility="allowed",
+                            horizon="now")
+    r = v2.evaluate(rec, {"mode": "potential", "scenario": "keep"})
+    assert abs(r.quantities["additional"] - 199.8) < 1e-6   # R précis, pas 200
+    assert r.details["score_brut"] <= 40                    # palier < 200 (35 pts), pas 55
+
+
+# [2] Valeurs invalides en branche provisoire : jamais exposées, résultat sérialisable.
+def test_quantites_invalides_non_exposees():
+    import json
+    for mauvaise in (float("inf"), float("nan"), -5.0, "texte"):
+        rec = v2.ScenarioRecord(id="X", area_m2=1000, perimeter_m=130, capacity_rebuild_m2=mauvaise,
+                                existing_m2=100, residual_m2=None, slope_deg=5, eligibility="allowed",
+                                horizon="unknown")      # passe par provisoire()
+        r = v2.evaluate(rec, {"mode": "potential", "scenario": "rebuild"})
+        assert r.quantities["project_total"] in (None,)  # C invalide non exposé
+        json.dumps(r.quantities)                         # sérialisable (pas d'inf/nan)
+
+
+# [4] Échec du calcul live : état PAR PARCELLE, jamais silencieux.
+def test_enrich_state_par_parcelle():
+    rec, _ = build.record_from_rows(_sig(), _ent(), None, enrich_state="failed")
+    assert rec.enrich_state == "failed"
+    rec2, _ = build.record_from_rows(_sig(), _ent(), None)
+    assert rec2.enrich_state == "not_requested"

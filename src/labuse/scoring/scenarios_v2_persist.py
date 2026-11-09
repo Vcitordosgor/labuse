@@ -52,6 +52,8 @@ CREATE TABLE IF NOT EXISTS parcel_scenario_v2_runs (
   analysis_version      text,
   score_version         text,                         -- version du barème ENREGISTRÉE avec le résultat
   cascade_label         text,                         -- run cascade servi au calcul
+  surface_m2            integer,                       -- surface terrain (tri area, P3)
+  enrich_state          text,                          -- not_requested/ok/failed (par parcelle, P2)
   computed_at           timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (run_label, parcel_id, scenario)
 );
@@ -61,6 +63,8 @@ ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS provenance text;
 ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS assiette_source text;
 ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS score_version text;
 ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS cascade_label text;
+ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS surface_m2 integer;
+ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS enrich_state text;
 """
 
 _UPSERT = text("""
@@ -68,10 +72,10 @@ INSERT INTO parcel_scenario_v2_runs
   (run_label, parcel_id, idu, commune, scenario, status, cause, band, score, band_provisional,
    additional_m2, project_total_m2, existing_m2, net_signed_m2, conditional_future_m2, residual_m2,
    zone_prod_zone, zone_prod_area_m2, vigilance, bande_v1, enriched, provenance, assiette_source,
-   analysis_version, score_version, cascade_label)
+   analysis_version, score_version, cascade_label, surface_m2, enrich_state)
 VALUES
   (:run,:pid,:idu,:commune,:scn,:status,:cause,:band,:score,:bandp,
-   :add,:ptot,:exist,:net,:fut,:res,:zz,:za,:vig,:v1,:enr,:prov,:asrc,:ver,:sver,:clabel)
+   :add,:ptot,:exist,:net,:fut,:res,:zz,:za,:vig,:v1,:enr,:prov,:asrc,:ver,:sver,:clabel,:surf,:estate)
 ON CONFLICT (run_label, parcel_id, scenario) DO UPDATE SET
   idu=EXCLUDED.idu, commune=EXCLUDED.commune, status=EXCLUDED.status, cause=EXCLUDED.cause,
   band=EXCLUDED.band, score=EXCLUDED.score, band_provisional=EXCLUDED.band_provisional,
@@ -82,7 +86,8 @@ ON CONFLICT (run_label, parcel_id, scenario) DO UPDATE SET
   vigilance=EXCLUDED.vigilance, bande_v1=EXCLUDED.bande_v1, enriched=EXCLUDED.enriched,
   provenance=EXCLUDED.provenance, assiette_source=EXCLUDED.assiette_source,
   analysis_version=EXCLUDED.analysis_version, score_version=EXCLUDED.score_version,
-  cascade_label=EXCLUDED.cascade_label, computed_at=now()
+  cascade_label=EXCLUDED.cascade_label, surface_m2=EXCLUDED.surface_m2,
+  enrich_state=EXCLUDED.enrich_state, computed_at=now()
 """)
 
 
@@ -115,7 +120,8 @@ def _tone(status):
             else "amber" if status in ("TO_VERIFY", "DEFERRED", "COMPUTE_PENDING") else "neutral")
 
 
-def _row(run_label, pid, rec, bande_v1, res, scenario, enriched, score_version, cascade_label):
+def _row(run_label, pid, rec, bande_v1, res, scenario, enriched, score_version, cascade_label,
+         surface=None):
     q = res.quantities
     zp = res.zone_portion or {}
     import json
@@ -129,7 +135,8 @@ def _row(run_label, pid, rec, bande_v1, res, scenario, enriched, score_version, 
         "zz": zp.get("zone"), "za": _as_int(zp.get("area_m2")),
         "vig": json.dumps(res.vigilance, ensure_ascii=False), "v1": bande_v1,
         "enr": enriched, "prov": rec.provenance, "asrc": rec.assiette_source,
-        "ver": v2.VERSION, "sver": score_version, "clabel": cascade_label}
+        "ver": v2.VERSION, "sver": score_version, "clabel": cascade_label,
+        "surf": _as_int(surface), "estate": rec.enrich_state}
 
 
 def compute_scenarios_v2_batch(session: Session, parcel_ids: list[int], *,
@@ -149,10 +156,12 @@ def compute_scenarios_v2_batch(session: Session, parcel_ids: list[int], *,
         lot = parcel_ids[i:i + chunk]
         recs = build.records_for_parcels(session, lot, run_label=run_label, enrich=enrich,
                                           with_zone=enrich)
-        # commune par parcelle (une requête groupée par lot)
-        for r in session.execute(text("SELECT id, commune FROM parcels WHERE id = ANY(:i)"),
-                                 {"i": lot}):
+        # commune + surface par parcelle (une requête groupée par lot)
+        surface_by_id = {}
+        for r in session.execute(text("SELECT id, commune, ST_Area(geom_2975) FROM parcels "
+                                      "WHERE id = ANY(:i)"), {"i": lot}):
             commune_by_id[r[0]] = r[1]
+            surface_by_id[r[0]] = r[2]
         id_by_idu = {}
         for r in session.execute(text("SELECT idu, id FROM parcels WHERE id = ANY(:i)"), {"i": lot}):
             id_by_idu[r[0]] = r[1]
@@ -161,14 +170,17 @@ def compute_scenarios_v2_batch(session: Session, parcel_ids: list[int], *,
             pid = id_by_idu.get(rec.id)
             if pid is None:
                 continue
+            surf = surface_by_id.get(pid)
+            # `enriched` est désormais PAR PARCELLE : vrai seulement si le calcul live a réussi (P2).
+            enr_ok = enrich and rec.enrich_state == "ok"
             keep = v2.evaluate(rec, {"mode": "potential", "scenario": "keep"})
-            rk = _row(run_label, pid, rec, v1, keep, "keep", enrich, score_version, cascade_label)
+            rk = _row(run_label, pid, rec, v1, keep, "keep", enr_ok, score_version, cascade_label, surf)
             rk["commune"] = commune_by_id.get(pid)
             rows.append(rk)
             bilan["keep"] += 1
-            if enrich:
+            if enrich and rec.enrich_state == "ok":
                 reb = v2.evaluate(rec, {"mode": "potential", "scenario": "rebuild"})
-                rr = _row(run_label, pid, rec, v1, reb, "rebuild", True, score_version, cascade_label)
+                rr = _row(run_label, pid, rec, v1, reb, "rebuild", True, score_version, cascade_label, surf)
             else:
                 # Statut de reconstruction SANS chiffrer C : « Calcul à compléter » si C est requis
                 # (P1) — jamais « Capacité estimée » déduite. Quantités/bande nulles, cause distincte.
@@ -179,7 +191,8 @@ def compute_scenarios_v2_batch(session: Session, parcel_ids: list[int], *,
                     reb.band = None
                     reb.band_provisional = None
                     reb.quantities = {k: None for k in reb.quantities}
-                rr = _row(run_label, pid, rec, v1, reb, "rebuild", False, score_version, cascade_label)
+                rr = _row(run_label, pid, rec, v1, reb, "rebuild", False, score_version,
+                          cascade_label, surf)
             rr["commune"] = commune_by_id.get(pid)
             rows.append(rr)
             bilan["rebuild"] += 1
@@ -196,13 +209,17 @@ _READ_SQL = text("""
 SELECT s.idu, s.status, s.cause, s.band, s.score, s.band_provisional,
        s.additional_m2, s.project_total_m2, s.existing_m2, s.net_signed_m2,
        s.conditional_future_m2, s.residual_m2, s.zone_prod_zone, s.zone_prod_area_m2,
-       s.vigilance, s.bande_v1, s.enriched,
+       s.vigilance, s.bande_v1, s.enriched, s.surface_m2, s.enrich_state, s.analysis_version,
        sl.signal_p, sl.signal_niveau, sl.cascade_exclue
 FROM parcel_scenario_v2_runs s
 LEFT JOIN score_labuse sl ON sl.run_label = s.run_label AND sl.idu = s.idu
 WHERE s.run_label = :run AND s.scenario = :scn AND {where}
 ORDER BY s.idu
 """)
+
+# Signal (état interne) → état de la vue Prospection, IDENTIQUE au moteur pur (contrat unique, P3).
+_SALE_STATE = {"AVAILABLE": "SIGNAL_AVAILABLE", "TO_VERIFY": "SIGNAL_TO_VERIFY",
+               "NOT_AVAILABLE": "SIGNAL_NOT_AVAILABLE", "OUT_OF_SCOPE": "SIGNAL_OUT_OF_SCOPE"}
 
 
 def _filtre(commune, idus):
@@ -218,13 +235,14 @@ def _filtre(commune, idus):
 
 
 def _signal_persiste(p, niveau, cascade_exclue) -> dict:
-    """Signal servi RELAYÉ, avec la MÊME validation que le moteur pur (avis Astra §5.D / P6) :
-    une valeur hors [0,1], NaN ou infinie n'est JAMAIS « disponible » et ne se classe jamais en tête."""
+    """Signal servi RELAYÉ, MÊME validation ET MÊME état que le moteur pur (avis Astra passe-3 §6) :
+    une valeur hors [0,1], NaN ou infinie donne l'état `TO_VERIFY` (comme le moteur pur), jamais
+    « disponible », jamais en tête de classement."""
     if p is None:
         return {"status": "NOT_AVAILABLE", "p": None, "niveau": None,
                 "reason": "ECARTEE_ETAGE_0" if cascade_exclue else "SIGNAL_NON_CALCULE"}
     if not v2._finite(p) or p < 0 or p > 1:
-        return {"status": "NOT_AVAILABLE", "p": None, "niveau": None,
+        return {"status": "TO_VERIFY", "p": None, "niveau": None,
                 "reason": "PROBABILITE_SERVIE_INVALIDE"}
     return {"status": "AVAILABLE", "p": p, "niveau": niveau, "reason": "PROBABILITE_SERVIE"}
 
@@ -245,11 +263,12 @@ def read_scenarios(session: Session, *, run_label: str, scenario: str,
             "quantites": {"additional": m["additional_m2"], "project_total": m["project_total_m2"],
                           "existing": m["existing_m2"], "net_signed": m["net_signed_m2"],
                           "conditional_future": m["conditional_future_m2"]},
-            "residual_m2": m["residual_m2"],
+            "residual_m2": m["residual_m2"], "surface_m2": m["surface_m2"],
             "zone_productive": ({"zone": m["zone_prod_zone"], "area_m2": m["zone_prod_area_m2"]}
                                 if m["zone_prod_zone"] else None),
             "vigilance": m["vigilance"], "bande_v1": m["bande_v1"],
-            "quantites_calculees": m["enriched"],
+            "quantites_calculees": m["enriched"], "etat_calcul": m["enrich_state"],
+            "analysis_version": m["analysis_version"],
             "signal": _signal_persiste(m["signal_p"], m["signal_niveau"], m["cascade_exclue"]),
         })
     return out
@@ -257,8 +276,10 @@ def read_scenarios(session: Session, *, run_label: str, scenario: str,
 
 def _rank_value(row: dict, scenario: str, sort: str) -> float | None:
     q = row["quantites"]
+    if sort == "id":
+        return None                                          # tri par IDU seul
     if sort == "area":
-        return row.get("residual_m2") if False else None    # surface non stockée ici ; tri idu
+        return row.get("surface_m2")                         # surface persistée (P3)
     if row["statut"] == "DEFERRED":
         return None
     if scenario == "rebuild":
@@ -267,17 +288,20 @@ def _rank_value(row: dict, scenario: str, sort: str) -> float | None:
 
 
 def _trier(rows: list[dict], *, mode: str, scenario: str, sort: str) -> list[dict]:
-    """Tri déterministe D10 appliqué aux lignes LUES (groupe → bande → quantité → IDU)."""
+    """Tri déterministe D10 appliqué aux lignes LUES. `sort=id` = IDU seul ; `sort=area` = surface
+    persistée ; sinon groupe → bande → quantité → IDU (valeurs absentes après les connues)."""
     if mode == "sale":
         def key(r):
             p = r["signal"]["p"]
             av = r["signal"]["status"] == "AVAILABLE"
             return (0 if av else 1, -(p if av and v2._finite(p) else 0.0), r["idu"])
         return sorted(rows, key=key)
+    if sort == "id":
+        return sorted(rows, key=lambda r: r["idu"])
 
     def key(r):
         grp = v2.GROUP_ORDER.get(r["statut"], 9)
-        band = v2._BANDE_RANG.get(r["bande"], v2._BANDE_RANG["NC"])
+        band = 0 if sort == "area" else v2._BANDE_RANG.get(r["bande"], v2._BANDE_RANG["NC"])
         rv = _rank_value(r, scenario, sort)
         known = v2._finite(rv)
         return (grp, band, 0 if known else 1, -rv if known else 0.0, r["idu"])
@@ -291,17 +315,23 @@ def analyse_payload_persiste(session: Session, *, run_label: str, mode: str, sce
     """Réponse d'analyse V2 LUE de la table de run (l'endpoint ne calcule pas). Effectifs sur
     EXACTEMENT la sélection servie (commune ∩ IDU, avant pagination), Y COMPRIS en prospection (P6).
     Versions ENREGISTRÉES avec le résultat (pas lues à la requête — P2)."""
+    if sort and sort not in ("signal", "capacity", "gain", "area", "id"):
+        raise ValueError(f"tri inconnu : {sort}")
     scn_read = "keep" if mode == "sale" else scenario
     rows = read_scenarios(session, run_label=run_label, scenario=scn_read,
                           commune=commune, idus=idus)
     sort = sort or ("signal" if mode == "sale" else "area" if scenario == "divide" else "capacity")
     ordered = _trier(rows, mode=mode, scenario=scn_read, sort=sort)
-    # Effectifs : en prospection, par état de Signal (D9) ; en potentiel, par statut/bande. Toujours
-    # sur le même ensemble que la liste (commune ∩ IDU).
+    # Contrat UNIQUE persisté = live (P3) : en prospection, le STATUT servi est l'état de Signal
+    # (SIGNAL_*), le statut foncier passe dans un champ séparé ; les compteurs portent sur les
+    # états de Signal — dans les DEUX chemins.
     if mode == "sale":
         par_etat: dict = {}
-        for r in rows:
-            par_etat[r["signal"]["status"]] = par_etat.get(r["signal"]["status"], 0) + 1
+        for r in ordered:
+            etat = _SALE_STATE.get(r["signal"]["status"], "SIGNAL_NOT_AVAILABLE")
+            par_etat[etat] = par_etat.get(etat, 0) + 1
+            r["statut_foncier"] = r["statut"]
+            r["statut"] = etat
         eff = {"par_statut": par_etat, "par_bande": {}}
     else:
         eff = effectifs_persistes(session, run_label=run_label, scenario=scn_read,
@@ -309,11 +339,14 @@ def analyse_payload_persiste(session: Session, *, run_label: str, mode: str, sce
     ver = _versions_servies(session, run_label, scn_read, commune, idus)
     page = ordered[offset:offset + limit]
     return {
-        "analysis_version": v2.VERSION,
+        "analysis_version": ver.get("analysis_version") or v2.VERSION,   # LUE des lignes servies (P3)
         "scenario_engine_version": ver.get("score_version"),
         "cascade_run": ver.get("cascade_label"),
-        "signal_recette": "q_v15", "signal_run": run_label, "run_servi": run_label,
+        "signal_recette": ver.get("signal_recette"),                     # lue, pas codée en dur
+        "signal_run": run_label, "run_servi": run_label,
         "source_donnees": "run_persiste", "provenance": ver.get("provenance"),
+        "lot_mixte": ver.get("mixte", False),
+        "reference": ("calculs V2 actuels comparés au Signal servi " + run_label),  # wording honnête
         "mode": mode, "scenario": scenario, "sort": sort, "as_of": as_of,
         "n_selection": len(rows),
         "effectifs": {"par_statut": eff["par_statut"], "par_bande": eff["par_bande"]},
@@ -323,15 +356,33 @@ def analyse_payload_persiste(session: Session, *, run_label: str, mode: str, sce
 
 
 def _versions_servies(session, run_label, scenario, commune, idus) -> dict:
-    """Versions ENREGISTRÉES avec les résultats servis (pas la config lue à la requête — P2)."""
+    """Versions ENREGISTRÉES avec les résultats servis (pas la config lue à la requête — P2/P3).
+    Vérifie l'HOMOGÉNÉITÉ de la provenance : un lot cache+live est ANNONCÉ comme mixte, pas réduit
+    à une provenance arbitraire. La recette du Signal est LUE du run servi (pas codée en dur)."""
     where, params = _filtre(commune, idus)
     where = where.replace("s.commune", "commune").replace("s.idu", "idu")   # table sans alias
     params.update({"run": run_label, "scn": scenario})
-    row = session.execute(text(
-        f"SELECT score_version, cascade_label, provenance FROM parcel_scenario_v2_runs "
-        f"WHERE run_label=:run AND scenario=:scn AND {where} LIMIT 1"), params).fetchone()
-    return ({"score_version": row[0], "cascade_label": row[1], "provenance": row[2]}
-            if row else {})
+    rows = session.execute(text(
+        f"SELECT score_version, cascade_label, analysis_version, provenance, count(*) "
+        f"FROM parcel_scenario_v2_runs WHERE run_label=:run AND scenario=:scn AND {where} "
+        f"GROUP BY 1,2,3,4"), params).fetchall()
+    if not rows:
+        return {}
+    provs = {r[3] for r in rows}
+    top = max(rows, key=lambda r: r[4])
+    recette = _signal_recette_servie(session, run_label)
+    return {"score_version": top[0], "cascade_label": top[1], "analysis_version": top[2],
+            "provenance": "mixte" if len(provs) > 1 else top[3],
+            "mixte": len(provs) > 1, "signal_recette": recette}
+
+
+def _signal_recette_servie(session, run_label) -> str | None:
+    """Recette (version de modèle) du Signal servi, LUE de `score_labuse.signal_version` — pas codée
+    en dur (P3). Repli : le préfixe de version s'il n'y a pas de ligne."""
+    v = session.execute(text(
+        "SELECT signal_version FROM score_labuse WHERE run_label=:r AND signal_version IS NOT NULL "
+        "LIMIT 1"), {"r": run_label}).scalar()
+    return v
 
 
 def effectifs_persistes(session: Session, *, run_label: str, scenario: str,

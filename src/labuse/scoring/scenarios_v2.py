@@ -143,6 +143,8 @@ class ScenarioRecord:
     notes: list | None = None                  # vigilances pré-constituées par l'adaptateur
     provenance: str = "cache"                  # 'live' (calcul unique) / 'cache' (run servi)
     assiette_source: str | None = None         # 'gabarit' / 'residuel_legacy', du MÊME calcul
+    assiette_qualifiee: bool = True            # False = chemin de repli non qualifié (legacy)
+    enrich_state: str = "not_requested"        # not_requested / ok / failed / fallback (par parcelle)
 
 
 @dataclass
@@ -434,17 +436,24 @@ def evaluate(record, options=None) -> ScenarioResult:
 
     def provisoire():
         """Rend consultables, SANS les servir comme sûres, les quantités et la bande provisoire
-        d'une ligne « À vérifier » (avis Astra : chiffre provisoire consultable)."""
+        d'une ligne « À vérifier ». N'expose QUE des quantités VALIDES (finies, ≥ 0 ; net_signed
+        signé) — jamais NaN/∞/négatif, le résultat reste sérialisable (avis Astra passe-3 §5). La
+        bande provisoire suit la MÊME règle que la bande ferme : quantité de classement = C en
+        reconstruction, R en conservation."""
         C, E, R = rec.capacity_rebuild_m2, rec.existing_m2, rec.residual_m2
-        if _present(C):
+        if _nonneg(C):
             res.quantities["project_total"] = C
-        if _present(E):
+        if _nonneg(E):
             res.quantities["existing"] = E
-        if _present(C) and _present(E):
-            res.quantities["net_signed"] = C - E
-        q = (R if _nonneg(R) else (max(0.0, C - E) if _present(C) and _present(E) else None))
+        if _nonneg(C) and _nonneg(E):
+            res.quantities["net_signed"] = C - E            # signé (peut être négatif)
+        if _nonneg(R):
+            res.quantities["additional"] = R
+        elif _nonneg(C) and _nonneg(E):
+            res.quantities["additional"] = max(0.0, C - E)
+        q = (C if opts["scenario"] == "rebuild"
+             else (R if _nonneg(R) else (max(0.0, C - E) if _nonneg(C) and _nonneg(E) else None)))
         if _nonneg(q):
-            res.quantities["additional"] = q
             _, bande, _score = _bande_sensible_a_inconnue(q, rec, bareme)
             res.band_provisional = bande
             res.details["bande_provisoire"] = bande
@@ -568,6 +577,16 @@ def _finish_keep(rec, opts, res, bareme, cause, vig, finish):
     if err:
         return finish("TO_VERIFY", err)
 
+    # P1a — assiette de repli non qualifiée : la capacité du scénario CONSERVATION est R. Si R > 0,
+    # elle est à confirmer (chiffre provisoire + bande provisoire conservés). R = 0 reste « Aucun
+    # ajout » (zéro réel du scénario, pas une capacité positive douteuse).
+    if not rec.assiette_qualifiee and R > 0:
+        _, bande_p, _s = _bande_sensible_a_inconnue(R, rec, bareme)
+        res.band_provisional = bande_p
+        res.details["bande_provisoire"] = bande_p
+        vig("Assiette de repli non qualifiée — capacité de conservation (R) à confirmer.")
+        return finish("TO_VERIFY", "ASSIETTE_A_CONFIRMER")
+
     vig("Marge par différence : l'insertion avec le bâti conservé reste à vérifier.")
     if R == 0:
         # Spec §7.1 / D3 : « Aucun ajout identifié selon les hypothèses », pas « rien à construire ».
@@ -593,6 +612,16 @@ def _finish_rebuild(rec, opts, res, bareme, cause, vig, finish):
     res.quantities["existing"] = E
     res.quantities["net_signed"] = C - E          # signé : une perte reste négative (spec §7.2)
     res.quantities["additional"] = max(0.0, C - E)
+
+    # P1a — assiette de repli non qualifiée : la capacité du scénario RECONSTRUCTION est C. Si C > 0,
+    # elle est à confirmer, MÊME saturée (R = 0, E ≥ C) : le statut reconstruction ne doit pas
+    # hériter d'un feu vert obtenu parce que R vaut zéro (avis Astra passe-3 §2).
+    if not rec.assiette_qualifiee and C > 0:
+        _, bande_p, _s = _bande_sensible_a_inconnue(C, rec, bareme)
+        res.band_provisional = bande_p
+        res.details["bande_provisoire"] = bande_p
+        vig("Assiette de repli non qualifiée — capacité de reconstruction (C) à confirmer.")
+        return finish("TO_VERIFY", "ASSIETTE_A_CONFIRMER")
 
     err = _bornes(rec, res, C, E, "rebuild", vig)
     if err:

@@ -131,7 +131,34 @@ def test_versions_enregistrees_avec_le_resultat(db_session):
         commune="Entre-Deux", limit=1, offset=0)
     assert pl["scenario_engine_version"]                        # version PERSISTÉE, pas None
     assert pl["cascade_run"]
-    assert pl["provenance"] in ("live", "cache")
+    assert pl["provenance"] in ("live", "cache", "mixte")
+    assert pl["signal_recette"] and pl["signal_recette"] != "q_v15"   # LUE du run (ex. signal_v2+q_v15)
+    assert "figé" not in pl["reference"] and "q_v20" in pl["reference"]
+
+
+# ── P3 (passe-4) — contrat API persisté = live en prospection : statut = état Signal ────────────
+def test_prospection_statut_est_etat_signal(db_session):
+    pl = persist.analyse_payload_persiste(
+        db_session, run_label="q_v20", mode="sale", scenario="keep", sort="signal",
+        commune="Entre-Deux", limit=20, offset=0)
+    assert all(p["statut"].startswith("SIGNAL_") for p in pl["parcelles"])   # état Signal, pas foncier
+    assert all("statut_foncier" in p for p in pl["parcelles"])               # foncier dans un champ séparé
+    assert all(k.startswith("SIGNAL_") for k in pl["effectifs"]["par_statut"])
+
+
+def test_tris_id_et_area_persistes(db_session):
+    idp = persist.analyse_payload_persiste(
+        db_session, run_label="q_v20", mode="potential", scenario="keep", sort="id",
+        commune="Entre-Deux", limit=20, offset=0)
+    idus = [p["idu"] for p in idp["parcelles"]]
+    assert idus == sorted(idus)                                 # sort=id : IDU croissant
+    ar = persist.analyse_payload_persiste(
+        db_session, run_label="q_v20", mode="potential", scenario="keep", sort="area",
+        commune="Entre-Deux", limit=20, offset=0)
+    # surface décroissante AU SEIN du premier groupe de statut
+    g0 = [p for p in ar["parcelles"] if p["statut"] == ar["parcelles"][0]["statut"]]
+    surf = [p["surface_m2"] for p in g0 if p.get("surface_m2") is not None]
+    assert surf == sorted(surf, reverse=True)
 
 
 def test_signal_lu_egale_signal_servi(db_session):
