@@ -18,7 +18,7 @@ import hashlib
 import re
 from typing import Any, Optional
 
-from .rendu import Cartouche, esc, page_html
+from .rendu import FOOT_LIGNE, Cartouche, esc, page_html
 
 
 def _donnees_labuse_au_etude(genere_le: str) -> str:
@@ -76,7 +76,7 @@ table.ef-scn tr.retenu { background: var(--mint-bg); }
 .art { border-left: 2pt solid var(--mint); padding: 2pt 0 2pt 7pt; margin: 5pt 0; }
 .art-ref { font-size: 8pt; font-weight: 600; color: var(--mint-ink); }
 .art-cit { font-size: 8.5pt; font-style: italic; color: var(--ink); margin-top: 1pt; }
-.url { font-family: monospace; font-size: var(--fs-xs); word-break: break-all; color: var(--muted); }
+.url { font-family: "JetBrains Mono", monospace; font-size: var(--fs-xs); word-break: break-all; color: var(--muted); }
 .st { display: inline-block; font-size: var(--fs-xs); padding: 2pt 5pt; border-radius: 2pt; white-space: nowrap; }
 .st.ok { color: var(--mint-ink); background: var(--mint-bg); border: 1px solid var(--mint); }
 .st.cp { color: var(--amber); background: var(--amber-bg); border: 1px solid var(--amber); }
@@ -326,7 +326,10 @@ def _svg_plan(fc: dict, kinds: list[str], *, w: int = 620, h: int = 440) -> str:
     # flèche nord
     body.append('<g transform="translate(%d,24)"><path d="M0,-12 6,6 0,2 -6,6 Z" fill="#1F2A24"/>'
                 '<text x="-4" y="20" font-size="11" fill="#1F2A24">N</text></g>' % (w - 26))
-    return ('<div class="ef-fig"><svg viewBox="0 0 %d %d" width="100%%">%s</svg></div>'
+    # DOCS-DA-1 (V11) — font-family Inter héritée par tout le SVG (la flèche nord et tout <text>) :
+    # plus de repli Verdana dans l'Étude de faisabilité.
+    return ('<div class="ef-fig"><svg viewBox="0 0 %d %d" width="100%%" '
+            'font-family="Inter, sans-serif">%s</svg></div>'
             % (w, h, "".join(body)))
 
 
@@ -1016,7 +1019,7 @@ def rendu_etude(payload: dict, *, genere_le: str, scenario_ref: Optional[str] = 
         doc_ref=f"{refs} · {numero}",
         # DOCS-1 (décision Vic) — pied RACCOURCI (l'IDU, le type et le « généré le » sont déjà en tête) :
         # le numéro de page tient sur une ligne.
-        doc_foot=(f"Étude de faisabilité · pré-faisabilité, non contractuel."))
+        doc_foot=FOOT_LIGNE)
     corps = (
         f"<style>{_STYLE}</style>"
         + _p1_synthese(payload, retenu, numero, genere_le)
@@ -1052,7 +1055,7 @@ def rendu_lotissement(payload: dict, *, genere_le: str) -> dict:
     cart = Cartouche(
         doc_title=f"LABUSE — Lotissement · {commune}",
         doc_ref=f"{idus[0][8:] if idus else ''} · {numero}",
-        doc_foot=(f"Lotissement · pré-faisabilité, non contractuel."))
+        doc_foot=FOOT_LIGNE)
     lignes = "".join(f"<tr><td>Lot {i}</td><td class='n'>{fr(s)} m²</td></tr>"
                      for i, s in enumerate(tl["surfaces_m2"], 1))
     racc = "".join(f"<tr><td>{r['reseau']}</td><td class='n'>{'non vérifié' if r['distance_m'] is None else fr(r['distance_m'])+' m'}</td></tr>"
@@ -1109,7 +1112,7 @@ def rendu_hors_perimetre(payload: dict, *, genere_le: str) -> dict:
     cart = Cartouche(
         doc_title=f"LABUSE — Étude de faisabilité · {commune}",
         doc_ref=f"{idus[0][8:] if idus else ''} · {numero}",
-        doc_foot=(f"Étude de faisabilité · pré-faisabilité, non contractuel."))
+        doc_foot=FOOT_LIGNE)
     # contraintes signalées (texte du payload) — « signalées, non interprétées », comme l'étude normale.
     t = payload.get("terrain") or {}
     crows = "".join(f"<li>{esc(lib)}</li>" for lib in (t.get("contraintes_signalees") or []))

@@ -31,15 +31,21 @@
     border-bottom: 0.6pt solid #1E9E58; width: 100%; padding-bottom: 4pt;
     margin-bottom: 8pt; vertical-align: bottom;
   }
+  /* DOCS-DA-1 (V11) — la date ne vit qu'en couverture (garde) : plus de date dans l'en-tête courant. */
   @top-right {
-    content: "{{ date_generation }}";
+    content: "{{ reference }}";
     font-family: "JetBrains Mono", monospace; font-size: 10.5px; color: #8C9891;
     border-bottom: 0.6pt solid #1E9E58; vertical-align: bottom;
     padding-bottom: 4pt; margin-bottom: 8pt;
   }
-  @bottom-center {
-    content: "Document d'information — ne remplace pas un certificat d'urbanisme ; ne vaut ni document opposable, ni conseil juridique · page " counter(page) "/" counter(pages);
-    font-family: "Inter"; font-size: 10.5px; color: #8C9891;
+  /* DOCS-DA-1 (V11) — pied UNIFORME sur UNE ligne : mention légale à gauche, pagination à droite. */
+  @bottom-left {
+    content: "Document d'information · ne remplace ni un certificat d'urbanisme, ni une étude réglementaire, ni un conseil juridique";
+    font-family: "Inter"; font-size: 10.5px; color: #8C9891; white-space: nowrap;
+  }
+  @bottom-right {
+    content: counter(page) " / " counter(pages);
+    font-family: "Inter"; font-size: 10.5px; color: #8C9891; white-space: nowrap;
   }
 }
 @page garde { @top-left { content: none; } @top-right { content: none; } }

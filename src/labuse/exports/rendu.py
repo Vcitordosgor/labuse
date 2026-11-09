@@ -28,6 +28,12 @@ _FONT_FACE = f"""
 """
 
 
+#: DOCS-DA-1 (V11, arbitrage Vic / maquette) — la mention de PIED, UNIQUE et IDENTIQUE pour TOUS les
+#: documents : une seule ligne à gauche (la pagination est à droite). Sans date, sans « Généré via LABUSE ».
+FOOT_LIGNE = ("Document d'information · ne remplace ni un certificat d'urbanisme, ni une étude "
+              "réglementaire, ni un conseil juridique")
+
+
 def esc(s) -> str:
     """Échappe une valeur pour le HTML. `None` → chaîne vide (le bloc décide de « non chiffré »)."""
     return _html.escape("" if s is None else str(s))
@@ -126,11 +132,14 @@ def page_html(titre_html: str, cartouche: Cartouche, corps_html: str, *, lang: s
     # DOCS-COHERENCE-1 (C3) — les boîtes de marge @page N'HÉRITENT PAS du body : on y REDÉSACTIVE les
     # ligatures OpenType (sinon « aﬀaires », « transme re », « éme eur » : le « tt »/« ff » ligaturé
     # tombe à l'extraction, comme RECETTE-6 pour le corps). Correctif pour les 8 documents.
-    # DOCS-DA-1 — aucune taille sous 10,5 px : le pied littéral passe de 7,2 pt à 10,5 px (--fs-xs).
+    # DOCS-DA-1 — aucune taille sous 10,5 px : le pied littéral à 10,5 px (--fs-xs).
+    # V11 — le pied tient sur UNE LIGNE (`white-space: nowrap`) : la mention légale uniforme à gauche,
+    # la pagination à droite (@bottom-right de theme.css) ; plus de @bottom-center.
     foot_css = ('@page { @bottom-left { content: "' + _css_str(cartouche.doc_foot) + '"; '
-                'font: 10.5px "Inter","DejaVu Sans",sans-serif; color:#6B746E; '
+                'font: 10.5px "Inter","DejaVu Sans",sans-serif; color:#6B746E; white-space: nowrap; '
                 'font-variant-ligatures: none; '
-                'font-feature-settings: "liga" 0, "clig" 0, "dlig" 0, "calt" 0 } }')
+                'font-feature-settings: "liga" 0, "clig" 0, "dlig" 0, "calt" 0 } '
+                '@bottom-center { content: none } }')
     # ANNONCE-3-FIX — `page_extra_css` : règles @page SUPPLÉMENTAIRES propres à un document (ex. le
     # compteur de pages en `white-space:nowrap`). Vide par défaut → les documents existants (servis)
     # produisent EXACTEMENT le même HTML qu'avant.

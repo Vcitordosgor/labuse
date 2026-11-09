@@ -69,7 +69,13 @@ def docs():
     _pdf("Comparatif", c.get(f"/comparatif.pdf?idus={_IDU},{_VOISINES[0]},{_VOISINES[1]}"))
     _pdf("Apporteur", c.get(f"/apporteur/{_IDU}.pdf"))
     _pdf("Courrier", c.post("/courrier/pdf", json={"idu": _IDU}), scaled=False)
-    _pdf("Etude-faisa", c.post("/modules/etude/pdf", json={"idus": [_IDU]}))
+    # l'Étude de faisabilité peut renvoyer un 503 transitoire (moteur d'implantation CPU-bound) : on
+    # réessaie, pour que le test des polices porte AUSSI sur l'Étude (DOCS-DA-1 V11).
+    for _ in range(4):
+        r = c.post("/modules/etude/pdf", json={"idus": [_IDU]})
+        if r.status_code == 200 and r.content[:4] == b"%PDF":
+            out["Etude-faisa"] = (r.content, True)
+            break
     g = c.post(f"/bilan/{_IDU}/generer", json={
         "programme": {"terrain": None, "surface_taxable": 65, "sdp": 35},
         "produits": [{"libelle": "Logement", "lots": 1, "suv": 65, "prix_ttc_m2_suv": 4500, "tva": 0.021}],
@@ -158,6 +164,30 @@ def test_pied_de_page_sans_date(docs):
                         if sp["bbox"][1] >= seuil and _RX_DATE.search(sp["text"]):
                             fautes.append(f"{nom} p{pno + 1}: « {sp['text'][:30]} »")
     assert not fautes, "date dans le pied de page : " + " ; ".join(sorted(set(fautes))[:20])
+
+
+def test_pied_de_page_tient_sur_une_ligne(docs):
+    """Le pied de page tient sur UNE SEULE ligne de texte (mention légale à gauche, pagination à
+    droite) — sur les documents du gabarit (WeasyPrint). On vérifie que la bande basse (~15 mm) ne
+    porte qu'UNE rangée de texte (toutes les empreintes sur la même ligne de base)."""
+    import fitz
+    fautes = []
+    for nom, (octets, scaled) in docs.items():
+        if not scaled:
+            continue
+        d = fitz.open(stream=octets, filetype="pdf")
+        for pno in range(d.page_count):
+            pg = d[pno]
+            seuil = pg.rect.height - 42.0
+            rangs = set()
+            for blk in pg.get_text("dict")["blocks"]:
+                for ln in blk.get("lines", []):
+                    for sp in ln.get("spans", []):
+                        if sp["bbox"][1] >= seuil and sp["text"].strip():
+                            rangs.add(round(sp["bbox"][1] / 5.0))   # tolérance ~5 pt = même ligne
+            if len(rangs) > 1:
+                fautes.append(f"{nom} p{pno + 1}: {len(rangs)} lignes de pied")
+    assert not fautes, "pied sur plusieurs lignes : " + " ; ".join(sorted(set(fautes))[:20])
 
 
 def test_aucun_fond_sombre_pleine_page(docs):

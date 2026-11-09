@@ -14,6 +14,28 @@ figure dans `git branch --merged origin/main`). Préalable rempli — le mandat 
 
 ---
 
+## V11 — deux écarts (relecture Vic)
+
+1. **Pied sur UNE SEULE ligne, IDENTIQUE pour tous les documents** — à gauche « Document d'information ·
+   ne remplace ni un certificat d'urbanisme, ni une étude réglementaire, ni un conseil juridique », à
+   droite la pagination ; **« Généré via LABUSE » retiré** du pied. Source unique `rendu.FOOT_LIGNE`,
+   servie par `builder._FOOT` (tous les exports), le Bilan, l'Étude de faisabilité et le Flash
+   (`rapport.css` : @bottom-left légal + @bottom-right pagination). `@bottom-left { white-space: nowrap }`
+   garde la mention sur une ligne (mesuré : x0=45→x1=482 pt, pagination à 530 pt, 0 chevauchement). Le
+   « Généré via LABUSE » des deux chemins (dossier.py @bottom-center + documents.py `_mention_marque`)
+   est retiré. Testé : `test_pied_de_page_tient_sur_une_ligne` (bande basse = une seule rangée de texte).
+2. **Étude de faisabilité — Verdana + Andale Mono éliminées** (textes du plan masse SVG) : `font-family`
+   Inter posée sur la racine du SVG `_svg_plan` (la flèche nord héritait Verdana), `.url` passe de
+   `monospace` (→ Andale Mono) à **JetBrains Mono**. Après : le PDF n'embarque plus que Inter + JetBrains.
+   Le **test des polices porte sur TOUS les PDF réellement générés, Étude comprise** (le fixture réessaie
+   le 503 transitoire de l'Étude).
+
+**Recette V11** : banc des documents **VERT — 0 écart** (13 témoins/130 docs) ; test gabarit
+`tests/test_docs_da_1.py` **5 passed** (fond, polices 11 docs + Étude, tailles, **pied sans date**,
+**pied une ligne**) ; hook vert ; régénération **V11** (`scripts/docs1_regen_v11.py`).
+
+---
+
 ## V10 — six écarts avec la maquette corrigés (relecture Vic)
 
 1. **Pied de page sur une ligne, SANS date, tous documents** — la date de la donnée ne vit qu'en

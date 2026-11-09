@@ -17,7 +17,7 @@ from __future__ import annotations
 from datetime import date
 
 from ..exports import numeros
-from ..exports.rendu import Cartouche, esc, page_html, render_pdf
+from ..exports.rendu import FOOT_LIGNE, Cartouche, esc, page_html, render_pdf
 from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17/D-13) — jour Réunion, pas process
 from .catalogue import Catalogue, assiette_unite, charger_catalogue
 from .moteur import ResultatBilan
@@ -299,7 +299,7 @@ def construire_html(
     cart = Cartouche(
         doc_title=f"LABUSE — Bilan" + (f" · {adresse}" if adresse else ""),
         doc_ref=f"{idu} · {numero}",
-        doc_foot="Document d'information LABUSE.",
+        doc_foot=FOOT_LIGNE,   # DOCS-DA-1 (V11) — pied uniforme, une ligne, sans date
     )
     html = page_html("Bilan", cart, f"<style>{_CSS}</style>" + "".join(corps))
     return html, cart
