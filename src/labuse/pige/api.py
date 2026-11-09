@@ -2029,7 +2029,8 @@ def _parcelle_mesures(db, idu: str, fiche: dict) -> list[dict]:
             {"i": idu}).mappings().first()
     ecartee = bool(srun) and (srun["rc"] is not None or srun["sc"] is not None)
     if srun and isinstance(srun["s"], (int, float)) and not ecartee:
-        suff = " (estimation simplifiée)" if srun["a"] == "residuel_legacy" else ""
+        # RESIDUEL-2 — repli qualifié OU non : inset uniforme → « estimation simplifiée » dans les deux cas.
+        suff = " (estimation simplifiée)" if str(srun["a"] or "").startswith("residuel_legacy") else ""
         out.append({"cle": "SDP restante estimée", "valeur": f"{_fmt_m2_fr(round(srun['s']))}{suff}"})
     return out
 

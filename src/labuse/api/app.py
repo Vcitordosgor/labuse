@@ -6932,7 +6932,11 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
     # gabarit ne sert pas) : (1) AUCUN intermédiaire impossible n'est servi — un taux/pourcentage
     # > 100 % (ex. 607 %, 640 % vus à l'audit) est SUPPRIMÉ (None), jamais affiché comme un fait ;
     # (2) chaque chiffre de ce moteur porte la mention « estimation simplifiée ».
-    estimation_simplifiee = (row["assiette_source"] == "residuel_legacy")
+    # RESIDUEL-2 — le moteur de secours (inset uniforme) porte « estimation simplifiée », qu'il soit
+    # QUALIFIÉ (`residuel_legacy_qualifie` : règles provablement appliquées) ou non : la géométrie
+    # reste plus simple que le gabarit par côté. La qualification est portée par `assiette_source`
+    # pour la couche de scoring, pas par ce libellé client.
+    estimation_simplifiee = str(row["assiette_source"] or "").startswith("residuel_legacy")
     # SDP-UNIQUE-1 (E-007) — la SDP résiduelle « bâti conservé » DÉDUIT le bâti existant (emprise ×
     # niveaux). Quand la hauteur du bâti n'est ni mesurée au LiDAR ni déclarée en BD TOPO, le moteur
     # suppose R+1 (`hauteur_source='sans'`). On le DIT au client dès qu'il y a du bâti à déduire

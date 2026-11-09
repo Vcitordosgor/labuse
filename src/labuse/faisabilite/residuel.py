@@ -285,8 +285,9 @@ _UPSERT = text(
     """INSERT INTO parcel_residuel_runs
          (run_seq, parcel_id, taux_emprise_pct, pct_potentiel, sous_densite, sdp_residuelle_m2,
           capacite_estimee, cause, assiette_source, hauteur_source, regles_non_modelisees,
-          surface_terrain_m2, computed_at)
-       VALUES (:rs, :p, :t, :pp, :sd, :sr, :ce, :cz, :asrc, :hsrc, :rnm, :sfc, now())
+          surface_terrain_m2, sdp_max_m2, sdp_existante_m2, d_net_m2, computed_at)
+       VALUES (:rs, :p, :t, :pp, :sd, :sr, :ce, :cz, :asrc, :hsrc, :rnm, :sfc,
+               :cmax, :eex, :dnet, now())
        ON CONFLICT (run_seq, parcel_id) DO UPDATE SET
          taux_emprise_pct=EXCLUDED.taux_emprise_pct, pct_potentiel=EXCLUDED.pct_potentiel,
          sous_densite=EXCLUDED.sous_densite, sdp_residuelle_m2=EXCLUDED.sdp_residuelle_m2,
@@ -294,6 +295,8 @@ _UPSERT = text(
          assiette_source=EXCLUDED.assiette_source, hauteur_source=EXCLUDED.hauteur_source,
          regles_non_modelisees=EXCLUDED.regles_non_modelisees,
          surface_terrain_m2=EXCLUDED.surface_terrain_m2,
+         sdp_max_m2=EXCLUDED.sdp_max_m2, sdp_existante_m2=EXCLUDED.sdp_existante_m2,
+         d_net_m2=EXCLUDED.d_net_m2,
          computed_at=now()""")
 
 
@@ -334,13 +337,20 @@ def compute_residuel_batch(session: Session, parcel_ids: list[int], run_seq: int
             continue
         if r.get("disponible"):
             rnm = r.get("regles_non_modelisees") or []
+            # RESIDUEL-2 — scénario reconstruction : C_rebuild (sdp_max), E (sdp_existante) et le gain
+            # SIGNÉ D_net = C − E (négatif quand la démolition perd de la SDP). Déjà calculés ici,
+            # désormais persistés pour servir la reconstruction île entière.
+            _cmax = r.get("sdp_max_m2")
+            _eex = r.get("sdp_existante_m2")
+            _dnet = (int(_cmax) - int(_eex)) if (_cmax is not None and _eex is not None) else None
             session.execute(_UPSERT, {
                 "rs": run_seq, "p": pid, "t": r["taux_emprise_pct"], "pp": r["pct_potentiel"],
                 "sd": r["sous_densite"], "sr": r["sdp_residuelle_m2"],
                 "ce": r["capacite_estimee"], "cz": None, "asrc": r.get("assiette_source"),
                 "hsrc": r.get("hauteur_source"),
                 "rnm": (_json.dumps(rnm, ensure_ascii=False) if rnm else None),
-                "sfc": r.get("surface_terrain_m2")})
+                "sfc": r.get("surface_terrain_m2"),
+                "cmax": _cmax, "eex": _eex, "dnet": _dnet})
             res["calcules"] += 1
             continue
         cause = r.get("cause") or "indetermine"
@@ -350,7 +360,8 @@ def compute_residuel_batch(session: Session, parcel_ids: list[int], run_seq: int
         session.execute(_UPSERT, {"rs": run_seq, "p": pid, "t": None, "pp": None, "sd": None,
                                   "sr": r.get("sdp_ecrite"), "ce": None, "cz": cause,
                                   "asrc": None, "hsrc": None, "rnm": None,
-                                  "sfc": r.get("surface_terrain_m2")})
+                                  "sfc": r.get("surface_terrain_m2"),
+                                  "cmax": None, "eex": None, "dnet": None})
         res["causes"][cause] = res["causes"].get(cause, 0) + 1
     session.flush()
     return res
