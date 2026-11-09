@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Fragment, useEffect, useState } from 'react'
-import { banAutocomplete, deleteLogo, getCommunes, getEvents, getMarque, getMoi, getNotifPrefs, getParcelsGeojson, markAllEventsRead, markEventRead, modPatrimoineSearch, parcelAt, patchDigestFrequence, patchNotifPref, postLogo, postMarque, postRetour, searchParcels, type LabuseEvent } from '../../lib/api'
+import { banAutocomplete, deleteLogo, getCommunes, getEvents, getMarque, getMoi, getNotifPrefs, getParcelsGeojson, markEventRead, modPatrimoineSearch, parcelAt, patchDigestFrequence, patchNotifPref, postLogo, postMarque, postRetour, searchParcels, type LabuseEvent } from '../../lib/api'
 import { estIdu, estSectionNumero, iduComplet, normSectionNumero, ilYA, fmtDateLong } from '../../lib/format'
 import { communePastille } from '../../lib/communes'
 import { Chargement } from '../Loading'
@@ -331,7 +331,7 @@ function NotifBell() {
   // RECETTE-4 — l'intro Notifications (libellés d'en-tête cloche) est retirée : plus de requête entete-cloche.
   const invalidate = () => { qc.invalidateQueries({ queryKey: ['events'] }); qc.invalidateQueries({ queryKey: ['events-count'] }) }
   const readOne = useMutation({ mutationFn: markEventRead, onSuccess: invalidate })
-  const readAll = useMutation({ mutationFn: markAllEventsRead, onSuccess: invalidate })
+  // RETOURS-17 — « tout lire » retiré de l'en-tête : plus de mutation markAll (le ✓ par ligne reste).
   // M87 P5.1 — la carte d'un événement, réutilisée en ligne seule ET dans un groupe déplié.
   const carte = (e: LabuseEvent) => (
     <div key={e.id} className={`hover-fill rounded-lg border px-3 py-2 ${e.lu ? 'border-line-2 opacity-55' : 'border-line-2 bg-bg-2'}`}>
@@ -408,8 +408,8 @@ function NotifBell() {
           // NU5-FIX-1 (F4) — le compte est DÉCORATIF (déjà porté par l'aria-label « Notifications (N
           // non lues) ») : aria-hidden pour que le texte visible du bouton n'entre pas en conflit avec
           // son nom accessible (label-in-name) et ne soit pas annoncé deux fois.
-          <span aria-hidden className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber px-1 font-mono text-[9px] font-bold text-[#2A2113]">
-            {unread > 99 ? '99+' : unread}{/* GB-002 : badge capé (le dropdown garde le vrai compte) */}
+          <span aria-hidden className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-mint px-1 font-mono text-[9px] font-bold text-mint-ink">
+            {unread > 99 ? '99+' : unread}{/* RETOURS-17 — pastille VERTE (menthe, encre sombre) ; GB-002 : badge capé (le dropdown garde le vrai compte) */}
           </span>
         )}
       </button>
@@ -424,14 +424,9 @@ function NotifBell() {
               <h2 className="m-0 whitespace-nowrap font-mono text-[11px] uppercase tracking-[.16em] text-txt-mut">
                 Notifications{unread > 0 ? ` · ${unread}` : ''}
               </h2>
-              <div className="ml-auto flex items-center gap-3 whitespace-nowrap">
-                {/* RECETTE-2 LOT D2 — l'entrée « Le point du jour » est RETIRÉE de l'en-tête Notifications.
-                    Retrait de surface : la page /events/digest.html (aperçu du digest) et les envois Brevo
-                    restent INTACTS (atteignables par e-mail / URL directe) — plus aucun lien in-app n'y mène. */}
-                {/* M85 — préférences par type et par canal (l'écran minimal in-app) */}
-                <button data-notif-prefs-toggle onClick={() => setPrefsOpen((o) => !o)} className="text-[11px] text-txt-mut hover:text-txt">{prefsOpen ? 'fermer' : 'préférences'}</button>
-                {unread > 0 && <button onClick={() => readAll.mutate()} className="text-[11px] text-txt-mut hover:text-txt">tout lire</button>}
-              </div>
+              {/* RETOURS-17 — les actions « préférences » et « tout lire » sont RETIRÉES de l'en-tête
+                  Notifications (demande Vic). Le volet Préférences reste atteignable par l'événement
+                  `labuse:open-notif-prefs` ; `markAll`/`markOne` restent câblés (✓ par ligne). */}
             </header>
             {/* M85 — l'écran minimal : par type, cloche / e-mail / les deux / rien. */}
             {prefsOpen && (

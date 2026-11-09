@@ -32,21 +32,13 @@ describe('RETOURS-14 P1 — la fiche lit le scoring SERVI (source=SOURCE), jamai
   })
 })
 
-describe('RETOURS-14 P1 — la carte « Analyse LABUSE » affiche la version servie (param, pas en dur)', () => {
-  it('rend le mot de la bande et la version passée', () => {
-    const { container } = render(<AnalyseLabuseCard analyse={ANALYSE} version="q_v11_m137" />)
+describe('RETOURS-17 — la carte « Analyse LABUSE » n\'affiche AUCUN identifiant de run', () => {
+  it('rend le mot de la bande, sans la moindre mention de run (ex. « q_v20 »)', () => {
+    const { container } = render(<AnalyseLabuseCard analyse={ANALYSE} />)
     expect(container.querySelector('[data-analyse-labuse-card]')).toBeTruthy()
     expect(container.querySelector('[data-fiche-bande="A"]')?.textContent).toBe('Excellente')
-    expect(container.querySelector('[data-analyse-version]')?.textContent).toContain('q_v11_m137')
-  })
-
-  it('une AUTRE version servie → un AUTRE rendu (donc rien de codé en dur)', () => {
-    const { container } = render(<AnalyseLabuseCard analyse={ANALYSE} version="q_v99_futur" />)
-    expect(container.querySelector('[data-analyse-version]')?.textContent).toContain('q_v99_futur')
-  })
-
-  it('sans version servie, aucune mention de version fantôme', () => {
-    const { container } = render(<AnalyseLabuseCard analyse={ANALYSE} version="" />)
+    // plus aucun badge de version, et le texte complet ne contient aucun label de run « q_v… ».
     expect(container.querySelector('[data-analyse-version]')).toBeNull()
+    expect(container.textContent ?? '').not.toMatch(/q_v\d/i)
   })
 })

@@ -212,7 +212,7 @@ export function M16() {
       {/* RECETTE-1 (H5, Vic) — ÉTAPE 1 « Choisir les parcelles » : EntreeParcelle (adresse OU clic carte)
           + liste des parcelles retenues (✕), 8 maximum, puis « Vérifier l'assemblage ». */}
       <p className="label-caps text-[9.5px]">Étape 1 — choisir les parcelles ({ASM_MAX} maximum)</p>
-      <EntreeParcelle source={null} onPick={(i) => addDepart(i)} />
+      <EntreeParcelle source={null} viderApresPick onPick={(i) => addDepart(i)} />
       <div className="flex flex-wrap gap-1">
         {msel.map((i) => (
           <button key={i} data-asm-chip onClick={() => { setMsel(msel.filter((x) => x !== i)); setMax8(false) }}

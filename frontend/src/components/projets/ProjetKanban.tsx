@@ -107,10 +107,11 @@ function LigneParcelle({ it, onDragStart, onRetenir, onEcarter, onFiche, onVoir 
   return (
     <div draggable onDragStart={onDragStart} data-tri-ligne={it.idu}
       onClick={(e) => { if (!(e.target as HTMLElement).closest('button')) onFiche() }}
-      className="grid cursor-pointer grid-cols-[14px_1fr_170px_76px_auto] items-center gap-3 border-b border-line/50 px-3.5 py-2 transition-colors duration-quick hover:bg-surface-2">
+      className="grid cursor-pointer grid-cols-[14px_minmax(56px,1fr)_minmax(0,170px)_minmax(0,76px)_auto] items-center gap-3 border-b border-line/50 px-3.5 py-2 transition-colors duration-quick hover:bg-surface-2">
       <span className="h-[7px] w-[7px] rounded-full" style={{ background: tierDot(it.tier, paliers) }} />
       <AdresseLigne it={it} mono={etatLabel(it.etat_bien)} />
-      <SignauxLigne signaux={it.signaux} />
+      {/* RETOURS-17 — cellule Signaux rétractable (min-w-0 overflow-hidden) : se comprime sans déborder. */}
+      <div className="min-w-0 overflow-hidden"><SignauxLigne signaux={it.signaux} /></div>
       <span className="text-right font-mono text-[11.5px] text-txt-mut">{it.surface_m2 != null ? fmtM2(it.surface_m2) : '—'}</span>
       {/* DA-FIX-5 P5 — la dernière colonne est `auto` (les 3 icônes 32 px + gaps = 108 px ne rentraient
           pas dans 96 px et débordaient sur la surface) ; `pl-3` garantit ≥ 12 px entre « 300 m² » et l'œil. */}
@@ -463,10 +464,13 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                         <Bouton niveau="lien" onClick={() => setSousFiltre(null)}>tout effacer</Bouton>
                       </div>
                     )}
-                    {/* en-tête de colonnes */}
+                    {/* en-tête de colonnes — RETOURS-17 : colonnes RÉTRACTABLES. « Parcelle » garde un
+                        minimum (minmax(56px,1fr)) pour n'être JAMAIS coupé ; Signaux/Surface se compriment
+                        (minmax(0,…)) avant de déborder. La colonne porte déjà `overflow-hidden` → aucun
+                        défilement horizontal. */}
                     {list.length > 0 && (
-                      <div data-kanban-lhead className="grid shrink-0 grid-cols-[14px_1fr_170px_76px_66px] gap-3 border-b border-line-2 px-3.5 py-1.5 font-mono text-[9.5px] uppercase tracking-wider text-txt-dim">
-                        <span></span><span>Parcelle</span><span>Signaux</span><span className="text-right">Surface</span><span className="text-right">Trier</span>
+                      <div data-kanban-lhead className="grid shrink-0 grid-cols-[14px_minmax(56px,1fr)_minmax(0,170px)_minmax(0,76px)_66px] gap-3 border-b border-line-2 px-3.5 py-1.5 font-mono text-[9.5px] uppercase tracking-wider text-txt-dim">
+                        <span></span><span className="truncate">Parcelle</span><span className="truncate">Signaux</span><span className="truncate text-right">Surface</span><span className="text-right">Trier</span>
                       </div>
                     )}
                   </>

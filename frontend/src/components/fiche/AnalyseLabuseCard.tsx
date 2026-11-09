@@ -19,7 +19,10 @@ export interface AnalyseLabuse {
   sdp_residuelle_m2?: number | null
 }
 
-export function AnalyseLabuseCard({ analyse, version }: { analyse: AnalyseLabuse; version: string }) {
+// RETOURS-17 — l'identifiant de run (ex. « q_v20 ») n'est PLUS affiché côté client : la prop `version`
+// qui l'injectait dans l'en-tête de la carte est retirée. Le run reste un détail serveur (param `source`
+// de getFiche), jamais montré à l'utilisateur.
+export function AnalyseLabuseCard({ analyse }: { analyse: AnalyseLabuse }) {
   const bm = BANDE_META[analyse.bande as keyof typeof BANDE_META]
   const sm = analyse.signal_niveau ? SIGNAL_META[analyse.signal_niveau as keyof typeof SIGNAL_META] : null
   const nc = analyse.bande === 'NC'
@@ -33,8 +36,6 @@ export function AnalyseLabuseCard({ analyse, version }: { analyse: AnalyseLabuse
         <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 9, minWidth: 0, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 10, letterSpacing: 1.4, color: 'var(--lab)', textTransform: 'uppercase' }}>
             Analyse LABUSE
-            {/* RETOURS-14 P1 — la VERSION SERVIE (run) affichée, discrète. Jamais codée en dur : c'est SOURCE. */}
-            {version && <span data-analyse-version style={{ marginLeft: 7, color: 'var(--txt-off)', letterSpacing: 0.6 }}>· {version}</span>}
           </span>
           {!ouvert && <span style={{ fontSize: 13, fontWeight: 600, color: bm.color }}>{bm.label}</span>}
         </span>

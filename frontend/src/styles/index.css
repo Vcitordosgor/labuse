@@ -170,6 +170,10 @@
   @media (hover:hover) and (pointer:fine) {
     .hover-fill:hover { background:var(--fill-mint); border-color:#2FBE66; color:var(--ink); }
     .hover-fill:hover * { color:var(--ink) !important; }
+    /* RETOURS-17 — « + CRM » / « + Projet » (boutons d'action de la fiche) : au survol, TEXTE BLANC
+       sur le vert opaque (demande Vic : « texte blanc sur vert opaque, comme partout »), au lieu de
+       l'encre sombre générique de .hover-fill. Scopé à .fiche-v6 .act (n'affecte pas le reste de l'app). */
+    .fiche-v6 .act.hover-fill:hover, .fiche-v6 .act.hover-fill:hover * { color:#fff !important; }
     /* RECETTE-2 (S15) — quand .hover-fill est posé sur une LIGNE DE TABLEAU (<tr>, ex. Densifier),
        le fond en DÉGRADÉ ne peint pas sur le <tr> (modèle de rendu des tables : un <tr> ne dessine
        pas de background-image). Résultat : le texte passait en encre sombre SANS aplat vert →
@@ -499,12 +503,16 @@ input[data-copilote-saisie]:focus-visible {
    moitié » alors que la ligne avait la place). UNE ligne tant que ça tient ; sinon ellipse,
    l'adresse complète au survol (title). */
 .fiche-v6 .addr > span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; line-height:1.3; }
-.fiche-v6 .addr-row { padding:0 14px 11px; margin-top:-4px; }
+/* RETOURS-17 — IDU, adresse et Secteur ESPACÉS RÉGULIÈREMENT (gap identique entre les trois lignes,
+   « comme Secteur ») : l'adresse ne colle plus à l'IDU (fin du margin-top négatif) et porte le même
+   écart (6px) que le Secteur. */
+.fiche-v6 .addr-row { padding:0 14px 11px; margin-top:6px; }
 /* KELFONCIER-FIX-2 (Lot A) — SECTEUR rentré dans la carte d'en-tête : même retrait horizontal (14px)
    que l'adresse, sous elle. Libellé gris (--txt-dim ≈ maquette --mut), nom en clair (--txt-hi ≈ --txt).
-   Quand un secteur suit l'adresse, l'adresse perd son padding-bas (le secteur porte la fermeture). */
-.fiche-v6 .addr-row.has-sect { padding-bottom:2px; }
-.fiche-v6 .sect-line { padding:0 14px 11px; font-size:11.5px; color:var(--txt-dim); line-height:1.3; }
+   Quand un secteur suit l'adresse, l'adresse perd son padding-bas (le Secteur porte la fermeture ET
+   son propre écart margin-top, pour un espacement régulier IDU↔adresse↔Secteur). */
+.fiche-v6 .addr-row.has-sect { padding-bottom:0; }
+.fiche-v6 .sect-line { padding:0 14px 11px; margin-top:6px; font-size:11.5px; color:var(--txt-dim); line-height:1.3; }
 .fiche-v6 .sect-line b { color:var(--txt-hi); font-weight:400; }
 /* RETOURS-13 R17 — SIREN/SIRET : BLEU et SOULIGNÉ, partout (décision Vic 05/09 — la SEULE
    exception à « pas de bleu » de la DA : un lien externe doit ressembler à un lien). */
@@ -617,7 +625,10 @@ input[data-copilote-saisie]:focus-visible {
   .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-title,
   .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-sub,
   .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-val,
-  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .chev { color:var(--ink) !important; }
+  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .chev,
+  /* RETOURS-17 — le chevron des cartes de la fiche (composant Chevron = .t-chev) passe au NOIR (--ink)
+     au survol, au lieu de rester gris (il n'a pas la classe .chev visée par la règle historique). */
+  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-chev { color:var(--ink) !important; }
 }
 .fiche-v6 .t-open { background:var(--f-card); border:0.5px solid var(--f-linecard); border-top:none; border-bottom-left-radius:12px; border-bottom-right-radius:12px; margin-bottom:9px; padding:2px 13px 13px; animation:apparition 150ms ease-out both; }
 .fiche-v6 .t-ico { width:32px; height:32px; border-radius:6px; background:var(--line); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--f-icotxt); }

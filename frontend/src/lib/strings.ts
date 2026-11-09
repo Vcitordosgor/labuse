@@ -434,7 +434,7 @@ export const CLIENT = {
     ecarteeVoirTip: "Ouvre l'onglet « Pourquoi pas » — motifs sourcés de l'écartement.",
     // M55-L point 5 — verdict à la demande : à l'ouverture, un bouton remplace le bloc verdict
     // (l'avis n'est jamais imposé à qui veut d'abord des informations). Au clic, le bloc se déploie.
-    demanderAnalyse: 'Demander à LABUSE',   // RETOURS-14 P1 (libellé Vic — raccourci ; l'objet « la parcelle » vit dans le contexte de la fiche)
+    demanderAnalyse: 'Analyse LABUSE',   // RETOURS-17 (libellé Vic) — ex « Demander à LABUSE » ; côte à côte avec « Copilote », même taille
     demanderAnalyseSous: 'Le verdict, le score et « pourquoi » — à la demande.',
     // M55-N point 5 — libellé honnête du tiroir « Les données » : dit CE QU'IL COMPTE (les sources
     // qui alimentent CETTE fiche, cf. audit M55-L P13), pas un manque. Chiffre servi (jamais en dur).

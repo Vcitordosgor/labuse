@@ -366,8 +366,7 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
 
 export function LeftPanel() {
   const { panelOpen, togglePanel, verdict } = useApp()
-  // DA-029 — nombre de filtres actifs, visible sur la languette même panneau FERMÉ.
-  const nFiltresActifs = countActiveFilters(useApp((st) => st.filters))
+  // RETOURS-17 — plus de pastille de compteur sur la languette (panneau fermé) : `nFiltresActifs` retiré.
   // Item 1 (UX V1, mobile) : sous 640 px le panneau occupait 100 % de l'écran — la carte
   // n'existait pas. Désormais la CARTE est l'écran d'accueil mobile ; COUCHES + légende
   // VERDICT vivent dans un tiroir escamotable (bouton « Couches » flottant).
@@ -457,10 +456,9 @@ export function LeftPanel() {
           aria-label="Déplier le panneau"
         >
           ›
-          {/* DA-029 — pastille VERTE du nombre de filtres actifs, visible panneau fermé. */}
-          {nFiltresActifs > 0 && (
-            <span className="rounded-full bg-mint px-1 py-0.5 text-[10px] font-medium leading-none text-mint-on">{nFiltresActifs}</span>
-          )}
+          {/* RETOURS-17 — la pastille du nombre de filtres actifs ne s'affiche PLUS sur la languette
+              quand le panneau est fermé (le compteur « 1 » ne doit pas apparaître). Le compte reste
+              visible dans l'en-tête de la section Filtres, panneau ouvert. */}
         </button>
       ) : (
         <aside className="hidden h-full w-[clamp(240px,24vw,340px)] shrink-0 flex-col border-r border-line bg-surface-1 sm:flex">

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cadastreGeoportailUrl, errialUrl, googleEarthKmzUrl, googleMapsUrl, pagesJaunes, type Coords } from './liensExternes'
+import { cadastreGeoportailUrl, errialUrl, googleEarthUrl, googleMapsUrl, pagesJaunes, type Coords } from './liensExternes'
 
 // RETOURS-10 (T4.3) — chaque lien de l'en-tête mène à la BONNE donnée : les cartes (Cadastre/Maps)
 // centrées sur le centroïde de la parcelle, Pages jaunes sur l'adresse exacte (repli commune annoncé).
@@ -37,6 +37,15 @@ describe('T4 — liens externes de la fiche', () => {
     expect(u.searchParams.get('ou')).toBe('14 rue Françoise-Dolto La Possession')
   })
 
+  // RETOURS-17 — RÉPARATION : le paramètre `quoiqui` DOIT être présent (même vide), sinon PagesJaunes
+  // renvoie 404 (« Aucun résultat … Commerces »). Sa présence suffit à obtenir une page de résultats.
+  it('Pages jaunes : le paramètre quoiqui est présent (répare le 404)', () => {
+    const u = new URL(pagesJaunes('14 rue Françoise-Dolto', 'La Possession').url!)
+    expect(u.searchParams.has('quoiqui')).toBe(true)
+    const v = new URL(pagesJaunes(null, 'Saint-Joseph').url!)
+    expect(v.searchParams.has('quoiqui')).toBe(true)
+  })
+
   it('Pages jaunes SANS adresse : commune seule + drapeau commune_seule', () => {
     const { url, commune_seule } = pagesJaunes(null, 'Saint-Joseph')
     expect(commune_seule).toBe(true)
@@ -68,7 +77,11 @@ describe('T4 — liens externes de la fiche', () => {
     expect(errialUrl('  ', '').url).toBeNull()
   })
 
-  it('Google Earth : endpoint KMZ relatif de la parcelle (même origine)', () => {
-    expect(googleEarthKmzUrl('97408000AP1599')).toBe('/parcels/97408000AP1599.kmz')
+  // RETOURS-17 — Google Earth EN LIGNE : caméra centrée sur le centroïde (@lat,lon,…), plus de KMZ.
+  it('Google Earth : URL en ligne centrée sur la parcelle (lat,lon, jamais inversés)', () => {
+    const u = googleEarthUrl(COORDS) // COORDS = [lon, lat] = [55.335, -20.925]
+    expect(u.startsWith('https://earth.google.com/web/@')).toBe(true)
+    expect(u).toContain('@-20.925,55.335,') // lat,lon — ordre Google Earth
+    expect(u).not.toContain('.kmz')
   })
 })

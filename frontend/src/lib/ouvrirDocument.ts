@@ -42,7 +42,11 @@ export function useOuvrirDocument(onErreur?: (msg: string) => void) {
   // écoulé (le serveur ne diffuse pas d'avancement réel) : une courbe asymptotique rassurante jusqu'à
   // ~92 %, puis 100 % à l'ouverture du PDF. L'appelant affiche une barre tant que `enCours`.
   const [progres, setProgres] = useState(0)
-  const ouvrir = async (url: string, cle: string = url, init?: RequestInit): Promise<boolean> => {
+  // RETOURS-17 — `filename` (optionnel) : quand il est fourni, le document est TÉLÉCHARGÉ sous ce nom
+  // EXACT (« <IDU> — <Nom du document>.pdf », idem .xlsx/.zip) via une ancre `download`, au lieu d'être
+  // ouvert dans un onglet (le nom d'un blob ouvert n'est pas maîtrisable). Sans `filename` : onglet
+  // (comportement historique inchangé pour les appelants qui ne nomment pas).
+  const ouvrir = async (url: string, cle: string = url, init?: RequestInit, filename?: string): Promise<boolean> => {
     setErreur(null); setEnCours(cle); setProgres(6)
     const t0 = Date.now()
     const timer = setInterval(() => {
@@ -52,7 +56,15 @@ export function useOuvrirDocument(onErreur?: (msg: string) => void) {
     try {
       const r = await fetch(url, init)
       if (!r.ok) { const m = await messageDErreur(r); (onErreur ?? setErreur)(m); return false }
-      window.open(URL.createObjectURL(await r.blob()), '_blank', 'noopener')
+      const blobUrl = URL.createObjectURL(await r.blob())
+      if (filename) {
+        const a = document.createElement('a')
+        a.href = blobUrl; a.download = filename
+        document.body.appendChild(a); a.click(); a.remove()
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10_000)
+      } else {
+        window.open(blobUrl, '_blank', 'noopener')
+      }
       return true
     } catch {
       const m = "Le document n'a pas pu être généré — vérifiez votre connexion et réessayez."
