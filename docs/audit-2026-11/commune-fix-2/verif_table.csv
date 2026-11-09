@@ -1,0 +1,313 @@
+insee,commune,famille,fait,servi,source,verdict
+97401,Les Avirons,INSEE,habitants (pop. municipale),11536,11536,V
+97401,Les Avirons,INSEE,millésime population,2023,2023,V
+97401,Les Avirons,INSEE,logements,5459,5459,V
+97401,Les Avirons,INSEE,ménages (rés. princ.),4742,4742,V
+97401,Les Avirons,INSEE,vacance %,9.6,9.6,V
+97401,Les Avirons,SRU,taux LLS %,13.29,13.29,V
+97401,Les Avirons,SRU,objectif %,25,25,V
+97401,Les Avirons,SRU,statut,deficitaire,deficitaire,V
+97401,Les Avirons,SRU,nb LLS,654.0,654.0,V
+97401,Les Avirons,Sitadel,permis 12 mois (nb),54,54,V
+97401,Les Avirons,DVF,prix ancien médian €/m²,3041,3041.0,V
+97401,Les Avirons,DVF,mutations 12 mois,84,84,V
+97401,Les Avirons,GPU,zonage Σ familles ≈100 %,100.0,≈100,V
+97402,Bras-Panon,INSEE,habitants (pop. municipale),13012,13012,V
+97402,Bras-Panon,INSEE,millésime population,2023,2023,V
+97402,Bras-Panon,INSEE,logements,5622,5622,V
+97402,Bras-Panon,INSEE,ménages (rés. princ.),5218,5218,V
+97402,Bras-Panon,INSEE,vacance %,6.4,6.4,V
+97402,Bras-Panon,SRU,taux LLS %,33.42,33.42,V
+97402,Bras-Panon,SRU,objectif %,20,20,V
+97402,Bras-Panon,SRU,statut,conforme,conforme,V
+97402,Bras-Panon,SRU,nb LLS,1657.0,1657.0,V
+97402,Bras-Panon,Sitadel,permis 12 mois (nb),47,47,V
+97402,Bras-Panon,DVF,prix ancien médian €/m²,1880,1880.0,V
+97402,Bras-Panon,DVF,mutations 12 mois,61,61,V
+97402,Bras-Panon,GPU,zonage Σ familles ≈100 %,99.9,≈100,V
+97403,Entre-Deux,INSEE,habitants (pop. municipale),7176,7176,V
+97403,Entre-Deux,INSEE,millésime population,2023,2023,V
+97403,Entre-Deux,INSEE,logements,3338,3338,V
+97403,Entre-Deux,INSEE,ménages (rés. princ.),2949,2949,V
+97403,Entre-Deux,INSEE,vacance %,6.9,6.9,V
+97403,Entre-Deux,SRU,taux LLS %,10.29,10.29,V
+97403,Entre-Deux,SRU,objectif %,25,25,V
+97403,Entre-Deux,SRU,statut,carencee,carencee,V
+97403,Entre-Deux,SRU,nb LLS,301.0,301.0,V
+97403,Entre-Deux,Sitadel,permis 12 mois (nb),57,57,V
+97403,Entre-Deux,DVF,prix ancien médian €/m²,2689,2689.0,V
+97403,Entre-Deux,DVF,mutations 12 mois,46,46,V
+97403,Entre-Deux,GPU,zonage Σ familles ≈100 %,100.0,≈100,V
+97404,L'Étang-Salé,INSEE,habitants (pop. municipale),14464,14464,V
+97404,L'Étang-Salé,INSEE,millésime population,2023,2023,V
+97404,L'Étang-Salé,INSEE,logements,6794,6794,V
+97404,L'Étang-Salé,INSEE,ménages (rés. princ.),5861,5861,V
+97404,L'Étang-Salé,INSEE,vacance %,8.3,8.3,V
+97404,L'Étang-Salé,SRU,taux LLS %,17.53,17.53,V
+97404,L'Étang-Salé,SRU,objectif %,25,25,V
+97404,L'Étang-Salé,SRU,statut,deficitaire,deficitaire,V
+97404,L'Étang-Salé,SRU,nb LLS,1040.0,1040.0,V
+97404,L'Étang-Salé,Sitadel,permis 12 mois (nb),102,102,V
+97404,L'Étang-Salé,DVF,prix ancien médian €/m²,3737,3737.0,V
+97404,L'Étang-Salé,DVF,mutations 12 mois,79,79,V
+97404,L'Étang-Salé,GPU,zonage Σ familles ≈100 %,99.9,≈100,V
+97405,Petite-Île,INSEE,habitants (pop. municipale),13067,13067,V
+97405,Petite-Île,INSEE,millésime population,2023,2023,V
+97405,Petite-Île,INSEE,logements,6136,6136,V
+97405,Petite-Île,INSEE,ménages (rés. princ.),5411,5411,V
+97405,Petite-Île,INSEE,vacance %,8.3,8.3,V
+97405,Petite-Île,SRU,taux LLS %,5.73,5.73,V
+97405,Petite-Île,SRU,objectif %,25,25,V
+97405,Petite-Île,SRU,statut,deficitaire,deficitaire,V
+97405,Petite-Île,SRU,nb LLS,314.0,314.0,V
+97405,Petite-Île,Sitadel,permis 12 mois (nb),61,61,V
+97405,Petite-Île,DVF,prix ancien médian €/m²,2458,2458.0,V
+97405,Petite-Île,DVF,mutations 12 mois,81,81,V
+97405,Petite-Île,GPU,zonage Σ familles ≈100 %,100.0,≈100,V
+97406,La Plaine-des-Palmistes,INSEE,habitants (pop. municipale),6936,6936,V
+97406,La Plaine-des-Palmistes,INSEE,millésime population,2023,2023,V
+97406,La Plaine-des-Palmistes,INSEE,logements,3702,3702,V
+97406,La Plaine-des-Palmistes,INSEE,ménages (rés. princ.),2616,2616,V
+97406,La Plaine-des-Palmistes,INSEE,vacance %,9.1,9.1,V
+97406,La Plaine-des-Palmistes,SRU,taux LLS %,16.82,16.82,V
+97406,La Plaine-des-Palmistes,SRU,objectif %,20,20,V
+97406,La Plaine-des-Palmistes,SRU,statut,deficitaire,deficitaire,V
+97406,La Plaine-des-Palmistes,SRU,nb LLS,449.0,449.0,V
+97406,La Plaine-des-Palmistes,Sitadel,permis 12 mois (nb),64,64,V
+97406,La Plaine-des-Palmistes,DVF,prix ancien médian €/m²,2071,2071.0,V
+97406,La Plaine-des-Palmistes,DVF,mutations 12 mois,52,52,V
+97406,La Plaine-des-Palmistes,GPU,zonage Σ familles ≈100 %,99.9,≈100,V
+97407,Le Port,INSEE,habitants (pop. municipale),33969,33969,V
+97407,Le Port,INSEE,millésime population,2023,2023,V
+97407,Le Port,INSEE,logements,13426,13426,V
+97407,Le Port,INSEE,ménages (rés. princ.),12757,12757,V
+97407,Le Port,INSEE,vacance %,4.2,4.2,V
+97407,Le Port,SRU,taux LLS %,60.71,60.71,V
+97407,Le Port,SRU,objectif %,25,25,V
+97407,Le Port,SRU,statut,conforme,conforme,V
+97407,Le Port,SRU,nb LLS,7416.0,7416.0,V
+97407,Le Port,Sitadel,permis 12 mois (nb),64,64,V
+97407,Le Port,DVF,prix ancien médian €/m²,1943,1943.0,V
+97407,Le Port,DVF,mutations 12 mois,121,121,V
+97407,Le Port,GPU,zonage Σ familles ≈100 %,100.0,≈100,V
+97408,La Possession,INSEE,habitants (pop. municipale),36568,36568,V
+97408,La Possession,INSEE,millésime population,2023,2023,V
+97408,La Possession,INSEE,logements,15427,15427,V
+97408,La Possession,INSEE,ménages (rés. princ.),14390,14390,V
+97408,La Possession,INSEE,vacance %,5.4,5.4,V
+97408,La Possession,SRU,taux LLS %,33.04,33.04,V
+97408,La Possession,SRU,objectif %,25,25,V
+97408,La Possession,SRU,statut,conforme,conforme,V
+97408,La Possession,SRU,nb LLS,4486.0,4486.0,V
+97408,La Possession,Sitadel,permis 12 mois (nb),80,80,V
+97408,La Possession,DVF,prix ancien médian €/m²,2843,2843.0,V
+97408,La Possession,DVF,mutations 12 mois,233,233,V
+97408,La Possession,GPU,zonage Σ familles ≈100 %,100.0,≈100,V
+97409,Saint-André,INSEE,habitants (pop. municipale),58885,58885,V
+97409,Saint-André,INSEE,millésime population,2023,2023,V
+97409,Saint-André,INSEE,logements,23612,23612,V
+97409,Saint-André,INSEE,ménages (rés. princ.),21682,21682,V
+97409,Saint-André,INSEE,vacance %,7.2,7.2,V
+97409,Saint-André,SRU,taux LLS %,26.17,26.17,V
+97409,Saint-André,SRU,objectif %,20,20,V
+97409,Saint-André,SRU,statut,conforme,conforme,V
+97409,Saint-André,SRU,nb LLS,5392.0,5392.0,V
+97409,Saint-André,Sitadel,permis 12 mois (nb),166,166,V
+97409,Saint-André,DVF,prix ancien médian €/m²,1949,1949.0,V
+97409,Saint-André,DVF,mutations 12 mois,176,176,V
+97409,Saint-André,GPU,zonage Σ familles ≈100 %,100.0,≈100,V
+97410,Saint-Benoît,INSEE,habitants (pop. municipale),38604,38604,V
+97410,Saint-Benoît,INSEE,millésime population,2023,2023,V
+97410,Saint-Benoît,INSEE,logements,16636,16636,V
+97410,Saint-Benoît,INSEE,ménages (rés. princ.),14780,14780,V
+97410,Saint-Benoît,INSEE,vacance %,9.7,9.7,V
+97410,Saint-Benoît,SRU,taux LLS %,34.49,34.49,V
+97410,Saint-Benoît,SRU,objectif %,20,20,V
+97410,Saint-Benoît,SRU,statut,conforme,conforme,V
+97410,Saint-Benoît,SRU,nb LLS,4936.0,4936.0,V
+97410,Saint-Benoît,Sitadel,permis 12 mois (nb),173,173,V
+97410,Saint-Benoît,DVF,prix ancien médian €/m²,1838,1838.0,V
+97410,Saint-Benoît,DVF,mutations 12 mois,111,111,V
+97410,Saint-Benoît,GPU,zonage Σ familles ≈100 %,100.1,≈100,V
+97411,Saint-Denis,INSEE,habitants (pop. municipale),155634,155634,V
+97411,Saint-Denis,INSEE,millésime population,2023,2023,V
+97411,Saint-Denis,INSEE,logements,76819,76819,V
+97411,Saint-Denis,INSEE,ménages (rés. princ.),68726,68726,V
+97411,Saint-Denis,INSEE,vacance %,8.8,8.8,V
+97411,Saint-Denis,SRU,taux LLS %,38.62,38.62,V
+97411,Saint-Denis,SRU,objectif %,20,20,V
+97411,Saint-Denis,SRU,statut,conforme,conforme,V
+97411,Saint-Denis,SRU,nb LLS,24758.0,24758.0,V
+97411,Saint-Denis,Sitadel,permis 12 mois (nb),223,223,V
+97411,Saint-Denis,DVF,prix ancien médian €/m²,2469,2469.0,V
+97411,Saint-Denis,DVF,mutations 12 mois,1323,1323,V
+97411,Saint-Denis,GPU,zonage Σ familles ≈100 %,100.1,≈100,V
+97412,Saint-Joseph,INSEE,habitants (pop. municipale),39207,39207,V
+97412,Saint-Joseph,INSEE,millésime population,2023,2023,V
+97412,Saint-Joseph,INSEE,logements,17815,17815,V
+97412,Saint-Joseph,INSEE,ménages (rés. princ.),16215,16215,V
+97412,Saint-Joseph,INSEE,vacance %,7.1,7.1,V
+97412,Saint-Joseph,SRU,taux LLS %,13.88,13.88,V
+97412,Saint-Joseph,SRU,objectif %,20,20,V
+97412,Saint-Joseph,SRU,statut,deficitaire,deficitaire,V
+97412,Saint-Joseph,SRU,nb LLS,2190.0,2190.0,V
+97412,Saint-Joseph,Sitadel,permis 12 mois (nb),183,183,V
+97412,Saint-Joseph,DVF,prix ancien médian €/m²,2035,2035.0,V
+97412,Saint-Joseph,DVF,mutations 12 mois,192,192,V
+97412,Saint-Joseph,GPU,zonage Σ familles ≈100 %,100.1,≈100,V
+97413,Saint-Leu,INSEE,habitants (pop. municipale),36163,36163,V
+97413,Saint-Leu,INSEE,millésime population,2023,2023,V
+97413,Saint-Leu,INSEE,logements,17007,17007,V
+97413,Saint-Leu,INSEE,ménages (rés. princ.),14723,14723,V
+97413,Saint-Leu,INSEE,vacance %,7.6,7.6,V
+97413,Saint-Leu,SRU,taux LLS %,12.26,12.26,V
+97413,Saint-Leu,SRU,objectif %,25,25,V
+97413,Saint-Leu,SRU,statut,carencee,carencee,V
+97413,Saint-Leu,SRU,nb LLS,1746.0,1746.0,V
+97413,Saint-Leu,Sitadel,permis 12 mois (nb),118,118,V
+97413,Saint-Leu,DVF,prix ancien médian €/m²,3822,3822.0,V
+97413,Saint-Leu,DVF,mutations 12 mois,188,188,V
+97413,Saint-Leu,GPU,zonage Σ familles ≈100 %,100.0,≈100,V
+97414,Saint-Louis,INSEE,habitants (pop. municipale),54941,54941,V
+97414,Saint-Louis,INSEE,millésime population,2023,2023,V
+97414,Saint-Louis,INSEE,logements,23494,23494,V
+97414,Saint-Louis,INSEE,ménages (rés. princ.),20456,20456,V
+97414,Saint-Louis,INSEE,vacance %,9.3,9.3,V
+97414,Saint-Louis,SRU,taux LLS %,19.65,19.65,V
+97414,Saint-Louis,SRU,objectif %,25,25,V
+97414,Saint-Louis,SRU,statut,deficitaire,deficitaire,V
+97414,Saint-Louis,SRU,nb LLS,4025.0,4025.0,V
+97414,Saint-Louis,Sitadel,permis 12 mois (nb),213,213,V
+97414,Saint-Louis,DVF,prix ancien médian €/m²,2253,2253.0,V
+97414,Saint-Louis,DVF,mutations 12 mois,218,218,V
+97414,Saint-Louis,GPU,zonage Σ familles ≈100 %,100.0,≈100,V
+97415,Saint-Paul,INSEE,habitants (pop. municipale),108088,108088,V
+97415,Saint-Paul,INSEE,millésime population,2023,2023,V
+97415,Saint-Paul,INSEE,logements,51317,51317,V
+97415,Saint-Paul,INSEE,ménages (rés. princ.),42756,42756,V
+97415,Saint-Paul,INSEE,vacance %,9.4,9.4,V
+97415,Saint-Paul,SRU,taux LLS %,18.33,18.33,V
+97415,Saint-Paul,SRU,objectif %,25,25,V
+97415,Saint-Paul,SRU,statut,deficitaire,deficitaire,V
+97415,Saint-Paul,SRU,nb LLS,7499.0,7499.0,V
+97415,Saint-Paul,Sitadel,permis 12 mois (nb),329,329,V
+97415,Saint-Paul,DVF,prix ancien médian €/m²,4278,4278.0,V
+97415,Saint-Paul,DVF,mutations 12 mois,570,570,V
+97415,Saint-Paul,GPU,zonage Σ familles ≈100 %,100.1,≈100,V
+97416,Saint-Pierre,INSEE,habitants (pop. municipale),85038,85038,V
+97416,Saint-Pierre,INSEE,millésime population,2023,2023,V
+97416,Saint-Pierre,INSEE,logements,40684,40684,V
+97416,Saint-Pierre,INSEE,ménages (rés. princ.),35123,35123,V
+97416,Saint-Pierre,INSEE,vacance %,9.2,9.2,V
+97416,Saint-Pierre,SRU,taux LLS %,22.85,22.85,V
+97416,Saint-Pierre,SRU,objectif %,25,25,V
+97416,Saint-Pierre,SRU,statut,deficitaire,deficitaire,V
+97416,Saint-Pierre,SRU,nb LLS,8113.0,8113.0,V
+97416,Saint-Pierre,Sitadel,permis 12 mois (nb),347,347,V
+97416,Saint-Pierre,DVF,prix ancien médian €/m²,3015,3015.0,V
+97416,Saint-Pierre,DVF,mutations 12 mois,542,542,V
+97416,Saint-Pierre,GPU,zonage Σ familles ≈100 %,99.9,≈100,V
+97417,Saint-Philippe,INSEE,habitants (pop. municipale),5082,5082,V
+97417,Saint-Philippe,INSEE,millésime population,2023,2023,V
+97417,Saint-Philippe,INSEE,logements,2515,2515,V
+97417,Saint-Philippe,INSEE,ménages (rés. princ.),2142,2142,V
+97417,Saint-Philippe,INSEE,vacance %,12.5,12.5,V
+97417,Saint-Philippe,SRU,taux LLS %,9.57,9.57,V
+97417,Saint-Philippe,SRU,objectif %,20,20,V
+97417,Saint-Philippe,SRU,statut,exemptee,exemptee,V
+97417,Saint-Philippe,SRU,nb LLS,193.0,193.0,V
+97417,Saint-Philippe,Sitadel,permis 12 mois (nb),28,28,V
+97417,Saint-Philippe,DVF,prix ancien médian €/m²,1875,1875.0,V
+97417,Saint-Philippe,DVF,mutations 12 mois,36,36,V
+97417,Saint-Philippe,GPU,zonage Σ familles ≈100 %,100.0,≈100,V
+97418,Sainte-Marie,INSEE,habitants (pop. municipale),37093,37093,V
+97418,Sainte-Marie,INSEE,millésime population,2023,2023,V
+97418,Sainte-Marie,INSEE,logements,15595,15595,V
+97418,Sainte-Marie,INSEE,ménages (rés. princ.),14342,14342,V
+97418,Sainte-Marie,INSEE,vacance %,6.5,6.5,V
+97418,Sainte-Marie,SRU,taux LLS %,29.67,29.67,V
+97418,Sainte-Marie,SRU,objectif %,20,20,V
+97418,Sainte-Marie,SRU,statut,conforme,conforme,V
+97418,Sainte-Marie,SRU,nb LLS,4110.0,4110.0,V
+97418,Sainte-Marie,Sitadel,permis 12 mois (nb),109,109,V
+97418,Sainte-Marie,DVF,prix ancien médian €/m²,2481,2481.0,V
+97418,Sainte-Marie,DVF,mutations 12 mois,152,152,V
+97418,Sainte-Marie,GPU,zonage Σ familles ≈100 %,100.0,≈100,V
+97419,Sainte-Rose,INSEE,habitants (pop. municipale),6557,6557,V
+97419,Sainte-Rose,INSEE,millésime population,2023,2023,V
+97419,Sainte-Rose,INSEE,logements,2890,2890,V
+97419,Sainte-Rose,INSEE,ménages (rés. princ.),2584,2584,V
+97419,Sainte-Rose,INSEE,vacance %,8.0,8.0,V
+97419,Sainte-Rose,SRU,taux LLS %,16.94,16.94,V
+97419,Sainte-Rose,SRU,objectif %,20,20,V
+97419,Sainte-Rose,SRU,statut,exemptee,exemptee,V
+97419,Sainte-Rose,SRU,nb LLS,407.0,407.0,V
+97419,Sainte-Rose,Sitadel,permis 12 mois (nb),27,27,V
+97419,Sainte-Rose,DVF,prix ancien médian €/m²,1707,1707.0,V
+97419,Sainte-Rose,DVF,mutations 12 mois,18,18,V
+97419,Sainte-Rose,GPU,zonage Σ familles ≈100 %,100.0,≈100,V
+97420,Sainte-Suzanne,INSEE,habitants (pop. municipale),25551,25551,V
+97420,Sainte-Suzanne,INSEE,millésime population,2023,2023,V
+97420,Sainte-Suzanne,INSEE,logements,10291,10291,V
+97420,Sainte-Suzanne,INSEE,ménages (rés. princ.),9616,9616,V
+97420,Sainte-Suzanne,INSEE,vacance %,5.8,5.8,V
+97420,Sainte-Suzanne,SRU,taux LLS %,26.49,26.49,V
+97420,Sainte-Suzanne,SRU,objectif %,20,20,V
+97420,Sainte-Suzanne,SRU,statut,conforme,conforme,V
+97420,Sainte-Suzanne,SRU,nb LLS,2390.0,2390.0,V
+97420,Sainte-Suzanne,Sitadel,permis 12 mois (nb),70,70,V
+97420,Sainte-Suzanne,DVF,prix ancien médian €/m²,2262,2262.0,V
+97420,Sainte-Suzanne,DVF,mutations 12 mois,68,68,V
+97420,Sainte-Suzanne,GPU,zonage Σ familles ≈100 %,100.0,≈100,V
+97421,Salazie,INSEE,habitants (pop. municipale),7268,7268,V
+97421,Salazie,INSEE,millésime population,2023,2023,V
+97421,Salazie,INSEE,logements,3444,3444,V
+97421,Salazie,INSEE,ménages (rés. princ.),2694,2694,V
+97421,Salazie,INSEE,vacance %,14.5,14.5,V
+97421,Salazie,SRU,taux LLS %,2.8,2.8,V
+97421,Salazie,SRU,objectif %,20,20,V
+97421,Salazie,SRU,statut,exemptee,exemptee,V
+97421,Salazie,SRU,nb LLS,70.0,70.0,V
+97421,Salazie,Sitadel,permis 12 mois (nb),45,45,V
+97421,Salazie,DVF,prix ancien médian €/m²,1474,1474.0,V
+97421,Salazie,DVF,mutations 12 mois,24,24,V
+97421,Salazie,GPU,zonage Σ familles ≈100 %,100.0,≈100,V
+97422,Le Tampon,INSEE,habitants (pop. municipale),82579,82579,V
+97422,Le Tampon,INSEE,millésime population,2023,2023,V
+97422,Le Tampon,INSEE,logements,37985,37985,V
+97422,Le Tampon,INSEE,ménages (rés. princ.),34557,34557,V
+97422,Le Tampon,INSEE,vacance %,6.0,6.0,V
+97422,Le Tampon,SRU,taux LLS %,16.77,16.77,V
+97422,Le Tampon,SRU,objectif %,25,25,V
+97422,Le Tampon,SRU,statut,deficitaire,deficitaire,V
+97422,Le Tampon,SRU,nb LLS,5526.0,5526.0,V
+97422,Le Tampon,Sitadel,permis 12 mois (nb),290,290,V
+97422,Le Tampon,DVF,prix ancien médian €/m²,2259,2259.0,V
+97422,Le Tampon,DVF,mutations 12 mois,510,510,V
+97422,Le Tampon,GPU,zonage Σ familles ≈100 %,100.0,≈100,V
+97423,Les Trois-Bassins,INSEE,habitants (pop. municipale),7221,7221,V
+97423,Les Trois-Bassins,INSEE,millésime population,2023,2023,V
+97423,Les Trois-Bassins,INSEE,logements,3350,3350,V
+97423,Les Trois-Bassins,INSEE,ménages (rés. princ.),2855,2855,V
+97423,Les Trois-Bassins,INSEE,vacance %,12.1,12.1,V
+97423,Les Trois-Bassins,SRU,taux LLS %,10.93,10.93,V
+97423,Les Trois-Bassins,SRU,objectif %,25,25,V
+97423,Les Trois-Bassins,SRU,statut,exemptee,exemptee,V
+97423,Les Trois-Bassins,SRU,nb LLS,286.0,286.0,V
+97423,Les Trois-Bassins,Sitadel,permis 12 mois (nb),44,44,V
+97423,Les Trois-Bassins,DVF,prix ancien médian €/m²,2444,2444.0,V
+97423,Les Trois-Bassins,DVF,mutations 12 mois,22,22,V
+97423,Les Trois-Bassins,GPU,zonage Σ familles ≈100 %,99.9,≈100,V
+97424,Cilaos,INSEE,habitants (pop. municipale),5040,5040,V
+97424,Cilaos,INSEE,millésime population,2023,2023,V
+97424,Cilaos,INSEE,logements,2926,2926,V
+97424,Cilaos,INSEE,ménages (rés. princ.),2092,2092,V
+97424,Cilaos,INSEE,vacance %,11.1,11.1,V
+97424,Cilaos,SRU,taux LLS %,2.94,2.94,V
+97424,Cilaos,SRU,objectif %,25,25,V
+97424,Cilaos,SRU,statut,exemptee,exemptee,V
+97424,Cilaos,SRU,nb LLS,65.0,65.0,V
+97424,Cilaos,Sitadel,permis 12 mois (nb),25,25,V
+97424,Cilaos,DVF,prix ancien médian €/m²,1622,1622.0,V
+97424,Cilaos,DVF,mutations 12 mois,40,40,V
+97424,Cilaos,GPU,zonage Σ familles ≈100 %,100.0,≈100,V
