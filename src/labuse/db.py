@@ -6,6 +6,7 @@ index GIST.
 """
 from __future__ import annotations
 
+import os
 from collections.abc import Iterator
 from contextlib import contextmanager
 
@@ -90,12 +91,20 @@ def make_engine(url: str | None = None, echo: bool = False) -> Engine:
     # pression sur `max_connections`. `pool_timeout` borné et RÉGLABLE. La vraie cause d'épuisement
     # (connexions « idle in transaction » pendant l'appel modèle) est traitée à la source par R3
     # (ai.core.complete libère la connexion AVANT l'appel réseau).
+    # DEPLOY-GROUPE-3 (q_v23) — un PROCESS de calcul peut faire lire à TOUTES ses connexions un run
+    # résiduel CANDIDAT (par numéro) au lieu du run servi, en posant `LABUSE_RESIDUEL_RUN_SEQ`. La vue
+    # `parcel_residuel` honore alors le réglage de session `labuse.residuel_run_seq` (cf.
+    # residuel_runs._view_sql). Le service/les clients ne posent JAMAIS cet env → run servi, comportement
+    # inchangé. `int()` valide l'entrée (jamais d'injection dans les options de connexion).
+    opts = "-c idle_in_transaction_session_timeout=600000 -c timezone=Indian/Reunion"
+    _rseq = os.environ.get("LABUSE_RESIDUEL_RUN_SEQ")
+    if _rseq:
+        opts += f" -c labuse.residuel_run_seq={int(_rseq)}"
     return create_engine(url or settings.database_url, echo=echo, future=True,
                          pool_size=settings.db_pool_size, max_overflow=settings.db_max_overflow,
                          pool_pre_ping=settings.db_pool_pre_ping, pool_recycle=settings.db_pool_recycle_s,
                          pool_timeout=settings.db_pool_timeout_s, pool_use_lifo=True,
-                         connect_args={"options": "-c idle_in_transaction_session_timeout=600000"
-                                                  " -c timezone=Indian/Reunion"})
+                         connect_args={"options": opts})
 
 
 _engine: Engine | None = None

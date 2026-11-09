@@ -121,8 +121,15 @@ def ensure_runs_schema(conn) -> None:
         # CREATE OR REPLACE VIEW n'accepte que des AJOUTS en fin de liste : assiette_source,
         # hauteur_source puis regles_non_modelisees sont toutes en fin de `_VIEW_COLS` → OR REPLACE
         # suffit. Idempotent.
-        if not {"assiette_source", "hauteur_source", "regles_non_modelisees",
-                "surface_terrain_m2", "sdp_max_m2", "sdp_existante_m2", "d_net_m2"} <= cols:
+        colonnes_a_jour = {"assiette_source", "hauteur_source", "regles_non_modelisees",
+                           "surface_terrain_m2", "sdp_max_m2", "sdp_existante_m2", "d_net_m2"} <= cols
+        # DEPLOY-GROUPE-3 — la vue doit aussi honorer le réglage de session `labuse.residuel_run_seq`
+        # (run candidat lisible par numéro, cf. `_view_sql`). Si la définition servie ne le contient
+        # pas encore, on la remet au niveau. Idempotent : une fois posé, le marqueur est présent → plus
+        # de DDL au boot. (ACCESS EXCLUSIVE bref, une seule fois, au déploiement — le service est
+        # relancé derrière la stabilisation `/readyz`.)
+        vdef = conn.execute(text("SELECT pg_get_viewdef('parcel_residuel'::regclass)")).scalar() or ""
+        if not colonnes_a_jour or "residuel_run_seq" not in vdef:
             conn.execute(text(_view_sql(or_replace=True)))
 
 
@@ -137,8 +144,25 @@ def served_run_seq(conn) -> int:
 def _view_sql(or_replace: bool = False) -> str:
     cols = ", ".join(_VIEW_COLS)
     verb = "CREATE OR REPLACE VIEW" if or_replace else "CREATE VIEW"
+    # DEPLOY-GROUPE-3 (q_v23) — la vue lit le run SERVI PAR DÉFAUT, mais une session peut viser un
+    # run CANDIDAT par son numéro, sans servir, via le réglage de session `labuse.residuel_run_seq`
+    # (posé par l'env `LABUSE_RESIDUEL_RUN_SEQ` au connect, cf. db.make_engine ; ou par
+    # `apply_residuel_run_seq`). Les sessions CLIENT ne le posent jamais → `current_setting(.., true)`
+    # renvoie NULL → COALESCE retombe sur le run servi : comportement EXACTEMENT inchangé côté service.
+    # C'est ce qui permet de calculer le Score (et les features du Signal) d'un run candidat q_v23 sur
+    # son propre résiduel, AVANT la promotion, sans toucher le run servi ni ce que voit le client.
     return (f"{verb} parcel_residuel AS SELECT {cols} FROM parcel_residuel_runs "
-            "WHERE run_seq = (SELECT run_seq FROM residuel_runs WHERE is_served)")
+            "WHERE run_seq = COALESCE("
+            "NULLIF(current_setting('labuse.residuel_run_seq', true), '')::int, "
+            "(SELECT run_seq FROM residuel_runs WHERE is_served))")
+
+
+def apply_residuel_run_seq(conn, run_seq: int | None) -> None:
+    """Fait lire la vue `parcel_residuel` sur un run DONNÉ (par `run_seq`) pour CETTE session, au lieu
+    du run servi. `run_seq=None` réinitialise (lecture du servi). LECTURE SEULE : ne touche NI
+    `is_served` NI aucune donnée — seul un réglage de session (`labuse.residuel_run_seq`) est posé."""
+    conn.execute(text("SELECT set_config('labuse.residuel_run_seq', :v, false)"),
+                 {"v": "" if run_seq is None else str(int(run_seq))})
 
 
 def next_run_seq(conn) -> int:

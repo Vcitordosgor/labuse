@@ -2665,6 +2665,9 @@ def score_labuse_cmd(
     signal_run: str = typer.Option(None, "--signal-run",
                                    help="run_id p_score_v2 pour le Signal (défaut : Score seul)."),
     signal_recette: str = typer.Option("q_v15", "--signal-recette", help="Recette du Signal (traçabilité)."),
+    residuel_run_seq: int = typer.Option(None, "--residuel-run-seq",
+                                         help="DEPLOY-GROUPE-3 — numéro d'un run résiduel CANDIDAT dont "
+                                              "lire le résiduel (sans le servir) ; défaut : run servi."),
     persist: bool = typer.Option(True, "--persist/--no-persist", help="Écrire dans score_labuse."),
     chunk: int = typer.Option(2000, help="Taille des lots."),
 ) -> None:
@@ -2673,6 +2676,7 @@ def score_labuse_cmd(
     (versionné par run_label). q_v11_m137 reste servi — c'est un run CANDIDAT."""
     import time
 
+    from .faisabilite.residuel_runs import apply_residuel_run_seq
     from .scoring.score_labuse_combine import (combiner, ensure_schema,
                                                persister)
 
@@ -2698,6 +2702,8 @@ def score_labuse_cmd(
     total = 0
     for k in range(0, len(ids), chunk):
         with session_scope() as s:
+            if residuel_run_seq is not None:
+                apply_residuel_run_seq(s, residuel_run_seq)   # lire le résiduel candidat, sans le servir
             lignes = combiner(s, ids[k:k + chunk], run, cascade_label=cascade_label,
                               signal_run_id=signal_run, signal_recette=signal_recette)
             total += (persister(s, run, lignes, cascade_label=cascade_label,
