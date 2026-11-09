@@ -3317,7 +3317,7 @@ def _destination_interdit_keys(db: Session, sous_destination: str) -> list[str]:
 @app.get("/filtre")
 def filtre(c: FiltreCriteres = Depends(),
            limit: int = Query(20, ge=0, le=200), offset: int = Query(0, ge=0),
-           sort: str | None = Query(None, pattern="^(rang|mult|surface|surface_asc|commune|potentiel|adresse|labuse)$"),
+           sort: str | None = Query(None, pattern="^(rang|mult|surface|surface_asc|commune|potentiel|adresse|labuse|labuse_potentiel|labuse_vente|labuse_surface)$"),
            idus: int = Query(0, ge=0, le=1),
            groupes: int = Query(0, ge=0, le=1),
            segment: str | None = Query(None, pattern="^(permis_pro|terrain_nu|bati_densifier|reste)$"),
@@ -4056,6 +4056,14 @@ _Q_V2_ORDERS = {
     # décroissant), puis SDP résiduelle, puis IDU (ordre TOTAL, déterministe). `sl` = score_labuse joint.
     "labuse": (f"{_BANDE_RANG_SQL} ASC, sl.signal_p DESC NULLS LAST, "
                "COALESCE(sl.sdp_residuelle_m2,0) DESC, p.idu ASC"),
+    # ECRANS-NOV-1 §2 — « Classer par » À L'INTÉRIEUR de la bande (la bande reste le 1er critère, comme
+    # `labuse`) : potentiel à bâtir (SDP résiduelle exploitable ↓), chance de vente (proba du Signal ↓),
+    # surface (contenance ↓). Seule la clé SECONDAIRE change ; `p.idu` ferme l'ordre (total, déterministe).
+    "labuse_potentiel": (f"{_BANDE_RANG_SQL} ASC, COALESCE(sl.sdp_residuelle_m2,0) DESC NULLS LAST, "
+                         "sl.signal_p DESC NULLS LAST, p.idu ASC"),
+    "labuse_vente": (f"{_BANDE_RANG_SQL} ASC, sl.signal_p DESC NULLS LAST, "
+                     "COALESCE(sl.sdp_residuelle_m2,0) DESC NULLS LAST, p.idu ASC"),
+    "labuse_surface": (f"{_BANDE_RANG_SQL} ASC, COALESCE(p.contenance_m2, p.surface_m2) DESC NULLS LAST, p.idu ASC"),
     "mult": "s2.mult_base DESC NULLS LAST, s2.rang ASC NULLS LAST",
     # CONTENANCE-1 (Lot B) : tri Surface = surface de TERRAIN (contenance si présente, sinon dessin).
     "surface": "COALESCE(p.contenance_m2, p.surface_m2) DESC NULLS LAST, s2.rang ASC NULLS LAST",
@@ -4087,6 +4095,12 @@ _Q_V2_ORDERS_PAGE = {
     # ANALYSE-1 — même ordre lexicographique au niveau page (bande via pg.bande, signal via pg.signal_p).
     "labuse": (f"{_BANDE_RANG_PAGE_SQL} ASC, pg.signal_p DESC NULLS LAST, "
                "COALESCE(pg.sdp_residuelle_m2,0) DESC, pg.idu ASC"),
+    # ECRANS-NOV-1 §2 — « Classer par » au niveau page (même tête de bande, clé secondaire au choix).
+    "labuse_potentiel": (f"{_BANDE_RANG_PAGE_SQL} ASC, COALESCE(pg.sdp_residuelle_m2,0) DESC NULLS LAST, "
+                         "pg.signal_p DESC NULLS LAST, pg.idu ASC"),
+    "labuse_vente": (f"{_BANDE_RANG_PAGE_SQL} ASC, pg.signal_p DESC NULLS LAST, "
+                     "COALESCE(pg.sdp_residuelle_m2,0) DESC NULLS LAST, pg.idu ASC"),
+    "labuse_surface": (f"{_BANDE_RANG_PAGE_SQL} ASC, COALESCE(pg.contenance_m2, pg.surface_m2) DESC NULLS LAST, pg.idu ASC"),
     "mult": "pg.mult_v2 DESC NULLS LAST, pg.rang_v2 ASC NULLS LAST",
     "surface": "COALESCE(pg.contenance_m2, pg.surface_m2) DESC NULLS LAST, pg.rang_v2 ASC NULLS LAST",
     "surface_asc": "COALESCE(pg.contenance_m2, pg.surface_m2) ASC NULLS LAST, pg.rang_v2 ASC NULLS LAST",

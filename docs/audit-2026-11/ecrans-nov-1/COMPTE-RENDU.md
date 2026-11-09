@@ -83,12 +83,17 @@ Fichiers : `components/panel/FiltreLabuse.tsx`, `ResultsSection.tsx`, `LeftPanel
 - Sur **chaque parcelle** (`AnalyseCard`) : les trois puces **bande · signal · zone sur une ligne**, le
   signal écrit « **Faible** » **sans « Signal »**. La **ligne démolition est neutre** : « **bâti existant
   sur N % de la parcelle — à prendre en compte** » (marqueur `•`, teinte grise, plus de ▼ négatif).
+- **« Classer par »** (bloc Score/Signal, 3e rangée) : **Potentiel à bâtir** (défaut) · Chance de vente ·
+  Surface, survol vert. **Côté serveur** (`app.py`, `_Q_V2_ORDERS`/`_Q_V2_ORDERS_PAGE` + validateur
+  `/filtre`) : trois clés de tri `labuse_potentiel|labuse_vente|labuse_surface`, toujours **DANS la
+  bande** (`_BANDE_RANG_SQL` ASC en 1er critère) — potentiel = `sdp_residuelle_m2 ↓`, vente = `signal_p ↓`,
+  surface = `COALESCE(contenance, surface) ↓`, `idu` ferme l'ordre. `SortKey`/`ClasserKey`/`CLASSER_SORT`
+  (api.ts), `getAnalyse` passe `classer`, la liste ET les groupes de fin (`AnalyseBandeGroup`) suivent.
+  **L'ancien tri « Usage » (Va se vendre / À construire) est RETIRÉ de l'écran.** Vérifié live : bande
+  d'abord, puis la clé décroissante (ex. Surface → 608 616 > 430 402 > 344 306…), et au back (Entre-Deux /
+  Saint-Paul). Sort inconnu → 422.
 
 **Partiel / non fait (écran 2)** — à arbitrer avec Vic :
-- Le bloc « **Classer par** » de la maquette (potentiel à bâtir / chance de vente / surface) : l'écran
-  garde son tri « USAGE » (Va se vendre / À construire) + la barre de tri existante. Rebrancher
-  « Classer par » sur ces trois clés = changer les options de tri servies (`SortKey`) → plus large que
-  le front, laissé en l'état.
 - « Même phrase pendant l'animation de chargement » : la phrase est sur l'encart d'analyse ; le décompte
   (3 s) garde son texte propre.
 

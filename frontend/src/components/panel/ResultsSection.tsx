@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { Fragment, useEffect, useMemo, useState } from 'react'
-import { getAnalyse, getAnalyseStats, getCommunes, getFiltre, getParcelsGeojson, getResults, getScoringFraction, type BandeGroupe, type QualiteKey, type SignalNiveauKey, type SortKey } from '../../lib/api'
+import { getAnalyse, getAnalyseStats, getCommunes, getFiltre, getParcelsGeojson, getResults, getScoringFraction, type BandeGroupe, type ClasserKey, type QualiteKey, type SignalNiveauKey, type SortKey } from '../../lib/api'
 import { hasScopeFilters, matchAll, type ParcelProps } from '../../lib/filters'
 import { surfaceTerrain } from '../../lib/surface'
 import { roughCentroid } from '../../lib/geo'
@@ -361,6 +361,13 @@ const SIGNALS_FILTRE: { key: SignalNiveauKey | 'tous'; label: string }[] = [
   { key: 'fort', label: 'Fort' }, { key: 'moyen', label: 'Moyen' },
   { key: 'faible', label: 'Faible' }, { key: 'tous', label: 'Tous' },
 ]
+// ECRANS-NOV-1 §2 — « Classer par » : la clé de tri DANS la bande (la bande reste le 1er critère).
+// Remplace l'ancien tri « Usage » (Va se vendre / À construire) à l'écran d'analyse.
+const CLASSER_FILTRE: { key: ClasserKey; label: string }[] = [
+  { key: 'potentiel', label: 'Potentiel à bâtir' },
+  { key: 'vente', label: 'Chance de vente' },
+  { key: 'surface', label: 'Surface' },
+]
 // ANALYSE-2 — le filtre CLASSEMENT : les 4 bandes de qualité (libellés gravés) + « Tous » en DERNIER.
 // « Non retenue » et « Analyse incomplète » ne sont PAS des choix de classement (catégories à part) —
 // elles restent accessibles par leurs groupes de fin de liste.
@@ -443,14 +450,14 @@ function AnalyseCard({ p, communeLabel }: { p: ParcelProps & { commune?: string 
 
 // UN groupe de fin de liste (« Analyse incomplète » NC, puis « Sans potentiel constructible » 0) :
 // repliable, son COMPTE dans l'en-tête, lignes chargées à l'ouverture (jamais masqué — mandat §5).
-function AnalyseBandeGroup({ groupe, label, color, total, filters, commune, signal }: {
+function AnalyseBandeGroup({ groupe, label, color, total, filters, commune, signal, classer }: {
   groupe: BandeGroupe; label: string; color: string; total: number
-  filters: Filters; commune: string; signal?: SignalNiveauKey
+  filters: Filters; commune: string; signal?: SignalNiveauKey; classer?: ClasserKey
 }) {
   const [open, setOpen] = useState(false)
   const q = useInfiniteQuery({
-    queryKey: ['analyse-groupe', groupe, filters, signal],
-    queryFn: ({ pageParam }) => getAnalyse(filters, groupe, { limit: RESULTS_PAGE, offset: pageParam as number, signal }),
+    queryKey: ['analyse-groupe', groupe, filters, signal, classer],
+    queryFn: ({ pageParam }) => getAnalyse(filters, groupe, { limit: RESULTS_PAGE, offset: pageParam as number, signal, classer }),
     initialPageParam: 0,
     getNextPageParam: (last: unknown[], pages) => (last.length === RESULTS_PAGE ? pages.length * RESULTS_PAGE : undefined),
     enabled: open,
@@ -501,8 +508,6 @@ function BandeHeader({ bande }: { bande: Bande }) {
 export function ResultsSection() {
   const { filters, query, zone, resetFilters, commune, setCommune } = useApp()
   // CLASSEMENT-USAGE-1 — tri par usage (listes + carte), mémorisé par compte.
-  const triUsage = useApp((s) => s.triUsage)
-  const setTriUsage = useApp((s) => s.setTriUsage)
   // FRONT-CHIFFRES-2 (F26) — seuil bas « peu probable » servi (config scoring_client) pour le « i ».
   const dPeuProbable = useQuery({ queryKey: ['scoring-fraction'], queryFn: getScoringFraction, staleTime: 60 * 60 * 1000 }).data?.seuil_bas_denominateur ?? 50
   const ile = commune == null   // mode « Toute l'île » : liste + compteurs servis en SQL
@@ -559,14 +564,18 @@ export function ResultsSection() {
   const [classementFiltre, setClassementFiltre] = useState<QualiteKey | 'tous'>('tous')
   const [signalFiltre, setSignalFiltre] = useState<SignalNiveauKey | 'tous'>('tous')
   const signalParam = signalFiltre === 'tous' ? undefined : signalFiltre
+  // ECRANS-NOV-1 §2 — « Classer par » : la clé de tri DANS la bande (potentiel à bâtir par défaut).
+  // La bande reste toujours le 1er critère (tri serveur) ; seule la clé secondaire change.
+  const [classer, setClasser] = useState<ClasserKey>('potentiel')
+  useEffect(() => { if (!analyse) setClasser('potentiel') }, [analyse])
   // param serveur `bande` : une bande PRÉCISE (A/B/C/D) ou `qualite` (les 4) quand Classement = Tous.
   const bandeParam: BandeGroupe = classementFiltre === 'tous' ? 'qualite' : classementFiltre
   useEffect(() => { if (!analyse) { setSignalFiltre('tous'); setClassementFiltre('tous') } }, [analyse])
   // la LISTE UNIQUE (bandes ordonnées par bande puis Signal côté serveur), servie par /filtre en mode
   // `labuse` — TOUJOURS côté serveur (le geojson commune ne porte pas la bande). Filtrée par les DEUX.
   const analyseList = useInfiniteQuery({
-    queryKey: ['analyse-qualite', commune, filters, bandeParam, signalParam],
-    queryFn: ({ pageParam }) => getAnalyse(filters, bandeParam, { limit: RESULTS_PAGE, offset: pageParam as number, signal: signalParam }),
+    queryKey: ['analyse-qualite', commune, filters, bandeParam, signalParam, classer],
+    queryFn: ({ pageParam }) => getAnalyse(filters, bandeParam, { limit: RESULTS_PAGE, offset: pageParam as number, signal: signalParam, classer }),
     initialPageParam: 0,
     getNextPageParam: (last: unknown[], pages) => (last.length === RESULTS_PAGE ? pages.length * RESULTS_PAGE : undefined),
     enabled: analyse,
@@ -677,20 +686,8 @@ export function ResultsSection() {
             classé par probabilité de vente). Mémorisé par compte. Visible en mode analyse (le classement
             vit là) ; coule aussi dans la carte (mêmes filtres). Le palier reste la probabilité de vente —
             ce tri ne le change jamais, il filtre le périmètre. */}
-        <div data-tri-usage className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
-          <span className="flex h-[15px] shrink-0 items-center text-[10px] uppercase tracking-wide text-txt-dim">Usage</span>
-          <div className="inline-flex overflow-hidden rounded-full border border-line-2">
-            {([['va_se_vendre', 'Va se vendre'], ['a_construire', 'À construire']] as const).map(([key, label]) => (
-              <button key={key} type="button" data-tri-usage-opt={key}
-                aria-pressed={triUsage === key}
-                onClick={() => setTriUsage(key)}
-                className={`px-3 py-1 text-[11px] font-medium transition-colors duration-quick ${
-                  triUsage === key ? 'bg-mint text-ink' : 'text-txt-dim hover:text-mint'}`}>
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* ECRANS-NOV-1 §2 — l'ancien tri « Usage » (Va se vendre / À construire) est RETIRÉ de l'écran :
+            le classement vit désormais dans « Classer par » (bloc Score/Signal), toujours dans la bande. */}
         {!analyse && <div data-tri-bar className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
           <span className="flex h-[15px] shrink-0 items-center gap-1.5 text-[10px] uppercase tracking-wide text-txt-dim">Trier
             {/* M55-F point 6 : le « i » des deux lunettes (opportunité globale vs probabilité seule) */}
@@ -796,6 +793,22 @@ export function ResultsSection() {
                 })}
               </div>
             </div>
+            {/* ECRANS-NOV-1 §2 — « Classer par » : ordonne la liste DANS chaque bande (survol vert). */}
+            <div>
+              <p className="label-caps text-txt-dim">Classer par</p>
+              <div data-classer-filtre className="mt-0.5 flex flex-wrap items-center gap-0.5">
+                {CLASSER_FILTRE.map((c) => {
+                  const actif = classer === c.key
+                  return (
+                    <button key={c.key} data-classer-pill={c.key} onClick={() => setClasser(c.key)}
+                      className={`whitespace-nowrap rounded-md px-1.5 py-1 text-[10px] leading-none transition-colors duration-quick ${
+                        actif ? 'bg-mint font-semibold text-mint-ink' : 'text-txt-mut hover:bg-surface-3 hover:text-txt'}`}>
+                      {c.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
           </div>
 
           {/* ANALYSE-3 (§4) — la ligne de résultats : « N parcelles correspondent à vos filtres » SEULE,
@@ -874,11 +887,11 @@ export function ResultsSection() {
               demandée n'inclut pas ces catégories à part). Jamais masqués sinon. */}
           {showEndGroups && (bandes.NC ?? 0) > 0 && (
             <AnalyseBandeGroup groupe="nc" label={BANDE_META.NC.label} color={BANDE_META.NC.color}
-              total={bandes.NC ?? 0} filters={filters} commune={commune ?? ''} />
+              total={bandes.NC ?? 0} filters={filters} commune={commune ?? ''} classer={classer} />
           )}
           {showEndGroups && (bandes['0'] ?? 0) > 0 && (
             <AnalyseBandeGroup groupe="zero" label={BANDE_META['0'].label} color={BANDE_META['0'].color}
-              total={bandes['0'] ?? 0} filters={filters} commune={commune ?? ''} />
+              total={bandes['0'] ?? 0} filters={filters} commune={commune ?? ''} classer={classer} />
           )}
           </>
         )}
