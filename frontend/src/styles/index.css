@@ -482,11 +482,14 @@ input[data-copilote-saisie]:focus-visible {
    carrés, d'où le « haut rogné · trou noir au-dessus »). On restaure une carte pleinement arrondie +
    bordure haute ; le bloc reste collé top:0 (fond --bg-2 opaque, aucun contenu ne défile au-dessus),
    les petits arcs du haut laissent voir le fond opaque du panneau — des coins, pas un trou. */
-/* RECETTE-PROD-1 (A4) — petit espace (fond --bg-0 du panneau) entre le bord haut et la carte
-   d'en-tête : la carte se colle à top:8px (pt-2 du conteneur), pas au bord ; le fond opaque couvre
-   toujours le défilement au-dessus (aucun contenu ne passe dans l'interstice). */
-.fiche-v6 .tete-collee { position:sticky; top:8px; z-index:20; background:var(--bg-2);
-  border:0.5px solid var(--f-linehead); border-radius:6px;
+/* RETOURS-17 — l'en-tête collant se colle à TOP:0 du conteneur défilant, avec un fond OPAQUE --bg-0
+   qui couvre toute la hauteur JUSQU'AU BORD HAUT du panneau : rien ne passe plus au-dessus de lui au
+   défilement (avant : top:8px laissait une bande transparente de 8 px où le contenu défilait, les
+   boutons Analyse LABUSE/Copilote apparaissaient derrière). Le petit espace noir au-dessus de la carte
+   grise vit DÉSORMAIS À L'INTÉRIEUR du bloc collant (padding-top), donc il reste collé lui aussi.
+   La carte grise à bords arrondis (.tete-carte) est un enfant, inchangée. */
+.fiche-v6 .tete-collee { position:sticky; top:0; z-index:20; background:var(--bg-0); padding-top:8px; }
+.fiche-v6 .tete-carte { background:var(--bg-2); border:0.5px solid var(--f-linehead); border-radius:6px;
   box-shadow:0 3px 10px -6px rgba(0,0,0,.55); }
 .fiche-v6 .head-top { padding:13px 14px; display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
 .fiche-v6 .eyebrow { font-size:9.5px; letter-spacing:.11em; color:var(--txt-off); }

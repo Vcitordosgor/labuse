@@ -804,7 +804,10 @@ export function Fiche({ idu }: { idu: string }) {
           voyait les boutons de carte derrière. (Annule le pt-2.5 flottant de FIX-4 A1.) */}
       {/* RECETTE-PROD-1 (A4) — pt-2 : petit espace (fond du panneau) au-dessus de la carte d'en-tête ;
           la carte se recolle à top:8px (.tete-collee) → pas de contenu qui défile dans l'interstice. */}
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pt-2 pb-4">
+      {/* RETOURS-17 — plus de pt-2 : le petit espace noir au-dessus de la carte grise vit DANS le bloc
+          collant (.tete-collee padding-top), qui se colle à top:0 — sinon la bande de 8 px laissait voir
+          le contenu défiler au-dessus de l'en-tête. */}
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pb-4">
       {/* RETOURS-13 P7 — EN-TÊTE COLLÉ. SEUL le bloc identité (PARCELLE·commune, IDU, adresse, icônes,
           croix de fermeture) reste collé en haut au défilement — un client ferme la fiche sans remonter.
           Les 6 tuiles NE collent PAS (carte séparée dessous). Le bloc est un ENFANT DIRECT du conteneur
@@ -812,6 +815,9 @@ export function Fiche({ idu }: { idu: string }) {
           clipperait le sticky) : fond opaque + ombre pour couvrir ce qui passe dessous. FINITIONS-2 avait
           annulé un sticky qui embarquait AUSSI les tuiles et recouvrait le contenu ; ici, identité seule. */}
       <div className="tete-collee" data-fiche-tete-collee>
+        {/* RETOURS-17 — la CARTE GRISE à bords arrondis (.tete-carte) est un enfant du bloc collant
+            opaque (.tete-collee, fond --bg-0) : elle reste telle quelle, le fond noir la coiffe. */}
+        <div className="tete-carte">
           {/* LIENS-1 (maquette Vic) — UNE ligne de boutons sur TOUTE la largeur, en deux groupes :
               à GAUCHE les liens vers l'extérieur (nouvel onglet) Cadastre · Pages Jaunes · Google Maps ·
               État des risques (Errial) · Google Earth ; à DROITE, séparées par un trait vertical fin,
@@ -922,6 +928,7 @@ export function Fiche({ idu }: { idu: string }) {
               Secteur : <b>{f.secteur}</b>
             </div>
           )}
+        </div>{/* /.tete-carte — RETOURS-17 : la carte grise arrondie */}
       </div>{/* /.tete-collee — RETOURS-13 P7 : bloc identité COLLÉ (les 6 tuiles ne collent pas) */}
 
       {/* RETOURS-13 P7 — les 6 tuiles vivent dans leur PROPRE carte, sous l'en-tête collé : elles
@@ -2196,7 +2203,8 @@ export function Fiche({ idu }: { idu: string }) {
                   ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18M6 21V9l6-4 6 4v12M10 21v-5h4v5" /></svg>} />
                 <OutilCase nom="Estimer" data-estimer-tile
                   onClick={() => { setAnnonceParcellePrefill(idu); setModule('analyser-annonce') }}
-                  ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>} />
+                  /* RETOURS-17 — icône € (Euro) au lieu de $ (Dollar) : LABUSE est en euros. */
+                  ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 10h12" /><path d="M4 14h9" /><path d="M19 6a7.7 7.7 0 0 0-5.2-2A8 8 0 0 0 6 12a8 8 0 0 0 7.8 8 7.7 7.7 0 0 0 5.2-2" /></svg>} />
                 {/* RECETTE-6 (D2) — « Remonter le temps » : ouvre l'outil PRÉ-REMPLI sur la parcelle
                     (setParcelPrefill + recentrage) ; fermer l'outil ramène la fiche (selectedIdu préservé). */}
                 <OutilCase nom="Remonter le temps" data-temps-tile

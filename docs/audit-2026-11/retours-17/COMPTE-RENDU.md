@@ -37,12 +37,17 @@ au survol. Ajout d'une classe dédiée `t-chev` sur le chevron des tiroirs (`pri
 de la règle `.tiroir.is-lien:hover` (`index.css`) → chevron en **noir (--ink)** au survol.
 Après : `apres/17-fiche-chevron-noir-hover.png`.
 
-### 5. Fiche — espace au-dessus bouché en noir ; section grise inchangée
-Vérifié sur pièces (sonde DOM) : l'espace de 16 px au-dessus de la carte grise à bords arrondis
-(`.tete-collee`, `--bg-2`) est déjà peint en **noir opaque `--bg-0` (#0A0C0B)** par le fond du panneau
-(`.fiche-v6`), la carte grise restant telle quelle. Aucun changement nécessaire — l'état correspond à
-la demande. Après : `apres/16-fiche-haut-contexte.png`. *(Si « pur #000 » est attendu plutôt que le
-noir de l'app `--bg-0`, dites-le : ajustement d'un token, 1 ligne.)*
+### 5. Fiche — espace au-dessus bouché en noir ; en-tête collé à top:0
+**Vrai défaut** (précisé par Vic) : l'en-tête collant se collait à **top:8px**, laissant une bande
+transparente de 8 px au-dessus de lui — au défilement, le contenu (boutons **Analyse LABUSE / Copilote**)
+apparaissait DERRIÈRE, au-dessus de l'en-tête. Corrigé : `.tete-collee` se colle désormais à **top:0**
+avec un **fond opaque `--bg-0`** couvrant toute la hauteur jusqu'au bord haut du panneau ; le petit
+espace noir au-dessus de la carte grise vit À L'INTÉRIEUR du bloc collant (`padding-top`), donc il reste
+collé lui aussi ; la **carte grise à bords arrondis** devient un enfant `.tete-carte` (inchangée). Le
+`pt-2` du conteneur défilant est retiré. **Vérifié en défilant** (sonde DOM : au point haut, c'est
+`.tete-collee` qui peint, plus un `.tiroir` défilant). Fichiers : `Fiche.tsx`, `index.css`. Avant/après
+en défilement : `avant/19b-fiche-scroll-bleed.png` (boutons verts au-dessus de l'en-tête) vs
+`apres/19-fiche-scroll-entete-net.png` (rien au-dessus).
 
 ### 6. « + CRM » / « + Projet » — tout en vert, survol blanc sur vert opaque
 `Fiche.tsx` : **« + Projet »** passe de l'ambre au **vert** (mêmes classes que « + CRM » :
@@ -74,13 +79,11 @@ Après : `apres/30-projets.png`, `apres/31-projet-kanban.png`.
 ### 10. Badge « constructibilité très limitée » — sans le « i »
 `Fiche.tsx` : l'infobulle « ⓘ » (exceptions A/N) est retirée du badge ; libellé seul.
 
-### 11. Estimer — « € remplace $ » : AUCUN « $ » trouvé ⚠
-Recherche exhaustive : l'outil **Estimer un bien** (`AnalyserAnnonce.tsx`, chemins bâti/terrain/copro),
-l'endpoint `/radar/annonce/estimation`, le document d'estimation (backend) et **tout** le source front
-n'affichent **que des « € »** — aucun « $ » monétaire nulle part. Rien à remplacer : le point semble
-déjà réglé (ou le « $ » venait d'un état que je n'ai pas pu reproduire). **Merci de m'indiquer où vous
-l'avez vu** (outil exact + type de parcelle) si le symbole persiste.
-Référence : `avant/21-estimer.png`, `avant/22-estimer-resultat.png` (tout en €).
+### 11. Estimer — le symbole € remplace le $ ✅
+Le « $ » était une **icône** (SVG lucide *DollarSign*), pas un texte — d'où l'introuvabilité par
+recherche de chaîne. C'est l'icône de la tuile **« Estimer »** dans la grille d'outils de la fiche
+parcelle (`Fiche.tsx`, `data-estimer-tile`, juste au-dessus de « Estimations indicatives issues de… »).
+Remplacée par l'**icône € (lucide *Euro*)**. Après : `apres/80-estimer-tile-euro.png`.
 
 ### 12. Liens externes de la fiche
 `liensExternes.ts` (+ test `liensExternes.test.ts`) :
@@ -146,13 +149,13 @@ portent un **écart régulier de 6 px**. Avant/après : `avant/11-fiche-panel.pn
 | 2 | Notifications : préférences/tout lire retirés ; 99+ vert | ✅ |
 | 3 | Fiche : trait vertical cloche retiré | ✅ |
 | 4 | Fiche : chevron survol noir | ✅ |
-| 5 | Espace au-dessus fiche noir ; carte grise inchangée | ✅ (déjà `--bg-0`, vérifié) |
+| 5 | Espace au-dessus fiche noir ; en-tête collé top:0 (rien au-dessus au défilement) | ✅ (vérifié en défilant) |
 | 6 | + CRM / + Projet verts ; survol blanc sur vert opaque | ✅ |
 | 7 | Listing projets : Parcelle non coupé, pas de scroll H, Nouveau projet, survol vert | ✅ |
 | 8 | CRM : « Déplacer », Note → détail/section note, champ kanban retiré | ✅ |
 | 9 | Filtres fermés : compteur « 1 » n'apparaît pas | ✅ |
 | 10 | Badge « constructibilité très limitée » sans le « i » | ✅ |
-| 11 | Estimer : € remplace $ | ⚠ aucun « $ » trouvé (tout en €) |
+| 11 | Estimer : € remplace $ (icône de la tuile) | ✅ |
 | 12 | Liens externes (PJ réparé, Earth en ligne, Cadastre/Maps/Géorisques) | ✅ |
 | 13 | Docs : Fiche → et petites phrases retirées ; Comparatif | ✅ |
 | 14 | Sources : phrase 434 582… retirée | ✅ |
@@ -163,5 +166,4 @@ portent un **écart régulier de 6 px**. Avant/après : `avant/11-fiche-panel.pn
 | 19 | Puces « moyen » Situation → « impact moyen/faible/fort » | ✅ |
 | 20 | Fiche : adresse et IDU espacés comme Secteur | ✅ |
 
-**Un seul point en suspens : #11** — aucun « $ » n'existe dans l'app (Estimer rend tout en €). À
-préciser où le symbole a été vu.
+**Les 20 points sont traités.**
