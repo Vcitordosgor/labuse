@@ -446,3 +446,27 @@ tsc 0, vitest 310, build, secrets ; cinq captures WebKit (Safari) après clic/su
 (2) `border-current/40` n'est PAS une classe Tailwind (pas de variante d'opacité sur `current`) → repli gris
 silencieux. (3) le compteur `[data-compteur-vivant]` n'est rendu QUE section « Filtres » dépliée (`data-filtres-
 toggle` aria-expanded=true) — une mesure panneau replié le croit absent.
+
+# RETOURS-22 — trait Filtres, cadre tuiles, défilement des sections (même branche, pas de merge)
+
+**3 points**, une capture par point dans `captures/retours-22/`. Hook VERT (tsc 0, vitest 310, build, secrets).
+Le bloc Score/Signal/Classer par n'est PAS touché.
+
+1. **Fin trait sous « Filtres » retiré dans TOUS les états** (fermé, ouvert, analyse) — `LeftPanel` : le
+   séparateur `border-t border-line` (les deux occurrences desktop+mobile) est SUPPRIMÉ (R-21 ne le retirait
+   qu'en analyse). Vérifié : absent fermé ET ouvert. *(01-sans-trait-filtres)*
+2. **Fiche parcelle — cadre des six tuiles retiré, tuiles égales, libellés sur une ligne** (`index.css`) :
+   - `.fiche-v6 .stats` → **`border:0`** (et non `border-top:0` : la bordure GLOBALE `.stats`
+     (`border:0.5px --line-2`) subsistait en bas et sur les côtés = le cadre encore visible). Mesuré :
+     border `0px` sur les 4 côtés.
+   - **Même hauteur ajustée au contenu, sans vide en bas** : `grid-auto-rows:1fr` (six tuiles égales) +
+     `min-height` RETIRÉ (hauteur = contenu le plus riche, plus de plancher 62 px) + `.stat` en flex colonne
+     `justify-content:center` (contenu centré → pas de vide en bas). Mesuré : les 6 tuiles à **88 px** (avant
+     94 px, gonflées par un libellé sur 2 lignes).
+   - **Chaque libellé sur une ligne** : `.stat-l` `white-space:nowrap` + interlettrage `.06em→.04em`.
+     « SDP RESTANTE » + son « i » tiennent sur une ligne (mesuré : 14 px, non tronqué). *(02-fiche-tuiles)*
+3. **Filtres — ouverture d'une section défile jusqu'à son DÉBUT** (`FiltreLabuse.AccordionCat`) : au passage
+   fermé→ouvert (clic utilisateur), on aligne le haut de la carte (`.gcard`) sur le haut du conteneur défilant
+   (`[data-filtres-drawer]`, trouvé par remontée du 1er ancêtre défilant), `scrollTo({top, smooth})`. La
+   hauteur dépliée n'importe pas (on vise le début, jamais la fin). Mesuré : panneau défilé en bas (593) →
+   ouverture de « Le terrain » → en-tête à **4 px du haut** du conteneur. *(03-section-ouverte-debut)*

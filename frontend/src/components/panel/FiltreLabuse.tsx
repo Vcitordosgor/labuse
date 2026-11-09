@@ -283,8 +283,27 @@ export function AccordionCat({ titre, info, num, defaultOpen = false, badge, cls
   const controlled = open !== undefined && onToggle !== undefined
   const isOpen = controlled ? open! : openInner
   const toggle = controlled ? onToggle! : () => setOpenInner((o) => !o)
+  // RETOURS-22 (pt 3) — à l'OUVERTURE (passage fermé→ouvert par l'utilisateur), le panneau défile
+  // jusqu'au DÉBUT de la section ouverte (son en-tête remonte en haut du conteneur défilant), jamais
+  // à sa fin. On aligne le haut de la carte sur le haut du conteneur ; la hauteur dépliée n'importe pas.
+  const rootRef = useRef<HTMLDivElement>(null)
+  const prevOpen = useRef(isOpen)
+  useEffect(() => {
+    if (isOpen && !prevOpen.current) {
+      requestAnimationFrame(() => {
+        const el = rootRef.current
+        let sc: HTMLElement | null = el?.parentElement ?? null
+        while (sc && !(sc.scrollHeight > sc.clientHeight && /(auto|scroll)/.test(getComputedStyle(sc).overflowY))) sc = sc.parentElement
+        if (el && sc) {
+          const top = el.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop
+          sc.scrollTo({ top: Math.max(0, top - 4), behavior: 'smooth' })
+        }
+      })
+    }
+    prevOpen.current = isOpen
+  }, [isOpen])
   return (
-    <div className={`gcard overflow-hidden ${cls}`}>
+    <div ref={rootRef} className={`gcard overflow-hidden ${cls}`}>
       <button type="button" data-cat-toggle aria-expanded={isOpen} onClick={toggle}
         className="flex w-full items-center gap-2 px-3 py-2.5 text-left">
         <span className="flex min-w-0 items-center gap-1.5">
