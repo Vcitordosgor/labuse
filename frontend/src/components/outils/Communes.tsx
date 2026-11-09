@@ -83,7 +83,7 @@ function AcquisitionsRecentes() {
         <p className="label-caps text-[9.5px]">Commune</p>
         <Select data-acq-commune value={commune ?? ''} onChange={(e) => { setCommune(e.target.value || null); setMillesimes([]); setLimite(200) }}
           wrapClassName="mt-1 w-full"
-          className="w-full rounded-md border border-line-2 bg-surface-3 px-2 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none">
+          className="w-full rounded-md border border-line-2 bg-surface-3 px-2 py-1.5 text-[12px] text-txt focus:outline-none">
           <option value="">Choisir une commune…</option>
           {(communes.data ?? []).map((c) => <option key={c.insee} value={c.commune}>{c.commune}</option>)}
         </Select>

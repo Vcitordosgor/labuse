@@ -140,7 +140,7 @@ export function RadarEcran() {
   const setNum = (k: keyof RadarFiltres, v: string) => setF((p) => ({ ...p, [k]: v === '' ? undefined : Number(v) }))
   const nTotal = data?.n_total ?? 0
   const nActifs = [f.commune, f.type_bien, f.particulier_pro, f.prix_min, f.prix_max, f.surface_terrain_min, f.surface_terrain_max].filter((v) => v != null && v !== '').length
-  const selInput = 'h-8 rounded-md border border-line-2 bg-surface-1 px-2.5 text-[12.5px] text-txt focus:border-mint focus:outline-none'
+  const selInput = 'h-8 rounded-md border border-line-2 bg-surface-1 px-2.5 text-[12.5px] text-txt focus:outline-none'
 
   return (
     <div className="flex min-h-0 flex-1 overflow-hidden">
@@ -150,7 +150,7 @@ export function RadarEcran() {
         <div className="flex shrink-0 items-center gap-3 border-b border-line-2 px-6 py-3.5">
           <Retour label="Radar" data-radar-retour onClick={() => setRadarEcran('portes')} />
           <div className="text-[12.5px] text-txt-mut"><b className="text-[14px] font-semibold text-txt-hi">{nTotal}</b> bien{nTotal > 1 ? 's' : ''}</div>
-          <Select value={tri} onChange={(e) => setTri(e.target.value)} wrapClassName="ml-auto" className="h-8 rounded-md border border-line-2 bg-surface-1 px-2.5 text-[12px] text-txt focus:border-mint focus:outline-none">
+          <Select value={tri} onChange={(e) => setTri(e.target.value)} wrapClassName="ml-auto" className="h-8 rounded-md border border-line-2 bg-surface-1 px-2.5 text-[12px] text-txt focus:outline-none">
             {TRIS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </Select>
         </div>

@@ -244,7 +244,7 @@ function CreerPage({ mode, onBack, onCree }: {
       setErr(e instanceof Error ? e.message : 'Création impossible.')
     } finally { setBusy(false) }
   }
-  const inp = 'w-full rounded-md border border-line-2 bg-bg px-3 py-2.5 text-[13.5px] text-txt outline-none focus:border-mint'
+  const inp = 'w-full rounded-md border border-line-2 bg-bg px-3 py-2.5 text-[13.5px] text-txt outline-none'
   const titre = mode === 'client' ? 'Créer un client' : 'Ouvrir un essai 48 h'
   return (
     <div>
@@ -367,7 +367,7 @@ function ProlongerModal({ l, onClose, onDone }: {
           <div className="mb-3 text-txt-dim">Échéance actuelle : <b className={l.essai_expire_at && new Date(l.essai_expire_at).getTime() <= now ? 'text-coral' : 'text-txt'}>{fmtReu(l.essai_expire_at, true)}</b></div>
           <label className="mb-1.5 block text-[12px] text-txt-dim">Nouvelle date de fin</label>
           <input type="datetime-local" value={fin} min={minStr} max={maxStr} onChange={(e) => setFin(e.target.value)}
-            className="w-full rounded-md border border-line-2 bg-bg px-3 py-2.5 text-[13px] text-txt outline-none focus:border-mint [color-scheme:dark]" />
+            className="w-full rounded-md border border-line-2 bg-bg px-3 py-2.5 text-[13px] text-txt outline-none [color-scheme:dark]" />
           <div className="mt-2 text-[11.5px] text-txt-off">
             {valide ? <>L'essai sera actif encore <b className="text-txt">≈ {heures} h</b> (jusqu'à la date choisie).</>
               : <span className="text-coral">Choisir une date entre maintenant et +30 jours (1 à 720 h).</span>}
@@ -726,7 +726,7 @@ export function LicencesSection() {
           ))}
         </div>
         <input value={recherche} onChange={(e) => setRecherche(e.target.value)} placeholder="Nom, e-mail…"
-          className="ml-auto w-60 rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-[13px] text-txt outline-none focus:border-mint" />
+          className="ml-auto w-60 rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-[13px] text-txt outline-none" />
       </div>
 
       <div className="overflow-hidden rounded-xl border border-line bg-surface-2">

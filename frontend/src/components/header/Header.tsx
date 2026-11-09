@@ -264,8 +264,9 @@ function CommuneSelect() {
     <div className="relative shrink-0">
       {/* RETOURS-19 (pt 5) — bouton SECONDAIRE de l'en-tête, identique à « Signaler » (plus d'ambre) :
           liseré neutre au repos, aplat vert plein / encre sombre quand le menu est ouvert. */}
+      {/* RETOURS-21 (pt 7) — EXACTEMENT la hauteur de la barre de recherche (`h-9`), alignée haut/bas. */}
       <button onClick={() => setOpen((o) => !o)} data-commune-select data-fiche-commune-menu aria-pressed={open}
-        className={`flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs transition-colors duration-quick ${
+        className={`flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-xs transition-colors duration-quick ${
           open ? 'border-mint bg-mint font-medium text-mint-ink' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
         {/* RETOURS-20 (pt 1) — plus de chevron sur le bouton « Fiche commune ». */}
         Fiche commune
@@ -776,15 +777,17 @@ function SignalerButton() {
             <div className="mt-2 flex gap-1.5">
               {RETOUR_TYPES.map((t) => (
                 <button key={t.key} data-retour-type={t.key} onClick={() => setType(t.key)}
+                  /* RETOURS-21 (pt 2) — RÈGLE DE SÉLECTION UNIQUE : chip choisi = FOND VERT OPAQUE + texte
+                     SOMBRE (comme les lignes de filtre / puces de tri), jamais un simple contour vert. */
                   className={`rounded-full border px-3 py-1 text-[11px] transition-colors duration-quick ${
-                    type === t.key ? 'border-mint bg-mint/10 text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
+                    type === t.key ? 'border-mint bg-mint font-medium text-mint-on' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
                   {t.label}
                 </button>
               ))}
             </div>
             <textarea value={msg} onChange={(e) => setMsg(e.target.value)} rows={4} maxLength={2000}
               aria-label="Décrivez le bug, l'idée ou la question" placeholder="Décrivez le bug, l'idée ou la question…" data-retour-message
-              className="mt-3 w-full resize-none rounded-md border border-line-2 bg-bg p-2 text-xs text-txt outline-none focus:border-mint" />
+              className="mt-3 w-full resize-none rounded-md border border-line-2 bg-bg p-2 text-xs text-txt outline-none" />
             <div className="mt-2 flex items-center justify-between">
               <span className="text-[10px] text-txt-mut">Transmis avec votre licence — jamais anonyme.</span>
               <button data-retour-envoyer onClick={envoyer} disabled={msg.trim().length < 3 || busy}

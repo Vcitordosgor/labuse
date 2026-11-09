@@ -66,13 +66,15 @@ function DocCard({ d, onOpen }: { d: DocCatalogue; onOpen: () => void }) {
   // s'étire plus à toute la hauteur de la colonne (les colonnes sont étirées par la grille) ; toutes
   // les cartes gardent la même taille, calée sur leur contenu (desc en 2 lignes fixes).
   return (
+    // RETOURS-21 (pt 3) — survol = FOND VERT OPAQUE + texte/icônes SOMBRES (`.hover-fill`, comme les
+    // autres survols de l'app), plus un simple contour vert. Le focus suit la règle unique (globale).
     <button onClick={onOpen}
-      className="group flex w-full flex-col gap-3 rounded-lg border border-line bg-surface-1 p-4 text-left transition-colors duration-quick hover:border-mint focus-visible:border-mint focus-visible:outline-none">
+      className="hover-fill group flex w-full flex-col gap-3 rounded-lg border border-line bg-surface-1 p-4 text-left transition-colors duration-quick">
       <div className="flex items-start justify-between">
-        <span className="grid h-8 w-8 place-items-center rounded-md border border-line-2 text-mint transition-colors duration-quick group-hover:border-mint/60">
+        <span className="grid h-8 w-8 place-items-center rounded-md border border-line-2 text-mint transition-colors duration-quick">
           <DocGlyphe />
         </span>
-        <span aria-hidden className="text-txt-faint transition-colors duration-quick group-hover:text-mint">→</span>
+        <span aria-hidden className="text-txt-faint transition-colors duration-quick">→</span>
       </div>
       <div className="min-w-0">
         <div className="text-[15px] font-semibold text-txt">{d.nom}</div>
@@ -305,7 +307,7 @@ function Porte({ d, onClose, initialIdu }: { d: DocCatalogue; onClose: () => voi
               <div className="mt-2 flex items-center gap-2">
                 <label className="text-[13px] text-txt-dim" htmlFor="doc-surface-hab">Surface habitable (m²)</label>
                 <input id="doc-surface-hab" type="number" min={1} step={1} inputMode="numeric"
-                  className="h-9 w-24 rounded-md border border-line-2 bg-surface-3 px-2 text-[13px] text-txt-hi placeholder:text-txt-mut focus:border-mint focus:outline-none"
+                  className="h-9 w-24 rounded-md border border-line-2 bg-surface-3 px-2 text-[13px] text-txt-hi placeholder:text-txt-mut focus:outline-none"
                   placeholder="facultatif" value={surfaceHab} onChange={(e) => setSurfaceHab(e.target.value)} />
               </div>
             )}
@@ -318,7 +320,7 @@ function Porte({ d, onClose, initialIdu }: { d: DocCatalogue; onClose: () => voi
             </div>
             <div className="mb-2 font-semibold text-txt">Un lien d’annonce</div>
             <input
-              className="h-10 w-full rounded-md border border-line-2 bg-surface-3 px-3 text-[13px] text-txt-hi placeholder:text-txt-mut focus:border-mint focus:outline-none"
+              className="h-10 w-full rounded-md border border-line-2 bg-surface-3 px-3 text-[13px] text-txt-hi placeholder:text-txt-mut focus:outline-none"
               placeholder="https://www.leboncoin.fr/ventes_immobilieres/…"
               value={lien} onChange={(e) => setLien(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && lien.trim() && !enCours) void ouvrir(docAnalyseAnnonceLienUrl(lien.trim()), 'analyse-annonce', undefined, `${d.fichier ?? d.nom}.pdf`).then((ok) => { if (ok) onClose() }) }}

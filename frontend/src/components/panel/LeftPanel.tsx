@@ -474,7 +474,9 @@ export function LeftPanel() {
           {/* RETOURS-7 Z9 — « Voir les N parcelles » REFERME le panneau Filtres (→ 'listing') et
               rend la place à la liste. L'état ouvert/fermé suit l'action, pas l'historique de nav. */}
           <FiltresSection open={filtresOpen} onToggle={toggleFiltres} onRetract={() => setPanneauSection('listing')} fill={sectionFill} closable />
-          {!sectionFill && <div className="mx-5 mt-3 mb-1 shrink-0 border-t border-line" />}
+          {/* RETOURS-21 (pt 6) — en ANALYSE, plus de fin trait sous « Filtres » (il ne sépare plus rien
+              d'utile : l'en-tête d'analyse suit directement). Conservé hors analyse (accueil). */}
+          {!sectionFill && !verdict && <div className="mx-5 mt-3 mb-1 shrink-0 border-t border-line" />}
           <VerdictHero />
           {verdict && <ResultsSection />}
         </aside>
@@ -507,7 +509,9 @@ export function LeftPanel() {
             {/* RETOURS-7 Z9 — « Voir les N parcelles » REFERME le panneau Filtres (→ 'listing') et
               rend la place à la liste. L'état ouvert/fermé suit l'action, pas l'historique de nav. */}
           <FiltresSection open={filtresOpen} onToggle={toggleFiltres} onRetract={() => setPanneauSection('listing')} fill={sectionFill} closable />
-            {!sectionFill && <div className="mx-5 mt-3 mb-1 shrink-0 border-t border-line" />}
+            {/* RETOURS-21 (pt 6) — en ANALYSE, plus de fin trait sous « Filtres » (il ne sépare plus rien
+              d'utile : l'en-tête d'analyse suit directement). Conservé hors analyse (accueil). */}
+          {!sectionFill && !verdict && <div className="mx-5 mt-3 mb-1 shrink-0 border-t border-line" />}
             <div className="shrink-0 px-5 pb-1"><Legend inline /></div>
             <VerdictHero />
             {verdict && <ResultsSection />}

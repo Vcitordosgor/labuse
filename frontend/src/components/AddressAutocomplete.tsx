@@ -5,7 +5,7 @@ import { rechercheSuggest, type SuggestItem, type SuggestType } from '../lib/api
 // DA-FIX-2 Lot 2 (DA-001) — rendu d'omnibox CANONIQUE (planche) : 40 px de haut, contour, rayon 6.
 // C'est le rendu par défaut de TOUTES les barres parcelle (via ParcelInput). Le header garde son
 // propre className (barre à loupe) mais la même métrique (son wrapper est passé à h-10).
-const OMNIBOX_CLS = 'w-full h-10 rounded-md border border-line-2 bg-surface-3 px-3 text-[13px] text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none'
+const OMNIBOX_CLS = 'w-full h-10 rounded-md border border-line-2 bg-surface-3 px-3 text-[13px] text-txt placeholder:text-txt-dim focus:outline-none'
 
 // M12-D1 — LE composant de barre de recherche PARTAGÉ (mutualisé D2 + D3).
 // RETOURS-16 V5 — il devient la SUGGESTION UNIFIÉE de l'app : un seul endpoint

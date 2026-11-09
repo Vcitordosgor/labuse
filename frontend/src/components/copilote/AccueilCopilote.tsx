@@ -186,8 +186,8 @@ export function AccueilCopilote({ value, onChange, onSubmit, occupe, reponse,
       {/* M133 — LE CHAMP EN PREMIER (l'action principale), sous le hero. Placeholder = un exemple
           d'une VRAIE mission (donnée), servi ; jouer le placeholder tel quel aboutit à la mission 1,
           jamais à un refus. FOCUS sans contour vert (M87 P2). */}
-      {/* RETOURS-3 R12 — mauve ASSUMÉ au focus du champ (bordure mauve + halo doux), comme la maquette v3. */}
-      <div data-accueil-barre className="mb-3 flex items-center gap-3 rounded-xl border border-cp-ia-border bg-cp-card/60 py-2 pl-[18px] pr-2 transition-[border-color,box-shadow] duration-quick focus-within:border-cp-ia focus-within:shadow-[0_0_0_3px_rgba(180,151,240,0.16)]">
+      {/* RETOURS-21 — plus d'anneau de focus (`focus-within:border`/`shadow`) : règle de focus unique. */}
+      <div data-accueil-barre className="mb-3 flex items-center gap-3 rounded-xl border border-cp-ia-border bg-cp-card/60 py-2 pl-[18px] pr-2">
         <textarea ref={ref} data-brief rows={1} value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (value.trim()) onSubmit() } }}

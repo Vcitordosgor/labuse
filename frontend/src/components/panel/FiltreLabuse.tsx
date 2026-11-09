@@ -361,7 +361,7 @@ export function NumField({ field, ph, suffix }: { field: keyof Filters; ph: stri
     <div className="flex items-center gap-1">
       <input type="number" inputMode="numeric" placeholder={ph}
         value={v ?? ''} onChange={(e) => setFilter(field, (e.target.value === '' ? null : Number(e.target.value)) as never)}
-        className="w-[68px] rounded-md border border-line-2 bg-transparent px-2 py-1 text-[11px] text-txt-hi placeholder:text-txt-dim focus:border-mint focus:outline-none" />
+        className="w-[68px] rounded-md border border-line-2 bg-transparent px-2 py-1 text-[11px] text-txt-hi placeholder:text-txt-dim focus:outline-none" />
       {suffix && <span className="text-[10px] text-txt-dim">{suffix}</span>}
     </div>
   )
@@ -465,8 +465,12 @@ export function AffinerBody() {
             <LigneChoix key={k} dataAttr="data-signal" label={
               <span className="inline-flex items-center gap-1.5">{CLIENT.signaux.labels[k]}
                 <Tip garder side="top" tip={CLIENT.signaux.infos[k]}>
+                  {/* RETOURS-21 (pt 4) — le « i » suit la couleur du TEXTE de la ligne (cercle COMPRIS) :
+                      `border-current` (et non `border-current/40`, qui ne génère pas de classe valide et
+                      retombait en gris clair). Sur une ligne sélectionnée (encre sombre), le cercle devient
+                      sombre et reste lisible sur le vert. */}
                   <span role="button" tabIndex={0} aria-label={`En savoir plus : ${CLIENT.signaux.labels[k]}`}
-                    className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-current/40 text-[8px] font-bold leading-none opacity-70 hover:opacity-100">i</span>
+                    className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-current text-[8px] font-bold leading-none opacity-70 hover:opacity-100">i</span>
                 </Tip>
               </span>}
               on={filters.signaux.includes(k)} onClick={() => toggleSignal(k)} />
@@ -675,7 +679,7 @@ export function SectionProprietaire({ open: openProp, onToggle }: { open?: boole
                 onChange={(e) => { setDenomInput(e.target.value); setShowSug(true); if (e.target.value.trim() === '') setFilter('pmDenom', null) }}
                 onFocus={() => setShowSug(true)}
                 onBlur={() => window.setTimeout(() => setShowSug(false), 150)}
-                className="mt-1 w-full rounded-md border border-line-2 bg-transparent px-2 py-1 text-[11px] text-txt-hi placeholder:text-txt-dim focus:border-mint focus:outline-none" />
+                className="mt-1 w-full rounded-md border border-line-2 bg-transparent px-2 py-1 text-[11px] text-txt-hi placeholder:text-txt-dim focus:outline-none" />
               {showSug && debDenom.length >= 2 && aq.data && aq.data.suggestions.length > 0 && (
                 <ul data-prop-suggestions className="absolute z-20 mt-1 max-h-44 w-full overflow-y-auto rounded-md border border-line-2 bg-surface-2 py-1 shadow-lg">
                   {aq.data.suggestions.map((s) => (
@@ -697,7 +701,7 @@ export function SectionProprietaire({ open: openProp, onToggle }: { open?: boole
               <TitreSection titre="SIREN" info="Un ou plusieurs SIREN, séparés par une virgule." />
               <input type="text" value={filters.pmSiren ?? ''} placeholder="Un ou plusieurs, séparés par une virgule"
                 onChange={(e) => setFilter('pmSiren', e.target.value.trim() === '' ? null : e.target.value)}
-                className="mt-1 w-full rounded-md border border-line-2 bg-transparent px-2 py-1 text-[11px] text-txt-hi placeholder:text-txt-dim focus:border-mint focus:outline-none" />
+                className="mt-1 w-full rounded-md border border-line-2 bg-transparent px-2 py-1 text-[11px] text-txt-hi placeholder:text-txt-dim focus:outline-none" />
             </div>
 
             {/* ── FORME JURIDIQUE — sous-accordéons par famille (compte cumulé), formes en LigneChoix. ── */}
@@ -818,24 +822,27 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
   // encore répondu, et disparaît (0) si l'endpoint échoue — jamais un chiffre inventé.
   const totalIleQ = useQuery({ queryKey: ['accueil-chiffres'], queryFn: getAccueilChiffres, staleTime: 60 * 60 * 1000 })
   const totalIle = totalIleQ.data?.parcelles ?? null
-  const [live, setLive] = useState<number | null>(null)
-  // ECRANS-NOV-1 §2 — la ligne « N à instruire · N écartées » est retirée du pied (maquette) ; le split
-  // reste calculé (le back le sert) mais n'est plus LU côté panneau — binding de valeur omis.
-  const [, setLiveSplit] = useState<{ instruire: number; ecartees: number } | null>(null)
-  const [liveLoading, setLiveLoading] = useState(false)
+  // RETOURS-21 (pt 8) — compteur « N parcelles correspondent » sous 300 ms :
+  //   · debounce ramené 400 → 120 ms (la frappe ne déclenche plus une rafale, mais l'actualisation
+  //     démarre bien plus tôt) ;
+  //   · passage à react-query (clé = filtres débouncés) : une COMBINAISON DÉJÀ VUE (staleTime 30 s)
+  //     s'affiche INSTANTANÉMENT depuis le cache, sans réseau (≈ le débounce, bien < 300 ms) ;
+  //   · `placeholderData` = valeur précédente : pour une combinaison NEUVE (comptage serveur ~1 s à
+  //     froid), l'ANCIEN nombre reste affiché tout de suite (flottant, opacité), puis se CORRIGE à
+  //     l'arrivée du compte exact — « estimé affiché tout de suite puis corrigé ».
+  const [filtresDebounced, setFiltresDebounced] = useState(filters)
   useEffect(() => {
-    const ctrl = new AbortController()
-    setLiveLoading(true)
-    const tmr = window.setTimeout(() => {
-      getFiltreCount(filters, ctrl.signal)
-        .then((r) => {
-          setLive(r.compte); setLiveLoading(false)
-          setLiveSplit({ instruire: r.instruire, ecartees: r.ecartees })
-        })
-        .catch(() => { /* abort/réseau : on garde le dernier nombre, l'opacité signale le flottement */ })
-    }, 400)
-    return () => { window.clearTimeout(tmr); ctrl.abort() }
+    const t = window.setTimeout(() => setFiltresDebounced(filters), 120)
+    return () => window.clearTimeout(t)
   }, [filters])
+  const countQ = useQuery({
+    queryKey: ['filtre-count', filtresDebounced],
+    queryFn: ({ signal }) => getFiltreCount(filtresDebounced, signal),
+    staleTime: 30_000,
+    placeholderData: (prev) => prev,
+  })
+  const live = countQ.data?.compte ?? null
+  const liveLoading = countQ.isFetching
 
   // ═══ M55-D stage 5 · LA RÉVÉLATION — couche de PRÉSENTATION par-dessus l'état stage 4 (al/verdict
   // intouchés jusqu'au geste final). Décompte 3 s CONSTANT (rituel, décision Vic) ; pendant

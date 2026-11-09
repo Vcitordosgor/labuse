@@ -42,7 +42,7 @@ export function DepotAgence({ onClose }: { onClose?: () => void }) {
   const pret = Boolean(adresse && idu && rec.type && rec.prix)
   const reset = () => { setRec({}); setAdresse(''); setIdu(''); setPubMsg(null); setPublie(null) }
 
-  const inp = 'h-9 w-full rounded-md border border-line-2 bg-surface-1 px-2.5 text-[13px] text-txt focus:border-mint focus:outline-none'
+  const inp = 'h-9 w-full rounded-md border border-line-2 bg-surface-1 px-2.5 text-[13px] text-txt focus:outline-none'
   const lab = 'mb-1 block text-[11px] text-txt-dim'
 
   return (

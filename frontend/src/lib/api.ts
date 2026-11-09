@@ -215,10 +215,13 @@ export const getFiltreCount = (f: Filters, signal?: AbortSignal) => {
 }
 /** M55-G suite (point 1) — les IDU du résultat courant (mêmes critères, plafond serveur
  *  20 000 + drapeau tronqué) : la CARTE raccorde sa palette au résultat exact de la liste. */
-export const getFiltreIdus = (f: Filters) => {
+// RETOURS-21 (pt 9) — `bande` optionnel : restreint les IDU à une bande du Score (A=Excellente,
+// B=Bonne, C=À étudier, D=Faible). Quand le résultat complet dépasse le plafond (20 000), la carte
+// demande ainsi SEULEMENT les meilleures bandes (peu nombreuses) et les peint exactement.
+export const getFiltreIdus = (f: Filters, bande?: 'A' | 'B' | 'C' | 'D') => {
   const { tiers: _t, ...rest } = filterParams(f)
   return j<FiltreReponse & { idus: string[] | null; idus_tronque: boolean }>(
-    `/filtre?${qf({ limit: 0, idus: 1, ...rest, ...tiersParam(f) })}`)
+    `/filtre?${qf({ limit: 0, idus: 1, ...(bande ? { bande } : {}), ...rest, ...tiersParam(f) })}`)
 }
 
 /** M99 Phase 3 — zones du sélecteur par famille : familles triées par volume réel, zones en

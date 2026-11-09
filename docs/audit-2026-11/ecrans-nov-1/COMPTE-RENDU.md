@@ -357,3 +357,92 @@ n'est **pas** retouché (remplacé par un autre mandat).
 d'une capture → extension temporaire de `RITUEL_MS` (20 s) pour capturer l'écran de chargement, puis
 revert. (3) un `live` pas encore chargé fait retomber le N du décompte sur le total de l'île (433 229) ;
 en usage réel le compteur « N parcelles correspondent » est déjà chargé avant « Analyser » → N commune juste.
+
+# RETOURS-21 — WebKit/Safari, focus & sélection uniques, carte & compteur (même branche, pas de merge)
+
+**10 points.** Tout vérifié **dans WebKit** (moteur de Safari, `playwright webkit`) **après un clic souris**,
+pas seulement dans Chrome. Captures Safari dans `captures/retours-21/`. Hook VERT (tsc 0, vitest **310**,
+build, secrets).
+
+> Environnement : Playwright 1.62 veut `webkit-2336` (non supporté sur ce macOS mac13-arm64). On a donc
+> installé `playwright@1.49.1` (hors dépôt, `/tmp/pw-wk`) qui pilote le `webkit-2104` déjà en cache — moteur
+> Safari fonctionnel. Harnais `/tmp/retours21_webkit_focus.cjs`.
+
+## 1. Règle de focus UNIQUE (globale)
+`src/lib/focusModality.ts` (nouveau) pose `html[data-input="mouse"|"key"]` : `mouse` dès un `pointerdown`,
+`key` seulement sur une touche qui DÉPLACE le focus (Tab/flèches/Home/Fin/PagePrec-Suiv/Échap). `index.css`
+(`@layer base`) : `*:focus-visible { outline:2px vert }` au clavier, et `html[data-input="mouse"] *:focus,
+*:focus-visible { outline:none }` au clic. **Pourquoi la modalité et pas `:focus-visible` seul** : en Safari
+un champ texte matche `:focus-visible` même au CLIC → le drapeau souris est le seul moyen de l'éteindre.
+Règles locales RETIRÉES : bordure menthe des champs (`focus:border-mint` ×34 → 0, balayage), anneaux
+`focus-within:border/shadow` du composeur Copilote (×2) + `focus-visible:ring` (CopiloteEmbarque ×2), aplats
+de focus `focus-visible:bg/text` de `Bouton` (snapshot `formes` mis à jour). **Mesures WebKit après clic :**
+
+| Élément (clic souris) | outline | box-shadow | verdict |
+|---|---|---|---|
+| Copilote — zone de texte | `none 0px` | `none` | ✓ (bordure inchangée) |
+| Signaler — zone de texte | `none 0px` | `none` | ✓ (bordure inchangée) |
+| Signaler — chip « Bug » | `none 0px` | `none` | ✓ (vert = sélection, pas focus) |
+| En-tête — bouton « Signaler » | `none 0px` | `none` | ✓ (vert = état ouvert, pas focus) |
+| Filtre — ligne commune | `none 0px` | `none` | ✓ |
+| Filtre — « Procédure collective » | `none 0px` | `none` | ✓ |
+| + Projet (fiche) | `none 0px` | `none` | ✓ (bordure menthe = design au repos) |
+| **CLAVIER (Tab)** | **`solid 2px rgb(74,222,128)`** | — | ✓ **contour vert** |
+
+*(01-copilote-champ-clic, 02-signaler-chip-et-champ)*
+
+## 2. Règle de sélection UNIQUE
+Tout élément choisi = **fond vert opaque + texte sombre**, jamais un simple contour. Les chips Bug/Idée/
+Question de « Signaler » passaient `border-mint bg-mint/10 text-mint` (contour + teinte) → **`bg-mint
+text-mint-on`** (`Header.tsx`). Les lignes de filtre (`LigneChoix`) et les puces de tri (`Tri`) étaient déjà
+en aplat vert + encre sombre. *(02, 04)*
+
+## 3. Survol des cartes Documents
+`DocumentsView.DocCard` : `hover:border-mint` (simple contour) → **`.hover-fill`** = fond vert opaque + texte
+et icônes sombres, comme les autres survols. Mesuré WebKit : fond `linear-gradient(#52E68C→#2FBE66)`, titre/
+flèche/trait SVG `rgb(7,16,9)`. *(03-documents-survol)*
+
+## 4. Le « i » d'une ligne sélectionnée
+Le cercle du « i » des signaux restait **gris clair** (`border-current/40` **n'est pas une classe Tailwind
+valide** → repli `gray-200`). `border-current` : le cercle (et le texte) prennent la couleur de la ligne →
+**encre sombre sur le vert**. Mesuré : `color` et `border-color` du « i » = `rgb(6,48,26)`. *(04)*
+
+## 5. Fiche parcelle — cadre gris derrière les six tuiles retiré
+`.fiche-v6 .head` (le conteneur des tuiles) : fond + bordure retirés (`background:transparent; border:0`) et
+le filet `.stats border-top` supprimé → **seules les six tuiles** (chacune son liseré) restent. *(05-fiche-tuiles-sans-cadre)*
+
+## 6. Analyse — fin trait blanc sous « Filtres » retiré
+`LeftPanel` : le séparateur `border-t border-line` sous la section « Filtres » ne s'affiche plus **en analyse**
+(`!verdict`) ; conservé hors analyse (accueil). Vérifié : séparateur absent, l'en-tête « ✓ Analyse LABUSE »
+suit directement.
+
+## 7. « Fiche commune » = hauteur de la barre de recherche
+Bouton passé à **`h-9`** (comme la recherche). Mesuré : recherche 36 px / Fiche commune 36 px, **haut 10/10,
+bas 46/46** (alignés).
+
+## 8. Compteur « N parcelles correspondent » < 300 ms
+Cause : débounce **400 ms** + comptage serveur `/filtre?limit=0` (`COUNT(*)` filtré) **~1 s à froid**, ~5 ms
+chaud (mémoïsé 30 s). AVANT ≈ 405 ms (chaud) / ~1,4 s (froid). Fix (`FiltreLabuse`) : débounce **400 → 120 ms**
++ passage à **react-query** (clé = filtres débouncés, `staleTime 30 s`) → une combinaison DÉJÀ VUE s'affiche
+du cache **sans réseau** ; `placeholderData` = valeur précédente → pour une combinaison neuve, l'ancien nombre
+reste affiché tout de suite (flottant) puis se CORRIGE. **Mesuré APRÈS : bascule d'un filtre en cache =
+140 ms** (38 217 → 44 793), < 300 ms.
+
+## 9. Carte — « Résultat trop large pour peindre » (~110 000 parcelles)
+**Cause** : en analyse avec un critère HORS-TUILES (signaux, état du sol, propriétaire… que la tuile vectorielle
+ne sait pas exprimer), la carte demande au serveur la LISTE EXACTE des IDU à peindre. **Limite** : le serveur
+plafonne cette liste à **20 000** (`_FILTRE_IDUS_CAP`, `app.py`) ; au-delà il renvoie `idus_tronque` et l'ancien
+code affichait « trop large pour peindre » (aveu d'impuissance) en peignant au mieux le sur-ensemble des tuiles.
+**Fix** (`MapView` + `api.getFiltreIdus(f, bande)`) : au-delà du plafond, on ne renonce pas — on demande
+SEULEMENT les IDU des **meilleures bandes (Excellente=A + Bonne=B)**, bien moins nombreuses (l'endpoint
+`/filtre?idus=1&bande=A|B` existe déjà), et on les peint EXACTEMENT. Message réécrit : « La carte peint les
+meilleures bandes (Excellente + Bonne) parcelle à parcelle ; … reste dans la liste. » (repli approximation si
+même A+B dépasse le plafond — rare). Jamais un message d'impuissance.
+
+## 10. Hook + captures Safari
+tsc 0, vitest 310, build, secrets ; cinq captures WebKit (Safari) après clic/survol dans `captures/retours-21/`.
+
+**Pièges** — (1) `webkit-2336` non supporté sur ce macOS → `playwright@1.49.1` + `webkit-2104` en cache.
+(2) `border-current/40` n'est PAS une classe Tailwind (pas de variante d'opacité sur `current`) → repli gris
+silencieux. (3) le compteur `[data-compteur-vivant]` n'est rendu QUE section « Filtres » dépliée (`data-filtres-
+toggle` aria-expanded=true) — une mesure panneau replié le croit absent.

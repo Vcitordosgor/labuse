@@ -1334,7 +1334,7 @@ export function Fiche({ idu }: { idu: string }) {
             <input autoFocus data-fiche-search value={ficheQuery} onChange={(e) => setFicheQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Escape' && (setFicheQuery(''), setFicheSearchOpen(false))}
               placeholder="Chercher dans cette fiche (risque, réseau, ICPE…)"
-              className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1 text-xs text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none" />
+              className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1 text-xs text-txt placeholder:text-txt-dim focus:outline-none" />
             {/* FICHE-RECHERCHE-1 — accord correct (« 1 résultat surligné ») ; « aucun résultat »
                 (jamais un compteur à zéro). Le compteur = le nombre de LIGNES trouvées (la liste). */}
             {fq && <span data-fiche-search-count className="shrink-0 text-[11px] text-txt-mut">{results.length === 0

@@ -225,7 +225,7 @@ function CardEditPanel({ e, meta, onCancel, onSave, onMove, saving, focusNotes }
   const [nom, setNom] = useState(pr.contact_nom ?? '')
   const [tel, setTel] = useState(pr.contact_telephone ?? '')
   const [mail, setMail] = useState(pr.contact_email ?? '')
-  const inputCls = 'mt-1 w-full rounded-md border border-line-2 bg-surface-2 px-2 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none'
+  const inputCls = 'mt-1 w-full rounded-md border border-line-2 bg-surface-2 px-2 py-1.5 text-[12px] text-txt focus:outline-none'
   const submit = () => onSave({
     priority, notes, reminder_date: reminder,
     prospection: { statut_proprietaire: statutProp, prochaine_action: action,
@@ -498,7 +498,7 @@ export function Kanban() {
           {/* GB-027 — recherche CRM (nom, commune, IDU, société), accents insensibles, filtre client. */}
           <input value={search} onChange={(ev) => setSearch(ev.target.value)} type="search"
             placeholder="Rechercher (nom, commune, IDU…)" aria-label="Rechercher dans le CRM"
-            className="w-44 rounded-md border border-line-2 bg-surface-2 px-2 py-1 text-[11px] text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none" />
+            className="w-44 rounded-md border border-line-2 bg-surface-2 px-2 py-1 text-[11px] text-txt placeholder:text-txt-dim focus:outline-none" />
           {/* QA-46 (M13-C) : pagination par FLÈCHES (plus de défilement horizontal). Les flèches
               n'apparaissent que si toutes les colonnes ne tiennent pas dans la fenêtre. */}
           {paginated && !editMode && (
@@ -530,7 +530,7 @@ export function Kanban() {
                     onKeyDown={(ev) => { if (ev.key === 'Enter') commitAdd(); if (ev.key === 'Escape') { setAdding(false); setNewColLabel('') } }}
                     placeholder="Nom de la colonne…"
                     maxLength={80}
-                    className="w-40 rounded-md border border-mint/50 bg-surface-2 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none"
+                    className="w-40 rounded-md border border-mint/50 bg-surface-2 px-2 py-1 text-[11px] text-txt focus:outline-none"
                     aria-label="Nom de la nouvelle colonne"
                   />
                   <Bouton niveau="primaire" ton="vert" onClick={commitAdd} disabled={!newColLabel.trim() || addCol.isPending}

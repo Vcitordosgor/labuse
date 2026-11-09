@@ -181,7 +181,8 @@ export function CopiloteView() {
   // REMONTÉE (padding haut réduit).
   const champ = (
     <div data-copilote-champ className="bg-cp-bg/80 px-4 pb-3.5 pt-1.5 md:px-6">
-      <div className="mx-auto flex max-w-[840px] items-end gap-2.5 rounded-xl border border-cp-ia-border bg-cp-card/60 py-2 pl-[16px] pr-2 transition-[border-color,box-shadow] duration-quick focus-within:border-cp-ia focus-within:shadow-[0_0_0_3px_rgba(180,151,240,0.16)]">
+      {/* RETOURS-21 — plus d'anneau de focus (`focus-within:border`/`shadow`) : règle de focus unique. */}
+      <div className="mx-auto flex max-w-[840px] items-end gap-2.5 rounded-xl border border-cp-ia-border bg-cp-card/60 py-2 pl-[16px] pr-2">
         <textarea ref={champRef} data-copilote-saisie rows={1} value={saisie}
           onChange={(e) => setSaisie(e.target.value)} onKeyDown={onChamp}
           aria-label="Votre message au Copilote"

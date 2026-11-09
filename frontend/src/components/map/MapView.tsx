@@ -473,10 +473,17 @@ function BoutonCarte({ onClick, title, children }: { onClick: () => void; title:
 
 // M129-D P2.2 — la glose de la palette NOMME son univers : le vivier servi (hors exclusions
 // légales et physiques, motifs consultables), jamais un « > 20 000 » nu.
+// RETOURS-21 (pt 9) — la carte peint les MEILLEURES BANDES exactement (le cas normal au-delà du
+// plafond) : un message UTILE, jamais un aveu d'impuissance.
+const getToastMeilleuresBandes = (total?: number) =>
+  'La carte peint les meilleures bandes (Excellente + Bonne) parcelle à parcelle'
+  + (total ? ` ; les ${total.toLocaleString('fr-FR')} parcelles du résultat` : ' ; tout le résultat')
+  + ' reste dans la liste.'
+// repli (si même les meilleures bandes dépassent le plafond — rare) : approximation par critères.
 const getPaletteToast = (total?: number) =>
-  'Résultat trop large pour peindre parcelle à parcelle (> 20 000'
-  + (total ? ` sur ${total.toLocaleString('fr-FR')} parcelles servies — hors exclusions légales et physiques` : '')
-  + ') — la carte montre l’approximation par critères ; la liste reste exacte.'
+  'La carte montre l’approximation par critères'
+  + (total ? ` (${total.toLocaleString('fr-FR')} parcelles servies, hors exclusions légales et physiques)` : '')
+  + ' ; la liste reste exacte.'
 
 export function MapView() {
   const ref = useRef<HTMLDivElement>(null)
@@ -552,14 +559,34 @@ export function MapView() {
     queryFn: () => getFiltreIdus(filters),
     enabled: besoinIdus, staleTime: 30_000,
   })
-  const resultIdus = besoinIdus && idusQ.data && !idusQ.data.idus_tronque ? idusQ.data.idus : null
-  // no-silent-caps : résultat > plafond → la carte replie sur l'approximation, et le DIT
+  // RETOURS-21 (pt 9) — quand le résultat exact dépasse le plafond serveur (20 000), on NE RENONCE PAS
+  // à peindre : on demande SEULEMENT les IDU des MEILLEURES BANDES (Excellente + Bonne), bien moins
+  // nombreuses, et on les peint EXACTEMENT (les deux appels en parallèle, un seul hook/queryKey).
+  const idusTronque = besoinIdus && !!idusQ.data?.idus_tronque
+  const idusTopQ = useQuery({
+    queryKey: ['filtre-idus-top', filters],
+    queryFn: async () => {
+      const [a, b] = await Promise.all([getFiltreIdus(filters, 'A'), getFiltreIdus(filters, 'B')])
+      const ok = (r: { idus: string[] | null; idus_tronque: boolean }) => (r && !r.idus_tronque ? (r.idus ?? []) : null)
+      const ma = ok(a), mb = ok(b)
+      if (ma == null && mb == null) return { idus: null as string[] | null }
+      return { idus: [...(ma ?? []), ...(mb ?? [])] }
+    },
+    enabled: idusTronque, staleTime: 30_000,
+  })
+  // palette exacte : résultat complet si sous le plafond, sinon les meilleures bandes (A+B).
+  const resultIdus = besoinIdus
+    ? (idusQ.data && !idusQ.data.idus_tronque ? idusQ.data.idus : (idusTopQ.data?.idus ?? null))
+    : null
+  // no-silent-caps : au-delà du plafond, la carte DIT ce qu'elle peint — les meilleures bandes
+  // exactement (jamais un message d'impuissance), et la liste reste complète.
   useEffect(() => {
-    if (besoinIdus && idusQ.data?.idus_tronque) {
-      useApp.getState().setToast(
-        getPaletteToast(idusQ.data?.total))
-    }
-  }, [besoinIdus, idusQ.data])
+    if (!idusTronque) return
+    const peintBandes = (idusTopQ.data?.idus?.length ?? 0) > 0
+    useApp.getState().setToast(peintBandes
+      ? getToastMeilleuresBandes(idusQ.data?.total)
+      : getPaletteToast(idusQ.data?.total))
+  }, [idusTronque, idusTopQ.data, idusQ.data])
 
   // le remplissage zonage n'est appliqué que si la source ACTIVE porte zone_fam :
   // geojson commune = toujours (jointure live) ; tuiles île = au prochain build-mvt

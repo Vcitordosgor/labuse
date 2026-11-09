@@ -240,19 +240,19 @@ export function Blocs() {
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-txt-mut">
               <label className="flex items-center gap-1.5">Surface totale
                 <Select data-blocs-surf-min value={surfMin} onChange={(e) => { setSurfMin(Number(e.target.value)); reset() }}
-                  className="h-8 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:border-mint focus:outline-none">
+                  className="h-8 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:outline-none">
                   {SURFACE_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
                 </Select>
               </label>
               <label className="flex items-center gap-1.5">Résiduel
                 <Select data-blocs-sdp-min value={sdpMin} onChange={(e) => { setSdpMin(Number(e.target.value)); reset() }}
-                  className="h-8 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:border-mint focus:outline-none">
+                  className="h-8 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:outline-none">
                   {SDP_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
                 </Select>
               </label>
               <label className="flex items-center gap-1.5">Parcelles
                 <Select data-blocs-n-min value={nMin} onChange={(e) => { setNMin(Number(e.target.value)); reset() }}
-                  className="h-8 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:border-mint focus:outline-none">
+                  className="h-8 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:outline-none">
                   {N_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
                 </Select>
               </label>
