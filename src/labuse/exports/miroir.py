@@ -871,8 +871,149 @@ def _r_artif_ocsge(v):
 
 
 #: id → rendeur. `bloc` = fragment pleine largeur (tableau propre) ; sinon cellule valeur.
+# ══ DOCS-DA-1 — rendeurs des faits de l'inventaire (lus au même robinet que la fiche) ═════════════
+def _da_date(s):
+    try:
+        a, m, j = str(s)[:10].split("-")
+        return f"{j}/{m}/{a}"
+    except Exception:  # noqa: BLE001
+        return esc(s)
+
+
+def _da_eurm2(x):
+    try:
+        return f"{groupe(round(float(x)))} €/m²"
+    except (TypeError, ValueError):
+        return esc(x)
+
+
+def _r_acquereurs_pro(v):
+    acq = (v or {}).get("acquereurs") or []
+    if not acq:
+        return ""
+    items = " · ".join(f"{esc(a.get('denomination') or '')} ({_da_date(a.get('date'))})" for a in acq[:6])
+    r, mois = (v or {}).get("rayon_m"), (v or {}).get("mois")
+    return items + (f" — à moins de {int(r)} m, {int(mois)} mois" if r and mois else "")
+
+
+def _r_permis_section(v):
+    n = v.get("count")
+    if not n:
+        return ""
+    d = f", dernier {_da_date(v.get('dernier'))}" if v.get("dernier") else ""
+    return esc(f"{groupe(n)} permis sur la section cadastrale (36 mois{d})")
+
+
+def _r_dvf_fourchette(v):
+    def g(k):
+        return groupe(round(v[k])) if v.get(k) is not None else "—"
+    return esc(f"Q1 {g('q1')} · médiane {g('median')} · Q3 {g('q3')} €/m² "
+               f"(min {g('min')} · max {g('max')})")
+
+
+def _r_dvf_tendance(v):
+    t, p = (v or {}).get("tendance"), (v or {}).get("pct")
+    lib = {"baisse": "Baisse", "hausse": "Hausse", "stable": "Stable"}.get(str(t), str(t))
+    if p is not None:
+        signe = "−" if p < 0 else ("+" if p > 0 else "")
+        return esc(f"{lib} ({signe}{abs(int(p))} %)")
+    return esc(lib)
+
+
+def _r_oll(v):
+    loyer, zone = v.get("loyer_median_eur_m2"), v.get("zone")
+    s = str(loyer).replace(".", ",") if loyer is not None else "—"
+    return esc(f"{s} €/m²" + (f" — zone {zone}" if zone is not None else ""))
+
+
+def _r_filosofi(v):
+    try:
+        niv = groupe(int(str(v.get("nivvie_moyen_eur")).replace(" ", "")))
+    except Exception:  # noqa: BLE001
+        niv = esc(v.get("nivvie_moyen_eur"))
+    bits = [f"Niveau de vie {niv} €"]
+    if v.get("taux_pauvrete_pct") is not None:
+        bits.append(f"{int(v['taux_pauvrete_pct'])} % sous le seuil de pauvreté")
+    if v.get("part_proprietaires_pct") is not None:
+        bits.append(f"{int(v['part_proprietaires_pct'])} % propriétaires")
+    return esc(" · ".join(bits) + " (carreau 200 m)")
+
+
+def _r_gestionnaires(v):
+    parts = []
+    eau = (v.get("eau") or {}).get("operateur")
+    ass = (v.get("assainissement") or {}).get("operateur")
+    elec = (v.get("electricite") or {}).get("gestionnaire")
+    spanc = v.get("spanc")
+    if eau:
+        parts.append(f"Eau : {esc(eau)}")
+    if ass:
+        parts.append(f"Assainissement : {esc(ass)}")
+    if elec:
+        parts.append(f"Électricité : {esc(elec)}")
+    if spanc:
+        parts.append(f"SPANC : {esc(spanc)}")
+    return " · ".join(parts)
+
+
+def _r_bus_contact(v):
+    nom = (str(v.get("nom") or "").split("—")[0]).strip() or "ligne"
+    res = f" ({esc(v.get('reseau'))})" if v.get("reseau") else ""
+    d = f" — à {int(v['distance_m'])} m" if v.get("distance_m") is not None else ""
+    return esc(f"Ligne {nom}") + res + " au contact" + d
+
+
+def _r_saturation(v):
+    bits = []
+    if v.get("consomme") is not None:
+        bits.append(f"{int(v['consomme'])} % consommé")
+    if v.get("residuel") is not None:
+        bits.append(f"{int(v['residuel'])} % résiduel")
+    return esc(" · ".join(bits))
+
+
+def _r_catnat(v):
+    total = v.get("total")
+    perils = []
+    for a in v.get("arretes") or []:
+        p = a.get("peril")
+        if p and p not in perils:
+            perils.append(p)
+    tail = (" — " + ", ".join(perils[:4]) + ("…" if len(perils) > 4 else "")) if perils else ""
+    return esc(f"{groupe(total)} arrêtés CatNat (commune){tail}")
+
+
+def _r_comparables(v, val=None):
+    rows = ""
+    for c in (v or [])[:8]:
+        surf = c.get("surface_m2")
+        rows += (f'<tr><td>{esc(c.get("date"))}</td><td>{esc(c.get("type"))}</td>'
+                 f'<td class="num">{esc(surf)} m²</td>'
+                 f'<td class="num">{_da_eurm2(c.get("prix_m2"))}</td>'
+                 f'<td class="num">{esc(c.get("distance_m"))} m</td></tr>')
+    if not rows:
+        return ""
+    return ('<div data-quoi="comparables_proches" class="keep"><h3>Les 8 comparables les plus proches '
+            '(comme Estimer)</h3><table class="kv">'
+            '<tr><th>Vente</th><th>Type</th><th class="num">Surface</th>'
+            '<th class="num">Prix</th><th class="num">Distance</th></tr>' + rows + '</table></div>')
+
+
+def _r_gabarit_plan_3d(brute, val=None):
+    """La vue 3D du gabarit — à côté du schéma 2D (§Potentiel). `brute` = SVG déjà sûr (serveur)."""
+    svg = brute if isinstance(brute, str) else ""
+    return (f'<div class="gabarit-plan" data-quoi="gabarit_plan_3d" '
+            f'style="margin:6px 0;text-align:center">{svg}</div>')
+
+
 _RENDEURS: dict[str, Any] = {
     "part_artificialisee_pct": _r_artif_ocsge,
+    # DOCS-DA-1 — les faits de l'inventaire
+    "acquereurs_pro_voisins": _r_acquereurs_pro, "permis_section_36m": _r_permis_section,
+    "dvf_fourchette": _r_dvf_fourchette, "dvf_tendance": _r_dvf_tendance,
+    "loyer_oll_eur_m2": _r_oll, "filosofi_200m": _r_filosofi,
+    "gestionnaires_reseaux": _r_gestionnaires, "ligne_bus_contact": _r_bus_contact,
+    "densite_saturation": _r_saturation, "catnat_arretes": _r_catnat,
     "prix_achat_historique_eur": _r_prix_achat, "coproprietes_liste": _r_copros,
     "proprietaire_timeline_liste": _r_timeline, "historique_permis_liste": _r_permis_liste,
     "er_emplacement_reserve": _r_er_ebc, "ebc_classe": _r_er_ebc, "dpu_perimetre": _r_dpu,
@@ -907,6 +1048,8 @@ _RENDEURS_BLOC: dict[str, Any] = {
     "aleas_parcelle_liste": _r_aleas, "dvf_parcelle_liste": _r_dvf_liste,
     "iris_quartier": _r_iris, "perimetres_dispositifs_liste": _r_territoire,
     "gabarit_plan_2d": _r_gabarit_plan,
+    # DOCS-DA-1 — table des 8 comparables (comme Estimer) + vue 3D du gabarit (à côté du 2D).
+    "comparables_proches": _r_comparables, "gabarit_plan_3d": _r_gabarit_plan_3d,
 }
 #: EXPORTS-FIX-1 A8 — intitulés de groupe internes, masqués au rendu (lignes conservées).
 _GROUPES_MASQUES = {"Bilan indicatif"}

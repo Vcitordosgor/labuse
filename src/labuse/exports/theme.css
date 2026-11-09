@@ -271,6 +271,10 @@ table.cmp tr { page-break-inside: avoid; }
 /* Gabarit — plan 2D + vue 3D côte à côte + règles */
 .plan2d { border: 1px solid var(--line); border-radius: 3pt; padding: 6pt; margin: 4pt 0 12pt; page-break-inside: avoid; }
 .plan2d svg, .plan3d svg { width: 100%; height: auto; max-height: 120mm; display: block; }
+/* DOCS-DA-1 — au Dossier §Potentiel, la vue 3D À CÔTÉ du schéma 2D : deux colonnes (la classe
+   `.gabarit-plan` ne sert QU'ICI ; le document Gabarit a son propre `.plan2d`/`.plan3d`). */
+.gabarit-plan { display: inline-block; width: 49%; vertical-align: top; box-sizing: border-box; }
+.gabarit-plan + .gabarit-plan { padding-left: 2%; }
 /* DOCS-DA-1 — la légende des figures du gabarit, en HTML sous le SVG (≥ 10,5 px, s'enroule). */
 .fig-legende { margin: 5pt 2pt 2pt; }
 .fig-note { font-size: var(--fs-xs); color: var(--muted); margin-bottom: 3pt; }

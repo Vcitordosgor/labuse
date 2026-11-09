@@ -40,6 +40,38 @@ donnees:
     absence_type: absente_ici
     pourquoi: "Écarter est notre décision : elle se justifie (Vic) — repliée, avec le motif."
 
+  # DOCS-DA-1 — la FOURCHETTE (dispersion) et la TENDANCE (un seul lecteur : prix_ancien).
+  - quoi:  dvf_fourchette
+    ou:    { rang: 42, etat: replie, section: "Constaté — ventes actées (DVF)" }
+    comment: { libelle: "Fourchette des prix (DVF)", format: texte, i: "Dispersion des prix de l'ancien (DVF) : Q1, médiane, Q3, min et max — la dispersion dit la fiabilité de la médiane." }
+    absence: "Fourchette des prix : non calculable (échantillon insuffisant)."
+    absence_type: absente_ici
+    masquer_si_absent: true
+    pourquoi: "La dispersion éclaire la médiane ; repliée."
+  - quoi:  dvf_tendance
+    ou:    { rang: 44, etat: replie, section: "Constaté — ventes actées (DVF)" }
+    comment: { libelle: "Tendance des prix (DVF)", format: texte, i: "Sens du marché de l'ancien (DVF) — hausse / baisse / stable, avec sa variation. Un seul lecteur (prix_ancien) ; rien si non servi." }
+    absence: "Tendance des prix : non déterminée."
+    absence_type: absente_ici
+    masquer_si_absent: true
+    pourquoi: "Le sens du marché, pas qu'un point ; replié."
+  # DOCS-DA-1 — les 8 comparables les plus proches, le MÊME point de données qu'Estimer.
+  - quoi:  comparables_proches
+    ou:    { rang: 46, etat: replie, section: "Constaté — ventes actées (DVF)" }
+    comment: { libelle: "Les 8 comparables les plus proches", format: liste, i: "Les 8 ventes retenues par Estimer (pondérées distance / surface / type / ancienneté) — le MÊME point de données que le document Estimer." }
+    absence: "Comparables : aucune vente comparable exploitable à proximité."
+    absence_type: absente_ici
+    masquer_si_absent: true
+    pourquoi: "Les ventes qui portent la médiane, comme dans Estimer ; repliées."
+  # DOCS-DA-1 — le loyer de marché OLL (base du rendement locatif).
+  - quoi:  loyer_oll_eur_m2
+    ou:    { rang: 48, etat: replie, section: "Constaté — ventes actées (DVF)" }
+    comment: { libelle: "Loyer de marché (OLL)", unite: "€/m²", format: texte, i: "Loyer médian de marché observé (OLL — ADIL / AGORAH), base du rendement locatif, avec sa zone." }
+    absence: "Loyer de marché (OLL) : non disponible pour cette zone."
+    absence_type: absente_ici
+    masquer_si_absent: true
+    pourquoi: "La base du rendement locatif ; repliée."
+
   - quoi:  dvf_parcelle_liste
     ou:    { rang: 50, etat: replie, section: "Constaté — ventes actées (DVF)" }
     comment: { libelle: "Ventes de cette parcelle", format: liste, i: "Mutations DVF portant sur la parcelle elle-même (son propre historique de ventes)." }

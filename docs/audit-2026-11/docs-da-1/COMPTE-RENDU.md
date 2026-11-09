@@ -63,16 +63,37 @@ Réécriture de `src/labuse/exports/theme.css` + câblage des polices (`exports/
   l'écran, qui en tire « Ensoleillement très favorable »). `robinet_fiche._c_solaire` lit désormais cette
   source → « **1 548 kWh/kWc** ». Le fait entre au **banc des documents** (`_productible`).
 
-### B — faits ajoutés : état
+### B — les 15 faits ajoutés (V9) — LIVRÉS
 
-Le défaut explicitement signalé (productible solaire « non calculé » faux) est **corrigé** et au banc. Les
-autres faits de la liste d'ajout de l'inventaire (pente maximale + alerte terrassement, hauteur à l'égout
-mesurée, acquéreurs pro < 300 m/36 mois, permis de section/36 mois, fourchette DVF Q1–Q3, 8 comparables,
-loyer OLL, Filosofi 200 m, gestionnaires de réseaux nommés, bus au contact, taux départemental de TA,
-saturation de densité, niveaux max, vue 3D à côté du 2D, CatNat si complet) **restent à câbler** : chacun
-exige son extracteur (`robinet_fiche`), son rendeur (`miroir`) et son entrée au banc. **Non livrés dans ce
-lot** — identifiés comme suite B (le gabarit, l'ordre, les retraits et la correction solaire étant le socle
-prioritaire validé visuellement).
+Chaque fait est lu au **même robinet que la fiche** (extracteur `robinet_fiche` sur le payload `/parcels`,
+ou moteur PARTAGÉ avec Estimer/le Gabarit), déclaré au registre (`donnees.py` + robinet + oracle), rendu
+par un rendeur (`miroir`) et **vérifié par le banc des documents**. Le front de la fiche n'est pas touché
+(les déclarations pilotent le Dossier/miroir, pas le JSX de l'écran).
+
+| Fait | Source (même lecteur) | Section |
+|---|---|---|
+| Pente maximale + alerte terrassement | `terrain.pente_max_deg` / `flag_terrassement_lourd` (RGE ALTI) | 5 Terrain |
+| Hauteur à l'égout **mesurée** | `le_bien.hauteur_egout_m` (LiDAR HD) | 6 Bâti |
+| Acquéreurs pro < 300 m/36 mois, nommés et datés | `pm_voisines.acquereurs` (DVF × DGFiP PM) | 1 Identité |
+| Permis de la **section** cadastrale/36 mois | `depots.secteur` (Sitadel) | 8 Marché |
+| Fourchette DVF (Q1–Q3, min/max) | `prix_ancien` (DVF) | 8 Marché |
+| Les **8 comparables** les plus proches, **comme Estimer** | `rapport_parcelle().estimation.comparables` (même lecteur qu'Estimer) | 8 Marché |
+| Loyer de marché **OLL** | `loyers_oll` | 8 Marché |
+| Niveau de vie **Filosofi 200 m** | `marche_secteur.filosofi_200m` | 10 Quartier |
+| **Gestionnaires** de réseaux nommés | `gestionnaires` (eau/assainissement/élec/SPANC) | 7 Réseaux |
+| Ligne de **bus au contact** | `proximites.transport_ligne` (OSM/GTFS) | 7 Réseaux |
+| **Taux départemental** de taxe d'aménagement | `taxe_amenagement.taux_departemental_pct` | 9 Fiscalité |
+| **Saturation** de la densité (consommé/résiduel) | `potentiel_transformation.pct_consomme/pct_residuel` | 3 Potentiel |
+| **Niveaux maximum** | `potentiel_transformation.calcul.niveaux_max` | 3 Potentiel |
+| **Vue 3D** du gabarit **à côté** du schéma 2D | `gabarit_svg_3d` (moteur Gabarit) — deux colonnes | 3 Potentiel |
+| Arrêtés **CatNat** (si le compte est complet) | `catnat` + garde `CATNAT_REFERENCE` (06/09, troncature réparée) | 4 Risques |
+
+**Tendance DVF : un seul lecteur** — `prix_ancien.tendance` (le même que le Flash et le secteur) ; rien si
+non servi. **Ne PAS ajouter** (respecté) : établissement SIRENE à l'adresse, marge à l'égout, valeur du
+terrain nu, score de vente. **Banc** : 11 faits numériques/comparables entrent au banc
+(`pente_maximale`, `hauteur_egout_mesuree`, `acquereurs_pro_n`, `permis_section_n`, `comparables_sig`,
+`loyer_oll`, `filosofi_nivvie`, `taux_dep_ta`, `niveaux_max_da`, `catnat_total`, `tendance_dvf`) + le
+productible solaire. Faux positif pré-existant « Excel » ⊂ « Excellente » corrigé à la source.
 
 ## C — Les dix autres documents
 
@@ -99,9 +120,9 @@ prioritaire validé visuellement).
 | **Banc des documents** (`scripts/coherence/documents_banc.py`), **13 témoins canoniques, 130 documents** | **VERT — 0 écart** (faits à deux valeurs 0, jetons de cuisine interne 0, fautes de format 0, incohérence capacité/PPR 0). |
 | **Banc des documents**, 4 parcelles de la régénération (BZ1065, AK0804, DH0076, AB0133) | **VERT — 0 écart**. Un faux positif pré-existant « Excel » ⊂ « Excel­lente » (classement A d'une parcelle au Comparatif) corrigé à la source : un jeton alphabétique ne matche plus s'il est suivi d'une lettre. |
 | **Test gabarit** `tests/test_docs_da_1.py` (`reel`+`local`, PyMuPDF) | **3 passed** — aucun fond sombre pleine page, polices embarquées (Inter/JetBrains/DejaVu uniquement), aucune taille sous 10,5 px (plancher mesuré 7,88 pt = 10,5 px). |
-| **Régénération V8** `scripts/docs1_regen_v8.py` → `~/Desktop/LABUSE-EXPORTS-2026-11-07-V8/` + `SOMMAIRE.md` | 4 parcelles, **45 documents** (Flash/Bilan+Excel/Apporteur/Pré-dossier/Gabarit/Comparatif/Étude de zone/Étude de faisabilité/Estimer/Courrier). |
-| **Captures avant/après** | `docs/audit-2026-11/docs-da-1/captures/` (avant = V7, après = V8), un PNG par document + la page 2 du Dossier. |
-| **Hook** (unitaires `not db/local/reel/network`) | **vert — 3182 passed, 50 skipped** (2 tests mis à jour au nouvel ordre / à la légende HTML du gabarit : `test_exports2_lot2`, `test_plan_svg`). |
+| **Régénération V9** `scripts/docs1_regen_v9.py` → `~/Desktop/LABUSE-EXPORTS-2026-11-07-V9/` + `SOMMAIRE.md` | 4 parcelles, tous les documents, **avec les 15 faits ajoutés**. (La V8 — gabarit seul — reste `scripts/docs1_regen_v8.py`.) |
+| **Captures avant/après** | `docs/audit-2026-11/docs-da-1/captures/` (avant = V7, après = V9), un PNG par document + la page 2 du Dossier. |
+| **Hook** (unitaires `not db/local/reel/network`) | **vert** (contrôles d'intégrité du registre satisfaits : 17 ids ajoutés à `donnees.py` + robinet `/parcels` + oracle ; 4 ids « moteur »→`passe_plat`, 1 phrase d'absence reformulée au vocabulaire). |
 
 ### Polices (contrôle `pdffonts` / PyMuPDF)
 
@@ -112,14 +133,13 @@ système — **plus aucune Space Grotesk ni Verdana**.
 
 ## Ce qui reste (honnêtement)
 
-1. **Faits ajoutés B** (14 faits au-delà du solaire) — à câbler (extracteur + rendeur + banc).
-2. **Miroir écran** du nouvel ordre de sections (réordonner le JSX de `Fiche.tsx`) — suite FRONT.
-3. **Pré-dossier PC** — typographie du formulaire CERFA (fpdf2) à aligner sans casser la mise en page légale.
-4. Reculs des limites séparatives → phrase courte, et masquage des codes bruts résiduels (NAF/US5) —
+1. **Miroir écran** du nouvel ordre de sections (réordonner le JSX de `Fiche.tsx`) — suite FRONT (un autre mandat s'en charge ; le front n'est pas touché ici).
+2. **Pré-dossier PC** — typographie du formulaire CERFA (fpdf2) conservée (mise en page réglementaire).
+3. Reculs des limites séparatives → phrase courte, et masquage des codes bruts résiduels (NAF/US5) —
    polissages de l'inventaire non bloquants.
 
 ---
 
 *DOCS-DA-1 — base locale, prod jamais touchée. Banc : `scripts/coherence/documents_banc.py` ;
-test gabarit : `tests/test_docs_da_1.py` ; régénération : `scripts/docs1_regen_v8.py`. Branche
-`feat/docs-da-1`, non mergée.*
+test gabarit : `tests/test_docs_da_1.py` ; régénération : `scripts/docs1_regen_v8.py` (gabarit),
+`scripts/docs1_regen_v9.py` (gabarit + 15 faits). Branche `feat/docs-da-1`, non mergée.*

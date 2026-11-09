@@ -174,6 +174,81 @@ def _permis_100m(t):
     return m.group(1) if m else None
 
 
+# ══ DOCS-DA-1 — les faits de l'inventaire ajoutés au Dossier (un fait = une valeur, banc) ══
+def _apres_libelle(libelle_rx, val_rx=r"(\d[\d\s  ]*(?:[.,]\d+)?)"):
+    """Fabrique un extracteur : la valeur qui suit un LIBELLÉ (ancré — évite les faux appariements
+    d'un document à l'autre)."""
+    rx = re.compile(libelle_rx + r"\D{0,40}?" + val_rx)
+    return lambda t: _num(rx.search(t).group(1)) if rx.search(t) else None
+
+
+def _pente_max(t):
+    m = re.search(r"Pente maximale\D{0,20}?(\d+(?:[.,]\d+)?)" + _SP + r"*°", t)
+    return _num(m.group(1)) if m else None
+
+
+def _hauteur_egout_mesuree(t):
+    m = re.search(r"Hauteur à l['’]égout" + _SP + r"*\(mesurée\)\D{0,30}?(\d+(?:[.,]\d+)?)" + _SP + r"*m\b", t)
+    return _num(m.group(1)) if m else None
+
+
+def _acquereurs_pro_n(t):
+    m = re.search(r"Acquéreurs professionnels[^\n]*", t)
+    if not m:
+        return None
+    # compte les «  (JJ/MM/AAAA) » datés de la ligne — nombre d'acquéreurs nommés.
+    return str(len(re.findall(r"\(\d{2}/\d{2}/\d{4}\)", m.group(0)))) or None
+
+
+def _permis_section_n(t):
+    m = re.search(r"(\d+)" + _SP + r"*permis sur la section cadastrale", t)
+    return m.group(1) if m else None
+
+
+def _comparables_sig(t):
+    # SIGNATURE des 8 comparables DU DOSSIER : les prix €/m² de la table (ordre d'apparition). Les 8
+    # sont, PAR CONSTRUCTION, ceux d'Estimer (même lecteur `rapport_parcelle`) ; le banc verrouille ici
+    # leur PRÉSENCE et leur ORDRE dans le Dossier (régression). Ancré sur l'intitulé propre au Dossier
+    # (« comparables les plus proches (comme Estimer) ») → aucun autre document ne produit de signature.
+    # Insensible à la casse : les intitulés de groupe sont rendus en MAJUSCULES (text-transform CSS).
+    m = re.search(r"comparables les plus proches", t, re.I)
+    if not m:
+        return None
+    zone = t[m.end():m.end() + 1500]            # fenêtre bornée = les 8 lignes de la table
+    prix = re.findall(r"(\d[\d\s  ]*)" + _SP + r"*€/m²", zone)
+    return ",".join(_num(p) for p in prix[:8]) if len(prix) >= 4 else None
+
+
+def _loyer_oll(t):
+    m = re.search(r"Loyer de marché" + _SP + r"*\(OLL\)\D{0,20}?(\d+(?:[.,]\d+)?)" + _SP + r"*€/m²", t)
+    return _num(m.group(1)) if m else None
+
+
+def _filosofi_nivvie(t):
+    m = re.search(r"Niveau de vie\D{0,15}?(\d[\d\s  ]*)" + _SP + r"*€", t)
+    return _num(m.group(1)) if m else None
+
+
+def _taux_dep_ta(t):
+    m = re.search(r"taux départemental\D{0,20}?(\d+(?:[.,]\d+)?)" + _SP + r"*%", t)
+    return _num(m.group(1)) if m else None
+
+
+def _niveaux_max(t):
+    m = re.search(r"Niveaux maximum\D{0,15}?(\d+)", t)
+    return m.group(1) if m else None
+
+
+def _catnat_total(t):
+    m = re.search(r"(\d+)" + _SP + r"*arrêtés CatNat", t)
+    return m.group(1) if m else None
+
+
+def _tendance_dvf(t):
+    m = re.search(r"Tendance des prix[^\n]*?(Baisse|Hausse|Stable)", t, re.I)
+    return m.group(1).lower() if m else None
+
+
 def _productible(t):
     """DOCS-DA-1 — le productible solaire (kWh/kWc), lu du MÊME faisceau que la fiche
     (`viabilisation.solaire.prod_kwh_kwc`). Le Dossier l'imprimait « non calculé » à tort ; désormais
@@ -279,6 +354,19 @@ FAITS = {
     "marge_surelevation_m": _marge_surelevation,
     "surface_vendable": _surface_vendable,
     "permis_100m": _permis_100m,
+    "productible_solaire": _productible,
+    # DOCS-DA-1 — les faits de l'inventaire ajoutés au Dossier (ancrés sur leur libellé).
+    "pente_maximale": _pente_max,
+    "hauteur_egout_mesuree": _hauteur_egout_mesuree,
+    "acquereurs_pro_n": _acquereurs_pro_n,
+    "permis_section_n": _permis_section_n,
+    "comparables_sig": _comparables_sig,
+    "loyer_oll": _loyer_oll,
+    "filosofi_nivvie": _filosofi_nivvie,
+    "taux_dep_ta": _taux_dep_ta,
+    "niveaux_max_da": _niveaux_max,
+    "catnat_total": _catnat_total,
+    "tendance_dvf": _tendance_dvf,
 }
 
 

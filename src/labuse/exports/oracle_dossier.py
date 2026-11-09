@@ -92,6 +92,21 @@ ORACLE: dict[str, tuple[str, ...]] = {
     "equipements_proximite_liste": ("proximites_equipements.items",),
     "tier_opportunite": ("score_v2.label", "score_v2.tier"),
     "rang_tier": ("score_v2.rang",),
+    # DOCS-DA-1 — les faits de l'inventaire : chemin du payload /parcels (même robinet que la fiche).
+    "pente_max_deg": ("terrain.pente_max_deg",),
+    "terrassement_alerte": ("terrain.flag_terrassement_lourd",),
+    "hauteur_egout_mesuree_m": ("le_bien.hauteur_egout_m",),
+    "acquereurs_pro_voisins": ("pm_voisines.acquereurs",),
+    "permis_section_36m": ("depots.secteur.count",),
+    "dvf_fourchette": ("prix_ancien.q1",),
+    "dvf_tendance": ("prix_ancien.tendance",),
+    "loyer_oll_eur_m2": ("loyers_oll.loyer_median_eur_m2",),
+    "filosofi_200m": ("marche_secteur.filosofi_200m.nivvie_moyen_eur",),
+    "gestionnaires_reseaux": ("gestionnaires.eau",),
+    "ligne_bus_contact": ("proximites.transport_ligne.distance_m",),
+    "taux_amenagement_departemental_pct": ("taxe_amenagement.taux_departemental_pct",),
+    "densite_saturation": ("potentiel_transformation.pct_consomme",),
+    "niveaux_max": ("potentiel_transformation.calcul.niveaux_max",),
 }
 
 #: rendues par la fiche React depuis une AUTRE requête que `/parcels/{idu}` (getFaisabilite,
@@ -124,6 +139,11 @@ HORS_PAYLOAD: dict[str, str] = {
     "gabarit_couverture_verdict": "React getGabarit(idu).coverage — outil, hors payload /parcels",
     "gabarit_motif_blocage": "React getGabarit(idu).validationErrors (status incomplete) — outil, hors payload",
     "gabarit_plan_2d": "React getGabarit(idu) géométries (MiniPlan) — outil, hors payload /parcels",
+    # DOCS-DA-1 — faits servis par un MOTEUR PARTAGÉ (pas un miroir direct du payload /parcels).
+    "comparables_proches": "rapport_parcelle(estimation.comparables) — même lecteur qu'Estimer, hors payload",
+    "gabarit_plan_3d": "getGabarit(idu) axonométrie 3D — outil (compute_gabarit), hors payload /parcels",
+    "catnat_arretes": "arrêtés CatNat servis SOUS condition de complétude (CATNAT_REFERENCE) — "
+                      "pas un miroir direct du payload",
 }
 
 

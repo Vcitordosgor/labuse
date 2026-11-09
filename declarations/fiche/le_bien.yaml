@@ -34,6 +34,15 @@ donnees:
     absence_type: absente_ici
     pourquoi: "La hauteur mesurée commande le potentiel de surélévation ; en tête."
 
+  # DOCS-DA-1 — hauteur à l'égout MESURÉE (LiDAR HD), sert la marge de surélévation.
+  - quoi:  hauteur_egout_mesuree_m
+    ou:    { rang: 32, etat: replie, section: "Ce qu'il y a dessus" }
+    comment: { libelle: "Hauteur à l'égout (mesurée)", unite: "m", format: metre, i: "Hauteur à l'égout mesurée au LiDAR HD (MNH 50 cm, IGN) — base de la marge de surélévation." }
+    absence: "Hauteur à l'égout : non mesurée sur ce bâti."
+    absence_type: absente_ici
+    masquer_si_absent: true
+    pourquoi: "Complète la hauteur mesurée ; nuance la surélévation."
+
   # KELFONCIER-FIX-1 (Lot H) — les établissements SIRENE rattachés à la parcelle par l'adresse BAN
   # (précision « adresse » seulement). Repliés sous le bâti (liste, nom·NAF·effectif·état). Miroir Dossier.
   - quoi:  etablissements_parcelle_liste
@@ -49,6 +58,22 @@ donnees:
     absence: "Surface au sol libre : non calculable (emprise ou surface parcelle manquante)."
     absence_type: absente_ici
     pourquoi: "Ce qu'il reste à bâtir au sol — la place disponible ; en tête."
+
+  # DOCS-DA-1 — le relief : pente MAXIMALE (le point dur) + alerte terrassement (forte pente).
+  - quoi:  pente_max_deg
+    ou:    { rang: 42, etat: replie, section: "Relief" , fiche_section: terrain }
+    comment: { libelle: "Pente maximale", unite: "°", format: degre, i: "Pente MAXIMALE du terrain (RGE ALTI IGN) — le point dur du terrassement, au-delà de la pente moyenne." }
+    absence: "Pente maximale : non calculée sur ce terrain."
+    absence_type: absente_ici
+    masquer_si_absent: true
+    pourquoi: "Le point le plus pentu commande le surcoût de terrassement."
+  - quoi:  terrassement_alerte
+    ou:    { rang: 44, etat: replie, section: "Relief" , fiche_section: terrain }
+    comment: { libelle: "Terrassement", format: texte, i: "Alerte terrassement lourd quand le terrain est fortement pentu (RGE ALTI IGN) — surcoût de fondation prévisible." }
+    absence: "Terrassement : pas d'alerte de forte pente sur ce terrain."
+    absence_type: absente_ici
+    masquer_si_absent: true
+    pourquoi: "Un surcoût de fondation prévisible ; à dire tôt."
 
   # ── REPLIÉ : la couverture du sol (OCS GE / CoSIA) et le toit ──
   - quoi:  part_artificialisee_pct
