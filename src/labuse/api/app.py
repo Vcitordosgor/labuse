@@ -3280,33 +3280,39 @@ def analyse_scenarios(
     db: Session = Depends(get_db)) -> dict:
     """ALGO-FIX-1 — Analyse LABUSE V2 par SCÉNARIO, en LECTURE SEULE sur le run servi.
 
-    Expose, pour la sélection (commune ou liste d'IDU), le contrat de sortie par parcelle (statut
-    et cause, bande et score, quantités du scénario, points de vigilance, portion productive, et le
-    Signal avec son état évalué/non évalué) PLUS les effectifs par statut et par bande sur toute la
-    sélection (spec §2.1 : tous les statuts dans les comptes). Le Signal est RELAYÉ, jamais
-    recalculé (D6). `enrich=1` calcule C/E live pour la reconstruction exacte (≈ 80 ms/parcelle).
+    Par défaut l'endpoint LIT les résultats de scénario PERSISTÉS par le calcul du run
+    (`parcel_scenario_v2_runs`) — il ne calcule pas à la volée. Il expose, par parcelle, le contrat
+    de sortie (statut et cause, bande et score, quantités, vigilances, portion productive, Signal +
+    son état évalué/non évalué) PLUS les effectifs par statut et par bande sur toute la sélection
+    (spec §2.1). Le Signal est RELAYÉ depuis `score_labuse`, jamais recalculé (D6).
 
-    Calcul EN PARALLÈLE du service historique (`/parcels`, `/stats`) : aucune écriture, aucune
-    bascule. `mode=sale` sert le Signal (le foncier n'entre pas) ; `mode=potential` sert le
-    scénario choisi (le Signal est secondaire)."""
+    `enrich=1` est une trappe de calcul LIVE (≤ 500 parcelles) pour la reconstruction exacte à la
+    demande quand le run n'a pas encore chiffré une sélection. `mode=sale` sert le Signal (le
+    foncier n'entre pas) ; `mode=potential` sert le scénario choisi (le Signal est secondaire)."""
     from ..scoring import scenarios_v2_build as _sv2
+    from ..scoring import scenarios_v2_persist as _persist
     run_label = source or runs.current()
+    wanted = None
     if commune:
         ids = _sv2.parcel_ids_for_commune(db, commune, run_label=run_label)
     elif idus:
         wanted = [i.strip() for i in idus.split(",") if i.strip()]
         if not wanted:
             raise HTTPException(status_code=400, detail="aucun IDU fourni")
-        rows = db.execute(text("SELECT id FROM parcels WHERE idu = ANY(:i)"), {"i": wanted})
-        ids = [r[0] for r in rows]
+        ids = [r[0] for r in db.execute(text("SELECT id FROM parcels WHERE idu = ANY(:i)"),
+                                        {"i": wanted})]
     else:
         raise HTTPException(status_code=400, detail="préciser ?commune=… ou ?idus=…")
-    if enrich and len(ids) > 500:
-        raise HTTPException(status_code=413,
-                            detail="enrich limité à 500 parcelles par requête (coût live C/E)")
-    return _sv2.analyse_scenarios_payload(
-        db, ids, mode=mode, scenario=scenario, sort=sort, run_label=run_label,
-        enrich=enrich, limit=limit, offset=offset,
+    if enrich:
+        if len(ids) > 500:
+            raise HTTPException(status_code=413,
+                                detail="enrich limité à 500 parcelles par requête (coût live C/E)")
+        return _sv2.analyse_scenarios_payload(
+            db, ids, mode=mode, scenario=scenario, sort=sort, run_label=run_label,
+            enrich=True, limit=limit, offset=offset, as_of=datetime.now(timezone.utc).isoformat())
+    return _persist.analyse_payload_persiste(
+        db, run_label=run_label, mode=mode, scenario=scenario, sort=sort,
+        commune=commune, idus=wanted, limit=limit, offset=offset,
         as_of=datetime.now(timezone.utc).isoformat())
 
 

@@ -29,10 +29,14 @@ def _niveau(p):
 
 def _rec(**kw):
     kw.setdefault("signal_status", "AVAILABLE")
-    kw.setdefault("signal_domain_verified", True)
     kw.pop("signal_domain_verified", None)
     if kw.get("signal_status") == "AVAILABLE" and "signal_niveau" not in kw:
         kw["signal_niveau"] = _niveau(kw.get("signal_p"))
+    # Forme CONNUE par défaut : un périmètre compact (≈ carré) si l'aire est donnée sans périmètre,
+    # pour que la forme ne soit pas « inconnue » (D4) dans les cas fictifs — comme en données
+    # réelles où ST_Area/ST_Perimeter existent toujours sur une géométrie valide.
+    if kw.get("area_m2") and "perimeter_m" not in kw:
+        kw["perimeter_m"] = 4.0 * math.sqrt(kw["area_m2"])
     return v2.ScenarioRecord(**kw)
 
 
@@ -376,6 +380,60 @@ def test_zonage_mixte_portion_productive():
     assert r.quantities["additional"] == 2000
     # La portion productive est la U (4 000 m²), PAS la majoritaire N (16 000 m²).
     assert r.zone_portion == {"zone": "U", "area_m2": 4000}
+
+
+# ── D4 complet — forme et accès inconnus suivent la règle de la pente ───────
+def test_d4_pente_inconnue_bascule_bande():
+    # R=633, pente inconnue : neutre→bande A/B, défavorable (0,6)→bande inférieure ⇒ sensible.
+    r = pot(rec("B", capacity_rebuild_m2=1200, existing_m2=0, residual_m2=633, slope_deg=None))
+    assert r.status == "TO_VERIFY"
+    assert r.cause_codes == ["BANDE_SENSIBLE_INCONNUE"]
+    assert r.band is None and r.band_provisional is not None
+
+
+def test_d4_forme_inconnue_bascule_bande():
+    # Même parcelle mais SANS périmètre (forme inconnue), pente connue plate : la forme inconnue
+    # (pire = lame 0,8) peut faire basculer la bande ⇒ À vérifier, bande provisoire conservée.
+    base = dict(id="DEMO-FORME", area_m2=1400, perimeter_m=None, capacity_rebuild_m2=1200,
+                existing_m2=0, residual_m2=720, slope_deg=16, eligibility="allowed",
+                horizon="now", signal_status="AVAILABLE", signal_p=0.05)
+    r = v2.evaluate(v2.ScenarioRecord(**base), {"mode": "potential", "scenario": "keep"})
+    if r.band_provisional is not None:               # bascule effective → À vérifier
+        assert r.status == "TO_VERIFY"
+        assert r.cause_codes == ["BANDE_SENSIBLE_INCONNUE"]
+    # Avec périmètre (forme connue), plus de sensibilité de forme.
+    base2 = {**base, "perimeter_m": 4.0 * math.sqrt(1400)}
+    r2 = v2.evaluate(v2.ScenarioRecord(**base2), {"mode": "potential", "scenario": "keep"})
+    assert r2.status == "ESTIMATED"
+
+
+def test_d4_acces_inconnu_vs_non_identifie():
+    # R=300 (55 pts), pente plate (coef 1) : bande neutre 55→B ; accès défavorable 0,85→47→C.
+    # « non identifié » (PASS) est un fait MESURÉ (access_known=True) : jamais de sensibilité d'accès.
+    r_pass = pot(rec("B", capacity_rebuild_m2=300, existing_m2=0, residual_m2=300,
+                     slope_deg=5, access="PASS"))
+    assert r_pass.status == "ESTIMATED"              # PASS = malus connu (0,85), pas une inconnue
+    assert r_pass.band == "C"
+    # « inconnu » (aucun verdict, access_known=False) suit la règle : la bande bascule B↔C ⇒ À vérifier.
+    r_unk = v2.evaluate(v2.ScenarioRecord(
+        id="DEMO-ACC", area_m2=1400, perimeter_m=4.0 * math.sqrt(1400), capacity_rebuild_m2=300,
+        existing_m2=0, residual_m2=300, slope_deg=5, access=None, access_known=False,
+        eligibility="allowed", horizon="now"), {"mode": "potential", "scenario": "keep"})
+    assert r_unk.status == "TO_VERIFY"
+    assert r_unk.band is None and r_unk.band_provisional == "B"
+
+
+def test_calcul_assiette_douteux_a_verifier():
+    # Assiette de repli non découpée (residuel_legacy + contrainte rédhibitoire) → À vérifier.
+    r = v2.evaluate(v2.ScenarioRecord(
+        id="DEMO-LEGACY", area_m2=199431, perimeter_m=4.0 * math.sqrt(199431),
+        capacity_rebuild_m2=12976, existing_m2=1608, residual_m2=11368, slope_deg=40,
+        eligibility="allowed", horizon="now", calc_reliable=False,
+        calc_doubt_reason="Assiette de repli non découpée au gabarit — capacité à confirmer."),
+        {"mode": "potential", "scenario": "keep"})
+    assert r.status == "TO_VERIFY"
+    assert r.cause_codes == ["CALCUL_ASSIETTE_DOUTEUX"]
+    assert any("repli" in m for m in r.vigilance)
 
 
 # ── 26. versions : une réponse porte sa version d'analyse ───────────────────

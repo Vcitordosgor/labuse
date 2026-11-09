@@ -138,17 +138,44 @@ def _eligibilite(cause: str | None, cascade_exclue: bool, cascade_motifs) -> dic
     return out
 
 
+def _contraintes_partielles(motifs) -> dict:
+    """Extrait des motifs de cascade les contraintes rédhibitoires PARTIELLES (spec §9.2) : PPR
+    rouge, EBC, pente forte. Sert (a) aux points de vigilance, (b) à décider si une assiette de
+    repli (`residuel_legacy`) est douteuse parce qu'elle n'a pas découpé ces portions."""
+    out = {"ppr_rouge_pct": None, "ebc": False, "pente_forte_pct": None}
+    if not isinstance(motifs, list):
+        return out
+    for m in motifs:
+        if not isinstance(m, dict):
+            continue
+        layer, detail, res, pct = (m.get("layer"), m.get("detail") or "",
+                                   m.get("result"), m.get("recouvrement_pct"))
+        if layer == "risques" and ("rouge" in detail or res == "HARD_EXCLUDE"):
+            if pct is not None:
+                out["ppr_rouge_pct"] = max(out["ppr_rouge_pct"] or 0, pct)
+        if layer == "prescription_plu" and ("boisé" in detail or "EBC" in detail):
+            out["ebc"] = True
+        if layer == "pente" and pct is not None:
+            out["pente_forte_pct"] = max(out["pente_forte_pct"] or 0, pct)
+    return out
+
+
 def record_from_rows(sig: dict, ent: dict | None, geom: dict | None,
-                     residuel: dict | None = None) -> tuple[v2.ScenarioRecord, str]:
+                     residuel: dict | None = None, assiette_source: str | None = None,
+                     zone_parts: list | None = None) -> tuple[v2.ScenarioRecord, str]:
     """Construit un `ScenarioRecord` (+ bande V1 servie, pour la comparaison avant/après) depuis :
       · `sig`   — ligne `score_labuse` (Signal servi, cascade, bande V1) ;
       · `ent`   — ligne d'entrées de score (pente, aire, périmètre, accès, AU, cause résiduel) ;
       · `geom`  — métriques géométriques (diagnostic D5) ;
-      · `residuel` — dict `compute_residuel` LIVE (C, E) si enrichi, sinon None.
+      · `residuel` — dict `compute_residuel` LIVE (C, E) si enrichi, sinon None ;
+      · `assiette_source` — 'gabarit' (découpé) / 'residuel_legacy' (repli) ;
+      · `zone_parts` — portions de zone [{zone, fam, pct}] (zone_dominante), si disponibles.
     """
     cause = (ent or {}).get("cause") if ent else sig.get("cause")
     au_classe = (ent or {}).get("au_classe")
     el = _eligibilite(cause, bool(sig.get("cascade_exclue")), sig.get("cascade_motifs"))
+    contr = _contraintes_partielles(sig.get("cascade_motifs"))
+    notes: list[str] = []
 
     # Conservation : R caché (cache servi). Reconstruction : C/E si enrichi.
     R = (ent or {}).get("sdp") if ent else sig.get("sdp_residuelle_m2")
@@ -187,9 +214,46 @@ def record_from_rows(sig: dict, ent: dict | None, geom: dict | None,
         if C is None:
             C = 0.0
 
+    # Contraintes partielles (spec §9.2) — points de vigilance SOURCÉS.
+    if contr["ppr_rouge_pct"]:
+        if assiette_source == "gabarit":
+            notes.append(f"PPR zone rouge sur ~{round(contr['ppr_rouge_pct'])} % de la parcelle "
+                         "— exclu de l'assiette (découpé au gabarit) ; la capacité porte sur la "
+                         "portion restante.")
+        else:
+            notes.append(f"PPR zone rouge sur ~{round(contr['ppr_rouge_pct'])} % de la parcelle "
+                         "(aléa rédhibitoire) — vérifier le découpage de l'assiette.")
+    if contr["ebc"]:
+        notes.append("Espace boisé classé (EBC) — construction interdite sur l'emprise boisée "
+                     "(soustraite de l'assiette).")
+    if contr["pente_forte_pct"] and contr["pente_forte_pct"] >= 30:
+        notes.append(f"Pente forte (~{round(contr['pente_forte_pct'])} %) — terrassement et accès "
+                     "renchéris ; difficulté physique, pas une exclusion.")
+
+    # Correction `residuel_legacy` (RESIDUEL-1) : l'assiette de repli N'EST PAS découpée au gabarit
+    # (reculs + PPR rouge + EBC). Si une contrainte rédhibitoire PARTIELLE existe, la surface
+    # productive (et donc la capacité) peut être SURESTIMÉE → calcul douteux → À vérifier (§9.3).
+    calc_reliable, calc_doubt = True, None
+    if assiette_source == "residuel_legacy" and (contr["ppr_rouge_pct"] or contr["ebc"]):
+        calc_reliable = False
+        calc_doubt = ("Assiette calculée par chemin de repli (non découpée au gabarit), alors "
+                      "qu'une contrainte rédhibitoire partielle (PPR rouge / EBC) grève la parcelle "
+                      "— surface productive et capacité à confirmer.")
+    elif assiette_source == "residuel_legacy":
+        notes.append("Assiette calculée par chemin de repli (non découpée au gabarit) — surface "
+                     "productive à confirmer.")
+
+    # Portion productive (spec §9.2 / D9) : parts CONSTRUCTIBLES (U/AU), surface = pct × aire.
+    aire = (ent or geom or {}).get("aire")
+    zp = None
+    if zone_parts:
+        zp = [{"zone": p.get("zone"), "area_m2": round((p.get("pct") or 0) / 100.0 * (aire or 0)),
+               "constructible": (p.get("fam") in ("U", "AU"))}
+              for p in zone_parts]
+
     rec = v2.ScenarioRecord(
         id=sig["idu"],
-        area_m2=(ent or geom or {}).get("aire"),
+        area_m2=aire,
         perimeter_m=(ent or geom or {}).get("perim"),
         geometry_status=geometry_status,
         capacity_rebuild_m2=C,
@@ -203,21 +267,34 @@ def record_from_rows(sig: dict, ent: dict | None, geom: dict | None,
         height_required=True,
         slope_deg=(ent or {}).get("pente_moy_deg"),
         access=(ent or {}).get("acces"),
+        access_known=(ent is not None and (ent or {}).get("acces") is not None),
         built_coverage_pct=(ent or {}).get("emp"),
+        calc_reliable=calc_reliable,
+        calc_doubt_reason=calc_doubt,
+        zone_main=(zone_parts[0].get("zone") if zone_parts else None),
+        zone_parts=zp,
         capacity_estimated=bool((ent or {}).get("capacite_estimee")),
         cause_engine=cause,
         diagnostic=diagnostic,
+        notes=notes,
         **_signal_state(sig))
     return rec, (sig.get("bande") or "")
 
 
+_ASSIETTE_SQL = text(
+    "SELECT parcel_id, assiette_source FROM parcel_residuel WHERE parcel_id = ANY(:ids)")
+
+
 def records_for_parcels(session: Session, parcel_ids: list[int], *, run_label: str | None = None,
-                        cascade_label: str | None = None, enrich: bool = False
+                        cascade_label: str | None = None, enrich: bool = False,
+                        with_zone: bool | None = None
                         ) -> list[tuple[v2.ScenarioRecord, str]]:
     """Construit les `ScenarioRecord` d'une liste de parcelles pour le run servi. `enrich=True`
-    calcule C/E live (reconstruction exacte, ~80 ms/parcelle). Renvoie [(record, bande_v1)]."""
+    calcule C/E live (reconstruction exacte, ~80 ms/parcelle). `with_zone` (défaut = enrich) ajoute
+    la portion productive (zone_dominante, une requête par parcelle). Renvoie [(record, bande_v1)]."""
     run_label = run_label or runs.current()
     cascade_label = cascade_label or runs.cascade()
+    with_zone = enrich if with_zone is None else with_zone
     if not parcel_ids:
         return []
     sig_rows = {r._mapping["parcel_id"]: dict(r._mapping)
@@ -226,6 +303,8 @@ def records_for_parcels(session: Session, parcel_ids: list[int], *, run_label: s
                 for r in session.execute(sl._ENTREES_SQL, {"ids": parcel_ids, "clabel": cascade_label})}
     geom_rows = {r._mapping["id"]: dict(r._mapping)
                  for r in session.execute(_GEOM_SQL, {"ids": parcel_ids})}
+    assiette = {r._mapping["parcel_id"]: r._mapping["assiette_source"]
+                for r in session.execute(_ASSIETTE_SQL, {"ids": parcel_ids})}
     residuel = {}
     if enrich:
         from ..faisabilite.residuel import compute_residuel
@@ -234,12 +313,21 @@ def records_for_parcels(session: Session, parcel_ids: list[int], *, run_label: s
                 residuel[pid] = compute_residuel(session, pid)
             except Exception:
                 residuel[pid] = None
+    zones = {}
+    if with_zone:
+        from ..faisabilite.zone_servie import zone_dominante
+        for pid in parcel_ids:
+            try:
+                zones[pid] = zone_dominante(session, pid).parts
+            except Exception:
+                zones[pid] = None
     out = []
     for pid in parcel_ids:
         sig = sig_rows.get(pid)
         if sig is None:
             continue
-        out.append(record_from_rows(sig, ent_rows.get(pid), geom_rows.get(pid), residuel.get(pid)))
+        out.append(record_from_rows(sig, ent_rows.get(pid), geom_rows.get(pid), residuel.get(pid),
+                                    assiette_source=assiette.get(pid), zone_parts=zones.get(pid)))
     return out
 
 

@@ -11,6 +11,42 @@ spécification là où elles diffèrent). État de l'existant : `docs/audit-2026
 
 ---
 
+## 0. Suite ALGO-FIX-1 (2ᵉ passe)
+
+Cinq ajouts de la 2ᵉ passe, sur la même branche :
+
+1. **D4 complet.** La sensibilité d'une bande à une inconnue vaut désormais pour les **trois**
+   facteurs physiques — pente, **forme** et **accès** —, pas seulement la pente : si la bande
+   change en remplaçant un facteur inconnu par sa pire valeur de configuration → **À vérifier**,
+   bande provisoire au détail (`scenarios_v2._inconnues_physiques`).
+   **Distinction accès « non identifié » vs « inconnu » : tranchée par les données.** Dans le run
+   servi, **chaque** parcelle porte un verdict de cascade `acces` (POSITIVE 366 506 / PASS 66 723,
+   **zéro parcelle sans verdict**). « Non identifié » (PASS) est donc un fait **mesuré** (malus
+   connu 0,85), pas une inconnue ; l'ensemble « inconnu » (aucun verdict) est **vide aujourd'hui**.
+   Le moteur porte néanmoins un drapeau `access_known` : si une couche d'accès partielle apparaît
+   un jour, l'accès inconnu suivra la règle de la pente sans changement de code.
+
+2. **Persistance par le calcul du run.** Les scénarios (statut, cause, bande, score, **C, E,
+   C_rebuild, D_net**, R, portion productive, vigilances) sont **écrits** dans une table de run
+   dédiée `parcel_scenario_v2_runs` (additive, aucune table historique touchée) par
+   `scenarios_v2_persist.compute_scenarios_v2_batch`. **L'endpoint LIT** cette table
+   (`analyse_payload_persiste`) — il ne calcule plus à la volée (sauf trappe `enrich=1` ≤ 500
+   parcelles). Le Signal reste relayé depuis `score_labuse` à la lecture (jamais stocké ni
+   recalculé).
+
+3. **Avant/après sur toute l'île**, par commune et par scénario, lu de la table de run (§5 et
+   `AVANT-APRES.md`) : répartition des bandes V1 et des statuts V2 (conservation sur 433 k ;
+   reconstruction chiffrée sur Entre-Deux + Saint-Denis), **top 20 des changements de bande avec la
+   raison**.
+
+4. **Les deux cas réels de Saint-Denis** (§6-bis) : `97411000EH0043` (22,7 ha) et `97411000EI0085`
+   sont des parcelles **à cheval** dont la capacité servie « Bonne » vient d'une **portion
+   minoritaire U/AU**. La V2 l'**expose** (D9) et **corrige** le cas faux.
+
+5. Tests, hook et compte-rendu mis à jour.
+
+---
+
 ## 1. Résumé — avant / après (tête du compte-rendu)
 
 La V2 **ne remplace pas** la note 0–100 par une autre note : elle la double par des **statuts de
@@ -80,7 +116,7 @@ d'ALGO-LECTURE (bande belle + exclusion dure) correspond exactement au cas que l
 | **D1** bandes conservées, barème actuel × pente/forme/accès | `scenarios_v2._coef_physique` + `_bande_pour` réutilisent `score_labuse._f_pente/_f_forme/_f_acces`, `_bareme_capacite`, `bande_de_score` (source unique des coefficients, gravés) |
 | **D2** deux scénarios, **sans coef bâti**, **sans ×0,65 démolition**, D_net signé, calculé pour toutes | `_finish_keep` (R = max(0,C−E)) / `_finish_rebuild` (C_rebuild, E, D_net signé) ; aucun `_f_bati` ; saturées incluses |
 | **D3** statuts exclusifs, AU fermée → **À différer avant toute bande** | `evaluate` §5.1 : `DEFERRED` testé à l'étape horizon, AVANT toute bande ; plus de ×0,5 |
-| **D4** une inconnue ne fabrique pas une bande | `_bande_sensible_a_inconnue` : pente non mesurée → test de sensibilité (config) ; si la bande bascule → `TO_VERIFY`, **bande provisoire au détail** |
+| **D4** une inconnue ne fabrique pas une bande | `_bande_sensible_a_inconnue` + `_inconnues_physiques` : pente/forme/accès inconnus → test de sensibilité (config) ; si la bande bascule → `TO_VERIFY`, **bande provisoire au détail** (accès : « inconnu » = aucun verdict, ensemble vide aujourd'hui ; PASS = mesuré) |
 | **D5** `terrain_exigu` diagnostiqué, sans règle de taille | `scenarios_v2_build._diagnostic_geometrie` : validité, multipolygone, **compacité** ; `suspect → TO_VERIFY` ; sinon cause précise « aucune assiette après retraits » |
 | **D6** Signal protégé, état exposé | Signal **relayé** depuis `score_labuse` (`_signal_state`) ; **aucun fichier du Signal modifié** (test structurel) ; `mode=sale` sert le Signal, le foncier n'entre pas |
 | **D7** hors périmètre (division/préétude, versions, interface) | `scenario=divide` = `PRESTUDY` documentaire (aucun lot) ; aucun nouveau système de versions ; aucun fichier front |
@@ -98,27 +134,54 @@ d'ALGO-LECTURE (bande belle + exclusion dure) correspond exactement au cas que l
   `order`, `effectifs`, `ScenarioRecord`, `ScenarioResult`. Miroir fidèle du moteur de référence
   `04_MOTEUR_REFERENCE.cjs` + couche bandes (D1/D2/D4).
 - `src/labuse/scoring/scenarios_v2_build.py` — **adaptateur** (lecture seule) des caches réels vers
-  `ScenarioRecord` : `records_for_parcels` (cache / `enrich` live C,E), diagnostic géométrique
-  `terrain_exigu`, relais Signal ; `analyse_scenarios_payload` (contrat §2.2/§2.1/§10).
-- `tests/test_algofix1_contrat.py` — **26 tests de contrat** du §13.2, adaptés (moteur pur).
+  `ScenarioRecord` : `records_for_parcels` (cache / `enrich` live C,E ; `with_zone` = portion
+  productive), diagnostic géométrique `terrain_exigu`, contraintes partielles (PPR rouge / EBC /
+  pente), correction `residuel_legacy`, relais Signal ; `analyse_scenarios_payload` (calcul live).
+- `src/labuse/scoring/scenarios_v2_persist.py` *(2ᵉ passe)* — **table de run**
+  `parcel_scenario_v2_runs` (DDL) + `compute_scenarios_v2_batch` (ÉCRIT C,E,C_rebuild,D_net,statut,
+  cause,bande/scénario) + `read_scenarios`/`analyse_payload_persiste` (l'endpoint LIT).
+- `tests/test_algofix1_contrat.py` — **26 tests de contrat** du §13.2 + D4 complet (moteur pur).
 - `tests/test_algofix1_protections.py` — **4 protections + 2 bonus** sur parcelles réelles q_v20.
 - `tests/test_algofix1_signal_intact.py` — preuve **Signal intact** (structurelle + comportementale).
-- `scripts/algofix1_avant_apres.py` — comparaison avant/après (génère `AVANT-APRES.md`).
+- `tests/test_algofix1_persist.py` *(2ᵉ passe)* — écrit = calculé ; l'endpoint-lecture rend le
+  contrat + effectifs + Signal relayé, sans recalcul.
+- `scripts/algofix1_avant_apres.py` — avant/après île (lit la table de run) ; `AVANT-APRES.md`.
+- `scripts/algofix1_persist_run.py` *(2ᵉ passe)* — peuple la table de run (île + enrich 2 communes).
 
 **Modifié** (seul fichier existant touché) :
 
-- `src/labuse/api/app.py` — un endpoint **lecture seule** `GET /analyse/scenarios`
-  (commune|idus, mode, scenario, sort, enrich, pagination). Aucun autre chemin modifié.
+- `src/labuse/api/app.py` — un endpoint **lecture seule** `GET /analyse/scenarios` qui **LIT** la
+  table de run (trappe `enrich=1` live ≤ 500). Aucun autre chemin modifié.
+- `tests/test_proxy_dev_couvre_routes_api.py` — `/analyse` ajouté à l'allowlist serveur (front non
+  encore câblé).
 
-**Caches historiques :** aucun écrasé. **Aucune écriture SQL** dans les modules V2 (test structurel
-`test_cover_le_module_v2_n_importe_aucune_ecriture_signal`). La V2 lit `parcel_residuel`,
-`score_labuse`, `parcels` et calcule C/E live quand on demande la reconstruction.
+**Caches historiques :** aucun écrasé. Le moteur pur et l'adaptateur n'écrivent RIEN (test
+structurel) ; **seul** `scenarios_v2_persist` écrit, et uniquement dans la table **neuve**
+`parcel_scenario_v2_runs`. La V2 lit `parcel_residuel`, `score_labuse`, `parcels`.
 
 ---
 
-## 5. Avant / après sur le même univers (Entre-Deux, q_v20)
+## 5. Avant / après (toute l'île + Entre-Deux, q_v20)
 
-Voir `AVANT-APRES.md` pour les tableaux complets. Faits saillants :
+`AVANT-APRES.md` donne les tableaux complets **par commune et par scénario**, lus de la table de
+run. **Île entière (433 229 parcelles)** :
+
+| | V1 (bande servie) | V2 conservation | V2 reconstruction |
+|---|---|---|---|
+| Actionnable | A/B/C/D : 192 344 (44,4 %) | **ESTIMATED 184 432 (42,6 %)** | **ESTIMATED 269 455 (62,2 %)** |
+| Aucun ajout | — | NO_MARGIN 85 480 (19,7 %) | NO_MARGIN 0 |
+| À vérifier | NC : 16 272 | TO_VERIFY 30 438 (7,0 %) | TO_VERIFY 30 895 (7,1 %) |
+| À différer | — | DEFERRED 782 | DEFERRED 782 |
+| Hors projet | — | OUTSIDE 132 097 (30,5 %) | OUTSIDE 132 097 (30,5 %) |
+| Non retenue (muette) | **0 : 217 954 (50,3 %)** + HC 6 659 | *(réparti ci-dessus)* | *(réparti ci-dessus)* |
+
+Lecture : la **moitié muette** de la V1 (« 0 ») se répartit en statuts nommés ; en
+**reconstruction**, **62,2 %** de l'île reçoit une « Capacité estimée » (un projet de remplacement
+existe dès que la zone autorise le logement), avec son **D_net signé**. Les bandes V2 conservation
+(parmi les 184 432 estimées) : A 5,5 % · B 30,3 % · C 34,1 % · D 30,0 %. Le **top 20 des changements
+de bande** (avec la raison) est dans `AVANT-APRES.md`.
+
+**Entre-Deux (6 341)** — faits saillants :
 
 - **Conservation** — les 3 789 « 0 » de la V1 se répartissent en statuts nommés : **Hors de ce
   projet** (3 054, preuve), **Aucun ajout identifié** (810, saturé/capacité nulle), **Analyse à
@@ -154,6 +217,42 @@ Le diagnostic (`_diagnostic_geometrie`) ne conclut JAMAIS « terrain trop étroi
 
 ---
 
+## 6-bis. Les deux cas réels de Saint-Denis (zonage à cheval, D9 + correction)
+
+Les deux parcelles nommées par le mandat sont **à cheval** : majoritairement zone N, mais la
+capacité servie vient d'une **portion minoritaire U/AU**. Mesures sur q_v20 :
+
+| IDU | Surface | Zonage (parts) | Capacité servie | Portion productive | Assiette | pente |
+|---|---|---|---|---|---|---|
+| `97411000EH0043` | 226 815 m² (22,7 ha) | N 56,6 % · **AUm 39,4 %** · Uh 3,8 % | V1 « Bonne » (B), R = 44 117 m², SDP C = 44 123 | **AUm ≈ 89 365 m²** (part AU) ; emprise clippée 49 026 m² | **gabarit** (PPR rouge 64 % découpé) | 91 % |
+| `97411000EI0085` | 199 431 m² | N 86,0 % · **Um 8,2 %** · AUm 5,1 % | V1 « Bonne » (B), R = 11 368 m², SDP C = 12 976 | **Um ≈ 16 353 m²** (part U) | **residuel_legacy** (NON découpé) | 87 % |
+
+**EH0043 — réelle mais à rendre transparente (pas fausse).** L'assiette est calculée par le
+**gabarit** : le PPR rouge (64 % « HARD_EXCLUDE ») et l'EBC sont **découpés** ; l'emprise tombe à
+49 026 m² (21,6 % de la parcelle), sur la portion **AUm**. La capacité est **théorique et
+correctement clippée** ; le problème est l'**opacité** du produit servi (« zone N » + « Bonne » +
+« aléa rédhibitoire » sans dire d'où vient la capacité). La V2 **expose** (D9) : `zone_productive =
+{AUm, 89 365 m²}` et trois vigilances sourcées — « PPR zone rouge ~64 % — exclu de l'assiette
+(découpé au gabarit) », « EBC — construction interdite sur l'emprise boisée », « pente ~91 % —
+terrassement majeur, pas une exclusion ». Statut V2 : **Capacité estimée**.
+
+**EI0085 — capacité SURESTIMÉE, corrigée.** L'assiette vient du chemin de **repli**
+(`residuel_legacy`), qui **n'est pas découpé** au gabarit (reculs + PPR rouge + EBC) malgré un PPR
+rouge sur 47 % et un EBC sur 39 %. Signe mesuré : l'emprise (14 417 m²) couvre **88 % de la portion
+Um** (16 353 m²), contre ~50 % pour EH0043 (gabarit) — le repli **sous-découpe**. La V2 **corrige** :
+`residuel_legacy` + contrainte rédhibitoire partielle ⇒ **calcul d'assiette douteux** → **Analyse à
+compléter** (À vérifier, cause `CALCUL_ASSIETTE_DOUTEUX`), au lieu de servir « Bonne » sur un chiffre
+non fiable. La vigilance nomme la cause : « assiette de repli non découpée + contrainte rédhibitoire
+partielle — surface productive et capacité à confirmer ».
+
+**Cause racine, portée.** 53 923 parcelles du run servi (42 539 constructibles avec capacité)
+portent `assiette_source = residuel_legacy` — le gabarit n'a pas été calculé pour elles (gap de
+couverture RESIDUEL-1). La **correction de fond** (recalcul du gabarit pour ces parcelles) est un
+geste **au niveau du run** (moteur de faisabilité), hors de ce mandat « calcul + API isolé » ; la V2
+**refuse** entre-temps de servir le chiffre douteux comme une capacité sûre — exactement ce que
+demande la spec §9.3. Les parcelles `residuel_legacy` **sans** contrainte rédhibitoire restent
+« Capacité estimée » avec une vigilance « assiette de repli — à confirmer ».
+
 ## 7. Préservation du Signal de mutation (D6, spec §12)
 
 - **Structurel** : aucun des 14 fichiers de la chaîne du Signal (modèle gelé, WoE, features,
@@ -173,22 +272,27 @@ Le diagnostic (`_diagnostic_geometrie`) ne conclut JAMAIS « terrain trop étroi
 
 | Suite | Résultat |
 |---|---|
-| `test_algofix1_contrat.py` (26 contrats §13.2, moteur pur) | **35 passed** |
+| `test_algofix1_contrat.py` (26 contrats §13.2 + D4 complet, moteur pur) | **39 passed** |
 | `test_algofix1_protections.py` (4 protections + 2 bonus, réel q_v20) | **6 passed** |
 | `test_algofix1_signal_intact.py` (Signal intact) | **3 passed** |
-| Import `labuse.api.app` + route `/analyse/scenarios` + boot uvicorn :9970 + curl | **OK** (health, rebuild D_net signé, sale, 400) |
+| `test_algofix1_persist.py` (écrit = calculé ; endpoint-lecture, réel q_v20) | **4 passed** |
+| Import `app` + route + boot uvicorn :9970 + curl (lecture persistée + enrich) | **OK** |
 
 **Validations encore manquantes** (honnêtes) :
 
 - La **réussite des tests pédagogiques n'est pas une validation produit** (rappel du mandat). Le
   moteur pur valide le contrat arithmétique et les statuts ; il ne valide ni le SIG ni le modèle ML.
-- La **reconstruction à l'échelle de l'île** n'est pas persistée : C/E sont calculés live
-  (≈ 80 ms/parcelle). Pour servir la reconstruction pour toutes les parcelles, un run parallèle
-  (batch enrichi vers une table V2 dédiée) est l'étape d'activation — non faite ici (pas de prod).
-- Les **coefficients pente/forme/accès restent NON validés** (conservés provisoirement, D1) : la
-  bande hérite de leur incertitude. Le plan de validation est en §10.
-- Le **banc de cohérence complet** et la suite unitaire entière n'ont pas été rejoués dans ce
-  compte-rendu (env Python projet ; venv `~/Desktop/labuse/.venv` utilisé pour les tests ciblés).
+- **Reconstruction chiffrée (C/E/C_rebuild/D_net)** : persistée sur **Entre-Deux + Saint-Denis**
+  (enrich ≈ 80 ms/parcelle). Sur le reste de l'île, la **conservation** est persistée exactement et
+  le **statut** de reconstruction est dérivé ; les **quantités** de reconstruction y sont à
+  `enriched=false` — leur calcul île entière (~10 h mono-cœur) est le run de nuit (activation).
+- La **cause racine `residuel_legacy`** (gabarit non calculé pour 53 923 parcelles) se corrige au
+  niveau du moteur de faisabilité (hors de ce mandat isolé) ; la V2 refuse entre-temps de servir le
+  chiffre douteux (§6-bis).
+- Les **coefficients pente/forme/accès restent NON validés** (D1) ; plan de validation en §10.
+- Le **banc de cohérence complet** et la suite unitaire entière n'ont pas été rejoués ici (env
+  Python projet ; venv `~/Desktop/labuse/.venv` pour les tests ciblés ; seul échec hors périmètre :
+  `test_compte2_brevo` real-API, marqueur `local`).
 
 ---
 
@@ -199,10 +303,10 @@ Le diagnostic (`_diagnostic_geometrie`) ne conclut JAMAIS « terrain trop étroi
 2. **Calcul parallèle** : `scripts/algofix1_avant_apres.py` et `/analyse/scenarios?enrich=1`
    produisent la V2 sans bascule ; comparer identifiants, capacités, statuts, effectifs sur le même
    instantané (fait pour Entre-Deux).
-3. **Persistance (activation)** : un batch V2 (à écrire) peuplerait une table dédiée
-   `parcel_scenario_v2_runs` (C, E, R, cause, AU, géométrie) depuis `compute_residuel`, sans toucher
-   `parcel_residuel_runs` ni `score_labuse`. L'endpoint lirait alors la table au lieu de calculer
-   live.
+3. **Persistance** *(fait)* : `scripts/algofix1_persist_run.py` peuple la table **neuve**
+   `parcel_scenario_v2_runs` (C, E, C_rebuild, D_net, statut, cause, bande/scénario) depuis
+   `compute_residuel`, sans toucher `parcel_residuel_runs` ni `score_labuse`. **L'endpoint LIT** la
+   table. Activation île entière = lancer l'enrichissement de nuit (conservation déjà île-entière).
 4. **Interface** : derrière l'indicateur de version (mandat d'écran suivant) ; mêmes filtres, deux
    sorties, aucun nouvel onglet.
 5. **Retour arrière** : supprimer l'endpoint et la table V2 ; le service historique

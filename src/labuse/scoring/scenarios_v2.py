@@ -122,7 +122,10 @@ class ScenarioRecord:
     # Difficultés physiques = points de vigilance SOURCÉS (spec §10.3) — jamais une note cachée.
     slope_deg: float | None = None
     access: str | None = None                  # verdict cascade 'acces' ('PASS' = voie non identifiée)
+    access_known: bool = True                  # un verdict d'accès EXISTE (POSITIVE/PASS) vs aucun
     built_coverage_pct: float | None = None    # emprise / plafond (dénominateur explicite, §4)
+    calc_reliable: bool = True                 # le calcul d'assiette est fiable (vs chemin de repli)
+    calc_doubt_reason: str | None = None       # cause du doute (ex. assiette de repli non découpée)
     # Zonage par portion (spec §9.2 / D9) : quelle portion produit la capacité.
     zone_main: str | None = None
     zone_parts: list | None = None             # [{zone, area_m2}] — portion productive identifiable
@@ -214,30 +217,46 @@ def _bande_pour(quantite: float | None, coef: float, bareme: dict) -> tuple[int,
     return score, sl.bande_de_score(score, bareme)
 
 
+def _inconnues_physiques(rec: ScenarioRecord) -> list[str]:
+    """Les facteurs physiques réellement INCONNUS (pas « neutres »), pour D4.
+
+    - **pente** : inconnue si `slope_deg is None` (RGE ALTI non mesuré sur la parcelle).
+    - **forme** : inconnue si aire OU périmètre manquent (sinon la lame se calcule — c'est connu).
+    - **accès** : inconnu SEULEMENT si aucun verdict de cascade n'existe (`access_known=False`).
+      Dans le run servi, CHAQUE parcelle porte un verdict `acces` (POSITIVE = voie identifiée, ou
+      PASS = voie « non identifiée ») : « non identifié » (PASS) est un fait MESURÉ, pas une
+      inconnue ; l'ensemble « inconnu » (aucun verdict) est donc vide aujourd'hui. On garde
+      néanmoins la branche pour rester correct si une couche d'accès partielle apparaissait."""
+    inc = []
+    if rec.slope_deg is None:
+        inc.append("pente")
+    if rec.area_m2 is None or rec.perimeter_m is None:
+        inc.append("forme")
+    if not rec.access_known:
+        inc.append("acces")
+    return inc
+
+
 def _bande_sensible_a_inconnue(quantite: float | None, rec: ScenarioRecord,
                                bareme: dict) -> tuple[bool, str, int]:
     """D4 — une inconnue ne fabrique pas une bande. Test de sensibilité avec les valeurs de la
-    configuration : on compare la bande en neutralisant l'inconnue à la bande calculée avec la
-    valeur de configuration la PLUS défavorable. Si la bande change ⇒ sensible, et la ligne passe
-    « À vérifier » ; la bande provisoire conservée = la bande neutre (la mieux documentée possible),
-    rangée dans le détail. Jamais de pente défavorable inventée (spec §8.1).
-
-    L'inconnue VISÉE est la PENTE non mesurée (`slope_deg is None`) — le cas nommé par D4. L'accès
-    n'est PAS une inconnue symétrique dans ce dépôt : la cascade `acces` ne produit un malus que
-    sur le verdict explicite `PASS` (« voie non identifiée ») ; `None` = aucun défaut d'accès
-    détecté (neutre), pas une donnée manquante. La forme est géométrique (connue dès que aire et
-    périmètre existent). Le mécanisme reste généralisable si une vraie incertitude d'accès est un
-    jour tracée."""
+    configuration : on compare la bande en neutralisant les inconnues à la bande calculée en
+    remplaçant CHAQUE facteur inconnu (pente, forme, accès) par sa valeur de configuration la plus
+    défavorable (les facteurs connus restent tels quels). Si la bande change ⇒ sensible : la ligne
+    passe « À vérifier » et la **bande provisoire** (la bande neutre, la mieux documentée possible)
+    est conservée au détail. Jamais de valeur défavorable inventée pour un facteur connu (§8.1)."""
     fa = bareme.get("faisabilite", {})
     coef_neutre, _ = _coef_physique(rec, fa)
     score_neutre, bande_neutre = _bande_pour(quantite, coef_neutre, bareme)
-    if rec.slope_deg is not None:
+    inconnues = _inconnues_physiques(rec)
+    if not inconnues:
         return False, bande_neutre, score_neutre
-    # Pente inconnue : coefficient « défavorable » = pire pente de configuration, autres facteurs
-    # inchangés (connus). Si la bande bascule entre neutre et défavorable ⇒ sensible.
-    f_pente = float(fa.get("pente_au_dela", 0.6))
-    f_forme = sl._f_forme(rec.area_m2, rec.perimeter_m, fa)
-    f_acces = sl._f_acces(rec.access, fa)
+    f_pente = (float(fa.get("pente_au_dela", 0.6)) if "pente" in inconnues
+               else sl._f_pente(rec.slope_deg, fa)[0])
+    f_forme = (float(fa.get("forme", {}).get("facteur", 0.8)) if "forme" in inconnues
+               else sl._f_forme(rec.area_m2, rec.perimeter_m, fa))
+    f_acces = (float(fa.get("acces_non_identifie", 0.85)) if "acces" in inconnues
+               else sl._f_acces(rec.access, fa))
     coef_defav = max(float(fa.get("plancher", 0.4)), f_pente * f_forme * f_acces)
     _, bande_defav = _bande_pour(quantite, coef_defav, bareme)
     return bande_defav != bande_neutre, bande_neutre, score_neutre
@@ -416,11 +435,22 @@ def evaluate(record, options=None) -> ScenarioResult:
     if rec.horizon != "now":
         return finish("TO_VERIFY", "HORIZON_INCONNU")
 
-    # 8/§7.3. Division pour logement en repérage ⇒ préétude (la hauteur manquante ne bloque pas).
+    # 8/§7.3. Division pour logement en repérage ⇒ préétude (la hauteur manquante ne bloque pas ;
+    # une assiette de repli douteuse ne bloque pas non plus un repérage documentaire).
     if opts["scenario"] == "divide":
         vig("Préétude documentaire : divisibilité, nombre de lots, accès individuels et "
             "viabilisation non calculés.")
         return finish("PRESTUDY", "PREETUDE_DIVISION_DOCUMENTAIRE")
+
+    # 4-bis. Calcul d'assiette douteux (ex. assiette de repli non découpée aux contraintes
+    # rédhibitoires partielles) ⇒ À vérifier, quelle que soit la surface (spec §9.3). La quantité
+    # est conservée au détail, jamais servie comme une capacité sûre.
+    if not rec.calc_reliable:
+        if rec.calc_doubt_reason:
+            vig(rec.calc_doubt_reason)
+        if _nonneg(rec.residual_m2):
+            res.quantities["additional"] = rec.residual_m2
+        return finish("TO_VERIFY", "CALCUL_ASSIETTE_DOUTEUX")
 
     # 4. Entrées critiques propres au scénario de capacité.
     if rec.height_status == "missing" and rec.height_required is not False:
