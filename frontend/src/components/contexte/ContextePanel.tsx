@@ -1,13 +1,12 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { deleteCommuneContact, getCommuneAcquisitions, getCommuneContacts, getContexteCommune, getMoi, motMarcheCommune, motRarete, postCommuneContact } from '../../lib/api'
+import { getCommuneAcquisitions, getContexteCommune, motMarcheCommune, motRarete } from '../../lib/api'
 import { TOKENS } from '../../lib/tokens'
 import { fmtDateNum, fmtAns } from '../../lib/format'   // RECETTE-2 (B2/B5/B6) — dates JJ/MM/AAAA, « 1,1 an »
 import { Trace } from '../../lib/trace'
 import { useApp } from '../../store/useApp'
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
-import { CONTACT_VIDE, ContactEdit, trimContact, type ContactForm } from '../shared/ContactEdit'  // RETOURS-8 (R6)
 import { Chevron } from '../ui/Chevron'
 import { GrilleOutils, OutilCase } from '../shared/GrilleOutils'   // COMMUNE-FIX-1 (C9) — grille d'outils PARTAGÉE (même rendu que la fiche parcelle)
 
@@ -36,7 +35,10 @@ function RowT({ lbl, val, strong, ton }: { lbl: string; val: string; strong?: bo
   return (
     <div className="flex items-baseline justify-between gap-2 py-0.5">
       <span className="min-w-0 text-txt-mut">{lbl}</span>
-      <span className={`tnum shrink-0 text-right ${strong ? 'font-semibold ' : ''}${ton ? '' : strong ? 'text-mint' : 'text-txt'}`}
+      {/* COMMUNE-FIX-2 (défilement horizontal) — la valeur peut être une longue phrase (p. ex. la
+          ligne « Par quartier … ») : `min-w-0` + `break-words` au lieu de `shrink-0` pour qu'elle
+          revienne à la ligne au lieu de pousser la largeur de la fiche (plus de scroll horizontal). */}
+      <span className={`tnum min-w-0 break-words text-right ${strong ? 'font-semibold ' : ''}${ton ? '' : strong ? 'text-mint' : 'text-txt'}`}
         style={ton ? { color: TON_COL[ton] } : undefined}>{val}</span>
     </div>
   )
@@ -57,7 +59,7 @@ const SRU_META: Record<string, { color: string; label: string; lecture: string }
 function Source({ nom, url }: { nom?: string | null; url?: string | null }) {
   if (!nom) return null
   return (
-    <p className="mt-2 text-[10.5px] leading-snug text-txt-dim">
+    <p className="mt-2 text-[10px] leading-snug text-txt-dim">
       Source :{' '}
       {url ? <a href={url} target="_blank" rel="noreferrer" className="text-mint hover:underline">{nom} ↗</a> : nom}
     </p>
@@ -116,54 +118,9 @@ function fmtDateFr(iso: string): string {
   catch { return iso }
 }
 
-// ADMIN-1 (AD10) — contacts NOMMÉS de la commune, servis sous le standard officiel de la carte Mairie.
-// Lecture ouverte à tous les comptes ; l'ajout/suppression n'est proposé qu'à l'admin (getMoi.role).
-function ContactsMairie({ insee, commune }: { insee: string | null; commune: string }) {
-  const qc = useQueryClient()
-  const moi = useQuery({ queryKey: ['moi'], queryFn: getMoi, staleTime: 3_600_000 })
-  const admin = moi.data?.role === 'admin'
-  const q = useQuery({ queryKey: ['commune-contacts', insee], queryFn: () => getCommuneContacts(insee!), enabled: !!insee })
-  const [ajout, setAjout] = useState(false)
-  const invalider = () => qc.invalidateQueries({ queryKey: ['commune-contacts', insee] })
-  // RETOURS-8 (R6) — même geste d'ajout que la page admin Contacts (composant ContactEdit partagé).
-  const creer = useMutation({
-    mutationFn: (f: ContactForm) => postCommuneContact({ insee: insee!, commune_nom: commune, ...trimContact(f) }),
-    onSuccess: () => { setAjout(false); invalider() },
-  })
-  const suppr = useMutation({ mutationFn: (id: number) => deleteCommuneContact(id), onSuccess: invalider })
-  const contacts = q.data?.contacts ?? []
-  if (!insee) return null
-  return (
-    <div className="mt-2.5 border-t border-line pt-2">
-      {contacts.map((c) => (
-        <div key={c.id} className="mb-1.5 text-[12px]">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <b className="text-txt">{c.nom}</b>{c.role && <span className="ml-1.5 rounded bg-mint/12 px-1.5 py-0.5 text-[10px] text-mint">{c.role}</span>}
-              <div className="mt-0.5 text-txt-mut">
-                {c.telephone && <a href={`tel:${c.telephone.replace(/\s/g, '')}`} className="text-mint hover:underline">{c.telephone}</a>}
-                {c.telephone && c.email && '  ·  '}
-                {c.email && <a href={`mailto:${c.email}`} className="text-mint hover:underline">{c.email}</a>}
-              </div>
-              {c.note && <div className="mt-0.5 text-[10.5px] text-txt-dim">note : {c.note}</div>}
-            </div>
-            {admin && (
-              <button onClick={() => { if (window.confirm(`Supprimer « ${c.nom} » ?`)) suppr.mutate(c.id) }}
-                className="shrink-0 text-[11px] text-coral hover:underline">🗑</button>
-            )}
-          </div>
-        </div>
-      ))}
-      {admin && !ajout && (
-        <button onClick={() => setAjout(true)} className="mt-1 text-[11.5px] text-mint hover:underline">+ Ajouter un contact</button>
-      )}
-      {admin && ajout && (
-        <ContactEdit init={CONTACT_VIDE} busy={creer.isPending}
-          onCancel={() => setAjout(false)} onSave={(f) => creer.mutate(f)} />
-      )}
-    </div>
-  )
-}
+// COMMUNE-FIX-2 — la section « Contacts » (contacts nommés + « + Ajouter un contact », source annuaire)
+// est RETIRÉE de la fiche commune. Les coordonnées officielles de la mairie (adresse, téléphone, e-mail,
+// site, fiche Annuaire) restent dans le bloc Identité ; seul l'ajout/listing de contacts admin est retiré.
 
 // COMMUNE-FIX-1 (D13) — LES ACQUÉREURS RÉCENTS (PM) de la commune, servis par l'endpoint dédié
 // /communes/{c}/acquisitions-pm (même point de calcul que l'outil Communes) — l'endpoint existait mais
@@ -262,13 +219,13 @@ function LigneCarte({ id, ic, titre, sous, val, ton, badge, defaultOpen, chiffre
             passé en encre sombre reste lisible — sinon sombre-sur-sombre. Réglé dans index.css (gaté pointeur fin). */}
         <span className="lc-ic flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-line-2 bg-surface-3 text-[14px] text-txt-mut">{ic}</span>
         <span className="min-w-0 flex-1">
-          <b className="block text-[13px] font-semibold text-txt-hi">{titre}</b>
+          <b className="block text-[12px] font-semibold text-txt-hi">{titre}</b>
           {sous && <span className="block truncate text-[11px] text-txt-mut">{sous}</span>}
         </span>
         {val != null && val !== '' && (() => {
           const rendu = badge
             ? <span className="shrink-0 rounded-md border px-1.5 py-0.5 text-[11px] font-medium" style={{ color: col, borderColor: `${col}55`, background: `${col}1a` }}>{val}</span>
-            : <span className="shrink-0 text-[12.5px] font-semibold" style={col ? { color: col } : undefined}>{val}</span>
+            : <span className="shrink-0 text-[12px] font-semibold" style={col ? { color: col } : undefined}>{val}</span>
           return chiffre ? <Trace id={chiffre}>{rendu}</Trace> : rendu
         })()}
         <Chevron open={open} className="shrink-0" />
@@ -334,20 +291,25 @@ export function ContextePanel() {
                 lisible, market_signal score<40). Les signaux nommés (règle en constante) le remplacent, en puces plus bas. */}
             <h2 className="font-display text-lg font-bold text-txt-hi">{commune}</h2>
           </div>
-          {d?.epci && <p className="text-[10.5px] text-txt-mut">{d.epci} — {d.epci_nom}</p>}
+          {d?.epci && <p className="text-[10px] text-txt-mut">{d.epci} — {d.epci_nom}</p>}
           {d?.foncier && (
-            <p className="mt-0.5 text-[10.5px] text-txt-dim">{fmt(d.foncier.surface_ha)} ha · {fmt(d.foncier.n_parcelles)} parcelles</p>
+            <p className="mt-0.5 text-[10px] text-txt-dim">{fmt(d.foncier.surface_ha)} ha · {fmt(d.foncier.n_parcelles)} parcelles</p>
           )}
         </div>
         <button onClick={() => setContexteCommune(null)} className="shrink-0 text-txt-dim hover:text-txt-hi" aria-label="Fermer">✕</button>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      {/* COMMUNE-FIX-2 — `overflow-x-hidden` : garde-fou dur, aucune barre horizontale quelle que soit
+          la largeur du texte (le contenu revient à la ligne, cf. RowT/break-words). */}
+      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
         {q.isLoading && <div className="p-5"><Squelette lignes={5} /></div>}
         {q.isError && <ErrorState className="p-5" message="Erreur de chargement — réessayez." retry={() => q.refetch()} />}
         {d && (
           <>
-            {/* ── EN-TÊTE (maquette v1) — bandeau 6 chiffres en 3×3 + 3 raccourcis. Pas de rang comparatif. ── */}
+            {/* ── EN-TÊTE (maquette v1) — bandeau 9 chiffres en 3×3 + 3 raccourcis. Pas de rang comparatif.
+                COMMUNE-FIX-2 — 3 chiffres ajoutés (dernière rangée) au même gabarit que les six : surface
+                de la commune (ha), intercommunalité (sigle), SRU (part LLS / objectif). Tout vient déjà du
+                payload (d.foncier.surface_ha, d.epci, d.sru) — aucun chiffre en dur, aucun appel en plus. ── */}
             <div className="border-b border-line bg-surface-2/40 px-5 py-3">
               <div data-bandeau-chiffres className="grid grid-cols-3 gap-2">
                 {[
@@ -359,10 +321,16 @@ export function ContextePanel() {
                   { v: d.comparable?.ancien_median_eur_m2 != null ? `${fmt(d.comparable.ancien_median_eur_m2)} €/m²` : '—', n: 'Prix ancien', s: 'DVF' },
                   { v: tendPct != null ? `${Number(tendPct) > 0 ? '+' : ''}${fmtDec(tendPct)} %` : '—', n: 'Tendance 12 m', s: 'DVF' },
                   { v: d.plu_statut?.statut ?? '—', n: 'État du PLU', s: 'GPU · Sudocuh' },
+                  // COMMUNE-FIX-2 — surface cadastrale de la commune (même grandeur que l'en-tête).
+                  { v: d.foncier?.surface_ha != null ? `${fmt(d.foncier.surface_ha)} ha` : '—', n: 'Surface', s: 'Cadastre' },
+                  // COMMUNE-FIX-2 — sigle de l'intercommunalité (CINOR, TCO…) ; le nom long est déjà sous le titre.
+                  { v: d.epci ?? '—', n: 'Intercommunalité', s: 'INSEE' },
+                  // COMMUNE-FIX-2 — SRU : part de logements sociaux (taux LLS) et objectif légal.
+                  { v: d.sru ? `${fmtDec(d.sru.taux_lls)} / ${Number(d.sru.objectif_pct).toLocaleString('fr-FR')} %` : '—', n: 'SRU (LLS / obj.)', s: 'DHUP' },
                 ].map((c) => (
                   <div key={c.n} className="rounded-lg bg-surface-3 px-2.5 py-1.5">
                     <p className="tnum font-mono text-[14px] font-bold leading-tight text-txt-hi">{c.v}</p>
-                    <p className="mt-0.5 text-[9.5px] uppercase tracking-[0.04em] text-txt-mut">{c.n}</p>
+                    <p className="mt-0.5 text-[10px] uppercase tracking-[0.04em] text-txt-mut">{c.n}</p>
                     <p className="text-[9px] text-txt-dim">{c.s}</p>
                   </div>
                 ))}
@@ -401,7 +369,7 @@ export function ContextePanel() {
             {d.rnu && (
               <div data-rnu-bandeau className="border-b border-line px-5 py-3">
                 <div className="rounded-lg border border-st-creuser/40 bg-st-creuser/[0.10] px-3 py-2.5">
-                  <p className="flex items-center gap-1.5 text-[12.5px] font-semibold text-st-creuser"><span aria-hidden>⚑</span>{d.rnu.libelle}</p>
+                  <p className="flex items-center gap-1.5 text-[12px] font-semibold text-st-creuser"><span aria-hidden>⚑</span>{d.rnu.libelle}</p>
                   <p className="mt-1 text-[11px] leading-relaxed text-txt">{d.rnu.detail}</p>
                 </div>
               </div>
@@ -420,12 +388,19 @@ export function ContextePanel() {
                 val={insee ?? undefined}>
                 <div className="flex flex-col gap-0.5 text-[12px]">
                   <RowT lbl="Intercommunalité" val={d.epci ?? '—'} />
-                  {d.epci_nom && <p className="-mt-0.5 mb-0.5 text-[10.5px] text-txt-dim">{d.epci_nom}</p>}
+                  {d.epci_nom && <p className="-mt-0.5 mb-0.5 text-[10px] text-txt-dim">{d.epci_nom}</p>}
                   {/* RECETTE-PROD-1 (F) — médiane EN PREMIER : l'étendue brute 0→100 % vient de petits IRIS
                       (parc minuscule) et était trompeuse présentée comme LA lecture. */}
+                  {/* COMMUNE-FIX-2 — ligne longue : libellé + chiffre-clé sur la 1ʳᵉ ligne, la précision
+                      (étendue) en pleine largeur dessous, pour ne jamais déborder la colonne de droite. */}
                   {d.population?.quartiers && (
-                    <RowT lbl={`Par quartier (${d.population.quartiers.n_iris} IRIS)`}
-                      val={`vacance méd. ${fmtDec(d.population.quartiers.vacance_mediane_pct)} % (étendue ${fmtDec(d.population.quartiers.vacance_min_pct)}–${fmtDec(d.population.quartiers.vacance_max_pct)} % selon l'IRIS, petits IRIS inclus)`} />
+                    <div className="py-0.5">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="min-w-0 text-txt-mut">Par quartier ({d.population.quartiers.n_iris} IRIS)</span>
+                        <span className="tnum shrink-0 text-right text-txt">vacance méd. {fmtDec(d.population.quartiers.vacance_mediane_pct)} %</span>
+                      </div>
+                      <p className="mt-0.5 text-[10px] leading-snug text-txt-dim">étendue {fmtDec(d.population.quartiers.vacance_min_pct)}–{fmtDec(d.population.quartiers.vacance_max_pct)} % selon l'IRIS (petits IRIS inclus)</p>
+                    </div>
                   )}
                 </div>
                 {d.mairie && (
@@ -437,8 +412,7 @@ export function ContextePanel() {
                       <MairieLigne label="Site officiel" val={d.mairie.site_officiel} href={d.mairie.site_officiel ?? undefined} />
                       <MairieLigne label="Annuaire" val={d.mairie.url_annuaire ? 'Fiche service-public' : null} href={d.mairie.url_annuaire ?? undefined} />
                     </dl>
-                    <p className="mt-2 text-[10.5px] leading-snug text-txt-dim">{d.mairie.source}{d.mairie.date_import ? ` · relevé le ${fmtDateFr(d.mairie.date_import)}` : ''}</p>
-                    <ContactsMairie insee={insee} commune={commune} />
+                    <p className="mt-2 text-[10px] leading-snug text-txt-dim">{d.mairie.source}{d.mairie.date_import ? ` · relevé le ${fmtDateFr(d.mairie.date_import)}` : ''}</p>
                   </div>
                 )}
                 <Source nom="INSEE · IGN contours IRIS · Annuaire de l'administration" />
@@ -456,7 +430,7 @@ export function ContextePanel() {
                   {d.population.habitants != null && <RowT lbl="Habitants (population municipale)" val={fmt(d.population.habitants)} strong />}
                   {/* COHERENCE-FIX-1 (lot E) — l'étiquette du back (« Population légale 2023 (INSEE) ») :
                       la source et SON année, jamais un chiffre daté sans date. */}
-                  {(d.population.habitants_etiquette || d.population.habitants_millesime) && <p className="-mt-0.5 mb-0.5 text-[10.5px] text-txt-dim">{d.population.habitants_etiquette ?? `Population municipale légale INSEE · millésime ${d.population.habitants_millesime}`}{d.population.habitants_pop_totale != null ? ` · population totale ${fmt(d.population.habitants_pop_totale)}` : ''}</p>}
+                  {(d.population.habitants_etiquette || d.population.habitants_millesime) && <p className="-mt-0.5 mb-0.5 text-[10px] text-txt-dim">{d.population.habitants_etiquette ?? `Population municipale légale INSEE · millésime ${d.population.habitants_millesime}`}{d.population.habitants_pop_totale != null ? ` · population totale ${fmt(d.population.habitants_pop_totale)}` : ''}</p>}
                   {d.population.menages != null && <RowT lbl="Ménages (résidences principales)" val={fmt(d.population.menages)} />}
                   {d.population.niveau_vie_moyen_eur != null && <RowT lbl="Niveau de vie moyen (Filosofi)" val={`${fmt(d.population.niveau_vie_moyen_eur)} €/an`} />}
                   {d.population.logements != null && <RowT lbl="Logements" val={`${fmt(d.population.logements)}${d.population.vacants != null ? ` · ${fmt(d.population.vacants)} vacants (${fmtDec(d.population.vacance_pct)} %)` : ''}`} />}
@@ -494,13 +468,13 @@ export function ContextePanel() {
                   const baseSru = (nbLls != null && taux > 0) ? Math.round(nbLls / (taux / 100)) : null
                   return (
                     <div className="rounded-lg border px-3 py-2" style={{ borderColor: `${m.color}55`, background: `${m.color}14` }}>
-                      <span className="font-mono text-[13px] font-bold" style={{ color: m.color }}>SRU {taux.toLocaleString('fr-FR')} %</span>
+                      <span className="font-mono text-[14px] font-bold" style={{ color: m.color }}>SRU {taux.toLocaleString('fr-FR')} %</span>
                       <span className="ml-2 text-[11px] text-txt-mut">objectif {Number(d.sru.objectif_pct).toLocaleString('fr-FR')} %</span>
                       {nbLls != null && (
                         <p className="mt-1 text-[11px] text-txt"><b>{fmt(nbLls)} logements sociaux (LLS)</b> — stock au dernier inventaire SRU{d.sru.millesime ? ` · ${d.sru.millesime}` : ''}.</p>
                       )}
                       {baseSru != null && (
-                        <p className="mt-0.5 text-[10.5px] text-txt-dim">Le taux de {taux.toLocaleString('fr-FR')} % rapporte ces LLS aux résidences principales retenues pour la SRU (≈ {fmt(baseSru)}) — base différente des ménages ci-dessus.</p>
+                        <p className="mt-0.5 text-[10px] text-txt-dim">Le taux de {taux.toLocaleString('fr-FR')} % rapporte ces LLS aux résidences principales retenues pour la SRU (≈ {fmt(baseSru)}) — base différente des ménages ci-dessus.</p>
                       )}
                       <p className="mt-1 text-[11px] leading-relaxed text-txt">{m.lecture}</p>
                     </div>
@@ -529,8 +503,8 @@ export function ContextePanel() {
                     {(['U', 'AU'] as const).map((fam) => {
                       const pz = d.foncier!.prix_terrain_nu.par_zone?.[fam]
                       return pz?.calculable
-                        ? <div key={fam}><p className="font-mono text-base font-bold text-txt-hi">{fmt(pz.median_eur_m2)} €/m²</p><p className="text-[10.5px] text-txt-dim">terrain nu zone {fam} · {fmt(pz.n)} ventes</p></div>
-                        : <div key={fam}><p className="font-mono text-sm text-txt-mut">zone {fam} —</p><p className="text-[10.5px] text-txt-dim">&lt; {d.foncier!.prix_terrain_nu.seuil_n} ventes</p></div>
+                        ? <div key={fam}><p className="font-mono text-lg font-bold text-txt-hi">{fmt(pz.median_eur_m2)} €/m²</p><p className="text-[10px] text-txt-dim">terrain nu zone {fam} · {fmt(pz.n)} ventes</p></div>
+                        : <div key={fam}><p className="font-mono text-[12px] text-txt-mut">zone {fam} —</p><p className="text-[10px] text-txt-dim">&lt; {d.foncier!.prix_terrain_nu.seuil_n} ventes</p></div>
                     })}
                   </div>
                 )}
@@ -570,14 +544,14 @@ export function ContextePanel() {
                             <RowT lbl="Prix demandé médian" val={sous ? libSeuil : (ma!.prix_demande_median_eur_m2 != null ? `${fmt(ma!.prix_demande_median_eur_m2)} €/m²` : '—')} />
                             <RowT lbl="Écart demandé / acté" strong={!sous && ma!.ecart_demande_acte_pct != null}
                               val={sous ? libSeuil : (ma!.ecart_demande_acte_pct != null ? `${ma!.ecart_demande_acte_pct > 0 ? '+' : ''}${fmtDec(ma!.ecart_demande_acte_pct)} %` : '—')} />
-                            {sous && <p className="text-[10.5px] text-txt-dim">Prix demandé et écart servis à partir de {ma!.demande_seuil_n} biens relevés (robustesse Radar).</p>}
+                            {sous && <p className="text-[10px] text-txt-dim">Prix demandé et écart servis à partir de {ma!.demande_seuil_n} biens relevés (robustesse Radar).</p>}
                           </div>
                         )
                       })()}
                     </>
                   )}
                   {/* RECETTE-PROD-1 (F) — date du dernier relevé Radar (la pige est en pause depuis le 06/10). */}
-                  {ma?.derniere_collecte && <p data-radar-collecte className="mt-1.5 text-[10.5px] text-txt-dim">Radar — dernier relevé le {fmtDateNum(ma.derniere_collecte)}.</p>}
+                  {ma?.derniere_collecte && <p data-radar-collecte className="mt-1.5 text-[10px] text-txt-dim">Radar — dernier relevé le {fmtDateNum(ma.derniere_collecte)}.</p>}
                   {/* COMMUNE-FIX-1 (D13) — acquéreurs récents (PM) : endpoint dédié, 5 premiers + Scan patrimoine. */}
                   <AcquereursPmCommune commune={commune} />
                   <Source nom={`DVF (mutations)${ma ? ` · ${ma.source}` : ' · Radar LABUSE'}`} />

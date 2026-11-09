@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Fragment, useEffect, useState } from 'react'
 import { banAutocomplete, deleteLogo, getCommunes, getEvents, getMarque, getMoi, getNotifPrefs, getParcelsGeojson, markEventRead, modPatrimoineSearch, parcelAt, patchDigestFrequence, patchNotifPref, postLogo, postMarque, postRetour, searchParcels, type LabuseEvent } from '../../lib/api'
 import { estIdu, estSectionNumero, iduComplet, normSectionNumero, ilYA, fmtDateLong } from '../../lib/format'
-import { communePastille } from '../../lib/communes'
+import { communePastille, trierCommunes } from '../../lib/communes'
 import { Chargement } from '../Loading'
 
 // M87 P5.1 — REGROUPER les notifications : une ligne par commune quand plusieurs événements de même
@@ -269,16 +269,18 @@ function CommuneSelect() {
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          {/* La liste des 24 communes : choisir = ouvrir la FICHE de la commune (volet), jamais filtrer. */}
-          <div className="floating absolute left-0 top-9 z-20 flex max-h-[70vh] w-[320px] flex-col overflow-y-auto p-1.5">
-            {(communes.data ?? []).map((c) => (
+          {/* COMMUNE-FIX-2 — le menu « Fiche commune » refait : largeur AJUSTÉE AU CONTENU (w-max, plus de
+              320px fixe), apparition animée comme les autres déroulants (`.floating` → @keyframes apparition),
+              et les 24 communes sur DEUX COLONNES, triées alphabétiquement (article ignoré), chacune avec son
+              code postal. Choisir = ouvrir la FICHE de la commune (volet), jamais filtrer la carte. */}
+          <div className="floating absolute left-0 top-9 z-20 grid max-h-[70vh] w-max grid-cols-2 gap-x-1 overflow-y-auto p-1.5">
+            {trierCommunes(communes.data ?? [], (c) => c.commune).map((c) => (
               <button key={c.insee} data-fiche-commune onClick={() => pick(c.commune)}
-                /* RETOURS-16 (point 6) — le menu « Fiche commune » suit la DA des AUTRES déroulants
-                   (menu compte Header.tsx) : même hauteur de ligne (px-3 py-2, rounded-lg) et même
-                   SURVOL subtil (hover:bg-surface-3, texte clair conservé). Fini le `hover-fill`
-                   (aplat vert plein + encre sombre) et l'espacement serré (py-1.5). */
-                className="flex min-w-0 items-center gap-2 truncate whitespace-nowrap rounded-lg px-3 py-2 text-left text-xs text-txt transition-colors duration-quick hover:bg-surface-3 hover:text-txt-hi">
-                {communePastille(c.commune)} <span className="font-mono text-[11px] tabular-nums text-txt-dim">{CP_PAR_COMMUNE[c.commune] ?? c.insee}</span>
+                /* RETOURS-16 (point 6) — même DA que les autres déroulants (menu compte) : hauteur de ligne
+                   px-3 py-2, rounded-lg, survol subtil (hover:bg-surface-3, texte clair conservé). */
+                className="flex min-w-0 items-center justify-between gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-left text-xs text-txt transition-colors duration-quick hover:bg-surface-3 hover:text-txt-hi">
+                <span className="truncate">{communePastille(c.commune)}</span>
+                <span className="shrink-0 font-mono text-[11px] tabular-nums text-txt-dim">{CP_PAR_COMMUNE[c.commune] ?? c.insee}</span>
               </button>
             ))}
           </div>
