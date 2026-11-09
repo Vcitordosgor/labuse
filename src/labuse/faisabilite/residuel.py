@@ -244,6 +244,12 @@ def compute_residuel(session: Session, parcel_id: int,
         "sdp_max_m2": round(sdp_max),
         "sdp_existante_m2": round(sdp_existante),
         "sdp_residuelle_m2": round(sdp_residuelle),
+        # ALGO-FIX-1 (avis Astra passe-3 §5) — valeurs NON ARRONDIES, pour que le barème et la bande
+        # soient calculés en précision complète (l'arrondi n'intervient qu'à l'affichage). Les
+        # champs arrondis ci-dessus restent servis à l'identique (aucun impact run).
+        "sdp_max_m2_precis": float(sdp_max),
+        "sdp_existante_m2_precis": float(sdp_existante),
+        "sdp_residuelle_m2_precis": float(sdp_residuelle),
         # CHASSE-CALCULS-FIX-1 Lot 3 (E-B1) — la surface (contenance) SUR LAQUELLE ce résiduel est
         # calculé, écrite au run pour être servie À CÔTÉ de la SDP (jamais une surface vive discordante).
         "surface_terrain_m2": round(surface),

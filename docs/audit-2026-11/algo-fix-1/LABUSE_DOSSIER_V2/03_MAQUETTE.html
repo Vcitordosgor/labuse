@@ -1,0 +1,3413 @@
+<!doctype html>
+<html lang="en" data-visualize-standalone>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com https://persistent.oaistatic.com/plugins/visualize/; style-src 'unsafe-inline' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com https://persistent.oaistatic.com/plugins/visualize/charts/; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Labuse Analyse V2</title>
+<style>:root{color-scheme:light dark;background:light-dark(rgb(255 255 255), rgb(24 24 24))}html,body{margin:0}body{box-sizing:border-box;padding:1rem;background:inherit}iframe{display:block;width:100%;height:calc(100vh - 2rem);margin:0 auto;border:0}</style>
+
+</head>
+<body>
+<iframe id="codex-visualization" sandbox="allow-scripts" referrerpolicy="no-referrer" title="Labuse Analyse V2" data-srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot; data-visualize-standalone&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;utf-8&quot;&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+&lt;meta name=&quot;referrer&quot; content=&quot;no-referrer&quot;&gt;
+&lt;meta http-equiv=&quot;Content-Security-Policy&quot; content=&quot;default-src &#x27;none&#x27;; script-src &#x27;unsafe-inline&#x27; &#x27;unsafe-eval&#x27; &#x27;wasm-unsafe-eval&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com https://persistent.oaistatic.com/plugins/visualize/; style-src &#x27;unsafe-inline&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com https://persistent.oaistatic.com/plugins/visualize/charts/; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src &#x27;none&#x27;; object-src &#x27;none&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;&quot;&gt;
+&lt;title&gt;Labuse Analyse V2&lt;/title&gt;
+&lt;style&gt;:root {
+  color-scheme: light dark;
+  background-color: var(
+    --background,
+    var(--color-background-primary, light-dark(rgb(255 255 255), rgb(24 24 24)))
+  ) !important;
+
+  /* Agent-facing contract; keep in sync with SKILL.md. */
+  --background: var(
+    --color-background-primary,
+    light-dark(rgb(255 255 255), rgb(24 24 24))
+  );
+  --foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --card: color-mix(in oklab, var(--foreground) 5%, var(--background));
+  --card-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --popover: var(
+    --color-background-secondary,
+    light-dark(rgb(255 255 255), rgb(45 45 45))
+  );
+  --popover-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --primary: var(
+    --color-text-info,
+    light-dark(rgb(51 156 255), rgb(131 195 255))
+  );
+  --primary-foreground: var(
+    --color-text-inverse,
+    light-dark(rgb(255 255 255), rgb(13 13 13))
+  );
+  --secondary: var(
+    --color-background-secondary,
+    light-dark(rgb(255 255 255 / 96%), rgb(54 54 54 / 96%))
+  );
+  --secondary-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --muted: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --muted-foreground: var(
+    --color-text-secondary,
+    light-dark(rgb(26 28 31 / 49.4%), rgb(255 255 255 / 49.8%))
+  );
+  --accent: var(
+    --color-background-info,
+    light-dark(rgb(229 242 255), rgb(13 39 63))
+  );
+  --accent-foreground: var(
+    --color-text-info,
+    light-dark(rgb(51 156 255), rgb(131 195 255))
+  );
+  --destructive: var(
+    --color-text-warning,
+    light-dark(rgb(226 85 7), rgb(255 133 73))
+  );
+  --border: var(
+    --color-border-secondary,
+    light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%))
+  );
+  --input: var(
+    --color-border-primary,
+    light-dark(
+      rgb(26 28 31 / 11.8%),
+      color-mix(in oklab, rgb(0 0 0) 10%, transparent)
+    )
+  );
+  --ring: var(
+    --color-ring-primary,
+    light-dark(rgb(51 156 255), rgb(131 195 255 / 76%))
+  );
+  --font-size-base: var(--font-text-md-size, 16px);
+  --blue: light-dark(rgb(51 156 255), rgb(51 156 255));
+  --orange: light-dark(rgb(226 85 7), rgb(251 106 34));
+  --green: light-dark(rgb(0 162 64), rgb(64 201 119));
+  --red: light-dark(rgb(224 46 42), rgb(255 103 100));
+  --purple: light-dark(rgb(146 79 247), rgb(173 123 249));
+  --yellow: light-dark(rgb(255 195 0), rgb(255 210 64));
+  --viz-series-1: var(--primary);
+  --viz-series-2: light-dark(rgb(243 136 59), rgb(245 154 86));
+  --viz-series-3: light-dark(rgb(93 201 119), rgb(116 213 139));
+  --viz-series-4: light-dark(rgb(235 119 177), rgb(240 143 192));
+  --viz-series-5: light-dark(rgb(155 121 236), rgb(170 145 239));
+  --viz-series-6: light-dark(rgb(58 185 177), rgb(90 203 194));
+
+  /* Internal implementation variables; not part of the agent contract. */
+  --font-sans:
+    -apple-system-body, ui-sans-serif, -apple-system, system-ui, &quot;Segoe UI&quot;,
+    Helvetica, &quot;Apple Color Emoji&quot;, Arial, sans-serif, &quot;Segoe UI Emoji&quot;,
+    &quot;Segoe UI Symbol&quot;;
+  --font-mono:
+    ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;,
+    monospace;
+  --font-size-normal: max(11px, var(--font-size-base));
+  --font-size-tooltip: calc(var(--font-size-base) - 1px);
+  --font-size-small: max(11px, calc(var(--font-size-base) - 2px));
+  --font-size-h1: calc(var(--font-size-normal) * 1.7142857143);
+  --font-size-h2: calc(var(--font-size-normal) * 1.4285714286);
+  --font-size-h3: calc(var(--font-size-normal) * 1.2857142857);
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --icon-size: 16px;
+  --line-height-normal: calc(var(--font-size-normal) * 1.5);
+  --line-height-tooltip: calc(var(--font-size-tooltip) * 1.4285714286);
+  --line-height-small: calc(var(--font-size-small) + 4px);
+  --corner-shape: round;
+  --radius: var(--border-radius-lg, 8px);
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.75);
+  --radius-lg: var(--radius);
+  --radius-2xl: calc(var(--radius) * 2);
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px -1px rgb(0 0 0 / 8%);
+  --checkmark-image: url(&quot;data:image/svg+xml,%3Csvg xmlns=&#x27;http://www.w3.org/2000/svg&#x27; viewBox=&#x27;0 0 17 17&#x27;%3E%3Cpath d=&#x27;M12.8961 3.64101C13.1297 3.41418 13.4984 3.37523 13.7779 3.56581C14.0571 3.75635 14.1554 4.11331 14.0299 4.41347L13.9615 4.53847L7.71151 13.7045C7.59411 13.8767 7.4063 13.9877 7.19881 14.0072C6.99136 14.0267 6.78564 13.9533 6.63826 13.806L2.88826 10.056L2.79842 9.9457C2.6192 9.67407 2.64927 9.30496 2.88826 9.06581C3.12738 8.82669 3.49647 8.79676 3.76815 8.97597L3.8785 9.06581L7.03084 12.2182L12.8053 3.74941L12.8961 3.64101Z&#x27;/%3E%3C/svg%3E&quot;);
+
+  /* Legacy aliases; not part of the current agent contract. */
+  --viz-bg: transparent;
+  --viz-panel: var(--card);
+  --viz-border: var(--border);
+  --viz-text: var(--foreground);
+  --viz-muted: var(--muted-foreground);
+  --viz-accent: var(--primary);
+  --viz-accent-text: var(--primary-foreground);
+  --viz-accent-bg: var(--accent);
+  --viz-font-size: var(--font-size-base);
+  --viz-warning: var(--destructive);
+}
+
+:root[data-theme=&quot;light&quot;] {
+  color-scheme: light;
+}
+
+:root[data-theme=&quot;dark&quot;] {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html &gt; body {
+  /* Preserve MCP aliases for older inline renderers without creating :root cycles. */
+  --color-background-primary: var(
+    --background,
+    light-dark(rgb(255 255 255), rgb(24 24 24))
+  );
+  --color-text-primary: var(
+    --foreground,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --color-border-secondary: var(
+    --border,
+    light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%))
+  );
+
+  margin: 0;
+  padding: var(--visualize-paint-gutter, 0px);
+  color: var(--foreground);
+  background: transparent !important;
+  font-family: var(--font-sans) !important;
+  -webkit-font-smoothing: antialiased;
+  font-size: var(--font-size-base);
+  line-height: calc(var(--font-size-base) * 1.625);
+  font-weight: var(--font-weight-normal);
+}
+
+.cursor-interaction {
+  cursor: var(--cursor-interaction, pointer);
+}
+
+a {
+  color: color-mix(in srgb, var(--viz-accent) 80%, var(--viz-text) 20%);
+  cursor: var(--cursor-interaction, pointer);
+  text-decoration: none;
+  text-underline-offset: 2px;
+  font-weight: inherit;
+}
+
+a:is(:hover, :focus-visible) {
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-thickness: 0.5px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin-block: 0;
+}
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+li,
+.table {
+  font-family: var(--font-sans);
+}
+
+h1 {
+  font-size: calc(var(--font-size-base) * 1.5);
+  line-height: 1.3333333333;
+}
+
+h2 {
+  font-size: calc(var(--font-size-base) * 1.25);
+  line-height: 1.4;
+}
+h3 {
+  font-size: calc(var(--font-size-base) * 1.125);
+  line-height: 1.5555555556;
+}
+h4 {
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+}
+h5,
+h6 {
+  font-size: var(--font-size-base);
+  line-height: calc(var(--font-size-base) * 1.625);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+b,
+strong,
+th {
+  font-weight: 600;
+}
+
+code:not(pre code) {
+  display: inline;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  corner-shape: var(--corner-shape);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  word-break: break-word;
+}
+pre,
+pre code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.table {
+  width: 100%;
+  color: var(--foreground);
+  font: inherit;
+  text-align: start;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: calc(var(--font-size-base) * 0.875);
+  line-height: calc(var(--font-size-base) * 1.625);
+  font-family: var(--font-sans);
+}
+
+.table :is(th, td) {
+  padding-block: 10px;
+  padding-inline: 0 24px;
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid var(--border);
+  text-align: start;
+  vertical-align: top;
+  border-bottom-color: color-mix(in srgb, var(--foreground) 5%, transparent);
+}
+.table :is(th, td):not(:last-child) {
+  padding-inline-end: calc(var(--font-size-base) * 1.5);
+}
+
+.table-responsive &gt; .table :is(th, td) {
+  overflow-wrap: break-word;
+}
+
+.table :is(th, td):last-child {
+  padding-inline-end: 0;
+}
+
+.table :is(caption, thead th) {
+  font-weight: 600;
+}
+
+.table thead :is(th, td) {
+  border-bottom-color: var(--border-strong, var(--input));
+  padding-block: calc(var(--font-size-base) / 2);
+  line-height: var(--font-size-base);
+}
+
+.table tbody tr:last-child :is(th, td) {
+  border-bottom: 0;
+}
+.table tbody :is(th, td) {
+  padding-block: calc(var(--font-size-base) * 0.625);
+}
+
+.table.table-sm :is(th, td) {
+  padding-block: 8px;
+}
+
+.table.table-sm :is(th, td):not(:last-child) {
+  padding-inline-end: 16px;
+}
+
+.table :is(.text-end, [align=&quot;right&quot;]) {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.table :is(.text-center, [align=&quot;center&quot;]) {
+  text-align: center;
+}
+
+.table .text-nowrap {
+  white-space: nowrap;
+}
+
+#widget {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  background: transparent !important;
+}
+
+.card {
+  min-width: 0;
+  padding: 12px;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  border-radius: var(--radius-2xl);
+  corner-shape: var(--corner-shape);
+  color: var(--card-foreground);
+  background: var(--card);
+}
+
+.widget {
+  min-width: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-lg);
+  corner-shape: var(--corner-shape);
+  box-shadow: 0 0 0 0.5px var(--border-strong, var(--border));
+  color: var(--foreground);
+  background: var(--background);
+}
+
+#widget &gt; :not(.card, .widget, .progress) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: 50;
+  top: 0;
+  left: 0;
+  width: max-content;
+  max-width: min(
+    20rem,
+    var(--tooltip-available-width, calc(100vw - 10px)),
+    calc(100vw - 10px)
+  );
+  max-height: min(
+    var(--tooltip-available-height, calc(100vh - 10px)),
+    calc(100vh - 10px)
+  );
+  border: 1px solid var(--border);
+  corner-shape: var(--corner-shape);
+  overflow-wrap: break-word;
+  white-space: normal;
+  pointer-events: none;
+  user-select: none;
+  font-family: var(--font-sans);
+  padding: 5px 12px;
+  border-color: color-mix(
+    in oklab,
+    light-dark(var(--primary-foreground), var(--foreground)) 5%,
+    transparent
+  );
+  border-radius: var(--radius-2xl);
+  color: light-dark(var(--primary-foreground), var(--foreground));
+  background: light-dark(var(--foreground), var(--popover));
+  box-shadow: 0 8px 18px rgb(15 23 42 / 20%);
+  letter-spacing: -0.15px;
+  font-size: calc(var(--font-size-base) * 14 / 16);
+  font-size: round(nearest, calc(var(--font-size-base) * 14 / 16), 1px);
+  font-weight: 600;
+  line-height: 18px;
+  text-align: center;
+}
+
+.viz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(max(180px, 24%), 1fr));
+  gap: 10px;
+}
+
+.viz-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.viz-stat-value {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+.viz-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+hr {
+  width: 100%;
+  height: 1px;
+  margin-block: 6px;
+  border: 0;
+  background: var(--border);
+}
+
+.nav {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+}
+
+.progress {
+  display: flex;
+  height: 8px;
+  margin-block: calc((var(--line-height-normal, 1.5em) - 8px) / 2);
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+}
+
+.progress-bar:only-child {
+  border-radius: var(--radius-full);
+}
+
+.progress-bar {
+  height: 100%;
+  flex-shrink: 0;
+  border: 0;
+  background: var(--viz-series-1);
+}
+
+.viz-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  color: color-mix(in srgb, var(--foreground) 40%, var(--muted-foreground));
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  font-family: var(--font-sans);
+  font-size: calc(var(--font-size-base) * 14 / 16);
+  font-size: round(nearest, calc(var(--font-size-base) * 14 / 16), 1px);
+  font-weight: var(--font-weight-normal);
+  line-height: 1;
+}
+
+small,
+.text-small {
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+.text-muted {
+  color: var(--muted-foreground);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.viz-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.viz-controls &gt; .form-label {
+  display: grid;
+  min-width: min(100%, 260px);
+  flex: 1 1 280px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 12px;
+  margin-bottom: 0;
+}
+
+.viz-controls &gt; .form-label &gt; :is(.form-control, .form-range, .form-select) {
+  grid-column: 1 / -1;
+}
+
+.btn,
+.nav-link,
+.form-check-input,
+.form-control,
+.form-range,
+.form-select {
+  font: inherit;
+}
+
+/* Match inline alignment without overriding a containing flex or grid layout. */
+.btn,
+.nav-link,
+.form-control,
+.form-select,
+.form-range,
+.form-check {
+  vertical-align: middle;
+}
+
+.btn,
+.nav-link {
+  --btn-size: calc(12px + 2 * var(--control-spacing, 12px));
+  appearance: button;
+  display: inline-flex;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0 8px;
+  -webkit-app-region: no-drag;
+  border: 1px solid var(--input);
+  corner-shape: var(--corner-shape);
+  cursor: var(--cursor-interaction, pointer);
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-font-smoothing: inherit;
+  font-family: var(--font-sans);
+  height: fit-content;
+  min-height: var(--btn-size);
+  padding-inline: var(--control-spacing, 12px);
+  border-color: transparent;
+  border-radius: var(--radius-full);
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  font-size: calc(var(--font-size-base) * 14 / 16);
+  font-size: round(nearest, calc(var(--font-size-base) * 14 / 16), 1px);
+  font-weight: var(--font-weight-normal);
+  line-height: 18px;
+}
+
+.btn {
+  border-color: var(--border);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+}
+
+/* Codex Button size=&quot;compact&quot;; appearance stays with the button variant. */
+.btn-sm {
+  --btn-size: 24px;
+  padding-inline: 8px;
+  font-size: calc(var(--font-size-base) * 12 / 16);
+  font-size: round(nearest, calc(var(--font-size-base) * 12 / 16), 1px);
+  line-height: 16px;
+}
+
+.btn:is(.btn-block, .viz-tile) {
+  inline-size: 100%;
+}
+
+.btn.viz-tile {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+a.btn {
+  cursor: var(--cursor-interaction, pointer);
+  text-decoration: none;
+}
+
+.btn:not(:disabled):hover {
+  background: light-dark(
+    color-mix(in srgb, var(--foreground) 5.5%, transparent),
+    color-mix(in srgb, var(--foreground) 8%, transparent)
+  );
+}
+
+.nav-link:not(:disabled):not([aria-disabled=&quot;true&quot;]):hover {
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+
+.btn-primary {
+  border-color: var(--border);
+  color: var(--primary-foreground);
+  background: var(--foreground);
+  background-clip: border-box;
+}
+
+.btn-primary .text-muted {
+  color: color-mix(in srgb, var(--primary-foreground) 50%, transparent);
+}
+
+.btn-primary:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 80%, transparent);
+  background-clip: border-box;
+}
+
+.btn-ghost {
+  border-color: transparent;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.btn-ghost:not(:disabled):hover {
+  color: var(--muted-foreground);
+  background: light-dark(
+    color-mix(in srgb, var(--foreground) 5.5%, transparent),
+    color-mix(in srgb, var(--foreground) 8%, transparent)
+  );
+}
+
+.nav-pills .nav-link {
+  min-width: 0;
+  border-color: transparent;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.nav-justified .nav-link {
+  flex: 1 1 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.nav-pills .nav-link.active {
+  color: var(--foreground);
+  background: var(--muted);
+}
+
+/* Shared preview chrome; product styles stay inside each variant. */
+.viz-dotted-background {
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--foreground) 14%, transparent) 0.8px,
+    transparent 0.8px
+  );
+  background-position: center;
+  background-size: 16px 16px;
+}
+
+.viz-carousel {
+  position: relative;
+  min-width: 0;
+}
+
+.viz-carousel:has(&gt; .viz-carousel-controls) {
+  min-height: calc(60px + var(--viz-carousel-picker-height, 0px));
+  padding-bottom: 60px;
+}
+
+.viz-carousel &gt; [data-variant][hidden] {
+  display: none !important;
+}
+
+.viz-carousel &gt; [data-variant] {
+  isolation: isolate;
+}
+
+.viz-carousel-controls {
+  --viz-carousel-hover: light-dark(
+    color-mix(in srgb, var(--foreground) 5.4%, transparent),
+    color-mix(in srgb, var(--foreground) 7.8%, transparent)
+  );
+  position: absolute;
+  z-index: 2;
+  bottom: 8px;
+  left: 50%;
+  display: flex;
+  width: max-content;
+  /* Leave room for the host&#x27;s design-controls launcher at the trailing edge. */
+  max-width: calc(100% - 96px);
+  align-items: center;
+  gap: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-sans);
+  /* Match the settings dropdown chrome independently of the content font size. */
+  font-size: 13px;
+  font-weight: var(--font-weight-normal);
+  line-height: 18px;
+  transform: translateX(-50%);
+  user-select: none;
+}
+
+/* Keep authored mockup button styles out of the shared carousel chrome. */
+.viz-carousel-controls button,
+.viz-carousel-picker &gt; summary {
+  display: flex !important;
+  height: auto !important;
+  min-height: 30px;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px;
+  padding: 0 6px !important;
+  -webkit-app-region: no-drag;
+  border: 0 !important;
+  border-radius: 14px !important;
+  color: inherit !important;
+  background: transparent !important;
+  font: inherit !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.viz-carousel-controls &gt; button,
+.viz-carousel-picker &gt; summary {
+  position: relative;
+  isolation: isolate;
+}
+
+.viz-carousel-controls &gt; button {
+  --icon-size: 16px;
+  width: 30px !important;
+  padding: 0 !important;
+}
+
+.viz-carousel-picker &gt; summary {
+  padding-inline: 12px !important;
+}
+
+.viz-carousel-controls .viz-carousel-caret {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  margin: 0;
+  color: inherit;
+  transform: rotate(180deg);
+}
+
+.viz-carousel-controls &gt; button &gt; svg,
+.viz-carousel-controls .viz-carousel-caret,
+.viz-carousel-count {
+  opacity: 0.5;
+}
+
+.viz-carousel-controls &gt; button::before,
+.viz-carousel-picker &gt; summary::before {
+  position: absolute;
+  z-index: -1;
+  inset: 3px;
+  border-radius: 12px;
+  content: &quot;&quot;;
+  pointer-events: none;
+}
+
+.viz-carousel-controls &gt; button:hover::before,
+.viz-carousel-picker &gt; summary:hover::before {
+  background: var(--viz-carousel-hover);
+}
+
+.viz-carousel-controls &gt; button,
+.viz-carousel-controls [data-lucide],
+.viz-carousel-controls .lucide {
+  flex-shrink: 0;
+}
+
+.viz-carousel-picker {
+  min-width: 0;
+}
+
+.viz-carousel-picker &gt; summary {
+  min-width: 0;
+  list-style: none;
+}
+
+.viz-carousel-picker &gt; summary::-webkit-details-marker {
+  display: none;
+}
+
+.viz-carousel-count {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.viz-carousel-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.viz-carousel-options {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 4px);
+  left: 0;
+  display: flex;
+  max-height: 240px;
+  flex-direction: column;
+  gap: 2px;
+  overflow: auto;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--background);
+  box-shadow: 0 4px 12px light-dark(rgb(0 0 0 / 6%), rgb(0 0 0 / 25%));
+}
+
+.viz-carousel-options &gt; button {
+  border-radius: max(0px, calc(var(--radius-lg) - 5px)) !important;
+  width: 100% !important;
+  min-height: 28px;
+  justify-content: flex-start !important;
+  padding: 4px 8px !important;
+  font-size: var(--font-size-small) !important;
+  text-align: start;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.viz-carousel-options &gt; [aria-current=&quot;true&quot;],
+.viz-carousel-options &gt; button:hover {
+  background: var(--viz-carousel-hover) !important;
+}
+
+.btn:disabled,
+.nav-link:disabled,
+.nav-link[aria-disabled=&quot;true&quot;] {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+[data-lucide] {
+  stroke-width: 1.6;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--foreground);
+}
+
+.form-control {
+  display: block;
+  width: 100%;
+  padding: 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  corner-shape: var(--corner-shape);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  height: calc(12px + 2 * var(--control-spacing, 12px));
+  min-height: calc(12px + 2 * var(--control-spacing, 12px));
+  padding-inline: calc(4px + var(--control-spacing, 12px) / 2);
+  border-color: var(--input);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--popover) 96%, transparent);
+  font-size: calc(var(--font-size-base) * 14 / 16);
+  font-size: round(nearest, calc(var(--font-size-base) * 14 / 16), 1px);
+  font-weight: var(--font-weight-normal);
+  line-height: 1.4285714286;
+}
+.form-control:is(
+  [type=&quot;file&quot;],
+  [type=&quot;date&quot;],
+  [type=&quot;datetime-local&quot;],
+  [type=&quot;month&quot;],
+  [type=&quot;week&quot;],
+  [type=&quot;color&quot;]
+) {
+  height: calc(12px + 2 * var(--control-spacing, 12px));
+  min-height: calc(12px + 2 * var(--control-spacing, 12px));
+  line-height: 18px;
+}
+.form-control:is(
+  [type=&quot;date&quot;],
+  [type=&quot;datetime-local&quot;],
+  [type=&quot;month&quot;],
+  [type=&quot;week&quot;]
+) {
+  padding-inline: var(--control-spacing, 12px);
+}
+
+.form-control::placeholder {
+  color: var(--muted-foreground);
+}
+
+.form-control[type=&quot;file&quot;] {
+  overflow: hidden;
+  cursor: var(--cursor-interaction, pointer);
+  padding: 0;
+}
+
+.form-control[type=&quot;file&quot;]::file-selector-button {
+  padding: 0 8px;
+  border: 0;
+  border-right: 1px solid var(--input);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: inherit;
+  font: inherit;
+  min-height: calc(10px + 2 * var(--control-spacing, 12px));
+  padding-inline: var(--control-spacing, 12px);
+  margin-inline-end: var(--control-spacing, 12px);
+}
+
+.form-control[type=&quot;file&quot;]:not(:disabled):hover::file-selector-button {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-control-color[type=&quot;color&quot;] {
+  width: 40px;
+  height: calc(12px + 2 * var(--control-spacing, 12px));
+  padding: 3px;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control-color[type=&quot;color&quot;]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.form-control-color[type=&quot;color&quot;]::-webkit-color-swatch {
+  border: 0;
+  border-radius: calc(var(--radius-lg) - 4px);
+  corner-shape: var(--corner-shape);
+}
+
+textarea.form-control {
+  height: auto;
+  resize: vertical;
+  min-height: 96px;
+  padding: 8px 10px;
+}
+
+.form-control:focus-visible {
+  border-color: var(--ring);
+  box-shadow: none;
+}
+.form-control:disabled {
+  color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  opacity: 1;
+}
+.form-control[aria-invalid=&quot;true&quot;] {
+  border-color: var(--red);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--red) 20%, transparent);
+}
+
+.form-control:disabled,
+.form-select:disabled {
+  cursor: not-allowed;
+}
+
+.form-select {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: fit-content;
+  min-height: calc(12px + 2 * var(--control-spacing, 12px));
+  margin: 0;
+  /* The secondary icon role is 14px at compact density and 16px at web density. */
+  --icon-size: calc(10px + var(--control-spacing, 12px) / 2);
+  /* Settings dropdowns retain a 12px inset and a 4px text-to-chevron gap. */
+  padding: 0 calc(16px + var(--icon-size)) 0 12px;
+  outline: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  corner-shape: var(--corner-shape);
+  color: var(--foreground);
+  background-color: var(--secondary);
+  background-image:
+    linear-gradient(
+      45deg,
+      transparent calc(50% - 0.6px),
+      var(--muted-foreground) calc(50% - 0.6px) calc(50% + 0.6px),
+      transparent calc(50% + 0.6px)
+    ),
+    linear-gradient(
+      135deg,
+      transparent calc(50% - 0.6px),
+      var(--muted-foreground) calc(50% - 0.6px) calc(50% + 0.6px),
+      transparent calc(50% + 0.6px)
+    );
+  background-position:
+    calc(100% - 12px - var(--icon-size) / 2) 50%,
+    calc(100% - 12px - var(--icon-size) * 0.18) 50%;
+  background-repeat: no-repeat;
+  background-size: calc(var(--icon-size) * 0.32) calc(var(--icon-size) * 0.32);
+  cursor: var(--cursor-interaction, default);
+  font-size: calc(var(--font-size-base) * 14 / 16);
+  font-size: round(nearest, calc(var(--font-size-base) * 14 / 16), 1px);
+  font-weight: var(--font-weight-normal);
+  line-height: 18px;
+}
+
+.form-select :is(option, optgroup) {
+  color: var(--popover-foreground);
+  background-color: var(--popover);
+}
+
+.form-select :is(option, optgroup):disabled {
+  color: var(--muted-foreground);
+}
+
+.form-select:not(:disabled):hover {
+  background-color: light-dark(
+    color-mix(in srgb, var(--foreground) 5.5%, transparent),
+    color-mix(in srgb, var(--foreground) 8%, transparent)
+  );
+}
+
+.form-select:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+.form-select:disabled {
+  opacity: 0.4;
+}
+
+.form-check {
+  display: flex;
+  min-height: calc(12px + 2 * var(--control-spacing, 12px));
+  align-items: center;
+  gap: 6px;
+}
+
+.form-check-input {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin: 0;
+  border: 1px solid var(--input);
+  color: var(--primary-foreground);
+  background-color: transparent;
+  cursor: var(--cursor-interaction, default);
+  transition:
+    background-color 150ms,
+    border-color 150ms,
+    box-shadow 150ms;
+}
+
+.form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;] {
+  corner-shape: round;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  width: calc(10px + var(--control-spacing, 12px) / 2);
+  height: calc(10px + var(--control-spacing, 12px) / 2);
+  border-color: var(--border-strong, var(--input));
+  border-radius: calc(var(--radius-sm) / 2);
+  background-color: transparent;
+  color: var(--foreground);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input:not(:disabled):not(:checked):hover {
+  background-color: var(--card);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input[type=&quot;checkbox&quot;]:is(:checked, :indeterminate) {
+  border-color: var(--border-strong, var(--input));
+  background-color: color-mix(in srgb, var(--popover) 96%, transparent);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input[type=&quot;checkbox&quot;]:checked::before {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--primary-foreground);
+  content: &quot;&quot;;
+  mask: var(--checkmark-image) center / 12px 12px no-repeat;
+  background-color: var(--foreground);
+}
+.form-check:not(.form-switch)
+  .form-check-input[type=&quot;checkbox&quot;]:indeterminate::before {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 65%;
+  height: 6.65%;
+  margin: auto;
+  border-radius: var(--radius-full);
+  background: var(--foreground);
+  mask: none;
+  content: &quot;&quot;;
+}
+
+.form-check-input[type=&quot;radio&quot;] {
+  border-radius: var(--radius-full);
+  width: 16px;
+  height: 16px;
+  border: 0;
+  box-shadow: inset 0 0 0 1px var(--input);
+}
+
+.form-check-input[type=&quot;radio&quot;]:checked {
+  border: 0;
+  background: radial-gradient(
+    circle,
+    var(--primary-foreground) 0 3px,
+    var(--foreground) 3px
+  );
+  box-shadow: none;
+}
+
+.form-check:not(.form-switch) .form-check-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;]:focus-visible {
+  border-color: var(--ring);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+}
+.form-check:not(.form-switch) .form-check-input[type=&quot;radio&quot;]:disabled,
+.form-check:not(.form-switch)
+  .form-check-input[type=&quot;radio&quot;]:disabled
+  + .form-check-label {
+  opacity: 0.5;
+}
+
+.form-switch .form-check-input:disabled,
+.form-switch .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-check-label {
+  color: var(--foreground);
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-switch .form-check-input {
+  position: relative;
+  width: 32px;
+  height: 20px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+  box-shadow: none;
+  transition: background-color 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 1px solid light-dark(var(--primary-foreground), var(--foreground));
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-sm);
+  content: &quot;&quot;;
+  transform: translate(2px, -50%);
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+  border-color: #fff;
+  background: #fff;
+}
+
+.form-switch .form-check-input:checked {
+  background: var(--blue);
+}
+
+.form-switch .form-check-input:checked::before {
+  transform: translate(14px, -50%);
+}
+
+.form-switch .form-check-input:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+  outline: none;
+}
+
+.form-range {
+  appearance: none;
+  display: block;
+  width: 100%;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  accent-color: var(--primary);
+  height: calc(12px + 2 * var(--control-spacing, 12px));
+  min-height: calc(12px + 2 * var(--control-spacing, 12px));
+  outline: none;
+  border-radius: var(--radius-full);
+  color: var(--foreground);
+  background: transparent;
+}
+
+.form-range::-webkit-slider-runnable-track {
+  background: var(--form-range-track, var(--border));
+  height: 2px;
+  border-radius: var(--radius-full);
+}
+
+.form-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  margin-top: -9px;
+  border-color: transparent;
+  background: currentColor;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Outline the native track and thumb, preserving the larger input hit area. */
+.form-range:focus-visible::-webkit-slider-runnable-track {
+  outline: 2px auto Highlight;
+  outline-color: -webkit-focus-ring-color;
+}
+
+.form-range::-moz-range-track {
+  background: var(--form-range-track, var(--border));
+  height: 2px;
+  border-radius: var(--radius-full);
+}
+
+.form-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  border-color: transparent;
+  background: currentColor;
+  box-shadow: var(--shadow-sm);
+}
+
+.form-range:focus-visible::-moz-range-thumb {
+  outline: 2px solid Highlight;
+  outline-offset: 2px;
+}
+
+.form-range:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.btn:not(.btn-primary, .viz-tile):is(
+  [aria-pressed=&quot;true&quot;],
+  [aria-selected=&quot;true&quot;],
+  .is-selected
+) {
+  border-color: transparent;
+  color: var(--primary-foreground);
+  background: var(--blue);
+}
+
+.btn.viz-tile:is([aria-pressed=&quot;true&quot;], [aria-selected=&quot;true&quot;], .is-selected) {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.btn:focus-visible,
+.nav-link:focus-visible {
+  outline-offset: 2px;
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+.viz-carousel-controls :is(button, summary):focus-visible {
+  outline: 2px solid var(--ring) !important;
+  outline-offset: 2px !important;
+}
+
+/* Web recipes are the default, including on renderers without inline style queries. */
+@supports (border-radius: if(style(--corner-shape: round): 1px; else: 2px)) {
+  /* Match the host&#x27;s proportional text-sm scale at every text preference. */
+  .tooltip,
+  .viz-badge,
+  .btn,
+  .nav-link,
+  .form-control,
+  .form-select {
+    font-size: if(
+      style(--corner-shape: round): round(
+          nearest,
+          calc(var(--font-size-base) * 14 / 16),
+          1px
+        );
+        else: round(nearest, calc(var(--font-size-base) * 13 / 14), 1px)
+    );
+  }
+
+  .btn-sm {
+    font-size: if(
+      style(--corner-shape: round): round(
+          nearest,
+          calc(var(--font-size-base) * 12 / 16),
+          1px
+        );
+        else: round(nearest, calc(var(--font-size-base) * 12 / 14), 1px)
+    );
+  }
+
+  .btn,
+  .nav-link,
+  .form-select {
+    border-radius: if(
+      style(--corner-shape: round): var(--radius-full); else: var(--radius-lg)
+    );
+  }
+
+  .form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;] {
+    border-radius: if(
+      style(--corner-shape: round): calc(var(--radius-sm) / 2);
+        else: calc(var(--radius-lg) * 0.4)
+    );
+  }
+
+  .tooltip {
+    font-weight: if(
+      style(--corner-shape: round): 600; else: var(--font-weight-normal)
+    );
+  }
+}
+
+@media (pointer: coarse) {
+  .viz-carousel:has(&gt; .viz-carousel-controls) {
+    min-height: calc(76px + var(--viz-carousel-picker-height, 0px));
+    padding-bottom: 76px;
+  }
+
+  .btn,
+  .nav-link,
+  .viz-carousel-controls button,
+  .viz-carousel-picker &gt; summary,
+  .form-control,
+  .form-select {
+    --btn-size: 44px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Keep small-screen WebKit from zooming when a text field receives focus. */
+  .form-control,
+  .form-select {
+    font-size: max(16px, calc(var(--font-size-base) * 14 / 16));
+    font-size: max(
+      16px,
+      round(nearest, calc(var(--font-size-base) * 14 / 16), 1px)
+    );
+  }
+  .form-control:is(
+    [type=&quot;file&quot;],
+    [type=&quot;date&quot;],
+    [type=&quot;datetime-local&quot;],
+    [type=&quot;month&quot;],
+    [type=&quot;week&quot;],
+    [type=&quot;time&quot;],
+    [type=&quot;color&quot;]
+  ) {
+    height: 44px;
+    min-height: 44px;
+    font-size: max(16px, calc(var(--font-size-base) * 14 / 16));
+    font-size: max(
+      16px,
+      round(nearest, calc(var(--font-size-base) * 14 / 16), 1px)
+    );
+  }
+
+  .form-control[type=&quot;file&quot;]::file-selector-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .form-control-color[type=&quot;color&quot;] {
+    width: 44px;
+    height: 44px;
+  }
+
+  .form-control:is(
+    [type=&quot;date&quot;],
+    [type=&quot;datetime-local&quot;],
+    [type=&quot;month&quot;],
+    [type=&quot;time&quot;],
+    [type=&quot;week&quot;]
+  ) {
+    min-width: 0;
+    max-width: 100%;
+    padding-block: 8px;
+  }
+
+  .form-check {
+    min-height: 44px;
+    padding-inline: 15px;
+  }
+
+  .form-check-input {
+    position: relative;
+  }
+
+  .form-check-input::after {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    content: &quot;&quot;;
+    transform: translate(-50%, -50%);
+  }
+
+  .form-check-label {
+    display: inline-flex;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+  }
+
+  .form-range {
+    height: 44px;
+    touch-action: pan-y;
+  }
+}
+
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+#widget &gt; svg {
+  width: 100%;
+}
+
+/* Model-authored chart rules can otherwise stretch icons after these styles load. */
+svg.lucide {
+  display: block;
+  width: var(--icon-size) !important;
+  height: var(--icon-size) !important;
+  flex: none;
+  margin: 0 !important;
+  stroke-width: 1.6;
+}
+
+.text-warning,
+.text-destructive {
+  color: var(--destructive);
+}
+
+html&gt;body{padding:0}&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;script type=&quot;application/json&quot; id=&quot;codex-visualization-widget-state&quot;&gt;__CODEX_VISUALIZATION_WIDGET_STATE__&lt;/script&gt;
+&lt;script&gt;(() =&gt; {
+  const root = document.documentElement;
+  const mediaQuery = globalThis.matchMedia(&quot;(prefers-color-scheme: dark)&quot;);
+  const apply = Reflect.apply;
+  const isArray = Array.isArray;
+  const hasOwn = Object.hasOwn;
+  const parentWindow = globalThis.parent;
+  const stringify = JSON.stringify;
+  const parse = JSON.parse;
+  const encode = TextEncoder.prototype.encode.bind(new TextEncoder());
+  const initialStateElement = document.getElementById(
+    &quot;codex-visualization-widget-state&quot;,
+  );
+  const initialGlobals = parse(initialStateElement?.textContent ?? &quot;{}&quot;);
+  initialStateElement?.remove();
+  /** @type {Record&lt;string, unknown&gt; | null} */
+  let state = initialGlobals.widgetState ?? null;
+  const statePersistence = initialGlobals.statePersistence ?? &quot;none&quot;;
+  let nextStateRequestId = 0;
+  /** @type {Map&lt;number, { resolve: () =&gt; void; reject: (error: Error) =&gt; void; timeout: ReturnType&lt;typeof globalThis.setTimeout&gt;; serializedState: string }&gt;} */
+  const pendingStateWrites = new Map();
+  const persistenceError = () =&gt;
+    Object.assign(
+      new Error(&quot;The host could not persist the widget state update&quot;),
+      {
+        code: -32000,
+        data: { code: &quot;widget_state_persistence_failed&quot;, retryable: false },
+      },
+    );
+  /**
+   * @param {object} prototype
+   * @param {string} property
+   */
+  const getPrototypeGetter = (prototype, property) =&gt; {
+    // oxlint-disable-next-line typescript/unbound-method -- invoked through captured Reflect.apply
+    const getter = Object.getOwnPropertyDescriptor(prototype, property)?.get;
+    if (getter == null) {
+      throw new Error(`Missing ${property} getter`);
+    }
+    return getter;
+  };
+  const getMessageData = getPrototypeGetter(MessageEvent.prototype, &quot;data&quot;);
+  const getMessagePorts = getPrototypeGetter(MessageEvent.prototype, &quot;ports&quot;);
+  const getMessageSource = getPrototypeGetter(MessageEvent.prototype, &quot;source&quot;);
+  // oxlint-disable-next-line typescript/unbound-method -- captured before the untrusted fragment runs
+  const addHostMessageListener = MessagePort.prototype.addEventListener;
+  // oxlint-disable-next-line typescript/unbound-method -- captured before the untrusted fragment runs
+  const postHostMessage = MessagePort.prototype.postMessage;
+  // oxlint-disable-next-line typescript/unbound-method -- captured before the untrusted fragment runs
+  const startHostPort = MessagePort.prototype.start;
+  // oxlint-disable-next-line typescript/unbound-method -- captured before the untrusted fragment runs
+  const stopMessagePropagation = Event.prototype.stopImmediatePropagation;
+  /** @type {MessagePort | null} */
+  let hostPort = null;
+  const postToHost = (type, payload) =&gt; {
+    if (hostPort != null) {
+      apply(postHostMessage, hostPort, [{ type, ...payload }]);
+    }
+  };
+  const openExternal = ({ href }) =&gt; {
+    if (globalThis.navigator.userActivation?.isActive === true) {
+      postToHost(&quot;open-external&quot;, { href });
+    }
+  };
+  const sendFollowUpMessage = ({ context, prompt, title }) =&gt; {
+    if (globalThis.navigator.userActivation?.isActive === true) {
+      postToHost(&quot;follow-up&quot;, { context, prompt, title });
+    }
+    return Promise.resolve();
+  };
+  /**
+   * @param {Record&lt;string, unknown&gt; | ((previous: Record&lt;string, unknown&gt; | null) =&gt; Record&lt;string, unknown&gt;)} next
+   * @returns {Promise&lt;void&gt;}
+   */
+  const setWidgetState = async (next) =&gt; {
+    const nextState = typeof next === &quot;function&quot; ? next(state) : next;
+    if (
+      nextState == null ||
+      typeof nextState !== &quot;object&quot; ||
+      isArray(nextState)
+    ) {
+      throw new TypeError(&quot;Widget state must be a JSON object&quot;);
+    }
+    const inputState = stringify(
+      nextState,
+      (_key, /** @type {unknown} */ value) =&gt; {
+        if (
+          typeof value === &quot;undefined&quot; ||
+          typeof value === &quot;function&quot; ||
+          typeof value === &quot;symbol&quot; ||
+          (typeof value === &quot;number&quot; &amp;&amp; !Number.isFinite(value))
+        ) {
+          throw new TypeError(&quot;Widget state must be a JSON object&quot;);
+        }
+        return value;
+      },
+    );
+    const parsedState = parse(inputState);
+    if (
+      parsedState == null ||
+      typeof parsedState !== &quot;object&quot; ||
+      isArray(parsedState)
+    ) {
+      throw new TypeError(&quot;Widget state must be a JSON object&quot;);
+    }
+    const storedState = {
+      modelContent: null,
+      privateContent: null,
+      ...parsedState,
+    };
+    const serializedState = stringify(storedState);
+    if (encode(serializedState).length &gt; 16 * 1024) {
+      throw new TypeError(
+        &quot;Widget state must be a JSON object of at most 16 KiB&quot;,
+      );
+    }
+    if (
+      hasOwn(storedState, &quot;imageIds&quot;) &amp;&amp;
+      (!isArray(storedState.imageIds) ||
+        storedState.imageIds.some(
+          (/** @type {unknown} */ id) =&gt; typeof id !== &quot;string&quot;,
+        ))
+    ) {
+      throw new TypeError(&quot;Widget state imageIds must be an array of strings&quot;);
+    }
+    if (storedState.imageIds?.length &gt; 0) {
+      throw Object.assign(
+        new TypeError(&quot;Visualization state does not support image attachments&quot;),
+        { code: -32602, data: { code: &quot;images_unsupported&quot; } },
+      );
+    }
+    state = storedState;
+    globalThis.openai.widgetState = state;
+    globalThis.dispatchEvent(
+      new CustomEvent(&quot;openai:set_globals&quot;, {
+        detail: { globals: { widgetState: state } },
+      }),
+    );
+    if (statePersistence === &quot;none&quot;) {
+      throw persistenceError();
+    }
+    const id = ++nextStateRequestId;
+    return new Promise((resolve, reject) =&gt; {
+      const timeout = globalThis.setTimeout(() =&gt; {
+        pendingStateWrites.delete(id);
+        reject(persistenceError());
+      }, 30_000);
+      pendingStateWrites.set(id, { resolve, reject, timeout, serializedState });
+      postToHost(&quot;widget-state-write&quot;, { id, state: serializedState });
+    });
+  };
+  const mockElement = document.getElementById(&quot;codex-connector-mocks&quot;);
+  const connectorGlobals = {};
+  if (mockElement != null) {
+    const values = new Map(Object.entries(parse(mockElement.textContent)));
+    mockElement.remove();
+    connectorGlobals.visualizationData = {
+      updates: Array.from(values, ([name, value]) =&gt; ({
+        name,
+        revision: 1,
+        state: &quot;ready&quot;,
+        value: { type: &quot;json&quot;, value },
+      })),
+    };
+    connectorGlobals.visualization = {
+      /** @param {string} name @param {(value: unknown) =&gt; void} callback */
+      onData(name, callback) {
+        if (typeof callback !== &quot;function&quot;) {
+          throw new TypeError(&quot;onData requires a callback&quot;);
+        }
+        try {
+          callback(values.get(name));
+        } catch (error) {
+          // oxlint-disable-next-line no-console -- Keep authored callback failures local.
+          console.error(&quot;Live visualization data callback failed&quot;, error);
+        }
+        // A static preview delivers the current fixture once per subscription.
+        return () =&gt; {};
+      },
+    };
+  }
+  const syncTheme = () =&gt; {
+    const theme = mediaQuery.matches ? &quot;dark&quot; : &quot;light&quot;;
+    root.dataset.theme = theme;
+    globalThis.openai = {
+      ...globalThis.openai,
+      ...connectorGlobals,
+      openExternal,
+      sendFollowUpMessage,
+      setWidgetState,
+      theme,
+      visualizationStyleVariables: {},
+      visualizationTheme: theme,
+      widgetState: state,
+      statePersistence,
+      stateModelContext: &quot;none&quot;,
+    };
+    globalThis.dispatchEvent(
+      new CustomEvent(&quot;openai:set_globals&quot;, {
+        detail: { globals: globalThis.openai },
+      }),
+    );
+  };
+  const sendHeight = () =&gt; {
+    postToHost(&quot;height&quot;, {
+      height: Math.ceil(
+        Math.max(
+          document.body.scrollHeight,
+          document.body.getBoundingClientRect().height,
+        ),
+      ),
+    });
+  };
+
+  globalThis.addEventListener(
+    &quot;message&quot;,
+    (event) =&gt; {
+      const data = apply(getMessageData, event, []);
+      const ports = apply(getMessagePorts, event, []);
+      const source = apply(getMessageSource, event, []);
+      if (
+        hostPort != null ||
+        source !== parentWindow ||
+        typeof data !== &quot;object&quot; ||
+        data?.type !== &quot;codex-visualization-initialize&quot; ||
+        !isArray(ports) ||
+        ports.length !== 1
+      ) {
+        return;
+      }
+      apply(stopMessagePropagation, event, []);
+      const nextHostPort = ports[0];
+      try {
+        apply(addHostMessageListener, nextHostPort, [
+          &quot;message&quot;,
+          (event) =&gt; {
+            const data = apply(getMessageData, event, []);
+            if (typeof data === &quot;object&quot; &amp;&amp; data?.type === &quot;measure&quot;) {
+              sendHeight();
+            } else if (
+              typeof data === &quot;object&quot; &amp;&amp;
+              data?.type === &quot;widget-state-result&quot;
+            ) {
+              /** @type {unknown} */
+              const id = data.id;
+              if (typeof id !== &quot;number&quot;) {
+                return;
+              }
+              const pending = pendingStateWrites.get(id);
+              if (pending != null) {
+                pendingStateWrites.delete(id);
+                globalThis.clearTimeout(pending.timeout);
+                if (data.ok === true) {
+                  pending.resolve();
+                } else {
+                  pending.reject(persistenceError());
+                }
+              }
+            }
+          },
+        ]);
+        apply(startHostPort, nextHostPort, []);
+      } catch {
+        return;
+      }
+      hostPort = nextHostPort;
+      for (const [id, { serializedState }] of pendingStateWrites) {
+        postToHost(&quot;widget-state-write&quot;, { id, state: serializedState });
+      }
+      sendHeight();
+    },
+    { capture: true },
+  );
+  document.currentScript?.remove();
+  mediaQuery.addEventListener(&quot;change&quot;, syncTheme);
+  globalThis.addEventListener(&quot;click&quot;, (event) =&gt; {
+    if (event.defaultPrevented) {
+      return;
+    }
+    let element = null;
+    if (event.target instanceof globalThis.Element) {
+      element = event.target;
+    } else if (event.target instanceof globalThis.Node) {
+      element = event.target.parentElement;
+    }
+    const link = element?.closest(&quot;a[href]&quot;);
+    const href = link?.getAttribute(&quot;href&quot;);
+    if (href == null) {
+      return;
+    }
+    if (href.startsWith(&quot;#&quot;)) {
+      let id;
+      try {
+        id = decodeURIComponent(href.slice(1));
+      } catch {
+        return;
+      }
+      const target = id.length === 0 ? root : document.getElementById(id);
+      if (
+        target == null ||
+        globalThis.navigator.userActivation?.isActive !== true
+      ) {
+        return;
+      }
+      event.preventDefault();
+      postToHost(&quot;scroll-to&quot;, {
+        top: target.getBoundingClientRect().top + globalThis.scrollY,
+      });
+      return;
+    }
+    event.preventDefault();
+    openExternal({ href });
+  });
+  new ResizeObserver(sendHeight).observe(document.body);
+  syncTheme();
+})();
+&lt;/script&gt;
+&lt;div id=&quot;labuse-analysis-demo&quot;&gt;
+  &lt;section class=&quot;lx-app&quot; aria-label=&quot;Exemple interactif de l’analyse LABUSE&quot;&gt;
+    &lt;header class=&quot;lx-appbar&quot;&gt;
+      &lt;div class=&quot;lx-brand&quot;&gt;LABUSE &lt;span&gt;Cartes · Analyse V2&lt;/span&gt;&lt;/div&gt;
+      &lt;span class=&quot;lx-demo-label&quot;&gt;Exemple fictif · aucun calcul sur le foncier réel&lt;/span&gt;
+    &lt;/header&gt;
+    &lt;div class=&quot;lx-workspace&quot;&gt;
+      &lt;aside class=&quot;lx-sidebar&quot; aria-label=&quot;Recherche et résultats&quot;&gt;
+        &lt;div class=&quot;lx-panel-top&quot;&gt;&lt;h2&gt;Cartes&lt;/h2&gt;&lt;button type=&quot;button&quot; class=&quot;lx-text-button&quot; data-action=&quot;filters&quot;&gt;Modifier les filtres&lt;/button&gt;&lt;/div&gt;
+        &lt;div class=&quot;lx-scope&quot;&gt;&lt;span&gt;Saint-Denis&lt;/span&gt;&lt;span id=&quot;lx-scope-detail&quot;&gt;6 parcelles · zones U et N&lt;/span&gt;&lt;/div&gt;
+        &lt;section id=&quot;lx-filter-screen&quot;&gt;
+          &lt;div class=&quot;lx-section-title&quot;&gt;Votre sélection&lt;/div&gt;
+          &lt;div class=&quot;lx-filter-fields&quot;&gt;
+            &lt;fieldset&gt;&lt;legend&gt;Zonage&lt;/legend&gt;&lt;div class=&quot;lx-pills&quot;&gt;
+              &lt;button type=&quot;button&quot; data-zone=&quot;U&quot; aria-pressed=&quot;true&quot;&gt;Zone U&lt;/button&gt;
+              &lt;button type=&quot;button&quot; data-zone=&quot;N&quot; aria-pressed=&quot;true&quot;&gt;Zone N&lt;/button&gt;
+              &lt;button type=&quot;button&quot; data-zone=&quot;AU&quot; aria-pressed=&quot;true&quot;&gt;Zone AU&lt;/button&gt;
+            &lt;/div&gt;&lt;/fieldset&gt;
+            &lt;fieldset&gt;&lt;legend&gt;État du sol&lt;/legend&gt;&lt;div class=&quot;lx-pills&quot;&gt;
+              &lt;button type=&quot;button&quot; data-soil=&quot;nu&quot; aria-pressed=&quot;true&quot;&gt;Terrain nu&lt;/button&gt;
+              &lt;button type=&quot;button&quot; data-soil=&quot;bati&quot; aria-pressed=&quot;true&quot;&gt;Terrain bâti&lt;/button&gt;
+            &lt;/div&gt;&lt;/fieldset&gt;
+            &lt;fieldset&gt;&lt;legend&gt;Surface parcellaire&lt;/legend&gt;&lt;div class=&quot;lx-input-pair&quot;&gt;
+              &lt;label&gt;&lt;span&gt;Minimum, m²&lt;/span&gt;&lt;input type=&quot;number&quot; id=&quot;lx-min&quot; min=&quot;0&quot; placeholder=&quot;Sans minimum&quot;&gt;&lt;/label&gt;
+              &lt;label&gt;&lt;span&gt;Maximum, m²&lt;/span&gt;&lt;input type=&quot;number&quot; id=&quot;lx-max&quot; min=&quot;0&quot; placeholder=&quot;Sans maximum&quot;&gt;&lt;/label&gt;
+            &lt;/div&gt;&lt;/fieldset&gt;
+          &lt;/div&gt;
+          &lt;p id=&quot;lx-filter-count&quot; class=&quot;lx-filter-count&quot; aria-live=&quot;polite&quot;&gt;10 parcelles correspondent à vos critères&lt;/p&gt;
+          &lt;div class=&quot;lx-entry-actions&quot;&gt;
+            &lt;button type=&quot;button&quot; class=&quot;lx-button lx-primary&quot; data-action=&quot;list&quot;&gt;Voir les 10 parcelles&lt;/button&gt;
+            &lt;span class=&quot;lx-caption&quot;&gt;Les informations du bien, sans classement.&lt;/span&gt;
+            &lt;button type=&quot;button&quot; class=&quot;lx-button lx-outline&quot; data-action=&quot;analyse&quot;&gt;Analyser avec LABUSE &lt;span aria-hidden=&quot;true&quot;&gt;→&lt;/span&gt;&lt;/button&gt;
+            &lt;button type=&quot;button&quot; class=&quot;lx-text-button&quot; data-action=&quot;reset&quot;&gt;Réinitialiser les filtres&lt;/button&gt;
+          &lt;/div&gt;
+        &lt;/section&gt;
+        &lt;section id=&quot;lx-results-screen&quot; hidden&gt;
+          &lt;div class=&quot;lx-view-top&quot;&gt;&lt;span id=&quot;lx-view-label&quot; class=&quot;lx-active-label&quot;&gt;✓ Analyse LABUSE&lt;/span&gt;&lt;button type=&quot;button&quot; class=&quot;lx-text-button&quot; data-action=&quot;toggle-screen&quot;&gt;Liste simple&lt;/button&gt;&lt;/div&gt;
+          &lt;div id=&quot;lx-analysis-controls&quot;&gt;
+            &lt;div class=&quot;lx-section-title&quot;&gt;Votre objectif&lt;/div&gt;
+            &lt;div class=&quot;lx-mode-picker&quot; aria-label=&quot;Objectif de l’analyse&quot;&gt;
+              &lt;button type=&quot;button&quot; data-mode=&quot;sale&quot; aria-pressed=&quot;true&quot;&gt;Prospection vente&lt;/button&gt;
+              &lt;button type=&quot;button&quot; data-mode=&quot;potential&quot; aria-pressed=&quot;false&quot;&gt;Potentiel foncier&lt;/button&gt;
+            &lt;/div&gt;
+            &lt;label id=&quot;lx-scenario-field&quot; class=&quot;lx-select-label&quot; hidden&gt;Projet étudié
+              &lt;select id=&quot;lx-scenario&quot;&gt;&lt;option value=&quot;keep&quot;&gt;Construire sans démolir&lt;/option&gt;&lt;option value=&quot;rebuild&quot;&gt;Démolir et reconstruire&lt;/option&gt;&lt;option value=&quot;divide&quot;&gt;Division pour logement · repérage&lt;/option&gt;&lt;/select&gt;
+            &lt;/label&gt;
+            &lt;label class=&quot;lx-select-label&quot; for=&quot;lx-sort&quot;&gt;Trier au sein des groupes de statut
+              &lt;select id=&quot;lx-sort&quot;&gt;&lt;option value=&quot;signal&quot;&gt;Signal de mutation&lt;/option&gt;&lt;option value=&quot;area&quot;&gt;Surface du terrain&lt;/option&gt;&lt;option value=&quot;id&quot;&gt;Identifiant&lt;/option&gt;&lt;/select&gt;
+            &lt;/label&gt;
+            &lt;div class=&quot;lx-summary&quot;&gt;&lt;p id=&quot;lx-summary-title&quot;&gt;6 parcelles analysées pour la prospection&lt;/p&gt;&lt;div id=&quot;lx-status-filters&quot; class=&quot;lx-status-filters&quot; aria-label=&quot;Filtrer les résultats de l’analyse&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+            &lt;p id=&quot;lx-sort-label&quot; class=&quot;lx-sort-label&quot;&gt;Ordre : signal de mutation décroissant&lt;/p&gt;
+          &lt;/div&gt;
+          &lt;div id=&quot;lx-raw-intro&quot; class=&quot;lx-raw-intro&quot; hidden&gt;&lt;p&gt;Les parcelles de votre sélection&lt;/p&gt;&lt;span&gt;Informations descriptives · aucun score appliqué&lt;/span&gt;&lt;/div&gt;
+          &lt;div id=&quot;lx-list&quot; class=&quot;lx-result-list&quot; aria-live=&quot;polite&quot;&gt;&lt;/div&gt;
+          &lt;div class=&quot;lx-pagination&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;lx-small-button&quot; data-action=&quot;prev&quot; aria-label=&quot;Page précédente&quot;&gt;←&lt;/button&gt;&lt;span id=&quot;lx-page-label&quot;&gt;1–3 sur 6&lt;/span&gt;&lt;button type=&quot;button&quot; class=&quot;lx-small-button&quot; data-action=&quot;next&quot; aria-label=&quot;Page suivante&quot;&gt;→&lt;/button&gt;&lt;/div&gt;
+        &lt;/section&gt;
+      &lt;/aside&gt;
+      &lt;section class=&quot;lx-detail&quot; id=&quot;lx-detail&quot; aria-label=&quot;Détail de la parcelle sélectionnée&quot;&gt;
+        &lt;div id=&quot;lx-selection-preview&quot;&gt;
+          &lt;div class=&quot;lx-context&quot;&gt;&lt;span class=&quot;lx-context-dot&quot;&gt;&lt;/span&gt;&lt;span&gt;Votre recherche&lt;/span&gt;&lt;/div&gt;
+          &lt;h2&gt;Les mêmes critères,&lt;br&gt;deux façons de travailler.&lt;/h2&gt;
+          &lt;p class=&quot;lx-intro-copy&quot; id=&quot;lx-selection-count&quot;&gt;10 parcelles dans cette sélection fictive.&lt;/p&gt;
+          &lt;div class=&quot;lx-choice-explainer&quot;&gt;&lt;h3&gt;Voir les parcelles&lt;/h3&gt;&lt;p&gt;Consulter les caractéristiques des biens, sans classement d’analyse.&lt;/p&gt;&lt;/div&gt;
+          &lt;div class=&quot;lx-choice-explainer&quot;&gt;&lt;h3&gt;Analyser avec LABUSE&lt;/h3&gt;&lt;p&gt;Choisir un objectif, comparer les résultats et comprendre leurs limites.&lt;/p&gt;&lt;/div&gt;
+          &lt;p class=&quot;lx-disclaimer&quot;&gt;Filtres puis liste ou analyse : le parcours reste le même. Les filtres de cette démonstration sont simplifiés ; ceux du produit restent inchangés.&lt;/p&gt;
+        &lt;/div&gt;
+        &lt;div id=&quot;lx-record-detail&quot; hidden&gt;
+        &lt;button type=&quot;button&quot; class=&quot;lx-text-button lx-back&quot; data-action=&quot;back&quot;&gt;← Retour aux résultats&lt;/button&gt;
+        &lt;div class=&quot;lx-detail-kicker&quot;&gt;&lt;span id=&quot;lx-detail-id&quot;&gt;EX-001 · Saint-Denis&lt;/span&gt;&lt;span class=&quot;lx-zone&quot; id=&quot;lx-detail-zone&quot;&gt;Zone U&lt;/span&gt;&lt;/div&gt;
+        &lt;div class=&quot;lx-detail-title&quot;&gt;&lt;h2 id=&quot;lx-detail-name&quot;&gt;Maison avec jardin&lt;/h2&gt;&lt;span id=&quot;lx-detail-type&quot;&gt;Terrain bâti · 450 m²&lt;/span&gt;&lt;/div&gt;
+        &lt;div id=&quot;lx-detail-analysis&quot;&gt;
+          &lt;div class=&quot;lx-context&quot;&gt;&lt;span class=&quot;lx-context-dot&quot;&gt;&lt;/span&gt;&lt;span id=&quot;lx-context-label&quot;&gt;Prospection vente&lt;/span&gt;&lt;/div&gt;
+          &lt;div class=&quot;lx-verdict&quot;&gt;&lt;div class=&quot;lx-verdict-top&quot;&gt;&lt;span id=&quot;lx-verdict-status&quot; class=&quot;lx-badge lx-green&quot;&gt;Signal fort&lt;/span&gt;&lt;span id=&quot;lx-verdict-coverage&quot; class=&quot;lx-coverage&quot;&gt;Signal calculé&lt;/span&gt;&lt;/div&gt;&lt;h3 id=&quot;lx-verdict-title&quot;&gt;Une piste à examiner pour la vente de l’existant&lt;/h3&gt;&lt;p id=&quot;lx-verdict-text&quot;&gt;Le potentiel de construction supplémentaire n’est pas le critère principal de cette recherche.&lt;/p&gt;&lt;/div&gt;
+          &lt;dl id=&quot;lx-main-metrics&quot; class=&quot;lx-main-metrics&quot;&gt;&lt;/dl&gt;
+          &lt;section class=&quot;lx-detail-section&quot;&gt;&lt;h3 id=&quot;lx-reasons-title&quot;&gt;Pourquoi ce signal ?&lt;/h3&gt;&lt;ul id=&quot;lx-reasons&quot; class=&quot;lx-reasons&quot;&gt;&lt;/ul&gt;&lt;/section&gt;
+          &lt;section class=&quot;lx-detail-section&quot;&gt;&lt;h3&gt;À vérifier avant d’aller plus loin&lt;/h3&gt;&lt;ul id=&quot;lx-checks&quot; class=&quot;lx-checks&quot;&gt;&lt;/ul&gt;&lt;/section&gt;
+          &lt;div class=&quot;lx-secondary&quot; id=&quot;lx-secondary&quot;&gt;&lt;/div&gt;
+        &lt;/div&gt;
+        &lt;div id=&quot;lx-detail-raw&quot; hidden&gt;&lt;p class=&quot;lx-raw-description&quot;&gt;Les caractéristiques connues du bien, avant toute analyse.&lt;/p&gt;&lt;dl id=&quot;lx-raw-metrics&quot; class=&quot;lx-main-metrics&quot;&gt;&lt;/dl&gt;&lt;button type=&quot;button&quot; class=&quot;lx-button lx-primary&quot; data-action=&quot;analyse&quot;&gt;Analyser la sélection&lt;/button&gt;&lt;/div&gt;
+        &lt;details class=&quot;lx-facts&quot;&gt;&lt;summary&gt;Faits et hypothèses de cet exemple&lt;/summary&gt;&lt;div id=&quot;lx-facts-body&quot;&gt;&lt;/div&gt;&lt;/details&gt;
+        &lt;p class=&quot;lx-disclaimer&quot;&gt;Exemple de présentation. Les biens, capacités, signaux et appréciations sont fictifs.&lt;/p&gt;
+        &lt;/div&gt;
+      &lt;/section&gt;
+    &lt;/div&gt;
+  &lt;/section&gt;
+&lt;/div&gt;
+&lt;style&gt;
+  #labuse-analysis-demo {
+    color-scheme: dark;
+    --lx-bg: #0c120f;
+    --lx-panel: #101813;
+    --lx-card: #17211b;
+    --lx-card-hover: #1c2921;
+    --lx-line: #29392e;
+    --lx-ink: #edf5ef;
+    --lx-muted: #a3b2a7;
+    --lx-dim: #829789;
+    --lx-accent: #43db82;
+    --lx-accent-ink: #071c0f;
+    --lx-green-bg: #193e29;
+    --lx-blue: #a4caff;
+    --lx-blue-bg: #1c3042;
+    --lx-amber: #f1cb84;
+    --lx-amber-bg: #3a301c;
+    --lx-gray-bg: #26322b;
+    font: 14px/1.5 Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;
+  }
+  #labuse-analysis-demo * { box-sizing: border-box; }
+  #labuse-analysis-demo [hidden] { display: none !important; }
+  #labuse-analysis-demo h2,
+  #labuse-analysis-demo h3,
+  #labuse-analysis-demo p,
+  #labuse-analysis-demo dl,
+  #labuse-analysis-demo dd,
+  #labuse-analysis-demo ul { margin: 0; }
+  #labuse-analysis-demo button,
+  #labuse-analysis-demo input,
+  #labuse-analysis-demo select { font: inherit; }
+  #labuse-analysis-demo button { color: inherit; }
+  #labuse-analysis-demo button:focus-visible,
+  #labuse-analysis-demo input:focus-visible,
+  #labuse-analysis-demo select:focus-visible,
+  #labuse-analysis-demo summary:focus-visible { outline: 2px solid var(--lx-accent); outline-offset: 3px; }
+  #labuse-analysis-demo .lx-app { background: var(--lx-bg); color: var(--lx-ink); border: 1px solid var(--lx-line); border-radius: 15px; overflow: hidden; }
+  #labuse-analysis-demo .lx-appbar { padding: 18px 22px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid var(--lx-line); }
+  #labuse-analysis-demo .lx-brand { color: var(--lx-accent); font-size: 15px; font-weight: 650; letter-spacing: .12em; display: flex; align-items: center; gap: 19px; }
+  #labuse-analysis-demo .lx-brand span { color: var(--lx-muted); font-size: 12px; font-weight: 400; letter-spacing: 0; }
+  #labuse-analysis-demo .lx-demo-label { color: var(--lx-muted); font-size: 11px; }
+  #labuse-analysis-demo .lx-workspace { display: grid; grid-template-columns: minmax(300px, 365px) minmax(0, 1fr); }
+  #labuse-analysis-demo .lx-sidebar { padding: 22px 20px; border-right: 1px solid var(--lx-line); min-width: 0; }
+  #labuse-analysis-demo .lx-panel-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  #labuse-analysis-demo .lx-panel-top h2 { font-size: 15px; font-weight: 500; }
+  #labuse-analysis-demo .lx-text-button { background: none; border: 0; padding: 4px 0; text-decoration: underline; text-underline-offset: 3px; font-size: 12px; color: var(--lx-muted); }
+  #labuse-analysis-demo .lx-scope { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 5px 12px; padding: 13px 0 16px; color: var(--lx-muted); font-size: 12px; }
+  #labuse-analysis-demo .lx-scope &gt; span:first-child { color: var(--lx-ink); }
+  #labuse-analysis-demo .lx-view-top { padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-radius: 7px; background: var(--lx-panel); }
+  #labuse-analysis-demo .lx-active-label { color: var(--lx-accent); font-size: 12px; font-weight: 500; }
+  #labuse-analysis-demo .lx-section-title { margin: 18px 0 9px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--lx-muted); }
+  #labuse-analysis-demo .lx-mode-picker { display: grid; grid-template-columns: 1fr 1fr; padding: 3px; gap: 3px; border: 1px solid var(--lx-line); border-radius: 9px; }
+  #labuse-analysis-demo .lx-mode-picker button { display: flex; gap: 6px; align-items: center; justify-content: center; background: transparent; border: 0; border-radius: 6px; padding: 10px 5px; color: var(--lx-muted); font-size: 12px; }
+  #labuse-analysis-demo .lx-mode-picker button[aria-pressed=&quot;true&quot;] { background: var(--lx-accent); color: var(--lx-accent-ink); font-weight: 600; }
+  #labuse-analysis-demo .lx-mode-picker svg { width: 14px; height: 14px; flex: 0 0 auto; }
+  #labuse-analysis-demo .lx-select-label { display: grid; gap: 6px; margin-top: 12px; color: var(--lx-muted); font-size: 12px; }
+  #labuse-analysis-demo select { min-width: 0; width: 100%; color: var(--lx-ink); background: var(--lx-panel); border: 1px solid var(--lx-line); padding: 9px 10px; border-radius: 6px; }
+  #labuse-analysis-demo .lx-summary { padding: 13px 0 11px; }
+  #labuse-analysis-demo .lx-summary &gt; p { color: var(--lx-ink); font-size: 12px; }
+  #labuse-analysis-demo .lx-status-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+  #labuse-analysis-demo .lx-status-filters button { background: transparent; border: 1px solid var(--lx-line); color: var(--lx-muted); border-radius: 5px; padding: 4px 7px; font-size: 11px; }
+  #labuse-analysis-demo .lx-status-filters button[aria-pressed=&quot;true&quot;] { background: var(--lx-gray-bg); color: var(--lx-ink); border-color: var(--lx-dim); }
+  #labuse-analysis-demo .lx-sort-label { color: var(--lx-muted); font-size: 11px; margin: 0 0 12px; }
+  #labuse-analysis-demo .lx-result-list { display: grid; gap: 9px; }
+  #labuse-analysis-demo .lx-result { text-align: left; display: grid; width: 100%; gap: 8px; padding: 13px; background: var(--lx-card); border: 1px solid var(--lx-line); border-radius: 9px; position: relative; }
+  #labuse-analysis-demo .lx-result:hover { background: var(--lx-card-hover); }
+  #labuse-analysis-demo .lx-result[aria-pressed=&quot;true&quot;] { border-color: var(--lx-accent); }
+  #labuse-analysis-demo .lx-result[aria-pressed=&quot;true&quot;]::before { content: &quot;&quot;; position: absolute; left: -1px; top: 13px; bottom: 13px; width: 3px; background: var(--lx-accent); border-radius: 2px; }
+  #labuse-analysis-demo .lx-result-head { display: flex; gap: 7px; justify-content: space-between; align-items: center; }
+  #labuse-analysis-demo .lx-result-id { font-size: 11px; color: var(--lx-muted); }
+  #labuse-analysis-demo .lx-result-name { font-size: 14px; font-weight: 500; display: block; }
+  #labuse-analysis-demo .lx-result-meta { color: var(--lx-muted); font-size: 12px; display: block; }
+  #labuse-analysis-demo .lx-result-primary { font-size: 13px; font-weight: 500; display: block; }
+  #labuse-analysis-demo .lx-result-reason { color: var(--lx-muted); font-size: 12px; display: block; }
+  #labuse-analysis-demo .lx-result-footer { display: flex; gap: 8px; justify-content: space-between; align-items: center; color: var(--lx-dim); font-size: 11px; border-top: 1px solid var(--lx-line); padding-top: 8px; }
+  #labuse-analysis-demo .lx-result-footer &gt; span:last-child { color: var(--lx-ink); }
+  #labuse-analysis-demo .lx-badge { display: inline-block; width: fit-content; max-width: 100%; border-radius: 5px; padding: 3px 7px; font-size: 11px; font-weight: 500; overflow-wrap: anywhere; }
+  #labuse-analysis-demo .lx-green { color: var(--lx-accent); background: var(--lx-green-bg); }
+  #labuse-analysis-demo .lx-blue { color: var(--lx-blue); background: var(--lx-blue-bg); }
+  #labuse-analysis-demo .lx-amber { color: var(--lx-amber); background: var(--lx-amber-bg); }
+  #labuse-analysis-demo .lx-neutral { color: var(--lx-muted); background: var(--lx-gray-bg); }
+  #labuse-analysis-demo .lx-pagination { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 13px; color: var(--lx-muted); font-size: 11px; }
+  #labuse-analysis-demo .lx-small-button { background: var(--lx-panel); color: var(--lx-ink); border: 1px solid var(--lx-line); border-radius: 5px; padding: 4px 12px; }
+  #labuse-analysis-demo button:disabled { opacity: .35; }
+  #labuse-analysis-demo .lx-detail { padding: 30px; min-width: 0; }
+  #labuse-analysis-demo .lx-back { display: none; margin-bottom: 15px; }
+  #labuse-analysis-demo .lx-detail-kicker { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: 11px; color: var(--lx-muted); }
+  #labuse-analysis-demo .lx-zone { color: var(--lx-muted); border: 1px solid var(--lx-line); border-radius: 5px; padding: 1px 6px; }
+  #labuse-analysis-demo .lx-detail-title { display: grid; gap: 5px; margin: 13px 0 23px; }
+  #labuse-analysis-demo .lx-detail-title h2 { font-size: 25px; line-height: 1.25; font-weight: 550; letter-spacing: -.03em; }
+  #labuse-analysis-demo .lx-detail-title &gt; span { color: var(--lx-muted); font-size: 13px; }
+  #labuse-analysis-demo .lx-context { display: flex; gap: 8px; align-items: center; font-size: 11px; color: var(--lx-muted); margin-bottom: 10px; }
+  #labuse-analysis-demo .lx-context-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lx-accent); flex: 0 0 auto; }
+  #labuse-analysis-demo .lx-verdict { background: var(--lx-panel); border: 1px solid var(--lx-line); border-radius: 10px; padding: 18px; display: grid; gap: 11px; }
+  #labuse-analysis-demo .lx-verdict-top { display: flex; justify-content: space-between; flex-wrap: wrap; align-items: center; gap: 8px; }
+  #labuse-analysis-demo .lx-coverage { color: var(--lx-muted); font-size: 11px; }
+  #labuse-analysis-demo .lx-verdict h3 { font-size: 18px; font-weight: 500; line-height: 1.4; }
+  #labuse-analysis-demo .lx-verdict p { color: var(--lx-muted); font-size: 13px; }
+  #labuse-analysis-demo .lx-main-metrics { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; padding: 20px 0; border-bottom: 1px solid var(--lx-line); }
+  #labuse-analysis-demo .lx-main-metrics dt { color: var(--lx-muted); font-size: 12px; }
+  #labuse-analysis-demo .lx-main-metrics dd { font-size: 23px; font-weight: 500; letter-spacing: -.03em; margin-top: 4px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  #labuse-analysis-demo .lx-main-metrics dd.lx-value-text { font-size: 16px; letter-spacing: 0; }
+  #labuse-analysis-demo .lx-detail-section { padding-top: 19px; }
+  #labuse-analysis-demo .lx-detail-section h3 { font-size: 13px; font-weight: 500; margin-bottom: 9px; }
+  #labuse-analysis-demo .lx-reasons,
+  #labuse-analysis-demo .lx-checks { padding-left: 17px; display: grid; gap: 6px; color: var(--lx-muted); font-size: 12px; }
+  #labuse-analysis-demo .lx-reasons li::marker { color: var(--lx-accent); }
+  #labuse-analysis-demo .lx-checks li::marker { color: var(--lx-amber); }
+  #labuse-analysis-demo .lx-secondary { margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--lx-line); display: grid; gap: 6px; }
+  #labuse-analysis-demo .lx-secondary-row { display: flex; justify-content: space-between; align-items: center; gap: 15px; color: var(--lx-muted); font-size: 12px; }
+  #labuse-analysis-demo .lx-secondary-row span:last-child { color: var(--lx-ink); text-align: right; }
+  #labuse-analysis-demo .lx-facts { border-top: 1px solid var(--lx-line); margin-top: 20px; padding-top: 14px; color: var(--lx-muted); font-size: 12px; }
+  #labuse-analysis-demo .lx-facts summary { color: var(--lx-ink); }
+  #labuse-analysis-demo .lx-facts p { margin-top: 9px; }
+  #labuse-analysis-demo .lx-disclaimer { margin-top: 18px; color: var(--lx-dim); font-size: 11px; }
+  #labuse-analysis-demo .lx-filter-fields { display: grid; gap: 21px; margin-top: 15px; }
+  #labuse-analysis-demo fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+  #labuse-analysis-demo legend { margin-bottom: 9px; color: var(--lx-muted); font-size: 12px; }
+  #labuse-analysis-demo .lx-pills { display: flex; flex-wrap: wrap; gap: 7px; }
+  #labuse-analysis-demo .lx-pills button { background: var(--lx-panel); border: 1px solid var(--lx-line); color: var(--lx-muted); padding: 7px 10px; border-radius: 6px; font-size: 12px; }
+  #labuse-analysis-demo .lx-pills button[aria-pressed=&quot;true&quot;] { background: var(--lx-green-bg); border-color: var(--lx-accent); color: var(--lx-ink); }
+  #labuse-analysis-demo .lx-pills button span { color: var(--lx-muted); margin-left: 6px; }
+  #labuse-analysis-demo .lx-input-pair { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+  #labuse-analysis-demo .lx-input-pair label { display: grid; gap: 6px; color: var(--lx-muted); font-size: 11px; }
+  #labuse-analysis-demo input { width: 100%; min-width: 0; background: var(--lx-panel); color: var(--lx-ink); border: 1px solid var(--lx-line); border-radius: 5px; padding: 8px; font-size: 12px; }
+  #labuse-analysis-demo input::placeholder { color: var(--lx-dim); }
+  #labuse-analysis-demo .lx-filter-count { margin: 23px 0 16px; color: var(--lx-muted); font-size: 12px; }
+  #labuse-analysis-demo .lx-entry-actions { display: grid; gap: 11px; padding: 16px; border: 1px solid var(--lx-line); border-radius: 8px; }
+  #labuse-analysis-demo .lx-button { width: 100%; border: 1px solid var(--lx-line); border-radius: 6px; padding: 10px 12px; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 12px; }
+  #labuse-analysis-demo .lx-primary { background: var(--lx-accent); color: var(--lx-accent-ink); border-color: var(--lx-accent); font-weight: 500; }
+  #labuse-analysis-demo .lx-outline { background: transparent; color: var(--lx-accent); border-color: var(--lx-accent); }
+  #labuse-analysis-demo .lx-caption { color: var(--lx-muted); font-size: 11px; text-align: center; }
+  #labuse-analysis-demo .lx-raw-intro { padding: 15px 0; }
+  #labuse-analysis-demo .lx-raw-intro p { font-size: 13px; }
+  #labuse-analysis-demo .lx-raw-intro span { color: var(--lx-muted); font-size: 11px; }
+  #labuse-analysis-demo .lx-raw-description { color: var(--lx-muted); font-size: 13px; }
+  #labuse-analysis-demo #lx-detail-raw &gt; button { margin-top: 20px; }
+  #labuse-analysis-demo .lx-empty { padding: 20px 5px; color: var(--lx-muted); font-size: 13px; }
+  #labuse-analysis-demo #lx-selection-preview { padding: 40px 0; }
+  #labuse-analysis-demo #lx-selection-preview &gt; h2 { font-size: 30px; line-height: 1.25; font-weight: 500; letter-spacing: -.03em; margin-top: 18px; }
+  #labuse-analysis-demo .lx-intro-copy { color: var(--lx-muted); margin: 18px 0 26px; }
+  #labuse-analysis-demo .lx-choice-explainer { border-top: 1px solid var(--lx-line); padding: 20px 0; }
+  #labuse-analysis-demo .lx-choice-explainer h3 { font-size: 16px; font-weight: 500; }
+  #labuse-analysis-demo .lx-choice-explainer p { color: var(--lx-muted); margin-top: 6px; font-size: 13px; }
+  @media(max-width:760px) {
+    #labuse-analysis-demo .lx-workspace { grid-template-columns: 1fr; }
+    #labuse-analysis-demo .lx-sidebar { border-right: 0; }
+    #labuse-analysis-demo .lx-detail { display: none; padding: 22px; }
+    #labuse-analysis-demo[data-details-open=&quot;true&quot;] .lx-sidebar { display: none; }
+    #labuse-analysis-demo[data-details-open=&quot;true&quot;] .lx-detail { display: block; }
+    #labuse-analysis-demo .lx-back { display: block; }
+    #labuse-analysis-demo .lx-appbar { padding: 16px 20px; }
+    #labuse-analysis-demo .lx-detail-title h2 { font-size: 23px; }
+    #labuse-analysis-demo .lx-result { padding: 15px; }
+    #labuse-analysis-demo .lx-demo-label { font-size: 11px; }
+    #labuse-analysis-demo input,
+    #labuse-analysis-demo select { font-size: 16px; }
+  }
+  @media(pointer:coarse) {
+    #labuse-analysis-demo button,
+    #labuse-analysis-demo summary { min-height: 44px; }
+  }
+&lt;/style&gt;
+
+
+
+
+&lt;script&gt;
+/* ALGO-LABUSE-2 — reference pedagogique, donnees fictives uniquement.
+ * Aucun SIG, reglement PLU ou modele statistique n&#x27;est reconstitue ici.
+ * Contrat : evaluate(record, options), order(records, options).
+ * order renvoie les evaluations, avec les faits d&#x27;origine dans .record.
+ */
+(function (root, factory) {
+  &#x27;use strict&#x27;;
+  const api = factory();
+  if (typeof module === &#x27;object&#x27; &amp;&amp; module.exports) module.exports = api;
+  if (root) root.LabuseV2 = api;
+})(typeof globalThis !== &#x27;undefined&#x27; ? globalThis : this, function () {
+  &#x27;use strict&#x27;;
+
+  const VERSION = &#x27;ALGO-LABUSE-2-reference-demo-1.0&#x27;;
+  const LABELS = Object.freeze({
+    ESTIMATED: &#x27;Capacité théorique estimée&#x27;,
+    PRESTUDY: &#x27;Préétude à mener&#x27;,
+    TO_VERIFY: &#x27;Analyse à compléter&#x27;,
+    DEFERRED: &#x27;À différer&#x27;,
+    NO_MARGIN: &#x27;Aucun ajout identifié&#x27;,
+    OUTSIDE_OBJECTIVE: &#x27;Hors de ce projet&#x27;,
+    SIGNAL_AVAILABLE: &#x27;Signal de mutation disponible&#x27;,
+    SIGNAL_TO_VERIFY: &#x27;Signal à vérifier&#x27;,
+    SIGNAL_NOT_AVAILABLE: &#x27;Signal non évalué&#x27;,
+    SIGNAL_OUT_OF_SCOPE: &#x27;Hors du domaine du modèle&#x27;
+  });
+  const GROUPS = Object.freeze({ESTIMATED:0, PRESTUDY:0, TO_VERIFY:1,
+    DEFERRED:2, NO_MARGIN:3, OUTSIDE_OBJECTIVE:4,
+    SIGNAL_AVAILABLE:0, SIGNAL_TO_VERIFY:1, SIGNAL_NOT_AVAILABLE:2,
+    SIGNAL_OUT_OF_SCOPE:3});
+  const finite = value =&gt; typeof value === &#x27;number&#x27; &amp;&amp; Number.isFinite(value);
+  const nonnegative = value =&gt; finite(value) &amp;&amp; value &gt;= 0;
+  const present = value =&gt; value !== null &amp;&amp; value !== undefined;
+  const normalizeId = value =&gt; typeof value === &#x27;string&#x27; ? value.trim().toUpperCase() : &#x27;&#x27;;
+  const statusLabel = status =&gt; LABELS[status] || String(status);
+  const formatQuantity = value =&gt; !finite(value) ? &#x27;Non calculé&#x27;
+    : value &gt; 0 &amp;&amp; value &lt; 1 ? &#x27;&lt;1 m²&#x27;
+    : value &lt; 0 &amp;&amp; value &gt; -1 ? &#x27;−&lt;1 m²&#x27;
+    : new Intl.NumberFormat(&#x27;fr-FR&#x27;, {maximumFractionDigits:2}).format(value) + &#x27; m²&#x27;;
+
+  function optionsFor(input) {
+    const supplied = input || {};
+    const mode = supplied.mode || &#x27;potential&#x27;;
+    const scenario = supplied.scenario || &#x27;keep&#x27;;
+    const defaultSort = mode === &#x27;sale&#x27; ? &#x27;signal&#x27; : scenario === &#x27;divide&#x27; ? &#x27;area&#x27; : &#x27;capacity&#x27;;
+    const opts = Object.assign({mode, scenario, sort:defaultSort, policy:&#x27;DEMO&#x27;}, supplied);
+    if (![&#x27;sale&#x27;,&#x27;potential&#x27;].includes(opts.mode)) throw new RangeError(&#x27;mode invalide&#x27;);
+    if (![&#x27;keep&#x27;,&#x27;rebuild&#x27;,&#x27;divide&#x27;].includes(opts.scenario)) throw new RangeError(&#x27;scenario invalide&#x27;);
+    if (![&#x27;signal&#x27;,&#x27;capacity&#x27;,&#x27;gain&#x27;,&#x27;area&#x27;,&#x27;id&#x27;].includes(opts.sort)) throw new RangeError(&#x27;sort invalide&#x27;);
+    if (opts.sort === &#x27;signal&#x27; &amp;&amp; opts.mode !== &#x27;sale&#x27;) throw new RangeError(&#x27;tri Signal réservé à la prospection&#x27;);
+    if (opts.sort === &#x27;gain&#x27; &amp;&amp; (opts.mode !== &#x27;potential&#x27; || opts.scenario !== &#x27;rebuild&#x27;))
+      throw new RangeError(&#x27;tri gain net réservé à la reconstruction&#x27;);
+    if (opts.sort === &#x27;capacity&#x27; &amp;&amp; (opts.mode === &#x27;sale&#x27; || opts.scenario === &#x27;divide&#x27;))
+      throw new RangeError(&#x27;tri capacité réservé aux scénarios de capacité&#x27;);
+    return opts;
+  }
+
+  function evaluateSignal(record, opts) {
+    const declared = String(record.signal_status || &#x27;NOT_AVAILABLE&#x27;).toUpperCase();
+    const empty = (status, reason) =&gt; ({status, p:null, level:null,
+      label:status === &#x27;OUT_OF_SCOPE&#x27; ? &#x27;Hors du domaine du modèle&#x27;
+        : status === &#x27;TO_VERIFY&#x27; ? &#x27;Signal à vérifier&#x27; : &#x27;Signal non évalué&#x27;, reason});
+    if (declared === &#x27;OUT_OF_SCOPE&#x27;) return empty(&#x27;OUT_OF_SCOPE&#x27;,&#x27;SIGNAL_DOMAIN_OUT_OF_SCOPE&#x27;);
+    if (declared === &#x27;NOT_AVAILABLE&#x27;) return empty(&#x27;NOT_AVAILABLE&#x27;,&#x27;SIGNAL_NOT_COMPUTED&#x27;);
+    if (declared === &#x27;TO_VERIFY&#x27;) return empty(&#x27;TO_VERIFY&#x27;,&#x27;SIGNAL_DECLARED_UNVERIFIED&#x27;);
+    if (declared !== &#x27;AVAILABLE&#x27;) return empty(&#x27;TO_VERIFY&#x27;,&#x27;SIGNAL_STATUS_INVALID&#x27;);
+    if (!present(record.p)) return empty(&#x27;NOT_AVAILABLE&#x27;,&#x27;SERVED_PROBABILITY_MISSING&#x27;);
+    if (!finite(record.p) || record.p &lt; 0 || record.p &gt; 1)
+      return empty(&#x27;TO_VERIFY&#x27;,&#x27;SERVED_PROBABILITY_INVALID&#x27;);
+    // p est le champ declare comme probabilite servie dans les fixtures.
+    // p_raw, logits et score historique sont volontairement ignores.
+    if (record.signal_domain_verified !== true)
+      return empty(&#x27;TO_VERIFY&#x27;,&#x27;SIGNAL_DOMAIN_UNVERIFIED&#x27;);
+    const demoPermitted = opts.policy === &#x27;DEMO&#x27; &amp;&amp; record.demo === true;
+    // La référence ne possède aucune politique de service de production.
+    // Un booléen dans une fixture ne vaut pas validation d&#x27;un manifest réel.
+    if (!demoPermitted)
+      return empty(&#x27;TO_VERIFY&#x27;,&#x27;SIGNAL_POLICY_UNVERIFIED&#x27;);
+    if (present(record.signal_value_kind) &amp;&amp; record.signal_value_kind !== &#x27;served_probability&#x27;)
+      return empty(&#x27;TO_VERIFY&#x27;,&#x27;SIGNAL_VALUE_KIND_UNVERIFIED&#x27;);
+    const level = record.p &gt;= 0.20 ? &#x27;strong&#x27; : record.p &gt;= 0.10 ? &#x27;medium&#x27; : &#x27;weak&#x27;;
+    return {status:&#x27;AVAILABLE&#x27;, p:record.p, level,
+      label:level === &#x27;strong&#x27; ? &#x27;Signal fort&#x27; : level === &#x27;medium&#x27; ? &#x27;Signal moyen&#x27; : &#x27;Signal faible&#x27;,
+      reason:&#x27;SERVED_PROBABILITY&#x27;, demo:demoPermitted};
+  }
+
+  function inspectBound(bound, central) {
+    if (!present(bound)) return {present:false};
+    const min = Array.isArray(bound) ? bound[0] : bound.min;
+    const max = Array.isArray(bound) ? bound[1] : bound.max;
+    if (!nonnegative(min) || !nonnegative(max) || min &gt; max)
+      return {present:true,error:&#x27;BOUNDS_INVALID&#x27;};
+    if (finite(central) &amp;&amp; (central &lt; min || central &gt; max))
+      return {present:true,error:&#x27;CENTRAL_ESTIMATE_OUTSIDE_BOUNDS&#x27;};
+    if (!bound.source || bound.documented !== true)
+      return {present:true,error:&#x27;BOUNDS_NOT_DOCUMENTED&#x27;};
+    return {present:true,min,max,source:bound.source};
+  }
+
+  function evaluate(input, inputOptions) {
+    const opts = optionsFor(inputOptions);
+    const record = input &amp;&amp; typeof input === &#x27;object&#x27; &amp;&amp; !Array.isArray(input) ? input : {};
+    const signal = evaluateSignal(record, opts);
+    const result = {id:normalizeId(record.id), record, mode:opts.mode, scenario:opts.scenario,
+      horizon:record.horizon || &#x27;unknown&#x27;, status:&#x27;TO_VERIFY&#x27;, label:LABELS.TO_VERIFY, tone:&#x27;amber&#x27;,
+      quantities:{additional:null,project_total:null,existing:null,net_signed:null,conditional_future:null},
+      bounds:null, cause_codes:[], warnings:[], signal, rank_value:null,
+      analysis_version:VERSION};
+    const cause = code =&gt; {if (!result.cause_codes.includes(code)) result.cause_codes.push(code);};
+    const warning = message =&gt; {if (!result.warnings.includes(message)) result.warnings.push(message);};
+    const finish = (status, code, label) =&gt; {
+      result.status = status;
+      result.label = label || LABELS[status];
+      result.tone = status === &#x27;ESTIMATED&#x27; ? &#x27;green&#x27; : status === &#x27;PRESTUDY&#x27; ? &#x27;blue&#x27;
+        : [&#x27;TO_VERIFY&#x27;,&#x27;DEFERRED&#x27;,&#x27;SIGNAL_TO_VERIFY&#x27;].includes(status) ? &#x27;amber&#x27; : &#x27;neutral&#x27;;
+      if (code) cause(code);
+      if (opts.sort === &#x27;id&#x27;) result.rank_value = null;
+      else if (opts.sort === &#x27;area&#x27;) result.rank_value = nonnegative(record.area) ? record.area : null;
+      else if (opts.mode === &#x27;sale&#x27;) result.rank_value = signal.status === &#x27;AVAILABLE&#x27; ? signal.p : null;
+      else if (opts.scenario === &#x27;divide&#x27;) result.rank_value = nonnegative(record.area) ? record.area : null;
+      // Une capacité future conditionnelle n&#x27;est pas le résiduel courant,
+      // ni le gain net. Aucun tri de quantité non calculée n&#x27;est simulé.
+      else if (status === &#x27;DEFERRED&#x27;) result.rank_value = null;
+      else if (opts.scenario === &#x27;rebuild&#x27;) result.rank_value = opts.sort === &#x27;gain&#x27;
+        ? result.quantities.net_signed : result.quantities.project_total;
+      else result.rank_value = result.quantities.additional;
+      return result;
+    };
+
+    if (!result.id) return finish(opts.mode === &#x27;sale&#x27; ? &#x27;SIGNAL_TO_VERIFY&#x27; : &#x27;TO_VERIFY&#x27;,&#x27;ID_MISSING&#x27;);
+    if (opts.mode === &#x27;sale&#x27;) {
+      // Aucun zonage, SDP ou facteur physique ne change le Signal de cette vue.
+      const map = {AVAILABLE:&#x27;SIGNAL_AVAILABLE&#x27;,TO_VERIFY:&#x27;SIGNAL_TO_VERIFY&#x27;,
+        NOT_AVAILABLE:&#x27;SIGNAL_NOT_AVAILABLE&#x27;,OUT_OF_SCOPE:&#x27;SIGNAL_OUT_OF_SCOPE&#x27;};
+      const answer = finish(map[signal.status], signal.reason, signal.label);
+      if (signal.status === &#x27;AVAILABLE&#x27;) answer.tone = signal.level === &#x27;strong&#x27; ? &#x27;green&#x27;
+        : signal.level === &#x27;medium&#x27; ? &#x27;blue&#x27; : &#x27;neutral&#x27;;
+      if (signal.demo) warning(&#x27;Probabilité fictive de démonstration ; aucun modèle ML n’est exécuté.&#x27;);
+      return answer;
+    }
+
+    // Les avertissements n&#x27;ajoutent aucun coefficient au calcul.
+    if (!present(record.slope)) warning(&#x27;Pente non renseignée ; aucune pente favorable ou défavorable imputée.&#x27;);
+    else if (!nonnegative(record.slope)) warning(&#x27;Valeur de pente à vérifier ; aucun coefficient appliqué.&#x27;);
+    else if (record.slope &gt; 30) warning(&#x27;Pente supérieure à 30 % : difficulté physique à étudier, sans malus numérique.&#x27;);
+    if (record.complexity) warning(String(record.complexity));
+    if (Array.isArray(record.checks)) record.checks.forEach(item =&gt; warning(String(item)));
+    if (!nonnegative(record.area) || record.area === 0) return finish(&#x27;TO_VERIFY&#x27;,&#x27;PARCEL_AREA_INVALID&#x27;);
+    if (record.geometry_status !== &#x27;valid&#x27;) return finish(&#x27;TO_VERIFY&#x27;,
+      record.geometry_status === &#x27;suspect&#x27; ? &#x27;GEOMETRY_SUSPECT&#x27; : &#x27;GEOMETRY_NOT_AVAILABLE&#x27;);
+    if (record.eligibility === &#x27;incompatible&#x27;) {
+      if (record.proof_verified === true) return finish(&#x27;OUTSIDE_OBJECTIVE&#x27;,&#x27;HOUSING_INCOMPATIBILITY_PROVED&#x27;);
+      return finish(&#x27;TO_VERIFY&#x27;,&#x27;INCOMPATIBILITY_PROOF_UNVERIFIED&#x27;);
+    }
+    if (record.eligibility !== &#x27;allowed&#x27;) return finish(&#x27;TO_VERIFY&#x27;,&#x27;HOUSING_ELIGIBILITY_UNKNOWN&#x27;);
+    if (record.horizon === &#x27;deferred&#x27;) {
+      if (present(record.future_capacity) &amp;&amp; !nonnegative(record.future_capacity)) {
+        cause(&#x27;FUTURE_CAPACITY_INVALID&#x27;);
+        warning(&#x27;Hypothèse future invalide : quantité non servie ; le caractère différé reste établi.&#x27;);
+      }
+      result.quantities.conditional_future = nonnegative(record.future_capacity) ? record.future_capacity : null;
+      if (nonnegative(record.existing)) result.quantities.existing = record.existing;
+      warning(&#x27;Capacité conditionnelle ; aucune date d’ouverture ni disponibilité actuelle n’est inventée.&#x27;);
+      return finish(&#x27;DEFERRED&#x27;,&#x27;AVAILABILITY_DEFERRED&#x27;);
+    }
+    if (record.horizon !== &#x27;now&#x27;) return finish(&#x27;TO_VERIFY&#x27;,&#x27;AVAILABILITY_HORIZON_UNKNOWN&#x27;);
+    if (opts.scenario === &#x27;divide&#x27;) {
+      warning(&#x27;Préétude documentaire : divisibilité, nombre de lots, accès individuels et viabilisation non calculés.&#x27;);
+      return finish(&#x27;PRESTUDY&#x27;,&#x27;DIVISION_DOCUMENTARY_PRESTUDY&#x27;);
+    }
+
+    if (record.height_status === &#x27;missing&#x27; &amp;&amp; record.height_required !== false)
+      return finish(&#x27;TO_VERIFY&#x27;,&#x27;HEIGHT_CRITICAL_MISSING&#x27;);
+    if (!present(record.capacity)) return finish(&#x27;TO_VERIFY&#x27;,&#x27;CAPACITY_MISSING&#x27;);
+    if (!nonnegative(record.capacity)) return finish(&#x27;TO_VERIFY&#x27;,&#x27;CAPACITY_INVALID&#x27;);
+    if (!present(record.existing)) return finish(&#x27;TO_VERIFY&#x27;,&#x27;EXISTING_SDP_MISSING&#x27;);
+    if (!nonnegative(record.existing)) return finish(&#x27;TO_VERIFY&#x27;,&#x27;EXISTING_SDP_INVALID&#x27;);
+
+    const C = record.capacity, E = record.existing;
+    result.quantities.project_total = C;
+    result.quantities.existing = E;
+    result.quantities.net_signed = C - E;
+    result.quantities.additional = Math.max(0, C - E);
+    const capacityBound = inspectBound(record.capacity_bounds,C);
+    const existingBound = inspectBound(record.existing_bounds,E);
+    if (capacityBound.error || existingBound.error)
+      return finish(&#x27;TO_VERIFY&#x27;,capacityBound.error || existingBound.error);
+    if (capacityBound.present &amp;&amp; existingBound.present) {
+      const gain = {min:capacityBound.min-existingBound.max,max:capacityBound.max-existingBound.min};
+      const additional = {min:Math.max(0,gain.min),max:Math.max(0,gain.max)};
+      result.bounds = {
+        additional_interval:[additional.min,additional.max],
+        gain_interval:[gain.min,gain.max],
+        capacity_interval:[capacityBound.min,capacityBound.max],
+        existing_interval:[existingBound.min,existingBound.max],
+        sources:[capacityBound.source,existingBound.source],
+        kind:&#x27;documented_assumption_envelope&#x27;
+      };
+      warning(&#x27;Enveloppes d’hypothèses documentées ; pas un intervalle de confiance statistique.&#x27;);
+      if (opts.scenario === &#x27;keep&#x27; &amp;&amp; gain.min &lt;= 0 &amp;&amp; gain.max &gt; 0)
+        return finish(&#x27;TO_VERIFY&#x27;,&#x27;ADDITIONAL_CAPACITY_ENVELOPE_CROSSES_ZERO&#x27;);
+    } else {
+      warning(&#x27;Estimation ponctuelle ; incertitude non quantifiée.&#x27;);
+      if (capacityBound.present || existingBound.present)
+        warning(&#x27;Une seule entrée bornée : aucune enveloppe de résultat n’est inventée.&#x27;);
+    }
+
+    if (opts.scenario === &#x27;keep&#x27;) {
+      warning(&#x27;Marge par différence : insertion avec le bâti conservé non vérifiée par ce moteur pédagogique.&#x27;);
+      return result.quantities.additional === 0
+        ? finish(&#x27;NO_MARGIN&#x27;,&#x27;NO_ADDITIONAL_BUDGET&#x27;,&#x27;Aucun ajout identifié selon les hypothèses&#x27;)
+        : finish(&#x27;ESTIMATED&#x27;,&#x27;ADDITIONAL_BUDGET_ESTIMATED&#x27;);
+    }
+    if (E === 0) warning(&#x27;Terrain déjà nu : aucune démolition nécessaire.&#x27;);
+    else warning(&#x27;Occupation, démolition, protections, relogement et coûts restent à vérifier.&#x27;);
+    if (C - E &lt; 0) warning(&#x27;La reconstruction présente une perte théorique de SDP ; ce n’est pas une conclusion économique.&#x27;);
+    return C === 0 ? finish(&#x27;NO_MARGIN&#x27;,&#x27;NO_REBUILD_CAPACITY&#x27;,&#x27;Aucune capacité identifiée selon les hypothèses&#x27;)
+      : finish(&#x27;ESTIMATED&#x27;,&#x27;REBUILD_CAPACITY_ESTIMATED&#x27;);
+  }
+
+  function order(records, inputOptions) {
+    if (!Array.isArray(records)) throw new TypeError(&#x27;records doit être un tableau&#x27;);
+    const opts = optionsFor(inputOptions);
+    return records.map(record =&gt; evaluate(record,opts)).sort((a,b) =&gt; {
+      const group = GROUPS[a.status] - GROUPS[b.status];
+      if (group) return group;
+      if (opts.sort !== &#x27;id&#x27;) {
+        const aKnown = finite(a.rank_value), bKnown = finite(b.rank_value);
+        if (aKnown !== bKnown) return aKnown ? -1 : 1;
+        if (aKnown &amp;&amp; a.rank_value !== b.rank_value) return b.rank_value - a.rank_value;
+      }
+      return a.id &lt; b.id ? -1 : a.id &gt; b.id ? 1 : 0;
+    });
+  }
+
+  return Object.freeze({VERSION,DEMO_ONLY:true,STATUS_LABELS:LABELS,
+    evaluate,order,formatQuantity,normalizeId,statusLabel});
+});
+
+&lt;/script&gt;
+&lt;script type=&quot;application/json&quot; id=&quot;labuse-v2-cases&quot;&gt;
+[{&quot;id&quot;: &quot;DEMO-A&quot;, &quot;name&quot;: &quot;Maison des Hauts&quot;, &quot;area&quot;: 450, &quot;zones&quot;: [&quot;U&quot;], &quot;soil&quot;: &quot;Bâti&quot;, &quot;existing&quot;: 180, &quot;capacity&quot;: 180, &quot;p&quot;: 0.24, &quot;p_raw&quot;: 0.91, &quot;tenure&quot;: 18, &quot;slope&quot;: 8, &quot;saleReason&quot;: &quot;Exemple fictif : le signal n’est pas une intention déclarée de vendre.&quot;, &quot;complexity&quot;: &quot;Maison existante ; aucun gain de SDP identifié en conservation.&quot;, &quot;checks&quot;: [&quot;État intérieur, occupation et prix non renseignés.&quot;], &quot;geometry_status&quot;: &quot;valid&quot;, &quot;eligibility&quot;: &quot;allowed&quot;, &quot;proof_verified&quot;: true, &quot;horizon&quot;: &quot;now&quot;, &quot;future_capacity&quot;: null, &quot;signal_status&quot;: &quot;AVAILABLE&quot;, &quot;signal_domain_verified&quot;: true, &quot;signal_policy_allowed&quot;: false, &quot;signal_value_kind&quot;: &quot;served_probability&quot;, &quot;demo&quot;: true, &quot;source_note&quot;: &quot;Données et probabilités inventées pour la démonstration ; aucune parcelle réelle.&quot;, &quot;sources&quot;: [{&quot;name&quot;: &quot;Source de démonstration — faits et règles fictifs&quot;, &quot;date&quot;: &quot;2026-11-09&quot;, &quot;demo&quot;: true}]}, {&quot;id&quot;: &quot;DEMO-B&quot;, &quot;name&quot;: &quot;Terrain des Tamarins&quot;, &quot;area&quot;: 1400, &quot;zones&quot;: [&quot;U&quot;], &quot;soil&quot;: &quot;Nu&quot;, &quot;existing&quot;: 0, &quot;capacity&quot;: 1200, &quot;p&quot;: 0.06, &quot;tenure&quot;: 12, &quot;slope&quot;: 7, &quot;saleReason&quot;: &quot;Exemple fictif de potentiel foncier avec signal faible.&quot;, &quot;complexity&quot;: &quot;Terrain nu ; desserte observée dans cet exemple fictif.&quot;, &quot;checks&quot;: [&quot;Réseaux et implantation du projet à vérifier.&quot;], &quot;geometry_status&quot;: &quot;valid&quot;, &quot;eligibility&quot;: &quot;allowed&quot;, &quot;proof_verified&quot;: true, &quot;horizon&quot;: &quot;now&quot;, &quot;future_capacity&quot;: null, &quot;signal_status&quot;: &quot;AVAILABLE&quot;, &quot;signal_domain_verified&quot;: true, &quot;signal_policy_allowed&quot;: false, &quot;signal_value_kind&quot;: &quot;served_probability&quot;, &quot;demo&quot;: true, &quot;source_note&quot;: &quot;Données et probabilités inventées pour la démonstration ; aucune parcelle réelle.&quot;, &quot;sources&quot;: [{&quot;name&quot;: &quot;Source de démonstration — faits et règles fictifs&quot;, &quot;date&quot;: &quot;2026-11-09&quot;, &quot;demo&quot;: true}]}, {&quot;id&quot;: &quot;DEMO-C&quot;, &quot;name&quot;: &quot;Ensemble bâti du Centre&quot;, &quot;area&quot;: 2200, &quot;zones&quot;: [&quot;U&quot;], &quot;soil&quot;: &quot;Bâti&quot;, &quot;existing&quot;: 1800, &quot;capacity&quot;: 2400, &quot;p&quot;: 0.14, &quot;tenure&quot;: 24, &quot;slope&quot;: 12, &quot;saleReason&quot;: &quot;Exemple fictif ; les explications d’un vrai signal doivent venir du modèle.&quot;, &quot;complexity&quot;: &quot;Insertion avec le bâti conservé à étudier.&quot;, &quot;checks&quot;: [&quot;Occupation et conditions d’une éventuelle démolition inconnues.&quot;], &quot;geometry_status&quot;: &quot;valid&quot;, &quot;eligibility&quot;: &quot;allowed&quot;, &quot;proof_verified&quot;: true, &quot;horizon&quot;: &quot;now&quot;, &quot;future_capacity&quot;: null, &quot;signal_status&quot;: &quot;AVAILABLE&quot;, &quot;signal_domain_verified&quot;: true, &quot;signal_policy_allowed&quot;: false, &quot;signal_value_kind&quot;: &quot;served_probability&quot;, &quot;demo&quot;: true, &quot;source_note&quot;: &quot;Données et probabilités inventées pour la démonstration ; aucune parcelle réelle.&quot;, &quot;sources&quot;: [{&quot;name&quot;: &quot;Source de démonstration — faits et règles fictifs&quot;, &quot;date&quot;: &quot;2026-11-09&quot;, &quot;demo&quot;: true}]}, {&quot;id&quot;: &quot;DEMO-D&quot;, &quot;name&quot;: &quot;Terrain des Ravines&quot;, &quot;area&quot;: 6000, &quot;zones&quot;: [&quot;N&quot;], &quot;soil&quot;: &quot;Nu&quot;, &quot;existing&quot;: 0, &quot;capacity&quot;: null, &quot;p&quot;: null, &quot;tenure&quot;: 30, &quot;slope&quot;: 19, &quot;saleReason&quot;: &quot;Aucune probabilité extrapolée hors du domaine du modèle.&quot;, &quot;complexity&quot;: &quot;Incompatibilité du scénario logement établie dans les règles fictives de l’exemple.&quot;, &quot;checks&quot;: [&quot;Les autres usages fonciers ne sont pas évalués.&quot;], &quot;geometry_status&quot;: &quot;valid&quot;, &quot;eligibility&quot;: &quot;incompatible&quot;, &quot;proof_verified&quot;: true, &quot;eligibility_proof&quot;: {&quot;rule&quot;: &quot;Règle logement fictive, portion entière vérifiée&quot;, &quot;source&quot;: &quot;Source de démonstration&quot;, &quot;date&quot;: &quot;2026-11-09&quot;, &quot;demo&quot;: true}, &quot;horizon&quot;: &quot;now&quot;, &quot;future_capacity&quot;: null, &quot;signal_status&quot;: &quot;OUT_OF_SCOPE&quot;, &quot;signal_domain_verified&quot;: false, &quot;signal_policy_allowed&quot;: false, &quot;demo&quot;: true, &quot;source_note&quot;: &quot;Zone et preuve entièrement fictives ; ce n’est pas une règle générale sur toutes les zones N.&quot;, &quot;sources&quot;: [{&quot;name&quot;: &quot;Source de démonstration — incompatibilité de logement fictive&quot;, &quot;date&quot;: &quot;2026-11-09&quot;, &quot;demo&quot;: true}]}, {&quot;id&quot;: &quot;DEMO-E&quot;, &quot;name&quot;: &quot;Bâti à documenter&quot;, &quot;area&quot;: 1800, &quot;zones&quot;: [&quot;U&quot;], &quot;soil&quot;: &quot;Bâti&quot;, &quot;existing&quot;: 900, &quot;capacity&quot;: null, &quot;height_status&quot;: &quot;missing&quot;, &quot;height_required&quot;: true, &quot;p&quot;: 0.035, &quot;tenure&quot;: 15, &quot;slope&quot;: null, &quot;saleReason&quot;: &quot;Signal fictif disponible ; la capacité logement reste non calculable.&quot;, &quot;complexity&quot;: &quot;Hauteur critique absente pour l’estimation de SDP.&quot;, &quot;checks&quot;: [&quot;La hauteur manquante ne bloque pas le repérage division.&quot;], &quot;geometry_status&quot;: &quot;valid&quot;, &quot;eligibility&quot;: &quot;allowed&quot;, &quot;proof_verified&quot;: true, &quot;horizon&quot;: &quot;now&quot;, &quot;future_capacity&quot;: null, &quot;signal_status&quot;: &quot;AVAILABLE&quot;, &quot;signal_domain_verified&quot;: true, &quot;signal_policy_allowed&quot;: false, &quot;signal_value_kind&quot;: &quot;served_probability&quot;, &quot;demo&quot;: true, &quot;source_note&quot;: &quot;Données et probabilités inventées pour la démonstration ; aucune parcelle réelle.&quot;, &quot;sources&quot;: [{&quot;name&quot;: &quot;Source de démonstration — donnée hauteur manquante fictive&quot;, &quot;date&quot;: &quot;2026-11-09&quot;, &quot;demo&quot;: true}]}, {&quot;id&quot;: &quot;DEMO-F&quot;, &quot;name&quot;: &quot;Grande parcelle en pente&quot;, &quot;area&quot;: 4200, &quot;zones&quot;: [&quot;U&quot;], &quot;soil&quot;: &quot;Bâti&quot;, &quot;existing&quot;: 400, &quot;capacity&quot;: 2800, &quot;p&quot;: 0.018, &quot;tenure&quot;: 9, &quot;slope&quot;: 35, &quot;saleReason&quot;: &quot;Exemple fictif : faible signal, volume théorique important.&quot;, &quot;complexity&quot;: &quot;Pente de 35 % : terrassement et implantation à étudier.&quot;, &quot;checks&quot;: [&quot;Un grand volume n’est pas une preuve de rentabilité.&quot;], &quot;geometry_status&quot;: &quot;valid&quot;, &quot;eligibility&quot;: &quot;allowed&quot;, &quot;proof_verified&quot;: true, &quot;horizon&quot;: &quot;now&quot;, &quot;future_capacity&quot;: null, &quot;signal_status&quot;: &quot;AVAILABLE&quot;, &quot;signal_domain_verified&quot;: true, &quot;signal_policy_allowed&quot;: false, &quot;signal_value_kind&quot;: &quot;served_probability&quot;, &quot;demo&quot;: true, &quot;source_note&quot;: &quot;Données et probabilités inventées pour la démonstration ; aucune parcelle réelle.&quot;, &quot;sources&quot;: [{&quot;name&quot;: &quot;Source de démonstration — relief et capacités fictifs&quot;, &quot;date&quot;: &quot;2026-11-09&quot;, &quot;demo&quot;: true}]}, {&quot;id&quot;: &quot;DEMO-G&quot;, &quot;name&quot;: &quot;Réserve foncière des Plaines&quot;, &quot;area&quot;: 8000, &quot;zones&quot;: [&quot;AU fermée&quot;], &quot;soil&quot;: &quot;Nu&quot;, &quot;existing&quot;: 0, &quot;capacity&quot;: null, &quot;p&quot;: 0.08, &quot;tenure&quot;: 20, &quot;slope&quot;: 10, &quot;saleReason&quot;: &quot;Signal fictif ; le caractère différé ne devient pas une probabilité de vente.&quot;, &quot;complexity&quot;: &quot;AU fermée fictive ; aucune date d’ouverture supposée.&quot;, &quot;checks&quot;: [&quot;4 200 m² constituent une capacité conditionnelle, non une capacité actuelle.&quot;], &quot;geometry_status&quot;: &quot;valid&quot;, &quot;eligibility&quot;: &quot;allowed&quot;, &quot;proof_verified&quot;: true, &quot;horizon&quot;: &quot;deferred&quot;, &quot;future_capacity&quot;: 4200, &quot;signal_status&quot;: &quot;AVAILABLE&quot;, &quot;signal_domain_verified&quot;: true, &quot;signal_policy_allowed&quot;: false, &quot;signal_value_kind&quot;: &quot;served_probability&quot;, &quot;demo&quot;: true, &quot;source_note&quot;: &quot;Données et probabilités inventées ; capacité future conditionnelle fictive.&quot;, &quot;sources&quot;: [{&quot;name&quot;: &quot;Source de démonstration — AU différée fictive&quot;, &quot;date&quot;: &quot;2026-11-09&quot;, &quot;demo&quot;: true}]}, {&quot;id&quot;: &quot;DEMO-H&quot;, &quot;name&quot;: &quot;Immeuble aux droits historiques&quot;, &quot;area&quot;: 1700, &quot;zones&quot;: [&quot;U&quot;], &quot;soil&quot;: &quot;Bâti&quot;, &quot;existing&quot;: 3000, &quot;capacity&quot;: 2500, &quot;p&quot;: 0.12, &quot;tenure&quot;: 28, &quot;slope&quot;: 9, &quot;saleReason&quot;: &quot;Exemple fictif : le remplacement peut perdre de la SDP sans empêcher une mutation.&quot;, &quot;complexity&quot;: &quot;Existant supérieur à la capacité théorique actuelle.&quot;, &quot;checks&quot;: [&quot;Droits historiques, occupation et programme à examiner.&quot;], &quot;geometry_status&quot;: &quot;valid&quot;, &quot;eligibility&quot;: &quot;allowed&quot;, &quot;proof_verified&quot;: true, &quot;horizon&quot;: &quot;now&quot;, &quot;future_capacity&quot;: null, &quot;signal_status&quot;: &quot;AVAILABLE&quot;, &quot;signal_domain_verified&quot;: true, &quot;signal_policy_allowed&quot;: false, &quot;signal_value_kind&quot;: &quot;served_probability&quot;, &quot;demo&quot;: true, &quot;source_note&quot;: &quot;Données et probabilités inventées pour la démonstration ; aucune parcelle réelle.&quot;, &quot;sources&quot;: [{&quot;name&quot;: &quot;Source de démonstration — écart de SDP fictif&quot;, &quot;date&quot;: &quot;2026-11-09&quot;, &quot;demo&quot;: true}]}, {&quot;id&quot;: &quot;DEMO-I&quot;, &quot;name&quot;: &quot;Grand contour à vérifier&quot;, &quot;area&quot;: 113832, &quot;zones&quot;: [&quot;U&quot;], &quot;soil&quot;: &quot;Nu&quot;, &quot;existing&quot;: 0, &quot;capacity&quot;: null, &quot;p&quot;: null, &quot;tenure&quot;: null, &quot;slope&quot;: null, &quot;saleReason&quot;: &quot;Signal non calculé, distinct d’une probabilité nulle.&quot;, &quot;complexity&quot;: &quot;Géométrie suspecte ; assiette utile non établie.&quot;, &quot;checks&quot;: [&quot;La grande surface ne résout pas une anomalie de contour.&quot;], &quot;geometry_status&quot;: &quot;suspect&quot;, &quot;eligibility&quot;: &quot;allowed&quot;, &quot;proof_verified&quot;: false, &quot;horizon&quot;: &quot;now&quot;, &quot;future_capacity&quot;: null, &quot;signal_status&quot;: &quot;NOT_AVAILABLE&quot;, &quot;signal_domain_verified&quot;: false, &quot;signal_policy_allowed&quot;: false, &quot;demo&quot;: true, &quot;source_note&quot;: &quot;Cas fictif inspiré d’une famille d’anomalies ; aucune conclusion sur une parcelle réelle.&quot;, &quot;sources&quot;: [{&quot;name&quot;: &quot;Source de démonstration — anomalie géométrique fictive&quot;, &quot;date&quot;: &quot;2026-11-09&quot;, &quot;demo&quot;: true}]}, {&quot;id&quot;: &quot;DEMO-J&quot;, &quot;name&quot;: &quot;Parcelle aux deux zonages&quot;, &quot;area&quot;: 20000, &quot;zones&quot;: [&quot;U&quot;, &quot;N&quot;], &quot;zone_parts&quot;: [{&quot;zone&quot;: &quot;U&quot;, &quot;area&quot;: 4000, &quot;demo&quot;: true}, {&quot;zone&quot;: &quot;N&quot;, &quot;area&quot;: 16000, &quot;demo&quot;: true}], &quot;soil&quot;: &quot;Bâti&quot;, &quot;existing&quot;: 100, &quot;capacity&quot;: 2100, &quot;p&quot;: 0.025, &quot;tenure&quot;: 17, &quot;slope&quot;: 14, &quot;saleReason&quot;: &quot;Exemple fictif ; le zonage majoritaire ne remplace pas l’analyse par portion.&quot;, &quot;complexity&quot;: &quot;Capacité fictive calculée uniquement sur la portion U de 4 000 m².&quot;, &quot;checks&quot;: [&quot;La portion N de 16 000 m² n’est pas comptée dans la capacité logement.&quot;], &quot;geometry_status&quot;: &quot;valid&quot;, &quot;eligibility&quot;: &quot;allowed&quot;, &quot;proof_verified&quot;: true, &quot;horizon&quot;: &quot;now&quot;, &quot;future_capacity&quot;: null, &quot;signal_status&quot;: &quot;AVAILABLE&quot;, &quot;signal_domain_verified&quot;: true, &quot;signal_policy_allowed&quot;: false, &quot;signal_value_kind&quot;: &quot;served_probability&quot;, &quot;demo&quot;: true, &quot;source_note&quot;: &quot;Données et probabilités inventées ; aucune intersection SIG réelle calculée.&quot;, &quot;sources&quot;: [{&quot;name&quot;: &quot;Source de démonstration — portions U/N fictives&quot;, &quot;date&quot;: &quot;2026-11-09&quot;, &quot;demo&quot;: true}]}]
+&lt;/script&gt;
+&lt;script&gt;
+(() =&gt; {
+  const root = document.getElementById(&#x27;labuse-analysis-demo&#x27;);
+  const Engine = globalThis.LabuseV2;
+  const records = JSON.parse(document.getElementById(&#x27;labuse-v2-cases&#x27;).textContent);
+  const $ = selector =&gt; root.querySelector(selector);
+  const $$ = selector =&gt; [...root.querySelectorAll(selector)];
+  const fmt = number =&gt; new Intl.NumberFormat(&#x27;fr-FR&#x27;, {maximumFractionDigits: number !== 0 &amp;&amp; Math.abs(number) &lt; 1 ? 2 : 1}).format(number);
+  const sqm = number =&gt; Engine.formatQuantity(number);
+  const soilKey = record =&gt; String(record.soil).toLowerCase()===&#x27;nu&#x27;?&#x27;nu&#x27;:&#x27;bati&#x27;;
+  const zoneFamily = zone =&gt; String(zone).toUpperCase().startsWith(&#x27;AU&#x27;)?&#x27;AU&#x27;:String(zone).toUpperCase().startsWith(&#x27;U&#x27;)?&#x27;U&#x27;:String(zone).toUpperCase().startsWith(&#x27;N&#x27;)?&#x27;N&#x27;:zone;
+  const esc = value =&gt; String(value).replace(/[&amp;&lt;&gt;&quot;&#x27;]/g, c =&gt; ({&#x27;&amp;&#x27;:&#x27;&amp;amp;&#x27;,&#x27;&lt;&#x27;:&#x27;&amp;lt;&#x27;,&#x27;&gt;&#x27;:&#x27;&amp;gt;&#x27;,&#x27;&quot;&#x27;:&#x27;&amp;quot;&#x27;,&quot;&#x27;&quot;:&#x27;&amp;#39;&#x27;}[c]));
+  const defaults = {schema:&#x27;2&#x27;,revision:0,screen:&#x27;filters&#x27;,mode:&#x27;sale&#x27;,scenario:&#x27;keep&#x27;,sort:&#x27;signal&#x27;,zones:[&#x27;U&#x27;,&#x27;N&#x27;,&#x27;AU&#x27;],soils:[&#x27;nu&#x27;,&#x27;bati&#x27;],min:&#x27;&#x27;,max:&#x27;&#x27;,status:&#x27;all&#x27;,page:0,selected:null,details:false};
+  let state = {...defaults,zones:defaults.zones.slice(),soils:defaults.soils.slice()};
+  const sorts = () =&gt; state.mode === &#x27;sale&#x27; ? [[&#x27;signal&#x27;,&#x27;Signal de mutation décroissant&#x27;],[&#x27;area&#x27;,&#x27;Surface du terrain décroissante&#x27;],[&#x27;id&#x27;,&#x27;Identifiant&#x27;]] : state.scenario === &#x27;keep&#x27; ? [[&#x27;capacity&#x27;,&#x27;SDP supplémentaire théorique&#x27;],[&#x27;area&#x27;,&#x27;Surface du terrain décroissante&#x27;],[&#x27;id&#x27;,&#x27;Identifiant&#x27;]] : state.scenario === &#x27;rebuild&#x27; ? [[&#x27;capacity&#x27;,&#x27;Capacité totale après démolition&#x27;],[&#x27;gain&#x27;,&#x27;Gain net de SDP signé&#x27;],[&#x27;area&#x27;,&#x27;Surface du terrain décroissante&#x27;],[&#x27;id&#x27;,&#x27;Identifiant&#x27;]] : [[&#x27;area&#x27;,&#x27;Surface du terrain · repérage&#x27;],[&#x27;id&#x27;,&#x27;Identifiant&#x27;]];
+  function restore(value) {
+    if (!value || value.schema !== &#x27;2&#x27;) return;
+    state = {...defaults,
+      revision:Number.isInteger(value.revision)&amp;&amp;value.revision&gt;=0?value.revision:0,
+      screen:[&#x27;filters&#x27;,&#x27;list&#x27;,&#x27;analysis&#x27;].includes(value.screen)?value.screen:&#x27;filters&#x27;,
+      mode:[&#x27;sale&#x27;,&#x27;potential&#x27;].includes(value.mode)?value.mode:&#x27;sale&#x27;,
+      scenario:[&#x27;keep&#x27;,&#x27;rebuild&#x27;,&#x27;divide&#x27;].includes(value.scenario)?value.scenario:&#x27;keep&#x27;,
+      sort:[&#x27;signal&#x27;,&#x27;capacity&#x27;,&#x27;gain&#x27;,&#x27;area&#x27;,&#x27;id&#x27;].includes(value.sort)?value.sort:&#x27;signal&#x27;,
+      zones:Array.isArray(value.zones)?value.zones.filter(v=&gt;[&#x27;U&#x27;,&#x27;N&#x27;,&#x27;AU&#x27;].includes(v)):defaults.zones.slice(),
+      soils:Array.isArray(value.soils)?value.soils.filter(v=&gt;[&#x27;nu&#x27;,&#x27;bati&#x27;].includes(v)):defaults.soils.slice(),
+      min:typeof value.min===&#x27;string&#x27;?value.min:&#x27;&#x27;,max:typeof value.max===&#x27;string&#x27;?value.max:&#x27;&#x27;,
+      status:typeof value.status===&#x27;string&#x27;?value.status:&#x27;all&#x27;,
+      page:Number.isInteger(value.page)&amp;&amp;value.page&gt;=0?value.page:0,
+      selected:records.some(r=&gt;r.id===value.selected)?value.selected:null,details:!!value.details
+    };
+  }
+  const saved = window.openai?.widgetState;
+  restore(saved?.modelContent?.labuseV2Demo || saved?.labuseV2Demo);
+  function persist() {
+    state.revision++;
+    if (window.openai?.setWidgetState) window.openai.setWidgetState({modelContent:{labuseV2Demo:{...state},fictitiousExample:true},privateContent:null}).catch(()=&gt;{});
+  }
+  function filtered() {
+    const min = state.min===&#x27;&#x27;?0:Math.max(0,Number(state.min)||0);
+    const max = state.max===&#x27;&#x27;?Infinity:Math.max(0,Number(state.max)||0);
+    return records.filter(r=&gt;r.zones.some(z=&gt;state.zones.includes(zoneFamily(z)))&amp;&amp;state.soils.includes(soilKey(r))&amp;&amp;r.area&gt;=min&amp;&amp;r.area&lt;=max);
+  }
+  const options = () =&gt; ({mode:state.mode,scenario:state.scenario,sort:state.sort,policy:&#x27;DEMO&#x27;});
+  function group(result) {
+    return state.mode===&#x27;sale&#x27;?(result.status===&#x27;SIGNAL_AVAILABLE&#x27;?result.signal.level:&#x27;not_evaluated&#x27;):result.status;
+  }
+  function metric(label,value,text=false) {
+    return &#x27;&lt;div&gt;&lt;dt&gt;&#x27;+esc(label)+&#x27;&lt;/dt&gt;&lt;dd&#x27;+(text?&#x27; class=&quot;lx-value-text&quot;&#x27;:&#x27;&#x27;)+&#x27;&gt;&#x27;+esc(value)+&#x27;&lt;/dd&gt;&lt;/div&gt;&#x27;;
+  }
+  function row(label,value) {return &#x27;&lt;div class=&quot;lx-secondary-row&quot;&gt;&lt;span&gt;&#x27;+esc(label)+&#x27;&lt;/span&gt;&lt;span&gt;&#x27;+esc(value)+&#x27;&lt;/span&gt;&lt;/div&gt;&#x27;;}
+  function setList(selector,values) {$(selector).innerHTML=values.map(value=&gt;&#x27;&lt;li&gt;&#x27;+esc(value)+&#x27;&lt;/li&gt;&#x27;).join(&#x27;&#x27;);}
+  function scenarioLabel() {return state.mode===&#x27;sale&#x27;?&#x27;Prospection vente&#x27;:({&#x27;keep&#x27;:&#x27;Logement · bâti conservé&#x27;,&#x27;rebuild&#x27;:&#x27;Logement · reconstruction&#x27;,&#x27;divide&#x27;:&#x27;Division pour logement · repérage&#x27;})[state.scenario];}
+  function primary(result) {
+    const r=result.record,q=result.quantities;
+    if(state.mode===&#x27;sale&#x27;)return result.status===&#x27;SIGNAL_AVAILABLE&#x27;?(r.saleReason||&#x27;Signal illustratif de mutation à douze mois&#x27;):&#x27;Aucune probabilité attribuée&#x27;;
+    if(result.status===&#x27;OUTSIDE_OBJECTIVE&#x27;)return &#x27;Opération de logement hors objectif&#x27;;
+    if(result.status===&#x27;DEFERRED&#x27;)return &#x27;Horizon différé · capacité actuelle non servie&#x27;;
+    if(result.status===&#x27;TO_VERIFY&#x27;)return &#x27;Données nécessaires à compléter&#x27;;
+    if(state.scenario===&#x27;divide&#x27;)return &#x27;Nombre de lots non calculé&#x27;;
+    return state.scenario===&#x27;keep&#x27;?sqm(q.additional)+&#x27; supplémentaires théoriques&#x27;:sqm(q.project_total)+&#x27; au total après reconstruction&#x27;;
+  }
+  function shortReason(result) {
+    const r=result.record,q=result.quantities;
+    if(state.mode===&#x27;sale&#x27;)return result.status===&#x27;SIGNAL_AVAILABLE&#x27;?(r.id===&#x27;DEMO-A&#x27;?&#x27;Bâti conservé : aucune marge additionnelle identifiée&#x27;:&#x27;Signal de démonstration · pas une vente certaine&#x27;):&#x27;Bien conservé dans la sélection&#x27;;
+    if(result.status===&#x27;DEFERRED&#x27;)return &#x27;AU fermée dans cet exemple · aucune date inventée&#x27;;
+    if(result.status===&#x27;OUTSIDE_OBJECTIVE&#x27;)return &#x27;Conclusion limitée au projet logement étudié&#x27;;
+    if(result.status===&#x27;TO_VERIFY&#x27;)return r.geometry_status!==&#x27;valid&#x27;?&#x27;Contour à vérifier&#x27;:r.complexity||&#x27;Donnée critique indisponible&#x27;;
+    if(state.scenario===&#x27;rebuild&#x27;)return &#x27;Différence nette : &#x27;+sqm(q.net_signed)+(q.net_signed&lt;0?&#x27; · perte de surface&#x27;:&#x27;&#x27;);
+    if(state.scenario===&#x27;divide&#x27;)return &#x27;Accès, lots et réseaux à étudier&#x27;;
+    return r.complexity||&#x27;Implantation à vérifier&#x27;;
+  }
+  function renderDetail(result) {
+    const onFilters=state.screen===&#x27;filters&#x27;;
+    $(&#x27;#lx-detail&#x27;).hidden=false;
+    $(&#x27;#lx-selection-preview&#x27;).hidden=!onFilters;
+    $(&#x27;#lx-record-detail&#x27;).hidden=onFilters||!result;
+    if(onFilters||!result)return;
+    const r=result.record,q=result.quantities;
+    const keep=Engine.evaluate(r,{mode:&#x27;potential&#x27;,scenario:&#x27;keep&#x27;,policy:&#x27;DEMO&#x27;});
+    const analysis=state.screen===&#x27;analysis&#x27;;
+    $(&#x27;#lx-detail-id&#x27;).textContent=r.id+&#x27; · Saint-Denis&#x27;;
+    $(&#x27;#lx-detail-zone&#x27;).textContent=&#x27;Zone&#x27;+(r.zones.length&gt;1?&#x27;s &#x27;:&#x27; &#x27;)+r.zones.join(&#x27; / &#x27;);
+    $(&#x27;#lx-detail-name&#x27;).textContent=r.name;
+    $(&#x27;#lx-detail-type&#x27;).textContent=(soilKey(r)===&#x27;nu&#x27;?&#x27;Terrain nu&#x27;:&#x27;Terrain bâti&#x27;)+&#x27; · &#x27;+sqm(r.area);
+    $(&#x27;#lx-detail-analysis&#x27;).hidden=!analysis;
+    $(&#x27;#lx-detail-raw&#x27;).hidden=analysis;
+    $(&#x27;#lx-raw-metrics&#x27;).innerHTML=metric(&#x27;Surface du terrain&#x27;,sqm(r.area))+metric(&#x27;SDP existante estimée&#x27;,sqm(r.existing));
+    $(&#x27;#lx-context-label&#x27;).textContent=scenarioLabel();
+    $(&#x27;#lx-verdict-status&#x27;).textContent=result.label;
+    $(&#x27;#lx-verdict-status&#x27;).className=&#x27;lx-badge lx-&#x27;+([&#x27;green&#x27;,&#x27;blue&#x27;,&#x27;amber&#x27;,&#x27;neutral&#x27;].includes(result.tone)?result.tone:&#x27;neutral&#x27;);
+    let title,text,coverage,metrics,reasons,checks=(r.checks||[]).slice(),secondary;
+    if(state.mode===&#x27;sale&#x27;){
+      const available=result.status===&#x27;SIGNAL_AVAILABLE&#x27;;
+      title=available?(r.id===&#x27;DEMO-A&#x27;?&#x27;Une piste de prospection sur la maison existante&#x27;:&#x27;Un signal de mutation à interpréter dans son périmètre&#x27;):&#x27;Signal non évalué pour ce cas&#x27;;
+      text=available?(r.id===&#x27;DEMO-A&#x27;?&#x27;L’absence de capacité supplémentaire ne retire pas la maison de cette recherche de transaction.&#x27;:&#x27;Le signal ne mesure ni la qualité du terrain pour construire, ni la volonté déclarée de vendre.&#x27;):&#x27;Le bien reste dans votre sélection. Une absence de prédiction ne devient pas une faible probabilité de vente.&#x27;;
+      coverage=available?&#x27;Signal entièrement fictif&#x27;:&#x27;Aucune probabilité classante&#x27;;
+      metrics=metric(&#x27;Signal de mutation&#x27;,result.signal.label,true)+metric(&#x27;Horizon&#x27;,available?&#x27;12 mois depuis le scoring&#x27;:&#x27;Non évalué&#x27;,true);
+      reasons=available?[(r.saleReason||&#x27;Signal de démonstration&#x27;)+&#x27;.&#x27;,&#x27;Fenêtre de l’exemple : 09/11/2026 au 09/11/2027.&#x27;]:[&#x27;Le domaine ou les données de ce cas ne permettent pas de servir un signal dans cet exemple.&#x27;,&#x27;Aucune probabilité zéro n’a été imputée.&#x27;];
+      secondary=row(&#x27;Marge supplémentaire · bâti conservé&#x27;,keep.status===&#x27;OUTSIDE_OBJECTIVE&#x27;?&#x27;Projet logement hors objectif&#x27;:keep.status===&#x27;DEFERRED&#x27;?&#x27;À différer&#x27;:keep.status===&#x27;TO_VERIFY&#x27;?&#x27;À vérifier&#x27;:sqm(keep.quantities.additional))+row(&#x27;Pente observée&#x27;,r.slope===null?&#x27;Non renseignée&#x27;:r.slope+&#x27; %&#x27;);
+    }else if(result.status===&#x27;OUTSIDE_OBJECTIVE&#x27;){
+      title=&#x27;Ce projet de logement n’est pas retenu&#x27;;
+      text=&#x27;L’incompatibilité concerne le scénario de logement de cet exemple. Elle ne signifie ni que le bien est invendable, ni que toute division foncière est impossible.&#x27;;
+      coverage=&#x27;Cause localisée dans les hypothèses fictives&#x27;;
+      metrics=metric(&#x27;Surface du terrain&#x27;,sqm(r.area))+metric(&#x27;Programme étudié&#x27;,&#x27;Logement&#x27;,true);
+      reasons=[&#x27;Zonage et règle d’incompatibilité supposés vérifiés dans la démonstration.&#x27;,&#x27;Le bien reste consultable en liste simple et en prospection.&#x27;];secondary=row(&#x27;Signal de mutation&#x27;,result.signal.label);
+    }else if(result.status===&#x27;DEFERRED&#x27;){
+      title=&#x27;Un foncier à examiner dans un horizon différé&#x27;;text=&#x27;Le caractère différé est identifié. Aucune capacité actuellement mobilisable ni date d’ouverture ne sont inventées.&#x27;;coverage=&#x27;Disponibilité actuelle distincte des hypothèses futures&#x27;;
+      metrics=metric(&#x27;Capacité actuelle&#x27;,&#x27;Non servie&#x27;,true)+metric(&#x27;Hypothèse conditionnelle&#x27;,sqm(q.conditional_future));
+      reasons=[&#x27;AU fermée dans les données fictives.&#x27;,&#x27;Une hypothèse future ne remplace pas les règles actuellement applicables.&#x27;];
+      checks=[&#x27;Conditions et procédure d’ouverture à l’urbanisation.&#x27;,&#x27;Règles futures et équipements nécessaires.&#x27;,&#x27;Horizon de détention et stratégie du projet.&#x27;];secondary=row(&#x27;Signal de mutation&#x27;,result.signal.label);
+    }else if(result.status===&#x27;TO_VERIFY&#x27;){
+      title=&#x27;L’analyse de ce scénario reste à compléter&#x27;;text=&#x27;Une donnée manquante ou une anomalie ne devient ni une capacité nulle, ni une appréciation favorable.&#x27;;coverage=&#x27;Pas de verdict ferme sur ce projet&#x27;;
+      metrics=metric(&#x27;Résultat principal&#x27;,&#x27;À vérifier&#x27;,true)+metric(&#x27;Surface du terrain&#x27;,sqm(r.area));
+      reasons=[r.geometry_status!==&#x27;valid&#x27;?&#x27;La fiabilité du contour utile doit être contrôlée.&#x27;:r.complexity||&#x27;Une entrée critique manque.&#x27;,&#x27;Les autres informations du bien restent consultables.&#x27;];secondary=row(&#x27;Signal de mutation&#x27;,result.signal.label);
+    }else if(state.scenario===&#x27;divide&#x27;){
+      title=&#x27;Un repérage avant une véritable étude de division&#x27;;text=&#x27;Cette vue rassemble les éléments du foncier. Elle ne calcule ni divisibilité ni nombre de lots. Une hauteur manquante n’empêche pas automatiquement ce repérage.&#x27;;coverage=&#x27;Préétude documentaire uniquement&#x27;;
+      metrics=metric(&#x27;Surface du terrain&#x27;,sqm(r.area))+metric(&#x27;Nombre de lots&#x27;,&#x27;Non calculé&#x27;,true);
+      reasons=[soilKey(r)===&#x27;nu&#x27;?&#x27;Terrain nu dans cet exemple.&#x27;:&#x27;Présence du bâti à prendre en compte.&#x27;,&#x27;Zonage et géométrie permettent ici un repérage pour logement.&#x27;];
+      checks=[&#x27;Implantation de chaque lot et accès propres.&#x27;,&#x27;Réseaux, assainissement, servitudes et équipements.&#x27;,&#x27;Règlement applicable à l’ensemble du projet.&#x27;];secondary=row(&#x27;Signal de mutation&#x27;,result.signal.label);
+    }else if(state.scenario===&#x27;rebuild&#x27;){
+      title=q.net_signed&lt;0?&#x27;La reconstruction peut réduire la surface existante&#x27;:q.net_signed===0?&#x27;Aucun gain net de SDP dans ce scénario&#x27;:&#x27;Capacité totale et création nette sont distinguées&#x27;;
+      text=&#x27;Le total après démolition est distinct de la différence avec l’existant. Le gain net reste signé ; il ne constitue pas un bilan économique.&#x27;;coverage=&#x27;Estimation théorique · incertitude non quantifiée&#x27;;
+      metrics=metric(&#x27;SDP totale après reconstruction&#x27;,sqm(q.project_total))+metric(&#x27;Différence nette de SDP&#x27;,sqm(q.net_signed));
+      reasons=[&#x27;SDP existante estimée : &#x27;+sqm(q.existing)+&#x27;.&#x27;,soilKey(r)===&#x27;nu&#x27;?&#x27;Terrain déjà nu : aucune démolition nécessaire.&#x27;:&#x27;Occupation, conditions de démolition et coût du projet à examiner.&#x27;];
+      secondary=row(&#x27;Signal de mutation&#x27;,result.signal.label)+row(&#x27;Pente observée&#x27;,r.slope===null?&#x27;Non renseignée&#x27;:r.slope+&#x27; %&#x27;);
+    }else{
+      title=result.status===&#x27;NO_MARGIN&#x27;?&#x27;Aucun ajout identifié avec le bâti conservé&#x27;:&#x27;Une marge de SDP théorique à examiner&#x27;;
+      text=&#x27;La différence entre capacité totale et existant ne prouve pas l’insertion d’un nouveau bâtiment. Elle reste liée aux hypothèses et à l’assiette du calcul.&#x27;;coverage=&#x27;Estimation ponctuelle · insertion non vérifiée&#x27;;
+      metrics=metric(&#x27;SDP supplémentaire théorique&#x27;,sqm(q.additional))+metric(&#x27;SDP existante conservée&#x27;,sqm(q.existing));
+      reasons=[&#x27;Capacité de référence estimée : &#x27;+sqm(r.capacity)+&#x27;.&#x27;,r.complexity||&#x27;Implantation et desserte à vérifier.&#x27;];secondary=row(&#x27;Signal de mutation&#x27;,result.signal.label)+row(&#x27;Pente observée&#x27;,r.slope===null?&#x27;Non renseignée&#x27;:r.slope+&#x27; %&#x27;);
+    }
+    $(&#x27;#lx-verdict-title&#x27;).textContent=title;$(&#x27;#lx-verdict-text&#x27;).textContent=text;$(&#x27;#lx-verdict-coverage&#x27;).textContent=coverage;$(&#x27;#lx-main-metrics&#x27;).innerHTML=metrics;
+    $(&#x27;#lx-reasons-title&#x27;).textContent=state.mode===&#x27;sale&#x27;?&#x27;Éléments illustratifs du signal&#x27;:&#x27;Ce qui explique le résultat&#x27;;
+    setList(&#x27;#lx-reasons&#x27;,reasons);setList(&#x27;#lx-checks&#x27;,checks);$(&#x27;#lx-secondary&#x27;).innerHTML=secondary;
+    $(&#x27;#lx-facts-body&#x27;).innerHTML=&#x27;&lt;p&gt;&#x27;+esc(&#x27;Surface : &#x27;+sqm(r.area)+&#x27;. Zones &#x27;+r.zones.join(&#x27; / &#x27;)+&#x27;. SDP existante estimée : &#x27;+sqm(r.existing)+&#x27;.&#x27;)+&#x27;&lt;/p&gt;&#x27;+(analysis?&#x27;&lt;p&gt;&#x27;+esc(&#x27;Capacité totale de référence : &#x27;+sqm(r.capacity)+&#x27;. Périmètre : parcelle isolée. Conclusion pour ce projet : &#x27;+result.label+&#x27;.&#x27;)+&#x27;&lt;/p&gt;&#x27;:&#x27;&#x27;)+&#x27;&lt;p&gt;Sources et données fictives de démonstration. Aucun modèle ML ni calcul géométrique réel n’est exécuté.&lt;/p&gt;&#x27;;
+  }
+  function render() {
+    const items=filtered(),analysis=state.screen===&#x27;analysis&#x27;;
+    $(&#x27;[data-action=&quot;filters&quot;]&#x27;).hidden=state.screen===&#x27;filters&#x27;;
+    if(!sorts().some(([key])=&gt;key===state.sort))state.sort=sorts()[0][0];
+    $(&#x27;#lx-filter-screen&#x27;).hidden=state.screen!==&#x27;filters&#x27;;$(&#x27;#lx-results-screen&#x27;).hidden=state.screen===&#x27;filters&#x27;;
+    $(&#x27;#lx-analysis-controls&#x27;).hidden=!analysis;$(&#x27;#lx-raw-intro&#x27;).hidden=analysis;
+    $(&#x27;#lx-view-label&#x27;).textContent=analysis?&#x27;✓ Analyse LABUSE&#x27;:&#x27;Liste des parcelles&#x27;;
+    $(&#x27;[data-action=&quot;toggle-screen&quot;]&#x27;).textContent=analysis?&#x27;Liste simple&#x27;:&#x27;Analyser&#x27;;
+    $(&#x27;#lx-scenario-field&#x27;).hidden=state.mode!==&#x27;potential&#x27;;$(&#x27;#lx-scenario&#x27;).value=state.scenario;
+    $(&#x27;#lx-sort&#x27;).innerHTML=sorts().map(([key,label])=&gt;&#x27;&lt;option value=&quot;&#x27;+key+&#x27;&quot;&gt;&#x27;+esc(label)+&#x27;&lt;/option&gt;&#x27;).join(&#x27;&#x27;);$(&#x27;#lx-sort&#x27;).value=state.sort;
+    $(&#x27;#lx-scope-detail&#x27;).textContent=items.length+&#x27; parcelles · &#x27;+(state.zones.length?&#x27;zones &#x27;+state.zones.join(&#x27; / &#x27;):&#x27;aucune zone&#x27;);
+    $(&#x27;#lx-filter-count&#x27;).textContent=items.length+&#x27; parcelle&#x27;+(items.length!==1?&#x27;s&#x27;:&#x27;&#x27;)+&#x27; correspondent à vos critères&#x27;;
+    $(&#x27;#lx-selection-count&#x27;).textContent=items.length+&#x27; parcelle&#x27;+(items.length!==1?&#x27;s&#x27;:&#x27;&#x27;)+&#x27; dans cette sélection fictive.&#x27;;
+    $(&#x27;[data-action=&quot;list&quot;]&#x27;).textContent=&#x27;Voir les &#x27;+items.length+&#x27; parcelles&#x27;;$(&#x27;#lx-min&#x27;).value=state.min;$(&#x27;#lx-max&#x27;).value=state.max;
+    $$(&#x27;[data-zone]&#x27;).forEach(b=&gt;b.setAttribute(&#x27;aria-pressed&#x27;,String(state.zones.includes(b.dataset.zone))));
+    $$(&#x27;[data-soil]&#x27;).forEach(b=&gt;b.setAttribute(&#x27;aria-pressed&#x27;,String(state.soils.includes(b.dataset.soil))));
+    $$(&#x27;[data-mode]&#x27;).forEach(b=&gt;b.setAttribute(&#x27;aria-pressed&#x27;,String(state.mode===b.dataset.mode)));
+    const ordered=analysis?Engine.order(items,options()):Engine.order(items,{...options(),sort:&#x27;id&#x27;}).sort((a,b)=&gt;a.id&lt;b.id?-1:a.id&gt;b.id?1:0);
+    const groups=state.mode===&#x27;sale&#x27;?[[&#x27;strong&#x27;,&#x27;Fort&#x27;],[&#x27;medium&#x27;,&#x27;Moyen&#x27;],[&#x27;weak&#x27;,&#x27;Faible&#x27;],[&#x27;not_evaluated&#x27;,&#x27;Non évalué&#x27;]]:[[&#x27;ESTIMATED&#x27;,&#x27;Capacité estimée&#x27;],[&#x27;PRESTUDY&#x27;,&#x27;Préétude&#x27;],[&#x27;TO_VERIFY&#x27;,&#x27;À vérifier&#x27;],[&#x27;DEFERRED&#x27;,&#x27;À différer&#x27;],[&#x27;NO_MARGIN&#x27;,state.scenario===&#x27;rebuild&#x27;?&#x27;Sans capacité&#x27;:&#x27;Sans marge&#x27;],[&#x27;OUTSIDE_OBJECTIVE&#x27;,&#x27;Hors projet&#x27;]];
+    if(state.status!==&#x27;all&#x27;&amp;&amp;!groups.some(([key])=&gt;key===state.status))state.status=&#x27;all&#x27;;
+    const chips=[[&#x27;all&#x27;,&#x27;Tous&#x27;,items.length],...groups.map(([key,label])=&gt;[key,label,ordered.filter(r=&gt;group(r)===key).length]).filter(x=&gt;x[2]&gt;0)];
+    $(&#x27;#lx-status-filters&#x27;).innerHTML=chips.map(([key,label,count])=&gt;&#x27;&lt;button type=&quot;button&quot; data-status=&quot;&#x27;+key+&#x27;&quot; aria-pressed=&quot;&#x27;+(state.status===key)+&#x27;&quot;&gt;&#x27;+esc(label)+&#x27; · &#x27;+count+&#x27;&lt;/button&gt;&#x27;).join(&#x27;&#x27;);
+    $(&#x27;#lx-summary-title&#x27;).textContent=items.length+&#x27; parcelles · &#x27;+(state.mode===&#x27;sale&#x27;?&#x27;signaux illustratifs&#x27;:&#x27;programme logement&#x27;);
+    const selectedSort=sorts().find(([key])=&gt;key===state.sort)?.[1]||&#x27;&#x27;;
+    $(&#x27;#lx-sort-label&#x27;).textContent=&#x27;Groupes de statut, puis : &#x27;+selectedSort.toLowerCase();
+    const visible=analysis?ordered.filter(r=&gt;state.status===&#x27;all&#x27;||group(r)===state.status):ordered;
+    const pages=Math.max(1,Math.ceil(visible.length/3));state.page=Math.max(0,Math.min(state.page,pages-1));
+    const paged=visible.slice(state.page*3,state.page*3+3);
+    if(!paged.some(r=&gt;r.id===state.selected))state.selected=paged[0]?.id||null;
+    if(!state.selected)state.details=false;
+    root.dataset.detailsOpen=String(state.details);
+    $(&#x27;#lx-list&#x27;).innerHTML=paged.length?paged.map(result=&gt;{const r=result.record;return &#x27;&lt;button type=&quot;button&quot; class=&quot;lx-result&quot; data-record=&quot;&#x27;+esc(r.id)+&#x27;&quot; aria-pressed=&quot;&#x27;+(r.id===state.selected)+&#x27;&quot;&gt;&lt;span class=&quot;lx-result-head&quot;&gt;&lt;span class=&quot;lx-result-id&quot;&gt;&#x27;+esc(r.id)+&#x27; · &#x27;+esc(r.zones.join(&#x27; / &#x27;))+&#x27;&lt;/span&gt;&#x27;+(analysis?&#x27;&lt;span class=&quot;lx-badge lx-&#x27;+esc(result.tone||&#x27;neutral&#x27;)+&#x27;&quot;&gt;&#x27;+esc(result.label)+&#x27;&lt;/span&gt;&#x27;:&#x27;&#x27;)+&#x27;&lt;/span&gt;&lt;span&gt;&lt;span class=&quot;lx-result-name&quot;&gt;&#x27;+esc(r.name)+&#x27;&lt;/span&gt;&lt;span class=&quot;lx-result-meta&quot;&gt;&#x27;+sqm(r.area)+&#x27; · &#x27;+(soilKey(r)===&#x27;nu&#x27;?&#x27;terrain nu&#x27;:&#x27;terrain bâti&#x27;)+&#x27;&lt;/span&gt;&lt;/span&gt;&#x27;+(analysis?&#x27;&lt;span&gt;&lt;span class=&quot;lx-result-primary&quot;&gt;&#x27;+esc(primary(result))+&#x27;&lt;/span&gt;&lt;span class=&quot;lx-result-reason&quot;&gt;&#x27;+esc(shortReason(result))+&#x27;&lt;/span&gt;&lt;/span&gt;&#x27;:&#x27;&#x27;)+&#x27;&lt;span class=&quot;lx-result-footer&quot;&gt;&lt;span&gt;&#x27;+(analysis?esc(scenarioLabel()):&#x27;Saint-Denis · exemple fictif&#x27;)+&#x27;&lt;/span&gt;&lt;span&gt;Détail →&lt;/span&gt;&lt;/span&gt;&lt;/button&gt;&#x27;;}).join(&#x27;&#x27;):&#x27;&lt;p class=&quot;lx-empty&quot;&gt;Aucun résultat pour ces critères et ce statut. Votre recherche n’a pas été élargie.&lt;/p&gt;&#x27;;
+    $(&#x27;#lx-page-label&#x27;).textContent=visible.length?(state.page*3+1)+&#x27;–&#x27;+Math.min(visible.length,state.page*3+3)+&#x27; sur &#x27;+visible.length:&#x27;0 résultat&#x27;;
+    $(&#x27;[data-action=&quot;prev&quot;]&#x27;).disabled=state.page===0;$(&#x27;[data-action=&quot;next&quot;]&#x27;).disabled=state.page&gt;=pages-1;
+    renderDetail(ordered.find(r=&gt;r.id===state.selected)||null);
+  }
+  root.addEventListener(&#x27;click&#x27;,event=&gt;{
+    const button=event.target.closest(&#x27;button&#x27;);if(!button||!root.contains(button)||button.disabled)return;
+    if(button.dataset.zone){const z=button.dataset.zone;state.zones=state.zones.includes(z)?state.zones.filter(v=&gt;v!==z):[...state.zones,z];state.status=&#x27;all&#x27;;state.page=0;}
+    else if(button.dataset.soil){const s=button.dataset.soil;state.soils=state.soils.includes(s)?state.soils.filter(v=&gt;v!==s):[...state.soils,s];state.status=&#x27;all&#x27;;state.page=0;}
+    else if(button.dataset.mode){state.mode=button.dataset.mode;state.status=&#x27;all&#x27;;state.page=0;state.sort=sorts()[0][0];}
+    else if(button.dataset.status){state.status=button.dataset.status;state.page=0;}
+    else if(button.dataset.record){state.selected=button.dataset.record;state.details=true;}
+    else switch(button.dataset.action){
+      case &#x27;filters&#x27;:state.screen=&#x27;filters&#x27;;state.details=false;break;
+      case &#x27;list&#x27;:state.screen=&#x27;list&#x27;;state.details=false;state.page=0;break;
+      case &#x27;analyse&#x27;:state.screen=&#x27;analysis&#x27;;state.details=false;state.page=0;state.status=&#x27;all&#x27;;break;
+      case &#x27;toggle-screen&#x27;:state.screen=state.screen===&#x27;analysis&#x27;?&#x27;list&#x27;:&#x27;analysis&#x27;;state.page=0;state.status=&#x27;all&#x27;;state.details=false;break;
+      case &#x27;reset&#x27;:state={...defaults,revision:state.revision,zones:defaults.zones.slice(),soils:defaults.soils.slice()};break;
+      case &#x27;prev&#x27;:state.page--;break;
+      case &#x27;next&#x27;:state.page++;break;
+      case &#x27;back&#x27;:state.details=false;break;
+      default:return;
+    }
+    render();persist();
+  });
+  $(&#x27;#lx-scenario&#x27;).addEventListener(&#x27;change&#x27;,event=&gt;{state.scenario=event.target.value;state.status=&#x27;all&#x27;;state.page=0;state.sort=sorts()[0][0];render();persist();});
+  $(&#x27;#lx-sort&#x27;).addEventListener(&#x27;change&#x27;,event=&gt;{state.sort=event.target.value;state.page=0;render();persist();});
+  [&#x27;min&#x27;,&#x27;max&#x27;].forEach(key=&gt;$(&#x27;#lx-&#x27;+key).addEventListener(&#x27;input&#x27;,event=&gt;{state[key]=event.target.value;state.status=&#x27;all&#x27;;state.page=0;render();persist();}));
+  window.addEventListener(&#x27;openai:set_globals&#x27;,event=&gt;{const raw=event.detail?.globals?.widgetState;const next=raw?.modelContent?.labuseV2Demo||raw?.labuseV2Demo;if(next&amp;&amp;(next.revision||0)&gt;=state.revision){restore(next);render();}});
+  render();
+})();
+
+&lt;/script&gt;
+
+
+
+&lt;script&gt;
+(() =&gt; {
+  if (window.FloatingUIDOM == null) {
+    return;
+  }
+  const { autoUpdate, computePosition, flip, offset, shift, size } =
+    window.FloatingUIDOM;
+  const tooltipPlacements = new Set([&quot;top&quot;, &quot;right&quot;, &quot;bottom&quot;, &quot;left&quot;]);
+  const tooltipId = `codex-visualization-tooltip-${
+    window.crypto?.randomUUID?.() ?? Date.now().toString(36)
+  }`;
+  const tooltipGap = 5;
+  const hoverDelay = 700;
+  const skipDelay = 300;
+  let activeTrigger = null;
+  let pendingTrigger = null;
+  let tooltip = null;
+  let openTimeout = null;
+  let autoUpdateCleanup = null;
+  let positionRequest = 0;
+  let skipDelayUntil = 0;
+  let lastPointerWasTouch = false;
+  let pinnedByTouch = false;
+
+  const getTrigger = (event) =&gt; {
+    for (const target of event.composedPath()) {
+      if (target?.nodeType === Node.ELEMENT_NODE) {
+        const trigger = target.closest(&quot;[data-tooltip]&quot;);
+        if (trigger) return trigger;
+      }
+    }
+    return null;
+  };
+  const containsTarget = (trigger, target) =&gt;
+    target?.nodeType != null &amp;&amp; trigger.contains(target);
+  const getContent = (trigger) =&gt;
+    trigger.getAttribute(&quot;data-tooltip&quot;)?.trim() ?? &quot;&quot;;
+  const getPlacement = (trigger) =&gt; {
+    const placement = trigger.getAttribute(&quot;data-tooltip-placement&quot;);
+    return tooltipPlacements.has(placement) ? placement : &quot;top&quot;;
+  };
+  const getTooltip = () =&gt; {
+    if (tooltip == null) {
+      tooltip = document.createElement(&quot;div&quot;);
+      tooltip.id = tooltipId;
+      tooltip.className = &quot;tooltip&quot;;
+      tooltip.setAttribute(&quot;role&quot;, &quot;tooltip&quot;);
+    }
+    return tooltip;
+  };
+  const setDescribedBy = (trigger, described) =&gt; {
+    const ids = new Set(
+      (trigger.getAttribute(&quot;aria-describedby&quot;) ?? &quot;&quot;)
+        .split(/\s+/)
+        .filter(Boolean),
+    );
+    if (described) {
+      ids.add(tooltipId);
+    } else {
+      ids.delete(tooltipId);
+    }
+    if (ids.size === 0) {
+      trigger.removeAttribute(&quot;aria-describedby&quot;);
+    } else {
+      trigger.setAttribute(&quot;aria-describedby&quot;, [...ids].join(&quot; &quot;));
+    }
+  };
+  const clearOpenTimeout = () =&gt; {
+    if (openTimeout != null) {
+      window.clearTimeout(openTimeout);
+      openTimeout = null;
+    }
+    pendingTrigger = null;
+  };
+  const closeTooltip = (activateSkipDelay = true) =&gt; {
+    clearOpenTimeout();
+    pinnedByTouch = false;
+    positionRequest += 1;
+    autoUpdateCleanup?.();
+    autoUpdateCleanup = null;
+    if (activeTrigger == null) {
+      return;
+    }
+    setDescribedBy(activeTrigger, false);
+    activeTrigger = null;
+    tooltip?.remove();
+    if (activateSkipDelay) {
+      skipDelayUntil = Date.now() + skipDelay;
+    }
+  };
+  const updatePosition = (trigger, floating) =&gt; {
+    const request = ++positionRequest;
+    void computePosition(trigger, floating, {
+      middleware: [
+        offset(tooltipGap),
+        flip({ padding: tooltipGap }),
+        shift({ padding: tooltipGap }),
+        size({
+          padding: tooltipGap,
+          apply({ availableHeight, availableWidth, elements }) {
+            elements.floating.style.setProperty(
+              &quot;--tooltip-available-width&quot;,
+              `${Math.max(0, availableWidth)}px`,
+            );
+            elements.floating.style.setProperty(
+              &quot;--tooltip-available-height&quot;,
+              `${Math.max(0, availableHeight)}px`,
+            );
+          },
+        }),
+      ],
+      placement: getPlacement(trigger),
+      strategy: &quot;fixed&quot;,
+    })
+      .then(({ x, y }) =&gt; {
+        if (activeTrigger !== trigger || request !== positionRequest) {
+          return;
+        }
+        const scale = window.devicePixelRatio || 1;
+        floating.style.transform = `translate(${Math.round(x * scale) / scale}px, ${Math.round(y * scale) / scale}px)`;
+        floating.style.visibility = &quot;visible&quot;;
+      })
+      .catch(() =&gt; {
+        if (activeTrigger === trigger &amp;&amp; request === positionRequest) {
+          closeTooltip(false);
+        }
+      });
+  };
+  const openTooltip = (trigger) =&gt; {
+    const content = getContent(trigger);
+    if (!trigger.isConnected || content.length === 0) {
+      return;
+    }
+    clearOpenTimeout();
+    if (activeTrigger === trigger) {
+      return;
+    }
+    closeTooltip();
+    const floating = getTooltip();
+    floating.textContent = content;
+    floating.style.visibility = &quot;hidden&quot;;
+    floating.style.transform = &quot;translate(0, 0)&quot;;
+    document.body.appendChild(floating);
+    activeTrigger = trigger;
+    setDescribedBy(trigger, true);
+    autoUpdateCleanup = autoUpdate(trigger, floating, () =&gt; {
+      updatePosition(trigger, floating);
+    });
+  };
+  const requestOpen = (trigger, immediate = false) =&gt; {
+    if (
+      getContent(trigger).length === 0 ||
+      activeTrigger === trigger ||
+      pendingTrigger === trigger
+    ) {
+      return;
+    }
+    clearOpenTimeout();
+    pendingTrigger = trigger;
+    const delay =
+      immediate || activeTrigger != null || Date.now() &lt; skipDelayUntil
+        ? 0
+        : hoverDelay;
+    if (delay === 0) {
+      openTooltip(trigger);
+      return;
+    }
+    openTimeout = window.setTimeout(() =&gt; {
+      openTimeout = null;
+      pendingTrigger = null;
+      openTooltip(trigger);
+    }, delay);
+  };
+  const handlePointerOpen = (event) =&gt; {
+    if (event.pointerType === &quot;touch&quot;) {
+      return;
+    }
+    const trigger = getTrigger(event);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    requestOpen(trigger);
+  };
+  const handlePointer = (event) =&gt; {
+    lastPointerWasTouch =
+      event.type === &quot;pointerdown&quot; &amp;&amp; event.pointerType === &quot;touch&quot;;
+  };
+  const handleTouchClick = (event) =&gt; {
+    const isTouch = event.pointerType === &quot;touch&quot; || lastPointerWasTouch;
+    lastPointerWasTouch = false;
+    if (!isTouch || event.detail === 0) {
+      return;
+    }
+    const trigger = getTrigger(event);
+    if (
+      trigger == null ||
+      !trigger.isConnected ||
+      getContent(trigger).length === 0 ||
+      (pinnedByTouch &amp;&amp; activeTrigger === trigger)
+    ) {
+      if (pinnedByTouch) {
+        closeTooltip();
+      }
+      return;
+    }
+    openTooltip(trigger);
+    pinnedByTouch = activeTrigger === trigger;
+    window.setTimeout(() =&gt; {
+      if (activeTrigger === trigger &amp;&amp; !trigger.isConnected) {
+        closeTooltip(false);
+      }
+    }, 0);
+  };
+  const handleLeave = (event) =&gt; {
+    if (pinnedByTouch) {
+      return;
+    }
+    const trigger = getTrigger(event);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const handleFocusIn = (event) =&gt; {
+    const trigger = getTrigger(event);
+    if (trigger?.matches(&quot;:focus-visible&quot;)) {
+      requestOpen(trigger, true);
+    }
+  };
+  const handleKeyDown = (event) =&gt; {
+    if (event.key === &quot;Escape&quot;) {
+      closeTooltip();
+    }
+  };
+  const handleContextMenu = (event) =&gt; {
+    lastPointerWasTouch = false;
+    const trigger = getTrigger(event);
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const handlers = {
+    pointerover: handlePointerOpen,
+    pointerdown: handlePointer,
+    pointercancel: handlePointer,
+    click: handleTouchClick,
+    pointerout: handleLeave,
+    focusin: handleFocusIn,
+    focusout: handleLeave,
+    keydown: handleKeyDown,
+    contextmenu: handleContextMenu,
+  };
+  const roots = new Map();
+  const handledEvents = new WeakSet();
+  const handleEvent = (event) =&gt; {
+    if (handledEvents.has(event)) return;
+    handledEvents.add(event);
+    handlers[event.type](event);
+  };
+  const discoverRoots = (node) =&gt; {
+    if (node.shadowRoot) listen(node.shadowRoot);
+    for (const element of node.querySelectorAll(&quot;*&quot;)) {
+      if (element.shadowRoot) listen(element.shadowRoot);
+    }
+  };
+  const listen = (root) =&gt; {
+    if (roots.has(root)) return;
+    for (const type of Object.keys(handlers)) root.addEventListener(type, handleEvent);
+    const observer = new window.MutationObserver((records) =&gt; {
+      for (const { addedNodes } of records) {
+        for (const node of addedNodes) {
+          if (node.nodeType === Node.ELEMENT_NODE) discoverRoots(node);
+        }
+      }
+      for (const [root, cleanup] of roots) {
+        if (root.host &amp;&amp; !root.host.isConnected) {
+          cleanup();
+          roots.delete(root);
+        }
+      }
+      if (activeTrigger &amp;&amp; !activeTrigger.isConnected) closeTooltip(false);
+    });
+    observer.observe(root, { childList: true, subtree: true });
+    roots.set(root, () =&gt; {
+      observer.disconnect();
+      for (const type of Object.keys(handlers)) root.removeEventListener(type, handleEvent);
+    });
+    discoverRoots(root);
+  };
+  const destroy = () =&gt; {
+    closeTooltip(false);
+    lastPointerWasTouch = false;
+    for (const cleanup of roots.values()) cleanup();
+    roots.clear();
+    tooltip = null;
+  };
+
+  // Events between children of one shadow root never reach the document.
+  listen(document);
+  window.addEventListener(&quot;pagehide&quot;, destroy, { once: true });
+})();
+&lt;/script&gt;
+&lt;script id=&quot;codex-visualization-tabs&quot;&gt;
+(() =&gt; {
+  const selector = &#x27;.nav[role=&quot;tablist&quot;] [role=&quot;tab&quot;]&#x27;;
+  const disabled = &#x27;:disabled,[aria-disabled=&quot;true&quot;]&#x27;;
+  const selectTab = (selected) =&gt; {
+    const panelId = selected.getAttribute(&quot;aria-controls&quot;);
+    for (const tab of selected.closest(&#x27;[role=&quot;tablist&quot;]&#x27;).querySelectorAll(&#x27;[role=&quot;tab&quot;]&#x27;)) {
+      const active = tab === selected;
+      tab.classList.toggle(&quot;active&quot;, active);
+      tab.setAttribute(&quot;aria-selected&quot;, String(active));
+      const id = tab.getAttribute(&quot;aria-controls&quot;);
+      const panel = id &amp;&amp; document.getElementById(id);
+      if (panel != null) {
+        panel.hidden = id !== panelId;
+        if (!panel.hidden &amp;&amp; selected.id) {
+          panel.setAttribute(&quot;aria-labelledby&quot;, selected.id);
+        }
+      }
+    }
+  };
+  const interact = (event) =&gt; {
+    const tab = event.target?.closest?.(selector);
+    if (event.defaultPrevented || tab == null || tab.matches(disabled)) {
+      return;
+    }
+    if (event.type === &quot;click&quot;) {
+      selectTab(tab);
+      return;
+    }
+    const tabs = Array.from(
+      tab.closest(&#x27;[role=&quot;tablist&quot;]&#x27;).querySelectorAll(&#x27;[role=&quot;tab&quot;]&#x27;),
+    ).filter((candidate) =&gt; !candidate.matches(disabled));
+    const current = tabs.indexOf(tab);
+    let next;
+    if (event.key === &quot;ArrowRight&quot; || event.key === &quot;ArrowDown&quot;) {
+      next = (current + 1) % tabs.length;
+    } else if (event.key === &quot;ArrowLeft&quot; || event.key === &quot;ArrowUp&quot;) {
+      next = (current + tabs.length - 1) % tabs.length;
+    } else if (event.key === &quot;Home&quot;) {
+      next = 0;
+    } else if (event.key === &quot;End&quot;) {
+      next = tabs.length - 1;
+    } else {
+      return;
+    }
+    event.preventDefault();
+    tabs[next].focus();
+    selectTab(tabs[next]);
+  };
+
+  for (const list of document.querySelectorAll(&#x27;.nav[role=&quot;tablist&quot;]&#x27;)) {
+    const selected =
+      list.querySelector(&#x27;[role=&quot;tab&quot;][aria-selected=&quot;true&quot;]&#x27;) ??
+      list.querySelector(&#x27;[role=&quot;tab&quot;].active&#x27;) ??
+      list.querySelector(&#x27;[role=&quot;tab&quot;]&#x27;);
+    if (selected != null) {
+      selectTab(selected);
+    }
+  }
+  document.addEventListener(&quot;click&quot;, interact);
+  document.addEventListener(&quot;keydown&quot;, interact);
+  window.addEventListener(&quot;pagehide&quot;, () =&gt; {
+    document.removeEventListener(&quot;click&quot;, interact);
+    document.removeEventListener(&quot;keydown&quot;, interact);
+  }, { once: true });
+})();
+&lt;/script&gt;
+&lt;script id=&quot;codex-visualization-carousel&quot;&gt;
+  (() =&gt; {
+    for (const root of document.querySelectorAll(&quot;.viz-carousel&quot;)) {
+      const panels = Array.from(
+        root.querySelectorAll(&quot;:scope &gt; [data-variant]&quot;),
+      );
+      if (panels.length === 0) {
+        continue;
+      }
+      root.setAttribute(&quot;role&quot;, &quot;group&quot;);
+      panels.forEach((panel, index) =&gt; {
+        panel.hidden = index !== 0;
+        panel.setAttribute(&quot;role&quot;, &quot;group&quot;);
+        if (!panel.hasAttribute(&quot;aria-label&quot;)) {
+          panel.setAttribute(&quot;aria-label&quot;, panel.dataset.variant);
+        }
+      });
+      root.dataset.activeVariant = panels[0].dataset.variant;
+      if (panels.length === 1) {
+        continue;
+      }
+
+      const controls = document.createElement(&quot;div&quot;);
+      controls.className = &quot;viz-carousel-controls&quot;;
+      // Portable copy of the settings dropdown&#x27;s legacy glyph; no 14px icon-package preset matches it.
+      // https://github.com/openai/openai/blob/master/codex/codex-apps/webview/src/icons/chevron.svg
+      controls.innerHTML = `
+      &lt;button type=&quot;button&quot; class=&quot;viz-carousel-previous cursor-interaction&quot;&gt;&lt;i data-lucide=&quot;chevron-left&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+      &lt;details class=&quot;viz-carousel-picker&quot;&gt;
+        &lt;summary class=&quot;cursor-interaction&quot;&gt;
+          &lt;span class=&quot;viz-carousel-count tabular-nums&quot;&gt;&lt;/span&gt;
+          &lt;span class=&quot;viz-carousel-name&quot;&gt;&lt;/span&gt;
+          &lt;svg class=&quot;viz-carousel-caret&quot; width=&quot;14&quot; height=&quot;14&quot; viewBox=&quot;0 0 20 21&quot; fill=&quot;none&quot; aria-hidden=&quot;true&quot; focusable=&quot;false&quot;&gt;
+            &lt;path d=&quot;M15.2793 7.71101C15.539 7.45131 15.961 7.45131 16.2207 7.71101C16.4804 7.97071 16.4804 8.39272 16.2207 8.65242L10.4707 14.4024C10.211 14.6621 9.78902 14.6621 9.52932 14.4024L3.77932 8.65242L3.69436 8.54792C3.52385 8.28979 3.55205 7.93828 3.77932 7.71101C4.00659 7.48374 4.3581 7.45554 4.61623 7.62605L4.72073 7.71101L10 12.9903L15.2793 7.71101Z&quot; fill=&quot;currentColor&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;0.6&quot; /&gt;
+          &lt;/svg&gt;
+        &lt;/summary&gt;
+        &lt;div class=&quot;viz-carousel-options&quot;&gt;&lt;/div&gt;
+      &lt;/details&gt;
+      &lt;button type=&quot;button&quot; class=&quot;viz-carousel-next cursor-interaction&quot;&gt;&lt;i data-lucide=&quot;chevron-right&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;`;
+      const previous = controls.querySelector(&quot;.viz-carousel-previous&quot;);
+      const next = controls.querySelector(&quot;.viz-carousel-next&quot;);
+      const picker = controls.querySelector(&quot;.viz-carousel-picker&quot;);
+      const summary = picker.querySelector(&quot;summary&quot;);
+      const count = controls.querySelector(&quot;.viz-carousel-count&quot;);
+      const name = controls.querySelector(&quot;.viz-carousel-name&quot;);
+      const options = controls.querySelector(&quot;.viz-carousel-options&quot;);
+      const status = document.createElement(&quot;span&quot;);
+      status.className = &quot;sr-only&quot;;
+      status.setAttribute(&quot;role&quot;, &quot;status&quot;);
+      status.setAttribute(&quot;aria-live&quot;, &quot;polite&quot;);
+      status.setAttribute(&quot;aria-atomic&quot;, &quot;true&quot;);
+      previous.setAttribute(
+        &quot;aria-label&quot;,
+        root.dataset.previousLabel ?? &quot;Previous variant&quot;,
+      );
+      next.setAttribute(&quot;aria-label&quot;, root.dataset.nextLabel ?? &quot;Next variant&quot;);
+
+      let active = 0;
+      let mousePointerId = null;
+      let summaryPointerHandled = false;
+      summary.addEventListener(&quot;pointerdown&quot;, (event) =&gt; {
+        summaryPointerHandled =
+          event.pointerType === &quot;mouse&quot; &amp;&amp; event.button === 0 &amp;&amp; !event.ctrlKey;
+        if (!summaryPointerHandled) {
+          return;
+        }
+        event.preventDefault();
+        summary.focus({ preventScroll: true });
+        picker.open = !picker.open;
+        mousePointerId = picker.open ? event.pointerId : null;
+      });
+      summary.addEventListener(&quot;click&quot;, (event) =&gt; {
+        if (summaryPointerHandled &amp;&amp; event.detail &gt; 0) {
+          event.preventDefault();
+        }
+      });
+      const choices = panels.map((panel, index) =&gt; {
+        const choice = document.createElement(&quot;button&quot;);
+        choice.type = &quot;button&quot;;
+        choice.className = &quot;cursor-interaction&quot;;
+        choice.textContent = panel.dataset.variant;
+        choice.addEventListener(&quot;click&quot;, () =&gt; {
+          select(index);
+          summary.focus();
+        });
+        choice.addEventListener(&quot;pointerup&quot;, (event) =&gt; {
+          if (
+            picker.open &amp;&amp;
+            event.pointerType === &quot;mouse&quot; &amp;&amp;
+            event.button === 0 &amp;&amp;
+            event.pointerId === mousePointerId
+          ) {
+            choice.click();
+          }
+        });
+        options.appendChild(choice);
+        return choice;
+      });
+      const select = (index) =&gt; {
+        const changed = active !== index;
+        active = index;
+        panels.forEach((panel, position) =&gt; {
+          panel.hidden = position !== active;
+          choices[position].setAttribute(
+            &quot;aria-current&quot;,
+            String(position === active),
+          );
+        });
+        root.dataset.activeVariant = panels[active].dataset.variant;
+        count.textContent = `${active + 1} / ${panels.length}`;
+        name.textContent = panels[active].dataset.variant;
+        picker.open = false;
+        mousePointerId = null;
+        if (changed) {
+          status.textContent = `${count.textContent}: ${name.textContent}`;
+        }
+      };
+      previous.addEventListener(&quot;click&quot;, () =&gt;
+        select((active + panels.length - 1) % panels.length),
+      );
+      next.addEventListener(&quot;click&quot;, () =&gt;
+        select((active + 1) % panels.length),
+      );
+      picker.addEventListener(&quot;keydown&quot;, (event) =&gt; {
+        if (event.key === &quot;Escape&quot; &amp;&amp; picker.open) {
+          event.preventDefault();
+          picker.open = false;
+          mousePointerId = null;
+          summary.focus();
+          return;
+        }
+        if (event.altKey || event.ctrlKey || event.metaKey) {
+          return;
+        }
+        const index = choices.indexOf(document.activeElement);
+        let nextIndex;
+        if (event.key === &quot;ArrowDown&quot;) {
+          nextIndex = index &lt; 0 ? active : (index + 1) % choices.length;
+        } else if (event.key === &quot;ArrowUp&quot;) {
+          nextIndex = index &lt; 0 ? active : (index + choices.length - 1) % choices.length;
+        } else if (picker.open &amp;&amp; event.key === &quot;Home&quot;) {
+          nextIndex = 0;
+        } else if (picker.open &amp;&amp; event.key === &quot;End&quot;) {
+          nextIndex = choices.length - 1;
+        } else {
+          return;
+        }
+        event.preventDefault();
+        picker.open = true;
+        choices[nextIndex].focus();
+      });
+      picker.addEventListener(&quot;focusout&quot;, (event) =&gt; {
+        if (!picker.contains(event.relatedTarget)) {
+          picker.open = false;
+          mousePointerId = null;
+        }
+      });
+      const dismiss = (event) =&gt; {
+        if (!summary.contains(event.target)) {
+          mousePointerId = null;
+        }
+        if (!picker.contains(event.target)) {
+          picker.open = false;
+        }
+      };
+      const endPointerSelection = () =&gt; {
+        mousePointerId = null;
+      };
+      const sizePicker = () =&gt; {
+        root.style.setProperty(
+          &quot;--viz-carousel-picker-height&quot;,
+          `${picker.open ? options.offsetHeight : 0}px`,
+        );
+      };
+      picker.addEventListener(&quot;toggle&quot;, sizePicker);
+      window.addEventListener(&quot;resize&quot;, sizePicker);
+      document.addEventListener(&quot;pointerdown&quot;, dismiss);
+      document.addEventListener(&quot;pointerup&quot;, endPointerSelection);
+      document.addEventListener(&quot;pointercancel&quot;, endPointerSelection);
+      window.addEventListener(&quot;blur&quot;, endPointerSelection);
+      window.addEventListener(
+        &quot;pagehide&quot;,
+        () =&gt; {
+          document.removeEventListener(&quot;pointerdown&quot;, dismiss);
+          document.removeEventListener(&quot;pointerup&quot;, endPointerSelection);
+          document.removeEventListener(&quot;pointercancel&quot;, endPointerSelection);
+          window.removeEventListener(&quot;blur&quot;, endPointerSelection);
+          window.removeEventListener(&quot;resize&quot;, sizePicker);
+        },
+        { once: true },
+      );
+      root.append(controls, status);
+      select(0);
+    }
+  })();
+&lt;/script&gt;
+&lt;script id=&quot;codex-visualization-lucide&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+(() =&gt; {
+  const initialize = () =&gt; {
+    globalThis.lucide?.createIcons({ attrs: { width: 16, height: 16 } });
+  };
+  if (globalThis.lucide != null) {
+    initialize();
+    return;
+  }
+  document
+    .getElementById(&quot;codex-visualization-lucide&quot;)
+    ?.addEventListener(&quot;load&quot;, initialize, { once: true });
+})();
+&lt;/script&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+"></iframe>
+
+<script>(() => {
+  const frame = document.getElementById("codex-visualization");
+  if (!(frame instanceof HTMLIFrameElement)) {
+    return;
+  }
+  const isShare = document.documentElement.classList.contains(
+    "visualization-share-root",
+  );
+  let viewportHeight = globalThis.innerHeight;
+  let sizeFingerprint = null;
+  let sizeWriteTimeout;
+  let lastSize = null;
+  let pendingSize = null;
+  const storageKey = `codex:visualization-widget-state-v2:${JSON.stringify([
+    globalThis.location.pathname,
+    globalThis.location.search,
+  ])}`;
+  const sizeStorageKey = `${storageKey}:share-size-v1`;
+  const parseState = (serializedState) => {
+    if (
+      typeof serializedState !== "string" ||
+      new TextEncoder().encode(serializedState).length > 16 * 1024
+    ) {
+      throw new TypeError(
+        "Widget state must be a JSON object of at most 16 KiB",
+      );
+    }
+    /** @type {unknown} */
+    const state = JSON.parse(serializedState);
+    if (
+      state == null ||
+      typeof state !== "object" ||
+      Array.isArray(state) ||
+      ("imageIds" in state &&
+        (!Array.isArray(state.imageIds) || state.imageIds.length > 0))
+    ) {
+      throw new TypeError("Widget state must be a JSON object");
+    }
+    const storedState = { modelContent: null, privateContent: null, ...state };
+    const canonicalState = JSON.stringify(
+      storedState,
+      (_key, /** @type {unknown} */ value) => {
+        if (typeof value === "number" && !Number.isFinite(value)) {
+          throw new TypeError("Widget state must contain finite numbers");
+        }
+        return value;
+      },
+    );
+    if (new TextEncoder().encode(canonicalState).length > 16 * 1024) {
+      throw new TypeError(
+        "Widget state must be a JSON object of at most 16 KiB",
+      );
+    }
+    return storedState;
+  };
+  let storage = null;
+  let state = null;
+  try {
+    const localStorage = globalThis.localStorage;
+    const probeKey = `${storageKey}:probe`;
+    localStorage.setItem(probeKey, "1");
+    localStorage.removeItem(probeKey);
+    storage = localStorage;
+    const savedState = storage.getItem(storageKey);
+    if (savedState != null) {
+      try {
+        state = parseState(savedState);
+      } catch {
+        // Invalid saved state does not disable future writes.
+      }
+    }
+  } catch {
+    storage = null;
+  }
+  const persistSize = () => {
+    globalThis.clearTimeout(sizeWriteTimeout);
+    if (pendingSize == null) {
+      return;
+    }
+    try {
+      storage?.setItem(sizeStorageKey, pendingSize);
+    } catch {
+      // A denied or full cache must not affect the visualization.
+    }
+    pendingSize = null;
+  };
+  if (isShare) {
+    globalThis.addEventListener("pagehide", persistSize);
+  }
+  const initialGlobals = {
+    widgetState: state,
+    statePersistence: storage == null ? "none" : "local",
+  };
+
+  const channel = new MessageChannel();
+  channel.port1.addEventListener("message", (event) => {
+    const data = event.data;
+    if (typeof data !== "object" || data == null) {
+      return;
+    }
+    if (data.type === "widget-state-write") {
+      if (!Number.isSafeInteger(data.id) || data.id <= 0) {
+        return;
+      }
+      let ok = false;
+      try {
+        if (storage != null) {
+          const state = parseState(data.state);
+          storage.setItem(storageKey, JSON.stringify(state));
+          ok = true;
+        }
+      } catch {
+        // Storage denial, quota limits, and invalid state return a failed receipt.
+      }
+      channel.port1.postMessage({
+        type: "widget-state-result",
+        id: data.id,
+        ok,
+      });
+      return;
+    }
+    if (data.type === "height") {
+      const height = data.height;
+      if (
+        typeof height !== "number" ||
+        !Number.isFinite(height) ||
+        height < 0
+      ) {
+        return;
+      }
+      if (height <= 10_000) {
+        const width = isShare && storage != null ? frame.clientWidth : null;
+        frame.style.height = Math.ceil(height) + "px";
+        if (isShare && storage != null) {
+          const size = JSON.stringify({
+            fingerprint: sizeFingerprint,
+            width,
+            viewportHeight: globalThis.innerHeight,
+            dark: globalThis.matchMedia("(prefers-color-scheme: dark)").matches,
+            scale: globalThis.devicePixelRatio,
+            height: Math.ceil(height),
+          });
+          if (size !== lastSize) {
+            lastSize = size;
+            pendingSize = size;
+            globalThis.clearTimeout(sizeWriteTimeout);
+            sizeWriteTimeout = globalThis.setTimeout(persistSize, 100);
+          }
+        }
+      }
+      if (isShare) {
+        // Keep unusually tall content accessible without accepting an unbounded height.
+        if (height > 10_000 && Number.parseFloat(frame.style.height) === 0) {
+          frame.style.removeProperty("height");
+        }
+        frame.scrolling = height > 10_000 ? "auto" : "no";
+        document.documentElement.classList.add("visualization-share-ready");
+      }
+      return;
+    }
+    if (data.type === "scroll-to") {
+      const top = data.top;
+      if (
+        typeof top === "number" &&
+        Number.isFinite(top) &&
+        top >= 0 &&
+        globalThis.navigator.userActivation?.isActive === true
+      ) {
+        globalThis.scrollTo({
+          top: Math.ceil(
+            globalThis.scrollY + frame.getBoundingClientRect().top + top,
+          ),
+        });
+      }
+      return;
+    }
+    if (data.type === "open-external") {
+      const rawHref = data.href;
+      if (typeof rawHref !== "string") {
+        return;
+      }
+      let href;
+      try {
+        const url = new URL(rawHref, document.baseURI);
+        if (url.protocol !== "https:") {
+          return;
+        }
+        href = url.href;
+      } catch {
+        return;
+      }
+      if (globalThis.navigator.userActivation?.isActive === true) {
+        const anchor = document.createElement("a");
+        anchor.href = href;
+        anchor.rel = "noopener noreferrer";
+        anchor.target = "_blank";
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+      }
+      return;
+    }
+    if (data.type === "follow-up") {
+      const prompt = data.prompt;
+      if (
+        typeof prompt !== "string" ||
+        globalThis.navigator.userActivation?.isActive !== true
+      ) {
+        return;
+      }
+      const title = data.title;
+      globalThis.prompt(typeof title === "string" ? title : prompt, prompt);
+    }
+  });
+  channel.port1.start();
+  const srcdoc = frame.dataset.srcdoc;
+  if (srcdoc == null) {
+    return;
+  }
+  globalThis.addEventListener("resize", () => {
+    const height = Number.parseFloat(frame.style.height);
+    if (!isShare && (!Number.isFinite(height) || height <= viewportHeight)) {
+      frame.style.removeProperty("height");
+    }
+    viewportHeight = globalThis.innerHeight;
+    channel.port1.postMessage({ type: "measure" });
+  });
+  frame.addEventListener(
+    "load",
+    () => {
+      frame.contentWindow?.postMessage(
+        { type: "codex-visualization-initialize" },
+        "*",
+        [channel.port2],
+      );
+    },
+    { once: true },
+  );
+  // Match the trusted bootstrap element, not the same text in an authored title.
+  const frameHtml = srcdoc.replace(
+    '<script type="application/json" id="codex-visualization-widget-state">__CODEX_VISUALIZATION_WIDGET_STATE__<\/script>',
+    () =>
+      '<script type="application/json" id="codex-visualization-widget-state">' +
+      JSON.stringify(initialGlobals).replaceAll("<", "\\u003c") +
+      "<\/script>",
+  );
+  if (isShare && storage != null) {
+    // Fingerprint the rendered document, including restored widget state, without
+    // storing its content. This is a layout cache, not a security identity.
+    let hash = 5381;
+    for (let index = 0; index < frameHtml.length; index += 1) {
+      hash = (hash * 33 + frameHtml.charCodeAt(index)) % 4_294_967_296;
+    }
+    sizeFingerprint = hash.toString(36);
+    try {
+      const size = JSON.parse(storage.getItem(sizeStorageKey) ?? "null");
+      if (
+        size?.fingerprint === sizeFingerprint &&
+        size.width === frame.clientWidth &&
+        size.viewportHeight === globalThis.innerHeight &&
+        size.dark ===
+          globalThis.matchMedia("(prefers-color-scheme: dark)").matches &&
+        size.scale === globalThis.devicePixelRatio &&
+        typeof size.height === "number" &&
+        Number.isFinite(size.height) &&
+        size.height >= 0 &&
+        size.height <= 10_000
+      ) {
+        frame.style.height = size.height + "px";
+      }
+    } catch {
+      // Ignore missing or invalid cache entries and measure the live frame.
+    }
+  }
+  frame.srcdoc = frameHtml;
+  delete frame.dataset.srcdoc;
+})();
+</script>
+</body>
+</html>
