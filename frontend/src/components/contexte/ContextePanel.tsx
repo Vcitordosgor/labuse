@@ -197,8 +197,9 @@ function LigneCarte({ id, ic, titre, sous, val, ton, badge, defaultOpen, chiffre
   const acc = useContext(CommuneAccCtx)
   const open = acc.openId === id
   const col = ton ? TON_COL[ton] : undefined
-  // RECETTE-1 D4 — le PREMIER tiroir monté revendique l'ouverture par défaut (une seule fois).
-  useEffect(() => { acc.claimDefault(id) }, [])   // eslint-disable-line react-hooks/exhaustive-deps
+  // RETOURS-19 (pt 4) — la fiche commune s'ouvre TOUTES SECTIONS FERMÉES, Identité comprise :
+  // plus aucun tiroir ne revendique l'ouverture par défaut (openId reste null au montage).
+  void acc.claimDefault
   // RECETTE-1 D4/D3 — à l'ouverture (par l'utilisateur), le titre de la section remonte EN HAUT du
   // conteneur défilant.
   // RETOURS-18 (pt 8) — MAIS la fiche commune s'ouvre EN HAUT (bandeau 9 chiffres visible), pas sur

@@ -203,7 +203,9 @@ export function CopiloteView() {
 
   // ── ACCUEIL (vide) — « Bonjour. Sur quoi on travaille ? » + six suggestions. ──
   const accueil = (
-    <div data-accueil className="flex min-h-full flex-col items-center justify-center px-6 py-10">
+    // RETOURS-19 (pt 12) — les suggestions se posent JUSTE AU-DESSUS de la zone de texte (justify-end) :
+    // plus de grand vide entre les exemples et le champ ; l'espace libre remonte au-dessus du titre.
+    <div data-accueil className="flex min-h-full flex-col items-center justify-end px-6 pb-6 pt-10">
       <div className="w-full max-w-[760px] text-center">
         {/* RETOURS-18 (pt 15) — le « C » (pastille), le « Bonjour. » et le sous-titre sont RETIRÉS :
             il ne reste que le titre « Sur quoi on travaille ? », au-dessus des suggestions. */}

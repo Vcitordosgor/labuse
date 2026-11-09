@@ -320,8 +320,9 @@ export function SousAccordion({ label, count, children, dataAttr, defaultOpen = 
   return (
     <div className="rounded-md">
       <button type="button" {...extra} aria-expanded={open} onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center gap-2 rounded-md border border-line-2 bg-surface-3/60 px-2.5 py-1.5 text-left text-[12px] font-medium text-txt transition-colors duration-quick hover:border-mint/50 hover:text-txt-hi">
-        <span className="min-w-0 truncate">{label}</span>
+        className="flex w-full items-start gap-2 rounded-md border border-line-2 bg-surface-3/60 px-2.5 py-1.5 text-left text-[12px] font-medium text-txt transition-colors duration-quick hover:border-mint/50 hover:text-txt-hi">
+        {/* RETOURS-19 (pt 7) — libellé long passe À LA LIGNE (jamais coupé) ; le compte reste visible à droite. */}
+        <span className="min-w-0 flex-1 break-words leading-snug">{label}</span>
         <span className="ml-auto flex shrink-0 items-center gap-1.5">
           {count != null && <span className="text-[10.5px] tabular-nums text-txt-dim">{count}</span>}
           <Chevron open={open} />
@@ -339,10 +340,11 @@ export function LigneChoix({ label, on, onClick, sub, dataAttr }:
   const extra = dataAttr ? { [dataAttr]: true } : {}
   return (
     <button type="button" {...extra} aria-pressed={on} onClick={onClick}
-      className={`flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[12px] transition-colors duration-quick ${
+      className={`flex w-full items-start gap-2 rounded-md px-2.5 py-1.5 text-left text-[12px] transition-colors duration-quick ${
         on ? 'bg-mint font-medium text-mint-on' : 'text-txt-mut hover:bg-mint/15 hover:text-txt'}`}>
-      <span className="min-w-0 flex-1 truncate">{label}</span>
-      {sub != null && <span className={`shrink-0 text-[10.5px] tabular-nums ${on ? 'text-mint-on/70' : 'text-txt-dim'}`}>{sub}</span>}
+      {/* RETOURS-19 (pt 7) — libellé long À LA LIGNE (plus de texte coupé) ; le compte reste visible à droite. */}
+      <span className="min-w-0 flex-1 break-words leading-snug">{label}</span>
+      {sub != null && <span className={`mt-px shrink-0 text-[10.5px] tabular-nums ${on ? 'text-mint-on/70' : 'text-txt-dim'}`}>{sub}</span>}
       {on && (
         <svg aria-hidden viewBox="0 0 12 12" className="h-3 w-3 shrink-0">
           <polyline points="2.5,6.5 5,9 9.5,3.5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
@@ -1130,14 +1132,14 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
              franc (fond + bordure visibles) AU-DESSUS, primaire dominant (plus haut, flèche
              dessinée — même patron que « Commencer »). La carte ne bouge QU'AU geste. ── */
           <div data-appel className="flex flex-col gap-2">
-            {/* ECRANS-NOV-1 §2 — « Analyser avec LABUSE » devient le PRIMAIRE (l'action dominante du pied,
-                maquette) ; « Voir la liste » et « Réinitialiser » viennent DESSOUS. La ligne « N à instruire ·
-                N écartées » est RETIRÉE (le compteur « N parcelles correspondent à vos critères » suffit). */}
+            {/* RETOURS-19 (pt 8) — ORDRE du pied : « Voir la liste brute » D'ABORD (secondaire franc),
+                PUIS « Analyser avec LABUSE » (primaire dominant), PUIS « Réinitialiser » (lien discret).
+                La ligne « N à instruire · N écartées » reste retirée (le compteur de correspondances suffit). */}
+            <Bouton data-voir-factuel niveau="secondaire" ton="vert" onClick={voirFactuel} className="w-full">
+              Voir la liste brute
+            </Bouton>
             <Bouton data-analyser-btn niveau="primaire" ton="vert" onClick={lancer} className="w-full">
               Analyser avec LABUSE
-            </Bouton>
-            <Bouton data-voir-factuel niveau="secondaire" ton="vert" onClick={voirFactuel} className="w-full">
-              Voir la liste
             </Bouton>
             <button data-reinitialiser onClick={resetTout}
               className="mx-auto min-h-7 px-1 py-0.5 text-[11px] text-txt-dim underline decoration-txt-dim/30 underline-offset-2 transition-colors duration-quick hover:text-danger hover:decoration-danger-line">

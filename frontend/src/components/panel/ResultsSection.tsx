@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { Fragment, useEffect, useMemo, useState } from 'react'
-import { getAnalyse, getAnalyseStats, getCommunes, getFiltre, getParcelsGeojson, getResults, getScoringFraction, type BandeGroupe, type ClasserKey, type QualiteKey, type SignalNiveauKey, type SortKey } from '../../lib/api'
+import { getAnalyse, getAnalyseStats, getCommunes, getFiltre, getParcelsGeojson, getResults, type BandeGroupe, type ClasserKey, type QualiteKey, type SignalNiveauKey, type SortKey } from '../../lib/api'
 import { hasScopeFilters, matchAll, type ParcelProps } from '../../lib/filters'
 import { surfaceTerrain } from '../../lib/surface'
 import { roughCentroid } from '../../lib/geo'
@@ -198,8 +198,10 @@ const SORTS: { key: SortKey; label: string; tip: string; dir?: string }[] = [
 // RECETTE-6 (A1, décision Vic) — le BOUTON « Adresse » est RETIRÉ de la barre : le tri « adressées
 // d'abord » reste le DÉFAUT (en arrière-plan, cf. le `useState`/`useEffect` ci-dessous qui garde
 // 'adresse'), il ne s'affiche simplement plus comme bouton. Seule « Surface » reste cliquable.
+// RETOURS-19 (pt 9) — dans la liste brute, l'unique tri porte le libellé explicite « Trier par surface »
+// (le ↓/↑ indique le sens, inversible au clic), au lieu d'une pastille « Surface » muette.
 const FACTUAL_SORTS: { key: SortKey; label: string; tip: string; dir?: string }[] = [
-  { key: 'surface', label: CLIENT.tri.surface, tip: CLIENT.tri.surfaceTip, dir: '↓' },
+  { key: 'surface', label: 'Trier par surface', tip: CLIENT.tri.surfaceTip, dir: '↓' },
 ]
 
 // M55-H point 5 (décision Vic) — ordre des GROUPES de la liste d'analyse (identique au CASE
@@ -508,8 +510,6 @@ function BandeHeader({ bande }: { bande: Bande }) {
 export function ResultsSection() {
   const { filters, query, zone, resetFilters, commune, setCommune } = useApp()
   // CLASSEMENT-USAGE-1 — tri par usage (listes + carte), mémorisé par compte.
-  // FRONT-CHIFFRES-2 (F26) — seuil bas « peu probable » servi (config scoring_client) pour le « i ».
-  const dPeuProbable = useQuery({ queryKey: ['scoring-fraction'], queryFn: getScoringFraction, staleTime: 60 * 60 * 1000 }).data?.seuil_bas_denominateur ?? 50
   const ile = commune == null   // mode « Toute l'île » : liste + compteurs servis en SQL
   // M55-G point 8 — décision Vic : sans analyse demandée, l'avis LABUSE ne s'affiche pas.
   // Mode FACTUEL (analyse OFF) : liste neutre, tri Surface seul, aucune ventilation d'opinion.
@@ -689,13 +689,8 @@ export function ResultsSection() {
         {/* ECRANS-NOV-1 §2 — l'ancien tri « Usage » (Va se vendre / À construire) est RETIRÉ de l'écran :
             le classement vit désormais dans « Classer par » (bloc Score/Signal), toujours dans la bande. */}
         {!analyse && <div data-tri-bar className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
-          <span className="flex h-[15px] shrink-0 items-center gap-1.5 text-[10px] uppercase tracking-wide text-txt-dim">Trier
-            {/* M55-F point 6 : le « i » des deux lunettes (opportunité globale vs probabilité seule) */}
-            <Tip garder side="top" tip={CLIENT.tri.lunettes(dPeuProbable)}>
-              <span data-tri-info role="button" tabIndex={0} aria-label="Comprendre les deux tris"
-                className="flex h-[15px] w-[15px] items-center justify-center rounded-full border border-line-2 text-[9px] font-bold normal-case leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
-            </Tip>
-          </span>
+          {/* RETOURS-19 (pt 9) — plus de préfixe « Trier » ni d'info « deux lunettes » (sans objet en
+              mode factuel) : le seul bouton dit déjà « Trier par surface ». */}
           {/* DA-FIX-3 Lot 3 (DA-027) — barre de tri extraite vers le Tri partagé. Le sens (inversion
               Surface ↓/↑, flèche `dir`) reste calculé ici : `suffix` porte la flèche quand la pill est
               active, `isActive` et `onSelect` gardent EXACTEMENT le comportement d'avant. */}

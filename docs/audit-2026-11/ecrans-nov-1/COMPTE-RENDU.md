@@ -242,3 +242,71 @@ par point** dans `captures/retours-18/`. Hook VERT (tsc 0, vitest, build, secret
 **Note d'exécution** — le pt 21 (gros rewrite de `FiltreLabuse.tsx`) a été confié à un **agent frais**
 (scope : ce seul fichier, sans navigateur) pendant que je faisais les pts 1-20 ; vérifié + capturé
 ensuite dans l'app. (Leçon de l'écran 2 appliquée : agent frais, pas un fork.)
+
+# RETOURS-19 — recette de Vic sur RETOURS-18 (même branche, pas de merge)
+
+**15 points**, **une capture après par point** dans `captures/retours-19/`, et pour le **point 3 une
+mesure** (tableau avant/après). Hook VERT (tsc 0, vitest **310**, build, secrets).
+
+1. **Accueil centré** (`LeftPanel.tsx`) — titre + 5 cartes **centrés verticalement** sous Filtres
+   (`justify-center`), cartes **64 px** (`.acc-entry`), plus de grand vide en bas. *(01-accueil-centre)*
+2. **Notifications** (`Header.tsx`, `notifBell.test.tsx`) — le compteur compte les **non vues**
+   (`vuMax` persisté en `localStorage`, `e.id > vuMax`) ; **ouvrir la cloche le remet à 0**
+   (`marquerVues`) ; chaque notif garde **son point jusqu'au clic** (`lu` + `readOne` par ligne).
+   Test : badge « 3 non vues » → clic cloche → « Notifications » + `vuMax=12` ; clic ligne → POST /read.
+   *(02-notifications)*
+3. **3D — le zoom ne saute plus** (`MapView.tsx`) — cause : `setTerrain` (exagération DEM) **recadre**
+   pour garder un centre élevé en vue (asynchrone, au chargement du DEM). Fix : on **mémorise** zoom+centre
+   avant, on **restaure** par `setZoom`/`setCenter` (qui **préservent le pitch**, contrairement à `jumpTo`)
+   sur `idle` **et** à 900/1300/1800 ms, APRÈS le basculement du pitch (`easeTo pitch:55`). Mesuré dans
+   Playwright depuis une parcelle sélectionnée (haute altitude), les 3 boutons :
+
+   | Bouton               | avant (RETOURS-18)        | après (RETOURS-19)              |
+   |----------------------|---------------------------|---------------------------------|
+   | 3D                   | z 17 → 17 (pitch 0→55)    | z 17 → 17, pitch 0→55           |
+   | Relief               | z 17 → **15,81** (saut)   | z 17 → **17**, pitch 0→55       |
+   | Bâtiments + relief   | z 17 → **15,81** (saut)   | z 17 → **17**, pitch 0→55       |
+
+   Seule l'inclinaison change, zoom+centre identiques. *(03-3d-zoom-stable)*
+4. **Fiche commune — toutes sections fermées à l'ouverture** (`ContextePanel.tsx`) — plus aucun tiroir ne
+   revendique l'ouverture par défaut (`openId` reste `null`), **Identité comprise**. Vérifié : 0/9 ouvert.
+   *(04-fiche-commune-fermee)*
+5. **Bouton « Fiche commune »** (`Header.tsx`) — **style secondaire** identique à « Signaler » (liseré
+   neutre au repos, aplat vert plein + encre sombre à l'ouverture), **plus d'ambre**. *(05-bouton-fiche-commune)*
+6. **Contours de focus** (`index.css`, `@layer base`) — `*:focus:not(:focus-visible){outline:none
+   !important}` (aucun contour bleu navigateur, à la souris) + `*:focus-visible{outline:2px solid
+   var(--mint)!important}` (clavier seul = **contour vert DA**). Mesuré : Tab → `rgb(74,222,128)` 2 px.
+   *(06-focus-vert)*
+7. **Filtres — aucun texte coupé** (`FiltreLabuse.tsx`) — libellés longs **à la ligne**
+   (`break-words leading-snug`, `items-start`) au `Group` et à `LigneChoix`, **comptes visibles à droite**
+   (`shrink-0`). Mesuré : 0 label clippé dans le panneau (342 px). *(07-filtres-texte)*
+8. **Pied des filtres** (`FiltreLabuse.tsx`) — ordre **« Voir la liste brute » → « Analyser avec LABUSE »
+   → « Réinitialiser »** (mesuré : tops 469 < 509 < …). *(08-pied-filtres)*
+9. **Liste brute — bouton « Trier par surface »** (`ResultsSection.tsx`) — l'unique tri factuel porte ce
+   libellé explicite (↓/↑ inversible) ; préfixe « Trier » + info « deux lunettes » (sans objet en factuel)
+   retirés. *(09-liste-brute-tri)*
+10. **Fiche parcelle — six tuiles séparées** (`index.css` `.fiche-v6 .stats`/`.stat`) — coins arrondis
+    (6 px), espacement (gap 6 px), fond relevé + liseré par tuile, **marges haut/bas égales** (12/14) —
+    comme le bandeau de la fiche commune ; fini la grille soudée. *(10-fiche-tuiles)*
+11. **« Réseaux et desserte » sur une ligne** (`index.css` `.fiche-v6 .t-title`) — `white-space:nowrap`
+    (+ ellipse de secours) ; vérifié sur **tous** les titres de section (dont « Risques et environnement »),
+    0 clippé. *(11-titres-section)*
+12. **Copilote — exemples rapprochés de la zone de texte** (`CopiloteView.tsx`) — l'accueil s'ancre
+    `justify-end` : les suggestions se posent **juste au-dessus du champ** (écart 46 px, l'espace libre
+    remonte au-dessus du titre), plus de grand vide. *(12-copilote)*
+13. **« + Projet » — survol vert opaque + texte sombre** (déjà câblé RETOURS-18, re-vérifié) — fond
+    dégradé `--fill-mint` (opaque) + encre `--ink`, **comme « + CRM »**. Capture **pendant le survol**.
+    *(13-projet-hover)*
+14. **CRM** (`Kanban.tsx`) — note **plus coupée en haut** (plafond de hauteur + défilement interne
+    retirés, elle s'enroule en entier) ; **IDU déjà cliquable → fiche parcelle** (`focusParcelle(fiche:true)`,
+    conservé) ; phrase « Contact saisi manuellement — … aucune donnée propriétaire automatiquement »
+    **retirée**. *(14-crm)*
+15. **Documents — « Étude de zone » même taille** (`DocumentsView.tsx`) — `h-full` retiré de `DocCard` :
+    une carte **seule** dans sa colonne ne s'étire plus à toute la hauteur (les colonnes sont étirées par
+    la grille). Mesuré : 140 px comme les autres (au lieu d'une tuile géante). *(15-documents)*
+
+**Pièges rencontrés** — (1) un `{/* … */}` **premier enfant après `return (`** = deux nœuds racine →
+`PARSE_ERROR` (encore, dans `DocumentsView.tsx`) ; corrigé en `//` au-dessus du `return`. (2) `--fill-mint`
+est un **dégradé** (`linear-gradient`) : `getComputedStyle(...).backgroundColor` lit transparent alors que
+le fond est bien un vert opaque (c'est `backgroundImage`) — vérifier le bon ⚡ pour ne pas croire à une
+régression. (3) les outils Playwright `click`/`hover` attendent le paramètre **`target`** (pas `element`/`ref`).

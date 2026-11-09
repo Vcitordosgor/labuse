@@ -117,9 +117,11 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, onEditNote, column
       {/* RETOURS-17 — note AFFICHÉE EN ENTIER, en LECTURE SEULE (clic = ouvrir le détail de la carte,
           section « Notes »). Plus de champ de saisie inline : l'édition vit dans le panneau onEdit.
           Hauteur bornée + défilement interne : une note longue ne casse pas la colonne. */}
+      {/* RETOURS-19 (pt 14) — la note s'affiche EN ENTIER, jamais coupée en haut : plus de hauteur
+          bornée ni de défilement interne (qui masquait la première ligne). Elle s'enroule librement. */}
       {note && (
         <button data-crm-note-edit onClick={(ev) => { stop(ev); onEditNote() }}
-          className="max-h-[6rem] w-full overflow-y-auto overscroll-contain whitespace-pre-wrap [overflow-wrap:anywhere] rounded-md px-0 text-left text-[12.5px] leading-snug text-txt transition-colors duration-quick hover:text-txt-hi">
+          className="w-full whitespace-pre-wrap [overflow-wrap:anywhere] rounded-md px-0 text-left text-[12.5px] leading-snug text-txt transition-colors duration-quick hover:text-txt-hi">
           {note}
         </button>
       )}
@@ -278,9 +280,8 @@ function CardEditPanel({ e, meta, onCancel, onSave, onMove, saving, focusNotes }
             <textarea ref={notesRef} data-crm-notes value={notes} maxLength={4000} rows={3} onChange={(ev) => setNotes(ev.target.value)}
               className={`${inputCls} resize-none`} />
           </label>
-          <p className="text-[10px] leading-snug text-txt-faint">
-            Contact saisi manuellement — LA BUSE ne récupère aucune donnée propriétaire automatiquement.
-          </p>
+          {/* RETOURS-19 (pt 14) — la mention « Contact saisi manuellement — … aucune donnée
+              propriétaire automatiquement » est RETIRÉE (demande Vic). */}
         </div>
         <div className="flex justify-end gap-2 border-t border-line-2 px-5 py-3">
           <Bouton niveau="lien" onClick={onCancel}>Annuler</Bouton>

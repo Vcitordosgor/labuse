@@ -333,10 +333,10 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
   // ECRANS-NOV-1 §3 — SIX entrées identiques (58 px), sans label « Par où commencer » ni ligne de
   // pied : le titre, puis les six portes. Tout tient dans le panneau 342 × 640 sans défilement.
   const nOutils = MODULES.filter((m) => !m.hidden).length
-  // RETOURS-18 (pt 1) — panneau d'accueil FIGÉ (plus de défilement) : les 5 entrées + le titre
-  // tiennent dans le volet. L'entrée « Radar » est RETIRÉE ; les espaces sont réajustés.
+  // RETOURS-19 (pt 1) — le titre + les 5 cartes (64 px) sont CENTRÉS VERTICALEMENT dans l'espace sous
+  // « Filtres » (`justify-center`) : plus de grand vide en bas. Panneau figé (pas de défilement).
   return (
-    <div data-accueil className="flex min-h-0 flex-1 flex-col overflow-hidden px-5 py-4">
+    <div data-accueil className="flex min-h-0 flex-1 flex-col justify-center overflow-hidden px-5 py-4">
       {/* B1 — la promesse (2e ligne en --mint) */}
       <p className="text-[17px] font-medium leading-tight text-txt">Tout le foncier de La Réunion.</p>
       <p className="mb-5 text-[17px] font-medium leading-tight text-mint">Au même endroit.</p>

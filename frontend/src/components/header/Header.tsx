@@ -262,10 +262,12 @@ function CommuneSelect() {
   const pick = (c: string) => { setContexteCommune(c); setOpen(false) }
   return (
     <div className="relative shrink-0">
-      <button onClick={() => setOpen((o) => !o)} data-commune-select data-fiche-commune-menu
-        className={`flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs transition-colors duration-quick ${
-          open ? 'border-amber bg-amber/[0.12] text-amber' : 'border-amber/40 bg-amber/[0.08] text-amber hover:border-amber'}`}>
-        ⓘ Fiche commune
+      {/* RETOURS-19 (pt 5) — bouton SECONDAIRE de l'en-tête, identique à « Signaler » (plus d'ambre) :
+          liseré neutre au repos, aplat vert plein / encre sombre quand le menu est ouvert. */}
+      <button onClick={() => setOpen((o) => !o)} data-commune-select data-fiche-commune-menu aria-pressed={open}
+        className={`flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs transition-colors duration-quick ${
+          open ? 'border-mint bg-mint font-medium text-mint-ink' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
+        Fiche commune
         <svg viewBox="0 0 10 10" className="h-2.5 w-2.5"><polyline points="2,4 5,7 8,4" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>
       </button>
       {open && (
@@ -321,7 +323,7 @@ function dateFr(iso: string): string {
   return r === '—' ? iso : r
 }
 
-function NotifBell() {
+export function NotifBell() {   // RETOURS-19 (pt 2) — exportée pour le test du compteur « non vues ».
   const [open, setOpen] = useState(false)
   // M104 P3 — la config des recherches sauvegardées (NL, exemples, liste) a déménagé dans la
   // section Surveillance (volet Critères) : la cloche affiche des événements, rien d'autre.
@@ -347,6 +349,8 @@ function NotifBell() {
               style={{ background: e.lu ? 'var(--line-3)' : 'var(--amber)' }} />
         {e.demo && <span className="rounded-full bg-surface-3 px-1.5 py-0.5 text-[8.5px] font-medium text-txt-dim">DÉMO</span>}
         <button onClick={() => {
+            // RETOURS-19 (pt 2) — CLIQUER la notif la marque LUE (son point disparaît), en plus d'ouvrir sa cible.
+            if (!e.lu) readOne.mutate(e.id)
             if (e.idu) { setView('cartes'); select(e.idu) }
             else if (e.lien?.startsWith('/sources')) openSources()
             // VEILLE-2 (Lot 3) — Radar : le lien est l'ANNONCE (http) → ouvrir dans un onglet.
@@ -383,7 +387,19 @@ function NotifBell() {
   // profondeur, même s'il franchissait le filtre serveur — et le compteur « non lues » suit la même
   // liste (plus de badge gonflé par des événements d'exploitation).
   const itemsClient = (ev.data?.items ?? []).filter((e) => e.kind in _NOM_KIND)
-  const unread = itemsClient.filter((e) => !e.lu).length
+  // RETOURS-19 (pt 2) — le COMPTEUR (badge) compte les NON VUES : les événements arrivés depuis la
+  // dernière OUVERTURE de la cloche. Ouvrir la cloche marque tout comme VU (`vuMax` = plus grand id vu,
+  // persisté) → le badge retombe à 0. Le POINT de chaque ligne, lui, reste tant que la notif n'est pas
+  // CLIQUÉE (état `lu`, serveur) — « vu » (badge) et « lu » (point) sont deux choses distinctes.
+  const [vuMax, setVuMax] = useState<number>(() => { try { return Number(localStorage.getItem('labuse:notif-vu-max') || 0) } catch { return 0 } })
+  const nonVues = itemsClient.filter((e) => e.id > vuMax).length
+  const unread = itemsClient.filter((e) => !e.lu).length   // NON LUES — l'en-tête du volet (« Notifications · N ») l'affiche.
+  const marquerVues = () => {
+    const m = itemsClient.reduce((mx, e) => Math.max(mx, e.id), vuMax)
+    if (m !== vuMax) { setVuMax(m); try { localStorage.setItem('labuse:notif-vu-max', String(m)) } catch { /* privé/quota */ } }
+  }
+  // ouvrir la cloche = tout VU (badge → 0) ; fermer n'y touche pas.
+  const toggleCloche = () => setOpen((o) => { const n = !o; if (n) marquerVues(); return n })
   // GB-004 : Escape ferme le dropdown Notifications (il n'avait aucun handler clavier — seul le clic sur
   // le backdrop fermait). Aligné sur le patron des overlays. Listener actif uniquement quand ouvert.
   useEffect(() => {
@@ -404,8 +420,8 @@ function NotifBell() {
       {/* RETOURS-9 (Q9) — la cloche OUVERTE devient pleine de sa couleur (vert, encre sombre), pas un liseré. */}
       {/* NU5-FIX-1 (F4) — label-in-name : le nom accessible CONTIENT le texte visible (« 99+ ») pour que
           la commande vocale (« clique 99+ ») marche et que le lecteur d'écran annonce le compte. */}
-      <button onClick={() => setOpen((o) => !o)}
-        aria-label={unread ? `Notifications ${unread > 99 ? '99+' : unread} non lues` : 'Notifications'}
+      <button onClick={toggleCloche}
+        aria-label={nonVues ? `Notifications ${nonVues > 99 ? '99+' : nonVues} non vues` : 'Notifications'}
         aria-pressed={open}
         className={`relative flex h-9 w-9 items-center justify-center rounded-full border transition-colors duration-quick ${
           open ? 'border-mint bg-mint text-mint-ink' : 'border-line-2 bg-surface-3 text-txt-mut hover:text-txt'}`}>
@@ -413,12 +429,12 @@ function NotifBell() {
           <path d="M10 3 a4 4 0 0 1 4 4 v3 l1.5 2.5 h-11 L6 10 V7 a4 4 0 0 1 4-4Z" fill="none" stroke="currentColor" strokeWidth="1.4" />
           <path d="M8.5 15 a1.5 1.5 0 0 0 3 0" fill="none" stroke="currentColor" strokeWidth="1.4" />
         </svg>
-        {unread > 0 && (
+        {nonVues > 0 && (
           // NU5-FIX-1 (F4) — le compte est DÉCORATIF (déjà porté par l'aria-label « Notifications (N
           // non lues) ») : aria-hidden pour que le texte visible du bouton n'entre pas en conflit avec
           // son nom accessible (label-in-name) et ne soit pas annoncé deux fois.
           <span aria-hidden className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-mint px-1 font-mono text-[9px] font-bold text-mint-ink">
-            {unread > 99 ? '99+' : unread}{/* RETOURS-17 — pastille VERTE (menthe, encre sombre) ; GB-002 : badge capé (le dropdown garde le vrai compte) */}
+            {nonVues > 99 ? '99+' : nonVues}{/* RETOURS-19 (pt 2) — badge = NON VUES (remis à 0 à l'ouverture) ; capé 99+ */}
           </span>
         )}
       </button>

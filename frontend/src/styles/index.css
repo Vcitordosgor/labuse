@@ -59,14 +59,13 @@
 @layer base {
   :disabled, [aria-disabled="true"] { opacity: .4; cursor: not-allowed; }
   :disabled:hover, [aria-disabled="true"]:hover { opacity: .4; }
-  /* RETOURS-18 (pt 16) — plus de DOUBLE contour au focus des CHAMPS : on retire l'outline natif du
-     navigateur ; seul le contour de la DA (bordure/anneau menthe ou mauve au focus, porté par chaque
-     champ) marque le champ actif. Vaut pour TOUS les champs de l'app (input/textarea/select/éditable).
-     Les boutons gardent leur focus-visible (non ciblés ici). */
-  input:focus, input:focus-visible,
-  textarea:focus, textarea:focus-visible,
-  select:focus, select:focus-visible,
-  [contenteditable]:focus, [contenteditable]:focus-visible { outline: none !important; outline-offset: 0 !important; }
+  /* RETOURS-19 (pt 6) — plus AUCUN contour BLEU du navigateur, NULLE PART (champs, boutons, lignes de
+     filtres, « + Projet »…) : au focus SOURIS/programmatique (`:focus:not(:focus-visible)`), outline
+     retiré. Pour la navigation au CLAVIER seulement (`:focus-visible`), un contour VERT de la DA. Les
+     deux sélecteurs sont mutuellement exclusifs → aucun conflit ; `!important` bat les styles de focus
+     des composants (y compris `outline-none` de Tailwind). */
+  *:focus:not(:focus-visible) { outline: none !important; }
+  *:focus-visible { outline: 2px solid var(--mint) !important; outline-offset: 2px !important; }
 }
 
 /* ═══ LOI-0 (conservé) — labels/chiffres. Repointés sur les tokens DA. ═══ */
@@ -111,7 +110,7 @@
      inversé suffit à la faire ressortir), exactement comme les catégories du rail. */
   /* RETOURS-4 S8 (maquette v5) — cartes SANS liseré gauche : bord fin complet. Survol = dégradé profond. */
   /* ECRANS-NOV-1 §3 — hauteur FIXE 58 px (six entrées identiques), padding horizontal seul. */
-  .acc-entry { position:relative; display:flex; align-items:center; gap:12px; width:100%; height:58px; text-align:left; cursor:pointer;
+  .acc-entry { position:relative; display:flex; align-items:center; gap:12px; width:100%; height:64px; text-align:left; cursor:pointer;
     background:var(--bg-2); border:1px solid var(--line-2); border-radius:6px; padding:0 12px;
     color:var(--txt); transition:background .1s, border-color .1s, color .1s; }
   .acc-entry .acc-tile { width:34px; height:34px; flex:none; border-radius:6px; display:flex;
@@ -566,8 +565,11 @@ input[data-copilote-saisie]:focus-visible {
 /* RECETTE-6 (C5) — SIX tuiles, deux rangs de TROIS. Hauteur FIXE : chaque tuile a la même hauteur
    (`min-height` + `grid-auto-rows:1fr`) quel que soit le nombre de lignes du libellé ou la présence de
    la ligne secondaire — les deux rangs s'alignent. */
-.fiche-v6 .stats { display:grid; grid-template-columns:repeat(3,1fr); grid-auto-rows:1fr; gap:0.5px; background:var(--line); border-top:0.5px solid var(--line); }
-.fiche-v6 .stat { padding:9px 10px 10px; min-width:0; min-height:62px; background:var(--bg-2); }
+/* RETOURS-19 (pt 10) — les SIX chiffres sont des TUILES SÉPARÉES (coins arrondis, espacement, fond
+   relevé + liseré), comme le bandeau de la fiche commune — fini la grille soudée par des filets. Le
+   bloc a des marges HAUT/BAS ÉGALES (padding 12/14), le gap transparent laisse respirer les tuiles. */
+.fiche-v6 .stats { display:grid; grid-template-columns:repeat(3,1fr); grid-auto-rows:1fr; gap:6px; padding:12px 14px; background:transparent; border-top:0.5px solid var(--line); }
+.fiche-v6 .stat { padding:9px 10px 10px; min-width:0; min-height:62px; background:var(--bg-stat); border:0.5px solid var(--f-linehead); border-radius:var(--r-ctl); }
 /* ECRANS-NOV-1 §1 — style fiche commune : valeur en tête (grande, mono), libellé DESSOUS. */
 .fiche-v6 .stat-l { font-size:9px; color:var(--txt-off); letter-spacing:.06em; margin-top:3px; display:flex; align-items:center; gap:4px; text-transform:uppercase; }
 /* A-02-1 — la valeur d'une tuile (ex. « Non publié au GPU ») ne se coupe plus par ellipsis : elle
@@ -647,7 +649,10 @@ input[data-copilote-saisie]:focus-visible {
 .fiche-v6 .t-open { background:var(--f-card); border:0.5px solid var(--f-linecard); border-top:none; border-bottom-left-radius:12px; border-bottom-right-radius:12px; margin-bottom:9px; padding:2px 13px 13px; animation:apparition 150ms ease-out both; }
 .fiche-v6 .t-ico { width:32px; height:32px; border-radius:6px; background:var(--line); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--f-icotxt); }
 .fiche-v6 .t-body { flex:1; min-width:0; }
-.fiche-v6 .t-title { font-size:14px; color:var(--txt-hi); }
+/* RETOURS-19 (pt 11) — le TITRE de section tient sur UNE SEULE LIGNE (« Réseaux et desserte »,
+   « Risques et environnement »… ne se coupent plus en deux) ; le corps flex:1 min-width:0 l'ellipse
+   au besoin plutôt que de l'enrouler. */
+.fiche-v6 .t-title { font-size:14px; color:var(--txt-hi); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 /* RECETTE-2 (T4) — plus de troncature « … » : sous-titre et valeur des tuiles passent sur 2+ lignes. */
 .fiche-v6 .t-sub { font-size:11px; color:var(--txt-mut); margin-top:2px; white-space:normal; overflow:visible; text-overflow:clip; overflow-wrap:anywhere; }
 .fiche-v6 .t-right { display:flex; align-items:center; gap:9px; flex-shrink:0; min-width:0; }

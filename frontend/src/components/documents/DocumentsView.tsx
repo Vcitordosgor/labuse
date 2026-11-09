@@ -62,9 +62,12 @@ function DocGlyphe() {
 // fenêtre demande l'adresse). Icône + FLÈCHE en tête, titre sur une ligne, description sur EXACTEMENT
 // DEUX lignes (cartes alignées) ; au survol, bordure verte. Plus de bouton « Générer » ni de badge « PDF ».
 function DocCard({ d, onOpen }: { d: DocCatalogue; onOpen: () => void }) {
+  // RETOURS-19 (pt 15) — plus de `h-full` : une carte SEULE dans sa colonne (« Étude de zone ») ne
+  // s'étire plus à toute la hauteur de la colonne (les colonnes sont étirées par la grille) ; toutes
+  // les cartes gardent la même taille, calée sur leur contenu (desc en 2 lignes fixes).
   return (
     <button onClick={onOpen}
-      className="group flex h-full w-full flex-col gap-3 rounded-lg border border-line bg-surface-1 p-4 text-left transition-colors duration-quick hover:border-mint focus-visible:border-mint focus-visible:outline-none">
+      className="group flex w-full flex-col gap-3 rounded-lg border border-line bg-surface-1 p-4 text-left transition-colors duration-quick hover:border-mint focus-visible:border-mint focus-visible:outline-none">
       <div className="flex items-start justify-between">
         <span className="grid h-8 w-8 place-items-center rounded-md border border-line-2 text-mint transition-colors duration-quick group-hover:border-mint/60">
           <DocGlyphe />

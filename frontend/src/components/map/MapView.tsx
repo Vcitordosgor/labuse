@@ -1272,6 +1272,27 @@ export function MapView() {
       // CORRECTIFS-1 C1 — instrumentation : WebGL absent OU setTerrain qui lève → on loggue et on
       // affiche « 3D indisponible : motif » (jamais un écran vide), et on retombe en 2D proprement.
       setErreur3d(null)
+      // RETOURS-19 (pt 3) — poser le relief NE DOIT PAS changer le ZOOM/CENTRE. `setTerrain` rezoome pour
+      // garder le centre ÉLEVÉ en vue (perte mesurée ~1,2 niveau sur une parcelle en altitude) — et le DEM
+      // s'applique de façon ASYNCHRONE (au chargement de la tuile). On MÉMORISE la caméra AVANT, on la
+      // RESTAURE dans l'inclinaison (easeTo) ET plusieurs fois tant que le DEM se pose (jusqu'à ~1,8 s) :
+      // seul le PITCH change. `restaurerCam` ne touche ni pitch ni bearing (inclinaison préservée).
+      const camAvant = { center: m.getCenter(), zoom: m.getZoom() }
+      // `restaurerCam` remet le ZOOM/CENTRE d'avant via setZoom/setCenter (qui PRÉSERVENT le pitch et le
+      // bearing — contrairement à jumpTo, qui couperait l'inclinaison en cours). Donc l'inclinaison monte
+      // normalement, et seul le zoom dérivé par le DEM est corrigé.
+      const restaurerCam = () => {
+        const st = useApp.getState()
+        if (!st.terrain3d || st.module === 'gabarit') return   // le Gabarit a son propre cadrage
+        const c = m.getCenter()
+        if (Math.abs(c.lng - camAvant.center.lng) > 1e-5 || Math.abs(c.lat - camAvant.center.lat) > 1e-5) m.setCenter(camAvant.center)
+        if (Math.abs(m.getZoom() - camAvant.zoom) > 0.001) m.setZoom(camAvant.zoom)
+      }
+      // le DEM se pose de façon asynchrone → on ré-affirme le zoom APRÈS l'inclinaison (easeTo 800 ms) et
+      // quelques fois ensuite (jamais pendant, pour ne pas figer le pitch) + au premier `idle`.
+      m.once('idle', restaurerCam)
+      const relances = [900, 1300, 1800].map((d) => window.setTimeout(restaurerCam, d))
+      const cleanRelances = () => relances.forEach((id) => window.clearTimeout(id))
       const gl = (m.painter && (m.painter as unknown as { context?: { gl?: unknown } }).context?.gl) ?? null
       if (!gl) {
         console.error('[LABUSE 3D] contexte WebGL indisponible')
@@ -1291,7 +1312,7 @@ export function MapView() {
       const gabaritFlat = useApp.getState().module === 'gabarit'
       if (gabaritFlat) {
         try { m.setTerrain(null) } catch { /* noop */ }
-        terrain3dCleanup.current = () => { /* rien à nettoyer : pas de DEM en Gabarit */ }
+        terrain3dCleanup.current = () => { cleanRelances(); m.off('idle', restaurerCam) }
       } else {
         // Écoute les erreurs de la source de relief (tuiles DEM terrarium) tant que la 3D est active.
         const onErr = (e: { sourceId?: string; error?: { message?: string } }) => {
@@ -1308,7 +1329,7 @@ export function MapView() {
             setErreur3d('relief trop lent à charger (délai dépassé)')
           }
         }, 8000)
-        terrain3dCleanup.current = () => { m.off('error', onErr); window.clearTimeout(t3d) }
+        terrain3dCleanup.current = () => { m.off('error', onErr); window.clearTimeout(t3d); cleanRelances(); m.off('idle', restaurerCam) }
         try {
           m.setTerrain({ source: 'dem', exaggeration: 1.35 })
         } catch (e) {
@@ -1328,7 +1349,11 @@ export function MapView() {
         // bearing 0 sur l'emprise de la parcelle). Un seul propriétaire de caméra = le fitBounds du
         // Gabarit ; MapView ne fait que poser le relief.
       } else if (m.getPitch() < 20) {
-        m.easeTo({ pitch: 55, duration: 800 })   // inclinaison seule : center/zoom inchangés
+        // RETOURS-19 (pt 3) — l'inclinaison VERROUILLE le zoom/centre d'avant (le `setTerrain` les
+        // avait fait dériver) : seul le pitch monte, le zoom et le centre restent IDENTIQUES.
+        m.easeTo({ pitch: 55, center: camAvant.center, zoom: camAvant.zoom, duration: 800 })
+      } else {
+        restaurerCam()   // déjà incliné (ex. « Relief → Bâtiments ») : on ré-affirme zoom/centre sans retoucher le pitch
       }
       chargerBati()
       m.on('moveend', chargerBati)
