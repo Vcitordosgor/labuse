@@ -149,7 +149,7 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
       </div>
       <div className="ml-2 flex shrink-0 flex-col items-end">
         {/* M135 P2 — la PROBABILITÉ en FRACTION humaine (« 1/5 sous 1 an »), jamais un « ×N ».
-            Servie depuis la proba calibrée (p) ; « — / peu probable » sous 1/50. Calcul inchangé. */}
+            Servie depuis la proba calibrée (p) ; « — / peu probable » sous le seuil servi (config). Calcul inchangé. */}
         <Tip tip={p.fraction ? CLIENT.mult.fractionBadge(p.fraction) : CLIENT.mult.absent}>
           <span data-fraction className="font-display text-[15px] font-bold leading-none tnum" style={{ color: meta.color }}>
             {p.fraction ?? '—'}

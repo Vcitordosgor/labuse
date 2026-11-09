@@ -149,8 +149,14 @@ def test_f26_scoring_fraction_seuil_bas_servi():
     strings = (SRC / "lib/strings.ts").read_text(encoding="utf-8")
     assert "lunettes: (d = 50) =>" in strings and "corps: (d = 50, paliers" in strings
     assert "Sous 1/50," not in strings, "« 1/50 » affiché codé en dur dans strings.ts (F26)"
+    # ECRANS-NOV-1 / RETOURS-19 (pt 9, décision Vic) — dans la liste brute, le tri factuel est le seul
+    # bouton « Trier par surface » (sans « i ») : l'infobulle des « deux lunettes » a été RETIRÉE (sans
+    # objet en mode factuel). ResultsSection ne consomme donc plus le seuil servi et ne doit coder
+    # « 1/50 » nulle part. La règle « jamais 1/50 codé en dur » reste portée par les surfaces qui
+    # l'affichent encore (ScoringV2 + strings.ts lunettes/corps + LeftPanel), lues depuis la config.
     rs = (SRC / "components/panel/ResultsSection.tsx").read_text(encoding="utf-8")
-    assert "CLIENT.tri.lunettes(dPeuProbable)" in rs
+    assert "CLIENT.tri.lunettes" not in rs, "l'infobulle « deux lunettes » retirée en RETOURS-19 est revenue (F26)"
+    assert "1/50" not in rs, "seuil « 1/50 » codé en dur dans ResultsSection (F26)"
     lp = (SRC / "components/panel/LeftPanel.tsx").read_text(encoding="utf-8")
     assert "CLIENT.algo.corps(sf?.seuil_bas_denominateur" in lp
 

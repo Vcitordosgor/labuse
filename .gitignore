@@ -209,3 +209,7 @@ reports/**/DOSSIER-*.pdf
 # QV21-PROMO-1 — manifeste du CANDIDAT : état runtime (écrit par flux-run/recompute-paliers),
 # propre à chaque environnement comme served_manifest.json — pas committé.
 config/candidat_manifest.json
+
+# Journaux d'exploitation (SQL/`.log`/CSV ad hoc écrits pendant les nuits de déploiement) :
+# propres à chaque machine, jamais dans le dépôt.
+logs/
