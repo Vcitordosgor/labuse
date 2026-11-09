@@ -24,7 +24,7 @@ _FONT_FACE = f"""
 @font-face {{ font-family: "Inter"; src: url("file://{_FONTS/'Inter-Medium.ttf'}"); font-weight: 500; }}
 @font-face {{ font-family: "Inter"; src: url("file://{_FONTS/'Inter-SemiBold.ttf'}"); font-weight: 600; }}
 @font-face {{ font-family: "Inter"; src: url("file://{_FONTS/'Inter-Bold.ttf'}"); font-weight: 700; }}
-@font-face {{ font-family: "IBM Plex Mono"; src: url("file://{_FONTS/'JetBrainsMono-Regular.ttf'}"); }}
+@font-face {{ font-family: "JetBrains Mono"; src: url("file://{_FONTS/'JetBrainsMono-Regular.ttf'}"); }}
 """
 
 

@@ -90,25 +90,26 @@ def titre_document(document: str) -> str:
 # n'était écrite nulle part). Point de vérité unique concaténé à chaque pied spécifique.
 _CLAUSE_JURIDIQUE = ("Ne remplace ni un certificat d'urbanisme, ni une étude de faisabilité "
                      "réglementaire, ni un conseil juridique, et ne garantit pas la constructibilité.")
-_FOOT_DOSSIER = ("Document d'information établi à partir de données publiques. " + _CLAUSE_JURIDIQUE
-                 + " Données LABUSE au {au}.")
+# DOCS-DA-1 (V10, arbitrage Vic / maquette) — le pied tient sur UNE ligne SANS date : la date de la
+# donnée ne vit qu'EN COUVERTURE (cartouche « Données à jour au »). Le pied ne porte plus « Données
+# LABUSE au {au} ». (`{au}` reste accepté par .format mais n'apparaît plus dans les gabarits.)
+_FOOT_DOSSIER = "Document d'information établi à partir de données publiques. " + _CLAUSE_JURIDIQUE
 _FOOT = {
     "dossier": _FOOT_DOSSIER, "flash": _FOOT_DOSSIER,
     "apporteur": ("Document confidentiel remis par l'émetteur à son apporteur d'affaires. Ne pas "
-                  "transmettre au propriétaire. Ne vaut pas mandat. " + _CLAUSE_JURIDIQUE
-                  + " Données publiques LABUSE au {au}."),
+                  "transmettre au propriétaire. Ne vaut pas mandat. " + _CLAUSE_JURIDIQUE),
     # DOCS-1 (Lot C)
-    "gabarit": ("Gabarit réglementaire 2D, pré-faisabilité sur règlement public. " + _CLAUSE_JURIDIQUE
-                + " Données LABUSE au {au}."),
+    "gabarit": "Gabarit réglementaire 2D, pré-faisabilité sur règlement public. " + _CLAUSE_JURIDIQUE,
     "comparatif": ("Comparatif indicatif de parcelles établi sur des données publiques. Ni un prix, "
-                   "ni un avis de valeur. " + _CLAUSE_JURIDIQUE + " Données LABUSE au {au}."),
+                   "ni un avis de valeur. " + _CLAUSE_JURIDIQUE),
     "etude-zone": ("Agrégats de données publiques dans le périmètre indiqué. Les mailles « à l'échelle "
-                   "de la commune » portent sur toute la commune. " + _CLAUSE_JURIDIQUE
-                   + " Données LABUSE au {au}."),
+                   "de la commune » portent sur toute la commune. " + _CLAUSE_JURIDIQUE),
     # ANNONCE-3 — l'estimation est COMPARATIVE (prix observés au m², DVF), jamais un avis de valeur.
+    # DOCS-DA-1 (V10) — on garde l'attribution « Sources : DVF · Radar LABUSE » (pied légal), on retire
+    # seulement la DATE (« Données LABUSE au … », qui ne vit qu'en couverture).
     "analyse-annonce": ("Estimation comparative établie sur des données publiques (prix observés au m², "
                         "DVF) — ce n'est pas un avis de valeur. " + _CLAUSE_JURIDIQUE
-                        + " Sources : DVF · Radar LABUSE. Données LABUSE au {au}."),
+                        + " Sources : DVF · Radar LABUSE."),
 }
 
 #: composition de chaque document. EXPORTS-REBRANCHEMENT-1 lot 1 : le Dossier n'est PLUS une
@@ -458,7 +459,7 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
     cart = Cartouche(
         doc_title=f"LABUSE — {label}" + (f" · {adresse}" if adresse else ""),
         doc_ref=f"{idu} · {numero}",
-        doc_foot=_FOOT.get(document, "Document d'information LABUSE. Données au {au}.").format(au=au),
+        doc_foot=_FOOT.get(document, "Document d'information LABUSE.").format(au=au),
     )
     corps = _cover(document, idu, f, numero, j, valeurs)
     for b in blocs:
@@ -491,7 +492,7 @@ def _cart(document: str, titre_suffixe: str, idu_ref: str, numero: str, jour: da
     return Cartouche(
         doc_title=f"LABUSE — {label}" + (f" · {titre_suffixe}" if titre_suffixe else ""),
         doc_ref=f"{idu_ref} · {numero}",
-        doc_foot=_FOOT.get(document, "Document d'information LABUSE. Données au {au}.").format(au=au))
+        doc_foot=_FOOT.get(document, "Document d'information LABUSE.").format(au=au))
 
 
 def construire_gabarit(db, idu: str, *, jour: date | None = None) -> ResultatDoc:
@@ -633,7 +634,7 @@ _ANNONCE_PAGE_CSS = """
 .abar .abrand { font-weight:700; color:var(--mint-ink); font-size:12pt; letter-spacing:.02em; }
 .abar .akind { color:var(--muted); font-size:9pt; }
 .abar .aref { margin-left:auto; color:var(--muted); font-size:8.5pt;
-  font-family:"IBM Plex Mono","DejaVu Sans Mono",monospace; }
+  font-family:"JetBrains Mono","DejaVu Sans Mono",monospace; }
 .atitre { font-size:19pt; font-weight:700; margin:0 0 2pt; letter-spacing:-.01em; line-height:1.12; }
 .asub { font-size:10pt; color:var(--muted); margin:0 0 8pt; }
 .amaps { display:grid; grid-template-columns:1fr 1fr; gap:7pt; margin:2pt 0 5pt; }

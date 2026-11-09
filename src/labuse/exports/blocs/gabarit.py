@@ -5,7 +5,7 @@ le MÊME moteur que l'écran /outils/gabarit (build_gabarit_input + compute_gaba
 incomplet, le document NE se génère PAS (builder.construire_gabarit lève DocumentNonEtablissable)."""
 from __future__ import annotations
 
-from ..lignes import ligne, pied
+from ..lignes import ligne
 from ..registre_fmt import fmt_m, fmt_m2, fmt_pct
 from ..rendu import esc, ligne_kv, note, section, table_kv, verdict
 
@@ -212,5 +212,6 @@ def rendu(valeurs, ctx=None) -> str:
                   f'<div class="plan3d">{svg3d}</div></div>')
     corps += note("Gabarit réglementaire 2D, pré-faisabilité sur règlement public. Une étude par un "
                   "professionnel peut modifier ces valeurs.")
-    corps += pied(valeurs, IDS)
+    # DOCS-DA-1 (V10) — plus de ligne « Sources : » sous la section (comme le Dossier) ; les sources
+    # restent portées par les badges de nature et le pied légal du document.
     return section("Enveloppe réglementaire (gabarit)", corps)

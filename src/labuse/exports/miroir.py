@@ -482,9 +482,19 @@ def _r_aleas(v, val: Valeur):
             lib += esc(f" — aléa de niveau {niv}") if "niveau" not in (a.get("libelle") or "") else ""
         # RETOUCHES-1 point 7 — le libellé daté de la source (déjà nommé par servitudes.aleas_parcelle :
         # « millésime <X> » si publié amont, sinon « ingéré le JJ/MM/AAAA ») s'imprime sur la ligne.
-        mill = a.get("millesime")
-        if mill:
-            lib += esc(f" · {_mill_client(mill)}")   # DOCS-1 — jj/mm/aaaa, jamais « ingéré le »
+        # DOCS-DA-1 (V10) — pour un PPR : UNE SEULE date, celle de l'APPROBATION du PPR de la COMMUNE
+        # (a.ppr[].approbation), JAMAIS la date d'édition de la couche DEAL (île entière, « 16/04/2026 »).
+        _ppr = a.get("ppr")
+        _appro = ((_ppr[0] or {}).get("approbation") if isinstance(_ppr, list) and _ppr else None)
+        mill = a.get("millesime") or ""
+        _est_edition_deal = ("édition DEAL" in mill) or ("millésime PPR" in mill)
+        if _appro and len(str(_appro)) >= 10:
+            _a = str(_appro)
+            lib += esc(f" · PPR approuvé le {_a[8:10]}/{_a[5:7]}/{_a[0:4]} (commune)")
+        elif mill and not _est_edition_deal:
+            # la date d'ÉDITION de la couche DEAL (île entière) n'est JAMAIS « la date du PPR » → omise ;
+            # les autres millésimes de source restent (jj/mm/aaaa, jamais « ingéré le »).
+            lib += esc(f" · {_mill_client(mill)}")
         rows.append(f'<tr data-quoi="aleas_parcelle_liste"><td class="k">{nat}</td>'
                     f'<td>{lib}</td><td class="n">{chip(val)}</td></tr>')
     return '<table class="kv">' + "".join(rows) + "</table>"
@@ -963,6 +973,18 @@ def _r_bus_contact(v):
     return esc(f"Ligne {nom}") + res + " au contact" + d
 
 
+def _r_solaire(v):
+    # DOCS-DA-1 (V10) — « 1 548 kWh/kWc — très favorable » (même lecture que la fiche). Accepte aussi
+    # une valeur nue (repli) → « N kWh/kWc ».
+    if isinstance(v, dict):
+        kwh, qual = v.get("kwh"), v.get("qualite")
+    else:
+        kwh, qual = v, None
+    if kwh is None:
+        return ""
+    return esc(f"{groupe(round(float(kwh)))} kWh/kWc" + (f" — {qual}" if qual else ""))
+
+
 def _r_saturation(v):
     bits = []
     if v.get("consomme") is not None:
@@ -1014,6 +1036,7 @@ _RENDEURS: dict[str, Any] = {
     "loyer_oll_eur_m2": _r_oll, "filosofi_200m": _r_filosofi,
     "gestionnaires_reseaux": _r_gestionnaires, "ligne_bus_contact": _r_bus_contact,
     "densite_saturation": _r_saturation, "catnat_arretes": _r_catnat,
+    "prod_spec_kwh_kwc": _r_solaire,
     "prix_achat_historique_eur": _r_prix_achat, "coproprietes_liste": _r_copros,
     "proprietaire_timeline_liste": _r_timeline, "historique_permis_liste": _r_permis_liste,
     "er_emplacement_reserve": _r_er_ebc, "ebc_classe": _r_er_ebc, "dpu_perimetre": _r_dpu,

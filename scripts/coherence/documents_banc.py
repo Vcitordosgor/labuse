@@ -258,9 +258,11 @@ def _productible(t):
 
 
 def _date_ppr(t):
-    """La DATE du PPR : l'ANNÉE d'APPROBATION du PPR qui s'applique (« approuvé le JJ/MM/AAAA »,
-    « PPR … (AAAA) »). Un document qui en montre deux, ou deux documents qui divergent = écart.
-    On exclut les dates d'INGESTION/millésime (« au JJ/MM/AAAA », « vue le … ») — jamais « la date du PPR »."""
+    """La DATE du PPR : l'ANNÉE d'APPROBATION du PPR de la COMMUNE (« approuvé le JJ/MM/AAAA »,
+    « PPR … (AAAA) »). DOCS-DA-1 (V10) — on capture AUSSI la date d'ÉDITION de la couche DEAL
+    (« dernière édition DEAL du … AAAA », « millésime PPR … AAAA ») : si un document la montre, elle
+    entre dans le fait → un document qui porte DEUX dates PPR (ou qui montre l'édition quand les autres
+    montrent l'approbation) = ÉCART. La régression « deux dates PPR » est ainsi attrapée par le banc."""
     yrs: set[str] = set()
     for line in t.splitlines():
         if "PPR" not in line and "prévention des risques" not in line:
@@ -268,6 +270,9 @@ def _date_ppr(t):
         for m in re.finditer(r"approuvé le\s*\d{2}/\d{2}/((?:19|20)\d{2})", line):
             yrs.add(m.group(1))
         for m in re.finditer(r"PPR[^\n]{0,40}?\(((?:19|20)\d{2})\)", line):
+            yrs.add(m.group(1))
+        # édition DEAL (couche, île entière) — JAMAIS « la date du PPR » : si elle apparaît, c'est la régression.
+        for m in re.finditer(r"(?:édition DEAL|millésime PPR)[^\n]{0,40}?((?:19|20)\d{2})", line):
             yrs.add(m.group(1))
     return ",".join(sorted(yrs)) if yrs else None
 

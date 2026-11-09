@@ -1,44 +1,53 @@
-"""DOCS-DA-1 (gabarit-documents-A, arbitrage Vic) — le GABARIT en test : sur une parcelle témoin,
-chaque document rendu respecte les trois invariants de la maquette validée :
+"""DOCS-DA-1 (gabarit-documents-A, arbitrage Vic) — le GABARIT en test, sur les 11 documents.
 
-  1. AUCUN fond sombre PLEINE PAGE — le papier est blanc partout ; le seul aplat sombre (le bandeau
-     de couverture) est un bandeau, jamais une page entière.
-  2. POLICES EMBARQUÉES — toute police utilisée est embarquée dans le PDF, et c'est l'une des deux
-     familles du gabarit (Inter / JetBrains Mono, « IBM Plex Mono » côté CSS), au repli DejaVu près.
-  3. AUCUNE TAILLE SOUS 10,5 px — l'échelle unique (34/20/13,5/12,5/11/10,5 px) a pour plancher
-     10,5 px = 7,875 pt ; aucun glyphe ne descend sous ce seuil.
+Invariants de la maquette validée :
+  1. AUCUN fond sombre PLEINE PAGE — papier blanc ; seul aplat sombre = le bandeau de couverture.
+  2. POLICES EMBARQUÉES — Inter + JetBrains Mono (plus d'IBM Plex Mono, de Space Grotesk ni de Verdana) ;
+     vérifié sur les 11 documents.
+  3. AUCUNE TAILLE SOUS 10,5 px — plancher de l'échelle unique (docs WeasyPrint du gabarit).
+  4. PIED DE PAGE SANS DATE — la date de la donnée ne vit qu'EN COUVERTURE (« Données à jour au ») ;
+     le pied de chaque page de chaque document ne porte aucune date.
 
-Marqué `reel`+`local` : exige la base RÉELLE `labuse` et weasyprint (venv PDF) + PyMuPDF (fitz) —
-jamais en CI (base vierge). Rejoué dans la recette DOCS-DA-1 :
+Marqué `reel`+`local` : base RÉELLE `labuse` + weasyprint + PyMuPDF (fitz) — jamais en CI.
 
     PROJ_DATA=$HOME/miniforge3/envs/labusedb/share/proj PYTHONPATH=$PWD/src \
       ~/Desktop/labuse/.venv/bin/python -m pytest tests/test_docs_da_1.py -m "reel or local"
 """
 from __future__ import annotations
 
+import re
+
 import pytest
 
 pytestmark = [pytest.mark.reel, pytest.mark.local]
 
-#: parcelle témoin de référence (Saint-Denis, Uh, bâtie, PPR bleue) + deux voisines pour le Comparatif.
 _IDU = "97411000BZ1065"
 _VOISINES = ("97411000BZ1066", "97411000BZ1288")
-#: plancher de l'échelle : 10,5 px = 7,875 pt (tolérance d'arrondi de rendu : 7,8 pt).
-_MIN_PT = 7.8
-#: familles admises (au repli système DejaVu près) — AUCUNE autre (plus de Space Grotesk / Verdana).
-_FAMILLES_OK = ("Inter", "IBM-Plex", "IBMPlex", "JetBrains", "DejaVu")
+_MIN_PT = 7.8                       # 10,5 px = 7,875 pt (tolérance d'arrondi 7,8)
+#: familles admises (au repli système DejaVu / Helvetica des champs de formulaire près).
+_OK = ("Inter", "JetBrains", "DejaVu")
+#: familles INTERDITES par la maquette — « IBM Plex Mono retiré », plus de Space Grotesk ni de Verdana.
+_INTERDITES = ("IBM-Plex", "IBMPlex", "IBM Plex", "Space", "Verdana")
+#: date imprimée (jj/mm/aaaa) — interdite dans le PIED.
+_RX_DATE = re.compile(r"\b\d{2}/\d{2}/(?:19|20)\d{2}\b")
 
 
 @pytest.fixture(scope="module")
-def pdfs():
-    fitz = pytest.importorskip("fitz", reason="PyMuPDF (fitz) indisponible")
+def docs():
+    """Les documents LABUSE, rendus. Chaque entrée : (octets, scaled) — `scaled`=True pour les
+    documents WeasyPrint qui portent l'échelle px du gabarit (test de taille) ; False pour le fpdf2
+    (Courrier) et le Pré-dossier (CERFA)."""
+    pytest.importorskip("fitz", reason="PyMuPDF (fitz) indisponible")
     try:
+        import io
+        import zipfile
+
         from fastapi.testclient import TestClient
+        from sqlalchemy import text
 
         from labuse.api import bilan as _bilan, tenant
         from labuse.api.app import app
-        from labuse.db import session_factory
-        from sqlalchemy import text
+        from labuse.db import session_factory, session_scope
     except Exception as exc:  # noqa: BLE001
         pytest.skip(f"application non importable : {exc}")
     db = session_factory()()
@@ -47,26 +56,42 @@ def pdfs():
     tenant.current_compte = lambda request=None: cid        # type: ignore[assignment]
     _bilan.current_compte = lambda request=None: cid         # type: ignore[assignment]
     c = TestClient(app)
-    routes = {
-        "Dossier": f"/dossier/{_IDU}.pdf",
-        "Gabarit": f"/gabarit/{_IDU}.pdf",
-        "Estimer": f"/analyse-annonce/{_IDU}.pdf",
-        "Etude-zone": f"/etude-zone.pdf?idu={_IDU}&rayon_km=1",
-        "Comparatif": f"/comparatif.pdf?idus={_IDU},{_VOISINES[0]},{_VOISINES[1]}",
-    }
-    out: dict[str, bytes] = {}
-    for nom, url in routes.items():
-        r = c.get(url)
+    out: dict[str, tuple[bytes, bool]] = {}
+
+    def _pdf(nom, r, scaled=True):
         if r.status_code == 200 and r.content[:4] == b"%PDF":
-            out[nom] = r.content
-    # le Flash a son propre moteur (produit 79 €) — même gabarit.
+            out[nom] = (r.content, scaled)
+
+    _pdf("Dossier", c.get(f"/dossier/{_IDU}.pdf"))
+    _pdf("Gabarit", c.get(f"/gabarit/{_IDU}.pdf"))
+    _pdf("Estimer", c.get(f"/analyse-annonce/{_IDU}.pdf"))
+    _pdf("Etude-zone", c.get(f"/etude-zone.pdf?idu={_IDU}&rayon_km=1"))
+    _pdf("Comparatif", c.get(f"/comparatif.pdf?idus={_IDU},{_VOISINES[0]},{_VOISINES[1]}"))
+    _pdf("Apporteur", c.get(f"/apporteur/{_IDU}.pdf"))
+    _pdf("Courrier", c.post("/courrier/pdf", json={"idu": _IDU}), scaled=False)
+    _pdf("Etude-faisa", c.post("/modules/etude/pdf", json={"idus": [_IDU]}))
+    g = c.post(f"/bilan/{_IDU}/generer", json={
+        "programme": {"terrain": None, "surface_taxable": 65, "sdp": 35},
+        "produits": [{"libelle": "Logement", "lots": 1, "suv": 65, "prix_ttc_m2_suv": 4500, "tva": 0.021}],
+        "postes": {}, "mode": "marge", "marge_cible": 9, "calendrier": {}})
+    if g.status_code == 200 and g.json().get("doc_id"):
+        _pdf("Bilan", c.get(f"/bilan/{_IDU}.pdf?doc_id={g.json()['doc_id']}"))
+    # Flash — moteur propre (produit 79 €), même gabarit.
     try:
-        from labuse.db import session_scope
         from labuse.flash.report import generate_flash_report
         with session_scope() as s:
-            out["Flash"] = generate_flash_report(_IDU, order_ref="DA1", force=True, db=s,
-                                                  with_map=False).read_bytes()
-    except Exception:  # noqa: BLE001 — Flash best-effort (réseau tuiles) ; les autres documents suffisent
+            out["Flash"] = (generate_flash_report(_IDU, order_ref="DA1", force=True, db=s,
+                                                   with_map=False).read_bytes(), True)
+    except Exception:  # noqa: BLE001 — best-effort (réseau tuiles)
+        pass
+    # Pré-dossier PC — ZIP : on teste les PDF qu'il contient (LABUSE + CERFA), hors échelle.
+    try:
+        z = c.get(f"/pre-dossier/{_IDU}.zip")
+        if z.status_code == 200 and z.content[:2] == b"PK":
+            with zipfile.ZipFile(io.BytesIO(z.content)) as zf:
+                for i, n in enumerate(x for x in zf.namelist() if x.lower().endswith(".pdf")):
+                    out[f"Pre-dossier::{n}"] = (zf.read(n), False)
+    except Exception:  # noqa: BLE001
         pass
     if not out:
         pytest.skip("aucun document rendu (base réelle/weasyprint indisponibles)")
@@ -83,57 +108,74 @@ def _spans(fitz, octets: bytes):
                         yield sp
 
 
-def test_aucune_taille_sous_10_5_px(pdfs):
-    """L'échelle unique a pour plancher 10,5 px (7,875 pt) : aucun glyphe en dessous."""
+def test_aucune_taille_sous_10_5_px(docs):
+    """L'échelle unique a pour plancher 10,5 px (7,875 pt) : aucun glyphe en dessous (docs WeasyPrint)."""
     import fitz
     fautes = []
-    for nom, octets in pdfs.items():
+    for nom, (octets, scaled) in docs.items():
+        if not scaled:
+            continue
         for sp in _spans(fitz, octets):
             if sp["size"] < _MIN_PT:
                 fautes.append(f"{nom}: {sp['size']:.2f}pt « {sp['text'][:24]} »")
     assert not fautes, "tailles sous 10,5 px : " + " ; ".join(sorted(set(fautes))[:20])
 
 
-def test_polices_embarquees_inter_et_mono(pdfs):
-    """Toute police est embarquée et appartient aux deux familles du gabarit (Inter / JetBrains)."""
+def test_polices_embarquees_inter_jetbrains_sur_11_documents(docs):
+    """Sur les 11 documents : toute police est EMBARQUÉE, Inter + JetBrains Mono — AUCUNE IBM Plex
+    Mono, Space Grotesk ni Verdana. (Helvetica des champs de formulaire tolérée.)"""
     import fitz
-    hors = []
-    for nom, octets in pdfs.items():
+    # polices standard-14 PDF (champs de formulaire remplissables) : JAMAIS embarquées par nature,
+    # tolérées (l'Apporteur est un formulaire). Ce ne sont pas des polices de corps LABUSE.
+    _std14 = ("Helvetica", "Arial", "Times", "Courier", "Symbol", "ZapfDingbats")
+    interdites, non_embarquees = [], []
+    for nom, (octets, _scaled) in docs.items():
         d = fitz.open(stream=octets, filetype="pdf")
         for pno in range(d.page_count):
             for f in d.get_page_fonts(pno):
-                # f = (xref, ext, type, basefont, name, encoding, ...) ; basefont = f[3]
-                base = f[3] or ""
-                emb = f[1] not in ("", "n/a")   # ext présent → fonte embarquée
-                if not emb:
-                    hors.append(f"{nom}: « {base} » NON embarquée")
-                elif not any(k in base for k in _FAMILLES_OK):
-                    hors.append(f"{nom}: « {base} » hors Inter/JetBrains")
-    assert not hors, "polices non conformes : " + " ; ".join(sorted(set(hors))[:20])
+                base, emb = (f[3] or ""), (f[1] not in ("", "n/a"))
+                if any(k in base for k in _INTERDITES):
+                    interdites.append(f"{nom}: « {base} »")
+                elif not emb and not any(k in base for k in _std14):
+                    non_embarquees.append(f"{nom}: « {base} » NON embarquée")
+    assert not interdites, "polices interdites (maquette) : " + " ; ".join(sorted(set(interdites))[:20])
+    assert not non_embarquees, "polices non embarquées : " + " ; ".join(sorted(set(non_embarquees))[:20])
 
 
-def test_aucun_fond_sombre_pleine_page(pdfs):
-    """Papier blanc partout : aucune page n'est majoritairement sombre. Le bandeau de couverture est
-    un bandeau (≈ 6 % de la hauteur), la page de garde reste claire ; un aplat sombre pleine page
-    (ancien thème) noircirait la majorité des pixels."""
+def test_pied_de_page_sans_date(docs):
+    """Le PIED de chaque page ne porte AUCUNE date (jj/mm/aaaa) : la date ne vit qu'en couverture
+    (« Données à jour au »). On lit la bande basse (~15 mm) de chaque page."""
     import fitz
-    sombres = []
-    for nom, octets in pdfs.items():
+    fautes = []
+    for nom, (octets, _scaled) in docs.items():
         d = fitz.open(stream=octets, filetype="pdf")
         for pno in range(d.page_count):
-            pix = d[pno].get_pixmap(dpi=24)          # basse résolution : on juge la teinte d'ensemble
+            pg = d[pno]
+            seuil = pg.rect.height - 42.0        # ~15 mm en points (bande du pied)
+            for blk in pg.get_text("dict")["blocks"]:
+                for ln in blk.get("lines", []):
+                    for sp in ln.get("spans", []):
+                        if sp["bbox"][1] >= seuil and _RX_DATE.search(sp["text"]):
+                            fautes.append(f"{nom} p{pno + 1}: « {sp['text'][:30]} »")
+    assert not fautes, "date dans le pied de page : " + " ; ".join(sorted(set(fautes))[:20])
+
+
+def test_aucun_fond_sombre_pleine_page(docs):
+    """Papier blanc partout : aucune page n'est majoritairement sombre (docs WeasyPrint du gabarit)."""
+    import fitz
+    sombres = []
+    for nom, (octets, scaled) in docs.items():
+        if not scaled:
+            continue
+        d = fitz.open(stream=octets, filetype="pdf")
+        for pno in range(d.page_count):
+            pix = d[pno].get_pixmap(dpi=24)
             n = pix.width * pix.height
-            if n == 0:
+            if not n:
                 continue
-            px = pix.samples
-            k = pix.n                                  # octets par pixel
-            dark = 0
+            px, k, dark = pix.samples, pix.n, 0
             for i in range(0, len(px), k):
-                # luminance approchée (RGB ou gris) ; alpha ignoré
-                if k >= 3:
-                    lum = 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2]
-                else:
-                    lum = px[i]
+                lum = (0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2]) if k >= 3 else px[i]
                 if lum < 110:
                     dark += 1
             if dark / n > 0.40:

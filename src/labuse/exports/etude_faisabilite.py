@@ -1016,8 +1016,7 @@ def rendu_etude(payload: dict, *, genere_le: str, scenario_ref: Optional[str] = 
         doc_ref=f"{refs} · {numero}",
         # DOCS-1 (décision Vic) — pied RACCOURCI (l'IDU, le type et le « généré le » sont déjà en tête) :
         # le numéro de page tient sur une ligne.
-        doc_foot=(f"Étude de faisabilité · pré-faisabilité, non contractuel · "
-                  f"Données LABUSE au {_donnees_labuse_au_etude(genere_le)}."))
+        doc_foot=(f"Étude de faisabilité · pré-faisabilité, non contractuel."))
     corps = (
         f"<style>{_STYLE}</style>"
         + _p1_synthese(payload, retenu, numero, genere_le)
@@ -1053,8 +1052,7 @@ def rendu_lotissement(payload: dict, *, genere_le: str) -> dict:
     cart = Cartouche(
         doc_title=f"LABUSE — Lotissement · {commune}",
         doc_ref=f"{idus[0][8:] if idus else ''} · {numero}",
-        doc_foot=(f"Lotissement · pré-faisabilité, non contractuel · "
-                  f"Données LABUSE au {_donnees_labuse_au_etude(genere_le)}."))
+        doc_foot=(f"Lotissement · pré-faisabilité, non contractuel."))
     lignes = "".join(f"<tr><td>Lot {i}</td><td class='n'>{fr(s)} m²</td></tr>"
                      for i, s in enumerate(tl["surfaces_m2"], 1))
     racc = "".join(f"<tr><td>{r['reseau']}</td><td class='n'>{'non vérifié' if r['distance_m'] is None else fr(r['distance_m'])+' m'}</td></tr>"
@@ -1111,8 +1109,7 @@ def rendu_hors_perimetre(payload: dict, *, genere_le: str) -> dict:
     cart = Cartouche(
         doc_title=f"LABUSE — Étude de faisabilité · {commune}",
         doc_ref=f"{idus[0][8:] if idus else ''} · {numero}",
-        doc_foot=(f"Étude de faisabilité · pré-faisabilité, non contractuel · "
-                  f"Données LABUSE au {_donnees_labuse_au_etude(genere_le)}."))
+        doc_foot=(f"Étude de faisabilité · pré-faisabilité, non contractuel."))
     # contraintes signalées (texte du payload) — « signalées, non interprétées », comme l'étude normale.
     t = payload.get("terrain") or {}
     crows = "".join(f"<li>{esc(lib)}</li>" for lib in (t.get("contraintes_signalees") or []))

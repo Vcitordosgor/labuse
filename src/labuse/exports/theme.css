@@ -45,7 +45,7 @@
      Les boîtes de marge @page n'héritent pas des variables :root sous WeasyPrint → tailles littérales
      (10,5 px = --fs-xs, le plancher de l'échelle). */
   @top-left { content: string(doc-title); font: 10.5px "Inter", "DejaVu Sans", sans-serif; color: #6B746E; }
-  @top-right { content: string(doc-ref); font: 10.5px "IBM Plex Mono", "DejaVu Sans Mono", monospace; color: #6B746E; }
+  @top-right { content: string(doc-ref); font: 10.5px "JetBrains Mono", "DejaVu Sans Mono", monospace; color: #6B746E; }
   @bottom-left { content: string(doc-foot); font: 10.5px "Inter", "DejaVu Sans", sans-serif; color: #6B746E; }
   @bottom-right { content: counter(page) " / " counter(pages); font: 10.5px "Inter", "DejaVu Sans", sans-serif; color: #6B746E; white-space: nowrap; }
 }
@@ -96,15 +96,15 @@ strong, b { font-weight: 600; }
 
 /* ── page de garde — référence mono · adresse 34 · sous-titre · tuiles · sommaire · cartouche ── */
 .kicker { font-size: var(--fs-sm); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 4pt; }
-.idu-ref { font-family: "IBM Plex Mono", "DejaVu Sans Mono", monospace; font-size: var(--fs-lg);
+.idu-ref { font-family: "JetBrains Mono", "DejaVu Sans Mono", monospace; font-size: var(--fs-lg);
            letter-spacing: 0; color: var(--muted); font-feature-settings: "zero" 1; margin: 0 0 4pt; }
 h1 { font-size: var(--fs-xxl); line-height: 1.12; font-weight: 700; margin: 0 0 4pt; letter-spacing: -.01em; }
 h1.addr-compacte { font-size: var(--fs-xl); line-height: 1.2; }
-h1.idu-code { font-family: "IBM Plex Mono", "DejaVu Sans Mono", monospace; font-size: var(--fs-xl);
+h1.idu-code { font-family: "JetBrains Mono", "DejaVu Sans Mono", monospace; font-size: var(--fs-xl);
               letter-spacing: 0; font-feature-settings: "zero" 1; }
 .subtitle { font-size: var(--fs-lg); color: var(--muted); margin: 2pt 0 16pt; }
 .address { font-size: var(--fs-xxl); line-height: 1.12; font-weight: 700; margin: 0 0 2pt; }
-.idu { font-family: "IBM Plex Mono", "DejaVu Sans Mono", monospace; font-size: var(--fs-lg); color: var(--muted); margin-bottom: 14pt; }
+.idu { font-family: "JetBrains Mono", "DejaVu Sans Mono", monospace; font-size: var(--fs-lg); color: var(--muted); margin-bottom: 14pt; }
 
 /* plan de situation en page de garde */
 .cover-map { height: 76mm; border: 1px solid var(--line); border-radius: 3pt; background: #f1f4f1; position: relative; margin-bottom: 8pt; }
@@ -125,12 +125,12 @@ h1.idu-code { font-family: "IBM Plex Mono", "DejaVu Sans Mono", monospace; font-
 /* le cartouche du bas de garde : n° de rapport · généré le · données à jour au */
 .cover-cartouche { display: flex; flex-wrap: wrap; gap: 26pt; margin: 16pt 0 6pt; font-size: var(--fs-xs); color: var(--muted); }
 .cover-cartouche > div b { color: var(--ink); display: block; font-size: var(--fs-md); font-weight: 600; letter-spacing: 0; }
-.cover-cartouche .mono b { font-family: "IBM Plex Mono", "DejaVu Sans Mono", monospace; }
+.cover-cartouche .mono b { font-family: "JetBrains Mono", "DejaVu Sans Mono", monospace; }
 /* ancien cartouche-tableau (en-têtes compacts) — conservé pour les documents « au fil ». */
 .cartouche { width: 100%; border-collapse: collapse; font-size: var(--fs-md); margin-top: 6pt; }
 .cartouche td { padding: 4pt 0; border-bottom: 1px solid var(--line); }
 .cartouche td:first-child { color: var(--muted); width: 42%; }
-.cartouche td:last-child { font-family: "IBM Plex Mono", "DejaVu Sans Mono", monospace; }
+.cartouche td:last-child { font-family: "JetBrains Mono", "DejaVu Sans Mono", monospace; }
 .gm-meta { display: flex; flex-wrap: wrap; gap: 22pt; margin: 14pt 0 4pt; font-size: var(--fs-xs); color: var(--muted); }
 .gm-meta b { color: var(--ink); display: block; font-size: var(--fs-md); font-weight: 600; }
 .cover-resume { font-size: var(--fs-md); color: var(--muted); margin: 6pt 0 8pt; }
@@ -148,7 +148,7 @@ h1.idu-code { font-family: "IBM Plex Mono", "DejaVu Sans Mono", monospace; font-
 
 /* grille de sensibilité 3×3 (Bilan) — mono */
 table.grid3 { width: 100%; border-collapse: collapse; font-size: var(--fs-md); margin: 6pt 0 4pt; }
-table.grid3 td, table.grid3 th { padding: 5pt 6pt; border: 1px solid var(--line); text-align: center; font-family: "IBM Plex Mono", "DejaVu Sans Mono", monospace; }
+table.grid3 td, table.grid3 th { padding: 5pt 6pt; border: 1px solid var(--line); text-align: center; font-family: "JetBrains Mono", "DejaVu Sans Mono", monospace; }
 table.grid3 th { background: var(--grey-bg); font-family: "Inter", sans-serif; font-weight: 600; color: var(--ink); }
 table.grid3 td.neg { color: var(--rose); }
 
@@ -271,10 +271,16 @@ table.cmp tr { page-break-inside: avoid; }
 /* Gabarit — plan 2D + vue 3D côte à côte + règles */
 .plan2d { border: 1px solid var(--line); border-radius: 3pt; padding: 6pt; margin: 4pt 0 12pt; page-break-inside: avoid; }
 .plan2d svg, .plan3d svg { width: 100%; height: auto; max-height: 120mm; display: block; }
-/* DOCS-DA-1 — au Dossier §Potentiel, la vue 3D À CÔTÉ du schéma 2D : deux colonnes (la classe
-   `.gabarit-plan` ne sert QU'ICI ; le document Gabarit a son propre `.plan2d`/`.plan3d`). */
-.gabarit-plan { display: inline-block; width: 49%; vertical-align: top; box-sizing: border-box; }
-.gabarit-plan + .gabarit-plan { padding-left: 2%; }
+/* DOCS-DA-1 — au Dossier §Potentiel, la vue 3D À CÔTÉ du schéma 2D : DEUX CADRES DE MÊME TAILLE côte
+   à côte, légende sous chacun (la classe `.gabarit-plan` ne sert QU'ICI ; le document Gabarit a son
+   propre `.plan2d`/`.plan3d`). */
+.gabarit-plan { display: inline-block; width: 49%; vertical-align: top; box-sizing: border-box;
+                text-align: left; margin: 6pt 0 0; page-break-inside: avoid; }
+.gabarit-plan:first-child { padding-right: 2%; }
+/* le SVG dans un cadre à 1 px de HAUTEUR FIXE (identique pour le 2D et le 3D) ; le viewBox est
+   letterboxé (preserveAspectRatio par défaut) → les deux figures occupent le MÊME rectangle. */
+.gabarit-plan svg { width: 100%; height: 46mm; display: block; border: 1px solid var(--line);
+                    border-radius: 3pt; background: #FBFCFB; box-sizing: border-box; }
 /* DOCS-DA-1 — la légende des figures du gabarit, en HTML sous le SVG (≥ 10,5 px, s'enroule). */
 .fig-legende { margin: 5pt 2pt 2pt; }
 .fig-note { font-size: var(--fs-xs); color: var(--muted); margin-bottom: 3pt; }

@@ -14,6 +14,35 @@ figure dans `git branch --merged origin/main`). Préalable rempli — le mandat 
 
 ---
 
+## V10 — six écarts avec la maquette corrigés (relecture Vic)
+
+1. **Pied de page sur une ligne, SANS date, tous documents** — la date de la donnée ne vit qu'en
+   COUVERTURE (« Données à jour au »). Retirée des pieds des exports (`builder._FOOT`), de l'Étude de
+   faisabilité, du Bilan (`bilan/pdf.py`). Testé : `test_pied_de_page_sans_date` (bande basse de chaque
+   page, aucune date). L'attribution « Sources : DVF · Radar LABUSE » de l'Estimer est conservée (sans date).
+2. **Polices : « IBM Plex Mono » → « JetBrains Mono » partout** (nom réellement embarqué) ; le **Courrier**
+   passe sous le gabarit — **Inter embarquée** (fpdf2 `add_font`, plus d'Helvetica de base), forme de
+   lettre conservée, même pied. Testé sur les **11 documents** : `test_polices_embarquees_inter_jetbrains_sur_11_documents`
+   (aucune IBM Plex Mono / Space Grotesk / Verdana ; Helvetica des champs de formulaire tolérée).
+3. **§Potentiel — 2D et 3D dans deux cadres de MÊME taille côte à côte**, légende sous chacun
+   (`.gabarit-plan svg { height: 46mm; border }`, viewBox letterboxé → même rectangle).
+4. **PPR — une seule date** : l'**approbation du PPR de la COMMUNE** (`aleas[].ppr[].approbation`), jamais
+   la date d'édition de la couche DEAL (île entière). Le millésime d'édition DEAL est omis de la ligne
+   d'aléa (`miroir._r_aleas`). Le fait banc **`date_ppr` attrape la régression** : il capture désormais
+   aussi « dernière édition DEAL du … AAAA » → un document qui porte deux dates PPR = écart (prouvé : le
+   banc a flashé ROUGE sur DH0076/AB0133 avant le correctif, VERT après).
+5. **Productible solaire : « 1 548 kWh/kWc — très favorable »** — le qualificatif vient de la MÊME lecture
+   que la fiche (`viabilisation.solaire.qualite`), via `_c_solaire` (dict) + rendeur `_r_solaire`.
+6. **Plus aucune ligne « Sources : » sous une section** dans le **Flash** (template), le **Gabarit**
+   (`pied(valeurs, IDS)` retiré) et l'**Étude de zone** (note reformulée sur la seule mise en garde
+   d'échelle). La section dédiée « Mentions / Sources » (= §11 Limites et sources) reste.
+
+**Recette V10** : banc des documents **VERT — 0 écart** (4 parcelles ET 13 témoins/130 docs) ; test gabarit
+`tests/test_docs_da_1.py` **4 passed** (fond, polices 11 docs, tailles, **pied sans date**) ; hook vert ;
+régénération **V10** (`scripts/docs1_regen_v10.py`).
+
+---
+
 ## A — Le gabarit (à la source, une fois pour tous)
 
 Réécriture de `src/labuse/exports/theme.css` + câblage des polices (`exports/rendu.py`).
