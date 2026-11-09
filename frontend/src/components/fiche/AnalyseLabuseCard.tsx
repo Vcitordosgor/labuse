@@ -22,7 +22,15 @@ export interface AnalyseLabuse {
 // RETOURS-17 — l'identifiant de run (ex. « q_v20 ») n'est PLUS affiché côté client : la prop `version`
 // qui l'injectait dans l'en-tête de la carte est retirée. Le run reste un détail serveur (param `source`
 // de getFiche), jamais montré à l'utilisateur.
-export function AnalyseLabuseCard({ analyse }: { analyse: AnalyseLabuse }) {
+// ECRANS-NOV-1 §1 — la carte refaite : la BANDE en grand ; le signal ET la zone en puces sur une ligne ;
+// « Ce qui compte » ; et en pied « Classer par » (renvoie au tri des résultats) + « Comprendre l'analyse ».
+// Aucun identifiant de run.
+export function AnalyseLabuseCard({ analyse, zone, onClasserPar, onComprendre }: {
+  analyse: AnalyseLabuse
+  zone?: string | null
+  onClasserPar?: () => void
+  onComprendre?: () => void
+}) {
   const bm = BANDE_META[analyse.bande as keyof typeof BANDE_META]
   const sm = analyse.signal_niveau ? SIGNAL_META[analyse.signal_niveau as keyof typeof SIGNAL_META] : null
   const nc = analyse.bande === 'NC'
@@ -42,11 +50,15 @@ export function AnalyseLabuseCard({ analyse }: { analyse: AnalyseLabuse }) {
         <Chevron open={ouvert} />
       </button>
       {ouvert && (<>
+      {/* ECRANS-NOV-1 §1 — la BANDE en grand, puis le signal et la zone en puces sur UNE ligne. */}
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 6, flexWrap: 'wrap' }}>
-        <span data-fiche-bande={analyse.bande} style={{ fontSize: 22, fontWeight: 600, color: bm.color, lineHeight: 1 }}>{bm.label}</span>
+        <span data-fiche-bande={analyse.bande} style={{ fontSize: 28, fontWeight: 700, color: bm.color, lineHeight: 1 }}>{bm.label}</span>
         {sm && !nc && (
           <span data-fiche-signal={analyse.signal_niveau}
             style={{ fontSize: 11, fontWeight: 500, color: sm.color, border: `1px solid ${sm.color}66`, borderRadius: 9999, padding: '2px 8px' }}>{sm.label}</span>
+        )}
+        {zone && (
+          <span data-fiche-zone={zone} style={{ fontSize: 11, fontWeight: 500, color: 'var(--txt-dim)', border: '1px solid var(--line-2)', borderRadius: 9999, padding: '2px 8px' }}>zone {zone}</span>
         )}
       </div>
       {nc && analyse.cause && (
@@ -64,6 +76,24 @@ export function AnalyseLabuseCard({ analyse }: { analyse: AnalyseLabuse }) {
               </span>
             )
           })}
+        </div>
+      )}
+      {/* ECRANS-NOV-1 §1 — pied de carte : « Classer par » (→ tri des résultats) à gauche, « Comprendre
+          l'analyse » à droite. Aucun identifiant de run. */}
+      {(onClasserPar || onComprendre) && (
+        <div data-analyse-pied style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 13, paddingTop: 11, borderTop: `1px solid ${bm.color}33`, flexWrap: 'wrap' }}>
+          {onClasserPar ? (
+            <button type="button" data-classer-par onClick={onClasserPar}
+              style={{ background: 'none', border: 0, padding: 0, cursor: 'pointer', fontSize: 11.5, color: 'var(--txt-dim)' }}>
+              Classer par : <b style={{ color: 'var(--txt)', fontWeight: 600 }}>potentiel</b> · chance de vente
+            </button>
+          ) : <span />}
+          {onComprendre && (
+            <button type="button" data-comprendre-open onClick={onComprendre}
+              style={{ background: 'none', border: 0, padding: 0, cursor: 'pointer', fontSize: 11.5, fontWeight: 500, color: 'var(--lab)' }}>
+              Comprendre l’analyse
+            </button>
+          )}
         </div>
       )}
       </>)}

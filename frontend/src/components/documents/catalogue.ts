@@ -7,7 +7,18 @@
 // pas encore) : sa carte est présente, grisée, « bientôt », non cliquable (`bientot: true`).
 
 // ANNONCE-3 — `annonce` : deux entrées (une adresse OU un lien d'annonce), comme l'outil Analyser une annonce.
-export type DocKind = 'parcelle' | 'multi' | 'zone' | 'annonce'
+// ECRANS-NOV-1 §4 — `courrier` : la lettre au propriétaire, servie par l'outil Courrier (pont prérempli).
+export type DocKind = 'parcelle' | 'multi' | 'zone' | 'annonce' | 'courrier'
+
+// ECRANS-NOV-1 §4 — les quatre COLONNES PAR USAGE de la maquette. L'ordre des colonnes et des cartes
+// dans chaque colonne suit la maquette validée.
+export type DocUsage = 'comprendre' | 'chiffrer' | 'partager' | 'secteur'
+export const USAGES: { key: DocUsage; titre: string }[] = [
+  { key: 'comprendre', titre: 'Comprendre la parcelle' },
+  { key: 'chiffrer', titre: 'Chiffrer un projet' },
+  { key: 'partager', titre: 'Partager et agir' },
+  { key: 'secteur', titre: 'Le secteur' },
+]
 
 export interface DocBadge {
   label: string
@@ -18,9 +29,11 @@ export interface DocCatalogue {
   key: string
   /** nom affiché sur la carte et en tête de la porte. */
   nom: string
-  /** type de cible : une parcelle · 2–3 parcelles · une parcelle + rayon. */
+  /** type de cible : une parcelle · 2–3 parcelles · une parcelle + rayon · annonce · courrier. */
   kind: DocKind
-  /** badges de format (PDF ; PDF + Excel pour le Bilan). */
+  /** ECRANS-NOV-1 §4 — la colonne « par usage » où la carte vit. */
+  usage: DocUsage
+  /** badges de format (PDF ; ZIP pour le pré-dossier). */
   formats: string[]
   /** description d'une ligne (carte). */
   desc: string
@@ -29,80 +42,82 @@ export interface DocCatalogue {
   /** ligne d'explication sous la parcelle résolue (variante parcelle). */
   explication: string
   /** RETOURS-17 — nom du document dans le fichier exporté (« <IDU> — <fichier>.pdf »). Défaut = `nom`.
-   *  Sert quand le nom de carte diffère du nom d'export (ex. « Estimer un bien » → « Estimation »). */
+   *  Sert quand le nom de carte diffère du nom d'export (ex. « Estimation »). */
   fichier?: string
   /** « Comparables DVF » — carte présente mais grisée/non cliquable (hors mandat). */
   bientot?: boolean
 }
 
-// L'ordre EST celui de la maquette : 2 rangées de 4 + ANNONCE-3 (9e carte « Analyse d'annonce »,
-// la grille `grid-cols-4` s'adapte : 2 rangées pleines + 1 carte à la 3e).
+// ECRANS-NOV-1 §4 — les DIX documents, rangés par usage (quatre colonnes). Descriptions courtes de la
+// maquette validée. La parcelle se choisit UNE fois en haut de l'écran ; chaque carte « Génère » dessus.
 export const CATALOGUE: DocCatalogue[] = [
+  // ── Comprendre la parcelle ──
   {
-    key: 'dossier', nom: 'Dossier', kind: 'parcelle', formats: ['PDF'],
-    desc: 'La fiche parcelle complète, imprimable : zonage, capacité, risques, marché, réseaux.',
+    key: 'dossier', nom: 'Dossier', kind: 'parcelle', usage: 'comprendre', formats: ['PDF'],
+    desc: 'Tout ce que LABUSE sait de la parcelle, en 10 pages. C’est aussi le Flash.',
     cta: 'Générer le dossier',
-    explication: '',   // RECETTE-2 (E2) — phrase « La fiche parcelle complète … Mes documents » retirée
+    explication: '',
+  },
+  {
+    key: 'gabarit', nom: 'Gabarit', kind: 'parcelle', usage: 'comprendre', formats: ['PDF'],
+    desc: 'L’enveloppe réglementaire : zone d’implantation, emprise, hauteur, 3D.',
+    cta: 'Générer le gabarit',
+    explication: '',
+  },
+  {
+    // ANNONCE-3 — miroir de l'outil « Analyser une annonce ». RECETTE-4 / ECRANS-NOV-1 — nom « Estimation ».
+    key: 'analyse-annonce', nom: 'Estimation', kind: 'annonce', usage: 'comprendre', formats: ['PDF'],
+    fichier: 'Estimation',
+    desc: 'Prix au m² du bien d’après les ventes voisines, avec sa fourchette.',
+    cta: 'Générer l’estimation',
+    explication: '',
+  },
+  // ── Chiffrer un projet ──
+  {
+    // IMPLANTATION-4 (LOT A) — ouvre l'écran d'étude complet (scénarios, plan masse), génère le PDF depuis l'écran.
+    key: 'etude-faisabilite', nom: 'Étude de faisabilité', kind: 'parcelle', usage: 'chiffrer', formats: ['PDF'],
+    desc: 'Un plan masse et un programme possibles, dessinés par le moteur.',
+    cta: 'Ouvrir l’étude de faisabilité',
+    explication: '',
   },
   {
     // RECETTE-5 / DOCS-1 §4 — le mot « Financier » disparaît côté client : le document s'appelle « Bilan ».
-    // DOCS-FIX-1 (P12) — badge « Excel » RETIRÉ : l'export Excel n'existe pas (`_EXCEL_DISPONIBLE`
-    // vide côté back) → le badge promettait un format jamais servi. À réintroduire le jour où
-    // l'export existe (la plomberie `r.excel`/bouton Excel de LigneDoc reste en place).
-    key: 'bilan', nom: 'Bilan', kind: 'parcelle', formats: ['PDF'],
-    desc: 'Charge foncière, coûts, CA et marge, avec vos propres ratios. Prix connu, ou prix maximum du terrain pour votre marge.',
+    key: 'bilan', nom: 'Bilan', kind: 'parcelle', usage: 'chiffrer', formats: ['PDF'],
+    desc: 'Le bilan promoteur, 45 postes, charge foncière, coûts, CA et marge.',
     cta: 'Générer le bilan',
-    explication: '',   // RETOURS-17 — petite phrase retirée des fenêtres Docs
+    explication: '',
   },
   {
-    key: 'apporteur', nom: 'Apporteur', kind: 'parcelle', formats: ['PDF'],
-    desc: 'Présenter un terrain à un acheteur en une page : plan, faits, dernière vente, contact.',
-    cta: 'Générer l’apporteur',
-    explication: '',   // RETOURS-17 — petite phrase retirée des fenêtres Docs
-  },
-  {
-    key: 'pre-dossier', nom: 'Pré-dossier PC', kind: 'parcelle', formats: ['PDF'],
-    desc: 'Ce que le PLU permet et exige ici, l’enveloppe réglementaire et la liste des pièces à joindre.',
-    cta: 'Générer le pré-dossier PC',
-    explication: '',   // RETOURS-17 — petite phrase retirée des fenêtres Docs
-  },
-  {
-    key: 'gabarit', nom: 'Gabarit', kind: 'parcelle', formats: ['PDF'],
-    desc: 'Zone d’implantation, plafond d’emprise, hauteur : le plan, les règles appliquées et celles non intégrées.',
-    cta: 'Générer le gabarit',
-    explication: '',   // RETOURS-17 — petite phrase retirée des fenêtres Docs
-  },
-  // RECETTE-OUTILS-1 (point 50) — carte « Comparables DVF » (jamais faite, `bientot`) RETIRÉE du catalogue.
-  {
-    key: 'comparatif', nom: 'Comparatif', kind: 'multi', formats: ['PDF'],
-    desc: 'Deux ou trois parcelles côte à côte sur les 19 lignes de Comparer, en page paysage.',
+    key: 'comparatif', nom: 'Comparatif', kind: 'multi', usage: 'chiffrer', formats: ['PDF'],
+    desc: 'Deux à trois parcelles côte à côte, critère par critère.',
     cta: 'Générer le comparatif',
-    explication: '',   // RECETTE-OUTILS-2 (R8) — « Les 19 lignes de Comparer, côte à côte. » retirée.
+    explication: '',
+  },
+  // ── Partager et agir ──
+  {
+    key: 'apporteur', nom: 'Apporteur', kind: 'parcelle', usage: 'partager', formats: ['PDF'],
+    desc: 'Le brief confidentiel à remettre à un apporteur d’affaires.',
+    cta: 'Générer l’apporteur',
+    explication: '',
   },
   {
-    key: 'etude-zone', nom: 'Étude de zone', kind: 'zone', formats: ['PDF'],
-    desc: 'Population, économie, immobilier, foncier, contraintes, équipements, dynamique — autour d’une parcelle, dans le rayon choisi.',
+    // ECRANS-NOV-1 §4 — « Courrier » : la lettre au propriétaire, servie par l'outil Courrier (pont prérempli).
+    key: 'courrier', nom: 'Courrier', kind: 'courrier', usage: 'partager', formats: ['PDF'],
+    desc: 'La lettre au propriétaire, à votre nom.',
+    cta: 'Rédiger le courrier',
+    explication: '',
+  },
+  {
+    key: 'pre-dossier', nom: 'Pré-dossier PC', kind: 'parcelle', usage: 'partager', formats: ['ZIP'],
+    desc: 'CERFA et pièces PCMI pré-remplis, dans un ZIP.',
+    cta: 'Générer le pré-dossier PC',
+    explication: '',
+  },
+  // ── Le secteur ──
+  {
+    key: 'etude-zone', nom: 'Étude de zone', kind: 'zone', usage: 'secteur', formats: ['PDF'],
+    desc: 'Le territoire autour de la parcelle, dans le rayon choisi.',
     cta: 'Générer l’étude de zone',
-    explication: '',   // RETOURS-17 — petite phrase retirée des fenêtres Docs
-  },
-  {
-    // IMPLANTATION-4 (LOT A) — 9e carte : l'Étude de faisabilité a QUITTÉ les Outils, elle vit ICI. La
-    // carte n'exporte plus un PDF « par défaut » : elle OUVRE l'écran d'étude complet (configuration,
-    // scénarios A/B/C, plan masse DESSINÉ, hypothèses), sur le modèle du Bilan — on génère le PDF DEPUIS
-    // l'écran, une fois le scénario choisi. Même composant (M22), même API (POST /modules/etude).
-    key: 'etude-faisabilite', nom: 'Étude de faisabilité', kind: 'parcelle', formats: ['PDF'],
-    desc: 'Scénarios d’implantation collectif : fourchette de logements, plan masse dessiné, contrôles des règles du PLU — pré-faisabilité.',
-    cta: 'Ouvrir l’étude de faisabilité',
-    explication: '',   // RETOURS-17 — petite phrase retirée des fenêtres Docs
-  },
-  {
-    // ANNONCE-3 — miroir de l'outil « Analyser une annonce » : une adresse (rapport parcelle) OU un
-    // lien d'annonce Leboncoin (rapport commune). Le PDF Docs est identique à celui de l'outil.
-    // RECETTE-4 — nom affiché « Estimer un bien » (clé/kind internes inchangés).
-    key: 'analyse-annonce', nom: 'Estimer un bien', kind: 'annonce', formats: ['PDF'],
-    fichier: 'Estimation',   // RETOURS-17 — nom d'export (ex. « 97411000BZ1065 — Estimation.pdf »)
-    desc: 'Une adresse ou un lien d’annonce : LABUSE croise le bien avec le marché et le foncier.',
-    cta: 'Générer l’estimation',
-    explication: '',   // RETOURS-17 — petite phrase retirée des fenêtres Docs
+    explication: '',
   },
 ]

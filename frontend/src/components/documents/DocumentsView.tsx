@@ -27,7 +27,7 @@ import { fmtDateNum, fmtM2, iduComplet } from '../../lib/format'
 import { editeurDiffere } from '../../lib/empreinteDoc'
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'
 import { supprimerDocument, getMoteursConfig } from '../../lib/api'
-import { CATALOGUE, type DocCatalogue } from './catalogue'
+import { CATALOGUE, USAGES, type DocCatalogue } from './catalogue'
 
 // l'URL du générateur d'une ligne de bibliothèque (régénération à la demande — « Ouvrir »).
 function urlDocument(r: Pick<DocGenereRow, 'id' | 'doc_type' | 'idus' | 'rayon_km'>): string | null {
@@ -47,69 +47,40 @@ function urlDocument(r: Pick<DocGenereRow, 'id' | 'doc_type' | 'idus' | 'rayon_k
   }
 }
 
-// ── vignette : un glyphe sobre par carte (la DA finale les remappe ; ici distinct et net à 56×72). ──
-function Vignette({ kind, bientot }: { kind: DocCatalogue['kind']; bientot?: boolean }) {
+
+// ECRANS-NOV-1 §4 — une icône de document sobre, commune à toutes les cartes (comme la maquette).
+function DocGlyphe() {
   return (
-    <svg viewBox="0 0 56 72" className={`block h-[72px] w-[56px] rounded border ${bientot ? 'border-line-2 opacity-60' : 'border-line-2'}`} aria-hidden>
-      <rect x="0" y="0" width="56" height="72" rx="4" className="fill-bg" />
-      {kind === 'multi' ? (
-        <>
-          <rect className="fill-mint" x="8" y="8" width="16" height="3" />
-          <rect className="fill-mint" x="31" y="8" width="9" height="3" />
-          {[16, 22, 28, 34, 40, 46, 52].map((y) => (
-            <g key={y}><rect className="fill-line-2" x="8" y={y} width="15" height="2" /><rect className="fill-line-2" x="31" y={y} width="9" height="2" /><rect className="fill-line-2" x="42" y={y} width="7" height="2" /></g>
-          ))}
-        </>
-      ) : kind === 'zone' ? (
-        <>
-          <rect className="fill-mint" x="8" y="8" width="26" height="3" />
-          <rect x="8" y="15" width="40" height="22" rx="1" fill="none" className="stroke-mint" strokeWidth="1.2" />
-          <path d="M18 20l14-3 10 8-6 9-14 1-6-8z" className="fill-mint" opacity="0.4" />
-          {[42, 47, 52, 57, 62].map((y) => <rect key={y} className="fill-line-2" x="8" y={y} width={y % 3 ? 40 : 30} height="2" />)}
-        </>
-      ) : (
-        <>
-          <rect className="fill-mint" x="8" y="8" width="24" height="3" />
-          {[16, 21, 26].map((y) => <rect key={y} className="fill-line-2" x="8" y={y} width={y === 21 ? 34 : 40} height="2" />)}
-          <rect x="8" y="33" width="40" height="18" rx="1" fill="none" className="stroke-mint" strokeWidth="1.2" />
-          {[56, 61].map((y) => <rect key={y} className="fill-line-2" x="8" y={y} width={y === 56 ? 30 : 36} height="2" />)}
-        </>
-      )}
+    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth={1.7}
+      strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M6.5 3.5h7L18 8v12.5H6.5z" /><path d="M13.5 3.5V8H18" /><path d="M9 12.5h6M9 15.5h4.5" />
     </svg>
   )
 }
 
-function DocCard({ d, onOpen }: { d: DocCatalogue; onOpen: () => void }) {
-  if (d.bientot) {
-    // Comparables DVF — HORS mandat : carte présente, grisée à 40 %, « bientôt », non cliquable.
-    return (
-      <div aria-disabled className="grid cursor-not-allowed grid-cols-[56px_1fr] items-start gap-3 rounded-md border border-line bg-surface-1 p-3 opacity-40" title="Bientôt">
-        <Vignette kind={d.kind} bientot />
-        <div>
-          <div className="flex flex-wrap items-center gap-2 text-[15px] font-semibold text-txt">
-            {d.nom} <Badge ton="neutre">bientôt</Badge>
-          </div>
-          <div className="mt-1 text-[13px] text-txt-dim">{d.desc}</div>
-        </div>
-      </div>
-    )
-  }
+// ECRANS-NOV-1 §4 — la carte d'un document : icône + badge de format en tête, nom, description, puis
+// « Générer ». La parcelle est déjà choisie en haut ; le bouton génère DESSUS (ou ouvre la fenêtre de
+// saisie supplémentaire pour le Comparatif / l'Étude de zone).
+function DocCard({ d, onGenerer, busy, pret }: { d: DocCatalogue; onGenerer: () => void; busy?: boolean; pret: boolean }) {
   return (
-    <button
-      onClick={onOpen}
-      className="group grid grid-cols-[56px_1fr] items-start gap-3 rounded-md border border-line bg-surface-1 p-3 text-left transition-colors duration-quick hover:border-mint hover:bg-mint focus-visible:border-mint focus-visible:bg-mint focus-visible:outline-none"
-    >
-      <Vignette kind={d.kind} />
-      <div>
-        <div className="flex flex-wrap items-center gap-2 text-[15px] font-semibold text-txt group-hover:text-mint-on">
-          {d.nom}
-          {d.formats.map((f) => (
-            <span key={f} className="inline-flex h-[18px] items-center rounded-full border border-line-2 px-[7px] text-[11px] font-semibold text-txt-mut group-hover:border-mint-on group-hover:text-mint-on">{f}</span>
-          ))}
-        </div>
-        <div className="mt-1 text-[13px] text-txt-dim group-hover:text-mint-on/80">{d.desc}</div>
+    <div className="flex flex-col gap-3 rounded-lg border border-line bg-surface-1 p-4">
+      <div className="flex items-start justify-between">
+        <span className="grid h-8 w-8 place-items-center rounded-md border border-line-2 text-mint">
+          <DocGlyphe />
+        </span>
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-txt-dim">{d.formats.join(' · ')}</span>
       </div>
-    </button>
+      <div className="min-w-0">
+        <div className="text-[15px] font-semibold text-txt">{d.nom}</div>
+        <p className="mt-1 text-[13px] leading-snug text-txt-dim">{d.desc}</p>
+      </div>
+      <div className="mt-auto pt-1">
+        <Bouton niveau="secondaire" ton="vert" disabled={!pret || busy} onClick={onGenerer}
+          title={pret ? undefined : 'Choisissez d’abord une parcelle'}>
+          {busy ? <Chargement variant="inline" accent="courant" label="Génération…" /> : 'Générer'}
+        </Bouton>
+      </div>
+    </div>
   )
 }
 
@@ -151,7 +122,10 @@ function ParcelleResolue({ idu }: { idu: string }) {
 }
 
 // ── la porte (fenêtre centrée) : ✕ / Échap / clic hors fenêtre ferment. ──
-function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
+// ECRANS-NOV-1 §4 — la porte ne sert plus QUE les documents à saisie SUPPLÉMENTAIRE (Comparatif :
+// d'autres parcelles ; Étude de zone : un rayon). `initialIdu` amorce ces saisies avec la parcelle
+// déjà choisie en haut de l'écran (on n'a plus à la re-saisir).
+function Porte({ d, onClose, initialIdu }: { d: DocCatalogue; onClose: () => void; initialIdu?: string | null }) {
   // FIX-NU3-2 (M-A04) — piège de focus + Échap + restitution au déclencheur sur la modale « document ».
   const dialogRef = useRef<HTMLDivElement | null>(null)
   usePiegeFocus(true, dialogRef, onClose)
@@ -164,9 +138,9 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
       .then(() => qc.invalidateQueries({ queryKey: ['documents'] }))
       .catch(() => { /* non bloquant */ })
   }
-  // variante parcelle / multi / zone
-  const [idu, setIdu] = useState<string | null>(null)                // parcelle & zone
-  const [idus, setIdus] = useState<(string | null)[]>([null, null, null])  // multi (2 à 3)
+  // variante parcelle / multi / zone — amorcées par la parcelle déjà choisie (ECRANS-NOV-1 §4).
+  const [idu, setIdu] = useState<string | null>(initialIdu ?? null)                // parcelle & zone
+  const [idus, setIdus] = useState<(string | null)[]>([initialIdu ?? null, null, null])  // multi (2 à 3)
   const [rayon, setRayon] = useState(2)                              // zone : rayon servi, défaut 2
   const [lien, setLien] = useState('')                               // ANNONCE-3 : lien d'annonce (variante annonce)
   const [surfaceHab, setSurfaceHab] = useState('')                   // ESTIMER-PRECISION-1 : surface habitable facultative (variante adresse)
@@ -534,30 +508,113 @@ function Bibliotheque() {
   )
 }
 
+// ── en tête : la PARCELLE choisie UNE fois (ECRANS-NOV-1 §4) — champ de recherche, puis la parcelle
+//    résolue (réf + adresse + zone + surface) et « Changer » pour en prendre une autre. ──
+function PickerParcelle({ idu, onPick, onChanger }: { idu: string | null; onPick: (i: string) => void; onChanger: () => void }) {
+  if (!idu) {
+    return (
+      <div className="rounded-lg border border-line-2 bg-surface-1 p-3">
+        <ParcelInput placeholder="Adresse, IDU ou référence (BW0917)" withCarte={false} onPick={onPick} autoFocus />
+      </div>
+    )
+  }
+  return (
+    <div className="flex items-start gap-2 rounded-lg border border-mint/40 bg-mint/[0.06] px-3 py-2.5">
+      <div className="min-w-0 flex-1">
+        <ParcelleResolue idu={idu} />
+      </div>
+      <Bouton niveau="secondaire" ton="vert" className="mt-2.5 shrink-0" onClick={onChanger}>Changer</Bouton>
+    </div>
+  )
+}
+
 export function DocumentsView() {
+  // ECRANS-NOV-1 §4 — la parcelle se choisit UNE fois. On l'amorce avec la sélection courante (fiche/carte),
+  // lue une seule fois au montage ; « Changer » la remet à zéro (pas de ré-amorçage automatique ensuite).
+  const [idu, setIdu] = useState<string | null>(() => useApp.getState().selectedIdu ?? null)
   const [porte, setPorte] = useState<DocCatalogue | null>(null)
+  const [bilanIdu, setBilanIdu] = useState<string | null>(null)
   const ouvrirEtude = useApp((s) => s.ouvrirEtude)
-  // fermeture propre si l'on quitte la vue pendant qu'une porte est ouverte.
-  const mounted = useRef(true)
-  useEffect(() => () => { mounted.current = false }, [])
+  const setView = useApp((s) => s.setView)
+  const setModule = useApp((s) => s.setModule)
+  const setCourrierPrefill = useApp((s) => s.setCourrierPrefill)
+  const setToast = useApp((s) => s.setToast)
+  const qc = useQueryClient()
+  // ouverture propre (fetch + blob + toast d'erreur) — comme « Mes documents ».
+  const { ouvrir, enCours } = useOuvrirDocument(setToast)
+
+  const nomExport = (d: DocCatalogue, i: string) => `${iduComplet(i)} — ${d.fichier ?? d.nom}.${d.key === 'pre-dossier' ? 'zip' : 'pdf'}`
+  const enregistrer = (doc_type: DocType, idus: string[], rayon_km?: number | null) => {
+    enregistrerDocument({ doc_type, idus, rayon_km: rayon_km ?? null })
+      .then(() => qc.invalidateQueries({ queryKey: ['documents'] }))
+      .catch(() => { /* non bloquant */ })
+  }
+
+  // ECRANS-NOV-1 §4 — « Générer » depuis la carte, SUR la parcelle choisie. Les documents à saisie
+  // supplémentaire (Comparatif : d'autres parcelles ; Étude de zone : un rayon) ouvrent la fenêtre
+  // dédiée, préremplie avec la parcelle. Bilan et Étude de faisabilité ouvrent leur écran ; Courrier
+  // part à l'outil Courrier prérempli.
+  const generer = async (d: DocCatalogue) => {
+    if (d.kind === 'multi' || d.kind === 'zone') { setPorte(d); return }
+    // IMPLANTATION-4 — l'Étude de faisabilité OUVRE l'écran d'étude (assiette multi-parcelles composée
+    // DANS l'écran) : avec la parcelle choisie si elle existe, sinon une assiette vide à composer.
+    if (d.key === 'etude-faisabilite') { ouvrirEtude(idu ? [idu] : []); return }
+    if (!idu) return
+    if (d.key === 'bilan') { setBilanIdu(idu); return }
+    if (d.key === 'courrier') { setCourrierPrefill(idu); setView('cartes'); setModule('courriers'); return }
+    if (d.key === 'analyse-annonce') {
+      if (await ouvrir(docAnalyseAnnonceUrl(idu, null), d.key, undefined, nomExport(d, idu))) enregistrer('analyse-annonce', [idu])
+      return
+    }
+    const url =
+      d.key === 'dossier' ? docDossierUrl(idu)
+      : d.key === 'apporteur' ? docApporteurUrl(idu)
+      : d.key === 'pre-dossier' ? docPreDossierUrl(idu)
+      : d.key === 'gabarit' ? docGabaritUrl(idu)
+      : null
+    if (url && await ouvrir(url, d.key, undefined, nomExport(d, idu))) enregistrer(d.key as DocType, [idu])
+  }
+
   return (
     <div className="min-w-0 flex-1 overflow-y-auto bg-bg">
       <div className="mx-auto max-w-[1400px] px-6 pb-12 pt-6">
-        <h1 className="mb-5 text-[22px] font-bold text-txt">Documents</h1>
-        {/* RECETTE-OUTILS-1 (point 49) — phrase d'introduction « Huit documents produits… » retirée.
-            (point 50) — la carte « Comparables DVF » est retirée du catalogue → plus de compteur « huit ». */}
-        <div className="grid grid-cols-4 gap-3 max-[1100px]:grid-cols-2">
-          {CATALOGUE.map((d) => (
-            // IMPLANTATION-4 (parcelles multiples) — la carte « Étude de faisabilité » n'ouvre PLUS la
-            // fenêtre « Sur quelle parcelle ? » : elle ouvre directement l'écran d'étude (état 1), dont
-            // le champ AJOUTE les parcelles (assiette de 1 à 8). Les autres documents gardent leur porte.
-            <DocCard key={d.key} d={d}
-              onOpen={() => (d.key === 'etude-faisabilite' ? ouvrirEtude([]) : setPorte(d))} />
+        {/* ECRANS-NOV-1 §4 — titre + accroche à gauche, la parcelle choisie à droite. */}
+        <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-[22px] font-bold text-txt">Documents</h1>
+            <p className="mt-1 text-[13px] text-txt-dim">Choisissez la parcelle une fois, puis générez ce qu’il vous faut.</p>
+          </div>
+          <div className="w-full max-w-[460px]">
+            <PickerParcelle idu={idu} onPick={setIdu} onChanger={() => setIdu(null)} />
+          </div>
+        </div>
+
+        {/* ECRANS-NOV-1 §4 — onze cartes en QUATRE COLONNES par usage. */}
+        <div className="grid grid-cols-4 gap-4 max-[1100px]:grid-cols-2">
+          {USAGES.map((u) => (
+            <div key={u.key} className="flex flex-col gap-3">
+              <h2 className="label-caps text-[11px] text-txt-dim">{u.titre}</h2>
+              {CATALOGUE.filter((d) => d.usage === u.key).map((d) => {
+                // multi/zone (fenêtre de saisie) et Étude de faisabilité (écran-assiette) s'ouvrent sans parcelle.
+                const pret = d.kind === 'multi' || d.kind === 'zone' || d.key === 'etude-faisabilite' ? true : !!idu
+                return <DocCard key={d.key} d={d} pret={pret} busy={enCours === d.key} onGenerer={() => generer(d)} />
+              })}
+              {/* la colonne « Le secteur » porte le rappel : un seul moteur, mêmes chiffres partout. */}
+              {u.key === 'secteur' && (
+                <div className="rounded-lg border border-dashed border-line-2 p-4 text-[12px] leading-snug text-txt-dim">
+                  Chaque document est lu par le même moteur que la fiche : mêmes chiffres partout.
+                </div>
+              )}
+            </div>
           ))}
         </div>
         <Bibliotheque />
       </div>
-      {porte && <Porte d={porte} onClose={() => setPorte(null)} />}
+      {porte && <Porte d={porte} initialIdu={idu} onClose={() => setPorte(null)} />}
+      {bilanIdu && (
+        <BilanEcran idu={bilanIdu} onGenerated={() => qc.invalidateQueries({ queryKey: ['documents'] })}
+          onClose={() => setBilanIdu(null)} />
+      )}
     </div>
   )
 }

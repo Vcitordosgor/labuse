@@ -86,9 +86,11 @@ const FicheAccordionCtx = createContext<{ openId: string | null; toggle: (id: st
  *  TÊTE du tiroir ouvert (règle §4 : une seule ligne de contexte sur la rangée fermée).
  *  `value` : chaîne → enveloppée en `.gr-v` ; élément React (une `.pill`) → rendu tel quel.
  *  `icon` ignoré (gardé au type pour ne pas toucher les call-sites). */
-function RefDrawer({ id, name, context, value, valueColor, accent, icon, micro, children }: {
+function RefDrawer({ id, name, context, value, valueColor, accent, icon, micro, children, order }: {
   id?: string; icon?: ReactNode; name: string; context?: ReactNode; value?: ReactNode; valueColor?: string
   accent?: boolean; micro?: ReactNode; children?: ReactNode
+  // ECRANS-NOV-1 §1 — rang de la section dans la pile (flex `order`), lu de sections.yaml par Fiche.tsx.
+  order?: number
 }) {
   const acc = useContext(FicheAccordionCtx)
   const open = !!acc.forceOpen || (!!id && acc.openId === id)
@@ -112,7 +114,7 @@ function RefDrawer({ id, name, context, value, valueColor, accent, icon, micro, 
     return () => clearTimeout(t)
   }, [open])
   return (
-    <div ref={ref} data-drawer={id} style={{ scrollMarginTop: 8 }}>
+    <div ref={ref} data-drawer={id} style={{ scrollMarginTop: 8, order }}>
       {/* M56-B6 · DA-FICHE-v6 — le tiroir est une CARTE AUTONOME : pastille d'icône 32×32 à
           gauche, corps (titre + sous-titre une ligne), valeur/pastille + chevron à droite.
           Ouvert : la carte s'ouvre (coins bas carrés) et .t-open prolonge la carte. */}

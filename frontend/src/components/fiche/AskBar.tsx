@@ -83,15 +83,20 @@ export function AskBar({ idu, startOpen, onClose }: { idu: string; zone?: string
   // à chaque changement de fiche : on replie et on repart propre (l'IA ne s'impose jamais).
   useEffect(() => { setOpen(!!startOpen); setQ(''); ask.reset() }, [idu])   // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Exemples curés (point 15) — tous GROUNDÉS sur la liste blanche de /ask (aménités = ajout backend).
-  // RETOURS-9 (Q10.2) — « Pourquoi ce statut ? » retiré (suggestion peu actionnable).
+  // Exemples curés — courts, deux rangées (maquette ECRANS-NOV-1 §5) ; chacun reste sur un sujet
+  // que /ask sait traiter (capacité, DVF, viabilisation, risques, propriétaire, explication d'acronyme).
+  // Un clic ENVOIE la question (run).
   const chips = [
-    'Y a-t-il des équipements à proximité ?',
     'Combien je peux construire ?',
+    'Des ventes récentes à côté ?',
     'C’est raccordé à l’assainissement ?',
-    'Des ventes récentes dans le secteur ?',
-    'Y a-t-il un risque inondation ?',
+    'Quel risque d’inondation ?',
+    'Qui est le propriétaire ?',
+    'Que veut dire « zone Uh » ?',
   ]
+  // ECRANS-NOV-1 §5 — la phrase dit SUR QUELLE parcelle le Copilote répond : la référence courte
+  // (section + numéro, ex. « BZ1065 »), dérivée de l'IDU (5 INSEE + 3 feuille + section + numéro).
+  const refCourt = idu.length >= 12 ? idu.slice(8) : idu
 
   // M19 : en mode contrôlé (carte IA en bas de pile), replié = rien (le parent fournit la carte).
   if (!open && onClose) return null
@@ -116,22 +121,30 @@ export function AskBar({ idu, startOpen, onClose }: { idu: string; zone?: string
   return (
     <div data-askbar className="shrink-0 border-b border-violet/50 bg-violet/[0.07] px-5 py-3">
       <div className="flex items-center gap-2">
-        <span className="label-caps text-[10px] text-violet">✦ Demander à l'IA</span>
+        {/* ECRANS-NOV-1 §5 — « Copilote » (mauve), comme le bouton de la fiche ; plus « Demander à l'IA ». */}
+        <span className="label-caps text-[10px] text-violet">✦ Copilote</span>
         <button data-askbar-close onClick={close}
           className="ml-auto min-h-7 rounded px-1.5 py-0.5 text-[11px] text-txt-dim transition-colors duration-quick hover:bg-violet/15 hover:text-txt"
           >✕ fermer</button>
       </div>
-      <div className="mt-2 flex items-center gap-2">
-        <input
-          value={q} onChange={(e) => setQ(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') run(q) }}
-          placeholder="Expliquez un point, un acronyme, ou trouvez une donnée…"
-          className="min-w-0 flex-1 rounded-lg border border-violet/40 bg-surface-1 px-3 py-1.5 text-[12px] text-txt placeholder:text-txt-dim focus:border-violet focus:outline-none" />
+      {/* ECRANS-NOV-1 §5 — une phrase dit CE QU'IL FAIT et SUR QUELLE parcelle. */}
+      <p data-askbar-phrase className="mt-1 text-[11.5px] leading-snug text-txt-mut">
+        Posez une question sur <span className="font-mono font-semibold text-txt">{refCourt}</span>. Je réponds avec les chiffres de la fiche, rien d’autre.
+      </p>
+      {/* ECRANS-NOV-1 §5 — champ MULTILIGNE (plus d'exemple coupé). Entrée envoie ; Maj+Entrée = saut de ligne. */}
+      <textarea
+        value={q} onChange={(e) => setQ(e.target.value)} rows={3}
+        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); run(q) } }}
+        placeholder="Votre question…"
+        className="mt-2 w-full resize-none rounded-lg border border-violet/40 bg-surface-1 px-3 py-2 text-[12px] leading-relaxed text-txt placeholder:text-txt-dim focus:border-violet focus:outline-none" />
+      <div className="mt-2 flex justify-end">
         <Bouton niveau="primaire" ton="ia" className="shrink-0" onClick={() => run(q)} disabled={ask.isPending || !q.trim()}>
           {ask.isPending ? '…' : 'Demander'}
         </Bouton>
       </div>
-      <div className="mt-2 flex flex-wrap gap-1.5">
+      {/* ECRANS-NOV-1 §5 — exemples courts, deux rangées ; un clic ENVOIE la question. */}
+      <p className="mt-2 label-caps text-[9px] text-txt-dim">Par exemple</p>
+      <div className="mt-1.5 flex flex-wrap gap-1.5">
         {chips.map((c) => (
           <button key={c} onClick={() => run(c)} disabled={ask.isPending}
             className="min-h-7 rounded-full border border-line-2 px-2.5 py-1 text-[10.5px] text-txt-mut transition-colors duration-quick hover:border-violet/60 hover:text-txt">

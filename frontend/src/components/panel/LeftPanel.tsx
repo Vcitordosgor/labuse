@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef } from 'react'
-import { getScoringFraction } from '../../lib/api'
+import { getScoringFraction, getAccueilFraicheur } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 import { Legend } from '../map/Legend'
 import { NouvellesCouches } from '../map/CouchesTuyau'  // COUCHES-TUYAU-1 lot 2
@@ -251,13 +251,13 @@ function VerdictHero() {
           <button data-comprendre-open onClick={() => setAlgoModale('comprendre')}
             className="inline-flex shrink-0 items-center gap-1 rounded-ctl border border-mint/40 px-2 py-0.5 text-[11px] font-medium text-mint hover:bg-mint/10">
             <span className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-mint/50 text-[9px] font-bold leading-none">i</span>
-            Comprendre
+            Comprendre l’analyse
           </button>
         )}
-        {/* M55-J point 7 : « Retour » — destination UNIQUE (store.retourFiltres). */}
+        {/* ECRANS-NOV-1 §2 — « ← Changer les filtres » (ex-« Retour ») : destination UNIQUE (store.retourFiltres). */}
         <button data-verdict-off onClick={retourFiltres}
           className="shrink-0 rounded-ctl border border-line-2 px-2 py-0.5 text-[10.5px] text-txt-mut hover:border-txt-dim hover:text-txt">
-          Retour
+          ← Changer les filtres
         </button>
       </div>
     )
@@ -299,6 +299,10 @@ const ACC_ICONS: Record<string, JSX.Element> = {
   outil: <><circle cx="12" cy="12" r="3" /><path d="M19.4 13a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V20a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 18.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" /></>,
   // RECETTE-5 (V13) — horloge « Remonter le temps » (5e porte de l'accueil).
   temps: <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.3V12l3.1 1.9" /></>,
+  // ECRANS-NOV-1 §3 — « Générer un document » (ouvre Docs) : feuille à coin plié + lignes de texte.
+  document: <><path d="M6.5 3.5h7L18 8v12.5H6.5z" /><path d="M13.5 3.5V8H18" /><path d="M9 12.5h6M9 15.5h4.5" /></>,
+  // ECRANS-NOV-1 §3 — « Voir les données » (ouvre la section Données) : pile (base de données).
+  donnees: <><ellipse cx="12" cy="6" rx="7" ry="2.8" /><path d="M5 6v6c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8V6" /><path d="M5 12v6c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8v-6" /></>,
 }
 function AccEntry({ ton, icone, titre, sous, onClick }: {
   ton: 'mint' | 'mauve'; icone: keyof typeof ACC_ICONS; titre: string; sous: string; onClick: () => void
@@ -321,44 +325,37 @@ function AccEntry({ ton, icone, titre, sous, onClick }: {
 
 function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
   const { setView, setAccueilVu, toggleOutils } = useApp()
-  // PAGES-RANGEMENT-1 (lot 3) — la ligne de FRAÎCHEUR (pastille ok/warn/error + phrase d'état, lue de
-  // /accueil/fraicheur) est RETIRÉE de l'accueil client : c'est de l'exploitation, elle vit au dashboard
-  // admin. L'appel /accueil/fraicheur est supprimé du front ; il ne reste que la porte vers Sources.
-  // M87 P1 — le bloc « Cette semaine » (M83) était déjà retiré (composant + appel /accueil/cette-semaine).
+  // ECRANS-NOV-1 §3 — « Voir les données » annonce le NOMBRE de sources servies (purement un
+  // compte, lu de l'endpoint accueil déjà dédié ; PAS la pastille de fraîcheur/retard retirée par
+  // PAGES-RANGEMENT-1). Un compte absent → libellé neutre, jamais un chiffre inventé.
+  const nSources = useQuery({ queryKey: ['accueil-fraicheur'], queryFn: getAccueilFraicheur, staleTime: 30 * 60_000 }).data?.n_sources
+  const sousDonnees = nSources ? `${nSources} sources, au même endroit` : 'toutes les sources, au même endroit'
+  // ECRANS-NOV-1 §3 — SIX entrées identiques (58 px), sans label « Par où commencer » ni ligne de
+  // pied : le titre, puis les six portes. Tout tient dans le panneau 342 × 640 sans défilement.
+  const nOutils = MODULES.filter((m) => !m.hidden).length
   return (
-    <div data-accueil className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 py-5">
+    <div data-accueil className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 py-4">
       {/* B1 — la promesse (2e ligne en --mint) */}
       <p className="text-[17px] font-medium leading-tight text-txt">Tout le foncier de La Réunion.</p>
-      <p className="mb-5 text-[17px] font-medium leading-tight text-mint">Au même endroit.</p>
+      <p className="mb-4 text-[17px] font-medium leading-tight text-mint">Au même endroit.</p>
 
-      {/* RETOURS-5 T1 — la LIGNE de chiffres est RETIRÉE (« 64 sources » passait à la ligne, et une donnée
-          coupée est pire qu'absente). Le titre est suivi directement de « PAR OÙ COMMENCER ». L'appel
-          /accueil/chiffres est supprimé du front (endpoint utilisé UNIQUEMENT ici — cf. compte-rendu). */}
-      {/* NU5-FIX-1 (F1) — #5C6A63 (3,6:1) → #7E8B82 (5,5:1 sur bg-0). */}
-      <p className="mb-2 font-mono text-[9px] uppercase tracking-[.14em] text-[#7E8B82]">Par où commencer</p>
-      <div className="mb-5 flex flex-col gap-2">
-        <AccEntry ton="mint" icone="carte" titre="Explorer la carte" sous="couches, filtres, parcelles"
+      <div className="flex flex-col gap-2">
+        <AccEntry ton="mint" icone="carte" titre="Explorer la carte" sous="couches, filtres, Analyse LABUSE"
           onClick={onCommencer} />
         {/* OUTILS-1 B1 — le Radar est une porte : vue de premier niveau, consomme l'accueil comme les autres. */}
-        <AccEntry ton="mint" icone="radar" titre="Suivre le marché — Radar" sous="les biens en vente"
+        <AccEntry ton="mint" icone="radar" titre="Suivre le marché — Radar" sous="les biens en vente et votre veille"
           onClick={() => { setAccueilVu(); setView('radar') }} />
+        {/* ECRANS-NOV-1 §3 — « Générer un document » ouvre Docs (le sélecteur de parcelle y vit). */}
+        <AccEntry ton="mint" icone="document" titre="Générer un document" sous="Dossier, Bilan, Étude… sur une parcelle"
+          onClick={() => { setAccueilVu(); setView('documents') }} />
+        {/* GB-001 : compte des outils VISIBLES (comme le tiroir Rail), dynamique. */}
+        <AccEntry ton="mint" icone="outil" titre="Ouvrir un outil" sous={`${nOutils} outils fonciers`}
+          onClick={() => { setAccueilVu(); toggleOutils() }} />
         <AccEntry ton="mauve" icone="copilote" titre="Demander au Copilote" sous="« terrain 1 000 m² à Saint-Paul »"
           onClick={() => { setAccueilVu(); setView('copilote') }} />{/* seule surface IA → mauve */}
-        {/* GB-001 : compte des outils VISIBLES (comme le tiroir Rail), dynamique — S7 : 15 après la fusion Veille→Scan. */}
-        <AccEntry ton="mint" icone="outil" titre="Ouvrir un outil" sous={`${MODULES.filter((m) => !m.hidden).length} outils fonciers`}
-          onClick={() => { setAccueilVu(); toggleOutils() }} />
-        {/* RECETTE-6 (D2, décision Vic) — « Remonter le temps » RETIRÉ de l'accueil : il vit désormais
-            comme 6e bouton de la rangée d'outils de la fiche parcelle (pré-rempli sur la parcelle). */}
-      </div>
-
-      {/* M87 P1 — bloc « Cette semaine » RETIRÉ (M83). */}
-
-      {/* PAGES-RANGEMENT-1 (lot 3) — la pastille d'état (ok/warn/error) et la phrase de fraîcheur sont
-          retirées ; reste une ligne neutre + la porte vers la page Sources (quelles données, pas leur état). */}
-      <div className="mt-auto flex items-center gap-2 border-t border-[#1E2622] pt-3">
-        <span className="text-[10.5px] leading-snug text-[#7C8A83]">Toutes les données au même endroit.</span>
-        <button data-accueil-sources onClick={() => { setAccueilVu(); setView('sources') }}
-          className="ml-auto shrink-0 whitespace-nowrap text-[10.5px] text-mint hover:underline">voir les données →</button>
+        {/* ECRANS-NOV-1 §3 — « Voir les données » ouvre la section Données (ex-lien de pied, devenu porte). */}
+        <AccEntry ton="mint" icone="donnees" titre="Voir les données" sous={sousDonnees}
+          onClick={() => { setAccueilVu(); setView('sources') }} />
       </div>
     </div>
   )

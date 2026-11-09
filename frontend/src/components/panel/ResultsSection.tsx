@@ -26,6 +26,9 @@ const OWNER_BADGE: Record<string, { label: string; title: string }> = {
   bailleur: { label: 'BAILLEUR', title: 'Bailleur social — démarche dédiée' },
   copro: { label: 'COPRO', title: 'Copropriété — acquisition complexe (hors classement foncier)' },
 }
+// ECRANS-NOV-1 §2 — sur la carte de résultat, le signal de mutation s'écrit SANS le mot « Signal »
+// (« Faible », pas « Signal faible ») : le contexte (la rangée de puces) le dit déjà.
+const SIGNAL_SHORT: Record<string, string> = { fort: 'Fort', moyen: 'Moyen', faible: 'Faible' }
 
 // B2 (M12) : le mini-anneau de complétude (le « 92 » des cartes) a QUITTÉ la liste — il était
 // présent sur toutes les cartes, sans valeur discriminante. Il ne vit plus que sur la fiche
@@ -378,10 +381,15 @@ function ContributionsRow({ contributions }: { contributions?: ParcelProps['cont
     <div data-contributions className="mt-1 flex flex-col gap-0.5">
       {list.map((c, i) => {
         const up = c.sens === 'hausse'
+        // ECRANS-NOV-1 §2 — la ligne « bâti existant » (démolition) est NEUTRE, pas un ▼ négatif :
+        // « bâti existant sur N % de la parcelle — à prendre en compte » (marqueur neutre, teinte grise).
+        const demolMatch = c.libelle.match(/bâti existant sur\s*[\d.,\s]+%\s*de la parcelle/i)
+        const neutre = !!demolMatch
+        const libelle = neutre ? `${demolMatch![0].replace(/\s+/g, ' ').trim()} — à prendre en compte` : c.libelle
         return (
-          <span key={i} className="inline-flex items-start gap-1 text-[10px] leading-snug" style={{ color: up ? '#5CE6A1' : '#C08A6E' }}>
-            <span aria-hidden className="mt-[1px] shrink-0 text-[8px] font-bold">{up ? '▲' : '▼'}</span>
-            <span className="text-txt-dim">{c.libelle}</span>
+          <span key={i} className="inline-flex items-start gap-1 text-[10px] leading-snug" style={{ color: neutre ? 'var(--txt-dim)' : (up ? '#5CE6A1' : '#C08A6E') }}>
+            <span aria-hidden className="mt-[1px] shrink-0 text-[8px] font-bold">{neutre ? '•' : up ? '▲' : '▼'}</span>
+            <span className="text-txt-dim">{libelle}</span>
           </span>
         )
       })}
@@ -412,7 +420,8 @@ function AnalyseCard({ p, communeLabel }: { p: ParcelProps & { commune?: string 
           )}
           {sm && !nc && (
             <Tip tip={sm.long} className="shrink-0">
-              <span data-signal={p.signal_niveau} className="rounded-full border px-1.5 py-0.5 text-[8.5px] font-medium" style={{ borderColor: `${sm.color}66`, color: sm.color }}>{sm.label}</span>
+              {/* ECRANS-NOV-1 §2 — sur la carte d'analyse, le signal s'écrit SANS « Signal » (« Faible »). */}
+              <span data-signal={p.signal_niveau} className="rounded-full border px-1.5 py-0.5 text-[8.5px] font-medium" style={{ borderColor: `${sm.color}66`, color: sm.color }}>{(p.signal_niveau && SIGNAL_SHORT[p.signal_niveau]) || sm.label}</span>
             </Tip>
           )}
           {p.zone_fam && (
@@ -727,6 +736,8 @@ export function ResultsSection() {
             <p className="text-[11.5px] leading-snug text-txt-mut">
               <b className="text-txt">LABUSE</b> a analysé les <b className="tabular-nums text-txt">{fmt(encartTotal)}</b> parcelles{zone ? ' de la zone' : commune ? ` de ${commune}` : ' de votre sélection'}.
             </p>
+            {/* ECRANS-NOV-1 §2 — la phrase du classement (maquette) : ce qui ordonne la liste. */}
+            <p className="mt-0.5 text-[11px] leading-snug text-txt-dim">Classées selon vos critères et l’analyse LABUSE (potentiel à bâtir, risques, accès, terrain).</p>
             <div data-ventilation-bande className="mt-1 flex flex-wrap gap-x-2.5 gap-y-0.5 text-[11px] leading-snug">
               {BANDE_ENCART.map((b) => (
                 <span key={b} className="inline-flex items-center gap-1">

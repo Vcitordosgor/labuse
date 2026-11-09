@@ -8,6 +8,26 @@ import { defineConfig } from 'vite'
 const SERVED_RUN = readFileSync(new URL('../config/served_run.txt', import.meta.url), 'utf-8')
   .split('\n').map((l) => l.trim()).find((l) => l && !l.startsWith('#')) ?? ''
 
+// ECRANS-NOV-1 §1 — l'ORDRE et les NOMS des sections de la fiche sont LUS de la source de vérité
+// `declarations/fiche/sections.yaml` (le MIROIR du Dossier PDF, builder/miroir côté serveur), plus
+// codés en dur dans Fiche.tsx. On parse le YAML au build (pas de dépendance yaml : les lignes sont
+// `- { id: x, titre: "…", numerote: … }`), on retire l'en-tête (bandeau de tuiles) et `simulation`
+// (fondue dans Potentiel), et on APPEND « Limites et sources » (§11, comme le Dossier qui l'ajoute
+// après la boucle). Résultat injecté en VITE_FICHE_SECTIONS → Fiche.tsx ordonne ses tiroirs dessus.
+const FICHE_SECTIONS = (() => {
+  const yaml = readFileSync(new URL('../declarations/fiche/sections.yaml', import.meta.url), 'utf-8')
+  const out: { id: string; titre: string }[] = []
+  for (const line of yaml.split('\n')) {
+    const m = line.match(/id:\s*([a-z_]+)\s*,\s*titre:\s*"([^"]+)"/)
+    if (!m) continue
+    const [, id, titre] = m
+    if (id === 'entete' || id === 'simulation') continue   // bandeau de tuiles ; simulation fondue
+    out.push({ id, titre })
+  }
+  out.push({ id: 'limites', titre: 'Limites et sources' })   // §11 — ajouté après la boucle (cf. miroir.py)
+  return out
+})()
+
 // API FastAPI (labuse api) proxifiée en dev. En prod, FastAPI sert dist/ à la même origine.
 const API = process.env.LABUSE_API_DEV ?? 'http://127.0.0.1:8000'
 // F6 (M12) : le proxy dev doit couvrir TOUTES les routes métier — sinon /projets (chercher-plus,
@@ -112,7 +132,11 @@ export default defineConfig({
   base: '/socle/', // servi par FastAPI sous /socle (cf. app.py). Dev vite = racine.
   plugins: [react()],
   // M31 : injecte le run servi versionné dans le bundle (api.ts lit import.meta.env.VITE_RUN_LABEL).
-  define: { 'import.meta.env.VITE_RUN_LABEL': JSON.stringify(SERVED_RUN) },
+  define: {
+    'import.meta.env.VITE_RUN_LABEL': JSON.stringify(SERVED_RUN),
+    // ECRANS-NOV-1 §1 — l'ordre/les noms des sections de la fiche, lus de sections.yaml (cf. plus haut).
+    'import.meta.env.VITE_FICHE_SECTIONS': JSON.stringify(JSON.stringify(FICHE_SECTIONS)),
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: true,

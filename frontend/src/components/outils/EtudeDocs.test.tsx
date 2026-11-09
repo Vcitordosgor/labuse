@@ -89,14 +89,18 @@ describe('parcelles multiples — la carte Docs ouvre l\'état 1 (pas de picker)
     ({ ok: true, json: async () => (String(u).includes('/documents') ? { documents: [], total: 0 } : {}) }) as never) as unknown as typeof fetch })
   afterEach(() => { vi.restoreAllMocks(); useApp.setState({ etudeIdus: null }) })
 
-  it('clic sur la carte Étude → ouvrirEtude([]) et AUCUNE fenêtre « Sur quelle parcelle ? »', async () => {
+  it('clic sur « Générer » de la carte Étude → ouvrirEtude([]) et AUCUNE fenêtre « Sur quelle parcelle ? »', async () => {
+    // ECRANS-NOV-1 §4 — la carte porte un bouton « Générer » (plus de carte-bouton). Sans parcelle
+    // choisie en haut, l'Étude de faisabilité ouvre quand même l'écran-assiette (vide, à composer).
     render(<QueryClientProvider client={qc()}><DocumentsView /></QueryClientProvider>)
-    const carte = await waitFor(() => {
-      const b = [...document.querySelectorAll('button')].find((x) => /Étude de faisabilité/.test(x.textContent ?? ''))
-      if (!b) throw new Error('carte Étude introuvable')
+    const generer = await waitFor(() => {
+      const b = [...document.querySelectorAll('button')]
+        .filter((x) => x.textContent?.trim() === 'Générer')
+        .find((x) => /Étude de faisabilité/.test(x.closest('.flex-col')?.textContent ?? ''))
+      if (!b) throw new Error('bouton Générer de la carte Étude introuvable')
       return b as HTMLElement
     })
-    fireEvent.click(carte)
+    fireEvent.click(generer)
     expect(useApp.getState().etudeIdus).toEqual([])          // overlay demandé, assiette vide
     expect(screen.queryByText('Sur quelle parcelle ?')).toBeNull()   // pas de fenêtre de choix
   })
