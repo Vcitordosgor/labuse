@@ -31,8 +31,8 @@ from labuse.faisabilite.db import parcel_faisabilite  # noqa: E402
 from labuse.faisabilite.residuel import compute_residuel  # noqa: E402
 
 TEMOINS = [
-    "97411000EH0043", "97411000EI0085", "97403000AL0258", "97411000DH0076",
-    "97411000BZ1065", "97410000AK0804", "97403000AM0314", "97403000AM0473",
+    "97411000EH0043", "97411000EI0085", "97403000AL0258", "97415000DH0076",
+    "97411000BZ1065", "97409000AK0804", "97403000AM0314", "97403000AM0473",
     "97403000AM0561",
 ]
 N = int(os.environ.get("RESIDUEL2_N", "600"))

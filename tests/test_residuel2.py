@@ -39,6 +39,12 @@ def test_repli_qualifiable_seulement_sur_limites_non_qualifiees():
     ) is False
     # NON qualifié : mélange limites + règle devinée (le mélange disqualifie).
     assert _repli_qualifiable([lim, "recul sur voie non réglementé / non validé"]) is False
+    # NON qualifié : PIÈGE — un motif « Limites non qualifiées » qui porte une VOIE PRIVÉE (recul
+    # deviné) commence aussi par « Limites… » mais n'est PAS une arête naturelle → jamais qualifié.
+    vp = ("Limites de la parcelle non qualifiées (voie / limite séparative) — "
+          "desservie par une voie privée : le règlement ne précise pas le recul")
+    assert _repli_qualifiable([vp]) is False
+    assert _repli_qualifiable([lim, vp]) is False
     # NON qualifié : liste vide (compute échoué, build None) — jamais qualifié par défaut.
     assert _repli_qualifiable([]) is False
 
@@ -72,8 +78,8 @@ def test_union_globale_cablee_dans_la_branche_legacy():
 
 # ── 2. Base réelle — témoins, batch ≡ fiche, propriété du double retrait ──────────────────────────
 _TEMOINS = [
-    "97411000EH0043", "97411000EI0085", "97403000AL0258", "97411000DH0076",
-    "97411000BZ1065", "97410000AK0804", "97403000AM0314", "97403000AM0473",
+    "97411000EH0043", "97411000EI0085", "97403000AL0258", "97415000DH0076",
+    "97411000BZ1065", "97409000AK0804", "97403000AM0314", "97403000AM0473",
     "97403000AM0561",
 ]
 
@@ -114,15 +120,17 @@ def test_batch_egale_fiche_sur_temoins(session_reelle, idu):
 
 @pytest.mark.reel
 def test_qualification_temoins(session_reelle):
-    """EI0085 (multi-zones) et AK0804 (recul voie) restent NON qualifiés ; AM0314/AM0473 (arête
-    naturelle seule) sont QUALIFIÉS. La qualification ne se déduit jamais de l'absence de contrainte."""
+    """EI0085 (multi-zones) et AM0561 (PLU N non calibré) restent NON qualifiés ; AM0314/AM0473 (arête
+    naturelle seule) sont QUALIFIÉS ; AK0804 (Saint-André, nue en zone U) est servie par le GABARIT.
+    La qualification ne se déduit jamais de l'absence de contrainte."""
     from labuse.faisabilite.db import parcel_faisabilite
     s = session_reelle
     attendu = {
         "97403000AM0314": "residuel_legacy_qualifie",
         "97403000AM0473": "residuel_legacy_qualifie",
         "97411000EI0085": "residuel_legacy",
-        "97410000AK0804": "residuel_legacy",
+        "97403000AM0561": "residuel_legacy",
+        "97409000AK0804": "gabarit",
     }
     for idu, src in attendu.items():
         pid = s.execute(text("SELECT id FROM parcels WHERE idu=:i"), {"i": idu}).scalar()

@@ -25,7 +25,7 @@ R > 0, 27 027 servies comme capacité).
 
 | Cause de non-service du gabarit | part éch. | ≈ île | décision RESIDUEL-2 |
 |---|---:|---:|---|
-| **Limites non qualifiées** (arête sans voie ni voisin : ravine / littoral / DPF non routier) | 50,0 % | ~26 983 | **repli QUALIFIÉ** — pas de voie sur l'arête → l'inset séparatif uniforme + l'union des contraintes applique les règles du cas ; marqué `residuel_legacy_qualifie` |
+| **Limites non qualifiées** (arête sans voie ni voisin : ravine / littoral / DPF non routier) | 50,0 % | ~26 983 | **repli QUALIFIÉ** — pas de voie sur l'arête → l'inset séparatif uniforme + l'union des contraintes applique les règles du cas ; marqué `residuel_legacy_qualifie`. *(Exception : si l'arête non classée est une **voie privée**, le motif reste « Limites… » mais c'est un recul deviné → NON qualifié, cf. §1.3.)* |
 | **recul sur voie non réglementé** | 14,6 % | ~7 851 | **non qualifié** — recul voie deviné (souvent > séparatif) peut gonfler la capacité |
 | **PLU non calibré pour la zone** (Uavap, A, N, AUS…) | 9,7 % | ~5 220 | **non qualifié** — règles CES/hauteur génériques, pas la géométrie |
 | **gabarit OK aujourd'hui** (incohérence de run) | 9,2 % | ~4 982 | **gabarit** — le run q_v20 est périmé ; un recompute (q_v23) les sert en `gabarit` |
@@ -63,17 +63,48 @@ simplifié) ; la **qualification** est portée par `assiette_source` pour la cou
 
 | `assiette_source` (code servi RESIDUEL-2) | part | ≈ île |
 |---|---:|---:|
-| `residuel_legacy_qualifie` (repli PROUVÉ) | 53,5 % | **~28 831** |
-| `residuel_legacy` (non qualifié → provisoire) | 36,7 % | **~19 772** |
+| `residuel_legacy_qualifie` (repli PROUVÉ) | 50,0 % | **~26 962** |
+| `residuel_legacy` (non qualifié → provisoire) | 40,1 % | **~21 641** |
 | `gabarit` (run périmé → servable au recompute) | 9,7 % | **~5 213** |
 | non constructible (None) | 0,2 % | ~108 |
 
 **Lecture.** Après RESIDUEL-2, sur les 53 923 ex-« repli », **~5 213 passent au gabarit** (simple
-recompute), **~28 831 sont un repli QUALIFIÉ** (règles prouvées appliquées, source qualifiée), et il
-ne reste que **~19 772 capacités d'assiette NON qualifiées** (provisoires, « à vérifier » côté
-scoring). Objectif du mandat atteint : **toute capacité servie porte désormais une source qualifiée
-ou le marqueur explicite de non-qualification** — plus aucune capacité servie sans source qualifiée
-par défaut.
+recompute), **~26 962 sont un repli QUALIFIÉ** (règles prouvées appliquées, source qualifiée), et il
+reste **~21 641 capacités d'assiette NON qualifiées** (provisoires, « à vérifier » côté scoring —
+détail §1.4). Objectif du mandat atteint : **toute capacité servie porte désormais une source
+qualifiée ou le marqueur explicite de non-qualification** — plus aucune capacité servie sans source
+qualifiée par défaut.
+
+**Piège corrigé** : un repli dont l'arête non classée est une **voie privée** (`MOTIF_VOIE_PRIVEE`)
+produit aussi un motif « Limites de la parcelle non qualifiées — … voie privée », mais c'est un
+**recul deviné**, pas une arête naturelle. `_repli_qualifiable` exclut donc explicitement
+« voie privée » (les motifs bénins ne contiennent jamais cette sous-chaîne) → ces ~1 900 parcelles
+restent NON qualifiées (test `test_repli_qualifiable_*`).
+
+### 1.4 Les ~21 641 non qualifiées — par motif, et ce qu'il faudrait (sans le faire)
+
+Échantillon md5 de 3 500 legacy, rejeu du builder, buckets sur le 1er motif non bénin (NON qualifiés
+mesurés : 1 408 / 3 500 → **≈ 21 692** île, cohérent avec le 40,1 % de §1.3) :
+
+| motif de non-service | part | ≈ île | exemple | pour SERVIR au gabarit / QUALIFIER (sans le faire) |
+|---|---:|---:|---|---|
+| **recul sur voie non réglementé** | 35,7 % | ~7 734 | `97410000AW0630` | **Donnée** : calibrer le recul sur voie de la zone au règlement (`recul_voirie_m`). Non qualifiable : l'inset uniforme applique le recul *séparatif* sur l'arête voie, souvent **< recul voie réel → emprise gonflée**. |
+| **PLU non calibré pour la zone** (Uavap, A, N, AUS…) | 24,1 % | ~5 223 | `97411000AH0360` | **Donnée** : calibrer les règles de la zone (CES, hauteur, reculs). Inventer des valeurs génériques est proscrit (doctrine « jamais une valeur servie inventée »). |
+| **desserte : voie privée** (recul non réglé) | 17,9 % | ~3 882 | `97412000BM1113` | **Règle** : fixer le recul sur voie privée au règlement, ou prouver que le séparatif s'y applique. Tant que c'est deviné → non qualifiable (même risque que le recul voie). |
+| **multi-zones : morceau non isolable** | 10,2 % | ~2 203 | `97405000AI1185` | **Moteur** : outiller le gabarit pour isoler et calculer SÉPARÉMENT chaque morceau constructible (CES/hauteur propres) puis sommer. Aujourd'hui une seule CES sur toute la portion U/AU = faux. |
+| **emprise (CES) non réglementée** | 5,2 % | ~1 125 | `97415000EI0173` | **Donnée** : renseigner le CES de la zone au règlement. |
+| **compute_gabarit : incomplete** | 4,8 % | ~1 048 | `97403000AS1759` | **Moteur/Donnée** : diagnostiquer au cas par cas la donnée manquante en aval (géométrie d'implantation, hauteur, raccordement). |
+| **zone sans règles d'implantation propres** (ex. UF) | 1,0 % | ~216 | `97405000AR0807` | **Règlement** : la zone ne fixe NI recul NI hauteur NI emprise (renvoi non résolu / silence) → résoudre le renvoi réglementaire. |
+| **A/N dominante** (sous-zone U/AU non calibrée) | 1,0 % | ~216 | `97403000AM0438` | **Donnée** : calibrer la sous-zone U/AU minoritaire → **deviendrait qualifiable** (le repli clippe déjà à la portion). |
+| **hauteur réglementaire non validée** | 0,2 % | ~46 | `97408000AN0447` | **Donnée** : valider la hauteur réglementaire de la zone. |
+
+**Synthèse.** ~**85 %** des non qualifiées tiennent à un **CALIBRAGE PLU manquant** (recul voie, voie
+privée, CES, hauteur, zone/sous-zone non calibrée, renvoi non résolu) : le projet **interdit d'inventer
+la valeur** → elles restent honnêtement « estimation simplifiée, non qualifiée » jusqu'au calibrage du
+règlement. Un seul groupe (**multi-zones, ~2 203**) relève d'un **développement MOTEUR** (isoler les
+morceaux constructibles). **Aucune** ne peut être qualifiée par la géométrie du repli : c'est la
+**règle de capacité elle-même** qui manque ou est devinée, pas l'assiette. Ce travail de calibrage/
+moteur est délibérément **laissé hors de RESIDUEL-2** (le mandat marque et isole, il n'invente pas).
 
 ---
 
@@ -179,18 +210,19 @@ R ; `assiette_source` RESIDUEL-2.
 | 97411000EH0043 | gabarit | 49 026 | 49 026 | 44 123 | 6 | 44 117 | gabarit (double retrait sans effet) |
 | 97411000EI0085 | **residuel_legacy** | 14 417 | 14 417 | 12 976 | 1 608 | 11 368 | multi-zones (AUm,Um) → non qualifié (sous-découpe connue) |
 | 97403000AL0258 | — (non constr.) | — | — | — | — | 0 | contour très découpé (compacité 0,11) |
-| 97411000DH0076 | gabarit | 134 | 134 | 301 | 225 | 76 | PPR partiel, hors rouge servi |
+| 97415000DH0076 | gabarit | 13 659 | 13 659 | 30 733 | 4 475 | 26 258 | Saint-Paul, PPR rouge partiel 2 % — constructible hors rouge (Étude ~48 logts) |
 | 97411000BZ1065 | gabarit | 470 | 470 | 212 | 177 | 35 | Uh bâtie |
-| 97410000AK0804 | **residuel_legacy** | 436 | 436 | 589 | 0 | 589 | recul voie non réglé → non qualifié |
+| 97409000AK0804 | gabarit | 19 024 | 19 024 | 34 243 | 20 | 34 223 | Saint-André, nue en zone U |
 | 97403000AM0314 | **residuel_legacy_qualifie** | 105 | 105 | 142 | 169 | 0 | saturée, **D_net −27** |
 | 97403000AM0473 | **residuel_legacy_qualifie** | 122 | 122 | 109 | 357 | 0 | saturée, **D_net −248** |
 | 97403000AM0561 | **residuel_legacy** | 165 | 165 | 148 | 289 | 0 | PLU non calibré zone N → non qualifié |
 
 La qualification distingue **correctement** : AM0314/AM0473 (arête naturelle seule) **qualifiés** ;
-AM0561 (PLU N non calibré), EI0085 (multi-zones), AK0804 (recul voie) **non qualifiés**. `batch ≡
-fiche` sur les 9 témoins (test `test_batch_egale_fiche_sur_temoins`).
-_(Note : `AK0804`/`DH0076`/`BZ1065` existent dans plusieurs communes — retenus ici les IDU nommés par
-le contexte algo-fix : 97411000DH0076/BZ1065, 97410000AK0804 legacy.)_
+AM0561 (PLU N non calibré), EI0085 (multi-zones) **non qualifiés** ; EH0043/DH0076/BZ1065/AK0804
+servis par le **gabarit** (le double retrait est sans effet sur eux : emp_old = emp_new). `batch ≡
+fiche` sur les 9 témoins (test `test_batch_egale_fiche_sur_temoins`). Témoins nommés : DH0076 =
+`97415000DH0076` (Saint-Paul, PPR rouge partiel 2 %, Étude ~48 logts), AK0804 = `97409000AK0804`
+(Saint-André, nue en zone U).
 
 ---
 
@@ -200,10 +232,10 @@ le contexte algo-fix : 97411000DH0076/BZ1065, 97410000AK0804 legacy.)_
 |---|---:|---|
 | **Double retrait levé** (union globale) | **172** | R augmente légèrement ; **13 verdict change** (0 faux zéro) |
 | **Run périmé → gabarit** (recompute q_v23) | **~5 213** | assiette legacy → assiette gabarit réglementaire ; capacité recalculée |
-| **Qualification** (`residuel_legacy_qualifie`) | ~28 831 | **métadonnée** (source qualifiée) ; la valeur R **ne change pas** |
+| **Qualification** (`residuel_legacy_qualifie`) | ~26 962 | **métadonnée** (source qualifiée) ; la valeur R **ne change pas** |
 
 La capacité **numérique servie** change pour **~5 213 + 172 parcelles** (dominées par le
-recompute du run périmé) ; la qualification de ~28 831 parcelles est un gain de **traçabilité**, pas
+recompute du run périmé) ; la qualification de ~26 962 parcelles est un gain de **traçabilité**, pas
 de valeur. Aucun changement client-visible sur q_v20 (le run servi reste intact) ; tout prend effet
 au **recompute q_v23**.
 
@@ -240,8 +272,8 @@ au **recompute q_v23**.
    for L in /tmp/shard_*; do caffeinate -i scripts/residuel_shard.sh $RS $L & done ; wait
    ```
    (⚠ ne pas sur-sharder si la machine swappe : le run est DB-bound.)
-4. **Effets attendus** : ~5 213 ex-legacy passent `gabarit` (run frais) ; ~28 831 `residuel_legacy_qualifie` ;
-   ~19 772 `residuel_legacy`. Reconstruction (C/E/D_net) servie île entière. Double retrait levé sur
+4. **Effets attendus** : ~5 213 ex-legacy passent `gabarit` (run frais) ; ~26 962 `residuel_legacy_qualifie` ;
+   ~21 641 `residuel_legacy`. Reconstruction (C/E/D_net) servie île entière. Double retrait levé sur
    172 parcelles (R +), 0 faux zéro / 13 verdict.
 5. **Vérifs avant bascule** : banc de cohérence (0 écart), comptes par `assiette_source`,
    `batch ≡ fiche` sur témoins, invariants du run.

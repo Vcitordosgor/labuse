@@ -451,21 +451,27 @@ def _assiette_gabarit(session: Session, idu: str):
 
 
 # RESIDUEL-2 — un repli est QUALIFIÉ (il applique provablement les règles du cas) uniquement quand
-# TOUS les motifs de non-service du gabarit sont « Limites de la parcelle non qualifiées » : le
-# builder n'atteint cette étape (limites/géométrie) QUE si le PLU est complet et unique
-# (`if not blocking`), donc zone constructible calibrée, CES et hauteur connus. Le SEUL point ouvert
-# est une arête non classable (ravine / littoral / domaine public non routier / micro-arête de
-# numérisation) : il n'y a PAS de voie dont le recul (souvent supérieur au séparatif) serait
-# sous-appliqué. L'inset uniforme au recul séparatif + l'union globale des contraintes certaines est
-# alors une assiette correcte et CONSERVATRICE (jamais gonflée). Tout autre motif (recul voie non
-# réglementé, voie privée, PLU non calibré, CES/hauteur absents, multi-zones non isolable, compute
-# incomplet) implique une RÈGLE DEVINÉE pouvant gonfler la capacité → repli NON qualifié.
+# TOUS les motifs de non-service du gabarit sont « Limites de la parcelle non qualifiées » PORTANT
+# une arête NATURELLE (ravine / littoral / domaine public non routier / micro-arête de numérisation).
+# Le builder n'atteint l'étape limites/géométrie QUE si le PLU est complet et unique (`if not
+# blocking`), donc zone constructible calibrée, CES et hauteur connus ; le seul point ouvert est alors
+# cette arête, SANS voie dont le recul (souvent supérieur au séparatif) serait sous-appliqué →
+# l'inset séparatif uniforme + l'union des contraintes est correct et CONSERVATEUR.
+#
+# PIÈGE (corrigé) : `non_classees` peut aussi contenir `MOTIF_VOIE_PRIVEE` (« desservie par une voie
+# privée : le règlement ne précise pas le recul ») → le message commence AUSSI par « Limites… » mais
+# c'est une RÈGLE DEVINÉE (recul sur voie privée), pas une arête naturelle → NON qualifiable. On
+# exclut donc explicitement « voie privée » (les motifs bénins — « arête sans voie ni voisin »,
+# « arête résiduelle < 1 m » — ne contiennent jamais cette sous-chaîne). Tout autre motif (recul voie,
+# PLU non calibré, CES/hauteur absents, multi-zones) → NON qualifié.
 _MOTIF_LEGACY_BENIN = "Limites de la parcelle non qualifiées"
 
 
 def _repli_qualifiable(blocages: list[str]) -> bool:
-    """RESIDUEL-2 — True si le repli applique provablement les règles du cas (cf. `_MOTIF_LEGACY_BENIN`)."""
-    return bool(blocages) and all(b.startswith(_MOTIF_LEGACY_BENIN) for b in blocages)
+    """RESIDUEL-2 — True si le repli applique provablement les règles du cas (arête naturelle seule ;
+    jamais une voie privée au recul deviné)."""
+    return bool(blocages) and all(
+        b.startswith(_MOTIF_LEGACY_BENIN) and "voie privée" not in b for b in blocages)
 
 
 def _sous_zone_constructible(ctx: ParcelContext):
