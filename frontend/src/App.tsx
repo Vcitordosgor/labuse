@@ -51,6 +51,8 @@ const ModulePanel = lazy(() => import('./components/outils/ModulePanel').then((m
 const AdminView = lazy(() => import('./components/admin/AdminView').then((m) => ({ default: m.AdminView })))
 // DOCS-1 (Lot A) — la catégorie Documents (catalogue + porte + bibliothèque), chargée à la demande.
 const DocumentsView = lazy(() => import('./components/documents/DocumentsView').then((m) => ({ default: m.DocumentsView })))
+// ECRANS-NOV-2 — l'écran « Analyse LABUSE par scénario » (GET /analyse/scenarios), chargé à la demande.
+const AnalyseScenario = lazy(() => import('./components/analyse/AnalyseScenario').then((m) => ({ default: m.AnalyseScenario })))
 // IMPLANTATION-4 — l'overlay Étude de faisabilité (écran M22, SANS carte : plan masse dessiné en SVG).
 // Chargé à la demande : son chunk n'arrive qu'à l'ouverture de l'Étude.
 const EtudeEcran = lazy(() => import('./components/outils/EtudeEcran').then((m) => ({ default: m.EtudeEcran })))
@@ -426,6 +428,8 @@ export default function App() {
     if (sv) useApp.getState().openSurveillance(sv === 'criteres' ? 'criteres' : 'parcelles')
     // DASHBOARD-V1 — deep-link de la Tour de contrôle (#admin=1) ; la garde reste au backend.
     if (p.get('admin') === '1') setView('admin')
+    // ECRANS-NOV-2 — deep-link de l'écran Analyse LABUSE par scénario (#analyse=1), survit au reload.
+    if (p.get('analyse') === '1') setView('analyse')
     // (Alias d'URL #pg=vues / pg=segments retiré avec le spin-off « Vues » — M12 Lot C-bis.)
     }
     appliquer()                                        // montage / rechargement (deep-link)
@@ -456,6 +460,7 @@ export default function App() {
     if (selectedIdu) add(`idu=${selectedIdu}`)   // GB-032 — fiche partageable/réhydratable
     if (view === 'admin') add('admin=1')         // DASHBOARD-V1 — la Tour de contrôle survit au reload
     if (view === 'radar') add('radar=1')         // RADAR-CATÉGORIE (T1) — la catégorie survit au reload
+    if (view === 'analyse') add('analyse=1')     // ECRANS-NOV-2 — l'écran Analyse par scénario survit au reload
     window.history.replaceState(null, '', h || window.location.pathname + window.location.search)
   }, [filters, zone, module, commune, verdict, view, selectedIdu])
 
@@ -540,6 +545,8 @@ export default function App() {
           {/* DOCS-1 (Lot A) — Documents : page pleine largeur (catalogue + porte + bibliothèque). */}
           {view === 'documents' && <Suspense fallback={<PanelLoading />}><DocumentsView /></Suspense>}
           {view === 'sources' && <Suspense fallback={<PanelLoading />}><SourcesPage /></Suspense>}
+          {/* ECRANS-NOV-2 — l'écran Analyse LABUSE par scénario, pleine largeur (comme Documents/Sources). */}
+          {view === 'analyse' && <Suspense fallback={<PanelLoading />}><AnalyseScenario /></Suspense>}
           {view === 'projets' && <Suspense fallback={<PanelLoading />}><ProjetsPanel /></Suspense>}
           {view === 'copilote' && <Suspense fallback={<PanelLoading />}><CopiloteView /></Suspense>}
           {/* RADAR-CATÉGORIE (T3) — en vue Radar, la fiche du BIEN (overlay RadarView) est maître ;

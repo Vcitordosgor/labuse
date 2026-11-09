@@ -308,13 +308,40 @@ def _trier(rows: list[dict], *, mode: str, scenario: str, sort: str) -> list[dic
     return sorted(rows, key=key)
 
 
+def _niveau_chip(signal: dict) -> str:
+    """Famille de puce du Signal pour la PROSPECTION : fort / moyen / faible, ou « non_evalue »
+    (Signal absent, écarté ou à vérifier) — jamais un faux « faible »."""
+    if signal.get("status") != "AVAILABLE":
+        return "non_evalue"
+    return signal.get("niveau") or "non_evalue"
+
+
+def _passe_chip(r: dict, mode: str, *, band: str | None, statut: str | None,
+                signal_niveau: str | None) -> bool:
+    """La ligne passe-t-elle la PUCE sélectionnée ? Les puces NARROWENT la liste servie ; elles ne
+    touchent PAS les effectifs (qui portent toujours sur la sélection entière — « font le total »)."""
+    if mode == "sale":
+        return signal_niveau is None or _niveau_chip(r["signal"]) == signal_niveau
+    # potentiel : une bande (A/B/C/D, parcelles ESTIMÉES) OU un statut nommé (non estimé).
+    if band:
+        return r["statut"] == "ESTIMATED" and r["bande"] == band
+    if statut:
+        return r["statut"] == statut
+    return True
+
+
 def analyse_payload_persiste(session: Session, *, run_label: str, mode: str, scenario: str,
                              sort: str | None, commune: str | None = None,
                              idus: list[str] | None = None, limit: int = 100, offset: int = 0,
-                             as_of: str | None = None) -> dict:
+                             as_of: str | None = None, band: str | None = None,
+                             statut: str | None = None, signal_niveau: str | None = None) -> dict:
     """Réponse d'analyse V2 LUE de la table de run (l'endpoint ne calcule pas). Effectifs sur
     EXACTEMENT la sélection servie (commune ∩ IDU, avant pagination), Y COMPRIS en prospection (P6).
-    Versions ENREGISTRÉES avec le résultat (pas lues à la requête — P2)."""
+    Versions ENREGISTRÉES avec le résultat (pas lues à la requête — P2).
+
+    Puces (ECRANS-NOV-2) : `band`/`statut` (potentiel) ou `signal_niveau` (prospection) NARROWENT la
+    LISTE servie, jamais les effectifs — ceux-ci portent toujours sur la sélection entière, pour que
+    « les effectifs fassent le total » (mandat §2)."""
     if sort and sort not in ("signal", "capacity", "gain", "area", "id"):
         raise ValueError(f"tri inconnu : {sort}")
     scn_read = "keep" if mode == "sale" else scenario
@@ -324,21 +351,35 @@ def analyse_payload_persiste(session: Session, *, run_label: str, mode: str, sce
     ordered = _trier(rows, mode=mode, scenario=scn_read, sort=sort)
     # Contrat UNIQUE persisté = live (P3) : en prospection, le STATUT servi est l'état de Signal
     # (SIGNAL_*), le statut foncier passe dans un champ séparé ; les compteurs portent sur les
-    # états de Signal — dans les DEUX chemins.
+    # états de Signal — dans les DEUX chemins. En plus, on sert `par_signal` (fort/moyen/faible/
+    # non_evalue) : la rangée de puces de prospection (mandat §2), toujours sur la sélection entière.
     if mode == "sale":
         par_etat: dict = {}
+        par_signal: dict = {}
         for r in ordered:
             etat = _SALE_STATE.get(r["signal"]["status"], "SIGNAL_NOT_AVAILABLE")
             par_etat[etat] = par_etat.get(etat, 0) + 1
+            niv = _niveau_chip(r["signal"])
+            par_signal[niv] = par_signal.get(niv, 0) + 1
             r["statut_foncier"] = r["statut"]
             r["statut"] = etat
-        eff = {"par_statut": par_etat, "par_bande": {}}
+        eff = {"par_statut": par_etat, "par_bande": {}, "par_signal": par_signal}
     else:
         eff = effectifs_persistes(session, run_label=run_label, scenario=scn_read,
                                   commune=commune, idus=idus)
+    # Puce sélectionnée : filtre la LISTE (pas les effectifs). Appliqué APRÈS le tri, avant la page.
+    if band or statut or signal_niveau:
+        ordered = [r for r in ordered
+                   if _passe_chip(r, mode, band=band, statut=statut, signal_niveau=signal_niveau)]
     ver = _versions_servies(session, run_label, scn_read, commune, idus)
     page = ordered[offset:offset + limit]
+    # Adresse factuelle (BAN) pour la SEULE page servie (≤ limite) — jamais inventée.
+    adr = build.adresses_pour(session, [p["idu"] for p in page])
+    for p in page:
+        p["adresse"] = adr.get(p["idu"])
     return {
+        "puce": {"band": band, "statut": statut, "signal_niveau": signal_niveau},
+        "n_filtre": len(ordered),
         "analysis_version": ver.get("analysis_version") or v2.VERSION,   # LUE des lignes servies (P3)
         "scenario_engine_version": ver.get("score_version"),
         "cascade_run": ver.get("cascade_label"),
@@ -349,7 +390,8 @@ def analyse_payload_persiste(session: Session, *, run_label: str, mode: str, sce
         "reference": ("calculs V2 actuels comparés au Signal servi " + run_label),  # wording honnête
         "mode": mode, "scenario": scenario, "sort": sort, "as_of": as_of,
         "n_selection": len(rows),
-        "effectifs": {"par_statut": eff["par_statut"], "par_bande": eff["par_bande"]},
+        "effectifs": {"par_statut": eff["par_statut"], "par_bande": eff["par_bande"],
+                      **({"par_signal": eff["par_signal"]} if "par_signal" in eff else {})},
         "page": {"limit": limit, "offset": offset, "n": len(page)},
         "parcelles": page,
     }

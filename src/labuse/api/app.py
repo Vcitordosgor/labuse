@@ -3275,6 +3275,11 @@ def analyse_scenarios(
     mode: str = Query("potential", pattern="^(sale|potential)$"),
     scenario: str = Query("keep", pattern="^(keep|rebuild|divide)$"),
     sort: str | None = Query(None, pattern="^(signal|capacity|gain|area|id)$"),
+    # ECRANS-NOV-2 — PUCES comptées : narrowent la LISTE servie, jamais les effectifs. En potentiel,
+    # une bande (parcelles estimées) OU un statut nommé ; en prospection, un niveau de Signal.
+    band: str | None = Query(None, pattern="^(A|B|C|D)$"),
+    statut: str | None = Query(None, pattern="^(TO_VERIFY|DEFERRED|NO_MARGIN|OUTSIDE_OBJECTIVE|COMPUTE_PENDING|PRESTUDY)$"),
+    signal_niveau: str | None = Query(None, pattern="^(fort|moyen|faible|non_evalue)$"),
     enrich: bool = Query(False, description="calcule C/E live (reconstruction exacte) — plus lent"),
     limit: int = Query(100, ge=1, le=1000), offset: int = Query(0, ge=0),
     db: Session = Depends(get_db)) -> dict:
@@ -3317,6 +3322,7 @@ def analyse_scenarios(
     return _persist.analyse_payload_persiste(
         db, run_label=run_label, mode=mode, scenario=scenario, sort=sort,
         commune=commune, idus=wanted, limit=limit, offset=offset,
+        band=band, statut=statut, signal_niveau=signal_niveau,
         as_of=datetime.now(timezone.utc).isoformat())
 
 

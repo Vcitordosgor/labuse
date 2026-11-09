@@ -76,6 +76,16 @@ const ICONS: Record<Zone, JSX.Element> = {
       <path d="M10 1v2M10 17v2M1 10h2M17 10h2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </>
   ),
+  // ECRANS-NOV-2 — Analyse par scénario : une loupe posée sur des barres de répartition (le motif
+  // de l'écran) — distincte des barres pleines du CRM.
+  analyse: (
+    <>
+      <rect x="3.2" y="12.5" width="3.2" height="4" rx="0.6" fill="none" stroke="currentColor" strokeWidth="1.4" />
+      <rect x="7.4" y="9.5" width="3.2" height="7" rx="0.6" fill="none" stroke="currentColor" strokeWidth="1.4" />
+      <circle cx="13.2" cy="7.4" r="3" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <line x1="15.4" y1="9.6" x2="17" y2="11.2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </>
+  ),
   // « base de données / fraîcheur » : stack de disques (remplace l'ancien badge « J-2 »)
   sources: (
     <>
@@ -95,6 +105,8 @@ const RAIL: { key: RailKey; label: string; ia?: boolean }[] = [
   { key: 'outils', label: 'Outils' },
   // DOCS-1 (Lot A) — Documents en 3ᵉ, après Outils (Sources/Admin restent épinglés au pied).
   { key: 'documents', label: 'Docs' },   // RECETTE-2 (E1) — « Documents » ne tient pas dans le rail → « Docs »
+  // ECRANS-NOV-2 — l'écran « Analyse LABUSE par scénario » (GET /analyse/scenarios).
+  { key: 'analyse', label: 'Analyse' },
   { key: 'copilote', label: 'Copilote', ia: true },
   // RADAR-2 (Lot 1) — « Veille » QUITTE le rail : on l'atteint par la porte « Veille » du hub Radar.
   { key: 'radar', label: 'Radar' },

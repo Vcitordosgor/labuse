@@ -256,6 +256,85 @@ export type QualiteKey = 'A' | 'B' | 'C' | 'D'
 
 export interface CommuneInfo { commune: string; insee: string; parcelles: number; chaudes: number; evaluees: number; bbox: [number, number, number, number]; note: string | null }
 export const getCommunes = () => j<CommuneInfo[]>('/communes')
+
+// ══════════ ECRANS-NOV-2 — Analyse LABUSE PAR SCÉNARIO (GET /analyse/scenarios, ALGO-FIX-1) ══════
+// L'écran LIT le run servi (lecture seule) : statut + cause, bande + quantités par parcelle, plus
+// les effectifs par statut / bande / niveau de Signal sur TOUTE la sélection (ils « font le total »).
+// Aucun chiffre inventé côté front : tout vient de la réponse.
+export type ScnMode = 'sale' | 'potential'
+export type ScnScenario = 'keep' | 'rebuild'
+export type ScnStatut =
+  'ESTIMATED' | 'COMPUTE_PENDING' | 'TO_VERIFY' | 'DEFERRED' | 'NO_MARGIN' | 'OUTSIDE_OBJECTIVE'
+  | 'PRESTUDY' | 'SIGNAL_AVAILABLE' | 'SIGNAL_TO_VERIFY' | 'SIGNAL_NOT_AVAILABLE' | 'SIGNAL_OUT_OF_SCOPE'
+export interface ScnParcelle {
+  idu: string
+  adresse?: string | null
+  statut: ScnStatut
+  statut_foncier?: ScnStatut | null       // prospection : le statut foncier, à côté de l'état de Signal
+  cause: string[]
+  bande: string | null                    // A/B/C/D/0/NC (bande du scénario)
+  score: number | null
+  bande_provisoire: string | null
+  quantites: { additional: number | null; project_total: number | null; existing: number | null
+    net_signed: number | null; conditional_future: number | null }
+  residual_m2: number | null
+  surface_m2: number | null
+  zone_productive: { zone: string | null; area_m2: number | null } | null
+  vigilance: string[]
+  bande_v1: string | null
+  quantites_calculees?: boolean
+  etat_calcul?: string | null
+  analysis_version?: string
+  signal: { status: string; p: number | null; niveau: SignalNiveauKey | null; reason: string | null }
+  // présents seulement sur le détail enrichi (enrich=1) :
+  libelle?: string
+  horizon?: string
+  details?: { f_pente?: number; f_forme?: number; f_acces?: number; pente_pct?: number
+    bande_brute?: string; score_brut?: number; enrich_state?: string; assiette_source?: string
+    zone_parts?: { zone: string; fam: string; area_m2: number; constructible: boolean }[] }
+}
+export interface ScnEffectifs {
+  par_statut: Record<string, number>
+  par_bande: Record<string, number>
+  par_signal?: Record<string, number>     // prospection : fort/moyen/faible/non_evalue
+}
+export interface ScnReponse {
+  mode: ScnMode; scenario: string; sort: string | null
+  run_servi: string; signal_recette: string | null; scenario_engine_version: string | null
+  lot_mixte?: boolean; reference?: string
+  n_selection: number; n_filtre?: number
+  puce?: { band: string | null; statut: string | null; signal_niveau: string | null }
+  effectifs: ScnEffectifs
+  enrichissement?: { demande: boolean; echecs: string[]; n_echecs: number }
+  page: { limit: number; offset: number; n: number }
+  parcelles: ScnParcelle[]
+}
+export interface ScnParams {
+  commune?: string | null
+  idus?: string[] | null
+  mode?: ScnMode
+  scenario?: ScnScenario
+  sort?: string
+  band?: 'A' | 'B' | 'C' | 'D' | null
+  statut?: string | null
+  signalNiveau?: 'fort' | 'moyen' | 'faible' | 'non_evalue' | null
+  enrich?: boolean
+  limit?: number
+  offset?: number
+}
+export const getAnalyseScenarios = (p: ScnParams) => {
+  const e: Record<string, string | number> = { mode: p.mode ?? 'potential', scenario: p.scenario ?? 'keep' }
+  if (p.commune) e.commune = p.commune
+  if (p.idus?.length) e.idus = p.idus.join(',')
+  if (p.sort) e.sort = p.sort
+  if (p.band) e.band = p.band
+  if (p.statut) e.statut = p.statut
+  if (p.signalNiveau) e.signal_niveau = p.signalNiveau
+  if (p.enrich) e.enrich = 1
+  if (p.limit != null) e.limit = p.limit
+  if (p.offset != null) e.offset = p.offset
+  return j<ScnReponse>(`/analyse/scenarios?${qf(e)}`)
+}
 // RECETTE-10 T11 — ce que le score apporte, mesuré (taux de mutation 12 mois par palier vs filtre
 // simple) + une phrase chiffrée/datée pour le client. Mémorisé 6h côté serveur.
 export interface ScoringBacktest { phrase_client: string | null; fenetre_fin?: string; base_pct?: number }
