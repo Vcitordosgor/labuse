@@ -111,17 +111,9 @@ def dossier_pdf(idu: str, request: Request, carte: bool = True,
     except ValueError as exc:                    # parcelle inconnue
         raise HTTPException(404, str(exc))
     res = builder.construire(db, idu, "dossier", fiche=fiche, compte_id=current_compte(request))
-    _pour = "" if (s.raison_sociale or "").strip() in ("", "Pilote LABUSE") else f" pour {s.raison_sociale}"
-    # EXPORTS-FIX-1-BIS point 7 — la mention d'attribution vit dans un BLOC DE MARGE @page
-    # (@bottom-center, contenu STATIQUE qui SE REND dans ce WeasyPrint, contrairement à
-    # string()/element()) : jamais dans le flux → aucun chevauchement possible (badge « sourcé »,
-    # titres). Le div `position:fixed` (F1) qui chevauchait encore est retiré.
-    _txt = ("Généré via LABUSE" + _pour).replace("\\", "").replace('"', "'")
-    # RETOUCHES-1 point 1 — `white-space: nowrap` : la mention tient sur UNE ligne (elle se coupait en
-    # « Généré / via / LABUSE » quand la case @bottom-left réservait 150 mm — largeur retirée à la feuille).
-    style = ('<style>@page { @bottom-center { content: "' + _txt + '"; white-space: nowrap; '
-             'font: 7pt "Inter","DejaVu Sans",sans-serif; color: #5F6C65; } }</style>')
-    pdf = render_pdf(res.html.replace("</head>", style + "</head>"))
+    # DOCS-DA-1 (V11, arbitrage Vic) — « Généré via LABUSE » RETIRÉ du pied : le pied tient sur UNE
+    # ligne (mention légale à gauche, pagination à droite), plus de @bottom-center.
+    pdf = render_pdf(res.html)
 
     from .protection import _aujourdhui
     db.execute(text(

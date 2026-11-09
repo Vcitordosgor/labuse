@@ -54,7 +54,10 @@ def gabarit_svg(result: Any, *, width: int = 340, height: int = 250) -> Optional
     bati = g("batiExistantGeoJSON")   # EXPORTS-FIX-1 F5 — bâti existant (fait contextuel, GABARIT-6 P4)
 
     PAD = 8
-    LEG = 54  # bandeau de légende sous le dessin
+    # DOCS-DA-1 — la LÉGENDE n'est plus DANS le SVG (texte minuscule en repli Verdana qui débordait) :
+    # elle est rendue en HTML sous la figure (thème, ≥ 10,5 px, s'enroule). On ne réserve donc plus qu'un
+    # mince bandeau bas.
+    LEG = 8
     W, H = width, height
     plot_h = H - LEG
     minx = miny = 1e18
@@ -84,8 +87,10 @@ def gabarit_svg(result: Any, *, width: int = 340, height: int = 250) -> Optional
             d += "M" + "L".join(f"{px(x):.1f},{py(y):.1f}" for x, y in ((p[0], p[1]) for p in r)) + "Z"
         return d
 
+    # DOCS-DA-1 — font-family Inter héritée par tous les <text> (plus de repli Verdana, 3ᵉ famille).
     parts = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" '
              f'role="img" aria-label="Plan de la zone d\'implantation réglementaire" '
+             f'font-family="Inter, sans-serif" '
              f'style="border:1px solid #d5d7db;background:#fafbfc">']
     if retrait:
         parts.append(f'<path d="{path(retrait)}" fill="{C_RETRAIT}" fill-opacity="0.30" stroke="none"/>')
@@ -103,22 +108,30 @@ def gabarit_svg(result: Any, *, width: int = 340, height: int = 250) -> Optional
         parts.append(f'<path d="{path(contour)}" fill="none" stroke="{C_CONTOUR}" '
                      f'stroke-width="1" stroke-dasharray="4 2"/>')
     # légende — EXPORTS-FIX-1 F5 : uniquement les éléments PRÉSENTS (plus de « PPR rouge » sur une
-    # parcelle qui n'a aucune exclusion).
-    y0 = plot_h + 12
+    # parcelle qui n'a aucune exclusion). DOCS-DA-1 — rendue en HTML sous la figure (thème, ≥ 10,5 px).
     leg = [(c, l) for c, l, present in (
         (C_ZONE, "Zone d'implantation", zone), (C_RETRAIT, "Retraits", retrait),
         (C_BATI, "Bâti existant", bati), (C_EXCL, "Exclusion réglementaire (PPR rouge / SUP)", excl),
         (C_CONTOUR, "Contour cadastral", contour)) if present]
-    parts.append(f'<text x="{PAD}" y="{plot_h + 2}" font-size="8" fill="#6b7075">'
-                 f'Zone d\'implantation réglementaire (schéma — pas un plan de masse)</text>')
-    for i, (col, lab) in enumerate(leg):
-        cx = PAD + (i % 2) * (W / 2)
-        cy = y0 + (i // 2) * 15
-        parts.append(f'<rect x="{cx}" y="{cy}" width="9" height="9" fill="{col}" '
-                     f'fill-opacity="0.6" stroke="{col}" stroke-width="0.6"/>')
-        parts.append(f'<text x="{cx + 13}" y="{cy + 8}" font-size="8" fill="#33383d">{lab}</text>')
     parts.append("</svg>")
+    parts.append(_legende_html(
+        "Zone d'implantation réglementaire (schéma — pas un plan de masse).", leg))
     return "".join(parts)
+
+
+def _legende_html(note: str, cles: list[tuple[str, str]], alerte: str = "") -> str:
+    """DOCS-DA-1 — la légende d'une figure du gabarit, en HTML sous le SVG : une note, une éventuelle
+    alerte (rouge), puis les clés colorées. Styles dans theme.css (`.fig-legende`), police du thème,
+    ≥ 10,5 px, qui s'enroule — plus de texte minuscule DANS le SVG (repli Verdana qui débordait)."""
+    import html as _h
+    # contenus TEXTUELS (pas des attributs) : on n'échappe pas l'apostrophe (quote=False) — « Zone
+    # d'implantation » reste littéral, pas « d&#x27;implantation ».
+    cl = "".join(
+        f'<span class="fig-cle"><i style="background:{c}"></i>{_h.escape(l, quote=False)}</span>'
+        for c, l in cles)
+    al = f'<div class="fig-alerte">{_h.escape(alerte, quote=False)}</div>' if alerte else ""
+    return (f'<div class="fig-legende"><div class="fig-note">{_h.escape(note, quote=False)}</div>'
+            f'{al}<div class="fig-cles">{cl}</div></div>')
 
 
 # ── RECETTE-OUTILS-2 (R16) — vue 3D du gabarit pour le PDF ───────────────────────────────────────
@@ -308,6 +321,7 @@ def gabarit_svg_3d(result: Any, *, width: int = 560, height: int = 380) -> Optio
 
     parts = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" '
              f'width="{width}" height="{height}" role="img" aria-label="Vue 3D indicative du gabarit" '
+             f'font-family="Inter, sans-serif" '
              f'style="border:1px solid #d5d7db;background:#fafbfc">']
     # sol : contour cadastral à plat (repère)
     if contour:
@@ -321,24 +335,15 @@ def gabarit_svg_3d(result: Any, *, width: int = 560, height: int = 380) -> Optio
     vols.append(extrude(zone_env, float(haut), C_ZONE, "#2c9f7c", "#1f6f57"))
     for frag, d in sorted(vols, key=lambda v: v[1]):
         parts.append(frag)
-    # légende R16 — DOCS-1 : chaque mention sur SA LIGNE (empilées, jamais superposées).
-    _y = plot_h + 12
-    parts.append(f'<text x="{PAD}" y="{_y}" font-size="9" fill="#33383d" font-weight="600">'
-                 f'Volume indicatif — terrain supposé plat</text>')
-    # DOCS-1 — mention CLAIRE quand le bâti existant dépasse la hauteur autorisée : SOUS la précédente.
+    # légende R16 — DOCS-DA-1 : rendue en HTML sous le SVG (thème, ≥ 10,5 px), plus DANS le dessin.
+    alerte = ""
     if bati_depasse:
-        _y += 12
-        _hm = f"{bati_h_max:g}".replace(".", ",")   # DOCS-1 — décimale à la virgule (« 10,3 m »)
+        _hm = f"{bati_h_max:g}".replace(".", ",")   # décimale à la virgule (« 10,3 m »)
         _hr = f"{haut:g}".replace(".", ",")
-        parts.append(f'<text x="{PAD}" y="{_y}" font-size="8.5" fill="#b23b3b" font-weight="600">'
-                     f'Le bâti existant dépasse la hauteur autorisée '
-                     f'({_hm} m mesurés / {_hr} m autorisés)</text>')
+        alerte = f"Le bâti existant dépasse la hauteur autorisée ({_hm} m mesurés / {_hr} m autorisés)."
     leg = [(C_ZONE, f"Enveloppe réglementaire — plafond d'emprise (hauteur {f'{haut:g}'.replace('.', ',')} m)")]
     if batis:
         leg.append(("#7c828a", "Bâti existant"))
-    for i, (col, lab) in enumerate(leg):
-        cy = _y + 11 + i * 13
-        parts.append(f'<rect x="{PAD}" y="{cy}" width="9" height="9" fill="{col}" fill-opacity="0.85"/>')
-        parts.append(f'<text x="{PAD + 13}" y="{cy + 8}" font-size="8" fill="#33383d">{lab}</text>')
     parts.append("</svg>")
+    parts.append(_legende_html("Volume indicatif — terrain supposé plat.", leg, alerte=alerte))
     return "".join(parts)

@@ -155,6 +155,23 @@ _ABSENCE_CLAIR = {
 # 2ᵉ/3ᵉ ligne « non renseigné » qui répète l'absence de la clause.
 _ABSENCE_MASQUEE = {"sar_divergence", "mixite_seuil_m2", "mixite_quota_pct"}
 
+#: DOCS-DA-1 (arbitrage Vic, inventaire-dossier-1) — RETRAITS CÔTÉ DOSSIER (l'écran garde ses lignes ;
+#: le Dossier épure). Ces faits sont techniques ou non pertinents pour l'opérateur foncier : on ne les
+#: imprime NI en valeur NI en absence dans le Dossier.
+_RETIRES_DOSSIER = {
+    "rnb_batiments_liste",            # identifiants RNB (référence technique sans valeur client)
+    "ban_plus_adresses_bati",         # adresses BAN PLUS (doublon de l'adresse principale)
+    "enr_exclue_parcelle",            # APER (hors sujet pour cette parcelle)
+    "mesures_compensatoires_parcelle",  # GéoMCE (donnée nationale rare, sur-détaillée)
+    "tcsp_stationnement_allege",      # « hors rayon TCSP » (absence peu signifiante)
+}
+#: Faits à GARDER quand ils sont servis, mais dont on N'IMPRIME PAS l'ABSENCE dans le Dossier (une
+#: absence non informative : échantillon insuffisant, aucun millésime connu).
+_RETIRES_ABSENCE_DOSSIER = {
+    "prix_neuf_vefa_acte_eur_m2",     # VEFA : retiré quand l'échantillon est insuffisant (absent)
+    "proprietaire_timeline_liste",    # historique de détention : retiré pour un particulier (nul)
+}
+
 #: EXPORTS-FIX-1 C6 — marqueurs d'une donnée NON DISPONIBLE (non calculée/déterminée), à distinguer
 #: d'un « vérifié : rien » (contrôle fait, rien trouvé). Deux encadrés distincts au rendu.
 _MARQUEURS_NON_DISPO = ("non calcul", "non détermin", "non estim", "non relev", "non renseign",
@@ -465,9 +482,19 @@ def _r_aleas(v, val: Valeur):
             lib += esc(f" — aléa de niveau {niv}") if "niveau" not in (a.get("libelle") or "") else ""
         # RETOUCHES-1 point 7 — le libellé daté de la source (déjà nommé par servitudes.aleas_parcelle :
         # « millésime <X> » si publié amont, sinon « ingéré le JJ/MM/AAAA ») s'imprime sur la ligne.
-        mill = a.get("millesime")
-        if mill:
-            lib += esc(f" · {_mill_client(mill)}")   # DOCS-1 — jj/mm/aaaa, jamais « ingéré le »
+        # DOCS-DA-1 (V10) — pour un PPR : UNE SEULE date, celle de l'APPROBATION du PPR de la COMMUNE
+        # (a.ppr[].approbation), JAMAIS la date d'édition de la couche DEAL (île entière, « 16/04/2026 »).
+        _ppr = a.get("ppr")
+        _appro = ((_ppr[0] or {}).get("approbation") if isinstance(_ppr, list) and _ppr else None)
+        mill = a.get("millesime") or ""
+        _est_edition_deal = ("édition DEAL" in mill) or ("millésime PPR" in mill)
+        if _appro and len(str(_appro)) >= 10:
+            _a = str(_appro)
+            lib += esc(f" · PPR approuvé le {_a[8:10]}/{_a[5:7]}/{_a[0:4]} (commune)")
+        elif mill and not _est_edition_deal:
+            # la date d'ÉDITION de la couche DEAL (île entière) n'est JAMAIS « la date du PPR » → omise ;
+            # les autres millésimes de source restent (jj/mm/aaaa, jamais « ingéré le »).
+            lib += esc(f" · {_mill_client(mill)}")
         rows.append(f'<tr data-quoi="aleas_parcelle_liste"><td class="k">{nat}</td>'
                     f'<td>{lib}</td><td class="n">{chip(val)}</td></tr>')
     return '<table class="kv">' + "".join(rows) + "</table>"
@@ -799,8 +826,9 @@ def _r_territoire(v, val: Valeur):
             _row(_cle_dom(dom, i), dom["libelle"])
     if (v.get("zfang") or {}).get("libelle"):
         _row("ZFANG", v["zfang"]["libelle"])
-    if (v.get("frr") or {}).get("libelle"):
-        _row("FRR (ex-ZRR)", _frr_libelle(v["frr"]))
+    # DOCS-DA-1 (arbitrage Vic, inventaire) — FRR (ex-ZRR) RETIRÉE du Dossier : à La Réunion elle
+    # n'ouvre que des mesures NON fiscales (FAQ FRR DGCL) — non applicable fiscalement, elle brouille
+    # le §Dispositifs. (`_frr_libelle` reste pour l'écran/usages éventuels.)
     for per in _perimetres_hors_piscine(v):   # EXPORTS-FIX-1 B2 — la piscine sort du §7 (elle est au §2)
         if per.get("libelle"):
             # EXPORTS-FIX-1 A9 — la bande QPV est nommée, jamais « Périmètre » nu.
@@ -853,8 +881,162 @@ def _r_artif_ocsge(v):
 
 
 #: id → rendeur. `bloc` = fragment pleine largeur (tableau propre) ; sinon cellule valeur.
+# ══ DOCS-DA-1 — rendeurs des faits de l'inventaire (lus au même robinet que la fiche) ═════════════
+def _da_date(s):
+    try:
+        a, m, j = str(s)[:10].split("-")
+        return f"{j}/{m}/{a}"
+    except Exception:  # noqa: BLE001
+        return esc(s)
+
+
+def _da_eurm2(x):
+    try:
+        return f"{groupe(round(float(x)))} €/m²"
+    except (TypeError, ValueError):
+        return esc(x)
+
+
+def _r_acquereurs_pro(v):
+    acq = (v or {}).get("acquereurs") or []
+    if not acq:
+        return ""
+    items = " · ".join(f"{esc(a.get('denomination') or '')} ({_da_date(a.get('date'))})" for a in acq[:6])
+    r, mois = (v or {}).get("rayon_m"), (v or {}).get("mois")
+    return items + (f" — à moins de {int(r)} m, {int(mois)} mois" if r and mois else "")
+
+
+def _r_permis_section(v):
+    n = v.get("count")
+    if not n:
+        return ""
+    d = f", dernier {_da_date(v.get('dernier'))}" if v.get("dernier") else ""
+    return esc(f"{groupe(n)} permis sur la section cadastrale (36 mois{d})")
+
+
+def _r_dvf_fourchette(v):
+    def g(k):
+        return groupe(round(v[k])) if v.get(k) is not None else "—"
+    return esc(f"Q1 {g('q1')} · médiane {g('median')} · Q3 {g('q3')} €/m² "
+               f"(min {g('min')} · max {g('max')})")
+
+
+def _r_dvf_tendance(v):
+    t, p = (v or {}).get("tendance"), (v or {}).get("pct")
+    lib = {"baisse": "Baisse", "hausse": "Hausse", "stable": "Stable"}.get(str(t), str(t))
+    if p is not None:
+        signe = "−" if p < 0 else ("+" if p > 0 else "")
+        return esc(f"{lib} ({signe}{abs(int(p))} %)")
+    return esc(lib)
+
+
+def _r_oll(v):
+    loyer, zone = v.get("loyer_median_eur_m2"), v.get("zone")
+    s = str(loyer).replace(".", ",") if loyer is not None else "—"
+    return esc(f"{s} €/m²" + (f" — zone {zone}" if zone is not None else ""))
+
+
+def _r_filosofi(v):
+    try:
+        niv = groupe(int(str(v.get("nivvie_moyen_eur")).replace(" ", "")))
+    except Exception:  # noqa: BLE001
+        niv = esc(v.get("nivvie_moyen_eur"))
+    bits = [f"Niveau de vie {niv} €"]
+    if v.get("taux_pauvrete_pct") is not None:
+        bits.append(f"{int(v['taux_pauvrete_pct'])} % sous le seuil de pauvreté")
+    if v.get("part_proprietaires_pct") is not None:
+        bits.append(f"{int(v['part_proprietaires_pct'])} % propriétaires")
+    return esc(" · ".join(bits) + " (carreau 200 m)")
+
+
+def _r_gestionnaires(v):
+    parts = []
+    eau = (v.get("eau") or {}).get("operateur")
+    ass = (v.get("assainissement") or {}).get("operateur")
+    elec = (v.get("electricite") or {}).get("gestionnaire")
+    spanc = v.get("spanc")
+    if eau:
+        parts.append(f"Eau : {esc(eau)}")
+    if ass:
+        parts.append(f"Assainissement : {esc(ass)}")
+    if elec:
+        parts.append(f"Électricité : {esc(elec)}")
+    if spanc:
+        parts.append(f"SPANC : {esc(spanc)}")
+    return " · ".join(parts)
+
+
+def _r_bus_contact(v):
+    nom = (str(v.get("nom") or "").split("—")[0]).strip() or "ligne"
+    res = f" ({esc(v.get('reseau'))})" if v.get("reseau") else ""
+    d = f" — à {int(v['distance_m'])} m" if v.get("distance_m") is not None else ""
+    return esc(f"Ligne {nom}") + res + " au contact" + d
+
+
+def _r_solaire(v):
+    # DOCS-DA-1 (V10) — « 1 548 kWh/kWc — très favorable » (même lecture que la fiche). Accepte aussi
+    # une valeur nue (repli) → « N kWh/kWc ».
+    if isinstance(v, dict):
+        kwh, qual = v.get("kwh"), v.get("qualite")
+    else:
+        kwh, qual = v, None
+    if kwh is None:
+        return ""
+    return esc(f"{groupe(round(float(kwh)))} kWh/kWc" + (f" — {qual}" if qual else ""))
+
+
+def _r_saturation(v):
+    bits = []
+    if v.get("consomme") is not None:
+        bits.append(f"{int(v['consomme'])} % consommé")
+    if v.get("residuel") is not None:
+        bits.append(f"{int(v['residuel'])} % résiduel")
+    return esc(" · ".join(bits))
+
+
+def _r_catnat(v):
+    total = v.get("total")
+    perils = []
+    for a in v.get("arretes") or []:
+        p = a.get("peril")
+        if p and p not in perils:
+            perils.append(p)
+    tail = (" — " + ", ".join(perils[:4]) + ("…" if len(perils) > 4 else "")) if perils else ""
+    return esc(f"{groupe(total)} arrêtés CatNat (commune){tail}")
+
+
+def _r_comparables(v, val=None):
+    rows = ""
+    for c in (v or [])[:8]:
+        surf = c.get("surface_m2")
+        rows += (f'<tr><td>{esc(c.get("date"))}</td><td>{esc(c.get("type"))}</td>'
+                 f'<td class="num">{esc(surf)} m²</td>'
+                 f'<td class="num">{_da_eurm2(c.get("prix_m2"))}</td>'
+                 f'<td class="num">{esc(c.get("distance_m"))} m</td></tr>')
+    if not rows:
+        return ""
+    return ('<div data-quoi="comparables_proches" class="keep"><h3>Les 8 comparables les plus proches '
+            '(comme Estimer)</h3><table class="kv">'
+            '<tr><th>Vente</th><th>Type</th><th class="num">Surface</th>'
+            '<th class="num">Prix</th><th class="num">Distance</th></tr>' + rows + '</table></div>')
+
+
+def _r_gabarit_plan_3d(brute, val=None):
+    """La vue 3D du gabarit — à côté du schéma 2D (§Potentiel). `brute` = SVG déjà sûr (serveur)."""
+    svg = brute if isinstance(brute, str) else ""
+    return (f'<div class="gabarit-plan" data-quoi="gabarit_plan_3d" '
+            f'style="margin:6px 0;text-align:center">{svg}</div>')
+
+
 _RENDEURS: dict[str, Any] = {
     "part_artificialisee_pct": _r_artif_ocsge,
+    # DOCS-DA-1 — les faits de l'inventaire
+    "acquereurs_pro_voisins": _r_acquereurs_pro, "permis_section_36m": _r_permis_section,
+    "dvf_fourchette": _r_dvf_fourchette, "dvf_tendance": _r_dvf_tendance,
+    "loyer_oll_eur_m2": _r_oll, "filosofi_200m": _r_filosofi,
+    "gestionnaires_reseaux": _r_gestionnaires, "ligne_bus_contact": _r_bus_contact,
+    "densite_saturation": _r_saturation, "catnat_arretes": _r_catnat,
+    "prod_spec_kwh_kwc": _r_solaire,
     "prix_achat_historique_eur": _r_prix_achat, "coproprietes_liste": _r_copros,
     "proprietaire_timeline_liste": _r_timeline, "historique_permis_liste": _r_permis_liste,
     "er_emplacement_reserve": _r_er_ebc, "ebc_classe": _r_er_ebc, "dpu_perimetre": _r_dpu,
@@ -889,6 +1071,8 @@ _RENDEURS_BLOC: dict[str, Any] = {
     "aleas_parcelle_liste": _r_aleas, "dvf_parcelle_liste": _r_dvf_liste,
     "iris_quartier": _r_iris, "perimetres_dispositifs_liste": _r_territoire,
     "gabarit_plan_2d": _r_gabarit_plan,
+    # DOCS-DA-1 — table des 8 comparables (comme Estimer) + vue 3D du gabarit (à côté du 2D).
+    "comparables_proches": _r_comparables, "gabarit_plan_3d": _r_gabarit_plan_3d,
 }
 #: EXPORTS-FIX-1 A8 — intitulés de groupe internes, masqués au rendu (lignes conservées).
 _GROUPES_MASQUES = {"Bilan indicatif"}
@@ -1150,13 +1334,38 @@ _COVER_TUILES = [
 ]
 
 
+def _sous_titre_cover(fiche: dict, valeurs: dict[str, Valeur]) -> str:
+    """DOCS-DA-1 (maquette) — le sous-titre de la garde : lieu · type de bien · zone.
+    « La Montagne · parcelle bâtie, maison · zone Uh ». Composé des seules valeurs servies."""
+    bits: list[str] = []
+    lieu = (fiche.get("lieu_dit") or fiche.get("quartier") or fiche.get("commune") or "").strip()
+    if lieu:
+        bits.append(esc_noms(lieu))
+    nb = (fiche.get("bati") or {}).get("n_batiments")
+    etat = None
+    if isinstance(nb, (int, float)):
+        etat = "parcelle bâtie" if nb and nb > 0 else "parcelle nue"
+    type_bien = (fiche.get("marche") or {}).get("type_prioritaire") or fiche.get("type_bien")
+    if etat and type_bien and str(type_bien) not in etat:
+        bits.append(f"{etat}, {esc(type_bien)}")
+    elif etat:
+        bits.append(etat)
+    _reg = valeurs.get("reglement_plu_bloc")
+    _zcode = (_reg.valeur.get("zone") if _reg is not None and isinstance(_reg.valeur, dict) else None)
+    _zfam = valeurs.get("zone_plu_famille")
+    zone = _zcode or (_zfam.valeur if _zfam is not None else None)
+    if zone:
+        bits.append(f"zone {esc(zone)}")
+    return " · ".join(b for b in bits if b)
+
+
 def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, Valeur],
-                  modele: str, *, plan_html: str = "") -> str:
-    """La page de garde du Dossier (maquette v4) : cartouche 4 champs + bandeau des SIX chiffres
-    de la fiche en 3 colonnes + sommaire des sections + légende. Chaque tuile porte data-quoi
-    (verrou V5d) ; une valeur absente s'affiche « — » (jamais un zéro inventé).
-    DOCS-1 (décision Vic) — la COUVERTURE porte désormais la CARTE de situation (en plus du bandeau
-    des six chiffres, qui est le RÉSUMÉ) : elle tient la page au lieu de rester creuse."""
+                  modele: str, *, plan_html: str = "", donnees_au: str = "") -> str:
+    """La page de garde du Dossier (DOCS-DA-1, maquette validée par Vic) : bandeau noir LABUSE + nom du
+    document, référence en mono, adresse en 34 px, sous-titre (type de bien, zone), plan de situation,
+    six tuiles-chiffres, sommaire paginé, puis le cartouche du bas (n° de rapport · généré le · données
+    à jour au = date du run servi) et un disclaimer sur une ligne SANS date. Pas de légende des badges.
+    Chaque tuile porte data-quoi (verrou V5d) ; une valeur absente est OMISE (jamais un zéro inventé)."""
     adresse = fiche.get("adresse") or ""
     commune = fiche.get("commune") or ""
     tuiles_html = []
@@ -1201,41 +1410,35 @@ def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, V
         # EXPORTS-FIX-1 A3 — plus de clé technique (« fiche identite ») en colonne droite du sommaire.
         toc.append(f'<li>{n}. {esc(sec["titre"])}</li>')
     toc.append(f'<li>{n + 1}. Limites et sources</li>')
-    legende = (
-        '<div class="legend">'
-        '<span class="chip s">sourcé</span> lu dans la source · '
-        '<span class="chip d">dérivé</span> calculé · '
-        '<span class="chip e">estimé</span> hypothèse dite · '
-        '<span class="chip p">projet</span> saisi par vous</div>')
+    sous_titre = _sous_titre_cover(fiche, valeurs)
+    au = donnees_au or f"{jour:%d/%m/%Y}"
     return (
         '<div class="cover">'
-        '<div class="kicker">Dossier parcelle</div>'
-        # EXPORTS-FIX-1 F4 — l'IDU en police MONO (chiffre 0 pointé, distinct du O), jamais en
-        # SpaceGrotesk où « EO0796 » se lit « E00796 ».
-        f'<h1 class="idu-code">{esc(idu)}</h1>'
-        + (f'<p class="address">{esc_noms(adresse)}</p>' if adresse else "")
-        + f'<p class="idu">{esc(commune)}</p>'
-        '<div class="gm-meta">'
-        f'<div><b>{esc(numero)}</b>n° de rapport</div>'
-        f'<div><b>{jour:%d/%m/%Y}</b>généré le</div>'
-        # CHASSE-DONNEES-FIX-1 (Lot 1) — « contenance » UNIQUEMENT si la valeur servie est la
-        # contenance cadastrale ; sinon « surface (plan) » (dessin, repli). Jamais « contenance »
-        # sur une parcelle dont la contenance est absente (BC9999 : 600 m² source=plan).
-        f'<div><b>{fmt_m2(valeurs["surface_parcelle_m2"].valeur) if valeurs.get("surface_parcelle_m2") else "—"}</b>'
-        # FIX-FINAL-1 (NU-D-041) — `surface_source` n'est PAS un id déclaré de la fiche, donc jamais
-        # collecté dans `valeurs` → le ternaire tombait TOUJOURS en « surface (plan) », même sur une
-        # contenance cadastrale (IE0241 : 625 m² étiquetés « surface (plan) »). On lit la source
-        # CANONIQUE directement sur la fiche (`champs_terrain` la pose : cadastre/plan).
-        f'{"contenance" if (fiche.get("surface_source") == "cadastre") else "surface (plan)"}</div>'
-        # EXPORTS-FIX-1 A2 — plus de « Modèle 3.0 · miroir de la fiche » en page de garde.
+        # Le bandeau noir — le SEUL aplat sombre : marque LABUSE + nom du document à gauche, devise à droite.
+        '<div class="cover-banner">'
+        '<div><span class="wordmark">LA<em>BUSE</em></span>'
+        '<span class="kind">Dossier parcelle</span></div>'
+        '<span class="tag">Le trésor est sous vos pieds</span>'
         '</div>'
-        f'<div class="cover-tiles">{"".join(tuiles_html)}</div>'
-        # DOCS-1 — la carte de situation sur la page de garde (résumé = le bandeau de tuiles ci-dessus).
-        # Le fragment `.plan` est auto-stylé (image + légende) ; on le pose tel quel.
+        # Référence cadastrale en MONO (chiffre 0 pointé, distinct du O), puis adresse 34 px, sous-titre.
+        f'<p class="idu-ref">{esc(idu)}</p>'
+        + (f'<p class="address">{esc_noms(adresse)}</p>' if adresse else "")
+        + (f'<p class="subtitle">{sous_titre}</p>' if sous_titre else "")
+        # Le plan de situation (fragment `.plan` auto-stylé : image + légende).
         + (plan_html or "")
-        # EXPORTS-FIX-1 A2 — plus de « Le bandeau des six chiffres de la fiche. »
+        # Les six chiffres de la fiche (le résumé).
+        + f'<div class="cover-tiles">{"".join(tuiles_html)}</div>'
+        # Le sommaire paginé.
         + f'<ul class="toc">{"".join(toc)}</ul>'
-        + legende +
+        # Le cartouche du bas : n° de rapport · généré le · données à jour au (date du run servi).
+        '<div class="cover-cartouche">'
+        f'<div class="mono"><b>{esc(numero)}</b>n° de rapport</div>'
+        f'<div><b>{jour:%d/%m/%Y}</b>généré le</div>'
+        f'<div><b>{esc(au)}</b>données à jour au</div>'
+        '</div>'
+        # Le disclaimer — une ligne, SANS date (la date de donnée vit dans le cartouche ci-dessus).
+        '<p class="notice">Document d\'information sur données publiques — ne remplace ni un certificat '
+        'd\'urbanisme, ni une étude réglementaire, ni un conseil juridique.</p>'
         '</div>')
 
 
@@ -1282,8 +1485,22 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
             # le doublon du §9 (voisinage_100m_liste) est omis.
             if l.quoi == "voisinage_100m_liste":
                 continue
+            # DOCS-DA-1 (arbitrage Vic) — retraits CÔTÉ DOSSIER (l'écran garde ses lignes).
+            if l.quoi in _RETIRES_DOSSIER:
+                continue
+            # Piscine : retirée du Dossier quand elle est ABSENTE (non pertinente pour l'investisseur) ;
+            # conservée au §Terrain quand elle est détectée (_pisc, rendue plus bas).
+            if l.quoi == "piscine_m2" and not _pisc:
+                continue
             v = valeurs.get(l.quoi)
+            # Part de sol nu à 0,0 % : un zéro n'apprend rien ici — ligne omise (l'inventaire la retire).
+            if l.quoi == "part_sol_nu_cosia_pct" and v is not None and not v.valeur:
+                continue
             if v is None:
+                # Faits dont l'ABSENCE n'est pas imprimée dans le Dossier (échantillon insuffisant,
+                # aucun millésime connu) : ni valeur, ni phrase d'absence.
+                if l.quoi in _RETIRES_ABSENCE_DOSSIER:
+                    continue
                 if l.quoi == "rtaa_exigences":
                     # EXPORTS-FIX-1-BIS point 4 — la RTAA DOM est une RÈGLE APPLICABLE (tout logement
                     # neuf), pas une absence : ligne normale du §4, hors de l'encadré « Vérifié : rien ».
@@ -1420,8 +1637,9 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
             if nondispo:
                 frags.append('<div class="sansobjet"><div class="t">Non disponible ici</div>'
                              f'<ul>{"".join(nondispo)}</ul></div>')
-        if vals_lus:
-            frags.append(_pied_noms(vals_lus))
+        # DOCS-DA-1 (arbitrage Vic) — les sources ne figurent plus SOUS chaque section : elles sont
+        # rassemblées au §11 « Limites et sources » (bloc_sources), une seule fois. On NE rend plus le
+        # pied de noms par section (vals_lus reste collecté pour le verrou de provenance, non imprimé).
         corps.append(section(titre, "".join(x for x in frags if x)))
     # §12 — ce que ce document ne peut pas dire + les NOMS des sources (bloc dédié, sans millésime).
     from .blocs import sources as bloc_sources

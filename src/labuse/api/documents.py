@@ -22,14 +22,10 @@ def get_db():
 
 
 def _mention_marque(html: str) -> str:
-    """Attribution imprimée sur chaque page (position:fixed) — « Généré via LABUSE pour <raison> »,
-    sans « pour » quand la marque blanche n'est pas résolue (M73 C6)."""
-    from ..config import get_settings
-    s = get_settings()
-    pour = "" if (s.raison_sociale or "").strip() in ("", "Pilote LABUSE") else f" pour {s.raison_sociale}"
-    mention = (f'<div style="position:fixed;bottom:2mm;right:0;font-size:7pt;color:#5F6C65;'
-               f'font-family:Inter,sans-serif;">Généré via LABUSE{pour}</div>')
-    return html.replace("</body>", mention + "</body>")
+    """DOCS-DA-1 (V11, arbitrage Vic) — « Généré via LABUSE » RETIRÉ du pied : le pied tient sur UNE
+    ligne (mention légale uniforme à gauche, pagination à droite). Plus d'attribution en bas de page.
+    (Fonction conservée — point d'appel inchangé — mais elle ne modifie plus le document.)"""
+    return html
 
 
 def rendre_document(db, idu: str, request: Request, document: str, *,

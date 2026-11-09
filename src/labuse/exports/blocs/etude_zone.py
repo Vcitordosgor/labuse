@@ -240,10 +240,8 @@ def rendu(zone, *, map_html: str, idu: str, rayon_km) -> str:
     # CHASSE-DONNEES-FIX-1 (suite 2d, C-42) — la note RELAIE les sources DATÉES servies (zone['note'] :
     # « INSEE Filosofi 2021 · SIRENE · BPE 2025 · DVF · isochrones IGN · Arcep… »), plus une note
     # statique muette : les millésimes calculés côté outil s'impriment enfin dans le PDF.
-    # CHASSE-DOCS-FIX-1 (E-14) — la note servie finit déjà par « . » ; on la débarrasse de sa ponctuation
-    # finale avant d'ajouter « . » + le rappel, sinon « …chiffre d'affaires.. Les mailles ».
-    _note_servie = (z.get("note") or "").strip().rstrip(".")
+    # DOCS-DA-1 (V10) — plus de ligne « Sources : » sous la section (comme le Dossier) ; on garde la
+    # seule mise en garde d'ÉCHELLE (les mailles communales ne portent pas sur le seul rayon).
     _rappel = ("Les mailles « " + ECHELLE_COMMUNE + " » portent sur toute la commune, pas sur le seul rayon.")
-    corps += note((f"Sources : {_note_servie}. {_rappel}" if _note_servie
-                   else "Agrégats de sources publiques dans le périmètre. " + _rappel))
+    corps += note(_rappel)
     return section("Étude de zone", corps)

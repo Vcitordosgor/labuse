@@ -17,7 +17,7 @@ from __future__ import annotations
 from datetime import date
 
 from ..exports import numeros
-from ..exports.rendu import Cartouche, esc, page_html, render_pdf
+from ..exports.rendu import FOOT_LIGNE, Cartouche, esc, page_html, render_pdf
 from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17/D-13) — jour Réunion, pas process
 from .catalogue import Catalogue, assiette_unite, charger_catalogue
 from .moteur import ResultatBilan
@@ -44,15 +44,17 @@ _CSS = """
 .bilan tr.tot td{font-weight:700;background:#eaf2ec}
 .bilan .bloc{page-break-inside:avoid;margin-bottom:10px}
 .bilan .synth{page-break-before:always}
-.bilan .badge{font-size:10px;border:1px solid #9bb0a4;border-radius:9px;padding:1px 6px;color:#44584c;white-space:nowrap}
+.bilan .badge{font-size:10.5px;border:1px solid #9bb0a4;border-radius:9px;padding:1px 6px;color:#44584c;white-space:nowrap}
 .bilan .res{font-size:16px;font-weight:700;color:#0a6b38}
 .bilan .tete2{font-size:11px;margin:4px 0 8px}
 .bilan .tete2 td{border:0;padding:2px 8px}
 .bilan .tete2 .k{color:#6b7a72}
 .bilan .tete2 .cal{padding-left:26px}
 .bilan .tete2 .v{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
-.bilan .vides{color:#6b7a72;font-size:10px;margin:2px 0 8px}
+.bilan .vides{color:#6b7a72;font-size:10.5px;margin:2px 0 8px}
 .bilan .tete-doc{color:#6b7a72;font-size:11px;margin:-2px 0 6px}
+/* DOCS-DA-1 (V10) — aucune taille sous 10,5 px : les sous-libellés `<small>` au plancher. */
+.bilan small{font-size:10.5px}
 """
 
 # Colonne « Libellé · Assiette · Taux · HT · TVA · TTC · État » — largeurs fixes
@@ -288,7 +290,7 @@ def construire_html(
             f"<tr><td>Cash flow</td><td class='num'>{_eur(r.cash_flow)}</td><td colspan='2'></td></tr>"
         )
     corps.append("</tbody></table>")
-    corps.append('<p style="color:#6b7a72;font-size:10px">Document non contractuel.</p>')
+    corps.append('<p style="color:#6b7a72;font-size:10.5px">Document non contractuel.</p>')
     corps.append("</div></div>")
 
     # DOCS-COHERENCE-1 (recette Vic) — pied « Données LABUSE au <date du RUN servi> » (comme les 7
@@ -297,7 +299,7 @@ def construire_html(
     cart = Cartouche(
         doc_title=f"LABUSE — Bilan" + (f" · {adresse}" if adresse else ""),
         doc_ref=f"{idu} · {numero}",
-        doc_foot=f"Document d'information LABUSE. Données LABUSE au {au}.",
+        doc_foot=FOOT_LIGNE,   # DOCS-DA-1 (V11) — pied uniforme, une ligne, sans date
     )
     html = page_html("Bilan", cart, f"<style>{_CSS}</style>" + "".join(corps))
     return html, cart

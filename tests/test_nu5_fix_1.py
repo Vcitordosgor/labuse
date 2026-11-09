@@ -22,15 +22,17 @@ from fastapi.testclient import TestClient
 # ───────────────────────── PUR (sans base) ─────────────────────────
 
 def test_bf2_bf4_clause_juridique_sur_tous_les_pieds():
-    """B-F2 / B-F4 — la clause juridique (conseil juridique + garantie de constructibilité) figure
-    dans le pied de CHAQUE document. Avant : absente de l'Étude de zone et du Comparatif ; « ni
-    garantie de constructibilité » écrit nulle part."""
+    """B-F2 / B-F4 — la clause juridique (certificat d'urbanisme + conseil juridique) figure dans le
+    pied de CHAQUE document. DOCS-DA-1 (V11, arbitrage Vic / maquette) — le pied tient désormais sur UNE
+    ligne, IDENTIQUE partout : « Document d'information · ne remplace ni un certificat d'urbanisme, ni
+    une étude réglementaire, ni un conseil juridique » (la mention « garantie de constructibilité » a
+    été retirée pour tenir sur une ligne ; la clause juridique essentielle reste)."""
     from labuse.exports.builder import _CLAUSE_JURIDIQUE, _FOOT
     assert "conseil juridique" in _CLAUSE_JURIDIQUE
-    assert "constructibilité" in _CLAUSE_JURIDIQUE
+    assert "certificat d'urbanisme" in _CLAUSE_JURIDIQUE
     for doc, pied in _FOOT.items():
         assert "conseil juridique" in pied, f"{doc} sans clause conseil juridique"
-        assert "constructibilité" in pied, f"{doc} sans clause constructibilité"
+        assert "certificat d'urbanisme" in pied, f"{doc} sans clause certificat d'urbanisme"
 
 
 def _fake_gabarit_ok():

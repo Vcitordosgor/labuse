@@ -164,6 +164,8 @@ def render_report_html(db: Session, idu: str, *, order_ref: str, adresse: str | 
     from ..api.export_commun import SOURCES_ATTRIBUTION  # source unique (M6 2a)
     css = _env.get_template("rapport.css").render(
         fonts_dir=_FONTS.as_uri(), order_ref=order_ref, produit=produit,
+        # DOCS-DA-1 (V11) — `reference` (parcelle) servie au CSS pour l'en-tête courant (plus la date).
+        reference=data.get("reference", ""),
         date_generation=data["date_generation"], watermark=watermark)
     from ..api.blocs_documents import BLOC_CSS       # M73-G — habillage des blocs, écrit une fois
     css += BLOC_CSS

@@ -25,6 +25,22 @@ donnees:
     absence: "Arrêt de transport : aucun arrêt à proximité mesurable."
     absence_type: absente_ici
     pourquoi: "Desserte transport ; replié."
+  # DOCS-DA-1 — la ligne de bus au CONTACT (tracé qui passe à proximité immédiate).
+  - quoi:  ligne_bus_contact
+    ou:    { rang: 32, etat: replie, section: "Accès" }
+    comment: { libelle: "Ligne de bus au contact", format: texte, i: "Ligne de transport public (Citalis) dont le tracé passe au contact de la parcelle (OSM / GTFS)." }
+    absence: "Ligne de bus au contact : aucune ligne au contact immédiat."
+    absence_type: absente_ici
+    masquer_si_absent: true
+    pourquoi: "Une desserte au pied de la parcelle ; concret."
+  # DOCS-DA-1 — les GESTIONNAIRES de réseaux nommés (à qui s'adresser) — contact administratif.
+  - quoi:  gestionnaires_reseaux
+    ou:    { rang: 34, etat: replie, section: "Réseaux" }
+    comment: { libelle: "Gestionnaires de réseaux", format: texte, i: "Gestionnaires administratifs des réseaux (eau, assainissement, électricité, SPANC) nommés — contact, aucun tracé. Viabilité à confirmer par DT-DICT." }
+    absence: "Gestionnaires de réseaux : non renseignés pour cette commune."
+    absence_type: absente_ici
+    masquer_si_absent: true
+    pourquoi: "À qui s'adresser pour le raccordement ; concret."
   # part_logements_egout_pct RETIRÉ (lot 2) : la source RP EGOUL n'est pas matérialisée en colonne
   # interrogeable (part des logements sur égout à la maille commune) — on ne montre pas ce qu'on ne
   # sait pas sourcer proprement. À reprendre si la donnée est ingérée en clair (→ page Données).

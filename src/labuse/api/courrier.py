@@ -467,9 +467,21 @@ _DA_ENCRE = (28, 36, 31)        # corps du courrier
 _DA_GRIS = (120, 130, 124)      # tagline / pied
 
 
+from pathlib import Path as _Path
+_FONTS = _Path(__file__).resolve().parent / "fonts"
+
+
+def _inter(pdf) -> None:
+    """DOCS-DA-1 (V10) — le Courrier passe sous le gabarit : Inter EMBARQUÉE (régulier + gras), plus de
+    police de base Helvetica. Appelé juste après la création de chaque FPDF, avant la 1re page."""
+    pdf.add_font("inter", "", str(_FONTS / "Inter-Regular.ttf"))
+    pdf.add_font("inter", "B", str(_FONTS / "Inter-Bold.ttf"))
+
+
 def _pdf_safe(s: str) -> str:
-    """Ponctuation typographique (’ — … « ») → équivalents latin-1 (polices de base fpdf), jamais un « ? »."""
-    return s.translate(_LATIN1_PUNCT).encode("latin-1", "replace").decode("latin-1")
+    """DOCS-DA-1 (V10) — avec Inter (TTF Unicode embarquée), la ponctuation typographique (’ — … « »)
+    est rendue telle quelle : plus de repli latin-1 (qui était la contrainte des polices de base fpdf)."""
+    return s
 
 
 def _pdf_header(pdf, expediteur: dict | None = None) -> None:
@@ -480,11 +492,11 @@ def _pdf_header(pdf, expediteur: dict | None = None) -> None:
     titre = societe if (societe and societe != "l'expéditeur") else "Courrier"
     tel = (expediteur or {}).get("telephone") if expediteur else None
     pdf.set_text_color(*_DA_VERT)
-    pdf.set_font("Helvetica", "B", 24)
+    pdf.set_font("inter", "B", 24)
     pdf.cell(0, 11, _pdf_safe(titre), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     if tel:
         pdf.set_text_color(*_DA_GRIS)
-        pdf.set_font("Helvetica", "", 9)
+        pdf.set_font("inter", "", 9)
         pdf.cell(0, 5, _pdf_safe(tel), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.ln(2.5)
     pdf.set_draw_color(*_DA_VERT_FILET)
@@ -516,15 +528,16 @@ def courrier_pdf(body: PdfIn, request: Request, db: Session = Depends(get_db)) -
         # jamais un courrier « au nom de rien » ni signé d'une adresse e-mail.
         if (comp.get("synthese") or {}).get("sans_nom"):
             _p = FPDF(format="A4")
+            _inter(_p)
             _p.set_auto_page_break(True, margin=28)
             _p.set_margins(22, 24, 22)
             _p.add_page()
             _p.set_text_color(*_DA_ENCRE)
-            _p.set_font("Helvetica", "B", 13)
+            _p.set_font("inter", "B", 13)
             _p.multi_cell(_p.epw, 8, _pdf_safe("Courrier non généré"),
                           new_x=XPos.LMARGIN, new_y=YPos.NEXT)
             _p.ln(2)
-            _p.set_font("Helvetica", "", 11)
+            _p.set_font("inter", "", 11)
             _p.multi_cell(_p.epw, 6, _pdf_safe(comp["recto"]),
                           new_x=XPos.LMARGIN, new_y=YPos.NEXT)
             return Response(content=bytes(_p.output()), media_type="application/pdf",
@@ -538,7 +551,7 @@ def courrier_pdf(body: PdfIn, request: Request, db: Session = Depends(get_db)) -
             self.line(self.l_margin, self.get_y(), self.w - self.r_margin, self.get_y())
             self.ln(1.5)
             self.set_text_color(*_DA_GRIS)
-            self.set_font("Helvetica", "", 7)
+            self.set_font("inter", "", 9)
             if idu:
                 self.multi_cell(self.epw, 3.3, _pdf_safe(
                     cc._PIED.format(societe=comp["expediteur"]["societe"])), new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="L")
@@ -553,6 +566,7 @@ def courrier_pdf(body: PdfIn, request: Request, db: Session = Depends(get_db)) -
                     "Ni conseil juridique ni offre d'achat."), new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="C")
 
     pdf = _Courrier(format="A4")
+    _inter(pdf)
     pdf.set_auto_page_break(True, margin=28)
     pdf.set_margins(22, 20, 22)
     pdf.add_page()
@@ -560,7 +574,7 @@ def courrier_pdf(body: PdfIn, request: Request, db: Session = Depends(get_db)) -
 
     if not idu:                                   # ── repli LEGACY : texte brut ──
         pdf.set_text_color(*_DA_ENCRE)
-        pdf.set_font("Helvetica", "", 11)
+        pdf.set_font("inter", "", 11)
         for ligne in (body.texte or "").split("\n"):
             safe = _pdf_safe(ligne)
             if safe.strip() == "":
@@ -573,7 +587,7 @@ def courrier_pdf(body: PdfIn, request: Request, db: Session = Depends(get_db)) -
 
     # ── EN-TÊTE DESTINATAIRE (bloc adresse) ──
     pdf.set_text_color(*_DA_ENCRE)
-    pdf.set_font("Helvetica", "", 10)
+    pdf.set_font("inter", "", 10)
     if res["bloque"]:
         pdf.set_text_color(*_DA_GRIS)
         pdf.multi_cell(pdf.epw, 5, _pdf_safe(f"[Aperçu — pli non déposable : {res['motif']}]"),
@@ -586,15 +600,15 @@ def courrier_pdf(body: PdfIn, request: Request, db: Session = Depends(get_db)) -
     pdf.ln(6)
 
     # ── CORPS (recto composé) ──
-    pdf.set_font("Helvetica", "", 11)
+    pdf.set_font("inter", "", 11)
     for ligne in comp["recto"].split("\n"):
         safe = _pdf_safe(ligne)
         if safe.strip() == "":
             pdf.ln(3)
         elif safe.startswith("Objet :"):
-            pdf.set_font("Helvetica", "B", 11)
+            pdf.set_font("inter", "B", 11)
             pdf.multi_cell(pdf.epw, 6, safe, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-            pdf.set_font("Helvetica", "", 11)
+            pdf.set_font("inter", "", 11)
         else:
             pdf.multi_cell(pdf.epw, 6, safe, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
@@ -603,12 +617,12 @@ def courrier_pdf(body: PdfIn, request: Request, db: Session = Depends(get_db)) -
     _pdf_header(pdf, comp["expediteur"])
     verso = comp["verso"]
     pdf.set_text_color(*_DA_VERT)
-    pdf.set_font("Helvetica", "B", 13)
+    pdf.set_font("inter", "B", 13)
     pdf.multi_cell(pdf.epw, 7, _pdf_safe(verso[0] if verso else "Synthèse de la parcelle"),
                    new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.ln(2)
     pdf.set_text_color(*_DA_ENCRE)
-    pdf.set_font("Helvetica", "", 10.5)
+    pdf.set_font("inter", "", 10.5)
     for ligne in verso[1:]:
         pdf.multi_cell(pdf.epw, 5.6, _pdf_safe(ligne), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.ln(0.8)

@@ -28,6 +28,16 @@ donnees:
     absence_type: absente_ici
     pourquoi: "Le cœur des signaux contradictoires ; en tête, rédhibitoires d'abord, statut par item."
 
+  # DOCS-DA-1 — les arrêtés CatNat (commune), SEULEMENT si le compte est COMPLET (≥ référence GASPAR
+  # 06/09 — la troncature de septembre réparée) : l'historique de sinistres parle au banquier.
+  - quoi:  catnat_arretes
+    ou:    { rang: 25, etat: replie, section: "Ce qui contraint" }
+    comment: { libelle: "Arrêtés CatNat (commune)", format: texte, i: "Nombre d'arrêtés de catastrophe naturelle de la commune (GASPAR / Géorisques) et les périls dominants — un historique de sinistres. Affiché seulement si le compte de la commune est complet (sinon la donnée est tronquée)." }
+    absence: "Arrêtés CatNat : compte non complet ou indisponible pour cette commune."
+    absence_type: absente_ici
+    masquer_si_absent: true
+    pourquoi: "L'historique de sinistres parle au banquier ; replié."
+
   - quoi:  sis_classe
     ou:    { rang: 30, etat: en_tete, section: "Ce qui contraint" }
     comment: { libelle: "Sols pollués (SIS)", format: classe, i: "La parcelle est dans un Secteur d'Information sur les Sols (Géorisques, art. L125-6 c. env.) : cette information est annexée au PLU et déclenche, en cas de projet de construction ou de lotissement, une obligation d'étude de sols (art. L556-2 c. env.)." }

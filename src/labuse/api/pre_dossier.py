@@ -235,7 +235,7 @@ def _cerfa_prerempli(parcelle: dict, adresse: dict | None, cerfa_num: str = "134
 _PAGE_CSS = """
 @page {{ size: A4; margin: 16mm;
   @bottom-center {{ content: "{libelle}";
-    font-family: sans-serif; font-size: 6.5pt; color: #78551477; }} }}
+    font-family: sans-serif; font-size: 10.5px; color: #78551477; }} }}
 body {{ font-family: sans-serif; color: #28322D; font-size: 10pt; }}
 h1 {{ font-size: 15pt; color: #111814; border-bottom: 1.4pt solid #1E9E58;
      padding-bottom: 2mm; }}
@@ -245,7 +245,7 @@ table {{ width: 100%; border-collapse: collapse; }}
 tr {{ page-break-inside: avoid; }}      /* P6 — une ligne ne se coupe plus sur deux pages */
 td, th {{ border-bottom: 0.5pt solid #D8E2DC; padding: 1.6mm 2mm 1.6mm 0;
          text-align: left; font-size: 9pt; vertical-align: top; }}
-th {{ color: #5F6C65; text-transform: uppercase; font-size: 7pt;
+th {{ color: #5F6C65; text-transform: uppercase; font-size: 10.5px;
      border-bottom: 0.8pt solid #1E9E58; }}
 .note {{ font-size: 8pt; color: #5F6C65; }}
 .bandeau {{ background: #FFF4D6; border-radius: 2mm; padding: 3mm 4mm;
@@ -527,7 +527,8 @@ def _pdf_a4():
     pdf.set_auto_page_break(auto=True, margin=16)
     pdf.add_font("inter", fname=str(_FONTS / "Inter-Regular.ttf"))
     pdf.add_font("mono", fname=str(_FONTS / "JetBrainsMono-Regular.ttf"))
-    pdf.add_font("display", fname=str(_FONTS / "SpaceGrotesk-Bold.ttf"))
+    # DOCS-DA-1 — une seule famille d'affichage : Inter (gras). Plus de Space Grotesk.
+    pdf.add_font("display", fname=str(_FONTS / "Inter-Bold.ttf"))
     return pdf
 
 

@@ -120,7 +120,9 @@ def test_verdict_zonage_et_contenu():
     assert "Interdites" in html and "CDAC" in html
     # EXPORTS-REBRANCHEMENT-1 lot 1 — le Dossier est le MIROIR de la fiche : sections de
     # sections.yaml (le nuage des ventes et le titre « maille IRIS » étaient l'ancien gabarit).
-    assert "8. Marché" in html and "9. Quartier" in html
+    # DOCS-DA-1 (arbitrage Vic) — nouvel ORDRE : Marché reste 8, Quartier passe 9 → 10 (Urbanisme et
+    # Potentiel remontés juste après l'Identité).
+    assert "8. Marché" in html and "10. Quartier" in html
 
 
 def test_flash_est_dossier_identique():

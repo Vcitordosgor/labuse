@@ -18,7 +18,7 @@ import hashlib
 import re
 from typing import Any, Optional
 
-from .rendu import Cartouche, esc, page_html
+from .rendu import FOOT_LIGNE, Cartouche, esc, page_html
 
 
 def _donnees_labuse_au_etude(genere_le: str) -> str:
@@ -72,12 +72,12 @@ table.ef-scn th, table.ef-scn td { padding: 4.5pt 6pt; border-bottom: 1px solid 
 table.ef-scn th { font-weight: 600; font-size: 8pt; color: var(--muted); border-bottom: 1.5px solid var(--ink); }
 table.ef-scn td.num, table.ef-scn th.num { text-align: right; }
 table.ef-scn tr.retenu { background: var(--mint-bg); }
-.cite { display: block; font-size: 7.5pt; color: var(--muted); margin-top: 1pt; }
+.cite { display: block; font-size: var(--fs-xs); color: var(--muted); margin-top: 1pt; }
 .art { border-left: 2pt solid var(--mint); padding: 2pt 0 2pt 7pt; margin: 5pt 0; }
 .art-ref { font-size: 8pt; font-weight: 600; color: var(--mint-ink); }
 .art-cit { font-size: 8.5pt; font-style: italic; color: var(--ink); margin-top: 1pt; }
-.url { font-family: monospace; font-size: 7pt; word-break: break-all; color: var(--muted); }
-.st { display: inline-block; font-size: 7.5pt; padding: 2pt 5pt; border-radius: 2pt; white-space: nowrap; }
+.url { font-family: "JetBrains Mono", monospace; font-size: var(--fs-xs); word-break: break-all; color: var(--muted); }
+.st { display: inline-block; font-size: var(--fs-xs); padding: 2pt 5pt; border-radius: 2pt; white-space: nowrap; }
 .st.ok { color: var(--mint-ink); background: var(--mint-bg); border: 1px solid var(--mint); }
 .st.cp { color: var(--amber); background: var(--amber-bg); border: 1px solid var(--amber); }
 .st.no { color: var(--rose); background: var(--rose-bg); border: 1px solid #f0b3ac; }
@@ -85,7 +85,7 @@ table.ef-scn tr.retenu { background: var(--mint-bg); }
 .res.ok { color: var(--mint-ink); } .res.ko { color: var(--rose); } .res.ne { color: var(--muted); }
 .ef-fig { border: 1px solid var(--line); border-radius: 3pt; padding: 6pt; margin: 6pt 0; background: #FBFCFB; page-break-inside: avoid; }
 .ef-fig svg { width: 100%; height: auto; display: block; }
-.ef-leg { font-size: 7.8pt; color: var(--muted); margin-top: 3pt; display: flex; flex-wrap: wrap; gap: 10pt; }
+.ef-leg { font-size: var(--fs-xs); color: var(--muted); margin-top: 3pt; display: flex; flex-wrap: wrap; gap: 10pt; }
 .ef-leg i { display: inline-block; width: 9pt; height: 9pt; border-radius: 1.5pt; vertical-align: -1pt; margin-right: 3pt; }
 /* IMPLANTATION-4 — la PLANCHE plan masse (le MÊME SVG qu'à l'écran) sur une page PAYSAGE pleine. */
 @page planche-land { size: A4 landscape; margin: 9mm; }
@@ -325,8 +325,11 @@ def _svg_plan(fc: dict, kinds: list[str], *, w: int = 620, h: int = 440) -> str:
                 d, (face or "none"), (edge or "none"), ("1.6" if kind == "assiette" else "0.8"), dash, op))
     # flèche nord
     body.append('<g transform="translate(%d,24)"><path d="M0,-12 6,6 0,2 -6,6 Z" fill="#1F2A24"/>'
-                '<text x="-4" y="20" font-size="10" fill="#1F2A24">N</text></g>' % (w - 26))
-    return ('<div class="ef-fig"><svg viewBox="0 0 %d %d" width="100%%">%s</svg></div>'
+                '<text x="-4" y="20" font-size="11" fill="#1F2A24">N</text></g>' % (w - 26))
+    # DOCS-DA-1 (V11) — font-family Inter héritée par tout le SVG (la flèche nord et tout <text>) :
+    # plus de repli Verdana dans l'Étude de faisabilité.
+    return ('<div class="ef-fig"><svg viewBox="0 0 %d %d" width="100%%" '
+            'font-family="Inter, sans-serif">%s</svg></div>'
             % (w, h, "".join(body)))
 
 
@@ -837,7 +840,7 @@ def _p7_capacite(payload: dict, retenu: dict) -> str:
     varg = payload["hypotheses"].get("varangues") or {}
     prows = []
     for x in sorted(pt):
-        vcell = f'{_m2(surf.get(x))}' + (f' <span style="color:#6b7280;font-size:0.82em">dont {_m2(varg.get(x))} varangue</span>' if varg.get(x) else '')
+        vcell = f'{_m2(surf.get(x))}' + (f' <span style="color:#6b7280;font-size:var(--fs-xs)">dont {_m2(varg.get(x))} varangue</span>' if varg.get(x) else '')
         prows.append(f'<tr><td class="k">{esc(x)}</td><td class="num">{int(pt[x])}</td>'
                      f'<td class="num">{vcell}</td><td class="num">{_m2(shab.get(x))}</td>'
                      f'<td class="n"><span class="chip e">Estimé</span></td></tr>')
@@ -1016,8 +1019,7 @@ def rendu_etude(payload: dict, *, genere_le: str, scenario_ref: Optional[str] = 
         doc_ref=f"{refs} · {numero}",
         # DOCS-1 (décision Vic) — pied RACCOURCI (l'IDU, le type et le « généré le » sont déjà en tête) :
         # le numéro de page tient sur une ligne.
-        doc_foot=(f"Étude de faisabilité · pré-faisabilité, non contractuel · "
-                  f"Données LABUSE au {_donnees_labuse_au_etude(genere_le)}."))
+        doc_foot=FOOT_LIGNE)
     corps = (
         f"<style>{_STYLE}</style>"
         + _p1_synthese(payload, retenu, numero, genere_le)
@@ -1053,8 +1055,7 @@ def rendu_lotissement(payload: dict, *, genere_le: str) -> dict:
     cart = Cartouche(
         doc_title=f"LABUSE — Lotissement · {commune}",
         doc_ref=f"{idus[0][8:] if idus else ''} · {numero}",
-        doc_foot=(f"Lotissement · pré-faisabilité, non contractuel · "
-                  f"Données LABUSE au {_donnees_labuse_au_etude(genere_le)}."))
+        doc_foot=FOOT_LIGNE)
     lignes = "".join(f"<tr><td>Lot {i}</td><td class='n'>{fr(s)} m²</td></tr>"
                      for i, s in enumerate(tl["surfaces_m2"], 1))
     racc = "".join(f"<tr><td>{r['reseau']}</td><td class='n'>{'non vérifié' if r['distance_m'] is None else fr(r['distance_m'])+' m'}</td></tr>"
@@ -1111,8 +1112,7 @@ def rendu_hors_perimetre(payload: dict, *, genere_le: str) -> dict:
     cart = Cartouche(
         doc_title=f"LABUSE — Étude de faisabilité · {commune}",
         doc_ref=f"{idus[0][8:] if idus else ''} · {numero}",
-        doc_foot=(f"Étude de faisabilité · pré-faisabilité, non contractuel · "
-                  f"Données LABUSE au {_donnees_labuse_au_etude(genere_le)}."))
+        doc_foot=FOOT_LIGNE)
     # contraintes signalées (texte du payload) — « signalées, non interprétées », comme l'étude normale.
     t = payload.get("terrain") or {}
     crows = "".join(f"<li>{esc(lib)}</li>" for lib in (t.get("contraintes_signalees") or []))

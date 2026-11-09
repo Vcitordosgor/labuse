@@ -301,6 +301,14 @@ ROBINETS: dict[str, Robinet] = {
     "/parcels/{idu}", "json_puis_js", chiffres=("pente_deg", "piscine_m2", "distance_arret_m", "tcsp_stationnement_allege", "part_logements_egout_pct", "viabilisation_verdict",)),
  "fiche_parcelle_autour": _r("fiche", "Autour de cette parcelle", "fiche_parcelle",
     "/parcels/{idu} + /parcels/{idu}/zone", "json_puis_js", chiffres=("population_zone", "n_permis_proximite", "depots_secteur_n", "historique_permis_liste", "voisinage_100m_liste", "equipements_proximite_liste",)),
+ # DOCS-DA-1 — les faits de l'inventaire ajoutés au Dossier (lus au robinet du payload /parcels).
+ "fiche_parcelle_docs_da1": _r("fiche", "Dossier — faits de l'inventaire (DOCS-DA-1)", "fiche_parcelle",
+    "/parcels/{idu}", "json_puis_js", chiffres=(
+        "pente_max_deg", "terrassement_alerte", "hauteur_egout_mesuree_m", "acquereurs_pro_voisins",
+        "permis_section_36m", "dvf_fourchette", "dvf_tendance", "comparables_proches",
+        "loyer_oll_eur_m2", "filosofi_200m", "gestionnaires_reseaux", "ligne_bus_contact",
+        "taux_amenagement_departemental_pct", "densite_saturation", "niveaux_max", "catnat_arretes",
+        "gabarit_plan_3d",)),
  # FICHE-1 lot 8 — ordre canonique des tiroirs revu : … propriétaire, division, solaire, confiance.
  "fiche_parcelle_proprietaire": _r("fiche", "Propriétaire", "fiche_parcelle",
     "/parcels/{idu}", "json_puis_js", chiffres=("type_proprietaire", "proprietaire_timeline_liste", "evenements_proprietaire_liste",)),

@@ -88,28 +88,14 @@ def titre_document(document: str) -> str:
 # NU5-FIX-1 (B-F2 / B-F4) — AVERTISSEMENT JURIDIQUE UNIQUE, servi en pied de CHAQUE document (il
 # manquait sur l'Étude de zone et le Comparatif ; la formule « ni garantie de constructibilité »
 # n'était écrite nulle part). Point de vérité unique concaténé à chaque pied spécifique.
-_CLAUSE_JURIDIQUE = ("Ne remplace ni un certificat d'urbanisme, ni une étude de faisabilité "
-                     "réglementaire, ni un conseil juridique, et ne garantit pas la constructibilité.")
-_FOOT_DOSSIER = ("Document d'information établi à partir de données publiques. " + _CLAUSE_JURIDIQUE
-                 + " Données LABUSE au {au}.")
-_FOOT = {
-    "dossier": _FOOT_DOSSIER, "flash": _FOOT_DOSSIER,
-    "apporteur": ("Document confidentiel remis par l'émetteur à son apporteur d'affaires. Ne pas "
-                  "transmettre au propriétaire. Ne vaut pas mandat. " + _CLAUSE_JURIDIQUE
-                  + " Données publiques LABUSE au {au}."),
-    # DOCS-1 (Lot C)
-    "gabarit": ("Gabarit réglementaire 2D, pré-faisabilité sur règlement public. " + _CLAUSE_JURIDIQUE
-                + " Données LABUSE au {au}."),
-    "comparatif": ("Comparatif indicatif de parcelles établi sur des données publiques. Ni un prix, "
-                   "ni un avis de valeur. " + _CLAUSE_JURIDIQUE + " Données LABUSE au {au}."),
-    "etude-zone": ("Agrégats de données publiques dans le périmètre indiqué. Les mailles « à l'échelle "
-                   "de la commune » portent sur toute la commune. " + _CLAUSE_JURIDIQUE
-                   + " Données LABUSE au {au}."),
-    # ANNONCE-3 — l'estimation est COMPARATIVE (prix observés au m², DVF), jamais un avis de valeur.
-    "analyse-annonce": ("Estimation comparative établie sur des données publiques (prix observés au m², "
-                        "DVF) — ce n'est pas un avis de valeur. " + _CLAUSE_JURIDIQUE
-                        + " Sources : DVF · Radar LABUSE. Données LABUSE au {au}."),
-}
+# DOCS-DA-1 (V11, arbitrage Vic / maquette) — le pied tient sur UNE SEULE LIGNE, IDENTIQUE pour TOUS
+# les documents : à gauche cette mention, à droite la pagination. SANS date (la date de la donnée ne
+# vit qu'en COUVERTURE, « Données à jour au »), SANS « Généré via LABUSE ». Les mentions propres à un
+# document (confidentialité de l'Apporteur, attribution de l'Estimer) vivent dans le CORPS, pas au pied.
+from .rendu import FOOT_LIGNE as _FOOT_LIGNE
+_CLAUSE_JURIDIQUE = _FOOT_LIGNE   # alias conservé (lecteurs éventuels)
+_FOOT = {d: _FOOT_LIGNE for d in
+         ("dossier", "flash", "apporteur", "gabarit", "comparatif", "etude-zone", "analyse-annonce")}
 
 #: composition de chaque document. EXPORTS-REBRANCHEMENT-1 lot 1 : le Dossier n'est PLUS une
 #: suite de blocs — il est le MIROIR des déclarations de la fiche (exports/miroir.py, 11
@@ -440,7 +426,8 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
         plan_html = _plan_situation_html(db, idu)
         # DOCS-1 (décision Vic) — la carte de situation remonte sur la PAGE DE GARDE (couverture avec
         # carte + résumé) ; elle n'est plus répétée en §1 (une seule carte de situation par Dossier).
-        corps = (miroir.cover_dossier(idu, f, numero, j, valeurs, MODELE_VERSION, plan_html=plan_html)
+        corps = (miroir.cover_dossier(idu, f, numero, j, valeurs, MODELE_VERSION,
+                                      plan_html=plan_html, donnees_au=au)
                  + miroir.rendu_sections(valeurs, f, plan_html=""))
         html = page_html(label, cart, corps)
         return ResultatDoc(html=html, valeurs=valeurs, numero=numero, cartouche=cart,
@@ -457,7 +444,7 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
     cart = Cartouche(
         doc_title=f"LABUSE — {label}" + (f" · {adresse}" if adresse else ""),
         doc_ref=f"{idu} · {numero}",
-        doc_foot=_FOOT.get(document, "Document d'information LABUSE. Données au {au}.").format(au=au),
+        doc_foot=_FOOT.get(document, "Document d'information LABUSE.").format(au=au),
     )
     corps = _cover(document, idu, f, numero, j, valeurs)
     for b in blocs:
@@ -490,7 +477,7 @@ def _cart(document: str, titre_suffixe: str, idu_ref: str, numero: str, jour: da
     return Cartouche(
         doc_title=f"LABUSE — {label}" + (f" · {titre_suffixe}" if titre_suffixe else ""),
         doc_ref=f"{idu_ref} · {numero}",
-        doc_foot=_FOOT.get(document, "Document d'information LABUSE. Données au {au}.").format(au=au))
+        doc_foot=_FOOT.get(document, "Document d'information LABUSE.").format(au=au))
 
 
 def construire_gabarit(db, idu: str, *, jour: date | None = None) -> ResultatDoc:
@@ -632,25 +619,25 @@ _ANNONCE_PAGE_CSS = """
 .abar .abrand { font-weight:700; color:var(--mint-ink); font-size:12pt; letter-spacing:.02em; }
 .abar .akind { color:var(--muted); font-size:9pt; }
 .abar .aref { margin-left:auto; color:var(--muted); font-size:8.5pt;
-  font-family:"IBM Plex Mono","DejaVu Sans Mono",monospace; }
+  font-family:"JetBrains Mono","DejaVu Sans Mono",monospace; }
 .atitre { font-size:19pt; font-weight:700; margin:0 0 2pt; letter-spacing:-.01em; line-height:1.12; }
 .asub { font-size:10pt; color:var(--muted); margin:0 0 8pt; }
 .amaps { display:grid; grid-template-columns:1fr 1fr; gap:7pt; margin:2pt 0 5pt; }
 .mapcell { position:relative; border:1px solid var(--line); border-radius:3pt; overflow:hidden; }
 .mapcell img { display:block; width:100%; height:37mm; object-fit:cover; }
-.mcap { font-size:6.8pt; color:var(--muted); padding:2pt 6pt; background:#fff; border-top:1px solid var(--line); }
+.mcap { font-size:var(--fs-xs); color:var(--muted); padding:2pt 6pt; background:#fff; border-top:1px solid var(--line); }
 .zlabel { position:absolute; left:5pt; top:5pt; background:rgba(255,255,255,.9);
   border:1px solid var(--line); border-radius:2pt; padding:1pt 5pt; font-size:8.5pt; font-weight:700; color:var(--ink); }
 .zalea { position:absolute; left:5pt; bottom:15pt; background:rgba(255,255,255,.86);
-  border-radius:2pt; padding:1pt 5pt; font-size:7.3pt; color:var(--amber); }
+  border-radius:2pt; padding:1pt 5pt; font-size:var(--fs-xs); color:var(--amber); }
 .atiles { display:grid; grid-template-columns:repeat(6,1fr); gap:5pt; margin:5pt 0; }
 .atiles .tile { border:1px solid var(--line); border-radius:3pt; padding:4pt 6pt; }
 .atiles .tile .v { font-size:11pt; font-weight:700; line-height:1.05; }
-.atiles .tile .l { font-size:6.6pt; color:var(--muted); margin-top:1pt; text-transform:uppercase; letter-spacing:.03em; }
+.atiles .tile .l { font-size:var(--fs-xs); color:var(--muted); margin-top:1pt; text-transform:uppercase; letter-spacing:.03em; }
 h2 { font-size:12pt; margin:8pt 0 4pt; }
-.anote { font-size:7.8pt; color:var(--muted); margin:3pt 0 2pt; line-height:1.3; }
+.anote { font-size:var(--fs-xs); color:var(--muted); margin:3pt 0 2pt; line-height:1.3; }
 .muted { color:var(--muted); }
-.kicker { font-size:7.3pt; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-weight:600; margin-bottom:3pt; }
+.kicker { font-size:var(--fs-xs); letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-weight:600; margin-bottom:3pt; }
 .estgrid { display:grid; grid-template-columns:1.1fr 1fr; gap:9pt; align-items:start; page-break-inside:avoid; }
 .estleft { background:var(--mint-bg); border-radius:4pt; padding:8pt 11pt; }
 .estkicker { font-size:8pt; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin-bottom:2pt; }
@@ -671,7 +658,7 @@ h2 { font-size:12pt; margin:8pt 0 4pt; }
 .akv tr:last-child td { border-bottom:none; }
 .vikv td.k { font-weight:400; color:var(--ink); }
 .acomp { width:100%; border-collapse:collapse; font-size:9pt; margin:1pt 0; }
-.acomp th { text-align:left; font-size:7.5pt; text-transform:uppercase; letter-spacing:.04em;
+.acomp th { text-align:left; font-size:var(--fs-xs); text-transform:uppercase; letter-spacing:.04em;
   color:var(--muted); border-bottom:1.5px solid var(--ink); padding:4pt 8pt 4pt 0; }
 .acomp td { padding:2.7pt 8pt 2.7pt 0; border-bottom:1px solid var(--line); }
 .acomp th.r, .acomp td.r { text-align:right; padding-right:0; }
@@ -679,7 +666,7 @@ h2 { font-size:12pt; margin:8pt 0 4pt; }
 .apage2 { page-break-before:always; }
 .fongrid { display:grid; grid-template-columns:1fr 1fr; gap:18pt; page-break-inside:avoid; }
 .arisq { width:100%; border-collapse:collapse; font-size:9pt; }
-.arisq th { text-align:left; font-size:7.5pt; text-transform:uppercase; letter-spacing:.04em;
+.arisq th { text-align:left; font-size:var(--fs-xs); text-transform:uppercase; letter-spacing:.04em;
   color:var(--muted); border-bottom:1.5px solid var(--ink); padding:4pt 8pt 4pt 0; }
 .arisq td { padding:4pt 8pt 4pt 0; border-bottom:1px solid var(--line); vertical-align:top; }
 .arisq th:last-child, .arisq td:last-child { width:45%; padding-right:0; }
@@ -687,11 +674,11 @@ h2 { font-size:12pt; margin:8pt 0 4pt; }
 .chart { border:1px solid var(--line); border-radius:4pt; padding:8pt 11pt; }
 .barchart { width:100%; border-collapse:collapse; margin-top:7pt; table-layout:fixed; }
 .barchart td { text-align:center; padding:0; }
-.barchart .bv { font-size:7pt; color:var(--muted); padding-bottom:2pt; }
+.barchart .bv { font-size:var(--fs-xs); color:var(--muted); padding-bottom:2pt; }
 .barchart tr.rbars td { vertical-align:bottom; height:27mm; }
 .barchart .bb { width:62%; margin:0 auto; background:#CFE8D8; border-radius:2pt 2pt 0 0; }
 .barchart .bb.last { background:var(--mint-ink); }
-.barchart .bl { font-size:7pt; color:var(--muted); padding-top:3pt; }
+.barchart .bl { font-size:var(--fs-xs); color:var(--muted); padding-top:3pt; }
 .averif { margin:3pt 0; padding-left:15pt; font-size:9.5pt; }
 .averif li { margin:2.5pt 0; }
 .liengrid { display:grid; grid-template-columns:1fr 1fr; gap:10pt; align-items:start; margin-bottom:4pt; }

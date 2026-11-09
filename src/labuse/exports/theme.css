@@ -1,12 +1,23 @@
-/* LABUSE — exports v2 — feuille commune (WeasyPrint 69)
-   DA v3 : vert mint = sourcé / structure · ambre = Projet (saisi par le client) · mauve = IA seule (aucune ici)
-   Une famille de caractères ; chiffres tabulaires ; ragged left ; rien en capitales. */
+/* LABUSE — exports — feuille commune (WeasyPrint 70)
+   DOCS-DA-1 (gabarit-documents-A, maquette validée par Vic) : UN seul gabarit pour les 11 documents.
+   — Papier BLANC partout ; le seul noir est le bandeau de couverture.
+   — Deux familles de caractères : Inter (400/500/600/700) pour le texte, JetBrains Mono (« IBM Plex
+     Mono » du gabarit) pour les références cadastrales. Polices embarquées (rendu.py, @font-face).
+   — UNE échelle, six tailles, rien en dessous de 10,5 px :
+        --fs-xxl 34  (adresse de garde)
+        --fs-xl  20  (titres de section · valeurs des tuiles)
+        --fs-lg  13,5 (verdict · référence mono de garde · sous-titre)
+        --fs-md  12,5 (texte courant · valeurs des lignes)
+        --fs-sm  11   (libellés · intitulés de groupe · sommaire · badges)
+        --fs-xs  10,5 (en-tête courant · pied · légendes · sources)
+   Chiffres non tabulaires (ToUnicode, RECETTE-6) ; ragged-left ; aucune capitale typographiée. */
 
 :root {
   --ink: #1C2320;
   --muted: #6B746E;
   --line: #D8DED9;
   --paper: #FFFFFF;
+  --banner: #0A0F0C;        /* le seul aplat sombre — bandeau de couverture / en-tête de lettre */
   --mint: #4ADE80;
   --mint-ink: #146B47;
   --mint-bg: #EDFAF2;
@@ -18,140 +29,164 @@
   --rose: #B42318;
   --rose-bg: #FDEBE9;
   --grey-bg: #F3F5F3;
+  /* l'échelle unique (px) — aucune valeur sous --fs-xs */
+  --fs-xxl: 34px;
+  --fs-xl: 20px;
+  --fs-lg: 13.5px;
+  --fs-md: 12.5px;
+  --fs-sm: 11px;
+  --fs-xs: 10.5px;
 }
 
 @page {
   size: A4;
-  /* EXPORTS-FIX-1-BIS point 7 — la mention d'attribution est passée dans un bloc de marge @page
-     (@bottom-center, injecté par la route) : plus de div fixe dans le flux, marge basse ramenée à 19 mm. */
   margin: 17mm 16mm 19mm 16mm;
-  @top-left { content: string(doc-title); font: 8pt "Inter", "Inter", "DejaVu Sans", sans-serif; color: #6B746E; }
-  @top-right { content: string(doc-ref); font: 8pt "IBM Plex Mono", "DejaVu Sans Mono", monospace; color: #6B746E; }
-  /* RETOUCHES-1 point 1 — plus de `width: 150mm` RÉSERVÉE ici : elle écrasait la case @bottom-center
-     (mention « Généré via LABUSE ») sur trois lignes. La case s'ajuste à son contenu ; le pied @bottom-center
-     dispose enfin de la largeur pour tenir sur une seule ligne (cf. `white-space: nowrap` de la route). */
-  @bottom-left { content: string(doc-foot); font: 7.2pt "Inter", "DejaVu Sans", sans-serif; color: #6B746E; }
-  /* DOCS-1 (décision Vic) — le numéro de page tient TOUJOURS sur une ligne (nowrap), jamais poussé
-     sur deux par un pied @bottom-left trop long. */
-  @bottom-right { content: counter(page) " / " counter(pages); font: 8pt "Inter", "DejaVu Sans", sans-serif; color: #6B746E; white-space: nowrap; }
+  /* En-tête courant d'UNE ligne : « LABUSE · document » (gauche) · « référence · adresse » (droite).
+     Les boîtes de marge @page n'héritent pas des variables :root sous WeasyPrint → tailles littérales
+     (10,5 px = --fs-xs, le plancher de l'échelle). */
+  @top-left { content: string(doc-title); font: 10.5px "Inter", "DejaVu Sans", sans-serif; color: #6B746E; }
+  @top-right { content: string(doc-ref); font: 10.5px "JetBrains Mono", "DejaVu Sans Mono", monospace; color: #6B746E; }
+  @bottom-left { content: string(doc-foot); font: 10.5px "Inter", "DejaVu Sans", sans-serif; color: #6B746E; }
+  @bottom-right { content: counter(page) " / " counter(pages); font: 10.5px "Inter", "DejaVu Sans", sans-serif; color: #6B746E; white-space: nowrap; }
 }
 @page :first { @top-left { content: none } @top-right { content: none } }
 
-html { font-size: 10pt; }
+html { font-size: var(--fs-md); }
 body {
-  font-family: "Inter", "Inter", "DejaVu Sans", sans-serif;
+  font-family: "Inter", "DejaVu Sans", sans-serif;
+  font-size: var(--fs-md);
   color: var(--ink);
   line-height: 1.45;
-  /* RECETTE-6 (F2, 🔴) — le texte du PDF n'était PAS extractible (copier-coller / pdftotext /
-     lecteur d'écran) : WeasyPrint 69 ne construit pas de table ToUnicode correcte pour les glyphes
-     atteints par une SUBSTITUTION OpenType (ligatures « fi/tt », et surtout les chiffres TABULAIRES
-     `tnum`) → dates et prix ressortaient en caractères parasites (« 09/09/2026 » illisible), les
-     ligatures cassaient les mots (« Conﬁdentiel »). L'IDU en mono s'extrayait bien, lui, faute de
-     variante tabulaire. On DÉSACTIVE ligatures et chiffres tabulaires : les glyphes de la cmap de
-     base portent, eux, un ToUnicode juste. Correctif à la feuille partagée → vaut pour les 5 docs. */
+  background: var(--paper);
+  /* RECETTE-6 (F2) — ligatures + chiffres tabulaires DÉSACTIVÉS : WeasyPrint ne construit pas de
+     ToUnicode pour les glyphes atteints par substitution OpenType → dates/prix illisibles à la copie. */
   font-variant-ligatures: none;
   font-variant-numeric: normal;
   font-feature-settings: "liga" 0, "clig" 0, "dlig" 0, "calt" 0, "tnum" 0, "onum" 0, "lnum" 0;
   margin: 0;
 }
-.nb { white-space: nowrap; }   /* RECETTE-7 (E7) — noms composés insécables (Saint-Denis) */
+.nb { white-space: nowrap; }   /* noms composés insécables (Saint-Denis) */
 .doc-title { string-set: doc-title content(); }
 .doc-ref   { string-set: doc-ref content(); }
 .doc-foot  { string-set: doc-foot content(); }
+strong, b { font-weight: 600; }
 
-/* --- page de garde ------------------------------------------------------ */
+/* ── bandeau de couverture — le SEUL aplat sombre, strip en pleine largeur (bleed) ───────────── */
 .cover { page-break-after: always; }
-.brand { display: flex; align-items: baseline; gap: 10pt; margin-bottom: 26pt; }
-.brand .wordmark { font-weight: 700; letter-spacing: .02em; font-size: 13pt; color: var(--mint-ink); }
-.brand .kind { color: var(--muted); font-size: 9pt; }
-h1 { font-size: 24pt; line-height: 1.15; font-weight: 700; margin: 0 0 4pt; letter-spacing: -.01em; }
-/* RECETTE-8 W21 — l'adresse de l'en-tête COMPACT (Financier) : plus petite que le h1 de garde
-   (24 pt cassait « …97417 / Saint-Denis » au milieu) ; elle tient sur une ligne pour une adresse
-   réunionnaise courante, le code postal restant lié à la commune (U+00A0, builder). */
-h1.addr-compacte { font-size: 15pt; line-height: 1.2; }
-/* EXPORTS-FIX-1 F4 — l'IDU en tête de garde : police MONO (chiffre 0 pointé de JetBrains Mono,
-   distinct du O), sans crénage négatif, pour que « 97415000EO0796 » ne se lise pas « …E00796 ». */
-h1.idu-code { font-family: "IBM Plex Mono", "DejaVu Sans Mono", monospace; font-size: 20pt;
+.cover-banner {
+  background: var(--banner);
+  color: #FFFFFF;
+  margin: -17mm -16mm 22pt -16mm;      /* bleed jusqu'aux bords de la page (marges @page) */
+  padding: 13pt 16mm;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.cover-banner .wordmark { font-weight: 700; letter-spacing: .01em; font-size: var(--fs-lg); color: #FFFFFF; }
+.cover-banner .wordmark em { font-style: normal; color: var(--mint); }
+.cover-banner .kind { color: #B9C2BC; font-size: var(--fs-sm); letter-spacing: .14em; text-transform: uppercase; margin-left: 10pt; }
+.cover-banner .tag { color: #8D968F; font-size: var(--fs-xs); }
+
+/* En-tête des AUTRES documents (Gabarit, Comparatif, Étude de zone, Estimer, Apporteur) — le MÊME
+   bandeau noir que la couverture du Dossier : un seul gabarit. */
+.brand { background: var(--banner); color: #FFFFFF; margin: -17mm -16mm 18pt -16mm; padding: 12pt 16mm;
+         display: flex; align-items: baseline; gap: 10pt; }
+.brand .wordmark { font-weight: 700; letter-spacing: .01em; font-size: var(--fs-lg); color: #FFFFFF; }
+.brand .kind { color: #B9C2BC; font-size: var(--fs-sm); letter-spacing: .14em; text-transform: uppercase; }
+
+/* ── page de garde — référence mono · adresse 34 · sous-titre · tuiles · sommaire · cartouche ── */
+.kicker { font-size: var(--fs-sm); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 4pt; }
+.idu-ref { font-family: "JetBrains Mono", "DejaVu Sans Mono", monospace; font-size: var(--fs-lg);
+           letter-spacing: 0; color: var(--muted); font-feature-settings: "zero" 1; margin: 0 0 4pt; }
+h1 { font-size: var(--fs-xxl); line-height: 1.12; font-weight: 700; margin: 0 0 4pt; letter-spacing: -.01em; }
+h1.addr-compacte { font-size: var(--fs-xl); line-height: 1.2; }
+h1.idu-code { font-family: "JetBrains Mono", "DejaVu Sans Mono", monospace; font-size: var(--fs-xl);
               letter-spacing: 0; font-feature-settings: "zero" 1; }
-.subtitle { font-size: 11pt; color: var(--muted); margin: 0 0 18pt; }
-.address { font-size: 14pt; margin: 0 0 2pt; }
-.idu { font-family: "IBM Plex Mono", "DejaVu Sans Mono", monospace; font-size: 9.5pt; color: var(--muted); margin-bottom: 16pt; }
-.cover-map { height: 92mm; border: 1px solid var(--line); border-radius: 3pt; background:
-  #f1f4f1; position: relative; margin-bottom: 8pt; }
+.subtitle { font-size: var(--fs-lg); color: var(--muted); margin: 2pt 0 16pt; }
+.address { font-size: var(--fs-xxl); line-height: 1.12; font-weight: 700; margin: 0 0 2pt; }
+.idu { font-family: "JetBrains Mono", "DejaVu Sans Mono", monospace; font-size: var(--fs-lg); color: var(--muted); margin-bottom: 14pt; }
+
+/* plan de situation en page de garde */
+.cover-map { height: 76mm; border: 1px solid var(--line); border-radius: 3pt; background: #f1f4f1; position: relative; margin-bottom: 8pt; }
 .cover-map .parcel { position: absolute; left: 44%; top: 42%; width: 14%; height: 12%; border: 2.5px solid var(--mint-ink); background: rgba(74,222,128,.25); transform: rotate(-38deg); }
-.cover-map .cap { position: absolute; right: 8pt; bottom: 6pt; font-size: 7.5pt; color: var(--muted); }
-.cover-map .north { position: absolute; right: 8pt; top: 6pt; font-size: 8pt; color: var(--muted); border: 1px solid var(--line); padding: 1pt 4pt; background: #fff; }
-.cover-map .scale { position: absolute; left: 8pt; bottom: 8pt; font-size: 7.5pt; color: var(--muted); border-bottom: 2px solid var(--ink); padding-bottom: 2pt; width: 60pt; }
-.cartouche { width: 100%; border-collapse: collapse; font-size: 9pt; margin-top: 6pt; }
+.cover-map .cap { position: absolute; right: 8pt; bottom: 6pt; font-size: var(--fs-xs); color: var(--muted); }
+
+/* les SIX tuiles-chiffres de la garde (3 colonnes × 2 rangées) */
+.cover-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8pt; margin: 14pt 0 10pt; }
+.cover-tiles .tile { border: 1px solid var(--line); border-radius: 3pt; padding: 9pt 11pt; }
+.cover-tiles .tile .v { font-size: var(--fs-xl); font-weight: 700; line-height: 1.1; }
+.cover-tiles .tile .l { font-size: var(--fs-sm); color: var(--muted); margin-top: 2pt; text-transform: uppercase; letter-spacing: .04em; }
+
+/* le sommaire paginé (2 colonnes) */
+.toc { columns: 2; column-gap: 26pt; font-size: var(--fs-sm); margin: 12pt 0 0; padding: 0; list-style: none; }
+.toc li { padding: 3pt 0; border-bottom: 1px dotted var(--line); break-inside: avoid; display: flex; justify-content: space-between; }
+.toc li span { color: var(--muted); }
+
+/* le cartouche du bas de garde : n° de rapport · généré le · données à jour au */
+.cover-cartouche { display: flex; flex-wrap: wrap; gap: 26pt; margin: 16pt 0 6pt; font-size: var(--fs-xs); color: var(--muted); }
+.cover-cartouche > div b { color: var(--ink); display: block; font-size: var(--fs-md); font-weight: 600; letter-spacing: 0; }
+.cover-cartouche .mono b { font-family: "JetBrains Mono", "DejaVu Sans Mono", monospace; }
+/* ancien cartouche-tableau (en-têtes compacts) — conservé pour les documents « au fil ». */
+.cartouche { width: 100%; border-collapse: collapse; font-size: var(--fs-md); margin-top: 6pt; }
 .cartouche td { padding: 4pt 0; border-bottom: 1px solid var(--line); }
 .cartouche td:first-child { color: var(--muted); width: 42%; }
-.cartouche td:last-child { font-family: "IBM Plex Mono", "DejaVu Sans Mono", monospace; }
-.notice { font-size: 8.5pt; color: var(--muted); border-left: 2px solid var(--line); padding-left: 8pt; margin-top: 14pt; }
+.cartouche td:last-child { font-family: "JetBrains Mono", "DejaVu Sans Mono", monospace; }
+.gm-meta { display: flex; flex-wrap: wrap; gap: 22pt; margin: 14pt 0 4pt; font-size: var(--fs-xs); color: var(--muted); }
+.gm-meta b { color: var(--ink); display: block; font-size: var(--fs-md); font-weight: 600; }
+.cover-resume { font-size: var(--fs-md); color: var(--muted); margin: 6pt 0 8pt; }
+
+/* le disclaimer de la garde — une ligne, sans date */
+.notice { font-size: var(--fs-xs); color: var(--muted); border-left: 2px solid var(--line); padding-left: 8pt; margin-top: 12pt; }
 .summary { margin-top: 10pt; }
 .summary li { margin: 2pt 0; }
 
-/* EXPORTS-REBRANCHEMENT-2 lot 1 — page de garde miroir (maquette v4) : cartouche 4 champs,
-   bandeau des SIX chiffres de la fiche en 3 colonnes (2 rangées), sommaire 2 colonnes, légende. */
-.kicker { font-size: 8pt; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
-.gm-meta { display: flex; flex-wrap: wrap; gap: 22pt; margin: 14pt 0 4pt; font-size: 8.5pt; color: var(--muted); }
-.gm-meta b { color: var(--ink); display: block; font-size: 10.5pt; font-weight: 600; }
-/* DOCS-1 — résumé d'une ligne en couverture (Comparatif). */
-.cover-resume { font-size: 9.5pt; color: var(--muted); margin: 6pt 0 8pt; }
-.cover-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8pt; margin: 14pt 0 8pt; }
-.cover-tiles .tile { border: 1px solid var(--line); border-radius: 3pt; padding: 8pt 10pt; }
-.cover-tiles .tile .v { font-size: 15pt; font-weight: 700; line-height: 1.1; }
-.cover-tiles .tile .l { font-size: 8pt; color: var(--muted); margin-top: 2pt; text-transform: uppercase; letter-spacing: .04em; }
-.toc { columns: 2; column-gap: 26pt; font-size: 9pt; margin: 12pt 0 0; padding: 0; list-style: none; }
-.toc li { padding: 2pt 0; border-bottom: 1px dotted var(--line); break-inside: avoid; display: flex; justify-content: space-between; }
-.toc li span { color: var(--muted); }
+/* « Vérifié : rien à signaler » / absences — un encart gris clair, jamais sombre */
+.sansobjet { margin: 8pt 0 10pt; background: var(--grey-bg); border-radius: 3pt; padding: 8pt 12pt; font-size: var(--fs-md); color: var(--ink); page-break-inside: avoid; }
+.sansobjet .t { color: var(--muted); font-weight: 600; font-size: var(--fs-sm); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 4pt; }
+.sansobjet ul { margin: 0; padding-left: 15pt; }
+.sansobjet li { margin: 2pt 0; }
 
-/* « Vérifié, sans objet » — compact : un encart gris, une ligne par couche en petit corps
-   (les 34 absences dites d'une parcelle ne doivent pas noyer les lignes servies). */
-.sansobjet { margin: 8pt 0 10pt; background: var(--grey-bg); border-radius: 3pt; padding: 7pt 11pt; font-size: 8.3pt; color: var(--muted); page-break-inside: avoid; }
-.sansobjet .t { color: var(--ink); font-weight: 600; font-size: 8pt; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 3pt; }
-.sansobjet ul { margin: 0; padding-left: 14pt; }
-.sansobjet li { margin: 1pt 0; }
-
-/* grille de sensibilité 3×3 (Financier) — coût en colonnes, prix de sortie en lignes */
-table.grid3 { width: 100%; border-collapse: collapse; font-size: 9pt; margin: 6pt 0 4pt; }
-table.grid3 td, table.grid3 th { padding: 5pt 6pt; border: 1px solid var(--line); text-align: center; font-family: "IBM Plex Mono", "DejaVu Sans Mono", monospace; }
+/* grille de sensibilité 3×3 (Bilan) — mono */
+table.grid3 { width: 100%; border-collapse: collapse; font-size: var(--fs-md); margin: 6pt 0 4pt; }
+table.grid3 td, table.grid3 th { padding: 5pt 6pt; border: 1px solid var(--line); text-align: center; font-family: "JetBrains Mono", "DejaVu Sans Mono", monospace; }
 table.grid3 th { background: var(--grey-bg); font-family: "Inter", sans-serif; font-weight: 600; color: var(--ink); }
 table.grid3 td.neg { color: var(--rose); }
 
-/* --- sections ---------------------------------------------------------- */
-h2 { font-size: 15pt; font-weight: 700; margin: 22pt 0 8pt; padding-left: 10pt; border-left: 4px solid var(--mint); page-break-after: avoid; break-after: avoid; }
-h3 { font-size: 10.5pt; font-weight: 600; margin: 14pt 0 5pt; page-break-after: avoid; break-after: avoid; }
-/* EXPORTS-FIX-1-BIS point 7 — un en-tête de groupe (« Ce qui contraint », « Taxes »…) reste COLLÉ à
-   sa première ligne, jamais seul en bas de page. */
+/* ── sections ───────────────────────────────────────────────────────────────────────────────── */
+h2 { font-size: var(--fs-xl); font-weight: 700; margin: 22pt 0 8pt; padding-left: 11pt; border-left: 4px solid var(--mint); page-break-after: avoid; break-after: avoid; }
+h2 .n { color: var(--muted); font-weight: 600; margin-right: 8pt; }
+/* intitulés de groupe (« CE QUI CONTRAINT », « COUVERTURE DU SOL »…) — petites capitales grises */
+h3 { font-size: var(--fs-sm); font-weight: 600; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin: 14pt 0 5pt; page-break-after: avoid; break-after: avoid; }
 tr.grp { page-break-after: avoid; break-after: avoid; }
-tr.grp td { padding-top: 4pt; }
+tr.grp td { padding-top: 7pt; }
+tr.grp td strong { font-size: var(--fs-sm); font-weight: 600; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
 section { page-break-inside: auto; }
 .keep { page-break-inside: avoid; }
 p { margin: 0 0 6pt; }
 
-/* le verdict : l'élément mémorable — une phrase, en tête de section, qui conclut */
-.verdict { font-size: 12.5pt; line-height: 1.35; color: var(--mint-ink); background: var(--mint-bg); padding: 9pt 12pt; border-radius: 3pt; margin: 0 0 10pt; page-break-inside: avoid; }
+/* le verdict : la phrase mémorable en tête de section */
+.verdict { font-size: var(--fs-lg); line-height: 1.35; color: var(--mint-ink); background: var(--mint-bg); padding: 10pt 13pt; border-radius: 3pt; margin: 0 0 10pt; page-break-inside: avoid; }
 .verdict.warn { color: var(--rose); background: var(--rose-bg); }
 .verdict.neutral { color: var(--ink); background: var(--grey-bg); }
-.verdict small { display: block; font-size: 8.5pt; color: var(--muted); margin-top: 3pt; font-weight: 400; }
+.verdict small { display: block; font-size: var(--fs-xs); color: var(--muted); margin-top: 3pt; font-weight: 400; }
 
-/* tuiles de synthèse : 3 chiffres, pas plus */
+/* tuiles de synthèse d'une section (3 chiffres au plus) */
 .tiles { display: flex; gap: 8pt; margin: 8pt 0 12pt; }
-.tile { flex: 1; border: 1px solid var(--line); border-radius: 3pt; padding: 8pt 10pt; page-break-inside: avoid; }
-.tile .v { font-size: 17pt; font-weight: 700; line-height: 1.1; }
-.tile .l { font-size: 8.5pt; color: var(--muted); margin-top: 2pt; }
+.tile { flex: 1; border: 1px solid var(--line); border-radius: 3pt; padding: 9pt 11pt; page-break-inside: avoid; }
+.tile .v { font-size: var(--fs-xl); font-weight: 700; line-height: 1.1; }
+.tile .l { font-size: var(--fs-sm); color: var(--muted); margin-top: 2pt; }
 
-/* tableaux clé / valeur / nature */
-table.kv { width: 100%; border-collapse: collapse; margin: 4pt 0 10pt; font-size: 9.5pt; }
-table.kv td, table.kv th { padding: 4.5pt 6pt 4.5pt 0; border-bottom: 1px solid var(--line); vertical-align: top; }
-table.kv th { text-align: left; font-weight: 600; font-size: 8.5pt; color: var(--muted); border-bottom: 1.5px solid var(--ink); }
-table.kv td.k { width: 36%; color: var(--muted); }
-table.kv td.n { width: 60pt; text-align: right; padding-right: 0; }
+/* lignes « libellé / valeur / badge » à trois colonnes */
+table.kv { width: 100%; border-collapse: collapse; margin: 4pt 0 10pt; font-size: var(--fs-md); }
+table.kv td, table.kv th { padding: 5pt 6pt 5pt 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.kv th { text-align: left; font-weight: 600; font-size: var(--fs-sm); color: var(--muted); border-bottom: 1.5px solid var(--ink); }
+table.kv td.k { width: 34%; color: var(--muted); }
+table.kv td.n { width: 64pt; text-align: right; padding-right: 0; }
 table.kv tr { page-break-inside: avoid; }
-table.kv td.num { text-align: right; }  /* RECETTE-6 (F2) — chiffres tabulaires retirés (ToUnicode) */
+table.kv td.num { text-align: right; }
 
-/* nature de la donnée */
-.chip { display: inline-block; font-size: 7.5pt; line-height: 1; padding: 3pt 5pt; border-radius: 2pt; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+/* nature de la donnée — badges ≥ 10,5 px */
+.chip { display: inline-block; font-size: var(--fs-xs); line-height: 1; padding: 3pt 6pt; border-radius: 2pt; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
 .chip.s { border-color: var(--mint); color: var(--mint-ink); background: var(--mint-bg); }
 .chip.e { }
 .chip.d { }
@@ -160,17 +195,17 @@ table.kv td.num { text-align: right; }  /* RECETTE-6 (F2) — chiffres tabulaire
 .chip.ia { border-color: var(--mauve); color: var(--mauve); }
 
 /* blocs Projet (saisi par le client) */
-.projet { border: 1px solid var(--amber); background: var(--amber-bg); border-radius: 3pt; padding: 8pt 11pt; margin: 8pt 0 12pt; page-break-inside: avoid; }
-.projet .t { font-weight: 600; color: var(--amber); font-size: 9pt; margin-bottom: 4pt; }
+.projet { border: 1px solid var(--amber); background: var(--amber-bg); border-radius: 3pt; padding: 9pt 12pt; margin: 8pt 0 12pt; page-break-inside: avoid; }
+.projet .t { font-weight: 600; color: var(--amber); font-size: var(--fs-sm); margin-bottom: 4pt; }
 .projet table.kv td { border-bottom-color: #f0dcae; }
 
-/* encarts */
-.aside { border: 1px solid var(--line); background: var(--grey-bg); border-radius: 3pt; padding: 8pt 11pt; margin: 8pt 0 12pt; font-size: 9pt; page-break-inside: avoid; }
+/* encarts « Non disponible ici » et asides */
+.aside { border: 1px solid var(--line); background: var(--grey-bg); border-radius: 3pt; padding: 9pt 12pt; margin: 8pt 0 12pt; font-size: var(--fs-md); page-break-inside: avoid; }
 .aside.blue { background: var(--blue-bg); border-color: #b9c8ff; }
 .aside.rose { background: var(--rose-bg); border-color: #f0b3ac; }
-.none { font-size: 9pt; color: var(--muted); }
-.note { font-size: 8.3pt; color: var(--muted); margin: 2pt 0 8pt; }
-.legend { font-size: 8.3pt; color: var(--muted); margin-top: 4pt; }
+.none { font-size: var(--fs-md); color: var(--muted); }
+.note { font-size: var(--fs-xs); color: var(--muted); margin: 2pt 0 8pt; }
+.legend { font-size: var(--fs-xs); color: var(--muted); margin-top: 4pt; }
 
 /* nuage de ventes (schéma) */
 .cloud { border: 1px solid var(--line); border-radius: 3pt; padding: 10pt 12pt 6pt; margin: 6pt 0 8pt; page-break-inside: avoid; }
@@ -178,37 +213,34 @@ table.kv td.num { text-align: right; }  /* RECETTE-6 (F2) — chiffres tabulaire
 .cloud .dot { position: absolute; bottom: 4pt; width: 6pt; height: 6pt; border-radius: 50%; background: var(--mint-ink); }
 .cloud .dot.x { background: #c7cdc8; }
 .cloud .med { position: absolute; bottom: 0; width: 2px; height: 22pt; background: var(--ink); }
-.cloud .lab { display: flex; justify-content: space-between; font-size: 7.5pt; color: var(--muted); margin-top: 3pt; }
+.cloud .lab { display: flex; justify-content: space-between; font-size: var(--fs-xs); color: var(--muted); margin-top: 3pt; }
 
-/* carte / image */
+/* figure : cadre à 1 px, légende + source dessous */
 .figure { height: 62mm; border: 1px solid var(--line); border-radius: 3pt; background: #f1f4f1; position: relative; margin: 6pt 0 4pt; page-break-inside: avoid; }
-.figure .cap { position: absolute; right: 8pt; bottom: 6pt; font-size: 7.5pt; color: var(--muted); }
+.figure .cap { position: absolute; right: 8pt; bottom: 6pt; font-size: var(--fs-xs); color: var(--muted); }
 .figure .parcel { position: absolute; left: 46%; top: 44%; width: 10%; height: 12%; border: 2px solid var(--mint-ink); background: rgba(74,222,128,.25); transform: rotate(-38deg); }
 
-/* Brief apporteur (RECETTE-3 T1) — date d'émission, plan de situation, questionnaire */
-.emis { font-size: 8.5pt; color: var(--muted); margin: -10pt 0 14pt; }
+/* Note apporteur — date d'émission, plan, questionnaire */
+.emis { font-size: var(--fs-xs); color: var(--muted); margin: -10pt 0 14pt; }
 .plan { margin: 10pt 0 4pt; border: 1px solid var(--line); border-radius: 3pt; overflow: hidden; page-break-inside: avoid; }
-/* RECETTE-5 (V20c) — le plan reste EN PAGE 1 avec le coup d'œil : sans plafond de hauteur, une ortho
-   large poussait le plan (page-break-inside: avoid) en page 2 → un brief de 5 pages au lieu de 4.
-   On borne la hauteur du plan (recadrage cover) : la page 1 tient, le document fait bien 4 pages. */
 .plan img { display: block; width: 100%; height: auto; max-height: 58mm; object-fit: cover; }
-.plan .ph { height: 56mm; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--muted); font-size: 8.5pt; background: repeating-linear-gradient(45deg,#fafbfa,#fafbfa 9px,#f2f5f2 9px,#f2f5f2 18px); }
-.plan .cap { font-size: 7.5pt; color: var(--muted); padding: 3pt 8pt; border-top: 1px solid var(--line); }
-.cle { display: inline-block; font-size: 6.8pt; font-weight: 700; letter-spacing: .04em; color: var(--mint-ink); border: 1px solid var(--mint-ink); border-radius: 2pt; padding: 0 3pt; margin-right: 5pt; vertical-align: 1.5pt; }
-.aide { font-size: 8.5pt; color: var(--muted); margin: 0 0 9pt; line-height: 1.45; }
+.plan .ph { height: 56mm; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--muted); font-size: var(--fs-xs); background: repeating-linear-gradient(45deg,#fafbfa,#fafbfa 9px,#f2f5f2 9px,#f2f5f2 18px); }
+.plan .cap { font-size: var(--fs-xs); color: var(--muted); padding: 4pt 9pt; border-top: 1px solid var(--line); }
+.cle { display: inline-block; font-size: var(--fs-xs); font-weight: 700; letter-spacing: .04em; color: var(--mint-ink); border: 1px solid var(--mint-ink); border-radius: 2pt; padding: 0 4pt; margin-right: 5pt; vertical-align: 1pt; }
+.aide { font-size: var(--fs-xs); color: var(--muted); margin: 0 0 9pt; line-height: 1.45; }
 .duo { display: flex; gap: 12pt; }
 .duo > * { flex: 1; }
 
 /* formulaire (Apporteur) */
 .q { page-break-inside: avoid; margin: 0 0 9pt; }
-.q .l { font-size: 9.5pt; margin-bottom: 3pt; }
+.q .l { font-size: var(--fs-md); margin-bottom: 3pt; }
 .q .l small { color: var(--muted); }
 .line { border-bottom: 1px solid var(--ink); height: 13pt; margin: 3pt 0; }
 .line.tall { height: 26pt; }
-.boxes { font-size: 9pt; }
+.boxes { font-size: var(--fs-md); }
 .boxes span { display: inline-block; margin-right: 12pt; }
 .boxes span::before { content: ""; display: inline-block; width: 9pt; height: 9pt; border: 1px solid var(--ink); vertical-align: -1pt; margin-right: 4pt; border-radius: 1.5pt; }
-.confidential { border: 1.5px solid var(--ink); padding: 6pt 10pt; font-size: 9pt; font-weight: 600; margin-bottom: 14pt; }
+.confidential { border: 1.5px solid var(--ink); padding: 7pt 11pt; font-size: var(--fs-md); font-weight: 600; margin-bottom: 14pt; }
 
 /* sensibilité */
 table.sens td.bar { width: 45%; }
@@ -216,39 +248,51 @@ table.sens td.bar { width: 45%; }
 .bar span.neg { background: var(--rose); }
 
 /* glossaire */
-dl.gloss { font-size: 9pt; columns: 2; column-gap: 18pt; }
+dl.gloss { font-size: var(--fs-md); columns: 2; column-gap: 18pt; }
 dl.gloss dt { font-weight: 600; break-after: avoid; }
 dl.gloss dd { margin: 0 0 6pt; color: var(--muted); }
 
 /* deux colonnes */
 .cols { display: flex; gap: 14pt; }
 .cols > * { flex: 1; }
-
 .pb { page-break-before: always; }
 
-/* ══ DOCS-1 (Lot C) — les 3 nouveaux documents (Gabarit · Comparatif paysage · Étude de zone) ══ */
-/* Comparatif : page PAYSAGE (première orientation du builder — size seulement, le reste hérite). */
+/* ══ Comparatif (paysage) · Gabarit · Étude de zone ══════════════════════════════════════════ */
 @page paysage { size: A4 landscape; }
 .paysage { page: paysage; }
-/* Comparatif — parcelles en COLONNES (les lignes de Comparer). */
-/* DOCS-1 (décision Vic) — le titre + le tableau du Comparatif forment UN bloc qui ne se coupe pas :
-   s'il ne tient pas entier sous la carte de situation en page 1, l'ensemble commence en page 2. */
 .cmp-bloc { page-break-inside: avoid; break-inside: avoid; }
-table.cmp { width: 100%; border-collapse: collapse; font-size: 9pt; margin: 6pt 0 10pt; }
-table.cmp th, table.cmp td { padding: 4.5pt 8pt; border-bottom: 1px solid var(--line); vertical-align: top; text-align: left; }
-table.cmp thead th { font-weight: 700; font-size: 9.5pt; border-bottom: 1.5px solid var(--ink); }
-table.cmp thead th.sub { font-weight: 400; font-size: 8pt; color: var(--muted); }
+table.cmp { width: 100%; border-collapse: collapse; font-size: var(--fs-md); margin: 6pt 0 10pt; }
+table.cmp th, table.cmp td { padding: 5pt 8pt; border-bottom: 1px solid var(--line); vertical-align: top; text-align: left; }
+table.cmp thead th { font-weight: 700; font-size: var(--fs-lg); border-bottom: 1.5px solid var(--ink); }
+table.cmp thead th.sub { font-weight: 400; font-size: var(--fs-sm); color: var(--muted); }
 table.cmp td.lbl { color: var(--muted); width: 24%; }
 table.cmp td.lbl .chip { margin-left: 4pt; }
 table.cmp tr { page-break-inside: avoid; }
-/* Gabarit — plan 2D + règles appliquées / non intégrées (nom · citation · source). */
+/* Gabarit — plan 2D + vue 3D côte à côte + règles */
 .plan2d { border: 1px solid var(--line); border-radius: 3pt; padding: 6pt; margin: 4pt 0 12pt; page-break-inside: avoid; }
-.plan2d svg { width: 100%; height: auto; max-height: 120mm; display: block; }
-.regles .r { padding: 5pt 0; border-bottom: 1px solid var(--line); page-break-inside: avoid; }
-.regles .r .nom { font-weight: 600; font-size: 9.5pt; }
-.regles .r .src { color: var(--muted); font-size: 8pt; margin-top: 1pt; }
+.plan2d svg, .plan3d svg { width: 100%; height: auto; max-height: 120mm; display: block; }
+/* DOCS-DA-1 — au Dossier §Potentiel, la vue 3D À CÔTÉ du schéma 2D : DEUX CADRES DE MÊME TAILLE côte
+   à côte, légende sous chacun (la classe `.gabarit-plan` ne sert QU'ICI ; le document Gabarit a son
+   propre `.plan2d`/`.plan3d`). */
+.gabarit-plan { display: inline-block; width: 49%; vertical-align: top; box-sizing: border-box;
+                text-align: left; margin: 6pt 0 0; page-break-inside: avoid; }
+.gabarit-plan:first-child { padding-right: 2%; }
+/* le SVG dans un cadre à 1 px de HAUTEUR FIXE (identique pour le 2D et le 3D) ; le viewBox est
+   letterboxé (preserveAspectRatio par défaut) → les deux figures occupent le MÊME rectangle. */
+.gabarit-plan svg { width: 100%; height: 46mm; display: block; border: 1px solid var(--line);
+                    border-radius: 3pt; background: #FBFCFB; box-sizing: border-box; }
+/* DOCS-DA-1 — la légende des figures du gabarit, en HTML sous le SVG (≥ 10,5 px, s'enroule). */
+.fig-legende { margin: 5pt 2pt 2pt; }
+.fig-note { font-size: var(--fs-xs); color: var(--muted); margin-bottom: 3pt; }
+.fig-alerte { font-size: var(--fs-xs); color: var(--rose); font-weight: 600; margin-bottom: 3pt; }
+.fig-cles { display: flex; flex-wrap: wrap; gap: 4pt 14pt; font-size: var(--fs-xs); color: var(--ink); }
+.fig-cle { display: inline-flex; align-items: center; }
+.fig-cle i { display: inline-block; width: 9pt; height: 9pt; border-radius: 1.5pt; margin-right: 4pt; }
+.regles .r { padding: 6pt 0; border-bottom: 1px solid var(--line); page-break-inside: avoid; }
+.regles .r .nom { font-weight: 600; font-size: var(--fs-md); }
+.regles .r .src { color: var(--muted); font-size: var(--fs-xs); margin-top: 1pt; }
 .regles.nonint .r .nom { color: var(--muted); font-weight: 600; }
-/* Étude de zone — carte du périmètre (page 1). */
+/* Étude de zone — carte du périmètre */
 .zone-map { width: 100%; height: 95mm; border: 1px solid var(--line); border-radius: 3pt; object-fit: cover; display: block; page-break-inside: avoid; }
-.zone-map-ph { width: 100%; height: 95mm; border: 1px solid var(--line); border-radius: 3pt; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 9pt; text-align: center; }
-.zone-echelle { color: var(--muted); font-size: 9pt; margin: 4pt 0 2pt; }
+.zone-map-ph { width: 100%; height: 95mm; border: 1px solid var(--line); border-radius: 3pt; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: var(--fs-md); text-align: center; }
+.zone-echelle { color: var(--muted); font-size: var(--fs-md); margin: 4pt 0 2pt; }

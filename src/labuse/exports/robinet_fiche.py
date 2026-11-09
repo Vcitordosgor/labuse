@@ -639,9 +639,21 @@ def _c_fibre(db, idu, f):
 
 @extracteur("prod_spec_kwh_kwc")
 def _c_solaire(db, idu, f):
+    # DOCS-DA-1 (inventaire-dossier-1) — le Dossier imprimait « Productible solaire : non calculé »
+    # À TORT : la fiche détient la valeur dans `viabilisation.solaire.prod_kwh_kwc` (le MÊME lecteur
+    # que l'écran, qui en tire « Ensoleillement très favorable »). On lit cette source en priorité.
+    # DOCS-DA-1 (V10) — on sert AUSSI le qualificatif (« très favorable ») de la MÊME lecture que la
+    # fiche (`viabilisation.solaire.qualite`) → « 1 548 kWh/kWc — très favorable ».
+    sol = (f.get("viabilisation") or {}).get("solaire")
+    if isinstance(sol, dict):
+        v = _nz(sol.get("prod_kwh_kwc") or sol.get("prod_spec_kwh_kwc") or sol.get("productible_kwh_kwc"))
+        if v is not None:
+            return {"kwh": v, "qualite": sol.get("qualite")}
     a = f.get("aper")
     if isinstance(a, dict):
-        return _nz(a.get("prod_spec_kwh_kwc") or a.get("productible_kwh_kwc"))
+        v = _nz(a.get("prod_spec_kwh_kwc") or a.get("productible_kwh_kwc"))
+        if v is not None:
+            return {"kwh": v, "qualite": None}
     return None
 
 
@@ -801,6 +813,7 @@ def _c_rang(db, idu, f):
 # (build_gabarit_input + compute_gabarit) → écran = Dossier. Mémoïsé par session (WeakKeyDictionary)
 # pour ne construire le gabarit qu'UNE fois par document (≈ une douzaine de requêtes PostGIS).
 _GAB_MEMO: "WeakKeyDictionary" = WeakKeyDictionary()
+_CMP_MEMO: "WeakKeyDictionary" = WeakKeyDictionary()   # DOCS-DA-1 — comparables Estimer, par (db, idu)
 
 
 def _gabarit(db, idu: str) -> dict:
@@ -814,7 +827,7 @@ def _gabarit(db, idu: str) -> dict:
     try:
         from ..gabarit.builder import build_gabarit_input
         from ..gabarit.engine import compute_gabarit
-        from ..gabarit.plan_svg import gabarit_svg
+        from ..gabarit.plan_svg import gabarit_svg, gabarit_svg_3d
         build = build_gabarit_input(db, idu)
         if build is None:
             per[idu] = out
@@ -896,7 +909,8 @@ def _gabarit(db, idu: str) -> dict:
                    zone_libere_m2=((res.zoneImplantationM2 or 0) + (res.batiDeduitM2 or 0)),
                    plafond=("Non réglementé" if res.plafondEmpriseStatus == "absent" else res.plafondEmpriseM2),
                    hauteur=hauteur,
-                   svg=gabarit_svg(res))
+                   svg=gabarit_svg(res),
+                   svg3d=gabarit_svg_3d(res))   # DOCS-DA-1 — vue 3D à côté du schéma 2D (§Potentiel)
     except Exception:  # noqa: BLE001 — jamais un 500 sur un document ; la donnée est simplement omise
         pass
     per[idu] = out
@@ -950,6 +964,141 @@ def _c_gab_motif(db, idu, f):
 def _c_gab_plan(db, idu, f):
     g = _gabarit(db, idu)
     return _nz(g.get("svg")) if g["served"] else None
+
+
+# ══ DOCS-DA-1 — les faits de l'inventaire, chacun lu au MÊME robinet que la fiche ═════════════
+# Les extracteurs lisent le payload (`f`) — la MÊME fiche que l'écran ; comparables et vue 3D passent
+# par les moteurs PARTAGÉS avec Estimer / le Gabarit (un seul lecteur → une seule valeur, banc vert).
+
+@extracteur("pente_max_deg")
+def _c_pente_max(db, idu, f):
+    return _nz((f.get("terrain") or {}).get("pente_max_deg"))
+
+
+@extracteur("terrassement_alerte")
+def _c_terrassement(db, idu, f):
+    # alerte terrassement quand la pente est forte (flag unique du moteur terrain) — sinon absent.
+    return "Terrassement lourd probable (forte pente)" if (f.get("terrain") or {}).get("flag_terrassement_lourd") else None
+
+
+@extracteur("hauteur_egout_mesuree_m")
+def _c_hauteur_egout(db, idu, f):
+    return _nz((f.get("le_bien") or {}).get("hauteur_egout_m"))
+
+
+@extracteur("acquereurs_pro_voisins")
+def _c_acquereurs_pro(db, idu, f):
+    v = f.get("pm_voisines") or {}
+    return v if v.get("acquereurs") else None
+
+
+@extracteur("permis_section_36m")
+def _c_permis_section(db, idu, f):
+    sec = (f.get("depots") or {}).get("secteur") or {}
+    return sec if sec.get("count") else None
+
+
+@extracteur("dvf_fourchette")
+def _c_dvf_fourchette(db, idu, f):
+    pa = f.get("prix_ancien") or {}
+    if pa.get("q1") is None or pa.get("q3") is None:
+        return None
+    return {k: pa.get(k) for k in ("min", "q1", "median", "q3", "max")}
+
+
+@extracteur("dvf_tendance")
+def _c_dvf_tendance(db, idu, f):
+    # TENDANCE DVF : UN SEUL lecteur — `prix_ancien` (le même que le Flash et le secteur). Si la tendance
+    # n'est pas servie là, on ne l'invente pas (rien).
+    pa = f.get("prix_ancien") or {}
+    return {"tendance": pa.get("tendance"), "pct": pa.get("tendance_pct")} if pa.get("tendance") else None
+
+
+@extracteur("comparables_proches")
+def _c_comparables(db, idu, f):
+    # LES 8 COMPARABLES, « comme Estimer » : le MÊME point de données que le document Estimer
+    # (`rapport_parcelle` → estimation.comparables). Mémoïsé par (db, idu).
+    per = _CMP_MEMO.get(db)
+    if per is None:
+        per = {}; _CMP_MEMO[db] = per
+    if idu in per:
+        return per[idu]
+    out = None
+    try:
+        from ..pige.api import rapport_parcelle
+        rap = rapport_parcelle(db, idu, f)
+        comps = ((rap or {}).get("estimation") or {}).get("comparables")
+        out = comps[:8] if comps else None
+    except Exception as exc:  # noqa: BLE001 — best-effort, jamais un bloqueur du Dossier
+        log.warning("comparables (Estimer) non servis (%s) : %s", idu, exc)
+    per[idu] = out
+    return out
+
+
+@extracteur("loyer_oll_eur_m2")
+def _c_oll(db, idu, f):
+    o = f.get("loyers_oll") or {}
+    return o if o.get("loyer_median_eur_m2") is not None else None
+
+
+@extracteur("filosofi_200m")
+def _c_filosofi(db, idu, f):
+    fi = (f.get("marche_secteur") or {}).get("filosofi_200m") or {}
+    return fi if fi.get("nivvie_moyen_eur") else None
+
+
+@extracteur("gestionnaires_reseaux")
+def _c_gestionnaires(db, idu, f):
+    g = f.get("gestionnaires") or {}
+    return g if (g.get("eau") or g.get("assainissement") or g.get("electricite")) else None
+
+
+@extracteur("ligne_bus_contact")
+def _c_bus_contact(db, idu, f):
+    t = (f.get("proximites") or {}).get("transport_ligne") or {}
+    return t if t.get("distance_m") is not None else None
+
+
+@extracteur("taux_amenagement_departemental_pct")
+def _c_taux_dep_ta(db, idu, f):
+    ta = f.get("taxe_amenagement") or {}
+    return _nz(ta.get("taux_departemental_pct")) if ta.get("taux_departemental_confirme") else None
+
+
+@extracteur("densite_saturation")
+def _c_saturation(db, idu, f):
+    pt = f.get("potentiel_transformation") or {}
+    return {"consomme": pt.get("pct_consomme"), "residuel": pt.get("pct_residuel")} \
+        if pt.get("pct_consomme") is not None else None
+
+
+@extracteur("niveaux_max")
+def _c_niveaux_max(db, idu, f):
+    return _nz(((f.get("potentiel_transformation") or {}).get("calcul") or {}).get("niveaux_max"))
+
+
+@extracteur("catnat_arretes")
+def _c_catnat(db, idu, f):
+    # arrêtés CatNat SEULEMENT si le compte de la commune est COMPLET (≥ référence GASPAR 06/09 —
+    # la troncature de septembre réparée). Sous la référence → on n'affiche pas un total tronqué.
+    cn = f.get("catnat") or {}
+    total = cn.get("total")
+    if not total or not cn.get("arretes"):
+        return None
+    try:
+        from ..filtres.sources import CATNAT_REFERENCE
+        ref = CATNAT_REFERENCE.get(idu[:5])
+        if ref is not None and total < ref:
+            return None   # compte tronqué — on ne l'imprime pas
+    except Exception:  # noqa: BLE001 — référence illisible : on reste prudent et on affiche ce qui est servi
+        pass
+    return cn
+
+
+@extracteur("gabarit_plan_3d")
+def _c_gab_plan_3d(db, idu, f):
+    g = _gabarit(db, idu)
+    return _nz(g.get("svg3d")) if g.get("served") else None
 
 
 # ══ Sources (section de clôture, hors miroir) ═════════════════════════════════════════════

@@ -30,7 +30,7 @@ BLOC_CSS = """
 .bloc-tete { display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
              margin-bottom: 4px; }
 .bloc-titre { font-size: 11pt; font-weight: 600; color: var(--txt-hi); }
-.bloc-etat { font-family: 'JetBrains Mono', monospace; font-size: 7.5pt; text-transform: uppercase;
+.bloc-etat { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; text-transform: uppercase;
              letter-spacing: .05em; padding: 1px 7px; border-radius: 9px; white-space: nowrap;
              color: var(--txt-dim); background: #EEF1EF; }
 .bloc-etat[data-etat="source"], .bloc-etat[data-etat="source_secteur"],

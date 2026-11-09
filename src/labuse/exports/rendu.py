@@ -15,13 +15,23 @@ from pathlib import Path
 _PKG = Path(__file__).resolve().parent
 _FONTS = _PKG.parent / "api" / "fonts"
 
-#: @font-face injecté : Inter (fournie) pour le texte ; la mono de LABUSE (JetBrains) tient la
-#: place d'« IBM Plex Mono » du gabarit (même intention monospace ; la CSS garde DejaVu en repli).
+#: @font-face injecté (DOCS-DA-1) : Inter aux QUATRE poids réels — 400/500/600/700 — instanciés
+#: depuis la fonte variable Inter (plus de SpaceGrotesk-Bold en substitution du gras, qui faussait le
+#: 700 et la famille). La mono de LABUSE (JetBrains) tient la place d'« IBM Plex Mono » du gabarit
+#: (même intention monospace ; la CSS garde DejaVu en repli). Polices EMBARQUÉES dans chaque PDF.
 _FONT_FACE = f"""
 @font-face {{ font-family: "Inter"; src: url("file://{_FONTS/'Inter-Regular.ttf'}"); font-weight: 400; }}
-@font-face {{ font-family: "Inter"; src: url("file://{_FONTS/'SpaceGrotesk-Bold.ttf'}"); font-weight: 700; }}
-@font-face {{ font-family: "IBM Plex Mono"; src: url("file://{_FONTS/'JetBrainsMono-Regular.ttf'}"); }}
+@font-face {{ font-family: "Inter"; src: url("file://{_FONTS/'Inter-Medium.ttf'}"); font-weight: 500; }}
+@font-face {{ font-family: "Inter"; src: url("file://{_FONTS/'Inter-SemiBold.ttf'}"); font-weight: 600; }}
+@font-face {{ font-family: "Inter"; src: url("file://{_FONTS/'Inter-Bold.ttf'}"); font-weight: 700; }}
+@font-face {{ font-family: "JetBrains Mono"; src: url("file://{_FONTS/'JetBrainsMono-Regular.ttf'}"); }}
 """
+
+
+#: DOCS-DA-1 (V11, arbitrage Vic / maquette) — la mention de PIED, UNIQUE et IDENTIQUE pour TOUS les
+#: documents : une seule ligne à gauche (la pagination est à droite). Sans date, sans « Généré via LABUSE ».
+FOOT_LIGNE = ("Document d'information · ne remplace ni un certificat d'urbanisme, ni une étude "
+              "réglementaire, ni un conseil juridique")
 
 
 def esc(s) -> str:
@@ -122,10 +132,14 @@ def page_html(titre_html: str, cartouche: Cartouche, corps_html: str, *, lang: s
     # DOCS-COHERENCE-1 (C3) — les boîtes de marge @page N'HÉRITENT PAS du body : on y REDÉSACTIVE les
     # ligatures OpenType (sinon « aﬀaires », « transme re », « éme eur » : le « tt »/« ff » ligaturé
     # tombe à l'extraction, comme RECETTE-6 pour le corps). Correctif pour les 8 documents.
+    # DOCS-DA-1 — aucune taille sous 10,5 px : le pied littéral à 10,5 px (--fs-xs).
+    # V11 — le pied tient sur UNE LIGNE (`white-space: nowrap`) : la mention légale uniforme à gauche,
+    # la pagination à droite (@bottom-right de theme.css) ; plus de @bottom-center.
     foot_css = ('@page { @bottom-left { content: "' + _css_str(cartouche.doc_foot) + '"; '
-                'font: 7.2pt "Inter","DejaVu Sans",sans-serif; color:#6B746E; '
+                'font: 10.5px "Inter","DejaVu Sans",sans-serif; color:#6B746E; white-space: nowrap; '
                 'font-variant-ligatures: none; '
-                'font-feature-settings: "liga" 0, "clig" 0, "dlig" 0, "calt" 0 } }')
+                'font-feature-settings: "liga" 0, "clig" 0, "dlig" 0, "calt" 0 } '
+                '@bottom-center { content: none } }')
     # ANNONCE-3-FIX — `page_extra_css` : règles @page SUPPLÉMENTAIRES propres à un document (ex. le
     # compteur de pages en `white-space:nowrap`). Vide par défaut → les documents existants (servis)
     # produisent EXACTEMENT le même HTML qu'avant.
