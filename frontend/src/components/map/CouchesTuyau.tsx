@@ -75,7 +75,9 @@ const COURBES_NIVEAU_COUCHE: TuyauCouche = {
   legende: 'Courbes de niveau (équidistance variable selon l’échelle)',
   statut_juridique: null,
   tuiles_url: '/map/tiles/contours/{z}/{x}/{y}',
-  i: 'Courbes de niveau — IGN Géoplateforme, couche WMTS ELEVATION.CONTOUR.LINE (dérivée du RGE ALTI, millésime 2025). Équidistance variable selon l’échelle. Overlay raster superposable à tous les fonds.',
+  // VERIF-FIX-1 (Q2) — la SOURCE est désormais déclarée au robinet /map/couches-info (comme toute
+  // couche) et rendue en tête du « i » ; la prose ne garde que la description.
+  i: 'Équidistance variable selon l’échelle. Overlay raster superposable à tous les fonds.',
 }
 
 // GEOPF-3 — CONTRAINTES EnR PRÈS DES HABITATIONS : couche RASTER servie par le proxy
@@ -99,7 +101,8 @@ const ENR_HABITATION_COUCHE: TuyauCouche = {
   legende: 'Contraintes réglementaires EnR liées aux habitations (loi APER)',
   statut_juridique: 'opposable',
   tuiles_url: '/map/tiles/enr_habitation/{z}/{x}/{y}',
-  i: 'Contraintes réglementaires liées aux habitations pour l’implantation d’EnR (loi APER) — IGN Géoplateforme, couche WMTS ENR.PERIMETRE.HABITATION. Overlay raster superposable. Visible aussi dans l’outil Prospection solaire.',
+  // VERIF-FIX-1 (Q2) — source déclarée au robinet /map/couches-info (rendue en tête du « i »).
+  i: 'Contraintes réglementaires liées aux habitations pour l’implantation d’EnR (loi APER). Overlay raster superposable. Visible aussi dans l’outil Prospection solaire.',
 }
 
 async function chargerPlan(): Promise<TuyauCouche[]> {

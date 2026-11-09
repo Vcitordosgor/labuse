@@ -88,6 +88,12 @@ def build_vefa_neuf(session: Session, *, commit: bool = True, log=lambda *_: Non
     millesime = (f"VEFA DVF — {FENETRE_MOIS} mois glissants (dernière vente {dmax})" if dmax
                  else f"VEFA DVF — {FENETRE_MOIS} mois glissants")
     session.execute(text("DELETE FROM spatial_layers WHERE kind = 'vefa_neuf'"))
+    # VERIF-FIX-1 (Q2) — la couche était ORPHELINE de source (data_source_id NULL sur toutes les lignes,
+    # millésime/date absents en admin). Elle est RE-BRANCHÉE sur son amont réel : DVF (les mutations VEFA
+    # DGFiP portent le prix et la géométrie ; Sitadel ne fournit qu'un attribut d'offre engagée). On résout
+    # l'id une fois ; si la source manque (base partielle), on retombe sur NULL plutôt que d'échouer.
+    _ds_id = session.execute(text(
+        "SELECT id FROM data_sources WHERE name = 'DVF / valeurs foncières' LIMIT 1")).scalar()
     n_peintes = hachurees = 0
     for feat in geo["features"]:
         insee = feat["properties"].get("code")
@@ -127,9 +133,10 @@ def build_vefa_neuf(session: Session, *, commit: bool = True, log=lambda *_: Non
                             "Les ventes sans surface d'habitation (bâti non construit à l'acte) comptent dans "
                             "le volume, pas dans le prix — jamais extrapolé.")}
         session.execute(text(
-            "INSERT INTO spatial_layers (kind, subtype, name, commune, geom, attrs) VALUES "
-            "('vefa_neuf', :st, :nom, :c, ST_GeomFromGeoJSON(:g), CAST(:a AS jsonb))"),
-            {"st": cle, "nom": name, "c": commune, "g": json.dumps(feat["geometry"]), "a": json.dumps(attrs)})
+            "INSERT INTO spatial_layers (kind, subtype, name, commune, geom, attrs, data_source_id) VALUES "
+            "('vefa_neuf', :st, :nom, :c, ST_GeomFromGeoJSON(:g), CAST(:a AS jsonb), :ds)"),
+            {"st": cle, "nom": name, "c": commune, "g": json.dumps(feat["geometry"]),
+             "a": json.dumps(attrs), "ds": _ds_id})
     if commit:
         session.commit()
     log(f"vefa_neuf : {n_peintes} communes peintes, {hachurees} hachurées (< {SEUIL_VEFA_AFFICHAGE} ventes)")

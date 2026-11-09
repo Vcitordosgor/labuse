@@ -1178,6 +1178,11 @@ def _ensure_schema_steps(engine, *, geom_backfill: bool) -> None:
     ensure_data_sources_millesime(engine)   # M32 Phase B §2 : colonnes millésime amont
     ensure_data_sources_status_norm(engine)  # FIX-SOURCES S2 : statut normalisé (casse enum)
     ensure_source_veille(engine)            # SENTINELLE-1 W1/W5 : table de veille amont + seed
+    try:                                    # VERIF-FIX-1 (Q2) : échéance de revue des couches carte
+        from .echeances_couches import ensure_echeances_couches
+        ensure_echeances_couches(engine)
+    except Exception:                       # noqa: BLE001 — base partielle (millésimes pas encore semés) : no-op
+        pass
     ensure_icd_columns(engine)              # M9 lot 1
     ensure_signalements(engine)             # M9 lot 3
     from . import commune_contacts as _cc   # ADMIN-1 (AD10) : carnet des contacts nommés de communes

@@ -2364,6 +2364,13 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
     from ..registre import tables as _rt_mod
     _etats = _filtres.etats_servis(c)
     _reg = _filtres.FILTRES()
+    # VERIF-FIX-1 (Q2) — ÉCHÉANCE DE REVUE des couches carte. On ne l'applique qu'aux sources qui
+    # alimentent RÉELLEMENT la carte (data_source_id porté par spatial_layers), et on la calcule sur
+    # l'âge RÉEL de la donnée (millésime), pas sur la date de synchro. Au-delà de la fenêtre de revue,
+    # la source sort « à vérifier » (cf. etat_reservoir). Côté client : rien ne change.
+    from .. import echeances_couches as _ech
+    _couche_sids = {r[0] for r in c.execute(text(
+        "SELECT DISTINCT data_source_id FROM spatial_layers WHERE data_source_id IS NOT NULL")).all()}
     # motif le plus LONG d'abord : « Géorisques — mouvements » l'emporte sur « Géorisques ».
     _motifs = sorted([(cle, (f.source_motif or "").lower().replace("%", ""))
                       for cle, f in _reg.items() if f.source_motif],
@@ -2402,8 +2409,13 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
                                       dernier_vu=r["dernier_vu"], last_sync_at=r["last_sync_at"])
         _rt = _rt_mod.RESERVOIR_TABLES.get(_cetats.slug_reservoir(r["name"]) or "")
         _millesime = _mill_verite or ((_rt.millesime or None) if _rt else None)
+        # VERIF-FIX-1 (Q2) — échéance de revue : seulement pour les sources de la carte, sur l'âge réel.
+        _ech_info = (_ech.echeance_pour(r["name"], r["source_millesime"], r["source_horizon_at"])
+                     if r["id"] in _couche_sids else {"echeance": None, "a_verifier": False})
         reservoirs.append({
             "a_verifier": a_verifier,
+            "echeance": _ech_info["echeance"].isoformat() if _ech_info["echeance"] else None,
+            "echeance_depassee": _ech_info["a_verifier"],
             "dernier_controle": _dernier_controle.isoformat() if _dernier_controle else None,
             "id": r["id"], "nom": r["name"], "producteur": r["provider"],
             # COCKPIT-1b (point 6) — le RÉFÉRENTIEL interne (lu par la pompe, montré dans le Circuit)

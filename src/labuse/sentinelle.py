@@ -30,6 +30,7 @@ import os
 import re
 import ssl
 import time
+import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -304,6 +305,46 @@ def evaluer(sonde: Sonde, servi: str | None) -> Sonde:
     return sonde
 
 
+# ─── VERIF-FIX-1 (Q3) — `ortho` : détection d'une Ortho Express plus récente POUR LA RÉUNION ───
+# Spécifique à l'ortho basemap servie en direct (WMTS IGN), que l'`api` data.gouv ne sait pas juger
+# par île : l'IGN publie un millésime pour la métropole AVANT La Réunion, et a RENOMMÉ la famille
+# (`ORTHO-EXPRESS.*` → `RVB-EXPRESS.*`) à partir de 2026. On lit le GetCapabilities (tous les millésimes
+# publiés, ancien ET nouveau nommage), on prend le plus récent, et on CONFIRME qu'il couvre bien l'île
+# par une tuile témoin à Saint-Denis (une 404 = publié métropole mais pas encore Réunion → on ne crie pas).
+_ORTHO_LAYER_RE = re.compile(r"ORTHOIMAGERY\.ORTHOPHOTOS\.(?:ORTHO-EXPRESS|RVB-EXPRESS)\.\d{4}")
+_ORTHO_TUILE_974 = (16, 42863, 36657)   # z/col/row — tuile Saint-Denis (témoin de couverture La Réunion)
+_ORTHO_TUILE_URL = ("https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&STYLE=normal"
+                    "&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&LAYER={layer}&FORMAT=image/jpeg")
+
+
+def _ortho_couvre_974(layer: str) -> bool:
+    """La couche sert-elle une tuile RÉELLE à Saint-Denis ? (404 = pas encore La Réunion.)"""
+    z, x, y = _ORTHO_TUILE_974
+    try:
+        status, _, _ = _http(_ORTHO_TUILE_URL.format(layer=layer, z=z, x=x, y=y))
+    except urllib.error.HTTPError as exc:
+        status = exc.code
+    return bool(status) and status < 400
+
+
+def sonder_ortho(url: str, servi: str | None) -> Sonde:
+    """`ortho` — GetCapabilities WMTS IGN : le millésime Ortho Express/RVB Express le plus récent qui
+    COUVRE La Réunion, comparé au servi. `nouvelle_version` seulement si plus récent ET présent sur l'île."""
+    status, _, corps = _http(url)
+    if status >= 400:
+        return Sonde("injoignable", message=f"HTTP {status} (GetCapabilities)")
+    par_annee = {int(lid[-4:]): lid for lid in _ORTHO_LAYER_RE.findall(corps)}
+    if not par_annee:
+        return Sonde("illisible", message="aucune couche ORTHO-EXPRESS/RVB-EXPRESS au GetCapabilities")
+    servi_an = max([int(a) for a in re.findall(r"20\d{2}", servi or "")] or [0])
+    recent = max(par_annee)
+    if recent > servi_an and _ortho_couvre_974(par_annee[recent]):
+        return Sonde("nouvelle_version", vu=f"{par_annee[recent]} (couvre La Réunion)")
+    msg = (f"{recent} publiée mais hors Réunion (servi {servi_an})"
+           if recent > servi_an else f"servi {servi_an} — rien de plus récent pour La Réunion")
+    return Sonde("ok", vu=f"Ortho Express {servi_an}", message=msg)
+
+
 def sonder_ligne(row: dict, servi: str | None, *, http=None) -> Sonde:
     """Sonde UNE ligne `source_veille` (dict : methode, url_version, selecteur, dernier_entete) et rend
     le verdict évalué. `http` : injection de la couche réseau pour les tests (défaut = `_http` réel)."""
@@ -325,12 +366,14 @@ def sonder_ligne(row: dict, servi: str | None, *, http=None) -> Sonde:
             elif methode == "temoin":
                 s = sonder_temoin(url, row.get("selecteur"), row.get("dernier_entete"),
                                   url2=row.get("url_temoin_2"))
+            elif methode == "ortho":
+                s = sonder_ortho(url, servi)   # VERIF-FIX-1 (Q3) — tranche seule (couverture Réunion)
             else:
                 return Sonde("illisible", message=f"méthode inconnue : {methode}")
         except Exception as exc:  # noqa: BLE001 — tout échec réseau/parse = la SENTINELLE a échoué, pas la donnée
             return Sonde("injoignable", message=f"{type(exc).__name__}: {str(exc)[:200]}")
-        # `entete`/`temoin` ont déjà tranché (marqueur opaque, aucune notion de « servi ») : on n'applique
-        # la comparaison au millésime servi qu'aux méthodes À VERSION (api/page).
+        # `entete`/`temoin`/`ortho` ont déjà tranché (aucune comparaison lexicale au « servi » à appliquer) :
+        # seules les méthodes À VERSION (api/page) passent par `evaluer`.
         return evaluer(s, servi) if methode in ("api", "page") else s
     finally:
         if http is not None:
@@ -344,7 +387,7 @@ def _lignes_a_sonder(db, *, source_ids=None, forcer: bool) -> list[dict]:
     joint `data_sources` pour lire le millésime SERVI (source_millesime) et le nom (message/notif)."""
     # SENTINELLE-3 (Y4) — on ne sonde QUE les vraies méthodes de surveillance ; une ligne `rappel`
     # (source manuelle, rafraîchissement attendu) n'est jamais interrogée sur le réseau.
-    where = ["v.actif = true", "v.methode IN ('api', 'page', 'entete', 'temoin')"]
+    where = ["v.actif = true", "v.methode IN ('api', 'page', 'entete', 'temoin', 'ortho')"]
     params: dict = {}
     if source_ids:
         where.append("v.source_id = ANY(:ids)")
@@ -509,8 +552,12 @@ SEED: list[dict] = [
      "url": "https://www.data.gouv.fr/api/1/datasets/bd-topo-r/", "selecteur": "last_update"},
     {"name": "Forêts publiques (ONF)", "methode": "api",   # BDTOPO_V3:foret_publique → même jeu bd-topo-r
      "url": "https://www.data.gouv.fr/api/1/datasets/bd-topo-r/", "selecteur": "last_update"},
-    {"name": "BD ORTHO 20 cm (IGN)", "methode": "api",
-     "url": "https://www.data.gouv.fr/api/1/datasets/bd-ortho-r/", "selecteur": "last_update"},
+    # VERIF-FIX-1 (Q3) — l'ortho « Actuelle » servie en direct (WMTS) : la sonde `api` data.gouv ne
+    # savait pas juger la couverture PAR ÎLE. On passe à la méthode `ortho` qui lit le GetCapabilities
+    # WMTS IGN (tous millésimes, ancien ET nouveau nommage RVB-EXPRESS) et confirme la présence sur La
+    # Réunion par une tuile témoin → signale « nouvelle version » dans la page Données quand l'île l'a.
+    {"name": "BD ORTHO 20 cm (IGN)", "methode": "ortho",
+     "url": "https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetCapabilities&VERSION=1.0.0", "selecteur": None},
     {"name": "BD ORTHO IRC (IGN)", "methode": "api",       # dérivée IRC de la BD ORTHO → même jeu bd-ortho-r
      "url": "https://www.data.gouv.fr/api/1/datasets/bd-ortho-r/", "selecteur": "last_update"},
     {"name": "RGE ALTI (altimétrie)", "methode": "api",
@@ -1161,7 +1208,8 @@ DOUBLONS_COUVERTS: dict[str, str] = {
     "RGE ALTI 5 m (IGN)": "amont identique à « RGE ALTI (altimétrie) » (une seule veille, l'alerte vaut pour les deux)",
 }
 
-_LIB_METHODE = {"api": "`api`", "page": "`page`", "entete": "`entete`", "temoin": "`temoin`"}
+_LIB_METHODE = {"api": "`api`", "page": "`page`", "entete": "`entete`", "temoin": "`temoin`",
+                "ortho": "`ortho`"}   # VERIF-FIX-1 (Q3) — contrôle d'ortho plus récente (La Réunion)
 
 
 def _famille(provider: str | None) -> str:

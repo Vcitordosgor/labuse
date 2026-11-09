@@ -29,10 +29,15 @@ def test_couches_info_sert_source_et_fabrication(db_session):
     # (55 kind depuis DONNEES-1 lot 2.1 — piscine partie en Solaire, cf. couches_tuyau.registre), pas
     # le pont COUCHE_PAR_CLE_FRONT (hérité, partiel — 38 clés
     # aux anciens noms V1). Chaque couche a source ET fabrication (défaut tuyau vectoriel si pas de cid).
-    assert set(d) == set(tuyau_registre())
+    # VERIF-FIX-1 (Q2) — les deux couches RASTER déclarées côté front (WMTS IGN en direct, hors tuyau
+    # vectoriel) voient désormais LEUR SOURCE déclarée ici aussi, au même robinet que toute couche.
+    _RASTER_FRONT = {"courbes_niveau", "enr_habitation"}
+    assert set(d) == set(tuyau_registre()) | _RASTER_FRONT
     for cle, meta in d.items():
         assert meta["source"], cle
         assert meta["fabrication"], cle
+    for cle in _RASTER_FRONT:
+        assert "IGN Géoplateforme" in d[cle]["source"], cle
     # sobre, sans identifiant technique : la fabrication est en français (noms de kind ACTUELS)
     assert d["limites_parcelles"]["fabrication"] == "tuiles reconstruites à la bascule"
     assert d["zonage_parcelle"]["fabrication"] == "lue en direct de la base"

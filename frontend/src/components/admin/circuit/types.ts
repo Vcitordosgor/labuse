@@ -13,6 +13,8 @@ export type Reservoir = {
   id: number; nom: string; producteur: string; famille: string; slug: string | null
   millesime: string | null; ingere_le: string | null; mode: string
   cadence_jours: number | null; cadence_statut: string | null; a_verifier: boolean
+  // VERIF-FIX-1 (Q2) — échéance de revue de la donnée (couches carte) + son dépassement.
+  echeance?: string | null; echeance_depassee?: boolean
   dernier_controle: string | null; etat: Etat; ko: boolean; taps: string[]; chiffres_ids: string[]
   interne?: boolean   // COCKPIT-1b (point 6) — référentiel interne (lu par la pompe), hors vitrine
   vanne: { type: string; label?: string; motif?: string }
@@ -51,7 +53,7 @@ export type AFaire = {
 }
 // CIRCUIT-P4 (lot 1) — le compte par état (pastilles de l'onglet Sources).
 export type EtatsSources = {
-  'à jour': number; 'nouvelle version': number; 'échue': number
+  'à jour': number; 'nouvelle version': number; 'à vérifier': number; 'échue': number
   'jamais vérifiée': number; 'sonde en panne': number; total: number
   vitrine?: number   // COCKPIT-1b (point 6) — le compteur VITRINE canonique (99), badge Sources
 }

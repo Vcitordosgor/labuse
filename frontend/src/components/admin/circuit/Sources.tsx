@@ -14,9 +14,11 @@ const jour = (iso?: string | null) => (iso ? iso.slice(0, 10).split('-').reverse
 const quandCourt = fmtHorodatage
 const eur = (n?: number | null) =>
   n == null ? '—' : `${n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`
-const ETATS = ['à jour', 'nouvelle version', 'échue', 'jamais vérifiée', 'sonde en panne'] as const
+// VERIF-FIX-1 (Q2) — « à vérifier » (échéance de revue dépassée : couche carte dont la donnée réelle
+// est plus vieille que sa fenêtre de revue). Ambre, comme « nouvelle version »/« échue ».
+const ETATS = ['à jour', 'nouvelle version', 'à vérifier', 'échue', 'jamais vérifiée', 'sonde en panne'] as const
 const COUL: Record<string, string> = {
-  'à jour': 'mint', 'nouvelle version': 'ambre', 'échue': 'ambre',
+  'à jour': 'mint', 'nouvelle version': 'ambre', 'à vérifier': 'ambre', 'échue': 'ambre',
   'jamais vérifiée': 'gris', 'sonde en panne': 'rouge',
 }
 const estSonde = (m?: string) => ['api', 'page', 'entete', 'temoin'].includes(m || '')
@@ -27,7 +29,7 @@ const action = (r: Reservoir): string | null =>
 // CIRCUIT-P7 (lot 2) — l'ordre du tri : les problèmes d'abord (sonde en panne → nouvelle version →
 // échue → jamais vérifiée → à jour), puis le nom. Une source non classée tombe en dernier.
 const RANG: Record<string, number> = {
-  'sonde en panne': 0, 'nouvelle version': 1, 'échue': 2, 'jamais vérifiée': 3, 'à jour': 4,
+  'sonde en panne': 0, 'nouvelle version': 1, 'à vérifier': 2, 'échue': 3, 'jamais vérifiée': 4, 'à jour': 5,
 }
 // CIRCUIT-P7 (lot 2) — le « mode d'entrée » lisible (comment la donnée entre), sous le nom.
 const SONDE_LABEL: Record<string, string> = {
