@@ -47,6 +47,46 @@ Cinq ajouts de la 2ᵉ passe, sur la même branche :
 
 ---
 
+## 0-bis. Suite ALGO-FIX-1 (3ᵉ passe — les 7 points de l'avis d'Astra)
+
+Astra valide la direction (bandes contextualisées, retrait du coefficient bâti, deux scénarios,
+gain signé, séparation du Signal) et ne demande pas de refonte, mais pose sept correctifs avant
+activation. Tous appliqués sur la même branche :
+
+1. **Aucune reconstruction « Capacité estimée » sans C/E/D_net calculés.** Nouveau statut
+   **« Calcul à compléter »** (`COMPUTE_PENDING`, distinct des problèmes de données) : le mode
+   rapide ne DÉDUIT plus un statut estimé de la conservation (ce qui pouvait transformer un
+   `terrain_exigu` en reconstruction estimée). Le bilan ne publie que les capacités réellement
+   chiffrées — l'ancien titre « 62,2 % de reconstructions estimées » disparaît.
+2. **Provenance unique.** En enrichissement, **cause, assiette, R et quantités viennent du MÊME
+   calcul live** (plus de mélange « nouvelle assiette gabarit + ancien cache legacy »). Les
+   **versions** (barème, run cascade, provenance) sont **enregistrées avec le résultat** et servies
+   telles quelles, pas relues à la requête.
+3. **Legacy.** TOUTE capacité d'assiette de repli non qualifiée → **« À vérifier — assiette à
+   confirmer »** (chiffre provisoire consultable, Signal visible), pas seulement les cas PPR/EBC :
+   l'absence de contrainte dans les motifs ne prouve pas la justesse du repli. Mesure du **double
+   retrait** des contraintes superposées (`db.py:629/638`) dans `DOUBLE-RETRAIT.md` (faux zéros
+   potentiels inclus, SANS reclasser les 9 087 « Aucun ajout »).
+4. **Diagnostics.** Géométrie **invalide** traitée **quelle que soit la cause** (plus seulement
+   `terrain_exigu`) ; **AU au statut inconnu → horizon INCONNU** (jamais « À différer ») ; plus
+   aucun texte « PPR découpé / EBC soustrait » **dérivé du nom du chemin** — on signale la présence
+   de la contrainte, l'assiette nette restant à vérifier.
+5. **EH0043 → « À vérifier »**, capacité provisoire consultable : sa capacité repose sur une
+   **portion AU (AUm) dont le régime n'est pas établi** (ni `parcel_au_statut`, ni OAP/équipement
+   prouvés). Le **49 026 m²** est identifié : c'est l'**emprise constructible** du moteur
+   (`fourchette.emprise_constructible_m2`), pas une assiette nette démontrée. Pente **31,5 % (moy,
+   RGE ALTI)** distinguée du **91 % (max cascade)**.
+6. **Effectifs** calculés sur **exactement l'ensemble servi** (IDU ∩ commune, avant pagination),
+   **aussi en prospection** ; **Signal persisté validé** comme le moteur pur (hors [0,1]/NaN/∞ →
+   non disponible, jamais en tête).
+7. **Bilan unique** régénéré depuis un seul instantané (`AVANT-APRES.md`) : cohortes nommées,
+   matrice **complète** bande V1 × statut/bande V2 (y compris bande→bande entre estimées), et
+   **décomposition à entrées constantes** isolant retrait bâti · retrait ×0,5 AU · recalcul ·
+   statut. **Invariant testé** : à R/pente/forme/accès/config identiques, retirer le seul
+   coefficient bâti ne baisse jamais le score. Contrôle d'arrondi aux paliers.
+
+---
+
 ## 1. Résumé — avant / après (tête du compte-rendu)
 
 La V2 **ne remplace pas** la note 0–100 par une autre note : elle la double par des **statuts de
@@ -163,23 +203,25 @@ structurel) ; **seul** `scenarios_v2_persist` écrit, et uniquement dans la tabl
 
 ## 5. Avant / après (toute l'île + Entre-Deux, q_v20)
 
-`AVANT-APRES.md` donne les tableaux complets **par commune et par scénario**, lus de la table de
-run. **Île entière (433 229 parcelles)** :
+`AVANT-APRES.md` donne le bilan complet **par scénario** (cohortes nommées, matrice V1×V2,
+décomposition). **Île entière (433 229 parcelles), après les correctifs d'Astra** :
 
 | | V1 (bande servie) | V2 conservation | V2 reconstruction |
 |---|---|---|---|
-| Actionnable | A/B/C/D : 192 344 (44,4 %) | **ESTIMATED 184 432 (42,6 %)** | **ESTIMATED 269 455 (62,2 %)** |
-| Aucun ajout | — | NO_MARGIN 85 480 (19,7 %) | NO_MARGIN 0 |
-| À vérifier | NC : 16 272 | TO_VERIFY 30 438 (7,0 %) | TO_VERIFY 30 895 (7,1 %) |
-| À différer | — | DEFERRED 782 | DEFERRED 782 |
-| Hors projet | — | OUTSIDE 132 097 (30,5 %) | OUTSIDE 132 097 (30,5 %) |
+| Capacité estimée | A/B/C/D : 192 344 (44,4 %) | **ESTIMATED 151 451 (35,0 %)** | ESTIMATED 4 342 (1,0 %, **chiffrées**) |
+| Calcul à compléter | — | — | **COMPUTE_PENDING 212 024 (48,9 %)** |
+| À vérifier | NC : 16 272 | TO_VERIFY 72 046 (16,6 %) | TO_VERIFY 72 051 (16,6 %) |
+| Aucun ajout | — | NO_MARGIN 64 920 (15,0 %) | — |
+| À différer | — | DEFERRED 320 | DEFERRED 320 |
+| Hors projet | — | OUTSIDE 144 492 (33,4 %) | OUTSIDE 144 492 (33,4 %) |
 | Non retenue (muette) | **0 : 217 954 (50,3 %)** + HC 6 659 | *(réparti ci-dessus)* | *(réparti ci-dessus)* |
 
-Lecture : la **moitié muette** de la V1 (« 0 ») se répartit en statuts nommés ; en
-**reconstruction**, **62,2 %** de l'île reçoit une « Capacité estimée » (un projet de remplacement
-existe dès que la zone autorise le logement), avec son **D_net signé**. Les bandes V2 conservation
-(parmi les 184 432 estimées) : A 5,5 % · B 30,3 % · C 34,1 % · D 30,0 %. Le **top 20 des changements
-de bande** (avec la raison) est dans `AVANT-APRES.md`.
+Lecture (honnête, P1) : la **moitié muette** de la V1 se répartit en statuts nommés ; la
+reconstruction ne **publie que les 4 342 capacités réellement chiffrées** (enrich Entre-Deux +
+Saint-Denis) — les **212 024 autres sont « Calcul à compléter »**, pas « estimées » par déduction.
+Le **TO_VERIFY conservation monte à 16,6 %** parce que la V2 refuse désormais de servir sans preuve
+les capacités d'assiette de repli (legacy, +≈ 33 k) et les portions AU au régime non établi. Bandes
+V2 conservation (parmi les estimées) : A 4,6 % · B 28,5 % · C 34,9 % · D 32,0 %.
 
 **Entre-Deux (6 341)** — faits saillants :
 
@@ -231,27 +273,36 @@ capacité servie vient d'une **portion minoritaire U/AU**. Mesures sur q_v20 :
 **gabarit** : le PPR rouge (64 % « HARD_EXCLUDE ») et l'EBC sont **découpés** ; l'emprise tombe à
 49 026 m² (21,6 % de la parcelle), sur la portion **AUm**. La capacité est **théorique et
 correctement clippée** ; le problème est l'**opacité** du produit servi (« zone N » + « Bonne » +
-« aléa rédhibitoire » sans dire d'où vient la capacité). La V2 **expose** (D9) : `zone_productive =
-{AUm, 89 365 m²}` et trois vigilances sourcées — « PPR zone rouge ~64 % — exclu de l'assiette
-(découpé au gabarit) », « EBC — construction interdite sur l'emprise boisée », « pente ~91 % —
-terrassement majeur, pas une exclusion ». Statut V2 : **Capacité estimée**.
+« aléa rédhibitoire » sans dire d'où vient la capacité). **3ᵉ passe (avis Astra §3)** : le statut
+passe de « Capacité estimée » à **« À vérifier »** (`HORIZON_INCONNU`) tant que le **régime AUm**
+n'est pas établi (aucune ligne `parcel_au_statut` ; l'adaptateur mettait `now` par défaut — ce n'est
+pas une preuve d'ouverture). La **capacité reste provisoire consultable** (R 44 117, C_rebuild
+44 123, E 6), `zone_productive = {AUm, 89 365 m²}` est exposée (D9), et les vigilances ne prétendent
+plus connaître le découpage : « PPR rouge **présent** ~64 % — assiette nette à vérifier », « EBC
+présent », « pente forte ~91 % (cascade) à rapprocher de la moyenne du Score ». Le **49 026 m²** est
+identifié : c'est l'`emprise_constructible_m2` du moteur (après CES/reculs sur l'assiette calculée),
+pas une assiette nette démontrée. La pente du Score est **31,5 % (moyenne RGE ALTI, 17,5°)**,
+distincte du **91 % (max de la couche cascade)** — métriques à ne pas confondre.
 
 **EI0085 — capacité SURESTIMÉE, corrigée.** L'assiette vient du chemin de **repli**
-(`residuel_legacy`), qui **n'est pas découpé** au gabarit (reculs + PPR rouge + EBC) malgré un PPR
-rouge sur 47 % et un EBC sur 39 %. Signe mesuré : l'emprise (14 417 m²) couvre **88 % de la portion
-Um** (16 353 m²), contre ~50 % pour EH0043 (gabarit) — le repli **sous-découpe**. La V2 **corrige** :
-`residuel_legacy` + contrainte rédhibitoire partielle ⇒ **calcul d'assiette douteux** → **Analyse à
-compléter** (À vérifier, cause `CALCUL_ASSIETTE_DOUTEUX`), au lieu de servir « Bonne » sur un chiffre
-non fiable. La vigilance nomme la cause : « assiette de repli non découpée + contrainte rédhibitoire
-partielle — surface productive et capacité à confirmer ».
+(`residuel_legacy`), non découpé au gabarit, avec PPR rouge 47 % et EBC 39 %. Signe mesuré :
+l'emprise (14 417 m²) couvre **88 % de la portion Um** (16 353 m²), contre ~50 % pour EH0043
+(gabarit) — le repli **sous-découpe**. **3ᵉ passe** : la règle legacy est élargie — **toute**
+capacité d'assiette de repli positive non qualifiée → **« À vérifier »** (`CALCUL_ASSIETTE_DOUTEUX`,
+chiffre provisoire consultable), pas seulement les cas PPR/EBC.
 
-**Cause racine, portée.** 53 923 parcelles du run servi (42 539 constructibles avec capacité)
-portent `assiette_source = residuel_legacy` — le gabarit n'a pas été calculé pour elles (gap de
-couverture RESIDUEL-1). La **correction de fond** (recalcul du gabarit pour ces parcelles) est un
-geste **au niveau du run** (moteur de faisabilité), hors de ce mandat « calcul + API isolé » ; la V2
-**refuse** entre-temps de servir le chiffre douteux comme une capacité sûre — exactement ce que
-demande la spec §9.3. Les parcelles `residuel_legacy` **sans** contrainte rédhibitoire restent
-« Capacité estimée » avec une vigilance « assiette de repli — à confirmer ».
+**Cause racine + double retrait (P3, `DOUBLE-RETRAIT.md`).** 53 923 parcelles du run servi portent
+`assiette_source = residuel_legacy` (gabarit non calculé — gap RESIDUEL-1). Au-delà de la
+sous-découpe, le repli soustrait **séparément** `union(ER, EBC)` puis `union(PPR rouge, PEB, DPF,
+ravine, 50 pas)` (`db.py:629` puis `638`) : là où ces ensembles **se chevauchent**, l'intersection
+est **soustraite deux fois** → l'emprise est **sous-estimée** (faux zéros possibles — le risque
+n'est donc pas que la surestimation). Mesure (échantillon 1 500 legacy, chevauchement prescription ∩
+PPR rouge) : **8,7 % de touchées → ≈ 4 709 parcelles** sur l'île, surface doublement soustraite
+médiane **261 m²** (max 156 430 m²), dont **≈ 30/1 500 → ~1 078 faux zéros potentiels**. La
+**correction de fond** (union globale des contraintes, ou soustractions successives sur le reliquat)
+est un geste **au niveau du moteur** (hors de ce mandat isolé), et les 9 087 legacy « Aucun ajout »
+**ne sont pas reclassés automatiquement**. La V2 **refuse** entre-temps de servir le chiffre legacy
+non qualifié comme une capacité sûre (→ « À vérifier »), chiffre provisoire consultable.
 
 ## 7. Préservation du Signal de mutation (D6, spec §12)
 
@@ -273,19 +324,26 @@ demande la spec §9.3. Les parcelles `residuel_legacy` **sans** contrainte rédh
 | Suite | Résultat |
 |---|---|
 | `test_algofix1_contrat.py` (26 contrats §13.2 + D4 complet, moteur pur) | **39 passed** |
-| `test_algofix1_protections.py` (4 protections + 2 bonus, réel q_v20) | **6 passed** |
+| `test_algofix1_astra.py` (7 vérifications ciblées §6, moteur pur) | **8 passed** |
+| `test_algofix1_protections.py` (4 protections + P4/P5 réels q_v20) | **8 passed** |
 | `test_algofix1_signal_intact.py` (Signal intact) | **3 passed** |
-| `test_algofix1_persist.py` (écrit = calculé ; endpoint-lecture, réel q_v20) | **4 passed** |
+| `test_algofix1_persist.py` (écrit=calculé ; effectifs/Signal/versions, réel q_v20) | **8 passed** |
+| `test_proxy_dev_couvre_routes_api.py` | **3 passed** |
 | Import `app` + route + boot uvicorn :9970 + curl (lecture persistée + enrich) | **OK** |
+
+**Décomposition à entrées constantes (`AVANT-APRES.md`)** — sur 416 957 parcelles calculables,
+l'**invariant est tenu : 0 parcelle** voit son score baisser en retirant le seul coefficient bâti.
+Les promotions de bande à R constant viennent du retrait du bâti (**B→A 5 529 · C→B 27 828 · D→C
+42 166 = 75 523**) puis du retrait du ×0,5 AU (≈ 660) — effet des coefficients **isolé** du recalcul
+de capacité et des changements de statut.
 
 **Validations encore manquantes** (honnêtes) :
 
 - La **réussite des tests pédagogiques n'est pas une validation produit** (rappel du mandat). Le
   moteur pur valide le contrat arithmétique et les statuts ; il ne valide ni le SIG ni le modèle ML.
 - **Reconstruction chiffrée (C/E/C_rebuild/D_net)** : persistée sur **Entre-Deux + Saint-Denis**
-  (enrich ≈ 80 ms/parcelle). Sur le reste de l'île, la **conservation** est persistée exactement et
-  le **statut** de reconstruction est dérivé ; les **quantités** de reconstruction y sont à
-  `enriched=false` — leur calcul île entière (~10 h mono-cœur) est le run de nuit (activation).
+  (enrich ≈ 80 ms/parcelle) ; ailleurs, le statut de reconstruction est **« Calcul à compléter »**
+  (jamais « estimé » déduit) et son chiffrage île entière (~10 h mono-cœur) est le run de nuit.
 - La **cause racine `residuel_legacy`** (gabarit non calculé pour 53 923 parcelles) se corrige au
   niveau du moteur de faisabilité (hors de ce mandat isolé) ; la V2 refuse entre-temps de servir le
   chiffre douteux (§6-bis).

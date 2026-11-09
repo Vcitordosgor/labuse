@@ -47,22 +47,31 @@ CREATE TABLE IF NOT EXISTS parcel_scenario_v2_runs (
   vigilance             jsonb,
   bande_v1              text,                         -- bande servie (comparaison avant/après)
   enriched              boolean NOT NULL DEFAULT false,
+  provenance            text,                         -- 'live' | 'cache' (P2 : provenance unique)
+  assiette_source       text,                         -- 'gabarit' | 'residuel_legacy', même calcul
   analysis_version      text,
+  score_version         text,                         -- version du barème ENREGISTRÉE avec le résultat
+  cascade_label         text,                         -- run cascade servi au calcul
   computed_at           timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (run_label, parcel_id, scenario)
 );
 CREATE INDEX IF NOT EXISTS parcel_scenario_v2_commune
   ON parcel_scenario_v2_runs (run_label, commune, scenario);
+ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS provenance text;
+ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS assiette_source text;
+ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS score_version text;
+ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS cascade_label text;
 """
 
 _UPSERT = text("""
 INSERT INTO parcel_scenario_v2_runs
   (run_label, parcel_id, idu, commune, scenario, status, cause, band, score, band_provisional,
    additional_m2, project_total_m2, existing_m2, net_signed_m2, conditional_future_m2, residual_m2,
-   zone_prod_zone, zone_prod_area_m2, vigilance, bande_v1, enriched, analysis_version)
+   zone_prod_zone, zone_prod_area_m2, vigilance, bande_v1, enriched, provenance, assiette_source,
+   analysis_version, score_version, cascade_label)
 VALUES
   (:run,:pid,:idu,:commune,:scn,:status,:cause,:band,:score,:bandp,
-   :add,:ptot,:exist,:net,:fut,:res,:zz,:za,:vig,:v1,:enr,:ver)
+   :add,:ptot,:exist,:net,:fut,:res,:zz,:za,:vig,:v1,:enr,:prov,:asrc,:ver,:sver,:clabel)
 ON CONFLICT (run_label, parcel_id, scenario) DO UPDATE SET
   idu=EXCLUDED.idu, commune=EXCLUDED.commune, status=EXCLUDED.status, cause=EXCLUDED.cause,
   band=EXCLUDED.band, score=EXCLUDED.score, band_provisional=EXCLUDED.band_provisional,
@@ -71,7 +80,9 @@ ON CONFLICT (run_label, parcel_id, scenario) DO UPDATE SET
   conditional_future_m2=EXCLUDED.conditional_future_m2, residual_m2=EXCLUDED.residual_m2,
   zone_prod_zone=EXCLUDED.zone_prod_zone, zone_prod_area_m2=EXCLUDED.zone_prod_area_m2,
   vigilance=EXCLUDED.vigilance, bande_v1=EXCLUDED.bande_v1, enriched=EXCLUDED.enriched,
-  analysis_version=EXCLUDED.analysis_version, computed_at=now()
+  provenance=EXCLUDED.provenance, assiette_source=EXCLUDED.assiette_source,
+  analysis_version=EXCLUDED.analysis_version, score_version=EXCLUDED.score_version,
+  cascade_label=EXCLUDED.cascade_label, computed_at=now()
 """)
 
 
@@ -87,16 +98,24 @@ def _as_int(x):
 
 
 def _rebuild_statut_sans_C(rec: v2.ScenarioRecord, keep_res) -> str:
-    """Statut de RECONSTRUCTION sans la magnitude de C (mode rapide). Il ne diffère de la
-    conservation que sur un point : une parcelle « Aucun ajout » en conservation (R=0 par
-    saturation, mais capacité de projet C_rebuild>0) devient « Capacité estimée » en reconstruction.
-    Une capacité réglementaire nulle (`capacite_nulle`) reste « Aucun ajout » dans les deux."""
-    if keep_res.status == "NO_MARGIN" and rec.cause_engine != "capacite_nulle":
-        return "ESTIMATED"
-    return keep_res.status
+    """Statut de RECONSTRUCTION sans la magnitude de C_rebuild (mode rapide). On ne DÉDUIT JAMAIS
+    « Capacité estimée » sans C/E/D_net calculés (avis Astra §5.A / P1) : tout statut qui exigerait
+    C passe en « Calcul à compléter » (COMPUTE_PENDING), distinct des problèmes de données.
+    Les statuts définitifs SANS C (hors projet, à vérifier, à différer, préétude, et le zéro
+    réglementaire `capacite_nulle`) sont conservés."""
+    if keep_res.status in ("OUTSIDE_OBJECTIVE", "TO_VERIFY", "DEFERRED", "PRESTUDY"):
+        return keep_res.status
+    if keep_res.status == "NO_MARGIN" and rec.cause_engine == "capacite_nulle":
+        return "NO_MARGIN"
+    return "COMPUTE_PENDING"       # ESTIMATED / NO_MARGIN-saturé : capacité à chiffrer
 
 
-def _row(run_label, pid, rec, bande_v1, res, scenario, enriched):
+def _tone(status):
+    return ("green" if status == "ESTIMATED" else "blue" if status == "PRESTUDY"
+            else "amber" if status in ("TO_VERIFY", "DEFERRED", "COMPUTE_PENDING") else "neutral")
+
+
+def _row(run_label, pid, rec, bande_v1, res, scenario, enriched, score_version, cascade_label):
     q = res.quantities
     zp = res.zone_portion or {}
     import json
@@ -109,7 +128,8 @@ def _row(run_label, pid, rec, bande_v1, res, scenario, enriched):
         "fut": _as_int(q["conditional_future"]), "res": _as_int(rec.residual_m2),
         "zz": zp.get("zone"), "za": _as_int(zp.get("area_m2")),
         "vig": json.dumps(res.vigilance, ensure_ascii=False), "v1": bande_v1,
-        "enr": enriched, "ver": v2.VERSION}
+        "enr": enriched, "prov": rec.provenance, "asrc": rec.assiette_source,
+        "ver": v2.VERSION, "sver": score_version, "clabel": cascade_label}
 
 
 def compute_scenarios_v2_batch(session: Session, parcel_ids: list[int], *,
@@ -120,6 +140,9 @@ def compute_scenarios_v2_batch(session: Session, parcel_ids: list[int], *,
     Idempotent (upsert). Renvoie un petit bilan."""
     run_label = run_label or runs.current()
     ensure_table(session)
+    from . import score_labuse as sl
+    _, score_version = sl.charger_bareme()
+    cascade_label = runs.cascade()
     bilan = {"parcelles": 0, "keep": 0, "rebuild": 0, "enriched": enrich}
     commune_by_id = {}
     for i in range(0, len(parcel_ids), chunk):
@@ -139,20 +162,24 @@ def compute_scenarios_v2_batch(session: Session, parcel_ids: list[int], *,
             if pid is None:
                 continue
             keep = v2.evaluate(rec, {"mode": "potential", "scenario": "keep"})
-            rk = _row(run_label, pid, rec, v1, keep, "keep", enrich)
+            rk = _row(run_label, pid, rec, v1, keep, "keep", enrich, score_version, cascade_label)
             rk["commune"] = commune_by_id.get(pid)
             rows.append(rk)
             bilan["keep"] += 1
             if enrich:
                 reb = v2.evaluate(rec, {"mode": "potential", "scenario": "rebuild"})
-                rr = _row(run_label, pid, rec, v1, reb, "rebuild", True)
+                rr = _row(run_label, pid, rec, v1, reb, "rebuild", True, score_version, cascade_label)
             else:
-                # Statut de reconstruction dérivé, quantités non chiffrées (enriched=false).
+                # Statut de reconstruction SANS chiffrer C : « Calcul à compléter » si C est requis
+                # (P1) — jamais « Capacité estimée » déduite. Quantités/bande nulles, cause distincte.
                 reb = v2.evaluate(rec, {"mode": "potential", "scenario": "keep"})  # base statut
                 reb.status = _rebuild_statut_sans_C(rec, keep)
-                reb.band = None
-                reb.quantities = {k: None for k in reb.quantities}
-                rr = _row(run_label, pid, rec, v1, reb, "rebuild", False)
+                if reb.status == "COMPUTE_PENDING":
+                    reb.cause_codes = ["RECONSTRUCTION_NON_CHIFFREE"]
+                    reb.band = None
+                    reb.band_provisional = None
+                    reb.quantities = {k: None for k in reb.quantities}
+                rr = _row(run_label, pid, rec, v1, reb, "rebuild", False, score_version, cascade_label)
             rr["commune"] = commune_by_id.get(pid)
             rows.append(rr)
             bilan["rebuild"] += 1
@@ -178,19 +205,40 @@ ORDER BY s.idu
 """)
 
 
+def _filtre(commune, idus):
+    """Clause SQL de sélection : commune ET IDU en INTERSECTION (jamais l'un OU l'autre — P6)."""
+    clauses, params = [], {}
+    if commune:
+        clauses.append("s.commune = :c")
+        params["c"] = commune
+    if idus:
+        clauses.append("s.idu = ANY(:i)")
+        params["i"] = list(idus)
+    return (" AND ".join(clauses) if clauses else "TRUE"), params
+
+
+def _signal_persiste(p, niveau, cascade_exclue) -> dict:
+    """Signal servi RELAYÉ, avec la MÊME validation que le moteur pur (avis Astra §5.D / P6) :
+    une valeur hors [0,1], NaN ou infinie n'est JAMAIS « disponible » et ne se classe jamais en tête."""
+    if p is None:
+        return {"status": "NOT_AVAILABLE", "p": None, "niveau": None,
+                "reason": "ECARTEE_ETAGE_0" if cascade_exclue else "SIGNAL_NON_CALCULE"}
+    if not v2._finite(p) or p < 0 or p > 1:
+        return {"status": "NOT_AVAILABLE", "p": None, "niveau": None,
+                "reason": "PROBABILITE_SERVIE_INVALIDE"}
+    return {"status": "AVAILABLE", "p": p, "niveau": niveau, "reason": "PROBABILITE_SERVIE"}
+
+
 def read_scenarios(session: Session, *, run_label: str, scenario: str,
                    commune: str | None = None, idus: list[str] | None = None) -> list[dict]:
-    """LIT les scénarios persistés (+ relaie le Signal servi depuis score_labuse). Aucun calcul."""
-    where, params = "TRUE", {"run": run_label, "scn": scenario}
-    if commune:
-        where, params["c"] = "s.commune = :c", commune
-    elif idus:
-        where, params["i"] = "s.idu = ANY(:i)", idus
+    """LIT les scénarios persistés (+ relaie le Signal servi, validé). Aucun calcul. Sélection =
+    commune ∩ IDU (P6)."""
+    where, params = _filtre(commune, idus)
+    params.update({"run": run_label, "scn": scenario})
     sql = text(str(_READ_SQL).replace("{where}", where))
     out = []
     for r in session.execute(sql, params):
         m = r._mapping
-        signal_eval = m["signal_p"] is not None
         out.append({
             "idu": m["idu"], "statut": m["status"], "cause": m["cause"], "bande": m["band"],
             "score": m["score"], "bande_provisoire": m["band_provisional"],
@@ -202,10 +250,7 @@ def read_scenarios(session: Session, *, run_label: str, scenario: str,
                                 if m["zone_prod_zone"] else None),
             "vigilance": m["vigilance"], "bande_v1": m["bande_v1"],
             "quantites_calculees": m["enriched"],
-            "signal": {"status": "AVAILABLE" if signal_eval else "NOT_AVAILABLE",
-                       "p": m["signal_p"], "niveau": m["signal_niveau"],
-                       "reason": None if signal_eval else
-                       ("ECARTEE_ETAGE_0" if m["cascade_exclue"] else "SIGNAL_NON_CALCULE")},
+            "signal": _signal_persiste(m["signal_p"], m["signal_niveau"], m["cascade_exclue"]),
         })
     return out
 
@@ -243,22 +288,32 @@ def analyse_payload_persiste(session: Session, *, run_label: str, mode: str, sce
                              sort: str | None, commune: str | None = None,
                              idus: list[str] | None = None, limit: int = 100, offset: int = 0,
                              as_of: str | None = None) -> dict:
-    """Réponse d'analyse V2 LUE de la table de run (l'endpoint ne calcule pas). Effectifs sur toute
-    la sélection, page triée, versions (spec §2.2), Signal relayé."""
-    from . import score_labuse as sl
-    _, score_version = sl.charger_bareme()
+    """Réponse d'analyse V2 LUE de la table de run (l'endpoint ne calcule pas). Effectifs sur
+    EXACTEMENT la sélection servie (commune ∩ IDU, avant pagination), Y COMPRIS en prospection (P6).
+    Versions ENREGISTRÉES avec le résultat (pas lues à la requête — P2)."""
     scn_read = "keep" if mode == "sale" else scenario
     rows = read_scenarios(session, run_label=run_label, scenario=scn_read,
                           commune=commune, idus=idus)
     sort = sort or ("signal" if mode == "sale" else "area" if scenario == "divide" else "capacity")
     ordered = _trier(rows, mode=mode, scenario=scn_read, sort=sort)
-    eff = (effectifs_persistes(session, run_label=run_label, scenario=scn_read, commune=commune)
-           if mode != "sale" else {"n": len(rows), "par_statut": {}, "par_bande": {}})
+    # Effectifs : en prospection, par état de Signal (D9) ; en potentiel, par statut/bande. Toujours
+    # sur le même ensemble que la liste (commune ∩ IDU).
+    if mode == "sale":
+        par_etat: dict = {}
+        for r in rows:
+            par_etat[r["signal"]["status"]] = par_etat.get(r["signal"]["status"], 0) + 1
+        eff = {"par_statut": par_etat, "par_bande": {}}
+    else:
+        eff = effectifs_persistes(session, run_label=run_label, scenario=scn_read,
+                                  commune=commune, idus=idus)
+    ver = _versions_servies(session, run_label, scn_read, commune, idus)
     page = ordered[offset:offset + limit]
     return {
-        "analysis_version": v2.VERSION, "scenario_engine_version": score_version,
+        "analysis_version": v2.VERSION,
+        "scenario_engine_version": ver.get("score_version"),
+        "cascade_run": ver.get("cascade_label"),
         "signal_recette": "q_v15", "signal_run": run_label, "run_servi": run_label,
-        "source_donnees": "run_persiste",
+        "source_donnees": "run_persiste", "provenance": ver.get("provenance"),
         "mode": mode, "scenario": scenario, "sort": sort, "as_of": as_of,
         "n_selection": len(rows),
         "effectifs": {"par_statut": eff["par_statut"], "par_bande": eff["par_bande"]},
@@ -267,12 +322,25 @@ def analyse_payload_persiste(session: Session, *, run_label: str, mode: str, sce
     }
 
 
+def _versions_servies(session, run_label, scenario, commune, idus) -> dict:
+    """Versions ENREGISTRÉES avec les résultats servis (pas la config lue à la requête — P2)."""
+    where, params = _filtre(commune, idus)
+    where = where.replace("s.commune", "commune").replace("s.idu", "idu")   # table sans alias
+    params.update({"run": run_label, "scn": scenario})
+    row = session.execute(text(
+        f"SELECT score_version, cascade_label, provenance FROM parcel_scenario_v2_runs "
+        f"WHERE run_label=:run AND scenario=:scn AND {where} LIMIT 1"), params).fetchone()
+    return ({"score_version": row[0], "cascade_label": row[1], "provenance": row[2]}
+            if row else {})
+
+
 def effectifs_persistes(session: Session, *, run_label: str, scenario: str,
-                        commune: str | None = None) -> dict:
-    """Effectifs par statut et par bande, lus de la table (tous les statuts dans les comptes)."""
-    where, params = "TRUE", {"run": run_label, "scn": scenario}
-    if commune:
-        where, params["c"] = "commune = :c", commune
+                        commune: str | None = None, idus: list[str] | None = None) -> dict:
+    """Effectifs par statut et par bande, lus de la table (tous les statuts dans les comptes), sur
+    EXACTEMENT la sélection (commune ∩ IDU — P6)."""
+    where, params = _filtre(commune, idus)
+    where = where.replace("s.commune", "commune").replace("s.idu", "idu")
+    params.update({"run": run_label, "scn": scenario})
     stat = session.execute(text(
         f"SELECT status, count(*) FROM parcel_scenario_v2_runs WHERE run_label=:run "
         f"AND scenario=:scn AND {where} GROUP BY status"), params).fetchall()

@@ -51,27 +51,25 @@ FROM parcels p WHERE p.id = ANY(:ids)
 
 
 def _diagnostic_geometrie(g: dict) -> dict:
-    """Constats géométriques (spec §9.3) — nomme la cause réelle, sans jamais conclure « terrain
-    trop étroit » d'une taille. `suspect=True` ⇒ le calcul d'assiette est douteux → À vérifier."""
-    constats, suspect = [], False
+    """Constats géométriques (spec §9.3). Distingue le DÉFAUT DUR (géométrie invalide — à traiter
+    quelle que soit la cause) des simples INDICES d'investigation (multipolygone, faible compacité)
+    qui ne sont PAS des preuves d'erreur (avis Astra §4). Ne conclut jamais « terrain trop étroit »
+    d'une taille, et n'affirme aucun retrait vérifié."""
+    constats, invalide = [], False
     if g.get("valide") is False:
-        constats.append("Géométrie invalide (auto-intersection ou anneau incohérent).")
-        suspect = True
+        constats.append("Géométrie invalide (auto-intersection ou anneau incohérent) — à traiter.")
+        invalide = True
     if (g.get("n_geom") or 1) > 1:
-        constats.append(f"Multipolygone ({g['n_geom']} composantes) : emprise fragmentée.")
-        suspect = True
+        constats.append(f"Multipolygone ({g['n_geom']} composantes) : indice (emprise fragmentée), "
+                        "pas une preuve d'erreur.")
     aire, perim = g.get("aire"), g.get("perim")
     if aire and perim and perim > 0:
         compacite = 4 * math.pi * aire / (perim * perim)       # 1 = disque ; →0 = très découpé
         g["compacite"] = round(compacite, 3)
         if compacite < 0.25:
-            constats.append(f"Contour très découpé (compacité {compacite:.2f}) : les reculs "
-                            "peuvent vider l'assiette utile sans que la parcelle soit « étroite ».")
-            suspect = True
-    if aire and aire > 1000 and suspect:
-        constats.append(f"Surface réelle {round(aire)} m² : « terrain trop étroit » serait trompeur "
-                        "— cause réelle à confirmer sur l'assiette après retraits.")
-    return {"constats": constats, "suspect": suspect, "compacite": g.get("compacite")}
+            constats.append(f"Contour très découpé (compacité {compacite:.2f}) : indice, pas une "
+                            "preuve que l'assiette utile soit vidée.")
+    return {"constats": constats, "invalide": invalide, "compacite": g.get("compacite")}
 
 
 def _signal_state(row: dict) -> dict:
@@ -171,85 +169,101 @@ def record_from_rows(sig: dict, ent: dict | None, geom: dict | None,
       · `assiette_source` — 'gabarit' (découpé) / 'residuel_legacy' (repli) ;
       · `zone_parts` — portions de zone [{zone, fam, pct}] (zone_dominante), si disponibles.
     """
-    cause = (ent or {}).get("cause") if ent else sig.get("cause")
-    au_classe = (ent or {}).get("au_classe")
-    el = _eligibilite(cause, bool(sig.get("cascade_exclue")), sig.get("cascade_motifs"))
-    contr = _contraintes_partielles(sig.get("cascade_motifs"))
     notes: list[str] = []
+    contr = _contraintes_partielles(sig.get("cascade_motifs"))
+    au_classe = (ent or {}).get("au_classe")      # parcel_au_statut.classe (hors run)
 
-    # Conservation : R caché (cache servi). Reconstruction : C/E si enrichi.
-    R = (ent or {}).get("sdp") if ent else sig.get("sdp_residuelle_m2")
+    # ── PROVENANCE UNIQUE (avis Astra §5.B / P2) : cause, assiette et quantités du MÊME calcul ──
+    # Enrichi ⇒ tout vient du calcul LIVE `compute_residuel` (jamais mélangé au cache). Rapide ⇒
+    # tout vient du cache servi. Le drapeau `prov` tracé est servi au résultat.
     C = E = None
-    if residuel and residuel.get("disponible"):
+    if residuel is not None and residuel.get("disponible"):
         C = residuel.get("sdp_max_m2")
         E = residuel.get("sdp_existante_m2")
-        if residuel.get("capacite_differee"):
-            au_classe = au_classe or "declasse_au_fermee"
+        R = residuel.get("sdp_residuelle_m2")
+        cause = None
+        eff_assiette = residuel.get("assiette_source")
+        prov = "live"
+    elif residuel is not None:                    # live mais non constructible
+        cause = residuel.get("cause")
+        R = residuel.get("sdp_ecrite")
+        eff_assiette = residuel.get("assiette_source") or assiette_source
+        prov = "live"
+    else:                                         # cache servi
+        cause = (ent or {}).get("cause") if ent else sig.get("cause")
+        R = (ent or {}).get("sdp") if ent else sig.get("sdp_residuelle_m2")
+        eff_assiette = assiette_source
+        prov = "cache"
 
-    # AU différée (D3/§9.1) : horizon « differed », capacité conditionnelle = R (ou C) calculé.
-    horizon = el["horizon"]
-    future = None
-    if au_classe in ("declasse_au_fermee", "declasse_au_statut_inconnu"):
-        horizon = "deferred"
-        future = C if C is not None else R
+    el = _eligibilite(cause, bool(sig.get("cascade_exclue")), sig.get("cascade_motifs"))
 
-    # terrain_exigu (D5) : diagnostic géométrique ; suspect ⇒ À vérifier, sinon cause précise.
-    geometry_status = el["geometry_status"]
-    diagnostic = None
-    if cause == "terrain_exigu" and geom is not None:
-        diag = _diagnostic_geometrie(geom)
-        diagnostic = diag
-        if diag["suspect"]:
-            geometry_status = "suspect"      # calcul d'assiette douteux → TO_VERIFY (sans règle de taille)
-        else:
-            # Assiette réellement vidée par les retraits sur une géométrie saine ⇒ aucun ajout,
-            # cause précise (jamais « terrain trop étroit » déduit d'une géométrie vide, spec §9.3).
-            R = 0 if R is None else R
-            diagnostic = {**diag, "cause_precise": "Aucune assiette obtenue après application des "
-                          "retraits identifiés."}
-
-    # capacite_nulle / saturation : R=0, scénario sans ajout (conservation) — rebuild via C/E enrichi.
-    if cause == "capacite_nulle":
-        R = 0 if R is None else R
-        if C is None:
-            C = 0.0
-
-    # Contraintes partielles (spec §9.2) — points de vigilance SOURCÉS.
-    if contr["ppr_rouge_pct"]:
-        if assiette_source == "gabarit":
-            notes.append(f"PPR zone rouge sur ~{round(contr['ppr_rouge_pct'])} % de la parcelle "
-                         "— exclu de l'assiette (découpé au gabarit) ; la capacité porte sur la "
-                         "portion restante.")
-        else:
-            notes.append(f"PPR zone rouge sur ~{round(contr['ppr_rouge_pct'])} % de la parcelle "
-                         "(aléa rédhibitoire) — vérifier le découpage de l'assiette.")
-    if contr["ebc"]:
-        notes.append("Espace boisé classé (EBC) — construction interdite sur l'emprise boisée "
-                     "(soustraite de l'assiette).")
-    if contr["pente_forte_pct"] and contr["pente_forte_pct"] >= 30:
-        notes.append(f"Pente forte (~{round(contr['pente_forte_pct'])} %) — terrassement et accès "
-                     "renchéris ; difficulté physique, pas une exclusion.")
-
-    # Correction `residuel_legacy` (RESIDUEL-1) : l'assiette de repli N'EST PAS découpée au gabarit
-    # (reculs + PPR rouge + EBC). Si une contrainte rédhibitoire PARTIELLE existe, la surface
-    # productive (et donc la capacité) peut être SURESTIMÉE → calcul douteux → À vérifier (§9.3).
-    calc_reliable, calc_doubt = True, None
-    if assiette_source == "residuel_legacy" and (contr["ppr_rouge_pct"] or contr["ebc"]):
-        calc_reliable = False
-        calc_doubt = ("Assiette calculée par chemin de repli (non découpée au gabarit), alors "
-                      "qu'une contrainte rédhibitoire partielle (PPR rouge / EBC) grève la parcelle "
-                      "— surface productive et capacité à confirmer.")
-    elif assiette_source == "residuel_legacy":
-        notes.append("Assiette calculée par chemin de repli (non découpée au gabarit) — surface "
-                     "productive à confirmer.")
-
-    # Portion productive (spec §9.2 / D9) : parts CONSTRUCTIBLES (U/AU), surface = pct × aire.
+    # Portion productive (spec §9.2 / D9) : parts CONSTRUCTIBLES (U/AU) ; surface = pct × aire.
     aire = (ent or geom or {}).get("aire")
-    zp = None
+    zp, prod_fam = None, None
     if zone_parts:
-        zp = [{"zone": p.get("zone"), "area_m2": round((p.get("pct") or 0) / 100.0 * (aire or 0)),
+        zp = [{"zone": p.get("zone"), "fam": p.get("fam"),
+               "area_m2": round((p.get("pct") or 0) / 100.0 * (aire or 0)),
                "constructible": (p.get("fam") in ("U", "AU"))}
               for p in zone_parts]
+        constr = [p for p in zp if p["constructible"] and p["area_m2"]]
+        if constr:
+            prod_fam = max(constr, key=lambda p: p["area_m2"])["fam"]
+
+    # ── HORIZON (avis Astra §4/§3 — P4/P5) ──────────────────────────────────────────────────────
+    #  · `declasse_au_fermee` (AU fermée établie) → À différer.
+    #  · `declasse_au_statut_inconnu` → horizon INCONNU (jamais « À différer » ; reste à vérifier).
+    #  · capacité portée par une portion AU SANS régime établi (pas de `parcel_au_statut`, ouverture
+    #    / OAP / conditions d'équipement non prouvées) → horizon INCONNU (cas EH0043).
+    horizon = el["horizon"]
+    future = None
+    if au_classe == "declasse_au_fermee":
+        horizon = "deferred"
+        future = C if C is not None else R
+    elif au_classe == "declasse_au_statut_inconnu":
+        horizon = "unknown"
+    elif prod_fam == "AU" and not au_classe and horizon == "now":
+        horizon = "unknown"
+        notes.append("La capacité repose sur une portion AU (à urbaniser) dont le régime (ouverture, "
+                     "OAP, conditions d'équipement) n'est pas établi — disponibilité actuelle à vérifier.")
+
+    # ── GÉOMÉTRIE : un défaut DUR (invalide) est traité QUELLE QUE SOIT la cause (P4) ───────────
+    geometry_status = el["geometry_status"]
+    diagnostic = _diagnostic_geometrie(geom) if geom is not None else None
+    if diagnostic and diagnostic["invalide"]:
+        geometry_status = "suspect"
+
+    # ── terrain_exigu : assiette non obtenue → calcul douteux. Métriques = INDICES, jamais une
+    # affirmation de retraits vérifiés ; on ne force pas R à 0 (P4, avis Astra §4). ──────────────
+    calc_reliable, calc_doubt = True, None
+    if cause == "terrain_exigu":
+        calc_reliable = False
+        calc_doubt = ("Assiette non obtenue par le moteur (terrain exigu) — métriques géométriques "
+                      "indicatives ; les retraits ne sont pas tracés, surface productive à confirmer.")
+
+    if cause == "capacite_nulle" and C is None:
+        C = 0.0
+
+    # ── Contraintes partielles (spec §9.2) — vigilances SOURCÉES, SANS prétendre connaître le
+    # découpage réel (P4, avis Astra §3.2 : aucun texte « découpé/soustrait » dérivé du nom du
+    # chemin ; on signale la PRÉSENCE de la contrainte, l'assiette nette restant à vérifier). ────
+    if contr["ppr_rouge_pct"]:
+        notes.append(f"PPR zone rouge présent sur ~{round(contr['ppr_rouge_pct'])} % de la parcelle "
+                     "(aléa rédhibitoire) — assiette nette de la portion productive à vérifier.")
+    if contr["ebc"]:
+        notes.append("Espace boisé classé (EBC) présent — emprise boisée inconstructible ; part dans "
+                     "la portion productive à vérifier.")
+    if contr["pente_forte_pct"] and contr["pente_forte_pct"] >= 30:
+        notes.append(f"Pente forte signalée (~{round(contr['pente_forte_pct'])} % en cascade) — "
+                     "difficulté physique, pas une exclusion ; à rapprocher de la pente moyenne du Score.")
+
+    # ── Legacy (P3, avis Astra §2) : TOUTE capacité d'assiette de repli NON QUALIFIÉE est À
+    # VÉRIFIER (chiffre provisoire consultable). L'absence de PPR/EBC dans les motifs ne prouve PAS
+    # que le repli est correct ; seule une assiette `gabarit` (ou une version qualifiée) qualifie. ─
+    if eff_assiette == "residuel_legacy" and (R or 0) > 0 and calc_reliable:
+        calc_reliable = False
+        calc_doubt = ("Assiette calculée par un chemin de repli non qualifié (`residuel_legacy`) — "
+                      "capacité provisoire à confirmer (version et opérations réellement appliquées "
+                      "non établies ici).")
 
     rec = v2.ScenarioRecord(
         id=sig["idu"],
@@ -277,6 +291,8 @@ def record_from_rows(sig: dict, ent: dict | None, geom: dict | None,
         cause_engine=cause,
         diagnostic=diagnostic,
         notes=notes,
+        provenance=prov,
+        assiette_source=eff_assiette,
         **_signal_state(sig))
     return rec, (sig.get("bande") or "")
 

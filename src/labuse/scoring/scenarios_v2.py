@@ -39,6 +39,7 @@ VERSION = "ALGO-LABUSE-2-1.0"
 LABELS = {
     "ESTIMATED": "Capacité théorique estimée",
     "PRESTUDY": "Préétude à mener",
+    "COMPUTE_PENDING": "Calcul à compléter",        # quantités du scénario pas encore calculées
     "TO_VERIFY": "Analyse à compléter",
     "DEFERRED": "À différer",
     "NO_MARGIN": "Aucun ajout identifié",
@@ -55,7 +56,8 @@ SIGNAL_LABELS = {
 # de travail distinctes, pas des « moins bonnes » : la hiérarchie est AFFICHÉE, pas cachée.
 GROUP_ORDER = {
     "ESTIMATED": 0, "PRESTUDY": 0,
-    "TO_VERIFY": 1, "DEFERRED": 2, "NO_MARGIN": 3, "OUTSIDE_OBJECTIVE": 4,
+    "COMPUTE_PENDING": 1,                            # file de travail « à chiffrer » (≠ données)
+    "TO_VERIFY": 2, "DEFERRED": 3, "NO_MARGIN": 4, "OUTSIDE_OBJECTIVE": 5,
 }
 SIGNAL_GROUP_ORDER = {
     "SIGNAL_AVAILABLE": 0, "SIGNAL_TO_VERIFY": 1,
@@ -139,6 +141,8 @@ class ScenarioRecord:
     cause_engine: str | None = None            # cause brute du moteur, pour la traçabilité
     diagnostic: dict | None = None             # diagnostic géométrique (terrain exigu, D5)
     notes: list | None = None                  # vigilances pré-constituées par l'adaptateur
+    provenance: str = "cache"                  # 'live' (calcul unique) / 'cache' (run servi)
+    assiette_source: str | None = None         # 'gabarit' / 'residuel_legacy', du MÊME calcul
 
 
 @dataclass
@@ -311,7 +315,19 @@ def _inspect_bound(bound, central) -> dict:
     return {"present": True, "min": bmin, "max": bmax, "source": src}
 
 
-# ── moteur ───────────────────────────────────────────────────────────────────
+# ── portion productive + quantités provisoires (consultables même en « À vérifier ») ─────────
+def _zone_portion(rec: ScenarioRecord) -> dict | None:
+    """Spec §9.2 / D9 : la portion CONSTRUCTIBLE (U/AU) qui produit la capacité, pas la majoritaire."""
+    if rec.zone_parts:
+        constr = [p for p in rec.zone_parts if p.get("constructible") and _nonneg(p.get("area_m2"))]
+        if constr:
+            prod = max(constr, key=lambda p: p.get("area_m2") or 0)
+            return {"zone": prod.get("zone"), "area_m2": prod.get("area_m2")}
+    if rec.zone_main:
+        return {"zone": rec.zone_main, "area_m2": rec.area_m2}
+    return None
+
+
 def evaluate(record, options=None) -> ScenarioResult:
     opts = _options(options)
     rec = record if isinstance(record, ScenarioRecord) else ScenarioRecord(**dict(record or {}))
@@ -325,7 +341,8 @@ def evaluate(record, options=None) -> ScenarioResult:
                     "net_signed": None, "conditional_future": None},
         bounds=None, band=None, score=None, band_provisional=None,
         cause_codes=[], vigilance=list(rec.notes or []), zone_portion=None,
-        signal=signal, rank_value=None, band_rank=_BANDE_RANG["NC"])
+        signal=signal, rank_value=None, band_rank=_BANDE_RANG["NC"],
+        details={"provenance": rec.provenance, "assiette_source": rec.assiette_source})
 
     def cause(code):
         if code and code not in res.cause_codes:
@@ -410,6 +427,28 @@ def evaluate(record, options=None) -> ScenarioResult:
                       "GEOMETRIE_SUSPECTE" if rec.geometry_status == "suspect"
                       else "GEOMETRIE_INDISPONIBLE")
 
+    # Portion productive calculée tôt : disponible pour TOUS les statuts suivants (D9).
+    res.zone_portion = _zone_portion(rec)
+    if rec.zone_parts:
+        res.details["zone_parts"] = rec.zone_parts
+
+    def provisoire():
+        """Rend consultables, SANS les servir comme sûres, les quantités et la bande provisoire
+        d'une ligne « À vérifier » (avis Astra : chiffre provisoire consultable)."""
+        C, E, R = rec.capacity_rebuild_m2, rec.existing_m2, rec.residual_m2
+        if _present(C):
+            res.quantities["project_total"] = C
+        if _present(E):
+            res.quantities["existing"] = E
+        if _present(C) and _present(E):
+            res.quantities["net_signed"] = C - E
+        q = (R if _nonneg(R) else (max(0.0, C - E) if _present(C) and _present(E) else None))
+        if _nonneg(q):
+            res.quantities["additional"] = q
+            _, bande, _score = _bande_sensible_a_inconnue(q, rec, bareme)
+            res.band_provisional = bande
+            res.details["bande_provisoire"] = bande
+
     # 2. Preuve suffisante d'incompatibilité POUR CE projet (logement). Une simple famille de
     #    zone ou une absence de donnée n'est pas cette preuve (spec §5.1).
     if rec.eligibility == "incompatible":
@@ -433,6 +472,7 @@ def evaluate(record, options=None) -> ScenarioResult:
         vig("Capacité conditionnelle ; aucune date d'ouverture ni disponibilité actuelle inventée.")
         return finish("DEFERRED", "DISPONIBILITE_DIFFEREE")
     if rec.horizon != "now":
+        provisoire()                      # capacité provisoire + bande provisoire consultables
         return finish("TO_VERIFY", "HORIZON_INCONNU")
 
     # 8/§7.3. Division pour logement en repérage ⇒ préétude (la hauteur manquante ne bloque pas ;
@@ -448,28 +488,14 @@ def evaluate(record, options=None) -> ScenarioResult:
     if not rec.calc_reliable:
         if rec.calc_doubt_reason:
             vig(rec.calc_doubt_reason)
-        if _nonneg(rec.residual_m2):
-            res.quantities["additional"] = rec.residual_m2
+        provisoire()                      # chiffre provisoire consultable, jamais servi comme sûr
         return finish("TO_VERIFY", "CALCUL_ASSIETTE_DOUTEUX")
 
     # 4. Entrées critiques propres au scénario de capacité.
     if rec.height_status == "missing" and rec.height_required is not False:
         return finish("TO_VERIFY", "HAUTEUR_CRITIQUE_ABSENTE")
 
-    # Portion productive identifiable (spec §9.2 / D9) : zone + surface qui produisent la capacité.
-    # Le zonage MAJORITAIRE n'est pas nécessairement celui de la portion productive : on retient la
-    # portion CONSTRUCTIBLE (marquée par l'adaptateur), pas la plus grande.
-    if rec.zone_parts:
-        constructibles = [pp for pp in rec.zone_parts
-                          if pp.get("constructible") and _nonneg(pp.get("area_m2"))]
-        prod = (max(constructibles, key=lambda pp: pp.get("area_m2") or 0)
-                if constructibles else None)
-        if prod:
-            res.zone_portion = {"zone": prod.get("zone"), "area_m2": prod.get("area_m2")}
-            res.details["zone_parts"] = rec.zone_parts
-    elif rec.zone_main:
-        res.zone_portion = {"zone": rec.zone_main, "area_m2": rec.area_m2}
-
+    # Portion productive déjà posée plus haut (res.zone_portion) — rien à recalculer ici.
     if opts["scenario"] == "keep":
         return _finish_keep(rec, opts, res, bareme, cause, vig, finish)
     return _finish_rebuild(rec, opts, res, bareme, cause, vig, finish)

@@ -81,14 +81,57 @@ def test_endpoint_lecture_contrat_et_effectifs(db_session):
     assert pl["source_donnees"] == "run_persiste"
     assert pl["n_selection"] > 6000
     assert sum(pl["effectifs"]["par_statut"].values()) == pl["n_selection"]
-    # Tri D10 : groupe de statut croissant, puis quantité décroissante dans ESTIMATED.
-    est = [p for p in pl["parcelles"] if p["statut"] == "ESTIMATED" and p["quantites"]["additional"]]
-    vals = [p["quantites"]["additional"] for p in est]
-    assert vals == sorted(vals, reverse=True) or len(vals) < 2
+    # Tri D10 : groupe de statut, puis BANDE, puis quantité décroissante DANS la bande.
+    vals_A = [p["quantites"]["additional"] for p in pl["parcelles"]
+              if p["statut"] == "ESTIMATED" and p["bande"] == "A" and p["quantites"]["additional"]]
+    assert vals_A == sorted(vals_A, reverse=True)       # quantité décroissante au sein de la bande A
     # contrat par parcelle présent
     p0 = pl["parcelles"][0]
     for k in ("idu", "statut", "cause", "bande", "quantites", "vigilance", "signal"):
         assert k in p0
+
+
+# ── P6 — effectifs sur EXACTEMENT la sélection (commune ∩ IDU), avant pagination ────────────────
+def test_effectifs_sur_selection_idu(db_session):
+    idus = [r[0] for r in db_session.execute(text(
+        "SELECT idu FROM parcel_scenario_v2_runs WHERE run_label='q_v20' AND scenario='keep' "
+        "AND commune='Entre-Deux' ORDER BY idu LIMIT 3"))]
+    pl = persist.analyse_payload_persiste(
+        db_session, run_label="q_v20", mode="potential", scenario="keep", sort="capacity",
+        idus=idus, limit=50, offset=0)
+    assert pl["n_selection"] == len(idus)                       # pas les effectifs de l'île
+    assert sum(pl["effectifs"]["par_statut"].values()) == len(idus)
+
+
+def test_commune_et_idu_en_intersection(db_session):
+    idus = [r[0] for r in db_session.execute(text(
+        "SELECT idu FROM parcel_scenario_v2_runs WHERE run_label='q_v20' AND scenario='keep' "
+        "AND commune='Entre-Deux' ORDER BY idu LIMIT 2"))]
+    # mêmes IDU mais commune DIFFÉRENTE → intersection vide
+    pl = persist.analyse_payload_persiste(
+        db_session, run_label="q_v20", mode="potential", scenario="keep", sort="capacity",
+        commune="Saint-Denis", idus=idus, limit=50, offset=0)
+    assert pl["n_selection"] == 0
+
+
+def test_effectifs_en_prospection(db_session):
+    pl = persist.analyse_payload_persiste(
+        db_session, run_label="q_v20", mode="sale", scenario="keep", sort="signal",
+        commune="Entre-Deux", limit=50, offset=0)
+    assert sum(pl["effectifs"]["par_statut"].values()) == pl["n_selection"]   # comptés aussi en vente
+    # Signal invalide jamais en tête : la première page triée n'a pas de p hors [0,1].
+    for p in pl["parcelles"][:10]:
+        if p["signal"]["status"] == "AVAILABLE":
+            assert 0 <= p["signal"]["p"] <= 1
+
+
+def test_versions_enregistrees_avec_le_resultat(db_session):
+    pl = persist.analyse_payload_persiste(
+        db_session, run_label="q_v20", mode="potential", scenario="keep", sort="capacity",
+        commune="Entre-Deux", limit=1, offset=0)
+    assert pl["scenario_engine_version"]                        # version PERSISTÉE, pas None
+    assert pl["cascade_run"]
+    assert pl["provenance"] in ("live", "cache")
 
 
 def test_signal_lu_egale_signal_servi(db_session):

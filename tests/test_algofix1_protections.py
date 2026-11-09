@@ -116,10 +116,35 @@ def test_reconstruction_parcelle_saturee_gain_net_negatif(db_session):
     assert r.quantities["project_total"] is not None and r.quantities["existing"] is not None
 
 
-# ── bonus — terrain_exigu de 11 ha : plus « trop étroit », diagnostic réel (D5) ─
-def test_terrain_exigu_grande_parcelle_diagnostic(db_session):
-    rec, v1, r = _eval(db_session, "97403000AL0258")   # 113 832 m², V1 « 0 » terrain_exigu
+# ── P4 bis — terrain_exigu de 11 ha hard-exclu : la vraie cause (Parc National), pas « trop étroit » ─
+def test_terrain_exigu_grande_parcelle_hard_exclue(db_session):
+    # 97403000AL0258 (113 832 m²) est dans le CŒUR DE PARC NATIONAL (UNESCO) + PPR rouge 100 % +
+    # forêt domaniale + pente 133 % : « terrain trop étroit » était trompeur ; la vraie cause est
+    # une exclusion dure prouvée → Hors de ce projet (avis Astra §4 : géométrie/indices ≠ verdict).
+    rec, v1, r = _eval(db_session, "97403000AL0258")
     assert rec.cause_engine == "terrain_exigu"
-    assert r.status == "TO_VERIFY"                      # calcul d'assiette douteux (sans règle de taille)
+    assert r.status == "OUTSIDE_OBJECTIVE"
+    assert "trop étroit" not in " ".join(r.vigilance)   # le mot faux n'est jamais servi
+
+
+# ── P4 ter — terrain_exigu SANS exclusion dure : À vérifier, métriques = INDICES (pas « retraits ») ─
+def test_terrain_exigu_sans_exclusion_a_verifier(db_session):
+    rec, v1, r = _eval(db_session, "97415000AB0732")   # 82 254 m², terrain_exigu, non hard-exclu
+    assert rec.cause_engine == "terrain_exigu"
+    assert r.status == "TO_VERIFY"
+    assert r.cause_codes == ["CALCUL_ASSIETTE_DOUTEUX"]
     joined = " ".join(r.vigilance)
-    assert "trop étroit" in joined and "trompeur" in joined   # le mot faux est explicitement récusé
+    assert "trop étroit" not in joined                 # jamais déduit d'une taille
+    assert "retraits ne sont pas tracés" in joined     # métriques = indices, pas une preuve de retraits
+
+
+# ── P5 — EH0043 : capacité sur portion AU sans régime établi → À vérifier, provisoire consultable ─
+def test_eh0043_au_non_etabli_a_verifier(db_session):
+    rec, v1, r = _eval(db_session, "97411000EH0043", scenario="keep")
+    assert v1 == "B"                                    # V1 servait « Bonne »
+    assert r.status == "TO_VERIFY"
+    assert r.cause_codes == ["HORIZON_INCONNU"]         # régime AUm non établi (pas « À différer »)
+    assert r.band is None and r.band_provisional is not None   # pas de bande ferme ; provisoire au détail
+    assert r.quantities["additional"] is not None       # capacité provisoire CONSULTABLE
+    assert r.zone_portion and r.zone_portion["zone"] == "AUm"   # portion productive exposée (D9)
+    assert any("régime" in m for m in r.vigilance)

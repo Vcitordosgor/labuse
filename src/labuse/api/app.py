@@ -3292,18 +3292,22 @@ def analyse_scenarios(
     from ..scoring import scenarios_v2_build as _sv2
     from ..scoring import scenarios_v2_persist as _persist
     run_label = source or runs.current()
-    wanted = None
-    if commune:
-        ids = _sv2.parcel_ids_for_commune(db, commune, run_label=run_label)
-    elif idus:
-        wanted = [i.strip() for i in idus.split(",") if i.strip()]
-        if not wanted:
-            raise HTTPException(status_code=400, detail="aucun IDU fourni")
-        ids = [r[0] for r in db.execute(text("SELECT id FROM parcels WHERE idu = ANY(:i)"),
-                                        {"i": wanted})]
-    else:
+    # Sélection = commune ∩ IDU (P6 / avis Astra §5.C) : les deux filtres s'appliquent ensemble.
+    wanted = [i.strip() for i in idus.split(",") if i.strip()] if idus else None
+    if idus and not wanted:
+        raise HTTPException(status_code=400, detail="aucun IDU fourni")
+    if not commune and not wanted:
         raise HTTPException(status_code=400, detail="préciser ?commune=… ou ?idus=…")
     if enrich:
+        sql = "SELECT sl.id FROM parcels sl JOIN score_labuse s ON s.parcel_id=sl.id WHERE s.run_label=:r"
+        p = {"r": run_label}
+        if commune:
+            sql += " AND s.commune=:c"
+            p["c"] = commune
+        if wanted:
+            sql += " AND sl.idu = ANY(:i)"
+            p["i"] = wanted
+        ids = [r[0] for r in db.execute(text(sql), p)]
         if len(ids) > 500:
             raise HTTPException(status_code=413,
                                 detail="enrich limité à 500 parcelles par requête (coût live C/E)")
