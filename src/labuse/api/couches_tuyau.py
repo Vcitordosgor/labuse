@@ -64,6 +64,12 @@ _RESOLUTION_OVERRIDE: dict[str, list[tuple[str, tuple[str, ...] | None]]] = {
     "alea_mvt": [("georisque_alea", ("mouvement_terrain",))],
     # TCSP : une couche-front, trois morceaux stockés (zone + tronçons en site propre + stations).
     "tcsp": [("tcsp_zone", None), ("tcsp_troncon", ("site_propre",)), ("tcsp_station", None)],
+    # VERIF-FIX-1 (Q2) — pôles d'échange : la déclaration YAML peint UNIQUEMENT le subtype `osm`
+    # (gares routières/stations sourcées ; les pôles `gtfs` dérivés étaient à opacité 0 côté legacy).
+    # Le `filtre subtype=osm` du YAML n'était qu'un filtre de rendu FRONT, jamais appliqué à la source :
+    # le tuyau servait les 61 lignes (osm 42 + gtfs 19). On applique la résolution à la source → 42 osm,
+    # conforme à la déclaration, et le verrou lit la même résolution (cohérent).
+    "pole_echange": [("pole_echange", ("osm",))],
     # COUCHES-RECETTE-2 (retour) : la couche « Équipements OSM » ne montre QUE les aménités typées
     # (couleur + icône) ; les sous-types tcsp/sport (12 000 points, doublons de Transport/Sport) sont
     # EXCLUS — sinon la vue rue est un tapis de points gris sans icône. Filtre à la source (le verrou

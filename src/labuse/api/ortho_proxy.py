@@ -49,9 +49,26 @@ MER_HEX = "#0A3B59"
 #: servis en direct sans ingestion. La seule ortho INGÉRÉE (table locale ortho_detections/tiles)
 #: est BD ORTHO 20 cm 2025 (id 61) ; SCAN50 1950 (id 155) et EduGéo (id 156) ont leurs lignes
 #: propres. Aucune donnée servie hors liste : le fond est un flux hub, pas une mesure inventée.
+# VERIF-FIX-1 (Q3) — la couche « Actuelle » n'est PLUS codée en dur : son identifiant WMTS IGN est une
+# config overridable (env `LABUSE_ORTHO_EXPRESS`), de sorte qu'une bascule de millésime (ou le nouveau
+# nommage IGN `RVB-EXPRESS.*` à partir de 2026) se fasse SANS toucher au code. La sentinelle (méthode
+# `ortho`, cf. sentinelle.sonder_ortho) détecte la publication d'une ortho plus récente POUR LA RÉUNION
+# et la signale dans la page Données ; Vic promeut la couche en changeant cette seule valeur.
+import os as _os
+ORTHO_EXPRESS_SERVIE = _os.environ.get(
+    "LABUSE_ORTHO_EXPRESS", "ORTHOIMAGERY.ORTHOPHOTOS.ORTHO-EXPRESS.2025")
+
+
+def annee_ortho_servie() -> int | None:
+    """L'année du millésime ortho « Actuelle » réellement servi (depuis l'identifiant de couche)."""
+    import re as _re
+    m = _re.search(r"(20\d{2})", ORTHO_EXPRESS_SERVIE)
+    return int(m.group(1)) if m else None
+
+
 _COUCHES: dict[str, tuple[str, str]] = {
     "monde":   ("ORTHOIMAGERY.ORTHOPHOTOS", "image/jpeg"),
-    "express": ("ORTHOIMAGERY.ORTHOPHOTOS.ORTHO-EXPRESS.2025", "image/jpeg"),
+    "express": (ORTHO_EXPRESS_SERVIE, "image/jpeg"),
     "1950":    ("ORTHOIMAGERY.ORTHOPHOTOS.1950-1965", "image/png"),
     "2000":    ("ORTHOIMAGERY.ORTHOPHOTOS2000-2005", "image/jpeg"),
     "2006":    ("ORTHOIMAGERY.ORTHOPHOTOS2006-2010", "image/jpeg"),

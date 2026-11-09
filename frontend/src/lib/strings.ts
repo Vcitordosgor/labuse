@@ -315,7 +315,7 @@ export const CLIENT = {
     titre: 'Comprendre l’analyse',
     classement: {
       h: '1 · Le classement LABUSE',
-      p: 'La bande dit le potentiel constructible RÉEL de la parcelle : ce que le PLU autorise encore à bâtir, une fois retirées les contraintes (zonage, risques, accès, terrain) et vérifiée la faisabilité.',
+      p: 'La bande dit le potentiel constructible RÉEL de la parcelle : ce que le PLU autorise encore à bâtir, une fois retirées les contraintes de zonage et de risques, puis vérifiée la faisabilité du terrain (accès, pente, forme).',
       bandes: [
         { label: 'Excellente', d: 'le meilleur potentiel constructible' },
         { label: 'Bonne', d: 'un potentiel solide' },
@@ -329,7 +329,7 @@ export const CLIENT = {
     },
     signal: {
       h: '2 · Le signal de mutation',
-      p: 'Des signes que la parcelle pourrait bouger dans les 12 mois (mise en vente, succession, société en difficulté…), résumés en Fort, Moyen ou Faible. C’est un indice, pas une promesse — et il ne change JAMAIS la bande : une parcelle Excellente à signal Faible reste Excellente. Il sert seulement à départager les parcelles d’une même bande.',
+      p: 'Des signes que la parcelle pourrait bouger dans les 12 mois (rotation des ventes du secteur, ancienneté de détention, ancienneté du dernier permis, sous-densité du bâti…), résumés en Fort, Moyen ou Faible. C’est un indice, pas une promesse — et il ne change JAMAIS la bande : une parcelle Excellente à signal Faible reste Excellente. Il sert seulement à départager les parcelles d’une même bande.',
     },
     logique: {
       h: '3 · La logique de l’analyse',

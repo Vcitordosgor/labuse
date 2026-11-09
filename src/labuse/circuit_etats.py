@@ -336,6 +336,14 @@ def etat_reservoir(r: dict) -> tuple[str, str]:
     #     sonde amont câblée) n'« attend » aucun agent — elle est « à jour » par construction, comme
     #     les sources sans millésime (0). Fini le « 11 » du circuit ≠ « 4 » de /admin/sources : un
     #     seul moteur, un seul nombre.
+    # (3bis) À VÉRIFIER (échéance de revue dépassée) — VERIF-FIX-1 (Q2). Une couche carte dont la
+    #     donnée RÉELLE (millésime, pas la synchro) a dépassé sa fenêtre de revue : une nouvelle édition
+    #     amont existe peut-être (DPF 2006, trait de côte 2018, HTA 2020, parc national 2021, bruit 2022…).
+    #     Ambre (à regarder), PAS rouge : la donnée servie reste valable, c'est un rappel de vérification.
+    #     Passe APRÈS « nouvelle version » (plus actionnable) et « sonde en panne » (signal technique).
+    if r.get("echeance_depassee"):
+        return ("ambre", "à vérifier")
+
     from .etats_sources import est_surveillee
     if est_surveillee(veille.get("methode"), veille.get("actif")) and statut in (None, ""):
         return ("gris", "jamais vérifiée")
@@ -346,12 +354,13 @@ def etat_reservoir(r: dict) -> tuple[str, str]:
     return ("mint", "à jour")
 
 
-#: CIRCUIT-P4 (lot 1) — les CINQ libellés d'état, dans l'ordre d'affichage des pastilles (Sources).
+#: CIRCUIT-P4 (lot 1) — les libellés d'état, dans l'ordre d'affichage des pastilles (Sources).
+#: VERIF-FIX-1 (Q2) — « à vérifier » (échéance de revue dépassée) s'ajoute aux cinq historiques.
 ETATS_SOURCE: tuple[str, ...] = (
-    "à jour", "nouvelle version", "échue", "jamais vérifiée", "sonde en panne")
+    "à jour", "nouvelle version", "à vérifier", "échue", "jamais vérifiée", "sonde en panne")
 #: couleur canonique de chaque libellé (pour l'onglet Sources et ses pastilles).
 COULEUR_ETAT: dict[str, str] = {
-    "à jour": "mint", "nouvelle version": "ambre", "échue": "ambre",
+    "à jour": "mint", "nouvelle version": "ambre", "à vérifier": "ambre", "échue": "ambre",
     "jamais vérifiée": "gris", "sonde en panne": "rouge"}
 
 

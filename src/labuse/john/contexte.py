@@ -101,18 +101,31 @@ def sources(db) -> dict:
     et la CLASSE A/B (qui décide si l'injection est automatique ou attend Vic)."""
     try:
         from ..autonomie import classe_source
+        from .. import echeances_couches as _ech
         rows = db.execute(text(
             "SELECT d.id, d.name, d.category, d.status, d.source_millesime, d.source_horizon_at,"
             "       d.source_cadence, COALESCE(d.affichage_desactive, false) AS off,"
             "       v.dernier_statut, v.dernier_vu, v.dernier_passage_at, v.echecs_consecutifs,"
-            "       v.actif AS veille_active"
+            "       v.actif AS veille_active, v.methode AS veille_methode"
             " FROM data_sources d LEFT JOIN source_veille v ON v.source_id = d.id"
             " ORDER BY d.name")).mappings().all()
+        # VERIF-FIX-1 (Q2) — les sources qui alimentent la carte (pour l'échéance de revue).
+        _couche_sids = {r[0] for r in db.execute(text(
+            "SELECT DISTINCT data_source_id FROM spatial_layers WHERE data_source_id IS NOT NULL")).all()}
     except Exception as exc:  # noqa: BLE001
         return _indispo(exc)
-    out, nouvelles, en_panne = [], [], []
+    out, nouvelles, en_panne, a_verifier = [], [], [], []
     for r in rows:
         cl, raison = classe_source(r["name"], r["category"])
+        # VERIF-FIX-1 (Q2) — une COUCHE CARTE dont la donnée réelle a dépassé sa fenêtre de revue
+        # remonte « à vérifier », avec l'amont à surveiller (producteur + méthode de veille).
+        if r["id"] in _couche_sids:
+            _e = _ech.echeance_pour(r["name"], r["source_millesime"], r["source_horizon_at"])
+            if _e["a_verifier"]:
+                a_verifier.append({"nom": r["name"], "millesime_servi": r["source_millesime"],
+                                   "echeance": _e["echeance"].isoformat() if _e["echeance"] else None,
+                                   "amont_a_surveiller": r["name"],
+                                   "veille": r["veille_methode"] or "non surveillée"})
         # JOHN-COUT-1 (outil SOBRE) : l'essentiel par source (nom, statut, classe A/B, millésime servi,
         # état de veille). Le détail (id, catégorie, raison de classe, horizon, cadence, dernier vu amont,
         # date de passage, échecs consécutifs) gonflait chaque ligne × ~140 sources, re-renvoyé à chaque
@@ -123,7 +136,8 @@ def sources(db) -> dict:
             nouvelles.append({"nom": r["name"], "classe": cl, "amont_vu": r["dernier_vu"]})
         if r["dernier_statut"] in ("injoignable", "illisible"):
             en_panne.append({"nom": r["name"], "statut": r["dernier_statut"]})
-    return {"n": len(out), "nouvelles_versions": nouvelles, "veille_en_panne": en_panne, "sources": out}
+    return {"n": len(out), "nouvelles_versions": nouvelles, "veille_en_panne": en_panne,
+            "couches_a_verifier": a_verifier, "sources": out}
 
 
 # ════════════════════════════════ RUNS (servi / calculé) ════════════════════════════════

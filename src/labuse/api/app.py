@@ -7993,6 +7993,18 @@ def map_couches_info(db: Session = Depends(get_db)) -> dict:
                                              getattr(d, "fabrication", None)) if d else None)
                            or "reconstruite à la bascule (tuyau vectoriel)",
         }
+    # VERIF-FIX-1 (Q2) — les deux couches RASTER déclarées côté front (WMTS IGN en direct, hors tuyau
+    # vectoriel) portaient leur source uniquement dans la prose du « i ». On la DÉCLARE ici, au même
+    # robinet que toute autre couche : le front rend `meta.source` (le millésime reste admin, comme
+    # partout). Tuiles servies en direct par la Géoplateforme → aucune date de contrôle (jamais synchro).
+    out["courbes_niveau"] = {
+        "source": "IGN Géoplateforme — courbes de niveau (WMTS ELEVATION.CONTOUR.LINE, dérivée RGE ALTI)",
+        "millesime": "RGE ALTI 2025", "date_controle": None, "fabrication": "tuiles IGN en direct",
+    }
+    out["enr_habitation"] = {
+        "source": "IGN Géoplateforme — contraintes EnR près des habitations (WMTS ENR.PERIMETRE.HABITATION, loi APER)",
+        "millesime": "APER (périmètres habitations)", "date_controle": None, "fabrication": "tuiles IGN en direct",
+    }
     return out
 
 
@@ -8187,8 +8199,9 @@ def map_bati(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
 def map_batiments_geojson(bbox: str = Query(..., description="minLon,minLat,maxLon,maxLat (WGS84)"),
                           db: Session = Depends(get_db)) -> dict:
     """RECETTE-6 (A3) — le BÂTI de la BBOX pour l'extrusion 3D : empreinte au sol (BD TOPO) + hauteur
-    (`attrs.hauteur`, la MÊME que sert l'Apporteur « … m au sol · … m de haut »). Sans hauteur → EXCLU
-    (jamais d'extrusion inventée, décision Vic). Borné à la BBOX + plafond 8000, JAMAIS l'île entière."""
+    (`attrs.hauteur`, la MÊME que sert l'Apporteur « … m au sol · … m de haut »), OU — à défaut — le
+    faîtage LiDAR MESURÉ de la parcelle (VERIF-FIX-1). Aucune hauteur du tout → EXCLU (jamais d'extrusion
+    inventée, décision Vic). Borné à la BBOX + plafond 8000, JAMAIS l'île entière."""
     try:
         xmin, ymin, xmax, ymax = (float(x) for x in bbox.split(","))
     except Exception:
@@ -8200,6 +8213,13 @@ def map_batiments_geojson(bbox: str = Query(..., description="minLon,minLat,maxL
     _h_expr = ("round(COALESCE(hl.faitage_m::numeric, (attrs->>'hauteur')::numeric), 1)"
                if _lid_ok else "round((attrs->>'hauteur')::numeric, 1)")
     _lid_col = "(hl.faitage_m IS NOT NULL)" if _lid_ok else "false"
+    # VERIF-FIX-1 (Q4) — le filtre de disponibilité de hauteur s'applique APRÈS le JOIN LiDAR :
+    # un bâtiment BD TOPO sans `attrs.hauteur` propre mais dont la parcelle porte un faîtage LiDAR
+    # mesuré était auparavant EXCLU (filtre `attrs.hauteur IS NOT NULL` posé avant le JOIN). Désormais
+    # on retient le bâtiment dès qu'une hauteur existe — LiDAR mesuré OU BD TOPO déclarée. Aucune
+    # extrusion inventée : si les deux manquent, le bâtiment reste exclu.
+    _h_avail = ("(hl.faitage_m IS NOT NULL OR (sl.attrs->>'hauteur') IS NOT NULL)"
+                if _lid_ok else "(sl.attrs->>'hauteur') IS NOT NULL")
     # CHASSE-INVARIANTS-FIX-2 (1) — l'extrusion 3D lit la MÊME borne : un faîtage aberrant devient NULL,
     # l'extrusion retombe sur la hauteur BD TOPO (COALESCE) et le flag `lidar` passe à false (jamais 53 km).
     _lid_join = ("""LEFT JOIN LATERAL (
@@ -8215,7 +8235,8 @@ def map_batiments_geojson(bbox: str = Query(..., description="minLon,minLat,maxL
       FROM (
         SELECT sl.geom, {_h_expr} AS h, {_lid_col} AS lidar FROM spatial_layers sl
         {_lid_join}
-        WHERE sl.kind = 'batiment' AND (sl.attrs->>'hauteur') IS NOT NULL
+        WHERE sl.kind = 'batiment'
+          AND {_h_avail}
           AND sl.geom && ST_MakeEnvelope(:xmin, :ymin, :xmax, :ymax, 4326)
         LIMIT 8000
       ) b
