@@ -67,7 +67,7 @@ const dePl = (pl: string) => (/^[aeiouyàâäéèêëîïôöùûü]/i.test(pl) 
 
 const INPUT_CLS =
   'w-full h-10 rounded-md border border-line-2 bg-surface-3 px-3 text-[13px] text-txt-hi ' +
-  'placeholder:text-txt-mut focus:border-mint focus:outline-none'
+  'placeholder:text-txt-mut focus:outline-none'
 const H_TILE = 'rounded-md border border-line-2 bg-surface-3 px-3 py-2'
 const LBL = 'text-[10.5px] leading-tight text-txt-dim'
 const VAL = 'mt-0.5 text-[13px] font-medium leading-tight text-txt-hi'
@@ -232,7 +232,7 @@ function RapportParcelle({ idu }: { idu: string }) {
                 <label className="text-[11px] text-txt-dim" htmlFor="surface-hab">Surface habitable</label>
                 <input
                   id="surface-hab" type="number" min={1} step={1} inputMode="numeric"
-                  className="h-8 w-28 rounded-md border border-line-2 bg-surface-3 px-2 text-[12.5px] text-txt-hi placeholder:text-txt-mut focus:border-mint focus:outline-none"
+                  className="h-8 w-28 rounded-md border border-line-2 bg-surface-3 px-2 text-[12.5px] text-txt-hi placeholder:text-txt-mut focus:outline-none"
                   placeholder={e?.surface_dvf_m2 != null ? String(e.surface_dvf_m2) : 'm²'}
                   value={surfaceHab}
                   onChange={(ev) => { setSurfaceTouchee(true); setSurfaceHab(ev.target.value) }} />

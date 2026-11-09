@@ -215,10 +215,13 @@ export const getFiltreCount = (f: Filters, signal?: AbortSignal) => {
 }
 /** M55-G suite (point 1) — les IDU du résultat courant (mêmes critères, plafond serveur
  *  20 000 + drapeau tronqué) : la CARTE raccorde sa palette au résultat exact de la liste. */
-export const getFiltreIdus = (f: Filters) => {
+// RETOURS-21 (pt 9) — `bande` optionnel : restreint les IDU à une bande du Score (A=Excellente,
+// B=Bonne, C=À étudier, D=Faible). Quand le résultat complet dépasse le plafond (20 000), la carte
+// demande ainsi SEULEMENT les meilleures bandes (peu nombreuses) et les peint exactement.
+export const getFiltreIdus = (f: Filters, bande?: 'A' | 'B' | 'C' | 'D') => {
   const { tiers: _t, ...rest } = filterParams(f)
   return j<FiltreReponse & { idus: string[] | null; idus_tronque: boolean }>(
-    `/filtre?${qf({ limit: 0, idus: 1, ...rest, ...tiersParam(f) })}`)
+    `/filtre?${qf({ limit: 0, idus: 1, ...(bande ? { bande } : {}), ...rest, ...tiersParam(f) })}`)
 }
 
 /** M99 Phase 3 — zones du sélecteur par famille : familles triées par volume réel, zones en
@@ -236,7 +239,15 @@ export const getZonageZones = (communes: string[]) =>
 // RECETTE-5 (V2) : le tri factuel devient 'adresse' (adressées d'abord, puis surface décroissante) —
 // que du fait ; 'potentiel' (SDP résiduelle = calcul LABUSE) ne sert plus qu'en analyse, nulle part ailleurs.
 // ANALYSE-1 : 'labuse' = le classement du NOUVEAU moteur (bande lexicographique puis Signal de mutation).
-export type SortKey = 'rang' | 'mult' | 'surface' | 'surface_asc' | 'commune' | 'potentiel' | 'adresse' | 'labuse'
+// ECRANS-NOV-1 §2 : les trois « Classer par » DANS la bande (bande d'abord) : potentiel à bâtir /
+// chance de vente / surface.
+export type SortKey = 'rang' | 'mult' | 'surface' | 'surface_asc' | 'commune' | 'potentiel' | 'adresse'
+  | 'labuse' | 'labuse_potentiel' | 'labuse_vente' | 'labuse_surface'
+// ECRANS-NOV-1 §2 — la clé « Classer par » de l'écran d'analyse → le tri serveur (toujours dans la bande).
+export type ClasserKey = 'potentiel' | 'vente' | 'surface'
+export const CLASSER_SORT: Record<ClasserKey, SortKey> = {
+  potentiel: 'labuse_potentiel', vente: 'labuse_vente', surface: 'labuse_surface',
+}
 // ANALYSE-1/2 — le param serveur `bande` : `qualite` (les 4 bandes de qualité), une bande PRÉCISE
 // (A/B/C/D — filtre Classement), ou un groupe de fin de liste (`nc`, `zero`).
 export type BandeGroupe = 'qualite' | 'nc' | 'zero' | 'A' | 'B' | 'C' | 'D'
@@ -509,12 +520,15 @@ export const getResults = (f?: Filters, limit = 200, sort: SortKey = 'rang', off
 // dépouillement de `tiers` ici. `bande` scope le groupe (qualité A-D / incomplète / sans potentiel),
 // `signal` filtre le Signal (propre à l'Analyse, mandat §1.4).
 export const getAnalyse = (
-  f: Filters, bande: BandeGroupe, opts: { limit?: number; offset?: number; signal?: SignalNiveauKey } = {},
+  f: Filters, bande: BandeGroupe,
+  opts: { limit?: number; offset?: number; signal?: SignalNiveauKey; classer?: ClasserKey } = {},
 ) => {
   const { tiers: _t, ...rest } = filterParams(f)   // filtres globaux SANS le tier de l'ancien classement
-  const { limit = 200, offset = 0, signal } = opts
+  const { limit = 200, offset = 0, signal, classer } = opts
+  // ECRANS-NOV-1 §2 — « Classer par » choisit la clé secondaire ; la BANDE reste toujours le 1er critère.
+  const sort = classer ? CLASSER_SORT[classer] : 'labuse'
   return j<FiltreReponse>(`/filtre?${qf({
-    limit, offset, sort: 'labuse', bande, ...(signal ? { signal } : {}), ...rest,
+    limit, offset, sort, bande, ...(signal ? { signal } : {}), ...rest,
   })}`).then((r) => r.page)
 }
 // ANALYSE-1 — la ventilation par bande du périmètre courant (récapitulatif « LABUSE a analysé N »),

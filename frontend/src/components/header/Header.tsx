@@ -193,7 +193,9 @@ export function Omnibox() {
     // FIX-NU3-2 (H-m03) — le champ de recherche RÉTRÉCIT au lieu de déborder : largeur idéale 360 px,
     // mais min-w-0 + max-w le laissent se contracter quand la fenêtre de bureau est en demi-écran
     // (la porte appareil.ts ne filtre que l'écran PHYSIQUE, pas la fenêtre).
-    <div className="flex h-10 w-full min-w-0 max-w-[360px] items-center gap-2 rounded-md border border-line-2 bg-surface-3 px-3 transition-colors duration-quick focus-within:border-mint">
+    // RETOURS-18 (pt 7) — barre de recherche MOINS HAUTE (h-9 ≈ cloche) : logo, recherche, « Fiche
+    // commune », Signaler, cloche et avatar partagent la même ligne de base dans l'en-tête h-14.
+    <div className="flex h-9 w-full min-w-0 max-w-[360px] items-center gap-2 rounded-md border border-line-2 bg-surface-3 px-3 transition-colors duration-quick focus-within:border-mint">
       {/* DA §10 — LA LOUPE EST DANS LE CHAMP (leading). Elle reste cliquable (lance la recherche
           sur le texte courant) ; pendant la résolution elle devient un spinner sobre (M55-B). */}
       <button
@@ -260,11 +262,14 @@ function CommuneSelect() {
   const pick = (c: string) => { setContexteCommune(c); setOpen(false) }
   return (
     <div className="relative shrink-0">
-      <button onClick={() => setOpen((o) => !o)} data-commune-select data-fiche-commune-menu
-        className={`flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs transition-colors duration-quick ${
-          open ? 'border-amber bg-amber/[0.12] text-amber' : 'border-amber/40 bg-amber/[0.08] text-amber hover:border-amber'}`}>
-        ⓘ Fiche commune
-        <svg viewBox="0 0 10 10" className="h-2.5 w-2.5"><polyline points="2,4 5,7 8,4" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>
+      {/* RETOURS-19 (pt 5) — bouton SECONDAIRE de l'en-tête, identique à « Signaler » (plus d'ambre) :
+          liseré neutre au repos, aplat vert plein / encre sombre quand le menu est ouvert. */}
+      {/* RETOURS-21 (pt 7) — EXACTEMENT la hauteur de la barre de recherche (`h-9`), alignée haut/bas. */}
+      <button onClick={() => setOpen((o) => !o)} data-commune-select data-fiche-commune-menu aria-pressed={open}
+        className={`flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-xs transition-colors duration-quick ${
+          open ? 'border-mint bg-mint font-medium text-mint-ink' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
+        {/* RETOURS-20 (pt 1) — plus de chevron sur le bouton « Fiche commune ». */}
+        Fiche commune
       </button>
       {open && (
         <>
@@ -276,11 +281,11 @@ function CommuneSelect() {
           <div className="floating absolute left-0 top-9 z-20 grid max-h-[70vh] w-max grid-cols-2 gap-x-1 overflow-y-auto p-1.5">
             {trierCommunes(communes.data ?? [], (c) => c.commune).map((c) => (
               <button key={c.insee} data-fiche-commune onClick={() => pick(c.commune)}
-                /* RETOURS-16 (point 6) — même DA que les autres déroulants (menu compte) : hauteur de ligne
-                   px-3 py-2, rounded-lg, survol subtil (hover:bg-surface-3, texte clair conservé). */
-                className="flex min-w-0 items-center justify-between gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-left text-xs text-txt transition-colors duration-quick hover:bg-surface-3 hover:text-txt-hi">
+                /* RETOURS-18 (pt 10) — SURVOL VERT (aplat vert opaque, encre sombre) via `.hover-fill`,
+                   comme les lignes de la fiche parcelle et les cases d'outils — plus de survol gris. */
+                className="hover-fill group flex min-w-0 items-center justify-between gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-left text-xs text-txt transition-colors duration-quick">
                 <span className="truncate">{communePastille(c.commune)}</span>
-                <span className="shrink-0 font-mono text-[11px] tabular-nums text-txt-dim">{CP_PAR_COMMUNE[c.commune] ?? c.insee}</span>
+                <span className="shrink-0 font-mono text-[11px] tabular-nums text-txt-dim group-hover:text-[color:var(--ink)]/70">{CP_PAR_COMMUNE[c.commune] ?? c.insee}</span>
               </button>
             ))}
           </div>
@@ -319,7 +324,7 @@ function dateFr(iso: string): string {
   return r === '—' ? iso : r
 }
 
-function NotifBell() {
+export function NotifBell() {   // RETOURS-19 (pt 2) — exportée pour le test du compteur « non vues ».
   const [open, setOpen] = useState(false)
   // M104 P3 — la config des recherches sauvegardées (NL, exemples, liste) a déménagé dans la
   // section Surveillance (volet Critères) : la cloche affiche des événements, rien d'autre.
@@ -345,6 +350,8 @@ function NotifBell() {
               style={{ background: e.lu ? 'var(--line-3)' : 'var(--amber)' }} />
         {e.demo && <span className="rounded-full bg-surface-3 px-1.5 py-0.5 text-[8.5px] font-medium text-txt-dim">DÉMO</span>}
         <button onClick={() => {
+            // RETOURS-19 (pt 2) — CLIQUER la notif la marque LUE (son point disparaît), en plus d'ouvrir sa cible.
+            if (!e.lu) readOne.mutate(e.id)
             if (e.idu) { setView('cartes'); select(e.idu) }
             else if (e.lien?.startsWith('/sources')) openSources()
             // VEILLE-2 (Lot 3) — Radar : le lien est l'ANNONCE (http) → ouvrir dans un onglet.
@@ -376,7 +383,24 @@ function NotifBell() {
   const setPref = useMutation({ mutationFn: patchNotifPref, onSuccess: () => { invalidate(); qc.invalidateQueries({ queryKey: ['notif-prefs'] }) } })
   // VEILLE-FIX-2 (Lot C) — la FRÉQUENCE des mails (quotidien / hebdo / cloche seule), réglable ici.
   const setFreq = useMutation({ mutationFn: patchDigestFrequence, onSuccess: () => qc.invalidateQueries({ queryKey: ['notif-prefs'] }) })
-  const unread = ev.data?.unread ?? 0
+  // RETOURS-18 (pt 4) — la cloche CLIENT ne montre QUE les notifications qui le concernent : liste
+  // BLANCHE des kinds (_NOM_KIND). Tout kind d'EXPLOITATION/ADMIN est écarté ICI en défense de
+  // profondeur, même s'il franchissait le filtre serveur — et le compteur « non lues » suit la même
+  // liste (plus de badge gonflé par des événements d'exploitation).
+  const itemsClient = (ev.data?.items ?? []).filter((e) => e.kind in _NOM_KIND)
+  // RETOURS-19 (pt 2) — le COMPTEUR (badge) compte les NON VUES : les événements arrivés depuis la
+  // dernière OUVERTURE de la cloche. Ouvrir la cloche marque tout comme VU (`vuMax` = plus grand id vu,
+  // persisté) → le badge retombe à 0. Le POINT de chaque ligne, lui, reste tant que la notif n'est pas
+  // CLIQUÉE (état `lu`, serveur) — « vu » (badge) et « lu » (point) sont deux choses distinctes.
+  const [vuMax, setVuMax] = useState<number>(() => { try { return Number(localStorage.getItem('labuse:notif-vu-max') || 0) } catch { return 0 } })
+  const nonVues = itemsClient.filter((e) => e.id > vuMax).length
+  const unread = itemsClient.filter((e) => !e.lu).length   // NON LUES — l'en-tête du volet (« Notifications · N ») l'affiche.
+  const marquerVues = () => {
+    const m = itemsClient.reduce((mx, e) => Math.max(mx, e.id), vuMax)
+    if (m !== vuMax) { setVuMax(m); try { localStorage.setItem('labuse:notif-vu-max', String(m)) } catch { /* privé/quota */ } }
+  }
+  // ouvrir la cloche = tout VU (badge → 0) ; fermer n'y touche pas.
+  const toggleCloche = () => setOpen((o) => { const n = !o; if (n) marquerVues(); return n })
   // GB-004 : Escape ferme le dropdown Notifications (il n'avait aucun handler clavier — seul le clic sur
   // le backdrop fermait). Aligné sur le patron des overlays. Listener actif uniquement quand ouvert.
   useEffect(() => {
@@ -397,8 +421,8 @@ function NotifBell() {
       {/* RETOURS-9 (Q9) — la cloche OUVERTE devient pleine de sa couleur (vert, encre sombre), pas un liseré. */}
       {/* NU5-FIX-1 (F4) — label-in-name : le nom accessible CONTIENT le texte visible (« 99+ ») pour que
           la commande vocale (« clique 99+ ») marche et que le lecteur d'écran annonce le compte. */}
-      <button onClick={() => setOpen((o) => !o)}
-        aria-label={unread ? `Notifications ${unread > 99 ? '99+' : unread} non lues` : 'Notifications'}
+      <button onClick={toggleCloche}
+        aria-label={nonVues ? `Notifications ${nonVues > 99 ? '99+' : nonVues} non vues` : 'Notifications'}
         aria-pressed={open}
         className={`relative flex h-9 w-9 items-center justify-center rounded-full border transition-colors duration-quick ${
           open ? 'border-mint bg-mint text-mint-ink' : 'border-line-2 bg-surface-3 text-txt-mut hover:text-txt'}`}>
@@ -406,12 +430,12 @@ function NotifBell() {
           <path d="M10 3 a4 4 0 0 1 4 4 v3 l1.5 2.5 h-11 L6 10 V7 a4 4 0 0 1 4-4Z" fill="none" stroke="currentColor" strokeWidth="1.4" />
           <path d="M8.5 15 a1.5 1.5 0 0 0 3 0" fill="none" stroke="currentColor" strokeWidth="1.4" />
         </svg>
-        {unread > 0 && (
+        {nonVues > 0 && (
           // NU5-FIX-1 (F4) — le compte est DÉCORATIF (déjà porté par l'aria-label « Notifications (N
           // non lues) ») : aria-hidden pour que le texte visible du bouton n'entre pas en conflit avec
           // son nom accessible (label-in-name) et ne soit pas annoncé deux fois.
           <span aria-hidden className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-mint px-1 font-mono text-[9px] font-bold text-mint-ink">
-            {unread > 99 ? '99+' : unread}{/* RETOURS-17 — pastille VERTE (menthe, encre sombre) ; GB-002 : badge capé (le dropdown garde le vrai compte) */}
+            {nonVues > 99 ? '99+' : nonVues}{/* RETOURS-19 (pt 2) — badge = NON VUES (remis à 0 à l'ouverture) ; capé 99+ */}
           </span>
         )}
       </button>
@@ -481,9 +505,9 @@ function NotifBell() {
             {/* RECETTE-4 — le paragraphe d'intro « Ce qui bouge sur vos parcelles suivies … réellement
                 détecter. » de la page Notifications est RETIRÉ (décision Vic). */}
             <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2">
-              {(ev.data?.items ?? []).length === 0 && <p className="p-3 text-xs leading-snug text-txt-dim">Aucune notification pour l'instant — nous vous préviendrons dès qu'une parcelle suivie change ou qu'une de vos veilles se déclenche.</p>}
+              {itemsClient.length === 0 && <p className="p-3 text-xs leading-snug text-txt-dim">Aucune notification pour l'instant — nous vous préviendrons dès qu'une parcelle suivie change ou qu'une de vos veilles se déclenche.</p>}
               {/* M87 P5.1 — REGROUPÉ par commune (une ligne + « Voir les N → ») ; sinon carte simple. */}
-              {grouperEvents(ev.data?.items ?? []).map((b) => {
+              {grouperEvents(itemsClient).map((b) => {
                 if (b.type === 'single') return carte(b.e)
                 const ouvert = ouverts.has(b.cle)
                 const nonLus = b.items.filter((e) => !e.lu).length
@@ -504,8 +528,8 @@ function NotifBell() {
               {/* RETOURS-11 A5 (T4) — « Voir plus » par 200. Le back ne renvoie pas de total ; on
                   n'affiche l'action QUE si la fenêtre est PLEINE (donc probablement d'autres après),
                   et « Voir plus » remonte la limite d'un cran. Compteur honnête : N chargées. */}
-              {(ev.data?.items?.length ?? 0) >= limite && (
-                <ListPaginationFooter shown={ev.data?.items?.length ?? 0} total={(ev.data?.items?.length ?? 0) + PAGE_SIZE}
+              {itemsClient.length >= limite && (
+                <ListPaginationFooter shown={itemsClient.length} total={itemsClient.length + PAGE_SIZE}
                   onMore={() => setLimite((l) => l + PAGE_SIZE)} className="flex flex-wrap items-center gap-3 border-t border-line px-3 pt-2 text-[11px] text-txt-mut" />
               )}
             </div>
@@ -585,6 +609,9 @@ function MarqueForm() {
 function AccountMenu() {
   const [open, setOpen] = useState(false)
   const [marqueOpen, setMarqueOpen] = useState(false)   // M54-EXPO-2 A6
+  // RETOURS-18 (pt 6) — ouvrir le compte FERME une fiche commune ouverte (le menu compte n'était pas
+  // atteignable « par-dessus » elle). On nettoie `contexteCommune` à l'ouverture du menu.
+  const setContexteCommune = useApp((s) => s.setContexteCommune)
   const moi = useQuery({ queryKey: ['moi'], queryFn: getMoi, enabled: open })
   const d = moi.data
   const close = () => { setOpen(false); setMarqueOpen(false) }
@@ -593,7 +620,7 @@ function AccountMenu() {
       {/* RECETTE-PROD-1 (13) — ICÔNE utilisateur générique (style feather/lucide de l'app, comme les
           glyphes du Rail/LeftPanel) au lieu des initiales « VL » : plus aucune initiale calculée pour
           le compte. Même bulle (h-8 w-8, rond, bord), même taille, même comportement au clic. */}
-      <button data-account-btn onClick={() => setOpen((o) => !o)} aria-label="Mon compte"
+      <button data-account-btn onClick={() => { if (!open) setContexteCommune(null); setOpen((o) => !o) }} aria-label="Mon compte"
         className="flex h-8 w-8 items-center justify-center rounded-full border border-line-2 bg-surface-3 text-mint transition-colors duration-quick hover:border-mint/50">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-[17px] w-[17px]" aria-hidden="true">
           <path d="M19 21v-1a5 5 0 0 0-5-5h-4a5 5 0 0 0-5 5v1" />
@@ -750,15 +777,17 @@ function SignalerButton() {
             <div className="mt-2 flex gap-1.5">
               {RETOUR_TYPES.map((t) => (
                 <button key={t.key} data-retour-type={t.key} onClick={() => setType(t.key)}
+                  /* RETOURS-21 (pt 2) — RÈGLE DE SÉLECTION UNIQUE : chip choisi = FOND VERT OPAQUE + texte
+                     SOMBRE (comme les lignes de filtre / puces de tri), jamais un simple contour vert. */
                   className={`rounded-full border px-3 py-1 text-[11px] transition-colors duration-quick ${
-                    type === t.key ? 'border-mint bg-mint/10 text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
+                    type === t.key ? 'border-mint bg-mint font-medium text-mint-on' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
                   {t.label}
                 </button>
               ))}
             </div>
             <textarea value={msg} onChange={(e) => setMsg(e.target.value)} rows={4} maxLength={2000}
               aria-label="Décrivez le bug, l'idée ou la question" placeholder="Décrivez le bug, l'idée ou la question…" data-retour-message
-              className="mt-3 w-full resize-none rounded-md border border-line-2 bg-bg p-2 text-xs text-txt outline-none focus:border-mint" />
+              className="mt-3 w-full resize-none rounded-md border border-line-2 bg-bg p-2 text-xs text-txt outline-none" />
             <div className="mt-2 flex items-center justify-between">
               <span className="text-[10px] text-txt-mut">Transmis avec votre licence — jamais anonyme.</span>
               <button data-retour-envoyer onClick={envoyer} disabled={msg.trim().length < 3 || busy}

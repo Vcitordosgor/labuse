@@ -755,7 +755,7 @@ export function MarcheCommune({ communeProp }: { communeProp?: string } = {}) {
       {!communeProp && (
       <Select data-marche-commune value={commune} onChange={(e) => setCommune(e.target.value)}
         wrapClassName="self-start"
-        className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none">
+        className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-[12px] text-txt focus:outline-none">
         {MU_COMMUNES.map((c) => <option key={c} value={c}>{c}</option>)}
       </Select>)}
       {q.isLoading && <Squelette bloc className="py-8" />}
@@ -869,9 +869,9 @@ export function M19() {
       {/* ajout d'un profil de démo */}
       <div className="flex gap-1.5">
         <input value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Nouveau profil…"
-          className="min-w-0 flex-1 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none" />
+          className="min-w-0 flex-1 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:outline-none" />
         <input value={smin} onChange={(e) => setSmin(e.target.value)} placeholder="surf. min" type="number"
-          className="w-20 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none" />
+          className="w-20 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:outline-none" />
         <Bouton niveau="primaire" ton="vert" icone onClick={() => nom.trim() && add.mutate()} disabled={!nom.trim()} aria-label="Ajouter le profil">+</Bouton>
       </div>
 

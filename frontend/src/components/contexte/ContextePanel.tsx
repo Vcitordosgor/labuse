@@ -86,15 +86,20 @@ function Bar({ parts }: { parts: { label: string; pct: number; color: string }[]
 // RECETTE-1 (D4, Vic 04/10) — comme la fiche parcelle : accordéon EXCLUSIF (un seul tiroir ouvert à
 // la fois), le PREMIER tiroir ouvert par défaut, les autres fermés. L'état vit dans un contexte
 // partagé (fini le localStorage par-section qui laissait « tous les tiroirs ouverts »).
-const CommuneAccCtx = createContext<{ openId: string | null; toggle: (id: string) => void; claimDefault: (id: string) => void }>({
-  openId: null, toggle: () => {}, claimDefault: () => {},
+// RETOURS-18 (pt 8) — `userActed()` dit si l'ouverture vient d'un CLIC utilisateur (vs l'ouverture par
+// défaut `claimDefault`) : le recadrage (scrollIntoView) ne s'applique QU'aux toggles utilisateur, pour
+// que la fiche commune s'ouvre EN HAUT (bandeau visible), jamais scrollée sur « Identité ».
+const CommuneAccCtx = createContext<{ openId: string | null; toggle: (id: string) => void; claimDefault: (id: string) => void; userActed: () => boolean }>({
+  openId: null, toggle: () => {}, claimDefault: () => {}, userActed: () => false,
 })
 function CommuneAccProvider({ children }: { children: React.ReactNode }) {
   const [openId, setOpenId] = useState<string | null>(null)
   const defaulted = useRef(false)
+  const acted = useRef(false)
   const value = useMemo(() => ({
     openId,
-    toggle: (id: string) => setOpenId((cur) => (cur === id ? null : id)),
+    userActed: () => acted.current,
+    toggle: (id: string) => { acted.current = true; setOpenId((cur) => (cur === id ? null : id)) },
     // le PREMIER tiroir monté (identité) revendique l'ouverture, une seule fois (remontée à la clé commune).
     claimDefault: (id: string) => { if (!defaulted.current) { defaulted.current = true; setOpenId(id) } },
   }), [openId])
@@ -192,12 +197,18 @@ function LigneCarte({ id, ic, titre, sous, val, ton, badge, defaultOpen, chiffre
   const acc = useContext(CommuneAccCtx)
   const open = acc.openId === id
   const col = ton ? TON_COL[ton] : undefined
-  // RECETTE-1 D4 — le PREMIER tiroir monté revendique l'ouverture par défaut (une seule fois).
-  useEffect(() => { acc.claimDefault(id) }, [])   // eslint-disable-line react-hooks/exhaustive-deps
-  // RECETTE-1 D4/D3 — à l'ouverture, le titre de la section remonte EN HAUT du conteneur défilant.
+  // RETOURS-19 (pt 4) — la fiche commune s'ouvre TOUTES SECTIONS FERMÉES, Identité comprise :
+  // plus aucun tiroir ne revendique l'ouverture par défaut (openId reste null au montage).
+  void acc.claimDefault
+  // RECETTE-1 D4/D3 — à l'ouverture (par l'utilisateur), le titre de la section remonte EN HAUT du
+  // conteneur défilant.
+  // RETOURS-18 (pt 8) — MAIS la fiche commune s'ouvre EN HAUT (bandeau 9 chiffres visible), pas sur
+  // « Identité » : on NE scrolle PAS pour l'ouverture PAR DÉFAUT (premier tiroir, au montage) — seul
+  // un toggle utilisateur ultérieur recadre la section ouverte.
   const ref = useRef<HTMLDetailsElement>(null)
   useEffect(() => {
     if (!open || !ref.current) return
+    if (!acc.userActed()) return   // ouverture PAR DÉFAUT (pas un clic) → on reste EN HAUT (bandeau visible)
     const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
     const tete = document.querySelector('[data-ctx-tete]') as HTMLElement | null
     ref.current.style.scrollMarginTop = `${(tete?.offsetHeight ?? 0) + 8}px`
@@ -291,10 +302,9 @@ export function ContextePanel() {
                 lisible, market_signal score<40). Les signaux nommés (règle en constante) le remplacent, en puces plus bas. */}
             <h2 className="font-display text-lg font-bold text-txt-hi">{commune}</h2>
           </div>
-          {d?.epci && <p className="text-[10px] text-txt-mut">{d.epci} — {d.epci_nom}</p>}
-          {d?.foncier && (
-            <p className="mt-0.5 text-[10px] text-txt-dim">{fmt(d.foncier.surface_ha)} ha · {fmt(d.foncier.n_parcelles)} parcelles</p>
-          )}
+          {/* RETOURS-18 (pt 9) — les deux lignes de résumé de l'en-tête (« CIVIS — … » et
+              « N ha · N parcelles ») sont RETIRÉES : l'intercommunalité (sigle), la surface (ha) et les
+              parcelles vivent déjà dans le bandeau 9 chiffres ci-dessous — plus de doublon dans l'en-tête. */}
         </div>
         <button onClick={() => setContexteCommune(null)} className="shrink-0 text-txt-dim hover:text-txt-hi" aria-label="Fermer">✕</button>
       </div>

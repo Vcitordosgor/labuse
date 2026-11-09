@@ -159,7 +159,7 @@ export function CommuneScope({ commune, onChange, noteFiltre = true }: { commune
       Périmètre
       {/* U3 (RECETTE-OUTILS-4) — composant partagé `ui/Select` (chevron charte à 16 px, pr suffisant). */}
       <Select data-commune-scope value={commune ?? ''} onChange={(e) => onChange(e.target.value || null)}
-        className="rounded border border-line-2 bg-surface-3 pl-1.5 py-0.5 text-txt focus:border-mint focus:outline-none">
+        className="rounded border border-line-2 bg-surface-3 pl-1.5 py-0.5 text-txt focus:outline-none">
         <option value="">Toute l'île</option>
         {(communes.data ?? []).map((c) => <option key={c.commune} value={c.commune}>{c.commune}</option>)}
       </Select>
@@ -510,7 +510,7 @@ function CommunePermisSelect({ value, onChange }: { value: string | null; onChan
   return (
     <Select data-permis-commune value={value ?? ''} onChange={(e) => onChange(e.target.value || null)}
       wrapClassName="w-full"
-      className="w-full rounded-lg border border-line-2 bg-surface-3 pl-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none">
+      className="w-full rounded-lg border border-line-2 bg-surface-3 pl-2 py-1 text-[11px] text-txt focus:outline-none">
       <option value="">Toutes les communes</option>
       {(communes.data ?? []).map((c) => <option key={c.commune} value={c.commune}>{c.commune}</option>)}
     </Select>
@@ -1749,7 +1749,7 @@ export function M10() {
           <div className="mt-1.5 flex flex-col gap-1.5">
             <textarea data-diligence-paste value={paste} onChange={(e) => setPaste(e.target.value)} rows={3}
               placeholder={'97415000AC0253\nAC0254\nBK 63…'}
-              className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 font-mono text-[10.5px] text-txt focus:border-mint focus:outline-none" />
+              className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 font-mono text-[10.5px] text-txt focus:outline-none" />
             <Bouton niveau="secondaire" ton="vert" data-diligence-add onClick={ajouterListe} disabled={!paste.trim()} className="self-start">+ Ajouter la liste</Bouton>
           </div>
         </details>

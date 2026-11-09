@@ -19,8 +19,8 @@ import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
 import { Chargement } from '../Loading'
 import { Tip } from '../Tip'
 import { Bouton } from '../ui/Bouton'
-import { Case } from '../ui/Case'
 import { Chevron } from '../ui/Chevron'
+import { ChevronSection } from './ChevronSection'   // ECRANS-NOV-1 §2 — chevron de catégorie (accordéon)
 import { Chip } from '../ui/Chip'
 import { useFiltre } from './filtreContext'   // M120 — binding partagé (carte OU cadrage projet)
 
@@ -63,6 +63,11 @@ function ActionBtn({ variant, onClick, children, dataAttr }:
 }
 
 const ZONE_FAM = [{ k: 'U', l: 'U' }, { k: 'AU', l: 'AU' }, { k: 'A', l: 'A' }, { k: 'N', l: 'N' }]
+// RETOURS-18 pt 21 — libellé long d'une famille de zonage (« U · urbain »…). Le CODE reste la clé
+// du filtre (zonagePlu), seul l'affichage s'étoffe.
+const ZONE_FAM_LABEL: Record<string, string> = {
+  U: 'U · urbain', N: 'N · naturel', A: 'A · agricole', AU: 'AU · à urbaniser',
+}
 // M55-G point 7 : PROPRIO_TYPE / ETAT_SOCIETE / COPRO retirés avec les tiroirs pédagogiques
 // (0-caller) — les champs de filtre restent dans le store + l'URL.
 // M55-D stage 6 — les 24 communes par CODE POSTAL (CP dominant mesuré dans la BAN, table
@@ -157,7 +162,6 @@ export function ChipGroup({ field, options, partition }: { field: keyof Filters;
 // filtre sur une panne).
 export function ZoneSelector() {
   const { filters, setFilter } = useFiltre()
-  const [openFam, setOpenFam] = useState<string | null>(null)
   const [retirees, setRetirees] = useState<string[]>([])
   const zq = useQuery({
     queryKey: ['zonage-zones', [...filters.communes].sort().join('|')],
@@ -196,57 +200,33 @@ export function ZoneSelector() {
           {' '}: absente{retirees.length > 1 ? 's' : ''} de la portée courante.
         </p>
       )}
+      {/* RETOURS-18 pt 21 — chaque famille est un SOUS-ACCORDÉON « U · urbain » avec son COMPTE à
+          droite, qui se déplie sur ses sous-zones en `LigneChoix` (vert opaque + coche si choisie).
+          Le PREMIER item « U seul · toute la famille » coche la famille entière (zonagePlu) ; les
+          sous-zones cochent zonePlu (exclusivité famille/zones conservée via choisirFamille/choisirZone).
+          data-zones-fam / data-zone-toutes / data-zone préservés (hooks QA). */}
       {familles.map((f) => {
         const zonesSelFam = f.zones.filter((z) => selZones.includes(z.zone)).length
-        const ouverte = openFam === f.fam
         const enModeFamille = selFam.includes(f.fam)
         return (
-          <div key={f.fam} className="rounded-lg border border-line-2 bg-surface-3/60">
-            {/* M137-B (Vic) — TOUTE la ligne ouvre l'accordéon (pastille, compte, chevron) : le lien
-                « zones… » disparaît, un chevron à droite dit ouvert/fermé. Le choix de la famille
-                entière n'est plus sur la ligne — il est le PREMIER item du menu (« U » seul). */}
-            <button data-zones-fam={f.fam} aria-expanded={ouverte} onClick={() => setOpenFam(ouverte ? null : f.fam)}
-              className="flex w-full items-center gap-2 px-2 py-1 text-left">
-              <span className={`rounded-full border px-2.5 py-0.5 text-[11px] ${
-                enModeFamille ? 'border-mint bg-mint/20 font-medium text-txt-hi' : 'border-line-2 bg-surface-3 text-txt-mut'}`}>
-                {f.fam}
-              </span>
-              <span className="flex-1 text-[10.5px] text-txt-dim">
-                {zq.data ? `${nf.format(f.n)} parcelles · ${f.zones.length} zones` : '…'}
-                {zonesSelFam > 0 && <span className="text-mint"> · {zonesSelFam} choisie{zonesSelFam > 1 ? 's' : ''}</span>}
-              </span>
-              {/* DA-FIX-3 Lot 5 (DA-031) — chevron d'accordéon partagé (fermé ▶ / ouvert ▼). */}
-              <Chevron open={ouverte} />
-            </button>
-            {ouverte && (
-              <div className="flex max-h-44 flex-col gap-0.5 overflow-y-auto border-t border-line-2 px-2 py-1.5">
-                <button data-zone-toutes={f.fam} onClick={() => choisirFamille(f.fam)}
-                  className={`flex items-center gap-2 rounded px-1 py-0.5 text-left text-[11px] transition-colors duration-quick hover:bg-surface-3 ${
-                    enModeFamille ? 'font-medium text-mint' : 'text-txt'}`}>
-                  <span className="w-3 text-center">{enModeFamille ? '✓' : ''}</span>
-                  <span>{f.fam}<span className="text-txt-dim"> seul · toute la famille</span></span>
-                  <span className="ml-auto text-[10px] text-txt-dim">{zq.data ? nf.format(f.n) : '…'}</span>
-                </button>
-                {f.zones.map((z) => {
-                  const on = selZones.includes(z.zone)
-                  return (
-                    <button key={z.zone} data-zone={z.zone} onClick={() => choisirZone(z.zone)}
-                      className={`flex items-center gap-2 rounded px-1 py-0.5 text-left text-[11px] transition-colors duration-quick hover:bg-surface-3 ${
-                        on ? 'font-medium text-txt-hi' : 'text-txt'}`}>
-                      <span className="w-3 text-center text-mint">{on ? '✓' : ''}</span>
-                      <span>{z.zone}</span>
-                      <span className="ml-auto text-[10px] text-txt-dim">{nf.format(z.n)}</span>
-                    </button>
-                  )
-                })}
-                {f.zones.length === 0 && (
-                  <p className="px-1 py-1 text-[10.5px] text-txt-dim">
-                    Aucune zone de cette famille dans la portée courante.
-                  </p>
-                )}
-              </div>
+          <SousAccordion key={f.fam} dataAttr="data-zone-fam"
+            label={<span>{ZONE_FAM_LABEL[f.fam] ?? f.fam}
+              {zonesSelFam > 0 && <span className="ml-1.5 text-[10.5px] font-normal text-mint">{zonesSelFam} choisie{zonesSelFam > 1 ? 's' : ''}</span>}</span>}
+            count={zq.data ? nf.format(f.n) : '…'}>
+            <LigneChoix dataAttr="data-zone-toutes"
+              label={<>{f.fam}<span className="font-normal opacity-70"> seul · toute la famille</span></>}
+              on={enModeFamille} onClick={() => choisirFamille(f.fam)}
+              sub={zq.data ? nf.format(f.n) : '…'} />
+            {f.zones.map((z) => (
+              <LigneChoix key={z.zone} dataAttr="data-zone" label={z.zone}
+                on={selZones.includes(z.zone)} onClick={() => choisirZone(z.zone)} sub={nf.format(z.n)} />
+            ))}
+            {f.zones.length === 0 && (
+              <p className="px-1 py-1 text-[10.5px] text-txt-dim">
+                Aucune zone de cette famille dans la portée courante.
+              </p>
             )}
-          </div>
+          </SousAccordion>
         )
       })}
       {selZones.length > 0 && (
@@ -290,6 +270,109 @@ export function TitreSection({ titre, info, cls = '' }: { titre: string; info: s
   )
 }
 
+// ECRANS-NOV-1 §2 / RETOURS-18 pt 21 — une CATÉGORIE DE FILTRES en ACCORDÉON NUMÉROTÉ (1 · Communes,
+// 2 · Le terrain, 3 · Affiner la recherche, 4 · Le propriétaire). Le titre porte le petit numéro gris
+// PUIS le titre blanc gras, SUR UNE LIGNE (truncate). `badge` = le RÉSUMÉ du choix à droite, montré
+// quand la catégorie est fermée (« Toutes », « 2 choix », « — »…). Le chevron pointe vers le bas à l'ouvert.
+// CONTRÔLE : si `open`+`onToggle` sont fournis, l'accordéon est piloté de l'extérieur (ouverture
+// EXCLUSIVE depuis le parent) ; sinon il garde un état interne (usage autonome, p. ex. le cadrage projet).
+export function AccordionCat({ titre, info, num, defaultOpen = false, badge, cls = '', open, onToggle, children }:
+  { titre: string; info?: string; num?: string; defaultOpen?: boolean; badge?: React.ReactNode; cls?: string;
+    open?: boolean; onToggle?: () => void; children: React.ReactNode }) {
+  const [openInner, setOpenInner] = useState(defaultOpen)
+  const controlled = open !== undefined && onToggle !== undefined
+  const isOpen = controlled ? open! : openInner
+  const toggle = controlled ? onToggle! : () => setOpenInner((o) => !o)
+  // RETOURS-22 (pt 3) — à l'OUVERTURE (passage fermé→ouvert par l'utilisateur), le panneau défile
+  // jusqu'au DÉBUT de la section ouverte (son en-tête remonte en haut du conteneur défilant), jamais
+  // à sa fin. On aligne le haut de la carte sur le haut du conteneur ; la hauteur dépliée n'importe pas.
+  const rootRef = useRef<HTMLDivElement>(null)
+  const prevOpen = useRef(isOpen)
+  useEffect(() => {
+    if (isOpen && !prevOpen.current) {
+      requestAnimationFrame(() => {
+        const el = rootRef.current
+        let sc: HTMLElement | null = el?.parentElement ?? null
+        while (sc && !(sc.scrollHeight > sc.clientHeight && /(auto|scroll)/.test(getComputedStyle(sc).overflowY))) sc = sc.parentElement
+        if (el && sc) {
+          const top = el.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop
+          sc.scrollTo({ top: Math.max(0, top - 4), behavior: 'smooth' })
+        }
+      })
+    }
+    prevOpen.current = isOpen
+  }, [isOpen])
+  return (
+    <div ref={rootRef} className={`gcard overflow-hidden ${cls}`}>
+      <button type="button" data-cat-toggle aria-expanded={isOpen} onClick={toggle}
+        className="flex w-full items-center gap-2 px-3 py-2.5 text-left">
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className="flex min-w-0 items-center gap-2 truncate">
+            {num && <span className="shrink-0 text-[12px] text-txt-dim tabular-nums">{num}</span>}
+            <span className="truncate text-[13px] font-semibold text-txt-hi">{titre}</span>
+          </span>
+          {info && (
+            <Tip garder side="top" tip={info}>
+              <span role="button" tabIndex={0} aria-label={`En savoir plus : ${titre}`}
+                className="flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-full border border-line-2 text-[8px] font-bold normal-case leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
+            </Tip>
+          )}
+        </span>
+        <span className="ml-auto flex shrink-0 items-center gap-2">
+          {!isOpen && badge && <span className="text-[10.5px] text-txt-dim">{badge}</span>}
+          <ChevronSection open={isOpen} />
+        </span>
+      </button>
+      {isOpen && <div className="px-3 pb-3">{children}</div>}
+    </div>
+  )
+}
+
+// RETOURS-18 pt 21 — un SOUS-ACCORDÉON (dans « Le terrain » zonage, ou « Le propriétaire » forme/activité) :
+// un en-tête avec son COMPTE à droite (mêmes comptes servis), qui se déplie sur des `LigneChoix`. Le head
+// est lui-même stylé comme une `LigneChoix` sombre (pas de sélection), avec un chevron à droite. L'état
+// d'ouverture est LOCAL (plusieurs sous-accordéons peuvent coexister ouverts dans une même catégorie).
+export function SousAccordion({ label, count, children, dataAttr, defaultOpen = false }:
+  { label: React.ReactNode; count?: React.ReactNode; children: React.ReactNode; dataAttr?: string; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen)
+  const extra = dataAttr ? { [dataAttr]: true } : {}
+  return (
+    <div className="rounded-md">
+      <button type="button" {...extra} aria-expanded={open} onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-start gap-2 rounded-md border border-line-2 bg-surface-3/60 px-2.5 py-1.5 text-left text-[12px] font-medium text-txt transition-colors duration-quick hover:border-mint/50 hover:text-txt-hi">
+        {/* RETOURS-19 (pt 7) — libellé long passe À LA LIGNE (jamais coupé) ; le compte reste visible à droite. */}
+        <span className="min-w-0 flex-1 break-words leading-snug">{label}</span>
+        <span className="ml-auto flex shrink-0 items-center gap-1.5">
+          {count != null && <span className="text-[10.5px] tabular-nums text-txt-dim">{count}</span>}
+          <Chevron open={open} />
+        </span>
+      </button>
+      {open && <div className="mt-0.5 flex flex-col gap-0.5 pl-3">{children}</div>}
+    </div>
+  )
+}
+
+// ECRANS-NOV-1 §2 — une LIGNE de liste sélectionnable (commune, sous-zone…) : UN seul état sélectionné
+// partout — vert OPAQUE, texte sombre, coche à DROITE ; au repos, survol vert léger. Plus de liseré.
+export function LigneChoix({ label, on, onClick, sub, dataAttr }:
+  { label: React.ReactNode; on: boolean; onClick: () => void; sub?: React.ReactNode; dataAttr?: string }) {
+  const extra = dataAttr ? { [dataAttr]: true } : {}
+  return (
+    <button type="button" {...extra} aria-pressed={on} onClick={onClick}
+      className={`flex w-full items-start gap-2 rounded-md px-2.5 py-1.5 text-left text-[12px] transition-colors duration-quick ${
+        on ? 'bg-mint font-medium text-mint-on' : 'text-txt-mut hover:bg-mint/15 hover:text-txt'}`}>
+      {/* RETOURS-19 (pt 7) — libellé long À LA LIGNE (plus de texte coupé) ; le compte reste visible à droite. */}
+      <span className="min-w-0 flex-1 break-words leading-snug">{label}</span>
+      {sub != null && <span className={`mt-px shrink-0 text-[10.5px] tabular-nums ${on ? 'text-mint-on/70' : 'text-txt-dim'}`}>{sub}</span>}
+      {on && (
+        <svg aria-hidden viewBox="0 0 12 12" className="h-3 w-3 shrink-0">
+          <polyline points="2.5,6.5 5,9 9.5,3.5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+    </button>
+  )
+}
+
 export function NumField({ field, ph, suffix }: { field: keyof Filters; ph: string; suffix?: string }) {
   const { filters, setFilter } = useFiltre()
   const v = filters[field] as number | null
@@ -297,7 +380,7 @@ export function NumField({ field, ph, suffix }: { field: keyof Filters; ph: stri
     <div className="flex items-center gap-1">
       <input type="number" inputMode="numeric" placeholder={ph}
         value={v ?? ''} onChange={(e) => setFilter(field, (e.target.value === '' ? null : Number(e.target.value)) as never)}
-        className="w-[68px] rounded-md border border-line-2 bg-transparent px-2 py-1 text-[11px] text-txt-hi placeholder:text-txt-dim focus:border-mint focus:outline-none" />
+        className="w-[68px] rounded-md border border-line-2 bg-transparent px-2 py-1 text-[11px] text-txt-hi placeholder:text-txt-dim focus:outline-none" />
       {suffix && <span className="text-[10px] text-txt-dim">{suffix}</span>}
     </div>
   )
@@ -307,31 +390,123 @@ export function NumField({ field, ph, suffix }: { field: keyof Filters; ph: stri
 // destination ; SDP restante / Déjà bâti d'« Affiner ») est ENTIÈREMENT RETIRÉ. Les clés restent
 // inertes côté store ⇒ un vieux hash / une vue / une veille s'ouvre sans erreur (clé ignorée).
 
-// RETOURS-14 P5 — SECTION REPLIABLE « AFFINER LA RECHERCHE », FERMÉE PAR DÉFAUT, tout en bas du panneau.
-// Y sont REGROUPÉS (aucun filtre supprimé — simple relocalisation) : ZFANG (zone franche), FRR (ruralités)
-// — qui quittent la section « 2 · Le terrain » — et les Signaux de vie — qui quittaient la section « 4 ».
-// Chevron de la charte (ui/Chevron), titre au style des autres sections (label-caps text-txt-mut).
-export function AffinerRecherche() {
-  const { filters, setFilter } = useFiltre()
-  const [ouvert, setOuvert] = useState(false)
+// RETOURS-18 pt 21 — nombre de critères actifs de « Affiner la recherche » (copro + risques + hauteur
+// + emprise + ZFANG + FRR + signaux). Sert le badge du head quand la catégorie est fermée.
+export function nAffinerActifs(filters: Filters): number {
   const nSig = filters.signaux.filter((s) => SIGNAUX_KEYS.includes(s)).length
-  // KELFONCIER-FIX-2 (Lot C) — la section repliée accueille désormais les filtres bâti/capacité
-  // descendus de la façade (copro, hauteur, emprise, SDP, déjà bâti). Le compteur du repli les
-  // recense (sinon, section fermée, un filtre actif serait invisible) — ce n'est PAS le badge
-  // « Filtres (N) » global (inchangé), juste l'indicateur local de cette section.
-  // FIX-NU3-2 (G-001) — filtre « Risques (PPR / aléa) » : avec / sans, exclusifs. Le token client
-  // `risques` recouvre les couches ppr+georisque_alea (expand client ET serveur) — le besoin #1 du
-  // promoteur (« zone U SANS PPR ») est enfin réalisable, cohérent avec le signal commune « PPR N % ».
+  const risqueAvec = filters.flags.includes('risques')
+  const risqueSans = filters.flagsExclus.includes('risques')
+  return nSig + (filters.horsCopro ? 1 : 0)
+    + (filters.hauteurMin != null || filters.hauteurMax != null ? 1 : 0)
+    + (filters.empriseMin != null || filters.empriseMax != null ? 1 : 0)
+    + (risqueAvec || risqueSans ? 1 : 0)
+    + ((filters.zfangRegime?.length ?? 0) > 0 ? 1 : 0)
+    + ((filters.frrClassement?.length ?? 0) > 0 ? 1 : 0)
+}
+
+// RETOURS-18 pt 21 — le CORPS de « Affiner la recherche » : chaque interrupteur devient une `LigneChoix`
+// (vert opaque + coche si actif ; survol vert léger sinon), SANS case ni pastille. Les fourchettes
+// chiffrées (hauteur / emprise LiDAR) restent des champs numériques (ce ne sont pas des interrupteurs).
+// AUCUN prédicat ne change — seuls les écritures store existantes (horsCopro, flags/flagsExclus 'risques',
+// zfangRegime, frrClassement, signaux, empriseSature) sont pilotées par les mêmes gestes.
+export function AffinerBody() {
+  const { filters, setFilter } = useFiltre()
+  // FIX-NU3-2 (G-001) — RISQUES exclusifs (off / avec / sans) : prédicat inchangé.
   const risqueAvec = filters.flags.includes('risques')
   const risqueSans = filters.flagsExclus.includes('risques')
   const setRisque = (mode: 'off' | 'avec' | 'sans') => {
     setFilter('flags', filters.flags.filter((f) => f !== 'risques').concat(mode === 'avec' ? ['risques'] : []))
     setFilter('flagsExclus', filters.flagsExclus.filter((f) => f !== 'risques').concat(mode === 'sans' ? ['risques'] : []))
   }
-  const nAffiner = nSig + (filters.horsCopro ? 1 : 0)   // RECETTE-1 E2 — plus de SDP/Déjà bâti (Capacité retirée)
-    + (filters.hauteurMin != null || filters.hauteurMax != null ? 1 : 0)
-    + (filters.empriseMin != null || filters.empriseMax != null ? 1 : 0)
-    + (risqueAvec || risqueSans ? 1 : 0)
+  const zfang = filters.zfangRegime ?? []
+  const frr = filters.frrClassement ?? []
+  const toggleArr = (field: 'zfangRegime' | 'frrClassement', k: string) => {
+    const cur = (filters[field] as string[] | undefined) ?? []
+    setFilter(field, (cur.includes(k) ? cur.filter((x) => x !== k) : [...cur, k]) as never)
+  }
+  const toggleSignal = (k: string) => setFilter('signaux',
+    (filters.signaux.includes(k) ? filters.signaux.filter((x) => x !== k) : [...filters.signaux, k]) as never)
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Copropriété — un seul interrupteur (sans copropriété). */}
+      <div data-filtre-hors-copro>
+        <TitreSection titre="Copropriété" info="Écarte les parcelles en copropriété (immatriculation RNIC ou copro DVF)." />
+        <div className="mt-1 flex flex-col gap-0.5">
+          <LigneChoix label="Sans copropriété" on={filters.horsCopro} onClick={() => setFilter('horsCopro', !filters.horsCopro)} />
+        </div>
+      </div>
+      {/* Risques (PPR / aléa) — trois états exclusifs. */}
+      <div data-filtre-risques>
+        <TitreSection titre="Risques (PPR / aléa)" info="PPR (zones rouge/bleue) et aléas Géorisques. « Sans risque » écarte toute parcelle portant un de ces signaux." />
+        <div className="mt-1 flex flex-col gap-0.5">
+          {([['off', 'Peu importe'], ['avec', 'Avec un risque'], ['sans', 'Sans risque']] as const).map(([k, l]) => {
+            const on = k === 'avec' ? risqueAvec : k === 'sans' ? risqueSans : (!risqueAvec && !risqueSans)
+            return <LigneChoix key={k} dataAttr={`data-risque-${k}`} label={l} on={on} onClick={() => setRisque(k)} />
+          })}
+        </div>
+      </div>
+      {/* Hauteur / emprise LiDAR — fourchettes chiffrées (pas des interrupteurs). */}
+      <div>
+        <TitreSection titre="Hauteur du bâti (LiDAR)" info="Faîtage mesuré au LiDAR HD (la hauteur de la fiche §Bâti) ; les parcelles au bâti non mesuré n’entrent pas dans une fourchette." />
+        <div className="mt-1 flex items-center gap-1.5"><NumField field="hauteurMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="hauteurMax" ph="max" suffix="m" /></div>
+      </div>
+      <div>
+        <TitreSection titre="Emprise bâtie" info="Part de l'emprise constructible déjà couverte par du bâti (run servi). La même que « État du sol »." />
+        <div className="mt-1 flex items-center gap-1.5"><NumField field="empriseMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="empriseMax" ph="max" suffix="%" /></div>
+        <div className="mt-1 flex flex-col gap-0.5">
+          <LigneChoix dataAttr="data-filtre-emprise-sature" label="Saturé (bâti au-delà du plafond)"
+            on={filters.empriseSature} onClick={() => setFilter('empriseSature', !filters.empriseSature)} />
+        </div>
+      </div>
+      {/* ZFANG / FRR — statut de la commune (territoire_fiscal), multi-sélection. */}
+      <div>
+        <TitreSection titre="ZFANG — zone franche" info="Statut ZFANG de la commune (source unique territoire_fiscal)." />
+        <div className="mt-1 flex flex-col gap-0.5">
+          {[['renforce', 'Renforcée'], ['standard', 'Standard']].map(([k, l]) => (
+            <LigneChoix key={k} dataAttr="data-zfang" label={l} on={zfang.includes(k)} onClick={() => toggleArr('zfangRegime', k)} />
+          ))}
+        </div>
+      </div>
+      <div>
+        <TitreSection titre="FRR — ruralités" info="Classement FRR de la commune (source unique territoire_fiscal)." />
+        <div className="mt-1 flex flex-col gap-0.5">
+          {[['totalite', 'Totalité'], ['partie', 'En partie'], ['hors', 'Hors dispositif']].map(([k, l]) => (
+            <LigneChoix key={k} dataAttr="data-frr" label={l} on={frr.includes(k)} onClick={() => toggleArr('frrClassement', k)} />
+          ))}
+        </div>
+      </div>
+      {/* Signaux de vie — événements sourcés, cumulables (OU de groupe). Chaque signal garde son « i ». */}
+      <div data-signaux-vie>
+        <TitreSection titre="Signaux de vie"
+          info="Des événements sourcés, cumulables — une parcelle correspond si au moins un des signaux cochés est présent." />
+        <div className="mt-1 flex flex-col gap-0.5">
+          {SIGNAUX_KEYS.map((k) => (
+            <LigneChoix key={k} dataAttr="data-signal" label={
+              <span className="inline-flex items-center gap-1.5">{CLIENT.signaux.labels[k]}
+                <Tip garder side="top" tip={CLIENT.signaux.infos[k]}>
+                  {/* RETOURS-21 (pt 4) — le « i » suit la couleur du TEXTE de la ligne (cercle COMPRIS) :
+                      `border-current` (et non `border-current/40`, qui ne génère pas de classe valide et
+                      retombait en gris clair). Sur une ligne sélectionnée (encre sombre), le cercle devient
+                      sombre et reste lisible sur le vert. */}
+                  <span role="button" tabIndex={0} aria-label={`En savoir plus : ${CLIENT.signaux.labels[k]}`}
+                    className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-current text-[8px] font-bold leading-none opacity-70 hover:opacity-100">i</span>
+                </Tip>
+              </span>}
+              on={filters.signaux.includes(k)} onClick={() => toggleSignal(k)} />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// RETOURS-14 P5 — SECTION REPLIABLE « AFFINER LA RECHERCHE » — usage AUTONOME (cadrage projet) : garde son
+// propre chevron + état interne. Sur la CARTE, elle est rendue comme AccordionCat numéroté « 3 · » (contrôlé
+// par le parent, ouverture exclusive) — voir FiltreLabuse. Le corps est le MÊME (AffinerBody), zéro copie.
+export function AffinerRecherche() {
+  const { filters } = useFiltre()
+  const [ouvert, setOuvert] = useState(false)
+  const nAffiner = nAffinerActifs(filters)
   return (
     <div data-affiner className="mt-4">
       <button data-affiner-toggle aria-expanded={ouvert} onClick={() => setOuvert((v) => !v)}
@@ -341,77 +516,8 @@ export function AffinerRecherche() {
         {nAffiner > 0 && <span className="ml-auto shrink-0 rounded-full bg-mint/20 px-1.5 py-0.5 text-[10px] font-medium text-mint tabular-nums">{nAffiner}</span>}
       </button>
       {ouvert && (
-        <div className="gcard mt-2 flex flex-col gap-3 p-3">
-          {/* KELFONCIER-FIX-2 (Lot C) — filtres descendus de la façade (prédicats inchangés). */}
-          {/* KELFONCIER-FIX-1 (Lot E) — case « Sans copropriété » : écarte les parcelles en copropriété
-              (RNIC/DVF, s2.copro). Backend `hors_copro` (hash hc), compteur/veille/Mes vues/badge câblés. */}
-          <div>
-            <p className="label-caps text-txt-dim">Copropriété</p>
-            <Case data-filtre-hors-copro className="mt-1"
-              checked={filters.horsCopro}
-              onChange={(e) => setFilter('horsCopro', e.target.checked)}
-              label="Sans copropriété" />
-            <p className="mt-1 text-[10px] leading-snug text-txt-dim">Écarte les parcelles en copropriété (immatriculation RNIC ou copro DVF).</p>
-          </div>
-          {/* FIX-NU3-2 (G-001) — RISQUES (PPR / aléa) : trois états exclusifs. « Sans risque » répond au
-              besoin promoteur « zone U sans PPR » ; le groupe recouvre PPR + aléa Géorisques. */}
-          <div data-filtre-risques>
-            <p className="label-caps text-txt-dim">Risques (PPR / aléa)</p>
-            <div className="mt-1 flex flex-wrap gap-1">
-              {([['off', 'Peu importe'], ['avec', 'Avec un risque'], ['sans', 'Sans risque']] as const).map(([k, l]) => {
-                const on = k === 'avec' ? risqueAvec : k === 'sans' ? risqueSans : (!risqueAvec && !risqueSans)
-                return (
-                  <button key={k} type="button" data-risque={k} aria-pressed={on} onClick={() => setRisque(k)}
-                    className={`rounded-full border px-2.5 py-0.5 text-[11px] transition-colors duration-quick ${
-                      on ? 'border-mint bg-mint/20 font-medium text-txt-hi'
-                        : 'border-line-2 bg-surface-3 text-txt-mut hover:border-mint/50 hover:text-txt'}`}>
-                    {l}
-                  </button>
-                )
-              })}
-            </div>
-            <p className="mt-1 text-[10px] leading-snug text-txt-dim">PPR (zones rouge/bleue) et aléas Géorisques. « Sans risque » écarte toute parcelle portant un de ces signaux.</p>
-          </div>
-          {/* KELFONCIER-FIX-1 (Lot D) — FILTRES BÂTI : la MÊME donnée que la fiche §3 Bâti. Hauteur LiDAR
-              faîtage (batiment_hauteur_lidar, id registre le_bien.hauteur_bati_m) et emprise bâtie en %
-              (taux_emprise_pct du run servi, la colonne d'« État du sol »). Compteur SQL, ET avec le reste. */}
-          <div>
-            <p className="label-caps text-txt-dim">Hauteur du bâti (LiDAR)</p>
-            <div className="mt-1 flex items-center gap-1.5"><NumField field="hauteurMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="hauteurMax" ph="max" suffix="m" /></div>
-            <p className="mt-1 text-[10px] leading-snug text-txt-dim">Faîtage mesuré au LiDAR HD (la hauteur de la fiche §Bâti) ; les parcelles au bâti non mesuré n’entrent pas dans une fourchette.</p>
-          </div>
-          <div>
-            <p className="label-caps text-txt-dim">Emprise bâtie</p>
-            <div className="mt-1 flex items-center gap-1.5"><NumField field="empriseMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="empriseMax" ph="max" suffix="%" /></div>
-            <p className="mt-1 text-[10px] leading-snug text-txt-dim">Part de l'emprise constructible déjà couverte par du bâti (run servi) — pas « de la parcelle » : sur un grand terrain la part du sol bâti est plus faible. La même que « État du sol ».</p>
-            {/* CHASSE-INVARIANTS-FIX-1 (Lot 1, E-01) — « Saturé » (> 100 %) est une valeur à part entière :
-                le bâti existant dépasse le plafond d'emprise du PLU, le range 0–100 ne l'atteint jamais. */}
-            <Case data-filtre-emprise-sature className="mt-2"
-              checked={filters.empriseSature}
-              onChange={(e) => setFilter('empriseSature', e.target.checked)}
-              label="Saturé (bâti au-delà du plafond)" />
-          </div>
-          {/* RECETTE-1 (E2) — « SDP restante » et « Déjà bâti » (part de l'encart Capacité) RETIRÉS
-              de « Affiner la recherche » avec le reste de la Capacité. */}
-          {/* COUCHES-2 point 4 — filtre par STATUT ZFANG / FRR de la commune. SOURCE UNIQUE
-              (territoire_fiscal) : le même statut peint la carte et s'affiche sur la fiche commune. */}
-          <div>
-            <p className="label-caps text-txt-dim">ZFANG — zone franche</p>
-            <div className="mt-1"><ChipGroup field="zfangRegime" options={[{ k: 'renforce', l: 'Renforcée' }, { k: 'standard', l: 'Standard' }]} /></div>
-          </div>
-          <div>
-            <p className="label-caps text-txt-dim">FRR — ruralités</p>
-            <div className="mt-1"><ChipGroup field="frrClassement" options={[{ k: 'totalite', l: 'Totalité' }, { k: 'partie', l: 'En partie' }, { k: 'hors', l: 'Hors dispositif' }]} /></div>
-          </div>
-          {/* Signaux de vie (M55-D stage 6 · M55-G suite point 4) — ÉVÉNEMENTS SOURCÉS, filtrables SANS
-              analyse (pas des jugements). OU entre signaux du groupe, ET avec le reste. */}
-          <div data-signaux-vie>
-            <TitreSection titre="Signaux de vie"
-              info="Des événements sourcés, cumulables — une parcelle correspond si au moins un des signaux cochés est présent. Chaque signal porte son propre « i » (source)." />
-            <div className="gcard mt-2 flex flex-wrap gap-1.5 p-3">
-              {SIGNAUX_KEYS.map((k) => <SignalChip key={k} k={k} />)}
-            </div>
-          </div>
+        <div className="gcard mt-2 p-3">
+          <AffinerBody />
         </div>
       )}
     </div>
@@ -441,30 +547,51 @@ function useDebounced<T>(value: T, ms: number): T {
   return v
 }
 
-// Puce multi-sélection alimentée par les facettes (label + compte n) ; la valeur portée = le code.
-function FacetteChip({ code, label, n, on, onToggle, disabled }:
-  { code: string; label: string; n: number; on: boolean; onToggle: (code: string) => void; disabled?: boolean }) {
-  return (
-    <button type="button" disabled={disabled} onClick={() => onToggle(code)}
-      className={`flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] transition-colors duration-quick disabled:opacity-40 ${
-        on ? 'border-mint bg-mint/20 font-medium text-txt-hi'
-          : 'border-line-2 bg-surface-3 text-txt-mut hover:border-mint/50 hover:text-txt'}`}>
-      <span>{label}</span>
-      <span className="tabular-nums text-txt-dim">{nf.format(n)}</span>
-    </button>
-  )
-}
+// RETOURS-18 pt 21 — la puce de facette `FacetteChip` est retirée : les formes/activités sont désormais
+// rendues en `LigneChoix` sous des sous-accordéons (voir SectionProprietaire).
 
 // KELFONCIER-FIX-1 (Lot B) — les trois TRANCHES d'âge du dirigeant (jamais l'âge exact).
+// RETOURS-18 pt 21 — libellés de la maquette (« Moins de 50 ans »…) ; les CLÉS (pmAge) sont inchangées.
 const PM_AGE_TRANCHES = [
-  { k: 'moins50', l: '< 50 ans' },
-  { k: '50_69', l: '50–69 ans' },
-  { k: '70plus', l: '≥ 70 ans' },
+  { k: 'moins50', l: 'Moins de 50 ans' },
+  { k: '50_69', l: '50 à 69 ans' },
+  { k: '70plus', l: '70 ans et plus' },
 ]
 
-export function SectionProprietaire() {
+// RETOURS-18 pt 21 — REGROUPEMENT d'affichage des FORMES juridiques en 3 familles (maquette :
+// « Collectivités et État », « Sociétés », « Associations et autres »). Le GROUPE n'est qu'une
+// présentation : chaque forme réelle (code DGFiP servi par les facettes) reste cochée/décochée
+// individuellement (pmForme, écriture store inchangée). Une forme absente de ces listes retombe
+// dans « Associations et autres » (jamais masquée). L'ORDRE de la famille « Sociétés » suit la
+// maquette (SCI, SAS, SARL, SA) ; les autres codes de la famille viennent ensuite.
+const FORME_GROUPES: { k: string; l: string; codes: string[] }[] = [
+  { k: 'public', l: 'Collectivités et État',
+    codes: ['COM', 'DEPT', 'REG', 'ETAT', 'COLL', 'EPCI', 'EPIC', 'SEM', 'HLM', 'SAFR', 'COAG'] },
+  { k: 'societe', l: 'Sociétés',
+    codes: ['SCI', 'SAS', 'SARL', 'SA', 'SC', 'SCP', 'SCM', 'SCCV', 'SCA', 'SNC', 'GIE', 'SCA'] },
+  { k: 'autre', l: 'Associations et autres',
+    codes: ['ASS', 'GFA', 'EARL', 'GAEC', 'AUPM'] },
+]
+
+// RETOURS-18 pt 21 — REGROUPEMENT d'affichage des codes APE/activité (maquette : « Immobilier »,
+// « Construction et promotion », « Autres »). Préfixe NAF → famille ; même principe (pmApe inchangé).
+function apeGroupe(code: string): 'immobilier' | 'construction' | 'autre' {
+  if (code.startsWith('41.') || code.startsWith('43.') || code.startsWith('42.')) return 'construction'
+  if (code.startsWith('68.') || code.startsWith('70.') || code.startsWith('64.')) return 'immobilier'
+  return 'autre'
+}
+const APE_GROUPES: { k: 'immobilier' | 'construction' | 'autre'; l: string }[] = [
+  { k: 'immobilier', l: 'Immobilier' },
+  { k: 'construction', l: 'Construction et promotion' },
+  { k: 'autre', l: 'Autres' },
+]
+
+export function SectionProprietaire({ open: openProp, onToggle }: { open?: boolean; onToggle?: () => void } = {}) {
   const { filters, setFilter } = useFiltre()
-  const [open, setOpen] = useState(false)
+  const [openInner, setOpenInner] = useState(false)
+  const controlled = openProp !== undefined && onToggle !== undefined
+  const open = controlled ? openProp! : openInner
+  const setOpen = () => { if (controlled) onToggle!(); else setOpenInner((o) => !o) }
   // Portée facettes : une commune SEULE cochée → cette commune ; sinon portée par défaut du back.
   const commune = filters.communes.length === 1 ? filters.communes[0] : undefined
   const fq = useQuery({
@@ -509,19 +636,34 @@ export function SectionProprietaire() {
     + (filters.pmSiren ? 1 : 0) + filters.pmForme.length + filters.pmApe.length + filters.pmAge.length
     + (filters.pmDirigMin != null ? 1 : 0) + (filters.pmDirigMax != null ? 1 : 0)
 
-  return (
-    <div data-section-proprietaire className="mt-4">
-      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open}
-        className="group flex w-full items-center gap-2 text-left">
-        <Chevron open={open} />
-        <span className="label-caps text-txt-mut group-hover:text-txt-hi">Propriétaire</span>
-        {nActifsProp > 0 && (
-          <span className="ml-auto rounded-full bg-mint/20 px-1.5 py-0.5 text-[10px] font-medium text-mint tabular-nums">{nActifsProp}</span>
-        )}
-      </button>
+  // RETOURS-18 pt 21 — FORME JURIDIQUE en SOUS-ACCORDÉONS (3 familles) : chaque groupe réunit les
+  // formes RÉELLES servies par les facettes qui lui appartiennent, le head porte le COMPTE cumulé
+  // (somme des n), et le corps liste chaque forme en `LigneChoix` (toggle pmForme — écriture inchangée).
+  const formesByGroupe = FORME_GROUPES.map((g) => {
+    const dansGroupe = (fac?.formes ?? []).filter((o) =>
+      (g.k === 'autre'
+        ? !FORME_GROUPES.filter((x) => x.k !== 'autre').some((x) => x.codes.includes(o.code))
+        : g.codes.includes(o.code)))
+    // ordre maquette pour « Sociétés » (SCI, SAS, SARL, SA…) : trie par position dans g.codes, puis n.
+    const ordre = (o: { code: string }) => { const i = g.codes.indexOf(o.code); return i < 0 ? 999 : i }
+    const items = [...dansGroupe].sort((a, b) => ordre(a) - ordre(b) || b.n - a.n)
+    return { ...g, items, total: items.reduce((s, o) => s + o.n, 0),
+      nSel: items.filter((o) => filters.pmForme.includes(o.code)).length }
+  })
+  // RETOURS-18 pt 21 — ACTIVITÉ (code APE) en SOUS-ACCORDÉONS (Immobilier / Construction / Autres).
+  const apesByGroupe = APE_GROUPES.map((g) => {
+    const items = (fac?.apes ?? []).filter((o) => apeGroupe(o.code) === g.k)
+    return { ...g, items, total: items.reduce((s, o) => s + o.n, 0),
+      nSel: items.filter((o) => filters.pmApe.includes(o.code)).length }
+  })
 
-      {open && (
-        <div className="gcard mt-2 flex flex-col gap-3 p-3">
+  // ECRANS-NOV-1 §2 / RETOURS-18 pt 21 — « 4 · Le propriétaire » : carrosserie AccordionCat numérotée.
+  const badge = nActifsProp > 0 ? `${nActifsProp} choix` : '—'
+  return (
+    <div data-section-proprietaire className="mt-3">
+      <AccordionCat num="4" titre="Le propriétaire" open={open} onToggle={setOpen} badge={badge}
+        info="Qui détient la parcelle (DGFiP, millésime récent) : particulier ou société, forme juridique, activité, âge du dirigeant.">
+        <div className="flex flex-col gap-4">
           {/* En-tête : source + millésime, et l'état de couverture (jamais un zéro muet). */}
           <p className="text-[10.5px] leading-snug text-txt-dim">
             {fq.isLoading ? <Chargement variant="inline" />
@@ -533,29 +675,30 @@ export function SectionProprietaire() {
             </p>
           )}
 
-          {/* ── Qui détient : Particulier / Société (personne morale) / Indifférent ──
-              « Particulier » = aucune personne morale connue sur la parcelle (349 597, prédicat de l'audit). */}
+          {/* ── QUI DÉTIENT : Particulier / Société / Indifférent (3 LigneChoix, Indifférent = défaut). ── */}
           <div>
-            <p className="label-caps text-txt-dim">Qui détient</p>
-            <div className="mt-1 flex flex-wrap gap-1.5">
-              <Chip on={particulier} onClick={() => setParticulier(!particulier)}>Particulier</Chip>
-              <Chip on={pmOui} onClick={() => { setFilter('personneMorale', true); setParticulier(false) }}>Société</Chip>
-              <Chip on={!pmOui && !particulier} onClick={() => { setFilter('personneMorale', false); setParticulier(false) }}>Indifférent</Chip>
+            <TitreSection titre="Qui détient" info="« Particulier » = aucune société connue sur la parcelle ; « Société » = détenue par une personne morale (SCI, SA…) ; « Indifférent » = sans restriction." />
+            <div className="mt-1 flex flex-col gap-0.5">
+              <LigneChoix dataAttr="data-prop-particulier" label="Particulier"
+                on={particulier} onClick={() => setParticulier(!particulier)} />
+              <LigneChoix dataAttr="data-prop-societe" label="Société"
+                on={pmOui} onClick={() => { setFilter('personneMorale', true); setParticulier(false) }} />
+              <LigneChoix dataAttr="data-prop-indifferent" label="Indifférent"
+                on={!pmOui && !particulier} onClick={() => { setFilter('personneMorale', false); setParticulier(false) }} />
             </div>
-            <p className="mt-1 text-[10px] leading-snug text-txt-dim">« Particulier » = aucune société connue sur la parcelle ; « Société » = détenue par une personne morale (SCI, SA…).</p>
           </div>
 
           {/* Les critères FINS ne valent que sur des personnes morales — grisés si « Particulier ». */}
           <fieldset disabled={dis || particulier} className={(dis || particulier) ? 'pointer-events-none opacity-50' : ''}>
-          <div className="flex flex-col gap-3">
-            {/* ── Dénomination + autocomplétion ── */}
+          <div className="flex flex-col gap-4">
+            {/* ── Dénomination + autocomplétion (conservée — texte, pas un interrupteur). ── */}
             <div className="relative">
-              <p className="label-caps text-txt-dim">Dénomination</p>
+              <TitreSection titre="Dénomination" info="Nom de la société (autocomplétion sur les entités réelles)." />
               <input type="text" value={denomInput} placeholder="Ex. SCI du Littoral"
                 onChange={(e) => { setDenomInput(e.target.value); setShowSug(true); if (e.target.value.trim() === '') setFilter('pmDenom', null) }}
                 onFocus={() => setShowSug(true)}
                 onBlur={() => window.setTimeout(() => setShowSug(false), 150)}
-                className="mt-1 w-full rounded-md border border-line-2 bg-transparent px-2 py-1 text-[11px] text-txt-hi placeholder:text-txt-dim focus:border-mint focus:outline-none" />
+                className="mt-1 w-full rounded-md border border-line-2 bg-transparent px-2 py-1 text-[11px] text-txt-hi placeholder:text-txt-dim focus:outline-none" />
               {showSug && debDenom.length >= 2 && aq.data && aq.data.suggestions.length > 0 && (
                 <ul data-prop-suggestions className="absolute z-20 mt-1 max-h-44 w-full overflow-y-auto rounded-md border border-line-2 bg-surface-2 py-1 shadow-lg">
                   {aq.data.suggestions.map((s) => (
@@ -574,62 +717,72 @@ export function SectionProprietaire() {
 
             {/* ── SIREN (un ou plusieurs, séparés par virgule) ── */}
             <div>
-              <p className="label-caps text-txt-dim">SIREN</p>
+              <TitreSection titre="SIREN" info="Un ou plusieurs SIREN, séparés par une virgule." />
               <input type="text" value={filters.pmSiren ?? ''} placeholder="Un ou plusieurs, séparés par une virgule"
                 onChange={(e) => setFilter('pmSiren', e.target.value.trim() === '' ? null : e.target.value)}
-                className="mt-1 w-full rounded-md border border-line-2 bg-transparent px-2 py-1 text-[11px] text-txt-hi placeholder:text-txt-dim focus:border-mint focus:outline-none" />
+                className="mt-1 w-full rounded-md border border-line-2 bg-transparent px-2 py-1 text-[11px] text-txt-hi placeholder:text-txt-dim focus:outline-none" />
             </div>
 
-            {/* ── Forme juridique (facettes réelles : label + compte, valeur = code) ── */}
+            {/* ── FORME JURIDIQUE — sous-accordéons par famille (compte cumulé), formes en LigneChoix. ── */}
             <div>
-              <p className="label-caps text-txt-dim">Forme juridique</p>
+              <TitreSection titre="Forme juridique" info="Regroupée en familles ; chaque forme (code DGFiP réel) reste cochable individuellement." />
               {fac && fac.formes.length > 0 ? (
-                <div className="mt-1 flex flex-wrap gap-1.5">
-                  {fac.formes.map((o) => (
-                    <FacetteChip key={o.code} code={o.code} label={o.label} n={o.n}
-                      on={filters.pmForme.includes(o.code)} onToggle={toggleForme} disabled={dis} />
+                <div className="mt-1 flex flex-col gap-1">
+                  {formesByGroupe.filter((g) => g.items.length > 0).map((g) => (
+                    <SousAccordion key={g.k} dataAttr="data-forme-groupe"
+                      label={<span>{g.l}{g.nSel > 0 && <span className="ml-1.5 text-[10.5px] font-normal text-mint">{g.nSel} choix</span>}</span>}
+                      count={nf.format(g.total)}>
+                      {g.items.map((o) => (
+                        <LigneChoix key={o.code} dataAttr="data-forme-juridique" label={o.label} sub={nf.format(o.n)}
+                          on={filters.pmForme.includes(o.code)} onClick={() => toggleForme(o.code)} />
+                      ))}
+                    </SousAccordion>
                   ))}
                 </div>
               ) : <p className="mt-1 text-[10px] text-txt-dim">{fq.isLoading ? '…' : 'Aucune forme dans la portée courante.'}</p>}
             </div>
 
-            {/* ── Code APE / activité (facettes réelles) ── */}
+            {/* ── ACTIVITÉ (code APE) — sous-accordéons (Immobilier / Construction / Autres). ── */}
             <div>
-              <p className="label-caps text-txt-dim">Code APE / activité</p>
+              <TitreSection titre="Activité" info="Code APE/NAF (SIRENE), regroupé par famille ; chaque activité reste cochable individuellement." />
               {fac && fac.apes.length > 0 ? (
-                <div className="mt-1 flex flex-wrap gap-1.5">
-                  {fac.apes.map((o) => (
-                    <FacetteChip key={o.code} code={o.code} label={o.label} n={o.n}
-                      on={filters.pmApe.includes(o.code)} onToggle={toggleApe} disabled={dis} />
+                <div className="mt-1 flex flex-col gap-1">
+                  {apesByGroupe.filter((g) => g.items.length > 0).map((g) => (
+                    <SousAccordion key={g.k} dataAttr="data-ape-groupe"
+                      label={<span>{g.l}{g.nSel > 0 && <span className="ml-1.5 text-[10.5px] font-normal text-mint">{g.nSel} choix</span>}</span>}
+                      count={nf.format(g.total)}>
+                      {g.items.map((o) => (
+                        <LigneChoix key={o.code} dataAttr="data-ape" label={o.label} sub={nf.format(o.n)}
+                          on={filters.pmApe.includes(o.code)} onClick={() => toggleApe(o.code)} />
+                      ))}
+                    </SousAccordion>
                   ))}
                 </div>
               ) : <p className="mt-1 text-[10px] text-txt-dim">{fq.isLoading ? '…' : 'Aucune activité dans la portée courante.'}</p>}
             </div>
 
-            {/* ── Nombre de dirigeants (min / max) ── */}
+            {/* ── Nombre de dirigeants (min / max) — fourchette chiffrée. ── */}
             <div>
-              <p className="label-caps text-txt-dim">Nombre de dirigeants</p>
+              <TitreSection titre="Nombre de dirigeants" info="Fourchette du nombre de dirigeants (INPI/RNE)." />
               <div className="mt-1 flex items-center gap-1.5">
                 <NumField field="pmDirigMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="pmDirigMax" ph="max" />
               </div>
             </div>
 
-            {/* ── KELFONCIER-FIX-1 (Lot B) — TRANCHE d'âge du dirigeant : < 50 / 50-69 / ≥ 70, JAMAIS l'âge
-                exact. Filtre sur l'âge MAX des dirigeants (v_pm_propension_vendre), déjà calculé en base.
-                OU entre tranches. ── */}
+            {/* ── DIRIGEANTS — tranche d'âge (Moins de 50 / 50 à 69 / 70 et plus), LigneChoix. JAMAIS l'âge exact. ── */}
             <div data-prop-age-tranche>
-              <p className="label-caps text-txt-dim">Âge du dirigeant (tranche)</p>
-              <div className="mt-1 flex flex-wrap gap-1.5">
+              <TitreSection titre="Dirigeants" info="Tranche du dirigeant le plus âgé (INPI/RNE) — jamais l'âge exact. Un signal de succession possible." />
+              <div className="mt-1 flex flex-col gap-0.5">
                 {PM_AGE_TRANCHES.map((t) => (
-                  <Chip key={t.k} on={filters.pmAge.includes(t.k)} onClick={() => toggleAge(t.k)}>{t.l}</Chip>
+                  <LigneChoix key={t.k} dataAttr="data-prop-age" label={t.l}
+                    on={filters.pmAge.includes(t.k)} onClick={() => toggleAge(t.k)} />
                 ))}
               </div>
-              <p className="mt-1 text-[10px] leading-snug text-txt-dim">Tranche du dirigeant le plus âgé (INPI/RNE) — jamais l'âge exact. Un signal de succession possible.</p>
             </div>
           </div>
           </fieldset>
         </div>
-      )}
+      </AccordionCat>
     </div>
   )
 }
@@ -640,12 +793,38 @@ export function SectionProprietaire() {
 export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; enVeille?: boolean } = {}) {
   const { filters, setFilter, setFilters, setVerdict, commune, setCommunesFilter, setAnalyseRecap } = useApp()
   const analyseOn = filters.analyseLabuse
+  // RETOURS-18 pt 21 — les QUATRE catégories sont EXCLUSIVES : une seule ouverte à la fois, toutes
+  // fermées à l'ouverture du panneau. L'état d'ouverture est LEVÉ ici ; chaque AccordionCat est piloté.
+  type Cat = 'communes' | 'terrain' | 'affiner' | 'proprietaire'
+  const [openCat, setOpenCat] = useState<null | Cat>(null)
+  const toggleCat = (c: Cat) => setOpenCat((o) => (o === c ? null : c))
+  // RETOURS-18 pt 21 — « montrer plus » de communes : ~10 d'abord, puis « … N autres ».
+  const [communesTout, setCommunesTout] = useState(false)
+  const COMMUNES_INIT = 10
+  // RETOURS-18 pt 21 — ÉTAT DU SOL en LigneChoix (3 lignes) avec la MÊME partition que l'ancien
+  // ChipGroup : [] = tout coché (sans restriction) ; [AUCUN_SENTINEL] = rien coché ; sinon le
+  // sous-ensemble stocké. Écriture store `etatSol` inchangée (rétro-compatible avec les vieux hash).
+  const etatSolKeys = ETAT_SOL.map((o) => o.k)
+  const etatSolSel = (filters.etatSol as string[]) ?? []
+  const etatSolCoche = etatSolSel.length === 0 ? etatSolKeys
+    : etatSolSel.includes(AUCUN_SENTINEL) ? [] : etatSolSel
+  const toggleEtatSol = (k: string) => {
+    const next = etatSolCoche.includes(k) ? etatSolCoche.filter((x) => x !== k) : [...etatSolCoche, k]
+    setFilter('etatSol', (next.length === etatSolKeys.length ? [] : next.length === 0 ? [AUCUN_SENTINEL] : next) as never)
+  }
+  // RETOURS-18 pt 21 — résumés de choix pour les têtes fermées.
+  const nZonage = filters.zonagePlu.length + filters.zonePlu.length
+  const etatSolRestreint = etatSolCoche.length !== etatSolKeys.length
+  const nTerrain = (filters.surfaceMin != null || filters.surfaceMax != null ? 1 : 0)
+    + (nZonage > 0 ? 1 : 0) + (etatSolRestreint ? 1 : 0)
+  const terrainBadge = nTerrain > 0 ? `${nTerrain} choix` : '—'
+  const nAffiner = nAffinerActifs(filters)
   // M55-D stage 4 : interrupteur UNIFIÉ — analyseLabuse (persisté, URL) ⟺ verdict (carte). Éteint
   // par défaut : plus jamais « analyse active » quand l'utilisateur n'a rien allumé (bug mesuré).
   const setAnalyse = (v: boolean) => { setFilter('analyseLabuse', v); setVerdict(v) }
   // Reset : les DEUX étages + éteint l'interrupteur (retour à l'état vierge). M55-J : coupe
   // aussi le rituel (phase/snapshot) — jamais une carte-phrase orpheline après un reset.
-  const resetTout = () => { setFilters(EMPTY_FILTERS); setVerdict(false); setPhase('idle'); setSnapFilters(null); setAnalyseRecap(null) }
+  const resetTout = () => { setFilters(EMPTY_FILTERS); setVerdict(false); setPhase('idle'); setSnapFilters(null); setAnalyseRecap(null); setOpenCat(null); setCommunesTout(false) }
   // ANALYSE-1 — la TRAME entière (analyse coupée = tous les tiers) porte la ventilation par BANDE du
   // nouveau moteur (`bandes` dans la réponse /filtre). C'est la seule source du récapitulatif ; la
   // requête « retenues » (tier) a été retirée (le nouveau moteur ne parle plus de tiers).
@@ -662,23 +841,27 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
   // encore répondu, et disparaît (0) si l'endpoint échoue — jamais un chiffre inventé.
   const totalIleQ = useQuery({ queryKey: ['accueil-chiffres'], queryFn: getAccueilChiffres, staleTime: 60 * 60 * 1000 })
   const totalIle = totalIleQ.data?.parcelles ?? null
-  const [live, setLive] = useState<number | null>(null)
-  // NU-B-001 — le split du compteur : `à instruire` (peint) · `écartées` (étage 0, non peint).
-  const [liveSplit, setLiveSplit] = useState<{ instruire: number; ecartees: number } | null>(null)
-  const [liveLoading, setLiveLoading] = useState(false)
+  // RETOURS-21 (pt 8) — compteur « N parcelles correspondent » sous 300 ms :
+  //   · debounce ramené 400 → 120 ms (la frappe ne déclenche plus une rafale, mais l'actualisation
+  //     démarre bien plus tôt) ;
+  //   · passage à react-query (clé = filtres débouncés) : une COMBINAISON DÉJÀ VUE (staleTime 30 s)
+  //     s'affiche INSTANTANÉMENT depuis le cache, sans réseau (≈ le débounce, bien < 300 ms) ;
+  //   · `placeholderData` = valeur précédente : pour une combinaison NEUVE (comptage serveur ~1 s à
+  //     froid), l'ANCIEN nombre reste affiché tout de suite (flottant, opacité), puis se CORRIGE à
+  //     l'arrivée du compte exact — « estimé affiché tout de suite puis corrigé ».
+  const [filtresDebounced, setFiltresDebounced] = useState(filters)
   useEffect(() => {
-    const ctrl = new AbortController()
-    setLiveLoading(true)
-    const tmr = window.setTimeout(() => {
-      getFiltreCount(filters, ctrl.signal)
-        .then((r) => {
-          setLive(r.compte); setLiveLoading(false)
-          setLiveSplit({ instruire: r.instruire, ecartees: r.ecartees })
-        })
-        .catch(() => { /* abort/réseau : on garde le dernier nombre, l'opacité signale le flottement */ })
-    }, 400)
-    return () => { window.clearTimeout(tmr); ctrl.abort() }
+    const t = window.setTimeout(() => setFiltresDebounced(filters), 120)
+    return () => window.clearTimeout(t)
   }, [filters])
+  const countQ = useQuery({
+    queryKey: ['filtre-count', filtresDebounced],
+    queryFn: ({ signal }) => getFiltreCount(filtresDebounced, signal),
+    staleTime: 30_000,
+    placeholderData: (prev) => prev,
+  })
+  const live = countQ.data?.compte ?? null
+  const liveLoading = countQ.isFetching
 
   // ═══ M55-D stage 5 · LA RÉVÉLATION — couche de PRÉSENTATION par-dessus l'état stage 4 (al/verdict
   // intouchés jusqu'au geste final). Décompte 3 s CONSTANT (rituel, décision Vic) ; pendant
@@ -741,7 +924,10 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
       }
       rafRef.current = requestAnimationFrame(tick)
     }
-    timerRef.current = window.setTimeout(() => setPhase((ph) => (ph === 'counting' ? 'revealed' : ph)), RITUEL_MS)
+    // RETOURS-20 (pt 5) — fin du décompte : on arrive DIRECTEMENT sur les résultats (plus d'étape
+    // de résumé « LABUSE a analysé… Voir les parcelles »). Si le run a échoué, le `.catch` a déjà
+    // basculé en 'error' et vidé ce timer — on ne force donc jamais les résultats sur un échec.
+    timerRef.current = window.setTimeout(() => { if (phaseRef.current === 'counting') voirParcelles() }, RITUEL_MS)
   }
   // ANALYSE-1 : l'échec réseau du run est détecté par le `.catch` de l'appel direct dans `lancer()`
   // (ci-dessus) ; l'ancien useEffect sur `on.isError` (requête retirée) n'a plus lieu d'être.
@@ -796,85 +982,70 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
           filtres » ou « Désactiver »). */}
       {!analyseActive && (
       <>
-      {/* ═══════ 1 · COMMUNES — rang 1, MAÎTRE du périmètre (M55-D stage 6). Multi par code
-          postal ; le sélecteur du header n'est plus qu'un REFLET de CE filtre. ═══════ */}
+      {/* ═══════ RETOURS-18 pt 21 — QUATRE catégories EXCLUSIVES, toutes fermées à l'ouverture, un
+          seul numéro gris + titre blanc gras sur une ligne, le résumé du choix à droite au repli. ═══════ */}
+
+      {/* ─── 1 · COMMUNES — maître du périmètre. « Toutes les communes » en tête ET par défaut ;
+          ~10 communes puis « … N autres » (montrer plus). Multi-sélection, style unique vert/coche. ─── */}
       <div data-communes-filtre>
-        <TitreSection titre="1 · Communes"
-          info="Le périmètre des résultats. Tout coché = toute l’île — rien coché aussi (aucune restriction)." />
-        <div className="gcard mt-2 p-3">
-        <div className="flex flex-wrap gap-1">
-          {CP_COMMUNES.map(([cp, nom]) => (
-            // FIX-NU3-2 (G-002) — la chip affiche le NOM de la commune (comme la carte), plus le code
-            // postal nu : un utilisateur neuf ne devine pas que 97460 = Saint-Paul. Le CP reste au survol
-            // (infobulle « <code> — <commune> »). La valeur filtrée reste le `nom`.
-            <Tip key={cp} garder side="top" tip={`${cp} — ${nom}`}>
-              <button onClick={() => setCommunesFilter(
-                  filters.communes.includes(nom) ? filters.communes.filter((c) => c !== nom) : [...filters.communes, nom])}
-                className={`rounded-full border px-2 py-0.5 text-[10.5px] transition-colors duration-quick ${
-                  filters.communes.includes(nom) ? 'border-mint bg-mint/20 font-medium text-txt-hi'
-                    : 'border-line-2 bg-surface-3 text-txt-mut hover:border-mint/50 hover:text-txt'}`}>
-                {nom}
+        <AccordionCat num="1" titre="Communes" open={openCat === 'communes'} onToggle={() => toggleCat('communes')}
+          badge={filters.communes.length ? (filters.communes.length === 1 ? filters.communes[0] : `${filters.communes.length} choix`) : 'Toutes'}
+          info="Le périmètre des résultats. « Toutes les communes » = toute l’île (aucune restriction).">
+          <div className="flex flex-col gap-0.5">
+            <LigneChoix dataAttr="data-communes-toutes" label="Toutes les communes"
+              on={filters.communes.length === 0} onClick={() => setCommunesFilter([])} />
+            {(communesTout ? CP_COMMUNES : CP_COMMUNES.slice(0, COMMUNES_INIT)).map(([cp, nom]) => (
+              <LigneChoix key={cp} label={nom} on={filters.communes.includes(nom)}
+                onClick={() => setCommunesFilter(
+                  filters.communes.includes(nom) ? filters.communes.filter((c) => c !== nom) : [...filters.communes, nom])} />
+            ))}
+            {!communesTout && CP_COMMUNES.length > COMMUNES_INIT && (
+              <button type="button" data-communes-plus onClick={() => setCommunesTout(true)}
+                className="rounded-md px-2.5 py-1.5 text-left text-[12px] text-txt-dim transition-colors duration-quick hover:bg-mint/15 hover:text-txt">
+                … {CP_COMMUNES.length - COMMUNES_INIT} autres
               </button>
-            </Tip>
-          ))}
-        </div>
-        <div className="mt-1.5 flex gap-3">
-          {/* M55-G point 12 : libellés d'ACTION (« tout » / « rien (toute l'île) » ne disaient
-              pas le geste) — le sous-titre de la section garde « tout coché = toute l'île ». */}
-          <button data-communes-toutes onClick={() => setCommunesFilter(CP_COMMUNES.map(([, n]) => n))}
-            className="text-[10.5px] text-txt-dim underline decoration-txt-dim/40 underline-offset-2 hover:text-mint">Ajouter tout</button>
-          <button data-communes-aucune onClick={() => setCommunesFilter([])}
-            className="text-[10.5px] text-txt-dim underline decoration-txt-dim/40 underline-offset-2 hover:text-mint">Retirer tout</button>
-          {/* FILTRE-NETTOYAGE #2 — forme courte « 12/24 » ; tout coché = « Toute l'île » (cf. le sous-titre
-              de section) ; rien coché = pas de mention (aucune restriction, déjà toute l'île). */}
-          {nCom > 0 && <span className="text-[10.5px] text-txt-dim">{nCom === CP_COMMUNES.length ? 'Toute l’île' : `${nCom}/${CP_COMMUNES.length}`}</span>}
-        </div>
-        </div>
+            )}
+          </div>
+        </AccordionCat>
       </div>
 
-      {/* ═══════ 2 · LE TERRAIN (faits objectifs, toujours actifs — contraintes EN DERNIER) ═══════ */}
-      <TitreSection cls="mt-4" titre="2 · Le terrain"
-        info="Des faits objectifs (surface, zonage, état du sol) — valables sans aucune analyse." />
-      <div className="gcard mt-2 flex flex-col gap-3 p-3">
+      {/* ─── 2 · LE TERRAIN — surface + zonage (sous-accordéons par famille) + état du sol (LigneChoix). ─── */}
+      <AccordionCat cls="mt-3" num="2" titre="Le terrain" open={openCat === 'terrain'} onToggle={() => toggleCat('terrain')}
+        badge={terrainBadge}
+        info="Des faits objectifs (surface, zonage, état du sol) — valables sans aucune analyse.">
+      <div className="flex flex-col gap-4">
         <div>
-          <p className="label-caps text-txt-dim">Surface parcelle</p>
+          <p className="label-caps text-txt-dim">Surface de la parcelle</p>
           <div className="mt-1 flex items-center gap-1.5"><NumField field="surfaceMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="surfaceMax" ph="max" suffix="m²" /></div>
         </div>
         <div>
-          {/* M99 Phase 3 : la saisie libre de zone exacte est remplacée par le sélecteur par
-              famille (zones normalisées + comptes calculés) — voir ZoneSelector. */}
           <p className="label-caps text-txt-dim">Zonage</p>
           <ZoneSelector />
         </div>
         <div>
           <p className="label-caps text-txt-dim">État du sol</p>
-          {/* RECETTE-1 (E3) — nu + bâti PARTITIONNENT les parcelles → tout coché par défaut, décocher
-              restreint, tout décocher = 0 parcelle (plus de « aucune cochée mais 430 k »). */}
-          <div className="mt-1"><ChipGroup field="etatSol" options={ETAT_SOL} partition /></div>
-          {/* RECETTE-1 (E1, Vic 04/10) — la phrase explicative « Terrain nu = aucune emprise bâtie ≥ 5 %… »
-              est RETIRÉE (la clause SQL ne bouge pas, seul l'affichage). */}
+          {/* RETOURS-18 pt 21 — nu + bâti PARTITIONNENT les parcelles (tout coché = sans restriction) ;
+              rendus en LigneChoix (vert opaque + coche si inclus), MÊME logique que l'ancien ChipGroup
+              partition (vide = tout ; sentinelle = rien ; sinon sous-ensemble) — écriture store inchangée. */}
+          <div className="mt-1 flex flex-col gap-0.5">
+            {ETAT_SOL.map((o) => (
+              <LigneChoix key={o.k} dataAttr="data-etat-sol" label={o.l}
+                on={etatSolCoche.includes(o.k)} onClick={() => toggleEtatSol(o.k)} />
+            ))}
+          </div>
         </div>
-        {/* KELFONCIER-FIX-2 (Lot C) — « Sans copropriété », « Hauteur du bâti (LiDAR) » et « Emprise bâtie »
-            (ex-KELFONCIER-FIX-1 Lot D/E) descendent dans « Affiner la recherche » (façade allégée). Les
-            prédicats (horsCopro, hauteurMin/Max, empriseMin/Max) sont inchangés — seul l'emplacement bouge.
-            RETOURS-14 P5 — ZFANG/FRR ont aussi quitté « Le terrain » vers « Affiner la recherche ». */}
       </div>
-      {/* M55-D stage 7 (décision Vic) : « Contraintes de secteur » a QUITTÉ le panneau Filtres —
-          les flags restent visibles en fiche et en couches. Les clés URL legacy (fl=) sont
-          ignorées proprement à la lecture (filters.ts). */}
+      </AccordionCat>
 
-      {/* RECETTE-1 (E2, Vic 04/10) — l'encart « 3 · Capacité » (SDP restante / logements possibles /
-          destination) est ENTIÈREMENT RETIRÉ (façade + « Plus de filtres »). Les clés restent ignorées
-          sans erreur dans un hash / une vue / une veille existante (cf. lib/filters.ts, tables de hash). */}
+      {/* ─── 3 · AFFINER LA RECHERCHE — copro / risques / hauteur / emprise / ZFANG / FRR / signaux. ─── */}
+      <AccordionCat cls="mt-3" num="3" titre="Affiner la recherche" open={openCat === 'affiner'} onToggle={() => toggleCat('affiner')}
+        badge={nAffiner > 0 ? `${nAffiner} choix` : '—'}
+        info="Des critères complémentaires (copropriété, risques, dispositifs fiscaux, signaux de vie).">
+        <AffinerBody />
+      </AccordionCat>
 
-      {/* ═══════ RETOURS-14 P5 — « AFFINER LA RECHERCHE » (repliée, fermée par défaut, en bas) :
-          ZFANG, FRR et Signaux de vie y sont regroupés (aucun filtre supprimé). ═══════ */}
-      <AffinerRecherche />
-
-      {/* ═══════ KELFONCIER-FIX-1 (Lot B) — SECTION « PROPRIÉTAIRE » REMONTÉE dans « Plus de filtres » ═══════
-          Facettes DGFiP réelles (forme juridique · APE) + dénomination/SIREN (omnibox) + nb dirigeants
-          + tranche d'âge du dirigeant + Particulier. Compteur/veille/Mes vues/badge déjà câblés. */}
-      <SectionProprietaire />
+      {/* ─── 4 · LE PROPRIÉTAIRE — qui détient / forme juridique / activité / dirigeants (DGFiP). ─── */}
+      <SectionProprietaire open={openCat === 'proprietaire'} onToggle={() => toggleCat('proprietaire')} />
 
       {/* ═══════ SECTION « LE BIEN » RETIRÉE DU PANNEAU (FILTRE, Vic 23/08/2026) ═══════
           Les 4 facettes M137 (« On peut encore construire » / « Construite au maximum » = droitsResiduels ;
@@ -921,7 +1092,9 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
               {!reduced && live != null && countVal >= live && <span aria-hidden> ✓</span>}
             </p>
             <p className="mt-1 text-[11px] leading-snug text-txt-dim">
-              {CLIENT.revelation.decompte(live ?? totalIle ?? 0)}…
+              {/* RETOURS-20 (pt 4) — « LABUSE croise ses 99 sources (…) pour classer les N parcelles
+                  de [commune]… », avec le N et la commune réels (périmètre du run). */}
+              {CLIENT.revelation.decompteCroise(live ?? totalIle ?? 0, perimetre)}…
             </p>
           </div>
         ) : phase === 'error' ? (
@@ -990,40 +1163,18 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
              franc (fond + bordure visibles) AU-DESSUS, primaire dominant (plus haut, flèche
              dessinée — même patron que « Commencer »). La carte ne bouge QU'AU geste. ── */
           <div data-appel className="flex flex-col gap-2">
-            {/* RECETTE-1 R35 — les boutons ne DÉPENDENT plus de `liveLoading` pour leur couleur/opacité :
-                ils sont actionnables quel que soit le compteur en cours de calcul (le débounce 400 ms +
-                l'aller-retour donnaient l'illusion d'un bouton « éteint » qui s'allume après coup). L'état
-                « en cours » n'est plus signalé que sur le NOMBRE (compteur), pas sur les boutons. */}
-            {/* DA-FIX-1 Lot 4 (DA-021) — un seul primaire par écran : « Voir les N parcelles » = primaire
-                vert (le geste dominant) ; « Analyser avec LABUSE » = secondaire vert (moteur statistique,
-                pas l'IA → jamais mauve). */}
-            <Bouton data-voir-factuel niveau="primaire" ton="vert" onClick={voirFactuel} className="w-full">
-              {CLIENT.revelation.voirN(live ?? totalIle ?? 0)}
+            {/* RETOURS-19 (pt 8) — ORDRE du pied : « Voir la liste brute » D'ABORD (secondaire franc),
+                PUIS « Analyser avec LABUSE » (primaire dominant), PUIS « Réinitialiser » (lien discret).
+                La ligne « N à instruire · N écartées » reste retirée (le compteur de correspondances suffit). */}
+            <Bouton data-voir-factuel niveau="secondaire" ton="vert" onClick={voirFactuel} className="w-full">
+              Voir la liste brute
             </Bouton>
-            {/* NU-B-001 — le split : le bouton garde le TOTAL, cette ligne dit ce que la carte PEINT
-                vraiment (hors étage 0) et combien sont écartées. Plus de « 6 576 » qui n'allume que
-                3 107 pastilles sans explication. Affiché dès qu'il y a des écartées. */}
-            {liveSplit && liveSplit.ecartees > 0 && (
-              <p data-voir-split className="-mt-0.5 text-center text-[11px] leading-snug text-txt-dim">
-                <span className="text-txt">{liveSplit.instruire.toLocaleString('fr-FR')}</span> à instruire
-                {' · '}
-                <span className="text-st-ecartee">{liveSplit.ecartees.toLocaleString('fr-FR')}</span> écartées
-              </p>
-            )}
-            <Bouton data-analyser-btn niveau="secondaire" ton="vert" onClick={lancer} className="group w-full">
-              <span>{CLIENT.revelation.boutonFaire.replace(/\s*→\s*$/, '')}</span>
-              <svg viewBox="0 0 16 16" aria-hidden="true"
-                className="h-[13px] w-[13px] transition-transform duration-quick group-hover:translate-x-0.5">
-                <path d="M2.5 8 H13 M9.5 3.5 L14 8 L9.5 12.5" fill="none" stroke="currentColor"
-                  strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+            <Bouton data-analyser-btn niveau="primaire" ton="vert" onClick={lancer} className="w-full">
+              Analyser avec LABUSE
             </Bouton>
-            {/* FILTRE-NETTOYAGE #5 — « Réinitialiser » remonte DANS le bloc d'actions (avec « Voir » et
-                « Analyser »), plus isolé en bas. Reste secondaire (action de recul) : lien discret centré,
-                teinte danger au survol — lisible, jamais un bouton de poids égal. */}
             <button data-reinitialiser onClick={resetTout}
               className="mx-auto min-h-7 px-1 py-0.5 text-[11px] text-txt-dim underline decoration-txt-dim/30 underline-offset-2 transition-colors duration-quick hover:text-danger hover:decoration-danger-line">
-              Réinitialiser les filtres
+              Réinitialiser
             </button>
           </div>
         ) : null}

@@ -5,6 +5,7 @@ import App from './App'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { EcranOrdinateur } from './components/EcranOrdinateur'
 import { estAppareilMobile } from './lib/appareil'
+import { installFocusModality } from './lib/focusModality'
 import { _setServedRun, fetchServedRun, getSources, getSourcesCouverture, is429, SOURCE } from './lib/api'
 // CORRECTIFS-1 C7 — polices AUTO-HÉBERGÉES (@fontsource, bundlées par Vite) : plus aucun appel à
 // Google Fonts (ni au runtime, ni au build). Poids = ceux chargés auparavant.
@@ -71,6 +72,9 @@ function _lancerPrefetch(): void {
 }
 
 function _rendre(): void {
+  // RETOURS-21 — drapeau de modalité (souris/clavier) posé sur <html> avant le rendu : la feuille de
+  // styles supprime tout focus visible au clic et ne garde le contour vert qu'au clavier.
+  installFocusModality()
   // CHARGEMENT-1 (point 6) — téléphone/tablette : l'app NE s'ouvre PAS. Un écran unique renvoie vers
   // l'ordinateur ; aucune autre page (ni App, ni admin) n'est montée. Décidé ici, avant tout le reste.
   if (estAppareilMobile()) {

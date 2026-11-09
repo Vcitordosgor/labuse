@@ -348,7 +348,7 @@ function FormulaireAlerte({ edit, onFini, onAnnuler }: { edit?: RadarAlerte; onF
   const [surfMin, setSurfMin] = useState(c.surface_min != null ? String(c.surface_min) : '')
   const [vendeur, setVendeur] = useState(c.particulier_only ? 'particulier' : '')
   const [msg, setMsg] = useState<string | null>(null)
-  const inp = 'h-8 rounded-md border border-line-2 bg-surface-1 px-2.5 text-[12.5px] text-txt focus:border-mint focus:outline-none'
+  const inp = 'h-8 rounded-md border border-line-2 bg-surface-1 px-2.5 text-[12.5px] text-txt focus:outline-none'
 
   const payload = () => ({
     communes: communes.length ? communes : undefined,

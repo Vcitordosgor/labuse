@@ -390,6 +390,7 @@ interface AppState {
   // au bouton. Idu → true = analyse demandée.
   verdictRevele: Record<string, boolean>
   revelerVerdict: (idu: string) => void
+  masquerVerdict: (idu: string) => void   // RETOURS-18 (pt 13) — referme la carte d'analyse (clic ailleurs)
   // M61 P2 — le bloc Analyse est un TIROIR repliable : déplié par défaut à la première demande,
   // l'état de repli est mémorisé PAR PARCELLE pour la session (idu → true = replié). INDÉPENDANT
   // de l'accordéon exclusif des 7 tiroirs (le replier/déplier ne ferme aucun autre tiroir).
@@ -843,6 +844,7 @@ export const useApp = create<AppState>((set, get) => ({
   }),
   verdictRevele: {},
   revelerVerdict: (idu) => set((s) => ({ verdictRevele: { ...s.verdictRevele, [idu]: true } })),
+  masquerVerdict: (idu) => set((s) => ({ verdictRevele: { ...s.verdictRevele, [idu]: false } })),
   analyseReplie: {},
   toggleAnalyseReplie: (idu) => set((s) => ({ analyseReplie: { ...s.analyseReplie, [idu]: !s.analyseReplie[idu] } })),
   ficheTiroir: {},

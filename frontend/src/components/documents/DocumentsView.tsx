@@ -27,7 +27,7 @@ import { fmtDateNum, fmtM2, iduComplet } from '../../lib/format'
 import { editeurDiffere } from '../../lib/empreinteDoc'
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'
 import { supprimerDocument, getMoteursConfig } from '../../lib/api'
-import { CATALOGUE, type DocCatalogue } from './catalogue'
+import { CATALOGUE, USAGES, type DocCatalogue } from './catalogue'
 
 // l'URL du générateur d'une ligne de bibliothèque (régénération à la demande — « Ouvrir »).
 function urlDocument(r: Pick<DocGenereRow, 'id' | 'doc_type' | 'idus' | 'rayon_km'>): string | null {
@@ -47,67 +47,39 @@ function urlDocument(r: Pick<DocGenereRow, 'id' | 'doc_type' | 'idus' | 'rayon_k
   }
 }
 
-// ── vignette : un glyphe sobre par carte (la DA finale les remappe ; ici distinct et net à 56×72). ──
-function Vignette({ kind, bientot }: { kind: DocCatalogue['kind']; bientot?: boolean }) {
+
+// ECRANS-NOV-1 §4 — une icône de document sobre, commune à toutes les cartes (comme la maquette).
+function DocGlyphe() {
   return (
-    <svg viewBox="0 0 56 72" className={`block h-[72px] w-[56px] rounded border ${bientot ? 'border-line-2 opacity-60' : 'border-line-2'}`} aria-hidden>
-      <rect x="0" y="0" width="56" height="72" rx="4" className="fill-bg" />
-      {kind === 'multi' ? (
-        <>
-          <rect className="fill-mint" x="8" y="8" width="16" height="3" />
-          <rect className="fill-mint" x="31" y="8" width="9" height="3" />
-          {[16, 22, 28, 34, 40, 46, 52].map((y) => (
-            <g key={y}><rect className="fill-line-2" x="8" y={y} width="15" height="2" /><rect className="fill-line-2" x="31" y={y} width="9" height="2" /><rect className="fill-line-2" x="42" y={y} width="7" height="2" /></g>
-          ))}
-        </>
-      ) : kind === 'zone' ? (
-        <>
-          <rect className="fill-mint" x="8" y="8" width="26" height="3" />
-          <rect x="8" y="15" width="40" height="22" rx="1" fill="none" className="stroke-mint" strokeWidth="1.2" />
-          <path d="M18 20l14-3 10 8-6 9-14 1-6-8z" className="fill-mint" opacity="0.4" />
-          {[42, 47, 52, 57, 62].map((y) => <rect key={y} className="fill-line-2" x="8" y={y} width={y % 3 ? 40 : 30} height="2" />)}
-        </>
-      ) : (
-        <>
-          <rect className="fill-mint" x="8" y="8" width="24" height="3" />
-          {[16, 21, 26].map((y) => <rect key={y} className="fill-line-2" x="8" y={y} width={y === 21 ? 34 : 40} height="2" />)}
-          <rect x="8" y="33" width="40" height="18" rx="1" fill="none" className="stroke-mint" strokeWidth="1.2" />
-          {[56, 61].map((y) => <rect key={y} className="fill-line-2" x="8" y={y} width={y === 56 ? 30 : 36} height="2" />)}
-        </>
-      )}
+    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth={1.7}
+      strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M6.5 3.5h7L18 8v12.5H6.5z" /><path d="M13.5 3.5V8H18" /><path d="M9 12.5h6M9 15.5h4.5" />
     </svg>
   )
 }
 
+// RETOURS-18 (pt 19 / maquette 4b) — ANCIEN FLUX rétabli : la carte ENTIÈRE est cliquable (clic → la
+// fenêtre demande l'adresse). Icône + FLÈCHE en tête, titre sur une ligne, description sur EXACTEMENT
+// DEUX lignes (cartes alignées) ; au survol, bordure verte. Plus de bouton « Générer » ni de badge « PDF ».
 function DocCard({ d, onOpen }: { d: DocCatalogue; onOpen: () => void }) {
-  if (d.bientot) {
-    // Comparables DVF — HORS mandat : carte présente, grisée à 40 %, « bientôt », non cliquable.
-    return (
-      <div aria-disabled className="grid cursor-not-allowed grid-cols-[56px_1fr] items-start gap-3 rounded-md border border-line bg-surface-1 p-3 opacity-40" title="Bientôt">
-        <Vignette kind={d.kind} bientot />
-        <div>
-          <div className="flex flex-wrap items-center gap-2 text-[15px] font-semibold text-txt">
-            {d.nom} <Badge ton="neutre">bientôt</Badge>
-          </div>
-          <div className="mt-1 text-[13px] text-txt-dim">{d.desc}</div>
-        </div>
-      </div>
-    )
-  }
+  // RETOURS-19 (pt 15) — plus de `h-full` : une carte SEULE dans sa colonne (« Étude de zone ») ne
+  // s'étire plus à toute la hauteur de la colonne (les colonnes sont étirées par la grille) ; toutes
+  // les cartes gardent la même taille, calée sur leur contenu (desc en 2 lignes fixes).
   return (
-    <button
-      onClick={onOpen}
-      className="group grid grid-cols-[56px_1fr] items-start gap-3 rounded-md border border-line bg-surface-1 p-3 text-left transition-colors duration-quick hover:border-mint hover:bg-mint focus-visible:border-mint focus-visible:bg-mint focus-visible:outline-none"
-    >
-      <Vignette kind={d.kind} />
-      <div>
-        <div className="flex flex-wrap items-center gap-2 text-[15px] font-semibold text-txt group-hover:text-mint-on">
-          {d.nom}
-          {d.formats.map((f) => (
-            <span key={f} className="inline-flex h-[18px] items-center rounded-full border border-line-2 px-[7px] text-[11px] font-semibold text-txt-mut group-hover:border-mint-on group-hover:text-mint-on">{f}</span>
-          ))}
-        </div>
-        <div className="mt-1 text-[13px] text-txt-dim group-hover:text-mint-on/80">{d.desc}</div>
+    // RETOURS-21 (pt 3) — survol = FOND VERT OPAQUE + texte/icônes SOMBRES (`.hover-fill`, comme les
+    // autres survols de l'app), plus un simple contour vert. Le focus suit la règle unique (globale).
+    <button onClick={onOpen}
+      className="hover-fill group flex w-full flex-col gap-3 rounded-lg border border-line bg-surface-1 p-4 text-left transition-colors duration-quick">
+      <div className="flex items-start justify-between">
+        <span className="grid h-8 w-8 place-items-center rounded-md border border-line-2 text-mint transition-colors duration-quick">
+          <DocGlyphe />
+        </span>
+        <span aria-hidden className="text-txt-faint transition-colors duration-quick">→</span>
+      </div>
+      <div className="min-w-0">
+        <div className="text-[15px] font-semibold text-txt">{d.nom}</div>
+        {/* exactement deux lignes : hauteur minimale fixée + line-clamp, pour que toutes les cartes s'alignent. */}
+        <p className="mt-1 line-clamp-2 min-h-[2.4em] text-[13px] leading-snug text-txt-dim">{d.desc}</p>
       </div>
     </button>
   )
@@ -151,7 +123,10 @@ function ParcelleResolue({ idu }: { idu: string }) {
 }
 
 // ── la porte (fenêtre centrée) : ✕ / Échap / clic hors fenêtre ferment. ──
-function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
+// ECRANS-NOV-1 §4 — la porte ne sert plus QUE les documents à saisie SUPPLÉMENTAIRE (Comparatif :
+// d'autres parcelles ; Étude de zone : un rayon). `initialIdu` amorce ces saisies avec la parcelle
+// déjà choisie en haut de l'écran (on n'a plus à la re-saisir).
+function Porte({ d, onClose, initialIdu }: { d: DocCatalogue; onClose: () => void; initialIdu?: string | null }) {
   // FIX-NU3-2 (M-A04) — piège de focus + Échap + restitution au déclencheur sur la modale « document ».
   const dialogRef = useRef<HTMLDivElement | null>(null)
   usePiegeFocus(true, dialogRef, onClose)
@@ -164,9 +139,9 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
       .then(() => qc.invalidateQueries({ queryKey: ['documents'] }))
       .catch(() => { /* non bloquant */ })
   }
-  // variante parcelle / multi / zone
-  const [idu, setIdu] = useState<string | null>(null)                // parcelle & zone
-  const [idus, setIdus] = useState<(string | null)[]>([null, null, null])  // multi (2 à 3)
+  // variante parcelle / multi / zone — amorcées par la parcelle déjà choisie (ECRANS-NOV-1 §4).
+  const [idu, setIdu] = useState<string | null>(initialIdu ?? null)                // parcelle & zone
+  const [idus, setIdus] = useState<(string | null)[]>([initialIdu ?? null, null, null])  // multi (2 à 3)
   const [rayon, setRayon] = useState(2)                              // zone : rayon servi, défaut 2
   const [lien, setLien] = useState('')                               // ANNONCE-3 : lien d'annonce (variante annonce)
   const [surfaceHab, setSurfaceHab] = useState('')                   // ESTIMER-PRECISION-1 : surface habitable facultative (variante adresse)
@@ -283,7 +258,9 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
             </div>
             {d.explication && <p className="my-3 border-l-2 border-line-2 pl-2.5 text-[13px] text-txt-dim">{d.explication}</p>}
             {erreur && <p className="my-3 border-l-2 border-amber pl-2.5 text-[13px] text-amber">{erreur}</p>}
-            <Bouton niveau="primaire" ton="vert" className="w-full" disabled={idusValides.length < 2 || !!enCours}
+            {/* RETOURS-18 (pt 20) — marge NORMALE entre le dernier champ et le bouton (sans explication,
+                le bouton collait au 3ᵉ champ). */}
+            <Bouton niveau="primaire" ton="vert" className="mt-3 w-full" disabled={idusValides.length < 2 || !!enCours}
               onClick={async () => { if (await ouvrir(docComparatifUrl(idusValides), 'comparatif', undefined, `${idusValides.map(iduComplet).join(', ')} — ${d.fichier ?? d.nom}.pdf`)) { enregistrer('comparatif', idusValides); onClose() } }}>
               {enCours ? <Chargement variant="inline" accent="courant" label="Génération…" /> : d.cta}
             </Bouton>
@@ -330,7 +307,7 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
               <div className="mt-2 flex items-center gap-2">
                 <label className="text-[13px] text-txt-dim" htmlFor="doc-surface-hab">Surface habitable (m²)</label>
                 <input id="doc-surface-hab" type="number" min={1} step={1} inputMode="numeric"
-                  className="h-9 w-24 rounded-md border border-line-2 bg-surface-3 px-2 text-[13px] text-txt-hi placeholder:text-txt-mut focus:border-mint focus:outline-none"
+                  className="h-9 w-24 rounded-md border border-line-2 bg-surface-3 px-2 text-[13px] text-txt-hi placeholder:text-txt-mut focus:outline-none"
                   placeholder="facultatif" value={surfaceHab} onChange={(e) => setSurfaceHab(e.target.value)} />
               </div>
             )}
@@ -343,7 +320,7 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
             </div>
             <div className="mb-2 font-semibold text-txt">Un lien d’annonce</div>
             <input
-              className="h-10 w-full rounded-md border border-line-2 bg-surface-3 px-3 text-[13px] text-txt-hi placeholder:text-txt-mut focus:border-mint focus:outline-none"
+              className="h-10 w-full rounded-md border border-line-2 bg-surface-3 px-3 text-[13px] text-txt-hi placeholder:text-txt-mut focus:outline-none"
               placeholder="https://www.leboncoin.fr/ventes_immobilieres/…"
               value={lien} onChange={(e) => setLien(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && lien.trim() && !enCours) void ouvrir(docAnalyseAnnonceLienUrl(lien.trim()), 'analyse-annonce', undefined, `${d.fichier ?? d.nom}.pdf`).then((ok) => { if (ok) onClose() }) }}
@@ -535,24 +512,26 @@ function Bibliotheque() {
 }
 
 export function DocumentsView() {
+  // RETOURS-18 (pt 19) — ANCIEN FLUX : plus de barre « parcelle choisie une fois » en haut ni de
+  // phrase d'intro. La carte ENTIÈRE ouvre la fenêtre (Porte) qui demande l'adresse/la parcelle.
   const [porte, setPorte] = useState<DocCatalogue | null>(null)
   const ouvrirEtude = useApp((s) => s.ouvrirEtude)
-  // fermeture propre si l'on quitte la vue pendant qu'une porte est ouverte.
-  const mounted = useRef(true)
-  useEffect(() => () => { mounted.current = false }, [])
   return (
     <div className="min-w-0 flex-1 overflow-y-auto bg-bg">
       <div className="mx-auto max-w-[1400px] px-6 pb-12 pt-6">
-        <h1 className="mb-5 text-[22px] font-bold text-txt">Documents</h1>
-        {/* RECETTE-OUTILS-1 (point 49) — phrase d'introduction « Huit documents produits… » retirée.
-            (point 50) — la carte « Comparables DVF » est retirée du catalogue → plus de compteur « huit ». */}
-        <div className="grid grid-cols-4 gap-3 max-[1100px]:grid-cols-2">
-          {CATALOGUE.map((d) => (
-            // IMPLANTATION-4 (parcelles multiples) — la carte « Étude de faisabilité » n'ouvre PLUS la
-            // fenêtre « Sur quelle parcelle ? » : elle ouvre directement l'écran d'étude (état 1), dont
-            // le champ AJOUTE les parcelles (assiette de 1 à 8). Les autres documents gardent leur porte.
-            <DocCard key={d.key} d={d}
-              onOpen={() => (d.key === 'etude-faisabilite' ? ouvrirEtude([]) : setPorte(d))} />
+        <h1 className="mb-6 text-[22px] font-bold text-txt">Documents</h1>
+        {/* QUATRE COLONNES par usage (4b) ; « Mes documents » reste en dessous (inchangé). */}
+        <div className="grid grid-cols-4 gap-4 max-[1100px]:grid-cols-2">
+          {USAGES.map((u) => (
+            <div key={u.key} className="flex flex-col gap-3">
+              <h2 className="label-caps text-[11px] text-txt-dim">{u.titre}</h2>
+              {CATALOGUE.filter((d) => d.usage === u.key).map((d) => (
+                // IMPLANTATION-4 — l'Étude de faisabilité ouvre directement l'écran d'étude (assiette vide à
+                // composer) ; les autres ouvrent leur fenêtre (Porte) qui demande la parcelle/l'adresse.
+                <DocCard key={d.key} d={d}
+                  onOpen={() => (d.key === 'etude-faisabilite' ? ouvrirEtude([]) : setPorte(d))} />
+              ))}
+            </div>
           ))}
         </div>
         <Bibliotheque />

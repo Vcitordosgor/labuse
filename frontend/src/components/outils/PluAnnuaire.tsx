@@ -186,7 +186,7 @@ export function PluAnnuaire() {
               <input data-plu-q value={q} onChange={(e) => setQ(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') run() }}
                 placeholder="ex. hauteur clôture / Ua"
-                className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none" />
+                className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1.5 text-[12px] text-txt focus:outline-none" />
               <Bouton niveau="secondaire" ton="vert" onClick={run} disabled={q.trim().length < 2 || m.isPending}
                 className="shrink-0 whitespace-nowrap">
                 {m.isPending ? '…' : 'Chercher'}

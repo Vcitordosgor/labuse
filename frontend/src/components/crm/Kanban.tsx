@@ -117,9 +117,11 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, onEditNote, column
       {/* RETOURS-17 — note AFFICHÉE EN ENTIER, en LECTURE SEULE (clic = ouvrir le détail de la carte,
           section « Notes »). Plus de champ de saisie inline : l'édition vit dans le panneau onEdit.
           Hauteur bornée + défilement interne : une note longue ne casse pas la colonne. */}
+      {/* RETOURS-19 (pt 14) — la note s'affiche EN ENTIER, jamais coupée en haut : plus de hauteur
+          bornée ni de défilement interne (qui masquait la première ligne). Elle s'enroule librement. */}
       {note && (
         <button data-crm-note-edit onClick={(ev) => { stop(ev); onEditNote() }}
-          className="max-h-[6rem] w-full overflow-y-auto overscroll-contain whitespace-pre-wrap [overflow-wrap:anywhere] rounded-md px-0 text-left text-[12.5px] leading-snug text-txt transition-colors duration-quick hover:text-txt-hi">
+          className="w-full whitespace-pre-wrap [overflow-wrap:anywhere] rounded-md px-0 text-left text-[12.5px] leading-snug text-txt transition-colors duration-quick hover:text-txt-hi">
           {note}
         </button>
       )}
@@ -136,12 +138,13 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, onEditNote, column
         <div className="min-w-0 flex-1">
           <DeplacerMenu columns={columns} currentStatus={e.status} onMove={onMove} onRetirer={onArchive} />
         </div>
-        {!note && (
-          <button data-crm-note-add onClick={(ev) => { stop(ev); onEditNote() }}
-            className="shrink-0 whitespace-nowrap rounded-md border border-line-2 bg-surface-2 px-2 py-1 text-[11px] text-txt-dim transition-colors duration-quick hover:border-mint/40 hover:text-mint min-h-[24px]">
-            + Note
-          </button>
-        )}
+        {/* RETOURS-18 (pt 18) — bouton « Note » présent sur TOUTES les cartes, quelle que soit la colonne
+            (avant : seulement quand la carte n'avait PAS de note). « + Note » si vide, « Note » sinon ;
+            les deux ouvrent le détail à la section Notes. */}
+        <button data-crm-note-add onClick={(ev) => { stop(ev); onEditNote() }}
+          className="shrink-0 whitespace-nowrap rounded-md border border-line-2 bg-surface-2 px-2 py-1 text-[11px] text-txt-dim transition-colors duration-quick hover:border-mint/40 hover:text-mint min-h-[24px]">
+          {note ? 'Note' : '+ Note'}
+        </button>
       </div>
     </div>
   )
@@ -222,7 +225,7 @@ function CardEditPanel({ e, meta, onCancel, onSave, onMove, saving, focusNotes }
   const [nom, setNom] = useState(pr.contact_nom ?? '')
   const [tel, setTel] = useState(pr.contact_telephone ?? '')
   const [mail, setMail] = useState(pr.contact_email ?? '')
-  const inputCls = 'mt-1 w-full rounded-md border border-line-2 bg-surface-2 px-2 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none'
+  const inputCls = 'mt-1 w-full rounded-md border border-line-2 bg-surface-2 px-2 py-1.5 text-[12px] text-txt focus:outline-none'
   const submit = () => onSave({
     priority, notes, reminder_date: reminder,
     prospection: { statut_proprietaire: statutProp, prochaine_action: action,
@@ -277,9 +280,8 @@ function CardEditPanel({ e, meta, onCancel, onSave, onMove, saving, focusNotes }
             <textarea ref={notesRef} data-crm-notes value={notes} maxLength={4000} rows={3} onChange={(ev) => setNotes(ev.target.value)}
               className={`${inputCls} resize-none`} />
           </label>
-          <p className="text-[10px] leading-snug text-txt-faint">
-            Contact saisi manuellement — LA BUSE ne récupère aucune donnée propriétaire automatiquement.
-          </p>
+          {/* RETOURS-19 (pt 14) — la mention « Contact saisi manuellement — … aucune donnée
+              propriétaire automatiquement » est RETIRÉE (demande Vic). */}
         </div>
         <div className="flex justify-end gap-2 border-t border-line-2 px-5 py-3">
           <Bouton niveau="lien" onClick={onCancel}>Annuler</Bouton>
@@ -496,7 +498,7 @@ export function Kanban() {
           {/* GB-027 — recherche CRM (nom, commune, IDU, société), accents insensibles, filtre client. */}
           <input value={search} onChange={(ev) => setSearch(ev.target.value)} type="search"
             placeholder="Rechercher (nom, commune, IDU…)" aria-label="Rechercher dans le CRM"
-            className="w-44 rounded-md border border-line-2 bg-surface-2 px-2 py-1 text-[11px] text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none" />
+            className="w-44 rounded-md border border-line-2 bg-surface-2 px-2 py-1 text-[11px] text-txt placeholder:text-txt-dim focus:outline-none" />
           {/* QA-46 (M13-C) : pagination par FLÈCHES (plus de défilement horizontal). Les flèches
               n'apparaissent que si toutes les colonnes ne tiennent pas dans la fenêtre. */}
           {paginated && !editMode && (
@@ -528,7 +530,7 @@ export function Kanban() {
                     onKeyDown={(ev) => { if (ev.key === 'Enter') commitAdd(); if (ev.key === 'Escape') { setAdding(false); setNewColLabel('') } }}
                     placeholder="Nom de la colonne…"
                     maxLength={80}
-                    className="w-40 rounded-md border border-mint/50 bg-surface-2 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none"
+                    className="w-40 rounded-md border border-mint/50 bg-surface-2 px-2 py-1 text-[11px] text-txt focus:outline-none"
                     aria-label="Nom de la nouvelle colonne"
                   />
                   <Bouton niveau="primaire" ton="vert" onClick={commitAdd} disabled={!newColLabel.trim() || addCol.isPending}

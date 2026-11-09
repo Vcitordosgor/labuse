@@ -32,7 +32,7 @@ function BudgetEdit({ id, budget, defaut }: { id: number; budget: number | null;
     <span className="flex items-center justify-end gap-1.5">
       <input value={v} onChange={(e) => setV(e.target.value.replace(/[^0-9.,]/g, ''))} placeholder={defaut.toFixed(2)}
         data-quota={id}
-        className="w-16 rounded-md border border-line-2 bg-bg px-2 py-1 text-right font-mono text-xs text-txt outline-none focus:border-cp-ia" />
+        className="w-16 rounded-md border border-line-2 bg-bg px-2 py-1 text-right font-mono text-xs text-txt outline-none" />
       <span className="text-xs text-txt-dim">€</span>
       {dirty && <ActBtn tone="ia" onClick={() => save.mutate()} disabled={save.isPending}>Enregistrer</ActBtn>}
     </span>

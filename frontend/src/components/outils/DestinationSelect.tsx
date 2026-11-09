@@ -22,7 +22,7 @@ export function DestinationSelect({ value, onChange, dataAttr }: {
       <Select data-destination-select={dataAttr ?? true} value={value ?? ''}
         wrapClassName="mt-0.5 w-full"
         onChange={(e) => onChange(e.target.value || null)}
-        className="h-8 w-full rounded-md border border-line-2 bg-surface-1 pl-2 text-[11.5px] text-txt focus:border-mint focus:outline-none">
+        className="h-8 w-full rounded-md border border-line-2 bg-surface-1 pl-2 text-[11.5px] text-txt focus:outline-none">
         <option value="">— toutes (facultatif) —</option>
         {(d?.destinations ?? []).map((g) => (
           <optgroup key={g.slug} label={g.libelle}>

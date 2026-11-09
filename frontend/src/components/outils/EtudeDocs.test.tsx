@@ -90,6 +90,8 @@ describe('parcelles multiples — la carte Docs ouvre l\'état 1 (pas de picker)
   afterEach(() => { vi.restoreAllMocks(); useApp.setState({ etudeIdus: null }) })
 
   it('clic sur la carte Étude → ouvrirEtude([]) et AUCUNE fenêtre « Sur quelle parcelle ? »', async () => {
+    // RETOURS-18 (pt 19) — ancien flux rétabli : la CARTE ENTIÈRE est cliquable (plus de bouton « Générer »).
+    // L'Étude de faisabilité ouvre directement l'écran-assiette (vide, à composer), sans fenêtre de choix.
     render(<QueryClientProvider client={qc()}><DocumentsView /></QueryClientProvider>)
     const carte = await waitFor(() => {
       const b = [...document.querySelectorAll('button')].find((x) => /Étude de faisabilité/.test(x.textContent ?? ''))

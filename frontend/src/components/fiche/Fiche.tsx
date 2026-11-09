@@ -13,7 +13,7 @@ import { useOuvrirDocument } from '../../lib/ouvrirDocument'
 import { verdictMeta } from '../../lib/status'
 import { AnalyseLabuseCard } from './AnalyseLabuseCard'   // RETOURS-14 P1 — carte « Analyse LABUSE » extraite (testable), affiche la version servie
 import { fmtInt, fmtM2, fmtDateNum, fmtLibelleBrut, fmtPctConsomme, iduComplet } from '../../lib/format'
-import { surfaceTerrain, surfaceDessin, surfaceSource, montrerDessin } from '../../lib/surface'
+import { surfaceTerrain, surfaceDessin, surfaceSource } from '../../lib/surface'
 import { layerLabel } from '../../lib/layers'
 import { CLIENT } from '../../lib/strings'
 import { Chargement, Squelette } from '../Loading'
@@ -47,6 +47,7 @@ import { RisquesSection } from './risques'
 import { MarcheSection, DerniereVenteBlock } from './marche'
 import { ReseauxSection, EquipementsBadges } from './reseaux'
 import { ProfilAltimetrique } from './ProfilAltimetrique'   // RETOURS-13 P6
+import { ComprendreAnalyse } from '../panel/LeftPanel'   // ECRANS-NOV-1 §1 — « Comprendre l'analyse » (carte d'analyse)
 import { AutourSection, HistoriqueSiteBlock } from './autour'
 import { ReglementPluBlock } from './blocks'   // FICHE-RANGEMENT-2 Lot 1 — extraits (cycle-free)
 export { Calculette, FaisabiliteTab } from './constructibilite'
@@ -57,23 +58,20 @@ export type { CalcResult } from './constructibilite'
 // complétude = lecture admin/Circuit, pas cliente) : IcdBlockView supprimé (0-caller côté fiche).
 // Le payload `f.icd` reste servi par le back (disponible côté admin).
 
-// RETOURS-11 F2 — id de tiroir (RefDrawer) → libellé de section, pour tagger le signalement
-// avec « la section ouverte » (jamais une clé technique à l'écran).
-// FICHE-RANGEMENT-2/3 — les 11 sections PAR NATURE (accordéon exclusif). Mode B (Réhabilitation)
-// n'est plus un tiroir : il vit DANS §11 Simulation (FICHE-RANGEMENT-3 Lot 3).
-const SECTION_LABELS: Record<string, string> = {
-  identite: 'Identité',
-  terrain: 'Terrain',
-  bati: 'Bâti',
-  urbanisme: 'Urbanisme',
-  risques: 'Risques et environnement',
-  reseaux: 'Réseaux et desserte',
-  fiscalite: 'Fiscalité et dispositifs',
-  marche: 'Marché',
-  quartier: 'Quartier',
-  // FICHE-ORFEVRERIE-1 (Lot B, pt 16) — « Simulation » fondue dans Potentiel : 10 sections (plus de 11e).
-  potentiel: 'Potentiel',
-}
+// ECRANS-NOV-1 §1 — L'ORDRE ET LES NOMS DES SECTIONS SONT LUS DE declarations/fiche/sections.yaml
+// (le MIROIR du Dossier PDF), injectés au build en VITE_FICHE_SECTIONS (cf. vite.config.ts) — plus
+// codés en dur ici. La fiche range ses tiroirs via `SECTION_ORDER` (flex `order`) ; `SECTION_LABELS`
+// (id → libellé, pour tagger le signalement avec « la section ouverte ») en dérive. Ordre servi :
+// Identité · Urbanisme · Potentiel · Risques et environnement · Terrain · Bâti · Réseaux et desserte ·
+// Marché · Fiscalité et dispositifs · Quartier · (Limites et sources = le pied : mentions + signalement).
+const FICHE_SECTIONS: { id: string; titre: string }[] = (() => {
+  try { return JSON.parse(import.meta.env.VITE_FICHE_SECTIONS ?? '[]') as { id: string; titre: string }[] }
+  catch { return [] }
+})()
+const SECTION_ORDER: Record<string, number> = Object.fromEntries(FICHE_SECTIONS.map((s, i) => [s.id, i]))
+const SECTION_LABELS: Record<string, string> = Object.fromEntries(FICHE_SECTIONS.map((s) => [s.id, s.titre]))
+// l'ordre d'une section par son id (sections absentes du YAML → poussées en fin, avant le pied).
+const ordreSection = (id: string): number => SECTION_ORDER[id] ?? FICHE_SECTIONS.length
 
 // ── M9 lot 3 — Signaler une erreur (file de QA humaine, aucune action automatique) ──
 const SIGNALEMENT_TYPES: [string, string][] = [
@@ -356,7 +354,10 @@ function ProjetButton({ idu }: { idu: string }) {
       </button>
 
       {open && (
-        <div data-projet-fiche-menu className="floating absolute bottom-10 left-0 z-30 w-72 p-2 text-[11px]">
+        <div data-projet-fiche-menu className="floating absolute bottom-10 right-0 z-30 w-72 p-2 text-[11px]">
+          {/* RETOURS-20 (pt 9) — le menu s'ancre à DROITE (`right-0`) : « + Projet » est dans la moitié
+              droite du pied de fiche ; ouvert vers la gauche, le menu reste dans la fenêtre et aucun
+              libellé n'est coupé par le bord de l'écran. */}
           <p className="label-caps px-1 pb-1 text-txt-dim">Ajouter cette parcelle à…</p>
           {projetsQ.isLoading && <Squelette lignes={2} className="px-1 py-2" />}
           {!projetsQ.isLoading && candidats.length === 0 && (
@@ -368,24 +369,25 @@ function ProjetButton({ idu }: { idu: string }) {
               return (
                 <button key={p.id} data-projet-fiche-cible={p.id} disabled={add.isPending}
                   onClick={() => (deja ? (setOpenProjet({ id: p.id, nom: p.nom }), setOpen(false)) : add.mutate(p.id))}
-                  /* RETOURS-16 (point 3) — survol comme les AUTRES menus déroulants de l'app (menu
-                     compte, etc.) : seul le FOND change (hover:bg-surface-3), le texte reste CLAIR.
-                     L'ancien `hover-fill-amber` passait le nom en encre sombre sur fond quasi
-                     transparent → noir sur fond sombre, illisible. */
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-txt transition-colors duration-quick hover:bg-surface-3 hover:text-txt-hi"
+                  /* RETOURS-20 (pt 9) — survol = fond VERT OPAQUE + texte SOMBRE (`.hover-fill` :
+                     `--fill-mint` + `--ink` sur tous les descendants), comme les autres listes
+                     sélectionnables de l'app. Libellé jamais coupé (`break-words`, plus de `truncate`). */
+                  className="hover-fill flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left text-txt transition-colors duration-quick"
                   >
-                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-mint" />
-                  <span className="min-w-0 flex-1 truncate">{p.nom}</span>
-                  <span className="shrink-0 font-mono text-[10px] text-txt-dim">{deja ? 'déjà ↗' : vivier(p).toLocaleString('fr-FR')}</span>
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-mint" />
+                  <span className="min-w-0 flex-1 break-words leading-snug">{p.nom}</span>
+                  <span className="mt-px shrink-0 font-mono text-[10px] text-txt-dim">{deja ? 'déjà ↗' : vivier(p).toLocaleString('fr-FR')}</span>
                 </button>
               )
             })}
           </div>
           <div className="my-1.5 h-px bg-line/40" />
+          {/* RETOURS-20 (pt 9) — dernière ligne « Nouveau projet » (sans « avec cette parcelle ») ;
+              même survol vert opaque + encre sombre que la liste. */}
           <button data-projet-fiche-nouveau disabled={nouveau.isPending} onClick={() => nouveau.mutate()}
-            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-mint transition-colors duration-quick hover:bg-surface-3"
+            className="hover-fill flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-mint transition-colors duration-quick"
             >
-            <span aria-hidden>＋</span><span className="flex-1">{nouveau.isPending ? 'Création…' : 'Nouveau projet avec cette parcelle'}</span>
+            <span aria-hidden>＋</span><span className="flex-1">{nouveau.isPending ? 'Création…' : 'Nouveau projet'}</span>
           </button>
         </div>
       )}
@@ -415,6 +417,24 @@ export function Fiche({ idu }: { idu: string }) {
   // M55-L point 5 — verdict à la demande : mémoire par parcelle pour la session (store).
   const verdictRevele = useApp((s) => !!s.verdictRevele[idu])
   const revelerVerdict = useApp((s) => s.revelerVerdict)
+  const masquerVerdict = useApp((s) => s.masquerVerdict)
+  // RETOURS-18 (pt 13) — la carte d'analyse se REFERME au clic AILLEURS (hors carte ET hors bouton
+  // « Analyse LABUSE ») ; le bouton « Analyse LABUSE » la ROUVRE (revelerVerdict).
+  useEffect(() => {
+    if (!verdictRevele) return
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as HTMLElement
+      if (t.closest?.('[data-analyse-labuse-card]') || t.closest?.('[data-demander-analyse]') || t.closest?.('[data-modale]')) return
+      masquerVerdict(idu)
+    }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [verdictRevele, idu, masquerVerdict])
+  // ECRANS-NOV-1 §1 — pied de la carte d'analyse : « Classer par » renvoie au tri des résultats (on
+  // révèle l'analyse et on ferme la fiche → la liste classée s'affiche) ; « Comprendre l'analyse »
+  // ouvre le même panneau pédagogique que l'écran d'analyse (modale locale, indépendante de la pile).
+  const setVerdictGlobal = useApp((s) => s.setVerdict)
+  const [comprendreOuvert, setComprendreOuvert] = useState(false)
   // M61 P2 — bloc Analyse repliable : déplié par défaut (absent du map), état par parcelle/session.
   const analyseReplie = useApp((s) => !!s.analyseReplie[idu])
   const toggleAnalyseReplie = useApp((s) => s.toggleAnalyseReplie)
@@ -736,7 +756,10 @@ export function Fiche({ idu }: { idu: string }) {
           /* RECETTE-PROD-1 (A7) — hauteur table-graphique : valeur servie + étiquette « Estimé ». */
           ? `${fmtH(gd.hauteurReglementaireM)} m à l'égout${gd.hauteurEstimee ? ' · Estimé' : ''}`
           : gd.hauteurEgoutM != null
-            ? <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.15 }}>
+            /* RETOURS-18 (pt 11) — « N m max » à la MÊME taille que les autres valeurs de tiroir (12,5 px,
+               comme `.t-val`) : une valeur ReactNode saute le wrapper `.t-val` et héritait du 16 px de
+               `.t-right` → on fixe la taille ici. L'égout reste en sous-ligne discrète. */
+            ? <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.15, fontSize: 12.5 }}>
                 <span>{fmtH(gd.hauteurReglementaireM)} m max</span>
                 <span style={{ fontSize: 10, color: 'var(--txt-dim)' }}>égout {fmtH(gd.hauteurEgoutM)} m</span>
               </span>
@@ -955,9 +978,10 @@ export function Fiche({ idu }: { idu: string }) {
             : zoneFamille === 'AU' ? 'à urbaniser' : zoneFamille === 'U' ? 'constructible'
             : zoneFamille === 'A' ? 'agricole' : zoneFamille === 'N' ? 'naturelle' : undefined
           const pente = f.terrain?.pente_moy_deg
-          // FRONT-CHIFFRES-2 (F01b) — bande de pente SERVIE (terrain.pente_bande) ; le front ne
-          // classe plus par seuils 5/15/30° codés en dur.
-          const penteSous = f.terrain?.pente_bande ?? undefined
+          // ECRANS-NOV-1 §1 — la 3e ligne = SOURCE : « RGE ALTI » + la pente en % (tan), comme la maquette
+          // (« RGE ALTI · 25 % »). La bande verbale (modérée/forte) reste au tiroir Terrain.
+          const pentePct = pente != null ? Math.round(Math.tan(pente * Math.PI / 180) * 100) : null
+          const penteSous = pentePct != null ? `RGE ALTI · ${pentePct} %` : 'RGE ALTI'
           // FIX-P-1 (P-02 / J#4) — la tuile « Risques » compte les ALÉAS DISTINCTS (`aleas.n_hazards`,
           // fonction unique `distinct_hazards`), le MÊME compteur et le MÊME mot (« aléa ») que l'outil
           // « Estimer » et le Dossier PDF — fin de « 5 vigilances » ici vs « 2 aléas » à l'Estimer. Les
@@ -985,14 +1009,15 @@ export function Fiche({ idu }: { idu: string }) {
               // plan » quand l'écart dépasse 1 % ; B4 : mention « mesurée sur le plan » en repli.
               const st = surfaceTerrain(f)
               const cadastre = surfaceSource(f) === 'cadastre'
-              const sous = montrerDessin(f) ? `Dessin du plan : ${fmtM2(surfaceDessin(f))}`
-                : !cadastre ? 'surface mesurée sur le plan' : undefined
+              // ECRANS-NOV-1 §1 — la 3e ligne de la tuile = la SOURCE (style fiche commune), plus le
+              // détail « Dessin du plan » (qui reste dans l'infobulle « i » et dans la section Terrain).
+              const sous = cadastre ? 'Cadastre' : 'Plan cadastral'
               const info = cadastre
                 ? 'Surface mesurée sur le plan cadastral. Elle diffère souvent un peu de la contenance inscrite au cadastre, qui est celle de l’acte.'
                 : 'Contenance cadastrale indisponible : surface mesurée sur le contour du plan cadastral (géométrie).'
               return { l: 'Surface', v: st != null ? fmtM2(st) : '—', s: sous, vide: st == null, i: info } as Tuile
             })(),
-            { l: 'Zone', v: reglesZone ?? 'Non publié au GPU', s: zoneSous, vide: reglesZone == null,
+            { l: 'Zone', v: reglesZone ?? 'Non publié au GPU', s: zoneSous ? `PLU · ${zoneSous}` : 'PLU', vide: reglesZone == null,
               i: 'Zone du PLU au point de la parcelle (règlement communal, archive GPU). « Non publié au GPU » : la commune n’a pas déposé de document opposable.' },
             { l: 'Pente', v: pente != null ? `${nf(pente)}°` : '—', s: penteSous, vide: pente == null,
               i: 'Pente moyenne du terrain, calculée sur le modèle de relief RGE ALTI (IGN). À La Réunion elle commande le coût de terrassement autant que la constructibilité. « — » : relief non disponible sur la parcelle.' },
@@ -1025,6 +1050,9 @@ export function Fiche({ idu }: { idu: string }) {
             <div className="stats" data-bandeau-chiffres>
               {tuiles.map((c) => (
                 <div className="stat" key={c.l}>
+                  {/* ECRANS-NOV-1 §1 — style fiche commune : la VALEUR (mono, en grand) d'abord, puis le
+                      LIBELLÉ, puis la SOURCE. (Avant : libellé en tête, valeur dessous.) */}
+                  <div className={`stat-v${c.vide ? ' vide' : ''}`}>{c.v}</div>
                   <div className="stat-l">
                     {c.l.toUpperCase()}
                     {c.i && (
@@ -1034,7 +1062,6 @@ export function Fiche({ idu }: { idu: string }) {
                       </Tip>
                     )}
                   </div>
-                  <div className={`stat-v${c.vide ? ' vide' : ''}`}>{c.v}</div>
                   {c.s && <div className="stat-s">{c.s}</div>}
                   {/* PPR-PARTIEL-FIX-1 (étape B) — sous la tuile SDP restante : la parcelle touche une
                       zone rouge PPR (servie 0 par prudence) mais garde du foncier HORS rouge (≥ 200 m²).
@@ -1101,7 +1128,10 @@ export function Fiche({ idu }: { idu: string }) {
           <>
             {iaOuvert !== 'question' && (
               <div className="ia">
-                {verdict && !verdictRevele && (
+                {/* ECRANS-NOV-1 §1 — « Analyse LABUSE » (vert) RESTE côte à côte avec « Copilote » (mauve)
+                    même une fois l'analyse révélée (la carte se déploie dessous) : les deux boutons, même
+                    taille, sont toujours la paire d'entrée (maquette). */}
+                {verdict && (
                   <Bouton data-demander-analyse niveau="primaire" ton="vert" className="flex-1" onClick={() => revelerVerdict(idu)}>
                     {CLIENT.fiche.demanderAnalyse}
                   </Bouton>
@@ -1124,8 +1154,12 @@ export function Fiche({ idu }: { idu: string }) {
           // RETOURS-17 — la carte n'affiche plus l'identifiant de run : plus de prop `version`.
           // La fiche lit toujours le run servi via getFiche(idu) = `/parcels/{idu}?source=${SOURCE}`,
           // mais ce détail serveur n'est jamais montré côté client.
-          <AnalyseLabuseCard analyse={f.analyse_labuse!} />
+          <AnalyseLabuseCard analyse={f.analyse_labuse!} zone={zoneFamille}
+            onClasserPar={() => { setVerdictGlobal(true); select(null) }}
+            onComprendre={() => setComprendreOuvert(true)} />
         )}
+        {/* ECRANS-NOV-1 §1 — « Comprendre l'analyse » : même panneau que l'écran d'analyse, en modale. */}
+        {comprendreOuvert && <ComprendreAnalyse onClose={() => setComprendreOuvert(false)} />}
         {/* CARTE VERDICT (ancien moteur, run servi) — teintée selon le tier. ANALYSE-1 : MASQUÉE dès que
             le nouveau moteur porte un verdict (`analyse_labuse`), pour qu'aucun ancien mot (Priorité / À
             suivre / Sans signal / Écartée) n'apparaisse sur la fiche. La réglette « ×N vs moyenne » et la
@@ -1300,7 +1334,7 @@ export function Fiche({ idu }: { idu: string }) {
             <input autoFocus data-fiche-search value={ficheQuery} onChange={(e) => setFicheQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Escape' && (setFicheQuery(''), setFicheSearchOpen(false))}
               placeholder="Chercher dans cette fiche (risque, réseau, ICPE…)"
-              className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1 text-xs text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none" />
+              className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1 text-xs text-txt placeholder:text-txt-dim focus:outline-none" />
             {/* FICHE-RECHERCHE-1 — accord correct (« 1 résultat surligné ») ; « aucun résultat »
                 (jamais un compteur à zéro). Le compteur = le nombre de LIGNES trouvées (la liste). */}
             {fq && <span data-fiche-search-count className="shrink-0 text-[11px] text-txt-mut">{results.length === 0
@@ -1455,14 +1489,16 @@ export function Fiche({ idu }: { idu: string }) {
                 Risques·Réseaux·Fiscalité) · Le marché (Marché·Quartier) · Le projet (Potentiel, qui
                 absorbe la Simulation — FICHE-ORFEVRERIE-1 Lot B pt 16). Accordéon exclusif inchangé
                 (RefDrawer / FicheAccordionCtx). Chaque section COMPOSE des blocs feuilles. */}
-            <GroupLabel>Le bien</GroupLabel>
+            {/* ECRANS-NOV-1 §1 — les groupes silencieux (« Le bien / Le droit du sol / Le marché /
+                Le projet ») sont RETIRÉS : la fiche est à plat, MIROIR du Dossier (11 sections,
+                sections.yaml). Chaque section porte son `order` (flex) lu du YAML. */}
 
             {/* ① IDENTITÉ — ce qui identifie le bien : surface (ex-tuile), propriétaire (relocalisé
                 §1), dernière vente DVF (ex-Marché), filiation cadastrale, historique des permis DE la
                 parcelle (ex-Autour). CARTE ACCENTUÉE VIOLETTE = le signal propriétaire chaud. */}
             {/* FICHE-RANGEMENT-3 Lot 4 — la commune n'est plus rappelée en sous-titre (déjà dans
                 l'en-tête « PARCELLE · <COMMUNE> ») : le sous-titre ne porte que le signal propriétaire. */}
-            <RefDrawer id="identite" icon={IC.proprio} name="Identité" accent={proprioAccent}
+            <RefDrawer id="identite" order={ordreSection('identite')} icon={IC.proprio} name="Identité" accent={proprioAccent}
               context={proprioSignal ? (f.proprietaire_moral ? proprioType : 'non identifié') : undefined}
               value={proprioSignal ? shorten(proprioSignal.detail).slice(0, 20) : (f.proprietaire_moral ? proprioType.slice(0, 18) : 'Non identifié')  /* CHASSE-FIX-1 (C24) : absence de PM ≠ personne physique — le tiroir le dit déjà */}
               micro={proprioPastilles.length ? <MicroPastilles items={proprioPastilles} /> : undefined}>
@@ -1588,7 +1624,7 @@ export function Fiche({ idu }: { idu: string }) {
 
             {/* ② TERRAIN — ce qui touche le sol : pente + exposition (ex-tuiles), surface au sol libre
                 + artificialisation OCS GE (TerrainDuBienBlock §2), piscine (EquipementsBadges, ex-Réseaux). */}
-            <RefDrawer id="terrain" icon={IC.terrain} name="Terrain"
+            <RefDrawer id="terrain" order={ordreSection('terrain')} icon={IC.terrain} name="Terrain"
               context={[penteSous ? `pente ${penteSous}` : null, expoOrient && expoOrient !== 'plat' ? String(expoOrient) : null].filter(Boolean).join(' · ') || undefined}
               value={penteDeg != null ? `${nf(penteDeg)}°` : (expoOrient && expoOrient !== 'plat' ? String(expoOrient) : undefined)}>
               <div className="flex flex-col gap-3">
@@ -1650,7 +1686,7 @@ export function Fiche({ idu }: { idu: string }) {
             {/* ③ BÂTI — le bâtiment existant (emprise, CoSIA, hauteur, DPE, toit, RNB → BatiBlock §3).
                 S'omet si rien d'évaluable (couche bâtiments non ingérée → le_bien absent). */}
             {f.le_bien?.disponible && (
-              <RefDrawer id="bati" icon={IC.faisa} name="Bâti"
+              <RefDrawer id="bati" order={ordreSection('bati')} icon={IC.faisa} name="Bâti"
                 /* RECETTE-2 (A4) — quand BD TOPO et RNB s'accordent sur N bâtiments, le sous-titre dit
                    « N bâtiments » (cohérent avec le badge) plutôt qu'un « Présence de bâti à vérifier » vague. */
                 context={(() => {
@@ -1673,7 +1709,6 @@ export function Fiche({ idu }: { idu: string }) {
               </RefDrawer>
             )}
 
-            <GroupLabel>Le droit du sol</GroupLabel>
 
             {/* ④ URBANISME — droit du sol : zone (ex-tuile) + PLU/procédure/traducteur/règlement/
                 situation (ex-tiroir Règles) + RTAA DOM (§4) + dispositifs ER/EBC/DPU/PEB/SUP (§4) +
@@ -1685,7 +1720,7 @@ export function Fiche({ idu }: { idu: string }) {
                 que l'article/zone non publiée (rien quand la zone est connue → la jauge suffit). */}
             {/* FICHE-FIX-5 (Lot E) — la jauge « N % SDP consommée » ne FLOTTE plus en tête (micro
                 retiré) : elle descend en Ligne dans le corps (voir plus bas). */}
-            <RefDrawer id="urbanisme" icon={IC.regles} name="Urbanisme"
+            <RefDrawer id="urbanisme" order={ordreSection('urbanisme')} icon={IC.regles} name="Urbanisme"
               value={reglesGabarit}
               context={reglesZone ? undefined : (reglesArticle ? `art. ${reglesArticle}` : 'zone non publiée au GPU')}>
               <div className="flex flex-col gap-3">
@@ -1928,16 +1963,16 @@ export function Fiche({ idu }: { idu: string }) {
             </RefDrawer>
 
             {/* ⑤ RISQUES ET ENVIRONNEMENT — aléas, sols, vigilances, SUP, lignes HT/MT → risques.tsx. */}
-            <RisquesSection f={f} idu={idu} />
+            <div style={{ order: ordreSection('risques') }}><RisquesSection f={f} idu={idu} /></div>
 
             {/* ⑥ RÉSEAUX ET DESSERTE — fibre, accès + transport, gestionnaires, viabilisation (+ solaire),
                 axes et nuisances → reseaux.tsx. */}
-            <ReseauxSection f={f} idu={idu} />
+            <div style={{ order: ordreSection('reseaux') }}><ReseauxSection f={f} idu={idu} /></div>
 
             {/* ⑦ FISCALITÉ ET DISPOSITIFS — taxe foncière (ex-tuile) + fiscal & leviers (QPV/TVA §7) +
                 taxe d'aménagement (§7) + dispositifs territoriaux ZFANG/FRR/DOM (relocalisés §7). */}
             {/* FICHE-RANGEMENT-3 Lot 4 — la commune (sous-titre) est retirée : déjà dans l'en-tête. */}
-            <RefDrawer id="fiscalite" icon={IC.fiscal} name="Fiscalité et dispositifs"
+            <RefDrawer id="fiscalite" order={ordreSection('fiscalite')} icon={IC.fiscal} name="Fiscalité et dispositifs"
               value={f.territoire_fiscal?.zfang?.regime === 'renforce'
                 ? <Badge ton="vert">ZFANG renforcé</Badge>
                 : tfpb != null ? `${nf(tfpb)} %` : undefined}>
@@ -2047,20 +2082,17 @@ export function Fiche({ idu }: { idu: string }) {
               </div>
             </RefDrawer>
 
-            <GroupLabel>Le marché</GroupLabel>
 
             {/* ⑧ MARCHÉ — prix de secteur, prix de sortie, VEFA, voisinage, annonces Radar → marche.tsx. */}
-            <MarcheSection f={f} idu={idu} />
+            <div style={{ order: ordreSection('marche') }}><MarcheSection f={f} idu={idu} /></div>
 
             {/* ⑨ QUARTIER — équipements, socio-éco, IRIS, isochrone, permis à proximité → autour.tsx. */}
-            <AutourSection f={f} idu={idu} />
-
-            <GroupLabel>Le projet</GroupLabel>
+            <div style={{ order: ordreSection('quartier') }}><AutourSection f={f} idu={idu} /></div>
 
             {/* ⑩ POTENTIEL — SDP restante (ex-tuile) + potentiel de transformation (SDP conso/résid,
                 marge H) + capacité constructible (SHAB vendable, calcul tracé). Lecture ; la simulation
                 interactive (charge foncière, outils) vit en §11. */}
-            <RefDrawer id="potentiel" icon={IC.potentiel} name="Potentiel"
+            <RefDrawer id="potentiel" order={ordreSection('potentiel')} icon={IC.potentiel} name="Potentiel"
               context={fo?.niveaux ? `${fo.niveaux} · calcul tracé` : 'calcul tracé'}
               value={reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m² SDP` : undefined}>
               <div className="flex flex-col gap-3">
@@ -2139,7 +2171,8 @@ export function Fiche({ idu }: { idu: string }) {
                       )}
                       {sdpNulle && pourquoi && <p className="text-[11.5px] leading-snug text-txt-mut" data-potentiel-pourquoi>{pourquoi}</p>}
                       {faisa.data?.delaisse && <div data-delaisse><Vigilance title={faisa.data.delaisse.libelle} /></div>}
-                      <OutilsSection outils={outils} />
+                      {/* RETOURS-18 (pt 14) — les quatre portes du Projet en UNE colonne, toutes vert-contour (6-projet.png). */}
+                      <OutilsSection outils={outils} colonne />
                       {sdpNulle
                         ? <Repli label="Étudier quand même">{panneau}</Repli>
                         : panneau}
@@ -2160,7 +2193,9 @@ export function Fiche({ idu }: { idu: string }) {
                 de fiche (voir plus haut, data-ia-tete). Il ne vit plus en bas de la pile. */}
 
             {/* ═══ BARRE D'ACTIONS · 2 niveaux (spec) — DANS le flux (fin du « double écran de vide ») ═══ */}
-            <div>
+            {/* ECRANS-NOV-1 §1 — le pied (actions, outils, mentions, signalement) = « Limites et sources »,
+                toujours APRÈS les onze sections quel que soit l'ordre YAML (order élevé). */}
+            <div style={{ order: 99 }}>
               {/* M56-B6 · DA-FICHE-v6 — actions de pied en .actions (+ CRM · + Projet · Comparer),
                   sans filet séparateur (le relief vient du contraste fond/carte). */}
               {/* M60 P1d — « Comparer » DÉPLACÉ dans le groupe « OUTILS SUR CETTE PARCELLE » (portes,

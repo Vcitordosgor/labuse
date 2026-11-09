@@ -251,7 +251,7 @@ exports[`formes de la fiche (maquette v3) — 12 composants > OutilsSection (un 
 >
   <div>
     <button
-      class="inline-flex items-center justify-center gap-2 h-8 rounded-md text-[13px] font-medium leading-none transition-colors duration-quick focus-visible:outline-none disabled:pointer-events-auto px-[14px] bg-transparent border border-mint text-mint hover:bg-mint hover:text-mint-on focus-visible:bg-mint focus-visible:text-mint-on w-full justify-between"
+      class="inline-flex items-center justify-center gap-2 h-8 rounded-md text-[13px] font-medium leading-none transition-colors duration-quick focus-visible:outline-none disabled:pointer-events-auto px-[14px] bg-transparent border border-mint text-mint hover:bg-mint hover:text-mint-on w-full justify-between"
       data-porte="plu"
       type="button"
     >
@@ -265,7 +265,7 @@ exports[`formes de la fiche (maquette v3) — 12 composants > OutilsSection (un 
   </div>
   <div>
     <button
-      class="inline-flex items-center justify-center gap-2 h-8 rounded-md text-[13px] font-medium leading-none transition-colors duration-quick focus-visible:outline-none disabled:pointer-events-auto px-[14px] bg-transparent border border-mint text-mint hover:bg-mint hover:text-mint-on focus-visible:bg-mint focus-visible:text-mint-on w-full justify-between !border-line-2 !text-txt !bg-transparent hover:!bg-surface-3 hover:!text-txt-hi hover:!border-line-3"
+      class="inline-flex items-center justify-center gap-2 h-8 rounded-md text-[13px] font-medium leading-none transition-colors duration-quick focus-visible:outline-none disabled:pointer-events-auto px-[14px] bg-transparent border border-mint text-mint hover:bg-mint hover:text-mint-on w-full justify-between !border-line-2 !text-txt !bg-transparent hover:!bg-surface-3 hover:!text-txt-hi hover:!border-line-3"
       type="button"
     >
       Voir l'article
@@ -278,7 +278,7 @@ exports[`formes de la fiche (maquette v3) — 12 composants > OutilsSection (un 
   </div>
   <div>
     <button
-      class="inline-flex items-center justify-center gap-2 h-8 rounded-md text-[13px] font-medium leading-none transition-colors duration-quick focus-visible:outline-none disabled:pointer-events-auto px-[14px] bg-transparent border border-mint text-mint hover:bg-mint hover:text-mint-on focus-visible:bg-mint focus-visible:text-mint-on w-full justify-between !border-line-2 !text-txt !bg-transparent hover:!bg-surface-3 hover:!text-txt-hi hover:!border-line-3"
+      class="inline-flex items-center justify-center gap-2 h-8 rounded-md text-[13px] font-medium leading-none transition-colors duration-quick focus-visible:outline-none disabled:pointer-events-auto px-[14px] bg-transparent border border-mint text-mint hover:bg-mint hover:text-mint-on w-full justify-between !border-line-2 !text-txt !bg-transparent hover:!bg-surface-3 hover:!text-txt-hi hover:!border-line-3"
       type="button"
     >
       Annuaire PLU
@@ -291,7 +291,7 @@ exports[`formes de la fiche (maquette v3) — 12 composants > OutilsSection (un 
   </div>
   <div>
     <button
-      class="inline-flex items-center justify-center gap-2 h-8 rounded-md text-[13px] font-medium leading-none transition-colors duration-quick focus-visible:outline-none disabled:pointer-events-auto px-[14px] bg-transparent border border-mint text-mint hover:bg-mint hover:text-mint-on focus-visible:bg-mint focus-visible:text-mint-on w-full justify-between !border-line-2 !text-txt !bg-transparent hover:!bg-surface-3 hover:!text-txt-hi hover:!border-line-3"
+      class="inline-flex items-center justify-center gap-2 h-8 rounded-md text-[13px] font-medium leading-none transition-colors duration-quick focus-visible:outline-none disabled:pointer-events-auto px-[14px] bg-transparent border border-mint text-mint hover:bg-mint hover:text-mint-on w-full justify-between !border-line-2 !text-txt !bg-transparent hover:!bg-surface-3 hover:!text-txt-hi hover:!border-line-3"
       type="button"
     >
       Vérif procédure

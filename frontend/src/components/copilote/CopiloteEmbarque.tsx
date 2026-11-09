@@ -52,7 +52,7 @@ export function CopiloteEmbarque({ contexte, placeholder, exemples, ton = 'mint'
             onKeyDown={(e) => { if (e.key === 'Enter' && reponse.trim()) void envoyer(reponse) }}
             placeholder="Votre réponse…"
             className={`min-w-0 flex-1 rounded-lg border bg-transparent px-3 py-1.5 text-[12.5px] text-txt outline-none placeholder:text-txt-faint ${
-              ton === 'violet' ? 'border-violet/30 focus:border-violet' : 'border-cp-ia/30 focus:border-cp-ia'}`} />
+              ton === 'violet' ? 'border-violet/30 focus:border-violet' : 'border-cp-ia/30'}`} />
           <button data-embarque-repondre disabled={!reponse.trim()} onClick={() => void envoyer(reponse)}
             className={`shrink-0 text-[11.5px] font-medium hover:underline ${
               ton === 'violet' ? 'text-violet' : 'text-cp-ia'}`}>
@@ -76,8 +76,8 @@ export function CopiloteEmbarque({ contexte, placeholder, exemples, ton = 'mint'
           <input data-embarque-bar value={q} onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && q.trim()) void soumettre() }}
             placeholder={placeholder ?? 'Demander au Copilote…'}
-            /* FIX-NU3-2 (M-A09) — `outline-none` sans focus visible → on rend le focus clavier perceptible. */
-            className="min-w-0 flex-1 rounded bg-transparent text-[12.5px] text-txt outline-none placeholder:text-txt-faint focus-visible:ring-1 focus-visible:ring-violet" />
+            /* RETOURS-21 — plus d'anneau local (`focus-visible:ring`) : règle de focus unique (contour vert clavier global). */
+            className="min-w-0 flex-1 rounded bg-transparent text-[12.5px] text-txt outline-none placeholder:text-txt-faint" />
           <button data-embarque-envoyer onClick={() => void soumettre()} disabled={!q.trim() || busy}
             className="shrink-0 text-[11px] font-medium text-violet transition-opacity duration-quick hover:underline">
             {busy ? '…' : 'demander →'}
@@ -96,8 +96,8 @@ export function CopiloteEmbarque({ contexte, placeholder, exemples, ton = 'mint'
         <input data-embarque-bar value={q} onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && q.trim()) void soumettre() }}
           placeholder={placeholder ?? 'Demander au Copilote…'}
-          /* FIX-NU3-2 (M-A09) — focus clavier visible (outline-none sans remplacement). */
-          className="min-w-0 flex-1 rounded bg-transparent text-[13px] text-txt outline-none placeholder:text-txt-faint focus-visible:ring-1 focus-visible:ring-cp-ia" />
+          /* RETOURS-21 — plus d'anneau local (`focus-visible:ring`) : règle de focus unique. */
+          className="min-w-0 flex-1 rounded bg-transparent text-[13px] text-txt outline-none placeholder:text-txt-faint" />
         <button data-embarque-envoyer onClick={() => void soumettre()} disabled={!q.trim() || busy}
           className="shrink-0 rounded-lg bg-cp-ia px-3.5 py-1.5 text-[12px] font-medium text-cp-ia-on transition-[filter] duration-quick hover:brightness-110">
           {busy ? '…' : 'Demander'}

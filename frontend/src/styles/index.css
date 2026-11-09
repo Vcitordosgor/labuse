@@ -59,6 +59,18 @@
 @layer base {
   :disabled, [aria-disabled="true"] { opacity: .4; cursor: not-allowed; }
   :disabled:hover, [aria-disabled="true"]:hover { opacity: .4; }
+  /* RETOURS-21 — RÈGLE DE FOCUS UNIQUE pour toute l'app (WebKit/Safari compris). SOURCE UNIQUE ; toute
+     autre règle locale de focus (bordure menthe des champs, anneaux box-shadow, focus-visible fills…)
+     est retirée ailleurs.
+       · CLAVIER : contour VERT de la DA en `:focus-visible`, et RIEN d'autre.
+       · CLIC (souris/tactile/programmatique) : AUCUN focus visible — ni outline, ni anneau (box-shadow),
+         ni bordure. On s'appuie sur `html[data-input="mouse"]` (focusModality.ts) car, en Safari, un
+         champ texte matche `:focus-visible` même au clic → `:focus-visible` seul ne suffirait pas à
+         l'éteindre. `!important` bat les styles de composants (y compris `outline-none` de Tailwind). */
+  *:focus:not(:focus-visible) { outline: none !important; }
+  *:focus-visible { outline: 2px solid var(--mint) !important; outline-offset: 2px !important; }
+  html[data-input="mouse"] *:focus,
+  html[data-input="mouse"] *:focus-visible { outline: none !important; }
 }
 
 /* ═══ LOI-0 (conservé) — labels/chiffres. Repointés sur les tokens DA. ═══ */
@@ -102,8 +114,9 @@
      passe en FOND TRANSPARENT avec CONTOUR SOMBRE (plus de pastille foncée qui fait tache — le glyphe
      inversé suffit à la faire ressortir), exactement comme les catégories du rail. */
   /* RETOURS-4 S8 (maquette v5) — cartes SANS liseré gauche : bord fin complet. Survol = dégradé profond. */
-  .acc-entry { position:relative; display:flex; align-items:center; gap:12px; width:100%; text-align:left; cursor:pointer;
-    background:var(--bg-2); border:1px solid var(--line-2); border-radius:6px; padding:12px;
+  /* ECRANS-NOV-1 §3 — hauteur FIXE 58 px (six entrées identiques), padding horizontal seul. */
+  .acc-entry { position:relative; display:flex; align-items:center; gap:12px; width:100%; height:64px; text-align:left; cursor:pointer;
+    background:var(--bg-2); border:1px solid var(--line-2); border-radius:6px; padding:0 12px;
     color:var(--txt); transition:background .1s, border-color .1s, color .1s; }
   .acc-entry .acc-tile { width:34px; height:34px; flex:none; border-radius:6px; display:flex;
     align-items:center; justify-content:center; border:1px solid transparent;
@@ -170,10 +183,12 @@
   @media (hover:hover) and (pointer:fine) {
     .hover-fill:hover { background:var(--fill-mint); border-color:#2FBE66; color:var(--ink); }
     .hover-fill:hover * { color:var(--ink) !important; }
-    /* RETOURS-17 — « + CRM » / « + Projet » (boutons d'action de la fiche) : au survol, TEXTE BLANC
-       sur le vert opaque (demande Vic : « texte blanc sur vert opaque, comme partout »), au lieu de
-       l'encre sombre générique de .hover-fill. Scopé à .fiche-v6 .act (n'affecte pas le reste de l'app). */
-    .fiche-v6 .act.hover-fill:hover, .fiche-v6 .act.hover-fill:hover * { color:#fff !important; }
+    /* RETOURS-18 (pt 2) — « + CRM » / « + Projet » : au survol, VERT OPAQUE + ENCRE SOMBRE (jamais
+       blanc). `.act-mint` (plus bas, même spécificité, source plus tardive) MASQUAIT le fond vert de
+       `.hover-fill:hover` → on le FORCE ici (spécificité .act.hover-fill plus forte), et l'encre passe
+       en sombre (--ink) comme le reste des survols verts de la DA. */
+    .fiche-v6 .act.hover-fill:hover { background:var(--fill-mint); border-color:#2FBE66; }
+    .fiche-v6 .act.hover-fill:hover, .fiche-v6 .act.hover-fill:hover * { color:var(--ink) !important; }
     /* RECETTE-2 (S15) — quand .hover-fill est posé sur une LIGNE DE TABLEAU (<tr>, ex. Densifier),
        le fond en DÉGRADÉ ne peint pas sur le <tr> (modèle de rendu des tables : un <tr> ne dessine
        pas de background-image). Résultat : le texte passait en encre sombre SANS aplat vert →
@@ -307,7 +322,9 @@
   /* FIX-NU3-2 (M-A01) — le texte SAISI dans un champ passe à --txt (≈10:1) : une valeur tapée doit être
      pleinement lisible, pas au seuil. (La bordure/focus restent inchangés.) */
   .field { height:32px; background:var(--bg-2); border:0.5px solid var(--line-2); border-radius:var(--r-sm); padding:0 12px; font-size:13px; color:var(--txt); }
-  .field:focus, .field:focus-visible { outline:none; border-color:var(--mint); }
+  /* RETOURS-21 — plus de bordure menthe au focus (règle de focus UNIQUE : contour vert clavier géré
+     globalement, aucun indicateur au clic). */
+  .field:focus, .field:focus-visible { outline:none; }
 
   /* bandeau de statistiques */
   .stats { display:grid; gap:1px; background:var(--line-2); border:0.5px solid var(--line-2); border-radius:var(--r-ctl); overflow:hidden; }
@@ -404,22 +421,9 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
 /* Firefox (pas de :hover sur le pouce) : pouce discret par défaut, cohérent avec le repos WebKit. */
 * { scrollbar-color: var(--line-2) transparent; }
 
-/* DA-FIX-3 Lot 4 (DA-019) — l'ANNEAU global de focus est RETIRÉ : le focus clavier prend le rendu du
-   survol de chaque contrôle (Bouton/Chip/Case/Tri via `focus-visible:` ; champs via contour vert
-   ci-dessous). Plus de liseré 2px superposé. Les contrôles natifs (input/select/textarea) reçoivent le
-   contour vert au focus, sans anneau. */
-input:focus-visible, select:focus-visible, textarea:focus-visible {
-  outline: none; border-color: var(--mint);
-}
-:focus:not(:focus-visible) { outline: none; }
-
-/* NU5-FIX-1 (F6) — le composeur du Copilote avait une bordure menthe PERMANENTE (état de repos) et
-   rien ne changeait au focus clavier (anneau global retiré). On pose un anneau de focus net sur la
-   zone de saisie (spécificité supérieure à la règle `textarea:focus-visible` ci-dessus → l'emporte). */
-textarea[data-copilote-saisie]:focus-visible,
-input[data-copilote-saisie]:focus-visible {
-  outline: 2px solid var(--mint); outline-offset: 2px; border-color: var(--mint);
-}
+/* RETOURS-21 — la règle de focus UNIQUE vit dans `@layer base` (contour vert au clavier, rien au clic,
+   drapeau `html[data-input]`). Les anciennes règles locales (bordure menthe des champs natifs, anneau
+   dédié du composeur Copilote) sont RETIRÉES : plus aucune bordure/anneau de focus hors la règle unique. */
 
 /* NU5-FIX-1 (F5) — lien d'évitement : hors écran jusqu'au focus clavier, puis visible en haut à gauche. */
 .skip-link {
@@ -468,7 +472,9 @@ input[data-copilote-saisie]:focus-visible {
 .fiche-v6 { background:var(--bg-0); }
 
 /* en-tête en carte */
-.fiche-v6 .head { background:var(--bg-2); border:0.5px solid var(--f-linehead); border-radius:6px; overflow:hidden; }
+/* RETOURS-21 (pt 5) — plus de grand cadre gris derrière les six tuiles : `.head` devient transparent
+   et sans bordure ; SEULES les six tuiles (qui portent leur propre liseré) restent visibles. */
+.fiche-v6 .head { background:transparent; border:0; border-radius:0; }
 /* RETOURS-13 P7 — le bloc identité (head-top + adresse) COLLÉ en haut de la fiche défilante. Même
    habillage que la carte .head mais SANS overflow:hidden (qui clipperait le sticky et son ombre) ;
    fond opaque + ombre pour couvrir le contenu qui passe dessous. z au-dessus des tiroirs.
@@ -496,7 +502,8 @@ input[data-copilote-saisie]:focus-visible {
 .fiche-v6 .ref { font-size:17px; font-weight:500; font-family:var(--mono); letter-spacing:-.02em; margin-top:5px; display:flex; align-items:center; gap:6px; }
 /* LIENS-1 — l'IDU descend SOUS la ligne de boutons : il prend le retrait horizontal (14px) de
    l'adresse/secteur et un peu d'air sous les boutons. */
-.fiche-v6 .ref-sous-actions { padding:0 14px; margin-top:9px; }
+/* ECRANS-NOV-1 §1 — en-tête AÉRÉ : plus d'espace entre la référence, l'adresse et le secteur. */
+.fiche-v6 .ref-sous-actions { padding:0 14px; margin-top:14px; }
 /* M61 P5 — .addr en flex (texte adresse + icône copier alignés) ; texte sélectionnable.
    RETOURS-11 R3 — l'adresse tient sur UNE ligne : plus de flex-wrap, le texte prend la place
    dispo (min-width:0) et tronque en … par la fin (jamais de retour à la ligne au milieu de la rue). */
@@ -509,13 +516,13 @@ input[data-copilote-saisie]:focus-visible {
 /* RETOURS-17 — IDU, adresse et Secteur ESPACÉS RÉGULIÈREMENT (gap identique entre les trois lignes,
    « comme Secteur ») : l'adresse ne colle plus à l'IDU (fin du margin-top négatif) et porte le même
    écart (6px) que le Secteur. */
-.fiche-v6 .addr-row { padding:0 14px 11px; margin-top:6px; }
+.fiche-v6 .addr-row { padding:0 14px 11px; margin-top:10px; }
 /* KELFONCIER-FIX-2 (Lot A) — SECTEUR rentré dans la carte d'en-tête : même retrait horizontal (14px)
    que l'adresse, sous elle. Libellé gris (--txt-dim ≈ maquette --mut), nom en clair (--txt-hi ≈ --txt).
    Quand un secteur suit l'adresse, l'adresse perd son padding-bas (le Secteur porte la fermeture ET
    son propre écart margin-top, pour un espacement régulier IDU↔adresse↔Secteur). */
 .fiche-v6 .addr-row.has-sect { padding-bottom:0; }
-.fiche-v6 .sect-line { padding:0 14px 11px; margin-top:6px; font-size:11.5px; color:var(--txt-dim); line-height:1.3; }
+.fiche-v6 .sect-line { padding:0 14px 11px; margin-top:10px; font-size:11.5px; color:var(--txt-dim); line-height:1.3; }
 .fiche-v6 .sect-line b { color:var(--txt-hi); font-weight:400; }
 /* RETOURS-13 R17 — SIREN/SIRET : BLEU et SOULIGNÉ, partout (décision Vic 05/09 — la SEULE
    exception à « pas de bleu » de la DA : un lien externe doit ressembler à un lien). */
@@ -554,16 +561,26 @@ input[data-copilote-saisie]:focus-visible {
 /* RECETTE-6 (C5) — SIX tuiles, deux rangs de TROIS. Hauteur FIXE : chaque tuile a la même hauteur
    (`min-height` + `grid-auto-rows:1fr`) quel que soit le nombre de lignes du libellé ou la présence de
    la ligne secondaire — les deux rangs s'alignent. */
-.fiche-v6 .stats { display:grid; grid-template-columns:repeat(3,1fr); grid-auto-rows:1fr; gap:0.5px; background:var(--line); border-top:0.5px solid var(--line); }
-.fiche-v6 .stat { padding:9px 10px 10px; min-width:0; min-height:58px; background:var(--bg-2); }
-.fiche-v6 .stat-l { font-size:9px; color:var(--txt-off); letter-spacing:.06em; display:flex; align-items:center; gap:4px; }
+/* RETOURS-19 (pt 10) — les SIX chiffres sont des TUILES SÉPARÉES (coins arrondis, espacement, fond
+   relevé + liseré), comme le bandeau de la fiche commune — fini la grille soudée par des filets. Le
+   bloc a des marges HAUT/BAS ÉGALES (padding 12/14), le gap transparent laisse respirer les tuiles. */
+/* RETOURS-22 (pt 2) — plus AUCUN cadre autour des six tuiles (bordure COMPRISE : `border:0`, pas
+   seulement `border-top`, sinon la bordure globale `.stats` subsistait en bas/côtés). Les tuiles ont
+   la MÊME hauteur (`grid-auto-rows:1fr`), ajustée au contenu le plus riche (plus de plancher
+   `min-height`), et leur contenu est CENTRÉ verticalement → aucun vide en bas. */
+.fiche-v6 .stats { display:grid; grid-template-columns:repeat(3,1fr); grid-auto-rows:1fr; gap:6px; padding:12px 14px; background:transparent; border:0; }
+.fiche-v6 .stat { padding:9px 10px; min-width:0; background:var(--bg-stat); border:0.5px solid var(--f-linehead); border-radius:var(--r-ctl); display:flex; flex-direction:column; justify-content:center; }
+/* ECRANS-NOV-1 §1 — style fiche commune : valeur en tête (grande, mono), libellé DESSOUS. */
+/* RETOURS-22 (pt 2) — chaque libellé tient sur UNE ligne, « SDP RESTANTE » et son « i » compris
+   (`white-space:nowrap`, interlettrage resserré pour rester dans la tuile). */
+.fiche-v6 .stat-l { font-size:9px; color:var(--txt-off); letter-spacing:.04em; margin-top:3px; display:flex; align-items:center; gap:4px; text-transform:uppercase; white-space:nowrap; }
 /* A-02-1 — la valeur d'une tuile (ex. « Non publié au GPU ») ne se coupe plus par ellipsis : elle
    s'enroule sur 2 lignes max (comme le sous-titre .stat-s). Les tuiles gardent la même hauteur
    (grid-auto-rows:1fr) ; les valeurs courtes (prix, code de zone) tiennent toujours sur une ligne. */
 /* RECETTE-PROD-1 (A2) — CHARTE : la valeur chiffrée d'une tuile est dans la MÊME police numérique
    (--mono, tabular-nums) que les valeurs des lignes de détail (.f-row > .v). Avant, les tuiles
    héritaient Inter (sans) → les mêmes nombres étaient tantôt mono (détail) tantôt sans (tuiles). */
-.fiche-v6 .stat-v { font-family:var(--mono); font-variant-numeric:tabular-nums; font-size:13px; color:var(--txt-hi); margin-top:3px; line-height:1.2; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow-wrap:anywhere; }
+.fiche-v6 .stat-v { font-family:var(--mono); font-variant-numeric:tabular-nums; font-size:17px; font-weight:600; color:var(--txt-hi); margin-top:0; line-height:1.15; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow-wrap:anywhere; }
 .fiche-v6 .stat-v.vide { color:var(--txt-faint); font-weight:400; }
 .fiche-v6 .stat-v.neuf { color:var(--mint); }
 /* RECETTE-7 (B3) — le sous-titre (« pas de potentiel résiduel ») ne se COUPE plus (« pas de
@@ -625,18 +642,19 @@ input[data-copilote-saisie]:focus-visible {
      sombre + glyphe vert), le « carré sombre sur la barre verte » que Vic pointait. Ce traitement
      est celui du bloc « en-tête » (Z1) → il vaut pour les neuf accordéons de la fiche. */
   .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-ico { background:transparent; border:1px solid rgba(7,16,9,.30); color:var(--ink); }
-  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-title,
-  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-sub,
-  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-val,
-  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .chev,
-  /* RETOURS-17 — le chevron des cartes de la fiche (composant Chevron = .t-chev) passe au NOIR (--ink)
-     au survol, au lieu de rester gris (il n'a pas la classe .chev visée par la règle historique). */
-  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-chev { color:var(--ink) !important; }
+  /* RETOURS-18 (pt 11) — au survol d'une CARTE de section, TOUT le texte passe en encre sombre, JAMAIS
+     blanc ni clair : on vise TOUS les descendants (`*`), pas seulement .t-title/.t-sub/.t-val — une
+     valeur ReactNode (ex. « N m max », hors `.t-val`) restait claire sur le vert. */
+  .fiche-v6 .tiroir.is-lien:not(.is-open):hover,
+  .fiche-v6 .tiroir.is-lien:not(.is-open):hover * { color:var(--ink) !important; }
 }
 .fiche-v6 .t-open { background:var(--f-card); border:0.5px solid var(--f-linecard); border-top:none; border-bottom-left-radius:12px; border-bottom-right-radius:12px; margin-bottom:9px; padding:2px 13px 13px; animation:apparition 150ms ease-out both; }
 .fiche-v6 .t-ico { width:32px; height:32px; border-radius:6px; background:var(--line); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--f-icotxt); }
 .fiche-v6 .t-body { flex:1; min-width:0; }
-.fiche-v6 .t-title { font-size:14px; color:var(--txt-hi); }
+/* RETOURS-19 (pt 11) — le TITRE de section tient sur UNE SEULE LIGNE (« Réseaux et desserte »,
+   « Risques et environnement »… ne se coupent plus en deux) ; le corps flex:1 min-width:0 l'ellipse
+   au besoin plutôt que de l'enrouler. */
+.fiche-v6 .t-title { font-size:14px; color:var(--txt-hi); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 /* RECETTE-2 (T4) — plus de troncature « … » : sous-titre et valeur des tuiles passent sur 2+ lignes. */
 .fiche-v6 .t-sub { font-size:11px; color:var(--txt-mut); margin-top:2px; white-space:normal; overflow:visible; text-overflow:clip; overflow-wrap:anywhere; }
 .fiche-v6 .t-right { display:flex; align-items:center; gap:9px; flex-shrink:0; min-width:0; }

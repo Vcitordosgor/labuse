@@ -313,7 +313,7 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                 if (e.key === 'Escape') { setNomInput(nom); setEditing(false) }
               }}
               onBlur={() => { if (nomInput.trim() && nomInput !== nom) patch.mutate({ nom: nomInput.trim() }); setEditing(false) }}
-              className="rounded-md border border-mint/40 bg-surface-3 px-2 py-1 font-display text-lg font-bold text-txt-hi outline-none focus:border-mint" />
+              className="rounded-md border border-mint/40 bg-surface-3 px-2 py-1 font-display text-lg font-bold text-txt-hi outline-none" />
           ) : (
             <h1 data-kanban-nom className="font-display text-xl font-bold text-txt-hi">{projet?.nom ?? nom}</h1>
           )}
