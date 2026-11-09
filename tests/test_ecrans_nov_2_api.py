@@ -112,6 +112,59 @@ def test_prospection_par_signal_fait_le_total(sess):
     assert sum(ps.values()) == d["n_selection"]                     # « font le total »
 
 
+# ── sélection par le JEU DE FILTRES COMPLET (ECRANS-NOV-2, placement) ────────
+def test_order_by_potential():
+    assert "project_total_m2 DESC" in persist._order_by_potential("rebuild", "capacity")
+    assert "additional_m2 DESC" in persist._order_by_potential("keep", "capacity")
+    assert "net_signed_m2 DESC" in persist._order_by_potential("rebuild", "gain")
+    assert "surface_m2 DESC" in persist._order_by_potential("keep", "area")
+
+
+def test_chip_where_potentiel_et_prospection():
+    p = {}
+    assert "ESTIMATED" in persist._chip_where("potential", "A", None, None, p) and p["chip_band"] == "A"
+    p = {}
+    assert persist._chip_where("potential", None, "TO_VERIFY", None, p).endswith(":chip_statut")
+    assert p["chip_statut"] == "TO_VERIFY"
+    p = {}
+    assert persist._chip_where("sale", None, None, "fort", p) and p["chip_niv"] == "fort"
+    assert persist._chip_where("sale", None, None, None, {}) == ""
+
+
+_SEL = "SELECT idu FROM parcels WHERE commune = :selc"
+
+
+@_reel
+def test_payload_filtre_effectifs_font_le_total(sess):
+    d = persist.analyse_payload_filtre(sess, scn_run="q_v20", mode="potential", scenario="keep",
+                                       sort=None, sel_sql=_SEL, sel_params={"selc": "Entre-Deux"},
+                                       limit=5)
+    assert sum(d["effectifs"]["par_statut"].values()) == d["n_selection"]       # font le total
+    assert d["n_filtre"] == d["n_selection"]                                    # pas de puce
+    assert d["page"]["n"] <= 5
+
+
+@_reel
+def test_payload_filtre_puce_narrowe_la_liste_pas_les_effectifs(sess):
+    base = persist.analyse_payload_filtre(sess, scn_run="q_v20", mode="potential", scenario="keep",
+                                          sort=None, sel_sql=_SEL, sel_params={"selc": "Entre-Deux"},
+                                          limit=5)
+    filt = persist.analyse_payload_filtre(sess, scn_run="q_v20", mode="potential", scenario="keep",
+                                          sort=None, sel_sql=_SEL, sel_params={"selc": "Entre-Deux"},
+                                          band="A", limit=5)
+    assert filt["effectifs"] == base["effectifs"]                              # effectifs intacts
+    assert filt["n_filtre"] == base["effectifs"]["par_bande"].get("A", 0)      # liste narrowée
+    assert all(p["statut"] == "ESTIMATED" and p["bande"] == "A" for p in filt["parcelles"])
+
+
+@_reel
+def test_payload_filtre_sale_par_signal_fait_le_total(sess):
+    d = persist.analyse_payload_filtre(sess, scn_run="q_v20", mode="sale", scenario="keep",
+                                       sort=None, sel_sql=_SEL, sel_params={"selc": "Entre-Deux"},
+                                       limit=1)
+    assert sum(d["effectifs"]["par_signal"].values()) == d["n_selection"]
+
+
 @_reel
 def test_enrichissement_remonte_dans_la_reponse(sess):
     d = build.analyse_scenarios_payload(sess, _ids(sess, "97403000AR1154"),

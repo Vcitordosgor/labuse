@@ -1,155 +1,117 @@
 # ECRANS-NOV-2 — compte rendu
 
-**Mandat** ECRANS-NOV-2 — l'écran **Analyse LABUSE par scénario**.
+**Mandat** ECRANS-NOV-2 — l'écran **Analyse LABUSE par scénario**, **DANS le panneau de gauche**
+(342 px, à côté de la carte), à la place de l'ancien bloc Score / Signal / Classer par.
 **Branche** `feat/ecrans-nov-2` (worktree `~/Desktop/labuse-ecrans2`). **Aucun merge, aucun accès
-production.** Front (+ route back déjà servie) et quatre ajustements d'API (recette d'Astra).
-Ports de travail : front **9990**, back **7190**. Run servi **q_v20** (base locale, 433 229 parcelles ;
-table `parcel_scenario_v2_runs` déjà peuplée, keep/rebuild = 433 229 chacun).
+production.** Front + API (lecture seule). Ports : front **9990**, back **7190**. Run servi **q_v20**
+(base locale, 433 229 parcelles ; table `parcel_scenario_v2_runs` peuplée, keep/rebuild = 433 229).
 
 Références : la maquette `docs/design/maquettes/nov-2026/7-analyse-labuse.png`, l'endpoint
-`GET /analyse/scenarios` (ALGO-FIX-1, `docs/audit-2026-11/algo-fix-1/COMPTE-RENDU.md`), la DA
-existante et les règles de focus/sélection uniques de l'app (RETOURS-21).
+`GET /analyse/scenarios` (ALGO-FIX-1), la DA et les règles de focus/sélection uniques (RETOURS-21).
 
 ---
 
-## 1. Ce qui est livré (écran)
+## 1. Placement — l'écran EST le mode analyse du panneau de gauche
 
-Une **nouvelle vue plein écran** `analyse` (comme Documents / Sources), atteignable par le rail
-(entrée « Analyse ») et le deep-link `#analyse=1`. Elle **LIT** `GET /analyse/scenarios` — elle
-n'invente aucun chiffre ; tout (effectifs, bandes, quantités, adresses, vigilances) vient de la
-réponse.
+Pas de vue plein écran séparée. Le parcours est : **Filtres → « Analyser avec LABUSE » → ce panneau**,
+à la place de l'ancien bloc Score / Signal / Classer par (retiré). La carte **reste visible à droite**
+et peint les parcelles de la liste (mécanisme existant, même règle au-delà de 20 000). **« ← Retour »**
+revient aux filtres (`store.retourFiltres`).
 
-- **En-tête** : « Analyse LABUSE · N parcelles » + sélecteur de commune, « ← Retour » et
-  « Comprendre l'analyse » sur une ligne. N = `n_selection` de l'API.
-- **Objectif** : « Prospection vente » / « Potentiel foncier » (bascule, l'active en vert opaque).
-  En potentiel, sous « Projet · logement » : « Bâti conservé » / « Reconstruction ».
-- **La phrase qui classe**, toujours présente : « Classées par Signal de mutation à 12 mois… » /
-  « Classées par bande, puis par surface de plancher supplémentaire. » / « … puis par capacité du
-  nouveau projet. Le gain net est signé. »
-- **Bloc de filtres repliable** : tout le bloc (objectif, scénario, puces) se replie en une ligne de
-  résumé (ex. « Potentiel foncier · Bâti conservé · Toutes ▾ ») ; **ouvert par défaut** à la première
-  analyse.
-- **Puces comptées** + **barre de répartition** au-dessus ; les effectifs viennent de l'API et
-  **font le total**. En prospection : Signal (Tous · Fort · Moyen · Faible · Non évalué). En
-  potentiel : une seule rangée **bandes puis statuts** (Excellente · Bonne · À étudier · Faible · À
-  vérifier · À différer · Aucun ajout · Hors projet · Calcul à compléter). Une puce **narrowe la
-  liste** sans toucher les effectifs.
-- **Cartes de résultat** : référence, adresse, une ligne de faits (surface · bâti/terrain nu ·
-  zone), un chiffre et une raison ; puces **bande · Signal** (le Signal secondaire en potentiel,
-  **principal en prospection**). Parcelle à cheval : « sur la portion U (X m²) ». Reconstruction :
-  « Projet · existant · gain net signé », **orange s'il est négatif ». Pied (potentiel) : scénario ·
-  « Voir le détail → ». Aucune formule sur la carte.
-- **Détail** (overlay, `enrich=1`) : deux gros chiffres, gain net, **« Ce qui explique »** (points ×
-  facteurs = score → bande), **« À vérifier avant d'aller plus loin »** (les vigilances servies).
-- **Carte** : au-delà de la limite de peinture (20 000), un message clair invite à peindre les
-  meilleures bandes (Excellente + Bonne) via « Voir sur la carte → » (qui passe à la carte avec le
-  périmètre de commune + l'analyse allumée : la carte réutilise alors son mécanisme éprouvé
-  `getFiltreIdus(f, bande)` + plafond serveur 20 000 + toast « meilleures bandes »). Entre-Deux
-  (6 341) peint tout ; le cas « trop large » se vérifie à l'échelle île (voir §4).
+Intégration : dans `LeftPanel`, quand l'analyse est allumée (`verdict && filters.analyseLabuse`), le
+corps du panneau devient `<AnalyseScenario />` au lieu de `VerdictHero + ResultsSection` ; le **tri
+factuel** (analyse éteinte) garde l'ancien rendu. La bascule « Analyser avec LABUSE » (`voirParcelles →
+setAnalyse(true)`) et le retour (`retourFiltres → analyseLabuse=false`) sont inchangés.
+
+L'écran : en-tête « Analyse LABUSE · N parcelles » + « ← Retour » + « Comprendre l'analyse » ; objectif
+Prospection vente / Potentiel foncier ; en potentiel, scénario Bâti conservé / Reconstruction ; **la
+phrase qui classe**, toujours ; **bloc de filtres repliable** en une ligne de résumé (« Potentiel
+foncier · Bâti conservé · Toutes ▾ ») ; **barre de répartition** + **puces comptées** (effectifs de
+l'API, ils font le total ; une puce narrowe la liste) ; **cartes de résultat** (bande · Signal — le
+Signal principal en prospection ; à-cheval « sur la portion U (X m²) » ; reconstruction « Projet ·
+existant · gain net signé », orange si négatif ; la carte entière ouvre le détail en potentiel) ;
+**détail** (deux gros chiffres, gain net, « Ce qui explique » = points × facteurs = score → bande,
+« À vérifier avant d'aller plus loin ») ; **au-delà de 20 000**, un message dit que la carte peint
+les meilleures bandes (Excellente + Bonne).
+
+**Supprimés** (replacement) : la vue plein écran `analyse` + l'entrée du rail + le deep-link
+`#analyse=1` + la valeur `View 'analyse'` du store.
 
 ### Fichiers front
-- **Ajoutés** : `src/components/analyse/AnalyseScenario.tsx` (l'écran : en-tête, bloc repliable,
-  barre + puces, cartes, détail, « Comprendre »), `src/lib/scenario.ts` (vocabulaire + ordonnancement,
-  les libellés du mandat), `src/lib/__tests__/scenario.test.ts` (12 tests), `qa/ecrans_nov_2_webkit.mjs`.
-- **Modifiés** : `src/lib/api.ts` (`getAnalyseScenarios` + types), `src/store/useApp.ts` (vue
-  `analyse`), `src/App.tsx` (montage + deep-link), `src/components/Rail.tsx` (entrée + icône),
-  `vite.config.ts` (proxy dev `/analyse/scenarios` — il **manquait**, distinct de `/analyse-annonce`).
+- **Ajoutés** : `src/components/analyse/AnalyseScenario.tsx` (l'écran, dans le panneau), `src/lib/
+  scenario.ts` (vocabulaire + ordonnancement, les libellés du mandat), `src/lib/__tests__/scenario.
+  test.ts` (12), `qa/ecrans_nov_2_webkit.mjs` (parcours WebKit).
+- **Modifiés** : `src/components/panel/LeftPanel.tsx` (le panneau analyse remplace le bloc Score/
+  Signal/Classer par), `src/lib/api.ts` (`getAnalyseScenarios(f, opts)` = jeu de filtres complet +
+  `getAnalyseScenarioDetail`), `vite.config.ts` (proxy `/analyse/scenarios`). **Revenus en arrière**
+  (vue plein écran retirée) : `src/App.tsx`, `src/components/Rail.tsx`, `src/store/useApp.ts`.
 
 ---
 
-## 2. Recette d'Astra — côté API (le strict nécessaire)
+## 2. API — `/analyse/scenarios` accepte le JEU DE FILTRES COMPLET
 
-Quatre ajouts, additifs, lecture seule ; aucune table historique touchée.
+L'endpoint prend désormais `FiltreCriteres` (comme `/filtre`), **pas seulement commune/IDU** : la
+sélection est EXACTEMENT celle de l'analyse actuelle. `_scenario_selection_sql` réutilise la
+résolution d'IDU de la liste carte (`/filtre?idus=1`) — même masque des slivers < 2 m², mêmes filtres
+`_q_v2_where` — **sans plafond** (les effectifs portent sur TOUTE la sélection) et **sans** les
+filtres Analyse bande/Signal de l'ancien écran (les puces V2 sont appliquées en aval). On **n'exclut
+pas** l'étage 0 : l'analyse COMPTE toutes les parcelles filtrées (les exclues dures = « Hors projet »),
+comme le compteur `/filtre`.
 
-1. **Codes AU phasés reconnus** (`scenarios_v2_build._famille_portion_productive`). La regex
-   `([A-Za-z]+)` **échouait sur « 1AU », « 2AUc »…** (un chiffre de phase en tête) → l'AU phasée
-   n'était pas vue, et sa portion au régime non établi passait pour « maintenant ». Corrigée en
-   `(\d*[A-Za-z][0-9A-Za-z]*)` + retrait de l'indice de phase. Test paramétré (AU/AUc/1AU/2AU/1AUc/
-   2AUm → AU ; U/Ub/UA → U ; A/N → aucun ; l'AU phasée prime sur U).
-2. **Rangée de puces de prospection** + **puces qui narrowent la liste**
-   (`scenarios_v2_persist`). En vente, l'API sert désormais `effectifs.par_signal`
-   (fort/moyen/faible/non_evalue) sur toute la sélection — ils **font le total**. Les paramètres
-   `band` / `statut` (potentiel) et `signal_niveau` (prospection) **filtrent la liste servie, jamais
-   les effectifs** (toujours calculés sur la sélection entière). `n_filtre` est renvoyé à côté de
-   `n_selection`.
-3. **Échec d'enrichissement remonté explicitement** (`scenarios_v2_build.analyse_scenarios_payload`
-   + `scenarios_v2`). La réponse live porte `enrichissement: {demande, echecs:[…], n_echecs}` (sur
-   toute la sélection) et chaque parcelle un `etat_calcul` (`ok`/`failed`/…) — un échec n'est plus
-   avalé en silence ni confondu avec un « calcul à compléter » demandé.
-4. **Adresse factuelle** (BAN) servie pour la **seule page** (`adresses_pour`, un `DISTINCT ON`) —
-   nécessaire à la carte de résultat, jamais inventée (absence = pas de clé).
+`analyse_payload_filtre` calcule **en SQL** (pas de lecture Python de toute la sélection) : effectifs
+par statut / bande (potentiel) ou par niveau de Signal (prospection) sur toute la sélection ; et la
+**page** triée (groupe → bande → quantité → IDU, ou Signal décroissant) et **narrowée par la puce**
+(LIMIT/OFFSET). Vérifié : **n_selection = compteur `/filtre`** à l'identique (Entre-Deux 6 336 ;
+Saint-Denis + zonage U ≈ 34,5 k). `n_filtre` (après puce) à côté de `n_selection`.
 
-Les tris, la précision et les versions mixtes live/persisté étaient déjà alignés par ALGO-FIX-1 ;
-`test_algofix1_persist.py` (10) le re-vérifie vert sur q_v20, inchangé.
+Recette d'Astra conservée (ECRANS-NOV-2, 1ʳᵉ passe) : codes **AU phasés** 1AU/2AU reconnus ;
+`effectifs.par_signal` de prospection ; échec d'enrichissement remonté (`enrichissement` +
+`etat_calcul`) ; adresse BAN factuelle servie pour la page.
 
 ### Fichiers back
-- **Modifiés** : `src/labuse/scoring/scenarios_v2_build.py` (regex AU, `adresses_pour`, `etat_calcul`
-  + `enrichissement`), `src/labuse/scoring/scenarios_v2_persist.py` (`par_signal`, puces de liste,
-  adresse de page), `src/labuse/scoring/scenarios_v2.py` (`enrich_state` dans `details`),
-  `src/labuse/api/app.py` (params `band`/`statut`/`signal_niveau`).
-- **Ajouté** : `tests/test_ecrans_nov_2_api.py` (18 : AU phasée, helpers de puce, et 3 DB-gardés sur
-  la sélection réelle — effectifs intacts, `par_signal` fait le total, enrichissement remonté).
+- **Modifiés** : `src/labuse/api/app.py` (`_scenario_selection_sql` + endpoint sur `FiltreCriteres`),
+  `src/labuse/scoring/scenarios_v2_persist.py` (`analyse_payload_filtre` + helpers SQL `_order_by_
+  potential`/`_chip_where`/`_versions_run`, row-mapping partagé), `scenarios_v2_build.py` (AU phasée,
+  `adresses_pour`, `etat_calcul`, `enrichissement`), `scenarios_v2.py` (`enrich_state` dans `details`).
+- **Ajouté** : `tests/test_ecrans_nov_2_api.py` (23 : AU phasée, helpers de puce/tri, et contrôles DB
+  — effectifs font le total, puce narrowe la liste pas les effectifs, par_signal, enrichissement).
 
 ---
 
-## 3. Vérifications (hook + WebKit)
+## 3. Vérifications (hook + WebKit, parcours complet)
 
-- **Front** : `tsc -b` **0 erreur** · **vitest 322** (310 + 12) · `vite build` OK · scan de secrets
-  « rien trouvé ».
-- **Back** : `pytest -m "not db and not local and not reel and not network"` → **3200 passed**,
-  0 échec. Avec base locale : `test_algofix1_*` + `test_ecrans_nov_2_api` → **tous verts** (DB-gardés
-  compris). `test_proxy_dev_couvre_routes_api` vert (le proxy couvre `/analyse/scenarios`).
+- **Front** : `tsc -b` **0 erreur** · **vitest 322** (310 + 12) · `vite build` OK · secrets « rien ».
+- **Back** : `pytest -m "not db and not local and not reel and not network"` → **3200 passed** ;
+  `test_ecrans_nov_2_api` + `test_algofix1_*` + `test_proxy_dev_couvre_routes_api` **verts** (base q_v20) ;
   `test_aucun_fichier_du_signal_modifie` vert (le Signal n'est pas touché).
-- **WebKit (Safari, playwright 1.49.1 / webkit-2104)** : `qa/ecrans_nov_2_webkit.mjs` capture les
-  cinq états + le détail + « Comprendre » + les filtres repliés (`captures/ecrans-nov-2/webkit-*.png`).
-  **Règle de focus vérifiée APRÈS CLIC** : cliquer une puce laisse `html[data-input="mouse"]`,
-  `activeElement=BODY`, `outline: none` — **aucun contour au clic** ; la sélection est un aplat vert
-  opaque. (La règle est la règle globale de l'app, inchangée.)
-
-Captures : la maquette `docs/design/maquettes/nov-2026/7-analyse-labuse.png` fait foi (« avant ») ;
-les captures WebKit `frontend/captures/ecrans-nov-2/webkit-01…07.png` sont le rendu (« après »).
-
----
-
-## 4. Effectifs réels (Entre-Deux, q_v20) — le croisement du mandat
-
-| Puce (potentiel, bâti conservé) | n | Puce (reconstruction) | n |
-|---|---:|---|---:|
-| Excellente / Bonne / À étudier / Faible | 38 / 569 / 751 / 685 | Excellente / Bonne / À étudier / Faible | 77 / 922 / 1 033 / 527 |
-| À vérifier / Aucun ajout / Hors projet | 582 / 564 / 3 152 | À vérifier / Hors projet | 630 / 3 152 |
-| **Tous** | **6 341** | **Tous** | **6 341** |
-
-Prospection (par Signal) : **Fort 1 · Moyen 5 · Faible 6 335** (somme = 6 341, « font le total »).
-
-**Croisement « ~43 000 Bonne sur l'île »** (mandat) : à l'échelle île, `parcel_scenario_v2_runs`
-keep/ESTIMATED band B = **43 122** ≈ 43 000 ✅. C'est cette cohorte que la carte peint au-delà du
-plafond (meilleures bandes A+B + message), via le mécanisme carte existant.
+- **WebKit (Safari, playwright 1.49.1 / webkit-2104, `reducedMotion`)** — PARCOURS COMPLET piloté
+  (`qa/ecrans_nov_2_webkit.mjs`) : filtres **Saint-Denis + zonage U** → **« Analyser avec LABUSE »** →
+  le panneau d'analyse apparaît (à côté de la carte) → **changement d'objectif** (Prospection) et de
+  **scénario** (Reconstruction) → **clic sur une carte de résultat** → **détail** (deux chiffres,
+  gain net, « Ce qui explique », « À vérifier ») → **Retour** (revient aux filtres,
+  `analyseLabuse=false` mesuré). **Focus APRÈS CLIC** : clic sur une puce → `data-input=mouse`,
+  `activeElement=BODY`, `aContour=false` — aucun contour, sélection vert opaque. Captures
+  `frontend/captures/ecrans-nov-2/webkit-00…06.png`.
 
 ---
 
-## 5. Décision d'intégration (carte)
+## 4. Décision carte (inchangée, par réutilisation)
 
-La maquette est **un panneau** (trois états, 342 px) ; l'écran est donc une vue plein écran centrée
-sur ce panneau. Le mandat « Carte : au-delà de 20 000 → meilleures bandes + message » est honoré en
-**réutilisant** le mécanisme de peinture éprouvé de la carte (RETOURS-21) : le bouton « Voir sur la
-carte → » passe à la carte avec le périmètre de commune + l'analyse allumée ; la bannière « trop
-large » (≥ 20 000) le dit explicitement. On **ne réimplémente pas** une peinture par bande V2 à
-l'échelle île (non disponible à bas coût : l'endpoint est commune/IDU-scopé) — on s'appuie sur la
-carte qui sait déjà peindre A/B avec son toast. Rien ne casse côté carte : son chemin est inchangé.
+La carte **reste la carte existante**, à droite du panneau : elle peint la sélection filtrée par
+bande via `getFiltreIdus(f, bande)` + plafond serveur 20 000 + toast « meilleures bandes » (RETOURS-21,
+inchangé). Le panneau d'analyse lit la MÊME sélection (le jeu de filtres global) → carte et effectifs
+sont cohérents. Croisement île (keep/ESTIMATED band B) = **43 122 ≈ 43 000**.
 
 ---
 
-## 6. Limites honnêtes
+## 5. Limites honnêtes
 
-- La **reconstruction chiffrée** n'est persistée qu'à Entre-Deux + Saint-Denis (enrich au run de
-  nuit, cf. ALGO-FIX-1). Ailleurs, « Calcul à compléter » — l'écran le dit, jamais une capacité
-  déduite. Le **détail** (overlay) force `enrich=1` par parcelle (≤ 500) : il chiffre la
-  reconstruction à la demande.
-- L'écran est **commune-scopé** (l'endpoint exige commune ∩ IDU) : défaut Entre-Deux, sélecteur de
-  commune en en-tête. Pas d'analyse scénario « île entière » en un appel (par conception de
-  l'endpoint).
-- Le **type de bien** affiché (« bâti » / « terrain nu ») est dérivé de l'existant E (E>0 vs E=0) —
-  factuel, pas inventé ; l'endpoint ne sert pas « maison / immeuble ».
+- Reconstruction chiffrée persistée seulement à Entre-Deux + Saint-Denis (ailleurs « Calcul à
+  compléter ») ; le **détail** force `enrich=1` par parcelle (≤ 500) pour chiffrer à la demande.
+- Le **type de bien** (« bâti » / « terrain nu ») est dérivé de l'existant E (E>0 vs E=0) — factuel,
+  pas inventé ; l'endpoint ne sert pas « maison / immeuble ».
+- Les effectifs incluent les exclues dures en « Hors projet » (comme le compteur `/filtre`) ; la carte,
+  elle, ne peint que les bandes (une exclue dure n'est pas une bande).
 
 ---
 

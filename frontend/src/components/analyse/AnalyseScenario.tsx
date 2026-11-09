@@ -8,7 +8,7 @@
 // contour au clic) — vérifiées dans WebKit.
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { getAnalyseScenarios, getCommunes, type ScnParcelle, type ScnReponse } from '../../lib/api'
+import { getAnalyseScenarios, getAnalyseScenarioDetail, type ScnParcelle, type ScnReponse } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { BANDE_META, SIGNAL_META, type Bande } from '../../lib/status'
 import {
@@ -16,7 +16,7 @@ import {
   bandeLabel, couleurParcelle, phraseClassement, resumeFiltres,
   type NiveauChip, type Objectif, type ScnScenario,
 } from '../../lib/scenario'
-import { EMPTY_FILTERS, useApp } from '../../store/useApp'
+import { useApp } from '../../store/useApp'
 import { Squelette } from '../Loading'
 import { EmptyState, ErrorState } from '../States'
 
@@ -125,8 +125,14 @@ function CarteResultat({ p, objectif, scenario, onDetail }:
   }
 
   const scnLabel = scenario === 'rebuild' ? 'Reconstruction' : 'Bâti conservé'
+  // En potentiel, la CARTE ENTIÈRE ouvre le détail (mandat : « clic sur une carte de résultat → détail »).
+  // En prospection, pas de détail : la carte est statique (le Signal est l'histoire).
+  const cliquable = objectif === 'potential'
   return (
-    <div className="shrink-0 rounded-[10px] border border-line-2 bg-surface-3 px-4 py-3">
+    <div data-carte-resultat={p.idu} role={cliquable ? 'button' : undefined} tabIndex={cliquable ? 0 : undefined}
+      onClick={cliquable ? onDetail : undefined}
+      onKeyDown={cliquable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onDetail() } } : undefined}
+      className={`shrink-0 rounded-[10px] border border-line-2 bg-surface-3 px-4 py-3 ${cliquable ? 'cursor-pointer transition-colors duration-quick hover:border-mint/50' : ''}`}>
       <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
         <span className="shrink-0 font-mono text-[11.5px] font-medium tracking-tight text-txt-hi">{p.idu}</span>
         {/* en potentiel : bande principale + Signal secondaire ; en prospection : Signal principal + bande secondaire. */}
@@ -152,8 +158,8 @@ function CarteResultat({ p, objectif, scenario, onDetail }:
       {objectif === 'potential' && (
         <div className="mt-2 flex items-center justify-between border-t border-line-2/60 pt-2">
           <span className="text-[10.5px] text-txt-dim">{scnLabel}</span>
-          <button data-voir-detail onClick={onDetail}
-            className="text-[11px] font-medium text-mint underline-offset-2 hover:underline">Voir le détail →</button>
+          {/* affordance visuelle : la carte ENTIÈRE est cliquable (pas un bouton imbriqué). */}
+          <span data-voir-detail className="text-[11px] font-medium text-mint">Voir le détail →</span>
         </div>
       )}
     </div>
@@ -165,7 +171,7 @@ function DetailOverlay({ idu, scenario, onClose }:
   { idu: string; scenario: ScnScenario; onClose: () => void }) {
   const d = useQuery({
     queryKey: ['scn-detail', idu, scenario],
-    queryFn: () => getAnalyseScenarios({ idus: [idu], mode: 'potential', scenario, enrich: true, limit: 1 }),
+    queryFn: () => getAnalyseScenarioDetail(idu, { scenario }),
   })
   const p = d.data?.parcelles[0]
   useEffect(() => {
@@ -264,7 +270,10 @@ function ComprendreModale({ onClose }: { onClose: () => void }) {
 }
 
 export function AnalyseScenario() {
-  const { commune: communeStore, setCommune, setView, setFilters, setVerdict } = useApp()
+  // ECRANS-NOV-2 (placement) — le panneau vit DANS la colonne de gauche, à côté de la carte : il lit
+  // le JEU DE FILTRES GLOBAL (la sélection de l'analyse), et « ← Retour » revient aux filtres.
+  const filters = useApp((s) => s.filters)
+  const retourFiltres = useApp((s) => s.retourFiltres)
   const [objectif, setObjectif] = useState<Objectif>('potential')
   const [scenario, setScenario] = useState<ScnScenario>('keep')
   const [puce, setPuce] = useState<{ band?: 'A' | 'B' | 'C' | 'D'; statut?: string; niveau?: NiveauChip } | null>(null)
@@ -273,20 +282,16 @@ export function AnalyseScenario() {
   const [detailIdu, setDetailIdu] = useState<string | null>(null)
   const [comprendre, setComprendre] = useState(false)
 
-  // Communes servies, pour le sélecteur de périmètre ; défaut = la commune du contexte ou Entre-Deux.
-  const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes, staleTime: 600_000 })
-  const commune = communeStore || 'Entre-Deux'
-
-  // Une sélection de puce / un changement de périmètre ou d'objectif remet la pagination à zéro.
-  useEffect(() => { setLimit(PAGE) }, [commune, objectif, scenario, puce])
+  // Une sélection de puce / un changement de filtre ou d'objectif remet la pagination à zéro.
+  useEffect(() => { setLimit(PAGE) }, [filters, objectif, scenario, puce])
   // Les puces d'un objectif (bandes/statuts) n'ont pas de sens dans l'autre (niveaux de Signal) :
   // changer d'objectif remet la puce sur « Tous » (plus de label périmé sur la liste).
   useEffect(() => { setPuce(null) }, [objectif])
 
   const query = useQuery({
-    queryKey: ['scn', commune, objectif, scenario, puce, limit],
-    queryFn: () => getAnalyseScenarios({
-      commune, mode: objectif, scenario, limit,
+    queryKey: ['scn', filters, objectif, scenario, puce, limit],
+    queryFn: () => getAnalyseScenarios(filters, {
+      mode: objectif, scenario, limit,
       band: puce?.band ?? null, statut: puce?.statut ?? null, signalNiveau: puce?.niveau ?? null,
     }),
     placeholderData: (prev) => prev,          // compteur stable, pas de clignotement (RETOURS-21)
@@ -327,38 +332,23 @@ export function AnalyseScenario() {
     : puce.statut ? STATUT_SCN_META[puce.statut]?.label ?? '—'
     : puce.niveau ? NIVEAU_META[puce.niveau].label : 'Toutes'
 
-  // « Voir sur la carte » : on passe à la carte avec le périmètre de commune + l'analyse allumée.
-  // La carte peint alors les bandes (et, au-delà de 20 000, les meilleures A+B avec son message).
-  const voirCarte = () => {
-    setCommune(commune)
-    setFilters({ ...EMPTY_FILTERS, communes: [commune], analyseLabuse: true })
-    setVerdict(true)
-    setView('cartes')
-  }
-
   const parcelles = data?.parcelles ?? []
   const nFiltre = data?.n_filtre ?? data?.n_selection ?? 0
   const tropLarge = (data?.n_selection ?? 0) > PAINT_CAP
 
   return (
-    <div data-ecran="analyse-scenario" className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-bg">
-      <div className="mx-auto flex min-h-0 w-full max-w-[520px] flex-1 flex-col">
+    <div data-ecran="analyse-scenario" className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="flex min-h-0 w-full flex-1 flex-col">
         {/* ── EN-TÊTE ─────────────────────────────────────────────────────────── */}
-        <header className="flex shrink-0 items-center gap-2 px-5 py-3">
-          <div className="min-w-0 flex-1">
-            <div className="text-[13px] font-semibold tracking-wide text-txt-hi">
-              Analyse LABUSE <span className="text-txt-dim">· {fmtInt(data?.n_selection ?? 0)} parcelles</span>
-            </div>
-            <select value={commune} onChange={(e) => setCommune(e.target.value)}
-              aria-label="Commune analysée"
-              className="mt-0.5 cursor-pointer rounded border border-line-2 bg-surface-2 px-1.5 py-0.5 text-[11px] text-txt-mut hover:border-txt-dim">
-              {(communes.data ?? [{ commune }]).map((c) => <option key={c.commune} value={c.commune}>{c.commune}</option>)}
-            </select>
+        <header className="flex shrink-0 items-center gap-2 px-5 pt-3 pb-2">
+          <div className="min-w-0 flex-1 text-[12.5px] font-semibold tracking-wide text-txt-hi">
+            Analyse LABUSE <span className="text-txt-dim">· {fmtInt(data?.n_selection ?? 0)} parcelles</span>
           </div>
-          <button data-retour onClick={() => setView('cartes')}
-            className="shrink-0 rounded-ctl border border-line-2 px-2 py-1 text-[11px] text-txt-mut hover:border-txt-dim hover:text-txt">← Retour</button>
+          {/* RETOURS-20 (pt 8) — « ← Retour » revient aux filtres (store.retourFiltres). */}
+          <button data-retour onClick={retourFiltres}
+            className="shrink-0 rounded-ctl border border-line-2 px-2 py-0.5 text-[10.5px] text-txt-mut hover:border-txt-dim hover:text-txt">← Retour</button>
           <button data-comprendre onClick={() => setComprendre(true)}
-            className="inline-flex shrink-0 items-center gap-1 rounded-ctl border border-mint/40 px-2 py-1 text-[11px] font-medium text-mint hover:bg-mint/10">
+            className="inline-flex shrink-0 items-center gap-1 rounded-ctl border border-mint/40 px-2 py-0.5 text-[11px] font-medium text-mint hover:bg-mint/10">
             <span className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-mint/50 text-[9px] font-bold leading-none">i</span>
             Comprendre l'analyse
           </button>
@@ -409,8 +399,7 @@ export function AnalyseScenario() {
         </div>
         {tropLarge && (
           <div data-trop-large className="mx-5 mt-2 shrink-0 rounded-lg border border-amber/40 bg-amber-bg px-3 py-2 text-[11px] leading-snug text-amber">
-            Sélection trop large pour tout peindre. Sur la carte, LABUSE peint les meilleures bandes (Excellente + Bonne).
-            <button onClick={voirCarte} className="ml-1 font-medium underline underline-offset-2">Voir sur la carte →</button>
+            Sélection trop large pour tout peindre ({fmtInt(data?.n_selection ?? 0)}). À droite, la carte peint les meilleures bandes (Excellente + Bonne).
           </div>
         )}
 

@@ -3267,11 +3267,50 @@ def stats(commune: str | None = None, source: str | None = None,
 
 
 
+def _scenario_selection_sql(db: Session, c: "FiltreCriteres",
+                            idus_restrict: list[str] | None = None) -> tuple[str, dict]:
+    """ECRANS-NOV-2 — la SÉLECTION de l'écran Analyse = EXACTEMENT celle de l'analyse actuelle (le
+    jeu de filtres complet). On réutilise la résolution d'IDU de la liste carte (`/filtre?idus=1`) :
+    MÊME gate étage 0, MÊME masque des slivers < 2 m², MÊMES filtres `_q_v2_where` — mais SANS
+    plafond (les effectifs portent sur toute la sélection) et SANS les filtres Analyse bande/Signal
+    de l'ancien écran (les puces V2 sont appliquées en aval, sur le scénario). Renvoie une sous-requête
+    `SELECT p.idu` + ses paramètres."""
+    extra, extra_params = c.where()
+    if c.destination:
+        from ..plu.destinations import SOUS_DESTINATIONS
+        if c.destination not in SOUS_DESTINATIONS:
+            raise HTTPException(status_code=400, detail=f"sous-destination inconnue : {c.destination}")
+        interdit = _mem_cached(("dest_interdit", c.destination), 300.0,
+                               lambda: _destination_interdit_keys(db, c.destination))
+        if interdit:
+            extra += (" AND NOT EXISTS (SELECT 1 FROM parcel_zone_plu zd WHERE zd.idu = p.idu"
+                      " AND (p.commune || '||' || zd.zone_lib) = ANY(:f_dest_x))")
+            extra_params["f_dest_x"] = interdit
+    run_idus = _cascade_run(db, c.source)
+    # On N'EXCLUT PAS l'étage 0 ici : l'analyse actuelle COMPTE toutes les parcelles filtrées (les
+    # exclues dures = « Hors classement », rendues « Hors projet » côté scénario), comme le compteur
+    # /filtre. La carte, elle, ne peint naturellement que les BANDES (les HC ne sont pas une bande).
+    params = {"c": c.commune, "run": run_idus, "v2run": _score_v2_run_id(db),
+              "minsurf": MIN_DISPLAY_SURFACE_M2, **extra_params}
+    restr = ""
+    if idus_restrict:
+        restr = "AND p.idu = ANY(:scn_idus)"
+        params["scn_idus"] = idus_restrict
+    sql = f"""
+        SELECT p.idu
+        FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
+        LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
+        WHERE d.run_label = :run AND (CAST(:c AS text) IS NULL OR p.commune = :c)
+          AND {_surface.SLIVER_MASK_SQL('p')}
+          {extra} {restr}
+    """
+    return sql, params
+
+
 @app.get("/analyse/scenarios")
 def analyse_scenarios(
-    source: str | None = Query(None, description="run servi q_v* (défaut : run courant)"),
-    commune: str | None = Query(None),
-    idus: str | None = Query(None, description="liste d'IDU séparés par des virgules"),
+    c: FiltreCriteres = Depends(),
+    idus: str | None = Query(None, description="liste d'IDU (détail/enrich) séparés par des virgules"),
     mode: str = Query("potential", pattern="^(sale|potential)$"),
     scenario: str = Query("keep", pattern="^(keep|rebuild|divide)$"),
     sort: str | None = Query(None, pattern="^(signal|capacity|gain|area|id)$"),
@@ -3283,32 +3322,30 @@ def analyse_scenarios(
     enrich: bool = Query(False, description="calcule C/E live (reconstruction exacte) — plus lent"),
     limit: int = Query(100, ge=1, le=1000), offset: int = Query(0, ge=0),
     db: Session = Depends(get_db)) -> dict:
-    """ALGO-FIX-1 — Analyse LABUSE V2 par SCÉNARIO, en LECTURE SEULE sur le run servi.
+    """ALGO-FIX-1 / ECRANS-NOV-2 — Analyse LABUSE V2 par SCÉNARIO, en LECTURE SEULE sur le run servi.
 
-    Par défaut l'endpoint LIT les résultats de scénario PERSISTÉS par le calcul du run
-    (`parcel_scenario_v2_runs`) — il ne calcule pas à la volée. Il expose, par parcelle, le contrat
-    de sortie (statut et cause, bande et score, quantités, vigilances, portion productive, Signal +
-    son état évalué/non évalué) PLUS les effectifs par statut et par bande sur toute la sélection
-    (spec §2.1). Le Signal est RELAYÉ depuis `score_labuse`, jamais recalculé (D6).
+    La SÉLECTION = EXACTEMENT celle de l'analyse actuelle (le JEU DE FILTRES COMPLET, `FiltreCriteres`,
+    PAS seulement commune/IDU) : même gate que la liste d'IDU de la carte. Effectifs par statut / bande
+    (potentiel) ou par niveau de Signal (prospection) sur TOUTE la sélection (ils font le total) ; la
+    liste est triée et NARROWÉE par la puce. Le Signal est RELAYÉ depuis `score_labuse` (D6).
 
-    `enrich=1` est une trappe de calcul LIVE (≤ 500 parcelles) pour la reconstruction exacte à la
-    demande quand le run n'a pas encore chiffré une sélection. `mode=sale` sert le Signal (le
-    foncier n'entre pas) ; `mode=potential` sert le scénario choisi (le Signal est secondaire)."""
+    `enrich=1` + `idus=` est une trappe de calcul LIVE (≤ 500 parcelles) pour la reconstruction exacte
+    à la demande (le DÉTAIL d'une parcelle) : elle ne touche pas la sélection filtrée."""
     from ..scoring import scenarios_v2_build as _sv2
     from ..scoring import scenarios_v2_persist as _persist
-    run_label = source or runs.current()
-    # Sélection = commune ∩ IDU (P6 / avis Astra §5.C) : les deux filtres s'appliquent ensemble.
+    run_label = c.source or runs.current()
     wanted = [i.strip() for i in idus.split(",") if i.strip()] if idus else None
     if idus and not wanted:
         raise HTTPException(status_code=400, detail="aucun IDU fourni")
-    if not commune and not wanted:
-        raise HTTPException(status_code=400, detail="préciser ?commune=… ou ?idus=…")
+    # DÉTAIL : enrich + IDU → calcul live par parcelle (inchangé).
     if enrich:
+        if not wanted and not c.commune:
+            raise HTTPException(status_code=400, detail="enrich : préciser ?idus=… (détail d'une parcelle)")
         sql = "SELECT sl.id FROM parcels sl JOIN score_labuse s ON s.parcel_id=sl.id WHERE s.run_label=:r"
         p = {"r": run_label}
-        if commune:
+        if c.commune:
             sql += " AND s.commune=:c"
-            p["c"] = commune
+            p["c"] = c.commune
         if wanted:
             sql += " AND sl.idu = ANY(:i)"
             p["i"] = wanted
@@ -3319,11 +3356,12 @@ def analyse_scenarios(
         return _sv2.analyse_scenarios_payload(
             db, ids, mode=mode, scenario=scenario, sort=sort, run_label=run_label,
             enrich=True, limit=limit, offset=offset, as_of=datetime.now(timezone.utc).isoformat())
-    return _persist.analyse_payload_persiste(
-        db, run_label=run_label, mode=mode, scenario=scenario, sort=sort,
-        commune=commune, idus=wanted, limit=limit, offset=offset,
-        band=band, statut=statut, signal_niveau=signal_niveau,
-        as_of=datetime.now(timezone.utc).isoformat())
+    # LISTE : la sélection du jeu de filtres complet (comme l'analyse actuelle), effectifs + page en SQL.
+    sel_sql, sel_params = _scenario_selection_sql(db, c, idus_restrict=wanted)
+    return _persist.analyse_payload_filtre(
+        db, scn_run=run_label, mode=mode, scenario=scenario, sort=sort,
+        sel_sql=sel_sql, sel_params=sel_params, band=band, statut=statut, signal_niveau=signal_niveau,
+        limit=limit, offset=offset, as_of=datetime.now(timezone.utc).isoformat())
 
 
 #: M55-G suite (point 1) — plafond de la liste d'IDU servie à la carte : au-delà, un filtre

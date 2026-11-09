@@ -309,32 +309,32 @@ export interface ScnReponse {
   page: { limit: number; offset: number; n: number }
   parcelles: ScnParcelle[]
 }
-export interface ScnParams {
-  commune?: string | null
-  idus?: string[] | null
+export interface ScnOpts {
   mode?: ScnMode
   scenario?: ScnScenario
   sort?: string
   band?: 'A' | 'B' | 'C' | 'D' | null
   statut?: string | null
   signalNiveau?: 'fort' | 'moyen' | 'faible' | 'non_evalue' | null
-  enrich?: boolean
   limit?: number
   offset?: number
 }
-export const getAnalyseScenarios = (p: ScnParams) => {
-  const e: Record<string, string | number> = { mode: p.mode ?? 'potential', scenario: p.scenario ?? 'keep' }
-  if (p.commune) e.commune = p.commune
-  if (p.idus?.length) e.idus = p.idus.join(',')
-  if (p.sort) e.sort = p.sort
-  if (p.band) e.band = p.band
-  if (p.statut) e.statut = p.statut
-  if (p.signalNiveau) e.signal_niveau = p.signalNiveau
-  if (p.enrich) e.enrich = 1
-  if (p.limit != null) e.limit = p.limit
-  if (p.offset != null) e.offset = p.offset
+// ECRANS-NOV-2 — la LISTE lit EXACTEMENT la sélection de l'analyse (le JEU DE FILTRES COMPLET), comme
+// `getAnalyse` : filtres globaux SANS le tier de l'ancien classement (le scénario porte son verdict).
+export const getAnalyseScenarios = (f: Filters, o: ScnOpts = {}) => {
+  const { tiers: _t, ...rest } = filterParams(f)
+  const e: Record<string, string | number> = { mode: o.mode ?? 'potential', scenario: o.scenario ?? 'keep', ...rest }
+  if (o.sort) e.sort = o.sort
+  if (o.band) e.band = o.band
+  if (o.statut) e.statut = o.statut
+  if (o.signalNiveau) e.signal_niveau = o.signalNiveau
+  if (o.limit != null) e.limit = o.limit
+  if (o.offset != null) e.offset = o.offset
   return j<ScnReponse>(`/analyse/scenarios?${qf(e)}`)
 }
+// Le DÉTAIL d'UNE parcelle : enrich=1 (C/E exacts + facteurs), par IDU, hors sélection filtrée.
+export const getAnalyseScenarioDetail = (idu: string, o: { scenario?: ScnScenario } = {}) =>
+  j<ScnReponse>(`/analyse/scenarios?${qf({ idus: idu, mode: 'potential', scenario: o.scenario ?? 'keep', enrich: 1, limit: 1 })}`)
 // RECETTE-10 T11 — ce que le score apporte, mesuré (taux de mutation 12 mois par palier vs filtre
 // simple) + une phrase chiffrée/datée pour le client. Mémorisé 6h côté serveur.
 export interface ScoringBacktest { phrase_client: string | null; fenetre_fin?: string; base_pct?: number }

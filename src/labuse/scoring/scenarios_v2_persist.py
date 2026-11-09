@@ -247,6 +247,25 @@ def _signal_persiste(p, niveau, cascade_exclue) -> dict:
     return {"status": "AVAILABLE", "p": p, "niveau": niveau, "reason": "PROBABILITE_SERVIE"}
 
 
+def _row_from_mapping(m) -> dict:
+    """Une ligne de scénario (+ Signal relayé, validé) depuis un mapping SQL — partagé par la lecture
+    simple (commune ∩ IDU) et la lecture FILTRÉE (jeu de filtres complet, ECRANS-NOV-2)."""
+    return {
+        "idu": m["idu"], "statut": m["status"], "cause": m["cause"], "bande": m["band"],
+        "score": m["score"], "bande_provisoire": m["band_provisional"],
+        "quantites": {"additional": m["additional_m2"], "project_total": m["project_total_m2"],
+                      "existing": m["existing_m2"], "net_signed": m["net_signed_m2"],
+                      "conditional_future": m["conditional_future_m2"]},
+        "residual_m2": m["residual_m2"], "surface_m2": m["surface_m2"],
+        "zone_productive": ({"zone": m["zone_prod_zone"], "area_m2": m["zone_prod_area_m2"]}
+                            if m["zone_prod_zone"] else None),
+        "vigilance": m["vigilance"], "bande_v1": m["bande_v1"],
+        "quantites_calculees": m["enriched"], "etat_calcul": m["enrich_state"],
+        "analysis_version": m["analysis_version"],
+        "signal": _signal_persiste(m["signal_p"], m["signal_niveau"], m["cascade_exclue"]),
+    }
+
+
 def read_scenarios(session: Session, *, run_label: str, scenario: str,
                    commune: str | None = None, idus: list[str] | None = None) -> list[dict]:
     """LIT les scénarios persistés (+ relaie le Signal servi, validé). Aucun calcul. Sélection =
@@ -254,24 +273,7 @@ def read_scenarios(session: Session, *, run_label: str, scenario: str,
     where, params = _filtre(commune, idus)
     params.update({"run": run_label, "scn": scenario})
     sql = text(str(_READ_SQL).replace("{where}", where))
-    out = []
-    for r in session.execute(sql, params):
-        m = r._mapping
-        out.append({
-            "idu": m["idu"], "statut": m["status"], "cause": m["cause"], "bande": m["band"],
-            "score": m["score"], "bande_provisoire": m["band_provisional"],
-            "quantites": {"additional": m["additional_m2"], "project_total": m["project_total_m2"],
-                          "existing": m["existing_m2"], "net_signed": m["net_signed_m2"],
-                          "conditional_future": m["conditional_future_m2"]},
-            "residual_m2": m["residual_m2"], "surface_m2": m["surface_m2"],
-            "zone_productive": ({"zone": m["zone_prod_zone"], "area_m2": m["zone_prod_area_m2"]}
-                                if m["zone_prod_zone"] else None),
-            "vigilance": m["vigilance"], "bande_v1": m["bande_v1"],
-            "quantites_calculees": m["enriched"], "etat_calcul": m["enrich_state"],
-            "analysis_version": m["analysis_version"],
-            "signal": _signal_persiste(m["signal_p"], m["signal_niveau"], m["cascade_exclue"]),
-        })
-    return out
+    return [_row_from_mapping(r._mapping) for r in session.execute(sql, params)]
 
 
 def _rank_value(row: dict, scenario: str, sort: str) -> float | None:
@@ -443,3 +445,165 @@ def effectifs_persistes(session: Session, *, run_label: str, scenario: str,
     return {"par_statut": {s[0]: s[1] for s in stat},
             "par_bande": {b[0]: b[1] for b in band},
             "n": sum(s[1] for s in stat)}
+
+
+# ══════════ ECRANS-NOV-2 — sélection par le JEU DE FILTRES COMPLET (comme l'analyse actuelle) ══════
+# L'endpoint ne LIT plus seulement « commune ∩ IDU » : il accepte EXACTEMENT la sélection de l'analyse
+# (tous les filtres, résolus en une sous-requête d'IDU par app.py, MÊME gate étage 0/sliver que la
+# liste d'IDU de la carte). Effectifs ET liste sont calculés EN SQL sur cette sélection (pas de lecture
+# Python de toute la sélection : elle peut être grande). Les puces narrowent la LISTE, pas les effectifs.
+
+# Colonnes du scénario + Signal servi (jointure score_labuse), pour la lecture filtrée.
+_SCN_COLS = """sv.idu, sv.status, sv.cause, sv.band, sv.score, sv.band_provisional,
+       sv.additional_m2, sv.project_total_m2, sv.existing_m2, sv.net_signed_m2,
+       sv.conditional_future_m2, sv.residual_m2, sv.zone_prod_zone, sv.zone_prod_area_m2,
+       sv.vigilance, sv.bande_v1, sv.enriched, sv.surface_m2, sv.enrich_state, sv.analysis_version,
+       sl.signal_p, sl.signal_niveau, sl.cascade_exclue"""
+
+# rang de GROUPE (= GROUP_ORDER du moteur) et rang de BANDE (= _BANDE_RANG), en SQL.
+_GROUP_RANK_SQL = ("CASE sv.status WHEN 'ESTIMATED' THEN 0 WHEN 'PRESTUDY' THEN 0 "
+                   "WHEN 'COMPUTE_PENDING' THEN 1 WHEN 'TO_VERIFY' THEN 2 WHEN 'DEFERRED' THEN 3 "
+                   "WHEN 'NO_MARGIN' THEN 4 WHEN 'OUTSIDE_OBJECTIVE' THEN 5 ELSE 9 END")
+_BAND_RANK_SQL = ("CASE sv.band WHEN 'A' THEN 0 WHEN 'B' THEN 1 WHEN 'C' THEN 2 WHEN 'D' THEN 3 "
+                  "WHEN '0' THEN 4 ELSE 5 END")
+# famille de puce de prospection (fort/moyen/faible/non_evalue), MÊME règle que _niveau_chip.
+_NIVEAU_SQL = ("CASE WHEN sl.signal_p IS NULL OR sl.signal_p < 0 OR sl.signal_p > 1 THEN 'non_evalue' "
+               "ELSE COALESCE(sl.signal_niveau, 'non_evalue') END")
+# état de Signal servi (SIGNAL_*), MÊME règle que _signal_persiste.
+_SIGNAL_STATE_SQL = ("CASE WHEN sl.signal_p IS NULL THEN 'SIGNAL_NOT_AVAILABLE' "
+                     "WHEN sl.signal_p < 0 OR sl.signal_p > 1 THEN 'SIGNAL_TO_VERIFY' "
+                     "ELSE 'SIGNAL_AVAILABLE' END")
+_SALE_ORDER_SQL = ("(CASE WHEN sl.signal_p IS NOT NULL AND sl.signal_p >= 0 AND sl.signal_p <= 1 "
+                   "THEN 0 ELSE 1 END), sl.signal_p DESC NULLS LAST, sv.idu")
+
+
+def _order_by_potential(scenario: str, sort: str) -> str:
+    """ORDER BY du potentiel = groupe → bande → quantité décroissante → IDU (D10), en SQL."""
+    if sort == "area":
+        return f"{_GROUP_RANK_SQL}, sv.surface_m2 DESC NULLS LAST, sv.idu"
+    if sort == "gain":
+        qty = "sv.net_signed_m2"
+    elif scenario == "rebuild":
+        qty = "sv.project_total_m2"
+    else:
+        qty = "sv.additional_m2"
+    return f"{_GROUP_RANK_SQL}, {_BAND_RANK_SQL}, {qty} DESC NULLS LAST, sv.idu"
+
+
+def _chip_where(mode: str, band: str | None, statut: str | None, signal_niveau: str | None,
+                params: dict) -> str:
+    """Clause de PUCE (narrowe la LISTE, jamais les effectifs). Potentiel : bande (estimées) OU statut
+    nommé ; prospection : niveau de Signal."""
+    if mode == "sale":
+        if signal_niveau:
+            params["chip_niv"] = signal_niveau
+            return f" AND {_NIVEAU_SQL} = :chip_niv"
+        return ""
+    if band:
+        params["chip_band"] = band
+        return " AND sv.status = 'ESTIMATED' AND sv.band = :chip_band"
+    if statut:
+        params["chip_statut"] = statut
+        return " AND sv.status = :chip_statut"
+    return ""
+
+
+def analyse_payload_filtre(session: Session, *, scn_run: str, mode: str, scenario: str,
+                           sort: str | None, sel_sql: str, sel_params: dict,
+                           band: str | None = None, statut: str | None = None,
+                           signal_niveau: str | None = None, limit: int = 100, offset: int = 0,
+                           as_of: str | None = None) -> dict:
+    """Réponse d'analyse V2 sur la sélection du JEU DE FILTRES COMPLET. `sel_sql` est une sous-requête
+    `SELECT idu` (résolue par app.py avec le MÊME gate que la liste d'IDU de la carte). Effectifs et
+    liste calculés EN SQL sur EXACTEMENT cette sélection ; les puces narrowent la liste."""
+    if sort and sort not in ("signal", "capacity", "gain", "area", "id"):
+        raise ValueError(f"tri inconnu : {sort}")
+    scn_read = "keep" if mode == "sale" else scenario
+    sort = sort or ("signal" if mode == "sale" else "capacity")
+    base = {**sel_params, "scnrun": scn_run, "scn": scn_read}
+    join = ("JOIN parcel_scenario_v2_runs sv ON sv.idu = sel.idu "
+            "AND sv.run_label = :scnrun AND sv.scenario = :scn "
+            "LEFT JOIN score_labuse sl ON sl.run_label = sv.run_label AND sl.idu = sv.idu")
+
+    # n_selection = la taille de la sélection filtrée (avant toute puce).
+    n_sel = session.execute(text(f"WITH sel AS ({sel_sql}) SELECT count(*) FROM sel JOIN "
+                                 f"parcel_scenario_v2_runs sv ON sv.idu = sel.idu "
+                                 f"AND sv.run_label=:scnrun AND sv.scenario=:scn"), base).scalar() or 0
+
+    # ── effectifs sur TOUTE la sélection (ils font le total) ──
+    if mode == "sale":
+        rows = session.execute(text(
+            f"WITH sel AS ({sel_sql}) "
+            f"SELECT {_NIVEAU_SQL} AS niveau, {_SIGNAL_STATE_SQL} AS etat, count(*) AS n "
+            f"FROM sel {join} GROUP BY 1, 2"), base).fetchall()
+        par_signal: dict = {}
+        par_statut: dict = {}
+        for r in rows:
+            par_signal[r.niveau] = par_signal.get(r.niveau, 0) + r.n
+            par_statut[r.etat] = par_statut.get(r.etat, 0) + r.n
+        eff = {"par_statut": par_statut, "par_bande": {}, "par_signal": par_signal}
+    else:
+        st = session.execute(text(
+            f"WITH sel AS ({sel_sql}) SELECT sv.status, count(*) FROM sel {join} GROUP BY sv.status"),
+            base).fetchall()
+        bd = session.execute(text(
+            f"WITH sel AS ({sel_sql}) SELECT sv.band, count(*) FROM sel {join} "
+            f"WHERE sv.band IS NOT NULL GROUP BY sv.band"), base).fetchall()
+        eff = {"par_statut": {r[0]: r[1] for r in st}, "par_bande": {r[0]: r[1] for r in bd}}
+
+    # ── liste : la PAGE, triée + filtrée par la puce, EN SQL (pas de lecture Python de la sélection) ──
+    page_params = dict(base)
+    chip = _chip_where(mode, band, statut, signal_niveau, page_params)
+    n_filtre = session.execute(text(
+        f"WITH sel AS ({sel_sql}) SELECT count(*) FROM sel {join} WHERE TRUE {chip}"),
+        page_params).scalar() or 0
+    order = _SALE_ORDER_SQL if mode == "sale" else _order_by_potential(scenario, sort)
+    page_params.update({"lim": limit, "off": offset})
+    rows = session.execute(text(
+        f"WITH sel AS ({sel_sql}) SELECT {_SCN_COLS} FROM sel {join} WHERE TRUE {chip} "
+        f"ORDER BY {order} LIMIT :lim OFFSET :off"), page_params)
+    page = [_row_from_mapping(r._mapping) for r in rows]
+    if mode == "sale":
+        for p in page:
+            etat = _SALE_STATE.get(p["signal"]["status"], "SIGNAL_NOT_AVAILABLE")
+            p["statut_foncier"] = p["statut"]
+            p["statut"] = etat
+    adr = build.adresses_pour(session, [p["idu"] for p in page])
+    for p in page:
+        p["adresse"] = adr.get(p["idu"])
+
+    ver = _versions_run(session, scn_run, scn_read)
+    return {
+        "puce": {"band": band, "statut": statut, "signal_niveau": signal_niveau},
+        "n_filtre": n_filtre,
+        "analysis_version": ver.get("analysis_version") or v2.VERSION,
+        "scenario_engine_version": ver.get("score_version"),
+        "cascade_run": ver.get("cascade_label"),
+        "signal_recette": ver.get("signal_recette"),
+        "signal_run": scn_run, "run_servi": scn_run,
+        "source_donnees": "run_persiste", "provenance": ver.get("provenance"),
+        "lot_mixte": ver.get("mixte", False),
+        "reference": ("calculs V2 actuels comparés au Signal servi " + scn_run),
+        "mode": mode, "scenario": scenario, "sort": sort, "as_of": as_of,
+        "n_selection": n_sel,
+        "effectifs": {"par_statut": eff["par_statut"], "par_bande": eff["par_bande"],
+                      **({"par_signal": eff["par_signal"]} if "par_signal" in eff else {})},
+        "page": {"limit": limit, "offset": offset, "n": len(page)},
+        "parcelles": page,
+    }
+
+
+def _versions_run(session, scn_run, scenario) -> dict:
+    """Versions enregistrées du run de scénario servi (sans dépendre d'un sous-ensemble : l'écran lit
+    un run homogène). Provenance mixte annoncée si le run mêle cache et live."""
+    rows = session.execute(text(
+        "SELECT score_version, cascade_label, analysis_version, provenance, count(*) "
+        "FROM parcel_scenario_v2_runs WHERE run_label=:run AND scenario=:scn GROUP BY 1,2,3,4"),
+        {"run": scn_run, "scn": scenario}).fetchall()
+    if not rows:
+        return {}
+    provs = {r[3] for r in rows}
+    top = max(rows, key=lambda r: r[4])
+    return {"score_version": top[0], "cascade_label": top[1], "analysis_version": top[2],
+            "provenance": "mixte" if len(provs) > 1 else top[3],
+            "mixte": len(provs) > 1, "signal_recette": _signal_recette_servie(session, scn_run)}

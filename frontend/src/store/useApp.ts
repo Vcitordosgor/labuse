@@ -13,9 +13,7 @@ import type { FilterTier } from '../lib/status'
 // catégorie plein écran à GAUCHE (patron Radar), avec ses deux portes (Le foncier / Les annonces).
 // DOCS-1 (Lot A) — 'documents' = la catégorie Documents (catalogue + porte + bibliothèque), vue de
 // premier niveau pleine largeur (comme crm/projets/sources). 3ᵉ dans le rail, après Outils.
-// ECRANS-NOV-2 — 'analyse' = l'écran « Analyse LABUSE par scénario » (GET /analyse/scenarios,
-// ALGO-FIX-1) : vue pleine largeur (comme documents/sources), objectif + scénario + puces comptées.
-export type View = 'cartes' | 'crm' | 'sources' | 'projets' | 'copilote' | 'admin' | 'radar' | 'veille' | 'documents' | 'analyse'
+export type View = 'cartes' | 'crm' | 'sources' | 'projets' | 'copilote' | 'admin' | 'radar' | 'veille' | 'documents'
 
 // RADAR-2 (Lot 1) — les écrans du hub Radar plein écran (SANS carte). La Veille n'est plus une entrée
 // du rail : on l'atteint par la porte « Veille » du hub Radar (view:'radar'). 'veille' = ses deux portes.
