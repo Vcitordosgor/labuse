@@ -326,6 +326,62 @@ def _greve_certaine_m2(session: Session, parcel_id: int, recul: float, commune: 
     return float(row or 0.0)
 
 
+# RESIDUEL-2 — UNION GLOBALE des contraintes certaines sur l'assiette legacy (p.b ∩ U/AU), fin du
+# DOUBLE RETRAIT. L'ancien chemin legacy soustrayait SÉPARÉMENT union(ER,EBC) (greve_a, `_EMPRISE`)
+# PUIS union(PPR rouge, PEB A/B, DPF, ravine, 50 pas) (greve_cert, `_GREVE_CERTAINE`) : là où ces
+# deux ensembles se chevauchent, leur intersection était retranchée DEUX FOIS → emprise
+# sous-estimée (faux zéros). Ici, une SEULE union de TOUTES les contraintes certaines, intersectée
+# une seule fois avec l'assiette — exactement la mécanique du chemin gabarit (`_GREVE_SUR_ASSIETTE`,
+# `greve_total`). er_area/ebc_area/cert_area restent retournés pour l'affichage (contributions
+# individuelles, qui PEUVENT se chevaucher) ; seul `greve_total` (union) est réellement soustrait.
+# Assiette identique à `_GREVE_CERTAINE` (inset p.b clippé à l'union U/AU) : résultat strictement
+# comparable à `base` de `_EMPRISE`.
+_GREVE_LEGACY_UNION = text("""
+WITH p AS (SELECT commune, ST_Buffer(geom_2975, -:d) AS b FROM parcels WHERE id = :pid),
+uau AS (SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(z.geom_2975, p.b))) AS u
+        FROM spatial_layers z, p
+        WHERE z.kind = :zkind AND z.commune = p.commune
+          AND labuse_zone_famille(z.subtype) = ANY(:uau_fams)
+          AND ST_Intersects(z.geom_2975, p.b)),
+assiette AS (SELECT CASE WHEN uau.u IS NULL THEN p.b
+                         ELSE ST_Intersection(p.b, uau.u) END AS a
+             FROM p LEFT JOIN uau ON TRUE),
+er AS (SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(e.geom_2975, p.b))) AS u
+       FROM spatial_layers e, p
+       WHERE e.kind = :pkind AND e.commune = p.commune
+         AND e.subtype = ANY(:er_types) AND ST_Intersects(e.geom_2975, p.b)),
+ebc AS (SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(e.geom_2975, p.b))) AS u
+        FROM spatial_layers e, p
+        WHERE e.kind = :pkind AND e.commune = p.commune
+          AND e.subtype = ANY(:ebc_types) AND ST_Intersects(e.geom_2975, p.b)),
+cert AS (SELECT ST_Union(geom) AS u FROM (
+    SELECT ST_MakeValid(ST_ClipByBox2D(g.geom_2975, p.b)) AS geom FROM spatial_layers g, p
+      WHERE g.kind = 'ppr' AND g.commune = p.commune
+        AND labuse_ppr_couleur(g.subtype, g.attrs) <> 'bleu' AND ST_Intersects(g.geom_2975, p.b)
+  UNION ALL
+    SELECT ST_MakeValid(ST_ClipByBox2D(g.geom_2975, p.b)) FROM spatial_layers g, p
+      WHERE g.kind = 'peb' AND lower(g.subtype) = ANY(:peb_ab) AND ST_Intersects(g.geom_2975, p.b)
+  UNION ALL
+    SELECT ST_Buffer(ST_MakeValid(g.geom_2975), :dpf_m) FROM spatial_layers g, p
+      WHERE g.kind = 'dpf' AND g.commune = p.commune AND ST_DWithin(g.geom_2975, p.b, :dpf_m)
+  UNION ALL
+    SELECT ST_Buffer(ST_MakeValid(g.geom_2975), :rav_m) FROM spatial_layers g, p
+      WHERE g.kind = 'ravine' AND g.commune = p.commune AND ST_DWithin(g.geom_2975, p.b, :rav_m)
+  UNION ALL
+    SELECT ST_MakeValid(ST_ClipByBox2D(g.geom_2975, p.b)) FROM spatial_layers g, p
+      WHERE g.kind = 'cinquante_pas' AND g.commune = p.commune AND ST_Intersects(g.geom_2975, p.b)
+) s)
+SELECT COALESCE(ST_Area(ST_Intersection(a.a, er.u)), 0.0)   AS er_area,
+       COALESCE(ST_Area(ST_Intersection(a.a, ebc.u)), 0.0)  AS ebc_area,
+       COALESCE(ST_Area(ST_Intersection(a.a, cert.u)), 0.0) AS cert_area,
+       COALESCE(ST_Area(ST_Intersection(a.a, ST_Union(ST_Union(
+           COALESCE(er.u,  ST_GeomFromText('GEOMETRYCOLLECTION EMPTY', 2975)),
+           COALESCE(ebc.u, ST_GeomFromText('GEOMETRYCOLLECTION EMPTY', 2975))),
+           COALESCE(cert.u, ST_GeomFromText('GEOMETRYCOLLECTION EMPTY', 2975))))), 0.0) AS greve_total
+FROM assiette a LEFT JOIN er ON TRUE LEFT JOIN ebc ON TRUE LEFT JOIN cert ON TRUE
+""")
+
+
 # GEOMETRIE-1 lot B — UN SEUL moteur de géométrie. L'assiette du calcul de capacité devient la
 # ZONE D'IMPLANTATION du gabarit (reculs PAR CÔTÉ voie/séparative, PPR zone rouge DÉCOUPÉE,
 # morceau constructible seul si à cheval) — la même fonction que l'outil Gabarit et le tiroir
@@ -372,18 +428,44 @@ FROM a LEFT JOIN er ON TRUE LEFT JOIN ebc ON TRUE LEFT JOIN cert ON TRUE
 
 def _assiette_gabarit(session: Session, idu: str):
     """GEOMETRIE-1 lot B — zone d'implantation du MOTEUR GABARIT (builder + compute_gabarit),
-    servie comme assiette de la capacité. None quand le gabarit ne sert pas la parcelle
-    (blocking, 5 causes — le lecteur garde alors son chemin legacy et l'écrit :
-    `assiette_source='residuel_legacy'`). Renvoie (BuildResult, GabaritResult)."""
+    servie comme assiette de la capacité.
+
+    RESIDUEL-2 — renvoie `(gab, blocages)` : `gab = (BuildResult, GabaritResult)` quand le gabarit
+    SERT la parcelle (`blocages = []`) ; `(None, blocages)` sinon, où `blocages` liste les MOTIFS de
+    non-service. Le lecteur garde alors son chemin legacy et QUALIFIE le repli selon ces motifs
+    (`_repli_qualifiable`) : seule une non-qualification due à des arêtes naturelles non classables
+    (ravine/littoral/DPF/micro-arête) prouve que l'inset uniforme + l'union des contraintes applique
+    correctement les règles ; tout autre motif (recul voie deviné, PLU non calibré, CES/hauteur
+    absents, multi-zones) laisse la capacité NON qualifiée (`assiette_source='residuel_legacy'`)."""
     from ..gabarit.builder import build_gabarit_input
     from ..gabarit.engine import compute_gabarit
     build = build_gabarit_input(session, idu)
-    if build is None or build.blocking:
-        return None
+    if build is None:
+        return None, ["parcelle/zone introuvable ou géométrie de parcelle indisponible"]
+    if build.blocking:
+        return None, list(build.blocking)
     res = compute_gabarit(build.input)
     if res.status != "ok":
-        return None
-    return build, res
+        return None, [f"gabarit:{res.status}"]
+    return (build, res), []
+
+
+# RESIDUEL-2 — un repli est QUALIFIÉ (il applique provablement les règles du cas) uniquement quand
+# TOUS les motifs de non-service du gabarit sont « Limites de la parcelle non qualifiées » : le
+# builder n'atteint cette étape (limites/géométrie) QUE si le PLU est complet et unique
+# (`if not blocking`), donc zone constructible calibrée, CES et hauteur connus. Le SEUL point ouvert
+# est une arête non classable (ravine / littoral / domaine public non routier / micro-arête de
+# numérisation) : il n'y a PAS de voie dont le recul (souvent supérieur au séparatif) serait
+# sous-appliqué. L'inset uniforme au recul séparatif + l'union globale des contraintes certaines est
+# alors une assiette correcte et CONSERVATRICE (jamais gonflée). Tout autre motif (recul voie non
+# réglementé, voie privée, PLU non calibré, CES/hauteur absents, multi-zones non isolable, compute
+# incomplet) implique une RÈGLE DEVINÉE pouvant gonfler la capacité → repli NON qualifié.
+_MOTIF_LEGACY_BENIN = "Limites de la parcelle non qualifiées"
+
+
+def _repli_qualifiable(blocages: list[str]) -> bool:
+    """RESIDUEL-2 — True si le repli applique provablement les règles du cas (cf. `_MOTIF_LEGACY_BENIN`)."""
+    return bool(blocages) and all(b.startswith(_MOTIF_LEGACY_BENIN) for b in blocages)
 
 
 def _sous_zone_constructible(ctx: ParcelContext):
@@ -408,7 +490,8 @@ def _pct_constructible(ctx: ParcelContext) -> float | None:
 
 
 def parcel_faisabilite(session: Session, parcel_id: int,
-                       hyp_overrides: dict | None = None) -> tuple[ParcelContext, Faisabilite] | None:
+                       hyp_overrides: dict | None = None,
+                       legacy_union: bool = True) -> tuple[ParcelContext, Faisabilite] | None:
     """Contexte + pré-faisabilité d'une parcelle, EMPRISE SUR GÉOMÉTRIE RÉELLE
     (ST_Buffer du contour cadastral par le recul séparatif, EPSG:2975), clippée à la
     portion U/AU si zonage mixte (Décision 1) et amputée des emplacements réservés
@@ -425,7 +508,12 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     Quand le moteur gabarit ne sert pas la parcelle (`_assiette_gabarit` → None : gabarit bloquant,
     zone non constructible), le calcul retombe sur la branche legacy ci-dessous — qui applique
     DÉSORMAIS inconditionnellement la découpe des contraintes certaines (PPR rouge compris) et le
-    clip de surface à la portion U/AU. La provenance est écrite (`assiette_source`)."""
+    clip de surface à la portion U/AU. La provenance est écrite (`assiette_source`).
+
+    RESIDUEL-2 — la branche legacy soustrait l'UNION GLOBALE des contraintes certaines (fin du double
+    retrait). `legacy_union=False` est un seam de MESURE (hors service) qui rejoue l'ancien double
+    retrait (ER∪EBC puis cert, chevauchement soustrait deux fois) pour chiffrer l'impact ; il ne
+    change jamais le service (défaut True)."""
     from .engine import Hypotheses, SEUIL_EXIGU_M2
 
     ctx = parcel_context(session, parcel_id)
@@ -509,8 +597,15 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     # ZONE D'IMPLANTATION du gabarit (reculs par côté, PPR rouge découpé, morceau constructible
     # si à cheval) quand le gabarit sert la parcelle ; sinon chemin legacy inchangé, et la
     # provenance est ÉCRITE (`assiette_source`) — pas de trou, pas de mensonge.
-    gab = _assiette_gabarit(session, ctx.idu)
-    assiette_source = "gabarit" if gab is not None else "residuel_legacy"
+    gab, _blocages = _assiette_gabarit(session, ctx.idu)
+    # RESIDUEL-2 — provenance EXACTE : gabarit, repli QUALIFIÉ (motifs purement « limites non
+    # qualifiées » → règles provablement appliquées), ou repli NON qualifié (capacité provisoire).
+    if gab is not None:
+        assiette_source = "gabarit"
+    elif _repli_qualifiable(_blocages):
+        assiette_source = "residuel_legacy_qualifie"
+    else:
+        assiette_source = "residuel_legacy"
     # CONTENANCE-1 (Lot C3) — toute aire tirée du DESSIN (zone d'implantation, déductions ER/EBC/
     # greve) est ramenée à l'échelle de la CONTENANCE par ce facteur, pour que rien ne dépasse la
     # surface du terrain et que les proportions tiennent. Les FORMES (GeoJSON, reculs, intersections)
@@ -600,7 +695,7 @@ def parcel_faisabilite(session: Session, parcel_id: int,
         uau_a = (float(row.uau_area) * k_cont) if row.uau_area is not None else None
         er_a = float(row.er_area or 0.0) * k_cont
         ebc_a = float(row.ebc_area or 0.0) * k_cont
-        greve_a = float(row.greve_area or 0.0) * k_cont
+        greve_a_old = float(row.greve_area or 0.0) * k_cont  # union ER∪EBC (ancien 1er retrait)
 
         base = full_a if uau_a is None else min(full_a, uau_a)
         plancher = float(zonage.get("an_mixte_min_pct", 5)) / 100.0
@@ -620,25 +715,42 @@ def parcel_faisabilite(session: Session, parcel_id: int,
                     (f"{r.txt} : {r.libelle}" if r.txt and r.txt != r.libelle else (r.libelle or "ER"))
                 ctx.contraintes.libelles.append(
                     f"{label} — {m2:.0f} m² déduits de l'emprise constructible.")
-        # SOURCES-1 lot 1 : la part EBC est soustraite de l'assiette (L113-1 CU) — union ER+EBC
-        # (greve_a) pour ne jamais soustraire deux fois un chevauchement.
+        # SOURCES-1 lot 1 : la part EBC est soustraite de l'assiette (L113-1 CU).
         if ebc_a >= 0.5:
             ctx.contraintes.libelles.append(
                 f"Espace boisé classé — {ebc_a:.0f} m² soustraits de l'assiette constructible "
                 "(Art. L113-1 CU, aucune construction sur l'emprise boisée).")
-        emprise = max(0.0, base - greve_a)
 
-        # SCORING-6 lot A — assiette clippée : soustraire les contraintes géométriques certaines
-        # (PPR rouge, PEB A/B, marchepied DPF, ravine, 50 pas) et ramener la surface au sol servant
-        # aux plafonds CES/pleine terre à la seule portion U/AU. RESIDUEL-1 — inconditionnel (chemin
-        # unique) : ce repli legacy (gabarit non servant) découpe lui aussi le PPR rouge, jamais plus
-        # la « branche héritée » qui fermait toute parcelle rouge.
-        greve_cert = _greve_certaine_m2(session, parcel_id, recul, ctx.commune) * k_cont  # C3
+        # RESIDUEL-2 — FIN DU DOUBLE RETRAIT. Avant : `base − greve_a` (union ER∪EBC) PUIS
+        # `− greve_cert` (union PPR/PEB/DPF/ravine/50 pas) en DEUX soustractions → l'intersection
+        # ER∪EBC ∩ PPR… était retranchée deux fois (emprise sous-estimée, faux zéros). Désormais UNE
+        # SEULE union de TOUTES les contraintes certaines (`greve_total`), intersectée une fois avec
+        # l'assiette — même mécanique que le chemin gabarit. er_a/ebc_a restent affichés comme
+        # contributions (elles peuvent se chevaucher) ; seul `greve_total` est réellement soustrait.
+        grow = session.execute(_GREVE_LEGACY_UNION, {
+            "pid": parcel_id, "d": recul,
+            "zkind": zonage.get("spatial_kind", "plu_gpu_zone"),
+            "uau_fams": list(zonage.get("positive_prefixes", ["U", "AU"])),
+            "pkind": pkind, "er_types": er_types, "ebc_types": ebc_types,
+            "peb_ab": [str(z).lower() for z in _layer_params("peb").get("hard_zones", ["a", "b"])],
+            "dpf_m": float(_layer_params("dpf").get("marchepied_m", 3.25)),
+            "rav_m": float(_layer_params("ravine").get("buffer_m", 10)),
+        }).one()
+        greve_cert = float(grow.cert_area or 0.0) * k_cont   # part PPR/PEB/DPF/ravine/50 pas (affichage)
+        greve_union = float(grow.greve_total or 0.0) * k_cont
+        if legacy_union:
+            greve_a = greve_union    # déduction NETTE réellement retranchée (union, jamais re-sommée)
+            emprise = max(0.0, base - greve_union)
+        else:
+            # RESIDUEL-2 — seam de MESURE (hors service) : ANCIENNE mécanique du double retrait
+            # (base − union(ER∪EBC) PUIS − union(cert), le chevauchement soustrait deux fois).
+            greve_a = greve_a_old
+            emprise = max(0.0, base - greve_a_old - greve_cert)
         if greve_cert > 0.5:
-            emprise = max(0.0, emprise - greve_cert)
             ctx.contraintes.libelles.append(
                 f"Assiette clippée : {greve_cert:.0f} m² de contraintes géométriques certaines "
-                "(PPR rouge, PEB A/B, marchepied DPF, ravine, 50 pas) soustraits de l'emprise.")
+                "(PPR rouge, PEB A/B, marchepied DPF, ravine, 50 pas) soustraits de l'emprise — "
+                "union globale avec ER/EBC, aucun chevauchement compté deux fois.")
         # RECETTE-1 A1 — raison réelle du vidage (chemin legacy).
         vide_raison = None
         if emprise < SEUIL_EXIGU_M2:
@@ -683,12 +795,13 @@ def parcel_faisabilite(session: Session, parcel_id: int,
 
     # FAISABILITE-1 (lot D) — lignes manquantes : ER/EBC/greve déjà soustraits (dits en étape) +
     # mixité détectée (dite « non modélisée »). Informatif : aucune de ces valeurs ne change la fourchette.
-    # total_deduit = déduction NETTE réellement retranchée de l'emprise. Chemin gabarit : greve_a
-    # est déjà l'UNION ER∪EBC∪certaines ∩ assiette (_GREVE_SUR_ASSIETTE) — jamais re-sommer.
-    # Chemin legacy : greve_a = union ER+EBC (dédupée par _EMPRISE) + greve_cert. er_m2/ebc_m2/
-    # greve_cert ne sont que les CONTRIBUTIONS listées (elles peuvent se chevaucher).
+    # total_deduit = déduction NETTE réellement retranchée de l'emprise. RESIDUEL-2 : dans LES DEUX
+    # chemins `greve_a` est désormais l'UNION ER∪EBC∪certaines ∩ assiette (gabarit :
+    # `_GREVE_SUR_ASSIETTE` ; legacy : `_GREVE_LEGACY_UNION`) — jamais re-sommer avec greve_cert
+    # (fin du double retrait). er_m2/ebc_m2/greve_cert ne sont que les CONTRIBUTIONS listées (elles
+    # peuvent se chevaucher).
     extras = {"er_m2": er_a, "ebc_m2": ebc_a, "greve_certaine_m2": greve_cert,
-              "total_deduit_m2": greve_a if assiette_source == "gabarit" else greve_a + greve_cert,
+              "total_deduit_m2": greve_a,
               "mixite": bool(eco.get("mixite")),
               "assiette_source": assiette_source,
               "assiette_vide": vide_raison}   # RECETTE-1 A1 — raison du vidage (message ciblé)

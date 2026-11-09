@@ -26,7 +26,13 @@ _VIEW_COLS = ("parcel_id", "taux_emprise_pct", "pct_potentiel", "sous_densite",
               # CHASSE-CALCULS-FIX-1 Lot 3 (E-B1) — la surface de terrain QU'A UTILISÉE le run
               # (contenance au moment du calcul). Permet de montrer la SDP avec SA surface, et de
               # signaler si la surface cadastrale vive a changé depuis. NULL = run antérieur au lot.
-              "surface_terrain_m2")
+              "surface_terrain_m2",
+              # RESIDUEL-2 — scénario RECONSTRUCTION servi île entière (plus de « Calcul à compléter »
+              # par déduction). C_rebuild = capacité sur terrain libéré (`sdp_max_m2`), E = existant
+              # (`sdp_existante_m2`), D_net = C−E SIGNÉ (`d_net_m2`, négatif = la démolition perd de la
+              # SDP). Déjà calculés par `compute_residuel` à chaque run ; désormais PERSISTÉS (le run de
+              # nuit à 4 shards tient ~3,6 h, cf. RESIDUEL-2.md). NULL = run antérieur au lot.
+              "sdp_max_m2", "sdp_existante_m2", "d_net_m2")
 
 
 class ServedRunWriteError(RuntimeError):
@@ -80,6 +86,11 @@ def ensure_runs_schema(conn) -> None:
     # Même garde catalogue (ALTER émis seulement si la colonne manque → aucun ACCESS EXCLUSIVE no-op).
     if not _colonne_presente(conn, "parcel_residuel_runs", "surface_terrain_m2"):
         conn.execute(text("ALTER TABLE parcel_residuel_runs ADD COLUMN surface_terrain_m2 integer"))
+    # RESIDUEL-2 — scénario reconstruction (C_rebuild/E/D_net signé) persisté île entière. Même garde
+    # catalogue (ALTER émis seulement si la colonne manque → aucun ACCESS EXCLUSIVE no-op au boot).
+    for col in ("sdp_max_m2", "sdp_existante_m2", "d_net_m2"):
+        if not _colonne_presente(conn, "parcel_residuel_runs", col):
+            conn.execute(text(f"ALTER TABLE parcel_residuel_runs ADD COLUMN {col} integer"))
     # index lecteurs-par-parcelle (les EXISTS/JOIN sur parcel_id) : (parcel_id, run_seq)
     if not _regclass_present(conn, "parcel_residuel_runs_pid"):
         conn.execute(text("CREATE INDEX parcel_residuel_runs_pid "
@@ -111,7 +122,7 @@ def ensure_runs_schema(conn) -> None:
         # hauteur_source puis regles_non_modelisees sont toutes en fin de `_VIEW_COLS` → OR REPLACE
         # suffit. Idempotent.
         if not {"assiette_source", "hauteur_source", "regles_non_modelisees",
-                "surface_terrain_m2"} <= cols:
+                "surface_terrain_m2", "sdp_max_m2", "sdp_existante_m2", "d_net_m2"} <= cols:
             conn.execute(text(_view_sql(or_replace=True)))
 
 
