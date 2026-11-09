@@ -310,3 +310,50 @@ mesure** (tableau avant/après). Hook VERT (tsc 0, vitest **310**, build, secret
 est un **dégradé** (`linear-gradient`) : `getComputedStyle(...).backgroundColor` lit transparent alors que
 le fond est bien un vert opaque (c'est `backgroundImage`) — vérifier le bon ⚡ pour ne pas croire à une
 régression. (3) les outils Playwright `click`/`hover` attendent le paramètre **`target`** (pas `element`/`ref`).
+
+# RETOURS-20 — recette de Vic sur RETOURS-19 (même branche, pas de merge)
+
+**10 points**, **une capture après par point** dans `captures/retours-20/` ; pour les survols, capture
+**pendant le survol**. Hook VERT (tsc 0, vitest **310**, build, secrets). Le bloc Score/Signal/Classer par
+n'est **pas** retouché (remplacé par un autre mandat).
+
+1. **Bouton « Fiche commune » sans chevron** (`Header.tsx`) — le `<svg>` chevron est retiré ; ne reste que
+   le libellé. *(01-bouton-sans-chevron)*
+2. **Accueil — espace trait↔titre réduit** (`LeftPanel.tsx`) — le trait sous « Filtres » resserré
+   (`my-3` → `mt-3 mb-1`) et l'accueil `py-4` → `py-2` ; le bloc **reste centré** (`justify-center`). Mesuré :
+   trait→titre **54 → 50 px**, désormais équilibré avec le bas (50/46). *(02-accueil-espace)*
+3. **Ligne sélectionnée — fond vert seul** (`FiltreLabuse.tsx` `LigneChoix`) — aucune bordure, aucun
+   contour, aucune ombre : seulement le fond vert, le texte sombre et la coche. Mesuré sur « Saint-Denis »
+   sélectionnée : **border-width `0px` (4 côtés)**, **outline-style `none`**, **box-shadow `none`**,
+   background `rgb(74,222,128)`, color `rgb(6,48,26)`, coche présente. (Déjà conforme — vérifié, pas de
+   changement de code.) *(03-ligne-selectionnee)*
+4. **Chargement de l'analyse** (`strings.ts`, `FiltreLabuse.tsx`) — « LABUSE croise ses 99 sources (PLU,
+   risques, cadastre, bâti, ventes) pour classer les N parcelles de [commune]… », avec **N et la commune
+   réels** (périmètre du run). Vérifié : « …les **38 217** parcelles de **Saint-Denis**… ». *(04-chargement)*
+5. **L'étape de résumé supprimée** (`FiltreLabuse.tsx`) — fin du décompte → on arrive **directement** sur
+   les résultats (plus de « LABUSE a analysé… Voir les parcelles »). Le `setTimeout` appelle `voirParcelles()`
+   au lieu de passer en phase `'revealed'`. Vérifié : après le décompte, `data-voir-parcelles`/`data-phrase`
+   absents, résultats affichés. *(05-resultats-directs)*
+6. **Phrase retirée** (`ResultsSection.tsx`) — « Classées selon vos critères et l'analyse LABUSE (potentiel
+   à bâtir, risques, accès, terrain) » supprimée. Vérifié absente du DOM. *(06-sans-phrase-classees)*
+7. **Rectangle gris retiré** (`LeftPanel.tsx` `VerdictHero`) — plus de fond ni d'ombre derrière « Comprendre
+   l'analyse » / « Retour » (fond + `shadow-elev-1` retirés). Mesuré : background transparent, box-shadow
+   `none`. *(07-sans-rectangle-gris)*
+8. **« ← Changer les filtres » → « ← Retour »** (`strings.ts` `changerFiltres`, `LeftPanel.tsx`) — partout
+   où il apparaît. Vérifié : bouton `data-verdict-off` = « ← Retour ». *(08-retour)*
+9. **Menu « Ajouter cette parcelle à… »** (`Fiche.tsx` `ProjetButton`) — dernière ligne **« Nouveau projet »**
+   (sans « avec cette parcelle ») ; **aucun libellé coupé** (`break-words` au lieu de `truncate`, **et menu
+   ancré `right-0`** pour ne plus déborder hors écran — « + Projet » est à droite du pied) ; **survol de
+   chaque projet = fond vert opaque + texte sombre** (`.hover-fill`) ; **« + Projet » ouvert sans double
+   contour** (outline `none`, box-shadow `none`, un seul liseré `act-cmp`). *(09-menu-projet)*
+10. **Copilote — un seul bloc centré** (`CopiloteView.tsx`) — titre + exemples + zone de texte forment un
+    bloc **centré verticalement** (`justify-center`, le champ vit DANS le bloc, plus pinné en bas qu'en
+    conversation), **écart normal** exemples↔champ (24 px), plus de grand vide noir en haut. Vérifié à
+    **deux hauteurs** : 900 px (void 238/238) et 620 px (void 98/98) — toujours centré, champ visible.
+    *(10-copilote-900, 10-copilote-620)*
+
+**Pièges** — (1) encore un `{/* … */}` **premier enfant après `{open && (`** → `PARSE_ERROR` 500 sur
+`Fiche.tsx` ; corrigé en déplaçant le commentaire DANS le `<div>`. (2) le décompte dure 3 s < aller-retour
+d'une capture → extension temporaire de `RITUEL_MS` (20 s) pour capturer l'écran de chargement, puis
+revert. (3) un `live` pas encore chargé fait retomber le N du décompte sur le total de l'île (433 229) ;
+en usage réel le compteur « N parcelles correspondent » est déjà chargé avant « Analyser » → N commune juste.

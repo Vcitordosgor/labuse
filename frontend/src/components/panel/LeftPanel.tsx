@@ -241,7 +241,9 @@ function VerdictHero() {
   // pastille en ligne. Le titre « RÉSULTATS » disparaît (ResultsSection).
   if (verdict) {
     return (
-      <div className={`mx-5 mb-1 flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 shadow-elev-1 ${analyse ? 'bg-mint/[0.08]' : 'bg-surface-2'}`}>
+      <div className="mx-5 mb-1 flex shrink-0 items-center gap-2 px-0 py-1.5">
+        {/* RETOURS-20 (pt 7) — plus de rectangle gris (ni ombre) derrière « Comprendre l'analyse » /
+            « Retour » : la ligne vit sans conteneur (fond + `shadow-elev-1` retirés). */}
         {algoModale === 'classement' && <AlgoExplainer onClose={() => setAlgoModale(null)} />}
         {algoModale === 'scoring' && <ScoringExplainer onClose={() => setAlgoModale(null)} />}
         {algoModale === 'comprendre' && <ComprendreAnalyse onClose={() => setAlgoModale(null)} />}
@@ -254,10 +256,11 @@ function VerdictHero() {
             Comprendre l’analyse
           </button>
         )}
-        {/* ECRANS-NOV-1 §2 — « ← Changer les filtres » (ex-« Retour ») : destination UNIQUE (store.retourFiltres). */}
+        {/* RETOURS-20 (pt 8) — « ← Changer les filtres » redevient « ← Retour » (destination UNIQUE
+            store.retourFiltres, inchangée). */}
         <button data-verdict-off onClick={retourFiltres}
           className="shrink-0 rounded-ctl border border-line-2 px-2 py-0.5 text-[10.5px] text-txt-mut hover:border-txt-dim hover:text-txt">
-          ← Changer les filtres
+          ← Retour
         </button>
       </div>
     )
@@ -335,8 +338,10 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
   const nOutils = MODULES.filter((m) => !m.hidden).length
   // RETOURS-19 (pt 1) — le titre + les 5 cartes (64 px) sont CENTRÉS VERTICALEMENT dans l'espace sous
   // « Filtres » (`justify-center`) : plus de grand vide en bas. Panneau figé (pas de défilement).
+  // RETOURS-20 (pt 2) — espace réduit entre le trait sous « Filtres » et le titre (py-4 → py-2 +
+  // le trait resserré `mb-3→mb-1`) ; le bloc reste centré dans ce qui reste.
   return (
-    <div data-accueil className="flex min-h-0 flex-1 flex-col justify-center overflow-hidden px-5 py-4">
+    <div data-accueil className="flex min-h-0 flex-1 flex-col justify-center overflow-hidden px-5 py-2">
       {/* B1 — la promesse (2e ligne en --mint) */}
       <p className="text-[17px] font-medium leading-tight text-txt">Tout le foncier de La Réunion.</p>
       <p className="mb-5 text-[17px] font-medium leading-tight text-mint">Au même endroit.</p>
@@ -469,7 +474,7 @@ export function LeftPanel() {
           {/* RETOURS-7 Z9 — « Voir les N parcelles » REFERME le panneau Filtres (→ 'listing') et
               rend la place à la liste. L'état ouvert/fermé suit l'action, pas l'historique de nav. */}
           <FiltresSection open={filtresOpen} onToggle={toggleFiltres} onRetract={() => setPanneauSection('listing')} fill={sectionFill} closable />
-          {!sectionFill && <div className="mx-5 my-3 shrink-0 border-t border-line" />}
+          {!sectionFill && <div className="mx-5 mt-3 mb-1 shrink-0 border-t border-line" />}
           <VerdictHero />
           {verdict && <ResultsSection />}
         </aside>
@@ -502,7 +507,7 @@ export function LeftPanel() {
             {/* RETOURS-7 Z9 — « Voir les N parcelles » REFERME le panneau Filtres (→ 'listing') et
               rend la place à la liste. L'état ouvert/fermé suit l'action, pas l'historique de nav. */}
           <FiltresSection open={filtresOpen} onToggle={toggleFiltres} onRetract={() => setPanneauSection('listing')} fill={sectionFill} closable />
-            {!sectionFill && <div className="mx-5 my-3 shrink-0 border-t border-line" />}
+            {!sectionFill && <div className="mx-5 mt-3 mb-1 shrink-0 border-t border-line" />}
             <div className="shrink-0 px-5 pb-1"><Legend inline /></div>
             <VerdictHero />
             {verdict && <ResultsSection />}

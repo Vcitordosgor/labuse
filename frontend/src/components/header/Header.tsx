@@ -267,8 +267,8 @@ function CommuneSelect() {
       <button onClick={() => setOpen((o) => !o)} data-commune-select data-fiche-commune-menu aria-pressed={open}
         className={`flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs transition-colors duration-quick ${
           open ? 'border-mint bg-mint font-medium text-mint-ink' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
+        {/* RETOURS-20 (pt 1) — plus de chevron sur le bouton « Fiche commune ». */}
         Fiche commune
-        <svg viewBox="0 0 10 10" className="h-2.5 w-2.5"><polyline points="2,4 5,7 8,4" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>
       </button>
       {open && (
         <>

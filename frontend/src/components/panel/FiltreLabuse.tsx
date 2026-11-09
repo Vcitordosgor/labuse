@@ -898,7 +898,10 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
       }
       rafRef.current = requestAnimationFrame(tick)
     }
-    timerRef.current = window.setTimeout(() => setPhase((ph) => (ph === 'counting' ? 'revealed' : ph)), RITUEL_MS)
+    // RETOURS-20 (pt 5) — fin du décompte : on arrive DIRECTEMENT sur les résultats (plus d'étape
+    // de résumé « LABUSE a analysé… Voir les parcelles »). Si le run a échoué, le `.catch` a déjà
+    // basculé en 'error' et vidé ce timer — on ne force donc jamais les résultats sur un échec.
+    timerRef.current = window.setTimeout(() => { if (phaseRef.current === 'counting') voirParcelles() }, RITUEL_MS)
   }
   // ANALYSE-1 : l'échec réseau du run est détecté par le `.catch` de l'appel direct dans `lancer()`
   // (ci-dessus) ; l'ancien useEffect sur `on.isError` (requête retirée) n'a plus lieu d'être.
@@ -1063,7 +1066,9 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
               {!reduced && live != null && countVal >= live && <span aria-hidden> ✓</span>}
             </p>
             <p className="mt-1 text-[11px] leading-snug text-txt-dim">
-              {CLIENT.revelation.decompte(live ?? totalIle ?? 0)}…
+              {/* RETOURS-20 (pt 4) — « LABUSE croise ses 99 sources (…) pour classer les N parcelles
+                  de [commune]… », avec le N et la commune réels (périmètre du run). */}
+              {CLIENT.revelation.decompteCroise(live ?? totalIle ?? 0, perimetre)}…
             </p>
           </div>
         ) : phase === 'error' ? (

@@ -354,7 +354,10 @@ function ProjetButton({ idu }: { idu: string }) {
       </button>
 
       {open && (
-        <div data-projet-fiche-menu className="floating absolute bottom-10 left-0 z-30 w-72 p-2 text-[11px]">
+        <div data-projet-fiche-menu className="floating absolute bottom-10 right-0 z-30 w-72 p-2 text-[11px]">
+          {/* RETOURS-20 (pt 9) — le menu s'ancre à DROITE (`right-0`) : « + Projet » est dans la moitié
+              droite du pied de fiche ; ouvert vers la gauche, le menu reste dans la fenêtre et aucun
+              libellé n'est coupé par le bord de l'écran. */}
           <p className="label-caps px-1 pb-1 text-txt-dim">Ajouter cette parcelle à…</p>
           {projetsQ.isLoading && <Squelette lignes={2} className="px-1 py-2" />}
           {!projetsQ.isLoading && candidats.length === 0 && (
@@ -366,24 +369,25 @@ function ProjetButton({ idu }: { idu: string }) {
               return (
                 <button key={p.id} data-projet-fiche-cible={p.id} disabled={add.isPending}
                   onClick={() => (deja ? (setOpenProjet({ id: p.id, nom: p.nom }), setOpen(false)) : add.mutate(p.id))}
-                  /* RETOURS-16 (point 3) — survol comme les AUTRES menus déroulants de l'app (menu
-                     compte, etc.) : seul le FOND change (hover:bg-surface-3), le texte reste CLAIR.
-                     L'ancien `hover-fill-amber` passait le nom en encre sombre sur fond quasi
-                     transparent → noir sur fond sombre, illisible. */
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-txt transition-colors duration-quick hover:bg-surface-3 hover:text-txt-hi"
+                  /* RETOURS-20 (pt 9) — survol = fond VERT OPAQUE + texte SOMBRE (`.hover-fill` :
+                     `--fill-mint` + `--ink` sur tous les descendants), comme les autres listes
+                     sélectionnables de l'app. Libellé jamais coupé (`break-words`, plus de `truncate`). */
+                  className="hover-fill flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left text-txt transition-colors duration-quick"
                   >
-                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-mint" />
-                  <span className="min-w-0 flex-1 truncate">{p.nom}</span>
-                  <span className="shrink-0 font-mono text-[10px] text-txt-dim">{deja ? 'déjà ↗' : vivier(p).toLocaleString('fr-FR')}</span>
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-mint" />
+                  <span className="min-w-0 flex-1 break-words leading-snug">{p.nom}</span>
+                  <span className="mt-px shrink-0 font-mono text-[10px] text-txt-dim">{deja ? 'déjà ↗' : vivier(p).toLocaleString('fr-FR')}</span>
                 </button>
               )
             })}
           </div>
           <div className="my-1.5 h-px bg-line/40" />
+          {/* RETOURS-20 (pt 9) — dernière ligne « Nouveau projet » (sans « avec cette parcelle ») ;
+              même survol vert opaque + encre sombre que la liste. */}
           <button data-projet-fiche-nouveau disabled={nouveau.isPending} onClick={() => nouveau.mutate()}
-            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-mint transition-colors duration-quick hover:bg-surface-3"
+            className="hover-fill flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-mint transition-colors duration-quick"
             >
-            <span aria-hidden>＋</span><span className="flex-1">{nouveau.isPending ? 'Création…' : 'Nouveau projet avec cette parcelle'}</span>
+            <span aria-hidden>＋</span><span className="flex-1">{nouveau.isPending ? 'Création…' : 'Nouveau projet'}</span>
           </button>
         </div>
       )}

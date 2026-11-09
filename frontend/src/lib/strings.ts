@@ -82,6 +82,9 @@ export const CLIENT = {
     // M55-F point 3 : choix sobre — voir la liste + carte en TRI FACTUEL, sans l'opinion LABUSE.
     voirN: (n: number) => `Voir les ${n.toLocaleString('fr-FR')} parcelles`,
     decompte: (n: number) => `application de vos critères aux ${n.toLocaleString('fr-FR')} parcelles`,
+    // RETOURS-20 (pt 4) — le texte de CHARGEMENT de l'analyse, avec N et la commune réels.
+    decompteCroise: (n: number, perimetre: string) =>
+      `LABUSE croise ses 99 sources (PLU, risques, cadastre, bâti, ventes) pour classer les ${n.toLocaleString('fr-FR')} parcelles de ${perimetre}`,
     decompteFin: 'parcelles analysées',
     phraseIntro: (n: number, perimetre: string) =>
       `LABUSE a analysé les ${n.toLocaleString('fr-FR')} parcelles de ${perimetre}.`,
@@ -105,7 +108,8 @@ export const CLIENT = {
     // rendue honnête (défiger les filtres et rendre la main sur le panneau — cf. changerFiltres()
     // dans FiltreLabuse) et le libellé dit désormais vrai. Clé renommée (l'ancienne `relancer`
     // n'existe plus).
-    changerFiltres: 'Changer les filtres',
+    // RETOURS-20 (pt 8) — « Changer les filtres » → « Retour » partout où il apparaît.
+    changerFiltres: 'Retour',
     // M55-J point 2 : « désactiver » devient un vrai bouton (majuscule initiale).
     desactiver: 'Désactiver l’analyse',
     erreur: 'L’analyse n’a pas pu aboutir — le serveur n’a pas répondu. Vos critères sont conservés.',

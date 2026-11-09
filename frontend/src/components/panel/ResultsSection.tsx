@@ -728,8 +728,8 @@ export function ResultsSection() {
             <p className="text-[11.5px] leading-snug text-txt-mut">
               <b className="text-txt">LABUSE</b> a analysé les <b className="tabular-nums text-txt">{fmt(encartTotal)}</b> parcelles{zone ? ' de la zone' : commune ? ` de ${commune}` : ' de votre sélection'}.
             </p>
-            {/* ECRANS-NOV-1 §2 — la phrase du classement (maquette) : ce qui ordonne la liste. */}
-            <p className="mt-0.5 text-[11px] leading-snug text-txt-dim">Classées selon vos critères et l’analyse LABUSE (potentiel à bâtir, risques, accès, terrain).</p>
+            {/* RETOURS-20 (pt 6) — la phrase « Classées selon vos critères et l'analyse LABUSE
+                (potentiel à bâtir, risques, accès, terrain) » est RETIRÉE (demande Vic). */}
             <div data-ventilation-bande className="mt-1 flex flex-wrap gap-x-2.5 gap-y-0.5 text-[11px] leading-snug">
               {BANDE_ENCART.map((b) => (
                 <span key={b} className="inline-flex items-center gap-1">
