@@ -413,6 +413,19 @@ export function Fiche({ idu }: { idu: string }) {
   // M55-L point 5 — verdict à la demande : mémoire par parcelle pour la session (store).
   const verdictRevele = useApp((s) => !!s.verdictRevele[idu])
   const revelerVerdict = useApp((s) => s.revelerVerdict)
+  const masquerVerdict = useApp((s) => s.masquerVerdict)
+  // RETOURS-18 (pt 13) — la carte d'analyse se REFERME au clic AILLEURS (hors carte ET hors bouton
+  // « Analyse LABUSE ») ; le bouton « Analyse LABUSE » la ROUVRE (revelerVerdict).
+  useEffect(() => {
+    if (!verdictRevele) return
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as HTMLElement
+      if (t.closest?.('[data-analyse-labuse-card]') || t.closest?.('[data-demander-analyse]') || t.closest?.('[data-modale]')) return
+      masquerVerdict(idu)
+    }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [verdictRevele, idu, masquerVerdict])
   // ECRANS-NOV-1 §1 — pied de la carte d'analyse : « Classer par » renvoie au tri des résultats (on
   // révèle l'analyse et on ferme la fiche → la liste classée s'affiche) ; « Comprendre l'analyse »
   // ouvre le même panneau pédagogique que l'écran d'analyse (modale locale, indépendante de la pile).
@@ -739,7 +752,10 @@ export function Fiche({ idu }: { idu: string }) {
           /* RECETTE-PROD-1 (A7) — hauteur table-graphique : valeur servie + étiquette « Estimé ». */
           ? `${fmtH(gd.hauteurReglementaireM)} m à l'égout${gd.hauteurEstimee ? ' · Estimé' : ''}`
           : gd.hauteurEgoutM != null
-            ? <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.15 }}>
+            /* RETOURS-18 (pt 11) — « N m max » à la MÊME taille que les autres valeurs de tiroir (12,5 px,
+               comme `.t-val`) : une valeur ReactNode saute le wrapper `.t-val` et héritait du 16 px de
+               `.t-right` → on fixe la taille ici. L'égout reste en sous-ligne discrète. */
+            ? <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.15, fontSize: 12.5 }}>
                 <span>{fmtH(gd.hauteurReglementaireM)} m max</span>
                 <span style={{ fontSize: 10, color: 'var(--txt-dim)' }}>égout {fmtH(gd.hauteurEgoutM)} m</span>
               </span>
@@ -2151,7 +2167,8 @@ export function Fiche({ idu }: { idu: string }) {
                       )}
                       {sdpNulle && pourquoi && <p className="text-[11.5px] leading-snug text-txt-mut" data-potentiel-pourquoi>{pourquoi}</p>}
                       {faisa.data?.delaisse && <div data-delaisse><Vigilance title={faisa.data.delaisse.libelle} /></div>}
-                      <OutilsSection outils={outils} />
+                      {/* RETOURS-18 (pt 14) — les quatre portes du Projet en UNE colonne, toutes vert-contour (6-projet.png). */}
+                      <OutilsSection outils={outils} colonne />
                       {sdpNulle
                         ? <Repli label="Étudier quand même">{panneau}</Repli>
                         : panneau}

@@ -177,8 +177,10 @@ export function CopiloteView() {
 
   const contexteParts = sujet ? [sujet.idu, sujet.commune, sujet.zone, sujet.surface].filter(Boolean) as string[] : []
 
+  // RETOURS-18 (pt 15) — plus de TRAIT GRIS au-dessus de la zone d'écriture (border-t retiré), zone
+  // REMONTÉE (padding haut réduit).
   const champ = (
-    <div data-copilote-champ className="border-t border-cp-line bg-cp-bg/80 px-4 py-3.5 md:px-6">
+    <div data-copilote-champ className="bg-cp-bg/80 px-4 pb-3.5 pt-1.5 md:px-6">
       <div className="mx-auto flex max-w-[840px] items-end gap-2.5 rounded-xl border border-cp-ia-border bg-cp-card/60 py-2 pl-[16px] pr-2 transition-[border-color,box-shadow] duration-quick focus-within:border-cp-ia focus-within:shadow-[0_0_0_3px_rgba(180,151,240,0.16)]">
         <textarea ref={champRef} data-copilote-saisie rows={1} value={saisie}
           onChange={(e) => setSaisie(e.target.value)} onKeyDown={onChamp}
@@ -190,11 +192,12 @@ export function CopiloteView() {
           {dispatching ? '…' : 'Envoyer'}
         </button>
       </div>
-      <p className="mx-auto mt-2 max-w-[840px] text-[11px] text-cp-faint">
-        {enFil
-          ? 'Le Copilote ne dit que ce que les données portent. Un chiffre engageant vient toujours d’un outil.'
-          : 'Entrée pour envoyer · Maj+Entrée pour une nouvelle ligne'}
-      </p>
+      {/* RETOURS-18 (pt 15) — « Entrée pour envoyer… » RETIRÉ ; seule la note de prudence reste, dans le fil. */}
+      {enFil && (
+        <p className="mx-auto mt-2 max-w-[840px] text-[11px] text-cp-faint">
+          Le Copilote ne dit que ce que les données portent. Un chiffre engageant vient toujours d’un outil.
+        </p>
+      )}
     </div>
   )
 
@@ -202,13 +205,11 @@ export function CopiloteView() {
   const accueil = (
     <div data-accueil className="flex min-h-full flex-col items-center justify-center px-6 py-10">
       <div className="w-full max-w-[760px] text-center">
-        <div aria-hidden className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-full border border-cp-ia-border bg-cp-ia/10 font-display text-[17px] font-semibold text-cp-ia">C</div>
-        <h1 data-accueil-titre className="mb-2.5 font-display text-[28px] font-medium leading-[1.2] tracking-[-.4px] text-cp-txt">
-          Bonjour. Sur quoi on travaille ?
+        {/* RETOURS-18 (pt 15) — le « C » (pastille), le « Bonjour. » et le sous-titre sont RETIRÉS :
+            il ne reste que le titre « Sur quoi on travaille ? », au-dessus des suggestions. */}
+        <h1 data-accueil-titre className="mb-7 font-display text-[28px] font-medium leading-[1.2] tracking-[-.4px] text-cp-txt">
+          Sur quoi on travaille ?
         </h1>
-        <p data-accueil-tagline className="mb-7 text-[13px] text-cp-muted">
-          Une parcelle, un propriétaire, une règle de PLU, un calcul. Je réponds avec la source et la date.
-        </p>
         <div data-accueil-suggestions className="grid grid-cols-1 gap-3 text-left sm:grid-cols-2">
           {SUGGESTIONS.map((s) => (
             <button key={s.t} data-accueil-suggestion onClick={() => void interroger(s.t)} disabled={dispatching}

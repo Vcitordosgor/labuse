@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { render, waitFor } from '@testing-library/react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Kanban } from './Kanban'
 import type { PipelineEntry } from '../../lib/types'
@@ -27,9 +27,16 @@ function renderKanban() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(<QueryClientProvider client={qc}><Kanban /></QueryClientProvider>)
 }
+// RETOURS-18 (pt 17) — le « Déplacer » est désormais un MENU de la DA (déclencheur + volet), plus un
+// <select> natif : on OUVRE le menu puis on lit ses entrées ([data-crm-move-opt]). La 1ʳᵉ « option »
+// reste le libellé du déclencheur (« Déplacer »), suivie des colonnes puis de « Retirer du CRM ».
 function options(container: HTMLElement) {
-  const sel = container.querySelector('[data-crm-move]') as HTMLSelectElement
-  return Array.from(sel.options).map((o) => ({ value: o.value, label: o.textContent }))
+  const trigger = container.querySelector('[data-crm-move]') as HTMLButtonElement
+  fireEvent.click(trigger)
+  const items = Array.from(container.querySelectorAll('[data-crm-move-opt]')).map((o) => ({
+    value: o.getAttribute('data-crm-move-opt') ?? '', label: o.textContent,
+  }))
+  return [{ value: '', label: trigger.textContent?.trim() ?? '' }, ...items]
 }
 
 describe('DA-FIX-5 P7 — menu « Déplacer vers… » = les colonnes du kanban', () => {

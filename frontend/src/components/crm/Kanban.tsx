@@ -136,12 +136,13 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, onEditNote, column
         <div className="min-w-0 flex-1">
           <DeplacerMenu columns={columns} currentStatus={e.status} onMove={onMove} onRetirer={onArchive} />
         </div>
-        {!note && (
-          <button data-crm-note-add onClick={(ev) => { stop(ev); onEditNote() }}
-            className="shrink-0 whitespace-nowrap rounded-md border border-line-2 bg-surface-2 px-2 py-1 text-[11px] text-txt-dim transition-colors duration-quick hover:border-mint/40 hover:text-mint min-h-[24px]">
-            + Note
-          </button>
-        )}
+        {/* RETOURS-18 (pt 18) — bouton « Note » présent sur TOUTES les cartes, quelle que soit la colonne
+            (avant : seulement quand la carte n'avait PAS de note). « + Note » si vide, « Note » sinon ;
+            les deux ouvrent le détail à la section Notes. */}
+        <button data-crm-note-add onClick={(ev) => { stop(ev); onEditNote() }}
+          className="shrink-0 whitespace-nowrap rounded-md border border-line-2 bg-surface-2 px-2 py-1 text-[11px] text-txt-dim transition-colors duration-quick hover:border-mint/40 hover:text-mint min-h-[24px]">
+          {note ? 'Note' : '+ Note'}
+        </button>
       </div>
     </div>
   )

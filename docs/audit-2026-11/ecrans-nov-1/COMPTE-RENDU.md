@@ -158,3 +158,87 @@ s'est mis sur la fiche = l'écran 1, créant un conflit à deux écrivains sur `
 miennes, correctes et conformes à la maquette — **conservées**. L'écran 2 a ensuite été fait en propre,
 avec itération visuelle. Leçon : ne pas déléguer un écran à un **fork** (qui se prend pour moi) ; un
 agent frais, scope explicite, serait plus sûr.
+
+---
+
+# RETOURS-18 — corrections de recette (même branche, pas de merge)
+
+Trois maquettes de plus : `2b-filtres-reel.png`, `4b-documents.png`, `6-projet.png`. **Une capture après
+par point** dans `captures/retours-18/`. Hook VERT (tsc 0, vitest, build, secrets, pytest unit 3193).
+
+## Accueil et en-tête
+1. **Accueil** (`LeftPanel.tsx`, `index.css`) — entrée **Radar retirée** (5 entrées), espaces réajustés,
+   panneau `overflow-hidden` (plus de défilement). *(01-accueil-sans-radar)*
+2. **« + Projet »** (`index.css`) — survol **vert opaque + encre sombre** comme « + CRM » : `.act-mint`
+   (source plus tardive) masquait le fond `.hover-fill:hover` → forcé, et l'encre passe en `--ink`
+   (plus de texte blanc). *(02-projet-hover-vert)*
+3. **3D** (`MapView.tsx`, vérif) — **aucun saut de zoom ni de centre** à l'activation, sur **les DEUX**
+   options du menu (« Relief seul » ET « Relief + bâtiments ») : mesuré live (zoom/centre identiques
+   avant/après, seul le `pitch` s'incline). Déjà porté par RETOURS-17, vérifié sur les deux boutons. *(03-3d-sans-saut)*
+4. **Cloche** (`Header.tsx`) — la cloche CLIENT ne montre QUE la **liste blanche** de kinds
+   (`parcelle_suivie`, `radar`, `bascule`, `bodacc`, `match`, `nouveaute`) ; le compteur « non lues »
+   suit la même liste. **Types retirés** (exploitation/admin, défense de profondeur au front) : tout
+   kind hors liste — ex. `systeme`, `run`/calcul de nuit, `agent`/`batch`, `registre`, cohérence,
+   déploiement, jobs de nuit, incidents, résumé matin, selftest, vigie/silence. *(04-cloche-client)*
+5. **Outils sous l'en-tête** (`Rail.tsx`, `App.tsx`) — le panneau Outils a QUITTÉ le rail (il
+   élargissait la colonne et poussait le logo + la recherche) : extrait en `OutilsPanel`, monté dans
+   `<main>` SOUS l'en-tête. Logo et recherche NE BOUGENT PLUS (mesuré : `left` identique). *(05-outils-sous-entete)*
+6. **Avatar** (`Header.tsx`) — ouvrir le compte **ferme une fiche commune** ouverte
+   (`setContexteCommune(null)` à l'ouverture du menu). *(06-avatar-ferme-fiche-commune)*
+7. **Alignements** (`Header.tsx`) — barre de recherche MOINS HAUTE (`h-10`→`h-9`) : logo, recherche,
+   « Fiche commune », Signaler, cloche, avatar sur la même ligne de base. *(07-entete-alignee)*
+
+## Fiche commune (`ContextePanel.tsx`)
+8. **Ouvre EN HAUT** (bandeau visible), jamais sur « Identité » : le `scrollIntoView` ne s'applique
+   QU'aux toggles **utilisateur** (nouveau `userActed()` dans le contexte d'accordéon), pas à
+   l'ouverture par défaut (`claimDefault`, asynchrone). *(08-09-fiche-commune-haut)*
+9. **Bandeau** — les deux lignes de résumé de l'en-tête (« CINOR — … » et « N ha · N parcelles »)
+   RETIRÉES (doublon du bandeau 9 chiffres). *(08-09-fiche-commune-haut)*
+10. **Menu des communes** (`Header.tsx`) — survol **vert** (`.hover-fill`). *(10-menu-commune-hover-vert)*
+
+## Fiche parcelle
+11. **Cartes** (`index.css`, `Fiche.tsx`) — au survol, **texte sombre sur vert, jamais blanc** (la
+    règle de survol vise TOUS les descendants `*`, plus seulement `.t-val`) ; « N m max » à **12,5 px**
+    comme les autres valeurs (une valeur ReactNode sautait le wrapper `.t-val` et héritait du 16 px). *(11-carte-hover-sombre)*
+12. **Copilote fiche** (`AskBar.tsx`) — phrase « Posez une question sur… » RETIRÉE, espacements
+    resserrés. *(12-copilote-fiche-resserre)*
+13. **Analyse** (`Fiche.tsx`, `useApp.ts`) — se **referme au clic ailleurs** (hors carte et hors bouton ;
+    nouveau `masquerVerdict`) ; le bouton « Analyse LABUSE » la **rouvre**. *(13-analyse-rouvre)*
+14. **« Le projet »** (`formes.tsx`, `Fiche.tsx`) selon 6-projet.png — les quatre portes (Étude de
+    faisabilité · Densifier l'existant · Calculette foncière · Assemblage) en **UNE colonne, toutes
+    vert-contour** (`OutilsSection colonne`), au-dessus de « Étudier quand même ». *(14-le-projet)*
+
+## Copilote (page) — `CopiloteView.tsx`, `ConversationsSidebar.tsx`, `index.css`
+15. « C » retiré ; titre **« Sur quoi on travaille ? » seul** ; sous-titre, « Conservées 30 jours… »,
+    « Entrée pour envoyer… » et le **trait gris** au-dessus de la zone d'écriture RETIRÉS (zone
+    remontée). *(15-16-copilote-page)*
+16. **Focus** (`index.css`, global) — plus de double contour sur les CHAMPS : `outline:none !important`
+    au focus de `input/textarea/select/[contenteditable]` ; seul le contour de la DA (mauve ici) marque
+    le champ. Appliqué à TOUTE l'app. *(15-16-copilote-page)*
+
+## CRM — `DeplacerMenu.tsx`, `Kanban.tsx`
+17. **« Déplacer »** = **menu de la DA** (déclencheur + volet `.floating`, lignes survol vert), plus le
+    `<select>` natif ; **flèche (chevron) avec sa marge** (`ml-1`). Test `Kanban.test.tsx` mis à jour. *(17-18-crm-deplacer-note)*
+18. **« Note »** présent sur **toutes les cartes**, quelle que soit la colonne (« Note » si remplie,
+    « + Note » sinon ; avant : seulement quand vide). *(17-18-crm-deplacer-note)*
+
+## Documents — `DocumentsView.tsx`, `catalogue.ts`
+19. Selon 4b : **ancien flux rétabli** (clic sur la carte → la fenêtre demande l'adresse) ; barre de
+    parcelle en haut, phrase d'intro et encart « Chaque document est lu… » RETIRÉS ; cartes alignées
+    (icône + flèche, titre 1 ligne, description **exactement 2 lignes** `line-clamp-2`), **toute la
+    carte cliquable** (survol bordure verte), plus de « Générer » ni de badge « PDF ». *(19-documents-4b)*
+20. **Comparatif** — marge normale (`mt-3`) entre le dernier champ et le bouton. *(20-comparatif-marge)*
+
+## Filtres — `FiltreLabuse.tsx` (selon 2b-filtres-reel.png)
+21. **Quatre accordéons numérotés** (Communes · Le terrain · Affiner la recherche · Le propriétaire),
+    **tous fermés à l'ouverture, UN SEUL ouvert à la fois** (état `openCat` partagé), tête = résumé du
+    choix (« Toutes » / « — »). **UNE seule façon d'être sélectionné** partout (`LigneChoix` : vert
+    opaque + texte sombre + coche à DROITE ; au repos texte clair, sans bordure, sans coche ; survol
+    `bg-mint/15`) — plus aucun chip, case ni encoche. **Sous-accordéons avec le compte** : zonage
+    (U · urbain / N · naturel / A · agricole / AU · à urbaniser → sous-zones), forme juridique, activité.
+    « Toutes les communes » 1ʳᵉ ligne et défaut (+ « … N autres »). Titres sur une ligne.
+    *(21-filtres-fermes, 21-filtres-communes, 21-filtres-terrain, 21-filtres-affiner, 21-filtres-proprietaire)*
+
+**Note d'exécution** — le pt 21 (gros rewrite de `FiltreLabuse.tsx`) a été confié à un **agent frais**
+(scope : ce seul fichier, sans navigateur) pendant que je faisais les pts 1-20 ; vérifié + capturé
+ensuite dans l'app. (Leçon de l'écran 2 appliquée : agent frais, pas un fork.)

@@ -94,9 +94,6 @@ export function AskBar({ idu, startOpen, onClose }: { idu: string; zone?: string
     'Qui est le propriétaire ?',
     'Que veut dire « zone Uh » ?',
   ]
-  // ECRANS-NOV-1 §5 — la phrase dit SUR QUELLE parcelle le Copilote répond : la référence courte
-  // (section + numéro, ex. « BZ1065 »), dérivée de l'IDU (5 INSEE + 3 feuille + section + numéro).
-  const refCourt = idu.length >= 12 ? idu.slice(8) : idu
 
   // M19 : en mode contrôlé (carte IA en bas de pile), replié = rien (le parent fournit la carte).
   if (!open && onClose) return null
@@ -127,24 +124,21 @@ export function AskBar({ idu, startOpen, onClose }: { idu: string; zone?: string
           className="ml-auto min-h-7 rounded px-1.5 py-0.5 text-[11px] text-txt-dim transition-colors duration-quick hover:bg-violet/15 hover:text-txt"
           >✕ fermer</button>
       </div>
-      {/* ECRANS-NOV-1 §5 — une phrase dit CE QU'IL FAIT et SUR QUELLE parcelle. */}
-      <p data-askbar-phrase className="mt-1 text-[11.5px] leading-snug text-txt-mut">
-        Posez une question sur <span className="font-mono font-semibold text-txt">{refCourt}</span>. Je réponds avec les chiffres de la fiche, rien d’autre.
-      </p>
-      {/* ECRANS-NOV-1 §5 — champ MULTILIGNE (plus d'exemple coupé). Entrée envoie ; Maj+Entrée = saut de ligne. */}
+      {/* RETOURS-18 (pt 12) — la phrase « Posez une question sur… » est RETIRÉE ; les espacements sont
+          RESSERRÉS (champ multiligne juste sous l'en-tête, Entrée envoie / Maj+Entrée = saut de ligne). */}
       <textarea
         value={q} onChange={(e) => setQ(e.target.value)} rows={3}
         onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); run(q) } }}
         placeholder="Votre question…"
-        className="mt-2 w-full resize-none rounded-lg border border-violet/40 bg-surface-1 px-3 py-2 text-[12px] leading-relaxed text-txt placeholder:text-txt-dim focus:border-violet focus:outline-none" />
-      <div className="mt-2 flex justify-end">
+        className="mt-1.5 w-full resize-none rounded-lg border border-violet/40 bg-surface-1 px-3 py-2 text-[12px] leading-relaxed text-txt placeholder:text-txt-dim focus:border-violet focus:outline-none" />
+      <div className="mt-1.5 flex justify-end">
         <Bouton niveau="primaire" ton="ia" className="shrink-0" onClick={() => run(q)} disabled={ask.isPending || !q.trim()}>
           {ask.isPending ? '…' : 'Demander'}
         </Bouton>
       </div>
-      {/* ECRANS-NOV-1 §5 — exemples courts, deux rangées ; un clic ENVOIE la question. */}
-      <p className="mt-2 label-caps text-[9px] text-txt-dim">Par exemple</p>
-      <div className="mt-1.5 flex flex-wrap gap-1.5">
+      {/* exemples courts, deux rangées ; un clic ENVOIE la question. */}
+      <p className="mt-1.5 label-caps text-[9px] text-txt-dim">Par exemple</p>
+      <div className="mt-1 flex flex-wrap gap-1.5">
         {chips.map((c) => (
           <button key={c} onClick={() => run(c)} disabled={ask.isPending}
             className="min-h-7 rounded-full border border-line-2 px-2.5 py-1 text-[10.5px] text-txt-mut transition-colors duration-quick hover:border-violet/60 hover:text-txt">

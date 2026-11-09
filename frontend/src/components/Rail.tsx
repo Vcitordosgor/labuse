@@ -155,22 +155,12 @@ function AdminRailEntry() {
 }
 
 export function Rail() {
-  const { view, setView, outilsOpen, toggleOutils, openSources, setModule, openRadar } = useApp()
+  const { view, setView, outilsOpen, toggleOutils, openSources, openRadar } = useApp()
   // M104 — UNE seule entrée « Surveillance » (fusion Suivis + Secteurs + Critères, arbitrage
   // 17/08). Les notifications restent à la CLOCHE (chrome global) : la section configure et
   // liste ce qu'on surveille, la cloche affiche ce qui en sort.
-  // M55-L point 9 — « Comparer » est un outil : son clic n'ouvre pas un ModulePanel mais l'overlay
-  // comparateur (setCompareOpen). C'est l'OUVERTURE de la sélection courante (compareIdus persiste
-  // en session) ; l'AJOUT reste sur la fiche (mesuré : ouvrir Outils remet selectedIdu à null, donc
-  // un outil ne peut pas récupérer la parcelle regardée). Ferme le tiroir Outils.
-  const openOutil = (k: string) => {
-    // COMPARAISON (refonte) : « comparer » est un outil ANCRÉ dans Outils — openCompare ouvre son
-    // panneau gauche (module='comparer', outilsOpen:false, picking ON, TTL 15 min), la carte reste
-    // active à droite. Plus de bascule surprise vers « Cartes » ni de tiroir à refermer à la main.
-    if (k === 'comparer') { useApp.getState().openCompare(); return }
-    setModule(k)
-  }
-
+  // RETOURS-18 (pt 5) — `openOutil` a migré dans `OutilsPanel` (le panneau outils vit désormais sous
+  // l'en-tête, pas dans le rail). `setModule` n'est plus utilisé par le rail lui-même.
   return (
     <>
       {/* RETOURS-5 T2 — rail +10 % (64 → 70 px) : moins serré, libellés au large. */}
@@ -227,25 +217,34 @@ export function Rail() {
         </div>
       </nav>
 
-      {/* §2 (23/08/2026) — Tiroir Outils EN LISTE PLATE : plus de catégories, plus d'étoile « phare ».
-          Une seule colonne, gabarit unique, dans l'ORDRE d'usage probable fixé par registry.ts
-          (instruire le bien → sourcer/approcher → lire le marché → analyse ponctuelle). */}
-      {outilsOpen && (
-        <aside className="flex h-full w-[320px] shrink-0 flex-col border-r border-line bg-surface-1">
-          <div className="shrink-0 px-5 pb-2 pt-5">
-            <h2 className="text-sm font-medium text-txt-hi">Outils</h2>
-            {/* M82 : compte DYNAMIQUE (le nombre d'outils bouge) ; « métier » retiré (hors sujet). */}
-            <p className="mt-0.5 text-[11px] leading-snug text-txt-dim">
-              {MODULES.filter((m) => !m.hidden).length} outils fonciers, du repérage à l’action.
-            </p>
-          </div>
-          <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-5 pb-5">
-            {MODULES.filter((m) => !m.hidden).map((m) => (   // clés aliasées (hidden) : pas de carte en double
-              <OutilCard key={m.key} m={m} open={openOutil} />
-            ))}
-          </div>
-        </aside>
-      )}
+      {/* RETOURS-18 (pt 5) — le panneau Outils ne vit PLUS dans le rail (il élargissait la colonne et
+          POUSSAIT le logo + la barre de recherche vers la droite). Il est monté par App.tsx DANS le
+          <main>, SOUS l'en-tête (composant `OutilsPanel` ci-dessous) : le chrome ne bouge plus. */}
     </>
+  )
+}
+
+// RETOURS-18 (pt 5) — le panneau Outils, rendu dans le <main> (sous l'en-tête) à la place du panneau
+// gauche quand `outilsOpen`. Même contenu qu'avant (liste plate des outils visibles).
+export function OutilsPanel() {
+  const { setModule } = useApp()
+  const openOutil = (k: string) => {
+    if (k === 'comparer') { useApp.getState().openCompare(); return }
+    setModule(k)
+  }
+  return (
+    <aside className="flex h-full w-[320px] shrink-0 flex-col border-r border-line bg-surface-1">
+      <div className="shrink-0 px-5 pb-2 pt-5">
+        <h2 className="text-sm font-medium text-txt-hi">Outils</h2>
+        <p className="mt-0.5 text-[11px] leading-snug text-txt-dim">
+          {MODULES.filter((m) => !m.hidden).length} outils fonciers, du repérage à l’action.
+        </p>
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-5 pb-5">
+        {MODULES.filter((m) => !m.hidden).map((m) => (
+          <OutilCard key={m.key} m={m} open={openOutil} />
+        ))}
+      </div>
+    </aside>
   )
 }

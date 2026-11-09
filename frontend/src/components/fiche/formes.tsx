@@ -271,17 +271,22 @@ export type OutilSection = { label: ReactNode; onClick: () => void; principal?: 
 // (.tools .btn : bord --line2, texte --txt) est obtenu en neutralisant le ton vert par un override de
 // classes (les seules valeurs en dur autorisées = tokens de l'app). Le PRINCIPAL garde le vert (.btn.sec).
 const NEUTRE_CLS = '!border-line-2 !text-txt !bg-transparent hover:!bg-surface-3 hover:!text-txt-hi hover:!border-line-3'
-export function OutilsSection({ outils }: { outils: OutilSection[] }) {
+// RETOURS-18 (pt 14) — `colonne` : les portes en UNE SEULE colonne, toutes VERT-contour (→ vert),
+// comme la maquette « Le projet » (6-projet.png). Sans `colonne`, grille 2×N inchangée (ailleurs).
+export function OutilsSection({ outils, colonne }: { outils: OutilSection[]; colonne?: boolean }) {
   return (
-    <div data-forme="outils-section" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginTop: 10 }}>
-      {outils.map((o, i) => (
-        <div key={i} style={o.full ? { gridColumn: '1 / -1' } : undefined}>
-          <Bouton niveau="secondaire" ton="vert" data-porte={o.data} onClick={o.onClick}
-            className={`w-full justify-between ${o.principal ? '' : NEUTRE_CLS}`}>
-            {o.label}<span style={{ color: o.principal ? 'var(--mint)' : 'var(--txt-faint)' }}>→</span>
-          </Bouton>
-        </div>
-      ))}
+    <div data-forme="outils-section" style={{ display: 'grid', gridTemplateColumns: colonne ? '1fr' : '1fr 1fr', gap: 6, marginTop: 10 }}>
+      {outils.map((o, i) => {
+        const vert = colonne || o.principal
+        return (
+          <div key={i} style={!colonne && o.full ? { gridColumn: '1 / -1' } : undefined}>
+            <Bouton niveau="secondaire" ton="vert" data-porte={o.data} onClick={o.onClick}
+              className={`w-full justify-between ${vert ? '' : NEUTRE_CLS}`}>
+              {o.label}<span style={{ color: vert ? 'var(--mint)' : 'var(--txt-faint)' }}>→</span>
+            </Bouton>
+          </div>
+        )
+      })}
     </div>
   )
 }

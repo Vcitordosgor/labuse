@@ -11,11 +11,11 @@ import { ageConversation } from '../../lib/format'
 // (COPILOTE-4). CHASSE-FIX-1 (A-3) — via le formateur unique (fuseau Réunion), plus de calcul local.
 const ageConv = ageConversation
 
-export function ConversationsSidebar({ conversations, activeId, retentionJours, onNouvelle, onOuvrir,
+export function ConversationsSidebar({ conversations, activeId, onNouvelle, onOuvrir,
   onSupprimer, onFermerMenu, mobile = false }: {
   conversations: CopiloteMission[]
   activeId: number | null
-  retentionJours: number
+  retentionJours?: number   // RETOURS-18 (pt 15) — pied « Conservées 30 jours… » retiré ; prop ignorée (appelants inchangés).
   onNouvelle: () => void
   onOuvrir: (m: CopiloteMission) => void
   onSupprimer: (m: CopiloteMission) => void
@@ -72,10 +72,7 @@ export function ConversationsSidebar({ conversations, activeId, retentionJours, 
           )
         ))}
       </div>
-      {/* Rétention + suppression : le pied le DIT (COPILOTE-4 : 30 jours, par compte, supprimables). */}
-      <p data-conv-retention className="border-t border-cp-line px-4 py-3 text-[11px] leading-snug text-cp-faint">
-        Conservées {retentionJours} jours, supprimables à tout moment. Réponses sourcées, datées — La Réunion uniquement.
-      </p>
+      {/* RETOURS-18 (pt 15) — la section « Conservées 30 jours… » est RETIRÉE du pied de la barre. */}
     </nav>
   )
 }

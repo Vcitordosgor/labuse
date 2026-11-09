@@ -59,6 +59,14 @@
 @layer base {
   :disabled, [aria-disabled="true"] { opacity: .4; cursor: not-allowed; }
   :disabled:hover, [aria-disabled="true"]:hover { opacity: .4; }
+  /* RETOURS-18 (pt 16) — plus de DOUBLE contour au focus des CHAMPS : on retire l'outline natif du
+     navigateur ; seul le contour de la DA (bordure/anneau menthe ou mauve au focus, porté par chaque
+     champ) marque le champ actif. Vaut pour TOUS les champs de l'app (input/textarea/select/éditable).
+     Les boutons gardent leur focus-visible (non ciblés ici). */
+  input:focus, input:focus-visible,
+  textarea:focus, textarea:focus-visible,
+  select:focus, select:focus-visible,
+  [contenteditable]:focus, [contenteditable]:focus-visible { outline: none !important; outline-offset: 0 !important; }
 }
 
 /* ═══ LOI-0 (conservé) — labels/chiffres. Repointés sur les tokens DA. ═══ */
@@ -171,10 +179,12 @@
   @media (hover:hover) and (pointer:fine) {
     .hover-fill:hover { background:var(--fill-mint); border-color:#2FBE66; color:var(--ink); }
     .hover-fill:hover * { color:var(--ink) !important; }
-    /* RETOURS-17 — « + CRM » / « + Projet » (boutons d'action de la fiche) : au survol, TEXTE BLANC
-       sur le vert opaque (demande Vic : « texte blanc sur vert opaque, comme partout »), au lieu de
-       l'encre sombre générique de .hover-fill. Scopé à .fiche-v6 .act (n'affecte pas le reste de l'app). */
-    .fiche-v6 .act.hover-fill:hover, .fiche-v6 .act.hover-fill:hover * { color:#fff !important; }
+    /* RETOURS-18 (pt 2) — « + CRM » / « + Projet » : au survol, VERT OPAQUE + ENCRE SOMBRE (jamais
+       blanc). `.act-mint` (plus bas, même spécificité, source plus tardive) MASQUAIT le fond vert de
+       `.hover-fill:hover` → on le FORCE ici (spécificité .act.hover-fill plus forte), et l'encre passe
+       en sombre (--ink) comme le reste des survols verts de la DA. */
+    .fiche-v6 .act.hover-fill:hover { background:var(--fill-mint); border-color:#2FBE66; }
+    .fiche-v6 .act.hover-fill:hover, .fiche-v6 .act.hover-fill:hover * { color:var(--ink) !important; }
     /* RECETTE-2 (S15) — quand .hover-fill est posé sur une LIGNE DE TABLEAU (<tr>, ex. Densifier),
        le fond en DÉGRADÉ ne peint pas sur le <tr> (modèle de rendu des tables : un <tr> ne dessine
        pas de background-image). Résultat : le texte passait en encre sombre SANS aplat vert →
@@ -628,13 +638,11 @@ input[data-copilote-saisie]:focus-visible {
      sombre + glyphe vert), le « carré sombre sur la barre verte » que Vic pointait. Ce traitement
      est celui du bloc « en-tête » (Z1) → il vaut pour les neuf accordéons de la fiche. */
   .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-ico { background:transparent; border:1px solid rgba(7,16,9,.30); color:var(--ink); }
-  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-title,
-  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-sub,
-  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-val,
-  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .chev,
-  /* RETOURS-17 — le chevron des cartes de la fiche (composant Chevron = .t-chev) passe au NOIR (--ink)
-     au survol, au lieu de rester gris (il n'a pas la classe .chev visée par la règle historique). */
-  .fiche-v6 .tiroir.is-lien:not(.is-open):hover .t-chev { color:var(--ink) !important; }
+  /* RETOURS-18 (pt 11) — au survol d'une CARTE de section, TOUT le texte passe en encre sombre, JAMAIS
+     blanc ni clair : on vise TOUS les descendants (`*`), pas seulement .t-title/.t-sub/.t-val — une
+     valeur ReactNode (ex. « N m max », hors `.t-val`) restait claire sur le vert. */
+  .fiche-v6 .tiroir.is-lien:not(.is-open):hover,
+  .fiche-v6 .tiroir.is-lien:not(.is-open):hover * { color:var(--ink) !important; }
 }
 .fiche-v6 .t-open { background:var(--f-card); border:0.5px solid var(--f-linecard); border-top:none; border-bottom-left-radius:12px; border-bottom-right-radius:12px; margin-bottom:9px; padding:2px 13px 13px; animation:apparition 150ms ease-out both; }
 .fiche-v6 .t-ico { width:32px; height:32px; border-radius:6px; background:var(--line); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--f-icotxt); }

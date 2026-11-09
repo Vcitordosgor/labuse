@@ -8,7 +8,7 @@ import { Bouton } from './components/ui/Bouton'
 import { SourceDrawer } from './components/fiche/SourceDrawer'
 import { Header } from './components/header/Header'
 import { LeftPanel } from './components/panel/LeftPanel'
-import { Rail } from './components/Rail'
+import { Rail, OutilsPanel } from './components/Rail'   // RETOURS-18 (pt 5) — panneau Outils sous l'en-tête
 import { LogoIntro, useOuvertureUneFois } from './components/LogoIntro'
 import { filtersFromHash, filtersToHash, hasOpinion, resumeCriteres } from './lib/filters'
 import { CLIENT } from './lib/strings'
@@ -498,7 +498,7 @@ export default function App() {
                   résultats) — la carte reste derrière. Un seul panneau gauche à la fois.
                   CARTE-VITESSE-2 lot B : ModulePanel est chargé à la demande (chunk des 16 outils
                   hors du graphe initial) → Suspense avec squelette de panneau. */}
-              {outilsOpen ? null : module ? <Suspense fallback={<PanelLoading />}><ModulePanel /></Suspense> : parcours ? null : <LeftPanel />}
+              {outilsOpen ? <OutilsPanel /> : module ? <Suspense fallback={<PanelLoading />}><ModulePanel /></Suspense> : parcours ? null : <LeftPanel />}
               <Suspense fallback={<MapLoading />}>
                 {/* M70 décision 11 (bug 10) — TimeMachine centrée sur LA parcelle : le bouton
                     « 1950 » de la fiche pose flyTo{center: coords} avant setModule('temps') ; on le

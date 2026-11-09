@@ -333,18 +333,17 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
   // ECRANS-NOV-1 §3 — SIX entrées identiques (58 px), sans label « Par où commencer » ni ligne de
   // pied : le titre, puis les six portes. Tout tient dans le panneau 342 × 640 sans défilement.
   const nOutils = MODULES.filter((m) => !m.hidden).length
+  // RETOURS-18 (pt 1) — panneau d'accueil FIGÉ (plus de défilement) : les 5 entrées + le titre
+  // tiennent dans le volet. L'entrée « Radar » est RETIRÉE ; les espaces sont réajustés.
   return (
-    <div data-accueil className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 py-4">
+    <div data-accueil className="flex min-h-0 flex-1 flex-col overflow-hidden px-5 py-4">
       {/* B1 — la promesse (2e ligne en --mint) */}
       <p className="text-[17px] font-medium leading-tight text-txt">Tout le foncier de La Réunion.</p>
-      <p className="mb-4 text-[17px] font-medium leading-tight text-mint">Au même endroit.</p>
+      <p className="mb-5 text-[17px] font-medium leading-tight text-mint">Au même endroit.</p>
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2.5">
         <AccEntry ton="mint" icone="carte" titre="Explorer la carte" sous="couches, filtres, Analyse LABUSE"
           onClick={onCommencer} />
-        {/* OUTILS-1 B1 — le Radar est une porte : vue de premier niveau, consomme l'accueil comme les autres. */}
-        <AccEntry ton="mint" icone="radar" titre="Suivre le marché — Radar" sous="les biens en vente et votre veille"
-          onClick={() => { setAccueilVu(); setView('radar') }} />
         {/* ECRANS-NOV-1 §3 — « Générer un document » ouvre Docs (le sélecteur de parcelle y vit). */}
         <AccEntry ton="mint" icone="document" titre="Générer un document" sous="Dossier, Bilan, Étude… sur une parcelle"
           onClick={() => { setAccueilVu(); setView('documents') }} />

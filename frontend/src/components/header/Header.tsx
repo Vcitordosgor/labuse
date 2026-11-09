@@ -193,7 +193,9 @@ export function Omnibox() {
     // FIX-NU3-2 (H-m03) — le champ de recherche RÉTRÉCIT au lieu de déborder : largeur idéale 360 px,
     // mais min-w-0 + max-w le laissent se contracter quand la fenêtre de bureau est en demi-écran
     // (la porte appareil.ts ne filtre que l'écran PHYSIQUE, pas la fenêtre).
-    <div className="flex h-10 w-full min-w-0 max-w-[360px] items-center gap-2 rounded-md border border-line-2 bg-surface-3 px-3 transition-colors duration-quick focus-within:border-mint">
+    // RETOURS-18 (pt 7) — barre de recherche MOINS HAUTE (h-9 ≈ cloche) : logo, recherche, « Fiche
+    // commune », Signaler, cloche et avatar partagent la même ligne de base dans l'en-tête h-14.
+    <div className="flex h-9 w-full min-w-0 max-w-[360px] items-center gap-2 rounded-md border border-line-2 bg-surface-3 px-3 transition-colors duration-quick focus-within:border-mint">
       {/* DA §10 — LA LOUPE EST DANS LE CHAMP (leading). Elle reste cliquable (lance la recherche
           sur le texte courant) ; pendant la résolution elle devient un spinner sobre (M55-B). */}
       <button
@@ -276,11 +278,11 @@ function CommuneSelect() {
           <div className="floating absolute left-0 top-9 z-20 grid max-h-[70vh] w-max grid-cols-2 gap-x-1 overflow-y-auto p-1.5">
             {trierCommunes(communes.data ?? [], (c) => c.commune).map((c) => (
               <button key={c.insee} data-fiche-commune onClick={() => pick(c.commune)}
-                /* RETOURS-16 (point 6) — même DA que les autres déroulants (menu compte) : hauteur de ligne
-                   px-3 py-2, rounded-lg, survol subtil (hover:bg-surface-3, texte clair conservé). */
-                className="flex min-w-0 items-center justify-between gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-left text-xs text-txt transition-colors duration-quick hover:bg-surface-3 hover:text-txt-hi">
+                /* RETOURS-18 (pt 10) — SURVOL VERT (aplat vert opaque, encre sombre) via `.hover-fill`,
+                   comme les lignes de la fiche parcelle et les cases d'outils — plus de survol gris. */
+                className="hover-fill group flex min-w-0 items-center justify-between gap-3 whitespace-nowrap rounded-lg px-3 py-2 text-left text-xs text-txt transition-colors duration-quick">
                 <span className="truncate">{communePastille(c.commune)}</span>
-                <span className="shrink-0 font-mono text-[11px] tabular-nums text-txt-dim">{CP_PAR_COMMUNE[c.commune] ?? c.insee}</span>
+                <span className="shrink-0 font-mono text-[11px] tabular-nums text-txt-dim group-hover:text-[color:var(--ink)]/70">{CP_PAR_COMMUNE[c.commune] ?? c.insee}</span>
               </button>
             ))}
           </div>
@@ -376,7 +378,12 @@ function NotifBell() {
   const setPref = useMutation({ mutationFn: patchNotifPref, onSuccess: () => { invalidate(); qc.invalidateQueries({ queryKey: ['notif-prefs'] }) } })
   // VEILLE-FIX-2 (Lot C) — la FRÉQUENCE des mails (quotidien / hebdo / cloche seule), réglable ici.
   const setFreq = useMutation({ mutationFn: patchDigestFrequence, onSuccess: () => qc.invalidateQueries({ queryKey: ['notif-prefs'] }) })
-  const unread = ev.data?.unread ?? 0
+  // RETOURS-18 (pt 4) — la cloche CLIENT ne montre QUE les notifications qui le concernent : liste
+  // BLANCHE des kinds (_NOM_KIND). Tout kind d'EXPLOITATION/ADMIN est écarté ICI en défense de
+  // profondeur, même s'il franchissait le filtre serveur — et le compteur « non lues » suit la même
+  // liste (plus de badge gonflé par des événements d'exploitation).
+  const itemsClient = (ev.data?.items ?? []).filter((e) => e.kind in _NOM_KIND)
+  const unread = itemsClient.filter((e) => !e.lu).length
   // GB-004 : Escape ferme le dropdown Notifications (il n'avait aucun handler clavier — seul le clic sur
   // le backdrop fermait). Aligné sur le patron des overlays. Listener actif uniquement quand ouvert.
   useEffect(() => {
@@ -481,9 +488,9 @@ function NotifBell() {
             {/* RECETTE-4 — le paragraphe d'intro « Ce qui bouge sur vos parcelles suivies … réellement
                 détecter. » de la page Notifications est RETIRÉ (décision Vic). */}
             <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2">
-              {(ev.data?.items ?? []).length === 0 && <p className="p-3 text-xs leading-snug text-txt-dim">Aucune notification pour l'instant — nous vous préviendrons dès qu'une parcelle suivie change ou qu'une de vos veilles se déclenche.</p>}
+              {itemsClient.length === 0 && <p className="p-3 text-xs leading-snug text-txt-dim">Aucune notification pour l'instant — nous vous préviendrons dès qu'une parcelle suivie change ou qu'une de vos veilles se déclenche.</p>}
               {/* M87 P5.1 — REGROUPÉ par commune (une ligne + « Voir les N → ») ; sinon carte simple. */}
-              {grouperEvents(ev.data?.items ?? []).map((b) => {
+              {grouperEvents(itemsClient).map((b) => {
                 if (b.type === 'single') return carte(b.e)
                 const ouvert = ouverts.has(b.cle)
                 const nonLus = b.items.filter((e) => !e.lu).length
@@ -504,8 +511,8 @@ function NotifBell() {
               {/* RETOURS-11 A5 (T4) — « Voir plus » par 200. Le back ne renvoie pas de total ; on
                   n'affiche l'action QUE si la fenêtre est PLEINE (donc probablement d'autres après),
                   et « Voir plus » remonte la limite d'un cran. Compteur honnête : N chargées. */}
-              {(ev.data?.items?.length ?? 0) >= limite && (
-                <ListPaginationFooter shown={ev.data?.items?.length ?? 0} total={(ev.data?.items?.length ?? 0) + PAGE_SIZE}
+              {itemsClient.length >= limite && (
+                <ListPaginationFooter shown={itemsClient.length} total={itemsClient.length + PAGE_SIZE}
                   onMore={() => setLimite((l) => l + PAGE_SIZE)} className="flex flex-wrap items-center gap-3 border-t border-line px-3 pt-2 text-[11px] text-txt-mut" />
               )}
             </div>
@@ -585,6 +592,9 @@ function MarqueForm() {
 function AccountMenu() {
   const [open, setOpen] = useState(false)
   const [marqueOpen, setMarqueOpen] = useState(false)   // M54-EXPO-2 A6
+  // RETOURS-18 (pt 6) — ouvrir le compte FERME une fiche commune ouverte (le menu compte n'était pas
+  // atteignable « par-dessus » elle). On nettoie `contexteCommune` à l'ouverture du menu.
+  const setContexteCommune = useApp((s) => s.setContexteCommune)
   const moi = useQuery({ queryKey: ['moi'], queryFn: getMoi, enabled: open })
   const d = moi.data
   const close = () => { setOpen(false); setMarqueOpen(false) }
@@ -593,7 +603,7 @@ function AccountMenu() {
       {/* RECETTE-PROD-1 (13) — ICÔNE utilisateur générique (style feather/lucide de l'app, comme les
           glyphes du Rail/LeftPanel) au lieu des initiales « VL » : plus aucune initiale calculée pour
           le compte. Même bulle (h-8 w-8, rond, bord), même taille, même comportement au clic. */}
-      <button data-account-btn onClick={() => setOpen((o) => !o)} aria-label="Mon compte"
+      <button data-account-btn onClick={() => { if (!open) setContexteCommune(null); setOpen((o) => !o) }} aria-label="Mon compte"
         className="flex h-8 w-8 items-center justify-center rounded-full border border-line-2 bg-surface-3 text-mint transition-colors duration-quick hover:border-mint/50">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-[17px] w-[17px]" aria-hidden="true">
           <path d="M19 21v-1a5 5 0 0 0-5-5h-4a5 5 0 0 0-5 5v1" />
