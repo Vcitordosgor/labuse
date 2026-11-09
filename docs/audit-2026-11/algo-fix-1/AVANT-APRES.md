@@ -1,0 +1,116 @@
+# ALGO-FIX-1 — AVANT / APRÈS (run servi q_v20, base locale, lecture seule)
+
+V1 = bande servie `score_labuse` (note unique 0–100 → bande). V2 = statut + bande du
+scénario (conservation sauf mention). Calcul EN PARALLÈLE, service inchangé.
+
+## Entre-Deux — 6341 parcelles
+
+### Bandes V1 (servies)
+| Bande | n | part |
+|---|---:|---:|
+| A | 35 | 0.6 % |
+| B | 464 | 7.3 % |
+| C | 626 | 9.9 % |
+| D | 1229 | 19.4 % |
+| 0 | 3789 | 59.8 % |
+| NC | 4 | 0.1 % |
+| HC | 194 | 3.1 % |
+| ? | 0 | 0.0 % |
+
+### Statuts V2 — conservation (bâti conservé)
+| Statut | n | part |
+|---|---:|---:|
+| ESTIMATED | 2331 | 36.8 % |
+| PRESTUDY | 0 | 0.0 % |
+| TO_VERIFY | 142 | 2.2 % |
+| DEFERRED | 0 | 0.0 % |
+| NO_MARGIN | 814 | 12.8 % |
+| OUTSIDE_OBJECTIVE | 3054 | 48.2 % |
+
+### Statuts V2 — reconstruction
+| Statut | n | part |
+|---|---:|---:|
+| ESTIMATED | 2881 | 45.4 % |
+| PRESTUDY | 0 | 0.0 % |
+| TO_VERIFY | 406 | 6.4 % |
+| DEFERRED | 0 | 0.0 % |
+| NO_MARGIN | 0 | 0.0 % |
+| OUTSIDE_OBJECTIVE | 3054 | 48.2 % |
+
+### Bandes V2 (conservation, parcelles « Capacité estimée »)
+| Bande | n | part |
+|---|---:|---:|
+| A | 59 | 2.5 % |
+| B | 674 | 28.9 % |
+| C | 853 | 36.6 % |
+| D | 745 | 32.0 % |
+
+### Croisement bande V1 → statut V2 (conservation)
+| V1 ↓ / V2 → | ESTIMATED | PRESTUDY | TO_VERIFY | DEFERRED | NO_MARGIN | OUTSIDE_OBJECTIVE |
+|---|---|---|---|---|---|---|
+| A | 33 | 0 | 2 | 0 | 0 | 0 |
+| B | 454 | 0 | 10 | 0 | 0 | 0 |
+| C | 622 | 0 | 4 | 0 | 0 | 0 |
+| D | 1222 | 0 | 3 | 0 | 4 | 0 |
+| 0 | 0 | 0 | 119 | 0 | 810 | 2860 |
+| NC | 0 | 0 | 4 | 0 | 0 | 0 |
+| HC | 0 | 0 | 0 | 0 | 0 | 194 |
+
+### Reconstruction sur parcelles « 0 » saturées (échantillon enrichi)
+- 80 parcelles V1 « Non retenue » (saturées) testées en reconstruction ; **67 obtiennent un scénario** « Capacité estimée » (dont 67 à gain net négatif — démolition-reconstruction qui perd de la SDP, affichée signée).
+
+| IDU | bande V2 | C_rebuild | E | D_net |
+|---|---|---:|---:|---:|
+| 97403000AL0482 | C | 206 | 432 | -226 |
+| 97403000AM0016 | A | 5135 | 7497 | -2362 |
+| 97403000AM0020 | C | 178 | 252 | -74 |
+| 97403000AM0035 | C | 82 | 120 | -38 |
+| 97403000AM0036 | D | 24 | 59 | -35 |
+
+### Parcelles qui changent de verdict : 577
+(V1 muette « 0/NC/HC » → V2 actionnable, ou V1 constructible → V2 à vérifier / hors projet, avec la raison V2.)
+
+| IDU | V1 | V2 conservation | V2 reconstruction | raison V2 |
+|---|---|---|---|---|
+| 97403000AL0482 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0016 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0020 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0035 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0036 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0091 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0102 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0104 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0119 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0120 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0122 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0219 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0220 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0227 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0283 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0284 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0303 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0314 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0320 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0321 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0410 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0436 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0473 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0516 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0527 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0561 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0564 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0581 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0582 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0589 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0590 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0594 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0598 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0604 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0605 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0618 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0619 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0622 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0624 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| 97403000AM0636 | 0 | NO_MARGIN | ESTIMATED | AUCUN_AJOUT_IDENTIFIE |
+| … | | | | (+537 autres) |
+

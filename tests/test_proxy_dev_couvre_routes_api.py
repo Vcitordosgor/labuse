@@ -32,6 +32,10 @@ _APP = _ROOT / "src" / "labuse" / "api" / "app.py"
 # l'ajouter à `apiPaths`. (Vérifié par grep du front : aucune de ces racines n'est fetch-ée.)
 NON_PROXIFIE = {
     "/",                                   # la SPA elle-même (servie par Vite en dev)
+    "/analyse",                            # ALGO-FIX-1 — /analyse/scenarios : endpoint V2 (lecture
+                                           # seule), PAS encore appelé par le front (le mandat
+                                           # d'écran suit ; aucun fichier front touché ici). À
+                                           # déplacer vers `apiPaths` quand l'écran le fetchera.
     "/assistant",                          # /assistant/status — sonde ops, pas d'appel front
     "/cgv", "/confidentialite", "/mentions-legales",   # pages légales (liens, rendu serveur)
     "/demo", "/demo-status",               # parcours démo (rendu serveur)

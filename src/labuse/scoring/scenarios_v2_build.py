@@ -1,0 +1,309 @@
+"""ALGO-FIX-1 — adaptateur : des caches réels vers le `ScenarioRecord` du moteur V2.
+
+Ce module est la SEULE frontière entre le moteur pur (`scenarios_v2`, aucun SIG) et les données du
+dépôt. Il LIT (jamais n'écrit) les caches du run servi et construit, par parcelle, un
+`ScenarioRecord` normalisé :
+
+  · conservation — R = SDP résiduelle (cache `parcel_residuel`, déjà servie) ;
+  · reconstruction — C_rebuild = `sdp_max` et E = `sdp_existante`, calculés LIVE par le moteur de
+    faisabilité (`compute_residuel`) quand `enrich=True` (seul chemin qui expose C et E séparément,
+    y compris pour les parcelles saturées où D_net est négatif) ;
+  · pente / forme / accès / AU — lus de la même requête d'entrées que le Score V1 (`_ENTREES_SQL`) ;
+  · Signal — RELAYÉ depuis `score_labuse` (D6, spec §12) : probabilité servie, niveau servi, état
+    « évalué / non évalué » ; jamais recalculé ;
+  · diagnostic géométrique de `terrain_exigu` (D5, spec §9.3) : constats SANS règle de taille.
+
+Aucune écriture, aucun nouveau run : la V2 se calcule EN PARALLÈLE du service (spec §14.4), à
+partir de l'instantané servi.
+"""
+from __future__ import annotations
+
+import math
+
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+from . import scenarios_v2 as v2
+from . import score_labuse as sl
+from .. import runs
+
+# Lecture conjointe : entrées de score (résiduel + pente/aire/périmètre/accès/AU) ET état Signal
+# servi (score_labuse). Une ligne par parcelle de la sélection.
+_SIGNAL_SQL = text("""
+SELECT parcel_id, idu, commune, bande, score, cause,
+       signal_p, signal_niveau, cascade_exclue, cascade_motifs,
+       sdp_residuelle_m2
+FROM score_labuse
+WHERE run_label = :run AND parcel_id = ANY(:ids)
+""")
+
+# Métriques géométriques pour le diagnostic de `terrain_exigu` (D5). AUCUN seuil de taille : on
+# mesure validité, multipolygone et compacité (4πA/P²) — une forme très découpée (ravines,
+# concavités) a une compacité faible, d'où un contour utile potentiellement vidé par les reculs.
+_GEOM_SQL = text("""
+SELECT p.id,
+       ST_IsValid(p.geom_2975)                                   AS valide,
+       ST_NumGeometries(p.geom_2975)                             AS n_geom,
+       ST_Area(p.geom_2975)                                      AS aire,
+       ST_Perimeter(p.geom_2975)                                 AS perim
+FROM parcels p WHERE p.id = ANY(:ids)
+""")
+
+
+def _diagnostic_geometrie(g: dict) -> dict:
+    """Constats géométriques (spec §9.3) — nomme la cause réelle, sans jamais conclure « terrain
+    trop étroit » d'une taille. `suspect=True` ⇒ le calcul d'assiette est douteux → À vérifier."""
+    constats, suspect = [], False
+    if g.get("valide") is False:
+        constats.append("Géométrie invalide (auto-intersection ou anneau incohérent).")
+        suspect = True
+    if (g.get("n_geom") or 1) > 1:
+        constats.append(f"Multipolygone ({g['n_geom']} composantes) : emprise fragmentée.")
+        suspect = True
+    aire, perim = g.get("aire"), g.get("perim")
+    if aire and perim and perim > 0:
+        compacite = 4 * math.pi * aire / (perim * perim)       # 1 = disque ; →0 = très découpé
+        g["compacite"] = round(compacite, 3)
+        if compacite < 0.25:
+            constats.append(f"Contour très découpé (compacité {compacite:.2f}) : les reculs "
+                            "peuvent vider l'assiette utile sans que la parcelle soit « étroite ».")
+            suspect = True
+    if aire and aire > 1000 and suspect:
+        constats.append(f"Surface réelle {round(aire)} m² : « terrain trop étroit » serait trompeur "
+                        "— cause réelle à confirmer sur l'assiette après retraits.")
+    return {"constats": constats, "suspect": suspect, "compacite": g.get("compacite")}
+
+
+def _signal_state(row: dict) -> dict:
+    """État du Signal servi, relayé (D6). Jamais de probabilité fabriquée."""
+    p = row.get("signal_p")
+    if p is not None:
+        return {"signal_status": "AVAILABLE", "signal_p": float(p),
+                "signal_niveau": row.get("signal_niveau"), "signal_reason": "PROBABILITE_SERVIE"}
+    if row.get("cascade_exclue"):
+        return {"signal_status": "NOT_AVAILABLE", "signal_p": None, "signal_niveau": None,
+                "signal_reason": "ECARTEE_ETAGE_0"}
+    return {"signal_status": "NOT_AVAILABLE", "signal_p": None, "signal_niveau": None,
+            "signal_reason": "SIGNAL_NON_CALCULE"}
+
+
+def _eligibilite(cause: str | None, cascade_exclue: bool, cascade_motifs) -> dict:
+    """Traduit la cause brute du moteur + l'exclusion dure de cascade en champs d'éligibilité /
+    horizon / hauteur du `ScenarioRecord`, selon la taxonomie §5.1 et les décisions Vic D3.
+
+    Une famille de zone seule n'est jamais une preuve (spec §5.1) ; mais le verdict
+    `zone_non_constructible:<zone>` du moteur EST le règlement opposable appliqué à l'assiette
+    (ALGO.md §3.3, Vic D3 « Hors projet : zone A/N … avec la preuve »). De même une exclusion dure
+    de cascade (route, DPF, forêt publique, cœur de Parc, PPR rouge total) est une preuve sourcée."""
+    out = {"eligibility": "allowed", "horizon": "now", "height_status": "present",
+           "geometry_status": "valid", "eligibility_proof": None, "cause_engine": cause}
+    c = cause or ""
+    # §5.1 étape 1 AVANT l'étape 2 : une anomalie géométrique critique (surface incohérente
+    # plan≠cadastre) l'emporte sur toute preuve d'incompatibilité — « une intersection sur une
+    # géométrie douteuse ne devient pas une preuve certaine » (spec §5.1).
+    if c == "surface_incertaine":
+        out.update(geometry_status="suspect")
+        return out
+    if cascade_exclue:
+        motifs = cascade_motifs if isinstance(cascade_motifs, list) else []
+        out.update(eligibility="incompatible",
+                   eligibility_proof={"verified": True, "rule": "exclusion dure de la cascade",
+                                      "source": "cascade v2", "portion": "entière",
+                                      "motifs": motifs})
+        return out
+    if c.startswith("zone_non_constructible"):
+        zone = c.split(":", 1)[1] if ":" in c else None
+        out.update(eligibility="incompatible",
+                   eligibility_proof={"verified": True,
+                                      "rule": f"zone {zone or ''} inconstructible au PLU".strip(),
+                                      "source": "PLU / GPU", "portion": "entière", "zone": zone})
+        return out
+    if c.startswith("habitat_interdit"):
+        zone = c.split(":", 1)[1] if ":" in c else None
+        out.update(eligibility="incompatible",
+                   eligibility_proof={"verified": True,
+                                      "rule": f"habitat interdit en zone {zone or ''}".strip(),
+                                      "source": "règlement PLU", "portion": "entière", "zone": zone})
+        return out
+    if c == "redhibitoire":
+        # Rédhibitoire SANS exclusion dure sourcée : on ne conclut pas « hors projet » à l'aveugle.
+        out.update(eligibility="unknown")
+        return out
+    if c.startswith(("zone_non_resolue", "regle_plu_non_validee")) or c in ("hors_plu", "indetermine"):
+        out.update(eligibility="unknown")           # ignorance → À vérifier (spec §8.1)
+        return out
+    if c == "hauteur_indispo":
+        out.update(height_status="missing")
+        return out
+    return out
+
+
+def record_from_rows(sig: dict, ent: dict | None, geom: dict | None,
+                     residuel: dict | None = None) -> tuple[v2.ScenarioRecord, str]:
+    """Construit un `ScenarioRecord` (+ bande V1 servie, pour la comparaison avant/après) depuis :
+      · `sig`   — ligne `score_labuse` (Signal servi, cascade, bande V1) ;
+      · `ent`   — ligne d'entrées de score (pente, aire, périmètre, accès, AU, cause résiduel) ;
+      · `geom`  — métriques géométriques (diagnostic D5) ;
+      · `residuel` — dict `compute_residuel` LIVE (C, E) si enrichi, sinon None.
+    """
+    cause = (ent or {}).get("cause") if ent else sig.get("cause")
+    au_classe = (ent or {}).get("au_classe")
+    el = _eligibilite(cause, bool(sig.get("cascade_exclue")), sig.get("cascade_motifs"))
+
+    # Conservation : R caché (cache servi). Reconstruction : C/E si enrichi.
+    R = (ent or {}).get("sdp") if ent else sig.get("sdp_residuelle_m2")
+    C = E = None
+    if residuel and residuel.get("disponible"):
+        C = residuel.get("sdp_max_m2")
+        E = residuel.get("sdp_existante_m2")
+        if residuel.get("capacite_differee"):
+            au_classe = au_classe or "declasse_au_fermee"
+
+    # AU différée (D3/§9.1) : horizon « differed », capacité conditionnelle = R (ou C) calculé.
+    horizon = el["horizon"]
+    future = None
+    if au_classe in ("declasse_au_fermee", "declasse_au_statut_inconnu"):
+        horizon = "deferred"
+        future = C if C is not None else R
+
+    # terrain_exigu (D5) : diagnostic géométrique ; suspect ⇒ À vérifier, sinon cause précise.
+    geometry_status = el["geometry_status"]
+    diagnostic = None
+    if cause == "terrain_exigu" and geom is not None:
+        diag = _diagnostic_geometrie(geom)
+        diagnostic = diag
+        if diag["suspect"]:
+            geometry_status = "suspect"      # calcul d'assiette douteux → TO_VERIFY (sans règle de taille)
+        else:
+            # Assiette réellement vidée par les retraits sur une géométrie saine ⇒ aucun ajout,
+            # cause précise (jamais « terrain trop étroit » déduit d'une géométrie vide, spec §9.3).
+            R = 0 if R is None else R
+            diagnostic = {**diag, "cause_precise": "Aucune assiette obtenue après application des "
+                          "retraits identifiés."}
+
+    # capacite_nulle / saturation : R=0, scénario sans ajout (conservation) — rebuild via C/E enrichi.
+    if cause == "capacite_nulle":
+        R = 0 if R is None else R
+        if C is None:
+            C = 0.0
+
+    rec = v2.ScenarioRecord(
+        id=sig["idu"],
+        area_m2=(ent or geom or {}).get("aire"),
+        perimeter_m=(ent or geom or {}).get("perim"),
+        geometry_status=geometry_status,
+        capacity_rebuild_m2=C,
+        existing_m2=E,
+        residual_m2=float(R) if R is not None else None,
+        eligibility=el["eligibility"],
+        eligibility_proof=el["eligibility_proof"],
+        horizon=horizon,
+        future_capacity_m2=float(future) if future is not None else None,
+        height_status=el["height_status"],
+        height_required=True,
+        slope_deg=(ent or {}).get("pente_moy_deg"),
+        access=(ent or {}).get("acces"),
+        built_coverage_pct=(ent or {}).get("emp"),
+        capacity_estimated=bool((ent or {}).get("capacite_estimee")),
+        cause_engine=cause,
+        diagnostic=diagnostic,
+        **_signal_state(sig))
+    return rec, (sig.get("bande") or "")
+
+
+def records_for_parcels(session: Session, parcel_ids: list[int], *, run_label: str | None = None,
+                        cascade_label: str | None = None, enrich: bool = False
+                        ) -> list[tuple[v2.ScenarioRecord, str]]:
+    """Construit les `ScenarioRecord` d'une liste de parcelles pour le run servi. `enrich=True`
+    calcule C/E live (reconstruction exacte, ~80 ms/parcelle). Renvoie [(record, bande_v1)]."""
+    run_label = run_label or runs.current()
+    cascade_label = cascade_label or runs.cascade()
+    if not parcel_ids:
+        return []
+    sig_rows = {r._mapping["parcel_id"]: dict(r._mapping)
+                for r in session.execute(_SIGNAL_SQL, {"run": run_label, "ids": parcel_ids})}
+    ent_rows = {r._mapping["id"]: dict(r._mapping)
+                for r in session.execute(sl._ENTREES_SQL, {"ids": parcel_ids, "clabel": cascade_label})}
+    geom_rows = {r._mapping["id"]: dict(r._mapping)
+                 for r in session.execute(_GEOM_SQL, {"ids": parcel_ids})}
+    residuel = {}
+    if enrich:
+        from ..faisabilite.residuel import compute_residuel
+        for pid in parcel_ids:
+            try:
+                residuel[pid] = compute_residuel(session, pid)
+            except Exception:
+                residuel[pid] = None
+    out = []
+    for pid in parcel_ids:
+        sig = sig_rows.get(pid)
+        if sig is None:
+            continue
+        out.append(record_from_rows(sig, ent_rows.get(pid), geom_rows.get(pid), residuel.get(pid)))
+    return out
+
+
+def _result_to_dict(res) -> dict:
+    """Contrat de sortie par parcelle (D9, spec §11.1) : statut + cause, bande + score, quantités,
+    points de vigilance, portion productive, Signal et son état."""
+    return {
+        "idu": res.id,
+        "statut": res.status,
+        "libelle": res.label,
+        "ton": res.tone,
+        "cause": res.cause_codes,
+        "bande": res.band,
+        "score": res.score,
+        "bande_provisoire": res.band_provisional,
+        "horizon": res.horizon,
+        "quantites": res.quantities,
+        "bornes": res.bounds,
+        "vigilance": res.vigilance,
+        "zone_productive": res.zone_portion,
+        "signal": {k: res.signal.get(k) for k in ("status", "p", "niveau", "label", "reason")},
+        "tri_valeur": res.rank_value,
+        "details": res.details,
+    }
+
+
+def analyse_scenarios_payload(session: Session, parcel_ids: list[int], *, mode: str = "potential",
+                              scenario: str = "keep", sort: str | None = None,
+                              run_label: str | None = None, enrich: bool = False,
+                              limit: int = 100, offset: int = 0,
+                              as_of: str | None = None) -> dict:
+    """Réponse d'analyse V2 pour une sélection : versions (spec §2.2), effectifs par statut et par
+    bande sur TOUTE la sélection (spec §2.1 — tous les statuts dans les comptes), et la page
+    courante de parcelles triée (spec §10). LECTURE SEULE."""
+    run_label = run_label or runs.current()
+    from . import score_labuse as sl
+    _, score_version = sl.charger_bareme()
+    opts = {"mode": mode, "scenario": scenario}
+    if sort:
+        opts["sort"] = sort
+
+    records = [rec for rec, _ in records_for_parcels(session, parcel_ids, run_label=run_label,
+                                                      enrich=enrich)]
+    rows = v2.order(records, opts)
+    eff = v2.effectifs(rows)
+    page = rows[offset:offset + limit]
+    return {
+        "analysis_version": v2.VERSION,
+        "scenario_engine_version": score_version,       # barème/coefficients réutilisés (gravés)
+        "signal_recette": "q_v15",                       # modèle gelé relayé (D6) — jamais recalculé
+        "signal_run": run_label,
+        "run_servi": run_label,
+        "mode": mode, "scenario": scenario, "sort": opts.get("sort"),
+        "as_of": as_of,
+        "n_selection": eff["n"],
+        "effectifs": {"par_statut": eff["par_statut"], "par_bande": eff["par_bande"]},
+        "page": {"limit": limit, "offset": offset, "n": len(page)},
+        "parcelles": [_result_to_dict(r) for r in page],
+    }
+
+
+def parcel_ids_for_commune(session: Session, commune: str, run_label: str | None = None) -> list[int]:
+    run_label = run_label or runs.current()
+    rows = session.execute(
+        text("SELECT parcel_id FROM score_labuse WHERE run_label = :run AND commune = :c "
+             "ORDER BY idu"), {"run": run_label, "c": commune})
+    return [r[0] for r in rows]

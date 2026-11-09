@@ -3267,6 +3267,49 @@ def stats(commune: str | None = None, source: str | None = None,
 
 
 
+@app.get("/analyse/scenarios")
+def analyse_scenarios(
+    source: str | None = Query(None, description="run servi q_v* (défaut : run courant)"),
+    commune: str | None = Query(None),
+    idus: str | None = Query(None, description="liste d'IDU séparés par des virgules"),
+    mode: str = Query("potential", pattern="^(sale|potential)$"),
+    scenario: str = Query("keep", pattern="^(keep|rebuild|divide)$"),
+    sort: str | None = Query(None, pattern="^(signal|capacity|gain|area|id)$"),
+    enrich: bool = Query(False, description="calcule C/E live (reconstruction exacte) — plus lent"),
+    limit: int = Query(100, ge=1, le=1000), offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db)) -> dict:
+    """ALGO-FIX-1 — Analyse LABUSE V2 par SCÉNARIO, en LECTURE SEULE sur le run servi.
+
+    Expose, pour la sélection (commune ou liste d'IDU), le contrat de sortie par parcelle (statut
+    et cause, bande et score, quantités du scénario, points de vigilance, portion productive, et le
+    Signal avec son état évalué/non évalué) PLUS les effectifs par statut et par bande sur toute la
+    sélection (spec §2.1 : tous les statuts dans les comptes). Le Signal est RELAYÉ, jamais
+    recalculé (D6). `enrich=1` calcule C/E live pour la reconstruction exacte (≈ 80 ms/parcelle).
+
+    Calcul EN PARALLÈLE du service historique (`/parcels`, `/stats`) : aucune écriture, aucune
+    bascule. `mode=sale` sert le Signal (le foncier n'entre pas) ; `mode=potential` sert le
+    scénario choisi (le Signal est secondaire)."""
+    from ..scoring import scenarios_v2_build as _sv2
+    run_label = source or runs.current()
+    if commune:
+        ids = _sv2.parcel_ids_for_commune(db, commune, run_label=run_label)
+    elif idus:
+        wanted = [i.strip() for i in idus.split(",") if i.strip()]
+        if not wanted:
+            raise HTTPException(status_code=400, detail="aucun IDU fourni")
+        rows = db.execute(text("SELECT id FROM parcels WHERE idu = ANY(:i)"), {"i": wanted})
+        ids = [r[0] for r in rows]
+    else:
+        raise HTTPException(status_code=400, detail="préciser ?commune=… ou ?idus=…")
+    if enrich and len(ids) > 500:
+        raise HTTPException(status_code=413,
+                            detail="enrich limité à 500 parcelles par requête (coût live C/E)")
+    return _sv2.analyse_scenarios_payload(
+        db, ids, mode=mode, scenario=scenario, sort=sort, run_label=run_label,
+        enrich=enrich, limit=limit, offset=offset,
+        as_of=datetime.now(timezone.utc).isoformat())
+
+
 #: M55-G suite (point 1) — plafond de la liste d'IDU servie à la carte : au-delà, un filtre
 #: MapLibre « in literal » devient coûteux ; le front replie sur l'expression par critères
 #: carte et le DIT (toast, règle no-silent-caps).
