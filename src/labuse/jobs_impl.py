@@ -2255,3 +2255,56 @@ def regles_references(ctx) -> None:
         v = out.get("verdict", "erreur")
         verdicts[v] = verdicts.get(v, 0) + 1
     ctx.compte(fiches_a_reverifier=len(cibles), **{f"verdict_{k}": n for k, n in verdicts.items()})
+
+
+# ═══════════════════════════ ESTIMER-2 (D-6) — banc de précision de nuit ═══════════════════════════
+# Seuils de RÉGRESSION : on alerte (le job échoue → mail admin) si l'écart médian MESURÉ d'un type se
+# dégrade de ≥ 5 points, ou si la part SANS PRIX d'un type remonte de ≥ 5 points, vs le dernier banc vert.
+_BANC_SEUIL_ECART_PTS = 5.0
+_BANC_SEUIL_SANS_PRIX_PTS = 5.0
+
+
+def estimer_banc_precision(ctx) -> None:
+    """ESTIMER-2 (fix/estimer-2, D-6) — rejoue CHAQUE NUIT le banc de précision de l'outil « Estimer un
+    bien » (200 maisons + 200 terrains + 200 appartements, SANS FUITE), persiste la table de calibration
+    SERVIE (fourchette + fiabilité mesurées par commune/type, D-5) et ALERTE si la précision se dégrade
+    vs le dernier banc (écart médian +≥5 pts ou part sans prix +≥5 pts). Lecteur UNIQUE :
+    `pige.banc_estimer`."""
+    from . import jobs_journal
+    from .pige import banc_estimer as be
+    eng = ctx.db.get_bind()
+    rep = be.calcule(eng)
+    pt = rep["par_type"]
+    if not ctx.dry_run:
+        n_calib = be.persiste(eng, rep)
+    else:
+        n_calib = 0
+    compteurs = {"n_calibration": n_calib}
+    for t in ("maison", "appartement", "terrain"):
+        compteurs[f"{t}_ecart_median"] = pt[t]["mediane"]
+        compteurs[f"{t}_pct_20"] = pt[t]["pct_20"]
+        compteurs[f"{t}_sans_prix"] = pt[t].get("pct_sans_prix")
+    compteurs["global_ecart_median"] = rep["global"]["mediane"]
+    ctx.compte(**compteurs)
+
+    # Régression vs le dernier banc RÉUSSI (job_runs). Le runner n'a pas encore écrit CE run → le plus
+    # récent de l'historique est le précédent.
+    try:
+        hist = jobs_journal.historique(ctx.db, "estimer-banc-precision", n=5)
+    except Exception:  # noqa: BLE001 — pas d'historique (1er passage) → aucune régression possible
+        hist = []
+    prec = next((h for h in hist if h.get("statut") == "ok" and (h.get("compteurs") or {})), None)
+    regressions = []
+    if prec:
+        pc = prec["compteurs"]
+        for t in ("maison", "appartement", "terrain"):
+            av = pc.get(f"{t}_ecart_median")
+            nv = compteurs[f"{t}_ecart_median"]
+            if isinstance(av, (int, float)) and isinstance(nv, (int, float)) and nv - av >= _BANC_SEUIL_ECART_PTS:
+                regressions.append(f"{t} : écart médian {av:.1f}% → {nv:.1f}% (+{nv-av:.1f} pts)")
+            avs, nvs = pc.get(f"{t}_sans_prix"), compteurs[f"{t}_sans_prix"]
+            if isinstance(avs, (int, float)) and isinstance(nvs, (int, float)) and nvs - avs >= _BANC_SEUIL_SANS_PRIX_PTS:
+                regressions.append(f"{t} : part sans prix {avs:.1f}% → {nvs:.1f}% (+{nvs-avs:.1f} pts)")
+    ctx.compte(regression=bool(regressions))
+    if regressions:
+        raise RuntimeError("Banc Estimer — précision DÉGRADÉE : " + " ; ".join(regressions))

@@ -5032,6 +5032,20 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         "SELECT date_mutation, nature, valeur, prix_m2_bati, prix_m2_terrain, multi_parcelles, "
         "       n_parcelles "
         "FROM v_parcel_dvf_last WHERE idu = :idu"), {"idu": idu}).mappings().first()
+    # ESTIMER-2 (fix/estimer-2, D-1) — la vue `v_parcel_dvf_last` ne porte que le géo-DVF 2021→. Quand la
+    # parcelle n'a AUCUNE vente depuis 2021 mais une vente RÉELLE entre 2014 et 2020 (historique Etalab,
+    # `dvf_mutations_histo` — 37 488 parcelles, ESTIMER-AUDIT-1 §2), on replie sur la dernière vente de
+    # TOUT l'historique : « Dernière vente » dit alors la vraie date (06/2017…) au lieu du faux « aucune
+    # depuis 2014 ». REPLI SEULEMENT : une parcelle qui a déjà une vente 2021+ garde EXACTEMENT sa valeur
+    # servie (le géo-DVF est toujours plus récent) → aucune cohérence fiche/Dossier/Copilote touchée.
+    if not dvf_last:
+        from ..pige.api import derniere_vente_parcelle
+        _dv = derniere_vente_parcelle(db, idu)
+        if _dv:
+            dvf_last = {"date_mutation": _dv["date_mutation"], "nature": _dv["nature_mutation"],
+                        "valeur": _dv["valeur"], "prix_m2_bati": _dv["prix_m2_bati"],
+                        "prix_m2_terrain": _dv["prix_m2_terrain"],
+                        "multi_parcelles": _dv["multi_parcelles"], "n_parcelles": _dv["n_parcelles"]}
     dvf_secteur = [dict(r) for r in db.execute(text(
         "SELECT type_bien, n_ventes, mediane_valeur, mediane_prix_m2, fenetre "
         "FROM dvf_secteur_medianes WHERE secteur = substring(:idu FROM 1 FOR 10) "
