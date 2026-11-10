@@ -186,4 +186,92 @@ La ré-ingestion prod d'une commune dont le PLU a bougé (ex. Saint-Denis), au c
 - **Front** : `tsc -b` 0, `vitest` 326 verts (type `plu_modifie` + bandeau fiche).
 - **Secrets** : rien trouvé. **Cohérence** : non impactée (aucun témoin €/m² touché).
 
+---
+
+## 8. Vérifications avant merge (demande de Vic)
+
+### (1) Hook complet — cohérence rejouée, VERTE
+
+L'étape de cohérence (arrêtée au premier rapport faute de base calme) a été **rejouée** :
+`6 passed in 219,70 s` · « aucun écart (1 €/1 m²) sur les témoins » · exit 0 (run résiduel servi
+seq 17). L'arrêt précédent **n'était pas un blocage** : la suite PROGRESSAIT (témoins validés un à un),
+**aucune session en attente de verrou** (`wait_event` = CPU/`ClientRead`, jamais `Lock`) — seulement
+ralentie par d'autres sessions (serveurs `uvicorn`/`labuse.cli api` d'autres worktrees, `::1`, 6
+connexions depuis ~27 min, faisant des `ST_Intersection`/`ST_Union` lourds). Rejouée telle quelle sous
+cette charge, elle finit en ~3 min 40 et passe. Les autres étapes du hook restent vertes
+(tsc 0 · vitest 326 · pytest unitaire + scénarios/persist · secrets). → **hook complet vert.**
+
+### (2) Les trois décalages, couche par couche (Géoportail vs ingéré, avec dates)
+
+Confirmé **en direct** sur l'API Carto GPU (endpoint `/document` ET `/prescription-*`, features propres
+`DU_<insee>`) le 11/11/2026 :
+
+| Commune | Couche | Géoportail (publié) | Ingéré LABUSE | Verdict |
+|---|---|---|---|---|
+| **Saint-Denis** (97411) | zonage | `97411_PLU_20260805` | `97411_PLU_20260805` (14/09) | à jour |
+| | prescriptions | `97411_PLU_20260805` (2908) | ⚠ `97411_PLU_20260423` (29/06) | **en retard** → corrigé §3 |
+| | informations (DPU) | `97411_PLU_20260805` | `97411_PLU_20260805` | à jour |
+| | règles chiffrées | `97411_PLU_20260805` | calibrée 03/09 sur `…20260805` | à jour |
+| **Saint-Joseph** (97412) | zonage | `97412_PLU_20251210` | `97412_PLU_20251210` | à jour |
+| | prescriptions | `97412_PLU_20251210` (451) | ⚠ `97412_PLU_20240320` (447) | **en retard** |
+| | informations (DPU) | non publié | absent | — |
+| | règles chiffrées | `97412_PLU_20251210` | calibrée sur `…20251210` | à jour |
+| **Bras-Panon** (97402) | zonage | `97402_PLU_20260428` | `97402_PLU_20260428` | à jour |
+| | prescriptions | `97402_PLU_20260428` (412) | ⚠ `97402_PLU_20211020` (412) | **en retard** (PLU **précédent 2021**) |
+| | informations (DPU) | non publié | absent | — |
+| | règles chiffrées | `97402_PLU_20260428` | calibrée sur `…20260428` | à jour |
+
+**Bras-Panon, clairement** : le **zonage ET les règles** servis aux clients sont ceux du **PLU EN
+VIGUEUR** (2026, `97402_PLU_20260428`) — **PAS un ancien PLU**. Le seul retard est sur les
+**prescriptions** (ER/EBC), ingérées du PLU **précédent** (2021, `97402_PLU_20211020`), alors que le
+Géoportail sert déjà celles de 2026 (vérifié en direct : 412 features propres `DU_97402` à l'idurba
+`97402_PLU_20260428`) — ce n'est donc pas un faux positif. En conséquence, **0 parcelle ne change de
+zone** (le zonage servi est déjà à jour) ; le décalage ne touche que les prescriptions. Même profil
+pour **Saint-Joseph** (zonage et règles à jour, seules les prescriptions en retard).
+
+### (3) Déclencheur de l'affichage client : la DÉTECTION, pas `plu appliquer`
+
+Le job de nuit `plu-veille-nuit` appelle `synchroniser_recalibrage(communes_desync)` : **dès qu'une
+commune est `desync`**, ses parcelles passent « À vérifier » et le bandeau fiche s'allume (il lit
+`plu_veille_etat`). Le signal **ne dépend pas** de `plu appliquer` — qui est le **correctif** (aligne
+les couches + pose le drapeau règles), pas le déclencheur.
+
+**Preuve en base** : **Bras-Panon (4 191 parcelles)** et **Saint-Joseph (15 613)** sont **déjà** en
+overlay « À vérifier » alors qu'elles n'ont **jamais** été `plu appliquer` — seule la détection les a
+basculées.
+
+**Au premier passage de nuit en prod** (chiffres mesurés sur la base locale q_v20, prod-like) :
+communes basculées = **Saint-Denis, Saint-Joseph, Bras-Panon** ; parcelles passant « À vérifier »
+(statuts chiffrés éligibles) = **30 124 + 15 613 + 4 191 ≈ 49 928**. Les parcelles « Hors de ce
+projet » / « À différer » restent inchangées (p. ex. Saint-Denis : 8 171 non éligibles sur 38 295).
+
+### (4) Prescriptions Saint-Denis (ER, EBC) dans la capacité — combien changent, quels IDU recalculer
+
+Les prescriptions **entrent bien dans la capacité** (`config/cascade_rules.yaml` → règle
+`prescription_plu`, `src/labuse/cascade/layers/phase1.py`) : **ER ≥ 50 %** de la parcelle →
+**rédhibitoire** (exclue) ; **EBC ≥ 80 %** → **rédhibitoire** ; en deçà, la **surface ER/EBC est
+soustraite** de l'assiette constructible (pré-faisabilité). Les autres types (mixité, OAP, eaux
+pluviales, patrimoine) sont des vigilances, sans effet sur la capacité.
+
+- **Combien changent (exclusion)** : la ré-ingestion fait passer le nombre de parcelles de Saint-Denis
+  **rédhibitoirement exclues par prescription de 2 743 → 2 757**, soit **14 parcelles qui DEVIENNENT
+  exclues** (ER ≥ 50 % / EBC ≥ 80 % sur la nouvelle géométrie), **0 qui cessent de l'être**. Mesure
+  avant/après non destructive : le run servi (`cascade_results`) porte les verdicts calculés sur les
+  anciennes prescriptions (20260423) ; comparés à la couverture ER/EBC recalculée sur les nouvelles
+  (20260805). Les **14 IDU** :
+  `97411000AK0184, 97411000BE0025, 97411000BW0164, 97411000BX0057, 97411000CH0672, 97411000CM0226,
+  97411000CP0479, 97411000CY0016, 97411000EL0164, 97411000EL0169, 97411000IC0148, 97411000IL0379,
+  97411000IS0406, 97411000IV0035`.
+
+- **Liste à recalculer pour que fiche == run** : **14 155** parcelles de Saint-Denis intersectent une
+  prescription **ER (10 991)** ou **EBC (4 188)** — ce sont celles dont la capacité peut bouger (les 14
+  par leur exclusion ; les autres par la part ER/EBC soustraite, à la marge). La liste complète des
+  14 155 IDU est écrite dans **`reports/PLU-VEILLE-FIX-1-saint-denis-recompute.txt`**. Geste prod après
+  `plu appliquer 97411` : `labuse reevaluer-cascade` sur ces IDU, puis re-persister les scénarios V2 —
+  sinon la fiche (calcul live) et le run (persisté) divergent sur ces parcelles.
+
+> Les deux autres décalages (Bras-Panon, Saint-Joseph) appellent le même geste prod (prescriptions
+> ER/EBC à réingérer + recalcul des parcelles touchées) ; leur zonage et leurs règles, eux, sont déjà
+> à jour (§2) — rien à refaire côté zonage.
+
 *Fin du rapport.*
