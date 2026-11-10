@@ -567,58 +567,87 @@ def comparateur_bien(db: Session, idu: str, *, type_bien: str | None = None,
     }
 
 
-def comparateur_terrain(db: Session, idu: str, *, rayons=(1000.0, 2000.0, 3000.0), n_table: int = 8) -> dict:
-    """ANNONCE-5-FIX — les ventes de TERRAIN NU les plus proches (dvf_mutations_parcelle, ventes sans
-    bâti), MÊME format que le comparateur bâti : date · surface · prix · €/m² · distance. Agrège par
-    mutation (une mutation = une vente ; terrain total = somme des parcelles, distance = la plus proche de
-    la parcelle sujet). Rayon adaptatif jusqu'au seuil. `marche_service.py` est déjà lecteur déclaré."""
+# ESTIMER-2 (fix/estimer-2, D-3) — le TERRAIN reçoit le MÊME moteur adaptatif que le bâti : rayon
+# 500→1000→1500 m puis repli commune, au lieu de la table pré-agrégée par SECTION cadastrale sans rayon
+# (`dvf_secteur_medianes`/`_terrain_section`) qui laissait 1 terrain sur 5 sans prix (ESTIMER-AUDIT-1
+# §4-c). Mêmes constantes que le bâti (_CMP_RAYONS, min 8), repli commune garanti (chaque commune a des
+# dizaines de ventes de terrain). Le repère servi porte sa MÉDIANE, son n et son PÉRIMÈTRE retenu.
+_TERR_RAYONS = _CMP_RAYONS                 # (500, 1000, 1500) — identique au bâti (mandat)
+_TERR_BORNES = (50.0, 20000.0)             # domaine €/m² terrain (comme dvf_secteur_medianes / le banc)
+_TERR_MIN_N = 8                            # seuil d'effectif visé par le rayon adaptatif (= bâti)
+
+
+def comparateur_terrain(db: Session, idu: str, *, n_table: int = 8) -> dict:
+    """ANNONCE-5-FIX + ESTIMER-2 (D-3) — le repère €/m² de TERRAIN NU du secteur ET les ventes les plus
+    proches, par rayon ADAPTATIF 500→1000→1500 m puis repli COMMUNE (comme le bâti). Agrège par mutation
+    (une mutation = une vente ; terrain total = somme des parcelles dédoublonnées, distance = la plus
+    proche de la parcelle sujet), exclut la parcelle sujet, borne [50 ; 20 000] €/m², trim des 5 %
+    extrêmes dès que l'échantillon le permet. Renvoie médiane + quartiles + n + périmètre retenu (rayon
+    ou commune) + les 8 comparables. `median` None seulement si la COMMUNE n'a aucune vente de terrain."""
+    import statistics
     pid = _parcel_id(db, idu)
     if pid is None:
-        return {"comparables": [], "n_total": 0, "radius_m": None, "periode": None}
+        return {"comparables": [], "n_total": 0, "radius_m": None, "periode": None,
+                "median": None, "q1": None, "q3": None, "n": 0, "commune_fallback": False,
+                "perimetre": None}
+    # Une seule requête COMMUNE-WIDE avec la distance au sujet : le rayon adaptatif est ensuite appliqué
+    # en Python (pas de 4 allers-retours SQL). Même dédoublonnage terrain que MARCHE-UNIQUE-1 (NU-E-031).
+    rows = db.execute(text(
+        "WITH p AS (SELECT geom_2975 g, commune FROM parcels WHERE idu = :idu), "
+        "parc AS (SELECT DISTINCT dm.id_mutation, dm.id_parcelle, dm.valeur_fonciere AS vf, "
+        "           dm.date_mutation AS d, "
+        "           max(COALESCE(dm.surface_terrain,0)) OVER (PARTITION BY dm.id_mutation, dm.id_parcelle) AS terr_p, "
+        "           round(ST_Distance(pp.geom_2975, p.g))::int AS dist "
+        "         FROM dvf_mutations_parcelle dm JOIN parcels pp ON pp.idu = dm.id_parcelle, p "
+        "         WHERE dm.nature_mutation IN ('Vente', 'Vente terrain à bâtir') "
+        "           AND COALESCE(dm.surface_reelle_bati,0)=0 AND dm.surface_terrain > 0 "
+        "           AND dm.date_mutation IS NOT NULL AND dm.id_parcelle <> :idu "
+        "           AND pp.commune = (SELECT commune FROM p)), "
+        "t AS (SELECT id_mutation, to_char(min(d), 'YYYY-MM-DD') AS date, "
+        "        extract(year FROM min(d))::int AS annee, "
+        "        sum(terr_p) AS surf, max(vf) AS vf, min(dist)::int AS dist "
+        "      FROM parc GROUP BY id_mutation) "
+        "SELECT date, annee, round(surf)::int AS surface_m2, round(vf)::int AS prix_eur, "
+        "       round(vf / NULLIF(surf,0))::int AS prix_m2, (vf / NULLIF(surf,0)) AS prix_m2_f, "
+        "       dist AS distance_m "
+        "FROM t WHERE vf / NULLIF(surf,0) BETWEEN :lo AND :hi ORDER BY dist ASC"),
+        {"idu": idu, "lo": _TERR_BORNES[0], "hi": _TERR_BORNES[1]}).mappings().all()
+    pool = [dict(x) for x in rows]
 
-    def _fetch(r: float) -> list[dict]:
-        rows = db.execute(text(
-            "WITH p AS (SELECT geom_2975 g FROM parcels WHERE idu = :idu), "
-            # MARCHE-UNIQUE-1 (NU-E-031) — dénominateur TERRAIN dédoublonné : surface = max() par
-            # (mutation, parcelle) PUIS somme par mutation, jamais la somme des lignes répétées
-            # (nature_culture) qui gonflait le terrain (×146 observé) et faussait le €/m². (NU-E-023) —
-            # la parcelle sujet exclue. (NU-E-025) — nature terrain = Vente + Vente terrain à bâtir.
-            "parc AS (SELECT DISTINCT dm.id_mutation, dm.id_parcelle, dm.valeur_fonciere AS vf, "
-            "           dm.date_mutation AS d, "
-            "           max(COALESCE(dm.surface_terrain,0)) OVER (PARTITION BY dm.id_mutation, dm.id_parcelle) AS terr_p, "
-            "           round(ST_Distance(pp.geom_2975, p.g))::int AS dist "
-            "         FROM dvf_mutations_parcelle dm JOIN parcels pp ON pp.idu = dm.id_parcelle, p "
-            "         WHERE dm.nature_mutation IN ('Vente', 'Vente terrain à bâtir') "
-            "           AND COALESCE(dm.surface_reelle_bati,0)=0 AND dm.surface_terrain > 0 "
-            "           AND dm.date_mutation IS NOT NULL AND dm.id_parcelle <> :idu "
-            "           AND " + fenetre_dvf_sql("dm.date_mutation", annees_param="ans") + " "
-            "           AND ST_DWithin(pp.geom_2975, p.g, :r)), "
-            "t AS (SELECT id_mutation, to_char(min(d), 'YYYY-MM-DD') AS date, "
-            "        extract(year FROM min(d))::int AS annee, "
-            "        sum(terr_p) AS surf, max(vf) AS vf, min(dist)::int AS dist "
-            "      FROM parc GROUP BY id_mutation) "
-            "SELECT date, annee, round(surf)::int AS surface_m2, round(vf)::int AS prix_eur, "
-            "       round(vf / NULLIF(surf,0))::int AS prix_m2, dist AS distance_m "
-            "FROM t WHERE vf / NULLIF(surf,0) BETWEEN 50 AND 4000 ORDER BY dist ASC LIMIT 200"),
-            {"idu": idu, "ans": 5, "r": r}).mappings().all()
-        return [dict(x) for x in rows]
-
+    # Rayon adaptatif : premier rayon qui réunit ≥ _TERR_MIN_N ventes ; sinon repli COMMUNE (tout le pool).
     kept: list[dict] = []
-    radius = None
-    for r in rayons:
-        kept = _fetch(r)
-        if len(kept) >= 4:
+    radius: int | None = None
+    commune_fallback = False
+    for r in _TERR_RAYONS:
+        kept = [v for v in pool if (v.get("distance_m") or 0) <= r]
+        if len(kept) >= _TERR_MIN_N:
             radius = int(r)
             break
     else:
-        radius = int(rayons[-1]) if kept else None
+        if pool:
+            kept, commune_fallback = pool, True
+        else:
+            kept = []
+
+    prix = sorted(float(v["prix_m2_f"]) for v in kept if v.get("prix_m2_f") is not None)
+    # Trim des 5 % extrêmes (2,5 % par queue), floor → rien retiré sous ~20 ventes (comme bâti).
+    _k = int(len(prix) * 0.025)
+    prix_trim = prix[_k:len(prix) - _k] if _k else prix
+    median = round(statistics.median(prix_trim)) if prix_trim else None
+    q1 = q3 = None
+    if len(prix_trim) >= 4:
+        _q1, _m, _q3 = statistics.quantiles(prix_trim, n=4, method="inclusive")
+        q1, q3 = round(_q1), round(_q3)
     annees = [k["annee"] for k in kept if k.get("annee")]
     proches = sorted(kept, key=lambda v: (v.get("distance_m") is None, v.get("distance_m")))[:n_table]
     comparables = [{"date": f"{k['date'][5:7]}/{k['date'][0:4]}" if isinstance(k.get("date"), str) and len(k["date"]) >= 7 else None,
                     "type": "Terrain", "surface_m2": k.get("surface_m2"), "prix_eur": k.get("prix_eur"),
                     "prix_m2": k.get("prix_m2"), "distance_m": k.get("distance_m")} for k in proches]
+    perimetre = ("commune" if commune_fallback else (f"{radius} m autour de la parcelle" if radius else None))
     return {"comparables": comparables, "n_total": len(kept), "radius_m": radius,
-            "periode": [min(annees), max(annees)] if annees else None}
+            "periode": [min(annees), max(annees)] if annees else None,
+            "median": median, "q1": q1, "q3": q3, "n": len(prix_trim),
+            "commune_fallback": commune_fallback, "perimetre": perimetre}
 
 
 def permits(db: Session, idu: str, *, profil: str) -> dict | None:

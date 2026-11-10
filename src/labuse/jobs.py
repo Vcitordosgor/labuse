@@ -665,6 +665,15 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
               "— le sous-ensemble rapide `--nuit` chaque nuit (SQL île + moteur), l'intégrale `--tout` le dimanche ; "
               "un FAUX-CLIENT nouveau / une garde en écart ouvre un incident à J+1 — plus jamais des mois.",
        test="tests/verrous/test_v6b_coherence.py::test_v6b_coherence_banc"),
+    _j("estimer-banc-precision", "Banc de précision « Estimer un bien » — rétro-test sans fuite, alerte régression",
+       "quotidien", "30 0 * * *", "04:30", touche="exploitation", timeout_s=1800, envoie_mail=True,
+       raison="ESTIMER-AUDIT-1 a mesuré l'outil « Estimer » face à de vraies ventes (maison ~29 % d'écart "
+              "médian, 1 terrain sur 5 sans prix). ESTIMER-2 en fait un BANC PERMANENT : chaque nuit, "
+              "200 maisons + 200 terrains + 200 appartements rejoués SANS FUITE, la fourchette et la "
+              "fiabilité SERVIES sont recalibrées par commune/type (table estimer_precision_calibration), "
+              "et le job ÉCHOUE (→ mail admin) si la précision se dégrade (écart médian +≥5 pts ou part "
+              "sans prix +≥5 pts) vs le dernier banc vert.",
+       test="tests/test_estimer2_banc.py::test_banc_precision_canary"),
     # COCKPIT-1 (Lot C, correction D) — `recap-matin` RETIRÉ du registre (Vic ne veut plus le mail récap
     # de 07:30). Mais « les ALERTES restent » : les vigies qu'il évaluait (disque, /readyz, sauvegarde,
     # copie externe, jobs en retard) via `ops_alertes.verifier_declencheurs` sont désormais ÉVALUÉES par
@@ -810,6 +819,10 @@ _FAMILLE_LIBELLE_ROLE: dict[str, tuple[int, str, str, bool]] = {
                            "Vérifie que deux chemins d'un même chiffre donnent bien la même valeur (fuites).", True),
     "coherence-banc": (4, "Le contrôleur de nuit",
                        "Relit chaque chiffre sur tous les écrans — zéro faux chez le client.", True),
+    "estimer-banc-precision": (4, "Le banc du prix",
+                               "Rejoue chaque nuit l'outil « Estimer » sur de vraies ventes (maison, "
+                               "terrain, appartement), recalibre la fourchette servie et alerte si la "
+                               "précision baisse.", True),
     "verite-sources": (4, "Le vérificateur mensuel",
                        "Compare 20 parcelles au hasard aux sites officiels, une fois par mois.", True),
     "restore-test": (4, "Le test de restauration",

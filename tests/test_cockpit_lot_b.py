@@ -107,8 +107,10 @@ def test_familles_attendues():
     # JOHN-TAYLOR-1 : + john-veille (F1, la veille de nuit de John) → 35 jobs, F1 passe de 2 à 3.
     # NU5-FIX-1 : + essai-fin-proche (C-F7) + verite-permanente (point 8), les deux en F4 → 37 jobs,
     # F4 passe de 22 à 24.
-    assert par_fam == {1: 3, 2: 7, 3: 3, 4: 24}
-    assert sum(par_fam.values()) == 37
+    # ESTIMER-2 (fix/estimer-2) : + estimer-banc-precision (F4, le banc de précision de nuit) → 38 jobs,
+    # F4 passe de 24 à 25.
+    assert par_fam == {1: 3, 2: 7, 3: 3, 4: 25}
+    assert sum(par_fam.values()) == 38
 
 
 # ─────────────── endpoints (db) ───────────────
