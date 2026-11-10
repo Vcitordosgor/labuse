@@ -54,6 +54,8 @@ CREATE TABLE IF NOT EXISTS parcel_scenario_v2_runs (
   cascade_label         text,                         -- run cascade servi au calcul
   surface_m2            integer,                       -- surface terrain (tri area, P3)
   enrich_state          text,                          -- not_requested/ok/failed (par parcelle, P2)
+  public_facility       text,                          -- FONCIER-PUBLIC-1 : catégorie équipement public
+  public_land           boolean NOT NULL DEFAULT false,-- FONCIER-PUBLIC-1 : propriétaire public
   computed_at           timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (run_label, parcel_id, scenario)
 );
@@ -65,6 +67,8 @@ ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS score_version text;
 ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS cascade_label text;
 ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS surface_m2 integer;
 ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS enrich_state text;
+ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS public_facility text;
+ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS public_land boolean NOT NULL DEFAULT false;
 """
 
 _UPSERT = text("""
@@ -72,10 +76,12 @@ INSERT INTO parcel_scenario_v2_runs
   (run_label, parcel_id, idu, commune, scenario, status, cause, band, score, band_provisional,
    additional_m2, project_total_m2, existing_m2, net_signed_m2, conditional_future_m2, residual_m2,
    zone_prod_zone, zone_prod_area_m2, vigilance, bande_v1, enriched, provenance, assiette_source,
-   analysis_version, score_version, cascade_label, surface_m2, enrich_state)
+   analysis_version, score_version, cascade_label, surface_m2, enrich_state,
+   public_facility, public_land)
 VALUES
   (:run,:pid,:idu,:commune,:scn,:status,:cause,:band,:score,:bandp,
-   :add,:ptot,:exist,:net,:fut,:res,:zz,:za,:vig,:v1,:enr,:prov,:asrc,:ver,:sver,:clabel,:surf,:estate)
+   :add,:ptot,:exist,:net,:fut,:res,:zz,:za,:vig,:v1,:enr,:prov,:asrc,:ver,:sver,:clabel,:surf,:estate,
+   :pfac,:pland)
 ON CONFLICT (run_label, parcel_id, scenario) DO UPDATE SET
   idu=EXCLUDED.idu, commune=EXCLUDED.commune, status=EXCLUDED.status, cause=EXCLUDED.cause,
   band=EXCLUDED.band, score=EXCLUDED.score, band_provisional=EXCLUDED.band_provisional,
@@ -87,7 +93,8 @@ ON CONFLICT (run_label, parcel_id, scenario) DO UPDATE SET
   provenance=EXCLUDED.provenance, assiette_source=EXCLUDED.assiette_source,
   analysis_version=EXCLUDED.analysis_version, score_version=EXCLUDED.score_version,
   cascade_label=EXCLUDED.cascade_label, surface_m2=EXCLUDED.surface_m2,
-  enrich_state=EXCLUDED.enrich_state, computed_at=now()
+  enrich_state=EXCLUDED.enrich_state, public_facility=EXCLUDED.public_facility,
+  public_land=EXCLUDED.public_land, computed_at=now()
 """)
 
 
@@ -136,7 +143,8 @@ def _row(run_label, pid, rec, bande_v1, res, scenario, enriched, score_version, 
         "vig": json.dumps(res.vigilance, ensure_ascii=False), "v1": bande_v1,
         "enr": enriched, "prov": rec.provenance, "asrc": rec.assiette_source,
         "ver": v2.VERSION, "sver": score_version, "clabel": cascade_label,
-        "surf": _as_int(surface), "estate": rec.enrich_state}
+        "surf": _as_int(surface), "estate": rec.enrich_state,
+        "pfac": rec.public_facility, "pland": bool(rec.public_land)}
 
 
 def compute_scenarios_v2_batch(session: Session, parcel_ids: list[int], *,
@@ -210,6 +218,7 @@ SELECT s.idu, s.status, s.cause, s.band, s.score, s.band_provisional,
        s.additional_m2, s.project_total_m2, s.existing_m2, s.net_signed_m2,
        s.conditional_future_m2, s.residual_m2, s.zone_prod_zone, s.zone_prod_area_m2,
        s.vigilance, s.bande_v1, s.enriched, s.surface_m2, s.enrich_state, s.analysis_version,
+       s.public_facility, s.public_land,
        sl.signal_p, sl.signal_niveau, sl.cascade_exclue
 FROM parcel_scenario_v2_runs s
 LEFT JOIN score_labuse sl ON sl.run_label = s.run_label AND sl.idu = s.idu
@@ -262,6 +271,8 @@ def _row_from_mapping(m) -> dict:
         "vigilance": m["vigilance"], "bande_v1": m["bande_v1"],
         "quantites_calculees": m["enriched"], "etat_calcul": m["enrich_state"],
         "analysis_version": m["analysis_version"],
+        # FONCIER-PUBLIC-1 — drapeaux servis (identiques au chemin live).
+        "equipement_public": m["public_facility"], "foncier_public": bool(m["public_land"]),
         "signal": _signal_persiste(m["signal_p"], m["signal_niveau"], m["cascade_exclue"]),
     }
 
@@ -458,7 +469,18 @@ _SCN_COLS = """sv.idu, sv.status, sv.cause, sv.band, sv.score, sv.band_provision
        sv.additional_m2, sv.project_total_m2, sv.existing_m2, sv.net_signed_m2,
        sv.conditional_future_m2, sv.residual_m2, sv.zone_prod_zone, sv.zone_prod_area_m2,
        sv.vigilance, sv.bande_v1, sv.enriched, sv.surface_m2, sv.enrich_state, sv.analysis_version,
+       sv.public_facility, sv.public_land,
        sl.signal_p, sl.signal_niveau, sl.cascade_exclue"""
+
+# FONCIER-PUBLIC-1 — la case « Inclure le foncier public » (décochée par défaut) : quand elle est
+# DÉCOCHÉE, le TERRAIN PUBLIC SANS équipement (bande gardée, simple drapeau) sort de la SÉLECTION —
+# effectifs, liste ET IDU carte. Un équipement public (public_facility renseigné) reste TOUJOURS dans
+# la sélection : il s'affiche en « Hors projet ». Ce n'est donc PAS une puce de cohorte (qui narrowe la
+# seule liste) mais un filtre de sélection, appliqué partout de façon homogène.
+def _foncier_clause(inclure_foncier_public: bool) -> str:
+    if inclure_foncier_public:
+        return ""
+    return " AND NOT (sv.public_land AND sv.public_facility IS NULL)"
 
 # rang de GROUPE (= GROUP_ORDER du moteur) et rang de BANDE (= _BANDE_RANG), en SQL.
 _GROUP_RANK_SQL = ("CASE sv.status WHEN 'ESTIMATED' THEN 0 WHEN 'PRESTUDY' THEN 0 "
@@ -520,20 +542,28 @@ def _cohort_where(mode: str, bands: list, statuts: list, niveaux: list, params: 
 
 
 def effectifs_filtre(session: Session, *, scn_run: str, mode: str, scenario: str,
-                     sel_sql: str, sel_params: dict) -> dict:
+                     sel_sql: str, sel_params: dict,
+                     inclure_foncier_public: bool = False) -> dict:
     """Effectifs d'analyse sur la sélection du JEU DE FILTRES COMPLET, en UNE SEULE passe (la sélection
     n'est résolue qu'une fois — à l'échelle île c'était 5 passes ≈ 10 s, c'est désormais une seule,
     cachée au robinet). Renvoie n_selection + par_statut/par_bande (potentiel) ou par_signal/par_statut
-    (prospection)."""
+    (prospection). FONCIER-PUBLIC-1 : la case « Inclure le foncier public » (décochée par défaut) sort
+    le terrain public sans équipement des effectifs ; `n_foncier_public` (count sur TOUTE la sélection,
+    hors case) est toujours servi pour l'étiquette de la case."""
     scn_read = "keep" if mode == "sale" else scenario
     base = {**sel_params, "scnrun": scn_run, "scn": scn_read}
+    foncier = _foncier_clause(inclure_foncier_public)
     join = ("JOIN parcel_scenario_v2_runs sv ON sv.idu = sel.idu "
             "AND sv.run_label = :scnrun AND sv.scenario = :scn")
+    # Compte du foncier public SANS équipement (sur toute la sélection, indépendant de la case).
+    n_fp = session.execute(text(
+        f"WITH sel AS ({sel_sql}) SELECT count(*) FROM sel {join} "
+        f"WHERE sv.public_land AND sv.public_facility IS NULL"), base).scalar() or 0
     if mode == "sale":
         join += " LEFT JOIN score_labuse sl ON sl.run_label = sv.run_label AND sl.idu = sv.idu"
         rows = session.execute(text(
             f"WITH sel AS ({sel_sql}) SELECT {_NIVEAU_SQL} AS niveau, {_SIGNAL_STATE_SQL} AS etat, "
-            f"count(*) AS n FROM sel {join} GROUP BY 1, 2"), base).fetchall()
+            f"count(*) AS n FROM sel {join} WHERE TRUE {foncier} GROUP BY 1, 2"), base).fetchall()
         par_signal: dict = {}
         par_statut: dict = {}
         n = 0
@@ -541,17 +571,19 @@ def effectifs_filtre(session: Session, *, scn_run: str, mode: str, scenario: str
             par_signal[r.niveau] = par_signal.get(r.niveau, 0) + r.n
             par_statut[r.etat] = par_statut.get(r.etat, 0) + r.n
             n += r.n
-        return {"n_selection": n, "par_statut": par_statut, "par_bande": {}, "par_signal": par_signal}
+        return {"n_selection": n, "par_statut": par_statut, "par_bande": {}, "par_signal": par_signal,
+                "n_foncier_public": n_fp}
     rows = session.execute(text(
         f"WITH sel AS ({sel_sql}) SELECT sv.status AS s, sv.band AS b, count(*) AS n "
-        f"FROM sel {join} GROUP BY sv.status, sv.band"), base).fetchall()
+        f"FROM sel {join} WHERE TRUE {foncier} GROUP BY sv.status, sv.band"), base).fetchall()
     par_statut, par_bande, n = {}, {}, 0
     for r in rows:
         par_statut[r.s] = par_statut.get(r.s, 0) + r.n
         if r.b is not None:
             par_bande[r.b] = par_bande.get(r.b, 0) + r.n
         n += r.n
-    return {"n_selection": n, "par_statut": par_statut, "par_bande": par_bande}
+    return {"n_selection": n, "par_statut": par_statut, "par_bande": par_bande,
+            "n_foncier_public": n_fp}
 
 
 def _n_coche(eff: dict, mode: str, bands: list, statuts: list, niveaux: list) -> int:
@@ -571,20 +603,25 @@ def analyse_payload_filtre(session: Session, *, scn_run: str, mode: str, scenari
                            sort: str | None, sel_sql: str, sel_params: dict,
                            bands=None, statuts=None, niveaux=None,
                            effectifs: dict | None = None, avec_idus: bool = False,
+                           inclure_foncier_public: bool = False,
                            limit: int = 100, offset: int = 0, as_of: str | None = None) -> dict:
     """Réponse d'analyse V2 sur la sélection du JEU DE FILTRES COMPLET. `sel_sql` est une sous-requête
     `SELECT idu` (résolue par app.py avec le MÊME gate que la liste d'IDU de la carte). Les effectifs
     (passés `effectifs`, ou calculés ici — ils peuvent être cachés) portent sur TOUTE la sélection ;
     les cohortes cochées (bands/statuts/niveaux) narrowent la LISTE. `limit=0` = effectifs seuls (pas
-    de liste : l'étape « Choisir »)."""
+    de liste : l'étape « Choisir »). FONCIER-PUBLIC-1 : `inclure_foncier_public` (défaut False) décide
+    si le terrain public sans équipement entre dans la sélection (effectifs + liste + IDU carte) ;
+    `idus_foncier_public` isole, parmi les IDU peints, ceux qui portent le drapeau (puce carte)."""
     if sort and sort not in ("signal", "capacity", "gain", "area", "id"):
         raise ValueError(f"tri inconnu : {sort}")
     scn_read = "keep" if mode == "sale" else scenario
     sort = sort or ("signal" if mode == "sale" else "capacity")
     bands, statuts, niveaux = _as_list(bands), _as_list(statuts), _as_list(niveaux)
     eff = effectifs or effectifs_filtre(session, scn_run=scn_run, mode=mode, scenario=scenario,
-                                        sel_sql=sel_sql, sel_params=sel_params)
+                                        sel_sql=sel_sql, sel_params=sel_params,
+                                        inclure_foncier_public=inclure_foncier_public)
     n_filtre = _n_coche(eff, mode, bands, statuts, niveaux)
+    foncier = _foncier_clause(inclure_foncier_public)
 
     join = ("JOIN parcel_scenario_v2_runs sv ON sv.idu = sel.idu "
             "AND sv.run_label = :scnrun AND sv.scenario = :scn "
@@ -593,18 +630,20 @@ def analyse_payload_filtre(session: Session, *, scn_run: str, mode: str, scenari
     # ── IDU des cohortes COCHÉES, pour que la CARTE peigne EXACTEMENT la liste choisie (≤ plafond ;
     # au-delà, tronqué = la carte ne peint pas la liste et le bandeau le dit). ──────────────────────
     idus = None
+    idus_foncier_public: list | None = None
     idus_tronque = False
     if avec_idus:
         bi = {**sel_params, "scnrun": scn_run, "scn": scn_read}
         coh = _cohort_where(mode, bands, statuts, niveaux, bi)
         bi["cap"] = IDUS_CARTE_CAP + 1
         rows_i = session.execute(text(
-            f"WITH sel AS ({sel_sql}) SELECT sv.idu FROM sel {join} WHERE TRUE {coh} LIMIT :cap"),
-            bi).scalars().all()
+            f"WITH sel AS ({sel_sql}) SELECT sv.idu, (sv.public_land AND sv.public_facility IS NULL) AS fp "
+            f"FROM sel {join} WHERE TRUE {coh} {foncier} LIMIT :cap"), bi).fetchall()
         if len(rows_i) > IDUS_CARTE_CAP:
             idus_tronque = True
         else:
-            idus = list(rows_i)
+            idus = [r[0] for r in rows_i]
+            idus_foncier_public = [r[0] for r in rows_i if r[1]]
 
     page: list = []
     if limit:
@@ -613,7 +652,7 @@ def analyse_payload_filtre(session: Session, *, scn_run: str, mode: str, scenari
         order = _SALE_ORDER_SQL if mode == "sale" else _order_by_potential(scenario, sort)
         base.update({"lim": limit, "off": offset})
         rows = session.execute(text(
-            f"WITH sel AS ({sel_sql}) SELECT {_SCN_COLS} FROM sel {join} WHERE TRUE {cohort} "
+            f"WITH sel AS ({sel_sql}) SELECT {_SCN_COLS} FROM sel {join} WHERE TRUE {cohort} {foncier} "
             f"ORDER BY {order} LIMIT :lim OFFSET :off"), base)
         page = [_row_from_mapping(r._mapping) for r in rows]
         if mode == "sale":
@@ -629,7 +668,11 @@ def analyse_payload_filtre(session: Session, *, scn_run: str, mode: str, scenari
     return {
         "cohortes": {"bands": bands, "statuts": statuts, "niveaux": niveaux},
         "n_filtre": n_filtre,
-        **({"idus": idus, "idus_tronque": idus_tronque} if avec_idus else {}),
+        # FONCIER-PUBLIC-1 — état de la case + compte pour l'étiquette (toujours servi).
+        "inclure_foncier_public": inclure_foncier_public,
+        "n_foncier_public": eff.get("n_foncier_public", 0),
+        **({"idus": idus, "idus_tronque": idus_tronque,
+            "idus_foncier_public": idus_foncier_public} if avec_idus else {}),
         "analysis_version": ver.get("analysis_version") or v2.VERSION,
         "scenario_engine_version": ver.get("score_version"),
         "cascade_run": ver.get("cascade_label"),

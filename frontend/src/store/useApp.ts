@@ -538,8 +538,8 @@ interface AppState {
   // ECRANS-NOV-2 (recette 2) — la carte peint EXACTEMENT la liste choisie de l'analyse par scénario :
   // le panneau pose les IDU des cohortes cochées (null si > 20 000 = trop large pour peindre). La carte
   // les préfère au raccord /filtre quand il est posé ; le panneau le remet à null en quittant.
-  scenarioPaint: { idus: string[] | null; tronque: boolean } | null
-  setScenarioPaint: (p: { idus: string[] | null; tronque: boolean } | null) => void
+  scenarioPaint: { idus: string[] | null; tronque: boolean; foncierPublic?: string[] | null } | null
+  setScenarioPaint: (p: { idus: string[] | null; tronque: boolean; foncierPublic?: string[] | null } | null) => void
   // IMPLANTATION-4 (LOT A) — l'Étude de faisabilité QUITTE les Outils et vit dans Docs : overlay plein
   // écran (patron BilanEcran) monté au niveau App, piloté par ce drapeau. `etudeIdus` = l'assiette
   // (1 à 8 parcelles) ou null (fermé). Ouvert depuis la 9e carte Docs, la tuile fiche et le pont

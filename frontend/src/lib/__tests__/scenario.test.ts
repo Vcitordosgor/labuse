@@ -8,6 +8,7 @@ import { BANDE_META, SIGNAL_META } from '../status'
 import {
   BANDES_CHIP, STATUTS_CHIP, NIVEAUX_CHIP, NIVEAU_META, STATUT_SCN_META,
   bandeLabel, couleurParcelle, phraseClassement, resumeFiltres, venteLabel,
+  equipementLabel, FONCIER_PUBLIC_LABEL,
 } from '../scenario'
 
 describe('libellés du mandat', () => {
@@ -75,5 +76,19 @@ describe('résumé replié des choix (cohortes cochées)', () => {
   })
   it('aucune cochée', () => {
     expect(resumeFiltres('potential', 'keep', [])).toBe('Potentiel · Bâti conservé · aucune')
+  })
+})
+
+describe('FONCIER-PUBLIC-1 — libellés foncier / équipement public', () => {
+  it('« équipement public : <type> » quand une catégorie est servie', () => {
+    expect(equipementLabel('enseignement')).toBe('Équipement public : enseignement')
+    expect(equipementLabel('santé')).toBe('Équipement public : santé')
+  })
+  it('aucune catégorie → pas de libellé', () => {
+    expect(equipementLabel(null)).toBeNull()
+    expect(equipementLabel(undefined)).toBeNull()
+  })
+  it('la puce « Foncier public » est libellée', () => {
+    expect(FONCIER_PUBLIC_LABEL).toBe('Foncier public')
   })
 })

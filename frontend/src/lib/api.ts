@@ -286,6 +286,10 @@ export interface ScnParcelle {
   etat_calcul?: string | null
   analysis_version?: string
   signal: { status: string; p: number | null; niveau: SignalNiveauKey | null; reason: string | null }
+  // FONCIER-PUBLIC-1 — drapeaux : catégorie de l'équipement public en place (null = aucun), et
+  // caractère public du propriétaire (terrain public).
+  equipement_public?: string | null
+  foncier_public?: boolean
   // présents seulement sur le détail enrichi (enrich=1) :
   libelle?: string
   horizon?: string
@@ -306,6 +310,11 @@ export interface ScnReponse {
   cohortes?: { bands: string[]; statuts: string[]; niveaux: string[] }
   idus?: string[] | null            // ECRANS-NOV-2 — IDU des cohortes cochées (carte=1) ; null si > 20 000
   idus_tronque?: boolean
+  // FONCIER-PUBLIC-1 — IDU peints qui portent le drapeau « foncier public » (puce carte) ; état +
+  // compte de la case « Inclure le foncier public ».
+  idus_foncier_public?: string[] | null
+  inclure_foncier_public?: boolean
+  n_foncier_public?: number
   effectifs: ScnEffectifs
   enrichissement?: { demande: boolean; echecs: string[]; n_echecs: number }
   page: { limit: number; offset: number; n: number }
@@ -321,6 +330,7 @@ export interface ScnOpts {
   statuts?: string[]
   niveaux?: string[]
   carte?: boolean                   // renvoie les IDU des cohortes cochées pour peindre la carte
+  inclureFoncierPublic?: boolean    // FONCIER-PUBLIC-1 — inclut le terrain public sans équipement
   limit?: number
   offset?: number
 }
@@ -334,6 +344,7 @@ export const getAnalyseScenarios = (f: Filters, o: ScnOpts = {}) => {
   if (o.statuts?.length) e.statuts = o.statuts.join(',')
   if (o.niveaux?.length) e.niveaux = o.niveaux.join(',')
   if (o.carte) e.carte = 1
+  if (o.inclureFoncierPublic) e.inclure_foncier_public = 1
   if (o.limit != null) e.limit = o.limit
   if (o.offset != null) e.offset = o.offset
   return j<ScnReponse>(`/analyse/scenarios?${qf(e)}`)
