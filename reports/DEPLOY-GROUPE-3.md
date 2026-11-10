@@ -18,10 +18,11 @@ d'abord : `reports/DEPLOY-GROUPE-2.md`, `RESIDUEL-1.md`, `RESIDUEL-2.md`,
 | **B. Calcul q_v23** | ✅ _chaîne de nuit faite_ : résiduel seq 18 (R+C/E/D_net) · cascade q_v23 (21,09 M) · build_all (frame 433 229) · flux-run Signal (p_score_v2 433 229) · Score LABUSE (seq 18). **Scénarios V2 = demain** (après merge origin/main + foncier-public-1). |
 | **C. Contrôles** | ✅ _7 contrôles VERTS_ (`ok=True`) · témoins fiche↔run 6/6 · comptes 433 229 · banc cohérence achevé 0/0. **Répartition statuts/bandes V2 = demain** (avec les scénarios V2). |
 
-**Phrase pour John (promotion)** : _à finaliser demain après les scénarios V2._ Provisoire : « q_v23 est
-calculé et contrôlable (7 contrôles verts, comptes 433 229, témoins OK). **AVANT de promouvoir, noter** :
-le classement Score corrige ~12 k parcelles vers bande 0 (le run servi lisait un résiduel non clippé trop
-généreux ; q_v23 = chemin unique clippé = la fiche). PROMEUT=0, promotion = geste de John sur ordre de Vic. »
+**Phrase pour John (promotion)** : _à finaliser demain après les scénarios V2._ **Reco actuelle : NE PAS
+promouvoir q_v23 en l'état** (cf. §D) : le run est juste (7 contrôles verts, comptes 433 229, batch≡fiche)
+et corrige de vraies erreurs, mais il porte dans le classement le faux positif `terrain_exigu` sur ~122
+grandes parcelles (≥ 48 Excellentes/Bonnes). Corriger `terrain_exigu` (ALGO-LECTURE-1) puis recompute,
+PUIS promouvoir. `PROMEUT=0`, la promotion reste un geste de John sur ordre de Vic.
 
 ### Incidents prod trouvés & corrigés pendant A (hors périmètre nominal)
 
@@ -204,6 +205,53 @@ Le run servi q_v20 n'est jamais écrit (`assert_writable` sur le résiduel, `is_
 - **Répartition des bandes Score** : cf. §B.6 (écart +11 914 bande 0 expliqué). **Répartition statuts/
   bandes V2** : **demain**, après le calcul des scénarios V2 (comparaison ALGO-FIX-1 §5).
 
+## D. Les ~11 819 bascules A–D → bande 0 (analyse demandée par Vic avant promotion)
+
+**Cohorte** : parcelles constructibles en q_v20 (bande A/B/C/D) qui tombent en **bande 0** dans q_v23 =
+**11 819** (214 font l'inverse, 0→constructible). Toutes **lecture seule**, **batch ≡ fiche vérifié**.
+
+**Par cause** (proximale ; le clip du chemin unique combine reculs + emprise/CES + découpe PPR rouge +
+portion U/AU — non séparables sans instrumenter le moteur, limite honnête) :
+
+| Famille | n | Nature | Jugement |
+|---|---:|---|---|
+| **Saturées par le clip** (gabarit, `C ≤ E`, cause nulle) | **8 136** | capacité clippée ≤ existant → reconstruction nulle (déjà bâti au max) ; aire médiane **467 m²** | **CORRECT** (thèse RESIDUEL-1 : q_v20 lisait un C non clippé trop généreux ; q_v23 = la fiche) |
+| **`terrain_exigu`** (fragment jugé trop étroit) | **3 683** | < 300 m² : **plausible** (735) ; 200–1000 m² (2 826) ; **> 1000 m² : 122**, dont **48 bande A/B**, jusqu'à **5 791 m²** | **DISCUTABLE** — heuristique fautive ALGO-LECTURE-1 |
+
+**Par bande d'origine (q_v20)** : A (Excellente) **11** · B (Bonne) **307** · C **1 977** · D (Faible)
+**9 524** (80,6 %). **Par commune** (tête) : La Possession 3 194 · Saint-Denis 3 002 · Saint-Joseph
+2 736 · Sainte-Marie 1 039 · Bras-Panon 967 · Saint-Paul 168.
+
+**20 parcelles au hasard, capacité avant/après + raison, vérifiées contre la fiche** (`compute_residuel`
+live) : **batch == fiche 20/20**. Exemples : `97408000AP1022` (La Possession, C) R 370 → C 159 ≤ E 297
+(saturée) ; `97412000BX0131` (Saint-Joseph, D) R 134 → C 142 ≤ E 181 ; `97418000AT0525` (Sainte-Marie, D,
+260 m²) → `terrain_exigu`. Les saturées montrent toutes `C_clippé ≤ E` conforme à la fiche.
+
+**Famille DISCUTABLE — `terrain_exigu` sur grandes parcelles (vérifiée 8/8 batch == fiche)** :
+`97418000AY0416` Sainte-Marie **2 017 m², q_v20 bande A (Excellente), R 1 828** → `terrain_exigu`, R 0 ;
+`97411000DK0447` Saint-Denis 2 256 m², B, R 1 324 → 0 ; `97415000CW0252` Saint-Paul 2 143 m², B, R 1 270
+→ 0 ; `97419000AN0398` Sainte-Rose **5 791 m²** → 0. **Une parcelle de 2 017 m² « Excellente » (1 828 m²
+résiduels) ne peut pas être « terrain trop exigu ».** C'est le défaut documenté par ALGO-LECTURE-1
+(`terrain_exigu` teste l'étroitesse du CONTOUR après reculs, pas la SURFACE → faux positifs sur grandes
+parcelles), **amplifié** par le clip RESIDUEL-1 (le fragment clippé a un contour plus étroit). `batch ≡
+fiche` tient (la fiche est tout aussi fausse) → ce n'est **pas** une régression de q_v23, mais q_v23
+porte ce faux positif dans le **classement** (≥ **48** parcelles A/B > 1000 m², ~**122** > 1000 m² au
+total). La famille saturée compte aussi 170 A/B / 285 à R20 ≥ 500 — plus gros écarts, mais conformes à la
+fiche et au clip (échantillon saturé vérifié OK).
+
+### Recommandation : **NE PAS promouvoir q_v23 en l'état.**
+
+q_v23 est **juste par construction** (batch ≡ fiche, 7 contrôles verts, comptes 433 229) et corrige deux
+vraies erreurs de q_v20 (214 parcelles rouvertes dont DH0076 ; 8 136 saturées enfin alignées sur la
+fiche). **MAIS** il propage dans le classement le faux positif **`terrain_exigu`** sur ~122 grandes
+parcelles (≥ 48 Excellentes/Bonnes, jusqu'à 5 791 m²), qui disparaîtraient à tort des classements.
+Comme `batch ≡ fiche`, le défaut est **dans l'heuristique `terrain_exigu` elle-même** (donc déjà faux
+côté fiche/client). **Reco** : (1) corriger `terrain_exigu` (tester la SURFACE nette, pas seulement le
+contour post-reculs — ALGO-LECTURE-1) ; (2) recompute q_v23 ; (3) alors promouvoir — les corrections
+saturées + flips PPR restent valides. Si Vic veut promouvoir malgré tout (le run EST cohérent avec la
+fiche actuelle), le faire en connaissance des ~122 faux « terrain exigu » à corriger ensuite.
+
 ---
 
-_Rédaction en cours — exécution A/B/C après 05:00 Réunion. Commit, pas de merge._
+_Exécuté : A (déploiement + 4 incidents) ✅ · B (chaîne de nuit q_v23) ✅ · C (7 contrôles) ✅ + analyse §D.
+Reste : scénarios V2 (demain, après merge origin/main + foncier-public-1) + finalisation. Commit, pas de merge._
