@@ -25,7 +25,30 @@ from sqlalchemy.orm import Session
 
 from . import scenarios_v2 as v2
 from . import score_labuse as sl
+from . import equipement_public as eqp
 from .. import runs
+from ..proprietaire_type import PUBLIC_DGFIP_GROUPES
+
+
+def adresses_pour(session: Session, idus: list[str]) -> dict[str, str]:
+    """ECRANS-NOV-2 — l'ADRESSE (factuelle, table `adresses`/BAN) d'un lot d'IDU, pour la carte de
+    résultat. Une seule adresse par parcelle (la plus basse par numéro) ; jamais inventée (absence =
+    pas de clé). Lecture seule, un aller par page servie (≤ limite), pas sur toute la sélection."""
+    if not idus:
+        return {}
+    rows = session.execute(text("""
+        SELECT DISTINCT ON (idu) idu,
+               trim(both ' ' from concat_ws(' ', numero, rep, voie)) AS adresse
+        FROM adresses
+        WHERE idu = ANY(:ids) AND voie IS NOT NULL
+        ORDER BY idu, NULLIF(regexp_replace(numero, '[^0-9]', '', 'g'), '')::int NULLS LAST, numero
+    """), {"ids": list(idus)})
+    out: dict[str, str] = {}
+    for r in rows:
+        a = (r.adresse or "").strip()
+        if a:
+            out[r.idu] = a
+    return out
 
 # Lecture conjointe : entrées de score (résiduel + pente/aire/périmètre/accès/AU) ET état Signal
 # servi (score_labuse). Une ligne par parcelle de la sélection.
@@ -172,9 +195,14 @@ def _famille_portion_productive(motifs) -> str | None:
         if m.get("result") != "POSITIVE":
             continue
         import re
-        mo = re.search(r"Zone PLU «\s*([A-Za-z]+)", m.get("detail") or "")
+        # Recette Astra ECRANS-NOV-2 : les zones AU PHASÉES sont préfixées d'un indice de phase
+        # (« 1AU », « 2AUc »…). Le code doit donc capturer un éventuel chiffre de tête (sinon
+        # `[A-Za-z]+` échouait sur « 1AU » → l'AU phasée n'était pas reconnue, et sa portion au
+        # régime non établi passait pour « maintenant »). On capture `\d*` + lettres, puis on
+        # retire l'indice de phase avant de lire la famille.
+        mo = re.search(r"Zone PLU «\s*(\d*[A-Za-z][0-9A-Za-z]*)", m.get("detail") or "")
         if mo:
-            code = mo.group(1).upper()
+            code = mo.group(1).upper().lstrip("0123456789")
             f = "AU" if code.startswith("AU") else "U" if code.startswith("U") else None
             if f == "AU":
                 return "AU"          # l'AU prime : une portion AU au régime non établi commande
@@ -184,7 +212,8 @@ def _famille_portion_productive(motifs) -> str | None:
 
 def record_from_rows(sig: dict, ent: dict | None, geom: dict | None,
                      residuel: dict | None = None, assiette_source: str | None = None,
-                     zone_parts: list | None = None, enrich_state: str = "not_requested"
+                     zone_parts: list | None = None, enrich_state: str = "not_requested",
+                     public_facility: str | None = None, public_land: bool = False
                      ) -> tuple[v2.ScenarioRecord, str]:
     """Construit un `ScenarioRecord` (+ bande V1 servie, pour la comparaison avant/après) depuis :
       · `sig`   — ligne `score_labuse` (Signal servi, cascade, bande V1) ;
@@ -327,12 +356,43 @@ def record_from_rows(sig: dict, ent: dict | None, geom: dict | None,
         assiette_source=eff_assiette,
         assiette_qualifiee=assiette_qualifiee,
         enrich_state=enrich_state,
+        public_facility=public_facility,
+        public_land=bool(public_land),
         **_signal_state(sig))
     return rec, (sig.get("bande") or "")
 
 
 _ASSIETTE_SQL = text(
     "SELECT parcel_id, assiette_source FROM parcel_residuel WHERE parcel_id = ANY(:ids)")
+
+# FONCIER-PUBLIC-1 — par parcelle : propriétaire public (groupe DGFiP) ET catégorie DOMINANTE de
+# l'équipement public en place (BPE/INSEE). Join spatial point-dans-parcelle sur `geom_2975` indexé
+# des deux côtés ; la catégorie est celle du module `equipement_public` (source unique). Un snack (A5)
+# ou un cabinet libéral (D2) sur l'emprise d'un campus est classé NULL → ignoré.
+_FONCIER_SQL = text(f"""
+SELECT p.id AS pid,
+       EXISTS (SELECT 1 FROM parcelle_personne_morale m
+               WHERE m.idu = p.idu AND m.groupe = ANY(:pub)) AS public_land,
+       (SELECT {eqp.categorie_sql('b')}
+          FROM spatial_layers b
+          WHERE b.kind = 'amenite_bpe' AND b.attrs->>'sdom' = ANY(:sdoms)
+            AND ST_Intersects(b.geom_2975, p.geom_2975)
+          ORDER BY {eqp.priorite_sql(eqp.categorie_sql('b'))}
+          LIMIT 1) AS public_facility
+FROM parcels p WHERE p.id = ANY(:ids)
+""")
+
+
+def _foncier_public(session: Session, parcel_ids: list[int]) -> dict[int, dict]:
+    """{parcel_id: {facility: catégorie|None, land: bool}} — propriétaire public + équipement public
+    dominant en place, par parcelle. LECTURE SEULE."""
+    if not parcel_ids:
+        return {}
+    rows = session.execute(_FONCIER_SQL, {"ids": parcel_ids,
+                                          "pub": list(PUBLIC_DGFIP_GROUPES),
+                                          "sdoms": list(eqp.RETENU_SDOM)})
+    return {r._mapping["pid"]: {"facility": r._mapping["public_facility"],
+                                "land": bool(r._mapping["public_land"])} for r in rows}
 
 
 def records_for_parcels(session: Session, parcel_ids: list[int], *, run_label: str | None = None,
@@ -355,6 +415,7 @@ def records_for_parcels(session: Session, parcel_ids: list[int], *, run_label: s
                  for r in session.execute(_GEOM_SQL, {"ids": parcel_ids})}
     assiette = {r._mapping["parcel_id"]: r._mapping["assiette_source"]
                 for r in session.execute(_ASSIETTE_SQL, {"ids": parcel_ids})}
+    foncier = _foncier_public(session, parcel_ids)
     # Échec du calcul live NON silencieux (avis Astra passe-3 §5) : état PAR PARCELLE —
     # not_requested / ok / failed. Un échec ne retombe pas discrètement sur le cache.
     residuel = {}
@@ -381,9 +442,11 @@ def records_for_parcels(session: Session, parcel_ids: list[int], *, run_label: s
         sig = sig_rows.get(pid)
         if sig is None:
             continue
+        fp = foncier.get(pid) or {}
         out.append(record_from_rows(sig, ent_rows.get(pid), geom_rows.get(pid), residuel.get(pid),
                                     assiette_source=assiette.get(pid), zone_parts=zones.get(pid),
-                                    enrich_state=etat.get(pid, "not_requested")))
+                                    enrich_state=etat.get(pid, "not_requested"),
+                                    public_facility=fp.get("facility"), public_land=fp.get("land", False)))
     return out
 
 
@@ -414,7 +477,15 @@ def _result_to_dict(res) -> dict:
         "vigilance": res.vigilance,
         "zone_productive": zp,
         "signal": {k: res.signal.get(k) for k in ("status", "p", "niveau", "label", "reason")},
+        # FONCIER-PUBLIC-1 — drapeaux servis : la catégorie de l'équipement public en place (None si
+        # aucun) et le caractère public du propriétaire (terrain public).
+        "equipement_public": res.details.get("equipement_public"),
+        "foncier_public": bool(res.details.get("foncier_public")),
         "tri_valeur": res.rank_value,
+        # Recette Astra ECRANS-NOV-2 : l'état du calcul LIVE est remonté PAR PARCELLE (comme dans le
+        # chemin persisté), pour qu'un échec d'enrichissement soit explicite et jamais confondu avec
+        # un « calcul à compléter » demandé.
+        "etat_calcul": res.details.get("enrich_state"),
         "details": res.details,
     }
 
@@ -443,6 +514,15 @@ def analyse_scenarios_payload(session: Session, parcel_ids: list[int], *, mode: 
         "SELECT signal_version FROM score_labuse WHERE run_label=:r AND signal_version IS NOT NULL "
         "LIMIT 1"), {"r": run_label}).scalar()
     parcelles = [_result_to_dict(r) for r in page]
+    adr = adresses_pour(session, [d["idu"] for d in parcelles])     # adresse factuelle (page seule)
+    for d in parcelles:
+        d["adresse"] = adr.get(d["idu"])
+    # Recette Astra ECRANS-NOV-2 : un échec d'enrichissement est remonté EXPLICITEMENT au niveau de
+    # la réponse (sur TOUTE la sélection, pas la seule page), jamais avalé en silence. `demande` dit
+    # si le calcul live a été requis ; `echecs` liste les IDU dont le calcul a échoué (enrich_state
+    # == 'failed'). Le front peut ainsi afficher une alerte au lieu de laisser croire au cache.
+    echecs = [rec.id for rec in records if rec.enrich_state == "failed"]
+    enrichissement = {"demande": bool(enrich), "echecs": echecs, "n_echecs": len(echecs)}
     # Contrat UNIQUE live = persisté (P3) : en vente, le statut foncier passe en champ séparé (le
     # statut porte déjà l'état de Signal SIGNAL_*, comme le chemin persisté).
     if mode == "sale":
@@ -458,6 +538,7 @@ def analyse_scenarios_payload(session: Session, parcel_ids: list[int], *, mode: 
         "reference": "calculs V2 actuels comparés au Signal servi " + str(run_label),
         "mode": mode, "scenario": scenario, "sort": opts.get("sort"),
         "as_of": as_of,
+        "enrichissement": enrichissement,
         "n_selection": eff["n"],
         "effectifs": {"par_statut": eff["par_statut"], "par_bande": eff["par_bande"]},
         "page": {"limit": limit, "offset": offset, "n": len(page)},

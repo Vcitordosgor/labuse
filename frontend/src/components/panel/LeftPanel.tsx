@@ -9,6 +9,9 @@ import { MODULES } from '../outils/registry'
 import { ChevronSection, CroixEntete } from './ChevronSection'
 import { ResultsSection } from './ResultsSection'
 import { FiltreLabuse } from './FiltreLabuse'
+// ECRANS-NOV-2 — l'écran « Analyse LABUSE par scénario » REMPLACE l'ancien bloc Score/Signal/Classer
+// par (ResultsSection en mode analyse) ici, dans le panneau de gauche, à côté de la carte.
+import { AnalyseScenario } from '../analyse/AnalyseScenario'
 import { CLIENT } from '../../lib/strings'
 import { BANDE_META, LEGEND_V2_ORDER, SIGNAL_META, TIER_V2_META, tierChipLabel } from '../../lib/status'
 
@@ -367,6 +370,10 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
 
 export function LeftPanel() {
   const { panelOpen, togglePanel, verdict } = useApp()
+  // ECRANS-NOV-2 — quand l'ANALYSE est allumée (analyseLabuse), le corps du panneau est l'écran
+  // « Analyse par scénario » (en-tête + objectif/scénario + puces + liste + détail). Le tri FACTUEL
+  // (analyseLabuse éteint) garde le VerdictHero + ResultsSection.
+  const analyse = useApp((s) => s.filters.analyseLabuse)
   // RETOURS-17 — plus de pastille de compteur sur la languette (panneau fermé) : `nFiltresActifs` retiré.
   // Item 1 (UX V1, mobile) : sous 640 px le panneau occupait 100 % de l'écran — la carte
   // n'existait pas. Désormais la CARTE est l'écran d'accueil mobile ; COUCHES + légende
@@ -476,8 +483,7 @@ export function LeftPanel() {
           <FiltresSection open={filtresOpen} onToggle={toggleFiltres} onRetract={() => setPanneauSection('listing')} fill={sectionFill} closable />
           {/* RETOURS-22 (pt 1) — plus AUCUN fin trait sous « Filtres », dans TOUS les états du panneau
               (fermé, ouvert, analyse) : le séparateur est retiré partout. */}
-          <VerdictHero />
-          {verdict && <ResultsSection />}
+          {verdict && analyse ? <AnalyseScenario /> : <><VerdictHero />{verdict && <ResultsSection />}</>}
         </aside>
       )}
 
@@ -511,8 +517,7 @@ export function LeftPanel() {
             {/* RETOURS-22 (pt 1) — plus AUCUN fin trait sous « Filtres », dans TOUS les états du panneau
               (fermé, ouvert, analyse) : le séparateur est retiré partout. */}
             <div className="shrink-0 px-5 pb-1"><Legend inline /></div>
-            <VerdictHero />
-            {verdict && <ResultsSection />}
+            {verdict && analyse ? <AnalyseScenario /> : <><VerdictHero />{verdict && <ResultsSection />}</>}
           </aside>
         </div>
       )}

@@ -119,6 +119,9 @@ const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/filtre
   // adresse `/analyse-annonce/{idu}.pdf` ET entrée lien `/analyse-annonce.pdf?url=…`. Même famille de
   // trous de proxy dev que /gabarit·/comparatif·/etude-zone ; prod OK (FastAPI même origine).
   '/analyse-annonce',
+  // ECRANS-NOV-2 : l'écran « Analyse LABUSE par scénario » lit GET /analyse/scenarios (ALGO-FIX-1).
+  // Préfixe DISTINCT de /analyse-annonce → il manquait au proxy dev (404 en `npm run dev`). Prod OK.
+  '/analyse/scenarios',
   // DOCS-FIX-1 (P1, garde-fou) : trois routes d'API que le FRONT appelle en JSON (`j<…>`) mais qui
   // MANQUAIENT encore au proxy dev — révélées par test_proxy_dev_couvre_routes_api.py :
   //   • '/config'      → main.tsx au démarrage (fetchServedRun = /config/run = runs.current())
