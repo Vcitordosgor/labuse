@@ -668,6 +668,17 @@ def render_fiche_pdf(fiche: dict) -> bytes:
                 lignes.append(entete)
         _section(pdf, "RÈGLEMENT PLU PAR ZONE", lignes, source=rp.get("disclaimer"))
 
+    # PLU-VEILLE-FIX-1 — le bandeau « PLU modifié — règles en cours de mise à jour », SERVI AVANT le
+    # reste de l'urbanisme : le document d'urbanisme a changé au Géoportail et les règles ne sont pas
+    # encore recalibrées/validées → les chiffres restent à confirmer.
+    pm = fiche.get("plu_modifie")
+    if pm:
+        _section(pdf, "PLU MODIFIÉ — MISE À JOUR EN COURS",
+                 [pm.get("message"),
+                  (f"Nouveau document : {pm['nouveau']}" if pm.get("nouveau") else None),
+                  "Les règles chiffrées sont en cours de recalibrage : les capacités de cette "
+                  "commune sont « à vérifier » le temps de la mise à jour."])
+
     pf = fiche.get("plu_fraicheur")
     if pf:
         _section(pdf, "FRAÎCHEUR DU ZONAGE (GPU vs mairie)",

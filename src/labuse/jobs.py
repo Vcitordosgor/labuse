@@ -513,6 +513,16 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
               "(cloche + mail, lien /sources) et à la page Données (instantané), avec le nom de la source "
               "et le millésime attendu ; une source rentrée dans l'ordre résout son incident. N'ingère rien.",
        test="tests/test_fraicheur_fix1_nuit.py::test_fraicheur_nuit_signale_les_retards"),
+    _j("plu-veille-nuit", "Veille PLU/GPU — un document remplacé est vu, appliqué en entier, le client prévenu",
+       "quotidien", "10 4 * * *", "08:10", touche="eau", timeout_s=1800,
+       raison="PLU-VEILLE-FIX-1 — chaque nuit, APRÈS la sonde, on compare pour les 24 communes "
+              "l'IDENTIFIANT (idurba) du document d'urbanisme servi par le Géoportail à celui "
+              "RÉELLEMENT ingéré, couche par couche (zonage, prescriptions, informations, règles). "
+              "Tout remplacement est vu le jour même, 1→1 compris (l'ancienne sonde lisait un COMPTE, "
+              "aveugle à la révision). Une commune en décalage passe ses parcelles « À vérifier » dans "
+              "l'Analyse, remonte chez John + à la page Données (ancien/nouveau document + gestes) avec "
+              "rappel sous 7 j, et rappelle trimestriellement les procédures en cours. N'ingère rien.",
+       test="tests/test_plu_veille_fix1.py::test_plu_veille_nuit_signale_desync"),
     _j("agents-sources", "Agents de source (veille amont par IA) — le dimanche, 1 semaine sur 2, plafonné",
        "tous les 15 j (dim)", "0 19 * * 0", "23:00 dim", touche="eau", timeout_s=3600,
        raison="Le détective : sur les sources SANS amont lisible (que la sonde ne peut pas lire), un "
@@ -881,6 +891,10 @@ _FAMILLE_LIBELLE_ROLE: dict[str, tuple[int, str, str, bool]] = {
     "fraicheur-nuit": (1, "Le contrôle de fraîcheur",
                        "Rejoue chaque nuit le tableau des sources : compare le millésime servi au dernier "
                        "publié et remonte tout retard (John, cloche, page Données). Gratuit.", True),
+    "plu-veille-nuit": (1, "La veille PLU",
+                        "Compare chaque nuit, pour les 24 communes, le document d'urbanisme servi par le "
+                        "Géoportail à celui ingéré, couche par couche. Un remplacement (même 1→1) passe les "
+                        "parcelles « À vérifier » et remonte chez John + à la page Données. Gratuit.", True),
     # ── 2 · Livraisons quotidiennes ──
     "ingest-bodacc": (2, "Livreur BODACC", "Procédures collectives, chaque matin.", True),
     "ingest-dvf": (2, "Livreur DVF", "Ventes immobilières, à chaque nouvelle livraison.", True),

@@ -69,7 +69,18 @@ ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS surface_m2 integer;
 ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS enrich_state text;
 ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS public_facility text;
 ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS public_land boolean NOT NULL DEFAULT false;
+-- PLU-VEILLE-FIX-1 — overlay « PLU modifié, règles en cours de mise à jour » : le statut foncier
+-- servi bascule « À vérifier » le temps de la mise à jour, et se RESTAURE (status_avant_plu) à la
+-- validation du recalibrage. Réversible, sans recalcul du run.
+ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS plu_recalibrage boolean NOT NULL DEFAULT false;
+ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS plu_modifie_le text;
+ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS status_avant_plu text;
 """
+
+# PLU-VEILLE-FIX-1 — seuls les statuts FONCIERS « chiffrés » basculent (cf. scenarios_v2._PLU_SENSIBLE) ;
+# « Hors de ce projet » / « À différer » / « Préétude » ne dépendent pas des chiffres du PLU → intacts.
+_PLU_SENSIBLE = ("ESTIMATED", "COMPUTE_PENDING", "NO_MARGIN", "TO_VERIFY")
+_PLU_CAUSE = "PLU_MODIFIE_RECALIBRAGE"
 
 _UPSERT = text("""
 INSERT INTO parcel_scenario_v2_runs
@@ -218,7 +229,7 @@ SELECT s.idu, s.status, s.cause, s.band, s.score, s.band_provisional,
        s.additional_m2, s.project_total_m2, s.existing_m2, s.net_signed_m2,
        s.conditional_future_m2, s.residual_m2, s.zone_prod_zone, s.zone_prod_area_m2,
        s.vigilance, s.bande_v1, s.enriched, s.surface_m2, s.enrich_state, s.analysis_version,
-       s.public_facility, s.public_land,
+       s.public_facility, s.public_land, s.plu_recalibrage, s.plu_modifie_le,
        sl.signal_p, sl.signal_niveau, sl.cascade_exclue
 FROM parcel_scenario_v2_runs s
 LEFT JOIN score_labuse sl ON sl.run_label = s.run_label AND sl.idu = s.idu
@@ -256,11 +267,27 @@ def _signal_persiste(p, niveau, cascade_exclue) -> dict:
     return {"status": "AVAILABLE", "p": p, "niveau": niveau, "reason": "PROBABILITE_SERVIE"}
 
 
+def _augmenter_plu(cause, vigilance, modifie_le):
+    """PLU-VEILLE-FIX-1 — l'overlay ne mute que le STATUT en base (restaurable) ; la CAUSE et la
+    VIGILANCE « PLU modifié » sont injectées à la lecture (idempotent). Rend (cause, vigilance)."""
+    cause = list(cause or [])
+    vig = list(vigilance or [])
+    if _PLU_CAUSE not in cause:
+        cause = [_PLU_CAUSE] + cause
+    msg = f"PLU modifié le {modifie_le or '…'} — règles en cours de mise à jour."
+    if not any("règles en cours de mise à jour" in str(v) for v in vig):
+        vig = vig + [msg]
+    return cause, vig
+
+
 def _row_from_mapping(m) -> dict:
     """Une ligne de scénario (+ Signal relayé, validé) depuis un mapping SQL — partagé par la lecture
     simple (commune ∩ IDU) et la lecture FILTRÉE (jeu de filtres complet, ECRANS-NOV-2)."""
+    cause, vigilance = m["cause"], m["vigilance"]
+    if m["plu_recalibrage"]:
+        cause, vigilance = _augmenter_plu(cause, vigilance, m["plu_modifie_le"])
     return {
-        "idu": m["idu"], "statut": m["status"], "cause": m["cause"], "bande": m["band"],
+        "idu": m["idu"], "statut": m["status"], "cause": cause, "bande": m["band"],
         "score": m["score"], "bande_provisoire": m["band_provisional"],
         "quantites": {"additional": m["additional_m2"], "project_total": m["project_total_m2"],
                       "existing": m["existing_m2"], "net_signed": m["net_signed_m2"],
@@ -268,7 +295,7 @@ def _row_from_mapping(m) -> dict:
         "residual_m2": m["residual_m2"], "surface_m2": m["surface_m2"],
         "zone_productive": ({"zone": m["zone_prod_zone"], "area_m2": m["zone_prod_area_m2"]}
                             if m["zone_prod_zone"] else None),
-        "vigilance": m["vigilance"], "bande_v1": m["bande_v1"],
+        "vigilance": vigilance, "bande_v1": m["bande_v1"],
         "quantites_calculees": m["enriched"], "etat_calcul": m["enrich_state"],
         "analysis_version": m["analysis_version"],
         # FONCIER-PUBLIC-1 — drapeaux servis (identiques au chemin live).
@@ -469,7 +496,7 @@ _SCN_COLS = """sv.idu, sv.status, sv.cause, sv.band, sv.score, sv.band_provision
        sv.additional_m2, sv.project_total_m2, sv.existing_m2, sv.net_signed_m2,
        sv.conditional_future_m2, sv.residual_m2, sv.zone_prod_zone, sv.zone_prod_area_m2,
        sv.vigilance, sv.bande_v1, sv.enriched, sv.surface_m2, sv.enrich_state, sv.analysis_version,
-       sv.public_facility, sv.public_land,
+       sv.public_facility, sv.public_land, sv.plu_recalibrage, sv.plu_modifie_le,
        sl.signal_p, sl.signal_niveau, sl.cascade_exclue"""
 
 # FONCIER-PUBLIC-1 — la case « Inclure le foncier public » (décochée par défaut) : quand elle est
@@ -688,6 +715,60 @@ def analyse_payload_filtre(session: Session, *, scn_run: str, mode: str, scenari
         "page": {"limit": limit, "offset": offset, "n": len(page)},
         "parcelles": page,
     }
+
+
+# ══════════ PLU-VEILLE-FIX-1 — overlay « PLU modifié, règles en cours de mise à jour » ══════════
+# Le signal client vit dans la table de run (l'endpoint LIT) : quand une commune bascule en `desync`
+# (document du Géoportail non encore suivi par toutes les couches / règles), ses parcelles passent
+# « À vérifier » SANS recalculer le run, et se RESTAURENT à la validation. On ne mute que le STATUT
+# (restaurable via status_avant_plu) ; la cause/vigilance « PLU modifié » sont injectées à la lecture.
+
+def appliquer_recalibrage(session: Session, *, run_label: str, commune: str,
+                          modifie_le: str | None, actif: bool) -> int:
+    """Pose (actif=True) ou lève (actif=False) l'overlay « PLU modifié » sur les parcelles de la
+    commune, les DEUX scénarios. Idempotent. Rend le nombre de lignes touchées."""
+    ensure_table(session)
+    if actif:
+        return session.execute(text(
+            "UPDATE parcel_scenario_v2_runs SET status_avant_plu = COALESCE(status_avant_plu, status), "
+            " status = 'TO_VERIFY', plu_recalibrage = true, plu_modifie_le = :d "
+            "WHERE run_label = :run AND commune = :c AND NOT plu_recalibrage "
+            " AND status = ANY(:sens)"),
+            {"run": run_label, "c": commune, "d": modifie_le, "sens": list(_PLU_SENSIBLE)}).rowcount
+    return session.execute(text(
+        "UPDATE parcel_scenario_v2_runs SET status = COALESCE(status_avant_plu, status), "
+        " status_avant_plu = NULL, plu_recalibrage = false, plu_modifie_le = NULL "
+        "WHERE run_label = :run AND commune = :c AND plu_recalibrage"),
+        {"run": run_label, "c": commune}).rowcount
+
+
+def synchroniser_recalibrage(session: Session, communes_desync: dict,
+                             *, run_label: str | None = None) -> dict:
+    """Aligne l'overlay sur l'état de veille : chaque commune du run est posée « À vérifier » si elle
+    est dans `communes_desync` (nom → {date_modif_fr}), restaurée sinon. Un seul passage, idempotent.
+    Retourne {posees, restaurees, lignes}."""
+    run_label = run_label or runs.current()
+    ensure_table(session)
+    noms = [r[0] for r in session.execute(text(
+        "SELECT DISTINCT commune FROM parcel_scenario_v2_runs WHERE run_label = :run AND commune IS NOT NULL"),
+        {"run": run_label})]
+    posees = restaurees = lignes = 0
+    for nom in noms:
+        d = communes_desync.get(nom)
+        if d:
+            n = appliquer_recalibrage(session, run_label=run_label, commune=nom,
+                                      modifie_le=d.get("date_modif_fr"), actif=True)
+            if n:
+                posees += 1
+                lignes += n
+        else:
+            n = appliquer_recalibrage(session, run_label=run_label, commune=nom,
+                                      modifie_le=None, actif=False)
+            if n:
+                restaurees += 1
+                lignes += n
+    session.commit()
+    return {"posees": posees, "restaurees": restaurees, "lignes": lignes, "run_label": run_label}
 
 
 def _versions_run(session, scn_run, scenario) -> dict:

@@ -109,8 +109,9 @@ def test_familles_attendues():
     # F4 passe de 22 à 24.
     # FRAICHEUR-FIX-1 : + fraicheur-nuit (F1, le contrôle de fraîcheur de nuit) + ingest-inpi-rne
     # (F2, le chargement INPI mensuel) → 39 jobs, F1 passe de 3 à 4, F2 de 7 à 8.
-    assert par_fam == {1: 4, 2: 8, 3: 3, 4: 24}
-    assert sum(par_fam.values()) == 39
+    # PLU-VEILLE-FIX-1 : + plu-veille-nuit (F1, la veille PLU/GPU de nuit) → 40 jobs, F1 passe de 4 à 5.
+    assert par_fam == {1: 5, 2: 8, 3: 3, 4: 24}
+    assert sum(par_fam.values()) == 40
 
 
 # ─────────────── endpoints (db) ───────────────

@@ -101,3 +101,65 @@ def plu_verif_cmd(
             if r["verdict"] != "TROUVE":
                 typer.echo(f"   {r['verdict']:9} {r['insee']} {r['zone']:10} {r['regle']:28} "
                            f"{r['valeur_labuse']:12} p{r['page']} {r['article']}")
+
+
+# ═══════════════════════ PLU-VEILLE-FIX-1 — veille PLU/GPU : voir, appliquer, prévenir ═══════════════════════
+
+@plu_app.command("etat")
+def plu_etat_cmd(
+    live: bool = typer.Option(False, "--live", help="Interroge le Géoportail en direct (sinon catalogue)."),
+) -> None:
+    """ÉTAT DES LIEUX des 24 communes : document Géoportail face à l'ingéré, couche par couche."""
+    from .. import controle_plu
+    from ..db import session_scope
+    gpu = controle_plu.fetch_gpu_ile() if live else None
+    with session_scope() as s:
+        tab = controle_plu.tableau_ile(s, gpu_par_insee=gpu)
+    n_desync = sum(1 for e in tab if e["etat"] == "desync")
+    for e in tab:
+        cer = ", ".join(e["couches_en_retard"]) or "—"
+        marque = "⚠ " if e["etat"] == "desync" else "  "
+        typer.echo(f"{marque}{e['insee']} {e['commune']:<24} {e['etat']:<8} "
+                   f"réf={e['reference'] or '—'}  retard=[{cer}]")
+    typer.echo(f"\n{n_desync} commune(s) en cours de mise à jour (desync) sur {len(tab)}.")
+
+
+@plu_app.command("appliquer")
+def plu_appliquer_cmd(
+    insee: str = typer.Option(..., "--insee", help="Code INSEE de la commune (ex. 97411)."),
+    overlay: bool = typer.Option(True, help="Pose l'overlay « À vérifier » sur les parcelles (Analyse)."),
+) -> None:
+    """LE GESTE UNIQUE : zonage + prescriptions + informations + drapeau « règles à recalibrer »
+    appliqués d'un seul tenant. Puis l'instantané de veille + l'overlay client sont rafraîchis."""
+    from .. import controle_plu
+    from ..db import session_scope
+    from ..scoring import scenarios_v2_persist as persist
+    with session_scope() as s:
+        bilan = controle_plu.appliquer_plu(s, insee, log=typer.echo)
+        controle_plu.rejouer_nuit(s)
+        if overlay:
+            ov = persist.synchroniser_recalibrage(s, controle_plu.communes_desync(s))
+            typer.echo(f"  overlay Analyse : {ov['lignes']} ligne(s) « À vérifier ».")
+    typer.echo(f"✓ {bilan['commune']} appliqué → {bilan['reference']} "
+               f"(zones {bilan['zonage']}, prescriptions {bilan['prescriptions']}, "
+               f"informations {bilan['informations']}). Règles à recalibrer.")
+    typer.echo("  Prod (couche servie) : rebâtir parcel_zone_plu → `labuse build-mvt` → `promote`.")
+
+
+@plu_app.command("valider")
+def plu_valider_cmd(
+    insee: str = typer.Option(..., "--insee", help="Code INSEE de la commune."),
+) -> None:
+    """Lève le drapeau « règles à recalibrer » (règles relues et validées) : la commune repasse
+    « à jour », le bandeau client disparaît, les parcelles sortent de « À vérifier »."""
+    from .. import controle_plu
+    from ..db import session_scope
+    from ..scoring import scenarios_v2_persist as persist
+    with session_scope() as s:
+        ok = controle_plu.valider_recalibrage(s, insee)
+        controle_plu.rejouer_nuit(s)
+        ov = persist.synchroniser_recalibrage(s, controle_plu.communes_desync(s))
+    if ok:
+        typer.echo(f"✓ recalibrage validé pour {insee} — {ov['lignes']} ligne(s) restaurée(s).")
+    else:
+        typer.echo(f"(aucun drapeau de recalibrage en cours pour {insee})")

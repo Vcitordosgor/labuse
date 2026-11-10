@@ -5267,6 +5267,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         # KELFONCIER-FIX-1 (Lot A) — statut d'ouverture de la zone AU (§4 Urbanisme + cause §10).
         "au_ouverture": _au_ouverture_block(db, idu),
         "plu_fraicheur": _plu_fraicheur(idu),   # M32 §2 : fraîcheur GPU-vs-mairie du zonage
+        "plu_modifie": _plu_modifie(db, idu),   # PLU-VEILLE-FIX-1 : bandeau « PLU modifié — règles en cours »
         "radar_procedure": _radar_proc(idu, (score_v2 or {}).get("tier")),   # M41 — radar procédures PLU
         "historique_site": _historique_site(db, idu),      # M42 — « Sur cette parcelle » (permis + caduc)
         "voisinage_proche": _voisinage_proche(db, idu),    # M42 — « Autour, à moins de 100 m »
@@ -6441,6 +6442,27 @@ def _icd_block(s2) -> dict | None:
 
 
 _PLU_FRAICHEUR_CACHE: dict = {}
+
+
+def _plu_modifie(db, idu: str) -> dict | None:
+    """PLU-VEILLE-FIX-1 — le bandeau CLIENT « PLU modifié le jj/mm/aaaa — règles en cours de mise à
+    jour », servi sur la fiche ET dans les documents TANT que la commune est en cours de mise à jour
+    (une couche d'urbanisme en retard sur le Géoportail, ou règles pas encore recalibrées/validées).
+    None quand la commune est à jour. Jamais un 500 : une veille absente = pas de bandeau."""
+    insee = (idu or "")[:5]
+    if not insee:
+        return None
+    try:
+        from .. import controle_plu
+        e = controle_plu.lire_etat(db, insee)
+    except Exception:  # noqa: BLE001 — la fiche ne tombe jamais pour un défaut de veille
+        return None
+    if not e or e.get("etat") != "desync":
+        return None
+    return {"date": e.get("date_modif_fr"), "ancien": e.get("ancien"), "nouveau": e.get("nouveau"),
+            "couches": e.get("couches_en_retard") or [],
+            "message": f"PLU modifié le {e.get('date_modif_fr') or '…'} — "
+                       "règles en cours de mise à jour."}
 
 
 def _plu_fraicheur(idu: str) -> dict | None:
@@ -8987,6 +9009,7 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         # M40 — source qui fait foi (GPU-vs-mairie) : présent aussi sur le payload par défaut et les
         # exports (md/html), pas seulement la fiche premium. Jamais un zonage servi sans mention.
         "plu_fraicheur": _plu_fraicheur(idu),
+        "plu_modifie": _plu_modifie(db, idu),   # PLU-VEILLE-FIX-1 : bandeau « PLU modifié — règles en cours »
         "radar_procedure": _radar_proc(idu, verdict_block["tier"]),   # M41 — radar procédures PLU
         "historique_site": _historique_site(db, idu),      # M42 — « Sur cette parcelle » (permis + caduc)
         "voisinage_proche": _voisinage_proche(db, idu),    # M42 — « Autour, à moins de 100 m »

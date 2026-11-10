@@ -379,6 +379,11 @@ export interface Fiche {
     document_servi?: string | null; fait_foi?: string | null
     en_cours?: string | null; action?: string | null; fait_foi_ok?: boolean
   } | null
+  // PLU-VEILLE-FIX-1 : « PLU modifié le jj/mm/aaaa — règles en cours de mise à jour » (desync).
+  plu_modifie?: {
+    date: string | null; ancien: string | null; nouveau: string | null
+    couches: string[]; message: string
+  } | null
   // M41 : radar procédures PLU (stade + conséquences parcellaires servables ; jamais l'issue).
   radar_procedure?: {
     indisponible?: boolean; raison?: string   // M125 — état PANNE (≠ absence)
