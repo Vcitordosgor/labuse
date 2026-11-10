@@ -110,8 +110,11 @@ fi
 # docs/ reste exclu (audit + 9,5 Mo de captures) ; on REDÉPOSE seulement le CODE des harnais (sans
 # les captures), par le même mécanisme -R. La garde `jobs selftest` (§2ter) refuse le déploiement
 # s'il en manque un. (Relocalisation durable hors docs/ = dette, comme ECHANTILLON/artefacts.)
+# DEPLOY-GROUPE-3 — le lot A LIT sa vérité-terrain preuves/choix.json (20 parcelles-pièges) ; deploy
+# ne livrait que A/harnais/ → FileNotFoundError, lot A rouge (dette DEPLOY-GROUPE-2 §A4). On la livre.
 HARNAIS_NU5=(
   docs/audit-2026-11/nu-5/A/harnais
+  docs/audit-2026-11/nu-5/A/preuves/choix.json
   docs/audit-2026-11/nu-5/B/harnais
   docs/audit-2026-11/nu-5/C/harnais_mails.py
   docs/audit-2026-11/nu-5/D/harnais.sql

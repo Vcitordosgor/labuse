@@ -97,7 +97,10 @@ async function main() {
 
   // ── 1. VERROU MOBILE : contexte vrai iPhone (écran < 1024 + UA mobile + tactile).
   for (const [dev, label] of [['iPhone 13', 'iPhone 13 (390, portrait)'], ['iPad (gen 7)', 'iPad gen7 (810, portrait)']]) {
-    const ctx = await browser.newContext({ ...devices[dev] })
+    // DEPLOY-GROUPE-3 — bypassCSP uniquement pour le navigateur d'AUDIT : la CSP de prod
+    // (script-src 'self') bloque sinon l'injection d'axe-core (page.addScriptTag) → l'audit lève
+    // (rc=2) au lieu de mesurer l'accessibilité. N'affecte QUE le navigateur du harnais, jamais le produit.
+    const ctx = await browser.newContext({ ...devices[dev], bypassCSP: true })
     await authentifier(ctx)
     const page = await ctx.newPage()
     await page.goto(BASE, { waitUntil: 'domcontentloaded' })
@@ -114,7 +117,7 @@ async function main() {
   }
 
   // ── 2. APP RENDUE (fenêtre de bureau rétrécie — non verrouillée).
-  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } })
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, bypassCSP: true })
   await authentifier(ctx)
   const page = await ctx.newPage()
   await page.goto(BASE, { waitUntil: 'domcontentloaded' })
