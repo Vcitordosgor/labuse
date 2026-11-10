@@ -552,8 +552,12 @@ export function MapView() {
   // mode analyse, la palette ne peut pas être exacte par expression → on demande les IDU du
   // résultat courant (plafond serveur 20 000, drapeau tronqué). La couche « Verdict — toute
   // l'île » court-circuite ce raccord (peinture explicite de tout le classement).
+  // ECRANS-NOV-2 (recette 2) — en analyse PAR SCÉNARIO, la carte peint EXACTEMENT la liste choisie
+  // (les IDU des cohortes cochées, posés par le panneau). Ils PRIMENT sur le raccord /filtre ; quand
+  // ils sont posés, on coupe le raccord /filtre (une seule source de peinture).
+  const scenarioPaint = useApp((s) => s.scenarioPaint)
   const besoinIdus = verdict && filters.analyseLabuse && !layers.couleurs_verdict
-    && hasCriteresHorsTuiles(filters)
+    && hasCriteresHorsTuiles(filters) && !scenarioPaint
   const idusQ = useQuery({
     queryKey: ['filtre-idus', filters],
     queryFn: () => getFiltreIdus(filters),
@@ -574,8 +578,11 @@ export function MapView() {
     },
     enabled: idusTronque, staleTime: 30_000,
   })
-  // palette exacte : résultat complet si sous le plafond, sinon les meilleures bandes (A+B).
-  const resultIdus = besoinIdus
+  // palette exacte : la liste choisie de l'analyse par scénario si posée (recette 2), sinon le
+  // résultat /filtre complet sous le plafond, sinon les meilleures bandes (A+B).
+  const resultIdus = scenarioPaint
+    ? scenarioPaint.idus
+    : besoinIdus
     ? (idusQ.data && !idusQ.data.idus_tronque ? idusQ.data.idus : (idusTopQ.data?.idus ?? null))
     : null
   // no-silent-caps : au-delà du plafond, la carte DIT ce qu'elle peint — les meilleures bandes

@@ -344,7 +344,8 @@ def evaluate(record, options=None) -> ScenarioResult:
         bounds=None, band=None, score=None, band_provisional=None,
         cause_codes=[], vigilance=list(rec.notes or []), zone_portion=None,
         signal=signal, rank_value=None, band_rank=_BANDE_RANG["NC"],
-        details={"provenance": rec.provenance, "assiette_source": rec.assiette_source})
+        details={"provenance": rec.provenance, "assiette_source": rec.assiette_source,
+                 "enrich_state": rec.enrich_state})
 
     def cause(code):
         if code and code not in res.cause_codes:

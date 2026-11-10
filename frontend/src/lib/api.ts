@@ -256,6 +256,91 @@ export type QualiteKey = 'A' | 'B' | 'C' | 'D'
 
 export interface CommuneInfo { commune: string; insee: string; parcelles: number; chaudes: number; evaluees: number; bbox: [number, number, number, number]; note: string | null }
 export const getCommunes = () => j<CommuneInfo[]>('/communes')
+
+// ══════════ ECRANS-NOV-2 — Analyse LABUSE PAR SCÉNARIO (GET /analyse/scenarios, ALGO-FIX-1) ══════
+// L'écran LIT le run servi (lecture seule) : statut + cause, bande + quantités par parcelle, plus
+// les effectifs par statut / bande / niveau de Signal sur TOUTE la sélection (ils « font le total »).
+// Aucun chiffre inventé côté front : tout vient de la réponse.
+export type ScnMode = 'sale' | 'potential'
+export type ScnScenario = 'keep' | 'rebuild'
+export type ScnStatut =
+  'ESTIMATED' | 'COMPUTE_PENDING' | 'TO_VERIFY' | 'DEFERRED' | 'NO_MARGIN' | 'OUTSIDE_OBJECTIVE'
+  | 'PRESTUDY' | 'SIGNAL_AVAILABLE' | 'SIGNAL_TO_VERIFY' | 'SIGNAL_NOT_AVAILABLE' | 'SIGNAL_OUT_OF_SCOPE'
+export interface ScnParcelle {
+  idu: string
+  adresse?: string | null
+  statut: ScnStatut
+  statut_foncier?: ScnStatut | null       // prospection : le statut foncier, à côté de l'état de Signal
+  cause: string[]
+  bande: string | null                    // A/B/C/D/0/NC (bande du scénario)
+  score: number | null
+  bande_provisoire: string | null
+  quantites: { additional: number | null; project_total: number | null; existing: number | null
+    net_signed: number | null; conditional_future: number | null }
+  residual_m2: number | null
+  surface_m2: number | null
+  zone_productive: { zone: string | null; area_m2: number | null } | null
+  vigilance: string[]
+  bande_v1: string | null
+  quantites_calculees?: boolean
+  etat_calcul?: string | null
+  analysis_version?: string
+  signal: { status: string; p: number | null; niveau: SignalNiveauKey | null; reason: string | null }
+  // présents seulement sur le détail enrichi (enrich=1) :
+  libelle?: string
+  horizon?: string
+  details?: { f_pente?: number; f_forme?: number; f_acces?: number; pente_pct?: number
+    bande_brute?: string; score_brut?: number; enrich_state?: string; assiette_source?: string
+    zone_parts?: { zone: string; fam: string; area_m2: number; constructible: boolean }[] }
+}
+export interface ScnEffectifs {
+  par_statut: Record<string, number>
+  par_bande: Record<string, number>
+  par_signal?: Record<string, number>     // prospection : fort/moyen/faible/non_evalue
+}
+export interface ScnReponse {
+  mode: ScnMode; scenario: string; sort: string | null
+  run_servi: string; signal_recette: string | null; scenario_engine_version: string | null
+  lot_mixte?: boolean; reference?: string
+  n_selection: number; n_filtre?: number
+  cohortes?: { bands: string[]; statuts: string[]; niveaux: string[] }
+  idus?: string[] | null            // ECRANS-NOV-2 — IDU des cohortes cochées (carte=1) ; null si > 20 000
+  idus_tronque?: boolean
+  effectifs: ScnEffectifs
+  enrichissement?: { demande: boolean; echecs: string[]; n_echecs: number }
+  page: { limit: number; offset: number; n: number }
+  parcelles: ScnParcelle[]
+}
+export interface ScnOpts {
+  mode?: ScnMode
+  scenario?: ScnScenario
+  sort?: string
+  // ECRANS-NOV-2 — cohortes COCHÉES (cases à cocher multiples) : bandes/statuts (potentiel), niveaux
+  // de Signal (prospection). Elles narrowent la LISTE, pas les effectifs. `limit=0` = effectifs seuls.
+  bands?: string[]
+  statuts?: string[]
+  niveaux?: string[]
+  carte?: boolean                   // renvoie les IDU des cohortes cochées pour peindre la carte
+  limit?: number
+  offset?: number
+}
+// ECRANS-NOV-2 — la LISTE lit EXACTEMENT la sélection de l'analyse (le JEU DE FILTRES COMPLET), comme
+// `getAnalyse` : filtres globaux SANS le tier de l'ancien classement (le scénario porte son verdict).
+export const getAnalyseScenarios = (f: Filters, o: ScnOpts = {}) => {
+  const { tiers: _t, ...rest } = filterParams(f)
+  const e: Record<string, string | number> = { mode: o.mode ?? 'potential', scenario: o.scenario ?? 'keep', ...rest }
+  if (o.sort) e.sort = o.sort
+  if (o.bands?.length) e.bands = o.bands.join(',')
+  if (o.statuts?.length) e.statuts = o.statuts.join(',')
+  if (o.niveaux?.length) e.niveaux = o.niveaux.join(',')
+  if (o.carte) e.carte = 1
+  if (o.limit != null) e.limit = o.limit
+  if (o.offset != null) e.offset = o.offset
+  return j<ScnReponse>(`/analyse/scenarios?${qf(e)}`)
+}
+// Le DÉTAIL d'UNE parcelle : enrich=1 (C/E exacts + facteurs), par IDU, hors sélection filtrée.
+export const getAnalyseScenarioDetail = (idu: string, o: { scenario?: ScnScenario } = {}) =>
+  j<ScnReponse>(`/analyse/scenarios?${qf({ idus: idu, mode: 'potential', scenario: o.scenario ?? 'keep', enrich: 1, limit: 1 })}`)
 // RECETTE-10 T11 — ce que le score apporte, mesuré (taux de mutation 12 mois par palier vs filtre
 // simple) + une phrase chiffrée/datée pour le client. Mémorisé 6h côté serveur.
 export interface ScoringBacktest { phrase_client: string | null; fenetre_fin?: string; base_pct?: number }
