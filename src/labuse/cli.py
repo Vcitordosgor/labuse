@@ -5139,6 +5139,41 @@ def jobs_crontab_cmd(
     typer.echo(contenu, nl=False)
 
 
+@jobs_app.command("rattraper")
+def jobs_rattraper_cmd(
+    dry_run: bool = typer.Option(False, "--dry-run", help="Liste les tâches à rattraper sans les lancer."),
+) -> None:
+    """FRAICHEUR-FIX-1 (point 8) — relance les tâches planifiées du JOUR qui ont été SAUTÉES (ex. un
+    déploiement qui réécrit le crontab en pleine nuit). Idempotent : ne relance pas un job déjà passé.
+    Lancé par deploy.sh après la pose du crontab ; chaque job garde ses propres garde-fous."""
+    from . import jobs as jobs_mod
+    if dry_run:
+        from datetime import datetime, timezone
+        from .tz import REUNION_TZ
+        now = datetime.now(timezone.utc)
+        depuis = now.astimezone(REUNION_TZ).replace(hour=0, minute=0, second=0, microsecond=0).astimezone(timezone.utc)
+        etats = {}
+        for nom in jobs_mod.JOBS:
+            e = jobs_mod.lire_etat(nom) or {}
+            d = e.get("debut")
+            try:
+                dt = datetime.fromisoformat(str(d)) if d else None
+                if dt and dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+            except (ValueError, TypeError):
+                dt = None
+            etats[nom] = dt
+        a_faire = jobs_mod.taches_a_rattraper(now, depuis, etats)
+        if not a_faire:
+            typer.echo("✓ aucune tâche du jour à rattraper")
+            return
+        for nom, prevu in a_faire:
+            typer.echo(f"• {nom} (prévu {prevu.isoformat()})")
+        return
+    out = jobs_mod.rattraper(log=typer.echo)
+    typer.echo(f"✓ rattrapage terminé : {len(out['resultats'])} tâche(s)")
+
+
 # ═══════════════════════ SOLIDITE-1 (Lot 1) — exploitation : les alertes, les incidents ═══════════════════════
 ops_app = typer.Typer(add_completion=False,
                       help="Exploitation (SOLIDITE-1) : vigies, incidents, alertes — plus de panne en silence.")

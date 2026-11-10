@@ -357,6 +357,82 @@ def prochaine(cron_utc: str, *, horizon_jours: int = 40) -> datetime | None:
     return None
 
 
+def _dernier_prevu(cron_utc: str, now: datetime, depuis: datetime) -> datetime | None:
+    """Le DERNIER instant (UTC) où `cron_utc` était prévu dans la fenêtre [depuis, now] (bornes incluses),
+    ou None si aucun. Balayage minute par minute (fenêtre ≤ 1 jour) — même grammaire que `prochaine`."""
+    from datetime import timedelta
+    t = depuis.replace(second=0, microsecond=0)
+    m, h, dom, mon, dow = cron_utc.split()
+    dernier = None
+    while t <= now:
+        cron_dow = (t.weekday() + 1) % 7
+        if (_champ_match(t.minute, m) and _champ_match(t.hour, h) and _champ_match(t.day, dom)
+                and _champ_match(t.month, mon) and _champ_match(cron_dow, dow)):
+            dernier = t
+        t += timedelta(minutes=1)
+    return dernier
+
+
+def taches_a_rattraper(now: datetime, depuis: datetime,
+                       etats: dict[str, datetime | None]) -> list[tuple[str, datetime]]:
+    """FRAICHEUR-FIX-1 (point 8) — PUR : quels jobs étaient prévus dans [depuis, now] mais n'ont PAS
+    tourné depuis leur instant prévu ? `etats` = {nom: dernier début (UTC, tz-aware) ou None}. On ignore
+    les jobs non planifiés, gelés et sous-horaires (15 min / 5 min : ils se rattrapent seuls au prochain
+    créneau). Rendu trié par instant prévu (on rattrape dans l'ordre chronologique)."""
+    out: list[tuple[str, datetime]] = []
+    for nom, j in JOBS.items():
+        if not j.planifie or j.gel or "min" in j.cadence:
+            continue
+        prevu = _dernier_prevu(j.cron_utc, now, depuis)
+        if prevu is None:
+            continue
+        debut = etats.get(nom)
+        if debut is None or debut < prevu:   # jamais tourné, ou dernier run ANTÉRIEUR au créneau = sauté
+            out.append((nom, prevu))
+    out.sort(key=lambda x: x[1])
+    return out
+
+
+def rattraper(*, now: datetime | None = None, executer=None, log=print) -> dict:
+    """FRAICHEUR-FIX-1 (point 8) — RATTRAPAGE post-déploiement : un déploiement qui réécrit le crontab
+    pendant la nuit fait SAUTER les crons déjà passés du jour (FRAICHEUR-1 §6 : le 10/11, 00:00→05:08
+    sautés, dont `ingest-dvf`, `ingest-sitadel`, `injection-nuit`). On relance ici CE QUI A ÉTÉ SAUTÉ
+    aujourd'hui (jour RÉUNION), dans l'ordre, chaque job gardant ses propres garde-fous (calcul-nuit
+    s'abandonne proprement hors de sa fenêtre 01-05 h). Idempotent : un job déjà passé n'est pas relancé.
+
+    `executer(nom)->int` injectable (défaut = `exec_one`), `now` injectable (défaut = maintenant UTC)."""
+    from .tz import REUNION_TZ
+    now = now or datetime.now(timezone.utc)
+    # début du JOUR RÉUNION, exprimé en UTC (la fenêtre « du jour » est celle du serveur = Réunion).
+    minuit_reunion = now.astimezone(REUNION_TZ).replace(hour=0, minute=0, second=0, microsecond=0)
+    depuis = minuit_reunion.astimezone(timezone.utc)
+    etats: dict[str, datetime | None] = {}
+    for nom in JOBS:
+        e = lire_etat(nom) or {}
+        d = e.get("debut")
+        try:
+            dt = datetime.fromisoformat(str(d)) if d else None
+            if dt and dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+        except (ValueError, TypeError):
+            dt = None
+        etats[nom] = dt
+    a_faire = taches_a_rattraper(now, depuis, etats)
+    executer = executer or exec_one
+    resultats = []
+    log(f"rattrapage : {len(a_faire)} tâche(s) du jour sautée(s) à relancer "
+        f"({', '.join(n for n, _ in a_faire) or 'aucune'})")
+    for nom, prevu in a_faire:
+        log(f"→ rattrapage {nom} (prévu {prevu.isoformat()})")
+        try:
+            code = executer(nom)
+        except Exception as exc:  # noqa: BLE001 — un rattrapage qui rate n'arrête pas les autres
+            code = 1
+            log(f"  ✗ {nom} : {exc}")
+        resultats.append({"nom": nom, "prevu": prevu.isoformat(), "code": code})
+    return {"a_rattraper": [n for n, _ in a_faire], "resultats": resultats}
+
+
 def liste() -> list[dict]:
     """Pour `labuse jobs list` + la page admin : chaque job avec sa planif, sa prochaine exécution et son
     dernier état."""
@@ -429,6 +505,14 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
               "(millésime API/page, GetCapabilities daté, en-tête de fichier). Une version amont plus "
               "récente ⇒ cloche admin. N'ingère rien : la sentinelle prévient, Vic décide.",
        test="tests/test_cron1_registre.py::test_sonde_sources_couvre_le_max"),
+    _j("fraicheur-nuit", "Contrôle de fraîcheur — rejoue le tableau des sources, remonte les retards",
+       "quotidien", "50 3 * * *", "07:50", touche="eau", timeout_s=900,
+       raison="FRAICHEUR-FIX-1 (point 7) — le contrôle PERMANENT : chaque nuit, APRÈS la sonde (dernier "
+              "publié frais), rejoue le tableau des sources avec le contrôle de millésime (ingéré vs "
+              "publié). Toute source qui passe « en retard » remonte chez John (onglet veille), à l'admin "
+              "(cloche + mail, lien /sources) et à la page Données (instantané), avec le nom de la source "
+              "et le millésime attendu ; une source rentrée dans l'ordre résout son incident. N'ingère rien.",
+       test="tests/test_fraicheur_fix1_nuit.py::test_fraicheur_nuit_signale_les_retards"),
     _j("agents-sources", "Agents de source (veille amont par IA) — le dimanche, 1 semaine sur 2, plafonné",
        "tous les 15 j (dim)", "0 19 * * 0", "23:00 dim", touche="eau", timeout_s=3600,
        raison="Le détective : sur les sources SANS amont lisible (que la sonde ne peut pas lire), un "
@@ -462,6 +546,15 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
               "(cadence du wrapper) — le producteur SDES publie une fois par mois ; le QUOTIDIEN legacy "
               "re-téléchargeait chaque jour le même jeu (gâchis + faux « frais »).",
        test="tests/test_cron1_registre.py::test_recoupements_arbitres"),
+    _j("ingest-inpi-rne", "INPI RNE — dirigeants des personnes morales foncières (outil Successions)",
+       "mensuel (6)", "0 1 6 * *", "05:00 le 6", touche="eau", timeout_s=10800, envoie_mail=True,
+       raison="FRAICHEUR-FIX-1 (point 3) — les dirigeants RNE (âges, fonctions) nourrissent l'outil "
+              "Successions. Avant, UN SEUL batch manuel (05/07/2026) sans job NI sentinelle (FRAICHEUR-1 "
+              "§3.3) : l'outil raisonnait sur des dirigeants vieux de ~4 mois. Désormais un poste MENSUEL "
+              "(le 6, delta résumable par SIREN, identifiants INPI_API_* en env) rafraîchit la table "
+              "pm_dirigeants ; la date servie à l'écran vient de la donnée (max ingested_at), et une "
+              "sentinelle de fraîcheur (rappel de cadence) alerte si le rafraîchissement décroche.",
+       test="tests/test_fraicheur_fix1_inpi.py::test_inpi_job_et_sentinelle"),
     _j("ingest-dpe", "DPE ADEME mensuel", "mensuel (12)", "0 0 12 * *", "04:00 le 12",
        touche="eau", timeout_s=3600,
        raison="Les DPE ADEME sortent en train MENSUEL (mesuré : dataUpdatedAt mensuel). RECOUPEMENT tranché : "
@@ -785,10 +878,15 @@ _FAMILLE_LIBELLE_ROLE: dict[str, tuple[int, str, str, bool]] = {
                       "Regarde chaque nuit si les producteurs ont publié une nouvelle version. Gratuit.", True),
     "agents-sources": (1, "Les enquêteurs IA",
                        "Pour les sources que le veilleur ne sait pas lire : un agent lit la page amont. Coûte quelques centimes le passage.", False),
+    "fraicheur-nuit": (1, "Le contrôle de fraîcheur",
+                       "Rejoue chaque nuit le tableau des sources : compare le millésime servi au dernier "
+                       "publié et remonte tout retard (John, cloche, page Données). Gratuit.", True),
     # ── 2 · Livraisons quotidiennes ──
     "ingest-bodacc": (2, "Livreur BODACC", "Procédures collectives, chaque matin.", True),
     "ingest-dvf": (2, "Livreur DVF", "Ventes immobilières, à chaque nouvelle livraison.", True),
     "ingest-sitadel": (2, "Livreur Sitadel", "Permis de construire, une fois par mois.", True),
+    "ingest-inpi-rne": (2, "Livreur INPI RNE",
+                        "Dirigeants des sociétés foncières (outil Successions), une fois par mois.", True),
     "ingest-dpe": (2, "Livreur DPE", "Diagnostics énergie, une fois par mois.", True),
     "ingest-sirene": (2, "Livreur SIRENE", "Entreprises géolocalisées, une fois par mois.", True),
     "sync-gpu": (2, "Livreur GPU", "Documents d'urbanisme (PLU), une fois par mois.", True),

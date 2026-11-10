@@ -1203,9 +1203,16 @@ def _calcul_successions(db: Session, commune, sdp_min, limit, offset) -> dict:
     # il est servi même quand le filtre rend 0 ligne (l'état vide honnête le cite).
     maj = db.execute(text(
         "SELECT to_char(max(computed_at), 'DD/MM/YYYY') FROM parcel_veille_succession")).scalar()
-    # Date amont RNE (âges dirigeants) — lue du catalogue, jamais en dur.
-    rne = db.execute(text("SELECT to_char(max(last_sync_at), 'DD/MM/YYYY') FROM data_sources "
-                          "WHERE name = 'INPI RNE (dirigeants)'")).scalar()
+    # FRAICHEUR-FIX-1 (point 3) — date RNE servie = celle de la DONNÉE (max(ingested_at) de
+    # pm_dirigeants), plus `data_sources.last_sync_at` (une date de catalogue qui pouvait diverger de
+    # l'ingéré : FRAICHEUR-1 §3.3 — l'écran montrait « au 06/10 » sans ingestion correspondante). Repli
+    # sur le catalogue uniquement si la table est absente (base partielle).
+    rne = db.execute(text(
+        "SELECT to_char(max(ingested_at), 'DD/MM/YYYY') FROM pm_dirigeants")).scalar() \
+        if db.execute(text("SELECT to_regclass('pm_dirigeants') IS NOT NULL")).scalar() else None
+    if not rne:
+        rne = db.execute(text("SELECT to_char(max(last_sync_at), 'DD/MM/YYYY') FROM data_sources "
+                              "WHERE name = 'INPI RNE (dirigeants)'")).scalar()
     return {"total": total, "n": len(items), "items": items,
             "maj": maj, "rne_sync": rne,
             "source": "RNE INPI (dirigeants) · Recherche d'entreprises (DINUM) · fichiers PM DGFiP",

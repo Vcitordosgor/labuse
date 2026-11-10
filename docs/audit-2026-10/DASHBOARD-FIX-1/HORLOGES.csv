@@ -36,3 +36,5 @@ resume-matin;quotidien;07:30;exploitation;deploy.sh → /etc/cron.d/labuse (gén
 john-veille;quotidien;03:00;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run john-veille
 essai-fin-proche;quotidien;09:00;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run essai-fin-proche
 verite-permanente;quotidien;06:00;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run verite-permanente
+fraicheur-nuit;quotidien;07:50;eau;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run fraicheur-nuit
+ingest-inpi-rne;mensuel (6);05:00 le 6;eau;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run ingest-inpi-rne
