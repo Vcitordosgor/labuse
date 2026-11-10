@@ -162,11 +162,9 @@ function CarteResultat({ p, objectif, scenario }:
         <span className="text-[14px] font-semibold tnum" style={{ color: grosColor }}>{gros}</span>
         {capExist && <span className="shrink-0 text-[11px] text-txt-dim tnum">{capExist}</span>}
       </div>
-      {/* une ligne de raison (gauche) + une flèche (droite) — toute la carte ouvre la fiche */}
-      <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-txt-mut">
-        <span className="min-w-0 truncate">{raison ? `▾ ${raison}` : ''}</span>
-        <span aria-hidden className="shrink-0 text-txt-dim">→</span>
-      </div>
+      {/* une ligne de raison, SEULEMENT si elle existe (plus de flèche ni d'espace vide en bas) —
+          toute la carte ouvre la fiche. */}
+      {raison && <div className="mt-1 truncate text-[11px] text-txt-mut">▾ {raison}</div>}
     </button>
   )
 }
@@ -295,7 +293,10 @@ export function AnalyseScenario() {
     : `Potentiel · ${scenario === 'rebuild' ? 'Reconstruction' : 'Bâti conservé'}`}`
   const parcelles = listeQ.data?.parcelles ?? []
 
-  // ── EN-TÊTE sur UNE ligne : « Analyse LABUSE » + « i » (Comprendre) + « ← Retour ». ──
+  // ── EN-TÊTE sur UNE ligne : « Analyse LABUSE » + « i » (Comprendre) + UN SEUL bouton « ← Retour »
+  // (règle des outils) : depuis la LISTE il ramène à « Choisir » (choix conservés) ; depuis « Choisir »
+  // il ramène aux filtres. ─────────────────────────────────────────────────────────────────────────
+  const retour = () => (etape === 'liste' ? setEtape('choisir') : retourFiltres())
   const entete = (
     <header className="flex shrink-0 items-center gap-2 px-5 pt-3 pb-2">
       <div className="flex min-w-0 flex-1 items-center gap-1.5">
@@ -303,7 +304,7 @@ export function AnalyseScenario() {
         <button data-comprendre onClick={() => setComprendre(true)} aria-label="Comprendre l'analyse"
           className="flex h-[14px] w-[14px] items-center justify-center rounded-full border border-mint/50 text-[9px] font-bold leading-none text-mint hover:bg-mint/10">i</button>
       </div>
-      <button data-retour onClick={retourFiltres}
+      <button data-retour onClick={retour}
         className="shrink-0 rounded-ctl border border-line-2 px-2 py-0.5 text-[10.5px] text-txt-mut hover:border-txt-dim hover:text-txt">← Retour</button>
     </header>
   )
@@ -363,11 +364,8 @@ export function AnalyseScenario() {
       ) : (
         /* ════════ ÉTAPE « LA LISTE » (prend tout le panneau) ════════ */
         <>
-          <button data-modifier onClick={() => setEtape('choisir')}
-            className="mx-5 shrink-0 rounded-lg border border-line-2 bg-bg-1 py-2 text-center text-[12.5px] font-medium text-mint hover:border-mint/50 hover:bg-mint/5">
-            Modifier la recherche
-          </button>
-          <div className="mx-5 mt-2 shrink-0 text-[11px] text-txt-mut">{resumeLigne}</div>
+          {/* « ← Retour » (en-tête) ramène ici à « Choisir » ; plus de bouton « Modifier la recherche ». */}
+          <div className="mx-5 shrink-0 text-[11px] text-txt-mut">{resumeLigne}</div>
           {tropLarge && (
             <div data-trop-large className="mx-5 mt-2 shrink-0 rounded-lg border border-amber/40 bg-amber-bg px-3 py-2 text-[11px] leading-snug text-amber">
               Liste trop large pour tout peindre ({fmtInt(nFiltre)}). À droite, la carte ne peint pas cette liste au-delà de {fmtInt(PAINT_CAP)} parcelles.

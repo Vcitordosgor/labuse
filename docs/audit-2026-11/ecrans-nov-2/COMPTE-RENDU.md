@@ -11,6 +11,18 @@ Références : les maquettes `7-analyse-labuse.png` → `7b-analyse-etapes.png` 
 
 ---
 
+## 0bis. Recette 3 — 2 points
+
+1. **Carte de résultat** : la **flèche → est retirée**, et l'espace qu'elle créait en bas aussi (la
+   ligne de raison n'est rendue QUE si elle existe — plus de rangée vide). La carte reste
+   **entièrement cliquable vers la fiche**.
+2. **Un seul bouton de navigation « ← Retour »** (règle des outils) : depuis la **liste** il ramène à
+   l'étape **« Choisir »** (choix conservés — vérifié WebKit : Excellente/Bonne toujours cochées) ;
+   depuis **« Choisir »** il ramène aux **filtres**. Le bouton **« Modifier la recherche » est retiré** ;
+   la ligne **« N parcelles · objectif · scénario » reste**.
+
+---
+
 ## 0. Recette 2 (maquette 7c-analyse-cartes) — 7 points
 
 1. **Phrase « Classées par bande… » retirée** (étape Choisir).

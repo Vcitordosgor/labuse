@@ -65,11 +65,18 @@ await shot('webkit-04-fiche')
 await page.evaluate(() => { const x = document.querySelector('.fiche-v6 button[aria-label*="ermer"]'); if (x) x.click() })
 await wait(400)
 
-// ── 6. focus au clic (cocher ne pose aucun contour) ──
-await page.locator(`${panel} [data-modifier]`).click()
-await page.waitForSelector(`${panel} [data-etape-choisir]`)
-await wait(300)
-await shot('webkit-05-modifier')
+// ── 6. recette 3 : UN SEUL bouton « ← Retour ». Depuis la LISTE → étape « Choisir » (choix conservés).
+const pasDeModifier = (await page.locator(`${panel} [data-modifier]`).count()) === 0
+await page.locator(`${panel} [data-retour]`).click()
+await page.waitForSelector(`${panel} [data-etape-choisir]`, { timeout: 8000 })
+await wait(400)
+const choixConserves = await page.evaluate(() => {
+  const btns = [...document.querySelectorAll('[data-etape-choisir] [role="checkbox"]')]
+  const coche = (lab) => { const b = btns.find((x) => x.textContent.includes(lab)); return b && b.getAttribute('data-check') === 'on' }
+  return { excellente: coche('Excellente'), bonne: coche('Bonne') }
+})
+await shot('webkit-05-retour-choisir')
+// focus au clic (cocher ne pose aucun contour)
 await page.locator(`${panel} [role="checkbox"]`).first().click()
 await wait(200)
 const focusAuClic = await page.evaluate(() => {
@@ -77,11 +84,18 @@ const focusAuClic = await page.evaluate(() => {
   return { input: document.documentElement.getAttribute('data-input'), tag: el && el.tagName,
     aContour: !!s && s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) > 0 }
 })
+// ── depuis « Choisir », « ← Retour » ramène aux filtres (panneau d'analyse disparu) ──
+await page.locator(`${panel} [data-retour]`).click()
+await wait(500)
+const retourFiltres = await page.evaluate(() => ({ panneauAnalyse: !!document.querySelector('[data-ecran="analyse-scenario"]'),
+  analyseLabuse: window.__labuse.getFilters().analyseLabuse }))
 
 console.log(JSON.stringify({
   choisir,
   carte_peint_liste: { n_idus: Array.isArray(paint?.idus) ? paint.idus.length : null, tronque: paint?.tronque },
   carteOuvreFiche: { clicIdu: idu, selectedIdu: fiche.selectedIdu, ficheDom: fiche.ficheDom },
-  vente: etat.vente, pasVoirDetail: etat.pasVoirDetail, focusAuClic,
+  vente: etat.vente, pasVoirDetail: etat.pasVoirDetail,
+  nav: { pasDeModifier, retourListe_vers_choisir_choixConserves: choixConserves, retourChoisir_vers_filtres: retourFiltres },
+  focusAuClic,
 }, null, 2))
 await b.close()
