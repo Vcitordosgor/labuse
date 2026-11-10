@@ -46,7 +46,13 @@ from labuse.faisabilite.engine import (  # noqa: E402
     estimate_capacity,
 )
 from labuse.faisabilite.zonage import ZoneRules, resolve_zone  # noqa: E402
-from labuse.exports import financier_bilan as FBILAN  # noqa: E402
+try:
+    from labuse.exports import financier_bilan as FBILAN  # noqa: E402
+except ImportError:
+    # DEPLOY-GROUPE-3 — DOCS-1 a retiré le document « Financier » (labuse.exports.financier_bilan).
+    # La famille métamorphique F3 revente/bilan n'a donc plus de moteur : on la saute GRACIEUSEMENT
+    # (feature retirée ≠ invariant en échec) pour que F3 reste IMPORTABLE et le banc ACHEVÉ (OPS-3).
+    FBILAN = None
 from labuse import taxe_amenagement as TAXE  # noqa: E402
 
 EPS = 1e-6  # tolérance d'égalité flottante (une direction « ≥ » accepte l'égalité à EPS près)
@@ -891,53 +897,56 @@ def generer(cx) -> tuple[list[RuleSpec], list[Ecartee]]:
         "SDP > 0 ⇒ emprise > 0 et niveaux ≥ 1 (pas de SDP sans support)", "INCOHERENT",
         "cohérence de signe", _mk_check_niveaux_sdp_coherence())
 
-    # ── 2) bilan de revente : marge décroît en achat/travaux/frais, croît en revente ──────────
-    for champ, sens, nom in (("prix_achat", -1, "prix d'achat"), ("travaux", -1, "travaux"),
-                             ("frais_acq_pct", -1, "frais d'acquisition %"),
-                             ("taux_apport", -1, "taux de portage"),
-                             ("duree_portage", -1, "durée de portage"),
-                             ("prix_revente", +1, "prix de revente")):
-        add(f"F3.revente.{champ}.marge_{'ge' if sens > 0 else 'le'}",
-            "exports.financier_bilan.calculer_revente",
-            f"{nom} ↑ ⇒ marge de revente {'≥' if sens > 0 else '≤'}", "INCOHERENT",
-            f"marge {'≥' if sens > 0 else '≤'}", _mk_check_revente(champ, sens, nom))
-    # taux de marge % : même sens pour les postes de COÛT (revente fixe), pas pour la revente
-    for champ, sens, nom in (("prix_achat", -1, "prix d'achat"), ("travaux", -1, "travaux"),
-                             ("frais_acq_pct", -1, "frais d'acquisition %")):
-        add(f"F3.revente.{champ}.taux_marge_le", "exports.financier_bilan.calculer_revente",
-            f"{nom} ↑ ⇒ taux de marge % ≤", "INCOHERENT", "taux de marge ≤",
-            _mk_check_revente_taux_marge(champ, sens, nom))
-    ecartees.append(Ecartee("F3.revente.prix_revente.taux_marge_ge", "F3",
-                            "exports.financier_bilan.calculer_revente",
-                            "taux de marge = marge/revente : revente ↑ fait croître num ET dénom — "
-                            "le sens n'est PAS garanti par construction (dépend du coût total) → écartée"))
+    # ── 2+3) bilans revente / à rebours — DEPLOY-GROUPE-3 : sautés si le moteur financier a été
+    # retiré (DOCS-1, document « Financier »). Feature absente ⇒ ses invariants ne s'appliquent plus.
+    if FBILAN is not None:
+        # ── 2) bilan de revente : marge décroît en achat/travaux/frais, croît en revente ──────────
+        for champ, sens, nom in (("prix_achat", -1, "prix d'achat"), ("travaux", -1, "travaux"),
+                                 ("frais_acq_pct", -1, "frais d'acquisition %"),
+                                 ("taux_apport", -1, "taux de portage"),
+                                 ("duree_portage", -1, "durée de portage"),
+                                 ("prix_revente", +1, "prix de revente")):
+            add(f"F3.revente.{champ}.marge_{'ge' if sens > 0 else 'le'}",
+                "exports.financier_bilan.calculer_revente",
+                f"{nom} ↑ ⇒ marge de revente {'≥' if sens > 0 else '≤'}", "INCOHERENT",
+                f"marge {'≥' if sens > 0 else '≤'}", _mk_check_revente(champ, sens, nom))
+        # taux de marge % : même sens pour les postes de COÛT (revente fixe), pas pour la revente
+        for champ, sens, nom in (("prix_achat", -1, "prix d'achat"), ("travaux", -1, "travaux"),
+                                 ("frais_acq_pct", -1, "frais d'acquisition %")):
+            add(f"F3.revente.{champ}.taux_marge_le", "exports.financier_bilan.calculer_revente",
+                f"{nom} ↑ ⇒ taux de marge % ≤", "INCOHERENT", "taux de marge ≤",
+                _mk_check_revente_taux_marge(champ, sens, nom))
+        ecartees.append(Ecartee("F3.revente.prix_revente.taux_marge_ge", "F3",
+                                "exports.financier_bilan.calculer_revente",
+                                "taux de marge = marge/revente : revente ↑ fait croître num ET dénom — "
+                                "le sens n'est PAS garanti par construction (dépend du coût total) → écartée"))
 
-    # ── 3) bilan à rebours : charge foncière ───────────────────────────────────────────────────
-    for champ, pct, sens, nom, cle in (
-            ("prix_sortie", 1.3, +1, "prix de sortie", "hyp"),
-            ("cout", 1.3, -1, "coût de construction", "hyp"),
-            ("marge_pct", 1.5, -1, "marge visée %", "hyp"),
-            ("honoraires_pct", 1.5, -1, "honoraires %", "hyp"),
-            ("aleas_pct", 1.5, -1, "aléas %", "hyp"),
-            ("vrd_m2", 1.5, -1, "VRD €/m²", "hyp"),
-            ("cout_place", 1.5, -1, "coût par place", "hyp"),
-            ("surface_vendable", 1.3, +1, "surface vendable", "prog")):
-        add(f"F3.bilan.{champ}.charge_{'ge' if sens > 0 else 'le'}",
-            "exports.financier_bilan.calculer",
-            f"{nom} ↑ ⇒ charge foncière supportable {'≥' if sens > 0 else '≤'}", "INCOHERENT",
-            f"charge {'≥' if sens > 0 else '≤'}", _mk_check_bilan_charge(champ, pct, sens, nom, cle))
-    add("F3.bilan.ca_monotone", "exports.financier_bilan.calculer",
-        "prix de sortie ↑ et surface vendable ↑ ⇒ CA HT ≥", "INCOHERENT", "CA ≥",
-        _mk_check_bilan_ca())
-    add("F3.bilan.prix_demande.marge_residuelle_le", "exports.financier_bilan.calculer",
-        "prix demandé ↑ ⇒ marge résiduelle % ≤ et écart (charge−demandé) ≤", "INCOHERENT",
-        "marge résiduelle / écart ≤", _mk_check_bilan_marge_residuelle())
-    add("F3.bilan.prix_revient_monotone", "exports.financier_bilan.calculer",
-        "prix demandé ↑ et coût de construction ↑ ⇒ prix de revient €/m² ≥", "INCOHERENT",
-        "prix de revient ≥", _mk_check_bilan_prix_revient())
-    add("F3.bilan.portage.charge_le", "exports.financier_bilan.calculer",
-        "durée et taux de portage ↑ ⇒ poste portage ↑ ⇒ charge foncière ≤", "INCOHERENT",
-        "charge ≤", _mk_check_bilan_portage())
+        # ── 3) bilan à rebours : charge foncière ───────────────────────────────────────────────────
+        for champ, pct, sens, nom, cle in (
+                ("prix_sortie", 1.3, +1, "prix de sortie", "hyp"),
+                ("cout", 1.3, -1, "coût de construction", "hyp"),
+                ("marge_pct", 1.5, -1, "marge visée %", "hyp"),
+                ("honoraires_pct", 1.5, -1, "honoraires %", "hyp"),
+                ("aleas_pct", 1.5, -1, "aléas %", "hyp"),
+                ("vrd_m2", 1.5, -1, "VRD €/m²", "hyp"),
+                ("cout_place", 1.5, -1, "coût par place", "hyp"),
+                ("surface_vendable", 1.3, +1, "surface vendable", "prog")):
+            add(f"F3.bilan.{champ}.charge_{'ge' if sens > 0 else 'le'}",
+                "exports.financier_bilan.calculer",
+                f"{nom} ↑ ⇒ charge foncière supportable {'≥' if sens > 0 else '≤'}", "INCOHERENT",
+                f"charge {'≥' if sens > 0 else '≤'}", _mk_check_bilan_charge(champ, pct, sens, nom, cle))
+        add("F3.bilan.ca_monotone", "exports.financier_bilan.calculer",
+            "prix de sortie ↑ et surface vendable ↑ ⇒ CA HT ≥", "INCOHERENT", "CA ≥",
+            _mk_check_bilan_ca())
+        add("F3.bilan.prix_demande.marge_residuelle_le", "exports.financier_bilan.calculer",
+            "prix demandé ↑ ⇒ marge résiduelle % ≤ et écart (charge−demandé) ≤", "INCOHERENT",
+            "marge résiduelle / écart ≤", _mk_check_bilan_marge_residuelle())
+        add("F3.bilan.prix_revient_monotone", "exports.financier_bilan.calculer",
+            "prix demandé ↑ et coût de construction ↑ ⇒ prix de revient €/m² ≥", "INCOHERENT",
+            "prix de revient ≥", _mk_check_bilan_prix_revient())
+        add("F3.bilan.portage.charge_le", "exports.financier_bilan.calculer",
+            "durée et taux de portage ↑ ⇒ poste portage ↑ ⇒ charge foncière ≤", "INCOHERENT",
+            "charge ≤", _mk_check_bilan_portage())
 
     # ── 4) taxe d'aménagement ──────────────────────────────────────────────────────────────────
     for cle, nom in (("assiette_eur", "assiette"), ("total_eur", "total"),
