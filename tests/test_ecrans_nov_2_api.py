@@ -120,15 +120,28 @@ def test_order_by_potential():
     assert "surface_m2 DESC" in persist._order_by_potential("keep", "area")
 
 
-def test_chip_where_potentiel_et_prospection():
+def test_cohort_where_multi():
+    # cases à cocher MULTIPLES : bandes (estimées) UNION statuts ; prospection : niveaux.
     p = {}
-    assert "ESTIMATED" in persist._chip_where("potential", "A", None, None, p) and p["chip_band"] == "A"
+    w = persist._cohort_where("potential", ["A", "B"], [], [], p)
+    assert "ESTIMATED" in w and ":c_bands" in w and p["c_bands"] == ["A", "B"]
     p = {}
-    assert persist._chip_where("potential", None, "TO_VERIFY", None, p).endswith(":chip_statut")
-    assert p["chip_statut"] == "TO_VERIFY"
+    w = persist._cohort_where("potential", ["A"], ["TO_VERIFY"], [], p)
+    assert " OR " in w and p["c_bands"] == ["A"] and p["c_statuts"] == ["TO_VERIFY"]
     p = {}
-    assert persist._chip_where("sale", None, None, "fort", p) and p["chip_niv"] == "fort"
-    assert persist._chip_where("sale", None, None, None, {}) == ""
+    assert ":c_niv" in persist._cohort_where("sale", [], [], ["fort", "moyen"], p)
+    assert p["c_niv"] == ["fort", "moyen"]
+    # rien de coché ⇒ liste vide (AND FALSE)
+    assert "FALSE" in persist._cohort_where("potential", [], [], [], {})
+    assert "FALSE" in persist._cohort_where("sale", [], [], [], {})
+
+
+def test_n_coche_derive_des_effectifs():
+    eff = {"par_bande": {"A": 10, "B": 20, "C": 5}, "par_statut": {"TO_VERIFY": 7},
+           "par_signal": {"fort": 3, "faible": 9}}
+    assert persist._n_coche(eff, "potential", ["A", "B"], [], []) == 30
+    assert persist._n_coche(eff, "potential", ["A"], ["TO_VERIFY"], []) == 17
+    assert persist._n_coche(eff, "sale", [], [], ["fort"]) == 3
 
 
 _SEL = "SELECT idu FROM parcels WHERE commune = :selc"
@@ -138,23 +151,49 @@ _SEL = "SELECT idu FROM parcels WHERE commune = :selc"
 def test_payload_filtre_effectifs_font_le_total(sess):
     d = persist.analyse_payload_filtre(sess, scn_run="q_v20", mode="potential", scenario="keep",
                                        sort=None, sel_sql=_SEL, sel_params={"selc": "Entre-Deux"},
+                                       bands=["A", "B", "C", "D"],
+                                       statuts=["TO_VERIFY", "DEFERRED", "NO_MARGIN", "OUTSIDE_OBJECTIVE", "COMPUTE_PENDING"],
                                        limit=5)
     assert sum(d["effectifs"]["par_statut"].values()) == d["n_selection"]       # font le total
-    assert d["n_filtre"] == d["n_selection"]                                    # pas de puce
+    # toutes les cohortes cochées → n_filtre = n_selection (hors PRESTUDY, absent du parc potentiel)
+    assert d["n_filtre"] == d["n_selection"]
     assert d["page"]["n"] <= 5
 
 
 @_reel
-def test_payload_filtre_puce_narrowe_la_liste_pas_les_effectifs(sess):
+def test_payload_filtre_cohortes_narrowent_la_liste_pas_les_effectifs(sess):
     base = persist.analyse_payload_filtre(sess, scn_run="q_v20", mode="potential", scenario="keep",
                                           sort=None, sel_sql=_SEL, sel_params={"selc": "Entre-Deux"},
                                           limit=5)
+    # Excellente + Bonne cochées (défaut maquette)
     filt = persist.analyse_payload_filtre(sess, scn_run="q_v20", mode="potential", scenario="keep",
                                           sort=None, sel_sql=_SEL, sel_params={"selc": "Entre-Deux"},
-                                          band="A", limit=5)
+                                          bands=["A", "B"], limit=5)
     assert filt["effectifs"] == base["effectifs"]                              # effectifs intacts
-    assert filt["n_filtre"] == base["effectifs"]["par_bande"].get("A", 0)      # liste narrowée
-    assert all(p["statut"] == "ESTIMATED" and p["bande"] == "A" for p in filt["parcelles"])
+    pb = base["effectifs"]["par_bande"]
+    assert filt["n_filtre"] == pb.get("A", 0) + pb.get("B", 0)                 # N = somme cochée
+    assert all(p["statut"] == "ESTIMATED" and p["bande"] in ("A", "B") for p in filt["parcelles"])
+    # limit=0 (étape « Choisir ») : effectifs seuls, pas de liste
+    choisir = persist.analyse_payload_filtre(sess, scn_run="q_v20", mode="potential", scenario="keep",
+                                             sort=None, sel_sql=_SEL, sel_params={"selc": "Entre-Deux"},
+                                             bands=["A"], limit=0)
+    assert choisir["parcelles"] == [] and choisir["effectifs"] == base["effectifs"]
+
+
+@_reel
+def test_le_scenario_change_les_effectifs(sess):
+    # BUG Vic (4) : la reconstruction NE DOIT PAS servir les effectifs du bâti conservé.
+    keep = persist.effectifs_filtre(sess, scn_run="q_v20", mode="potential", scenario="keep",
+                                    sel_sql="SELECT idu FROM parcels", sel_params={})
+    reb = persist.effectifs_filtre(sess, scn_run="q_v20", mode="potential", scenario="rebuild",
+                                   sel_sql="SELECT idu FROM parcels", sel_params={})
+    # conservation : « Aucun ajout » existe, « Calcul à compléter » non
+    assert keep["par_statut"].get("NO_MARGIN", 0) > 0
+    assert keep["par_statut"].get("COMPUTE_PENDING", 0) == 0
+    # reconstruction : l'INVERSE (la plupart « Calcul à compléter », aucun « Aucun ajout »)
+    assert reb["par_statut"].get("COMPUTE_PENDING", 0) > 0
+    assert reb["par_statut"].get("NO_MARGIN", 0) == 0
+    assert keep["par_statut"] != reb["par_statut"]
 
 
 @_reel

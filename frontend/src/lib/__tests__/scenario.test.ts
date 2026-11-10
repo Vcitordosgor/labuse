@@ -59,14 +59,18 @@ describe('la phrase qui dit ce qui classe', () => {
   })
 })
 
-describe('résumé replié des filtres', () => {
-  it('potentiel reconstruction', () => {
-    expect(resumeFiltres('potential', 'rebuild', 'Toutes')).toBe('Potentiel foncier · Reconstruction · Toutes')
+describe('résumé replié des choix (cohortes cochées)', () => {
+  it('potentiel reconstruction, deux bandes cochées', () => {
+    expect(resumeFiltres('potential', 'rebuild', ['Excellente', 'Bonne']))
+      .toBe('Potentiel · Reconstruction · Excellente, Bonne')
   })
-  it('potentiel bâti conservé', () => {
-    expect(resumeFiltres('potential', 'keep', 'Excellente')).toBe('Potentiel foncier · Bâti conservé · Excellente')
+  it('potentiel bâti conservé, une bande', () => {
+    expect(resumeFiltres('potential', 'keep', ['Excellente'])).toBe('Potentiel · Bâti conservé · Excellente')
   })
   it('prospection (pas de scénario)', () => {
-    expect(resumeFiltres('sale', 'keep', 'Fort')).toBe('Prospection vente · Fort')
+    expect(resumeFiltres('sale', 'keep', ['Fort', 'Moyen'])).toBe('Prospection · Fort, Moyen')
+  })
+  it('aucune cochée', () => {
+    expect(resumeFiltres('potential', 'keep', [])).toBe('Potentiel · Bâti conservé · aucune')
   })
 })

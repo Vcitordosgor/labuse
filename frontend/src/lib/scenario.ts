@@ -53,9 +53,10 @@ export function phraseClassement(objectif: Objectif, scenario: ScnScenario): str
   return 'Classées par bande, puis par surface de plancher supplémentaire.'
 }
 
-// Le résumé replié du bloc de filtres (ex. « Potentiel foncier · Bâti conservé · Toutes »).
-export function resumeFiltres(objectif: Objectif, scenario: ScnScenario, pucelabel: string): string {
-  if (objectif === 'sale') return `Prospection vente · ${pucelabel}`
+// Le résumé replié des choix (étape « La liste ») : objectif · scénario · cohortes cochées.
+export function resumeFiltres(objectif: Objectif, scenario: ScnScenario, cohortes: string[]): string {
+  const choix = cohortes.length ? cohortes.join(', ') : 'aucune'
+  if (objectif === 'sale') return `Prospection · ${choix}`
   const scn = scenario === 'rebuild' ? 'Reconstruction' : 'Bâti conservé'
-  return `Potentiel foncier · ${scn} · ${pucelabel}`
+  return `Potentiel · ${scn} · ${choix}`
 }

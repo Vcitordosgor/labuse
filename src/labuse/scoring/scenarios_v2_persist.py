@@ -490,91 +490,123 @@ def _order_by_potential(scenario: str, sort: str) -> str:
     return f"{_GROUP_RANK_SQL}, {_BAND_RANK_SQL}, {qty} DESC NULLS LAST, sv.idu"
 
 
-def _chip_where(mode: str, band: str | None, statut: str | None, signal_niveau: str | None,
-                params: dict) -> str:
-    """Clause de PUCE (narrowe la LISTE, jamais les effectifs). Potentiel : bande (estimées) OU statut
-    nommé ; prospection : niveau de Signal."""
+def _as_list(x) -> list:
+    if x is None:
+        return []
+    if isinstance(x, str):
+        return [v.strip() for v in x.split(",") if v.strip()]
+    return list(x)
+
+
+def _cohort_where(mode: str, bands: list, statuts: list, niveaux: list, params: dict) -> str:
+    """Clause des COHORTES COCHÉES (ECRANS-NOV-2 : cases à cocher multiples — on peut en voir
+    plusieurs à la fois). Narrowe la LISTE, jamais les effectifs. Potentiel : bandes (estimées) OU
+    statuts nommés (union) ; prospection : niveaux de Signal. Rien de coché ⇒ liste vide."""
     if mode == "sale":
-        if signal_niveau:
-            params["chip_niv"] = signal_niveau
-            return f" AND {_NIVEAU_SQL} = :chip_niv"
-        return ""
-    if band:
-        params["chip_band"] = band
-        return " AND sv.status = 'ESTIMATED' AND sv.band = :chip_band"
-    if statut:
-        params["chip_statut"] = statut
-        return " AND sv.status = :chip_statut"
-    return ""
+        if niveaux:
+            params["c_niv"] = niveaux
+            return f" AND {_NIVEAU_SQL} = ANY(:c_niv)"
+        return " AND FALSE"
+    clauses = []
+    if bands:
+        params["c_bands"] = bands
+        clauses.append("(sv.status = 'ESTIMATED' AND sv.band = ANY(:c_bands))")
+    if statuts:
+        params["c_statuts"] = statuts
+        clauses.append("sv.status = ANY(:c_statuts)")
+    if not clauses:
+        return " AND FALSE"
+    return " AND (" + " OR ".join(clauses) + ")"
+
+
+def effectifs_filtre(session: Session, *, scn_run: str, mode: str, scenario: str,
+                     sel_sql: str, sel_params: dict) -> dict:
+    """Effectifs d'analyse sur la sélection du JEU DE FILTRES COMPLET, en UNE SEULE passe (la sélection
+    n'est résolue qu'une fois — à l'échelle île c'était 5 passes ≈ 10 s, c'est désormais une seule,
+    cachée au robinet). Renvoie n_selection + par_statut/par_bande (potentiel) ou par_signal/par_statut
+    (prospection)."""
+    scn_read = "keep" if mode == "sale" else scenario
+    base = {**sel_params, "scnrun": scn_run, "scn": scn_read}
+    join = ("JOIN parcel_scenario_v2_runs sv ON sv.idu = sel.idu "
+            "AND sv.run_label = :scnrun AND sv.scenario = :scn")
+    if mode == "sale":
+        join += " LEFT JOIN score_labuse sl ON sl.run_label = sv.run_label AND sl.idu = sv.idu"
+        rows = session.execute(text(
+            f"WITH sel AS ({sel_sql}) SELECT {_NIVEAU_SQL} AS niveau, {_SIGNAL_STATE_SQL} AS etat, "
+            f"count(*) AS n FROM sel {join} GROUP BY 1, 2"), base).fetchall()
+        par_signal: dict = {}
+        par_statut: dict = {}
+        n = 0
+        for r in rows:
+            par_signal[r.niveau] = par_signal.get(r.niveau, 0) + r.n
+            par_statut[r.etat] = par_statut.get(r.etat, 0) + r.n
+            n += r.n
+        return {"n_selection": n, "par_statut": par_statut, "par_bande": {}, "par_signal": par_signal}
+    rows = session.execute(text(
+        f"WITH sel AS ({sel_sql}) SELECT sv.status AS s, sv.band AS b, count(*) AS n "
+        f"FROM sel {join} GROUP BY sv.status, sv.band"), base).fetchall()
+    par_statut, par_bande, n = {}, {}, 0
+    for r in rows:
+        par_statut[r.s] = par_statut.get(r.s, 0) + r.n
+        if r.b is not None:
+            par_bande[r.b] = par_bande.get(r.b, 0) + r.n
+        n += r.n
+    return {"n_selection": n, "par_statut": par_statut, "par_bande": par_bande}
+
+
+def _n_coche(eff: dict, mode: str, bands: list, statuts: list, niveaux: list) -> int:
+    """L'effectif des cohortes COCHÉES (le « N » de « Voir les N parcelles ») — dérivé des effectifs,
+    AUCUNE requête de plus."""
+    if mode == "sale":
+        return sum(eff.get("par_signal", {}).get(x, 0) for x in niveaux)
+    return (sum(eff.get("par_bande", {}).get(b, 0) for b in bands)
+            + sum(eff.get("par_statut", {}).get(s, 0) for s in statuts))
 
 
 def analyse_payload_filtre(session: Session, *, scn_run: str, mode: str, scenario: str,
                            sort: str | None, sel_sql: str, sel_params: dict,
-                           band: str | None = None, statut: str | None = None,
-                           signal_niveau: str | None = None, limit: int = 100, offset: int = 0,
-                           as_of: str | None = None) -> dict:
+                           bands=None, statuts=None, niveaux=None,
+                           effectifs: dict | None = None,
+                           limit: int = 100, offset: int = 0, as_of: str | None = None) -> dict:
     """Réponse d'analyse V2 sur la sélection du JEU DE FILTRES COMPLET. `sel_sql` est une sous-requête
-    `SELECT idu` (résolue par app.py avec le MÊME gate que la liste d'IDU de la carte). Effectifs et
-    liste calculés EN SQL sur EXACTEMENT cette sélection ; les puces narrowent la liste."""
+    `SELECT idu` (résolue par app.py avec le MÊME gate que la liste d'IDU de la carte). Les effectifs
+    (passés `effectifs`, ou calculés ici — ils peuvent être cachés) portent sur TOUTE la sélection ;
+    les cohortes cochées (bands/statuts/niveaux) narrowent la LISTE. `limit=0` = effectifs seuls (pas
+    de liste : l'étape « Choisir »)."""
     if sort and sort not in ("signal", "capacity", "gain", "area", "id"):
         raise ValueError(f"tri inconnu : {sort}")
     scn_read = "keep" if mode == "sale" else scenario
     sort = sort or ("signal" if mode == "sale" else "capacity")
-    base = {**sel_params, "scnrun": scn_run, "scn": scn_read}
-    join = ("JOIN parcel_scenario_v2_runs sv ON sv.idu = sel.idu "
-            "AND sv.run_label = :scnrun AND sv.scenario = :scn "
-            "LEFT JOIN score_labuse sl ON sl.run_label = sv.run_label AND sl.idu = sv.idu")
+    bands, statuts, niveaux = _as_list(bands), _as_list(statuts), _as_list(niveaux)
+    eff = effectifs or effectifs_filtre(session, scn_run=scn_run, mode=mode, scenario=scenario,
+                                        sel_sql=sel_sql, sel_params=sel_params)
+    n_filtre = _n_coche(eff, mode, bands, statuts, niveaux)
 
-    # n_selection = la taille de la sélection filtrée (avant toute puce).
-    n_sel = session.execute(text(f"WITH sel AS ({sel_sql}) SELECT count(*) FROM sel JOIN "
-                                 f"parcel_scenario_v2_runs sv ON sv.idu = sel.idu "
-                                 f"AND sv.run_label=:scnrun AND sv.scenario=:scn"), base).scalar() or 0
-
-    # ── effectifs sur TOUTE la sélection (ils font le total) ──
-    if mode == "sale":
+    page: list = []
+    if limit:
+        base = {**sel_params, "scnrun": scn_run, "scn": scn_read}
+        join = ("JOIN parcel_scenario_v2_runs sv ON sv.idu = sel.idu "
+                "AND sv.run_label = :scnrun AND sv.scenario = :scn "
+                "LEFT JOIN score_labuse sl ON sl.run_label = sv.run_label AND sl.idu = sv.idu")
+        cohort = _cohort_where(mode, bands, statuts, niveaux, base)
+        order = _SALE_ORDER_SQL if mode == "sale" else _order_by_potential(scenario, sort)
+        base.update({"lim": limit, "off": offset})
         rows = session.execute(text(
-            f"WITH sel AS ({sel_sql}) "
-            f"SELECT {_NIVEAU_SQL} AS niveau, {_SIGNAL_STATE_SQL} AS etat, count(*) AS n "
-            f"FROM sel {join} GROUP BY 1, 2"), base).fetchall()
-        par_signal: dict = {}
-        par_statut: dict = {}
-        for r in rows:
-            par_signal[r.niveau] = par_signal.get(r.niveau, 0) + r.n
-            par_statut[r.etat] = par_statut.get(r.etat, 0) + r.n
-        eff = {"par_statut": par_statut, "par_bande": {}, "par_signal": par_signal}
-    else:
-        st = session.execute(text(
-            f"WITH sel AS ({sel_sql}) SELECT sv.status, count(*) FROM sel {join} GROUP BY sv.status"),
-            base).fetchall()
-        bd = session.execute(text(
-            f"WITH sel AS ({sel_sql}) SELECT sv.band, count(*) FROM sel {join} "
-            f"WHERE sv.band IS NOT NULL GROUP BY sv.band"), base).fetchall()
-        eff = {"par_statut": {r[0]: r[1] for r in st}, "par_bande": {r[0]: r[1] for r in bd}}
-
-    # ── liste : la PAGE, triée + filtrée par la puce, EN SQL (pas de lecture Python de la sélection) ──
-    page_params = dict(base)
-    chip = _chip_where(mode, band, statut, signal_niveau, page_params)
-    n_filtre = session.execute(text(
-        f"WITH sel AS ({sel_sql}) SELECT count(*) FROM sel {join} WHERE TRUE {chip}"),
-        page_params).scalar() or 0
-    order = _SALE_ORDER_SQL if mode == "sale" else _order_by_potential(scenario, sort)
-    page_params.update({"lim": limit, "off": offset})
-    rows = session.execute(text(
-        f"WITH sel AS ({sel_sql}) SELECT {_SCN_COLS} FROM sel {join} WHERE TRUE {chip} "
-        f"ORDER BY {order} LIMIT :lim OFFSET :off"), page_params)
-    page = [_row_from_mapping(r._mapping) for r in rows]
-    if mode == "sale":
+            f"WITH sel AS ({sel_sql}) SELECT {_SCN_COLS} FROM sel {join} WHERE TRUE {cohort} "
+            f"ORDER BY {order} LIMIT :lim OFFSET :off"), base)
+        page = [_row_from_mapping(r._mapping) for r in rows]
+        if mode == "sale":
+            for p in page:
+                etat = _SALE_STATE.get(p["signal"]["status"], "SIGNAL_NOT_AVAILABLE")
+                p["statut_foncier"] = p["statut"]
+                p["statut"] = etat
+        adr = build.adresses_pour(session, [p["idu"] for p in page])
         for p in page:
-            etat = _SALE_STATE.get(p["signal"]["status"], "SIGNAL_NOT_AVAILABLE")
-            p["statut_foncier"] = p["statut"]
-            p["statut"] = etat
-    adr = build.adresses_pour(session, [p["idu"] for p in page])
-    for p in page:
-        p["adresse"] = adr.get(p["idu"])
+            p["adresse"] = adr.get(p["idu"])
 
     ver = _versions_run(session, scn_run, scn_read)
     return {
-        "puce": {"band": band, "statut": statut, "signal_niveau": signal_niveau},
+        "cohortes": {"bands": bands, "statuts": statuts, "niveaux": niveaux},
         "n_filtre": n_filtre,
         "analysis_version": ver.get("analysis_version") or v2.VERSION,
         "scenario_engine_version": ver.get("score_version"),
@@ -585,7 +617,7 @@ def analyse_payload_filtre(session: Session, *, scn_run: str, mode: str, scenari
         "lot_mixte": ver.get("mixte", False),
         "reference": ("calculs V2 actuels comparés au Signal servi " + scn_run),
         "mode": mode, "scenario": scenario, "sort": sort, "as_of": as_of,
-        "n_selection": n_sel,
+        "n_selection": eff["n_selection"],
         "effectifs": {"par_statut": eff["par_statut"], "par_bande": eff["par_bande"],
                       **({"par_signal": eff["par_signal"]} if "par_signal" in eff else {})},
         "page": {"limit": limit, "offset": offset, "n": len(page)},

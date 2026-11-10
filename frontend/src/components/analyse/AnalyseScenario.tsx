@@ -23,17 +23,17 @@ import { EmptyState, ErrorState } from '../States'
 const PAGE = 40
 const PAINT_CAP = 20_000     // M55-G : au-delà, la carte peint les meilleures bandes (A+B).
 
-// ── une puce de sélection : étiquette + compte. Sélectionnée = vert opaque (règle de l'app),
-// sinon pastille de couleur (bande/statut/signal) + bord discret. Aucun contour au clic. ──────────
-function Puce({ label, n, color, on, onClick }:
-  { label: string; n: number | undefined; color?: string; on: boolean; onClick: () => void }) {
+// ── une LIGNE À COCHER : pastille de couleur + libellé + effectif + coche (✓). La ligne entière
+// bascule ; cochée = encre vive + ✓ menthe. Aucun contour au clic (règle de l'app). ────────────────
+function CheckRow({ label, n, color, on, onToggle }:
+  { label: string; n: number | undefined; color: string; on: boolean; onToggle: () => void }) {
   return (
-    <button onClick={onClick}
-      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11.5px] transition-colors duration-quick ${
-        on ? 'border-transparent bg-mint font-medium text-mint-on' : 'border-line-2 text-txt hover:border-txt-dim'}`}>
-      {!on && color && <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: color }} />}
-      <span>{label}</span>
-      {n != null && <span className={on ? 'tnum text-mint-on/80' : 'tnum text-txt-dim'}>{fmtInt(n)}</span>}
+    <button data-check={on ? 'on' : 'off'} role="checkbox" aria-checked={on} onClick={onToggle}
+      className="flex w-full items-center gap-2.5 rounded-md px-1.5 py-1.5 text-left text-[12.5px] transition-colors duration-quick hover:bg-surface-2">
+      <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: on ? color : 'transparent', border: `1.5px solid ${color}` }} />
+      <span className={`min-w-0 flex-1 truncate ${on ? 'text-txt-hi' : 'text-txt-mut'}`}>{label}</span>
+      {n != null && <span className={`tnum ${on ? 'text-txt' : 'text-txt-dim'}`}>{fmtInt(n)}</span>}
+      <span className="w-3 shrink-0 text-center text-[12px] font-bold text-mint">{on ? '✓' : ''}</span>
     </button>
   )
 }
@@ -269,168 +269,187 @@ function ComprendreModale({ onClose }: { onClose: () => void }) {
   )
 }
 
+// Cohortes cochées par défaut : Excellente + Bonne en potentiel (maquette) ; Fort + Moyen en vente.
+type Coches = { bands: string[]; statuts: string[]; niveaux: NiveauChip[] }
+const COCHES_DEFAUT = (o: Objectif): Coches =>
+  o === 'sale' ? { bands: [], statuts: [], niveaux: ['fort', 'moyen'] }
+    : { bands: ['A', 'B'], statuts: [], niveaux: [] }
+
 export function AnalyseScenario() {
   // ECRANS-NOV-2 (placement) — le panneau vit DANS la colonne de gauche, à côté de la carte : il lit
   // le JEU DE FILTRES GLOBAL (la sélection de l'analyse), et « ← Retour » revient aux filtres.
   const filters = useApp((s) => s.filters)
   const retourFiltres = useApp((s) => s.retourFiltres)
+  const [etape, setEtape] = useState<'choisir' | 'liste'>('choisir')
   const [objectif, setObjectif] = useState<Objectif>('potential')
   const [scenario, setScenario] = useState<ScnScenario>('keep')
-  const [puce, setPuce] = useState<{ band?: 'A' | 'B' | 'C' | 'D'; statut?: string; niveau?: NiveauChip } | null>(null)
-  const [open, setOpen] = useState(true)         // le bloc de filtres, ouvert à la première analyse
+  const [coches, setCoches] = useState<Coches>(COCHES_DEFAUT('potential'))
   const [limit, setLimit] = useState(PAGE)
   const [detailIdu, setDetailIdu] = useState<string | null>(null)
   const [comprendre, setComprendre] = useState(false)
 
-  // Une sélection de puce / un changement de filtre ou d'objectif remet la pagination à zéro.
-  useEffect(() => { setLimit(PAGE) }, [filters, objectif, scenario, puce])
-  // Les puces d'un objectif (bandes/statuts) n'ont pas de sens dans l'autre (niveaux de Signal) :
-  // changer d'objectif remet la puce sur « Tous » (plus de label périmé sur la liste).
-  useEffect(() => { setPuce(null) }, [objectif])
+  // Changer d'objectif remet les cases cochées sur le défaut de ce nouvel objectif (bandes ≠ niveaux).
+  useEffect(() => { setCoches(COCHES_DEFAUT(objectif)) }, [objectif])
+  useEffect(() => { setLimit(PAGE) }, [filters, objectif, scenario, coches, etape])
 
-  const query = useQuery({
-    queryKey: ['scn', filters, objectif, scenario, puce, limit],
+  // ── EFFECTIFS (étape « Choisir » + le N de l'étape « Liste ») : une requête limit=0, CACHÉE côté
+  // serveur (30 s). `placeholderData=prev` → changer d'objectif ou de scénario GARDE l'affichage
+  // précédent le temps de la mise à jour (jamais « 0 parcelle »). C'est aussi le fix du bug (4) :
+  // les effectifs sont RE-TIRÉS pour le scénario choisi (plus les chiffres du bâti conservé). ──────
+  const effQ = useQuery({
+    queryKey: ['scn-eff', filters, objectif, scenario],
+    queryFn: () => getAnalyseScenarios(filters, { mode: objectif, scenario, limit: 0 }),
+    placeholderData: (prev) => prev,
+  })
+  const data: ScnReponse | undefined = effQ.data
+  const eff = data?.effectifs
+  const nSelection = data?.n_selection ?? 0
+  const tropLarge = nSelection > PAINT_CAP
+
+  // ── LISTE (étape « Liste ») : la page des cohortes cochées. Activée à l'étape Liste seulement. ──
+  const listeQ = useQuery({
+    queryKey: ['scn-liste', filters, objectif, scenario, coches, limit],
     queryFn: () => getAnalyseScenarios(filters, {
       mode: objectif, scenario, limit,
-      band: puce?.band ?? null, statut: puce?.statut ?? null, signalNiveau: puce?.niveau ?? null,
+      bands: coches.bands, statuts: coches.statuts, niveaux: coches.niveaux,
     }),
-    placeholderData: (prev) => prev,          // compteur stable, pas de clignotement (RETOURS-21)
+    enabled: etape === 'liste',
+    placeholderData: (prev) => prev,
   })
-  const data: ScnReponse | undefined = query.data
-  const eff = data?.effectifs
 
-  // Les segments de la barre de répartition + la rangée de puces, selon l'objectif.
-  const { segments, chips } = useMemo(() => {
-    if (!eff) return { segments: [], chips: [] as { key: string; label: string; n: number; color?: string; on: boolean; set: () => void }[] }
+  // La liste des lignes à cocher + les segments de la barre, selon l'objectif. Chaque ligne porte
+  // son effectif (servi par l'API) ; une case cochée s'ajoute, jamais ne remplace (plusieurs à voir).
+  const { lignes, segments } = useMemo(() => {
+    if (!eff) return { lignes: [] as { key: string; label: string; n: number; color: string; on: boolean; toggle: () => void }[], segments: [] }
+    const toggle = (famille: 'bands' | 'statuts' | 'niveaux', key: string) => () =>
+      setCoches((c) => {
+        const arr = c[famille] as string[]
+        const next = arr.includes(key) ? arr.filter((x) => x !== key) : [...arr, key]
+        return { ...c, [famille]: next }
+      })
     if (objectif === 'sale') {
       const ps = eff.par_signal ?? {}
       const segs = NIVEAUX_CHIP.map((k) => ({ color: NIVEAU_META[k].color, n: ps[k] ?? 0, label: NIVEAU_META[k].label }))
-      const chs = [
-        { key: 'tous', label: 'Tous', n: data!.n_selection, color: undefined as string | undefined, on: !puce, set: () => setPuce(null) },
-        ...NIVEAUX_CHIP.map((k) => ({ key: k, label: NIVEAU_META[k].label, n: ps[k] ?? 0, color: NIVEAU_META[k].color,
-          on: puce?.niveau === k, set: () => setPuce({ niveau: k }) })),
-      ]
-      return { segments: segs, chips: chs }
+      const lg = NIVEAUX_CHIP.map((k) => ({ key: k, label: NIVEAU_META[k].label, n: ps[k] ?? 0,
+        color: NIVEAU_META[k].color, on: coches.niveaux.includes(k), toggle: toggle('niveaux', k) }))
+      return { lignes: lg, segments: segs }
     }
     const pb = eff.par_bande, pst = eff.par_statut
     const segs = [
       ...BANDES_CHIP.map((b) => ({ color: BANDE_META[b].color, n: pb[b] ?? 0, label: BANDE_META[b].label })),
       ...STATUTS_CHIP.map((s) => ({ color: STATUT_SCN_META[s].color, n: pst[s] ?? 0, label: STATUT_SCN_META[s].label })),
     ]
-    const chs = [
-      { key: 'tous', label: 'Tous', n: data!.n_selection, color: undefined as string | undefined, on: !puce, set: () => setPuce(null) },
-      ...BANDES_CHIP.map((b) => ({ key: b, label: BANDE_META[b].label, n: pb[b] ?? 0, color: BANDE_META[b].color,
-        on: puce?.band === b, set: () => setPuce({ band: b }) })),
-      ...STATUTS_CHIP.map((s) => ({ key: s, label: STATUT_SCN_META[s].label, n: pst[s] ?? 0, color: STATUT_SCN_META[s].color,
-        on: puce?.statut === s, set: () => setPuce({ statut: s }) })),
+    const lg = [
+      ...BANDES_CHIP.map((b) => ({ key: b, label: BANDE_META[b].label, n: pb[b] ?? 0,
+        color: BANDE_META[b].color, on: coches.bands.includes(b), toggle: toggle('bands', b) })),
+      ...STATUTS_CHIP.map((s) => ({ key: s, label: STATUT_SCN_META[s].label, n: pst[s] ?? 0,
+        color: STATUT_SCN_META[s].color, on: coches.statuts.includes(s), toggle: toggle('statuts', s) })),
     ]
-    return { segments: segs, chips: chs }
-  }, [eff, objectif, puce, data])
+    return { lignes: lg, segments: segs }
+  }, [eff, objectif, coches])
 
-  const pucelabel = !puce ? 'Toutes'
-    : puce.band ? BANDE_META[puce.band].label
-    : puce.statut ? STATUT_SCN_META[puce.statut]?.label ?? '—'
-    : puce.niveau ? NIVEAU_META[puce.niveau].label : 'Toutes'
+  // N = somme des effectifs cochés (immédiat, dérivé des effectifs — pas d'attente de la liste).
+  const nCoche = useMemo(() => {
+    if (!eff) return 0
+    if (objectif === 'sale') return coches.niveaux.reduce((s, k) => s + (eff.par_signal?.[k] ?? 0), 0)
+    return coches.bands.reduce((s, b) => s + (eff.par_bande[b] ?? 0), 0)
+      + coches.statuts.reduce((s, k) => s + (eff.par_statut[k] ?? 0), 0)
+  }, [eff, objectif, coches])
 
-  const parcelles = data?.parcelles ?? []
-  const nFiltre = data?.n_filtre ?? data?.n_selection ?? 0
-  const tropLarge = (data?.n_selection ?? 0) > PAINT_CAP
+  // Libellés des cohortes cochées (pour la ligne de résumé de l'étape « Liste »).
+  const labelsCoches = useMemo(() => {
+    if (objectif === 'sale') return coches.niveaux.map((k) => NIVEAU_META[k].label)
+    return [...coches.bands.map((b) => BANDE_META[b as Bande]?.label ?? b),
+      ...coches.statuts.map((s) => STATUT_SCN_META[s]?.label ?? s)]
+  }, [objectif, coches])
+
+  const parcelles = listeQ.data?.parcelles ?? []
+
+  // ── EN-TÊTE sur UNE ligne : « Analyse LABUSE » + « i » (Comprendre) + « ← Retour ». ──
+  const entete = (
+    <header className="flex shrink-0 items-center gap-2 px-5 pt-3 pb-2">
+      <div className="flex min-w-0 flex-1 items-center gap-1.5">
+        <span className="text-[12.5px] font-semibold tracking-wide text-txt-hi">Analyse LABUSE</span>
+        <button data-comprendre onClick={() => setComprendre(true)} aria-label="Comprendre l'analyse"
+          className="flex h-[14px] w-[14px] items-center justify-center rounded-full border border-mint/50 text-[9px] font-bold leading-none text-mint hover:bg-mint/10">i</button>
+      </div>
+      <button data-retour onClick={retourFiltres}
+        className="shrink-0 rounded-ctl border border-line-2 px-2 py-0.5 text-[10.5px] text-txt-mut hover:border-txt-dim hover:text-txt">← Retour</button>
+    </header>
+  )
 
   return (
-    <div data-ecran="analyse-scenario" className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="flex min-h-0 w-full flex-1 flex-col">
-        {/* ── EN-TÊTE ─────────────────────────────────────────────────────────── */}
-        <header className="flex shrink-0 items-center gap-2 px-5 pt-3 pb-2">
-          <div className="min-w-0 flex-1 text-[12.5px] font-semibold tracking-wide text-txt-hi">
-            Analyse LABUSE <span className="text-txt-dim">· {fmtInt(data?.n_selection ?? 0)} parcelles</span>
-          </div>
-          {/* RETOURS-20 (pt 8) — « ← Retour » revient aux filtres (store.retourFiltres). */}
-          <button data-retour onClick={retourFiltres}
-            className="shrink-0 rounded-ctl border border-line-2 px-2 py-0.5 text-[10.5px] text-txt-mut hover:border-txt-dim hover:text-txt">← Retour</button>
-          <button data-comprendre onClick={() => setComprendre(true)}
-            className="inline-flex shrink-0 items-center gap-1 rounded-ctl border border-mint/40 px-2 py-0.5 text-[11px] font-medium text-mint hover:bg-mint/10">
-            <span className="flex h-[13px] w-[13px] items-center justify-center rounded-full border border-mint/50 text-[9px] font-bold leading-none">i</span>
-            Comprendre l'analyse
-          </button>
-        </header>
+    <div data-ecran="analyse-scenario" data-etape={etape} className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+      {entete}
 
-        {/* ── BLOC DE FILTRES (repliable) ─────────────────────────────────────── */}
-        <div className="shrink-0 px-5">
-          {open ? (
-            <div className="space-y-3 rounded-xl border border-line-2 bg-bg-1 p-3.5">
-              <div>
-                <div className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-txt-dim">Objectif</div>
-                <Segment value={objectif} onChange={setObjectif}
-                  options={[{ v: 'sale', label: 'Prospection vente' }, { v: 'potential', label: 'Potentiel foncier' }]} />
-              </div>
-              {objectif === 'potential' && (
-                <div>
-                  <div className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-txt-dim">Projet · logement</div>
-                  <Segment value={scenario} onChange={setScenario}
-                    options={[{ v: 'keep', label: 'Bâti conservé' }, { v: 'rebuild', label: 'Reconstruction' }]} />
-                </div>
-              )}
-              <p className="text-[11px] leading-snug text-txt-mut">{phraseClassement(objectif, scenario)}</p>
-              {eff && (
-                <div className="space-y-2">
-                  <BarreRepartition segments={segments} />
-                  <div className="flex flex-wrap gap-1.5">
-                    {chips.map((c) => <Puce key={c.key} label={c.label} n={c.n} color={c.color} on={c.on} onClick={c.set} />)}
-                  </div>
-                </div>
-              )}
-              <button onClick={() => setOpen(false)}
-                className="text-[11px] text-txt-dim hover:text-txt">Replier les filtres ▴</button>
-            </div>
-          ) : (
-            <button onClick={() => setOpen(true)}
-              className="flex w-full items-center justify-between rounded-xl border border-line-2 bg-bg-1 px-3.5 py-2.5 text-left text-[12px] text-txt hover:border-txt-dim">
-              <span>{resumeFiltres(objectif, scenario, pucelabel)}</span>
-              <span className="text-txt-dim">▾</span>
-            </button>
-          )}
-        </div>
-
-        {/* ── LISTE ───────────────────────────────────────────────────────────── */}
-        <div className="mt-3 flex items-center justify-between px-5">
-          <span className="text-[10px] font-medium uppercase tracking-wide text-txt-dim">
-            {fmtInt(nFiltre)} parcelle{nFiltre > 1 ? 's' : ''}{puce ? ' — ' + pucelabel.toLowerCase() : objectif === 'sale' ? '' : ' analysées'}
-          </span>
-        </div>
-        {tropLarge && (
-          <div data-trop-large className="mx-5 mt-2 shrink-0 rounded-lg border border-amber/40 bg-amber-bg px-3 py-2 text-[11px] leading-snug text-amber">
-            Sélection trop large pour tout peindre ({fmtInt(data?.n_selection ?? 0)}). À droite, la carte peint les meilleures bandes (Excellente + Bonne).
-          </div>
-        )}
-
-        <div data-scn-scroll className="mt-2 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-5 pb-6">
-          {query.isLoading && !data ? (
-            <Squelette bloc label="LABUSE croise ses sources…" />
-          ) : query.isError ? (
-            <ErrorState message="Analyse indisponible." />
-          ) : parcelles.length === 0 ? (
-            <EmptyState title="Aucune parcelle" hint="Aucune parcelle pour cette puce dans la sélection." />
-          ) : (
+      {etape === 'choisir' ? (
+        /* ════════ ÉTAPE « CHOISIR » ════════ */
+        <div data-etape-choisir className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 pb-4">
+          <div className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-txt-dim">Objectif</div>
+          <Segment value={objectif} onChange={setObjectif}
+            options={[{ v: 'sale', label: 'Prospection' }, { v: 'potential', label: 'Potentiel' }]} />
+          {objectif === 'potential' && (
             <>
-              {parcelles.map((p) => (
-                <CarteResultat key={p.idu} p={p} objectif={objectif} scenario={scenario}
-                  onDetail={() => setDetailIdu(p.idu)} />
-              ))}
-              {nFiltre > parcelles.length && (
-                <button onClick={() => setLimit((l) => l + PAGE)} disabled={query.isFetching}
-                  className="mt-1 shrink-0 rounded-lg border border-line-2 py-2 text-[11.5px] text-txt-mut hover:border-txt-dim hover:text-txt">
-                  {query.isFetching ? 'Chargement…' : `Charger plus (${fmtInt(nFiltre - parcelles.length)} restantes)`}
-                </button>
-              )}
-              <p className="mt-2 shrink-0 text-[10.5px] leading-snug text-txt-ghost">
-                {objectif === 'sale'
-                  ? 'Une maison au potentiel garde son Signal : en prospection, on cherche qui va bouger, pas ce qui se construit.'
-                  : 'Les parcelles « À vérifier » / « Calcul à compléter » ne sont pas perdues : elles attendent une donnée, pas une décision.'}
-              </p>
+              <div className="mb-1.5 mt-3 text-[10px] font-medium uppercase tracking-wide text-txt-dim">Projet · logement</div>
+              <Segment value={scenario} onChange={setScenario}
+                options={[{ v: 'keep', label: 'Bâti conservé' }, { v: 'rebuild', label: 'Reconstruction' }]} />
             </>
           )}
+          <p className="mt-3 text-[11px] leading-snug text-txt-mut">{phraseClassement(objectif, scenario)}</p>
+          <div className="mt-3 flex items-center justify-between">
+            <span className="text-[10px] font-medium uppercase tracking-wide text-txt-dim">{fmtInt(nSelection)} parcelles analysées</span>
+            {effQ.isFetching && <span className="text-[10px] text-txt-ghost">mise à jour…</span>}
+          </div>
+          <div className="mt-2"><BarreRepartition segments={segments} /></div>
+          {/* la liste des bandes et statuts à cocher (plusieurs possibles), chacun son effectif */}
+          <div className="mt-2.5 flex flex-col">
+            {lignes.map((l) => <CheckRow key={l.key} label={l.label} n={l.n} color={l.color} on={l.on} onToggle={l.toggle} />)}
+          </div>
+          {/* un seul bouton : « Voir les N parcelles » */}
+          <button data-voir-parcelles onClick={() => setEtape('liste')} disabled={nCoche === 0}
+            className="mt-4 shrink-0 rounded-lg bg-mint py-2.5 text-center text-[13px] font-semibold text-mint-on transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
+            Voir les {fmtInt(nCoche)} parcelles →
+          </button>
         </div>
-      </div>
+      ) : (
+        /* ════════ ÉTAPE « LA LISTE » (prend tout le panneau) ════════ */
+        <>
+          {/* les choix, repliés en une ligne de résumé — « Modifier ▾ » rouvre l'étape « Choisir » */}
+          <button data-modifier onClick={() => setEtape('choisir')}
+            className="mx-5 flex shrink-0 items-center justify-between rounded-lg border border-line-2 bg-bg-1 px-3 py-2 text-left hover:border-txt-dim">
+            <span className="min-w-0 truncate text-[11.5px] text-txt">{resumeFiltres(objectif, scenario, labelsCoches)}
+              <span className="text-txt-dim"> · {fmtInt(nCoche)} parcelles</span></span>
+            <span className="shrink-0 pl-2 text-[11px] font-medium text-mint">Modifier ▾</span>
+          </button>
+          {tropLarge && (
+            <div data-trop-large className="mx-5 mt-2 shrink-0 rounded-lg border border-amber/40 bg-amber-bg px-3 py-2 text-[11px] leading-snug text-amber">
+              Sélection trop large pour tout peindre ({fmtInt(nSelection)}). À droite, la carte peint les meilleures bandes (Excellente + Bonne).
+            </div>
+          )}
+          <div data-scn-scroll className="mt-2 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-5 pb-6">
+            {listeQ.isLoading && !listeQ.data ? (
+              <Squelette bloc label="LABUSE dresse la liste…" />
+            ) : listeQ.isError ? (
+              <ErrorState message="Analyse indisponible." />
+            ) : parcelles.length === 0 ? (
+              <EmptyState title="Aucune parcelle" hint="Aucune parcelle dans les cohortes cochées." />
+            ) : (
+              <>
+                {parcelles.map((p) => (
+                  <CarteResultat key={p.idu} p={p} objectif={objectif} scenario={scenario}
+                    onDetail={() => setDetailIdu(p.idu)} />
+                ))}
+                {nCoche > parcelles.length && (
+                  <button onClick={() => setLimit((l) => l + PAGE)} disabled={listeQ.isFetching}
+                    className="mt-1 shrink-0 rounded-lg border border-line-2 py-2 text-[11.5px] text-txt-mut hover:border-txt-dim hover:text-txt">
+                    {listeQ.isFetching ? 'Chargement…' : `Charger plus (${fmtInt(nCoche - parcelles.length)} restantes)`}
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        </>
+      )}
 
       {detailIdu && (
         <DetailOverlay idu={detailIdu} scenario={scenario} onClose={() => setDetailIdu(null)} />

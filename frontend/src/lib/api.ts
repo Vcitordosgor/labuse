@@ -303,7 +303,7 @@ export interface ScnReponse {
   run_servi: string; signal_recette: string | null; scenario_engine_version: string | null
   lot_mixte?: boolean; reference?: string
   n_selection: number; n_filtre?: number
-  puce?: { band: string | null; statut: string | null; signal_niveau: string | null }
+  cohortes?: { bands: string[]; statuts: string[]; niveaux: string[] }
   effectifs: ScnEffectifs
   enrichissement?: { demande: boolean; echecs: string[]; n_echecs: number }
   page: { limit: number; offset: number; n: number }
@@ -313,9 +313,11 @@ export interface ScnOpts {
   mode?: ScnMode
   scenario?: ScnScenario
   sort?: string
-  band?: 'A' | 'B' | 'C' | 'D' | null
-  statut?: string | null
-  signalNiveau?: 'fort' | 'moyen' | 'faible' | 'non_evalue' | null
+  // ECRANS-NOV-2 — cohortes COCHÉES (cases à cocher multiples) : bandes/statuts (potentiel), niveaux
+  // de Signal (prospection). Elles narrowent la LISTE, pas les effectifs. `limit=0` = effectifs seuls.
+  bands?: string[]
+  statuts?: string[]
+  niveaux?: string[]
   limit?: number
   offset?: number
 }
@@ -325,9 +327,9 @@ export const getAnalyseScenarios = (f: Filters, o: ScnOpts = {}) => {
   const { tiers: _t, ...rest } = filterParams(f)
   const e: Record<string, string | number> = { mode: o.mode ?? 'potential', scenario: o.scenario ?? 'keep', ...rest }
   if (o.sort) e.sort = o.sort
-  if (o.band) e.band = o.band
-  if (o.statut) e.statut = o.statut
-  if (o.signalNiveau) e.signal_niveau = o.signalNiveau
+  if (o.bands?.length) e.bands = o.bands.join(',')
+  if (o.statuts?.length) e.statuts = o.statuts.join(',')
+  if (o.niveaux?.length) e.niveaux = o.niveaux.join(',')
   if (o.limit != null) e.limit = o.limit
   if (o.offset != null) e.offset = o.offset
   return j<ScnReponse>(`/analyse/scenarios?${qf(e)}`)

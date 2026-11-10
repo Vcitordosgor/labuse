@@ -3314,13 +3314,14 @@ def analyse_scenarios(
     mode: str = Query("potential", pattern="^(sale|potential)$"),
     scenario: str = Query("keep", pattern="^(keep|rebuild|divide)$"),
     sort: str | None = Query(None, pattern="^(signal|capacity|gain|area|id)$"),
-    # ECRANS-NOV-2 — PUCES comptées : narrowent la LISTE servie, jamais les effectifs. En potentiel,
-    # une bande (parcelles estimées) OU un statut nommé ; en prospection, un niveau de Signal.
-    band: str | None = Query(None, pattern="^(A|B|C|D)$"),
-    statut: str | None = Query(None, pattern="^(TO_VERIFY|DEFERRED|NO_MARGIN|OUTSIDE_OBJECTIVE|COMPUTE_PENDING|PRESTUDY)$"),
-    signal_niveau: str | None = Query(None, pattern="^(fort|moyen|faible|non_evalue)$"),
+    # ECRANS-NOV-2 — COHORTES cochées (cases à cocher multiples) : narrowent la LISTE servie, jamais
+    # les effectifs. En potentiel, des bandes (parcelles estimées) et/ou des statuts nommés (union) ;
+    # en prospection, des niveaux de Signal. CSV ; vides = liste vide (l'écran coche au moins une case).
+    bands: str | None = Query(None, description="bandes cochées (CSV de A,B,C,D)"),
+    statuts: str | None = Query(None, description="statuts cochés (CSV)"),
+    niveaux: str | None = Query(None, description="niveaux de Signal cochés (CSV, prospection)"),
     enrich: bool = Query(False, description="calcule C/E live (reconstruction exacte) — plus lent"),
-    limit: int = Query(100, ge=1, le=1000), offset: int = Query(0, ge=0),
+    limit: int = Query(100, ge=0, le=1000), offset: int = Query(0, ge=0),
     db: Session = Depends(get_db)) -> dict:
     """ALGO-FIX-1 / ECRANS-NOV-2 — Analyse LABUSE V2 par SCÉNARIO, en LECTURE SEULE sur le run servi.
 
@@ -3358,10 +3359,16 @@ def analyse_scenarios(
             enrich=True, limit=limit, offset=offset, as_of=datetime.now(timezone.utc).isoformat())
     # LISTE : la sélection du jeu de filtres complet (comme l'analyse actuelle), effectifs + page en SQL.
     sel_sql, sel_params = _scenario_selection_sql(db, c, idus_restrict=wanted)
+    # Les EFFECTIFS (par statut/bande/Signal) sont CACHÉS 30 s par (filtre × mode × scénario) — ils
+    # sont stables, la sélection n'est résolue qu'une fois, et basculer objectif/scénario redevient
+    # instantané après le premier calcul (plus de 10 s à l'échelle île, plus d'« effectifs périmés »).
+    eff_key = ("scn_eff", c.cache_key(), mode, scenario, tuple(sorted(wanted or ())))
+    eff = _mem_cached(eff_key, 30.0, lambda: _persist.effectifs_filtre(
+        db, scn_run=run_label, mode=mode, scenario=scenario, sel_sql=sel_sql, sel_params=sel_params))
     return _persist.analyse_payload_filtre(
         db, scn_run=run_label, mode=mode, scenario=scenario, sort=sort,
-        sel_sql=sel_sql, sel_params=sel_params, band=band, statut=statut, signal_niveau=signal_niveau,
-        limit=limit, offset=offset, as_of=datetime.now(timezone.utc).isoformat())
+        sel_sql=sel_sql, sel_params=sel_params, bands=bands, statuts=statuts, niveaux=niveaux,
+        effectifs=eff, limit=limit, offset=offset, as_of=datetime.now(timezone.utc).isoformat())
 
 
 #: M55-G suite (point 1) — plafond de la liste d'IDU servie à la carte : au-delà, un filtre
