@@ -280,8 +280,54 @@ exigu-fix compris ; hors 01 h–05 h) :
 **Skippé** (donc économisé) : cascade (~3 h) + build_all + flux-run Signal (inchangés). Vs recompute
 complet ~15 h.
 
+## F. Second déploiement — FRAICHEUR-FIX-1 + ESTIMER-2 (évaluation demandée par Vic)
+
+**Décision Vic (11/11)** : déploiement 1 = **seulement jusqu'à `585d3dd8e`** (ECRANS-NOV-2 +
+FONCIER-PUBLIC-1) puis scénarios V2 ; FRAICHEUR-FIX-1 + ESTIMER-2 (mergés depuis, pointe `a8d578655`)
+partent dans un **2ᵉ déploiement avec le correctif exigu**, avant le recalcul partiel.
+
+**Touchent-ils résiduel / cascade / Signal / Score ? — NON (vérifié).** Diff `585d3dd8e..a8d578655` sur
+`src/` : **0 fichier sensible** (ni `faisabilite/residuel*` / `residuel_runs` / `faisabilite/db.py`, ni
+`cascade/`, ni `scoring/p_v2` / `p_model` / `signal` / `score_labuse` / `scenarios_v2`). `faisabilite/
+bilan.py` touché = **prix** (`_mediane_ponderee`), pas le résiduel. → **orthogonaux à q_v23**.
+
+**Ce que ça change en prod :**
+- **Au déploiement du code (immédiat, sans ingestion)** : (a) **prix de secteur = médiane PONDÉRÉE**
+  (ESTIMER-2) calculée sur le DVF DÉJÀ ingéré (31/12/2025) → €/m² servis changent (fiche/Dossier/bilan/
+  Estimer/Radar) ; « dernière vente » lue sur tout l'historique (37 488 parcelles corrigées) ; prix
+  terrain (rayon adaptatif, plus de vide) ; surface maison (niveaux LiDAR). **Client-visible, indépendant
+  de q_v23.** (b) La page Données passe **5 sources « en retard »** (DVF, SITADEL, RP, INPI, OSM) tant
+  qu'elles ne sont pas rechargées (surveillance honnête). (c) **3 nouveaux jobs de nuit** installés au
+  crontab : `fraicheur-nuit` 07:50, `estimer-banc-precision` 04:30 (calibration prix, pas une ingestion),
+  **`ingest-inpi-rne` mensuel (≈ 1 h 45, INGESTION)**.
+- **`jobs rattraper`** (FRAICHEUR-FIX-1 ajoute cet appel dans `deploy.sh`) : relance les crons du JOUR
+  dont le créneau est passé → **peut déclencher des INGESTIONS** (`ingest-dvf`, `ingest-sitadel`,
+  `injection-nuit`…). ⚠ **À NEUTRALISER au 2ᵉ déploiement** (consigne « aucune ingestion sans accord ») :
+  lister ce qu'il relancerait, OK de Vic, sinon déploiement avec rattraper désactivé.
+- **Ingestions explicites (SEULEMENT sur accord Vic, hors 01–05)** : `refresh-dvf` (+1 606 ventes 2026-S1,
+  ~3–6 min), `ingest-permits --refresh` (SITADEL), `ingest-inpi-rne` (~1 h 45), `ingest-iris-rp` (RP2023
+  si publié). **ESTIMER-2 ne requiert AUCUNE ingestion** (recalcule sur le DVF existant + histo + LiDAR).
+- **Signal** : **code non touché**. Mais un **rechargement DVF** (ingestion FRAICHEUR-FIX-1) change les
+  **intrants** du Signal et des prix → après `calcul-nuit` (rebuild `dvf_mutations_parcelle`), **prix
+  médianes recalés (+6 mois) + Signal re-scoré** sur mutations plus fraîches. Tant que les dérivés ne sont
+  pas reconstruits, prix DVF et Signal ne bougent pas.
+
+**Ordre recommandé vs promotion de q_v23** (les deux chantiers sont orthogonaux) :
+1. **Demain** — déploiement 1 (≤ `585d3dd8e`) + scénarios V2 q_v23 (aucun changement prix/Signal).
+2. **Au merge d'exigu-fix** — déploiement 2 (exigu-fix + FRAICHEUR-FIX-1 + ESTIMER-2), **`jobs rattraper`
+   neutralisé** → changement immédiat du **prix servi** (médiane pondérée, à annoncer) + 5 sources « en
+   retard » + 3 jobs ; puis **recalcul partiel exigu** (§E) → rejeu des 7 contrôles.
+3. **Promouvoir q_v23** (John, sur ordre Vic) — run capacité/Score/scénarios, sur DVF courant.
+4. **Puis, opération SÉPARÉE sur accord Vic** — ingestions DVF/SITADEL/RP/INPI → `calcul-nuit` → prix +
+   Signal rafraîchis. Découplé de q_v23 (surfaces servies différentes).
+
+Je recommande cet ordre (promouvoir q_v23 d'abord, rafraîchir les données ensuite) : q_v23 reste sur un
+DVF stable, et le rafraîchissement DVF/Signal est une opération de fraîcheur distincte, approuvée à part.
+*Variante si tu veux q_v23 servi sur le DVF le plus frais : recharger DVF d'abord, re-scorer le Signal de
+q_v23 (flux-run ~17 min), puis promouvoir — plus couplé.*
+
 ---
 
 _Exécuté : A (déploiement + 4 incidents) ✅ · B (chaîne de nuit q_v23) ✅ · C (7 contrôles) ✅ + analyse §D
-+ §E préparée.
++ §E/§F préparées.
 Reste : scénarios V2 (demain, après merge origin/main + foncier-public-1) + finalisation. Commit, pas de merge._
