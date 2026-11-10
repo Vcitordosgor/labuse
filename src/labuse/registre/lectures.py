@@ -157,6 +157,8 @@ LECTURES: tuple[Lecture, ...] = (
       "revenu = ind_snv/ind du carreau au centroïde (source UNIQUE fiche + étude de zone, jamais un 2e revenu divergent) — lignes 3714 et 5121."),
     L("iris_rp", "zone.py", "iris_quartier", "outil_etude_zone",
       "population_zone() joint iris_rp aux IRIS intersectant la zone (vacance_pct, part bâti avant 1990) — overlay quartiers INSEE RP2022 de l'Étude de zone (SOURCES-1 lot 6)."),
+    L("iris_rp", "controle_millesime.py", None, None,
+      "FRAICHEUR-FIX-1 (point 6) — le contrôle de millésime RP lit max(millesime) d'iris_rp (le millésime RP RÉELLEMENT ingéré, « RP2022 … ») pour le comparer au dernier publié par la sonde : prouver « à jour » ou poser « en retard ». Machinerie de surveillance de fraîcheur, aucun chiffre de fiche servi."),
     L("lidar_dalle_grille", "faisabilite/hauteur_lidar_dalles.py", None, None,
       "Grille d'état du batch par dalle 1 km (bbox, code_mission, fait_le) : reprise (sauter les dalles finies) + backfill des dates de survol — pur état interne d'ingestion."),
     L("mairies", "api/modules.py", "mairie_coordonnees", "fiche_commune_mairie",
