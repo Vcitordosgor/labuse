@@ -305,6 +305,7 @@ export interface ScnEffectifs {
 export interface ScnReponse {
   mode: ScnMode; scenario: string; sort: string | null
   run_servi: string; signal_recette: string | null; scenario_engine_version: string | null
+  run_calcule?: boolean              // DEPLOY-GROUPE-3 — false ⇒ « Analyse en cours de mise à jour »
   lot_mixte?: boolean; reference?: string
   n_selection: number; n_filtre?: number
   cohortes?: { bands: string[]; statuts: string[]; niveaux: string[] }

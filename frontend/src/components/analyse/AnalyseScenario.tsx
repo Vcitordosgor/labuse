@@ -325,7 +325,13 @@ export function AnalyseScenario() {
     <div data-ecran="analyse-scenario" data-etape={etape} className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
       {entete}
 
-      {etape === 'choisir' ? (
+      {data?.run_calcule === false ? (
+        /* DEPLOY-GROUPE-3 — run servi sans scénarios V2 persistés : jamais une erreur ni un écran vide. */
+        <div className="flex min-h-0 flex-1 items-center justify-center px-5">
+          <EmptyState title="Analyse en cours de mise à jour"
+            hint="Les scénarios du run servi sont en cours de calcul — réessayez dans quelques minutes." />
+        </div>
+      ) : etape === 'choisir' ? (
         /* ════════ ÉTAPE « CHOISIR » ════════ */
         <div data-etape-choisir className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 pb-4">
           <div className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-txt-dim">Objectif</div>

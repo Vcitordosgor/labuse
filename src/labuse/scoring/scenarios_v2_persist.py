@@ -614,8 +614,14 @@ def analyse_payload_filtre(session: Session, *, scn_run: str, mode: str, scenari
     `idus_foncier_public` isole, parmi les IDU peints, ceux qui portent le drapeau (puce carte)."""
     if sort and sort not in ("signal", "capacity", "gain", "area", "id"):
         raise ValueError(f"tri inconnu : {sort}")
+    ensure_table(session)   # DEPLOY-GROUPE-3 — jamais de 500 si la table n'existe pas encore (run non calculé)
     scn_read = "keep" if mode == "sale" else scenario
     sort = sort or ("signal" if mode == "sale" else "capacity")
+    # DEPLOY-GROUPE-3 — le run servi a-t-il des scénarios persistés ? Sinon l'écran affiche « Analyse en
+    # cours de mise à jour » (jamais une erreur ni un écran vide trompeur) — consigne Vic.
+    run_calcule = bool(session.execute(text(
+        "SELECT EXISTS (SELECT 1 FROM parcel_scenario_v2_runs WHERE run_label = :r)"),
+        {"r": scn_run}).scalar())
     bands, statuts, niveaux = _as_list(bands), _as_list(statuts), _as_list(niveaux)
     eff = effectifs or effectifs_filtre(session, scn_run=scn_run, mode=mode, scenario=scenario,
                                         sel_sql=sel_sql, sel_params=sel_params,
@@ -682,6 +688,7 @@ def analyse_payload_filtre(session: Session, *, scn_run: str, mode: str, scenari
         "lot_mixte": ver.get("mixte", False),
         "reference": ("calculs V2 actuels comparés au Signal servi " + scn_run),
         "mode": mode, "scenario": scenario, "sort": sort, "as_of": as_of,
+        "run_calcule": run_calcule,          # False ⇒ écran « Analyse en cours de mise à jour »
         "n_selection": eff["n_selection"],
         "effectifs": {"par_statut": eff["par_statut"], "par_bande": eff["par_bande"],
                       **({"par_signal": eff["par_signal"]} if "par_signal" in eff else {})},
