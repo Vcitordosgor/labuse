@@ -27,6 +27,27 @@ from . import scenarios_v2 as v2
 from . import score_labuse as sl
 from .. import runs
 
+
+def adresses_pour(session: Session, idus: list[str]) -> dict[str, str]:
+    """ECRANS-NOV-2 — l'ADRESSE (factuelle, table `adresses`/BAN) d'un lot d'IDU, pour la carte de
+    résultat. Une seule adresse par parcelle (la plus basse par numéro) ; jamais inventée (absence =
+    pas de clé). Lecture seule, un aller par page servie (≤ limite), pas sur toute la sélection."""
+    if not idus:
+        return {}
+    rows = session.execute(text("""
+        SELECT DISTINCT ON (idu) idu,
+               trim(both ' ' from concat_ws(' ', numero, rep, voie)) AS adresse
+        FROM adresses
+        WHERE idu = ANY(:ids) AND voie IS NOT NULL
+        ORDER BY idu, NULLIF(regexp_replace(numero, '[^0-9]', '', 'g'), '')::int NULLS LAST, numero
+    """), {"ids": list(idus)})
+    out: dict[str, str] = {}
+    for r in rows:
+        a = (r.adresse or "").strip()
+        if a:
+            out[r.idu] = a
+    return out
+
 # Lecture conjointe : entrées de score (résiduel + pente/aire/périmètre/accès/AU) ET état Signal
 # servi (score_labuse). Une ligne par parcelle de la sélection.
 _SIGNAL_SQL = text("""
@@ -172,9 +193,14 @@ def _famille_portion_productive(motifs) -> str | None:
         if m.get("result") != "POSITIVE":
             continue
         import re
-        mo = re.search(r"Zone PLU «\s*([A-Za-z]+)", m.get("detail") or "")
+        # Recette Astra ECRANS-NOV-2 : les zones AU PHASÉES sont préfixées d'un indice de phase
+        # (« 1AU », « 2AUc »…). Le code doit donc capturer un éventuel chiffre de tête (sinon
+        # `[A-Za-z]+` échouait sur « 1AU » → l'AU phasée n'était pas reconnue, et sa portion au
+        # régime non établi passait pour « maintenant »). On capture `\d*` + lettres, puis on
+        # retire l'indice de phase avant de lire la famille.
+        mo = re.search(r"Zone PLU «\s*(\d*[A-Za-z][0-9A-Za-z]*)", m.get("detail") or "")
         if mo:
-            code = mo.group(1).upper()
+            code = mo.group(1).upper().lstrip("0123456789")
             f = "AU" if code.startswith("AU") else "U" if code.startswith("U") else None
             if f == "AU":
                 return "AU"          # l'AU prime : une portion AU au régime non établi commande
@@ -415,6 +441,10 @@ def _result_to_dict(res) -> dict:
         "zone_productive": zp,
         "signal": {k: res.signal.get(k) for k in ("status", "p", "niveau", "label", "reason")},
         "tri_valeur": res.rank_value,
+        # Recette Astra ECRANS-NOV-2 : l'état du calcul LIVE est remonté PAR PARCELLE (comme dans le
+        # chemin persisté), pour qu'un échec d'enrichissement soit explicite et jamais confondu avec
+        # un « calcul à compléter » demandé.
+        "etat_calcul": res.details.get("enrich_state"),
         "details": res.details,
     }
 
@@ -443,6 +473,15 @@ def analyse_scenarios_payload(session: Session, parcel_ids: list[int], *, mode: 
         "SELECT signal_version FROM score_labuse WHERE run_label=:r AND signal_version IS NOT NULL "
         "LIMIT 1"), {"r": run_label}).scalar()
     parcelles = [_result_to_dict(r) for r in page]
+    adr = adresses_pour(session, [d["idu"] for d in parcelles])     # adresse factuelle (page seule)
+    for d in parcelles:
+        d["adresse"] = adr.get(d["idu"])
+    # Recette Astra ECRANS-NOV-2 : un échec d'enrichissement est remonté EXPLICITEMENT au niveau de
+    # la réponse (sur TOUTE la sélection, pas la seule page), jamais avalé en silence. `demande` dit
+    # si le calcul live a été requis ; `echecs` liste les IDU dont le calcul a échoué (enrich_state
+    # == 'failed'). Le front peut ainsi afficher une alerte au lieu de laisser croire au cache.
+    echecs = [rec.id for rec in records if rec.enrich_state == "failed"]
+    enrichissement = {"demande": bool(enrich), "echecs": echecs, "n_echecs": len(echecs)}
     # Contrat UNIQUE live = persisté (P3) : en vente, le statut foncier passe en champ séparé (le
     # statut porte déjà l'état de Signal SIGNAL_*, comme le chemin persisté).
     if mode == "sale":
@@ -458,6 +497,7 @@ def analyse_scenarios_payload(session: Session, parcel_ids: list[int], *, mode: 
         "reference": "calculs V2 actuels comparés au Signal servi " + str(run_label),
         "mode": mode, "scenario": scenario, "sort": opts.get("sort"),
         "as_of": as_of,
+        "enrichissement": enrichissement,
         "n_selection": eff["n"],
         "effectifs": {"par_statut": eff["par_statut"], "par_bande": eff["par_bande"]},
         "page": {"limit": limit, "offset": offset, "n": len(page)},
