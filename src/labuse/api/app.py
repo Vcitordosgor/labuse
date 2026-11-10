@@ -3320,6 +3320,7 @@ def analyse_scenarios(
     bands: str | None = Query(None, description="bandes cochées (CSV de A,B,C,D)"),
     statuts: str | None = Query(None, description="statuts cochés (CSV)"),
     niveaux: str | None = Query(None, description="niveaux de Signal cochés (CSV, prospection)"),
+    carte: bool = Query(False, description="renvoie les IDU des cohortes cochées (≤ 20 000) pour la carte"),
     enrich: bool = Query(False, description="calcule C/E live (reconstruction exacte) — plus lent"),
     limit: int = Query(100, ge=0, le=1000), offset: int = Query(0, ge=0),
     db: Session = Depends(get_db)) -> dict:
@@ -3368,7 +3369,8 @@ def analyse_scenarios(
     return _persist.analyse_payload_filtre(
         db, scn_run=run_label, mode=mode, scenario=scenario, sort=sort,
         sel_sql=sel_sql, sel_params=sel_params, bands=bands, statuts=statuts, niveaux=niveaux,
-        effectifs=eff, limit=limit, offset=offset, as_of=datetime.now(timezone.utc).isoformat())
+        effectifs=eff, avec_idus=carte, limit=limit, offset=offset,
+        as_of=datetime.now(timezone.utc).isoformat())
 
 
 #: M55-G suite (point 1) — plafond de la liste d'IDU servie à la carte : au-delà, un filtre

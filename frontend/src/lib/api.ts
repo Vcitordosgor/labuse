@@ -304,6 +304,8 @@ export interface ScnReponse {
   lot_mixte?: boolean; reference?: string
   n_selection: number; n_filtre?: number
   cohortes?: { bands: string[]; statuts: string[]; niveaux: string[] }
+  idus?: string[] | null            // ECRANS-NOV-2 — IDU des cohortes cochées (carte=1) ; null si > 20 000
+  idus_tronque?: boolean
   effectifs: ScnEffectifs
   enrichissement?: { demande: boolean; echecs: string[]; n_echecs: number }
   page: { limit: number; offset: number; n: number }
@@ -318,6 +320,7 @@ export interface ScnOpts {
   bands?: string[]
   statuts?: string[]
   niveaux?: string[]
+  carte?: boolean                   // renvoie les IDU des cohortes cochées pour peindre la carte
   limit?: number
   offset?: number
 }
@@ -330,6 +333,7 @@ export const getAnalyseScenarios = (f: Filters, o: ScnOpts = {}) => {
   if (o.bands?.length) e.bands = o.bands.join(',')
   if (o.statuts?.length) e.statuts = o.statuts.join(',')
   if (o.niveaux?.length) e.niveaux = o.niveaux.join(',')
+  if (o.carte) e.carte = 1
   if (o.limit != null) e.limit = o.limit
   if (o.offset != null) e.offset = o.offset
   return j<ScnReponse>(`/analyse/scenarios?${qf(e)}`)

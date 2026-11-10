@@ -22,14 +22,18 @@ export const STATUT_SCN_META: Record<string, { label: string; color: string }> =
 export const BANDES_CHIP = ['A', 'B', 'C', 'D'] as const
 export const STATUTS_CHIP = ['TO_VERIFY', 'DEFERRED', 'NO_MARGIN', 'OUTSIDE_OBJECTIVE', 'COMPUTE_PENDING'] as const
 
-// La rangée de puces de PROSPECTION : niveaux de Signal, « non évalué » en fin.
+// La rangée de PROSPECTION : le Signal de mutation, renommé « Vente » côté client (recette 2 Vic).
+// `label` = le mot seul (forte/moyenne/faible) ; `venteLabel` = « Vente : <label> » (puce + case).
 export type NiveauChip = 'fort' | 'moyen' | 'faible' | 'non_evalue'
 export const NIVEAUX_CHIP: NiveauChip[] = ['fort', 'moyen', 'faible', 'non_evalue']
 export const NIVEAU_META: Record<NiveauChip, { label: string; color: string }> = {
-  fort: { label: 'Fort', color: SIGNAL_META.fort.color },
-  moyen: { label: 'Moyen', color: SIGNAL_META.moyen.color },
-  faible: { label: 'Faible', color: SIGNAL_META.faible.color },
-  non_evalue: { label: 'Non évalué', color: '#5C7268' },
+  fort: { label: 'forte', color: SIGNAL_META.fort.color },
+  moyen: { label: 'moyenne', color: SIGNAL_META.moyen.color },
+  faible: { label: 'faible', color: SIGNAL_META.faible.color },
+  non_evalue: { label: 'non évaluée', color: '#5C7268' },
+}
+export function venteLabel(niveau: NiveauChip | null | undefined): string | null {
+  return niveau && NIVEAU_META[niveau] ? `Vente : ${NIVEAU_META[niveau].label}` : null
 }
 
 // Couleur d'une parcelle pour la barre de répartition / la puce de carte : bande si estimée,

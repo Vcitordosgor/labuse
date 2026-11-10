@@ -6,8 +6,35 @@
 production.** Front + API (lecture seule). Ports : front **9990**, back **7190**. Run servi **q_v20**
 (base locale, 433 229 parcelles ; table `parcel_scenario_v2_runs` peuplée, keep/rebuild = 433 229).
 
-Références : la maquette `docs/design/maquettes/nov-2026/7-analyse-labuse.png`, l'endpoint
-`GET /analyse/scenarios` (ALGO-FIX-1), la DA et les règles de focus/sélection uniques (RETOURS-21).
+Références : les maquettes `7-analyse-labuse.png` → `7b-analyse-etapes.png` → `7c-analyse-cartes.png`
+(nov-2026), l'endpoint `GET /analyse/scenarios` (ALGO-FIX-1), la DA et les règles de focus (RETOURS-21).
+
+---
+
+## 0. Recette 2 (maquette 7c-analyse-cartes) — 7 points
+
+1. **Phrase « Classées par bande… » retirée** (étape Choisir).
+2. **Étape Choisir** : les 4 bandes en lignes à cocher, puis une ligne repliable **« Autres parcelles ·
+   N ▸ »** regroupant À vérifier / À différer / Aucun ajout / Hors projet ; **les lignes à 0 sont
+   masquées** (« Calcul à compléter 0 » n'apparaît plus).
+3. Le résumé replié devient un bouton **« Modifier la recherche »** ; au-dessus de la liste, une ligne
+   **« N parcelles · objectif · scénario »**.
+4. **Bug carte** : le bandeau « trop large » comptait **toute la sélection** ; il compte désormais la
+   **liste choisie** (`n_filtre`) et n'apparaît que si elle dépasse 20 000. **La carte peint EXACTEMENT
+   la liste choisie** : l'endpoint renvoie les IDU des cohortes cochées (`carte=1`, ≤ 20 000), le
+   panneau les pose dans `scenarioPaint`, et `MapView` les peint (ils priment sur le raccord /filtre).
+   Vérifié WebKit : Saint-Denis + U, Excellente + Bonne → **2 569 IDU peints exactement**.
+5. **Plus de détail à déplier** : la carte de résultat montre le **chiffre principal EN GROS** (gain
+   vert, perte orange ; « net » en reconstruction) et, à droite en petit, **« capacité − existant »** ;
+   une ligne de raison + une flèche ; **toute la carte ouvre la fiche parcelle** (bordure verte au
+   survol). Plus de page séparée, plus de « Voir le détail ». Vérifié : clic → fiche DO0049 ouverte.
+6. **Puce Signal renommée « Vente : faible / moyenne / forte »** partout (`NIVEAU_META` + `venteLabel`).
+7. **Investigation (rapport, aucune correction)** : `INVESTIGATION-FONCIER-PUBLIC.md`. **97411000DO0049**
+   (3 Allée des Étudiants) = **campus de lycées de la Région Réunion**, classé « Excellente, +112 339 m² ».
+   Sur l'île, parmi les **49 980** parcelles Excellente + Bonne : **3 012** (6,0 %) sont du **foncier
+   public** (Commune 2 385 · EP 255 · État 248 · Dépt 118 · Région 6), **3 705** (7,4 %) portent un
+   équipement BPE (dont 43 lycée/collège/université, 53 hôpital) ; union public/équipement d'enseignement
+   ou santé = **3 066**. Décision de règle (exclure / badge « foncier public ») laissée à Vic.
 
 ---
 

@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest'
 import { BANDE_META, SIGNAL_META } from '../status'
 import {
   BANDES_CHIP, STATUTS_CHIP, NIVEAUX_CHIP, NIVEAU_META, STATUT_SCN_META,
-  bandeLabel, couleurParcelle, phraseClassement, resumeFiltres,
+  bandeLabel, couleurParcelle, phraseClassement, resumeFiltres, venteLabel,
 } from '../scenario'
 
 describe('libellés du mandat', () => {
@@ -22,10 +22,13 @@ describe('libellés du mandat', () => {
     expect(BANDES_CHIP).toEqual(['A', 'B', 'C', 'D'])
     expect(STATUTS_CHIP).toEqual(['TO_VERIFY', 'DEFERRED', 'NO_MARGIN', 'OUTSIDE_OBJECTIVE', 'COMPUTE_PENDING'])
   })
-  it('la rangée de puces prospection = niveaux de Signal, non évalué en fin', () => {
+  it('la rangée prospection = niveaux de Vente (Signal renommé), non évaluée en fin', () => {
     expect(NIVEAUX_CHIP).toEqual(['fort', 'moyen', 'faible', 'non_evalue'])
     expect(NIVEAU_META.fort.color).toBe(SIGNAL_META.fort.color)
-    expect(NIVEAU_META.non_evalue.label).toBe('Non évalué')
+    expect(NIVEAU_META.fort.label).toBe('forte')
+    expect(NIVEAU_META.non_evalue.label).toBe('non évaluée')
+    expect(venteLabel('fort')).toBe('Vente : forte')
+    expect(venteLabel(null)).toBeNull()
   })
 })
 

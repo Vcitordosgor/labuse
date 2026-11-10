@@ -563,10 +563,14 @@ def _n_coche(eff: dict, mode: str, bands: list, statuts: list, niveaux: list) ->
             + sum(eff.get("par_statut", {}).get(s, 0) for s in statuts))
 
 
+#: Plafond des IDU servis à la carte (identique à /filtre) : au-delà, la carte ne peint pas la liste.
+IDUS_CARTE_CAP = 20_000
+
+
 def analyse_payload_filtre(session: Session, *, scn_run: str, mode: str, scenario: str,
                            sort: str | None, sel_sql: str, sel_params: dict,
                            bands=None, statuts=None, niveaux=None,
-                           effectifs: dict | None = None,
+                           effectifs: dict | None = None, avec_idus: bool = False,
                            limit: int = 100, offset: int = 0, as_of: str | None = None) -> dict:
     """Réponse d'analyse V2 sur la sélection du JEU DE FILTRES COMPLET. `sel_sql` est une sous-requête
     `SELECT idu` (résolue par app.py avec le MÊME gate que la liste d'IDU de la carte). Les effectifs
@@ -582,12 +586,29 @@ def analyse_payload_filtre(session: Session, *, scn_run: str, mode: str, scenari
                                         sel_sql=sel_sql, sel_params=sel_params)
     n_filtre = _n_coche(eff, mode, bands, statuts, niveaux)
 
+    join = ("JOIN parcel_scenario_v2_runs sv ON sv.idu = sel.idu "
+            "AND sv.run_label = :scnrun AND sv.scenario = :scn "
+            "LEFT JOIN score_labuse sl ON sl.run_label = sv.run_label AND sl.idu = sv.idu")
+
+    # ── IDU des cohortes COCHÉES, pour que la CARTE peigne EXACTEMENT la liste choisie (≤ plafond ;
+    # au-delà, tronqué = la carte ne peint pas la liste et le bandeau le dit). ──────────────────────
+    idus = None
+    idus_tronque = False
+    if avec_idus:
+        bi = {**sel_params, "scnrun": scn_run, "scn": scn_read}
+        coh = _cohort_where(mode, bands, statuts, niveaux, bi)
+        bi["cap"] = IDUS_CARTE_CAP + 1
+        rows_i = session.execute(text(
+            f"WITH sel AS ({sel_sql}) SELECT sv.idu FROM sel {join} WHERE TRUE {coh} LIMIT :cap"),
+            bi).scalars().all()
+        if len(rows_i) > IDUS_CARTE_CAP:
+            idus_tronque = True
+        else:
+            idus = list(rows_i)
+
     page: list = []
     if limit:
         base = {**sel_params, "scnrun": scn_run, "scn": scn_read}
-        join = ("JOIN parcel_scenario_v2_runs sv ON sv.idu = sel.idu "
-                "AND sv.run_label = :scnrun AND sv.scenario = :scn "
-                "LEFT JOIN score_labuse sl ON sl.run_label = sv.run_label AND sl.idu = sv.idu")
         cohort = _cohort_where(mode, bands, statuts, niveaux, base)
         order = _SALE_ORDER_SQL if mode == "sale" else _order_by_potential(scenario, sort)
         base.update({"lim": limit, "off": offset})
@@ -608,6 +629,7 @@ def analyse_payload_filtre(session: Session, *, scn_run: str, mode: str, scenari
     return {
         "cohortes": {"bands": bands, "statuts": statuts, "niveaux": niveaux},
         "n_filtre": n_filtre,
+        **({"idus": idus, "idus_tronque": idus_tronque} if avec_idus else {}),
         "analysis_version": ver.get("analysis_version") or v2.VERSION,
         "scenario_engine_version": ver.get("score_version"),
         "cascade_run": ver.get("cascade_label"),

@@ -535,6 +535,11 @@ interface AppState {
   // « tout le périmètre » des parcelles à piscine — sinon, au zoom île, les parcelles colorées sont invisibles).
   moduleMap: { idus: string[]; extra: unknown | null; fit?: boolean }
   setModuleMap: (m: { idus: string[]; extra: unknown | null; fit?: boolean }) => void
+  // ECRANS-NOV-2 (recette 2) — la carte peint EXACTEMENT la liste choisie de l'analyse par scénario :
+  // le panneau pose les IDU des cohortes cochées (null si > 20 000 = trop large pour peindre). La carte
+  // les préfère au raccord /filtre quand il est posé ; le panneau le remet à null en quittant.
+  scenarioPaint: { idus: string[] | null; tronque: boolean } | null
+  setScenarioPaint: (p: { idus: string[] | null; tronque: boolean } | null) => void
   // IMPLANTATION-4 (LOT A) — l'Étude de faisabilité QUITTE les Outils et vit dans Docs : overlay plein
   // écran (patron BilanEcran) monté au niveau App, piloté par ce drapeau. `etudeIdus` = l'assiette
   // (1 à 8 parcelles) ou null (fermé). Ouvert depuis la 9e carte Docs, la tuile fiche et le pont
@@ -1074,6 +1079,8 @@ export const useApp = create<AppState>((set, get) => ({
   }),
   moduleMap: { idus: [], extra: null },
   setModuleMap: (moduleMap) => set({ moduleMap }),
+  scenarioPaint: null,
+  setScenarioPaint: (scenarioPaint) => set({ scenarioPaint }),
   zoneSeg: 0,
   setZoneSeg: (zoneSeg) => set({ zoneSeg }),
   cmpLeft: 'bm-ortho-1950',
