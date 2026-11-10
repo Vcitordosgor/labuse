@@ -48,6 +48,7 @@ import { TaxeAmenagement } from './TaxeAmenagement'
 import { Gabarit } from './Gabarit'   // GABARIT-1 — outil interne (registry hidden:true, flag admin)
 import { MonSecteur } from './MonSecteur'   // SECTEUR-1 (S1) — outil « Mon secteur »
 import { ScanPatrimoine } from './ScanPatrimoine'   // RETOURS-4 S7 — fusion Scan patrimoine (possède + construit)
+import { ouvrirBullePermis, fermerBullePermis } from '../map/MapView'   // RETOURS-23 (pt 1) — bulle permis (ancre auto)
 import { OwnerParcelles } from '../OwnerParcelles'   // RECHERCHE-2 Lot 2 — sous-panneau propriétaire → ses parcelles
 import { Successions } from './Successions'   // OUTILS-MUSCLER-1 Lot A — radar patrimonial servi en outil
 import { Blocs } from './Blocs'   // OUTILS-MUSCLER-3 — assiettes contiguës d'un même propriétaire PM
@@ -507,22 +508,6 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
   )
 }
 
-/** RETOURS-23 (pt 7) — fiche permis dans le PANNEAU DE DROITE (comme la fiche parcelle), jamais en
- *  bulle sur la carte. Montée au niveau App ; pilotée par `permisOuvert` (id du permis ouvert). */
-export function PermitFichePanel() {
-  const permisOuvert = useApp((s) => s.permisOuvert)
-  const setPermisOuvert = useApp((s) => s.setPermisOuvert)
-  if (!permisOuvert) return null
-  return (
-    <aside aria-label="Fiche du permis" data-permis-panel
-      className="apparition absolute right-0 top-0 z-20 flex h-full w-[400px] max-w-full flex-col border-l border-line bg-surface-1 shadow-2xl">
-      <div className="min-h-0 flex-1 overflow-y-auto p-4">
-        <PermitFicheCorps permitId={permisOuvert} onClose={() => setPermisOuvert(null)} />
-      </div>
-    </aside>
-  )
-}
-
 // §3 (23/08/2026) — outil « PERMIS » UNIFIÉ : fusion de « Radar permis » (M03) et « Permis au point
 // mort » (M04). Le radar est l'ENTRÉE (tous les permis Sitadel, points cliquables + fiche) ; « Au point
 // mort » est un FILTRE qui ne garde que les PC anciens sans achèvement — désormais rendus en POINTS
@@ -566,10 +551,9 @@ export function M03() {
   // l'ouverture était « Tous » = 240 mois (toute la profondeur → carte = base entière).
   const [months, setMonths] = useState(moduleKey === 'promesses' ? 36 : 3)
   const [nature, setNature] = useState('')
-  // RETOURS-23 (pt 7) — la fiche permis s'ouvre dans le PANNEAU DE DROITE (comme la fiche parcelle),
-  // jamais en bulle sur la carte, que le clic vienne d'un point carte OU d'une ligne de liste.
-  // `permisOuvert` (store) = l'id du permis ouvert → le panneau <PermitFichePanel> le rend, et la ligne
-  // de liste correspondante est surlignée.
+  // RETOURS-23 (suite, pt 1) — la fiche permis s'ouvre en BULLE sur la carte (ancre automatique : jamais
+  // coupée, cf. ouvrirBullePermis), que le clic vienne d'un point carte OU d'une ligne de liste.
+  // `permisOuvert` (store) surligne la ligne correspondante. On nettoie la bulle au démontage.
   const permisOuvert = useApp((s) => s.permisOuvert)
   const setPermisOuvert = useApp((s) => s.setPermisOuvert)
   // RETOURS-18 X1 — panneau en ACCORDÉON : sous le bloc total (permanent) et le bandeau Sitadel
@@ -589,21 +573,22 @@ export function M03() {
   const setFlyTo = useApp((s) => s.setFlyTo)
   const focusParcelle = useApp((s) => s.focusParcelle)   // RETOURS-12 O12.2 — zoom+surbrillance commun (O1)
   const select = useApp((s) => s.select)   // PERMIS-CHECK-2 pt 2 — lever une fiche stale avant de focus
-  // RETOURS-23 (pt 7) — ouvrir la fiche permis (depuis la LISTE ou un point carte) dans le PANNEAU DE
-  // DROITE : on pose `permisOuvert` (le panneau se monte) et on recentre la carte sur la parcelle du
-  // permis (confort), sans aucune bulle.
-  const ouvrirPermisFiche = (id: string) => {
+  // RETOURS-23 (suite, pt 1) — ouvrir la bulle permis depuis la LISTE : on surligne la ligne, on recentre
+  // la carte sur le permis (sa parcelle rattachée) et on ouvre la bulle AU CENTRE (`centre=true`, ancre
+  // auto) ; MÊME bulle que le clic carte, jamais coupée.
+  const ouvrirPermisBulle = (id: string) => {
     setPermisOuvert(id)
     const m = (window as unknown as { __labuse_map?: any }).__labuse_map
     if (!m) return
     modPermisFiche(id).then((f: Record<string, any>) => {
       const c = (f?.['geom'] as { coordinates?: [number, number] } | null)?.coordinates
-      if (c) m.easeTo({ center: c, zoom: Math.max(m.getZoom?.() ?? 15, 17), duration: 600 })
-    }).catch(() => { /* fiche indisponible : le panneau le dira */ })
+      if (c) { m.easeTo({ center: c, zoom: Math.max(m.getZoom?.() ?? 15, 17), duration: 600 }); ouvrirBullePermis(m, id, c, true) }
+      else { ouvrirBullePermis(m, id, m.getCenter(), true) }   // non géocodé : bulle au centre courant
+    }).catch(() => { /* fiche indisponible : la bulle le dira */ ouvrirBullePermis(m, id, m.getCenter(), true) })
   }
-  useEffect(() => { if (permitToOpen) { ouvrirPermisFiche(permitToOpen); setPermitToOpen(null) } }, [permitToOpen, setPermitToOpen])   // eslint-disable-line react-hooks/exhaustive-deps
-  // ferme la fiche permis quand on quitte l'outil Permis.
-  useEffect(() => () => { setPermisOuvert(null) }, [])   // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (permitToOpen) { ouvrirPermisBulle(permitToOpen); setPermitToOpen(null) } }, [permitToOpen, setPermitToOpen])   // eslint-disable-line react-hooks/exhaustive-deps
+  // nettoie la bulle quand on quitte l'outil Permis.
+  useEffect(() => () => { fermerBullePermis(); setPermisOuvert(null) }, [])   // eslint-disable-line react-hooks/exhaustive-deps
   // la clé d'ouverture (radar `permis` vs filtre `promesses`) fixe le MODE d'entrée + la fenêtre par
   // défaut ; ensuite le toggle local est maître (un deep-link vers l'autre clé re-cale l'écran).
   // RECETTE-4 — même fenêtre que `choisirSeg` : 'tous' → 240 mois (pas 24, qui appliquait « Récent »
@@ -847,7 +832,7 @@ export function M03() {
             // pt 2 — `select(null)` d'abord : le focus barre prime sur une fiche stale (cf. onSelect).
             if (v.length === 14 && estIdu(v)) { select(null); focusParcelle(v); setParcelIdu(v); setSeg('tous'); return }
             // sinon une référence Sitadel compacte → fiche permis
-            if (/^[0-9][0-9a-z]{6,}$/i.test(v)) ouvrirPermisFiche(v)
+            if (/^[0-9][0-9a-z]{6,}$/i.test(v)) ouvrirPermisBulle(v)
           }} />
         {/* RECHERCHE-2 Lot 2 — propriétaire → ses parcelles ; en choisir une cible la parcelle (zoom +
             délimitation) et cherche ses permis, exactement comme un IDU saisi. */}
@@ -1048,7 +1033,7 @@ export function M03() {
           return (
           <button key={k} data-permis-row data-geocode={i['geom'] ? '1' : '0'} data-point-mort={pointMort ? '1' : '0'} data-permis-row-etat={et}
             data-permis-actif={permisOuvert === (i['permit_id'] as string) ? '1' : undefined}
-            onClick={() => ouvrirPermisFiche(i['permit_id'] as string)}
+            onClick={() => ouvrirPermisBulle(i['permit_id'] as string)}
             onMouseEnter={() => i['geom'] && setPermitHover(i['geom'])} onMouseLeave={() => setPermitHover(null)}
             className={`flex w-full items-center gap-2 rounded-lg border px-3 py-1.5 text-left text-[11px] transition-colors duration-quick hover:border-mint/60 ${permisOuvert === (i['permit_id'] as string) ? 'border-mint bg-mint/10' : `border-line-2 ${i['geom'] ? 'bg-surface-3' : 'bg-surface-1'}`}`}>
             {/* RETOURS-11 R6 — puce sur UNE seule ligne (moitié moins haute) : pastille · type · date ·
@@ -1774,7 +1759,7 @@ export function M10() {
         lot qu'elle touche. Ajoutez-les en tapant une adresse ou un IDU, ou en cliquant la carte.</Banner>
       {/* BARRE UNIQUE (SOCLE) + « + Ajouter » → chips du lot */}
       <div className="flex flex-col gap-1.5 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2">
-        <ParcelInput dataAttr="diligence-idu" placeholder="Adresse, IDU ou référence (BW0917)"
+        <ParcelInput dataAttr="diligence-idu" cadre={false} placeholder="Adresse, IDU ou référence (BW0917)"
           onPick={ajouter}
           onAddress={() => setMsg("Cette adresse n'a pas de parcelle rattachée — saisissez un IDU ou cliquez la parcelle sur la carte.")} />
         {msg && <p data-diligence-msg className="text-[10.5px] leading-snug text-st-creuser">{msg}</p>}

@@ -40,7 +40,7 @@ type Candidate = { idu: string; commune: string; surface_m2: number | null
 // GEOPF-3 — 5ᵉ grammaire « lieu_dit » (BD NYME) active par défaut dans toutes les barres.
 const GRAMMAIRES_DEFAUT: SuggestType[] = ['adresse', 'cadastre', 'proprietaire', 'siren', 'lieu_dit']
 
-export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, autoFocus, withCarte = true, inviteCarte, dataAttr, grammaires = GRAMMAIRES_DEFAUT, viderApresPick }: {
+export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, autoFocus, withCarte = true, inviteCarte, cadre, dataAttr, grammaires = GRAMMAIRES_DEFAUT, viderApresPick }: {
   onPick: (idu: string) => void
   onAddress?: (label: string) => void
   // RECHERCHE-2 Lot 1 — remonte un pick PROPRIÉTAIRE (SIREN) au niveau propriétaire (Scan patrimoine).
@@ -53,6 +53,10 @@ export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, au
   // un outil qui consomme le clic carte lui-même (Pièges, via son propre effet selectedIdu) passe
   // `withCarte={false} inviteCarte` pour montrer l'invite SANS que le socle rappelle onPick. Défaut = withCarte.
   inviteCarte?: boolean
+  // RETOURS-23 (suite, pt 3) — modèle « Comparaison » : quand l'invite est montrée, le champ + l'invite
+  // vivent dans UN MÊME CADRE (défaut). `cadre={false}` = pas de cadre propre (pour un hôte qui encadre
+  // déjà lui-même un bloc multi-parcelles, ex. Diligence « barre + coller une liste »).
+  cadre?: boolean
   dataAttr?: string                 // hook QA : pose data-<dataAttr> sur le champ (ex. « courrier-idu »)
   grammaires?: SuggestType[]        // défaut = les 4 familles ; un appelant peut restreindre/étendre.
   // RETOURS-17 — outils MULTI-parcelles (Comparer) : après chaque parcelle désignée, le champ se VIDE
@@ -136,41 +140,61 @@ export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, au
     }
   }
 
+  const champ = (
+    <AddressAutocomplete
+      {...attr}
+      autoFocus={autoFocus}
+      placeholder={placeholder ?? 'Propriétaire, adresse, IDU ou référence (BW0917)'}
+      grammaires={grammaires}
+      seed={seed}
+      resetSignal={viderApresPick ? resetTick : undefined}
+      onClear={oublier}
+      // Un pick PROPRIÉTAIRE / SIREN (type ≠ adresse/cadastre → onPick d'AddressAutocomplete) :
+      // remonté à onProprietaire s'il existe (outil propriétaire), sinon sous-panneau de ses parcelles.
+      onPick={(it: SuggestItem) => {
+        if ((it.type === 'proprietaire' || it.type === 'siren') && it.siren) {
+          setMsg(null); setCandidats(null)
+          if (onProprietaire) onProprietaire(it.siren, it.label)
+          else setOwner({ siren: it.siren, nom: it.label })
+        }
+      }}
+      onSelect={(sel) => {
+        // le clic de suggestion a déjà recopié le libellé (S1) → pas de seed ici.
+        if (sel.idu) resoudre(iduComplet(sel.idu))
+        else if (onAddress) { clearRepliques(); onAddress(sel.label) }
+        else { clearRepliques(); setMsg("Adresse trouvée, mais aucune parcelle cadastrale rattachée — saisissez l'IDU.") }
+      }}
+      onEnterRaw={(raw) => {
+        const qn = iduComplet(raw).toUpperCase()
+        if (estIdu(qn)) { resoudre(qn, qn) }
+        // RETOURS-12 T1 — référence courte reconnue AVANT le repli adresse (sinon la BAN
+        // répondrait « aucune adresse » à tort et l'utilisateur resterait dans le vide).
+        else if (estSectionNumero(raw)) { setOwner(null); void resoudreRef(raw) }
+        else if (onAddress) { clearRepliques(); onAddress(raw) }
+        // sinon (adresse/nom en cours) : l'autocomplétion guide déjà — pas de commit hasardeux.
+      }}
+    />
+  )
+  // RETOURS-23 (suite, pt 3) — modèle de la « Comparaison » (EntreeParcelle) : quand l'invite carte est
+  // montrée, le CHAMP et « — ou — cliquez une parcelle sur la carte » vivent dans UN MÊME CADRE. (Les
+  // consommateurs qui passent par <EntreeParcelle> encadrent déjà eux-mêmes ; ici, l'usage direct de
+  // ParcelInput avec invite — Scan patrimoine — obtient le même cadre, « partout ».)
+  const inviteMontree = (inviteCarte ?? withCarte) && !resolu
+  const invite = inviteMontree && (
+    <div data-parcelinput-carte className="flex items-center gap-1.5 text-[10.5px] leading-snug text-txt-mut">
+      <span className="font-mono text-txt-dim">— ou —</span>
+      <span>cliquez une parcelle sur la carte</span>
+    </div>
+  )
+  // `encadre` ne dépend PAS de `resolu` : le CADRE est stable (toujours présent pour un consommateur du
+  // modèle encadré), seule l'invite À L'INTÉRIEUR apparaît/disparaît — le champ ne CHANGE jamais de place
+  // dans l'arbre (pas de remontage : focus/valeur/`onClear` préservés en passant résolu ↔ non résolu).
+  const encadre = (inviteCarte ?? withCarte) && cadre !== false
   return (
     <div className="flex flex-col gap-1.5">
-      <AddressAutocomplete
-        {...attr}
-        autoFocus={autoFocus}
-        placeholder={placeholder ?? 'Propriétaire, adresse, IDU ou référence (BW0917)'}
-        grammaires={grammaires}
-        seed={seed}
-        resetSignal={viderApresPick ? resetTick : undefined}
-        onClear={oublier}
-        // Un pick PROPRIÉTAIRE / SIREN (type ≠ adresse/cadastre → onPick d'AddressAutocomplete) :
-        // remonté à onProprietaire s'il existe (outil propriétaire), sinon sous-panneau de ses parcelles.
-        onPick={(it: SuggestItem) => {
-          if ((it.type === 'proprietaire' || it.type === 'siren') && it.siren) {
-            setMsg(null); setCandidats(null)
-            if (onProprietaire) onProprietaire(it.siren, it.label)
-            else setOwner({ siren: it.siren, nom: it.label })
-          }
-        }}
-        onSelect={(sel) => {
-          // le clic de suggestion a déjà recopié le libellé (S1) → pas de seed ici.
-          if (sel.idu) resoudre(iduComplet(sel.idu))
-          else if (onAddress) { clearRepliques(); onAddress(sel.label) }
-          else { clearRepliques(); setMsg("Adresse trouvée, mais aucune parcelle cadastrale rattachée — saisissez l'IDU.") }
-        }}
-        onEnterRaw={(raw) => {
-          const qn = iduComplet(raw).toUpperCase()
-          if (estIdu(qn)) { resoudre(qn, qn) }
-          // RETOURS-12 T1 — référence courte reconnue AVANT le repli adresse (sinon la BAN
-          // répondrait « aucune adresse » à tort et l'utilisateur resterait dans le vide).
-          else if (estSectionNumero(raw)) { setOwner(null); void resoudreRef(raw) }
-          else if (onAddress) { clearRepliques(); onAddress(raw) }
-          // sinon (adresse/nom en cours) : l'autocomplétion guide déjà — pas de commit hasardeux.
-        }}
-      />
+      {encadre
+        ? <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2">{champ}{invite}</div>
+        : <>{champ}{invite}</>}
       {msg && <p data-parcelinput-msg className="text-[10.5px] text-st-creuser">{msg}</p>}
       {candidats && candidats.length > 0 && (
         <div data-parcelinput-candidats className="flex flex-col gap-0.5 rounded-md border border-line-2 bg-surface-2 p-1.5">
@@ -197,17 +221,8 @@ export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, au
           onPick={(idu) => resoudre(idu, iduCourt(idu))}
           onChanger={clearRepliques} />
       )}
-      {/* RETOURS-15 S2/S4 — plus de bouton « Utiliser la parcelle sélectionnée » : le clic carte agit
-          directement (l'effet ci-dessus le consomme). Il ne reste qu'une INVITE discrète au second
-          geste ; elle DISPARAÎT dès qu'une parcelle est résolue par la barre (réapparaît si vidé). */}
-      {(inviteCarte ?? withCarte) && !resolu && (
-        // RETOURS-23 (pt 2) — modèle UNIQUE d'entrée parcelle (P19) : plus de cadre pointillé. La même
-        // invite « — ou — cliquez une parcelle sur la carte » que <EntreeParcelle>, sous le champ.
-        <div data-parcelinput-carte className="flex items-center gap-1.5 text-[10.5px] leading-snug text-txt-mut">
-          <span className="font-mono text-txt-dim">— ou —</span>
-          <span>cliquez une parcelle sur la carte</span>
-        </div>
-      )}
+      {/* RETOURS-15 S2/S4 — l'invite « — ou — cliquez une parcelle sur la carte » est désormais DANS le
+          cadre du champ (ci-dessus, modèle Comparaison, RETOURS-23 pt 3) ; plus de bloc séparé ici. */}
     </div>
   )
 }

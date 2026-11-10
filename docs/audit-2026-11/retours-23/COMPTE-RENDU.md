@@ -12,6 +12,54 @@ Vérifié dans **WebKit** (playwright 1.49.1, webkit-2104, reducedMotion) — un
 
 ---
 
+## Suite — 3 retours (2ᵉ passe)
+
+### R1 — Permis : RETOUR à la bulle sur la carte, placement automatique (jamais coupée)
+Le point 7 (fiche permis dans le panneau de droite) est **annulé** : retour à la **bulle sur la carte**
+comme avant (`ouvrirBullePermis`, `MapView` ; `PermitFichePanel` retiré). Nouveau : **ancre calculée à la
+main** (`_ancrePermis`) — la bulle se place du côté où il y a la place (au-dessus / en dessous / gauche /
+droite du point) DANS la zone visible. Le conteneur maplibre commence déjà **sous l'en-tête** (y≈56) et **à
+droite du panneau** (x≈390, mesuré WebKit) → « rester dans le conteneur » = « rester sous l'en-tête ». On
+fixe l'ancre (déterministe, pas d'auto-flip) : vertical = sous le point si la place est dessous sinon
+au-dessus ; horizontal = décalé gauche/droite seulement si la bulle centrée dépasserait un bord. Ouverture
+depuis la liste / permis non géocodé = la carte recentre d'abord (`centre=true`) → ancre au centre.
+**Vérifié** : bulle `inside:true` dans la carte (mesuré WebKit, `p1b-permis-bulle.png`) ; l'ancre testée
+sur 11 positions (centre, 4 coins, 4 milieux de bord, 2 points de bord) → **la bulle reste dans le
+conteneur pour TOUTES**. « Voir la parcelle → » ouvre la fiche parcelle (inchangé).
+
+### R2 — Tableau des 24 communes : ~4 s à l'ouverture — mesuré
+Mesuré en WebKit : **le rendu est rapide (86 ms)** — ce n'est PAS le rendu. Le coût est la **REQUÊTE à
+froid** `/comparateur-communes` : `_compute_raw` (DVF ancien + VEFA + terrain-nu par zone × 24 communes)
+mesuré **3,26 s**. La modale s'ouvre instantanément avec un **squelette** (`blocB.tsx:226`) pendant ce
+temps.
+
+**Pourquoi à froid** : la clé de fraîcheur partagée (`empreinte_attendue`) inclut `code=<sha git>`. **Chaque
+déploiement change la clé → le cache `comparateur_raw_cache` est invalidé** → la 1ʳᵉ ouverture après un
+déploiement recalcule (~3,3 s par worker) tant que le job nocturne (`fiche_commune_cache` →
+`rafraichir_raw_cache`) / le réchauffage de déploiement n'ont pas ré-écrit la ligne du nouveau sha. Une fois
+chaud : ~5 ms (requête) + 86 ms (rendu).
+
+**Corrige / explique** (consigne : corriger seulement si sans risque pour les MAJ de nuit) → **EXPLIQUE, pas
+de correction**. Le levier serait de retirer `code=<sha>` de la clé (le cache survivrait aux déploiements →
+rapide), MAIS : (a) la clé est **PARTAGÉE** avec `commune_contexte_cache` et le job nocturne ; (b) `code`
+sert à invalider le cache quand la **logique de calcul change** — l'enlever ferait servir les valeurs du code
+**précédent** jusqu'au recalcul de nuit après un déploiement qui change le calcul. C'est exactement un risque
+**pour les mises à jour de nuit** → on ne touche pas. La mitigation sûre existe déjà (job nocturne +
+réchauffage de déploiement, tous deux appellent `rafraichir_raw_cache`) ; côté ops, un déploiement devrait
+lancer `labuse jobs run fiche-commune-cache` pour réchauffer immédiatement le nouveau sha.
+
+### R3 — Champ de parcelle : modèle « Comparaison » (champ + invite dans UN cadre), partout
+Le champ de Scan patrimoine (et partout) prend la forme de la **Comparaison** (`EntreeParcelle`) : le **champ
+ET « — ou — cliquez une parcelle sur la carte » dans UN MÊME CADRE**. `ParcelInput` encadre désormais
+champ + invite (`rounded-lg border border-line-2 bg-surface-2`) dès qu'il porte l'invite. Le cadre est
+**indépendant de l'état résolu** (présence stable) : le champ ne change jamais de place dans l'arbre → pas de
+remontage (focus/valeur/`onClear` préservés — régression attrapée par `socle.test`). `cadre={false}`
+(opt-out) pour un hôte qui encadre déjà un bloc multi-parcelles (Diligence « barre + coller une liste ») :
+pas de double cadre. `EntreeParcelle` (Comparer/Assemblage) encadre déjà lui-même → inchangé.
+Vérifié WebKit : `p3b-scan-cadre.png` (champ + invite dans un cadre). `ParcelPicker` est inutilisé (mort).
+
+---
+
 ## Règles transversales
 
 ### 1. Un seul bouton de retour — « ← Retour » partout, hiérarchique

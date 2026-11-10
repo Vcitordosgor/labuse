@@ -48,9 +48,6 @@ const EvolutionTablePanel = lazy(() => import('./components/outils/Communes').th
 const RadarTablePanel = lazy(() => import('./components/outils/Communes').then((m) => ({ default: m.RadarTablePanel })))
 const CopiloteView = lazy(() => import('./components/copilote/CopiloteView').then((m) => ({ default: m.CopiloteView })))
 const ModulePanel = lazy(() => import('./components/outils/ModulePanel').then((m) => ({ default: m.ModulePanel })))
-// RETOURS-23 (pt 7) — fiche permis dans le panneau de droite (même chunk que ModulePanel, déjà chargé
-// quand l'outil Permis est ouvert).
-const PermitFichePanel = lazy(() => import('./components/outils/ModulePanel').then((m) => ({ default: m.PermitFichePanel })))
 const AdminView = lazy(() => import('./components/admin/AdminView').then((m) => ({ default: m.AdminView })))
 // DOCS-1 (Lot A) — la catégorie Documents (catalogue + porte + bibliothèque), chargée à la demande.
 const DocumentsView = lazy(() => import('./components/documents/DocumentsView').then((m) => ({ default: m.DocumentsView })))
@@ -300,7 +297,7 @@ function titreVueA11y(view: string, module: string | null): string {
 }
 
 export default function App() {
-  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, flyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel, setPermitToOpen, setIaRestitution, compareOpen, contexteCommune, setContexteCommune, togglePanel, setTuyauActives, toggleTuyau, setModuleMap, etudeIdus, permisOuvert } = useApp()
+  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, flyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel, setPermitToOpen, setIaRestitution, compareOpen, contexteCommune, setContexteCommune, togglePanel, setTuyauActives, toggleTuyau, setModuleMap, etudeIdus } = useApp()
   // feat/ouverture — le voile d'ouverture (oiseau LABUSE) monté AU-DESSUS de l'app ; `montre` est vrai
   // une fois par session (jeton sessionStorage, pas à chaque navigation interne), `fini` le retire.
   // L'app se charge DERRIÈRE le voile.
@@ -552,11 +549,6 @@ export default function App() {
               la demande — overlay, fallback null (la fiche a ses propres squelettes internes). */}
           {selectedIdu && view !== 'sources' && view !== 'radar' && (
             <Suspense fallback={null}><Fiche idu={selectedIdu} /></Suspense>
-          )}
-          {/* RETOURS-23 (pt 7) — la fiche permis s'ouvre ICI, dans le panneau de droite (z-20, au-dessus
-              de la fiche parcelle), jamais en bulle sur la carte. */}
-          {permisOuvert && view !== 'sources' && view !== 'radar' && (
-            <Suspense fallback={null}><PermitFichePanel /></Suspense>
           )}
           {contexteCommune && <Suspense fallback={null}><ContextePanel /></Suspense>}
           <SourceDrawer />
