@@ -2660,6 +2660,10 @@ def score_labuse_cmd(
                                  help="Communes (noms/INSEE, séparées par des virgules). Défaut : île."),
     parcelles: str = typer.Option(None, "--parcelles",
                                   help="IDU de parcelles (virgules) — sous-ensemble ciblé."),
+    parcelles_fichier: str = typer.Option(None, "--parcelles-fichier",
+                                          help="DEPLOY-GROUPE-3 — recalcul EN DELTA : fichier de "
+                                               "parcelles (parcel_id ou idu, une par ligne). Ignore "
+                                               "--communes/--parcelles."),
     cascade_label: str = typer.Option("q_v13_sources1", "--cascade-label",
                                       help="Run cascade dont on lit accès + verdicts (reclassement v2)."),
     signal_run: str = typer.Option(None, "--signal-run",
@@ -2681,7 +2685,9 @@ def score_labuse_cmd(
                                                persister)
 
     with session_scope() as s:
-        if parcelles:
+        if parcelles_fichier:
+            ids = _parcel_ids_from_file(s, parcelles_fichier)   # delta ciblé (ex. parcelles terrain_exigu)
+        elif parcelles:
             idus = [x.strip() for x in parcelles.split(",") if x.strip()]
             ids = [r[0] for r in s.execute(
                 select(models.Parcel.id).where(models.Parcel.idu.in_(idus))
