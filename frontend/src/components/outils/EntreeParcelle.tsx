@@ -43,12 +43,19 @@ export function EntreeParcelle({ source, onPick, placeholder, titre, picked, adr
   })
 
   if (picked) {
-    const adresseAffichee = adresse ?? addrQ.data?.[0]?.adresse ?? iduCourt(picked)
+    // RETOURS-25 (pt 4) — JAMAIS de texte coupé : soit l'IDU seul, soit l'adresse ENTIÈRE (qui passe à la
+    // ligne) + l'IDU dessous. Plus de `truncate` (l'ellipse masquait l'adresse ; le `title` ne suffit pas).
+    const adrPleine = adresse ?? addrQ.data?.[0]?.adresse ?? null
+    const idCourt = iduCourt(picked)
     return (
-      <div data-entree-parcelle-choisie className="flex items-center justify-between gap-2 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2">
-        <span className="min-w-0 flex-1 truncate text-[12px] text-txt" title={adresseAffichee}>{adresseAffichee}</span>
+      <div data-entree-parcelle-choisie className="flex items-start justify-between gap-2 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2">
+        <span className="min-w-0 flex-1 text-[12px] leading-snug text-txt">
+          {adrPleine
+            ? <><span className="break-words">{adrPleine}</span><span data-entree-idu className="mt-0.5 block font-mono text-[10px] text-txt-dim">{idCourt}</span></>
+            : <span className="font-mono">{idCourt}</span>}
+        </span>
         {onChanger && (
-          /* RETOURS-23 (pt 3) — plus d'ambre pour les liens : « Changer de parcelle » passe au VERT. */
+          /* RETOURS-23 (pt 3) — « Changer de parcelle » : bouton vert de la DA (plus d'ambre). */
           <Bouton niveau="lien" ton="vert" data-entree-changer onClick={onChanger} className="shrink-0">
             Changer de parcelle
           </Bouton>

@@ -290,14 +290,7 @@ export function Gabarit() {
     <div data-gabarit-panel className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       {/* RECETTE-2 (T3) — Réinitialiser SEUL sur sa ligne (haut-droite) ; l'intro vient EN DESSOUS,
           pleine largeur (plus côte à côte). Présent ssi une parcelle est désignée. */}
-      <div className="flex flex-col gap-1.5">
-        {/* RECETTE-OUTILS-1 (T5) — « Réinitialiser » retiré ; le changement de parcelle passe par
-            « Changer de parcelle » (EntreeParcelle, picked). */}
-        <p className="text-[11px] leading-snug text-txt-mut">
-          Où et jusqu'où une construction peut s'implanter, selon les règles réglementaires
-          <b className="text-txt"> intégrées et sourcées</b> dans LABUSE.
-        </p>
-      </div>
+      {/* RETOURS-25 (pt 7) — phrase d'intro « Où et jusqu'où une construction peut s'implanter… » retirée. */}
 
       {/* RECETTE-1 (F2) — EntreeParcelle : adresse/IDU OU clic carte, l'une grise l'autre. */}
       <EntreeParcelle source={source} picked={target} onChanger={resetAll}
@@ -488,7 +481,20 @@ export function Gabarit() {
               ? <p className="mt-1.5 text-st-creuser">3D indisponible — hauteur non chiffrée (prospect).</p>
               : terrain3d
                 ? <>
-                    <p className="mt-1.5 text-txt-mut">3D active — <b className="text-txt">Enveloppe réglementaire selon les règles intégrées</b> (hauteur sourcée {res.hauteurReglementaireM} m).</p>
+                    {/* RETOURS-25 (pt 7) — LES DEUX HAUTEURS écrites sur la vue : l'enveloppe RÈGLE (vert) et
+                        le BÂTI existant (gris, LiDAR). Le bâti paraît plus bas car c'est sa hauteur RÉELLE,
+                        inférieure à la hauteur MAXIMALE que la règle autorise (l'enveloppe). */}
+                    {(() => {
+                      const hBati = Math.round(Math.max(0, ...((res.batiExistantGeoJSON?.features ?? [])
+                        .map((f) => Number(f.properties?.hauteur_m) || 0))))
+                      return (
+                        <p data-gabarit-3d-hauteurs className="mt-1.5 text-txt-mut">3D active —
+                          <b className="text-mint"> enveloppe (règle) {res.hauteurReglementaireM} m</b>
+                          {hBati > 0 && <> · <b className="text-txt">bâti existant {hBati} m</b></>}.
+                          <span className="text-txt-dim"> Le bâti est plus bas : c'est sa hauteur réelle, sous le maximum réglementaire.</span>
+                        </p>
+                      )
+                    })()}
                     {/* CHASSE-CALCULS-FIX-1 Lot 6 (E-C1) — l'extrusion est posée à plat : le dire. */}
                     {res.terrainNote && <p data-gabarit-terrain className="mt-1 text-[10px] italic text-txt-dim">{res.terrainNote}</p>}
                   </>
@@ -518,9 +524,7 @@ export function Gabarit() {
               </Bouton>
             )}
           </div>
-          {terrain3d && (
-            <p className="text-[10px] text-txt-dim">Ctrl + glisser pour tourner / incliner la vue 3D.</p>
-          )}
+          {/* RETOURS-25 (pt 7) — indication « Ctrl + glisser … » retirée. */}
         </>
       )}
     </div>

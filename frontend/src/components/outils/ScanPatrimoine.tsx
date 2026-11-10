@@ -18,6 +18,7 @@ import { estIdu, iduComplet } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { M02 } from './ModulePanel'
 import { VeillePromoteurs } from './VeillePromoteurs'
+import { Bouton } from '../ui/Bouton'
 
 type Tab = 'possede' | 'construit'
 // RETOURS-15 B5 (P11) — l'outil s'ouvre sur DEUX PORTES : « Un propriétaire » (la recherche puis ses
@@ -231,7 +232,8 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
               <div className="truncate text-[13.5px] font-semibold text-txt-hi">{ownerNom ?? '…'}</div>
               <div className="mt-0.5 font-mono text-[10.5px] text-txt-dim">SIREN <Siren value={owner} className="font-mono text-txt-dim" /></div>
             </div>
-            <button data-scan-changer onClick={changer} className="shrink-0 text-[11.5px] text-mint underline underline-offset-2 hover:text-mint/80">changer</button>
+            {/* RETOURS-25 (pt 3) — « changer » : bouton vert de la DA (plus un lien nu souligné). */}
+            <Bouton niveau="lien" ton="vert" data-scan-changer onClick={changer} className="shrink-0">changer</Bouton>
           </div>
 
           {/* U1.6 — onglets SOULIGNÉS (pas des boutons pleins) ; le propriétaire est partagé (aucune relance).

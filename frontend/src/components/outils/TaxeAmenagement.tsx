@@ -234,7 +234,9 @@ export function TaxeAmenagement() {
         <div className="flex flex-col gap-1.5">
           <CheckField dataAttr="residence" label="Résidence principale"
             checked={residencePrincipale} onChange={setResidencePrincipale}
-            hint={`Abattement ${fmtInt(c.abattement.taux_pct)} % sur les ${fmtInt(c.abattement.plafond_m2_residence_principale)} premiers m² de CHAQUE logement.`} />
+            /* RETOURS-25 (pt 10) — le détail de l'abattement (« … premiers m² de CHAQUE logement ») n'est
+               écrit qu'UNE fois, sur le champ « Nombre de logements » ci-dessous ; ici, l'effet seul. */
+            hint={`Minore la taxe : abattement de ${fmtInt(c.abattement.taux_pct)} % par logement.`} />
           {/* E-A1 — l'abattement 100 m² est dû logement par logement : le nombre de logements est demandé
               dès que « Résidence principale » est coché (défaut vide → 1 logement, dit par le message). */}
           {residencePrincipale && !motifExo && (

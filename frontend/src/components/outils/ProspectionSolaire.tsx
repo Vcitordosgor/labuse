@@ -60,7 +60,7 @@ function EntreeSolaire({ onChoose }: { onChoose: (m: 'piscines' | 'ensoleillemen
   )
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2">
-      <p className="text-[11px] text-txt-mut">Deux métiers, deux entrées.</p>
+      {/* RETOURS-25 (pt 9) — « Deux métiers, deux entrées. » retiré. */}
       {/* RECETTE-2 (S16) — description RACCOURCIE : elle débordait sur 3 lignes (la carte
           Ensoleillement en fait 2) ; le titre « Piscines » + l'icône disent déjà le sujet. */}
       <Carte k="piscines" ic="💧" titre="Piscines" desc="Pisciniste — rénovation, couverture, entretien" />
@@ -379,11 +379,8 @@ function FicheSoleil({ f }: { f: SolaireFiche }) {
           Puissance installable = emprise toit × {String(kwcParM2).replace('.', ',')} kWc/m² (hypothèse) ; production annuelle = puissance × potentiel PVGIS.
         </p>
       )}
-      {f.toiture && (
-        <p data-solaire-toiture className="mt-1.5 text-[9px] leading-snug text-txt-dim">
-          Nature du toit : {f.toiture.statut} — {f.toiture.methode}
-        </p>
-      )}
+      {/* RETOURS-25 (pt 9) — ligne « Nature du toit : {statut} — {méthode} » RETIRÉE (doublon de la tuile
+          « Nature du toit » ci-dessus, qui porte déjà la valeur et la provenance « Estimé »). */}
       {/* RETOURS-12 O7 — PHOTO DU TOIT (ortho IGN) + ROSACE alignée sur l'azimut réel du bâti. */}
       {f.lon != null && f.lat != null && (
         <div data-solaire-photo className="mt-2">
@@ -393,8 +390,9 @@ function FicheSoleil({ f }: { f: SolaireFiche }) {
             <Rosace azimut={f.azimut ?? null} />
           </div>
           <p className="mt-1 text-[9px] leading-snug text-txt-dim">
+            {/* RETOURS-25 (pt 9) — phrase « La lecture LiDAR … se vérifie sur cette photo » retirée (filler).
+                On garde la légende de la rosace et la levée d'ambiguïté « pente du terrain ≠ pente du toit ». */}
             Photo aérienne (ortho IGN) — rosace alignée sur l'orientation du bâti{f.azimut != null ? ` (${f.azimut}°, Estimé)` : ' (orientation non estimée)'}.
-            La lecture LiDAR de la toiture (ci-dessus) se vérifie sur cette photo.
             « Pente du terrain » ci-dessus = pente moyenne du sol (RGE ALTI), pas la pente du toit.
           </p>
         </div>

@@ -65,9 +65,6 @@ const cap = (s: string | null | undefined) => (s ? s[0].toUpperCase() + s.slice(
 // « de maisons » / « de terrain nu » mais « d’appartements » (élision devant voyelle) — CHASSE-4-FIX (C4-003).
 const dePl = (pl: string) => (/^[aeiouyàâäéèêëîïôöùûü]/i.test(pl) ? `d’${pl}` : `de ${pl}`)
 
-const INPUT_CLS =
-  'w-full h-10 rounded-md border border-line-2 bg-surface-3 px-3 text-[13px] text-txt-hi ' +
-  'placeholder:text-txt-mut focus:outline-none'
 const H_TILE = 'rounded-md border border-line-2 bg-surface-3 px-3 py-2'
 const LBL = 'text-[10.5px] leading-tight text-txt-dim'
 const VAL = 'mt-0.5 text-[13px] font-medium leading-tight text-txt-hi'
@@ -97,7 +94,6 @@ function Corps({ children }: { children: React.ReactNode }) {
 
 // ═══════════════════════════════════════ RAPPORT PARCELLE ═══════════════════════════════════════
 function RapportParcelle({ idu }: { idu: string }) {
-  const focusParcelle = useApp((s) => s.focusParcelle)
   const fiche = useQuery({ queryKey: ['annonce-fiche', idu], queryFn: () => getFiche(idu) })
   const expo = useQuery({ queryKey: ['annonce-expo', idu], queryFn: () => getParcelExposition(idu) })
   // RECETTE-4 — la tuile « Classement LABUSE » est remplacée par « Dernière vente » (date + prix DVF de la
@@ -129,9 +125,10 @@ function RapportParcelle({ idu }: { idu: string }) {
   // RECETTE-4 — « Dernière vente » : date (MM/AAAA) + prix DVF de la parcelle (sa dernière mutation),
   // sinon « aucune depuis 2014 » (début de la couverture DVF). Lu de la fiche, aucun recalcul.
   const dm = (f.dvf_parcelle?.derniere_mutation ?? null) as { date_mutation?: string | null; valeur?: number | null } | null
+  // RETOURS-25 (pt 6) — pas de vente connue : « Aucune vente enregistrée (DVF depuis 2014) » (plus « aucune depuis 2014 »).
   const derniereVente = dm?.date_mutation
     ? `${dm.date_mutation.slice(5, 7)}/${dm.date_mutation.slice(0, 4)}${dm.valeur != null ? ` · ${fmtInt(dm.valeur)} €` : ''}`
-    : 'aucune depuis 2014'
+    : 'Aucune vente enregistrée (DVF depuis 2014)'
   // CHASSE-4-FIX (C4-002) — la tuile « Risques » lit le MÊME compte dédupliqué que le PDF (servi par
   // l'estimation, `n_aleas` = liste `_risques_rows`). Repli sur le brut `aleas.n` seulement si l'estimation
   // n'est pas encore là.
@@ -176,9 +173,7 @@ function RapportParcelle({ idu }: { idu: string }) {
           </div>
         ))}
       </div>
-      {/* RECETTE-4 — le lien « Ouvrir la fiche parcelle → » remonte SOUS les tuiles (la section
-          « Le foncier » qui le portait est supprimée). */}
-      <Bouton niveau="lien" ton="vert" onClick={() => focusParcelle(idu, { fiche: true })}>Ouvrir la fiche parcelle →</Bouton>
+      {/* RETOURS-25 (pt 6) — lien « Ouvrir la fiche parcelle → » retiré. */}
 
       {/* FIX-NU3-2 (M-A02) — le résultat d'estimation est une RÉGION LIVE : quand il se construit (après
           « Estimer »), le lecteur d'écran l'annonce au lieu de rester muet après « Lecture… ». */}
@@ -447,7 +442,6 @@ export function AnalyserAnnonce() {
 
   const [etape, setEtape] = useState<Etape>('entree')
   const [parcelle, setParcelle] = useState<string | null>(null)
-  const [lien, setLien] = useState('')
   const [erreur, setErreur] = useState<string | null>(null)
   const [res, setRes] = useState<AnnonceAnalyse | null>(null)
 
@@ -491,8 +485,7 @@ export function AnalyserAnnonce() {
       return
     }
     if (!annonceLienPrefill) return
-    setLien(annonceLienPrefill)
-    analyse.mutate(annonceLienPrefill)
+    analyse.mutate(annonceLienPrefill)   // pont Radar « Ce bien » — l'entrée lien n'est plus affichée, mais le lien reste analysable
     setAnnonceLienPrefill(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -519,12 +512,26 @@ export function AnalyserAnnonce() {
 
   const revenir = () => { setEtape('entree'); setErreur(null) }
 
+  // RETOURS-25 (pt 6) — un clic sur une AUTRE parcelle de la carte relance l'estimation sur elle (à
+  // chaque clic). `focusParcelle(parcelle)` pose selectedIdu = parcelle → on ignore ce cas (garde
+  // `!== parcelle`) pour ne pas boucler ; seule une parcelle VRAIMENT différente relance.
+  const selectedIdu = useApp((s) => s.selectedIdu)
+  const dernierClicEstim = useRef<string | null>(selectedIdu ?? null)
+  useEffect(() => {
+    if (selectedIdu && selectedIdu !== dernierClicEstim.current && selectedIdu !== parcelle) {
+      dernierClicEstim.current = selectedIdu
+      setParcelle(selectedIdu); setEtape('parcelle')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedIdu])
+
   if (etape === 'parcelle' && parcelle) {
     return (
       <>
+        {/* RETOURS-25 (pt 3) — « Changer de parcelle » : bouton vert de la DA (plus un lien nu souligné). */}
         <Entete retour={{ label: 'Retour', onClick: revenir }}
           titre={iduCourt(parcelle)}
-          sous={<>{parcelle} · <button className="underline underline-offset-2 hover:text-mint" onClick={revenir}>Changer de parcelle</button></>} />
+          sous={<>{parcelle} · <Bouton niveau="lien" ton="vert" onClick={revenir}>Changer de parcelle</Bouton></>} />
         <RapportParcelle idu={parcelle} />
       </>
     )
@@ -548,45 +555,18 @@ export function AnalyserAnnonce() {
     <>
       {/* RECETTE-4 — titre renommé « Estimer un bien » (clé interne analyser-annonce inchangée). */}
       {/* RETOURS-23 (pt 1) — le bouton du haut dit « ← Retour » partout (il ferme l'outil vers le menu Outils). */}
+      {/* RETOURS-25 (pt 6) — l'entrée « Un lien d'annonce » (et le titre « Une adresse ») sont retirées :
+          l'outil s'ouvre sur UN SEUL champ (adresse / IDU / clic carte). Sous-titre sans mention du lien. */}
       <Entete retour={{ label: 'Retour', onClick: toggleOutils }}
         titre="Estimer un bien"
-        sous="Une adresse ou un lien d’annonce : LABUSE croise le bien avec le marché et le foncier." />
+        sous="Une adresse : LABUSE croise le bien avec le marché et le foncier." />
       <Corps>
-        <div className="flex flex-col gap-1.5">
-          <p className="text-[11px] font-medium text-txt-dim">Une adresse</p>
-          <ParcelInput
-            placeholder="Adresse, IDU ou référence (BW0917)"
-            onPick={(idu) => { setParcelle(idu); setEtape('parcelle') }}
-          />
-        </div>
-
-        <div className="flex items-center gap-2 text-[11px] text-txt-mut">
-          <span className="h-px flex-1 bg-line-2" />OU<span className="h-px flex-1 bg-line-2" />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          {/* FIX-NU3-2 (M-A03) — le champ « lien d'annonce » a un vrai libellé programmatique (htmlFor),
-              et l'erreur lui est RATTACHÉE (aria-describedby + aria-invalid) et annoncée (role=alert). */}
-          <label htmlFor="estimer-lien" className="text-[11px] font-medium text-txt-dim">Un lien d’annonce</label>
-          <input
-            id="estimer-lien"
-            className={INPUT_CLS}
-            placeholder="https://www.leboncoin.fr/ventes_immobilieres/…"
-            value={lien}
-            aria-invalid={erreur ? true : undefined}
-            aria-describedby={erreur ? 'estimer-lien-err' : undefined}
-            onChange={(e) => { setLien(e.target.value); setErreur(null) }}
-            onKeyDown={(e) => { if (e.key === 'Enter' && lien.trim() && !analyse.isPending) analyse.mutate(lien.trim()) }}
-          />
-          <Bouton niveau="primaire" ton="vert" className="self-start"
-            disabled={!lien.trim() || analyse.isPending}
-            onClick={() => analyse.mutate(lien.trim())}>
-            {/* FIX-NU3-2 (M-T04) — un seul nom pour le geste : « Estimer » (l'écran s'appelle « Estimer un bien »). */}
-            {analyse.isPending ? 'Lecture…' : 'Estimer ce bien'}
-          </Bouton>
-          {erreur && <p id="estimer-lien-err" role="alert" className="text-[12px] leading-snug text-coral">{erreur}</p>}
-          <p className="text-[11px] leading-snug text-txt-mut">Leboncoin pour l’instant. SeLoger et Bien’ici à venir.</p>
-        </div>
+        <ParcelInput
+          placeholder="Adresse, IDU ou référence (BW0917)"
+          onPick={(idu) => { setParcelle(idu); setEtape('parcelle') }}
+        />
+        {/* le lien d'annonce (pont Radar « Ce bien ») reste analysable ; une erreur éventuelle se dit ici. */}
+        {erreur && <p role="alert" className="text-[12px] leading-snug text-coral">{erreur}</p>}
       </Corps>
     </>
   )

@@ -207,7 +207,11 @@ class Settings(BaseSettings):
     mercifacteur_api_key: str | None = None
     mercifacteur_api_secret: str | None = None
     courrier_cout_lettre_eur: float = 2.69   # lettre verte 3 pages Merci Facteur (grille 2026)
-    courrier_marge: float = 1.5              # prix client = coût prestataire × marge
+    courrier_marge: float = 1.5              # (hérité) prix = coût prestataire × marge, si prix client non fixé
+    # RETOURS-25 (pt 13) — PRIX CLIENT tout compris (impression + enveloppe + affranchissement) et DÉLAI
+    # d'envoi, affichés dans l'intro du Courrier. Lus ICI (config), jamais écrits en dur côté front.
+    courrier_prix_client_eur: float = 2.50   # prix client tout compris, par courrier
+    courrier_delai_jours: str = "7 à 10"     # délai d'envoi (jours), texte affiché « envoi sous … jours »
     courrier_max_jour: int = 100             # plafond anti-abus d'envois / jour / sujet
 
     # ── Offre INTÉGRAL — abonnement mensuel (parcours d'entrée · E1) ──

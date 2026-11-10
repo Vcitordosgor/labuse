@@ -48,21 +48,24 @@ describe('ASSEMBLAGE (H5) — étapes, contiguïté, isolées, plus de Courrier'
   beforeEach(() => { current = STUDY_OK; mockFetch(); useApp.setState({ msel: IDUS, parcelPrefill: null, module: 'assemblage' }) })
   afterEach(() => { vi.restoreAllMocks(); useApp.setState({ msel: [], module: null }) })
 
-  it('contigu : en-tête « N contiguës · surface totale » + 2 KPI distincts (14 111 / 11 065)', async () => {
+  it('RETOURS-25 — en-tête « N contiguës » SANS « surface totale » (dédup) + 2 KPI (14 111 / 11 065)', async () => {
     renderM16(); await verifier('[data-asm-charge]')
-    expect(document.querySelector('[data-asm-contigu]')?.textContent).toContain('111')   // surface totale 14 111
+    const entete = document.querySelector('[data-asm-contigu]')?.textContent ?? ''
+    expect(entete).toContain('contiguë')
+    expect(entete).not.toContain('surface totale')   // la surface vit UNE SEULE fois, dans la tuile « Surface d'assiette »
+    expect(document.querySelector('[data-asm-faits]')).toBeFalsy()   // chips « d'un seul tenant » / « N interlocuteurs » retirées
     expect(document.querySelector('[data-asm-kpi="surface"]')?.textContent).toContain('111')
     expect(document.querySelector('[data-asm-kpi="sdp"]')?.textContent).toContain('065')  // 11 065
   })
 
-  it('contigu : ×gain à 2 décimales ×1,03 (+3 %) + charge négative ROUGE + réf marché', async () => {
+  it('RETOURS-25 — « vs meilleure seule » retirée · charge négative ROUGE · Bilan (marché de la zone)', async () => {
     renderM16(); await verifier('[data-asm-charge]')
-    const kpi = document.querySelector('[data-asm-kpi="ratio"]')?.textContent ?? ''
-    expect(kpi).toContain('1,03'); expect(kpi).toContain('3')
+    expect(document.querySelector('[data-asm-kpi="ratio"]')).toBeFalsy()   // tuile « vs meilleure seule » retirée
     const bloc = document.querySelector('[data-asm-charge]') as HTMLElement
     expect(bloc.getAttribute('data-neg')).toBe('1')
-    expect(bloc.textContent).toContain('ne dégage rien pour le terrain')
-    expect(bloc.textContent).toContain('479')
+    expect(bloc.querySelector('.text-st-ecartee')).toBeTruthy()           // charge négative en rouge
+    // le marché de la zone (479 €/m²) vit DANS le Bilan (4 lignes : charge · prix de sortie · marché · chiffrables)
+    expect(document.querySelector('[data-asm-bilan]')?.textContent).toContain('479')
   })
 
   it('NON contigu : « pas d\'assemblage possible » + parcelles isolées, PAS de bilan', async () => {

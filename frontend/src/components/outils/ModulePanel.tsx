@@ -1521,7 +1521,12 @@ export function M09() {
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       <Banner>Un <b>service d'envoi</b> : vous préparez vos courriers (destinataires + relecture), LABUSE
         <b> les imprime, les affranchit et les poste</b>. Adressage générique (SPF/CERFA) — aucune identité
-        de propriétaire particulier.</Banner>
+        de propriétaire particulier.
+        {/* RETOURS-25 (pt 13) — prix et délai LUS DE LA CONFIG (/courrier/statut), jamais écrits en dur. */}
+        {statut.data?.tarif_unitaire_eur != null && (
+          <> <b>{statut.data.tarif_unitaire_eur.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} € par courrier</b>,
+            impression, enveloppe et affranchissement compris{statut.data.delai_jours ? <> · envoi sous {statut.data.delai_jours} jours</> : null}.</>
+        )}</Banner>
       {/* OUTILS-FIX-4 D1/D2 — ÉTAT DU SERVICE + PLAFOND DU JOUR, à l'ouverture, avant toute saisie.
           CHASSE-APP-FIX-2 (point 1) — REVIENT sur RECETTE-1 R27 : tant que /courrier/statut renvoie
           disponible:false, on AFFICHE la raison du serveur (le fournisseur est un bouchon ; la demande
@@ -1552,7 +1557,7 @@ export function M09() {
 
       {step === 1 && (
         <div className="flex min-h-0 flex-1 flex-col gap-2">
-          <p className="text-[11px] text-txt-mut">Les parcelles à démarcher — <b>une barre</b> (adresse ou IDU), autant que voulu :</p>
+          {/* RETOURS-25 (pt 13) — phrase « Les parcelles à démarcher — une barre… » retirée. */}
           <ParcelInput dataAttr="courrier-idu" placeholder="Adresse, IDU ou référence (BW0917)"
             onPick={ajouter} />
           {/* LOT7 — l'import Assemblage passe UNIQUEMENT par le pont one-shot « Préparer les courriers (n) »

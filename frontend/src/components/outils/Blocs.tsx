@@ -13,7 +13,6 @@ import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { BLOCS_PAGE, getBlocDetail, getBlocs, type BlocItem } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
-import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { ListPaginationFooter } from '../ListPagination'
 import { Squelette } from '../Loading'
@@ -219,17 +218,7 @@ export function Blocs() {
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       {/* RECETTE-OUTILS-1 (T5) — plus de « Réinitialiser » en tête : le lien « Réinitialiser les filtres »
           vit DANS le bloc Filtres (ci-dessous), visible seulement quand un filtre diffère du défaut. */}
-      {/* bandeau client — ce que l'outil EST (et n'est pas) */}
-      <div className="rounded-lg border px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut"
-        style={{ borderColor: `${TOKENS.mint}4d`, background: `${TOKENS.mint}0f` }}>
-        {/* RECETTE-2 (D15) — encart réduit à 2 lignes ; le détail (règle de contiguïté, particuliers hors
-            périmètre, nature des chiffres) vit dans le « i ». */}
-        Les parcelles <b className="text-txt">contiguës d'un même propriétaire</b> (personne morale) regroupées
-        en une assiette.
-        <Tip garder tip="Le regroupement : un bloc = des parcelles cadastrales en contact (≤ 0,5 m) appartenant au MÊME propriétaire personne morale (SIREN confirmé, fichiers des personnes morales DGFiP), à partir de 2 parcelles. Contiguïté purement géométrique (PostGIS), jamais un rapprochement par nom. Ce qu'il ne dit pas : les particuliers sont hors périmètre (identité non stable d'une parcelle à l'autre) ; un bloc n'affirme ni la constructibilité, ni un accord de vente. Les chiffres : surface, communes et zonages Sourcés (cadastre, PLU) ; SDP restante Estimée — somme des résiduels de la fiche (enveloppe PLU moins bâti existant), une parcelle hors PLU n'a pas de résiduel connu (le compteur « résiduel sur n/N » le dit). Tri par SDP restante agrégée décroissante.">
-          <span className="ml-1 cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
-        </Tip>
-      </div>
+      {/* RETOURS-25 (pt 11) — bandeau d'intro « Les parcelles contiguës d'un même propriétaire… » retiré. */}
 
       {/* RECETTE-OUTILS-3 (pt 39) — contrôles de filtres : même rendu, qu'on soit AVANT (déployés,
           sans chrome d'accordéon) ou APRÈS « Voir les parcelles » (repliés dans l'accordéon). */}
@@ -270,7 +259,8 @@ export function Blocs() {
             {/* RECETTE-OUTILS-1 (T5) — « Réinitialiser les filtres » DANS le bloc Filtres, visible seulement
                 quand un filtre diffère de sa valeur par défaut. */}
             {dirty && (
-              <Bouton niveau="lien" ton="ambre" data-blocs-reset-filtres onClick={resetAll} className="self-start">
+              /* RETOURS-25 (pt 11) — « Réinitialiser les filtres » en VERT (plus d'ambre). */
+              <Bouton niveau="lien" ton="vert" data-blocs-reset-filtres onClick={resetAll} className="self-start">
                 Réinitialiser les filtres
               </Bouton>
             )}
@@ -316,7 +306,7 @@ export function Blocs() {
           Aucun bloc de deux parcelles ou plus
           {commune ? <> à <b className="text-txt">{commune}</b></> : ' sur l’île'}
           {surfMin ? ` (surface ≥ ${fmtInt(surfMin)} m²)` : ''}{sdpMin ? ` (résiduel ≥ ${fmtInt(sdpMin)} m²)` : ''}
-          {nMin > 2 ? ` (≥ ${nMin} parcelles)` : ''}{meta.maj ? ` au ${meta.maj}` : ''}.
+          {nMin > 2 ? ` (≥ ${nMin} parcelles)` : ''}.{/* RETOURS-25 (pt 11) — date « au … » retirée. */}
           {!inclurePublics && meta.n_publics > 0 && (
             <> {fmtInt(meta.n_publics)} propriétaire{meta.n_publics > 1 ? 's' : ''} public{meta.n_publics > 1 ? 's' : ''} écarté{meta.n_publics > 1 ? 's' : ''} (cochez « inclure les propriétaires publics » pour les voir).</>
           )}
@@ -327,8 +317,8 @@ export function Blocs() {
           {/* bandeau de tête : N blocs · signal [source] au [millésime] */}
           <div data-blocs-bandeau className="rounded-lg bg-surface-2 px-3 py-2 text-[10.5px] leading-snug text-txt-mut">
             <b data-blocs-total className="tnum text-txt">{fmtInt(total)}</b> bloc{total > 1 ? 's' : ''} ·
-            signal <b className="text-txt">propriétaires PM DGFiP</b>{meta.millesime ? ` (millésime ${meta.millesime})` : ''}
-            {meta.maj ? ` au ${meta.maj}` : ''}{commune ? ` — ${commune}` : ' — toute l’île'}
+            {/* RETOURS-25 (pt 11) — millésime + date « au … » retirés. */}
+            signal <b className="text-txt">propriétaires PM DGFiP</b>{commune ? ` — ${commune}` : ' — toute l’île'}
             {!inclurePublics && meta.n_publics > 0 && (
               <span data-blocs-ecartes className="text-txt-dim"> · {fmtInt(meta.n_publics)} propriétaire{meta.n_publics > 1 ? 's' : ''} public{meta.n_publics > 1 ? 's' : ''} écarté{meta.n_publics > 1 ? 's' : ''}</span>
             )}

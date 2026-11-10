@@ -9,7 +9,6 @@ import { Squelette } from '../Loading'
 import { EmptyState, ErrorState } from '../States'
 import { Tip } from '../Tip'
 import { Retour } from '../ui/Retour'   // DA-FIX-5 P6 — retour unique (haut gauche)
-import { Chevron } from '../ui/Chevron'   // RETOURS-15 D6 — accordéon « Méthode et limites » de la charte
 
 const jfetch = async <T,>(url: string): Promise<T> => {
   const r = await fetch(url)
@@ -39,7 +38,6 @@ export function O5Servitudes() {
   // RECETTE-1 (F2) — quelle entrée a désigné la parcelle (grise l'autre). INVARIANT : 'carte' seulement
   // quand la parcelle vient de selectedIdu. (Le wrapper Risques remonte O5 à chaque selectedIdu → F1 inhérent.)
   const [source, setSource] = useState<SourceParcelle>(selectedIdu ? 'carte' : null)
-  const [methodeOuverte, setMethodeOuverte] = useState(false)   // RETOURS-15 D6 — accordéon charte, fermé par défaut
   useEffect(() => {
     if (selectedIdu && selectedIdu !== idu) { setIdu(selectedIdu); if (source == null) setSource('carte') }
     else if (selectedIdu == null && source === 'carte') { setIdu(''); setSource(null) }
@@ -60,14 +58,7 @@ export function O5Servitudes() {
   const d = q.data
   return (
     <>
-      {/* RETOURS-12 O3 — intro DESCRIPTIVE : ce que l'outil montre. L'aveu « ce que nos données ne
-          couvrent pas » quitte l'accueil client ; la limite vit désormais dans « Méthode & limites »
-          (replié, plus bas). */}
-      {/* RECETTE-OUTILS-1 (T5) — « Réinitialiser » retiré au profit de « Changer de parcelle ». */}
-      <div className="flex flex-col gap-1.5">
-        <Banner>Ce qui peut bloquer un projet sans se voir sur la carte : servitudes, sols, bruit,
-          assainissement. Chaque servitude est nommée, datée et sourcée.</Banner>
-      </div>
+      {/* RETOURS-25 (pt 2) — phrase d'intro « Ce qui peut bloquer un projet… » retirée. */}
       {/* RECETTE-1 (F2) — EntreeParcelle : adresse/IDU (→ allerA : zoom + contour SANS ouvrir la fiche)
           OU clic carte (capté par l'effet selectedIdu : il analyse ET ouvre la fiche). */}
       <EntreeParcelle source={source} picked={idu || null} onChanger={resetAll}
@@ -114,26 +105,12 @@ export function O5Servitudes() {
           {d.servitudes.length === 0 && (
             <EmptyState title="Aucune servitude détectée dans les couches ingérées à cette parcelle." />
           )}
-          {/* RETOURS-12 O3 — l'encadré « NON COUVERT PAR LA BASE — À VÉRIFIER AILLEURS » quitte la vue
-              client : plus d'aveu d'ignorance en évidence. Ce qui reste (les limites de couverture)
-              vit ICI, dans une MÉTHODE repliée. Les procédures PLU renvoient discrètement à l'outil
-              PLU ; les 417 SUP décodées sont rappelées comme une réserve courte, pas une alarme. */}
+          {/* RETOURS-25 (pt 2) — l'accordéon « Méthode et limites » est remplacé par UNE LIGNE en bas
+              « Non couvert : … » (la liste des limites de couverture, discrète). */}
           {d.non_couvert?.length > 0 && (
-            <details data-o5-methode open={methodeOuverte}
-              onToggle={(e) => setMethodeOuverte((e.target as HTMLDetailsElement).open)}
-              className="group rounded-lg border border-line-2 bg-surface-2">
-              {/* RECETTE-1 H7.2 — chevron `boite` (charte) : sur une barre à fond plein survolée, le
-                  conteneur du chevron reste CONTRASTÉ et le glyphe lisible (fini le « rond invisible,
-                  vert sur vert »). C'est le variant prévu pour les en-têtes d'accordéon sur .hover-fill. */}
-              <summary className="hover-fill group flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-3 py-2 text-[10.5px] text-txt-dim">
-                <Chevron open={methodeOuverte} boite />
-                <b className="text-txt-mut">Méthode et limites</b>
-              </summary>
-              <div className="space-y-0.5 border-t border-line px-3 pb-2 pt-1.5">
-                {d.non_couvert.map((n, i) => <p key={i} className="text-[10.5px] leading-snug text-txt-mut">· {n}</p>)}
-                <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">Une servitude non publiée au Géoportail de l'urbanisme n'est pas vue — le certificat d'urbanisme reste la référence. Les procédures PLU en cours sont servies par l'outil « PLU ».</p>
-              </div>
-            </details>
+            <p data-o5-non-couvert className="mt-auto pt-1 text-[10px] leading-snug text-txt-dim">
+              Non couvert : {d.non_couvert.join(' · ')}.
+            </p>
           )}
         </div>
       )}

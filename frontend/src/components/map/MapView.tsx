@@ -14,7 +14,7 @@ import { useApp, type Filters, type MapTool } from '../../store/useApp'
 import { BASEMAP_SOURCES, ORTHO_MONDE, activeBasemapKey } from './basemaps'
 import { Legend } from './Legend'
 import { fmtDateNum, fmtDateSitadel } from '../../lib/format'   // CHASSE-FIX-1 (A-3) — dates fuseau Réunion
-import { CouchesTuyauLayers, paintParcellesParFond } from './CouchesTuyau'  // COUCHES-TUYAU-1 lot 2 · G1 lot 3
+import { CouchesTuyauLayers, TuyauLegend, useTuyauPlan, paintParcellesParFond } from './CouchesTuyau'  // COUCHES-TUYAU-1 lot 2 · G1 lot 3
 import { VefaDetail } from './VefaDetail'
 import { MapToolbar } from './MapToolbar'
 import { Chargement } from '../Loading'
@@ -506,6 +506,7 @@ const getPaletteToast = (total?: number) =>
   + ' ; la liste reste exacte.'
 
 export function MapView() {
+  const { data: tuyauPlan } = useTuyauPlan()   // RETOURS-25 (pt 8) — légende des couches empilée avec la Légende
   const ref = useRef<HTMLDivElement>(null)
   const map = useRef<maplibregl.Map | null>(null)
   const ready = useRef(false)
@@ -1450,11 +1451,20 @@ export function MapView() {
     //    (liste N == parcelles peintes N) + trame neutre dessous pour « le reste » ;
     //  · sinon → l'expression client (exacte dans ce cas).
     const expr = toExpr(filters)
+    // RETOURS-25 (pt 15) — DÉCHARGE DU CORIAGE hors carte : le filtre de palette porte jusqu'à ~20 000
+    // IDU (`['in', idu, ['literal', …]]`), que maplibre ré-évalue pour chaque parcelle à chaque
+    // (re)construction des buckets. Dès qu'un OUTIL (module) ou une FICHE (selectedIdu) prend le focus,
+    // la carte n'est plus l'objet du regard : on RETIRE ce filtre lourd (la peinture ne colore plus rien,
+    // les contours restent). Au RETOUR à la carte nue, il est REcHARGÉ (resultIdus intact). `selectedIdu`
+    // est dans les deps de cet effet pour déclencher décharge/recharge.
+    const coloriageDecharge = !!resultIdus && (selectedIdu != null || module != null)
     const exprPalette: maplibregl.FilterSpecification = layers.couleurs_verdict
       ? (['all'] as unknown as maplibregl.FilterSpecification)
-      : resultIdus
-        ? (['all', expr, ['in', ['get', 'idu'], ['literal', resultIdus]]] as unknown as maplibregl.FilterSpecification)
-        : expr
+      : coloriageDecharge
+        ? (['==', ['get', 'idu'], ' '] as unknown as maplibregl.FilterSpecification)   // déchargé : ne peint rien
+        : resultIdus
+          ? (['all', expr, ['in', ['get', 'idu'], ['literal', resultIdus]]] as unknown as maplibregl.FilterSpecification)
+          : expr
     // RECETTE-8 W9 (A1) — plus de GRIS DE FOND sous les parcelles hors sélection en mode Analyse.
     // La trame neutre (#22302A/0,28) peignait « le reste » d'un gris sale : une parcelle doit
     // porter la COULEUR DE SON PALIER ou RIEN, jamais un gris. Les parcelles hors sélection restent
@@ -1518,7 +1528,7 @@ export function MapView() {
     // M64-P1 (A) : `basemap` dans les deps — au changement de thème, cet effet (seul à connaître le
     // mode zonage/opinion/factuel/neutre) se ré-exécute et RE-POSE la bonne fill-color des parcelles.
     // Corrige la teinte rouge/brune au boot : la couleur des parcelles n'appartient plus à applyTheme.
-  }, [filters, layers, bpeDomains, geo.dataUpdatedAt, mapReady, ile, verdict, opinion, zonageFill, module, comparePicking, resultIdus, basemap])
+  }, [filters, layers, bpeDomains, geo.dataUpdatedAt, mapReady, ile, verdict, opinion, zonageFill, module, comparePicking, resultIdus, basemap, selectedIdu])
 
   // P3 (dernière passe) — RÉSULTATS DE RECHERCHE EN VIOLET : quand une recherche/projet est
   // active (restitution posée), les parcelles-résultats (promues filtrées) reçoivent un CONTOUR
@@ -1944,11 +1954,15 @@ export function MapView() {
       {/* RECETTE-OUTILS-3 (S11) — bloc de contrôle 3D (↺/↻ · inclinaison · recentrer), seulement en 3D. */}
       {terrain3d && <Controle3D map={map} />}
       <MapToolbar />
-      {/* M12 C6/C7 : UN SEUL panneau de légendes (verdict replié + zonage + 50 pas +
-          équipements), cohabitant sans se recouvrir. La légende « Équipements » a quitté son
-          bloc flottant (qui masquait le verdict) pour rejoindre ce panneau. */}
-      <Legend />
-      {/* COUCHES-TUYAU-1 lot 2 — le tuyau : sources vectorielles des 52 couches + légende bas-droite */}
+      {/* RETOURS-25 (pt 8) — UN SEUL conteneur de légendes en bas à droite : la légende des COUCHES
+          (TuyauLegend) et la légende de PEINTURE (Legend : verdict/zonage) EMPILÉES (flex-col, gap), au
+          lieu de deux panneaux flottants indépendants qui se superposaient (deux « Légende » l'une sur
+          l'autre). Chacune se masque seule quand elle est vide. */}
+      <div data-legendes className="floating absolute bottom-4 right-4 z-10 hidden w-[244px] flex-col divide-y divide-line/70 sm:flex">
+        <TuyauLegend plan={tuyauPlan} />
+        <Legend />
+      </div>
+      {/* COUCHES-TUYAU-1 lot 2 — le tuyau : sources vectorielles des 52 couches (la légende est empilée ci-dessus) */}
       <CouchesTuyauLayers map={map} ready={mapReady} />
       <VefaDetail />{/* SECTEUR-2b (U1) — panneau de détail au clic sur une commune VEFA */}
       {/* B1/P5 : chargement carte DISCRET (données GeoJSON + tuiles MVT) — jamais figé.

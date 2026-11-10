@@ -568,7 +568,10 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
    seulement `border-top`, sinon la bordure globale `.stats` subsistait en bas/côtés). Les tuiles ont
    la MÊME hauteur (`grid-auto-rows:1fr`), ajustée au contenu le plus riche (plus de plancher
    `min-height`), et leur contenu est CENTRÉ verticalement → aucun vide en bas. */
-.fiche-v6 .stats { display:grid; grid-template-columns:repeat(3,1fr); grid-auto-rows:1fr; gap:6px; padding:12px 14px; background:transparent; border:0; }
+/* RETOURS-25 (pt 14) — les 6 tuiles ont EXACTEMENT la largeur de l'en-tête et des sections : plus de
+   padding HORIZONTAL sur `.stats` (qui les rentrait de 14 px de chaque côté, plus étroites que la carte
+   d'en-tête et les sections). Le padding vertical (haut/bas) reste. */
+.fiche-v6 .stats { display:grid; grid-template-columns:repeat(3,1fr); grid-auto-rows:1fr; gap:6px; padding:12px 0; background:transparent; border:0; }
 .fiche-v6 .stat { padding:9px 10px; min-width:0; background:var(--bg-stat); border:0.5px solid var(--f-linehead); border-radius:var(--r-ctl); display:flex; flex-direction:column; justify-content:center; }
 /* ECRANS-NOV-1 §1 — style fiche commune : valeur en tête (grande, mono), libellé DESSOUS. */
 /* RETOURS-22 (pt 2) — chaque libellé tient sur UNE ligne, « SDP RESTANTE » et son « i » compris
