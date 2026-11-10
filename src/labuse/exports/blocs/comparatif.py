@@ -77,6 +77,7 @@ def _m2(r, k):
 _CAUSE_COURT = {
     "terrain_exigu": "terrain exigu", "hors_plu": "hors PLU", "redhibitoire": "rédhibitoire",
     "capacite_nulle": "capacité nulle", "bati_non_ingere": "bâti non estimé",
+    "assiette_a_verifier": "assiette à vérifier",   # EXIGU-FIX-1 — ignorance, jamais « trop étroit »
 }
 
 
