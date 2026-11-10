@@ -211,7 +211,8 @@ export function M16() {
           (décision Vic) : l'outil se lit directement par ses étapes. */}
       {/* RECETTE-1 (H5, Vic) — ÉTAPE 1 « Choisir les parcelles » : EntreeParcelle (adresse OU clic carte)
           + liste des parcelles retenues (✕), 8 maximum, puis « Vérifier l'assemblage ». */}
-      <p className="label-caps text-[9.5px]">Étape 1 — choisir les parcelles ({ASM_MAX} maximum)</p>
+      {/* RETOURS-26 (pt 2) — « Étape 1 — » retiré : il n'y a qu'une étape. */}
+      <p className="label-caps text-[9.5px]">Choisir les parcelles ({ASM_MAX} maximum)</p>
       <EntreeParcelle source={null} viderApresPick onPick={(i) => addDepart(i)} />
       <div className="flex flex-wrap gap-1">
         {msel.map((i) => (
@@ -278,7 +279,9 @@ export function M16() {
             )
           })()}
 
-          <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]">
+          {/* RETOURS-26 (pt 1) — `flex flex-col gap-2` : un espace NORMAL (et constant) entre les tuiles et
+              « Bilan » — avant, les deux blocs étaient collés, et « Bilan » ouvert empiétait sur les tuiles. */}
+          <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]">
             {/* CAS I — assiette sans potentiel : on le DIT, pas de bloc gain trompeur. */}
             {d.sans_potentiel ? (
               <div data-asm-sans-potentiel className="rounded-md bg-st-ecartee/[0.08] px-2 py-1.5 text-[11px] leading-snug text-st-ecartee">
@@ -319,7 +322,7 @@ export function M16() {
                   {/* RETOURS-25 (pt 1) — tuile « vs meilleure seule » RETIRÉE. */}
                 </div>
                 {d.sdp_conserve_estimation && (
-                  <p data-asm-sdp-estimation className="mt-1 text-[9px] leading-tight text-txt-dim">* SDP bâti conservé estimée — le bâti existant déduit repose sur une hypothèse de niveaux (comme la fiche) quand la mesure manque.</p>
+                  <p data-asm-sdp-estimation className="text-[9px] leading-tight text-txt-dim">* SDP bâti conservé estimée — le bâti existant déduit repose sur une hypothèse de niveaux (comme la fiche) quand la mesure manque.</p>
                 )}
                 {/* RECETTE-OUTILS-1 (point 15) — le bloc rouge « Charge foncière cumulée (estimée) » ET le
                     paragraphe « Capacité et bilan calculés sur l'UNION… » (note_sdp) passent dans un
@@ -339,14 +342,20 @@ export function M16() {
                       <span className="ml-0.5 cursor-help rounded-full border border-line-2 px-1 text-[8px] font-normal text-txt-dim">i</span>
                     </Tip>
                   </summary>
-                  <div data-asm-bilan-corps className="flex flex-col gap-1 px-3 pb-2 text-[11px]">
+                  {/* RETOURS-26 (pt 1) — chaque ligne tient sur UNE ligne : libellé à gauche, valeur à
+                      droite ; la précision (€/m², source DVF) passe EN DESSOUS (petite, alignée à droite)
+                      au lieu d'allonger la valeur et de la faire passer à la ligne. */}
+                  <div data-asm-bilan-corps className="flex flex-col gap-1.5 px-3 pb-2 text-[11px]">
                     {d.charge_fonciere && (() => {
                       const c = d.charge_fonciere.central as number
                       const neg = c < 0
                       return (
-                        <div data-asm-charge data-neg={neg ? '1' : '0'} className="flex items-baseline justify-between gap-2">
-                          <span className="text-txt-dim">Charge foncière estimée</span>
-                          <span className={`font-medium ${neg ? 'text-st-ecartee' : 'text-mint'}`}>{fmtEurCompact(c)} <span className="text-[9px] font-normal text-txt-dim">({fmt(d.charge_fonciere.par_m2_terrain)} €/m²)</span></span>
+                        <div data-asm-charge data-neg={neg ? '1' : '0'}>
+                          <div className="flex items-baseline justify-between gap-2">
+                            <span className="text-txt-dim">Charge foncière estimée</span>
+                            <span className={`font-medium ${neg ? 'text-st-ecartee' : 'text-mint'}`}>{fmtEurCompact(c)}</span>
+                          </div>
+                          <div className="text-right text-[9px] leading-tight text-txt-dim">{fmt(d.charge_fonciere.par_m2_terrain)} €/m²</div>
                         </div>
                       )
                     })()}
@@ -357,14 +366,18 @@ export function M16() {
                       </div>
                     )}
                     {d.terrain_zone_eur_m2 != null && (
-                      <div className="flex items-baseline justify-between gap-2">
-                        <span className="text-txt-dim">Marché de la zone</span>
-                        <span className="text-txt">{fmt(d.terrain_zone_eur_m2)} €/m² <span className="text-[9px] text-txt-dim">(DVF · fiab. {String(d.terrain_zone_fiabilite ?? '—')})</span></span>
+                      <div>
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span className="text-txt-dim">Marché de la zone</span>
+                          <span className="text-txt">{fmt(d.terrain_zone_eur_m2)} €/m²</span>
+                        </div>
+                        <div className="text-right text-[9px] leading-tight text-txt-dim">DVF · fiab. {String(d.terrain_zone_fiabilite ?? '—')}</div>
                       </div>
                     )}
+                    {/* RETOURS-26 (pt 1) — « Parcelles chiffrables 1/3 » devient « Prix connu pour 1 parcelle sur 3 ». */}
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-txt-dim">Parcelles chiffrables</span>
-                      <span className={d.n_chiffrables < d.n ? 'text-st-creuser' : 'text-txt'}>{d.n_chiffrables}/{d.n}</span>
+                      <span className="text-txt-dim">Prix connu pour</span>
+                      <span data-asm-chiffrables className={d.n_chiffrables < d.n ? 'text-st-creuser' : 'text-txt'}>{d.n_chiffrables} parcelle{d.n_chiffrables > 1 ? 's' : ''} sur {d.n}</span>
                     </div>
                   </div>
                 </details>
@@ -389,7 +402,7 @@ export function M16() {
             {d.tous_personnes_morales ? (
               <span className="text-mint">✓ Approche simplifiée — {d.n_personnes_morales} propriétaire(s) <b>personne(s) morale(s)</b>, aucun particulier</span>
             ) : (
-              <span className="text-txt-mut">{d.n_personnes_morales} personne(s) morale(s) · <b className="text-st-creuser">{d.n_particuliers} particulier(s)</b> (approche plus lourde)</span>
+              <span className="text-txt-mut">{d.n_personnes_morales} personne(s) morale(s) · <b className="text-st-creuser">{d.n_particuliers} particulier(s)</b></span>
             )}
             {/* RECETTE-4 — noms des personnes morales EN ENTIER (plusieurs lignes si besoin) : plus de troncature (break-words). */}
             {(d.proprietaires_pm as string[]).length > 0 && (
@@ -421,8 +434,7 @@ export function M16() {
             )})}
           </div>
           {/* RECETTE-1 (H5, Vic) — bouton « Préparer courrier propriétaire » RETIRÉ de l'Assemblage. */}
-          {/* C — indivision non détectable en base (honnête, pas fabriqué) */}
-          <p className="shrink-0 text-[10px] leading-snug text-txt-dim">Indivision : non détectable en open data (aucune structure de propriété physique publiée) — signal non affiché plutôt qu'inventé.</p>
+          {/* RETOURS-26 (pt 1) — phrase « Indivision : non détectable en open data… » retirée. */}
         </>
       )}
     </div>

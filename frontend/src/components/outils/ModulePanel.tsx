@@ -1296,7 +1296,8 @@ export function M08() {
     <>
       {/* RECETTE-OUTILS-2 (R6) — encart « La parcelle d'abord… / choisissez l'année… » retiré. */}
       <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
-        {/* RECETTE-OUTILS-1 (T5) — « Réinitialiser » retiré au profit de « Changer de parcelle ». */}
+        {/* RETOURS-26 (pt 7) — plus de « Changer de parcelle » : la boîte parcelle (EntreeParcelle) porte
+            la croix (✕) qui vide le champ (onChanger=resetAll). */}
         <div className="flex flex-col gap-1.5">
           <p className="label-caps text-[9.5px]">Quelle parcelle voir évoluer ?</p>
         </div>

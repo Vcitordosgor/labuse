@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import * as maplibregl from 'maplibre-gl'   // RETOURS-26 (pt 4) — étiquettes de hauteur sur la vue 3D (Marker)
 import { useQuery } from '@tanstack/react-query'
 import { getGabarit, docGabaritUrl, type GabaritResult, type GabGeom } from '../../lib/api'
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'   // RECETTE-OUTILS-1 (34) — export = doc Gabarit
@@ -68,14 +69,45 @@ function bboxOf(geom: GabGeom): number[][] | null {
   return [[minx, miny], [maxx, maxy]]
 }
 
+/** Centre (lng,lat) d'une ou plusieurs géométries — pour poser une étiquette au milieu de la parcelle. */
+function centerOf(...geoms: (GabGeom | null | undefined)[]): [number, number] | null {
+  let minx = 180, miny = 90, maxx = -180, maxy = -90, seen = false
+  for (const g of geoms) {
+    const bb = g ? bboxOf(g) : null
+    if (!bb) continue
+    seen = true
+    minx = Math.min(minx, bb[0][0]); miny = Math.min(miny, bb[0][1])
+    maxx = Math.max(maxx, bb[1][0]); maxy = Math.max(maxy, bb[1][1])
+  }
+  return seen ? [(minx + maxx) / 2, (miny + maxy) / 2] : null
+}
+
+/** RETOURS-26 (pt 4) — étiquette de hauteur posée SUR la vue : pastille HTML (Marker). Les Markers
+ *  maplibre sont alignés sur l'écran (billboard) : ils restent droits et lisibles sous TOUS les angles
+ *  (pitch/rotation) de la 3D. Le décalage écran est passé via l'option `offset` du Marker (PAS un
+ *  `transform` CSS, que maplibre écrase par son propre transform de positionnement). */
+function mkHauteurEl(texte: string, couleur: string): HTMLDivElement {
+  const el = document.createElement('div')
+  el.setAttribute('data-gabarit-3d-label', texte)
+  el.textContent = texte
+  el.style.cssText = `font:600 11px ui-sans-serif,system-ui,sans-serif;color:${couleur};`
+    + 'background:rgba(6,17,11,.86);padding:2px 8px;border-radius:6px;white-space:nowrap;pointer-events:none;'
+    + `border:1px solid ${couleur}66;box-shadow:0 1px 4px rgba(0,0,0,.4)`
+  return el
+}
+
 /** Dessine (ou retire) les couches réglementaires sur la carte, seulement après validation réussie. */
 function useMapLayers(res: GabaritResult | undefined, terrain3d: boolean, batiVisible: boolean) {
+  // RETOURS-26 (pt 4) — étiquettes de hauteur (Marker) posées sur la vue 3D ; retirées à chaque passe.
+  const labels = useRef<maplibregl.Marker[]>([])
   useEffect(() => {
     const m = getMap()
     if (!m) return
     const setBaseSel = (v: 'visible' | 'none') =>
       SEL_BASE.forEach((id) => { try { const mm = m as unknown as { setLayoutProperty?: (i: string, p: string, x: string) => void }; if (m.getLayer(id)) mm.setLayoutProperty?.(id, 'visibility', v) } catch { /* noop */ } })
     const clear = () => {
+      labels.current.forEach((mk) => { try { mk.remove() } catch { /* noop */ } })
+      labels.current = []
       LAYERS.forEach((id) => { try { if (m.getLayer(id)) m.removeLayer(id) } catch { /* noop */ } })
       try { if (m.getSource(SRC)) m.removeSource(SRC) } catch { /* noop */ }
       setBaseSel('visible')   // R15 — le gabarit ne dessine plus : rendre le liseré de base
@@ -146,6 +178,33 @@ function useMapLayers(res: GabaritResult | undefined, terrain3d: boolean, batiVi
         filter: ['==', 'kind', 'bati'],
         paint: { 'fill-extrusion-color': C_BATI, 'fill-extrusion-opacity': 0.55,
                  'fill-extrusion-height': ['coalesce', ['get', 'hauteur_m'], 3], 'fill-extrusion-base': 0 } })
+    }
+    // RETOURS-26 (pt 4) — LES DEUX HAUTEURS ÉCRITES SUR LA VUE : deux pastilles (Marker, billboard =
+    // lisibles sous tous les angles). « Règle : X m » (vert, centre de la zone) · « Bâti : N m » (gris,
+    // centre du bâti). Les Markers maplibre ne portent pas d'altitude : le décalage vertical (dy) est
+    // calculé À PARTIR des deux hauteurs (échelle commune) pour que la pastille PHYSIQUEMENT la plus
+    // haute s'affiche la plus haute — qu'il s'agisse de la règle OU du bâti (ex. bâti antérieur plus haut
+    // que la limite PLU actuelle). La hauteur bâti est la MAX mesurée (LiDAR HD / BD TOPO).
+    const mapGl = m as unknown as maplibregl.Map
+    const hRegle = ok && res.hauteurReglementaireM != null ? res.hauteurReglementaireM : null
+    const hBati = batiFeats.length
+      ? Math.round(Math.max(0, ...batiFeats.map((f) => Number(f.properties?.hauteur_m) || 0))) : 0
+    const dyFor = (h: number) => {
+      const hmax = Math.max(hRegle ?? 0, hBati, 1)
+      return -14 - Math.round((h / hmax) * 42)   // plus haut = décalé plus haut (−14 … −56 px)
+    }
+    // Les deux pastilles sont ancrées au MÊME point (centre de la parcelle) avec une séparation
+    // horizontale fixe via l'option `offset` du Marker (Règle à gauche, Bâti à droite, ∓46 px) : elles
+    // ne se chevauchent JAMAIS, même quand les hauteurs sont proches. L'offset VERTICAL est proportionnel
+    // à la hauteur → la pastille PHYSIQUEMENT la plus haute s'affiche la plus haute (règle OU bâti).
+    const cParc = centerOf(res.zoneImplantationGeoJSON ?? null, res.contourGeoJSON ?? null)
+    if (terrain3d && cParc && hRegle != null) {
+      const el = mkHauteurEl(`Règle : ${hRegle} m`, C_ZONE)
+      labels.current.push(new maplibregl.Marker({ element: el, anchor: 'bottom', offset: [-46, dyFor(hRegle)] }).setLngLat(cParc).addTo(mapGl))
+    }
+    if (terrain3d && batiVisible && cParc && hBati > 0) {
+      const el = mkHauteurEl(`Bâti : ${hBati} m`, C_BATI)
+      labels.current.push(new maplibregl.Marker({ element: el, anchor: 'bottom', offset: [46, dyFor(hBati)] }).setLngLat(cParc).addTo(mapGl))
     }
     // RECETTE-OUTILS-2 (R13) — le cadrage est le SEUL propriétaire de la caméra du Gabarit (MapView ne
     // recentre plus en gabarit). En 3D on cadre AVEC l'inclinaison (pitch 55, bearing 0) — comme « Vue
@@ -402,32 +461,9 @@ export function Gabarit() {
                 </li>
               ))}
             </ul>
-            {/* GABARIT-6 P3 — la LISTE des règles connues mais non intégrées (le compte seul vivait
-                ci-dessus). Nom · pourquoi (souvent avec la citation PLU) · source. Rien d'inventé :
-                exactement ce que le moteur renvoie dans nonIntegratedRules. */}
-            {res.nonIntegratedRules.length > 0 && (
-              <details data-gabarit-non-integrees open={nonIntOuvertes}
-                onToggle={(e) => setNonIntOuvertes((e.target as HTMLDetailsElement).open)}
-                className="group mt-2 border-t border-line pt-2">
-                <summary className="hover-fill flex cursor-pointer list-none items-center gap-1.5 rounded px-0.5 py-0.5 text-[10.5px] text-txt-mut">
-                  <Chevron open={nonIntOuvertes} />
-                  <b>Le détail des {res.nonIntegratedRules.length} règle{res.nonIntegratedRules.length > 1 ? 's' : ''} non intégrée{res.nonIntegratedRules.length > 1 ? 's' : ''}</b>
-                </summary>
-                <ul className="mt-1.5 flex flex-col gap-1.5">
-                  {res.nonIntegratedRules.map((n, i) => (
-                    <li key={i} data-gabarit-non-integree className="border-b border-line pb-1.5 last:border-0">
-                      <span className="text-[10.5px] text-txt">{n.label}</span>
-                      {n.detail && <span className="block text-[9.5px] italic leading-snug text-txt-dim">{n.detail}</span>}
-                      {(n.source?.document || n.source?.zone || n.source?.article) && (
-                        <span className="block text-[9px] leading-snug text-txt-ghost">
-                          {[n.source.document, n.source.zone, n.source.article].filter(Boolean).join(' — ')}
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            )}
+            {/* RETOURS-26 (pt 5) — l'accordéon « Le détail des N règles non intégrées » qui vivait ICI est
+                RETIRÉ : le détail est désormais DANS la boîte jaune (devenue l'accordéon) sous « Voir les
+                règles appliquées ». Un seul bloc pour les règles non intégrées. */}
           </div>
 
           {/* RÈGLES APPLIQUÉES — générées depuis le moteur, aucune valeur en dur */}
@@ -453,15 +489,32 @@ export function Gabarit() {
                   </span>
                 </div>
               ))}
+              {/* RETOURS-26 (pt 5) — UN SEUL bloc : la boîte jaune EST l'accordéon. Son en-tête
+                  « ⚠ N règles applicables non intégrées » déplie EN DEDANS le détail complet (nom · pourquoi
+                  · source) — exactement ce que renvoie le moteur (nonIntegratedRules), rien d'inventé.
+                  L'accordéon séparé « Le détail des N règles… » (ci-dessus, dans la couverture) a disparu. */}
               {res.nonIntegratedRules.length > 0 && (
-                <div className="mt-1 rounded-md border border-st-creuser/30 bg-st-creuser/5 px-2.5 py-1.5">
-                  <p className="text-[10.5px] font-medium text-st-creuser">
+                <details data-gabarit-non-integrees open={nonIntOuvertes}
+                  onToggle={(e) => setNonIntOuvertes((e.target as HTMLDetailsElement).open)}
+                  className="group mt-1 rounded-md border border-st-creuser/30 bg-st-creuser/5">
+                  <summary className="flex cursor-pointer list-none items-center gap-1.5 px-2.5 py-1.5 text-[10.5px] font-medium text-st-creuser marker:hidden">
+                    <Chevron open={nonIntOuvertes} />
                     ⚠ {res.nonIntegratedRules.length} règle{res.nonIntegratedRules.length > 1 ? 's' : ''} applicable{res.nonIntegratedRules.length > 1 ? 's' : ''} non intégrée{res.nonIntegratedRules.length > 1 ? 's' : ''}
-                  </p>
-                  <ul className="ml-3 list-disc text-[10px] leading-snug text-txt-mut">
-                    {res.nonIntegratedRules.map((n, i) => <li key={i}>{n.label}</li>)}
+                  </summary>
+                  <ul className="flex flex-col gap-1.5 px-2.5 pb-2 pt-0.5">
+                    {res.nonIntegratedRules.map((n, i) => (
+                      <li key={i} data-gabarit-non-integree className="border-t border-st-creuser/15 pt-1.5 first:border-0 first:pt-0">
+                        <span className="text-[10.5px] text-txt">{n.label}</span>
+                        {n.detail && <span className="block text-[9.5px] italic leading-snug text-txt-dim">{n.detail}</span>}
+                        {(n.source?.document || n.source?.zone || n.source?.article) && (
+                          <span className="block text-[9px] leading-snug text-txt-ghost">
+                            {[n.source.document, n.source.zone, n.source.article].filter(Boolean).join(' — ')}
+                          </span>
+                        )}
+                      </li>
+                    ))}
                   </ul>
-                </div>
+                </details>
               )}
             </div>
           </details>
@@ -481,17 +534,23 @@ export function Gabarit() {
               ? <p className="mt-1.5 text-st-creuser">3D indisponible — hauteur non chiffrée (prospect).</p>
               : terrain3d
                 ? <>
-                    {/* RETOURS-25 (pt 7) — LES DEUX HAUTEURS écrites sur la vue : l'enveloppe RÈGLE (vert) et
-                        le BÂTI existant (gris, LiDAR). Le bâti paraît plus bas car c'est sa hauteur RÉELLE,
-                        inférieure à la hauteur MAXIMALE que la règle autorise (l'enveloppe). */}
+                    {/* RETOURS-26 (pt 4) — les deux hauteurs sont ÉCRITES SUR LA VUE (pastilles « Règle : X m »
+                        / « Bâti : N m », lisibles sous tous les angles). Le panneau n'en garde que
+                        l'EXPLICATION, et elle est CONDITIONNELLE : le bâti est à sa hauteur RÉELLE mesurée,
+                        qui peut être SOUS l'enveloppe (maximum réglementaire), AU-DESSUS (bâti antérieur à
+                        une limite PLU abaissée) ou à sa hauteur. On ne prétend plus qu'il est « plus bas ». */}
                     {(() => {
                       const hBati = Math.round(Math.max(0, ...((res.batiExistantGeoJSON?.features ?? [])
                         .map((f) => Number(f.properties?.hauteur_m) || 0))))
+                      const hr = res.hauteurReglementaireM
+                      const rel = hBati <= 0 || hr == null ? null
+                        : hBati > hr + 0.5 ? `Ici le bâti existant (${hBati} m) DÉPASSE le maximum réglementaire (${hr} m) — construction antérieure à la limite actuelle du PLU.`
+                        : hBati < hr - 0.5 ? `Ici le bâti existant (${hBati} m) est plus bas que le maximum réglementaire (${hr} m) : c'est sa hauteur réelle, sous ce que la règle autorise.`
+                        : `Ici le bâti existant (${hBati} m) est à la hauteur du maximum réglementaire (${hr} m).`
                       return (
-                        <p data-gabarit-3d-hauteurs className="mt-1.5 text-txt-mut">3D active —
-                          <b className="text-mint"> enveloppe (règle) {res.hauteurReglementaireM} m</b>
-                          {hBati > 0 && <> · <b className="text-txt">bâti existant {hBati} m</b></>}.
-                          <span className="text-txt-dim"> Le bâti est plus bas : c'est sa hauteur réelle, sous le maximum réglementaire.</span>
+                        <p data-gabarit-3d-hauteurs className="mt-1.5 text-txt-mut">Hauteurs indiquées sur la vue —
+                          <b className="text-mint"> enveloppe (règle)</b> et <b className="text-txt">bâti existant</b>.
+                          {rel && <span className="text-txt-dim"> {rel}</span>}
                         </p>
                       )
                     })()}

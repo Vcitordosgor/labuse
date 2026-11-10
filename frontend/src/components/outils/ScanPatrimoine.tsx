@@ -161,11 +161,14 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
         <div className="flex flex-col gap-2">
           {/* RECETTE-2 (T9) — cartes de CHOIX internes : pas de bord gauche vert (door-hot réservé au
               listing du menu Outils). */}
-          <button data-scan-porte="proprietaire" onClick={() => setPorte('proprietaire')} className="door hover-fill w-full text-left">
+          {/* RETOURS-26 (pt 3) — `mb-0` : la classe `.door` porte `margin-bottom:8px` ; sans le neutraliser,
+              l'écart entre les deux chemins valait 8px (gap) + 8px (marge) = 16px, le double des autres
+              outils (Communes, Solaire). Avec `mb-0`, seul le `gap-2` (8px) compte. */}
+          <button data-scan-porte="proprietaire" onClick={() => setPorte('proprietaire')} className="door hover-fill mb-0 w-full text-left">
             <div className="text-[12.5px] font-medium text-txt">Un propriétaire</div>
             <div className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">Ce qu'une société possède et construit — par nom, SIREN, adresse ou IDU.</div>
           </button>
-          <button data-scan-porte="operations" onClick={() => setPorte('operations')} className="door hover-fill w-full text-left">
+          <button data-scan-porte="operations" onClick={() => setPorte('operations')} className="door hover-fill mb-0 w-full text-left">
             <div className="text-[12.5px] font-medium text-txt">Toutes les opérations de l'île</div>
             <div className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">Ce que les promoteurs, bailleurs et SEM construisent — filtrable par commune et période.</div>
           </button>

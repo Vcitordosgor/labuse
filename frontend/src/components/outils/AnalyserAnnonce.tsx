@@ -18,9 +18,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 
-import { ParcelInput } from '../ParcelInput'
+import { EntreeParcelle } from './EntreeParcelle'
 import { analyserAnnonce, docAnalyseAnnonceLienUrl, docAnalyseAnnonceUrl, getAnnonceEstimation, getFiche, getParcelExposition, type AnnonceAnalyse } from '../../lib/api'
-import { fmtInt, fmtM2, iduCourt } from '../../lib/format'
+import { fmtInt, fmtM2 } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'
 import { Chargement } from '../Loading'
@@ -104,7 +104,10 @@ function RapportParcelle({ idu }: { idu: string }) {
   // ESTIMER-PRECISION-1 — surface habitable SAISISSABLE (facultative) : si renseignée, le total l'utilise
   // (libellé « surface saisie »). Préremplie depuis la dernière vente DVF quand elle la donne. Le champ
   // voyage dans l'estimation ET le PDF (écran == PDF == Doc).
+  // RETOURS-26 (pt 10) — `surfaceHab` = valeur VALIDÉE (pilote l'estimation) ; `surfaceDraft` = texte en
+  // cours de frappe. La validation a lieu à la sortie du champ (blur) ou sur Entrée, pas à chaque touche.
   const [surfaceHab, setSurfaceHab] = useState('')
+  const [surfaceDraft, setSurfaceDraft] = useState('')
   const [surfaceTouchee, setSurfaceTouchee] = useState(false)
   const surfNum = surfaceHab.trim() ? Math.round(Number(surfaceHab)) : null
   const surfValide = surfNum != null && Number.isFinite(surfNum) && surfNum > 0 ? surfNum : null
@@ -115,6 +118,8 @@ function RapportParcelle({ idu }: { idu: string }) {
       setSurfaceHab(String(estim.data.surface_dvf_m2))
     }
   }, [estim.data?.surface_dvf_m2, surfaceTouchee, surfaceHab])
+  // Le brouillon suit la valeur validée (préremplissage DVF, « effacer »).
+  useEffect(() => { setSurfaceDraft(surfaceHab) }, [surfaceHab])
 
   if (fiche.isLoading) return <Corps><Chargement /></Corps>
   if (fiche.isError || !fiche.data) return <Corps><ErrorState message="Impossible de charger la fiche parcelle." retry={() => fiche.refetch()} /></Corps>
@@ -225,16 +230,21 @@ function RapportParcelle({ idu }: { idu: string }) {
             {!terrain && !copro && (
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <label className="text-[11px] text-txt-dim" htmlFor="surface-hab">Surface habitable</label>
+                {/* RETOURS-26 (pt 10) — on TAPE le nombre directement : `type="text"` (aucune flèche
+                    haut/bas) + `inputMode="numeric"` (clavier numérique) ; validé à la sortie du champ
+                    (blur) ou sur Entrée — pas à chaque touche. */}
                 <input
-                  id="surface-hab" type="number" min={1} step={1} inputMode="numeric"
+                  id="surface-hab" type="text" inputMode="numeric" pattern="[0-9]*"
                   className="h-8 w-28 rounded-md border border-line-2 bg-surface-3 px-2 text-[12.5px] text-txt-hi placeholder:text-txt-mut focus:outline-none"
                   placeholder={e?.surface_dvf_m2 != null ? String(e.surface_dvf_m2) : 'm²'}
-                  value={surfaceHab}
-                  onChange={(ev) => { setSurfaceTouchee(true); setSurfaceHab(ev.target.value) }} />
+                  value={surfaceDraft}
+                  onChange={(ev) => setSurfaceDraft(ev.target.value.replace(/[^\d]/g, ''))}
+                  onBlur={() => { setSurfaceTouchee(true); setSurfaceHab(surfaceDraft.trim()) }}
+                  onKeyDown={(ev) => { if (ev.key === 'Enter') ev.currentTarget.blur() }} />
                 <span className="text-[11px] text-txt-mut">m² — facultatif, affine le total</span>
-                {surfaceHab && (
+                {surfaceDraft && (
                   <button className="text-[11px] text-mint underline underline-offset-2"
-                    onClick={() => { setSurfaceTouchee(true); setSurfaceHab('') }}>effacer</button>
+                    onClick={() => { setSurfaceTouchee(true); setSurfaceDraft(''); setSurfaceHab('') }}>effacer</button>
                 )}
               </div>
             )}
@@ -510,7 +520,7 @@ export function AnalyserAnnonce() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [etape, parcelle, res])
 
-  const revenir = () => { setEtape('entree'); setErreur(null) }
+  const revenir = () => { setEtape('entree'); setParcelle(null); setErreur(null) }
 
   // RETOURS-25 (pt 6) — un clic sur une AUTRE parcelle de la carte relance l'estimation sur elle (à
   // chaque clic). `focusParcelle(parcelle)` pose selectedIdu = parcelle → on ignore ce cas (garde
@@ -525,18 +535,6 @@ export function AnalyserAnnonce() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedIdu])
 
-  if (etape === 'parcelle' && parcelle) {
-    return (
-      <>
-        {/* RETOURS-25 (pt 3) — « Changer de parcelle » : bouton vert de la DA (plus un lien nu souligné). */}
-        <Entete retour={{ label: 'Retour', onClick: revenir }}
-          titre={iduCourt(parcelle)}
-          sous={<>{parcelle} · <Bouton niveau="lien" ton="vert" onClick={revenir}>Changer de parcelle</Bouton></>} />
-        <RapportParcelle idu={parcelle} />
-      </>
-    )
-  }
-
   if (etape === 'annonce' && res?.annonce) {
     const a = res.annonce
     const titre = `${a.type ? a.type[0].toUpperCase() + a.type.slice(1) : 'Annonce'}${a.pieces != null ? ` ${a.pieces} pièces` : ''}${a.commune ? ` · ${a.commune}` : ''}`
@@ -550,23 +548,23 @@ export function AnalyserAnnonce() {
     )
   }
 
-  // ÉCRAN D'ENTRÉE
+  // ÉCRAN UNIQUE — boîte parcelle (RETOURS-26 pt 7)
+  // RECETTE-4 — titre « Estimer un bien ». RETOURS-23 (pt 1) — « ← Retour » ferme l'outil.
+  // RETOURS-26 (pt 7) — plus de deux écrans ni de lien « Changer de parcelle » : `EntreeParcelle` tient
+  // les deux états — champ de recherche (vide) → boîte remplie + croix (parcelle choisie). Le rapport
+  // s'affiche sous la boîte. La croix (onChanger) vide et réaffiche le champ.
   return (
     <>
-      {/* RECETTE-4 — titre renommé « Estimer un bien » (clé interne analyser-annonce inchangée). */}
-      {/* RETOURS-23 (pt 1) — le bouton du haut dit « ← Retour » partout (il ferme l'outil vers le menu Outils). */}
-      {/* RETOURS-25 (pt 6) — l'entrée « Un lien d'annonce » (et le titre « Une adresse ») sont retirées :
-          l'outil s'ouvre sur UN SEUL champ (adresse / IDU / clic carte). Sous-titre sans mention du lien. */}
       <Entete retour={{ label: 'Retour', onClick: toggleOutils }}
         titre="Estimer un bien"
         sous="Une adresse : LABUSE croise le bien avec le marché et le foncier." />
       <Corps>
-        <ParcelInput
+        <EntreeParcelle source={parcelle ? 'adresse' : null} picked={parcelle} onChanger={revenir}
           placeholder="Adresse, IDU ou référence (BW0917)"
-          onPick={(idu) => { setParcelle(idu); setEtape('parcelle') }}
-        />
+          onPick={(idu) => { setParcelle(idu); setEtape('parcelle') }} />
         {/* le lien d'annonce (pont Radar « Ce bien ») reste analysable ; une erreur éventuelle se dit ici. */}
         {erreur && <p role="alert" className="text-[12px] leading-snug text-coral">{erreur}</p>}
+        {parcelle && <RapportParcelle idu={parcelle} />}
       </Corps>
     </>
   )

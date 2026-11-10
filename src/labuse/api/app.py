@@ -3169,10 +3169,15 @@ def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None
     ban_cols = (", ban.ban_voie, ban.ban_cp, ban.ban_commune" if ban_ok
                 else ", NULL AS ban_voie, NULL AS ban_cp, NULL AS ban_commune")
     ban_join = _ban_lateral("s.idu") if ban_ok else ""
+    # RETOURS-26 (pt 7) — la boîte parcelle unique affiche « IDU · zone · surface » : on joint la zone PLU
+    # dominante (parcel_zone_plu, table dérivée) APRÈS le LIMIT (≤ 10 lignes), jamais un scan par parcelle.
+    zone_ok = _zone_plu_ready(db)
+    zone_cols = (", COALESCE(z.zone_lib, z.zone_fam) AS zone_plu" if zone_ok else ", NULL AS zone_plu")
+    zone_join = " LEFT JOIN parcel_zone_plu z ON z.idu = s.idu" if zone_ok else ""
     rows = db.execute(text(
         f"""
         SELECT s.idu, s.commune, s.surface_m2, s.contenance_m2, s.status, s.tier_v2, s.rang_v2, s.etage0
-               {ban_cols}
+               {ban_cols}{zone_cols}
         FROM (
             SELECT p.idu, p.commune, p.surface_m2, p.contenance_m2,  -- RETOURS-12 T1 : surface pour désambiguïser une réf. courte
                    d.status AS status, d.opportunity_score,  -- M129-B : matrice morte → statut cascade
@@ -3190,7 +3195,7 @@ def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None
             ORDER BY ord, s2.rang ASC NULLS LAST, p.idu
             LIMIT :lim
         ) s
-        {ban_join}
+        {ban_join}{zone_join}
         ORDER BY s.ord, s.rang_v2 ASC NULLS LAST, s.idu
         """), {"pat": f"%{needle}", "c": commune, "run": source, "lim": limit,
                "v2run": _score_v2_run_id(db)}).mappings().all()
@@ -3198,6 +3203,7 @@ def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None
              **_surface.champs_terrain(r["surface_m2"], r["contenance_m2"]),  # CONTENANCE-1 (B)
              "status": r["status"], "tier_v2": r["tier_v2"],
              "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
+             "zone_plu": r["zone_plu"],   # RETOURS-26 (pt 7) — zone PLU dominante pour la boîte parcelle
              "adresse": _fmt_ban(r["ban_voie"], r["ban_cp"], r["ban_commune"])} for r in rows]
 
 

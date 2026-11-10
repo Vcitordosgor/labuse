@@ -570,8 +570,11 @@ body { background: var(--bg-0); color: var(--txt); -webkit-font-smoothing: antia
    `min-height`), et leur contenu est CENTRÉ verticalement → aucun vide en bas. */
 /* RETOURS-25 (pt 14) — les 6 tuiles ont EXACTEMENT la largeur de l'en-tête et des sections : plus de
    padding HORIZONTAL sur `.stats` (qui les rentrait de 14 px de chaque côté, plus étroites que la carte
-   d'en-tête et les sections). Le padding vertical (haut/bas) reste. */
-.fiche-v6 .stats { display:grid; grid-template-columns:repeat(3,1fr); grid-auto-rows:1fr; gap:6px; padding:12px 0; background:transparent; border:0; }
+   d'en-tête et les sections). */
+/* RETOURS-26 (pt 6) — padding VERTICAL retiré aussi (`12px 0` → `0`) : ce padding était du vide noir
+   au-dessus et au-dessous des tuiles qui s'ajoutait au `gap-3` (12px) du conteneur. Sans lui, l'écart
+   haut/bas des tuiles vaut exactement le rythme de la fiche (le gap entre sections). */
+.fiche-v6 .stats { display:grid; grid-template-columns:repeat(3,1fr); grid-auto-rows:1fr; gap:6px; padding:0; background:transparent; border:0; }
 .fiche-v6 .stat { padding:9px 10px; min-width:0; background:var(--bg-stat); border:0.5px solid var(--f-linehead); border-radius:var(--r-ctl); display:flex; flex-direction:column; justify-content:center; }
 /* ECRANS-NOV-1 §1 — style fiche commune : valeur en tête (grande, mono), libellé DESSOUS. */
 /* RETOURS-22 (pt 2) — chaque libellé tient sur UNE ligne, « SDP RESTANTE » et son « i » compris

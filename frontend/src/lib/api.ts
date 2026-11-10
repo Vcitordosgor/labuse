@@ -499,6 +499,7 @@ export const searchParcels = (needle: string, opts?: { ileEntiere?: boolean }) =
       surface_dessin_m2?: number | null; contenance_m2?: number | null;
       status: string | null; q_score: number | null;
       tier_v2: string | null; rang_v2: number | null; etage0: boolean;
+      zone_plu?: string | null;   // RETOURS-26 (pt 7) — zone PLU dominante (boîte parcelle)
       adresse?: string | null }[]>(
     `/parcels/search?q=${encodeURIComponent(needle)}${!opts?.ileEntiere && commune() ? `&commune=${encodeURIComponent(commune()!)}` : ''}`)
 
