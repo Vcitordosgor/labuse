@@ -265,10 +265,11 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
                     {fmtFr(c[col.k])}</span>
                 )
               })}
-              {/* OUTILS-1 B4 — « Fiche → » PERMANENT sur chaque ligne. RETOURS-13 R11 — action
-                  SECONDAIRE : jaune opaque au survol (distinct du survol vert de la ligne). */}
+              {/* OUTILS-1 B4 — « Fiche → » PERMANENT sur chaque ligne. RETOURS-23 (pt 3) — plus d'ambre
+                  pour les liens : le lien est VERT (text-mint) ; au survol de la ligne il passe à l'encre
+                  (règle .hover-fill), comme les autres liens d'action. */}
               {onSelect && (
-                <span className="hover-jaune -my-0.5 justify-self-end whitespace-nowrap px-1.5 py-0.5 text-right text-[11px] font-medium">Fiche →</span>
+                <span className="-my-0.5 justify-self-end whitespace-nowrap px-1.5 py-0.5 text-right text-[11px] font-medium text-mint">Fiche →</span>
               )}
             </Cell>
           )

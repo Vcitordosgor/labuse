@@ -520,6 +520,12 @@ interface AppState {
   outilRetour: OutilRetour[]
   pushOutilRetour: (e: OutilRetour) => void
   retourOutil: () => void
+  // RETOURS-23 (pt 1) — RETOUR INTERNE d'un outil à plusieurs chemins. L'outil enregistre ici un
+  // « reculer d'un niveau » quand il est dans un sous-écran (null au niveau racine). Le bouton UNIQUE
+  // du haut (PanelRetour) l'appelle EN PRIORITÉ : sous-écran → liste des chemins, PUIS pont, PUIS
+  // fermeture de l'outil. Remplace les « ← Retour » internes, retirés de tous les outils.
+  outilSousRetour: (() => void) | null
+  setOutilSousRetour: (fn: (() => void) | null) => void
   // M15 D1 : comparateur « Remonter le temps » — les DEUX fonds choisis vivent dans le store
   // pour que les sélecteurs soient rendus dans le BANDEAU GAUCHE (M08), pas en surimpression carte.
   cmpLeft: string
@@ -671,7 +677,7 @@ interface AppState {
 // niveau App) tombe à TOUTE navigation (setModule, setView, openCompare…), comme les autres overlays
 // plein écran. `ouvrirEtude` pose le drapeau APRÈS ce spread (il ne spread pas CLOSE_OVERLAYS) → pas
 // d'auto-fermeture.
-const CLOSE_OVERLAYS = { compareOpen: false, comparePicking: false, communesTableOpen: false, evolutionTableOpen: false, radarTableOpen: false, densifierTableOpen: false, sourceLine: null, outilRetour: [] as OutilRetour[], etudeIdus: null as string[] | null } as const
+const CLOSE_OVERLAYS = { compareOpen: false, comparePicking: false, communesTableOpen: false, evolutionTableOpen: false, radarTableOpen: false, densifierTableOpen: false, sourceLine: null, outilRetour: [] as OutilRetour[], outilSousRetour: null as (() => void) | null, etudeIdus: null as string[] | null } as const
 
 export const useApp = create<AppState>((set, get) => ({
   tuyauActives: {},
@@ -1056,6 +1062,10 @@ export const useApp = create<AppState>((set, get) => ({
   // navigation (la nav a déjà vidé la pile via CLOSE_OVERLAYS) → il ne reste que l'entrée de départ.
   outilRetour: [],
   pushOutilRetour: (e) => set((s) => ({ outilRetour: [...s.outilRetour, e] })),
+  // RETOURS-23 (pt 1) — enregistrement du retour interne d'un outil (null = niveau racine). Remis à
+  // null par CLOSE_OVERLAYS (toute nav), re-posé par l'effet de l'outil selon son sous-écran courant.
+  outilSousRetour: null,
+  setOutilSousRetour: (fn) => set({ outilSousRetour: fn }),
   // `retourOutil` rouvre l'outil de départ (comme setModule, mais SANS re-vider la pile) : on dépile la
   // dernière entrée, on applique son `restore` (overlay/prefill) APRÈS CLOSE_OVERLAYS, on garde le reste.
   retourOutil: () => set((s) => {

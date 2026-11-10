@@ -547,7 +547,8 @@ export function AnalyserAnnonce() {
   return (
     <>
       {/* RECETTE-4 — titre renommé « Estimer un bien » (clé interne analyser-annonce inchangée). */}
-      <Entete retour={{ label: 'Outils', onClick: toggleOutils }}
+      {/* RETOURS-23 (pt 1) — le bouton du haut dit « ← Retour » partout (il ferme l'outil vers le menu Outils). */}
+      <Entete retour={{ label: 'Retour', onClick: toggleOutils }}
         titre="Estimer un bien"
         sous="Une adresse ou un lien d’annonce : LABUSE croise le bien avec le marché et le foncier." />
       <Corps>

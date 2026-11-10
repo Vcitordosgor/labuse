@@ -201,8 +201,11 @@ export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, au
           directement (l'effet ci-dessus le consomme). Il ne reste qu'une INVITE discrète au second
           geste ; elle DISPARAÎT dès qu'une parcelle est résolue par la barre (réapparaît si vidé). */}
       {(inviteCarte ?? withCarte) && !resolu && (
-        <div data-parcelinput-carte className="flex items-center gap-2 rounded-md border border-dashed border-line-2 bg-surface-2/40 px-3 py-2 text-[11px] text-txt-dim">
-          <span aria-hidden="true">◎</span> ou cliquez une parcelle sur la carte
+        // RETOURS-23 (pt 2) — modèle UNIQUE d'entrée parcelle (P19) : plus de cadre pointillé. La même
+        // invite « — ou — cliquez une parcelle sur la carte » que <EntreeParcelle>, sous le champ.
+        <div data-parcelinput-carte className="flex items-center gap-1.5 text-[10.5px] leading-snug text-txt-mut">
+          <span className="font-mono text-txt-dim">— ou —</span>
+          <span>cliquez une parcelle sur la carte</span>
         </div>
       )}
     </div>

@@ -624,6 +624,8 @@ export interface PluExtrait {
   insee: string; commune: string; idurba: string; millesime: string | null; document: string
   zone: string | null; article_ref: string | null; page_pdf: number
   texte_verbatim: string; doute: boolean; doute_motif: string | null
+  // RETOURS-23 (pt 6) — titre « en clair » lu en tête du verbatim + corps (aperçu sans le titre).
+  titre?: string | null; corps?: string
   pagination_ambigue: boolean; pagination_note?: string; source_url: string; gpu_consult?: string
 }
 export interface PluSearch {

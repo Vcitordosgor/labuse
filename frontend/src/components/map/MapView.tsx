@@ -3,7 +3,7 @@ import * as maplibregl from 'maplibre-gl'   // MAPLIBRE-1 Lot B — v6 ESM : plu
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { reglerWorkerMaplibre } from './maplibreWorker'   // MAPLIBRE-1 Lot B — worker Vite (dev + build)
 import { useEffect, useRef, useState } from 'react'
-import { getBatiments, getCommunes, getFiche, getFiltreIdus, getParcelGeojson, getParcelsGeojson, getTilesMeta, modPermisFiche, parcelAt } from '../../lib/api'
+import { getBatiments, getCommunes, getFiche, getFiltreIdus, getParcelGeojson, getParcelsGeojson, getTilesMeta, parcelAt } from '../../lib/api'
 import { ALL_TIER_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
 import { MAP_THEME } from '../../lib/mapTheme'
 import { TOKENS } from '../../lib/tokens'
@@ -13,7 +13,7 @@ import { communePastille } from '../../lib/communes'
 import { useApp, type Filters, type MapTool } from '../../store/useApp'
 import { BASEMAP_SOURCES, ORTHO_MONDE, activeBasemapKey } from './basemaps'
 import { Legend } from './Legend'
-import { fmtDateNum, fmtDateSitadel } from '../../lib/format'   // CHASSE-FIX-1 (A-3) — dates fuseau Réunion
+import { fmtDateSitadel } from '../../lib/format'   // CHASSE-FIX-1 (A-3) — dates fuseau Réunion
 import { CouchesTuyauLayers, paintParcellesParFond } from './CouchesTuyau'  // COUCHES-TUYAU-1 lot 2 · G1 lot 3
 import { VefaDetail } from './VefaDetail'
 import { MapToolbar } from './MapToolbar'
@@ -42,62 +42,6 @@ const STYLE: maplibregl.StyleSpecification = {
 // blanc illisible. Fond quasi opaque, bord --card-line, ombre portée pour détacher de la carte.
 const POPUP_BOX_CSS = 'font:12px system-ui;color:#e9edeb;min-width:220px;max-width:280px;background:rgba(14,18,16,.97);border:1px solid #232a26;border-radius:11px;padding:13px;box-shadow:0 12px 32px rgba(0,0,0,.55)'
 
-// RECETTE-OUTILS-1 (points 6 & 7) — LA bulle « fiche permis » UNIQUE, sur la carte (plus de drawer en
-// colonne). Ouverte au clic d'un point permis sur la carte OU au clic d'une ligne de la liste (M03, via
-// window.__labuse_map) → MÊME bulle, MÊME contenu. Une ligne par donnée (libellé à gauche, valeur à
-// droite). Fermeture : croix (closeButton) + clic ailleurs (closeOnClick). DOM textContent (anti-injection).
-let _permisPopup: maplibregl.Popup | null = null
-export function fermerBullePermis() { try { _permisPopup?.remove() } catch { /* noop */ } _permisPopup = null }
-export function ouvrirBullePermis(m: maplibregl.Map, pid: string, lngLat: maplibregl.LngLatLike) {
-  fermerBullePermis()   // une seule bulle permis à la fois
-  const select = useApp.getState().select
-  const box = document.createElement('div'); box.style.cssText = POPUP_BOX_CSS
-  const titre = document.createElement('b'); titre.textContent = 'Permis'
-  titre.style.cssText = 'display:block;font-size:14px;font-weight:650;padding-right:16px'; box.appendChild(titre)
-  const sub = document.createElement('div'); sub.style.cssText = 'color:#98a39d;font-size:12px;margin-top:4px;font-family:ui-monospace,monospace'; box.appendChild(sub)
-  const corps = document.createElement('div'); corps.style.cssText = 'margin-top:9px;font-size:12px;line-height:1.75'
-  const load = document.createElement('div'); load.textContent = 'Chargement de la fiche…'; load.style.cssText = 'color:#c9d2cc;font-size:12px;margin-top:9px'
-  box.appendChild(load); box.appendChild(corps)
-  const popup = new maplibregl.Popup({ offset: 12, className: 'labuse-popup', maxWidth: '320px', closeButton: true, closeOnClick: true })
-    .setLngLat(lngLat).setDOMContent(box).addTo(m)
-  _permisPopup = popup
-  popup.on('close', () => { if (_permisPopup === popup) _permisPopup = null; try { useApp.getState().setPermisOuvert(null) } catch { /* noop */ } })
-  const ligne = (lab: string, val: string) => {
-    if (!val) return
-    const d = document.createElement('div'); d.style.cssText = 'display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #232a26;padding:3px 0'
-    const c = document.createElement('span'); c.textContent = lab; c.style.color = '#98a39d'
-    const v = document.createElement('span'); v.textContent = val; v.style.cssText = 'text-align:right;color:#e9edeb'
-    d.appendChild(c); d.appendChild(v); corps.appendChild(d)
-  }
-  modPermisFiche(pid).then((f: Record<string, any>) => {
-    load.remove()
-    const fmtD = (s: unknown) => { const r = fmtDateNum(s == null ? null : String(s)); return r === '—' ? '' : r }
-    titre.textContent = String(f.nature_libelle ?? f.nature ?? 'Permis')
-    sub.textContent = [f.permit_id ? String(f.permit_id) : pid, f.commune ? String(f.commune) : ''].filter(Boolean).join(' · ')
-    if (f.statut) {
-      const bd = document.createElement('span'); bd.textContent = String(f.statut) + (f.annule ? ' · annulé' : '')
-      bd.style.cssText = `display:inline-block;margin-top:7px;padding:1px 8px;border-radius:999px;font-size:11px;${f.annule ? 'background:rgba(232,73,29,.15);color:#e8491d' : 'background:rgba(74,222,128,.15);color:#4ADE80'}`
-      box.insertBefore(bd, corps)
-    }
-    ligne('Destination', String(f.destination_libelle ?? ''))
-    ligne('Pétitionnaire', String(f.porteur ?? f.porteur_note ?? ''))
-    if (f.porteur_siren) ligne('SIREN', String(f.porteur_siren))
-    ligne('Lots', f.nb_lots != null ? String(f.nb_lots) : '')
-    ligne('Surface habitable', f.surface_hab_m2 != null ? `${f.surface_hab_m2} m²` : '')
-    ligne('Autorisé le', fmtD(f.date_autorisation))
-    const parcs = Array.isArray(f.parcelles) ? (f.parcelles as string[]) : []
-    if (parcs.length) ligne('Parcelle(s)', parcs.map((p) => (p.length >= 14 ? `${p.slice(8, 10)} ${p.slice(10)}` : p)).join(', '))
-    const idu0 = parcs[0] ?? null
-    if (idu0 && idu0.length === 14) {
-      const bp = document.createElement('button'); bp.textContent = 'Voir la parcelle sur la carte →'
-      bp.style.cssText = 'margin-top:11px;width:100%;color:#4ADE80;background:none;border:1px solid rgba(74,222,128,.35);border-radius:8px;cursor:pointer;font:12px system-ui;padding:7px 10px'
-      bp.addEventListener('click', () => { select(String(idu0)); popup.remove() }); corps.appendChild(bp)
-    }
-    const srcEl = document.createElement('div'); srcEl.textContent = 'Source : Sitadel (SDES)'
-    srcEl.style.cssText = 'margin-top:9px;color:#6b756f;font-size:10px'; corps.appendChild(srcEl)
-  }).catch(() => { load.textContent = 'Fiche permis indisponible — réessayez.' })
-  return popup
-}
 
 const LEGACY_COLOR = '#39463F'
 const LEGACY_OPACITY = 0.03
@@ -1085,10 +1029,10 @@ export function MapView() {
           btn.addEventListener('click', () => { parcelAt(lon, lat).then((r) => { if (r.idu) select(String(r.idu)) }).catch(() => {}); popup.remove() })
           ;(e as maplibregl.MapLayerMouseEvent).preventDefault()
         } else if (pid) {
-          // RECETTE-OUTILS-1 (points 6 & 7) — fiche permis en bulle UNIQUE sur la carte (fonction partagée
-          // avec le clic depuis la LISTE). On surligne aussi la ligne correspondante dans la liste.
+          // RETOURS-23 (pt 7) — un clic sur un point permis ouvre sa fiche dans le PANNEAU DE DROITE
+          // (`permisOuvert` → <PermitFichePanel>), jamais en bulle sur la carte. La ligne correspondante
+          // de la liste est surlignée (même `permisOuvert`).
           useApp.getState().setPermisOuvert?.(String(pid))
-          ouvrirBullePermis(m, String(pid), (e as maplibregl.MapLayerMouseEvent).lngLat)
           ;(e as maplibregl.MapLayerMouseEvent).preventDefault()
         }
         else if (props?.idu) { select(String(props.idu)); (e as maplibregl.MapLayerMouseEvent).preventDefault() }  // LOT8b : clic piscine → fiche parcelle

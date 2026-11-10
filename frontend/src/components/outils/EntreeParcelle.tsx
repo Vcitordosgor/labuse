@@ -48,7 +48,8 @@ export function EntreeParcelle({ source, onPick, placeholder, titre, picked, adr
       <div data-entree-parcelle-choisie className="flex items-center justify-between gap-2 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2">
         <span className="min-w-0 flex-1 truncate text-[12px] text-txt" title={adresseAffichee}>{adresseAffichee}</span>
         {onChanger && (
-          <Bouton niveau="lien" ton="ambre" data-entree-changer onClick={onChanger} className="shrink-0">
+          /* RETOURS-23 (pt 3) — plus d'ambre pour les liens : « Changer de parcelle » passe au VERT. */
+          <Bouton niveau="lien" ton="vert" data-entree-changer onClick={onChanger} className="shrink-0">
             Changer de parcelle
           </Bouton>
         )}

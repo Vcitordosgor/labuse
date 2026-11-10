@@ -19,6 +19,7 @@ import logging
 import json
 import multiprocessing
 import queue as _queue
+import re
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response
@@ -2883,6 +2884,67 @@ def plu_annuaire_pack(insee: str, db: Session = Depends(get_db)) -> dict:
             "url": f"https://www.geoportail-urbanisme.gouv.fr/api/document/{doc.get('id')}/download/{idurba}.zip"}
 
 
+# RETOURS-23 (pt 6) — TITRE d'article « en clair » pour la carte d'extrait (maquette 8-plu-articles).
+# Le payload PLU ne porte pas de titre distinct : il est lu EN TÊTE du verbatim (après la référence
+# d'article et un éventuel tiret/sous-numéro), puis remis en CASSE DE PHRASE quand le PDF l'a recopié
+# tout en majuscules (« ASPECT EXTÉRIEUR… » → « Aspect extérieur… »). `corps` = le verbatim PRIVÉ de ce
+# titre : l'aperçu 3 lignes de la carte, sans répéter le titre affiché au-dessus. Heuristique pure
+# (aucune ré-ingestion), couverte par tests/test_plu_titre.py.
+_PLU_DASH = "-–—"
+_PLU_REF = re.compile(r"(?i)^\s*(?:ARTICLE|Article|article)\s+[A-Za-zÀ-ÿ]{0,5}\s*\.?\s*\d*[A-Za-z0-9.\-]*\s*")
+_PLU_SUB = re.compile(r"\b\d{1,2}\.\d{1,2}\b")
+
+
+def _plu_mot_maj(mot: str) -> bool:
+    """Un mot « de titre majuscule » : toutes ses lettres sont capitales (la ponctuation et les
+    chiffres — « - », « DE », « & » — ne rompent pas le titre)."""
+    lettres = [c for c in mot if c.isalpha()]
+    return all(c == c.upper() for c in lettres)
+
+
+def _plu_nettoie_titre(titre: str) -> str:
+    titre = titre.strip(" " + _PLU_DASH + ":.,«»\"")
+    lettres = [c for c in titre if c.isalpha()]
+    # titre recopié TOUT EN MAJUSCULES du PDF → casse de phrase. Un titre déjà en casse mixte est laissé.
+    if lettres and sum(1 for c in lettres if c == c.upper()) / len(lettres) > 0.7:
+        titre = titre.capitalize()
+    return titre
+
+
+def plu_titre_corps(verbatim: str) -> tuple[str | None, str]:
+    """Scinde un extrait d'article en (titre « en clair », corps). `titre` = None si rien d'exploitable
+    (le corps vaut alors le verbatim entier)."""
+    # les PDF de règlement sèment des puces Wingdings (zone d'usage privé U+F000–F0FF) et des puces
+    # Unicode (•, ·, ▪…) en tête de liste → on les remplace par une espace avant de normaliser.
+    sans_puces = re.sub(r"[\uf000-\uf0ff\u2022\u2023\u25aa\u25e6\u00b7\u2219]", " ", verbatim or "")
+    plein = re.sub(r"\s+", " ", sans_puces).strip()
+    reste = _PLU_REF.sub("", plein, count=1)
+    reste = re.sub(r"^\s*[" + _PLU_DASH + r"]\s*", "", reste)
+    reste = re.sub(r"^\d{1,2}\s*[" + _PLU_DASH + r"]\s*", "", reste)   # « 3 - » (sous-numéro collé au ref)
+    if not reste:
+        return None, plein
+    sub = _PLU_SUB.search(reste)
+    tete = reste[: sub.start()].strip() if sub else reste
+    mots = tete.split(" ")
+    # motif dominant — en-tête TOUT EN MAJUSCULES : le titre = le préfixe majuscule, le corps commence
+    # au premier mot en casse mixte (début de la phrase réglementaire).
+    if mots and any(c.isalpha() for c in mots[0]) and _plu_mot_maj(mots[0]):
+        pris: list[str] = []
+        for mot in mots:
+            if _plu_mot_maj(mot):
+                pris.append(mot)
+            else:
+                break
+        titre_brut = " ".join(pris)
+        if len(titre_brut) >= 4:
+            corps = reste[len(titre_brut):].strip() if reste.upper().startswith(titre_brut.upper()) else reste
+            return _plu_nettoie_titre(titre_brut), corps
+    # casse mixte / sans majuscules : titre = jusqu'au sous-article, borné (n'avale pas le corps).
+    titre_brut = tete if (len(tete) <= 110 and len(mots) <= 14) else " ".join(mots[:14])
+    corps = reste[len(titre_brut):].strip()
+    return _plu_nettoie_titre(titre_brut), corps
+
+
 @router.get("/plu-annuaire/search")
 def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = None,
                         limit: int = Query(25, ge=1, le=200),   # FIX-C5
@@ -2914,6 +2976,8 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
     n_total = count_reglement(db, q, insee, zone=zone)
     for r in res:
         r["gpu_consult"] = "https://www.geoportail-urbanisme.gouv.fr/"
+        # RETOURS-23 (pt 6) — titre « en clair » + corps (aperçu sans le titre) pour la carte d'extrait.
+        r["titre"], r["corps"] = plu_titre_corps(r.get("texte_verbatim") or "")
         if r.get("pagination_ambigue"):
             r["pagination_note"] = ("pagination du document ambiguë (double numérotation) — la page "
                                     "citée est la PAGE PDF du fichier, pas la page imprimée.")
