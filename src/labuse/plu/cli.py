@@ -129,20 +129,22 @@ def plu_appliquer_cmd(
     insee: str = typer.Option(..., "--insee", help="Code INSEE de la commune (ex. 97411)."),
     overlay: bool = typer.Option(True, help="Pose l'overlay « À vérifier » sur les parcelles (Analyse)."),
 ) -> None:
-    """LE GESTE UNIQUE : zonage + prescriptions + informations + drapeau « règles à recalibrer »
-    appliqués d'un seul tenant. Puis l'instantané de veille + l'overlay client sont rafraîchis."""
+    """LE GESTE UNIQUE : zonage + prescriptions + informations appliqués d'un seul tenant (drapeau
+    « règles à recalibrer » seulement si le zonage/les règles ont bougé). Puis l'instantané de veille
+    + l'overlay client (proportionnel) sont rafraîchis."""
     from .. import controle_plu
     from ..db import session_scope
-    from ..scoring import scenarios_v2_persist as persist
     with session_scope() as s:
         bilan = controle_plu.appliquer_plu(s, insee, log=typer.echo)
         controle_plu.rejouer_nuit(s)
         if overlay:
-            ov = persist.synchroniser_recalibrage(s, controle_plu.communes_desync(s))
+            ov = controle_plu.rafraichir_signal_client(s)
             typer.echo(f"  overlay Analyse : {ov['lignes']} ligne(s) « À vérifier ».")
+    note = "Règles à recalibrer." if bilan.get("recalibrage_requis") else \
+        "Règles inchangées (prescriptions seules) — recalcule les parcelles portant une prescription."
     typer.echo(f"✓ {bilan['commune']} appliqué → {bilan['reference']} "
                f"(zones {bilan['zonage']}, prescriptions {bilan['prescriptions']}, "
-               f"informations {bilan['informations']}). Règles à recalibrer.")
+               f"informations {bilan['informations']}). {note}")
     typer.echo("  Prod (couche servie) : rebâtir parcel_zone_plu → `labuse build-mvt` → `promote`.")
 
 
@@ -154,11 +156,10 @@ def plu_valider_cmd(
     « à jour », le bandeau client disparaît, les parcelles sortent de « À vérifier »."""
     from .. import controle_plu
     from ..db import session_scope
-    from ..scoring import scenarios_v2_persist as persist
     with session_scope() as s:
         ok = controle_plu.valider_recalibrage(s, insee)
         controle_plu.rejouer_nuit(s)
-        ov = persist.synchroniser_recalibrage(s, controle_plu.communes_desync(s))
+        ov = controle_plu.rafraichir_signal_client(s)
     if ok:
         typer.echo(f"✓ recalibrage validé pour {insee} — {ov['lignes']} ligne(s) restaurée(s).")
     else:

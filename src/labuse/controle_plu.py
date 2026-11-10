@@ -46,6 +46,85 @@ COUCHES_SPATIALES: list[tuple[str, str, str]] = [
 LIBELLE_COUCHE = {c[0]: c[2] for c in COUCHES_SPATIALES}
 LIBELLE_COUCHE["regles"] = "règles chiffrées (destinations)"
 
+# PLU-VEILLE-FIX-1 (décision Vic — alerte PROPORTIONNELLE) : la gravité d'un décalage dépend de la
+# couche qui bouge.
+#   · `fort`          — zonage OU règles en retard : toute la commune « À vérifier » + bandeau
+#                       « PLU modifié … — règles en cours de mise à jour » (les chiffres bougent).
+#   · `prescriptions` — prescriptions seules : bandeau « Prescriptions … — intégration en cours » ;
+#                       seules les parcelles QUI PORTENT une prescription DISCRIMINANTE passent
+#                       « À vérifier » (les autres gardent leur bande).
+#   · `informations`  — DPU seul : bandeau SEUL (aucune parcelle « À vérifier »).
+NIVEAUX_FORTS = ("zonage", "regles")
+
+
+def niveau_decalage(couches_en_retard: list[str]) -> str | None:
+    if not couches_en_retard:
+        return None
+    if any(c in NIVEAUX_FORTS for c in couches_en_retard):
+        return "fort"
+    if "prescriptions" in couches_en_retard:
+        return "prescriptions"
+    if "informations" in couches_en_retard:
+        return "informations"
+    return "fort"
+
+
+def bandeau_client(niveau: str | None, date_fr: str | None) -> str | None:
+    """Le texte du bandeau client, PROPORTIONNEL au décalage (décision Vic)."""
+    d = date_fr or "…"
+    return {
+        "fort": f"PLU modifié le {d} — règles en cours de mise à jour.",
+        "prescriptions": f"Prescriptions du PLU mises à jour le {d} — intégration en cours.",
+        "informations": f"Droit de préemption urbain mis à jour le {d} — intégration en cours.",
+    }.get(niveau or "")
+
+
+def cause_client(niveau: str | None) -> str | None:
+    return {"fort": "PLU_MODIFIE_RECALIBRAGE", "prescriptions": "PLU_PRESCRIPTIONS_MAJ",
+            "informations": "PLU_INFOS_MAJ"}.get(niveau or "")
+
+
+def avec_a_verifier(niveau: str | None) -> bool:
+    """Les parcelles passent-elles « À vérifier » pour ce niveau ? (pas pour `informations`.)"""
+    return niveau in ("fort", "prescriptions")
+
+
+# Prescriptions DISCRIMINANTES = celles que la cascade transforme en vrai verdict (exclusion / vigilance
+# réelle), donc qui peuvent CHANGER ce que le client voit : ER, EBC, patrimoine bâti. Les périmètres
+# informatifs qui nappent la commune (« zone tendue », ZAC, OAP, mixité, eaux pluviales) restent PASS —
+# ils ne font PAS passer « À vérifier » (sinon toute la commune basculerait : l'inverse du proportionnel).
+# Les codes typepsc sont LUS de config/cascade_rules.yaml (une seule vérité avec la cascade).
+def _discriminants() -> tuple[set[str], str | None]:
+    from .config import load_yaml_config
+    try:
+        cfg = load_yaml_config("cascade_rules") or {}
+        regles = cfg.get("layers") or cfg.get("rules") or []
+    except Exception:  # noqa: BLE001
+        return {"05", "01", "07"}, None
+    p = next((r.get("params", {}) for r in regles if r.get("name") == "prescription_plu"), {})
+    codes: set[str] = set()
+    for cle in ("emplacement_reserve_typepsc", "boise_classe_typepsc", "patrimoine_bati_typepsc"):
+        codes.update(str(c) for c in (p.get(cle) or []))
+    return (codes or {"05", "01", "07"}), p.get("er_libelle_rescue")
+
+
+def parcelles_prescription(db, insee: str, commune: str) -> list[str]:
+    """Les IDU des parcelles de la commune qui PORTENT une prescription DISCRIMINANTE (ER/EBC/
+    patrimoine — + libellé ER « rescue »). C'est l'ensemble qui passe « À vérifier » (niveau
+    prescriptions) ET la liste à recalculer pour que fiche == run."""
+    codes, rescue = _discriminants()
+    clause = "s.subtype = ANY(:codes)"
+    params = {"commune": commune, "codes": list(codes)}
+    if rescue:
+        clause = f"({clause} OR s.attrs->>'libelle' ~* :rescue)"
+        params["rescue"] = rescue
+    rows = db.execute(text(
+        f"SELECT DISTINCT p.idu FROM parcels p JOIN spatial_layers s "
+        f"ON s.kind='plu_gpu_prescription' AND s.commune=:commune AND {clause} "
+        f"AND ST_Intersects(p.geom_2975, s.geom_2975) WHERE p.commune=:commune"),
+        params).scalars().all()
+    return [r for r in rows if r]
+
 
 def _date8(idurba: str | None) -> date | None:
     """`97411_PLU_20260805` → date(2026, 8, 5). None si pas de date AAAAMMJJ lisible."""
@@ -167,6 +246,7 @@ class EtatPlu:
     insee: str
     commune: str
     etat: str                                   # a_jour | desync | rnu | inconnu
+    niveau: str | None = None                   # fort | prescriptions | informations (gravité, décision Vic)
     publie: str | None = None                   # idurba servi par le Géoportail (ou catalogue)
     publie_source: str | None = None            # 'geoportail' | 'catalogue'
     reference: str | None = None                # le document que tout devrait porter
@@ -257,6 +337,7 @@ def verdict_pur(insee: str, commune: str, pub: str | None, pub_src: str | None,
         en_retard.append("regles")
 
     out = EtatPlu(insee=insee, commune=commune, etat="a_jour" if not en_retard else "desync",
+                  niveau=niveau_decalage(en_retard),
                   publie=pub, publie_source=pub_src, reference=reference, date_modif=ref_d,
                   couches=couches, couches_en_retard=en_retard,
                   recalibrage_pending=bool(en_retard), nouveau=reference)
@@ -300,6 +381,7 @@ CREATE TABLE IF NOT EXISTS plu_veille_etat (
   insee           varchar(5) PRIMARY KEY,
   commune         text NOT NULL,
   etat            text NOT NULL,                 -- a_jour | desync | rnu | inconnu
+  niveau          text,                          -- fort | prescriptions | informations (gravité, décision Vic)
   publie          text,                          -- idurba servi par le Géoportail (ou catalogue)
   publie_source   text,
   reference       text,
@@ -317,6 +399,7 @@ CREATE TABLE IF NOT EXISTS plu_veille_etat (
 
 def ensure_table(db) -> None:
     db.execute(text(_DDL))
+    db.execute(text("ALTER TABLE plu_veille_etat ADD COLUMN IF NOT EXISTS niveau text"))
 
 
 def rejouer_nuit(db, *, gpu_par_insee: dict | None = None) -> dict:
@@ -334,19 +417,20 @@ def rejouer_nuit(db, *, gpu_par_insee: dict | None = None) -> dict:
         recalibre = (prec.get("recalibre_le") if prec and prec.get("reference") == e.get("reference")
                      else None)
         db.execute(text(
-            "INSERT INTO plu_veille_etat (insee, commune, etat, publie, publie_source, reference, "
+            "INSERT INTO plu_veille_etat (insee, commune, etat, niveau, publie, publie_source, reference, "
             " date_modif, couches_en_retard, recalibrage_pending, ancien, nouveau, gestes, "
             " detecte_le, recalibre_le) "
-            "VALUES (:insee, :commune, :etat, :publie, :psrc, :ref, :dmod, CAST(:cer AS jsonb), "
+            "VALUES (:insee, :commune, :etat, :niveau, :publie, :psrc, :ref, :dmod, CAST(:cer AS jsonb), "
             " :recal, :anc, :nouv, CAST(:gestes AS jsonb), now(), :rl) "
             "ON CONFLICT (insee) DO UPDATE SET commune=EXCLUDED.commune, etat=EXCLUDED.etat, "
-            " publie=EXCLUDED.publie, publie_source=EXCLUDED.publie_source, reference=EXCLUDED.reference, "
-            " date_modif=EXCLUDED.date_modif, couches_en_retard=EXCLUDED.couches_en_retard, "
+            " niveau=EXCLUDED.niveau, publie=EXCLUDED.publie, publie_source=EXCLUDED.publie_source, "
+            " reference=EXCLUDED.reference, date_modif=EXCLUDED.date_modif, "
+            " couches_en_retard=EXCLUDED.couches_en_retard, "
             " recalibrage_pending=EXCLUDED.recalibrage_pending, ancien=EXCLUDED.ancien, "
             " nouveau=EXCLUDED.nouveau, gestes=EXCLUDED.gestes, detecte_le=now(), "
             " recalibre_le=EXCLUDED.recalibre_le"),
-            {"insee": e["insee"], "commune": e["commune"], "etat": e["etat"], "publie": e["publie"],
-             "psrc": e["publie_source"], "ref": e["reference"], "dmod": e["date_modif"],
+            {"insee": e["insee"], "commune": e["commune"], "etat": e["etat"], "niveau": e["niveau"],
+             "publie": e["publie"], "psrc": e["publie_source"], "ref": e["reference"], "dmod": e["date_modif"],
              "cer": json.dumps(e["couches_en_retard"]), "recal": e["recalibrage_pending"],
              "anc": e["ancien"], "nouv": e["nouveau"], "gestes": json.dumps(e["gestes"], ensure_ascii=False),
              "rl": recalibre})
@@ -359,7 +443,7 @@ def lire_etat(db, insee: str) -> dict | None:
     """L'état servi d'une commune (fiche/documents/exploitation). None si non encore sondé."""
     ensure_table(db)
     r = db.execute(text(
-        "SELECT insee, commune, etat, publie, reference, date_modif, couches_en_retard, "
+        "SELECT insee, commune, etat, niveau, publie, reference, date_modif, couches_en_retard, "
         " recalibrage_pending, ancien, nouveau, gestes, detecte_le, recalibre_le "
         "FROM plu_veille_etat WHERE insee = :i"), {"i": insee}).mappings().first()
     if r is None:
@@ -371,6 +455,9 @@ def lire_etat(db, insee: str) -> dict | None:
     for k in ("detecte_le", "recalibre_le"):
         if d.get(k) is not None:
             d[k] = d[k].isoformat()
+    # bandeau client PROPORTIONNEL + si les parcelles passent « À vérifier » (décision Vic).
+    d["message"] = bandeau_client(d.get("niveau"), d["date_modif_fr"])
+    d["avec_a_verifier"] = avec_a_verifier(d.get("niveau"))
     return d
 
 
@@ -427,10 +514,15 @@ def recalibrage_pending(db, insee: str, reference: str | None) -> bool:
 def appliquer_plu(db, insee: str, *, commune: str | None = None, bbox=None, run_id=None,
                   log=print) -> dict:
     """LE GESTE UNIQUE. Applique un document d'urbanisme EN ENTIER, d'un seul tenant, dans UNE
-    transaction : zonage + prescriptions + informations (DPU) ré-ingérés ensemble, PUIS le drapeau
-    « règles à recalibrer » posé. Il n'existe AUCUN chemin qui mette à jour une couche sans les
-    autres : le statut « à jour » d'une commune exige que toutes portent le même document, et le
-    drapeau garde le client prévenu jusqu'à la validation des règles. Rend un bilan par couche.
+    transaction : zonage + prescriptions + informations (DPU) ré-ingérés ensemble. Il n'existe AUCUN
+    chemin qui mette à jour une couche sans les autres : le statut « à jour » d'une commune exige que
+    toutes portent le même document. Rend un bilan par couche.
+
+    Le drapeau « règles à recalibrer » n'est posé QUE si le ZONAGE ou les RÈGLES ont bougé (décision
+    Vic, alerte proportionnelle) : les règles chiffrées ne dépendent QUE du zonage/règlement, pas des
+    prescriptions. Un décalage de prescriptions seules (ER/EBC) ne déclenche donc pas le recalibrage —
+    la commune repasse « à jour » dès les couches alignées (+ recalcul des parcelles portant une
+    prescription, pour que fiche == run).
 
     N.B. serving : après ce geste, la prod rebâtit `parcel_zone_plu` puis `build-mvt`/`promote`
     (couche servie) — documenté dans la procédure prod, hors de cette transaction de données."""
@@ -441,6 +533,9 @@ def appliquer_plu(db, insee: str, *, commune: str | None = None, bbox=None, run_
         raise ValueError(f"commune inconnue pour l'insee {insee}")
     if cat.get("statut") == "rnu":
         raise ValueError(f"{commune} est au RNU — aucun PLU à appliquer")
+    # gravité AVANT ré-ingestion : le drapeau règles ne se pose que pour un décalage « fort »
+    # (zonage/règles) — un décalage de prescriptions seules ne requiert PAS de recalibrage.
+    niveau_avant = etat_commune(db, insee).niveau
     seed_sources.seed(db)
     sids = layers_ingest._source_ids(db)
     bbox = bbox or run_all._commune_bbox(db, commune)
@@ -465,30 +560,46 @@ def appliquer_plu(db, insee: str, *, commune: str | None = None, bbox=None, run_
     bilan["informations"] = info.get("dpu", 0)
     db.flush()
 
-    # 4) le drapeau « règles à recalibrer » — posé AVEC les couches (jamais après coup, jamais seul).
+    # 4) le drapeau « règles à recalibrer » — SEULEMENT si le zonage/les règles ont bougé (fort).
     ing = idurba_ingere(db, insee, commune)
     candidats = [c["idurba"] for c in ing.values() if c]
     reference = max(candidats, key=lambda c: (_date8(c) or date.min)) if candidats else cat.get("idurba")
-    if reference:
+    recalibrage = (niveau_avant == "fort")
+    if reference and recalibrage:
         demander_recalibrage(db, insee, reference)
     bilan["reference"] = reference
     bilan["commune"] = commune
     bilan["insee"] = insee
+    bilan["recalibrage_requis"] = recalibrage
+    suffixe = "règles à recalibrer." if recalibrage else "règles inchangées (prescriptions seules)."
     log(f"geste unique {commune} ({insee}) : {bilan['zonage']} zones, {bilan['prescriptions']} "
-        f"prescriptions, {bilan['informations']} informations → {reference} ; règles à recalibrer.")
+        f"prescriptions, {bilan['informations']} informations → {reference} ; {suffixe}")
     return bilan
 
 
-def communes_desync(db) -> dict[str, dict]:
-    """{nom_commune: état} des communes en cours de mise à jour (desync) — pour l'overlay scénarios
-    et le bandeau fiche. Lu de l'instantané servi."""
+def rafraichir_signal_client(db, *, run_label: str | None = None) -> dict:
+    """Aligne le signal CLIENT (overlay « À vérifier » dans l'Analyse) sur l'instantané de veille,
+    de façon PROPORTIONNELLE (décision Vic) :
+      · `fort`          → toute la commune (parcelles chiffrées) « À vérifier » ;
+      · `prescriptions` → SEULES les parcelles portant une prescription DISCRIMINANTE (ER/EBC/
+                          patrimoine) ; les autres gardent leur bande ;
+      · `informations`  → AUCUNE parcelle (bandeau seul).
+    Les communes « à jour » sont restaurées. Le bandeau fiche/documents, lui, est servi par
+    `lire_etat` (toutes les `desync`, y compris `informations`). Retourne le bilan d'overlay."""
+    from .scoring import scenarios_v2_persist as persist
     ensure_table(db)
     rows = db.execute(text(
-        "SELECT insee, commune, reference, date_modif FROM plu_veille_etat WHERE etat = 'desync'")
-    ).mappings().all()
-    out = {}
+        "SELECT insee, commune, niveau, reference, date_modif FROM plu_veille_etat WHERE etat='desync'"
+    )).mappings().all()
+    plan: dict[str, dict] = {}
     for r in rows:
+        niveau = r["niveau"]
+        if not avec_a_verifier(niveau):               # informations → bandeau seul, pas d'overlay
+            continue
         d = _date8(r["reference"]) or r["date_modif"]
-        out[r["commune"]] = {"insee": r["insee"], "commune": r["commune"],
-                             "date_modif_fr": _fr(d) if d else None, "reference": r["reference"]}
-    return out
+        date_fr = _fr(d) if d else None
+        idus = (parcelles_prescription(db, r["insee"], r["commune"])
+                if niveau == "prescriptions" else None)
+        plan[r["commune"]] = {"message": bandeau_client(niveau, date_fr),
+                              "cause": cause_client(niveau), "idus": idus}
+    return persist.synchroniser_recalibrage(db, plan, run_label=run_label)

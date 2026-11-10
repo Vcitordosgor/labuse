@@ -1929,15 +1929,15 @@ def plu_veille_nuit(ctx: JobContext) -> None:
     En plus : rappel TRIMESTRIEL de relecture des PROCÉDURES en cours (comme les sources manuelles)."""
     from . import controle_plu, ops_alertes, veille_plu
     from .john import veille as john_veille
-    from .scoring import scenarios_v2_persist as persist
 
     # publié = Géoportail en direct (le signal qui voit le 1→1) ; repli catalogue si injoignable.
     gpu = controle_plu.fetch_gpu_ile()
     r = controle_plu.rejouer_nuit(ctx.db, gpu_par_insee=gpu)
     desync = r["desync"]
 
-    # Analyse LABUSE : les parcelles des communes en cours de mise à jour passent « À vérifier ».
-    ov = persist.synchroniser_recalibrage(ctx.db, controle_plu.communes_desync(ctx.db))
+    # Analyse LABUSE : signal client PROPORTIONNEL (décision Vic) — fort = toute la commune,
+    # prescriptions = seules les parcelles portant une prescription, informations = bandeau seul.
+    ov = controle_plu.rafraichir_signal_client(ctx.db)
 
     rappels7 = 0
     for e in desync:

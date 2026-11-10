@@ -231,6 +231,8 @@ LECTURES: tuple[Lecture, ...] = (
       "JOIN spatial zones de veille × parcels (ST_Intersects) + id→idu pour composer les alertes — aucun des 18 chiffres candidats n'y est produit"),
     L("parcels", "anc_service.py", None, None,
       "lit parcels.commune par idu et count(DISTINCT commune) comme dénominateur de couverture ANC — jointure de rattachement, pas un chiffre candidat"),
+    L("parcels", "controle_plu.py", None, None,
+      "PLU-VEILLE-FIX-1 — JOIN parcels × prescriptions PLU (ST_Intersects) pour l'ensemble des parcelles portant une prescription (overlay « À vérifier » proportionnel + liste à recalculer) ; aucune valeur du cadastre servie ici."),
     L("parcels", "api/accueil.py", "n_parcelles_ile", "page_accueil_chiffres",
       "count(*) FROM parcels (compteur accueil + repli du moteur plateforme_compteurs) — le nombre de parcelles servi au bloc chiffres de l'accueil"),
     L("parcels", "api/anti_fiche.py", None, None,

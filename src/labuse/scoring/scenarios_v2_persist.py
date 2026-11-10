@@ -75,6 +75,10 @@ ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS public_land boolean
 ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS plu_recalibrage boolean NOT NULL DEFAULT false;
 ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS plu_modifie_le text;
 ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS status_avant_plu text;
+-- PLU-VEILLE-FIX-1 (alerte proportionnelle) : le bandeau/la cause SERVIS varient selon la couche en
+-- décalage (zonage/règles vs prescriptions seules) → stockés avec l'overlay, lus à la lecture.
+ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS plu_bandeau text;
+ALTER TABLE parcel_scenario_v2_runs ADD COLUMN IF NOT EXISTS plu_cause text;
 """
 
 # PLU-VEILLE-FIX-1 — seuls les statuts FONCIERS « chiffrés » basculent (cf. scenarios_v2._PLU_SENSIBLE) ;
@@ -229,7 +233,7 @@ SELECT s.idu, s.status, s.cause, s.band, s.score, s.band_provisional,
        s.additional_m2, s.project_total_m2, s.existing_m2, s.net_signed_m2,
        s.conditional_future_m2, s.residual_m2, s.zone_prod_zone, s.zone_prod_area_m2,
        s.vigilance, s.bande_v1, s.enriched, s.surface_m2, s.enrich_state, s.analysis_version,
-       s.public_facility, s.public_land, s.plu_recalibrage, s.plu_modifie_le,
+       s.public_facility, s.public_land, s.plu_recalibrage, s.plu_modifie_le, s.plu_bandeau, s.plu_cause,
        sl.signal_p, sl.signal_niveau, sl.cascade_exclue
 FROM parcel_scenario_v2_runs s
 LEFT JOIN score_labuse sl ON sl.run_label = s.run_label AND sl.idu = s.idu
@@ -267,15 +271,17 @@ def _signal_persiste(p, niveau, cascade_exclue) -> dict:
     return {"status": "AVAILABLE", "p": p, "niveau": niveau, "reason": "PROBABILITE_SERVIE"}
 
 
-def _augmenter_plu(cause, vigilance, modifie_le):
+def _augmenter_plu(cause, vigilance, plu_cause, plu_bandeau):
     """PLU-VEILLE-FIX-1 — l'overlay ne mute que le STATUT en base (restaurable) ; la CAUSE et la
-    VIGILANCE « PLU modifié » sont injectées à la lecture (idempotent). Rend (cause, vigilance)."""
+    VIGILANCE (bandeau PROPORTIONNEL, variant selon la couche en décalage) sont injectées à la
+    lecture (idempotent). Rend (cause, vigilance)."""
     cause = list(cause or [])
     vig = list(vigilance or [])
-    if _PLU_CAUSE not in cause:
-        cause = [_PLU_CAUSE] + cause
-    msg = f"PLU modifié le {modifie_le or '…'} — règles en cours de mise à jour."
-    if not any("règles en cours de mise à jour" in str(v) for v in vig):
+    code = plu_cause or _PLU_CAUSE
+    if code not in cause:
+        cause = [code] + cause
+    msg = plu_bandeau or "PLU modifié — mise à jour en cours."
+    if msg not in vig:
         vig = vig + [msg]
     return cause, vig
 
@@ -285,7 +291,7 @@ def _row_from_mapping(m) -> dict:
     simple (commune ∩ IDU) et la lecture FILTRÉE (jeu de filtres complet, ECRANS-NOV-2)."""
     cause, vigilance = m["cause"], m["vigilance"]
     if m["plu_recalibrage"]:
-        cause, vigilance = _augmenter_plu(cause, vigilance, m["plu_modifie_le"])
+        cause, vigilance = _augmenter_plu(cause, vigilance, m["plu_cause"], m["plu_bandeau"])
     return {
         "idu": m["idu"], "statut": m["status"], "cause": cause, "bande": m["band"],
         "score": m["score"], "bande_provisoire": m["band_provisional"],
@@ -496,7 +502,7 @@ _SCN_COLS = """sv.idu, sv.status, sv.cause, sv.band, sv.score, sv.band_provision
        sv.additional_m2, sv.project_total_m2, sv.existing_m2, sv.net_signed_m2,
        sv.conditional_future_m2, sv.residual_m2, sv.zone_prod_zone, sv.zone_prod_area_m2,
        sv.vigilance, sv.bande_v1, sv.enriched, sv.surface_m2, sv.enrich_state, sv.analysis_version,
-       sv.public_facility, sv.public_land, sv.plu_recalibrage, sv.plu_modifie_le,
+       sv.public_facility, sv.public_land, sv.plu_recalibrage, sv.plu_modifie_le, sv.plu_bandeau, sv.plu_cause,
        sl.signal_p, sl.signal_niveau, sl.cascade_exclue"""
 
 # FONCIER-PUBLIC-1 — la case « Inclure le foncier public » (décochée par défaut) : quand elle est
@@ -723,30 +729,39 @@ def analyse_payload_filtre(session: Session, *, scn_run: str, mode: str, scenari
 # « À vérifier » SANS recalculer le run, et se RESTAURENT à la validation. On ne mute que le STATUT
 # (restaurable via status_avant_plu) ; la cause/vigilance « PLU modifié » sont injectées à la lecture.
 
-def appliquer_recalibrage(session: Session, *, run_label: str, commune: str,
-                          modifie_le: str | None, actif: bool) -> int:
-    """Pose (actif=True) ou lève (actif=False) l'overlay « PLU modifié » sur les parcelles de la
-    commune, les DEUX scénarios. Idempotent. Rend le nombre de lignes touchées."""
+def appliquer_recalibrage(session: Session, *, run_label: str, commune: str, actif: bool,
+                          message: str | None = None, cause: str | None = None,
+                          idus: list[str] | None = None) -> int:
+    """Pose (actif=True) ou lève (actif=False) l'overlay « À vérifier » sur les parcelles de la
+    commune (les DEUX scénarios). PROPORTIONNEL : si `idus` est fourni (niveau prescriptions), SEULES
+    ces parcelles basculent ; sinon toute la commune (niveau fort). Idempotent. Rend les lignes touchées."""
     ensure_table(session)
     if actif:
+        params = {"run": run_label, "c": commune, "msg": message, "cause": cause,
+                  "sens": list(_PLU_SENSIBLE)}
+        clause = ""
+        if idus is not None:
+            clause = " AND idu = ANY(:idus)"
+            params["idus"] = list(idus)
         return session.execute(text(
             "UPDATE parcel_scenario_v2_runs SET status_avant_plu = COALESCE(status_avant_plu, status), "
-            " status = 'TO_VERIFY', plu_recalibrage = true, plu_modifie_le = :d "
+            " status = 'TO_VERIFY', plu_recalibrage = true, plu_bandeau = :msg, plu_cause = :cause "
             "WHERE run_label = :run AND commune = :c AND NOT plu_recalibrage "
-            " AND status = ANY(:sens)"),
-            {"run": run_label, "c": commune, "d": modifie_le, "sens": list(_PLU_SENSIBLE)}).rowcount
+            f" AND status = ANY(:sens){clause}"), params).rowcount
     return session.execute(text(
         "UPDATE parcel_scenario_v2_runs SET status = COALESCE(status_avant_plu, status), "
-        " status_avant_plu = NULL, plu_recalibrage = false, plu_modifie_le = NULL "
+        " status_avant_plu = NULL, plu_recalibrage = false, plu_modifie_le = NULL, "
+        " plu_bandeau = NULL, plu_cause = NULL "
         "WHERE run_label = :run AND commune = :c AND plu_recalibrage"),
         {"run": run_label, "c": commune}).rowcount
 
 
-def synchroniser_recalibrage(session: Session, communes_desync: dict,
+def synchroniser_recalibrage(session: Session, plan: dict,
                              *, run_label: str | None = None) -> dict:
-    """Aligne l'overlay sur l'état de veille : chaque commune du run est posée « À vérifier » si elle
-    est dans `communes_desync` (nom → {date_modif_fr}), restaurée sinon. Un seul passage, idempotent.
-    Retourne {posees, restaurees, lignes}."""
+    """Aligne l'overlay sur le PLAN de signal client : `plan` = {commune → {message, cause, idus}}
+    (idus=None ⇒ toute la commune, niveau fort ; idus=[…] ⇒ prescriptions seules). Toute commune du
+    run ABSENTE du plan est restaurée (revenue « à jour » ou niveau `informations` = bandeau seul).
+    Un seul passage, idempotent. Retourne {posees, restaurees, lignes}."""
     run_label = run_label or runs.current()
     ensure_table(session)
     noms = [r[0] for r in session.execute(text(
@@ -754,16 +769,18 @@ def synchroniser_recalibrage(session: Session, communes_desync: dict,
         {"run": run_label})]
     posees = restaurees = lignes = 0
     for nom in noms:
-        d = communes_desync.get(nom)
-        if d:
-            n = appliquer_recalibrage(session, run_label=run_label, commune=nom,
-                                      modifie_le=d.get("date_modif_fr"), actif=True)
+        p = plan.get(nom)
+        if p:
+            # repose proprement si le message/la portée a changé (restaure d'abord, puis réapplique).
+            appliquer_recalibrage(session, run_label=run_label, commune=nom, actif=False)
+            n = appliquer_recalibrage(session, run_label=run_label, commune=nom, actif=True,
+                                      message=p.get("message"), cause=p.get("cause"),
+                                      idus=p.get("idus"))
             if n:
                 posees += 1
                 lignes += n
         else:
-            n = appliquer_recalibrage(session, run_label=run_label, commune=nom,
-                                      modifie_le=None, actif=False)
+            n = appliquer_recalibrage(session, run_label=run_label, commune=nom, actif=False)
             if n:
                 restaurees += 1
                 lignes += n

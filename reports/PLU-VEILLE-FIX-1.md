@@ -263,15 +263,88 @@ pluviales, patrimoine) sont des vigilances, sans effet sur la capacité.
   97411000CP0479, 97411000CY0016, 97411000EL0164, 97411000EL0169, 97411000IC0148, 97411000IL0379,
   97411000IS0406, 97411000IV0035`.
 
-- **Liste à recalculer pour que fiche == run** : **14 155** parcelles de Saint-Denis intersectent une
-  prescription **ER (10 991)** ou **EBC (4 188)** — ce sont celles dont la capacité peut bouger (les 14
-  par leur exclusion ; les autres par la part ER/EBC soustraite, à la marge). La liste complète des
-  14 155 IDU est écrite dans **`reports/PLU-VEILLE-FIX-1-saint-denis-recompute.txt`**. Geste prod après
-  `plu appliquer 97411` : `labuse reevaluer-cascade` sur ces IDU, puis re-persister les scénarios V2 —
-  sinon la fiche (calcul live) et le run (persisté) divergent sur ces parcelles.
+- **Liste à recalculer pour que fiche == run** : **15 698** parcelles de Saint-Denis portent une
+  prescription DISCRIMINANTE — ER (05) ∪ EBC (01) ∪ patrimoine (07) — soit l'ensemble servi par
+  `controle_plu.parcelles_prescription` (voir §9, c'est aussi l'ensemble « À vérifier » proportionnel).
+  Sous-ensemble CAPACITÉ (ER ∪ EBC) = **14 155** (dont les 14 qui changent d'exclusion) ; le patrimoine
+  n'affecte qu'une vigilance. La liste complète des 15 698 IDU : **`reports/PLU-VEILLE-FIX-1-saint-denis-recompute.txt`**.
+  Geste prod après `plu appliquer 97411` : `labuse reevaluer-cascade` sur ces IDU, puis re-persister les
+  scénarios V2 — sinon la fiche (calcul live) et le run (persisté) divergent sur ces parcelles.
 
 > Les deux autres décalages (Bras-Panon, Saint-Joseph) appellent le même geste prod (prescriptions
 > ER/EBC à réingérer + recalcul des parcelles touchées) ; leur zonage et leurs règles, eux, sont déjà
 > à jour (§2) — rien à refaire côté zonage.
+
+---
+
+## 9. Alerte client PROPORTIONNELLE (décision Vic)
+
+Le signal client n'est plus « tout ou rien » : il suit la COUCHE en décalage (`controle_plu.niveau_decalage`).
+
+| Niveau | Déclencheur | Bandeau (fiche + documents) | « À vérifier » dans l'Analyse |
+|---|---|---|---|
+| **fort** | zonage **ou** règles en retard | « PLU modifié le jj/mm/aaaa — règles en cours de mise à jour » | **toute** la commune (parcelles chiffrées) |
+| **prescriptions** | prescriptions seules | « Prescriptions du PLU mises à jour le jj/mm/aaaa — intégration en cours » | **seules** les parcelles portant une prescription discriminante |
+| **informations** | DPU seul | « Droit de préemption urbain mis à jour le jj/mm/aaaa — intégration en cours » | **aucune** (bandeau seul) |
+
+« Porte une prescription » = intersecte une prescription que la cascade transforme en VERDICT : ER (05),
+EBC (01), patrimoine bâti (07). Les périmètres informatifs qui nappent la commune (« zone tendue », ZAC,
+OAP, mixité, eaux pluviales → `PASS` dans la cascade) ne font **pas** passer « À vérifier » — sinon toute
+la commune basculerait (le périmètre « zone tendue » de Saint-Denis couvre à lui seul 38 557 parcelles :
+l'inverse du proportionnel). Les codes sont LUS de `config/cascade_rules.yaml` (une seule vérité avec la cascade).
+
+Mécanisme : overlay restaurable `scenarios_v2_persist.appliquer_recalibrage(…, idus=…)` — `idus=None` =
+toute la commune (fort), `idus=[…]` = prescriptions seules ; `informations` = pas d'overlay. Le bandeau et
+la cause proportionnels sont stockés (`plu_bandeau`/`plu_cause`) et injectés à la lecture. Le drapeau
+« règles à recalibrer » n'est posé par `plu appliquer` que pour un décalage **fort** — un décalage de
+prescriptions seules ne requiert aucun recalibrage des règles chiffrées (elles ne dépendent que du zonage/règlement).
+
+### Avant / après (points 4) — parcelles « À vérifier », base locale q_v20
+
+| Commune | Niveau | Avant (toute la commune) | Après (proportionnel) |
+|---|---|---|---|
+| Saint-Denis (97411) | prescriptions | 30 124 | **11 006** |
+| Saint-Joseph (97412) | prescriptions | 15 613 | **1 667** |
+| Bras-Panon (97402) | prescriptions | 4 191 | **295** |
+
+Les trois sont « prescriptions seules » (leur zonage ET leurs règles sont à jour — §8(2)) : aucune ne
+déclenche l'alerte « fort ». Les parcelles non concernées **gardent leur bande**. Test de recette :
+`tests/test_plu_veille_fix1.py::test_appliquer_recalibrage_pose_restaure_et_proportionnel` (fort = toutes
+les sensibles ; prescriptions = seules les parcelles visées ; restauration exacte).
+
+### Listes à recalculer (points 5) — les trois communes, même définition que Saint-Denis
+
+Les parcelles portant une prescription discriminante (= l'ensemble « À vérifier » ET la liste à
+`reevaluer-cascade` pour que fiche == run) :
+
+| Commune | Parcelles à recalculer | Fichier |
+|---|---|---|
+| Saint-Denis (97411) | 15 698 | `reports/PLU-VEILLE-FIX-1-saint-denis-recompute.txt` |
+| Saint-Joseph (97412) | 6 078 | `reports/PLU-VEILLE-FIX-1-saint-joseph-recompute.txt` |
+| Bras-Panon (97402) | 1 131 | `reports/PLU-VEILLE-FIX-1-bras-panon-recompute.txt` |
+
+### Procédure PROD (point 6) — déployer sans qu'aucun client ne voie l'alerte sur ces trois communes
+
+Au déploiement, **AVANT** le premier passage de `plu-veille-nuit` (08:10), pour chacune des trois communes
+`97411`, `97412`, `97402` :
+
+1. **Aligner les prescriptions (geste unique)** —
+   `sudo -u labuse labuse plu appliquer --insee <code>`.
+   Décalage de prescriptions seules ⇒ **aucun** drapeau « règles à recalibrer » n'est posé : dès les
+   couches alignées, la commune repasse **« à jour »** (`labuse plu etat` doit la montrer sans ⚠).
+2. **Recalculer les parcelles portant une prescription** (pour que la fiche live == le run persisté) —
+   rejouer la cascade **servie** sur ces parcelles (les IDU de la liste ci-dessus / la commune) avec
+   persistance, puis re-peupler `parcel_scenario_v2_runs` pour ces parcelles
+   (`scenarios_v2_persist.compute_scenarios_v2_batch`). C'est le même calcul que `calcul-nuit`, restreint
+   aux 3 communes pour aller vite — à faire avant `promote`. (`labuse reevaluer-cascade` seul écrit un
+   run CANDIDAT/dry, non servi : il ne suffit pas ici.)
+3. **Couche servie** — `promote` le run recalculé (le zonage est inchangé pour les trois : rien à rebâtir
+   côté `parcel_zone_plu`/MVT, seule la capacité recalculée est promue).
+
+Comme `plu appliquer` d'un décalage de prescriptions ne pose pas le drapeau règles, les trois communes
+sont **à jour** à l'issue de l'étape 1 : `rafraichir_signal_client` (appelé par l'étape 1 et par la tâche
+de nuit) ne pose **aucun** overlay, et le premier passage nocturne ne lève **aucune** alerte client pour
+ces trois-là. Les gestes 2–3 garantissent en plus que les chiffres servis (capacité) reflètent les
+nouvelles prescriptions.
 
 *Fin du rapport.*

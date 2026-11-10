@@ -36,6 +36,7 @@ def test_verdict_desync_sur_prescription_perimee():
     reg = {"idurba": "97411_PLU_20260805", "date": date(2026, 8, 5), "etat": "calibree"}
     e = cp.verdict_pur("97411", "Saint-Denis", "97411_PLU_20260805", "geoportail", ing, reg)
     assert e.etat == "desync"
+    assert e.niveau == "prescriptions"                      # décalage proportionnel (prescriptions seules)
     assert "prescriptions" in e.couches_en_retard
     assert "zonage" not in e.couches_en_retard
     assert e.reference == "97411_PLU_20260805"
@@ -50,6 +51,7 @@ def test_verdict_remplacement_1_1_detecte():
     reg = {"idurba": "97411_PLU_20260423", "date": date(2026, 4, 23), "etat": "calibree"}
     e = cp.verdict_pur("97411", "Saint-Denis", "97411_PLU_20260805", "geoportail", ing, reg)
     assert e.etat == "desync"
+    assert e.niveau == "fort"                               # le zonage bouge → toute la commune
     assert "zonage" in e.couches_en_retard and "prescriptions" in e.couches_en_retard
     assert e.nouveau == "97411_PLU_20260805"
 
@@ -130,12 +132,13 @@ def test_evaluate_ne_touche_pas_les_statuts_durs():
 
 
 def test_augmenter_plu_idempotent():
-    c, v = persist._augmenter_plu(["AUTRE"], ["note"], "05/08/2026")
-    assert persist._PLU_CAUSE in c
-    assert any("règles en cours de mise à jour" in x for x in v)
-    c2, v2_ = persist._augmenter_plu(c, v, "05/08/2026")
-    assert c2.count(persist._PLU_CAUSE) == 1
-    assert sum("règles en cours de mise à jour" in x for x in v2_) == 1
+    msg = "Prescriptions du PLU mises à jour le 05/08/2026 — intégration en cours."
+    c, v = persist._augmenter_plu(["AUTRE"], ["note"], "PLU_PRESCRIPTIONS_MAJ", msg)
+    assert "PLU_PRESCRIPTIONS_MAJ" in c
+    assert any("Prescriptions du PLU mises à jour" in x for x in v)
+    c2, v2_ = persist._augmenter_plu(c, v, "PLU_PRESCRIPTIONS_MAJ", msg)
+    assert c2.count("PLU_PRESCRIPTIONS_MAJ") == 1
+    assert sum(msg in x for x in v2_) == 1
 
 
 # ─────────────────────────── passage de nuit (base) ───────────────────────────
@@ -181,25 +184,55 @@ def test_plu_veille_nuit_signale_desync(db_session, monkeypatch):
     assert "Saint-Denis" in ctx.compteurs["communes_desync"]
 
 
+def test_niveau_proportionnel():
+    """Décision Vic : la gravité dépend de la couche en décalage."""
+    assert cp.niveau_decalage(["zonage"]) == "fort"
+    assert cp.niveau_decalage(["regles"]) == "fort"
+    assert cp.niveau_decalage(["prescriptions"]) == "prescriptions"
+    assert cp.niveau_decalage(["prescriptions", "informations"]) == "prescriptions"
+    assert cp.niveau_decalage(["informations"]) == "informations"
+    assert cp.niveau_decalage([]) is None
+    assert cp.avec_a_verifier("fort") and cp.avec_a_verifier("prescriptions")
+    assert not cp.avec_a_verifier("informations")              # DPU seul = bandeau seul
+    assert "règles en cours" in cp.bandeau_client("fort", "05/08/2026")
+    assert cp.bandeau_client("prescriptions", "05/08/2026").startswith("Prescriptions du PLU mises à jour")
+    assert "préemption" in cp.bandeau_client("informations", "05/08/2026")
+
+
 @pytest.mark.db
-def test_appliquer_recalibrage_pose_et_restaure(db_session):
-    """L'overlay persisté : poser « À vérifier » puis le restaurer rend EXACTEMENT le statut d'avant."""
+def test_appliquer_recalibrage_pose_restaure_et_proportionnel(db_session):
+    """L'overlay persisté : poser « À vérifier » puis restaurer rend EXACTEMENT le statut d'avant ;
+    et avec `idus` (niveau prescriptions) SEULES les parcelles visées basculent."""
     s = db_session
     persist.ensure_table(s)
     run = "test-plu-overlay"
     s.execute(text("DELETE FROM parcel_scenario_v2_runs WHERE run_label=:r"), {"r": run})
-    base = {"run": run, "scn": "keep", "commune": "Testville"}
-    for idu, st in [("A", "ESTIMATED"), ("B", "OUTSIDE_OBJECTIVE"), ("C", "COMPUTE_PENDING")]:
+    for idu, st in [("A", "ESTIMATED"), ("B", "OUTSIDE_OBJECTIVE"), ("C", "COMPUTE_PENDING"),
+                    ("D", "ESTIMATED")]:
         s.execute(text("INSERT INTO parcel_scenario_v2_runs (run_label, parcel_id, idu, commune, "
-                       "scenario, status) VALUES (:run, :pid, :idu, :c, :scn, :st)"),
-                  {"run": run, "pid": ord(idu), "idu": idu, "c": "Testville", "scn": "keep", "st": st})
-    n = persist.appliquer_recalibrage(s, run_label=run, commune="Testville",
-                                      modifie_le="05/08/2026", actif=True)
-    assert n == 2                                            # ESTIMATED + COMPUTE_PENDING ; pas OUTSIDE
+                       "scenario, status) VALUES (:run, :pid, :idu, 'Testville', 'keep', :st)"),
+                  {"run": run, "pid": ord(idu), "idu": idu, "st": st})
+    # fort (idus=None) : toutes les sensibles basculent (A, C, D ; pas B=OUTSIDE)
+    n = persist.appliquer_recalibrage(s, run_label=run, commune="Testville", actif=True,
+                                      message="PLU modifié le 05/08/2026 — règles en cours de mise à jour.",
+                                      cause="PLU_MODIFIE_RECALIBRAGE")
+    assert n == 3
+    persist.appliquer_recalibrage(s, run_label=run, commune="Testville", actif=False)
+    # prescriptions (idus=[A]) : SEULE A bascule ; C et D gardent leur bande
+    n = persist.appliquer_recalibrage(s, run_label=run, commune="Testville", actif=True,
+                                      message="Prescriptions du PLU mises à jour le 28/04/2026 — intégration en cours.",
+                                      cause="PLU_PRESCRIPTIONS_MAJ", idus=["A"])
+    assert n == 1
     stt = dict(s.execute(text("SELECT idu, status FROM parcel_scenario_v2_runs WHERE run_label=:r"),
                          {"r": run}).all())
-    assert stt["A"] == "TO_VERIFY" and stt["C"] == "TO_VERIFY" and stt["B"] == "OUTSIDE_OBJECTIVE"
-    persist.appliquer_recalibrage(s, run_label=run, commune="Testville", modifie_le=None, actif=False)
+    assert stt == {"A": "TO_VERIFY", "B": "OUTSIDE_OBJECTIVE", "C": "COMPUTE_PENDING", "D": "ESTIMATED"}
+    # le bandeau/la cause PROPORTIONNELS sont stockés (injectés à la lecture par _augmenter_plu)
+    bandeau, cause = s.execute(text("SELECT plu_bandeau, plu_cause FROM parcel_scenario_v2_runs "
+                                    "WHERE run_label=:r AND idu='A'"), {"r": run}).first()
+    assert cause == "PLU_PRESCRIPTIONS_MAJ" and "Prescriptions du PLU mises à jour" in bandeau
+    c2, v2_ = persist._augmenter_plu([], [], cause, bandeau)          # la lecture injecte proprement
+    assert "PLU_PRESCRIPTIONS_MAJ" in c2 and any("Prescriptions du PLU" in x for x in v2_)
+    persist.appliquer_recalibrage(s, run_label=run, commune="Testville", actif=False)
     stt2 = dict(s.execute(text("SELECT idu, status FROM parcel_scenario_v2_runs WHERE run_label=:r"),
                           {"r": run}).all())
-    assert stt2 == {"A": "ESTIMATED", "B": "OUTSIDE_OBJECTIVE", "C": "COMPUTE_PENDING"}
+    assert stt2 == {"A": "ESTIMATED", "B": "OUTSIDE_OBJECTIVE", "C": "COMPUTE_PENDING", "D": "ESTIMATED"}

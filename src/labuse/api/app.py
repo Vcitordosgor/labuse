@@ -6459,10 +6459,13 @@ def _plu_modifie(db, idu: str) -> dict | None:
         return None
     if not e or e.get("etat") != "desync":
         return None
-    return {"date": e.get("date_modif_fr"), "ancien": e.get("ancien"), "nouveau": e.get("nouveau"),
+    # Bandeau PROPORTIONNEL (décision Vic) : le message et le fait que les parcelles passent
+    # « À vérifier » dépendent de la couche en décalage (fort / prescriptions / informations).
+    return {"date": e.get("date_modif_fr"), "niveau": e.get("niveau"),
+            "ancien": e.get("ancien"), "nouveau": e.get("nouveau"),
             "couches": e.get("couches_en_retard") or [],
-            "message": f"PLU modifié le {e.get('date_modif_fr') or '…'} — "
-                       "règles en cours de mise à jour."}
+            "avec_a_verifier": bool(e.get("avec_a_verifier")),
+            "message": e.get("message") or "PLU mis à jour — intégration en cours."}
 
 
 def _plu_fraicheur(idu: str) -> dict | None:
