@@ -148,6 +148,28 @@ def lancer(db, *, appel=None, settings=None) -> dict:
     return {"ok": True, "n": len(items), "items": items}
 
 
+def signaler_retard_source(db, nom: str, millesime_attendu, millesime_servi) -> bool:
+    """FRAICHEUR-FIX-1 (point 7) — remonte UNE source en retard à l'onglet veille de John (axe
+    « sources »), avec le nom de la source et le millésime attendu. IDEMPOTENT par jour : on ne
+    redépose pas le même retard tant qu'il n'a pas changé de millésime attendu (dédup source + date_vue).
+    Retourne True si un item a été posé."""
+    ensure(db)
+    titre = f"{nom} — en retard (millésime attendu {millesime_attendu})"
+    deja = db.execute(text(
+        "SELECT 1 FROM john_veille WHERE axe = 'sources' AND source = :s "
+        "AND date_vue = :d AND ts::date = (now() AT TIME ZONE 'UTC')::date"),
+        {"s": nom, "d": str(millesime_attendu)}).scalar()
+    if deja:
+        return False
+    db.execute(text(
+        "INSERT INTO john_veille (axe, titre, source, date_vue, libelle, url, extrait) "
+        "VALUES ('sources', :t, :s, :d, 'à intégrer', '/sources', :e)"),
+        {"t": titre, "s": nom, "d": str(millesime_attendu),
+         "e": f"L'amont publie {millesime_attendu} ; LABUSE sert {millesime_servi or 'un millésime non prouvé'}. "
+              "À recharger."})
+    return True
+
+
 def recentes(db, n: int = 20) -> list[dict]:
     """Les derniers éléments de veille (pour l'onglet)."""
     ensure(db)

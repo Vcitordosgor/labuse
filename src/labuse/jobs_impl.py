@@ -1763,8 +1763,14 @@ def ingest_sirene(ctx: JobContext) -> None:
 
 def ingest_sitadel(ctx: JobContext) -> None:
     """Permis SITADEL mensuel, PUIS événements de veille foncière (comparaison aux critères clients) +
-    calcul d'un golden CANDIDAT (jamais servi — bascule = geste de Vic, cf. K5)."""
-    _ingest_via_cli(ctx, "ingest-permits")
+    calcul d'un golden CANDIDAT (jamais servi — bascule = geste de Vic, cf. K5).
+
+    FRAICHEUR-FIX-1 (point 2) — DELTA mensuel (`--refresh`, recouvrement 3 mois) et non plus un backfill
+    complet 2013+ à chaque passage : le passage mensuel reste léger et ne risque plus le timeout
+    (une des raisons pour lesquelles le poste restait sans trace d'exécution utile — FRAICHEUR-1 §3.1).
+    La CAUSE première du « jamais exécuté » (unique créneau du 10 mangé par le déploiement du matin)
+    est corrigée par le rattrapage post-déploiement (point 8, `labuse jobs rattraper`)."""
+    _ingest_via_cli(ctx, "ingest-permits", "--refresh")
     from .copilote_v2 import veilles as veilles_mod
     r = veilles_mod.evaluer_toutes(ctx.db)
     ctx.compte(veille_fonciere=r)
@@ -1773,6 +1779,20 @@ def ingest_sitadel(ctx: JobContext) -> None:
     from . import golden_ops
     ctx.compte(candidat=golden_ops.rapport_candidat(dry_run=ctx.dry_run))
     _persist_millesime(ctx, "sitadel")   # E3
+
+
+def ingest_inpi_rne(ctx: JobContext) -> None:
+    """FRAICHEUR-FIX-1 (point 3) — rafraîchit les dirigeants RNE (table pm_dirigeants) des personnes
+    morales foncières (outil Successions), via la commande VIVANTE (delta résumable par SIREN). PUIS
+    pose la date de la DONNÉE (max ingested_at) sur la source ET acquitte sa sentinelle de fraîcheur —
+    pour que l'écran Successions et le rappel de cadence lisent la même vérité (la donnée, pas le catalogue)."""
+    from sqlalchemy import text as _t
+    _ingest_via_cli(ctx, "ingest-inpi-rne")
+    maj = ctx.db.execute(_t("SELECT max(ingested_at)::date FROM pm_dirigeants")).scalar()
+    n = ctx.db.execute(_t("SELECT count(*) FROM pm_dirigeants")).scalar()
+    ctx.db.execute(_t("UPDATE data_sources SET last_sync_at = now(), source_horizon_at = :h, "
+                      "updated_at = now() WHERE name = 'INPI RNE (dirigeants)'"), {"h": maj})
+    ctx.compte(dirigeants=int(n or 0), millesime_donnee=str(maj) if maj else None)
 
 
 def _persist_millesime(ctx: JobContext, key: str) -> None:
@@ -1852,6 +1872,47 @@ def sonde_sources(ctx: JobContext) -> None:
     l'ancien `sentinelle-sources` : parcourt les lignes source_veille échues, sonde l'amont, alerte,
     n'ingère rien. Alias conservé pour ne pas dupliquer la logique."""
     sentinelle_sources(ctx)
+
+
+def fraicheur_nuit(ctx: JobContext) -> None:
+    """FRAICHEUR-FIX-1 (point 7) — LE CONTRÔLE PERMANENT. Chaque nuit, APRÈS la sonde (dernier publié
+    frais), on REJOUE le tableau des sources avec le contrôle de millésime : toute source qui PASSE
+    « en retard » (publié prouvé plus récent que l'ingéré) ou « à vérifier » remonte
+      · chez JOHN (onglet veille, axe « sources », avec le nom de la source et le millésime attendu) ;
+      · à l'ADMIN (porte d'alerte unique ops_alertes → mail + cloche, lien /sources) ;
+      · à la page DONNÉES (instantané `fraicheur_controle_nuit`, lu par l'écran, + `etats_sources`).
+    Une source rentrée dans l'ordre RÉSOUT son incident (plus jamais une alerte qui ne se referme pas)."""
+    from sqlalchemy import text
+
+    from . import controle_millesime, ops_alertes
+    from .john import veille as john_veille
+
+    r = controle_millesime.rejouer_nuit(ctx.db)
+    noms_retard = {e["name"] for e in r["retards"]}
+
+    for e in r["retards"]:
+        attendu, servi = e.get("millesime_publie"), e.get("millesime_ingere")
+        ops_alertes.signaler(
+            ctx.db, f"fraicheur-retard:{e['name']}",
+            f"Source en retard : {e['name']}",
+            f"L'amont publie {attendu}, LABUSE sert {servi or 'un millésime non prouvé'}. "
+            f"Source à recharger : {e['name']} (millésime attendu {attendu}).",
+            lien="/sources")
+        john_veille.signaler_retard_source(ctx.db, e["name"], attendu, servi)
+
+    # résolution des incidents des sources RENTRÉES DANS L'ORDRE (plus en retard ce soir).
+    ouverts = ctx.db.execute(text(
+        "SELECT cle FROM ops_incidents WHERE cle LIKE 'fraicheur-retard:%' AND resolu_at IS NULL"
+    )).scalars().all()
+    resolus = 0
+    for cle in ouverts:
+        if cle.split(":", 1)[1] not in noms_retard:
+            ops_alertes.resoudre(ctx.db, cle)
+            resolus += 1
+
+    ctx.compte(total=r["total"], retards=len(r["retards"]), a_verifier=len(r["a_verifier"]),
+               incidents_resolus=resolus,
+               noms_en_retard=sorted(noms_retard))
 
 
 def _cout_agent_source_eur(db) -> float:
