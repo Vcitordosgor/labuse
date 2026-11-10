@@ -251,7 +251,37 @@ contour post-reculs — ALGO-LECTURE-1) ; (2) recompute q_v23 ; (3) alors promou
 saturées + flips PPR restent valides. Si Vic veut promouvoir malgré tout (le run EST cohérent avec la
 fiche actuelle), le faire en connaissance des ~122 faux « terrain exigu » à corriger ensuite.
 
+## E. Recalcul PARTIEL de q_v23 après `fix/exigu-fix-1` (préparé, à lancer au merge)
+
+Décision Vic : ne pas promouvoir q_v23 ; un correctif `terrain_exigu` arrive. On recalcule **seulement
+les parcelles `cause='terrain_exigu'`** (résiduel → Score → scénarios V2), **sans refaire l'île** — car
+`exigu-fix` ne *relâche* que la règle `terrain_exigu` (aucune parcelle hors de cet ensemble ne peut
+*devenir* terrain_exigu ; la cascade, le socle et le Signal ne changent pas).
+
+**Cible** : `terrain_exigu` dans le run candidat (seq 18) = **72 083 parcelles** (23 communes ; tête :
+Saint-Denis 11 909 · Saint-Paul 7 981 · Saint-Pierre 6 045 · Le Tampon 5 271 · Saint-Joseph 4 782…).
+
+**Procédure** (`scripts/q23_exigu_delta.sh`, lancée en `labuse` sur le VPS APRÈS déploiement d'origin/main
+exigu-fix compris ; hors 01 h–05 h) :
+1. **Pré-vérif** : diff de `exigu-fix` limité à la règle `terrain_exigu` — sinon le delta est invalide
+   (faire un recompute complet). git merge origin/main dans la branche (garder les fixes) + `deploy_app.sh`.
+2. **Résiduel delta** : `compute-residuel --into-run 18 --parcelles-fichier <72 083>` en **4 shards**
+   (écrase les lignes terrain_exigu de seq 18 par les valeurs corrigées — upsert `(run_seq, parcel_id)`,
+   run servi seq 17 intact).
+3. **Sous-ensemble corrigé** : parcelles dont la cause n'est plus `terrain_exigu`.
+4. **Score LABUSE delta** : `score-labuse --run q_v23 --parcelles-fichier <cible> --cascade-label q_v23
+   --signal-run q_v23 --residuel-run-seq 18` (nouveau `--parcelles-fichier`, commit `0e96618a3`).
+5. **Scénarios V2 delta** : `compute_scenarios_v2_batch(run_label='q_v23', enrich=True)` sur les corrigées.
+6. **Rejouer les 7 contrôles** (`scripts/q23_gate.py`) + re-vérifier §D (les grandes parcelles A/B
+   `terrain_exigu` doivent retrouver une bande constructible).
+
+**Durée estimée ~2–3 h** : résiduel delta sur 72 083 (4 shards) **~1,5–2 h** (poste dominant) · Score delta
+**~1 min** · scénarios V2 enrich (sous-ensemble corrigé) **~10–40 min** · contrôles + banc **~20 min**.
+**Skippé** (donc économisé) : cascade (~3 h) + build_all + flux-run Signal (inchangés). Vs recompute
+complet ~15 h.
+
 ---
 
-_Exécuté : A (déploiement + 4 incidents) ✅ · B (chaîne de nuit q_v23) ✅ · C (7 contrôles) ✅ + analyse §D.
+_Exécuté : A (déploiement + 4 incidents) ✅ · B (chaîne de nuit q_v23) ✅ · C (7 contrôles) ✅ + analyse §D
++ §E préparée.
 Reste : scénarios V2 (demain, après merge origin/main + foncier-public-1) + finalisation. Commit, pas de merge._
