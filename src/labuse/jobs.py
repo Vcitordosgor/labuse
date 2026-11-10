@@ -913,7 +913,11 @@ def selftest() -> tuple[bool, list[str]]:
     try:
         import scripts.verite_permanente as vp
         for h in vp._harnais():
-            script = next((a for a in h["cmd"]
+            # DEPLOY-GROUPE-3 — un harnais peut être en état SAUTÉ/ROUGE (lots A/B/F sans prérequis
+            # d'instance au selftest : `_auth_lot` renvoie alors {skip|rouge} SANS clé `cmd`, OPS-3).
+            # Le runner le gère déjà ; le selftest ne vérifie la présence du FICHIER que des harnais
+            # RÉELLEMENT commandables (C/D/E ici). `.get` tolère l'absence de `cmd` (plus de KeyError).
+            script = next((a for a in h.get("cmd", [])
                            if isinstance(a, str) and a.endswith((".py", ".sql", ".mjs"))), None)
             if script and not Path(script).exists():
                 problemes.append(f"verite-permanente lot {h['lot']} : fichier non livré {script}")
