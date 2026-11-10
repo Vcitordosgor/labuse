@@ -12,7 +12,8 @@ import { fmtInt } from '../../lib/format'
 import { BANDE_META, type Bande } from '../../lib/status'
 import {
   BANDES_CHIP, STATUTS_CHIP, NIVEAUX_CHIP, NIVEAU_META, STATUT_SCN_META,
-  bandeLabel, couleurParcelle, venteLabel,
+  bandeLabel, couleurParcelle, venteLabel, equipementLabel,
+  FONCIER_PUBLIC_COLOR, FONCIER_PUBLIC_LABEL,
   type NiveauChip, type Objectif, type ScnScenario,
 } from '../../lib/scenario'
 import { useApp } from '../../store/useApp'
@@ -152,6 +153,11 @@ function CarteResultat({ p, objectif, scenario }:
             {vente && <Pastille label={vente} color={venteColor} />}
           </>
         )}
+        {/* FONCIER-PUBLIC-1 — « Équipement public : <type> » (occupé → Hors projet) ou « Foncier
+            public » (terrain public, bande gardée). L'équipement prime (il explique le Hors projet). */}
+        {p.equipement_public
+          ? <Pastille label={equipementLabel(p.equipement_public)!} color={FONCIER_PUBLIC_COLOR} />
+          : p.foncier_public && <Pastille label={FONCIER_PUBLIC_LABEL} color={FONCIER_PUBLIC_COLOR} />}
       </div>
       <div className={`mt-1 truncate text-[11px] ${p.adresse ? 'text-txt-dim' : 'text-txt-ghost'}`}>
         {p.adresse ?? 'Adresse non disponible'}
@@ -208,31 +214,36 @@ export function AnalyseScenario() {
   const [scenario, setScenario] = useState<ScnScenario>('keep')
   const [coches, setCoches] = useState<Coches>(COCHES_DEFAUT('potential'))
   const [autresOpen, setAutresOpen] = useState(false)
+  // FONCIER-PUBLIC-1 — « Inclure le foncier public » : DÉCOCHÉE par défaut (décision Vic). Décochée,
+  // le terrain public sans équipement sort de la sélection (effectifs, liste, carte).
+  const [inclureFoncier, setInclureFoncier] = useState(false)
   const [limit, setLimit] = useState(PAGE)
   const [comprendre, setComprendre] = useState(false)
 
   useEffect(() => { setCoches(COCHES_DEFAUT(objectif)); setAutresOpen(false) }, [objectif])
-  useEffect(() => { setLimit(PAGE) }, [filters, objectif, scenario, coches, etape])
+  useEffect(() => { setLimit(PAGE) }, [filters, objectif, scenario, coches, inclureFoncier, etape])
   // La carte ne peint la liste choisie que tant que l'écran est monté : on l'efface en quittant.
   useEffect(() => () => setScenarioPaint(null), [setScenarioPaint])
 
   // ── EFFECTIFS (étape « Choisir » + le N de l'étape « Liste ») : requête limit=0, CACHÉE côté serveur.
   // `placeholderData=prev` → changer d'objectif/scénario GARDE l'affichage précédent le temps de la MAJ.
   const effQ = useQuery({
-    queryKey: ['scn-eff', filters, objectif, scenario],
-    queryFn: () => getAnalyseScenarios(filters, { mode: objectif, scenario, limit: 0 }),
+    queryKey: ['scn-eff', filters, objectif, scenario, inclureFoncier],
+    queryFn: () => getAnalyseScenarios(filters, { mode: objectif, scenario, limit: 0, inclureFoncierPublic: inclureFoncier }),
     placeholderData: (prev) => prev,
   })
   const data: ScnReponse | undefined = effQ.data
   const eff = data?.effectifs
   const nSelection = data?.n_selection ?? 0
+  const nFoncierPublic = data?.n_foncier_public ?? 0
 
   // ── LISTE + IDU pour la carte : cohortes cochées. carte=1 → la carte peint EXACTEMENT la liste. ──
   const cochesCsv = { bands: coches.bands, statuts: coches.statuts, niveaux: coches.niveaux }
   const listeQ = useQuery({
-    queryKey: ['scn-liste', filters, objectif, scenario, coches, etape === 'liste' ? limit : 0],
+    queryKey: ['scn-liste', filters, objectif, scenario, coches, inclureFoncier, etape === 'liste' ? limit : 0],
     queryFn: () => getAnalyseScenarios(filters, {
-      mode: objectif, scenario, carte: true, limit: etape === 'liste' ? limit : 0, ...cochesCsv,
+      mode: objectif, scenario, carte: true, inclureFoncierPublic: inclureFoncier,
+      limit: etape === 'liste' ? limit : 0, ...cochesCsv,
     }),
     placeholderData: (prev) => prev,
   })
@@ -242,7 +253,8 @@ export function AnalyseScenario() {
   // La carte peint exactement la liste choisie (idus des cohortes) ; null si trop large pour peindre.
   useEffect(() => {
     if (!listeQ.data) return
-    setScenarioPaint({ idus: listeQ.data.idus ?? null, tronque: !!listeQ.data.idus_tronque })
+    setScenarioPaint({ idus: listeQ.data.idus ?? null, tronque: !!listeQ.data.idus_tronque,
+      foncierPublic: listeQ.data.idus_foncier_public ?? null })
   }, [listeQ.data, setScenarioPaint])
 
   // lignes à cocher (bandes), lignes « Autres » (statuts), segments de la barre, selon l'objectif.
@@ -355,6 +367,21 @@ export function AnalyseScenario() {
                   )}
                 </>
               )}
+          </div>
+          {/* FONCIER-PUBLIC-1 — la case « Inclure le foncier public » (décochée par défaut) : elle
+              fait ENTRER le terrain public SANS équipement (État/commune/EP) dans la sélection.
+              Les équipements publics restent toujours visibles, en « Hors projet ». */}
+          <div className="mt-3 border-t border-line-2/60 pt-2.5">
+            <button data-foncier-public role="checkbox" aria-checked={inclureFoncier}
+              onClick={() => setInclureFoncier((v) => !v)}
+              className="flex w-full items-center gap-2.5 rounded-md px-1.5 py-1.5 text-left text-[12.5px] transition-colors duration-quick hover:bg-surface-2">
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ background: inclureFoncier ? FONCIER_PUBLIC_COLOR : 'transparent', border: `1.5px solid ${FONCIER_PUBLIC_COLOR}` }} />
+              <span className={`min-w-0 flex-1 truncate ${inclureFoncier ? 'text-txt-hi' : 'text-txt-mut'}`}>Inclure le foncier public</span>
+              <span className={`tnum ${inclureFoncier ? 'text-txt' : 'text-txt-dim'}`}>{fmtInt(nFoncierPublic)}</span>
+              <span className="w-3 shrink-0 text-center text-[12px] font-bold" style={{ color: FONCIER_PUBLIC_COLOR }}>{inclureFoncier ? '✓' : ''}</span>
+            </button>
+            <p className="px-1.5 text-[10.5px] leading-snug text-txt-ghost">Terrains publics (État, Région, Département, commune) sans équipement en place.</p>
           </div>
           <button data-voir-parcelles onClick={() => setEtape('liste')} disabled={nCoche === 0}
             className="mt-4 shrink-0 rounded-lg bg-mint py-2.5 text-center text-[13px] font-semibold text-mint-on transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">

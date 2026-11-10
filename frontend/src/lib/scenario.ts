@@ -48,6 +48,14 @@ export function bandeLabel(bande: string | null): string | null {
   return (bande && BANDE_META[bande as Bande]?.label) || null
 }
 
+// FONCIER-PUBLIC-1 — puces « foncier public » (terrain public) et « équipement public » (occupé).
+// Un bleu franc, distinct des bandes (verts/ambre) et des statuts (gris) : « public » se lit d'emblée.
+export const FONCIER_PUBLIC_COLOR = '#4F86C6'
+export const FONCIER_PUBLIC_LABEL = 'Foncier public'
+export function equipementLabel(categorie: string | null | undefined): string | null {
+  return categorie ? `Équipement public : ${categorie}` : null
+}
+
 // La phrase qui dit TOUJOURS ce qui classe (mandat §2).
 export function phraseClassement(objectif: Objectif, scenario: ScnScenario): string {
   if (objectif === 'sale')

@@ -556,6 +556,8 @@ export function MapView() {
   // (les IDU des cohortes cochées, posés par le panneau). Ils PRIMENT sur le raccord /filtre ; quand
   // ils sont posés, on coupe le raccord /filtre (une seule source de peinture).
   const scenarioPaint = useApp((s) => s.scenarioPaint)
+  // FONCIER-PUBLIC-1 — IDU « foncier public » peints (sous-ensemble de la liste choisie) : liseré bleu.
+  const fonciIdus = scenarioPaint?.foncierPublic ?? null
   const besoinIdus = verdict && filters.analyseLabuse && !layers.couleurs_verdict
     && hasCriteresHorsTuiles(filters) && !scenarioPaint
   const idusQ = useQuery({
@@ -765,6 +767,11 @@ export function MapView() {
       m.addLayer({ id: 'parcels-muet', type: 'line', source: 'parcels', minzoom: 15, filter: NON_PROMUES_FILTER,
         layout: { visibility: 'none' }, paint: { 'line-color': '#5F7267', 'line-width': 0.3, 'line-opacity': 0.5 } })
       m.addLayer({ id: 'parcels-sel', type: 'line', source: 'parcels', filter: ['==', ['get', 'idu'], ''], paint: { 'line-color': '#ECF5EF', 'line-width': 2 } })
+      // FONCIER-PUBLIC-1 — liseré « foncier public » : un contour BLEU pointillé sur les parcelles
+      // publiques peintes (quand « Inclure le foncier public » est coché). Le remplissage de bande
+      // reste visible dessous ; le filtre d'IDU est posé par l'effet (scenarioPaint.foncierPublic).
+      m.addLayer({ id: 'parcels-foncier', type: 'line', source: 'parcels', layout: { visibility: 'none' },
+        filter: ['==', ['get', 'idu'], ''], paint: { 'line-color': '#4F86C6', 'line-width': 1.6, 'line-opacity': 0.95, 'line-dasharray': [2, 1.4] } })
       // FICHE-FIX-5 (Lot A) — SOURCE DE SÉLECTION dédiée : la géométrie de la parcelle sélectionnée
       // (getParcelGeojson) y est posée → le LISERÉ BLANC s'affiche TOUJOURS, que la parcelle soit
       // dans le GeoJSON commune, dans les tuiles île, ou nulle part (lien profond). `selection-line`
@@ -830,6 +837,9 @@ export function MapView() {
         paint: { 'fill-color': STATUS_COLOR, 'fill-opacity': STATUS_OPACITY } })
       m.addLayer({ id: 'ile-line', type: 'line', ...SL, layout: { visibility: 'none' },
         filter: PROMUES_FILTER, paint: { 'line-color': STATUS_COLOR, 'line-width': 0.6, 'line-opacity': 0.9 } })
+      // FONCIER-PUBLIC-1 — jumeau île du liseré « foncier public » (cf. parcels-foncier).
+      m.addLayer({ id: 'ile-foncier', type: 'line', ...SL, layout: { visibility: 'none' },
+        filter: ['==', ['get', 'idu'], ''], paint: { 'line-color': '#4F86C6', 'line-width': 1.6, 'line-opacity': 0.95, 'line-dasharray': [2, 1.4] } })
       // G1 (lot 3) — CONTOUR CADASTRAL NEUTRE en vue île, servi par `parcels-ile` (DÉJÀ chargée)
       // au lieu de la 2ᵉ source `tuyau-limites_parcelles` en extent 4096 (~9,9 Mo/boot, doublon de
       // l'audit VITESSE-CARTE-1 G1). Jumeau île de `tuyau-limites_parcelles-outline` : MÊME style
@@ -1525,6 +1535,23 @@ export function MapView() {
     }
   }, [iaRestitution, mapReady, ile, verdict, filters, basemap])
 
+  // FONCIER-PUBLIC-1 — liseré BLEU sur les parcelles « foncier public » peintes (cf. parcels-foncier /
+  // ile-foncier). Le filtre d'IDU suit `scenarioPaint.foncierPublic` ; la couche île ou commune selon
+  // la vue. Vide → éteint. La puce/légende (JSX) n'apparaît que quand il y a des parcelles.
+  useEffect(() => {
+    const m = map.current
+    if (!m || !ready.current) return
+    const ids = fonciIdus && fonciIdus.length ? fonciIdus : null
+    for (const id of ['parcels-foncier', 'ile-foncier']) {
+      if (!m.getLayer(id)) continue
+      const isIle = id.startsWith('ile')
+      m.setFilter(id, (ids ? ['in', ['get', 'idu'], ['literal', ids]]
+        : ['==', ['get', 'idu'], '']) as maplibregl.FilterSpecification)
+      const on = !!ids && (isIle ? ile : !ile)
+      m.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none')
+    }
+  }, [fonciIdus, ile, mapReady])
+
   // G1 (lot 3) — CONTOUR CADASTRAL NEUTRE en vue île (`ile-limites`, source `parcels-ile`). Visible
   // quand le toggle « Limites parcelles » est coché ET qu'on est en vue île ; le style suit le fond
   // actif, EXACTEMENT comme l'overlay commune `tuyau-limites_parcelles-outline` (même fonction). En
@@ -1958,6 +1985,15 @@ export function MapView() {
         <div className="pointer-events-none absolute right-4 top-4 flex items-center gap-1.5 rounded-full border border-violet/40 bg-surface-2/95 px-3 py-1 text-[11px] text-violet shadow-elev-2">
           <span className="h-2 w-2 rounded-full ring-2 ring-violet" style={{ background: 'transparent' }} />
           contour violet = résultats de votre recherche
+        </div>
+      )}
+      {/* FONCIER-PUBLIC-1 — rappel de ce que signale le liseré bleu pointillé pendant l'analyse. */}
+      {fonciIdus && fonciIdus.length > 0 && (
+        <div data-foncier-legende
+          className="pointer-events-none absolute right-4 top-4 flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] shadow-elev-2"
+          style={{ borderColor: '#4F86C680', color: '#4F86C6', background: 'rgba(23,32,40,0.92)' }}>
+          <span className="h-2 w-2 rounded-full ring-2" style={{ background: 'transparent', boxShadow: 'inset 0 0 0 2px #4F86C6' }} />
+          Foncier public
         </div>
       )}
       {/* ALGO-FIX-1 (point 4) — la carte SIGNALE qu'elle n'est pas à jour : les tuiles matérialisées

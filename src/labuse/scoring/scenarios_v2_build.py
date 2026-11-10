@@ -25,7 +25,9 @@ from sqlalchemy.orm import Session
 
 from . import scenarios_v2 as v2
 from . import score_labuse as sl
+from . import equipement_public as eqp
 from .. import runs
+from ..proprietaire_type import PUBLIC_DGFIP_GROUPES
 
 
 def adresses_pour(session: Session, idus: list[str]) -> dict[str, str]:
@@ -210,7 +212,8 @@ def _famille_portion_productive(motifs) -> str | None:
 
 def record_from_rows(sig: dict, ent: dict | None, geom: dict | None,
                      residuel: dict | None = None, assiette_source: str | None = None,
-                     zone_parts: list | None = None, enrich_state: str = "not_requested"
+                     zone_parts: list | None = None, enrich_state: str = "not_requested",
+                     public_facility: str | None = None, public_land: bool = False
                      ) -> tuple[v2.ScenarioRecord, str]:
     """Construit un `ScenarioRecord` (+ bande V1 servie, pour la comparaison avant/après) depuis :
       · `sig`   — ligne `score_labuse` (Signal servi, cascade, bande V1) ;
@@ -353,12 +356,43 @@ def record_from_rows(sig: dict, ent: dict | None, geom: dict | None,
         assiette_source=eff_assiette,
         assiette_qualifiee=assiette_qualifiee,
         enrich_state=enrich_state,
+        public_facility=public_facility,
+        public_land=bool(public_land),
         **_signal_state(sig))
     return rec, (sig.get("bande") or "")
 
 
 _ASSIETTE_SQL = text(
     "SELECT parcel_id, assiette_source FROM parcel_residuel WHERE parcel_id = ANY(:ids)")
+
+# FONCIER-PUBLIC-1 — par parcelle : propriétaire public (groupe DGFiP) ET catégorie DOMINANTE de
+# l'équipement public en place (BPE/INSEE). Join spatial point-dans-parcelle sur `geom_2975` indexé
+# des deux côtés ; la catégorie est celle du module `equipement_public` (source unique). Un snack (A5)
+# ou un cabinet libéral (D2) sur l'emprise d'un campus est classé NULL → ignoré.
+_FONCIER_SQL = text(f"""
+SELECT p.id AS pid,
+       EXISTS (SELECT 1 FROM parcelle_personne_morale m
+               WHERE m.idu = p.idu AND m.groupe = ANY(:pub)) AS public_land,
+       (SELECT {eqp.categorie_sql('b')}
+          FROM spatial_layers b
+          WHERE b.kind = 'amenite_bpe' AND b.attrs->>'sdom' = ANY(:sdoms)
+            AND ST_Intersects(b.geom_2975, p.geom_2975)
+          ORDER BY {eqp.priorite_sql(eqp.categorie_sql('b'))}
+          LIMIT 1) AS public_facility
+FROM parcels p WHERE p.id = ANY(:ids)
+""")
+
+
+def _foncier_public(session: Session, parcel_ids: list[int]) -> dict[int, dict]:
+    """{parcel_id: {facility: catégorie|None, land: bool}} — propriétaire public + équipement public
+    dominant en place, par parcelle. LECTURE SEULE."""
+    if not parcel_ids:
+        return {}
+    rows = session.execute(_FONCIER_SQL, {"ids": parcel_ids,
+                                          "pub": list(PUBLIC_DGFIP_GROUPES),
+                                          "sdoms": list(eqp.RETENU_SDOM)})
+    return {r._mapping["pid"]: {"facility": r._mapping["public_facility"],
+                                "land": bool(r._mapping["public_land"])} for r in rows}
 
 
 def records_for_parcels(session: Session, parcel_ids: list[int], *, run_label: str | None = None,
@@ -381,6 +415,7 @@ def records_for_parcels(session: Session, parcel_ids: list[int], *, run_label: s
                  for r in session.execute(_GEOM_SQL, {"ids": parcel_ids})}
     assiette = {r._mapping["parcel_id"]: r._mapping["assiette_source"]
                 for r in session.execute(_ASSIETTE_SQL, {"ids": parcel_ids})}
+    foncier = _foncier_public(session, parcel_ids)
     # Échec du calcul live NON silencieux (avis Astra passe-3 §5) : état PAR PARCELLE —
     # not_requested / ok / failed. Un échec ne retombe pas discrètement sur le cache.
     residuel = {}
@@ -407,9 +442,11 @@ def records_for_parcels(session: Session, parcel_ids: list[int], *, run_label: s
         sig = sig_rows.get(pid)
         if sig is None:
             continue
+        fp = foncier.get(pid) or {}
         out.append(record_from_rows(sig, ent_rows.get(pid), geom_rows.get(pid), residuel.get(pid),
                                     assiette_source=assiette.get(pid), zone_parts=zones.get(pid),
-                                    enrich_state=etat.get(pid, "not_requested")))
+                                    enrich_state=etat.get(pid, "not_requested"),
+                                    public_facility=fp.get("facility"), public_land=fp.get("land", False)))
     return out
 
 
@@ -440,6 +477,10 @@ def _result_to_dict(res) -> dict:
         "vigilance": res.vigilance,
         "zone_productive": zp,
         "signal": {k: res.signal.get(k) for k in ("status", "p", "niveau", "label", "reason")},
+        # FONCIER-PUBLIC-1 — drapeaux servis : la catégorie de l'équipement public en place (None si
+        # aucun) et le caractère public du propriétaire (terrain public).
+        "equipement_public": res.details.get("equipement_public"),
+        "foncier_public": bool(res.details.get("foncier_public")),
         "tri_valeur": res.rank_value,
         # Recette Astra ECRANS-NOV-2 : l'état du calcul LIVE est remonté PAR PARCELLE (comme dans le
         # chemin persisté), pour qu'un échec d'enrichissement soit explicite et jamais confondu avec
