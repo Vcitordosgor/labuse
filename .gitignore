@@ -213,3 +213,8 @@ config/candidat_manifest.json
 # Journaux d'exploitation (SQL/`.log`/CSV ad hoc écrits pendant les nuits de déploiement) :
 # propres à chaque machine, jamais dans le dépôt.
 logs/
+
+# EXIGU-FIX-1 — données de mesure intermédiaires (le rapport + la liste des IDU sont versionnés)
+reports/data/*.jsonl
+reports/data/exigu_*_shard_*.log
+reports/data/exigu_v2_*.json
