@@ -140,8 +140,8 @@
       "rien_ne_depasse": true,
       "photo": {
         "etat": "ok",
-        "delai_ms": 203,
-        "credit_ign": true,
+        "delai_ms": 698,
+        "credit_ign": false,
         "millesime": "2025",
         "proxy_serveur": true
       }
@@ -286,8 +286,8 @@
       "rien_ne_depasse": true,
       "photo": {
         "etat": "ok",
-        "delai_ms": 101,
-        "credit_ign": true,
+        "delai_ms": 288,
+        "credit_ign": false,
         "millesime": "2025",
         "proxy_serveur": true
       }
@@ -430,7 +430,7 @@
       "rien_ne_depasse": true,
       "photo": {
         "etat": "ok",
-        "delai_ms": 67,
+        "delai_ms": 218,
         "credit_ign": true,
         "millesime": "2025",
         "proxy_serveur": true
@@ -572,7 +572,7 @@
       "rien_ne_depasse": true,
       "photo": {
         "etat": "ok",
-        "delai_ms": 98,
+        "delai_ms": 105,
         "credit_ign": true,
         "millesime": "2025",
         "proxy_serveur": true
