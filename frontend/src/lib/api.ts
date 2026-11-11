@@ -587,6 +587,71 @@ export interface AnnonceEstimation {
 export const getAnnonceEstimation = (idu: string, surfaceHab?: number | null) =>
   j<AnnonceEstimation>(`/radar/annonce/estimation/${encodeURIComponent(idu)}`
     + (surfaceHab != null && surfaceHab > 0 ? `?surface_hab=${surfaceHab}` : ''))
+
+// ───────────────────────────── ESTIMER-3 — l'estimation « en un seul écran » ─────────────────────────────
+// POINT UNIQUE lu par l'écran Estimer (et le PDF) : ce que LABUSE a MESURÉ (en clair), l'estimation issue
+// des ventes de biens SEMBLABLES, les DEUX fourchettes servies telles quelles (« 1 fois sur 2 » = écart
+// médian ; « 3 fois sur 4 » = Q3), la LISTE DES VENTES RETENUES (écartables → l'API recalcule), la seule
+// question au gain mesuré (surface habitable, + pièces pour l'appartement) et le Radar des biens en vente.
+export interface Estimer3Mesures {
+  nature?: string | null
+  terrain_m2: number | null
+  emprise_bati_m2: number | null
+  niveaux: number | null
+  surface_hab_estimee_m2: number | null
+  surface_hab_estimee_ligne: string | null
+  piscine: { presente: boolean; surface_m2: number | null; source: string } | null
+  pente: { deg: number; pct: number } | null
+  zone: string | null
+}
+export interface Estimer3Estimation {
+  valeur_eur: number | null
+  valeur_basse: number | null; valeur_haute: number | null              // « 1 fois sur 2 » (écart médian)
+  valeur_basse_q3: number | null; valeur_haute_q3: number | null        // « 3 fois sur 4 » (Q3 prudent)
+  eur_m2: number | null
+  precision_pct: number; ecart_median_pct: number; precision_q3_pct: number
+  pct_20_mesure?: number | null
+  precision_source?: string; precision_perimetre?: string
+  fiabilite?: string; fiabilite_mot: string | null
+  surface_utilisee_m2?: number | null; surface_source?: string
+  n_comparables?: number | null; comparables_desc?: string | null
+  radius_m?: number | null; commune_fallback?: boolean; periode?: number[] | null
+  methode_prix: 'semblable' | 'secteur' | 'repli_secteur'
+  repli_secteur?: boolean; repli_note?: string | null
+}
+export interface Estimer3Vente {
+  id: string; date: string | null
+  surface_m2: number | null; terrain_m2: number | null
+  prix_eur: number | null; distance_m: number | null
+  pieces: number | null; piscine: boolean; ecartee: boolean
+}
+export interface Estimer3Question {
+  cle: 'surface_hab' | 'pieces'; label: string; type: 'nombre' | 'choix'
+  unite?: string; options?: (number | string)[]; gain?: string
+  prerempli: number | null; prerempli_source: string | null
+}
+export interface Estimer3Radar {
+  biens: { type: string | null; pieces: number | null; surface_m2: number | null;
+           terrain_m2: number | null; prix_affiche_eur: number | null }[]
+  ecart_affiche_vendu_pct: number | null; ecart_note: string | null; ecart_n: number
+}
+export interface Estimer3Rapport {
+  idu: string; commune: string | null; type_bien: 'maison' | 'appartement' | 'terrain'
+  mesures: Estimer3Mesures
+  estimation: Estimer3Estimation
+  ventes_retenues: Estimer3Vente[]
+  niveau_info?: string
+  precision_par_niveau?: Record<string, number>
+  questions: Estimer3Question[]
+  questions_abandonnees?: { cle: string; raison: string }[]
+  radar: Estimer3Radar
+  note_terrain?: string
+  erreur?: string; note?: string
+}
+export const getEstimation3 = (idu: string, body?: { surface_hab?: number | null; pieces?: number | null; ecartees?: string[] }) =>
+  j<Estimer3Rapport>(`/radar/annonce/estimation3/${encodeURIComponent(idu)}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body ?? {}),
+  })
 export const parcelAt = (lon: number, lat: number) =>
   j<{ idu: string | null }>(`/parcels/at?lon=${lon}&lat=${lat}`)
 export const searchParcels = (needle: string, opts?: { ileEntiere?: boolean }) =>

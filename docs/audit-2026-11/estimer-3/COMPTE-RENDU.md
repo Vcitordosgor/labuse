@@ -241,3 +241,58 @@ terrain, zone), soit **non posé parce que non prouvé**.
 **Rejouer le banc des niveaux** :
 `LABUSE_DATABASE_URL=postgresql+psycopg:///labuse ~/Desktop/labuse/.venv/bin/python -m labuse.pige.banc_estimer --niveaux`
 (PYTHONPATH=src).
+
+---
+
+# Écran (ESTIMER-ECRAN-1)
+
+*Mandat : l'écran Estimer sur la maquette validée `docs/design/maquettes/nov-2026/12-estimer-un-ecran.png`. Branche `fix/estimer-3`, worktree `~/Desktop/labuse-estimer3`. Calcul+API+**front**, aucun accès prod, pas de merge.*
+
+## Étape 0 — base
+`origin/main` **contient** `fix/retours-23` (`49f98abf4`, la refonte des outils) : condition remplie. `origin/main` mergé dans la branche (merge `ort`, **0 conflit** ; apporte EXIGU-FIX-1). Hook complet rejoué ensuite.
+
+## Ce qui a été fait
+
+### Un seul écran, autour de la boîte parcelle
+`frontend/src/components/outils/AnalyserAnnonce.tsx` — le chemin **parcelle** est refondu en UN écran (plus d'étape « entrée → rapport ») :
+- **Boîte parcelle (option A)** : adresse en gras + « IDU · zone · surface » + ✕ pour changer. Rendue **localement** dans l'écran (le composant partagé `EntreeParcelle` n'est PAS modifié — il sert 15 autres outils et son option A n'est pas encore mergée : la changer dépassait « l'écran Estimer » et aurait déstabilisé les autres outils). L'entrée vide reste le `ParcelInput` commun (adresse / clic carte).
+- **« Ce que LABUSE a mesuré »** : en puces, UNIQUEMENT ce qui est connu — type, terrain, bâti au sol, niveaux, piscine, pente (la zone vit dans la boîte, pas en puce).
+- **Une seule question** — la surface habitable, pré-remplie par l'estimation de LABUSE (badge **estimée**, hypothèse écrite dessous), saisie au clavier (`inputMode=numeric`, validée au blur/Entrée), badge **saisie** dès qu'on la change. Pour un **appartement**, s'ajoute le **nombre de pièces** (chips 2·3·4·5·6+). Pour un **terrain nu**, aucune question (ni état, ni vue, ni piscine, ni viabilisation).
+- **La valeur estimée** — le montant, le badge de fiabilité, et une **jauge à deux bandes** : « 1 fois sur 2 » (écart médian) et « 3 fois sur 4 » (Q3), chacune avec ses **deux bornes en euros**. Dessous : la **méthode servie** (« Biens semblables » / « Prix du secteur ») + « mesuré sur les ventes réelles de [type] à [commune] ».
+- **Les ventes retenues** — date, surface·terrain, prix, distance ; chaque ligne se **décoche** (case) → l'API **recalcule** (`ecartees`).
+- **« En vente en ce moment · Radar »** — les biens similaires s'il y en a ; sinon le bloc n'apparaît pas.
+- La ligne « LABUSE ne connaît ni l'état du bien ni sa vue : ce prix est un repère de marché, pas une expertise. » et l'**export PDF**.
+
+Le chemin **lien d'annonce** (Leboncoin) n'est plus une entrée de l'écran (la maquette est parcelle-only) : il reste atteignable **depuis le Radar** (« Estimer ce bien → »), son rapport commune inchangé.
+
+### API — deux fourchettes servies telles quelles
+`src/labuse/pige/estimer3.py` : l'estimation sert désormais **`valeur_basse_q3` / `valeur_haute_q3`** (bande « 3 fois sur 4 ») à côté de `valeur_basse` / `valeur_haute` (bande « 1 fois sur 2 »), en euros, calculées à partir du même central ± l'écart **médian** / **Q3** mesuré, pour le bâti ET le terrain. Jamais une fourchette unique présentée comme sûre ; le front n'invente aucune largeur (il affiche ce que l'API sert). `frontend/src/lib/api.ts` : type `Estimer3Rapport` + `getEstimation3(idu, {surface_hab, pieces, ecartees})` (POST).
+
+### Un seul prix partout — écran == PDF == document, 0 écart
+`src/labuse/pige/api.py` : `rapport_parcelle` (le point du PDF parcelle « Estimer un bien ») lit désormais son estimation du **MÊME point que l'écran** (`estimer3.rapport3`), via l'adaptateur `_est_bloc_depuis_estimer3` (reformate ESTIMER-3 au format du bloc PDF sans rien recalculer). Le bloc PDF (`exports/blocs/annonce.py`) est **inchangé** (ses tests sur fixtures restent verts). Résultat : sans saisie, l'écran et le document affichent **exactement** le même prix.
+**Banc des documents** : `tests/coherence_ecrans/test_temoins.py::test_estimer3_ecran_egale_document` — sur les 12 témoins, `estimer3.rapport3(...).estimation.valeur_eur` == la valeur **imprimée** dans le document rendu (`rendu_parcelle`), à l'euro, et réellement présente dans le texte. **0 écart** (vert). Correctif découvert par le banc : la branche **terrain** n'exposait pas `surface_utilisee_m2` → la valeur n'était pas imprimée ; corrigé.
+
+## Preuves — captures WebKit
+`docs/audit-2026-11/estimer-3/` (WebKit, DPR 2, consentement cookies pré-posé) :
+- `ecran-maison-sans-saisie.png` — maison, surface **estimée** (116 m²), 417 000 €, bandes 334–501 k€ / 267–568 k€, « Biens semblables ».
+- `ecran-maison-surface.png` — même maison, surface **saisie** 140 m² (badge vert), valeur recalculée 504 000 €, bandes 403–604 k€ / 322–685 k€.
+- `ecran-appartement.png` — appartement, question **pièces** présente, « …ventes réelles d'appartements à Saint-Paul ».
+- `ecran-terrain-nu.png` — terrain, **aucune question**, puces sans bâti/niveaux, Radar « terrains ».
+
+## Hook
+`tsc -b` 0 · `vitest` 326 · `pytest` unitaires verts (seule `test_annonce_lien` avait buté sur la phrase d'échec raccourcie → phrase du mandat restaurée) · **cohérence** 7/7 (dont le nouveau banc écran==document). Scan de secrets vert.
+
+## Écarts / notes
+- **Ports** : la maquette/mandat cite `10080/7280`. Le port **10080 est bloqué** par Chromium ET WebKit (« restricted network port ») → le front tourne sur **10800** (backend 7280 inchangé) pour les captures ; aucune incidence produit (port de dev).
+- **`EntreeParcelle` option A** : rendue localement dans l'écran Estimer (composant partagé non modifié — voir ci-dessus).
+- **Pré-existant** : `tests/test_pige_socle.py::test_aucune_requete_portail` (marqueur `db`, hors hook) échoue sur des libellés d'e-mails `mails_contenu.py` sans rapport avec ce mandat (fichier non touché).
+
+## Fichiers (écran)
+
+| Fichier | Rôle |
+|---|---|
+| `frontend/src/components/outils/AnalyserAnnonce.tsx` | l'écran Estimer en un seul écran (boîte option A, mesures, question unique, valeur + jauge deux bandes, ventes décochables, Radar, PDF) |
+| `frontend/src/lib/api.ts` | types `Estimer3Rapport` + `getEstimation3` (POST estimation3) |
+| `src/labuse/pige/estimer3.py` | `valeur_basse_q3`/`valeur_haute_q3` (bâti + terrain), `surface_utilisee_m2` terrain |
+| `src/labuse/pige/api.py` | `rapport_parcelle` → estimation du PDF sourcée d'ESTIMER-3 (`_est_bloc_depuis_estimer3`) |
+| `tests/coherence_ecrans/test_temoins.py` | banc des documents : écran Estimer == document, 0 écart |

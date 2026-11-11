@@ -424,14 +424,23 @@ def estimation_semblable(db, idu: str, fiche: dict, *, surface_hab: float | None
     niv_interne, mot = _fiabilite_mot(prec["ecart_median"], prec.get("n") or n_sembl)
     # Fourchette = ± l'écart TYPIQUE mesuré (médian : une estimation sur deux y tombe) ; elle SE RESSERRE
     # à chaque niveau d'information. Le Q3 mesuré (≈75 % des ventes) est servi à part (bande prudente).
+    # DEUX fourchettes servies TELLES QUELLES (mandat ESTIMER-ECRAN-1, jamais une seule donnée pour sûre) :
+    #   · « 1 fois sur 2 » = ± l'écart MÉDIAN mesuré (une estimation sur deux y tombe) ;
+    #   · « 3 fois sur 4 » = ± le Q3 mesuré (≈75 % des ventes) — la bande prudente.
+    # Les deux se resserrent à chaque niveau d'information ; l'API les calcule en euros pour que l'écran
+    # et le PDF les affichent à l'identique (aucune largeur recalculée au front).
     demi = prec["ecart_median"]
+    demi_q3 = prec["ecart_q3"]
     valeur = None
     basse = haute = None
+    basse_q3 = haute_q3 = None
     if med and surface_tot:
         central = float(surface_tot) * float(med)
         valeur = _arrondi_mille(central)
         basse = _arrondi_mille(central * (1 - demi / 100.0))
         haute = _arrondi_mille(central * (1 + demi / 100.0))
+        basse_q3 = _arrondi_mille(central * (1 - demi_q3 / 100.0))
+        haute_q3 = _arrondi_mille(central * (1 + demi_q3 / 100.0))
 
     # ── ventes retenues : les plus PESANTES d'abord (actives), puis les écartées (décochées) ──
     active_tri = sorted(active, key=lambda c: c.get("_poids", 0.0), reverse=True)
@@ -453,6 +462,7 @@ def estimation_semblable(db, idu: str, fiche: dict, *, surface_hab: float | None
         "idu": idu, "type_bien": type_bien,
         "estimation": {
             "valeur_eur": valeur, "valeur_basse": basse, "valeur_haute": haute,
+            "valeur_basse_q3": basse_q3, "valeur_haute_q3": haute_q3,
             "eur_m2": (round(med) if med else None),
             "precision_pct": demi, "ecart_median_pct": prec["ecart_median"],
             "precision_q3_pct": prec["ecart_q3"], "pct_20_mesure": prec.get("pct_20"),
@@ -586,15 +596,25 @@ def rapport3(db, idu: str, fiche: dict, *, surface_hab: float | None = None,
         base = estimation_annonce(db, idu, fiche)      # ESTIMER-2 (repère terrain nu + mesurée)
         mesures = mesures_labuse(db, idu, fiche, nature="terrain", zone_lib=zone_lib, mut=mut, insee=insee)
         prec = charge_precision(db, "terrain", insee, "sans_saisie")
+        # Terrain nu : UNE seule question n'existe pas (viabilisation non mesurable) → un seul niveau. Les
+        # deux fourchettes servies sortent du MÊME central (ESTIMER-2) ± écart médian / Q3 mesurés, comme
+        # le bâti — pour que l'écran montre les deux bandes « 1 fois sur 2 » / « 3 fois sur 4 » à l'identique.
+        central_t = (base.get("valeur_indicative") or {}).get("valeur_eur")
+        _bt = (lambda p: _arrondi_mille(float(central_t) * (1 - p / 100.0))) if central_t else (lambda p: None)
+        _ht = (lambda p: _arrondi_mille(float(central_t) * (1 + p / 100.0))) if central_t else (lambda p: None)
         return {"idu": idu, "commune": commune, "type_bien": "terrain",
                 "mesures": mesures,
-                "estimation": {"valeur_eur": (base.get("valeur_indicative") or {}).get("valeur_eur"),
-                               "valeur_basse": (base.get("valeur_indicative") or {}).get("valeur_basse"),
-                               "valeur_haute": (base.get("valeur_indicative") or {}).get("valeur_haute"),
+                "estimation": {"valeur_eur": central_t,
+                               "valeur_basse": _bt(prec["ecart_median"]),
+                               "valeur_haute": _ht(prec["ecart_median"]),
+                               "valeur_basse_q3": _bt(prec["ecart_q3"]),
+                               "valeur_haute_q3": _ht(prec["ecart_q3"]),
+                               "surface_utilisee_m2": (base.get("valeur_indicative") or {}).get("surface_m2"),
                                "eur_m2": base.get("median"), "precision_pct": prec["ecart_median"],
                                "precision_q3_pct": prec["ecart_q3"], "ecart_median_pct": prec["ecart_median"],
                                "fiabilite_mot": base.get("fiabilite_mot"),
                                "n_comparables": base.get("n"), "repli_secteur": False,
+                               "methode_prix": "secteur",
                                "comparables_desc": None, "repli_note": None},
                 "ventes_retenues": [_vente_retenue({**c, "mid": c.get("date")}, False)
                                     for c in (base.get("comparables") or [])],

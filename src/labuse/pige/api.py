@@ -2424,11 +2424,69 @@ def _a_verifier(fiche: dict, nature: str, zone: str | None) -> list[str]:
     return pts[:3]
 
 
+def _est_bloc_depuis_estimer3(db, idu: str, fiche: dict, surface_hab: float | None) -> dict:
+    """ESTIMER-ECRAN-1 — l'estimation du PDF parcelle, sourcée du MÊME point que l'écran (ESTIMER-3,
+    `estimer3.rapport3`) → « un seul prix partout » : la valeur imprimée == la valeur affichée (0 écart).
+    On re-façonne le rapport ESTIMER-3 au format attendu par le bloc PDF `rendu_parcelle` (median €/m²,
+    valeur indicative, comparables = ventes retenues) sans rien recalculer ici."""
+    from . import estimer3
+    r3 = estimer3.rapport3(db, idu, fiche, surface_hab=surface_hab)
+    e = r3.get("estimation") or {}
+    type_bien = r3.get("type_bien")
+    terrain = type_bien == "terrain"
+    pl = "maisons" if type_bien == "maison" else ("appartements" if type_bien == "appartement" else None)
+    # ventes retenues ACTIVES → lignes de comparables du PDF (date, type, surface, prix, €/m², distance).
+    type_court = "Maison" if type_bien == "maison" else ("Appart." if type_bien == "appartement" else "Terrain")
+    comps = []
+    for v in (r3.get("ventes_retenues") or []):
+        if v.get("ecartee"):
+            continue
+        s, p = v.get("surface_m2"), v.get("prix_eur")
+        comps.append({"date": v.get("date"), "type": type_court, "surface_m2": s, "prix_eur": p,
+                      "prix_m2": (round(p / s) if (isinstance(p, (int, float)) and isinstance(s, (int, float)) and s) else None),
+                      "distance_m": v.get("distance_m")})
+    # libellé « quelle surface a servi » (identique à l'écran).
+    surf_src = e.get("surface_source")
+    surf = e.get("surface_utilisee_m2")
+    ligne = (r3.get("mesures") or {}).get("surface_hab_estimee_ligne")
+    if surf_src == "saisie" and surf:
+        ligne = f"Surface habitable saisie ({surf} m²)"
+    elif surf_src == "vente DVF" and surf and not ligne:
+        ligne = f"Surface bâtie de la dernière vente DVF ({surf} m²)"
+    methode = e.get("methode_prix")
+    note = ("Ordre de grandeur issu des ventes de biens semblables — un repère de marché, pas une expertise."
+            if methode == "semblable"
+            else "Ordre de grandeur au prix du secteur — un repère de marché, pas une expertise.")
+    return {
+        "type_comparateur": "terrain_nu" if terrain else "bati",
+        "type_bien": type_bien, "type_label_pluriel": pl,
+        "nature": "nue" if terrain else None,
+        "median": e.get("eur_m2"), "q1": None, "q3": None,
+        "n": e.get("n_comparables"), "n_total": e.get("n_comparables"),
+        "radius_m": e.get("radius_m"), "commune_fallback": e.get("commune_fallback"),
+        "periode": e.get("periode"),
+        "perimetre": ("commune" if e.get("commune_fallback") else "secteur") if terrain else None,
+        "precision_pct": e.get("ecart_median_pct"),
+        "fiabilite": e.get("fiabilite"), "fiabilite_mot": e.get("fiabilite_mot"),
+        "valeur_indicative": ({
+            "surface_m2": surf, "eur_m2": e.get("eur_m2"), "valeur_eur": e.get("valeur_eur"),
+            "valeur_basse": e.get("valeur_basse"), "valeur_haute": e.get("valeur_haute"),
+            "ligne": ligne, "note": note,
+        } if e.get("valeur_eur") is not None else None),
+        "comparables": comps,
+        "note": (None if e.get("valeur_eur") is not None
+                 else "Estimation indisponible — pas assez de ventes comparables dans le secteur."),
+    }
+
+
 def rapport_parcelle(db, idu: str, fiche: dict | None = None, surface_hab: float | None = None) -> dict:
     """ANNONCE-5 — le rapport PARCELLE complet (variante adresse, 2 pages du PDF) : POINT UNIQUE lu par
     l'écran ET par le PDF → aucune divergence. Compose la fiche servie, l'estimation (comparables + valeur
     indicative), le foncier (règles calibrées face aux mesures de la parcelle), le classement (run servi +
-    phrase gravée), les risques et le marché de la commune. Aucun recalcul de prix ici."""
+    phrase gravée), les risques et le marché de la commune. Aucun recalcul de prix ici.
+
+    ESTIMER-ECRAN-1 — l'estimation imprimée vient désormais du MÊME point qu'à l'écran (ESTIMER-3) →
+    « un seul prix partout » : écran == PDF == document, 0 écart (banc des documents)."""
     from ..api.app import parcel_fiche
     if fiche is None:
         fiche = parcel_fiche(idu, db=db)
@@ -2437,7 +2495,7 @@ def rapport_parcelle(db, idu: str, fiche: dict | None = None, surface_hab: float
     zone = (zones[0] or {}).get("zone") if zones and isinstance(zones[0], dict) else None
     commune = (fiche or {}).get("commune")
     nature = _nature_parcelle(db, idu)
-    est = estimation_annonce(db, idu, fiche, surface_hab=surface_hab)
+    est = _est_bloc_depuis_estimer3(db, idu, fiche, surface_hab)
     try:
         cls = _classement_bande(db, idu)
     except Exception:  # noqa: BLE001
