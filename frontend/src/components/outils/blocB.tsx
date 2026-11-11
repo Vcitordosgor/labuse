@@ -9,7 +9,6 @@ import { Squelette } from '../Loading'
 import { EmptyState, ErrorState } from '../States'
 import { Tip } from '../Tip'
 import { Retour } from '../ui/Retour'   // DA-FIX-5 P6 — retour unique (haut gauche)
-import { Chevron } from '../ui/Chevron'   // RETOURS-15 D6 — accordéon « Méthode et limites » de la charte
 
 const jfetch = async <T,>(url: string): Promise<T> => {
   const r = await fetch(url)
@@ -30,6 +29,10 @@ function Banner({ children }: { children: React.ReactNode }) {
 type Servitudes = {
   idu: string; n: number; synthese: string
   servitudes: { categorie: string; effet: string; source: string; date: string | null; redhibitoire?: boolean }[]
+  // OUTILS-REFONTE-1 (9a) — familles examinées & claires (puces « rien à signaler »).
+  verifie?: string[]
+  // RETOURS-27 (pt 2) — procédure PLU en cours (carte dédiée) ; null si aucune n'est servie.
+  procedure_plu?: { libelle: string; stade?: string | null; source?: string | null; date?: string | null; date_constat?: string | null } | null
   non_couvert: string[]
 }
 
@@ -39,7 +42,6 @@ export function O5Servitudes() {
   // RECETTE-1 (F2) — quelle entrée a désigné la parcelle (grise l'autre). INVARIANT : 'carte' seulement
   // quand la parcelle vient de selectedIdu. (Le wrapper Risques remonte O5 à chaque selectedIdu → F1 inhérent.)
   const [source, setSource] = useState<SourceParcelle>(selectedIdu ? 'carte' : null)
-  const [methodeOuverte, setMethodeOuverte] = useState(false)   // RETOURS-15 D6 — accordéon charte, fermé par défaut
   useEffect(() => {
     if (selectedIdu && selectedIdu !== idu) { setIdu(selectedIdu); if (source == null) setSource('carte') }
     else if (selectedIdu == null && source === 'carte') { setIdu(''); setSource(null) }
@@ -60,14 +62,7 @@ export function O5Servitudes() {
   const d = q.data
   return (
     <>
-      {/* RETOURS-12 O3 — intro DESCRIPTIVE : ce que l'outil montre. L'aveu « ce que nos données ne
-          couvrent pas » quitte l'accueil client ; la limite vit désormais dans « Méthode & limites »
-          (replié, plus bas). */}
-      {/* RECETTE-OUTILS-1 (T5) — « Réinitialiser » retiré au profit de « Changer de parcelle ». */}
-      <div className="flex flex-col gap-1.5">
-        <Banner>Ce qui peut bloquer un projet sans se voir sur la carte : servitudes, sols, bruit,
-          assainissement. Chaque servitude est nommée, datée et sourcée.</Banner>
-      </div>
+      {/* RETOURS-25 (pt 2) — phrase d'intro « Ce qui peut bloquer un projet… » retirée. */}
       {/* RECETTE-1 (F2) — EntreeParcelle : adresse/IDU (→ allerA : zoom + contour SANS ouvrir la fiche)
           OU clic carte (capté par l'effet selectedIdu : il analyse ET ouvre la fiche). */}
       <EntreeParcelle source={source} picked={idu || null} onChanger={resetAll}
@@ -91,50 +86,71 @@ export function O5Servitudes() {
               }, {} as Record<string, { categorie: string; source?: string; date?: string; effets: string[]; redhibitoire: boolean }>))
               .sort((a, b) => Number(b.redhibitoire) - Number(a.redhibitoire))
             return (<>
+              {/* OUTILS-REFONTE-1 (9a) — compteur « N contrainte(s) relevée(s) sur la parcelle ». */}
               <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]">
                 <span className="num-key text-base text-mint">{groupes.length}</span>
-                <span className="text-txt-mut">servitude(s)/contrainte(s) sur</span>
-                <span className="font-mono text-txt-hi">{d.idu.slice(8, 10)} {d.idu.slice(10)}</span>
+                <span className="text-txt-mut">contrainte{groupes.length > 1 ? 's relevées' : ' relevée'} sur la parcelle</span>
               </div>
+              {/* RETOURS-27 (pt 2) — PROCÉDURE PLU EN COURS (donnée de l'outil PLU) : carte dédiée ; ce point
+                  a quitté « Non couvert » (le back le retire quand une procédure est servie). */}
+              {d.procedure_plu && (
+                <div data-o5-procedure className="rounded-lg border border-st-creuser/40 bg-surface-3 px-3 py-2 shadow-elev-1">
+                  <div className="flex flex-wrap items-baseline gap-1.5">
+                    <b className="text-[11.5px] text-txt-hi">Procédure PLU en cours</b>
+                    <span className="rounded-full border border-st-creuser/40 bg-st-creuser/10 px-1.5 text-[8.5px] font-medium text-st-creuser">radar PLU</span>
+                  </div>
+                  <p className="mt-1 text-[11px] leading-snug text-txt">{d.procedure_plu.libelle}{d.procedure_plu.stade ? ` — ${d.procedure_plu.stade}` : ''}. Le document d'urbanisme peut évoluer — voir l'outil PLU.</p>
+                  <p className="mt-0.5 text-[9.5px] text-txt-dim">{d.procedure_plu.source ?? 'radar PLU (Sudocuh)'}{d.procedure_plu.date ? ` · ${d.procedure_plu.date}` : ''}</p>
+                </div>
+              )}
+              {/* OUTILS-REFONTE-1 (9a) — une carte par contrainte : titre · badge · une phrase · source.
+                  RETOURS-27 (pt 2) — liseré JAUNE FIN tout autour (plus de bord gauche épais) ; rouge si rédhibitoire. */}
               {groupes.map((s, i) => (
-                <div key={i} className={`rounded-lg px-3 py-2 shadow-elev-1 ${s.redhibitoire ? 'border border-red-500/50 bg-red-500/10' : 'bg-surface-3'}`}>
+                <div key={i} className={`rounded-lg border px-3 py-2 shadow-elev-1 ${s.redhibitoire ? 'border-red-500/50 bg-red-500/10' : 'border-st-creuser/40 bg-surface-3'}`}>
                   <div className="flex flex-wrap items-baseline gap-1.5">
                     {s.redhibitoire && <span aria-hidden className="text-red-500">●</span>}
                     <b className="text-[11.5px] text-txt-hi">{s.categorie}</b>
                     {s.redhibitoire
                       ? <span className="rounded-full border border-red-500/40 bg-red-500/10 px-1.5 text-[8.5px] font-medium text-red-500">Inconstructible (partie rouge)</span>
-                      : <span className="rounded-full border border-mint/40 bg-mint/10 px-1.5 text-[8.5px] font-medium text-mint">Sourcé</span>}
-                    <span className="text-[9.5px] text-txt-dim">{s.source}{s.date ? ` · ${s.date}` : ''}</span>
+                      : <span className="rounded-full border border-mint/40 bg-mint/10 px-1.5 text-[8.5px] font-medium text-mint">sourcé</span>}
                   </div>
                   <p className="mt-1 text-[11px] leading-snug text-txt">{s.effets.join(' · ')}</p>
+                  <p className="mt-0.5 text-[9.5px] text-txt-dim">{s.source}{s.date ? ` · ${s.date}` : ''}</p>
                 </div>
               ))}
             </>)
           })()}
-          {d.servitudes.length === 0 && (
+          {/* OUTILS-REFONTE-1 (9a) — « VÉRIFIÉ, RIEN À SIGNALER » : familles examinées et claires, en puces.
+              RETOURS-28 (Pièges) — si la commune n'a PAS de procédure PLU en cours, une puce « Procédure PLU »
+              s'y ajoute (« vérifié : aucune procédure »). */}
+          {((d.verifie?.length ?? 0) > 0 || !d.procedure_plu) && (
+            <div data-o5-verifie className="flex flex-col gap-1.5">
+              <p className="label-caps text-[9.5px] text-txt-dim">Vérifié, rien à signaler</p>
+              <div className="flex flex-wrap gap-1.5">
+                {(d.verifie ?? []).map((f) => (
+                  <span key={f} className="rounded-full border border-line-2 bg-surface-2 px-2.5 py-0.5 text-[10.5px] text-txt-mut">{f}</span>
+                ))}
+                {!d.procedure_plu && (
+                  <span data-o5-procedure-ras className="rounded-full border border-line-2 bg-surface-2 px-2.5 py-0.5 text-[10.5px] text-txt-mut">Procédure PLU</span>
+                )}
+              </div>
+            </div>
+          )}
+          {d.servitudes.length === 0 && (d.verifie?.length ?? 0) === 0 && (
             <EmptyState title="Aucune servitude détectée dans les couches ingérées à cette parcelle." />
           )}
-          {/* RETOURS-12 O3 — l'encadré « NON COUVERT PAR LA BASE — À VÉRIFIER AILLEURS » quitte la vue
-              client : plus d'aveu d'ignorance en évidence. Ce qui reste (les limites de couverture)
-              vit ICI, dans une MÉTHODE repliée. Les procédures PLU renvoient discrètement à l'outil
-              PLU ; les 417 SUP décodées sont rappelées comme une réserve courte, pas une alarme. */}
-          {d.non_couvert?.length > 0 && (
-            <details data-o5-methode open={methodeOuverte}
-              onToggle={(e) => setMethodeOuverte((e.target as HTMLDetailsElement).open)}
-              className="group rounded-lg border border-line-2 bg-surface-2">
-              {/* RECETTE-1 H7.2 — chevron `boite` (charte) : sur une barre à fond plein survolée, le
-                  conteneur du chevron reste CONTRASTÉ et le glyphe lisible (fini le « rond invisible,
-                  vert sur vert »). C'est le variant prévu pour les en-têtes d'accordéon sur .hover-fill. */}
-              <summary className="hover-fill group flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-3 py-2 text-[10.5px] text-txt-dim">
-                <Chevron open={methodeOuverte} boite />
-                <b className="text-txt-mut">Méthode et limites</b>
-              </summary>
-              <div className="space-y-0.5 border-t border-line px-3 pb-2 pt-1.5">
-                {d.non_couvert.map((n, i) => <p key={i} className="text-[10.5px] leading-snug text-txt-mut">· {n}</p>)}
-                <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">Une servitude non publiée au Géoportail de l'urbanisme n'est pas vue — le certificat d'urbanisme reste la référence. Les procédures PLU en cours sont servies par l'outil « PLU ».</p>
-              </div>
-            </details>
-          )}
+          {/* RETOURS-28 (Pièges) — « Non couvert » = UNE ligne fixe, le DÉTAIL (couches non ingérées,
+              per API) passe dans le « i ». Les procédures PLU n'y figurent plus (carte/puce dédiées). */}
+          {/* RETOURS-29 (Pièges) — le « i » est INLINE, à la FIN de la phrase (sur la même ligne) : plus
+              de flex-wrap qui le rejetait à la ligne. Le détail (couches non ingérées) vit dans le « i ». */}
+          <p data-o5-non-couvert className="mt-auto pt-1 text-[10px] leading-snug text-txt-dim">
+            Non couvert : oléoducs (Le Port, Sainte-Marie) et servitudes non publiées au Géoportail. Le certificat d'urbanisme fait foi.{(d.non_couvert?.length ?? 0) > 0 && (
+              <Tip garder side="top" tip={`${d.non_couvert.join(' · ')}.`}>
+                <span role="button" tabIndex={0} aria-label="Détail du non couvert"
+                  className="ml-1 inline-flex h-[13px] w-[13px] translate-y-[2px] items-center justify-center rounded-full border border-line-2 text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
+              </Tip>
+            )}
+          </p>
         </div>
       )}
       {/* RECETTE-2 (T1) — l'invite « Saisissez un IDU … ou cliquez une parcelle » est RETIRÉE : doublon de
@@ -265,10 +281,11 @@ export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => vo
                     {fmtFr(c[col.k])}</span>
                 )
               })}
-              {/* OUTILS-1 B4 — « Fiche → » PERMANENT sur chaque ligne. RETOURS-13 R11 — action
-                  SECONDAIRE : jaune opaque au survol (distinct du survol vert de la ligne). */}
+              {/* OUTILS-1 B4 — « Fiche → » PERMANENT sur chaque ligne. RETOURS-23 (pt 3) — plus d'ambre
+                  pour les liens : le lien est VERT (text-mint) ; au survol de la ligne il passe à l'encre
+                  (règle .hover-fill), comme les autres liens d'action. */}
               {onSelect && (
-                <span className="hover-jaune -my-0.5 justify-self-end whitespace-nowrap px-1.5 py-0.5 text-right text-[11px] font-medium">Fiche →</span>
+                <span className="-my-0.5 justify-self-end whitespace-nowrap px-1.5 py-0.5 text-right text-[11px] font-medium text-mint">Fiche →</span>
               )}
             </Cell>
           )

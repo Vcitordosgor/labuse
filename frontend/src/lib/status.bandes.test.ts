@@ -24,15 +24,15 @@ describe('BANDES-UNIFIEES — libellés écran = vocabulaire de la fiche', () =>
     expect(SIGNAL_META.faible.label).toBe('Signal faible')
   })
 
-  it('l’écran Comparer rend « lettre · libellé » + badge Signal (même forme que le PDF)', () => {
-    // la forme « C · À étudier · Signal faible » du PDF (comparatif.py:_classement) se recompose
-    // exactement depuis les mêmes briques front :
+  it('le vocabulaire des bandes/Signal se recompose (fiche + Analyse)', () => {
+    // le vocabulaire reste gravé pour la fiche et l'écran Analyse (forme « C · À étudier · Signal faible »).
     const bm = bandeMeta('C')!
     const sm = signalMeta('faible')!
     expect(`C · ${bm.label} · ${sm.label}`).toBe('C · À étudier · Signal faible')
-    // et ComparePanel rend bien cette forme (val + badge) — figé au niveau source.
+    // RETOURS-29 (maquette 15-comparatif-v2) — l'écran Comparer NE PORTE PLUS de classement LABUSE ni de
+    // puce de vente (l'analyse reste dans son écran). On vérifie donc l'ABSENCE de ce rendu.
     const panel = readFileSync(resolve(__dirname, '../components/compare/ComparePanel.tsx'), 'utf8')
-    expect(panel).toContain('`${r.bande} · ${bm.label}`')
-    expect(panel).toContain('{r.bande} · {bm.label}')
+    expect(panel).not.toContain('{r.bande} · {bm.label}')
+    expect(panel).not.toContain('Classement LABUSE')
   })
 })

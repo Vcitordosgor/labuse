@@ -19,18 +19,19 @@
  * L'entrée par LIEN d'annonce (Leboncoin) reste atteignable DEPUIS le Radar (« Estimer ce bien → ») et
  * rend son rapport commune inchangé ; la maquette validée, elle, est l'écran PARCELLE ci-dessus.
  *
- * DA : panneau gauche + carte, en-tête maison (le MÊME bandeau que ModulePanel) porté ici. Composants
- * charte uniquement (Bouton/Retour/Badge/ParcelInput). Changer d'outil vide tout (T1).
+ * DA : panneau gauche + carte, en-tête maison (le MÊME bandeau que ModulePanel) porté ici. La boîte
+ * parcelle est le composant COMMUN des outils `EntreeParcelle` (option A, affichage instantané via
+ * `getParcelApercu` : adresse + zone + surface d'un coup). Changer d'outil vide tout (T1).
  */
 import { useEffect, useRef, useState } from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation } from '@tanstack/react-query'
 
-import { ParcelInput } from '../ParcelInput'
+import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'
 import {
-  analyserAnnonce, docAnalyseAnnonceLienUrl, docAnalyseAnnonceUrl, getEstimation3, searchParcels,
+  analyserAnnonce, docAnalyseAnnonceLienUrl, docAnalyseAnnonceUrl, getEstimation3,
   type AnnonceAnalyse, type Estimer3Mesures, type Estimer3Rapport, type Estimer3Vente,
 } from '../../lib/api'
-import { fmtInt, fmtM2, iduCourt } from '../../lib/format'
+import { fmtInt, fmtM2 } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'
 import { Chargement } from '../Loading'
@@ -63,9 +64,6 @@ function fiab(mot?: string | null): { mot: string; ton: 'vert' | 'ambre' } {
 const cap = (s: string | null | undefined) => (s ? s[0].toUpperCase() + s.slice(1) : null)
 const dePl = (pl: string) => (/^[aeiouyàâäéèêëîïôöùûü]/i.test(pl) ? `d’${pl}` : `de ${pl}`)
 
-const INPUT_CLS =
-  'w-full h-10 rounded-md border border-line-2 bg-surface-3 px-3 text-[13px] text-txt-hi ' +
-  'placeholder:text-txt-mut focus:outline-none'
 const LBL = 'text-[10.5px] leading-tight text-txt-dim'
 const VAL = 'mt-0.5 text-[13px] font-medium leading-tight text-txt-hi'
 const SECTION = 'rounded-md border border-line-2 bg-surface-2 p-3'
@@ -94,32 +92,6 @@ function Corps({ children }: { children: React.ReactNode }) {
 }
 
 // ═══════════════════════════ ÉCRAN ESTIMER — PARCELLE (maquette validée) ═══════════════════════════
-
-// ── Boîte parcelle (option A) : adresse en gras, « IDU · zone · surface », ✕ pour changer ──
-function BoiteParcelle({ idu, zone, surface_m2, onChanger }: {
-  idu: string; zone: string | null; surface_m2: number | null; onChanger: () => void
-}) {
-  const addr = useQuery({
-    queryKey: ['estimer-adresse', idu],
-    queryFn: () => searchParcels(idu, { ileEntiere: true }),
-    staleTime: 5 * 60_000,
-  })
-  const adresse = addr.data?.[0]?.adresse ?? iduCourt(idu)
-  const sous = [iduCourt(idu), zone, surface_m2 != null ? fmtM2(surface_m2) : null].filter(Boolean).join(' · ')
-  return (
-    <div data-estimer-boite className="flex items-start justify-between gap-2 rounded-lg border border-mint/40 bg-mint/[0.06] px-3 py-2.5">
-      <div className="flex min-w-0 items-start gap-2">
-        <span aria-hidden className="mt-0.5 text-mint">📍</span>
-        <div className="min-w-0">
-          <p className="truncate text-[13px] font-semibold leading-tight text-txt-hi" title={adresse}>{adresse}</p>
-          <p className="mt-0.5 truncate text-[11px] leading-tight text-txt-dim">{sous}</p>
-        </div>
-      </div>
-      <button data-estimer-changer onClick={onChanger} aria-label="Changer de parcelle"
-        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-txt-mut transition-colors duration-quick hover:bg-mint/10 hover:text-txt-hi">✕</button>
-    </div>
-  )
-}
 
 // ── « Ce que LABUSE a mesuré » : en puces, UNIQUEMENT ce qui est connu ──
 function Mesures({ m, typeBien }: { m: Estimer3Mesures; typeBien: string }) {
@@ -314,8 +286,9 @@ function Question({ rapport, surfaceStr, onSurfaceChange, onSurfaceCommit, surfa
   )
 }
 
-// ── L'écran complet dès qu'une parcelle est choisie (lit le point unique estimation3). ──
-function Estimer3({ idu, onChanger }: { idu: string; onChanger: () => void }) {
+// ── L'écran complet dès qu'une parcelle est choisie (lit le point unique estimation3). La boîte
+//    parcelle (EntreeParcelle) est rendue AU-DESSUS par le parent — ici, uniquement l'estimation. ──
+function Estimer3({ idu }: { idu: string }) {
   // Saisie locale : la surface est COMMISE au blur/Entrée (pas à chaque frappe) ; pièces & décochages
   // s'appliquent tout de suite. La requête se re-joue sur (surface commise, pièces, ventes écartées).
   const [surfaceStr, setSurfaceStr] = useState('')
@@ -363,7 +336,6 @@ function Estimer3({ idu, onChanger }: { idu: string; onChanger: () => void }) {
 
   return (
     <>
-      <BoiteParcelle idu={idu} zone={r.mesures.zone} surface_m2={r.mesures.terrain_m2} onChanger={onChanger} />
       <Mesures m={r.mesures} typeBien={r.type_bien} />
       {!terrain && (
         <Question rapport={r} surfaceStr={surfaceStr}
@@ -510,12 +482,13 @@ export function AnalyserAnnonce() {
 
   const [etape, setEtape] = useState<Etape>('entree')
   const [parcelle, setParcelle] = useState<string | null>(null)
+  const [source, setSource] = useState<SourceParcelle>(null)
   const [res, setRes] = useState<AnnonceAnalyse | null>(null)
   const [erreur, setErreur] = useState<string | null>(null)
 
-  // src (adresse | carte) : conservé pour la trace de provenance ; l'écran reste identique quelle que
-  // soit l'entrée (la boîte option A s'affiche dans les deux cas).
-  const choisir = (idu: string, _src: 'adresse' | 'carte') => { setParcelle(idu); setEtape('parcelle') }
+  // `source` (adresse | carte) grise l'autre entrée dans EntreeParcelle ; l'écran reste identique
+  // quelle que soit la provenance (la boîte option A s'affiche dans les deux cas).
+  const choisir = (idu: string, src: 'adresse' | 'carte') => { setParcelle(idu); setSource(src); setEtape('parcelle') }
 
   // Clic carte : la parcelle sélectionnée est ADOPTÉE (source carte) tant qu'on est sur l'écran d'entrée
   // ou déjà en mode parcelle — même idiome que les autres outils (selectedIdu suivi en continu).
@@ -586,7 +559,7 @@ export function AnalyserAnnonce() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [etape, parcelle, res])
 
-  const changerParcelle = () => { setParcelle(null); setEtape('entree') }
+  const changerParcelle = () => { setParcelle(null); setSource(null); setEtape('entree') }
 
   // ── Rapport annonce (lien, depuis le Radar) — inchangé ──
   if (etape === 'annonce' && res?.annonce) {
@@ -609,23 +582,14 @@ export function AnalyserAnnonce() {
         titre="Estimer un bien"
         sous="Une adresse ou une parcelle : LABUSE part des ventes réelles de biens semblables." />
       <Corps>
+        {/* Boîte parcelle COMMUNE (EntreeParcelle, option A) : champ de recherche tant qu'aucune parcelle,
+            puis boîte remplie (adresse + IDU · zone · surface + ✕) à l'affichage instantané. */}
+        <EntreeParcelle source={source} picked={parcelle} onPick={choisir} onChanger={changerParcelle}
+          titre="Une adresse ou une parcelle" />
         {parcelle ? (
-          <Estimer3 idu={parcelle} onChanger={changerParcelle} />
+          <Estimer3 idu={parcelle} />
         ) : (
-          <>
-            <div className="flex flex-col gap-1.5">
-              <p className="text-[11px] font-medium text-txt-dim">Une adresse ou une parcelle</p>
-              <ParcelInput
-                placeholder="Adresse, IDU ou référence (BW0917)"
-                onPick={(idu) => choisir(idu, 'adresse')}
-              />
-              <div className="flex items-center gap-1.5 text-[10.5px] leading-snug text-txt-mut">
-                <span className="font-mono text-txt-dim">— ou —</span>
-                <span>cliquez une parcelle sur la carte</span>
-              </div>
-            </div>
-            {erreur && <p role="alert" className={`${INPUT_CLS} h-auto border-coral/40 py-2 text-[12px] leading-snug text-coral`}>{erreur}</p>}
-          </>
+          erreur && <p role="alert" className="rounded-md border border-coral/40 bg-surface-3 px-3 py-2 text-[12px] leading-snug text-coral">{erreur}</p>
         )}
       </Corps>
     </>

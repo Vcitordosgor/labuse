@@ -4,7 +4,7 @@ import {
   getTaxeAmenagement, getTaxeConfig, getTaxePrefill,
   type TaxeParams, type TaxeResult,
 } from '../../lib/api'
-import { fmtEur, fmtInt, fmtM2 } from '../../lib/format'
+import { fmtEur, fmtInt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECETTE-1 F2
 import { Tip } from '../Tip'
@@ -14,28 +14,29 @@ import { Case } from '../ui/Case'
 import { Chevron } from '../ui/Chevron'
 
 // K3 (rattrapage KelFoncier) — outil « Taxe d'aménagement » (calculette). 100 % piloté par le backend :
-// le barème (valeur forfaitaire, abattement, forfaits) et les taux (plafonds/défauts) viennent de
-// /outils/taxe-amenagement/config ; le calcul détaillé (assiette + parts) vient de l'endpoint. AUCUN
-// montant ni taux n'est écrit en dur ici. Le TAUX COMMUNAL n'a JAMAIS de défaut : tant qu'il n'est pas
-// saisi, l'outil affiche l'assiette et les parts « en attente » — il n'invente jamais de total.
+// le barème (valeur forfaitaire, abattement, forfaits) et les taux viennent de /outils/taxe-amenagement/config
+// et du prefill (taux communal PUBLIC de la parcelle). AUCUN montant ni taux n'est écrit en dur ici. Tant
+// que le taux communal public manque, l'outil n'invente jamais de total.
+// OUTILS-REFONTE-1 (9c) — maquette 9c-taxe : « Votre projet » (surface taxable · Logement/Autre ·
+// abattements) → « Options » (replié : aménagements au forfait + exonérations) → encadré résultat (total,
+// assiette détaillée, parts, archéologie, note). Le calcul back est le MÊME lecteur ; les taux sont LUS
+// (prefill), jamais saisis. (Correction : les forfaits/exonérations, retirés par la 1ʳᵉ passe de la refonte,
+// sont rétablis dans un bloc « Options » replié — mêmes valeurs, même calcul.)
 // DA LABUSE : fond sombre, accent vert mint ; le mauve est réservé à l'IA (interdit ici).
 
-/** Champ numérique compact réutilisable (label + input + unité optionnelle). */
-function NumField({ label, value, onChange, unit, placeholder, hint, dataAttr }: {
+/** Champ numérique compact (label + input + unité) — aménagements au forfait. */
+function NumField({ label, value, onChange, unit, hint, dataAttr }: {
   label: string; value: number | null; onChange: (v: number | null) => void
-  unit?: string; placeholder?: string; hint?: string; dataAttr?: string
+  unit?: string; hint?: string; dataAttr?: string
 }) {
   return (
     <label className="flex flex-col gap-1">
-      {/* RECETTE-1 R38 — la case « Piscine » (label court) réserve DEUX lignes comme ses voisines
-          « Panneaux PV au sol » / « Stationnement ext. » : les champs de la grille 2 colonnes s'alignent. */}
       <span className="label-caps flex min-h-[2.1em] items-start text-[9.5px] leading-tight text-txt-dim">{label}</span>
       <span className="flex items-center gap-1.5 rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 focus-within:border-mint">
-        <input
-          data-taxe-field={dataAttr}
-          type="number" inputMode="decimal" min={0}
-          value={value ?? ''} placeholder={placeholder}
-          onChange={(e) => { const v = e.target.value; onChange(v === '' ? null : Math.max(0, Number(v))) }}
+        {/* texte + inputMode numérique : pas de flèches haut/bas (cohérent avec la surface taxable). */}
+        <input data-taxe-field={dataAttr} type="text" inputMode="numeric"
+          value={value ?? ''} placeholder="0"
+          onChange={(e) => { const v = e.target.value.replace(/[^\d]/g, ''); onChange(v === '' ? null : Number(v)) }}
           className="min-w-0 flex-1 bg-transparent font-mono text-xs text-txt tabular-nums focus:outline-none" />
         {unit && <span className="shrink-0 text-[10px] text-txt-dim">{unit}</span>}
       </span>
@@ -43,6 +44,9 @@ function NumField({ label, value, onChange, unit, placeholder, hint, dataAttr }:
     </label>
   )
 }
+
+// RETOURS-27 (pt 4) — pourcentages à la VIRGULE décimale (2,5 % · 0,4 %), jamais le point anglais.
+const pc = (v: number | null | undefined) => (v == null ? '—' : `${String(v).replace('.', ',')} %`)
 
 /** Case à cocher au gabarit LABUSE. */
 function CheckField({ label, checked, onChange, hint, dataAttr }: {
@@ -69,98 +73,75 @@ export function TaxeAmenagement() {
 
   // ── saisie ──
   const [surface, setSurface] = useState<number | null>(null)
+  // OUTILS-REFONTE-1 (9c) — Logement / Autre : « Autre » (non résidentiel) = pas d'abattement RP/social.
+  const [usage, setUsage] = useState<'logement' | 'autre'>('logement')
   const [residencePrincipale, setResidencePrincipale] = useState(false)
-  const [nbLogements, setNbLogements] = useState<number | null>(null)   // E-A1 — abattement 100 m² PAR logement
   const [logementAide, setLogementAide] = useState(false)
-  // TAXE-FIX-1 point 1 — nature du projet EXONÉRÉE de plein droit (CGI 1635 quater D). Une seule
-  // nature à la fois (une surface est agricole OU PLAI OU reconstruction) : cases à cocher qui se
-  // désélectionnent l'une l'autre. Quand une nature est choisie, la surface saisie devient exonérée.
-  const [motifExo, setMotifExo] = useState<'agricole' | 'plai' | 'reconstruction' | null>(null)
+  const [tauxDepartemental, setTauxDepartemental] = useState<number | null>(null)
+  // ── options (repliées) : aménagements au forfait + exonérations de plein droit ──
+  const [optionsOuvertes, setOptionsOuvertes] = useState(false)
   const [piscine, setPiscine] = useState<number | null>(null)
   const [pvSol, setPvSol] = useState<number | null>(null)
   const [stationnement, setStationnement] = useState<number | null>(null)
   const [eoliennes, setEoliennes] = useState<number | null>(null)
-  const [tauxCommunal, setTauxCommunal] = useState<number | null>(null)   // OBLIGATOIRE — jamais de défaut
-  const [tauxDepartemental, setTauxDepartemental] = useState<number | null>(null)
-  const [aideOuverte, setAideOuverte] = useState(false)   // DA-031 — accordéon « Où trouver le taux communal ? »
+  // TAXE-FIX-1 point 1 — nature EXONÉRÉE de plein droit (CGI 1635 quater D) : une seule à la fois.
+  const [motifExo, setMotifExo] = useState<'agricole' | 'plai' | 'reconstruction' | null>(null)
 
-  // RETOURS-14 S4 — l'outil s'ouvre sur la BARRE UNIQUE (adresse / IDU / référence courte,
-  // moteur ParcelInput) + « ou cliquez une parcelle sur la carte » ; un clic carte pendant que
-  // l'outil est ouvert ADOPTE la parcelle (selectedIdu suivi en continu — avant, rien ne le
-  // disait). Changer de parcelle remet la saisie à zéro (le calcul suit la parcelle).
   const [prefillIdu, setPrefillIdu] = useState<string | null>(selectedIdu)
   // RECETTE-1 (F2) — quelle entrée a désigné la parcelle (grise l'autre dans EntreeParcelle).
   const [source, setSource] = useState<SourceParcelle>(selectedIdu ? 'carte' : null)
-  // RECETTE-1 (F1) — la parcelle de l'outil EST celle de la fiche (selectedIdu) : un clic carte
-  // l'adopte (source carte), FERMER la fiche (selectedIdu → null) VIDE l'outil (champs + résultat).
+  // RECETTE-1 (F1) — la parcelle de l'outil EST celle de la fiche (selectedIdu) : un clic carte l'adopte ;
+  // FERMER la fiche (selectedIdu → null) VIDE l'outil.
   useEffect(() => {
     if (selectedIdu !== prefillIdu) {
       setPrefillIdu(selectedIdu)
       setSurface(null); setMotifExo(null)
       if (selectedIdu == null) setSource(null)
-      else if (source == null) setSource('carte')   // changement venu de la carte (le champ a déjà posé 'adresse')
+      else if (source == null) setSource('carte')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedIdu])
-  // RECETTE-1 (F3) — Réinitialiser : vide la parcelle partagée (ferme la fiche → l'effet ci-dessus
-  // remet champs/résultat à zéro) + rend les deux entrées + remet tous les champs locaux à zéro.
   const resetAll = () => {
     select(null)
     setPrefillIdu(null); setSource(null)
-    setSurface(null); setResidencePrincipale(false); setLogementAide(false); setMotifExo(null)
-    setPiscine(null); setPvSol(null); setStationnement(null); setEoliennes(null)
-    setTauxCommunal(null); setTauxDepartemental(null); setAideOuverte(false)
+    setSurface(null); setUsage('logement'); setResidencePrincipale(false); setLogementAide(false)
+    setTauxDepartemental(null); setOptionsOuvertes(false)
+    setPiscine(null); setPvSol(null); setStationnement(null); setEoliennes(null); setMotifExo(null)
   }
   const prefill = useQuery({
     queryKey: ['taxe-prefill', prefillIdu], queryFn: () => getTaxePrefill(prefillIdu!),
     enabled: !!prefillIdu, retry: false,
   })
-  // OUTILS-FIX-2 B1 — la surface taxable n'est JAMAIS pré-remplie d'office (décision recette) : elle
-  // reste VIDE. La SDP restante au gabarit reste affichée à côté du champ comme repère, avec un geste
-  // « reprendre » pour la copier si l'utilisateur le veut (voir ci-dessous). Jamais copiée d'office.
 
-  // Le taux départemental se pré-remplit avec le PLAFOND LÉGAL servi (part_departementale_defaut) dès
-  // que la config arrive — étiqueté « à confirmer », car part_departementale_confirmee_974 est false.
+  // Taux départemental = PLAFOND LÉGAL servi (part_departementale_defaut) tant que non surchargé.
   const depDefaut = cfg.data?.taux.part_departementale_defaut ?? null
   const tauxDepEffectif = tauxDepartemental ?? depDefaut
-
-  // OUTILS-FIX-5 L2 — le taux communal PUBLIC de la parcelle, servi par le prefill (même id que la
-  // fiche §7). Quand il existe (24/24 communes), l'outil l'AFFICHE et ne le fait plus saisir : on
-  // envoie `insee` au calcul, le back applique le taux public (total chiffré) — plus aucune saisie.
+  // Taux communal PUBLIC de la parcelle (prefill, même id que la fiche §7) → envoyé via `insee`.
   const insee = prefill.data?.insee ?? null
-  const tauxCommunalPublic = prefill.data?.taux_communal_source === 'public'
-    ? (prefill.data.taux_communal_pct ?? null) : null
-  // TAXE-FIX-1 point 1 — zone A (agricole) mais PAS AU (à urbaniser) : on propose la case
-  // « Locaux agricoles » (sans la cocher), car ces locaux y sont exonérés de plein droit.
+  const logement = usage === 'logement'
+  // TAXE-FIX-1 point 1 — zone A (agricole) : on propose (sans la cocher) « Locaux agricoles » exonérés.
   // FRONT-CHIFFRES-2 (F28) — la FAMILLE de zone est servie (cascade) ; plus de regex `/^A(?!U)/`.
   const zoneA = prefill.data?.zone_famille === 'A'
 
-  // Paramètres du calcul — envoyés seulement quand une surface taxable est saisie.
   const params: TaxeParams | null = useMemo(() => {
     if (surface == null || surface <= 0) return null
-    // TAXE-FIX-1 point 1 — nature exonérée : la surface saisie part en `surface_exoneree_m2` (0 €)
-    // et la part surface taxée tombe à 0. Sinon, comportement inchangé (surface taxée au barème).
+    // nature exonérée : la surface saisie part en `surface_exoneree_m2` (0 €) ; les abattements n'ont plus
+    // d'effet. Sinon, surface taxée au barème. Les forfaits (piscine/PV/stationnement/éoliennes) s'ajoutent.
     return {
       surface_taxable_m2: motifExo ? 0 : surface,
       surface_exoneree_m2: motifExo ? surface : undefined,
       motif_exoneration: motifExo ?? undefined,
-      residence_principale: (!motifExo && residencePrincipale) || undefined,
-      // E-A1 — l'abattement 100 m² vaut PAR logement : on transmet le nombre quand il est saisi (RP).
-      nb_logements: (!motifExo && residencePrincipale && nbLogements && nbLogements > 0) ? nbLogements : undefined,
-      logement_aide: (!motifExo && logementAide) || undefined,
+      residence_principale: (!motifExo && logement && residencePrincipale) || undefined,
+      logement_aide: (!motifExo && logement && logementAide) || undefined,
       piscine_m2: piscine ?? undefined,
       pv_sol_m2: pvSol ?? undefined,
       stationnement_ext_places: stationnement ?? undefined,
       eoliennes_mats: eoliennes ?? undefined,
-      // taux communal : `insee` sert le taux PUBLIC au back ; `taux_communal_pct` reste une
-      // correction FACULTATIVE (null par défaut → le back prend le public, source 'public').
-      taux_communal_pct: tauxCommunal,
       taux_departemental_pct: tauxDepEffectif,
       insee: insee ?? undefined,
-      // TAXE-FIX-1 point 3 — l'IDU permet au back de servir le taux du SECTEUR à taux majoré s'il y en a un.
-      idu: prefillIdu ?? undefined,
+      idu: prefillIdu ?? undefined,   // TAXE-FIX-1 point 3 — secteur à taux majoré prioritaire
     }
-  }, [surface, motifExo, residencePrincipale, nbLogements, logementAide, piscine, pvSol, stationnement, eoliennes, tauxCommunal, tauxDepEffectif, insee, prefillIdu])
+  }, [surface, motifExo, logement, residencePrincipale, logementAide, piscine, pvSol, stationnement, eoliennes, tauxDepEffectif, insee, prefillIdu])
 
   const calc = useQuery({
     queryKey: ['taxe-calc', params],
@@ -174,288 +155,213 @@ export function TaxeAmenagement() {
     <ErrorState message="Barème indisponible — réessayez plus tard." retry={() => cfg.refetch()} />
   )
   const c = cfg.data
+  const lignes = r?.lignes ?? []
 
   return (
     <div data-taxe-panel className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-      {/* RETOURS-14 S4 — le PREMIER écran ne porte que la parcelle et le calcul : l'intro
-          (service-public, CGI…) vit derrière le « i ». */}
-      {/* RECETTE-2 (T3) — Réinitialiser SEUL sur sa ligne (haut-droite) ; l'intro vient EN DESSOUS,
-          pleine largeur (plus côte à côte). Présent ssi une parcelle est désignée. */}
-      <div className="flex flex-col gap-1.5">
-        {/* RECETTE-OUTILS-1 (T5) — plus de « Réinitialiser » en tête : dès qu'une parcelle est choisie,
-            le bloc de recherche devient « adresse · Changer de parcelle » (EntreeParcelle, picked). */}
+      {/* RECETTE-1 (F2) — EntreeParcelle (boîte parcelle option A) : adresse/IDU OU clic carte. */}
+      <EntreeParcelle source={source} picked={prefillIdu} onChanger={resetAll}
+        onPick={(i, src) => { setSource(src); setPrefillIdu(i); focusParcelle(i, { fiche: true }) }} />
+
+      {prefillIdu && prefill.isLoading && (
+        <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10.5px] text-txt-mut">
+          <Chargement variant="inline" label="Chargement du contexte parcelle…" />
+        </div>
+      )}
+
+      {/* VOTRE PROJET — surface taxable · Logement/Autre · abattements à cocher. */}
+      {prefillIdu && (
+      <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
         <div className="flex items-center gap-1.5">
-          <p className="min-w-0 flex-1 text-[11px] text-txt-mut">Calculer la taxe d'aménagement d'une parcelle</p>
-          <Tip garder side="bottom" tip={`Estimez la taxe d'aménagement de votre projet avant le dépôt du permis. Valeurs ${c.meta.annee} (arrêté officiel, base CGI art. 1635 quater A et suivants) ; à La Réunion, c'est la valeur forfaitaire hors Île-de-France qui s'applique. Le montant définitif est fixé par l'administration après le permis. Source : ${c.meta.source}.`}>
+          <p className="label-caps text-[9.5px] text-txt-dim">Votre projet</p>
+          <Tip garder side="bottom" tip={`Estimez la taxe d'aménagement avant le dépôt du permis. Valeurs ${c.meta.annee} (CGI art. 1635 quater A et s.) ; à La Réunion, c'est la valeur forfaitaire hors Île-de-France qui s'applique (${fmtEur(c.valeur_forfaitaire_m2.hors_idf)}/m²). La surface taxable = surface close et couverte > 1,80 m, garages et annexes INCLUS (≠ SDP). Le montant définitif est fixé par l'administration. Source : ${c.meta.source}.`}>
             <span role="button" tabIndex={0} aria-label="Méthode et sources"
               className="flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full border border-line-2 text-[9px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
           </Tip>
         </div>
-      </div>
-      {/* RECETTE-1 (F2) — EntreeParcelle : adresse/IDU OU clic carte, l'une grise l'autre. Le pick du
-          champ fixe source='adresse' puis focusParcelle (fiche) ; le clic carte est adopté par l'effet selectedIdu. */}
-      <EntreeParcelle source={source} picked={prefillIdu} onChanger={resetAll}
-        onPick={(i, src) => { setSource(src); setPrefillIdu(i); focusParcelle(i, { fiche: true }) }} />
-      {/* RECETTE-2 (D12) — section « Le formulaire s'ouvrira quand une parcelle sera choisie … » retirée. */}
-      {prefillIdu && (
-        <div data-taxe-contexte className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10.5px] text-txt-mut">
-          {prefill.isLoading && <Chargement variant="inline" label="Chargement du contexte parcelle…" />}
-          {prefill.isError && <span className="text-st-ecartee">Contexte parcelle indisponible.</span>}
-          {prefill.data && (
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
-              <span className="font-mono text-[10px] text-txt-dim">{prefill.data.idu}</span>
-              <span className="text-txt">{prefill.data.commune}</span>
-              {prefill.data.zone_plu && <span>zone <b className="text-txt">{prefill.data.zone_plu}</b></span>}
-              {prefill.data.surface_terrain_m2 != null && (
-                <span className="text-txt-dim">terrain : {fmtM2(prefill.data.surface_terrain_m2)} <span className="text-[9px]">(référence)</span></span>
-              )}
-              {/* OUTILS-FIX-2 B1 — la SDP au gabarit n'est plus ici : elle sert de repère « reprendre »
-                  à côté du champ Surface taxable (source unique). B2 — plus de « retirer » : l'omnibox
-                  en tête reste permanente, choisir une autre parcelle remplace. */}
-            </div>
-          )}
-        </div>
-      )}
 
-      {/* SAISIE — repliée tant qu'aucune parcelle n'est choisie (S4). */}
-      {prefillIdu && (
-      <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
-        {/* TAXE-FIX-1 point 4 — la SURFACE TAXABLE n'est PAS la SDP : c'est la somme des surfaces
-            closes et couvertes sous plus de 1,80 m, calculée au nu intérieur des façades, GARAGES
-            ET ANNEXES INCLUS (CGI art. 1635 quater H ; la SDP d'urbanisme, elle, les déduit). */}
-        {/* RETOURS-15 C5 (P20) — l'outil ne parle QUE de surface taxable : le bloc « SDP restante au
-            gabarit… Partir de la SDP du projet » est retiré (la SDP d'urbanisme n'est pas la surface
-            taxable, art. 1635 quater H). Le champ reste vide, saisi par l'utilisateur. */}
-        <NumField dataAttr="surface" label="Surface taxable" unit="m²" value={surface}
-          onChange={(v) => setSurface(v)}
-          hint={`Surface close et couverte > 1,80 m, garages et annexes INCLUS (CGI 1635 quater H) — ≠ SDP. Valeur forfaitaire ${fmtEur(c.valeur_forfaitaire_m2.hors_idf)}/m² (hors Île-de-France, DOM inclus).${
-            c.exoneration_surface_min_m2 ? ` Surface < ${fmtInt(c.exoneration_surface_min_m2)} m² : exonérée.` : ''}`} />
-
-        <div className="flex flex-col gap-1.5">
-          <CheckField dataAttr="residence" label="Résidence principale"
-            checked={residencePrincipale} onChange={setResidencePrincipale}
-            hint={`Abattement ${fmtInt(c.abattement.taux_pct)} % sur les ${fmtInt(c.abattement.plafond_m2_residence_principale)} premiers m² de CHAQUE logement.`} />
-          {/* E-A1 — l'abattement 100 m² est dû logement par logement : le nombre de logements est demandé
-              dès que « Résidence principale » est coché (défaut vide → 1 logement, dit par le message). */}
-          {residencePrincipale && !motifExo && (
-            <NumField dataAttr="nb-logements" label="Nombre de logements (résidences principales)" unit="logt"
-              value={nbLogements} onChange={setNbLogements}
-              hint={`Abattement de ${fmtInt(c.abattement.taux_pct)} % sur les ${fmtInt(c.abattement.plafond_m2_residence_principale)} premiers m² de CHAQUE logement (CGI 1635 quater I). Vide = 1 logement (maison).`} />
-          )}
-          <CheckField dataAttr="aide" label="Logement aidé"
-            checked={logementAide} onChange={setLogementAide}
-            hint={`Abattement ${fmtInt(c.abattement.taux_pct)} % (logement locatif social / aidé) — PLUS/PLS. Un PLAI est EXONÉRÉ (ci-dessous), pas seulement abattu.`} />
+        {/* Surface taxable — champ saisissable (texte, clavier numérique, sans flèches), « m² de surface taxable » à droite. */}
+        <div className="flex items-center gap-2">
+          <input
+            data-taxe-field="surface" type="text" inputMode="numeric" aria-label="Surface taxable"
+            className="h-10 w-28 rounded-lg border border-line-2 bg-surface-3 px-3 text-[16px] font-mono tabular-nums text-txt-hi focus:border-mint focus:outline-none"
+            placeholder="0" value={surface ?? ''}
+            onChange={(e) => { const v = e.target.value.replace(/[^\d]/g, ''); setSurface(v === '' ? null : Number(v)) }} />
+          <span className="text-[11px] text-txt-mut">m² de surface taxable</span>
         </div>
 
-        {/* TAXE-FIX-1 point 1 — NATURE DU PROJET : exonérations de plein droit (CGI 1635 quater D).
-            Cocher une nature EXONÈRE la surface saisie (0 €), à la différence de l'abattement (−50 %).
-            Une seule nature à la fois (cases mutuellement exclusives). En zone A, la case « Locaux
-            agricoles » est proposée (non cochée). */}
-        <div data-taxe-nature className="flex flex-col gap-1.5 rounded-lg border border-line-2 bg-surface-3/40 p-2">
-          <p className="label-caps text-[9.5px] text-txt-dim">Nature du projet — exonération de plein droit (optionnel)</p>
-          <CheckField dataAttr="exo-agricole" label="Locaux agricoles"
-            checked={motifExo === 'agricole'} onChange={(v) => setMotifExo(v ? 'agricole' : null)}
-            hint={`Serres, bâtiments d'exploitation, stockage de récoltes, abris d'animaux — exonérés (CGI 1635 quater D, 3°).${zoneA ? ' Parcelle en zone A : les locaux agricoles y sont exonérés de plein droit.' : ''}`} />
-          <CheckField dataAttr="exo-plai" label="Logements PLAI / très sociaux"
-            checked={motifExo === 'plai'} onChange={(v) => setMotifExo(v ? 'plai' : null)}
-            hint="Prêt locatif aidé d'intégration — exonérés de plein droit (CGI 1635 quater D, 2°). Pour du PLUS/PLS, cocher plutôt « Logement aidé »." />
-          <CheckField dataAttr="exo-reconstruction" label="Reconstruction à l'identique"
-            checked={motifExo === 'reconstruction'} onChange={(v) => setMotifExo(v ? 'reconstruction' : null)}
-            hint="Reconstruction à l'identique d'un bâtiment détruit ou démoli depuis moins de 10 ans, après sinistre (CGI 1635 quater D, 9°)." />
-          {motifExo && (
-            <p data-taxe-nature-note className="text-[10px] leading-snug text-st-creuser">
-              Surface exonérée : la part surface tombe à 0 € (abattements sans effet). Les exonérations
-              <b> facultatives</b> votées par délibération communale (CGI 1635 quater E) ne sont pas appliquées ici — à vérifier auprès de la commune.
-            </p>
-          )}
+        {/* Logement / Autre — segmented toggle. */}
+        <div data-taxe-usage className="flex gap-1.5">
+          {([['logement', 'Logement'], ['autre', 'Autre']] as const).map(([k, l]) => (
+            <button key={k} data-taxe-usage-opt={k} onClick={() => setUsage(k)}
+              aria-pressed={usage === k}
+              className={`rounded-lg border px-3 py-1.5 text-[11.5px] transition-colors duration-quick ${
+                usage === k ? 'border-mint bg-mint/15 font-medium text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
+              {l}
+            </button>
+          ))}
         </div>
 
-        {/* FORFAITS OPTIONNELS — installations et aménagements taxés au forfait (barème servi). */}
-        <div className="rounded-lg border border-line-2 bg-surface-3/60 p-2">
-          <p className="label-caps mb-1.5 text-[9.5px] text-txt-dim">Aménagements au forfait (optionnel)</p>
-          <div className="grid grid-cols-2 gap-2">
-            <NumField dataAttr="piscine" label="Piscine" unit="m²" value={piscine} onChange={setPiscine}
-              hint={`${fmtEur(c.forfaits.piscine_m2)}/m²`} />
-            <NumField dataAttr="pv" label="Panneaux PV au sol" unit="m²" value={pvSol} onChange={setPvSol}
-              hint={`${fmtEur(c.forfaits.panneau_pv_sol_m2)}/m²`} />
-            <NumField dataAttr="stationnement" label="Stationnement ext." unit="places" value={stationnement} onChange={setStationnement}
-              hint={`${fmtEur(c.forfaits.stationnement_ext_place)}/place (jusqu’à ${fmtEur(c.forfaits.stationnement_ext_place_max_delib)} sur délibération)`} />
-            <NumField dataAttr="eoliennes" label="Éoliennes" unit="mâts" value={eoliennes} onChange={setEoliennes}
-              hint={`${fmtEur(c.forfaits.eolienne_mat)}/mât`} />
+        {/* Abattements à cocher — seulement pour un logement (pas de minoration RP/social sur « Autre »). */}
+        {logement && (
+          <div className="flex flex-col gap-1.5">
+            <CheckField dataAttr="residence" label={`Résidence principale (abattement ${fmtInt(c.abattement.taux_pct)} % sur ${fmtInt(c.abattement.plafond_m2_residence_principale)} m²)`}
+              checked={residencePrincipale} onChange={setResidencePrincipale}
+              hint={`Minore la taxe : abattement de ${fmtInt(c.abattement.taux_pct)} % sur les ${fmtInt(c.abattement.plafond_m2_residence_principale)} premiers m² (CGI 1635 quater I).`} />
+            {/* RETOURS-27 (pt 4) — libellé EXACT de l'abattement appliqué. */}
+            <CheckField dataAttr="aide" label="Logement social aidé"
+              checked={logementAide} onChange={setLogementAide}
+              hint={`Abattement ${fmtInt(c.abattement.taux_pct)} % (logement locatif social / aidé, PLUS-PLS).`} />
           </div>
-        </div>
-
-        {/* TAUX — OUTILS-FIX-5 L2 : le taux communal PUBLIC (servi par le prefill, même id que la
-            fiche §7) est AFFICHÉ, plus saisi. La saisie manuelle ne réapparaît qu'en repli si la
-            commune n'a aucun taux public en base (défensif — les 24 sont peuplées). */}
-        <div className="grid grid-cols-2 gap-2">
-          {tauxCommunalPublic != null ? (
-            <div data-taxe-taux-communal-public className="flex flex-col gap-1">
-              <span className="label-caps flex min-h-[2.1em] items-start text-[9.5px] leading-tight text-txt-dim">Taux communal</span>
-              <span className="flex items-center gap-1.5 rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5">
-                <span className="min-w-0 flex-1 font-mono text-xs tabular-nums text-mint">{tauxCommunalPublic} %</span>
-                {/* TAXE-FIX-1 point 3 — secteur à taux majoré : on le DIT, le taux n'est pas le taux général. */}
-                <span className={`shrink-0 text-[9px] uppercase tracking-[.06em] ${prefill.data?.secteur_majore ? 'font-semibold text-st-creuser' : 'text-txt-dim'}`}>
-                  {prefill.data?.secteur_majore ? 'secteur majoré' : 'public'}
-                </span>
-              </span>
-              <span className="text-[10px] leading-snug text-txt-dim">
-                {prefill.data?.secteur_majore
-                  ? 'Secteur à taux majoré voté par la commune pour cette parcelle'
-                  : 'Voté par la commune'} — {prefill.data?.taux_communal_millesime ?? 'délibération communale'}.
-                {prefill.data?.taux_communal_perime && (
-                  <span data-taxe-taux-perime className="ml-1 font-medium text-st-creuser">⚠ non rafraîchi depuis plus d'un an.</span>
-                )}
-              </span>
-            </div>
-          ) : (
-            <NumField dataAttr="taux-communal" label="Taux communal *" unit="%" value={tauxCommunal} onChange={setTauxCommunal}
-              placeholder={`≤ ${fmtInt(c.taux.part_communale_plafond_pct)}`}
-              hint={`Obligatoire — voté par la commune (plafond ${fmtInt(c.taux.part_communale_plafond_pct)} %). L’outil ne l’invente pas.`} />
-          )}
-          {/* TAXE-FIX-1 point 4 — le taux départemental 974 (2,5 %) est CONFIRMÉ par DELTA (comme la
-              fiche) : on ne dit plus « à confirmer » en dur. On ne le dit que si la config ne l'a pas confirmé. */}
-          <NumField dataAttr="taux-departemental" label="Taux départemental" unit="%" value={tauxDepEffectif} onChange={setTauxDepartemental}
-            placeholder={depDefaut != null ? String(depDefaut) : undefined}
-            hint={`${depDefaut != null ? depDefaut : '—'} %${c.taux.part_departementale_confirmee_974
-              ? ' — confirmé (délibération départementale, source DGFiP/DELTA).'
-              : ` (plafond légal) — à confirmer auprès du département.`}`} />
-        </div>
-        {/* RV2-V2 — aide pour trouver le taux communal : n'apparaît qu'en REPLI (taux public absent),
-            sinon l'outil sert déjà le taux et la question ne se pose plus. */}
-        {tauxCommunalPublic == null && (
-        <details data-taux-aide open={aideOuverte}
-          onToggle={(e) => setAideOuverte((e.target as HTMLDetailsElement).open)}
-          className="group rounded-md border border-line-2 bg-surface-3/50 text-[10.5px] leading-snug text-txt-mut">
-          <summary className="hover-fill flex cursor-pointer list-none items-center gap-1.5 rounded-md px-2.5 py-2 text-txt">
-            <Chevron open={aideOuverte} />
-            <b>Où trouver le taux communal ?</b>
-          </summary>
-          <div className="px-2.5 pb-2">
-            Dans la <b>délibération du conseil municipal fixant le taux de la part communale de la taxe
-            d’aménagement</b> (adoptée avant le 1<sup>er</sup> juillet pour l’année suivante). À demander au{' '}
-            <b>service urbanisme de la mairie</b>, ou sur le site de la commune (recueil des actes
-            administratifs). À défaut de délibération, le taux légal minimal est de 1 %.
-          </div>
-        </details>
         )}
       </div>
       )}
 
-      {/* RÉSULTAT DÉTAILLÉ */}
+      {/* OPTIONS (repliées par défaut) — aménagements au forfait + exonérations. Entre « Votre projet » et
+          le résultat. Mêmes valeurs/calcul qu'avant la refonte ; le résultat se recalcule à chaque changement
+          (params dans la deps du useMemo) et la ligne correspondante apparaît dans le détail du résultat. */}
+      {prefillIdu && (
+      <details data-taxe-options open={optionsOuvertes}
+        onToggle={(e) => setOptionsOuvertes((e.target as HTMLDetailsElement).open)}
+        className="group rounded-lg border border-line-2 bg-surface-2">
+        <summary className="flex cursor-pointer list-none items-center gap-1.5 px-3 py-2 text-[11px] font-medium text-txt-dim marker:hidden hover:text-mint">
+          <Chevron open={optionsOuvertes} />Options
+          <span className="ml-1 text-[9.5px] font-normal text-txt-dim">aménagements au forfait · exonérations</span>
+        </summary>
+        <div className="flex flex-col gap-3 px-3 pb-3">
+          {/* Aménagements au forfait — barème servi par la config. */}
+          <div>
+            <p className="label-caps mb-1.5 text-[9.5px] text-txt-dim">Aménagements au forfait</p>
+            <div className="grid grid-cols-2 gap-2">
+              <NumField dataAttr="stationnement" label="Stationnement ext." unit="places" value={stationnement} onChange={setStationnement}
+                hint={`${fmtEur(c.forfaits.stationnement_ext_place)}/place (jusqu’à ${fmtEur(c.forfaits.stationnement_ext_place_max_delib)} sur délibération)`} />
+              <NumField dataAttr="piscine" label="Piscine" unit="m²" value={piscine} onChange={setPiscine}
+                hint={`${fmtEur(c.forfaits.piscine_m2)}/m²`} />
+              <NumField dataAttr="pv" label="Panneaux PV au sol" unit="m²" value={pvSol} onChange={setPvSol}
+                hint={`${fmtEur(c.forfaits.panneau_pv_sol_m2)}/m²`} />
+              <NumField dataAttr="eoliennes" label="Éoliennes" unit="mâts" value={eoliennes} onChange={setEoliennes}
+                hint={`${fmtEur(c.forfaits.eolienne_mat)}/mât`} />
+            </div>
+          </div>
+          {/* Exonérations de plein droit (CGI 1635 quater D) — mutuellement exclusives. */}
+          <div className="flex flex-col gap-1.5">
+            <p className="label-caps text-[9.5px] text-txt-dim">Exonération de plein droit</p>
+            <CheckField dataAttr="exo-agricole" label="Locaux agricoles"
+              checked={motifExo === 'agricole'} onChange={(v) => setMotifExo(v ? 'agricole' : null)}
+              hint={`Serres, bâtiments d'exploitation, stockage de récoltes, abris d'animaux — exonérés (CGI 1635 quater D, 3°).${zoneA ? ' Parcelle en zone A : exonérés de plein droit.' : ''}`} />
+            <CheckField dataAttr="exo-plai" label="Logements PLAI / très sociaux"
+              checked={motifExo === 'plai'} onChange={(v) => setMotifExo(v ? 'plai' : null)}
+              hint="Prêt locatif aidé d'intégration — exonérés de plein droit (CGI 1635 quater D, 2°). Pour du PLUS/PLS, cocher plutôt « Logement social » ci-dessus." />
+            <CheckField dataAttr="exo-reconstruction" label="Reconstruction à l'identique"
+              checked={motifExo === 'reconstruction'} onChange={(v) => setMotifExo(v ? 'reconstruction' : null)}
+              hint="Reconstruction à l'identique d'un bâtiment détruit/démoli depuis moins de 10 ans, après sinistre (CGI 1635 quater D, 9°)." />
+            {motifExo && (
+              <p data-taxe-nature-note className="text-[10px] leading-snug text-st-creuser">
+                Surface exonérée : la part surface tombe à 0 € (abattements sans effet). Les exonérations
+                <b> facultatives</b> votées par délibération (CGI 1635 quater E) ne sont pas appliquées ici.
+              </p>
+            )}
+          </div>
+        </div>
+      </details>
+      )}
+
+      {/* RÉSULTAT — total (gros, vert) · assiette détaillée · parts · archéologie · note. */}
       {prefillIdu && !params && (
         <p className="text-[11px] text-txt-dim">Saisissez une surface taxable pour estimer la taxe.</p>
       )}
       {calc.isLoading && <Squelette lignes={3} />}
       {calc.isError && <ErrorState message="Erreur de calcul — vérifiez les valeurs saisies." retry={() => calc.refetch()} />}
 
-      {r && !calc.isLoading && (
-        <div data-taxe-resultat className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-1 p-3">
-          {/* Détail ligne par ligne — un promoteur doit pouvoir vérifier chaque poste. */}
-          <div className="flex flex-col">
-            <div className="grid grid-cols-[1fr_auto] gap-x-3 border-b border-line pb-1 text-[9.5px] uppercase tracking-[.08em] text-txt-dim">
-              <span>Poste</span><span className="text-right">Assiette</span>
+      {r && !calc.isLoading && (() => {
+        const rap = r.rap_eur != null && r.assiette_eur > 0 ? r.rap_eur : null
+        // RETOURS-27 (pt 4) — « Total à prévoir » = Taxe d'aménagement (parts) + Redevance d'archéologie.
+        const totalAPrevoir = r.total_eur != null ? r.total_eur + (rap ?? 0) : null
+        return (
+        <div data-taxe-resultat className="flex flex-col gap-1.5 rounded-lg border border-mint/40 bg-surface-1 p-3">
+          {/* TOTAL À PRÉVOIR en tête (gros, vert) — ou message honnête si le taux communal manque. */}
+          {totalAPrevoir != null ? (
+            <div className="flex items-baseline justify-between gap-2 border-b border-line pb-2">
+              <span className="text-[12px] text-txt-mut">Total à prévoir</span>
+              <span data-taxe-total className="font-mono text-[22px] font-bold tabular-nums text-mint">{fmtEur(totalAPrevoir)}</span>
             </div>
-            {r.lignes.map((l, i) => (
-              <div key={i} data-taxe-ligne className="grid grid-cols-[1fr_auto] gap-x-3 border-b border-line py-1.5 text-[11px]">
-                <span className="min-w-0">
-                  <span className="text-txt">{l.poste}</span>
-                  {/* OUTILS-1 A1/B8 — le produit exact sous chaque poste, en petit mono : l'écran
-                      s'auto-vérifie (assiette = somme des postes affichés), par le client comme par un notaire. */}
-                  {l.detail && <span className="mt-0.5 block font-mono text-[10px] leading-snug text-txt-dim">{l.detail}</span>}
-                </span>
-                <span className="text-right font-mono tabular-nums text-txt-mut">{fmtEur(l.assiette_eur)}</span>
-              </div>
-            ))}
-            {/* Assiette totale */}
-            <div className="grid grid-cols-[1fr_auto] gap-x-3 py-1.5 text-[12px]">
-              <span className="font-medium text-txt-hi">Assiette imposable</span>
-              <span className="text-right font-mono font-semibold tabular-nums text-txt-hi">{fmtEur(r.assiette_eur)}</span>
+          ) : r.taux_communal_manquant && r.message_taux_communal ? (
+            <div data-taxe-manque className="rounded-md border border-st-creuser/40 bg-st-creuser/10 px-2.5 py-1.5 text-[10.5px] leading-snug text-st-creuser">
+              {r.message_taux_communal}
             </div>
-          </div>
+          ) : null}
 
-          {/* E-A1 — nombre de logements non précisé : l'abattement 100 m² a été appliqué pour 1 logement.
-              On le DIT et on invite à saisir, on ne suppose jamais un collectif. */}
-          {r.message_nb_logements && (
-            <p data-taxe-nb-logements className="rounded-md border border-line-2 bg-surface-3/50 px-2 py-1.5 text-[10px] leading-snug text-st-creuser">
-              {r.message_nb_logements}
-            </p>
-          )}
-
-          {/* Parts + total */}
-          <div className="flex flex-col gap-1 rounded-lg border border-line-2 bg-surface-2 p-2.5 text-[11px]">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-txt-mut">Part communale <span className="text-txt-dim">({r.taux_communal_pct != null ? `${r.taux_communal_pct} %` : '—'})</span></span>
-              <span className="font-mono tabular-nums text-txt">
-                {/* RETOURS-15 U6 — la ligne DIT quoi faire, pas un état passif. */}
-                {r.part_communale_eur != null ? fmtEur(r.part_communale_eur) : <span className="text-txt-dim">taux non renseigné, saisissez-le ci-dessus</span>}
-              </span>
+          {/* Assiette — une ligne par poste (surface + forfaits actifs) ; chaque option ajoutée y apparaît. */}
+          {lignes.length <= 1 ? (
+            <div className="flex items-baseline justify-between gap-2 pt-1 text-[11px]">
+              <span className="min-w-0 text-txt-mut">Assiette{lignes[0]?.detail ? <span className="text-txt-dim"> ({lignes[0].detail})</span> : ''}</span>
+              <span className="shrink-0 font-mono tabular-nums text-txt">{fmtEur(r.assiette_eur)}</span>
             </div>
-            {/* TAXE-AMÉNAGEMENT-1 lot C — taux communal public : millésime affiché (délibération en
-                vigueur, source datée) + alerte si non rafraîchi depuis plus d'un an. */}
-            {r.taux_communal_source === 'public' && r.taux_communal_millesime && (
-              <p data-taxe-millesime className="text-[9.5px] leading-snug text-txt-dim">
-                {r.taux_communal_millesime}
-                {r.taux_communal_perime && (
-                  <span data-taxe-perime className="ml-1 font-medium text-st-creuser">
-                    ⚠ taux non rafraîchi depuis plus d'un an — à réingérer
-                  </span>
-                )}
-              </p>
-            )}
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-txt-mut">
-                Part départementale <span className="text-txt-dim">({r.taux_departemental_pct} %{!r.part_departementale_confirmee ? ', à confirmer' : ''})</span>
-              </span>
-              <span className="font-mono tabular-nums text-txt">
-                {r.part_departementale_eur != null ? fmtEur(r.part_departementale_eur) : '—'}
-              </span>
-            </div>
-
-            {r.total_eur != null ? (
-              <div className="mt-1 flex items-center justify-between gap-2 border-t border-line pt-1.5">
-                <span className="text-[12.5px] font-semibold text-mint">Total estimé</span>
-                <span className="font-mono text-[13px] font-bold tabular-nums text-mint">{fmtEur(r.total_eur)}</span>
-              </div>
-            ) : (
-              // Taux communal absent → PAS de total inventé. Message en évidence, ton neutre/ambre.
-              r.taux_communal_manquant && r.message_taux_communal && (
-                <div data-taxe-manque className="mt-1 rounded-md border border-st-creuser/40 bg-st-creuser/10 px-2.5 py-1.5 text-[10.5px] leading-snug text-st-creuser">
-                  {r.message_taux_communal}
+          ) : (
+            <>
+              {lignes.map((l, i) => (
+                <div key={i} data-taxe-ligne className="flex items-baseline justify-between gap-2 pt-0.5 text-[11px]">
+                  <span className="min-w-0 text-txt-mut">{l.poste}{l.detail ? <span className="text-txt-dim"> ({l.detail})</span> : ''}</span>
+                  <span className="shrink-0 font-mono tabular-nums text-txt-dim">{fmtEur(l.assiette_eur)}</span>
                 </div>
-              )
-            )}
-            {/* TAXE-FIX-1 point 2 — redevance d'archéologie préventive : taxe DISTINCTE de la TA,
-                0,40 % de la même assiette, souvent due au dépôt du permis. Ligne à part, sous le total. */}
-            {r.rap_eur != null && r.assiette_eur > 0 && (
-              <div data-taxe-rap className="mt-1 flex items-start justify-between gap-2 border-t border-line pt-1.5">
-                <span className="min-w-0 text-txt-mut">
-                  Redevance d’archéologie préventive <span className="text-txt-dim">({r.rap_pct} %)</span>
-                  <span className="mt-0.5 block text-[9.5px] leading-snug text-txt-dim">Taxe distincte, souvent due avec le permis — {r.rap_source}.</span>
-                </span>
-                <span className="shrink-0 font-mono tabular-nums text-txt">{fmtEur(r.rap_eur)}</span>
+              ))}
+              <div className="flex items-baseline justify-between gap-2 border-t border-line pt-1 text-[11px]">
+                <span className="font-medium text-txt-hi">Assiette imposable</span>
+                <span className="shrink-0 font-mono font-semibold tabular-nums text-txt-hi">{fmtEur(r.assiette_eur)}</span>
               </div>
-            )}
-          </div>
+            </>
+          )}
 
-          {/* CHASSE-CALCULS-FIX-1 Lot 2 (E-A2) — dire ce que le barème NE couvre PAS (toujours visible). */}
-          {r.non_couvert && r.non_couvert.length > 0 && (
-            <div data-taxe-non-couvert className="rounded-lg border border-line-2 bg-surface-3/40 p-2 text-[9.5px] leading-snug text-txt-dim">
-              <p className="label-caps mb-1 text-[9.5px] text-txt-mut">Non pris en compte par cette estimation</p>
-              <ul className="list-disc pl-3.5 space-y-0.5">
-                {r.non_couvert.map((s, i) => <li key={i}>{s}</li>)}
-              </ul>
+          {/* Parts (composent la Taxe d'aménagement). */}
+          {r.part_communale_eur != null && (
+            <div className="flex items-baseline justify-between gap-2 text-[11px]">
+              <span className="text-txt-mut">Part communale <span className="text-txt-dim">· {pc(r.taux_communal_pct)}{r.taux_communal_secteur_majore ? ' (majoré)' : ''}</span></span>
+              <span className="shrink-0 font-mono tabular-nums text-txt">{fmtEur(r.part_communale_eur)}</span>
+            </div>
+          )}
+          {r.part_departementale_eur != null && (
+            <div className="flex items-baseline justify-between gap-2 text-[11px]">
+              <span className="text-txt-mut">Part départementale <span className="text-txt-dim">· {pc(r.taux_departemental_pct)}{!r.part_departementale_confirmee ? ', à confirmer' : ''}</span></span>
+              <span className="shrink-0 font-mono tabular-nums text-txt">{fmtEur(r.part_departementale_eur)}</span>
             </div>
           )}
 
-          {/* RETOURS-11 O4c : le rappel « estimation indicative » (r.note) est déjà dit dans l'intro
-              en tête de page → on ne garde ici que la provenance datée (année + source), non redondante. */}
-          <p className="text-[10px] leading-snug text-txt-dim">
-            Valeurs {r.annee} —{' '}
+          {/* RETOURS-27 (pt 4) — le total ventile les DEUX taxes distinctes puis le total à prévoir. */}
+          {totalAPrevoir != null && (
+            <div className="mt-0.5 flex flex-col gap-1 border-t border-line pt-1.5 text-[11px]">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-txt">Taxe d'aménagement</span>
+                <span data-taxe-ta className="shrink-0 font-mono font-medium tabular-nums text-txt-hi">{fmtEur(r.total_eur)}</span>
+              </div>
+              {rap != null && (
+                <div data-taxe-rap className="flex items-baseline justify-between gap-2">
+                  <span className="text-txt">Redevance d'archéologie préventive <span className="text-txt-dim">· {pc(r.rap_pct)}</span></span>
+                  <span className="shrink-0 font-mono tabular-nums text-txt">{fmtEur(rap)}</span>
+                </div>
+              )}
+              <div className="flex items-baseline justify-between gap-2 border-t border-line pt-1">
+                <span className="font-semibold text-mint">Total à prévoir</span>
+                <span className="shrink-0 font-mono font-bold tabular-nums text-mint">{fmtEur(totalAPrevoir)}</span>
+              </div>
+            </div>
+          )}
+
+          {/* RETOURS-27 (pt 4) — note = valeur forfaitaire + taux (virgules décimales) ; « Non pris en
+              compte » passe dans le « i » (plus de paragraphe discret). Plus de « exigible au permis ». */}
+          <p className="mt-0.5 flex flex-wrap items-center gap-1 border-t border-line pt-1.5 text-[9.5px] leading-snug text-txt-dim">
+            <span>Valeur forfaitaire {r.annee} : {fmtEur(r.valeur_forfaitaire_m2)}/m² · taux communal {pc(r.taux_communal_pct)} · taux départemental {pc(r.taux_departemental_pct)}</span>
+            {r.non_couvert && r.non_couvert.length > 0 && (
+              <Tip garder side="top" tip={`Non pris en compte : ${r.non_couvert.join(' · ')}.`}>
+                <span role="button" tabIndex={0} aria-label="Ce qui n'est pas pris en compte"
+                  className="flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-full border border-line-2 text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
+              </Tip>
+            )}
             <a href={r.url} target="_blank" rel="noreferrer" className="text-mint hover:underline">{r.source}</a>
+            {r.taux_communal_perime && <span data-taxe-perime className="font-medium text-st-creuser">⚠ taux non rafraîchi depuis plus d'un an.</span>}
           </p>
         </div>
-      )}
+        )
+      })()}
     </div>
   )
 }

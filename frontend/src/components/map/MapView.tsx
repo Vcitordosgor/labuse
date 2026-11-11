@@ -14,7 +14,7 @@ import { useApp, type Filters, type MapTool } from '../../store/useApp'
 import { BASEMAP_SOURCES, ORTHO_MONDE, activeBasemapKey } from './basemaps'
 import { Legend } from './Legend'
 import { fmtDateNum, fmtDateSitadel } from '../../lib/format'   // CHASSE-FIX-1 (A-3) — dates fuseau Réunion
-import { CouchesTuyauLayers, paintParcellesParFond } from './CouchesTuyau'  // COUCHES-TUYAU-1 lot 2 · G1 lot 3
+import { CouchesTuyauLayers, TuyauLegend, useTuyauPlan, paintParcellesParFond } from './CouchesTuyau'  // COUCHES-TUYAU-1 lot 2 · G1 lot 3
 import { VefaDetail } from './VefaDetail'
 import { MapToolbar } from './MapToolbar'
 import { Chargement } from '../Loading'
@@ -42,13 +42,32 @@ const STYLE: maplibregl.StyleSpecification = {
 // blanc illisible. Fond quasi opaque, bord --card-line, ombre portée pour détacher de la carte.
 const POPUP_BOX_CSS = 'font:12px system-ui;color:#e9edeb;min-width:220px;max-width:280px;background:rgba(14,18,16,.97);border:1px solid #232a26;border-radius:11px;padding:13px;box-shadow:0 12px 32px rgba(0,0,0,.55)'
 
-// RECETTE-OUTILS-1 (points 6 & 7) — LA bulle « fiche permis » UNIQUE, sur la carte (plus de drawer en
-// colonne). Ouverte au clic d'un point permis sur la carte OU au clic d'une ligne de la liste (M03, via
-// window.__labuse_map) → MÊME bulle, MÊME contenu. Une ligne par donnée (libellé à gauche, valeur à
-// droite). Fermeture : croix (closeButton) + clic ailleurs (closeOnClick). DOM textContent (anti-injection).
+// RETOURS-23 (suite, pt 1) — LA bulle « fiche permis », sur la carte (clic d'un point OU d'une ligne de
+// liste, via window.__labuse_map). ANCRE AUTOMATIQUE : la bulle ne doit JAMAIS être coupée — on la place
+// du côté où il y a la place (au-dessus / en dessous / gauche / droite du point) DANS la zone visible de
+// la carte. Le conteneur maplibre commence déjà SOUS l'en-tête (y≈56) et À DROITE du panneau (x≈390), donc
+// « rester dans le conteneur » = « rester sous l'en-tête, dans la zone visible ». On calcule l'ancre à la
+// main et on la FIXE (déterministe, pas d'auto-flip). `centre` = la carte recentre d'abord sur le point
+// (ouverture depuis la liste / permis non géocodé) → le point finit au centre, on ancre donc au centre.
+const _POP_W = 320, _POP_H = 360, _POP_OFF = 14
+function _ancrePermis(m: maplibregl.Map, lngLat: maplibregl.LngLatLike, centre: boolean): maplibregl.PositionAnchor {
+  const c = m.getContainer()
+  const cw = c.clientWidth, ch = c.clientHeight
+  const pt = centre ? { x: cw / 2, y: ch / 2 } : m.project(lngLat)
+  // vertical : sous le point si la place est dessous, sinon au-dessus, sinon le côté le plus grand.
+  const vy = (ch - pt.y) >= _POP_H + _POP_OFF ? 'top'
+    : pt.y >= _POP_H + _POP_OFF ? 'bottom'
+    : (ch - pt.y) >= pt.y ? 'top' : 'bottom'
+  // horizontal : décale à droite/gauche seulement si la bulle centrée dépasserait un bord.
+  const hx = pt.x - _POP_W / 2 < 0 ? '-left'          // point près du bord gauche → bulle vers la droite
+    : pt.x + _POP_W / 2 > cw ? '-right'               // près du bord droit → bulle vers la gauche
+    : ''
+  return (vy + hx) as maplibregl.PositionAnchor
+}
+
 let _permisPopup: maplibregl.Popup | null = null
 export function fermerBullePermis() { try { _permisPopup?.remove() } catch { /* noop */ } _permisPopup = null }
-export function ouvrirBullePermis(m: maplibregl.Map, pid: string, lngLat: maplibregl.LngLatLike) {
+export function ouvrirBullePermis(m: maplibregl.Map, pid: string, lngLat: maplibregl.LngLatLike, centre = false) {
   fermerBullePermis()   // une seule bulle permis à la fois
   const select = useApp.getState().select
   const box = document.createElement('div'); box.style.cssText = POPUP_BOX_CSS
@@ -58,7 +77,7 @@ export function ouvrirBullePermis(m: maplibregl.Map, pid: string, lngLat: maplib
   const corps = document.createElement('div'); corps.style.cssText = 'margin-top:9px;font-size:12px;line-height:1.75'
   const load = document.createElement('div'); load.textContent = 'Chargement de la fiche…'; load.style.cssText = 'color:#c9d2cc;font-size:12px;margin-top:9px'
   box.appendChild(load); box.appendChild(corps)
-  const popup = new maplibregl.Popup({ offset: 12, className: 'labuse-popup', maxWidth: '320px', closeButton: true, closeOnClick: true })
+  const popup = new maplibregl.Popup({ offset: 12, anchor: _ancrePermis(m, lngLat, centre), className: 'labuse-popup', maxWidth: '320px', closeButton: true, closeOnClick: true })
     .setLngLat(lngLat).setDOMContent(box).addTo(m)
   _permisPopup = popup
   popup.on('close', () => { if (_permisPopup === popup) _permisPopup = null; try { useApp.getState().setPermisOuvert(null) } catch { /* noop */ } })
@@ -89,7 +108,7 @@ export function ouvrirBullePermis(m: maplibregl.Map, pid: string, lngLat: maplib
     if (parcs.length) ligne('Parcelle(s)', parcs.map((p) => (p.length >= 14 ? `${p.slice(8, 10)} ${p.slice(10)}` : p)).join(', '))
     const idu0 = parcs[0] ?? null
     if (idu0 && idu0.length === 14) {
-      const bp = document.createElement('button'); bp.textContent = 'Voir la parcelle sur la carte →'
+      const bp = document.createElement('button'); bp.textContent = 'Voir la parcelle →'
       bp.style.cssText = 'margin-top:11px;width:100%;color:#4ADE80;background:none;border:1px solid rgba(74,222,128,.35);border-radius:8px;cursor:pointer;font:12px system-ui;padding:7px 10px'
       bp.addEventListener('click', () => { select(String(idu0)); popup.remove() }); corps.appendChild(bp)
     }
@@ -98,6 +117,7 @@ export function ouvrirBullePermis(m: maplibregl.Map, pid: string, lngLat: maplib
   }).catch(() => { load.textContent = 'Fiche permis indisponible — réessayez.' })
   return popup
 }
+
 
 const LEGACY_COLOR = '#39463F'
 const LEGACY_OPACITY = 0.03
@@ -486,6 +506,7 @@ const getPaletteToast = (total?: number) =>
   + ' ; la liste reste exacte.'
 
 export function MapView() {
+  const { data: tuyauPlan } = useTuyauPlan()   // RETOURS-25 (pt 8) — légende des couches empilée avec la Légende
   const ref = useRef<HTMLDivElement>(null)
   const map = useRef<maplibregl.Map | null>(null)
   const ready = useRef(false)
@@ -1102,8 +1123,8 @@ export function MapView() {
           btn.addEventListener('click', () => { parcelAt(lon, lat).then((r) => { if (r.idu) select(String(r.idu)) }).catch(() => {}); popup.remove() })
           ;(e as maplibregl.MapLayerMouseEvent).preventDefault()
         } else if (pid) {
-          // RECETTE-OUTILS-1 (points 6 & 7) — fiche permis en bulle UNIQUE sur la carte (fonction partagée
-          // avec le clic depuis la LISTE). On surligne aussi la ligne correspondante dans la liste.
+          // RETOURS-23 (suite, pt 1) — clic sur un point permis → bulle sur la carte (ancre auto, jamais
+          // coupée) AU POINT CLIQUÉ (`centre=false`). La ligne correspondante de la liste est surlignée.
           useApp.getState().setPermisOuvert?.(String(pid))
           ouvrirBullePermis(m, String(pid), (e as maplibregl.MapLayerMouseEvent).lngLat)
           ;(e as maplibregl.MapLayerMouseEvent).preventDefault()
@@ -1447,11 +1468,20 @@ export function MapView() {
     //    (liste N == parcelles peintes N) + trame neutre dessous pour « le reste » ;
     //  · sinon → l'expression client (exacte dans ce cas).
     const expr = toExpr(filters)
+    // RETOURS-25 (pt 15) — DÉCHARGE DU CORIAGE hors carte : le filtre de palette porte jusqu'à ~20 000
+    // IDU (`['in', idu, ['literal', …]]`), que maplibre ré-évalue pour chaque parcelle à chaque
+    // (re)construction des buckets. Dès qu'un OUTIL (module) ou une FICHE (selectedIdu) prend le focus,
+    // la carte n'est plus l'objet du regard : on RETIRE ce filtre lourd (la peinture ne colore plus rien,
+    // les contours restent). Au RETOUR à la carte nue, il est REcHARGÉ (resultIdus intact). `selectedIdu`
+    // est dans les deps de cet effet pour déclencher décharge/recharge.
+    const coloriageDecharge = !!resultIdus && (selectedIdu != null || module != null)
     const exprPalette: maplibregl.FilterSpecification = layers.couleurs_verdict
       ? (['all'] as unknown as maplibregl.FilterSpecification)
-      : resultIdus
-        ? (['all', expr, ['in', ['get', 'idu'], ['literal', resultIdus]]] as unknown as maplibregl.FilterSpecification)
-        : expr
+      : coloriageDecharge
+        ? (['==', ['get', 'idu'], ' '] as unknown as maplibregl.FilterSpecification)   // déchargé : ne peint rien
+        : resultIdus
+          ? (['all', expr, ['in', ['get', 'idu'], ['literal', resultIdus]]] as unknown as maplibregl.FilterSpecification)
+          : expr
     // RECETTE-8 W9 (A1) — plus de GRIS DE FOND sous les parcelles hors sélection en mode Analyse.
     // La trame neutre (#22302A/0,28) peignait « le reste » d'un gris sale : une parcelle doit
     // porter la COULEUR DE SON PALIER ou RIEN, jamais un gris. Les parcelles hors sélection restent
@@ -1515,7 +1545,7 @@ export function MapView() {
     // M64-P1 (A) : `basemap` dans les deps — au changement de thème, cet effet (seul à connaître le
     // mode zonage/opinion/factuel/neutre) se ré-exécute et RE-POSE la bonne fill-color des parcelles.
     // Corrige la teinte rouge/brune au boot : la couleur des parcelles n'appartient plus à applyTheme.
-  }, [filters, layers, bpeDomains, geo.dataUpdatedAt, mapReady, ile, verdict, opinion, zonageFill, module, comparePicking, resultIdus, basemap])
+  }, [filters, layers, bpeDomains, geo.dataUpdatedAt, mapReady, ile, verdict, opinion, zonageFill, module, comparePicking, resultIdus, basemap, selectedIdu])
 
   // P3 (dernière passe) — RÉSULTATS DE RECHERCHE EN VIOLET : quand une recherche/projet est
   // active (restitution posée), les parcelles-résultats (promues filtrées) reçoivent un CONTOUR
@@ -1958,11 +1988,15 @@ export function MapView() {
       {/* RECETTE-OUTILS-3 (S11) — bloc de contrôle 3D (↺/↻ · inclinaison · recentrer), seulement en 3D. */}
       {terrain3d && <Controle3D map={map} />}
       <MapToolbar />
-      {/* M12 C6/C7 : UN SEUL panneau de légendes (verdict replié + zonage + 50 pas +
-          équipements), cohabitant sans se recouvrir. La légende « Équipements » a quitté son
-          bloc flottant (qui masquait le verdict) pour rejoindre ce panneau. */}
-      <Legend />
-      {/* COUCHES-TUYAU-1 lot 2 — le tuyau : sources vectorielles des 52 couches + légende bas-droite */}
+      {/* RETOURS-25 (pt 8) — UN SEUL conteneur de légendes en bas à droite : la légende des COUCHES
+          (TuyauLegend) et la légende de PEINTURE (Legend : verdict/zonage) EMPILÉES (flex-col, gap), au
+          lieu de deux panneaux flottants indépendants qui se superposaient (deux « Légende » l'une sur
+          l'autre). Chacune se masque seule quand elle est vide. */}
+      <div data-legendes className="floating absolute bottom-4 right-4 z-10 hidden w-[244px] flex-col divide-y divide-line/70 sm:flex">
+        <TuyauLegend plan={tuyauPlan} />
+        <Legend />
+      </div>
+      {/* COUCHES-TUYAU-1 lot 2 — le tuyau : sources vectorielles des 52 couches (la légende est empilée ci-dessus) */}
       <CouchesTuyauLayers map={map} ready={mapReady} />
       <VefaDetail />{/* SECTEUR-2b (U1) — panneau de détail au clic sur une commune VEFA */}
       {/* B1/P5 : chargement carte DISCRET (données GeoJSON + tuiles MVT) — jamais figé.

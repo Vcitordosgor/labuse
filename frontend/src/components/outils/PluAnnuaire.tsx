@@ -1,12 +1,11 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { pluAnnuaireSearch, pluAnnuaireCommunes, pluAnnuairePack, type PluExtrait } from '../../lib/api'
+import { fmtDateNum } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { Bouton } from '../ui/Bouton'
-import { Retour } from '../ui/Retour'
-import { Chevron } from '../ui/Chevron'
 
 // M51 / M82 puis M137-P (fusion outil PLU) — ANNUAIRE PLU en DEUX ÉTAPES : (1) les 24 communes, on
 // clique celle dont on veut le PLU ; (2) deux voies — le PLU INTÉGRAL (pack officiel GPU .zip, à
@@ -50,15 +49,23 @@ export function PluAnnuaire() {
   const entrer = (code: string) => { setInsee(code); setQ(''); setZone(''); setMode('choix'); m.reset() }
   const communesVue = () => { setInsee(''); setZone(''); setQ(''); setMode('choix'); m.reset() }
 
+  // RETOURS-23 (pt 1) — le « ← Retour » interne est retiré : dans une commune, le bouton UNIQUE du
+  // haut ramène aux 24 communes (sinon au menu Outils). On enregistre ce recul tant qu'on est entré
+  // dans une commune ; au niveau racine (les 24), le retour de l'en-tête ferme l'outil.
+  const setOutilSousRetour = useApp((s) => s.setOutilSousRetour)
+  useEffect(() => {
+    setOutilSousRetour(insee ? communesVue : null)
+    return () => setOutilSousRetour(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [insee, setOutilSousRetour])
+
   const cur = insee ? info(insee) : undefined
   const servable = cur?.statut === 'servable'
 
   return (
     <div data-plu-annuaire className="flex min-h-0 flex-1 flex-col gap-2 overflow-x-hidden overflow-y-auto">
-      {/* RECETTE-OUTILS-2 (R4) — l'Annuaire est désormais la SEULE voie PLU (plus de hub « Procédure »).
-          Le « Retour » interne n'apparaît donc que DANS une commune (→ les 24 communes) ; sur la liste
-          des 24, seul le « ← Outils » de l'en-tête ramène en arrière. (onHub conservé mais inutile.) */}
-      {insee && <Retour label="Retour" onClick={communesVue} />}
+      {/* RETOURS-23 (pt 1) — le « ← Retour » interne est retiré : le bouton unique de l'en-tête
+          recule d'un niveau (commune → les 24 communes, via outilSousRetour ci-dessus). */}
       {/* ── ÉTAPE 1 — les 24 communes ─────────────────────────────────────────────── */}
       {!insee && (
         <>
@@ -80,16 +87,9 @@ export function PluAnnuaire() {
                 {communes.data.n_plu_vigueur ?? communes.data.servables} PLU en vigueur ({communes.data.n_communes} communes{communes.data.n_rnu > 0 && <>, {communes.data.n_rnu} au RNU</>})
                 {/* RECETTE-1 R26 — « · N procédures en cours » RETIRÉ de ce bandeau (demande Vic). */}
               </p>
-              {/* RECETTE-2 (D1) — DEUX FAITS DISTINCTS, plus mélangés : (1) les PLU en révision (en vigueur,
-                  servis) ; (2) les règlements non servis par le GPU. Les Trois-Bassins est en révision ET
-                  servi (il n'est pas dans non_servis) — vérifié. */}
-              {((communes.data.n_procedures ?? 0) > 0 || (communes.data.non_servis?.length ?? 0) > 0) && (
-                <p data-plu-trous className="mb-1.5 px-0.5 text-[9.5px] leading-snug text-cp-amber">
-                  {(communes.data.n_procedures ?? 0) > 0 && <>{communes.data.n_procedures} PLU en révision (PLU en vigueur servi)</>}
-                  {(communes.data.n_procedures ?? 0) > 0 && (communes.data.non_servis?.length ?? 0) > 0 && ' · '}
-                  {(communes.data.non_servis?.length ?? 0) > 0 && <>{communes.data.non_servis.length} règlement{communes.data.non_servis.length > 1 ? 's' : ''} non servi{communes.data.non_servis.length > 1 ? 's' : ''} par le Géoportail ({communes.data.non_servis.join(', ')}) — texte à consulter en mairie</>}
-                </p>
-              )}
+              {/* RETOURS-23 (pt 5) — bandeau « N PLU en révision … N règlements non servis … texte à
+                  consulter en mairie » RETIRÉ (demande Vic) : l'état par commune reste porté par le
+                  badge « révision » / « RNU » / « non servi » de chaque carte ci-dessous. */}
               {/* R21 — UNE COLONNE : le nom de commune est TOUJOURS entier (la grille à 2 colonnes
                   écrasait « Saint-André » en « S… » dès qu'un badge s'ajoutait). */}
               <div className="grid grid-cols-1 gap-1.5">
@@ -244,7 +244,7 @@ export function PluAnnuaire() {
                   la référence d'article (r.article_ref) comme titre ; l'aperçu est un simple
                   troncage front (le backend ne renvoie pas d'offset de surlignage). */}
               {d.resultats.map((r: PluExtrait, i: number) => (
-                <PluExtraitCard key={i} r={r} />
+                <PluExtraitCard key={i} r={r} premier={i === 0} />
               ))}
               {d.avis && <div className="text-[10px] text-txt-dim">{d.avis}</div>}
             </div>
@@ -255,38 +255,49 @@ export function PluAnnuaire() {
   )
 }
 
-// O7(c) — carte d'un extrait de règlement. Verbatim opposable montré en aperçu court (≈ 4 lignes),
-// dépliable en entier. Pas de surlignage : le backend ne renvoie ni offset d'occurrence ni titre
-// d'article distinct — on affiche donc la référence d'article comme titre et on tronque au front.
-const APERCU_MAX = 260   // caractères d'aperçu (≈ 4 lignes) avant « voir l'article entier »
-function PluExtraitCard({ r }: { r: PluExtrait }) {
+// RETOURS-23 (pt 6) — carte d'un extrait de règlement, maquette 8-plu-articles : numéro d'article en
+// VERT mono, zone + commune en PUCES, TITRE en clair (lu côté back, remis en casse de phrase — jamais
+// les majuscules recopiées du PDF), aperçu de TROIS lignes, « Lire tout ▾ » qui déplie DANS la carte,
+// pied d'une ligne « Règlement du jj/mm/aaaa · p. N » + « PDF ↗ ». Le premier extrait porte un liseré
+// vert (mis en avant). Plus de surlignage : le backend ne renvoie pas d'offset d'occurrence.
+function numeroArticle(ref: string | null): string {
+  if (!ref) return 'Article'
+  const court = ref.replace(/^\s*(?:ARTICLE|Article|article)\s+/i, '').replace(/\s*[-–—]\s*$/, '').trim()
+  return court || ref
+}
+function PluExtraitCard({ r, premier = false }: { r: PluExtrait; premier?: boolean }) {
   const [ouvert, setOuvert] = useState(false)
-  const texte = r.texte_verbatim ?? ''
-  const long = texte.length > APERCU_MAX
-  const apercu = long && !ouvert ? texte.slice(0, APERCU_MAX).trimEnd() + '…' : texte
+  const complet = r.texte_verbatim ?? ''
+  const corps = r.corps && r.corps.trim() ? r.corps : complet
+  const long = complet.trim().length > 180 || complet.length > corps.length + 8
   return (
-    <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
-      <div className="flex flex-wrap items-baseline gap-x-2 text-[11px]">
-        <span className="font-medium text-mint">{r.article_ref ?? 'Extrait du règlement'}</span>
-        {r.zone && <span className="text-txt-mut">zone {r.zone}</span>}
-        <span className="text-txt-mut">{r.commune}</span>
-        {r.doute && (
-          <span className="rounded bg-st-ecartee/15 px-1 text-[9.5px] text-st-ecartee">
-            doute — vérifier au PDF
-          </span>
-        )}
+    <div data-plu-carte className={`rounded-lg border bg-surface-2 px-3 py-2.5 ${premier ? 'border-mint/60' : 'border-line-2'}`}>
+      {/* en-tête : numéro vert mono à gauche, puces zone/commune à droite */}
+      <div className="flex items-start justify-between gap-2">
+        <span className="shrink-0 font-mono text-[12px] font-medium text-mint">{numeroArticle(r.article_ref)}</span>
+        <div className="flex flex-wrap items-center justify-end gap-1">
+          {r.zone && <span className="rounded border border-line-2 bg-surface-3 px-1.5 py-0.5 text-[9.5px] text-txt-mut">zone {r.zone}</span>}
+          <span className="rounded border border-line-2 bg-surface-3 px-1.5 py-0.5 text-[9.5px] text-txt-mut">{r.commune}</span>
+        </div>
       </div>
-      <pre className="mt-1 whitespace-pre-wrap break-words font-sans text-[11px] leading-snug text-txt">{apercu}</pre>
-      {long && (
-        <Bouton niveau="lien" onClick={() => setOuvert((o) => !o)} className="mt-0.5 inline-flex items-center gap-1">
-          <Chevron open={ouvert} />{ouvert ? 'replier l’article' : 'voir l’article entier'}
-        </Bouton>
+      {/* titre « en clair », deux lignes au plus */}
+      {r.titre && <p className="mt-1 line-clamp-2 text-[12px] font-medium leading-snug text-txt-hi">{r.titre}</p>}
+      {/* aperçu 3 lignes (corps, sans le titre) ; déplié → verbatim complet */}
+      <p className={`mt-1 whitespace-pre-wrap break-words text-[11px] leading-snug text-txt ${ouvert ? '' : 'line-clamp-3'}`}>
+        {ouvert ? complet : corps}
+      </p>
+      {r.doute && (
+        <span className="mt-1 inline-block rounded bg-st-ecartee/15 px-1 text-[9.5px] text-st-ecartee">doute — vérifier au PDF</span>
       )}
-      <div className="mt-1 flex flex-wrap items-center gap-x-2 text-[10px] text-txt-dim">
-        <span>{r.document}{r.millesime ? ` · ${r.millesime}` : ''}</span>
-        <a href={r.source_url} target="_blank" rel="noreferrer" className="text-mint hover:underline">
-          page PDF {r.page_pdf} · archive GPU ↗
-        </a>
+      {/* pied une ligne : règlement daté + page · Lire tout ▾ · PDF ↗ */}
+      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 border-t border-line/60 pt-1.5 text-[10px] text-txt-dim">
+        <span className="text-txt-mut">Règlement{r.millesime ? ` du ${fmtDateNum(r.millesime)}` : ''} · p. {r.page_pdf}</span>
+        {long && (
+          <button data-plu-lire onClick={() => setOuvert((o) => !o)} className="text-mint hover:underline">
+            {ouvert ? 'Réduire ▲' : 'Lire tout ▾'}
+          </button>
+        )}
+        <a href={r.source_url} target="_blank" rel="noreferrer" className="text-mint hover:underline">PDF ↗</a>
         {r.pagination_note && <span className="text-st-creuser">⚠ {r.pagination_note}</span>}
       </div>
     </div>

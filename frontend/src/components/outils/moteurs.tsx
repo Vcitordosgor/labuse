@@ -7,7 +7,6 @@ import { addProfile, getCommunes, getMoteursConfig, getProfiles, getResults, mot
 import { CLIENT } from '../../lib/strings'
 import { fmtEurCompact, fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
-import { PERIM_POTENTIEL_COURT } from '../../lib/perimetres'   // SDP-UNIQUE-1 — jamais « SDP » nu
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 import { Chargement, Squelette } from '../Loading'
 import { EmptyState, ErrorState } from '../States'
@@ -182,6 +181,10 @@ export function M16() {
   }, [mselPrefill])
   useEffect(() => {
     setModuleMap({ idus: msel, extra: null })
+    // RETOURS-25 (pt 1) — le message « 8 parcelles maximum » DISPARAÎT dès qu'on repasse sous 8 (quelle
+    // que soit la voie de retrait : puce ×, « Retirer les vides », clic carte). Avant, certains retraits
+    // (ex. « Retirer les vides ») ne remettaient pas max8 à false → le message collait.
+    if (msel.length < ASM_MAX) setMax8(false)
     // RECETTE-PROD-1 (1) — toute modification de la sélection PÉRIME le résultat précédent : on le
     // réinitialise pour que le bouton « Vérifier l'assemblage » RÉAPPARAISSE (et qu'aucun résultat
     // obsolète ne traîne sous une sélection qui a changé).
@@ -196,11 +199,7 @@ export function M16() {
   // MapView quand `module === 'assemblage'` — les contours de toutes les parcelles apparaissent,
   // bien lisibles, dès qu'on zoome (les tuiles se chargent). Voir MapView `ile-pick`.
   const d = run.data
-  // CONNEXIONS-2 Lot 9.3 (KO-15) — le ratio (2 déc.) ET le pourcentage sont désormais SERVIS par le
-  // backend (api/moteurs.py) : le front NE RE-DIVISE PLUS (fini les deux expressions du même ratio).
-  const ratio = d?.gain_ratio ?? null
-  const ratioStr = ratio != null ? ratio.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : null
-  const pct = d?.gain_pct ?? null
+  // RETOURS-25 (pt 1) — la tuile « vs meilleure seule » (gain_ratio/gain_pct) est retirée ; plus de lecture ici.
   return (
     // §1a — UN SEUL conteneur de défilement (wrapper ModulePanel = overflow-hidden).
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-0.5">
@@ -211,7 +210,8 @@ export function M16() {
           (décision Vic) : l'outil se lit directement par ses étapes. */}
       {/* RECETTE-1 (H5, Vic) — ÉTAPE 1 « Choisir les parcelles » : EntreeParcelle (adresse OU clic carte)
           + liste des parcelles retenues (✕), 8 maximum, puis « Vérifier l'assemblage ». */}
-      <p className="label-caps text-[9.5px]">Étape 1 — choisir les parcelles ({ASM_MAX} maximum)</p>
+      {/* RETOURS-26 (pt 2) — « Étape 1 — » retiré : il n'y a qu'une étape. */}
+      <p className="label-caps text-[9.5px]">Choisir les parcelles ({ASM_MAX} maximum)</p>
       <EntreeParcelle source={null} viderApresPick onPick={(i) => addDepart(i)} />
       <div className="flex flex-wrap gap-1">
         {msel.map((i) => (
@@ -255,17 +255,14 @@ export function M16() {
       {/* ÉTAPE 2 — assemblage CONTIGU : l'en-tête (N contiguës · surface totale) puis le résultat. */}
       {d && d.contigu && (
         <>
+          {/* RETOURS-25 (pt 1) — « · surface totale … » retiré de cet en-tête (la surface vit UNE SEULE
+              fois dans la tuile « Surface d'assiette » ci-dessous). */}
           <p data-asm-contigu className="text-[11.5px] text-mint">
-            <b className="tnum">{d.n}</b> parcelle{d.n > 1 ? 's' : ''} contiguë{d.n > 1 ? 's' : ''} · surface totale <b className="tnum text-txt">{fmt(d.surface_totale_m2)} m²</b>
+            <b className="tnum">{d.n}</b> parcelle{d.n > 1 ? 's' : ''} contiguë{d.n > 1 ? 's' : ''}
           </p>
           {d.tronquee && <p className="text-[10.5px] text-st-creuser">Assiette limitée aux {fmt(d.cap)} premières parcelles.</p>}
-          {/* #3 — pas de score (doctrine M120) : les FAITS agrégés — d'un seul tenant · N interlocuteurs. */}
-          <div data-asm-faits className="flex flex-wrap items-center gap-1.5 text-[11px]">
-            <span className="rounded-full bg-mint/10 px-2 py-0.5 text-mint">d'un seul tenant</span>
-            <span className="rounded-full bg-surface-3 px-2 py-0.5 text-txt-mut">{d.n_proprietaires} interlocuteur(s)</span>
-            {/* RECETTE-2 (D4b) — chip « N personnes morales · N particuliers » retirée (doublon de l'encart
-                « approche propriétaire » plus bas, qui porte le même compte avec son contexte). */}
-          </div>
+          {/* RETOURS-25 (pt 1) — chips « d'un seul tenant » + « N interlocuteurs » RETIRÉES : doublons
+              (« contiguës » dit déjà le seul tenant ; les interlocuteurs sont dans « approche propriétaire »). */}
           {(() => {
             const vides = (d.items as Record<string, any>[]).filter((i) => !((i.sdp_m2 as number) > 0))
             if (vides.length === 0) return null
@@ -281,7 +278,9 @@ export function M16() {
             )
           })()}
 
-          <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]">
+          {/* RETOURS-26 (pt 1) — `flex flex-col gap-2` : un espace NORMAL (et constant) entre les tuiles et
+              « Bilan » — avant, les deux blocs étaient collés, et « Bilan » ouvert empiétait sur les tuiles. */}
+          <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]">
             {/* CAS I — assiette sans potentiel : on le DIT, pas de bloc gain trompeur. */}
             {d.sans_potentiel ? (
               <div data-asm-sans-potentiel className="rounded-md bg-st-ecartee/[0.08] px-2 py-1.5 text-[11px] leading-snug text-st-ecartee">
@@ -294,7 +293,8 @@ export function M16() {
                 <div className="grid grid-cols-2 gap-1.5">
                   <div data-asm-kpi="surface" className="rounded-md bg-surface-3 px-2 py-1.5">
                     <div className="text-[9px] text-txt-dim">Surface d'assiette</div>
-                    <div className="tnum text-[14px] font-semibold text-txt">{fmt(d.surface_totale_m2)} m²</div>
+                    {/* RETOURS-29 (Assemblage) — « 196 m² » ne se coupe plus (whitespace-nowrap). */}
+                    <div className="tnum whitespace-nowrap text-[14px] font-semibold text-txt">{fmt(d.surface_totale_m2)} m²</div>
                     {/* NU-G-007 — la SDP cumulée est bornée à la PART EN ZONE CONSTRUCTIBLE (comme l'Étude
                         du même assemblage) : on DIT la part constructible et le % hors zone, pour ne pas
                         laisser croire que toute l'assiette se bâtit (ex. 40 % hors zone → Étude « Impossible »). */}
@@ -307,83 +307,103 @@ export function M16() {
                   {/* CHASSE-FIX-1 (B-2) — SDP-UNIQUE : la grandeur de tête est la SDP BÂTI CONSERVÉ (comme
                       la fiche), la SDP TERRAIN LIBÉRÉ (table rase) est dite juste dessous, sous ce nom, jamais
                       seule. ≠ « SDP gabarit » (capacité PLU) ≠ « SHAB vendable » (× rendement 0,8). */}
+                  {/* RETOURS-28 (Assemblage) — la tuile dit « Bâti conservé : X m² » et, dessous,
+                      « Reconstruction : Y m² » (SDP table rase, si démolition du bâti existant). */}
                   <div data-asm-kpi="sdp" className="rounded-md bg-surface-3 px-2 py-1.5">
-                    <div className="text-[9px] text-txt-dim">SDP bâti conservé · {PERIM_POTENTIEL_COURT}</div>
-                    <div data-asm-sdp-conserve className="tnum text-[14px] font-semibold text-mint">{fmt(d.sdp_bati_conserve_m2)} m²{d.sdp_conserve_estimation ? ' *' : ''}</div>
+                    <div data-asm-sdp-conserve className="text-[11px] leading-tight text-txt">
+                      <span className="text-txt-dim">Bâti conservé : </span>
+                      <b className="tnum whitespace-nowrap text-mint">{fmt(d.sdp_bati_conserve_m2)} m²</b>{d.sdp_conserve_estimation ? ' *' : ''}
+                    </div>
                     {d.sdp_terrain_libere_m2 != null && d.sdp_terrain_libere_m2 > d.sdp_bati_conserve_m2 && (
-                      <div data-asm-sdp-libere className="mt-0.5 text-[9px] leading-tight text-amber">
-                        terrain libéré {fmt(d.sdp_terrain_libere_m2)} m² — si démolition du bâti existant
+                      <div data-asm-sdp-libere className="mt-0.5 text-[10px] leading-tight text-txt-dim">
+                        Reconstruction : <b className="tnum whitespace-nowrap text-amber">{fmt(d.sdp_terrain_libere_m2)} m²</b>
                       </div>
                     )}
                   </div>
                   {/* IMPLANTATION-4 (LOT B) — la tuile « Logements » (fourchette cumulée de l'ancien
                       moteur) est RETIRÉE : le nombre de logements se lit dans l'Étude de faisabilité
                       (pont « Étude de faisabilité de cet assemblage » ci-dessous). */}
-                  {ratio != null && (
-                    <div data-asm-kpi="ratio" className="rounded-md bg-surface-3 px-2 py-1.5">
-                      <div className="text-[9px] text-txt-dim">vs meilleure seule</div>
-                      <div className="tnum text-[14px] font-semibold text-txt">×{ratioStr} <span className="text-[9px] font-normal text-mint">{pct != null && pct >= 0 ? '+' : ''}{pct} %</span></div>
-                    </div>
-                  )}
+                  {/* RETOURS-25 (pt 1) — tuile « vs meilleure seule » RETIRÉE. */}
                 </div>
                 {d.sdp_conserve_estimation && (
-                  <p data-asm-sdp-estimation className="mt-1 text-[9px] leading-tight text-txt-dim">* SDP bâti conservé estimée — le bâti existant déduit repose sur une hypothèse de niveaux (comme la fiche) quand la mesure manque.</p>
+                  <p data-asm-sdp-estimation className="text-[9px] leading-tight text-txt-dim">* SDP bâti conservé estimée — le bâti existant déduit repose sur une hypothèse de niveaux (comme la fiche) quand la mesure manque.</p>
                 )}
                 {/* RECETTE-OUTILS-1 (point 15) — le bloc rouge « Charge foncière cumulée (estimée) » ET le
                     paragraphe « Capacité et bilan calculés sur l'UNION… » (note_sdp) passent dans un
                     accordéon « Bilan » FERMÉ par défaut : l'écran d'arrivée ne montre que le descriptif
                     (surface, SDP cumulée, ×N, parcelles/interlocuteurs). */}
-                <details data-asm-bilan className="group rounded-lg border border-line-2 bg-surface-2">
+                {/* RETOURS-25 (pt 1) — Bilan réduit à L'ESSENTIEL : 4 lignes (charge foncière estimée · prix
+                    de sortie · marché de la zone · parcelles chiffrables). Le texte d'explication (bilan à
+                    rebours, hypothèses, CA, note d'union) part dans le « i » du titre. */}
+                {/* RETOURS-27 (pt 7) — Bilan OUVERT par défaut. */}
+                <details data-asm-bilan open className="group rounded-lg border border-line-2 bg-surface-2">
                   <summary className="flex cursor-pointer list-none items-center gap-1.5 px-3 py-2 text-[11px] font-medium text-txt-dim marker:hidden hover:text-mint">
                     <span aria-hidden className="inline-block w-3 text-mint transition-transform duration-quick group-open:rotate-90">▸</span> Bilan
+                    <Tip garder tip={[
+                      'Bilan À REBOURS, estimé — pas une valeur de marché. Il repose sur un prix de sortie estimé (écart médian mesuré ~27 % au backtest DVF) et des hypothèses de coût.',
+                      d.ca?.central != null ? `Chiffre d'affaires (CA) cumulé ~${fmtEurCompact(d.ca.central)}.` : '',
+                      d.note_sdp ?? '',
+                    ].filter(Boolean).join(' ')}>
+                      <span className="ml-0.5 cursor-help rounded-full border border-line-2 px-1 text-[8px] font-normal text-txt-dim">i</span>
+                    </Tip>
                   </summary>
-                  <div className="flex flex-col gap-1.5 px-3 pb-2">
-                {/* point 3 — CHARGE CUMULÉE : négative = MÊME traitement que « Étudier un bien » (bloc
-                    rouge + phrase), avec la référence marché à côté. */}
-                {d.charge_fonciere && (() => {
-                  const c = d.charge_fonciere.central as number
-                  const neg = c < 0
-                  return (
-                    <div data-asm-charge data-neg={neg ? '1' : '0'} className={`rounded-lg border px-3 py-2 text-[11px] leading-snug ${neg ? 'border-st-ecartee/40 bg-st-ecartee/[0.07]' : 'border-mint/40 bg-mint/[0.06]'}`}>
-                      {/* FIX-PRIX-ET-OPPORTUNITES (lot 1) — marquée « estimée » : c'est un bilan à rebours,
-                          pas une valeur de marché. Pas de fourchette ±30 % ici (la soustraction CA−coûts
-                          AMPLIFIE l'incertitude du prix de sortie → un ±30 % la SOUS-dirait) : on le dit. */}
-                      <span className={neg ? 'text-st-ecartee' : 'text-mint'}>Charge foncière cumulée (estimée) : <b>{fmtEurCompact(c)}</b> ({fmt(d.charge_fonciere.par_m2_terrain)} €/m² de terrain)</span>
-                      {/* RETOURS-12 T7 — résultat d'un scénario d'opération, pas un verdict sur les parcelles. */}
-                      {neg
-                        ? <span className="text-txt-dim"> — à ces hypothèses, une opération sur cet ensemble ne dégage rien pour le terrain (résultat d'un scénario, pas la valeur des parcelles).</span>
-                        : <span className="text-txt-dim"> — chiffre d'affaires (CA) cumulé ~{fmtEurCompact(d.ca?.central)}.</span>}
-                      <span className="text-txt-dim"> Estimée (bilan à rebours) : repose sur un prix de sortie estimé (écart médian mesuré ~27 % au backtest DVF) et des hypothèses de coût — pas une valeur de marché.</span>
-                      {d.terrain_zone_eur_m2 != null && <span className="text-txt-dim"> Marché zone : <b className="text-txt">{fmt(d.terrain_zone_eur_m2)} €/m²</b> (DVF · fiab. {String(d.terrain_zone_fiabilite ?? '—')}{d.zones_mixtes ? ' · zones mixtes' : ''}).</span>}
-                      {d.n_chiffrables < d.n && <span className="text-st-creuser"> · {d.n_chiffrables}/{d.n} parcelles chiffrables</span>}
-                    </div>
-                  )
-                })()}
-                <div className="mt-1 text-[10.5px] leading-snug text-txt-dim">{d.note_sdp}</div>
+                  {/* RETOURS-26 (pt 1) — chaque ligne tient sur UNE ligne : libellé à gauche, valeur à
+                      droite ; la précision (€/m², source DVF) passe EN DESSOUS (petite, alignée à droite)
+                      au lieu d'allonger la valeur et de la faire passer à la ligne. */}
+                  <div data-asm-bilan-corps className="flex flex-col gap-1.5 px-3 pb-2 text-[11px]">
+                    {d.charge_fonciere && (() => {
+                      const c = d.charge_fonciere.central as number
+                      const neg = c < 0
+                      return (
+                        <div data-asm-charge data-neg={neg ? '1' : '0'}>
+                          <div className="flex items-baseline justify-between gap-2">
+                            <span className="text-txt-dim">Charge foncière estimée</span>
+                            <span className={`font-medium ${neg ? 'text-st-ecartee' : 'text-mint'}`}>{fmtEurCompact(c)}</span>
+                          </div>
+                          <div className="text-right text-[9px] leading-tight text-txt-dim">{fmt(d.charge_fonciere.par_m2_terrain)} €/m²</div>
+                        </div>
+                      )
+                    })()}
+                    {d.prix_sortie_eur_m2 != null && (
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="text-txt-dim">Prix de sortie</span>
+                        <span data-asm-prix-sortie className="text-txt">{fmt(d.prix_sortie_eur_m2)} €/m²</span>
+                      </div>
+                    )}
+                    {d.terrain_zone_eur_m2 != null && (
+                      <div>
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span className="text-txt-dim">Marché de la zone</span>
+                          <span className="text-txt">{fmt(d.terrain_zone_eur_m2)} €/m²</span>
+                        </div>
+                        <div className="text-right text-[9px] leading-tight text-txt-dim">DVF · fiab. {String(d.terrain_zone_fiabilite ?? '—')}</div>
+                      </div>
+                    )}
+                    {/* RETOURS-27 (pt 7) — « Prix connu pour 1 parcelle sur 4 » sur UNE SEULE ligne (phrase
+                        continue, plus de libellé/valeur séparés par justify-between). */}
+                    <p data-asm-chiffrables className={`text-[11px] ${d.n_chiffrables < d.n ? 'text-st-creuser' : 'text-txt-dim'}`}>
+                      Prix connu pour <span className={d.n_chiffrables < d.n ? 'font-medium' : 'text-txt'}>{d.n_chiffrables} parcelle{d.n_chiffrables > 1 ? 's' : ''} sur {d.n}</span>
+                    </p>
                   </div>
                 </details>
               </>
             )}
           </div>
 
-          {/* IMPLANTATION-4 (LOT A) — pont vers l'Étude de faisabilité : ouvre l'écran d'étude (Docs,
-              overlay M22 + carte intégrée) avec l'assiette de l'assemblage. Le nombre de logements
-              dessiné/contrôlé se lit DANS l'Étude (plus de fourchette de l'ancien moteur ici, LOT B). */}
-          {/* RECETTE-OUTILS-2 (R3) — `shrink-0` sur le Bouton : même crush flex que le Retour (hauteur
-              écrasée, hors DA) sur le dernier enfant d'une colonne qui déborde. */}
-          {msel.length >= 1 && (
-            <Bouton niveau="secondaire" ton="vert" data-asm-etude className="w-full shrink-0"
-              onClick={() => ouvrirEtude(msel)}>
-              Étude de faisabilité de cet assemblage →
-            </Bouton>
-          )}
+          {/* RETOURS-27 (pt 7) — le bouton « Étude de faisabilité de cet assemblage » est déplacé TOUT EN
+              BAS, après la liste des parcelles (voir en pied du bloc). */}
 
           {/* B — approche propriétaire (privacy : PM nommée / particulier masqué) */}
           <div data-asm-proprio className={`rounded-lg border px-3 py-1.5 text-[11px] ${d.tous_personnes_morales ? 'border-mint/40 bg-mint/[0.06]' : 'border-line-2 bg-surface-2'}`}>
+            {/* RETOURS-28/29 (Assemblage) — pluriel résolu sans « (s) » ; RETOURS-29 : « 0 personne morale »
+                n'est PAS affiché (on ne montre la part PM que si > 0). */}
             {d.tous_personnes_morales ? (
-              <span className="text-mint">✓ Approche simplifiée — {d.n_personnes_morales} propriétaire(s) <b>personne(s) morale(s)</b>, aucun particulier</span>
+              <span className="text-mint">✓ Approche simplifiée — {d.n_personnes_morales} personne{d.n_personnes_morales > 1 ? 's' : ''} morale{d.n_personnes_morales > 1 ? 's' : ''}, aucun particulier</span>
             ) : (
-              <span className="text-txt-mut">{d.n_personnes_morales} personne(s) morale(s) · <b className="text-st-creuser">{d.n_particuliers} particulier(s)</b> (approche plus lourde)</span>
+              <span className="text-txt-mut">
+                {d.n_personnes_morales > 0 && <>{d.n_personnes_morales} personne{d.n_personnes_morales > 1 ? 's' : ''} morale{d.n_personnes_morales > 1 ? 's' : ''} · </>}
+                <b className="text-st-creuser">{d.n_particuliers} propriétaire{d.n_particuliers > 1 ? 's' : ''} particulier{d.n_particuliers > 1 ? 's' : ''}</b>
+              </span>
             )}
             {/* RECETTE-4 — noms des personnes morales EN ENTIER (plusieurs lignes si besoin) : plus de troncature (break-words). */}
             {(d.proprietaires_pm as string[]).length > 0 && (
@@ -398,8 +418,9 @@ export function M16() {
               <div key={i.idu} className="rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-[11px]">
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-txt-hi">{i.idu.slice(8)}</span>
-                  {/* CHASSE-FIX-1 (B-2) — SDP bâti conservé (= fiche) ; terrain libéré (table rase) dit à côté. */}
-                  <span className="text-txt-dim">{fmt(i.surface_m2)} m² · SDP {fmt(i.sdp_residuelle_m2 != null ? i.sdp_residuelle_m2 : i.sdp_m2)} m²{i.sdp_residuelle_m2 != null && i.sdp_m2 > i.sdp_residuelle_m2 ? ` (terrain libéré ${fmt(i.sdp_m2)})` : ''} · {PERIM_POTENTIEL_COURT}</span>
+                  {/* RETOURS-29 (Assemblage) — ligne de parcelle : « surface · bâti conservé X m² ·
+                      reconstruction Y m² » (bâti conservé = SDP résiduelle, reconstruction = table rase). */}
+                  <span className="text-txt-dim">{fmt(i.surface_m2)} m² · bâti conservé {fmt(i.sdp_residuelle_m2 != null ? i.sdp_residuelle_m2 : i.sdp_m2)} m² · reconstruction {fmt(i.sdp_m2)} m²</span>
                   {/* RECETTE-1 R8 — pastille de palier (scoring q_v14) retirée de l'Assemblage. */}
                 </div>
                 <div className="mt-0.5 flex items-center gap-2">
@@ -415,8 +436,15 @@ export function M16() {
             )})}
           </div>
           {/* RECETTE-1 (H5, Vic) — bouton « Préparer courrier propriétaire » RETIRÉ de l'Assemblage. */}
-          {/* C — indivision non détectable en base (honnête, pas fabriqué) */}
-          <p className="shrink-0 text-[10px] leading-snug text-txt-dim">Indivision : non détectable en open data (aucune structure de propriété physique publiée) — signal non affiché plutôt qu'inventé.</p>
+          {/* RETOURS-26 (pt 1) — phrase « Indivision : non détectable en open data… » retirée. */}
+
+          {/* RETOURS-27 (pt 7) — pont vers l'Étude de faisabilité, TOUT EN BAS (après la liste des parcelles). */}
+          {msel.length >= 1 && (
+            <Bouton niveau="secondaire" ton="vert" data-asm-etude className="w-full shrink-0"
+              onClick={() => ouvrirEtude(msel)}>
+              Étude de faisabilité de cet assemblage →
+            </Bouton>
+          )}
         </>
       )}
     </div>

@@ -603,7 +603,8 @@ export function CouchesTuyauLayers({ map, ready }: {
 
   return (
     <>
-      <TuyauLegend plan={plan} />
+      {/* RETOURS-25 (pt 8) — la légende des couches (TuyauLegend) est désormais rendue par MapView, EMPILÉE
+          avec la Légende de peinture dans un conteneur unique (fin de la superposition en bas de carte). */}
       {gatees.length > 0 && (
         <div data-tuyau-zoom-hint
           className="pointer-events-none absolute left-1/2 top-16 z-10 -translate-x-1/2 rounded-full border border-mint/40 bg-surface-2/95 px-3.5 py-1.5 text-[11.5px] text-txt shadow-elev-2">
@@ -617,7 +618,9 @@ export function CouchesTuyauLayers({ map, ready }: {
 // ── la LÉGENDE bas-droite — COUCHES-RECETTE-1 A10 : titrée « Légende », UN ACCORDÉON PAR COUCHE
 // active (titré du nom). La dernière couche allumée est dépliée, les autres repliées ; clic pour
 // déplier. Décalée vers le haut pour ne pas chevaucher l'attribution « Cadastre © DGFiP ».
-function TuyauLegend({ plan }: { plan: TuyauCouche[] | undefined }) {
+// RETOURS-25 (pt 8) — exportée : MapView l'EMPILE avec la Légende (peinture) dans un conteneur unique
+// (elles se superposaient en bas de la carte).
+export function TuyauLegend({ plan }: { plan: TuyauCouche[] | undefined }) {
   const { tuyauActives } = useApp()
   const actives = useMemo(
     () => (plan || []).filter((c) => tuyauActives[c.kind]).sort((a, b) => (b.rang_carte || 0) - (a.rang_carte || 0)),
@@ -661,7 +664,7 @@ function TuyauLegend({ plan }: { plan: TuyauCouche[] | undefined }) {
   }
   return (
     <div data-tuyau-legend
-      className="floating absolute bottom-10 right-4 hidden max-h-[52vh] w-[244px] overflow-y-auto rounded-xl bg-surface-2/95 p-3 text-txt shadow-elev-2 sm:block">
+      className="max-h-[52vh] w-full overflow-y-auto p-3 text-txt">
       {/* FINITIONS-1 (P7) — en-tête cliquable avec la flèche de repli/dépli (ChevronSection, DA). */}
       <button data-tuyau-legend-toggle onClick={() => setOuvertManuel(!ouvert)} aria-expanded={ouvert}
         className="flex w-full items-center gap-2 text-left">
