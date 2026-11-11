@@ -574,8 +574,11 @@ def calcule_niveaux(engine, n_sample: int = N_SAMPLE3, seed: int = SEED) -> dict
     maisons, apparts = maisons[:n_sample], apparts[:n_sample]
 
     NIV = ("sans_saisie", "surface", "surface_pieces")
-    err = _dd(lambda: _dd(list))          # err[(type)][(insee,niveau)] -> list
-    err_t = _dd(lambda: _dd(list))        # err_t[(type)][niveau] -> list (repli île)
+    # On mesure DEUX méthodes sur le MÊME échantillon : « secteur » (médiane SIMPLE du secteur = le prix
+    # d'ESTIMER-2) et « semblable » (médiane pondérée par la ressemblance = ESTIMER-3). Par cellule, on
+    # SERT la meilleure des deux (mandat) → une caractéristique/méthode ne dégrade jamais le servi.
+    err = _dd(lambda: _dd(lambda: {"semblable": [], "secteur": []}))     # [(type)][(insee,niveau)]
+    err_t = _dd(lambda: _dd(lambda: {"semblable": [], "secteur": []}))   # [(type)][niveau] (repli île)
 
     def _un(k, type_bien):
         sx, sy = float(k["x"]), float(k["y"])
@@ -608,30 +611,52 @@ def calcule_niveaux(engine, n_sample: int = N_SAMPLE3, seed: int = SEED) -> dict
                     "pieces": (float(k["pieces"]) if (use_pieces and k["pieces"]) else None)}
             _q1, med, _q3 = E3.eur_m2_semblable([dict(c) for c in sel], subj, type_bien,
                                                 use_pieces=use_pieces)
+            # « secteur » (ESTIMER-2) = médiane SIMPLE non pondérée du MÊME échantillon sélectionné.
+            med_sec = statistics.median([float(c["eurm2"]) for c in sel])
+            val = float(k["val"])
             if med:
-                e = abs(surf_tot * med / float(k["val"]) - 1.0) * 100
-                err[type_bien][(k["insee"], niveau)].append(e)
-                err_t[type_bien][niveau].append(e)
+                e = abs(surf_tot * med / val - 1.0) * 100
+                err[type_bien][(k["insee"], niveau)]["semblable"].append(e)
+                err_t[type_bien][niveau]["semblable"].append(e)
+            if med_sec:
+                es = abs(surf_tot * med_sec / val - 1.0) * 100
+                err[type_bien][(k["insee"], niveau)]["secteur"].append(es)
+                err_t[type_bien][niveau]["secteur"].append(es)
 
     for k in maisons:
         _un(k, "maison")
     for k in apparts:
         _un(k, "appartement")
 
+    def _meilleure(d: dict) -> dict:
+        """Choisit la MEILLEURE méthode (écart médian le plus bas) entre secteur et semblable, et renvoie
+        {methode, n, ecart_median, ecart_q3, pct_20, secteur, semblable} (les deux mesures pour le rapport)."""
+        qs = {m: _quart(d[m]) for m in ("secteur", "semblable")}
+        cand = {m: q for m, q in qs.items() if q["mediane"] is not None}
+        if not cand:
+            return {"methode": None, "n": 0, "ecart_median": None, "ecart_q3": None, "pct_20": None,
+                    "secteur": qs["secteur"], "semblable": qs["semblable"]}
+        best = min(cand, key=lambda m: cand[m]["mediane"])
+        q = cand[best]
+        return {"methode": best, "n": q["n"], "ecart_median": q["mediane"], "ecart_q3": q["q3"],
+                "pct_20": q["pct_20"], "secteur": qs["secteur"], "semblable": qs["semblable"]}
+
     calibration3 = []
     par_type_niveau = {}
     for t in ("maison", "appartement"):
-        par_type_niveau[t] = {niv: _quart(err_t[t][niv]) for niv in NIV}
+        par_type_niveau[t] = {niv: _meilleure(err_t[t][niv]) for niv in NIV}
         for niv in NIV:
-            q = _quart(err_t[t][niv])
-            if q["mediane"] is not None:
-                calibration3.append({"type_bien": t, "insee": "*", "niveau": niv, "n": q["n"],
-                                     "ecart_median": q["mediane"], "ecart_q3": q["q3"], "pct_20": q["pct_20"]})
-        for (insee, niv), es in err[t].items():
-            q = _quart(es)
-            if q["n"] >= MIN_CELL3:
-                calibration3.append({"type_bien": t, "insee": insee, "niveau": niv, "n": q["n"],
-                                     "ecart_median": q["mediane"], "ecart_q3": q["q3"], "pct_20": q["pct_20"]})
+            b = par_type_niveau[t][niv]
+            if b["methode"] is not None:
+                calibration3.append({"type_bien": t, "insee": "*", "niveau": niv, "n": b["n"],
+                                     "methode": b["methode"], "ecart_median": b["ecart_median"],
+                                     "ecart_q3": b["ecart_q3"], "pct_20": b["pct_20"]})
+        for (insee, niv), d in err[t].items():
+            b = _meilleure(d)
+            if b["methode"] is not None and b["n"] >= MIN_CELL3:
+                calibration3.append({"type_bien": t, "insee": insee, "niveau": niv, "n": b["n"],
+                                     "methode": b["methode"], "ecart_median": b["ecart_median"],
+                                     "ecart_q3": b["ecart_q3"], "pct_20": b["pct_20"]})
     return {"par_type_niveau": par_type_niveau, "calibration3": calibration3,
             "meta": {"n_sample": n_sample, "tires": {"maison": len(maisons), "appartement": len(apparts)}}}
 
@@ -641,8 +666,9 @@ CREATE TABLE IF NOT EXISTS estimer3_precision (
   type_bien    varchar(16) NOT NULL,
   insee        varchar(8)  NOT NULL,          -- '*' = repli île du type
   niveau       varchar(20) NOT NULL,          -- sans_saisie | surface | surface_pieces
+  methode      varchar(12) NOT NULL DEFAULT 'semblable',  -- secteur (ESTIMER-2) | semblable (ESTIMER-3) : la MEILLEURE
   n_ventes     integer     NOT NULL,
-  ecart_median real        NOT NULL,          -- écart |estimé−réel| médian MESURÉ (%)
+  ecart_median real        NOT NULL,          -- écart |estimé−réel| médian MESURÉ (%) de la méthode servie
   ecart_q3     real,                          -- borne de la fourchette servie (%)
   pct_20       real,
   maj          timestamptz NOT NULL DEFAULT now(),
@@ -655,14 +681,16 @@ def persiste3(engine, rapport: dict) -> int:
     """Écrit `estimer3_precision` (remplace le contenu) depuis `calibration3`. Renvoie le nombre de lignes."""
     rows = list(rapport["calibration3"])
     with engine.begin() as c:
+        # La table EST la photo du dernier banc : on la recrée (le schéma peut évoluer — ajout `methode`).
+        c.execute(sa.text("DROP TABLE IF EXISTS estimer3_precision"))
         c.execute(sa.text(_DDL3))
-        c.execute(sa.text("DELETE FROM estimer3_precision"))
         for r in rows:
             c.execute(sa.text(
-                "INSERT INTO estimer3_precision (type_bien,insee,niveau,n_ventes,ecart_median,ecart_q3,pct_20,maj) "
-                "VALUES (:t,:i,:nv,:n,:em,:q3,:p20, now())"),
-                {"t": r["type_bien"], "i": r["insee"], "nv": r["niveau"], "n": r["n"],
-                 "em": r["ecart_median"], "q3": r["ecart_q3"], "p20": r["pct_20"]})
+                "INSERT INTO estimer3_precision "
+                "(type_bien,insee,niveau,methode,n_ventes,ecart_median,ecart_q3,pct_20,maj) "
+                "VALUES (:t,:i,:nv,:me,:n,:em,:q3,:p20, now())"),
+                {"t": r["type_bien"], "i": r["insee"], "nv": r["niveau"], "me": r.get("methode", "semblable"),
+                 "n": r["n"], "em": r["ecart_median"], "q3": r["ecart_q3"], "p20": r["pct_20"]})
     return len(rows)
 
 
@@ -670,10 +698,12 @@ def _print3(rapport):
     print("\n════════  BANC ESTIMER-3 — niveaux d'information (no-leak, ventes 2025)  ════════")
     print(f"  tirés : {rapport['meta']['tires']}")
     for t in ("maison", "appartement"):
-        print(f"  {t.upper()}")
+        print(f"  {t.upper()}  (secteur=ESTIMER-2 · semblable=ESTIMER-3 · SERVI=la meilleure)")
         for niv, q in rapport["par_type_niveau"][t].items():
-            print(f"    {niv:<16} n={q['n']:>3}  médiane {str(q['mediane'])+'%':>8}  "
-                  f"Q3 {str(q['q3'])+'%':>8}  ±20% {str(q['pct_20'])+'%':>7}")
+            sec, sem = q["secteur"], q["semblable"]
+            print(f"    {niv:<16} secteur méd {str(sec['mediane'])+'%':>7} ±20% {str(sec['pct_20'])+'%':>6}"
+                  f"  | semblable méd {str(sem['mediane'])+'%':>7} ±20% {str(sem['pct_20'])+'%':>6}"
+                  f"  → SERVI {q['methode']} méd {str(q['ecart_median'])+'%':>7} Q3 {str(q['ecart_q3'])+'%':>7}")
 
 
 if __name__ == "__main__":

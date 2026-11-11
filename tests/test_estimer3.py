@@ -104,7 +104,7 @@ def test_charge_precision_repli_bande_sans_table():
         def rollback(self):
             pass
     p = E3.charge_precision(_FakeDB(), "maison", "97411", "surface")
-    assert p["source"] == "bande" and p["ecart_q3"] > 0
+    assert p["source"] == "bande" and p["ecart_q3"] > 0 and p["methode"] in ("secteur", "semblable")
 
 
 # ══════════════════════════════════════════════════════════════════════════════════════════════════
@@ -233,19 +233,56 @@ def test_charge_precision_lit_la_mesure_du_banc(db):
 
 
 @pytest.mark.reel
-def test_endpoint_estimation3(db):
-    """L'endpoint POST sert le rapport complet (il ouvre sa PROPRE session et relit la fiche). Le
-    chemin réel est prouvé hors test ; ici on tolère le run servi de l'environnement de test (la
-    résolution de run de la fiche peut différer) — jamais un échec aveugle."""
-    from fastapi import HTTPException
-    from labuse.pige.api import radar_annonce_estimation3, Estimation3In
+def test_sert_la_meilleure_des_deux_methodes(db):
+    """L'estimation sert la MEILLEURE méthode mesurée (secteur ESTIMER-2 / semblable ESTIMER-3) et
+    le dit (`methode_prix`) ; le ± servi (médian) n'est jamais plus large que la bande prudente (Q3)."""
     idu = _idu(db, "Maison")
+    e = E3.rapport3(db, idu, _fiche(db, idu))["estimation"]
+    assert e["methode_prix"] in ("secteur", "semblable", "repli_secteur")
+    assert e["precision_pct"] <= e["precision_q3_pct"] + 1e-6
+
+
+@pytest.mark.reel
+def test_endpoint_estimation3(monkeypatch):
+    """L'endpoint POST sert le rapport complet et RECALCULE quand on écarte une vente. Sous pytest,
+    `conftest` force l'app sur `labuse_test` (sans DVF/dryrun) : on redirige donc la session de
+    l'endpoint vers la base RÉELLE (le chemin de code de l'endpoint est exécuté tel quel)."""
+    from contextlib import contextmanager
+    url = os.environ.get("LABUSE_REEL_DATABASE_URL") or os.environ.get("LABUSE_DATABASE_URL")
+    if not url:
+        pytest.skip("LABUSE_REEL_DATABASE_URL non défini")
+    eng = create_engine(url)
     try:
-        out = radar_annonce_estimation3(idu, Estimation3In())
-    except HTTPException:
-        pytest.skip("fiche non servie par le run de cet environnement de test")
-    if out.get("note"):
-        pytest.skip("parcelle non servie (garde endpoint)")
-    assert out["type_bien"] == "maison"
-    assert {"mesures", "estimation", "ventes_retenues", "questions", "precision_par_niveau",
-            "radar", "questions_abandonnees"} <= set(out)
+        with eng.connect() as conn:
+            if conn.execute(text("SELECT to_regclass('dvf_mutations_parcelle')")).scalar() is None:
+                pytest.skip("DVF absent")
+            idu = conn.execute(text(
+                "SELECT dm.id_parcelle FROM dvf_mutations_parcelle dm "
+                "JOIN (SELECT id_mutation FROM dvf_mutations_parcelle GROUP BY 1 "
+                "      HAVING count(DISTINCT id_parcelle)=1) m USING(id_mutation) "
+                "WHERE dm.code_commune='97411' AND dm.type_local='Maison' "
+                "  AND dm.surface_reelle_bati BETWEEN 90 AND 160 ORDER BY dm.date_mutation DESC LIMIT 1")).scalar()
+        if not idu:
+            pytest.skip("pas de maison de test")
+
+        @contextmanager
+        def _reel_scope():
+            s = _Session(bind=eng)
+            try:
+                yield s
+            finally:
+                s.close()
+
+        import labuse.pige.api as papi
+        monkeypatch.setattr(papi, "session_scope", _reel_scope)
+        out = papi.radar_annonce_estimation3(idu, papi.Estimation3In())
+        assert out["type_bien"] == "maison"
+        assert {"mesures", "estimation", "ventes_retenues", "questions", "precision_par_niveau",
+                "radar", "questions_abandonnees"} <= set(out)
+        assert out["estimation"]["valeur_eur"] and out["ventes_retenues"]
+        # ré-interrogation en écartant une vente : l'endpoint recalcule (le vrai chemin POST).
+        vid = out["ventes_retenues"][0]["id"]
+        out2 = papi.radar_annonce_estimation3(idu, papi.Estimation3In(ecartees=[vid]))
+        assert any(v["id"] == vid and v["ecartee"] for v in out2["ventes_retenues"])
+    finally:
+        eng.dispose()

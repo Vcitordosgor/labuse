@@ -20,24 +20,32 @@ ressemblance), avec repli sur le prix de secteur d'ESTIMER-2 quand il y a trop p
 réponse le dit). Elle **se resserre** à chaque réponse, et **la précision servie est celle mesurée** pour
 le niveau d'information réellement disponible.
 
-**Banc permanent étendu aux niveaux d'information** (no-leak, ventes 2025, île entière, n = 1 500/type) —
-écart médian · part à ±20 % :
+**Banc permanent, MÊME échantillon no-leak** (ventes 2025, île entière, n = 1 500/type) — écart **médian**
+· part à **±20 %**, pour les trois méthodes. ESTIMER-2 = **prix de secteur** (médiane simple) ;
+ESTIMER-3 = **comparables semblables** (pondérée). On **SERT la meilleure des deux à chaque niveau** :
 
-| Type | sans rien saisir | + surface habitable | + nombre de pièces |
+| Type | ESTIMER-2 (secteur) | ESTIMER-3 sans saisie | ESTIMER-3 + surface |
 |---|---|---|---|
-| **Maison** | **30 %** · 34 % | **24 %** · 43 % | 25 % · 41 % — *aucun gain → non posée* |
-| **Appartement** | *sans objet¹* | **15 %** · 61 % | **15 %** · **62 %** *(Q3 28→27)* |
-| **Terrain nu** | **35 %** · 34 %² | *— pas de question mesurable —* | |
+| **Maison** | 30,3 % · 33 % | **30,3 % · 33 %** *(= secteur : voir ci-dessous)* | **24,5 % · 43 %** *(semblable)* |
+| **Appartement** | 16,4 % · 58 %¹ | *sans objet²* | **15,4 % · 61 %** *(semblable)* |
+| **Terrain nu** | 35 % · 34 %³ | *— pas de question mesurable —* | 35 % · 34 % |
 
-¹ L'appartement n'a **pas de surface mesurable sans saisie** (l'emprise×ratio est une formule *maison*) :
-son estimation commence à « surface connue ». ² Terrain : repère de secteur ESTIMER-2 (rayon adaptatif +
-repli commune) ; la seule caractéristique candidate (viabilisé) n'est **pas une donnée** → non posée.
+¹ Appartement « surface connue » (pas de niveau sans saisie, cf. ²). ² L'appartement n'a **pas de surface
+mesurable sans saisie** (emprise×ratio = formule *maison*) → son estimation commence à « surface connue ».
+³ Terrain : repère de secteur ESTIMER-2 (rayon adaptatif + repli commune) ; la seule caractéristique
+candidate (viabilisé) n'est **pas une donnée** → non posée, et ESTIMER-3 ne change pas le terrain.
 
-**Ce que ça change, prouvé :** répondre la **surface** fait passer la maison de **30 % → 24 %** d'écart
-médian et **34 % → 43 %** à ±20 % — le plus gros gain, robuste 2024 **et** 2025. Les autres questions ont
-été **mesurées une par une** et la plupart **écartées faute de gain** (§4). La précision n'est **jamais un
-chiffre fixe** : à Saint-Denis une maison « surface connue » porte **±43 %** (commune dispersée, mesuré
-sur 156 ventes), un appartement de Saint-Pierre (97410) **±21 %** — chacun sa mesure.
+**Dit franchement : sans saisie, la méthode « semblables » ne fait PAS mieux que le prix de secteur**
+(maison 30,3 % contre 30,3 %, à égalité ; le secteur l'emporte d'un cheveu à ±20 %). **À ce niveau, on sert
+donc le prix de secteur** (ESTIMER-2). **Dès que la surface est connue, « semblables » gagne** (maison
+25,3 % → **24,5 %** ; appartement 16,4 % → **15,4 %**) et c'est elle qu'on sert. La règle est **mesurée et
+servie cellule par cellule** (colonne `methode` de la table) : ESTIMER-3 **n'est jamais pire** qu'ESTIMER-2.
+*(L'audit ESTIMER-2 citait 26,7 % pour la maison ; c'était un échantillon de 200. Sur 1 500 ventes, le prix
+de secteur sans saisie est à 30,3 % — le présent banc, plus large, est la mesure de référence.)*
+
+**Ce que la surface change, prouvé :** pour la maison, l'écart médian passe de **30,3 % → 24,5 %** et la
+part à ±20 % de **33 % → 43 %** — robuste 2024 **et** 2025. Les autres questions ont été **mesurées une par
+une** et la plupart **écartées faute de gain** (§4). La précision n'est **jamais un chiffre fixe** (§3).
 
 ---
 
@@ -56,6 +64,13 @@ ventes du **même type** de la commune (`pige.estimer3.eur_m2_semblable`). Chaqu
 Le **rayon est adaptatif** (500 → 1000 → 1500 m jusqu'à 8 ventes, sinon repli commune), comme ESTIMER-2.
 **Les échelles de pondération ne sont pas inventées** : distance/surface/terrain/ancienneté viennent
 d'ESTIMER-PRECISION-1, l'échelle des pièces (h = 0,8) est réglée ici au banc et confirmée hors-période.
+
+**La meilleure des deux à chaque niveau.** Le banc mesure, sur le même échantillon, **le prix de secteur**
+(médiane simple = ESTIMER-2) **et** les **semblables** (pondérée = ESTIMER-3) ; pour chaque (type, commune,
+niveau) il retient la **méthode la plus précise**. Au service, l'outil calcule les deux médianes et sert
+celle que le banc a désignée (`methode_prix`). Conséquence mesurée : **sans saisie on sert le secteur**
+(les semblables n'aident pas), **surface connue on sert les semblables** (elles gagnent) — ESTIMER-3
+**n'est jamais pire** qu'ESTIMER-2.
 
 **Repli secteur.** Quand il reste moins de 8 ventes semblables (commune/ type rare), l'outil **replie sur
 le prix de secteur d'ESTIMER-2** (`comparateur_bien`) et **le dit** (`repli_secteur: true`, note servie).
@@ -79,14 +94,33 @@ du bien, **terrain** (contenance), **emprise bâtie au sol** (BD TOPO), **niveau
 ## 3 — La précision est mesurée par commune × type × niveau (jamais fixe)
 
 La précision servie vient du **banc permanent** (`estimer3_precision`), écrite chaque nuit : pour chaque
-(type, commune, niveau d'information) elle porte l'**écart médian** (la fourchette « ± X % » typique qui
-se resserre), le **Q3** (bande prudente ~75 % des ventes) et la **part à ±20 %**. Repli commune → île du
-type ; banc jamais passé → bande prudente, **jamais de 500**.
+(type, commune, niveau), elle porte la **méthode gagnante** (secteur / semblable), l'**écart médian**, le
+**Q3** et la **part à ±20 %**. Repli commune → île du type ; banc jamais passé → bande prudente, jamais de 500.
 
-Le niveau suit le **contenu d'information RÉEL** : une surface connue d'une vente DVF antérieure vaut
-« surface connue » (la précision le reflète, sans que l'utilisateur ait rien tapé). La maison **plafonne à
-« surface »** (les pièces n'y ajoutent rien). Exemple servi (commune) : Saint-Denis maison surface **±43 %**
-(méd 28 %, 156 ventes) ; l'Entre-Deux appartement surface **±21 %** — chacun sa mesure, jamais un ±30 % fixe.
+**Ce que « ± X % » veut dire exactement.** Deux chiffres mesurés, deux percentiles de l'écart
+|estimé − réel| :
+- le **± servi à l'écran** (`precision_pct`) = l'écart **MÉDIAN** (50ᵉ percentile) → *une estimation sur
+  deux* tombe dans la fourchette `valeur × (1 ± médian)`. C'est lui qui **se resserre** à chaque réponse ;
+- le **Q3** (`precision_q3_pct`, 75ᵉ percentile) = la **bande prudente** qui enferme ~trois estimations sur
+  quatre, servie à côté pour qui veut l'intervalle large.
+
+Donc l'ancien « ± 43 % » cité pour Saint-Denis était le **Q3** : à l'écran, une maison « surface connue »
+de Saint-Denis porte **± 28 %** (médian) et sa bande prudente est **56 %** (Q3). Les cinq plus grosses
+communes (maison, surface connue — médian servi / Q3 prudent / part ±20 % / méthode) :
+
+| Commune | ± servi (médian) | bande prudente (Q3) | part ±20 % | méthode servie | n |
+|---|---|---|---|---|---|
+| Saint-Paul (97415) | **± 20 %** | 36 % | 51 % | semblable | 153 |
+| Le Tampon (97422) | **± 25 %** | 41 % | 44 % | semblable | 214 |
+| Saint-Pierre (97416) | **± 20 %** | 34 % | 51 % | semblable | 181 |
+| Saint-Denis (97411) | **± 28 %** | 56 % | 35 % | secteur | 156 |
+| Saint-Louis (97414) | **± 22 %** | 32 % | 46 % | secteur | 99 |
+
+Saint-Denis est la plus dispersée (habitat urbain hétérogène) — et c'est là que le **prix de secteur** bat
+les semblables, donc c'est lui qu'on sert. Jamais un ±30 % fixe : chaque commune porte **sa** mesure et
+**sa** méthode. Le niveau suit le **contenu d'information RÉEL** : une surface connue d'une vente DVF
+antérieure vaut « surface connue » (la précision le reflète sans que l'utilisateur tape quoi que ce soit) ;
+la maison plafonne à « surface » (les pièces n'y ajoutent rien).
 
 ---
 
@@ -159,8 +193,8 @@ les écarts médians du niveau le plus informé.
 
 **GARDÉES** (gain mesuré, prouvé 2024 **et** 2025) :
 
-- **Surface habitable** — maison : écart médian **30 % → 24 %**, part ±20 % **34 % → 43 %** ; appartement :
-  indispensable (pas de total sans elle). *Posée pour les deux types.*
+- **Surface habitable** — maison : écart médian **30,3 % → 24,5 %**, part ±20 % **33 % → 43 %** ;
+  appartement : **16,4 % → 15,4 %** (indispensable — pas de total sans elle). *Posée pour les deux types.*
 - **Nombre de pièces** — appartement : Q3 **28 → 27**, part ±20 % **61 → 62 %**, stable sur deux millésimes.
   *Posée pour l'appartement seulement.*
 
@@ -182,11 +216,15 @@ terrain, zone), soit **non posé parce que non prouvé**.
 
 ## Ce qui est vérifié vert
 
-- **Python unitaire** : **3 257 passed, 0 failed** (famille sans base) ; scan de secrets OK.
-- **Tests ESTIMER-3** (`tests/test_estimer3.py`) : 14 verts (pondération par ressemblance, questions
-  prouvées par type, écartement qui recalcule, précision par niveau mesurée, Radar, repli bande) ;
-  canary du banc étendu + job de nuit verts. Graphe des lecteurs fins (G6) : dette 0, périmées 0.
-- **Front NON touché** (mandat) ; `tsc -b` + `vitest` verts (inchangés).
+- **Python unitaire** : **3 257 passed, 0 failed** (famille sans base) ; scan de secrets OK ;
+  **cohérence 6/6, 0 écart**.
+- **Tests ESTIMER-3** (`tests/test_estimer3.py`) : **15 verts, 0 ignoré** — pondération par ressemblance,
+  questions prouvées par type, **meilleure des deux méthodes**, écartement qui recalcule, précision par
+  niveau mesurée, Radar, repli bande, **endpoint POST exécuté pour de vrai** (le conftest force l'app sur
+  `labuse_test` → le test redirige la session de l'endpoint vers la base réelle, le chemin de l'endpoint
+  est exercé tel quel, écartement compris). Canary du banc étendu + job de nuit verts. Graphe des lecteurs
+  fins (G6) : dette 0, périmées 0.
+- **Front NON touché** (mandat) ; `tsc -b` 0 + `vitest` 326 verts (inchangés).
 
 ## Fichiers
 

@@ -271,13 +271,14 @@ def charge_precision(db, type_bien: str, insee: str, niveau: str) -> dict:
     try:
         for ins, peri in ((insee, "commune"), ("*", "ile")):
             r = db.execute(text(
-                "SELECT n_ventes, ecart_median, ecart_q3, pct_20 FROM estimer3_precision "
+                "SELECT n_ventes, ecart_median, ecart_q3, pct_20, methode FROM estimer3_precision "
                 "WHERE type_bien = :t AND insee = :i AND niveau = :n"),
                 {"t": t, "i": ins, "n": niveau}).mappings().first()
             if r and r["ecart_q3"] is not None:
                 return {"ecart_median": round(float(r["ecart_median"])), "ecart_q3": round(float(r["ecart_q3"])),
                         "pct_20": (round(float(r["pct_20"])) if r["pct_20"] is not None else None),
-                        "n": int(r["n_ventes"] or 0), "perimetre": peri, "source": "mesure"}
+                        "n": int(r["n_ventes"] or 0), "perimetre": peri, "source": "mesure",
+                        "methode": (r["methode"] or "semblable")}
     except Exception:  # noqa: BLE001 — table absente (banc jamais passé) → repli bande prudente
         try:
             db.rollback()
@@ -285,7 +286,7 @@ def charge_precision(db, type_bien: str, insee: str, niveau: str) -> dict:
             pass
     q3 = _BANDE_REPLI.get(t, _BANDE_REPLI["maison"]).get(niveau, 35)
     return {"ecart_median": q3, "ecart_q3": q3, "pct_20": None, "n": 0,
-            "perimetre": "bande", "source": "bande"}
+            "perimetre": "bande", "source": "bande", "methode": "semblable"}
 
 
 def _fiabilite_mot(ecart_median: float, n: int) -> tuple[str, str]:
@@ -396,8 +397,15 @@ def estimation_semblable(db, idu: str, fiche: dict, *, surface_hab: float | None
     subj = {"surf_poids": surf_poids_pond, "terrain": (float(surface_parc) if surface_parc else None),
             "pieces": pieces_use}
     repli = False
+    methode = prec.get("methode", "semblable")
     if len(active) >= SEUIL:
-        q1, med, q3 = eur_m2_semblable(active, subj, type_bien, use_pieces=bool(pieces_use))
+        # On calcule TOUJOURS la médiane pondérée (pose les poids pour l'ordre des ventes retenues) ET la
+        # médiane SIMPLE du secteur (ESTIMER-2) ; on SERT la MEILLEURE méthode mesurée au banc pour cette
+        # (commune, type, niveau) — « la meilleure des deux à chaque niveau » (mandat).
+        q1, med_sembl, q3 = eur_m2_semblable(active, subj, type_bien, use_pieces=bool(pieces_use))
+        prix = sorted(float(c["prix_m2_f"]) for c in active)
+        med_sect = prix[len(prix) // 2] if prix else None
+        med = med_sect if (methode == "secteur" and med_sect) else med_sembl
         n_sembl = len(active)
     else:
         # trop peu de ventes semblables → repli sur le prix de SECTEUR d'ESTIMER-2 (et on le DIT).
@@ -454,6 +462,9 @@ def estimation_semblable(db, idu: str, fiche: dict, *, surface_hab: float | None
             "surface_source": ("saisie" if surf_saisie else ("vente DVF" if surf_dvf else "estimée")),
             "n_comparables": n_sembl, "comparables_desc": desc,
             "radius_m": radius, "commune_fallback": commune_fallback, "periode": periode,
+            # méthode SERVIE (la meilleure mesurée) : « semblable » (pondérée ESTIMER-3) ou « secteur »
+            # (médiane simple ESTIMER-2) ; « repli_secteur » = trop peu de semblables.
+            "methode_prix": ("repli_secteur" if repli else methode),
             "repli_secteur": repli,
             "repli_note": ("Trop peu de ventes semblables dans le secteur — repli sur le prix de "
                            "secteur (ESTIMER-2)." if repli else None),
