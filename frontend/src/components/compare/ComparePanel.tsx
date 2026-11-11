@@ -2,7 +2,7 @@
 // L'outil est ANCRÉ dans Outils : `CompareModule` = le panneau gauche (stepper ① clic-carte ②
 // tableau ③ retour, chips de sélection, note SOCLE) ; `ComparePanel` = le TABLEAU en surimpression
 // (contenu/colonnes INCHANGÉS, mandat point 4). La carte reste active à droite pendant le picking.
-import { Fragment, useEffect } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getCompare, type CompareRow } from '../../lib/api'
 import { fmtEurCompact, fmtInt, fmtTauxEmprise, iduCourt } from '../../lib/format'
@@ -75,7 +75,8 @@ const ROWS: Row[] = [
       return (
         <span className="inline-flex flex-nowrap items-center gap-1.5">
           <span className="rounded px-1.5 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: `${bm.color}22`, color: bm.color }}>{r.bande} · {bm.label}</span>
-          {sm && <span className="rounded px-1 py-0.5 text-[9px] font-medium" style={{ backgroundColor: `${sm.color}1F`, color: sm.color }}>{sm.label}</span>}
+          {/* RETOURS-27 (pt 6) — « Signal faible » → « Vente : faible » (vocabulaire client). */}
+          {sm && <span className="rounded px-1 py-0.5 text-[9px] font-medium" style={{ backgroundColor: `${sm.color}1F`, color: sm.color }}>Vente : {r.signal_niveau}</span>}
         </span>
       )
     } },
@@ -164,11 +165,9 @@ const SECTION_OF: Record<string, Section> = {
   'Prix terrain nu zone': 'Marché', [`Prix bâti · ${PERIM_SECTION_CADASTRALE}`]: 'Marché',
 }
 
-// OUTILS-REFONTE-1 (9f) — « badges allégés » : seules les valeurs ESTIMÉES portent une puce discrète
-// « est. » (les valeurs sourcées, majoritaires, n'en portent plus — moins de bruit visuel).
+// RETOURS-27 (pt 6) — badge de provenance EN TOUTES LETTRES (« sourcé » / « estimé ») sur chaque ligne.
 function ProvBadge({ prov }: { prov: 'source' | 'estime' }) {
-  if (prov === 'source') return null
-  return <Badge className="ml-1 opacity-80" ton="ambre">est.</Badge>
+  return <Badge className="ml-1" ton={prov === 'source' ? 'vert' : 'ambre'}>{prov === 'source' ? 'sourcé' : 'estimé'}</Badge>
 }
 
 // O9(d) — indices des cellules gagnantes d'une ligne (peut être plusieurs en cas d'égalité).
@@ -244,6 +243,8 @@ export function ComparePanel() {
   const { ouvrir, enCours } = useOuvrirDocument()   // RECETTE-OUTILS-1 (point 21) — export = doc Comparatif
   const q = useQuery({ queryKey: ['compare', compareIdus.join(',')], queryFn: () => getCompare(compareIdus), enabled: compareIdus.length > 0 })
   const parcels = q.data?.parcels ?? []
+  // RETOURS-27 (pt 6) — « Détail contraintes » replié par défaut.
+  const [detailOuvert, setDetailOuvert] = useState(false)
 
   // OUTILS-FIX-3 Lot E — l'export CSV du tableau (bouton + générateur client `exporterCsv`) est RETIRÉ
   // (décision Vic 06/09 : aucun export CSV dans l'app pour l'instant). Aucune capacité back touchée —
@@ -309,9 +310,10 @@ export function ComparePanel() {
                             tier_v2) est RETIRÉE : l'Analyse LABUSE n'a pas été demandée sur cet écran, on ne
                             l'impose pas. Le chip « secteur qui bouge » (raison dominante M135) reste — c'est un
                             fait de marché, pas un score. */}
-                        {/* OUTILS-REFONTE-1 (9f) — en-tête de colonne : IDU · commune (adresse postale non
-                            servie par /compare) · bande LABUSE · surface. */}
-                        <p className="mt-0.5 text-[10px] font-normal text-txt-dim">{r.commune}{r.fraction ? ` · ${r.fraction} sous 1 an` : ''}</p>
+                        {/* OUTILS-REFONTE-1 (9f) — en-tête de colonne : IDU · commune · bande LABUSE · surface.
+                            RETOURS-27 (pt 6) — en-têtes HOMOGÈNES : « N/M sous 1 an » retiré (il n'apparaissait
+                            que sur certaines colonnes). */}
+                        <p className="mt-0.5 text-[10px] font-normal text-txt-dim">{r.commune}</p>
                         <div className="mt-1 flex flex-wrap items-center gap-1.5">
                           {(() => { const bm = bandeMeta(r.bande); return bm ? (
                             <span data-compare-bande className="rounded px-1.5 py-0.5 text-[9.5px] font-semibold" style={{ backgroundColor: `${bm.color}22`, color: bm.color }}>{bm.label}</span>
@@ -354,10 +356,22 @@ export function ComparePanel() {
                           </tr>
                         )
                       })}
-                      {/* le détail des contraintes clôt la section Risques. */}
+                      {/* RETOURS-27 (pt 6) — « Détail contraintes » REPLIÉ par défaut : la ligne de titre
+                          est un bouton qui déplie la ligne de détail (par colonne). */}
                       {sec === 'Risques' && (
                         <tr className="border-t border-line">
-                          <td className="p-2 align-top text-[10.5px] text-txt-dim">Détail contraintes</td>
+                          <td className="p-2 align-top text-[10.5px] text-txt-dim">
+                            <button data-compare-detail-toggle onClick={() => setDetailOuvert((v) => !v)}
+                              className="flex items-center gap-1 hover:text-txt">
+                              <span className="inline-block w-2 text-mint">{detailOuvert ? '▾' : '▸'}</span> Détail contraintes
+                            </button>
+                          </td>
+                          <td colSpan={parcels.length} />
+                        </tr>
+                      )}
+                      {sec === 'Risques' && detailOuvert && (
+                        <tr data-compare-detail className="border-t border-line">
+                          <td className="p-2 align-top" />
                           {parcels.map((r) => (
                             <td key={r.idu} className="border-l border-line p-2 align-top text-[10.5px] text-txt-mut">
                               {(r.contraintes ?? []).length ? <ul className="list-disc pl-4">{(r.contraintes ?? []).map((c, i) => <li key={i}>{c}</li>)}</ul> : '—'}

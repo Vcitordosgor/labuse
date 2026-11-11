@@ -14,7 +14,7 @@
 // (searchParcels sur l'IDU) si l'outil ne les fournit pas.
 import { useQuery } from '@tanstack/react-query'
 import { ParcelInput } from '../ParcelInput'
-import { searchParcels } from '../../lib/api'
+import { getParcelApercu } from '../../lib/api'
 import { iduCourt, fmtM2 } from '../../lib/format'
 
 export type SourceParcelle = 'adresse' | 'carte' | null
@@ -34,35 +34,42 @@ export function EntreeParcelle({ source, onPick, placeholder, titre, picked, adr
   /** la croix (✕) de la boîte vide le champ et réaffiche la recherche. */
   onChanger?: () => void
 }) {
-  // T5 — résolution de l'adresse complète (avec code postal) quand l'outil ne la passe pas.
-  const addrQ = useQuery({
-    queryKey: ['entree-adresse', picked],
-    queryFn: () => searchParcels(picked!, { ileEntiere: true }),
-    enabled: !!picked && !adresse,
+  // RETOURS-27 (pt 1) — aperçu RAPIDE (IDU exact, lookup indexé) : adresse + zone + surface arrivent
+  // ENSEMBLE et quasi instantanément (plus le scan île ~3 s de l'omnibox qui n'affichait d'abord que l'IDU).
+  const apQ = useQuery({
+    queryKey: ['parcel-apercu', picked],
+    queryFn: () => getParcelApercu(picked!),
+    enabled: !!picked,
     staleTime: 5 * 60_000,
   })
 
   if (picked) {
-    // RETOURS-26 (pt 7) — BOÎTE PARCELLE UNIQUE, option A (maquette 10-boite-parcelle) : le champ RESTE
-    // rempli — adresse ENTIÈRE en gras (passe à la ligne si besoin, jamais coupée), puis « IDU · zone ·
-    // surface » dessous — avec une CROIX à droite qui le vide (onChanger). Plus de bouton/lien « Changer
-    // de parcelle ». La croix réaffiche le champ : on tape une autre adresse ou on clique la carte.
-    const hit = addrQ.data?.[0]
-    const adrPleine = adresse ?? hit?.adresse ?? null
+    // BOÎTE PARCELLE UNIQUE, option A — champ rempli : adresse ENTIÈRE en gras + « IDU · zone · surface »
+    // dessous + croix ✕ (onChanger). RETOURS-27 (pt 1) : rendu ATOMIQUE (jamais à moitié) — tant que
+    // l'aperçu n'est pas arrivé, une ligne « chargement » ; dès qu'il est là, TOUT s'affiche d'un coup.
+    // L'icône ronde à gauche est retirée.
+    const ap = apQ.data
     const idCourt = iduCourt(picked)
-    const zone = hit?.zone_plu ?? null
-    const surf = hit?.surface_terrain_m2 ?? hit?.surface_m2 ?? null
+    const adrPleine = adresse ?? ap?.adresse ?? null
+    const zone = ap?.zone_plu ?? null
+    const surf = ap?.surface_terrain_m2 ?? ap?.surface_m2 ?? null
     const meta = [idCourt, zone, surf != null ? fmtM2(surf) : null].filter(Boolean).join(' · ')
+    const chargement = apQ.isLoading && !adresse && !ap
     return (
       <div className="flex flex-col gap-1">
         {titre && <p className="text-[10.5px] text-txt-mut">{titre}</p>}
         <div data-entree-parcelle-choisie className="flex items-start gap-2 rounded-lg border border-mint/50 bg-surface-2 px-2.5 py-2">
-          <span aria-hidden="true" className="mt-0.5 shrink-0 text-mint">◎</span>
           <div className="min-w-0 flex-1">
-            <div className="break-words text-[12px] font-semibold leading-snug text-txt-hi">{adrPleine ?? idCourt}</div>
-            <div data-entree-meta className="mt-0.5 break-words font-mono text-[10px] text-txt-dim">
-              {adrPleine ? meta : [zone, surf != null ? fmtM2(surf) : null].filter(Boolean).join(' · ')}
-            </div>
+            {chargement ? (
+              <div data-entree-chargement className="flex h-[29px] items-center text-[11px] text-txt-dim">Chargement de la parcelle…</div>
+            ) : (
+              <>
+                <div className="break-words text-[12px] font-semibold leading-snug text-txt-hi">{adrPleine ?? idCourt}</div>
+                <div data-entree-meta className="mt-0.5 break-words font-mono text-[10px] text-txt-dim">
+                  {adrPleine ? meta : [zone, surf != null ? fmtM2(surf) : null].filter(Boolean).join(' · ')}
+                </div>
+              </>
+            )}
           </div>
           {onChanger && (
             <button data-entree-vider onClick={onChanger} aria-label="Vider le champ — choisir une autre parcelle"

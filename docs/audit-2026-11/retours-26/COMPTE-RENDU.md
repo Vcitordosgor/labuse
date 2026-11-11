@@ -215,3 +215,78 @@ Délai par défaut **« envoi sous 3 à 5 jours »** (envoi depuis La Réunion),
 (5 sections · en-tête bande+surface · badges allégés) · `lib/api.ts` (commentaire délai).
 **Back** : `api/servitudes.py` (`verifie` = familles examinées & claires) · `config.py` (délai 3 à 5).
 **Tests** : `test_front_chiffres2_familles.py::test_f28` (aligné sur le retrait de l'UI agricole 9c).
+
+---
+---
+
+# RETOURS-27 — recette de la refonte
+
+Même branche `fix/retours-23`, **pas de merge**. Captures WebKit `r27-*.png` (une par point). Hook complet
+**VERT** : `tsc -b` 0 · vitest **326/326** · `vite build` OK · scan secrets OK · pytest unitaires verts.
+Règle d'or respectée : aucun chiffre inventé.
+
+## 1. Boîte parcelle — tout d'un coup, sans icône (`r27-boite.png`)
+Adresse + IDU + zone + surface arrivent **ensemble et quasi instantanément** (mesuré **~72 ms**), plus de
+remplissage « à moitié ». Cause de l'ancien délai : la boîte ré-interrogeait l'omnibox (`/parcels/search`,
+`ILIKE '%…'` qui **scanne l'île ~3 s** et n'affichait d'abord que l'IDU). Fix : nouvel endpoint **`/parcels/
+apercu/{idu}`** (lookup **indexé** `p.idu = :idu`) + rendu **atomique** (ligne « chargement » tant que l'aperçu
+n'est pas là, puis tout d'un coup). L'**icône ronde ◎** à gauche est retirée.
+
+## 2. Pièges — liseré jaune fin + procédure PLU (`r27-pieges.png`)
+Chaque carte a un **liseré jaune FIN tout autour** (plus de bord gauche épais ; rouge si rédhibitoire).
+Si la commune a une **procédure PLU en cours** (lue du radar PLU `veille_plu`, MÊME source que l'outil « Vérif
+procédure »), une **carte dédiée** l'indique (« Procédure PLU en cours · Révision générale du PLU — … ») et ce
+point **QUITTE « Non couvert »** (le back le retire quand une procédure est servie). Vérifié sur Saint-André
+(97409, révision prescrite).
+
+### Géorisques — canalisations de transport de matières dangereuses à La Réunion (sans ingestion)
+Vérifié (DEAL/DREAL Réunion « État de l'environnement industriel 2022 », DDRM Réunion, Géorisques) : **OUI, il
+en existe** — uniquement des **oléoducs** (hydrocarbures / kérosène / GPL), **≈ 7,3 km, 3 exploitants** (dont
+la SRPP), sur **deux communes : Le Port** (dépôt SRPP ↔ ports Est/Ouest) **et Sainte-Marie** (approvisionnement
+kérosène de l'aéroport Roland-Garros), avec servitudes d'utilité publique (I1/I3). **Aucun** réseau de
+**transport de gaz** (gazoduc). **Conclusion : le caveat « non couvert : canalisations de matières dangereuses »
+reste PERTINENT pour 974** — un enjeu réel subsiste au Port et à Sainte-Marie ; on le garde dans « Non couvert »
+(couche non ingérée). *(Réserve : la page Géorisques par commune est anti-bot ; chiffres = ordre de grandeur
+DREAL ; « 2 communes · oléoducs seulement · pas de gaz » sont des faits en clair des sources d'État.)*
+
+## 3. Gabarit 3D — faîtage LiDAR de parcelle, sans « dépasse » (`r27-gabarit3d.png`)
+**Correction prise en compte** : la hauteur LiDAR n'étant **pas rattachée de façon sûre au bâtiment dessiné**
+(elle peut provenir d'un bâtiment voisin au contact), le bâti n'est **plus extrudé** à cette hauteur (aucun
+volume de bâti), et l'étiquette devient **« Faîtage LiDAR sur la parcelle : X m »** — une **valeur de parcelle,
+non attachée à un volume** (offset fixe), quel que soit le nombre de bâtiments. L'enveloppe réglementaire reste
+en volume vert avec « Règle : X m » (hauteur = une RÈGLE, fiable). **Aucune phrase « dépasse la règle »** ni
+« antérieure à une limite PLU abaissée » (retirées). Vérifié BZ1065 : « Règle : 7 m » · « Faîtage LiDAR sur la
+parcelle : 10 m ».
+**« ~½ en médiane » — calcul & échantillon donnés** (traçable, dans le « i ») : médiane du ratio
+*autorisé / maximum réglementaire* = **0,46 en surface (0,40 en logements)**, mesurée sur **6 601 permis
+réellement autorisés post-PLU (Sit@del)**.
+
+## 4. Taxe (`r27-taxe.png`)
+« Logement social ou financé par un PTZ » → **« Logement social aidé »** (libellé exact de l'abattement) ;
+**« exigible au permis » retiré** ; note = **« Valeur forfaitaire 2026 : 892 €/m² · taux communal 3 % · taux
+départemental 2,5 % »** ; **« Non pris en compte » passe dans le « i »** ; **virgules décimales** (2,5 % · 0,4 %) ;
+le total **ventile** « Taxe d'aménagement » (5 887 €) · « Redevance d'archéologie préventive · 0,4 % » (428 €) ·
+**« Total à prévoir »** (6 315 €) ; la ligne « Terrain : … (référence cadastrale) » est **retirée**.
+
+## 5. Blocs fonciers (`r27-blocs.png`)
+**4 menus en grille 2×2** (commune · Surface · Plancher restant · Parcelles, sans chevauchement) ; case
+« propriétaires publics » **et** « Réinitialiser » **sur une ligne** ; compteur ; **liste affichée tout de
+suite**, mise à jour à **chaque filtre** ; le bouton **« Voir les parcelles » est retiré**.
+
+## 6. Comparatif (`r27-comparatif.png`)
+Badges **en toutes lettres** (« sourcé » / « estimé ») sur **chaque ligne** ; en-têtes de colonnes
+**homogènes** (« N/M sous 1 an » retiré) ; **« Signal faible » → « Vente : faible »** ; **« Détail contraintes »
+replié par défaut** (bouton ▸ qui déplie).
+
+## 7. Assemblage (`r27-assemblage.png`)
+**Bilan ouvert par défaut** ; **« Prix connu pour 1 parcelle sur 4 » sur une seule ligne** (phrase continue) ;
+le bouton **« Étude de faisabilité de cet assemblage » déplacé tout en bas**, après la liste des parcelles.
+
+## Fichiers touchés (RETOURS-27)
+**Front** : `outils/EntreeParcelle.tsx` (aperçu rapide, atomique, sans icône) · `outils/blocB.tsx` (Pièges :
+liseré · carte procédure) · `outils/Gabarit.tsx` (faîtage LiDAR, pas d'extrusion bâti, ~½ tracé) ·
+`outils/TaxeAmenagement.tsx` (libellés · note · virgules · total ventilé) · `outils/Blocs.tsx` (2×2 · liste
+immédiate) · `compare/ComparePanel.tsx` (badges · en-têtes · Vente · détail replié) · `outils/moteurs.tsx`
+(Assemblage) · `lib/api.ts` (`getParcelApercu`).
+**Back** : `api/app.py` (`/parcels/apercu/{idu}` indexé) · `api/servitudes.py` (`procedure_plu` + retrait du
+« Non couvert »).

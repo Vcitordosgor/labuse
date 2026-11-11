@@ -599,6 +599,15 @@ export const searchParcels = (needle: string, opts?: { ileEntiere?: boolean }) =
       adresse?: string | null }[]>(
     `/parcels/search?q=${encodeURIComponent(needle)}${!opts?.ileEntiere && commune() ? `&commune=${encodeURIComponent(commune()!)}` : ''}`)
 
+// RETOURS-27 (pt 1) — aperçu RAPIDE d'UNE parcelle (IDU exact, lookup indexé) pour la boîte parcelle :
+// adresse + zone + surface d'un coup, sans le scan île du `ILIKE` de l'omnibox.
+export interface ParcelApercu {
+  idu: string; commune: string; surface_m2: number | null
+  surface_terrain_m2?: number | null; zone_plu?: string | null; adresse?: string | null
+}
+export const getParcelApercu = (idu: string) =>
+  j<ParcelApercu>(`/parcels/apercu/${encodeURIComponent(idu)}`)
+
 // M45-B (L3) — UNIFICATION : compteur/cartouches ET liste passent par /filtre (FiltreCriteres),
 // donc portent EXACTEMENT les mêmes facettes que le compteur du panneau. Plus jamais un compteur
 // filtré et une liste qui ignore les filtres. `f` absent = univers par défaut (analyse active).

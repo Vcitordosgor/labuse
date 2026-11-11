@@ -458,10 +458,31 @@ def servitudes_invisibles(idu: str, db: Session = Depends(get_db)) -> dict:
     if not exists:
         raise HTTPException(404, "Parcelle inconnue")
     items = contraintes_parcelle(db, idu)
+    # RETOURS-27 (pt 2) — PROCÉDURE PLU EN COURS : lue du radar PLU (labuse.veille_plu, MÊME point de
+    # calcul que l'outil « Vérif procédure »), par commune. Si une procédure lourde est ACTIVE (SOURCE,
+    # révision/élaboration/modification non dormante), on la sert comme une carte dédiée — et ce point
+    # QUITTE « Non couvert » (il n'est plus une lacune : on l'indique).
+    procedure_plu = None
+    try:
+        from .. import veille_plu as _V
+        _e = _V.entry((idu or "")[:5])
+        if _e and _V.procedure_active(_e):
+            _lib = _V._TYPE_LABEL.get(_e.get("procedure"), _e.get("procedure") or "procédure PLU")
+            procedure_plu = {
+                "libelle": _V._cap(_lib), "stade": _e.get("stade"),
+                "source": _e.get("source"), "source_url": _e.get("source_url"),
+                "date": _e.get("date_acte"), "date_constat": _e.get("date_constat"),
+            }
+    except Exception:  # noqa: BLE001 — l'outil ne doit jamais 500 sur le radar PLU
+        procedure_plu = None
+    non_couvert = ([s for s in _NON_COUVERT if "Procédures PLU en cours" not in s]
+                   if procedure_plu else _NON_COUVERT)
     return {"idu": idu, "n": len(items), "servitudes": items,
             "synthese": (f"{len(items)} servitude(s)/contrainte(s) dormante(s) intersecte(nt) cette parcelle."
                          if items else "Aucune servitude dormante détectée dans les couches ingérées."),
             # OUTILS-REFONTE-1 (9a) — familles examinées & claires (puces « rien à signaler »).
             "verifie": familles_verifiees(items),
-            "non_couvert": _NON_COUVERT,
+            # RETOURS-27 (pt 2) — procédure PLU en cours (carte dédiée) ; null si aucune n'est servie.
+            "procedure_plu": procedure_plu,
+            "non_couvert": non_couvert,
             "avertissement": AVERTISSEMENT}

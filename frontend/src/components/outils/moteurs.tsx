@@ -331,7 +331,8 @@ export function M16() {
                 {/* RETOURS-25 (pt 1) — Bilan réduit à L'ESSENTIEL : 4 lignes (charge foncière estimée · prix
                     de sortie · marché de la zone · parcelles chiffrables). Le texte d'explication (bilan à
                     rebours, hypothèses, CA, note d'union) part dans le « i » du titre. */}
-                <details data-asm-bilan className="group rounded-lg border border-line-2 bg-surface-2">
+                {/* RETOURS-27 (pt 7) — Bilan OUVERT par défaut. */}
+                <details data-asm-bilan open className="group rounded-lg border border-line-2 bg-surface-2">
                   <summary className="flex cursor-pointer list-none items-center gap-1.5 px-3 py-2 text-[11px] font-medium text-txt-dim marker:hidden hover:text-mint">
                     <span aria-hidden className="inline-block w-3 text-mint transition-transform duration-quick group-open:rotate-90">▸</span> Bilan
                     <Tip garder tip={[
@@ -374,28 +375,19 @@ export function M16() {
                         <div className="text-right text-[9px] leading-tight text-txt-dim">DVF · fiab. {String(d.terrain_zone_fiabilite ?? '—')}</div>
                       </div>
                     )}
-                    {/* RETOURS-26 (pt 1) — « Parcelles chiffrables 1/3 » devient « Prix connu pour 1 parcelle sur 3 ». */}
-                    <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-txt-dim">Prix connu pour</span>
-                      <span data-asm-chiffrables className={d.n_chiffrables < d.n ? 'text-st-creuser' : 'text-txt'}>{d.n_chiffrables} parcelle{d.n_chiffrables > 1 ? 's' : ''} sur {d.n}</span>
-                    </div>
+                    {/* RETOURS-27 (pt 7) — « Prix connu pour 1 parcelle sur 4 » sur UNE SEULE ligne (phrase
+                        continue, plus de libellé/valeur séparés par justify-between). */}
+                    <p data-asm-chiffrables className={`text-[11px] ${d.n_chiffrables < d.n ? 'text-st-creuser' : 'text-txt-dim'}`}>
+                      Prix connu pour <span className={d.n_chiffrables < d.n ? 'font-medium' : 'text-txt'}>{d.n_chiffrables} parcelle{d.n_chiffrables > 1 ? 's' : ''} sur {d.n}</span>
+                    </p>
                   </div>
                 </details>
               </>
             )}
           </div>
 
-          {/* IMPLANTATION-4 (LOT A) — pont vers l'Étude de faisabilité : ouvre l'écran d'étude (Docs,
-              overlay M22 + carte intégrée) avec l'assiette de l'assemblage. Le nombre de logements
-              dessiné/contrôlé se lit DANS l'Étude (plus de fourchette de l'ancien moteur ici, LOT B). */}
-          {/* RECETTE-OUTILS-2 (R3) — `shrink-0` sur le Bouton : même crush flex que le Retour (hauteur
-              écrasée, hors DA) sur le dernier enfant d'une colonne qui déborde. */}
-          {msel.length >= 1 && (
-            <Bouton niveau="secondaire" ton="vert" data-asm-etude className="w-full shrink-0"
-              onClick={() => ouvrirEtude(msel)}>
-              Étude de faisabilité de cet assemblage →
-            </Bouton>
-          )}
+          {/* RETOURS-27 (pt 7) — le bouton « Étude de faisabilité de cet assemblage » est déplacé TOUT EN
+              BAS, après la liste des parcelles (voir en pied du bloc). */}
 
           {/* B — approche propriétaire (privacy : PM nommée / particulier masqué) */}
           <div data-asm-proprio className={`rounded-lg border px-3 py-1.5 text-[11px] ${d.tous_personnes_morales ? 'border-mint/40 bg-mint/[0.06]' : 'border-line-2 bg-surface-2'}`}>
@@ -435,6 +427,14 @@ export function M16() {
           </div>
           {/* RECETTE-1 (H5, Vic) — bouton « Préparer courrier propriétaire » RETIRÉ de l'Assemblage. */}
           {/* RETOURS-26 (pt 1) — phrase « Indivision : non détectable en open data… » retirée. */}
+
+          {/* RETOURS-27 (pt 7) — pont vers l'Étude de faisabilité, TOUT EN BAS (après la liste des parcelles). */}
+          {msel.length >= 1 && (
+            <Bouton niveau="secondaire" ton="vert" data-asm-etude className="w-full shrink-0"
+              onClick={() => ouvrirEtude(msel)}>
+              Étude de faisabilité de cet assemblage →
+            </Bouton>
+          )}
         </>
       )}
     </div>

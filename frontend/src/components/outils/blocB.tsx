@@ -31,6 +31,8 @@ type Servitudes = {
   servitudes: { categorie: string; effet: string; source: string; date: string | null; redhibitoire?: boolean }[]
   // OUTILS-REFONTE-1 (9a) — familles examinées & claires (puces « rien à signaler »).
   verifie?: string[]
+  // RETOURS-27 (pt 2) — procédure PLU en cours (carte dédiée) ; null si aucune n'est servie.
+  procedure_plu?: { libelle: string; stade?: string | null; source?: string | null; date?: string | null; date_constat?: string | null } | null
   non_couvert: string[]
 }
 
@@ -89,10 +91,22 @@ export function O5Servitudes() {
                 <span className="num-key text-base text-mint">{groupes.length}</span>
                 <span className="text-txt-mut">contrainte{groupes.length > 1 ? 's relevées' : ' relevée'} sur la parcelle</span>
               </div>
+              {/* RETOURS-27 (pt 2) — PROCÉDURE PLU EN COURS (donnée de l'outil PLU) : carte dédiée ; ce point
+                  a quitté « Non couvert » (le back le retire quand une procédure est servie). */}
+              {d.procedure_plu && (
+                <div data-o5-procedure className="rounded-lg border border-st-creuser/40 bg-surface-3 px-3 py-2 shadow-elev-1">
+                  <div className="flex flex-wrap items-baseline gap-1.5">
+                    <b className="text-[11.5px] text-txt-hi">Procédure PLU en cours</b>
+                    <span className="rounded-full border border-st-creuser/40 bg-st-creuser/10 px-1.5 text-[8.5px] font-medium text-st-creuser">radar PLU</span>
+                  </div>
+                  <p className="mt-1 text-[11px] leading-snug text-txt">{d.procedure_plu.libelle}{d.procedure_plu.stade ? ` — ${d.procedure_plu.stade}` : ''}. Le document d'urbanisme peut évoluer — voir l'outil PLU.</p>
+                  <p className="mt-0.5 text-[9.5px] text-txt-dim">{d.procedure_plu.source ?? 'radar PLU (Sudocuh)'}{d.procedure_plu.date ? ` · ${d.procedure_plu.date}` : ''}</p>
+                </div>
+              )}
               {/* OUTILS-REFONTE-1 (9a) — une carte par contrainte : titre · badge · une phrase · source.
-                  Liseré gauche ambre (contrainte « à prendre en compte »), rouge si rédhibitoire. */}
+                  RETOURS-27 (pt 2) — liseré JAUNE FIN tout autour (plus de bord gauche épais) ; rouge si rédhibitoire. */}
               {groupes.map((s, i) => (
-                <div key={i} className={`rounded-lg border-l-2 px-3 py-2 shadow-elev-1 ${s.redhibitoire ? 'border border-l-red-500 border-red-500/50 bg-red-500/10' : 'border-l-st-creuser bg-surface-3'}`}>
+                <div key={i} className={`rounded-lg border px-3 py-2 shadow-elev-1 ${s.redhibitoire ? 'border-red-500/50 bg-red-500/10' : 'border-st-creuser/40 bg-surface-3'}`}>
                   <div className="flex flex-wrap items-baseline gap-1.5">
                     {s.redhibitoire && <span aria-hidden className="text-red-500">●</span>}
                     <b className="text-[11.5px] text-txt-hi">{s.categorie}</b>

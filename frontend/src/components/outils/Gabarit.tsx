@@ -162,49 +162,37 @@ function useMapLayers(res: GabaritResult | undefined, terrain3d: boolean, batiVi
     m.addLayer({ id: 'gabarit-contour', type: 'line', source: SRC, filter: ['==', 'kind', 'contour'],
       paint: { 'line-color': C_CONTOUR, 'line-width': 1.5, 'line-dasharray': [2, 1] } })
     setBaseSel('none')   // R15 — un seul contour (celui du gabarit, aligné à ses couches)
-    // 3D : extrusion de la zone calculée (enveloppe réglementaire, vert) à la hauteur SOURCÉE. Le bâti
-    // existant (gris) est extrudé À PART, à sa hauteur MESURÉE (LiDAR HD, à défaut BD TOPO) : où l'on
-    // PEUT construire vs ce qui est DÉJÀ là. Deux couches distinctes, jamais confondues.
+    // 3D : seule la ZONE (enveloppe réglementaire, vert) est extrudée — à la hauteur SOURCÉE (une RÈGLE,
+    // fiable). RETOURS-27 (pt 3, correction) — le bâti existant n'est PLUS extrudé à la hauteur LiDAR :
+    // cette hauteur n'est pas rattachée de façon sûre au bâtiment dessiné (elle peut venir d'un bâtiment
+    // voisin qui touche la parcelle). On ne dessine donc AUCUN volume de bâti ; l'empreinte 2D grise
+    // (gabarit-bati) reste pour situer le bâti, et le faîtage LiDAR est donné comme une valeur de PARCELLE
+    // (étiquette flottante, non attachée à un volume).
     if (ok && terrain3d && res.hauteurReglementaireM != null) {
       m.addLayer({ id: 'gabarit-zone-3d', type: 'fill-extrusion', source: SRC,
         filter: ['==', 'kind', 'zone'],
         paint: { 'fill-extrusion-color': C_ZONE, 'fill-extrusion-opacity': 0.6,
                  'fill-extrusion-height': res.hauteurReglementaireM, 'fill-extrusion-base': 0 } })
     }
-    // RETOURS-13 P4 — le bâti existant s'extrude en 3D UNIQUEMENT si le chip « Bâtiments » est actif.
-    // Chip off → l'empreinte 2D grise (gabarit-bati, plus haut) reste : « bâti à plat », relief seul.
-    if (terrain3d && batiVisible && batiFeats.length) {
-      m.addLayer({ id: 'gabarit-bati-3d', type: 'fill-extrusion', source: SRC,
-        filter: ['==', 'kind', 'bati'],
-        paint: { 'fill-extrusion-color': C_BATI, 'fill-extrusion-opacity': 0.55,
-                 'fill-extrusion-height': ['coalesce', ['get', 'hauteur_m'], 3], 'fill-extrusion-base': 0 } })
-    }
-    // RETOURS-26 (pt 4) — LES DEUX HAUTEURS ÉCRITES SUR LA VUE : deux pastilles (Marker, billboard =
-    // lisibles sous tous les angles). « Règle : X m » (vert, centre de la zone) · « Bâti : N m » (gris,
-    // centre du bâti). Les Markers maplibre ne portent pas d'altitude : le décalage vertical (dy) est
-    // calculé À PARTIR des deux hauteurs (échelle commune) pour que la pastille PHYSIQUEMENT la plus
-    // haute s'affiche la plus haute — qu'il s'agisse de la règle OU du bâti (ex. bâti antérieur plus haut
-    // que la limite PLU actuelle). La hauteur bâti est la MAX mesurée (LiDAR HD / BD TOPO).
+    // RETOURS-26/27 — DEUX pastilles écrites sur la vue (Marker, billboard = lisibles sous tous les
+    // angles). « Règle : X m » (vert) = enveloppe réglementaire, attachée à son volume vert (hauteur
+    // fiable). RETOURS-27 (pt 3, correction) — « Faîtage LiDAR sur la parcelle : X m » (gris) = la plus
+    // haute toiture mesurée sur/au contact de la parcelle, donnée comme une valeur de PARCELLE, NON
+    // attachée à un volume (la mesure n'est pas rattachée de façon sûre au bâtiment dessiné) ; offset
+    // FIXE (pas proportionnel à une hauteur de volume), et AUCUNE comparaison « dépasse la règle ».
     const mapGl = m as unknown as maplibregl.Map
     const hRegle = ok && res.hauteurReglementaireM != null ? res.hauteurReglementaireM : null
     const hBati = batiFeats.length
       ? Math.round(Math.max(0, ...batiFeats.map((f) => Number(f.properties?.hauteur_m) || 0))) : 0
-    const dyFor = (h: number) => {
-      const hmax = Math.max(hRegle ?? 0, hBati, 1)
-      return -14 - Math.round((h / hmax) * 42)   // plus haut = décalé plus haut (−14 … −56 px)
-    }
-    // Les deux pastilles sont ancrées au MÊME point (centre de la parcelle) avec une séparation
-    // horizontale fixe via l'option `offset` du Marker (Règle à gauche, Bâti à droite, ∓46 px) : elles
-    // ne se chevauchent JAMAIS, même quand les hauteurs sont proches. L'offset VERTICAL est proportionnel
-    // à la hauteur → la pastille PHYSIQUEMENT la plus haute s'affiche la plus haute (règle OU bâti).
     const cParc = centerOf(res.zoneImplantationGeoJSON ?? null, res.contourGeoJSON ?? null)
     if (terrain3d && cParc && hRegle != null) {
+      const dyRegle = -14 - Math.round((hRegle / Math.max(hRegle, 1)) * 42)   // pastille au niveau du toit de l'enveloppe
       const el = mkHauteurEl(`Règle : ${hRegle} m`, C_ZONE)
-      labels.current.push(new maplibregl.Marker({ element: el, anchor: 'bottom', offset: [-46, dyFor(hRegle)] }).setLngLat(cParc).addTo(mapGl))
+      labels.current.push(new maplibregl.Marker({ element: el, anchor: 'bottom', offset: [-46, dyRegle] }).setLngLat(cParc).addTo(mapGl))
     }
     if (terrain3d && batiVisible && cParc && hBati > 0) {
-      const el = mkHauteurEl(`Bâti : ${hBati} m`, C_BATI)
-      labels.current.push(new maplibregl.Marker({ element: el, anchor: 'bottom', offset: [46, dyFor(hBati)] }).setLngLat(cParc).addTo(mapGl))
+      const el = mkHauteurEl(`Faîtage LiDAR sur la parcelle : ${hBati} m`, C_BATI)
+      labels.current.push(new maplibregl.Marker({ element: el, anchor: 'bottom', offset: [46, -30] }).setLngLat(cParc).addTo(mapGl))
     }
     // RECETTE-OUTILS-2 (R13) — le cadrage est le SEUL propriétaire de la caméra du Gabarit (MapView ne
     // recentre plus en gabarit). En 3D on cadre AVEC l'inclinaison (pitch 55, bearing 0) — comme « Vue
@@ -484,23 +472,22 @@ export function Gabarit() {
             )}
           </div>
 
-          {/* Référence discrète en bas : rappel « enveloppe = maximum » + explication des hauteurs 3D
-              (quand la 3D est active). La vue 3D et ses étiquettes ne sont pas touchées. */}
-          <p data-gabarit-plafond className="text-[10px] leading-snug text-txt-dim">{CAPACITE_MAX_MENTION_COURTE}</p>
-          {terrain3d && res.hauteurReglementaireM != null && (() => {
-            const hBati = Math.round(Math.max(0, ...((res.batiExistantGeoJSON?.features ?? [])
-              .map((f) => Number(f.properties?.hauteur_m) || 0))))
-            const hr = res.hauteurReglementaireM
-            const rel = hBati <= 0 || hr == null ? null
-              : hBati > hr + 0.5 ? `Le bâti existant (${hBati} m) DÉPASSE le maximum réglementaire (${hr} m) — construction antérieure à une limite PLU abaissée.`
-              : hBati < hr - 0.5 ? `Le bâti existant (${hBati} m) est plus bas que le maximum réglementaire (${hr} m) : sa hauteur réelle, sous ce que la règle autorise.`
-              : `Le bâti existant (${hBati} m) est à la hauteur du maximum réglementaire (${hr} m).`
-            return (
-              <p data-gabarit-3d-hauteurs className="text-[10px] leading-snug text-txt-dim">
-                Sur la vue 3D : <b className="text-mint">enveloppe (règle)</b> et <b className="text-txt-mut">bâti existant</b>.{rel && ` ${rel}`}
-              </p>
-            )
-          })()}
+          {/* Référence discrète en bas : rappel « enveloppe = maximum » + CALCUL ET ÉCHANTILLON du « ~½ »
+              (RETOURS-27 pt 3 : traçable → on le donne dans le « i »). */}
+          <p data-gabarit-plafond className="flex flex-wrap items-center gap-1 text-[10px] leading-snug text-txt-dim">
+            <span>{CAPACITE_MAX_MENTION_COURTE}</span>
+            <Tip garder side="top" tip="Médiane du ratio « autorisé / maximum réglementaire » : 0,46 en surface de plancher (0,40 en logements), mesurée sur 6 601 permis réellement autorisés après l'entrée en vigueur du PLU (Sit@del).">
+              <span role="button" tabIndex={0} aria-label="Calcul et échantillon du ~½"
+                className="flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-full border border-line-2 text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
+            </Tip>
+          </p>
+          {/* RETOURS-27 (pt 3, correction) — explication NEUTRE : le faîtage LiDAR est une valeur de
+              PARCELLE, non rattachée à un bâtiment précis ; AUCUNE phrase « dépasse la règle ». */}
+          {terrain3d && res.hauteurReglementaireM != null && (
+            <p data-gabarit-3d-hauteurs className="text-[10px] leading-snug text-txt-dim">
+              Sur la vue 3D : l'<b className="text-mint">enveloppe (règle)</b> en volume, et le <b className="text-txt-mut">faîtage LiDAR</b> le plus haut mesuré sur la parcelle — une valeur de parcelle, non rattachée à un bâtiment précis (la mesure peut provenir d'un bâtiment voisin au contact).
+            </p>
+          )}
         </>
         )
       })()}

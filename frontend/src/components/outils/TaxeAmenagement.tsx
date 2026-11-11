@@ -4,7 +4,7 @@ import {
   getTaxeAmenagement, getTaxeConfig, getTaxePrefill,
   type TaxeParams, type TaxeResult,
 } from '../../lib/api'
-import { fmtEur, fmtInt, fmtM2 } from '../../lib/format'
+import { fmtEur, fmtInt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECETTE-1 F2
 import { Tip } from '../Tip'
@@ -44,6 +44,9 @@ function NumField({ label, value, onChange, unit, hint, dataAttr }: {
     </label>
   )
 }
+
+// RETOURS-27 (pt 4) — pourcentages à la VIRGULE décimale (2,5 % · 0,4 %), jamais le point anglais.
+const pc = (v: number | null | undefined) => (v == null ? '—' : `${String(v).replace('.', ',')} %`)
 
 /** Case à cocher au gabarit LABUSE. */
 function CheckField({ label, checked, onChange, hint, dataAttr }: {
@@ -205,7 +208,8 @@ export function TaxeAmenagement() {
             <CheckField dataAttr="residence" label={`Résidence principale (abattement ${fmtInt(c.abattement.taux_pct)} % sur ${fmtInt(c.abattement.plafond_m2_residence_principale)} m²)`}
               checked={residencePrincipale} onChange={setResidencePrincipale}
               hint={`Minore la taxe : abattement de ${fmtInt(c.abattement.taux_pct)} % sur les ${fmtInt(c.abattement.plafond_m2_residence_principale)} premiers m² (CGI 1635 quater I).`} />
-            <CheckField dataAttr="aide" label="Logement social ou financé par un PTZ"
+            {/* RETOURS-27 (pt 4) — libellé EXACT de l'abattement appliqué. */}
+            <CheckField dataAttr="aide" label="Logement social aidé"
               checked={logementAide} onChange={setLogementAide}
               hint={`Abattement ${fmtInt(c.abattement.taux_pct)} % (logement locatif social / aidé, PLUS-PLS).`} />
           </div>
@@ -269,13 +273,17 @@ export function TaxeAmenagement() {
       {calc.isLoading && <Squelette lignes={3} />}
       {calc.isError && <ErrorState message="Erreur de calcul — vérifiez les valeurs saisies." retry={() => calc.refetch()} />}
 
-      {r && !calc.isLoading && (
+      {r && !calc.isLoading && (() => {
+        const rap = r.rap_eur != null && r.assiette_eur > 0 ? r.rap_eur : null
+        // RETOURS-27 (pt 4) — « Total à prévoir » = Taxe d'aménagement (parts) + Redevance d'archéologie.
+        const totalAPrevoir = r.total_eur != null ? r.total_eur + (rap ?? 0) : null
+        return (
         <div data-taxe-resultat className="flex flex-col gap-1.5 rounded-lg border border-mint/40 bg-surface-1 p-3">
-          {/* Total EN TÊTE (gros, vert) — ou message honnête si le taux communal manque. */}
-          {r.total_eur != null ? (
+          {/* TOTAL À PRÉVOIR en tête (gros, vert) — ou message honnête si le taux communal manque. */}
+          {totalAPrevoir != null ? (
             <div className="flex items-baseline justify-between gap-2 border-b border-line pb-2">
-              <span className="text-[12px] text-txt-mut">Taxe d'aménagement estimée</span>
-              <span data-taxe-total className="font-mono text-[22px] font-bold tabular-nums text-mint">{fmtEur(r.total_eur)}</span>
+              <span className="text-[12px] text-txt-mut">Total à prévoir</span>
+              <span data-taxe-total className="font-mono text-[22px] font-bold tabular-nums text-mint">{fmtEur(totalAPrevoir)}</span>
             </div>
           ) : r.taux_communal_manquant && r.message_taux_communal ? (
             <div data-taxe-manque className="rounded-md border border-st-creuser/40 bg-st-creuser/10 px-2.5 py-1.5 text-[10.5px] leading-snug text-st-creuser">
@@ -304,44 +312,56 @@ export function TaxeAmenagement() {
             </>
           )}
 
-          {/* Parts. */}
+          {/* Parts (composent la Taxe d'aménagement). */}
           {r.part_communale_eur != null && (
             <div className="flex items-baseline justify-between gap-2 text-[11px]">
-              <span className="text-txt-mut">Part communale <span className="text-txt-dim">· {r.taux_communal_pct != null ? `${r.taux_communal_pct} %` : '—'}{r.taux_communal_secteur_majore ? ' (majoré)' : ''}</span></span>
+              <span className="text-txt-mut">Part communale <span className="text-txt-dim">· {pc(r.taux_communal_pct)}{r.taux_communal_secteur_majore ? ' (majoré)' : ''}</span></span>
               <span className="shrink-0 font-mono tabular-nums text-txt">{fmtEur(r.part_communale_eur)}</span>
             </div>
           )}
           {r.part_departementale_eur != null && (
             <div className="flex items-baseline justify-between gap-2 text-[11px]">
-              <span className="text-txt-mut">Part départementale <span className="text-txt-dim">· {r.taux_departemental_pct} %{!r.part_departementale_confirmee ? ', à confirmer' : ''}</span></span>
+              <span className="text-txt-mut">Part départementale <span className="text-txt-dim">· {pc(r.taux_departemental_pct)}{!r.part_departementale_confirmee ? ', à confirmer' : ''}</span></span>
               <span className="shrink-0 font-mono tabular-nums text-txt">{fmtEur(r.part_departementale_eur)}</span>
             </div>
           )}
-          {/* Redevance d'archéologie préventive — taxe DISTINCTE (0,40 % de la même assiette). */}
-          {r.rap_eur != null && r.assiette_eur > 0 && (
-            <div data-taxe-rap className="flex items-baseline justify-between gap-2 text-[11px]">
-              <span className="text-txt-mut">Redevance archéologie <span className="text-txt-dim">· {r.rap_pct} %</span></span>
-              <span className="shrink-0 font-mono tabular-nums text-txt">{fmtEur(r.rap_eur)}</span>
+
+          {/* RETOURS-27 (pt 4) — le total ventile les DEUX taxes distinctes puis le total à prévoir. */}
+          {totalAPrevoir != null && (
+            <div className="mt-0.5 flex flex-col gap-1 border-t border-line pt-1.5 text-[11px]">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-txt">Taxe d'aménagement</span>
+                <span data-taxe-ta className="shrink-0 font-mono font-medium tabular-nums text-txt-hi">{fmtEur(r.total_eur)}</span>
+              </div>
+              {rap != null && (
+                <div data-taxe-rap className="flex items-baseline justify-between gap-2">
+                  <span className="text-txt">Redevance d'archéologie préventive <span className="text-txt-dim">· {pc(r.rap_pct)}</span></span>
+                  <span className="shrink-0 font-mono tabular-nums text-txt">{fmtEur(rap)}</span>
+                </div>
+              )}
+              <div className="flex items-baseline justify-between gap-2 border-t border-line pt-1">
+                <span className="font-semibold text-mint">Total à prévoir</span>
+                <span className="shrink-0 font-mono font-bold tabular-nums text-mint">{fmtEur(totalAPrevoir)}</span>
+              </div>
             </div>
           )}
-          {/* Note de valeur forfaitaire + millésime du taux communal + exigibilité. */}
-          <p className="mt-0.5 border-t border-line pt-1.5 text-[9.5px] leading-snug text-txt-dim">
-            Valeur forfaitaire {r.annee}
-            {r.taux_communal_source === 'public' && r.taux_communal_millesime ? ` · taux communaux ${r.taux_communal_millesime}` : ''}
-            {' · exigible au permis · '}
+
+          {/* RETOURS-27 (pt 4) — note = valeur forfaitaire + taux (virgules décimales) ; « Non pris en
+              compte » passe dans le « i » (plus de paragraphe discret). Plus de « exigible au permis ». */}
+          <p className="mt-0.5 flex flex-wrap items-center gap-1 border-t border-line pt-1.5 text-[9.5px] leading-snug text-txt-dim">
+            <span>Valeur forfaitaire {r.annee} : {fmtEur(r.valeur_forfaitaire_m2)}/m² · taux communal {pc(r.taux_communal_pct)} · taux départemental {pc(r.taux_departemental_pct)}</span>
+            {r.non_couvert && r.non_couvert.length > 0 && (
+              <Tip garder side="top" tip={`Non pris en compte : ${r.non_couvert.join(' · ')}.`}>
+                <span role="button" tabIndex={0} aria-label="Ce qui n'est pas pris en compte"
+                  className="flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-full border border-line-2 text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
+              </Tip>
+            )}
             <a href={r.url} target="_blank" rel="noreferrer" className="text-mint hover:underline">{r.source}</a>
-            {r.taux_communal_perime && <span data-taxe-perime className="ml-1 font-medium text-st-creuser">⚠ taux non rafraîchi depuis plus d'un an.</span>}
+            {r.taux_communal_perime && <span data-taxe-perime className="font-medium text-st-creuser">⚠ taux non rafraîchi depuis plus d'un an.</span>}
           </p>
-          {/* Ce que le barème ne couvre pas (discret). */}
-          {r.non_couvert && r.non_couvert.length > 0 && (
-            <p data-taxe-non-couvert className="text-[9px] leading-snug text-txt-dim">Non pris en compte : {r.non_couvert.join(' · ')}.</p>
-          )}
         </div>
-      )}
-      {/* repère : surface terrain (prefill) — discret, ne sert pas au calcul. */}
-      {prefill.data?.surface_terrain_m2 != null && prefillIdu && (
-        <p className="text-[9.5px] text-txt-dim">Terrain : {fmtM2(prefill.data.surface_terrain_m2)} (référence cadastrale).</p>
-      )}
+        )
+      })()}
     </div>
   )
 }

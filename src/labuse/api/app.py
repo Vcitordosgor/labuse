@@ -3207,6 +3207,39 @@ def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None
              "adresse": _fmt_ban(r["ban_voie"], r["ban_cp"], r["ban_commune"])} for r in rows]
 
 
+@app.get("/parcels/apercu/{idu}")
+def parcel_apercu(idu: str, db: Session = Depends(get_db)) -> dict:
+    """RETOURS-27 (pt 1) — aperçu RAPIDE d'UNE parcelle par IDU EXACT (adresse BAN · zone PLU · surface),
+    pour la boîte parcelle des outils. Lookup indexé `p.idu = :idu` (≠ le `ILIKE '%…'` de l'omnibox, qui
+    scanne l'île ~3 s) → la boîte s'affiche d'un coup (adresse+IDU+zone+surface ensemble, rien à moitié)."""
+    idu = (idu or "").strip().upper().replace(" ", "")
+    if not idu:
+        raise HTTPException(404, "Parcelle inconnue")
+    ban_ok = _ban_ready(db)
+    ban_cols = (", ban.ban_voie, ban.ban_cp, ban.ban_commune" if ban_ok
+                else ", NULL AS ban_voie, NULL AS ban_cp, NULL AS ban_commune")
+    ban_join = _ban_lateral("s.idu") if ban_ok else ""
+    zone_ok = _zone_plu_ready(db)
+    zone_cols = (", COALESCE(z.zone_lib, z.zone_fam) AS zone_plu" if zone_ok else ", NULL AS zone_plu")
+    zone_join = " LEFT JOIN parcel_zone_plu z ON z.idu = s.idu" if zone_ok else ""
+    r = db.execute(text(
+        f"""
+        SELECT s.idu, s.commune, s.surface_m2, s.contenance_m2 {ban_cols}{zone_cols}
+        FROM (
+            SELECT p.idu, p.commune, p.surface_m2, p.contenance_m2
+            FROM parcels p WHERE p.idu = :idu AND p.cadastre_disparue_le IS NULL
+            LIMIT 1
+        ) s
+        {ban_join}{zone_join}
+        """), {"idu": idu}).mappings().first()
+    if not r:
+        raise HTTPException(404, "Parcelle inconnue")
+    return {"idu": r["idu"], "commune": r["commune"], "surface_m2": r["surface_m2"],
+            **_surface.champs_terrain(r["surface_m2"], r["contenance_m2"]),
+            "zone_plu": r["zone_plu"],
+            "adresse": _fmt_ban(r["ban_voie"], r["ban_cp"], r["ban_commune"])}
+
+
 @app.get("/stats/entonnoir")
 def stats_entonnoir(commune: str | None = None, source: str | None = None,
                     db: Session = Depends(get_db)) -> dict:

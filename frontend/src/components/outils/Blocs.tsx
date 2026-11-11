@@ -11,7 +11,7 @@
  */
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { BLOCS_PAGE, getBlocDetail, getBlocs, type BlocItem } from '../../lib/api'
+import { BLOCS_PAGE, getBlocDetail, getBlocs, getCommunes, type BlocItem } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { ListPaginationFooter } from '../ListPagination'
@@ -19,10 +19,9 @@ import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { Siren } from '../shared/Siren'
 import { Tip } from '../Tip'
-import { CommuneScope, useModuleMap } from './ModulePanel'
+import { useModuleMap } from './ModulePanel'
 import { Bouton } from '../ui/Bouton'
 import { Case } from '../ui/Case'
-import { Chevron } from '../ui/Chevron'
 import { Select } from '../ui/Select'   // U3 (RECETTE-OUTILS-4) — menu déroulant partagé
 
 const fmtM2 = (v: number | null | undefined) => (v == null ? '—' : `${fmtInt(v)} m²`)
@@ -160,41 +159,29 @@ export function Blocs() {
   const [nMin, setNMin] = useState(2)
   const [inclurePublics, setInclurePublics] = useState(false)   // publics écartés par défaut
   const [openId, setOpenId] = useState<number | null>(null)
-  // RECETTE-1 R21 — deux temps : (1) on pose ses filtres ; (2) on clique « Voir les parcelles »,
-  // le listing s'ouvre et le bloc de filtres se replie en accordéon. `montre` gouverne les deux.
-  const [montre, setMontre] = useState(false)
-  const [filtresOuverts, setFiltresOuverts] = useState(true)
-  const voir = () => { setMontre(true); setFiltresOuverts(false) }
+  // RETOURS-27 (pt 5) — plus de « Voir les parcelles » : la liste se charge TOUT DE SUITE et se met à
+  // jour à chaque filtre (la clé de requête porte les filtres). Les filtres restent déployés.
+  const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
   const select = useApp((s) => s.select)             // RECETTE-1 F3 — fermer la fiche ouverte par un bloc
   const selectedIdu = useApp((s) => s.selectedIdu)
 
   // OUTILS-S1 (Lot D) — la sélection multiple ne servait QU'au pont Courrier (retiré) : plus de cases
   // à cocher par bloc (hors DA des autres outils). Le seul geste par bloc = « Scan patrimoine → ».
   const reset = () => { setOpenId(null) }
-  // RECETTE-1 (F3) — Réinitialiser : remet TOUS les filtres au défaut, replie le listing, rouvre les
-  // filtres, ferme la fiche éventuellement ouverte par un bloc. Reste dans l'outil.
-  const dirty = montre || commune !== null || surfMin > 0 || sdpMin > 0 || nMin !== 2 || inclurePublics
+  // RECETTE-1 (F3) — Réinitialiser : remet TOUS les filtres au défaut, ferme la fiche éventuellement
+  // ouverte par un bloc. Reste dans l'outil.
+  const dirty = commune !== null || surfMin > 0 || sdpMin > 0 || nMin !== 2 || inclurePublics
   const resetAll = () => {
     setCommune(null); setSurfMin(0); setSdpMin(0); setNMin(2); setInclurePublics(false)
-    setOpenId(null); setMontre(false); setFiltresOuverts(true)
+    setOpenId(null)
     if (selectedIdu) select(null)
   }
-  // RECETTE-OUTILS-3 (pt 39) — résumé court des filtres actifs, à droite de l'en-tête replié.
-  // Portée commune + seuls les paliers qui diffèrent du défaut ; tout au défaut → juste la portée.
-  const resumeFiltres = (() => {
-    const bouts: string[] = [commune ?? "Toute l'île"]
-    if (nMin !== 2) bouts.push(`${N_MIN.find((o) => o.v === nMin)?.label ?? `≥ ${nMin}`} parcelles`)
-    else bouts.push('≥ 2 parcelles')
-    if (surfMin > 0) bouts.push(`surface ${SURFACE_MIN.find((o) => o.v === surfMin)?.label ?? `≥ ${surfMin} m²`}`)
-    if (sdpMin > 0) bouts.push(`résiduel ${SDP_MIN.find((o) => o.v === sdpMin)?.label ?? `≥ ${sdpMin} m²`}`)
-    return bouts.join(' · ')
-  })()
   const q = useInfiniteQuery({
     queryKey: ['blocs', commune, surfMin, sdpMin, nMin, inclurePublics],
     queryFn: ({ pageParam }) => getBlocs(commune, surfMin, sdpMin, nMin, inclurePublics, pageParam),
     initialPageParam: 0,
     getNextPageParam: (last, pages) => { const n = pages.reduce((s, p) => s + p.items.length, 0); return n < last.total ? n : undefined },
-    enabled: montre,   // R21 — rien ne charge tant que « Voir les parcelles » n'est pas cliqué
+    // RETOURS-27 (pt 5) — chargée tout de suite (plus de gate « montre »).
   })
   const items = q.data?.pages.flatMap((p) => p.items) ?? []
   const meta = q.data?.pages[0]
@@ -206,81 +193,51 @@ export function Blocs() {
           vit DANS le bloc Filtres (ci-dessous), visible seulement quand un filtre diffère du défaut. */}
       {/* RETOURS-25 (pt 11) — bandeau d'intro « Les parcelles contiguës d'un même propriétaire… » retiré. */}
 
-      {/* RECETTE-OUTILS-3 (pt 39) — contrôles de filtres : même rendu, qu'on soit AVANT (déployés,
-          sans chrome d'accordéon) ou APRÈS « Voir les parcelles » (repliés dans l'accordéon). */}
-      {(() => {
-        const controles = (
-          <div className="flex flex-col gap-2">
-            <CommuneScope commune={commune} noteFiltre={false} onChange={(c) => { setCommune(c); reset() }} />
-            {/* OUTILS-REFONTE-1 (9d) — 4 menus compacts (commune + 3 paliers), en grille 2×2. */}
-            <div className="grid grid-cols-2 gap-1.5 text-[11px] text-txt-mut">
-              <label className="flex items-center gap-1.5">Surface
-                <Select data-blocs-surf-min value={surfMin} onChange={(e) => { setSurfMin(Number(e.target.value)); reset() }}
-                  className="h-8 min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:outline-none">
-                  {SURFACE_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
-                </Select>
-              </label>
-              <label className="flex items-center gap-1.5">Plancher restant
-                <Select data-blocs-sdp-min value={sdpMin} onChange={(e) => { setSdpMin(Number(e.target.value)); reset() }}
-                  className="h-8 min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:outline-none">
-                  {SDP_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
-                </Select>
-              </label>
-              <label className="flex items-center gap-1.5">Parcelles
-                <Select data-blocs-n-min value={nMin} onChange={(e) => { setNMin(Number(e.target.value)); reset() }}
-                  className="h-8 min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:outline-none">
-                  {N_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
-                </Select>
-              </label>
-            </div>
-            {/* OUTILS-REFONTE-1 (9d) — case « Inclure les propriétaires publics » (écartés par défaut) ·
-                « Réinitialiser » à droite (vert), visible dès qu'un filtre diffère du défaut. */}
-            <div className="flex items-center gap-2 text-[11px] text-txt-mut">
-              <Case data-blocs-inclure-publics
-                checked={inclurePublics} onChange={(e) => { setInclurePublics(e.target.checked); reset() }}
-                label="Inclure les propriétaires publics" />
-              <Tip garder tip="Communes, État, Région/Département/EPCI, établissements publics (dont EPF) et SEM — classés par leur catégorie juridique (fichiers des personnes morales, DGFiP), jamais par une liste de noms. Écartés par défaut car rarement cessibles à un promoteur.">
-                <span className="cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
-              </Tip>
-              {dirty && (
-                <Bouton niveau="lien" ton="vert" data-blocs-reset-filtres onClick={resetAll} className="ml-auto">
-                  Réinitialiser
-                </Bouton>
-              )}
-            </div>
-          </div>
-        )
-        // AVANT « Voir les parcelles » : filtres DÉPLOYÉS, sans en-tête repliable (rien derrière).
-        if (!montre) {
-          return (
-            <div data-blocs-filtres className="flex flex-col gap-2">
-              <div className="py-0.5 text-[11px] font-medium text-txt-dim">Filtres</div>
-              {controles}
-            </div>
-          )
-        }
-        // APRÈS : accordéon « › Filtres » FERMÉ, résumé des filtres actifs à DROITE de l'en-tête.
-        return (
-          <details data-blocs-filtres open={filtresOuverts}
-            onToggle={(e) => setFiltresOuverts((e.target as HTMLDetailsElement).open)}
-            className="flex flex-col gap-2">
-            <summary className="flex cursor-pointer list-none items-center gap-1.5 py-0.5 text-[11px] font-medium text-txt-dim marker:hidden hover:text-mint">
-              <Chevron open={filtresOuverts} />Filtres
-              <span data-blocs-filtres-resume className="ml-2 min-w-0 flex-1 truncate text-[10.5px] font-normal text-txt-mut">
-                {resumeFiltres}
-              </span>
-            </summary>
-            <div className="mt-1">{controles}</div>
-          </details>
-        )
-      })()}
-
-      {/* RECETTE-1 R21 — le geste explicite : ouvrir le listing (et replier les filtres). */}
-      {!montre && (
-        <Bouton niveau="primaire" ton="vert" data-blocs-voir onClick={voir} className="shrink-0">
-          Voir les parcelles
-        </Bouton>
-      )}
+      {/* RETOURS-27 (pt 5) — filtres TOUJOURS déployés : 4 menus en grille 2×2 (sans chevauchement),
+          puis la case « publics » et « Réinitialiser » sur UNE ligne. La liste se met à jour à chaque
+          changement (pas de bouton « Voir les parcelles »). */}
+      <div data-blocs-filtres className="flex flex-col gap-2">
+        <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 text-[11px] text-txt-mut">
+          <label className="flex min-w-0 items-center gap-1.5">Commune
+            <Select data-blocs-commune value={commune ?? ''} onChange={(e) => { setCommune(e.target.value || null); reset() }}
+              className="h-8 min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:outline-none">
+              <option value="">Toute l'île</option>
+              {(communes.data ?? []).map((c) => <option key={c.commune} value={c.commune}>{c.commune}</option>)}
+            </Select>
+          </label>
+          <label className="flex min-w-0 items-center gap-1.5">Surface
+            <Select data-blocs-surf-min value={surfMin} onChange={(e) => { setSurfMin(Number(e.target.value)); reset() }}
+              className="h-8 min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:outline-none">
+              {SURFACE_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
+            </Select>
+          </label>
+          <label className="flex min-w-0 items-center gap-1.5">Plancher restant
+            <Select data-blocs-sdp-min value={sdpMin} onChange={(e) => { setSdpMin(Number(e.target.value)); reset() }}
+              className="h-8 min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:outline-none">
+              {SDP_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
+            </Select>
+          </label>
+          <label className="flex min-w-0 items-center gap-1.5">Parcelles
+            <Select data-blocs-n-min value={nMin} onChange={(e) => { setNMin(Number(e.target.value)); reset() }}
+              className="h-8 min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:outline-none">
+              {N_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
+            </Select>
+          </label>
+        </div>
+        <div className="flex items-center gap-2 text-[11px] text-txt-mut">
+          <Case data-blocs-inclure-publics
+            checked={inclurePublics} onChange={(e) => { setInclurePublics(e.target.checked); reset() }}
+            label="Inclure les propriétaires publics" />
+          <Tip garder tip="Communes, État, Région/Département/EPCI, établissements publics (dont EPF) et SEM — classés par leur catégorie juridique (fichiers des personnes morales, DGFiP), jamais par une liste de noms. Écartés par défaut car rarement cessibles à un promoteur.">
+            <span className="cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
+          </Tip>
+          {dirty && (
+            <Bouton niveau="lien" ton="vert" data-blocs-reset-filtres onClick={resetAll} className="ml-auto">
+              Réinitialiser
+            </Bouton>
+          )}
+        </div>
+      </div>
 
       {q.isLoading && <Squelette lignes={6} />}
       {q.isError && <ErrorState message="Signal momentanément indisponible — réessayez." retry={() => q.refetch()} />}
