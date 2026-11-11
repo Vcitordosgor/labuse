@@ -175,10 +175,15 @@ redevance archéologie · note de valeur forfaitaire → **Exporter en PDF**. Le
 inventé : si la commune n'a pas de taux public, message au lieu d'un total). BZ1065 · 120 m² → **5 887 €**.
 *Avant* : formulaire long (nombre de logements, nature exonérée agricole/PLAI/reconstruction, forfaits
 piscine/PV/stationnement/éoliennes, saisie manuelle des taux, accordéon « où trouver le taux »).
-- **Simplification per maquette** : les champs ci-dessus (forfaits, nature exonérée, nb logements, taux
-  manuels) sont **retirés de l'UI** ; le calcul back est le MÊME lecteur. Export = impression du résultat
-  (le navigateur enregistre en PDF ; pas d'endpoint PDF taxe dans le dépôt). Le garde de test F28 (qui
-  exigeait l'UI agricole) a été mis à jour en conséquence (invariant anti-régression conservé).
+- **Simplification per maquette** : nb logements et taux manuels retirés (les taux restent **lus** du
+  prefill). Le calcul back est le MÊME lecteur.
+- **Correction (2ᵉ passe)** : les **forfaits** (stationnement · piscine · PV au sol · éoliennes) et les
+  **exonérations** de plein droit (agricole · PLAI · reconstruction), retirés par erreur, sont **rétablis**
+  dans un bloc **« Options » replié par défaut**, entre « Votre projet » et le résultat. Mêmes valeurs,
+  même calcul ; le résultat se **recalcule** à chaque changement et la **ligne du poste apparaît dans le
+  détail** (ex. « Stationnement extérieur (2 place(s) × 2 928 €) » → total 5 887 € → 6 209 €). Le **bouton
+  « Exporter en PDF » est retiré** (une impression navigateur n'est pas un document LABUSE). Garde F28
+  rétabli. Captures `r-taxe-options-replie.png` / `r-taxe-options-ouvert.png`.
 
 ## Blocs fonciers (9d) — `r-blocs-*`
 **4 menus compacts** (commune · Surface · Plancher restant · Parcelles, en grille 2×2) · case « Inclure les
