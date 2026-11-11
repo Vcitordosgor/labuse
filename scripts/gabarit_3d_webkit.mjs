@@ -46,6 +46,22 @@ function a2Control(svg) {
   const rects = [...svg.matchAll(/<rect [^>]*rx="2"/g)].map((m) => m.index)
   return { libelles_proteges: rects.length, traits_au_travers: rects.filter((i) => i < lastStroke).length }
 }
+// bornes (d) des bandes parcelle/zone portées en attribut → comparables aperçu ↔ détail
+function bandeBornes(svg) {
+  return [...svg.matchAll(/data-band="([^"]+)" data-d0="([\d.]+)" data-d1="([\d.]+)"/g)]
+    .map((m) => `${m[1]}:${(+m[2]).toFixed(2)}-${(+m[3]).toFixed(2)}`).sort()
+}
+// chevauchement des libellés à fond opaque (rupture, emprise bâtie, voie, pente max) : rects rx="2"
+function labelsChevauchent(svg) {
+  const r = [...svg.matchAll(/<rect x="([\d.-]+)" y="([\d.-]+)" width="([\d.]+)" height="([\d.]+)" rx="2"/g)]
+    .map((m) => ({ x: +m[1], y: +m[2], w: +m[3], h: +m[4] }))
+  let n = 0
+  for (let i = 0; i < r.length; i++) for (let j = i + 1; j < r.length; j++) {
+    const a = r[i], b = r[j]
+    if (a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h) n++
+  }
+  return { boites: r.length, chevauchements: n }
+}
 
 // altitude du profil à partir des graduations gauches du SVG : étiquettes d'altitude posées à x=off_x-6
 // (text-anchor end) avec y = Y(z)+3 → on retient x STRICTEMENT à gauche du tracé (exclut le « 0 » des
@@ -62,7 +78,7 @@ function altFromGrads(svg, off_x) {
 async function parSize(idu, w, h) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1.5 })
   const page = await ctx.newPage()
-  await page.goto(URL, { waitUntil: 'networkidle' }); await page.waitForFunction(() => window.__labuse != null, { timeout: 30000 })
+  await page.goto(URL, { waitUntil: 'domcontentloaded' }); await page.waitForFunction(() => window.__labuse != null, { timeout: 30000 })
   await ouvrir(page, idu); await page.waitForTimeout(700)
   const scene = await (await fetch(`${API}/outils/gabarit/scene/${idu}`)).json()
   const m = { cadrage_parcelle_largeur_pct: 0, coupes: {} }
@@ -70,19 +86,27 @@ async function parSize(idu, w, h) {
   m.contour_couverture_pct = Math.round((scene.terrain?.couverture_parcelle ?? 0) * 100)
   // A1 — audit de la zone d'implantation (pixels verts dedans / dehors)
   m.zone = await page.evaluate(() => window.__gab3dZoneAudit ? window.__gab3dZoneAudit() : { zone: false })
-  // 4. coupes A et B, aperçu (bas) + détail (agrandir) + A2 (libellés non traversés, sur l'aperçu)
+  // lettres de l'axe actif (B/B′, A/A′) visibles à l'ouverture
+  m.lettres_axe = await page.evaluate(() => [...document.querySelectorAll('[data-gab3d-canvas] div')]
+    .filter((d) => /^[AB]′?$/.test((d.textContent || '').trim()) && d.style.display !== 'none'
+      && d.getBoundingClientRect().width > 0).map((d) => d.textContent.trim()))
+  // 4. coupes A et B, aperçu (bas) + détail (agrandir) : A2 (non traversé), bandes (mêmes bornes), chevauchements
   for (const ax of ['A', 'B']) {
     await page.click(`text=Coupe ${ax}`).catch(() => {}); await page.waitForTimeout(500)
     const apImg = await page.$('[data-gab3d-overlay] img[alt^="Coupe"]')
     const apSvg = apImg ? await (await fetch(await apImg.evaluate((e) => e.src))).text() : ''
     const apercu = await mesureCoupe(page, '[data-gab3d-overlay] img[alt^="Coupe"]')
-    if (apercu) apercu.libelles = a2Control(apSvg)
+    if (apercu) { apercu.libelles = a2Control(apSvg); apercu.labels = labelsChevauchent(apSvg) }
     await page.screenshot({ path: `${OUT}/mesure_${idu.slice(-6)}_${w}x${h}_coupe${ax}.png` })
     await page.click('[data-gab3d-agrandir]').catch(() => {}); await page.waitForTimeout(500)
+    const detImg = await page.$('[data-gab3d-overlay] img[alt="Agrandie"]')
+    const detSvg = detImg ? await (await fetch(await detImg.evaluate((e) => e.src))).text() : ''
     const detail = await mesureCoupe(page, '[data-gab3d-overlay] img[alt="Agrandie"]')
+    if (detail) detail.labels = labelsChevauchent(detSvg)
     if (ax === 'B') await page.screenshot({ path: `${OUT}/mesure_${idu.slice(-6)}_${w}x${h}_detailB.png` })
     await page.click('text=Revenir au terrain').catch(() => {}); await page.waitForTimeout(300)
-    m.coupes[ax] = { apercu, detail }
+    const ba = bandeBornes(apSvg), bd = bandeBornes(detSvg)
+    m.coupes[ax] = { apercu, detail, bandes_apercu: ba, bandes_bornes_identiques: ba.length > 0 && JSON.stringify(ba) === JSON.stringify(bd) }
   }
   // A3 — on PART du losange ◆ affiché sur la coupe (B si elle en porte un, sinon A) : survol à son x → le
   // repère tombe sur le terrain. Écart = |altitude du marqueur drapé (maillage 3D) − altitude du losange

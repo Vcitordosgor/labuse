@@ -171,6 +171,7 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
   const [photoCredit, setPhotoCredit] = useState('')
   const axeSelRef = useRef(axeSel); axeSelRef.current = axeSel
   const axisObjs = useRef<Record<string, THREE.Group>>({})
+  const majLettresAxe = useRef<(lab: 'A' | 'B' | null) => void>(() => {})
   const [perdu, setPerdu] = useState(false)
 
   // changer de coupe ne recrée PAS le contexte : on recolore seulement l'axe (B9)
@@ -180,6 +181,7 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
       grp.visible = sel                                  // seul l'axe sélectionné est affiché (2 quater)
       for (const o of grp.children) { const m = (o as Line2).material as LineMaterial; if (m) { m.color.set(0xe0a44a); m.linewidth = 2.6; m.needsUpdate = true } ;(o as Line2).renderOrder = 5 }
     }
+    majLettresAxe.current(axeSel)                         // lettres B/B′ (ou A/A′) sur l'axe actif
   }, [axeSel])
 
   useEffect(() => {
@@ -312,6 +314,19 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
     const mkLab = (txt: string, col: string) => { const d = document.createElement('div'); d.textContent = txt; d.style.cssText = `position:absolute;color:${col};transform:translate(-50%,-50%);text-shadow:0 1px 2px #000` ; lay.appendChild(d); return d }
     const lHi = mkLab(`${hi.toFixed(1).replace('.', ',')} m`, '#e8edf2')      // une décimale (409,8 m)
     const lLo = mkLab(`${lo.toFixed(1).replace('.', ',')} m`, '#e8edf2')
+    // lettres de l'axe actif (B et B′, A et A′) posées aux EXTRÉMITÉS VISIBLES du trait orange
+    const lAx0 = mkLab('', '#f0b24a'); const lAx1 = mkLab('', '#f0b24a')
+    lAx0.style.font = lAx1.style.font = '700 13px Inter,sans-serif'
+    const axEnd = { a: new THREE.Vector3(), b: new THREE.Vector3(), on: false }
+    majLettresAxe.current = (lab) => {
+      const a = lab ? scene.axes_plan?.[lab] : null
+      if (!a) { axEnd.on = false; lAx0.style.display = lAx1.style.display = 'none'; return }
+      let first: [number, number, number] | null = null, last: [number, number, number] | null = null
+      for (let i = 0; i <= 48; i++) { const t = i / 48, x = a.p0[0] + (a.p1[0] - a.p0[0]) * t, y = a.p0[1] + (a.p1[1] - a.p0[1]) * t, z = elev(x, y); if (z != null) { if (!first) first = [x, z, y]; last = [x, z, y] } }
+      if (first && last) { axEnd.a.set(first[0], first[1] + 0.6, -first[2]); axEnd.b.set(last[0], last[1] + 0.6, -last[2]); axEnd.on = true; lAx0.textContent = lab; lAx1.textContent = `${lab}′` }
+      else { axEnd.on = false; lAx0.style.display = lAx1.style.display = 'none' }
+    }
+    majLettresAxe.current(axeSelRef.current)
     const compass = document.createElement('div')
     compass.innerHTML = '<svg width="34" height="34" viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="rgba(0,0,0,.4)" stroke="#5b6670"/><g id="nd"><path d="M17 4 L20 17 L17 15 L14 17 Z" fill="#e0a44a"/><text x="17" y="30" text-anchor="middle" font-size="8" fill="#cbd5e1">N</text></g></svg>'
     compass.style.cssText = 'position:absolute;right:8px;top:8px'; lay.appendChild(compass)
@@ -364,6 +379,7 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
       controls.update(); renderer.render(sc, cam)
       if (!first) first = performance.now()
       proj(hiP, lHi); proj(loP, lLo)
+      if (axEnd.on) { proj(axEnd.a, lAx0); proj(axEnd.b, lAx1) }
       const az = controls.getAzimuthalAngle(); nd.setAttribute('transform', `rotate(${(-az * 180 / Math.PI).toFixed(1)} 17 17)`)
       info = { geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures }
       ;(window as unknown as Record<string, unknown>).__gab3d = { first, info, fps: renderer.info.render.frame, probe, photo: photoFlag }
@@ -378,7 +394,7 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
     return () => {
       stop = true; cancelAnimationFrame(raf); window.removeEventListener('resize', onResize); ro.disconnect()
       renderer.domElement.removeEventListener('mousemove', onMove); renderer.domElement.removeEventListener('webglcontextlost', onLost)
-      markerApi.current = null; controls.dispose(); el.removeChild(lay)
+      markerApi.current = null; majLettresAxe.current = () => {}; controls.dispose(); el.removeChild(lay)
       photoApi.current = { load: () => {}, clear: () => {} }
       if (photoMat) origMat.dispose()                 // matériau d'origine détaché pendant la photo → libéré
       sc.traverse((o) => { const m = o as THREE.Mesh; if (m.geometry) m.geometry.dispose(); const mt = m.material as (THREE.Material & { map?: THREE.Texture }) | (THREE.Material & { map?: THREE.Texture })[] | undefined; const dm = (x: THREE.Material & { map?: THREE.Texture }) => { x.map?.dispose(); x.dispose() }; if (Array.isArray(mt)) mt.forEach(dm); else if (mt) dm(mt) })

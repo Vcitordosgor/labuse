@@ -202,9 +202,15 @@ def test_coupe_svg_cadre_sans_plafond_faitage():
     assert "bâti 7,0 m" in svg                            # hauteur BD TOPO (détail)
     assert "scène " not in svg                            # plus d'identifiant de scène dans la coupe
     assert svg.count("Altitudes en m") == 1               # en-tête UNE ligne (datum une fois)
-    # APERÇU : compact (sans bandes ni indicateurs), DÉTAIL plus grand
+    # 3 bis — APERÇU : les DEUX bandes (parcelle, zone) + la légende présentes, MÊMES bornes que le détail ;
+    # la ligne d'indicateurs (« traversée … ») reste réservée au détail.
     apercu = coupe_svg(_coupe_demo(), theme="clair", detail=False)
-    assert "parcelle" not in apercu and "traversée" not in apercu   # aperçu minimal
+    bornes = lambda s: sorted(re.findall(r'data-band="([^"]+)" data-d0="([\d.]+)" data-d1="([\d.]+)"', s))
+    assert "parcelle" in apercu and "zone d'implantation" in apercu   # bandes dans l'aperçu
+    assert bornes(apercu) and bornes(apercu) == bornes(svg)           # mêmes bornes aperçu ↔ détail
+    assert "traversée" not in apercu                                  # indicateurs = détail seulement
+    assert "Rupture du terrain à vérifier" in apercu                 # rupture expliquée à côté du losange
+    assert "profil sous le bâti" in apercu                           # légende : profil sous bâti distingué
 
 
 def test_bati_sans_hauteur_sans_mention():

@@ -20,11 +20,11 @@ _THEMES = {
     "sombre": {"bg": "#0f1115", "plot": "#161a20", "terrain": "#cbd5e1", "fill": "#1f2630",
                "limite": "#e5e7eb", "zone": "#36c99a", "bati": "#9aa0a6", "txt": "#d7dce3",
                "txt_dim": "#8b93a1", "grid": "#262c35", "lacune": "#f0603a", "axe": "#e0a44a",
-               "head": "#1a1f27"},
+               "sous_bati": "#f2b35e", "head": "#1a1f27"},
     "clair": {"bg": "#ffffff", "plot": "#ffffff", "terrain": "#374151", "fill": "#eef1f4",
               "limite": "#111827", "zone": "#2c9f7c", "bati": "#6b7280", "txt": "#1f2937",
               "txt_dim": "#6b7280", "grid": "#dadfe4", "lacune": "#c0392b", "axe": "#9a6a12",
-              "head": "#f3f4f6"},
+              "sous_bati": "#b26a00", "head": "#f3f4f6"},
 }
 _FONT = 'font-family="Inter, Helvetica, Arial, sans-serif"'
 _PONT_RECONSTITUE_M = 3.0
@@ -113,11 +113,12 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
     zmin, zmax = min(zs_all), max(zs_all)
     zspan = max(zmax - zmin, 1.0)
 
-    # COMPACT (2 quater/quinquies) : APERÇU sans bandes (court → texte lisible à l'écran) ; DÉTAIL avec bandes.
+    # 3 bis : les deux bandes (parcelle, zone) + la légende figurent dans l'APERÇU COMME dans le DÉTAIL
+    # (mêmes bornes) ; la ligne d'indicateurs reste réservée au détail.
     HEAD = 22
     PAD_L, PAD_R, PAD_T = 58, 16, HEAD + 8
-    BANDES_H = 32 if detail else 0
-    IND_H, AX_H = (16 if detail else 2), 20
+    BANDES_H, AX_H = 48, 20
+    IND_H = 16 if detail else 0
     plot_w = width - PAD_L - PAD_R
     s = min(plot_w / max(L, 1e-6), (h_max - PAD_T - BANDES_H - IND_H - AX_H) / zspan)   # H = V, JAMAIS tronqué
     plot_w = s * L
@@ -185,6 +186,13 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
             out.append(f'<line x1="{X(gap[0]):.1f}" y1="{Y(a[-1]["z"]):.1f}" x2="{X(gap[1]):.1f}" y2="{Y(b[0]["z"]):.1f}" '
                        f'stroke="{T["terrain"]}" stroke-width="1.4" stroke-dasharray="4 3"/>')
 
+    # 3 bis — le profil SOUS l'emprise bâtie est distingué (trait pointillé « sous_bati ») ; expliqué en légende
+    for b in batis:
+        seg = [(p["d"], p["z"]) for p in profil if b["d0"] - 1e-6 <= p["d"] <= b["d1"] + 1e-6 and p["z"] is not None]
+        if len(seg) >= 2:
+            pts = " ".join(f"{X(d):.1f},{Y(zz):.1f}" for d, zz in seg)
+            out.append(f'<polyline points="{pts}" fill="none" stroke="{T["sous_bati"]}" stroke-width="2.2" stroke-dasharray="3 2.5"/>')
+
     # BÂTI : emprise au sol + RUPTURE du terrain à vérifier (repère distinct des cotes) ; aucun toit
     faitages = []
     rupture = False
@@ -194,8 +202,8 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
         out.append(f'<line x1="{x0:.1f}" y1="{y_base:.1f}" x2="{x1:.1f}" y2="{y_base:.1f}" stroke="{T["bati"]}" stroke-width="3"/>')
         out.append(f'<line x1="{x0:.1f}" y1="{y_base-4:.1f}" x2="{x0:.1f}" y2="{y_base+4:.1f}" stroke="{T["bati"]}" stroke-width="1"/>')
         out.append(f'<line x1="{x1:.1f}" y1="{y_base-4:.1f}" x2="{x1:.1f}" y2="{y_base+4:.1f}" stroke="{T["bati"]}" stroke-width="1"/>')
-        # « emprise bâtie » SOUS sa barre (hors du profil et des limites qui s'arrêtent à y_base)
-        prot.append(_label_box((x0 + x1) / 2, y_base + 13, "emprise bâtie", T["bati"], T["bg"]))
+        # « emprise bâtie » AU-DESSUS de sa barre, DANS le tracé (fond opaque) → ne touche plus la graduation
+        prot.append(_label_box((x0 + x1) / 2, y_base - 8, "emprise bâtie", T["bati"], T["plot"]))
         # repère de rupture (losange) sur la PORTION CONCERNÉE = plus forte pente autour du bâti (pas le 1ᵉʳ pied)
         drb = _rupture_d(profil, b["d0"], min(b["d1"] + 3.0, L))
         zr = z_terrain(drb) if drb is not None else None
@@ -203,6 +211,12 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
             out.append(f'<path d="M{X(drb):.1f},{Y(zr)-4:.1f} l4,4 l-4,4 l-4,-4 z" fill="none" stroke="{T["lacune"]}" stroke-width="1.4"/>')
             out.append(f'<circle cx="{X(drb):.1f}" cy="{Y(zr):.1f}" r="1.6" fill="{T["lacune"]}"/>')
             rupture = True
+            # « Rupture du terrain à vérifier » À CÔTÉ du losange (aperçu ET détail), AU-DESSUS pour dégager
+            # « emprise bâtie » posée sur la barre ; fond opaque, sans chevauchement.
+            a_end = drb > L / 2                                 # losange à droite → texte à sa gauche
+            lxr = X(drb) + (-8 if a_end else 8)
+            prot.append(_label_box(lxr, max(Y(zr) - 11, PAD_T + 10), "Rupture du terrain à vérifier",
+                                   T["lacune"], T["plot"], anchor=("end" if a_end else "start")))
         if b.get("attribution") == "bdtopo" and b.get("hauteur_m"):
             faitages.append(f"Hauteur du bâtiment (BD TOPO) · {_fmt(b['hauteur_m'],1)} m")
 
@@ -245,17 +259,19 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
     # ÉCHELLE : barre dans un COIN du tracé (2 quater), barre seule
     out.append(_echelle(off_x + 8, y_base - 7, L, s, T))
 
-    # bandes de traversée + indicateurs : DÉTAIL seulement (l'aperçu reste court et lisible)
+    # BANDES (parcelle blanc, zone vert) : APERÇU ET DÉTAIL, MÊMES BORNES. Puis légende de la coupe.
+    yb0 = y_base + AX_H
+    out.append(_bande(coupe.get("limites_parcelle_d") or [], yb0, X, "parcelle", T))
+    yb1 = yb0 + 15
+    zspans = coupe.get("zone_implantation_d") or []
+    if zspans:
+        out.append(_bande(zspans, yb1, X, "zone d'implantation", T, col=T["zone"]))
+    else:
+        etat = "non traversée" if coupe.get("zone_presente") else "indisponible"
+        out.append(f'<text x="8" y="{yb1+3:.1f}" font-size="9" fill="{T["txt_dim"]}">zone d\'implantation — {etat}</text>')
+    out.append(_legende_coupe(yb1 + 17, off_x, T, rupture, bool(batis)))
+    # indicateurs (deux pentes, pente max 5 m, accès, bâti) : DÉTAIL seulement
     if detail:
-        yb0 = y_base + AX_H
-        out.append(_bande(coupe.get("limites_parcelle_d") or [], yb0, X, "parcelle", T))
-        yb1 = yb0 + 15
-        zspans = coupe.get("zone_implantation_d") or []
-        if zspans:
-            out.append(_bande(zspans, yb1, X, "zone d'implantation", T, col=T["zone"]))
-        else:
-            etat = "non traversée" if coupe.get("zone_presente") else "indisponible"
-            out.append(f'<text x="8" y="{yb1+3:.1f}" font-size="9" fill="{T["txt_dim"]}">zone d\'implantation — {etat}</text>')
         out.append(_indicateurs(coupe, faitages, rupture, y_base + AX_H + BANDES_H, PAD_L, width - PAD_R, T))
 
     # A2 — libellés à fond opaque EN DERNIER : aucun trait ne les traverse à l'écran
@@ -314,13 +330,32 @@ def _echelle(x, y, L, s, T):
 
 def _bande(spans, y, X, label, T, col=None):
     col = col or T["limite"]
+    key = "zone" if "zone" in label else "parcelle"
     frag = [f'<text x="8" y="{y+4:.1f}" font-size="9" fill="{T["txt_dim"]}">{_esc(label)}</text>']
     for d0, d1 in spans:
         x0, x1 = X(d0), X(d1)
-        frag.append(f'<line x1="{x0:.1f}" y1="{y:.1f}" x2="{x1:.1f}" y2="{y:.1f}" stroke="{col}" stroke-width="2.5"/>')
+        # bornes (d) portées en attribut → comparables entre aperçu et détail (3 bis)
+        frag.append(f'<line x1="{x0:.1f}" y1="{y:.1f}" x2="{x1:.1f}" y2="{y:.1f}" stroke="{col}" stroke-width="2.5" '
+                    f'data-band="{key}" data-d0="{d0:.2f}" data-d1="{d1:.2f}"/>')
         frag.append(f'<line x1="{x0:.1f}" y1="{y-3:.1f}" x2="{x0:.1f}" y2="{y+3:.1f}" stroke="{col}" stroke-width="1"/>')
         frag.append(f'<line x1="{x1:.1f}" y1="{y-3:.1f}" x2="{x1:.1f}" y2="{y+3:.1f}" stroke="{col}" stroke-width="1"/>')
         frag.append(f'<text x="{(x0+x1)/2:.1f}" y="{y-5:.1f}" text-anchor="middle" font-size="9" fill="{T["txt_dim"]}">{_fmt(d1-d0,1)} m</text>')
+    return "".join(frag)
+
+
+def _legende_coupe(y, x, T, rupture, has_bati):
+    """Légende de la COUPE (aperçu et détail) : terrain, profil sous le bâti (trait différent), rupture."""
+    frag, cx = [], x
+    def ent(label, draw, w):
+        nonlocal cx
+        frag.append(draw(cx))
+        frag.append(f'<text x="{cx+22:.1f}" y="{y+3:.1f}" font-size="9" fill="{T["txt_dim"]}">{_esc(label)}</text>')
+        cx += 22 + len(label) * 5.2 + 16
+    ent("terrain", lambda c: f'<line x1="{c:.1f}" y1="{y:.1f}" x2="{c+16:.1f}" y2="{y:.1f}" stroke="{T["terrain"]}" stroke-width="2"/>', 16)
+    if has_bati:
+        ent("profil sous le bâti", lambda c: f'<line x1="{c:.1f}" y1="{y:.1f}" x2="{c+16:.1f}" y2="{y:.1f}" stroke="{T["sous_bati"]}" stroke-width="2.2" stroke-dasharray="3 2.5"/>', 16)
+    if rupture:
+        ent("rupture du terrain à vérifier", lambda c: f'<path d="M{c+8:.1f},{y-4:.1f} l4,4 l-4,4 l-4,-4 z" fill="none" stroke="{T["lacune"]}" stroke-width="1.4"/>', 16)
     return "".join(frag)
 
 
@@ -354,10 +389,8 @@ def _indicateurs(coupe, faitages, rupture, y0, pad_l, right_x, T):
         bits.append(f"de la voie à la limite sur l'axe : {_fmt(ind['pente_acces_pct'],1)} %")
     for f in faitages:
         bits.append(f.replace("Hauteur du bâtiment (BD TOPO) · ", "bâti "))
-    frag = [f'<text x="{pad_l}" y="{y0+11:.1f}" font-size="9" fill="{T["txt"]}">{_esc(" · ".join(bits))}</text>']
-    if rupture:
-        frag.append(f'<text x="{right_x:.1f}" y="{y0+11:.1f}" text-anchor="end" font-size="9" fill="{T["lacune"]}">◆ rupture du terrain à vérifier</text>')
-    return "".join(frag)
+    # rupture : expliquée à côté du losange + en légende (3 bis) → plus de mention répétée ici
+    return f'<text x="{pad_l}" y="{y0+11:.1f}" font-size="9" fill="{T["txt"]}">{_esc(" · ".join(bits))}</text>'
 
 
 # ── Plan-clé (B8) : cadastre, axe + sens, bâti, voie à son intersection, nord ──────────────────────

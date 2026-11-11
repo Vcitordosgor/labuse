@@ -586,3 +586,48 @@ chiffres : `viewer/mesures_webkit.json` · harnais : `scripts/gabarit_3d_webkit.
 
 **Aucun critère non atteint.** Hook : tsc ✅ · build ✅ · vitest **326** ✅ · pytest gabarit **22 scène
 (1 skip base réelle) + 304** ✅ · 0 faute hors cadre.
+
+## 18. Étape 3 bis — deux retouches + branche prête à merger (9ᵉ revue d'Astra)
+
+Sur `9ba102297`. Version validée pour un pilote, composition figée. Harnais `scripts/gabarit_3d_webkit.mjs`,
+BZ1065 et CM1658, 1440×900 et 1280×720, coupe A et B, **relief et photo**.
+
+### Tableau de mesures
+
+| Critère | Cible | BZ1065 | CM1658 |
+|---|---|---|---|
+| **Lettres de l'axe** (B/B′, A/A′) visibles à l'ouverture | présentes | **B, B′** | **B, B′** |
+| **Bandes de l'aperçu** — bornes identiques au détail (parcelle + zone) | égales | **oui (A et B)** | **oui (A et B)** |
+| **Libellés** (rupture, emprise, voie, pente) — chevauchements | 0 | **0** | **0** |
+| **Zone** verte dedans / 0 dehors (rappel A1) | > 90 % / 0 | **98,1 % / 0** | **97,9–98,1 % / 0** |
+| **Survol** depuis le losange (rappel A3) | < 0,5 m | **0,24 m** | **0,07–0,11 m** |
+| **Photo aérienne** — millésime | présent | **2025** | **2025** |
+
+### Détail
+
+- **La coupe répond à la vue 3D.** Les **deux bandes** reviennent **sous le profil de l'aperçu** : tronçons
+  traversés de la **parcelle** (blanc) et de la **zone d'implantation** (vert). Les **bornes** (en mètres)
+  sont portées en attribut (`data-band/data-d0/data-d1`) et **identiques entre l'aperçu et le détail**
+  (vérifié aux deux tailles sur A et B). Dans la 3D, les **lettres de l'axe actif** (`B` et `B′`, ou `A` et
+  `A′`) sont posées aux **extrémités visibles du trait orange** (premier et dernier point drapé de l'axe),
+  **visibles à l'ouverture** aux deux tailles.
+- **La rupture est expliquée.** « **Rupture du terrain à vérifier** » est écrit **à côté du losange**, dans
+  l'aperçu **comme** en détail, **sans chevauchement** (0 sur les 8 coupes). Le **profil sous l'emprise
+  bâtie** est distingué (trait **pointillé « sous_bati »**, ton distinct), et sa **signification figure dans
+  la légende de la coupe** (« terrain », « profil sous le bâti », « ◆ rupture du terrain à vérifier »).
+- **Détail** : « emprise bâtie » est posée **au-dessus de sa barre, dans le tracé** (fond opaque) → elle **ne
+  touche plus la graduation** de l'axe.
+
+### Branche prête à merger
+Les **deux tests signalés** sont réglés **proprement, sans élargir** : `CairoSVG` **déclarée** dans le groupe
+`dev` de `pyproject.toml` (importée par le script de témoins `scripts/gabarit_3d_temoins.py`, pas par le
+serveur) ; les **deux arêtes** `adresses (ban)` et `parcels` **lues par `gabarit/scene.py`** sont **déclarées
+finement** dans `registre/lectures.py` comme **machinerie** (étiquette d'en-tête + géométrie de la maquette,
+**aucun chiffre du registre servi** — invariant du pilote). **Hook complet vert sur toute la suite** :
+tsc **0** · build ✅ · vitest **326** · **pytest 3273 passed, 0 failed** (49 skip) · secrets **0** · 0 faute
+hors cadre.
+
+Captures : `viewer/mesure_{BZ1065,CM1658}_{1440x900,1280x720}_{relief,photo,coupeA,coupeB,detailB}.png` ·
+chiffres : `viewer/mesures_webkit.json` · harnais : `scripts/gabarit_3d_webkit.mjs`.
+
+**Aucun critère non atteint. Branche prête à merger.**
