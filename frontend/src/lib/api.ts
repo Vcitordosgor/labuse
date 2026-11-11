@@ -1537,6 +1537,7 @@ export const ackAlerte = (id?: number) =>
 // M54-EXPO-3 A8 — comparateur de parcelles (2 à 3 côte à côte).
 export interface CompareRow {
   idu: string; commune?: string; surface_m2?: number | null
+  adresse?: string | null   // RETOURS-29 — aperçu parcelle (adresse BAN) en en-tête de colonne
   // verdict SERVI (source _q_v2_fiche) — la puce dérive de tier_v2 + etage0 ; fraction + raison M135
   status?: string | null; tier_v2?: string | null; etage0?: boolean | null; rang_v2?: number | null
   label?: string | null; fraction?: string | null; raison?: string | null

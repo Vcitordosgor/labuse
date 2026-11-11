@@ -9613,6 +9613,19 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
             if sl:
                 row["bande"] = ("NC" if sl["non_calculable"] else sl["bande"])
                 row["signal_niveau"] = sl["signal_niveau"]
+        # RETOURS-29 (Comparatif v2) — adresse BAN (aperçu parcelle) en en-tête de colonne. Lookup indexé
+        # par IDU (2-3 colonnes), jamais un scan ; None si BAN non ingérée.
+        try:
+            if _ban_ready(db):
+                _ba = db.execute(text(
+                    "SELECT trim(concat_ws(' ', a.numero, a.rep, a.voie)) AS v, a.code_postal AS cp, "
+                    "a.commune AS c FROM adresse_parcelles ap JOIN adresses a ON a.id_ban = ap.id_ban "
+                    f"WHERE ap.idu = :idu ORDER BY {_BAN_ORDER} LIMIT 1"), {"idu": idu}).mappings().first()
+                row["adresse"] = _fmt_ban(_ba["v"], _ba["cp"], _ba["c"]) if _ba else None
+            else:
+                row["adresse"] = None
+        except Exception:  # noqa: BLE001 — adresse indisponible ne doit jamais casser la comparaison
+            row["adresse"] = None
         out.append(row)
     # NU5-FIX-1 (A-O5) — IDU demandés mais non rendus : introuvables (ignores), surnuméraires
     # (tronques, au-delà de 3), doublons retirés. L'écran les affiche (« X non trouvée(s), Y au-delà

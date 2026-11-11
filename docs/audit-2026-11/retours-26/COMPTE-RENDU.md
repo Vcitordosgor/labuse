@@ -347,3 +347,62 @@ R+N+combles) · `outils/moteurs.tsx` (Assemblage) · `lib/api.ts` (`gabarit_comb
 `faisabilite/engine.py` + `faisabilite/residuel.py` (drapeau `combles`).
 **Tests** : `Assemblage.test.tsx` (Bâti conservé/Reconstruction) · `test_capacite_max.py` (mention Gabarit en
 phrase littérale ; Comparatif sans la ligne Logements).
+
+---
+
+# RETOURS-29 — recette (même branche `fix/retours-23`, pas de merge, WebKit, capture par point)
+
+## Comparatif v2 (`r29-comparatif.png`) — refonte selon `docs/design/maquettes/nov-2026/15-comparatif-v2.png`
+Le tableau est **reconstruit sur la maquette**, sans rien inventer (seules les lignes servies par `/compare`).
+- **Aucun classement LABUSE, aucune puce de vente** — ni en en-tête, ni sur les lignes. L'analyse reste dans
+  son écran (vérifié : `classement:false`).
+- **Colonne étroite en 2ᵉ position** (juste après le libellé) portant le badge de la ligne : **« sourcé »**
+  (contour vert) pour une donnée publique, **« estimé »** (contour ambre) pour un calcul de LABUSE.
+- **Pied** : « sourcé : donnée publique · estimé : calcul de LABUSE. Un clic sur une contrainte en affiche
+  le détail. » (vérifié : `pied:true`).
+- **En-tête de colonne** : identifiant (gras) + croix **✕**, **adresse** (aperçu parcelle, lookup BAN servi
+  par `/compare`), **zone · surface**, lien **« Ouvrir la fiche → »** (vérifié col. 1 :
+  `97415000DH0076 ✕ · 104 Avenue de Bourbon, 97434 Saint-Paul · U2b · 19 513 m² · Ouvrir la fiche →`).
+- **Point vert + fine barre proportionnelle** sur les lignes chiffrées — **meilleure valeur unique** de la
+  ligne ; **rien en cas d'égalité, ni sur une valeur nulle ou négative** sauf quand 0 EST la meilleure d'une
+  ligne « au moins » (Bâti existant « ● aucun », Part du gabarit « ● 0 % ») ; les charges foncières négatives
+  ne sont jamais vertes, seule la positive l'est (vérifié : 9 barres, « ● 7 €/m² » vert, −112/−20 €/m² non).
+- **Contraintes relevées en puces**, détail au clic (vérifié : `contraintePuce:true`).
+- **Fermeture au clic extérieur et à Échap** conservée (vérifié : clic sur le fond ferme l'overlay).
+- **Export PDF identique** (`exports/blocs/comparatif.py`) : mêmes 11 lignes, même ordre, mêmes badges
+  sourcé/estimé, même en-tête (IDU · adresse · zone · surface), plus de classement / prix de marché /
+  logements. Sections : Terrain · Urbanisme · Potentiel constructible · Risques et contraintes.
+
+## Blocs fonciers (`r29-blocs.png`)
+- Compteur **« 6 357 blocs appartenant à des sociétés · 4 865 blocs publics masqués »** ; la **seconde partie
+  disparaît quand la case « inclure les propriétaires publics » est cochée** (vérifié WebKit : décochée →
+  `6 357 … · 4 865 blocs publics masqués` ; cochée → `11 222 blocs appartenant à des sociétés`).
+- Le bouton **« Plancher restant : tous » n'est plus jamais tronqué** (les 4 boutons-menus en `w-full`,
+  `text-[10px]`, libellé embarqué dans l'option).
+
+## Pièges (`r29-pieges-nc.png`)
+- Le **« i »** est **à la fin de la phrase « Non couvert … »**, **sur la même ligne** (inline, plus de retour
+  à la ligne) : « … Le certificat d'urbanisme fait foi. ⓘ » (vérifié : `memeLigne:true`, bas du « i » ≈ bas
+  de la dernière ligne de texte).
+
+## Assemblage (`r29-assemblage.png`)
+- La surface d'assiette tient **sur une seule ligne** (« 196 m² » ne se coupe plus — `whitespace-nowrap` sur
+  la valeur ; vérifié : « 5 574 m² » / tuiles « 0 m² » / « 762 m² » non coupées).
+- **« 0 personne morale » n'est plus affiché** : la mention « N personne(s) morale(s) · » n'apparaît que si
+  N > 0 (vérifié : « 4 propriétaires particuliers », sans préfixe).
+- Lignes de parcelles au format **« 468 m² · bâti conservé 0 m² · reconstruction 84 m² »** (vérifié :
+  « BZ0389 · 1 960 m² · bâti conservé 0 m² · reconstruction 265 m² », idem BZ0798/BZ0799).
+
+## Fichiers touchés (RETOURS-29)
+**Front** : `compare/ComparePanel.tsx` (refonte v2 : 4 sections, colonne badges sourcé/estimé, en-tête IDU ·
+adresse · zone · surface + « Ouvrir la fiche → », point vert + barre proportionnelle, retrait classement/vente)
+· `outils/Blocs.tsx` (compteur « N publics masqués » conditionnel) · `outils/blocB.tsx` (« i » inline en fin
+de « Non couvert ») · `outils/moteurs.tsx` (Assemblage : surface `nowrap`, « 0 personne morale » masqué) ·
+`lib/api.ts` (`adresse` sur `CompareRow`).
+**Back** : `api/app.py` (`adresse` BAN servie par `/compare`) · `exports/blocs/comparatif.py` (PDF aligné sur
+la maquette v2).
+**Tests** : `test_bandes_unifiees.py` (classement ABSENT du panneau) · `test_capacite_max.py` (« maximale
+réglementaire » dans la ligne ; ligne Logements retirée) · `status.bandes.test.ts` (classement absent).
+
+**Hook complet vert** : `tsc -b` 0 · `vitest` 326 · `npm run build` 0 · `scan_secrets` rien · `pytest`
+3 259 passés (49 skipped). Commit sur `fix/retours-23`, **pas de merge**.

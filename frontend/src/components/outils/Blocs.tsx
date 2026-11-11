@@ -250,12 +250,12 @@ export function Blocs() {
       )}
       {meta && total > 0 && (
         <>
-          {/* OUTILS-REFONTE-1 (9d) — compteur : « N blocs · personnes morales DGFiP ». */}
+          {/* RETOURS-29 (Blocs) — compteur : « N blocs appartenant à des sociétés · M blocs publics
+              masqués » ; la 2ᵉ partie disparaît quand « Inclure les propriétaires publics » est coché. */}
           <div data-blocs-bandeau className="rounded-lg bg-surface-2 px-3 py-2 text-[10.5px] leading-snug text-txt-mut">
-            <b data-blocs-total className="tnum text-txt">{fmtInt(total)}</b> bloc{total > 1 ? 's' : ''} ·
-            <b className="text-txt"> personnes morales DGFiP</b>{commune ? ` — ${commune}` : ''}
+            <b data-blocs-total className="tnum text-txt">{fmtInt(total)}</b> bloc{total > 1 ? 's' : ''} appartenant à des sociétés{commune ? ` — ${commune}` : ''}
             {!inclurePublics && meta.n_publics > 0 && (
-              <span data-blocs-ecartes className="text-txt-dim"> · {fmtInt(meta.n_publics)} public{meta.n_publics > 1 ? 's' : ''} écarté{meta.n_publics > 1 ? 's' : ''}</span>
+              <span data-blocs-ecartes className="text-txt-dim"> · {fmtInt(meta.n_publics)} bloc{meta.n_publics > 1 ? 's' : ''} public{meta.n_publics > 1 ? 's' : ''} masqué{meta.n_publics > 1 ? 's' : ''}</span>
             )}
           </div>
 

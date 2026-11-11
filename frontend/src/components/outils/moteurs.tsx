@@ -7,7 +7,6 @@ import { addProfile, getCommunes, getMoteursConfig, getProfiles, getResults, mot
 import { CLIENT } from '../../lib/strings'
 import { fmtEurCompact, fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
-import { PERIM_POTENTIEL_COURT } from '../../lib/perimetres'   // SDP-UNIQUE-1 — jamais « SDP » nu
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 import { Chargement, Squelette } from '../Loading'
 import { EmptyState, ErrorState } from '../States'
@@ -294,7 +293,8 @@ export function M16() {
                 <div className="grid grid-cols-2 gap-1.5">
                   <div data-asm-kpi="surface" className="rounded-md bg-surface-3 px-2 py-1.5">
                     <div className="text-[9px] text-txt-dim">Surface d'assiette</div>
-                    <div className="tnum text-[14px] font-semibold text-txt">{fmt(d.surface_totale_m2)} m²</div>
+                    {/* RETOURS-29 (Assemblage) — « 196 m² » ne se coupe plus (whitespace-nowrap). */}
+                    <div className="tnum whitespace-nowrap text-[14px] font-semibold text-txt">{fmt(d.surface_totale_m2)} m²</div>
                     {/* NU-G-007 — la SDP cumulée est bornée à la PART EN ZONE CONSTRUCTIBLE (comme l'Étude
                         du même assemblage) : on DIT la part constructible et le % hors zone, pour ne pas
                         laisser croire que toute l'assiette se bâtit (ex. 40 % hors zone → Étude « Impossible »). */}
@@ -312,11 +312,11 @@ export function M16() {
                   <div data-asm-kpi="sdp" className="rounded-md bg-surface-3 px-2 py-1.5">
                     <div data-asm-sdp-conserve className="text-[11px] leading-tight text-txt">
                       <span className="text-txt-dim">Bâti conservé : </span>
-                      <b className="tnum text-mint">{fmt(d.sdp_bati_conserve_m2)} m²</b>{d.sdp_conserve_estimation ? ' *' : ''}
+                      <b className="tnum whitespace-nowrap text-mint">{fmt(d.sdp_bati_conserve_m2)} m²</b>{d.sdp_conserve_estimation ? ' *' : ''}
                     </div>
                     {d.sdp_terrain_libere_m2 != null && d.sdp_terrain_libere_m2 > d.sdp_bati_conserve_m2 && (
                       <div data-asm-sdp-libere className="mt-0.5 text-[10px] leading-tight text-txt-dim">
-                        Reconstruction : <b className="tnum text-amber">{fmt(d.sdp_terrain_libere_m2)} m²</b>
+                        Reconstruction : <b className="tnum whitespace-nowrap text-amber">{fmt(d.sdp_terrain_libere_m2)} m²</b>
                       </div>
                     )}
                   </div>
@@ -395,12 +395,15 @@ export function M16() {
 
           {/* B — approche propriétaire (privacy : PM nommée / particulier masqué) */}
           <div data-asm-proprio className={`rounded-lg border px-3 py-1.5 text-[11px] ${d.tous_personnes_morales ? 'border-mint/40 bg-mint/[0.06]' : 'border-line-2 bg-surface-2'}`}>
-            {/* RETOURS-28 (Assemblage) — pluriel RÉSOLU, plus de « (s) » : « 1 personne morale »,
-                « 3 propriétaires particuliers ». */}
+            {/* RETOURS-28/29 (Assemblage) — pluriel résolu sans « (s) » ; RETOURS-29 : « 0 personne morale »
+                n'est PAS affiché (on ne montre la part PM que si > 0). */}
             {d.tous_personnes_morales ? (
               <span className="text-mint">✓ Approche simplifiée — {d.n_personnes_morales} personne{d.n_personnes_morales > 1 ? 's' : ''} morale{d.n_personnes_morales > 1 ? 's' : ''}, aucun particulier</span>
             ) : (
-              <span className="text-txt-mut">{d.n_personnes_morales} personne{d.n_personnes_morales > 1 ? 's' : ''} morale{d.n_personnes_morales > 1 ? 's' : ''} · <b className="text-st-creuser">{d.n_particuliers} propriétaire{d.n_particuliers > 1 ? 's' : ''} particulier{d.n_particuliers > 1 ? 's' : ''}</b></span>
+              <span className="text-txt-mut">
+                {d.n_personnes_morales > 0 && <>{d.n_personnes_morales} personne{d.n_personnes_morales > 1 ? 's' : ''} morale{d.n_personnes_morales > 1 ? 's' : ''} · </>}
+                <b className="text-st-creuser">{d.n_particuliers} propriétaire{d.n_particuliers > 1 ? 's' : ''} particulier{d.n_particuliers > 1 ? 's' : ''}</b>
+              </span>
             )}
             {/* RECETTE-4 — noms des personnes morales EN ENTIER (plusieurs lignes si besoin) : plus de troncature (break-words). */}
             {(d.proprietaires_pm as string[]).length > 0 && (
@@ -415,9 +418,9 @@ export function M16() {
               <div key={i.idu} className="rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-[11px]">
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-txt-hi">{i.idu.slice(8)}</span>
-                  {/* RETOURS-28 (Assemblage) — le « · terrain libéré » répété par parcelle est RETIRÉ
-                      (la reconstruction est dite UNE fois dans la tuile SDP ci-dessus). */}
-                  <span className="text-txt-dim">{fmt(i.surface_m2)} m² · SDP {fmt(i.sdp_residuelle_m2 != null ? i.sdp_residuelle_m2 : i.sdp_m2)} m² · {PERIM_POTENTIEL_COURT}</span>
+                  {/* RETOURS-29 (Assemblage) — ligne de parcelle : « surface · bâti conservé X m² ·
+                      reconstruction Y m² » (bâti conservé = SDP résiduelle, reconstruction = table rase). */}
+                  <span className="text-txt-dim">{fmt(i.surface_m2)} m² · bâti conservé {fmt(i.sdp_residuelle_m2 != null ? i.sdp_residuelle_m2 : i.sdp_m2)} m² · reconstruction {fmt(i.sdp_m2)} m²</span>
                   {/* RECETTE-1 R8 — pastille de palier (scoring q_v14) retirée de l'Assemblage. */}
                 </div>
                 <div className="mt-0.5 flex items-center gap-2">

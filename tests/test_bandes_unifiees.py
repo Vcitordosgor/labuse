@@ -32,11 +32,12 @@ def test_comparatif_bandes_vocabulaire_de_la_fiche():
 
 
 def test_ecran_comparer_meme_forme_que_le_pdf():
-    """L'écran Comparer rend « lettre · libellé » (bandeMeta) + badge Signal (signalMeta) — figé
-    au niveau source (le vitest couvre le rendu) : plus de label seul divergeant du PDF."""
+    """RETOURS-29 (maquette 15-comparatif-v2) — l'écran Comparer NE porte PLUS de classement LABUSE ni de
+    puce de vente (l'analyse reste dans son écran). On vérifie l'ABSENCE de ce rendu ; le vocabulaire
+    (NIVEAU_LABELS/BANDE_META) reste gravé dans status.ts pour la fiche et l'Analyse."""
     panel = _lire("frontend/src/components/compare/ComparePanel.tsx")
-    assert "`${r.bande} · ${bm.label}`" in panel          # val() copie/tri
-    assert "{r.bande} · {bm.label}" in panel              # badge rendu
+    assert "{r.bande} · {bm.label}" not in panel          # plus de classement rendu au Comparatif
+    assert "Classement LABUSE" not in panel
     # les libellés Python (NIVEAU_LABELS) sont le miroir exact de SIGNAL_META (fort/moyen/faible).
     from labuse.scoring.signal_mutation import NIVEAU_LABELS
     status = _lire("frontend/src/lib/status.ts")
