@@ -27,6 +27,7 @@ digest;quotidien;07:15;exploitation;deploy.sh → /etc/cron.d/labuse (généré 
 mail-queue-consommer;5 min;toutes les 5 min;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run mail-queue-consommer
 fiche-commune-cache;quotidien;03:00;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run fiche-commune-cache
 coherence-banc;quotidien;03:45;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run coherence-banc
+estimer-banc-precision;quotidien;04:30;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run estimer-banc-precision
 verite-sources;mensuel (15);06:00 le 15;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run verite-sources
 signal-instantane;mensuel (1er);06:00 le 1er;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run signal-instantane
 injection-nuit;quotidien;01:00;eau;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run injection-nuit
@@ -36,3 +37,5 @@ resume-matin;quotidien;07:30;exploitation;deploy.sh → /etc/cron.d/labuse (gén
 john-veille;quotidien;03:00;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run john-veille
 essai-fin-proche;quotidien;09:00;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run essai-fin-proche
 verite-permanente;quotidien;06:00;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run verite-permanente
+fraicheur-nuit;quotidien;07:50;eau;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run fraicheur-nuit
+ingest-inpi-rne;mensuel (6);05:00 le 6;eau;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run ingest-inpi-rne

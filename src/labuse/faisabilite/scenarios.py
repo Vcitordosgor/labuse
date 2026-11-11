@@ -119,6 +119,9 @@ def _cause_limite(f, zone: str) -> tuple[str, str, bool]:
         }.get(getattr(f, "exigu_raison", None) or "",
               "Terrain trop exigu compte tenu des reculs.")
         return (f.verdict, _lim, True)
+    if cause == "assiette_a_verifier":
+        # EXIGU-FIX-1 — ignorance : on affiche « à vérifier », jamais « non constructible ».
+        return (f.verdict, "Assiette constructible à vérifier (géométrie).", True)
     if cause == "redhibitoire":
         return (f.verdict, "Contrainte rédhibitoire (voir les modulations réunionnaises).", True)
     if cause == "hauteur_indispo":

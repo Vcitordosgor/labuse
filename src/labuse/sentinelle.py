@@ -345,6 +345,21 @@ def sonder_ortho(url: str, servi: str | None) -> Sonde:
     return Sonde("ok", vu=f"Ortho Express {servi_an}", message=msg)
 
 
+def sonder_dvf(url: str | None, servi: str | None) -> Sonde:
+    """FRAICHEUR-FIX-1 (point 1/6) — DVF géo-DVF au FORMAT ETALAB ACTUEL : lit la LISTE DES RESSOURCES
+    du jeu data.gouv (`full-AAAA[-sN]`) et rend le DERNIER MILLÉSIME PUBLIÉ comme `dernier_vu`
+    (ex. « 2026-S1 »). Fini la lecture du Last-Modified de l'arborescence legacy FIGÉE (FRAICHEUR-1
+    §4.1). Le VERDICT « en retard » n'est PAS tranché ici (le sonde ne connaît pas l'horizon ingéré) :
+    il l'est à la lecture, par `etats_sources` qui compare ce `dernier_vu` au millésime réellement
+    ingéré (table servie) — c'est le cœur du mandat (point 6)."""
+    from .ingestion import dvf_etalab
+    ressources, _ = dvf_etalab.lister_ressources()
+    dernier = dvf_etalab.dernier_millesime(ressources)
+    if not dernier:
+        return Sonde("illisible", message="aucune ressource full-AAAA-sN au jeu data.gouv DVF")
+    return Sonde("ok", vu=dernier, message=f"dernier fichier publié : full-{dernier.lower()}")
+
+
 def sonder_ligne(row: dict, servi: str | None, *, http=None) -> Sonde:
     """Sonde UNE ligne `source_veille` (dict : methode, url_version, selecteur, dernier_entete) et rend
     le verdict évalué. `http` : injection de la couche réseau pour les tests (défaut = `_http` réel)."""
@@ -368,6 +383,8 @@ def sonder_ligne(row: dict, servi: str | None, *, http=None) -> Sonde:
                                   url2=row.get("url_temoin_2"))
             elif methode == "ortho":
                 s = sonder_ortho(url, servi)   # VERIF-FIX-1 (Q3) — tranche seule (couverture Réunion)
+            elif methode == "dvf":
+                s = sonder_dvf(url, servi)     # FRAICHEUR-FIX-1 — dernier fichier full-AAAA-sN publié
             else:
                 return Sonde("illisible", message=f"méthode inconnue : {methode}")
         except Exception as exc:  # noqa: BLE001 — tout échec réseau/parse = la SENTINELLE a échoué, pas la donnée
@@ -387,7 +404,7 @@ def _lignes_a_sonder(db, *, source_ids=None, forcer: bool) -> list[dict]:
     joint `data_sources` pour lire le millésime SERVI (source_millesime) et le nom (message/notif)."""
     # SENTINELLE-3 (Y4) — on ne sonde QUE les vraies méthodes de surveillance ; une ligne `rappel`
     # (source manuelle, rafraîchissement attendu) n'est jamais interrogée sur le réseau.
-    where = ["v.actif = true", "v.methode IN ('api', 'page', 'entete', 'temoin', 'ortho')"]
+    where = ["v.actif = true", "v.methode IN ('api', 'page', 'entete', 'temoin', 'ortho', 'dvf')"]
     params: dict = {}
     if source_ids:
         where.append("v.source_id = ANY(:ids)")
@@ -636,11 +653,14 @@ SEED: list[dict] = [
     {"name": "INSEE RP2022 — fichier détail Logements (EGOUL)", "methode": "api",
      "url": "https://www.data.gouv.fr/api/1/datasets/recensement-de-la-population-fichiers-detail-logements-ordinaires/", "selecteur": "last_update"},
     # ── Autres jeux data.gouv (last_update) ──
-    # DVF — cas phare : on GARDE `page` (l'index géo-DVF liste les millésimes annuels, on garde le plus
-    # récent, motif lisible « 2025 » comparable au servi ; supérieur à un last_update opaque). Reprise
-    # de sentinelle-dvf-cadastre (moitié DVF).
-    {"name": "DVF / valeurs foncières", "methode": "page",
-     "url": "https://files.data.gouv.fr/geo-dvf/latest/csv/", "selecteur": r"20\d{2}"},
+    # DVF — cas phare du mandat FRAICHEUR-FIX-1. L'ancienne sonde `page` lisait l'index legacy
+    # `/geo-dvf/latest/csv/` qui ne liste QUE 2021–2025 (figé depuis mai 2026, supprimé au 31/11/2026) :
+    # elle rendait toujours « 2025 » = servi → « à jour » faussement alors que l'amont publie S1 2026
+    # (nouveau format `full-AAAA-sN`). La méthode `dvf` lit la LISTE DES RESSOURCES du jeu data.gouv et
+    # rend le dernier fichier publié (« 2026-S1 ») ; le verdict « en retard » est tranché à la lecture.
+    {"name": "DVF / valeurs foncières", "methode": "dvf",
+     "url": "https://www.data.gouv.fr/api/1/datasets/demandes-de-valeurs-foncieres-geolocalisees/",
+     "selecteur": None},
     {"name": "QPV 2024 (ANCT)", "methode": "api",   # SENTINELLE-1 sondait le .zip horodaté (périt à chaque
      # génération → deviendrait injoignable) ; le jeu data.gouv `last_update` est stable et suit les gén.
      "url": "https://www.data.gouv.fr/api/1/datasets/quartiers-prioritaires-de-la-politique-de-la-ville-qpv/", "selecteur": "last_update"},
@@ -720,10 +740,14 @@ SEED: list[dict] = [
     # (dataUpdatedAt 09/09 tous les trois) → le jeu principal suffit comme signal de version.
     {"name": "DPE ADEME (logements existants)", "methode": "api",
      "url": "https://data.ademe.fr/data-fair/api/v1/datasets/dpe03existant", "selecteur": "dataUpdatedAt"},
-    # SITADEL — Dido (SDES) : métadonnée `last_update` du dataset national.
+    # SITADEL — Dido (SDES). FRAICHEUR-FIX-1 (point 2/6) : l'ancien sélecteur `last_update` lisait la
+    # date de MODIFICATION du dataset (30/10), PAS le dernier mois de DONNÉES — or la base détail retarde
+    # structurellement de ~1,5-2 mois sur la note, donc `last_update` était toujours « en avance » sur
+    # l'ingéré (faux signal, FRAICHEUR-1 §3.1). On lit `temporal_coverage.end` = le DERNIER MOIS COUVERT
+    # (ex. 2026-09-30) → comparable au mois réellement ingéré (max(date) sitadel_permits).
     {"name": "SITADEL (autorisations d'urbanisme)", "methode": "api",
      "url": "https://data.statistiques.developpement-durable.gouv.fr/dido/api/v1/datasets/6513f0189d7d312c80ec5b5b",
-     "selecteur": "last_update"},
+     "selecteur": "temporal_coverage.end"},
     # Classement sonore ITT — endpoint de REQUÊTE ArcGIS sans notion de version : requête témoin
     # `returnCountOnly` → compteur stable `count` (X2, cas particulier assumé ; un changement du nombre
     # de tronçons signale une republication).
@@ -816,21 +840,15 @@ SEED: list[dict] = [
     {"name": "Recherche d'entreprises (DINUM)", "methode": "temoin",
      "url": "https://recherche-entreprises.api.gouv.fr/search?q=mairie&departement=974&page=1&per_page=1",
      "selecteur": "total_results"},
-    # ── OSM / Overpass : API de requête sur des SNAPSHOTS ingérés (parkings APER, pôles d'échange, TCSP)
-    #    → témoin sur le COMPTE (out count) de l'agrégat 974 (selecteur elements.0.tags.total ; la réponse
-    #    porte un horodatage volatil au sommet, donc on cible le compte, jamais la réponse entière). Un
-    #    ajout/retrait OSM change le compte → « la donnée amont a divergé du snapshot ingéré ». (La source
-    #    générique 19 « OpenStreetMap / Overpass » reste NON surveillée : interrogée EN DIRECT, aucun
-    #    snapshot à comparer — cf. RAISONS_NON_SURVEILLEES.) ──
-    {"name": "Parkings OSM (loi APER)", "methode": "temoin",
-     "url": "https://overpass-api.de/api/interpreter?data=%5Bout%3Ajson%5D%5Btimeout%3A60%5D%3Barea%5B%22ref%3AINSEE%22%3D%22974%22%5D-%3E.a%3B%28nwr%5B%22amenity%22%3D%22parking%22%5D%28area.a%29%3B%29-%3E.r%3B.r%20out%20count%3B",
-     "selecteur": "elements.0.tags.total"},
-    {"name": "OSM — transport (pôles d'échange & téléphérique)", "methode": "temoin",
-     "url": "https://overpass-api.de/api/interpreter?data=%5Bout%3Ajson%5D%5Btimeout%3A60%5D%3Barea%5B%22ref%3AINSEE%22%3D%22974%22%5D-%3E.a%3B%28nwr%5B%22public_transport%22%3D%22station%22%5D%28area.a%29%3Bnwr%5B%22aerialway%22%5D%28area.a%29%3B%29-%3E.r%3B.r%20out%20count%3B",
-     "selecteur": "elements.0.tags.total"},
-    {"name": "TCSP — voies bus en site propre (OSM)", "methode": "temoin",
-     "url": "https://overpass-api.de/api/interpreter?data=%5Bout%3Ajson%5D%5Btimeout%3A60%5D%3Barea%5B%22ref%3AINSEE%22%3D%22974%22%5D-%3E.a%3B%28way%5B%22highway%22%3D%22bus_guideway%22%5D%28area.a%29%3Bway%5B%22busway%22%5D%28area.a%29%3B%29-%3E.r%3B.r%20out%20count%3B",
-     "selecteur": "elements.0.tags.total"},
+    # ── OSM / Overpass (parkings APER, pôles d'échange, TCSP) — FRAICHEUR-FIX-1 (point 5) : la sonde
+    #    `temoin` live a été RETIRÉE. Diagnostic mesuré depuis le VPS (10/11/2026) : overpass-api.de est
+    #    en 502 « at capacity » de façon persistante (≠ panne réseau → les 16-18 « injoignable » de
+    #    FRAICHEUR-1 §4.5), les miroirs kumi.systems/private.coffee NE RÉSOLVENT PAS depuis le VPS
+    #    (HTTP 000), et overpass.osm.ch répond (200) mais est une instance RÉGIONALE sans le planet
+    #    complet (compte 974 = 0, faux). Aucun Overpass fiable depuis le VPS → une sonde live ne peut que
+    #    (a) crier injoignable en boucle, ou (b) projeter « à jour » sans rien vérifier (fraîcheur inerte).
+    #    On REMPLACE donc par un RAPPEL de fraîcheur sur le SNAPSHOT ingéré (cf. RAPPELS_MANUELS) : honnête
+    #    (« snapshot OSM non rafraîchi depuis N jours »), jamais un faux vert ni une fausse alerte amont.
     # ── GPU API Carto (prescriptions/info-surf servies DANS les documents PLU ; le seul endpoint
     #    versionnable est `document?partition=DU_<insee>` → totalFeatures — une republication du PLU
     #    de la commune témoin qui porte la couche change l'empreinte. Communes témoins choisies là où
@@ -939,8 +957,14 @@ RAISONS_NON_SURVEILLEES: dict[str, str] = {
     "Micro-données OLL (ADIL / AGORAH)": "CHANTIER — micro-données conventionnées (jamais en flux ouvert) ; les agrégats par zone sont servis et surveillés (loyers_oll, lot 5) ; demande prête (DEMANDE-REGION-EPCI.md).",
     "LOVAC (logements vacants)": "SOUS CONVENTION — détail réservé aux collectivités et à leurs prestataires (fiche 19) ; rien à sonder sans accès. Relecture à la convention ; en attendant, la vacance INSEE RP par IRIS est servie (lot 6).",
     "DV3F (Cerema)": "SOUS CONVENTION — même demande que les Fichiers fonciers (une convention pour les trois) ; rien à sonder sans accès. En attendant : DVF ouvert + échantillon producteur Région (lot 4).",
-    "INPI RNE (dirigeants)": "API AUTHENTIFIÉE interrogée par SIREN (pas de requête témoin publique possible) — aucun millésime global à comparer.",
+    "INPI RNE (dirigeants)": "API AUTHENTIFIÉE par SIREN (aucun millésime public à sonder) — FRAICHEUR-FIX-1 : ingérée par le poste mensuel `ingest-inpi-rne` et surveillée par un RAPPEL de cadence (fraîcheur réelle de pm_dirigeants), plus par le contrôle de nuit.",
     "OpenStreetMap / Overpass": "Y3 : témoin de comptage testé (Overpass `out count`) → stable localement mais OSM est un flux continu (planet) et LABUSE l'interroge EN DIRECT (aucun snapshot ingéré) ; un compte sur zone stable ne représente pas l'île et n'est pas actionnable.",
+    # FRAICHEUR-FIX-1 (point 5) — les 3 couches OSM : sonde live Overpass RETIRÉE (aucun endpoint fiable
+    # depuis le VPS : overpass-api.de en 502 persistant, miroirs non résolus, osm.ch sans le planet 974).
+    # Surveillance par RAPPEL de fraîcheur du snapshot ingéré (RAPPELS_MANUELS, cadence 180 j).
+    "Parkings OSM (loi APER)": "FRAICHEUR-FIX-1 : Overpass injoignable de façon fiable depuis le VPS (502 persistant / miroirs HS) — sonde live retirée, remplacée par un rappel de fraîcheur sur le snapshot ingéré (cadence 180 j).",
+    "OSM — transport (pôles d'échange & téléphérique)": "FRAICHEUR-FIX-1 : idem parkings OSM — sonde live Overpass retirée, rappel de fraîcheur sur le snapshot (180 j).",
+    "TCSP — voies bus en site propre (OSM)": "FRAICHEUR-FIX-1 : idem parkings OSM — sonde live Overpass retirée, rappel de fraîcheur sur le snapshot (180 j).",
     "INPN / patrinat — espaces protégés": "Couches patrinat servies en WFS Géoplateforme ; pas de jeu data.gouv national « espaces protégés » à millésime trouvé, ni de requête témoin à agrégat stable.",
     "PEIGEO (hub régional)": "Y2 : peigeo.re répond désormais (200) mais c'est un site WordPress — plus de GeoNetwork/CSW ni d'API de catalogue à sonder (les chemins /geonetwork renvoient 404). Pas un jeu unique.",
     "DEAL Réunion (WMS/WFS)": "Y1 : hôte carto DEAL (deal974.lizmap.com) de nouveau joignable mais sans URL amont datée ; le seul jeu data.gouv « NPNRU » est DÉPARTEMENTAL (Bouches-du-Rhône), pas Réunion → inscrire son `last_update` serait une fausse veille. La couche QP génération 2024 servie ici est, elle, déjà couverte par « QPV 2024 (ANCT) ».",
@@ -974,6 +998,18 @@ RAISONS_NON_SURVEILLEES: dict[str, str] = {
 #: connue — jamais inventée (Fichiers fonciers : la date de convention n'est pas connue ici → None). MOBPRO
 #: est exclu (abandonné, aucun rafraîchissement attendu).
 RAPPELS_MANUELS: list[dict] = [
+    # FRAICHEUR-FIX-1 (point 3) — INPI RNE dirigeants : flux quotidien AUTHENTIFIÉ (pas de millésime
+    # public à sonder), désormais ingéré par le poste MENSUEL `ingest-inpi-rne`. La SENTINELLE est un
+    # rappel de cadence (40 j = mensuel + marge) sur la fraîcheur RÉELLE (data_sources.last_sync_at posé
+    # par le job depuis max(ingested_at)) : si le rafraîchissement décroche, le panneau/le contrôle de
+    # nuit le signalent — fin du « ni job ni sentinelle » (FRAICHEUR-1 §3.3).
+    {"name": "INPI RNE (dirigeants)", "cadence_jours": 40, "convention_echeance": None},
+    # FRAICHEUR-FIX-1 (point 5) — les 3 couches OSM : sonde live Overpass retirée (aucun endpoint fiable
+    # depuis le VPS, cf. SEED). Surveillance = RAPPEL de fraîcheur sur le snapshot ingéré (transport/
+    # stationnement = couches LENTES → cadence 180 j ; un snapshot plus vieux ⇒ « à rafraîchir »).
+    {"name": "Parkings OSM (loi APER)", "cadence_jours": 180, "convention_echeance": None},
+    {"name": "OSM — transport (pôles d'échange & téléphérique)", "cadence_jours": 180, "convention_echeance": None},
+    {"name": "TCSP — voies bus en site propre (OSM)", "cadence_jours": 180, "convention_echeance": None},
     {"name": "Radar (pige d'annonces)", "cadence_jours": 7, "convention_echeance": None},
     # SILENCE-1 (point 7) — rappel TRIMESTRIEL (une manuelle en attente de fichier : gentil rappel, pas d'alerte).
     {"name": "VRD / assainissement (SPANC)", "cadence_jours": 91, "convention_echeance": None},
@@ -1209,7 +1245,8 @@ DOUBLONS_COUVERTS: dict[str, str] = {
 }
 
 _LIB_METHODE = {"api": "`api`", "page": "`page`", "entete": "`entete`", "temoin": "`temoin`",
-                "ortho": "`ortho`"}   # VERIF-FIX-1 (Q3) — contrôle d'ortho plus récente (La Réunion)
+                "ortho": "`ortho`",   # VERIF-FIX-1 (Q3) — contrôle d'ortho plus récente (La Réunion)
+                "dvf": "`dvf`"}       # FRAICHEUR-FIX-1 — ressources data.gouv full-AAAA-sN
 
 
 def _famille(provider: str | None) -> str:

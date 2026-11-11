@@ -66,8 +66,20 @@ def _arrondir(v: float, sens: str) -> int:
     return int((math.floor(v / pas) if sens == "bas" else math.ceil(v / pas)) * pas)
 
 
-def fourchette(valeur: float | int | None) -> dict | None:
+def _mention_mesuree(dlp: int, ecart_median: int | None = None) -> str:
+    """ESTIMER-2 (D-5) — mention d'une fourchette MESURÉE par le banc de nuit (plus le ±30 % fixe)."""
+    med = f" ; écart médian mesuré {ecart_median} %" if ecart_median else ""
+    return (f"Estimation indicative, pas une valeur vénale : fourchette ±{dlp} %, MESURÉE par le banc "
+            f"de nuit (rétro-test sans fuite, par commune et type de bien{med}).")
+
+
+def fourchette(valeur: float | int | None, demi_largeur_pct: float | int | None = None,
+               ecart_median: int | None = None) -> dict | None:
     """Fourchette d'incertitude autour d'une valeur de parcelle estimée (euros).
+
+    ESTIMER-2 (D-5) — `demi_largeur_pct` (facultatif) = la demi-largeur MESURÉE pour ce bien (écart Q3
+    du banc, par commune/type) ; elle REMPLACE le ±30 % fixe quand elle est fournie, et la mention dit
+    alors « mesurée » plutôt que de citer l'ancien backtest. Absente → ±30 % historique (compat).
 
     Renvoie None si `valeur` est None (on ne fabrique jamais une fourchette sur une absence). Les bornes
     sont ARRONDIES à un pas lisible (bas vers le bas, haut vers le haut — la fourchette encadre la
@@ -76,16 +88,20 @@ def fourchette(valeur: float | int | None) -> dict | None:
     if valeur is None:
         return None
     v = float(valeur)
-    b1 = _arrondir(v * (1 - DEMI_LARGEUR), "bas")
-    b2 = _arrondir(v * (1 + DEMI_LARGEUR), "haut")
+    mesuree = isinstance(demi_largeur_pct, (int, float)) and demi_largeur_pct > 0
+    dl = (float(demi_largeur_pct) / 100.0) if mesuree else DEMI_LARGEUR
+    dlp = round(dl * 100)
+    b1 = _arrondir(v * (1 - dl), "bas")
+    b2 = _arrondir(v * (1 + dl), "haut")
     bas, haut = (b1, b2) if b1 <= b2 else (b2, b1)
     return {
         "centre": round(v),
         "bas": bas,
         "haut": haut,
-        "demi_largeur_pct": DEMI_LARGEUR_PCT,
-        "mention": MENTION,
-        "mention_courte": MENTION_COURTE,
+        "demi_largeur_pct": dlp,
+        "mesuree": bool(mesuree),
+        "mention": (_mention_mesuree(dlp, ecart_median) if mesuree else MENTION),
+        "mention_courte": (f"estimation ±{dlp} % (mesurée)" if mesuree else MENTION_COURTE),
     }
 
 

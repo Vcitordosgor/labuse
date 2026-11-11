@@ -55,11 +55,15 @@ SOURCES = {
             # M32 Phase B §2 : millésime amont (vague 1 = DVF). `cadence_norme` = token servi ;
             # `prochain` = prochaine livraison géo-DVF (S1-2026 en octobre) ; `millesime` = édition
             # fournisseur (texte normé). L'horizon (max date_mutation) est CALCULÉ, pas figé ici.
-            "cadence_norme": "semestriel", "prochain": "2026-10-01",
+            "cadence_norme": "semestriel", "prochain": "2027-04-01",
             # M124 — la profondeur DIT les deux canaux : prod geo-DVF 2021+ ET archives brutes
             # DGFiP 2014-2020 (dvf_mutations_histo, miroir cquest, Licence Ouverte).
-            "millesime": "géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020",
-            "detection": "Last-Modified HTTP des CSV annuels — reload du millésime modifié uniquement"},
+            # FRAICHEUR-FIX-1 — le millésime servi est POSÉ dynamiquement par refresh_dvf (dernier
+            # fichier `full-AAAA-sN` publié) ; cette valeur ne sert que de repli si aucun refresh.
+            "millesime": "géo-DVF Etalab (5 ans glissants) + DGFiP 2014–2020",
+            # FRAICHEUR-FIX-1 (point 1) — fini le HEAD sur l'arborescence legacy figée : détection par
+            # la LISTE DES RESSOURCES du jeu data.gouv (fichiers semestriels `full-AAAA-sN`).
+            "detection": "ressources data.gouv (full-AAAA-sN) — reload de la période modifiée uniquement"},
     "dpe": {"label": "DPE ADEME (logements existants)", "cadence": "hebdomadaire (flux continu)",
             "date_sql": "SELECT max(date_etablissement)::date FROM dpe_records",
             "ds_name": "DPE ADEME%", "auto": True,
@@ -369,65 +373,76 @@ def persist_millesime(session: Session, only: str | None = None, *, commit: bool
 
 # ─────────────────────────── J2 · détection + refresh incrémentaux ───────────────────────────
 
-def check_dvf_livraison(session: Session, timeout: float = 20.0) -> dict:
-    """Nouvelle livraison Etalab ? Compare le Last-Modified HTTP de chaque CSV annuel à l'état
-    stocké — on ne retélécharge JAMAIS ce qu'on a déjà. Renvoie les millésimes modifiés."""
+def check_dvf_livraison(session: Session, *, http_get=None) -> dict:
+    """FRAICHEUR-FIX-1 (point 1) — nouvelle livraison Etalab ? On lit la LISTE DES RESSOURCES du jeu
+    data.gouv (nouveau format `full-AAAA[-sN].csv.gz`) et on compare le SEGMENT HORODATÉ de chaque
+    ressource à l'état stocké (`dvf:res:<token>`). Une période dont le segment a changé (ou absente de
+    l'état) est à recharger. Fin de l'ancien HEAD sur l'arborescence legacy FIGÉE (no-op perpétuel,
+    FRAICHEUR-1 §4.1). `http_get(url)->bytes` injectable (tests)."""
+    from . import dvf_etalab
     _ensure(session)
+    ressources, last_update = dvf_etalab.lister_ressources(http_get=http_get)
     modifies = []
-    with httpx.Client(timeout=timeout, follow_redirects=True) as c:
-        for year in range(2021, today_reunion().year + 1):
-            try:
-                r = c.head(GEO_DVF_URL.format(year=year))
-                if r.status_code != 200:
-                    continue
-                lastmod = r.headers.get("last-modified", "")
-            except Exception as exc:  # noqa: BLE001 — réseau : on réessaiera au prochain cron
-                log.warning("HEAD geo-dvf %s : %s", year, exc)
-                continue
-            connu = _etat_get(session, f"dvf:lastmod:{year}")
-            if lastmod and lastmod != connu:
-                modifies.append({"annee": year, "lastmod": lastmod, "connu": connu})
-    return {"modifies": modifies, "n": len(modifies)}
+    for res in ressources:
+        connu = _etat_get(session, f"dvf:res:{res.token}")
+        if res.version and res.version != connu:
+            modifies.append({"token": res.token, "version": res.version, "connu": connu})
+    return {"modifies": modifies, "n": len(modifies),
+            "dernier_millesime": dvf_etalab.dernier_millesime(ressources),
+            "last_update": last_update, "ressources": ressources}
 
 
-def refresh_dvf(session: Session, *, commit: bool = True, log_fn=print) -> dict:
-    """Refresh DVF INCRÉMENTAL : seuls les millésimes dont la livraison a changé sont rechargés
-    (DELETE millésime + réinsertion = idempotent ; un double run = le même état)."""
-    from .layers_ingest import load_dvf_geo
+def refresh_dvf(session: Session, *, commit: bool = True, log_fn=print, http_get=None) -> dict:
+    """Refresh DVF INCRÉMENTAL au FORMAT ETALAB ACTUEL : seules les PÉRIODES dont la ressource a changé
+    sont rechargées. Chaque fichier `full-AAAA[-sN]` est full-France : on filtre le 974, on agrège PAR
+    MUTATION (même agrégat que le legacy), on SUPPRIME la fenêtre de dates de la période puis on
+    réinsère (idempotent, SANS doublon ; un double run = le même état). L'HISTORIQUE est conservé :
+    `dvf_mutations_histo` (≤ 2020) n'est jamais touché ; les périodes hors fenêtre amont restent en base."""
+    from . import dvf_etalab
+    from .layers_ingest import _geo_dvf_aggregate, insert_muts
 
-    check = check_dvf_livraison(session)
+    check = check_dvf_livraison(session, http_get=http_get)
+    par_token = {r.token: r for r in check["ressources"]}
     if not check["modifies"]:
-        log_fn("DVF : aucune nouvelle livraison (Last-Modified inchangés) — no-op")
-        return {"recharges": [], "no_op": True}
+        log_fn(f"DVF : aucune nouvelle livraison (format Etalab {check['dernier_millesime']}) — no-op")
+        return {"recharges": [], "no_op": True, "dernier_millesime": check["dernier_millesime"]}
     recharges = []
-    # CORRECTIFS-1 E1 — on recharge `dvf_mutations` (la table SERVIE par la fiche, maille mutation),
-    # avec les COLONNES de load_dvf_geo (mutation_id, commune, geom, raw…) ; l'ancien code ciblait
-    # `dvf_mutations_parcelle` dont ces colonnes N'EXISTENT PAS → INSERT en échec, et la table lue
-    # jamais rafraîchie. La date de livraison (lastmod) n'est gravée qu'APRÈS succès (plus bas).
-    reussis: list[tuple[int, str]] = []
+    # la version (segment horodaté) n'est gravée qu'APRÈS un rechargement RÉUSSI de sa période.
+    reussis: list[tuple[str, str]] = []
     for m in check["modifies"]:
-        year = m["annee"]
+        res = par_token[m["token"]]
+        debut, fin = res.bornes
         n_avant = session.execute(text(
-            "SELECT count(*) FROM dvf_mutations WHERE extract(year FROM date_mutation) = :y"),
-            {"y": year}).scalar()
-        session.execute(text(
-            "DELETE FROM dvf_mutations WHERE extract(year FROM date_mutation) = :y"), {"y": year})
-        n = load_dvf_geo(session, target="dvf_mutations", years=(year,))
-        reussis.append((year, m["lastmod"]))
-        recharges.append({"annee": year, "avant": n_avant, "apres": n})
-        log_fn(f"DVF {year} : livraison {m['lastmod']!r} — {n_avant} → {n} mutations")
-    # CORRECTIFS-1 E1 — la date de livraison n'est enregistrée qu'une fois TOUS les millésimes
-    # modifiés rechargés sans erreur (sinon un load qui lève laisse 0 lastmod gravé → re-tenté).
-    for year, lastmod in reussis:
-        _etat_set(session, f"dvf:lastmod:{year}", lastmod)
+            "SELECT count(*) FROM dvf_mutations WHERE date_mutation::date BETWEEN :d AND :f"),
+            {"d": debut, "f": fin}).scalar()
+        lignes = dvf_etalab.lignes_974(res, http_get=http_get)
+        muts = _geo_dvf_aggregate(lignes)
+        # purge de la FENÊTRE exacte avant réinsertion (pas de doublon ni de trou) ; on ne supprime
+        # que si l'amont a réellement renvoyé des mutations 974 (jamais remplacer du réel par du vide).
+        if muts:
+            session.execute(text(
+                "DELETE FROM dvf_mutations WHERE date_mutation::date BETWEEN :d AND :f"),
+                {"d": debut, "f": fin})
+            n = insert_muts(session, muts, target="dvf_mutations")
+        else:
+            n = 0
+        reussis.append((res.token, res.version))
+        recharges.append({"token": res.token, "avant": n_avant, "apres": n,
+                          "ajoutees": max(0, n - (n_avant or 0))})
+        log_fn(f"DVF {res.token} : ressource {res.version} — {n_avant} → {n} mutations 974")
+    for token, version in reussis:
+        _etat_set(session, f"dvf:res:{token}", version)
     session.execute(text(
         "UPDATE data_sources SET last_sync_at = now() WHERE name = 'DVF / valeurs foncières'"))
-    # CORRECTIFS-1 E3 — on branche le magasin VIVANT des millésimes (data_sources.source_millesime,
-    # via persist_millesime) À LA FIN de l'ingestion DVF : un seul magasin, tenu par l'ingester.
+    # CORRECTIFS-1 E3 — magasin VIVANT des millésimes (data_sources.source_millesime / horizon) à la
+    # fin de l'ingestion ; FRAICHEUR-FIX-1 — le millésime amont servi suit le dernier fichier publié.
     persist_millesime(session, only="dvf", commit=False)
+    session.execute(text(
+        "UPDATE data_sources SET source_millesime = :m WHERE name = 'DVF / valeurs foncières'"),
+        {"m": f"géo-DVF Etalab — millésime {check['dernier_millesime']}"})
     if commit:
         session.commit()
-    return {"recharges": recharges, "no_op": False}
+    return {"recharges": recharges, "no_op": False, "dernier_millesime": check["dernier_millesime"]}
 
 
 def ingest_bodacc_quotidien(session: Session, *, commit: bool = True, log_fn=print) -> dict:

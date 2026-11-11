@@ -83,6 +83,18 @@ else
 fi
 command -v systemctl >/dev/null 2>&1 && systemctl restart cron 2>/dev/null || service cron restart 2>/dev/null || true
 
+# ── FRAICHEUR-FIX-1 (point 8) — RATTRAPAGE des tâches du jour sautées par ce déploiement ─────
+# Réécrire le crontab en pleine nuit fait sauter les crons déjà passés du jour (FRAICHEUR-1 §6 :
+# le 10/11, 00:00→05:08 Réunion sautés, dont ingest-dvf/ingest-sitadel/injection-nuit). On relance
+# CE QUI A ÉTÉ SAUTÉ aujourd'hui, en tant qu'utilisateur `labuse`, chaque job gardant ses garde-fous.
+echo "→ Rattrapage des tâches planifiées du jour sautées par le déploiement…"
+if id labuse >/dev/null 2>&1; then
+  sudo -u labuse sh -c 'set -a; . /etc/labuse/labuse.env 2>/dev/null; set +a; exec '"$LABUSE_BIN"' jobs rattraper' \
+    || echo "  ⚠ rattrapage non terminé (voir les logs) — les jobs reprendront à leur prochain créneau"
+else
+  "$LABUSE_BIN" jobs rattraper || echo "  ⚠ rattrapage non terminé — reprise au prochain créneau"
+fi
+
 # ── logrotate + dossiers d'état/logs ───────────────────────────────────────────────────────
 echo "→ Pose du logrotate + dossiers d'état/logs…"
 install -o root -g root -m 644 "$REPO/deploy/logrotate.d/labuse-jobs" /etc/logrotate.d/labuse-jobs

@@ -150,8 +150,9 @@ def _eligibilite(cause: str | None, cascade_exclue: bool, cascade_motifs) -> dic
         # Rédhibitoire SANS exclusion dure sourcée : on ne conclut pas « hors projet » à l'aveugle.
         out.update(eligibility="unknown")
         return out
-    if c.startswith(("zone_non_resolue", "regle_plu_non_validee")) or c in ("hors_plu", "indetermine"):
-        out.update(eligibility="unknown")           # ignorance → À vérifier (spec §8.1)
+    if (c.startswith(("zone_non_resolue", "regle_plu_non_validee", "assiette_a_verifier"))
+            or c in ("hors_plu", "indetermine")):
+        out.update(eligibility="unknown")           # ignorance → À vérifier (spec §8.1 ; EXIGU-FIX-1)
         return out
     if c == "hauteur_indispo":
         out.update(height_status="missing")

@@ -22,18 +22,21 @@ from datetime import datetime, timezone
 
 from sqlalchemy import text
 
-from . import sentinelle
+from . import controle_millesime, sentinelle
 from .sources_catalog import WHERE_AFFICHEES, masquees_param
 
-#: les CINQ états admin — le vocabulaire unique. Ordre = priorité d'affichage (geste attendu d'abord).
-#: RETOURS-9 (Q2) — `jamais_verifiee` ajouté : une source SURVEILLÉE dont l'agent n'est pas encore
-#: passé (aucun `dernier_statut`). Elle n'est pas « à jour » (rien n'a été constaté) ni « non surveillée »
-#: (une sonde est bien câblée) : elle attend sa première vérification. Fréquent en local (pas de cron).
-ETATS = ("nouvelle_version", "a_rafraichir", "jamais_verifiee", "a_jour", "non_surveillee",
+#: le vocabulaire unique des états admin. Ordre = priorité d'affichage (geste attendu d'abord).
+#: RETOURS-9 (Q2) — `jamais_verifiee` : une source SURVEILLÉE dont l'agent n'est pas encore passé.
+#: FRAICHEUR-FIX-1 (point 6) — `en_retard` (décrochage PROUVÉ : publié > ingéré) et `a_verifier`
+#: (publié connu, ingéré non prouvé → « à jour » pas démontrable) : la projection « à jour » cesse
+#: d'être le défaut silencieux pour les sources à axe de millésime (fin de la faille FRAICHEUR-1 §7).
+ETATS = ("en_retard", "nouvelle_version", "a_rafraichir", "a_verifier", "jamais_verifiee",
+         "a_jour", "non_surveillee",
          "vide")  # CIRCUIT-6 lot 4 (G4) — branchée mais vide (mesure témoins)
 
 #: méthodes de veille qui sont une VRAIE sonde amont (un rappel manuel n'en est pas une).
-_SONDES = ("api", "page", "entete", "temoin")
+#: FRAICHEUR-FIX-1 — `ortho` (couverture Réunion) et `dvf` (ressources data.gouv) sont de VRAIES sondes.
+_SONDES = ("api", "page", "entete", "temoin", "ortho", "dvf")
 
 
 def est_surveillee(methode, actif) -> bool:
@@ -147,7 +150,7 @@ def etat_source(row, *, now: datetime | None = None) -> dict:
 _SQL_ETATS = (
     "SELECT d.id, d.name, d.last_sync_at, d.source_cadence, d.source_horizon_at,"
     "       v.methode AS veille_methode, v.dernier_statut AS veille_statut, v.actif AS veille_actif,"
-    "       v.cadence_attendue_jours AS veille_cadence_attendue"
+    "       v.dernier_vu, v.cadence_attendue_jours AS veille_cadence_attendue"  # FRAICHEUR-FIX-1 : dernier publié
     "  FROM data_sources d LEFT JOIN source_veille v ON v.source_id = d.id"
     f" WHERE {WHERE_AFFICHEES}"
 )
@@ -167,6 +170,22 @@ def lister_etats(conn, *, now: datetime | None = None) -> list[dict]:
     for r in rows:
         d = dict(r)
         d.update(etat_source(r, now=now))
+        # FRAICHEUR-FIX-1 (point 6) — CONTRÔLE DE MILLÉSIME : pour une source à axe de millésime
+        # SURVEILLÉE, on ne projette « à jour » que si c'est PROUVÉ (ingéré ≥ publié) ; sinon
+        # « en retard » (publié plus récent) ou « à vérifier » (ingéré non lisible). Le contrôle
+        # PRIME sur l'état heuristique ; une source hors contrôle garde son état normal.
+        if est_surveillee(d.get("veille_methode"), d.get("veille_actif")):
+            try:
+                v = controle_millesime.verdict(conn, d)
+            except Exception:  # noqa: BLE001 — un contrôle qui rate ne casse jamais la liste
+                v = None
+            if v is not None:
+                d["etat"] = v["etat"]
+                d["etat_client"] = "pas_a_jour" if v["etat"] == "en_retard" else "a_jour"
+                d["phrase_admin"] = v["phrase_admin"]
+                d["phrase_client"] = v["phrase_client"]
+                d["millesime_publie"] = v["publie"]
+                d["millesime_ingere"] = v["ingere"]
         out.append(d)
     # CIRCUIT-6 lot 4 (G4) — « à jour » ne peut plus être vrai sur une source VIDE : l'état
     # combine la VERSION (sentinelle) ET le REMPLISSAGE (mesure G2 sur les témoins). Le DPE
@@ -193,9 +212,10 @@ def compteurs(etats: list[dict]) -> dict:
     for x in etats:
         c[x["etat"]] = c.get(x["etat"], 0) + 1
     c["total"] = len(etats)
-    # projection client (R2 + CIRCUIT-6 G4) : « pas à jour » = nouvelles versions ET vides
-    # (une source vide ne peut pas être « à jour », quel que soit son état de version).
-    c["pas_a_jour"] = c["nouvelle_version"] + c.get("vide", 0)
+    # projection client (R2 + CIRCUIT-6 G4 + FRAICHEUR-FIX-1) : « pas à jour » = nouvelles versions,
+    # vides ET retards PROUVÉS (`en_retard`). Un `a_verifier` (publié connu, ingéré non prouvé) n'alarme
+    # PAS le client faute de preuve de décrochage, mais reste visible à l'admin (vocabulaire unique).
+    c["pas_a_jour"] = c["nouvelle_version"] + c.get("vide", 0) + c.get("en_retard", 0)
     c["client_a_jour"] = c["total"] - c["pas_a_jour"]
     return c
 

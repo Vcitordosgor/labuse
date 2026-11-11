@@ -390,6 +390,11 @@ def cause_libelle(cause: str | None, exigu_raison: str | None = None) -> str | N
         return "Analyse incomplète — parcelle hors du PLU outillé."
     if head == "hauteur_indispo":
         return "Analyse incomplète — hauteur de référence indisponible."
+    # EXIGU-FIX-1 — le ré-examen géométrique n'a pas pu établir une assiette nette fiable (contraintes
+    # superposées, portion U/AU incohérente, géométrie non réparable) : IGNORANCE, jamais « trop étroit ».
+    if head == "assiette_a_verifier":
+        return ("Analyse incomplète — assiette constructible à vérifier (géométrie : contraintes "
+                "superposées, portion U/AU ou reculs à confirmer).")
     if head == "bati_non_ingere":
         return "Analyse incomplète — couche bâtiments non ingérée."
     if head == "surface_incertaine":
@@ -528,6 +533,21 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
             # bien les reculs sur une parcelle réellement étroite. Le message le DIT (plus jamais
             # « compte tenu des reculs (4 m) » sur une parcelle de 1 625 m² vidée par un PPR rouge).
             raison = (extras or {}).get("assiette_vide") or "reculs"
+            # EXIGU-FIX-1 — le ré-examen géométrique amont (db.parcel_faisabilite) a conclu que
+            # l'assiette nette n'a PAS pu être établie de façon fiable (parcelle large mais contraintes
+            # superposées / portion U/AU incohérente / géométrie non réparable). On NE dit PLUS « terrain
+            # trop étroit » (cause CERTAINE) sur un cas douteux : cause d'IGNORANCE « assiette à vérifier »
+            # → bande NC / « À vérifier » (jamais un verdict ferme sans preuve géométrique).
+            if raison == "a_verifier":
+                steps.append(Step(_step1_label, _step1_formule, "à vérifier (assiette non établie)",
+                                  _step1_source if _asrc == "gabarit" else f"{rl_src}",
+                                  prov=_step1_prov))
+                return fini(False,
+                            "Assiette constructible à vérifier — la géométrie (contraintes superposées, "
+                            "portion constructible U/AU, reculs) n'a pas permis d'établir une emprise nette "
+                            "fiable. Capacité non affirmée ; aucun verdict ferme sans preuve géométrique.",
+                            {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
+                            cause="assiette_a_verifier")
             verdict, step_val = _verdict_assiette_vide(raison, recul_used)
             steps.append(Step(_step1_label, _step1_formule, step_val,
                               _step1_source if _asrc == "gabarit" else f"{rl_src}",

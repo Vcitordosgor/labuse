@@ -987,13 +987,11 @@ def fetch_geo_dvf(years: tuple[int, ...] = GEO_DVF_YEARS, dep: str = "974") -> l
     return _geo_dvf_aggregate(rows)
 
 
-def load_dvf_geo(session: Session, target: str = "dvf_mutations",
-                 years: tuple[int, ...] = GEO_DVF_YEARS) -> int:
-    """Charge geo-dvf dans `target` : mutation_id = id_mutation RÉEL (traçabilité corrigée),
-    géométrie = vraie coordonnée lon/lat de la mutation (plus le centroïde de parcelle).
-    N'insère que les communes ayant des parcelles chargées (jointure commune du moteur).
-    Idempotent à l'appelant : vider `target` avant si rechargement. Renvoie le nombre inséré."""
-    muts = fetch_geo_dvf(years)
+def insert_muts(session: Session, muts: list[dict], target: str = "dvf_mutations") -> int:
+    """FRAICHEUR-FIX-1 — INSÈRE des mutations DÉJÀ agrégées (`_geo_dvf_aggregate`) dans `target`,
+    en rattachant l'INSEE à la commune du moteur (parcels). Partagé par `load_dvf_geo` (legacy) et
+    par le chargeur nouveau format (`fraicheur.refresh_dvf` via `dvf_etalab`). N'insère que les
+    communes ayant des parcelles chargées. Idempotent à l'appelant (vider la fenêtre avant)."""
     insee2com = {idu[:5]: com for (com, idu) in session.execute(
         text("SELECT commune, min(idu) FROM parcels GROUP BY commune")).all()}
     stmt = text(f"""
@@ -1008,12 +1006,23 @@ def load_dvf_geo(session: Session, target: str = "dvf_mutations",
         com = insee2com.get(m["insee"])
         if com is None:
             continue
-        params.append({**m, "com": com,
-                       "raw": json.dumps({"source": "geo-dvf Etalab (data.gouv)",
-                                          "id_mutation": m["mid"], "vefa": m["vefa"]})})
+        params.append({k: v for k, v in m.items() if k != "n_lots"} | {
+            "com": com,
+            "raw": json.dumps({"source": "geo-dvf Etalab (data.gouv)",
+                               "id_mutation": m["mid"], "vefa": m["vefa"],
+                               "n_lots": m.get("n_lots", 1)})})
     if params:
         session.execute(stmt, params)
     return len(params)
+
+
+def load_dvf_geo(session: Session, target: str = "dvf_mutations",
+                 years: tuple[int, ...] = GEO_DVF_YEARS) -> int:
+    """Charge geo-dvf dans `target` : mutation_id = id_mutation RÉEL (traçabilité corrigée),
+    géométrie = vraie coordonnée lon/lat de la mutation (plus le centroïde de parcelle).
+    N'insère que les communes ayant des parcelles chargées (jointure commune du moteur).
+    Idempotent à l'appelant : vider `target` avant si rechargement. Renvoie le nombre inséré."""
+    return insert_muts(session, fetch_geo_dvf(years), target)
 
 
 def ingest_foret_publique(session, bbox, commune, run_id, sids) -> int:

@@ -75,6 +75,12 @@ def classify_constructibilite(faisa: Faisabilite | None) -> tuple[str | None, st
         ref = f" ({faisa.zone})" if faisa.zone else ""
         return DECLASSE_ZONE_FERMEE, (f"Zone fermée à l'urbanisation — non constructible en "
                                       f"l'état{ref}.")
+    # EXIGU-FIX-1 — cause d'IGNORANCE : on ne SAIT pas si c'est constructible (assiette non établie
+    # de façon fiable). On SIGNALE « non vérifiable », on NE déclasse PAS en « surface insuffisante »
+    # (ce serait le faux « trop étroit » que ce correctif supprime). NON_VERIFIABLE ∉ _CONSTR_FERME.
+    if faisa.cause == "assiette_a_verifier":
+        return NON_VERIFIABLE, ("Constructibilité non vérifiable — assiette constructible à vérifier "
+                                "(géométrie : contraintes, portion U/AU ou reculs à confirmer).")
     # cause B, ou non constructible sans cause structurée → repli prudent en B (physique).
     return DECLASSE_NON_CONSTRUCTIBLE, ("Parcelle non constructible — surface ou reculs "
                                         "insuffisants.")
