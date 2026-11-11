@@ -1,0 +1,11 @@
+{
+  "d1_lacune_sous_bati": {
+    "bati_toujours_dessine": true,
+    "lacune_ouverte": true
+  },
+  "d2_reproductible": {
+    "svg_identique": true,
+    "scene_id_identique": true,
+    "scene_id": "362d417ee9d0"
+  }
+}

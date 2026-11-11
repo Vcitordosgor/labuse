@@ -141,8 +141,9 @@ def _bloc_coupes_pilote(scene: dict) -> str:
         return ""
     if not scene.get("disponible") or not scene.get("coupes"):
         return ""
-    plan = plan_cle_svg(scene) or ""
-    figures = [coupe_svg(c) for c in scene["coupes"]]
+    # PDF = thème CLAIR ; largeur imprimée maîtrisée (contenu A4 ≈ 170 mm) → échelle chiffrée possible.
+    plan = plan_cle_svg(scene, theme="clair") or ""
+    figures = [coupe_svg(c, theme="clair", largeur_mm=170) for c in scene["coupes"]]
     figures = [f for f in figures if f]
     if not figures:
         return ""

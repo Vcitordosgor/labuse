@@ -27,5 +27,5 @@
   ],
   "ecart_abs_max_m": 0.39,
   "ecart_abs_moyen_m": 0.23,
-  "derive": "Le service RGE ALTI de La Réunion (ign_rge_alti_wld) renvoie des cotes quasi identiques au LiDAR HD MNT (écarts décimétriques) : il en DÉRIVE (RGE ALTI « HIGHRES » = LiDAR HD). La couche RGE ALTI historique 5 m, elle, s'écarte de plusieurs mètres (mesuré en amont : σ≈5 m)."
+  "derive": "Le service RGE ALTI de La Réunion (ign_rge_alti_wld) rend des cotes quasi identiques au LiDAR HD MNT (écarts décimétriques, toutes pentes) : il en DÉRIVE. La couche RGE ALTI historique 5 m s'écarte de plusieurs mètres (σ≈5 m)."
 }

@@ -1,36 +1,35 @@
 {
-  "plan": {
-    "Z0": 100.0,
-    "GX": 0.1,
-    "GY": -0.04,
-    "pente_plan_pct": 10.77
-  },
-  "altitudes": {
-    "erreur_max_m": 0.0,
-    "erreur_moyenne_m": 0.0,
-    "note": "échantillonnage AU CENTRE des pixels = valeur exacte du plan"
+  "oblique": {
+    "pente_attendue_pct": 5.5791,
+    "pente_min_pct": 5.5791,
+    "pente_max_pct": 5.5791,
+    "ecart_max": 0.0,
+    "constante": true,
+    "note": "surface bilinéaire = reproduit un plan ; coupe décalée des centres → pente constante"
   },
   "lacune": {
     "n_runs": 2,
-    "longueurs_runs_m": [
-      59.0,
-      54.0
-    ],
-    "n_lacune_profil": 5,
-    "note": "la bande nodata coupe le profil en 2 morceaux ; pente calculée PAR morceau"
+    "longueurs_m": [
+      58.0,
+      53.0
+    ]
   },
-  "pente_mesuree_pct": 10.0,
-  "pente_le_long_x_attendue_pct": 10.0,
-  "raccords": {
-    "continuité_dans_un_run_ok": true,
-    "pas_constant_m": 1.0
-  },
-  "talus_50cm_vs_1m": {
-    "pente_mediane_deg": 14.5,
-    "pente_max_deg": 81.7,
-    "etendue_intra_pixel_mediane_m": 0.165,
-    "etendue_intra_pixel_mediane_talus_m": 0.354,
-    "etendue_intra_pixel_p95_talus_m": 0.918,
-    "note": "le 1 m IGN = moyenne 2×2 du 0,50 m ; l'étendue intra-pixel est ce que le 1 m lisse."
-  }
+  "talus_50cm_vs_1m": [
+    {
+      "temoin": "bz1065",
+      "axe": "A (pente dominante)",
+      "longueur_m": 48.8,
+      "ecart_1m_vs_50cm_median_m": 0.107,
+      "ecart_1m_vs_50cm_p95_m": 0.497,
+      "ecart_1m_vs_50cm_max_m": 0.558
+    },
+    {
+      "temoin": "cotier",
+      "axe": "A (pente dominante)",
+      "longueur_m": 109.6,
+      "ecart_1m_vs_50cm_median_m": 0.11,
+      "ecart_1m_vs_50cm_p95_m": 1.09,
+      "ecart_1m_vs_50cm_max_m": 2.531
+    }
+  ]
 }

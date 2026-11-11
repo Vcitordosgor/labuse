@@ -5,6 +5,9 @@ prod. **Aucun chiffre servi ne change** (bancs Gabarit verts, chiffres du Gabari
 La vue 3D actuelle reste la vue par défaut ; le pilote vit derrière un **interrupteur réservé aux admins**.
 **Aucun plafond de hauteur n'est dessiné** (les hauteurs en pente sont le mandat suivant).
 
+> Les §1–§9 décrivent l'étape 1. Le **§10** consigne la **revue d'Astra (étape 1 bis)** et FAIT FOI
+> pour la scène et les coupes (surface de référence, trois contours, indicateurs, thèmes, contrôle C).
+
 ---
 
 ## 1. L'existant, en une page
@@ -56,8 +59,8 @@ viennent en réalité du **service IGN en ligne**. Aucun fond 1 m n'existait.
 | Endpoints | `src/labuse/api/gabarit.py` | `GET …/scene/{idu}`, `…/coupe/{A\|B}.svg`, `…/plan.svg` (**admin**) |
 | PDF | `src/labuse/exports/blocs/gabarit.py` | section pilote **gated** `ctx['scene3d']` (défaut inchangé) |
 | Config | `src/labuse/config.py` | `mnt1m_cog_path` / `LABUSE_MNT1M_COG_PATH` |
-| Témoins + contrôles | `scripts/gabarit_3d_temoins.py` | coupes SVG+PNG, plan, contrôles a/b/c |
-| Tests | `tests/test_gabarit_scene.py` | 9 tests (exactitude, lacunes, SVG, gating, invariant chiffres) |
+| Témoins + contrôles | `scripts/gabarit_3d_temoins.py` | coupes SVG(clair+sombre)+PNG, plan, recette D, contrôles a/b/c/C |
+| Tests | `tests/test_gabarit_scene.py` | 13 tests (surface bilinéaire, trous, indicateurs, cadre, thèmes, gating, invariant) |
 
 La **scène** lit le `GabaritResult` SERVI par `gabarit_detail` (chiffres repris tels quels) + le fond 1 m.
 Écran (étape 2) et PDF lisent la même scène. Tout est **offline** (COG local + base ; aucun appel réseau,
@@ -128,9 +131,10 @@ bande nodata :
 - **altitudes : erreur max 0,000 m**, moyenne 0,000 m (échantillon au centre = valeur exacte du plan) ;
 - **pente le long de x : 10,0 % mesurée = 10,0 % attendue** ; raccords continus (pas constant 1 m) ;
 - **lacune** : la bande coupe le profil en **2 morceaux** ; la pente est calculée **par morceau**.
-- **50 cm → 1 m sur le talus BZ1065** : le 1 m = moyenne 2×2 du 0,50 m. Étendue intra-pixel **lissée**
-  (ce que le 1 m enlève) : médiane **0,165 m** ; **en talus (>20°) médiane 0,354 m, p95 0,918 m**
-  (pente médiane 14,5°, max 81,7°). Le 1 m lisse les micro-ruptures ; il garde la forme du talus.
+- **50 cm → 1 m sur le talus BZ1065** : le 1 m = moyenne 2×2 du 0,50 m. ⚠ **Lecture corrigée en
+  étape 1 bis (§10, contrôle C)** : le « 0,92 m » annoncé ici était l'étendue pic-à-pic des sous-pixels
+  (dispersion interne), PAS l'écart de cote introduit par le 1 m. Mesuré le long des MÊMES axes, l'écart
+  réel 1 m↔0,50 m est **décimétrique** (BZ1065 médiane 0,107 m, p95 0,50 m).
 
 ### (b) Cohérence LiDAR HD ↔ RGE ALTI — `controles/b_coherence_lidar_rgealti.json`
 Aux centroïdes témoins, par type de terrain : COG LiDAR HD vs service RGE ALTI IGN.
@@ -198,3 +202,62 @@ Le COG est **hors-git** (`data/*`) ; sa taille réelle est reportée ci-dessus e
 - Les PNG/PDF des coupes sont normalement exclus par `.gitignore` (`docs/audit-*/**/*.png|pdf`,
   anti-bloat) ; comme le mandat les demande explicitement « en SVG **et** PNG », ils sont ajoutés en
   `git add -f` (chacun < 45 Ko). Le COG, lui, reste hors-git.
+
+---
+
+## 10. Étape 1 bis — revue d'Astra appliquée
+
+Même branche, avant la visionneuse. La maquette « 13-coupe-cible » n'est qu'une direction graphique
+(ses longueurs étaient fausses) ; seules les règles ci-dessous font foi.
+
+### A. La scène
+- **Trois contours distincts**, trous et parties multiples conservés : `contour_cadastral` (parcels),
+  `contour_gabarit` (contour étudié), `zone_implantation` (`_polys_local` → `{ext, trous}`).
+- **Une seule surface de référence** `SurfaceReference` : patchs **bilinéaires** sur le MNT 1 m
+  (= triangulation par maille ; raccords 1 m/2 m et lacunes définis). Les profils sont calculés **par
+  intersection** avec elle. ✅ Test : une **coupe oblique** (37°) décalée des centres de pixels rend la
+  **pente constante** d'un plan (écart 0,0).
+- **Axe B** : porte l'identité de la voie, son **point d'intersection vérifié** (`intersection_d`) et le
+  **statut d'accès** ; sans intersection établie → « coupe orientée vers la voie », **sans voie dessinée**.
+  **Axe A renommé « pente dominante »**.
+- **État et identifiant exposés séparément** : `etat = {gabarit, terrain_couverture, fond_disponible,
+  coupes[]}` ; **jamais « disponible » avec des grilles vides** (`disponible = fond ∧ couverture>0`).
+  `scene_id` = hash du **contenu** + des **sources versionnées**. Scène **déterministe** : ✅ l'export se
+  reproduit **après purge du cache** (SVG et `scene_id` identiques — recette D2).
+- **Bâtiments** : hauteur **cotée et « mesurée » seulement si LiDAR** (`cotee`) ; BD TOPO → « estimée »,
+  volume schématique **sans cote** ; **pied aux DEUX rencontres** de la coupe (amont/aval), même
+  convention scène et SVG. *(Réserve : la hauteur LiDAR est le faîtage par parcelle, pas encore mesuré
+  par emprise — le MNS/MNH n'est pas dans le fond local ; à affiner si besoin.)*
+
+### B. Les coupes (SVG serveur, `coupe_svg`)
+- **Cadre** : l'extent vertical inclut terrain, pieds **et sommets de bâti** + marges ; **rien ne
+  déborde** (test automatique, 0 faute sur tous les témoins) ; **flèches dessinées en tracés**.
+- **Échelle** : « H = V · sans exagération verticale » + **barre graphique** ; échelle **chiffrée dans
+  le PDF seulement** (`largeur_mm=170`).
+- **Intervalles** : traversées parcelle et zone en **bandes cotées sous le profil, par tronçon**.
+- **Traits N&B** : terrain plein (mesuré), **reconstitué en tirets** si trou ≤ 3 m bordé d'appuis,
+  **lacune ouverte** sinon, limites en trait fin, **aplat léger** pour le bâti coupé.
+- **Cotes au décimètre**, « Altitudes en m, IGN 1989 » **une fois**, **aux points vérifiés seulement**
+  (voie si établie, limites, haut/bas, pieds amont/aval) ; cote au support incertain **omise**.
+- **Indicateurs par traversée** : pente entre limites (signée, avec sens) **et** amplitude **séparément** ;
+  **pente max sur 5 m** (fenêtre entièrement valable, dans la parcelle, hors bâti, **emplacement reporté**
+  sur le dessin) ; **pente d'accès** seulement si la voie est établie.
+- **Thèmes** : **clair** (PDF) / **sombre** (écran), même contenu.
+
+### C. Résolution — `controles/C_resolution_georef.json`
+- **1 m vs 0,50 m sur les témoins en pente, mêmes axes** : écart de cote **décimétrique** — BZ1065
+  médiane **0,107 m** / p95 0,50 m / max 0,56 m ; cotier (falaise) médiane 0,11 m / p95 1,09 m (le 0,50 m
+  résout mieux la crête de falaise). Le 1 m conserve la forme et les cotes utiles.
+- **Géoréférencement** : l'altitude en un point est **invariante** par le cadrage de la fenêtre WMS
+  (écart **0,06 m** entre deux fenêtres décalées) → fenêtres bien calées sur la grille native.
+- **Correction du 0,92 m** : voir §5(a) — le 0,92 m était une dispersion intra-pixel, pas l'écart réel.
+
+### D. Recette — `recette/`
+- Bâtiment sur **coupe plate**, toit **cadré** ✅ (test). Parcelle **multi-tronçons** (BZ1065 coupe B :
+  traversées 31,9–50,8 m et 61,7–94,6 m) ✅. **Lacune sous bâti** : bâti dessiné, lacune **ouverte**
+  dessous, cotes omises ✅. **Reproductibilité après purge du cache** ✅.
+- **Test automatique** : aucun élément hors cadre ; chaque repère vérifié a son libellé.
+- Coupes témoins en **SVG (clair + sombre) et PNG** dans `coupes/`, plan-clé dans `plan/`.
+
+Vérifs étape 1 bis : 13 tests `test_gabarit_scene.py` ✅ ; 292 unit + 2 db gabarit inchangés ✅ ;
+invariant « chiffres identiques » + déterminisme (base réelle) ✅ ; PDF pilote (clair) rendu offline ✅.

@@ -3,98 +3,152 @@
     {
       "label": "plate",
       "idu": "97415000CY0196",
-      "titre": "Parcelle plate — plaine littorale de Saint-Paul (~5 m)",
-      "scene_id": "7c08f7789091",
+      "titre": "Parcelle plate — plaine littorale de Saint-Paul (~5 m), bâti sur terrain plat",
+      "scene_id": "255879b1d6ab",
       "disponible": true,
-      "n_batiments": 2,
-      "regles": {
-        "zoneImplantationM2": null,
-        "plafondEmpriseM2": null,
-        "hauteurReglementaireM": null
+      "etat": {
+        "gabarit": "inconstructible",
+        "terrain_couverture": 1.0,
+        "fond_disponible": true,
+        "coupes": [
+          {
+            "axe": "A",
+            "disponible": true
+          },
+          {
+            "axe": "B",
+            "disponible": true
+          }
+        ]
       },
+      "n_batiments": 2,
       "coupes": [
         {
           "axe": "A",
-          "titre": "Coupe A-A' — plus grande pente",
           "voie": null,
-          "L": 44.79,
-          "cotes": {
-            "disponible": true,
-            "altitude_min_m": 3.54,
-            "altitude_max_m": 7.23,
-            "denivele_m": 3.69,
-            "denivele_positif_m": 0.2,
-            "denivele_negatif_m": 3.89,
-            "pente_moyenne_pct": 9.1,
-            "pente_max_pct": 86.0,
-            "n_lacune": 0
-          }
+          "indicateurs": {
+            "traversees": [
+              {
+                "d0": 1.0,
+                "d1": 43.89,
+                "pente_pct": -8.0,
+                "sens": "descente",
+                "amplitude_m": 3.43
+              }
+            ],
+            "pente_max_5m": {
+              "disponible": true,
+              "pente_pct": 30.1,
+              "d": 42.39,
+              "fenetre_m": 5.0
+            },
+            "pente_acces_pct": null
+          },
+          "n_cotes_points": 8
         },
         {
           "axe": "B",
-          "titre": "Coupe B-B' — voie → parcelle (accès)",
-          "voie": "Rue des Sables",
-          "L": 68.42,
-          "cotes": {
-            "disponible": true,
-            "altitude_min_m": 3.75,
-            "altitude_max_m": 11.23,
-            "denivele_m": 7.48,
-            "denivele_positif_m": 0.24,
-            "denivele_negatif_m": 7.72,
-            "pente_moyenne_pct": 11.6,
-            "pente_max_pct": 151.5,
-            "n_lacune": 0
-          }
+          "voie": {
+            "nom": "Rue des Sables",
+            "etablie": true,
+            "intersection_d": 19.46,
+            "statut": "accès présumé (intersection de voie vérifiée)"
+          },
+          "indicateurs": {
+            "traversees": [
+              {
+                "d0": 26.16,
+                "d1": 66.41,
+                "pente_pct": -4.1,
+                "sens": "descente",
+                "amplitude_m": 1.66
+              }
+            ],
+            "pente_max_5m": {
+              "disponible": true,
+              "pente_pct": 27.4,
+              "d": 25.66,
+              "fenetre_m": 5.0
+            },
+            "pente_acces_pct": -14.6
+          },
+          "n_cotes_points": 9
         }
       ]
     },
     {
       "label": "cotier",
       "idu": "97413000CA0057",
-      "titre": "Littoral de Saint-Leu — falaise / bord d'eau",
-      "scene_id": "e028d8d76245",
+      "titre": "Littoral de Saint-Leu — falaise",
+      "scene_id": "ac760451bfec",
       "disponible": true,
-      "n_batiments": 0,
-      "regles": {
-        "zoneImplantationM2": null,
-        "plafondEmpriseM2": null,
-        "hauteurReglementaireM": null
+      "etat": {
+        "gabarit": "inconstructible",
+        "terrain_couverture": 1.0,
+        "fond_disponible": true,
+        "coupes": [
+          {
+            "axe": "A",
+            "disponible": true
+          },
+          {
+            "axe": "B",
+            "disponible": true
+          }
+        ]
       },
+      "n_batiments": 0,
       "coupes": [
         {
           "axe": "A",
-          "titre": "Coupe A-A' — plus grande pente",
           "voie": null,
-          "L": 107.74,
-          "cotes": {
-            "disponible": true,
-            "altitude_min_m": 0.41,
-            "altitude_max_m": 48.6,
-            "denivele_m": 48.19,
-            "denivele_positif_m": 2.2,
-            "denivele_negatif_m": 48.84,
-            "pente_moyenne_pct": 47.4,
-            "pente_max_pct": 496.0,
-            "n_lacune": 0
-          }
+          "indicateurs": {
+            "traversees": [
+              {
+                "d0": 35.86,
+                "d1": 80.68,
+                "pente_pct": -26.4,
+                "sens": "descente",
+                "amplitude_m": 11.82
+              }
+            ],
+            "pente_max_5m": {
+              "disponible": true,
+              "pente_pct": 194.6,
+              "d": 81.18,
+              "fenetre_m": 5.0
+            },
+            "pente_acces_pct": null
+          },
+          "n_cotes_points": 4
         },
         {
           "axe": "B",
-          "titre": "Coupe B-B' — voie → parcelle (accès)",
-          "voie": "Rue Georges Pompidou",
-          "L": 127.33,
-          "cotes": {
-            "disponible": true,
-            "altitude_min_m": 0.58,
-            "altitude_max_m": 52.4,
-            "denivele_m": 51.82,
-            "denivele_positif_m": 2.32,
-            "denivele_negatif_m": 54.14,
-            "pente_moyenne_pct": 44.3,
-            "pente_max_pct": 408.9,
-            "n_lacune": 0
-          }
+          "voie": {
+            "nom": "Rue Georges Pompidou",
+            "etablie": true,
+            "intersection_d": 49.3,
+            "statut": "accès présumé (intersection de voie vérifiée)"
+          },
+          "indicateurs": {
+            "traversees": [
+              {
+                "d0": 55.14,
+                "d1": 99.26,
+                "pente_pct": -26.1,
+                "sens": "descente",
+                "amplitude_m": 11.51
+              }
+            ],
+            "pente_max_5m": {
+              "disponible": true,
+              "pente_pct": 175.9,
+              "d": 99.76,
+              "fenetre_m": 5.0
+            },
+            "pente_acces_pct": 6.9
+          },
+          "n_cotes_points": 5
         }
       ]
     },
@@ -102,136 +156,191 @@
       "label": "alt760",
       "idu": "97415000CM1658",
       "titre": "Parcelle en altitude — 36 Rue des Jacarandas, Saint-Paul (~595 m mesurés)",
-      "scene_id": "40dfa6aba6b4",
+      "scene_id": "a35230147072",
       "disponible": true,
-      "n_batiments": 1,
-      "regles": {
-        "zoneImplantationM2": 130,
-        "plafondEmpriseM2": null,
-        "hauteurReglementaireM": 13.0
+      "etat": {
+        "gabarit": "ok",
+        "terrain_couverture": 1.0,
+        "fond_disponible": true,
+        "coupes": [
+          {
+            "axe": "A",
+            "disponible": true
+          },
+          {
+            "axe": "B",
+            "disponible": true
+          }
+        ]
       },
+      "n_batiments": 1,
       "coupes": [
         {
           "axe": "A",
-          "titre": "Coupe A-A' — plus grande pente",
           "voie": null,
-          "L": 24.01,
-          "cotes": {
-            "disponible": true,
-            "altitude_min_m": 592.74,
-            "altitude_max_m": 595.14,
-            "denivele_m": 2.4,
-            "denivele_positif_m": 0.25,
-            "denivele_negatif_m": 2.43,
-            "pente_moyenne_pct": 11.2,
-            "pente_max_pct": 78.0,
-            "n_lacune": 0
-          }
+          "indicateurs": {
+            "traversees": [
+              {
+                "d0": 2.02,
+                "d1": 22.19,
+                "pente_pct": -10.1,
+                "sens": "descente",
+                "amplitude_m": 2.19
+              }
+            ],
+            "pente_max_5m": {
+              "disponible": true,
+              "pente_pct": 32.7,
+              "d": 21.69,
+              "fenetre_m": 5.1
+            },
+            "pente_acces_pct": null
+          },
+          "n_cotes_points": 6
         },
         {
           "axe": "B",
-          "titre": "Coupe B-B' — voie → parcelle (accès)",
-          "voie": "Rue des Jacarandas",
-          "L": 42.99,
-          "cotes": {
-            "disponible": true,
-            "altitude_min_m": 594.21,
-            "altitude_max_m": 595.71,
-            "denivele_m": 1.5,
-            "denivele_positif_m": 1.11,
-            "denivele_negatif_m": 2.25,
-            "pente_moyenne_pct": 7.8,
-            "pente_max_pct": 59.0,
-            "n_lacune": 0
-          }
+          "voie": {
+            "nom": null,
+            "etablie": false,
+            "intersection_d": null,
+            "statut": "coupe orientée vers la voie (intersection non établie)"
+          },
+          "indicateurs": {
+            "traversees": [
+              {
+                "d0": 25.99,
+                "d1": 41.99,
+                "pente_pct": -0.6,
+                "sens": "descente",
+                "amplitude_m": 0.33
+              }
+            ],
+            "pente_max_5m": {
+              "disponible": true,
+              "pente_pct": 20.2,
+              "d": 25.49,
+              "fenetre_m": 5.0
+            },
+            "pente_acces_pct": null
+          },
+          "n_cotes_points": 4
         }
       ]
     },
     {
       "label": "bz1065",
       "idu": "97411000BZ1065",
-      "titre": "97411000BZ1065 — talus, Saint-Denis (témoin CDC)",
-      "scene_id": "8a3fc4d701e5",
+      "titre": "97411000BZ1065 — talus, Saint-Denis ; coupe B traverse la parcelle en plusieurs tronçons",
+      "scene_id": "362d417ee9d0",
       "disponible": true,
-      "n_batiments": 3,
-      "regles": {
-        "zoneImplantationM2": 734,
-        "plafondEmpriseM2": 470.1,
-        "hauteurReglementaireM": 7.0
+      "etat": {
+        "gabarit": "ok",
+        "terrain_couverture": 1.0,
+        "fond_disponible": true,
+        "coupes": [
+          {
+            "axe": "A",
+            "disponible": true
+          },
+          {
+            "axe": "B",
+            "disponible": true
+          }
+        ]
       },
+      "n_batiments": 3,
       "coupes": [
         {
           "axe": "A",
-          "titre": "Coupe A-A' — plus grande pente",
           "voie": null,
-          "L": 48.79,
-          "cotes": {
-            "disponible": true,
-            "altitude_min_m": 395.59,
-            "altitude_max_m": 408.08,
-            "denivele_m": 12.49,
-            "denivele_positif_m": 0.45,
-            "denivele_negatif_m": 12.92,
-            "pente_moyenne_pct": 27.4,
-            "pente_max_pct": 103.0,
-            "n_lacune": 0
-          }
+          "indicateurs": {
+            "traversees": [
+              {
+                "d0": 4.98,
+                "d1": 46.78,
+                "pente_pct": -25.2,
+                "sens": "descente",
+                "amplitude_m": 10.52
+              }
+            ],
+            "pente_max_5m": {
+              "disponible": true,
+              "pente_pct": 70.7,
+              "d": 46.28,
+              "fenetre_m": 5.0
+            },
+            "pente_acces_pct": null
+          },
+          "n_cotes_points": 4
         },
         {
           "axe": "B",
-          "titre": "Coupe B-B' — voie → parcelle (accès)",
-          "voie": "Chemin de la Citerne",
-          "L": 95.55,
-          "cotes": {
-            "disponible": true,
-            "altitude_min_m": 401.46,
-            "altitude_max_m": 410.14,
-            "denivele_m": 8.68,
-            "denivele_positif_m": 11.45,
-            "denivele_negatif_m": 16.34,
-            "pente_moyenne_pct": 29.1,
-            "pente_max_pct": 349.5,
-            "n_lacune": 0
-          }
+          "voie": {
+            "nom": "Chemin de la Citerne",
+            "etablie": true,
+            "intersection_d": 27.5,
+            "statut": "accès présumé (intersection de voie vérifiée)"
+          },
+          "indicateurs": {
+            "traversees": [
+              {
+                "d0": 31.85,
+                "d1": 50.76,
+                "pente_pct": -21.6,
+                "sens": "descente",
+                "amplitude_m": 4.17
+              },
+              {
+                "d0": 61.71,
+                "d1": 94.56,
+                "pente_pct": 2.6,
+                "sens": "montée",
+                "amplitude_m": 3.6
+              }
+            ],
+            "pente_max_5m": {
+              "disponible": true,
+              "pente_pct": 69.9,
+              "d": 83.11,
+              "fenetre_m": 5.0
+            },
+            "pente_acces_pct": 7.2
+          },
+          "n_cotes_points": 9
         }
       ]
     }
   ],
-  "controle_a": {
-    "plan": {
-      "Z0": 100.0,
-      "GX": 0.1,
-      "GY": -0.04,
-      "pente_plan_pct": 10.77
+  "test_cadre_fautes": [],
+  "recette_d": {
+    "d1_lacune_sous_bati": {
+      "bati_toujours_dessine": true,
+      "lacune_ouverte": true
     },
-    "altitudes": {
-      "erreur_max_m": 0.0,
-      "erreur_moyenne_m": 0.0,
-      "note": "échantillonnage AU CENTRE des pixels = valeur exacte du plan"
+    "d2_reproductible": {
+      "svg_identique": true,
+      "scene_id_identique": true,
+      "scene_id": "362d417ee9d0"
+    }
+  },
+  "controle_a": {
+    "oblique": {
+      "pente_attendue_pct": 5.5791,
+      "pente_min_pct": 5.5791,
+      "pente_max_pct": 5.5791,
+      "ecart_max": 0.0,
+      "constante": true,
+      "note": "surface bilinéaire = reproduit un plan ; coupe décalée des centres → pente constante"
     },
     "lacune": {
       "n_runs": 2,
-      "longueurs_runs_m": [
-        59.0,
-        54.0
-      ],
-      "n_lacune_profil": 5,
-      "note": "la bande nodata coupe le profil en 2 morceaux ; pente calculée PAR morceau"
+      "longueurs_m": [
+        58.0,
+        53.0
+      ]
     },
-    "pente_mesuree_pct": 10.0,
-    "pente_le_long_x_attendue_pct": 10.0,
-    "raccords": {
-      "continuité_dans_un_run_ok": true,
-      "pas_constant_m": 1.0
-    },
-    "talus_50cm_vs_1m": {
-      "pente_mediane_deg": 14.5,
-      "pente_max_deg": 81.7,
-      "etendue_intra_pixel_mediane_m": 0.165,
-      "etendue_intra_pixel_mediane_talus_m": 0.354,
-      "etendue_intra_pixel_p95_talus_m": 0.918,
-      "note": "le 1 m IGN = moyenne 2×2 du 0,50 m ; l'étendue intra-pixel est ce que le 1 m lisse."
-    }
+    "talus_50cm_vs_1m": null
   },
   "controle_b": {
     "points": [
@@ -262,11 +371,42 @@
     ],
     "ecart_abs_max_m": 0.39,
     "ecart_abs_moyen_m": 0.23,
-    "derive": "Le service RGE ALTI de La Réunion (ign_rge_alti_wld) renvoie des cotes quasi identiques au LiDAR HD MNT (écarts décimétriques) : il en DÉRIVE (RGE ALTI « HIGHRES » = LiDAR HD). La couche RGE ALTI historique 5 m, elle, s'écarte de plusieurs mètres (mesuré en amont : σ≈5 m)."
+    "derive": "Le service RGE ALTI de La Réunion (ign_rge_alti_wld) rend des cotes quasi identiques au LiDAR HD MNT (écarts décimétriques, toutes pentes) : il en DÉRIVE. La couche RGE ALTI historique 5 m s'écarte de plusieurs mètres (σ≈5 m)."
   },
   "controle_c": {
     "disponible": false,
-    "constat": "Aucune cote publique INDÉPENDANTE ne coïncide avec un point témoin au même endroit ET au même référentiel (REUN89). Le service RGE ALTI et le WMS LiDAR HD sont le MÊME référentiel/source (contrôle b), donc PAS indépendants. Les repères de nivellement IGN (REUN89) existent mais aucun ne tombe au pixel d'un témoin. Conformément au mandat : il n'y a pas de contrôle indépendant à affirmer ici."
+    "constat": "Aucune cote publique INDÉPENDANTE ne coïncide avec un point témoin au même endroit ET au même référentiel (REUN89). Service RGE ALTI et WMS LiDAR HD = même source (donc pas indépendants) ; aucun repère de nivellement IGN ne tombe au pixel d'un témoin. Conformément au mandat : il n'y en a pas."
+  },
+  "controle_C": {
+    "resolution": [
+      {
+        "temoin": "bz1065",
+        "axe": "A (pente dominante)",
+        "longueur_m": 48.8,
+        "ecart_1m_vs_50cm_median_m": 0.107,
+        "ecart_1m_vs_50cm_p95_m": 0.497,
+        "ecart_1m_vs_50cm_max_m": 0.558
+      },
+      {
+        "temoin": "cotier",
+        "axe": "A (pente dominante)",
+        "longueur_m": 109.6,
+        "ecart_1m_vs_50cm_median_m": 0.11,
+        "ecart_1m_vs_50cm_p95_m": 1.09,
+        "ecart_1m_vs_50cm_max_m": 2.531
+      }
+    ],
+    "georeferencement": {
+      "point_2975": [
+        336637,
+        7689754
+      ],
+      "valeur_fenetre_A_m": 401.01,
+      "valeur_fenetre_decalee_m": 401.07,
+      "ecart_m": 0.06,
+      "note": "L'altitude en un point est INVARIANTE par le cadrage de la fenêtre WMS (écart ~0) : les fenêtres sont bien géoréférencées sur la grille native (origine = BBOX au pixel près). Le WMS tague EPSG:32740 mais la grille est en coordonnées 2975 → ré-étiquetée."
+    },
+    "correction_0_92m": "CORRECTION (lecture du rapport précédent) : le « 0,92 m » annoncé était l'ÉTENDUE pic-à-pic des quatre sous-pixels 0,50 m DANS un pixel 1 m en talus (p95) — une dispersion interne, PAS l'écart que le 1 m introduit sur une coupe. Mesuré ci-dessus LE LONG DES MÊMES AXES, l'écart réel de cote entre 1 m et 0,50 m est décimétrique (médiane ~0.107 m, p95 ~0.497 m sur BZ1065). Le 1 m lisse les micro-ruptures ; il conserve la forme et les cotes utiles du talus."
   },
   "fond": {
     "taille_octets": 2934273,

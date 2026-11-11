@@ -194,8 +194,9 @@ def gabarit_scene(idu: str, request: Request, db: Session = Depends(get_db)) -> 
 
 
 @router.get("/scene/{idu}/coupe/{axe}.svg")
-def gabarit_coupe_svg(idu: str, axe: str, request: Request, db: Session = Depends(get_db)) -> Response:
-    """Coupe A (plus grande pente) ou B (voie→parcelle) en SVG vectoriel serveur."""
+def gabarit_coupe_svg(idu: str, axe: str, request: Request, theme: str = "sombre",
+                      db: Session = Depends(get_db)) -> Response:
+    """Coupe A (pente dominante) ou B (voie) en SVG vectoriel serveur. theme=sombre (écran)|clair."""
     _exiger_admin(request)
     from ..gabarit.coupe_svg import coupe_svg
     from ..gabarit.scene import build_scene
@@ -203,19 +204,20 @@ def gabarit_coupe_svg(idu: str, axe: str, request: Request, db: Session = Depend
     coupe = next((c for c in scene.coupes if c["label"].upper() == axe.upper()), None)
     if coupe is None:
         raise HTTPException(404, f"Coupe « {axe} » indisponible pour {idu}.")
-    svg = coupe_svg(coupe)
+    svg = coupe_svg(coupe, theme=theme)
     if not svg:
         raise HTTPException(404, "Relief indisponible sur cette emprise (profil sans point valide).")
     return Response(svg, media_type="image/svg+xml")
 
 
 @router.get("/scene/{idu}/plan.svg")
-def gabarit_plan_cle_svg(idu: str, request: Request, db: Session = Depends(get_db)) -> Response:
-    """Plan-clé : parcelle + zone d'implantation + trace des deux axes de coupe."""
+def gabarit_plan_cle_svg(idu: str, request: Request, theme: str = "sombre",
+                         db: Session = Depends(get_db)) -> Response:
+    """Plan-clé : cadastre + zone + bâti + axes/sens + nord."""
     _exiger_admin(request)
     from ..gabarit.coupe_svg import plan_cle_svg
     from ..gabarit.scene import build_scene
-    svg = plan_cle_svg(build_scene(db, idu).to_dict())
+    svg = plan_cle_svg(build_scene(db, idu).to_dict(), theme=theme)
     if not svg:
         raise HTTPException(404, f"Plan-clé indisponible pour {idu}.")
     return Response(svg, media_type="image/svg+xml")
