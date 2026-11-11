@@ -164,3 +164,64 @@ describe('SOLAIRE — deux modes', () => {
     expect(useApp.getState().selectedIdu).toBe('97411000AP0000')
   })
 })
+
+// OUTILS-P0-1 (#1) — GARDE-FOU ANTI-BOUCLE. L'outil est monté DANS UN HÔTE qui s'abonne au store ENTIER
+// (`useApp()` sans sélecteur), comme le faisait le panneau (ModulePanel) : l'hôte re-rend à CHAQUE
+// écriture du store. Avant le correctif, ouvrir un mode réécrivait `outilSousRetour` à chaque rendu
+// (le retour `onBack` étant recréé) → « Maximum update depth exceeded ». Le retour stabilisé
+// (useCallback) casse la boucle même sous ce pire cas. Le bouton de retour du panneau appelle
+// `outilSousRetour` : on le simule ici via `useApp.getState().outilSousRetour()`.
+describe('SOLAIRE — pas de boucle de rendu (ouvrir / reculer / rouvrir sous un hôte abonné au store entier)', () => {
+  beforeEach(() => {
+    mockFetch()
+    useApp.setState({ solairePrefill: null, outilSousRetour: null, selectedIdu: null })
+  })
+  afterEach(() => { vi.restoreAllMocks(); useApp.setState({ outilSousRetour: null }) })
+
+  function HoteStoreEntier() {
+    useApp()   // abonnement au store ENTIER — reproduit la condition du panneau (pire cas : re-rend à chaque set)
+    return <ProspectionSolaire />
+  }
+  function renderDansHote() {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    return render(<QueryClientProvider client={qc}><HoteStoreEntier /></QueryClientProvider>)
+  }
+  const reculer = () => { const r = useApp.getState().outilSousRetour; if (r) r() }
+
+  it('Piscines : ouvrir → reculer → rouvrir, sans « Maximum update depth exceeded »', async () => {
+    renderDansHote()
+    // ouvrir
+    fireEvent.click(document.querySelector('[data-solaire-mode="piscines"]')!)
+    await waitFor(() => expect(document.querySelector('[data-piscines-perim="ile"]')).toBeTruthy())
+    // le mode a posé un retour interne dans le store (lu par le bouton du panneau)
+    expect(typeof useApp.getState().outilSousRetour).toBe('function')
+    // reculer (le geste du bouton « Retour » du panneau) → écran d'entrée
+    reculer()
+    await waitFor(() => expect(document.querySelector('[data-solaire-mode="piscines"]')).toBeTruthy())
+    // rouvrir — aucune boucle
+    fireEvent.click(document.querySelector('[data-solaire-mode="piscines"]')!)
+    await waitFor(() => expect(document.querySelector('[data-piscines-perim="ile"]')).toBeTruthy())
+  })
+
+  it('Ensoleillement : ouvrir → reculer → rouvrir, sans « Maximum update depth exceeded »', async () => {
+    renderDansHote()
+    fireEvent.click(document.querySelector('[data-solaire-mode="ensoleillement"]')!)
+    // l'entrée parcelle du mode ensoleillement s'affiche + retour interne posé
+    await waitFor(() => expect(typeof useApp.getState().outilSousRetour).toBe('function'))
+    reculer()
+    await waitFor(() => expect(document.querySelector('[data-solaire-mode="ensoleillement"]')).toBeTruthy())
+    fireEvent.click(document.querySelector('[data-solaire-mode="ensoleillement"]')!)
+    await waitFor(() => expect(typeof useApp.getState().outilSousRetour).toBe('function'))
+  })
+
+  it('entrée depuis la fiche parcelle (solairePrefill) : ouvre Ensoleillement sur la parcelle, sans boucle', async () => {
+    useApp.setState({ solairePrefill: '97411000AP0000' })
+    renderDansHote()
+    // prefill → mode ensoleillement ouvert directement sur la fiche soleil de la parcelle
+    await screen.findByText(/Profil mensuel/)
+    expect(document.querySelector('[data-solaire-fiche]')?.textContent).toContain('kWh/kWc/an')
+    // reculer revient à l'écran d'entrée (les deux cartes)
+    reculer()
+    await waitFor(() => expect(document.querySelector('[data-solaire-mode="ensoleillement"]')).toBeTruthy())
+  })
+})

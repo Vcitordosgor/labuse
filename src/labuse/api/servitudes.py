@@ -116,12 +116,24 @@ NON_COUVERT = [
 ]
 _NON_COUVERT = NON_COUVERT   # rétro-compat (tests + anciens imports)
 
-# OUTILS-REFONTE-1 (9a) — « Vérifié, rien à signaler » : les FAMILLES de contraintes que le lecteur
-# examine RÉELLEMENT à chaque parcelle (couches toutes ingérées + intersectables, cf. commentaire _KINDS)
-# et qui n'ont RIEN remonté sur cette parcelle. Ce n'est PAS un faux RAS : une famille n'apparaît ici que
-# parce que sa (ses) couche(s) ont bien été interrogées — ce qui n'est pas couvert reste dans NON_COUVERT.
-# Détection « famille déclenchée » par sous-chaîne dans le libellé (categorie + effet) des contraintes
-# remontées. Une famille sans correspondance = examinée et claire → listée en puce.
+# OUTILS-P0-1 (#2) — FAMILLES & ÉTATS. Chaque famille de contraintes prend UN état parmi QUATRE, et
+# jamais un « vérifié » sans preuve de couverture :
+#   • CONTRAINTE  — une contrainte de la famille intersecte la parcelle (remontée dans `items`) ;
+#   • CLAIR       — « Aucune intersection détectée » : la famille a été interrogée ET sa source COUVRE
+#                   de façon DÉMONTRÉE la zone de la parcelle (au moins une couche de la famille est
+#                   ingérée pour la COMMUNE de la parcelle — métadonnée `spatial_layers.commune`) ;
+#   • INCONNU     — « Couverture inconnue » : rien ne remonte mais on ne peut pas démontrer que la
+#                   source couvre cette zone (zone blanche / couche non ingérée sur cette commune) ;
+#   • INDISPONIBLE— « Lecture indisponible » : la lecture de la famille a échoué (ex. radar PLU en panne).
+# Avant, une famille était « vérifiée » dès qu'AUCUNE contrainte ne la nommait — si bien que
+# `familles_verifiees([])` déclarait les DIX familles « vérifiées » sur une parcelle où RIEN n'avait été
+# prouvé couvert. Désormais, sans preuve de couverture, une famille muette est « Couverture inconnue ».
+ETAT_CONTRAINTE = "contrainte"
+ETAT_CLAIR = "aucune_intersection"
+ETAT_INCONNU = "couverture_inconnue"
+ETAT_INDISPONIBLE = "lecture_indisponible"
+
+# Détection « famille déclenchée » par sous-chaîne dans (categorie + effet) des contraintes remontées.
 _FAMILLES_VERIFIEES: list[tuple[str, tuple[str, ...]]] = [
     ("Sols pollués", ("information sur les sols", "SIS", "CASIAS", "site industriel")),
     ("Bruit", ("sonore des voies", "exposition au bruit")),
@@ -135,12 +147,83 @@ _FAMILLES_VERIFIEES: list[tuple[str, tuple[str, ...]]] = [
     ("Risques naturels", ("risque naturel", "PPR", "inondation", "mouvement")),
 ]
 
+# Famille → couches (`spatial_layers.kind`) qui la PORTENT. La couverture d'une famille est DÉMONTRÉE
+# quand au moins une de ces couches est ingérée pour la commune de la parcelle (cf. `couverture_familles`).
+# Les couches sans `commune` renseignée en base (dpf, zone_humide, cinquante_pas, znieff,
+# mesures_compensatoires) ne PROUVENT pas de couverture par commune : la famille reste « inconnue » si
+# aucune de ses autres couches (trait_de_cote, sup…) n'est présente pour la commune. Jamais un faux CLAIR.
+_FAMILLE_KINDS: dict[str, tuple[str, ...]] = {
+    "Sols pollués": ("sol_pollue",),
+    "Bruit": ("bruit_route", "peb"),
+    "Assainissement": ("zonage_assainissement",),
+    "ICPE": ("icpe", "sup"),
+    "Monuments et sites": ("abf", "sup"),
+    "ER / EBC": ("plu_gpu_prescription", "plu_gpu_zone"),
+    "Préemption": ("dpu",),
+    "Eau et zones humides": ("trait_de_cote", "dpf", "zone_humide", "cinquante_pas"),
+    "Espaces naturels": ("ens", "znieff", "mesures_compensatoires", "sup"),
+    "Risques naturels": ("ppr", "georisque_alea"),
+}
 
-def familles_verifiees(items: list[dict]) -> list[str]:
-    """Familles examinées qui n'ont RIEN remonté sur la parcelle (puces « rien à signaler »)."""
+
+def etats_familles(items: list[dict], couvertes: set[str] | None = None,
+                   indisponibles: tuple[str, ...] | set[str] = ()) -> list[dict]:
+    """État (un parmi quatre) de chaque famille examinée sur la parcelle. PUR — pas de DB.
+
+    `couvertes` : familles dont la source couvre DÉMONTRÉMENT la commune (cf. `couverture_familles`).
+    `indisponibles` : familles dont la lecture a échoué. Priorité : indisponible > contrainte > clair >
+    inconnu. Sans preuve de couverture (`couvertes` vide), une famille muette est « Couverture inconnue »."""
+    couvertes = couvertes or set()
+    indispo = set(indisponibles)
     blob = " · ".join(f"{i.get('categorie', '')} {i.get('effet', '')}" for i in items).lower()
-    return [fam for fam, needles in _FAMILLES_VERIFIEES
-            if not any(n.lower() in blob for n in needles)]
+    out: list[dict] = []
+    for fam, needles in _FAMILLES_VERIFIEES:
+        if fam in indispo:
+            etat = ETAT_INDISPONIBLE
+        elif any(n.lower() in blob for n in needles):
+            etat = ETAT_CONTRAINTE
+        elif fam in couvertes:
+            etat = ETAT_CLAIR
+        else:
+            etat = ETAT_INCONNU
+        out.append({"famille": fam, "etat": etat})
+    return out
+
+
+def couverture_familles(db: Session, commune: str | None) -> set[str]:
+    """Familles dont AU MOINS UNE couche source est ingérée POUR LA COMMUNE de la parcelle — preuve de
+    couverture d'après les métadonnées de la source (`spatial_layers.commune`, renseigné à l'ingestion).
+
+    L'EMPREINTE kind → communes couvertes est lue une fois PAR SESSION (db.info, comme `aleas_parcelle`)
+    puis mémorisée : la fiche n'y revient pas. Le rapprochement est INSENSIBLE À LA CASSE (casefold) :
+    certaines couches stockent la commune en capitales (`bruit_route` → « SAINT-DENIS ») là où `parcels`
+    la porte en casse de titre (« Saint-Denis ») — un `=` strict déclarerait à tort « couverture inconnue ».
+    Commune inconnue / erreur → ensemble vide (tout « inconnu », jamais un faux CLAIR)."""
+    if not commune:
+        return set()
+    cle = commune.strip().casefold()
+    fp: dict[str, set[str]] | None = db.info.get("_sl_footprint")
+    if fp is None:
+        tous_kinds = sorted({k for ks in _FAMILLE_KINDS.values() for k in ks})
+        try:
+            fp = {}
+            for kind, com in db.execute(text(
+                "SELECT DISTINCT kind, commune FROM spatial_layers "
+                "WHERE kind = ANY(:k) AND commune IS NOT NULL"), {"k": tous_kinds}).all():
+                fp.setdefault(kind, set()).add((com or "").strip().casefold())
+        except Exception:  # noqa: BLE001 — jamais une 500 pour un calcul de couverture
+            db.rollback()
+            return set()
+        db.info["_sl_footprint"] = fp
+    presents = {kind for kind, comms in fp.items() if cle in comms}
+    return {fam for fam, kinds in _FAMILLE_KINDS.items() if any(k in presents for k in kinds)}
+
+
+def familles_verifiees(items: list[dict], couvertes: set[str] | None = None) -> list[str]:
+    """RÉTRO-COMPAT — familles « Aucune intersection détectée » : examinées ET dont la source couvre la
+    commune de façon démontrée. Sans preuve de couverture (`couvertes` vide/omis), AUCUNE famille n'est
+    « vérifiée » → `familles_verifiees([])` ne renvoie plus les dix familles (OUTILS-P0-1 #2)."""
+    return [e["famille"] for e in etats_familles(items, couvertes) if e["etat"] == ETAT_CLAIR]
 
 
 def get_db():
@@ -256,6 +339,32 @@ def _clean_risque(detail: str) -> str:
         return detail
 
 
+def _ppr_ligne(couleur: str, risques: str, pct: int) -> dict:
+    """Ligne d'affichage d'une zone PPR à partir de sa couleur (`labuse_ppr_couleur` : rouge/bleu/autre),
+    du risque et du % de la parcelle touché. PUR (pas de DB) → testable.
+
+    OUTILS-P0-1 (#2) — un code PPR NON RECONNU (couleur 'autre') ne s'affiche PLUS « partie
+    inconstructible » : il devient « Zonage PPR non classé, à vérifier ». L'HYPOTHÈSE PRUDENTE du calcul
+    (la part non classée est retranchée de l'assiette, comme le rouge — cf. ppr.est_interdit) RESTE, mais
+    elle est DITE comme une hypothèse, pas assénée comme un fait. Le rouge RÉGLEMENTAIRE (INTERDICTION)
+    garde « partie INCONSTRUCTIBLE » (fait opposable, C. env. L562-1)."""
+    if couleur == "bleu":
+        lib = (f"PPR {risques} — zone bleue sur {pct} % de la parcelle : constructible SOUS "
+               f"PRESCRIPTIONS, à confirmer au règlement du PPR.")
+        return {"nature": "PPR — zone bleue", "niveau": "bleu", "libelle": lib, "redhibitoire": False}
+    if couleur == "autre":
+        lib = (f"Zonage PPR non classé, à vérifier — zone au code PPR non reconnu sur {pct} % de la "
+               f"parcelle (risque : {risques}). Par prudence, le calcul la retranche de l'assiette "
+               f"constructible (hypothèse) ; classement à confirmer au règlement du PPR / en mairie.")
+        return {"nature": "PPR — zonage non classé", "niveau": "autre", "libelle": lib, "redhibitoire": True}
+    # rouge RÉGLEMENTAIRE (INTERDICTION)
+    hors = max(0, 100 - pct)
+    lib = (f"PPR {risques} — zone rouge sur {pct} % de la parcelle : partie INCONSTRUCTIBLE "
+           f"(interdiction, C. env. L562-1), quelle que soit la surface. Partie hors zone rouge "
+           f"({hors} %) : constructible selon les règles de sa zone, à confirmer au règlement du PPR.")
+    return {"nature": "PPR — zone rouge", "niveau": "rouge", "libelle": lib, "redhibitoire": True}
+
+
 def _table_aleas(db: Session) -> str:
     """VITESSE-PROD-1 — la source des requêtes d'intersection d'`aleas_parcelle` : `tuyau_subdivise`
     (morceaux ≤ 256 sommets, index GiST) quand elle existe AVEC `data_source_id` (build postérieur à
@@ -292,16 +401,14 @@ def aleas_parcelle(db: Session, idu: str) -> list[dict]:
     srctable = _table_aleas(db)
     out: list[dict] = []
     # ── PPR zoné — CLASSIFICATION UNIQUE PPR-UNIQUE-1 (`labuse_ppr_couleur`) ───────────────────────
-    # Deux groupes : part INTERDITE = rouge (INTERDICTION) ∪ code non classé (traité en rouge par
-    # prudence, p.ex. le `subtype='i'` de Saint-Philippe — l'ancien filtre `IN ('INTERDICTION',
-    # 'PRESCRIPTION')` le LAISSAIT TOMBER) ; part BLEUE = prescription. % = union sur la parcelle.
-    # La part rouge est inconstructible (interdiction, C. env. L562-1) QUELLE QUE SOIT la surface
-    # (doctrine Vic : plus de seuil 50 %). On nomme part rouge ET part hors rouge, « à confirmer au
-    # règlement du PPR ». Une seule ligne rouge, une seule ligne bleue (plus de doublon par risque).
+    # TROIS groupes DISTINCTS (OUTILS-P0-1 #2) : rouge (INTERDICTION), bleu (PRESCRIPTION), autre (code
+    # non reconnu — p.ex. le `subtype='i'` de Saint-Philippe). L'« autre » n'est PLUS fondu dans le
+    # rouge : il reste retranché de l'assiette par prudence (`ppr.est_interdit` : rouge ∪ autre), mais il
+    # s'AFFICHE « Zonage PPR non classé, à vérifier » — l'hypothèse prudente du calcul, dite comme telle,
+    # au lieu d'un « partie inconstructible » asséné. % = union sur la parcelle, une ligne par couleur.
     for r in db.execute(text(
         f"""WITH p AS (SELECT geom_2975 g, ST_Area(geom_2975) a FROM parcels WHERE idu = :idu)
-           SELECT CASE WHEN labuse_ppr_couleur(sl.subtype, sl.attrs) = 'bleu' THEN 'bleu' ELSE 'rouge' END AS couleur,
-                  bool_or(labuse_ppr_couleur(sl.subtype, sl.attrs) = 'autre') AS non_classe,
+           SELECT labuse_ppr_couleur(sl.subtype, sl.attrs) AS couleur,
                   string_agg(DISTINCT sl.attrs->>'risque', ', ') AS risques,
                   round((100 * ST_Area(ST_Union(ST_Intersection(sl.geom_2975, p.g))) / NULLIF(min(p.a), 0))::numeric)::int AS pct,
                   max(ds.name) AS source,
@@ -309,30 +416,17 @@ def aleas_parcelle(db: Session, idu: str) -> list[dict]:
                   max(COALESCE(ds.last_sync_at, ds.updated_at)::date)::text AS ingere_le
            FROM {srctable} sl CROSS JOIN p LEFT JOIN data_sources ds ON ds.id = sl.data_source_id
            WHERE sl.kind = 'ppr' AND sl.geom_2975 IS NOT NULL AND ST_Intersects(sl.geom_2975, p.g)
-           GROUP BY 1 ORDER BY 1 DESC"""), {"idu": idu}).mappings().all():
+           GROUP BY labuse_ppr_couleur(sl.subtype, sl.attrs) ORDER BY 1 DESC"""), {"idu": idu}).mappings().all():
         pct = r["pct"] or 0
         if pct <= 0:   # intersection au bord (aire arrondie à 0 %) → bruit, pas une contrainte
             continue
         # RETOUCHES-1 point 7 — libellé daté nommé selon sa provenance : « millésime <X> » si publié
         # en amont (source_millesime), sinon « ingéré le JJ/MM/AAAA » (repli d'ingestion).
         mill = _date_source(r["source_millesime"], source_horizon_at=r["source_horizon_at"], ingere_le=r["ingere_le"])
-        risques = _risque_fr(r["risques"])
-        if r["couleur"] == "rouge":
-            hors = max(0, 100 - pct)
-            nc = (" (dont une zone au code PPR non reconnu, classée rouge par prudence)"
-                  if r["non_classe"] else "")
-            lib = (f"PPR {risques} — zone rouge sur {pct} % de la parcelle{nc} : partie INCONSTRUCTIBLE "
-                   f"(interdiction, C. env. L562-1), quelle que soit la surface. Partie hors zone rouge "
-                   f"({hors} %) : constructible selon les règles de sa zone, à confirmer au règlement du PPR.")
-            out.append({"nature": "PPR — zone rouge", "niveau": "rouge", "part_pct": pct,
-                        "libelle": _clean_risque(lib), "redhibitoire": True,
-                        "source": r["source"] or "DEAL Réunion", "millesime": mill})
-        else:   # PRESCRIPTION = zone bleue
-            lib = (f"PPR {risques} — zone bleue sur {pct} % de la parcelle : constructible SOUS "
-                   f"PRESCRIPTIONS, à confirmer au règlement du PPR.")
-            out.append({"nature": "PPR — zone bleue", "niveau": "bleu", "part_pct": pct,
-                        "libelle": _clean_risque(lib), "redhibitoire": False,
-                        "source": r["source"] or "DEAL Réunion", "millesime": mill})
+        lig = _ppr_ligne(r["couleur"], _risque_fr(r["risques"]), pct)
+        out.append({"nature": lig["nature"], "niveau": lig["niveau"], "part_pct": pct,
+                    "libelle": _clean_risque(lig["libelle"]), "redhibitoire": lig["redhibitoire"],
+                    "source": r["source"] or "DEAL Réunion", "millesime": mill})
     # ── Aléas Géorisques : TOUS les niveaux par type, chacun avec sa part (PPR-UNIQUE-1, A-007/D-033 :
     #    plus de « meilleur niveau seul » — « fort ~3 % » masquait une exposition totale). Triés par
     #    type puis par niveau décroissant.
@@ -458,11 +552,15 @@ def servitudes_invisibles(idu: str, db: Session = Depends(get_db)) -> dict:
     if not exists:
         raise HTTPException(404, "Parcelle inconnue")
     items = contraintes_parcelle(db, idu)
+    commune = db.execute(text("SELECT commune FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
     # RETOURS-27 (pt 2) — PROCÉDURE PLU EN COURS : lue du radar PLU (labuse.veille_plu, MÊME point de
     # calcul que l'outil « Vérif procédure »), par commune. Si une procédure lourde est ACTIVE (SOURCE,
     # révision/élaboration/modification non dormante), on la sert comme une carte dédiée — et ce point
     # QUITTE « Non couvert » (il n'est plus une lacune : on l'indique).
+    # OUTILS-P0-1 (#2) — on DISTINGUE désormais « radar lu, aucune procédure » (famille claire) d'un
+    # ÉCHEC de lecture du radar (`plu_radar_ok=False`) : une panne n'est JAMAIS présentée « rien à signaler ».
     procedure_plu = None
+    plu_radar_ok = True
     try:
         from .. import veille_plu as _V
         _e = _V.entry((idu or "")[:5])
@@ -474,16 +572,39 @@ def servitudes_invisibles(idu: str, db: Session = Depends(get_db)) -> dict:
                 "date": _e.get("date_acte"), "date_constat": _e.get("date_constat"),
             }
     except Exception:  # noqa: BLE001 — l'outil ne doit jamais 500 sur le radar PLU
+        log.warning("radar PLU indisponible pour %s", idu, exc_info=True)
+        plu_radar_ok = False
         procedure_plu = None
+    # OUTILS-P0-1 (#2) — ÉTAT DES FAMILLES : contrainte / aucune intersection (couverture démontrée) /
+    # couverture inconnue / lecture indisponible. Source UNIQUE de ce verdict (parité : seul l'outil
+    # « Pièges et risques — une parcelle » le lit ; la fiche §Risques et les PDF ont leur propre moteur
+    # cascade, ils ne REPRENNENT pas `verifie`).
+    couvertes = couverture_familles(db, commune)
+    etats = etats_familles(items, couvertes)
+    # Procédure PLU = une famille de plus, pilotée par le radar : panne → indisponible ; radar lu sans
+    # procédure active → claire ; procédure active → servie en carte dédiée (pas de puce).
+    if not plu_radar_ok:
+        etats.append({"famille": "Procédure PLU", "etat": ETAT_INDISPONIBLE})
+    elif procedure_plu is None:
+        etats.append({"famille": "Procédure PLU", "etat": ETAT_CLAIR})
+    else:
+        etats.append({"famille": "Procédure PLU", "etat": ETAT_CONTRAINTE})
+    verifie = [e["famille"] for e in etats if e["etat"] == ETAT_CLAIR]
+    couverture_inconnue = [e["famille"] for e in etats if e["etat"] == ETAT_INCONNU]
+    lecture_indisponible = [e["famille"] for e in etats if e["etat"] == ETAT_INDISPONIBLE]
     # RETOURS-28 (Pièges) — les procédures PLU ne figurent PLUS JAMAIS dans « Non couvert » : une
     # procédure active est servie en carte dédiée (procedure_plu) ; son absence devient une puce
-    # « Procédure PLU » dans « Vérifié, rien à signaler » (côté front). On la retire donc toujours.
+    # « Procédure PLU » dans « Aucune intersection détectée » (côté front). On la retire donc toujours.
     non_couvert = [s for s in _NON_COUVERT if "Procédures PLU en cours" not in s]
     return {"idu": idu, "n": len(items), "servitudes": items,
             "synthese": (f"{len(items)} servitude(s)/contrainte(s) dormante(s) intersecte(nt) cette parcelle."
                          if items else "Aucune servitude dormante détectée dans les couches ingérées."),
-            # OUTILS-REFONTE-1 (9a) — familles examinées & claires (puces « rien à signaler »).
-            "verifie": familles_verifiees(items),
+            # OUTILS-P0-1 (#2) — état par famille + les trois listes dérivées (l'écran les rend telles quelles).
+            "familles": etats,
+            "verifie": verifie,                          # « Aucune intersection détectée » (couverture démontrée)
+            "couverture_inconnue": couverture_inconnue,  # « Couverture inconnue »
+            "lecture_indisponible": lecture_indisponible,  # « Lecture indisponible » (ex. radar PLU en panne)
+            "plu_radar_ok": plu_radar_ok,
             # RETOURS-27 (pt 2) — procédure PLU en cours (carte dédiée) ; null si aucune n'est servie.
             "procedure_plu": procedure_plu,
             "non_couvert": non_couvert,

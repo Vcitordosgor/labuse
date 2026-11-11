@@ -1955,7 +1955,12 @@ function PanelRetour() {
 }
 
 export function ModulePanel() {
-  const { module, setModule } = useApp()
+  // OUTILS-P0-1 (#1) — abonnement CIBLÉ (sélecteurs) et non plus au store ENTIER (`useApp()`) : le
+  // panneau ne se ré-abonnait à tout le store que pour lire `module`/`setModule`, si bien qu'il re-rendait
+  // à CHAQUE écriture du store (dont `outilSousRetour`, posé par chaque outil). Couplé à un retour recréé
+  // à chaque rendu, cela faisait boucler Prospection solaire. On ne re-rend plus que quand `module` change.
+  const module = useApp((s) => s.module)
+  const setModule = useApp((s) => s.setModule)
   const def = MODULES.find((m) => m.key === module)
   // M6.1 item 3 : Échap ferme le panneau (cohérent fiche/contexte). La fiche et les
   // tiroirs gardent la priorité : si l'un d'eux est ouvert, c'est LUI qu'Échap ferme.

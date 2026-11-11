@@ -14,7 +14,7 @@
  * = lecture seule de données gelées).
  */
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { getPiscinesAgregat, getPiscinesListe, getPiscinesParcelles, getSolaireFiche,
   type SolaireFiche } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
@@ -40,8 +40,14 @@ export function ProspectionSolaire() {
   useEffect(() => {
     if (solairePrefill) { setPrefillIdu(solairePrefill); setMode('ensoleillement'); setSolairePrefill(null) }
   }, [solairePrefill, setSolairePrefill])
-  if (mode === 'piscines') return <ModePiscines onBack={() => setMode(null)} />
-  if (mode === 'ensoleillement') return <ModeEnsoleillement onBack={() => setMode(null)} prefillIdu={prefillIdu} />
+  // OUTILS-P0-1 (#1) — le RETOUR est STABILISÉ (`useCallback`, `setMode` est stable). Avant, il était
+  // recréé à chaque rendu : chaque mode l'écrit dans `outilSousRetour` (store) via un effet dont `onBack`
+  // est une dépendance ; comme le panneau hôte (ModulePanel) se ré-abonnait au store entier, l'écriture
+  // déclenchait un rendu → nouveau `onBack` → l'effet enfant réécrivait → « Maximum update depth exceeded ».
+  // Un retour d'identité stable casse la boucle même si l'hôte re-rend à chaque écriture du store.
+  const back = useCallback(() => setMode(null), [])
+  if (mode === 'piscines') return <ModePiscines onBack={back} />
+  if (mode === 'ensoleillement') return <ModeEnsoleillement onBack={back} prefillIdu={prefillIdu} />
   return <EntreeSolaire onChoose={setMode} />
 }
 
