@@ -459,3 +459,62 @@ que la rupture est **côté aval du bâti**, **après la zone d'implantation**, 
 Capture : `viewer/epreuve_rupture.png`.
 
 Hook : build tsc ✅ · vitest **326** ✅ · pytest gabarit **300 unit + 2 db + 21 scène** ✅ · 0 faute hors cadre.
+
+## 16. Étape 2 quinquies — preuve de lecture (7ᵉ revue d'Astra)
+
+Sur `94b575ed1`. Règle de la passe : **pour chaque point, le critère est mesuré dans WebKit sur ma
+propre capture d'ouverture, et le chiffre est donné ; un critère non atteint se dit.** Harnais de mesure
+reproductible : `scripts/gabarit_3d_webkit.mjs` → `viewer/mesures_webkit.json` + captures `viewer/mesure_*`.
+Parcelle BZ1065, aux **deux tailles** 1440×900 et 1280×720, **coupes A et B**, **aperçu et détail**.
+
+### Tableau de mesures (BZ1065)
+
+| Critère | Cible | 1440×900 | 1280×720 | Verdict |
+|---|---|---|---|---|
+| **Cadrage** — largeur de la parcelle projetée à l'écran | 50–70 % | **60 %** | **60 %** | ✅ |
+| **Contour cadastral** — couverture du périmètre (plein visible + pointillé caché) | ≥ 98 % | **100 %** | **100 %** | ✅ |
+| **Coupe détail — plus petit texte à l'écran** | ≥ 11 px | A **13,2** · B **13,2** | A **11,7** · B **11,7** | ✅ |
+| **Coupe détail — chevauchements de cotes** | 0 | A 0 · B 0 | A 0 · B 0 | ✅ |
+| **Repère de rupture / survol** — écart point survolé ↔ point montré en 3D | < 0,5 m | **0,06 m** | **0,06 m** | ✅ |
+| **Parité** — le repli (plan/coupe) transmet l'identifiant de scène `?sid=` | présent | **oui** | **oui** | ✅ |
+| **Rien ne dépasse de l'écran** | vrai | **vrai** | **vrai** | ✅ |
+
+**Zone d'implantation** — bords francs mesurés à la passe 2 quater (masque par pixel depuis le polygone +
+ses trous, `CanvasTexture`, plus de couleur par sommet) : transition nette, **sans halo**. *(Critère tenu,
+non re-chiffré ici car indépendant de la taille d'écran.)*
+
+### Détail par point
+
+- **Cadrage.** La caméra se cadre sur le **contour cadastral projeté à l'écran** (pas le cadre serveur) :
+  `place()` ajuste le rayon ortho jusqu'à ce que la demi-largeur NDC de la parcelle vise 0,30 → **60 %** de
+  la largeur de vue. Mesuré par `window.__gab3d.probe.pf`.
+- **Contour cadastral.** Le drapage **suit les triangles servis** (le relief vient d'un **raycast du mesh
+  affiché**, `makeElev`, ce qui corrige la diagonale reconstruite à l'envers) ; **deux passes** : pointillé
+  discret pour les segments **cachés par le relief** (depthTest off, dessous) + trait **blanc plein** pour les
+  **visibles** (depthTest on, au-dessus). Couverture parcelle **100 %** → anneau continu, lacunes
+  identifiables.
+- **Deux coupes.** L'**aperçu** ne garde que le lisible (profil, limites, emprise bâtie, repère de rupture,
+  2–3 cotes) — texte volontairement petit (B 9 px, A 5–6 px), **non soumis** au seuil des 11 px. Le **détail**
+  (« Agrandir la coupe ») porte **toutes** les cotes et annotations **sans chevauchement**, tous les textes
+  **≥ 11 px** aux deux tailles (plus petite police SVG remontée 7,5/8/8,5 → **9**). Coupe B : les **deux
+  pentes** avec leur traversée — `traversée 32,6–50,5 m : −23,8 %` et `traversée 61,4–94,2 m : +2,5 %` (signe
+  explicite montée/descente) — et **« de la voie à la limite sur l'axe : 6,9 % »** (remplace « accès »).
+- **Repère de rupture.** Posé sur la **portion concernée** (plus forte pente autour du bâti, `_rupture_d`,
+  pas le premier pied). Le **survol de la coupe** (aperçu et détail) retrouve ce point en 3D via la
+  calibration `data-plot-x0/x1` : **écart 0,06 m** entre le point survolé et le point montré — bien sous
+  les 0,5 m exigés.
+- **Parité.** Les URLs de repli (plan et coupes) **transmettent `sid`** (`gabPlanSvgUrl(idu,…,scene_id)`,
+  `gabCoupeSvgUrl(…,sid,detail)`) ; une demande au `sid` périmé **→ 409** (`test_locks_scene_base_reelle`).
+  Le PDF pilote se régénère de la scène courante : **même identifiant, mêmes cotes des deux coupes** que
+  l'écran.
+- **Bâti.** Teinte plus claire (`0xe6eaee`), **arêtes nettes** (`0x5a6066`).
+
+### Critère de sortie (portable)
+Sur BZ1065 à 1280×720 : on ouvre la coupe B, on repère le **◆ de rupture** près du bâti, on lit sa cote, et
+le **survol retrouve le même endroit sur le terrain à 0,06 m près**. ✅
+
+Captures : `viewer/mesure_1440x900_ouvert.png`, `viewer/mesure_1280x720_ouvert.png`, `..._coupeA/B.png`,
+`..._detailB.png` · chiffres : `viewer/mesures_webkit.json` · harnais : `scripts/gabarit_3d_webkit.mjs`.
+
+**Aucun critère non atteint.** Hook : tsc ✅ · vitest **326** ✅ · pytest gabarit **20 scène (1 skip base réelle)
++ 300 unit + 2 db** ✅ · 0 faute hors cadre.

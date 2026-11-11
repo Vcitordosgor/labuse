@@ -192,16 +192,19 @@ def _hors_cadre(svg, w, h, tol=1.0):
 
 
 def test_coupe_svg_cadre_sans_plafond_faitage():
-    svg = coupe_svg(_coupe_demo(), theme="clair", width=960, adresse="12 Rue X", idu="97411000BZ1065")
+    svg = coupe_svg(_coupe_demo(), theme="clair", width=960, detail=True, adresse="12 Rue X", idu="97411000BZ1065")
     assert svg and svg.startswith("<svg")
     h = int(re.search(r'height="(\d+)"', svg).group(1))
     assert _hors_cadre(svg, 960, h) == []                # rien ne déborde (B6/B9)
     assert "H = V" in svg and svg.count("IGN 1989") == 1   # datum une fois (barre)
     assert "plafond" not in svg.lower()
     assert "emprise bâtie" in svg                         # emprise au sol (B5)
-    assert "bâti 7,0 m" in svg                            # hauteur BD TOPO condensée (résumé 1 ligne)
+    assert "bâti 7,0 m" in svg                            # hauteur BD TOPO (détail)
     assert "scène " not in svg                            # plus d'identifiant de scène dans la coupe
     assert svg.count("Altitudes en m") == 1               # en-tête UNE ligne (datum une fois)
+    # APERÇU : compact (sans bandes ni indicateurs), DÉTAIL plus grand
+    apercu = coupe_svg(_coupe_demo(), theme="clair", detail=False)
+    assert "parcelle" not in apercu and "traversée" not in apercu   # aperçu minimal
 
 
 def test_bati_sans_hauteur_sans_mention():
@@ -211,9 +214,9 @@ def test_bati_sans_hauteur_sans_mention():
 
 
 def test_implantation_band_etats():
-    assert "non traversée" not in coupe_svg(_coupe_demo(zone=True), theme="clair")  # zone traversée
-    svg = coupe_svg(_coupe_demo(zone=False), theme="clair")
-    assert "indisponible" in svg                         # pas de zone → indisponible
+    assert "non traversée" not in coupe_svg(_coupe_demo(zone=True), theme="clair", detail=True)  # zone traversée
+    svg = coupe_svg(_coupe_demo(zone=False), theme="clair", detail=True)
+    assert "indisponible" in svg                         # pas de zone → indisponible (bande détail)
 
 
 def test_themes_clair_sombre_fond():

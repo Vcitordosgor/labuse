@@ -91,8 +91,10 @@ def _fleche(x0, y0, x1, y1, col, w=1.4):
             f'<polygon points="{x1:.1f},{y1:.1f} {xa:.1f},{ya:.1f} {xb:.1f},{yb:.1f}" fill="{col}"/>')
 
 
-def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=None):
-    """SVG d'une coupe. None si le profil n'a aucun point valide."""
+def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=None, detail=False):
+    """SVG d'une coupe. APERÇU (detail=False) : profil, limites, emprise, rupture, 2–3 cotes — ce qui
+    reste lisible. DÉTAIL (detail=True) : toutes les cotes, bandes, les DEUX pentes de la coupe B.
+    None si le profil n'a aucun point valide."""
     T = _THEMES.get(theme, _THEMES["sombre"])
     profil = coupe.get("profil") or []
     valides = [p for p in profil if p["z"] is not None]
@@ -111,10 +113,11 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
     zmin, zmax = min(zs_all), max(zs_all)
     zspan = max(zmax - zmin, 1.0)
 
-    # COMPACT (2 quater) : en-tête UNE ligne, indicateurs UNE ligne → la coupe tient dans sa case.
+    # COMPACT (2 quater/quinquies) : APERÇU sans bandes (court → texte lisible à l'écran) ; DÉTAIL avec bandes.
     HEAD = 22
     PAD_L, PAD_R, PAD_T = 58, 16, HEAD + 8
-    BANDES_H, IND_H, AX_H = 34, 16, 20
+    BANDES_H = 32 if detail else 0
+    IND_H, AX_H = (16 if detail else 2), 20
     plot_w = width - PAD_L - PAD_R
     s = min(plot_w / max(L, 1e-6), (h_max - PAD_T - BANDES_H - IND_H - AX_H) / zspan)   # H = V, JAMAIS tronqué
     plot_w = s * L
@@ -151,7 +154,7 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
     d = 0.0
     while d <= L + 1e-6:
         out.append(f'<line x1="{X(d):.1f}" y1="{PAD_T}" x2="{X(d):.1f}" y2="{y_base:.1f}" stroke="{T["grid"]}" stroke-width="0.4"/>')
-        out.append(f'<text x="{X(d):.1f}" y="{y_base+13:.1f}" text-anchor="middle" font-size="9" fill="{T["txt_dim"]}">{_fmt(d)}</text>')
+        out.append(f'<text x="{X(d):.1f}" y="{y_base+13:.1f}" text-anchor="middle" font-size="9.5" fill="{T["txt_dim"]}">{_fmt(d)}</text>')
         d += xs
     z = zmin - (zmin % zstep)
     while z <= zmax + 1e-6:
@@ -190,12 +193,13 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
         out.append(f'<line x1="{x0:.1f}" y1="{y_base:.1f}" x2="{x1:.1f}" y2="{y_base:.1f}" stroke="{T["bati"]}" stroke-width="3"/>')
         out.append(f'<line x1="{x0:.1f}" y1="{y_base-4:.1f}" x2="{x0:.1f}" y2="{y_base+4:.1f}" stroke="{T["bati"]}" stroke-width="1"/>')
         out.append(f'<line x1="{x1:.1f}" y1="{y_base-4:.1f}" x2="{x1:.1f}" y2="{y_base+4:.1f}" stroke="{T["bati"]}" stroke-width="1"/>')
-        out.append(f'<text x="{(x0+x1)/2:.1f}" y="{y_base-7:.1f}" text-anchor="middle" font-size="7.5" fill="{T["bati"]}">emprise bâtie</text>')
-        # repère de rupture (losange) au pied amont, distinct des cotes ordinaires
-        zr = z_terrain(b["d0"])
+        out.append(f'<text x="{(x0+x1)/2:.1f}" y="{y_base-7:.1f}" text-anchor="middle" font-size="9" fill="{T["bati"]}">emprise bâtie</text>')
+        # repère de rupture (losange) sur la PORTION CONCERNÉE = plus forte pente autour du bâti (pas le 1ᵉʳ pied)
+        drb = _rupture_d(profil, b["d0"], min(b["d1"] + 3.0, L))
+        zr = z_terrain(drb) if drb is not None else None
         if zr is not None:
-            yr = Y(zr)
-            out.append(f'<path d="M{x0:.1f},{yr-4:.1f} l4,4 l-4,4 l-4,-4 z" fill="none" stroke="{T["lacune"]}" stroke-width="1.2"/>')
+            out.append(f'<path d="M{X(drb):.1f},{Y(zr)-4:.1f} l4,4 l-4,4 l-4,-4 z" fill="none" stroke="{T["lacune"]}" stroke-width="1.4"/>')
+            out.append(f'<circle cx="{X(drb):.1f}" cy="{Y(zr):.1f}" r="1.6" fill="{T["lacune"]}"/>')
             rupture = True
         if b.get("attribution") == "bdtopo" and b.get("hauteur_m"):
             faitages.append(f"Hauteur du bâtiment (BD TOPO) · {_fmt(b['hauteur_m'],1)} m")
@@ -214,10 +218,13 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
                 out.append(f'<line x1="{X(dd):.1f}" y1="{Y(zt):.1f}" x2="{X(dd):.1f}" y2="{Y(zt)-14:.1f}" stroke="{T["lacune"]}" stroke-width="1.2"/>')
         zc = z_terrain((pm["d0"] + pm["d1"]) / 2)
         if zc is not None:
-            out.append(f'<text x="{X((pm["d0"]+pm["d1"])/2):.1f}" y="{Y(zc)-17:.1f}" text-anchor="middle" font-size="7.5" fill="{T["lacune"]}">pente max 5 m</text>')
+            out.append(f'<text x="{X((pm["d0"]+pm["d1"])/2):.1f}" y="{Y(zc)-17:.1f}" text-anchor="middle" font-size="9" fill="{T["lacune"]}">pente max 5 m</text>')
 
-    # cotes aux points vérifiés, UNE par point, anti-collision (B9/B11)
-    out.append(_cotes(coupe.get("cotes_points", {}).get("points", []), X, Y, T))
+    # cotes : APERÇU = voie/haut/bas (2–3) ; DÉTAIL = toutes. UNE par point, anti-collision.
+    pts = coupe.get("cotes_points", {}).get("points", [])
+    if not detail:
+        pts = [p for p in pts if p.get("role") in ("voie", "haut", "bas")]
+    out.append(_cotes(pts, X, Y, T))
 
     # VOIE nommée LÀ OÙ la coupe la traverse (C10, coupe B)
     voie = coupe.get("voie") or {}
@@ -228,24 +235,23 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
             yc0 = Y(zv) if zv is not None else y_base
             out.append(f'<circle cx="{X(dv):.1f}" cy="{yc0:.1f}" r="2.5" fill="none" stroke="{T["axe"]}" stroke-width="1.3"/>')
             out.append(f'<line x1="{X(dv):.1f}" y1="{yc0-3:.1f}" x2="{X(dv):.1f}" y2="{PAD_T+11:.1f}" stroke="{T["axe"]}" stroke-width="0.5" stroke-dasharray="2 2"/>')
-            out.append(f'<text x="{X(dv):.1f}" y="{PAD_T+9:.1f}" text-anchor="middle" font-size="8" fill="{T["axe"]}">{_esc(voie["nom"])}</text>')
+            out.append(f'<text x="{X(dv):.1f}" y="{PAD_T+9:.1f}" text-anchor="middle" font-size="9" fill="{T["axe"]}">{_esc(voie["nom"])}</text>')
 
     # ÉCHELLE : barre dans un COIN du tracé (2 quater), barre seule
     out.append(_echelle(off_x + 8, y_base - 7, L, s, T))
 
-    # bandes de traversée cotées (mêmes bornes que les limites), compactes
-    yb0 = y_base + AX_H
-    out.append(_bande(coupe.get("limites_parcelle_d") or [], yb0, X, "parcelle", T))
-    yb1 = yb0 + 15
-    zspans = coupe.get("zone_implantation_d") or []
-    if zspans:
-        out.append(_bande(zspans, yb1, X, "zone d'implantation", T, col=T["zone"]))
-    else:                                              # bande d'implantation à états
-        etat = "non traversée" if coupe.get("zone_presente") else "indisponible"
-        out.append(f'<text x="8" y="{yb1+3:.1f}" font-size="8" fill="{T["txt_dim"]}">zone d\'implantation — {etat}</text>')
-
-    # indicateurs sur UNE ligne de résumé (2 quater)
-    out.append(_indicateurs(coupe, faitages, rupture, y_base + AX_H + BANDES_H, PAD_L, width - PAD_R, T))
+    # bandes de traversée + indicateurs : DÉTAIL seulement (l'aperçu reste court et lisible)
+    if detail:
+        yb0 = y_base + AX_H
+        out.append(_bande(coupe.get("limites_parcelle_d") or [], yb0, X, "parcelle", T))
+        yb1 = yb0 + 15
+        zspans = coupe.get("zone_implantation_d") or []
+        if zspans:
+            out.append(_bande(zspans, yb1, X, "zone d'implantation", T, col=T["zone"]))
+        else:
+            etat = "non traversée" if coupe.get("zone_presente") else "indisponible"
+            out.append(f'<text x="8" y="{yb1+3:.1f}" font-size="9" fill="{T["txt_dim"]}">zone d\'implantation — {etat}</text>')
+        out.append(_indicateurs(coupe, faitages, rupture, y_base + AX_H + BANDES_H, PAD_L, width - PAD_R, T))
 
     out.append("</svg>")
     return "".join(out)
@@ -270,7 +276,7 @@ def _cotes(points, X, Y, T):
         yy = (y - 9) if placed == 0 else (y + 13)
         frag.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="1.8" fill="{T["txt"]}"/>')
         frag.append(f'<line x1="{x:.1f}" y1="{y:.1f}" x2="{x:.1f}" y2="{yy+(2 if placed else -7):.1f}" stroke="{T["txt_dim"]}" stroke-width="0.5"/>')  # trait de rappel
-        frag.append(f'<text x="{x:.1f}" y="{yy:.1f}" text-anchor="middle" font-size="8" fill="{T["txt"]}">{_fmt(p["z"],1)} m</text>')
+        frag.append(f'<text x="{x:.1f}" y="{yy:.1f}" text-anchor="middle" font-size="9" fill="{T["txt"]}">{_fmt(p["z"],1)} m</text>')
     return "".join(frag)
 
 
@@ -281,38 +287,54 @@ def _echelle(x, y, L, s, T):
         f'<line x1="{x:.1f}" y1="{y:.1f}" x2="{x+barre*s:.1f}" y2="{y:.1f}" stroke="{T["txt"]}" stroke-width="2"/>',
         f'<line x1="{x:.1f}" y1="{y-3:.1f}" x2="{x:.1f}" y2="{y+3:.1f}" stroke="{T["txt"]}" stroke-width="1"/>',
         f'<line x1="{x+barre*s:.1f}" y1="{y-3:.1f}" x2="{x+barre*s:.1f}" y2="{y+3:.1f}" stroke="{T["txt"]}" stroke-width="1"/>',
-        f'<text x="{x+barre*s+5:.1f}" y="{y+3:.1f}" font-size="8" fill="{T["txt_dim"]}">{_fmt(barre)} m</text>'])
+        f'<text x="{x+barre*s+5:.1f}" y="{y+3:.1f}" font-size="9" fill="{T["txt_dim"]}">{_fmt(barre)} m</text>'])
 
 
 def _bande(spans, y, X, label, T, col=None):
     col = col or T["limite"]
-    frag = [f'<text x="8" y="{y+4:.1f}" font-size="8.5" fill="{T["txt_dim"]}">{_esc(label)}</text>']
+    frag = [f'<text x="8" y="{y+4:.1f}" font-size="9" fill="{T["txt_dim"]}">{_esc(label)}</text>']
     for d0, d1 in spans:
         x0, x1 = X(d0), X(d1)
         frag.append(f'<line x1="{x0:.1f}" y1="{y:.1f}" x2="{x1:.1f}" y2="{y:.1f}" stroke="{col}" stroke-width="2.5"/>')
         frag.append(f'<line x1="{x0:.1f}" y1="{y-3:.1f}" x2="{x0:.1f}" y2="{y+3:.1f}" stroke="{col}" stroke-width="1"/>')
         frag.append(f'<line x1="{x1:.1f}" y1="{y-3:.1f}" x2="{x1:.1f}" y2="{y+3:.1f}" stroke="{col}" stroke-width="1"/>')
-        frag.append(f'<text x="{(x0+x1)/2:.1f}" y="{y-5:.1f}" text-anchor="middle" font-size="8" fill="{T["txt_dim"]}">{_fmt(d1-d0,1)} m</text>')
+        frag.append(f'<text x="{(x0+x1)/2:.1f}" y="{y-5:.1f}" text-anchor="middle" font-size="9" fill="{T["txt_dim"]}">{_fmt(d1-d0,1)} m</text>')
     return "".join(frag)
 
 
+def _rupture_d(profil, d0, d1):
+    """Distance de la PORTION la plus raide dans [d0,d1] (= la rupture près du bâti, pas le 1ᵉʳ pied)."""
+    seg = [p for p in profil if d0 - 1e-6 <= p["d"] <= d1 + 1e-6 and p["z"] is not None]
+    best, bd = -1.0, None
+    for a, b in zip(seg, seg[1:]):
+        dd = b["d"] - a["d"]
+        if dd <= 0:
+            continue
+        sl = abs(b["z"] - a["z"]) / dd
+        if sl > best:
+            best, bd = sl, (a["d"] + b["d"]) / 2
+    return bd if bd is not None else (d0 + d1) / 2
+
+
 def _indicateurs(coupe, faitages, rupture, y0, pad_l, right_x, T):
-    """UNE ligne de résumé (2 quater) : pente entre limites · amplitude · pente max 5 m · accès · bâti."""
+    """DÉTAIL : chaque TRAVERSÉE avec sa pente (les DEUX pentes de la coupe B) · pente max 5 m ·
+    « de la voie à la limite sur l'axe » · bâti ; mention rupture distincte à droite."""
     ind = coupe.get("indicateurs") or {}
     bits = []
-    tr0 = (ind.get("traversees") or [{}])[0]
-    if tr0.get("pente_pct") is not None:
-        bits.append(f"pente {_fmt(tr0['pente_pct'],1)} % · amplitude {_fmt(tr0.get('amplitude_m'),1)} m")
+    for tr in ind.get("traversees") or []:
+        if tr.get("pente_pct") is not None:
+            sgn = "+" if tr["pente_pct"] > 0 else ""  # montée explicite (+2,5 %) vs descente (−23,8 %)
+            bits.append(f"traversée {_fmt(tr['d0'],1)}–{_fmt(tr['d1'],1)} m : {sgn}{_fmt(tr['pente_pct'],1)} %")
     pm = ind.get("pente_max_5m") or {}
     if pm.get("disponible"):
-        bits.append(f"max 5 m {_fmt(pm['pente_pct'],1)} %")
+        bits.append(f"pente max 5 m {_fmt(pm['pente_pct'],1)} %")
     if ind.get("pente_acces_pct") is not None:
-        bits.append(f"accès {_fmt(ind['pente_acces_pct'],1)} %")
+        bits.append(f"de la voie à la limite sur l'axe : {_fmt(ind['pente_acces_pct'],1)} %")
     for f in faitages:
         bits.append(f.replace("Hauteur du bâtiment (BD TOPO) · ", "bâti "))
-    frag = [f'<text x="{pad_l}" y="{y0+11:.1f}" font-size="8.5" fill="{T["txt"]}">{_esc(" · ".join(bits))}</text>']
+    frag = [f'<text x="{pad_l}" y="{y0+11:.1f}" font-size="9" fill="{T["txt"]}">{_esc(" · ".join(bits))}</text>']
     if rupture:
-        frag.append(f'<text x="{right_x:.1f}" y="{y0+11:.1f}" text-anchor="end" font-size="8.5" fill="{T["lacune"]}">◆ rupture du terrain à vérifier au pied du bâti</text>')
+        frag.append(f'<text x="{right_x:.1f}" y="{y0+11:.1f}" text-anchor="end" font-size="9" fill="{T["lacune"]}">◆ rupture du terrain à vérifier</text>')
     return "".join(frag)
 
 

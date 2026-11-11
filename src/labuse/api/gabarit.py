@@ -206,8 +206,9 @@ def _verif_sid(scene, sid: str | None):
 
 @router.get("/scene/{idu}/coupe/{axe}.svg")
 def gabarit_coupe_svg(idu: str, axe: str, request: Request, theme: str = "sombre", sid: str | None = None,
-                      db: Session = Depends(get_db)) -> Response:
-    """Coupe A (pente dominante) ou B (voie) en SVG serveur, servie pour l'identifiant `sid`."""
+                      detail: int = 0, db: Session = Depends(get_db)) -> Response:
+    """Coupe A (pente dominante) ou B (voie) en SVG serveur, servie pour l'identifiant `sid`.
+    detail=1 : vue détaillée (toutes les cotes, bandes, les deux pentes) ; sinon aperçu."""
     _exiger_admin(request)
     from ..gabarit.coupe_svg import coupe_svg
     from ..gabarit.scene import build_scene
@@ -216,7 +217,7 @@ def gabarit_coupe_svg(idu: str, axe: str, request: Request, theme: str = "sombre
     coupe = next((c for c in scene.coupes if c["label"].upper() == axe.upper()), None)
     if coupe is None:
         raise HTTPException(404, f"Coupe « {axe} » indisponible pour {idu}.")
-    svg = coupe_svg(coupe, theme=theme, adresse=scene.adresse, idu=idu)
+    svg = coupe_svg(coupe, theme=theme, adresse=scene.adresse, idu=idu, detail=bool(detail))
     if not svg:
         raise HTTPException(404, "Relief indisponible sur cette emprise (profil sans point valide).")
     return Response(svg, media_type="image/svg+xml")

@@ -1,76 +1,78 @@
 {
-  "parcours": {
-    "1440x900": {
-      "etapes": {
-        "ouvert": {
-          "x": false,
-          "y": false,
-          "overlay": false
+  "1440x900": {
+    "cadrage_parcelle_largeur_pct": 60,
+    "coupes": {
+      "A": {
+        "apercu": {
+          "largeur_img_px": 688,
+          "texte_min_px": 6.4,
+          "n_cotes": 3,
+          "chevauchements": 0
         },
-        "coupeA": {
-          "x": false,
-          "y": false,
-          "overlay": false
-        },
-        "repere": {
-          "x": false,
-          "y": false,
-          "overlay": false
-        },
-        "agrandi": {
-          "x": false,
-          "y": false,
-          "overlay": false
-        },
-        "retour": {
-          "x": false,
-          "y": false,
-          "overlay": false
+        "detail": {
+          "largeur_img_px": 1408,
+          "texte_min_px": 13.2,
+          "n_cotes": 8,
+          "chevauchements": 0
         }
       },
-      "rien_ne_depasse": true
+      "B": {
+        "apercu": {
+          "largeur_img_px": 961,
+          "texte_min_px": 9,
+          "n_cotes": 4,
+          "chevauchements": 0
+        },
+        "detail": {
+          "largeur_img_px": 1408,
+          "texte_min_px": 13.2,
+          "n_cotes": 15,
+          "chevauchements": 0
+        }
+      }
     },
-    "1280x720": {
-      "etapes": {
-        "ouvert": {
-          "x": false,
-          "y": false,
-          "overlay": false
+    "contour_couverture_pct": 100,
+    "rupture_marqueur_pose": true,
+    "survol_ecart_m": 0.06,
+    "parite_sid": true,
+    "rien_ne_depasse": true
+  },
+  "1280x720": {
+    "cadrage_parcelle_largeur_pct": 60,
+    "coupes": {
+      "A": {
+        "apercu": {
+          "largeur_img_px": 530,
+          "texte_min_px": 5,
+          "n_cotes": 3,
+          "chevauchements": 0
         },
-        "coupeA": {
-          "x": false,
-          "y": false,
-          "overlay": false
-        },
-        "repere": {
-          "x": false,
-          "y": false,
-          "overlay": false
-        },
-        "agrandi": {
-          "x": false,
-          "y": false,
-          "overlay": false
-        },
-        "retour": {
-          "x": false,
-          "y": false,
-          "overlay": false
+        "detail": {
+          "largeur_img_px": 1248,
+          "texte_min_px": 11.7,
+          "n_cotes": 8,
+          "chevauchements": 0
         }
       },
-      "rien_ne_depasse": true
-    }
-  },
-  "mesures": {
-    "premiere_image_ms": 3986,
-    "fps": 59,
-    "trame_med_ms": 17,
-    "ressources_base": 11,
-    "ressources_apres_10": 11
-  },
-  "epreuve": {
-    "coupe_b": "coupe B affichée",
-    "note": "rupture ◆ au pied du bâti ; voie « Chemin de la Citerne » nommée au franchissement ; bandes parcelle + zone d’implantation sous le profil"
-  },
-  "erreurs": []
+      "B": {
+        "apercu": {
+          "largeur_img_px": 961,
+          "texte_min_px": 9,
+          "n_cotes": 4,
+          "chevauchements": 0
+        },
+        "detail": {
+          "largeur_img_px": 1248,
+          "texte_min_px": 11.7,
+          "n_cotes": 15,
+          "chevauchements": 0
+        }
+      }
+    },
+    "contour_couverture_pct": 100,
+    "rupture_marqueur_pose": true,
+    "survol_ecart_m": 0.06,
+    "parite_sid": true,
+    "rien_ne_depasse": true
+  }
 }
