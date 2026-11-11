@@ -631,3 +631,43 @@ Captures : `viewer/mesure_{BZ1065,CM1658}_{1440x900,1280x720}_{relief,photo,coup
 chiffres : `viewer/mesures_webkit.json` · harnais : `scripts/gabarit_3d_webkit.mjs`.
 
 **Aucun critère non atteint. Branche prête à merger.**
+
+## 19. Étape 3 ter — deux retouches + raccord (merge origin/main)
+
+Sur `6046239cb`. Mesuré au harnais (BZ1065 et CM1658, 1440×900 et 1280×720, A/B, relief et photo).
+
+### Tableau de mesures
+
+| Critère | Cible | BZ1065 | CM1658 |
+|---|---|---|---|
+| **Longueurs de bande ↔ graduations** — chevauchements (nouveau contrôle `bandeGradControl`) | 0 | **0** | **0** |
+| **Lettres de l'axe** dans la vue (A, A′, B, B′, les deux coupes) | toutes | **toutes** | **toutes** |
+| **Libellés** (rupture, emprise, voie, pente) — chevauchements | 0 | **0** | **0** |
+| **Survol** depuis le losange | < 0,5 m | **0,24 m** | **0,10–0,13 m** |
+| **Photo aérienne** — millésime | présent | **2025** | **2025** |
+
+### Retouches
+
+1. **La coupe répond à la vue 3D.** Les **longueurs des bandes** (« 9,3 m »…) passent sur **leur propre
+   ligne, sous chaque bande** (`y+11`) : elles ne croisent plus les graduations de distance — fini
+   « 4020,2 m » / « 33,4 m80 ». Le harnais gagne un contrôle dédié `bandeGradControl` (graduations ↔
+   longueurs) qui, lui, **détecte** le cas (**0** sur les 8 coupes).
+2. **Profil sous le bâti (interpolé).** Le MNT bare-earth sous une emprise bâtie est **interpolé** par l'IGN
+   (aucun retour sol) : la légende de la coupe l'écrit désormais « **profil sous le bâti (interpolé)** ».
+3. **Lettres de l'axe toujours dans la vue.** Les lettres (B/B′, A/A′) sont posées au **dernier point
+   visible** de l'axe (balayage des points drapés, projection **dans le cadre**) → la lettre basse n'est plus
+   absente quand le trait sort du cadre. Le contrôle du harnais est **renforcé** : il exige le **centre du
+   libellé à l'intérieur du canvas** (l'ancien `width>0` comptait un libellé posé hors écran comme visible).
+
+### Raccord (merge origin/main → feat/gabarit-3d-1)
+`git merge origin/main` (main 29 commits en avance). Conflits réglés **sans élargir** :
+- **`Gabarit.tsx`** : le **panneau refondu de `main`** est **conservé** tel quel ; seul le **bouton « Vue 3D
+  pilote (terrain réel · admin) »** et la **visionneuse lazy** sont **rebranchés** (imports `lazy/Suspense`
+  + `useRef`/`maplibregl` de main, état `moi/admin/viewer3dOpen`, bouton + `<Suspense>` en fin de panneau).
+  L'accès reste **gated admin**, la vue MapLibre par défaut inchangée.
+- **`registre/lectures.py`** : les arêtes des deux côtés conservées (gabarit/scene.py **et** ESTIMER-3).
+- `api.ts` / `config.py` auto-mergés.
+
+**Hook complet vert sur toute la suite** : tsc **0** · build ✅ · vitest **326** · **pytest 3295 passed,
+0 failed** (49 skip) · secrets **0** · 0 faute hors cadre. Harnais WebKit vert (bouton 3D câblé au panneau
+de main). **Aucun critère non atteint.**
