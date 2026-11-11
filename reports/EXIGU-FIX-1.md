@@ -290,3 +290,137 @@ intermédiaires ne sont pas versionnés.
 *Fin. Calcul seulement, aucun accès prod, pas de merge. Le ré-examen est actif par défaut
 (`LABUSE_EXIGU_FIX`≠0) et strictement condamné à la branche `terrain_exigu` : le recalcul partiel
 des parcelles `terrain_exigu` du run candidat reste valide.*
+
+---
+
+# Précisions avant merge (demandées par Vic)
+
+## P1 — Sur quelle assiette les 59 % retrouvent une capacité, et doctrine RESIDUEL-2
+
+**La capacité des régains est calculée sur un RETRAIT UNIFORME DE REPLI, pas sur le gabarit par
+côté.** Quand le ré-examen conclut `regain`, le moteur pose `emprise = plus grand morceau d'un seul
+tenant de l'inset séparatif uniforme (−recul)` et `assiette_source = 'residuel_legacy'`
+(`db.py`) — il NE réutilise PAS la zone d'implantation du gabarit (qui s'était effondrée).
+
+**Conséquence RESIDUEL-2 (automatique, vérifiée) :** `assiette_source='residuel_legacy'` ⇒
+`assiette_qualifiee = False` (`scenarios_v2_build.py:324`) ⇒ dans l'Analyse V2, le scénario rend
+`finish("TO_VERIFY", "ASSIETTE_A_CONFIRMER")` dès que la capacité est positive
+(`scenarios_v2.py:608`). **Ces parcelles sont donc servies « À vérifier » (amber), JAMAIS
+« Estimée » (vert)** — exactement la doctrine RESIDUEL-2 (« tant que l'application des règles n'est
+pas prouvée »). La bande ferme reste vide ; une **bande provisoire** (consultable, non servie
+comme sûre) est calculée sur la capacité de repli.
+
+### Répartition des 9 933 (> 1 000 m²) dans l'Analyse V2 après correction
+
+Dans l'Analyse LABUSE V2 — qui combine la **cascade étage-0** (exclusions dures sourcées) ET le
+résiduel corrigé — les 9 933 (> 1 000 m², code courant) se répartissent :
+
+| statut V2 (client) | n | sens |
+|---|--:|---|
+| **Hors de ce projet** (OUTSIDE_OBJECTIVE) | 8 599 (87 %) | exclusion DURE de cascade prouvée — **PAS** « trop étroit » |
+| **À vérifier** (TO_VERIFY) | 1 082 (11 %) | assiette de repli (`ASSIETTE_A_CONFIRMER`) ou douteuse (`CALCUL_ASSIETTE_DOUTEUX`) |
+| **Aucun ajout** (NO_MARGIN) | 174 (2 %) | régain mais saturé (C ≤ E) |
+| À différer (DEFERRED) | 1 | AU fermée |
+
+- **Bande FERME : vide** (aucune des 9 933 n'est servie « Estimée ») — conforme RESIDUEL-2.
+- **Bande PROVISOIRE** (consultable, non servie comme sûre) des lignes À vérifier / Aucun ajout :
+  A 50 · B 91 · C 63 · D 178 · 0 419.
+
+Le 87 % « Hors de ce projet » **n'est pas** un faux « trop étroit » : la cascade exclut ces parcelles
+**sur preuve sourcée** — zone A/N dominante (`zonage_plu_gpu`), PPR (`risques`), marchepied DPF,
+forêt publique, SAFER, Parc National… (8 586 / 9 933 sont `cascade_exclue`). Ces grandes parcelles
+résolvaient une **minuscule sous-zone U/AU** (d'où `terrain_exigu` au faisabilité) alors que la
+parcelle entière est en zone dure : le verdict honnête est « Hors de ce projet », pas « terrain trop
+étroit ». **Après correction, 0 des 9 933 n'affiche « trop étroit » dans l'Analyse, et 0 n'est servie
+« Estimée ».**
+
+> Deux niveaux à distinguer : au niveau **résiduel** (cause du moteur, §4) 59 % « retrouvent une
+> capacité » (capacité calculée sur la sous-zone U/AU) ; au niveau **Analyse client** (cascade +
+> résiduel) la cascade ramène 87 % à « Hors de ce projet ». Les deux sont cohérents — la capacité
+> résiduelle sur la sous-zone existe, mais la cascade exclut la parcelle pour l'objectif logement.
+> Dans les DEUX niveaux, le mot « trop étroit » a disparu.
+
+### Les 5 témoins — capacité (SDP résiduelle) avant / dans q_v23 / après
+
+| témoin | q_v20 (servi, ancien code) | q_v23 (candidat = code courant) | **après correction** |
+|---|---|---|---|
+| `97418000AY0416` | **1 828 m²** (capacité, « Estimée ») | `terrain_exigu` (0) | **1 831 m²**, statut **À vérifier** (bande prov. A) |
+| `97411000DK0447` | **1 324 m²** (capacité) | `terrain_exigu` (0) | **1 077 m²**, **À vérifier** (bande prov. B) |
+| `97415000CW0252` | **1 270 m²** (capacité) | `terrain_exigu` (0) | **1 270 m²**, **À vérifier** (bande prov. B) |
+| `97419000AN0398` | 7 m² | `terrain_exigu` (0) | **`terrain_exigu`** (preuve : net 5 m², largeur 0,6 m ; bande prov. 0) |
+| `97403000AL0258` | `terrain_exigu` (0) | `terrain_exigu` (0) | **`assiette_a_verifier`** → V2 **Hors de ce projet** (cascade : exclusion dure prouvée pré-empte la cause) |
+
+Lecture : q_v23 (le candidat, code courant) avait transformé en `terrain_exigu` des parcelles que
+q_v20 servait en capacité (effondrement gabarit + clip RESIDUEL-1) ; la correction **restitue** la
+capacité que q_v23 retirait à tort, mais **plus honnêtement** (« À vérifier » sur assiette de repli,
+plus jamais « Estimée » ferme).
+
+### Pourquoi le gabarit par côté vide de GRANDES parcelles (causes du diagnostic, en clair)
+
+Le gabarit applique les reculs **par limite** (voie ~5–6 m sur la façade sur rue, séparatifs sur
+les autres) et **découpe** le PPR zone rouge + les ER/EBC. Il s'effondre quand la portion réellement
+constructible est **étroite ou grevée**, par ordre de fréquence (diagnostic §2) :
+1. **Portion U/AU réduite (6 725 / 9 933)** — parcelle à cheval : l'essentiel est en zone A/N, seule
+   une bande U/AU est constructible ; les reculs par côté la vident. C'est le cas d'`AL0258`
+   (0 % d'intersection U/AU géométrique malgré un zonage résolu « Ua »).
+2. **Contraintes superposées (~2 990)** — PPR rouge découpé + PEB A/B / marchepied DPF / ravine /
+   50 pas / ER / EBC : ce qui reste après découpe par côté est nul.
+3. **Reculs / forme très découpée (269)** — géométrie tourmentée (ravines, concavités) : l'inset par
+   côté mange tout, même sur 10 ha.
+
+**Est-ce un défaut du gabarit à corriger à part ?** Le gabarit par côté n'est **pas faux** : il est
+conservateur et juste là où la portion constructible est franche. Le défaut était **(a)** l'absence
+de repli quand il s'effondre, et **(b)** le libellé « trop étroit » plaqué sur cet effondrement. Ce
+correctif traite les deux (repli mesuré + cause honnête `à vérifier`). Savoir si le gabarit
+sur-applique ses reculs par côté sur certaines géométries tourmentées est une **investigation
+distincte** (revue du moteur gabarit lui-même), **hors périmètre** ici : le repli + « à vérifier »
+empêchent déjà le mensonge, sans toucher au gabarit (qui sert, inchangé, toutes les parcelles
+non-exiguës).
+
+## P2 — Toutes les tailles : census complet par tranche (pas un échantillon)
+
+Population : les **64 757** parcelles `terrain_exigu` du run servi (q_v20) — **TOUTES, pas un
+échantillon**. « Après » = cause réellement servie par le moteur corrigé (fix ON).
+
+| tranche | n | reste exiguë | retrouve une capacité | passe « à vérifier » |
+|---|--:|--:|--:|--:|
+| < 300 m² | 45 421 | 43 109 (95 %) | 608 (1 %) | 1 704 (4 %) |
+| 300–600 m² | 6 026 | 2 152 (36 %) | 1 583 (26 %) | 2 286 (38 %) |
+| 600–1 000 m² | 3 596 | 809 (22 %) | 1 280 (36 %) | 1 505 (42 %) |
+| > 1 000 m² | 9 714 | 1 032 (11 %) | 5 741 (59 %) | 2 934 (30 %) |
+| **total** | **64 757** | **47 102 (73 %)** | **9 212 (14 %)** | **8 429 (13 %)** |
+
+(14 parcelles basculent `terrain_exigu` → `redhibitoire` au recalcul — contrainte dure confirmée,
+négligeable, comptées hors des 3 colonnes.) **Lecture : plus la parcelle est GRANDE, plus le faux
+« trop étroit » était fréquent** — sous 300 m² le verdict reste juste (95 % restent exiguës, à raison),
+au-delà de 1 000 m² il s'effondrait (89 % changent de verdict). La colonne « retrouve une capacité »
+est la cause RÉSIDUELLE ; au niveau Analyse client, la cascade en ramène une partie à « Hors de ce
+projet » (cf. P1, sans jamais « trop étroit »).
+
+## P3 — Tous les lecteurs de la cause `assiette_a_verifier`
+
+Carte des lecteurs de `cause` et ce que chacun affiche pour la nouvelle valeur. Un test
+(`tests/test_exigu_fix_1.py::test_tous_les_lecteurs_connaissent_assiette_a_verifier` +
+`::test_potentiel_batir_assemble_motif_a_verifier`) **échoue si un lecteur ne la connaît pas** (ou
+retombe sur un repli ferme « non constructible / surface insuffisante / trop étroit / rien à bâtir /
+pas de potentiel » ou « éligible/Estimée »).
+
+| Lecteur (surface produit) | Fonction | Affiche pour `assiette_a_verifier` |
+|---|---|---|
+| **Score LABUSE — bande** | `score_labuse._cause_nc` | cause non certaine → `NC_IGNORANCE` → **bande « NC » / « À vérifier »**, SDP ∅ |
+| **Carte « Analyse LABUSE » (fiche)** | `scenarios_v2_build._eligibilite` + `scenarios_v2.scenario` | `eligibility='unknown'` → statut **TO_VERIFY « Analyse à compléter »** (amber) ; `OUTSIDE_OBJECTIVE` seulement si une exclusion DURE de cascade est prouvée |
+| **Libellé cause (fiche, liste, Dossier PDF, Copilote)** | `engine.cause_libelle` (source unique) | « **Analyse incomplète — assiette constructible à vérifier (géométrie : contraintes, portion U/AU ou reculs à confirmer)** » |
+| **Filtres** | bande/statut (pas de lecture directe de la cause) | hérite la **bande NC** → filtrable sous « À vérifier » |
+| **Documents / exports (Comparatif, verdicts)** | `exports/blocs/comparatif._cause_court` | tag court « **assiette à vérifier** » |
+| **Constructibilité (candidature/déclassement)** | `faisabilite/constructibilite.classify_constructibilite` | **`NON_VERIFIABLE`** « Constructibilité non vérifiable — assiette à vérifier » (∉ `_CONSTR_FERME` : **signalée, PAS déclassée** « surface insuffisante ») |
+| **Motif fiche parcelle non-constructible** | `faisabilite/scenarios._cause_limite` | « **Assiette constructible à vérifier (géométrie).** » |
+| **Avertissement verdict servi (liste/Flash)** | `verdict_servi._avertissement_non_constructible` | « **Assiette constructible à vérifier — potentiel à confirmer (géométrie).** » (jamais « rien à bâtir ») |
+| **Potentiel à bâtir (fiche/Flash/PDF)** | `faisabilite/potentiel_batir._assemble` | motif « **Assiette constructible à vérifier (géométrie)** » |
+
+**Note de déploiement (caches).** Trois lecteurs lisent des CACHES, pas le calcul live :
+`potentiel_batir`/`est_ferme` lisent `parcel_residuel` **et** `parcel_constructibilite` ;
+`classify_constructibilite` alimente le cache `parcel_constructibilite`. Pour que la nouvelle cause
+s'affiche correctement (et ne reste pas sur l'ancien label « non constructible »), le déploiement
+doit **recalculer `parcel_constructibilite`** pour les parcelles recalculées, en plus du résiduel /
+Score / scénarios V2 du §E. (Les surfaces LIVE — fiche, Analyse V2 enrichie, Copilote — sont déjà
+correctes sans recompute.)

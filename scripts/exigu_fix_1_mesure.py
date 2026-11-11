@@ -82,17 +82,27 @@ def main():
     t0 = time.time()
     n = kept = 0
     with open(outpath, "w") as fh:
+        fixon_only = os.environ.get("FIXON_ONLY") == "1"
         for pid in ids:
             n += 1
-            os.environ["LABUSE_EXIGU_FIX"] = "0"
-            with session_scope() as s:
-                r0 = parcel_faisabilite(s, pid)
-            if r0 is None:
-                continue
-            ctx0, f0 = r0
-            if f0.cause != "terrain_exigu":
-                continue                         # hors périmètre du correctif : le fix ne le touche pas
-            kept += 1
+            if fixon_only:
+                # Census des parcelles DÉJÀ terrain_exigu (POP=stored) : « avant » = terrain_exigu par
+                # définition, on ne mesure que l'APRÈS (fix ON) — 1 seul appel moteur (2× plus rapide).
+                with session_scope() as s:
+                    os.environ["LABUSE_EXIGU_FIX"] = "0"  # (non utilisé ici ; le fix-ON suit)
+                    r0 = (None, None)
+                kept += 1
+                ctx0 = f0 = None
+            else:
+                os.environ["LABUSE_EXIGU_FIX"] = "0"
+                with session_scope() as s:
+                    r0 = parcel_faisabilite(s, pid)
+                if r0 is None:
+                    continue
+                ctx0, f0 = r0
+                if f0.cause != "terrain_exigu":
+                    continue                     # hors périmètre du correctif : le fix ne le touche pas
+                kept += 1
             os.environ["LABUSE_EXIGU_FIX"] = "1"
             with session_scope() as s:
                 ctx1, f1 = parcel_faisabilite(s, pid)
@@ -101,9 +111,12 @@ def main():
                 # zone dominante n'est pas constructible mais porte une portion U/AU).
                 rex = dict(ctx1.reexamen_exigu or {})
                 decision = rex.pop("decision", "non_reexamine")
-            rec = {"pid": pid, "idu": ctx0.idu, "commune": ctx0.commune,
-                   "surf": round(float(ctx0.surface_m2 or 0)), "zone": f0.zone,
-                   "raison_off": f0.exigu_raison, "cause_on": f1.cause, "raison_on": f1.exigu_raison,
+            cref = ctx0 if ctx0 is not None else ctx1          # fixon_only : repère sur le contexte fix-ON
+            fref = f0 if f0 is not None else f1
+            rec = {"pid": pid, "idu": cref.idu, "commune": cref.commune,
+                   "surf": round(float(cref.surface_m2 or 0)), "zone": fref.zone,
+                   "raison_off": (f0.exigu_raison if f0 is not None else None),
+                   "cause_on": f1.cause, "raison_on": f1.exigu_raison,
                    "sdp_on": f1.fourchette.get("surface_plancher_m2"),
                    "decision": decision, "net_m2": round(rex.get("net_m2", 0) or 0),
                    "net_larg": round(rex.get("net_larg", 0) or 0, 1),

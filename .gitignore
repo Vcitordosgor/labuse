@@ -217,3 +217,4 @@ logs/
 # EXIGU-FIX-1 — données de mesure intermédiaires (le rapport + la liste des IDU sont versionnés)
 reports/data/*.jsonl
 reports/data/exigu_*_shard_*.log
+reports/data/exigu_v2_*.json
