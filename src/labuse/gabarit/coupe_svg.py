@@ -184,10 +184,17 @@ def coupe_svg(coupe: dict, *, theme: str = "sombre", width: int = 960, h_max: in
             continue
         x0, x1 = X(b["d0"]), X(b["d1"])
         pts = (f'{x0:.1f},{Y(pa):.1f} {x1:.1f},{Y(pv):.1f} {x1:.1f},{Y(pv+h):.1f} {x0:.1f},{Y(pa+h):.1f}')
-        out.append(f'<polygon points="{pts}" fill="{T["bati"]}" fill-opacity="0.35" stroke="{T["bati"]}" stroke-width="0.8"/>')
+        # coté (mesuré, 1 seul bâti) = plein ; schématique (hauteur non attribuée) = contour tireté
+        dash = '' if b.get("cotee") else ' stroke-dasharray="4 3"'
+        op = "0.35" if b.get("cotee") else "0.18"
+        out.append(f'<polygon points="{pts}" fill="{T["bati"]}" fill-opacity="{op}" stroke="{T["bati"]}" stroke-width="0.8"{dash}/>')
+        yl = Y(max(pa, pv) + h) - 3
         if b.get("cotee"):
-            out.append(f'<text x="{(x0+x1)/2:.1f}" y="{Y(max(pa,pv)+h)-3:.1f}" text-anchor="middle" '
-                       f'font-size="8" fill="{T["bati"]}">{_fmt(h,1)} m · {_esc(b.get("provenance"))}</text>')
+            out.append(f'<text x="{(x0+x1)/2:.1f}" y="{yl:.1f}" text-anchor="middle" font-size="8" '
+                       f'fill="{T["bati"]}">{_fmt(h,1)} m · {_esc(b.get("provenance"))}</text>')
+        else:                                           # volume schématique : mention, SANS chiffre
+            out.append(f'<text x="{(x0+x1)/2:.1f}" y="{yl:.1f}" text-anchor="middle" font-size="7.5" '
+                       f'fill="{T["txt_dim"]}">{_esc(b.get("provenance") or "hauteur non attribuée")}</text>')
 
     # limites parcellaires : trait fin vertical
     bornes = sorted({round(v, 2) for sp in (coupe.get("limites_parcelle_d") or []) for v in sp})

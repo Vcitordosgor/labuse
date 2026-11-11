@@ -326,7 +326,8 @@ def _batiment_coupe(surf, ligne, axe, b) -> list[dict]:
         pa = surf.altitude(axe["ox"] + axe["ux"] * d0, axe["oy"] + axe["uy"] * d0)
         pv = surf.altitude(axe["ox"] + axe["ux"] * d1, axe["oy"] + axe["uy"] * d1)
         out.append({"d0": d0, "d1": d1, "hauteur_m": b["hauteur_m"], "provenance": b["provenance"],
-                    "cotee": b["cotee"], "pied_amont_m": pa, "pied_aval_m": pv})
+                    "cotee": b["cotee"], "schematique": b.get("schematique", not b["cotee"]),
+                    "pied_amont_m": pa, "pied_aval_m": pv})
     return out
 
 
@@ -485,28 +486,39 @@ def _fond_meta() -> dict:
 
 
 def _batiments(gr, surf, ox: float, oy: float) -> list[dict]:
-    """Bâtiments existants : hauteur COTÉE/« mesurée » seulement si LiDAR (rattachée à l'emprise) ;
-    BD TOPO → « estimée » (volume schématique, non cotée) ; aucune hauteur → schématique défaut."""
+    """Bâtiments existants. La hauteur LiDAR est un FAÎTAGE PAR PARCELLE (pas par emprise) : elle n'est
+    attribuable — et donc cotée « mesurée (LiDAR) » — que si la parcelle ne porte QU'UN SEUL bâtiment.
+    Si elle en porte plusieurs, AUCUN n'est coté : volume schématique, mention « hauteur non attribuée ».
+    BD TOPO (hauteur par bâtiment) → « estimée », volume schématique non coté."""
     fc = getattr(gr, "batiExistantGeoJSON", None)
     out = []
     if not isinstance(fc, dict):
         return out
-    for f in fc.get("features", []):
+    feats = fc.get("features", [])
+    n_bati = len(feats)                      # nombre de bâtiments PORTÉS par la parcelle
+    for f in feats:
         g2975 = _geom_2975(f.get("geometry"))
         if g2975 is None:
             continue
         props = f.get("properties") or {}
         h = props.get("hauteur_m")
         src = props.get("h_source")
-        mesuree = (src == "lidar")
-        prov = "mesurée (LiDAR)" if mesuree else ("estimée (BD TOPO)" if src == "bdtopo" else "schématique")
         hauteur = float(h) if isinstance(h, (int, float)) and h > 0 else None
+        if src == "lidar" and n_bati == 1 and hauteur:
+            prov, cotee, haut = "mesurée (LiDAR)", True, hauteur      # un seul bâti → attribuable
+        elif src == "lidar":
+            prov, cotee, haut = "hauteur non attribuée", False, 3.0   # plusieurs → faîtage non attribuable
+        elif src == "bdtopo" and hauteur:
+            prov, cotee, haut = "estimée (BD TOPO)", False, hauteur   # par bâtiment, mais non cotée
+        else:
+            prov, cotee, haut = "hauteur non attribuée", False, 3.0
         out.append({
             "geom": g2975,
             "empreinte": _polys_local(g2975, ox, oy),
-            "hauteur_m": hauteur if hauteur else (None if mesuree else 3.0),  # schéma défaut 3 m
+            "hauteur_m": haut,              # schématique (3 m) quand non attribuée
             "provenance": prov,
-            "cotee": bool(mesuree and hauteur),            # cotée seulement si mesurée ET chiffrée
+            "cotee": cotee,
+            "schematique": not cotee,       # volume schématique (hauteur non cotée)
         })
     return out
 

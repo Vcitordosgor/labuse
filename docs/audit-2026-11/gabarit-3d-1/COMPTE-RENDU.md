@@ -224,10 +224,13 @@ Même branche, avant la visionneuse. La maquette « 13-coupe-cible » n'est qu'u
   coupes[]}` ; **jamais « disponible » avec des grilles vides** (`disponible = fond ∧ couverture>0`).
   `scene_id` = hash du **contenu** + des **sources versionnées**. Scène **déterministe** : ✅ l'export se
   reproduit **après purge du cache** (SVG et `scene_id` identiques — recette D2).
-- **Bâtiments** : hauteur **cotée et « mesurée » seulement si LiDAR** (`cotee`) ; BD TOPO → « estimée »,
-  volume schématique **sans cote** ; **pied aux DEUX rencontres** de la coupe (amont/aval), même
-  convention scène et SVG. *(Réserve : la hauteur LiDAR est le faîtage par parcelle, pas encore mesuré
-  par emprise — le MNS/MNH n'est pas dans le fond local ; à affiner si besoin.)*
+- **Bâtiments** (règle précisée) : la hauteur LiDAR est un **faîtage PAR PARCELLE**, donc attribuable à
+  l'emprise dessinée **seulement si la parcelle ne porte qu'UN SEUL bâtiment** → cotée « mesurée
+  (LiDAR) ». Si elle en porte **plusieurs**, **aucun n'est coté** : volume schématique (contour tireté)
+  + mention « **hauteur non attribuée** ». Même règle pour les bâtiments voisins (le pilote n'en rend pas
+  encore ; la règle s'applique au nombre de bâtiments de LEUR parcelle). BD TOPO → « estimée », schématique
+  non coté. **Pied aux DEUX rencontres** (amont/aval). Témoins : **alt760 (1 bâti) coté « mesurée (LiDAR) »**,
+  **bz1065 / plate (plusieurs) → « hauteur non attribuée »**. Test `test_bati_cote_seulement_si_un_seul_batiment`.
 
 ### B. Les coupes (SVG serveur, `coupe_svg`)
 - **Cadre** : l'extent vertical inclut terrain, pieds **et sommets de bâti** + marges ; **rien ne

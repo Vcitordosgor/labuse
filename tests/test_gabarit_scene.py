@@ -128,10 +128,32 @@ def test_bati_plat_toit_cadre():
     assert _coords_hors_cadre(svg, 960, h) == []
 
 
+def _gr_batis(n, source="lidar", hauteur=10.0):
+    import types
+
+    def poly(ox):
+        return {"type": "Feature", "properties": {"hauteur_m": hauteur, "h_source": source},
+                "geometry": {"type": "Polygon", "coordinates": [[[55.45 + ox, -20.88], [55.45 + ox + 1e-4, -20.88],
+                             [55.45 + ox + 1e-4, -20.8799], [55.45 + ox, -20.8799], [55.45 + ox, -20.88]]]}}
+    fc = {"type": "FeatureCollection", "features": [poly(i * 2e-4) for i in range(n)]}
+    return types.SimpleNamespace(batiExistantGeoJSON=fc)
+
+
+def test_bati_cote_seulement_si_un_seul_batiment():
+    """Faîtage LiDAR par PARCELLE : coté « mesurée » si 1 bâti ; « hauteur non attribuée » si plusieurs."""
+    un = SC._batiments(_gr_batis(1), None, 0, 0)
+    assert len(un) == 1 and un[0]["cotee"] is True and un[0]["provenance"] == "mesurée (LiDAR)"
+    plusieurs = SC._batiments(_gr_batis(3), None, 0, 0)
+    assert len(plusieurs) == 3
+    assert all(b["cotee"] is False and b["provenance"] == "hauteur non attribuée" for b in plusieurs)
+    assert all(b["schematique"] for b in plusieurs)
+
+
 def test_bati_estime_non_cote():
     svg = coupe_svg(_coupe_demo(bati_mesure=False), theme="sombre")
-    assert "estimée (BD TOPO)" not in svg              # volume schématique, SANS cote de toiture
-    assert "polygon" in svg                            # mais le volume est dessiné
+    assert "estimée (BD TOPO)" in svg                  # mention du volume schématique
+    assert "7,0 m ·" not in svg                        # mais AUCUNE cote chiffrée de toiture
+    assert "polygon" in svg
 
 
 def test_themes_clair_sombre():
