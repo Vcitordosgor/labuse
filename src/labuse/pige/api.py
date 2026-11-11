@@ -2457,11 +2457,6 @@ def _est_bloc_depuis_estimer3(db, idu: str, fiche: dict, surface_hab: float | No
     note = ("Ordre de grandeur issu des ventes de biens semblables — un repère de marché, pas une expertise."
             if methode == "semblable"
             else "Ordre de grandeur au prix du secteur — un repère de marché, pas une expertise.")
-    # DÉFAUT B — avertissement « terrain seul dominant » porté AUSSI sur le document (identique à l'écran).
-    if e.get("terrain_depasse") and e.get("terrain_valeur_eur"):
-        note += (f" Attention : la valeur du terrain seul ({_arrondi_mille(e['terrain_valeur_eur'])} €) "
-                 "dépasse l'estimation du bien bâti — repère peu fiable (retenir le terrain comme plancher "
-                 "n'améliore pas la précision, mesuré).")
     masque = bool(e.get("total_masque"))
     return {
         "type_comparateur": "terrain_nu" if terrain else "bati",

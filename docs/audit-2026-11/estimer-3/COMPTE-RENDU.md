@@ -324,12 +324,12 @@ Quand la surface habitable **n'est pas connue** (ni saisie, ni vente DVF : estim
 
 **Part des cas concernés (terrain > bâti) : 28,6 % des maisons (590/2 060).**
 
-→ Conformément au mandat, **on n'applique PAS le plancher** (`PLANCHER_TERRAIN_APPLIQUE=False`). Quand la valeur du terrain seul (ancre foncière = contenance × €/m² terrain nu du secteur) dépasse l'estimation bâtie, l'écran **avertit** (bandeau ambre) et la **fiabilité est forcée à « Limitée »**. Porté aussi sur le document.
+→ **Décision (correction Vic)** : puisque la mesure montre que retenir le terrain **dégrade** la précision, sur un bien **bâti** on **n'affiche plus aucune valeur de terrain — ni bandeau, ni bloc**, et la **fiabilité reste celle mesurée au banc** pour le cas (jamais rabaissée à cause du terrain). La valeur de terrain **reste servie pour les terrains nus** (inchangé). *(Version intermédiaire : un avertissement + fiabilité forcée « Limitée » avaient d'abord été ajoutés, puis retirés — la mesure ne les justifie pas.)*
 
-**Cas témoin 97415000AW1367** : terrain 300 000 € > bâti 188 000 €, surface habitable inconnue, Q3 = 66 % → l'écran masque le total (prix au m² 3 423 €/m², de 2 946 à 4 100 €/m² + invite) **et** affiche l'avertissement « terrain seul » + fiabilité limitée. Avec une surface saisie (90 m²), la valeur totale revient (310 000 € + deux bandes).
+**Cas témoin 97415000AW1367** : surface habitable inconnue, Q3 = 66 % → l'écran masque le total (prix au m² 3 423 €/m², de 2 946 à 4 100 €/m² + invite à saisir la surface), **sans aucune mention du terrain** ; fiabilité « Limitée » parce que le banc le mesure (écart médian élevé), pas à cause du terrain. Avec une surface saisie (90 m²), la valeur totale revient (310 000 € + deux bandes).
 
 ## Preuves — captures WebKit
-`docs/audit-2026-11/estimer-3/` : `ecran-maison-sans-saisie`, `ecran-maison-surface`, `ecran-appartement`, `ecran-terrain-nu` (boîte commune EntreeParcelle), **`ecran-aw1367-masque`** (défauts A+B), **`ecran-aw1367-surface`** (masque levé).
+`docs/audit-2026-11/estimer-3/` : `ecran-maison-sans-saisie`, `ecran-maison-surface`, `ecran-appartement`, `ecran-terrain-nu` (boîte commune EntreeParcelle), **`ecran-aw1367-masque`** (défaut A : total masqué, prix au m² + invite, aucune mention du terrain), **`ecran-aw1367-surface`** (masque levé).
 
 ## Tests / hook
 Mesure : `mesure_plancher.py`. Tests reel `test_estimer3.py` : +2 (`test_defaut_a_masque_total_…`, `test_defaut_b_terrain_dominant_…`), 18/18. Banc des documents (cohérence) inchangé, vert (les témoins masqués ont `valeur_eur=null` des deux côtés → 0 écart). `tsc` 0 · `vitest` 326.
@@ -338,9 +338,9 @@ Mesure : `mesure_plancher.py`. Tests reel `test_estimer3.py` : +2 (`test_defaut_
 
 | Fichier | Rôle |
 |---|---|
-| `frontend/src/components/outils/AnalyserAnnonce.tsx` | boîte parcelle = `EntreeParcelle` commune ; écran masqué (prix au m² + invite) + avertissement terrain |
+| `frontend/src/components/outils/AnalyserAnnonce.tsx` | boîte parcelle = `EntreeParcelle` commune ; écran masqué (prix au m² + invite) ; aucune valeur de terrain sur bâti |
 | `frontend/src/lib/api.ts` | champs `total_masque`/`eur_m2_bas/haut`/`terrain_depasse`/`terrain_valeur_eur`/`plancher_terrain_applique` |
-| `src/labuse/pige/estimer3.py` | DÉFAUT A (masque + €/m² fourchette) ; DÉFAUT B (ancre foncière, avertissement, fiabilité limitée, plancher non appliqué) |
-| `src/labuse/pige/api.py` | adaptateur PDF : €/m² + fourchette, pas de total masqué, avertissement terrain |
+| `src/labuse/pige/estimer3.py` | DÉFAUT A (masque + €/m² fourchette) ; DÉFAUT B (aucune valeur de terrain sur bâti ; fiabilité du banc inchangée) |
+| `src/labuse/pige/api.py` | adaptateur PDF : €/m² + fourchette, pas de total masqué |
 | `docs/audit-2026-11/estimer-3/mesure_plancher.py` | mesure no-leak du plancher terrain (verdict : n'améliore pas) |
 | `tests/test_estimer3.py` | +2 tests reel (défauts A et B sur AW1367) |

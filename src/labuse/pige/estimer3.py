@@ -56,11 +56,10 @@ N_RETENUES = 12                # ventes retenues servies (la plus pesante d'abor
 # DÉFAUT A (Vic, ESTIMER-ECRAN-1) — surface habitable INCONNUE + bande « 3 fois sur 4 » au-delà de ce
 # seuil % : on n'affiche PAS de valeur totale (trop incertaine), on sert le prix au m² et sa fourchette.
 SEUIL_Q3_MASQUE = 50
-# DÉFAUT B (Vic) — le PLANCHER « valeur du terrain » n'est PAS appliqué : mesuré au banc no-leak sur
-# 2 060 maisons, il DÉGRADE la précision des cas concernés (terrain > bâti, 28,6 % des maisons : écart
-# médian 29,7 % → 45,2 %, ±20 % 35,3 % → 26,9 %). On se contente donc d'un AVERTISSEMENT + fiabilité
-# limitée. Mesure : docs/audit-2026-11/estimer-3/mesure_plancher.py.
-PLANCHER_TERRAIN_APPLIQUE = False
+# DÉFAUT B (Vic, correction) — sur un bien BÂTI, AUCUNE valeur de terrain n'est servie ni affichée : la
+# mesure no-leak sur 2 060 maisons montre que la retenir (plancher, ou même l'exposer) DÉGRADE la précision
+# des cas concernés (terrain > bâti, 28,6 % des maisons : écart médian 29,7 % → 45,2 %, ±20 % 35,3 % →
+# 26,9 %). La fiabilité reste celle mesurée au banc. Mesure : docs/audit-2026-11/estimer-3/mesure_plancher.py.
 
 # Les questions qui DÉPLACENT le prix — et SEULEMENT elles, PAR TYPE (gain mesuré au banc no-leak,
 # docs/audit-2026-11/estimer-3). `types` = types de bien pour lesquels le gain est prouvé → la question
@@ -440,12 +439,11 @@ def estimation_semblable(db, idu: str, fiche: dict, *, surface_hab: float | None
     demi = prec["ecart_median"]
     demi_q3 = prec["ecart_q3"]
     valeur = None
-    valeur_bati_ref = None          # valeur bâtie centrale, AVANT masquage (sert à comparer au terrain)
     basse = haute = None
     basse_q3 = haute_q3 = None
     if med and surface_tot:
         central = float(surface_tot) * float(med)
-        valeur = valeur_bati_ref = _arrondi_mille(central)
+        valeur = _arrondi_mille(central)
         basse = _arrondi_mille(central * (1 - demi / 100.0))
         haute = _arrondi_mille(central * (1 + demi / 100.0))
         basse_q3 = _arrondi_mille(central * (1 - demi_q3 / 100.0))
@@ -462,23 +460,11 @@ def estimation_semblable(db, idu: str, fiche: dict, *, surface_hab: float | None
     if total_masque:
         valeur = basse = haute = basse_q3 = haute_q3 = None
 
-    # DÉFAUT B (Vic) — la valeur du TERRAIN SEUL (ancre foncière : contenance × €/m² terrain nu du secteur)
-    # dépasse-t-elle l'estimation du bien bâti ? (cas 97415000AW1367 : terrain 300 000 € > bien 188 000 €).
-    # Mesuré au banc : RETENIR le terrain comme plancher DÉGRADE la précision (voir PLANCHER_TERRAIN_APPLIQUE)
-    # → on ne l'applique PAS ; on AVERTIT et on force la fiabilité à « Limitée ».
-    terrain_valeur_eur = None
-    terrain_depasse = False
-    try:
-        from .api import _terrain_repere, _lecture_fonciere_parcelle
-        repere_tn = _terrain_repere(db, idu)
-        lf = _lecture_fonciere_parcelle(float(surface_parc) if surface_parc else None,
-                                        repere_tn, valeur_bati_ref)
-        terrain_valeur_eur = (lf or {}).get("valeur_eur")
-    except Exception:  # noqa: BLE001 — l'ancre foncière est un plus, jamais un bloqueur
-        terrain_valeur_eur = None
-    if terrain_valeur_eur is not None and valeur_bati_ref and terrain_valeur_eur > valeur_bati_ref:
-        terrain_depasse = True
-        niv_interne, mot = "limitee", "Limitée"      # le terrain domine → fiabilité limitée (mandat)
+    # DÉFAUT B (Vic, correction) — sur un bien BÂTI, on N'AFFICHE PLUS AUCUNE valeur de terrain (ni bandeau,
+    # ni bloc) : la mesure no-leak montre que la retenir DÉGRADE la précision (plancher 29,7 %→45,2 % sur les
+    # 28,6 % de maisons concernées ; docs/audit-2026-11/estimer-3/mesure_plancher.py). La fiabilité reste
+    # celle MESURÉE au banc pour ce cas — jamais rabaissée à cause du terrain. (La valeur de terrain reste
+    # servie pour les TERRAINS NUS, cf. rapport3.)
 
     # ── ventes retenues : les plus PESANTES d'abord (actives), puis les écartées (décochées) ──
     active_tri = sorted(active, key=lambda c: c.get("_poids", 0.0), reverse=True)
@@ -504,10 +490,6 @@ def estimation_semblable(db, idu: str, fiche: dict, *, surface_hab: float | None
             # DÉFAUT A — total masqué (surface inconnue + Q3 trop large) → prix au m² + fourchette €/m².
             "total_masque": total_masque, "surface_connue": surface_connue,
             "eur_m2_bas": eur_m2_bas, "eur_m2_haut": eur_m2_haut,
-            # DÉFAUT B — valeur du terrain seul dominante → avertissement, plancher NON appliqué (mesuré).
-            "terrain_depasse": terrain_depasse,
-            "terrain_valeur_eur": (terrain_valeur_eur if terrain_depasse else None),
-            "plancher_terrain_applique": PLANCHER_TERRAIN_APPLIQUE,
             "eur_m2": (round(med) if med else None),
             "precision_pct": demi, "ecart_median_pct": prec["ecart_median"],
             "precision_q3_pct": prec["ecart_q3"], "pct_20_mesure": prec.get("pct_20"),

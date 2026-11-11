@@ -259,15 +259,23 @@ def test_defaut_a_masque_total_quand_surface_inconnue_et_q3_large(db):
 
 
 @pytest.mark.reel
-def test_defaut_b_terrain_dominant_avertit_et_limite_sans_plancher(db):
-    """DÉFAUT B (Vic) — 97415000AW1367, la valeur du terrain seul (ancre foncière) dépasse l'estimation
-    bâtie : AVERTISSEMENT + fiabilité « Limitée », et PLANCHER NON appliqué (mesuré au banc no-leak : le
-    retenir dégrade la précision — docs/audit-2026-11/estimer-3/mesure_plancher.py)."""
+def test_defaut_b_aucune_valeur_terrain_sur_bati(db):
+    """DÉFAUT B (Vic, correction) — sur un bien BÂTI, AUCUNE valeur de terrain n'est servie (ni bandeau,
+    ni bloc) : mesuré au banc no-leak, la retenir dégrade la précision (mesure_plancher.py). La fiabilité
+    reste celle du banc pour le cas (jamais rabaissée à cause du terrain). La valeur de terrain ne subsiste
+    que pour les TERRAINS NUS."""
     e = E3.rapport3(db, "97415000AW1367", _fiche(db, "97415000AW1367"))["estimation"]
-    assert e["terrain_depasse"] is True
-    assert e["terrain_valeur_eur"] and e["terrain_valeur_eur"] > 0
-    assert e["plancher_terrain_applique"] is False and E3.PLANCHER_TERRAIN_APPLIQUE is False
-    assert e["fiabilite_mot"] == "Limitée"
+    assert "terrain_depasse" not in e and "terrain_valeur_eur" not in e
+    assert "plancher_terrain_applique" not in e
+    # la fiabilité servie vient du banc (pas de champ de rabaissement « terrain »), valeur du set attendu.
+    assert e["fiabilite_mot"] in ("Élevée", "Moyenne", "Limitée")
+    # un terrain nu, lui, sert toujours sa valeur.
+    it = db.execute(text("SELECT dm.id_parcelle FROM dvf_mutations_parcelle dm "
+                         "WHERE dm.nature_mutation='Vente terrain à bâtir' AND dm.code_commune='97415' "
+                         "ORDER BY dm.date_mutation DESC LIMIT 1")).scalar()
+    if it:
+        et = E3.rapport3(db, it, _fiche(db, it))
+        assert et["type_bien"] == "terrain" and et["estimation"].get("valeur_eur")
 
 
 @pytest.mark.reel

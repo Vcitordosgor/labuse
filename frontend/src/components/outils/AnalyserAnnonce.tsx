@@ -142,13 +142,8 @@ function ValeurEstimee({ e, typeBien, commune }: { e: Estimer3Rapport['estimatio
       <strong className="font-medium text-txt-dim">{methode}</strong> · mesuré sur les ventes réelles {dePl(typePl)}{commune ? ` à ${commune}` : ''}.
     </p>
   )
-  // DÉFAUT B (Vic) — la valeur du terrain seul dépasse l'estimation du bien bâti : on AVERTIT (le plancher
-  // terrain n'améliore pas la précision, mesuré au banc) et la fiabilité est déjà « Limitée » côté API.
-  const avertTerrain = e.terrain_depasse && e.terrain_valeur_eur != null ? (
-    <p data-estimer-avert-terrain className="mt-2 rounded-md border border-amber/40 bg-amber-bg px-2.5 py-2 text-[11px] leading-snug text-amber">
-      La valeur du <strong>terrain seul</strong> ({fmtInt(e.terrain_valeur_eur)} €) dépasse l’estimation du bien bâti : prudence, ce prix n’est qu’un repère. Retenir le terrain comme plancher n’améliore pas la précision (mesuré sur les ventes réelles).
-    </p>
-  ) : null
+  // DÉFAUT B (Vic, correction) — sur un bien bâti, AUCUNE valeur de terrain n'est affichée (ni bandeau,
+  // ni bloc) : mesuré au banc, la retenir dégrade la précision. La fiabilité reste celle du banc.
 
   // DÉFAUT A (Vic) — surface habitable inconnue + bande « 3 fois sur 4 » trop large : PAS de valeur totale.
   // On sert le prix au m² du secteur avec sa fourchette, et on invite à saisir la surface (la valeur et ses
@@ -167,7 +162,6 @@ function ValeurEstimee({ e, typeBien, commune }: { e: Estimer3Rapport['estimatio
         <p data-estimer-invite-surface className="mt-2 rounded-md border border-mint/30 bg-mint/[0.06] px-2.5 py-2 text-[11px] leading-snug text-txt-dim">
           Surface habitable <strong className="text-txt-hi">inconnue</strong> : saisissez-la ci-dessus pour obtenir une valeur totale et ses deux fourchettes. Sans elle, une valeur serait trop incertaine.
         </p>
-        {avertTerrain}
         {ligneMethode}
       </section>
     )
@@ -205,7 +199,6 @@ function ValeurEstimee({ e, typeBien, commune }: { e: Estimer3Rapport['estimatio
           </div>
         </>
       )}
-      {avertTerrain}
       {ligneMethode}
     </section>
   )
