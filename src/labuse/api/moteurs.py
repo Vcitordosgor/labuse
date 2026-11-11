@@ -312,6 +312,8 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
         # lecteur front depuis IMPLANTATION-4) — le nombre de logements n'a qu'une seule source.
         "n_chiffrables": agg["n_chiffrables"],
         "ca": agg["ca"], "charge_fonciere": agg["charge_fonciere"],
+        "prix_sortie_eur_m2": agg.get("prix_sortie_eur_m2"),   # RETOURS-25 (pt 1) — ligne « Prix de sortie » du Bilan
+
         "note_sdp": "Capacité et bilan calculés sur l'UNION des géométries (ASSEMBLAGE-2) : une seule "
                     "assiette (reculs INTERNES supprimés à la fusion), un seul moteur de capacité, une "
                     "seule VRD sur l'emprise réellement aménagée de l'ensemble. La SDP « bâti conservé » "

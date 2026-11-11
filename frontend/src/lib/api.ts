@@ -595,8 +595,18 @@ export const searchParcels = (needle: string, opts?: { ileEntiere?: boolean }) =
       surface_dessin_m2?: number | null; contenance_m2?: number | null;
       status: string | null; q_score: number | null;
       tier_v2: string | null; rang_v2: number | null; etage0: boolean;
+      zone_plu?: string | null;   // RETOURS-26 (pt 7) — zone PLU dominante (boîte parcelle)
       adresse?: string | null }[]>(
     `/parcels/search?q=${encodeURIComponent(needle)}${!opts?.ileEntiere && commune() ? `&commune=${encodeURIComponent(commune()!)}` : ''}`)
+
+// RETOURS-27 (pt 1) — aperçu RAPIDE d'UNE parcelle (IDU exact, lookup indexé) pour la boîte parcelle :
+// adresse + zone + surface d'un coup, sans le scan île du `ILIKE` de l'omnibox.
+export interface ParcelApercu {
+  idu: string; commune: string; surface_m2: number | null
+  surface_terrain_m2?: number | null; zone_plu?: string | null; adresse?: string | null
+}
+export const getParcelApercu = (idu: string) =>
+  j<ParcelApercu>(`/parcels/apercu/${encodeURIComponent(idu)}`)
 
 // M45-B (L3) — UNIFICATION : compteur/cartouches ET liste passent par /filtre (FiltreCriteres),
 // donc portent EXACTEMENT les mêmes facettes que le compteur du panneau. Plus jamais un compteur
@@ -720,6 +730,8 @@ export interface PluExtrait {
   insee: string; commune: string; idurba: string; millesime: string | null; document: string
   zone: string | null; article_ref: string | null; page_pdf: number
   texte_verbatim: string; doute: boolean; doute_motif: string | null
+  // RETOURS-23 (pt 6) — titre « en clair » lu en tête du verbatim + corps (aperçu sans le titre).
+  titre?: string | null; corps?: string
   pagination_ambigue: boolean; pagination_note?: string; source_url: string; gpu_consult?: string
 }
 export interface PluSearch {
@@ -1493,7 +1505,9 @@ export interface CourrierStatut { disponible: boolean; provider: string; tarif: 
   // OUTILS-FIX-4 D2 — plafond d'envoi quotidien (celui qui déclenche le 422) + ce qui reste.
   plafond_jour?: number; envoyes_jour?: number; reste_jour?: number
   // OUTILS-S2 Lot B — tarif unitaire TTC (prix client, impression+affranchissement+suivi), affiché à l'étape 3.
-  tarif_unitaire_eur?: number }
+  tarif_unitaire_eur?: number
+  // RETOURS-25 (pt 13) — délai d'envoi (texte, ex. « 3 à 5 »), lu de la config, affiché dans l'intro.
+  delai_jours?: string }
 // OUTILS-FIX-4 D1/D2 — état du service + plafond du jour, lus à l'ouverture de l'outil Courrier.
 export const getCourrierStatut = () => j<CourrierStatut>('/courrier/statut')
 export interface CourrierEnvoi { id: number; ts: string; idu: string | null; adresse: string | null; statut: string; provider: string; prix_eur: number | null; modele: string | null }
@@ -1523,6 +1537,7 @@ export const ackAlerte = (id?: number) =>
 // M54-EXPO-3 A8 — comparateur de parcelles (2 à 3 côte à côte).
 export interface CompareRow {
   idu: string; commune?: string; surface_m2?: number | null
+  adresse?: string | null   // RETOURS-29 — aperçu parcelle (adresse BAN) en en-tête de colonne
   // verdict SERVI (source _q_v2_fiche) — la puce dérive de tier_v2 + etage0 ; fraction + raison M135
   status?: string | null; tier_v2?: string | null; etage0?: boolean | null; rang_v2?: number | null
   label?: string | null; fraction?: string | null; raison?: string | null
@@ -1543,6 +1558,7 @@ export interface CompareRow {
   // FIX-ORFEVRE-1 (décision Vic 18/10/2026) — logements_possibles/logements_min RETIRÉS : aucun nombre
   // de logements de l'ancien calcul de capacité dans Comparer (la ligne renvoie à l'Étude de faisabilité).
   gabarit_niveaux_max?: number | null
+  gabarit_combles?: boolean | null   // RETOURS-28 — combles aménageables (faîtage ≫ égout) → « R+N + combles »
   acces_reseaux?: string | null; assainissement?: string | null
   prix_secteur_bati_m2?: number | null
 }

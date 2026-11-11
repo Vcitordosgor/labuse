@@ -116,6 +116,32 @@ NON_COUVERT = [
 ]
 _NON_COUVERT = NON_COUVERT   # rétro-compat (tests + anciens imports)
 
+# OUTILS-REFONTE-1 (9a) — « Vérifié, rien à signaler » : les FAMILLES de contraintes que le lecteur
+# examine RÉELLEMENT à chaque parcelle (couches toutes ingérées + intersectables, cf. commentaire _KINDS)
+# et qui n'ont RIEN remonté sur cette parcelle. Ce n'est PAS un faux RAS : une famille n'apparaît ici que
+# parce que sa (ses) couche(s) ont bien été interrogées — ce qui n'est pas couvert reste dans NON_COUVERT.
+# Détection « famille déclenchée » par sous-chaîne dans le libellé (categorie + effet) des contraintes
+# remontées. Une famille sans correspondance = examinée et claire → listée en puce.
+_FAMILLES_VERIFIEES: list[tuple[str, tuple[str, ...]]] = [
+    ("Sols pollués", ("information sur les sols", "SIS", "CASIAS", "site industriel")),
+    ("Bruit", ("sonore des voies", "exposition au bruit")),
+    ("Assainissement", ("Assainissement non collectif", "ANC")),
+    ("ICPE", ("Installation classée", "ICPE")),
+    ("Monuments et sites", ("Monument historique", "Site classé", "ZPPAUP", "AVAP", "patrimoniale")),
+    ("ER / EBC", ("Espace boisé classé", "EBC", "Emplacement réservé")),
+    ("Préemption", ("préemption", "DPU")),
+    ("Eau et zones humides", ("Zone humide", "domaine public fluvial", "trait de côte", "50 pas", "Captage", "Halage")),
+    ("Espaces naturels", ("Espace naturel", "ZNIEFF", "Parc national", "Réserve naturelle", "compensatoire")),
+    ("Risques naturels", ("risque naturel", "PPR", "inondation", "mouvement")),
+]
+
+
+def familles_verifiees(items: list[dict]) -> list[str]:
+    """Familles examinées qui n'ont RIEN remonté sur la parcelle (puces « rien à signaler »)."""
+    blob = " · ".join(f"{i.get('categorie', '')} {i.get('effet', '')}" for i in items).lower()
+    return [fam for fam, needles in _FAMILLES_VERIFIEES
+            if not any(n.lower() in blob for n in needles)]
+
 
 def get_db():
     from .app import get_db as _g
@@ -432,8 +458,33 @@ def servitudes_invisibles(idu: str, db: Session = Depends(get_db)) -> dict:
     if not exists:
         raise HTTPException(404, "Parcelle inconnue")
     items = contraintes_parcelle(db, idu)
+    # RETOURS-27 (pt 2) — PROCÉDURE PLU EN COURS : lue du radar PLU (labuse.veille_plu, MÊME point de
+    # calcul que l'outil « Vérif procédure »), par commune. Si une procédure lourde est ACTIVE (SOURCE,
+    # révision/élaboration/modification non dormante), on la sert comme une carte dédiée — et ce point
+    # QUITTE « Non couvert » (il n'est plus une lacune : on l'indique).
+    procedure_plu = None
+    try:
+        from .. import veille_plu as _V
+        _e = _V.entry((idu or "")[:5])
+        if _e and _V.procedure_active(_e):
+            _lib = _V._TYPE_LABEL.get(_e.get("procedure"), _e.get("procedure") or "procédure PLU")
+            procedure_plu = {
+                "libelle": _V._cap(_lib), "stade": _e.get("stade"),
+                "source": _e.get("source"), "source_url": _e.get("source_url"),
+                "date": _e.get("date_acte"), "date_constat": _e.get("date_constat"),
+            }
+    except Exception:  # noqa: BLE001 — l'outil ne doit jamais 500 sur le radar PLU
+        procedure_plu = None
+    # RETOURS-28 (Pièges) — les procédures PLU ne figurent PLUS JAMAIS dans « Non couvert » : une
+    # procédure active est servie en carte dédiée (procedure_plu) ; son absence devient une puce
+    # « Procédure PLU » dans « Vérifié, rien à signaler » (côté front). On la retire donc toujours.
+    non_couvert = [s for s in _NON_COUVERT if "Procédures PLU en cours" not in s]
     return {"idu": idu, "n": len(items), "servitudes": items,
             "synthese": (f"{len(items)} servitude(s)/contrainte(s) dormante(s) intersecte(nt) cette parcelle."
                          if items else "Aucune servitude dormante détectée dans les couches ingérées."),
-            "non_couvert": _NON_COUVERT,
+            # OUTILS-REFONTE-1 (9a) — familles examinées & claires (puces « rien à signaler »).
+            "verifie": familles_verifiees(items),
+            # RETOURS-27 (pt 2) — procédure PLU en cours (carte dédiée) ; null si aucune n'est servie.
+            "procedure_plu": procedure_plu,
+            "non_couvert": non_couvert,
             "avertissement": AVERTISSEMENT}

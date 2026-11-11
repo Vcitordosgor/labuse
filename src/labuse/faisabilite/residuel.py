@@ -254,6 +254,8 @@ def compute_residuel(session: Session, parcel_id: int,
         # calculé, écrite au run pour être servie À CÔTÉ de la SDP (jamais une surface vive discordante).
         "surface_terrain_m2": round(surface),
         "niveaux_max": fr.get("niveaux_max"),
+        # RETOURS-28 (Comparatif, pt 11) — combles aménageables (faîtage ≫ égout) : affichage « R+N + combles ».
+        "combles": bool(fr.get("combles")),
         "niveaux_existants": round(niveaux_exist, 1),
         "niveaux_reels": niveaux_reels,
         # DONNEES-FIX-1 lot C — d'où viennent les niveaux existants : 'lidar' (égout mesuré),

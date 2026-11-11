@@ -18,9 +18,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 
-import { ParcelInput } from '../ParcelInput'
+import { EntreeParcelle } from './EntreeParcelle'
 import { analyserAnnonce, docAnalyseAnnonceLienUrl, docAnalyseAnnonceUrl, getAnnonceEstimation, getFiche, getParcelExposition, type AnnonceAnalyse } from '../../lib/api'
-import { fmtInt, fmtM2, iduCourt } from '../../lib/format'
+import { fmtInt, fmtM2 } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'
 import { Chargement } from '../Loading'
@@ -65,9 +65,6 @@ const cap = (s: string | null | undefined) => (s ? s[0].toUpperCase() + s.slice(
 // « de maisons » / « de terrain nu » mais « d’appartements » (élision devant voyelle) — CHASSE-4-FIX (C4-003).
 const dePl = (pl: string) => (/^[aeiouyàâäéèêëîïôöùûü]/i.test(pl) ? `d’${pl}` : `de ${pl}`)
 
-const INPUT_CLS =
-  'w-full h-10 rounded-md border border-line-2 bg-surface-3 px-3 text-[13px] text-txt-hi ' +
-  'placeholder:text-txt-mut focus:outline-none'
 const H_TILE = 'rounded-md border border-line-2 bg-surface-3 px-3 py-2'
 const LBL = 'text-[10.5px] leading-tight text-txt-dim'
 const VAL = 'mt-0.5 text-[13px] font-medium leading-tight text-txt-hi'
@@ -97,7 +94,6 @@ function Corps({ children }: { children: React.ReactNode }) {
 
 // ═══════════════════════════════════════ RAPPORT PARCELLE ═══════════════════════════════════════
 function RapportParcelle({ idu }: { idu: string }) {
-  const focusParcelle = useApp((s) => s.focusParcelle)
   const fiche = useQuery({ queryKey: ['annonce-fiche', idu], queryFn: () => getFiche(idu) })
   const expo = useQuery({ queryKey: ['annonce-expo', idu], queryFn: () => getParcelExposition(idu) })
   // RECETTE-4 — la tuile « Classement LABUSE » est remplacée par « Dernière vente » (date + prix DVF de la
@@ -108,7 +104,10 @@ function RapportParcelle({ idu }: { idu: string }) {
   // ESTIMER-PRECISION-1 — surface habitable SAISISSABLE (facultative) : si renseignée, le total l'utilise
   // (libellé « surface saisie »). Préremplie depuis la dernière vente DVF quand elle la donne. Le champ
   // voyage dans l'estimation ET le PDF (écran == PDF == Doc).
+  // RETOURS-26 (pt 10) — `surfaceHab` = valeur VALIDÉE (pilote l'estimation) ; `surfaceDraft` = texte en
+  // cours de frappe. La validation a lieu à la sortie du champ (blur) ou sur Entrée, pas à chaque touche.
   const [surfaceHab, setSurfaceHab] = useState('')
+  const [surfaceDraft, setSurfaceDraft] = useState('')
   const [surfaceTouchee, setSurfaceTouchee] = useState(false)
   const surfNum = surfaceHab.trim() ? Math.round(Number(surfaceHab)) : null
   const surfValide = surfNum != null && Number.isFinite(surfNum) && surfNum > 0 ? surfNum : null
@@ -119,6 +118,8 @@ function RapportParcelle({ idu }: { idu: string }) {
       setSurfaceHab(String(estim.data.surface_dvf_m2))
     }
   }, [estim.data?.surface_dvf_m2, surfaceTouchee, surfaceHab])
+  // Le brouillon suit la valeur validée (préremplissage DVF, « effacer »).
+  useEffect(() => { setSurfaceDraft(surfaceHab) }, [surfaceHab])
 
   if (fiche.isLoading) return <Corps><Chargement /></Corps>
   if (fiche.isError || !fiche.data) return <Corps><ErrorState message="Impossible de charger la fiche parcelle." retry={() => fiche.refetch()} /></Corps>
@@ -129,9 +130,10 @@ function RapportParcelle({ idu }: { idu: string }) {
   // RECETTE-4 — « Dernière vente » : date (MM/AAAA) + prix DVF de la parcelle (sa dernière mutation),
   // sinon « aucune depuis 2014 » (début de la couverture DVF). Lu de la fiche, aucun recalcul.
   const dm = (f.dvf_parcelle?.derniere_mutation ?? null) as { date_mutation?: string | null; valeur?: number | null } | null
+  // RETOURS-25 (pt 6) — pas de vente connue : « Aucune vente enregistrée (DVF depuis 2014) » (plus « aucune depuis 2014 »).
   const derniereVente = dm?.date_mutation
     ? `${dm.date_mutation.slice(5, 7)}/${dm.date_mutation.slice(0, 4)}${dm.valeur != null ? ` · ${fmtInt(dm.valeur)} €` : ''}`
-    : 'aucune depuis 2014'
+    : 'Aucune vente enregistrée (DVF depuis 2014)'
   // CHASSE-4-FIX (C4-002) — la tuile « Risques » lit le MÊME compte dédupliqué que le PDF (servi par
   // l'estimation, `n_aleas` = liste `_risques_rows`). Repli sur le brut `aleas.n` seulement si l'estimation
   // n'est pas encore là.
@@ -176,9 +178,7 @@ function RapportParcelle({ idu }: { idu: string }) {
           </div>
         ))}
       </div>
-      {/* RECETTE-4 — le lien « Ouvrir la fiche parcelle → » remonte SOUS les tuiles (la section
-          « Le foncier » qui le portait est supprimée). */}
-      <Bouton niveau="lien" ton="vert" onClick={() => focusParcelle(idu, { fiche: true })}>Ouvrir la fiche parcelle →</Bouton>
+      {/* RETOURS-25 (pt 6) — lien « Ouvrir la fiche parcelle → » retiré. */}
 
       {/* FIX-NU3-2 (M-A02) — le résultat d'estimation est une RÉGION LIVE : quand il se construit (après
           « Estimer »), le lecteur d'écran l'annonce au lieu de rester muet après « Lecture… ». */}
@@ -230,16 +230,21 @@ function RapportParcelle({ idu }: { idu: string }) {
             {!terrain && !copro && (
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <label className="text-[11px] text-txt-dim" htmlFor="surface-hab">Surface habitable</label>
+                {/* RETOURS-26 (pt 10) — on TAPE le nombre directement : `type="text"` (aucune flèche
+                    haut/bas) + `inputMode="numeric"` (clavier numérique) ; validé à la sortie du champ
+                    (blur) ou sur Entrée — pas à chaque touche. */}
                 <input
-                  id="surface-hab" type="number" min={1} step={1} inputMode="numeric"
+                  id="surface-hab" type="text" inputMode="numeric" pattern="[0-9]*"
                   className="h-8 w-28 rounded-md border border-line-2 bg-surface-3 px-2 text-[12.5px] text-txt-hi placeholder:text-txt-mut focus:outline-none"
                   placeholder={e?.surface_dvf_m2 != null ? String(e.surface_dvf_m2) : 'm²'}
-                  value={surfaceHab}
-                  onChange={(ev) => { setSurfaceTouchee(true); setSurfaceHab(ev.target.value) }} />
+                  value={surfaceDraft}
+                  onChange={(ev) => setSurfaceDraft(ev.target.value.replace(/[^\d]/g, ''))}
+                  onBlur={() => { setSurfaceTouchee(true); setSurfaceHab(surfaceDraft.trim()) }}
+                  onKeyDown={(ev) => { if (ev.key === 'Enter') ev.currentTarget.blur() }} />
                 <span className="text-[11px] text-txt-mut">m² — facultatif, affine le total</span>
-                {surfaceHab && (
+                {surfaceDraft && (
                   <button className="text-[11px] text-mint underline underline-offset-2"
-                    onClick={() => { setSurfaceTouchee(true); setSurfaceHab('') }}>effacer</button>
+                    onClick={() => { setSurfaceTouchee(true); setSurfaceDraft(''); setSurfaceHab('') }}>effacer</button>
                 )}
               </div>
             )}
@@ -447,7 +452,6 @@ export function AnalyserAnnonce() {
 
   const [etape, setEtape] = useState<Etape>('entree')
   const [parcelle, setParcelle] = useState<string | null>(null)
-  const [lien, setLien] = useState('')
   const [erreur, setErreur] = useState<string | null>(null)
   const [res, setRes] = useState<AnnonceAnalyse | null>(null)
 
@@ -491,8 +495,7 @@ export function AnalyserAnnonce() {
       return
     }
     if (!annonceLienPrefill) return
-    setLien(annonceLienPrefill)
-    analyse.mutate(annonceLienPrefill)
+    analyse.mutate(annonceLienPrefill)   // pont Radar « Ce bien » — l'entrée lien n'est plus affichée, mais le lien reste analysable
     setAnnonceLienPrefill(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -517,18 +520,20 @@ export function AnalyserAnnonce() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [etape, parcelle, res])
 
-  const revenir = () => { setEtape('entree'); setErreur(null) }
+  const revenir = () => { setEtape('entree'); setParcelle(null); setErreur(null) }
 
-  if (etape === 'parcelle' && parcelle) {
-    return (
-      <>
-        <Entete retour={{ label: 'Retour', onClick: revenir }}
-          titre={iduCourt(parcelle)}
-          sous={<>{parcelle} · <button className="underline underline-offset-2 hover:text-mint" onClick={revenir}>Changer de parcelle</button></>} />
-        <RapportParcelle idu={parcelle} />
-      </>
-    )
-  }
+  // RETOURS-25 (pt 6) — un clic sur une AUTRE parcelle de la carte relance l'estimation sur elle (à
+  // chaque clic). `focusParcelle(parcelle)` pose selectedIdu = parcelle → on ignore ce cas (garde
+  // `!== parcelle`) pour ne pas boucler ; seule une parcelle VRAIMENT différente relance.
+  const selectedIdu = useApp((s) => s.selectedIdu)
+  const dernierClicEstim = useRef<string | null>(selectedIdu ?? null)
+  useEffect(() => {
+    if (selectedIdu && selectedIdu !== dernierClicEstim.current && selectedIdu !== parcelle) {
+      dernierClicEstim.current = selectedIdu
+      setParcelle(selectedIdu); setEtape('parcelle')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedIdu])
 
   if (etape === 'annonce' && res?.annonce) {
     const a = res.annonce
@@ -543,49 +548,23 @@ export function AnalyserAnnonce() {
     )
   }
 
-  // ÉCRAN D'ENTRÉE
+  // ÉCRAN UNIQUE — boîte parcelle (RETOURS-26 pt 7)
+  // RECETTE-4 — titre « Estimer un bien ». RETOURS-23 (pt 1) — « ← Retour » ferme l'outil.
+  // RETOURS-26 (pt 7) — plus de deux écrans ni de lien « Changer de parcelle » : `EntreeParcelle` tient
+  // les deux états — champ de recherche (vide) → boîte remplie + croix (parcelle choisie). Le rapport
+  // s'affiche sous la boîte. La croix (onChanger) vide et réaffiche le champ.
   return (
     <>
-      {/* RECETTE-4 — titre renommé « Estimer un bien » (clé interne analyser-annonce inchangée). */}
-      <Entete retour={{ label: 'Outils', onClick: toggleOutils }}
+      <Entete retour={{ label: 'Retour', onClick: toggleOutils }}
         titre="Estimer un bien"
-        sous="Une adresse ou un lien d’annonce : LABUSE croise le bien avec le marché et le foncier." />
+        sous="Une adresse : LABUSE croise le bien avec le marché et le foncier." />
       <Corps>
-        <div className="flex flex-col gap-1.5">
-          <p className="text-[11px] font-medium text-txt-dim">Une adresse</p>
-          <ParcelInput
-            placeholder="Adresse, IDU ou référence (BW0917)"
-            onPick={(idu) => { setParcelle(idu); setEtape('parcelle') }}
-          />
-        </div>
-
-        <div className="flex items-center gap-2 text-[11px] text-txt-mut">
-          <span className="h-px flex-1 bg-line-2" />OU<span className="h-px flex-1 bg-line-2" />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          {/* FIX-NU3-2 (M-A03) — le champ « lien d'annonce » a un vrai libellé programmatique (htmlFor),
-              et l'erreur lui est RATTACHÉE (aria-describedby + aria-invalid) et annoncée (role=alert). */}
-          <label htmlFor="estimer-lien" className="text-[11px] font-medium text-txt-dim">Un lien d’annonce</label>
-          <input
-            id="estimer-lien"
-            className={INPUT_CLS}
-            placeholder="https://www.leboncoin.fr/ventes_immobilieres/…"
-            value={lien}
-            aria-invalid={erreur ? true : undefined}
-            aria-describedby={erreur ? 'estimer-lien-err' : undefined}
-            onChange={(e) => { setLien(e.target.value); setErreur(null) }}
-            onKeyDown={(e) => { if (e.key === 'Enter' && lien.trim() && !analyse.isPending) analyse.mutate(lien.trim()) }}
-          />
-          <Bouton niveau="primaire" ton="vert" className="self-start"
-            disabled={!lien.trim() || analyse.isPending}
-            onClick={() => analyse.mutate(lien.trim())}>
-            {/* FIX-NU3-2 (M-T04) — un seul nom pour le geste : « Estimer » (l'écran s'appelle « Estimer un bien »). */}
-            {analyse.isPending ? 'Lecture…' : 'Estimer ce bien'}
-          </Bouton>
-          {erreur && <p id="estimer-lien-err" role="alert" className="text-[12px] leading-snug text-coral">{erreur}</p>}
-          <p className="text-[11px] leading-snug text-txt-mut">Leboncoin pour l’instant. SeLoger et Bien’ici à venir.</p>
-        </div>
+        <EntreeParcelle source={parcelle ? 'adresse' : null} picked={parcelle} onChanger={revenir}
+          placeholder="Adresse, IDU ou référence (BW0917)"
+          onPick={(idu) => { setParcelle(idu); setEtape('parcelle') }} />
+        {/* le lien d'annonce (pont Radar « Ce bien ») reste analysable ; une erreur éventuelle se dit ici. */}
+        {erreur && <p role="alert" className="text-[12px] leading-snug text-coral">{erreur}</p>}
+        {parcelle && <RapportParcelle idu={parcelle} />}
       </Corps>
     </>
   )
