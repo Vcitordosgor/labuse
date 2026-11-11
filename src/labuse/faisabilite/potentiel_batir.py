@@ -149,6 +149,8 @@ def _assemble(sdp_raw, cause, constr_label, au_classe, zone_fam, zone_lib) -> di
             motif = "Terrain trop exigu pour un projet"
         elif str(cause).startswith("habitat_interdit"):
             motif = "Habitat interdit dans cette zone"
+        elif str(cause).startswith("assiette_a_verifier"):
+            motif = "Assiette constructible à vérifier (géométrie)"   # EXIGU-FIX-1 — ignorance, pas « pas de potentiel »
         else:
             motif = "Pas de potentiel constructible résiduel"
 
