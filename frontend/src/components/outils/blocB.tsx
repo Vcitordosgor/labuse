@@ -120,28 +120,36 @@ export function O5Servitudes() {
               ))}
             </>)
           })()}
-          {/* OUTILS-REFONTE-1 (9a) — « VÉRIFIÉ, RIEN À SIGNALER » : les familles examinées et claires sur
-              la parcelle, en puces (servi par l'API, jamais un faux RAS). */}
-          {(d.verifie?.length ?? 0) > 0 && (
+          {/* OUTILS-REFONTE-1 (9a) — « VÉRIFIÉ, RIEN À SIGNALER » : familles examinées et claires, en puces.
+              RETOURS-28 (Pièges) — si la commune n'a PAS de procédure PLU en cours, une puce « Procédure PLU »
+              s'y ajoute (« vérifié : aucune procédure »). */}
+          {((d.verifie?.length ?? 0) > 0 || !d.procedure_plu) && (
             <div data-o5-verifie className="flex flex-col gap-1.5">
               <p className="label-caps text-[9.5px] text-txt-dim">Vérifié, rien à signaler</p>
               <div className="flex flex-wrap gap-1.5">
-                {d.verifie!.map((f) => (
+                {(d.verifie ?? []).map((f) => (
                   <span key={f} className="rounded-full border border-line-2 bg-surface-2 px-2.5 py-0.5 text-[10.5px] text-txt-mut">{f}</span>
                 ))}
+                {!d.procedure_plu && (
+                  <span data-o5-procedure-ras className="rounded-full border border-line-2 bg-surface-2 px-2.5 py-0.5 text-[10.5px] text-txt-mut">Procédure PLU</span>
+                )}
               </div>
             </div>
           )}
           {d.servitudes.length === 0 && (d.verifie?.length ?? 0) === 0 && (
             <EmptyState title="Aucune servitude détectée dans les couches ingérées à cette parcelle." />
           )}
-          {/* RETOURS-25 (pt 2) — l'accordéon « Méthode et limites » est remplacé par UNE LIGNE en bas
-              « Non couvert : … » (la liste des limites de couverture, discrète). */}
-          {d.non_couvert?.length > 0 && (
-            <p data-o5-non-couvert className="mt-auto pt-1 text-[10px] leading-snug text-txt-dim">
-              Non couvert : {d.non_couvert.join(' · ')}.
-            </p>
-          )}
+          {/* RETOURS-28 (Pièges) — « Non couvert » = UNE ligne fixe, le DÉTAIL (couches non ingérées,
+              per API) passe dans le « i ». Les procédures PLU n'y figurent plus (carte/puce dédiées). */}
+          <p data-o5-non-couvert className="mt-auto flex flex-wrap items-center gap-1 pt-1 text-[10px] leading-snug text-txt-dim">
+            <span>Non couvert : oléoducs (Le Port, Sainte-Marie) et servitudes non publiées au Géoportail. Le certificat d'urbanisme fait foi.</span>
+            {(d.non_couvert?.length ?? 0) > 0 && (
+              <Tip garder side="top" tip={`${d.non_couvert.join(' · ')}.`}>
+                <span role="button" tabIndex={0} aria-label="Détail du non couvert"
+                  className="flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-full border border-line-2 text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
+              </Tip>
+            )}
+          </p>
         </div>
       )}
       {/* RECETTE-2 (T1) — l'invite « Saisissez un IDU … ou cliquez une parcelle » est RETIRÉE : doublon de

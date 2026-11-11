@@ -7,9 +7,6 @@ import { useQuery } from '@tanstack/react-query'
 import { getCompare, type CompareRow } from '../../lib/api'
 import { fmtEurCompact, fmtInt, fmtTauxEmprise, iduCourt } from '../../lib/format'
 import { PERIM_POTENTIEL_COURT, PERIM_RESIDUEL_COURT, PERIM_SECTION_CADASTRALE } from '../../lib/perimetres'
-// CAPACITE_MAX_MENTION_COURTE (main) : ne sert PLUS la ligne logements (retirée → renvoi à l'Étude),
-// mais la MENTION reste, en note sous le tableau (la SDP affichée est un maximum réglementaire, volet D).
-import { CAPACITE_MAX_MENTION_COURTE } from '../../lib/capaciteMax'
 import { bandeMeta, signalMeta } from '../../lib/status'   // COMPARER-2 §4 — bande + Signal (comme l'Analyse)
 import { useApp } from '../../store/useApp'
 import { EntreeParcelle } from '../outils/EntreeParcelle'   // RECETTE-OUTILS-1 (point 17) — bloc de saisie unique
@@ -121,22 +118,13 @@ const ROWS: Row[] = [
   { label: 'Prix terrain nu zone', prov: 'estime', val: (r) => r.terrain_zone_eur_m2 != null ? `${fmtInt(r.terrain_zone_eur_m2)} €/m²` : '—', num: (r) => r.terrain_zone_eur_m2 ?? null, best: 'lo', title: 'Médiane DVF du terrain nu dans la zone (calcul, pas un fait) — plus bas = plus intéressant.' },
   // RETOURS-11F M13 (O9) — lignes utiles ajoutées, toutes de la fiche servie (aucun second moteur).
   { label: `Prix bâti · ${PERIM_SECTION_CADASTRALE}`, prov: 'estime', val: (r) => r.prix_secteur_bati_m2 != null ? `${fmtInt(r.prix_secteur_bati_m2)} €/m²` : '—', num: (r) => r.prix_secteur_bati_m2 ?? null, title: 'Médiane DVF du bâti (maison/appartement) sur la section cadastrale (calcul) — même source que la fiche Marché (dvf_parcelle.secteur).' },
-  // IMPLANTATION-4 (LOT B) + FIX-ORFEVRE-1 (décision Vic 18/10/2026) — AUCUN nombre de logements de
-  // l'ancien calcul de capacité (fourchette estimate_capacity : SDP ÷ logement moyen) sur cet écran :
-  // seul le moteur d'implantation de l'Étude de faisabilité compte des logements. La ligne reste (repère
-  // de lecture), sans chiffre ni tri/surlignage, et RENVOIE vers l'outil (même geste que la fiche :
-  // parcelPrefill + module 'programme') ; la mention capacité maximale reste au survol.
-  { label: 'Logements possibles', prov: 'estime', noBadge: true,
-    val: () => 'voir l’Étude de faisabilité',
-    render: (r) => (
-      <button data-compare-etude className="text-mint hover:underline"
-        onClick={() => { const st = useApp.getState(); st.setParcelPrefill(r.idu); st.setModule('programme'); st.setCompareOpen(false) }}>
-        voir l’Étude de faisabilité →
-      </button>
-    ),
-    title: `Le nombre de logements n'est plus estimé ici : l'Étude de faisabilité le calcule sur une implantation réelle. ${CAPACITE_MAX_MENTION_COURTE}.` },
+  // RETOURS-28 (Comparatif) — ligne « Logements possibles » RETIRÉE (le nombre de logements se calcule
+  // dans l'Étude de faisabilité ; elle n'apportait qu'un renvoi, pas une donnée comparable).
   { label: 'Bâti existant', prov: 'source', val: (r) => r.bati_existant_pct != null ? `${fmtInt(r.bati_existant_pct)} % du terrain` : '—', num: (r) => r.bati_existant_pct ?? null, best: 'lo', title: 'Part du terrain déjà couverte par le bâti (emprise au sol / surface) — plus bas = plus de place à bâtir.' },
-  { label: 'Gabarit max', prov: 'source', val: (r) => r.gabarit_niveaux_max != null ? `R+${Math.max(0, r.gabarit_niveaux_max - 1)}` : '—', num: (r) => r.gabarit_niveaux_max ?? null, best: 'hi', title: 'Nombre de niveaux maximum autorisé (gabarit PLU).' },
+  // RETOURS-28 (pt 11) — « R+N » complété de « + combles » quand le faîtage domine l'égout (combles
+  // aménageables) : en Uh (égout 4,5 m → 1 niveau plein = R+0, faîtage 7 m → 2,5 m de toit), le gabarit
+  // n'est pas un simple R+0 mais « R+0 + combles ». Ni inventé ni un étage de plus : un fait du règlement.
+  { label: 'Gabarit max', prov: 'source', val: (r) => r.gabarit_niveaux_max != null ? `R+${Math.max(0, r.gabarit_niveaux_max - 1)}${r.gabarit_combles ? ' + combles' : ''}` : '—', num: (r) => r.gabarit_niveaux_max ?? null, best: 'hi', title: 'Nombre de niveaux maximum autorisé (gabarit PLU) ; « + combles » = niveau de combles aménageables sous un toit dont le faîtage domine l\'égout d\'au moins 1,80 m.' },
   { label: 'Accès & réseaux', prov: 'source', val: (r) => r.acces_reseaux ?? '—', title: 'Un seul verdict de viabilisation (accès voirie + réseaux) — le même que la fiche Réseaux et accès.' },
   // COMPARER-2 §3 — le verdict d'assainissement est souvent une STATISTIQUE de secteur (« 59 % non
   // raccordés »), pas un raccordement constaté à la parcelle → badge Estimé.
@@ -160,7 +148,7 @@ const SECTION_OF: Record<string, Section> = {
   [`SDP maximale réglementaire · ${PERIM_POTENTIEL_COURT}`]: 'Potentiel',
   [`SDP restante · ${PERIM_RESIDUEL_COURT}`]: 'Potentiel',
   "Taux d'occupation du gabarit": 'Potentiel', 'Charge foncière /m² terrain': 'Potentiel',
-  'Logements possibles': 'Potentiel', 'Classement LABUSE': 'Potentiel',
+  'Classement LABUSE': 'Potentiel',
   'Contrainte majeure': 'Risques', 'Accès & réseaux': 'Risques', 'Assainissement': 'Risques',
   'Prix terrain nu zone': 'Marché', [`Prix bâti · ${PERIM_SECTION_CADASTRALE}`]: 'Marché',
 }
@@ -170,8 +158,10 @@ function ProvBadge({ prov }: { prov: 'source' | 'estime' }) {
   return <Badge className="ml-1" ton={prov === 'source' ? 'vert' : 'ambre'}>{prov === 'source' ? 'sourcé' : 'estimé'}</Badge>
 }
 
-// O9(d) — indices des cellules gagnantes d'une ligne (peut être plusieurs en cas d'égalité).
-// Ne renvoie rien si < 2 valeurs numériques (rien à comparer) : on ne surligne pas un « gagnant » seul.
+// O9(d) — indice de la cellule gagnante d'une ligne. RETOURS-28 (Comparatif) : AUCUN vert
+//  · en cas d'égalité (le meilleur doit être UNIQUE) ;
+//  · sur une valeur nulle ou négative (une meilleure valeur ≤ 0 n'a rien à vanter).
+// Ne renvoie rien si < 2 valeurs numériques (rien à comparer).
 function bestIdx(row: Row, parcels: CompareRow[]): Set<number> {
   const out = new Set<number>()
   if (!row.num || !row.best) return out
@@ -179,6 +169,8 @@ function bestIdx(row: Row, parcels: CompareRow[]): Set<number> {
   const present = nums.filter((v): v is number => v != null)
   if (present.length < 2) return out
   const target = row.best === 'hi' ? Math.max(...present) : Math.min(...present)
+  if (target <= 0) return out                                   // ni nul ni négatif
+  if (present.filter((v) => v === target).length !== 1) return out   // pas d'égalité
   nums.forEach((v, i) => { if (v != null && v === target) out.add(i) })
   return out
 }
@@ -259,7 +251,9 @@ export function ComparePanel() {
   }, [setCompareOpen])
 
   return (
-    <div data-compare-panel className="absolute inset-0 z-40 flex items-center justify-center bg-black/50 p-6">
+    // RETOURS-28 (Comparatif) — un clic HORS du tableau (sur le fond) ferme l'overlay (Échap aussi).
+    <div data-compare-panel onClick={(e) => { if (e.target === e.currentTarget) setCompareOpen(false) }}
+      className="absolute inset-0 z-40 flex items-center justify-center bg-black/50 p-6">
       {/* RETOURS-15 B7 (P13) — le tableau s'élargit à la largeur disponible (880 → 1240 px) pour que
           chaque libellé et chaque valeur tiennent sur UNE ligne à 1440 px (whitespace-nowrap plus bas). */}
       <div className="floating flex max-h-full w-full max-w-[1240px] flex-col overflow-hidden">
@@ -299,6 +293,9 @@ export function ComparePanel() {
               <thead>
                 <tr>
                   <th scope="col" className="w-[120px] p-2" />
+                  {/* RETOURS-28 (Comparatif) — colonne dédiée aux badges « sourcé »/« estimé », entre le
+                      libellé et les valeurs. */}
+                  <th scope="col" className="w-[62px] p-2" />
                   {parcels.map((r) => {
                     return (
                       <th scope="col" key={r.idu} data-compare-col className="border-l border-line p-2 align-top">
@@ -333,7 +330,7 @@ export function ComparePanel() {
                   return (
                     <Fragment key={sec}>
                       <tr data-compare-section={sec}>
-                        <td colSpan={1 + parcels.length} className="px-2 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-[.1em] text-mint">{sec}</td>
+                        <td colSpan={2 + parcels.length} className="px-2 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-[.1em] text-mint">{sec}</td>
                       </tr>
                       {secRows.map((row) => {
                         const winners = bestIdx(row, parcels)   // O9(d) — cellules gagnantes de la ligne
@@ -343,8 +340,9 @@ export function ComparePanel() {
                               {row.title
                                 ? <span className="cursor-help border-b border-dotted border-line-2">{row.label}</span>
                                 : row.label}
-                              {!row.noBadge && <ProvBadge prov={row.prov} />}
                             </td>
+                            {/* RETOURS-28 — badge de provenance dans SA colonne (entre libellé et valeurs). */}
+                            <td className="p-2 align-top">{!row.noBadge && <ProvBadge prov={row.prov} />}</td>
                             {parcels.map((r, i) => {
                               const win = winners.has(i)   // vert = meilleure valeur (comme la table Communes)
                               return (
@@ -366,12 +364,12 @@ export function ComparePanel() {
                               <span className="inline-block w-2 text-mint">{detailOuvert ? '▾' : '▸'}</span> Détail contraintes
                             </button>
                           </td>
-                          <td colSpan={parcels.length} />
+                          <td /><td colSpan={parcels.length} />
                         </tr>
                       )}
                       {sec === 'Risques' && detailOuvert && (
                         <tr data-compare-detail className="border-t border-line">
-                          <td className="p-2 align-top" />
+                          <td className="p-2 align-top" /><td className="p-2 align-top" />
                           {parcels.map((r) => (
                             <td key={r.idu} className="border-l border-line p-2 align-top text-[10.5px] text-txt-mut">
                               {(r.contraintes ?? []).length ? <ul className="list-disc pl-4">{(r.contraintes ?? []).map((c, i) => <li key={i}>{c}</li>)}</ul> : '—'}

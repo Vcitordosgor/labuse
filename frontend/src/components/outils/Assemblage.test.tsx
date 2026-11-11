@@ -79,20 +79,19 @@ describe('ASSEMBLAGE (H5) — étapes, contiguïté, isolées, plus de Courrier'
     expect(document.querySelector('[data-asm-charge]')).toBeFalsy()
   })
 
-  it('B-2 (SDP-UNIQUE) : SDP bâti conservé en tête + terrain libéré dit à côté (jamais seul, démolition nommée)', async () => {
+  it('RETOURS-28 : tuile « Bâti conservé : X m² » + dessous « Reconstruction : Y m² » ; « · terrain libéré » retiré des lignes', async () => {
     renderM16(); await verifier('[data-asm-charge]')
     const sdpKpi = document.querySelector('[data-asm-kpi="sdp"]') as HTMLElement
-    // chiffre de tête = bâti conservé (11 065), comme la fiche
+    // chiffre de tête = bâti conservé (11 065), comme la fiche ; libellé « Bâti conservé : »
     expect(document.querySelector('[data-asm-sdp-conserve]')?.textContent).toContain('065')
-    expect(sdpKpi.textContent).toContain('bâti conservé')
-    // la table rase est servie À CÔTÉ, sous son nom, avec la mention de démolition — jamais seule
+    expect(sdpKpi.textContent).toContain('Bâti conservé')
+    // la table rase est servie DESSOUS, nommée « Reconstruction »
     const libere = document.querySelector('[data-asm-sdp-libere]') as HTMLElement
     expect(libere).toBeTruthy()
-    expect(libere.textContent).toContain('terrain libéré')
+    expect(libere.textContent).toContain('Reconstruction')
     expect(libere.textContent).toContain('800')          // 12 800
-    expect(libere.textContent).toContain('démolition')
-    // item : SDP bâti conservé (= fiche) en tête, terrain libéré entre parenthèses
-    expect(document.body.textContent).toContain('(terrain libéré')
+    // RETOURS-28 : le « (terrain libéré …) » répété par parcelle a disparu
+    expect(document.body.textContent).not.toContain('(terrain libéré')
   })
 
   it('plus de bouton « Préparer les courriers » dans l\'Assemblage (H5)', async () => {

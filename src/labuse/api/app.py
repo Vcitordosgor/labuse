@@ -9313,6 +9313,8 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
         "proprietaire": proprietaire,                                   # moral / particulier
         "bati_existant_pct": bati_pct,                                  # emprise bâtie ÷ terrain
         "gabarit_niveaux_max": res.get("niveaux_max") if res.get("disponible") else None,  # hauteur max (R+N)
+        # RETOURS-28 (pt 11) — combles aménageables (faîtage ≫ égout) → affichage « R+N + combles ».
+        "gabarit_combles": bool(res.get("combles")) if res.get("disponible") else None,
         "acces_reseaux": via.get("libelle"),                            # UN verdict viabilisation
         "assainissement": anc.get("libelle") or anc.get("statut_court") or anc.get("statut"),
         "prix_secteur_bati_m2": prix_bati,                              # médiane DVF bâti secteur

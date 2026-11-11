@@ -307,12 +307,16 @@ export function M16() {
                   {/* CHASSE-FIX-1 (B-2) — SDP-UNIQUE : la grandeur de tête est la SDP BÂTI CONSERVÉ (comme
                       la fiche), la SDP TERRAIN LIBÉRÉ (table rase) est dite juste dessous, sous ce nom, jamais
                       seule. ≠ « SDP gabarit » (capacité PLU) ≠ « SHAB vendable » (× rendement 0,8). */}
+                  {/* RETOURS-28 (Assemblage) — la tuile dit « Bâti conservé : X m² » et, dessous,
+                      « Reconstruction : Y m² » (SDP table rase, si démolition du bâti existant). */}
                   <div data-asm-kpi="sdp" className="rounded-md bg-surface-3 px-2 py-1.5">
-                    <div className="text-[9px] text-txt-dim">SDP bâti conservé · {PERIM_POTENTIEL_COURT}</div>
-                    <div data-asm-sdp-conserve className="tnum text-[14px] font-semibold text-mint">{fmt(d.sdp_bati_conserve_m2)} m²{d.sdp_conserve_estimation ? ' *' : ''}</div>
+                    <div data-asm-sdp-conserve className="text-[11px] leading-tight text-txt">
+                      <span className="text-txt-dim">Bâti conservé : </span>
+                      <b className="tnum text-mint">{fmt(d.sdp_bati_conserve_m2)} m²</b>{d.sdp_conserve_estimation ? ' *' : ''}
+                    </div>
                     {d.sdp_terrain_libere_m2 != null && d.sdp_terrain_libere_m2 > d.sdp_bati_conserve_m2 && (
-                      <div data-asm-sdp-libere className="mt-0.5 text-[9px] leading-tight text-amber">
-                        terrain libéré {fmt(d.sdp_terrain_libere_m2)} m² — si démolition du bâti existant
+                      <div data-asm-sdp-libere className="mt-0.5 text-[10px] leading-tight text-txt-dim">
+                        Reconstruction : <b className="tnum text-amber">{fmt(d.sdp_terrain_libere_m2)} m²</b>
                       </div>
                     )}
                   </div>
@@ -391,10 +395,12 @@ export function M16() {
 
           {/* B — approche propriétaire (privacy : PM nommée / particulier masqué) */}
           <div data-asm-proprio className={`rounded-lg border px-3 py-1.5 text-[11px] ${d.tous_personnes_morales ? 'border-mint/40 bg-mint/[0.06]' : 'border-line-2 bg-surface-2'}`}>
+            {/* RETOURS-28 (Assemblage) — pluriel RÉSOLU, plus de « (s) » : « 1 personne morale »,
+                « 3 propriétaires particuliers ». */}
             {d.tous_personnes_morales ? (
-              <span className="text-mint">✓ Approche simplifiée — {d.n_personnes_morales} propriétaire(s) <b>personne(s) morale(s)</b>, aucun particulier</span>
+              <span className="text-mint">✓ Approche simplifiée — {d.n_personnes_morales} personne{d.n_personnes_morales > 1 ? 's' : ''} morale{d.n_personnes_morales > 1 ? 's' : ''}, aucun particulier</span>
             ) : (
-              <span className="text-txt-mut">{d.n_personnes_morales} personne(s) morale(s) · <b className="text-st-creuser">{d.n_particuliers} particulier(s)</b></span>
+              <span className="text-txt-mut">{d.n_personnes_morales} personne{d.n_personnes_morales > 1 ? 's' : ''} morale{d.n_personnes_morales > 1 ? 's' : ''} · <b className="text-st-creuser">{d.n_particuliers} propriétaire{d.n_particuliers > 1 ? 's' : ''} particulier{d.n_particuliers > 1 ? 's' : ''}</b></span>
             )}
             {/* RECETTE-4 — noms des personnes morales EN ENTIER (plusieurs lignes si besoin) : plus de troncature (break-words). */}
             {(d.proprietaires_pm as string[]).length > 0 && (
@@ -409,8 +415,9 @@ export function M16() {
               <div key={i.idu} className="rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-[11px]">
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-txt-hi">{i.idu.slice(8)}</span>
-                  {/* CHASSE-FIX-1 (B-2) — SDP bâti conservé (= fiche) ; terrain libéré (table rase) dit à côté. */}
-                  <span className="text-txt-dim">{fmt(i.surface_m2)} m² · SDP {fmt(i.sdp_residuelle_m2 != null ? i.sdp_residuelle_m2 : i.sdp_m2)} m²{i.sdp_residuelle_m2 != null && i.sdp_m2 > i.sdp_residuelle_m2 ? ` (terrain libéré ${fmt(i.sdp_m2)})` : ''} · {PERIM_POTENTIEL_COURT}</span>
+                  {/* RETOURS-28 (Assemblage) — le « · terrain libéré » répété par parcelle est RETIRÉ
+                      (la reconstruction est dite UNE fois dans la tuile SDP ci-dessus). */}
+                  <span className="text-txt-dim">{fmt(i.surface_m2)} m² · SDP {fmt(i.sdp_residuelle_m2 != null ? i.sdp_residuelle_m2 : i.sdp_m2)} m² · {PERIM_POTENTIEL_COURT}</span>
                   {/* RECETTE-1 R8 — pastille de palier (scoring q_v14) retirée de l'Assemblage. */}
                 </div>
                 <div className="mt-0.5 flex items-center gap-2">

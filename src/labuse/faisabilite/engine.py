@@ -884,7 +884,13 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                           "sans objet", "règlement PLU", prov="absent"))
 
     rp = f"R+{max(0, niveaux - 1)}"     # logt_moyen défini plus haut (chemin central du vendable, §1)
-    fourch = {"niveaux": rp, "niveaux_max": niveaux,
+    # RETOURS-28 (Comparatif, pt 11) — COMBLES AMÉNAGEABLES : quand le faîtage domine l'égout d'au moins
+    # 1,80 m (hauteur habitable sous rampant), le gabarit porte un niveau de combles EN PLUS des niveaux
+    # pleins comptés à l'égout. Sinon « R+0 » (égout 4,5 m ÷ 3 = 1 niveau) masque ce potentiel. Indicateur
+    # d'affichage SEUL (aucun calcul de SDP n'en dépend ; display « R+N + combles »).
+    combles = bool(_is_num(rules.hf_m) and _is_num(rules.he_m)
+                   and (float(rules.hf_m) - float(rules.he_m)) >= 1.8)
+    fourch = {"niveaux": rp, "niveaux_max": niveaux, "combles": combles,
               # 3.D — hauteur du gabarit (niveaux × hauteur d'étage), pour l'extrusion 3D.
               "hauteur_m": round(niveaux * hyp.etage_m, 1),
               "hauteur_etage_m": hyp.etage_m,

@@ -39,8 +39,13 @@ def test_exports_portent_la_mention_capacite():
 def test_fiche_et_gabarit_portent_la_mention():
     assert "capaciteMax" in _lire("frontend/src/components/fiche/constructibilite.tsx")
     assert "SDP max" in _lire("frontend/src/components/fiche/constructibilite.tsx")
-    assert "capaciteMax" in _lire("frontend/src/components/outils/Gabarit.tsx")
-    assert "capaciteMax" in _lire("frontend/src/components/compare/ComparePanel.tsx")
+    # RETOURS-28 — le Gabarit porte la mention en PHRASE LITTÉRALE validée (plus l'import `capaciteMax`) :
+    # « les permis délivrés utilisent environ la moitié de ce maximum (médiane sur 6 601 permis) ».
+    _gab = _lire("frontend/src/components/outils/Gabarit.tsx")
+    assert "moitié de ce maximum" in _gab and "6 601 permis" in _gab
+    # RETOURS-28 — le Comparatif a RETIRÉ la ligne « Logements possibles » (qui portait la mention) ; la
+    # capacité y reste nommée « maximale réglementaire » dans le libellé de la ligne SDP.
+    assert "SDP maximale réglementaire" in _lire("frontend/src/components/compare/ComparePanel.tsx")
 
 
 def test_copilote_porte_la_mention_sur_la_capacite():

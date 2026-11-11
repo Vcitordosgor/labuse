@@ -197,32 +197,27 @@ export function Blocs() {
           puis la case « publics » et « Réinitialiser » sur UNE ligne. La liste se met à jour à chaque
           changement (pas de bouton « Voir les parcelles »). */}
       <div data-blocs-filtres className="flex flex-col gap-2">
-        <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 text-[11px] text-txt-mut">
-          <label className="flex min-w-0 items-center gap-1.5">Commune
-            <Select data-blocs-commune value={commune ?? ''} onChange={(e) => { setCommune(e.target.value || null); reset() }}
-              className="h-8 min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:outline-none">
-              <option value="">Toute l'île</option>
-              {(communes.data ?? []).map((c) => <option key={c.commune} value={c.commune}>{c.commune}</option>)}
-            </Select>
-          </label>
-          <label className="flex min-w-0 items-center gap-1.5">Surface
-            <Select data-blocs-surf-min value={surfMin} onChange={(e) => { setSurfMin(Number(e.target.value)); reset() }}
-              className="h-8 min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:outline-none">
-              {SURFACE_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
-            </Select>
-          </label>
-          <label className="flex min-w-0 items-center gap-1.5">Plancher restant
-            <Select data-blocs-sdp-min value={sdpMin} onChange={(e) => { setSdpMin(Number(e.target.value)); reset() }}
-              className="h-8 min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:outline-none">
-              {SDP_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
-            </Select>
-          </label>
-          <label className="flex min-w-0 items-center gap-1.5">Parcelles
-            <Select data-blocs-n-min value={nMin} onChange={(e) => { setNMin(Number(e.target.value)); reset() }}
-              className="h-8 min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:outline-none">
-              {N_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
-            </Select>
-          </label>
+        {/* RETOURS-28 (Blocs, 9d) — 4 BOUTONS-MENUS : le libellé est DANS le bouton (option sélectionnée),
+            pas d'intitulé extérieur ; grille de 2 colonnes ÉGALES (wrapClassName w-full) ; police resserrée
+            + pl-1 pour que « Plancher restant : tous » tienne SANS troncature sous le chevron (pr-9). */}
+        <div className="grid grid-cols-2 gap-2">
+          <Select data-blocs-commune aria-label="Commune" wrapClassName="w-full" value={commune ?? ''} onChange={(e) => { setCommune(e.target.value || null); reset() }}
+            className="h-8 w-full rounded-md border border-line-2 bg-surface-3 pl-2 text-[10px] text-txt focus:outline-none">
+            <option value="">Toute l'île</option>
+            {(communes.data ?? []).map((c) => <option key={c.commune} value={c.commune}>{c.commune}</option>)}
+          </Select>
+          <Select data-blocs-surf-min aria-label="Surface" wrapClassName="w-full" value={surfMin} onChange={(e) => { setSurfMin(Number(e.target.value)); reset() }}
+            className="h-8 w-full rounded-md border border-line-2 bg-surface-3 pl-2 text-[10px] text-txt focus:outline-none">
+            {SURFACE_MIN.map((o) => <option key={o.v} value={o.v}>Surface : {o.label}</option>)}
+          </Select>
+          <Select data-blocs-sdp-min aria-label="Plancher restant" wrapClassName="w-full" value={sdpMin} onChange={(e) => { setSdpMin(Number(e.target.value)); reset() }}
+            className="h-8 w-full rounded-md border border-line-2 bg-surface-3 pl-2 text-[10px] text-txt focus:outline-none">
+            {SDP_MIN.map((o) => <option key={o.v} value={o.v}>Plancher restant : {o.label}</option>)}
+          </Select>
+          <Select data-blocs-n-min aria-label="Nombre de parcelles" wrapClassName="w-full" value={nMin} onChange={(e) => { setNMin(Number(e.target.value)); reset() }}
+            className="h-8 w-full rounded-md border border-line-2 bg-surface-3 pl-2 text-[10px] text-txt focus:outline-none">
+            {N_MIN.map((o) => <option key={o.v} value={o.v}>{o.label} parcelles</option>)}
+          </Select>
         </div>
         <div className="flex items-center gap-2 text-[11px] text-txt-mut">
           <Case data-blocs-inclure-publics

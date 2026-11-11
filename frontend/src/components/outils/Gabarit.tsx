@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query'
 import { getGabarit, docGabaritUrl, type GabaritResult, type GabGeom } from '../../lib/api'
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'   // RECETTE-OUTILS-1 (34) — export = doc Gabarit
 import { fmtInt } from '../../lib/format'
-import { CAPACITE_MAX_MENTION_COURTE } from '../../lib/capaciteMax'
 import { useApp } from '../../store/useApp'
 import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECETTE-1 F2
 import { Squelette } from '../Loading'
@@ -184,15 +183,16 @@ function useMapLayers(res: GabaritResult | undefined, terrain3d: boolean, batiVi
     const hRegle = ok && res.hauteurReglementaireM != null ? res.hauteurReglementaireM : null
     const hBati = batiFeats.length
       ? Math.round(Math.max(0, ...batiFeats.map((f) => Number(f.properties?.hauteur_m) || 0))) : 0
+    // RETOURS-28 (Gabarit) — seule « Règle : X m » reste sur la vue 3D (attachée au volume vert de
+    // l'enveloppe). Le faîtage LiDAR QUITTE la vue : il devient une LIGNE DU PANNEAU (sous les tuiles),
+    // car la mesure n'est pas rattachée de façon sûre à un bâtiment dessiné. `batiVisible`/`hBati` ne
+    // pilotent plus d'étiquette ici.
+    void batiVisible; void hBati
     const cParc = centerOf(res.zoneImplantationGeoJSON ?? null, res.contourGeoJSON ?? null)
     if (terrain3d && cParc && hRegle != null) {
       const dyRegle = -14 - Math.round((hRegle / Math.max(hRegle, 1)) * 42)   // pastille au niveau du toit de l'enveloppe
       const el = mkHauteurEl(`Règle : ${hRegle} m`, C_ZONE)
       labels.current.push(new maplibregl.Marker({ element: el, anchor: 'bottom', offset: [-46, dyRegle] }).setLngLat(cParc).addTo(mapGl))
-    }
-    if (terrain3d && batiVisible && cParc && hBati > 0) {
-      const el = mkHauteurEl(`Faîtage LiDAR sur la parcelle : ${hBati} m`, C_BATI)
-      labels.current.push(new maplibregl.Marker({ element: el, anchor: 'bottom', offset: [46, -30] }).setLngLat(cParc).addTo(mapGl))
     }
     // RECETTE-OUTILS-2 (R13) — le cadrage est le SEUL propriétaire de la caméra du Gabarit (MapView ne
     // recentre plus en gabarit). En 3D on cadre AVEC l'inclinaison (pitch 55, bearing 0) — comme « Vue
@@ -424,6 +424,21 @@ export function Gabarit() {
               : <Num label="Surface parcelle" value={res.surfaceParcelleM2} unit="m²" sub="cadastre" />}
           </div>
 
+          {/* RETOURS-28 (Gabarit) — « Faîtage LiDAR sur la parcelle » : une LIGNE du panneau, sous les
+              tuiles (plus sur la vue 3D). Valeur de parcelle (plus haut faîtage mesuré), non rattachée à
+              un bâtiment précis. */}
+          {(() => {
+            const hBatiP = Math.round(Math.max(0, ...((res.batiExistantGeoJSON?.features ?? [])
+              .map((f) => Number(f.properties?.hauteur_m) || 0))))
+            if (hBatiP <= 0) return null
+            return (
+              <div data-gabarit-faitage className="flex items-baseline justify-between gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]">
+                <span className="min-w-0 text-txt-mut">Faîtage LiDAR sur la parcelle</span>
+                <span className="shrink-0 font-mono tabular-nums text-txt-hi">{hBatiP} m</span>
+              </div>
+            )
+          })()}
+
           {/* RÈGLES APPLIQUÉES — lignes « libellé · valeur · badge zone », toujours visibles (plus d'accordéon). */}
           <div data-gabarit-regles className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
             <p className="label-caps mb-1.5 text-[9.5px] text-txt-dim">Règles appliquées</p>
@@ -472,22 +487,12 @@ export function Gabarit() {
             )}
           </div>
 
-          {/* Référence discrète en bas : rappel « enveloppe = maximum » + CALCUL ET ÉCHANTILLON du « ~½ »
-              (RETOURS-27 pt 3 : traçable → on le donne dans le « i »). */}
-          <p data-gabarit-plafond className="flex flex-wrap items-center gap-1 text-[10px] leading-snug text-txt-dim">
-            <span>{CAPACITE_MAX_MENTION_COURTE}</span>
-            <Tip garder side="top" tip="Médiane du ratio « autorisé / maximum réglementaire » : 0,46 en surface de plancher (0,40 en logements), mesurée sur 6 601 permis réellement autorisés après l'entrée en vigueur du PLU (Sit@del).">
-              <span role="button" tabIndex={0} aria-label="Calcul et échantillon du ~½"
-                className="flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-full border border-line-2 text-[8px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
-            </Tip>
+          {/* RETOURS-28 (Gabarit) — phrase du bas : « En pratique, les permis délivrés utilisent environ la
+              moitié de ce maximum (médiane sur 6 601 permis). » (traçable : ratio médian 0,46 surface /
+              0,40 logements, Sit@del post-PLU). */}
+          <p data-gabarit-plafond className="text-[10px] leading-snug text-txt-dim">
+            En pratique, les permis délivrés utilisent environ la moitié de ce maximum (médiane sur 6 601 permis).
           </p>
-          {/* RETOURS-27 (pt 3, correction) — explication NEUTRE : le faîtage LiDAR est une valeur de
-              PARCELLE, non rattachée à un bâtiment précis ; AUCUNE phrase « dépasse la règle ». */}
-          {terrain3d && res.hauteurReglementaireM != null && (
-            <p data-gabarit-3d-hauteurs className="text-[10px] leading-snug text-txt-dim">
-              Sur la vue 3D : l'<b className="text-mint">enveloppe (règle)</b> en volume, et le <b className="text-txt-mut">faîtage LiDAR</b> le plus haut mesuré sur la parcelle — une valeur de parcelle, non rattachée à un bâtiment précis (la mesure peut provenir d'un bâtiment voisin au contact).
-            </p>
-          )}
         </>
         )
       })()}

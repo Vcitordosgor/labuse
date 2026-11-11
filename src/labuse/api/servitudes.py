@@ -475,8 +475,10 @@ def servitudes_invisibles(idu: str, db: Session = Depends(get_db)) -> dict:
             }
     except Exception:  # noqa: BLE001 — l'outil ne doit jamais 500 sur le radar PLU
         procedure_plu = None
-    non_couvert = ([s for s in _NON_COUVERT if "Procédures PLU en cours" not in s]
-                   if procedure_plu else _NON_COUVERT)
+    # RETOURS-28 (Pièges) — les procédures PLU ne figurent PLUS JAMAIS dans « Non couvert » : une
+    # procédure active est servie en carte dédiée (procedure_plu) ; son absence devient une puce
+    # « Procédure PLU » dans « Vérifié, rien à signaler » (côté front). On la retire donc toujours.
+    non_couvert = [s for s in _NON_COUVERT if "Procédures PLU en cours" not in s]
     return {"idu": idu, "n": len(items), "servitudes": items,
             "synthese": (f"{len(items)} servitude(s)/contrainte(s) dormante(s) intersecte(nt) cette parcelle."
                          if items else "Aucune servitude dormante détectée dans les couches ingérées."),

@@ -290,3 +290,60 @@ immédiate) · `compare/ComparePanel.tsx` (badges · en-têtes · Vente · déta
 (Assemblage) · `lib/api.ts` (`getParcelApercu`).
 **Back** : `api/app.py` (`/parcels/apercu/{idu}` indexé) · `api/servitudes.py` (`procedure_plu` + retrait du
 « Non couvert »).
+
+---
+---
+
+# RETOURS-28 — dernière recette des outils
+
+Même branche `fix/retours-23`, **pas de merge**. Captures WebKit `r28-*.png`. Hook complet **VERT** :
+`tsc -b` 0 · vitest **326/326** · `vite build` OK · scan secrets OK · pytest **3259 passed**.
+
+## Pièges (`r28-pieges.png`)
+« Non couvert » réduit à **UNE ligne fixe** : « Non couvert : oléoducs (Le Port, Sainte-Marie) et servitudes
+non publiées au Géoportail. Le certificat d'urbanisme fait foi. » ; le **détail** (couches non ingérées,
+servi par l'API) passe dans le **« i »**. Les **procédures PLU n'y figurent plus jamais** (`servitudes.py` les
+retire toujours de `non_couvert`). Quand la commune n'a **pas** de procédure en cours, une **puce « Procédure
+PLU »** apparaît dans « Vérifié, rien à signaler » (vérifié WebKit : puce présente, « Procédures PLU » absent
+de la ligne Non couvert).
+
+## Gabarit (`r28-gabarit.png`)
+« Faîtage LiDAR sur la parcelle : X m » **quitte la vue 3D** (le marqueur gris est retiré ; seule « Règle : X m »
+reste sur l'enveloppe verte) et devient **une ligne du panneau, sous les tuiles** (« Faîtage LiDAR sur la
+parcelle · 10 m » pour BZ1065). La phrase du bas devient : **« En pratique, les permis délivrés utilisent
+environ la moitié de ce maximum (médiane sur 6 601 permis). »**
+
+## Blocs fonciers (`r28-blocs.png`)
+Les filtres sont **quatre boutons-menus dont le libellé est DANS le bouton** (« Toute l'île ▾ », « Surface :
+toutes ▾ », « Plancher restant : tous ▾ », « ≥ 2 parcelles ▾ »), en **grille de 2 colonnes égales**
+(`wrapClassName="w-full"`), sans libellé extérieur. Vérifié WebKit : **aucun des 4 n'est tronqué**
+(`scrollWidth ≤ clientWidth`), rien de superposé.
+
+## Comparatif (`r28-comparatif.png`)
+- **Colonne dédiée aux badges « sourcé »/« estimé »**, entre le libellé et les valeurs (vérifié : ligne
+  « Surface » = [Surface][sourcé][1 567 m²]).
+- Ligne **« Logements possibles » retirée**.
+- **Aucun vert en cas d'égalité, ni sur une valeur nulle ou négative** (`bestIdx` : meilleur unique et > 0 ;
+  vérifié : « Taux d'occupation » min = 0 % non vert ; « Charge foncière » négatives non vertes, seule la
+  valeur positive l'est).
+- Un **clic hors du tableau**, ou **Échap**, le ferme (vérifié WebKit : clic sur le fond ferme l'overlay).
+- **« Gabarit max R+0 » en zone Uh corrigé** : égout 4,5 m ÷ 3 = 1 niveau plein (R+0) mais le faîtage à 7 m
+  laisse **2,5 m de combles aménageables** → l'affichage devient **« R+0 + combles »**. Ni inventé ni un étage
+  de plus : un fait du règlement (faîtage 7 m / égout 4,5 m, vérifié `/outils/gabarit`). Nouveau drapeau
+  `combles` servi par le moteur (`engine.py`/`residuel.py`), display-seul (aucun calcul de SDP n'en dépend).
+  Vérifié live : BZ1065 (Uh) → `combles=True` → « R+0 + combles » ; DH0076 → « R+4 + combles » ; AK0804 → « R+3 + combles ».
+
+## Assemblage (`r28-assemblage.png`)
+Pluriels **résolus, plus de « (s) »** : « 1 personne morale », « 3 propriétaires particuliers » (vérifié :
+« 0 personne morale · 4 propriétaires particuliers », aucun « (s) »). La tuile dit **« Bâti conservé : X m² »**
+et, dessous, **« Reconstruction : Y m² »** (SDP table rase). Le **« · terrain libéré » répété** dans les lignes
+de parcelles est **retiré** (dit une seule fois dans la tuile).
+
+## Fichiers touchés (RETOURS-28)
+**Front** : `outils/blocB.tsx` (Pièges) · `outils/Gabarit.tsx` (faîtage en panneau + phrase) · `outils/Blocs.tsx`
+(4 boutons-menus) · `compare/ComparePanel.tsx` (colonne badges · retrait Logements · vert strict · clic-dehors ·
+R+N+combles) · `outils/moteurs.tsx` (Assemblage) · `lib/api.ts` (`gabarit_combles`).
+**Back** : `api/servitudes.py` (PLU hors Non couvert) · `api/app.py` (`gabarit_combles` servi) ·
+`faisabilite/engine.py` + `faisabilite/residuel.py` (drapeau `combles`).
+**Tests** : `Assemblage.test.tsx` (Bâti conservé/Reconstruction) · `test_capacite_max.py` (mention Gabarit en
+phrase littérale ; Comparatif sans la ligne Logements).
