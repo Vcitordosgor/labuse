@@ -309,3 +309,34 @@ reste corrigé (dispersion intra-pixel, pas l'écart de cote).
 
 Vérifs : **18 tests** `test_gabarit_scene.py` ; 297 unit + 2 db gabarit inchangés ; 0 faute hors cadre ;
 PDF pilote (clair, plan à côté) rendu offline. **Étape 2 (visionneuse) ci-dessous.**
+
+---
+
+## 12. Étape 2 — Visionneuse Three.js (admin, à la demande)
+
+**C10 — Visionneuse** `frontend/src/components/outils/GabaritViewer3D.tsx` (chargée en `lazy` → Three.js
+dans un chunk séparé de **532 Ko**, hors bundle principal ; bouton `data-gabarit-viewer-3d` visible
+**seulement pour les admins**, `getMoi().role`). Sur la **scène corrigée** : **caméra orthographique**
+cadrée, **rotation + zoom** (OrbitControls), **terrain = FACES DU SERVEUR** (BufferGeometry depuis
+`terrain.faces_parcelle`/`faces_voisinage`) + **courbes de niveau** (marching-triangles sur les faces),
+**volumes schématiques** (bâti extrudé pied→faîtage, sans toiture), **contours cadastre/zone posés sur
+le terrain** (raycast vertical), **coupes + plan-clé à côté** (SVG serveur). Avertissement sous la vue :
+« Cotes indicatives issues du MNT IGN. Pas de grille 1 m. Référentiel IGN 1989. Acquisition [date].
+Précision locale à établir. »
+
+**C11 — Safari** : `powerPreference:'low-power'`, `devicePixelRatio` borné à 2, `ResizeObserver` pour la
+taille ; à la fermeture **toutes** les ressources libérées (géométries, matériaux, `renderer.dispose()`
++ `forceContextLoss()`) ; **repli sur plan + coupes** si WebGL tombe ou si le terrain n'est pas couvert
+(`data-gab3d-fallback`). Overlay via **portal** (document.body) → plein viewport.
+
+**C12 — Mesures WebKit (moteur Safari)** `viewer/mesures_webkit.json` :
+- **FPS en rotation : 60** (cible 30) ✅
+- **Affichage à chaud : 1349 ms** (cible < 2 s) ✅ · à froid 2107 ms (inclut le chunk lazy)
+- **10 ouvertures à la suite sans fuite : True** ✅ · **canvas OK après pause : True** ✅ · 0 erreur
+- **Cotes identiques écran / PDF** : la visionneuse lit les **mêmes coupes SVG serveur** que le PDF
+  (même scène, seul le thème diffère) → cotes identiques par construction.
+
+Captures WebKit : `viewer/bz1065_vue3d.png` (talus, à froid), `bz1065_vue3d_chaud.png`,
+`97415000CM1658_vue3d.png` (altitude), `apres_pause.png`. Recette sur base réelle rejouée (backend 7290,
+front 10090). **Hook vert** : tsc (build), vitest **326**, pytest gabarit **297 unit + 2 db** + 17 scène,
+secrets. three.js ajouté (0.169), code-splitté. La vue 3D MapLibre par défaut est **inchangée**.
