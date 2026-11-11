@@ -10,7 +10,7 @@ import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECE
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { Bouton } from '../ui/Bouton'
-import { Chevron } from '../ui/Chevron'
+import { Tip } from '../Tip'   // OUTILS-REFONTE-1 (9b) — « i » des puces « Non intégrées »
 
 // Outil « Gabarit réglementaire ». Traduit graphiquement et mathématiquement des règles SOURCÉES :
 // SOURCE → VALIDATION → CALCUL → AFFICHAGE. Jamais d'estimation (logements/étages/SDP/coût/valeur/
@@ -251,8 +251,8 @@ export function Gabarit() {
   const batiVisible = useApp((s) => s.batiVisible)   // RETOURS-13 P4 — chip « Bâtiments » (session)
   const [idu, setIdu] = useState<string | null>(selectedIdu)
   const [source, setSource] = useState<SourceParcelle>(selectedIdu ? 'carte' : null)   // RECETTE-1 F2
-  const [reglesOuvertes, setReglesOuvertes] = useState(true)   // RETOURS-15 D3 — « Voir les règles appliquées » ouvert par défaut
-  const [nonIntOuvertes, setNonIntOuvertes] = useState(true)    // GABARIT-6 P3 — liste des règles non intégrées, ouverte par défaut
+  // OUTILS-REFONTE-1 (9b) — plus d'accordéons « Voir les règles »/« Non intégrées » (lignes + puces
+  // toujours visibles), donc plus d'état d'ouverture.
 
   // RECETTE-1 (F1) — une parcelle désignée SUR LA CARTE (selectedIdu) est adoptée (source carte) ;
   // fermer la fiche de cette parcelle (selectedIdu → null) VIDE l'outil. Un pick dans le champ reste
@@ -265,7 +265,7 @@ export function Gabarit() {
   useEffect(() => () => { setTerrain3d(false) }, [setTerrain3d])   // RECETTE-1 H11 — sortie → 2D
   const resetAll = () => {
     if (selectedIdu) select(null)
-    setIdu(null); setSource(null); setTerrain3d(false); setReglesOuvertes(true); setNonIntOuvertes(true)
+    setIdu(null); setSource(null); setTerrain3d(false)
   }
 
   const target = idu
@@ -294,32 +294,12 @@ export function Gabarit() {
   const recentrer3dNonce = useApp((s) => s.recentrer3dNonce)
   useEffect(() => { if (recentrer3dNonce && terrain3d) vueParDefaut() }, [recentrer3dNonce])   // eslint-disable-line react-hooks/exhaustive-deps
 
-  // RECETTE-OUTILS-1 (point 31) — lever la contradiction « ✓ Risques intégrés » vs « PPR — analyse »
-  // listé parmi les règles NON intégrées : si une règle PPR est non intégrée, la famille « risques » ne
-  // doit plus s'afficher comme pleinement intégrée (✓). On distingue alors les zones d'exclusion
-  // (géométriques, appliquées) de l'analyse du règlement PPR (non intégrée, listée ci-dessous).
-  const pprNonIntegre = (res?.nonIntegratedRules ?? []).some(
-    (n) => /PPR/i.test(String(n.label ?? '')) || /PPR/i.test(String(n.source?.document ?? '')))
   // FIX-FINAL-1 (NU-D-027) — part de la parcelle en zone d'exclusion ; > 50 % ⇒ « majoritairement
-  // inconstructible » : le gabarit tient sur une portion résiduelle, « risques intégrés ✓ » serait trompeur.
+  // inconstructible » : le gabarit tient sur une portion résiduelle (bandeau d'avertissement).
+  // OUTILS-REFONTE-1 (9b) — la carte « Couverture · N familles vérifiées » est RETIRÉE (doublon des
+  // règles appliquées). `familles`/`nbVerifiees`/`pprNonIntegre` ne sont donc plus calculés.
   const partExclue = res?.partExcluePct ?? null
   const exclusionMajoritaire = partExclue != null && partExclue > 50
-  const familles = res?.coverage
-    ? [
-        { k: 'reculs', ok: res.coverage.reculs, label: 'Reculs vérifiés' },
-        { k: 'hauteur', ok: res.coverage.hauteur,
-          label: res.hauteurStatus === 'not_integrated' ? 'Hauteur non intégrée (prospect L ≥ H)' : 'Hauteur vérifiée' },
-        { k: 'emprise', ok: res.coverage.emprise,
-          label: res.plafondEmpriseStatus === 'absent' ? 'Emprise vérifiée — sans plafond' : 'Emprise vérifiée' },
-        { k: 'risques', ok: res.coverage.risques && !pprNonIntegre,
-          label: exclusionMajoritaire
-            ? `Parcelle majoritairement inconstructible — ${partExclue} % en zone d’exclusion (gabarit sur la portion restante)`
-            : pprNonIntegre
-            ? 'Aléas : zones d’exclusion intégrées — analyse du règlement PPR non intégrée (ci-dessous)'
-            : 'Risques intégrés' },
-      ]
-    : []
-  const nbVerifiees = familles.filter((f) => f.ok).length
   const appliedSetbacks = useMemo(
     () => (res?.appliedRules ?? []).filter((r) => r.category === 'setback'), [res])
   const appliedOther = useMemo(
@@ -418,164 +398,84 @@ export function Gabarit() {
         </div>
       )}
 
-      {/* RÉSULTAT COMPLET */}
-      {res && res.status === 'ok' && (
+      {/* RÉSULTAT COMPLET — OUTILS-REFONTE-1 (9b) : 4 tuiles · règles en lignes (libellé · valeur · badge
+          zone) · « Non intégrées » en puces (remplace l'encadré jaune + accordéon) · Voir 3D / Export PDF.
+          Les sections en double (Couverture, accordéon « Voir les règles ») disparaissent. La vue 3D et
+          ses étiquettes de hauteur ne sont pas touchées (leur EXPLICATION reste en ligne discrète). */}
+      {res && res.status === 'ok' && (() => {
+        // valeur % d'emprise — LUE de la règle PLU appliquée (jamais recalculée ni inventée).
+        const empriseRule = (res.appliedRules ?? []).find((r) => /emprise/i.test(r.label))
+        const emprisePctRule = empriseRule?.unit === '%' && empriseRule.value != null ? empriseRule.value : null
+        // badge d'une règle appliquée : la ZONE PLU servie (ex. « Uh ») — l'article n'est pas servi par
+        // le moteur (source.article = null), on n'invente donc aucun numéro d'article. Les règles
+        // géométriques (BD TOPO, zone absente) portent le badge « mesuré ».
+        const ruleBadge = (r: typeof appliedOther[number]) =>
+          r.source?.zone || (/BD ?TOPO/i.test(String(r.source?.document ?? '')) ? 'mesuré' : null)
+        const regles = [...appliedSetbacks, ...appliedOther]
+        return (
         <>
+          {/* 4 tuiles : Zone d'implantation · Emprise maximale · Hauteur maximale · Surface parcelle.
+              (La maquette montrait « Plancher maximal » ; le moteur Gabarit ne sert AUCUNE SDP/plancher
+              → on n'invente pas, on garde la Surface parcelle réelle.) */}
           <div data-gabarit-chiffres className="grid grid-cols-2 gap-x-3 gap-y-2 rounded-lg border border-line-2 bg-surface-2 p-3">
-            {aCheval
-              ? <Num label="Surface parcelle" value={cadastreM2} unit="m²"
-                  sub={`dont ${fmtInt(res.surfaceParcelleM2)} m² en ${zoneServieCode ?? 'zone constructible'} (${pctPortion} %)`} />
-              : <Num label="Surface parcelle" value={res.surfaceParcelleM2} unit="m²" />}
-            {/* RECETTE-OUTILS-3 (S7) — « Zone d'implantation » = valeur APRÈS déduction du bâti existant ;
-                juste en dessous l'emprise retranchée (si bâti conservé). */}
             <Num label="Zone d'implantation" value={res.zoneImplantationM2} unit="m²" accent
-              sub={res.batiDeduitM2 ? `bâti existant déduit : ${fmtInt(res.batiDeduitM2)} m²` : null} />
-            <Num label="Plafond d'emprise" value={res.plafondEmpriseM2} unit="m²"
+              sub={res.batiDeduitM2 ? `après reculs · bâti déduit ${fmtInt(res.batiDeduitM2)} m²` : 'après reculs'} />
+            <Num label="Emprise maximale" value={res.plafondEmpriseM2} unit="m²"
               statusLabel={res.plafondEmpriseStatus === 'absent' ? 'Non réglementé' : null}
-              sub={res.plafondEmpriseStatus === 'absent' ? 'pas de règle d’emprise au sol' : null} />
-            {/* RECETTE-4 — la HAUTEUR RETENUE est affichée (faitage/égout), et on dit qu'elle est mesurée
-                DEPUIS LE TERRAIN NATUREL : c'est bien elle que porte le volume vert (fill-extrusion height
-                = hauteurReglementaireM, base posée sur le MNT). */}
-            <Num label="Hauteur réglementaire" value={res.hauteurReglementaireM} unit="m"
+              sub={res.plafondEmpriseStatus === 'absent' ? 'pas de règle d’emprise au sol'
+                : emprisePctRule != null ? `${fmtInt(emprisePctRule)} % de la parcelle` : null} />
+            <Num label="Hauteur maximale" value={res.hauteurReglementaireM} unit="m"
               statusLabel={res.hauteurStatus === 'not_integrated' ? 'Non chiffrée' : null}
               sub={res.hauteurStatus === 'not_integrated'
                 ? 'prospect L ≥ H (non intégré)'
-                : `hauteur retenue${res.hauteurBase ? ` (${res.hauteurBase})` : ''} — depuis le terrain naturel`} />
-          </div>
-          {/* FIX-PRIX-ET-OPPORTUNITES (lot 3) — l'enveloppe est un MAXIMUM réglementaire ; les permis
-              réels en réalisent ~½ en médiane (volet D). Point de texte unique lib/capaciteMax. */}
-          <p data-gabarit-plafond className="text-[10.5px] leading-snug text-txt-dim">{CAPACITE_MAX_MENTION_COURTE}</p>
-
-          {/* COUVERTURE — les 4 familles (ni segments ni articles) */}
-          <div data-gabarit-couverture className="rounded-lg border border-line-2 bg-surface-2 p-3">
-            <p className="text-[11px] text-txt">
-              <b className="text-mint">{nbVerifiees} familles vérifiées</b>
-              {res.nonIntegratedRules.length > 0 && (
-                <span className="text-txt-dim"> · {res.nonIntegratedRules.length} règle{res.nonIntegratedRules.length > 1 ? 's' : ''} non intégrée{res.nonIntegratedRules.length > 1 ? 's' : ''}</span>
-              )}
-            </p>
-            <ul className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1 text-[10.5px]">
-              {familles.map((f) => (
-                <li key={f.k} className={f.ok ? 'text-txt-mut' : 'text-txt-dim'}>
-                  {f.ok ? '✓' : '⚠'} {f.label}
-                </li>
-              ))}
-            </ul>
-            {/* RETOURS-26 (pt 5) — l'accordéon « Le détail des N règles non intégrées » qui vivait ICI est
-                RETIRÉ : le détail est désormais DANS la boîte jaune (devenue l'accordéon) sous « Voir les
-                règles appliquées ». Un seul bloc pour les règles non intégrées. */}
+                : res.hauteurEgoutM != null ? `${String(res.hauteurEgoutM).replace('.', ',')} m à l’égout`
+                : res.hauteurBase ? `au ${res.hauteurBase}` : null} />
+            {aCheval
+              ? <Num label="Surface parcelle" value={cadastreM2} unit="m²"
+                  sub={`dont ${fmtInt(res.surfaceParcelleM2)} m² en ${zoneServieCode ?? 'zone constructible'} (${pctPortion} %)`} />
+              : <Num label="Surface parcelle" value={res.surfaceParcelleM2} unit="m²" sub="cadastre" />}
           </div>
 
-          {/* RÈGLES APPLIQUÉES — générées depuis le moteur, aucune valeur en dur */}
-          <details data-gabarit-regles open={reglesOuvertes}
-            onToggle={(e) => setReglesOuvertes((e.target as HTMLDetailsElement).open)}
-            className="group rounded-lg border border-line-2 bg-surface-2">
-            <summary className="hover-fill flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-3 py-2 text-[11px] text-txt">
-              <Chevron open={reglesOuvertes} />
-              <b>Voir les règles appliquées</b>
-            </summary>
-            <div className="flex flex-col gap-2 px-3 pb-3">
-              {[...appliedSetbacks, ...appliedOther].map((r, i) => (
-                <div key={i} data-gabarit-regle className="border-b border-line pb-1.5 last:border-0">
-                  <div className="flex items-baseline justify-between gap-2">
-                    <span className="text-[11px] text-txt">✓ {r.label}</span>
+          {/* RÈGLES APPLIQUÉES — lignes « libellé · valeur · badge zone », toujours visibles (plus d'accordéon). */}
+          <div data-gabarit-regles className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+            <p className="label-caps mb-1.5 text-[9.5px] text-txt-dim">Règles appliquées</p>
+            <div className="flex flex-col">
+              {regles.map((r, i) => {
+                const badge = ruleBadge(r)
+                return (
+                  <div key={i} data-gabarit-regle className="flex items-baseline justify-between gap-2 border-b border-line py-1.5 last:border-0">
+                    <span className="min-w-0 flex-1 text-[11px] text-txt">{r.label}</span>
                     {r.value != null
-                      ? <span className="font-mono text-[11px] tabular-nums text-mint">{r.value}{r.unit ? ` ${r.unit}` : ''}</span>
-                      : r.detail && <span className="text-[10px] italic text-txt-dim">{r.detail}</span>}
+                      ? <span className="shrink-0 font-mono text-[11px] tabular-nums text-txt-hi">{r.value}{r.unit ? ` ${r.unit}` : ''}</span>
+                      : r.detail ? <span className="shrink-0 text-[10px] italic text-txt-dim">{r.detail}</span> : null}
+                    {badge && <span className="shrink-0 rounded-full border border-mint/40 px-1.5 py-0.5 text-[9px] font-medium text-mint">{badge}</span>}
                   </div>
-                  <span className="block text-[9.5px] leading-snug text-txt-dim">
-                    {[r.source.document, r.source.zone, r.source.article].filter(Boolean).join(' — ')}
-                    {r.source.versionDate ? ` — ${r.source.versionDate}` : ''}
-                  </span>
-                </div>
-              ))}
-              {/* RETOURS-26 (pt 5) — UN SEUL bloc : la boîte jaune EST l'accordéon. Son en-tête
-                  « ⚠ N règles applicables non intégrées » déplie EN DEDANS le détail complet (nom · pourquoi
-                  · source) — exactement ce que renvoie le moteur (nonIntegratedRules), rien d'inventé.
-                  L'accordéon séparé « Le détail des N règles… » (ci-dessus, dans la couverture) a disparu. */}
-              {res.nonIntegratedRules.length > 0 && (
-                <details data-gabarit-non-integrees open={nonIntOuvertes}
-                  onToggle={(e) => setNonIntOuvertes((e.target as HTMLDetailsElement).open)}
-                  className="group mt-1 rounded-md border border-st-creuser/30 bg-st-creuser/5">
-                  <summary className="flex cursor-pointer list-none items-center gap-1.5 px-2.5 py-1.5 text-[10.5px] font-medium text-st-creuser marker:hidden">
-                    <Chevron open={nonIntOuvertes} />
-                    ⚠ {res.nonIntegratedRules.length} règle{res.nonIntegratedRules.length > 1 ? 's' : ''} applicable{res.nonIntegratedRules.length > 1 ? 's' : ''} non intégrée{res.nonIntegratedRules.length > 1 ? 's' : ''}
-                  </summary>
-                  <ul className="flex flex-col gap-1.5 px-2.5 pb-2 pt-0.5">
-                    {res.nonIntegratedRules.map((n, i) => (
-                      <li key={i} data-gabarit-non-integree className="border-t border-st-creuser/15 pt-1.5 first:border-0 first:pt-0">
-                        <span className="text-[10.5px] text-txt">{n.label}</span>
-                        {n.detail && <span className="block text-[9.5px] italic leading-snug text-txt-dim">{n.detail}</span>}
-                        {(n.source?.document || n.source?.zone || n.source?.article) && (
-                          <span className="block text-[9px] leading-snug text-txt-ghost">
-                            {[n.source.document, n.source.zone, n.source.article].filter(Boolean).join(' — ')}
-                          </span>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-              )}
+                )
+              })}
             </div>
-          </details>
-
-          {/* CARTE / 3D — légende des couches réglementaires */}
-          <div data-gabarit-carte className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10.5px] leading-snug text-txt-dim">
-            <p className="label-caps mb-1 text-[9px] text-txt-dim">Sur la carte</p>
-            <ul className="flex flex-col gap-0.5">
-              <li><span className="mr-1.5 inline-block h-2 w-3 rounded-sm align-middle" style={{ background: C_ZONE }} /> Zone d'implantation réglementaire</li>
-              <li><span className="mr-1.5 inline-block h-2 w-3 rounded-sm align-middle" style={{ background: C_RETRAIT }} /> Retrait réglementaire</li>
-              {res.exclusionsGeoJSON && <li><span className="mr-1.5 inline-block h-2 w-3 rounded-sm align-middle" style={{ background: C_EXCL }} /> Exclusion (PPR)</li>}
-              {res.batiExistantGeoJSON?.features?.length ? (
-                <li><span className="mr-1.5 inline-block h-2 w-3 rounded-sm align-middle" style={{ background: C_BATI }} /> Bâti existant (BD TOPO · LiDAR HD)</li>
-              ) : null}
-            </ul>
-            {res.hauteurReglementaireM == null
-              ? <p className="mt-1.5 text-st-creuser">3D indisponible — hauteur non chiffrée (prospect).</p>
-              : terrain3d
-                ? <>
-                    {/* RETOURS-26 (pt 4) — les deux hauteurs sont ÉCRITES SUR LA VUE (pastilles « Règle : X m »
-                        / « Bâti : N m », lisibles sous tous les angles). Le panneau n'en garde que
-                        l'EXPLICATION, et elle est CONDITIONNELLE : le bâti est à sa hauteur RÉELLE mesurée,
-                        qui peut être SOUS l'enveloppe (maximum réglementaire), AU-DESSUS (bâti antérieur à
-                        une limite PLU abaissée) ou à sa hauteur. On ne prétend plus qu'il est « plus bas ». */}
-                    {(() => {
-                      const hBati = Math.round(Math.max(0, ...((res.batiExistantGeoJSON?.features ?? [])
-                        .map((f) => Number(f.properties?.hauteur_m) || 0))))
-                      const hr = res.hauteurReglementaireM
-                      const rel = hBati <= 0 || hr == null ? null
-                        : hBati > hr + 0.5 ? `Ici le bâti existant (${hBati} m) DÉPASSE le maximum réglementaire (${hr} m) — construction antérieure à la limite actuelle du PLU.`
-                        : hBati < hr - 0.5 ? `Ici le bâti existant (${hBati} m) est plus bas que le maximum réglementaire (${hr} m) : c'est sa hauteur réelle, sous ce que la règle autorise.`
-                        : `Ici le bâti existant (${hBati} m) est à la hauteur du maximum réglementaire (${hr} m).`
-                      return (
-                        <p data-gabarit-3d-hauteurs className="mt-1.5 text-txt-mut">Hauteurs indiquées sur la vue —
-                          <b className="text-mint"> enveloppe (règle)</b> et <b className="text-txt">bâti existant</b>.
-                          {rel && <span className="text-txt-dim"> {rel}</span>}
-                        </p>
-                      )
-                    })()}
-                    {/* CHASSE-CALCULS-FIX-1 Lot 6 (E-C1) — l'extrusion est posée à plat : le dire. */}
-                    {res.terrainNote && <p data-gabarit-terrain className="mt-1 text-[10px] italic text-txt-dim">{res.terrainNote}</p>}
-                  </>
-                : <p className="mt-1.5">Bascule 2D / 3D : bouton <b className="text-txt">3D</b> de la carte.</p>}
           </div>
 
-          {/* RETOURS-15 D4 — bascule 2D / 3D DANS le panneau : le client n'a plus à passer par le menu
-              3D en haut à droite. Même levier que ce menu (setTerrain3d), donc cohérent partout. */}
-          {/* RECETTE-PROD-1 (5) — `shrink-0` : sans lui, le bouton (dernier enfant d'une colonne flex
-              qui déborde) était ÉCRASÉ par flex-shrink → hauteur 15 px au lieu des 32 px de la DA
-              (« hors DA, mal aligné »). Avec shrink-0 il reprend sa hauteur de bouton standard,
-              aligné à gauche comme les cartes au-dessus. */}
-          {/* RECETTE-OUTILS-3 (S11) — « Vue par défaut » RETIRÉ (le « Recentrer » du bloc de contrôle 3D
-              de la carte en tient lieu). « Revenir en 2D » et « Exporter en PDF » CÔTE À CÔTE, même ligne
-              (grille 2 colonnes). L'orientation initiale se reprend par le ◎ du bloc 3D sur la carte. */}
+          {/* NON INTÉGRÉES — en puces (remplace l'encadré jaune + son accordéon). Détail (pourquoi · source)
+              dans le « i » de chaque puce, rien d'inventé (exactement res.nonIntegratedRules). */}
+          {res.nonIntegratedRules.length > 0 && (
+            <div data-gabarit-non-integrees className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[10.5px] text-txt-mut">Non intégrées :</span>
+              {res.nonIntegratedRules.map((n, i) => (
+                <Tip key={i} garder side="top"
+                  tip={[n.detail, [n.source?.document, n.source?.zone].filter(Boolean).join(' — ')].filter(Boolean).join(' · ') || n.label}>
+                  <span data-gabarit-non-integree role="button" tabIndex={0}
+                    className="rounded-full border border-st-creuser/40 bg-st-creuser/5 px-2.5 py-0.5 text-[10.5px] text-st-creuser">{n.label}</span>
+                </Tip>
+              ))}
+            </div>
+          )}
+
+          {/* Voir en 3D / Exporter en PDF */}
           <div className="grid grid-cols-2 gap-2">
             <Bouton niveau="secondaire" ton="vert" data-gabarit-3d
               onClick={() => setTerrain3d(!terrain3d)} className="w-full justify-center">
               {terrain3d ? 'Revenir en 2D' : 'Voir en 3D'}
             </Bouton>
-            {/* RECETTE-OUTILS-1 (point 34 / T6) — « Exporter en PDF » = document « Gabarit » de Docs
-                (même générateur back `/gabarit/{idu}.pdf`). Absent si le calcul est incomplet. */}
             {target && res?.status === 'ok' && (
               <Bouton niveau="secondaire" ton="vert" data-gabarit-export
                 disabled={enCours != null} onClick={() => ouvrir(docGabaritUrl(target), 'gabarit')} className="w-full justify-center">
@@ -583,9 +483,27 @@ export function Gabarit() {
               </Bouton>
             )}
           </div>
-          {/* RETOURS-25 (pt 7) — indication « Ctrl + glisser … » retirée. */}
+
+          {/* Référence discrète en bas : rappel « enveloppe = maximum » + explication des hauteurs 3D
+              (quand la 3D est active). La vue 3D et ses étiquettes ne sont pas touchées. */}
+          <p data-gabarit-plafond className="text-[10px] leading-snug text-txt-dim">{CAPACITE_MAX_MENTION_COURTE}</p>
+          {terrain3d && res.hauteurReglementaireM != null && (() => {
+            const hBati = Math.round(Math.max(0, ...((res.batiExistantGeoJSON?.features ?? [])
+              .map((f) => Number(f.properties?.hauteur_m) || 0))))
+            const hr = res.hauteurReglementaireM
+            const rel = hBati <= 0 || hr == null ? null
+              : hBati > hr + 0.5 ? `Le bâti existant (${hBati} m) DÉPASSE le maximum réglementaire (${hr} m) — construction antérieure à une limite PLU abaissée.`
+              : hBati < hr - 0.5 ? `Le bâti existant (${hBati} m) est plus bas que le maximum réglementaire (${hr} m) : sa hauteur réelle, sous ce que la règle autorise.`
+              : `Le bâti existant (${hBati} m) est à la hauteur du maximum réglementaire (${hr} m).`
+            return (
+              <p data-gabarit-3d-hauteurs className="text-[10px] leading-snug text-txt-dim">
+                Sur la vue 3D : <b className="text-mint">enveloppe (règle)</b> et <b className="text-txt-mut">bâti existant</b>.{rel && ` ${rel}`}
+              </p>
+            )
+          })()}
         </>
-      )}
+        )
+      })()}
     </div>
   )
 }

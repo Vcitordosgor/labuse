@@ -29,6 +29,8 @@ function Banner({ children }: { children: React.ReactNode }) {
 type Servitudes = {
   idu: string; n: number; synthese: string
   servitudes: { categorie: string; effet: string; source: string; date: string | null; redhibitoire?: boolean }[]
+  // OUTILS-REFONTE-1 (9a) — familles examinées & claires (puces « rien à signaler »).
+  verifie?: string[]
   non_couvert: string[]
 }
 
@@ -82,27 +84,41 @@ export function O5Servitudes() {
               }, {} as Record<string, { categorie: string; source?: string; date?: string; effets: string[]; redhibitoire: boolean }>))
               .sort((a, b) => Number(b.redhibitoire) - Number(a.redhibitoire))
             return (<>
+              {/* OUTILS-REFONTE-1 (9a) — compteur « N contrainte(s) relevée(s) sur la parcelle ». */}
               <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]">
                 <span className="num-key text-base text-mint">{groupes.length}</span>
-                <span className="text-txt-mut">servitude(s)/contrainte(s) sur</span>
-                <span className="font-mono text-txt-hi">{d.idu.slice(8, 10)} {d.idu.slice(10)}</span>
+                <span className="text-txt-mut">contrainte{groupes.length > 1 ? 's relevées' : ' relevée'} sur la parcelle</span>
               </div>
+              {/* OUTILS-REFONTE-1 (9a) — une carte par contrainte : titre · badge · une phrase · source.
+                  Liseré gauche ambre (contrainte « à prendre en compte »), rouge si rédhibitoire. */}
               {groupes.map((s, i) => (
-                <div key={i} className={`rounded-lg px-3 py-2 shadow-elev-1 ${s.redhibitoire ? 'border border-red-500/50 bg-red-500/10' : 'bg-surface-3'}`}>
+                <div key={i} className={`rounded-lg border-l-2 px-3 py-2 shadow-elev-1 ${s.redhibitoire ? 'border border-l-red-500 border-red-500/50 bg-red-500/10' : 'border-l-st-creuser bg-surface-3'}`}>
                   <div className="flex flex-wrap items-baseline gap-1.5">
                     {s.redhibitoire && <span aria-hidden className="text-red-500">●</span>}
                     <b className="text-[11.5px] text-txt-hi">{s.categorie}</b>
                     {s.redhibitoire
                       ? <span className="rounded-full border border-red-500/40 bg-red-500/10 px-1.5 text-[8.5px] font-medium text-red-500">Inconstructible (partie rouge)</span>
-                      : <span className="rounded-full border border-mint/40 bg-mint/10 px-1.5 text-[8.5px] font-medium text-mint">Sourcé</span>}
-                    <span className="text-[9.5px] text-txt-dim">{s.source}{s.date ? ` · ${s.date}` : ''}</span>
+                      : <span className="rounded-full border border-mint/40 bg-mint/10 px-1.5 text-[8.5px] font-medium text-mint">sourcé</span>}
                   </div>
                   <p className="mt-1 text-[11px] leading-snug text-txt">{s.effets.join(' · ')}</p>
+                  <p className="mt-0.5 text-[9.5px] text-txt-dim">{s.source}{s.date ? ` · ${s.date}` : ''}</p>
                 </div>
               ))}
             </>)
           })()}
-          {d.servitudes.length === 0 && (
+          {/* OUTILS-REFONTE-1 (9a) — « VÉRIFIÉ, RIEN À SIGNALER » : les familles examinées et claires sur
+              la parcelle, en puces (servi par l'API, jamais un faux RAS). */}
+          {(d.verifie?.length ?? 0) > 0 && (
+            <div data-o5-verifie className="flex flex-col gap-1.5">
+              <p className="label-caps text-[9.5px] text-txt-dim">Vérifié, rien à signaler</p>
+              <div className="flex flex-wrap gap-1.5">
+                {d.verifie!.map((f) => (
+                  <span key={f} className="rounded-full border border-line-2 bg-surface-2 px-2.5 py-0.5 text-[10.5px] text-txt-mut">{f}</span>
+                ))}
+              </div>
+            </div>
+          )}
+          {d.servitudes.length === 0 && (d.verifie?.length ?? 0) === 0 && (
             <EmptyState title="Aucune servitude détectée dans les couches ingérées à cette parcelle." />
           )}
           {/* RETOURS-25 (pt 2) — l'accordéon « Méthode et limites » est remplacé par UNE LIGNE en bas

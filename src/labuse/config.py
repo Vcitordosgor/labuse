@@ -211,7 +211,7 @@ class Settings(BaseSettings):
     # RETOURS-25 (pt 13) — PRIX CLIENT tout compris (impression + enveloppe + affranchissement) et DÉLAI
     # d'envoi, affichés dans l'intro du Courrier. Lus ICI (config), jamais écrits en dur côté front.
     courrier_prix_client_eur: float = 2.50   # prix client tout compris, par courrier
-    courrier_delai_jours: str = "7 à 10"     # délai d'envoi (jours), texte affiché « envoi sous … jours »
+    courrier_delai_jours: str = "3 à 5"      # OUTILS-REFONTE-1 — envoi depuis La Réunion (était « 7 à 10 »)
     courrier_max_jour: int = 100             # plafond anti-abus d'envois / jour / sujet
 
     # ── Offre INTÉGRAL — abonnement mensuel (parcours d'entrée · E1) ──

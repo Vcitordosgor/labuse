@@ -1497,7 +1497,7 @@ export interface CourrierStatut { disponible: boolean; provider: string; tarif: 
   plafond_jour?: number; envoyes_jour?: number; reste_jour?: number
   // OUTILS-S2 Lot B — tarif unitaire TTC (prix client, impression+affranchissement+suivi), affiché à l'étape 3.
   tarif_unitaire_eur?: number
-  // RETOURS-25 (pt 13) — délai d'envoi (texte « 7 à 10 »), lu de la config, affiché dans l'intro.
+  // RETOURS-25 (pt 13) — délai d'envoi (texte, ex. « 3 à 5 »), lu de la config, affiché dans l'intro.
   delai_jours?: string }
 // OUTILS-FIX-4 D1/D2 — état du service + plafond du jour, lus à l'ouverture de l'outil Courrier.
 export const getCourrierStatut = () => j<CourrierStatut>('/courrier/statut')

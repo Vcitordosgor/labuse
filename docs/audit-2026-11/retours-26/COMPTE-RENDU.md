@@ -125,3 +125,88 @@ vaut désormais **exactement le `gap-3` de la fiche** — le même rythme que le
 Backend `PYTHONPATH=src …/.venv/bin/python -m uvicorn labuse.api.app:app --port 7210` · Vite
 `LABUSE_API_DEV=http://127.0.0.1:7210 npx vite --port 10010` · `node /tmp/retours26-captures.mjs`
 (+ `/tmp/retours26-fix.mjs` pour les vues 3D cadrées). Pilotage via `window.__labuse` (setModule/select/setMsel).
+
+---
+---
+
+# Refonte — OUTILS-REFONTE-1 (5 outils sur maquettes validées)
+
+Même branche `fix/retours-23`, **pas de merge** (commit seul). Captures **avant/après** WebKit dans
+`captures/r-<outil>-avant.png` / `-apres.png`. Hook complet **VERT** : `tsc -b` 0 · vitest **326/326** ·
+`vite build` OK · scan secrets OK · pytest unitaires **3259 passed** (49 skipped = famille base).
+
+Règle d'or respectée partout : **aucun chiffre inventé** — chaque valeur vient du même lecteur
+qu'aujourd'hui ; là où la maquette montrait une donnée que l'API NE sert PAS, on ne l'a pas fabriquée
+(déviations listées plus bas, jamais un faux chiffre).
+
+## Étape 0 — merge origin/main
+`git merge origin/main` dans `fix/retours-23` : **aucun conflit textuel** (20 commits entrants —
+ESTIMER-2, ECRANS-NOV-2, FONCIER-PUBLIC-1, FRAICHEUR-FIX-1, PLU-VEILLE-1…). `tsc`/vitest/pytest verts
+sur l'arbre fusionné. **Estimer vérifié** (son API a changé avec ESTIMER-2, sans le refondre) : l'écran
+rend la boîte parcelle + l'ordre de grandeur chiffré (capture `r-estimer-apres.png`) — il fonctionne.
+
+## Pièges et risques (9a) — `r-pieges-*`
+Compteur « **N contrainte(s) relevée(s) sur la parcelle** » ; une carte par contrainte (titre · badge
+« sourcé » · une phrase · source · liseré gauche ambre/rouge) ; **« Vérifié, rien à signaler » en puces**
+(familles examinées & CLAIRES) ; ligne « Non couvert » en bas. Le « rien à signaler » n'est **pas un faux
+RAS** : `servitudes.py` sert `verifie` = familles RÉELLEMENT examinées (couches ingérées) moins celles qui
+ont remonté quelque chose. BZ1065 : 3 contraintes (ANC · DPU · PPR) + 7 familles claires (Sols pollués,
+Bruit, ICPE, Monuments, ER/EBC, Eau & zones humides, Espaces naturels) — Assainissement/Préemption/Risques
+n'y sont PAS (ils ont déclenché). *Avant* : aucune section « vérifié » (0 puce).
+
+## Gabarit (9b) — `r-gabarit-*`
+**4 tuiles** (Zone d'implantation · Emprise maximale · Hauteur maximale · Surface parcelle) ; **règles en
+lignes « libellé · valeur · badge »** ; **« Non intégrées » en puces** (remplace l'encadré jaune + son
+accordéon) ; « Voir en 3D » / « Exporter en PDF ». Les sections en double (carte « Couverture · N familles »,
+accordéon « Voir les règles appliquées ») **disparaissent**. La vue 3D et ses étiquettes de hauteur ne sont
+**pas touchées** (leur explication reste en ligne discrète en bas). *Avant* : accordéon « Voir les règles »
++ carte Couverture + encadré jaune dépliable.
+- **Déviation honnête** : la maquette montrait une 4ᵉ tuile « Plancher maximal / terrain libéré » — le
+  moteur Gabarit ne sert **aucune SDP/plancher** → on garde la Surface parcelle réelle (pas de plancher
+  inventé). Le **badge** des règles est la **zone PLU** (« Uh ») ou « mesuré » (règles BD TOPO) : le moteur
+  ne sert **pas** le numéro d'article (`source.article = null`) — on n'invente donc pas les « Uh.7 / Uh.6 »
+  dessinés sur la maquette.
+
+## Taxe d'aménagement (9c) — `r-taxe-*`
+« Votre projet » : **surface taxable** (champ saisissable, clavier numérique, sans flèches) · **Logement /
+Autre** (segmenté) · **abattements à cocher** (Résidence principale · Logement social/PTZ) → **encadré
+résultat** : total (gros, vert) · assiette (surface × valeur) · part communale · part départementale ·
+redevance archéologie · note de valeur forfaitaire → **Exporter en PDF**. Le total reste **honnête** (jamais
+inventé : si la commune n'a pas de taux public, message au lieu d'un total). BZ1065 · 120 m² → **5 887 €**.
+*Avant* : formulaire long (nombre de logements, nature exonérée agricole/PLAI/reconstruction, forfaits
+piscine/PV/stationnement/éoliennes, saisie manuelle des taux, accordéon « où trouver le taux »).
+- **Simplification per maquette** : les champs ci-dessus (forfaits, nature exonérée, nb logements, taux
+  manuels) sont **retirés de l'UI** ; le calcul back est le MÊME lecteur. Export = impression du résultat
+  (le navigateur enregistre en PDF ; pas d'endpoint PDF taxe dans le dépôt). Le garde de test F28 (qui
+  exigeait l'UI agricole) a été mis à jour en conséquence (invariant anti-régression conservé).
+
+## Blocs fonciers (9d) — `r-blocs-*`
+**4 menus compacts** (commune · Surface · Plancher restant · Parcelles, en grille 2×2) · case « Inclure les
+propriétaires publics » + « Réinitialiser » · **compteur « N blocs · personnes morales DGFiP »** · **cartes
+cliquables SANS bouton** (dénomination · SIREN vert · commune · N parcelles · surface · plancher restant ·
+zones). Un clic ouvre le bloc (parcelles · carte · **Scan patrimoine**/Assembler, désormais DANS le détail,
+plus sur la carte). *Avant* : cartes avec chevron + 2 tuiles encadrées + boutons « Scan patrimoine → »/« Assembler ».
+
+## Comparatif (9f) — `r-comparatif-*`
+**3 colonnes avec en-tête** (IDU · commune · **bande LABUSE** · surface) ; les ~20 lignes regroupées en
+**5 sections** (Terrain · Urbanisme · Potentiel · Risques · Marché) ; **meilleure valeur en vert** (déjà en
+place, conservée) ; **badges allégés** (seules les valeurs estimées portent une puce « est. » discrète ;
+les sourcées n'en portent plus) ; **export inchangé** (doc Comparatif). *Avant* : table plate sans sections,
+en-tête IDU + chip « raison » + commune, badges « Sourcé/Estimé » sur chaque ligne.
+- **Déviation honnête** : `/compare` ne sert PAS la pente, la hauteur en mètres, le nombre de logements, les
+  permis à 500 m, ni l'adresse postale (dessinés sur la maquette). On ne les invente pas → on sert ce que le
+  lecteur donne (gabarit en niveaux R+N, commune comme localité, « voir l'Étude de faisabilité » pour les
+  logements). Les sections et le reste des lignes sont fidèles.
+
+## Courrier — `r-courrier-*`
+Délai par défaut **« envoi sous 3 à 5 jours »** (envoi depuis La Réunion), **lu de la config**
+(`config.courrier_delai_jours = "3 à 5"`, servi par `/courrier/statut`, affiché dans l'intro). *Avant* :
+« 7 à 10 jours ».
+
+## Fichiers touchés (Refonte)
+**Front** : `outils/blocB.tsx` (Pièges : compteur · liseré · puces vérifié) · `outils/Gabarit.tsx`
+(4 tuiles · règles en lignes · non-intégrées en puces) · `outils/TaxeAmenagement.tsx` (refonte 9c + export) ·
+`outils/Blocs.tsx` (4 menus · cartes sans bouton · détail porte les actions) · `compare/ComparePanel.tsx`
+(5 sections · en-tête bande+surface · badges allégés) · `lib/api.ts` (commentaire délai).
+**Back** : `api/servitudes.py` (`verifie` = familles examinées & claires) · `config.py` (délai 3 à 5).
+**Tests** : `test_front_chiffres2_familles.py::test_f28` (aligné sur le retrait de l'UI agricole 9c).

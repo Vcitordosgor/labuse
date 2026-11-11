@@ -2,7 +2,7 @@
 // L'outil est ANCRÉ dans Outils : `CompareModule` = le panneau gauche (stepper ① clic-carte ②
 // tableau ③ retour, chips de sélection, note SOCLE) ; `ComparePanel` = le TABLEAU en surimpression
 // (contenu/colonnes INCHANGÉS, mandat point 4). La carte reste active à droite pendant le picking.
-import { useEffect } from 'react'
+import { Fragment, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getCompare, type CompareRow } from '../../lib/api'
 import { fmtEurCompact, fmtInt, fmtTauxEmprise, iduCourt } from '../../lib/format'
@@ -146,9 +146,29 @@ const ROWS: Row[] = [
   { label: 'Contrainte majeure', prov: 'source', val: (r) => r.contrainte_majeure ?? (r.n_contraintes ? `${r.n_contraintes} signalée(s)` : 'aucune') },
 ]
 
-// OUTILS-FIX-2 D2 — DA-034 : badge de provenance via le Badge partagé. Sourcé = vert, Estimé = ambre.
+// OUTILS-REFONTE-1 (9f) — les lignes sont regroupées en 5 SECTIONS (maquette 9f-comparatif). Chaque
+// ligne existante garde sa valeur (même lecteur `getCompare`) ; seul le classement visuel change.
+// NB — pente, hauteur en mètres, nombre de logements, permis à 500 m et l'adresse postale ne sont PAS
+// servis par /compare : on ne les invente pas (on sert le gabarit en niveaux, la commune, « voir l'Étude »).
+const SECTIONS = ['Terrain', 'Urbanisme', 'Potentiel', 'Risques', 'Marché'] as const
+type Section = typeof SECTIONS[number]
+const SECTION_OF: Record<string, Section> = {
+  'Surface': 'Terrain', 'Bâti existant': 'Terrain', 'Propriétaire': 'Terrain',
+  'Zone PLU': 'Urbanisme', 'Zone constructible': 'Urbanisme', 'Emprise au sol max (PLU)': 'Urbanisme',
+  'Gabarit max': 'Urbanisme', 'Sous-densité': 'Urbanisme',
+  [`SDP maximale réglementaire · ${PERIM_POTENTIEL_COURT}`]: 'Potentiel',
+  [`SDP restante · ${PERIM_RESIDUEL_COURT}`]: 'Potentiel',
+  "Taux d'occupation du gabarit": 'Potentiel', 'Charge foncière /m² terrain': 'Potentiel',
+  'Logements possibles': 'Potentiel', 'Classement LABUSE': 'Potentiel',
+  'Contrainte majeure': 'Risques', 'Accès & réseaux': 'Risques', 'Assainissement': 'Risques',
+  'Prix terrain nu zone': 'Marché', [`Prix bâti · ${PERIM_SECTION_CADASTRALE}`]: 'Marché',
+}
+
+// OUTILS-REFONTE-1 (9f) — « badges allégés » : seules les valeurs ESTIMÉES portent une puce discrète
+// « est. » (les valeurs sourcées, majoritaires, n'en portent plus — moins de bruit visuel).
 function ProvBadge({ prov }: { prov: 'source' | 'estime' }) {
-  return <Badge className="ml-1" ton={prov === 'source' ? 'vert' : 'ambre'}>{prov === 'source' ? 'Sourcé' : 'Estimé'}</Badge>
+  if (prov === 'source') return null
+  return <Badge className="ml-1 opacity-80" ton="ambre">est.</Badge>
 }
 
 // O9(d) — indices des cellules gagnantes d'une ligne (peut être plusieurs en cas d'égalité).
@@ -243,7 +263,11 @@ export function ComparePanel() {
           chaque libellé et chaque valeur tiennent sur UNE ligne à 1440 px (whitespace-nowrap plus bas). */}
       <div className="floating flex max-h-full w-full max-w-[1240px] flex-col overflow-hidden">
         <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
-          <p className="label-caps">Comparer les parcelles ({compareIdus.length}/3)</p>
+          {/* OUTILS-REFONTE-1 (9f) — titre « Comparer N parcelles » + sous-titre « meilleure valeur en vert ». */}
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-txt-hi">Comparer {compareIdus.length} parcelle{compareIdus.length > 1 ? 's' : ''}</p>
+            <p className="text-[10.5px] text-txt-dim">La meilleure valeur de chaque ligne est en <span className="text-mint">vert</span>.</p>
+          </div>
           <div className="flex items-center gap-3 text-[11px]">
             {/* RECETTE-OUTILS-1 (point 21 / T6) — « Exporter en PDF » = le document « Comparatif » de Docs
                 (même générateur back `/comparatif.pdf`). Requiert ≥ 2 parcelles. */}
@@ -285,51 +309,65 @@ export function ComparePanel() {
                             tier_v2) est RETIRÉE : l'Analyse LABUSE n'a pas été demandée sur cet écran, on ne
                             l'impose pas. Le chip « secteur qui bouge » (raison dominante M135) reste — c'est un
                             fait de marché, pas un score. */}
-                        {r.raison && (
-                          <div className="mt-1 flex flex-wrap items-center gap-1">
-                            <span data-compare-raison className="inline-block rounded-full border border-mint/40 bg-mint/10 px-1.5 py-0.5 text-[9px] font-medium text-mint">{r.raison}</span>
-                          </div>
-                        )}
-                        {/* O9(a) — commune · fraction M135 (« 1/5 sous 1 an »). Le rang GLOBAL servi (ex.
-                            « rang 271 141 » sur 431 663) ne veut rien dire pour l'utilisateur ; l'action
-                            utile (le tier) est déjà portée par la puce ci-dessus. Un rang DANS LA COMMUNE
-                            serait parlant mais n'existe pas dans le payload → non affiché (voir rapport). */}
+                        {/* OUTILS-REFONTE-1 (9f) — en-tête de colonne : IDU · commune (adresse postale non
+                            servie par /compare) · bande LABUSE · surface. */}
                         <p className="mt-0.5 text-[10px] font-normal text-txt-dim">{r.commune}{r.fraction ? ` · ${r.fraction} sous 1 an` : ''}</p>
+                        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                          {(() => { const bm = bandeMeta(r.bande); return bm ? (
+                            <span data-compare-bande className="rounded px-1.5 py-0.5 text-[9.5px] font-semibold" style={{ backgroundColor: `${bm.color}22`, color: bm.color }}>{bm.label}</span>
+                          ) : null })()}
+                          {r.surface_m2 != null && <span className="font-mono text-[10px] tabular-nums text-txt-mut">{fmtInt(r.surface_m2)} m²</span>}
+                        </div>
                       </th>
                     )
                   })}
                 </tr>
               </thead>
+              {/* OUTILS-REFONTE-1 (9f) — les lignes regroupées en 5 SECTIONS (Terrain · Urbanisme ·
+                  Potentiel · Risques · Marché). Chaque section ouvre sur un intertitre vert. */}
               <tbody>
-                {ROWS.map((row) => {
-                  const winners = bestIdx(row, parcels)   // O9(d) — cellules gagnantes de la ligne
+                {SECTIONS.map((sec) => {
+                  const secRows = ROWS.filter((row) => SECTION_OF[row.label] === sec)
                   return (
-                    <tr key={row.label} className="border-t border-line">
-                      <td className="break-words p-2 text-[10.5px] uppercase tracking-wide text-txt-dim">
-                        {row.title
-                          ? <span className="cursor-help border-b border-dotted border-line-2">{row.label}</span>
-                          : row.label}
-                        {!row.noBadge && <ProvBadge prov={row.prov} />}
-                      </td>
-                      {parcels.map((r, i) => {
-                        const win = winners.has(i)   // vert = meilleure valeur (comme la table Communes)
+                    <Fragment key={sec}>
+                      <tr data-compare-section={sec}>
+                        <td colSpan={1 + parcels.length} className="px-2 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-[.1em] text-mint">{sec}</td>
+                      </tr>
+                      {secRows.map((row) => {
+                        const winners = bestIdx(row, parcels)   // O9(d) — cellules gagnantes de la ligne
                         return (
-                          <td key={r.idu} className={`break-words border-l border-line p-2 ${win ? 'font-semibold text-mint' : 'text-txt'}`}>
-                            {row.render ? row.render(r) : row.val(r)}
-                          </td>
+                          <tr key={row.label} className="border-t border-line">
+                            <td className="break-words p-2 text-[10.5px] text-txt-dim">
+                              {row.title
+                                ? <span className="cursor-help border-b border-dotted border-line-2">{row.label}</span>
+                                : row.label}
+                              {!row.noBadge && <ProvBadge prov={row.prov} />}
+                            </td>
+                            {parcels.map((r, i) => {
+                              const win = winners.has(i)   // vert = meilleure valeur (comme la table Communes)
+                              return (
+                                <td key={r.idu} className={`break-words border-l border-line p-2 ${win ? 'font-semibold text-mint' : 'text-txt'}`}>
+                                  {row.render ? row.render(r) : row.val(r)}
+                                </td>
+                              )
+                            })}
+                          </tr>
                         )
                       })}
-                    </tr>
+                      {/* le détail des contraintes clôt la section Risques. */}
+                      {sec === 'Risques' && (
+                        <tr className="border-t border-line">
+                          <td className="p-2 align-top text-[10.5px] text-txt-dim">Détail contraintes</td>
+                          {parcels.map((r) => (
+                            <td key={r.idu} className="border-l border-line p-2 align-top text-[10.5px] text-txt-mut">
+                              {(r.contraintes ?? []).length ? <ul className="list-disc pl-4">{(r.contraintes ?? []).map((c, i) => <li key={i}>{c}</li>)}</ul> : '—'}
+                            </td>
+                          ))}
+                        </tr>
+                      )}
+                    </Fragment>
                   )
                 })}
-                <tr className="border-t border-line">
-                  <td className="p-2 align-top text-[10.5px] uppercase tracking-wide text-txt-dim">Détail contraintes</td>
-                  {parcels.map((r) => (
-                    <td key={r.idu} className="border-l border-line p-2 align-top text-[10.5px] text-txt-mut">
-                      {(r.contraintes ?? []).length ? <ul className="list-disc pl-4">{(r.contraintes ?? []).map((c, i) => <li key={i}>{c}</li>)}</ul> : '—'}
-                    </td>
-                  ))}
-                </tr>
               </tbody>
             </table>
           )}

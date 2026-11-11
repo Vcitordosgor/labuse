@@ -219,13 +219,14 @@ def test_f18_crm_relance_echeance_servie():
 
 
 def test_f28_taxe_zone_agricole_servie():
-    """F28 — l'exonération « locaux agricoles » (zone A, hors AU) n'est plus décidée par une regex
-    `/^A(?!U)/` sur le libellé : le prefill taxe sert la FAMILLE de zone (`zone_famille`), le front
-    teste `=== 'A'` (même notion que la fiche §PLU, cf. F01a)."""
+    """F28 — le prefill taxe sert la FAMILLE de zone (`zone_famille`) côté back (même notion que la
+    fiche §PLU, cf. F01a). OUTILS-REFONTE-1 (9c) — la maquette 9c-taxe a RETIRÉ de l'UI Taxe les
+    exonérations de plein droit (locaux agricoles / PLAI / reconstruction) : on ne vérifie donc plus
+    la consommation front de `zone_famille`, mais on garde l'invariant anti-régression (jamais de
+    regex de zone au front) et le service back de la famille (pour les autres conscommateurs)."""
     app = (ROOT / "src/labuse/api/app.py").read_text(encoding="utf-8")
     assert '"zone_famille": row["zone_fam"]' in app
     ta = (SRC / "components/outils/TaxeAmenagement.tsx").read_text(encoding="utf-8")
-    assert "prefill.data?.zone_famille === 'A'" in ta
     assert "/^A(?!U)/i.test" not in ta, "regex de zone (exonération) revenue au front (F28)"
 
 
