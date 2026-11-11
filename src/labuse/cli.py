@@ -2831,6 +2831,9 @@ def residuel_pin_cmd(
 @app.command("compute-constructibilite")
 def compute_constructibilite_cmd(
     commune: str = typer.Option(None, help="Commune (nom ou INSEE ; défaut = pilote)."),
+    parcelles_fichier: str = typer.Option(None, "--parcelles-fichier",
+                                          help="DEPLOY-GROUPE-3 — recalcul EN DELTA : fichier de "
+                                               "parcelles (parcel_id ou idu, une par ligne). Ignore --commune."),
     chunk: int = typer.Option(500, help="Taille des lots (commit par lot)."),
 ) -> None:
     """Calcule et cache le VERDICT DE CONSTRUCTIBILITÉ (déclassement étage 0 : tête de liste non
@@ -2838,10 +2841,11 @@ def compute_constructibilite_cmd(
     / C non vérifiable), lu par le scoring pour déclasser les parcelles servies non bâtissables."""
     from .faisabilite.constructibilite import build_constructibilite_batch
 
-    commune = _resolve_commune(commune)
+    commune = None if parcelles_fichier else _resolve_commune(commune)
     models.ensure_constructibilite_cache(engine())
     with session_scope() as session:
-        ids = _parcel_ids(session, commune)
+        ids = (_parcel_ids_from_file(session, parcelles_fichier) if parcelles_fichier
+               else _parcel_ids(session, commune))
     if not ids:
         typer.echo("Aucune parcelle ingérée.")
         raise typer.Exit(1)
