@@ -1,171 +1,147 @@
 # Estimer un bien
 
-Clé interne : `analyser-annonce` (num N1) · composant : `frontend/src/components/outils/AnalyserAnnonce.tsx` · endpoints : `POST /radar/annonce/analyser` (chemin lien), `GET /radar/annonce/estimation/{idu}` (chemin adresse), `GET /radar/annonce/classement/{idu}`, `GET /radar/annonce/rapport/{idu}`, PDF `/analyse-annonce/{idu}.pdf` (adresse) et `/analyse-annonce.pdf?url=…` (lien).
+Clé interne : `analyser-annonce` (num N1) · composant : `frontend/src/components/outils/AnalyserAnnonce.tsx` · endpoint principal : **`POST /radar/annonce/estimation3/{idu}`** (point unique ESTIMER-3) · PDF parcelle `/analyse-annonce/{idu}.pdf` (même point) · chemin lien (Radar seulement) : `POST /radar/annonce/analyser`, PDF `/analyse-annonce.pdf?url=…`.
 
-> Note de nommage : le mémoire du mandat parlait de `pige/estimer3.py` ; ce fichier **n'existe pas** dans ce worktree. Le cœur de l'estimation vit dans `src/labuse/pige/api.py` (`estimation_annonce`, l. 1902) et `src/labuse/marche_service.py` (`comparateur_bien`, l. 406 ; `comparateur_terrain`, l. 580). `src/labuse/estimation_prix.py` ne contient que des helpers de **mise en forme** (fourchettes, arrondis, €/m² FR), pas le calcul.
+> Note de nommage : **`src/labuse/pige/estimer3.py` EXISTE** et c'est désormais le **cœur** du calcul (refonte ESTIMER-3 + ESTIMER-ECRAN-1, mergée le 11/11/2026). L'ancienne fiche disait « inexistant » : périmé. L'orchestration servie (écran == PDF == document) vit dans `estimer3.rapport3` ; l'endpoint `radar_annonce_estimation3` (`api.py` l. 2098) l'appelle ; l'adaptateur PDF `_est_bloc_depuis_estimer3` (`api.py` l. 2427) re-façonne le MÊME rapport sans recalculer. `marche_service.comparateur_bien/terrain` reste utilisé **en repli** (secteur) et pour le terrain nu ; `estimation_prix.py` ne fait toujours que la mise en forme.
 
-L'outil a **deux chemins** (l'écran d'entrée les tient tous les deux, `AnalyserAnnonce.tsx` l. 556-570) :
-- **Chemin A — ADRESSE** : on choisit une parcelle (omnibox / clic carte) → rapport PARCELLE avec estimation du prix.
-- **Chemin B — LIEN** : on colle un lien d'annonce Leboncoin → « ce que dit l'annonce » + écart au repère de la commune, **sans aucun rattachement parcelle**, fiabilité toujours « Limitée ».
+L'outil n'a plus deux chemins d'entrée. Il a **UN SEUL écran, parcelle uniquement** (`AnalyserAnnonce.tsx` l. 648-665) : boîte `EntreeParcelle` (option A) puis tout se construit dessous. Le **chemin lien Leboncoin** n'est plus une entrée de l'écran : il reste atteignable **depuis le Radar** (« Estimer ce bien → », `annonceLienPrefill`, l. 594-609) et rend un rapport COMMUNE inchangé (SSRF toujours fermé — le serveur ne fetch jamais le lien).
 
 ---
 
 ## 1. À quoi il sert, et pour qui
 
-Pour un prospecteur/agent qui veut jauger le prix d'un bien : soit à partir d'une **adresse** (LABUSE croise le bien avec les ventes DVF du secteur et la valeur du terrain nu), soit à partir d'un **lien d'annonce Leboncoin** déjà relevé par le Radar (ce que dit l'annonce, confronté à la médiane de la commune). Ce n'est **pas** une estimation notariale : c'est un repère de marché honnête sur des comparables, assorti d'une fiabilité mesurée.
+Pour un prospecteur/agent qui veut jauger le prix d'un bien à partir d'une **parcelle** (adresse ou clic carte). ESTIMER-3 part désormais des ventes de biens qui **RESSEMBLENT** au bien (même type, surface/terrain proches, distance, ancienneté — pondération par ressemblance), et non de toutes les ventes du secteur. L'estimation **se resserre** à chaque réponse ; **chaque question a dû prouver son gain** au banc no-leak (sinon elle n'est pas posée) ; **la précision servie est mesurée** par commune × type × niveau. Ce n'est **pas** une expertise : c'est un repère de marché honnête sur des comparables, assorti d'une fiabilité mesurée.
 
 ## 2. Le parcours
 
-### Chemin A — adresse (rapport PARCELLE)
-Écran unique (`AnalyserAnnonce.tsx` l. 556) : la boîte `EntreeParcelle` sert de recherche puis de badge de la parcelle choisie. Dès qu'une parcelle est choisie (`onPick`, l. 564), le `RapportParcelle` (l. 96) s'affiche dessous :
-- **6 tuiles** : Surface, Zone PLU, SDP restante, Dernière vente, Risques, Exposition (l. 143-150).
-- **« Estimation du prix »** (l. 185) : « Prix estimé au m² » en gros + fourchette « de Q1 à Q3 », badge **Fiabilité** (Élevée/Moyenne/Limitée), nombre de ventes · rayon/périmètre · période, phrase sur la nature (terrain nu / copropriété / bâti), et « ±N % » mesuré sur 2025.
-- **Surface habitable saisissable** (bâti hors copropriété, l. 230) : facultative, affine « l'ordre de grandeur », préremplie depuis la dernière vente DVF.
-- **« Ordre de grandeur du bien/terrain »** (l. 252) : surface × €/m² = valeur + fourchette. Pour le bâti, **« Lecture foncière · valeur du terrain »** (l. 269).
-- **Accordéon « Les ventes comparables »** (l. 282), fermé par défaut : les 8 ventes qui pèsent le plus, prix bruts.
-- Bouton **Exporter en PDF** (l. 319).
+### L'écran unique (parcelle)
+`AnalyserAnnonce.tsx` l. 648. Boîte **`EntreeParcelle`** (option A : adresse en gras + « IDU · zone · surface » + ✕ pour changer). Dès qu'une parcelle est choisie, `<Estimer3>` (l. 357) lit `POST /radar/annonce/estimation3/{idu}` et affiche, dans l'ordre :
+- **« Dernière vente de ce bien »** (`DerniereVente`, l. 97) — juste sous la boîte, **jamais** dans le calcul : « mois/année · surface · prix ». Absente si la parcelle n'a aucune vente DVF.
+- **« Ce que LABUSE a mesuré »** (`Mesures`, l. 110) — en puces, UNIQUEMENT ce qui est connu : type, terrain, bâti au sol, niveaux, piscine, pente (la zone vit dans la boîte).
+- **La question UNIQUE — surface habitable** (`Question`, l. 296) : pré-remplie par l'estimation LABUSE (badge **estimée**, formule LiDAR écrite dessous), saisie au clavier (`inputMode=numeric`, commise au blur/Entrée, badge **saisie** dès qu'on la change). Une **vente DVF** du bien la rend « connue » sans rien taper. Pour un **appartement** s'ajoute le **nombre de pièces** (chips 2·3·4·5·6+). Pour un **terrain nu**, aucune question.
+- **La valeur estimée** (`ValeurEstimee`, l. 149) : montant en gros + badge **Fiabilité** (Élevée/Moyenne/Limitée) + **jauge à deux bandes** servies telles quelles par l'API : « 1 fois sur 2 » (écart médian) et « 3 fois sur 4 » (Q3), chacune avec ses deux bornes en euros (`Jauge`, l. 132). Dessous : la **méthode servie** (« Biens semblables » / « Prix du secteur », suivant `methode_prix`) + « mesuré sur les ventes réelles de [type] à [commune] ».
+- **Les ventes retenues** (`VentesRetenues`, l. 221) : date, surface·terrain, prix, distance ; chaque ligne se **décoche** → l'API **recalcule** (`ecartees`).
+- **« En vente en ce moment · Radar »** (`RadarEnVente`, l. 270) : les 5 biens similaires les plus proches (commune + distance), s'il y en a ; sinon le bloc n'apparaît pas.
+- La ligne « LABUSE ne connaît ni l'état du bien ni sa vue : ce prix est un repère de marché, pas une expertise. » et l'**export PDF** (l. 44, même point que Docs).
 
-### Chemin B — lien (rapport COMMUNE)
-L'écran lien n'est pas affiché en direct : il s'ouvre via un **pont Radar « Ce bien »** (`annonceLienPrefill`, l. 484-498) qui lance l'analyse au montage. Le `RapportAnnonce` (l. 338) montre :
-- **« Ce que dit l'annonce »** (l. 378) : prix demandé, type, surface, pièces, terrain — **uniquement les champs présents** ; un champ attendu absent = « non précisé dans l'annonce » (l. 346).
-- **« Prix face au marché »** (l. 388) : lecture bâti (écart % au repère du type dans la commune) + lecture foncière (terrain × terrain nu, valeur + % du prix). Badge **Fiabilité « Limitée »** gravé en dur (l. 412).
-- **« La commune »** (l. 423) : ventes de maisons 12 mois, médianes, évolution, PLU, aléas, permis 12 mois + lien « Fiche commune ».
-- Bouton Exporter en PDF (l. 441).
-
-Si le bien n'est pas dans le Radar, une **phrase d'erreur** FR s'affiche (l. 461-472) ; aucun code HTTP.
+### Chemin lien (rapport COMMUNE) — depuis le Radar seulement
+`RapportAnnonce` (l. 440) : « Ce que dit l'annonce » (champs présents seulement), « Prix face au marché » (écart % au repère du type + lecture foncière terrain × terrain nu, fiabilité « Limitée » gravée en dur l. 510), bloc « La commune ». Un bien absent du Radar → phrase d'erreur FR (`messageErreur`, l. 573), aucun fetch Leboncoin.
 
 ## 3. Les données lues
 
 | Source (catalogue) | Table(s) SQL réellement lues | Millésime servi | Cadence |
 |---|---|---|---|
-| **DVF / valeurs foncières** | `dvf_mutations` (comparateurs bâti & terrain, `marche_service.py` l. 439) ; `dvf_mutations_parcelle` (géo-DVF 2021+, l'exclusion de la parcelle sujet + dernière mutation) ; `dvf_mutations_histo` (ventes 2014-2020, `api.py` l. 1597) | `géo-DVF Etalab — millésime 2026-S1` ; en base : `dvf_mutations` 2021-01-01 → 2026-06-30 (31 171 lignes) ; `dvf_mutations_histo` 2014-01-03 → 2020-12-31 (110 477 lignes) | semestriel |
-| **DVF Réunion (Région)** | alimente l'historique `dvf_mutations_histo` (jeu figé 2014→mi-2021) | `jeu figé 2014→mi-2021 (54 449 mutations)` | — (alias / contrôle producteur) |
-| **Radar (pige d'annonces)** | `pige_annonces` / `pige_biens` / `pige_faits` (chemin lien, `api.py` l. 1264-1272) — 528 annonces en base | `Collecte manuelle — biens en vente (faits + lien)` | quotidien (statut `manuel`) |
-| calibration de précision (interne) | `estimer_precision_calibration` (fiabilité + fourchette mesurées, `_fiabilite_mesuree` l. 1682) | table locale, `maj` 2026-11-11 (19 lignes : par INSEE + lignes île `*`) | recalculée par le banc `pige.banc_estimer` |
-| PLU / zonage (constructibilité, chemin A) | `spatial_layers` (`plu_gpu_zone`, `ppr`) ; `faisabilite.zonage.resolve_zone` ; `potentiel_batir` | run PLU servi | selon run |
-| run résiduel / scoring (SDP, classement) | `parcel_residuel`, `score_labuse`, `mvt_meta` (`api.py` l. 2194-2205 ; `_classement_bande` l. 1451) | run servi courant | selon run |
-| commune (chemin B) | `communes_referentiel` / `parcels` (nom canonique) ; `faisabilite.marche_commune.marche_commune_bloc` ; `commune_contexte` (PLU/aléas) | contexte commune servi | selon run |
+| **DVF / valeurs foncières** | `dvf_mutations_parcelle` (pool de comparables SEMBLABLES mono-parcelle, `estimer3._POOL_SQL` l. 118) ; `dvf_mutation_detail` (nombre de pièces des comparables, pré-remplissage pièces) ; `dvf_mutations` (repli secteur `comparateur_bien`, terrain nu `comparateur_terrain`) ; `dvf_mutations_histo` (ventes 2014-2020, dernière vente) | géo-DVF Etalab — base locale arrêtée au 31/12/2025 | semestriel |
+| **`estimer3_precision`** (précision MESURÉE) | `estimer3.charge_precision` l. 274 : écart médian + Q3 + part ±20 % + **méthode gagnante** (secteur / semblable) par (type, commune, niveau d'information) ; repli commune→île→bande prudente | écrite chaque nuit par le job **`estimer-banc-precision`** (`banc_estimer.calcule_niveaux`/`persiste3`) | quotidien (job de nuit) |
+| **Radar (pige d'annonces)** | `pige_biens` / `pige_faits` (biens similaires EN VENTE, `estimer3.radar_semblables` l. 525) ; `vendue_ecart_prix` (écart affiché/vendu, servi seulement si ≥ 20 annonces rattachées à une vente) | collecte manuelle | quotidien (statut `manuel`) |
+| piscine (couche détectée) | `piscines` (photo aérienne / CoSIA, île entière — `_piscine_mesuree` l. 218) | couche servie | — |
+| pente / niveaux / emprise | `parcel_terrain` (pente RGE ALTI), hauteur LiDAR (`_niveaux_lidar_parcelle`), emprise BD TOPO (`_emprise_bati_fiche_m2`) | run servi | selon run |
+| PLU / zonage (tuile zone) | `faisabilite.potentiel_batir` (`zone_lib`) | run PLU servi | selon run |
 
-**Important** : rien ne vient de Leboncoin en direct. Le serveur **n'appelle jamais** le lien fourni (fermeture SSRF, `api.py` l. 1410-1428) ; la seule donnée d'annonce provient du Radar (relevé par l'extension).
+**Important** : rien ne vient de Leboncoin en direct (fermeture SSRF, le serveur n'appelle jamais le lien). La seule donnée d'annonce provient du Radar.
 
-## 4. Les calculs
+## 4. Les calculs — la mécanique ESTIMER-3
 
-### 4a. Nature du bien (quel comparateur ?)
-`_estimation_annonce_core` (`api.py` l. 1931) décide dans l'ordre (l. 1948-1991) :
-1. **Copropriété** si `score_v2.copro` (flag du run servi) → comparateur **appartements** (l. 1968).
-2. **Terrain nu** si la dernière vente DVF est un terrain, **ou** (sans vente) si l'emprise bâtie < 5 % (`_nature_parcelle`, l. 1462) → repère €/m² de **terrain nu** (l. 1991).
-3. **Bâti** sinon → comparateur bâti ; type forcé (maison/appartement) par la dernière vente DVF, sinon type dominant déduit du secteur (l. 2014-2025).
+### 4a. Nature du bien (quelle méthode ?)
+`estimer3.rapport3` (l. 647) puis `estimation_semblable` (l. 342) décident : **terrain nu** (dernière vente DVF = terrain, ou sans vente parcelle nue) → repère de secteur ESTIMER-2 (§4e) ; **copropriété / appartement** (flag `copro` ou vente typée appartement) → comparateur appartements ; **maison** sinon (ou type dominant du secteur si aucune vente typée).
 
-### 4b. €/m² servi — médiane pondérée PUIS reprise de `reference_locale`
-`comparateur_bien` (`marche_service.py` l. 406) :
-- Récupère les ventes DVF (gré à gré seul, `nature_mutation='Vente'`, `surface_reelle_bati ≥ 20`, parcelle sujet exclue) dans un **rayon adaptatif** `_CMP_RAYONS = (500, 1000, 1500) m` (l. 322) jusqu'au **seuil d'effectif 8** (`seuil_effectif_local("comparables_annonce", 8)`, l. 424), repli commune entière.
-- **Médiane pondérée par ressemblance** (l. 486-523) : chaque comparable reçoit un poids = produit de gaussiennes/laplaciennes sur distance, écart de surface, écart de terrain (maisons), et une **demi-vie** d'ancienneté. Constantes `_POIDS_SEGMENT` (l. 333) : maison `h_dist=900, h_surf=120, halflife=4, h_terr=1500` ; appartement `h_dist=500, h_surf=160, halflife=2`. Codées en dur, « réglées sur 2024, annoncées sur 2025 » (commentaire l. 324-332).
-- Les prix sont **ramenés à l'ancre récente** par une dérive locale `_drift_commune` (médianes 2019-2024 figées, bornée [−4 % ; +12 %]/an, l. 338-339 ; facteur par comparable borné [0,7 ; 1,6], l. 501).
-- **PUIS** (l. 545-558) : pour un type maison/appartement, la médiane/q1/q3/n/rayon/période sont **écrasés** par `faisabilite.bilan.reference_locale` (le même moteur de secteur que la carte Marché de la fiche) → un seul €/m² pour le même bien. La médiane pondérée ci-dessus ne pilote alors que **l'ordre des 8 comparables affichés**, pas le chiffre de tête (sauf secteur mixte type `None`).
+### 4b. €/m² — comparables SEMBLABLES (pondérée par ressemblance)
+`estimer3.eur_m2_semblable` (l. 183) : €/m² **médiane PONDÉRÉE par la ressemblance** des ventes du même type. Chaque comparable pèse selon sa **distance** (gaussien), son écart de **surface habitable** (laplacien — **seulement si la surface est connue** : saisie ou vente DVF), pour la **maison** son écart de **taille de terrain** (laplacien), son **ancienneté** (demi-vie), et son écart de **nombre de pièces** (laplacien — **uniquement pour l'appartement**). Échelles non inventées (`POIDS` l. 45, issues d'ESTIMER-PRECISION-1 ; `H_PIECES=0,8` réglé au banc ESTIMER-3). Rayon **adaptatif** 500→1000→1500 m jusqu'à 8 ventes (`_selection_rayon` l. 168), sinon repli commune.
 
-### 4c. Terrain nu
-`comparateur_terrain` (`marche_service.py` l. 580) : même rayon adaptatif, agrège par mutation, borne €/m² [50 ; 20 000], trim 5 % des extrêmes. `_terrain_repere` sert la médiane + q1/q3 + n + périmètre.
+### 4c. La MEILLEURE des deux méthodes, cellule par cellule
+Au-dessus de 8 ventes semblables, l'outil calcule **toujours** la médiane pondérée (semblable = ESTIMER-3) ET la médiane simple du secteur (secteur = ESTIMER-2), et **sert celle que le banc a désignée** comme la plus précise pour cette (commune, type, niveau) — colonne `methode` de `estimer3_precision`, lue dans `charge_precision`, appliquée l. 415 (`med = med_sect if methode=="secteur" else med_sembl`). Le libellé de l'écran **suit la méthode réellement servie** (« Biens semblables » / « Prix du secteur », `AnalyserAnnonce.tsx` l. 152). Mesuré au banc (COMPTE-RENDU §verdict) : **sans saisie, « semblables » ne bat pas le secteur** (maison 30,3 % contre 30,3 %) → on sert le secteur ; **surface connue, « semblables » gagne** (maison 25,3 %→24,5 % ; appartement 16,4 %→15,4 %) → on la sert. ESTIMER-3 **n'est jamais pire** qu'ESTIMER-2.
 
-### 4d. Fiabilité et fourchette — **MESURÉES**, pas figées
-`_fiabilite_mesuree` (`api.py` l. 1675) lit `estimer_precision_calibration` par (type, INSEE), repli ligne île `*` :
-- fourchette servie `precision_pct` = **écart Q3 mesuré** (`ecart_q3`), arrondi ;
-- niveau = « Élevée » si `ecart_median < 15 %` **et** `n ≥ 15` ; « Moyenne » si `< 25 %` et `n ≥ 8` ; sinon « Limitée » (l. 1688-1693).
-- Sans calibration : repli bande historique `_fiabilite_bien`/`_fiabilite_segment` (`_FIAB_SEG` l. 1532, `_ECART_SEGMENT={"terrain":19}` l. 1545). Le repli commune force « Limitée » (l. 1569).
+### 4d. Repli secteur
+Quand il reste **moins de 8** ventes semblables (commune/type rare), l'outil **replie sur le prix de secteur d'ESTIMER-2** (`comparateur_bien`) et **le dit** (`repli_secteur: true`, `methode_prix: "repli_secteur"`, `repli_note` servie — `estimer3.py` l. 418-426).
 
-### 4e. Ordre de grandeur (valeur indicative)
-`_valeur_indicative` : surface × €/m², arrondi au millier (`_arrondi_mille`, l. 1548). La **surface** du bâti = surface bâtie de la dernière vente DVF, sinon emprise au sol × ratio médian habitable/emprise de la commune × niveaux LiDAR (`_surface_pour_total`, l. 1780) — **jamais l'emprise brute**. La fourchette basse/haute vient de `±precision_pct` autour de la valeur. **Lecture foncière** : surface terrain × €/m² terrain nu, et % du bâti.
+### 4e. Terrain nu
+Branche terrain de `rapport3` (l. 669) → `estimation_annonce` (ESTIMER-2, repère de secteur terrain nu `comparateur_terrain`, rayon adaptatif). **Aucune question** (la viabilisation n'est pas mesurable). Les deux bandes sortent du même central ± écart médian / Q3 mesurés.
 
-### 4f. Chemin B (lien)
-`rapport_lien` (`api.py` l. 1326) : lecture bâti = `(prix_m2_annonce − médiane_commune) / médiane_commune × 100` (l. 1351) ; lecture foncière = `terrain × €/m² terrain nu`, arrondi au millier, % du prix (l. 1358-1367). Conclusion textuelle selon seuils 75 % / 40 % (l. 1361-1366).
+### 4f. Précision MESURÉE par (type, commune, niveau)
+`charge_precision` (l. 274) lit `estimer3_precision` : **deux percentiles** de l'écart |estimé − réel| — l'**écart MÉDIAN** (`precision_pct`, « 1 fois sur 2 », c'est lui qui se resserre) et le **Q3** (`precision_q3_pct`, « 3 fois sur 4 », bande prudente), tous deux servis en euros autour du central (`estimation_semblable` l. 439-450). Repli commune→île→bande prudente (`_BANDE_REPLI` l. 269, **jamais un 500**). Fiabilité (`_fiabilite_mot` l. 299, comme ESTIMER-2) : « Élevée » si écart médian < 15 % & n ≥ 15 ; « Moyenne » si < 25 % & n ≥ 8 ; sinon « Limitée ».
 
-## 5. Chaque chiffre affiché
+### 4g. DÉFAUT A — surface inconnue + Q3 > 50 % → total masqué
+`estimation_semblable` l. 459 : si la surface habitable **n'est pas connue** (ni saisie, ni vente DVF — estimée au LiDAR) **et** que le Q3 dépasse ± `SEUIL_Q3_MASQUE` = 50 %, l'API **ne sert plus de valeur totale** (`total_masque=True`, `valeur_eur=null`). L'écran affiche le **prix au m² du secteur + sa fourchette** (`eur_m2`, `eur_m2_bas`–`eur_m2_haut`) et **invite à saisir la surface** (`AnalyserAnnonce.tsx` l. 164-180). Dès la surface saisie, le masque tombe.
 
-### Chemin A — rapport parcelle
+### 4h. DÉFAUT B — plus aucune valeur de terrain sur un bien BÂTI
+`estimer3.py` l. 463 (commentaire) + `AnalyserAnnonce.tsx` l. 158 : sur un bien **bâti**, **aucune valeur de terrain n'est affichée** (ni bandeau, ni bloc). Mesuré no-leak sur 2 060 maisons (`mesure_plancher.py`) : retenir la valeur du terrain comme plancher **dégrade** la précision des cas concernés (terrain > bâti, 28,6 % des maisons : écart médian 29,7 %→45,2 %). La fiabilité reste celle du banc (jamais rabaissée à cause du terrain). La valeur de terrain **reste servie pour les terrains nus** (branche terrain, §4e).
+
+## 5. Chaque chiffre affiché (écran parcelle)
+
 | Libellé à l'écran | D'où il vient | Sourcé / Estimé |
 |---|---|---|
-| Surface (tuile) | `fiche.surface_m2` | sourcé (cadastre) |
-| Zone PLU (tuile) | `fiche.reglement_plu.zones[0].zone` | sourcé (PLU GPU) |
-| SDP restante (tuile) | `potentiel_transformation.sdp_residuelle_m2` | estimé (moteur résiduel) |
-| Dernière vente (tuile) | `dvf_parcelle.derniere_mutation` (date + valeur DVF) | sourcé (DVF) |
-| Risques (tuile) | `n_aleas` = familles d'aléas distinctes (`distinct_hazards`) | sourcé (Géorisques/PPR) |
-| Exposition (tuile) | `getParcelExposition.orientation` | sourcé (calcul géométrique) |
-| **Prix estimé au m²** | `median` de `comparateur_bien`/terrain, **repris de `reference_locale`** pour maison/appart | **estimé** (médiane de ventes DVF) |
-| « de Q1 à Q3 €/m² » | `q1`/`q3` | estimé |
-| Fiabilité (badge) | `fiabilite_mot` (back) ← calibration mesurée | estimé (mesuré sur ventes 2025) |
-| N ventes · rayon · période | `n`, `radius_m`/`perimetre`, `periode` | sourcé (comptages DVF) |
-| ±N % précision | `precision_pct` = `ecart_q3` de `estimer_precision_calibration` | estimé (mesure banc) |
-| Ordre de grandeur (valeur €) | surface × €/m², arrondi millier | estimé |
-| Lecture foncière (valeur €) | terrain × €/m² terrain nu | estimé |
-| 8 ventes comparables | ventes DVF (prix bruts) triées par poids | sourcé (lignes DVF réelles) |
-
-### Chemin B — rapport annonce
-| Libellé à l'écran | D'où il vient | Sourcé / Estimé |
-|---|---|---|
-| Prix / Type / Surface / Pièces / Terrain | `pige_faits` (Radar) | sourcé (annonce relevée) |
-| Lecture bâti : écart % | `(prix_m2 − médiane_commune)/médiane_commune` | estimé (calcul) sur médiane sourcée |
-| Référentiel €/m² · N ventes | `marche_commune_bloc` (DVF commune) | sourcé (DVF) |
-| Lecture foncière : valeur / % | terrain × terrain nu commune | estimé |
-| Fiabilité « Limitée » | gravé en dur (pas de rattachement parcelle) | — |
-| Bloc commune (ventes, médianes, évolution, permis, PLU, aléas) | `marche_commune_bloc` + `commune_contexte` | sourcé |
+| Dernière vente du bien | `rapport3.derniere_vente` (DVF, hors calcul) | sourcé (DVF) |
+| « Ce que LABUSE a mesuré » (puces) | `mesures{}` : terrain (contenance), bâti au sol (BD TOPO), niveaux (LiDAR), piscine (`piscines`), pente (RGE ALTI), zone (PLU) | sourcé (mesures) |
+| Surface habitable (champ) | `surface_hab_detail` : badge **connue** (vente DVF) / **estimée** (emprise×niveaux×ratio LiDAR) / **saisie** | sourcé si DVF/saisie ; estimé si LiDAR |
+| Nombre de pièces (appart.) | pré-rempli de la dernière vente DVF (`pieces_prerempli`) | sourcé (DVF) |
+| **Valeur estimée (€)** | `estimation.valeur_eur` = surface_utilisée × €/m² (semblable ou secteur, la meilleure mesurée) | **estimé** |
+| « 1 fois sur 2 » (bandes €) | `valeur_basse`/`valeur_haute` = central ± `precision_pct` (écart MÉDIAN mesuré) | estimé |
+| « 3 fois sur 4 » (bandes €) | `valeur_basse_q3`/`valeur_haute_q3` = central ± `precision_q3_pct` (Q3 mesuré) | estimé |
+| Prix au m² (si total masqué) | `eur_m2`, `eur_m2_bas`–`eur_m2_haut` (q1–q3 €/m²) | estimé |
+| Méthode servie | `methode_prix` → « Biens semblables » / « Prix du secteur » / repli secteur | — (métadonnée) |
+| Fiabilité (badge) | `fiabilite_mot` ← écart médian mesuré + n | estimé (mesuré au banc) |
+| Ventes retenues (lignes) | `ventes_retenues[]` — ventes DVF réelles, décochables (recalcul `ecartees`) | sourcé (lignes DVF) |
+| Radar « En vente » | `radar.biens[]` (pige, 5 plus proches, commune + distance) | sourcé (annonces relevées) |
 
 ## 6. Les limites
 
-- **Ce n'est pas un total à bâtir** : l'estimation est un **repère de marché du secteur**. Sur une parcelle inconstructible (N/A/AU fermée/PPR rédhibitoire), un `avertissement_constructibilite` est ajouté (`api.py` l. 1924), mais le €/m² reste celui du secteur.
-- **Maisons : précision plancher ~27 %** (commentaire l. 331, confirmé témoin 97411 : ±54 %). Le code lui-même le dit : « aucune méthode ne descend sous 20 % » pour les maisons.
-- **Le chiffre de tête maison/appartement n'est PAS la médiane pondérée** : il est écrasé par `reference_locale` (l. 545-558). La pondération ne sert plus qu'à ordonner les 8 comparables. C'est intentionnel (cohérence avec la fiche) mais contre-intuitif vu le libellé « Prix estimé … pondéré ».
-- **Terrain : `valeur_indicative` = contenance ENTIÈRE × €/m²** (témoin 97409 : 27 862 m² × 278 = 7,7 M€). Sur un très grand terrain, ce « ordre de grandeur » n'a pas de sens marchand (un acquéreur n'achète pas 2,8 ha au €/m² d'un lot à bâtir).
-- **Chemin B** : fiabilité TOUJOURS « Limitée » (aucune adresse précise, pas de parcelle). Dépend entièrement de ce que le **Radar** a relevé ; un bien absent du Radar renvoie une erreur (aucun fetch Leboncoin). Le lat/lng est un centroïde de quartier/commune, pas la parcelle.
-- **Historique DVF** : la dernière vente couvre 2014→ via `dvf_mutations_histo` **si la table existe** ; sinon seul le géo-DVF 2021+ est servi (`_histo_dispo`, l. 1606). Ici elle existe.
+- **Ce n'est pas un total à bâtir** : repère de marché du secteur, pas une expertise (écrit à l'écran).
+- **Maison : précision plancher élevée**. Sur l'échantillon no-leak 1 500 ventes, l'écart médian maison **sans saisie = 30,3 %** et **surface connue = 24,5 %** ; sur témoin **BZ1065** (Saint-Denis), la précision servie est **± 28 %** médian / **56–60 %** Q3 et la fiabilité ressort « Limitée » (Saint-Denis est la commune la plus dispersée, c'est là que le **secteur** bat les semblables). Honnête, mais un chiffre à ± 28 % reste large.
+- **DÉFAUT A — total masqué** : sans surface connue et Q3 > 50 %, **aucune valeur totale** n'est servie (on sert le €/m² + fourchette + invite). Mesuré : BZ1065 sans saisie masque le total (eur_m2 3 684, 2 533–4 722 €/m²) ; avec 140 m² saisis, la valeur revient (529 000 €).
+- **DÉFAUT B — terrain non valorisé sur bâti** : voir §4h. Résiduel : voir §10.3.
+- **Terrain nu : valeur indicative = contenance ENTIÈRE × €/m² de lot** (limite résiduelle, §10.3) — témoin AK0804 : 27 862 m² × 278 = **7,7 M€** sur 2,8 ha.
+- **Chemin lien** : fiabilité TOUJOURS « Limitée », dépend entièrement du Radar (collecte `manuel`), lat/lng = centroïde de quartier.
+- **Écart affiché/vendu (Radar)** : **non servi sur la base locale** (0 annonce rattachée à une vente DVF, seuil 20) ; l'outil l'écrit plutôt que d'inventer un chiffre. S'affichera quand `cycle.matcher_dvf` aura peuplé `vendue_ecart_prix` en prod.
 
 ## 7. Les tests
 
-- `tests/test_annonce_lien.py` : garantit l'extraction du `list_id` sur formes d'URL courantes (l. 22), le `None` pour une page non-annonce (l. 37), que l'endpoint **ne fetch jamais** (`url_bloquee` servi, l. 50), le rapport depuis Radar sans fetch (l. 76 : prix/surface/pièces/`titre=None`/`releve_le` réels), et l'identifiant inconnu → `None` (l. 115).
-- `tests/test_annonce_pdf.py` : structure du PDF parcelle (l. 113), parcelle nue/comparables terrain (l. 151), copropriété (l. 162), `fiabilite_mot` servi tel quel (l. 173), jamais un champ vide (l. 182), estimation absente sourcée (l. 195), deux lectures chiffrées sur le lien (l. 222), PDF lien déterministe (l. 244), arrondi de l'ordre de grandeur (l. 259), une ligne par aléa sans doublon (l. 282), message d'échec lien identique à l'outil (l. 339).
-- `tests/test_estimer2.py` : dernière vente couvre 2014 (l. 58), rayon adaptatif terrain (l. 122), hypothèse surface LiDAR en clair (l. 151), **fiabilité servie vient de la calibration mesurée** (l. 198), fourchette mesurée remplace le ±30 % fixe (l. 216), médiane pondérée = vrai quantile pondéré (l. 231), médiane identique fiche/Estimer (l. 247).
-- `tests/test_estimer_precision1.py` : surface saisie prime (l. 16), bandes de fiabilité appart/maison (l. 34-53), quantile pondéré (l. 61-72).
-- `tests/test_marche_unique_estimer.py` : Estimer et fiche servent la **même médiane** (l. 33), médiane indépendante de la surface du sujet (l. 58).
-- `frontend/src/components/documents/AnalyseAnnonceDoc.test.tsx` : rendu du document.
+- `tests/test_estimer3.py` : **18 verts, 0 ignoré** (pur + canary + réel) — pondération par ressemblance, questions prouvées par type, **meilleure des deux méthodes**, écartement qui recalcule, précision par niveau mesurée, Radar, repli bande, DÉFAUT A (total masqué sur AW1367), DÉFAUT B (terrain dominant). L'**endpoint POST** est exercé pour de vrai (conftest redirige la session vers la base réelle).
+- `tests/coherence_ecrans/test_temoins.py::test_estimer3_ecran_egale_document` : sur les 12 témoins, `rapport3(...).estimation.valeur_eur` == la valeur **imprimée** dans le document, à l'euro. **0 écart**.
+- `banc_estimer` : canary du banc étendu + job de nuit `estimer-banc-precision` verts.
+- `mesure.py` / `mesure_plancher.py` (`docs/audit-2026-11/estimer-3/`) : prototypes no-leak de mesure des gains (surface, pièces, piscine) et du plancher terrain (DÉFAUT B).
+- Front : `tsc -b` 0, `vitest` 326 verts.
 
-**Non vérifié par les tests** : la **justesse marchande** du €/m² (aucun test ne confronte l'estimation à un prix de transaction réel hors échantillon — c'est le rôle du banc `estimer_precision_calibration`, pas d'un test unitaire) ; le comportement quand `reference_locale` écrase la médiane pondérée vs ce qu'affiche le libellé « pondéré » ; le bon sens de la `valeur_indicative` d'un très grand terrain.
+**Non vérifié par les tests** : la **justesse marchande** absolue du €/m² hors échantillon (c'est le rôle du banc de précision, pas d'un test unitaire) ; le bon sens de la valeur indicative d'un très grand terrain nu (§10.3).
 
 ## 8. Les documents liés (PDF, exports)
 
-Les deux PDF partagent le **même point de calcul** que l'écran (aucun recalcul divergent) :
-- **PDF parcelle** `/analyse-annonce/{idu}.pdf` (`documents.py` l. 332) → appelle `estimation_annonce` (le même que `GET /radar/annonce/estimation/{idu}`). Le paramètre `surface_hab` voyage de l'écran au PDF (`docAnalyseAnnonceUrl`, `api.ts` l. 1471) → écran == PDF == Doc.
-- **PDF lien** `/analyse-annonce.pdf?url=…` (`documents.py` l. 373) → appelle `radar_annonce_analyser` (le même que l'écran), puis `builder.construire_analyse_annonce_lien` sur le rapport **tel quel**. Même phrase d'échec (422) que l'outil.
+Le PDF parcelle `/analyse-annonce/{idu}.pdf` lit son estimation du **MÊME point que l'écran** (`estimer3.rapport3` via l'adaptateur `_est_bloc_depuis_estimer3`, `api.py` l. 2427) — « un seul prix partout », 0 écart (banc `test_estimer3_ecran_egale_document`). La surface saisie voyage de l'écran au PDF (`docAnalyseAnnonceUrl`). Le PDF se comporte comme l'écran sur DÉFAUT A (pas de total imprimé si masqué, €/m² + fourchette). PDF lien `/analyse-annonce.pdf?url=…` inchangé.
 
-Vérification réelle : PDF parcelle 97411000BZ1065 renvoie `http=200 application/pdf size=146627`. Source identique confirmée par `test_annonce_pdf` (points unique écran==PDF).
+## 9. Témoins rejoués (sorties RÉELLES de l'endpoint estimation3)
 
-## 9. Trois cas rejoués
+`POST /radar/annonce/estimation3/{idu}` sur `http://127.0.0.1:7280`, le 2026-11-11. Chiffres bruts copiés des réponses JSON.
 
-`GET /radar/annonce/estimation/{idu}` (serveur :7300), le 2026-11-11. Chiffres bruts copiés des réponses.
+**97411000BZ1065 (Saint-Denis) — maison.** POST `{}` (sans saisie) :
+`type_bien=maison`, `methode_prix=semblable`, `total_masque=true`, `surface_connue=false`, `eur_m2=3684`, `eur_m2_bas=2533`, `eur_m2_haut=4722`, `valeur_eur=null` (masqué), `precision_pct=28`, `precision_q3_pct=60`, `pct_20_mesure=35`, `fiabilite_mot=Limitée`, `precision_perimetre=commune`, `n_comparables=33`, `radius_m=500`, `periode=[2022,2025]`. Mesures : terrain 1 567 m², bâti 193 m² au sol, 1 niveau, pente 25 %, zone Uh, pas de piscine, surface habitable estimée 95 m². Questions : surface_hab (pré-remplie 95). — Illustre **DÉFAUT A** : sans surface, le total est masqué, on sert le prix au m² + invite.
+→ **Avec surface 140 m²** (`{"surface_hab":140}`) : `total_masque=false`, `surface_connue=true`, `surface_source=saisie`, `methode_prix=secteur` (Saint-Denis : le secteur bat les semblables à ce niveau), `eur_m2=3778`, `valeur_eur=529000`, bandes médian **381 000–677 000 €** (« 1 fois sur 2 »), bandes Q3 **233 000–825 000 €** (« 3 fois sur 4 »), `precision_pct=28`, `precision_q3_pct=56`, `fiabilite_mot=Limitée`.
+→ **Écarter une vente** (`ecartees:["2025-1270532"]`, surface 140) : `n_comparables` passe de 33 à **32**, la vente est servie `ecartee:true` (jamais une disparition muette), valeur recalculée (529 000 €, méthode secteur → stable).
 
-**97411000BZ1065 (Saint-Denis) — BÂTIE, maison.** `median=3821 €/m²`, `q1=2970`, `q3=4722`, `n=30`, `radius_m=500`, `periode=[2022,2026]`, `fiabilite=limitee`, `fiabilite_mot=Limitée`, `precision_pct=54`, `fourchette_source=mesure_commune`, `ecart_median_mesure=32`, `calibration_n=17`, `n_aleas=2`, `type_label_pluriel=maisons`. `valeur_indicative`: 95 m² × 3 821 = **363 000 €** (167 000–559 000), surface estimée d'après l'emprise 193 m² × 1 niveau LiDAR × ratio 0,51. `lecture_fonciere`: 1 567 m² × 578 €/m² = **906 000 €** (250 % du bâti). `constructibilite`: zone Uh, constructible. 8 comparables (le 1er : 07/2025, maison 165 m², 238 095 €, 1 443 €/m², 226 m). — Croisement : `estimer_precision_calibration(maison,97411)` donne `ecart_q3=54.2`, `ecart_median=31.8` → cohérent avec les 54 / 32 servis.
+**97409000AK0804 (Saint-André) — terrain nu.** POST `{}` :
+`type_bien=terrain`, `methode_prix=secteur`, `eur_m2=278`, `valeur_eur=7746000`, `surface_utilisee_m2=27862`, bandes médian **5 035 000–10 457 000 €** (= bandes Q3, `precision_pct=precision_q3_pct=35`), `fiabilite_mot=Limitée`, `n_comparables=26`, `repli_secteur=false`. `questions=[]` (aucune — viabilisation non mesurable), `note_terrain` servie. Mesures : terrain 27 862 m², pente 6 %, zone UB. — **Limite résiduelle §10.3** : `valeur_eur` = contenance entière 27 862 m² × 278 €/m² = 7,7 M€ sur 2,8 ha, un « ordre de grandeur » non marchand.
 
-**97409000AK0804 (Saint-André) — NUE, terrain.** `median=278 €/m²`, `q1=254`, `q3=396`, `n=26`, `radius_m=500`, `perimetre=500 m autour de la parcelle`, `periode=2021–2025`, `fiabilite=limitee`, `precision_pct=72`, `fourchette_source=mesure_ile` (pas de ligne 97409 → repli île `*` terrain `ecart_q3=71.8`), `calibration_n=120`, `n_aleas=2`. `valeur_indicative`: **27 862 m² × 278 = 7 746 000 €** (2 169 000–13 322 000). 8 comparables terrain (le 1er : 05/2022, 212 m², 57 120 €, 269 €/m², 0 m). — Illustre la limite §6 : l'ordre de grandeur sur 2,8 ha n'est pas un prix marchand réaliste.
-
-**97415000DH0076 (Saint-Pierre) — COPROPRIÉTÉ, appartement.** `median=6275 €/m²`, `q1=5508`, `q3=7168`, `n=79`, `radius_m=500`, `periode=[2022,2026]`, `fiabilite=fiable`, `fiabilite_mot=Élevée`, `precision_pct=23`, `fourchette_source=mesure_commune`, `ecart_median_mesure=12`, `calibration_n=16`, `n_aleas=2`. Pas de `valeur_indicative` (copro : aucun lot unique à valoriser). `lecture_fonciere`: 19 513 m² × 1 098 = 21 425 000 €. 8 comparables appart (1er : 06/2026, 49 m², 275 000 €, 5 612 €/m², 127 m). — Croisement : `estimer_precision_calibration(appartement,97415)` `ecart_median=12.5 (<15)`, `n=16 (≥15)` → bien « Élevée », cohérent.
-
-**Chemin B rejoué** (lien réel d'une annonce du Radar, `POST /radar/annonce/analyser`, `.../ventes_immobilieres/4661496863448217817.htm`) : `ok=true`, annonce maison Le Tampon, prix 194 000 €, 87,78 m², terrain 95 m², 3 pièces, 2 210 €/m², relevée 2026-10-29. `lectures.bati`: écart **−8 %** vs référentiel 2 397 €/m² (n=1 738). `lectures.fonciere`: 95 m² × 263 = 25 000 € (13 % du prix → « valeur tient surtout au bâti »). Bloc commune Le Tampon : 233 ventes maison 12 mois, médiane 2 397 €/m², terrain 263 €/m², évolution +5,4 %, PLU « à jour », aléas inondation/mouvement, 62 permis. Un lien inconnu du Radar renvoie `{"ok":false,"erreur":"url_bloquee"}` ; une URL hors Leboncoin `url_invalide` — aucun fetch sortant, conforme au code (l. 1416-1428).
+**97415000DH0076 (Saint-Pierre) — copropriété / appartement.** POST `{}` :
+`type_bien=appartement`, `methode_prix=semblable`, `surface_connue=true` (surface de la vente DVF 2024, 61 m²), `surface_source=vente DVF`, `eur_m2=6438`, `valeur_eur=393000`, bandes médian **349 000–436 000 €**, bandes Q3 **298 000–487 000 €**, `precision_pct=11`, `precision_q3_pct=24`, `pct_20_mesure=69`, `fiabilite_mot=Élevée`, `n_comparables=72`, `radius_m=500`. Questions : surface_hab (pré-remplie 61) **et pièces** (pré-remplies 4, dernière vente DVF).
+→ **Avec pièces = 3** (`{"pieces":3}`) : `niveau_info=surface_pieces`, `methode_prix=semblable`, `eur_m2=6275`, `valeur_eur=383000`, `precision_pct=11`, `precision_q3_pct=24`, `fiabilite_mot=Élevée`, `n_comparables=72` — les pièces resserrent légèrement l'estimation de l'appartement (gain mesuré, question posée pour l'appartement seulement).
 
 ## 10. Tes doutes
 
-1. **(grave) Le libellé « Prix estimé au m² » et la mécanique divergent.** Pour maison/appartement, la médiane pondérée par ressemblance (le gros du code `comparateur_bien`) est **écrasée** par `reference_locale` (l. 545-558) ; le chiffre de tête est en réalité la **médiane de secteur** de la carte Marché, pas l'estimation pondérée que l'écran décrit. L'utilisateur croit lire une estimation fine du bien ; il lit un repère de secteur. La pondération ne change que l'ordre des 8 comparables.
-2. **(grave) `valeur_indicative` d'un terrain = contenance ENTIÈRE × €/m² de lot.** Le témoin 97409 affiche 7,7 M€ pour 2,8 ha. Le €/m² vient de ventes de lots à bâtir (quelques centaines de m²) ; multiplier par une contenance de 2,8 ha produit un « ordre de grandeur » faux et potentiellement trompeur, sans seuil de garde.
-3. **(moyen) La fiabilité maison sort presque toujours « Limitée ».** Calibration mesurée : maison île `ecart_median=26,8 %` et par commune souvent >25 % → la condition « Élevée » (<15 % & n≥15) n'est quasi jamais atteinte. C'est honnête, mais l'outil « estime » surtout des maisons avec un ±50 % affiché : l'utilité pratique du chiffre est faible et ce n'est pas mis en avant.
-4. **(moyen) Dépendance totale au Radar pour le chemin B, sans fraîcheur visible côté calcul.** Le lien n'est exploitable que si le bien a été relevé (statut source `manuel`, « collecte manuelle »). Un bien récent/absent renvoie une erreur ; le `releve_le` (ex. 2026-10-29) peut être ancien sans que l'écart au marché le pondère. La source Radar est marquée `manuel` dans `data_sources`, pas automatisée.
-5. **(mineur) La `reference_locale` et la `precision_pct` peuvent décrire des échantillons différents.** Le €/m² vient de `reference_locale` (rayon/période propres) tandis que la fourchette ±% vient de `estimer_precision_calibration` (mesure banc par INSEE, parfois repli île). Les deux sont servis côte à côte comme s'ils portaient sur le même échantillon ; ce n'est pas garanti.
+1. **(CORRIGÉ) « Prix estimé au m² » = médiane de secteur qui écrase la pondération.** L'ancien défaut grave est traité : ESTIMER-3 calcule les **deux** médianes (semblable pondérée ET secteur simple) et **sert la meilleure des deux mesurée au banc** par (commune, type, niveau) ; le libellé de l'écran **suit la méthode réellement servie** (« Biens semblables » / « Prix du secteur »). Mesuré sur les témoins : BZ1065 surface connue sert « secteur » (Saint-Denis est dispersé), DH0076 sert « semblable ». Plus de divergence entre le libellé et la mécanique.
+2. **(CORRIGÉ) Fiabilité maison presque toujours « Limitée ».** La précision reste mesurée et honnête (BZ1065 ± 28 % Limitée), mais ce n'est plus caché : la jauge **à deux bandes** expose « 1 fois sur 2 » et « 3 fois sur 4 » en euros, la méthode servie est nommée, et **DÉFAUT A** refuse carrément un total quand la surface est inconnue et le Q3 > 50 % (invite à saisir). L'utilisateur voit l'incertitude plutôt qu'un faux chiffre précis.
+3. **(RÉSIDUEL — mesuré) Terrain nu : valeur indicative = contenance ENTIÈRE × €/m² de lot.** Sur un bien **bâti**, DÉFAUT B a retiré toute valeur de terrain (mesuré : la retenir dégrade). MAIS pour un **terrain nu**, la valeur indicative multiplie toujours la **contenance entière** par un €/m² de lot à bâtir : `estimation_annonce` fixe `surface_parc` = contenance (`api.py` l. 1961, doctrine CONTENANCE-1) et la passe à `_valeur_indicative(surface_parc, med, ecart)` (`api.py` l. 2008), repris par la branche terrain de `rapport3`. Témoin AK0804 : **27 862 m² × 278 = 7 746 000 €** — un « ordre de grandeur » faux sur 2,8 ha (le €/m² vient de ventes de lots de quelques centaines de m²). Aucun seuil de garde. **Limite résiduelle réelle**, non corrigée par ESTIMER-3 (qui ne touche pas le terrain nu).
+4. **(mineur — mesuré) Pool de comparables : ventes au terrain nul gardées à pleine pondération.** La pondération ESTIMER-3 **saute** la pénalité d'écart de terrain quand le comparable a terrain = 0 (`estimer3.py` l. 200, `(terrain_m2 or 0) > 0`). Sur l'île, 9,1 % des ventes maison ont un terrain nul/absent, médiane €/m² −7 % vs celles avec terrain (COMPTE-RENDU recette 2) — gardées à pleine pondération, elles tirent légèrement le €/m² vers le bas. Constat, non modifié.
+5. **(mineur) Une même mutation peut apparaître en double dans les ventes retenues** (plusieurs lots d'un même acte — vu sur BZ1065, id `2025-1269356` deux fois avec surfaces 94 et 71 m²). Le front dédoublonne à l'affichage par identifiant (`AnalyserAnnonce.tsx` l. 227-228), mais les deux lignes entrent toutes deux dans la médiane pondérée (poids distincts). Effet marginal, constaté.
+6. **(mineur) Écart affiché/vendu Radar non servi en base locale** (0 annonce rattachée à une vente, seuil 20). Honnête (l'outil l'écrit), mais le repère « prix affiché vs vendu » promis n'existe pas tant que `cycle.matcher_dvf` n'a pas peuplé `vendue_ecart_prix` en prod.
 
 ---
 
 ## Synthèse INDEX (≈12 lignes)
 
-- Fiche écrite : `docs/audit-2026-11/outils-fiches-1/analyser-annonce.md`.
-- Outil « Estimer un bien » (clé `analyser-annonce`, N1), 2 chemins : **adresse** → rapport parcelle + estimation (`GET /radar/annonce/estimation/{idu}`) ; **lien Leboncoin** → ce que dit l'annonce + écart au repère commune (`POST /radar/annonce/analyser`, fiabilité toujours « Limitée »).
-- Le mémoire parlait de `pige/estimer3.py` : **inexistant ici**. Le calcul vit dans `pige/api.py:estimation_annonce` (l. 1902) + `marche_service.py:comparateur_bien/terrain`.
-- Données principales : **DVF** (`dvf_mutations` 2021-2026 + `dvf_mutations_histo` 2014-2020, millésime 2026-S1 semestriel), **Radar** `pige_*` (quotidien manuel, 528 annonces), calibration locale `estimer_precision_calibration`, PLU/scoring pour tuiles.
-- Méthode réelle : médiane **pondérée par ressemblance** PUIS, pour maison/appart, **écrasée par `reference_locale`** (médiane de secteur = celle de la fiche) ; fiabilité et fourchette **mesurées** par le banc (INSEE, repli île).
-- Part sourcé vs estimé : tuiles et comparables bruts = **sourcés** (DVF/cadastre/Géorisques) ; tout le bloc prix (€/m², fourchette, valeur indicative, fiabilité, écart %) = **estimé**. Grossièrement ~50/50 à l'écran, mais le cœur « prix » est estimé.
-- 3 témoins rejoués (sorties réelles) : BZ1065 bâtie maison 3 821 €/m² ±54 % Limitée ; AK0804 nue terrain 278 €/m² ±72 % (valeur indicative 7,7 M€ sur 2,8 ha) ; DH0076 copro appart 6 275 €/m² ±23 % Élevée. Chemin B rejoué sur une vraie annonce Radar (Le Tampon, −8 % vs marché).
-- PDF (parcelle et lien) = **même point de calcul que l'écran**, vérifié (PDF 200/146 627 o).
-- **Le doute le plus grave** : le libellé « Prix estimé au m² » (présenté comme une estimation pondérée du bien) sert en réalité la **médiane de secteur** (`reference_locale` écrase la pondération pour maison/appart) ; secondairement, l'« ordre de grandeur » terrain multiplie la **contenance entière** par un €/m² de lot à bâtir, produisant des valeurs non marchandes sur les grandes parcelles.
+- Fiche réécrite : `docs/audit-2026-11/outils-fiches-1/analyser-annonce.md` — reflète la refonte **ESTIMER-3 + ESTIMER-ECRAN-1** (mergée 11/11/2026).
+- `src/labuse/pige/estimer3.py` **existe** et est le cœur du calcul ; endpoint principal **`POST /radar/annonce/estimation3/{idu}`** (`api.py` l. 2098), PDF via adaptateur `_est_bloc_depuis_estimer3` (l. 2427, 0 écart écran==document).
+- **Un seul écran, parcelle uniquement** : boîte `EntreeParcelle` (option A) + « Ce que LABUSE a mesuré » (puces) + question surface (badge estimée/connue/saisie) + pièces pour l'appartement + valeur avec **jauge à deux bandes** (« 1 fois sur 2 » médian / « 3 fois sur 4 » Q3) + ventes décochables + Radar + PDF. Le **lien Leboncoin** n'est plus une entrée d'écran (Radar seulement, rapport commune inchangé, SSRF fermé).
+- Méthode réelle : comparables **SEMBLABLES** (médiane pondérée par distance/surface/terrain/ancienneté/pièces) ; **meilleure des deux méthodes** (secteur ESTIMER-2 vs semblable) par cellule selon `methode_prix` mesuré au banc ; **repli secteur** si < 8 semblables (dit) ; précision **mesurée** (`estimer3_precision`, job nuit `estimer-banc-precision`).
+- **DÉFAUT A** : surface inconnue + Q3 > 50 % → total masqué, €/m² + invite. **DÉFAUT B** : sur un bien bâti, plus aucune valeur de terrain (mesuré : la retenir dégrade) ; valeur terrain servie pour les terrains nus.
+- Part sourcé vs estimé : mesures/ventes/Radar = **sourcés** ; tout le bloc prix (€/m², bandes, valeur, fiabilité) = **estimé**.
+- 3 témoins rejoués (sorties réelles) : BZ1065 maison sans saisie **total masqué** (3 684 €/m², ± 28 %/60 %, Limitée) → surface 140 m² **529 000 €** (secteur) ; AK0804 terrain **278 €/m² · 7,7 M€** (contenance 27 862 m²) ; DH0076 appart **6 438 €/m² · 393 000 €** (semblable, Élevée, ± 11 %/24 %).
+- **Les deux doutes graves de l'ancienne fiche sont CORRIGÉS** : la pondération n'est plus écrasée (meilleure des deux, libellé qui suit la méthode servie) ; la valeur de terrain disparaît sur le bâti.
+- **Limite résiduelle réelle** : le **terrain nu** multiplie toujours la **contenance entière** par un €/m² de lot (`api.py` l. 1961 → l. 2008), sans seuil de garde (AK0804 = 7,7 M€ sur 2,8 ha). Non corrigée par ESTIMER-3.
