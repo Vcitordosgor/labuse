@@ -1,25 +1,36 @@
 /**
- * ANNONCE-1 — outil « Analyser une annonce ».
+ * ESTIMER-ECRAN-1 — l'outil « Estimer un bien » sur la maquette validée (nov-2026/12-estimer-un-ecran).
  *
- * Un écran d'ENTRÉE, deux entrées : une ADRESSE (omnibox / clic carte) OU un LIEN d'annonce Leboncoin.
- *  · Entrée adresse → rapport PARCELLE : 6 tuiles (surface, zone PLU, SDP restante, classement LABUSE,
- *    risques, exposition) + « Estimation du prix » (comparateur DVF de la fiche, débloqué par l'idu :
- *    repère €/m², fourchette, fiabilité, N ventes · rayon · période) + « Le foncier ». Tout est LU sur
- *    la fiche parcelle SERVIE (`getFiche`) et l'exposition — rien n'est recalculé ici.
- *  · Entrée lien → rapport COMMUNE : « Ce que dit l'annonce » (champs PRÉSENTS seulement, jamais devinés),
- *    « Prix face au marché » (écart au repère commune du bon type, fiabilité LIMITÉE — aucune adresse
- *    précise, aucun rattachement parcelle), « La commune » (données communales existantes).
+ * UN SEUL ÉCRAN, bâti autour de la BOÎTE PARCELLE (option A : adresse en gras + « IDU · zone · surface »
+ * + ✕ pour changer). Une fois la parcelle choisie (adresse, clic carte, ou pont « Estimer » de la fiche),
+ * tout se construit DESSOUS, sur le point unique ESTIMER-3 (`POST /radar/annonce/estimation3/{idu}`) :
+ *   · « Ce que LABUSE a mesuré » — en puces, UNIQUEMENT ce qui est connu (type, terrain, bâti au sol,
+ *     niveaux, piscine, pente) ;
+ *   · UNE SEULE question — la surface habitable, pré-remplie par l'estimation de LABUSE (badge « estimée »,
+ *     hypothèse écrite dessous), saisie au clavier (badge « saisie » dès qu'on la change). Pour un
+ *     APPARTEMENT s'ajoute le nombre de pièces ; pour un TERRAIN nu, aucune question ;
+ *   · la VALEUR estimée — le montant, le badge de fiabilité, et une jauge à DEUX bandes servies telles
+ *     quelles par l'API (« 1 fois sur 2 » = écart médian ; « 3 fois sur 4 » = Q3), chacune avec ses deux
+ *     bornes en euros ; dessous la méthode servie (« Prix du secteur » / « Biens semblables ») ;
+ *   · les VENTES RETENUES — chaque ligne se décoche (l'API recalcule) ;
+ *   · « En vente en ce moment · Radar » — les biens similaires s'il y en a ;
+ *   · le repère de marché (pas une expertise) et l'export PDF.
  *
- * DA : panneau gauche (320 px) + carte. En-tête maison (le MÊME bandeau que ModulePanel) rendu ICI
- * pour porter les 3 écrans — un SEUL Retour par écran (« ← Outils » à l'entrée, « ← Retour » dans un
- * rapport). Composants charte uniquement (Bouton/Retour/Badge/Chip/ParcelInput), aucune couleur neuve.
- * Changer d'outil vide tout (T1, `setModule`) ; l'état local (étape, saisies) repart à zéro au remontage.
+ * L'entrée par LIEN d'annonce (Leboncoin) reste atteignable DEPUIS le Radar (« Estimer ce bien → ») et
+ * rend son rapport commune inchangé ; la maquette validée, elle, est l'écran PARCELLE ci-dessus.
+ *
+ * DA : panneau gauche + carte, en-tête maison (le MÊME bandeau que ModulePanel) porté ici. La boîte
+ * parcelle est le composant COMMUN des outils `EntreeParcelle` (option A, affichage instantané via
+ * `getParcelApercu` : adresse + zone + surface d'un coup). Changer d'outil vide tout (T1).
  */
 import { useEffect, useRef, useState } from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation } from '@tanstack/react-query'
 
-import { EntreeParcelle } from './EntreeParcelle'
-import { analyserAnnonce, docAnalyseAnnonceLienUrl, docAnalyseAnnonceUrl, getAnnonceEstimation, getFiche, getParcelExposition, type AnnonceAnalyse } from '../../lib/api'
+import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'
+import {
+  analyserAnnonce, docAnalyseAnnonceLienUrl, docAnalyseAnnonceUrl, getEstimation3,
+  type AnnonceAnalyse, type Estimer3Mesures, type Estimer3Rapport, type Estimer3Vente,
+} from '../../lib/api'
 import { fmtInt, fmtM2 } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'
@@ -29,9 +40,7 @@ import { Bouton } from '../ui/Bouton'
 import { Retour } from '../ui/Retour'
 import { Badge } from '../ui/Badge'
 
-// ANNONCE-3 — « Exporter en PDF » : le MÊME document que Docs (mêmes routes /analyse-annonce…), donc
-// le PDF sorti de l'outil et celui de Docs sont identiques, mêmes chiffres que cet écran. Ouverture
-// propre (fetch + blob + attente + message FR) via le hook partagé useOuvrirDocument.
+// « Exporter en PDF » : le MÊME document que Docs (route /analyse-annonce…), mêmes chiffres que l'écran.
 function ExportPdf({ url }: { url: string }) {
   const { ouvrir, enCours, erreur } = useOuvrirDocument()
   return (
@@ -47,28 +56,18 @@ function ExportPdf({ url }: { url: string }) {
 
 type Etape = 'entree' | 'parcelle' | 'annonce'
 
-function fmtPeriode(p: number[] | string | null | undefined): string | null {
-  if (!p) return null
-  if (Array.isArray(p)) { const [a, b] = p; return a === b ? String(a) : `${a}–${b}` }
-  return String(p)
-}
-// ANNONCE-3-FIX — fiabilité en TROIS niveaux capitalisés (l'étiquette « Fiabilité » est posée à côté
-// du badge, donc le badge ne porte QUE le niveau) : « Élevée » (repère fiable), « Moyenne » (indicatif),
-// « Limitée » (repli commune / entrée lien).
-// CHASSE-4-FIX (C4-001) — le MOT vient du backend (`fiabilite_mot`, même source que le PDF) ; le front
-// l'AFFICHE tel quel, sans retraduction qui pourrait diverger (l'ancienne version ratait « limitee » et
-// remontait à « Moyenne »). Seule la COULEUR est dérivée du mot (visuel, pas le libellé).
+// Fiabilité : le MOT vient du backend (`fiabilite_mot`), le front l'affiche tel quel ; seule la couleur
+// est dérivée (Élevée → vert, sinon ambre) — même règle qu'ESTIMER-2.
 function fiab(mot?: string | null): { mot: string; ton: 'vert' | 'ambre' } {
   return { mot: mot || 'Moyenne', ton: mot === 'Élevée' ? 'vert' : 'ambre' }
 }
 const cap = (s: string | null | undefined) => (s ? s[0].toUpperCase() + s.slice(1) : null)
-// « de maisons » / « de terrain nu » mais « d’appartements » (élision devant voyelle) — CHASSE-4-FIX (C4-003).
 const dePl = (pl: string) => (/^[aeiouyàâäéèêëîïôöùûü]/i.test(pl) ? `d’${pl}` : `de ${pl}`)
 
-const H_TILE = 'rounded-md border border-line-2 bg-surface-3 px-3 py-2'
 const LBL = 'text-[10.5px] leading-tight text-txt-dim'
 const VAL = 'mt-0.5 text-[13px] font-medium leading-tight text-txt-hi'
 const SECTION = 'rounded-md border border-line-2 bg-surface-2 p-3'
+const SECTION_TITRE = 'text-[10px] font-semibold uppercase tracking-wide text-txt-dim'
 
 // ───────────────────────────── En-tête maison (bandeau DA du panneau) ─────────────────────────────
 function Entete({ retour, titre, sous }: { retour: { label: string; onClick: () => void }; titre: string; sous: React.ReactNode }) {
@@ -92,236 +91,339 @@ function Corps({ children }: { children: React.ReactNode }) {
   return <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">{children}</div>
 }
 
-// ═══════════════════════════════════════ RAPPORT PARCELLE ═══════════════════════════════════════
-function RapportParcelle({ idu }: { idu: string }) {
-  const fiche = useQuery({ queryKey: ['annonce-fiche', idu], queryFn: () => getFiche(idu) })
-  const expo = useQuery({ queryKey: ['annonce-expo', idu], queryFn: () => getParcelExposition(idu) })
-  // RECETTE-4 — la tuile « Classement LABUSE » est remplacée par « Dernière vente » (date + prix DVF de la
-  // parcelle, lus de la fiche `dvf_parcelle.derniere_mutation`). La requête `getAnnonceClassement` n'est
-  // donc plus appelée côté écran.
-  // ANNONCE-3-FIX — l'estimation selon la nature (nue → terrain nu ; bâtie → bâti), servie par le MÊME
-  // point que le PDF (/radar/annonce/estimation) → mêmes chiffres à l'écran et dans le document.
-  // ESTIMER-PRECISION-1 — surface habitable SAISISSABLE (facultative) : si renseignée, le total l'utilise
-  // (libellé « surface saisie »). Préremplie depuis la dernière vente DVF quand elle la donne. Le champ
-  // voyage dans l'estimation ET le PDF (écran == PDF == Doc).
-  // RETOURS-26 (pt 10) — `surfaceHab` = valeur VALIDÉE (pilote l'estimation) ; `surfaceDraft` = texte en
-  // cours de frappe. La validation a lieu à la sortie du champ (blur) ou sur Entrée, pas à chaque touche.
-  const [surfaceHab, setSurfaceHab] = useState('')
-  const [surfaceDraft, setSurfaceDraft] = useState('')
-  const [surfaceTouchee, setSurfaceTouchee] = useState(false)
-  const surfNum = surfaceHab.trim() ? Math.round(Number(surfaceHab)) : null
-  const surfValide = surfNum != null && Number.isFinite(surfNum) && surfNum > 0 ? surfNum : null
-  const estim = useQuery({ queryKey: ['annonce-estim', idu, surfValide], queryFn: () => getAnnonceEstimation(idu, surfValide) })
-  // Préremplissage UNE fois depuis la dernière vente DVF (tant que l'utilisateur n'a rien tapé).
-  useEffect(() => {
-    if (!surfaceTouchee && !surfaceHab && estim.data?.surface_dvf_m2 != null) {
-      setSurfaceHab(String(estim.data.surface_dvf_m2))
-    }
-  }, [estim.data?.surface_dvf_m2, surfaceTouchee, surfaceHab])
-  // Le brouillon suit la valeur validée (préremplissage DVF, « effacer »).
-  useEffect(() => { setSurfaceDraft(surfaceHab) }, [surfaceHab])
+// ═══════════════════════════ ÉCRAN ESTIMER — PARCELLE (maquette validée) ═══════════════════════════
 
-  if (fiche.isLoading) return <Corps><Chargement /></Corps>
-  if (fiche.isError || !fiche.data) return <Corps><ErrorState message="Impossible de charger la fiche parcelle." retry={() => fiche.refetch()} /></Corps>
-  const f = fiche.data
-  const zone = f.reglement_plu?.zones?.[0]?.zone ?? null
-  const pot = f.potentiel_transformation
-  const sdp = pot?.sdp_residuelle_m2
-  // RECETTE-4 — « Dernière vente » : date (MM/AAAA) + prix DVF de la parcelle (sa dernière mutation),
-  // sinon « aucune depuis 2014 » (début de la couverture DVF). Lu de la fiche, aucun recalcul.
-  const dm = (f.dvf_parcelle?.derniere_mutation ?? null) as { date_mutation?: string | null; valeur?: number | null } | null
-  // RETOURS-25 (pt 6) — pas de vente connue : « Aucune vente enregistrée (DVF depuis 2014) » (plus « aucune depuis 2014 »).
-  const derniereVente = dm?.date_mutation
-    ? `${dm.date_mutation.slice(5, 7)}/${dm.date_mutation.slice(0, 4)}${dm.valeur != null ? ` · ${fmtInt(dm.valeur)} €` : ''}`
-    : 'Aucune vente enregistrée (DVF depuis 2014)'
-  // CHASSE-4-FIX (C4-002) — la tuile « Risques » lit le MÊME compte dédupliqué que le PDF (servi par
-  // l'estimation, `n_aleas` = liste `_risques_rows`). Repli sur le brut `aleas.n` seulement si l'estimation
-  // n'est pas encore là.
-  const nAleas = estim.data?.n_aleas ?? f.aleas?.n ?? 0
-  const orientation = expo.data?.orientation ?? null
-
-  const tuiles: { k: string; v: string }[] = [
-    { k: 'Surface', v: fmtM2(f.surface_m2) },
-    { k: 'Zone PLU', v: zone ?? '—' },
-    { k: 'SDP restante', v: sdp == null ? '—' : fmtM2(Math.round(sdp)) },
-    { k: 'Dernière vente', v: derniereVente },
-    { k: 'Risques', v: nAleas === 0 ? 'aucun aléa' : `${nAleas} aléa${nAleas > 1 ? 's' : ''}` },
-    { k: 'Exposition', v: orientation ?? '—' },
-  ]
-
-  // Estimation en €/m² (jamais un total inventé). Selon la nature de la parcelle : nue → repère terrain
-  // nu ; bâtie → comparateur bâti. On lit le point unique partagé avec le PDF (pas de recalcul au front).
-  const e = estim.data
-  const terrain = e?.type_comparateur === 'terrain_nu'
-  const median = e?.median ?? null
-  const p25 = e?.q1 ?? null
-  const p75 = e?.q3 ?? null
-  const nVentes = e?.n ?? null
-  const rayon = e?.radius_m ?? null
-  const periode = fmtPeriode(e?.periode)
-  const copro = e?.nature === 'copropriete'
-  const fi = fiab(e?.fiabilite_mot)
-  // CHASSE-4-FIX (C4-005) — périmètre des comparables avec le rayon RÉEL (distinct du « secteur cadastral »
-  // du repère €/m²). Terrain nu → rayon des ventes de terrain ; bâti → rayon du comparateur bâti.
-  const rayonComp = terrain ? e?.comparables_radius_m : rayon
-  const rayonTxt = (rayonComp != null && rayonComp > 0)
-    ? (rayonComp >= 1000 ? `à moins de ${rayonComp / 1000} km` : `à moins de ${fmtInt(rayonComp)} m`)
-    : 'à proximité'
-
+// ── Dernière vente DE CE BIEN, montrée juste sous la boîte parcelle (JAMAIS dans le calcul) ──
+function DerniereVente({ dv }: { dv: Estimer3Rapport['derniere_vente'] }) {
+  if (!dv || !dv.date) return null
+  // Une seule ligne : « Dernière vente : 12/2025 · 116 m² · 455 000 € » (prix en gras, blanc).
   return (
-    <Corps>
-      <div className="grid grid-cols-2 gap-2">
-        {tuiles.map((t) => (
-          <div key={t.k} className={H_TILE}>
-            <p className={LBL}>{t.k}</p>
-            <p className={VAL}>{t.v}</p>
-          </div>
-        ))}
-      </div>
-      {/* RETOURS-25 (pt 6) — lien « Ouvrir la fiche parcelle → » retiré. */}
-
-      {/* FIX-NU3-2 (M-A02) — le résultat d'estimation est une RÉGION LIVE : quand il se construit (après
-          « Estimer »), le lecteur d'écran l'annonce au lieu de rester muet après « Lecture… ». */}
-      <section className={SECTION} role="status" aria-live="polite">
-        <h3 className="text-sm font-medium text-txt-hi">Estimation du prix</h3>
-        {estim.isLoading ? (
-          <p className="mt-1 text-[12px] text-txt-dim">…</p>
-        ) : median == null ? (
-          <p className="mt-1 text-[12px] text-txt-dim">
-            {e?.note ?? (terrain
-              ? 'Indisponible — pas assez de ventes de terrain nu comparables dans le secteur.'
-              : 'Indisponible — pas assez de ventes comparables dans le secteur pour un repère de prix.')}
-          </p>
-        ) : (
-          <>
-            {/* FIX-P-1 (P-04) — libellé propre « Prix estimé au m² » : c'est une ESTIMATION pondérée
-                (comparables de précision), jamais une médiane. La « médiane » de marché reste le module
-                unique marche_dvf_commune (bloc « La commune », « Prix médian … »). */}
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-txt-dim">Prix estimé au m²</p>
-            <p className="mt-0.5 text-xl font-semibold leading-none text-txt-hi">{fmtInt(Math.round(median))} €/m²</p>
-            {p25 != null && p75 != null && (
-              <p className="mt-0.5 text-[12px] text-txt-dim">de {fmtInt(Math.round(p25))} à {fmtInt(Math.round(p75))} €/m²</p>
-            )}
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <span className="text-[11px] text-txt-dim">Fiabilité</span>
-              <Badge ton={fi.ton} point>{fi.mot}</Badge>
-              {/* ANNONCE-3-FIX-2 — le terrain nu affiche sa source comme le bâti : n réel · périmètre/rayon · période. */}
-              {(nVentes != null || rayon != null || e?.perimetre || periode) && (
-                <span className="text-[11px] text-txt-dim">
-                  {nVentes != null ? `${fmtInt(nVentes)} ${terrain ? 'ventes de terrain' : 'ventes comparables'}` : (terrain ? 'ventes de terrain' : 'ventes comparables')}
-                  {terrain ? (e?.perimetre ? ` · ${e.perimetre === 'secteur' ? 'secteur cadastral' : 'commune'}` : '') : (rayon != null ? ` · rayon ${fmtInt(Math.round(rayon))} m` : '')}
-                  {periode ? ` · ${periode}` : ''}
-                </span>
-              )}
-            </div>
-            <p className="mt-2 text-[11px] leading-snug text-txt-mut">
-              {terrain ? (
-                <>Parcelle nue — comparée aux ventes de <strong className="text-txt-hi">terrain nu</strong> du secteur (repère €/m² de terrain).</>
-              ) : copro ? (
-                /* CHASSE-4-FIX (C4-003) — copropriété comparée aux appartements, pas de bien unique à valoriser. */
-                <>Copropriété — comparée aux ventes d’<strong className="text-txt-hi">{e?.type_label_pluriel ?? 'appartements'}</strong> de la commune (repère €/m²). Le lot exact (étage, surface) n’est pas connu du modèle.</>
-              ) : (
-                <>{cap(e?.type_bien) ?? 'Bâti'} — comparé{e?.type_bien === 'maison' ? 'e' : ''} aux ventes de <strong className="text-txt-hi">{e?.type_label_pluriel ?? 'biens bâtis anciens'}</strong> autour de la parcelle. État et prestations du bien non connus du modèle.</>
-              )}
-              {e?.precision_pct != null && <> Précision mesurée sur les ventes 2025 : ±{fmtInt(e.precision_pct)} %.</>}
-            </p>
-            {/* ESTIMER-PRECISION-1 — surface habitable SAISISSABLE (bâti, hors copropriété). Si renseignée,
-                le total l'utilise (« surface saisie ») ; préremplie depuis la dernière vente DVF. */}
-            {!terrain && !copro && (
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <label className="text-[11px] text-txt-dim" htmlFor="surface-hab">Surface habitable</label>
-                {/* RETOURS-26 (pt 10) — on TAPE le nombre directement : `type="text"` (aucune flèche
-                    haut/bas) + `inputMode="numeric"` (clavier numérique) ; validé à la sortie du champ
-                    (blur) ou sur Entrée — pas à chaque touche. */}
-                <input
-                  id="surface-hab" type="text" inputMode="numeric" pattern="[0-9]*"
-                  className="h-8 w-28 rounded-md border border-line-2 bg-surface-3 px-2 text-[12.5px] text-txt-hi placeholder:text-txt-mut focus:outline-none"
-                  placeholder={e?.surface_dvf_m2 != null ? String(e.surface_dvf_m2) : 'm²'}
-                  value={surfaceDraft}
-                  onChange={(ev) => setSurfaceDraft(ev.target.value.replace(/[^\d]/g, ''))}
-                  onBlur={() => { setSurfaceTouchee(true); setSurfaceHab(surfaceDraft.trim()) }}
-                  onKeyDown={(ev) => { if (ev.key === 'Enter') ev.currentTarget.blur() }} />
-                <span className="text-[11px] text-txt-mut">m² — facultatif, affine le total</span>
-                {surfaceDraft && (
-                  <button className="text-[11px] text-mint underline underline-offset-2"
-                    onClick={() => { setSurfaceTouchee(true); setSurfaceDraft(''); setSurfaceHab('') }}>effacer</button>
-                )}
-              </div>
-            )}
-            {/* ANNONCE-5-FIX — ORDRE DE GRANDEUR (jamais un calcul exact, bâti = emprise au sol). */}
-            {e?.valeur_indicative && (
-              <div className="mt-3 rounded-md border border-line-2 bg-surface-3 p-2.5">
-                <p className="text-[10px] uppercase tracking-wide text-txt-dim">{terrain ? 'Ordre de grandeur du terrain' : 'Ordre de grandeur du bien'}</p>
-                <p className="mt-1 flex justify-between gap-2 text-[12.5px] text-txt-hi">
-                  {/* ESTIMER-2 — le libellé « quelle surface a servi » vient du back (ligne), identique au PDF. */}
-                  <span className="text-txt-dim">{terrain ? `Terrain ${fmtM2(e.valeur_indicative.surface_m2)}` : (e.valeur_indicative.ligne ?? `Surface (${fmtM2(e.valeur_indicative.surface_m2)})`)} × {fmtInt(e.valeur_indicative.eur_m2)} €/m²</span>
-                  <span className="shrink-0 font-semibold">{fmtInt(e.valeur_indicative.valeur_eur)} €</span>
-                </p>
-                {e.valeur_indicative.valeur_basse != null && e.valeur_indicative.valeur_haute != null && (
-                  <p className="mt-1 flex justify-between gap-2 text-[12px] text-txt-dim">
-                    <span>Fourchette</span><span className="shrink-0">{fmtInt(e.valeur_indicative.valeur_basse)} – {fmtInt(e.valeur_indicative.valeur_haute)} €</span>
-                  </p>
-                )}
-                {!terrain && e.valeur_indicative.note && <p className="mt-1.5 text-[11px] leading-snug text-txt-mut">{e.valeur_indicative.note}</p>}
-              </div>
-            )}
-            {/* Lecture foncière (parcelle bâtie) — comme la variante lien. */}
-            {!terrain && e?.lecture_fonciere && (
-              <div className="mt-2 rounded-md border border-line-2 bg-surface-3 p-2.5">
-                <p className="text-[10px] uppercase tracking-wide text-txt-dim">Lecture foncière · valeur du terrain</p>
-                <p className="mt-1 text-lg font-semibold leading-none text-mint">{fmtInt(e.lecture_fonciere.valeur_eur)} €</p>
-                <p className="mt-0.5 text-[12px] text-txt-dim">{fmtM2(e.lecture_fonciere.surface_m2)} × {fmtInt(e.lecture_fonciere.eur_m2)} €/m² de terrain nu{e.lecture_fonciere.perimetre ? ` · ${e.lecture_fonciere.perimetre}` : ''}</p>
-                {e.lecture_fonciere.pct_du_bati != null && <p className="mt-1 text-[11px] text-txt-mut">soit {fmtInt(e.lecture_fonciere.pct_du_bati)} % de l’ordre de grandeur bâti.</p>}
-              </div>
-            )}
-          </>
-        )}
-      </section>
-
-      {/* ANNONCE-5 — les 8 ventes comparables, accordéon FERMÉ par défaut (mêmes lignes que le PDF). */}
-      {(e?.comparables?.length ?? 0) > 0 && (
-        <details className={SECTION}>
-          <summary className="cursor-pointer text-sm font-medium text-txt-hi">{terrain ? `Les ventes de terrain nu ${rayonTxt}` : 'Les ventes comparables'}{e?.n_total != null ? ` (${fmtInt(e.n_total)})` : ''}</summary>
-          {/* RECETTE-4 — le tableau TIENT SANS DÉFILEMENT HORIZONTAL : police réduite (10 px), colonnes
-              resserrées (padding serré), prix et €/m² sur UNE ligne (tabular-nums + nowrap). */}
-          <div className="mt-2">
-            <table className="w-full table-fixed text-[10px] tabular-nums">
-              <thead>
-                <tr className="text-left text-txt-dim">
-                  <th scope="col" className="pb-1 pr-1 font-medium">Date</th><th scope="col" className="pb-1 pr-1 font-medium">Type</th>
-                  <th scope="col" className="pb-1 pr-1 text-right font-medium">Surf.</th><th scope="col" className="pb-1 pr-1 text-right font-medium">Prix</th>
-                  <th scope="col" className="pb-1 pr-1 text-right font-medium">€/m²</th><th scope="col" className="pb-1 text-right font-medium">Dist.</th>
-                </tr>
-              </thead>
-              <tbody>
-                {e!.comparables!.map((c, i) => (
-                  <tr key={i} className="border-t border-line-2 text-txt-hi">
-                    <td className="py-1 pr-1 whitespace-nowrap">{c.date ?? ''}</td><td className="py-1 pr-1 truncate">{c.type ?? ''}</td>
-                    <td className="py-1 pr-1 text-right whitespace-nowrap">{c.surface_m2 != null ? fmtM2(c.surface_m2) : ''}</td>
-                    <td className="py-1 pr-1 text-right whitespace-nowrap">{c.prix_eur != null ? `${fmtInt(c.prix_eur)} €` : ''}</td>
-                    <td className="py-1 pr-1 text-right whitespace-nowrap">{c.prix_m2 != null ? fmtInt(c.prix_m2) : ''}</td>
-                    <td className="py-1 text-right whitespace-nowrap">{c.distance_m != null ? `${fmtInt(c.distance_m)} m` : ''}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p className="mt-1.5 text-[11px] leading-snug text-txt-mut">
-            {(() => { const autres = Math.max(0, (e?.n_total ?? 0) - (e?.comparables?.length ?? 0)); const pl = terrain ? 'terrain nu' : (e?.type_label_pluriel ?? 'biens'); return autres > 0 ? `${fmtInt(autres)} autre${autres > 1 ? 's' : ''} vente${autres > 1 ? 's' : ''} ${dePl(pl)} ${rayonTxt}. ` : '' })()}
-            Source : DVF, ventes {dePl(terrain ? 'terrain nu' : (e?.type_label_pluriel ?? 'biens'))}{(terrain ? fmtPeriode(e?.comparables_periode) : periode) ? `, ${terrain ? fmtPeriode(e?.comparables_periode) : periode}` : ''}.
-          </p>
-        </details>
-      )}
-
-      {/* RECETTE-4 — section « Le foncier » supprimée de l'écran (zone/hauteur/SDP restent dans la fiche
-          parcelle, ouverte par le lien remonté sous les tuiles). */}
-
-      <ExportPdf url={docAnalyseAnnonceUrl(idu, surfValide)} />
-    </Corps>
+    <p data-estimer-derniere-vente className="truncate text-[11px] leading-snug text-txt-dim">
+      <span className="text-txt-mut">Dernière vente :</span> {dv.date}
+      {dv.surface_m2 != null ? ` · ${fmtM2(dv.surface_m2)}` : ''}
+      {dv.prix_eur != null && <> · <span className="font-semibold text-txt-hi">{fmtInt(dv.prix_eur)} €</span></>}
+    </p>
   )
 }
 
-// ════════════════════════════════════════ RAPPORT ANNONCE ════════════════════════════════════════
+// ── « Ce que LABUSE a mesuré » : en puces, UNIQUEMENT ce qui est connu ──
+function Mesures({ m, typeBien }: { m: Estimer3Mesures; typeBien: string }) {
+  const typeLabel = typeBien === 'maison' ? 'Maison' : typeBien === 'appartement' ? 'Appartement' : 'Terrain nu'
+  const puces: string[] = [typeLabel]
+  if (m.terrain_m2) puces.push(`Terrain ${fmtM2(m.terrain_m2)}`)
+  if (m.emprise_bati_m2) puces.push(`Bâti ${fmtM2(m.emprise_bati_m2)} au sol`)
+  if (m.niveaux) puces.push(`${m.niveaux} niveau${m.niveaux > 1 ? 'x' : ''}`)
+  if (m.piscine?.presente) puces.push('Piscine')
+  if (m.pente) puces.push(`Pente ${m.pente.pct} %`)
+  return (
+    <section>
+      <p className={SECTION_TITRE}>Ce que LABUSE a mesuré</p>
+      <div className="mt-1.5 flex flex-wrap gap-1.5">
+        {puces.map((p) => (
+          <span key={p} className="rounded-md border border-line-2 bg-surface-3 px-2 py-1 text-[11px] leading-none text-txt">{p}</span>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+// ── La jauge à deux bandes (servies telles quelles par l'API) : claire = « 3 fois sur 4 » (Q3),
+//    foncée = « 1 fois sur 2 » (médian), repère central sur la valeur estimée. ──
+function Jauge({ valeur, basse, haute, basseQ3, hauteQ3 }: {
+  valeur: number; basse: number; haute: number; basseQ3: number; hauteQ3: number
+}) {
+  const lo = Math.min(basseQ3, basse)
+  const hi = Math.max(hauteQ3, haute)
+  const span = hi - lo || 1
+  const pct = (x: number) => Math.max(0, Math.min(100, ((x - lo) / span) * 100))
+  const g = pct(basse), d = pct(haute), c = pct(valeur)
+  return (
+    <div className="relative mt-2 h-2.5 w-full rounded-full bg-mint/15" aria-hidden>
+      <div className="absolute inset-y-0 rounded-full bg-mint/45" style={{ left: `${g}%`, width: `${Math.max(2, d - g)}%` }} />
+      <div className="absolute top-1/2 h-3.5 w-0.5 -translate-y-1/2 rounded-full bg-mint" style={{ left: `calc(${c}% - 1px)` }} />
+    </div>
+  )
+}
+
+// ── La valeur estimée : montant + fiabilité + jauge deux bandes + méthode servie ──
+function ValeurEstimee({ e, typeBien, commune }: { e: Estimer3Rapport['estimation']; typeBien: string; commune: string | null }) {
+  const fi = fiab(e.fiabilite_mot)
+  const typePl = typeBien === 'maison' ? 'maisons' : typeBien === 'appartement' ? 'appartements' : 'terrains'
+  const methode = e.methode_prix === 'semblable' ? 'Biens semblables' : 'Prix du secteur'
+  const ligneMethode = (
+    <p className="mt-2 text-[11px] leading-snug text-txt-mut">
+      <strong className="font-medium text-txt-dim">{methode}</strong> · mesuré sur les ventes réelles {dePl(typePl)}{commune ? ` à ${commune}` : ''}.
+    </p>
+  )
+  // DÉFAUT B (Vic, correction) — sur un bien bâti, AUCUNE valeur de terrain n'est affichée (ni bandeau,
+  // ni bloc) : mesuré au banc, la retenir dégrade la précision. La fiabilité reste celle du banc.
+
+  // DÉFAUT A (Vic) — surface habitable inconnue + bande « 3 fois sur 4 » trop large : PAS de valeur totale.
+  // On sert le prix au m² du secteur avec sa fourchette, et on invite à saisir la surface (la valeur et ses
+  // deux bandes reviennent dès qu'elle est saisie — l'API lève le masque).
+  if (e.total_masque && e.eur_m2 != null) {
+    return (
+      <section className={SECTION} role="status" aria-live="polite">
+        <p className={SECTION_TITRE}>Prix au m²</p>
+        <div className="mt-1 flex flex-wrap items-center gap-2">
+          <span className="text-[26px] font-semibold leading-none text-txt-hi">{fmtInt(e.eur_m2)} €/m²</span>
+          <Badge ton={fi.ton} point>Fiabilité {fi.mot.toLowerCase()}</Badge>
+        </div>
+        {e.eur_m2_bas != null && e.eur_m2_haut != null && (
+          <p className="mt-1 text-[12px] text-txt-dim">de {fmtInt(e.eur_m2_bas)} à {fmtInt(e.eur_m2_haut)} €/m²</p>
+        )}
+        <p data-estimer-invite-surface className="mt-2 rounded-md border border-mint/30 bg-mint/[0.06] px-2.5 py-2 text-[11px] leading-snug text-txt-dim">
+          Saisissez la surface habitable ci-dessus pour obtenir une valeur totale et ses deux fourchettes. Sans elle, la fourchette serait trop large pour un montant fiable.
+        </p>
+        {ligneMethode}
+      </section>
+    )
+  }
+  if (e.valeur_eur == null) {
+    return (
+      <section className={SECTION} role="status" aria-live="polite">
+        <p className={SECTION_TITRE}>Valeur estimée</p>
+        <p className="mt-1 text-[12px] leading-snug text-txt-dim">
+          Indisponible — pas assez de ventes comparables dans le secteur pour un repère de prix.
+        </p>
+      </section>
+    )
+  }
+  const bq = e.valeur_basse_q3, hq = e.valeur_haute_q3, bm = e.valeur_basse, hm = e.valeur_haute
+  return (
+    <section className={SECTION} role="status" aria-live="polite">
+      <p className={SECTION_TITRE}>Valeur estimée</p>
+      <div className="mt-1 flex flex-wrap items-center gap-2">
+        <span className="text-[26px] font-semibold leading-none text-txt-hi">{fmtInt(e.valeur_eur)} €</span>
+        <Badge ton={fi.ton} point>Fiabilité {fi.mot.toLowerCase()}</Badge>
+      </div>
+      {bm != null && hm != null && bq != null && hq != null && (
+        <>
+          <Jauge valeur={e.valeur_eur} basse={bm} haute={hm} basseQ3={bq} hauteQ3={hq} />
+          <div className="mt-2 space-y-1">
+            <div className="flex items-center justify-between gap-2 text-[12px]">
+              <span className="text-txt-dim">1 fois sur 2</span>
+              <span className="font-medium tabular-nums text-txt-hi">{fmtInt(bm)} – {fmtInt(hm)} €</span>
+            </div>
+            <div className="flex items-center justify-between gap-2 text-[12px]">
+              <span className="text-txt-dim">3 fois sur 4</span>
+              <span className="tabular-nums text-txt-dim">{fmtInt(bq)} – {fmtInt(hq)} €</span>
+            </div>
+          </div>
+        </>
+      )}
+      {ligneMethode}
+    </section>
+  )
+}
+
+// ── Les ventes retenues : chaque ligne se décoche (l'API recalcule) ──
+function VentesRetenues({ ventes, ecartees, onToggle }: {
+  ventes: Estimer3Vente[]; ecartees: Set<string>; onToggle: (id: string) => void
+}) {
+  if (!ventes.length) return null
+  // Une mutation peut arriver deux fois (plusieurs lots d'un même acte) : on ne garde qu'une ligne par
+  // identifiant pour l'affichage (clé stable, pas de doublon à l'écran).
+  const vues = new Set<string>()
+  const uniques = ventes.filter((v) => (vues.has(v.id) ? false : (vues.add(v.id), true)))
+  return (
+    <section>
+      <div className="flex items-baseline justify-between gap-2">
+        <p className={SECTION_TITRE}>Les ventes retenues</p>
+        <span className="text-[10px] text-txt-mut">décochez pour écarter</span>
+      </div>
+      {/* RECETTE — rien de tronqué : date, surface habitable, surface du terrain, prix, distance, tous
+          lisibles, sur DEUX lignes si nécessaire (la ligne 2 passe sous la case à cocher). */}
+      <ul className="mt-1.5 flex flex-col gap-1">
+        {uniques.map((v) => {
+          const off = ecartees.has(v.id)
+          return (
+            <li key={v.id}>
+              <label className={`flex cursor-pointer items-start gap-2 rounded-md border px-2 py-1.5 text-[11px] ${off ? 'border-line-2 bg-surface-2 opacity-50' : 'border-line-2 bg-surface-3'}`}>
+                <input type="checkbox" checked={!off} onChange={() => onToggle(v.id)}
+                  className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-mint" aria-label={`Vente ${v.date ?? ''} — ${off ? 'écartée' : 'retenue'}`} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="tabular-nums text-txt-dim">{v.date ?? ''}</span>
+                    <span className="tabular-nums font-medium text-txt-hi">{v.prix_eur != null ? `${fmtInt(v.prix_eur)} €` : ''}</span>
+                  </div>
+                  <div className="mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 tabular-nums text-txt-dim">
+                    <span>{v.surface_m2 != null ? `${fmtM2(v.surface_m2)} hab.` : '— hab.'}</span>
+                    {/* terrain nul/absent (DVF ne l'a pas renseigné) → on ne montre pas « 0 m² terrain ». */}
+                    <span>{v.terrain_m2 ? `${fmtM2(v.terrain_m2)} terrain` : 'terrain non renseigné'}</span>
+                    {v.distance_m != null && <span>· {fmtInt(v.distance_m)} m</span>}
+                  </div>
+                </div>
+              </label>
+            </li>
+          )
+        })}
+      </ul>
+    </section>
+  )
+}
+
+// ── « En vente en ce moment · Radar » : les 5 annonces similaires LES PLUS PROCHES (commune + distance) ;
+//    le bloc n'apparaît pas s'il n'y en a aucune à proximité. ──
+const fmtDist = (m?: number | null): string | null =>
+  m == null ? null : (m >= 1000 ? `${(m / 1000).toFixed(1).replace('.', ',')} km` : `${fmtInt(m)} m`)
+function RadarEnVente({ radar }: { radar: Estimer3Rapport['radar'] }) {
+  if (!radar?.biens?.length) return null
+  return (
+    <section>
+      <p className={SECTION_TITRE}>En vente en ce moment · Radar</p>
+      <ul className="mt-1.5 flex flex-col gap-1">
+        {radar.biens.map((b, i) => (
+          <li key={i} className="flex items-start justify-between gap-2 rounded-md border border-line-2 bg-surface-3 px-2 py-1.5 text-[11px]">
+            <div className="min-w-0 flex-1">
+              <div className="text-txt">
+                {[b.type, b.pieces != null ? `${b.pieces} p.` : null, b.surface_m2 != null ? fmtM2(b.surface_m2) : null].filter(Boolean).join(' · ')}
+              </div>
+              <div className="mt-0.5 flex flex-wrap gap-x-1.5 text-[10.5px] text-txt-dim">
+                {b.commune && <span>{b.commune}</span>}
+                {fmtDist(b.distance_m) && <span>· {fmtDist(b.distance_m)}</span>}
+              </div>
+            </div>
+            <span className="shrink-0 tabular-nums text-txt-dim">{b.prix_affiche_eur != null ? `${fmtInt(b.prix_affiche_eur)} € affiché` : ''}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
+// ── La question UNIQUE : surface habitable (+ pièces pour l'appartement). Terrain nu : aucune. ──
+function Question({ rapport, surfaceStr, onSurfaceChange, onSurfaceCommit, surfaceTouchee, pieces, onPieces }: {
+  rapport: Estimer3Rapport
+  surfaceStr: string; onSurfaceChange: (v: string) => void; onSurfaceCommit: () => void; surfaceTouchee: boolean
+  pieces: number | null; onPieces: (n: number) => void
+}) {
+  const qSurface = rapport.questions.find((q) => q.cle === 'surface_hab')
+  const qPieces = rapport.questions.find((q) => q.cle === 'pieces')
+  if (!qSurface) return null
+  const detail = rapport.estimation.surface_hab_detail
+  const masque = !!rapport.estimation.total_masque
+  const estLabuse = rapport.mesures.surface_hab_estimee_m2
+  // badge : « saisie » si l'utilisateur a entré la valeur ; sinon « connue » (vente DVF) / « estimée »
+  // (calcul depuis le bâti). Quand le total est masqué, le champ est VIDE → pas de badge.
+  const badge: 'connue' | 'estimée' | 'saisie' | null =
+    surfaceTouchee ? 'saisie' : (masque ? null : (detail?.badge ?? 'estimée'))
+  const texte = masque
+    ? `LABUSE estime ${estLabuse != null ? `≈ ${estLabuse} m²` : 'la surface'}${detail?.texte ? ` — ${detail.texte}` : ''} Saisissez la surface réelle pour obtenir une valeur totale.`
+    : (surfaceTouchee ? 'Votre surface. L’estimation s’appuie sur cette valeur.'
+        : (detail?.texte ?? 'Surface habitable estimée depuis le bâti (LiDAR).'))
+  return (
+    <section className={SECTION}>
+      <p className={SECTION_TITRE}>Surface habitable</p>
+      <div className="mt-1.5 flex items-center gap-2">
+        <input
+          data-estimer-surface type="text" inputMode="numeric"
+          className="h-10 w-24 rounded-md border border-line-2 bg-surface-3 px-2 text-[22px] font-semibold tabular-nums text-txt-hi placeholder:text-[13px] placeholder:font-normal placeholder:text-txt-mut focus:outline-none focus:border-mint/60"
+          value={surfaceStr}
+          placeholder={masque ? 'à saisir' : ''}
+          onChange={(e) => onSurfaceChange(e.target.value.replace(/[^\d]/g, ''))}
+          onBlur={onSurfaceCommit}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); (e.target as HTMLInputElement).blur() } }}
+          aria-label="Surface habitable en m²" />
+        <span className="text-[13px] text-txt-dim">m²</span>
+        {badge && (
+          <Badge ton={badge === 'estimée' ? 'neutre' : 'vert'} data-estimer-surface-badge>{badge}</Badge>
+        )}
+      </div>
+      <p className="mt-1.5 text-[11px] leading-snug text-txt-mut">{texte}</p>
+      {qPieces && (
+        <div className="mt-3">
+          <p className="text-[11px] text-txt-dim">Nombre de pièces</p>
+          <div className="mt-1 flex flex-wrap gap-1">
+            {(qPieces.options ?? [2, 3, 4, 5, '6+']).map((opt) => {
+              const n = typeof opt === 'number' ? opt : 6
+              const actif = pieces === n
+              return (
+                <button key={String(opt)} data-estimer-pieces onClick={() => onPieces(n)}
+                  className={`rounded-md border px-2.5 py-1 text-[12px] tabular-nums transition-colors ${actif ? 'border-mint/50 bg-mint/15 text-txt-hi' : 'border-line-2 bg-surface-3 text-txt-dim hover:text-txt-hi'}`}>
+                  {opt}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </section>
+  )
+}
+
+// ── L'écran complet dès qu'une parcelle est choisie (lit le point unique estimation3). La boîte
+//    parcelle (EntreeParcelle) est rendue AU-DESSUS par le parent — ici, uniquement l'estimation. ──
+function Estimer3({ idu }: { idu: string }) {
+  // Saisie locale : la surface est COMMISE au blur/Entrée (pas à chaque frappe) ; pièces & décochages
+  // s'appliquent tout de suite. La requête se re-joue sur (surface commise, pièces, ventes écartées).
+  const [surfaceStr, setSurfaceStr] = useState('')
+  const [surfaceCommit, setSurfaceCommit] = useState<number | null>(null)
+  const [surfaceTouchee, setSurfaceTouchee] = useState(false)
+  const [pieces, setPieces] = useState<number | null>(null)
+  const [ecartees, setEcartees] = useState<Set<string>>(new Set())
+  // la parcelle change → on repart de zéro (nouvelle estimation).
+  useEffect(() => {
+    setSurfaceStr(''); setSurfaceCommit(null); setSurfaceTouchee(false); setPieces(null); setEcartees(new Set())
+  }, [idu])
+
+  const ecartList = Array.from(ecartees).sort()
+  const q = useQuery({
+    queryKey: ['estimer3', idu, surfaceCommit, pieces, ecartList.join(',')],
+    queryFn: () => getEstimation3(idu, { surface_hab: surfaceCommit, pieces, ecartees: ecartList }),
+    placeholderData: (prev) => prev,
+  })
+  const r = q.data
+
+  // Préremplissage UNE fois depuis la surface servie (DVF ou estimée) — SAUF quand le total est masqué :
+  // là le champ reste VIDE (l'estimation de LABUSE est montrée en indication dessous), on ne remplit pas.
+  useEffect(() => {
+    if (surfaceTouchee || surfaceStr) return
+    if (r?.estimation?.total_masque) return
+    const pre = r?.questions.find((x) => x.cle === 'surface_hab')?.prerempli ?? r?.mesures.surface_hab_estimee_m2
+    if (pre != null) setSurfaceStr(String(pre))
+  }, [r, surfaceTouchee, surfaceStr])
+
+  const commitSurface = () => {
+    const n = surfaceStr.trim() ? Math.round(Number(surfaceStr)) : null
+    const val = n != null && Number.isFinite(n) && n > 0 ? n : null
+    setSurfaceCommit(val)
+    const pre = r?.questions.find((x) => x.cle === 'surface_hab')?.prerempli ?? r?.mesures.surface_hab_estimee_m2 ?? null
+    setSurfaceTouchee(val != null && val !== pre)
+  }
+  const toggle = (id: string) => setEcartees((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
+
+  if (q.isLoading) return <Chargement />
+  if (q.isError || !r || r.erreur) {
+    return <ErrorState message={r?.note ?? 'Impossible de charger l’estimation de cette parcelle.'} retry={() => q.refetch()} />
+  }
+
+  const terrain = r.type_bien === 'terrain'
+  // Le PDF (route /analyse-annonce) partage le MÊME point : mêmes chiffres écran == document.
+  const pdfUrl = docAnalyseAnnonceUrl(idu, surfaceCommit)
+
+  return (
+    <>
+      <DerniereVente dv={r.derniere_vente} />
+      <Mesures m={r.mesures} typeBien={r.type_bien} />
+      {!terrain && (
+        <Question rapport={r} surfaceStr={surfaceStr}
+          onSurfaceChange={(v) => { setSurfaceStr(v) }}
+          onSurfaceCommit={commitSurface} surfaceTouchee={surfaceTouchee}
+          pieces={pieces} onPieces={(n) => setPieces(n)} />
+      )}
+      <ValeurEstimee e={r.estimation} typeBien={r.type_bien} commune={r.commune} />
+      <VentesRetenues ventes={r.ventes_retenues} ecartees={ecartees} onToggle={toggle} />
+      <RadarEnVente radar={r.radar} />
+      <p className="text-[11px] leading-snug text-txt-mut">
+        LABUSE ne connaît ni l’état du bien ni sa vue : ce prix est un repère de marché, pas une expertise.
+      </p>
+      <ExportPdf url={pdfUrl} />
+    </>
+  )
+}
+
+// ════════════════════════════════════════ RAPPORT ANNONCE (lien) ════════════════════════════════════════
 function pairs(entries: { k: string; v: string }[]) {
   return (
     <div className="grid grid-cols-2 gap-x-3 gap-y-2">
@@ -343,8 +445,6 @@ function RapportAnnonce({ res }: { res: AnnonceAnalyse }) {
   const lf = res.lectures?.fonciere
   const cm = res.commune
 
-  // ANNONCE-1-FIX (pt 3) — « non précisé dans l'annonce » est RÉSERVÉ aux champs ATTENDUS pour ce type
-  // et absents. Un champ non applicable au type (ex. Pièces sur un terrain) n'apparaît PAS du tout.
   const NP = 'non précisé dans l’annonce'
   const prixM2 = a.prix_m2 != null ? ` · ${fmtInt(a.prix_m2)} €/m²` : ''
   const rows: { k: string; v: string }[] = [
@@ -358,7 +458,6 @@ function RapportAnnonce({ res }: { res: AnnonceAnalyse }) {
     rows.push({ k: 'Pièces', v: a.pieces != null ? String(a.pieces) : NP })
     if (a.type === 'maison') rows.push({ k: 'Terrain', v: a.surface_terrain != null ? fmtM2(a.surface_terrain) : NP })
   } else {
-    // type inconnu : on n'affirme aucun attendu → on ne montre que ce qui est réellement présent.
     if (a.surface_hab != null) rows.push({ k: 'Surface', v: `${fmtM2(a.surface_hab)}${prixM2}` })
     if (a.pieces != null) rows.push({ k: 'Pièces', v: String(a.pieces) })
     if (a.surface_terrain != null) rows.push({ k: 'Terrain', v: fmtM2(a.surface_terrain) })
@@ -384,7 +483,6 @@ function RapportAnnonce({ res }: { res: AnnonceAnalyse }) {
         <p className="mt-2 text-[11px] leading-snug text-txt-mut">Seules les informations présentes dans l’annonce sont affichées.</p>
       </section>
 
-      {/* ANNONCE-5 — les DEUX lectures CHIFFRÉES (la phrase « valeur surtout foncière » sans chiffre disparaît). */}
       <section className={SECTION}>
         <h3 className="text-sm font-medium text-txt-hi">Prix face au marché</h3>
         {(lb || lf) ? (
@@ -443,21 +541,35 @@ function RapportAnnonce({ res }: { res: AnnonceAnalyse }) {
   )
 }
 
-// ══════════════════════════════════════════ ÉCRAN D'ENTRÉE ══════════════════════════════════════════
+// ══════════════════════════════════════════ ÉCRAN ESTIMER ══════════════════════════════════════════
 export function AnalyserAnnonce() {
   const toggleOutils = useApp((s) => s.toggleOutils)
   const focusParcelle = useApp((s) => s.focusParcelle)
   const setModuleMap = useApp((s) => s.setModuleMap)
   const setFlyTo = useApp((s) => s.setFlyTo)
+  const selectedIdu = useApp((s) => s.selectedIdu)
 
   const [etape, setEtape] = useState<Etape>('entree')
   const [parcelle, setParcelle] = useState<string | null>(null)
-  const [erreur, setErreur] = useState<string | null>(null)
+  const [source, setSource] = useState<SourceParcelle>(null)
   const [res, setRes] = useState<AnnonceAnalyse | null>(null)
+  const [erreur, setErreur] = useState<string | null>(null)
 
-  // ANNONCE-1-FIX (pt 2) / ANNONCE-2 (pt 4) — UNE phrase d'erreur, aucun code HTTP ni jargon (le détail
-  // technique part en log côté back). `url_bloquee` n'arrive QUE si le bien est absent du Radar ET que
-  // Leboncoin bloque le fetch (le lookup Radar est tenté d'abord) → la phrase le dit.
+  // `source` (adresse | carte) grise l'autre entrée dans EntreeParcelle ; l'écran reste identique
+  // quelle que soit la provenance (la boîte option A s'affiche dans les deux cas).
+  const choisir = (idu: string, src: 'adresse' | 'carte') => { setParcelle(idu); setSource(src); setEtape('parcelle') }
+
+  // Clic carte : la parcelle sélectionnée est ADOPTÉE (source carte) tant qu'on est sur l'écran d'entrée
+  // ou déjà en mode parcelle — même idiome que les autres outils (selectedIdu suivi en continu).
+  const lastSelected = useRef<string | null>(null)
+  useEffect(() => {
+    if (selectedIdu && selectedIdu !== lastSelected.current && etape !== 'annonce' && !parcelle) {
+      choisir(selectedIdu, 'carte')
+    }
+    lastSelected.current = selectedIdu
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedIdu])
+
   const messageErreur = (erreur?: string): string => {
     switch (erreur) {
       case 'url_bloquee':
@@ -479,28 +591,24 @@ export function AnalyserAnnonce() {
     onError: () => setErreur(messageErreur()),
   })
 
-  // RECETTE-4 — pont Radar « Ce bien » → « Estimer ce bien → » : le lien de l'annonce préremplit l'entrée
-  // LIEN et lance l'analyse au montage (consommé-puis-reset, comme les autres prefills).
+  // Pont Radar « Ce bien » → rapport COMMUNE (lien) ; pont fiche « Estimer » → écran PARCELLE.
   const annonceLienPrefill = useApp((s) => s.annonceLienPrefill)
   const setAnnonceLienPrefill = useApp((s) => s.setAnnonceLienPrefill)
-  // RETOURS-16 (point 4) — fiche → bouton « Estimer » : ouvre DIRECTEMENT l'écran rapport parcelle
-  // sur la parcelle courante (consommé-puis-reset au montage, comme le prefill LIEN du Radar).
   const annonceParcellePrefill = useApp((s) => s.annonceParcellePrefill)
   const setAnnonceParcellePrefill = useApp((s) => s.setAnnonceParcellePrefill)
   useEffect(() => {
     if (annonceParcellePrefill) {
-      setParcelle(annonceParcellePrefill)
-      setEtape('parcelle')
+      choisir(annonceParcellePrefill, 'adresse')
       setAnnonceParcellePrefill(null)
       return
     }
     if (!annonceLienPrefill) return
-    analyse.mutate(annonceLienPrefill)   // pont Radar « Ce bien » — l'entrée lien n'est plus affichée, mais le lien reste analysable
+    analyse.mutate(annonceLienPrefill)
     setAnnonceLienPrefill(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Carte : parcelle zoomée+surlignée (adresse) · commune centrée sans parcelle (lien) · rien (entrée).
+  // Carte : parcelle zoomée+surlignée (parcelle) · commune centrée (lien) · rien (entrée).
   const lastCommune = useRef<string | null>(null)
   useEffect(() => {
     if (etape === 'parcelle' && parcelle) {
@@ -520,51 +628,38 @@ export function AnalyserAnnonce() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [etape, parcelle, res])
 
-  const revenir = () => { setEtape('entree'); setParcelle(null); setErreur(null) }
+  const changerParcelle = () => { setParcelle(null); setSource(null); setEtape('entree') }
 
-  // RETOURS-25 (pt 6) — un clic sur une AUTRE parcelle de la carte relance l'estimation sur elle (à
-  // chaque clic). `focusParcelle(parcelle)` pose selectedIdu = parcelle → on ignore ce cas (garde
-  // `!== parcelle`) pour ne pas boucler ; seule une parcelle VRAIMENT différente relance.
-  const selectedIdu = useApp((s) => s.selectedIdu)
-  const dernierClicEstim = useRef<string | null>(selectedIdu ?? null)
-  useEffect(() => {
-    if (selectedIdu && selectedIdu !== dernierClicEstim.current && selectedIdu !== parcelle) {
-      dernierClicEstim.current = selectedIdu
-      setParcelle(selectedIdu); setEtape('parcelle')
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedIdu])
-
+  // ── Rapport annonce (lien, depuis le Radar) — inchangé ──
   if (etape === 'annonce' && res?.annonce) {
     const a = res.annonce
     const titre = `${a.type ? a.type[0].toUpperCase() + a.type.slice(1) : 'Annonce'}${a.pieces != null ? ` ${a.pieces} pièces` : ''}${a.commune ? ` · ${a.commune}` : ''}`
     const d = a.releve_le ? a.releve_le.split('-').reverse().join('/') : null
     return (
       <>
-        <Entete retour={{ label: 'Retour', onClick: revenir }}
+        <Entete retour={{ label: 'Retour', onClick: () => { setRes(null); setEtape('entree') } }}
           titre={titre} sous={`Annonce Leboncoin${d ? ` · relevée le ${d}` : ''}`} />
         <RapportAnnonce res={res} />
       </>
     )
   }
 
-  // ÉCRAN UNIQUE — boîte parcelle (RETOURS-26 pt 7)
-  // RECETTE-4 — titre « Estimer un bien ». RETOURS-23 (pt 1) — « ← Retour » ferme l'outil.
-  // RETOURS-26 (pt 7) — plus de deux écrans ni de lien « Changer de parcelle » : `EntreeParcelle` tient
-  // les deux états — champ de recherche (vide) → boîte remplie + croix (parcelle choisie). Le rapport
-  // s'affiche sous la boîte. La croix (onChanger) vide et réaffiche le champ.
+  // ── Écran ESTIMER (maquette validée) : un seul écran, la boîte parcelle puis tout dessous ──
   return (
     <>
       <Entete retour={{ label: 'Retour', onClick: toggleOutils }}
         titre="Estimer un bien"
-        sous="Une adresse : LABUSE croise le bien avec le marché et le foncier." />
+        sous="Une adresse ou une parcelle : LABUSE part des ventes réelles de biens semblables." />
       <Corps>
-        <EntreeParcelle source={parcelle ? 'adresse' : null} picked={parcelle} onChanger={revenir}
-          placeholder="Adresse, IDU ou référence (BW0917)"
-          onPick={(idu) => { setParcelle(idu); setEtape('parcelle') }} />
-        {/* le lien d'annonce (pont Radar « Ce bien ») reste analysable ; une erreur éventuelle se dit ici. */}
-        {erreur && <p role="alert" className="text-[12px] leading-snug text-coral">{erreur}</p>}
-        {parcelle && <RapportParcelle idu={parcelle} />}
+        {/* Boîte parcelle COMMUNE (EntreeParcelle, option A) : champ de recherche tant qu'aucune parcelle,
+            puis boîte remplie (adresse + IDU · zone · surface + ✕) à l'affichage instantané. Pas de libellé
+            au-dessus : le sous-titre de l'en-tête le dit déjà. */}
+        <EntreeParcelle source={source} picked={parcelle} onPick={choisir} onChanger={changerParcelle} />
+        {parcelle ? (
+          <Estimer3 idu={parcelle} />
+        ) : (
+          erreur && <p role="alert" className="rounded-md border border-coral/40 bg-surface-3 px-3 py-2 text-[12px] leading-snug text-coral">{erreur}</p>
+        )}
       </Corps>
     </>
   )
