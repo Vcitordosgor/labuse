@@ -343,11 +343,31 @@ l'analyse. Garantie Vic tenue.
 (keep + rebuild). **Mesure du mode rapide : ~27 min < 30 min** (sous le seuil ; pas de report du front —
 et la fenêtre « vide » était de toute façon couverte par le message). foncier-public-1 appliqué nativement.
 
-**Scénarios V2 q_v23** : lancés en mode rapide (conservation exacte + reconstruction « Calcul à compléter »,
-comme ALGO-FIX-1 §5 — donne la répartition pour §C). _Reconstruction enrich île entière différée_ : elle
-recalcule `compute_residuel` LIVE (~3 h en 4 shards) alors que C/E/D_net sont DÉJÀ dans le run résiduel
-seq 18 — redondant ; à faire à la finalisation (après exigu-fix) ou via un lecteur des colonnes persistées.
-Répartition statuts/bandes V2 : _à compléter quand q_v23 fini_.
+**Scénarios V2 q_v23 (mode rapide) — ✅** : 433 229 parcelles, **1 622 s (~27 min)**, 866 458 lignes.
+foncier-public-1 natif. _Reconstruction enrich île différée_ : recalcule `compute_residuel` LIVE (~3 h/4
+shards) alors que C/E/D_net sont DÉJÀ dans seq 18 (redondant) → à faire à la finalisation (après exigu-fix)
+ou via un lecteur des colonnes persistées.
+
+**Répartition statuts V2 q_v23 vs ALGO-FIX-1 §5 (q_v20) — écarts expliqués** :
+
+| Conservation (keep) | q_v20 §5 | q_v23 | Δ |
+|---|---:|---:|---:|
+| Capacité estimée | 151 223 | 150 605 | −618 |
+| **Hors de ce projet** | 144 492 | **146 194** | **+1 702** — équipements publics (FONCIER-PUBLIC-1) |
+| À vérifier | 72 314 | 71 476 | −838 |
+| Aucun ajout | 64 880 | 64 636 | −244 |
+| À différer | 320 | 318 | −2 |
+
+Reconstruction (rebuild) : **COMPUTE_PENDING « Calcul à compléter » 215 241** · OUTSIDE 146 194 · TO_VERIFY
+71 476 · DEFERRED 318. L'absence de « Capacité estimée » (q_v20 §5 en avait 2 562, enrich Entre-Deux +
+Saint-Denis) **vient du mode rapide** (0 enrich) — ce sera comblé par l'enrich (différé). Bandes V2 keep :
+A 6 511 · B 42 954 · C 52 766 · D 48 374 · (0/∅) 282 624. **Foncier public** : 2 198 équipements → « Hors de
+ce projet », 36 151 parcelles de terrain public drapeautées. Totaux 433 229 (keep & rebuild) ✓.
+
+**Lecture** : la V2 q_v23 est cohérente avec ALGO-FIX-1 §5 ; seuls écarts = (1) +1 702 « Hors de ce
+projet » (foncier-public-1, attendu), (2) reconstruction entièrement « Calcul à compléter » (mode rapide,
+enrich différé), (3) micro-décalages du résiduel clippé. **Le faux positif `terrain_exigu` (§D) reste à
+corriger (exigu-fix, §E) avant promotion.**
 
 ---
 
