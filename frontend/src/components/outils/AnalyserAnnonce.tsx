@@ -137,6 +137,41 @@ function ValeurEstimee({ e, typeBien, commune }: { e: Estimer3Rapport['estimatio
   const fi = fiab(e.fiabilite_mot)
   const typePl = typeBien === 'maison' ? 'maisons' : typeBien === 'appartement' ? 'appartements' : 'terrains'
   const methode = e.methode_prix === 'semblable' ? 'Biens semblables' : 'Prix du secteur'
+  const ligneMethode = (
+    <p className="mt-2 text-[11px] leading-snug text-txt-mut">
+      <strong className="font-medium text-txt-dim">{methode}</strong> · mesuré sur les ventes réelles {dePl(typePl)}{commune ? ` à ${commune}` : ''}.
+    </p>
+  )
+  // DÉFAUT B (Vic) — la valeur du terrain seul dépasse l'estimation du bien bâti : on AVERTIT (le plancher
+  // terrain n'améliore pas la précision, mesuré au banc) et la fiabilité est déjà « Limitée » côté API.
+  const avertTerrain = e.terrain_depasse && e.terrain_valeur_eur != null ? (
+    <p data-estimer-avert-terrain className="mt-2 rounded-md border border-amber/40 bg-amber-bg px-2.5 py-2 text-[11px] leading-snug text-amber">
+      La valeur du <strong>terrain seul</strong> ({fmtInt(e.terrain_valeur_eur)} €) dépasse l’estimation du bien bâti : prudence, ce prix n’est qu’un repère. Retenir le terrain comme plancher n’améliore pas la précision (mesuré sur les ventes réelles).
+    </p>
+  ) : null
+
+  // DÉFAUT A (Vic) — surface habitable inconnue + bande « 3 fois sur 4 » trop large : PAS de valeur totale.
+  // On sert le prix au m² du secteur avec sa fourchette, et on invite à saisir la surface (la valeur et ses
+  // deux bandes reviennent dès qu'elle est saisie — l'API lève le masque).
+  if (e.total_masque && e.eur_m2 != null) {
+    return (
+      <section className={SECTION} role="status" aria-live="polite">
+        <p className={SECTION_TITRE}>Prix au m²</p>
+        <div className="mt-1 flex flex-wrap items-center gap-2">
+          <span className="text-[26px] font-semibold leading-none text-txt-hi">{fmtInt(e.eur_m2)} €/m²</span>
+          <Badge ton={fi.ton} point>Fiabilité {fi.mot.toLowerCase()}</Badge>
+        </div>
+        {e.eur_m2_bas != null && e.eur_m2_haut != null && (
+          <p className="mt-1 text-[12px] text-txt-dim">de {fmtInt(e.eur_m2_bas)} à {fmtInt(e.eur_m2_haut)} €/m²</p>
+        )}
+        <p data-estimer-invite-surface className="mt-2 rounded-md border border-mint/30 bg-mint/[0.06] px-2.5 py-2 text-[11px] leading-snug text-txt-dim">
+          Surface habitable <strong className="text-txt-hi">inconnue</strong> : saisissez-la ci-dessus pour obtenir une valeur totale et ses deux fourchettes. Sans elle, une valeur serait trop incertaine.
+        </p>
+        {avertTerrain}
+        {ligneMethode}
+      </section>
+    )
+  }
   if (e.valeur_eur == null) {
     return (
       <section className={SECTION} role="status" aria-live="polite">
@@ -170,9 +205,8 @@ function ValeurEstimee({ e, typeBien, commune }: { e: Estimer3Rapport['estimatio
           </div>
         </>
       )}
-      <p className="mt-2 text-[11px] leading-snug text-txt-mut">
-        <strong className="font-medium text-txt-dim">{methode}</strong> · mesuré sur les ventes réelles {dePl(typePl)}{commune ? ` à ${commune}` : ''}.
-      </p>
+      {avertTerrain}
+      {ligneMethode}
     </section>
   )
 }

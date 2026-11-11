@@ -243,6 +243,34 @@ def test_sert_la_meilleure_des_deux_methodes(db):
 
 
 @pytest.mark.reel
+def test_defaut_a_masque_total_quand_surface_inconnue_et_q3_large(db):
+    """DÉFAUT A (Vic) — 97415000AW1367, surface habitable INCONNUE (estimée au LiDAR) + bande « 3 fois
+    sur 4 » au-delà de ± SEUIL_Q3_MASQUE % : AUCUNE valeur totale ; on sert le €/m² du secteur et sa
+    fourchette. Dès qu'une surface est saisie, le masque tombe et la valeur + ses deux bandes reviennent."""
+    idu = "97415000AW1367"
+    e = E3.rapport3(db, idu, _fiche(db, idu))["estimation"]
+    assert e["surface_connue"] is False and e["precision_q3_pct"] > E3.SEUIL_Q3_MASQUE
+    assert e["total_masque"] is True
+    assert e["valeur_eur"] is None and e["valeur_basse"] is None and e["valeur_haute_q3"] is None
+    assert e["eur_m2"] and e["eur_m2_bas"] and e["eur_m2_haut"]   # le prix au m² + sa fourchette restent servis
+    e2 = E3.rapport3(db, idu, _fiche(db, idu), surface_hab=90)["estimation"]
+    assert e2["surface_connue"] is True and e2["total_masque"] is False
+    assert e2["valeur_eur"] and e2["valeur_basse"] and e2["valeur_haute_q3"]
+
+
+@pytest.mark.reel
+def test_defaut_b_terrain_dominant_avertit_et_limite_sans_plancher(db):
+    """DÉFAUT B (Vic) — 97415000AW1367, la valeur du terrain seul (ancre foncière) dépasse l'estimation
+    bâtie : AVERTISSEMENT + fiabilité « Limitée », et PLANCHER NON appliqué (mesuré au banc no-leak : le
+    retenir dégrade la précision — docs/audit-2026-11/estimer-3/mesure_plancher.py)."""
+    e = E3.rapport3(db, "97415000AW1367", _fiche(db, "97415000AW1367"))["estimation"]
+    assert e["terrain_depasse"] is True
+    assert e["terrain_valeur_eur"] and e["terrain_valeur_eur"] > 0
+    assert e["plancher_terrain_applique"] is False and E3.PLANCHER_TERRAIN_APPLIQUE is False
+    assert e["fiabilite_mot"] == "Limitée"
+
+
+@pytest.mark.reel
 def test_endpoint_estimation3(monkeypatch):
     """L'endpoint POST sert le rapport complet et RECALCULE quand on écarte une vente. Sous pytest,
     `conftest` force l'app sur `labuse_test` (sans DVF/dryrun) : on redirige donc la session de

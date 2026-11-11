@@ -609,6 +609,11 @@ export interface Estimer3Estimation {
   valeur_basse: number | null; valeur_haute: number | null              // « 1 fois sur 2 » (écart médian)
   valeur_basse_q3: number | null; valeur_haute_q3: number | null        // « 3 fois sur 4 » (Q3 prudent)
   eur_m2: number | null
+  // DÉFAUT A — surface inconnue + bande « 3 fois sur 4 » > ±50 % : pas de total, on sert le €/m² et sa fourchette.
+  total_masque?: boolean; surface_connue?: boolean
+  eur_m2_bas?: number | null; eur_m2_haut?: number | null
+  // DÉFAUT B — valeur du terrain seul dominante : avertissement + fiabilité limitée (plancher NON appliqué, mesuré).
+  terrain_depasse?: boolean; terrain_valeur_eur?: number | null; plancher_terrain_applique?: boolean
   precision_pct: number; ecart_median_pct: number; precision_q3_pct: number
   pct_20_mesure?: number | null
   precision_source?: string; precision_perimetre?: string

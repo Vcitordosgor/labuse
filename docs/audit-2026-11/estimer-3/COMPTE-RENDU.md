@@ -296,3 +296,51 @@ Le chemin **lien d'annonce** (Leboncoin) n'est plus une entrée de l'écran (la 
 | `src/labuse/pige/estimer3.py` | `valeur_basse_q3`/`valeur_haute_q3` (bâti + terrain), `surface_utilisee_m2` terrain |
 | `src/labuse/pige/api.py` | `rapport_parcelle` → estimation du PDF sourcée d'ESTIMER-3 (`_est_bloc_depuis_estimer3`) |
 | `tests/coherence_ecrans/test_temoins.py` | banc des documents : écran Estimer == document, 0 écart |
+
+---
+
+# Raccord avec la refonte des outils + 2 défauts (ESTIMER-ECRAN-1, suite)
+
+## Étape 0
+`git merge-base --is-ancestor d8916edc0 origin/main` → **vrai** : la refonte des outils (OUTILS-REFONTE-1) est dans `origin/main`.
+
+## (1) Merge origin/main + boîte parcelle commune
+`origin/main` mergé dans `fix/estimer-3`. **Un seul conflit** (`AnalyserAnnonce.tsx`) : les deux côtés avaient refondu l'écran (le nôtre sur ESTIMER-3, celui d'`origin/main` sur l'ancien rapport). On a **gardé le nouvel écran** et remplacé sa boîte parcelle locale par le **composant commun des outils** `EntreeParcelle` (option A : adresse en gras + « IDU · zone · surface » + ✕, **affichage instantané** via `getParcelApercu`). L'écran rend `<EntreeParcelle>` en tête (recherche tant qu'aucune parcelle, boîte remplie ensuite) puis `<Estimer3>` dessous. `api.ts` a fusionné sans conflit (`getEstimation3` + `getParcelApercu` coexistent).
+
+## (2) Deux défauts vus par Vic
+
+### DÉFAUT A — surface inconnue + bande « 3 fois sur 4 » > ± 50 % → pas de valeur totale
+Quand la surface habitable **n'est pas connue** (ni saisie, ni vente DVF : estimée au LiDAR) **et** que la bande « 3 fois sur 4 » dépasse ± 50 % (`SEUIL_Q3_MASQUE`), l'API **ne sert plus de valeur totale** (`total_masque=True`, `valeur_eur=null`). L'écran affiche le **prix au m² du secteur avec sa fourchette** (`eur_m2`, `eur_m2_bas`–`eur_m2_haut`) et **invite à saisir la surface**. Dès qu'elle est saisie (`surface_connue=True`), le masque tombe : la valeur et ses **deux bandes** reviennent. Même point partagé → le PDF se comporte pareil (pas de total imprimé, €/m² + fourchette).
+
+### DÉFAUT B — valeur du terrain seul > estimation bâtie
+**Mesuré au banc no-leak** (`docs/audit-2026-11/estimer-3/mesure_plancher.py`, 2 060 maisons) : retenir la valeur du terrain comme **plancher** `max(bâti, terrain)` **n'améliore PAS** la précision — il la **dégrade**.
+
+| | écart médian | ±20 % |
+|---|---|---|
+| cas concernés « terrain > bâti » — bâti seul | 29,7 % | 35,3 % |
+| cas concernés — **avec plancher** | 45,2 % | 26,9 % |
+| global toutes maisons — bâti seul | 27,1 % | 38,5 % |
+| global — avec plancher | 29,4 % | 36,2 % |
+
+**Part des cas concernés (terrain > bâti) : 28,6 % des maisons (590/2 060).**
+
+→ Conformément au mandat, **on n'applique PAS le plancher** (`PLANCHER_TERRAIN_APPLIQUE=False`). Quand la valeur du terrain seul (ancre foncière = contenance × €/m² terrain nu du secteur) dépasse l'estimation bâtie, l'écran **avertit** (bandeau ambre) et la **fiabilité est forcée à « Limitée »**. Porté aussi sur le document.
+
+**Cas témoin 97415000AW1367** : terrain 300 000 € > bâti 188 000 €, surface habitable inconnue, Q3 = 66 % → l'écran masque le total (prix au m² 3 423 €/m², de 2 946 à 4 100 €/m² + invite) **et** affiche l'avertissement « terrain seul » + fiabilité limitée. Avec une surface saisie (90 m²), la valeur totale revient (310 000 € + deux bandes).
+
+## Preuves — captures WebKit
+`docs/audit-2026-11/estimer-3/` : `ecran-maison-sans-saisie`, `ecran-maison-surface`, `ecran-appartement`, `ecran-terrain-nu` (boîte commune EntreeParcelle), **`ecran-aw1367-masque`** (défauts A+B), **`ecran-aw1367-surface`** (masque levé).
+
+## Tests / hook
+Mesure : `mesure_plancher.py`. Tests reel `test_estimer3.py` : +2 (`test_defaut_a_masque_total_…`, `test_defaut_b_terrain_dominant_…`), 18/18. Banc des documents (cohérence) inchangé, vert (les témoins masqués ont `valeur_eur=null` des deux côtés → 0 écart). `tsc` 0 · `vitest` 326.
+
+## Fichiers (raccord + défauts)
+
+| Fichier | Rôle |
+|---|---|
+| `frontend/src/components/outils/AnalyserAnnonce.tsx` | boîte parcelle = `EntreeParcelle` commune ; écran masqué (prix au m² + invite) + avertissement terrain |
+| `frontend/src/lib/api.ts` | champs `total_masque`/`eur_m2_bas/haut`/`terrain_depasse`/`terrain_valeur_eur`/`plancher_terrain_applique` |
+| `src/labuse/pige/estimer3.py` | DÉFAUT A (masque + €/m² fourchette) ; DÉFAUT B (ancre foncière, avertissement, fiabilité limitée, plancher non appliqué) |
+| `src/labuse/pige/api.py` | adaptateur PDF : €/m² + fourchette, pas de total masqué, avertissement terrain |
+| `docs/audit-2026-11/estimer-3/mesure_plancher.py` | mesure no-leak du plancher terrain (verdict : n'améliore pas) |
+| `tests/test_estimer3.py` | +2 tests reel (défauts A et B sur AW1367) |

@@ -2457,24 +2457,33 @@ def _est_bloc_depuis_estimer3(db, idu: str, fiche: dict, surface_hab: float | No
     note = ("Ordre de grandeur issu des ventes de biens semblables — un repère de marché, pas une expertise."
             if methode == "semblable"
             else "Ordre de grandeur au prix du secteur — un repère de marché, pas une expertise.")
+    # DÉFAUT B — avertissement « terrain seul dominant » porté AUSSI sur le document (identique à l'écran).
+    if e.get("terrain_depasse") and e.get("terrain_valeur_eur"):
+        note += (f" Attention : la valeur du terrain seul ({_arrondi_mille(e['terrain_valeur_eur'])} €) "
+                 "dépasse l'estimation du bien bâti — repère peu fiable (retenir le terrain comme plancher "
+                 "n'améliore pas la précision, mesuré).")
+    masque = bool(e.get("total_masque"))
     return {
         "type_comparateur": "terrain_nu" if terrain else "bati",
         "type_bien": type_bien, "type_label_pluriel": pl,
         "nature": "nue" if terrain else None,
-        "median": e.get("eur_m2"), "q1": None, "q3": None,
+        # €/m² du secteur + sa fourchette (q1–q3 €/m²) ; servie dans les deux cas (total affiché ou masqué).
+        "median": e.get("eur_m2"), "q1": e.get("eur_m2_bas"), "q3": e.get("eur_m2_haut"),
         "n": e.get("n_comparables"), "n_total": e.get("n_comparables"),
         "radius_m": e.get("radius_m"), "commune_fallback": e.get("commune_fallback"),
         "periode": e.get("periode"),
         "perimetre": ("commune" if e.get("commune_fallback") else "secteur") if terrain else None,
         "precision_pct": e.get("ecart_median_pct"),
         "fiabilite": e.get("fiabilite"), "fiabilite_mot": e.get("fiabilite_mot"),
+        # DÉFAUT A — total masqué (surface inconnue + Q3 trop large) : AUCUNE valeur indicative (le document
+        # montre le €/m² et sa fourchette, comme l'écran, et n'imprime pas de total trompeur).
         "valeur_indicative": ({
             "surface_m2": surf, "eur_m2": e.get("eur_m2"), "valeur_eur": e.get("valeur_eur"),
             "valeur_basse": e.get("valeur_basse"), "valeur_haute": e.get("valeur_haute"),
             "ligne": ligne, "note": note,
-        } if e.get("valeur_eur") is not None else None),
+        } if (e.get("valeur_eur") is not None and not masque) else None),
         "comparables": comps,
-        "note": (None if e.get("valeur_eur") is not None
+        "note": (None if e.get("eur_m2") is not None
                  else "Estimation indisponible — pas assez de ventes comparables dans le secteur."),
     }
 
