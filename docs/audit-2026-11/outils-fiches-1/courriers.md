@@ -1,5 +1,20 @@
 # Courrier propriétaire
 
+<!-- CCM -->
+> **Comment ça marche**
+> 1. On part d'une ou plusieurs parcelles.
+> 2. L'outil retrouve le propriétaire et son adresse, et compose une lettre type.
+> 3. Il n'envoie pas tout seul : le client prépare, LABUSE poste à la main.
+> 4. Il rend un courrier prêt, avec un prix et un délai annoncés.
+> 5. Le prix (2,50 €) est figé et inférieur au coût réel ; rien n'est expédié automatiquement.
+
+**Captures — l'outil en action**
+
+![Courrier propriétaire — Courrier propriétaire sur BZ1065 — étape 2 Relecture, courrier préparé (adressage générique SPF/CERFA), tarif 2,50 €/courrier, bouton « Vérifier l'envoi » ; rien envoyé.](img/courriers.png)
+*Courrier propriétaire sur BZ1065 — étape 2 Relecture, courrier préparé (adressage générique SPF/CERFA), tarif 2,50 €/courrier, bouton « Vérifier l'envoi » ; rien envoyé.*
+
+<!-- CCM -->
+
 Clé interne : `courriers` (num M09) · composant : `frontend/src/components/outils/ModulePanel.tsx` (fonction `M09`, l.1400) · endpoints : `POST /courrier/adressage`, `POST /courrier/composer`, `POST /courrier/demande`, `GET /courrier/demandes`, `GET /courrier/statut`, `POST /courrier/pdf`, `GET/PUT /courrier/admin/config`, `GET/POST/DELETE /courrier/admin/oppositions` (backend `src/labuse/api/courrier.py`, cœur `src/labuse/courrier.py`, `src/labuse/courrier_adressage.py`, `src/labuse/courrier_compose.py`).
 
 ## 1. À quoi il sert, et pour qui

@@ -1,5 +1,20 @@
 # Successions à venir
 
+<!-- CCM -->
+> **Comment ça marche**
+> 1. On choisit une commune.
+> 2. L'outil repère les sociétés au dirigeant âgé (≥ 70 ans) ou les SCI dormantes.
+> 3. Il en déduit une probabilité de transmission à venir (jamais un fait juridique).
+> 4. Il rend une liste de foncier « succession probable ».
+> 5. C'est un signal estimé, avec un risque de faux positifs nominatifs.
+
+**Captures — l'outil en action**
+
+![Successions à venir — Successions à venir — Saint-Paul : 798 parcelles (signal RNE/INPI), cartes « succession probable » avec propriétaire + âge (ex. 84 ans, 94 ans), surface et IDU.](img/successions.png)
+*Successions à venir — Saint-Paul : 798 parcelles (signal RNE/INPI), cartes « succession probable » avec propriétaire + âge (ex. 84 ans, 94 ans), surface et IDU.*
+
+<!-- CCM -->
+
 Clé interne : `successions` (num M28) · composant : `frontend/src/components/outils/Successions.tsx` · endpoint(s) : `GET /modules/successions`
 
 > Audit en lecture seule. Chemins relatifs à `/Users/openclaw/Desktop/labuse-fiches`, numéros de ligne réellement ouverts. Sorties rejouées sur le backend local `http://127.0.0.1:7300` (06/10/2026 du snapshot) et sur la base Postgres `labuse`.

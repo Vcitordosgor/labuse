@@ -1,5 +1,20 @@
 # Prospection solaire
 
+<!-- CCM -->
+> **Comment ça marche**
+> 1. On choisit une commune (piscines) ou une parcelle (toiture).
+> 2. L'outil lit la détection des piscines et le potentiel solaire modélisé des toits.
+> 3. Il estime une puissance et une production (surface de toit × un ratio fixe).
+> 4. Il rend les toits bien exposés et les piscines à équiper, sur la carte.
+> 5. Les données sont gelées à mi-2026 ; la puissance est un ordre de grandeur brut.
+
+**Captures — l'outil en action**
+
+![Prospection solaire — Prospection solaire sur DH0076 — écran de choix des deux modes (💧 Piscines, ☀️ Ensoleillement) avec la parcelle chargée (contour + fiche). Les DEUX modes plantent au clic (boucle de rendu React « Maximum update depth exceeded ») : aucun résultat rempli atteignable dans ce build dev.](img/prospection-solaire.png)
+*Prospection solaire sur DH0076 — écran de choix des deux modes (💧 Piscines, ☀️ Ensoleillement) avec la parcelle chargée (contour + fiche). Les DEUX modes plantent au clic (boucle de rendu React « Maximum update depth exceeded ») : aucun résultat rempli atteignable dans ce build dev.*
+
+<!-- CCM -->
+
 Clé interne : `prospection-solaire` (num M26) · composant : `frontend/src/components/outils/ProspectionSolaire.tsx` · endpoints : `GET /modules/prospection-piscines` (+ `/points`, `/parcelles`, `/liste`, `POST /pas-une-piscine`) et `GET /modules/prospection-solaire/parcelle/{idu}`. L'ancien `GET /modules/prospection-solaire` (liste + CSV) existe encore côté back mais n'est PLUS appelé par le composant refondu (voir §6).
 
 L'outil a **deux chemins** choisis sur l'écran d'entrée (`ProspectionSolaire.tsx:49-71`) : **Piscines** (métier pisciniste) et **Ensoleillement** (métier installateur PV). Les rubriques ci-dessous font une sous-section par chemin quand c'est utile.

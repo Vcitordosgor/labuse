@@ -1,5 +1,23 @@
 # Blocs fonciers
 
+<!-- CCM -->
+> **Comment ça marche**
+> 1. On choisit une commune (ou toute l'île).
+> 2. L'outil regroupe les parcelles qui se touchent et appartiennent à une même société.
+> 3. Il additionne leur surface et leurs droits à bâtir restants.
+> 4. Il rend la liste des « blocs » et leurs parcelles membres, sur la carte.
+> 5. Les gros blocs publics sont masqués par défaut derrière une case.
+
+**Captures — l'outil en action**
+
+![Blocs fonciers — Blocs fonciers de Saint-André — 335 blocs / 304 sociétés ; cartes (SOREXIM 9 parcelles 62 182 m², SIDR 167 parcelles 110 613 m², SUCCESSION SETTAMA, ALBIOMA BOIS-ROUGE…).](img/blocs-fonciers-liste.png)
+*Blocs fonciers de Saint-André — 335 blocs / 304 sociétés ; cartes (SOREXIM 9 parcelles 62 182 m², SIDR 167 parcelles 110 613 m², SUCCESSION SETTAMA, ALBIOMA BOIS-ROUGE…).*
+
+![Blocs fonciers — Bloc SOREXIM (Saint-André) ouvert — 9 parcelles, 62 182 m² surface, 71 740 m² plancher restant estimé, liste des parcelles membres + « Assembler ce bloc ».](img/blocs-fonciers-bloc.png)
+*Bloc SOREXIM (Saint-André) ouvert — 9 parcelles, 62 182 m² surface, 71 740 m² plancher restant estimé, liste des parcelles membres + « Assembler ce bloc ».*
+
+<!-- CCM -->
+
 Clé interne : `blocs-fonciers` (num M29) · composant : `frontend/src/components/outils/Blocs.tsx` · endpoint(s) : `GET /modules/blocs`, `GET /modules/blocs/{bloc_id}`
 
 > Note : le fichier `frontend/src/components/outils/blocB.tsx` (pointé par le mandat) n'est PAS le composant de cet outil : c'est un fichier « BLOC B » qui héberge d'autres modules (O5Servitudes, O6Comparateur, CommunesLegende). Le vrai composant est `Blocs.tsx`. De même, `src/labuse/exports/blocs/` est un répertoire d'exports de la FICHE parcelle (annonce, bilan, gabarit…), sans rapport avec cet outil ; et `tests/test_blocs_documents.py` teste des blocs de contenu ANC/réhabilitation. Aucun de ces trois ne concerne l'outil Blocs fonciers.

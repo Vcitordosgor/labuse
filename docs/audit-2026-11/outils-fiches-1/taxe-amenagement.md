@@ -1,5 +1,20 @@
 # Taxe d'aménagement
 
+<!-- CCM -->
+> **Comment ça marche**
+> 1. On donne une parcelle, une surface à construire et le type (logement ou autre).
+> 2. L'outil prend le taux voté de la commune et le barème national en vigueur.
+> 3. Il calcule l'assiette puis la taxe (part communale + départementale + archéologie).
+> 4. Il rend le montant détaillé de la taxe du projet.
+> 5. Les taux sont ceux ingérés (figés à 2022) ; un taux revoté non réingéré ne serait pas signalé.
+
+**Captures — l'outil en action**
+
+![Taxe d'aménagement — BZ1065 (Saint-Denis) — taxe d'aménagement pour 35 m² taxables : Total à prévoir 1 842 € (assiette 35 m² × 892 €/m² = 31 220 €, taxe d'aménagement 1 707 € + redevance archéologie 125 €).](img/taxe-amenagement.png)
+*BZ1065 (Saint-Denis) — taxe d'aménagement pour 35 m² taxables : Total à prévoir 1 842 € (assiette 35 m² × 892 €/m² = 31 220 €, taxe d'aménagement 1 707 € + redevance archéologie 125 €).*
+
+<!-- CCM -->
+
 Clé interne : `taxe-amenagement` (num K3) · composant : `frontend/src/components/outils/TaxeAmenagement.tsx` · endpoint(s) : `GET /outils/taxe-amenagement` (calcul), `GET /outils/taxe-amenagement/config` (barème), `GET /outils/taxe-amenagement/prefill?idu=…` (contexte parcelle).
 
 ---

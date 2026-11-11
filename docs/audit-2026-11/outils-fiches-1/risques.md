@@ -1,5 +1,20 @@
 # Pièges et risques
 
+<!-- CCM -->
+> **Comment ça marche**
+> 1. On ouvre une parcelle.
+> 2. L'outil croise la parcelle avec toutes les couches de risques et de servitudes connues.
+> 3. Il calcule la part de la parcelle touchée et la classe (rouge/bleu).
+> 4. Il rend la liste des pièges (inondation, littoral, bruit, protections…) avec leur source.
+> 5. « Rien à signaler » peut venir d'une donnée absente sur la commune, pas d'une absence de risque.
+
+**Captures — l'outil en action**
+
+![Pièges et risques — DH0076 (Saint-Paul) — 5 contraintes relevées : Risque naturel PPR (2 % en zone rouge inconstructible), 50 pas géométriques (bande littorale), Droit de préemption DPU ; contour parcelle sur la carte.](img/risques.png)
+*DH0076 (Saint-Paul) — 5 contraintes relevées : Risque naturel PPR (2 % en zone rouge inconstructible), 50 pas géométriques (bande littorale), Droit de préemption DPU ; contour parcelle sur la carte.*
+
+<!-- CCM -->
+
 Clé interne : `risques` (num M10) · composant : `frontend/src/components/outils/ModulePanel.tsx:1862` (`function Risques`) → `frontend/src/components/outils/blocB.tsx:39` (`O5Servitudes`) · endpoint : `GET /servitudes-invisibles/{idu}` (back : `src/labuse/api/servitudes.py:452`)
 
 > Outil issu de la fusion de « Contrôle avant achat » (M10) et « Servitudes invisibles » (O5). Le mode « un lot » (jusqu'à 60 parcelles) a été **retiré** du menu (`ModulePanel.tsx:1864-1866`) ; il ne reste plus qu'une seule voie : **« une parcelle »**. La fonction `M10`/`duediligence` reste exportée pour son test unitaire mais n'est plus câblée. La fiche décrit donc UNE voie.
