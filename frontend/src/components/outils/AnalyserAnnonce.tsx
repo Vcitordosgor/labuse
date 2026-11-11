@@ -93,6 +93,20 @@ function Corps({ children }: { children: React.ReactNode }) {
 
 // ═══════════════════════════ ÉCRAN ESTIMER — PARCELLE (maquette validée) ═══════════════════════════
 
+// ── Dernière vente DE CE BIEN, montrée juste sous la boîte parcelle (JAMAIS dans le calcul) ──
+function DerniereVente({ dv }: { dv: Estimer3Rapport['derniere_vente'] }) {
+  if (!dv || !dv.date) return null
+  const bits = [
+    dv.surface_m2 != null ? fmtM2(dv.surface_m2) : null,
+    dv.prix_eur != null ? `${fmtInt(dv.prix_eur)} €` : null,
+  ].filter(Boolean)
+  return (
+    <p data-estimer-derniere-vente className="text-[11px] leading-snug text-txt-dim">
+      <span className="text-txt-mut">Dernière vente de ce bien :</span> {dv.date}{bits.length ? ` · ${bits.join(' · ')}` : ''}
+    </p>
+  )
+}
+
 // ── « Ce que LABUSE a mesuré » : en puces, UNIQUEMENT ce qui est connu ──
 function Mesures({ m, typeBien }: { m: Estimer3Mesures; typeBien: string }) {
   const typeLabel = typeBien === 'maison' ? 'Maison' : typeBien === 'appartement' ? 'Appartement' : 'Terrain nu'
@@ -160,7 +174,7 @@ function ValeurEstimee({ e, typeBien, commune }: { e: Estimer3Rapport['estimatio
           <p className="mt-1 text-[12px] text-txt-dim">de {fmtInt(e.eur_m2_bas)} à {fmtInt(e.eur_m2_haut)} €/m²</p>
         )}
         <p data-estimer-invite-surface className="mt-2 rounded-md border border-mint/30 bg-mint/[0.06] px-2.5 py-2 text-[11px] leading-snug text-txt-dim">
-          Surface habitable <strong className="text-txt-hi">inconnue</strong> : saisissez-la ci-dessus pour obtenir une valeur totale et ses deux fourchettes. Sans elle, une valeur serait trop incertaine.
+          Saisissez la surface habitable ci-dessus pour obtenir une valeur totale et ses deux fourchettes. Sans elle, la fourchette serait trop large pour un montant fiable.
         </p>
         {ligneMethode}
       </section>
@@ -219,20 +233,27 @@ function VentesRetenues({ ventes, ecartees, onToggle }: {
         <p className={SECTION_TITRE}>Les ventes retenues</p>
         <span className="text-[10px] text-txt-mut">décochez pour écarter</span>
       </div>
+      {/* RECETTE — rien de tronqué : date, surface habitable, surface du terrain, prix, distance, tous
+          lisibles, sur DEUX lignes si nécessaire (la ligne 2 passe sous la case à cocher). */}
       <ul className="mt-1.5 flex flex-col gap-1">
         {uniques.map((v) => {
           const off = ecartees.has(v.id)
           return (
             <li key={v.id}>
-              <label className={`flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1.5 text-[11px] ${off ? 'border-line-2 bg-surface-2 opacity-50' : 'border-line-2 bg-surface-3'}`}>
+              <label className={`flex cursor-pointer items-start gap-2 rounded-md border px-2 py-1.5 text-[11px] ${off ? 'border-line-2 bg-surface-2 opacity-50' : 'border-line-2 bg-surface-3'}`}>
                 <input type="checkbox" checked={!off} onChange={() => onToggle(v.id)}
-                  className="h-3.5 w-3.5 shrink-0 accent-mint" aria-label={`Vente ${v.date ?? ''} — ${off ? 'écartée' : 'retenue'}`} />
-                <span className="w-12 shrink-0 tabular-nums text-txt-dim">{v.date ?? ''}</span>
-                <span className="flex-1 truncate tabular-nums text-txt">
-                  {v.surface_m2 != null ? fmtM2(v.surface_m2) : '—'}{v.terrain_m2 ? ` · ${fmtM2(v.terrain_m2)}` : ''}
-                </span>
-                <span className="shrink-0 tabular-nums font-medium text-txt-hi">{v.prix_eur != null ? `${fmtInt(v.prix_eur)} €` : ''}</span>
-                <span className="w-12 shrink-0 text-right tabular-nums text-txt-mut">{v.distance_m != null ? `${fmtInt(v.distance_m)} m` : ''}</span>
+                  className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-mint" aria-label={`Vente ${v.date ?? ''} — ${off ? 'écartée' : 'retenue'}`} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="tabular-nums text-txt-dim">{v.date ?? ''}</span>
+                    <span className="tabular-nums font-medium text-txt-hi">{v.prix_eur != null ? `${fmtInt(v.prix_eur)} €` : ''}</span>
+                  </div>
+                  <div className="mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 tabular-nums text-txt-dim">
+                    <span>{v.surface_m2 != null ? `${fmtM2(v.surface_m2)} hab.` : '— hab.'}</span>
+                    <span>{v.terrain_m2 != null ? `${fmtM2(v.terrain_m2)} terrain` : '— terrain'}</span>
+                    {v.distance_m != null && <span>· {fmtInt(v.distance_m)} m</span>}
+                  </div>
+                </div>
               </label>
             </li>
           )
@@ -242,7 +263,10 @@ function VentesRetenues({ ventes, ecartees, onToggle }: {
   )
 }
 
-// ── « En vente en ce moment · Radar » : biens similaires s'il y en a (sinon le bloc n'apparaît pas) ──
+// ── « En vente en ce moment · Radar » : les 5 annonces similaires LES PLUS PROCHES (commune + distance) ;
+//    le bloc n'apparaît pas s'il n'y en a aucune à proximité. ──
+const fmtDist = (m?: number | null): string | null =>
+  m == null ? null : (m >= 1000 ? `${(m / 1000).toFixed(1).replace('.', ',')} km` : `${fmtInt(m)} m`)
 function RadarEnVente({ radar }: { radar: Estimer3Rapport['radar'] }) {
   if (!radar?.biens?.length) return null
   return (
@@ -250,10 +274,16 @@ function RadarEnVente({ radar }: { radar: Estimer3Rapport['radar'] }) {
       <p className={SECTION_TITRE}>En vente en ce moment · Radar</p>
       <ul className="mt-1.5 flex flex-col gap-1">
         {radar.biens.map((b, i) => (
-          <li key={i} className="flex items-center justify-between gap-2 rounded-md border border-line-2 bg-surface-3 px-2 py-1.5 text-[11px]">
-            <span className="min-w-0 flex-1 truncate text-txt">
-              {[b.type, b.pieces != null ? `${b.pieces} p.` : null, b.surface_m2 != null ? fmtM2(b.surface_m2) : null].filter(Boolean).join(' · ')}
-            </span>
+          <li key={i} className="flex items-start justify-between gap-2 rounded-md border border-line-2 bg-surface-3 px-2 py-1.5 text-[11px]">
+            <div className="min-w-0 flex-1">
+              <div className="text-txt">
+                {[b.type, b.pieces != null ? `${b.pieces} p.` : null, b.surface_m2 != null ? fmtM2(b.surface_m2) : null].filter(Boolean).join(' · ')}
+              </div>
+              <div className="mt-0.5 flex flex-wrap gap-x-1.5 text-[10.5px] text-txt-dim">
+                {b.commune && <span>{b.commune}</span>}
+                {fmtDist(b.distance_m) && <span>· {fmtDist(b.distance_m)}</span>}
+              </div>
+            </div>
             <span className="shrink-0 tabular-nums text-txt-dim">{b.prix_affiche_eur != null ? `${fmtInt(b.prix_affiche_eur)} € affiché` : ''}</span>
           </li>
         ))}
@@ -271,27 +301,36 @@ function Question({ rapport, surfaceStr, onSurfaceChange, onSurfaceCommit, surfa
   const qSurface = rapport.questions.find((q) => q.cle === 'surface_hab')
   const qPieces = rapport.questions.find((q) => q.cle === 'pieces')
   if (!qSurface) return null
-  const hypothese = surfaceTouchee
-    ? 'Votre surface. L’estimation s’appuie sur cette valeur.'
-    : (rapport.mesures.surface_hab_estimee_ligne
-        ? `Estimée par LABUSE — ${rapport.mesures.surface_hab_estimee_ligne.toLowerCase()}. Corrigez-la : c’est ce qui affine le plus.`
-        : 'Estimée par LABUSE d’après le bâti mesuré. Corrigez-la : c’est ce qui affine le plus.')
+  const detail = rapport.estimation.surface_hab_detail
+  const masque = !!rapport.estimation.total_masque
+  const estLabuse = rapport.mesures.surface_hab_estimee_m2
+  // badge : « saisie » si l'utilisateur a entré la valeur ; sinon « connue » (vente DVF) / « estimée »
+  // (calcul depuis le bâti). Quand le total est masqué, le champ est VIDE → pas de badge.
+  const badge: 'connue' | 'estimée' | 'saisie' | null =
+    surfaceTouchee ? 'saisie' : (masque ? null : (detail?.badge ?? 'estimée'))
+  const texte = masque
+    ? `LABUSE estime ${estLabuse != null ? `≈ ${estLabuse} m²` : 'la surface'}${detail?.texte ? ` — ${detail.texte}` : ''} Saisissez la surface réelle pour obtenir une valeur totale.`
+    : (surfaceTouchee ? 'Votre surface. L’estimation s’appuie sur cette valeur.'
+        : (detail?.texte ?? 'Surface habitable estimée depuis le bâti (LiDAR).'))
   return (
     <section className={SECTION}>
       <p className={SECTION_TITRE}>Surface habitable</p>
       <div className="mt-1.5 flex items-center gap-2">
         <input
           data-estimer-surface type="text" inputMode="numeric"
-          className="h-10 w-24 rounded-md border border-line-2 bg-surface-3 px-2 text-[22px] font-semibold tabular-nums text-txt-hi focus:outline-none focus:border-mint/60"
+          className="h-10 w-24 rounded-md border border-line-2 bg-surface-3 px-2 text-[22px] font-semibold tabular-nums text-txt-hi placeholder:text-[13px] placeholder:font-normal placeholder:text-txt-mut focus:outline-none focus:border-mint/60"
           value={surfaceStr}
+          placeholder={masque ? 'à saisir' : ''}
           onChange={(e) => onSurfaceChange(e.target.value.replace(/[^\d]/g, ''))}
           onBlur={onSurfaceCommit}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); (e.target as HTMLInputElement).blur() } }}
           aria-label="Surface habitable en m²" />
         <span className="text-[13px] text-txt-dim">m²</span>
-        <Badge ton={surfaceTouchee ? 'vert' : 'neutre'} data-estimer-surface-badge>{surfaceTouchee ? 'saisie' : 'estimée'}</Badge>
+        {badge && (
+          <Badge ton={badge === 'estimée' ? 'neutre' : 'vert'} data-estimer-surface-badge>{badge}</Badge>
+        )}
       </div>
-      <p className="mt-1.5 text-[11px] leading-snug text-txt-mut">{hypothese}</p>
+      <p className="mt-1.5 text-[11px] leading-snug text-txt-mut">{texte}</p>
       {qPieces && (
         <div className="mt-3">
           <p className="text-[11px] text-txt-dim">Nombre de pièces</p>
@@ -336,9 +375,11 @@ function Estimer3({ idu }: { idu: string }) {
   })
   const r = q.data
 
-  // Préremplissage UNE fois (tant que l'utilisateur n'a pas touché la surface) depuis la question servie.
+  // Préremplissage UNE fois depuis la surface servie (DVF ou estimée) — SAUF quand le total est masqué :
+  // là le champ reste VIDE (l'estimation de LABUSE est montrée en indication dessous), on ne remplit pas.
   useEffect(() => {
     if (surfaceTouchee || surfaceStr) return
+    if (r?.estimation?.total_masque) return
     const pre = r?.questions.find((x) => x.cle === 'surface_hab')?.prerempli ?? r?.mesures.surface_hab_estimee_m2
     if (pre != null) setSurfaceStr(String(pre))
   }, [r, surfaceTouchee, surfaceStr])
@@ -363,6 +404,7 @@ function Estimer3({ idu }: { idu: string }) {
 
   return (
     <>
+      <DerniereVente dv={r.derniere_vente} />
       <Mesures m={r.mesures} typeBien={r.type_bien} />
       {!terrain && (
         <Question rapport={r} surfaceStr={surfaceStr}
@@ -605,14 +647,14 @@ export function AnalyserAnnonce() {
   // ── Écran ESTIMER (maquette validée) : un seul écran, la boîte parcelle puis tout dessous ──
   return (
     <>
-      <Entete retour={{ label: 'Outils', onClick: toggleOutils }}
+      <Entete retour={{ label: 'Retour', onClick: toggleOutils }}
         titre="Estimer un bien"
         sous="Une adresse ou une parcelle : LABUSE part des ventes réelles de biens semblables." />
       <Corps>
         {/* Boîte parcelle COMMUNE (EntreeParcelle, option A) : champ de recherche tant qu'aucune parcelle,
-            puis boîte remplie (adresse + IDU · zone · surface + ✕) à l'affichage instantané. */}
-        <EntreeParcelle source={source} picked={parcelle} onPick={choisir} onChanger={changerParcelle}
-          titre="Une adresse ou une parcelle" />
+            puis boîte remplie (adresse + IDU · zone · surface + ✕) à l'affichage instantané. Pas de libellé
+            au-dessus : le sous-titre de l'en-tête le dit déjà. */}
+        <EntreeParcelle source={source} picked={parcelle} onPick={choisir} onChanger={changerParcelle} />
         {parcelle ? (
           <Estimer3 idu={parcelle} />
         ) : (

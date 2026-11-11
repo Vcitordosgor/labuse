@@ -518,33 +518,43 @@ def estimation_semblable(db, idu: str, fiche: dict, *, surface_hab: float | None
 #  Radar — biens SEMBLABLES en vente + écart affiché/vendu (seulement s'il est mesurable)
 # ════════════════════════════════════════════════════════════════════════════════════════════════
 _GAP_MIN_SAMPLE = 20            # échantillon minimal d'annonces rattachées à une vente pour servir l'écart
+_RADAR_RAYON_M = 10000          # « à proximité » : rayon autour de la parcelle (annonces au-delà écartées)
+_RADAR_N = 5                    # les CINQ plus proches (mandat)
 
 
-def radar_semblables(db, commune: str | None, type_bien: str | None,
-                     surface_hab: float | None, pieces: int | None, *, n: int = 6) -> dict:
-    """Les biens SIMILAIRES actuellement EN VENTE (Radar) : type, pièces, surface, prix affiché — les
-    plus proches en surface d'abord. + l'écart moyen prix affiché vs prix VENDU, SERVI SEULEMENT s'il est
-    mesurable sur un échantillon suffisant (annonces rattachées à une vente DVF) ; sinon non servi, avec
-    la raison (mandat)."""
+def radar_semblables(db, idu: str | None, commune: str | None, type_bien: str | None, *,
+                     n: int = _RADAR_N) -> dict:
+    """Les biens SIMILAIRES actuellement EN VENTE (Radar) : type, pièces, surface, terrain, prix affiché,
+    COMMUNE et DISTANCE à la parcelle — les CINQ PLUS PROCHES (par distance), uniquement À PROXIMITÉ
+    (rayon `_RADAR_RAYON_M`). Le bloc reste vide s'il n'y a aucune annonce proche. + l'écart moyen prix
+    affiché vs prix VENDU, servi seulement s'il est mesurable (annonces rattachées à une vente DVF)."""
     out = {"biens": [], "ecart_affiche_vendu_pct": None, "ecart_note": None, "ecart_n": 0}
-    if not commune:
-        return out
     tb = type_bien if type_bien in ("maison", "appartement", "terrain") else None
-    rows = db.execute(text(
-        "SELECT b.type_bien, f.pieces, f.surface_hab, f.surface_terrain, f.prix, b.bien_id "
-        "FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id "
-        "WHERE b.commune = :c AND b.statut IN ('active', 'en_vente_longue') "
-        "  AND (CAST(:tb AS text) IS NULL OR b.type_bien = :tb) AND f.prix > 0 "
-        "ORDER BY (CASE WHEN CAST(:s AS double precision) IS NULL OR f.surface_hab IS NULL THEN 1 ELSE 0 END), "
-        "         abs(COALESCE(f.surface_hab, 0) - COALESCE(CAST(:s AS double precision), f.surface_hab, 0)) ASC "
-        "LIMIT :n"),
-        {"c": commune, "tb": tb, "s": surface_hab, "n": n}).mappings().all()
+    if idu:
+        # distance réelle parcelle ↔ annonce (lat/lng du Radar projetés en 2975) ; les 5 plus proches
+        # dans le rayon, toutes communes confondues (une annonce voisine peut être dans une autre commune).
+        rows = db.execute(text(
+            "WITH subj AS (SELECT ST_Centroid(geom_2975) g FROM parcels WHERE idu = :idu) "
+            "SELECT b.type_bien, f.pieces, f.surface_hab, f.surface_terrain, f.prix, b.commune, "
+            "       round(ST_Distance("
+            "         ST_Transform(ST_SetSRID(ST_MakePoint(b.lng, b.lat), 4326), 2975), subj.g))::int AS distance_m "
+            "FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id CROSS JOIN subj "
+            "WHERE b.statut IN ('active', 'en_vente_longue') AND f.prix > 0 "
+            "  AND b.lat IS NOT NULL AND b.lng IS NOT NULL "
+            "  AND (CAST(:tb AS text) IS NULL OR b.type_bien = :tb) "
+            "  AND ST_Distance(ST_Transform(ST_SetSRID(ST_MakePoint(b.lng, b.lat), 4326), 2975), subj.g) <= :ray "
+            "ORDER BY distance_m ASC LIMIT :n"),
+            {"idu": idu, "tb": tb, "ray": _RADAR_RAYON_M, "n": n}).mappings().all()
+    else:
+        rows = []
     out["biens"] = [{
         "type": (r["type_bien"] or "").capitalize() or None,
         "pieces": (int(r["pieces"]) if r["pieces"] else None),
         "surface_m2": (round(float(r["surface_hab"])) if r["surface_hab"] else None),
         "terrain_m2": (round(float(r["surface_terrain"])) if r["surface_terrain"] else None),
         "prix_affiche_eur": (round(float(r["prix"])) if r["prix"] else None),
+        "commune": r["commune"],
+        "distance_m": (int(r["distance_m"]) if r["distance_m"] is not None else None),
     } for r in rows]
     # écart affiché / vendu : moyenne sur les biens VENDUS rattachés à une vente DVF (vendue_ecart_prix).
     g = db.execute(text(
@@ -597,6 +607,43 @@ def _questions_servies(est: dict, type_bien: str) -> list[dict]:
     return out
 
 
+def _derniere_vente_bien(mut: dict | None) -> dict | None:
+    """La DERNIÈRE vente de CE bien (sa propre mutation DVF), MONTRÉE sous la boîte parcelle mais JAMAIS
+    utilisée dans le calcul : mois/année · surface bâtie · prix. None si la parcelle n'a aucune vente."""
+    if not mut or not mut.get("date"):
+        return None
+    d = mut["date"]
+    mmaaaa = f"{d[5:7]}/{d[0:4]}" if isinstance(d, str) and len(d) >= 7 else None
+    return {"date": mmaaaa,
+            "surface_m2": (round(mut["bati_m2"]) if (mut.get("bati_m2") or 0) > 0 else None),
+            "terrain_m2": (round(mut["terrain_m2"]) if (mut.get("terrain_m2") or 0) > 0 else None),
+            "prix_eur": (round(mut["valeur"]) if (mut.get("valeur") or 0) > 0 else None),
+            "nature": mut.get("nature")}
+
+
+def _surface_hab_detail(src: str | None, mut: dict | None, mesures: dict, surface_utilisee) -> dict | None:
+    """Comment la surface habitable servie est CONNUE (badge + texte) : « connue » si elle vient d'une
+    vente DVF (« Surface de la vente de 2025 (DVF) ») ; « estimée » si calculée depuis le bâti (formule
+    complète, LiDAR) ; « saisie » si l'utilisateur l'a entrée."""
+    if src == "saisie":
+        return {"source": "saisie", "badge": "saisie", "texte": "Votre surface."}
+    if src == "vente DVF":
+        an = (mut.get("date") or "")[:4] if mut else ""
+        return {"source": "vente DVF", "badge": "connue", "annee": (int(an) if an else None),
+                "texte": (f"Surface de la vente de {an} (DVF)." if an else "Surface de la dernière vente (DVF).")}
+    # estimée depuis le bâti (LiDAR) — formule complète.
+    emp = mesures.get("emprise_bati_m2")
+    niv = mesures.get("niveaux")
+    if emp and surface_utilisee and emp > 0:
+        ratio = float(surface_utilisee) / float(emp)
+        rf = ("%.1f" % ratio).replace(".", ",")
+        nivlib = (f"{niv} niveau" + ("x" if niv > 1 else "")) if niv else "bâti"
+        return {"source": "estimée", "badge": "estimée",
+                "texte": f"{emp} m² au sol × {nivlib} × {rf}, part habitable moyenne du secteur (LiDAR)."}
+    return {"source": "estimée", "badge": "estimée",
+            "texte": (mesures.get("surface_hab_estimee_ligne") or "Surface habitable estimée depuis le bâti (LiDAR).")}
+
+
 def rapport3(db, idu: str, fiche: dict, *, surface_hab: float | None = None,
              pieces: int | None = None, ecartees=None) -> dict:
     """ESTIMER-3 — le rapport COMPLET de l'outil « Estimer un bien » en trois temps, POINT UNIQUE lu par
@@ -607,6 +654,7 @@ def rapport3(db, idu: str, fiche: dict, *, surface_hab: float | None = None,
     insee = idu[:5]
     commune = db.execute(text("SELECT commune FROM parcels WHERE idu = :idu"), {"idu": idu}).scalar()
     mut = _derniere_mutation_dvf(db, idu)
+    derniere_vente = _derniere_vente_bien(mut)
     nature_mut = mut.get("nature") if mut else None
     nature_parc = _nature_parcelle(db, idu)
     # zone en clair (même lecteur que la fiche).
@@ -645,24 +693,29 @@ def rapport3(db, idu: str, fiche: dict, *, surface_hab: float | None = None,
                                "comparables_desc": None, "repli_note": None},
                 "ventes_retenues": [_vente_retenue({**c, "mid": c.get("date")}, False)
                                     for c in (base.get("comparables") or [])],
+                "derniere_vente": derniere_vente,
                 "questions": [], "questions_abandonnees": QUESTIONS_ABANDONNEES,
                 "precision_par_niveau": {"sans_saisie": prec["ecart_median"]},
-                "radar": radar_semblables(db, commune, "terrain", None, None),
+                "radar": radar_semblables(db, idu, commune, "terrain"),
                 "note_terrain": "Terrain nu : repère de secteur ESTIMER-2 ; la viabilisation n'est pas "
                                 "une donnée mesurable, elle n'est pas demandée."}
 
     est = estimation_semblable(db, idu, fiche, surface_hab=surface_hab, pieces=pieces, ecartees=ecartees)
     type_bien = est["type_bien"]
     mesures = mesures_labuse(db, idu, fiche, nature=type_bien, zone_lib=zone_lib, mut=mut, insee=insee)
+    # comment la surface habitable servie est connue (badge connue/estimée/saisie + texte DVF / formule LiDAR).
+    est["estimation"]["surface_hab_detail"] = _surface_hab_detail(
+        est["estimation"].get("surface_source"), mut, mesures,
+        est["estimation"].get("surface_utilisee_m2"))
     return {
         "idu": idu, "commune": commune, "type_bien": type_bien,
         "mesures": mesures,
         "estimation": est["estimation"],
         "ventes_retenues": est["ventes_retenues"],
+        "derniere_vente": derniere_vente,
         "niveau_info": est["niveau_info"],
         "precision_par_niveau": est["precision_par_niveau"],
         "questions": _questions_servies(est, type_bien),
         "questions_abandonnees": QUESTIONS_ABANDONNEES,
-        "radar": radar_semblables(db, commune, type_bien,
-                                  est["estimation"].get("surface_utilisee_m2"), pieces),
+        "radar": radar_semblables(db, idu, commune, type_bien),
     }

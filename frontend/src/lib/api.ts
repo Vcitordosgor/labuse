@@ -612,6 +612,8 @@ export interface Estimer3Estimation {
   // DÉFAUT A — surface inconnue + bande « 3 fois sur 4 » > ±50 % : pas de total, on sert le €/m² et sa fourchette.
   total_masque?: boolean; surface_connue?: boolean
   eur_m2_bas?: number | null; eur_m2_haut?: number | null
+  // surface habitable : d'où elle vient (badge connue/estimée/saisie + texte DVF ou formule LiDAR).
+  surface_hab_detail?: { source: string; badge: 'connue' | 'estimée' | 'saisie'; annee?: number | null; texte: string } | null
   // DÉFAUT B (corrigé) — sur un bien bâti, aucune valeur de terrain n'est servie (mesuré : la retenir dégrade).
   precision_pct: number; ecart_median_pct: number; precision_q3_pct: number
   pct_20_mesure?: number | null
@@ -636,14 +638,20 @@ export interface Estimer3Question {
 }
 export interface Estimer3Radar {
   biens: { type: string | null; pieces: number | null; surface_m2: number | null;
-           terrain_m2: number | null; prix_affiche_eur: number | null }[]
+           terrain_m2: number | null; prix_affiche_eur: number | null;
+           commune?: string | null; distance_m?: number | null }[]
   ecart_affiche_vendu_pct: number | null; ecart_note: string | null; ecart_n: number
+}
+export interface Estimer3DerniereVente {
+  date: string | null; surface_m2: number | null; terrain_m2: number | null
+  prix_eur: number | null; nature?: string | null
 }
 export interface Estimer3Rapport {
   idu: string; commune: string | null; type_bien: 'maison' | 'appartement' | 'terrain'
   mesures: Estimer3Mesures
   estimation: Estimer3Estimation
   ventes_retenues: Estimer3Vente[]
+  derniere_vente?: Estimer3DerniereVente | null
   niveau_info?: string
   precision_par_niveau?: Record<string, number>
   questions: Estimer3Question[]

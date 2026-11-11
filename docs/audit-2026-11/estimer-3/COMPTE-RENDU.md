@@ -344,3 +344,23 @@ Mesure : `mesure_plancher.py`. Tests reel `test_estimer3.py` : +2 (`test_defaut_
 | `src/labuse/pige/api.py` | adaptateur PDF : €/m² + fourchette, pas de total masqué |
 | `docs/audit-2026-11/estimer-3/mesure_plancher.py` | mesure no-leak du plancher terrain (verdict : n'améliore pas) |
 | `tests/test_estimer3.py` | +2 tests reel (défauts A et B sur AW1367) |
+
+---
+
+# Recette de l'écran Estimer (ESTIMER-ECRAN-1, suite)
+
+Même branche `fix/estimer-3`, pas de merge, WebKit, capture par point.
+
+1. **Dernière vente du bien** — quand la parcelle a sa propre vente DVF, elle est montrée **juste sous la boîte parcelle** : « Dernière vente de ce bien : mois/année · surface · prix » (`rapport3.derniere_vente`, composant `DerniereVente`). Elle n'entre **pas** dans le calcul, elle est affichée. (AZ1645 : « 12/2025 · 116 m² · 455 000 € » ; AW1367 : aucune vente → ligne absente.)
+2. **Surface habitable — provenance** (`estimation.surface_hab_detail` {source, badge, texte}) :
+   - vente DVF → badge **« connue »**, texte **« Surface de la vente de 2025 (DVF) »** ;
+   - calcul depuis le bâti → badge **« estimée »**, texte avec la **formule complète** « 109 m² au sol × 1 niveau × 0,5, part habitable moyenne du secteur (LiDAR) » ;
+   - saisie utilisateur → badge « saisie ». Les mots **« DVF »** et **« LiDAR »** sont écrits.
+3. **Total masqué** (surface non connue, fourchette trop large) — le **champ est vide** (placeholder « à saisir »), l'**estimation de LABUSE est en indication dessous** (« LABUSE estime ≈ 54 m² — 109 m² au sol × 1 niveau × 0,5, part habitable moyenne du secteur (LiDAR). Saisissez la surface réelle… »), et l'**encadré ne dit plus « inconnue »** (il n'y a plus de champ rempli à côté). Le préremplissage est désactivé quand `total_masque`.
+4. **Ventes retenues** — rien de tronqué : chaque ligne porte **date, surface habitable, surface du terrain, prix, distance**, sur **deux lignes** (prix + date en haut, « X m² hab. · Y m² terrain · Z m » en dessous).
+5. **Radar** — chaque annonce porte sa **commune** et sa **distance** ; seules les **cinq plus proches** sont listées (tri par distance, rayon `_RADAR_RAYON_M` = 10 km, toutes communes confondues — une annonce voisine peut être dans une autre commune, ex. AW1367 : Saint-Paul **et** La Possession) ; le **bloc n'apparaît pas** s'il n'y en a aucune à proximité.
+6. **En-tête** — le bouton est **« ← Retour »** (comme tous les outils) ; le libellé **« Une adresse ou une parcelle » au-dessus de la boîte est retiré** (le sous-titre de l'en-tête le dit déjà).
+
+**Captures** (WebKit, panneau complet) : `ecran-maison-sans-saisie` (AZ1645 : dernière vente, « connue » DVF, ventes 2 lignes, Radar commune+distance), `ecran-maison-surface`, `ecran-appartement`, `ecran-terrain-nu`, `ecran-aw1367-masque` (champ vide + indication, pas de « inconnue », Radar multi-communes), `ecran-aw1367-surface`.
+
+**Fichiers** : `src/labuse/pige/estimer3.py` (`_derniere_vente_bien`, `_surface_hab_detail`, `radar_semblables` distance/commune/5-plus-proches/rayon), `frontend/src/lib/api.ts` (types), `frontend/src/components/outils/AnalyserAnnonce.tsx` (`DerniereVente`, Question badge/texte + champ vide si masqué, VentesRetenues 2 lignes, RadarEnVente commune+distance, en-tête « Retour », libellé retiré).
