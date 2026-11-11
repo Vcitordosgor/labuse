@@ -85,6 +85,85 @@ def test_recette3_nouveaux_kinds_couverts_et_decodes():
     assert "Zone C" in sv._detail("peb", "c", "PEB Roland Garros", {"zone": "C"})
 
 
+# ───────────── OUTILS-P0-1 (#2) — PPR non classé + quatre états (purs) ─────────────
+
+def test_ppr_ligne_rouge_et_bleu():
+    # rouge RÉGLEMENTAIRE (INTERDICTION) → « partie INCONSTRUCTIBLE » (fait opposable) ;
+    # bleu (PRESCRIPTION) → « zone bleue … sous prescriptions ».
+    r = sv._ppr_ligne("rouge", "inondation", 40)
+    assert "INCONSTRUCTIBLE" in r["libelle"] and r["redhibitoire"] is True and r["niveau"] == "rouge"
+    b = sv._ppr_ligne("bleu", "inondation", 20)
+    assert "zone bleue" in b["libelle"] and b["redhibitoire"] is False
+
+
+def test_ppr_ligne_non_classe_ne_dit_plus_inconstructible():
+    # OUTILS-P0-1 (#2) — un code PPR non reconnu → « Zonage PPR non classé, à vérifier ». Plus de
+    # « partie inconstructible » asséné ; l'hypothèse prudente du calcul (retranchée de l'assiette)
+    # RESTE mais est DITE comme une hypothèse (redhibitoire=True côté calcul).
+    lig = sv._ppr_ligne("autre", "mouvement de terrain", 30)
+    bas = lig["libelle"].lower()
+    assert "non classé" in bas and "à vérifier" in bas
+    assert "INCONSTRUCTIBLE" not in lig["libelle"]         # plus asséné « partie inconstructible »
+    assert "hypothèse" in bas                               # l'hypothèse prudente, DITE comme telle
+    assert lig["redhibitoire"] is True                     # le calcul reste prudent (part retranchée)
+    assert lig["nature"] == "PPR — zonage non classé"
+
+
+def test_familles_vide_sans_preuve_est_couverture_inconnue():
+    # OUTILS-P0-1 (#2) — items vides SANS preuve de couverture : AUCUNE famille « vérifiée » (fini les
+    # dix familles « vérifiées »). Toutes « Couverture inconnue ».
+    etats = sv.etats_familles([])
+    assert len(etats) == len(sv._FAMILLES_VERIFIEES) == 10
+    assert all(e["etat"] == sv.ETAT_INCONNU for e in etats)
+    assert sv.familles_verifiees([]) == []                  # le cœur du mandat
+
+
+def test_famille_couverte_sans_intersection_est_claire():
+    # couverture DÉMONTRÉE (famille dans `couvertes`) + rien remonté → « Aucune intersection détectée ».
+    couv = {"Risques naturels", "Sols pollués"}
+    etats = {e["famille"]: e["etat"] for e in sv.etats_familles([], couvertes=couv)}
+    assert etats["Risques naturels"] == sv.ETAT_CLAIR
+    assert etats["Préemption"] == sv.ETAT_INCONNU           # non démontrée couverte → inconnue
+    assert set(sv.familles_verifiees([], couv)) == couv
+
+
+def test_contrainte_visible_meme_si_famille_pas_demontree_couverte():
+    # une contrainte détectée RESTE visible même si le reste de sa famille n'est couvert qu'en partie
+    # (ici : couverture NON démontrée) — CONTRAINTE prime sur la couverture.
+    items = [{"categorie": "Risque naturel (PPR / aléa)", "effet": "PPR inondation — zone rouge sur 40 %"}]
+    etats = {e["famille"]: e["etat"] for e in sv.etats_familles(items, couvertes=set())}
+    assert etats["Risques naturels"] == sv.ETAT_CONTRAINTE
+
+
+def test_lecture_indisponible_prime_sur_tout():
+    etats = {e["famille"]: e["etat"] for e in
+             sv.etats_familles([], couvertes={"Risques naturels"}, indisponibles={"Risques naturels"})}
+    assert etats["Risques naturels"] == sv.ETAT_INDISPONIBLE   # une panne n'est jamais « clair »
+
+
+def test_etats_familles_partition_exacte():
+    # OUTILS-P0-1 (#2) — chaque famille a EXACTEMENT un état (partition) ; les quatre états couvrent tout.
+    items = [{"categorie": "Risque naturel (PPR / aléa)", "effet": "PPR inondation — zone rouge"}]
+    etats = sv.etats_familles(items, couvertes={"Sols pollués"}, indisponibles={"Bruit"})
+    assert [e["famille"] for e in etats] == [f for f, _ in sv._FAMILLES_VERIFIEES]   # toutes, une fois
+    assert all(e["etat"] in (sv.ETAT_CONTRAINTE, sv.ETAT_CLAIR, sv.ETAT_INCONNU, sv.ETAT_INDISPONIBLE) for e in etats)
+
+
+def test_parite_un_seul_producteur_du_verdict_familles():
+    # OUTILS-P0-1 (#2) — PARITÉ. Le verdict « état par famille » (etats_familles / familles_verifiees) a
+    # UN SEUL producteur, l'endpoint servitudes_invisibles, et UN SEUL lecteur (l'écran « Pièges et
+    # risques — une parcelle », O5Servitudes). L'outil « un lot » et les PDF/miroir ont leur PROPRE moteur
+    # (cascade) : ils ne REPRENNENT pas ce verdict. Garde-fou : si un module le réimporte pour le re-servir
+    # ailleurs, ce test casse et on revérifie la parité. (Le `familles_verifiees` du Gabarit est distinct.)
+    import inspect
+    from labuse.api import modules as _mod
+    from labuse.exports import miroir as _mir
+    for mod in (_mod, _mir):
+        src = inspect.getsource(mod)
+        assert "etats_familles" not in src
+        assert "familles_verifiees" not in src
+
+
 # ───────────────────────── flux DB ─────────────────────────
 
 _WKT = "POLYGON((55.45 -20.9,55.451 -20.9,55.451 -20.901,55.45 -20.901,55.45 -20.9))"
@@ -201,3 +280,93 @@ def test_flux_ras_honnete(db_session):
     out = sv.servitudes_invisibles(idu, s)
     assert out["n"] == 0 and "Aucune servitude" in out["synthese"]
     assert "ne vaut pas absence réelle" in out["avertissement"]   # jamais un faux RAS définitif
+
+
+# ───────────── OUTILS-P0-1 (#2) — quatre états bout-en-bout (flux DB) ─────────────
+
+_FAM_COUCHES = {f for f, _ in sv._FAMILLES_VERIFIEES}
+_WKT_AILLEURS = "POLYGON((55.6 -21.3,55.601 -21.3,55.601 -21.301,55.6 -21.301,55.6 -21.3))"
+
+
+def _ins_parcelle(s, idu, commune):
+    s.execute(text(
+        "INSERT INTO parcels (idu, commune, section, numero, geom, geom_2975, surface_m2, centroid, bbox) VALUES "
+        "(:i,:c,'ZZ','1', ST_GeomFromText(:w,4326), ST_Transform(ST_GeomFromText(:w,4326),2975), 800, "
+        " ST_Centroid(ST_GeomFromText(:w,4326)), ST_Envelope(ST_GeomFromText(:w,4326)))"),
+        {"i": idu, "c": commune, "w": _WKT})
+    s.flush()
+
+
+@pytest.mark.db
+def test_zone_blanche_aucune_famille_verifiee(db_session):
+    # OUTILS-P0-1 (#2) — ZONE BLANCHE : parcelle dans une commune SANS aucune couche ingérée. Aucune
+    # famille de couche n'est « vérifiée » (plus de dix familles) ; toutes « Couverture inconnue ».
+    s = db_session
+    idu = "97499000ZB0001"
+    _ins_parcelle(s, idu, "ZoneBlancheP0Test")
+    out = sv.servitudes_invisibles(idu, s)
+    assert not (set(out["verifie"]) & _FAM_COUCHES)            # aucune famille de couche « vérifiée »
+    assert set(out["couverture_inconnue"]) == _FAM_COUCHES     # toutes inconnues faute de preuve
+    assert "familles" in out and len(out["familles"]) == len(_FAM_COUCHES) + 1   # + « Procédure PLU »
+
+
+@pytest.mark.db
+def test_couverte_sans_intersection_est_claire(db_session):
+    # OUTILS-P0-1 (#2) — COUVERTE SANS INTERSECTION : la couche `sol_pollue` est ingérée POUR la commune
+    # (preuve de couverture) mais AILLEURS (n'intersecte pas la parcelle) → famille « Sols pollués »
+    # passe en « Aucune intersection détectée ».
+    s = db_session
+    idu = "97499000CV0001"
+    _ins_parcelle(s, idu, "CouvP0Test")
+    ds = s.execute(text("INSERT INTO data_sources (name, status, last_sync_at) "
+                        "VALUES ('BASIAS test', 'ok', '2026-07-10') RETURNING id")).scalar()
+    s.execute(text(
+        "INSERT INTO spatial_layers (kind, subtype, name, commune, data_source_id, geom, geom_2975) VALUES "
+        "('sol_pollue','casias','site','CouvP0Test', :ds, ST_GeomFromText(:w,4326), "
+        " ST_Transform(ST_GeomFromText(:w,4326),2975))"), {"ds": ds, "w": _WKT_AILLEURS})
+    s.flush()
+    out = sv.servitudes_invisibles(idu, s)
+    assert "Sols pollués" in out["verifie"]                   # couverte (commune) + aucune intersection
+    assert "Sols pollués" not in out["couverture_inconnue"]
+    # une couverture PARTIELLE : les AUTRES familles (non ingérées pour la commune) restent « inconnues »
+    assert "Préemption" in out["couverture_inconnue"]
+
+
+@pytest.mark.db
+def test_radar_plu_panne_non_rien_a_signaler(db_session, monkeypatch):
+    # OUTILS-P0-1 (#2) — PANNE DU RADAR PLU : un échec de lecture n'est JAMAIS présenté « rien à
+    # signaler ». La famille « Procédure PLU » passe en « Lecture indisponible », hors de `verifie`.
+    s = db_session
+    idu = "97499000RP0001"
+    _ins_parcelle(s, idu, "RadarPanneP0Test")
+    import labuse.veille_plu as V
+
+    def _boom(*a, **k):
+        raise RuntimeError("radar PLU HS")
+
+    monkeypatch.setattr(V, "entry", _boom)
+    out = sv.servitudes_invisibles(idu, s)
+    assert out["plu_radar_ok"] is False
+    assert "Procédure PLU" in out["lecture_indisponible"]
+    assert "Procédure PLU" not in out["verifie"]              # jamais « rien à signaler » sur une panne
+
+
+@pytest.mark.db
+def test_ppr_non_classe_flux(db_session):
+    # OUTILS-P0-1 (#2) — PPR NON CLASSÉ : un code non reconnu ('i', hérité Saint-Philippe) s'affiche
+    # « Zonage PPR non classé, à vérifier », plus « partie inconstructible » ; l'hypothèse prudente reste.
+    s = db_session
+    idu = "97499000NC0001"
+    _ins_parcelle(s, idu, "X")
+    ds = s.execute(text("INSERT INTO data_sources (name, status, last_sync_at) "
+                        "VALUES ('DEAL NC test', 'ok', '2026-09-13') RETURNING id")).scalar()
+    s.execute(text(
+        "INSERT INTO spatial_layers (kind, subtype, name, attrs, data_source_id, geom, geom_2975) VALUES "
+        "('ppr','i','PPR Saint-Philippe', '{\"risque\":\"MOUVEMENT_DE_TERRAIN\"}', :ds, ST_GeomFromText(:w,4326), "
+        " ST_Transform(ST_GeomFromText(:w,4326),2975))"), {"ds": ds, "w": _WKT})
+    s.flush()
+    effs = [c["effet"] for c in sv.contraintes_parcelle(s, idu) if c["categorie"].startswith("Risque")]
+    bas = " · ".join(effs).lower()
+    assert "non classé" in bas and "à vérifier" in bas        # le libellé honnête
+    assert "inconstructible" not in bas                       # plus « partie inconstructible » asséné
+    assert "hypothèse" in bas                                 # hypothèse prudente DITE comme telle
