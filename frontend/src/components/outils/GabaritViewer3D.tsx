@@ -317,16 +317,28 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
     // lettres de l'axe actif (B et B′, A et A′) posées aux EXTRÉMITÉS VISIBLES du trait orange
     const lAx0 = mkLab('', '#f0b24a'); const lAx1 = mkLab('', '#f0b24a')
     lAx0.style.font = lAx1.style.font = '700 13px Inter,sans-serif'
-    const axEnd = { a: new THREE.Vector3(), b: new THREE.Vector3(), on: false }
+    // échantillons DRAPÉS de l'axe (ordre p0→p1) ; la lettre est posée au dernier point VISIBLE (dans la vue)
+    const axEnd: { pts: THREE.Vector3[]; on: boolean } = { pts: [], on: false }
     majLettresAxe.current = (lab) => {
       const a = lab ? scene.axes_plan?.[lab] : null
+      axEnd.pts = []
       if (!a) { axEnd.on = false; lAx0.style.display = lAx1.style.display = 'none'; return }
-      let first: [number, number, number] | null = null, last: [number, number, number] | null = null
-      for (let i = 0; i <= 48; i++) { const t = i / 48, x = a.p0[0] + (a.p1[0] - a.p0[0]) * t, y = a.p0[1] + (a.p1[1] - a.p0[1]) * t, z = elev(x, y); if (z != null) { if (!first) first = [x, z, y]; last = [x, z, y] } }
-      if (first && last) { axEnd.a.set(first[0], first[1] + 0.6, -first[2]); axEnd.b.set(last[0], last[1] + 0.6, -last[2]); axEnd.on = true; lAx0.textContent = lab; lAx1.textContent = `${lab}′` }
+      for (let i = 0; i <= 64; i++) { const t = i / 64, x = a.p0[0] + (a.p1[0] - a.p0[0]) * t, y = a.p0[1] + (a.p1[1] - a.p0[1]) * t, z = elev(x, y); if (z != null) axEnd.pts.push(new THREE.Vector3(x, z + 0.6, -y)) }
+      if (axEnd.pts.length >= 2) { axEnd.on = true; lAx0.textContent = lab; lAx1.textContent = `${lab}′` }
       else { axEnd.on = false; lAx0.style.display = lAx1.style.display = 'none' }
     }
     majLettresAxe.current(axeSelRef.current)
+    // pose une lettre au 1ᵉʳ point visible depuis `from` (balayage vers `to`) — dans le cadre, jamais hors vue
+    const poseLettre = (el2: HTMLDivElement, from: number, to: number) => {
+      const step = from < to ? 1 : -1
+      for (let i = from; step > 0 ? i <= to : i >= to; i += step) {
+        const v = axEnd.pts[i].clone().project(cam)
+        if (v.z < 1 && Math.abs(v.x) <= 0.98 && Math.abs(v.y) <= 0.98) {
+          el2.style.display = 'block'; el2.style.left = `${(v.x * 0.5 + 0.5) * el.clientWidth}px`; el2.style.top = `${(-v.y * 0.5 + 0.5) * el.clientHeight}px`; return
+        }
+      }
+      el2.style.display = 'none'
+    }
     const compass = document.createElement('div')
     compass.innerHTML = '<svg width="34" height="34" viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="rgba(0,0,0,.4)" stroke="#5b6670"/><g id="nd"><path d="M17 4 L20 17 L17 15 L14 17 Z" fill="#e0a44a"/><text x="17" y="30" text-anchor="middle" font-size="8" fill="#cbd5e1">N</text></g></svg>'
     compass.style.cssText = 'position:absolute;right:8px;top:8px'; lay.appendChild(compass)
@@ -379,7 +391,8 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
       controls.update(); renderer.render(sc, cam)
       if (!first) first = performance.now()
       proj(hiP, lHi); proj(loP, lLo)
-      if (axEnd.on) { proj(axEnd.a, lAx0); proj(axEnd.b, lAx1) }
+      // lettres de l'axe : 1ʳᵉ posée au 1ᵉʳ point visible côté p0, 2ᵉ au dernier point visible côté p1
+      if (axEnd.on) { const n = axEnd.pts.length - 1; poseLettre(lAx0, 0, n); poseLettre(lAx1, n, 0) }
       const az = controls.getAzimuthalAngle(); nd.setAttribute('transform', `rotate(${(-az * 180 / Math.PI).toFixed(1)} 17 17)`)
       info = { geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures }
       ;(window as unknown as Record<string, unknown>).__gab3d = { first, info, fps: renderer.info.render.frame, probe, photo: photoFlag }

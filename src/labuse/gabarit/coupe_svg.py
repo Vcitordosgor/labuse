@@ -117,7 +117,7 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
     # (mêmes bornes) ; la ligne d'indicateurs reste réservée au détail.
     HEAD = 22
     PAD_L, PAD_R, PAD_T = 58, 16, HEAD + 8
-    BANDES_H, AX_H = 48, 20
+    BANDES_H, AX_H = 62, 20       # longueurs des bandes posées SOUS chaque bande (leur propre ligne)
     IND_H = 16 if detail else 0
     plot_w = width - PAD_L - PAD_R
     s = min(plot_w / max(L, 1e-6), (h_max - PAD_T - BANDES_H - IND_H - AX_H) / zspan)   # H = V, JAMAIS tronqué
@@ -259,17 +259,18 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
     # ÉCHELLE : barre dans un COIN du tracé (2 quater), barre seule
     out.append(_echelle(off_x + 8, y_base - 7, L, s, T))
 
-    # BANDES (parcelle blanc, zone vert) : APERÇU ET DÉTAIL, MÊMES BORNES. Puis légende de la coupe.
+    # BANDES (parcelle blanc, zone vert) : APERÇU ET DÉTAIL, MÊMES BORNES. Longueurs SOUS chaque bande
+    # (leur propre ligne, +11) → jamais sur les graduations. Puis légende de la coupe.
     yb0 = y_base + AX_H
     out.append(_bande(coupe.get("limites_parcelle_d") or [], yb0, X, "parcelle", T))
-    yb1 = yb0 + 15
+    yb1 = yb0 + 24
     zspans = coupe.get("zone_implantation_d") or []
     if zspans:
         out.append(_bande(zspans, yb1, X, "zone d'implantation", T, col=T["zone"]))
     else:
         etat = "non traversée" if coupe.get("zone_presente") else "indisponible"
         out.append(f'<text x="8" y="{yb1+3:.1f}" font-size="9" fill="{T["txt_dim"]}">zone d\'implantation — {etat}</text>')
-    out.append(_legende_coupe(yb1 + 17, off_x, T, rupture, bool(batis)))
+    out.append(_legende_coupe(yb1 + 24, off_x, T, rupture, bool(batis)))
     # indicateurs (deux pentes, pente max 5 m, accès, bâti) : DÉTAIL seulement
     if detail:
         out.append(_indicateurs(coupe, faitages, rupture, y_base + AX_H + BANDES_H, PAD_L, width - PAD_R, T))
@@ -329,6 +330,8 @@ def _echelle(x, y, L, s, T):
 
 
 def _bande(spans, y, X, label, T, col=None):
+    """Bande de traversée : la LIGNE à `y` (ticks aux bornes) ; les LONGUEURS sont posées SOUS la bande
+    (`y+11`, leur propre ligne) → elles ne croisent jamais les graduations de l'axe de distance (3 ter)."""
     col = col or T["limite"]
     key = "zone" if "zone" in label else "parcelle"
     frag = [f'<text x="8" y="{y+4:.1f}" font-size="9" fill="{T["txt_dim"]}">{_esc(label)}</text>']
@@ -339,7 +342,7 @@ def _bande(spans, y, X, label, T, col=None):
                     f'data-band="{key}" data-d0="{d0:.2f}" data-d1="{d1:.2f}"/>')
         frag.append(f'<line x1="{x0:.1f}" y1="{y-3:.1f}" x2="{x0:.1f}" y2="{y+3:.1f}" stroke="{col}" stroke-width="1"/>')
         frag.append(f'<line x1="{x1:.1f}" y1="{y-3:.1f}" x2="{x1:.1f}" y2="{y+3:.1f}" stroke="{col}" stroke-width="1"/>')
-        frag.append(f'<text x="{(x0+x1)/2:.1f}" y="{y-5:.1f}" text-anchor="middle" font-size="9" fill="{T["txt_dim"]}">{_fmt(d1-d0,1)} m</text>')
+        frag.append(f'<text x="{(x0+x1)/2:.1f}" y="{y+11:.1f}" text-anchor="middle" font-size="9" fill="{T["txt_dim"]}">{_fmt(d1-d0,1)} m</text>')
     return "".join(frag)
 
 
@@ -353,7 +356,8 @@ def _legende_coupe(y, x, T, rupture, has_bati):
         cx += 22 + len(label) * 5.2 + 16
     ent("terrain", lambda c: f'<line x1="{c:.1f}" y1="{y:.1f}" x2="{c+16:.1f}" y2="{y:.1f}" stroke="{T["terrain"]}" stroke-width="2"/>', 16)
     if has_bati:
-        ent("profil sous le bâti", lambda c: f'<line x1="{c:.1f}" y1="{y:.1f}" x2="{c+16:.1f}" y2="{y:.1f}" stroke="{T["sous_bati"]}" stroke-width="2.2" stroke-dasharray="3 2.5"/>', 16)
+        # le MNT bare-earth sous une emprise bâtie est INTERPOLÉ par l'IGN (pas de retour sol) → dit en légende
+        ent("profil sous le bâti (interpolé)", lambda c: f'<line x1="{c:.1f}" y1="{y:.1f}" x2="{c+16:.1f}" y2="{y:.1f}" stroke="{T["sous_bati"]}" stroke-width="2.2" stroke-dasharray="3 2.5"/>', 16)
     if rupture:
         ent("rupture du terrain à vérifier", lambda c: f'<path d="M{c+8:.1f},{y-4:.1f} l4,4 l-4,4 l-4,-4 z" fill="none" stroke="{T["lacune"]}" stroke-width="1.4"/>', 16)
     return "".join(frag)

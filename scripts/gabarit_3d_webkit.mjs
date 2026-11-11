@@ -39,6 +39,19 @@ async function mesureCoupe(page, sel) {
   return { largeur_img_px: Math.round(b.width), texte_min_px: Math.round(minPx * 10) / 10, n_cotes: cotes.length, chevauchements: overlaps }
 }
 
+// lettres de l'axe (B/B′, A/A′) DANS la vue : centre du libellé à l'intérieur du cadre du canvas 3D
+// (l'ancien contrôle width>0 comptait un libellé posé HORS écran comme « visible » → le bug non vu).
+async function lettresAxe(page) {
+  return page.evaluate(() => {
+    const cv = document.querySelector('[data-gab3d-canvas]'); if (!cv) return []
+    const r = cv.getBoundingClientRect()
+    return [...cv.querySelectorAll('div')]
+      .filter((d) => /^[AB]′?$/.test((d.textContent || '').trim()) && d.style.display !== 'none')
+      .map((d) => { const b = d.getBoundingClientRect(), cx = b.x + b.width / 2, cy = b.y + b.height / 2
+        return { t: d.textContent.trim(), dansLaVue: cx >= r.x && cx <= r.x + r.width && cy >= r.y && cy <= r.y + r.height } })
+  })
+}
+
 // A2 — aucun libellé traversé par un trait : les boîtes de fond (rx="2") sont émises APRÈS tous les traits
 // (<line>/<polyline>/<polygon>/<path>) → dessinées PAR-DESSUS, rien ne les traverse.
 function a2Control(svg) {
@@ -50,6 +63,20 @@ function a2Control(svg) {
 function bandeBornes(svg) {
   return [...svg.matchAll(/data-band="([^"]+)" data-d0="([\d.]+)" data-d1="([\d.]+)"/g)]
     .map((m) => `${m[1]}:${(+m[2]).toFixed(2)}-${(+m[3]).toFixed(2)}`).sort()
+}
+// 3 ter — les LONGUEURS de bande (« 9,3 m »…) ne doivent JAMAIS croiser les graduations de distance
+// (« 40 », « 80 ») : bug « 4020,2 m » / « 33,4 m80 » que l'ancien contrôle (rx="2" seulement) n'a pas vu.
+function bandeGradControl(svg) {
+  const T = [...svg.matchAll(/<text x="([\d.-]+)" y="([\d.-]+)" text-anchor="middle" font-size="([\d.]+)"[^>]*>([^<]+)<\/text>/g)]
+    .map((m) => ({ x: +m[1], y: +m[2], fs: +m[3], t: m[4] }))
+  const grads = T.filter((e) => e.fs === 9.5 && /^\d+$/.test(e.t))            // graduations de distance
+  if (!grads.length) return { graduations: 0, longueurs: 0, chevauchements: 0 }
+  const gy = Math.max(...grads.map((g) => g.y))
+  const lens = T.filter((e) => Math.abs(e.fs - 9) < 0.01 && /^[\d,]+ m$/.test(e.t) && e.y > gy - 2)  // longueurs de bande
+  const bb = (e) => { const w = e.t.length * e.fs * 0.55; return { x0: e.x - w / 2, x1: e.x + w / 2, y0: e.y - e.fs, y1: e.y + 2 } }
+  let n = 0
+  for (const g of grads) for (const l of lens) { const a = bb(g), b = bb(l); if (a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1) n++ }
+  return { graduations: grads.length, longueurs: lens.length, chevauchements: n }
 }
 // chevauchement des libellés à fond opaque (rupture, emprise bâtie, voie, pente max) : rects rx="2"
 function labelsChevauchent(svg) {
@@ -86,27 +113,26 @@ async function parSize(idu, w, h) {
   m.contour_couverture_pct = Math.round((scene.terrain?.couverture_parcelle ?? 0) * 100)
   // A1 — audit de la zone d'implantation (pixels verts dedans / dehors)
   m.zone = await page.evaluate(() => window.__gab3dZoneAudit ? window.__gab3dZoneAudit() : { zone: false })
-  // lettres de l'axe actif (B/B′, A/A′) visibles à l'ouverture
-  m.lettres_axe = await page.evaluate(() => [...document.querySelectorAll('[data-gab3d-canvas] div')]
-    .filter((d) => /^[AB]′?$/.test((d.textContent || '').trim()) && d.style.display !== 'none'
-      && d.getBoundingClientRect().width > 0).map((d) => d.textContent.trim()))
+  // lettres de l'axe actif (B/B′, A/A′) DANS la vue à l'ouverture (coupe B par défaut)
+  m.lettres_axe = await lettresAxe(page)
   // 4. coupes A et B, aperçu (bas) + détail (agrandir) : A2 (non traversé), bandes (mêmes bornes), chevauchements
   for (const ax of ['A', 'B']) {
     await page.click(`text=Coupe ${ax}`).catch(() => {}); await page.waitForTimeout(500)
+    const lettres = await lettresAxe(page)   // lettres de l'axe de CETTE coupe (A/A′ ou B/B′), dans la vue
     const apImg = await page.$('[data-gab3d-overlay] img[alt^="Coupe"]')
     const apSvg = apImg ? await (await fetch(await apImg.evaluate((e) => e.src))).text() : ''
     const apercu = await mesureCoupe(page, '[data-gab3d-overlay] img[alt^="Coupe"]')
-    if (apercu) { apercu.libelles = a2Control(apSvg); apercu.labels = labelsChevauchent(apSvg) }
+    if (apercu) { apercu.libelles = a2Control(apSvg); apercu.labels = labelsChevauchent(apSvg); apercu.bande_grad = bandeGradControl(apSvg) }
     await page.screenshot({ path: `${OUT}/mesure_${idu.slice(-6)}_${w}x${h}_coupe${ax}.png` })
     await page.click('[data-gab3d-agrandir]').catch(() => {}); await page.waitForTimeout(500)
     const detImg = await page.$('[data-gab3d-overlay] img[alt="Agrandie"]')
     const detSvg = detImg ? await (await fetch(await detImg.evaluate((e) => e.src))).text() : ''
     const detail = await mesureCoupe(page, '[data-gab3d-overlay] img[alt="Agrandie"]')
-    if (detail) detail.labels = labelsChevauchent(detSvg)
+    if (detail) { detail.labels = labelsChevauchent(detSvg); detail.bande_grad = bandeGradControl(detSvg) }
     if (ax === 'B') await page.screenshot({ path: `${OUT}/mesure_${idu.slice(-6)}_${w}x${h}_detailB.png` })
     await page.click('text=Revenir au terrain').catch(() => {}); await page.waitForTimeout(300)
     const ba = bandeBornes(apSvg), bd = bandeBornes(detSvg)
-    m.coupes[ax] = { apercu, detail, bandes_apercu: ba, bandes_bornes_identiques: ba.length > 0 && JSON.stringify(ba) === JSON.stringify(bd) }
+    m.coupes[ax] = { apercu, detail, lettres, bandes_apercu: ba, bandes_bornes_identiques: ba.length > 0 && JSON.stringify(ba) === JSON.stringify(bd) }
   }
   // A3 — on PART du losange ◆ affiché sur la coupe (B si elle en porte un, sinon A) : survol à son x → le
   // repère tombe sur le terrain. Écart = |altitude du marqueur drapé (maillage 3D) − altitude du losange
