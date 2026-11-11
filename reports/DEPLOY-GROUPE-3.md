@@ -326,8 +326,31 @@ DVF stable, et le rafraîchissement DVF/Signal est une opération de fraîcheur 
 *Variante si tu veux q_v23 servi sur le DVF le plus frais : recharger DVF d'abord, re-scorer le Signal de
 q_v23 (flux-run ~17 min), puis promouvoir — plus couplé.*
 
+## G. Déploiement 1 (≤ `585d3dd8e`) + scénarios V2 — 11/11
+
+**Déploiement 1 — ✅ `a8cc09dee383`** (merge `585d3dd8e` = ECRANS-NOV-2 + FONCIER-PUBLIC-1 + audit
+fraicheur-1, dans ma branche, mes 5 fixes gardés ; PAS la pointe) : filets `*-avant-groupe3b`, **37 jobs
+selftest**, **crontab == registre** (aucun job FRAICHEUR, **pas de `jobs rattraper`** — c'est le 2ᵉ
+déploiement), front reconstruit, `/readyz` 200 stable 25/25, manifeste q_v20 (433 229) intact. Le banc
+`coherence-banc` de **03:45 a tourné ACHEVÉ** (id=29, faux_client 0) → le fix F3 tient en nocturne.
+
+**Écran scénario — « Analyse en cours de mise à jour » VÉRIFIÉ LIVE** : avant le calcul des scénarios
+q_v20, l'endpoint rend `run_calcule=false`, `n_selection=0`, **pas de 500** → l'écran affiche le message
+(jamais erreur ni vide). Après le calcul q_v20 : `run_calcule=true`, `n_selection>0` → l'écran sert
+l'analyse. Garantie Vic tenue.
+
+**Scénarios V2 q_v20 (mode rapide) — ✅** : 433 229 parcelles, **1 631 s (~27 min)**, table 866 458 lignes
+(keep + rebuild). **Mesure du mode rapide : ~27 min < 30 min** (sous le seuil ; pas de report du front —
+et la fenêtre « vide » était de toute façon couverte par le message). foncier-public-1 appliqué nativement.
+
+**Scénarios V2 q_v23** : lancés en mode rapide (conservation exacte + reconstruction « Calcul à compléter »,
+comme ALGO-FIX-1 §5 — donne la répartition pour §C). _Reconstruction enrich île entière différée_ : elle
+recalcule `compute_residuel` LIVE (~3 h en 4 shards) alors que C/E/D_net sont DÉJÀ dans le run résiduel
+seq 18 — redondant ; à faire à la finalisation (après exigu-fix) ou via un lecteur des colonnes persistées.
+Répartition statuts/bandes V2 : _à compléter quand q_v23 fini_.
+
 ---
 
 _Exécuté : A (déploiement + 4 incidents) ✅ · B (chaîne de nuit q_v23) ✅ · C (7 contrôles) ✅ + analyse §D
-+ §E/§F préparées.
++ §E/§F préparées + §G déploiement 1 & scénarios V2.
 Reste : scénarios V2 (demain, après merge origin/main + foncier-public-1) + finalisation. Commit, pas de merge._
