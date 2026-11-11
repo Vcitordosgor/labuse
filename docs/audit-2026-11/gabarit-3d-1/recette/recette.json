@@ -1,11 +1,18 @@
 {
   "d1_lacune_sous_bati": {
-    "bati_toujours_dessine": true,
-    "lacune_ouverte": true
+    "emprise_au_sol": true,
+    "faitage_a_part": true
   },
   "d2_reproductible": {
     "svg_identique": true,
     "scene_id_identique": true,
-    "scene_id": "362d417ee9d0"
+    "scene_id": "1a439fd3ca95"
+  },
+  "d3_multipart": {
+    "idu": "97411000HP0455",
+    "disponible": false,
+    "couverture": 0.0,
+    "n_contours_cad": 3,
+    "coupes": 0
   }
 }

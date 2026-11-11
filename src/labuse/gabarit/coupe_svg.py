@@ -1,21 +1,15 @@
-"""GABARIT-3D-1 (pilote) — COUPES en SVG vectoriel, produites par le serveur (révision Astra).
+"""GABARIT-3D-1 (pilote) — PLANCHES de coupe en SVG serveur (révision Astra, étape 1 ter).
 
-Deux coupes depuis la SCÈNE (``scene.build_scene``) : A « pente dominante », B orientée par la voie.
-Exigences appliquées :
-  - CADRE (B6) : terrain, sommets de bâti et marges des cotes tiennent dans la vue ; rien ne déborde ;
-    flèches dessinées en TRACÉS.
-  - ÉCHELLE (B7) : « H = V · sans exagération verticale » + barre graphique ; échelle chiffrée
-    seulement si la largeur imprimée (``largeur_mm``) est fournie (PDF).
-  - INTERVALLES (B9) : traversées de la parcelle et de la zone en BANDES COTÉES sous le profil, par tronçon.
-  - TRAITS N&B (B10) : terrain plein (mesuré), terrain reconstitué en TIRETS (seulement si appuis des
-    deux côtés), lacune OUVERTE, limites en trait fin, aplat léger pour le bâti coupé.
-  - COTES (B11) : au décimètre, « Altitudes en m, IGN 1989 » une fois, aux POINTS VÉRIFIÉS seulement.
-  - INDICATEURS (B12) : pente entre limites (signée) et amplitude séparément ; pente max sur 5 m
-    (emplacement reporté) ; pente d'accès si établie.
-  - THÈMES (B13) : clair (PDF) / sombre (écran), MÊME contenu.
+B5  Bâti : emprise marquée AU SOL ; terrain coté au droit des deux façades si possible ; mention à part
+    « Hauteur au faîtage estimée par LiDAR · X m » quand attribuée ; AUCUN toit. Sous l'emprise le trait
+    s'interrompt ; les tirets sont réservés à un profil reconstruit entre deux appuis extérieurs (légende).
+B6  Pente max sur 5 m : 5 m entiers, un seul tronçon valide, dans la parcelle, hors emprise bâtie ±1 m ;
+    DEUX bornes dessinées. Cotes de limite, bandes et pente entre limites partagent les mêmes bornes.
+B7  Échelle : barre graphique dans un EMPLACEMENT RÉSERVÉ (écran + PDF) ; ratio chiffré au PDF seulement.
+B8  Voie à son intersection ; « pente sur l'axe de la voie à la limite » seulement si profil continu.
+B9  Pas de collision de textes (anti-collision) ; une seule cote par point ; en-tête identifiant+adresse ;
+    thème SOMBRE complet ; bande d'implantation « non traversée »/« indisponible ».
 AUCUN plafond de hauteur n'est dessiné.
-
-Le PLAN-CLÉ (``plan_cle_svg``) : contour cadastral, axe + sens de lecture, bâti traversé, voie, nord.
 """
 from __future__ import annotations
 
@@ -24,14 +18,16 @@ from typing import Any
 
 _THEMES = {
     "sombre": {"bg": "#0f1115", "plot": "#161a20", "terrain": "#cbd5e1", "fill": "#1f2630",
-               "limite": "#e5e7eb", "zone": "#36c99a", "bati": "#9aa0a6", "txt": "#cbd5e1",
-               "txt_dim": "#8b93a1", "grid": "#262c35", "lacune": "#f0603a", "axe": "#e0a44a"},
-    "clair": {"bg": "#fafbfc", "plot": "#ffffff", "terrain": "#374151", "fill": "#eceff2",
-              "limite": "#111827", "zone": "#2c9f7c", "bati": "#7c828a", "txt": "#374151",
-              "txt_dim": "#6b7280", "grid": "#d9dce0", "lacune": "#c0392b", "axe": "#9a6a12"},
+               "limite": "#e5e7eb", "zone": "#36c99a", "bati": "#9aa0a6", "txt": "#d7dce3",
+               "txt_dim": "#8b93a1", "grid": "#262c35", "lacune": "#f0603a", "axe": "#e0a44a",
+               "head": "#1a1f27"},
+    "clair": {"bg": "#ffffff", "plot": "#ffffff", "terrain": "#374151", "fill": "#eef1f4",
+              "limite": "#111827", "zone": "#2c9f7c", "bati": "#6b7280", "txt": "#1f2937",
+              "txt_dim": "#6b7280", "grid": "#dadfe4", "lacune": "#c0392b", "axe": "#9a6a12",
+              "head": "#f3f4f6"},
 }
-_FONT = 'font-family="Inter, sans-serif"'
-_PONT_RECONSTITUE_M = 3.0   # on relie en tirets un trou ≤ 3 m bordé d'appuis des deux côtés
+_FONT = 'font-family="Inter, Helvetica, Arial, sans-serif"'
+_PONT_RECONSTITUE_M = 3.0
 
 
 def _esc(s: Any) -> str:
@@ -39,11 +35,13 @@ def _esc(s: Any) -> str:
     return html.escape(str(s or ""), quote=False)
 
 
-def _fmt(v: float, dec: int = 0) -> str:
+def _fmt(v, dec=0) -> str:
+    if v is None:
+        return "—"
     return (f"{v:.{dec}f}").replace(".", ",")
 
 
-def _nice_step(span: float, cible: int = 6) -> float:
+def _nice_step(span, cible=6):
     if span <= 0:
         return 1.0
     brut = span / cible
@@ -54,7 +52,7 @@ def _nice_step(span: float, cible: int = 6) -> float:
     return 10 * p
 
 
-def _runs(profil: list[dict]) -> list[list[dict]]:
+def _runs(profil):
     runs, cur = [], []
     for p in profil:
         if p["z"] is None:
@@ -67,20 +65,24 @@ def _runs(profil: list[dict]) -> list[list[dict]]:
     return runs
 
 
-def _lacunes(profil: list[dict]) -> list[tuple[float, float]]:
-    out, start = [], None
-    for p in profil:
-        if p["z"] is None and start is None:
-            start = p["d"]
-        elif p["z"] is not None and start is not None:
-            out.append((start, p["d"])); start = None
-    if start is not None:
-        out.append((start, profil[-1]["d"]))
+def _soustraire(seg, spans):
+    """Retire de [d0,d1] les intervalles `spans` (emprises bâties) → liste de sous-segments."""
+    out = [seg]
+    for a, b in spans:
+        nxt = []
+        for s0, s1 in out:
+            if b <= s0 or a >= s1:
+                nxt.append((s0, s1))
+            else:
+                if s0 < a:
+                    nxt.append((s0, a))
+                if b < s1:
+                    nxt.append((b, s1))
+        out = nxt
     return out
 
 
-def _fleche(x0, y0, x1, y1, col, w=1.4) -> str:
-    """Flèche dessinée en tracés (ligne + tête triangulaire)."""
+def _fleche(x0, y0, x1, y1, col, w=1.4):
     ang = math.atan2(y1 - y0, x1 - x0)
     hl, ha = 7, math.radians(22)
     xa, ya = x1 - hl * math.cos(ang - ha), y1 - hl * math.sin(ang - ha)
@@ -89,8 +91,8 @@ def _fleche(x0, y0, x1, y1, col, w=1.4) -> str:
             f'<polygon points="{x1:.1f},{y1:.1f} {xa:.1f},{ya:.1f} {xb:.1f},{yb:.1f}" fill="{col}"/>')
 
 
-def coupe_svg(coupe: dict, *, theme: str = "sombre", width: int = 960, h_max: int = 520,
-              largeur_mm: float | None = None) -> str | None:
+def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, largeur_mm=None,
+              scene_id=None, adresse=None):
     """SVG d'une coupe. None si le profil n'a aucun point valide."""
     T = _THEMES.get(theme, _THEMES["sombre"])
     profil = coupe.get("profil") or []
@@ -99,24 +101,26 @@ def coupe_svg(coupe: dict, *, theme: str = "sombre", width: int = 960, h_max: in
         return None
     L = coupe["longueur_m"]
     batis = coupe.get("batiments") or []
+    bati_spans = [(b["d0"], b["d1"]) for b in batis]
 
-    # extent vertical : terrain + pieds + SOMMETS de bâti (rien ne déborde — B6)
     zs_all = [p["z"] for p in valides]
-    for b in batis:
-        for pied in (b.get("pied_amont_m"), b.get("pied_aval_m")):
-            if pied is not None:
-                zs_all += [pied, pied + (b.get("hauteur_m") or 0)]
+    for b in batis:                                   # inclure pied + faîtage au cadrage
+        if b.get("pied_m") is not None:
+            zs_all.append(b["pied_m"])
+            if b.get("hauteur_m"):
+                zs_all.append(b["pied_m"] + b["hauteur_m"])
     zmin, zmax = min(zs_all), max(zs_all)
     zspan = max(zmax - zmin, 1.0)
 
-    PAD_L, PAD_R, PAD_T = 64, 20, 58
-    BANDES_H, IND_H, AX_H = 46, 64, 30            # footer : bandes de traversée, indicateurs, axe X
+    HEAD = 38
+    PAD_L, PAD_R, PAD_T = 64, 20, HEAD + 34
+    BANDES_H, IND_H, AX_H = 44, 70, 28
     plot_w = width - PAD_L - PAD_R
-    s = plot_w / max(L, 1e-6)                      # 1:1 : px/m identiques en X et Y
+    s = plot_w / max(L, 1e-6)
     plot_h = s * zspan
     h_dispo = h_max - PAD_T - BANDES_H - IND_H - AX_H
     if plot_h > h_dispo:
-        s = h_dispo / zspan                        # recale (toujours 1:1), largeur réduite, centrée
+        s = h_dispo / zspan
         plot_w = s * L
         plot_h = h_dispo
     off_x = PAD_L + (width - PAD_L - PAD_R - plot_w) / 2
@@ -138,10 +142,20 @@ def coupe_svg(coupe: dict, *, theme: str = "sombre", width: int = 960, h_max: in
     out = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" '
            f'height="{height}" role="img" aria-label="{_esc(coupe.get("titre",""))}" {_FONT} '
            f'style="background:{T["bg"]}">']
+    # en-tête (B9) : titre · identifiant · adresse
+    out.append(f'<rect x="0" y="0" width="{width}" height="{HEAD}" fill="{T["head"]}"/>')
+    out.append(f'<text x="{PAD_L}" y="17" font-size="13" font-weight="600" fill="{T["txt"]}">{_esc(coupe.get("titre",""))}</text>')
+    sub = []
+    if adresse:
+        sub.append(_esc(adresse))
+    if scene_id:
+        sub.append(f"scène {scene_id}")
+    if sub:
+        out.append(f'<text x="{PAD_L}" y="31" font-size="9" fill="{T["txt_dim"]}">{" · ".join(sub)}</text>')
     out.append(f'<rect x="{off_x:.1f}" y="{PAD_T}" width="{plot_w:.1f}" height="{plot_h:.1f}" '
-               f'fill="{T["plot"]}" stroke="{T["grid"]}" stroke-width="0.5"/>')
+               f'fill="{T["plot"]}" stroke="{T["grid"]}" stroke-width="0.6"/>')
 
-    # graduations (échelle visible)
+    # graduations
     xs = _nice_step(L); zstep = _nice_step(zspan)
     d = 0.0
     while d <= L + 1e-6:
@@ -155,92 +169,124 @@ def coupe_svg(coupe: dict, *, theme: str = "sombre", width: int = 960, h_max: in
             out.append(f'<text x="{off_x-6:.1f}" y="{Y(z)+3:.1f}" text-anchor="end" font-size="9" fill="{T["txt_dim"]}">{_fmt(z)}</text>')
         z += zstep
 
-    # zone d'implantation : liseré au sol
+    # zone d'implantation : liseré au sol (étendue traversée)
     for d0, d1 in coupe.get("zone_implantation_d") or []:
         out.append(f'<rect x="{X(d0):.1f}" y="{y_base-5:.1f}" width="{(d1-d0)*s:.1f}" height="5" fill="{T["zone"]}" fill-opacity="0.85"/>')
 
-    # terrain : plein (mesuré) par morceaux + remplissage ; reconstitué en tirets si pont court
+    # TERRAIN : runs pleins, coupés sous les emprises bâties (trait interrompu, pas de tirets)
     runs = _runs(profil)
+    reconstruits = False
     for run in runs:
         if len(run) < 2:
             continue
-        pts = " ".join(f"{X(p['d']):.1f},{Y(p['z']):.1f}" for p in run)
-        base = f"{X(run[-1]['d']):.1f},{y_base:.1f} {X(run[0]['d']):.1f},{y_base:.1f}"
-        out.append(f'<polygon points="{pts} {base}" fill="{T["fill"]}" stroke="none"/>')
-        out.append(f'<polyline points="{pts}" fill="none" stroke="{T["terrain"]}" stroke-width="1.8"/>')
-    for a, b in zip(runs, runs[1:]):               # terrain reconstitué (tirets) sur trou court
-        gap = b[0]["d"] - a[-1]["d"]
-        if gap <= _PONT_RECONSTITUE_M:
-            out.append(f'<line x1="{X(a[-1]["d"]):.1f}" y1="{Y(a[-1]["z"]):.1f}" x2="{X(b[0]["d"]):.1f}" '
-                       f'y2="{Y(b[0]["z"]):.1f}" stroke="{T["terrain"]}" stroke-width="1.5" stroke-dasharray="4 3"/>')
-    for d0, d1 in _lacunes(profil):                # lacune OUVERTE (marque rouge pointillée au sol)
-        if (d1 - d0) > _PONT_RECONSTITUE_M:
-            out.append(f'<line x1="{X(d0):.1f}" y1="{y_base:.1f}" x2="{X(d1):.1f}" y2="{y_base:.1f}" stroke="{T["lacune"]}" stroke-width="2" stroke-dasharray="2 2"/>')
+        for s0, s1 in _soustraire((run[0]["d"], run[-1]["d"]), bati_spans):
+            pts = [(p["d"], p["z"]) for p in run if s0 - 1e-6 <= p["d"] <= s1 + 1e-6]
+            if len(pts) < 2:
+                continue
+            path = " ".join(f"{X(d):.1f},{Y(zz):.1f}" for d, zz in pts)
+            base = f"{X(pts[-1][0]):.1f},{y_base:.1f} {X(pts[0][0]):.1f},{y_base:.1f}"
+            out.append(f'<polygon points="{path} {base}" fill="{T["fill"]}" stroke="none"/>')
+            out.append(f'<polyline points="{path}" fill="none" stroke="{T["terrain"]}" stroke-width="1.8"/>')
+    # profil RECONSTRUIT (tirets) : lacune courte bordée d'appuis des deux côtés, HORS emprise bâtie
+    for a, b in zip(runs, runs[1:]):
+        gap = (a[-1]["d"], b[0]["d"])
+        if gap[1] - gap[0] <= _PONT_RECONSTITUE_M and not any(x0 < gap[1] and x1 > gap[0] for x0, x1 in bati_spans):
+            out.append(f'<line x1="{X(gap[0]):.1f}" y1="{Y(a[-1]["z"]):.1f}" x2="{X(gap[1]):.1f}" y2="{Y(b[0]["z"]):.1f}" '
+                       f'stroke="{T["terrain"]}" stroke-width="1.4" stroke-dasharray="4 3"/>')
+            reconstruits = True
 
-    # bâti coupé : parallélogramme sur les DEUX pieds (amont/aval), aplat léger ; cote si mesurée
+    # BÂTI : emprise au sol (bracket), cotes de façade, mention faîtage à part (aucun toit)
+    faitages = []
     for b in batis:
-        pa, pv, h = b.get("pied_amont_m"), b.get("pied_aval_m"), b.get("hauteur_m")
-        if pa is None or pv is None or not h:
-            continue
         x0, x1 = X(b["d0"]), X(b["d1"])
-        pts = (f'{x0:.1f},{Y(pa):.1f} {x1:.1f},{Y(pv):.1f} {x1:.1f},{Y(pv+h):.1f} {x0:.1f},{Y(pa+h):.1f}')
-        # coté (mesuré, 1 seul bâti) = plein ; schématique (hauteur non attribuée) = contour tireté
-        dash = '' if b.get("cotee") else ' stroke-dasharray="4 3"'
-        op = "0.35" if b.get("cotee") else "0.18"
-        out.append(f'<polygon points="{pts}" fill="{T["bati"]}" fill-opacity="{op}" stroke="{T["bati"]}" stroke-width="0.8"{dash}/>')
-        yl = Y(max(pa, pv) + h) - 3
-        if b.get("cotee"):
-            out.append(f'<text x="{(x0+x1)/2:.1f}" y="{yl:.1f}" text-anchor="middle" font-size="8" '
-                       f'fill="{T["bati"]}">{_fmt(h,1)} m · {_esc(b.get("provenance"))}</text>')
-        else:                                           # volume schématique : mention, SANS chiffre
-            out.append(f'<text x="{(x0+x1)/2:.1f}" y="{yl:.1f}" text-anchor="middle" font-size="7.5" '
-                       f'fill="{T["txt_dim"]}">{_esc(b.get("provenance") or "hauteur non attribuée")}</text>')
+        out.append(f'<line x1="{x0:.1f}" y1="{y_base:.1f}" x2="{x1:.1f}" y2="{y_base:.1f}" stroke="{T["bati"]}" stroke-width="3"/>')
+        out.append(f'<line x1="{x0:.1f}" y1="{y_base-4:.1f}" x2="{x0:.1f}" y2="{y_base+4:.1f}" stroke="{T["bati"]}" stroke-width="1"/>')
+        out.append(f'<line x1="{x1:.1f}" y1="{y_base-4:.1f}" x2="{x1:.1f}" y2="{y_base+4:.1f}" stroke="{T["bati"]}" stroke-width="1"/>')
+        out.append(f'<text x="{(x0+x1)/2:.1f}" y="{y_base-7:.1f}" text-anchor="middle" font-size="7.5" fill="{T["bati"]}">emprise bâtie</text>')
+        if b.get("attribution") and b.get("hauteur_m"):
+            prov = "estimée par LiDAR" if b["attribution"] == "lidar" else "estimée (BD TOPO)"
+            faitages.append(f"Hauteur au faîtage {prov} · {_fmt(b['hauteur_m'],1)} m")
 
-    # limites parcellaires : trait fin vertical
+    # limites parcellaires (mêmes bornes que bandes/pente) — B6
     bornes = sorted({round(v, 2) for sp in (coupe.get("limites_parcelle_d") or []) for v in sp})
     for dl in bornes:
         out.append(f'<line x1="{X(dl):.1f}" y1="{PAD_T}" x2="{X(dl):.1f}" y2="{y_base:.1f}" stroke="{T["limite"]}" stroke-width="0.8" stroke-dasharray="5 3"/>')
 
-    # cotes aux POINTS VÉRIFIÉS seulement (décimètre) — B11
-    for pt in (coupe.get("cotes_points") or {}).get("points", []):
-        if pt["z"] is None:
-            continue
-        x, y = X(pt["d"]), Y(pt["z"])
-        up = pt["role"] in ("haut", "voie")
-        out.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="1.8" fill="{T["txt"]}"/>')
-        out.append(f'<text x="{x:.1f}" y="{(y-5) if up else (y+11):.1f}" text-anchor="middle" '
-                   f'font-size="8" fill="{T["txt"]}">{_fmt(pt["z"],1)}</text>')
+    # pente max sur 5 m : DEUX bornes dessinées (B6)
+    pm = (coupe.get("indicateurs") or {}).get("pente_max_5m") or {}
+    if pm.get("disponible"):
+        for dd in (pm["d0"], pm["d1"]):
+            zt = z_terrain(dd)
+            if zt is not None:
+                out.append(f'<line x1="{X(dd):.1f}" y1="{Y(zt):.1f}" x2="{X(dd):.1f}" y2="{Y(zt)-14:.1f}" stroke="{T["lacune"]}" stroke-width="1.2"/>')
+        zc = z_terrain((pm["d0"] + pm["d1"]) / 2)
+        if zc is not None:
+            out.append(f'<text x="{X((pm["d0"]+pm["d1"])/2):.1f}" y="{Y(zc)-17:.1f}" text-anchor="middle" font-size="7.5" fill="{T["lacune"]}">pente max 5 m</text>')
 
-    # flèche « sens de lecture » (B6) en haut du cadre
-    out.append(_fleche(off_x + 6, PAD_T - 8, off_x + 54, PAD_T - 8, T["axe"]))
+    # cotes aux points vérifiés, UNE par point, anti-collision (B9/B11)
+    out.append(_cotes(coupe.get("cotes_points", {}).get("points", []), X, Y, T))
+
+    # flèche sens de lecture
+    out.append(_fleche(off_x + 6, PAD_T - 10, off_x + 54, PAD_T - 10, T["axe"]))
     sens = "voie vers parcelle" if (coupe.get("voie") and coupe["voie"].get("etablie")) else f'{coupe["label"]} vers {coupe["label"]}′'
-    out.append(f'<text x="{off_x+60:.1f}" y="{PAD_T-5:.1f}" font-size="9" fill="{T["txt_dim"]}">{_esc(sens)}</text>')
+    out.append(f'<text x="{off_x+60:.1f}" y="{PAD_T-7:.1f}" font-size="9" fill="{T["txt_dim"]}">{_esc(sens)}</text>')
 
-    # titre + échelle (B7)
-    out.append(f'<text x="{PAD_L}" y="18" font-size="13" font-weight="600" fill="{T["txt"]}">{_esc(coupe.get("titre",""))}</text>')
-    ech = "H = V · sans exagération verticale · Altitudes en m, IGN 1989"
-    if largeur_mm:                                  # échelle chiffrée seulement si largeur imprimée maîtrisée
-        ratio = (L / (largeur_mm / 1000.0)) * (plot_w / width)   # m terrain / m papier
-        ech += f" · 1:{int(round(ratio))}"
-    out.append(f'<text x="{PAD_L}" y="34" font-size="9.5" fill="{T["txt_dim"]}">{_esc(ech)}</text>')
-    # barre graphique
-    barre = _nice_step(L, 5)
-    bx, by = off_x, PAD_T - 26
-    out.append(f'<line x1="{bx:.1f}" y1="{by:.1f}" x2="{bx+barre*s:.1f}" y2="{by:.1f}" stroke="{T["txt"]}" stroke-width="2"/>')
-    out.append(f'<line x1="{bx:.1f}" y1="{by-3:.1f}" x2="{bx:.1f}" y2="{by+3:.1f}" stroke="{T["txt"]}" stroke-width="1"/>')
-    out.append(f'<line x1="{bx+barre*s:.1f}" y1="{by-3:.1f}" x2="{bx+barre*s:.1f}" y2="{by+3:.1f}" stroke="{T["txt"]}" stroke-width="1"/>')
-    out.append(f'<text x="{bx+barre*s+5:.1f}" y="{by+3:.1f}" font-size="8.5" fill="{T["txt_dim"]}">{_fmt(barre)} m</text>')
+    # ÉCHELLE : emplacement réservé (B7)
+    out.append(_echelle(off_x, PAD_T - 26, L, s, plot_w, width, largeur_mm, T))
 
-    # bandes de traversée cotées, par tronçon (B9)
+    # bandes de traversée cotées (mêmes bornes que les limites)
     yb0 = y_base + AX_H
     out.append(_bande(coupe.get("limites_parcelle_d") or [], yb0, X, "parcelle", T))
-    out.append(_bande(coupe.get("zone_implantation_d") or [], yb0 + 20, X, "zone d'implantation", T, col=T["zone"]))
+    yb1 = yb0 + 20
+    zspans = coupe.get("zone_implantation_d") or []
+    if zspans:
+        out.append(_bande(zspans, yb1, X, "zone d'implantation", T, col=T["zone"]))
+    else:                                              # bande d'implantation à états (B9)
+        etat = "non traversée" if coupe.get("zone_presente") else "indisponible"
+        out.append(f'<text x="8" y="{yb1+4:.1f}" font-size="8.5" fill="{T["txt_dim"]}">zone d\'implantation</text>')
+        out.append(f'<text x="{off_x:.1f}" y="{yb1+4:.1f}" font-size="8.5" fill="{T["txt_dim"]}">— {etat}</text>')
 
-    # indicateurs (B12)
-    out.append(_indicateurs_txt(coupe, X, Y, z_terrain, y_base + AX_H + BANDES_H, PAD_L, T))
+    # indicateurs + mentions faîtage + légende reconstruit (B5/B12)
+    out.append(_indicateurs(coupe, faitages, reconstruits, y_base + AX_H + BANDES_H, PAD_L, T))
 
     out.append("</svg>")
     return "".join(out)
+
+
+def _cotes(points, X, Y, T):
+    """Place les cotes (décimètre) sans collision : rangées alternées, min 26 px entre deux labels."""
+    items = sorted(points, key=lambda p: p["d"])
+    rows = [[], []]       # occupation x par rangée (0 = au-dessus, 1 = en dessous)
+    frag = []
+    for p in items:
+        if p["z"] is None:
+            continue
+        x, y = X(p["d"]), Y(p["z"])
+        placed = None
+        for r in (0, 1):
+            if all(abs(x - xx) >= 26 for xx in rows[r]):
+                rows[r].append(x); placed = r; break
+        if placed is None:
+            continue                                   # trop serré → omise (évite la collision)
+        yy = (y - 6) if placed == 0 else (y + 12)
+        frag.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="1.8" fill="{T["txt"]}"/>')
+        frag.append(f'<text x="{x:.1f}" y="{yy:.1f}" text-anchor="middle" font-size="8" fill="{T["txt"]}">{_fmt(p["z"],1)}</text>')
+    return "".join(frag)
+
+
+def _echelle(x, y, L, s, plot_w, width, largeur_mm, T):
+    barre = _nice_step(L, 5)
+    frag = [f'<line x1="{x:.1f}" y1="{y:.1f}" x2="{x+barre*s:.1f}" y2="{y:.1f}" stroke="{T["txt"]}" stroke-width="2"/>',
+            f'<line x1="{x:.1f}" y1="{y-3:.1f}" x2="{x:.1f}" y2="{y+3:.1f}" stroke="{T["txt"]}" stroke-width="1"/>',
+            f'<line x1="{x+barre*s:.1f}" y1="{y-3:.1f}" x2="{x+barre*s:.1f}" y2="{y+3:.1f}" stroke="{T["txt"]}" stroke-width="1"/>',
+            f'<text x="{x+barre*s+5:.1f}" y="{y+3:.1f}" font-size="8.5" fill="{T["txt_dim"]}">{_fmt(barre)} m · H = V</text>']
+    if largeur_mm:                                     # ratio chiffré : PDF seulement
+        ratio = 1000.0 * width / (s * largeur_mm)
+        for rr in (100, 200, 250, 500, 1000, 2000):
+            if rr >= ratio:
+                ratio = rr; break
+        frag.append(f'<text x="{x+barre*s+5:.1f}" y="{y-7:.1f}" font-size="8.5" fill="{T["txt_dim"]}">1:{int(ratio)}</text>')
+    return "".join(frag)
 
 
 def _bande(spans, y, X, label, T, col=None):
@@ -255,38 +301,37 @@ def _bande(spans, y, X, label, T, col=None):
     return "".join(frag)
 
 
-def _indicateurs_txt(coupe, X, Y, z_terrain, y0, pad_l, T):
+def _indicateurs(coupe, faitages, reconstruits, y0, pad_l, T):
     ind = coupe.get("indicateurs") or {}
     lignes = []
     for tr in ind.get("traversees") or []:
-        p = tr.get("pente_pct")
-        sens = tr.get("sens", "")
-        lignes.append(f"traversée {_fmt(tr['d0'],1)}–{_fmt(tr['d1'],1)} m : pente {_fmt(p,1) if p is not None else '—'} % ({_esc(sens)}) · amplitude {_fmt(tr['amplitude_m'],1)} m")
+        lignes.append(f"traversée {_fmt(tr['d0'],1)}–{_fmt(tr['d1'],1)} m : pente {_fmt(tr.get('pente_pct'),1)} % ({_esc(tr.get('sens'))}) · amplitude {_fmt(tr['amplitude_m'],1)} m")
     pm = ind.get("pente_max_5m") or {}
-    frag = []
     if pm.get("disponible"):
-        lignes.append(f"pente max sur 5 m (hors bâti) : {_fmt(pm['pente_pct'],1)} % à {_fmt(pm['d'],1)} m")
-        zt = z_terrain(pm["d"])
-        if zt is not None:                           # emplacement reporté sur le dessin
-            frag.append(f'<line x1="{X(pm["d"]):.1f}" y1="{Y(zt):.1f}" x2="{X(pm["d"]):.1f}" y2="{Y(zt)-18:.1f}" stroke="{T["lacune"]}" stroke-width="1.2"/>')
-            frag.append(f'<text x="{X(pm["d"]):.1f}" y="{Y(zt)-20:.1f}" text-anchor="middle" font-size="7.5" fill="{T["lacune"]}">pente max 5 m</text>')
+        lignes.append(f"pente max sur 5 m (hors bâti ±1 m) : {_fmt(pm['pente_pct'],1)} % entre {_fmt(pm['d0'],1)} et {_fmt(pm['d1'],1)} m")
     if ind.get("pente_acces_pct") is not None:
-        lignes.append(f"pente d'accès : {_fmt(ind['pente_acces_pct'],1)} %")
-    for i, ln in enumerate(lignes[:4]):
-        frag.append(f'<text x="{pad_l}" y="{y0+12+i*12:.1f}" font-size="8.5" fill="{T["txt"]}">{_esc(ln)}</text>')
+        lignes.append(f"pente sur l'axe, de la voie à la limite : {_fmt(ind['pente_acces_pct'],1)} %")
+    lignes += faitages
+    if reconstruits:
+        lignes.append("– – – profil reconstruit entre deux appuis (tirets)")
+    frag = []
+    for i, ln in enumerate(lignes[:6]):
+        frag.append(f'<text x="{pad_l}" y="{y0+12+i*11:.1f}" font-size="8.5" fill="{T["txt"]}">{_esc(ln)}</text>')
     return "".join(frag)
 
 
-# ── Plan-clé (B8) : cadastre, axe + sens, bâti traversé, voie, nord ────────────────────────────────
+# ── Plan-clé (B8) : cadastre, axe + sens, bâti, voie à son intersection, nord ──────────────────────
 
-def plan_cle_svg(scene: dict, *, theme: str = "sombre", width: int = 380, height: int = 320) -> str | None:
+def plan_cle_svg(scene, *, theme="sombre", width=380, height=320):
     T = _THEMES.get(theme, _THEMES["sombre"])
-    cad = scene.get("contour_cadastral") or scene.get("parcelle") or []
+    cad = scene.get("contour_cadastral") or scene.get("contour_gabarit") or []
     if not cad:
         return None
     zone = scene.get("zone_implantation") or []
     batis = scene.get("batiments") or []
     axes = scene.get("axes_plan") or {}
+    voie_pts = [c["voie"]["point_local"] for c in (scene.get("coupes") or [])
+                if c.get("voie") and c["voie"].get("point_local")]
 
     allpts = [p for poly in cad for p in poly.get("ext", [])]
     for a in axes.values():
@@ -301,36 +346,35 @@ def plan_cle_svg(scene: dict, *, theme: str = "sombre", width: int = 380, height
     offy = (height - (maxy - miny) * s) / 2
 
     def X(x): return offx + (x - minx) * s
-    def Y(y): return height - offy - (y - miny) * s      # nord vers le haut
+    def Y(y): return height - offy - (y - miny) * s
 
     def path(poly):
         d = "M" + "L".join(f"{X(x):.1f},{Y(y):.1f}" for x, y in poly["ext"]) + "Z"
-        for tr in poly.get("trous", []):                  # trous conservés
+        for tr in poly.get("trous", []):
             d += "M" + "L".join(f"{X(x):.1f},{Y(y):.1f}" for x, y in tr) + "Z"
         return d
 
     out = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" '
-           f'height="{height}" role="img" aria-label="Plan-clé des coupes" {_FONT} '
-           f'style="background:{T["bg"]}">']
+           f'height="{height}" role="img" aria-label="Plan-clé des coupes" {_FONT} style="background:{T["bg"]}">']
     for poly in zone:
         out.append(f'<path d="{path(poly)}" fill="{T["zone"]}" fill-opacity="0.4" stroke="{T["zone"]}" stroke-width="1" fill-rule="evenodd"/>')
     for poly in batis:
-        emp = poly.get("empreinte") or []
-        for sub in emp:
+        for sub in poly.get("empreinte") or []:
             out.append(f'<path d="{path(sub)}" fill="{T["bati"]}" fill-opacity="0.45" stroke="{T["bati"]}" stroke-width="0.6" fill-rule="evenodd"/>')
     for poly in cad:
         out.append(f'<path d="{path(poly)}" fill="none" stroke="{T["limite"]}" stroke-width="1.4" stroke-dasharray="4 2" fill-rule="evenodd"/>')
-    # axes + sens de lecture (flèche en tracés)
     for label, a in axes.items():
         x0, y0, x1, y1 = X(a["p0"][0]), Y(a["p0"][1]), X(a["p1"][0]), Y(a["p1"][1])
         out.append(f'<line x1="{x0:.1f}" y1="{y0:.1f}" x2="{x1:.1f}" y2="{y1:.1f}" stroke="{T["axe"]}" stroke-width="2"/>')
         out.append(_fleche(x0 + (x1 - x0) * 0.72, y0 + (y1 - y0) * 0.72, x1, y1, T["axe"]))
         out.append(f'<text x="{x0:.1f}" y="{y0-5:.1f}" font-size="10" font-weight="600" fill="{T["axe"]}">{label}</text>')
         out.append(f'<text x="{x1:.1f}" y="{y1-5:.1f}" font-size="10" font-weight="600" fill="{T["axe"]}">{label}′</text>')
-    # nord
+    for p in voie_pts:                                 # voie à son intersection (B8)
+        out.append(f'<circle cx="{X(p[0]):.1f}" cy="{Y(p[1]):.1f}" r="3.5" fill="none" stroke="{T["axe"]}" stroke-width="1.5"/>')
+        out.append(f'<text x="{X(p[0])+5:.1f}" y="{Y(p[1])+3:.1f}" font-size="8" fill="{T["axe"]}">voie</text>')
     nx, ny = width - 22, 30
     out.append(_fleche(nx, ny + 16, nx, ny - 8, T["txt"]))
     out.append(f'<text x="{nx:.1f}" y="{ny-11:.1f}" text-anchor="middle" font-size="9" font-weight="600" fill="{T["txt"]}">N</text>')
-    out.append(f'<text x="{PAD}" y="16" font-size="10" fill="{T["txt_dim"]}">Plan-clé — contour cadastral, axes et sens de lecture</text>')
+    out.append(f'<text x="{PAD}" y="16" font-size="10" fill="{T["txt_dim"]}">Plan-clé — cadastre, axes, sens, voie, nord</text>')
     out.append("</svg>")
     return "".join(out)

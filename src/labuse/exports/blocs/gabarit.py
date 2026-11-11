@@ -142,15 +142,20 @@ def _bloc_coupes_pilote(scene: dict) -> str:
     if not scene.get("disponible") or not scene.get("coupes"):
         return ""
     # PDF = thème CLAIR ; largeur imprimée maîtrisée (contenu A4 ≈ 170 mm) → échelle chiffrée possible.
+    sid = scene.get("scene_id"); adr = scene.get("adresse")
     plan = plan_cle_svg(scene, theme="clair") or ""
-    figures = [coupe_svg(c, theme="clair", largeur_mm=170) for c in scene["coupes"]]
+    figures = [coupe_svg(c, theme="clair", largeur_mm=170, scene_id=sid, adresse=adr)
+               for c in scene["coupes"]]
     figures = [f for f in figures if f]
     if not figures:
         return ""
     corps = ('<div class="coupes3d" style="page-break-before:always">'
-             '<h3>Terrain réel — coupes (pilote 3D)</h3>'
-             f'<div class="plan2d">{plan}</div>')
-    for fig in figures:
+             '<h3>Terrain réel — coupes (pilote 3D)</h3>')
+    # plan-clé À CÔTÉ de la première coupe (B8) : rangée flex
+    corps += (f'<div style="display:flex;gap:8px;align-items:flex-start">'
+              f'<div class="plan2d" style="flex:1 1 auto">{figures[0]}</div>'
+              f'<div class="plan2d" style="flex:0 0 auto">{plan}</div></div>')
+    for fig in figures[1:]:
         corps += f'<div class="plan2d" style="margin-top:8px">{fig}</div>'
     corps += ('</div>' + note(
         "Cotes indicatives issues du MNT LiDAR HD IGN à 1 m (REUN89). Échelle horizontale = verticale "

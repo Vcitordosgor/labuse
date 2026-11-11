@@ -204,7 +204,7 @@ def gabarit_coupe_svg(idu: str, axe: str, request: Request, theme: str = "sombre
     coupe = next((c for c in scene.coupes if c["label"].upper() == axe.upper()), None)
     if coupe is None:
         raise HTTPException(404, f"Coupe « {axe} » indisponible pour {idu}.")
-    svg = coupe_svg(coupe, theme=theme)
+    svg = coupe_svg(coupe, theme=theme, scene_id=scene.scene_id, adresse=scene.adresse)
     if not svg:
         raise HTTPException(404, "Relief indisponible sur cette emprise (profil sans point valide).")
     return Response(svg, media_type="image/svg+xml")

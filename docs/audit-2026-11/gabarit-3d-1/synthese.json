@@ -4,7 +4,7 @@
       "label": "plate",
       "idu": "97415000CY0196",
       "titre": "Parcelle plate — plaine littorale de Saint-Paul (~5 m), bâti sur terrain plat",
-      "scene_id": "255879b1d6ab",
+      "scene_id": "b4994874b1dc",
       "disponible": true,
       "etat": {
         "gabarit": "inconstructible",
@@ -31,20 +31,20 @@
               {
                 "d0": 1.0,
                 "d1": 43.89,
-                "pente_pct": -8.0,
+                "pente_pct": -7.9,
                 "sens": "descente",
-                "amplitude_m": 3.43
+                "amplitude_m": 3.4
               }
             ],
             "pente_max_5m": {
               "disponible": true,
-              "pente_pct": 30.1,
-              "d": 42.39,
-              "fenetre_m": 5.0
+              "pente_pct": 27.3,
+              "d0": 1.99,
+              "d1": 6.98
             },
             "pente_acces_pct": null
           },
-          "n_cotes_points": 8
+          "n_cotes_points": 7
         },
         {
           "axe": "B",
@@ -52,27 +52,31 @@
             "nom": "Rue des Sables",
             "etablie": true,
             "intersection_d": 19.46,
-            "statut": "accès présumé (intersection de voie vérifiée)"
+            "statut": "accès présumé (intersection de voie vérifiée)",
+            "point_local": [
+              49.13,
+              11.53
+            ]
           },
           "indicateurs": {
             "traversees": [
               {
                 "d0": 26.16,
                 "d1": 66.41,
-                "pente_pct": -4.1,
+                "pente_pct": -4.0,
                 "sens": "descente",
-                "amplitude_m": 1.66
+                "amplitude_m": 1.6
               }
             ],
             "pente_max_5m": {
               "disponible": true,
-              "pente_pct": 27.4,
-              "d": 25.66,
-              "fenetre_m": 5.0
+              "pente_pct": 16.7,
+              "d0": 61.37,
+              "d1": 66.41
             },
-            "pente_acces_pct": -14.6
+            "pente_acces_pct": -14.9
           },
-          "n_cotes_points": 9
+          "n_cotes_points": 8
         }
       ]
     },
@@ -80,7 +84,7 @@
       "label": "cotier",
       "idu": "97413000CA0057",
       "titre": "Littoral de Saint-Leu — falaise",
-      "scene_id": "ac760451bfec",
+      "scene_id": "de4ab3bc954f",
       "disponible": true,
       "etat": {
         "gabarit": "inconstructible",
@@ -105,18 +109,18 @@
           "indicateurs": {
             "traversees": [
               {
-                "d0": 35.86,
-                "d1": 80.68,
-                "pente_pct": -26.4,
+                "d0": 35.07,
+                "d1": 80.15,
+                "pente_pct": -26.5,
                 "sens": "descente",
-                "amplitude_m": 11.82
+                "amplitude_m": 11.96
               }
             ],
             "pente_max_5m": {
               "disponible": true,
-              "pente_pct": 194.6,
-              "d": 81.18,
-              "fenetre_m": 5.0
+              "pente_pct": 47.3,
+              "d0": 35.07,
+              "d1": 40.08
             },
             "pente_acces_pct": null
           },
@@ -128,25 +132,29 @@
             "nom": "Rue Georges Pompidou",
             "etablie": true,
             "intersection_d": 49.3,
-            "statut": "accès présumé (intersection de voie vérifiée)"
+            "statut": "accès présumé (intersection de voie vérifiée)",
+            "point_local": [
+              77.08,
+              55.55
+            ]
           },
           "indicateurs": {
             "traversees": [
               {
                 "d0": 55.14,
                 "d1": 99.26,
-                "pente_pct": -26.1,
+                "pente_pct": -27.1,
                 "sens": "descente",
-                "amplitude_m": 11.51
+                "amplitude_m": 11.97
               }
             ],
             "pente_max_5m": {
               "disponible": true,
-              "pente_pct": 175.9,
-              "d": 99.76,
-              "fenetre_m": 5.0
+              "pente_pct": 45.8,
+              "d0": 55.14,
+              "d1": 60.16
             },
-            "pente_acces_pct": 6.9
+            "pente_acces_pct": 4.4
           },
           "n_cotes_points": 5
         }
@@ -156,7 +164,7 @@
       "label": "alt760",
       "idu": "97415000CM1658",
       "titre": "Parcelle en altitude — 36 Rue des Jacarandas, Saint-Paul (~595 m mesurés)",
-      "scene_id": "a35230147072",
+      "scene_id": "6f4689613207",
       "disponible": true,
       "etat": {
         "gabarit": "ok",
@@ -181,22 +189,22 @@
           "indicateurs": {
             "traversees": [
               {
-                "d0": 2.02,
-                "d1": 22.19,
+                "d0": 2.01,
+                "d1": 22.14,
                 "pente_pct": -10.1,
                 "sens": "descente",
-                "amplitude_m": 2.19
+                "amplitude_m": 2.2
               }
             ],
             "pente_max_5m": {
               "disponible": true,
-              "pente_pct": 32.7,
-              "d": 21.69,
-              "fenetre_m": 5.1
+              "pente_pct": 30.2,
+              "d0": 17.11,
+              "d1": 22.14
             },
             "pente_acces_pct": null
           },
-          "n_cotes_points": 6
+          "n_cotes_points": 5
         },
         {
           "axe": "B",
@@ -204,23 +212,24 @@
             "nom": null,
             "etablie": false,
             "intersection_d": null,
-            "statut": "coupe orientée vers la voie (intersection non établie)"
+            "statut": "coupe orientée vers la voie (intersection non établie)",
+            "point_local": null
           },
           "indicateurs": {
             "traversees": [
               {
                 "d0": 25.99,
                 "d1": 41.99,
-                "pente_pct": -0.6,
+                "pente_pct": -0.4,
                 "sens": "descente",
-                "amplitude_m": 0.33
+                "amplitude_m": 0.36
               }
             ],
             "pente_max_5m": {
               "disponible": true,
-              "pente_pct": 20.2,
-              "d": 25.49,
-              "fenetre_m": 5.0
+              "pente_pct": 7.2,
+              "d0": 26.99,
+              "d1": 31.99
             },
             "pente_acces_pct": null
           },
@@ -232,7 +241,7 @@
       "label": "bz1065",
       "idu": "97411000BZ1065",
       "titre": "97411000BZ1065 — talus, Saint-Denis ; coupe B traverse la parcelle en plusieurs tronçons",
-      "scene_id": "362d417ee9d0",
+      "scene_id": "1a439fd3ca95",
       "disponible": true,
       "etat": {
         "gabarit": "ok",
@@ -258,17 +267,17 @@
             "traversees": [
               {
                 "d0": 4.98,
-                "d1": 46.78,
-                "pente_pct": -25.2,
+                "d1": 46.77,
+                "pente_pct": -25.3,
                 "sens": "descente",
-                "amplitude_m": 10.52
+                "amplitude_m": 10.57
               }
             ],
             "pente_max_5m": {
               "disponible": true,
-              "pente_pct": 70.7,
-              "d": 46.28,
-              "fenetre_m": 5.0
+              "pente_pct": 66.5,
+              "d0": 41.79,
+              "d1": 46.77
             },
             "pente_acces_pct": null
           },
@@ -280,32 +289,36 @@
             "nom": "Chemin de la Citerne",
             "etablie": true,
             "intersection_d": 27.5,
-            "statut": "accès présumé (intersection de voie vérifiée)"
+            "statut": "accès présumé (intersection de voie vérifiée)",
+            "point_local": [
+              53.96,
+              10.72
+            ]
           },
           "indicateurs": {
             "traversees": [
               {
                 "d0": 31.85,
                 "d1": 50.76,
-                "pente_pct": -21.6,
+                "pente_pct": -22.7,
                 "sens": "descente",
-                "amplitude_m": 4.17
+                "amplitude_m": 4.35
               },
               {
                 "d0": 61.71,
                 "d1": 94.56,
-                "pente_pct": 2.6,
+                "pente_pct": 1.6,
                 "sens": "montée",
-                "amplitude_m": 3.6
+                "amplitude_m": 3.66
               }
             ],
             "pente_max_5m": {
               "disponible": true,
-              "pente_pct": 69.9,
-              "d": 83.11,
-              "fenetre_m": 5.0
+              "pente_pct": 40.6,
+              "d0": 42.8,
+              "d1": 47.78
             },
-            "pente_acces_pct": 7.2
+            "pente_acces_pct": 6.9
           },
           "n_cotes_points": 9
         }
@@ -315,13 +328,20 @@
   "test_cadre_fautes": [],
   "recette_d": {
     "d1_lacune_sous_bati": {
-      "bati_toujours_dessine": true,
-      "lacune_ouverte": true
+      "emprise_au_sol": true,
+      "faitage_a_part": true
     },
     "d2_reproductible": {
       "svg_identique": true,
       "scene_id_identique": true,
-      "scene_id": "362d417ee9d0"
+      "scene_id": "1a439fd3ca95"
+    },
+    "d3_multipart": {
+      "idu": "97411000HP0455",
+      "disponible": false,
+      "couverture": 0.0,
+      "n_contours_cad": 3,
+      "coupes": 0
     }
   },
   "controle_a": {
@@ -383,17 +403,17 @@
         "temoin": "bz1065",
         "axe": "A (pente dominante)",
         "longueur_m": 48.8,
-        "ecart_1m_vs_50cm_median_m": 0.107,
-        "ecart_1m_vs_50cm_p95_m": 0.497,
-        "ecart_1m_vs_50cm_max_m": 0.558
+        "ecart_1m_vs_50cm_median_m": 0.01,
+        "ecart_1m_vs_50cm_p95_m": 0.038,
+        "ecart_1m_vs_50cm_max_m": 0.041
       },
       {
         "temoin": "cotier",
         "axe": "A (pente dominante)",
-        "longueur_m": 109.6,
-        "ecart_1m_vs_50cm_median_m": 0.11,
-        "ecart_1m_vs_50cm_p95_m": 1.09,
-        "ecart_1m_vs_50cm_max_m": 2.531
+        "longueur_m": 109.2,
+        "ecart_1m_vs_50cm_median_m": 0.101,
+        "ecart_1m_vs_50cm_p95_m": 1.801,
+        "ecart_1m_vs_50cm_max_m": 3.222
       }
     ],
     "georeferencement": {
@@ -401,12 +421,12 @@
         336637,
         7689754
       ],
-      "valeur_fenetre_A_m": 401.01,
+      "valeur_fenetre_A_m": 401.018,
       "valeur_fenetre_decalee_m": 401.07,
-      "ecart_m": 0.06,
+      "ecart_m": 0.052,
       "note": "L'altitude en un point est INVARIANTE par le cadrage de la fenêtre WMS (écart ~0) : les fenêtres sont bien géoréférencées sur la grille native (origine = BBOX au pixel près). Le WMS tague EPSG:32740 mais la grille est en coordonnées 2975 → ré-étiquetée."
     },
-    "correction_0_92m": "CORRECTION (lecture du rapport précédent) : le « 0,92 m » annoncé était l'ÉTENDUE pic-à-pic des quatre sous-pixels 0,50 m DANS un pixel 1 m en talus (p95) — une dispersion interne, PAS l'écart que le 1 m introduit sur une coupe. Mesuré ci-dessus LE LONG DES MÊMES AXES, l'écart réel de cote entre 1 m et 0,50 m est décimétrique (médiane ~0.107 m, p95 ~0.497 m sur BZ1065). Le 1 m lisse les micro-ruptures ; il conserve la forme et les cotes utiles du talus."
+    "correction_0_92m": "CORRECTION (lecture du rapport précédent) : le « 0,92 m » annoncé était l'ÉTENDUE pic-à-pic des quatre sous-pixels 0,50 m DANS un pixel 1 m en talus (p95) — une dispersion interne, PAS l'écart que le 1 m introduit sur une coupe. Mesuré ci-dessus LE LONG DES MÊMES AXES, l'écart réel de cote entre 1 m et 0,50 m est décimétrique (médiane ~0.01 m, p95 ~0.038 m sur BZ1065). Le 1 m lisse les micro-ruptures ; il conserve la forme et les cotes utiles du talus."
   },
   "fond": {
     "taille_octets": 2934273,

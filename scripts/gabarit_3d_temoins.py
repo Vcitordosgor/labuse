@@ -31,7 +31,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from labuse.gabarit import scene as SC
-from labuse.gabarit.scene import SurfaceReference, build_scene
+from labuse.gabarit.scene import build_scene
+from labuse.gabarit.terrain_mesh import TerrainMesh
 from labuse.gabarit.coupe_svg import coupe_svg, plan_cle_svg
 
 REPO = Path(__file__).resolve().parents[1]
@@ -83,7 +84,8 @@ def temoins(eng):
                  "coupes": []}
         for c in s.coupes:
             for theme in ("clair", "sombre"):
-                svg = coupe_svg(c, theme=theme, largeur_mm=170 if theme == "clair" else None)
+                svg = coupe_svg(c, theme=theme, largeur_mm=170 if theme == "clair" else None,
+                                scene_id=s.scene_id, adresse=s.adresse)
                 if not svg:
                     continue
                 h = int(re.search(r'height="(\d+)"', svg).group(1))
@@ -120,23 +122,53 @@ def recette_d(eng):
         for p in c2["profil"]:          # trou > 3 m → lacune OUVERTE (non reconstituée) sous le bâti
             if dmid - 3.0 <= p["d"] <= dmid + 3.0:
                 p["z"] = None
-        svg = coupe_svg(c2, theme="clair", largeur_mm=170)
+        svg = coupe_svg(c2, theme="clair", largeur_mm=170, scene_id=s.scene_id, adresse=s.adresse)
         _png(svg, OUT / "recette" / "d1_lacune_sous_bati.svg")
-        res["d1_lacune_sous_bati"] = {"bati_toujours_dessine": "polygon" in svg,
-                                      "lacune_ouverte": "stroke-dasharray=\"2 2\"" in svg}
-    # D2 — reproductibilité : même SVG après purge du cache COG
+        # emprise au sol présente ; mention faîtage à part (aucune cote de toiture sur un volume)
+        res["d1_lacune_sous_bati"] = {"emprise_au_sol": "emprise bâtie" in svg,
+                                      "faitage_a_part": "Hauteur au faîtage" in svg}
+    # D2 — reproductibilité : même SVG après purge du cache COG + mémo scène
     def svg_bz():
+        SC._MEMO.clear()
         with Session(eng) as db:
             sc = build_scene(db, "97411000BZ1065")
         c = [x for x in sc.coupes if x["label"] == "A"][0]
-        return coupe_svg(c, theme="clair", largeur_mm=170), sc.scene_id
+        return coupe_svg(c, theme="clair", largeur_mm=170, scene_id=sc.scene_id, adresse=sc.adresse), sc.scene_id
     svg1, id1 = svg_bz()
-    SC._open_cog.cache_clear()                 # purge du cache du fond
+    SC._open_cog.cache_clear()
     svg2, id2 = svg_bz()
     res["d2_reproductible"] = {"svg_identique": svg1 == svg2, "scene_id_identique": id1 == id2, "scene_id": id1}
-    print(f"  recette D : lacune sous bâti {res.get('d1_lacune_sous_bati')} ; reproductible {res['d2_reproductible']}")
+    # D3 — parcelle en PLUSIEURS MORCEAUX : la scène se construit, couverture sur la parcelle
+    idu_multi = _parcelle_multipart(eng)
+    if idu_multi:
+        SC._MEMO.clear()
+        with Session(eng) as db:
+            sm = build_scene(db, idu_multi)
+        res["d3_multipart"] = {"idu": idu_multi, "disponible": sm.disponible,
+                               "couverture": sm.etat.get("terrain_couverture"),
+                               "n_contours_cad": len(sm.contour_cadastral), "coupes": len(sm.coupes)}
+    else:
+        res["d3_multipart"] = {"idu": None, "note": "aucune parcelle multi-morceaux dans l'emprise du fond"}
+    print(f"  recette D : D1 {res.get('d1_lacune_sous_bati')} ; D2 {res['d2_reproductible']} ; D3 {res['d3_multipart']}")
     (OUT / "recette" / "recette.json").write_text(json.dumps(res, ensure_ascii=False, indent=2))
     return res
+
+
+def _parcelle_multipart(eng):
+    """Parcelle en plusieurs morceaux : d'abord dans une fenêtre témoin (terrain couvert), sinon
+    n'importe où dans les communes (teste la géométrie multi-morceaux + « disponible » si couverte)."""
+    from sqlalchemy import text
+    with eng.connect() as c:
+        for x, y in ((336637, 7689754), (314713, 7672415), (322881, 7672581), (320491, 7661770)):
+            r = c.execute(text(
+                "SELECT idu FROM parcels WHERE ST_NumGeometries(geom_2975) > 1 "
+                "AND ST_DWithin(geom_2975, ST_SetSRID(ST_Point(:x,:y),2975), 200) LIMIT 1"),
+                {"x": x, "y": y}).scalar()
+            if r:
+                return r
+        return c.execute(text(
+            "SELECT idu FROM parcels WHERE commune IN ('Saint-Denis','Saint-Paul','Saint-Leu') "
+            "AND ST_NumGeometries(geom_2975) > 1 LIMIT 1")).scalar()
 
 
 # ── contrôle (a) — plan incliné synthétique (droit + OBLIQUE) ─────────────────────────────────────
@@ -151,7 +183,7 @@ def controle_a():
     cx, cy = rasterio.transform.xy(tr, jj.ravel().tolist(), ii.ravel().tolist())
     cx = np.array(cx).reshape(n, n); cy = np.array(cy).reshape(n, n)
     Z = (Z0 + GX * (cx - x0) + GY * (cy - y0)).astype("float64")
-    surf = SurfaceReference(Z, x0, y0 + n, 1.0)
+    surf = TerrainMesh(Z, x0, y0 + n, 1.0)
     # coupe OBLIQUE (37°) décalée des centres → pente constante attendue (projection du gradient)
     ux, uy = math.cos(math.radians(37)), math.sin(math.radians(37))
     zs = [surf.altitude(x0 + 10.3 + ux * d, y0 + 8.7 + uy * d) for d in range(31)]
@@ -159,7 +191,7 @@ def controle_a():
     attendu = (GX * ux + GY * uy) * 100
     # lacune : un trou de surface → None sur la coupe droite EST
     Z2 = Z.copy(); Z2[:, 60:65] = np.nan
-    surf2 = SurfaceReference(Z2, x0, y0 + n, 1.0)
+    surf2 = TerrainMesh(Z2, x0, y0 + n, 1.0)
     jrow = n // 2; yr = y0 + n - (jrow + 0.5)
     prof = [{"d": float(i), "z": surf2.altitude(x0 + i + 0.5, yr)} for i in range(n)]
     runs = [r for r in _split_runs(prof)]
@@ -242,7 +274,7 @@ def _wms(minx, miny, maxx, maxy, pas):
         a = d.read(1).astype("float64")
         tr = d.transform
     a[(a <= -1000) | ~np.isfinite(a)] = np.nan
-    return SurfaceReference(a, tr.c, tr.f, tr.a)
+    return TerrainMesh(a, tr.c, tr.f, tr.a)
 
 
 def controle_C(eng):

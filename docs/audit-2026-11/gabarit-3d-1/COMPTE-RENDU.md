@@ -5,8 +5,8 @@ prod. **Aucun chiffre servi ne change** (bancs Gabarit verts, chiffres du Gabari
 La vue 3D actuelle reste la vue par défaut ; le pilote vit derrière un **interrupteur réservé aux admins**.
 **Aucun plafond de hauteur n'est dessiné** (les hauteurs en pente sont le mandat suivant).
 
-> Les §1–§9 décrivent l'étape 1. Le **§10** consigne la **revue d'Astra (étape 1 bis)** et FAIT FOI
-> pour la scène et les coupes (surface de référence, trois contours, indicateurs, thèmes, contrôle C).
+> Les §1–§9 décrivent l'étape 1 ; §10 = revue bis ; le **§11 (étape 1 ter) FAIT FOI** pour la scène
+> et les coupes (lecture pixel-native, maillage triangulé, planches, modèle bâti). §12 = visionneuse.
 
 ---
 
@@ -60,7 +60,7 @@ viennent en réalité du **service IGN en ligne**. Aucun fond 1 m n'existait.
 | PDF | `src/labuse/exports/blocs/gabarit.py` | section pilote **gated** `ctx['scene3d']` (défaut inchangé) |
 | Config | `src/labuse/config.py` | `mnt1m_cog_path` / `LABUSE_MNT1M_COG_PATH` |
 | Témoins + contrôles | `scripts/gabarit_3d_temoins.py` | coupes SVG(clair+sombre)+PNG, plan, recette D, contrôles a/b/c/C |
-| Tests | `tests/test_gabarit_scene.py` | 13 tests (surface bilinéaire, trous, indicateurs, cadre, thèmes, gating, invariant) |
+| Tests | `tests/test_gabarit_scene.py` | 18 tests (maillage, bâti, planches, cadre, thèmes, gating, locks) |
 
 La **scène** lit le `GabaritResult` SERVI par `gabarit_detail` (chiffres repris tels quels) + le fond 1 m.
 Écran (étape 2) et PDF lisent la même scène. Tout est **offline** (COG local + base ; aucun appel réseau,
@@ -264,3 +264,48 @@ Même branche, avant la visionneuse. La maquette « 13-coupe-cible » n'est qu'u
 
 Vérifs étape 1 bis : 13 tests `test_gabarit_scene.py` ✅ ; 292 unit + 2 db gabarit inchangés ✅ ;
 invariant « chiffres identiques » + déterminisme (base réelle) ✅ ; PDF pilote (clair) rendu offline ✅.
+
+---
+
+## 11. Étape 1 ter — 3ᵉ revue d'Astra (verrous scène + planches)
+
+### A. Verrous de la scène
+- **Lecture pixel-native** (`charger_surface` snappe la fenêtre sur la grille native) → ✅ une même cote
+  est **identique entre deux cadrages** (test A1, base réelle).
+- **Un seul MAILLAGE triangulé serveur** (`terrain_mesh.TerrainMesh`, 1 m parcelle / 2 m voisinage) :
+  les coupes sont l'**intersection avec ces faces** — celles que la visionneuse affiche. ✅ Test maille
+  non plane (0,0,0,4) → **2,0 (triangulé)**, pas 1,0 (bilinéaire). Faces exportées (sommets+triangles),
+  bornées, trous retirés.
+- **Scène construite une fois** (mémo), lue par visionneuse/coupes/export ; `scene_id` sur le contenu
+  (change dès qu'un contenu change) ; **une coupe impossible laisse le plan et le terrain accessibles**
+  (chaque coupe protégée) ; **« disponible » seulement si la PARCELLE est couverte** (`couverture > 0,5`
+  sur le polygone, multi-morceaux compris). ✅ Recette D3 : parcelle `97411000HP0455` (3 morceaux) →
+  3 contours conservés, hors fond → disponible=False, dégradée sans planter.
+- **Bâti** : hauteur **null** quand non attribuée (plus de défaut 3,0) ; la hauteur suit l'identité de
+  l'emprise mesurée, la règle « une seule emprise » **retirée** (plusieurs LiDAR → tous attribués,
+  mention « estimée par LiDAR »). **Volume schématique** : pied conventionnel = **médiane des altitudes
+  valides juste hors des façades**, dessus horizontal, **sans cote de toiture**.
+
+### B. Planches (régénérées, clair + sombre)
+- **Bâti dans la coupe** : emprise **marquée au sol**, terrain coté au droit des **deux façades**,
+  mention à part **« Hauteur au faîtage estimée par LiDAR · X m »** quand attribuée, **aucun toit**.
+  Sous l'emprise le **trait s'interrompt** ; les **tirets** sont réservés au **profil reconstruit** entre
+  deux appuis extérieurs (légende).
+- **Pente max sur 5 m** : 5 m entiers, un seul tronçon valide, dans la parcelle, **hors emprise bâtie
+  ±1 m**, **deux bornes dessinées** ; limites, bandes et pente entre limites partagent **les mêmes bornes**.
+- **Échelle** : barre graphique dans un **emplacement réservé** (écran + PDF) ; **ratio chiffré au PDF
+  seulement** (1:N rond).
+- **Voie** placée à son intersection, **reportée sur le plan-clé affiché à côté** (PDF : rangée flex) ;
+  « pente de la voie à la limite » **seulement si le profil est continu** sur tout le trajet.
+- **Mise en page** : anti-collision des cotes (**une seule cote par point**), en-tête **identifiant +
+  adresse**, police des documents, **thème sombre complet** (fond + textes), bande d'implantation
+  **« non traversée »** si la zone existe mais n'est pas croisée, **« indisponible »** sinon.
+
+### C. Résolution (corrigée, mesure maillage)
+1 m vs 0,50 m le long des **mêmes axes** (`controles/C_resolution_georef.json`) : BZ1065 A médiane
+**0,01 m** / p95 0,04 m ; **côtier (falaise) A médiane 0,10 m / p95 1,80 m / max 3,22 m** (le 0,50 m
+résout mieux la crête). Géoréférencement **invariant** par cadrage (0,05 m). Le « 0,92 m » du 1ᵉʳ rapport
+reste corrigé (dispersion intra-pixel, pas l'écart de cote).
+
+Vérifs : **18 tests** `test_gabarit_scene.py` ; 297 unit + 2 db gabarit inchangés ; 0 faute hors cadre ;
+PDF pilote (clair, plan à côté) rendu offline. **Étape 2 (visionneuse) ci-dessous.**
