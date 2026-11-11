@@ -1,0 +1,4 @@
+{
+  "disponible": false,
+  "constat": "Aucune cote publique INDÉPENDANTE ne coïncide avec un point témoin au même endroit ET au même référentiel (REUN89). Le service RGE ALTI et le WMS LiDAR HD sont le MÊME référentiel/source (contrôle b), donc PAS indépendants. Les repères de nivellement IGN (REUN89) existent mais aucun ne tombe au pixel d'un témoin. Conformément au mandat : il n'y a pas de contrôle indépendant à affirmer ici."
+}

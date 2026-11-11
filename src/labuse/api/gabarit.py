@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import json
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -173,3 +173,49 @@ def gabarit_detail(idu: str, db: Session = Depends(get_db)) -> GabaritResult:
         res.terrainNote = ("Volume 3D indicatif — la hauteur réglementaire est mesurée depuis le terrain "
                            "naturel, mais le sommet est représenté à plat (il ne suit pas la pente du terrain).")
     return res
+
+
+# ── GABARIT-3D-1 (pilote) — SCÈNE + COUPES ────────────────────────────────────────────────────────
+# Réservé aux ADMINS (interrupteur du pilote) : la vue 3D par défaut et les chiffres servis ne
+# changent pas. La scène lit le MÊME GabaritResult que l'outil (chiffres identiques) + le fond
+# LiDAR 1 m local. Écran (étape 2) et PDF liront la même scène.
+
+def _exiger_admin(request: Request) -> None:
+    from . import auth
+    auth.exiger_admin(request)
+
+
+@router.get("/scene/{idu}")
+def gabarit_scene(idu: str, request: Request, db: Session = Depends(get_db)) -> dict:
+    """Scène 3D du Gabarit (terrain 1 m, limite, zone, bâtiments, règles, 2 coupes, métadonnées)."""
+    _exiger_admin(request)
+    from ..gabarit.scene import build_scene
+    return build_scene(db, idu).to_dict()
+
+
+@router.get("/scene/{idu}/coupe/{axe}.svg")
+def gabarit_coupe_svg(idu: str, axe: str, request: Request, db: Session = Depends(get_db)) -> Response:
+    """Coupe A (plus grande pente) ou B (voie→parcelle) en SVG vectoriel serveur."""
+    _exiger_admin(request)
+    from ..gabarit.coupe_svg import coupe_svg
+    from ..gabarit.scene import build_scene
+    scene = build_scene(db, idu)
+    coupe = next((c for c in scene.coupes if c["label"].upper() == axe.upper()), None)
+    if coupe is None:
+        raise HTTPException(404, f"Coupe « {axe} » indisponible pour {idu}.")
+    svg = coupe_svg(coupe)
+    if not svg:
+        raise HTTPException(404, "Relief indisponible sur cette emprise (profil sans point valide).")
+    return Response(svg, media_type="image/svg+xml")
+
+
+@router.get("/scene/{idu}/plan.svg")
+def gabarit_plan_cle_svg(idu: str, request: Request, db: Session = Depends(get_db)) -> Response:
+    """Plan-clé : parcelle + zone d'implantation + trace des deux axes de coupe."""
+    _exiger_admin(request)
+    from ..gabarit.coupe_svg import plan_cle_svg
+    from ..gabarit.scene import build_scene
+    svg = plan_cle_svg(build_scene(db, idu).to_dict())
+    if not svg:
+        raise HTTPException(404, f"Plan-clé indisponible pour {idu}.")
+    return Response(svg, media_type="image/svg+xml")

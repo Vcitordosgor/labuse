@@ -1,0 +1,285 @@
+{
+  "temoins": [
+    {
+      "label": "plate",
+      "idu": "97415000CY0196",
+      "titre": "Parcelle plate — plaine littorale de Saint-Paul (~5 m)",
+      "scene_id": "7c08f7789091",
+      "disponible": true,
+      "n_batiments": 2,
+      "regles": {
+        "zoneImplantationM2": null,
+        "plafondEmpriseM2": null,
+        "hauteurReglementaireM": null
+      },
+      "coupes": [
+        {
+          "axe": "A",
+          "titre": "Coupe A-A' — plus grande pente",
+          "voie": null,
+          "L": 44.79,
+          "cotes": {
+            "disponible": true,
+            "altitude_min_m": 3.54,
+            "altitude_max_m": 7.23,
+            "denivele_m": 3.69,
+            "denivele_positif_m": 0.2,
+            "denivele_negatif_m": 3.89,
+            "pente_moyenne_pct": 9.1,
+            "pente_max_pct": 86.0,
+            "n_lacune": 0
+          }
+        },
+        {
+          "axe": "B",
+          "titre": "Coupe B-B' — voie → parcelle (accès)",
+          "voie": "Rue des Sables",
+          "L": 68.42,
+          "cotes": {
+            "disponible": true,
+            "altitude_min_m": 3.75,
+            "altitude_max_m": 11.23,
+            "denivele_m": 7.48,
+            "denivele_positif_m": 0.24,
+            "denivele_negatif_m": 7.72,
+            "pente_moyenne_pct": 11.6,
+            "pente_max_pct": 151.5,
+            "n_lacune": 0
+          }
+        }
+      ]
+    },
+    {
+      "label": "cotier",
+      "idu": "97413000CA0057",
+      "titre": "Littoral de Saint-Leu — falaise / bord d'eau",
+      "scene_id": "e028d8d76245",
+      "disponible": true,
+      "n_batiments": 0,
+      "regles": {
+        "zoneImplantationM2": null,
+        "plafondEmpriseM2": null,
+        "hauteurReglementaireM": null
+      },
+      "coupes": [
+        {
+          "axe": "A",
+          "titre": "Coupe A-A' — plus grande pente",
+          "voie": null,
+          "L": 107.74,
+          "cotes": {
+            "disponible": true,
+            "altitude_min_m": 0.41,
+            "altitude_max_m": 48.6,
+            "denivele_m": 48.19,
+            "denivele_positif_m": 2.2,
+            "denivele_negatif_m": 48.84,
+            "pente_moyenne_pct": 47.4,
+            "pente_max_pct": 496.0,
+            "n_lacune": 0
+          }
+        },
+        {
+          "axe": "B",
+          "titre": "Coupe B-B' — voie → parcelle (accès)",
+          "voie": "Rue Georges Pompidou",
+          "L": 127.33,
+          "cotes": {
+            "disponible": true,
+            "altitude_min_m": 0.58,
+            "altitude_max_m": 52.4,
+            "denivele_m": 51.82,
+            "denivele_positif_m": 2.32,
+            "denivele_negatif_m": 54.14,
+            "pente_moyenne_pct": 44.3,
+            "pente_max_pct": 408.9,
+            "n_lacune": 0
+          }
+        }
+      ]
+    },
+    {
+      "label": "alt760",
+      "idu": "97415000CM1658",
+      "titre": "Parcelle en altitude — 36 Rue des Jacarandas, Saint-Paul (~595 m mesurés)",
+      "scene_id": "40dfa6aba6b4",
+      "disponible": true,
+      "n_batiments": 1,
+      "regles": {
+        "zoneImplantationM2": 130,
+        "plafondEmpriseM2": null,
+        "hauteurReglementaireM": 13.0
+      },
+      "coupes": [
+        {
+          "axe": "A",
+          "titre": "Coupe A-A' — plus grande pente",
+          "voie": null,
+          "L": 24.01,
+          "cotes": {
+            "disponible": true,
+            "altitude_min_m": 592.74,
+            "altitude_max_m": 595.14,
+            "denivele_m": 2.4,
+            "denivele_positif_m": 0.25,
+            "denivele_negatif_m": 2.43,
+            "pente_moyenne_pct": 11.2,
+            "pente_max_pct": 78.0,
+            "n_lacune": 0
+          }
+        },
+        {
+          "axe": "B",
+          "titre": "Coupe B-B' — voie → parcelle (accès)",
+          "voie": "Rue des Jacarandas",
+          "L": 42.99,
+          "cotes": {
+            "disponible": true,
+            "altitude_min_m": 594.21,
+            "altitude_max_m": 595.71,
+            "denivele_m": 1.5,
+            "denivele_positif_m": 1.11,
+            "denivele_negatif_m": 2.25,
+            "pente_moyenne_pct": 7.8,
+            "pente_max_pct": 59.0,
+            "n_lacune": 0
+          }
+        }
+      ]
+    },
+    {
+      "label": "bz1065",
+      "idu": "97411000BZ1065",
+      "titre": "97411000BZ1065 — talus, Saint-Denis (témoin CDC)",
+      "scene_id": "8a3fc4d701e5",
+      "disponible": true,
+      "n_batiments": 3,
+      "regles": {
+        "zoneImplantationM2": 734,
+        "plafondEmpriseM2": 470.1,
+        "hauteurReglementaireM": 7.0
+      },
+      "coupes": [
+        {
+          "axe": "A",
+          "titre": "Coupe A-A' — plus grande pente",
+          "voie": null,
+          "L": 48.79,
+          "cotes": {
+            "disponible": true,
+            "altitude_min_m": 395.59,
+            "altitude_max_m": 408.08,
+            "denivele_m": 12.49,
+            "denivele_positif_m": 0.45,
+            "denivele_negatif_m": 12.92,
+            "pente_moyenne_pct": 27.4,
+            "pente_max_pct": 103.0,
+            "n_lacune": 0
+          }
+        },
+        {
+          "axe": "B",
+          "titre": "Coupe B-B' — voie → parcelle (accès)",
+          "voie": "Chemin de la Citerne",
+          "L": 95.55,
+          "cotes": {
+            "disponible": true,
+            "altitude_min_m": 401.46,
+            "altitude_max_m": 410.14,
+            "denivele_m": 8.68,
+            "denivele_positif_m": 11.45,
+            "denivele_negatif_m": 16.34,
+            "pente_moyenne_pct": 29.1,
+            "pente_max_pct": 349.5,
+            "n_lacune": 0
+          }
+        }
+      ]
+    }
+  ],
+  "controle_a": {
+    "plan": {
+      "Z0": 100.0,
+      "GX": 0.1,
+      "GY": -0.04,
+      "pente_plan_pct": 10.77
+    },
+    "altitudes": {
+      "erreur_max_m": 0.0,
+      "erreur_moyenne_m": 0.0,
+      "note": "échantillonnage AU CENTRE des pixels = valeur exacte du plan"
+    },
+    "lacune": {
+      "n_runs": 2,
+      "longueurs_runs_m": [
+        59.0,
+        54.0
+      ],
+      "n_lacune_profil": 5,
+      "note": "la bande nodata coupe le profil en 2 morceaux ; pente calculée PAR morceau"
+    },
+    "pente_mesuree_pct": 10.0,
+    "pente_le_long_x_attendue_pct": 10.0,
+    "raccords": {
+      "continuité_dans_un_run_ok": true,
+      "pas_constant_m": 1.0
+    },
+    "talus_50cm_vs_1m": {
+      "pente_mediane_deg": 14.5,
+      "pente_max_deg": 81.7,
+      "etendue_intra_pixel_mediane_m": 0.165,
+      "etendue_intra_pixel_mediane_talus_m": 0.354,
+      "etendue_intra_pixel_p95_talus_m": 0.918,
+      "note": "le 1 m IGN = moyenne 2×2 du 0,50 m ; l'étendue intra-pixel est ce que le 1 m lisse."
+    }
+  },
+  "controle_b": {
+    "points": [
+      {
+        "type": "plate (≈plat)",
+        "cog_lidar_m": 5.58,
+        "rge_alti_service_m": 5.19,
+        "ecart_m": 0.39
+      },
+      {
+        "type": "alt760 (pente douce)",
+        "cog_lidar_m": 594.92,
+        "rge_alti_service_m": 594.85,
+        "ecart_m": 0.07
+      },
+      {
+        "type": "bz1065 (talus)",
+        "cog_lidar_m": 400.97,
+        "rge_alti_service_m": 401.09,
+        "ecart_m": -0.12
+      },
+      {
+        "type": "cotier (falaise)",
+        "cog_lidar_m": 42.23,
+        "rge_alti_service_m": 41.87,
+        "ecart_m": 0.36
+      }
+    ],
+    "ecart_abs_max_m": 0.39,
+    "ecart_abs_moyen_m": 0.23,
+    "derive": "Le service RGE ALTI de La Réunion (ign_rge_alti_wld) renvoie des cotes quasi identiques au LiDAR HD MNT (écarts décimétriques) : il en DÉRIVE (RGE ALTI « HIGHRES » = LiDAR HD). La couche RGE ALTI historique 5 m, elle, s'écarte de plusieurs mètres (mesuré en amont : σ≈5 m)."
+  },
+  "controle_c": {
+    "disponible": false,
+    "constat": "Aucune cote publique INDÉPENDANTE ne coïncide avec un point témoin au même endroit ET au même référentiel (REUN89). Le service RGE ALTI et le WMS LiDAR HD sont le MÊME référentiel/source (contrôle b), donc PAS indépendants. Les repères de nivellement IGN (REUN89) existent mais aucun ne tombe au pixel d'un témoin. Conformément au mandat : il n'y a pas de contrôle indépendant à affirmer ici."
+  },
+  "fond": {
+    "taille_octets": 2934273,
+    "octets_par_m2_compresse": 3.736,
+    "extrapolation": {
+      "note": "taille = octets/m² compressé × surface (couverture 1 m pleine).",
+      "3_communes_km2": {
+        "saint_denis": 148,
+        "saint_leu": 119,
+        "saint_paul": 241
+      },
+      "estim_3_communes_octets": 1897907280,
+      "estim_ile_octets": 9384927337
+    }
+  }
+}

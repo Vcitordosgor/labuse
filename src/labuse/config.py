@@ -133,6 +133,11 @@ class Settings(BaseSettings):
     config_dir: str = "config"
     http_timeout_s: float = 20.0
 
+    # GABARIT-3D-1 (pilote) — fond d'altitudes LiDAR HD 1 m local (COG Float32, EPSG:2975, REUN89),
+    # lu par la scène 3D du Gabarit. Construit par scripts/gabarit_3d_fond.py ; hors-git (data/*).
+    # Absent → la scène se dégrade (terrain en lacune), jamais une erreur. LABUSE_MNT1M_COG_PATH.
+    mnt1m_cog_path: str = "data/mnt1m/fond_1m.tif"
+
     # RADAR (pige) — répertoire PRIVÉ des captures : hors racine publique, jamais servi par le web,
     # inclus au backup (mandat RADAR V0 §2). Surchargé par LABUSE_PIGE_CAPTURES_DIR en dev/tests.
     pige_captures_dir: str = "/srv/labuse/pige/captures"
@@ -474,6 +479,12 @@ class Settings(BaseSettings):
     @property
     def config_path(self) -> Path:
         p = Path(self.config_dir)
+        return p if p.is_absolute() else _repo_root() / p
+
+    @property
+    def mnt1m_cog_file(self) -> Path:
+        """Chemin résolu du fond d'altitudes 1 m (GABARIT-3D-1)."""
+        p = Path(self.mnt1m_cog_path)
         return p if p.is_absolute() else _repo_root() / p
 
 
