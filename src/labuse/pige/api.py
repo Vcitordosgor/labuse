@@ -2086,6 +2086,41 @@ def radar_annonce_estimation(
                 **estimation_annonce(db, idu, fiche, surface_hab=surface_hab)}
 
 
+class Estimation3In(BaseModel):
+    """Entrée de l'estimation ESTIMER-3 (trois temps). Tous les champs sont facultatifs : une estimation
+    SANS RIEN SAISIR est un POST vide `{}`. `ecartees` = identifiants de mutation des ventes retenues
+    que l'utilisateur a décochées (l'API recalcule sans elles)."""
+    surface_hab: float | None = None
+    pieces: int | None = None
+    ecartees: list[str] = []
+
+
+@router.post("/radar/annonce/estimation3/{idu}")
+def radar_annonce_estimation3(idu: str, body: Estimation3In | None = None) -> dict:
+    """ESTIMER-3 — l'estimation « une estimation qui se resserre, et qui le prouve » (maquette
+    nov-2026/11-estimer-3-temps), POINT UNIQUE lu par l'écran, l'API et le PDF. Sert : ce que LABUSE a
+    MESURÉ (en clair), l'estimation issue des ventes de biens SEMBLABLES (repli secteur ESTIMER-2 si trop
+    peu), la LISTE DES VENTES RETENUES (écartables via `ecartees`), les questions au gain MESURÉ
+    (pré-remplies), la précision PAR NIVEAU (commune × type) et le Radar des biens similaires en vente."""
+    from ..api.app import parcel_fiche
+    from . import estimer3
+    from .. import cadastre_disparue as _cd
+    b = body or Estimation3In()
+    sh = (float(b.surface_hab) if (isinstance(b.surface_hab, (int, float))
+                                   and 0 < b.surface_hab <= 100000 and math.isfinite(b.surface_hab)) else None)
+    pc = (int(b.pieces) if (isinstance(b.pieces, (int, float)) and 0 < b.pieces <= 50) else None)
+    with session_scope() as db:
+        _disp = _cd.info_disparue(db, idu)
+        if _disp:
+            return {"idu": idu, "erreur": "parcelle_disparue", "note": _cd.phrase_disparue(_disp)}
+        try:
+            fiche = parcel_fiche(idu, db=db)
+        except ValueError:
+            return {"idu": idu, "note": "Parcelle inconnue."}
+        return estimer3.rapport3(db, idu, fiche, surface_hab=sh, pieces=pc,
+                                 ecartees=set(b.ecartees or []))
+
+
 # ── ANNONCE-5 — le RAPPORT PARCELLE complet (variante adresse, 2 pages) : POINT UNIQUE écran == PDF ──
 def _num(x) -> str | None:
     """Nombre affiché FR court : 7.0 → « 7 », 4.5 → « 4,5 ». None → None."""
