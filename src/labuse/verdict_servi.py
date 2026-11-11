@@ -199,6 +199,9 @@ def _avertissement_non_constructible(constr_label, au_classe, resid_cause,
             return "Terrain trop exigu pour un projet — rien à bâtir."
         if str(resid_cause).startswith("habitat_interdit"):
             return f"Habitat interdit dans cette zone{z} — rien à bâtir."
+        if str(resid_cause).startswith("assiette_a_verifier"):
+            # EXIGU-FIX-1 — ignorance : « à vérifier », JAMAIS « rien à bâtir ».
+            return f"Assiette constructible à vérifier{z} — potentiel à confirmer (géométrie)."
         return f"Pas de potentiel constructible résiduel{z} — rien à bâtir."
     return None
 

@@ -54,8 +54,11 @@ describe('COMMUNES — O6Comparateur (table des 24 communes)', () => {
     renderO6()
     await screen.findByText('Saint-Paul')
     expect(screen.getAllByText('Fiche →')).toHaveLength(3)
-    // RETOURS-13 R11 — action SECONDAIRE : jaune opaque au survol (classe hover-jaune)
-    for (const el of screen.getAllByText('Fiche →')) expect(el.className).toContain('hover-jaune')
+    // RETOURS-23 (pt 3) — plus d'ambre pour les liens : « Fiche → » est VERT (text-mint), jamais jaune.
+    for (const el of screen.getAllByText('Fiche →')) {
+      expect(el.className).toContain('text-mint')
+      expect(el.className).not.toContain('hover-jaune')
+    }
   })
 
   it('meilleure valeur en vert : instruction MIN (8) ; colonne « Parcelles à potentiel » retirée (B2)', async () => {

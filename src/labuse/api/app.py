@@ -3169,10 +3169,15 @@ def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None
     ban_cols = (", ban.ban_voie, ban.ban_cp, ban.ban_commune" if ban_ok
                 else ", NULL AS ban_voie, NULL AS ban_cp, NULL AS ban_commune")
     ban_join = _ban_lateral("s.idu") if ban_ok else ""
+    # RETOURS-26 (pt 7) — la boîte parcelle unique affiche « IDU · zone · surface » : on joint la zone PLU
+    # dominante (parcel_zone_plu, table dérivée) APRÈS le LIMIT (≤ 10 lignes), jamais un scan par parcelle.
+    zone_ok = _zone_plu_ready(db)
+    zone_cols = (", COALESCE(z.zone_lib, z.zone_fam) AS zone_plu" if zone_ok else ", NULL AS zone_plu")
+    zone_join = " LEFT JOIN parcel_zone_plu z ON z.idu = s.idu" if zone_ok else ""
     rows = db.execute(text(
         f"""
         SELECT s.idu, s.commune, s.surface_m2, s.contenance_m2, s.status, s.tier_v2, s.rang_v2, s.etage0
-               {ban_cols}
+               {ban_cols}{zone_cols}
         FROM (
             SELECT p.idu, p.commune, p.surface_m2, p.contenance_m2,  -- RETOURS-12 T1 : surface pour désambiguïser une réf. courte
                    d.status AS status, d.opportunity_score,  -- M129-B : matrice morte → statut cascade
@@ -3190,7 +3195,7 @@ def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None
             ORDER BY ord, s2.rang ASC NULLS LAST, p.idu
             LIMIT :lim
         ) s
-        {ban_join}
+        {ban_join}{zone_join}
         ORDER BY s.ord, s.rang_v2 ASC NULLS LAST, s.idu
         """), {"pat": f"%{needle}", "c": commune, "run": source, "lim": limit,
                "v2run": _score_v2_run_id(db)}).mappings().all()
@@ -3198,7 +3203,41 @@ def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None
              **_surface.champs_terrain(r["surface_m2"], r["contenance_m2"]),  # CONTENANCE-1 (B)
              "status": r["status"], "tier_v2": r["tier_v2"],
              "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
+             "zone_plu": r["zone_plu"],   # RETOURS-26 (pt 7) — zone PLU dominante pour la boîte parcelle
              "adresse": _fmt_ban(r["ban_voie"], r["ban_cp"], r["ban_commune"])} for r in rows]
+
+
+@app.get("/parcels/apercu/{idu}")
+def parcel_apercu(idu: str, db: Session = Depends(get_db)) -> dict:
+    """RETOURS-27 (pt 1) — aperçu RAPIDE d'UNE parcelle par IDU EXACT (adresse BAN · zone PLU · surface),
+    pour la boîte parcelle des outils. Lookup indexé `p.idu = :idu` (≠ le `ILIKE '%…'` de l'omnibox, qui
+    scanne l'île ~3 s) → la boîte s'affiche d'un coup (adresse+IDU+zone+surface ensemble, rien à moitié)."""
+    idu = (idu or "").strip().upper().replace(" ", "")
+    if not idu:
+        raise HTTPException(404, "Parcelle inconnue")
+    ban_ok = _ban_ready(db)
+    ban_cols = (", ban.ban_voie, ban.ban_cp, ban.ban_commune" if ban_ok
+                else ", NULL AS ban_voie, NULL AS ban_cp, NULL AS ban_commune")
+    ban_join = _ban_lateral("s.idu") if ban_ok else ""
+    zone_ok = _zone_plu_ready(db)
+    zone_cols = (", COALESCE(z.zone_lib, z.zone_fam) AS zone_plu" if zone_ok else ", NULL AS zone_plu")
+    zone_join = " LEFT JOIN parcel_zone_plu z ON z.idu = s.idu" if zone_ok else ""
+    r = db.execute(text(
+        f"""
+        SELECT s.idu, s.commune, s.surface_m2, s.contenance_m2 {ban_cols}{zone_cols}
+        FROM (
+            SELECT p.idu, p.commune, p.surface_m2, p.contenance_m2
+            FROM parcels p WHERE p.idu = :idu AND p.cadastre_disparue_le IS NULL
+            LIMIT 1
+        ) s
+        {ban_join}{zone_join}
+        """), {"idu": idu}).mappings().first()
+    if not r:
+        raise HTTPException(404, "Parcelle inconnue")
+    return {"idu": r["idu"], "commune": r["commune"], "surface_m2": r["surface_m2"],
+            **_surface.champs_terrain(r["surface_m2"], r["contenance_m2"]),
+            "zone_plu": r["zone_plu"],
+            "adresse": _fmt_ban(r["ban_voie"], r["ban_cp"], r["ban_commune"])}
 
 
 @app.get("/stats/entonnoir")
@@ -9274,6 +9313,8 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
         "proprietaire": proprietaire,                                   # moral / particulier
         "bati_existant_pct": bati_pct,                                  # emprise bâtie ÷ terrain
         "gabarit_niveaux_max": res.get("niveaux_max") if res.get("disponible") else None,  # hauteur max (R+N)
+        # RETOURS-28 (pt 11) — combles aménageables (faîtage ≫ égout) → affichage « R+N + combles ».
+        "gabarit_combles": bool(res.get("combles")) if res.get("disponible") else None,
         "acces_reseaux": via.get("libelle"),                            # UN verdict viabilisation
         "assainissement": anc.get("libelle") or anc.get("statut_court") or anc.get("statut"),
         "prix_secteur_bati_m2": prix_bati,                              # médiane DVF bâti secteur
@@ -9572,6 +9613,19 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
             if sl:
                 row["bande"] = ("NC" if sl["non_calculable"] else sl["bande"])
                 row["signal_niveau"] = sl["signal_niveau"]
+        # RETOURS-29 (Comparatif v2) — adresse BAN (aperçu parcelle) en en-tête de colonne. Lookup indexé
+        # par IDU (2-3 colonnes), jamais un scan ; None si BAN non ingérée.
+        try:
+            if _ban_ready(db):
+                _ba = db.execute(text(
+                    "SELECT trim(concat_ws(' ', a.numero, a.rep, a.voie)) AS v, a.code_postal AS cp, "
+                    "a.commune AS c FROM adresse_parcelles ap JOIN adresses a ON a.id_ban = ap.id_ban "
+                    f"WHERE ap.idu = :idu ORDER BY {_BAN_ORDER} LIMIT 1"), {"idu": idu}).mappings().first()
+                row["adresse"] = _fmt_ban(_ba["v"], _ba["cp"], _ba["c"]) if _ba else None
+            else:
+                row["adresse"] = None
+        except Exception:  # noqa: BLE001 — adresse indisponible ne doit jamais casser la comparaison
+            row["adresse"] = None
         out.append(row)
     # NU5-FIX-1 (A-O5) — IDU demandés mais non rendus : introuvables (ignores), surnuméraires
     # (tronques, au-delà de 3), doublons retirés. L'écran les affiche (« X non trouvée(s), Y au-delà

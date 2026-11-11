@@ -76,6 +76,10 @@ class ParcelContext:
     # ne sait pas modéliser (bandes/voies nommées/destination…) : la parcelle les PORTE plutôt que
     # de les approximer. Chaque item : {regle, porte, article, page_pdf}. Renseigné par parcel_faisabilite.
     regles_non_modelisees: list = field(default_factory=list)
+    # EXIGU-FIX-1 — trace du ré-examen géométrique quand l'emprise tombait sous le seuil (sinon None) :
+    # {decision: regain|exigu|verifier, net_m2, net_larg, pre_m2, parc_larg, has_net, valide}. Lecture
+    # seule (transparence + tests), n'altère aucun calcul.
+    reexamen_exigu: dict | None = None
 
     @property
     def terrain_sur_dessin(self) -> float:
@@ -380,6 +384,119 @@ SELECT COALESCE(ST_Area(ST_Intersection(a.a, er.u)), 0.0)   AS er_area,
            COALESCE(cert.u, ST_GeomFromText('GEOMETRYCOLLECTION EMPTY', 2975))))), 0.0) AS greve_total
 FROM assiette a LEFT JOIN er ON TRUE LEFT JOIN ebc ON TRUE LEFT JOIN cert ON TRUE
 """)
+
+
+# ── EXIGU-FIX-1 — ré-examen géométrique AVANT de conclure « terrain exigu » ──────────────────────
+# ALGO-LECTURE-1 §3.4-A + DEPLOY-GROUPE-3 §D : le moteur gabarit (reculs par côté) s'effondre à tort
+# sur de grandes parcelles (zone d'implantation vidée) ; le code attribue alors une cause
+# `terrain_exigu` (« trop étroit ») à des parcelles qui portent un gros morceau exploitable d'un seul
+# tenant. Ce ré-examen est INDÉPENDANT du gabarit : il mesure, sur la GÉOMÉTRIE RÉPARÉE (ST_MakeValid),
+# le PLUS GRAND MORCEAU D'UN SEUL TENANT de l'assiette nette = (parcelle ∩ U/AU) insetée des reculs,
+# amputée de l'UNION des contraintes certaines (ER/EBC/PPR rouge/PEB A-B/DPF/ravine/50 pas) — même
+# définition que `_GREVE_LEGACY_UNION`. Il renvoie, pour ce morceau : son aire nette, sa largeur utile
+# (diamètre du cercle inscrit), ET l'aire de l'assiette AVANT contraintes + la largeur de la parcelle
+# (pour distinguer un vrai terrain étroit d'une donnée douteuse). Tout sur le DESSIN (ré-échelle
+# contenance appliquée côté Python). Lecture seule, isolé en SAVEPOINT par l'appelant.
+LARGEUR_MIN_EXPLOITABLE_M = 3.0   # diamètre inscrit du plus grand morceau net en deçà duquel = vraiment trop étroit
+
+_ASSIETTE_NETTE_ROBUSTE = text("""
+WITH p AS (SELECT commune, ST_MakeValid(geom_2975) AS g0, ST_Buffer(ST_MakeValid(geom_2975), -:d) AS b
+           FROM parcels WHERE id = :pid),
+uau AS (SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(z.geom_2975, p.b))) AS u
+        FROM spatial_layers z, p
+        WHERE z.kind = :zkind AND z.commune = p.commune
+          AND labuse_zone_famille(z.subtype) = ANY(:uau_fams) AND ST_Intersects(z.geom_2975, p.b)),
+pre AS (SELECT CASE WHEN uau.u IS NULL THEN p.b ELSE ST_Intersection(p.b, uau.u) END AS a
+        FROM p LEFT JOIN uau ON TRUE),
+predump AS (SELECT (ST_Dump(ST_CollectionExtract(ST_MakeValid((SELECT a FROM pre)), 3))).geom AS part),
+cert AS (SELECT ST_Union(geom) AS u FROM (
+    SELECT ST_MakeValid(ST_ClipByBox2D(e.geom_2975, p.b)) AS geom FROM spatial_layers e, p
+      WHERE e.kind = :pkind AND e.commune = p.commune AND e.subtype = ANY(:er_types) AND ST_Intersects(e.geom_2975, p.b)
+  UNION ALL
+    SELECT ST_MakeValid(ST_ClipByBox2D(e.geom_2975, p.b)) FROM spatial_layers e, p
+      WHERE e.kind = :pkind AND e.commune = p.commune AND e.subtype = ANY(:ebc_types) AND ST_Intersects(e.geom_2975, p.b)
+  UNION ALL
+    SELECT ST_MakeValid(ST_ClipByBox2D(g.geom_2975, p.b)) FROM spatial_layers g, p
+      WHERE g.kind = 'ppr' AND g.commune = p.commune
+        AND labuse_ppr_couleur(g.subtype, g.attrs) <> 'bleu' AND ST_Intersects(g.geom_2975, p.b)
+  UNION ALL
+    SELECT ST_MakeValid(ST_ClipByBox2D(g.geom_2975, p.b)) FROM spatial_layers g, p
+      WHERE g.kind = 'peb' AND lower(g.subtype) = ANY(:peb_ab) AND ST_Intersects(g.geom_2975, p.b)
+  UNION ALL
+    SELECT ST_Buffer(ST_MakeValid(g.geom_2975), :dpf_m) FROM spatial_layers g, p
+      WHERE g.kind = 'dpf' AND g.commune = p.commune AND ST_DWithin(g.geom_2975, p.b, :dpf_m)
+  UNION ALL
+    SELECT ST_Buffer(ST_MakeValid(g.geom_2975), :rav_m) FROM spatial_layers g, p
+      WHERE g.kind = 'ravine' AND g.commune = p.commune AND ST_DWithin(g.geom_2975, p.b, :rav_m)
+  UNION ALL
+    SELECT ST_MakeValid(ST_ClipByBox2D(g.geom_2975, p.b)) FROM spatial_layers g, p
+      WHERE g.kind = 'cinquante_pas' AND g.commune = p.commune AND ST_Intersects(g.geom_2975, p.b)
+) s),
+net AS (SELECT ST_Difference((SELECT a FROM pre),
+                             COALESCE((SELECT u FROM cert), ST_GeomFromText('POLYGON EMPTY', 2975))) AS n),
+netdump AS (SELECT (ST_Dump(ST_CollectionExtract(ST_MakeValid((SELECT n FROM net)), 3))).geom AS part),
+nbig AS (SELECT part FROM netdump ORDER BY ST_Area(part) DESC LIMIT 1)
+SELECT COALESCE((SELECT max(ST_Area(part)) FROM predump), 0.0)                         AS pre_area,
+       COALESCE((SELECT ST_Area(part) FROM nbig), 0.0)                                 AS net_area,
+       COALESCE((SELECT (ST_MaximumInscribedCircle(part)).radius * 2 FROM nbig), 0.0)  AS net_largeur,
+       COALESCE((ST_MaximumInscribedCircle((SELECT g0 FROM p))).radius * 2, 0.0)       AS parc_largeur,
+       (SELECT count(*) FROM nbig)                                                     AS has_net,
+       ST_IsValid(ST_MakeValid((SELECT n FROM net)))                                   AS valide
+""")
+
+
+def _exigu_fix_actif() -> bool:
+    """EXIGU-FIX-1 — seam de MESURE : le ré-examen géométrique est ACTIF par défaut ; mettre
+    `LABUSE_EXIGU_FIX=0` le désactive (chemin d'ORIGINE, pour mesurer l'avant/après sur la MÊME
+    population). N'influence AUCUNE parcelle hors de la branche terrain_exigu (il n'est appelé que
+    lorsque l'emprise calculée tombe sous le seuil)."""
+    import os
+    return os.environ.get("LABUSE_EXIGU_FIX", "1") != "0"
+
+
+def _reexamen_exigu(session: Session, parcel_id: int, recul: float, qargs: dict,
+                    k_cont: float) -> tuple[str, dict]:
+    """EXIGU-FIX-1 — décide, SUR PREUVE GÉOMÉTRIQUE, ce qu'est réellement une parcelle que le moteur
+    s'apprête à classer `terrain_exigu`. Renvoie (decision, info) où decision ∈ :
+      · 'regain'   — un morceau net exploitable existe (aire ≥ seuil ET largeur ≥ seuil) : la capacité
+                     doit être calculée dessus (`info['net_m2']` = emprise à servir) ;
+      · 'exigu'    — PROUVÉ inexploitable : morceau net mesuré trop petit/étroit, OU aucune assiette
+                     nette sur une parcelle elle-même étroite (inset légitimement vidé) → on garde
+                     `terrain_exigu` AVEC la preuve mesurée ;
+      · 'verifier' — DOUTEUX : aucune assiette nette établie alors que la parcelle est large (contraintes
+                     superposées / portion U/AU incohérente), ou géométrie non réparable → `assiette_a_verifier`.
+    Isolé en SAVEPOINT : toute erreur géométrique → 'verifier' (jamais un faux « trop étroit », jamais un crash)."""
+    from .engine import SEUIL_EXIGU_M2
+    info = {"net_m2": 0.0, "net_larg": 0.0, "pre_m2": 0.0, "parc_larg": 0.0, "has_net": 0, "valide": None}
+    try:
+        with session.begin_nested():
+            row = session.execute(_ASSIETTE_NETTE_ROBUSTE, {
+                "pid": parcel_id, "d": recul,
+                "zkind": qargs["zkind"], "uau_fams": qargs["uau_fams"],
+                "pkind": qargs["pkind"], "er_types": qargs["er_types"], "ebc_types": qargs["ebc_types"],
+                "peb_ab": qargs["peb_ab"], "dpf_m": qargs["dpf_m"], "rav_m": qargs["rav_m"],
+            }).one()
+    except Exception:  # noqa: BLE001 — géométrie pathologique : on ne tranche pas, on fait vérifier
+        return "verifier", info
+    info["net_m2"] = float(row.net_area or 0.0) * k_cont
+    info["pre_m2"] = float(row.pre_area or 0.0) * k_cont
+    info["net_larg"] = float(row.net_largeur or 0.0)
+    info["parc_larg"] = float(row.parc_largeur or 0.0)
+    info["has_net"] = int(row.has_net or 0)
+    info["valide"] = bool(row.valide) if row.valide is not None else None
+    if row.valide is False:
+        return "verifier", info                       # géométrie nette non réparable → douteux
+    # Un morceau net exploitable existe-t-il ? (aire ET largeur suffisantes)
+    if info["has_net"] and info["net_m2"] >= SEUIL_EXIGU_M2 and info["net_larg"] >= LARGEUR_MIN_EXPLOITABLE_M:
+        return "regain", info
+    # Pas exploitable. Avons-nous MESURÉ un vrai petit morceau (preuve de l'exiguïté) ?
+    if info["has_net"] and info["net_m2"] > 0:
+        return "exigu", info                          # morceau net mesuré, trop petit ou trop étroit → prouvé
+    # Aucune assiette nette (morceau net vide). Est-ce une parcelle réellement étroite, ou un doute ?
+    largeur_ruban = 2.0 * recul + 1.0                 # en deçà, l'inset vide légitimement le contour (vrai ruban)
+    if info["parc_larg"] and info["parc_larg"] < largeur_ruban:
+        return "exigu", info                          # parcelle elle-même étroite → inset vidé pour de vrai
+    return "verifier", info                           # parcelle large mais rien de net → données douteuses
 
 
 # GEOMETRIE-1 lot B — UN SEUL moteur de géométrie. L'assiette du calcul de capacité devient la
@@ -772,6 +889,43 @@ def parcel_faisabilite(session: Session, parcel_id: int,
                 vide_raison = "contraintes"
             else:
                 vide_raison = "reculs"
+
+    # ── EXIGU-FIX-1 — ré-examen géométrique AVANT de conclure « terrain exigu » ──────────────────
+    # Les deux chemins (gabarit, legacy) ont fixé `emprise` et `vide_raison`. Si l'emprise tombe sous
+    # le seuil, le code d'origine classait la parcelle `terrain_exigu` (« trop étroit ») — à tort sur
+    # de grandes parcelles (effondrement du gabarit, cause mal attribuée : cf. DEPLOY-GROUPE-3 §D).
+    # On ré-examine SUR PREUVE GÉOMÉTRIQUE (plus grand morceau d'un seul tenant de l'assiette nette,
+    # géométrie réparée) : morceau exploitable → capacité calculée dessus ; prouvé inexploitable →
+    # `terrain_exigu` AVEC preuve ; douteux → `assiette_a_verifier` (jamais « trop étroit »).
+    # GARDE DE PÉRIMÈTRE : ce bloc ne s'exécute QUE lorsque l'emprise est déjà < seuil (donc une
+    # parcelle qui n'aurait pas été `terrain_exigu` n'est jamais touchée → recalcul partiel valide).
+    if emprise < SEUIL_EXIGU_M2 and _exigu_fix_actif():
+        qargs = {"zkind": zonage.get("spatial_kind", "plu_gpu_zone"),
+                 "uau_fams": list(zonage.get("positive_prefixes", ["U", "AU"])),
+                 "pkind": pkind, "er_types": er_types, "ebc_types": ebc_types,
+                 "peb_ab": [str(z).lower() for z in _layer_params("peb").get("hard_zones", ["a", "b"])],
+                 "dpf_m": float(_layer_params("dpf").get("marchepied_m", 3.25)),
+                 "rav_m": float(_layer_params("ravine").get("buffer_m", 10))}
+        decision, rex = _reexamen_exigu(session, parcel_id, recul, qargs, k_cont)
+        ctx.reexamen_exigu = {"decision": decision, **rex}
+        if decision == "regain":
+            emprise = rex["net_m2"]                     # capacité recalculée sur le morceau exploitable
+            vide_raison = None
+            assiette_source = "residuel_legacy"         # assiette = inset séparatif (plus la zone d'implant. gabarit)
+            ctx.contraintes.libelles.append(
+                f"Assiette ré-examinée (EXIGU-FIX-1) : le plus grand morceau d'un seul tenant "
+                f"exploitable fait ~{rex['net_m2']:.0f} m² (largeur ~{rex['net_larg']:.0f} m) — "
+                "capacité calculée sur ce morceau (le gabarit par côté s'effondrait à tort).")
+        elif decision == "verifier":
+            vide_raison = "a_verifier"
+            ctx.contraintes.libelles.append(
+                f"Assiette à vérifier (EXIGU-FIX-1) : aucune emprise nette fiable établie sur une "
+                f"parcelle large (~{rex['parc_larg']:.0f} m) — contraintes superposées ou portion "
+                "constructible à confirmer. Ni capacité ni « trop étroit » affirmés.")
+        else:  # 'exigu' — prouvé inexploitable
+            ctx.contraintes.libelles.append(
+                f"Terrain exigu confirmé (EXIGU-FIX-1) : plus grand morceau net ~{rex['net_m2']:.0f} m², "
+                f"largeur ~{rex['net_larg']:.1f} m — sous le seuil constructible (preuve géométrique).")
 
     # Surface au sol servant aux plafonds CES/pleine terre : la seule portion U/AU (à cheval).
     # RESIDUEL-1 — inconditionnel (chemin unique).

@@ -959,7 +959,9 @@ export function Fiche({ idu }: { idu: string }) {
           DIRECT du conteneur défilant et son `overflow:hidden` ramène sa taille mini flex à 0 → sans
           shrink-0 elle s'écrase à 1px et clippe les 6 tuiles (l'ancien code l'enveloppait dans un div
           sans overflow, ce qui l'en protégeait). */}
-      <div className="head shrink-0" data-fiche-tuiles style={{ marginTop: 6 }}>
+      {/* RETOURS-26 (pt 6) — `marginTop:6` retiré : le `gap-3` (12px) du conteneur défilant suffit à
+          séparer les tuiles de l'en-tête, au MÊME rythme que le reste de la fiche (plus de 6px en trop). */}
+      <div className="head shrink-0" data-fiche-tuiles>
         {/* RETOURS-11 F1 — les trois accès (Cadastre · Pages Jaunes · Google Maps) ont MONTÉ dans
             l'en-tête à côté de la cloche, en boutons-logos (voir .hbtns ci-dessus). Les anciennes
             pastilles pleines sur deux lignes sont retirées. */}

@@ -39,8 +39,13 @@ def test_exports_portent_la_mention_capacite():
 def test_fiche_et_gabarit_portent_la_mention():
     assert "capaciteMax" in _lire("frontend/src/components/fiche/constructibilite.tsx")
     assert "SDP max" in _lire("frontend/src/components/fiche/constructibilite.tsx")
-    assert "capaciteMax" in _lire("frontend/src/components/outils/Gabarit.tsx")
-    assert "capaciteMax" in _lire("frontend/src/components/compare/ComparePanel.tsx")
+    # RETOURS-28 — le Gabarit porte la mention en PHRASE LITTÉRALE validée (plus l'import `capaciteMax`) :
+    # « les permis délivrés utilisent environ la moitié de ce maximum (médiane sur 6 601 permis) ».
+    _gab = _lire("frontend/src/components/outils/Gabarit.tsx")
+    assert "moitié de ce maximum" in _gab and "6 601 permis" in _gab
+    # RETOURS-28/29 — le Comparatif a RETIRÉ la ligne « Logements possibles » ; la capacité reste nommée
+    # « maximale réglementaire » (titre de la ligne « Plancher possible · reconstruction », maquette 15).
+    assert "maximale réglementaire" in _lire("frontend/src/components/compare/ComparePanel.tsx")
 
 
 def test_copilote_porte_la_mention_sur_la_capacite():
@@ -72,13 +77,14 @@ def test_ratios_declares_au_registre_et_ancres_sans_exception():
 
 
 def test_aucun_nombre_de_logements_ancien_moteur_fiche_et_comparatif():
-    """Décision Vic 18/10/2026 — la ligne « Logements possibles (max.) » (écran Comparer + document
-    Comparatif) ne porte plus de nombre : elle renvoie à l'Étude de faisabilité. Les champs
+    """Décision Vic 18/10/2026 + RETOURS-29 (maquette 15) — la ligne « Logements possibles » est RETIRÉE
+    de l'écran Comparer ET du document Comparatif (plus aucun renvoi non plus). Les champs
     logements_min/logements_possibles ne sont plus servis par /compare (aucun autre lecteur)."""
     comparatif = _lire("src/labuse/exports/blocs/comparatif.py")
     panel = _lire("frontend/src/components/compare/ComparePanel.tsx")
-    assert "voir l'Étude de faisabilité" in comparatif
-    assert "Étude de faisabilité" in panel
+    # RETOURS-29 : la ligne a disparu des deux (plus de « Logements possibles » du tout).
+    assert "Logements possibles" not in comparatif
+    assert "Logements possibles" not in panel
     assert "logements_possibles" not in comparatif and "logements_min" not in comparatif
     assert "logements_possibles" not in panel and "logements_min" not in panel
     app_py = _lire("src/labuse/api/app.py")

@@ -7,16 +7,8 @@ import { getRadarMarche, type RadarMarcheLigne, type RadarMesure } from '../../l
 import { communePastille } from '../../lib/communes'   // RECETTE-OUTILS-1 (point 11) — règle d'article
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
-import { fmtDateNum } from '../../lib/format'
 
 const fmt = (v: number) => v.toLocaleString('fr-FR')
-// RECETTE-OUTILS-1 (point 11) — date de la dernière collecte Radar (ISO → jj/mm/aaaa).
-// CHASSE-FIX-1 (A-3) — passe par le formateur unique (fuseau Réunion) ; null si date absente/invalide.
-const fmtDate = (iso: string | null | undefined) => {
-  if (!iso) return null
-  const s = fmtDateNum(iso)
-  return s === '—' ? null : s
-}
 
 // une MESURE : valeur + unité si n≥seuil, sinon « — » (et le n est toujours dit, discrètement).
 function Mesure({ m, unit }: { m: RadarMesure; unit: string }) {
@@ -59,22 +51,10 @@ export function RadarMarche() {
   // FRONT-CHIFFRES-2 (F25) — le front ne décide plus le seuil « corpus jeune » : il lit le flag servi.
   const jeune = data.corpus_jeune
 
-  const capture = fmtDate(data.derniere_capture_at)
   return (
     <div className="flex flex-col gap-3 p-3">
-      {/* RECETTE-OUTILS-1 (point 11) — la DATE de la dernière collecte est affichée dans l'encart du
-          haut : le Radar est alimenté par l'extension (pas un cron), donc une collecte en retard (ou en
-          pause) devient VISIBLE. « Nouv.30j » se lit relativement à cette date, pas à aujourd'hui. */}
-      {capture && (
-        <div data-radar-capture className="text-[10.5px] text-txt-dim">
-          Dernière collecte : <b className="text-txt-mut">{capture}</b> — les fenêtres « 30 j / 90 j » se comptent à partir de cette date.
-        </div>
-      )}
-      {/* RECETTE-1 (H3, Vic) — DATE de la dernière capture Radar (le bloc lit la même table que le Radar).
-          Le Radar est alimenté par l'EXTENSION (Mac), pas un cron VPS : afficher la date rend une capture
-          en retard VISIBLE (ex. « 27/09 » un 4/10 = extension non déposée depuis). */}
-      {/* RECETTE-2 (E6) — phrase « Dernière capture … Radar alimenté par l'extension … vérifier
-          l'extension » retirée (mécanique interne, pas pour le client). */}
+      {/* RETOURS-23 (pt 11) — la phrase « Dernière collecte : … » est RETIRÉE (demande Vic) : la date de
+          collecte (alimentation par l'extension, pas un cron) est une mécanique interne, pas pour le client. */}
       {jeune && (
         <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5 text-[11.5px] leading-relaxed text-txt-mut">
           Le corpus du Radar se constitue jour après jour (aujourd’hui {data.corpus_total} bien{data.corpus_total > 1 ? 's' : ''} suivi{data.corpus_total > 1 ? 's' : ''}).

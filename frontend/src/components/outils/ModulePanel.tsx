@@ -48,7 +48,7 @@ import { TaxeAmenagement } from './TaxeAmenagement'
 import { Gabarit } from './Gabarit'   // GABARIT-1 — outil interne (registry hidden:true, flag admin)
 import { MonSecteur } from './MonSecteur'   // SECTEUR-1 (S1) — outil « Mon secteur »
 import { ScanPatrimoine } from './ScanPatrimoine'   // RETOURS-4 S7 — fusion Scan patrimoine (possède + construit)
-import { ouvrirBullePermis, fermerBullePermis } from '../map/MapView'   // RECETTE-OUTILS-1 (6/7) — bulle permis
+import { ouvrirBullePermis, fermerBullePermis } from '../map/MapView'   // RETOURS-23 (pt 1) — bulle permis (ancre auto)
 import { OwnerParcelles } from '../OwnerParcelles'   // RECHERCHE-2 Lot 2 — sous-panneau propriétaire → ses parcelles
 import { Successions } from './Successions'   // OUTILS-MUSCLER-1 Lot A — radar patrimonial servi en outil
 import { Blocs } from './Blocs'   // OUTILS-MUSCLER-3 — assiettes contiguës d'un même propriétaire PM
@@ -383,14 +383,13 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
 // RETOURS-15 U3 — règle d'ordre : la case « Tout » / « Tous » est TOUJOURS la dernière à droite.
 const NATURES = [['PC', 'PC'], ['DP', 'DP'], ['PA', 'PA'], ['PD', 'PD'], ['', 'Tout']] as const
 
-/** Tiroir « fiche permis » (M10 lot 1.1) — s'ouvre au clic sur un permis, partagé radar/fiche. */
-export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose: () => void }) {
-  // FIX-NU3-2 (M-A04) — le tiroir Permis n'avait ni rôle, ni piège, ni Échap : on les généralise.
-  const drawerRef = useRef<HTMLDivElement | null>(null)
-  usePiegeFocus(true, drawerRef, onClose)
+// CONTENU de la fiche permis — PARTAGÉ entre la modale (bloc « permis à proximité » de la fiche
+// parcelle) et le PANNEAU DE DROITE (outil Permis, RETOURS-23 pt 7). Ne porte QUE le contenu ; chaque
+// hôte fournit sa coque (modale centrée OU panneau latéral) et son `onClose`.
+function PermitFicheCorps({ permitId, onClose }: { permitId: string; onClose: () => void }) {
   const q = useQuery({ queryKey: ['permis-fiche', permitId], queryFn: () => modPermisFiche(permitId) })
   const d = q.data as Record<string, any> | undefined
-  const select = useApp((s) => s.select)      // Fix LOT 2 : localiser la parcelle du permis
+  const select = useApp((s) => s.select)      // « Voir la parcelle » ouvre la fiche parcelle
   const setFlyTo = useApp((s) => s.setFlyTo)
   // OUTILS-FIX-2 A4 — pont Permis → Scan patrimoine (SIREN du porteur → m02Prefill, consommé par ScanPatrimoine).
   const setModule = useApp((s) => s.setModule)
@@ -399,10 +398,11 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
   // géom du permis (centroïde parcelle) : présente ssi géocodé ; sinon on ne peut pas localiser.
   const geom = d?.['geom'] as { coordinates?: [number, number] } | null | undefined
   const parcelle = (d?.['parcelles'] as string[] | undefined)?.[0]
-  const localiser = () => {
-    if (!geom?.coordinates) return
-    setFlyTo({ center: geom.coordinates, zoom: 18 })
-    if (parcelle && parcelle.length === 14) select(parcelle)   // halo sur la parcelle rattachée
+  // RETOURS-23 (pt 7) — « Voir la parcelle » OUVRE SA FICHE (select → panneau de droite), et recentre
+  // la carte si le permis est géocodé. Ferme la fiche permis (la fiche parcelle prend le relais).
+  const voirParcelle = () => {
+    if (parcelle && parcelle.length === 14) select(parcelle)
+    if (geom?.coordinates) setFlyTo({ center: geom.coordinates, zoom: 18 })
     onClose()
   }
   const F = ({ label, value }: { label: string; value: React.ReactNode }) =>
@@ -413,84 +413,96 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
       </div>
     )
   return (
+    <>
+      {q.isLoading && <Squelette lignes={5} />}
+      {/* audit-promesses — un permis INTROUVABLE (404) dit clairement pourquoi (avant : fiche vide). */}
+      {q.isError && (
+        <div data-permis-introuvable className="flex flex-col gap-2">
+          <div className="flex items-start justify-between gap-2">
+            <div className="font-display text-sm font-bold text-txt-hi">Permis introuvable</div>
+            <button onClick={onClose} aria-label="Fermer" className="flex h-7 w-7 items-center justify-center rounded-full border border-line-2 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt">✕</button>
+          </div>
+          <p className="rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2 text-[11px] leading-snug text-st-creuser">
+            Aucun permis <span className="font-mono">{permitId}</span> dans la base SITADEL (dép. 974).
+            Vérifiez le numéro (référence exacte de l'autorisation) — la base couvre 2013 à aujourd'hui.
+          </p>
+        </div>
+      )}
+      {d && (
+        <>
+          <div className="mb-2 flex items-start justify-between gap-2">
+            <div>
+              <div className="font-display text-sm font-bold text-txt-hi">{d['nature_libelle']}</div>
+              <div className="font-mono text-[11px] text-txt-mut">{d['permit_id']} · {d['commune']}</div>
+            </div>
+            <button onClick={onClose} aria-label="Fermer" className="flex h-7 w-7 items-center justify-center rounded-full border border-line-2 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt">✕</button>
+          </div>
+          {/* KELFONCIER-FIX-2 (Lot D) — statut en pastille (rouge si annulé, vert sinon), même
+              fonction que la fiche (etat_libelle/annule servis par /permis/{id}). */}
+          <F label="Statut" value={d['statut'] ? <Badge ton={d['annule'] ? 'rouge' : 'vert'}>{String(d['statut'])}</Badge> : null} />
+          {/* RETOURS-13 R30 — la DESTINATION est dite (hôtels, bureaux, commerce…) ; une position
+              estimée par l'adresse (parcelle du permis disparue du cadastre) est signalée. */}
+          <F label="Destination" value={d['destination_libelle']} />
+          <F label="Porteur" value={d['porteur'] ?? <span className="text-txt-dim">{d['porteur_note']}</span>} />
+          {d['porteur_siren'] && <F label="SIREN" value={<Siren value={String(d['porteur_siren'])} className="font-mono text-txt" />} />}
+          {/* OUTILS-FIX-2 A4 — pont Scan patrimoine (porteur avec SIREN seulement ; rien pour un particulier).
+              OUTILS-FIX-3 B2 — on TRONQUE à la source aux 9 chiffres du SIREN : Scan interroge
+              parcelle_personne_morale.siren (9 chiffres) ; un SIRET (14) passé tel quel ne matcherait jamais
+              (zéro muet). `porteur_siren` est déjà un SIREN aujourd'hui — la garde couvre le jour où la
+              source SITADEL n'exposerait qu'un SIRET. */}
+          {d['porteur_siren'] && (
+            <Bouton niveau="secondaire" ton="vert" data-permis-scan-patrimoine
+              onClick={() => { setM02Prefill(String(d['porteur_siren']).replace(/\D/g, '').slice(0, 9)); setModule('patrimoine'); onClose(); pushOutilRetour({ module: 'permis', label: 'Permis', restore: { permitToOpen: permitId } }) }}
+              className="mt-1.5 w-full">
+              Scan patrimoine du porteur →</Bouton>
+          )}
+          <F label="Nombre de lots" value={d['nb_lots']} />
+          <F label="Surface habitable" value={d['surface_hab_m2'] != null ? `${fmt(d['surface_hab_m2'])} m²` : null} />
+          {d['geoloc_note'] && <p className="mt-1 text-[10px] leading-snug text-txt-dim">Position : {String(d['geoloc_note'])}.</p>}
+          <F label="Date de dépôt" value={d['date_depot']} />
+          <F label="Date d'autorisation" value={d['date_autorisation']} />
+          {/* DONNEES-6/7 — dates JAMAIS réordonnées : dépôt après autorisation = incohérence du
+              producteur SDES/Dido, qualifiée par l'écart (au-delà d'1 mois = modificatif/transféré
+              probable). Le délai d'instruction reste non servi. Voir lib/permis.ts. */}
+          {(() => {
+            const note = (d['note_incoherence'] as string | null) ?? null   // FRONT-CHIFFRES-2 (F32) — servie
+            return note ? <p className="mt-1 text-[10px] leading-snug text-st-ecartee">{note} — délai d'instruction non calculé.</p> : null
+          })()}
+          <F label="Achèvement (DAACT)" value={d['date_achevement']} />
+          {d['delai_instruction'] && (
+            <F label="Délai d'instruction" value={<span className="font-semibold text-mint">{d['delai_instruction']['libelle']}</span>} />
+          )}
+          <F label="Parcelle(s)" value={<span className="font-mono text-[10px]">{(d['parcelles'] as string[]).join(', ')}</span>} />
+          {/* RETOURS-23 (pt 7) — « Voir la parcelle » ouvre la FICHE de la parcelle rattachée (géocodé) ;
+              sinon message clair (non géocodé) — jamais un clic mort. */}
+          {geom?.coordinates ? (
+            <Bouton niveau="secondaire" ton="vert" data-permis-localiser onClick={voirParcelle} className="mt-3 w-full">
+              Voir la parcelle
+            </Bouton>
+          ) : (
+            <div data-permis-nongeocode className="mt-3 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2 text-[11px] leading-snug text-st-creuser">
+              <b>Permis non géocodé</b> — son adresse n'a pas pu être rattachée à une parcelle du
+              cadastre, il ne peut pas être localisé sur la carte.
+            </div>
+          )}
+          <p className="mt-2 text-[10px] text-txt-dim">{d['source']}</p>
+        </>
+      )}
+    </>
+  )
+}
+
+/** Fiche permis en MODALE — bloc « permis à proximité » de la fiche parcelle (PermitsProximityBlock). */
+export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose: () => void }) {
+  // FIX-NU3-2 (M-A04) — rôle dialog + piège focus + Échap.
+  const drawerRef = useRef<HTMLDivElement | null>(null)
+  usePiegeFocus(true, drawerRef, onClose)
+  return (
     <div data-permis-drawer className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center" onClick={onClose}>
       <div ref={drawerRef} role="dialog" aria-modal="true" aria-label="Fiche du permis"
         className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-t-2xl border border-mint/40 bg-surface-1 p-4 shadow-elev-3 sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}>
-        {q.isLoading && <Squelette lignes={5} />}
-        {/* audit-promesses — un permis INTROUVABLE (404) dit clairement pourquoi (avant : drawer vide). */}
-        {q.isError && (
-          <div data-permis-introuvable className="flex flex-col gap-2">
-            <div className="flex items-start justify-between gap-2">
-              <div className="font-display text-sm font-bold text-txt-hi">Permis introuvable</div>
-              <button onClick={onClose} aria-label="Fermer" className="flex h-7 w-7 items-center justify-center rounded-full border border-line-2 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt">✕</button>
-            </div>
-            <p className="rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2 text-[11px] leading-snug text-st-creuser">
-              Aucun permis <span className="font-mono">{permitId}</span> dans la base SITADEL (dép. 974).
-              Vérifiez le numéro (référence exacte de l'autorisation) — la base couvre 2013 à aujourd'hui.
-            </p>
-          </div>
-        )}
-        {d && (
-          <>
-            <div className="mb-2 flex items-start justify-between gap-2">
-              <div>
-                <div className="font-display text-sm font-bold text-txt-hi">{d['nature_libelle']}</div>
-                <div className="font-mono text-[11px] text-txt-mut">{d['permit_id']} · {d['commune']}</div>
-              </div>
-              <button onClick={onClose} aria-label="Fermer" className="flex h-7 w-7 items-center justify-center rounded-full border border-line-2 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt">✕</button>
-            </div>
-            {/* KELFONCIER-FIX-2 (Lot D) — statut en pastille (rouge si annulé, vert sinon), même
-                fonction que la fiche (etat_libelle/annule servis par /permis/{id}). */}
-            <F label="Statut" value={d['statut'] ? <Badge ton={d['annule'] ? 'rouge' : 'vert'}>{String(d['statut'])}</Badge> : null} />
-            {/* RETOURS-13 R30 — la DESTINATION est dite (hôtels, bureaux, commerce…) ; une position
-                estimée par l'adresse (parcelle du permis disparue du cadastre) est signalée. */}
-            <F label="Destination" value={d['destination_libelle']} />
-            <F label="Porteur" value={d['porteur'] ?? <span className="text-txt-dim">{d['porteur_note']}</span>} />
-            {d['porteur_siren'] && <F label="SIREN" value={<Siren value={String(d['porteur_siren'])} className="font-mono text-txt" />} />}
-            {/* OUTILS-FIX-2 A4 — pont Scan patrimoine (porteur avec SIREN seulement ; rien pour un particulier).
-                OUTILS-FIX-3 B2 — on TRONQUE à la source aux 9 chiffres du SIREN : Scan interroge
-                parcelle_personne_morale.siren (9 chiffres) ; un SIRET (14) passé tel quel ne matcherait jamais
-                (zéro muet). `porteur_siren` est déjà un SIREN aujourd'hui — la garde couvre le jour où la
-                source SITADEL n'exposerait qu'un SIRET. */}
-            {d['porteur_siren'] && (
-              <Bouton niveau="secondaire" ton="vert" data-permis-scan-patrimoine
-                onClick={() => { setM02Prefill(String(d['porteur_siren']).replace(/\D/g, '').slice(0, 9)); setModule('patrimoine'); onClose(); pushOutilRetour({ module: 'permis', label: 'Permis', restore: { permitToOpen: permitId } }) }}
-                className="mt-1.5 w-full">
-                Scan patrimoine du porteur →</Bouton>
-            )}
-            <F label="Nombre de lots" value={d['nb_lots']} />
-            <F label="Surface habitable" value={d['surface_hab_m2'] != null ? `${fmt(d['surface_hab_m2'])} m²` : null} />
-            {d['geoloc_note'] && <p className="mt-1 text-[10px] leading-snug text-txt-dim">Position : {String(d['geoloc_note'])}.</p>}
-            <F label="Date de dépôt" value={d['date_depot']} />
-            <F label="Date d'autorisation" value={d['date_autorisation']} />
-            {/* DONNEES-6/7 — dates JAMAIS réordonnées : dépôt après autorisation = incohérence du
-                producteur SDES/Dido, qualifiée par l'écart (au-delà d'1 mois = modificatif/transféré
-                probable). Le délai d'instruction reste non servi. Voir lib/permis.ts. */}
-            {(() => {
-              const note = (d['note_incoherence'] as string | null) ?? null   // FRONT-CHIFFRES-2 (F32) — servie
-              return note ? <p className="mt-1 text-[10px] leading-snug text-st-ecartee">{note} — délai d'instruction non calculé.</p> : null
-            })()}
-            <F label="Achèvement (DAACT)" value={d['date_achevement']} />
-            {d['delai_instruction'] && (
-              <F label="Délai d'instruction" value={<span className="font-semibold text-mint">{d['delai_instruction']['libelle']}</span>} />
-            )}
-            <F label="Parcelle(s)" value={<span className="font-mono text-[10px]">{(d['parcelles'] as string[]).join(', ')}</span>} />
-            {/* Fix LOT 2 : localiser la parcelle sur la carte (géocodé) ou message clair (non géocodé) —
-                jamais un clic mort. La géom d'un permis = centroïde de la parcelle rattachée. */}
-            {geom?.coordinates ? (
-              <Bouton niveau="secondaire" ton="vert" data-permis-localiser onClick={localiser} className="mt-3 w-full">
-                ◎ Voir la parcelle sur la carte
-              </Bouton>
-            ) : (
-              <div data-permis-nongeocode className="mt-3 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2 text-[11px] leading-snug text-st-creuser">
-                <b>Permis non géocodé</b> — son adresse n'a pas pu être rattachée à une parcelle du
-                cadastre, il ne peut pas être localisé sur la carte.
-              </div>
-            )}
-            <p className="mt-2 text-[10px] text-txt-dim">{d['source']}</p>
-          </>
-        )}
+        <PermitFicheCorps permitId={permitId} onClose={onClose} />
       </div>
     </div>
   )
@@ -539,8 +551,8 @@ export function M03() {
   // l'ouverture était « Tous » = 240 mois (toute la profondeur → carte = base entière).
   const [months, setMonths] = useState(moduleKey === 'promesses' ? 36 : 3)
   const [nature, setNature] = useState('')
-  // RECETTE-OUTILS-1 (points 6 & 7) — plus de drawer en colonne : la fiche permis s'ouvre en BULLE sur
-  // la carte (ouvrirBullePermis, MapView), que le clic vienne d'un point carte OU d'une ligne de liste.
+  // RETOURS-23 (suite, pt 1) — la fiche permis s'ouvre en BULLE sur la carte (ancre automatique : jamais
+  // coupée, cf. ouvrirBullePermis), que le clic vienne d'un point carte OU d'une ligne de liste.
   // `permisOuvert` (store) surligne la ligne correspondante. On nettoie la bulle au démontage.
   const permisOuvert = useApp((s) => s.permisOuvert)
   const setPermisOuvert = useApp((s) => s.setPermisOuvert)
@@ -561,17 +573,18 @@ export function M03() {
   const setFlyTo = useApp((s) => s.setFlyTo)
   const focusParcelle = useApp((s) => s.focusParcelle)   // RETOURS-12 O12.2 — zoom+surbrillance commun (O1)
   const select = useApp((s) => s.select)   // PERMIS-CHECK-2 pt 2 — lever une fiche stale avant de focus
-  // RECETTE-OUTILS-1 (point 7) — ouvrir la bulle permis depuis la LISTE : on surligne la ligne, on zoome
-  // sur le permis (sa parcelle rattachée) et on ouvre LA MÊME bulle que le clic carte.
+  // RETOURS-23 (suite, pt 1) — ouvrir la bulle permis depuis la LISTE : on surligne la ligne, on recentre
+  // la carte sur le permis (sa parcelle rattachée) et on ouvre la bulle AU CENTRE (`centre=true`, ancre
+  // auto) ; MÊME bulle que le clic carte, jamais coupée.
   const ouvrirPermisBulle = (id: string) => {
     setPermisOuvert(id)
     const m = (window as unknown as { __labuse_map?: any }).__labuse_map
     if (!m) return
     modPermisFiche(id).then((f: Record<string, any>) => {
       const c = (f?.['geom'] as { coordinates?: [number, number] } | null)?.coordinates
-      if (c) { m.easeTo({ center: c, zoom: Math.max(m.getZoom?.() ?? 15, 17), duration: 600 }); ouvrirBullePermis(m, id, c) }
-      else { ouvrirBullePermis(m, id, m.getCenter()) }   // non géocodé : bulle au centre courant
-    }).catch(() => { /* fiche indisponible : la bulle le dira */ ouvrirBullePermis(m, id, m.getCenter()) })
+      if (c) { m.easeTo({ center: c, zoom: Math.max(m.getZoom?.() ?? 15, 17), duration: 600 }); ouvrirBullePermis(m, id, c, true) }
+      else { ouvrirBullePermis(m, id, m.getCenter(), true) }   // non géocodé : bulle au centre courant
+    }).catch(() => { /* fiche indisponible : la bulle le dira */ ouvrirBullePermis(m, id, m.getCenter(), true) })
   }
   useEffect(() => { if (permitToOpen) { ouvrirPermisBulle(permitToOpen); setPermitToOpen(null) } }, [permitToOpen, setPermitToOpen])   // eslint-disable-line react-hooks/exhaustive-deps
   // nettoie la bulle quand on quitte l'outil Permis.
@@ -1283,7 +1296,8 @@ export function M08() {
     <>
       {/* RECETTE-OUTILS-2 (R6) — encart « La parcelle d'abord… / choisissez l'année… » retiré. */}
       <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
-        {/* RECETTE-OUTILS-1 (T5) — « Réinitialiser » retiré au profit de « Changer de parcelle ». */}
+        {/* RETOURS-26 (pt 7) — plus de « Changer de parcelle » : la boîte parcelle (EntreeParcelle) porte
+            la croix (✕) qui vide le champ (onChanger=resetAll). */}
         <div className="flex flex-col gap-1.5">
           <p className="label-caps text-[9.5px]">Quelle parcelle voir évoluer ?</p>
         </div>
@@ -1406,6 +1420,14 @@ export function M09() {
   const [ajoutBloque, setAjoutBloque] = useState<{ idu: string; code: string; motif: string } | null>(null)
   const select = useApp((s) => s.select)
 
+  // RETOURS-23 (pt 1) — « ← Retour » internes (étape 2→1, 3→2) retirés : le bouton UNIQUE du haut
+  // recule d'une étape tant qu'on n'est pas à l'étape 1, puis ferme l'outil / revient à l'outil de départ.
+  const setOutilSousRetour = useApp((s) => s.setOutilSousRetour)
+  useEffect(() => {
+    setOutilSousRetour(step > 1 ? () => setStep((s) => (s > 1 ? ((s - 1) as 1 | 2 | 3) : s)) : null)
+    return () => setOutilSousRetour(null)
+  }, [step, setOutilSousRetour])
+
   // Enrichit commune + surface depuis la fiche (cache partagé) une fois le destinataire retenu.
   const _enrichir = (id: string) => {
     setDest((prev) => prev.some((d) => d.idu === id) ? prev : [...prev, { idu: id, commune: '', surface: null }])
@@ -1500,7 +1522,12 @@ export function M09() {
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       <Banner>Un <b>service d'envoi</b> : vous préparez vos courriers (destinataires + relecture), LABUSE
         <b> les imprime, les affranchit et les poste</b>. Adressage générique (SPF/CERFA) — aucune identité
-        de propriétaire particulier.</Banner>
+        de propriétaire particulier.
+        {/* RETOURS-25 (pt 13) — prix et délai LUS DE LA CONFIG (/courrier/statut), jamais écrits en dur. */}
+        {statut.data?.tarif_unitaire_eur != null && (
+          <> <b>{statut.data.tarif_unitaire_eur.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} € par courrier</b>,
+            impression, enveloppe et affranchissement compris{statut.data.delai_jours ? <> · envoi sous {statut.data.delai_jours} jours</> : null}.</>
+        )}</Banner>
       {/* OUTILS-FIX-4 D1/D2 — ÉTAT DU SERVICE + PLAFOND DU JOUR, à l'ouverture, avant toute saisie.
           CHASSE-APP-FIX-2 (point 1) — REVIENT sur RECETTE-1 R27 : tant que /courrier/statut renvoie
           disponible:false, on AFFICHE la raison du serveur (le fournisseur est un bouchon ; la demande
@@ -1531,7 +1558,7 @@ export function M09() {
 
       {step === 1 && (
         <div className="flex min-h-0 flex-1 flex-col gap-2">
-          <p className="text-[11px] text-txt-mut">Les parcelles à démarcher — <b>une barre</b> (adresse ou IDU), autant que voulu :</p>
+          {/* RETOURS-25 (pt 13) — phrase « Les parcelles à démarcher — une barre… » retirée. */}
           <ParcelInput dataAttr="courrier-idu" placeholder="Adresse, IDU ou référence (BW0917)"
             onPick={ajouter} />
           {/* LOT7 — l'import Assemblage passe UNIQUEMENT par le pont one-shot « Préparer les courriers (n) »
@@ -1594,8 +1621,8 @@ export function M09() {
               )}
             </>
           )}
+          {/* RETOURS-23 (pt 1) — « ← Retour » interne retiré : le bouton unique du haut recule d'une étape. */}
           <div className="flex gap-2">
-            <Retour label="Retour" onClick={() => setStep(1)} />
             <Bouton niveau="primaire" ton="vert" data-courrier-next onClick={() => setStep(3)} disabled={!apercu.data || corps.trim().length < 10}
               className="flex-1">Vérifier l'envoi ›</Bouton>
           </div>
@@ -1683,9 +1710,7 @@ export function M09() {
           {/* RECETTE-OUTILS-1 (point 47) — encart « Vos demandes » retiré du Courrier : les demandes se
               voient depuis Projets (« Projets → Mes courriers »). */}
 
-          {/* CHASSE-APP-FIX-2 (point 4 S) — le retour de l'étape 3 (Envoi) mène à l'étape PRÉCÉDENTE
-              (2 · Relecture), plus directement à l'étape 1 : on peut reculer d'un pas. */}
-          <Retour label="Retour" onClick={() => setStep(2)} className="mt-auto" />
+          {/* RETOURS-23 (pt 1) — « ← Retour » interne retiré : le bouton unique du haut recule à l'étape 2. */}
         </div>
       )}
     </div>
@@ -1740,7 +1765,7 @@ export function M10() {
         lot qu'elle touche. Ajoutez-les en tapant une adresse ou un IDU, ou en cliquant la carte.</Banner>
       {/* BARRE UNIQUE (SOCLE) + « + Ajouter » → chips du lot */}
       <div className="flex flex-col gap-1.5 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2">
-        <ParcelInput dataAttr="diligence-idu" placeholder="Adresse, IDU ou référence (BW0917)"
+        <ParcelInput dataAttr="diligence-idu" cadre={false} placeholder="Adresse, IDU ou référence (BW0917)"
           onPick={ajouter}
           onAddress={() => setMsg("Cette adresse n'a pas de parcelle rattachée — saisissez un IDU ou cliquez la parcelle sur la carte.")} />
         {msg && <p data-diligence-msg className="text-[10.5px] leading-snug text-st-creuser">{msg}</p>}
@@ -1917,10 +1942,16 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
 // `RetourOutil` post-pont (deux mécanismes fusionnés en un).
 function PanelRetour() {
   const stack = useApp((s) => s.outilRetour)
+  const sousRetour = useApp((s) => s.outilSousRetour)
   const retourOutil = useApp((s) => s.retourOutil)
   const toggleOutils = useApp((s) => s.toggleOutils)
   const top = stack.length ? stack[stack.length - 1] : null
-  return <Retour label={top ? top.label : 'Outils'} onClick={top ? retourOutil : toggleOutils} />
+  // RETOURS-23 (pt 1) — UN SEUL bouton de retour, toujours « ← Retour ». Priorité : (1) reculer d'un
+  // niveau DANS l'outil (sous-écran → liste des chemins) si l'outil a posé un retour interne ;
+  // (2) dépiler un pont (outil de départ) ; (3) fermer l'outil (menu Outils). Les « ← Retour » internes
+  // des outils sont retirés : ils passent tous par ici.
+  const onClick = sousRetour ?? (top ? retourOutil : toggleOutils)
+  return <Retour label="Retour" onClick={onClick} />
 }
 
 export function ModulePanel() {
@@ -1938,9 +1969,11 @@ export function ModulePanel() {
       // COMPARAISON : tant que le TABLEAU est ouvert, Échap le ferme (ComparePanel) — on ne recule pas
       // l'outil par-dessous. Le 2ᵉ Échap (tableau fermé) reculera l'outil.
       if (st.selectedIdu || st.sourceLine || st.tool || st.compareOpen) return
-      // DA-FIX-2 Lot 1 (DA-012) : Échap RECULE, il ne FERME plus. Après un pont → outil de départ
-      // restitué ; sinon → menu Outils. La croix ✕ reste le seul geste de fermeture du panneau.
-      if (st.outilRetour.length) st.retourOutil()
+      // DA-FIX-2 Lot 1 (DA-012) : Échap RECULE, il ne FERME plus. RETOURS-23 (pt 1) — même priorité
+      // que le bouton : d'abord reculer DANS l'outil (sous-écran → chemins), puis dépiler un pont,
+      // puis menu Outils. La croix ✕ reste le seul geste de fermeture du panneau.
+      if (st.outilSousRetour) st.outilSousRetour()
+      else if (st.outilRetour.length) st.retourOutil()
       else st.toggleOutils()
     }
     window.addEventListener('keydown', h, true)
