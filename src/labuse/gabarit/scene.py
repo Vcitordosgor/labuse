@@ -116,12 +116,10 @@ class _Sampler:
             return None
         return self.m.altitude(x, y)
 
-    def _r(self, z):
-        return round(z, 2) if z is not None else None
-
     def profil(self, ox, oy, ux, uy, L) -> list[dict]:
-        """Profil par FRANCHISSEMENT des faces (pas d'échantillonnage au mètre), borné."""
-        return [{"d": p["d"], "z": self._r(self.altitude(ox + ux * p["d"], oy + uy * p["d"]))}
+        """Profil par FRANCHISSEMENT des faces (pas d'échantillonnage au mètre), borné. z NON arrondi
+        (arrondi à l'affichage seulement) : une crête de 40,00 m ressort à 40,00 m."""
+        return [{"d": p["d"], "z": self.altitude(ox + ux * p["d"], oy + uy * p["d"])}
                 for p in self.m.profil(ox, oy, ux, uy, L)]
 
 
@@ -369,14 +367,25 @@ def _continu(profil, d0: float, d1: float) -> bool:
 
 
 def _batiment_coupe(sampler, ligne, axe, b) -> list[dict]:
-    """Un bâtiment traversé → segments ; terrain coté aux DEUX façades (amont/aval) si dispo."""
+    """Un bâtiment traversé → segments ; terrain coté aux DEUX façades (amont/aval) si dispo. Au pied
+    du bâti, on compare DEUX coupes parallèles légèrement décalées (±1,5 m perpendiculaire) : `supporte`
+    = les appuis existent des deux côtés sur toute l'emprise (sinon la portion sera interrompue)."""
+    ox, oy, ux, uy = axe["ox"], axe["oy"], axe["ux"], axe["uy"]
+    px, py = -uy, ux                                       # perpendiculaire à l'axe
     out = []
     for d0, d1 in _spans(ligne, b["geom"]):
-        fa = sampler.altitude(axe["ox"] + axe["ux"] * d0, axe["oy"] + axe["uy"] * d0)
-        fv = sampler.altitude(axe["ox"] + axe["ux"] * d1, axe["oy"] + axe["uy"] * d1)
+        fa = sampler.altitude(ox + ux * d0, oy + uy * d0)
+        fv = sampler.altitude(ox + ux * d1, oy + uy * d1)
+        appuis = True
+        for off in (-1.5, 1.5):
+            for k in range(5):
+                d = d0 + (d1 - d0) * k / 4
+                if sampler.altitude(ox + ux * d + px * off, oy + uy * d + py * off) is None:
+                    appuis = False
         out.append({"d0": d0, "d1": d1, "facade_amont_m": None if fa is None else round(fa, 2),
                     "facade_aval_m": None if fv is None else round(fv, 2),
-                    "pied_m": b["pied_m"], "hauteur_m": b["hauteur_m"], "attribution": b["attribution"]})
+                    "pied_m": b["pied_m"], "hauteur_m": b["hauteur_m"], "attribution": b["attribution"],
+                    "appuis": appuis})
     return out
 
 
@@ -401,11 +410,14 @@ def _indicateurs(profil, parcelle_spans, bati_spans, voie) -> dict:
         return any(a - 1e-6 <= d <= b + 1e-6 for a, b in spans)
     bati_elargi = [[a - 1.0, b + 1.0] for a, b in bati_spans]
     W = _PENTE_FENETRE_M
+    runs = [(r[0]["d"], r[-1]["d"]) for r in _runs(profil)]   # tronçons continus couverts
     pmax = {"disponible": False}
     for i, pi in enumerate(profil):
         d0, zi = pi["d"], pi["z"]
         d1 = d0 + W
         if zi is None or d1 > profil[-1]["d"] + 1e-6:
+            continue
+        if not any(a - 1e-6 <= d0 and d1 <= b + 1e-6 for a, b in runs):   # ENTIÈREMENT dans UN tronçon
             continue
         fenetre = [p for p in profil if d0 - 1e-6 <= p["d"] <= d1 + 1e-6]
         if any(p["z"] is None for p in fenetre):          # 5 m entiers valides
@@ -571,20 +583,11 @@ def _regles_servies(gr) -> dict:
                             "source": src(r.source)} for r in (gr.appliedRules or [])]}
 
 
-def _sources_versionnees(gr, fond_meta):
-    out = [{"fond": fond_meta.get("version_fond"), "produit": fond_meta.get("produit")}]
-    for r in (gr.appliedRules or []):
-        s = getattr(r, "source", None)
-        if s is not None:
-            out.append({"doc": getattr(s, "document", None), "version": getattr(s, "versionDate", None)})
-    return out
-
-
-def _scene_id(idu, gr, fond_meta, contenu) -> str:
-    sig = json.dumps({"idu": idu, "regles": _regles_servies(gr),
-                      "sources": _sources_versionnees(gr, fond_meta), "contenu": contenu},
-                     sort_keys=True, default=str)
-    return hashlib.sha1(sig.encode()).hexdigest()[:12]
+def _hash_scene(scene: "Scene") -> str:
+    """Identifiant = hachage de la scène RÉELLEMENT SÉRIALISÉE (tout sauf l'identifiant lui-même) :
+    adresse, contours, reculs, exclusions, bâti, terrain (sommets), règles, coupes, métadonnées."""
+    payload = {k: v for k, v in scene.to_dict().items() if k != "scene_id"}
+    return hashlib.sha1(json.dumps(payload, sort_keys=True, default=str).encode()).hexdigest()[:12]
 
 
 _MEMO: dict = {}        # scène construite UNE FOIS (clé : idu + signature du fond), lue par tous
@@ -609,15 +612,21 @@ def _build_scene(db, idu: str) -> Scene:
     gr = gabarit_detail(idu, db)
     fond_meta = _fond_meta()
     adresse = _adresse(db, idu)
+    try:                                   # commune (en-tête de la visionneuse)
+        from sqlalchemy import text as _t
+        fond_meta = {**fond_meta, "commune": db.execute(_t("SELECT commune FROM parcels WHERE idu=:i"), {"i": idu}).scalar()}
+    except Exception:  # noqa: BLE001
+        pass
 
     contour = _geom_2975(getattr(gr, "contourGeoJSON", None))
     cadastre = _cadastre_2975(db, idu)
     ref = cadastre or contour
     if ref is None:
-        sid = _scene_id(idu, gr, fond_meta, {"vide": True})
-        return Scene(idu=idu, scene_id=sid, disponible=False, adresse=adresse, meta=fond_meta,
+        vide = Scene(idu=idu, scene_id="", disponible=False, adresse=adresse, meta=fond_meta,
                      etat={"gabarit": gr.status, "terrain_couverture": 0.0, "fond_disponible": False, "coupes": []},
                      message=gr.message or "Parcelle sans contour exploitable.")
+        vide.scene_id = _hash_scene(vide)
+        return vide
     minx, miny, maxx, maxy = ref.bounds
     ox, oy = math.floor(minx), math.floor(miny)
     centroid = ref.centroid
@@ -676,23 +685,17 @@ def _build_scene(db, idu: str) -> Scene:
             "coupes": coupes_etat}
     disponible = sampler is not None and couverture > 0.5   # la PARCELLE elle-même doit être couverte
 
-    # identifiant sur TOUT le contenu rendu : SOMMETS (condensé), exclusions, contours, coupes (A3)
-    verts = faces_1m.get("vertices", []) if faces_1m else []
-    verts_sig = hashlib.sha1(json.dumps(verts, separators=(",", ":")).encode()).hexdigest()
-    contenu = {"cad": _polys_local(cadastre, ox, oy), "gab": _polys_local(contour, ox, oy),
-               "zone": _polys_local(zone, ox, oy), "excl": _polys_local(excl, ox, oy),
-               "couverture": couverture, "coupes": [[p["z"] for p in c["profil"]] for c in coupes],
-               "sommets": verts_sig, "n_sommets": len(verts)}
-    sid = _scene_id(idu, gr, fond_meta, contenu)
-
-    return Scene(
-        idu=idu, scene_id=sid, etat=etat, disponible=disponible, adresse=adresse, origine_2975=[ox, oy],
+    scene = Scene(
+        idu=idu, scene_id="", etat=etat, disponible=disponible, adresse=adresse, origine_2975=[ox, oy],
         contour_cadastral=_polys_local(cadastre, ox, oy), contour_gabarit=_polys_local(contour, ox, oy),
         zone_implantation=_polys_local(zone, ox, oy), reculs=_polys_local(reculs, ox, oy),
         exclusions=_polys_local(excl, ox, oy), batiments=batis, terrain=terrain,
         regles=_regles_servies(gr), coupes=coupes, axes_plan={a["label"]: a for a in axes_plan},
         meta=fond_meta,
         message=None if disponible else "Fond d'altitudes absent/insuffisant sur la parcelle (terrain en lacune).")
+    # identifiant = hachage de la scène réellement sérialisée (A3 : adresse/reculs/sommets compris)
+    scene.scene_id = _hash_scene(scene)
+    return scene
 
 
 def _axe_plan(label, axe, ox, oy) -> dict:

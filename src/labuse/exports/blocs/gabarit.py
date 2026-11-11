@@ -141,16 +141,17 @@ def _bloc_coupes_pilote(scene: dict) -> str:
         return ""
     if not scene.get("disponible") or not scene.get("coupes"):
         return ""
-    # PDF = thème CLAIR ; largeur imprimée maîtrisée (contenu A4 ≈ 170 mm) → échelle chiffrée possible.
-    sid = scene.get("scene_id"); adr = scene.get("adresse")
+    # PDF = thème CLAIR ; barre graphique SEULE (pas de ratio chiffré — A2).
+    sid = scene.get("scene_id"); adr = scene.get("adresse"); idu = scene.get("idu")
     plan = plan_cle_svg(scene, theme="clair") or ""
-    figures = [coupe_svg(c, theme="clair", largeur_mm=170, scene_id=sid, adresse=adr)
-               for c in scene["coupes"]]
+    figures = [coupe_svg(c, theme="clair", adresse=adr, idu=idu) for c in scene["coupes"]]
     figures = [f for f in figures if f]
     if not figures:
         return ""
+    # identifiant de scène porté par le DOCUMENT (parité écran/PDF), pas par la coupe (C10).
     corps = ('<div class="coupes3d" style="page-break-before:always">'
-             '<h3>Terrain réel — coupes (pilote 3D)</h3>')
+             f'<h3>Terrain réel — coupes (pilote 3D)</h3>'
+             f'<p class="src" style="font-size:8px">Scène {esc(str(sid or ""))} — servie pour cet identifiant.</p>')
     # plan-clé À CÔTÉ de la première coupe (B8) : rangée flex
     corps += (f'<div style="display:flex;gap:8px;align-items:flex-start">'
               f'<div class="plan2d" style="flex:1 1 auto">{figures[0]}</div>'

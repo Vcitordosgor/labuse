@@ -1,15 +1,26 @@
 {
   "mesures": {
-    "chargement_froid_ms": 1612,
-    "fps_rotation": 60,
-    "chargement_chaud_ms": 792
+    "chargement_froid_ms": 1454,
+    "premiere_image_rendue": true,
+    "fps_rotation": 59,
+    "trame_med_ms": 17,
+    "trame_max_ms": 72,
+    "ressources_base": {
+      "geometries": 12,
+      "textures": 0
+    },
+    "chargement_chaud_ms": 640
   },
   "robustesse": {
     "dix_ouvertures_sans_fuite": true,
-    "apres_pause_ms": 547,
+    "apres_pause_ms": 542,
     "canvas_ok_apres_pause": true,
     "perte_contexte_testee": true,
-    "perte_contexte_repli": true
+    "perte_contexte_repli": true,
+    "ressources_apres_cycles": {
+      "geo": 12,
+      "tex": 0
+    }
   },
   "erreurs": []
 }

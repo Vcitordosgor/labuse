@@ -5,8 +5,8 @@ prod. **Aucun chiffre servi ne change** (bancs Gabarit verts, chiffres du Gabari
 La vue 3D actuelle reste la vue par défaut ; le pilote vit derrière un **interrupteur réservé aux admins**.
 **Aucun plafond de hauteur n'est dessiné** (les hauteurs en pente sont le mandat suivant).
 
-> §1–§9 étape 1 ; §10 bis ; §11 ter ; §12 visionneuse ; le **§13 (étape 2 bis) FAIT FOI** pour la
-> justesse (maillage unique, coupes par franchissement, identifiant sur contenu, bâti BD TOPO) et le rendu.
+> §1–§12 (étapes 1→2 bis) ; le **§14 (étape 2 ter) FAIT FOI** : justesse (franchissement sans arrondi,
+> identifiant de scène sérialisée + parité PDF, pente 5 m dans un tronçon), visionneuse (cible) et coupes.
 
 ---
 
@@ -375,3 +375,40 @@ Chaque point ci-dessous porte son test et son résultat ; n'est « fermé » que
 
 Captures WebKit : `viewer/bz1065_vue3d.png`, `viewer/97415000CM1658_vue3d.png`, `viewer/perte_contexte.png`.
 Hook : build tsc ✅ · vitest **326** ✅ · pytest gabarit **299 unit + 2 db + 20 scène** ✅ · 0 faute hors cadre (coupes régénérées clair+sombre).
+
+---
+
+## 14. Étape 2 ter — 5ᵉ revue d'Astra (finitions avant démonstration)
+
+Sur le commit 6c859665b. Cible d'écran : `docs/design/maquettes/nov-2026/16-ecran-cible-astra.png`
+(mise en page, pas les chiffres). Chaque point porte son test et son résultat.
+
+### A. Justesse
+| # | Exigence | Test | Résultat |
+|---|---|---|---|
+| A1 | Intervalle calculé sur la face traversée, SANS arrondi intermédiaire | `test_coupe_par_franchissement_retrouve_crete` : crête de **40,00 m → 40,00 m** (exact) | **fermé** ✅ |
+| A1 | Au bord d'une lacune, une arête sur une face valide garde son altitude | `test_altitude_bord_lacune_face_valide` : altitude non nulle sur la diagonale valide | **fermé** ✅ |
+| A2 | Identifiant = hachage de la scène SÉRIALISÉE (adresse, reculs compris) ; parité écran/PDF | `test_scene_id_sur_scene_serialisee` (sommet/exclusion/adresse → 4 id distincts) ; **recette PDF BZ1065** : `scene_id` **152e22cc891e** présent au document, cotes coupe A identiques écran/PDF ; endpoints coupe/plan servis **pour `sid`** (409 si périmé) ; **barre graphique seule au PDF, pas de ratio** | **fermé** ✅ |
+| A3 | Pente max 5 m entièrement dans UN tronçon couvert (jamais à cheval sur le vide) | `_indicateurs` : fenêtre ⊆ un run ; `test_pente_max_5m_deux_bornes_hors_bati` | **fermé** ✅ |
+| A4 | Bâti sans pied : contour sur faces valides ou plan seul, jamais altitude arbitraire | `batiVolume` drape le contour via `makeElev` (jamais 0) ; serveur `volume=False` → contour | **fermé** ✅ |
+
+### B. Visionneuse (cible `16-ecran-cible-astra.png`) — `GabaritViewer3D.tsx`
+- **B5** inversion altitude/nord corrigée à l'émission `(x, altitude, -nord)` ; courbes/contours/axes/marqueurs sur les **triangles servis** (échantillonneur **triangulé** `makeElev`, même découpe que le serveur) ; teinte verte sur sommets servis (ne comble pas les trous) ; **bouton « Courbes de niveau »**.
+- **B6** mise en page de la cible : **en-tête** (adresse·commune·réf), **3D en haut à gauche**, à droite **plan-clé** (nord en haut) + **légende**, **coupe active pleine largeur en bas**, **sélecteur Coupe A/B** (plan maintenu).
+- **B7** **boussole qui tourne** avec la caméra ; **altitudes haut/bas sur leurs points** (virgule) ; **axe actif orange** + point « Voie » ; **arêtes fines** sur le bâti.
+- **B8** survol de la coupe **calé sur le rectangle du tracé** (`data-plot-x0/x1` portés par le SVG), y compris agrandi — plus de décalage de ~6 m.
+- **B9** **changer de coupe NE recrée PAS le contexte WebGL** (recoloration de l'axe par effet séparé) — vérifié : ressources stables.
+- **B12** échelle verticale ×1 ; **aucune photo aérienne**.
+
+### C. Coupes (`coupe_svg`)
+- **C10** en-tête adresse + réf cadastrale + « Altitudes en m · IGN 1989 · H = V » ; **plus d'identifiant de scène** (test) ; « A vers A′ » en en-tête (hors cotes) ; **cotes avec trait de rappel, une par point** ; **voie « Chemin de la Citerne » nommée au franchissement** (test) ; **liseré vert retiré**.
+- **C11** **rupture au pied du bâti** : le relevé reste visible + repère ◆ distinct + mention « Au pied du bâti · rupture du terrain à vérifier » ; comparaison de deux coupes parallèles décalées (`appuis`) → **trait interrompu** si les appuis manquent.
+- **C12** agrandissement : fond **opaque**, pleine largeur, H = V conservé.
+
+### D. Mesures réelles (WebKit / Safari) — `viewer/mesures_webkit.json`
+- **Première image effectivement rendue : True** · **FPS 59** (trame médiane 17 ms) · à chaud **640 ms** (<2 s) · à froid 1454 ms.
+- **Ressources graphiques après 10 cycles : 12 → 12 géométries** (stable, pas de fuite) · repli perte de contexte : **True** · 0 erreur.
+
+Recette : trois vues de BZ1065 (`viewer/bz1065_vue3d.png`, `bz1065_coupeA.png`, `bz1065_coupeB.png`) ;
+même point vérifié dans la 3D (marqueur au survol), la coupe et le PDF régénéré (même `scene_id`, mêmes cotes).
+Hook : build tsc ✅ · vitest **326** ✅ · pytest gabarit **300 unit + 2 db + 21 scène** ✅ · 0 faute hors cadre.

@@ -91,8 +91,7 @@ def _fleche(x0, y0, x1, y1, col, w=1.4):
             f'<polygon points="{x1:.1f},{y1:.1f} {xa:.1f},{ya:.1f} {xb:.1f},{yb:.1f}" fill="{col}"/>')
 
 
-def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, largeur_mm=None,
-              scene_id=None, adresse=None):
+def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=None):
     """SVG d'une coupe. None si le profil n'a aucun point valide."""
     T = _THEMES.get(theme, _THEMES["sombre"])
     profil = coupe.get("profil") or []
@@ -139,19 +138,18 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, largeur_mm=None,
                         return a["z"] + t * (b["z"] - a["z"])
         return None
 
+    # data-plot-x0/x1 : bornes px du RECTANGLE du tracé (cale le survol de la coupe en 3D — B8)
     out = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" '
            f'height="{height}" role="img" aria-label="{_esc(coupe.get("titre",""))}" {_FONT} '
+           f'data-plot-x0="{off_x:.1f}" data-plot-x1="{off_x+plot_w:.1f}" '
            f'style="background:{T["bg"]}">']
-    # en-tête (B9) : titre · identifiant · adresse
+    # en-tête (C10) : titre · adresse · référence cadastrale (PLUS d'identifiant de scène) + sens de lecture
     out.append(f'<rect x="0" y="0" width="{width}" height="{HEAD}" fill="{T["head"]}"/>')
     out.append(f'<text x="{PAD_L}" y="17" font-size="13" font-weight="600" fill="{T["txt"]}">{_esc(coupe.get("titre",""))}</text>')
-    sub = []
-    if adresse:
-        sub.append(_esc(adresse))
-    if scene_id:
-        sub.append(f"scène {scene_id}")
-    if sub:
-        out.append(f'<text x="{PAD_L}" y="31" font-size="9" fill="{T["txt_dim"]}">{" · ".join(sub)}</text>')
+    sub = [x for x in (_esc(adresse) if adresse else "", _esc(idu) if idu else "") if x]
+    sens = "voie vers parcelle" if (coupe.get("voie") and coupe["voie"].get("etablie")) else f'{coupe["label"]} vers {coupe["label"]}′'
+    sub.append(_esc(sens))
+    out.append(f'<text x="{PAD_L}" y="31" font-size="9" fill="{T["txt_dim"]}">{" · ".join(sub)}</text>')
     out.append(f'<rect x="{off_x:.1f}" y="{PAD_T}" width="{plot_w:.1f}" height="{plot_h:.1f}" '
                f'fill="{T["plot"]}" stroke="{T["grid"]}" stroke-width="0.6"/>')
 
@@ -169,17 +167,15 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, largeur_mm=None,
             out.append(f'<text x="{off_x-6:.1f}" y="{Y(z)+3:.1f}" text-anchor="end" font-size="9" fill="{T["txt_dim"]}">{_fmt(z)}</text>')
         z += zstep
 
-    # zone d'implantation : liseré au sol (étendue traversée)
-    for d0, d1 in coupe.get("zone_implantation_d") or []:
-        out.append(f'<rect x="{X(d0):.1f}" y="{y_base-5:.1f}" width="{(d1-d0)*s:.1f}" height="5" fill="{T["zone"]}" fill-opacity="0.85"/>')
-
-    # TERRAIN : runs pleins, coupés sous les emprises bâties (trait interrompu, pas de tirets)
+    # TERRAIN : le RELEVÉ reste visible sous le bâti (C11) ; interruption SEULEMENT si les appuis
+    # manquent (portion sans support). Le liseré vert au bas est RETIRÉ (C10).
     runs = _runs(profil)
-    reconstruits = False
+    # portions sans appuis (sous un bâti dont la comparaison parallèle échoue) → interrompues
+    sans_appui = [(b["d0"], b["d1"]) for b in batis if b.get("appuis") is False]
     for run in runs:
         if len(run) < 2:
             continue
-        for s0, s1 in _soustraire((run[0]["d"], run[-1]["d"]), bati_spans):
+        for s0, s1 in _soustraire((run[0]["d"], run[-1]["d"]), sans_appui):
             pts = [(p["d"], p["z"]) for p in run if s0 - 1e-6 <= p["d"] <= s1 + 1e-6]
             if len(pts) < 2:
                 continue
@@ -187,22 +183,27 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, largeur_mm=None,
             base = f"{X(pts[-1][0]):.1f},{y_base:.1f} {X(pts[0][0]):.1f},{y_base:.1f}"
             out.append(f'<polygon points="{path} {base}" fill="{T["fill"]}" stroke="none"/>')
             out.append(f'<polyline points="{path}" fill="none" stroke="{T["terrain"]}" stroke-width="1.8"/>')
-    # profil RECONSTRUIT (tirets) : lacune courte bordée d'appuis des deux côtés, HORS emprise bâtie
-    for a, b in zip(runs, runs[1:]):
+    for a, b in zip(runs, runs[1:]):          # profil reconstruit (tirets) sur lacune courte avec appuis
         gap = (a[-1]["d"], b[0]["d"])
-        if gap[1] - gap[0] <= _PONT_RECONSTITUE_M and not any(x0 < gap[1] and x1 > gap[0] for x0, x1 in bati_spans):
+        if gap[1] - gap[0] <= _PONT_RECONSTITUE_M:
             out.append(f'<line x1="{X(gap[0]):.1f}" y1="{Y(a[-1]["z"]):.1f}" x2="{X(gap[1]):.1f}" y2="{Y(b[0]["z"]):.1f}" '
                        f'stroke="{T["terrain"]}" stroke-width="1.4" stroke-dasharray="4 3"/>')
-            reconstruits = True
 
-    # BÂTI : emprise au sol (bracket), cotes de façade, mention faîtage à part (aucun toit)
+    # BÂTI : emprise au sol + RUPTURE du terrain à vérifier (repère distinct des cotes) ; aucun toit
     faitages = []
+    rupture = False
     for b in batis:
         x0, x1 = X(b["d0"]), X(b["d1"])
         out.append(f'<line x1="{x0:.1f}" y1="{y_base:.1f}" x2="{x1:.1f}" y2="{y_base:.1f}" stroke="{T["bati"]}" stroke-width="3"/>')
         out.append(f'<line x1="{x0:.1f}" y1="{y_base-4:.1f}" x2="{x0:.1f}" y2="{y_base+4:.1f}" stroke="{T["bati"]}" stroke-width="1"/>')
         out.append(f'<line x1="{x1:.1f}" y1="{y_base-4:.1f}" x2="{x1:.1f}" y2="{y_base+4:.1f}" stroke="{T["bati"]}" stroke-width="1"/>')
         out.append(f'<text x="{(x0+x1)/2:.1f}" y="{y_base-7:.1f}" text-anchor="middle" font-size="7.5" fill="{T["bati"]}">emprise bâtie</text>')
+        # repère de rupture (losange) au pied amont, distinct des cotes ordinaires
+        zr = z_terrain(b["d0"])
+        if zr is not None:
+            yr = Y(zr)
+            out.append(f'<path d="M{x0:.1f},{yr-4:.1f} l4,4 l-4,4 l-4,-4 z" fill="none" stroke="{T["lacune"]}" stroke-width="1.2"/>')
+            rupture = True
         if b.get("attribution") == "bdtopo" and b.get("hauteur_m"):
             faitages.append(f"Hauteur du bâtiment (BD TOPO) · {_fmt(b['hauteur_m'],1)} m")
 
@@ -225,13 +226,19 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, largeur_mm=None,
     # cotes aux points vérifiés, UNE par point, anti-collision (B9/B11)
     out.append(_cotes(coupe.get("cotes_points", {}).get("points", []), X, Y, T))
 
-    # flèche sens de lecture
-    out.append(_fleche(off_x + 6, PAD_T - 10, off_x + 54, PAD_T - 10, T["axe"]))
-    sens = "voie vers parcelle" if (coupe.get("voie") and coupe["voie"].get("etablie")) else f'{coupe["label"]} vers {coupe["label"]}′'
-    out.append(f'<text x="{off_x+60:.1f}" y="{PAD_T-7:.1f}" font-size="9" fill="{T["txt_dim"]}">{_esc(sens)}</text>')
+    # VOIE nommée LÀ OÙ la coupe la traverse (C10, coupe B)
+    voie = coupe.get("voie") or {}
+    if voie.get("etablie") and voie.get("nom") and voie.get("intersection_d") is not None:
+        dv = voie["intersection_d"]
+        if 0 <= dv <= L:
+            zv = z_terrain(dv)
+            yc0 = Y(zv) if zv is not None else y_base
+            out.append(f'<circle cx="{X(dv):.1f}" cy="{yc0:.1f}" r="2.5" fill="none" stroke="{T["axe"]}" stroke-width="1.3"/>')
+            out.append(f'<line x1="{X(dv):.1f}" y1="{yc0-3:.1f}" x2="{X(dv):.1f}" y2="{PAD_T+11:.1f}" stroke="{T["axe"]}" stroke-width="0.5" stroke-dasharray="2 2"/>')
+            out.append(f'<text x="{X(dv):.1f}" y="{PAD_T+9:.1f}" text-anchor="middle" font-size="8" fill="{T["axe"]}">{_esc(voie["nom"])}</text>')
 
-    # ÉCHELLE : emplacement réservé (B7)
-    out.append(_echelle(off_x, PAD_T - 26, L, s, plot_w, width, largeur_mm, T))
+    # ÉCHELLE : barre graphique dans un emplacement réservé + datum (PDF : barre SEULE, pas de ratio — A2)
+    out.append(_echelle(off_x, PAD_T - 24, L, s, T))
 
     # bandes de traversée cotées (mêmes bornes que les limites)
     yb0 = y_base + AX_H
@@ -245,15 +252,16 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, largeur_mm=None,
         out.append(f'<text x="8" y="{yb1+4:.1f}" font-size="8.5" fill="{T["txt_dim"]}">zone d\'implantation</text>')
         out.append(f'<text x="{off_x:.1f}" y="{yb1+4:.1f}" font-size="8.5" fill="{T["txt_dim"]}">— {etat}</text>')
 
-    # indicateurs + mentions faîtage + légende reconstruit (B5/B12)
-    out.append(_indicateurs(coupe, faitages, reconstruits, y_base + AX_H + BANDES_H, PAD_L, T))
+    # indicateurs + mentions faîtage + rupture au pied du bâti (C11)
+    out.append(_indicateurs(coupe, faitages, rupture, y_base + AX_H + BANDES_H, PAD_L, T))
 
     out.append("</svg>")
     return "".join(out)
 
 
 def _cotes(points, X, Y, T):
-    """Place les cotes (décimètre) sans collision : rangées alternées, min 26 px entre deux labels."""
+    """Cotes (décimètre, virgule), UNE par point, sans collision : rangées alternées + TRAIT DE RAPPEL
+    (C10) reliant le point à son étiquette quand elle est décalée."""
     items = sorted(points, key=lambda p: p["d"])
     rows = [[], []]       # occupation x par rangée (0 = au-dessus, 1 = en dessous)
     frag = []
@@ -263,29 +271,25 @@ def _cotes(points, X, Y, T):
         x, y = X(p["d"]), Y(p["z"])
         placed = None
         for r in (0, 1):
-            if all(abs(x - xx) >= 26 for xx in rows[r]):
+            if all(abs(x - xx) >= 24 for xx in rows[r]):
                 rows[r].append(x); placed = r; break
         if placed is None:
-            continue                                   # trop serré → omise (évite la collision)
-        yy = (y - 6) if placed == 0 else (y + 12)
+            continue
+        yy = (y - 9) if placed == 0 else (y + 13)
         frag.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="1.8" fill="{T["txt"]}"/>')
-        frag.append(f'<text x="{x:.1f}" y="{yy:.1f}" text-anchor="middle" font-size="8" fill="{T["txt"]}">{_fmt(p["z"],1)}</text>')
+        frag.append(f'<line x1="{x:.1f}" y1="{y:.1f}" x2="{x:.1f}" y2="{yy+(2 if placed else -7):.1f}" stroke="{T["txt_dim"]}" stroke-width="0.5"/>')  # trait de rappel
+        frag.append(f'<text x="{x:.1f}" y="{yy:.1f}" text-anchor="middle" font-size="8" fill="{T["txt"]}">{_fmt(p["z"],1)} m</text>')
     return "".join(frag)
 
 
-def _echelle(x, y, L, s, plot_w, width, largeur_mm, T):
+def _echelle(x, y, L, s, T):
+    """Barre graphique SEULE (pas de ratio chiffré, même au PDF — A2) + datum une fois."""
     barre = _nice_step(L, 5)
-    frag = [f'<line x1="{x:.1f}" y1="{y:.1f}" x2="{x+barre*s:.1f}" y2="{y:.1f}" stroke="{T["txt"]}" stroke-width="2"/>',
-            f'<line x1="{x:.1f}" y1="{y-3:.1f}" x2="{x:.1f}" y2="{y+3:.1f}" stroke="{T["txt"]}" stroke-width="1"/>',
-            f'<line x1="{x+barre*s:.1f}" y1="{y-3:.1f}" x2="{x+barre*s:.1f}" y2="{y+3:.1f}" stroke="{T["txt"]}" stroke-width="1"/>',
-            f'<text x="{x+barre*s+5:.1f}" y="{y+3:.1f}" font-size="8.5" fill="{T["txt_dim"]}">{_fmt(barre)} m · H = V</text>']
-    if largeur_mm:                                     # ratio chiffré : PDF seulement
-        ratio = 1000.0 * width / (s * largeur_mm)
-        for rr in (100, 200, 250, 500, 1000, 2000):
-            if rr >= ratio:
-                ratio = rr; break
-        frag.append(f'<text x="{x+barre*s+5:.1f}" y="{y-7:.1f}" font-size="8.5" fill="{T["txt_dim"]}">1:{int(ratio)}</text>')
-    return "".join(frag)
+    return "".join([
+        f'<line x1="{x:.1f}" y1="{y:.1f}" x2="{x+barre*s:.1f}" y2="{y:.1f}" stroke="{T["txt"]}" stroke-width="2"/>',
+        f'<line x1="{x:.1f}" y1="{y-3:.1f}" x2="{x:.1f}" y2="{y+3:.1f}" stroke="{T["txt"]}" stroke-width="1"/>',
+        f'<line x1="{x+barre*s:.1f}" y1="{y-3:.1f}" x2="{x+barre*s:.1f}" y2="{y+3:.1f}" stroke="{T["txt"]}" stroke-width="1"/>',
+        f'<text x="{x+barre*s+6:.1f}" y="{y+3:.1f}" font-size="8.5" fill="{T["txt_dim"]}">{_fmt(barre)} m · Altitudes en m · IGN 1989 · H = V</text>'])
 
 
 def _bande(spans, y, X, label, T, col=None):
@@ -300,22 +304,22 @@ def _bande(spans, y, X, label, T, col=None):
     return "".join(frag)
 
 
-def _indicateurs(coupe, faitages, reconstruits, y0, pad_l, T):
+def _indicateurs(coupe, faitages, rupture, y0, pad_l, T):
     ind = coupe.get("indicateurs") or {}
     lignes = []
     for tr in ind.get("traversees") or []:
-        lignes.append(f"traversée {_fmt(tr['d0'],1)}–{_fmt(tr['d1'],1)} m : pente {_fmt(tr.get('pente_pct'),1)} % ({_esc(tr.get('sens'))}) · amplitude {_fmt(tr['amplitude_m'],1)} m")
+        lignes.append((T["txt"], f"traversée {_fmt(tr['d0'],1)}–{_fmt(tr['d1'],1)} m : pente {_fmt(tr.get('pente_pct'),1)} % ({_esc(tr.get('sens'))}) · amplitude {_fmt(tr['amplitude_m'],1)} m"))
     pm = ind.get("pente_max_5m") or {}
     if pm.get("disponible"):
-        lignes.append(f"pente max sur 5 m (hors bâti ±1 m) : {_fmt(pm['pente_pct'],1)} % entre {_fmt(pm['d0'],1)} et {_fmt(pm['d1'],1)} m")
+        lignes.append((T["txt"], f"pente max sur 5 m (hors bâti ±1 m) : {_fmt(pm['pente_pct'],1)} % entre {_fmt(pm['d0'],1)} et {_fmt(pm['d1'],1)} m"))
     if ind.get("pente_acces_pct") is not None:
-        lignes.append(f"pente sur l'axe, de la voie à la limite : {_fmt(ind['pente_acces_pct'],1)} %")
-    lignes += faitages
-    if reconstruits:
-        lignes.append("– – – profil reconstruit entre deux appuis (tirets)")
+        lignes.append((T["txt"], f"pente sur l'axe, de la voie à la limite : {_fmt(ind['pente_acces_pct'],1)} %"))
+    lignes += [(T["txt"], f) for f in faitages]
+    if rupture:                                   # mention distincte (repère ◆, couleur de rupture) — C11
+        lignes.append((T["lacune"], "◆ Au pied du bâti · rupture du terrain à vérifier"))
     frag = []
-    for i, ln in enumerate(lignes[:6]):
-        frag.append(f'<text x="{pad_l}" y="{y0+12+i*11:.1f}" font-size="8.5" fill="{T["txt"]}">{_esc(ln)}</text>')
+    for i, (col, ln) in enumerate(lignes[:6]):
+        frag.append(f'<text x="{pad_l}" y="{y0+12+i*11:.1f}" font-size="8.5" fill="{col}">{_esc(ln)}</text>')
     return "".join(frag)
 
 

@@ -4,7 +4,7 @@
       "label": "plate",
       "idu": "97415000CY0196",
       "titre": "Parcelle plate — plaine littorale de Saint-Paul (~5 m), bâti sur terrain plat",
-      "scene_id": "d6f7b5fdc472",
+      "scene_id": "c633ee2b0eca",
       "disponible": true,
       "etat": {
         "gabarit": "inconstructible",
@@ -33,12 +33,12 @@
                 "d1": 43.85,
                 "pente_pct": -7.9,
                 "sens": "descente",
-                "amplitude_m": 3.4
+                "amplitude_m": 3.39
               }
             ],
             "pente_max_5m": {
               "disponible": true,
-              "pente_pct": 29.4,
+              "pente_pct": 29.1,
               "d0": 3.29,
               "d1": 8.29
             },
@@ -70,11 +70,11 @@
             ],
             "pente_max_5m": {
               "disponible": true,
-              "pente_pct": 18.4,
+              "pente_pct": 18.3,
               "d0": 61.85,
               "d1": 66.85
             },
-            "pente_acces_pct": -15.2
+            "pente_acces_pct": -15.4
           },
           "n_cotes_points": 8
         }
@@ -84,7 +84,7 @@
       "label": "cotier",
       "idu": "97413000CA0057",
       "titre": "Littoral de Saint-Leu — falaise",
-      "scene_id": "facc6e1bbcba",
+      "scene_id": "1be509637605",
       "disponible": true,
       "etat": {
         "gabarit": "inconstructible",
@@ -110,7 +110,7 @@
             "traversees": [
               {
                 "d0": 34.85,
-                "d1": 80.82,
+                "d1": 80.81,
                 "pente_pct": -27.5,
                 "sens": "descente",
                 "amplitude_m": 12.64
@@ -118,13 +118,13 @@
             ],
             "pente_max_5m": {
               "disponible": true,
-              "pente_pct": 49.4,
+              "pente_pct": 49.3,
               "d0": 34.85,
               "d1": 39.85
             },
             "pente_acces_pct": null
           },
-          "n_cotes_points": 4
+          "n_cotes_points": 3
         },
         {
           "axe": "B",
@@ -164,7 +164,7 @@
       "label": "alt760",
       "idu": "97415000CM1658",
       "titre": "Parcelle en altitude — 36 Rue des Jacarandas, Saint-Paul (~595 m mesurés)",
-      "scene_id": "5f9222a05c54",
+      "scene_id": "cf11252bedab",
       "disponible": true,
       "etat": {
         "gabarit": "ok",
@@ -193,12 +193,12 @@
                 "d1": 22.58,
                 "pente_pct": -9.6,
                 "sens": "descente",
-                "amplitude_m": 2.23
+                "amplitude_m": 2.22
               }
             ],
             "pente_max_5m": {
               "disponible": true,
-              "pente_pct": 31.4,
+              "pente_pct": 31.3,
               "d0": 16.57,
               "d1": 21.57
             },
@@ -228,8 +228,8 @@
             "pente_max_5m": {
               "disponible": true,
               "pente_pct": 7.4,
-              "d0": 27.16,
-              "d1": 32.16
+              "d0": 27.08,
+              "d1": 32.08
             },
             "pente_acces_pct": null
           },
@@ -241,7 +241,7 @@
       "label": "bz1065",
       "idu": "97411000BZ1065",
       "titre": "97411000BZ1065 — talus, Saint-Denis ; coupe B traverse la parcelle en plusieurs tronçons",
-      "scene_id": "d18bc99a4c90",
+      "scene_id": "5e017ab7205d",
       "disponible": true,
       "etat": {
         "gabarit": "ok",
@@ -270,7 +270,7 @@
                 "d1": 47.07,
                 "pente_pct": -25.8,
                 "sens": "descente",
-                "amplitude_m": 10.93
+                "amplitude_m": 10.92
               }
             ],
             "pente_max_5m": {
@@ -329,18 +329,18 @@
   "recette_d": {
     "d1_lacune_sous_bati": {
       "emprise_au_sol": true,
-      "lacune_ouverte": false
+      "lacune_ouverte": true
     },
     "d2_reproductible": {
       "svg_identique": true,
       "scene_id_identique": true,
-      "scene_id": "d18bc99a4c90"
+      "scene_id": "5e017ab7205d"
     },
     "d3_multipart": {
-      "idu": "97411000DT0331",
+      "idu": "97411000HP0491",
       "disponible": false,
       "couverture": 0.0,
-      "n_contours_cad": 2,
+      "n_contours_cad": 0,
       "coupes": 0
     }
   },

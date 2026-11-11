@@ -59,18 +59,26 @@ def test_maillage_lacune_propagee():
 
 
 def test_coupe_par_franchissement_retrouve_crete():
-    # A2 : une crête (ligne de sommets à 4 m) entre deux échantillons au mètre est retrouvée
-    arr = np.zeros((12, 12)); arr[5, :] = 4.0
-    m = TerrainMesh(arr, ox=0.0, oy=12.0, pas=1.0)
+    # A2/A1 : une crête de 40,00 m (sommet) ressort EXACTEMENT à 40,00 m (sans arrondi intermédiaire)
+    arr = np.zeros((10, 10)); arr[5, 5] = 40.0
+    m = TerrainMesh(arr, ox=0.0, oy=10.0, pas=1.0)
+    prof = m.profil(5.5, 10.0, 0.0, -1.0, 9.0)            # ligne passant par le sommet (5,5)
+    assert max(p["z"] for p in prof if p["z"] is not None) == 40.0
+    # une crête entre deux échantillons au mètre est retrouvée ; l'échantillon la manque
+    arr2 = np.zeros((12, 12)); arr2[5, :] = 4.0
+    m2 = TerrainMesh(arr2, 0.0, 12.0, 1.0)
     ux, uy = math.sin(math.radians(20)), -math.cos(math.radians(20))
-    prof = m.profil(2.3, 12.0, ux, uy, 9.0)
-    assert max(p["z"] for p in prof if p["z"] is not None) >= 3.95   # crête retrouvée
-    ech = [m.altitude(2.3 + ux * d, 12.0 + uy * d) for d in range(10)]
-    assert max(z for z in ech if z is not None) < 3.95              # l'échantillon 1 m la manque
-    # une lacune reste une lacune
-    arr2 = arr.copy(); arr2[5, 4] = np.nan
-    prof2 = TerrainMesh(arr2, 0.0, 12.0, 1.0).profil(2.3, 12.0, ux, uy, 9.0)
-    assert any(p["z"] is None for p in prof2)
+    p2 = m2.profil(2.3, 12.0, ux, uy, 9.0)
+    assert max(p["z"] for p in p2 if p["z"] is not None) >= 3.95
+    ech = [m2.altitude(2.3 + ux * d, 12.0 + uy * d) for d in range(10)]
+    assert max(z for z in ech if z is not None) < 3.95
+
+
+def test_altitude_bord_lacune_face_valide():
+    # A1 : au bord d'une lacune, un point sur la diagonale d'une face VALIDE garde son altitude
+    arr = np.array([[0., 0., 0.], [0., 0., np.nan], [0., 0., 0.]])
+    m = TerrainMesh(arr, 0.0, 3.0, 1.0)
+    assert m.altitude(1.5, 1.5) is not None               # face valide → altitude conservée
 
 
 def test_faces_bornees_et_valides():
@@ -116,18 +124,19 @@ def test_bati_hauteur_bdtopo_ou_contour_seul():
     assert nopied[0]["volume"] is False
 
 
-def test_scene_id_sur_contenu():
-    # A3 : modifier un sommet OU une exclusion change l'identifiant
-    import types
-    gr = types.SimpleNamespace(appliedRules=[], surfaceParcelleM2=None, zoneImplantationM2=None,
-                               batiDeduitM2=None, plafondEmpriseM2=None, plafondEmpriseStatus=None,
-                               hauteurReglementaireM=None, hauteurBase=None, hauteurEstimee=False,
-                               hauteurStatus=None)
-    base = {"cad": [[0, 0]], "zone": [], "excl": [], "sommets": "AAA", "n_sommets": 3}
-    i0 = SC._scene_id("X", gr, {"version_fond": 1}, base)
-    i_v = SC._scene_id("X", gr, {"version_fond": 1}, {**base, "sommets": "BBB"})   # sommet changé
-    i_e = SC._scene_id("X", gr, {"version_fond": 1}, {**base, "excl": [[[1, 1]]]})  # exclusion changée
-    assert i0 != i_v and i0 != i_e and i_v != i_e
+def test_scene_id_sur_scene_serialisee():
+    # A2/A3 : l'identifiant = hachage de la scène sérialisée ; sommet, exclusion ET adresse comptent
+    def mk(**kw):
+        base = dict(idu="X", scene_id="", adresse="1 Rue A", exclusions=[],
+                    terrain={"faces_parcelle": {"vertices": [[0, 0, 1.0]], "triangles": [], "pas_m": 1}})
+        base.update(kw); return SC.Scene(**base)
+    s0 = mk()
+    assert s0.scene_id == "" and SC._hash_scene(s0)                    # id = hash de la sérialisation
+    s_v = mk(terrain={"faces_parcelle": {"vertices": [[0, 0, 2.0]], "triangles": [], "pas_m": 1}})
+    s_e = mk(exclusions=[{"ext": [[1, 1]], "trous": []}])
+    s_a = mk(adresse="2 Rue B")
+    ids = {SC._hash_scene(x) for x in (s0, s_v, s_e, s_a)}
+    assert len(ids) == 4                                               # sommet/exclusion/adresse → id distinct
 
 
 # ── indicateurs : pente max 5 m à deux bornes, hors bâti ±1 m ─────────────────────────────────────
@@ -183,15 +192,16 @@ def _hors_cadre(svg, w, h, tol=1.0):
 
 
 def test_coupe_svg_cadre_sans_plafond_faitage():
-    svg = coupe_svg(_coupe_demo(), theme="clair", width=960, scene_id="abc123", adresse="12 Rue X")
+    svg = coupe_svg(_coupe_demo(), theme="clair", width=960, adresse="12 Rue X", idu="97411000BZ1065")
     assert svg and svg.startswith("<svg")
     h = int(re.search(r'height="(\d+)"', svg).group(1))
     assert _hors_cadre(svg, 960, h) == []                # rien ne déborde (B6/B9)
-    assert "H = V" in svg and svg.count("IGN 1989") == 0   # datum porté par la mention, pas répété
+    assert "H = V" in svg and svg.count("IGN 1989") == 1   # datum une fois (barre)
     assert "plafond" not in svg.lower()
     assert "emprise bâtie" in svg                         # emprise au sol (B5)
     assert "Hauteur du bâtiment (BD TOPO)" in svg and "7,0 m" in svg   # mention propre au bâtiment
-    assert "scène abc123" in svg and "12 Rue X" in svg    # en-tête (B9)
+    assert "scène " not in svg                            # C10 : plus d'identifiant de scène dans la coupe
+    assert "97411000BZ1065" in svg and "12 Rue X" in svg  # en-tête : adresse + référence cadastrale
 
 
 def test_bati_sans_hauteur_sans_mention():

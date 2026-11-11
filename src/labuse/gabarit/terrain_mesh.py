@@ -37,7 +37,9 @@ class TerrainMesh:
         return None if (v != v) else float(v)                         # NaN → None
 
     def altitude(self, x: float, y: float) -> Optional[float]:
-        """Altitude par intersection avec la face triangulaire contenant (x,y). None = lacune/hors maille."""
+        """Altitude par intersection avec la face triangulaire contenant (x,y). None = lacune/hors maille.
+        Au bord d'une lacune (point SUR la diagonale partagée), on garde la face VALIDE si l'une des deux
+        l'est. Résultat NON arrondi (arrondi à l'affichage seulement)."""
         fj = (x - self.ox - 0.5 * self.pas) / self.vpas               # colonne-sommet fractionnaire
         fi = (self.oy - y - 0.5 * self.pas) / self.vpas               # ligne-sommet fractionnaire
         J, I = math.floor(fj), math.floor(fi)
@@ -45,13 +47,11 @@ class TerrainMesh:
         z00, z10 = self._z(I, J), self._z(I, J + 1)
         z01, z11 = self._z(I + 1, J), self._z(I + 1, J + 1)
         # deux triangles par maille, diagonale P00–P11 (même découpe que les faces exportées)
-        if tc >= tr:                                                   # triangle (P00, P10, P11)
-            if None in (z00, z10, z11):
-                return None
-            return z00 * (1 - tc) + z10 * (tc - tr) + z11 * tr
-        if None in (z00, z11, z01):                                   # triangle (P00, P11, P01)
-            return None
-        return z00 * (1 - tr) + z11 * tc + z01 * (tr - tc)
+        triA = None if None in (z00, z10, z11) else z00 * (1 - tc) + z10 * (tc - tr) + z11 * tr
+        triB = None if None in (z00, z11, z01) else z00 * (1 - tr) + z11 * tc + z01 * (tr - tc)
+        if tc >= tr:
+            return triA if triA is not None else (triB if abs(tc - tr) < 1e-9 else None)
+        return triB if triB is not None else (triA if abs(tc - tr) < 1e-9 else None)
 
     def profil(self, ox: float, oy: float, ux: float, uy: float, L: float) -> list[dict]:
         """Profil le long de la ligne par FRANCHISSEMENT DES FACES (pas par échantillonnage au mètre) :
@@ -92,8 +92,8 @@ class TerrainMesh:
                     ds.add(round(d, 6))
         out = []
         for d in sorted(ds):
-            z = self.altitude(x0 + ux * d, y0 + uy * d)
-            out.append({"d": round(d, 2), "z": (None if z is None else round(z, 2))})
+            z = self.altitude(x0 + ux * d, y0 + uy * d)               # NON arrondi (arrondi à l'affichage)
+            out.append({"d": round(d, 3), "z": z})
         return out
 
     def faces(self, lox: float, loy: float, bounds=None) -> dict:

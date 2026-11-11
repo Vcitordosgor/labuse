@@ -38,23 +38,22 @@ async function fermerVue3D() {
   await page.waitForSelector('[data-gab3d-overlay]', { state: 'detached', timeout: 5000 }).catch(() => {})
 }
 async function mesureFPS(ms = 2000) {
-  // rotation : drag sur le canvas + compte des frames (rAF)
+  // rotation : drag + mesure des DURÉES DE TRAME (rAF)
   const box = await page.$eval('[data-gab3d-canvas] canvas', (c) => {
     const r = c.getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }
   }).catch(() => null)
   if (!box) return null
-  await page.evaluate(() => { window.__fps = 0; const l = () => { window.__fps++; window.__rafid = requestAnimationFrame(l) }; window.__rafid = requestAnimationFrame(l) })
+  await page.evaluate(() => { window.__t = []; let p = performance.now(); const l = () => { const n = performance.now(); window.__t.push(n - p); p = n; window.__rafid = requestAnimationFrame(l) }; window.__rafid = requestAnimationFrame(l) })
   const cx = box.x + box.w / 2, cy = box.y + box.h / 2
   await page.mouse.move(cx, cy); await page.mouse.down()
-  const steps = 40, start = Date.now()
-  for (let i = 0; i < steps; i++) {
-    const a = (i / steps) * Math.PI * 2
-    await page.mouse.move(cx + Math.cos(a) * 80, cy + Math.sin(a) * 60)
-    await page.waitForTimeout(ms / steps)
-  }
+  const steps = 40
+  for (let i = 0; i < steps; i++) { const a = (i / steps) * Math.PI * 2; await page.mouse.move(cx + Math.cos(a) * 80, cy + Math.sin(a) * 60); await page.waitForTimeout(ms / steps) }
   await page.mouse.up()
-  const frames = await page.evaluate(() => { cancelAnimationFrame(window.__rafid); return window.__fps })
-  return Math.round((frames / ((Date.now() - start) / 1000)))
+  return await page.evaluate(() => {
+    cancelAnimationFrame(window.__rafid); const t = window.__t.slice(5).sort((a, b) => a - b)
+    const med = t[Math.floor(t.length / 2)] || 0
+    return { fps: Math.round(1000 / med), trame_med_ms: Math.round(med * 10) / 10, trame_max_ms: Math.round((t[t.length - 1] || 0) * 10) / 10 }
+  })
 }
 
 const res = { mesures: {}, robustesse: {}, erreurs: [] }
@@ -69,9 +68,21 @@ await ouvrirGabarit(IDUS[0])
 const froid = await ouvrirVue3D()
 await page.waitForTimeout(600)
 await page.screenshot({ path: `${OUT}/bz1065_vue3d.png` })
+// première image effectivement rendue + ressources de base
+const base = await page.evaluate(() => ({ first: !!(window.__gab3d && window.__gab3d.first), geo: window.__gab3d?.info?.geometries ?? 0, tex: window.__gab3d?.info?.textures ?? 0 }))
 const fps = await mesureFPS()
 res.mesures.chargement_froid_ms = Math.round(froid)
-res.mesures.fps_rotation = fps
+res.mesures.premiere_image_rendue = base.first
+res.mesures.fps_rotation = fps.fps
+res.mesures.trame_med_ms = fps.trame_med_ms
+res.mesures.trame_max_ms = fps.trame_max_ms
+res.mesures.ressources_base = { geometries: base.geo, textures: base.tex }
+// recette : les 3 vues de BZ1065 (3D déjà capturée ; coupe A et coupe B)
+for (const ax of ['A', 'B']) {
+  await page.click(`text=Coupe ${ax}`).catch(() => {})
+  await page.waitForTimeout(500)
+  await page.screenshot({ path: `${OUT}/bz1065_coupe${ax}.png` })
+}
 await fermerVue3D()
 
 // 2) ouverture à CHAUD (chunk déjà chargé)
@@ -121,9 +132,13 @@ const repli = await page.evaluate(() => !!document.querySelector('[data-gab3d-fa
 await page.screenshot({ path: `${OUT}/perte_contexte.png` })
 await fermerVue3D()
 
+// ressources graphiques après 10+ cycles (ne doivent pas croître sans borne)
+await ouvrirGabarit(IDUS[0]); await ouvrirVue3D(); await page.waitForTimeout(400)
+const apres = await page.evaluate(() => ({ geo: window.__gab3d?.info?.geometries ?? 0, tex: window.__gab3d?.info?.textures ?? 0 }))
+await fermerVue3D()
 res.robustesse = { dix_ouvertures_sans_fuite: ok10, apres_pause_ms: Math.round(apresPause),
-                   canvas_ok_apres_pause: canvasApres,
-                   perte_contexte_testee: extOk, perte_contexte_repli: repli }
+                   canvas_ok_apres_pause: canvasApres, perte_contexte_testee: extOk, perte_contexte_repli: repli,
+                   ressources_apres_cycles: apres }
 res.erreurs = errs.slice(0, 10)
 
 fs.writeFileSync(`${OUT}/mesures_webkit.json`, JSON.stringify(res, null, 2))

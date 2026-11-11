@@ -84,8 +84,7 @@ def temoins(eng):
                  "coupes": []}
         for c in s.coupes:
             for theme in ("clair", "sombre"):
-                svg = coupe_svg(c, theme=theme, largeur_mm=170 if theme == "clair" else None,
-                                scene_id=s.scene_id, adresse=s.adresse)
+                svg = coupe_svg(c, theme=theme, adresse=s.adresse, idu=s.idu)
                 if not svg:
                     continue
                 h = int(re.search(r'height="(\d+)"', svg).group(1))
@@ -122,7 +121,7 @@ def recette_d(eng):
         for p in c2["profil"]:          # trou > 3 m → lacune OUVERTE (non reconstituée) sous le bâti
             if dmid - 3.0 <= p["d"] <= dmid + 3.0:
                 p["z"] = None
-        svg = coupe_svg(c2, theme="clair", largeur_mm=170, scene_id=s.scene_id, adresse=s.adresse)
+        svg = coupe_svg(c2, theme="clair", adresse=s.adresse, idu=s.idu)
         _png(svg, OUT / "recette" / "d1_lacune_sous_bati.svg")
         # emprise au sol présente ; lacune ouverte sous l'emprise (aucun toit dessiné)
         res["d1_lacune_sous_bati"] = {"emprise_au_sol": "emprise bâtie" in svg,
@@ -133,7 +132,7 @@ def recette_d(eng):
         with Session(eng) as db:
             sc = build_scene(db, "97411000BZ1065")
         c = [x for x in sc.coupes if x["label"] == "A"][0]
-        return coupe_svg(c, theme="clair", largeur_mm=170, scene_id=sc.scene_id, adresse=sc.adresse), sc.scene_id
+        return coupe_svg(c, theme="clair", adresse=sc.adresse, idu=sc.idu), sc.scene_id
     svg1, id1 = svg_bz()
     SC._open_cog.cache_clear()
     svg2, id2 = svg_bz()
