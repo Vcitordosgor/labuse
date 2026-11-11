@@ -179,6 +179,26 @@ function ValeurEstimee({ e, typeBien, commune }: { e: Estimer3Rapport['estimatio
       </section>
     )
   }
+  // OUTILS-P0-2 (P2) — terrain nu SANS total à bâtir (hors gamme des ventes de référence, ou non
+  // constructible) : pas de montant, mais le repère au m² et la raison restent affichés (les ventes
+  // de référence sont servies plus bas). On N'INVENTE PAS un total que les ventes ne peuvent pas porter.
+  if (e.terrain_sans_total_raison && e.eur_m2 != null) {
+    return (
+      <section className={SECTION} role="status" aria-live="polite">
+        <p className={SECTION_TITRE}>Prix au m²</p>
+        <div className="mt-1 flex flex-wrap items-center gap-2">
+          <span className="text-[26px] font-semibold leading-none text-txt-hi">{fmtInt(e.eur_m2)} €/m²</span>
+          <Badge ton={fi.ton} point>Fiabilité {fi.mot.toLowerCase()}</Badge>
+        </div>
+        {e.eur_m2_bas != null && e.eur_m2_haut != null && (
+          <p className="mt-1 text-[12px] text-txt-dim">de {fmtInt(e.eur_m2_bas)} à {fmtInt(e.eur_m2_haut)} €/m²</p>
+        )}
+        <p data-estimer-terrain-sans-total className="mt-2 rounded-md border border-cp-amber/30 bg-cp-amber/[0.07] px-2.5 py-2 text-[11px] leading-snug text-txt-dim">
+          {e.terrain_sans_total_raison}
+        </p>
+      </section>
+    )
+  }
   if (e.valeur_eur == null) {
     return (
       <section className={SECTION} role="status" aria-live="polite">
@@ -210,6 +230,10 @@ function ValeurEstimee({ e, typeBien, commune }: { e: Estimer3Rapport['estimatio
               <span className="tabular-nums text-txt-dim">{fmtInt(bq)} – {fmtInt(hq)} €</span>
             </div>
           </div>
+          {/* OUTILS-P0-2 (P4) — d'où viennent les fourchettes (ventes passées de biens comparables). */}
+          <p className="mt-1.5 text-[11px] leading-snug text-txt-mut">
+            Fourchettes mesurées sur des ventes passées de biens comparables.
+          </p>
         </>
       )}
       {ligneMethode}
@@ -399,8 +423,9 @@ function Estimer3({ idu }: { idu: string }) {
   }
 
   const terrain = r.type_bien === 'terrain'
-  // Le PDF (route /analyse-annonce) partage le MÊME point : mêmes chiffres écran == document.
-  const pdfUrl = docAnalyseAnnonceUrl(idu, surfaceCommit)
+  // Le PDF (route /analyse-annonce) partage le MÊME point : mêmes chiffres écran == document. OUTILS-P0-2
+  // (P1) — on transmet le scénario EXACT affiché : surface + pièces saisies, ventes décochées (ecartees).
+  const pdfUrl = docAnalyseAnnonceUrl(idu, surfaceCommit, { pieces, ecartees: ecartList })
 
   return (
     <>

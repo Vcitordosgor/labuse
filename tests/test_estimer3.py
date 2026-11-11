@@ -322,3 +322,81 @@ def test_endpoint_estimation3(monkeypatch):
         assert any(v["id"] == vid and v["ecartee"] for v in out2["ventes_retenues"])
     finally:
         eng.dispose()
+
+
+# ══════════════════════════════════════════════════════════════════════════════════════════════════
+#  OUTILS-P0-2 (P2) — terrain nu hors gamme / non constructible : pas de total, repère + ventes gardés
+# ══════════════════════════════════════════════════════════════════════════════════════════════════
+@pytest.mark.reel
+def test_terrain_hors_gamme_pas_de_total_mais_repere(db):
+    """Un terrain BEAUCOUP plus grand que les ventes de référence (surface > p90) ne reçoit AUCUN total
+    (le prix dégressif à la taille rend `surface × €/m²` faux — témoin 97409000AK0804 > 21 M€). Mais le
+    repère au m² et les ventes de référence RESTENT servis, et la raison est dite."""
+    idu = "97409000AK0804"
+    if db.execute(text("SELECT 1 FROM parcels WHERE idu=:i"), {"i": idu}).scalar() is None:
+        pytest.skip("témoin AK0804 absent")
+    r = E3.rapport3(db, idu, _fiche(db, idu))
+    assert r["type_bien"] == "terrain"
+    e = r["estimation"]
+    assert e.get("terrain_hors_gamme") is True
+    assert e.get("valeur_eur") is None                       # pas de total hors gamme
+    assert e.get("eur_m2")                                   # mais le repère au m² reste
+    assert r.get("ventes_retenues")                          # et les ventes de référence restent
+    assert "hors gamme des ventes de référence" in (e.get("terrain_sans_total_raison") or "")
+    # une surface dans la gamme, elle, garde un total.
+    it = db.execute(text(
+        "SELECT dm.id_parcelle FROM dvf_mutations_parcelle dm "
+        "JOIN (SELECT id_mutation FROM dvf_mutations_parcelle GROUP BY 1 HAVING count(DISTINCT id_parcelle)=1) m "
+        "  USING(id_mutation) WHERE dm.nature_mutation IN ('Vente','Vente terrain à bâtir') "
+        "  AND COALESCE(dm.surface_reelle_bati,0)=0 AND dm.surface_terrain BETWEEN 300 AND 700 "
+        "ORDER BY dm.date_mutation DESC LIMIT 1")).scalar()
+    if it:
+        et = E3.rapport3(db, it, _fiche(db, it))["estimation"]
+        if et.get("eur_m2") and not et.get("terrain_non_constructible"):
+            assert et.get("terrain_hors_gamme") is False and et.get("valeur_eur")
+
+
+@pytest.mark.reel
+def test_terrain_non_constructible_pas_de_valeur_a_batir(db):
+    """Un terrain non constructible n'a PAS de valeur de terrain à bâtir ; la raison (le motif) est dite,
+    le repère au m² reste. On cherche un terrain nu dont le verdict est « non constructible »."""
+    cands = db.execute(text(
+        "SELECT dm.id_parcelle FROM dvf_mutations_parcelle dm "
+        "JOIN (SELECT id_mutation FROM dvf_mutations_parcelle GROUP BY 1 HAVING count(DISTINCT id_parcelle)=1) m "
+        "  USING(id_mutation) WHERE dm.nature_mutation IN ('Vente','Vente terrain à bâtir') "
+        "  AND COALESCE(dm.surface_reelle_bati,0)=0 AND dm.surface_terrain BETWEEN 200 AND 800 "
+        "ORDER BY dm.date_mutation DESC LIMIT 300")).scalars().all()
+    for idu in cands:
+        try:
+            e = E3.rapport3(db, idu, _fiche(db, idu))["estimation"]
+        except Exception:  # noqa: BLE001 — parcelle sans fiche : on passe
+            continue
+        if e.get("terrain_non_constructible"):
+            assert e.get("valeur_eur") is None
+            assert e.get("eur_m2")                            # le repère au m² reste
+            assert "pas de valeur de terrain à bâtir" in (e.get("terrain_sans_total_raison") or "")
+            return
+    pytest.skip("aucun terrain nu non constructible trouvé dans l'échantillon")
+
+
+@pytest.mark.reel
+def test_pdf_parite_pieces_et_ventes_ecartees(db):
+    """OUTILS-P0-2 (P1) — le rapport PDF parcelle reprend le scénario EXACT de l'écran : mêmes pièces
+    saisies et mêmes ventes décochées → même montant qu'`estimer3.rapport3`. Avant, seule la surface
+    voyageait (pièces et décochages perdus → le document divergeait de l'écran)."""
+    from labuse.pige.api import rapport_parcelle
+    idu = _idu(db, "Appartement", lo=30, hi=120)             # l'appartement garde la question « pièces »
+    if not idu:
+        pytest.skip("pas d'appartement de test")
+    fiche = _fiche(db, idu)
+    ecran = E3.rapport3(db, idu, fiche, surface_hab=60, pieces=3)
+    vid = (ecran.get("ventes_retenues") or [{}])[0].get("id")
+    ecartees = [vid] if vid else []
+    ecran2 = E3.rapport3(db, idu, fiche, surface_hab=60, pieces=3, ecartees=set(ecartees))
+    pdf = rapport_parcelle(db, idu, fiche, surface_hab=60, pieces=3, ecartees=ecartees)
+    vi = (pdf.get("estimation") or {}).get("valeur_indicative") or {}
+    # le PDF imprime EXACTEMENT le montant de l'écran (même surface, pièces, ventes écartées).
+    assert vi.get("valeur_eur") == ecran2["estimation"].get("valeur_eur")
+    # le PDF ne retient que les ventes ACTIVES (les décochées sont exclues), comme l'écran.
+    actives = [v for v in (ecran2.get("ventes_retenues") or []) if not v.get("ecartee")]
+    assert len((pdf.get("estimation") or {}).get("comparables") or []) == len(actives)

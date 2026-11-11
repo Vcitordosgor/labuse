@@ -1996,6 +1996,15 @@ def _estimation_annonce_core(db, idu: str, fiche: dict, surface_hab: float | Non
             niveau, ecart, fcal = _fiabilite_mesuree(db, "terrain", insee, repere_tn.get("n"), med,
                                                      repere_tn.get("q1"), repere_tn.get("q3"), cf,
                                                      repli=_fiabilite_segment("terrain"))
+            # OUTILS-P0-2 (P2) — GAMME de comparabilité en surface : un terrain BEAUCOUP plus grand que
+            # les ventes de référence ne se valorise pas à leur €/m² (prix dégressif à la taille). Mesuré
+            # au banc no-leak (docs/audit-2026-11/outils-p0-2/) : au-delà du p90 des surfaces de
+            # référence, l'écart médian d'un total passe de ~30 % à ~86 % (témoin AK0804 > 21 M€). Hors
+            # gamme → PAS de total (valeur indicative None), on garde le repère €/m² + les ventes de réf.
+            gamme = terr.get("surface_gamme") or {}
+            borne_haute = gamme.get("p90_m2")
+            hors_gamme = bool(surface_parc and borne_haute and float(surface_parc) > float(borne_haute))
+            vi = None if hors_gamme else _valeur_indicative(surface_parc, med, ecart)
             return {"nature": "nue", "type_comparateur": "terrain_nu", "type_bien": "terrain",
                     "median": med, "q1": repere_tn.get("q1"), "q3": repere_tn.get("q3"),
                     "n": repere_tn.get("n"), "periode": repere_tn.get("periode"),
@@ -2005,7 +2014,9 @@ def _estimation_annonce_core(db, idu: str, fiche: dict, surface_hab: float | Non
                     "comparables": terr.get("comparables") or [], "n_total": terr.get("n_total"),
                     "comparables_periode": terr.get("periode"),
                     "comparables_radius_m": terr.get("radius_m"),   # C4-005 — rayon réel des comparables
-                    "valeur_indicative": _valeur_indicative(surface_parc, med, ecart),
+                    "valeur_indicative": vi,
+                    "terrain_hors_gamme": hors_gamme, "surface_gamme": gamme or None,
+                    "surface_parcelle_m2": (round(float(surface_parc)) if surface_parc else None),
                     "repere_terrain_nu": repere_tn}
         return {"nature": "nue", "type_comparateur": "terrain_nu", "type_bien": "terrain",
                 "median": None, "comparables": [], "repere_terrain_nu": repere_tn,
@@ -2424,13 +2435,15 @@ def _a_verifier(fiche: dict, nature: str, zone: str | None) -> list[str]:
     return pts[:3]
 
 
-def _est_bloc_depuis_estimer3(db, idu: str, fiche: dict, surface_hab: float | None) -> dict:
+def _est_bloc_depuis_estimer3(db, idu: str, fiche: dict, surface_hab: float | None,
+                              pieces: int | None = None, ecartees=None) -> dict:
     """ESTIMER-ECRAN-1 — l'estimation du PDF parcelle, sourcée du MÊME point que l'écran (ESTIMER-3,
     `estimer3.rapport3`) → « un seul prix partout » : la valeur imprimée == la valeur affichée (0 écart).
     On re-façonne le rapport ESTIMER-3 au format attendu par le bloc PDF `rendu_parcelle` (median €/m²,
-    valeur indicative, comparables = ventes retenues) sans rien recalculer ici."""
+    valeur indicative, comparables = ventes retenues) sans rien recalculer ici. OUTILS-P0-2 (P1) —
+    `pieces` et `ecartees` reprennent le scénario de l'écran (pièces saisies, ventes décochées)."""
     from . import estimer3
-    r3 = estimer3.rapport3(db, idu, fiche, surface_hab=surface_hab)
+    r3 = estimer3.rapport3(db, idu, fiche, surface_hab=surface_hab, pieces=pieces, ecartees=ecartees)
     e = r3.get("estimation") or {}
     type_bien = r3.get("type_bien")
     terrain = type_bien == "terrain"
@@ -2478,12 +2491,15 @@ def _est_bloc_depuis_estimer3(db, idu: str, fiche: dict, surface_hab: float | No
             "ligne": ligne, "note": note,
         } if (e.get("valeur_eur") is not None and not masque) else None),
         "comparables": comps,
+        # OUTILS-P0-2 (P2) — terrain sans total (hors gamme / non constructible) : la raison imprimée.
+        "terrain_sans_total_raison": e.get("terrain_sans_total_raison"),
         "note": (None if e.get("eur_m2") is not None
                  else "Estimation indisponible — pas assez de ventes comparables dans le secteur."),
     }
 
 
-def rapport_parcelle(db, idu: str, fiche: dict | None = None, surface_hab: float | None = None) -> dict:
+def rapport_parcelle(db, idu: str, fiche: dict | None = None, surface_hab: float | None = None,
+                     pieces: int | None = None, ecartees=None) -> dict:
     """ANNONCE-5 — le rapport PARCELLE complet (variante adresse, 2 pages du PDF) : POINT UNIQUE lu par
     l'écran ET par le PDF → aucune divergence. Compose la fiche servie, l'estimation (comparables + valeur
     indicative), le foncier (règles calibrées face aux mesures de la parcelle), le classement (run servi +
@@ -2499,7 +2515,7 @@ def rapport_parcelle(db, idu: str, fiche: dict | None = None, surface_hab: float
     zone = (zones[0] or {}).get("zone") if zones and isinstance(zones[0], dict) else None
     commune = (fiche or {}).get("commune")
     nature = _nature_parcelle(db, idu)
-    est = _est_bloc_depuis_estimer3(db, idu, fiche, surface_hab)
+    est = _est_bloc_depuis_estimer3(db, idu, fiche, surface_hab, pieces=pieces, ecartees=ecartees)
     try:
         cls = _classement_bande(db, idu)
     except Exception:  # noqa: BLE001

@@ -339,6 +339,11 @@ def _arrondi_mille(n):
     return int(round(n / 1000.0)) * 1000 if isinstance(n, (int, float)) else None
 
 
+def _arr_m2(n):
+    """Surface en m² lisible (espace fine insécable comme séparateur de milliers)."""
+    return f"{int(round(n)):,}".replace(",", " ") if isinstance(n, (int, float)) else "—"
+
+
 def estimation_semblable(db, idu: str, fiche: dict, *, surface_hab: float | None = None,
                          pieces: int | None = None, ecartees: set | None = None) -> dict:
     """ESTIMER-3 — l'estimation « comparables semblables » d'un bien BÂTI (maison / appartement), avec
@@ -675,6 +680,27 @@ def rapport3(db, idu: str, fiche: dict, *, surface_hab: float | None = None,
         # deux fourchettes servies sortent du MÊME central (ESTIMER-2) ± écart médian / Q3 mesurés, comme
         # le bâti — pour que l'écran montre les deux bandes « 1 fois sur 2 » / « 3 fois sur 4 » à l'identique.
         central_t = (base.get("valeur_indicative") or {}).get("valeur_eur")
+        # OUTILS-P0-2 (P2) — deux raisons INDÉPENDANTES de ne PAS servir de total à bâtir (on garde
+        # toujours le repère au m² + les ventes de référence) :
+        #  · NON CONSTRUCTIBLE : pas de valeur de terrain à bâtir, la raison est dite ;
+        #  · HORS GAMME : surface hors de la plage des ventes de référence (p90), total non fiable.
+        constr = base.get("constructibilite") or {}
+        non_constructible = constr.get("constructible") is False
+        hors_gamme = bool(base.get("terrain_hors_gamme"))
+        sans_total_raison = None
+        if non_constructible:
+            central_t = None
+            motif = (constr.get("motif") or "Parcelle non constructible").rstrip(" .")
+            sans_total_raison = f"{motif} — pas de valeur de terrain à bâtir."
+        elif hors_gamme:
+            central_t = None
+            g = base.get("surface_gamme") or {}
+            sp = base.get("surface_parcelle_m2")
+            detail = (f" (parcelle {_arr_m2(sp)} m², ventes de référence jusqu'à ~{_arr_m2(g.get('p90_m2'))} m²)"
+                      if (sp and g.get("p90_m2")) else "")
+            sans_total_raison = ("Terrain hors gamme des ventes de référence" + detail
+                                 + " — surface trop grande pour un total fiable. Le repère au m² et "
+                                 "les ventes de référence restent affichés.")
         _bt = (lambda p: _arrondi_mille(float(central_t) * (1 - p / 100.0))) if central_t else (lambda p: None)
         _ht = (lambda p: _arrondi_mille(float(central_t) * (1 + p / 100.0))) if central_t else (lambda p: None)
         return {"idu": idu, "commune": commune, "type_bien": "terrain",
@@ -690,6 +716,11 @@ def rapport3(db, idu: str, fiche: dict, *, surface_hab: float | None = None,
                                "fiabilite_mot": base.get("fiabilite_mot"),
                                "n_comparables": base.get("n"), "repli_secteur": False,
                                "methode_prix": "secteur",
+                               # OUTILS-P0-2 (P2) — total non servi : la raison voyage jusqu'à l'écran et au PDF.
+                               "terrain_sans_total_raison": sans_total_raison,
+                               "terrain_hors_gamme": hors_gamme,
+                               "terrain_non_constructible": non_constructible,
+                               "surface_gamme": base.get("surface_gamme"),
                                "comparables_desc": None, "repli_note": None},
                 "ventes_retenues": [_vente_retenue({**c, "mid": c.get("date")}, False)
                                     for c in (base.get("comparables") or [])],

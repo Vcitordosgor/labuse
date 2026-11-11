@@ -48,7 +48,9 @@ def test_zone_builder_consomme_le_moteur_et_reste_rendable(monkeypatch):
     assert z["population"]["revenu_estime"] is True, "revenu toujours ESTIMÉ"
     assert z["concurrence_absente"] is True, "pas de NAF au parcours Flash (FZ-001)"
     assert set(z["marche"]) == {"ventes_12m", "prix_m2_median_bati", "annonces_actives",
-                                "annonces_reserve", "permis_36m"}   # EXPORTS-1 (5.5) : réserve pige servie
+                                "annonces_reserve", "permis_36m",
+                                # OUTILS-P0-2 (P3) : effectif + période de la médiane DU CERCLE.
+                                "prix_m2_median_n", "prix_m2_median_periode"}
 
 
 def test_zone_builder_degrade_honnete_sans_classe_exception(monkeypatch):

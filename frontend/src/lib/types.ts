@@ -724,7 +724,18 @@ export interface ZoneEntreprise { siret: string; naf: string; naf_label: string 
 export interface ZoneFamille { section: string; nom: string; n: number; etablissements: ZoneEntreprise[]; charges: number }
 export interface ZoneEntreprises { total: number; familles: ZoneFamille[]; n_charges: number; cap_carte: number; millesime: string | null }
 export interface ZoneGenerateur { label: string; source: string }
-export interface ZoneMarche { ventes_12m: number; prix_m2_median_bati: number | null; annonces_actives: number; permis_36m: number }
+// OUTILS-P0-2 (P3) — le prix médian du bâti décrit le CERCLE dessiné (effectif + période portés) ;
+// `prix_secteur_fiche` = prix du secteur de la fiche (autre périmètre, rayon réel), servi à part.
+// `annonces_actives` : null quand la source Radar n'est pas ingérée → l'écran affiche « — », jamais 0.
+export interface ZoneMarche {
+  ventes_12m: number
+  prix_m2_median_bati: number | null
+  prix_m2_median_n?: number | null
+  prix_m2_median_periode?: [string, string] | null
+  prix_secteur_fiche?: { median: number; n: number | null; radius_m: number | null; commune_fallback: boolean } | null
+  annonces_actives: number | null
+  permis_36m: number
+}
 export type ZoneCouverture = 'servie' | 'non_couverte' | 'erreur'
 // DESTINATIONS-1 (X4.1) — verdict de la sous-destination choisie sur une zone PLU recouverte.
 // La `phrase` est SERVIE par le backend (même moteur que fiche/Copilote) — jamais reformulée au front.

@@ -42,6 +42,11 @@ const MINUTES_NEUTRE = 10, MODE_NEUTRE = 'voiture' as const
 function nb(n: number | null | undefined): string {
   return n == null ? '—' : n.toLocaleString('fr-FR')
 }
+// OUTILS-P0-2 (P3) — période [MM/YYYY, MM/YYYY] → « MM/YYYY–MM/YYYY » (bornes égales : une seule).
+function zonePeriode(p: [string, string] | null | undefined): string {
+  if (!p || !p[0]) return ''
+  return p[1] && p[1] !== p[0] ? `${p[0]}–${p[1]}` : p[0]
+}
 // F2 (OUTILS-4) — date de dernier traitement SIRENE (YYYY-MM-DD) → « MM/YYYY » lisible.
 const majFr = (d: string | null | undefined): string | null => (d && d.length >= 7 ? `${d.slice(5, 7)}/${d.slice(0, 4)}` : null)
 
@@ -270,12 +275,39 @@ export function EtudeZone() {
           <Section id="immobilier" titre="Immobilier" openSecs={openSecs} setOpenSecs={setOpenSecs}
             source="DVF (DGFiP/Etalab, ventes 12–36 mois) · Sitadel (SDES) · annonces Radar (pige LABUSE, partielle)">
             {res.marche && (
-              <div className="grid grid-cols-2 gap-2">
-                <Stat v={nb(res.marche.ventes_12m)} k="ventes / 12 mois" />
-                <Stat v={res.marche.prix_m2_median_bati != null ? `${nb(res.marche.prix_m2_median_bati)} €` : '—'} k="médian €/m² bâti" />
-                <Stat v={nb(res.marche.annonces_actives)} k="annonces actives" />
-                <Stat v={nb(res.marche.permis_36m)} k="permis / 36 mois" />
-              </div>
+              <>
+                {/* OUTILS-P0-2 (P3) — le PRIX DU CERCLE en tête : « Prix médian du bâti dans le cercle ·
+                    N ventes · période », calculé dans le périmètre dessiné. Au-dessus, le périmètre réel. */}
+                <div data-zone-prix-cercle className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+                  <div className="text-[10px] uppercase tracking-wide text-txt-mut">Dans un rayon de {rayonKm} km à vol d’oiseau</div>
+                  {res.marche.prix_m2_median_bati != null ? (
+                    <>
+                      <div className="mt-0.5 text-[20px] font-semibold leading-none text-txt-hi">{nb(res.marche.prix_m2_median_bati)} €/m²</div>
+                      <div className="mt-1 text-[11px] text-txt-dim">
+                        Prix médian du bâti dans le cercle
+                        {res.marche.prix_m2_median_n ? ` · ${nb(res.marche.prix_m2_median_n)} vente${res.marche.prix_m2_median_n > 1 ? 's' : ''}` : ''}
+                        {zonePeriode(res.marche.prix_m2_median_periode) ? ` · ${zonePeriode(res.marche.prix_m2_median_periode)}` : ''}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="mt-1 text-[11px] text-txt-dim">Prix médian du bâti dans le cercle — pas assez de ventes dans ce périmètre.</div>
+                  )}
+                  {/* Prix du SECTEUR de la fiche : autre périmètre (rayon réel), affiché à part. */}
+                  {res.marche.prix_secteur_fiche?.median != null && (
+                    <div className="mt-2 border-t border-line-2 pt-2 text-[11px] text-txt-dim">
+                      Secteur de la fiche : <span className="font-medium text-txt-hi">{nb(res.marche.prix_secteur_fiche.median)} €/m²</span>
+                      {res.marche.prix_secteur_fiche.commune_fallback
+                        ? (res.marche.prix_secteur_fiche.n ? ` · ${nb(res.marche.prix_secteur_fiche.n)} ventes (commune entière)` : ' (commune entière)')
+                        : `${res.marche.prix_secteur_fiche.n ? ` · ${nb(res.marche.prix_secteur_fiche.n)} ventes` : ''}${res.marche.prix_secteur_fiche.radius_m ? ` à moins de ${nb(res.marche.prix_secteur_fiche.radius_m)} m` : ''}`}
+                    </div>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Stat v={nb(res.marche.ventes_12m)} k="ventes / 12 mois" />
+                  <Stat v={nb(res.marche.permis_36m)} k="permis / 36 mois" />
+                  <Stat v={nb(res.marche.annonces_actives)} k="annonces suivies par LABUSE" />
+                </div>
+              </>
             )}
             {/* B3 — prix médian €/m² par type (maison / appartement / terrain nu), 36 mois, via le
                 point de calcul du bloc Marché de la fiche. « — » sous 5 ventes (échantillon insuffisant). */}
