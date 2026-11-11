@@ -919,17 +919,18 @@ export interface GabScene {
   origine_2975: number[]
   contour_cadastral: GabPoly[]; contour_gabarit: GabPoly[]; zone_implantation: GabPoly[]
   reculs: GabPoly[]; exclusions: GabPoly[]; batiments: GabSceneBati[]
-  terrain: { faces_parcelle?: GabMesh; faces_voisinage?: GabMesh; couverture_parcelle?: number }
+  terrain: { faces_parcelle?: GabMesh; faces_voisinage?: GabMesh; couverture_parcelle?: number; cadre?: number[] }
   coupes: Array<Record<string, unknown>>
   axes_plan: Record<string, { label: string; p0: number[]; p1: number[]; sens: number[] }>
   meta: Record<string, unknown>; message?: string | null
 }
 export const getGabaritScene = (idu: string) =>
   j<GabScene>(`/outils/gabarit/scene/${encodeURIComponent(idu)}`)
-export const gabCoupeSvgUrl = (idu: string, axe: string, theme = 'sombre') =>
-  `/outils/gabarit/scene/${encodeURIComponent(idu)}/coupe/${axe}.svg?theme=${theme}`
-export const gabPlanSvgUrl = (idu: string, theme = 'sombre') =>
-  `/outils/gabarit/scene/${encodeURIComponent(idu)}/plan.svg?theme=${theme}`
+// sid = identifiant de scène TRANSMIS par la visionneuse (parité : même version terrain/plan/coupe/PDF).
+export const gabCoupeSvgUrl = (idu: string, axe: string, theme = 'sombre', sid?: string) =>
+  `/outils/gabarit/scene/${encodeURIComponent(idu)}/coupe/${axe}.svg?theme=${theme}${sid ? `&sid=${sid}` : ''}`
+export const gabPlanSvgUrl = (idu: string, theme = 'sombre', sid?: string) =>
+  `/outils/gabarit/scene/${encodeURIComponent(idu)}/plan.svg?theme=${theme}${sid ? `&sid=${sid}` : ''}`
 
 // SECTEUR-1 (S1) — outil « Mon secteur » : prix du secteur autour d'une parcelle (médiane locale par
 // type + tendance 12 mois + annonces Radar dans le rayon). Chaque chiffre porte son n/millésime.

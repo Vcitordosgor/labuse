@@ -1,26 +1,76 @@
 {
-  "mesures": {
-    "chargement_froid_ms": 1454,
-    "premiere_image_rendue": true,
-    "fps_rotation": 59,
-    "trame_med_ms": 17,
-    "trame_max_ms": 72,
-    "ressources_base": {
-      "geometries": 12,
-      "textures": 0
+  "parcours": {
+    "1440x900": {
+      "etapes": {
+        "ouvert": {
+          "x": false,
+          "y": false,
+          "overlay": false
+        },
+        "coupeA": {
+          "x": false,
+          "y": false,
+          "overlay": false
+        },
+        "repere": {
+          "x": false,
+          "y": false,
+          "overlay": false
+        },
+        "agrandi": {
+          "x": false,
+          "y": false,
+          "overlay": false
+        },
+        "retour": {
+          "x": false,
+          "y": false,
+          "overlay": false
+        }
+      },
+      "rien_ne_depasse": true
     },
-    "chargement_chaud_ms": 640
-  },
-  "robustesse": {
-    "dix_ouvertures_sans_fuite": true,
-    "apres_pause_ms": 542,
-    "canvas_ok_apres_pause": true,
-    "perte_contexte_testee": true,
-    "perte_contexte_repli": true,
-    "ressources_apres_cycles": {
-      "geo": 12,
-      "tex": 0
+    "1280x720": {
+      "etapes": {
+        "ouvert": {
+          "x": false,
+          "y": false,
+          "overlay": false
+        },
+        "coupeA": {
+          "x": false,
+          "y": false,
+          "overlay": false
+        },
+        "repere": {
+          "x": false,
+          "y": false,
+          "overlay": false
+        },
+        "agrandi": {
+          "x": false,
+          "y": false,
+          "overlay": false
+        },
+        "retour": {
+          "x": false,
+          "y": false,
+          "overlay": false
+        }
+      },
+      "rien_ne_depasse": true
     }
+  },
+  "mesures": {
+    "premiere_image_ms": 3986,
+    "fps": 59,
+    "trame_med_ms": 17,
+    "ressources_base": 11,
+    "ressources_apres_10": 11
+  },
+  "epreuve": {
+    "coupe_b": "coupe B affichée",
+    "note": "rupture ◆ au pied du bâti ; voie « Chemin de la Citerne » nommée au franchissement ; bandes parcelle + zone d’implantation sous le profil"
   },
   "erreurs": []
 }

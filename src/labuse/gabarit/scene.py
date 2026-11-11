@@ -641,14 +641,11 @@ def _build_scene(db, idu: str) -> Scene:
 
     terrain, coupes, axes_plan, coupes_etat = {}, [], [], []
     couverture = 0.0
-    faces_1m = {}
+    faces_1m, cadre_local = {}, []
     batis = _batiments(gr, sampler, ox, oy) if sampler else []
     if sampler is not None:
         couverture = _couverture_parcelle(sampler, ref)
-        faces_1m = sampler.m.faces(ox, oy, bounds=bounds_1m)   # faces SERVIES = affichées par la visionneuse
-        terrain = {"faces_parcelle": faces_1m, "couverture_parcelle": couverture}
-
-        # chaque coupe est protégée : un échec la rend indisponible, PLAN et TERRAIN restent accessibles
+        # axes + coupes d'abord (l'échantillonneur couvre parcelle + abords, voie comprise)
         try:
             ax_p = _axe_pente_dominante(sampler, ref, centroid)
         except Exception:  # noqa: BLE001
@@ -677,6 +674,24 @@ def _build_scene(db, idu: str) -> Scene:
                 coupes_etat.append({"axe": "B", "disponible": c["cotes"]["disponible"]})
             except Exception:  # noqa: BLE001
                 coupes_etat.append({"axe": "B", "disponible": False})
+
+        # CADRE serré (2 quater) : la parcelle occupe ~60 % → cadre = bbox parcelle / 0,6, union la voie
+        # et les axes repérés. Les faces servies et la caméra s'y limitent (terrain coupé net au cadre).
+        pcx, pcy = (minx + maxx) / 2, (miny + maxy) / 2
+        chw, chh = max((maxx - minx) / 2 / 0.6, 18.0), max((maxy - miny) / 2 / 0.6, 18.0)
+        cminx, cminy, cmaxx, cmaxy = pcx - chw, pcy - chh, pcx + chw, pcy + chh
+        extra = [(ax_v["ox"] + ax_v["ux"] * voie["intersection_d"], ax_v["oy"] + ax_v["uy"] * voie["intersection_d"])] \
+            if (ax_v and voie and voie.get("etablie")) else []
+        for a in (ax_p, ax_v):
+            if a:
+                extra += [(a["ox"], a["oy"]), (a["ox"] + a["ux"] * a["L"], a["oy"] + a["uy"] * a["L"])]
+        for px, py in extra:
+            cminx, cminy = min(cminx, px - 4), min(cminy, py - 4)
+            cmaxx, cmaxy = max(cmaxx, px + 4), max(cmaxy, py + 4)
+        cadre = (cminx, cminy, cmaxx, cmaxy)
+        faces_1m = sampler.m.faces(ox, oy, bounds=cadre)        # faces servies = cadre (coupées net)
+        cadre_local = [round(cminx - ox, 2), round(cminy - oy, 2), round(cmaxx - ox, 2), round(cmaxy - oy, 2)]
+        terrain = {"faces_parcelle": faces_1m, "couverture_parcelle": couverture, "cadre": cadre_local}
 
     for b in batis:
         b.pop("geom", None)

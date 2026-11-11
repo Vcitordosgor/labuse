@@ -111,17 +111,14 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
     zmin, zmax = min(zs_all), max(zs_all)
     zspan = max(zmax - zmin, 1.0)
 
-    HEAD = 38
-    PAD_L, PAD_R, PAD_T = 64, 20, HEAD + 34
-    BANDES_H, IND_H, AX_H = 44, 70, 28
+    # COMPACT (2 quater) : en-tête UNE ligne, indicateurs UNE ligne → la coupe tient dans sa case.
+    HEAD = 22
+    PAD_L, PAD_R, PAD_T = 58, 16, HEAD + 8
+    BANDES_H, IND_H, AX_H = 34, 16, 20
     plot_w = width - PAD_L - PAD_R
-    s = plot_w / max(L, 1e-6)
+    s = min(plot_w / max(L, 1e-6), (h_max - PAD_T - BANDES_H - IND_H - AX_H) / zspan)   # H = V, JAMAIS tronqué
+    plot_w = s * L
     plot_h = s * zspan
-    h_dispo = h_max - PAD_T - BANDES_H - IND_H - AX_H
-    if plot_h > h_dispo:
-        s = h_dispo / zspan
-        plot_w = s * L
-        plot_h = h_dispo
     off_x = PAD_L + (width - PAD_L - PAD_R - plot_w) / 2
     y_base = PAD_T + plot_h
     height = int(y_base + AX_H + BANDES_H + IND_H)
@@ -143,13 +140,9 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
            f'height="{height}" role="img" aria-label="{_esc(coupe.get("titre",""))}" {_FONT} '
            f'data-plot-x0="{off_x:.1f}" data-plot-x1="{off_x+plot_w:.1f}" '
            f'style="background:{T["bg"]}">']
-    # en-tête (C10) : titre · adresse · référence cadastrale (PLUS d'identifiant de scène) + sens de lecture
-    out.append(f'<rect x="0" y="0" width="{width}" height="{HEAD}" fill="{T["head"]}"/>')
-    out.append(f'<text x="{PAD_L}" y="17" font-size="13" font-weight="600" fill="{T["txt"]}">{_esc(coupe.get("titre",""))}</text>')
-    sub = [x for x in (_esc(adresse) if adresse else "", _esc(idu) if idu else "") if x]
-    sens = "voie vers parcelle" if (coupe.get("voie") and coupe["voie"].get("etablie")) else f'{coupe["label"]} vers {coupe["label"]}′'
-    sub.append(_esc(sens))
-    out.append(f'<text x="{PAD_L}" y="31" font-size="9" fill="{T["txt_dim"]}">{" · ".join(sub)}</text>')
+    # en-tête UNE LIGNE (2 quater) : titre à gauche, datum à droite
+    out.append(f'<text x="{PAD_L}" y="15" font-size="12" font-weight="600" fill="{T["txt"]}">{_esc(coupe.get("titre",""))}</text>')
+    out.append(f'<text x="{width-PAD_R}" y="15" text-anchor="end" font-size="9" fill="{T["txt_dim"]}">Altitudes en m · IGN 1989 · H = V</text>')
     out.append(f'<rect x="{off_x:.1f}" y="{PAD_T}" width="{plot_w:.1f}" height="{plot_h:.1f}" '
                f'fill="{T["plot"]}" stroke="{T["grid"]}" stroke-width="0.6"/>')
 
@@ -237,23 +230,22 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
             out.append(f'<line x1="{X(dv):.1f}" y1="{yc0-3:.1f}" x2="{X(dv):.1f}" y2="{PAD_T+11:.1f}" stroke="{T["axe"]}" stroke-width="0.5" stroke-dasharray="2 2"/>')
             out.append(f'<text x="{X(dv):.1f}" y="{PAD_T+9:.1f}" text-anchor="middle" font-size="8" fill="{T["axe"]}">{_esc(voie["nom"])}</text>')
 
-    # ÉCHELLE : barre graphique dans un emplacement réservé + datum (PDF : barre SEULE, pas de ratio — A2)
-    out.append(_echelle(off_x, PAD_T - 24, L, s, T))
+    # ÉCHELLE : barre dans un COIN du tracé (2 quater), barre seule
+    out.append(_echelle(off_x + 8, y_base - 7, L, s, T))
 
-    # bandes de traversée cotées (mêmes bornes que les limites)
+    # bandes de traversée cotées (mêmes bornes que les limites), compactes
     yb0 = y_base + AX_H
     out.append(_bande(coupe.get("limites_parcelle_d") or [], yb0, X, "parcelle", T))
-    yb1 = yb0 + 20
+    yb1 = yb0 + 15
     zspans = coupe.get("zone_implantation_d") or []
     if zspans:
         out.append(_bande(zspans, yb1, X, "zone d'implantation", T, col=T["zone"]))
-    else:                                              # bande d'implantation à états (B9)
+    else:                                              # bande d'implantation à états
         etat = "non traversée" if coupe.get("zone_presente") else "indisponible"
-        out.append(f'<text x="8" y="{yb1+4:.1f}" font-size="8.5" fill="{T["txt_dim"]}">zone d\'implantation</text>')
-        out.append(f'<text x="{off_x:.1f}" y="{yb1+4:.1f}" font-size="8.5" fill="{T["txt_dim"]}">— {etat}</text>')
+        out.append(f'<text x="8" y="{yb1+3:.1f}" font-size="8" fill="{T["txt_dim"]}">zone d\'implantation — {etat}</text>')
 
-    # indicateurs + mentions faîtage + rupture au pied du bâti (C11)
-    out.append(_indicateurs(coupe, faitages, rupture, y_base + AX_H + BANDES_H, PAD_L, T))
+    # indicateurs sur UNE ligne de résumé (2 quater)
+    out.append(_indicateurs(coupe, faitages, rupture, y_base + AX_H + BANDES_H, PAD_L, width - PAD_R, T))
 
     out.append("</svg>")
     return "".join(out)
@@ -283,13 +275,13 @@ def _cotes(points, X, Y, T):
 
 
 def _echelle(x, y, L, s, T):
-    """Barre graphique SEULE (pas de ratio chiffré, même au PDF — A2) + datum une fois."""
+    """Barre graphique SEULE (pas de ratio), dans un coin du tracé."""
     barre = _nice_step(L, 5)
     return "".join([
         f'<line x1="{x:.1f}" y1="{y:.1f}" x2="{x+barre*s:.1f}" y2="{y:.1f}" stroke="{T["txt"]}" stroke-width="2"/>',
         f'<line x1="{x:.1f}" y1="{y-3:.1f}" x2="{x:.1f}" y2="{y+3:.1f}" stroke="{T["txt"]}" stroke-width="1"/>',
         f'<line x1="{x+barre*s:.1f}" y1="{y-3:.1f}" x2="{x+barre*s:.1f}" y2="{y+3:.1f}" stroke="{T["txt"]}" stroke-width="1"/>',
-        f'<text x="{x+barre*s+6:.1f}" y="{y+3:.1f}" font-size="8.5" fill="{T["txt_dim"]}">{_fmt(barre)} m · Altitudes en m · IGN 1989 · H = V</text>'])
+        f'<text x="{x+barre*s+5:.1f}" y="{y+3:.1f}" font-size="8" fill="{T["txt_dim"]}">{_fmt(barre)} m</text>'])
 
 
 def _bande(spans, y, X, label, T, col=None):
@@ -304,22 +296,23 @@ def _bande(spans, y, X, label, T, col=None):
     return "".join(frag)
 
 
-def _indicateurs(coupe, faitages, rupture, y0, pad_l, T):
+def _indicateurs(coupe, faitages, rupture, y0, pad_l, right_x, T):
+    """UNE ligne de résumé (2 quater) : pente entre limites · amplitude · pente max 5 m · accès · bâti."""
     ind = coupe.get("indicateurs") or {}
-    lignes = []
-    for tr in ind.get("traversees") or []:
-        lignes.append((T["txt"], f"traversée {_fmt(tr['d0'],1)}–{_fmt(tr['d1'],1)} m : pente {_fmt(tr.get('pente_pct'),1)} % ({_esc(tr.get('sens'))}) · amplitude {_fmt(tr['amplitude_m'],1)} m"))
+    bits = []
+    tr0 = (ind.get("traversees") or [{}])[0]
+    if tr0.get("pente_pct") is not None:
+        bits.append(f"pente {_fmt(tr0['pente_pct'],1)} % · amplitude {_fmt(tr0.get('amplitude_m'),1)} m")
     pm = ind.get("pente_max_5m") or {}
     if pm.get("disponible"):
-        lignes.append((T["txt"], f"pente max sur 5 m (hors bâti ±1 m) : {_fmt(pm['pente_pct'],1)} % entre {_fmt(pm['d0'],1)} et {_fmt(pm['d1'],1)} m"))
+        bits.append(f"max 5 m {_fmt(pm['pente_pct'],1)} %")
     if ind.get("pente_acces_pct") is not None:
-        lignes.append((T["txt"], f"pente sur l'axe, de la voie à la limite : {_fmt(ind['pente_acces_pct'],1)} %"))
-    lignes += [(T["txt"], f) for f in faitages]
-    if rupture:                                   # mention distincte (repère ◆, couleur de rupture) — C11
-        lignes.append((T["lacune"], "◆ Au pied du bâti · rupture du terrain à vérifier"))
-    frag = []
-    for i, (col, ln) in enumerate(lignes[:6]):
-        frag.append(f'<text x="{pad_l}" y="{y0+12+i*11:.1f}" font-size="8.5" fill="{col}">{_esc(ln)}</text>')
+        bits.append(f"accès {_fmt(ind['pente_acces_pct'],1)} %")
+    for f in faitages:
+        bits.append(f.replace("Hauteur du bâtiment (BD TOPO) · ", "bâti "))
+    frag = [f'<text x="{pad_l}" y="{y0+11:.1f}" font-size="8.5" fill="{T["txt"]}">{_esc(" · ".join(bits))}</text>']
+    if rupture:
+        frag.append(f'<text x="{right_x:.1f}" y="{y0+11:.1f}" text-anchor="end" font-size="8.5" fill="{T["lacune"]}">◆ rupture du terrain à vérifier au pied du bâti</text>')
     return "".join(frag)
 
 
@@ -378,6 +371,5 @@ def plan_cle_svg(scene, *, theme="sombre", width=380, height=320):
     nx, ny = width - 22, 30
     out.append(_fleche(nx, ny + 16, nx, ny - 8, T["txt"]))
     out.append(f'<text x="{nx:.1f}" y="{ny-11:.1f}" text-anchor="middle" font-size="9" font-weight="600" fill="{T["txt"]}">N</text>')
-    out.append(f'<text x="{PAD}" y="16" font-size="10" fill="{T["txt_dim"]}">Plan-clé — cadastre, axes, sens, voie, nord</text>')
     out.append("</svg>")
     return "".join(out)

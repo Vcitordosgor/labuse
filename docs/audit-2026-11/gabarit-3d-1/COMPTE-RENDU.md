@@ -5,8 +5,8 @@ prod. **Aucun chiffre servi ne change** (bancs Gabarit verts, chiffres du Gabari
 La vue 3D actuelle reste la vue par défaut ; le pilote vit derrière un **interrupteur réservé aux admins**.
 **Aucun plafond de hauteur n'est dessiné** (les hauteurs en pente sont le mandat suivant).
 
-> §1–§12 (étapes 1→2 bis) ; le **§14 (étape 2 ter) FAIT FOI** : justesse (franchissement sans arrondi,
-> identifiant de scène sérialisée + parité PDF, pente 5 m dans un tronçon), visionneuse (cible) et coupes.
+> §1–§14 (étapes 1→2 ter) ; le **§15 (étape 2 quater) FAIT FOI** : cadrage parcelle ~60 %, coupe
+> compacte jamais tronquée, un seul axe, identifiant transmis, parcours portable 1440×900 & 1280×720.
 
 ---
 
@@ -411,4 +411,51 @@ Sur le commit 6c859665b. Cible d'écran : `docs/design/maquettes/nov-2026/16-ecr
 
 Recette : trois vues de BZ1065 (`viewer/bz1065_vue3d.png`, `bz1065_coupeA.png`, `bz1065_coupeB.png`) ;
 même point vérifié dans la 3D (marqueur au survol), la coupe et le PDF régénéré (même `scene_id`, mêmes cotes).
+Hook : build tsc ✅ · vitest **326** ✅ · pytest gabarit **300 unit + 2 db + 21 scène** ✅ · 0 faute hors cadre.
+
+---
+
+## 15. Étape 2 quater — finitions portable (6ᵉ revue d'Astra)
+
+Sur 9f2e21a5a. Capture de Vic : **coupe tronquée**, **parcelle perdue dans le terrain** — corrigés.
+Cible : `16-ecran-cible-astra.png`. Chaque point porte son test.
+
+### 1. Belle vue 3D (parcelle retrouvée)
+- **Cadrage** sur la parcelle + abords utiles (voie comprise) : le serveur calcule un **CADRE** (bbox
+  parcelle ÷ 0,6 ∪ voie ∪ axes), les faces servies et la caméra s'y limitent → la **parcelle occupe
+  ~60 %**, **terrain coupé net au cadre**. *(Test : parcours WebKit, parcelle visible et cadrée.)*
+- **Limite cadastrale fermée et continue** (anneau bouclé, drapage sans trou) ; **zone à bords francs**
+  (opaque, sans halo) ; **bâti arêtes fines** ; **seul l'axe sélectionné est affiché** (visibilité, pas
+  de recréation de contexte).
+- **Altitudes à une décimale** (« 397,0 m ») ; la ligne « haut·bas·curseur » **supprimée**, seule
+  l'**altitude sous le curseur** reste, discrète.
+- **Plan-clé compact, un seul titre**, avec la légende.
+
+### 2. Coupe liée au terrain (jamais tronquée)
+- Sélecteur **Coupe A / Coupe B** → profil **COMPACT** : **une ligne d'en-tête** (titre à gauche,
+  « Altitudes en m · IGN 1989 · H = V » à droite), **barre d'échelle dans un coin** du tracé,
+  **indicateurs sur une ligne**. *(Test : `svg.count("Altitudes en m")==1`.)*
+- Profil **ajusté à sa case à H = V, JAMAIS tronqué** (`s = min(plot_w/L, h_dispo/zspan)`, image
+  `object-contain`). *(Test parcours : rien ne dépasse, coupe entière.)*
+- Bouton **« ⤢ Agrandir la coupe »** : fond **opaque**, pleine largeur, H = V, profil+bandes+résumé en
+  entier ; **« Revenir au terrain »** retrouve le même cadrage et le point repéré.
+- **Identifiant de scène transmis** (`?sid=`) pour le plan et les coupes → terrain/plan/coupe/PDF même
+  version. *(Test `test_locks_scene_base_reelle` : une demande avec un identifiant **périmé → 409**.)*
+
+### 3. Parcours vérifié sur portable (WebKit)
+Ouvrir BZ1065 → A → B → repérer un point → agrandir → revenir au terrain, à **1440×900** et **1280×720** :
+**rien ne dépasse de l'écran à aucune étape** — 1440×900 : **True** ; 1280×720 : **True** ✅.
+Captures : `viewer/parcours_1440x900_ouvert.png`, `parcours_1280x720_ouvert.png`, `..._agrandi.png`.
+
+### Mesures réelles (WebKit / Safari)
+Première image effectivement rendue **3986 ms** · **FPS 59** (trame médiane 17 ms) ·
+**ressources graphiques 11 → 11 géométries après 10 cycles** (stable) · 0 erreur.
+
+### Épreuve finale — où se situe la rupture près du bâti (BZ1065, en quelques clics)
+Onglet **Coupe B** → le profil montre la parcelle traversée (bandes **parcelle** et **zone d'implantation**
+sous le tracé), la **voie « Chemin de la Citerne »** nommée à son franchissement, l'**emprise bâtie** vers
+68–81 m, et le repère **◆ « rupture du terrain à vérifier au pied du bâti »**. On lit donc en un coup d'œil
+que la rupture est **côté aval du bâti**, **après la zone d'implantation**, à ~15 m **en amont de la voie**.
+Capture : `viewer/epreuve_rupture.png`.
+
 Hook : build tsc ✅ · vitest **326** ✅ · pytest gabarit **300 unit + 2 db + 21 scène** ✅ · 0 faute hors cadre.

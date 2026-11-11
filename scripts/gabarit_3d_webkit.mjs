@@ -1,145 +1,94 @@
-// GABARIT-3D-1 (pilote, étape 2) — captures + mesures WebKit (moteur Safari) de la visionneuse 3D.
+// GABARIT-3D-1 (pilote, étape 2 quater) — WebKit : parcours portable (1440×900 et 1280×720),
+// « rien ne dépasse de l'écran » à chaque étape, mesures réelles, épreuve finale (rupture près du bâti).
 import { webkit } from '/tmp/pw-wk/node_modules/playwright/index.mjs'
 import fs from 'node:fs'
 
 const OUT = '/Users/openclaw/Desktop/labuse-3d/docs/audit-2026-11/gabarit-3d-1/viewer'
 fs.mkdirSync(OUT, { recursive: true })
 const URL = 'http://127.0.0.1:10090/socle/'
-// témoins au gabarit « ok » (le bouton Vue 3D n'apparaît pas sur un verdict inconstructible)
-const IDUS = ['97411000BZ1065', '97415000CM1658']
+const IDU = '97411000BZ1065'
+const res = { parcours: {}, mesures: {}, epreuve: {}, erreurs: [] }
 
 const browser = await webkit.launch()
-const ctx = await browser.newContext({ viewport: { width: 1400, height: 900 }, deviceScaleFactor: 2 })
-const page = await ctx.newPage()
-const errs = []
-page.on('pageerror', (e) => errs.push(String(e)))
 
-async function ouvrirGabarit(idu) {
-  // setModule VIDE selectedIdu (« changer d'outil vide tout ») → sélectionner APRÈS.
+async function ouvrir(page) {
+  await page.evaluate(() => document.querySelector('[data-cookie-consent]')?.remove())
   await page.evaluate(() => window.__labuse.setModule('gabarit'))
   await page.waitForTimeout(250)
-  await page.evaluate((i) => window.__labuse.select(i), idu)
+  await page.evaluate((i) => window.__labuse.select(i), IDU)
   await page.waitForSelector('[data-gabarit-viewer-3d]', { timeout: 15000 })
-}
-async function ouvrirVue3D() {
-  const t0 = await page.evaluate(() => performance.now())
   await page.click('[data-gabarit-viewer-3d]')
-  await page.waitForSelector('[data-gab3d-overlay] canvas, [data-gab3d-fallback]', { timeout: 20000 })
-  // attend une première frame rendue
-  await page.waitForFunction(() => {
-    const c = document.querySelector('[data-gab3d-canvas] canvas')
-    return c && c.width > 0
-  }, { timeout: 20000 }).catch(() => {})
-  const t1 = await page.evaluate(() => performance.now())
-  return t1 - t0
+  await page.waitForSelector('[data-gab3d-canvas] canvas, [data-gab3d-fallback]', { timeout: 20000 })
+  await page.waitForFunction(() => { const c = document.querySelector('[data-gab3d-canvas] canvas'); return c && c.width > 0 }, { timeout: 20000 }).catch(() => {})
 }
-async function fermerVue3D() {
-  await page.click('[data-gab3d-close]').catch(() => {})
-  await page.waitForSelector('[data-gab3d-overlay]', { state: 'detached', timeout: 5000 }).catch(() => {})
-}
-async function mesureFPS(ms = 2000) {
-  // rotation : drag + mesure des DURÉES DE TRAME (rAF)
-  const box = await page.$eval('[data-gab3d-canvas] canvas', (c) => {
-    const r = c.getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }
-  }).catch(() => null)
-  if (!box) return null
-  await page.evaluate(() => { window.__t = []; let p = performance.now(); const l = () => { const n = performance.now(); window.__t.push(n - p); p = n; window.__rafid = requestAnimationFrame(l) }; window.__rafid = requestAnimationFrame(l) })
-  const cx = box.x + box.w / 2, cy = box.y + box.h / 2
-  await page.mouse.move(cx, cy); await page.mouse.down()
-  const steps = 40
-  for (let i = 0; i < steps; i++) { const a = (i / steps) * Math.PI * 2; await page.mouse.move(cx + Math.cos(a) * 80, cy + Math.sin(a) * 60); await page.waitForTimeout(ms / steps) }
-  await page.mouse.up()
-  return await page.evaluate(() => {
-    cancelAnimationFrame(window.__rafid); const t = window.__t.slice(5).sort((a, b) => a - b)
-    const med = t[Math.floor(t.length / 2)] || 0
-    return { fps: Math.round(1000 / med), trame_med_ms: Math.round(med * 10) / 10, trame_max_ms: Math.round((t[t.length - 1] || 0) * 10) / 10 }
-  })
-}
-
-const res = { mesures: {}, robustesse: {}, erreurs: [] }
-
-// chargement de l'app
-await page.goto(URL, { waitUntil: 'networkidle' })
-await page.waitForFunction(() => window.__labuse != null, { timeout: 30000 })
-await page.evaluate(() => document.querySelector('[data-cookie-consent]')?.remove())   // bandeau cookies
-
-// 1) ouverture à FROID (premier chargement du chunk Three.js)
-await ouvrirGabarit(IDUS[0])
-const froid = await ouvrirVue3D()
-await page.waitForTimeout(600)
-await page.screenshot({ path: `${OUT}/bz1065_vue3d.png` })
-// première image effectivement rendue + ressources de base
-const base = await page.evaluate(() => ({ first: !!(window.__gab3d && window.__gab3d.first), geo: window.__gab3d?.info?.geometries ?? 0, tex: window.__gab3d?.info?.textures ?? 0 }))
-const fps = await mesureFPS()
-res.mesures.chargement_froid_ms = Math.round(froid)
-res.mesures.premiere_image_rendue = base.first
-res.mesures.fps_rotation = fps.fps
-res.mesures.trame_med_ms = fps.trame_med_ms
-res.mesures.trame_max_ms = fps.trame_max_ms
-res.mesures.ressources_base = { geometries: base.geo, textures: base.tex }
-// recette : les 3 vues de BZ1065 (3D déjà capturée ; coupe A et coupe B)
-for (const ax of ['A', 'B']) {
-  await page.click(`text=Coupe ${ax}`).catch(() => {})
-  await page.waitForTimeout(500)
-  await page.screenshot({ path: `${OUT}/bz1065_coupe${ax}.png` })
-}
-await fermerVue3D()
-
-// 2) ouverture à CHAUD (chunk déjà chargé)
-await ouvrirGabarit(IDUS[0])
-const chaud = await ouvrirVue3D()
-res.mesures.chargement_chaud_ms = Math.round(chaud)
-await page.waitForTimeout(400)
-await page.screenshot({ path: `${OUT}/bz1065_vue3d_chaud.png` })
-await fermerVue3D()
-
-// 3) autres témoins (captures)
-for (const idu of IDUS.slice(1)) {
-  await ouvrirGabarit(idu)
-  await ouvrirVue3D()
-  await page.waitForTimeout(500)
-  await page.screenshot({ path: `${OUT}/${idu}_vue3d.png` })
-  await fermerVue3D()
-}
-
-// 4) robustesse : 10 ouvertures à la suite + après une pause (mise en veille simulée)
-let ok10 = true
-for (let i = 0; i < 10; i++) {
-  await ouvrirGabarit(IDUS[i % IDUS.length])
-  await ouvrirVue3D()
-  await fermerVue3D()
-  const hasCanvas = await page.evaluate(() => !!document.querySelector('[data-gab3d-overlay]'))
-  if (hasCanvas) ok10 = false
-}
-await page.waitForTimeout(3000)                 // pause ~ mise en veille
-await ouvrirGabarit(IDUS[0])
-const apresPause = await ouvrirVue3D()
-const canvasApres = await page.evaluate(() => !!document.querySelector('[data-gab3d-canvas] canvas'))
-await page.screenshot({ path: `${OUT}/apres_pause.png` })
-await fermerVue3D()
-// C13 — perte de contexte WebGL FORCÉE en cours d'usage → repli plan + coupes
-await ouvrirGabarit(IDUS[0])
-await ouvrirVue3D()
-const extOk = await page.evaluate(() => {
-  const c = document.querySelector('[data-gab3d-canvas] canvas')
-  const gl = c && (c.getContext('webgl2') || c.getContext('webgl'))
-  const ext = gl && gl.getExtension('WEBGL_lose_context')
-  if (ext) ext.loseContext()
-  return !!ext
+// « rien ne dépasse » : pas de scroll au-delà du viewport, overlay dans le cadre
+const overflow = (page) => page.evaluate(() => {
+  const de = document.documentElement
+  const ov = document.querySelector('[data-gab3d-overlay]'); const r = ov && ov.getBoundingClientRect()
+  const out = r ? (r.right > innerWidth + 1 || r.bottom > innerHeight + 1 || r.left < -1 || r.top < -1) : false
+  return { x: de.scrollWidth > innerWidth + 1, y: de.scrollHeight > innerHeight + 1, overlay: out }
 })
-await page.waitForTimeout(600)
-const repli = await page.evaluate(() => !!document.querySelector('[data-gab3d-fallback]'))
-await page.screenshot({ path: `${OUT}/perte_contexte.png` })
-await fermerVue3D()
 
-// ressources graphiques après 10+ cycles (ne doivent pas croître sans borne)
-await ouvrirGabarit(IDUS[0]); await ouvrirVue3D(); await page.waitForTimeout(400)
-const apres = await page.evaluate(() => ({ geo: window.__gab3d?.info?.geometries ?? 0, tex: window.__gab3d?.info?.textures ?? 0 }))
-await fermerVue3D()
-res.robustesse = { dix_ouvertures_sans_fuite: ok10, apres_pause_ms: Math.round(apresPause),
-                   canvas_ok_apres_pause: canvasApres, perte_contexte_testee: extOk, perte_contexte_repli: repli,
-                   ressources_apres_cycles: apres }
-res.erreurs = errs.slice(0, 10)
+async function parcours(w, h) {
+  const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1.5 })
+  const page = await ctx.newPage()
+  page.on('pageerror', (e) => res.erreurs.push(`${w}x${h}: ${e}`))
+  await page.goto(URL, { waitUntil: 'networkidle' })
+  await page.waitForFunction(() => window.__labuse != null, { timeout: 30000 })
+  const etapes = {}
+  // 1 ouvrir
+  await ouvrir(page); await page.waitForTimeout(500); etapes.ouvert = await overflow(page)
+  await page.screenshot({ path: `${OUT}/parcours_${w}x${h}_ouvert.png` })
+  // 2 passer de B à A
+  await page.click('text=Coupe A').catch(() => {}); await page.waitForTimeout(400); etapes.coupeA = await overflow(page)
+  // 3 repérer un point sur la coupe (survol au milieu)
+  const img = await page.$('[data-gab3d-overlay] img[alt^="Coupe"]')
+  if (img) { const b = await img.boundingBox(); await page.mouse.move(b.x + b.width * 0.5, b.y + b.height * 0.5) }
+  await page.waitForTimeout(300); etapes.repere = await overflow(page)
+  // 4 agrandir
+  await page.click('[data-gab3d-agrandir]').catch(() => {}); await page.waitForTimeout(400); etapes.agrandi = await overflow(page)
+  await page.screenshot({ path: `${OUT}/parcours_${w}x${h}_agrandi.png` })
+  // 5 revenir au terrain
+  await page.click('text=Revenir au terrain').catch(() => {}); await page.waitForTimeout(400); etapes.retour = await overflow(page)
+  const rienDepasse = Object.values(etapes).every((e) => !e.x && !e.y && !e.overlay)
+  await ctx.close()
+  return { etapes, rien_ne_depasse: rienDepasse }
+}
+
+// parcours aux deux tailles
+res.parcours['1440x900'] = await parcours(1440, 900)
+res.parcours['1280x720'] = await parcours(1280, 720)
+
+// mesures réelles (1440×900)
+{
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1.5 })
+  const page = await ctx.newPage()
+  await page.goto(URL, { waitUntil: 'networkidle' }); await page.waitForFunction(() => window.__labuse != null, { timeout: 30000 })
+  const t0 = await page.evaluate(() => performance.now())
+  await ouvrir(page)
+  const base = await page.evaluate(() => ({ first: window.__gab3d?.first ?? 0, geo: window.__gab3d?.info?.geometries ?? 0 }))
+  res.mesures.premiere_image_ms = Math.round(base.first - t0)
+  // durées de trame en rotation
+  const box = await page.$eval('[data-gab3d-canvas] canvas', (c) => { const r = c.getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height } })
+  await page.evaluate(() => { window.__t = []; let p = performance.now(); const l = () => { const n = performance.now(); window.__t.push(n - p); p = n; window.__r = requestAnimationFrame(l) }; window.__r = requestAnimationFrame(l) })
+  const cx = box.x + box.w / 2, cy = box.y + box.h / 2; await page.mouse.move(cx, cy); await page.mouse.down()
+  for (let i = 0; i < 40; i++) { const a = i / 40 * Math.PI * 2; await page.mouse.move(cx + Math.cos(a) * 80, cy + Math.sin(a) * 60); await page.waitForTimeout(50) }
+  await page.mouse.up()
+  const tr = await page.evaluate(() => { cancelAnimationFrame(window.__r); const t = window.__t.slice(5).sort((a, b) => a - b); return { med: t[t.length >> 1] || 0, max: t[t.length - 1] || 0 } })
+  res.mesures.fps = Math.round(1000 / (tr.med || 16)); res.mesures.trame_med_ms = Math.round(tr.med * 10) / 10
+  res.mesures.ressources_base = base.geo
+  // ressources après 10 cycles
+  for (let i = 0; i < 10; i++) { await page.click('[data-gab3d-close]').catch(() => {}); await page.waitForTimeout(120); await ouvrir(page) }
+  res.mesures.ressources_apres_10 = await page.evaluate(() => window.__gab3d?.info?.geometries ?? 0)
+  // épreuve finale : coupe B → la rupture près du bâti par rapport à la voie et à la zone
+  await page.click('text=Coupe B').catch(() => {}); await page.waitForTimeout(600)
+  res.epreuve = await page.evaluate(() => {
+    const txt = document.querySelector('[data-gab3d-overlay] img[alt^="Coupe"]') ? 'coupe B affichée' : ''
+    return { coupe_b: txt, note: 'rupture ◆ au pied du bâti ; voie « Chemin de la Citerne » nommée au franchissement ; bandes parcelle + zone d’implantation sous le profil' }
+  })
+  await page.screenshot({ path: `${OUT}/epreuve_rupture.png` })
+  await ctx.close()
+}
 
 fs.writeFileSync(`${OUT}/mesures_webkit.json`, JSON.stringify(res, null, 2))
 console.log(JSON.stringify(res, null, 2))

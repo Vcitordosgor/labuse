@@ -199,9 +199,9 @@ def test_coupe_svg_cadre_sans_plafond_faitage():
     assert "H = V" in svg and svg.count("IGN 1989") == 1   # datum une fois (barre)
     assert "plafond" not in svg.lower()
     assert "emprise bâtie" in svg                         # emprise au sol (B5)
-    assert "Hauteur du bâtiment (BD TOPO)" in svg and "7,0 m" in svg   # mention propre au bâtiment
-    assert "scène " not in svg                            # C10 : plus d'identifiant de scène dans la coupe
-    assert "97411000BZ1065" in svg and "12 Rue X" in svg  # en-tête : adresse + référence cadastrale
+    assert "bâti 7,0 m" in svg                            # hauteur BD TOPO condensée (résumé 1 ligne)
+    assert "scène " not in svg                            # plus d'identifiant de scène dans la coupe
+    assert svg.count("Altitudes en m") == 1               # en-tête UNE ligne (datum une fois)
 
 
 def test_bati_sans_hauteur_sans_mention():
@@ -292,3 +292,15 @@ def test_locks_scene_base_reelle():
     with Session(eng) as db:
         s2b = SC.build_scene(db, idu)
     assert s2b.scene_id == s.scene_id
+    # parité (2 quater) : une demande de coupe avec un identifiant PÉRIMÉ est refusée (409)
+    from fastapi import HTTPException
+    from labuse.api.gabarit import gabarit_coupe_svg
+
+    class _Req:
+        cookies = {}
+    SC._MEMO.clear()
+    with Session(eng) as db:
+        gabarit_coupe_svg(idu, "A", _Req(), sid=s.scene_id, db=db)          # bon id → OK
+        with pytest.raises(HTTPException) as e:
+            gabarit_coupe_svg(idu, "A", _Req(), sid="perime000000", db=db)   # id périmé → 409
+        assert e.value.status_code == 409

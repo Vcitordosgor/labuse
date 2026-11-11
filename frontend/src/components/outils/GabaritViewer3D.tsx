@@ -104,19 +104,26 @@ function contours(f: GabMesh) {
   return { master: mk(master, 0xb9c6bd, 0.6), minor: mk(minor, 0x7c8a81, 0.3) }
 }
 
-function drapeLine(ring: number[][], elev: (x: number, y: number) => number | null, color: number, px: number, res: THREE.Vector2, dashed = false) {
+function drapeLine(ring: number[][], elev: (x: number, y: number) => number | null, color: number, px: number, res: THREE.Vector2, dashed = false, closed = false, opaque = false, opacity = 1) {
   const group = new THREE.Group()
-  const mat = new LineMaterial({ color, linewidth: px, transparent: true, dashed, dashSize: 2, gapSize: 1.6 })
+  const mat = new LineMaterial({ color, linewidth: px, transparent: !opaque, opacity, dashed, dashSize: 2, gapSize: 1.6 })
   mat.resolution.copy(res)
   let run: number[] = []
   const flush = () => { if (run.length >= 6) { const g = new LineGeometry(); g.setPositions(run); const l = new Line2(g, mat); l.computeLineDistances(); l.renderOrder = 3; group.add(l) } run = [] }
+  const r2 = closed && ring.length > 1 ? [...ring, ring[0]] : ring      // FERMÉE (sans trou) pour le cadastre
   const dense: number[][] = []
-  for (let i = 0; i < ring.length - 1; i++) {
-    const a = ring[i], b = ring[i + 1], d = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.ceil(d))
+  for (let i = 0; i < r2.length - 1; i++) {
+    const a = r2[i], b = r2[i + 1], d = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.ceil(d))
     for (let k = 0; k < n; k++) dense.push([a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n])
   }
-  dense.push(ring[ring.length - 1])
-  for (const [x, y] of dense) { const z = elev(x, y); if (z != null) run.push(x, z + 0.4, -y); else flush() }   // jamais 0
+  dense.push(r2[r2.length - 1])
+  let lastZ: number | null = null
+  for (const [x, y] of dense) {
+    const z = elev(x, y)
+    if (z != null) { run.push(x, z + 0.4, -y); lastZ = z }
+    else if (closed && lastZ != null) run.push(x, lastZ + 0.4, -y)      // continu (sans trou), jamais 0
+    else flush()                                                        // sinon : interruption (lacune)
+  }
   flush()
   return group
 }
@@ -149,19 +156,15 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
   const recentrer = useRef<() => void>(() => {})
   const toggleCn = useRef<() => void>(() => {})
   const axeSelRef = useRef(axeSel); axeSelRef.current = axeSel
-  const axisObjs = useRef<Record<string, THREE.Object3D[]>>({})
+  const axisObjs = useRef<Record<string, THREE.Group>>({})
   const [perdu, setPerdu] = useState(false)
 
   // changer de coupe ne recrée PAS le contexte : on recolore seulement l'axe (B9)
   useEffect(() => {
-    for (const [lab, objs] of Object.entries(axisObjs.current)) {
+    for (const [lab, grp] of Object.entries(axisObjs.current)) {
       const sel = lab === axeSel
-      for (const o of objs) {
-        const l = o as Line2
-        const m = l.material as LineMaterial
-        if (m) { m.color.set(sel ? 0xe0a44a : 0x6b7682); m.linewidth = sel ? 2.6 : 1.4; m.needsUpdate = true }
-        l.renderOrder = sel ? 5 : 3
-      }
+      grp.visible = sel                                  // seul l'axe sélectionné est affiché (2 quater)
+      for (const o of grp.children) { const m = (o as Line2).material as LineMaterial; if (m) { m.color.set(0xe0a44a); m.linewidth = 2.6; m.needsUpdate = true } ;(o as Line2).renderOrder = 5 }
     }
   }, [axeSel])
 
@@ -181,25 +184,30 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
     const elev = makeElev(faces)
     const cn = contours(faces); const cnGroup = new THREE.Group(); cnGroup.add(cn.master); cnGroup.add(cn.minor); sc.add(cnGroup)
     toggleCn.current = () => { cnGroup.visible = !cnGroup.visible }
-    for (const poly of scene.contour_cadastral) sc.add(drapeLine(poly.ext, elev, 0xffffff, 3.0, res))
-    for (const poly of scene.zone_implantation) sc.add(drapeLine(poly.ext, elev, 0x36c99a, 1.6, res))
+    // limite cadastrale FERMÉE et continue (sans trou) ; zone à bords FRANCS (opaque)
+    for (const poly of scene.contour_cadastral) sc.add(drapeLine(poly.ext, elev, 0xffffff, 3.2, res, false, true, true))
+    for (const poly of scene.zone_implantation) sc.add(drapeLine(poly.ext, elev, 0x36c99a, 1.8, res, false, false, true, 1.0))
     axisObjs.current = {}
     for (const [lab, a] of Object.entries(scene.axes_plan || {})) {
-      const grp = drapeLine([a.p0, a.p1], elev, lab === axeSel ? 0xe0a44a : 0x6b7682, lab === axeSel ? 2.6 : 1.4, res, true)
-      sc.add(grp); axisObjs.current[lab] = grp.children as THREE.Object3D[]
+      const grp = drapeLine([a.p0, a.p1], elev, 0xe0a44a, 2.6, res, true)
+      grp.visible = lab === axeSel; sc.add(grp); axisObjs.current[lab] = grp
     }
     for (const b of scene.batiments) sc.add(batiVolume(b, elev, res))
 
     sc.add(new THREE.AmbientLight(0xffffff, 0.55))
     const sun = new THREE.DirectionalLight(0xffffff, 0.85); sun.position.set(-1, 1.4, 1); sc.add(sun)   // nord-ouest
 
-    const ctr = box.getCenter(new THREE.Vector3()), size = box.getSize(new THREE.Vector3())
-    const r = Math.max(size.x, size.z) * 0.6 + 4
+    // CADRAGE sur le CADRE servi (parcelle ~60 %) : centre sur le cadre, rayon = demi-cadre (2 quater)
+    const cadre = scene.terrain?.cadre
+    const ctr = box.getCenter(new THREE.Vector3())
+    if (cadre && cadre.length === 4) { ctr.x = (cadre[0] + cadre[2]) / 2; ctr.z = -(cadre[1] + cadre[3]) / 2 }
+    const size = box.getSize(new THREE.Vector3())
+    const r = (cadre && cadre.length === 4 ? Math.max(cadre[2] - cadre[0], cadre[3] - cadre[1]) / 2 : Math.max(size.x, size.z) * 0.6) * 1.05
     const cam = new THREE.OrthographicCamera(-r, r, r, -r, 0.1, r * 40)
     const place = () => {
       const w = el.clientWidth || W, h = el.clientHeight || H
       cam.position.set(ctr.x + r * 1.1, ctr.y + r * 1.25, ctr.z + r * 1.1); cam.lookAt(ctr)
-      cam.left = -r * (w / h); cam.right = r * (w / h); cam.top = r; cam.bottom = -r; cam.updateProjectionMatrix()
+      const ar = w / h; cam.left = -r * ar; cam.right = r * ar; cam.top = r; cam.bottom = -r; cam.updateProjectionMatrix()
     }
     place()
     const controls = new OrbitControls(cam, renderer.domElement); controls.target.copy(ctr); controls.update()
@@ -234,8 +242,8 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
     const lay = document.createElement('div'); lay.style.cssText = 'position:absolute;inset:0;pointer-events:none;font:600 10px Inter,sans-serif'
     el.appendChild(lay)
     const mkLab = (txt: string, col: string) => { const d = document.createElement('div'); d.textContent = txt; d.style.cssText = `position:absolute;color:${col};transform:translate(-50%,-50%);text-shadow:0 1px 2px #000` ; lay.appendChild(d); return d }
-    const lHi = mkLab(`${String(Math.round(hi * 10) / 10).replace('.', ',')} m`, '#e8edf2')
-    const lLo = mkLab(`${String(Math.round(lo * 10) / 10).replace('.', ',')} m`, '#e8edf2')
+    const lHi = mkLab(`${hi.toFixed(1).replace('.', ',')} m`, '#e8edf2')      // une décimale (409,8 m)
+    const lLo = mkLab(`${lo.toFixed(1).replace('.', ',')} m`, '#e8edf2')
     const compass = document.createElement('div')
     compass.innerHTML = '<svg width="34" height="34" viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="rgba(0,0,0,.4)" stroke="#5b6670"/><g id="nd"><path d="M17 4 L20 17 L17 15 L14 17 Z" fill="#e0a44a"/><text x="17" y="30" text-anchor="middle" font-size="8" fill="#cbd5e1">N</text></g></svg>'
     compass.style.cssText = 'position:absolute;right:8px;top:8px'; lay.appendChild(compass)
@@ -295,6 +303,7 @@ export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => 
   const [cote, setCote] = useState({ hi: 0, lo: 0, cur: null as number | null, cap: 0 })
   const markerApi = useRef<((f: number | null) => void) | null>(null)
   const dispo = scene?.disponible && !!scene.terrain?.faces_parcelle?.vertices?.length
+  const sid = scene?.scene_id   // transmis au plan/coupes (parité : même version que le terrain et le PDF)
   const coupes = useMemo(() => (scene?.coupes || []).map((c) => String((c as { label?: string }).label ?? '')), [scene])
   const acq = scene?.meta?.acquisition_date ? String(scene.meta.acquisition_date) : '—'
   const axeSel = coupes.includes(axe) ? axe : (coupes[0] as 'A' | 'B' | undefined) ?? null
@@ -346,13 +355,12 @@ export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => 
                     <p>{webgl ? 'Terrain non couvert ici.' : 'WebGL indisponible — repli sur le plan et les coupes.'}</p>
                     <img src={gabPlanSvgUrl(idu, 'sombre')} alt="Plan-clé" className="max-w-[380px]" />
                   </div>}
-              {dispo && <div className="pointer-events-none absolute left-3 bottom-8 text-[10px] text-txt-dim">
-                haut {String(cote.hi).replace('.', ',')} m · bas {String(cote.lo).replace('.', ',')} m{cote.cur != null ? ` · curseur ${String(cote.cur).replace('.', ',')} m` : ''}</div>}
+              {dispo && cote.cur != null && <div className="pointer-events-none absolute left-3 bottom-8 text-[10px] text-txt-dim">{cote.cur.toFixed(1).replace('.', ',')} m</div>}
             </div>
-            {/* à droite : plan-clé (nord en haut, échelle) + légende */}
-            <div className="flex w-[360px] shrink-0 flex-col gap-2 overflow-y-auto bg-[#0f1216] p-3">
+            {/* à droite : plan-clé COMPACT (un seul titre) + légende */}
+            <div className="flex w-[320px] shrink-0 flex-col gap-2 overflow-y-auto bg-[#0f1216] p-3">
               <div className="text-[11px] text-txt-mut">Plan-clé <span className="text-txt-ghost">— nord en haut</span></div>
-              <img src={gabPlanSvgUrl(idu, 'sombre')} alt="Plan-clé" className="w-full rounded border border-line" />
+              <img src={gabPlanSvgUrl(idu, 'sombre', sid)} alt="Plan-clé" className="w-full rounded border border-line" />
               <div className="mt-1 flex flex-col gap-1 text-[10px] text-txt-mut">
                 {LEG.map(([c, lab]) => (
                   <div key={lab} className="flex items-center gap-2"><span className="inline-block h-2 w-4 rounded-sm" style={{ background: c }} />{lab}</div>
@@ -361,23 +369,26 @@ export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => 
               <p className="mt-1 text-[9px] leading-snug text-txt-ghost">Détails techniques — scène {scene.scene_id}</p>
             </div>
           </div>
-          {/* en bas : la coupe active, pleine largeur */}
-          <div className="min-h-0 flex-1 overflow-auto border-t border-line bg-[#0f1216] p-3">
+          {/* en bas : la coupe active ajustée à sa case (jamais tronquée, H = V) + bouton Agrandir */}
+          <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden border-t border-line bg-[#0f1216] p-2">
             {axeSel
-              ? <img key={axeSel} src={gabCoupeSvgUrl(idu, axeSel, 'sombre')} alt={`Coupe ${axeSel}`}
+              ? <img key={axeSel} src={gabCoupeSvgUrl(idu, axeSel, 'sombre', sid)} alt={`Coupe ${axeSel}`}
                      onLoad={onImgLoad} onMouseMove={onCoupeHover} onMouseLeave={() => markerApi.current?.(null)}
-                     onClick={() => setAgrandi(true)} className="w-full cursor-crosshair rounded border border-line" />
+                     className="max-h-full max-w-full cursor-crosshair rounded border border-line object-contain" />
               : <p className="text-[12px] text-txt-mut">Aucune coupe disponible.</p>}
+            {axeSel && <button data-gab3d-agrandir onClick={() => setAgrandi(true)}
+              className="absolute right-3 top-2 rounded border border-line bg-black/50 px-2 py-1 text-[11px] text-txt-mut hover:text-txt">⤢ Agrandir la coupe</button>}
           </div>
           <p className="border-t border-line px-3 py-1.5 text-[10px] text-txt-dim">
             MNT LiDAR HD IGN · maille de 1 m · acquisition {acq} · cotes indicatives · courbes tous les mètres, trait fort tous les 5 m · H = V.
           </p>
         </div>
       )}
-      {/* agrandissement : fond OPAQUE, toute la largeur, H = V conservé (C12) */}
+      {/* agrandissement : fond OPAQUE, pleine largeur, H = V conservé (profil+bandes+résumé en entier) */}
       {agrandi && scene && axeSel && (
-        <div className="absolute inset-0 z-[70] flex items-center justify-center bg-[#0b0d10] p-4" onClick={() => setAgrandi(false)}>
-          <img src={gabCoupeSvgUrl(idu, axeSel, 'sombre')} alt="Agrandie" className="w-full rounded border border-line" onClick={(e) => e.stopPropagation()} />
+        <div className="absolute inset-0 z-[70] flex flex-col items-center justify-center gap-2 bg-[#0b0d10] p-4" onClick={() => setAgrandi(false)}>
+          <button onClick={() => setAgrandi(false)} className="self-end rounded px-2 py-1 text-[12px] text-txt-mut hover:text-txt">✕ Revenir au terrain</button>
+          <img src={gabCoupeSvgUrl(idu, axeSel, 'sombre', sid)} alt="Agrandie" className="max-h-full w-full rounded border border-line object-contain" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
     </div>,
