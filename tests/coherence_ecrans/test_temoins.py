@@ -125,6 +125,36 @@ def test_estimation_identique_endpoint_et_point_unique(app_session, fiches):
     assert not ecarts, "Estimation divergente endpoint ↔ point unique :\n  " + "\n  ".join(ecarts)
 
 
+# ─────────────────────────── FAIT 6 bis : ÉCRAN ESTIMER == DOCUMENT (ESTIMER-3) ───────────────────
+def test_estimer3_ecran_egale_document(app_session, fiches):
+    """ESTIMER-ECRAN-1 — « un seul prix partout ». La valeur estimée servie à l'ÉCRAN Estimer (point
+    unique ESTIMER-3 `estimer3.rapport3`, lu tel quel par l'endpoint `estimation3`) == la valeur
+    IMPRIMÉE sur le document (le PDF parcelle `rapport_parcelle` → bloc `rendu_parcelle`), à l'euro, et
+    REELLEMENT présente dans le texte rendu. Banc des documents à 0 écart : sans saisie, l'écran et le
+    document affichent exactement le même prix."""
+    from labuse.pige import estimer3
+    from labuse.pige.api import rapport_parcelle
+    from labuse.exports.blocs import annonce as bloc_annonce
+    from labuse.exports.registre_fmt import groupe
+    ecarts = []
+    vus = 0
+    for idu in _idus_servis(fiches):
+        ecran = (estimer3.rapport3(app_session, idu, fiches[idu]).get("estimation") or {}).get("valeur_eur")
+        rapport = rapport_parcelle(app_session, idu, fiches[idu])
+        doc = ((rapport.get("estimation") or {}).get("valeur_indicative") or {}).get("valeur_eur")
+        if ecran is None and doc is None:
+            continue
+        vus += 1
+        if ecran is None or doc is None or int(ecran) != int(doc):
+            ecarts.append(f"{idu}: écran={ecran} document={doc}")
+            continue
+        html = bloc_annonce.rendu_parcelle(rapport)
+        if groupe(ecran) not in html:
+            ecarts.append(f"{idu}: valeur {ecran} € absente du document rendu")
+    assert vus, "aucune estimation bâtie servie sur les témoins — base réelle incomplète ?"
+    assert not ecarts, "Écran Estimer ↔ document divergents (ESTIMER-3) :\n  " + "\n  ".join(ecarts)
+
+
 # ─────────────────────────────────────────────────────────── FAIT 3 : NOMBRE D'ALÉAS ─────────────
 def test_nombre_aleas_source_unique(app_session, fiches):
     """Deux garanties, chacune « une source » :

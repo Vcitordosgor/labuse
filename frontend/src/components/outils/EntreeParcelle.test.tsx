@@ -33,13 +33,19 @@ describe('RECETTE-1 F2 — EntreeParcelle grise l\'entrée non utilisée', () =>
     expect(champWrap?.className ?? '').toContain('opacity-40')
   })
 
-  it('RECETTE-OUTILS-1 (T5) : picked → ligne « Changer de parcelle », plus de champ de recherche', () => {
+  it('RETOURS-26 (pt 7) : picked → boîte parcelle remplie + croix (✕) qui vide, plus de champ ni de bouton « Changer de parcelle »', () => {
     const onChanger = vi.fn()
-    const { container, getByText } = renderQC(
+    const { container, queryByText } = renderQC(
       <EntreeParcelle source="adresse" onPick={() => {}} picked="97411000AD0213" adresse="14 Rue de Nice, 97400 Saint-Denis" onChanger={onChanger} />)
     expect(container.querySelector('[data-entree-parcelle-choisie]')).toBeTruthy()
     expect(container.querySelector('[data-entree-parcelle]')).toBeNull()
-    fireEvent.click(getByText('Changer de parcelle'))
+    // L'adresse ENTIÈRE est affichée (jamais coupée) ; plus de lien « Changer de parcelle ».
+    expect(container.textContent).toContain('14 Rue de Nice, 97400 Saint-Denis')
+    expect(queryByText('Changer de parcelle')).toBeNull()
+    // La croix (data-entree-vider) vide le champ.
+    const vider = container.querySelector('[data-entree-vider]') as HTMLElement
+    expect(vider).toBeTruthy()
+    fireEvent.click(vider)
     expect(onChanger).toHaveBeenCalledTimes(1)
   })
 })

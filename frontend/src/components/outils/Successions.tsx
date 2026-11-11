@@ -16,37 +16,17 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { getSuccessions, SUCCESSIONS_PAGE, type SuccessionItem } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
-import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { ListPaginationFooter } from '../ListPagination'
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { Siren } from '../shared/Siren'
-import { Tip } from '../Tip'
 import { Bouton } from '../ui/Bouton'
 import { CommuneScope } from './ModulePanel'
 
 const fmtM2 = (v: number | null | undefined) => (v == null ? '—' : `${fmtInt(v)} m²`)
 
-// Contenu de la méthode — déplacé du pied vers le « i » de l'en-tête (OUTILS-S2 Lot A). Le texte ne
-// disparaît pas, il se replie dans l'infobulle : ce qu'est le signal, ce qu'il n'est pas, les chiffres.
-function methodeTip(maj?: string | null, rne?: string | null): string {
-  const date = maj ? ` (calculé le ${maj}${rne ? `, RNE INPI lu au ${rne}` : ''})` : ''
-  return (
-    'LE SIGNAL — le propriétaire est une personne morale à SIREN confirmé (jamais un rapprochement '
-    + 'par nom) dont le dirigeant le plus âgé a ≥ 70 ans, ou une SCI créée il y a ≥ 20 ans sans mise à '
-    + 'jour RNE depuis ≥ 5 ans. Formes retenues pour l’âge : sociétés civiles, familiales et agricoles '
-    + '(SCI, SC, SARL, SNC, GFA, SCEA, EARL, SCM) — une SA, SAS, SEM ou société d’HLM est écartée '
-    + '(sa direction se renouvelle, elle ne « succède » pas). Source : registre RNE (INPI), fichiers '
-    + 'des personnes morales (DGFiP).\n\n'
-    + 'CE QU’IL NE DIT PAS — ni une succession ouverte, ni un décès, ni une mise en vente : un signal '
-    + 'd’état à horizon 3-7 ans. Aucune date « depuis » par parcelle (le registre ne publie pas '
-    + `d’historique) ; le signal est daté du calcul${date}.\n\n`
-    + 'LES CHIFFRES — surface et zonage : Sourcés (cadastre, PLU). SDP restante : Estimé, moteur de '
-    + 'la fiche (enveloppe : capacité PLU moins bâti existant ; « — » = hors PLU, réellement '
-    + 'inconnaissable). Le tri suit la SDP restante décroissante.'
-  )
-}
+// RETOURS-25 (pt 12) — `methodeTip` (contenu du « i » méthode) retiré avec la section explicative.
 
 export function Successions() {
   const focusParcelle = useApp((s) => s.focusParcelle)   // RETOURS-15 C8 — clic ligne → zoom + contour + fiche
@@ -69,16 +49,8 @@ export function Successions() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-      {/* bandeau client — ce que le signal EST (et n'est pas), toujours visible (doctrine A0). Le « i »
-          porte désormais TOUTE la méthode (le tiroir du pied est retiré, OUTILS-S2 Lot A). */}
-      <div className="rounded-lg border px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut"
-        style={{ borderColor: `${TOKENS.mint}4d`, background: `${TOKENS.mint}0f` }}>
-        Les parcelles à potentiel dont le propriétaire <b className="text-txt">approche une succession</b> —
-        dirigeant âgé (≥ 70 ans) ou SCI dormante.
-        <Tip garder tip={methodeTip(meta?.maj, meta?.rne_sync)}>
-          <span className="ml-1 cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
-        </Tip>
-      </div>
+      {/* RETOURS-25 (pt 12) — section explicative (« Les parcelles … approche une succession » + « i »
+          méthode) retirée. */}
 
       {/* entrée : périmètre EXPLICITE (Toute l'île par défaut). RETOURS-15 C8 — le filtre « Résiduel
           minimum (SDP) » est retiré (le tri serveur reste résiduel décroissant). */}
@@ -87,7 +59,8 @@ export function Successions() {
         {/* RECETTE-OUTILS-1 (T5) — « Réinitialiser les filtres » DANS le bloc filtre, visible seulement
             quand le périmètre diffère du défaut (Toute l'île). Plus de « Réinitialiser » en tête. */}
         {commune && (
-          <Bouton niveau="lien" ton="ambre" data-successions-reset-filtres onClick={resetAll} className="self-start">
+          /* RETOURS-25 — « Réinitialiser les filtres » en VERT (cohérent avec Blocs). */
+          <Bouton niveau="lien" ton="vert" data-successions-reset-filtres onClick={resetAll} className="self-start">
             Réinitialiser les filtres
           </Bouton>
         )}
@@ -99,8 +72,7 @@ export function Successions() {
         // ÉTAT VIDE HONNÊTE — jamais trois zéros : le périmètre, le signal et son millésime sont dits.
         <p data-successions-vide className="rounded-lg bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-mut">
           Aucune parcelle au signal de succession probable
-          {commune ? <> à <b className="text-txt">{commune}</b></> : ' sur l’île'}
-          {meta.maj ? ` au ${meta.maj}` : ''}.
+          {commune ? <> à <b className="text-txt">{commune}</b></> : ' sur l’île'}.{/* RETOURS-25 (pt 12) — date retirée. */}
         </p>
       )}
       {meta && total > 0 && (
@@ -108,8 +80,8 @@ export function Successions() {
           {/* bandeau de tête : N parcelles · signal [source] au [millésime] */}
           <div data-successions-bandeau className="rounded-lg bg-surface-2 px-3 py-2 text-[10.5px] leading-snug text-txt-mut">
             <b data-successions-total className="tnum text-txt">{fmtInt(total)}</b> parcelle{total > 1 ? 's' : ''} ·
-            signal <b className="text-txt">RNE INPI</b>{meta.maj ? ` au ${meta.maj}` : ''}
-            {commune ? ` — ${commune}` : ' — toute l’île'}
+            {/* RETOURS-25 (pt 12) — date « au … » retirée. */}
+            signal <b className="text-txt">RNE INPI</b>{commune ? ` — ${commune}` : ' — toute l’île'}
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">

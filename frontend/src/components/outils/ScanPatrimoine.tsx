@@ -9,7 +9,7 @@
 // trouvé : le champ DISPARAÎT, remplacé par un encart en tête (raison sociale · SIREN + « changer » qui
 // ramène à l'état 1), et LES ONGLETS APPARAISSENT — soulignés, pas des boutons pleins : ce sont des onglets,
 // pas des actions. La bascule d'onglet ne relance AUCUNE recherche (le propriétaire est partagé).
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ParcelInput } from '../ParcelInput'   // DA-FIX-4 verif — entrée canonique + « Cliquez une parcelle sur la carte »
@@ -18,7 +18,7 @@ import { estIdu, iduComplet } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { M02 } from './ModulePanel'
 import { VeillePromoteurs } from './VeillePromoteurs'
-import { Retour } from '../ui/Retour'
+import { Bouton } from '../ui/Bouton'
 
 type Tab = 'possede' | 'construit'
 // RETOURS-15 B5 (P11) — l'outil s'ouvre sur DEUX PORTES : « Un propriétaire » (la recherche puis ses
@@ -128,44 +128,63 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
     } finally { setBusy(false) }
   }
 
+  // RETOURS-23 (pt 14) — un clic carte relance le scan sur le PROPRIÉTAIRE de la parcelle cliquée, À
+  // CHAQUE clic et dans TOUS les états (y compris quand un propriétaire est déjà affiché). L'outil
+  // consomme lui-même le clic (ParcelInput en `withCarte={false}` ci-dessous) via cet effet sur
+  // `selectedIdu` — avant, une fois un propriétaire trouvé le champ disparaissait et le clic suivant
+  // n'était plus écouté.
+  const selectedIdu = useApp((s) => s.selectedIdu)
+  const dernierClicScan = useRef<string | null>(null)
+  useEffect(() => {
+    if (selectedIdu && selectedIdu !== dernierClicScan.current) {
+      dernierClicScan.current = selectedIdu
+      setPorte('proprietaire'); setOwner(null); setOwnerLabel(null)
+      void resoudre(selectedIdu)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedIdu])
+
+  // RETOURS-23 (pt 1) — « ← Retour » internes retirés : hors de l'accueil (deux portes), le bouton
+  // unique du haut ramène d'abord à l'accueil des chemins (puis à l'outil de départ / au menu Outils).
+  const setOutilSousRetour = useApp((s) => s.setOutilSousRetour)
+  useEffect(() => {
+    setOutilSousRetour(porte !== null ? () => { setOwner(null); setPorte(null) } : null)
+    return () => setOutilSousRetour(null)
+  }, [porte, setOutilSousRetour])
+
   return (
     <div data-scan-patrimoine className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-1 text-[12.5px]">
-      <div>
-        <h2 className="font-display text-base font-bold text-txt-hi">Scan patrimoine</h2>
-        <p className="mt-0.5 text-[11.5px] text-txt-mut">Ce qu'un propriétaire possède, et ce qu'il construit.</p>
-      </div>
-
       {porte === null && !owner ? (
-        /* ───────── ACCUEIL — DEUX PORTES (B5). ───────── */
-        <>
+        /* ───────── ACCUEIL — DEUX PORTES (B5). ─────────
+           RETOURS-23 (pt 13) — l'en-tête « Scan patrimoine · Ce qu'un propriétaire possède… » est RETIRÉ
+           (doublon de l'en-tête du panneau Outils) ; espacement des chemins aligné sur Communes (gap-2). */
+        <div className="flex flex-col gap-2">
           {/* RECETTE-2 (T9) — cartes de CHOIX internes : pas de bord gauche vert (door-hot réservé au
               listing du menu Outils). */}
-          <button data-scan-porte="proprietaire" onClick={() => setPorte('proprietaire')} className="door hover-fill w-full text-left">
+          {/* RETOURS-26 (pt 3) — `mb-0` : la classe `.door` porte `margin-bottom:8px` ; sans le neutraliser,
+              l'écart entre les deux chemins valait 8px (gap) + 8px (marge) = 16px, le double des autres
+              outils (Communes, Solaire). Avec `mb-0`, seul le `gap-2` (8px) compte. */}
+          <button data-scan-porte="proprietaire" onClick={() => setPorte('proprietaire')} className="door hover-fill mb-0 w-full text-left">
             <div className="text-[12.5px] font-medium text-txt">Un propriétaire</div>
             <div className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">Ce qu'une société possède et construit — par nom, SIREN, adresse ou IDU.</div>
           </button>
-          <button data-scan-porte="operations" onClick={() => setPorte('operations')} className="door hover-fill w-full text-left">
+          <button data-scan-porte="operations" onClick={() => setPorte('operations')} className="door hover-fill mb-0 w-full text-left">
             <div className="text-[12.5px] font-medium text-txt">Toutes les opérations de l'île</div>
             <div className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">Ce que les promoteurs, bailleurs et SEM construisent — filtrable par commune et période.</div>
           </button>
-        </>
+        </div>
       ) : porte === 'operations' ? (
         /* ───────── PORTE « TOUTES LES OPÉRATIONS » — l'exploration générale. ───────── */
-        <>
-          <Retour data-scan-retour-portes label="Retour" onClick={() => setPorte(null)} />
-          <VeillePromoteurs embedded />
-        </>
+        /* RETOURS-23 (pt 1) — « ← Retour » interne retiré : le bouton unique du haut ramène à l'accueil. */
+        <VeillePromoteurs embedded />
       ) : !owner ? (
         /* ───────── ÉTAT 1 — aucun propriétaire : la recherche SEULE, pas d'onglets. ───────── */
         <>
-          <Retour data-scan-retour-portes label="Retour" onClick={() => setPorte(null)} />
-          {/* DA-FIX-4 verif (task 1) — ENTRÉE CANONIQUE : ParcelInput (omnibox 40 px + séparateur « ou »
-              + Bouton « Cliquez une parcelle sur la carte »). Le clic-carte et l'IDU/adresse résolvent le
-              PROPRIÉTAIRE de la parcelle (onPick → resoudre → ownerDeIdu). RECHERCHE-2 Lot 1 — une
-              suggestion propriétaire/SIREN (les 4 grammaires sont par défaut) remonte par onProprietaire →
-              choisir (owner posé direct, PAS le sous-panneau parcelle) ; un nom tapé sans suggestion part
-              par onAddress → resoudre (recherche dénomination, liste candidats si plusieurs). */}
-          <ParcelInput dataAttr="scan-search" placeholder="Nom de société, SIREN, adresse ou IDU"
+          {/* DA-FIX-4 verif (task 1) — ENTRÉE CANONIQUE : ParcelInput (omnibox + invite P19 « — ou —
+              cliquez une parcelle sur la carte »). RETOURS-23 (pt 14) — l'outil consomme LUI-MÊME le clic
+              carte (effet `selectedIdu` ci-dessus, actif dans tous les états) → ParcelInput en
+              `withCarte={false} inviteCarte` : il montre l'invite mais ne double pas la résolution. */}
+          <ParcelInput dataAttr="scan-search" withCarte={false} inviteCarte placeholder="Nom de société, SIREN, adresse ou IDU"
             onPick={(v) => { setQ(v); void resoudre(v) }}
             onProprietaire={(siren, nom) => { setQ(nom ?? siren); choisir(siren, nom) }}
             onAddress={(v) => { setQ(v); void resoudre(v) }} />
@@ -208,18 +227,16 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
       ) : (
         /* ───────── ÉTAT 2 — propriétaire trouvé : encart en tête + onglets soulignés. ───────── */
         <>
-          {/* RECETTE-1 (H4, Vic) — le retour « ← Scan patrimoine » reste APRÈS la recherche (palier F4) :
-              on revient aux deux portes, pas seulement « changer » de propriétaire. En état 2 un
-              propriétaire est retenu : `setPorte(null)` seul retomberait sur l'écran état 2 (l'accueil
-              deux-portes est gardé par `!owner`) → il faut AUSSI relâcher `owner` pour revenir aux portes. */}
-          <Retour data-scan-retour-portes label="Retour" onClick={() => { setOwner(null); setPorte(null) }} />
+          {/* RETOURS-23 (pt 1) — « ← Retour » interne retiré : le bouton unique du haut ramène à l'accueil
+              (il relâche aussi `owner`) ; le lien « changer » (dans l'encart) reste pour re-saisir. */}
           {/* U1.5 — encart propriétaire : raison sociale + SIREN + « changer » (retour état 1). */}
           <div data-scan-owner className="flex items-center justify-between gap-2.5 rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
             <div className="min-w-0">
               <div className="truncate text-[13.5px] font-semibold text-txt-hi">{ownerNom ?? '…'}</div>
               <div className="mt-0.5 font-mono text-[10.5px] text-txt-dim">SIREN <Siren value={owner} className="font-mono text-txt-dim" /></div>
             </div>
-            <button data-scan-changer onClick={changer} className="shrink-0 text-[11.5px] text-mint underline underline-offset-2 hover:text-mint/80">changer</button>
+            {/* RETOURS-25 (pt 3) — « changer » : bouton vert de la DA (plus un lien nu souligné). */}
+            <Bouton niveau="lien" ton="vert" data-scan-changer onClick={changer} className="shrink-0">changer</Bouton>
           </div>
 
           {/* U1.6 — onglets SOULIGNÉS (pas des boutons pleins) ; le propriétaire est partagé (aucune relance).

@@ -162,15 +162,8 @@ export function EtudeZone() {
   // RECETTE-OUTILS-1 T5 — le « Réinitialiser » du haut (et son handler `resetEtude`) sont retirés :
   // l'outil garde son reset de zone via « Changer la zone » / Retour.
 
-  // RECETTE-2 (D8) — c'est le RAYON saisi (cercle) qui est mesuré et dessiné, jamais l'isochrone « 10 min ».
-  // L'en-tête le dit : « Zone de X km autour de <adresse> » (plus de « LA ZONE À 10 MIN EN VOITURE »).
-  const enTete = res?.zone_disponible
-    ? (res.rayon_km != null
-        ? `Zone de ${String(res.rayon_km).replace('.', ',')} km autour de ${res.adresse ?? 'la parcelle'}`
-        : res.entree === 'polygone'
-          ? `La zone dessinée — ${nb(res.surface_ha)} ha`
-          : `Zone autour de ${res.adresse ?? 'la parcelle'}`)
-    : ''
+  // RETOURS-25 (pt 5) — l'en-tête « Zone de N km autour de … » est retiré (le rayon choisi et le résultat
+  // se lisent déjà dans les chips de rayon et les sections ci-dessous).
 
   return (
     <div data-etude-zone className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
@@ -178,10 +171,10 @@ export function EtudeZone() {
           reset de zone via le flux « Changer la zone » / Retour. */}
       {/* ÉTAPE 1 — DÉFINIR LA ZONE : RECETTE-1 H8.2/H8.3 — UNE entrée (parcelle) + un rayon km réglable
           (+ / −). Plus de segmenté point/polygone, plus de « temps de trajet ». */}
-      <StepHead n={1} titre="Définir la zone" sous="une parcelle + un rayon en km" />
+      {/* RETOURS-25 (pt 5) — sous-titre « une parcelle + un rayon en km » et la ligne « Parcelle : … » retirés. */}
+      <StepHead n={1} titre="Définir la zone" />
       <ParcelInput dataAttr="zone-point" placeholder="Adresse, IDU ou référence (BW0917)"
         withCarte onPick={(idu) => setCible({ idu, label: iduCourt(idu) })} />
-      {cible && <div className="text-[10.5px] text-txt-mut">Parcelle : {cible.label}</div>}
       {/* RECETTE-1 H8.3 — AMPLEUR : rayon en km réglable par + / − (cercle exact tracé sur la carte). */}
       {/* CHASSE-DONNEES-FIX-1 (E-77) — rayons SERVIS (discrets), plus un stepper 0,5-10 proposant des
           rayons que le back ne calcule pas en cercle. */}
@@ -220,10 +213,9 @@ export function EtudeZone() {
         <div className="flex flex-col gap-2">
           {/* ÉTAPE 2 — LIRE LA ZONE, en 7 sections repliables (ETUDE-ZONE-2 Lot A). Chaque section
               porte sa ligne de source · millésime en bas ; Population + Économie ouvertes par défaut. */}
-          <StepHead n={2} titre="Lire la zone" sous="population · économie · immobilier · foncier · contraintes · équipements · dynamique" />
-          {/* RECETTE-OUTILS-2 (R9) — « Exporter en PDF » déplacé APRÈS le dernier accordéon (Dynamique),
-              aligné à droite (voir plus bas). Ici, seul le titre de la zone. */}
-          <SectionTitle>{enTete}</SectionTitle>
+          {/* RETOURS-25 (pt 5) — sous-titre « population · économie · … · dynamique » et le titre
+              « Zone de N km autour de … » retirés. */}
+          <StepHead n={2} titre="Lire la zone" />
 
           {/* 1 · POPULATION */}
           <Section id="population" titre="Population" openSecs={openSecs} setOpenSecs={setOpenSecs}

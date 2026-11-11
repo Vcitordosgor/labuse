@@ -2275,15 +2275,23 @@ def estimer_banc_precision(ctx) -> None:
     eng = ctx.db.get_bind()
     rep = be.calcule(eng)
     pt = rep["par_type"]
+    # ESTIMER-3 — banc ÉTENDU aux NIVEAUX D'INFORMATION (comparables semblables) : précision servie à
+    # chaque temps de l'outil (sans saisie / surface connue / surface+pièces), par type et commune.
+    rep3 = be.calcule_niveaux(eng)
     if not ctx.dry_run:
         n_calib = be.persiste(eng, rep)
+        n_calib3 = be.persiste3(eng, rep3)
     else:
-        n_calib = 0
-    compteurs = {"n_calibration": n_calib}
+        n_calib = n_calib3 = 0
+    compteurs = {"n_calibration": n_calib, "n_calibration3": n_calib3}
     for t in ("maison", "appartement", "terrain"):
         compteurs[f"{t}_ecart_median"] = pt[t]["mediane"]
         compteurs[f"{t}_pct_20"] = pt[t]["pct_20"]
         compteurs[f"{t}_sans_prix"] = pt[t].get("pct_sans_prix")
+    # témoins ESTIMER-3 : écart médian au niveau le plus informé (surface+pièces), par type bâti.
+    for t in ("maison", "appartement"):
+        q = (rep3.get("par_type_niveau") or {}).get(t, {}).get("surface_pieces") or {}
+        compteurs[f"{t}3_surface_pieces_ecart_median"] = q.get("mediane")
     compteurs["global_ecart_median"] = rep["global"]["mediane"]
     ctx.compte(**compteurs)
 

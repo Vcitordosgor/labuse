@@ -24,7 +24,6 @@ import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECE
 import { ListPaginationFooter } from '../ListPagination'   // RECETTE-OUTILS-1 T7 — pied de liste unifié
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
-import { Retour } from '../ui/Retour'
 
 // A1 — plus de date « gelée » en dur : le millésime affiché à l'écran est celui SERVI par l'endpoint
 // (parcel_solar.source_millesime). Un seul millésime par écran, jamais deux dates contradictoires.
@@ -61,7 +60,7 @@ function EntreeSolaire({ onChoose }: { onChoose: (m: 'piscines' | 'ensoleillemen
   )
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2">
-      <p className="text-[11px] text-txt-mut">Deux métiers, deux entrées.</p>
+      {/* RETOURS-25 (pt 9) — « Deux métiers, deux entrées. » retiré. */}
       {/* RECETTE-2 (S16) — description RACCOURCIE : elle débordait sur 3 lignes (la carte
           Ensoleillement en fait 2) ; le titre « Piscines » + l'icône disent déjà le sujet. */}
       <Carte k="piscines" ic="💧" titre="Piscines" desc="Pisciniste — rénovation, couverture, entretien" />
@@ -71,11 +70,11 @@ function EntreeSolaire({ onChoose }: { onChoose: (m: 'piscines' | 'ensoleillemen
   )
 }
 
-function BackBar({ onBack, titre }: { onBack: () => void; titre: string }) {
+// RETOURS-23 (pt 1) — le « ← Retour » interne est retiré : le bouton UNIQUE du haut recule d'une
+// section (via outilSousRetour, posé par chaque mode). BackBar ne porte plus que le TITRE de section.
+function BackBar({ titre }: { titre: string }) {
   return (
-    <div className="flex items-center justify-between gap-2">
-      {/* RECETTE-OUTILS-1 (T3 / point 37) — un seul « Retour » (hiérarchique : il recule d'une section). */}
-      <Retour data-solaire-retour label="Retour" onClick={onBack} />
+    <div className="flex items-center gap-2">
       <span className="text-[12px] font-medium text-txt-hi">{titre}</span>
     </div>
   )
@@ -96,6 +95,13 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
   // au résultat de ce périmètre (comportement d'avant : clic commune → ses piscines), les deux statuts
   // colorés distinctement sur la carte + listés. `statut` est donc constant ('tous').
   const [step, setStep] = useState<'perimetre' | 'resultat'>('perimetre')
+  // RETOURS-23 (pt 1) — le bouton unique du haut recule d'une section : résultat → périmètre, puis
+  // périmètre → accueil des deux chemins (onBack).
+  const setOutilSousRetour = useApp((s) => s.setOutilSousRetour)
+  useEffect(() => {
+    setOutilSousRetour(step === 'resultat' ? () => setStep('perimetre') : onBack)
+    return () => setOutilSousRetour(null)
+  }, [step, onBack, setOutilSousRetour])
   const [commune, setCommune] = useState<string | null>(null)   // null = toute l'île
   const statut: PiscStatut = 'tous'
   const [pasPiscine, setPasPiscine] = useState<Set<string>>(new Set())
@@ -151,7 +157,7 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
   if (step === 'perimetre') {
     return (
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-        <BackBar onBack={onBack} titre="💧 Piscines" />
+        <BackBar titre="💧 Piscines" />
         <p className="text-[11px] font-medium text-txt-hi">Étape 1 · Périmètre</p>
         <p className="text-[10px] text-txt-mut">Toute l’île ou une commune — le compte est à côté.</p>
         {agg.isLoading && <Squelette bloc />}
@@ -190,7 +196,7 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
       {/* RECETTE-OUTILS-1 (point 37 / T3) — UN SEUL « Retour » : sur le résultat il revient au choix du
           périmètre (section précédente). L'ancien double (« ← Prospection solaire » + « ← Changer le
           périmètre ») est fusionné. */}
-      <BackBar onBack={() => setStep('perimetre')} titre="💧 Piscines" />
+      <BackBar titre="💧 Piscines" />
       {/* Compte — RECETTE-PROD-1 (#9, précision Vic) : UNE SEULE catégorie « Piscines », un seul
           compteur, aucune notion de statut (ni « confirmées » ni « à confirmer »), une seule couleur. */}
       <div className="rounded-lg border px-3 py-2.5" style={{ borderColor: `${TOKENS.mint}4d`, background: `${TOKENS.mint}0f` }}>
@@ -263,10 +269,16 @@ function ModeEnsoleillement({ onBack, prefillIdu }: { onBack: () => void; prefil
   }, [selectedIdu])
   // RECETTE-1 (F3) — Réinitialiser : vide la fiche soleil + ferme la fiche parcelle + rend les deux entrées.
   const resetAll = () => { if (selectedIdu) select(null); setFicheIdu(null); setSource(null) }
+  // RETOURS-23 (pt 1) — le bouton unique du haut ramène à l'accueil des deux chemins (onBack).
+  const setOutilSousRetour = useApp((s) => s.setOutilSousRetour)
+  useEffect(() => {
+    setOutilSousRetour(onBack)
+    return () => setOutilSousRetour(null)
+  }, [onBack, setOutilSousRetour])
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-      <BackBar onBack={onBack} titre="☀️ Ensoleillement" />
+      <BackBar titre="☀️ Ensoleillement" />
       {/* RECETTE-OUTILS-1 (T5) — « Réinitialiser » retiré au profit de « Changer de parcelle ».
           (point 38) — la parcelle résolue OUVRE sa fiche parcelle (select) comme les autres outils. */}
       <EntreeParcelle source={source} picked={ficheIdu} onChanger={resetAll}
@@ -367,11 +379,8 @@ function FicheSoleil({ f }: { f: SolaireFiche }) {
           Puissance installable = emprise toit × {String(kwcParM2).replace('.', ',')} kWc/m² (hypothèse) ; production annuelle = puissance × potentiel PVGIS.
         </p>
       )}
-      {f.toiture && (
-        <p data-solaire-toiture className="mt-1.5 text-[9px] leading-snug text-txt-dim">
-          Nature du toit : {f.toiture.statut} — {f.toiture.methode}
-        </p>
-      )}
+      {/* RETOURS-25 (pt 9) — ligne « Nature du toit : {statut} — {méthode} » RETIRÉE (doublon de la tuile
+          « Nature du toit » ci-dessus, qui porte déjà la valeur et la provenance « Estimé »). */}
       {/* RETOURS-12 O7 — PHOTO DU TOIT (ortho IGN) + ROSACE alignée sur l'azimut réel du bâti. */}
       {f.lon != null && f.lat != null && (
         <div data-solaire-photo className="mt-2">
@@ -381,8 +390,9 @@ function FicheSoleil({ f }: { f: SolaireFiche }) {
             <Rosace azimut={f.azimut ?? null} />
           </div>
           <p className="mt-1 text-[9px] leading-snug text-txt-dim">
+            {/* RETOURS-25 (pt 9) — phrase « La lecture LiDAR … se vérifie sur cette photo » retirée (filler).
+                On garde la légende de la rosace et la levée d'ambiguïté « pente du terrain ≠ pente du toit ». */}
             Photo aérienne (ortho IGN) — rosace alignée sur l'orientation du bâti{f.azimut != null ? ` (${f.azimut}°, Estimé)` : ' (orientation non estimée)'}.
-            La lecture LiDAR de la toiture (ci-dessus) se vérifie sur cette photo.
             « Pente du terrain » ci-dessus = pente moyenne du sol (RGE ALTI), pas la pente du toit.
           </p>
         </div>

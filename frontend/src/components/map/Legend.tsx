@@ -98,9 +98,12 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   const grpOpen = (id: string, i: number) => leg.groupes[id] ?? (i === 0)
   const toggleGrp = (id: string) => set({ ...leg, groupes: { ...leg.groupes, [id]: !grpOpen(id, groupes.findIndex((g) => g.id === id)) } })
 
-  const shell = inline ? 'rounded-xl bg-surface-2' : 'floating absolute bottom-4 right-4 hidden sm:block'
+  // RETOURS-25 (pt 8) — en carte, la Légende est une SECTION (transparente, sans cadre propre) d'un SEUL
+  // panneau de légendes (MapView), empilée sous la légende des couches : fini les deux « Légende »
+  // superposées. En `inline` (panneau gauche), elle garde sa carte.
+  const shell = inline ? 'rounded-xl bg-surface-2 w-[240px]' : 'w-full'
   return (
-    <div data-legend className={`${shell} w-[240px]`}>
+    <div data-legend className={shell}>
       <button data-legend-toggle onClick={() => set({ ...leg, open: !leg.open })} aria-expanded={leg.open}
         aria-label={leg.open ? 'Replier la légende' : 'Déplier la légende'}
         className="flex w-full items-center gap-2 px-3.5 py-2 text-left">

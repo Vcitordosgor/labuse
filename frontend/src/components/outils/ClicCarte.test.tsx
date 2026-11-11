@@ -1,6 +1,6 @@
 // RECETTE-OUTILS-2 (R1) — verrou du CLIC CARTE : un clic sur une parcelle de la carte appelle
 // `select(idu)` (MapView), que l'outil à parcelle ADOPTE via `selectedIdu` → le bloc EntreeParcelle
-// bascule sur « adresse · Changer de parcelle ». La régression (brancher « risques » vers
+// bascule sur la boîte parcelle remplie (adresse + croix). La régression (brancher « risques » vers
 // `carteOutilIdu`, non consommé) faisait « rien ne se passe » ; ce test garde l'adoption.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render } from '@testing-library/react'
@@ -29,7 +29,7 @@ describe('R1 — clic carte adopté par l\'outil Pièges et risques (O5Servitude
     expect(container.querySelector('[data-entree-parcelle-choisie]')).toBeNull()
   })
 
-  it('clic carte (select → selectedIdu) : bascule sur « adresse · Changer de parcelle »', () => {
+  it('clic carte (select → selectedIdu) : bascule sur la boîte parcelle remplie', () => {
     // le clic carte, côté MapView, fait `select(idu)` → selectedIdu : on le pose avant le montage,
     // l'outil l'adopte (idu initialisé à selectedIdu) et montre la ligne choisie.
     useApp.setState({ selectedIdu: '97408000BL0020' })

@@ -256,6 +256,9 @@ def _capacite_union(session: Session, parcels: list) -> dict | None:
         "sdp_m2": round(float(fr.get("surface_plancher_m2") or 0.0)),
         "ca": (b.ca if (b and b.fiable) else None),
         "charge_fonciere": (b.charge_fonciere if (b and b.fiable) else None),
+        # RETOURS-25 (pt 1) — prix de SORTIE neuf (€/m² habitable) résolu pour ce bilan : exposé pour le
+        # Bilan de l'Assemblage (était calculé puis jeté). `_ps["prix"]` = resolve_prix_sortie_servi.
+        "prix_sortie_eur_m2": (round(float(_ps["prix"])) if (b and b.fiable and _ps and _ps.get("prix")) else None),
     }
 
 
@@ -327,6 +330,7 @@ def aggregate_assiette(session: Session, parcels: list) -> dict:
         "sdp_existante_par_parcelle": existante_par,
         "conserve_estimation": conserve_estimation,
         "ca": u["ca"],
+        "prix_sortie_eur_m2": u.get("prix_sortie_eur_m2"),   # RETOURS-25 (pt 1) — Bilan Assemblage
         "charge_fonciere": cf_out,
         "n_chiffrables": 1 if u["ca"] else 0,
         "sdp_par_parcelle": par_parcelle,

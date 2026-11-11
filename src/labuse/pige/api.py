@@ -2086,6 +2086,41 @@ def radar_annonce_estimation(
                 **estimation_annonce(db, idu, fiche, surface_hab=surface_hab)}
 
 
+class Estimation3In(BaseModel):
+    """Entrée de l'estimation ESTIMER-3 (trois temps). Tous les champs sont facultatifs : une estimation
+    SANS RIEN SAISIR est un POST vide `{}`. `ecartees` = identifiants de mutation des ventes retenues
+    que l'utilisateur a décochées (l'API recalcule sans elles)."""
+    surface_hab: float | None = None
+    pieces: int | None = None
+    ecartees: list[str] = []
+
+
+@router.post("/radar/annonce/estimation3/{idu}")
+def radar_annonce_estimation3(idu: str, body: Estimation3In | None = None) -> dict:
+    """ESTIMER-3 — l'estimation « une estimation qui se resserre, et qui le prouve » (maquette
+    nov-2026/11-estimer-3-temps), POINT UNIQUE lu par l'écran, l'API et le PDF. Sert : ce que LABUSE a
+    MESURÉ (en clair), l'estimation issue des ventes de biens SEMBLABLES (repli secteur ESTIMER-2 si trop
+    peu), la LISTE DES VENTES RETENUES (écartables via `ecartees`), les questions au gain MESURÉ
+    (pré-remplies), la précision PAR NIVEAU (commune × type) et le Radar des biens similaires en vente."""
+    from ..api.app import parcel_fiche
+    from . import estimer3
+    from .. import cadastre_disparue as _cd
+    b = body or Estimation3In()
+    sh = (float(b.surface_hab) if (isinstance(b.surface_hab, (int, float))
+                                   and 0 < b.surface_hab <= 100000 and math.isfinite(b.surface_hab)) else None)
+    pc = (int(b.pieces) if (isinstance(b.pieces, (int, float)) and 0 < b.pieces <= 50) else None)
+    with session_scope() as db:
+        _disp = _cd.info_disparue(db, idu)
+        if _disp:
+            return {"idu": idu, "erreur": "parcelle_disparue", "note": _cd.phrase_disparue(_disp)}
+        try:
+            fiche = parcel_fiche(idu, db=db)
+        except ValueError:
+            return {"idu": idu, "note": "Parcelle inconnue."}
+        return estimer3.rapport3(db, idu, fiche, surface_hab=sh, pieces=pc,
+                                 ecartees=set(b.ecartees or []))
+
+
 # ── ANNONCE-5 — le RAPPORT PARCELLE complet (variante adresse, 2 pages) : POINT UNIQUE écran == PDF ──
 def _num(x) -> str | None:
     """Nombre affiché FR court : 7.0 → « 7 », 4.5 → « 4,5 ». None → None."""
@@ -2389,11 +2424,73 @@ def _a_verifier(fiche: dict, nature: str, zone: str | None) -> list[str]:
     return pts[:3]
 
 
+def _est_bloc_depuis_estimer3(db, idu: str, fiche: dict, surface_hab: float | None) -> dict:
+    """ESTIMER-ECRAN-1 — l'estimation du PDF parcelle, sourcée du MÊME point que l'écran (ESTIMER-3,
+    `estimer3.rapport3`) → « un seul prix partout » : la valeur imprimée == la valeur affichée (0 écart).
+    On re-façonne le rapport ESTIMER-3 au format attendu par le bloc PDF `rendu_parcelle` (median €/m²,
+    valeur indicative, comparables = ventes retenues) sans rien recalculer ici."""
+    from . import estimer3
+    r3 = estimer3.rapport3(db, idu, fiche, surface_hab=surface_hab)
+    e = r3.get("estimation") or {}
+    type_bien = r3.get("type_bien")
+    terrain = type_bien == "terrain"
+    pl = "maisons" if type_bien == "maison" else ("appartements" if type_bien == "appartement" else None)
+    # ventes retenues ACTIVES → lignes de comparables du PDF (date, type, surface, prix, €/m², distance).
+    type_court = "Maison" if type_bien == "maison" else ("Appart." if type_bien == "appartement" else "Terrain")
+    comps = []
+    for v in (r3.get("ventes_retenues") or []):
+        if v.get("ecartee"):
+            continue
+        s, p = v.get("surface_m2"), v.get("prix_eur")
+        comps.append({"date": v.get("date"), "type": type_court, "surface_m2": s, "prix_eur": p,
+                      "prix_m2": (round(p / s) if (isinstance(p, (int, float)) and isinstance(s, (int, float)) and s) else None),
+                      "distance_m": v.get("distance_m")})
+    # libellé « quelle surface a servi » (identique à l'écran).
+    surf_src = e.get("surface_source")
+    surf = e.get("surface_utilisee_m2")
+    ligne = (r3.get("mesures") or {}).get("surface_hab_estimee_ligne")
+    if surf_src == "saisie" and surf:
+        ligne = f"Surface habitable saisie ({surf} m²)"
+    elif surf_src == "vente DVF" and surf and not ligne:
+        ligne = f"Surface bâtie de la dernière vente DVF ({surf} m²)"
+    methode = e.get("methode_prix")
+    note = ("Ordre de grandeur issu des ventes de biens semblables — un repère de marché, pas une expertise."
+            if methode == "semblable"
+            else "Ordre de grandeur au prix du secteur — un repère de marché, pas une expertise.")
+    masque = bool(e.get("total_masque"))
+    return {
+        "type_comparateur": "terrain_nu" if terrain else "bati",
+        "type_bien": type_bien, "type_label_pluriel": pl,
+        "nature": "nue" if terrain else None,
+        # €/m² du secteur + sa fourchette (q1–q3 €/m²) ; servie dans les deux cas (total affiché ou masqué).
+        "median": e.get("eur_m2"), "q1": e.get("eur_m2_bas"), "q3": e.get("eur_m2_haut"),
+        "n": e.get("n_comparables"), "n_total": e.get("n_comparables"),
+        "radius_m": e.get("radius_m"), "commune_fallback": e.get("commune_fallback"),
+        "periode": e.get("periode"),
+        "perimetre": ("commune" if e.get("commune_fallback") else "secteur") if terrain else None,
+        "precision_pct": e.get("ecart_median_pct"),
+        "fiabilite": e.get("fiabilite"), "fiabilite_mot": e.get("fiabilite_mot"),
+        # DÉFAUT A — total masqué (surface inconnue + Q3 trop large) : AUCUNE valeur indicative (le document
+        # montre le €/m² et sa fourchette, comme l'écran, et n'imprime pas de total trompeur).
+        "valeur_indicative": ({
+            "surface_m2": surf, "eur_m2": e.get("eur_m2"), "valeur_eur": e.get("valeur_eur"),
+            "valeur_basse": e.get("valeur_basse"), "valeur_haute": e.get("valeur_haute"),
+            "ligne": ligne, "note": note,
+        } if (e.get("valeur_eur") is not None and not masque) else None),
+        "comparables": comps,
+        "note": (None if e.get("eur_m2") is not None
+                 else "Estimation indisponible — pas assez de ventes comparables dans le secteur."),
+    }
+
+
 def rapport_parcelle(db, idu: str, fiche: dict | None = None, surface_hab: float | None = None) -> dict:
     """ANNONCE-5 — le rapport PARCELLE complet (variante adresse, 2 pages du PDF) : POINT UNIQUE lu par
     l'écran ET par le PDF → aucune divergence. Compose la fiche servie, l'estimation (comparables + valeur
     indicative), le foncier (règles calibrées face aux mesures de la parcelle), le classement (run servi +
-    phrase gravée), les risques et le marché de la commune. Aucun recalcul de prix ici."""
+    phrase gravée), les risques et le marché de la commune. Aucun recalcul de prix ici.
+
+    ESTIMER-ECRAN-1 — l'estimation imprimée vient désormais du MÊME point qu'à l'écran (ESTIMER-3) →
+    « un seul prix partout » : écran == PDF == document, 0 écart (banc des documents)."""
     from ..api.app import parcel_fiche
     if fiche is None:
         fiche = parcel_fiche(idu, db=db)
@@ -2402,7 +2499,7 @@ def rapport_parcelle(db, idu: str, fiche: dict | None = None, surface_hab: float
     zone = (zones[0] or {}).get("zone") if zones and isinstance(zones[0], dict) else None
     commune = (fiche or {}).get("commune")
     nature = _nature_parcelle(db, idu)
-    est = estimation_annonce(db, idu, fiche, surface_hab=surface_hab)
+    est = _est_bloc_depuis_estimer3(db, idu, fiche, surface_hab)
     try:
         cls = _classement_bande(db, idu)
     except Exception:  # noqa: BLE001

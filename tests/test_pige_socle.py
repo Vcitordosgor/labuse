@@ -48,8 +48,9 @@ _ALLOWLIST_LIGNES = (
     ("frontend/src/components/outils/AnalyserAnnonce.tsx", "Collez un lien d’annonce Leboncoin, ou entrez"),
     # AFFICHAGE : sous-titre du rapport « Annonce Leboncoin · relevée le … ».
     ("frontend/src/components/outils/AnalyserAnnonce.tsx", "sous={`Annonce Leboncoin"),
-    # AFFICHAGE : note d'entrée « Leboncoin pour l'instant. SeLoger et Bien'ici à venir. ».
-    ("frontend/src/components/outils/AnalyserAnnonce.tsx", "Leboncoin pour l’instant. SeLoger et Bien’ici"),
+    # ESTIMER-ECRAN-1 — l'écran Estimer est désormais PARCELLE (maquette validée) : l'entrée LIEN et sa
+    # note « Leboncoin pour l'instant… » ne sont plus sur l'écran ; le lien reste atteignable DEPUIS le
+    # Radar (« Estimer ce bien → »), son rapport commune inchangé — d'où le retrait de cet allowlist.
     # AFFICHAGE : sous-titre du PDF « Analyse d'annonce » variante lien (ANNONCE-5) — « Annonce Leboncoin · relevée… ».
     ("src/labuse/exports/builder.py", 'sous = ("Annonce Leboncoin"'),
     # AFFICHAGE : phrase d'échec du lien (route Docs/outil), miroir MOT POUR MOT de l'outil (ANNONCE-3).

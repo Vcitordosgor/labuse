@@ -612,9 +612,12 @@ def tarif(db=None) -> dict:
     n'est PLUS exposé au client (retiré de /courrier/statut)."""
     s = get_settings()
     cout = cout_lettre_eur(db) if db is not None else float(s.courrier_cout_lettre_eur)
+    # RETOURS-25 (pt 13) — le PRIX CLIENT affiché est le prix tout compris fixé en config
+    # (`courrier_prix_client_eur`) ; le coût prestataire × marge reste calculé pour référence.
     return {"cout_prestataire_eur": round(cout, 2),
             "marge": float(s.courrier_marge),
-            "prix_client_eur": round(cout * float(s.courrier_marge), 2),
+            "prix_client_eur": round(float(s.courrier_prix_client_eur), 2),
+            "delai_jours": str(s.courrier_delai_jours),
             "provider": provider_actif(),
             "note": "lettre verte 1-3 pages, tarif intérieur France (DOM inclus ≤ 100 g)"}
 

@@ -197,9 +197,10 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
     <div data-veille-promoteurs className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-1 text-[12.5px]">
       <div>
         <h2 className="font-display text-base font-bold text-txt-hi">{strict ? 'Ce qu\'ils construisent' : 'Veille promoteurs'}</h2>
-        {strict
-          ? <p className="mt-0.5 text-[11.5px] text-txt-mut">Uniquement les opérations de ce propriétaire (groupes de permis contigus, même période).</p>
-          : <p className="mt-0.5 text-[11.5px] text-txt-mut">Ce que les promoteurs, bailleurs sociaux et SEM CONSTRUISENT : leurs opérations (groupes de permis d'un même propriétaire moral, sur des parcelles contiguës et une même période).{d?.millesime ? ` Données Sitadel au ${fmtDateSitadel(d.millesime)}.` : ''}</p>}
+        {/* RETOURS-23 (pt 15) — en mode général, la phrase « Ce que les promoteurs, bailleurs sociaux et
+            SEM CONSTRUISENT… Données Sitadel au … » est RETIRÉE (demande Vic). Le sous-titre « strict »
+            (un propriétaire ciblé) reste. */}
+        {strict && <p className="mt-0.5 text-[11.5px] text-txt-mut">Uniquement les opérations de ce propriétaire (groupes de permis contigus, même période).</p>}
       </div>
 
       {/* LOT S1 — geste ADMIN discret : collecter les programmes du promoteur courant depuis son site.
@@ -310,13 +311,14 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
                       </div>
                     ))}
 
-                    {/* RECETTE-OUTILS-2 (R20) — deux colonnes ÉGALES (grille 1fr 1fr) : les boutons tiennent
-                        côte à côte sur une ligne, texte centré + majuscule initiale, et ne débordent plus
-                        de la carte (chaque colonne `min-w-0`, texte réduit) même à largeur minimale. */}
+                    {/* RECETTE-OUTILS-2 (R20) — deux colonnes ÉGALES (grille 1fr 1fr) côte à côte.
+                        RETOURS-23 (pt 16) — les libellés tiennent DANS leur cadre : plus de `whitespace-nowrap`
+                        (qui débordait à largeur minimale, cartes imbriquées) → le texte passe À LA LIGNE,
+                        centré, sans jamais sortir du bouton. */}
                     {g.siren && (
                       <div className="mt-1 grid grid-cols-2 gap-2 border-t border-line/60 pt-1.5">
-                        <Bouton niveau="secondaire" ton="vert" data-vp-patrimoine onClick={() => voirPatrimoine(g.siren!)} className="w-full min-w-0 justify-center whitespace-nowrap px-1 text-[11px]">Voir son patrimoine →</Bouton>
-                        <Bouton niveau="secondaire" ton="vert" data-vp-frise onClick={() => setOpenSiren((s) => (s === g.siren ? null : g.siren))} className="w-full min-w-0 justify-center gap-1 whitespace-nowrap px-1 text-[11px]">{openSiren === g.siren ? 'Masquer sa frise' : 'Sa frise'} <Chevron open={openSiren === g.siren} /></Bouton>
+                        <Bouton niveau="secondaire" ton="vert" data-vp-patrimoine onClick={() => voirPatrimoine(g.siren!)} className="w-full min-w-0 justify-center px-1 text-center text-[11px] leading-snug">Voir son patrimoine →</Bouton>
+                        <Bouton niveau="secondaire" ton="vert" data-vp-frise onClick={() => setOpenSiren((s) => (s === g.siren ? null : g.siren))} className="w-full min-w-0 justify-center gap-1 px-1 text-center text-[11px] leading-snug">{openSiren === g.siren ? 'Masquer sa frise' : 'Sa frise'} <Chevron open={openSiren === g.siren} /></Bouton>
                       </div>
                     )}
                     {openSiren === g.siren && g.siren && <Frise siren={g.siren} />}

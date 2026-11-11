@@ -55,14 +55,16 @@ def courrier_statut(request: Request, db: Session = Depends(get_db)) -> dict:
     # affiché au client AVANT dépôt (étape 3) et repris dans la confirmation. Il vient de `tarif(db)`
     # (coût prestataire admin/config × marge) — jamais codé dans le composant front. Sert le prix
     # unitaire TTC (impression, mise sous pli, affranchissement, suivi) ; le total = N × ce prix.
-    tarif_unitaire = round(float(courrier.tarif(db)["prix_client_eur"]), 2)
+    _tarif = courrier.tarif(db)
+    tarif_unitaire = round(float(_tarif["prix_client_eur"]), 2)
     # RECETTE-OUTILS-1 (point 45) — l'envoi est fait À LA MAIN par LABUSE : on ne dit plus « pas encore
     # disponible » (ligne retirée), mais que la demande est enregistrée et traitée.
+    # RETOURS-25 (pt 13) — prix client + délai d'envoi servis depuis la config (intro Courrier).
     return {"disponible": prov != "stub", "provider": prov,
             "raison": None if prov != "stub" else
             "La demande est enregistrée — LABUSE procède à l'envoi.",
             "plafond_jour": plafond, "envoyes_jour": envoyes, "reste_jour": max(0, plafond - envoyes),
-            "tarif_unitaire_eur": tarif_unitaire}
+            "tarif_unitaire_eur": tarif_unitaire, "delai_jours": str(_tarif.get("delai_jours") or "")}
 
 
 class EnvoiIn(BaseModel):

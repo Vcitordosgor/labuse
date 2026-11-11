@@ -2,15 +2,10 @@
 // L'outil est ANCRÉ dans Outils : `CompareModule` = le panneau gauche (stepper ① clic-carte ②
 // tableau ③ retour, chips de sélection, note SOCLE) ; `ComparePanel` = le TABLEAU en surimpression
 // (contenu/colonnes INCHANGÉS, mandat point 4). La carte reste active à droite pendant le picking.
-import { useEffect } from 'react'
+import { Fragment, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getCompare, type CompareRow } from '../../lib/api'
-import { fmtEurCompact, fmtInt, fmtTauxEmprise, iduCourt } from '../../lib/format'
-import { PERIM_POTENTIEL_COURT, PERIM_RESIDUEL_COURT, PERIM_SECTION_CADASTRALE } from '../../lib/perimetres'
-// CAPACITE_MAX_MENTION_COURTE (main) : ne sert PLUS la ligne logements (retirée → renvoi à l'Étude),
-// mais la MENTION reste, en note sous le tableau (la SDP affichée est un maximum réglementaire, volet D).
-import { CAPACITE_MAX_MENTION_COURTE } from '../../lib/capaciteMax'
-import { bandeMeta, signalMeta } from '../../lib/status'   // COMPARER-2 §4 — bande + Signal (comme l'Analyse)
+import { fmtInt, fmtTauxEmprise, iduCourt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { EntreeParcelle } from '../outils/EntreeParcelle'   // RECETTE-OUTILS-1 (point 17) — bloc de saisie unique
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'   // RECETTE-OUTILS-1 (point 21) — export PDF = Docs
@@ -18,7 +13,7 @@ import { docComparatifUrl } from '../../lib/api'
 import { Squelette } from '../Loading'
 import { EmptyState } from '../States'
 import { Bouton } from '../ui/Bouton'
-import { Badge } from '../ui/Badge'
+import { Tip } from '../Tip'   // RETOURS-29 — détail d'une contrainte au clic
 
 // OUTILS-FIX-3 C1 — le verdict de scoring (verdictMeta) n'est plus affiché dans Comparer (badge « Faible »
 // retiré : on n'impose pas l'Analyse LABUSE sur cet écran). Import + helper `verdict` supprimés.
@@ -35,12 +30,12 @@ type Row = {
   num?: (r: CompareRow) => number | null
   best?: 'hi' | 'lo'
   title?: string
-  // OUTILS-FIX-2 D2 — provenance (comme la fiche) : « source » = donnée observée (cadastre, PLU, DVF,
-  // DGFiP, aléas) ; « estime » = valeur dérivée/calculée (SDP, charge foncière, logements, sous-densité).
+  // provenance : « source » = donnée publique observée · « estime » = calcul de LABUSE.
   prov: 'source' | 'estime'
-  // COMPARER-2 §4 — rendu personnalisé (chip coloré) + ligne sans badge de provenance (verdict, pas donnée).
+  // RETOURS-29 — barre proportionnelle sous la valeur (lignes chiffrées).
+  bar?: boolean
+  // rendu personnalisé (puces de contraintes).
   render?: (r: CompareRow) => JSX.Element
-  noBadge?: boolean
 }
 // RECETTE-PROD-1 (12) — tag COURT de la cause (le code servi par /compare) pour la cellule SDP
 // résiduelle. La phrase longue (engine.cause_libelle) vit dans l'infobulle de la ligne.
@@ -57,102 +52,90 @@ const causeCourt = (c?: string | null): string | null => {
   return CAUSE_COURT[c] ?? c.replace(/_/g, ' ')
 }
 
+// RETOURS-29 (Comparatif v2, maquette 15-comparatif-v2) — SEULES les lignes que l'API sert, dans l'ordre
+// de la maquette. AUCUN classement LABUSE, AUCUNE puce de vente, AUCUN prix de marché (hors maquette).
+const PROPRIO: Record<string, string> = { morale: 'personne morale', public: 'public', particulier: 'particulier', succession: 'succession', indivision: 'indivision' }
 const ROWS: Row[] = [
-  { label: 'Surface', prov: 'source', val: (r) => r.surface_m2 != null ? `${fmtInt(r.surface_m2)} m²` : '—', num: (r) => r.surface_m2 ?? null, best: 'hi' },
-  { label: 'Zone PLU', prov: 'source', val: (r) => r.zone || '—' },
-  // COMPARER-2 §4 / SOURCES-FIX-2 lot B — Classement LABUSE (bande du RUN SERVI) + Signal de mutation en badge,
-  // MÊME source et MÊMES couleurs que l'écran Analyse (score_labuse). 2e ligne, sous la zone PLU.
-  // BANDES-UNIFIEES (fix/logements-source-unique) — UN SEUL libellé de bande, écran ET PDF :
-  // « lettre · libellé client · Signal X » (BANDE_META/SIGNAL_META = vocabulaire de la fiche ;
-  // le PDF comparatif.py rend la même chaîne depuis le barème). Avant : « À étudier » à l'écran
-  // vs « C · signal faible » au PDF — deux rendus pour la même donnée.
-  { label: 'Classement LABUSE', prov: 'estime', noBadge: true,
-    val: (r) => { const bm = bandeMeta(r.bande); return bm ? `${r.bande} · ${bm.label}` : '—' },
-    render: (r) => {
-      const bm = bandeMeta(r.bande)
-      if (!bm) return <span className="text-txt-dim">—</span>
-      const sm = signalMeta(r.signal_niveau)
-      return (
-        <span className="inline-flex flex-nowrap items-center gap-1.5">
-          <span className="rounded px-1.5 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: `${bm.color}22`, color: bm.color }}>{r.bande} · {bm.label}</span>
-          {sm && <span className="rounded px-1 py-0.5 text-[9px] font-medium" style={{ backgroundColor: `${sm.color}1F`, color: sm.color }}>{sm.label}</span>}
-        </span>
-      )
-    } },
-  // RECETTE-PROD-1 (12) — « Constructible : oui/non » (verdict faisabilité) MENTAIT : pour trois Um
-  // bâties côte à côte (EI0145/0146/0147), toutes zone constructible et toutes à 0 de potentiel
-  // résiduel, l'une affichait « oui » (emprise ≥ seuil) et deux « non » (terrain exigu) — incohérent
-  // à l'œil. On sépare : « Zone constructible » = constructibilité de la ZONE (famille ∉ A/N, honnête
-  // et IDENTIQUE pour les trois) ; le potentiel, lui, vit sur la ligne « SDP résiduelle » (0 pour les
-  // trois), suffixée de SA CAUSE (« terrain exigu », etc.). Plus de libellé qui ment.
-  { label: 'Zone constructible', prov: 'source',
-    val: (r) => r.zone_constructible == null ? '—' : r.zone_constructible ? 'oui' : 'non',
-    title: 'La ZONE du PLU autorise-t-elle de construire (famille U/AU) ? Distinct du potentiel résiduel restant (ligne SDP restante) : une zone constructible peut n\'avoir aucun potentiel si la parcelle est déjà saturée ou trop exiguë.' },
-  // O2-5 — chaque capacité porte son périmètre (source unique lib/perimetres) : la « max » suppose le
-  // terrain libéré, la « résiduelle » suppose le bâti conservé — sinon les deux se contredisent à l'œil.
-  // IMPLANTATION-4 (LOT C) — SDP de l'ancien moteur = « SDP maximale réglementaire » (jamais « du
-  // scénario », réservé à l'Étude) : les deux libellés ne se croisent jamais.
-  { label: `SDP maximale réglementaire · ${PERIM_POTENTIEL_COURT}`, prov: 'estime', val: (r) => r.sdp_max_m2 != null ? `${fmtInt(r.sdp_max_m2)} m²` : '—', num: (r) => r.sdp_max_m2 ?? null, best: 'hi' },
-  { label: `SDP restante · ${PERIM_RESIDUEL_COURT}`, prov: 'estime',
-    // RECETTE-PROD-1 (12) — potentiel résiduel + CAUSE COURTE quand il n'y a pas de potentiel (0/—) :
-    // le client voit POURQUOI (terrain exigu, zone non constructible…), pas un « 0 » muet. La phrase
-    // longue reste dans l'infobulle (title) ; la cellule porte un tag court.
+  // TERRAIN
+  { label: 'Surface', prov: 'source', bar: true, best: 'hi', num: (r) => r.surface_m2 ?? null,
+    val: (r) => r.surface_m2 != null ? `${fmtInt(r.surface_m2)} m²` : '—' },
+  { label: 'Bâti existant', prov: 'source', best: 'lo', num: (r) => r.bati_existant_pct ?? null,
+    val: (r) => r.bati_existant_pct == null ? '—' : r.bati_existant_pct <= 0 ? 'aucun' : `${fmtInt(r.bati_existant_pct)} % du terrain`,
+    title: 'Part du terrain déjà couverte par le bâti (emprise au sol / surface) — plus bas = plus de place à bâtir.' },
+  { label: 'Propriétaire', prov: 'source', val: (r) => PROPRIO[r.proprietaire as string] ?? '—',
+    title: 'Public / personne morale / succession / indivision / particulier — issu du fichier DGFiP.' },
+  // URBANISME
+  { label: 'Hauteur autorisée', prov: 'source', best: 'hi', num: (r) => r.gabarit_niveaux_max ?? null,
+    val: (r) => r.gabarit_niveaux_max != null ? `R+${Math.max(0, r.gabarit_niveaux_max - 1)}${r.gabarit_combles ? ' + combles' : ''}` : '—',
+    title: '« + combles » = niveau de combles aménageables sous un toit dont le faîtage domine l\'égout d\'au moins 1,80 m.' },
+  { label: 'Emprise au sol maximale', prov: 'source', best: 'hi', num: (r) => r.emprise_ces_pct ?? null,
+    val: (r) => r.emprise_ces_pct != null ? `${fmtInt(r.emprise_ces_pct)} %` : 'non réglementée',
+    title: 'Emprise au sol maximale fixée par le règlement de la zone (CES) — « non réglementée » si le PLU n\'en fixe pas.' },
+  // POTENTIEL CONSTRUCTIBLE
+  { label: 'Plancher possible · bâti conservé', prov: 'estime', bar: true, best: 'hi', num: (r) => r.sdp_residuelle_m2 ?? null,
     val: (r) => {
       if (r.sdp_residuelle_m2 != null && r.sdp_residuelle_m2 > 0) return `${fmtInt(r.sdp_residuelle_m2)} m²`
       const base = r.sdp_residuelle_m2 === 0 ? '0 m²' : '—'
       const sc = causeCourt(r.cause)
       return sc ? `${base} · ${sc}` : base
     },
-    title: 'Surface de plancher qui reste à bâtir en gardant le bâti existant. 0/— avec sa cause (terrain exigu, zone non constructible…) : la zone peut être constructible sans qu\'il reste de potentiel sur cette parcelle.',
-    num: (r) => r.sdp_residuelle_m2 ?? null, best: 'hi' },
-  // COMPARER-2 §1 — la VRAIE CES du PLU (validée dans plu_destinations), badge Sourcé + citation au survol.
-  // « non réglementée » quand la zone n'en fixe pas (ex. U3c/AU3c Saint-Paul) — jamais un dérivé sous ce titre.
-  { label: 'Emprise au sol max (PLU)', prov: 'source', val: (r) => r.emprise_ces_pct != null ? `${fmtInt(r.emprise_ces_pct)} %` : 'non réglementée', num: (r) => r.emprise_ces_pct ?? null, best: 'hi', title: 'Emprise au sol maximale fixée par le règlement de la zone (CES) — « non réglementée » si le PLU n\'en fixe pas.' },
-  // COMPARER-2 §1 — l'ancienne ligne « Emprise au sol max » servait CE ratio (bâti ÷ emprise constructible),
-  // pas une règle PLU → renommée « Taux d'occupation du gabarit », badge Estimé (un dérivé, pas un fait).
-  // CHASSE-INVARIANTS-FIX-1 (Lot 1, E-01) — au-delà de 100 % : « Saturé … » (fmtTauxEmprise, le rendu
-  // unique mirroir du Python), jamais un % brut. `num` garde le nombre réel pour le tri (saturé = pire).
-  { label: 'Taux d\'occupation du gabarit', prov: 'estime', val: (r) => fmtTauxEmprise(r.taux_emprise_pct), num: (r) => r.taux_emprise_pct ?? null, best: 'lo', title: 'Bâti existant ÷ emprise constructible : part du gabarit déjà occupée (plus bas = plus de marge à bâtir). Au-delà de 100 % : « Saturé » (le bâti dépasse le plafond d\'emprise du PLU).' },
-  { label: 'Sous-densité', prov: 'estime', val: (r) => r.sous_densite == null ? '—' : r.sous_densite ? 'oui' : 'non', title: 'Le bâti existant est nettement en-dessous de ce que le PLU permet : il reste un potentiel à construire.' },
-  // COMPARER-2 §2 — la valeur est par m² de TERRAIN (charge_fonciere.par_m2_terrain), pas de plancher.
-  { label: 'Charge foncière /m² terrain', prov: 'estime', val: (r) => r.charge_fonciere_m2 != null ? `${fmtEurCompact(r.charge_fonciere_m2)}/m²` : '—', num: (r) => r.charge_fonciere_m2 ?? null, best: 'hi', title: 'Charge foncière supportable ramenée au m² de terrain — plus haut = plus intéressant (négatif = l\'opération ne dégage rien pour le foncier).' },
-  // COMPARER-2 §3 — une MÉDIANE DVF est un calcul sur des ventes, pas un fait cadastral → badge Estimé.
-  { label: 'Prix terrain nu zone', prov: 'estime', val: (r) => r.terrain_zone_eur_m2 != null ? `${fmtInt(r.terrain_zone_eur_m2)} €/m²` : '—', num: (r) => r.terrain_zone_eur_m2 ?? null, best: 'lo', title: 'Médiane DVF du terrain nu dans la zone (calcul, pas un fait) — plus bas = plus intéressant.' },
-  // RETOURS-11F M13 (O9) — lignes utiles ajoutées, toutes de la fiche servie (aucun second moteur).
-  { label: `Prix bâti · ${PERIM_SECTION_CADASTRALE}`, prov: 'estime', val: (r) => r.prix_secteur_bati_m2 != null ? `${fmtInt(r.prix_secteur_bati_m2)} €/m²` : '—', num: (r) => r.prix_secteur_bati_m2 ?? null, title: 'Médiane DVF du bâti (maison/appartement) sur la section cadastrale (calcul) — même source que la fiche Marché (dvf_parcelle.secteur).' },
-  // IMPLANTATION-4 (LOT B) + FIX-ORFEVRE-1 (décision Vic 18/10/2026) — AUCUN nombre de logements de
-  // l'ancien calcul de capacité (fourchette estimate_capacity : SDP ÷ logement moyen) sur cet écran :
-  // seul le moteur d'implantation de l'Étude de faisabilité compte des logements. La ligne reste (repère
-  // de lecture), sans chiffre ni tri/surlignage, et RENVOIE vers l'outil (même geste que la fiche :
-  // parcelPrefill + module 'programme') ; la mention capacité maximale reste au survol.
-  { label: 'Logements possibles', prov: 'estime', noBadge: true,
-    val: () => 'voir l’Étude de faisabilité',
-    render: (r) => (
-      <button data-compare-etude className="text-mint hover:underline"
-        onClick={() => { const st = useApp.getState(); st.setParcelPrefill(r.idu); st.setModule('programme'); st.setCompareOpen(false) }}>
-        voir l’Étude de faisabilité →
-      </button>
-    ),
-    title: `Le nombre de logements n'est plus estimé ici : l'Étude de faisabilité le calcule sur une implantation réelle. ${CAPACITE_MAX_MENTION_COURTE}.` },
-  { label: 'Bâti existant', prov: 'source', val: (r) => r.bati_existant_pct != null ? `${fmtInt(r.bati_existant_pct)} % du terrain` : '—', num: (r) => r.bati_existant_pct ?? null, best: 'lo', title: 'Part du terrain déjà couverte par le bâti (emprise au sol / surface) — plus bas = plus de place à bâtir.' },
-  { label: 'Gabarit max', prov: 'source', val: (r) => r.gabarit_niveaux_max != null ? `R+${Math.max(0, r.gabarit_niveaux_max - 1)}` : '—', num: (r) => r.gabarit_niveaux_max ?? null, best: 'hi', title: 'Nombre de niveaux maximum autorisé (gabarit PLU).' },
-  { label: 'Accès & réseaux', prov: 'source', val: (r) => r.acces_reseaux ?? '—', title: 'Un seul verdict de viabilisation (accès voirie + réseaux) — le même que la fiche Réseaux et accès.' },
-  // COMPARER-2 §3 — le verdict d'assainissement est souvent une STATISTIQUE de secteur (« 59 % non
-  // raccordés »), pas un raccordement constaté à la parcelle → badge Estimé.
-  { label: 'Assainissement', prov: 'estime', val: (r) => r.assainissement ?? '—', title: 'Desserte d\'assainissement — souvent un constat de secteur (statistique), pas un raccordement vérifié à la parcelle.' },
-  // NU-3-J#7 — vocabulaire partagé : le PUBLIC (commune/État/collectivité) n'est plus perdu en « — » ;
-  // succession/indivision disent leur nature (le patronyme n'est jamais exposé ici — décision Vic).
-  { label: 'Propriétaire', prov: 'source', val: (r) => ({ morale: 'personne morale', public: 'public', particulier: 'particulier', succession: 'succession', indivision: 'indivision' } as Record<string, string>)[r.proprietaire as string] ?? '—', title: 'Public / personne morale / succession / indivision / particulier — issu du fichier DGFiP.' },
-  { label: 'Contrainte majeure', prov: 'source', val: (r) => r.contrainte_majeure ?? (r.n_contraintes ? `${r.n_contraintes} signalée(s)` : 'aucune') },
+    title: 'Surface de plancher qui reste à bâtir en gardant le bâti existant.' },
+  { label: 'Plancher possible · reconstruction', prov: 'estime', bar: true, best: 'hi', num: (r) => r.sdp_max_m2 ?? null,
+    val: (r) => r.sdp_max_m2 != null ? `${fmtInt(r.sdp_max_m2)} m²` : '—',
+    title: 'Surface de plancher maximale réglementaire, terrain libéré (après démolition du bâti existant).' },
+  { label: 'Part du gabarit déjà occupée', prov: 'estime', best: 'lo', num: (r) => r.taux_emprise_pct ?? null,
+    val: (r) => fmtTauxEmprise(r.taux_emprise_pct),
+    title: 'Bâti existant ÷ emprise constructible (plus bas = plus de marge à bâtir). Au-delà de 100 % : « Saturé ».' },
+  { label: 'Charge foncière', prov: 'estime', bar: true, best: 'hi', num: (r) => r.charge_fonciere_m2 ?? null,
+    val: (r) => r.charge_fonciere_m2 != null ? `${fmtInt(r.charge_fonciere_m2)} €/m²` : '—',
+    title: 'Charge foncière supportable ramenée au m² de terrain — plus haut = plus intéressant (négatif = l\'opération ne dégage rien pour le foncier).' },
+  // RISQUES ET CONTRAINTES
+  { label: 'Assainissement', prov: 'source', val: (r) => r.assainissement ?? '—',
+    title: 'Desserte d\'assainissement — souvent un constat de secteur (statistique), pas un raccordement vérifié à la parcelle.' },
+  { label: 'Contraintes relevées', prov: 'source',
+    val: (r) => (r.contraintes ?? []).length ? `${(r.contraintes ?? []).length} relevée${(r.contraintes ?? []).length > 1 ? 's' : ''}` : 'aucune relevée',
+    render: (r) => {
+      const cs = r.contraintes ?? []
+      if (!cs.length) return <span className="text-txt-dim">aucune relevée</span>
+      return (
+        <div className="flex flex-wrap gap-1">
+          {cs.map((c, i) => (
+            <Tip key={i} garder side="top" tip={c}>
+              <span data-compare-contrainte role="button" tabIndex={0}
+                className="cursor-help rounded-full border border-line-2 px-2 py-0.5 text-[10px] text-txt-mut hover:border-mint hover:text-txt">{contrainteCourt(c)}</span>
+            </Tip>
+          ))}
+        </div>
+      )
+    } },
 ]
 
-// OUTILS-FIX-2 D2 — DA-034 : badge de provenance via le Badge partagé. Sourcé = vert, Estimé = ambre.
-function ProvBadge({ prov }: { prov: 'source' | 'estime' }) {
-  return <Badge className="ml-1" ton={prov === 'source' ? 'vert' : 'ambre'}>{prov === 'source' ? 'Sourcé' : 'Estimé'}</Badge>
+const SECTIONS = ['Terrain', 'Urbanisme', 'Potentiel constructible', 'Risques et contraintes'] as const
+type Section = typeof SECTIONS[number]
+const SECTION_OF: Record<string, Section> = {
+  'Surface': 'Terrain', 'Bâti existant': 'Terrain', 'Propriétaire': 'Terrain',
+  'Hauteur autorisée': 'Urbanisme', 'Emprise au sol maximale': 'Urbanisme',
+  'Plancher possible · bâti conservé': 'Potentiel constructible', 'Plancher possible · reconstruction': 'Potentiel constructible',
+  'Part du gabarit déjà occupée': 'Potentiel constructible', 'Charge foncière': 'Potentiel constructible',
+  'Assainissement': 'Risques et contraintes', 'Contraintes relevées': 'Risques et contraintes',
 }
 
-// O9(d) — indices des cellules gagnantes d'une ligne (peut être plusieurs en cas d'égalité).
-// Ne renvoie rien si < 2 valeurs numériques (rien à comparer) : on ne surligne pas un « gagnant » seul.
+// RETOURS-29 — puce COURTE d'une contrainte ; son détail complet s'ouvre au clic (Tip).
+function contrainteCourt(c: string): string {
+  const court = c.split(/\s[—·:(]/)[0].trim()
+  return court.length > 34 ? `${court.slice(0, 32)}…` : court
+}
+
+// RETOURS-29 (maquette 15) — badge de provenance en OUTLINE : « sourcé » (vert) / « estimé » (ambre).
+function ProvBadge({ prov }: { prov: 'source' | 'estime' }) {
+  return prov === 'source'
+    ? <span className="rounded-full border border-mint/50 px-1.5 py-0.5 text-[9px] font-medium text-mint">sourcé</span>
+    : <span className="rounded-full border border-amber-500/50 px-1.5 py-0.5 text-[9px] font-medium text-amber-500">estimé</span>
+}
+
+// indice de la cellule gagnante. RETOURS-28/29 : AUCUN vert en cas d'égalité (gagnant UNIQUE) ni sur une
+// valeur ABSENTE (null) ou NÉGATIVE. Un 0 RÉEL reste un gagnant valable pour une ligne « lo » (ex. « aucun »
+// bâti, « 0 % » de gabarit occupé — cf. maquette).
 function bestIdx(row: Row, parcels: CompareRow[]): Set<number> {
   const out = new Set<number>()
   if (!row.num || !row.best) return out
@@ -160,8 +143,17 @@ function bestIdx(row: Row, parcels: CompareRow[]): Set<number> {
   const present = nums.filter((v): v is number => v != null)
   if (present.length < 2) return out
   const target = row.best === 'hi' ? Math.max(...present) : Math.min(...present)
+  if (target < 0) return out                                    // pas de vert sur une valeur négative
+  if (present.filter((v) => v === target).length !== 1) return out   // pas d'égalité
   nums.forEach((v, i) => { if (v != null && v === target) out.add(i) })
   return out
+}
+
+// RETOURS-29 — valeur MAX (> 0) d'une ligne à barre, pour la largeur proportionnelle des barres.
+function barMax(row: Row, parcels: CompareRow[]): number {
+  if (!row.num || !row.bar) return 0
+  const pos = parcels.map((p) => row.num!(p)).filter((v): v is number => v != null && v > 0)
+  return pos.length ? Math.max(...pos) : 0
 }
 
 // ── LE PANNEAU GAUCHE (outil « comparer », hôte ModulePanel) — ancré dans Outils, carte active à droite.
@@ -238,12 +230,18 @@ export function ComparePanel() {
   }, [setCompareOpen])
 
   return (
-    <div data-compare-panel className="absolute inset-0 z-40 flex items-center justify-center bg-black/50 p-6">
+    // RETOURS-28 (Comparatif) — un clic HORS du tableau (sur le fond) ferme l'overlay (Échap aussi).
+    <div data-compare-panel onClick={(e) => { if (e.target === e.currentTarget) setCompareOpen(false) }}
+      className="absolute inset-0 z-40 flex items-center justify-center bg-black/50 p-6">
       {/* RETOURS-15 B7 (P13) — le tableau s'élargit à la largeur disponible (880 → 1240 px) pour que
           chaque libellé et chaque valeur tiennent sur UNE ligne à 1440 px (whitespace-nowrap plus bas). */}
       <div className="floating flex max-h-full w-full max-w-[1240px] flex-col overflow-hidden">
         <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
-          <p className="label-caps">Comparer les parcelles ({compareIdus.length}/3)</p>
+          {/* RETOURS-29 (maquette 15) — titre + sous-titre « ● meilleure valeur de la ligne ». */}
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-txt-hi">Comparer {compareIdus.length} parcelle{compareIdus.length > 1 ? 's' : ''}</p>
+            <p className="flex items-center gap-1 text-[10.5px] text-txt-dim"><span className="text-mint">●</span> meilleure valeur de la ligne</p>
+          </div>
           <div className="flex items-center gap-3 text-[11px]">
             {/* RECETTE-OUTILS-1 (point 21 / T6) — « Exporter en PDF » = le document « Comparatif » de Docs
                 (même générateur back `/comparatif.pdf`). Requiert ≥ 2 parcelles. */}
@@ -273,68 +271,86 @@ export function ComparePanel() {
             <table className="w-full table-fixed border-collapse text-[12px]">
               <thead>
                 <tr>
-                  <th scope="col" className="w-[120px] p-2" />
-                  {parcels.map((r) => {
-                    return (
-                      <th scope="col" key={r.idu} data-compare-col className="border-l border-line p-2 align-top">
-                        <div className="flex items-center justify-between gap-2">
-                          <button onClick={() => select(r.idu)} className="font-mono text-[11px] tracking-tight text-txt-hi hover:underline">{r.idu}</button>
-                          <button onClick={() => removeFromCompare(r.idu)} aria-label="Retirer" className="text-[11px] text-txt-dim hover:text-st-ecartee">✕</button>
-                        </div>
-                        {/* OUTILS-FIX-3 C1 — la puce de scoring (tier « Faible / Neutre / Priorité »… dérivée de
-                            tier_v2) est RETIRÉE : l'Analyse LABUSE n'a pas été demandée sur cet écran, on ne
-                            l'impose pas. Le chip « secteur qui bouge » (raison dominante M135) reste — c'est un
-                            fait de marché, pas un score. */}
-                        {r.raison && (
-                          <div className="mt-1 flex flex-wrap items-center gap-1">
-                            <span data-compare-raison className="inline-block rounded-full border border-mint/40 bg-mint/10 px-1.5 py-0.5 text-[9px] font-medium text-mint">{r.raison}</span>
-                          </div>
-                        )}
-                        {/* O9(a) — commune · fraction M135 (« 1/5 sous 1 an »). Le rang GLOBAL servi (ex.
-                            « rang 271 141 » sur 431 663) ne veut rien dire pour l'utilisateur ; l'action
-                            utile (le tier) est déjà portée par la puce ci-dessus. Un rang DANS LA COMMUNE
-                            serait parlant mais n'existe pas dans le payload → non affiché (voir rapport). */}
-                        <p className="mt-0.5 text-[10px] font-normal text-txt-dim">{r.commune}{r.fraction ? ` · ${r.fraction} sous 1 an` : ''}</p>
-                      </th>
-                    )
-                  })}
-                </tr>
-              </thead>
-              <tbody>
-                {ROWS.map((row) => {
-                  const winners = bestIdx(row, parcels)   // O9(d) — cellules gagnantes de la ligne
-                  return (
-                    <tr key={row.label} className="border-t border-line">
-                      <td className="break-words p-2 text-[10.5px] uppercase tracking-wide text-txt-dim">
-                        {row.title
-                          ? <span className="cursor-help border-b border-dotted border-line-2">{row.label}</span>
-                          : row.label}
-                        {!row.noBadge && <ProvBadge prov={row.prov} />}
-                      </td>
-                      {parcels.map((r, i) => {
-                        const win = winners.has(i)   // vert = meilleure valeur (comme la table Communes)
-                        return (
-                          <td key={r.idu} className={`break-words border-l border-line p-2 ${win ? 'font-semibold text-mint' : 'text-txt'}`}>
-                            {row.render ? row.render(r) : row.val(r)}
-                          </td>
-                        )
-                      })}
-                    </tr>
-                  )
-                })}
-                <tr className="border-t border-line">
-                  <td className="p-2 align-top text-[10.5px] uppercase tracking-wide text-txt-dim">Détail contraintes</td>
+                  {/* RETOURS-29 — en-tête de la colonne libellé : « N parcelles · commune ». */}
+                  <th scope="col" className="w-[190px] p-2 align-bottom text-left text-[10px] font-normal text-txt-dim">
+                    {compareIdus.length} parcelle{compareIdus.length > 1 ? 's' : ''}{parcels[0]?.commune ? ` · ${parcels[0].commune}` : ''}
+                  </th>
+                  {/* colonne dédiée aux badges « sourcé »/« estimé », entre le libellé et les valeurs. */}
+                  <th scope="col" className="w-[58px] p-2" />
                   {parcels.map((r) => (
-                    <td key={r.idu} className="border-l border-line p-2 align-top text-[10.5px] text-txt-mut">
-                      {(r.contraintes ?? []).length ? <ul className="list-disc pl-4">{(r.contraintes ?? []).map((c, i) => <li key={i}>{c}</li>)}</ul> : '—'}
-                    </td>
+                    // RETOURS-29 (maquette 15) — en-tête colonne : IDU · adresse (aperçu) · zone · surface ·
+                    // « Ouvrir la fiche → » · croix. Aucun classement/bande.
+                    <th scope="col" key={r.idu} data-compare-col className="border-l border-line p-2 align-top">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="font-mono text-[11px] font-semibold tracking-tight text-txt-hi">{r.idu}</span>
+                        <button onClick={() => removeFromCompare(r.idu)} aria-label="Retirer" className="shrink-0 text-[11px] text-txt-dim hover:text-st-ecartee">✕</button>
+                      </div>
+                      <p className="mt-0.5 break-words text-[10.5px] font-normal text-txt">{r.adresse ?? r.commune ?? '—'}</p>
+                      <p className="mt-0.5 text-[10px] font-normal text-txt-dim">
+                        {[r.zone, r.surface_m2 != null ? `${fmtInt(r.surface_m2)} m²` : null].filter(Boolean).join(' · ') || '—'}
+                      </p>
+                      <button data-compare-fiche onClick={() => select(r.idu)} className="mt-1 text-[10.5px] font-medium text-mint hover:underline">Ouvrir la fiche →</button>
+                    </th>
                   ))}
                 </tr>
+              </thead>
+              {/* RETOURS-29 (maquette 15) — lignes regroupées en 4 sections ; badge en 2e colonne ; valeur
+                  avec point vert sur le gagnant + fine barre proportionnelle sur les lignes chiffrées. */}
+              <tbody>
+                {SECTIONS.map((sec) => {
+                  const secRows = ROWS.filter((row) => SECTION_OF[row.label] === sec)
+                  return (
+                    <Fragment key={sec}>
+                      <tr data-compare-section={sec}>
+                        <td colSpan={2 + parcels.length} className="px-2 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-[.1em] text-mint">{sec}</td>
+                      </tr>
+                      {secRows.map((row) => {
+                        const winners = bestIdx(row, parcels)     // gagnant unique (ou aucun)
+                        const bmax = barMax(row, parcels)         // max > 0 pour la largeur des barres
+                        return (
+                          <tr key={row.label} className="border-t border-line">
+                            <td className="break-words p-2 align-top text-[10.5px] text-txt-dim">
+                              {row.title
+                                ? <span className="cursor-help border-b border-dotted border-line-2">{row.label}</span>
+                                : row.label}
+                            </td>
+                            {/* badge de provenance dans SA colonne (entre libellé et valeurs). */}
+                            <td className="p-2 align-top"><ProvBadge prov={row.prov} /></td>
+                            {parcels.map((r, i) => {
+                              const win = winners.has(i)
+                              const v = row.num ? row.num(r) : null
+                              const barW = row.bar && bmax > 0 && v != null && v > 0 ? Math.max(4, Math.round((v / bmax) * 100)) : 0
+                              return (
+                                <td key={r.idu} className="border-l border-line p-2 align-top">
+                                  <div className="flex items-baseline gap-1">
+                                    {win && <span aria-hidden className="text-[10px] text-mint">●</span>}
+                                    <span className={`break-words ${win ? 'font-semibold text-mint' : 'text-txt'}`}>
+                                      {row.render ? row.render(r) : row.val(r)}
+                                    </span>
+                                  </div>
+                                  {row.bar && barW > 0 && (
+                                    <div className="mt-1.5 h-[2px] w-full max-w-[180px] overflow-hidden rounded-full bg-line-2">
+                                      <div className={`h-full rounded-full ${win ? 'bg-mint' : 'bg-txt-ghost'}`} style={{ width: `${barW}%` }} />
+                                    </div>
+                                  )}
+                                </td>
+                              )
+                            })}
+                          </tr>
+                        )
+                      })}
+                    </Fragment>
+                  )
+                })}
               </tbody>
             </table>
           )}
-          {/* RECETTE-OUTILS-1 (point 22) — mention de bas de tableau retirée (plafond réglementaire /
-              « permis réels ~½ » + « Chaque valeur vient du même point de calcul… »). */}
+          {/* RETOURS-29 (maquette 15) — pied : légende des badges + rappel du clic sur une contrainte. */}
+          {parcels.length > 0 && (
+            <p data-compare-pied className="mt-2 border-t border-line px-1 pt-2 text-[10px] text-txt-dim">
+              <span className="text-mint">sourcé</span> : donnée publique · <span className="text-amber-500">estimé</span> : calcul de LABUSE. Un clic sur une contrainte en affiche le détail.
+            </p>
+          )}
         </div>
       </div>
     </div>

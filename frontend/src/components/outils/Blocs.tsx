@@ -11,30 +11,28 @@
  */
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { BLOCS_PAGE, getBlocDetail, getBlocs, type BlocItem } from '../../lib/api'
+import { BLOCS_PAGE, getBlocDetail, getBlocs, getCommunes, type BlocItem } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
-import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { ListPaginationFooter } from '../ListPagination'
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { Siren } from '../shared/Siren'
 import { Tip } from '../Tip'
-import { CommuneScope, useModuleMap } from './ModulePanel'
+import { useModuleMap } from './ModulePanel'
 import { Bouton } from '../ui/Bouton'
 import { Case } from '../ui/Case'
-import { Chevron } from '../ui/Chevron'
 import { Select } from '../ui/Select'   // U3 (RECETTE-OUTILS-4) — menu déroulant partagé
 
 const fmtM2 = (v: number | null | undefined) => (v == null ? '—' : `${fmtInt(v)} m²`)
 
 // Paliers fixes (un select tient dans les 320 px ; le tri serveur reste résiduel décroissant).
 const SURFACE_MIN = [
-  { v: 0, label: 'peu importe' }, { v: 1000, label: '≥ 1 000 m²' }, { v: 5000, label: '≥ 5 000 m²' },
+  { v: 0, label: 'toutes' }, { v: 1000, label: '≥ 1 000 m²' }, { v: 5000, label: '≥ 5 000 m²' },
   { v: 10000, label: '≥ 1 ha' }, { v: 50000, label: '≥ 5 ha' },
 ]
 const SDP_MIN = [
-  { v: 0, label: 'peu importe' }, { v: 200, label: '≥ 200 m²' }, { v: 500, label: '≥ 500 m²' },
+  { v: 0, label: 'tous' }, { v: 200, label: '≥ 200 m²' }, { v: 500, label: '≥ 500 m²' },
   { v: 1000, label: '≥ 1 000 m²' }, { v: 5000, label: '≥ 5 000 m²' },
 ]
 const N_MIN = [
@@ -47,9 +45,10 @@ const Estime = () => (
 
 // Détail d'un bloc (ouvert au clic) — les IDU, chacun avec surface + zone + « Voir la fiche »,
 // et l'emprise du bloc mise en surbrillance sur la carte (mécanisme moduleMap).
-function BlocDetail({ blocId }: { blocId: number }) {
+function BlocDetail({ blocId, siren }: { blocId: number; siren: string | null }) {
   const select = useApp((s) => s.select)
   const setMselPrefill = useApp((s) => s.setMselPrefill)
+  const setM02Prefill = useApp((s) => s.setM02Prefill)
   const setModule = useApp((s) => s.setModule)
   const pushOutilRetour = useApp((s) => s.pushOutilRetour)
   const q = useQuery({ queryKey: ['bloc', blocId], queryFn: () => getBlocDetail(blocId) })
@@ -60,12 +59,12 @@ function BlocDetail({ blocId }: { blocId: number }) {
   if (q.isLoading) return <div className="px-2 py-1"><Squelette lignes={3} /></div>
   if (q.isError || !q.data) return null
   return (
-    <div className="mt-1 flex flex-col gap-0.5 border-t border-line-2 pt-1">
-      {/* RECETTE-1 R21 — le bouton « Voir la fiche » disparaît : cliquer la LIGNE ouvre la fiche. */}
+    <div className="mt-1.5 flex flex-col gap-0.5 border-t border-line-2 pt-1.5">
+      {/* RECETTE-1 R21 — cliquer la LIGNE (IDU) ouvre la fiche parcelle. */}
       {membres.map((m) => (
         <div key={m.idu} data-bloc-membre data-bloc-fiche role="button" tabIndex={0}
-          onClick={() => select(m.idu)}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(m.idu) } }}
+          onClick={(e) => { e.stopPropagation(); select(m.idu) }}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); select(m.idu) } }}
           className="flex cursor-pointer items-center gap-1.5 rounded px-1 py-0.5 text-[10.5px] hover-fill">
           <span className="font-mono text-txt-hi">{m.idu}</span>
           <span className="text-txt-dim">{fmtM2(m.surface_m2)}</span>
@@ -73,11 +72,20 @@ function BlocDetail({ blocId }: { blocId: number }) {
           <span className="ml-auto tnum text-txt-mut">{fmtM2(m.sdp_residuelle_m2)}</span>
         </div>
       ))}
-      {/* Assembler → : l'outil Assemblage pré-rempli avec les IDU du bloc (fil de retour). */}
-      <Bouton niveau="secondaire" ton="vert" data-bloc-assembler className="mt-1 self-start"
-        onClick={() => { setMselPrefill(membres.map((m) => m.idu)); setModule('assemblage'); pushOutilRetour({ module: 'blocs-fonciers', label: 'Blocs fonciers' }) }}>
-        ⛶ Assembler ce bloc →
-      </Bouton>
+      {/* OUTILS-REFONTE-1 (9d) — les actions du bloc vivent DANS le détail ouvert (la carte, elle, n'a plus
+          de bouton) : Assembler (IDU du bloc) · Scan patrimoine (SIREN). Fil de retour vers Blocs. */}
+      <div className="mt-1 flex flex-wrap gap-1.5">
+        <Bouton niveau="secondaire" ton="vert" data-bloc-assembler
+          onClick={(e) => { e.stopPropagation(); setMselPrefill(membres.map((m) => m.idu)); setModule('assemblage'); pushOutilRetour({ module: 'blocs-fonciers', label: 'Blocs fonciers' }) }}>
+          ⛶ Assembler ce bloc →
+        </Bouton>
+        {siren && (
+          <Bouton niveau="secondaire" ton="vert" data-bloc-scan
+            onClick={(e) => { e.stopPropagation(); setM02Prefill(siren); setModule('patrimoine'); pushOutilRetour({ module: 'blocs-fonciers', label: 'Blocs fonciers' }) }}>
+            Scan patrimoine →
+          </Bouton>
+        )}
+      </div>
     </div>
   )
 }
@@ -87,81 +95,57 @@ function BlocDetail({ blocId }: { blocId: number }) {
 // (2) deux tuiles Surface totale / SDP résiduelle estimée ;
 // (3) zonages PLU + petit bouton « Scan patrimoine → » (pt 42). Détail des parcelles à l'ouverture.
 function Carte({ it, ouvert, onToggle }: { it: BlocItem; ouvert: boolean; onToggle: () => void }) {
-  const setM02Prefill = useApp((s) => s.setM02Prefill)
-  const setModule = useApp((s) => s.setModule)
-  const pushOutilRetour = useApp((s) => s.pushOutilRetour)
-  // RECETTE-OUTILS-2 (R22) — zonages PLU : 4 puces au maximum, « +N » déplie le reste au clic.
+  // OUTILS-REFONTE-1 (9d) — zonages PLU : 5 puces au maximum, « +N » déplie le reste au clic.
   const [zonesDepliees, setZonesDepliees] = useState(false)
   const commune = it.communes[0]   // commune principale (première listée)
-  const ZONES_MAX = 4
+  const ZONES_MAX = 5
   const zonesVisibles = zonesDepliees ? it.zonages : it.zonages.slice(0, ZONES_MAX)
   const zonesCachees = it.zonages.length - ZONES_MAX
   return (
-    <div className="rounded-lg border border-line-2 bg-surface-3 px-2.5 py-2">
-      {/* RECETTE-OUTILS-2 (R22) — ligne 1 : chevron · dénomination SUR TOUTE LA LARGEUR (la pastille
-          « N parcelles » n'est plus à côté du nom : elle descend à la ligne des métadonnées, à côté de
-          la commune). SIREN insécable : « SIREN » + numéro ne se coupent jamais ; seul le numéro est en
-          lien bleu souligné. */}
-      <div data-bloc-row className="flex cursor-pointer items-start gap-2" onClick={onToggle}>
-        <Chevron open={ouvert} className="mt-0.5" />
-        <div className="min-w-0 flex-1">
-          <div className="break-words text-[15px] font-semibold leading-tight text-txt">
-            {it.denomination ?? '—'}
-          </div>
-          <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[10.5px] text-txt-mut">
-            {commune && <span className="break-words">{commune}</span>}
-            <span data-bloc-pastille className="rounded-full bg-surface-2 px-2 py-0.5 font-mono text-[10px] tnum text-txt">
-              {it.n_parcelles} parcelles
-            </span>
-            {it.siren && (
-              <span className="whitespace-nowrap">SIREN <Siren value={it.siren} className="font-mono text-[10px] text-[#6B8FD4]" /></span>
-            )}
+    // OUTILS-REFONTE-1 (9d) — carte CLIQUABLE, SANS bouton : nom · SIREN · commune · N parcelles ·
+    // surface · plancher restant · zones. Un clic ouvre le bloc (parcelles, carte, Scan patrimoine).
+    <div data-bloc-row role="button" tabIndex={0} onClick={onToggle}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle() } }}
+      className="cursor-pointer rounded-lg border border-line-2 bg-surface-3 px-3 py-2.5 transition-colors duration-quick hover:border-mint/50">
+      {/* ligne 1 : dénomination · SIREN (droite, vert) */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 break-words text-[14px] font-semibold leading-tight text-txt">{it.denomination ?? '—'}</div>
+        {it.siren && (
+          <span className="shrink-0 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+            <Siren value={it.siren} className="font-mono text-[11px] text-mint" />
+          </span>
+        )}
+      </div>
+      {/* ligne 2 : commune · N parcelles */}
+      <div className="mt-0.5 text-[10.5px] text-txt-mut">
+        {commune ?? '—'} · <span className="tnum">{it.n_parcelles}</span> parcelles
+      </div>
+      {/* ligne 3 : surface · plancher restant (vert) */}
+      <div className="mt-1.5 flex items-start gap-8">
+        <div>
+          <div className="tnum text-[13px] text-txt">{fmtM2(it.surface_totale_m2)}</div>
+          <div className="text-[9px] uppercase tracking-wide text-txt-dim">surface</div>
+        </div>
+        <div>
+          <div className="tnum text-[13px] font-medium text-mint">{fmtM2(it.sdp_residuelle_m2)}</div>
+          <div className="text-[9px] uppercase tracking-wide text-txt-dim">plancher restant <Estime />
+            {it.sdp_couverture < it.n_parcelles && <span className="normal-case"> · sur {it.sdp_couverture}/{it.n_parcelles}</span>}
           </div>
         </div>
       </div>
-
-      {/* ligne 2 — deux tuiles côte à côte : Surface totale · SDP résiduelle */}
-      <div className="mt-2 grid grid-cols-2 gap-1.5 pl-7">
-        <div className="rounded-md border border-line-2 bg-surface-2 px-2 py-1.5">
-          <div className="text-[9px] uppercase tracking-wide text-txt-dim">Surface totale</div>
-          <div className="mt-0.5 tnum text-[12px] text-txt">{fmtM2(it.surface_totale_m2)}</div>
-        </div>
-        {/* RECETTE-OUTILS-2 (R22) — tuile SDP : « SDP résiduelle » sur UNE ligne (libellé), valeur, puis
-            le badge « Estimé » SOUS la valeur, aligné à gauche — il ne chevauche plus le libellé. */}
-        <div className="rounded-md border border-line-2 bg-surface-2 px-2 py-1.5">
-          <div className="whitespace-nowrap text-[9px] uppercase tracking-wide text-txt-dim">SDP restante</div>
-          <div className="mt-0.5 tnum text-[12px] font-medium text-mint">{fmtM2(it.sdp_residuelle_m2)}</div>
-          <div className="mt-0.5"><Estime /></div>
-          {it.sdp_couverture < it.n_parcelles && (
-            <div className="mt-0.5 text-[9px] text-txt-dim">résiduel sur {it.sdp_couverture}/{it.n_parcelles}</div>
-          )}
-        </div>
-      </div>
-
-      {/* RECETTE-OUTILS-2 (R22) — ligne 3 : zonages PLU en PUCES mono (4 max + « +N » dépliable), sur une
-          ligne qui passe à la ligne normalement, jamais empilées en colonne. */}
-      <div className="mt-1.5 flex flex-wrap items-center gap-1 pl-7">
+      {/* ligne 4 : zonages PLU en puces (5 max + « +N » dépliable) */}
+      <div className="mt-1.5 flex flex-wrap items-center gap-1">
         {it.zonages.length === 0 && <span className="font-mono text-[10.5px] text-txt-dim">—</span>}
         {zonesVisibles.map((z, i) => (
-          <span key={i} data-bloc-zone className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[10px] text-txt-dim">{z}</span>
+          <span key={i} data-bloc-zone className="rounded-full border border-line-2 px-1.5 py-0.5 font-mono text-[10px] text-txt-dim">{z}</span>
         ))}
         {!zonesDepliees && zonesCachees > 0 && (
           <button data-bloc-zones-plus onClick={(e) => { e.stopPropagation(); setZonesDepliees(true) }}
-            className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[10px] text-mint hover:underline">+{zonesCachees}</button>
+            className="rounded-full border border-line-2 px-1.5 py-0.5 font-mono text-[10px] text-mint hover:underline">+{zonesCachees}</button>
         )}
       </div>
 
-      {/* RECETTE-OUTILS-2 (R22) — bouton « Scan patrimoine → » petit (contour, ~30 px, 12 px), aligné à
-          DROITE SOUS les puces (plus à côté d'elles). */}
-      <div className="mt-1.5 flex justify-end pl-7">
-        <Bouton niveau="secondaire" ton="vert" data-bloc-scan
-          className="h-[30px] shrink-0 px-2 text-[12px]"
-          onClick={(e) => { e.stopPropagation(); setM02Prefill(it.siren); setModule('patrimoine'); pushOutilRetour({ module: 'blocs-fonciers', label: 'Blocs fonciers' }) }}>
-          Scan patrimoine →
-        </Bouton>
-      </div>
-
-      {ouvert && <BlocDetail blocId={it.bloc_id} />}
+      {ouvert && <BlocDetail blocId={it.bloc_id} siren={it.siren} />}
     </div>
   )
 }
@@ -175,41 +159,29 @@ export function Blocs() {
   const [nMin, setNMin] = useState(2)
   const [inclurePublics, setInclurePublics] = useState(false)   // publics écartés par défaut
   const [openId, setOpenId] = useState<number | null>(null)
-  // RECETTE-1 R21 — deux temps : (1) on pose ses filtres ; (2) on clique « Voir les parcelles »,
-  // le listing s'ouvre et le bloc de filtres se replie en accordéon. `montre` gouverne les deux.
-  const [montre, setMontre] = useState(false)
-  const [filtresOuverts, setFiltresOuverts] = useState(true)
-  const voir = () => { setMontre(true); setFiltresOuverts(false) }
+  // RETOURS-27 (pt 5) — plus de « Voir les parcelles » : la liste se charge TOUT DE SUITE et se met à
+  // jour à chaque filtre (la clé de requête porte les filtres). Les filtres restent déployés.
+  const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
   const select = useApp((s) => s.select)             // RECETTE-1 F3 — fermer la fiche ouverte par un bloc
   const selectedIdu = useApp((s) => s.selectedIdu)
 
   // OUTILS-S1 (Lot D) — la sélection multiple ne servait QU'au pont Courrier (retiré) : plus de cases
   // à cocher par bloc (hors DA des autres outils). Le seul geste par bloc = « Scan patrimoine → ».
   const reset = () => { setOpenId(null) }
-  // RECETTE-1 (F3) — Réinitialiser : remet TOUS les filtres au défaut, replie le listing, rouvre les
-  // filtres, ferme la fiche éventuellement ouverte par un bloc. Reste dans l'outil.
-  const dirty = montre || commune !== null || surfMin > 0 || sdpMin > 0 || nMin !== 2 || inclurePublics
+  // RECETTE-1 (F3) — Réinitialiser : remet TOUS les filtres au défaut, ferme la fiche éventuellement
+  // ouverte par un bloc. Reste dans l'outil.
+  const dirty = commune !== null || surfMin > 0 || sdpMin > 0 || nMin !== 2 || inclurePublics
   const resetAll = () => {
     setCommune(null); setSurfMin(0); setSdpMin(0); setNMin(2); setInclurePublics(false)
-    setOpenId(null); setMontre(false); setFiltresOuverts(true)
+    setOpenId(null)
     if (selectedIdu) select(null)
   }
-  // RECETTE-OUTILS-3 (pt 39) — résumé court des filtres actifs, à droite de l'en-tête replié.
-  // Portée commune + seuls les paliers qui diffèrent du défaut ; tout au défaut → juste la portée.
-  const resumeFiltres = (() => {
-    const bouts: string[] = [commune ?? "Toute l'île"]
-    if (nMin !== 2) bouts.push(`${N_MIN.find((o) => o.v === nMin)?.label ?? `≥ ${nMin}`} parcelles`)
-    else bouts.push('≥ 2 parcelles')
-    if (surfMin > 0) bouts.push(`surface ${SURFACE_MIN.find((o) => o.v === surfMin)?.label ?? `≥ ${surfMin} m²`}`)
-    if (sdpMin > 0) bouts.push(`résiduel ${SDP_MIN.find((o) => o.v === sdpMin)?.label ?? `≥ ${sdpMin} m²`}`)
-    return bouts.join(' · ')
-  })()
   const q = useInfiniteQuery({
     queryKey: ['blocs', commune, surfMin, sdpMin, nMin, inclurePublics],
     queryFn: ({ pageParam }) => getBlocs(commune, surfMin, sdpMin, nMin, inclurePublics, pageParam),
     initialPageParam: 0,
     getNextPageParam: (last, pages) => { const n = pages.reduce((s, p) => s + p.items.length, 0); return n < last.total ? n : undefined },
-    enabled: montre,   // R21 — rien ne charge tant que « Voir les parcelles » n'est pas cliqué
+    // RETOURS-27 (pt 5) — chargée tout de suite (plus de gate « montre »).
   })
   const items = q.data?.pages.flatMap((p) => p.items) ?? []
   const meta = q.data?.pages[0]
@@ -219,94 +191,48 @@ export function Blocs() {
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       {/* RECETTE-OUTILS-1 (T5) — plus de « Réinitialiser » en tête : le lien « Réinitialiser les filtres »
           vit DANS le bloc Filtres (ci-dessous), visible seulement quand un filtre diffère du défaut. */}
-      {/* bandeau client — ce que l'outil EST (et n'est pas) */}
-      <div className="rounded-lg border px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut"
-        style={{ borderColor: `${TOKENS.mint}4d`, background: `${TOKENS.mint}0f` }}>
-        {/* RECETTE-2 (D15) — encart réduit à 2 lignes ; le détail (règle de contiguïté, particuliers hors
-            périmètre, nature des chiffres) vit dans le « i ». */}
-        Les parcelles <b className="text-txt">contiguës d'un même propriétaire</b> (personne morale) regroupées
-        en une assiette.
-        <Tip garder tip="Le regroupement : un bloc = des parcelles cadastrales en contact (≤ 0,5 m) appartenant au MÊME propriétaire personne morale (SIREN confirmé, fichiers des personnes morales DGFiP), à partir de 2 parcelles. Contiguïté purement géométrique (PostGIS), jamais un rapprochement par nom. Ce qu'il ne dit pas : les particuliers sont hors périmètre (identité non stable d'une parcelle à l'autre) ; un bloc n'affirme ni la constructibilité, ni un accord de vente. Les chiffres : surface, communes et zonages Sourcés (cadastre, PLU) ; SDP restante Estimée — somme des résiduels de la fiche (enveloppe PLU moins bâti existant), une parcelle hors PLU n'a pas de résiduel connu (le compteur « résiduel sur n/N » le dit). Tri par SDP restante agrégée décroissante.">
-          <span className="ml-1 cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
-        </Tip>
+      {/* RETOURS-25 (pt 11) — bandeau d'intro « Les parcelles contiguës d'un même propriétaire… » retiré. */}
+
+      {/* RETOURS-27 (pt 5) — filtres TOUJOURS déployés : 4 menus en grille 2×2 (sans chevauchement),
+          puis la case « publics » et « Réinitialiser » sur UNE ligne. La liste se met à jour à chaque
+          changement (pas de bouton « Voir les parcelles »). */}
+      <div data-blocs-filtres className="flex flex-col gap-2">
+        {/* RETOURS-28 (Blocs, 9d) — 4 BOUTONS-MENUS : le libellé est DANS le bouton (option sélectionnée),
+            pas d'intitulé extérieur ; grille de 2 colonnes ÉGALES (wrapClassName w-full) ; police resserrée
+            + pl-1 pour que « Plancher restant : tous » tienne SANS troncature sous le chevron (pr-9). */}
+        <div className="grid grid-cols-2 gap-2">
+          <Select data-blocs-commune aria-label="Commune" wrapClassName="w-full" value={commune ?? ''} onChange={(e) => { setCommune(e.target.value || null); reset() }}
+            className="h-8 w-full rounded-md border border-line-2 bg-surface-3 pl-2 text-[10px] text-txt focus:outline-none">
+            <option value="">Toute l'île</option>
+            {(communes.data ?? []).map((c) => <option key={c.commune} value={c.commune}>{c.commune}</option>)}
+          </Select>
+          <Select data-blocs-surf-min aria-label="Surface" wrapClassName="w-full" value={surfMin} onChange={(e) => { setSurfMin(Number(e.target.value)); reset() }}
+            className="h-8 w-full rounded-md border border-line-2 bg-surface-3 pl-2 text-[10px] text-txt focus:outline-none">
+            {SURFACE_MIN.map((o) => <option key={o.v} value={o.v}>Surface : {o.label}</option>)}
+          </Select>
+          <Select data-blocs-sdp-min aria-label="Plancher restant" wrapClassName="w-full" value={sdpMin} onChange={(e) => { setSdpMin(Number(e.target.value)); reset() }}
+            className="h-8 w-full rounded-md border border-line-2 bg-surface-3 pl-2 text-[10px] text-txt focus:outline-none">
+            {SDP_MIN.map((o) => <option key={o.v} value={o.v}>Plancher restant : {o.label}</option>)}
+          </Select>
+          <Select data-blocs-n-min aria-label="Nombre de parcelles" wrapClassName="w-full" value={nMin} onChange={(e) => { setNMin(Number(e.target.value)); reset() }}
+            className="h-8 w-full rounded-md border border-line-2 bg-surface-3 pl-2 text-[10px] text-txt focus:outline-none">
+            {N_MIN.map((o) => <option key={o.v} value={o.v}>{o.label} parcelles</option>)}
+          </Select>
+        </div>
+        <div className="flex items-center gap-2 text-[11px] text-txt-mut">
+          <Case data-blocs-inclure-publics
+            checked={inclurePublics} onChange={(e) => { setInclurePublics(e.target.checked); reset() }}
+            label="Inclure les propriétaires publics" />
+          <Tip garder tip="Communes, État, Région/Département/EPCI, établissements publics (dont EPF) et SEM — classés par leur catégorie juridique (fichiers des personnes morales, DGFiP), jamais par une liste de noms. Écartés par défaut car rarement cessibles à un promoteur.">
+            <span className="cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
+          </Tip>
+          {dirty && (
+            <Bouton niveau="lien" ton="vert" data-blocs-reset-filtres onClick={resetAll} className="ml-auto">
+              Réinitialiser
+            </Bouton>
+          )}
+        </div>
       </div>
-
-      {/* RECETTE-OUTILS-3 (pt 39) — contrôles de filtres : même rendu, qu'on soit AVANT (déployés,
-          sans chrome d'accordéon) ou APRÈS « Voir les parcelles » (repliés dans l'accordéon). */}
-      {(() => {
-        const controles = (
-          <div className="flex flex-col gap-2">
-            <CommuneScope commune={commune} noteFiltre={false} onChange={(c) => { setCommune(c); reset() }} />
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-txt-mut">
-              <label className="flex items-center gap-1.5">Surface totale
-                <Select data-blocs-surf-min value={surfMin} onChange={(e) => { setSurfMin(Number(e.target.value)); reset() }}
-                  className="h-8 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:outline-none">
-                  {SURFACE_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
-                </Select>
-              </label>
-              <label className="flex items-center gap-1.5">Résiduel
-                <Select data-blocs-sdp-min value={sdpMin} onChange={(e) => { setSdpMin(Number(e.target.value)); reset() }}
-                  className="h-8 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:outline-none">
-                  {SDP_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
-                </Select>
-              </label>
-              <label className="flex items-center gap-1.5">Parcelles
-                <Select data-blocs-n-min value={nMin} onChange={(e) => { setNMin(Number(e.target.value)); reset() }}
-                  className="h-8 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:outline-none">
-                  {N_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
-                </Select>
-              </label>
-            </div>
-            {/* Propriétaires publics (commune, État, collectivité, EP, SEM — catégorie juridique de la
-                source) écartés par défaut ; la case les rétablit. */}
-            <div className="flex items-center gap-2 text-[11px] text-txt-mut">
-              <Case data-blocs-inclure-publics
-                checked={inclurePublics} onChange={(e) => { setInclurePublics(e.target.checked); reset() }}
-                label="Inclure les propriétaires publics" />
-              <Tip garder tip="Communes, État, Région/Département/EPCI, établissements publics (dont EPF) et SEM — classés par leur catégorie juridique (fichiers des personnes morales, DGFiP), jamais par une liste de noms. Écartés par défaut car rarement cessibles à un promoteur.">
-                <span className="cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
-              </Tip>
-            </div>
-            {/* RECETTE-OUTILS-1 (T5) — « Réinitialiser les filtres » DANS le bloc Filtres, visible seulement
-                quand un filtre diffère de sa valeur par défaut. */}
-            {dirty && (
-              <Bouton niveau="lien" ton="ambre" data-blocs-reset-filtres onClick={resetAll} className="self-start">
-                Réinitialiser les filtres
-              </Bouton>
-            )}
-          </div>
-        )
-        // AVANT « Voir les parcelles » : filtres DÉPLOYÉS, sans en-tête repliable (rien derrière).
-        if (!montre) {
-          return (
-            <div data-blocs-filtres className="flex flex-col gap-2">
-              <div className="py-0.5 text-[11px] font-medium text-txt-dim">Filtres</div>
-              {controles}
-            </div>
-          )
-        }
-        // APRÈS : accordéon « › Filtres » FERMÉ, résumé des filtres actifs à DROITE de l'en-tête.
-        return (
-          <details data-blocs-filtres open={filtresOuverts}
-            onToggle={(e) => setFiltresOuverts((e.target as HTMLDetailsElement).open)}
-            className="flex flex-col gap-2">
-            <summary className="flex cursor-pointer list-none items-center gap-1.5 py-0.5 text-[11px] font-medium text-txt-dim marker:hidden hover:text-mint">
-              <Chevron open={filtresOuverts} />Filtres
-              <span data-blocs-filtres-resume className="ml-2 min-w-0 flex-1 truncate text-[10.5px] font-normal text-txt-mut">
-                {resumeFiltres}
-              </span>
-            </summary>
-            <div className="mt-1">{controles}</div>
-          </details>
-        )
-      })()}
-
-      {/* RECETTE-1 R21 — le geste explicite : ouvrir le listing (et replier les filtres). */}
-      {!montre && (
-        <Bouton niveau="primaire" ton="vert" data-blocs-voir onClick={voir} className="shrink-0">
-          Voir les parcelles
-        </Bouton>
-      )}
 
       {q.isLoading && <Squelette lignes={6} />}
       {q.isError && <ErrorState message="Signal momentanément indisponible — réessayez." retry={() => q.refetch()} />}
@@ -316,7 +242,7 @@ export function Blocs() {
           Aucun bloc de deux parcelles ou plus
           {commune ? <> à <b className="text-txt">{commune}</b></> : ' sur l’île'}
           {surfMin ? ` (surface ≥ ${fmtInt(surfMin)} m²)` : ''}{sdpMin ? ` (résiduel ≥ ${fmtInt(sdpMin)} m²)` : ''}
-          {nMin > 2 ? ` (≥ ${nMin} parcelles)` : ''}{meta.maj ? ` au ${meta.maj}` : ''}.
+          {nMin > 2 ? ` (≥ ${nMin} parcelles)` : ''}.{/* RETOURS-25 (pt 11) — date « au … » retirée. */}
           {!inclurePublics && meta.n_publics > 0 && (
             <> {fmtInt(meta.n_publics)} propriétaire{meta.n_publics > 1 ? 's' : ''} public{meta.n_publics > 1 ? 's' : ''} écarté{meta.n_publics > 1 ? 's' : ''} (cochez « inclure les propriétaires publics » pour les voir).</>
           )}
@@ -324,13 +250,12 @@ export function Blocs() {
       )}
       {meta && total > 0 && (
         <>
-          {/* bandeau de tête : N blocs · signal [source] au [millésime] */}
+          {/* RETOURS-29 (Blocs) — compteur : « N blocs appartenant à des sociétés · M blocs publics
+              masqués » ; la 2ᵉ partie disparaît quand « Inclure les propriétaires publics » est coché. */}
           <div data-blocs-bandeau className="rounded-lg bg-surface-2 px-3 py-2 text-[10.5px] leading-snug text-txt-mut">
-            <b data-blocs-total className="tnum text-txt">{fmtInt(total)}</b> bloc{total > 1 ? 's' : ''} ·
-            signal <b className="text-txt">propriétaires PM DGFiP</b>{meta.millesime ? ` (millésime ${meta.millesime})` : ''}
-            {meta.maj ? ` au ${meta.maj}` : ''}{commune ? ` — ${commune}` : ' — toute l’île'}
+            <b data-blocs-total className="tnum text-txt">{fmtInt(total)}</b> bloc{total > 1 ? 's' : ''} appartenant à des sociétés{commune ? ` — ${commune}` : ''}
             {!inclurePublics && meta.n_publics > 0 && (
-              <span data-blocs-ecartes className="text-txt-dim"> · {fmtInt(meta.n_publics)} propriétaire{meta.n_publics > 1 ? 's' : ''} public{meta.n_publics > 1 ? 's' : ''} écarté{meta.n_publics > 1 ? 's' : ''}</span>
+              <span data-blocs-ecartes className="text-txt-dim"> · {fmtInt(meta.n_publics)} bloc{meta.n_publics > 1 ? 's' : ''} public{meta.n_publics > 1 ? 's' : ''} masqué{meta.n_publics > 1 ? 's' : ''}</span>
             )}
           </div>
 
@@ -345,6 +270,8 @@ export function Blocs() {
           <ListPaginationFooter shown={items.length} total={total} step={BLOCS_PAGE} onMore={() => q.fetchNextPage()}>
             {q.isFetchingNextPage && <span className="text-txt-dim">chargement…</span>}
           </ListPaginationFooter>
+          {/* OUTILS-REFONTE-1 (9d) — ligne discrète : ce qu'un clic sur une carte ouvre. */}
+          <p className="shrink-0 text-[9.5px] leading-snug text-txt-dim">Un clic ouvre le bloc : parcelles, carte, Scan patrimoine.</p>
         </>
       )}
       {/* OUTILS-S1 (Lot D) — pied retiré : « Détail et méthode » remonté dans le « i » de l'en-tête ;

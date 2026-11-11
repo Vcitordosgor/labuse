@@ -460,8 +460,261 @@ def _print(rapport):
     ligne("GLOBAL (3 types)", rapport["global"])
 
 
+# ════════════════════════════════════════════════════════════════════════════════════════════════
+#  ESTIMER-3 — banc permanent ÉTENDU aux NIVEAUX D'INFORMATION (comparables semblables)
+#  ════════════════════════════════════════════════════════════════════════════════════════════════
+#  Mesure, PAR TYPE et PAR COMMUNE, l'écart de l'estimation « comparables semblables » (le MÊME calcul
+#  que `pige.estimer3.eur_m2_semblable` / `_selection_rayon` — banc == servi) à TROIS niveaux
+#  d'information : surface ESTIMÉE (emprise×ratio×niveaux) / surface CONNUE / surface + pièces connues.
+#  Écrit `estimer3_precision` (type, insee, niveau) : la précision servie à chaque temps de l'outil.
+#  No-leak : comparables strictement antérieurs, mutation jugée exclue (comme le banc estimer-2).
+_POOL3_SQL = """
+WITH mut AS (SELECT id_mutation, count(DISTINCT id_parcelle) np FROM dvf_mutations_parcelle GROUP BY 1),
+base AS (
+  SELECT dm.id_mutation mid, dm.id_parcelle idu, dm.type_local, dm.surface_reelle_bati bati,
+         COALESCE(dm.surface_terrain,0) terr, dm.valeur_fonciere val, dm.date_mutation::date d,
+         dm.code_commune insee
+  FROM dvf_mutations_parcelle dm JOIN mut m USING(id_mutation)
+  WHERE m.np=1 AND dm.nature_mutation IN ('Vente','Vente terrain à bâtir')
+    AND dm.type_local IN ('Maison','Appartement') AND dm.surface_reelle_bati>=20 AND dm.valeur_fonciere>0)
+SELECT b.mid, b.idu, b.type_local, b.bati, b.terr, b.val, b.d, b.insee,
+       (b.val / b.bati) AS eurm2,
+       ST_X(ST_Transform(p.centroid,2975)) x, ST_Y(ST_Transform(p.centroid,2975)) y,
+       dd.nombre_pieces pieces
+FROM base b
+JOIN parcels p ON p.idu=b.idu
+LEFT JOIN dvf_mutation_detail dd ON dd.id_mutation=b.mid AND dd.id_parcelle=b.idu
+WHERE (b.val / b.bati) BETWEEN 1000 AND 12000
+"""
+
+
+def _annee_dec3(d):
+    return d.year + (d.timetuple().tm_yday - 1) / 365.25
+
+
+def charger3(engine):
+    """Charge le pool bâti mono-parcelle (features : surface, terrain, pièces, x/y, date) + de quoi
+    estimer la surface AUTO (emprise, niveaux LiDAR, ratio communal) — comme `pige.estimer3` sert."""
+    from collections import defaultdict as _dd
+    out = {}
+    with engine.connect() as c:
+        rows = [dict(r) for r in c.execute(sa.text(_POOL3_SQL)).mappings().all()]
+        for r in rows:
+            r["ydec"] = _annee_dec3(r["d"])
+        out["pool"] = rows
+        idus = sorted({r["idu"] for r in rows})
+        emprise, niveaux = {}, {}
+        for i in range(0, len(idus), 5000):
+            lot = idus[i:i + 5000]
+            for r in c.execute(sa.text(
+                "SELECT idu, emprise_bati_m2 e FROM p_model_bati WHERE idu=ANY(:lot) AND emprise_bati_m2>0"),
+                {"lot": lot}).mappings():
+                emprise[r["idu"]] = float(r["e"])
+            for r in c.execute(sa.text(
+                "SELECT idu, max(labuse_hauteur_lidar_m(egout_m)) eg FROM batiment_hauteur_lidar "
+                "WHERE idu=ANY(:lot) GROUP BY idu"), {"lot": lot}).mappings():
+                if r["eg"] and float(r["eg"]) > 0:
+                    niveaux[r["idu"]] = max(1, round(float(r["eg"]) / ETAGE_REF_M))
+        ratio = {}
+        for r in c.execute(sa.text(
+            "WITH v AS (SELECT dm.code_commune insee, dm.id_parcelle, dm.id_mutation, "
+            "  sum(dm.surface_reelle_bati) surf FROM dvf_mutations_parcelle dm "
+            "  WHERE dm.type_local='Maison' AND dm.nature_mutation='Vente' AND dm.surface_reelle_bati>0 "
+            "  GROUP BY 1,2,3) "
+            "SELECT v.insee, count(*) n, percentile_cont(0.5) WITHIN GROUP "
+            "  (ORDER BY v.surf/b.emprise_bati_m2) ratio FROM v "
+            "JOIN p_model_bati b ON b.idu=v.id_parcelle AND b.emprise_bati_m2>0 GROUP BY 1")).mappings():
+            if r["ratio"] and (r["n"] or 0) >= RATIO_ASSISE_MIN:
+                ratio[r["insee"]] = round(float(r["ratio"]), 3)
+        by_com = _dd(list)
+        for r in rows:
+            by_com[r["insee"]].append(r)
+        out.update(emprise=emprise, niveaux=niveaux, ratio=ratio, by_com=dict(by_com))
+    return out
+
+
+def _surface_auto3(idu, D):
+    emp = D["emprise"].get(idu)
+    rat = D["ratio"].get(idu[:5])
+    if emp and rat:
+        niv = D["niveaux"].get(idu)
+        if niv:
+            return emp * rat * (MULT_NIVEAUX_1 if niv <= 1 else MULT_NIVEAUX_SUP)
+        return emp * rat
+    return None
+
+
+#: ESTIMER-3 — échantillon du banc des NIVEAUX plus LARGE que le banc estimer-2 (200) : la précision est
+#: servie PAR COMMUNE, il faut assez de ventes par commune pour un Q3 stable (sinon repli île). ~1 500
+#: couvre l'essentiel des ~2 300 ventes bâties 2025 ; les grosses communes dépassent le seuil, les
+#: petites replient sur l'île. Seuil de cellule commune = ventes minimales pour SERVIR le commune-spécifique.
+N_SAMPLE3 = 1500
+MIN_CELL3 = 25
+
+
+def calcule_niveaux(engine, n_sample: int = N_SAMPLE3, seed: int = SEED) -> dict:
+    """Rejoue le banc « comparables semblables » no-leak aux trois niveaux d'information et renvoie
+    {par_type_niveau, calibration3}. `calibration3` : lignes {type_bien, insee, niveau, n, ecart_median,
+    ecart_q3, pct_20} + repli « * » par (type, niveau). Réutilise le point de calcul SERVI (`estimer3`)."""
+    import math as _math
+    from collections import defaultdict as _dd
+    from . import estimer3 as E3
+    D = charger3(engine)
+    rng = random.Random(seed)
+    # sujets 2025 par type
+    maisons, apparts = [], []
+    for r in D["pool"]:
+        if r["d"].year != ANNEE_VENTES:
+            continue
+        reel = float(r["eurm2"])
+        if not (GARDE_BATI[0] <= reel <= GARDE_BATI[1]):
+            continue
+        (maisons if r["type_local"] == "Maison" else apparts).append(r)
+    rng.shuffle(maisons); rng.shuffle(apparts)
+    maisons, apparts = maisons[:n_sample], apparts[:n_sample]
+
+    NIV = ("sans_saisie", "surface", "surface_pieces")
+    # On mesure DEUX méthodes sur le MÊME échantillon : « secteur » (médiane SIMPLE du secteur = le prix
+    # d'ESTIMER-2) et « semblable » (médiane pondérée par la ressemblance = ESTIMER-3). Par cellule, on
+    # SERT la meilleure des deux (mandat) → une caractéristique/méthode ne dégrade jamais le servi.
+    err = _dd(lambda: _dd(lambda: {"semblable": [], "secteur": []}))     # [(type)][(insee,niveau)]
+    err_t = _dd(lambda: _dd(lambda: {"semblable": [], "secteur": []}))   # [(type)][niveau] (repli île)
+
+    def _un(k, type_bien):
+        sx, sy = float(k["x"]), float(k["y"])
+        dv = k["ydec"]
+        surf_vraie = float(k["bati"])
+        surf_auto = _surface_auto3(k["idu"], D)
+        # comparables de la commune, no-leak (antérieurs, sujet exclu), avec distance au sujet
+        comps = []
+        for c in D["by_com"].get(k["insee"], ()):
+            if c["mid"] == k["mid"] or c["ydec"] >= dv:
+                continue
+            comps.append({**c, "distance_m": _math.hypot(float(c["x"]) - sx, float(c["y"]) - sy),
+                          "prix_m2_f": float(c["eurm2"]), "surface_m2": float(c["bati"]),
+                          "terrain_m2": float(c["terr"]), "annee": c["d"].year})
+        sel, _radius, _cf = E3._selection_rayon(comps, type_bien)
+        for niveau in NIV:
+            vraie_surf = (niveau != "sans_saisie")
+            use_pieces = (niveau == "surface_pieces")
+            # Un appartement n'a pas de surface MESURABLE sans saisie (emprise×ratio = formule maison) :
+            # le niveau « sans saisie » n'existe pas pour lui (pas de total servi sans surface connue).
+            if type_bien == "appartement" and not vraie_surf:
+                continue
+            # pondération surface SEULEMENT si la surface est CONNUE (comme le servi) ; la surface du
+            # TOTAL reste l'estimée au niveau sans saisie.
+            surf_poids = surf_vraie if vraie_surf else None
+            surf_tot = surf_vraie if vraie_surf else surf_auto
+            if not surf_tot or len(sel) < E3.SEUIL:
+                continue
+            subj = {"surf_poids": surf_poids, "terrain": float(k["terr"]) or None,
+                    "pieces": (float(k["pieces"]) if (use_pieces and k["pieces"]) else None)}
+            _q1, med, _q3 = E3.eur_m2_semblable([dict(c) for c in sel], subj, type_bien,
+                                                use_pieces=use_pieces)
+            # « secteur » (ESTIMER-2) = médiane SIMPLE non pondérée du MÊME échantillon sélectionné.
+            med_sec = statistics.median([float(c["eurm2"]) for c in sel])
+            val = float(k["val"])
+            if med:
+                e = abs(surf_tot * med / val - 1.0) * 100
+                err[type_bien][(k["insee"], niveau)]["semblable"].append(e)
+                err_t[type_bien][niveau]["semblable"].append(e)
+            if med_sec:
+                es = abs(surf_tot * med_sec / val - 1.0) * 100
+                err[type_bien][(k["insee"], niveau)]["secteur"].append(es)
+                err_t[type_bien][niveau]["secteur"].append(es)
+
+    for k in maisons:
+        _un(k, "maison")
+    for k in apparts:
+        _un(k, "appartement")
+
+    def _meilleure(d: dict) -> dict:
+        """Choisit la MEILLEURE méthode (écart médian le plus bas) entre secteur et semblable, et renvoie
+        {methode, n, ecart_median, ecart_q3, pct_20, secteur, semblable} (les deux mesures pour le rapport)."""
+        qs = {m: _quart(d[m]) for m in ("secteur", "semblable")}
+        cand = {m: q for m, q in qs.items() if q["mediane"] is not None}
+        if not cand:
+            return {"methode": None, "n": 0, "ecart_median": None, "ecart_q3": None, "pct_20": None,
+                    "secteur": qs["secteur"], "semblable": qs["semblable"]}
+        best = min(cand, key=lambda m: cand[m]["mediane"])
+        q = cand[best]
+        return {"methode": best, "n": q["n"], "ecart_median": q["mediane"], "ecart_q3": q["q3"],
+                "pct_20": q["pct_20"], "secteur": qs["secteur"], "semblable": qs["semblable"]}
+
+    calibration3 = []
+    par_type_niveau = {}
+    for t in ("maison", "appartement"):
+        par_type_niveau[t] = {niv: _meilleure(err_t[t][niv]) for niv in NIV}
+        for niv in NIV:
+            b = par_type_niveau[t][niv]
+            if b["methode"] is not None:
+                calibration3.append({"type_bien": t, "insee": "*", "niveau": niv, "n": b["n"],
+                                     "methode": b["methode"], "ecart_median": b["ecart_median"],
+                                     "ecart_q3": b["ecart_q3"], "pct_20": b["pct_20"]})
+        for (insee, niv), d in err[t].items():
+            b = _meilleure(d)
+            if b["methode"] is not None and b["n"] >= MIN_CELL3:
+                calibration3.append({"type_bien": t, "insee": insee, "niveau": niv, "n": b["n"],
+                                     "methode": b["methode"], "ecart_median": b["ecart_median"],
+                                     "ecart_q3": b["ecart_q3"], "pct_20": b["pct_20"]})
+    return {"par_type_niveau": par_type_niveau, "calibration3": calibration3,
+            "meta": {"n_sample": n_sample, "tires": {"maison": len(maisons), "appartement": len(apparts)}}}
+
+
+_DDL3 = """
+CREATE TABLE IF NOT EXISTS estimer3_precision (
+  type_bien    varchar(16) NOT NULL,
+  insee        varchar(8)  NOT NULL,          -- '*' = repli île du type
+  niveau       varchar(20) NOT NULL,          -- sans_saisie | surface | surface_pieces
+  methode      varchar(12) NOT NULL DEFAULT 'semblable',  -- secteur (ESTIMER-2) | semblable (ESTIMER-3) : la MEILLEURE
+  n_ventes     integer     NOT NULL,
+  ecart_median real        NOT NULL,          -- écart |estimé−réel| médian MESURÉ (%) de la méthode servie
+  ecart_q3     real,                          -- borne de la fourchette servie (%)
+  pct_20       real,
+  maj          timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (type_bien, insee, niveau)
+)
+"""
+
+
+def persiste3(engine, rapport: dict) -> int:
+    """Écrit `estimer3_precision` (remplace le contenu) depuis `calibration3`. Renvoie le nombre de lignes."""
+    rows = list(rapport["calibration3"])
+    with engine.begin() as c:
+        # La table EST la photo du dernier banc : on la recrée (le schéma peut évoluer — ajout `methode`).
+        c.execute(sa.text("DROP TABLE IF EXISTS estimer3_precision"))
+        c.execute(sa.text(_DDL3))
+        for r in rows:
+            c.execute(sa.text(
+                "INSERT INTO estimer3_precision "
+                "(type_bien,insee,niveau,methode,n_ventes,ecart_median,ecart_q3,pct_20,maj) "
+                "VALUES (:t,:i,:nv,:me,:n,:em,:q3,:p20, now())"),
+                {"t": r["type_bien"], "i": r["insee"], "nv": r["niveau"], "me": r.get("methode", "semblable"),
+                 "n": r["n"], "em": r["ecart_median"], "q3": r["ecart_q3"], "p20": r["pct_20"]})
+    return len(rows)
+
+
+def _print3(rapport):
+    print("\n════════  BANC ESTIMER-3 — niveaux d'information (no-leak, ventes 2025)  ════════")
+    print(f"  tirés : {rapport['meta']['tires']}")
+    for t in ("maison", "appartement"):
+        print(f"  {t.upper()}  (secteur=ESTIMER-2 · semblable=ESTIMER-3 · SERVI=la meilleure)")
+        for niv, q in rapport["par_type_niveau"][t].items():
+            sec, sem = q["secteur"], q["semblable"]
+            print(f"    {niv:<16} secteur méd {str(sec['mediane'])+'%':>7} ±20% {str(sec['pct_20'])+'%':>6}"
+                  f"  | semblable méd {str(sem['mediane'])+'%':>7} ±20% {str(sem['pct_20'])+'%':>6}"
+                  f"  → SERVI {q['methode']} méd {str(q['ecart_median'])+'%':>7} Q3 {str(q['ecart_q3'])+'%':>7}")
+
+
 if __name__ == "__main__":
     url = os.environ.get("LABUSE_DATABASE_URL", "postgresql+psycopg:///labuse")
     eng = sa.create_engine(url)
-    rep = calcule(eng)
-    _print(rep)
+    import sys
+    if "--niveaux" in sys.argv:
+        rep3 = calcule_niveaux(eng)
+        _print3(rep3)
+    else:
+        rep = calcule(eng)
+        _print(rep)
+        rep3 = calcule_niveaux(eng)
+        _print3(rep3)

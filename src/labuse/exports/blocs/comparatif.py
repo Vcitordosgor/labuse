@@ -141,46 +141,35 @@ def _pct(r, k, suffixe="%"):
 
 # Les lignes de Comparer, DANS L'ORDRE de l'écran : (label, prov, fn(row)->str|None). prov=None → ligne
 # « Classement LABUSE » (aucun badge, comme à l'écran).
+# RETOURS-29 (Comparatif v2, maquette 15) — le PDF suit le MÊME CONTENU que l'écran : mêmes lignes (dans
+# le même ordre), mêmes badges sourcé/estimé. Plus de classement LABUSE, de prix de marché, de logements.
+_PROPRIO = {"morale": "personne morale", "public": "public", "particulier": "particulier",
+            "succession": "succession", "indivision": "indivision"}
 _LIGNES = [
+    # TERRAIN
     ("Surface", "s", lambda r: _m2(r, "surface_m2")),
-    # DOCS-FIX-1 (P5) — jamais « — » : la zone vient de zone_dominante (servie par /compare, comme la
-    # fiche) ; si aucune zone PLU ne couvre la parcelle, on écrit la RAISON en clair, pas un tiret.
-    ("Zone PLU", "s", lambda r: esc(r.get("zone")) if r.get("zone") else "hors zonage PLU"),
-    ("Classement LABUSE", None, _classement),
-    # RECETTE-PROD-1 (12) — « Constructible : oui/non » (verdict faisabilité) mentait (zone
-    # constructible mais 0 potentiel résiduel = « oui » trompeur). On sert la constructibilité de
-    # ZONE (famille ∉ A/N), le potentiel vivant sur la ligne « SDP résiduelle » suffixée de sa cause.
-    ("Zone constructible", "s", lambda r: _oui_non(r.get("zone_constructible"))),
-    # IMPLANTATION-4 (LOT C) — SDP de l'ancien moteur = « SDP maximale réglementaire » (jamais « du
-    # scénario », réservé à l'Étude) ; même libellé qu'à l'écran Comparer.
-    # DOCS-COHERENCE-1 (A9) — libellés COMPLETS : ce que mesure chaque SDP (comme le §10 du Dossier).
-    ("SDP maximale réglementaire, terrain libéré", "e", lambda r: _m2(r, "sdp_max_m2")),
-    ("SDP restante, bâti conservé", "e", lambda r: _sdp_residuelle_cause(r)),  # NU-3-M-T01 : « restante » partout
-    ("Emprise au sol max (PLU)", "s", lambda r: (_pct(r, "emprise_ces_pct") or "non réglementée")),
-    ("Taux d'occupation du gabarit", "e", lambda r: esc(fmt_taux_emprise(r.get("taux_emprise_pct")))),
-    ("Sous-densité", "e", lambda r: _oui_non(r.get("sous_densite"))),
-    # CHASSE-DOCS-FIX-1 (Lot 5) — charge foncière NÉGATIVE : on garde le chiffre mais on DIT ce qu'il
-    # signifie (« le foncier ne se paie pas » à ces hypothèses), jamais un « -59 €/m² » nu et énigmatique.
-    ("Charge foncière /m² terrain", "e", lambda r: ((f"{_i(r.get('charge_fonciere_m2'))} €/m²"
+    ("Bâti existant", "s", lambda r: (("aucun" if (r.get("bati_existant_pct") or 0) <= 0
+                                       else f"{_i(r.get('bati_existant_pct'))} % du terrain")
+                                      if r.get("bati_existant_pct") is not None else None)),
+    ("Propriétaire", "s", lambda r: _PROPRIO.get(r.get("proprietaire"))),
+    # URBANISME
+    ("Hauteur autorisée", "s", lambda r: ((f"R+{max(0, int(r['gabarit_niveaux_max']) - 1)}"
+                                           + (" + combles" if r.get("gabarit_combles") else ""))
+                                          if r.get("gabarit_niveaux_max") is not None else None)),
+    ("Emprise au sol maximale", "s", lambda r: (_pct(r, "emprise_ces_pct") or "non réglementée")),
+    # POTENTIEL CONSTRUCTIBLE
+    ("Plancher possible · bâti conservé", "e", lambda r: _sdp_residuelle_cause(r)),
+    ("Plancher possible · reconstruction", "e", lambda r: _m2(r, "sdp_max_m2")),
+    ("Part du gabarit déjà occupée", "e", lambda r: esc(fmt_taux_emprise(r.get("taux_emprise_pct")))),
+    # CHASSE-DOCS-FIX-1 (Lot 5) — charge foncière NÉGATIVE : chiffre + explication, jamais un « -59 €/m² » nu.
+    ("Charge foncière", "e", lambda r: ((f"{_i(r.get('charge_fonciere_m2'))} €/m²"
         + (" — Bilan déficitaire : à ces hypothèses, le foncier ne se paie pas"
            if (r.get("charge_fonciere_m2") or 0) < 0 else ""))
         if r.get("charge_fonciere_m2") is not None else None)),
-    # DOCS-COHERENCE-1 (A8) — prix lus de l'id de la fiche (secteur autour de la parcelle), comme le
-    # Dossier §8 et l'Étude de zone ; plus aucun calcul de prix propre au Comparatif.
-    ("Prix du terrain (secteur)", "e", _terrain_prix_ventes),
-    ("Prix du bâti (secteur)", "e", lambda r: _eur_m2_ventes(r, "prix_secteur_bati_m2", "prix_bati_n", "prix_bati_rayon_m")),
-    # IMPLANTATION-4 (LOT B) + FIX-ORFEVRE-1 (décision Vic 18/10/2026) — aucun nombre de logements de
-    # l'ancien calcul (fourchette estimate_capacity) : la ligne renvoie à l'Étude de faisabilité, seule
-    # à compter des logements. prov=None → aucun badge, comme « Classement LABUSE » (un renvoi, pas une
-    # donnée). La note « capacité maximale » reste sous le tableau.
-    ("Logements possibles", None, lambda r: "voir l'Étude de faisabilité"),
-    ("Bâti existant", "s", lambda r: (f"{_i(r.get('bati_existant_pct'))} % du terrain" if r.get("bati_existant_pct") is not None else None)),
-    ("Gabarit max", "s", lambda r: (f"R+{max(0, int(r['gabarit_niveaux_max']) - 1)}" if r.get("gabarit_niveaux_max") is not None else None)),
-    ("Accès & réseaux", "s", lambda r: esc(r.get("acces_reseaux")) if r.get("acces_reseaux") else None),
-    ("Assainissement", "e", lambda r: esc(r.get("assainissement")) if r.get("assainissement") else None),
-    ("Propriétaire", "s", lambda r: {"morale": "personne morale", "particulier": "particulier",
-                                      "succession": "succession", "indivision": "indivision"}.get(r.get("proprietaire"))),
-    ("Contrainte majeure", "s", lambda r: esc(r.get("contrainte_majeure")) if r.get("contrainte_majeure") else (f"{r.get('n_contraintes')} signalée(s)" if r.get("n_contraintes") else "aucune")),
+    # RISQUES ET CONTRAINTES
+    ("Assainissement", "s", lambda r: esc(r.get("assainissement")) if r.get("assainissement") else None),
+    ("Contraintes relevées", "s", lambda r: (" · ".join(esc(c) for c in (r.get("contraintes") or []))
+                                             if (r.get("contraintes") or []) else "aucune relevée")),
 ]
 
 _BADGE = {"s": ("s", "sourcé"), "e": ("e", "estimé")}
@@ -190,11 +179,15 @@ def rendu(rows) -> str:
     rows = list(rows or [])[:3]
     if not rows:
         return section("Comparatif", "<p>Aucune parcelle comparable.</p>")
-    # en-tête : une colonne par parcelle (référence cadastrale + commune).
-    thead = "<tr><th></th>" + "".join(
-        f'<th>{esc(_ref_courte(r.get("idu", "")))}'
-        + (f'<div class="sub">{esc(r.get("commune"))}</div>' if r.get("commune") else "") + "</th>"
-        for r in rows) + "</tr>"
+    # RETOURS-29 (maquette 15) — en-tête : IDU · adresse (aperçu parcelle) · zone + surface, comme l'écran.
+    def _col(r):
+        idu = esc(r.get("idu", ""))
+        adr = esc(r.get("adresse")) if r.get("adresse") else (esc(r.get("commune")) if r.get("commune") else "")
+        zs = " · ".join(x for x in [esc(r.get("zone")) if r.get("zone") else None,
+                                    (f'{_i(r.get("surface_m2"))} m²' if r.get("surface_m2") is not None else None)] if x)
+        sub = (f'<div class="sub">{adr}</div>' if adr else "") + (f'<div class="sub">{zs}</div>' if zs else "")
+        return f"<th>{idu}{sub}</th>"
+    thead = "<tr><th></th>" + "".join(_col(r) for r in rows) + "</tr>"
     body = ""
     for label, prov, fn in _LIGNES:
         badge = ""
