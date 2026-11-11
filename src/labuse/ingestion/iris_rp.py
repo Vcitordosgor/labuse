@@ -98,10 +98,14 @@ def _num(v):
 
 
 def ingest_iris_rp(session: Session, *, url_logement: str = URL_LOGEMENT,
-                   url_population: str = URL_POPULATION,
+                   url_population: str = URL_POPULATION, millesime: str = MILLESIME,
                    client: httpx.Client | None = None, log=print) -> dict:
     """Télécharge les deux bases nationales, garde le 974 (COM commence par 974), upsert par
-    IRIS. Rend {"iris": n, "communes": n, "sans_pop": n}."""
+    IRIS. Rend {"iris": n, "communes": n, "sans_pop": n}.
+
+    FRAICHEUR-FIX-1 (point 4) — `url_logement`/`url_population`/`millesime` paramétrés : la bascule
+    RP2023 = un seul appel avec les URLs INSEE RP2023 et `millesime="RP2023, …"` (le contrôle de
+    millésime lit ensuite `max(iris_rp.millesime)` et passe « à jour » une fois l'ingestion faite)."""
     own = client is None
     c = client or httpx.Client(timeout=max(get_settings().http_timeout_s, 300.0),
                                headers={"User-Agent": constants.USER_AGENT},
@@ -116,7 +120,7 @@ def ingest_iris_rp(session: Session, *, url_logement: str = URL_LOGEMENT,
     n = 0
     for r in rows_log:
         iris = r["IRIS"]
-        vals: dict = {"iris": iris, "insee": r["COM"], "millesime": MILLESIME}
+        vals: dict = {"iris": iris, "insee": r["COM"], "millesime": millesime}
         for src, dst in _LOG_COLS.items():
             vals[dst] = _num(r.get(src))
         p = pop_par_iris.get(iris) or {}

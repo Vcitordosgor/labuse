@@ -1763,8 +1763,14 @@ def ingest_sirene(ctx: JobContext) -> None:
 
 def ingest_sitadel(ctx: JobContext) -> None:
     """Permis SITADEL mensuel, PUIS événements de veille foncière (comparaison aux critères clients) +
-    calcul d'un golden CANDIDAT (jamais servi — bascule = geste de Vic, cf. K5)."""
-    _ingest_via_cli(ctx, "ingest-permits")
+    calcul d'un golden CANDIDAT (jamais servi — bascule = geste de Vic, cf. K5).
+
+    FRAICHEUR-FIX-1 (point 2) — DELTA mensuel (`--refresh`, recouvrement 3 mois) et non plus un backfill
+    complet 2013+ à chaque passage : le passage mensuel reste léger et ne risque plus le timeout
+    (une des raisons pour lesquelles le poste restait sans trace d'exécution utile — FRAICHEUR-1 §3.1).
+    La CAUSE première du « jamais exécuté » (unique créneau du 10 mangé par le déploiement du matin)
+    est corrigée par le rattrapage post-déploiement (point 8, `labuse jobs rattraper`)."""
+    _ingest_via_cli(ctx, "ingest-permits", "--refresh")
     from .copilote_v2 import veilles as veilles_mod
     r = veilles_mod.evaluer_toutes(ctx.db)
     ctx.compte(veille_fonciere=r)
@@ -1773,6 +1779,20 @@ def ingest_sitadel(ctx: JobContext) -> None:
     from . import golden_ops
     ctx.compte(candidat=golden_ops.rapport_candidat(dry_run=ctx.dry_run))
     _persist_millesime(ctx, "sitadel")   # E3
+
+
+def ingest_inpi_rne(ctx: JobContext) -> None:
+    """FRAICHEUR-FIX-1 (point 3) — rafraîchit les dirigeants RNE (table pm_dirigeants) des personnes
+    morales foncières (outil Successions), via la commande VIVANTE (delta résumable par SIREN). PUIS
+    pose la date de la DONNÉE (max ingested_at) sur la source ET acquitte sa sentinelle de fraîcheur —
+    pour que l'écran Successions et le rappel de cadence lisent la même vérité (la donnée, pas le catalogue)."""
+    from sqlalchemy import text as _t
+    _ingest_via_cli(ctx, "ingest-inpi-rne")
+    maj = ctx.db.execute(_t("SELECT max(ingested_at)::date FROM pm_dirigeants")).scalar()
+    n = ctx.db.execute(_t("SELECT count(*) FROM pm_dirigeants")).scalar()
+    ctx.db.execute(_t("UPDATE data_sources SET last_sync_at = now(), source_horizon_at = :h, "
+                      "updated_at = now() WHERE name = 'INPI RNE (dirigeants)'"), {"h": maj})
+    ctx.compte(dirigeants=int(n or 0), millesime_donnee=str(maj) if maj else None)
 
 
 def _persist_millesime(ctx: JobContext, key: str) -> None:
@@ -1852,6 +1872,47 @@ def sonde_sources(ctx: JobContext) -> None:
     l'ancien `sentinelle-sources` : parcourt les lignes source_veille échues, sonde l'amont, alerte,
     n'ingère rien. Alias conservé pour ne pas dupliquer la logique."""
     sentinelle_sources(ctx)
+
+
+def fraicheur_nuit(ctx: JobContext) -> None:
+    """FRAICHEUR-FIX-1 (point 7) — LE CONTRÔLE PERMANENT. Chaque nuit, APRÈS la sonde (dernier publié
+    frais), on REJOUE le tableau des sources avec le contrôle de millésime : toute source qui PASSE
+    « en retard » (publié prouvé plus récent que l'ingéré) ou « à vérifier » remonte
+      · chez JOHN (onglet veille, axe « sources », avec le nom de la source et le millésime attendu) ;
+      · à l'ADMIN (porte d'alerte unique ops_alertes → mail + cloche, lien /sources) ;
+      · à la page DONNÉES (instantané `fraicheur_controle_nuit`, lu par l'écran, + `etats_sources`).
+    Une source rentrée dans l'ordre RÉSOUT son incident (plus jamais une alerte qui ne se referme pas)."""
+    from sqlalchemy import text
+
+    from . import controle_millesime, ops_alertes
+    from .john import veille as john_veille
+
+    r = controle_millesime.rejouer_nuit(ctx.db)
+    noms_retard = {e["name"] for e in r["retards"]}
+
+    for e in r["retards"]:
+        attendu, servi = e.get("millesime_publie"), e.get("millesime_ingere")
+        ops_alertes.signaler(
+            ctx.db, f"fraicheur-retard:{e['name']}",
+            f"Source en retard : {e['name']}",
+            f"L'amont publie {attendu}, LABUSE sert {servi or 'un millésime non prouvé'}. "
+            f"Source à recharger : {e['name']} (millésime attendu {attendu}).",
+            lien="/sources")
+        john_veille.signaler_retard_source(ctx.db, e["name"], attendu, servi)
+
+    # résolution des incidents des sources RENTRÉES DANS L'ORDRE (plus en retard ce soir).
+    ouverts = ctx.db.execute(text(
+        "SELECT cle FROM ops_incidents WHERE cle LIKE 'fraicheur-retard:%' AND resolu_at IS NULL"
+    )).scalars().all()
+    resolus = 0
+    for cle in ouverts:
+        if cle.split(":", 1)[1] not in noms_retard:
+            ops_alertes.resoudre(ctx.db, cle)
+            resolus += 1
+
+    ctx.compte(total=r["total"], retards=len(r["retards"]), a_verifier=len(r["a_verifier"]),
+               incidents_resolus=resolus,
+               noms_en_retard=sorted(noms_retard))
 
 
 def _cout_agent_source_eur(db) -> float:
@@ -2194,3 +2255,56 @@ def regles_references(ctx) -> None:
         v = out.get("verdict", "erreur")
         verdicts[v] = verdicts.get(v, 0) + 1
     ctx.compte(fiches_a_reverifier=len(cibles), **{f"verdict_{k}": n for k, n in verdicts.items()})
+
+
+# ═══════════════════════════ ESTIMER-2 (D-6) — banc de précision de nuit ═══════════════════════════
+# Seuils de RÉGRESSION : on alerte (le job échoue → mail admin) si l'écart médian MESURÉ d'un type se
+# dégrade de ≥ 5 points, ou si la part SANS PRIX d'un type remonte de ≥ 5 points, vs le dernier banc vert.
+_BANC_SEUIL_ECART_PTS = 5.0
+_BANC_SEUIL_SANS_PRIX_PTS = 5.0
+
+
+def estimer_banc_precision(ctx) -> None:
+    """ESTIMER-2 (fix/estimer-2, D-6) — rejoue CHAQUE NUIT le banc de précision de l'outil « Estimer un
+    bien » (200 maisons + 200 terrains + 200 appartements, SANS FUITE), persiste la table de calibration
+    SERVIE (fourchette + fiabilité mesurées par commune/type, D-5) et ALERTE si la précision se dégrade
+    vs le dernier banc (écart médian +≥5 pts ou part sans prix +≥5 pts). Lecteur UNIQUE :
+    `pige.banc_estimer`."""
+    from . import jobs_journal
+    from .pige import banc_estimer as be
+    eng = ctx.db.get_bind()
+    rep = be.calcule(eng)
+    pt = rep["par_type"]
+    if not ctx.dry_run:
+        n_calib = be.persiste(eng, rep)
+    else:
+        n_calib = 0
+    compteurs = {"n_calibration": n_calib}
+    for t in ("maison", "appartement", "terrain"):
+        compteurs[f"{t}_ecart_median"] = pt[t]["mediane"]
+        compteurs[f"{t}_pct_20"] = pt[t]["pct_20"]
+        compteurs[f"{t}_sans_prix"] = pt[t].get("pct_sans_prix")
+    compteurs["global_ecart_median"] = rep["global"]["mediane"]
+    ctx.compte(**compteurs)
+
+    # Régression vs le dernier banc RÉUSSI (job_runs). Le runner n'a pas encore écrit CE run → le plus
+    # récent de l'historique est le précédent.
+    try:
+        hist = jobs_journal.historique(ctx.db, "estimer-banc-precision", n=5)
+    except Exception:  # noqa: BLE001 — pas d'historique (1er passage) → aucune régression possible
+        hist = []
+    prec = next((h for h in hist if h.get("statut") == "ok" and (h.get("compteurs") or {})), None)
+    regressions = []
+    if prec:
+        pc = prec["compteurs"]
+        for t in ("maison", "appartement", "terrain"):
+            av = pc.get(f"{t}_ecart_median")
+            nv = compteurs[f"{t}_ecart_median"]
+            if isinstance(av, (int, float)) and isinstance(nv, (int, float)) and nv - av >= _BANC_SEUIL_ECART_PTS:
+                regressions.append(f"{t} : écart médian {av:.1f}% → {nv:.1f}% (+{nv-av:.1f} pts)")
+            avs, nvs = pc.get(f"{t}_sans_prix"), compteurs[f"{t}_sans_prix"]
+            if isinstance(avs, (int, float)) and isinstance(nvs, (int, float)) and nvs - avs >= _BANC_SEUIL_SANS_PRIX_PTS:
+                regressions.append(f"{t} : part sans prix {avs:.1f}% → {nvs:.1f}% (+{nvs-avs:.1f} pts)")
+    ctx.compte(regression=bool(regressions))
+    if regressions:
+        raise RuntimeError("Banc Estimer — précision DÉGRADÉE : " + " ; ".join(regressions))

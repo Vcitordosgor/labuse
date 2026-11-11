@@ -226,6 +226,7 @@ def _ventes_bati_dedup(db: Session, parcel_id: int) -> tuple[list[dict], int]:
         "  CASE WHEN d.type_local ILIKE '%APPARTEMENT%' THEN 'appartement' ELSE 'maison' END AS cat, "
         "  (d.nature_mutation ILIKE '%futur%') AS vefa, "
         "  extract(year FROM d.date_mutation)::int AS annee, "
+        "  COALESCE(d.surface_terrain, 0) AS terr, "
         "  round(ST_Distance(d.geom::geography, p.centroid::geography)) AS dist "
         "FROM dvf_mutations d, parcels p "
         "WHERE p.id = :pid AND d.commune = p.commune AND d.surface_reelle_bati >= 20 "
@@ -245,7 +246,8 @@ def _ventes_bati_dedup(db: Session, parcel_id: int) -> tuple[list[dict], int]:
             seen[key]["dist"] = min(seen[key]["dist"], float(r["dist"]))
             continue
         d = {"prix": float(r["prix"]), "cat": r["cat"], "annee": int(r["annee"]),
-             "dist": float(r["dist"]), "vefa": bool(r["vefa"])}
+             "dist": float(r["dist"]), "vefa": bool(r["vefa"]),
+             "surf": float(r["surf"] or 0), "terr": float(r["terr"] or 0)}
         seen[key] = d
         sales.append(d)
     return sales, len(rows) - len(sales)
@@ -263,6 +265,84 @@ def _selection_secteur(sales: list[dict], base_plans: list[tuple], min_n: int) -
             if len(kept) >= min_n:
                 return (label, kept, ecartees, r, commune, sub, periode_label)
     return None
+
+
+# ─── ESTIMER-2 (fix/estimer-2, D-2) — LA MÉDIANE PONDÉRÉE, lecteur UNIQUE servi partout ──────────────
+# L'audit ESTIMER-AUDIT-1 §4-e a montré que la médiane PONDÉRÉE par la ressemblance (ESTIMER-PRECISION-1)
+# était calculée PUIS JETÉE : `comparateur_bien` la remplaçait par la médiane SIMPLE de `reference_locale`
+# pour le chiffre servi. Le banc permanent (pige.banc_estimer) a VÉRIFIÉ hors échantillon (sans fuite)
+# que la pondérée TIENT son gain (maison 24,7 %→23,0 %, appartement 14,4 %→13,7 % d'écart médian ; part
+# à ±20 % en hausse pour les deux, jamais pire). On SERT donc la pondérée, et par UN SEUL calcul :
+# `_mediane_ponderee` est appelée par `sector_price` (fiche/Dossier/bilan) ET `reference_locale`
+# (Estimer/Radar) sur le MÊME échantillon `kept` → une seule valeur, documents cohérents (0 écart banc).
+# Poids = RESSEMBLANCE (distance au centroïde, écart de surface au bien sujet, ancienneté) ; AUCUN
+# ré-indexage de dérive (on repondère les prix observés, on n'en invente pas) ; la surface du SUJET est
+# INTRINSÈQUE à la parcelle (sa dernière surface bâtie DVF), jamais une saisie utilisateur → le €/m²
+# servi ne dépend pas de ce que tape l'utilisateur, fiche == Estimer == PDF.
+_POIDS_SERVIS = {
+    "appartement": {"h_dist": 500.0, "h_surf": 160.0, "halflife": 2.0, "h_terr": None},
+    "maison":      {"h_dist": 900.0, "h_surf": 120.0, "halflife": 4.0, "h_terr": 1500.0},
+}
+_POIDS_SERVIS_DEFAUT = {"h_dist": 900.0, "h_surf": 120.0, "halflife": 4.0, "h_terr": None}
+
+
+def _mediane_ponderee(kept: list[dict], subj_surf: float | None, subj_terr: float | None,
+                      type_bien: str | None) -> tuple[float, float, float]:
+    """(q1, médiane, q3) PONDÉRÉS par la RESSEMBLANCE sur l'échantillon `kept` (sales à prix/dist/annee/
+    surf/terr). Poids = distance (noyau gaussien) × écart de surface au sujet × écart de terrain (maison)
+    × ancienneté (demi-vie). None de sujet → ce facteur vaut 1. Quantile pondéré = valeur où le poids
+    cumulé franchit 25/50/75 %. `kept` est supposé non vide."""
+    import math as _m
+    par = _POIDS_SERVIS.get(type_bien or "", _POIDS_SERVIS_DEFAUT)
+    ref_an = max((s["annee"] for s in kept), default=0)
+    is_maison = (type_bien == "maison")
+    vw: list[tuple[float, float]] = []
+    for s in kept:
+        w = 1.0
+        hd = par.get("h_dist")
+        if hd and isinstance(s.get("dist"), (int, float)):
+            w *= _m.exp(-((float(s["dist"]) / hd) ** 2))
+        hs = par.get("h_surf")
+        if hs and subj_surf and subj_surf > 0 and s.get("surf"):
+            w *= _m.exp(-abs(float(s["surf"]) - float(subj_surf)) / hs)
+        ht = par.get("h_terr")
+        if ht and is_maison and subj_terr and subj_terr > 0 and (s.get("terr") or 0) > 0:
+            w *= _m.exp(-abs(float(s["terr"]) - float(subj_terr)) / ht)
+        hl = par.get("halflife")
+        if hl:
+            w *= 0.5 ** (max(0, ref_an - s["annee"]) / hl)
+        if not (w > 0) or not _m.isfinite(w):
+            w = 1e-12
+        vw.append((float(s["prix"]), w))
+    vw.sort(key=lambda t: t[0])
+    total = sum(w for _, w in vw)
+    qs: dict[float, float] = {}
+    cum = 0.0
+    for v, w in vw:
+        cum += w
+        for c in (0.25, 0.5, 0.75):
+            if c not in qs and cum >= total * c:
+                qs[c] = v
+    for c in (0.25, 0.5, 0.75):
+        qs.setdefault(c, vw[-1][0])
+    return qs[0.25], qs[0.5], qs[0.75]
+
+
+def _surface_terrain_sujet(db: Session, parcel_id: int) -> tuple[float | None, float | None]:
+    """Attributs INTRINSÈQUES du bien sujet pour pondérer la ressemblance : sa dernière surface bâtie
+    DVF (m²) et sa surface de terrain (contenance/dessin). Déterministes par parcelle → fiche et Estimer
+    pondèrent à l'identique. (None, None) si rien."""
+    row = db.execute(text(
+        "SELECT (SELECT sum(surface_reelle_bati) FROM dvf_mutations_parcelle "
+        "          WHERE id_parcelle = p.idu AND type_local IN ('Maison','Appartement') "
+        "            AND date_mutation = (SELECT max(date_mutation) FROM dvf_mutations_parcelle "
+        "              WHERE id_parcelle = p.idu AND nature_mutation IN ('Vente','Vente terrain à bâtir'))) AS surf, "
+        "  COALESCE(p.contenance_m2, p.surface_m2) AS terr "
+        "FROM parcels p WHERE p.id = :pid"), {"pid": parcel_id}).mappings().first()
+    if not row:
+        return None, None
+    return (float(row["surf"]) if row["surf"] else None,
+            float(row["terr"]) if row["terr"] else None)
 
 
 def sector_price(db: Session, parcel_id: int, hyp: Hypotheses,
@@ -323,7 +403,10 @@ def sector_price(db: Session, parcel_id: int, hyp: Hypotheses,
     prices = [s["prix"] for s in kept]
     annees = [s["annee"] for s in kept]
     pct_appt = round(100 * sum(1 for s in kept if s["cat"] == "appartement") / len(kept))
-    q1, med, q3 = _quartiles(prices)
+    # ESTIMER-2 (D-2) — médiane/quartiles PONDÉRÉS par la ressemblance (lecteur unique `_mediane_ponderee`,
+    # même calcul que `reference_locale`), surface/terrain du sujet INTRINSÈQUES → fiche == Estimer == PDF.
+    _ssurf, _sterr = _surface_terrain_sujet(db, parcel_id)
+    q1, med, q3 = _mediane_ponderee(kept, _ssurf, _sterr, tp)
     return {**base, "fiable": niveau != "insuffisant", "pct_appartement": pct_appt,
             "periode": [min(annees), max(annees)],
             "q1": round(q1), "median": round(med), "q3": round(q3),
@@ -379,7 +462,13 @@ def reference_locale(db: Session, idu: str | None, type_bien: str | None,
     # « 2025 » laissait croire à une médiane d'une seule année (comme signaux.py _periode_annees).
     _mill = (f"{min(annees)}–{max(annees)}" if annees and min(annees) != max(annees)
              else (str(max(annees)) if annees else None))
-    out = {"eur_m2": float(statistics.median(prices)), "n": len(kept),
+    # ESTIMER-2 (D-2) — médiane/quartiles PONDÉRÉS par la ressemblance (lecteur UNIQUE `_mediane_ponderee`,
+    # le MÊME calcul que `sector_price`), sur l'échantillon mono-type `kept`. La pondérée est désormais
+    # SERVIE (plus calculée-puis-jetée) : l'Estimer (via comparateur_bien → reference_locale) et la carte
+    # Marché de la fiche lisent cette valeur unique. Surface/terrain du sujet intrinsèques (déterministes).
+    _ssurf, _sterr = _surface_terrain_sujet(db, int(pid))
+    _q1w, _medw, _q3w = _mediane_ponderee(kept, _ssurf, _sterr, tl)
+    out = {"eur_m2": float(_medw), "n": len(kept),
             "millesime": _mill,
             "perimetre": f"{'maisons' if tl == 'maison' else 'appartements'} · {int(radius)} m autour de la parcelle",
             "meme_type": True, "locale": True, "rayon_m": int(radius),
@@ -387,12 +476,10 @@ def reference_locale(db: Session, idu: str | None, type_bien: str | None,
                              "apres": distribution_secteur(prices),
                              "n_exclus_extremes": len(sub) - len(kept), "n_min_vise": n_min}}
     if return_echantillon:
-        # CHASSE-FIX-1 (B-3 / MARCHE-UNIQUE) — expose les quartiles et la période (min–max) du MÊME
-        # échantillon, pour que l'Estimer serve EXACTEMENT la médiane/quartiles de ce point de calcul
-        # unique (plus de « maison 4 747 » à l'Estimer vs « maison 4 265 » sur la carte Marché).
-        q1, _m, q3 = _quartiles(prices)
-        out["q1"] = round(q1)
-        out["q3"] = round(q3)
+        # CHASSE-FIX-1 (B-3 / MARCHE-UNIQUE) — expose les quartiles (pondérés, MÊME calcul) et la période ;
+        # l'Estimer sert EXACTEMENT la médiane/quartiles de ce point de calcul unique.
+        out["q1"] = round(_q1w)
+        out["q3"] = round(_q3w)
         out["periode"] = [min(annees), max(annees)] if annees else None
     return out
 
@@ -1180,15 +1267,25 @@ def compute_mode_b(session: Session, idu: str, *,
     terrain_nu = None
     if px_terrain and surface_parcelle:
         valeur_terrain = round(float(surface_parcelle) * px_terrain["prix_m2"])
-        # FIX-PRIX-ET-OPPORTUNITES (lot 1) — une valeur de parcelle estimée ne s'affiche jamais en
-        # chiffre sec : fourchette ±30 % + mention d'incertitude mesurée (backtest VERITE-TERRAIN-2).
-        from ..estimation_prix import MENTION as _INCERT, fourchette as _fourchette
-        _fr = _fourchette(valeur_terrain)
+        # FIX-PRIX-ET-OPPORTUNITES (lot 1) + ESTIMER-2 (D-5) — une valeur de parcelle estimée ne
+        # s'affiche jamais en chiffre sec : fourchette d'incertitude MESURÉE par le banc de nuit
+        # (écart Q3 du rétro-test terrain, par commune) quand elle existe, sinon ±30 % historique.
+        from ..estimation_prix import fourchette as _fourchette
+        _dl = _em = None
+        try:
+            from ..pige.banc_estimer import charge_calibration as _cc
+            _cal = _cc(session, "terrain", idu[:5])
+            if _cal:
+                _dl, _em = _cal.get("ecart_q3"), _cal.get("ecart_median")
+        except Exception:  # noqa: BLE001 — calibration absente → ±30 % historique
+            _dl = _em = None
+        _fr = _fourchette(valeur_terrain, demi_largeur_pct=_dl,
+                          ecart_median=(round(_em) if _em else None))
         terrain_nu = {
             "valeur_eur": valeur_terrain, "valeur_libelle": _eur(valeur_terrain),
             "valeur_bas_eur": _fr["bas"], "valeur_haut_eur": _fr["haut"],
             "valeur_fourchette_libelle": f"{_eur(_fr['bas'])} – {_eur(_fr['haut'])}",
-            "incertitude": _INCERT,
+            "incertitude": _fr["mention"],
             "prix_m2": round(px_terrain["prix_m2"]), "surface_m2": round(float(surface_parcelle)),
             "niveau": px_terrain["niveau"], "libelle": px_terrain["libelle"],
             "etiquette": "Estimé",

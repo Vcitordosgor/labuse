@@ -145,6 +145,11 @@ class ScenarioRecord:
     assiette_source: str | None = None         # 'gabarit' / 'residuel_legacy', du MÊME calcul
     assiette_qualifiee: bool = True            # False = chemin de repli non qualifié (legacy)
     enrich_state: str = "not_requested"        # not_requested / ok / failed / fallback (par parcelle)
+    # FONCIER-PUBLIC-1 (décision Vic) — un ÉQUIPEMENT PUBLIC en place (catégorie, cf.
+    # `equipement_public`) rend la parcelle « Hors de ce projet » dans les DEUX scénarios ; un TERRAIN
+    # PUBLIC (groupe DGFiP public) garde sa bande et porte un DRAPEAU. Le Signal n'est jamais touché.
+    public_facility: str | None = None         # catégorie d'équipement public (None = aucun / privé)
+    public_land: bool = False                  # propriétaire public (État/collectivité/EP)
 
 
 @dataclass
@@ -344,7 +349,13 @@ def evaluate(record, options=None) -> ScenarioResult:
         bounds=None, band=None, score=None, band_provisional=None,
         cause_codes=[], vigilance=list(rec.notes or []), zone_portion=None,
         signal=signal, rank_value=None, band_rank=_BANDE_RANG["NC"],
-        details={"provenance": rec.provenance, "assiette_source": rec.assiette_source})
+        details={"provenance": rec.provenance, "assiette_source": rec.assiette_source,
+                 "enrich_state": rec.enrich_state})
+    # FONCIER-PUBLIC-1 — drapeaux portés par TOUS les statuts et les DEUX objectifs (le flag
+    # « foncier public » est purement informatif ; il ne change ni la bande ni le Signal).
+    res.details["foncier_public"] = bool(rec.public_land)
+    if rec.public_facility:
+        res.details["equipement_public"] = rec.public_facility
 
     def cause(code):
         if code and code not in res.cause_codes:
@@ -404,6 +415,20 @@ def evaluate(record, options=None) -> ScenarioResult:
     # 1. Identifiant, unités, qualité géométrique nécessaire au scénario.
     if not res.id:
         return finish("TO_VERIFY", "ID_ABSENT")
+
+    # 1-bis. ÉQUIPEMENT PUBLIC EN PLACE (FONCIER-PUBLIC-1, décision Vic) — une parcelle occupée par un
+    # équipement public (école, hôpital, mairie, gendarmerie, stade, bibliothèque…) n'est pas un
+    # terrain à bâtir : « Hors de ce projet » dans les DEUX scénarios, cause « équipement public :
+    # <type> ». Verdict SOURCÉ (BPE/INSEE), prioritaire sur le résiduel réglementaire. N'affecte PAS
+    # la vue Prospection (traitée plus haut, retour anticipé) : le Signal reste intact.
+    if rec.public_facility:
+        res.details["eligibility_proof"] = {
+            "verified": True, "rule": f"équipement public : {rec.public_facility}",
+            "source": "BPE (INSEE)", "portion": "entière"}
+        vig(f"Équipement public en place ({rec.public_facility}) : parcelle occupée, pas un terrain "
+            "à bâtir.")
+        return finish("OUTSIDE_OBJECTIVE", f"EQUIPEMENT_PUBLIC:{rec.public_facility}",
+                      "Hors de ce projet")
     # Difficultés physiques = vigilances SOURCÉES, jamais un coefficient caché (spec §10.3).
     if rec.slope_deg is None:
         vig("Pente non renseignée ; aucune pente favorable ou défavorable imputée.")

@@ -93,15 +93,26 @@ def verification(db: Session, params: dict) -> dict:
                          f"{d.get('zone') or fam or '?'}, proposée à {_eur(prix)}."]
     if terrain_m2 and surface and not insuffisant:
         projection = round(terrain_m2 * surface)
-        # FIX-PRIX-ET-OPPORTUNITES (lot 1) — jamais un chiffre sec : fourchette ±30 % + mention
-        # d'incertitude mesurée (backtest VERITE-TERRAIN-2). Point de calcul unique estimation_prix.
-        from ..estimation_prix import DEMI_LARGEUR_PCT, fourchette as _fourchette
-        _fr = _fourchette(projection)
+        # FIX-PRIX-ET-OPPORTUNITES (lot 1) + ESTIMER-2 (D-5) — jamais un chiffre sec : fourchette
+        # MESURÉE par le banc de nuit (écart du rétro-test terrain, par commune) quand elle existe,
+        # sinon ±30 % historique. Point de calcul unique estimation_prix.
+        from ..estimation_prix import fourchette as _fourchette
+        _dl = _em = None
+        try:
+            from ..pige.banc_estimer import charge_calibration as _cc
+            _cal = _cc(db, "terrain", (idu or "")[:5]) if idu else None
+            if _cal:
+                _dl, _em = _cal.get("ecart_q3"), _cal.get("ecart_median")
+        except Exception:  # noqa: BLE001 — calibration absente → ±30 % historique
+            _dl = _em = None
+        _fr = _fourchette(projection, demi_largeur_pct=_dl, ecart_median=(round(_em) if _em else None))
+        _med_txt = (f"Écart médian mesuré {round(_em)} % (banc de nuit, par commune)."
+                    if _em else "Au dernier backtest (ventes DVF), ce type d'estimation s'écarte "
+                                "en médiane de 27 % du prix réel.")
         lignes.append(f"À ce prix médian de zone ({_eur(terrain_m2)}/m², {n_ventes} ventes DVF), "
                       f"{_m2(surface)} représenteraient une fourchette de {_eur(_fr['bas'])} à "
-                      f"{_eur(_fr['haut'])} (±{DEMI_LARGEUR_PCT} %) — une projection arithmétique, PAS une "
-                      f"valeur vénale. Au dernier backtest (ventes DVF), ce type d'estimation s'écarte "
-                      f"en médiane de 27 % du prix réel.")
+                      f"{_eur(_fr['haut'])} (±{_fr['demi_largeur_pct']} %) — une projection arithmétique, "
+                      f"PAS une valeur vénale. {_med_txt}")
         ecart = projection / prix if prix and prix < projection else (prix / projection if prix else None)
         sens = "sous" if prix < projection else "au-dessus de"
         if ecart:

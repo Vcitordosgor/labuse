@@ -17,7 +17,7 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from .layers_ingest import GEO_DVF_URL, GEO_DVF_YEARS, _client
+from . import dvf_etalab
 
 TABLE = "dvf_mutation_detail"
 
@@ -63,22 +63,20 @@ def _carrez(row: dict) -> float | None:
     return round(tot, 2) if seen else None
 
 
-def build_dvf_detail(session: Session, years: tuple[int, ...] = GEO_DVF_YEARS,
-                     dep: str = "974", log=lambda *_: None) -> dict:
-    """Remplit `dvf_mutation_detail` depuis géo-DVF (974). Idempotent (purge de la table).
-    N'insère que les parcelles présentes dans `parcels` (île 974). Retourne les comptes."""
-    import csv
-    import gzip
+def build_dvf_detail(session: Session, dep: str = "974", log=lambda *_: None,
+                     http_get=None) -> dict:
+    """Remplit `dvf_mutation_detail` depuis géo-DVF 974, FORMAT ETALAB ACTUEL (FRAICHEUR-FIX-1) :
+    les fichiers période `full-AAAA[-sN]` du jeu data.gouv (full-France, filtrés 974), au lieu de
+    l'arborescence legacy supprimée au 31/11/2026. Idempotent (purge de la table). N'insère que les
+    parcelles présentes dans `parcels` (île 974). Retourne les comptes."""
     ensure_table(session)
     idus = {r[0] for r in session.execute(text("SELECT idu FROM parcels")).all()}
+    ressources, _ = dvf_etalab.lister_ressources(http_get=http_get)
     # agrégat par (id_mutation, id_parcelle)
     agg: dict[tuple[str, str], dict] = {}
-    with _client() as c:
-        for y in years:
-            r = c.get(GEO_DVF_URL.format(year=y, dep=dep), timeout=120.0)
-            r.raise_for_status()
-            txt = gzip.decompress(r.content).decode("utf-8", "replace")
-            for row in csv.DictReader(txt.splitlines()):
+    for res in ressources:
+        y = res.token
+        for row in dvf_etalab.lignes_974(res, http_get=http_get):
                 idm, idp = row.get("id_mutation"), row.get("id_parcelle")
                 if not idm or not idp or idp not in idus:
                     continue
