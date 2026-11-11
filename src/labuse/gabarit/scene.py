@@ -691,7 +691,8 @@ def _build_scene(db, idu: str) -> Scene:
         cadre = (cminx, cminy, cmaxx, cmaxy)
         faces_1m = sampler.m.faces(ox, oy, bounds=cadre)        # faces servies = cadre (coupées net)
         cadre_local = [round(cminx - ox, 2), round(cminy - oy, 2), round(cmaxx - ox, 2), round(cmaxy - oy, 2)]
-        terrain = {"faces_parcelle": faces_1m, "couverture_parcelle": couverture, "cadre": cadre_local}
+        terrain = {"faces_parcelle": faces_1m, "couverture_parcelle": couverture, "cadre": cadre_local,
+                   "origin_2975": [ox, oy]}       # origine locale (EPSG:2975) → reconstruit la bbox absolue (photo IGN)
 
     for b in batis:
         b.pop("geom", None)

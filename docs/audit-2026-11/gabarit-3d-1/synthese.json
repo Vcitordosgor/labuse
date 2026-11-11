@@ -4,7 +4,7 @@
       "label": "plate",
       "idu": "97415000CY0196",
       "titre": "Parcelle plate — plaine littorale de Saint-Paul (~5 m), bâti sur terrain plat",
-      "scene_id": "d064cef0712f",
+      "scene_id": "4785dd1e0d3d",
       "disponible": true,
       "etat": {
         "gabarit": "inconstructible",
@@ -84,7 +84,7 @@
       "label": "cotier",
       "idu": "97413000CA0057",
       "titre": "Littoral de Saint-Leu — falaise",
-      "scene_id": "c23eca4584da",
+      "scene_id": "2c2fb722bf1c",
       "disponible": true,
       "etat": {
         "gabarit": "inconstructible",
@@ -164,7 +164,7 @@
       "label": "alt760",
       "idu": "97415000CM1658",
       "titre": "Parcelle en altitude — 36 Rue des Jacarandas, Saint-Paul (~595 m mesurés)",
-      "scene_id": "f2bd5a125081",
+      "scene_id": "ada72c56df35",
       "disponible": true,
       "etat": {
         "gabarit": "ok",
@@ -241,7 +241,7 @@
       "label": "bz1065",
       "idu": "97411000BZ1065",
       "titre": "97411000BZ1065 — talus, Saint-Denis ; coupe B traverse la parcelle en plusieurs tronçons",
-      "scene_id": "8982b54cbb60",
+      "scene_id": "6e98c0cde0ab",
       "disponible": true,
       "etat": {
         "gabarit": "ok",
@@ -334,13 +334,13 @@
     "d2_reproductible": {
       "svg_identique": true,
       "scene_id_identique": true,
-      "scene_id": "8982b54cbb60"
+      "scene_id": "6e98c0cde0ab"
     },
     "d3_multipart": {
-      "idu": "97411000HP0491",
+      "idu": "97415000CT3260",
       "disponible": false,
       "couverture": 0.0,
-      "n_contours_cad": 0,
+      "n_contours_cad": 2,
       "coupes": 0
     }
   },

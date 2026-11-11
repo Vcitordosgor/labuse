@@ -258,6 +258,39 @@ def test_bloc_pdf_gated():
     assert "coupes3d" in html and "Coupe A" in html
 
 
+def test_pdf_pilote_detail_et_parite():
+    """A4 — le PDF pilote régénère les coupes en DÉTAIL (detail=True) depuis la scène courante : même
+    identifiant de scène + MÊMES cotes que l'écran, pour les DEUX coupes."""
+    cA = _coupe_demo(); cB = dict(_coupe_demo()); cB["label"] = "B"; cB["titre"] = "Coupe B-B′ — orientée par la voie"
+    scene = {"disponible": True, "scene_id": "sid-abc123", "adresse": "12 Rue X", "idu": "97411000BZ1065",
+             "contour_cadastral": [{"ext": [[0, 0], [10, 0], [10, 10], [0, 10], [0, 0]], "trous": []}],
+             "zone_implantation": [], "batiments": [],
+             "axes_plan": {"A": {"label": "A", "p0": [0, 5], "p1": [10, 5]}, "B": {"label": "B", "p0": [5, 0], "p1": [5, 10]}},
+             "coupes": [cA, cB]}
+    bloc = BL._bloc_coupes_pilote(scene)
+    assert "sid-abc123" in bloc                                   # identifiant de scène porté par le PDF
+    cotes = lambda s: sorted(re.findall(r">([\d]+,[\d]+ m)<", s))
+    for c in (cA, cB):
+        ecran = coupe_svg(c, theme="clair", adresse="12 Rue X", idu="97411000BZ1065", detail=True)
+        apercu = coupe_svg(c, theme="clair", adresse="12 Rue X", idu="97411000BZ1065", detail=False)
+        assert cotes(ecran) and cotes(ecran) != cotes(apercu)    # le détail porte plus de cotes que l'aperçu
+        for cote in cotes(ecran):                                # chaque cote du détail écran est dans le PDF
+            assert cote in bloc
+    assert "ortho" not in bloc.lower()                           # la photo n'entre PAS dans le PDF (étape 3)
+
+
+def test_ortho_bbox_absolue():
+    """B — la photo est tirée pour le CADRE de la scène : bbox absolue = cadre local + origine (EPSG:2975)."""
+    from labuse.gabarit import ortho
+
+    class _S:
+        scene_id = "sid"
+        terrain = {"cadre": [1.0, 2.0, 11.0, 22.0], "origin_2975": [336000.0, 7689000.0]}
+    bb = ortho._bbox_absolue(_S())
+    assert bb == (336001.0, 7689002.0, 336011.0, 7689022.0)
+    assert ortho._bbox_absolue(type("X", (), {"scene_id": "s", "terrain": {}})()) is None
+
+
 # ── locks sur base réelle ─────────────────────────────────────────────────────────────────────────
 
 @pytest.mark.local

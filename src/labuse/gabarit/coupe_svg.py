@@ -188,12 +188,14 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
     # BÂTI : emprise au sol + RUPTURE du terrain à vérifier (repère distinct des cotes) ; aucun toit
     faitages = []
     rupture = False
+    prot = []   # A2 — libellés à FOND OPAQUE émis EN DERNIER (aucun trait au travers) : (svg,)
     for b in batis:
         x0, x1 = X(b["d0"]), X(b["d1"])
         out.append(f'<line x1="{x0:.1f}" y1="{y_base:.1f}" x2="{x1:.1f}" y2="{y_base:.1f}" stroke="{T["bati"]}" stroke-width="3"/>')
         out.append(f'<line x1="{x0:.1f}" y1="{y_base-4:.1f}" x2="{x0:.1f}" y2="{y_base+4:.1f}" stroke="{T["bati"]}" stroke-width="1"/>')
         out.append(f'<line x1="{x1:.1f}" y1="{y_base-4:.1f}" x2="{x1:.1f}" y2="{y_base+4:.1f}" stroke="{T["bati"]}" stroke-width="1"/>')
-        out.append(f'<text x="{(x0+x1)/2:.1f}" y="{y_base-7:.1f}" text-anchor="middle" font-size="9" fill="{T["bati"]}">emprise bâtie</text>')
+        # « emprise bâtie » SOUS sa barre (hors du profil et des limites qui s'arrêtent à y_base)
+        prot.append(_label_box((x0 + x1) / 2, y_base + 13, "emprise bâtie", T["bati"], T["bg"]))
         # repère de rupture (losange) sur la PORTION CONCERNÉE = plus forte pente autour du bâti (pas le 1ᵉʳ pied)
         drb = _rupture_d(profil, b["d0"], min(b["d1"] + 3.0, L))
         zr = z_terrain(drb) if drb is not None else None
@@ -218,7 +220,9 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
                 out.append(f'<line x1="{X(dd):.1f}" y1="{Y(zt):.1f}" x2="{X(dd):.1f}" y2="{Y(zt)-14:.1f}" stroke="{T["lacune"]}" stroke-width="1.2"/>')
         zc = z_terrain((pm["d0"] + pm["d1"]) / 2)
         if zc is not None:
-            out.append(f'<text x="{X((pm["d0"]+pm["d1"])/2):.1f}" y="{Y(zc)-17:.1f}" text-anchor="middle" font-size="9" fill="{T["lacune"]}">pente max 5 m</text>')
+            # « pente max 5 m » : au-dessus de la crête, FOND OPAQUE (grille/limites occultées dessous)
+            ypm = max(Y(zc) - 17, PAD_T + 10)
+            prot.append(_label_box(X((pm["d0"] + pm["d1"]) / 2), ypm, "pente max 5 m", T["lacune"], T["plot"]))
 
     # cotes : APERÇU = voie/haut/bas (2–3) ; DÉTAIL = toutes. UNE par point, anti-collision.
     pts = coupe.get("cotes_points", {}).get("points", [])
@@ -234,8 +238,9 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
             zv = z_terrain(dv)
             yc0 = Y(zv) if zv is not None else y_base
             out.append(f'<circle cx="{X(dv):.1f}" cy="{yc0:.1f}" r="2.5" fill="none" stroke="{T["axe"]}" stroke-width="1.3"/>')
-            out.append(f'<line x1="{X(dv):.1f}" y1="{yc0-3:.1f}" x2="{X(dv):.1f}" y2="{PAD_T+11:.1f}" stroke="{T["axe"]}" stroke-width="0.5" stroke-dasharray="2 2"/>')
-            out.append(f'<text x="{X(dv):.1f}" y="{PAD_T+9:.1f}" text-anchor="middle" font-size="9" fill="{T["axe"]}">{_esc(voie["nom"])}</text>')
+            # repère vers le HAUT, s'arrête AU bord du tracé ; le nom est posé AU-DESSUS du cadre (hors profil)
+            out.append(f'<line x1="{X(dv):.1f}" y1="{yc0-3:.1f}" x2="{X(dv):.1f}" y2="{PAD_T:.1f}" stroke="{T["axe"]}" stroke-width="0.5" stroke-dasharray="2 2"/>')
+            prot.append(_label_box(X(dv), PAD_T - 3, voie["nom"], T["axe"], T["bg"]))
 
     # ÉCHELLE : barre dans un COIN du tracé (2 quater), barre seule
     out.append(_echelle(off_x + 8, y_base - 7, L, s, T))
@@ -253,8 +258,25 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
             out.append(f'<text x="8" y="{yb1+3:.1f}" font-size="9" fill="{T["txt_dim"]}">zone d\'implantation — {etat}</text>')
         out.append(_indicateurs(coupe, faitages, rupture, y_base + AX_H + BANDES_H, PAD_L, width - PAD_R, T))
 
+    # A2 — libellés à fond opaque EN DERNIER : aucun trait ne les traverse à l'écran
+    out.extend(prot)
     out.append("</svg>")
     return "".join(out)
+
+
+def _label_box(cx, y, text, color, bg, anchor="middle", fs=9):
+    """A2 — libellé avec FOND OPAQUE (local), émis EN DERNIER : aucun trait (grille, limite, repère) ne
+    le traverse à l'écran. Largeur estimée au glyphe pour cadrer le fond."""
+    w = max(len(text) * fs * 0.56, 8.0)
+    if anchor == "middle":
+        rx = cx - w / 2 - 3
+    elif anchor == "end":
+        rx = cx - w - 3
+    else:
+        rx = cx - 3
+    return (f'<rect x="{rx:.1f}" y="{y-fs:.1f}" width="{w+6:.1f}" height="{fs+4:.1f}" rx="2" '
+            f'fill="{bg}" opacity="0.92"/>'
+            f'<text x="{cx:.1f}" y="{y:.1f}" text-anchor="{anchor}" font-size="{fs}" fill="{color}">{_esc(text)}</text>')
 
 
 def _cotes(points, X, Y, T):

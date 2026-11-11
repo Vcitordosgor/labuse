@@ -6,13 +6,13 @@
   "d2_reproductible": {
     "svg_identique": true,
     "scene_id_identique": true,
-    "scene_id": "8982b54cbb60"
+    "scene_id": "6e98c0cde0ab"
   },
   "d3_multipart": {
-    "idu": "97411000HP0491",
+    "idu": "97415000CT3260",
     "disponible": false,
     "couverture": 0.0,
-    "n_contours_cad": 0,
+    "n_contours_cad": 2,
     "coupes": 0
   }
 }

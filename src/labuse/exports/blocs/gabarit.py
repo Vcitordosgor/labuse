@@ -144,7 +144,9 @@ def _bloc_coupes_pilote(scene: dict) -> str:
     # PDF = thème CLAIR ; barre graphique SEULE (pas de ratio chiffré — A2).
     sid = scene.get("scene_id"); adr = scene.get("adresse"); idu = scene.get("idu")
     plan = plan_cle_svg(scene, theme="clair") or ""
-    figures = [coupe_svg(c, theme="clair", adresse=adr, idu=idu) for c in scene["coupes"]]
+    # COUPE DÉTAILLÉE explicite (detail=True) : l'aperçu est devenu le rendu par défaut (A4) ;
+    # le PDF porte toutes les cotes/annotations des deux coupes, en parité avec « Agrandir » à l'écran.
+    figures = [coupe_svg(c, theme="clair", adresse=adr, idu=idu, detail=True) for c in scene["coupes"]]
     figures = [f for f in figures if f]
     if not figures:
         return ""

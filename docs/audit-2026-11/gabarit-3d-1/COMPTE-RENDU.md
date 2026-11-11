@@ -518,3 +518,71 @@ Captures : `viewer/mesure_1440x900_ouvert.png`, `viewer/mesure_1280x720_ouvert.p
 
 **Aucun critère non atteint.** Hook : tsc ✅ · vitest **326** ✅ · pytest gabarit **20 scène (1 skip base réelle)
 + 300 unit + 2 db** ✅ · 0 faute hors cadre.
+
+## 17. Étape 3 — corrections + photo aérienne (8ᵉ revue d'Astra)
+
+Sur `30d48b8fb`. La composition est figée : **corrections mesurées (A)**, puis **photo aérienne (B)**.
+Harnais `scripts/gabarit_3d_webkit.mjs` → `viewer/mesures_webkit.json`. **BZ1065 et CM1658**, 1440×900 et
+1280×720, coupe A et B, aperçu+détail, **relief puis photo**.
+
+### A — Corrections (tableau de mesures)
+
+| Critère | Cible | BZ1065 | CM1658 | Verdict |
+|---|---|---|---|---|
+| **A1 Zone** — pixels verts À L'INTÉRIEUR de la zone (surface visible, bâti exclu) | > 90 % | **98,1 %** | **97,9–98,1 %** | ✅ |
+| **A1 Zone** — pixels verts AU-DEHORS | 0 | **0** | **0** | ✅ |
+| **A2 Aperçu** — libellés traversés par un trait | 0 | **0 / 3 protégés** | **0** | ✅ |
+| **A3 Survol** — repère tombé vs endroit visé par le losange (horizontal) | < 0,5 m | **0,24 m** (coupe B) | **0,08 m** (coupe A) | ✅ |
+| **A4 PDF** — même identifiant + mêmes cotes des deux coupes qu'à l'écran | égal | **test vert** | **test vert** | ✅ |
+
+- **A1 Zone d'implantation.** `side: THREE.DoubleSide` sur le calque : les faces orientées vers le bas ne
+  sont plus éliminées vu d'en haut. Mesure par **audit de pixels** (`window.__gab3dZoneAudit`) : on projette
+  le polygone de la zone à l'écran, on relit le framebuffer, on compte le vert (teinte `#2f9e6a`, nettement
+  plus saturée que la rampe du terrain) ; la **silhouette du bâti** (enveloppe convexe empreinte+faîtage) est
+  exclue du dénominateur (surface masquée, pas de la zone). Résultat : **98 %** dedans, **0** dehors.
+- **A2 Libellés de l'aperçu.** « emprise bâtie » **sous sa barre**, « Chemin de la Citerne » et « pente max
+  5 m » **décalés** ; chacun reçoit un **fond opaque** et est **émis en dernier** (par-dessus tous les traits).
+  Contrôle au harnais : les boîtes de fond (`rx="2"`) sont toutes situées **après** le dernier trait du SVG →
+  **0 libellé traversé** sur les 8 coupes. (Détail inchangé : texte ≥ **11,7 px**, **0 chevauchement**.)
+- **A3 Survol depuis le losange.** Le test **part du ◆ réellement dessiné** sur la coupe (B si elle en porte
+  un, sinon A), survole son abscisse, et compare l'endroit où le repère tombe en 3D à l'endroit visé.
+  **Correction d'un vrai défaut** : l'aperçu est en `object-contain` (letterboxé) et WebKit renvoie une
+  `naturalWidth` déjà mise à l'échelle → le survol dérivait pour une coupe au rapport différent de sa case.
+  Le calage se fait désormais sur les dimensions du **viewBox** et le **rectangle réellement dessiné** →
+  écart **0,24 m** (BZ1065 B) et **0,08 m** (CM1658 A).
+- **A4 PDF en détail.** Le bloc PDF régénère les coupes avec **`detail=True`** explicite (l'aperçu étant
+  devenu le rendu par défaut). Test `test_pdf_pilote_detail_et_parite` : le PDF porte le **même identifiant de
+  scène** et **toutes les cotes du détail** des deux coupes, et **la photo n'entre pas dans le PDF**.
+
+### B — Photo aérienne (orthophoto IGN drapée)
+
+| Critère | Cible | BZ1065 | CM1658 | Verdict |
+|---|---|---|---|---|
+| Chargement au clic, délai | < 3 s | **~0,1 s** (cache) | **~0,1 s** | ✅ |
+| Millésime affiché | présent | **2025** | **2025** | ✅ |
+| « © IGN » affiché | présent | **oui** | **oui** | ✅ |
+| Demandée au SERVEUR (navigateur n'appelle pas l'IGN) | oui | **oui** | **oui** | ✅ |
+
+- **Bouton « Photo aérienne »** à côté de « Courbes de niveau » : fond facultatif, **chargé au clic, jamais
+  à l'ouverture** ; re-clic → retour au relief.
+- **Serveur** `GET …/scene/{idu}/ortho?sid=` (`gabarit/ortho.py`) : tire l'orthophoto IGN (WMS Géoplateforme,
+  `ORTHOIMAGERY.ORTHOPHOTOS`, **EPSG:2975** comme le fond) **pour le cadre de la scène**, met en **cache par
+  identifiant de scène** (`data/ortho_cache/`). Le **millésime** vient du graphe de mosaïquage BD ORTHO®
+  (`date_vol` = 2025-07-24 / 2025-08-24). Le navigateur passe par le serveur (proxy) — **vérifié** : aucune
+  ressource `geopf.fr`/`ign.fr` côté navigateur.
+- **Drapage** : le matériau du terrain est **permuté** (texture ortho en UV-monde sur le cadre), relief
+  conservé ; **contour, zone, bâti, axe, repères restent au-dessus et lisibles** (lignes à +0,4 m, zone en
+  calque, marqueur en surcouche). Millésime + **© IGN · BD ORTHO®** affichés en bas à gauche.
+- **Robustesse** : délai > 3 s ou échec → `AbortController` à 3 s, la vue **reste en relief** avec un message
+  discret (`data-gab3d-photo-echec`). La **texture est libérée** au retrait et à la fermeture.
+- **PDF** : la photo **n'y figure pas** à ce stade (point 9).
+
+### Critère de sortie (portable)
+Sur BZ1065 : on ouvre la coupe B, on repère le ◆ près du bâti, on lit sa cote, et le survol **retrouve le
+même endroit sur le terrain à 0,24 m** ; on bascule en **photo aérienne** et on reconnaît la parcelle. ✅
+
+Captures : `viewer/mesure_{BZ1065,CM1658}_{1440x900,1280x720}_{relief,photo,coupeA,coupeB,detailB}.png` ·
+chiffres : `viewer/mesures_webkit.json` · harnais : `scripts/gabarit_3d_webkit.mjs`.
+
+**Aucun critère non atteint.** Hook : tsc ✅ · build ✅ · vitest **326** ✅ · pytest gabarit **22 scène
+(1 skip base réelle) + 304** ✅ · 0 faute hors cadre.

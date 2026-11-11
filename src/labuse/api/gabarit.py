@@ -223,6 +223,30 @@ def gabarit_coupe_svg(idu: str, axe: str, request: Request, theme: str = "sombre
     return Response(svg, media_type="image/svg+xml")
 
 
+@router.get("/scene/{idu}/ortho")
+def gabarit_ortho(idu: str, request: Request, sid: str | None = None,
+                  db: Session = Depends(get_db)) -> Response:
+    """PHOTO AÉRIENNE (étape 3) : orthophoto IGN tirée PAR LE SERVEUR pour le cadre de la scène, mise en
+    cache par identifiant de scène. Le navigateur ne contacte jamais l'IGN. Millésime en en-tête. 502 si
+    l'IGN est indisponible → la visionneuse reste en relief (jamais chargée à l'ouverture, bouton seulement)."""
+    _exiger_admin(request)
+    from ..gabarit.ortho import ortho_pour_scene
+    from ..gabarit.scene import build_scene
+    scene = build_scene(db, idu)
+    _verif_sid(scene, sid)
+    res = ortho_pour_scene(scene)
+    if not res:
+        raise HTTPException(502, "Orthophoto IGN indisponible pour cette emprise.")
+    headers = {
+        "X-Ortho-Millesime": str(res.get("millesime") or ""),
+        "X-Ortho-Date": str(res.get("date_vol") or ""),
+        "X-Ortho-Source": str(res.get("source") or "IGN"),
+        "Access-Control-Expose-Headers": "X-Ortho-Millesime,X-Ortho-Date,X-Ortho-Source",
+        "Cache-Control": "private, max-age=86400",
+    }
+    return Response(res["png"], media_type="image/png", headers=headers)
+
+
 @router.get("/scene/{idu}/plan.svg")
 def gabarit_plan_cle_svg(idu: str, request: Request, theme: str = "sombre", sid: str | None = None,
                          db: Session = Depends(get_db)) -> Response:

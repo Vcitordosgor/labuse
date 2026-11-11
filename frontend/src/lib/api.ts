@@ -931,6 +931,9 @@ export const gabCoupeSvgUrl = (idu: string, axe: string, theme = 'sombre', sid?:
   `/outils/gabarit/scene/${encodeURIComponent(idu)}/coupe/${axe}.svg?theme=${theme}${sid ? `&sid=${sid}` : ''}${detail ? '&detail=1' : ''}`
 export const gabPlanSvgUrl = (idu: string, theme = 'sombre', sid?: string) =>
   `/outils/gabarit/scene/${encodeURIComponent(idu)}/plan.svg?theme=${theme}${sid ? `&sid=${sid}` : ''}`
+// PHOTO aérienne (étape 3) : orthophoto IGN proxyée par le serveur, mise en cache par identifiant de scène.
+export const gabOrthoUrl = (idu: string, sid?: string) =>
+  `/outils/gabarit/scene/${encodeURIComponent(idu)}/ortho${sid ? `?sid=${sid}` : ''}`
 
 // SECTEUR-1 (S1) — outil « Mon secteur » : prix du secteur autour d'une parcelle (médiane locale par
 // type + tendance 12 mois + annonces Radar dans le rayon). Chaque chiffre porte son n/millésime.

@@ -14,7 +14,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { Line2 } from 'three/examples/jsm/lines/Line2.js'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js'
-import { getGabaritScene, gabCoupeSvgUrl, gabPlanSvgUrl, type GabScene, type GabMesh, type GabPoly } from '../../lib/api'
+import { getGabaritScene, gabCoupeSvgUrl, gabPlanSvgUrl, gabOrthoUrl, type GabScene, type GabMesh, type GabPoly } from '../../lib/api'
 import { Squelette } from '../Loading'
 
 function webglOK(): boolean {
@@ -81,7 +81,7 @@ function zoneOverlay(terrain: THREE.Mesh, zone: GabPoly[], cadre: number[]): THR
   const p = geo.getAttribute('position'), uv = new Float32Array(p.count * 2)
   for (let i = 0; i < p.count; i++) { uv[i * 2] = (p.getX(i) - minx) / W; uv[i * 2 + 1] = (-p.getZ(i) - miny) / H }
   geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2))
-  const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.5, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }))
+  const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.5, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }))
   m.renderOrder = 1; return m
 }
 
@@ -166,6 +166,9 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
   const host = useRef<HTMLDivElement>(null)
   const recentrer = useRef<() => void>(() => {})
   const toggleCn = useRef<() => void>(() => {})
+  const photoApi = useRef<{ load: () => void; clear: () => void }>({ load: () => {}, clear: () => {} })
+  const [photoStat, setPhotoStat] = useState<'off' | 'loading' | 'ok' | 'echec'>('off')
+  const [photoCredit, setPhotoCredit] = useState('')
   const axeSelRef = useRef(axeSel); axeSelRef.current = axeSel
   const axisObjs = useRef<Record<string, THREE.Group>>({})
   const [perdu, setPerdu] = useState(false)
@@ -191,7 +194,7 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
     const sc = new THREE.Scene(); sc.background = new THREE.Color('#0d0f12')
     // SONDES de mesure (lues par le test WebKit) : largeur projetée de la parcelle, périmètre cadastral,
     // point du marqueur (survol).
-    const probe = { pf: 0, perim: 0, mx: 0, my: 0, mon: false }
+    const probe = { pf: 0, perim: 0, mx: 0, my: 0, mz: 0, mon: false }
     for (const poly of scene.contour_cadastral) { const r = poly.ext; for (let i = 0; i < r.length - 1; i++) probe.perim += Math.hypot(r[i + 1][0] - r[i][0], r[i + 1][1] - r[i][1]) }
 
     const { mesh, box } = terrainMesh(faces, scene.contour_cadastral)
@@ -266,8 +269,41 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
       const a = axeSelRef.current ? scene.axes_plan?.[axeSelRef.current] : null
       if (frac == null || !a) { marker.visible = false; return }
       const x = a.p0[0] + (a.p1[0] - a.p0[0]) * frac, y = a.p0[1] + (a.p1[1] - a.p0[1]) * frac, z = elev(x, y)
-      if (z != null) { marker.position.set(x, z + 0.6, -y); marker.visible = true; probe.mx = x; probe.my = y; probe.mon = true }
+      if (z != null) { marker.position.set(x, z + 0.6, -y); marker.visible = true; probe.mx = x; probe.my = y; probe.mz = z; probe.mon = true }
       else { marker.visible = false; probe.mon = false }
+    }
+
+    // A1 — AUDIT de la zone d'implantation (lu par le test WebKit) : on projette le polygone de la zone
+    // à l'écran, on relit le framebuffer, et on compte les pixels VERTS dedans (teinte #2f9e6a, nettement
+    // plus saturée que la rampe du terrain) vs dehors. Rendu immédiat avant lecture (buffer frais).
+    ;(window as unknown as Record<string, unknown>).__gab3dZoneAudit = () => {
+      const zpolys = scene.zone_implantation || []
+      if (!zpolys.length) return { zone: false }
+      renderer.render(sc, cam)
+      const gl = renderer.getContext(), Wc = renderer.domElement.width, Hc = renderer.domElement.height
+      const buf = new Uint8Array(Wc * Hc * 4); gl.readPixels(0, 0, Wc, Hc, gl.RGBA, gl.UNSIGNED_BYTE, buf)
+      const projRing = (ring: number[][], dz: number) => ring.map(([x, y]) => { const z = elev(x, y); if (z == null) return null; const v = new THREE.Vector3(x, z + dz, -y).project(cam); return [(v.x * 0.5 + 0.5) * Wc, (v.y * 0.5 + 0.5) * Hc] as [number, number] }).filter(Boolean) as [number, number][]
+      const polyScreens = zpolys.map((poly) => [poly.ext, ...(poly.trous || [])].map((ring) => projRing(ring, 0)).filter((r) => r.length >= 3))
+      // bâti OPAQUE dans la zone : SILHOUETTE complète (enveloppe convexe de l'empreinte au pied ET au
+      // faîtage → couvre aussi les MURS du volume) EXCLUE du dénominateur. Le critère porte sur la surface
+      // de la zone VISIBLE, pas sur le bâti qui s'y pose et la masque légitimement.
+      const hull = (pts: [number, number][]): [number, number][] => { if (pts.length < 3) return pts; const p = [...pts].sort((a, b) => a[0] - b[0] || a[1] - b[1]); const cr = (o: number[], a: number[], b: number[]) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]); const lo: [number, number][] = [], up: [number, number][] = []; for (const q of p) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], q) <= 0) lo.pop(); lo.push(q) } for (let i = p.length - 1; i >= 0; i--) { const q = p[i]; while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], q) <= 0) up.pop(); up.push(q) } return lo.slice(0, -1).concat(up.slice(0, -1)) }
+      const batiScreens: [number, number][][] = []
+      for (const bt of scene.batiments || []) { const hh = (bt as { volume?: boolean }).volume && bt.hauteur_m ? bt.hauteur_m : 0; const pts: [number, number][] = []; for (const poly of bt.empreinte || []) for (const dz of hh ? [0, hh] : [0]) pts.push(...projRing(poly.ext, dz)); const h = hull(pts); if (h.length >= 3) batiScreens.push(h) }
+      const inRings = (rings: [number, number][][], px: number, py: number) => { let c = false; for (const r of rings) for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const [xi, yi] = r[i], [xj, yj] = r[j]; if ((yi > py) !== (yj > py) && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) c = !c } return c }
+      const inZone = (px: number, py: number) => polyScreens.some((rings) => inRings(rings, px, py))
+      const inBati = (px: number, py: number) => batiScreens.some((r) => inRings([r], px, py))
+      // « dehors » = CLAIREMENT hors zone : au-delà d'une bande de garde de 5 px (le masque est peint au
+      // pixel sur la surface courbe ; mon polygone-écran est une approximation des sommets → bord flou).
+      const G = 5
+      const clairDehors = (px: number, py: number) => !inZone(px, py) && !inZone(px + G, py) && !inZone(px - G, py) && !inZone(px, py + G) && !inZone(px, py - G)
+      let inTot = 0, inGreen = 0, outGreen = 0, inBatiN = 0
+      for (let py = 0; py < Hc; py += 4) for (let px = 0; px < Wc; px += 4) {
+        const o = (py * Wc + px) * 4, r = buf[o], g = buf[o + 1], b = buf[o + 2]
+        const green = g - r > 34 && g - b > 15 && g > 85
+        if (inZone(px, py)) { if (inBati(px, py)) { inBatiN++; continue } inTot++; if (green) inGreen++ } else if (green && clairDehors(px, py)) outGreen++
+      }
+      return { zone: true, inside_green_pct: inTot ? Math.round((inGreen / inTot) * 1000) / 10 : 0, inside_tot: inTot, bati_exclu: inBatiN, outside_green: outGreen }
     }
 
     // étiquettes HTML posées (hi/bas + boussole) mises à jour dans la boucle
@@ -282,6 +318,46 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
     const nd = compass.querySelector('#nd') as SVGGElement
     const proj = (p: THREE.Vector3, d: HTMLDivElement) => { const v = p.clone().project(cam); const vis = v.z < 1; d.style.display = vis ? 'block' : 'none'; d.style.left = `${(v.x * 0.5 + 0.5) * el.clientWidth}px`; d.style.top = `${(-v.y * 0.5 + 0.5) * el.clientHeight}px` }
 
+    // B — PHOTO AÉRIENNE : fond facultatif, chargé AU CLIC (jamais à l'ouverture), demandé AU SERVEUR
+    // (le navigateur ne contacte pas l'IGN), drapé sur la géométrie du terrain SOUS les calques (contour,
+    // zone, bâti, axe, repères restent au-dessus et lisibles). Délai > 3 s ou échec → on reste en relief.
+    // On DRAPE la photo en remplaçant le matériau du terrain (surface exacte, sans z-fight). Le relief reste
+    // porté par la géométrie ; les calculs (relief, marqueur) continuent de viser le même maillage.
+    let photoMat: THREE.MeshBasicMaterial | null = null, photoFlag = ''
+    const tmesh = mesh as unknown as { material: THREE.Material }   // matériau permutable (photo ↔ relief)
+    const origMat = tmesh.material
+    const cadrePhoto = scene.terrain?.cadre
+    photoApi.current = {
+      load: async () => {
+        if (photoMat || !cadrePhoto) return
+        setPhotoStat('loading')
+        const ctrl = new AbortController(); const to = setTimeout(() => ctrl.abort(), 3000)
+        try {
+          const resp = await fetch(gabOrthoUrl(scene.idu, scene.scene_id), { signal: ctrl.signal })
+          clearTimeout(to)
+          if (!resp.ok) throw new Error('indisponible')
+          const mil = resp.headers.get('X-Ortho-Millesime') || '', src = resp.headers.get('X-Ortho-Source') || 'IGN'
+          const url = URL.createObjectURL(await resp.blob())
+          const tex = await new Promise<THREE.Texture>((ok, ko) => new THREE.TextureLoader().load(url, (t) => { URL.revokeObjectURL(url); ok(t) }, undefined, () => { URL.revokeObjectURL(url); ko(new Error('texture')) }))
+          tex.colorSpace = THREE.SRGBColorSpace
+          const geo = mesh.geometry as THREE.BufferGeometry
+          if (!geo.getAttribute('uv')) {   // UV MONDE sur le cadre (une seule fois)
+            const [minx, miny, maxx, maxy] = cadrePhoto, W = maxx - minx, H = maxy - miny
+            const p = geo.getAttribute('position'), uv = new Float32Array(p.count * 2)
+            for (let i = 0; i < p.count; i++) { uv[i * 2] = (p.getX(i) - minx) / W; uv[i * 2 + 1] = (-p.getZ(i) - miny) / H }
+            geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2))
+          }
+          photoMat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide })
+          tmesh.material = photoMat
+          photoFlag = 'ok'; setPhotoCredit(`${src}${mil ? ` · ${mil}` : ''}`); setPhotoStat('ok')
+        } catch { clearTimeout(to); photoFlag = 'echec'; setPhotoStat('echec') }
+      },
+      clear: () => {
+        if (photoMat) { tmesh.material = origMat; photoMat.map?.dispose(); photoMat.dispose(); photoMat = null }
+        photoFlag = ''; setPhotoStat('off')
+      },
+    }
+
     let raf = 0, stop = false, first = 0, info = { geometries: 0, textures: 0 }
     const loop = () => {
       if (stop) return
@@ -290,7 +366,7 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
       proj(hiP, lHi); proj(loP, lLo)
       const az = controls.getAzimuthalAngle(); nd.setAttribute('transform', `rotate(${(-az * 180 / Math.PI).toFixed(1)} 17 17)`)
       info = { geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures }
-      ;(window as unknown as Record<string, unknown>).__gab3d = { first, info, fps: renderer.info.render.frame, probe }
+      ;(window as unknown as Record<string, unknown>).__gab3d = { first, info, fps: renderer.info.render.frame, probe, photo: photoFlag }
       raf = requestAnimationFrame(loop)
     }
     loop()
@@ -303,7 +379,9 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
       stop = true; cancelAnimationFrame(raf); window.removeEventListener('resize', onResize); ro.disconnect()
       renderer.domElement.removeEventListener('mousemove', onMove); renderer.domElement.removeEventListener('webglcontextlost', onLost)
       markerApi.current = null; controls.dispose(); el.removeChild(lay)
-      sc.traverse((o) => { const m = o as THREE.Mesh; if (m.geometry) m.geometry.dispose(); const mt = m.material as THREE.Material | THREE.Material[] | undefined; if (Array.isArray(mt)) mt.forEach((x) => x.dispose()); else mt?.dispose() })
+      photoApi.current = { load: () => {}, clear: () => {} }
+      if (photoMat) origMat.dispose()                 // matériau d'origine détaché pendant la photo → libéré
+      sc.traverse((o) => { const m = o as THREE.Mesh; if (m.geometry) m.geometry.dispose(); const mt = m.material as (THREE.Material & { map?: THREE.Texture }) | (THREE.Material & { map?: THREE.Texture })[] | undefined; const dm = (x: THREE.Material & { map?: THREE.Texture }) => { x.map?.dispose(); x.dispose() }; if (Array.isArray(mt)) mt.forEach(dm); else if (mt) dm(mt) })
       renderer.dispose(); renderer.forceContextLoss(); if (renderer.domElement.parentElement === el) el.removeChild(renderer.domElement)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -319,7 +397,18 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
       <div className="absolute left-3 top-3 flex gap-2">
         <button data-gab3d-recentrer onClick={() => recentrer.current()} className="rounded border border-line bg-black/50 px-2 py-1 text-[11px] text-txt-mut hover:text-txt">◎ Recentrer</button>
         <button data-gab3d-courbes onClick={() => toggleCn.current()} className="rounded border border-line bg-black/50 px-2 py-1 text-[11px] text-txt-mut hover:text-txt">Courbes de niveau</button>
+        <button data-gab3d-photo
+          onClick={() => (photoStat === 'ok' ? photoApi.current.clear() : photoApi.current.load())}
+          className={`rounded border px-2 py-1 text-[11px] ${photoStat === 'ok' ? 'border-mint/50 bg-mint/20 text-mint' : 'border-line bg-black/50 text-txt-mut hover:text-txt'}`}>
+          {photoStat === 'loading' ? 'Photo…' : photoStat === 'ok' ? 'Photo aérienne ✓' : 'Photo aérienne'}
+        </button>
       </div>
+      {photoStat === 'ok' && photoCredit && (
+        <div data-gab3d-credit className="absolute bottom-2 left-3 rounded bg-black/55 px-2 py-0.5 text-[10px] text-txt-mut">© {photoCredit}</div>
+      )}
+      {photoStat === 'echec' && (
+        <div data-gab3d-photo-echec className="absolute bottom-2 left-3 rounded bg-black/55 px-2 py-0.5 text-[10px] text-txt-ghost">Photo aérienne indisponible — vue en relief conservée.</div>
+      )}
     </div>
   )
 }
@@ -343,9 +432,12 @@ export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => 
   // survol de la coupe CALÉ sur le rectangle du tracé (data-plot-x0/x1 portés par le SVG) — B8
   const onCoupeHover = (ev: React.MouseEvent<HTMLImageElement>) => {
     const img = ev.currentTarget, r = img.getBoundingClientRect()
-    const vb = img.naturalWidth || 960
-    const x0 = Number(img.dataset.plotX0 ?? 64), x1 = Number(img.dataset.plotX1 ?? vb - 20)
-    const sx = ((ev.clientX - r.left) / r.width) * vb
+    // object-contain : l'image est LETTERBOXÉE dans l'élément → on retrouve le rectangle RÉELLEMENT dessiné.
+    // On prend les dimensions du viewBox (WebKit renvoie une naturalWidth déjà mise à l'échelle pour un SVG).
+    const nw = Number(img.dataset.vbw) || 960, nh = Number(img.dataset.vbh) || 1
+    const sc = Math.min(r.width / nw, r.height / nh), drawnW = nw * sc, offX = (r.width - drawnW) / 2
+    const x0 = Number(img.dataset.plotX0 ?? 64), x1 = Number(img.dataset.plotX1 ?? nw - 20)
+    const sx = ((ev.clientX - r.left - offX) / drawnW) * nw
     markerApi.current?.(Math.min(1, Math.max(0, (sx - x0) / (x1 - x0))))
   }
   // lit les bornes du tracé depuis le SVG chargé (pour caler le survol)
@@ -353,7 +445,9 @@ export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => 
     try {
       const txt = await (await fetch(ev.currentTarget.src)).text()
       const m0 = txt.match(/data-plot-x0="([\d.]+)"/), m1 = txt.match(/data-plot-x1="([\d.]+)"/)
+      const vb = txt.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/)
       if (m0) ev.currentTarget.dataset.plotX0 = m0[1]; if (m1) ev.currentTarget.dataset.plotX1 = m1[1]
+      if (vb) { ev.currentTarget.dataset.vbw = vb[1]; ev.currentTarget.dataset.vbh = vb[2] }
     } catch { /* noop */ }
   }
 

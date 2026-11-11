@@ -1,25 +1,28 @@
-// GABARIT-3D-1 (pilote, étape 2 quinquies) — MESURES WebKit : chaque critère mesuré sur l'ouverture,
-// chiffre donné ; un critère non atteint se dit. BZ1065, 1440×900 et 1280×720, coupe A et B, aperçu+détail.
+// GABARIT-3D-1 (pilote, étape 3) — MESURES WebKit : chaque critère mesuré sur l'ouverture, chiffre donné ;
+// un critère non atteint se dit. BZ1065 et CM1658, 1440×900 et 1280×720, coupe A et B, aperçu+détail,
+// RELIEF puis PHOTO aérienne. Sorties : viewer/mesures_webkit.json + captures viewer/mesure_*.
 import { webkit } from '/tmp/pw-wk/node_modules/playwright/index.mjs'
 import fs from 'node:fs'
 
 const OUT = '/Users/openclaw/Desktop/labuse-3d/docs/audit-2026-11/gabarit-3d-1/viewer'
 fs.mkdirSync(OUT, { recursive: true })
 const URL = 'http://127.0.0.1:10090/socle/'
-const IDU = '97411000BZ1065'
+const API = 'http://127.0.0.1:7290'
+const IDUS = [['BZ1065', '97411000BZ1065'], ['CM1658', '97415000CM1658']]
 const browser = await webkit.launch()
 const mesures = {}
 
-async function ouvrir(page) {
+async function ouvrir(page, idu) {
   await page.evaluate(() => document.querySelector('[data-cookie-consent]')?.remove())
   await page.evaluate(() => window.__labuse.setModule('gabarit')); await page.waitForTimeout(250)
-  await page.evaluate((i) => window.__labuse.select(i), IDU)
+  await page.evaluate((i) => window.__labuse.select(i), idu)
   await page.waitForSelector('[data-gabarit-viewer-3d]', { timeout: 15000 })
   await page.click('[data-gabarit-viewer-3d]')
   await page.waitForSelector('[data-gab3d-canvas] canvas', { timeout: 20000 })
   await page.waitForFunction(() => window.__gab3d?.probe?.pf > 0, { timeout: 20000 }).catch(() => {})
 }
-// taille de texte min à l'écran + chevauchement, pour un <img> de coupe
+
+// taille de texte min à l'écran + chevauchement des cotes, pour un <img> de coupe
 async function mesureCoupe(page, sel) {
   const img = await page.$(sel); if (!img) return null
   const b = await img.boundingBox()
@@ -29,7 +32,6 @@ async function mesureCoupe(page, sel) {
   const vb = +(svg.match(/viewBox="0 0 (\d+)/)?.[1] || 960)
   const scale = b.width / vb
   const minPx = Math.min(...fonts) * scale
-  // chevauchement des cotes : <text ...>X,X m</text> ; positions x (px écran), même ligne ~ y
   const cotes = [...svg.matchAll(/<text x="([\d.]+)" y="([\d.]+)"[^>]*>[\d,]+ m<\/text>/g)].map((m) => ({ x: +m[1] * scale, y: +m[2] * scale }))
   let overlaps = 0
   for (let i = 0; i < cotes.length; i++) for (let j = i + 1; j < cotes.length; j++)
@@ -37,51 +39,113 @@ async function mesureCoupe(page, sel) {
   return { largeur_img_px: Math.round(b.width), texte_min_px: Math.round(minPx * 10) / 10, n_cotes: cotes.length, chevauchements: overlaps }
 }
 
-async function parSize(w, h) {
+// A2 — aucun libellé traversé par un trait : les boîtes de fond (rx="2") sont émises APRÈS tous les traits
+// (<line>/<polyline>/<polygon>/<path>) → dessinées PAR-DESSUS, rien ne les traverse.
+function a2Control(svg) {
+  const lastStroke = Math.max(svg.lastIndexOf('<line'), svg.lastIndexOf('<polyline'), svg.lastIndexOf('<polygon'), svg.lastIndexOf('<path'))
+  const rects = [...svg.matchAll(/<rect [^>]*rx="2"/g)].map((m) => m.index)
+  return { libelles_proteges: rects.length, traits_au_travers: rects.filter((i) => i < lastStroke).length }
+}
+
+// altitude du profil à partir des graduations gauches du SVG : étiquettes d'altitude posées à x=off_x-6
+// (text-anchor end) avec y = Y(z)+3 → on retient x STRICTEMENT à gauche du tracé (exclut le « 0 » des
+// distances, posé à x=off_x). Y_plot = y_texte − 3 ; interpolation linéaire (y_plot, z).
+function altFromGrads(svg, off_x) {
+  const g = [...svg.matchAll(/<text x="([\d.]+)" y="([\d.]+)"[^>]*>(\d+)<\/text>/g)]
+    .map((m) => ({ x: +m[1], y: +m[2] - 3, z: +m[3] })).filter((t) => t.x < off_x - 3)
+  if (g.length < 2) return null
+  const a = g[0], b = g[g.length - 1]
+  const dz = (b.z - a.z) / (b.y - a.y)
+  return (yplot) => a.z + (yplot - a.y) * dz
+}
+
+async function parSize(idu, w, h) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1.5 })
   const page = await ctx.newPage()
   await page.goto(URL, { waitUntil: 'networkidle' }); await page.waitForFunction(() => window.__labuse != null, { timeout: 30000 })
-  await ouvrir(page); await page.waitForTimeout(600)
-  const scene = await (await fetch(`http://127.0.0.1:7290/outils/gabarit/scene/${IDU}`)).json()
+  await ouvrir(page, idu); await page.waitForTimeout(700)
+  const scene = await (await fetch(`${API}/outils/gabarit/scene/${idu}`)).json()
   const m = { cadrage_parcelle_largeur_pct: 0, coupes: {} }
-  // 1. cadrage : largeur projetée de la parcelle
   m.cadrage_parcelle_largeur_pct = Math.round((await page.evaluate(() => window.__gab3d.probe.pf)) * 1000) / 10
-  // 2. contour : couverture — parcelle couverte à 100 % → contour continu (plein visible + pointillé caché)
   m.contour_couverture_pct = Math.round((scene.terrain?.couverture_parcelle ?? 0) * 100)
-  // 4. coupes A et B, aperçu (bas) et détail (agrandir)
+  // A1 — audit de la zone d'implantation (pixels verts dedans / dehors)
+  m.zone = await page.evaluate(() => window.__gab3dZoneAudit ? window.__gab3dZoneAudit() : { zone: false })
+  // 4. coupes A et B, aperçu (bas) + détail (agrandir) + A2 (libellés non traversés, sur l'aperçu)
   for (const ax of ['A', 'B']) {
     await page.click(`text=Coupe ${ax}`).catch(() => {}); await page.waitForTimeout(500)
+    const apImg = await page.$('[data-gab3d-overlay] img[alt^="Coupe"]')
+    const apSvg = apImg ? await (await fetch(await apImg.evaluate((e) => e.src))).text() : ''
     const apercu = await mesureCoupe(page, '[data-gab3d-overlay] img[alt^="Coupe"]')
-    await page.screenshot({ path: `${OUT}/mesure_${w}x${h}_coupe${ax}.png` })
+    if (apercu) apercu.libelles = a2Control(apSvg)
+    await page.screenshot({ path: `${OUT}/mesure_${idu.slice(-6)}_${w}x${h}_coupe${ax}.png` })
     await page.click('[data-gab3d-agrandir]').catch(() => {}); await page.waitForTimeout(500)
     const detail = await mesureCoupe(page, '[data-gab3d-overlay] img[alt="Agrandie"]')
-    if (ax === 'B') await page.screenshot({ path: `${OUT}/mesure_${w}x${h}_detailB.png` })
+    if (ax === 'B') await page.screenshot({ path: `${OUT}/mesure_${idu.slice(-6)}_${w}x${h}_detailB.png` })
     await page.click('text=Revenir au terrain').catch(() => {}); await page.waitForTimeout(300)
     m.coupes[ax] = { apercu, detail }
   }
-  // 5. survol de la coupe → écart entre le point survolé et le point montré en 3D (critère < 0,5 m)
-  await page.click('text=Coupe B').catch(() => {}); await page.waitForTimeout(400)
-  const imgB = await page.$('[data-gab3d-overlay] img[alt^="Coupe"]'); const b = await imgB.boundingBox()
-  const svgB = await (await fetch(await imgB.evaluate((e) => e.src))).text()
-  const x0 = +(svgB.match(/data-plot-x0="([\d.]+)"/)?.[1] || 58), x1 = +(svgB.match(/data-plot-x1="([\d.]+)"/)?.[1] || 900)
-  const aB = scene.axes_plan.B, fr = 0.7
-  const ex = aB.p0[0] + (aB.p1[0] - aB.p0[0]) * fr, ey = aB.p0[1] + (aB.p1[1] - aB.p0[1]) * fr
-  const px = b.x + (x0 + (x1 - x0) * fr) / 960 * b.width
-  await page.mouse.move(px, b.y + b.height * 0.5); await page.waitForTimeout(250)
-  const mk = await page.evaluate(() => window.__gab3d.probe)
-  m.rupture_marqueur_pose = mk.mon
-  m.survol_ecart_m = mk.mon ? Math.round(Math.hypot(mk.mx - ex, mk.my - ey) * 100) / 100 : null
-  // 6. parité : les img plan/coupe transmettent sid
+  // A3 — on PART du losange ◆ affiché sur la coupe (B si elle en porte un, sinon A) : survol à son x → le
+  // repère tombe sur le terrain. Écart = |altitude du marqueur drapé (maillage 3D) − altitude du losange
+  // (profil serveur)|, deux pipelines distincts au MÊME endroit → critère < 0,5 m.
+  m.survol = { marqueur_pose: false, note: 'aucun losange sur les coupes' }
+  for (const ax of ['B', 'A']) {
+    await page.click(`text=Coupe ${ax}`).catch(() => {}); await page.waitForTimeout(450)
+    const img = await page.$('[data-gab3d-overlay] img[alt^="Coupe"]'); const bb = await img.boundingBox()
+    const svg = await (await fetch(await img.evaluate((e) => e.src))).text()
+    const x0 = +(svg.match(/data-plot-x0="([\d.]+)"/)?.[1] || 58), x1 = +(svg.match(/data-plot-x1="([\d.]+)"/)?.[1] || 900)
+    const los = svg.match(/<path d="M([\d.]+),([\d.-]+) l4,4 l-4,4 l-4,-4 z"/)
+    if (!los) continue
+    const lx = +los[1], ly = +los[2] + 4   // centre du losange (x plan, Y plot)
+    const alt = altFromGrads(svg, x0); const zLos = alt ? alt(ly) : null
+    // point d'axe VISÉ par le losange (plan) : fraction = (x_losange − x0)/(x1 − x0)
+    const a = scene.axes_plan[ax], frLos = (lx - x0) / (x1 - x0)
+    const ex = a.p0[0] + (a.p1[0] - a.p0[0]) * frLos, ey = a.p0[1] + (a.p1[1] - a.p0[1]) * frLos
+    // position RÉELLE du losange à l'écran (object-contain → letterbox ; dims = viewBox, pas naturalWidth WebKit)
+    const vb = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/)
+    const nw = +vb[1], nh = +vb[2]
+    const scl = Math.min(bb.width / nw, bb.height / nh), drawnW = nw * scl, offX = (bb.width - drawnW) / 2
+    const drawnH = nh * scl, offY = (bb.height - drawnH) / 2
+    const px = bb.x + offX + (lx / nw) * drawnW
+    await page.mouse.move(px - 1, bb.y + offY + drawnH * 0.5); await page.mouse.move(px, bb.y + offY + drawnH * 0.5); await page.waitForTimeout(250)
+    const mk = await page.evaluate(() => window.__gab3d.probe)
+    m.survol = {
+      coupe: ax, marqueur_pose: mk.mon,
+      // ÉCART HORIZONTAL : où le repère tombe sur le terrain vs l'endroit visé par le losange (« le même endroit »)
+      ecart_m: mk.mon ? Math.round(Math.hypot(mk.mx - ex, mk.my - ey) * 100) / 100 : null,
+      alt_marqueur_3d_m: mk.mon ? Math.round(mk.mz * 100) / 100 : null,
+      alt_losange_coupe_m: zLos != null ? Math.round(zLos * 100) / 100 : null,
+      ecart_altitude_m: (mk.mon && zLos != null) ? Math.round(Math.abs(mk.mz - zLos) * 100) / 100 : null,
+    }
+    break
+  }
   m.parite_sid = await page.evaluate(() => [...document.querySelectorAll('[data-gab3d-overlay] img')].some((i) => /[?&]sid=/.test(i.src)))
-  // overflow à chaque taille
   m.rien_ne_depasse = await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1 && document.documentElement.scrollHeight <= innerHeight + 1)
-  await page.screenshot({ path: `${OUT}/mesure_${w}x${h}_ouvert.png` })
+  await page.screenshot({ path: `${OUT}/mesure_${idu.slice(-6)}_${w}x${h}_relief.png` })
+
+  // B — PHOTO aérienne (si le bouton existe) : chargée au clic, drapée, overlays préservés.
+  const photoBtn = await page.$('[data-gab3d-photo]')
+  if (photoBtn) {
+    const t0 = Date.now()
+    await photoBtn.click()
+    const ok = await page.waitForFunction(() => window.__gab3d?.photo === 'ok' || window.__gab3d?.photo === 'echec', { timeout: 6000 }).then(() => true).catch(() => false)
+    const etat = await page.evaluate(() => window.__gab3d?.photo || 'inconnu')
+    m.photo = {
+      etat, delai_ms: Date.now() - t0,
+      credit_ign: await page.evaluate(() => /©\s*IGN/i.test(document.querySelector('[data-gab3d-credit]')?.textContent || '')),
+      millesime: await page.evaluate(() => document.querySelector('[data-gab3d-credit]')?.textContent?.match(/\b(19|20)\d{2}\b/)?.[0] || null),
+      proxy_serveur: await page.evaluate(() => performance.getEntriesByType('resource').some((r) => /\/outils\/gabarit\/.*ortho/i.test(r.name)) && !performance.getEntriesByType('resource').some((r) => /geopf\.fr|ign\.fr/i.test(r.name))),
+    }
+    if (ok && etat === 'ok') await page.screenshot({ path: `${OUT}/mesure_${idu.slice(-6)}_${w}x${h}_photo.png` })
+  }
   await ctx.close()
   return m
 }
 
-mesures['1440x900'] = await parSize(1440, 900)
-mesures['1280x720'] = await parSize(1280, 720)
+for (const [court, idu] of IDUS) {
+  mesures[court] = {}
+  mesures[court]['1440x900'] = await parSize(idu, 1440, 900)
+  mesures[court]['1280x720'] = await parSize(idu, 1280, 720)
+}
 fs.writeFileSync(`${OUT}/mesures_webkit.json`, JSON.stringify(mesures, null, 2))
 console.log(JSON.stringify(mesures, null, 2))
 await browser.close()

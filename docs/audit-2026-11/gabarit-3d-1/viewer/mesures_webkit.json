@@ -1,78 +1,270 @@
 {
-  "1440x900": {
-    "cadrage_parcelle_largeur_pct": 60,
-    "coupes": {
-      "A": {
-        "apercu": {
-          "largeur_img_px": 688,
-          "texte_min_px": 6.4,
-          "n_cotes": 3,
-          "chevauchements": 0
+  "BZ1065": {
+    "1440x900": {
+      "cadrage_parcelle_largeur_pct": 60,
+      "coupes": {
+        "A": {
+          "apercu": {
+            "largeur_img_px": 688,
+            "texte_min_px": 6.4,
+            "n_cotes": 3,
+            "chevauchements": 0,
+            "libelles": {
+              "libelles_proteges": 1,
+              "traits_au_travers": 0
+            }
+          },
+          "detail": {
+            "largeur_img_px": 1408,
+            "texte_min_px": 13.2,
+            "n_cotes": 8,
+            "chevauchements": 0
+          }
         },
-        "detail": {
-          "largeur_img_px": 1408,
-          "texte_min_px": 13.2,
-          "n_cotes": 8,
-          "chevauchements": 0
+        "B": {
+          "apercu": {
+            "largeur_img_px": 961,
+            "texte_min_px": 9,
+            "n_cotes": 4,
+            "chevauchements": 0,
+            "libelles": {
+              "libelles_proteges": 3,
+              "traits_au_travers": 0
+            }
+          },
+          "detail": {
+            "largeur_img_px": 1408,
+            "texte_min_px": 13.2,
+            "n_cotes": 15,
+            "chevauchements": 0
+          }
         }
       },
-      "B": {
-        "apercu": {
-          "largeur_img_px": 961,
-          "texte_min_px": 9,
-          "n_cotes": 4,
-          "chevauchements": 0
-        },
-        "detail": {
-          "largeur_img_px": 1408,
-          "texte_min_px": 13.2,
-          "n_cotes": 15,
-          "chevauchements": 0
-        }
+      "contour_couverture_pct": 100,
+      "zone": {
+        "zone": true,
+        "inside_green_pct": 98.1,
+        "inside_tot": 2751,
+        "bati_exclu": 539,
+        "outside_green": 0
+      },
+      "survol": {
+        "coupe": "B",
+        "marqueur_pose": true,
+        "ecart_m": 0.24,
+        "alt_marqueur_3d_m": 403.44,
+        "alt_losange_coupe_m": 404.06,
+        "ecart_altitude_m": 0.62
+      },
+      "parite_sid": true,
+      "rien_ne_depasse": true,
+      "photo": {
+        "etat": "ok",
+        "delai_ms": 102,
+        "credit_ign": true,
+        "millesime": "2025",
+        "proxy_serveur": true
       }
     },
-    "contour_couverture_pct": 100,
-    "rupture_marqueur_pose": true,
-    "survol_ecart_m": 0.06,
-    "parite_sid": true,
-    "rien_ne_depasse": true
+    "1280x720": {
+      "cadrage_parcelle_largeur_pct": 60,
+      "coupes": {
+        "A": {
+          "apercu": {
+            "largeur_img_px": 530,
+            "texte_min_px": 5,
+            "n_cotes": 3,
+            "chevauchements": 0,
+            "libelles": {
+              "libelles_proteges": 1,
+              "traits_au_travers": 0
+            }
+          },
+          "detail": {
+            "largeur_img_px": 1248,
+            "texte_min_px": 11.7,
+            "n_cotes": 8,
+            "chevauchements": 0
+          }
+        },
+        "B": {
+          "apercu": {
+            "largeur_img_px": 961,
+            "texte_min_px": 9,
+            "n_cotes": 4,
+            "chevauchements": 0,
+            "libelles": {
+              "libelles_proteges": 3,
+              "traits_au_travers": 0
+            }
+          },
+          "detail": {
+            "largeur_img_px": 1248,
+            "texte_min_px": 11.7,
+            "n_cotes": 15,
+            "chevauchements": 0
+          }
+        }
+      },
+      "contour_couverture_pct": 100,
+      "zone": {
+        "zone": true,
+        "inside_green_pct": 98.1,
+        "inside_tot": 2024,
+        "bati_exclu": 397,
+        "outside_green": 0
+      },
+      "survol": {
+        "coupe": "B",
+        "marqueur_pose": true,
+        "ecart_m": 0.24,
+        "alt_marqueur_3d_m": 403.44,
+        "alt_losange_coupe_m": 404.06,
+        "ecart_altitude_m": 0.62
+      },
+      "parite_sid": true,
+      "rien_ne_depasse": true,
+      "photo": {
+        "etat": "ok",
+        "delai_ms": 131,
+        "credit_ign": true,
+        "millesime": "2025",
+        "proxy_serveur": true
+      }
+    }
   },
-  "1280x720": {
-    "cadrage_parcelle_largeur_pct": 60,
-    "coupes": {
-      "A": {
-        "apercu": {
-          "largeur_img_px": 530,
-          "texte_min_px": 5,
-          "n_cotes": 3,
-          "chevauchements": 0
+  "CM1658": {
+    "1440x900": {
+      "cadrage_parcelle_largeur_pct": 60,
+      "coupes": {
+        "A": {
+          "apercu": {
+            "largeur_img_px": 573,
+            "texte_min_px": 5.4,
+            "n_cotes": 3,
+            "chevauchements": 0,
+            "libelles": {
+              "libelles_proteges": 2,
+              "traits_au_travers": 0
+            }
+          },
+          "detail": {
+            "largeur_img_px": 1408,
+            "texte_min_px": 13.2,
+            "n_cotes": 8,
+            "chevauchements": 0
+          }
         },
-        "detail": {
-          "largeur_img_px": 1248,
-          "texte_min_px": 11.7,
-          "n_cotes": 8,
-          "chevauchements": 0
+        "B": {
+          "apercu": {
+            "largeur_img_px": 961,
+            "texte_min_px": 9,
+            "n_cotes": 3,
+            "chevauchements": 0,
+            "libelles": {
+              "libelles_proteges": 1,
+              "traits_au_travers": 0
+            }
+          },
+          "detail": {
+            "largeur_img_px": 1408,
+            "texte_min_px": 13.2,
+            "n_cotes": 7,
+            "chevauchements": 0
+          }
         }
       },
-      "B": {
-        "apercu": {
-          "largeur_img_px": 961,
-          "texte_min_px": 9,
-          "n_cotes": 4,
-          "chevauchements": 0
-        },
-        "detail": {
-          "largeur_img_px": 1248,
-          "texte_min_px": 11.7,
-          "n_cotes": 15,
-          "chevauchements": 0
-        }
+      "contour_couverture_pct": 100,
+      "zone": {
+        "zone": true,
+        "inside_green_pct": 97.9,
+        "inside_tot": 1306,
+        "bati_exclu": 2789,
+        "outside_green": 0
+      },
+      "survol": {
+        "coupe": "A",
+        "marqueur_pose": true,
+        "ecart_m": 0.08,
+        "alt_marqueur_3d_m": 595.11,
+        "alt_losange_coupe_m": 595.09,
+        "ecart_altitude_m": 0.01
+      },
+      "parite_sid": true,
+      "rien_ne_depasse": true,
+      "photo": {
+        "etat": "ok",
+        "delai_ms": 143,
+        "credit_ign": false,
+        "millesime": "2025",
+        "proxy_serveur": true
       }
     },
-    "contour_couverture_pct": 100,
-    "rupture_marqueur_pose": true,
-    "survol_ecart_m": 0.06,
-    "parite_sid": true,
-    "rien_ne_depasse": true
+    "1280x720": {
+      "cadrage_parcelle_largeur_pct": 60,
+      "coupes": {
+        "A": {
+          "apercu": {
+            "largeur_img_px": 442,
+            "texte_min_px": 4.1,
+            "n_cotes": 3,
+            "chevauchements": 0,
+            "libelles": {
+              "libelles_proteges": 2,
+              "traits_au_travers": 0
+            }
+          },
+          "detail": {
+            "largeur_img_px": 1248,
+            "texte_min_px": 11.7,
+            "n_cotes": 8,
+            "chevauchements": 0
+          }
+        },
+        "B": {
+          "apercu": {
+            "largeur_img_px": 961,
+            "texte_min_px": 9,
+            "n_cotes": 3,
+            "chevauchements": 0,
+            "libelles": {
+              "libelles_proteges": 1,
+              "traits_au_travers": 0
+            }
+          },
+          "detail": {
+            "largeur_img_px": 1248,
+            "texte_min_px": 11.7,
+            "n_cotes": 7,
+            "chevauchements": 0
+          }
+        }
+      },
+      "contour_couverture_pct": 100,
+      "zone": {
+        "zone": true,
+        "inside_green_pct": 98.1,
+        "inside_tot": 959,
+        "bati_exclu": 2046,
+        "outside_green": 0
+      },
+      "survol": {
+        "coupe": "A",
+        "marqueur_pose": true,
+        "ecart_m": 0.08,
+        "alt_marqueur_3d_m": 595.11,
+        "alt_losange_coupe_m": 595.09,
+        "ecart_altitude_m": 0.01
+      },
+      "parite_sid": true,
+      "rien_ne_depasse": true,
+      "photo": {
+        "etat": "ok",
+        "delai_ms": 90,
+        "credit_ign": false,
+        "millesime": "2025",
+        "proxy_serveur": true
+      }
+    }
   }
 }
