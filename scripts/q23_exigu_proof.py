@@ -1,8 +1,14 @@
-"""DEPLOY-GROUPE-3 — PREUVE que le recalcul partiel exigu est complet (précision 4 de Vic).
+"""DEPLOY-GROUPE-3 — PREUVE que le recalcul partiel exigu est COMPLET (précisions Vic).
 
-Tire 500 parcelles AU HASARD HORS de la cible (cause != 'terrain_exigu' dans seq 18), recalcule le
-résiduel avec le NOUVEAU code (exigu-fix), et montre que le résultat est IDENTIQUE à seq 18 — donc
-le fix ne change RIEN hors de la cible, et recalculer la cible suffit. Lecture seule (compare, n'écrit pas).
+Pourquoi la cible = cause='terrain_exigu' suffit (et couvre « emprise<seuil », précision 2 Vic) :
+le ré-examen exigu est strictement condamné à `if emprise < SEUIL_EXIGU_M2` (db.py:902) et, dans le
+CODE D'ORIGINE (celui de seq 18, fix inactif), CE SEUL chemin produit cause='terrain_exigu'
+(engine.py:557 ; `assiette_a_verifier` exige le fix ACTIF, `redhibitoire` vient d'une branche
+NON-emprise). Donc {emprise<SEUIL dans seq 18} ≡ {cause='terrain_exigu'} exactement (cf. EXIGU-FIX-1
+§1 et §6). Le set « emprise<seuil mais autre cause » est VIDE. `emprise` n'étant pas une colonne
+persistée, on le PROUVE empiriquement : on recalcule HORS cible avec le NOUVEAU code et on montre
+l'identité à seq 18, en ciblant surtout les parcelles où une omission POURRAIT se cacher (capacité
+constructible quasi nulle). Lecture seule (compare, n'écrit pas).
 Usage : python scripts/q23_exigu_proof.py [N=500]
 """
 from __future__ import annotations
@@ -20,14 +26,17 @@ def _g(d, *ks):
 
 
 _SEL = {
-    # (A) hors cible, AU HASARD
+    # (A) hors cible, AU HASARD — prouve que le fix n'a AUCUN effet de bord hors terrain_exigu.
     "hors cible AU HASARD": (
         "r.cause IS DISTINCT FROM 'terrain_exigu'", "ORDER BY md5(p.idu)"),
-    # (B) hors cible ET emprise calculée < seuil d'exiguïté (≈5 m²) — les seules où une omission
-    #     pourrait se cacher (précision 4 de Vic). emprise ≈ taux_emprise_pct/100 × surface.
-    "hors cible ET emprise<seuil": (
-        "r.cause IS DISTINCT FROM 'terrain_exigu' AND "
-        "COALESCE(r.taux_emprise_pct,0)/100.0 * COALESCE(r.surface_terrain_m2,0) < 5",
+    # (B) hors cible ET capacité constructible quasi NULLE (sdp_max_m2 < 5) — le proxy FIABLE de
+    #     « emprise calculée sous le seuil » (la SDP max est proportionnelle à l'emprise ; contrairement
+    #     à taux_emprise_pct qui est l'occupation BÂTIE, sans rapport). C'est la SEULE zone où une
+    #     parcelle emprise<seuil pourrait porter une autre cause que terrain_exigu — donc la seule où
+    #     une omission de la cible se cacherait (précision 2 de Vic). Attendu : identique à seq 18.
+    "hors cible ET capacité quasi nulle": (
+        "r.cause IS DISTINCT FROM 'terrain_exigu' AND r.cause IS NOT NULL "
+        "AND COALESCE(r.sdp_max_m2, 0) < 5",
         "ORDER BY md5(p.idu)"),
 }
 
