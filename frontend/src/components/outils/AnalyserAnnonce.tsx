@@ -96,13 +96,12 @@ function Corps({ children }: { children: React.ReactNode }) {
 // ── Dernière vente DE CE BIEN, montrée juste sous la boîte parcelle (JAMAIS dans le calcul) ──
 function DerniereVente({ dv }: { dv: Estimer3Rapport['derniere_vente'] }) {
   if (!dv || !dv.date) return null
-  const bits = [
-    dv.surface_m2 != null ? fmtM2(dv.surface_m2) : null,
-    dv.prix_eur != null ? `${fmtInt(dv.prix_eur)} €` : null,
-  ].filter(Boolean)
+  // Une seule ligne : « Dernière vente : 12/2025 · 116 m² · 455 000 € » (prix en gras, blanc).
   return (
-    <p data-estimer-derniere-vente className="text-[11px] leading-snug text-txt-dim">
-      <span className="text-txt-mut">Dernière vente de ce bien :</span> {dv.date}{bits.length ? ` · ${bits.join(' · ')}` : ''}
+    <p data-estimer-derniere-vente className="truncate text-[11px] leading-snug text-txt-dim">
+      <span className="text-txt-mut">Dernière vente :</span> {dv.date}
+      {dv.surface_m2 != null ? ` · ${fmtM2(dv.surface_m2)}` : ''}
+      {dv.prix_eur != null && <> · <span className="font-semibold text-txt-hi">{fmtInt(dv.prix_eur)} €</span></>}
     </p>
   )
 }
@@ -250,7 +249,8 @@ function VentesRetenues({ ventes, ecartees, onToggle }: {
                   </div>
                   <div className="mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 tabular-nums text-txt-dim">
                     <span>{v.surface_m2 != null ? `${fmtM2(v.surface_m2)} hab.` : '— hab.'}</span>
-                    <span>{v.terrain_m2 != null ? `${fmtM2(v.terrain_m2)} terrain` : '— terrain'}</span>
+                    {/* terrain nul/absent (DVF ne l'a pas renseigné) → on ne montre pas « 0 m² terrain ». */}
+                    <span>{v.terrain_m2 ? `${fmtM2(v.terrain_m2)} terrain` : 'terrain non renseigné'}</span>
                     {v.distance_m != null && <span>· {fmtInt(v.distance_m)} m</span>}
                   </div>
                 </div>

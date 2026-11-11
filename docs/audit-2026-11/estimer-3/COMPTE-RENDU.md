@@ -364,3 +364,17 @@ Même branche `fix/estimer-3`, pas de merge, WebKit, capture par point.
 **Captures** (WebKit, panneau complet) : `ecran-maison-sans-saisie` (AZ1645 : dernière vente, « connue » DVF, ventes 2 lignes, Radar commune+distance), `ecran-maison-surface`, `ecran-appartement`, `ecran-terrain-nu`, `ecran-aw1367-masque` (champ vide + indication, pas de « inconnue », Radar multi-communes), `ecran-aw1367-surface`.
 
 **Fichiers** : `src/labuse/pige/estimer3.py` (`_derniere_vente_bien`, `_surface_hab_detail`, `radar_semblables` distance/commune/5-plus-proches/rayon), `frontend/src/lib/api.ts` (types), `frontend/src/components/outils/AnalyserAnnonce.tsx` (`DerniereVente`, Question badge/texte + champ vide si masqué, VentesRetenues 2 lignes, RadarEnVente commune+distance, en-tête « Retour », libellé retiré).
+
+---
+
+# Recette 2 — deux retouches (ESTIMER-ECRAN-1)
+
+1. **Ventes retenues, terrain nul/absent** — quand la surface du terrain est 0 ou absente (DVF ne l'a pas renseignée), on n'affiche plus « 0 m² terrain » mais **« terrain non renseigné »**.
+
+   **Combien, sur l'île ?** Sur le pool de comparables maison (mono-parcelle, Vente, bâti ≥ 20 m², €/m² 1 000–12 000) : **1 193 ventes (9,1 %)** ont un terrain nul/absent, contre 11 927 (90,9 %) avec terrain.
+
+   **Restent-elles de bons comparables pour une maison AVEC terrain ?** Partiellement. Leur **médiane €/m² = 2 644** contre **2 835** pour celles avec terrain (**−7 %**) : une maison vendue sans terrain attribué (copropriété horizontale, lotissement à terrain commun, terrain détenu à part) vaut un peu moins au m², donc comme comparable d'une maison avec terrain elle **sous-estime légèrement**. Même type et taille proche (médiane bâti 77 vs 84 m²) → pas disqualifiée, mais second choix. À noter : la pondération ESTIMER-3 **saute** la pénalité d'écart de terrain quand le comparable a terrain = 0 (`(terrain_m2 or 0) > 0`), donc ces 9,1 % sont gardées à pleine pondération (tirant le €/m² ~7 % vers le bas à la marge). *(Constat, non modifié ici.)*
+
+2. **Ligne « Dernière vente »** — tient sur **une seule ligne**, prix en **gras et blanc** : « Dernière vente : 12/2025 · 116 m² · **455 000 €** » (`truncate`, `font-semibold text-txt-hi`).
+
+Captures WebKit (AZ1645 : ligne dernière vente + « terrain non renseigné » au 09/2024 ; appartement : « terrain non renseigné » sur toutes les lignes). Hook complet vert.
