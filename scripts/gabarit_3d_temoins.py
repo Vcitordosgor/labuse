@@ -124,9 +124,9 @@ def recette_d(eng):
                 p["z"] = None
         svg = coupe_svg(c2, theme="clair", largeur_mm=170, scene_id=s.scene_id, adresse=s.adresse)
         _png(svg, OUT / "recette" / "d1_lacune_sous_bati.svg")
-        # emprise au sol présente ; mention faîtage à part (aucune cote de toiture sur un volume)
+        # emprise au sol présente ; lacune ouverte sous l'emprise (aucun toit dessiné)
         res["d1_lacune_sous_bati"] = {"emprise_au_sol": "emprise bâtie" in svg,
-                                      "faitage_a_part": "Hauteur au faîtage" in svg}
+                                      "lacune_ouverte": 'stroke-dasharray="2 2"' in svg}
     # D2 — reproductibilité : même SVG après purge du cache COG + mémo scène
     def svg_bz():
         SC._MEMO.clear()

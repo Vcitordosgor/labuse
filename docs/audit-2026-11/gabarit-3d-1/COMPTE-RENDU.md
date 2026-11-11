@@ -5,8 +5,8 @@ prod. **Aucun chiffre servi ne change** (bancs Gabarit verts, chiffres du Gabari
 La vue 3D actuelle reste la vue par défaut ; le pilote vit derrière un **interrupteur réservé aux admins**.
 **Aucun plafond de hauteur n'est dessiné** (les hauteurs en pente sont le mandat suivant).
 
-> Les §1–§9 décrivent l'étape 1 ; §10 = revue bis ; le **§11 (étape 1 ter) FAIT FOI** pour la scène
-> et les coupes (lecture pixel-native, maillage triangulé, planches, modèle bâti). §12 = visionneuse.
+> §1–§9 étape 1 ; §10 bis ; §11 ter ; §12 visionneuse ; le **§13 (étape 2 bis) FAIT FOI** pour la
+> justesse (maillage unique, coupes par franchissement, identifiant sur contenu, bâti BD TOPO) et le rendu.
 
 ---
 
@@ -340,3 +340,38 @@ Captures WebKit : `viewer/bz1065_vue3d.png` (talus, à froid), `bz1065_vue3d_cha
 `97415000CM1658_vue3d.png` (altitude), `apres_pause.png`. Recette sur base réelle rejouée (backend 7290,
 front 10090). **Hook vert** : tsc (build), vitest **326**, pytest gabarit **297 unit + 2 db** + 17 scène,
 secrets. three.js ajouté (0.169), code-splitté. La vue 3D MapLibre par défaut est **inchangée**.
+
+---
+
+## 13. Étape 2 bis — 4ᵉ revue d'Astra (d'abord juste, ensuite beau)
+
+Sur le commit 588accb99. Direction visuelle : `docs/design/maquettes/nov-2026/14-vue-3d-cible.png`.
+Chaque point ci-dessous porte son test et son résultat ; n'est « fermé » que ce qu'un test prouve.
+
+### A. Justesse
+
+| # | Exigence | Test | Résultat |
+|---|---|---|---|
+| A1 | UN seul maillage 1 m borné, servi ; 2 m retiré (plus de surfaces superposées) | `test_locks_scene_base_reelle` : `faces_parcelle` présent, `faces_voisinage` ABSENT | **fermé** ✅ |
+| A2 | Coupes au FRANCHISSEMENT des faces (pas d'échantillonnage au mètre) | `test_coupe_par_franchissement_retrouve_crete` : crête à 4 m retrouvée (≥3,95), 1 m la manque (<3,95) ; lacune reste lacune | **fermé** ✅ |
+| A3 | Identifiant sur tout le contenu (sommets, exclusions, sources) ; mêmes cotes dans les 3 sorties | `test_scene_id_sur_contenu` : changer un sommet OU une exclusion change l'id ; reproductibilité `test_locks` (rebuild → même id) ; cotes = mêmes `cotes_points` servis (SVG écran/PDF = mêmes valeurs, thème seul diffère) | **fermé** ✅ |
+| A4 | Même transformation emprise/volume (N-S) ; trous ; emprise seule si pied/hauteur manque ; hauteur BD TOPO par bâtiment (plus de hauteur de parcelle recopiée) | `test_bati_hauteur_bdtopo_ou_contour_seul` (BD TOPO → volume ; sans hauteur/pied → contour seul) ; recette BZ1065 : chaque volume **superposé à son emprise** (`viewer/bz1065_vue3d.png`) | **fermé** ✅ |
+
+### B. Rendu (visionneuse `GabaritViewer3D.tsx`)
+- **B5** ombrage LISSÉ (MeshStandardMaterial, `computeVertexNormals`, plus de facettes), lumière du nord-ouest, ambiance modérée — *rendu, voir captures*.
+- **B6** caméra ortho de trois quarts cadrée parcelle+abords, **repère nord**, bouton **◎ Recentrer** (`data-gab3d-recentrer`) — *rendu*.
+- **B7** courbes de niveau par intersection des triangles (égalités traitées, arêtes dédupliquées, interruption aux lacunes) ; **maîtresses tous les 5 m**, intermédiaires 1 m — *rendu*.
+- **B8** zone d'implantation en **masque** sur le terrain (trous respectés, `inPolys`) ; terrain assombri hors parcelle — *rendu (teinte verte visible)*.
+- **B9** contours/axes posés sur le relief, **jamais d'altitude zéro** (interruption si lacune) ; **parcelle blanc épais**, **orange = axe sélectionné**, soulevés 0,4 m (pas de scintillement) — *rendu*.
+- **B10** altitudes **haut/bas** à l'ouverture + **sous le curseur** ; titre adresse + **référence cadastrale** ; **scène dans les détails techniques** — *rendu (en-tête et coin supérieur droit)*.
+- **B11** onglets **Plan · Coupe A · Coupe B**, coupe à la largeur du panneau + **⤢ Agrandir** ; survol de la coupe → marqueur dans la 3D (`markerApi`) — *rendu*.
+- **B12** échelle verticale ×1 (altitudes intactes), aucune photo aérienne — *acquis*.
+
+### C. Recette et mesures WebKit (moteur Safari) — `viewer/mesures_webkit.json`
+| # | Exigence | Résultat |
+|---|---|---|
+| C13 | Repli plan+coupes sur **perte de contexte WebGL forcée** en cours d'usage | `WEBGL_lose_context.loseContext()` → `data-gab3d-fallback` affiché : **True** ✅ (`viewer/perte_contexte.png`) |
+| C14 | FPS, ressources libérées après 10 ouvertures/fermetures, temps à chaud/à froid | **FPS 60** (cible 30) ✅ · **à chaud 792 ms** (cible < 2 s) ✅ · à froid 1612 ms · **10 ouvertures sans fuite : True** ✅ · canvas OK après pause : True · 0 erreur |
+
+Captures WebKit : `viewer/bz1065_vue3d.png`, `viewer/97415000CM1658_vue3d.png`, `viewer/perte_contexte.png`.
+Hook : build tsc ✅ · vitest **326** ✅ · pytest gabarit **299 unit + 2 db + 20 scène** ✅ · 0 faute hors cadre (coupes régénérées clair+sombre).

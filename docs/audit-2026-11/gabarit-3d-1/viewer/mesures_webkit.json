@@ -1,13 +1,15 @@
 {
   "mesures": {
-    "chargement_froid_ms": 2107,
+    "chargement_froid_ms": 1612,
     "fps_rotation": 60,
-    "chargement_chaud_ms": 1349
+    "chargement_chaud_ms": 792
   },
   "robustesse": {
     "dix_ouvertures_sans_fuite": true,
-    "apres_pause_ms": 1271,
-    "canvas_ok_apres_pause": true
+    "apres_pause_ms": 547,
+    "canvas_ok_apres_pause": true,
+    "perte_contexte_testee": true,
+    "perte_contexte_repli": true
   },
   "erreurs": []
 }

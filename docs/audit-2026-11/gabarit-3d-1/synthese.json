@@ -4,7 +4,7 @@
       "label": "plate",
       "idu": "97415000CY0196",
       "titre": "Parcelle plate — plaine littorale de Saint-Paul (~5 m), bâti sur terrain plat",
-      "scene_id": "b4994874b1dc",
+      "scene_id": "d6f7b5fdc472",
       "disponible": true,
       "etat": {
         "gabarit": "inconstructible",
@@ -29,8 +29,8 @@
           "indicateurs": {
             "traversees": [
               {
-                "d0": 1.0,
-                "d1": 43.89,
+                "d0": 0.71,
+                "d1": 43.85,
                 "pente_pct": -7.9,
                 "sens": "descente",
                 "amplitude_m": 3.4
@@ -38,9 +38,9 @@
             ],
             "pente_max_5m": {
               "disponible": true,
-              "pente_pct": 27.3,
-              "d0": 1.99,
-              "d1": 6.98
+              "pente_pct": 29.4,
+              "d0": 3.29,
+              "d1": 8.29
             },
             "pente_acces_pct": null
           },
@@ -61,20 +61,20 @@
           "indicateurs": {
             "traversees": [
               {
-                "d0": 26.16,
-                "d1": 66.41,
-                "pente_pct": -4.0,
+                "d0": 26.1,
+                "d1": 66.18,
+                "pente_pct": -3.8,
                 "sens": "descente",
-                "amplitude_m": 1.6
+                "amplitude_m": 1.53
               }
             ],
             "pente_max_5m": {
               "disponible": true,
-              "pente_pct": 16.7,
-              "d0": 61.37,
-              "d1": 66.41
+              "pente_pct": 18.4,
+              "d0": 61.85,
+              "d1": 66.85
             },
-            "pente_acces_pct": -14.9
+            "pente_acces_pct": -15.2
           },
           "n_cotes_points": 8
         }
@@ -84,7 +84,7 @@
       "label": "cotier",
       "idu": "97413000CA0057",
       "titre": "Littoral de Saint-Leu — falaise",
-      "scene_id": "de4ab3bc954f",
+      "scene_id": "facc6e1bbcba",
       "disponible": true,
       "etat": {
         "gabarit": "inconstructible",
@@ -109,18 +109,18 @@
           "indicateurs": {
             "traversees": [
               {
-                "d0": 35.07,
-                "d1": 80.15,
-                "pente_pct": -26.5,
+                "d0": 34.85,
+                "d1": 80.82,
+                "pente_pct": -27.5,
                 "sens": "descente",
-                "amplitude_m": 11.96
+                "amplitude_m": 12.64
               }
             ],
             "pente_max_5m": {
               "disponible": true,
-              "pente_pct": 47.3,
-              "d0": 35.07,
-              "d1": 40.08
+              "pente_pct": 49.4,
+              "d0": 34.85,
+              "d1": 39.85
             },
             "pente_acces_pct": null
           },
@@ -141,20 +141,20 @@
           "indicateurs": {
             "traversees": [
               {
-                "d0": 55.14,
-                "d1": 99.26,
-                "pente_pct": -27.1,
+                "d0": 54.75,
+                "d1": 99.91,
+                "pente_pct": -27.8,
                 "sens": "descente",
-                "amplitude_m": 11.97
+                "amplitude_m": 12.55
               }
             ],
             "pente_max_5m": {
               "disponible": true,
-              "pente_pct": 45.8,
-              "d0": 55.14,
-              "d1": 60.16
+              "pente_pct": 48.6,
+              "d0": 54.75,
+              "d1": 59.75
             },
-            "pente_acces_pct": 4.4
+            "pente_acces_pct": 5.5
           },
           "n_cotes_points": 5
         }
@@ -164,7 +164,7 @@
       "label": "alt760",
       "idu": "97415000CM1658",
       "titre": "Parcelle en altitude — 36 Rue des Jacarandas, Saint-Paul (~595 m mesurés)",
-      "scene_id": "6f4689613207",
+      "scene_id": "5f9222a05c54",
       "disponible": true,
       "etat": {
         "gabarit": "ok",
@@ -189,18 +189,18 @@
           "indicateurs": {
             "traversees": [
               {
-                "d0": 2.01,
-                "d1": 22.14,
-                "pente_pct": -10.1,
+                "d0": 1.19,
+                "d1": 22.58,
+                "pente_pct": -9.6,
                 "sens": "descente",
-                "amplitude_m": 2.2
+                "amplitude_m": 2.23
               }
             ],
             "pente_max_5m": {
               "disponible": true,
-              "pente_pct": 30.2,
-              "d0": 17.11,
-              "d1": 22.14
+              "pente_pct": 31.4,
+              "d0": 16.57,
+              "d1": 21.57
             },
             "pente_acces_pct": null
           },
@@ -218,18 +218,18 @@
           "indicateurs": {
             "traversees": [
               {
-                "d0": 25.99,
-                "d1": 41.99,
-                "pente_pct": -0.4,
+                "d0": 25.48,
+                "d1": 42.42,
+                "pente_pct": -2.8,
                 "sens": "descente",
-                "amplitude_m": 0.36
+                "amplitude_m": 0.48
               }
             ],
             "pente_max_5m": {
               "disponible": true,
-              "pente_pct": 7.2,
-              "d0": 26.99,
-              "d1": 31.99
+              "pente_pct": 7.4,
+              "d0": 27.16,
+              "d1": 32.16
             },
             "pente_acces_pct": null
           },
@@ -241,7 +241,7 @@
       "label": "bz1065",
       "idu": "97411000BZ1065",
       "titre": "97411000BZ1065 — talus, Saint-Denis ; coupe B traverse la parcelle en plusieurs tronçons",
-      "scene_id": "1a439fd3ca95",
+      "scene_id": "d18bc99a4c90",
       "disponible": true,
       "etat": {
         "gabarit": "ok",
@@ -266,18 +266,18 @@
           "indicateurs": {
             "traversees": [
               {
-                "d0": 4.98,
-                "d1": 46.77,
-                "pente_pct": -25.3,
+                "d0": 4.7,
+                "d1": 47.07,
+                "pente_pct": -25.8,
                 "sens": "descente",
-                "amplitude_m": 10.57
+                "amplitude_m": 10.93
               }
             ],
             "pente_max_5m": {
               "disponible": true,
-              "pente_pct": 66.5,
-              "d0": 41.79,
-              "d1": 46.77
+              "pente_pct": 67.8,
+              "d0": 42.46,
+              "d1": 47.46
             },
             "pente_acces_pct": null
           },
@@ -298,25 +298,25 @@
           "indicateurs": {
             "traversees": [
               {
-                "d0": 31.85,
-                "d1": 50.76,
-                "pente_pct": -22.7,
+                "d0": 32.57,
+                "d1": 50.45,
+                "pente_pct": -23.8,
                 "sens": "descente",
-                "amplitude_m": 4.35
+                "amplitude_m": 4.25
               },
               {
-                "d0": 61.71,
-                "d1": 94.56,
-                "pente_pct": 1.6,
+                "d0": 61.38,
+                "d1": 94.2,
+                "pente_pct": 2.5,
                 "sens": "montée",
-                "amplitude_m": 3.66
+                "amplitude_m": 3.67
               }
             ],
             "pente_max_5m": {
               "disponible": true,
-              "pente_pct": 40.6,
-              "d0": 42.8,
-              "d1": 47.78
+              "pente_pct": 41.0,
+              "d0": 42.24,
+              "d1": 47.24
             },
             "pente_acces_pct": 6.9
           },
@@ -329,18 +329,18 @@
   "recette_d": {
     "d1_lacune_sous_bati": {
       "emprise_au_sol": true,
-      "faitage_a_part": true
+      "lacune_ouverte": false
     },
     "d2_reproductible": {
       "svg_identique": true,
       "scene_id_identique": true,
-      "scene_id": "1a439fd3ca95"
+      "scene_id": "d18bc99a4c90"
     },
     "d3_multipart": {
-      "idu": "97411000HP0455",
+      "idu": "97411000DT0331",
       "disponible": false,
       "couverture": 0.0,
-      "n_contours_cad": 3,
+      "n_contours_cad": 2,
       "coupes": 0
     }
   },

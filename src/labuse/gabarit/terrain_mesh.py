@@ -53,6 +53,49 @@ class TerrainMesh:
             return None
         return z00 * (1 - tr) + z11 * tc + z01 * (tr - tc)
 
+    def profil(self, ox: float, oy: float, ux: float, uy: float, L: float) -> list[dict]:
+        """Profil le long de la ligne par FRANCHISSEMENT DES FACES (pas par échantillonnage au mètre) :
+        un point à CHAQUE arête de triangle traversée → une crête entre deux pixels est retrouvée. Entre
+        deux franchissements la face est plane donc le profil est exact. Lacune = None (reste une lacune).
+
+        Arêtes du maillage (pas natif = self.vpas) : verticales x=const (colonnes de sommets),
+        horizontales y=const (lignes de sommets), diagonales x+y=const (découpe P00–P11 de chaque maille)."""
+        p = self.vpas
+        ds = {0.0, round(L, 6)}
+        x0, y0 = ox, oy
+        x1, y1 = ox + ux * L, oy + uy * L
+        # verticales : x = self.ox + (k+0.5)*p
+        if abs(ux) > 1e-12:
+            k_lo = math.floor((min(x0, x1) - self.ox) / p - 0.5)
+            k_hi = math.ceil((max(x0, x1) - self.ox) / p - 0.5)
+            for k in range(k_lo, k_hi + 1):
+                d = (self.ox + (k + 0.5) * p - x0) / ux
+                if 0 <= d <= L:
+                    ds.add(round(d, 6))
+        # horizontales : y = self.oy - (k+0.5)*p
+        if abs(uy) > 1e-12:
+            k_lo = math.floor((self.oy - max(y0, y1)) / p - 0.5)
+            k_hi = math.ceil((self.oy - min(y0, y1)) / p - 0.5)
+            for k in range(k_lo, k_hi + 1):
+                d = (self.oy - (k + 0.5) * p - y0) / uy
+                if 0 <= d <= L:
+                    ds.add(round(d, 6))
+        # diagonales : x + y = (self.ox + self.oy) + m*p
+        if abs(ux + uy) > 1e-12:
+            base = self.ox + self.oy
+            s0, s1 = x0 + y0, x1 + y1
+            m_lo = math.floor((min(s0, s1) - base) / p)
+            m_hi = math.ceil((max(s0, s1) - base) / p)
+            for m in range(m_lo, m_hi + 1):
+                d = (base + m * p - s0) / (ux + uy)
+                if 0 <= d <= L:
+                    ds.add(round(d, 6))
+        out = []
+        for d in sorted(ds):
+            z = self.altitude(x0 + ux * d, y0 + uy * d)
+            out.append({"d": round(d, 2), "z": (None if z is None else round(z, 2))})
+        return out
+
     def faces(self, lox: float, loy: float, bounds=None) -> dict:
         """Sommets (x,y,z local) + triangles (indices). `bounds`=(minx,miny,maxx,maxy) 2975 : limite le
         maillage à la fenêtre (pour juxtaposer 1 m / 2 m sans recouvrement ni sommets inutiles)."""

@@ -104,29 +104,25 @@ def sample_points(pts_2975: list[tuple[float, float]]) -> list[Optional[float]]:
 
 
 class _Sampler:
-    """Échantillonne l'ALTITUDE par intersection avec le maillage servi : faces 1 m dans la fenêtre
-    `bounds_1m`, faces 2 m au-delà. C'est EXACTEMENT la surface que la visionneuse affiche."""
+    """Échantillonne le maillage UNIQUE à 1 m, borné à `bounds` (parcelle + abords). C'est EXACTEMENT
+    la surface servie à la visionneuse (plus de maillage 2 m : aucune surface superposée)."""
 
-    def __init__(self, surf: _Surface, bounds_1m):
-        self.m1 = TerrainMesh(surf.a, surf.ox, surf.oy, surf.pas, step=1)
-        self.m2 = TerrainMesh(surf.a, surf.ox, surf.oy, surf.pas, step=2)
-        self.b = bounds_1m
+    def __init__(self, surf: _Surface, bounds):
+        self.m = TerrainMesh(surf.a, surf.ox, surf.oy, surf.pas, step=1)
+        self.b = bounds
 
     def altitude(self, x: float, y: float) -> Optional[float]:
-        if self.b[0] <= x <= self.b[2] and self.b[1] <= y <= self.b[3]:
-            z = self.m1.altitude(x, y)
-            if z is not None:
-                return z
-        return self.m2.altitude(x, y)
+        if not (self.b[0] <= x <= self.b[2] and self.b[1] <= y <= self.b[3]):
+            return None
+        return self.m.altitude(x, y)
 
     def _r(self, z):
         return round(z, 2) if z is not None else None
 
-    def ligne(self, ox, oy, ux, uy, L, pas=1.0) -> list[dict]:
-        n = max(2, int(round(L / pas)) + 1)
-        return [{"d": round(L * i / (n - 1), 2),
-                 "z": self._r(self.altitude(ox + ux * (L * i / (n - 1)), oy + uy * (L * i / (n - 1))))}
-                for i in range(n)]
+    def profil(self, ox, oy, ux, uy, L) -> list[dict]:
+        """Profil par FRANCHISSEMENT des faces (pas d'échantillonnage au mètre), borné."""
+        return [{"d": p["d"], "z": self._r(self.altitude(ox + ux * p["d"], oy + uy * p["d"]))}
+                for p in self.m.profil(ox, oy, ux, uy, L)]
 
 
 # ── Géométrie ─────────────────────────────────────────────────────────────────────────────────────
@@ -287,9 +283,10 @@ def _pied_conventionnel(sampler, geom) -> Optional[float]:
 
 
 def _batiments(gr, sampler, ox: float, oy: float) -> list[dict]:
-    """Bâti existant. La hauteur suit l'identité de l'emprise réellement mesurée : LiDAR (faîtage) ou
-    BD TOPO (par bâtiment) → attribuée ; sinon NULL (aucun défaut arbitraire). Volume schématique de
-    contexte : pied conventionnel + dessus horizontal à la hauteur attribuée, sans cote de toiture."""
+    """Bâti existant (étape 2 bis). La hauteur du VOLUME est PROPRE au bâtiment (BD TOPO) si elle existe ;
+    sinon CONTOUR seul. Plus de hauteur de PARCELLE (faîtage LiDAR) recopiée sur chaque emprise. Le volume
+    n'est dessiné que si pied ET hauteur sont connus (sinon emprise seule). Trous conservés ; la même
+    transformation sert l'emprise (plan) et le volume (3D)."""
     fc = getattr(gr, "batiExistantGeoJSON", None)
     out = []
     if not isinstance(fc, dict):
@@ -299,21 +296,17 @@ def _batiments(gr, sampler, ox: float, oy: float) -> list[dict]:
         if g2975 is None:
             continue
         props = f.get("properties") or {}
-        h = props.get("hauteur_m")
-        src = props.get("h_source")
-        hauteur = float(h) if isinstance(h, (int, float)) and h > 0 else None
-        if hauteur is not None and src == "lidar":
-            attribution = "lidar"
-        elif hauteur is not None and src == "bdtopo":
-            attribution = "bdtopo"
-        else:
-            attribution, hauteur = None, None          # null quand non attribuée
+        hb = props.get("hauteur_bdtopo_m")
+        hauteur = float(hb) if isinstance(hb, (int, float)) and hb > 0 else None   # BD TOPO, par bâtiment
+        pied = _pied_conventionnel(sampler, g2975) if sampler else None
+        volume = hauteur is not None and pied is not None
         out.append({
             "geom": g2975,
-            "empreinte": _polys_local(g2975, ox, oy),
-            "pied_m": _pied_conventionnel(sampler, g2975),
-            "hauteur_m": hauteur,
-            "attribution": attribution,                # 'lidar' | 'bdtopo' | None
+            "empreinte": _polys_local(g2975, ox, oy),     # trous conservés
+            "pied_m": pied,
+            "hauteur_m": hauteur if volume else None,     # hauteur propre au bâtiment, sinon null → contour seul
+            "attribution": "bdtopo" if volume else None,
+            "volume": volume,
         })
     return out
 
@@ -403,26 +396,31 @@ def _indicateurs(profil, parcelle_spans, bati_spans, voie) -> dict:
                                "pente_pct": round(100 * dz / dd, 1) if dd > 0 else None,
                                "sens": "montée" if dz > 0.05 else ("descente" if dz < -0.05 else "plat"),
                                "amplitude_m": round(max(alts) - min(alts), 2)})
-    # pente max sur 5 m
+    # pente max sur 5 m ENTIERS (fenêtre en DISTANCE ; profil à pas irrégulier après franchissement)
     def _dans(d, spans):
         return any(a - 1e-6 <= d <= b + 1e-6 for a, b in spans)
     bati_elargi = [[a - 1.0, b + 1.0] for a, b in bati_spans]
+    W = _PENTE_FENETRE_M
     pmax = {"disponible": False}
-    pas = (profil[1]["d"] - profil[0]["d"]) if len(profil) > 1 else 1.0
-    w = max(1, int(round(_PENTE_FENETRE_M / pas)))
-    for i in range(len(profil) - w):
-        f = profil[i:i + w + 1]
-        if any(p["z"] is None for p in f):               # 5 m ENTIERS valides
+    for i, pi in enumerate(profil):
+        d0, zi = pi["d"], pi["z"]
+        d1 = d0 + W
+        if zi is None or d1 > profil[-1]["d"] + 1e-6:
             continue
-        if not (_dans(f[0]["d"], parcelle_spans) and _dans(f[-1]["d"], parcelle_spans)):
+        fenetre = [p for p in profil if d0 - 1e-6 <= p["d"] <= d1 + 1e-6]
+        if any(p["z"] is None for p in fenetre):          # 5 m entiers valides
             continue
-        if any(_dans(p["d"], bati_elargi) for p in f):   # hors emprise bâtie élargie de 1 m
+        if not (_dans(d0, parcelle_spans) and _dans(d1, parcelle_spans)):
             continue
-        dd = f[-1]["d"] - f[0]["d"]
-        s = abs(f[-1]["z"] - f[0]["z"]) / dd if dd > 0 else 0.0
+        if any(_dans(p["d"], bati_elargi) for p in fenetre):   # hors emprise bâtie ±1 m
+            continue
+        z1 = _z_interp(profil, d1)
+        if z1 is None:
+            continue
+        s = abs(z1 - zi) / W
         if not pmax.get("disponible") or s > pmax["pente_pct"] / 100:
             pmax = {"disponible": True, "pente_pct": round(s * 100, 1),
-                    "d0": round(f[0]["d"], 2), "d1": round(f[-1]["d"], 2)}
+                    "d0": round(d0, 2), "d1": round(d1, 2)}
     pente_acces = None
     if voie and voie.get("etablie") and parcelle_spans:
         d_voie = voie["intersection_d"]
@@ -481,7 +479,7 @@ def _stats_coupe(profil) -> dict:
 def _construire_coupe(sampler, axe, cadastre, zone, batis, label, titre, voie) -> dict:
     from shapely.geometry import LineString
     ox, oy, ux, uy, L = axe["ox"], axe["oy"], axe["ux"], axe["uy"], axe["L"]
-    profil = sampler.ligne(ox, oy, ux, uy, L, pas=1.0)
+    profil = sampler.profil(ox, oy, ux, uy, L)   # franchissement des faces (A2)
     ligne = LineString([(ox, oy), (ox + ux * L, oy + uy * L)])
     parcelle_spans = _spans(ligne, cadastre)
     bati_coupes = [c for b in batis for c in _batiment_coupe(sampler, ligne, axe, b)]
@@ -627,21 +625,19 @@ def _build_scene(db, idu: str) -> Scene:
     reculs = _geom_2975(getattr(gr, "retraitsGeoJSON", None))
     excl = _geom_2975(getattr(gr, "exclusionsGeoJSON", None))
 
-    surf = charger_surface(min(minx, centroid.x - 150), min(miny, centroid.y - 150),
-                           max(maxx, centroid.x + 150), max(maxy, centroid.y + 150))
+    # UN SEUL maillage à 1 m, borné à la parcelle + abords (plus de fenêtre 150 m ni de maillage 2 m)
     bounds_1m = (minx - _MARGE_FACES_1M, miny - _MARGE_FACES_1M, maxx + _MARGE_FACES_1M, maxy + _MARGE_FACES_1M)
+    surf = charger_surface(minx, miny, maxx, maxy, marge=_MARGE_FACES_1M + 10)
     sampler = _Sampler(surf, bounds_1m) if surf else None
 
     terrain, coupes, axes_plan, coupes_etat = {}, [], [], []
     couverture = 0.0
+    faces_1m = {}
     batis = _batiments(gr, sampler, ox, oy) if sampler else []
     if sampler is not None:
         couverture = _couverture_parcelle(sampler, ref)
-        # faces servies (= affichées par la visionneuse) : 1 m sur la parcelle, 2 m sur le voisinage
-        faces_1m = sampler.m1.faces(ox, oy, bounds=bounds_1m)
-        faces_2m = sampler.m2.faces(ox, oy, bounds=(centroid.x - 150, centroid.y - 150,
-                                                    centroid.x + 150, centroid.y + 150))
-        terrain = {"faces_parcelle": faces_1m, "faces_voisinage": faces_2m, "couverture_parcelle": couverture}
+        faces_1m = sampler.m.faces(ox, oy, bounds=bounds_1m)   # faces SERVIES = affichées par la visionneuse
+        terrain = {"faces_parcelle": faces_1m, "couverture_parcelle": couverture}
 
         # chaque coupe est protégée : un échec la rend indisponible, PLAN et TERRAIN restent accessibles
         try:
@@ -680,11 +676,13 @@ def _build_scene(db, idu: str) -> Scene:
             "coupes": coupes_etat}
     disponible = sampler is not None and couverture > 0.5   # la PARCELLE elle-même doit être couverte
 
+    # identifiant sur TOUT le contenu rendu : SOMMETS (condensé), exclusions, contours, coupes (A3)
+    verts = faces_1m.get("vertices", []) if faces_1m else []
+    verts_sig = hashlib.sha1(json.dumps(verts, separators=(",", ":")).encode()).hexdigest()
     contenu = {"cad": _polys_local(cadastre, ox, oy), "gab": _polys_local(contour, ox, oy),
-               "zone": _polys_local(zone, ox, oy), "couverture": couverture,
-               "coupes": [[p["z"] for p in c["profil"]] for c in coupes],
-               "faces": [len(terrain.get("faces_parcelle", {}).get("triangles", [])),
-                         len(terrain.get("faces_voisinage", {}).get("triangles", []))]}
+               "zone": _polys_local(zone, ox, oy), "excl": _polys_local(excl, ox, oy),
+               "couverture": couverture, "coupes": [[p["z"] for p in c["profil"]] for c in coupes],
+               "sommets": verts_sig, "n_sommets": len(verts)}
     sid = _scene_id(idu, gr, fond_meta, contenu)
 
     return Scene(

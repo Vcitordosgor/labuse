@@ -106,8 +106,24 @@ const apresPause = await ouvrirVue3D()
 const canvasApres = await page.evaluate(() => !!document.querySelector('[data-gab3d-canvas] canvas'))
 await page.screenshot({ path: `${OUT}/apres_pause.png` })
 await fermerVue3D()
+// C13 — perte de contexte WebGL FORCÉE en cours d'usage → repli plan + coupes
+await ouvrirGabarit(IDUS[0])
+await ouvrirVue3D()
+const extOk = await page.evaluate(() => {
+  const c = document.querySelector('[data-gab3d-canvas] canvas')
+  const gl = c && (c.getContext('webgl2') || c.getContext('webgl'))
+  const ext = gl && gl.getExtension('WEBGL_lose_context')
+  if (ext) ext.loseContext()
+  return !!ext
+})
+await page.waitForTimeout(600)
+const repli = await page.evaluate(() => !!document.querySelector('[data-gab3d-fallback]'))
+await page.screenshot({ path: `${OUT}/perte_contexte.png` })
+await fermerVue3D()
+
 res.robustesse = { dix_ouvertures_sans_fuite: ok10, apres_pause_ms: Math.round(apresPause),
-                   canvas_ok_apres_pause: canvasApres }
+                   canvas_ok_apres_pause: canvasApres,
+                   perte_contexte_testee: extOk, perte_contexte_repli: repli }
 res.erreurs = errs.slice(0, 10)
 
 fs.writeFileSync(`${OUT}/mesures_webkit.json`, JSON.stringify(res, null, 2))

@@ -58,6 +58,21 @@ def test_maillage_lacune_propagee():
     assert m.altitude(x0 + 5.5, yr) is not None
 
 
+def test_coupe_par_franchissement_retrouve_crete():
+    # A2 : une crête (ligne de sommets à 4 m) entre deux échantillons au mètre est retrouvée
+    arr = np.zeros((12, 12)); arr[5, :] = 4.0
+    m = TerrainMesh(arr, ox=0.0, oy=12.0, pas=1.0)
+    ux, uy = math.sin(math.radians(20)), -math.cos(math.radians(20))
+    prof = m.profil(2.3, 12.0, ux, uy, 9.0)
+    assert max(p["z"] for p in prof if p["z"] is not None) >= 3.95   # crête retrouvée
+    ech = [m.altitude(2.3 + ux * d, 12.0 + uy * d) for d in range(10)]
+    assert max(z for z in ech if z is not None) < 3.95              # l'échantillon 1 m la manque
+    # une lacune reste une lacune
+    arr2 = arr.copy(); arr2[5, 4] = np.nan
+    prof2 = TerrainMesh(arr2, 0.0, 12.0, 1.0).profil(2.3, 12.0, ux, uy, 9.0)
+    assert any(p["z"] is None for p in prof2)
+
+
 def test_faces_bornees_et_valides():
     m, (x0, y0, n, *_1) = _plan_mesh(hole=(20, 25))
     f = m.faces(x0, y0 + n, bounds=(x0 + 5, y0 + n - 15, x0 + 15, y0 + n - 5))
@@ -77,11 +92,11 @@ def test_polys_local_conserve_trous():
 def _gr_batis(sources):
     import types
 
-    def poly(ox, src):
-        return {"type": "Feature", "properties": {"hauteur_m": (10.0 if src else None), "h_source": src},
+    def poly(ox, hb):
+        return {"type": "Feature", "properties": {"hauteur_bdtopo_m": hb},
                 "geometry": {"type": "Polygon", "coordinates": [[[55.45 + ox, -20.88], [55.45 + ox + 1e-4, -20.88],
                              [55.45 + ox + 1e-4, -20.8799], [55.45 + ox, -20.8799], [55.45 + ox, -20.88]]]}}
-    fc = {"type": "FeatureCollection", "features": [poly(i * 2e-4, s) for i, s in enumerate(sources)]}
+    fc = {"type": "FeatureCollection", "features": [poly(i * 2e-4, h) for i, h in enumerate(sources)]}
     return types.SimpleNamespace(batiExistantGeoJSON=fc)
 
 
@@ -90,13 +105,29 @@ class _SamplerNul:
         return 10.0
 
 
-def test_bati_attribution_et_hauteur_null():
-    # règle « une seule emprise » RETIRÉE : plusieurs LiDAR → tous attribués ; pas de source → null
-    b = SC._batiments(_gr_batis(["lidar", "lidar"]), _SamplerNul(), 0, 0)
-    assert len(b) == 2 and all(x["attribution"] == "lidar" and x["hauteur_m"] == 10.0 for x in b)
-    assert all(x["pied_m"] == 10.0 for x in b)           # pied conventionnel
-    nul = SC._batiments(_gr_batis([None]), _SamplerNul(), 0, 0)
-    assert nul[0]["attribution"] is None and nul[0]["hauteur_m"] is None   # plus de 3,0 arbitraire
+def test_bati_hauteur_bdtopo_ou_contour_seul():
+    # hauteur PROPRE au bâtiment (BD TOPO) → volume ; pas de hauteur → contour seul (null, pas de défaut)
+    b = SC._batiments(_gr_batis([6.0, None]), _SamplerNul(), 0, 0)
+    assert b[0]["attribution"] == "bdtopo" and b[0]["hauteur_m"] == 6.0 and b[0]["volume"] is True
+    assert b[1]["hauteur_m"] is None and b[1]["volume"] is False      # contour seul
+    assert all(x["pied_m"] == 10.0 for x in b)                         # pied conventionnel
+    # sans sampler (pied inconnu) → pas de volume même avec hauteur
+    nopied = SC._batiments(_gr_batis([6.0]), None, 0, 0)
+    assert nopied[0]["volume"] is False
+
+
+def test_scene_id_sur_contenu():
+    # A3 : modifier un sommet OU une exclusion change l'identifiant
+    import types
+    gr = types.SimpleNamespace(appliedRules=[], surfaceParcelleM2=None, zoneImplantationM2=None,
+                               batiDeduitM2=None, plafondEmpriseM2=None, plafondEmpriseStatus=None,
+                               hauteurReglementaireM=None, hauteurBase=None, hauteurEstimee=False,
+                               hauteurStatus=None)
+    base = {"cad": [[0, 0]], "zone": [], "excl": [], "sommets": "AAA", "n_sommets": 3}
+    i0 = SC._scene_id("X", gr, {"version_fond": 1}, base)
+    i_v = SC._scene_id("X", gr, {"version_fond": 1}, {**base, "sommets": "BBB"})   # sommet changé
+    i_e = SC._scene_id("X", gr, {"version_fond": 1}, {**base, "excl": [[[1, 1]]]})  # exclusion changée
+    assert i0 != i_v and i0 != i_e and i_v != i_e
 
 
 # ── indicateurs : pente max 5 m à deux bornes, hors bâti ±1 m ─────────────────────────────────────
@@ -122,7 +153,7 @@ def test_soustraire_emprise():
 
 # ── planches : cadre tenu, aucun plafond, une cote par point, thèmes ──────────────────────────────
 
-def _coupe_demo(attribution="lidar", plat=False, zone=True):
+def _coupe_demo(attribution="bdtopo", plat=False, zone=True):
     profil = [{"d": float(i), "z": (100.0 if plat else round(100 + 0.2 * i, 2))} for i in range(40)]
     b = {"d0": 10.0, "d1": 18.0, "facade_amont_m": profil[10]["z"], "facade_aval_m": profil[18]["z"],
          "pied_m": profil[14]["z"], "hauteur_m": (7.0 if attribution else None), "attribution": attribution}
@@ -159,14 +190,14 @@ def test_coupe_svg_cadre_sans_plafond_faitage():
     assert "H = V" in svg and svg.count("IGN 1989") == 0   # datum porté par la mention, pas répété
     assert "plafond" not in svg.lower()
     assert "emprise bâtie" in svg                         # emprise au sol (B5)
-    assert "Hauteur au faîtage estimée par LiDAR" in svg and "7,0 m" in svg   # mention à part
+    assert "Hauteur du bâtiment (BD TOPO)" in svg and "7,0 m" in svg   # mention propre au bâtiment
     assert "scène abc123" in svg and "12 Rue X" in svg    # en-tête (B9)
 
 
-def test_bati_non_attribue_sans_faitage():
+def test_bati_sans_hauteur_sans_mention():
     svg = coupe_svg(_coupe_demo(attribution=None), theme="sombre")
     assert "emprise bâtie" in svg
-    assert "Hauteur au faîtage" not in svg               # hauteur null → pas de mention
+    assert "Hauteur du bâtiment" not in svg               # hauteur null → contour/emprise seul
 
 
 def test_implantation_band_etats():
@@ -242,6 +273,7 @@ def test_locks_scene_base_reelle():
         s = SC.build_scene(db, idu)
     assert s.regles["zoneImplantationM2"] == gr.zoneImplantationM2         # chiffres identiques
     assert s.regles["hauteurReglementaireM"] == gr.hauteurReglementaireM
+    assert "faces_parcelle" in s.terrain and "faces_voisinage" not in s.terrain   # A1 : un seul maillage
     assert set(s.etat) >= {"gabarit", "terrain_couverture", "coupes"}       # état séparé
     if s.disponible:
         assert s.etat["terrain_couverture"] > 0.5                           # parcelle couverte

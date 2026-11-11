@@ -203,9 +203,8 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, largeur_mm=None,
         out.append(f'<line x1="{x0:.1f}" y1="{y_base-4:.1f}" x2="{x0:.1f}" y2="{y_base+4:.1f}" stroke="{T["bati"]}" stroke-width="1"/>')
         out.append(f'<line x1="{x1:.1f}" y1="{y_base-4:.1f}" x2="{x1:.1f}" y2="{y_base+4:.1f}" stroke="{T["bati"]}" stroke-width="1"/>')
         out.append(f'<text x="{(x0+x1)/2:.1f}" y="{y_base-7:.1f}" text-anchor="middle" font-size="7.5" fill="{T["bati"]}">emprise bâtie</text>')
-        if b.get("attribution") and b.get("hauteur_m"):
-            prov = "estimée par LiDAR" if b["attribution"] == "lidar" else "estimée (BD TOPO)"
-            faitages.append(f"Hauteur au faîtage {prov} · {_fmt(b['hauteur_m'],1)} m")
+        if b.get("attribution") == "bdtopo" and b.get("hauteur_m"):
+            faitages.append(f"Hauteur du bâtiment (BD TOPO) · {_fmt(b['hauteur_m'],1)} m")
 
     # limites parcellaires (mêmes bornes que bandes/pente) — B6
     bornes = sorted({round(v, 2) for sp in (coupe.get("limites_parcelle_d") or []) for v in sp})

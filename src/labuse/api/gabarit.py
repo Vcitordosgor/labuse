@@ -64,6 +64,10 @@ def _bati_existant(db: Session, idu: str) -> dict | None:
             "properties": {
                 "hauteur_m": round(hauteur, 1) if hauteur is not None else None,
                 "h_source": "lidar" if lidar_faitage is not None else ("bdtopo" if h_bdtopo is not None else None),
+                # GABARIT-3D-1 (étape 2 bis) — hauteur PROPRE au bâtiment (BD TOPO), indépendante du
+                # faîtage LiDAR (par parcelle) : la scène 3D l'utilise pour le volume (jamais la
+                # hauteur de parcelle recopiée). Additif : ne change aucun chiffre réglementaire servi.
+                "hauteur_bdtopo_m": round(h_bdtopo, 1) if h_bdtopo is not None else None,
             },
             "geometry": json.loads(r["gj"]),
         })
