@@ -3,6 +3,8 @@
 Branche `fix/outils-p0-2` (depuis `origin/main` à jour). Source : revue d'Astra du livret des outils.
 Ports de recette 10800 (vite) / 7280 (uvicorn). Aucun merge, aucune prod.
 
+> **RECETTE (2e passe)** — 8 points mesurés + testés, captures `recette-*.png`. Voir § RECETTE en bas.
+
 **Étape 0** — `88bfb6e11` (Estimer 3) est bien ancêtre d'`origin/main` ✓ (vérifié `git merge-base --is-ancestor`).
 
 ---
@@ -122,3 +124,41 @@ sur macOS 13 arm64 → playwright 1.49.1 épinglé dans /tmp/pwwk, navigateur we
 - `pytest` estimer3 21 (18 + 3 nouveaux), zone 28, tous verts. Les 22 autres échecs du run CI complet sont
   PRÉ-EXISTANTS (profil pass/échec identique à `origin/main`, base locale partielle) — mes seules régressions
   étaient 2 assertions de clés `marche` (zone), corrigées.
+
+---
+
+## RECETTE (2e passe) — la cohérence des ventes et des libellés
+
+Revue d'Astra du livret. 8 points, chacun mesuré au texte DOM (WebKit) et/ou testé.
+
+1. **Ventes de terrains.** Date « MM/YYYY » (bug corrigé : `_vente_retenue` re-formatait « 05/2022 » en
+   « 22/05/2 » — `_mois_annee` détecte le format déjà posé). Surface = celle du **terrain** (« 472 m² de
+   terrain »), jamais « hab. » ni « terrain non renseigné ». Distance = la vraie (ST_Distance), **« — »**
+   si inconnue/0, jamais « 0 m » par défaut. (`VentesRetenues` type-aware.)
+2. **Ventes d'appartements.** Aucune mention de terrain (« 86 m² habitable · 56 m »).
+3. **Fourchettes d'un terrain.** « 1 fois sur 2 » / « 3 fois sur 4 » = deux bandes distinctes mesurées au
+   banc. Si le banc n'en donne qu'une (repli régional, écart médian == Q3), **une seule ligne** « Fourchette
+   estimée » (helper `_fourchettes`). Témoins : terrain Tampon → une bande ; appartement BH0309 → deux.
+4. **Terrain non constructible.** AUCUNE estimation : pas de prix au m² en tête, aucune vente de terrain à
+   bâtir listée. L'écran dit **« Pas d'estimation : zone non constructible (A) »** (code zone via
+   `_zone_code`) + la dernière vente de la parcelle. (Change le P2 initial qui gardait le repère.)
+5. **Appartement en immeuble à plusieurs logements** (RNIC `nb_lots_habitation > 1`, `_multi_logement`) :
+   champ surface **vide**, indication **« Dernière vente dans l'immeuble : 24 m² (2025) »**, badge « connue »
+   réservé au mono-logement (la dernière vente DVF n'est qu'un lot). Read déclaré au registre des lectures.
+6. **Dernière mutation à prix symbolique (< 100 €)** : **« Dernière mutation : 12/2025 · cession à 1 €, hors
+   marché »** (pas « vente », pas de surface). Témoin 97413000DD1534.
+7. **Étude de zone.** « **0,5 km** » avec virgule. La ligne du secteur dit ce qu'elle mesure : **« Secteur de
+   la fiche, maisons, 2022–2026 : 3 821 €/m² · 30 ventes à moins de 500 m »** (type + fenêtre réelle en
+   années — PAS un « 24 mois » inventé : le prix de secteur agrège un segment de 5 ans). La période du cercle
+   est la **fenêtre demandée (36 mois)**, pas les dates extrêmes des ventes. Section **Immobilier dépliée** à
+   l'ouverture.
+8. **Noms de communes** : **« au Tampon », « au Port », « aux Avirons »**, jamais « à Le Tampon » (helper
+   `aCommune`, test vitest). Vérifié live : « mesuré sur les ventes réelles de terrains au Tampon ».
+
+**Captures WebKit** (`recette-*.png`, webkit-2104 / playwright 1.49.1, `capture_recette.mjs`) : terrain
+Tampon (1/3/8), appartement (2 + deux bandes + P4), non-constructible (4), multi-logement (5), symbolique
+(6), maison au Port (8), zone 0,5 km (7).
+
+**Hook** : tsc0 · vitest **327** · pytest estimer3 (purs 10 dont `_mois_annee`/`_fourchettes`/`_zone_code`,
++ reel hors-gamme/non-constructible/parité/zone) + lectures graph (read RNIC déclaré) verts. Les ~22 autres
+échecs du run CI complet restent PRÉ-EXISTANTS (profil identique à `origin/main`).

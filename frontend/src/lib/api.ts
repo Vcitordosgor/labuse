@@ -629,6 +629,12 @@ export interface Estimer3Estimation {
   terrain_sans_total_raison?: string | null
   terrain_hors_gamme?: boolean; terrain_non_constructible?: boolean
   surface_gamme?: { min_m2: number; max_m2: number; mediane_m2: number; p90_m2: number; n: number } | null
+  // OUTILS-P0-2 (recette) — immeuble à plusieurs logements : champ surface vide + indication « immeuble ».
+  multi_logement?: boolean
+  immeuble_derniere_vente?: string | null
+  // OUTILS-P0-2 (recette) — les bandes sous leur vrai nom : deux (« 1 fois sur 2 » / « 3 fois sur 4 »)
+  // si mesurées distinctes, une seule (« Fourchette estimée ») si le banc n'en donne qu'une.
+  fourchettes?: { nom: string; basse: number; haute: number }[]
 }
 export interface Estimer3Vente {
   id: string; date: string | null

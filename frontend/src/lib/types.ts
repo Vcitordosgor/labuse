@@ -731,8 +731,11 @@ export interface ZoneMarche {
   ventes_12m: number
   prix_m2_median_bati: number | null
   prix_m2_median_n?: number | null
+  prix_m2_median_fenetre_mois?: number | null   // OUTILS-P0-2 : fenêtre DEMANDÉE (36 mois), pas les dates extrêmes
   prix_m2_median_periode?: [string, string] | null
-  prix_secteur_fiche?: { median: number; n: number | null; radius_m: number | null; commune_fallback: boolean } | null
+  // OUTILS-P0-2 (recette) — le secteur de la fiche DIT ce qu'il mesure : type (maison/appartement/mixte)
+  // + fenêtre réelle (années du segment, jamais un « 24 mois » inventé) + rayon réel + effectif.
+  prix_secteur_fiche?: { median: number; n: number | null; radius_m: number | null; commune_fallback: boolean; type_prix?: string | null; periode?: [number, number] | null } | null
   annonces_actives: number | null
   permis_36m: number
 }

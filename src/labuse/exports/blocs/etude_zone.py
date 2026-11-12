@@ -75,26 +75,36 @@ def _immobilier(z) -> str:
     # la fiche (`prix_secteur_fiche`) est un AUTRE périmètre : servi À PART, avec son rayon réel. Même
     # périmètre, même prix, même effectif que l'écran.
     if m.get("prix_m2_median_bati") is not None:
-        n, per = m.get("prix_m2_median_n"), m.get("prix_m2_median_periode")
+        # OUTILS-P0-2 (recette) — la période du cercle est la FENÊTRE DEMANDÉE (36 mois), pas les dates
+        # extrêmes des ventes trouvées.
+        n, fen = m.get("prix_m2_median_n"), m.get("prix_m2_median_fenetre_mois")
         bouts = []
         if n:
             bouts.append(f"{_i(n)} ventes")
-        if isinstance(per, (list, tuple)) and len(per) == 2 and per[0]:
-            bouts.append(f"{per[0]}–{per[1]}" if per[1] and per[1] != per[0] else f"{per[0]}")
+        if fen:
+            bouts.append(f"{_i(fen)} mois")
         suff = f" — {', '.join(bouts)}" if bouts else ""
         lignes.append(_kv("Prix médian du bâti dans le cercle", f"{_i(m['prix_m2_median_bati'])} €/m²{suff}"))
     if m.get("ventes_12m") is not None:
         lignes.append(_kv("Ventes (12 mois)", f"{_i(m.get('ventes_12m'))}"))
-    # Prix du secteur de la fiche — AUTRE périmètre (rayon adaptatif de la fiche), affiché à part.
+    # OUTILS-P0-2 (recette) — le SECTEUR de la fiche DIT ce qu'il mesure : type + fenêtre (années) +
+    # effectif ; AUTRE périmètre (rayon adaptatif de la fiche), affiché à part.
     pa = m.get("prix_secteur_fiche") or {}
     if pa.get("median"):
         n, r = pa.get("n"), pa.get("radius_m")
+        tp = pa.get("type_prix")
+        type_lbl = ("maisons" if tp == "maison" else "appartements" if tp == "appartement"
+                    else "maisons et appartements" if (tp or "").startswith("mixte") else None)
+        per = pa.get("periode")
+        annees = (f"{per[0]}–{per[1]}" if (isinstance(per, (list, tuple)) and len(per) == 2 and per[0] and per[1] != per[0])
+                  else (f"{per[0]}" if (isinstance(per, (list, tuple)) and per and per[0]) else None))
+        cle = ", ".join(x for x in ("Secteur de la fiche", type_lbl, annees) if x)
         if pa.get("commune_fallback"):
             suff = f" — {_i(n)} ventes (commune entière)" if n else " (commune entière)"
         else:
             suff = (f" — {_i(n)} ventes à moins de {_i(r)} m" if n and r
                     else (f" — {_i(n)} ventes" if n else ""))
-        lignes.append(_kv("Prix du secteur de la fiche", f"{_i(pa['median'])} €/m²{suff}"))
+        lignes.append(_kv(cle, f"{_i(pa['median'])} €/m²{suff}"))
     if m.get("annonces_actives") is not None:
         lignes.append(_kv("Annonces suivies par LABUSE", f"{_i(m.get('annonces_actives'))}"))
     if m.get("permis_36m") is not None:

@@ -2493,8 +2493,11 @@ def _est_bloc_depuis_estimer3(db, idu: str, fiche: dict, surface_hab: float | No
         "comparables": comps,
         # OUTILS-P0-2 (P2) — terrain sans total (hors gamme / non constructible) : la raison imprimée.
         "terrain_sans_total_raison": e.get("terrain_sans_total_raison"),
+        # OUTILS-P0-2 (recette) — terrain NON CONSTRUCTIBLE : pas de prix du tout, la raison tient lieu de
+        # note (« Pas d'estimation : zone non constructible (A) ») ; sinon « indisponible » faute de ventes.
         "note": (None if e.get("eur_m2") is not None
-                 else "Estimation indisponible — pas assez de ventes comparables dans le secteur."),
+                 else (e.get("terrain_sans_total_raison") if e.get("terrain_non_constructible")
+                       else "Estimation indisponible — pas assez de ventes comparables dans le secteur.")),
     }
 
 

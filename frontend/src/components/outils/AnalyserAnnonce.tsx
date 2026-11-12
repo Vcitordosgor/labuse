@@ -31,7 +31,7 @@ import {
   analyserAnnonce, docAnalyseAnnonceLienUrl, docAnalyseAnnonceUrl, getEstimation3,
   type AnnonceAnalyse, type Estimer3Mesures, type Estimer3Rapport, type Estimer3Vente,
 } from '../../lib/api'
-import { fmtInt, fmtM2 } from '../../lib/format'
+import { fmtInt, fmtM2, aCommune } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'
 import { Chargement } from '../Loading'
@@ -96,6 +96,17 @@ function Corps({ children }: { children: React.ReactNode }) {
 // ── Dernière vente DE CE BIEN, montrée juste sous la boîte parcelle (JAMAIS dans le calcul) ──
 function DerniereVente({ dv }: { dv: Estimer3Rapport['derniere_vente'] }) {
   if (!dv || !dv.date) return null
+  // OUTILS-P0-2 (recette) — une mutation à prix SYMBOLIQUE (< 100 €, donation/cession familiale) n'est
+  // PAS une vente de marché : « Dernière mutation : 12/2024 · cession à 1 €, hors marché » (pas « vente »,
+  // pas de surface qui laisserait croire à un prix au m²). Sinon : « Dernière vente : … · surface · prix ».
+  const symbolique = dv.prix_eur != null && dv.prix_eur < 100
+  if (symbolique) {
+    return (
+      <p data-estimer-derniere-vente className="truncate text-[11px] leading-snug text-txt-dim">
+        <span className="text-txt-mut">Dernière mutation :</span> {dv.date} · cession à {fmtInt(dv.prix_eur!)} €, hors marché
+      </p>
+    )
+  }
   // Une seule ligne : « Dernière vente : 12/2025 · 116 m² · 455 000 € » (prix en gras, blanc).
   return (
     <p data-estimer-derniere-vente className="truncate text-[11px] leading-snug text-txt-dim">
@@ -152,7 +163,7 @@ function ValeurEstimee({ e, typeBien, commune }: { e: Estimer3Rapport['estimatio
   const methode = e.methode_prix === 'semblable' ? 'Biens semblables' : 'Prix du secteur'
   const ligneMethode = (
     <p className="mt-2 text-[11px] leading-snug text-txt-mut">
-      <strong className="font-medium text-txt-dim">{methode}</strong> · mesuré sur les ventes réelles {dePl(typePl)}{commune ? ` à ${commune}` : ''}.
+      <strong className="font-medium text-txt-dim">{methode}</strong> · mesuré sur les ventes réelles {dePl(typePl)}{commune ? ` ${aCommune(commune)}` : ''}.
     </p>
   )
   // DÉFAUT B (Vic, correction) — sur un bien bâti, AUCUNE valeur de terrain n'est affichée (ni bandeau,
@@ -199,6 +210,18 @@ function ValeurEstimee({ e, typeBien, commune }: { e: Estimer3Rapport['estimatio
       </section>
     )
   }
+  // OUTILS-P0-2 (recette, point 4) — TERRAIN NON CONSTRUCTIBLE : aucune estimation, aucun prix au m².
+  // « Pas d'estimation : zone non constructible (A) ». La dernière vente de la parcelle est montrée à part.
+  if (e.terrain_non_constructible) {
+    return (
+      <section className={SECTION} role="status" aria-live="polite">
+        <p className={SECTION_TITRE}>Estimation</p>
+        <p data-estimer-non-constructible className="mt-1 rounded-md border border-cp-amber/30 bg-cp-amber/[0.07] px-2.5 py-2 text-[12px] leading-snug text-txt-dim">
+          {e.terrain_sans_total_raison ?? 'Pas d’estimation : parcelle non constructible.'}
+        </p>
+      </section>
+    )
+  }
   if (e.valeur_eur == null) {
     return (
       <section className={SECTION} role="status" aria-live="polite">
@@ -210,6 +233,15 @@ function ValeurEstimee({ e, typeBien, commune }: { e: Estimer3Rapport['estimatio
     )
   }
   const bq = e.valeur_basse_q3, hq = e.valeur_haute_q3, bm = e.valeur_basse, hm = e.valeur_haute
+  // OUTILS-P0-2 (recette, point 3) — les bandes servies telles quelles par le banc (deux distinctes, ou
+  // une seule « Fourchette estimée »). Repli si l'API ne les fournit pas (anciens clients).
+  const bandes = (e.fourchettes && e.fourchettes.length)
+    ? e.fourchettes
+    : (bm != null && hm != null
+        ? (bq != null && hq != null && (bq !== bm || hq !== hm)
+            ? [{ nom: '1 fois sur 2', basse: bm, haute: hm }, { nom: '3 fois sur 4', basse: bq, haute: hq }]
+            : [{ nom: 'Fourchette estimée', basse: bm, haute: hm }])
+        : [])
   return (
     <section className={SECTION} role="status" aria-live="polite">
       <p className={SECTION_TITRE}>Valeur estimée</p>
@@ -217,18 +249,18 @@ function ValeurEstimee({ e, typeBien, commune }: { e: Estimer3Rapport['estimatio
         <span className="text-[26px] font-semibold leading-none text-txt-hi">{fmtInt(e.valeur_eur)} €</span>
         <Badge ton={fi.ton} point>Fiabilité {fi.mot.toLowerCase()}</Badge>
       </div>
-      {bm != null && hm != null && bq != null && hq != null && (
+      {bandes.length > 0 && (
         <>
-          <Jauge valeur={e.valeur_eur} basse={bm} haute={hm} basseQ3={bq} hauteQ3={hq} />
+          {bm != null && hm != null && (
+            <Jauge valeur={e.valeur_eur} basse={bm} haute={hm} basseQ3={bq ?? bm} hauteQ3={hq ?? hm} />
+          )}
           <div className="mt-2 space-y-1">
-            <div className="flex items-center justify-between gap-2 text-[12px]">
-              <span className="text-txt-dim">1 fois sur 2</span>
-              <span className="font-medium tabular-nums text-txt-hi">{fmtInt(bm)} – {fmtInt(hm)} €</span>
-            </div>
-            <div className="flex items-center justify-between gap-2 text-[12px]">
-              <span className="text-txt-dim">3 fois sur 4</span>
-              <span className="tabular-nums text-txt-dim">{fmtInt(bq)} – {fmtInt(hq)} €</span>
-            </div>
+            {bandes.map((b, i) => (
+              <div key={b.nom} className="flex items-center justify-between gap-2 text-[12px]">
+                <span className="text-txt-dim">{b.nom}</span>
+                <span className={`tabular-nums ${i === 0 ? 'font-medium text-txt-hi' : 'text-txt-dim'}`}>{fmtInt(b.basse)} – {fmtInt(b.haute)} €</span>
+              </div>
+            ))}
           </div>
           {/* OUTILS-P0-2 (P4) — d'où viennent les fourchettes (ventes passées de biens comparables). */}
           <p className="mt-1.5 text-[11px] leading-snug text-txt-mut">
@@ -242,8 +274,8 @@ function ValeurEstimee({ e, typeBien, commune }: { e: Estimer3Rapport['estimatio
 }
 
 // ── Les ventes retenues : chaque ligne se décoche (l'API recalcule) ──
-function VentesRetenues({ ventes, ecartees, onToggle }: {
-  ventes: Estimer3Vente[]; ecartees: Set<string>; onToggle: (id: string) => void
+function VentesRetenues({ ventes, ecartees, onToggle, typeBien }: {
+  ventes: Estimer3Vente[]; ecartees: Set<string>; onToggle: (id: string) => void; typeBien: string
 }) {
   if (!ventes.length) return null
   // Une mutation peut arriver deux fois (plusieurs lots d'un même acte) : on ne garde qu'une ligne par
@@ -256,11 +288,21 @@ function VentesRetenues({ ventes, ecartees, onToggle }: {
         <p className={SECTION_TITRE}>Les ventes retenues</p>
         <span className="text-[10px] text-txt-mut">décochez pour écarter</span>
       </div>
-      {/* RECETTE — rien de tronqué : date, surface habitable, surface du terrain, prix, distance, tous
-          lisibles, sur DEUX lignes si nécessaire (la ligne 2 passe sous la case à cocher). */}
+      {/* OUTILS-P0-2 (recette) — rien de tronqué, et chaque chiffre dit ce qu'il mesure selon le type :
+          · TERRAIN → la surface est celle du TERRAIN (« 472 m² de terrain »), jamais « hab. » ;
+          · APPARTEMENT → surface habitable seule, AUCUNE mention de terrain ;
+          · MAISON → habitable + terrain (si renseigné, sinon rien — plus de « terrain non renseigné ») ;
+          · distance = la VRAIE (ST_Distance), « — » si inconnue, jamais « 0 m » par défaut. */}
       <ul className="mt-1.5 flex flex-col gap-1">
         {uniques.map((v) => {
           const off = ecartees.has(v.id)
+          const terrain = typeBien === 'terrain'
+          const appart = typeBien === 'appartement'
+          const surfTxt = v.surface_m2 != null
+            ? (terrain ? `${fmtM2(v.surface_m2)} de terrain` : `${fmtM2(v.surface_m2)} habitable`)
+            : null
+          const terrTxt = (!terrain && !appart && v.terrain_m2) ? `${fmtM2(v.terrain_m2)} de terrain` : null
+          const distTxt = v.distance_m != null && v.distance_m > 0 ? `${fmtInt(v.distance_m)} m` : '—'
           return (
             <li key={v.id}>
               <label className={`flex cursor-pointer items-start gap-2 rounded-md border px-2 py-1.5 text-[11px] ${off ? 'border-line-2 bg-surface-2 opacity-50' : 'border-line-2 bg-surface-3'}`}>
@@ -272,10 +314,9 @@ function VentesRetenues({ ventes, ecartees, onToggle }: {
                     <span className="tabular-nums font-medium text-txt-hi">{v.prix_eur != null ? `${fmtInt(v.prix_eur)} €` : ''}</span>
                   </div>
                   <div className="mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 tabular-nums text-txt-dim">
-                    <span>{v.surface_m2 != null ? `${fmtM2(v.surface_m2)} hab.` : '— hab.'}</span>
-                    {/* terrain nul/absent (DVF ne l'a pas renseigné) → on ne montre pas « 0 m² terrain ». */}
-                    <span>{v.terrain_m2 ? `${fmtM2(v.terrain_m2)} terrain` : 'terrain non renseigné'}</span>
-                    {v.distance_m != null && <span>· {fmtInt(v.distance_m)} m</span>}
+                    {surfTxt && <span>{surfTxt}</span>}
+                    {terrTxt && <span>{terrTxt}</span>}
+                    <span>· {distTxt}</span>
                   </div>
                 </div>
               </label>
@@ -327,12 +368,18 @@ function Question({ rapport, surfaceStr, onSurfaceChange, onSurfaceCommit, surfa
   if (!qSurface) return null
   const detail = rapport.estimation.surface_hab_detail
   const masque = !!rapport.estimation.total_masque
+  // OUTILS-P0-2 (recette) — immeuble à plusieurs logements : champ vide, indication de la dernière vente
+  // DE L'IMMEUBLE (un autre lot), et le badge « connue » est RÉSERVÉ au mono-logement.
+  const multi = !!rapport.estimation.multi_logement
+  const immeuble = rapport.estimation.immeuble_derniere_vente
   const estLabuse = rapport.mesures.surface_hab_estimee_m2
-  // badge : « saisie » si l'utilisateur a entré la valeur ; sinon « connue » (vente DVF) / « estimée »
-  // (calcul depuis le bâti). Quand le total est masqué, le champ est VIDE → pas de badge.
+  // badge : « saisie » si l'utilisateur a entré la valeur ; sinon « connue » (vente DVF, mono-logement) /
+  // « estimée » (calcul depuis le bâti). Total masqué ou immeuble multi-logements → champ VIDE, pas de badge.
   const badge: 'connue' | 'estimée' | 'saisie' | null =
-    surfaceTouchee ? 'saisie' : (masque ? null : (detail?.badge ?? 'estimée'))
-  const texte = masque
+    surfaceTouchee ? 'saisie' : ((masque || multi) ? null : (detail?.badge ?? 'estimée'))
+  const texte = multi
+    ? `${immeuble ? immeuble[0].toUpperCase() + immeuble.slice(1) + '. ' : ''}Un immeuble à plusieurs logements : saisissez la surface du bien à estimer.`
+    : masque
     ? `LABUSE estime ${estLabuse != null ? `≈ ${estLabuse} m²` : 'la surface'}${detail?.texte ? ` — ${detail.texte}` : ''} Saisissez la surface réelle pour obtenir une valeur totale.`
     : (surfaceTouchee ? 'Votre surface. L’estimation s’appuie sur cette valeur.'
         : (detail?.texte ?? 'Surface habitable estimée depuis le bâti (LiDAR).'))
@@ -344,7 +391,7 @@ function Question({ rapport, surfaceStr, onSurfaceChange, onSurfaceCommit, surfa
           data-estimer-surface type="text" inputMode="numeric"
           className="h-10 w-24 rounded-md border border-line-2 bg-surface-3 px-2 text-[22px] font-semibold tabular-nums text-txt-hi placeholder:text-[13px] placeholder:font-normal placeholder:text-txt-mut focus:outline-none focus:border-mint/60"
           value={surfaceStr}
-          placeholder={masque ? 'à saisir' : ''}
+          placeholder={(masque || multi) ? 'à saisir' : ''}
           onChange={(e) => onSurfaceChange(e.target.value.replace(/[^\d]/g, ''))}
           onBlur={onSurfaceCommit}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); (e.target as HTMLInputElement).blur() } }}
@@ -399,21 +446,23 @@ function Estimer3({ idu }: { idu: string }) {
   })
   const r = q.data
 
-  // Préremplissage UNE fois depuis la surface servie (DVF ou estimée) — SAUF quand le total est masqué :
-  // là le champ reste VIDE (l'estimation de LABUSE est montrée en indication dessous), on ne remplit pas.
+  // OUTILS-P0-2 (recette) — immeuble à plusieurs logements : AUCUN préremplissage (la dernière vente est
+  // un autre lot), le champ reste vide avec l'indication « dernière vente dans l'immeuble : N m² (AAAA) ».
+  const multiLog = !!r?.estimation?.multi_logement
+  const preSurface = multiLog ? null : (r?.questions.find((x) => x.cle === 'surface_hab')?.prerempli ?? r?.mesures.surface_hab_estimee_m2 ?? null)
+  // Préremplissage UNE fois depuis la surface servie (DVF ou estimée) — SAUF quand le total est masqué
+  // ou l'immeuble multi-logements : là le champ reste VIDE, on ne remplit pas.
   useEffect(() => {
     if (surfaceTouchee || surfaceStr) return
-    if (r?.estimation?.total_masque) return
-    const pre = r?.questions.find((x) => x.cle === 'surface_hab')?.prerempli ?? r?.mesures.surface_hab_estimee_m2
-    if (pre != null) setSurfaceStr(String(pre))
-  }, [r, surfaceTouchee, surfaceStr])
+    if (r?.estimation?.total_masque || multiLog) return
+    if (preSurface != null) setSurfaceStr(String(preSurface))
+  }, [r, surfaceTouchee, surfaceStr, multiLog, preSurface])
 
   const commitSurface = () => {
     const n = surfaceStr.trim() ? Math.round(Number(surfaceStr)) : null
     const val = n != null && Number.isFinite(n) && n > 0 ? n : null
     setSurfaceCommit(val)
-    const pre = r?.questions.find((x) => x.cle === 'surface_hab')?.prerempli ?? r?.mesures.surface_hab_estimee_m2 ?? null
-    setSurfaceTouchee(val != null && val !== pre)
+    setSurfaceTouchee(val != null && val !== preSurface)
   }
   const toggle = (id: string) => setEcartees((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
 
@@ -438,7 +487,7 @@ function Estimer3({ idu }: { idu: string }) {
           pieces={pieces} onPieces={(n) => setPieces(n)} />
       )}
       <ValeurEstimee e={r.estimation} typeBien={r.type_bien} commune={r.commune} />
-      <VentesRetenues ventes={r.ventes_retenues} ecartees={ecartees} onToggle={toggle} />
+      <VentesRetenues ventes={r.ventes_retenues} ecartees={ecartees} onToggle={toggle} typeBien={r.type_bien} />
       <RadarEnVente radar={r.radar} />
       <p className="text-[11px] leading-snug text-txt-mut">
         LABUSE ne connaît ni l’état du bien ni sa vue : ce prix est un repère de marché, pas une expertise.

@@ -49,8 +49,8 @@ def test_zone_builder_consomme_le_moteur_et_reste_rendable(monkeypatch):
     assert z["concurrence_absente"] is True, "pas de NAF au parcours Flash (FZ-001)"
     assert set(z["marche"]) == {"ventes_12m", "prix_m2_median_bati", "annonces_actives",
                                 "annonces_reserve", "permis_36m",
-                                # OUTILS-P0-2 (P3) : effectif + période de la médiane DU CERCLE.
-                                "prix_m2_median_n", "prix_m2_median_periode"}
+                                # OUTILS-P0-2 (P3) : effectif + fenêtre + période de la médiane DU CERCLE.
+                                "prix_m2_median_n", "prix_m2_median_fenetre_mois", "prix_m2_median_periode"}
 
 
 def test_zone_builder_degrade_honnete_sans_classe_exception(monkeypatch):

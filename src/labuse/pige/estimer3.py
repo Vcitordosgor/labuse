@@ -33,6 +33,7 @@ dans `banc_estimer.py` (niveaux d'information) et calibre la précision servie p
 from __future__ import annotations
 
 import math
+import re
 import time
 
 from sqlalchemy import text
@@ -314,6 +315,19 @@ def precision_par_niveau(db, type_bien: str, insee: str) -> dict:
 # ════════════════════════════════════════════════════════════════════════════════════════════════
 #  Estimation « comparables semblables » — orchestration servie (écran == PDF == API)
 # ════════════════════════════════════════════════════════════════════════════════════════════════
+def _multi_logement(db, idu: str) -> bool:
+    """OUTILS-P0-2 (recette) — la parcelle porte-t-elle un IMMEUBLE à PLUSIEURS logements ? (copropriété
+    RNIC avec > 1 lot d'habitation). Si oui, la dernière vente DVF n'est qu'UN lot : sa surface ne décrit
+    PAS le bien estimé → on ne préremplit pas le champ, et le badge « connue » est réservé au mono-logement."""
+    try:
+        n = db.execute(text(
+            "SELECT max(nb_lots_habitation) FROM rnic_coproprietes WHERE parcelle_idu = :idu"),
+            {"idu": idu}).scalar()
+        return bool(n and int(n) > 1)
+    except Exception:  # noqa: BLE001 — table absente / base partielle : pas de signal, comportement nominal
+        return False
+
+
 def _pieces_sujet(db, idu: str) -> int | None:
     """Nombre de pièces de la DERNIÈRE vente DVF de la parcelle (pré-remplit la question « pièces »
     quand LABUSE le sait). None sinon."""
@@ -323,12 +337,21 @@ def _pieces_sujet(db, idu: str) -> int | None:
         "ORDER BY dd.id_mutation DESC LIMIT 1"), {"idu": idu}).scalar()
 
 
+def _mois_annee(d) -> str | None:
+    """Date d'une vente → « MM/YYYY ». Accepte « YYYY-MM-DD » (pool bâti) ET « MM/YYYY » déjà formaté
+    (comparables terrain) — ne re-formate JAMAIS une date déjà en mois/année (sinon « 05/2022 »→« 22/05/2 »)."""
+    if not isinstance(d, str) or len(d) < 7:
+        return None
+    if d[2] == "/":          # déjà « MM/YYYY »
+        return d[:7]
+    return f"{d[5:7]}/{d[0:4]}"   # « YYYY-MM-DD » → « MM/YYYY »
+
+
 def _vente_retenue(c: dict, ecartee: bool) -> dict:
     """Une vente RETENUE servie (date, surface, terrain, prix, distance) + son identifiant (mutation),
     que l'utilisateur peut décocher pour l'écarter (l'API renvoie le même id dans `ecartees`)."""
-    d = c.get("date")
     return {"id": c["mid"],
-            "date": (f"{d[5:7]}/{d[0:4]}" if isinstance(d, str) and len(d) >= 7 else None),
+            "date": _mois_annee(c.get("date")),
             "surface_m2": c.get("surface_m2"), "terrain_m2": c.get("terrain_m2"),
             "prix_eur": c.get("prix_eur"), "distance_m": c.get("distance_m"),
             "pieces": c.get("pieces"), "piscine": bool(c.get("pool")),
@@ -342,6 +365,35 @@ def _arrondi_mille(n):
 def _arr_m2(n):
     """Surface en m² lisible (espace fine insécable comme séparateur de milliers)."""
     return f"{int(round(n)):,}".replace(",", " ") if isinstance(n, (int, float)) else "—"
+
+
+def _zone_code(s) -> str | None:
+    """Code de zone PLU court (« A », « N », « 1AU »…) extrait d'un libellé ou d'un motif : « Zone non
+    constructible (A) » → « A », « N - Naturelle » → « N ». None si rien d'exploitable."""
+    if not isinstance(s, str) or not s.strip():
+        return None
+    m = re.search(r"\(([0-9]{0,2}[A-Za-z]{1,4}[0-9a-z]?)\)", s)   # code entre parenthèses
+    if m:
+        return m.group(1)
+    tete = s.strip().split()[0].rstrip("-–—,").strip()
+    if re.fullmatch(r"[0-9]{0,2}[A-Za-z]{1,4}[0-9a-z]?", tete) and len(tete) <= 5:
+        return tete
+    return None
+
+
+def _fourchettes(basse, haute, basse_q3, haute_q3, ecart_median, ecart_q3) -> list[dict]:
+    """OUTILS-P0-2 (recette) — les BANDES servies, sous leur vrai nom. « 1 fois sur 2 » (écart médian) et
+    « 3 fois sur 4 » (Q3) sont DEUX bandes distinctes MESURÉES au banc. Si le banc n'en donne qu'UNE (les
+    deux écarts coïncident — repli régional faute de mesure par commune), on n'affiche PAS deux lignes
+    identiques : une seule, nommée « Fourchette estimée » (honnête : un repère, pas deux quantiles mesurés)."""
+    if basse is None or haute is None:
+        return []
+    distinctes = (isinstance(ecart_median, (int, float)) and isinstance(ecart_q3, (int, float))
+                  and abs(float(ecart_q3) - float(ecart_median)) >= 1)
+    if distinctes and basse_q3 is not None and haute_q3 is not None:
+        return [{"nom": "1 fois sur 2", "basse": basse, "haute": haute},
+                {"nom": "3 fois sur 4", "basse": basse_q3, "haute": haute_q3}]
+    return [{"nom": "Fourchette estimée", "basse": basse, "haute": haute}]
 
 
 def estimation_semblable(db, idu: str, fiche: dict, *, surface_hab: float | None = None,
@@ -376,8 +428,17 @@ def estimation_semblable(db, idu: str, fiche: dict, *, surface_hab: float | None
     emprise = _emprise_bati_fiche_m2(fiche)
     surf_est, surf_src = _surface_pour_total(db, idu, emprise, mut, insee, None,
                                              bati_mesure=(nature_parc != "non_mesure"))
-    surf_dvf = round(mut["bati_m2"]) if (mut and (mut.get("bati_m2") or 0) > 0) else None
+    surf_dvf_brut = round(mut["bati_m2"]) if (mut and (mut.get("bati_m2") or 0) > 0) else None
     surf_saisie = (float(surface_hab) if (isinstance(surface_hab, (int, float)) and surface_hab > 0) else None)
+    # OUTILS-P0-2 (recette) — IMMEUBLE à plusieurs logements : la dernière vente DVF n'est qu'UN lot, sa
+    # surface ne décrit pas le bien → on ne la prend NI comme surface servie NI comme préremplissage (le
+    # champ reste vide, badge « connue » réservé au mono-logement) ; on sert juste l'indication « dernière
+    # vente dans l'immeuble : N m² (AAAA) ». Son prix au m² reste servi (invite à saisir la surface).
+    multi_logement = _multi_logement(db, idu)
+    surf_dvf = None if multi_logement else surf_dvf_brut
+    an_dvf = ((mut.get("date") or "")[:4] if mut else "") or None
+    immeuble_derniere_vente = (f"dernière vente dans l’immeuble : {surf_dvf_brut} m² ({an_dvf})"
+                               if (multi_logement and surf_dvf_brut and an_dvf) else None)
     # La surface ESTIMÉE (emprise×ratio×niveaux) n'a de sens que pour une MAISON ; un appartement sans
     # surface connue n'a pas de total servi (sa surface n'est pas mesurable) — on sert le €/m² seul.
     surf_est_valide = surf_est if type_bien == "maison" else None
@@ -386,7 +447,8 @@ def estimation_semblable(db, idu: str, fiche: dict, *, surface_hab: float | None
     surface_tot = surf_saisie or surf_dvf or surf_est_valide
     # pièces : réponse utilisateur > pièces de la dernière vente DVF (pré-remplissage). Les pièces ne
     # DÉPLACENT le prix que pour l'APPARTEMENT (gain mesuré) — jamais pour la maison (gain nul au banc).
-    pieces_pref = _pieces_sujet(db, idu)
+    # Immeuble multi-logements : les pièces de la dernière vente sont celles d'un AUTRE lot → pas de préremplissage.
+    pieces_pref = None if multi_logement else _pieces_sujet(db, idu)
     pieces_rep = int(pieces) if (isinstance(pieces, (int, float)) and pieces > 0) else None
     pieces_connu = bool(pieces_rep or pieces_pref)
     pieces_actif = (type_bien == "appartement")           # la question pièces n'existe que pour l'appart
@@ -492,6 +554,8 @@ def estimation_semblable(db, idu: str, fiche: dict, *, surface_hab: float | None
         "estimation": {
             "valeur_eur": valeur, "valeur_basse": basse, "valeur_haute": haute,
             "valeur_basse_q3": basse_q3, "valeur_haute_q3": haute_q3,
+            # OUTILS-P0-2 (recette) — les bandes sous leur vrai nom (deux si mesurées distinctes, une sinon).
+            "fourchettes": _fourchettes(basse, haute, basse_q3, haute_q3, prec["ecart_median"], prec["ecart_q3"]),
             # DÉFAUT A — total masqué (surface inconnue + Q3 trop large) → prix au m² + fourchette €/m².
             "total_masque": total_masque, "surface_connue": surface_connue,
             "eur_m2_bas": eur_m2_bas, "eur_m2_haut": eur_m2_haut,
@@ -510,11 +574,15 @@ def estimation_semblable(db, idu: str, fiche: dict, *, surface_hab: float | None
             "repli_secteur": repli,
             "repli_note": ("Trop peu de ventes semblables dans le secteur — repli sur le prix de "
                            "secteur (ESTIMER-2)." if repli else None),
+            # OUTILS-P0-2 (recette) — immeuble à plusieurs logements : champ surface vide + indication.
+            "multi_logement": multi_logement,
+            "immeuble_derniere_vente": immeuble_derniere_vente,
         },
         "ventes_retenues": retenues,
         "niveau_info": niveau,
         "precision_par_niveau": precision_par_niveau(db, type_bien, insee),
-        "surface_hab_prerempli": surf_est,
+        # immeuble multi-logements : aucun préremplissage de surface (la dernière vente est un autre lot).
+        "surface_hab_prerempli": (None if multi_logement else surf_est),
         "pieces_prerempli": (int(pieces_pref) if pieces_pref else None),
     }
 
@@ -676,23 +744,45 @@ def rapport3(db, idu: str, fiche: dict, *, surface_hab: float | None = None,
         base = estimation_annonce(db, idu, fiche)      # ESTIMER-2 (repère terrain nu + mesurée)
         mesures = mesures_labuse(db, idu, fiche, nature="terrain", zone_lib=zone_lib, mut=mut, insee=insee)
         prec = charge_precision(db, "terrain", insee, "sans_saisie")
-        # Terrain nu : UNE seule question n'existe pas (viabilisation non mesurable) → un seul niveau. Les
-        # deux fourchettes servies sortent du MÊME central (ESTIMER-2) ± écart médian / Q3 mesurés, comme
-        # le bâti — pour que l'écran montre les deux bandes « 1 fois sur 2 » / « 3 fois sur 4 » à l'identique.
-        central_t = (base.get("valeur_indicative") or {}).get("valeur_eur")
-        # OUTILS-P0-2 (P2) — deux raisons INDÉPENDANTES de ne PAS servir de total à bâtir (on garde
-        # toujours le repère au m² + les ventes de référence) :
-        #  · NON CONSTRUCTIBLE : pas de valeur de terrain à bâtir, la raison est dite ;
-        #  · HORS GAMME : surface hors de la plage des ventes de référence (p90), total non fiable.
         constr = base.get("constructibilite") or {}
         non_constructible = constr.get("constructible") is False
         hors_gamme = bool(base.get("terrain_hors_gamme"))
-        sans_total_raison = None
+
+        # OUTILS-P0-2 (recette, point 4) — TERRAIN NON CONSTRUCTIBLE : AUCUNE estimation. Pas de prix au
+        # m² en tête, aucune vente de terrain à bâtir listée (elles induiraient en erreur sur une parcelle
+        # qui ne peut rien recevoir). On affiche « Pas d'estimation : zone non constructible (A) » et la
+        # dernière vente de la parcelle (servie à part). La raison est dite.
         if non_constructible:
-            central_t = None
-            motif = (constr.get("motif") or "Parcelle non constructible").rstrip(" .")
-            sans_total_raison = f"{motif} — pas de valeur de terrain à bâtir."
-        elif hors_gamme:
+            motif = constr.get("motif") or ""
+            zcode = _zone_code(motif) or _zone_code(constr.get("zone_lib")) or _zone_code(zone_lib)
+            if zcode:
+                raison = f"Pas d’estimation : zone non constructible ({zcode})"
+            elif motif:
+                m = motif.rstrip(" .")
+                raison = "Pas d’estimation : " + (m[0].lower() + m[1:] if m else "zone non constructible")
+            else:
+                raison = "Pas d’estimation : parcelle non constructible"
+            return {"idu": idu, "commune": commune, "type_bien": "terrain",
+                    "mesures": mesures,
+                    "estimation": {"valeur_eur": None, "valeur_basse": None, "valeur_haute": None,
+                                   "valeur_basse_q3": None, "valeur_haute_q3": None, "fourchettes": [],
+                                   "eur_m2": None, "n_comparables": None, "repli_secteur": False,
+                                   "methode_prix": "secteur", "fiabilite_mot": None,
+                                   "terrain_non_constructible": True, "terrain_hors_gamme": False,
+                                   "terrain_sans_total_raison": raison,
+                                   "comparables_desc": None, "repli_note": None},
+                    "ventes_retenues": [],   # aucune vente de terrain à bâtir listée
+                    "derniere_vente": derniere_vente,
+                    "questions": [], "questions_abandonnees": QUESTIONS_ABANDONNEES,
+                    "precision_par_niveau": {}, "radar": [],
+                    "note_terrain": raison}
+
+        # Terrain nu CONSTRUCTIBLE : repère de secteur + deux fourchettes (ou une seule si le banc n'en
+        # donne qu'une). HORS GAMME (surface > p90 des ventes de référence) → pas de total, mais le repère
+        # au m² et les ventes de référence restent (la raison est dite).
+        central_t = (base.get("valeur_indicative") or {}).get("valeur_eur")
+        sans_total_raison = None
+        if hors_gamme:
             central_t = None
             g = base.get("surface_gamme") or {}
             sp = base.get("surface_parcelle_m2")
@@ -703,23 +793,25 @@ def rapport3(db, idu: str, fiche: dict, *, surface_hab: float | None = None,
                                  "les ventes de référence restent affichés.")
         _bt = (lambda p: _arrondi_mille(float(central_t) * (1 - p / 100.0))) if central_t else (lambda p: None)
         _ht = (lambda p: _arrondi_mille(float(central_t) * (1 + p / 100.0))) if central_t else (lambda p: None)
+        v_basse, v_haute = _bt(prec["ecart_median"]), _ht(prec["ecart_median"])
+        v_basse_q3, v_haute_q3 = _bt(prec["ecart_q3"]), _ht(prec["ecart_q3"])
         return {"idu": idu, "commune": commune, "type_bien": "terrain",
                 "mesures": mesures,
                 "estimation": {"valeur_eur": central_t,
-                               "valeur_basse": _bt(prec["ecart_median"]),
-                               "valeur_haute": _ht(prec["ecart_median"]),
-                               "valeur_basse_q3": _bt(prec["ecart_q3"]),
-                               "valeur_haute_q3": _ht(prec["ecart_q3"]),
+                               "valeur_basse": v_basse, "valeur_haute": v_haute,
+                               "valeur_basse_q3": v_basse_q3, "valeur_haute_q3": v_haute_q3,
+                               "fourchettes": _fourchettes(v_basse, v_haute, v_basse_q3, v_haute_q3,
+                                                           prec["ecart_median"], prec["ecart_q3"]),
                                "surface_utilisee_m2": (base.get("valeur_indicative") or {}).get("surface_m2"),
                                "eur_m2": base.get("median"), "precision_pct": prec["ecart_median"],
                                "precision_q3_pct": prec["ecart_q3"], "ecart_median_pct": prec["ecart_median"],
                                "fiabilite_mot": base.get("fiabilite_mot"),
                                "n_comparables": base.get("n"), "repli_secteur": False,
                                "methode_prix": "secteur",
-                               # OUTILS-P0-2 (P2) — total non servi : la raison voyage jusqu'à l'écran et au PDF.
+                               # OUTILS-P0-2 (P2) — total non servi (hors gamme) : la raison voyage écran+PDF.
                                "terrain_sans_total_raison": sans_total_raison,
                                "terrain_hors_gamme": hors_gamme,
-                               "terrain_non_constructible": non_constructible,
+                               "terrain_non_constructible": False,
                                "surface_gamme": base.get("surface_gamme"),
                                "comparables_desc": None, "repli_note": None},
                 "ventes_retenues": [_vente_retenue({**c, "mid": c.get("date")}, False)

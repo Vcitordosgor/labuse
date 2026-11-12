@@ -1,7 +1,18 @@
 // FICHE-FIX-4 (Lot B) — le format partagé des 11 sections de la fiche : décimales à la virgule,
 // dates JJ/MM/AAAA, année SIRENE 1900 = « n.c. ». Verrou.
 import { describe, expect, it } from 'vitest'
-import { fmtDec, fmtInt, fmtDateNum, fmtDateSirene, anneeSirene } from './format'
+import { fmtDec, fmtInt, fmtDateNum, fmtDateSirene, anneeSirene, aCommune } from './format'
+
+describe('OUTILS-P0-2 — « à {commune} » avec contraction de l’article', () => {
+  it('au Tampon / au Port, aux Avirons, à La Possession, à Saint-Denis', () => {
+    expect(aCommune('Le Tampon')).toBe('au Tampon')
+    expect(aCommune('Le Port')).toBe('au Port')
+    expect(aCommune('Les Avirons')).toBe('aux Avirons')
+    expect(aCommune('La Possession')).toBe('à La Possession')
+    expect(aCommune('Saint-Denis')).toBe('à Saint-Denis')
+    expect(aCommune(null)).toBe('')
+  })
+})
 
 describe('format partagé de la fiche', () => {
   it('décimales à la virgule, jamais le point', () => {

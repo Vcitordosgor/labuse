@@ -467,6 +467,9 @@ def marche_zone(session: Session, geom_geojson: dict) -> dict:
         prix, prix_n, prix_periode = med["median"], med["n"], med["periode"]
     else:
         prix_n = prix_periode = None
+    # OUTILS-P0-2 (recette) — la PÉRIODE affichée pour le cercle est la FENÊTRE DEMANDÉE (36 mois), pas
+    # les dates extrêmes des ventes trouvées (qui laisseraient croire à une couverture plus courte).
+    from .dvf_mediane import FENETRE_MOIS as _FEN_CERCLE
     annonces_source = _existe("pige_biens") and _existe("parcels")
     if annonces_source:
         annonces = session.execute(text(
@@ -483,8 +486,10 @@ def marche_zone(session: Session, geom_geojson: dict) -> dict:
     # comme MINIMUM avec sa réserve, jamais un total.
     return {"ventes_12m": int(ventes or 0),
             "prix_m2_median_bati": int(prix) if prix is not None else None,
-            # OUTILS-P0-2 (P3) — effectif + période de la médiane DU CERCLE (fenêtre 36 mois).
+            # OUTILS-P0-2 (P3) — effectif de la médiane DU CERCLE + FENÊTRE DEMANDÉE (36 mois), affichée
+            # telle quelle (jamais les dates extrêmes des ventes). `periode` gardé pour info/PDF.
             "prix_m2_median_n": int(prix_n) if prix_n is not None else None,
+            "prix_m2_median_fenetre_mois": _FEN_CERCLE,
             "prix_m2_median_periode": prix_periode,
             # OUTILS-P0-2 (P3) — « Annonces suivies par LABUSE » : une donnée INDISPONIBLE (source non
             # ingérée) vaut None → l'écran affiche « — », jamais un 0 trompeur. Un 0 mesuré reste 0.

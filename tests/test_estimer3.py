@@ -51,6 +51,32 @@ def test_wquantiles_pondere():
     assert E3._wquantiles([]) == (None, None, None)
 
 
+def test_mois_annee_ne_reformate_pas_une_date_deja_formatee():
+    """OUTILS-P0-2 (recette) — « YYYY-MM-DD » → « MM/YYYY », mais « MM/YYYY » déjà formaté (comparables
+    terrain) reste tel quel (le double formatage donnait « 05/2022 » → « 22/05/2 »)."""
+    assert E3._mois_annee("2022-05-15") == "05/2022"
+    assert E3._mois_annee("05/2022") == "05/2022"
+    assert E3._mois_annee(None) is None and E3._mois_annee("x") is None
+
+
+def test_fourchettes_une_ou_deux_bandes():
+    """OUTILS-P0-2 (recette) — deux bandes DISTINCTES si le banc mesure médian ≠ Q3 ; une seule, nommée
+    « Fourchette estimée », si les deux coïncident (repli) ; aucune si pas de total."""
+    deux = E3._fourchettes(90, 110, 80, 120, 10, 20)
+    assert [b["nom"] for b in deux] == ["1 fois sur 2", "3 fois sur 4"]
+    une = E3._fourchettes(90, 110, 90, 110, 35, 35)
+    assert len(une) == 1 and une[0]["nom"] == "Fourchette estimée"
+    assert E3._fourchettes(None, None, None, None, 35, 35) == []
+
+
+def test_zone_code_extrait_le_code_de_zone():
+    """OUTILS-P0-2 (recette) — « A » extrait de « Zone non constructible (A) » / « N - Naturelle »."""
+    assert E3._zone_code("Zone non constructible (A)") == "A"
+    assert E3._zone_code("N - Naturelle") == "N"
+    assert E3._zone_code("1AU - à urbaniser") == "1AU"
+    assert E3._zone_code("") is None and E3._zone_code(None) is None
+
+
 def test_eur_m2_semblable_pondere_par_ressemblance():
     """Un comparable PROCHE et de surface SEMBLABLE pèse plus qu'un comparable loin et différent :
     la médiane pondérée penche vers le prix du semblable."""
@@ -358,8 +384,9 @@ def test_terrain_hors_gamme_pas_de_total_mais_repere(db):
 
 @pytest.mark.reel
 def test_terrain_non_constructible_pas_de_valeur_a_batir(db):
-    """Un terrain non constructible n'a PAS de valeur de terrain à bâtir ; la raison (le motif) est dite,
-    le repère au m² reste. On cherche un terrain nu dont le verdict est « non constructible »."""
+    """OUTILS-P0-2 (recette, point 4) — un terrain NON CONSTRUCTIBLE n'a AUCUNE estimation : pas de prix
+    au m² en tête, aucune vente de terrain à bâtir listée. L'écran dit « Pas d'estimation : zone non
+    constructible (A) » et la dernière vente de la parcelle reste montrée (servie à part)."""
     cands = db.execute(text(
         "SELECT dm.id_parcelle FROM dvf_mutations_parcelle dm "
         "JOIN (SELECT id_mutation FROM dvf_mutations_parcelle GROUP BY 1 HAVING count(DISTINCT id_parcelle)=1) m "
@@ -368,13 +395,16 @@ def test_terrain_non_constructible_pas_de_valeur_a_batir(db):
         "ORDER BY dm.date_mutation DESC LIMIT 300")).scalars().all()
     for idu in cands:
         try:
-            e = E3.rapport3(db, idu, _fiche(db, idu))["estimation"]
+            rep = E3.rapport3(db, idu, _fiche(db, idu))
         except Exception:  # noqa: BLE001 — parcelle sans fiche : on passe
             continue
+        e = rep["estimation"]
         if e.get("terrain_non_constructible"):
             assert e.get("valeur_eur") is None
-            assert e.get("eur_m2")                            # le repère au m² reste
-            assert "pas de valeur de terrain à bâtir" in (e.get("terrain_sans_total_raison") or "")
+            assert e.get("eur_m2") is None                    # AUCUN prix au m² en tête
+            assert rep.get("ventes_retenues") == []           # aucune vente de terrain à bâtir listée
+            assert (e.get("terrain_sans_total_raison") or "").startswith("Pas d’estimation : ")
+            assert "non constructible" in (e.get("terrain_sans_total_raison") or "")
             return
     pytest.skip("aucun terrain nu non constructible trouvé dans l'échantillon")
 

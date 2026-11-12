@@ -7986,10 +7986,15 @@ def _calcul_etude_zone(db: Session, inp: EtudeZoneIn) -> dict:
             from ..marche_service import DVF_BANQUIER_ADAPTATIF, marche_dvf
             _pa = marche_dvf(db, idu, profil=DVF_BANQUIER_ADAPTATIF) or {}
             if _pa.get("median") is not None:
+                # OUTILS-P0-2 (recette) — la ligne du secteur DIT CE QU'ELLE MESURE : le type de bien
+                # (maison/appartement/mixte) et la fenêtre réelle (années, segment « récente »/« élargie »
+                # du prix de secteur — jamais un « 24 mois » inventé que ce prix ne mesure pas).
                 out["marche"]["prix_secteur_fiche"] = {
                     "median": _pa["median"], "n": _pa.get("n"),
                     "radius_m": _pa.get("radius_m"),
-                    "commune_fallback": bool(_pa.get("commune_fallback"))}
+                    "commune_fallback": bool(_pa.get("commune_fallback")),
+                    "type_prix": _pa.get("type_prix"),
+                    "periode": _pa.get("periode")}
         except Exception:  # noqa: BLE001 — jamais un 500 ; le prix de secteur est un plus
             db.rollback()
     if out.get("zone_disponible"):

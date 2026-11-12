@@ -284,4 +284,4 @@ def test_endpoint_etude_zone_concurrents_et_ratio(monkeypatch):
     # n'est ajouté QUE si la parcelle a un prix de secteur DVF (ici, parcelle semée sans ventes → absent).
     assert set(out["marche"]) == {"ventes_12m", "prix_m2_median_bati", "annonces_actives",
                               "annonces_reserve", "permis_36m",
-                              "prix_m2_median_n", "prix_m2_median_periode"}
+                              "prix_m2_median_n", "prix_m2_median_fenetre_mois", "prix_m2_median_periode"}

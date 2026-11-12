@@ -24,6 +24,16 @@ export const fmtEur = (n: number | null | undefined, _chiffreId?: string): strin
 export const fmtM2 = (m2: number | null | undefined, _chiffreId?: string): string =>
   m2 == null ? '—' : m2 >= 10_000 ? `${fmtDec(m2 / 10_000, 2)} ha` : `${fmtInt(m2)} m²`
 
+/** OUTILS-P0-2 (recette) — « à {commune} » avec la contraction française de l'article :
+ *  « Le Tampon » → « au Tampon », « Le Port » → « au Port », « Les Avirons » → « aux Avirons »,
+ *  « La Possession » → « à La Possession », « Saint-Denis » → « à Saint-Denis ». Jamais « à Le Tampon ». */
+export const aCommune = (commune: string | null | undefined): string => {
+  if (!commune) return ''
+  if (/^Les\s+/i.test(commune)) return `aux ${commune.replace(/^Les\s+/i, '')}`
+  if (/^Le\s+/i.test(commune)) return `au ${commune.replace(/^Le\s+/i, '')}`
+  return `à ${commune}`   // « La … » (à La …) et noms sans article restent avec « à »
+}
+
 /** montant compact (cartes, badges) : 450 k€ / 2 M€ / 2,4 M€.
  *  FIX-NU3-2 (M-T13) — espace INSÉCABLE (U+00A0) avant « M€ »/« k€ », comme `fmtEur` avant « € »
  *  (le format compact cassait la règle que le commentaire de `fmtEur` promet → césure « 2,4 ⏎ M€ »). */
