@@ -535,7 +535,7 @@ def test_jauge_logements_proche_du_calcul(session_reelle):
 
 @pytest.mark.reel
 def test_sous_sol_etude_rapide(session_reelle):
-    """L'étude sous-sol reste rapide (pas de 2ᵉ recherche) — bornée bien en deçà de la nouvelle borne 60 s."""
+    """L'étude sous-sol reste rapide (pas de 2ᵉ recherche) — bornée bien en deçà de la borne (120 s)."""
     import time
     from labuse.implantation.service import etudier_payload
     t = time.monotonic()

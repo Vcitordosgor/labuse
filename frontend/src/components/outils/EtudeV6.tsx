@@ -221,7 +221,7 @@ export function EtudeV6({ initialIdus, rouvrir, onClose }: {
   // ETUDE-V6-3 (item 4) — animation de chargement de l'app (composant existant) pendant « Calcul en cours ».
   const loadingOverlay = (analyse.isPending || (rouvrirActif && revQ.isLoading)) ? (
     <div data-etude-calcul className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-surface-0/75 backdrop-blur-sm">
-      <Chargement variant="bloc" label="Calcul en cours, jusqu'à une minute" />
+      <Chargement variant="bloc" label="Calcul en cours, jusqu'à deux minutes" />
     </div>
   ) : null
 
