@@ -2705,6 +2705,13 @@ export const postEtude = (body: EtudeIn) =>
     signal: AbortSignal.timeout(ETUDE_FETCH_TIMEOUT_MS),
   })
 
+// ETUDE-FIABLE-1 (LOT B2) — ROUVRIR une étude : relit la révision ENREGISTRÉE pour cette configuration,
+// SANS recalcul (le moteur n'est pas appelé ; le serveur empreinte le study_id). 404 si aucune révision.
+export const getEtudeRevisionParConfig = (body: EtudeIn) =>
+  j<EtudePayload>('/modules/etude/revision-par-config', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  })
+
 // ETUDE-ASYNC-1 — message d'erreur d'une étude, TOUJOURS propre (jamais un code HTTP, jamais le message
 // technique d'un abort réseau). 400 = entrée refusée → motif EXACT du moteur (ex. « parcelles non
 // contiguës »). 503 = borne dépassée : le calcul a été réellement interrompu côté serveur (plus de thread

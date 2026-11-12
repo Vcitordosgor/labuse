@@ -2416,6 +2416,22 @@ def etude_revision(study_id: str, db: Session = Depends(get_db)) -> dict:
     return payload
 
 
+@router.post("/etude/revision-par-config")
+def etude_revision_par_config(body: EtudeIn, db: Session = Depends(get_db)) -> dict:
+    """ETUDE-FIABLE-1 (LOT B2, câblage front) — ROUVRIR une étude depuis sa CONFIGURATION (la recette
+    archivée avec le document), sans que le front n'ait à connaître le study_id : on calcule l'empreinte
+    `study_id` de la config (même règle que l'analyse et le PDF — `_study_id`), puis on RELIT la révision
+    enregistrée, SANS JAMAIS appeler le moteur. 404 si aucune révision (le front retombe sur « Relancer »)."""
+    from ..implantation import revisions as revisions_mod
+    from ..implantation.service import _study_id
+    study_id = _study_id(body.model_dump())
+    payload = revisions_mod.charger(db, study_id)
+    if payload is None:
+        raise HTTPException(404, detail={"erreur": "revision_absente", "study_id": study_id,
+                                         "message": "Aucune étude enregistrée pour cette configuration — relancez l'analyse."})
+    return payload
+
+
 class EtudePdfIn(EtudeIn):
     # IMPLANTATION-3 — l'export FIGÉ de l'outil : mêmes entrées que l'écran (EtudeIn) + le scénario
     # AFFICHÉ (scenario_ref) que la tuile « Étude de faisabilité (PDF) » transmet. La 9e carte Docs

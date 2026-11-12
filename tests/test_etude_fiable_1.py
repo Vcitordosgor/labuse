@@ -114,6 +114,34 @@ def test_r1_export_relit_la_revision_sans_moteur(session_reelle, monkeypatch):
     assert rendu["numero"] == sid[:11] == (rev.get("study_id") or "")[:11]
 
 
+def test_b2_rouvrir_par_config_sans_moteur(session_reelle, monkeypatch):
+    """B2 (câblage front) — ROUVRIR par CONFIGURATION relit la révision enregistrée SANS appeler le moteur
+    (le front n'a pas à connaître le study_id : le serveur l'empreinte de la config). Mêmes chiffres."""
+    from labuse.api import modules
+    from labuse.implantation import revisions, service
+
+    # même chemin que l'API : le corps est normalisé (model_dump) avant analyse ET empreinte study_id.
+    body = modules.EtudeIn(**_cfg_andre())
+    data = body.model_dump()
+    sid = service._study_id(data)
+    ecran = service.etudier_payload(session_reelle, data)
+    revisions.enregistrer(session_reelle, ecran)
+    session_reelle.commit()
+
+    appels = {"n": 0}
+    vrai = service.etudier_payload
+
+    def espion(*a, **k):          # noqa: ANN001
+        appels["n"] += 1
+        return vrai(*a, **k)
+
+    monkeypatch.setattr(service, "etudier_payload", espion)
+    rev = modules.etude_revision_par_config(body, db=session_reelle)
+    assert appels["n"] == 0, "rouvrir par config ne doit PAS appeler le moteur"
+    assert rev.get("study_id") == sid
+    assert _chiffres(rev) == _chiffres(ecran)
+
+
 def test_r3_garde_fou_force_recherche_partielle(session_reelle, monkeypatch):
     """R3 — garde-fou temps forcé à 1 s : la recherche est COUPÉE avant les N candidats → état
     « partielle », visible à l'écran (payload.recherche) ET dans le PDF (même texte)."""

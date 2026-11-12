@@ -142,8 +142,9 @@ vi.mock('../../lib/api', () => ({
   postEtude: vi.fn(),
   postEtudeStationnement: vi.fn(),
   postEtudeJauge: vi.fn(),
+  getEtudeRevisionParConfig: vi.fn(),
 }))
-import { postEtudeParcelles, postEtude, postEtudeStationnement, postEtudeJauge } from '../../lib/api'
+import { postEtudeParcelles, postEtude, postEtudeStationnement, postEtudeJauge, getEtudeRevisionParConfig } from '../../lib/api'
 import { EtudeV6 } from './EtudeV6'
 
 const qc = () => new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -548,5 +549,21 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     expect(recap.textContent).toContain('—')
     // la ligne « Logements demandés » ne doit pas afficher 0
     expect(recap.textContent).not.toMatch(/Logements demandés\s*0/)
+  })
+})
+
+// ETUDE-FIABLE-1 (LOT B2) — ROUVRIR une étude affiche la RÉVISION enregistrée, SANS recalcul.
+describe('ÉTUDE — rouvrir affiche la révision sans recalcul (B2)', () => {
+  const CFG = { idus: ['97404000AW0099', '97404000AW0451'], type_projet: 'social' as const }
+  it('relit la révision (verdict affiché) et NE rappelle PAS le moteur (postEtude)', async () => {
+    vi.mocked(getEtudeRevisionParConfig).mockResolvedValue(RESULTAT as any)
+    render(<QueryClientProvider client={qc()}><EtudeV6 initialIdus={CFG.idus} rouvrir={CFG as any} /></QueryClientProvider>)
+    // le résultat (verdict de la révision) s'affiche...
+    await waitFor(() => expect(screen.getAllByText('Exploitable sous hypothèses').length).toBeGreaterThan(0))
+    // ...en ayant lu la révision PAR CONFIG, sans jamais appeler l'analyse (le moteur).
+    expect(vi.mocked(getEtudeRevisionParConfig)).toHaveBeenCalledWith(CFG)
+    expect(vi.mocked(postEtude)).not.toHaveBeenCalled()
+    // « Relancer l'analyse » est proposé (créera une nouvelle révision).
+    expect(document.querySelector('[data-etude-relancer]')).toBeTruthy()
   })
 })
