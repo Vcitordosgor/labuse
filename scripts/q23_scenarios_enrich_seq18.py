@@ -75,6 +75,14 @@ _CMP_COLS = ("scenario", "status", "cause", "band", "score", "band_provisional",
              "vigilance", "bande_v1", "enriched", "assiette_source", "surface_m2")
 
 
+def _snap(s, ids):
+    cols = ", ".join(_CMP_COLS)
+    return {(r.parcel_id, r.scenario): {c: getattr(r, c) for c in _CMP_COLS}
+            for r in s.execute(text(
+                f"SELECT parcel_id, {cols} FROM parcel_scenario_v2_runs "
+                "WHERE run_label=:r AND parcel_id = ANY(:ids)"), {"r": RUN, "ids": ids})}
+
+
 def _prove(n: int) -> int:
     with session_scope() as s:
         P.ensure_table(s)
@@ -86,34 +94,22 @@ def _prove(n: int) -> int:
         ids = sorted(set(rnd) | set(tem))
         print(f"[prove] {len(ids)} parcelles ({len(rnd)} au hasard + {len(tem)} témoins)", flush=True)
         _load_seq18(s, ids)
-        L_S18, L_LIVE = RUN + "_prv_s18", RUN + "_prv_live"
-        for lbl in (L_S18, L_LIVE):
-            s.execute(text("DELETE FROM parcel_scenario_v2_runs WHERE run_label=:l"), {"l": lbl})
-        s.commit()
-        # batch depuis seq 18 (patché)
+        # Le score (Signal/bande) se lit de score_labuse PAR run_label → on écrit sur le vrai label
+        # q_v23 (candidat, jamais servi). 1) batch PATCHÉ (seq 18) → snapshot. 2) batch LIVE → relecture.
         _patch()
-        P.compute_scenarios_v2_batch(s, ids, run_label=L_S18, enrich=True)
-        # batch live (réel)
+        P.compute_scenarios_v2_batch(s, ids, run_label=RUN, enrich=True)
+        a = _snap(s, ids)                                  # seq 18 (patché)
         _unpatch()
-        P.compute_scenarios_v2_batch(s, ids, run_label=L_LIVE, enrich=True)
-        # comparaison ligne à ligne (toutes colonnes substantielles)
-        cols = ", ".join(_CMP_COLS)
-        a = {(r.parcel_id, r.scenario): r for r in s.execute(text(
-            f"SELECT parcel_id, {cols} FROM parcel_scenario_v2_runs WHERE run_label=:l"), {"l": L_S18})}
-        b = {(r.parcel_id, r.scenario): r for r in s.execute(text(
-            f"SELECT parcel_id, {cols} FROM parcel_scenario_v2_runs WHERE run_label=:l"), {"l": L_LIVE})}
+        P.compute_scenarios_v2_batch(s, ids, run_label=RUN, enrich=True)
+        b = _snap(s, ids)                                  # live (réel)
         ecarts = []
         for k in sorted(set(a) | set(b)):
             ra, rb = a.get(k), b.get(k)
             if ra is None or rb is None:
                 ecarts.append((k, "ABSENT", "s18" if ra is None else "live", None)); continue
             for c in _CMP_COLS:
-                if getattr(ra, c) != getattr(rb, c):
-                    ecarts.append((k, c, getattr(ra, c), getattr(rb, c)))
-        # nettoyage des labels temporaires
-        for lbl in (L_S18, L_LIVE):
-            s.execute(text("DELETE FROM parcel_scenario_v2_runs WHERE run_label=:l"), {"l": lbl})
-        s.commit()
+                if ra[c] != rb[c]:
+                    ecarts.append((k, c, ra[c], rb[c]))
         print(f"[prove] lignes comparées : s18={len(a)} live={len(b)} · ÉCARTS={len(ecarts)}", flush=True)
         for e in ecarts[:25]:
             print("   ✗", e, flush=True)
