@@ -290,6 +290,7 @@ def _dernier_depot_comptes(db: Session, siren: str) -> dict | None:
 @router.get("/patrimoine")
 def patrimoine(siren: str, fmt: str = "json",
                limit: int = Query(200, ge=1, le=2000), offset: int = Query(0, ge=0),
+               blocs_limit: int = Query(12, ge=1, le=500),   # OUTILS-P1-1 LOT3 (pt 10) — « voir plus » des blocs
                request: Request = None, db: Session = Depends(get_db)):
     """Inventaire du foncier d'une PERSONNE MORALE (SIREN) : ses parcelles, le TIER v2 servi de
     chacune (étage 0 du run prime), le résiduel, les signaux d'approche (BODACC procédure + INPI
@@ -308,10 +309,20 @@ def patrimoine(siren: str, fmt: str = "json",
     # tests) où les défauts `Query()` ne sont pas résolus : on retombe sur les valeurs par défaut.
     limit = limit if isinstance(limit, int) else 200
     offset = offset if isinstance(offset, int) else 0
-    rows = db.execute(text("""
+    blocs_limit = blocs_limit if isinstance(blocs_limit, int) else 12   # OUTILS-P1-1 LOT3 (pt 10) — appel direct
+    # OUTILS-P1-1 LOT3c (pt 1) — ÉTAT BÂTI lu comme la FICHE (BD TOPO/CoSIA) : `p_model_bati` ne stocke QUE
+    # les parcelles bâties (emprise > 0) ; une parcelle ÉVALUÉE sans bâti n'a PAS de ligne → le « 0 »
+    # n'existe jamais. On lève l'ambiguïté avec `p_model_frame` (l'ensemble évalué) : bâti = ligne
+    # p_model_bati · NU = dans la frame SANS bâti · non renseigné = hors frame. La frame peut manquer sur
+    # une base partielle (test) → `dans_frame` NULL, et l'absence de bâti retombe en « non renseigné ».
+    has_frame = bool(db.execute(text("SELECT to_regclass('p_model_frame') IS NOT NULL")).scalar())
+    frame_join = "LEFT JOIN p_model_frame pf ON pf.idu = p.idu" if has_frame else ""
+    frame_expr = "(pf.idu IS NOT NULL)" if has_frame else "NULL::boolean"
+    rows = db.execute(text(f"""
         SELECT p.id, p.idu, p.commune, p.surface_m2, p.contenance_m2, z.zone_fam, r.sdp_residuelle_m2,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
-               COALESCE(pb.emprise_bati_m2, 0) AS emprise_bati,   -- RETOURS-15 B5 : bâti / nu
+               pb.emprise_bati_m2 AS emprise_bati,
+               {frame_expr} AS dans_frame,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
         FROM parcelle_personne_morale pm
         JOIN parcels p ON p.idu = pm.idu
@@ -320,6 +331,7 @@ def patrimoine(siren: str, fmt: str = "json",
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
         LEFT JOIN parcel_zone_plu z ON z.idu = p.idu
         LEFT JOIN p_model_bati pb ON pb.idu = p.idu
+        {frame_join}
         WHERE pm.siren = :s ORDER BY s2.rang ASC NULLS LAST"""),
         {"s": siren, "run": runs.cascade(), "v2run": _score_v2_run_id(db)}).mappings().all()
     bodacc = db.execute(text(
@@ -388,8 +400,20 @@ def patrimoine(siren: str, fmt: str = "json",
     # de dessin géométrique : homogène avec la fiche / le prefill taxe / Comparer (CONTENANCE-1).
     surface_totale_m2 = round(sum((_surface.surface_terrain(r["surface_m2"], r["contenance_m2"]).valeur or 0)
                                   for r in rows))
+    # OUTILS-P1-1 LOT3c (pt 1) — ÉTAT BÂTI lu comme la FICHE (`p_model_frame` = ensemble évalué,
+    # `p_model_bati` = parcelles bâties, emprise > 0). Le « nu » est RÉEL : parcelle évaluée SANS bâti
+    # cartographié (≈ 103 000 à l'échelle de l'île) — pas un « 0 » fabriqué. Les trois classes partitionnent
+    # exactement len(rows) : bâti (ligne p_model_bati) · nu (dans la frame, sans bâti) · non renseigné (hors frame).
     n_terrains_batis = sum(1 for r in rows if (r["emprise_bati"] or 0) > 0)
-    n_terrains_nus = len(rows) - n_terrains_batis
+    n_terrains_nus = sum(1 for r in rows if (r["emprise_bati"] or 0) <= 0 and r["dans_frame"])
+    n_bati_non_renseigne = sum(1 for r in rows if (r["emprise_bati"] or 0) <= 0 and not r["dans_frame"])
+    # OUTILS-P1-1 (pt 7) — TROIS comptes sur des ensembles DISTINCTS : RECENSÉES (toutes les parcelles du
+    # SIREN aux fichiers fonciers DGFiP, y compris celles sans géométrie cadastrale), RATTACHÉES au cadastre
+    # (jointes à `parcels` → une géométrie → `rows`). L'écart (ex. 1 871 vs 1 833) est ainsi ventilé, jamais
+    # muet : des parcelles recensées peuvent manquer au cadastre ingéré (le JOIN les écartait en silence).
+    n_recensees = int(db.execute(text(
+        "SELECT count(*) FROM parcelle_personne_morale WHERE siren = :s"), {"s": siren}).scalar() or 0)
+    n_rattachees = len(rows)
     n_constructible_u_au = sum(1 for r in rows if r["zone_fam"] in ("U", "AU"))
     # #3 VALORISATION indicative du foncier nu (zones U/AU) au RÉFÉRENTIEL UNIQUE prix terrain de zone
     # (ligne2_terrain_zone, une fois par commune). Indicative — seules les zones U/AU ont un prix marché.
@@ -451,12 +475,13 @@ def patrimoine(siren: str, fmt: str = "json",
                    (SELECT min(m.idu) FROM parcel_bloc_membres m WHERE m.bloc_id = b.id) AS idu_repr
             FROM parcel_blocs b WHERE b.siren = :s
             ORDER BY b.n_parcelles DESC, b.surface_totale_m2 DESC"""), {"s": siren}).mappings().all()
-        # OUT-SCAN-006 — la liste est plafonnée à 12 mais `n` = total réel (460…) : on sert `affiches`
-        # pour que l'écran dise « N affichés sur M » plutôt qu'une troncature silencieuse.
+        # OUT-SCAN-006 — la liste est plafonnée (12 par défaut) mais `n` = total réel (460…) : on sert
+        # `affiches` pour que l'écran dise « N affichés sur M ». OUTILS-P1-1 LOT3 (pt 10) — le plafond est
+        # relevable (`blocs_limit`) pour le bouton « voir plus » sous la liste.
         _items = [
             {"bloc_id": r["bloc_id"], "n_parcelles": r["n_parcelles"], "surface_m2": r["surface_totale_m2"],
              "communes": r["communes"], "sdp_residuelle_m2": r["sdp_residuelle_m2"], "idu_repr": r["idu_repr"]}
-            for r in brs[:12]]
+            for r in brs[:blocs_limit]]
         blocs_contigus = {"n": len(brs), "affiches": len(_items), "items": _items}
     # GB-017/018 — EXPORT CSV du portefeuille (raison sociale ENTIÈRE ; notice GB-016 si plafond).
     if fmt == "csv":
@@ -498,6 +523,9 @@ def patrimoine(siren: str, fmt: str = "json",
         "surface_totale_m2": surface_totale_m2,
         "n_terrains_nus": n_terrains_nus,
         "n_terrains_batis": n_terrains_batis,
+        "n_bati_non_renseigne": n_bati_non_renseigne,   # OUTILS-P1-1 (pt 7) — distinct de « nu »
+        "n_recensees": n_recensees,                     # OUTILS-P1-1 (pt 7) — fichiers fonciers DGFiP
+        "n_rattachees": n_rattachees,                   # OUTILS-P1-1 (pt 7) — jointes au cadastre
         "n_constructible_u_au": n_constructible_u_au,
         "n_actionnables": n_actionnables,
         # KO-10 — le libellé front dit « hors écartées par vous » SI ce compte a écarté des parcelles.
@@ -1139,6 +1167,39 @@ def successions_liste(commune: str | None = None,
         cle, lambda: _calcul_successions(db, commune, sdp_min, limit, offset))
 
 
+def _successions_zones_a_cheval(db: Session, idus: list[str]) -> dict[str, str]:
+    """OUTILS-P1-1 LOT3b (pt 4) — pour des parcelles à zone dominante A/N, renvoie {idu: composition
+    bizone « A 65 % · Ua 35 % »} UNIQUEMENT pour celles À CHEVAL (aucune zone n'atteint 90 % de la
+    surface), AU FORMAT DE LA FICHE. Un seul passage géométrique (spatial_layers `plu_gpu_zone`, la MÊME
+    source que `faisabilite.zone_servie`). Quand la dominante résume la parcelle (≥ 90 %), rien n'est
+    servi (la ligne garde la zone dominante, comme la fiche). Table absente → {} (jamais un 500)."""
+    if not idus or not db.execute(
+            text("SELECT to_regclass('spatial_layers') IS NOT NULL")).scalar():
+        return {}
+    rows = db.execute(text("""
+        WITH page AS (SELECT idu, geom_2975 AS g FROM parcels WHERE idu = ANY(:idus))
+        SELECT page.idu AS idu,
+               COALESCE(NULLIF(rtrim(split_part(btrim(z.attrs->>'libelle'), ' ', 1), ':'), ''), z.subtype) AS zone,
+               round((100 * ST_Area(ST_Intersection(ST_MakeValid(z.geom_2975), page.g))
+                      / NULLIF(ST_Area(page.g), 0))::numeric, 1) AS pct
+          FROM page
+          JOIN spatial_layers z ON z.kind = 'plu_gpu_zone' AND ST_Intersects(z.geom_2975, page.g)
+         WHERE ST_Area(ST_Intersection(ST_MakeValid(z.geom_2975), page.g)) > 0
+    """), {"idus": idus}).mappings().all()
+    from collections import defaultdict
+    parts: dict[str, list[tuple[str, float]]] = defaultdict(list)
+    for r in rows:
+        parts[r["idu"]].append((r["zone"], float(r["pct"] or 0)))
+    out: dict[str, str] = {}
+    for idu, ps in parts.items():
+        ps.sort(key=lambda x: x[1], reverse=True)
+        if not ps or ps[0][1] >= 90:   # la dominante résume la parcelle → PAS « à cheval » (seuil fiche)
+            continue
+        # Format fiche : « Zone N % » (% arrondi à l'entier), parts ≥ 1 % (on tait le bruit sub-1 %).
+        out[idu] = " · ".join(f"{z} {round(pct)} %" for z, pct in ps if pct >= 1)
+    return out
+
+
 def _calcul_successions(db: Session, commune, sdp_min, limit, offset) -> dict:
     if not db.execute(text("SELECT to_regclass('parcel_veille_succession') IS NOT NULL")).scalar():
         raise HTTPException(503, "signal succession non calculé (table absente).")
@@ -1160,39 +1221,64 @@ def _calcul_successions(db: Session, commune, sdp_min, limit, offset) -> dict:
     # (triées en queue) ; avec un seuil, une SDP inconnue ne peut pas le prouver → exclue.
     where = ("WHERE 1=1" + filtre_forme + (" AND p.commune = :c" if commune else "")
              + ((" AND d.sdp_residuelle_m2 >= :smin" if has_ext else " AND false") if sdp_min else ""))
+    # OUTILS-P1-1 (pt 1) — NOM ET ÂGE du dirigeant pris dans la MÊME requête ET le MÊME millésime :
+    # l'aîné des personnes physiques du RNE (`pm_dirigeants`, ingestion courante), avec son âge DÉRIVÉ
+    # de sa date de naissance. Fini la divergence entre un nom lu « au présent » et un âge figé au
+    # Score V : le couple nom/âge décrit la même personne, daté par la même ingestion (bandeau `rne`).
+    join_dir = """
+        LEFT JOIN LATERAL (
+            SELECT NULLIF(trim(coalesce(dd.prenoms,'') || ' ' || coalesce(dd.nom,'')), '') AS dirigeant_nom,
+                   (EXTRACT(year FROM current_date)::int - substring(dd.date_naissance, 1, 4)::int) AS age
+              FROM pm_dirigeants dd
+             WHERE dd.siren = pm.siren AND dd.type_personne = 'INDIVIDU'
+               AND dd.date_naissance ~ '^[0-9]{4}'
+             ORDER BY dd.date_naissance ASC LIMIT 1
+        ) dir ON true"""
     base = f"""
         FROM parcel_veille_succession v
         JOIN parcels p ON p.idu = v.parcelle_id
         {join_ext}
         LEFT JOIN parcel_zone_plu z ON z.idu = v.parcelle_id
-        LEFT JOIN parcelle_personne_morale pm ON pm.idu = v.parcelle_id"""
+        LEFT JOIN parcelle_personne_morale pm ON pm.idu = v.parcelle_id{join_dir}"""
+    # OUTILS-P1-1 (pt 1) — un âge AFFICHÉ ≥ 100 ans est invraisemblable (dirigeant décédé, date amont
+    # erronée) : la parcelle SORT de la liste et est COMPTÉE à part (`n_age_ecarte`), jamais écartée en
+    # silence. L'âge affiché = dérivé RNE quand il existe, sinon l'âge figé du signal (SCI dormante : pas
+    # d'âge, jamais écartée ici). Le repère est le même pour l'exclusion et pour l'affichage.
+    age_affiche = "coalesce(dir.age, v.dirigeant_age)"
+    ecart_age = f"((NOT v.sci_dormante) AND {age_affiche} >= 100)"
+    where_elig = f"{where} AND NOT {ecart_age}"
     params = {"c": commune, "smin": sdp_min, "annee": annee,
               "formes": sorted(score_v_constants.VEILLE_SUCCESSION_FORMES)}
-    total = int(db.execute(text(f"SELECT count(*) {base} {where}"), params).scalar() or 0)
+    total = int(db.execute(text(f"SELECT count(*) {base} {where_elig}"), params).scalar() or 0)
+    n_age_ecarte = int(db.execute(
+        text(f"SELECT count(*) {base} {where} AND {ecart_age}"), params).scalar() or 0)
     rows = db.execute(text(f"""
         SELECT v.parcelle_id AS idu, p.commune AS commune,
                round(p.surface_m2)::int AS surface_m2,
-               coalesce(z.zone_lib, z.zone_fam) AS zone,
+               coalesce(z.zone_lib, z.zone_fam) AS zone, z.zone_fam AS zone_fam,
                {sdp_expr} AS sdp_residuelle_m2,
-               v.dirigeant_age, v.sci_dormante,
-               -- Nom de l'aîné (personne physique) des dirigeants RNE de la société, pour afficher
-               -- « Nom · N ans » : même dirigeant que l'âge du signal (le plus âgé daté).
-               (SELECT NULLIF(trim(coalesce(dd.prenoms,'') || ' ' || coalesce(dd.nom,'')), '')
-                  FROM pm_dirigeants dd
-                 WHERE dd.siren = pm.siren AND dd.type_personne = 'INDIVIDU'
-                   AND dd.date_naissance IS NOT NULL
-                 ORDER BY dd.date_naissance ASC LIMIT 1) AS dirigeant_nom,
+               {age_affiche} AS dirigeant_age, v.sci_dormante,
+               dir.dirigeant_nom,
                pm.denomination, pm.siren
-        {base} {where}
+        {base} {where_elig}
         ORDER BY {ordre}
         LIMIT :lim OFFSET :off"""),
         {**params, "lim": limit, "off": offset}).mappings().all()
     # DONNEES-1 lot 2.3 — dernier dépôt de comptes par SIREN de la page (batch, table bodacc_depots).
     depots = _depots_par_siren(db, [r["siren"] for r in rows if r["siren"]])
+    # OUTILS-P1-1 LOT3b (pt 4) — parcelle À CHEVAL : zone DOMINANTE A/N mais une partie en zone
+    # constructible (le résiduel vient de là). On sert alors la COMPOSITION bizone AU FORMAT DE LA FICHE
+    # (« A 65 % · Ua 35 % »), calculée en UN SEUL passage géométrique sur les seules lignes A/N de la page
+    # (spatial_layers plu_gpu_zone, MÊME source que la fiche `zone_dominante`). À cheval ssi aucune zone
+    # n'atteint SEUIL_A_CHEVAL_PCT (90 %) de la surface — sinon la dominante résume la parcelle (fiche).
+    parts_lib = _successions_zones_a_cheval(db, [r["idu"] for r in rows
+                                                 if (r["zone_fam"] or "") in ("A", "N")])
     items = []
     for r in rows:
         d_ = dict(r)
         d_["sci_dormante"] = bool(r["sci_dormante"])
+        d_["zone_parts_libelle"] = parts_lib.get(r["idu"])   # bizone « A 65 % · Ua 35 % » ou None
+        d_.pop("zone_fam", None)
         d_["proprio"] = _solaire_proprio(r)   # MÊME règle privacy que Solaire/Assemblage
         # Signal « dépôt de comptes » du propriétaire PM (public) : renforce le radar succession
         # (une SCI sans dépôt récent = en sommeil). None (pas de clé) = aucun dépôt publié.
@@ -1215,6 +1301,7 @@ def _calcul_successions(db: Session, commune, sdp_min, limit, offset) -> dict:
         rne = db.execute(text("SELECT to_char(max(last_sync_at), 'DD/MM/YYYY') FROM data_sources "
                               "WHERE name = 'INPI RNE (dirigeants)'")).scalar()
     return {"total": total, "n": len(items), "items": items,
+            "n_age_ecarte": n_age_ecarte,   # OUTILS-P1-1 (pt 1) — parcelles sorties (âge ≥ 100 ans)
             "maj": maj, "rne_sync": rne,
             "source": "RNE INPI (dirigeants) · Recherche d'entreprises (DINUM) · fichiers PM DGFiP",
             "avertissement": ("Radar patrimonial (horizon 3-7 ans) : dirigeant âgé ou SCI dormante — "

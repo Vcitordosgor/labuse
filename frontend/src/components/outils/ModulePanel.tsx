@@ -12,7 +12,7 @@ import { AddressAutocomplete } from '../AddressAutocomplete'
 import { ParcelInput } from '../ParcelInput'
 import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECETTE-1 F2
 import { TEMPS_MILLESIMES } from '../map/basemaps'
-import { fmtInt, fmtM2 } from '../../lib/format'
+import { fmtInt, fmtM2, fmtDateNum } from '../../lib/format'
 import { iduComplet, iduCourt, estIdu } from '../../lib/format'
 import { pointInPolygon } from '../../lib/geo'
 import { TOKENS } from '../../lib/tokens'
@@ -206,6 +206,15 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
     getNextPageParam: (last, pages) => (last as Record<string, any>)['tronquee'] ? pages.length * M02_PAGE : undefined,
     enabled: !!siren,
   })
+  // OUTILS-P1-1 LOT3 (pt 10) — « voir plus » des blocs contigus : la page 0 sert les 12 premiers ; au clic
+  // on relève le plafond (`blocs_limit`) et un fetch LAZY (enabled seulement > 12) rapporte le reste.
+  const [blocsLimit, setBlocsLimit] = useState(12)
+  useEffect(() => { setBlocsLimit(12) }, [siren])   // nouveau propriétaire → replie
+  const blocsPlus = useQuery({
+    queryKey: ['m02-blocs', siren, blocsLimit],
+    queryFn: () => modPatrimoine(siren!, 1, 0, blocsLimit),
+    enabled: !!siren && blocsLimit > 12,
+  })
   const pages = (pat.data?.pages ?? []) as Record<string, any>[]
   const d = pages[0]  // page 0 = agrégats (nom, n_parcelles, n_actionnables, sdp…) + 1re tranche d'items
   const items = pages.flatMap((p) => (p['items'] ?? []) as Record<string, any>[])
@@ -258,21 +267,36 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
             <summary className="flex cursor-pointer list-none items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium text-txt-mut marker:hidden hover:text-mint">
               <span aria-hidden className="inline-block w-3 text-mint transition-transform duration-quick group-open:rotate-90">▸</span>
               Chiffres clés
-              <span className="ml-auto font-normal text-txt-dim">{fmt(d['n_parcelles'] as number)} parcelles · {fmtM2(d['surface_totale_m2'] as number | null)}</span>
+              {/* OUTILS-P1-1 LOT3 (pt 8) — résumé replié : « N parcelles » (le détail Recensées/Rattachées/Visibles est dans le tableau dessous). */}
+              <span className="ml-auto font-normal text-txt-dim">{fmt((d['n_recensees'] ?? d['n_parcelles']) as number)} parcelles · {fmtM2(d['surface_totale_m2'] as number | null)}</span>
             </summary>
+            {/* OUTILS-P1-1 (pt 7) — TROIS comptes sur des ensembles DISTINCTS : Recensées (fichiers
+                fonciers DGFiP) ≥ Rattachées au cadastre (ont une géométrie) ≥ Visibles selon les filtres
+                (ce que la carte peint ici). L'écart recensées↔rattachées est ventilé juste dessous. */}
             <div className="grid grid-cols-2 gap-2 px-2.5 pb-2.5">
             {[
-              { v: fmt(d['n_parcelles'] as number), lbl: 'parcelles' },
+              { v: fmt((d['n_recensees'] ?? d['n_parcelles']) as number), lbl: 'Recensées (DGFiP)' },
+              { v: fmt((d['n_rattachees'] ?? d['n_parcelles']) as number), lbl: 'Rattachées au cadastre' },
+              { v: fmt((d['n_rattachees'] ?? d['n_parcelles']) as number), lbl: 'Visibles selon les filtres' },
               { v: fmtM2(d['surface_totale_m2'] as number | null), lbl: 'surface totale' },
-              { v: `${fmt(d['n_terrains_nus'] as number)} / ${fmt(d['n_terrains_batis'] as number)}`, lbl: 'terrains nus / bâtis' },
+              // OUTILS-P1-1 LOT3d (pt 3) — tuile composite (3 nombres) : plus petite + autorisée à passer
+              // à la ligne, pour TENIR dans la case quel que soit le propriétaire (gros comptes SIDR &c.).
+              { v: `${fmt(d['n_terrains_nus'] as number)} / ${fmt(d['n_terrains_batis'] as number)} / ${fmt(d['n_bati_non_renseigne'] as number)}`, lbl: 'nus / bâtis / bâti non renseigné', compo: true },
               { v: fmt(d['n_constructible_u_au'] as number), lbl: 'en zone U ou AU' },
             ].map((c) => (
               <div key={c.lbl} data-m02-kpi className="min-w-0 rounded-lg border border-line-2 bg-surface-3 px-2.5 py-2.5">
-                <div className="num-key whitespace-nowrap text-[16px] tabular-nums text-mint">{c.v}</div>
+                <div className={`num-key tabular-nums text-mint ${'compo' in c && c.compo ? 'text-[12.5px] leading-tight break-words' : 'whitespace-nowrap text-[16px]'}`}>{c.v}</div>
                 <div className="mt-0.5 text-[10px] leading-tight text-txt-mut">{c.lbl}</div>
               </div>
             ))}
             </div>
+            {/* OUTILS-P1-1 (pt 7) — ventile l'écart Recensées ↔ Rattachées (jamais muet) : des parcelles
+                recensées aux fichiers fonciers peuvent manquer au cadastre ingéré (donc hors carte). */}
+            {d['n_recensees'] != null && d['n_rattachees'] != null && (d['n_recensees'] as number) > (d['n_rattachees'] as number) && (
+              <p data-m02-ventile className="px-2.5 pb-2 text-[10px] leading-snug text-txt-dim">
+                {fmt(d['n_recensees'] as number)} recensées (fichiers fonciers DGFiP), dont {fmt(d['n_rattachees'] as number)} rattachées au cadastre — {fmt((d['n_recensees'] as number) - (d['n_rattachees'] as number))} sans géométrie cadastrale (hors carte).
+              </p>
+            )}
             {/* RECETTE-OUTILS-2 (R19) — EN PIED de l'accordéon : les trois lignes de contexte (nature de
                 la donnée, millésime des fichiers fonciers, dépôt de comptes) autrefois en tête, qui
                 mangeaient la hauteur de la liste. Repliées par défaut avec les chiffres. */}
@@ -296,12 +320,13 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
               (même moteur que l'outil Blocs, table parcel_blocs). Ligne « Blocs contigus : N » + les
               groupes cliquables (→ fiche de leur parcelle représentative). */}
           {(() => {
-            const bc = d['blocs_contigus'] as { n: number; affiches?: number; items: { bloc_id: number; n_parcelles: number; surface_m2: number; communes: string[]; sdp_residuelle_m2: number; idu_repr: string | null }[] } | undefined
+            // OUTILS-P1-1 LOT3 (pt 10) — source = le fetch « voir plus » dès qu'on a relevé le plafond, sinon la page 0.
+            const bc = ((blocsLimit > 12 && blocsPlus.data ? (blocsPlus.data as Record<string, any>)['blocs_contigus'] : d['blocs_contigus'])) as { n: number; affiches?: number; items: { bloc_id: number; n_parcelles: number; surface_m2: number; communes: string[]; sdp_residuelle_m2: number; idu_repr: string | null }[] } | undefined
             if (!bc || bc.n === 0) return null
             // RECETTE-1 (H4, Vic) — le bloc « Blocs contigus » se REPLIE (disparaît) quand la liste des
             // parcelles s'ouvre (fusion ScanPatrimoine, bandeau replié) : il reprend sa place au retour.
             if (embedded && bandeauReplie) return null
-            // OUT-SCAN-006 — la liste des blocs est plafonnée (12) : on DIT « N affichés sur M » plutôt
+            // OUT-SCAN-006 — la liste des blocs est plafonnée : on DIT « N affichés sur M » plutôt
             // qu'une troncature silencieuse (`affiches` servi par le back).
             const bcAff = bc.affiches ?? bc.items.length
             return (
@@ -312,11 +337,21 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
                     <button key={bl.bloc_id} data-m02-bloc
                       onClick={() => bl.idu_repr && useApp.getState().focusParcelle(bl.idu_repr, { fiche: true })}
                       className="hover-fill flex items-baseline justify-between gap-2 rounded px-1.5 py-0.5 text-left text-[10.5px] text-txt-mut transition-colors duration-quick">
+                      {/* OUTILS-P1-1 LOT3 (pt 9) — surface du bloc en ha dès 1 ha (fmtM2), comme le total. */}
                       <span><b className="text-txt">{fmt(bl.n_parcelles)}</b> parcelles · {(bl.communes ?? []).join(', ')}</span>
-                      <span className="tnum shrink-0 text-txt-dim">{fmt(bl.surface_m2)} m²</span>
+                      <span className="tnum shrink-0 text-txt-dim">{fmtM2(bl.surface_m2)}</span>
                     </button>
                   ))}
                 </div>
+                {/* OUTILS-P1-1 LOT3b (pt 6) — pied au FORMAT COMMUN de l'app (ListPaginationFooter) :
+                    « N / M affichées · Voir 200 de plus » (par paquets de PAGE_SIZE), au lieu d'un bouton
+                    « Voir plus » ad hoc. Le plafond serveur `blocs_limit` grandit d'un paquet à chaque clic. */}
+                {bcAff < bc.n && (
+                  <ListPaginationFooter shown={bcAff} total={bc.n} step={PAGE_SIZE} uniteAccord="affichés"
+                    onMore={() => setBlocsLimit((l) => Math.min(l + PAGE_SIZE, 500))}>
+                    {blocsPlus.isFetching && <span className="text-txt-dim">chargement…</span>}
+                  </ListPaginationFooter>
+                )}
               </div>
             )
           })()}
@@ -459,8 +494,9 @@ function PermitFicheCorps({ permitId, onClose }: { permitId: string; onClose: ()
           <F label="Nombre de lots" value={d['nb_lots']} />
           <F label="Surface habitable" value={d['surface_hab_m2'] != null ? `${fmt(d['surface_hab_m2'])} m²` : null} />
           {d['geoloc_note'] && <p className="mt-1 text-[10px] leading-snug text-txt-dim">Position : {String(d['geoloc_note'])}.</p>}
-          <F label="Date de dépôt" value={d['date_depot']} />
-          <F label="Date d'autorisation" value={d['date_autorisation']} />
+          {/* OUTILS-P1-1 LOT3b (pt 1) — dates au format FR JJ/MM/AAAA (jamais AAAA-MM-JJ à l'écran). */}
+          <F label="Date de dépôt" value={d['date_depot'] ? fmtDateNum(d['date_depot'] as string) : null} />
+          <F label="Date d'autorisation" value={d['date_autorisation'] ? fmtDateNum(d['date_autorisation'] as string) : null} />
           {/* DONNEES-6/7 — dates JAMAIS réordonnées : dépôt après autorisation = incohérence du
               producteur SDES/Dido, qualifiée par l'écart (au-delà d'1 mois = modificatif/transféré
               probable). Le délai d'instruction reste non servi. Voir lib/permis.ts. */}
@@ -468,7 +504,7 @@ function PermitFicheCorps({ permitId, onClose }: { permitId: string; onClose: ()
             const note = (d['note_incoherence'] as string | null) ?? null   // FRONT-CHIFFRES-2 (F32) — servie
             return note ? <p className="mt-1 text-[10px] leading-snug text-st-ecartee">{note} — délai d'instruction non calculé.</p> : null
           })()}
-          <F label="Achèvement (DAACT)" value={d['date_achevement']} />
+          <F label="Achèvement (DAACT)" value={d['date_achevement'] ? fmtDateNum(d['date_achevement'] as string) : null} />
           {d['delai_instruction'] && (
             <F label="Délai d'instruction" value={<span className="font-semibold text-mint">{d['delai_instruction']['libelle']}</span>} />
           )}
@@ -768,14 +804,19 @@ export function M03() {
   // RECETTE-1 (H2.4) — en périmètre, les compteurs comptent DANS les 200 m (3 classes dérivables du
   // payload : récent / achevé / autre ; « dormant » exige le non-bâti par permis, non servi ici → fondu
   // dans « autre »). Hors périmètre, les compteurs servis par la base (toute l'île / commune).
+  // OUTILS-P1-1 (pt 5) — la PÉRIODE est écrite dans le libellé (« Autorisés depuis 90 jours ») ; le mot
+  // jargon « Dormant » devient « Ancien permis sans achèvement déclaré ». Le libellé + sa définition se
+  // lisent ensemble (« Autorisés — depuis 90 jours »). En périmètre, la fenêtre « récent » vaut 24 mois.
+  // OUTILS-P1-1 LOT3 (pt 2/3) — « Récents · autorisés depuis 90 jours » (la période reste dans la
+  // définition) ; l'état du cycle inactif reprend le mot du sous-titre : « Permis dormants ».
   const ETATS = (perim ? ([
-    ['cours', 'Récent', 'recent', perimCounts.recent, 'autorisé ≤ 24 mois'],
+    ['cours', 'Récents', 'recent', perimCounts.recent, 'autorisés depuis 24 mois'],
     ['acheve', 'Achevés', 'acheve', perimCounts.acheve, 'travaux déclarés (DAACT)'],
     ['autre', 'Autres', 'autre', perimCounts.autre, 'ni récent, ni achevé'],
     ['tous', 'Tous', null, perimCounts.tous, 'dans les 200 m'],
   ] as const) : ([
-    ['cours', 'Récent', 'recent', radarEntryTotal, '90 derniers jours'],   // RETOURS-16 (point 11)
-    ['mort', 'Dormant', 'dormant', pmEntryTotal, 'ancien PC sans achèvement'],
+    ['cours', 'Récents', 'recent', radarEntryTotal, 'autorisés, 90 derniers jours de la donnée'],
+    ['mort', 'Permis dormants', 'dormant', pmEntryTotal, 'autorisés depuis plus de 3 ans, sans achèvement déclaré (DAACT), terrain resté nu'],
     ['acheve', 'Achevés', 'acheve', acheveEntryTotal, 'travaux déclarés (DAACT)'],
     ['autre', 'Autres', 'autre', autreEntryTotal, 'ni récent, ni dormant, ni achevé'],
     ['tous', 'Tous', null, tousEntryTotal, 'toute la base'],
@@ -877,7 +918,7 @@ export function M03() {
                   /* OUT-PERMIS-011 — /modules/parcelle-permis n'est PAS fenêtré : il rend tous les permis
                      géolocalisés ≤ 200 m, sur TOUTE la profondeur Sitadel. L'ancien « 240 derniers mois »
                      (max(MONTHS_RADAR) = 20 ans) se lisait comme un faux fenêtrage. */
-                  ? <>sur toute la profondeur Sitadel servie{donneesJusquAu ? ` (Sitadel au ${donneesJusquAu})` : ''}.</>
+                  ? <>sur toute la profondeur Sitadel servie{donneesJusquAu ? ` (Sitadel au ${fmtDateNum(donneesJusquAu)})` : ''}.</>
                   : loc === 0
                     ? <>aucun point à afficher.</>
                     : <>cliquez les points sur la carte{nonLocTxt}.</>}
@@ -907,6 +948,11 @@ export function M03() {
           <span className="tnum text-[24px] font-semibold leading-none text-txt-hi">{tousEntryTotal != null ? fmt(tousEntryTotal) : '…'}</span>
           <span className="text-[12px] text-txt-mut">permis autorisés en base</span>
         </div>
+        {/* OUTILS-P1-1 LOT3 (pt 4) — date de la donnée Sitadel (max(date) en base, servie `donnees_jusqu_au`). */}
+        {donneesJusquAu && (
+          /* OUTILS-P1-1 LOT3b (pt 1) — date au format FR JJ/MM/AAAA (jamais AAAA-MM-JJ à l'écran). */
+          <div data-permis-sitadel-date className="mt-0.5 text-[10px] leading-snug text-txt-dim">Donnée Sitadel au {fmtDateNum(donneesJusquAu)}</div>
+        )}
       </div>
 
       {/* RETOURS-18 X1 — bandeau Sitadel PERMANENT. RETOURS-19 Y5 — tient sur UNE ligne (phrase resserrée
@@ -931,18 +977,27 @@ export function M03() {
           <div data-permis-segment className="flex flex-col gap-1">
             {ETATS.map(([k, label, etat, n, def]) => {
               const actif = seg === k
+              // OUTILS-P1-1 (pt 5) — le compteur de l'état ACTIF lit le MÊME total que la liste
+              // (`total`, servi par la requête active) : le compte affiché et la liste portent toujours
+              // sur le même ensemble, même si la fenêtre d'« Affiner » est changée.
+              const nShown = actif && total != null ? total : n
+          // OUTILS-P1-1 LOT3c (pt 3) — la définition passe SOUS le libellé, sur TOUTE la largeur (plus de
+          // « sans / achèvement / déclaré » sur 4 lignes coincé entre le nom et le compte) : 1ʳᵉ ligne =
+          // pastille · nom · compte à droite ; 2ᵉ ligne = définition pleine largeur.
           return (
             <button key={k} data-permis-seg={k} onClick={() => choisirSeg(k)} aria-pressed={actif}
-              className={`group flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors duration-quick ${
+              className={`group flex w-full flex-col gap-0.5 rounded-lg px-2.5 py-1.5 text-left transition-colors duration-quick ${
                 actif ? 'bg-mint text-mint-ink' : 'border border-line-2 text-txt hover:bg-mint hover:text-mint-ink'}`}>
-              {/* pastille = couleur de carte de l'état ; « Tous » n'a pas UNE couleur → anneau neutre. */}
-              {etat
-                ? <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: etatColor(etat) }} />
-                : <span className="h-2 w-2 shrink-0 rounded-full border border-current opacity-50" />}
-              <span className="shrink-0 text-[12px] font-medium">{label}</span>
-              <span className={`min-w-0 flex-1 truncate text-[11px] ${actif ? 'text-mint-ink/70' : 'text-txt-mut group-hover:text-mint-ink/70'}`}>{def}</span>
-                  <span className="shrink-0 tnum text-[12px] font-medium">{n != null ? fmt(n) : '…'}</span>
-                </button>
+              <span className="flex w-full items-center gap-2">
+                {/* pastille = couleur de carte de l'état ; « Tous » n'a pas UNE couleur → anneau neutre. */}
+                {etat
+                  ? <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: etatColor(etat) }} />
+                  : <span className="h-2 w-2 shrink-0 rounded-full border border-current opacity-50" />}
+                <span className="text-[12px] font-medium leading-snug">{label}</span>
+                <span className="ml-auto shrink-0 tnum text-[12px] font-medium">{nShown != null ? fmt(nShown) : '…'}</span>
+              </span>
+              {def && <span className={`w-full pl-4 text-[11px] leading-snug ${actif ? 'text-mint-ink/70' : 'text-txt-mut group-hover:text-mint-ink/70'}`}>{def}</span>}
+            </button>
               )
             })}
           </div>
@@ -1001,12 +1056,25 @@ export function M03() {
               /* RECETTE-1 (H2.4) — en périmètre : le compte est celui des permis dans les 200 m. */
               ? <>{fmt(perimItems.length)} dans les 200 m de <span className="font-mono">{iduCourt(parcelIdu!)}</span></>
               : pointMort
-              ? <>{fmt(cartePm.length)} dormants sur la carte{total != null && loaded < total
+              ? <>{fmt(cartePm.length)} permis dormants sur la carte{total != null && loaded < total
                   ? <> · <span data-permis-plafond>les {fmt(loaded)} plus anciens chargés — zoomez pour affiner</span></> : ''}</>
               : <>{fmt(carteRadar.length)} sur la carte
                   {total != null && loaded < total ? <> · {fmt(loaded)} / {fmt(total)} chargés</> : null}</>}
             {!perim && zone && <span className="text-mint/70"> · {items.length} dans la zone dessinée</span>}
           </p>
+          {/* OUTILS-P1-1 (pt 5) — « N dossiers · M géolocalisés » (même ensemble que la liste) + la date de
+              la dernière donnée Sitadel. M géolocalisés n'est servi que pour le radar/périmètre (exact). */}
+          {(() => {
+            const geocodesSel = perim ? perimItems.filter((i) => i['geom']).length
+              : pointMort ? null : ((head?.['geocodes'] as number | undefined) ?? null)
+            return (
+              <p data-permis-dossiers className="shrink-0 px-2 text-[10px] leading-snug text-txt-dim">
+                {total != null ? fmt(total) : '…'} dossier{(total ?? 0) > 1 ? 's' : ''}
+                {geocodesSel != null && <> · <span data-permis-geocodes>{fmt(geocodesSel)} géolocalisé{geocodesSel > 1 ? 's' : ''}</span></>}
+                {donneesJusquAu && <> · donnée Sitadel au {fmtDateNum(donneesJusquAu)}</>}
+              </p>
+            )
+          })()}
 
           {pointMort && qPm.isLoading && <Squelette bloc className="py-8" />}
 
@@ -1026,8 +1094,8 @@ export function M03() {
           // RETOURS-17 W3 — la pastille de la LIGNE = la couleur de son ÉTAT (source unique lib/permisEtats),
           // la MÊME que le point sur la carte : Récent vert · Dormant corail · Achevé/Autre gris.
           const et: PermisEtat = perim ? perimClasse(i) : pointMort ? 'dormant' : radarEtat(i)
-          const etTitre = { recent: 'Récent — autorisé dans les 24 derniers mois.',
-            dormant: 'Dormant — permis de construire de plus de 36 mois, sans déclaration d\'achèvement (DAACT) et parcelle toujours non bâtie.',
+          const etTitre = { recent: 'Récent — permis autorisé dans la fenêtre récente.',
+            dormant: 'Permis dormant — permis de construire de plus de 36 mois, sans déclaration d\'achèvement (DAACT) et parcelle toujours non bâtie.',
             acheve: 'Achevé — travaux déclarés terminés (DAACT).',
             autre: 'Autre — ni récent, ni dormant, ni achevé (autre nature, permis non rattaché, ou période intermédiaire).' }[et]
           return (
@@ -1046,7 +1114,8 @@ export function M03() {
                 avec la pastille d'état à droite. */}
             <span className="shrink-0 rounded border border-line-2 px-1.5 py-0.5 font-mono text-[10px] text-txt-hi">{i['type'] as string}</span>
             {/* O17 (h) — DATE = date réelle d'autorisation du permis (par ligne), PAS la date du fichier. */}
-            <span className="shrink-0 font-mono text-txt-mut">{i['date'] as string}</span>
+            {/* OUTILS-P1-1 LOT3b (pt 1) — date d'autorisation du permis au format FR (plus de AAAA-MM-JJ). */}
+            <span className="shrink-0 font-mono text-txt-mut">{fmtDateNum(i['date'] as string)}</span>
             {i['nb_lgt'] != null && <b className="shrink-0 tnum text-txt">{String(i['nb_lgt'])} lgt{Number(i['nb_lgt']) > 1 ? 's' : ''}</b>}
             {pointMort && i['surface_m2'] != null && <span className="shrink-0 tnum text-txt-dim">{fmt(i['surface_m2'] as number)} m²</span>}
             {/* commune / parcelle en clair — tronquée pour laisser la place au badge. */}
@@ -1365,6 +1434,14 @@ type Dest = { idu: string; commune: string; surface: number | null }
 
 // OUTILS-S2 Lot B — montant TTC avec les centimes (tarif courrier 4,04 € l'unité), virgule décimale FR.
 const fmtEur2 = (n: number) => `${n.toFixed(2).replace('.', ',')} €`
+// OUTILS-P1-1 LOT3c (pt 5) — trait d'union INSÉCABLE (U+2011) : « Saint-Denis » ne se coupe jamais en
+// bout de ligne au tiret (les espaces entre communes restent, eux, des points de césure normaux).
+const insecTiret = (s: string | null | undefined) => (s ?? '').replace(/-/g, '‑')
+// OUTILS-P1-1 (pt 10) — libellés CLIENT des statuts de demande (miroir de courrier.STATUT_LIBELLES côté
+// serveur) : l'écran affiche l'ÉTAT RÉEL de la demande, jamais « Posté » tant qu'elle n'est pas déposée.
+const COURRIER_STATUT_LIBELLE: Record<string, string> = {
+  demande: 'À déposer', depose: 'Déposé', envoye: 'Envoyé', repondu: 'Réponse reçue', sans_reponse: 'Sans réponse',
+}
 
 // RECETTE-2 (S8) — substitution PURE d'un gabarit de courrier, exportée pour être verrouillée par test.
 // RÈGLE : un champ vide ne s'imprime JAMAIS (ni « — », ni « (—) », ni « à — ») dans une lettre qui part
@@ -1521,7 +1598,7 @@ export function M09() {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       <Banner>Un <b>service d'envoi</b> : vous préparez vos courriers (destinataires + relecture), LABUSE
-        <b> les imprime, les affranchit et les poste</b>. Adressage générique (SPF/CERFA) — aucune identité
+        <b> les imprime, les affranchit et les poste</b>. Adressage générique — aucune identité
         de propriétaire particulier.
         {/* RETOURS-25 (pt 13) — prix et délai LUS DE LA CONFIG (/courrier/statut), jamais écrits en dur. */}
         {statut.data?.tarif_unitaire_eur != null && (
@@ -1550,8 +1627,10 @@ export function M09() {
       <div className="flex items-center gap-1 text-[10px]">
         {STEPS.map(([n, l], i) => (
           <div key={n} className={`flex items-center gap-1 ${step >= n ? 'text-mint' : 'text-txt-dim'}`}>
+            {/* OUTILS-P1-1 LOT3 (pt 11) — UN SEUL chiffre : la pastille porte le numéro (ou ✓), le texte ne
+                le répète plus (« ③ 3 · Envoi » → « ③ Envoi »). */}
             <span className={`flex h-4 w-4 items-center justify-center rounded-full border text-[9px] ${step >= n ? 'border-mint' : 'border-line-2'}`}>{step > n ? '✓' : n}</span>
-            {n} · {l}{i < 2 && <span className="text-txt-dim">›</span>}
+            {l}{i < 2 && <span className="text-txt-dim">›</span>}
           </div>
         ))}
       </div>
@@ -1634,7 +1713,7 @@ export function M09() {
           {/* récap */}
           <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]">
             <div className="flex justify-between"><span className="text-txt-mut">Courriers</span><b className="tnum text-txt">{dest.length}</b></div>
-            <div className="flex justify-between gap-2"><span className="text-txt-mut">Communes</span><span className="text-right text-txt">{recapCommunes() || '—'}</span></div>
+            <div className="flex justify-between gap-2"><span className="text-txt-mut">Communes</span><span className="text-right text-txt">{recapCommunes() ? insecTiret(recapCommunes()) : '—'}</span></div>
           </div>
 
           {/* COURRIER-2 Lot 2 — ADRESSAGE par destinataire : Destinataire · Adresse d'envoi · Bien concerné.
@@ -1646,15 +1725,17 @@ export function M09() {
                 className={`rounded-lg border px-3 py-2 text-[11px] ${r.bloque ? 'border-st-ecartee/50 bg-st-ecartee/[0.06]' : 'border-line-2 bg-surface-2'}`}>
                 {r.bloque ? (
                   <div className="flex items-start justify-between gap-2">
-                    <span className="font-mono text-txt-mut">{r.bien.reference}{r.bien.commune ? ` · ${r.bien.commune}` : ''}</span>
+                    <span className="font-mono text-txt-mut">{r.bien.reference}{r.bien.commune ? ` · ${insecTiret(r.bien.commune)}` : ''}</span>
                     <span data-courrier-motif className="text-right text-st-ecartee">⛔ {r.motif}</span>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-0.5">
-                    <div className="flex justify-between gap-2"><span className="text-txt-mut">Destinataire</span><span className="text-right text-txt">{r.destinataire}</span></div>
-                    <div className="flex justify-between gap-2"><span className="text-txt-mut">Adresse d’envoi</span><span className="text-right text-txt">{r.adresse_envoi}</span></div>
-                    <div className="flex justify-between gap-2"><span className="text-txt-mut">Bien concerné</span><span className="text-right text-txt-dim">{r.bien.adresse ?? r.bien.reference} · {r.bien.reference}</span></div>
-                    {r.mention && <div className="text-[10px] text-txt-dim">{r.mention}</div>}
+                    <div className="flex justify-between gap-2"><span className="text-txt-mut">Destinataire</span><span className="text-right text-txt">{insecTiret(r.destinataire)}</span></div>
+                    <div className="flex justify-between gap-2"><span className="text-txt-mut">Adresse d’envoi</span><span className="text-right text-txt">{insecTiret(r.adresse_envoi)}</span></div>
+                    <div className="flex justify-between gap-2"><span className="text-txt-mut">Bien concerné</span><span className="text-right text-txt-dim">{insecTiret(r.bien.adresse ?? r.bien.reference)} · {r.bien.reference}</span></div>
+                    {/* OUTILS-P1-1 LOT3c (pt 5) — « au siège social déclaré » n'est PAS répété : la mention
+                        n'est affichée que si elle n'est pas DÉJÀ dans le libellé du destinataire. */}
+                    {r.mention && !String(r.destinataire ?? '').includes(r.mention) && <div className="text-[10px] text-txt-dim">{r.mention}</div>}
                   </div>
                 )}
               </div>
@@ -1678,15 +1759,32 @@ export function M09() {
               ) : 'Tarif communiqué sous 24 h ouvrées.'}
             </p>
           )}
+          {/* OUTILS-P1-1 LOT3 (pt 12) — ligne « Total » (nombre de courriers × prix unitaire) JUSTE au-dessus
+              du bouton, dès que le prix est connu. Montant ESTIMÉ (le prestataire confirme avant envoi) —
+              distinct de la ligne détaillée ci-dessus, gated sur la disponibilité du service. */}
+          {!demande && statut.data?.tarif_unitaire_eur != null && (
+            <div data-courrier-total className="flex items-baseline justify-between gap-2 border-t border-line pt-1.5 text-[11.5px]">
+              <span className="font-medium text-txt">Total</span>
+              <span className="font-mono tabular-nums text-txt-hi">{dest.length} × {fmtEur2(statut.data.tarif_unitaire_eur)} = <b>{fmtEur2(statut.data.tarif_unitaire_eur * dest.length)}</b></span>
+            </div>
+          )}
           {!demande ? (
+            // OUTILS-P1-1 (pt 10) — le bouton dit ce qui se passe VRAIMENT : on DÉPOSE une demande d'envoi
+            // (LABUSE la traite à la main), on n'envoie pas le courrier d'un clic.
             <Bouton niveau="primaire" ton="vert" data-courrier-demander onClick={() => envoyer.mutate()} disabled={envoyer.isPending || depotBloque || adressage.isLoading}>
-              {envoyer.isPending ? 'Envoi de la demande…' : depotBloque ? 'Dépôt bloqué — voir les motifs' : "Demander l'envoi à LABUSE"}</Bouton>
+              {envoyer.isPending ? 'Dépôt de la demande…' : depotBloque ? 'Dépôt bloqué — voir les motifs' : "Déposer une demande d'envoi"}</Bouton>
           ) : (
             // OUTILS-1 A4/B6 — la confirmation porte la RÉFÉRENCE de la demande et renvoie vers le suivi.
             // RECETTE-4 — plus de numéro séquentiel « Demande n° 2 » : une référence NON séquentielle
             // (lettres + date), servie par le back (`reference` = C-DDMM-XX). Repli sur rang/id si absente.
             <div data-courrier-confirm className="rounded-lg border border-line-2 bg-mint/[0.05] px-3 py-2 text-[11px] leading-snug text-txt-mut">
-              <b className="text-mint">✓ Demande {demande.reference ?? `n° ${demande.rang_compte ?? demande.id}`} transmise.</b>
+              {/* OUTILS-P1-1 (pt 10) — l'écran dit l'ÉTAT RÉEL : « Demande reçue », puis l'état servi par
+                  le back (À déposer → Déposé → Envoyé). « Déposé »/« Envoyé » n'apparaissent qu'une fois le
+                  pli EFFECTIVEMENT posté par LABUSE — jamais au moment de la demande. */}
+              <b className="text-mint">✓ Demande reçue — {demande.reference ?? `n° ${demande.rang_compte ?? demande.id}`}.</b>
+              {' '}
+              <span data-courrier-etat-reel className="text-txt-mut">État : <b className="text-txt">{COURRIER_STATUT_LIBELLE[demande.statut] ?? demande.statut}</b>.</span>
+              <span className="mt-1 block text-[10px] text-txt-dim">LABUSE dépose puis poste le courrier ; l’état passe à « Déposé » puis « Envoyé » seulement une fois le pli effectivement posté.</span>
               {/* OUTILS-S2 Lot B — le MÊME montant qu'à l'étape 3 est repris ici.
                   CHASSE-APP-FIX-2 (point 1) — tant que le service est un bouchon, on ne reprend PAS la
                   prestation tarifée : la raison serveur dit que la demande est seulement enregistrée. */}

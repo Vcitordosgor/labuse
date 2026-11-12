@@ -46,6 +46,10 @@ export function Successions() {
   const items = q.data?.pages.flatMap((p) => p.items) ?? []
   const meta = q.data?.pages[0]
   const total = meta?.total ?? 0
+  // OUTILS-P1-1 (pt 1) — parcelles écartées (âge dirigeant ≥ 100 ans, donnée amont invraisemblable) :
+  // comptées, jamais écartées en silence ; la date de la donnée RNE est dite au bandeau et à l'état vide.
+  const ageEcarte = meta?.n_age_ecarte ?? 0
+  const rne = meta?.rne_sync
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
@@ -72,16 +76,28 @@ export function Successions() {
         // ÉTAT VIDE HONNÊTE — jamais trois zéros : le périmètre, le signal et son millésime sont dits.
         <p data-successions-vide className="rounded-lg bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-mut">
           Aucune parcelle au signal de succession probable
-          {commune ? <> à <b className="text-txt">{commune}</b></> : ' sur l’île'}.{/* RETOURS-25 (pt 12) — date retirée. */}
+          {commune ? <> à <b className="text-txt">{commune}</b></> : ' sur l’île'}.
+          {/* OUTILS-P1-1 (pt 1) — la date de la donnée RNE est affichée. */}
+          {rne && <> Donnée RNE au <b className="text-txt">{rne}</b>.</>}
+          {ageEcarte > 0 && <> {fmtInt(ageEcarte)} parcelle{ageEcarte > 1 ? 's' : ''} écartée{ageEcarte > 1 ? 's' : ''} : âge du dirigeant ≥ 100 ans (donnée amont à vérifier).</>}
         </p>
       )}
       {meta && total > 0 && (
         <>
-          {/* bandeau de tête : N parcelles · signal [source] au [millésime] */}
+          {/* bandeau de tête : N parcelles · signal [source] — périmètre · donnée RNE au [millésime] */}
           <div data-successions-bandeau className="rounded-lg bg-surface-2 px-3 py-2 text-[10.5px] leading-snug text-txt-mut">
             <b data-successions-total className="tnum text-txt">{fmtInt(total)}</b> parcelle{total > 1 ? 's' : ''} ·
-            {/* RETOURS-25 (pt 12) — date « au … » retirée. */}
             signal <b className="text-txt">RNE INPI</b>{commune ? ` — ${commune}` : ' — toute l’île'}
+            {/* OUTILS-P1-1 (pt 1) — date de la donnée RNE rétablie (le nom et l'âge en viennent). */}
+            {rne && <> · donnée RNE au <b className="text-txt">{rne}</b></>}
+            {/* OUTILS-P1-1 LOT3 (pt 5) — on DIT sur quoi la liste est triée (le grand chiffre à droite). */}
+            <div data-successions-tri className="mt-0.5 text-txt-dim">Triées par SDP restante estimée, de la plus grande à la plus petite.</div>
+            {/* OUTILS-P1-1 (pt 1) — les âges ≥ 100 ans sont sortis de la liste ET comptés ici. */}
+            {ageEcarte > 0 && (
+              <div data-successions-age-ecarte className="mt-0.5 text-txt-dim">
+                {fmtInt(ageEcarte)} parcelle{ageEcarte > 1 ? 's' : ''} écartée{ageEcarte > 1 ? 's' : ''} : âge du dirigeant ≥ 100 ans (donnée amont à vérifier).
+              </div>
+            )}
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
@@ -105,16 +121,28 @@ function Carte({ it, onOpen }: { it: SuccessionItem; onOpen: () => void }) {
     <div data-successions-row
       className="hover-fill cursor-pointer rounded-lg border border-line-2 bg-surface-3 px-2.5 py-1.5"
       onClick={onOpen}>
-      <div className="flex items-center gap-2">
-        <span className="font-mono text-[11px] text-txt-hi">{it.idu}</span>
-        <span className="ml-auto tnum text-[11px] text-txt">{fmtM2(it.sdp_residuelle_m2)}</span>
-        <span className="rounded bg-amber-500/15 px-1 text-[8.5px] font-medium text-amber-500">Estimé</span>
+      <div className="flex items-start gap-2">
+        <span className="mt-0.5 font-mono text-[11px] text-txt-hi">{it.idu}</span>
+        {/* OUTILS-P1-1 LOT3 (pt 5) — le grand chiffre à droite est LIBELLÉ : « plancher restant » (SDP
+            résiduelle estimée), c'est aussi la clé de tri de la liste. */}
+        <span className="ml-auto flex flex-col items-end leading-none">
+          <span className="flex items-center gap-1">
+            <span className="tnum text-[11px] text-txt">{fmtM2(it.sdp_residuelle_m2)}</span>
+            <span className="rounded bg-amber-500/15 px-1 text-[8.5px] font-medium text-amber-500">Estimé</span>
+          </span>
+          <span className="mt-0.5 text-[8px] uppercase tracking-wide text-txt-dim">SDP restante</span>
+        </span>
       </div>
-      <div className="mt-0.5 flex items-center gap-1.5 text-[10.5px]">
+      {/* OUTILS-P1-1 LOT3b (pt 4) — parcelle À CHEVAL : la ligne de zone dit la COMPOSITION bizone au
+          format de la fiche (« A 65 % · Ua 35 % ») au lieu de la seule zone dominante (qui cachait la
+          part constructible d'où vient la SDP restante) ; sinon la zone dominante, comme avant. */}
+      <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[10.5px]">
         <span className="shrink-0 text-txt-mut">{it.commune}</span>
         <span className="text-txt-dim">·</span>
         <span className="shrink-0 text-txt-dim">{fmtM2(it.surface_m2)}</span>
-        {it.zone && <><span className="text-txt-dim">·</span><span className="shrink-0 text-txt-dim">{it.zone}</span></>}
+        {it.zone_parts_libelle
+          ? <><span className="text-txt-dim">·</span><span data-successions-bizone className="text-amber-500">{it.zone_parts_libelle}</span></>
+          : it.zone && <><span className="text-txt-dim">·</span><span className="shrink-0 text-txt-dim">{it.zone}</span></>}
       </div>
       <div className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-[10.5px]">
         {/* PM nommée par construction (SIREN confirmé exigé) ; le repli particulier reste en ceinture */}
@@ -138,8 +166,14 @@ function Motif({ it }: { it: SuccessionItem }) {
   // FRONT-CHIFFRES-2 (F27) — « dépôt muet » servi à plat (seuil back SEUIL_DEPOT_MUET_ANS) ; le front
   // ne recalcule plus l'ancienneté du silence de dépôt.
   const depotMuet = it.depot_comptes?.muet ?? false
+  // OUTILS-P1-1 (pt 1) — libellé FACTUEL, sans pronostic : « Nom · N ans » quand le dirigeant est nommé
+  // (nom ET âge du même millésime RNE), sinon « Dirigeant de N ans » (jamais « dirigeant · » orphelin).
+  // OUTILS-P1-1 LOT3 (pt 7) — « N ans » insécable (espace insécable  ) : le nombre et « ans » ne se
+  // coupent jamais en bout de ligne, même quand le motif passe à la ligne (break-words).
   const base = it.sci_dormante ? 'SCI dormante'
-    : it.dirigeant_age != null ? `${it.dirigeant_nom ?? 'dirigeant'} · ${it.dirigeant_age} ans` : null
+    : it.dirigeant_age != null
+      ? (it.dirigeant_nom ? `${it.dirigeant_nom} · ${it.dirigeant_age} ans` : `Dirigeant de ${it.dirigeant_age} ans`)
+      : null
   if (!base && !depotMuet) return null
   // RECETTE-OUTILS-2 (R23) — plus de troncature (« aucun dépôt de compt… ») : le texte PEUT PASSER à la
   // ligne (`break-words`, plus de `shrink-0`), et la mention de dépôt descend sur SA ligne (« Nom · âge »,

@@ -79,17 +79,22 @@ describe('ASSEMBLAGE (H5) — étapes, contiguïté, isolées, plus de Courrier'
     expect(document.querySelector('[data-asm-charge]')).toBeFalsy()
   })
 
-  it('RETOURS-28 : tuile « Bâti conservé : X m² » + dessous « Reconstruction : Y m² » ; « · terrain libéré » retiré des lignes', async () => {
+  it('OUTILS-P1-1 (pt 2) : trois lectures « Existant » / « Si conservé » / « Après démolition · ±Δ » ; « · terrain libéré » retiré des lignes', async () => {
     renderM16(); await verifier('[data-asm-charge]')
     const sdpKpi = document.querySelector('[data-asm-kpi="sdp"]') as HTMLElement
-    // chiffre de tête = bâti conservé (11 065), comme la fiche ; libellé « Bâti conservé : »
+    // lecture 1 — l'existant (1 735) ancre les trois lectures
+    expect(document.querySelector('[data-asm-sdp-existant]')?.textContent).toContain('Existant')
+    expect(document.querySelector('[data-asm-sdp-existant]')?.textContent).toContain('735')
+    // lecture 2 — « Si conservé » : +11 065 m² estimés (résiduel au-dessus de l'existant)
+    expect(document.querySelector('[data-asm-sdp-conserve]')?.textContent).toContain('Si conservé')
     expect(document.querySelector('[data-asm-sdp-conserve]')?.textContent).toContain('065')
-    expect(sdpKpi.textContent).toContain('Bâti conservé')
-    // la table rase est servie DESSOUS, nommée « Reconstruction »
+    // lecture 3 — « Après démolition » : 12 800 m² estimés + écart SIGNÉ vs existant (+11 065)
     const libere = document.querySelector('[data-asm-sdp-libere]') as HTMLElement
     expect(libere).toBeTruthy()
-    expect(libere.textContent).toContain('Reconstruction')
+    expect(libere.textContent).toContain('Après démolition')
     expect(libere.textContent).toContain('800')          // 12 800
+    expect(document.querySelector('[data-asm-sdp-ecart]')?.textContent).toContain('par rapport à l\'existant')
+    expect(sdpKpi.textContent).not.toContain('Bâti conservé')   // plus de « Reconstruction » SOUS « Bâti conservé »
     // RETOURS-28 : le « (terrain libéré …) » répété par parcelle a disparu
     expect(document.body.textContent).not.toContain('(terrain libéré')
   })

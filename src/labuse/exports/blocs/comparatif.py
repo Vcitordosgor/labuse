@@ -156,7 +156,11 @@ _LIGNES = [
     ("Hauteur autorisée", "s", lambda r: ((f"R+{max(0, int(r['gabarit_niveaux_max']) - 1)}"
                                            + (" + combles" if r.get("gabarit_combles") else ""))
                                           if r.get("gabarit_niveaux_max") is not None else None)),
-    ("Emprise au sol maximale", "s", lambda r: (_pct(r, "emprise_ces_pct") or "non réglementée")),
+    # OUTILS-P1-1 (pt 3) — même règle qu'à l'écran : « PLU sans plafond d'emprise » seulement si une
+    # règle est identifiée (silence prouvé), sinon « Règle non renseignée ».
+    ("Emprise au sol maximale", "s", lambda r: (_pct(r, "emprise_ces_pct")
+        or ("PLU sans plafond d'emprise" if r.get("emprise_ces_etat") == "sans_plafond"
+            else "Règle non renseignée"))),
     # POTENTIEL CONSTRUCTIBLE
     ("Plancher possible · bâti conservé", "e", lambda r: _sdp_residuelle_cause(r)),
     ("Plancher possible · reconstruction", "e", lambda r: _m2(r, "sdp_max_m2")),
@@ -167,7 +171,9 @@ _LIGNES = [
            if (r.get("charge_fonciere_m2") or 0) < 0 else ""))
         if r.get("charge_fonciere_m2") is not None else None)),
     # RISQUES ET CONTRAINTES
-    ("Assainissement", "s", lambda r: esc(r.get("assainissement")) if r.get("assainissement") else None),
+    # OUTILS-P1-1 (pt 3) — statistique de SECTEUR préfixée « Secteur : » (comme à l'écran).
+    ("Assainissement", "s", lambda r: (f"Secteur : {esc(r.get('assainissement'))}"
+                                       if r.get("assainissement") else None)),
     ("Contraintes relevées", "s", lambda r: (" · ".join(esc(c) for c in (r.get("contraintes") or []))
                                              if (r.get("contraintes") or []) else "aucune relevée")),
 ]

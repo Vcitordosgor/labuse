@@ -68,9 +68,14 @@ const ROWS: Row[] = [
   { label: 'Hauteur autorisée', prov: 'source', best: 'hi', num: (r) => r.gabarit_niveaux_max ?? null,
     val: (r) => r.gabarit_niveaux_max != null ? `R+${Math.max(0, r.gabarit_niveaux_max - 1)}${r.gabarit_combles ? ' + combles' : ''}` : '—',
     title: '« + combles » = niveau de combles aménageables sous un toit dont le faîtage domine l\'égout d\'au moins 1,80 m.' },
+  // OUTILS-P1-1 (pt 3) — « PLU sans plafond d'emprise » SEULEMENT si une règle est identifiée (silence
+  // prouvé du règlement) ; sinon « Règle non renseignée » (on ne sait pas). Plus de « non réglementée »
+  // qui confondait les deux.
   { label: 'Emprise au sol maximale', prov: 'source', best: 'hi', num: (r) => r.emprise_ces_pct ?? null,
-    val: (r) => r.emprise_ces_pct != null ? `${fmtInt(r.emprise_ces_pct)} %` : 'non réglementée',
-    title: 'Emprise au sol maximale fixée par le règlement de la zone (CES) — « non réglementée » si le PLU n\'en fixe pas.' },
+    val: (r) => r.emprise_ces_pct != null ? `${fmtInt(r.emprise_ces_pct)} %`
+      : r.emprise_ces_etat === 'sans_plafond' ? 'PLU sans plafond d\'emprise'
+      : 'Règle non renseignée',
+    title: 'Emprise au sol maximale fixée par le règlement de la zone (CES). « PLU sans plafond d\'emprise » = le règlement ne fixe pas de plafond (silence prouvé) ; « Règle non renseignée » = aucune règle d\'emprise identifiée pour la zone.' },
   // POTENTIEL CONSTRUCTIBLE
   { label: 'Plancher possible · bâti conservé', prov: 'estime', bar: true, best: 'hi', num: (r) => r.sdp_residuelle_m2 ?? null,
     val: (r) => {
@@ -90,8 +95,10 @@ const ROWS: Row[] = [
     val: (r) => r.charge_fonciere_m2 != null ? `${fmtInt(r.charge_fonciere_m2)} €/m²` : '—',
     title: 'Charge foncière supportable ramenée au m² de terrain — plus haut = plus intéressant (négatif = l\'opération ne dégage rien pour le foncier).' },
   // RISQUES ET CONTRAINTES
-  { label: 'Assainissement', prov: 'source', val: (r) => r.assainissement ?? '—',
-    title: 'Desserte d\'assainissement — souvent un constat de secteur (statistique), pas un raccordement vérifié à la parcelle.' },
+  // OUTILS-P1-1 (pt 3) — statistique de SECTEUR (zonage d'assainissement par secteur, pas un
+  // raccordement vérifié à la parcelle) : préfixée « Secteur : » pour le dire sans ambiguïté.
+  { label: 'Assainissement', prov: 'source', val: (r) => r.assainissement ? `Secteur : ${r.assainissement}` : '—',
+    title: 'Desserte d\'assainissement — constat de SECTEUR (statistique du zonage d\'assainissement), pas un raccordement vérifié à la parcelle. D\'où le préfixe « Secteur : ».' },
   { label: 'Contraintes relevées', prov: 'source',
     val: (r) => (r.contraintes ?? []).length ? `${(r.contraintes ?? []).length} relevée${(r.contraintes ?? []).length > 1 ? 's' : ''}` : 'aucune relevée',
     render: (r) => {

@@ -9269,6 +9269,13 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
     _terr_sel = max(_terr, key=lambda s: s.get("n_ventes") or 0) if _terr else None
     prix_terrain = _terr_sel["mediane_prix_m2"] if _terr_sel else None
     prix_terrain_n = (_terr_sel or {}).get("n_ventes")
+    # OUTILS-P1-1 (pt 3) — prix du terrain FILTRÉ AU CALCUL sous le seuil d'échantillon (SEUIL_N = 8
+    # ventes, même règle que le Dossier §8) : une médiane fondée sur moins de 8 ventes n'est pas assez
+    # fiable → on ne la SERT PAS (None). Le NOMBRE de ventes reste servi (l'écran/PDF dit « échantillon
+    # insuffisant » au lieu d'un prix trompeur).
+    from ..dvf_mediane import SEUIL_N as _SEUIL_N
+    if prix_terrain is not None and prix_terrain_n is not None and int(prix_terrain_n) < _SEUIL_N:
+        prix_terrain = None
     return {
         "idu": qv2["idu"], "commune": qv2.get("commune"),
         # CHASSE-DONNEES-FIX-1 (Lot 1) — le Comparatif sert la surface de TERRAIN (contenance|dessin)
@@ -9598,8 +9605,20 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
             zr = None
         ces = getattr(zr, "emprise_sol_pct", None) if zr else None
         row["emprise_ces_pct"] = float(ces) if isinstance(ces, (int, float)) else None
-        row["emprise_ces_source"] = ((zr.sources or {}).get("emprise")
-                                     if zr and row["emprise_ces_pct"] is not None else None)
+        # OUTILS-P1-1 (pt 3) — « PLU sans plafond d'emprise » (règle d'emprise IDENTIFIÉE mais sans
+        # valeur : plu_destinations PROUVE le silence du règlement, sentinelle « pas de règle dans le
+        # PLU ») vs « Règle non renseignée » (aucune règle d'emprise identifiée pour la zone). Le signal
+        # vient de la source d'emprise posée par resolve_zone (plafond chiffré / absence prouvée / rien).
+        _emprise_src = (zr.sources or {}).get("emprise") if zr else None
+        if row["emprise_ces_pct"] is not None:
+            row["emprise_ces_etat"] = "plafond"
+            row["emprise_ces_source"] = _emprise_src
+        elif _emprise_src and "pas de règle dans le PLU" in _emprise_src:
+            row["emprise_ces_etat"] = "sans_plafond"
+            row["emprise_ces_source"] = _emprise_src
+        else:
+            row["emprise_ces_etat"] = "non_renseigne"
+            row["emprise_ces_source"] = None
         # COMPARER-2 §4 / SOURCES-FIX-2 lot B — Classement LABUSE (bande + Signal de mutation) du RUN
         # SERVI (SCORE_LABUSE_RUN = runs.current()), la MÊME source que l'écran Analyse et la fiche
         # (score_labuse). NULL tant que le run servi n'est pas peuplé dans score_labuse — la bascule
