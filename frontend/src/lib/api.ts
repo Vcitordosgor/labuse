@@ -1412,6 +1412,7 @@ export interface SuccessionItem {
 }
 export interface SuccessionsResp {
   total: number; n: number; items: SuccessionItem[]
+  n_age_ecarte: number     // OUTILS-P1-1 (pt 1) — parcelles sorties de la liste (âge dirigeant ≥ 100 ans)
   maj: string | null       // date du calcul Score V — le millésime du signal
   rne_sync: string | null  // date amont RNE (âges dirigeants)
   source: string; avertissement: string
@@ -1624,6 +1625,9 @@ export interface CompareRow {
   sdp_max_m2?: number | null; taux_emprise_pct?: number | null; sdp_residuelle_m2?: number | null; sous_densite?: boolean | null
   // COMPARER-2 §1 — CES PLU réelle (validée dans plu_destinations) ; null = zone sans CES → « non réglementée »
   emprise_ces_pct?: number | null; emprise_ces_source?: string | null
+  // OUTILS-P1-1 (pt 3) — 'plafond' (CES chiffré) · 'sans_plafond' (règle identifiée, pas de plafond) ·
+  // 'non_renseigne' (aucune règle d'emprise identifiée pour la zone).
+  emprise_ces_etat?: 'plafond' | 'sans_plafond' | 'non_renseigne' | null
   charge_fonciere_m2?: number | null
   // COMPARER-2 §4 / SOURCES-FIX-2 lot B — Classement LABUSE du RUN SERVI (même source que l'Analyse et la fiche) : bande + Signal
   bande?: string | null; signal_niveau?: string | null

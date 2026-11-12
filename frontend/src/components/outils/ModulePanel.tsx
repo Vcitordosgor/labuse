@@ -258,13 +258,18 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
             <summary className="flex cursor-pointer list-none items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium text-txt-mut marker:hidden hover:text-mint">
               <span aria-hidden className="inline-block w-3 text-mint transition-transform duration-quick group-open:rotate-90">▸</span>
               Chiffres clés
-              <span className="ml-auto font-normal text-txt-dim">{fmt(d['n_parcelles'] as number)} parcelles · {fmtM2(d['surface_totale_m2'] as number | null)}</span>
+              <span className="ml-auto font-normal text-txt-dim">{fmt((d['n_recensees'] ?? d['n_parcelles']) as number)} recensées · {fmtM2(d['surface_totale_m2'] as number | null)}</span>
             </summary>
+            {/* OUTILS-P1-1 (pt 7) — TROIS comptes sur des ensembles DISTINCTS : Recensées (fichiers
+                fonciers DGFiP) ≥ Rattachées au cadastre (ont une géométrie) ≥ Visibles selon les filtres
+                (ce que la carte peint ici). L'écart recensées↔rattachées est ventilé juste dessous. */}
             <div className="grid grid-cols-2 gap-2 px-2.5 pb-2.5">
             {[
-              { v: fmt(d['n_parcelles'] as number), lbl: 'parcelles' },
+              { v: fmt((d['n_recensees'] ?? d['n_parcelles']) as number), lbl: 'Recensées (DGFiP)' },
+              { v: fmt((d['n_rattachees'] ?? d['n_parcelles']) as number), lbl: 'Rattachées au cadastre' },
+              { v: fmt((d['n_rattachees'] ?? d['n_parcelles']) as number), lbl: 'Visibles selon les filtres' },
               { v: fmtM2(d['surface_totale_m2'] as number | null), lbl: 'surface totale' },
-              { v: `${fmt(d['n_terrains_nus'] as number)} / ${fmt(d['n_terrains_batis'] as number)}`, lbl: 'terrains nus / bâtis' },
+              { v: `${fmt(d['n_terrains_nus'] as number)} / ${fmt(d['n_terrains_batis'] as number)} / ${fmt(d['n_bati_non_renseigne'] as number)}`, lbl: 'nus / bâtis / bâti non renseigné' },
               { v: fmt(d['n_constructible_u_au'] as number), lbl: 'en zone U ou AU' },
             ].map((c) => (
               <div key={c.lbl} data-m02-kpi className="min-w-0 rounded-lg border border-line-2 bg-surface-3 px-2.5 py-2.5">
@@ -273,6 +278,13 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
               </div>
             ))}
             </div>
+            {/* OUTILS-P1-1 (pt 7) — ventile l'écart Recensées ↔ Rattachées (jamais muet) : des parcelles
+                recensées aux fichiers fonciers peuvent manquer au cadastre ingéré (donc hors carte). */}
+            {d['n_recensees'] != null && d['n_rattachees'] != null && (d['n_recensees'] as number) > (d['n_rattachees'] as number) && (
+              <p data-m02-ventile className="px-2.5 pb-2 text-[10px] leading-snug text-txt-dim">
+                {fmt(d['n_recensees'] as number)} recensées (fichiers fonciers DGFiP), dont {fmt(d['n_rattachees'] as number)} rattachées au cadastre — {fmt((d['n_recensees'] as number) - (d['n_rattachees'] as number))} sans géométrie cadastrale (hors carte).
+              </p>
+            )}
             {/* RECETTE-OUTILS-2 (R19) — EN PIED de l'accordéon : les trois lignes de contexte (nature de
                 la donnée, millésime des fichiers fonciers, dépôt de comptes) autrefois en tête, qui
                 mangeaient la hauteur de la liste. Repliées par défaut avec les chiffres. */}
@@ -768,16 +780,19 @@ export function M03() {
   // RECETTE-1 (H2.4) — en périmètre, les compteurs comptent DANS les 200 m (3 classes dérivables du
   // payload : récent / achevé / autre ; « dormant » exige le non-bâti par permis, non servi ici → fondu
   // dans « autre »). Hors périmètre, les compteurs servis par la base (toute l'île / commune).
+  // OUTILS-P1-1 (pt 5) — la PÉRIODE est écrite dans le libellé (« Autorisés depuis 90 jours ») ; le mot
+  // jargon « Dormant » devient « Ancien permis sans achèvement déclaré ». Le libellé + sa définition se
+  // lisent ensemble (« Autorisés — depuis 90 jours »). En périmètre, la fenêtre « récent » vaut 24 mois.
   const ETATS = (perim ? ([
-    ['cours', 'Récent', 'recent', perimCounts.recent, 'autorisé ≤ 24 mois'],
+    ['cours', 'Autorisés', 'recent', perimCounts.recent, 'depuis 24 mois'],
     ['acheve', 'Achevés', 'acheve', perimCounts.acheve, 'travaux déclarés (DAACT)'],
     ['autre', 'Autres', 'autre', perimCounts.autre, 'ni récent, ni achevé'],
     ['tous', 'Tous', null, perimCounts.tous, 'dans les 200 m'],
   ] as const) : ([
-    ['cours', 'Récent', 'recent', radarEntryTotal, '90 derniers jours'],   // RETOURS-16 (point 11)
-    ['mort', 'Dormant', 'dormant', pmEntryTotal, 'ancien PC sans achèvement'],
+    ['cours', 'Autorisés', 'recent', radarEntryTotal, 'depuis 90 jours'],   // OUTILS-P1-1 (pt 5)
+    ['mort', 'Ancien permis', 'dormant', pmEntryTotal, 'sans achèvement déclaré (DAACT)'],
     ['acheve', 'Achevés', 'acheve', acheveEntryTotal, 'travaux déclarés (DAACT)'],
-    ['autre', 'Autres', 'autre', autreEntryTotal, 'ni récent, ni dormant, ni achevé'],
+    ['autre', 'Autres', 'autre', autreEntryTotal, 'ni récent, ni ancien, ni achevé'],
     ['tous', 'Tous', null, tousEntryTotal, 'toute la base'],
   ] as const))
   const actE = ETATS.find((e) => e[0] === seg) ?? ETATS[0]
@@ -931,6 +946,10 @@ export function M03() {
           <div data-permis-segment className="flex flex-col gap-1">
             {ETATS.map(([k, label, etat, n, def]) => {
               const actif = seg === k
+              // OUTILS-P1-1 (pt 5) — le compteur de l'état ACTIF lit le MÊME total que la liste
+              // (`total`, servi par la requête active) : le compte affiché et la liste portent toujours
+              // sur le même ensemble, même si la fenêtre d'« Affiner » est changée.
+              const nShown = actif && total != null ? total : n
           return (
             <button key={k} data-permis-seg={k} onClick={() => choisirSeg(k)} aria-pressed={actif}
               className={`group flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors duration-quick ${
@@ -941,7 +960,7 @@ export function M03() {
                 : <span className="h-2 w-2 shrink-0 rounded-full border border-current opacity-50" />}
               <span className="shrink-0 text-[12px] font-medium">{label}</span>
               <span className={`min-w-0 flex-1 truncate text-[11px] ${actif ? 'text-mint-ink/70' : 'text-txt-mut group-hover:text-mint-ink/70'}`}>{def}</span>
-                  <span className="shrink-0 tnum text-[12px] font-medium">{n != null ? fmt(n) : '…'}</span>
+                  <span className="shrink-0 tnum text-[12px] font-medium">{nShown != null ? fmt(nShown) : '…'}</span>
                 </button>
               )
             })}
@@ -1001,12 +1020,25 @@ export function M03() {
               /* RECETTE-1 (H2.4) — en périmètre : le compte est celui des permis dans les 200 m. */
               ? <>{fmt(perimItems.length)} dans les 200 m de <span className="font-mono">{iduCourt(parcelIdu!)}</span></>
               : pointMort
-              ? <>{fmt(cartePm.length)} dormants sur la carte{total != null && loaded < total
+              ? <>{fmt(cartePm.length)} anciens permis sur la carte{total != null && loaded < total
                   ? <> · <span data-permis-plafond>les {fmt(loaded)} plus anciens chargés — zoomez pour affiner</span></> : ''}</>
               : <>{fmt(carteRadar.length)} sur la carte
                   {total != null && loaded < total ? <> · {fmt(loaded)} / {fmt(total)} chargés</> : null}</>}
             {!perim && zone && <span className="text-mint/70"> · {items.length} dans la zone dessinée</span>}
           </p>
+          {/* OUTILS-P1-1 (pt 5) — « N dossiers · M géolocalisés » (même ensemble que la liste) + la date de
+              la dernière donnée Sitadel. M géolocalisés n'est servi que pour le radar/périmètre (exact). */}
+          {(() => {
+            const geocodesSel = perim ? perimItems.filter((i) => i['geom']).length
+              : pointMort ? null : ((head?.['geocodes'] as number | undefined) ?? null)
+            return (
+              <p data-permis-dossiers className="shrink-0 px-2 text-[10px] leading-snug text-txt-dim">
+                {total != null ? fmt(total) : '…'} dossier{(total ?? 0) > 1 ? 's' : ''}
+                {geocodesSel != null && <> · <span data-permis-geocodes>{fmt(geocodesSel)} géolocalisé{geocodesSel > 1 ? 's' : ''}</span></>}
+                {donneesJusquAu && <> · donnée Sitadel au {donneesJusquAu}</>}
+              </p>
+            )
+          })()}
 
           {pointMort && qPm.isLoading && <Squelette bloc className="py-8" />}
 
@@ -1026,10 +1058,10 @@ export function M03() {
           // RETOURS-17 W3 — la pastille de la LIGNE = la couleur de son ÉTAT (source unique lib/permisEtats),
           // la MÊME que le point sur la carte : Récent vert · Dormant corail · Achevé/Autre gris.
           const et: PermisEtat = perim ? perimClasse(i) : pointMort ? 'dormant' : radarEtat(i)
-          const etTitre = { recent: 'Récent — autorisé dans les 24 derniers mois.',
-            dormant: 'Dormant — permis de construire de plus de 36 mois, sans déclaration d\'achèvement (DAACT) et parcelle toujours non bâtie.',
+          const etTitre = { recent: 'Autorisé — permis accordé dans la fenêtre récente.',
+            dormant: 'Ancien permis sans achèvement déclaré — permis de construire de plus de 36 mois, sans déclaration d\'achèvement (DAACT) et parcelle toujours non bâtie.',
             acheve: 'Achevé — travaux déclarés terminés (DAACT).',
-            autre: 'Autre — ni récent, ni dormant, ni achevé (autre nature, permis non rattaché, ou période intermédiaire).' }[et]
+            autre: 'Autre — ni récent, ni ancien sans achèvement, ni achevé (autre nature, permis non rattaché, ou période intermédiaire).' }[et]
           return (
           <button key={k} data-permis-row data-geocode={i['geom'] ? '1' : '0'} data-point-mort={pointMort ? '1' : '0'} data-permis-row-etat={et}
             data-permis-actif={permisOuvert === (i['permit_id'] as string) ? '1' : undefined}
@@ -1365,6 +1397,11 @@ type Dest = { idu: string; commune: string; surface: number | null }
 
 // OUTILS-S2 Lot B — montant TTC avec les centimes (tarif courrier 4,04 € l'unité), virgule décimale FR.
 const fmtEur2 = (n: number) => `${n.toFixed(2).replace('.', ',')} €`
+// OUTILS-P1-1 (pt 10) — libellés CLIENT des statuts de demande (miroir de courrier.STATUT_LIBELLES côté
+// serveur) : l'écran affiche l'ÉTAT RÉEL de la demande, jamais « Posté » tant qu'elle n'est pas déposée.
+const COURRIER_STATUT_LIBELLE: Record<string, string> = {
+  demande: 'À déposer', depose: 'Déposé', envoye: 'Envoyé', repondu: 'Réponse reçue', sans_reponse: 'Sans réponse',
+}
 
 // RECETTE-2 (S8) — substitution PURE d'un gabarit de courrier, exportée pour être verrouillée par test.
 // RÈGLE : un champ vide ne s'imprime JAMAIS (ni « — », ni « (—) », ni « à — ») dans une lettre qui part
@@ -1679,14 +1716,22 @@ export function M09() {
             </p>
           )}
           {!demande ? (
+            // OUTILS-P1-1 (pt 10) — le bouton dit ce qui se passe VRAIMENT : on DÉPOSE une demande d'envoi
+            // (LABUSE la traite à la main), on n'envoie pas le courrier d'un clic.
             <Bouton niveau="primaire" ton="vert" data-courrier-demander onClick={() => envoyer.mutate()} disabled={envoyer.isPending || depotBloque || adressage.isLoading}>
-              {envoyer.isPending ? 'Envoi de la demande…' : depotBloque ? 'Dépôt bloqué — voir les motifs' : "Demander l'envoi à LABUSE"}</Bouton>
+              {envoyer.isPending ? 'Dépôt de la demande…' : depotBloque ? 'Dépôt bloqué — voir les motifs' : "Déposer une demande d'envoi"}</Bouton>
           ) : (
             // OUTILS-1 A4/B6 — la confirmation porte la RÉFÉRENCE de la demande et renvoie vers le suivi.
             // RECETTE-4 — plus de numéro séquentiel « Demande n° 2 » : une référence NON séquentielle
             // (lettres + date), servie par le back (`reference` = C-DDMM-XX). Repli sur rang/id si absente.
             <div data-courrier-confirm className="rounded-lg border border-line-2 bg-mint/[0.05] px-3 py-2 text-[11px] leading-snug text-txt-mut">
-              <b className="text-mint">✓ Demande {demande.reference ?? `n° ${demande.rang_compte ?? demande.id}`} transmise.</b>
+              {/* OUTILS-P1-1 (pt 10) — l'écran dit l'ÉTAT RÉEL : « Demande reçue », puis l'état servi par
+                  le back (À déposer → Déposé → Envoyé). « Déposé »/« Envoyé » n'apparaissent qu'une fois le
+                  pli EFFECTIVEMENT posté par LABUSE — jamais au moment de la demande. */}
+              <b className="text-mint">✓ Demande reçue — {demande.reference ?? `n° ${demande.rang_compte ?? demande.id}`}.</b>
+              {' '}
+              <span data-courrier-etat-reel className="text-txt-mut">État : <b className="text-txt">{COURRIER_STATUT_LIBELLE[demande.statut] ?? demande.statut}</b>.</span>
+              <span className="mt-1 block text-[10px] text-txt-dim">LABUSE dépose puis poste le courrier ; l’état passe à « Déposé » puis « Envoyé » seulement une fois le pli effectivement posté.</span>
               {/* OUTILS-S2 Lot B — le MÊME montant qu'à l'étape 3 est repris ici.
                   CHASSE-APP-FIX-2 (point 1) — tant que le service est un bouchon, on ne reprend PAS la
                   prestation tarifée : la raison serveur dit que la demande est seulement enregistrée. */}

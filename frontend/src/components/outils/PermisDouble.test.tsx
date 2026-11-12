@@ -119,10 +119,11 @@ describe('PERMIS — double entrée + densité', () => {
     expect(document.querySelector('[data-permis-segment]')).toBeNull()         // état refermé
     // la barre repliée « Filtrer par état » DIT son état actif + compte
     const barreEtat = document.querySelector('[data-permis-bloc-toggle="etat"]')?.textContent
-    // RETOURS-16 (point 11) — l'outil Permis OUVRE sur « Récent » = 90 derniers jours (fenêtre 3 mois),
+    // RETOURS-16 (point 11) — l'outil Permis OUVRE sur « Autorisés » = 90 derniers jours (fenêtre 3 mois),
     // plus « Tous » (240 mois) qui chargeait toute la base à l'ouverture. Le résumé de la barre dit donc
-    // l'état « Récent » + son compte (compteur radar-entry du mock).
-    expect(barreEtat).toContain('Récent')
+    // l'état « Autorisés » + son compte (compteur radar-entry du mock).
+    // OUTILS-P1-1 (pt 5) — « Récent » renommé « Autorisés » (la période est dans la définition : depuis 90 jours).
+    expect(barreEtat).toContain('Autorisés')
     expect(barreEtat).toMatch(/5\s*613/)   // espace fine insécable (fr-FR) : on ne fige pas le séparateur
   })
 

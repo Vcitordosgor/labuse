@@ -311,7 +311,7 @@ def patrimoine(siren: str, fmt: str = "json",
     rows = db.execute(text("""
         SELECT p.id, p.idu, p.commune, p.surface_m2, p.contenance_m2, z.zone_fam, r.sdp_residuelle_m2,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
-               COALESCE(pb.emprise_bati_m2, 0) AS emprise_bati,   -- RETOURS-15 B5 : bâti / nu
+               pb.emprise_bati_m2 AS emprise_bati,   -- RETOURS-15 B5 : bâti / nu / NULL = bâti non renseigné (OUTILS-P1-1 pt 7)
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
         FROM parcelle_personne_morale pm
         JOIN parcels p ON p.idu = pm.idu
@@ -388,8 +388,19 @@ def patrimoine(siren: str, fmt: str = "json",
     # de dessin géométrique : homogène avec la fiche / le prefill taxe / Comparer (CONTENANCE-1).
     surface_totale_m2 = round(sum((_surface.surface_terrain(r["surface_m2"], r["contenance_m2"]).valeur or 0)
                                   for r in rows))
+    # OUTILS-P1-1 (pt 7) — « bâti non renseigné » (p_model_bati absent → emprise NULL) DISTINCT de « nu »
+    # (emprise mesurée = 0). Avant, le COALESCE(…,0) fondait les deux en « nu » : un terrain dont le bâti
+    # n'est pas renseigné était compté comme sans bâti. Les trois classes font exactement len(rows).
     n_terrains_batis = sum(1 for r in rows if (r["emprise_bati"] or 0) > 0)
-    n_terrains_nus = len(rows) - n_terrains_batis
+    n_terrains_nus = sum(1 for r in rows if r["emprise_bati"] is not None and r["emprise_bati"] == 0)
+    n_bati_non_renseigne = sum(1 for r in rows if r["emprise_bati"] is None)
+    # OUTILS-P1-1 (pt 7) — TROIS comptes sur des ensembles DISTINCTS : RECENSÉES (toutes les parcelles du
+    # SIREN aux fichiers fonciers DGFiP, y compris celles sans géométrie cadastrale), RATTACHÉES au cadastre
+    # (jointes à `parcels` → une géométrie → `rows`). L'écart (ex. 1 871 vs 1 833) est ainsi ventilé, jamais
+    # muet : des parcelles recensées peuvent manquer au cadastre ingéré (le JOIN les écartait en silence).
+    n_recensees = int(db.execute(text(
+        "SELECT count(*) FROM parcelle_personne_morale WHERE siren = :s"), {"s": siren}).scalar() or 0)
+    n_rattachees = len(rows)
     n_constructible_u_au = sum(1 for r in rows if r["zone_fam"] in ("U", "AU"))
     # #3 VALORISATION indicative du foncier nu (zones U/AU) au RÉFÉRENTIEL UNIQUE prix terrain de zone
     # (ligne2_terrain_zone, une fois par commune). Indicative — seules les zones U/AU ont un prix marché.
@@ -498,6 +509,9 @@ def patrimoine(siren: str, fmt: str = "json",
         "surface_totale_m2": surface_totale_m2,
         "n_terrains_nus": n_terrains_nus,
         "n_terrains_batis": n_terrains_batis,
+        "n_bati_non_renseigne": n_bati_non_renseigne,   # OUTILS-P1-1 (pt 7) — distinct de « nu »
+        "n_recensees": n_recensees,                     # OUTILS-P1-1 (pt 7) — fichiers fonciers DGFiP
+        "n_rattachees": n_rattachees,                   # OUTILS-P1-1 (pt 7) — jointes au cadastre
         "n_constructible_u_au": n_constructible_u_au,
         "n_actionnables": n_actionnables,
         # KO-10 — le libellé front dit « hors écartées par vous » SI ce compte a écarté des parcelles.
@@ -1160,30 +1174,46 @@ def _calcul_successions(db: Session, commune, sdp_min, limit, offset) -> dict:
     # (triées en queue) ; avec un seuil, une SDP inconnue ne peut pas le prouver → exclue.
     where = ("WHERE 1=1" + filtre_forme + (" AND p.commune = :c" if commune else "")
              + ((" AND d.sdp_residuelle_m2 >= :smin" if has_ext else " AND false") if sdp_min else ""))
+    # OUTILS-P1-1 (pt 1) — NOM ET ÂGE du dirigeant pris dans la MÊME requête ET le MÊME millésime :
+    # l'aîné des personnes physiques du RNE (`pm_dirigeants`, ingestion courante), avec son âge DÉRIVÉ
+    # de sa date de naissance. Fini la divergence entre un nom lu « au présent » et un âge figé au
+    # Score V : le couple nom/âge décrit la même personne, daté par la même ingestion (bandeau `rne`).
+    join_dir = """
+        LEFT JOIN LATERAL (
+            SELECT NULLIF(trim(coalesce(dd.prenoms,'') || ' ' || coalesce(dd.nom,'')), '') AS dirigeant_nom,
+                   (EXTRACT(year FROM current_date)::int - substring(dd.date_naissance, 1, 4)::int) AS age
+              FROM pm_dirigeants dd
+             WHERE dd.siren = pm.siren AND dd.type_personne = 'INDIVIDU'
+               AND dd.date_naissance ~ '^[0-9]{4}'
+             ORDER BY dd.date_naissance ASC LIMIT 1
+        ) dir ON true"""
     base = f"""
         FROM parcel_veille_succession v
         JOIN parcels p ON p.idu = v.parcelle_id
         {join_ext}
         LEFT JOIN parcel_zone_plu z ON z.idu = v.parcelle_id
-        LEFT JOIN parcelle_personne_morale pm ON pm.idu = v.parcelle_id"""
+        LEFT JOIN parcelle_personne_morale pm ON pm.idu = v.parcelle_id{join_dir}"""
+    # OUTILS-P1-1 (pt 1) — un âge AFFICHÉ ≥ 100 ans est invraisemblable (dirigeant décédé, date amont
+    # erronée) : la parcelle SORT de la liste et est COMPTÉE à part (`n_age_ecarte`), jamais écartée en
+    # silence. L'âge affiché = dérivé RNE quand il existe, sinon l'âge figé du signal (SCI dormante : pas
+    # d'âge, jamais écartée ici). Le repère est le même pour l'exclusion et pour l'affichage.
+    age_affiche = "coalesce(dir.age, v.dirigeant_age)"
+    ecart_age = f"((NOT v.sci_dormante) AND {age_affiche} >= 100)"
+    where_elig = f"{where} AND NOT {ecart_age}"
     params = {"c": commune, "smin": sdp_min, "annee": annee,
               "formes": sorted(score_v_constants.VEILLE_SUCCESSION_FORMES)}
-    total = int(db.execute(text(f"SELECT count(*) {base} {where}"), params).scalar() or 0)
+    total = int(db.execute(text(f"SELECT count(*) {base} {where_elig}"), params).scalar() or 0)
+    n_age_ecarte = int(db.execute(
+        text(f"SELECT count(*) {base} {where} AND {ecart_age}"), params).scalar() or 0)
     rows = db.execute(text(f"""
         SELECT v.parcelle_id AS idu, p.commune AS commune,
                round(p.surface_m2)::int AS surface_m2,
                coalesce(z.zone_lib, z.zone_fam) AS zone,
                {sdp_expr} AS sdp_residuelle_m2,
-               v.dirigeant_age, v.sci_dormante,
-               -- Nom de l'aîné (personne physique) des dirigeants RNE de la société, pour afficher
-               -- « Nom · N ans » : même dirigeant que l'âge du signal (le plus âgé daté).
-               (SELECT NULLIF(trim(coalesce(dd.prenoms,'') || ' ' || coalesce(dd.nom,'')), '')
-                  FROM pm_dirigeants dd
-                 WHERE dd.siren = pm.siren AND dd.type_personne = 'INDIVIDU'
-                   AND dd.date_naissance IS NOT NULL
-                 ORDER BY dd.date_naissance ASC LIMIT 1) AS dirigeant_nom,
+               {age_affiche} AS dirigeant_age, v.sci_dormante,
+               dir.dirigeant_nom,
                pm.denomination, pm.siren
-        {base} {where}
+        {base} {where_elig}
         ORDER BY {ordre}
         LIMIT :lim OFFSET :off"""),
         {**params, "lim": limit, "off": offset}).mappings().all()
@@ -1215,6 +1245,7 @@ def _calcul_successions(db: Session, commune, sdp_min, limit, offset) -> dict:
         rne = db.execute(text("SELECT to_char(max(last_sync_at), 'DD/MM/YYYY') FROM data_sources "
                               "WHERE name = 'INPI RNE (dirigeants)'")).scalar()
     return {"total": total, "n": len(items), "items": items,
+            "n_age_ecarte": n_age_ecarte,   # OUTILS-P1-1 (pt 1) — parcelles sorties (âge ≥ 100 ans)
             "maj": maj, "rne_sync": rne,
             "source": "RNE INPI (dirigeants) · Recherche d'entreprises (DINUM) · fichiers PM DGFiP",
             "avertissement": ("Radar patrimonial (horizon 3-7 ans) : dirigeant âgé ou SCI dormante — "

@@ -289,8 +289,10 @@ export function M16() {
             ) : (
               <>
                 {/* point 1 — DEUX GRANDEURS DISTINCTES : surface d'assiette ≠ SDP cumulée (fini
-                    « assiette 11 065 m² SDP » qui mélangeait tout). + logements + ×gain (point 2). */}
-                <div className="grid grid-cols-2 gap-1.5">
+                    « assiette 11 065 m² SDP » qui mélangeait tout). + logements + ×gain (point 2).
+                    OUTILS-P1-1 (pt 2) — pile verticale pleine largeur : la SDP porte TROIS lectures
+                    (existant / si conservé / après démolition) qui ont besoin de la largeur. */}
+                <div className="flex flex-col gap-1.5">
                   <div data-asm-kpi="surface" className="rounded-md bg-surface-3 px-2 py-1.5">
                     <div className="text-[9px] text-txt-dim">Surface d'assiette</div>
                     {/* RETOURS-29 (Assemblage) — « 196 m² » ne se coupe plus (whitespace-nowrap). */}
@@ -304,19 +306,35 @@ export function M16() {
                       </div>
                     )}
                   </div>
-                  {/* CHASSE-FIX-1 (B-2) — SDP-UNIQUE : la grandeur de tête est la SDP BÂTI CONSERVÉ (comme
-                      la fiche), la SDP TERRAIN LIBÉRÉ (table rase) est dite juste dessous, sous ce nom, jamais
-                      seule. ≠ « SDP gabarit » (capacité PLU) ≠ « SHAB vendable » (× rendement 0,8). */}
-                  {/* RETOURS-28 (Assemblage) — la tuile dit « Bâti conservé : X m² » et, dessous,
-                      « Reconstruction : Y m² » (SDP table rase, si démolition du bâti existant). */}
+                  {/* OUTILS-P1-1 (pt 2) — TROIS LECTURES ancrées sur l'existant, au lieu d'empiler
+                      « Reconstruction » SOUS « Bâti conservé » (qui se lisait comme une sous-ligne) :
+                      • « Existant · N m² » — la surface de plancher déjà bâtie ;
+                      • « Si conservé · aucun ajout estimé » (ou « +N m² estimés ») — le résiduel au-dessus ;
+                      • « Après démolition · N m² estimés · ±Δ m² par rapport à l'existant » — l'ÉCART est
+                        SIGNÉ, et ABSENT AVEC SA RAISON quand l'existant n'est pas mesuré. */}
                   <div data-asm-kpi="sdp" className="rounded-md bg-surface-3 px-2 py-1.5">
-                    <div data-asm-sdp-conserve className="text-[11px] leading-tight text-txt">
-                      <span className="text-txt-dim">Bâti conservé : </span>
-                      <b className="tnum whitespace-nowrap text-mint">{fmt(d.sdp_bati_conserve_m2)} m²</b>{d.sdp_conserve_estimation ? ' *' : ''}
+                    <div data-asm-sdp-existant className="text-[11px] leading-tight text-txt">
+                      <span className="text-txt-dim">Existant · </span>
+                      {d.sdp_existante_totale_m2 != null
+                        ? <b className="tnum whitespace-nowrap">{fmt(d.sdp_existante_totale_m2)} m²</b>
+                        : <span className="text-txt-dim">non mesuré</span>}
                     </div>
-                    {d.sdp_terrain_libere_m2 != null && d.sdp_terrain_libere_m2 > d.sdp_bati_conserve_m2 && (
-                      <div data-asm-sdp-libere className="mt-0.5 text-[10px] leading-tight text-txt-dim">
-                        Reconstruction : <b className="tnum whitespace-nowrap text-amber">{fmt(d.sdp_terrain_libere_m2)} m²</b>
+                    <div data-asm-sdp-conserve className="mt-0.5 text-[11px] leading-tight text-txt">
+                      <span className="text-txt-dim">Si conservé · </span>
+                      {d.sdp_bati_conserve_m2 > 0
+                        ? <b className="tnum whitespace-nowrap text-mint">+{fmt(d.sdp_bati_conserve_m2)} m² estimés{d.sdp_conserve_estimation ? ' *' : ''}</b>
+                        : <span className="text-txt-dim">aucun ajout estimé</span>}
+                    </div>
+                    {d.sdp_terrain_libere_m2 != null && (
+                      <div data-asm-sdp-libere className="mt-0.5 text-[11px] leading-snug text-txt">
+                        <span className="text-txt-dim">Après démolition · </span>
+                        <b className="tnum whitespace-nowrap text-amber">{fmt(d.sdp_terrain_libere_m2)} m² estimés</b>
+                        {d.sdp_existante_totale_m2 != null
+                          ? (() => {
+                              const ecart = (d.sdp_terrain_libere_m2 as number) - (d.sdp_existante_totale_m2 as number)
+                              return <span data-asm-sdp-ecart className={`whitespace-nowrap ${ecart < 0 ? 'text-st-ecartee' : 'text-mint'}`}> · {ecart >= 0 ? '+' : '−'}{fmt(Math.abs(ecart))} m² par rapport à l'existant</span>
+                            })()
+                          : <span data-asm-sdp-ecart-absent className="text-txt-dim"> · écart non calculé (existant non mesuré)</span>}
                       </div>
                     )}
                   </div>
@@ -418,9 +436,11 @@ export function M16() {
               <div key={i.idu} className="rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-[11px]">
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-txt-hi">{i.idu.slice(8)}</span>
-                  {/* RETOURS-29 (Assemblage) — ligne de parcelle : « surface · bâti conservé X m² ·
-                      reconstruction Y m² » (bâti conservé = SDP résiduelle, reconstruction = table rase). */}
-                  <span className="text-txt-dim">{fmt(i.surface_m2)} m² · bâti conservé {fmt(i.sdp_residuelle_m2 != null ? i.sdp_residuelle_m2 : i.sdp_m2)} m² · reconstruction {fmt(i.sdp_m2)} m²</span>
+                  {/* OUTILS-P1-1 (pt 2) — « surface · bâti conservé X m² · reconstruction Y m² ». Quand la
+                      SDP du bâti conservé n'est pas estimée, on DIT « non estimé » plutôt que d'y recopier
+                      la valeur de reconstruction (table rase) : la reconstruction n'est plus présentée SOUS
+                      « bâti conservé ». */}
+                  <span className="text-txt-dim">{fmt(i.surface_m2)} m² · bâti conservé {i.sdp_residuelle_m2 != null ? `${fmt(i.sdp_residuelle_m2)} m²` : 'non estimé'} · reconstruction {fmt(i.sdp_m2)} m²</span>
                   {/* RECETTE-1 R8 — pastille de palier (scoring q_v14) retirée de l'Assemblage. */}
                 </div>
                 <div className="mt-0.5 flex items-center gap-2">
