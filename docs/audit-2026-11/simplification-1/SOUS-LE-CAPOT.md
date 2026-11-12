@@ -50,7 +50,7 @@ Rythme actuel + passages/échecs sur 30 j + durée moyenne/max (prod `job_runs`)
 | **purge-runs** | purge vieux runs | hebdo dim 04:30 — **GELÉ** | 0 | — | — | disque | **Dégeler** (c'est l'inverse d'une dépense : ça libère le disque, EXP-013). |
 | radar-cloche / digest | notifications clients — **GELÉS** | — | 0 | — | — | clients | Décision produit (D8 audit précédent). |
 
-\* restore-test 0,2 s = il n'a pas réellement restauré (voir T4) — à vérifier.
+\* restore-test 0,2 s = **confirmé** : le job serveur ne restaure RIEN, il lit seulement la table des matières du dump (`pg_restore --list`). La vraie restauration est mensuelle sur le Mac. Voir **Compléments C2** en bas.
 
 **Doublons repérés** : `recap-matin` ↔ `resume-matin` (le premier est mort). `coherence-banc` (nuit, île) ↔ `coherence-robinets` ↔ `filtres-sources` ↔ `verite-permanente` : quatre contrôles de cohérence/qualité quotidiens qui se recoupent partiellement (T6). `healthcheck` (/15 min) ↔ `sante-endpoints` (/30 min) : deux sondes de santé (une locale, une métier) — complémentaires, pas doublon.
 
@@ -209,3 +209,84 @@ Source : lecture du code (`autonomie.py:44-94` classe A/B ; `circuit_garanties.p
 | ~19 sources internes (DOUBLON / DORMANT / RETIRÉ) | — | — | jamais | déjà cachées de la vitrine — **rien à faire**. |
 
 **Les SEULES sources dont un changement justifie vraiment un recalcul du classement** : **Cadastre, PLU/GPU, PPR** (classe B, changent rarement) + les classe-A du score (DVF semestriel, SITADEL mensuel, INSEE annuel, IGN pluriannuel). → **aucune ne change assez souvent pour justifier un recalcul chaque nuit.** C'est le cœur de la proposition T3.
+
+---
+
+## Compléments (13/11) — deux points tranchés sur la ligne de code
+
+### C1 — Classe A/B : qui s'injecte seul, qui attend ton clic (la vérité du code)
+
+**La contradiction entre mes deux audits venait d'une confusion : « classe » (doctrine A/B) ≠ « mode d'injection réel ».**
+La **classe** (`src/labuse/autonomie.py:60-104`, dict `SOURCES_CLASSE`) décide seulement si la source est balayée par le job générique `injection-nuit`. Mais **plusieurs sources de classe B ont leur PROPRE job cron dédié** (`ingest-dvf`, `ingest-sitadel`…) qui les recharge automatiquement — **sans attendre ton clic**. C'est ce que T1 avait vu (« auto ») mais mal étiqueté « classe A ».
+
+**Tranché par le code** : `DVF`, `SITADEL`, `DPE` sont **classe B** (`autonomie.py:73,74,75` : « marché… servi au client », « permis — nourrit le scoring », « DPE — features du bâti »). → **ETAT.md avait raison sur la classe, T1 avait tort.** Mais en pratique elles s'injectent seules **par leur cron dédié**, pas par `injection-nuit` (qui ne prend que la classe A : `jobs.py:803-810`, `jobs_impl.py:1653,1699`).
+
+Liste exacte, une ligne par source, par **mode d'injection réel** (classe entre parenthèses ; « classement » = entre-t-elle dans le scoring/cascade) :
+
+**① Injectées seules la nuit par `injection-nuit`** (classe A, contrôles + retour arrière ; seulement si « sûre », sinon listée « à décider ») :
+| Source | Classe | Classement ? |
+|---|---|---|
+| Contours IRIS (IGN/INSEE) | A | non (contexte) |
+| INSEE RP Logement 2023 | A | non |
+| Population légale (INSEE) | A | non |
+| Annuaire administration (DILA) | A | non |
+| Ramsar / sites classés (DEAL Carmen) | A | non (info) |
+| Transport GTFS (7 réseaux) | A | non |
+| **Filosofi (carreaux 200 m)** | A | **OUI** (features revenus) |
+| MOBPRO (mobilités) | A | non |
+| **BPE INSEE** | A | **OUI** (accès équipements) |
+| SIRENE / SIRENE étab. / Recherche entreprises | A | non (concurrents) |
+| SUP — assiettes GPU | A | non (info) |
+| Zones / contraintes EnR | A | non |
+| **Parc National / Forêts publiques (ONF)** | A | **OUI** (exclusion dure, mais source stable) |
+| ZNIEFF / INPN patrinat / GéoMCE | A | non (info) |
+| **QPV 2024 (ANCT)** | A | **OUI** (feature) |
+| ABF / Monuments hist. / bruit ITT / Cartofriches | A | non (surcouches info) |
+| BD NYME lieux-dits / CatNat GASPAR / Trafic RN / GéoLittoral | A | non |
+| Base Adresse Nationale | A | non (géocodage) |
+| 50 pas géométriques (limite haute) | A | partiel (géométrie SDP) |
+
+**② Classe B mais injectées seules par un CRON DÉDIÉ** (automatiques, **pas** d'attente de clic) :
+| Source | Classe | Cron | Classement ? |
+|---|---|---|---|
+| **DVF** | B | `ingest-dvf` hebdo (mar) → `refresh-dvf` | **OUI** (marché) |
+| **SITADEL** | B | `ingest-sitadel` mensuel → `ingest-permits --refresh` | **OUI** (permis) |
+| **DPE ADEME** | B | `ingest-dpe` mensuel | **OUI** (features bâti) |
+| BODACC | B (défaut) | `ingest-bodacc` quotidien | non (Radar/Successions/Signal) |
+| INPI RNE (dirigeants) | B (défaut) | `ingest-inpi-rne` mensuel | non (outil Successions) |
+
+**③ Classe B, DÉTECTION seule — attend ton geste** :
+| Source | Classe | Cron | Classement ? |
+|---|---|---|---|
+| **PLU / GPU (urbanisme)** | B | `sync-gpu` mensuel = **diff/veille seulement**, n'injecte PAS le zonage (`jobs_impl.sync_gpu`) | **OUI** (zonage opposable) |
+
+**④ Classe B, chargées à la MAIN / socle Mac→prod** (aucun cron auto) :
+| Source | Classe | Classement ? |
+|---|---|---|
+| Cadastre PCI / Cadastre Etalab | B | **OUI** (assiette, socle) |
+| PPR / aléas (DEAL) | B | **OUI** (exclusion rouge) |
+| GPU — assainissement | B | OUI (cascade ANC) |
+| RGE ALTI (altimétrie) | B | **OUI** (pente) |
+| BD TOPO IGN / RNB | B | **OUI** (emprise/densité) |
+| OCS GE / IGN BD CARTO V5 | B | OUI / contexte |
+| CoSIA / BD ORTHO (+IRC) | B (défaut) | OUI (piscine, canopée, dormance) |
+| DGFiP personnes morales / Fichiers fonciers | B | non (foncier public / propriété) |
+
+**⑤ Jamais chargées (en pratique)** — le mécanisme existe mais 0 exécution réelle (EXP-005) :
+| Source | Classe | État |
+|---|---|---|
+| SITADEL | B | cron jamais abouti → figé **31/08** |
+| INPI RNE | B | cron jamais abouti → figé **05/07** |
+
+**À retenir** : rien de ce qui **entre dans le classement** ne s'injecte « tout seul sans trace de décision » de façon dangereuse — Cadastre/PLU/PPR (le cœur) sont classe B à ta main ; DVF/SITADEL/DPE entrent dans le classement et sont **auto** (cron dédié), mais la **promotion** du run reste ton geste, donc une mauvaise version ne part pas chez le client sans toi.
+
+### C2 — restore-test : lit-il vraiment la base, et depuis quand une vraie restauration ?
+
+**Il y a DEUX restore-test, et seul celui du Mac restaure vraiment.**
+
+- **Serveur (`restore-test`, le 5 du mois, 0,2 s)** : ne restaure RIEN. Il fait seulement `pg_restore --list` (lit la **table des matières** du dump, compte les objets — 1814 le 05/11, vérifie ≥ 50 et la taille). `src/labuse/jobs_impl.py:2031-2069` : *« sur le VPS, on ne restaure PLUS un dump complet : il n'y a pas la place… vérifie seulement que le dump est RESTAURABLE sans le restaurer »*. D'où les 0,2 s. Une vraie restauration côté serveur n'a lieu que si `LABUSE_RESTORE_TEST_REEL=1` **et** disque libre ≥ 4× le dump (≈ 25 Go) — **impossible aujourd'hui** (7,8 Go libres). Le marqueur dit honnêtement lequel des deux a tourné (« lisibilité OK » = TOC seulement).
+- **Mac (`deploy/mac/restore_test.sh`, mensuel, launchd)** : LE vrai test. Rapatrie le dump → **crée une base jetable `labuse_restore_test` → `pg_restore` COMPLET → compte les tables clés (parcels, data_sources, score_labuse, veilles, comptes) et les compare à la prod + compte le run servi → DROP**. Garde-fou : refuse si < 20 Go libres.
+
+**Dernière vraie restauration complète prouvée** (marqueur Mac `~/labuse-backups/.restore-test.json`) : **28/10/2026** — dump du 27/10, statut ok, `parcels` restauré 434 582 = prod 434 582, run servi q_v20 (433 229 lignes). **→ ~16 jours sans vraie restauration vérifiée (28/10 → 13/11).**
+
+Pourquoi pas depuis ? Le journal `~/.labuse/restore_test.log` montre que le dernier essai journalisé (27/10) a été **REFUSÉ faute de place** (« 12 Go libres < 20 Go requis — reporté »), et aucun essai réussi n'est enregistré depuis le 28/10. **Même cause racine que le blocage du rapatriement (EXP-003) : le manque de place gèle la preuve de restauration.** Nuance : même le vrai test restaure la base et l'interroge (comptages) — il ne **démarre pas l'application** (uvicorn) dessus ; « la base démarre et répond aux requêtes » est prouvé, « l'app démarre sur une base restaurée » ne l'est pas.
