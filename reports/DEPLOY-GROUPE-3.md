@@ -392,3 +392,5 @@ Reprise 05:07 Réunion (hors fenêtre 01–05), déploiement 2 déjà live (`205
 Plancher 3 Go respecté en continu. La daily Nov 11 était superseded par la Nov 12 imminente (Option C validée par Vic) ; hebdo Nov 8 `pg_restore -l` lisible avant suppression. Vérif Nov 12 programmée 14:05.
 
 **Gros objets (pour l'agrandissement disque)** : `dryrun_cascade_results` 21 Go (q_v18_s/q_v19_s/q_v21/q_v22/q_v23 ~3 Go ch.), `score_labuse` 7,2 Go, `parcel_p_score_v2` 5,3 Go, `spatial_layers` 3,3 Go, sauvegardes 6,2–6,3 Go/pièce. Purge q_v21/q_v22 (~8–10 Go) exige un VACUUM FULL (temp ≈ 21 Go) → à faire après agrandissement.
+
+**Garde 14:05 — vérif sauvegarde Nov 12** : écrite (6,76 Go) et `pg_restore -l` **LISIBLE** ✓. 2 nets sains (hebdo Nov 8 + daily Nov 12). Disque après écriture **8,0 Go** (pas de saturation, plancher 3 Go respecté). Option C réussie de bout en bout.
