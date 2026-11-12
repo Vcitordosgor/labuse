@@ -710,3 +710,44 @@ faisait 960 de large, **faux dès qu'elle devient responsive**. Élément **capt
 
 **Hook complet vert** : tsc **0** · build ✅ · vitest **326** · **pytest 3295 passed, 0 failed** (49 skip) ·
 secrets **0**. **Aucun critère non atteint.**
+
+## 21. Étape 3 quinquies — retouche finale de la coupe (écran du Gabarit figé après)
+
+Sur `0c251d6d8`. Constaté par Vic sur BZ1065, coupe B, fenêtre **1440 × 694**. Harnais rejoué aux **cinq
+tailles** (1280×720, **1440×694**, 1440×900, 1920×1080, 2560×1300), BZ1065 et CM1658, coupe A et B.
+
+### Tableau de mesures (coupe B, aperçu — identique sur A)
+
+| Taille | Cadre (ouv./recentr.) | Agr. couvre datum | Étiq. sur courbe | Texte traversé | Remplissage | Texte min | Agrandir min | Plan-clé |
+|---|---|---|---|---|---|---|---|---|
+| 1280×720  | **oui/oui** | **non** | **0** | **0** | **100 %** | **11,7 px** | 11,7 | 11 |
+| **1440×694** | **oui/oui** | **non** | **0** | **0** | **100 %** | **11,7 px** | 13,2 | 11 |
+| 1440×900  | **oui/oui** | **non** | **0** | **0** | **100 %** | **11,7 px** | 13,2 | 11,3 |
+| 1920×1080 | **oui/oui** | **non** | **0** | **0** | **100 %** | **11,7 px** | 17,7 | 11,3 |
+| 2560×1300 | **oui/oui** | **non** | **0** | **0** | **100 %** | **11,7 px** | 23,7 | 11–12,7 |
+
+(Survol 0,03–0,08 m ; B/B′ dans la vue partout.)
+
+### Les sept points
+1. **« Agrandir la coupe » à côté du titre.** Le titre et le datum « Altitudes en m · IGN 1989 · H = V »
+   passent dans un **bandeau HTML** (titre à gauche, datum + bouton à droite) ; le SVG de l'aperçu est servi
+   **sans en-tête** (`header=0`). Le bouton ne recouvre plus le datum (mesuré : `recouvre_datum` faux partout).
+2. **Vue 3D recadrée.** Le cadrage tient **tout le contour + les extrémités des axes (B/B′, A/A′)**, centré
+   sur leur union, ajusté pour que le point le plus éloigné atteigne ±0,85 en projection → la pointe de la
+   parcelle côté voie n'est plus coupée, à l'**ouverture** et au **Recentrer** (mesuré : `cadre` vrai).
+3. **Aucun texte traversé par un trait.** Les cotes passent dans le **ciel**, à **fond opaque**, émises en
+   dernier → aucun pointillé vertical ne les traverse (mesuré : `traits_au_travers` = 0).
+4. **Aucune étiquette sur la courbe.** « emprise bâtie » rejoint la **légende** (barre grise) ; chaque
+   étiquette (cotes, pente, rupture) est posée **au-dessus du terrain local** (échantillonné sur toute sa
+   largeur) ; « Rupture du terrain à vérifier » est dans la voie d'étiquettes au-dessus du tracé, avec rappel.
+   Contrôle géométrique segment-courbe ∩ boîte = **0**. Le profil interpolé sous le bâti reste visible.
+5. **« pente max N % sur 5 m ».** La valeur mesurée est affichée (ex. « pente max 41 % sur 5 m »).
+6. **Pied de page** : « acquisition **12/08/2023** » (était 2023-08-12).
+7. **Harnais** : taille **1440 × 694** ajoutée + contrôles des points 1 à 4 (cadre, agrandir↔datum, étiquette
+   sur courbe, texte traversé) ; **mode « Agrandir » : plus petit texte ≥ 11 px** à toutes les tailles
+   (mesuré 11,7 → 23,7 px) ; plan-clé et légende lisibles (≥ 11 px).
+
+Captures avant/après à 1440×694 : `viewer/retouche_1440x694_avant.png`, `viewer/retouche_1440x694_apres.png`.
+
+**Hook complet vert** : tsc **0** · build ✅ · vitest **326** · **pytest 3295 passed, 0 failed** · secrets **0**
+· 0 faute hors cadre. **Aucun critère non atteint.** L'écran du Gabarit est figé.

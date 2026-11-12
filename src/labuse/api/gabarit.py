@@ -206,7 +206,7 @@ def _verif_sid(scene, sid: str | None):
 
 @router.get("/scene/{idu}/coupe/{axe}.svg")
 def gabarit_coupe_svg(idu: str, axe: str, request: Request, theme: str = "sombre", sid: str | None = None,
-                      detail: int = 0, w: int = 960, h: int = 520,
+                      detail: int = 0, w: int = 960, h: int = 520, header: int = 1,
                       db: Session = Depends(get_db)) -> Response:
     """Coupe A (pente dominante) ou B (voie) en SVG serveur, servie pour l'identifiant `sid`.
     detail=1 : vue détaillée (toutes les cotes, bandes, les deux pentes) ; sinon aperçu.
@@ -223,7 +223,7 @@ def gabarit_coupe_svg(idu: str, axe: str, request: Request, theme: str = "sombre
     width = max(360, min(int(w), 3000))
     h_max = max(140, min(int(h), 1600))
     svg = coupe_svg(coupe, theme=theme, adresse=scene.adresse, idu=idu, detail=bool(detail),
-                    width=width, h_max=h_max)
+                    width=width, h_max=h_max, header=bool(header))
     if not svg:
         raise HTTPException(404, "Relief indisponible sur cette emprise (profil sans point valide).")
     return Response(svg, media_type="image/svg+xml")

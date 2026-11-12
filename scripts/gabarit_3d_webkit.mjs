@@ -95,6 +95,26 @@ function bandeGradControl(svg) {
   for (const g of grads) for (const l of lens) { const a = bb(g), b = bb(l); if (a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1) n++ }
   return { graduations: grads.length, longueurs: lens.length, chevauchements: n }
 }
+// pt 4 — AUCUNE étiquette (boîte rx="2") sur la COURBE : segment du terrain / du profil sous bâti ∩ boîte ?
+function segCoupeRect([ax, ay], [bx, by], r) {       // Liang-Barsky : le segment traverse-t-il le rectangle ?
+  let t0 = 0, t1 = 1; const dx = bx - ax, dy = by - ay
+  const p = [-dx, dx, -dy, dy], q = [ax - r.x, r.x + r.w - ax, ay - r.y, r.y + r.h - ay]
+  for (let i = 0; i < 4; i++) {
+    if (p[i] === 0) { if (q[i] < 0) return false }
+    else { const t = q[i] / p[i]; if (p[i] < 0) { if (t > t1) return false; if (t > t0) t0 = t } else { if (t < t0) return false; if (t < t1) t1 = t } }
+  }
+  return t0 <= t1
+}
+function etiquettesSurCourbe(svg) {
+  const segs = []
+  for (const m of svg.matchAll(/<polyline points="([^"]+)" fill="none"[^>]*stroke-width="(?:1\.8|2\.2)"/g)) {   // terrain + profil sous bâti
+    const pts = m[1].trim().split(/\s+/).map((s) => s.split(',').map(Number))
+    for (let i = 0; i < pts.length - 1; i++) segs.push([pts[i], pts[i + 1]])
+  }
+  const boxes = [...svg.matchAll(/<rect x="([\d.-]+)" y="([\d.-]+)" width="([\d.]+)" height="([\d.]+)" rx="2"/g)]
+    .map((m) => ({ x: +m[1], y: +m[2], w: +m[3], h: +m[4] }))
+  return { boites: boxes.length, segments: segs.length, sur_courbe: boxes.filter((b) => segs.some((s) => segCoupeRect(s[0], s[1], b))).length }
+}
 // chevauchement des libellés à fond opaque (rupture, emprise bâtie, voie, pente max) : rects rx="2"
 function labelsChevauchent(svg) {
   const r = [...svg.matchAll(/<rect x="([\d.-]+)" y="([\d.-]+)" width="([\d.]+)" height="([\d.]+)" rx="2"/g)]
@@ -132,6 +152,17 @@ async function parSize(idu, w, h) {
   m.zone = await page.evaluate(() => window.__gab3dZoneAudit ? window.__gab3dZoneAudit() : { zone: false })
   // lettres de l'axe actif (B/B′, A/A′) DANS la vue à l'ouverture (coupe B par défaut)
   m.lettres_axe = await lettresAxe(page)
+  // pt 2 — tout le contour + B/B′ dans le cadre, à l'OUVERTURE puis au RECENTRER
+  m.cadre_ouverture = await page.evaluate(() => window.__gab3d?.probe?.cadre === true)
+  await page.click('[data-gab3d-recentrer]').catch(() => {}); await page.waitForTimeout(400)
+  m.cadre_recentrer = await page.evaluate(() => window.__gab3d?.probe?.cadre === true)
+  // pt 1 — « Agrandir la coupe » ne recouvre ni le titre ni le datum (bandeau HTML), et le datum n'est PLUS dans le SVG
+  m.agrandir = await page.evaluate(() => {
+    const re = (s) => { const e = document.querySelector(s); return e ? e.getBoundingClientRect() : null }
+    const b = re('[data-gab3d-agrandir]'), t = re('[data-gab3d-coupe-titre]'), d = re('[data-gab3d-coupe-datum]')
+    const ov = (a, c) => a && c && a.width > 0 && c.width > 0 && a.x < c.x + c.width && c.x < a.x + a.width && a.y < c.y + c.height && c.y < a.y + a.height
+    return { recouvre_titre: ov(b, t), recouvre_datum: ov(b, d) }
+  })
   // 4. coupes A et B, aperçu (bas) + détail (agrandir) : A2 (non traversé), bandes (mêmes bornes), chevauchements
   for (const ax of ['A', 'B']) {
     await page.click(`text=Coupe ${ax}`).catch(() => {}); await page.waitForTimeout(500)
@@ -139,7 +170,7 @@ async function parSize(idu, w, h) {
     const apImg = await page.$('[data-gab3d-overlay] img[alt^="Coupe"]')
     const apSvg = apImg ? await (await fetch(await apImg.evaluate((e) => e.src))).text() : ''
     const apercu = await mesureCoupe(page, '[data-gab3d-overlay] img[alt^="Coupe"]', '[data-gab3d-coupe-band]')
-    if (apercu) { apercu.libelles = a2Control(apSvg); apercu.labels = labelsChevauchent(apSvg); apercu.bande_grad = bandeGradControl(apSvg) }
+    if (apercu) { apercu.libelles = a2Control(apSvg); apercu.labels = labelsChevauchent(apSvg); apercu.bande_grad = bandeGradControl(apSvg); apercu.sur_courbe = etiquettesSurCourbe(apSvg); apercu.datum_dans_svg = /Altitudes en m/.test(apSvg) }
     await page.screenshot({ path: `${OUT}/mesure_${idu.slice(-6)}_${w}x${h}_coupe${ax}.png` })
     await page.click('[data-gab3d-agrandir]').catch(() => {}); await page.waitForTimeout(500)
     const detImg = await page.$('[data-gab3d-overlay] img[alt="Agrandie"]')
@@ -211,7 +242,7 @@ async function parSize(idu, w, h) {
   return m
 }
 
-const TAILLES = [[1280, 720], [1440, 900], [1920, 1080], [2560, 1300]]
+const TAILLES = [[1280, 720], [1440, 694], [1440, 900], [1920, 1080], [2560, 1300]]
 for (const [court, idu] of IDUS) {
   mesures[court] = {}
   for (const [w, h] of TAILLES) mesures[court][`${w}x${h}`] = await parSize(idu, w, h)

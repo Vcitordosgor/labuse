@@ -1016,8 +1016,8 @@ export interface GabScene {
 export const getGabaritScene = (idu: string) =>
   j<GabScene>(`/outils/gabarit/scene/${encodeURIComponent(idu)}`)
 // sid = identifiant de scène TRANSMIS par la visionneuse (parité : même version terrain/plan/coupe/PDF).
-export const gabCoupeSvgUrl = (idu: string, axe: string, theme = 'sombre', sid?: string, detail = false, w?: number, h?: number) =>
-  `/outils/gabarit/scene/${encodeURIComponent(idu)}/coupe/${axe}.svg?theme=${theme}${sid ? `&sid=${sid}` : ''}${detail ? '&detail=1' : ''}${w ? `&w=${w}` : ''}${h ? `&h=${h}` : ''}`
+export const gabCoupeSvgUrl = (idu: string, axe: string, theme = 'sombre', sid?: string, detail = false, w?: number, h?: number, header = true) =>
+  `/outils/gabarit/scene/${encodeURIComponent(idu)}/coupe/${axe}.svg?theme=${theme}${sid ? `&sid=${sid}` : ''}${detail ? '&detail=1' : ''}${w ? `&w=${w}` : ''}${h ? `&h=${h}` : ''}${header ? '' : '&header=0'}`
 export const gabPlanSvgUrl = (idu: string, theme = 'sombre', sid?: string, w?: number, h?: number) =>
   `/outils/gabarit/scene/${encodeURIComponent(idu)}/plan.svg?theme=${theme}${sid ? `&sid=${sid}` : ''}${w ? `&w=${w}` : ''}${h ? `&h=${h}` : ''}`
 // PHOTO aérienne (étape 3) : orthophoto IGN proxyée par le serveur, mise en cache par identifiant de scène.

@@ -196,7 +196,7 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
     const sc = new THREE.Scene(); sc.background = new THREE.Color('#0d0f12')
     // SONDES de mesure (lues par le test WebKit) : largeur projetée de la parcelle, périmètre cadastral,
     // point du marqueur (survol).
-    const probe = { pf: 0, perim: 0, mx: 0, my: 0, mz: 0, mon: false }
+    const probe = { pf: 0, perim: 0, mx: 0, my: 0, mz: 0, mon: false, cadre: true }
     for (const poly of scene.contour_cadastral) { const r = poly.ext; for (let i = 0; i < r.length - 1; i++) probe.perim += Math.hypot(r[i + 1][0] - r[i][0], r[i + 1][1] - r[i][1]) }
 
     const { mesh, box } = terrainMesh(faces, scene.contour_cadastral)
@@ -221,29 +221,38 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
     sc.add(new THREE.AmbientLight(0xffffff, 0.55))
     const sun = new THREE.DirectionalLight(0xffffff, 0.85); sun.position.set(-1, 1.4, 1); sc.add(sun)   // nord-ouest
 
-    // CADRAGE sur le CONTOUR CADASTRAL PROJETÉ à l'écran (parcelle ~60 % de la LARGEUR). On centre sur
-    // la parcelle, puis on ajuste r pour que sa largeur projetée vaille 60 % (critère 50–70 %).
+    // CADRAGE : tout le CONTOUR cadastral + les extrémités des axes (B/B′, A/A′) tiennent dans la vue, centrés
+    // sur leur UNION → la pointe de la parcelle côté voie n'est plus coupée quand la coupe réduit la hauteur,
+    // et les deux repères restent visibles (ouverture + Recentrer). probe.pf = largeur projetée de la parcelle.
+    const bc = box.getCenter(new THREE.Vector3()), zmid = bc.y
+    const framePts: THREE.Vector3[] = []
     let pminx = Infinity, pminy = Infinity, pmaxx = -Infinity, pmaxy = -Infinity
-    for (const poly of scene.contour_cadastral) for (const [x, y] of poly.ext) { pminx = Math.min(pminx, x); pminy = Math.min(pminy, y); pmaxx = Math.max(pmaxx, x); pmaxy = Math.max(pmaxy, y) }
-    const ctr = box.getCenter(new THREE.Vector3())
-    ctr.x = (pminx + pmaxx) / 2; ctr.z = -(pminy + pmaxy) / 2
-    const corners = [[pminx, pminy], [pmaxx, pminy], [pmaxx, pmaxy], [pminx, pmaxy]].map(([x, y]) => new THREE.Vector3(x, ctr.y, -y))
-    let r = Math.max(pmaxx - pminx, pmaxy - pminy) * 0.9 + 3
+    for (const poly of scene.contour_cadastral) for (const [x, y] of poly.ext) {
+      pminx = Math.min(pminx, x); pminy = Math.min(pminy, y); pmaxx = Math.max(pmaxx, x); pmaxy = Math.max(pmaxy, y)
+      framePts.push(new THREE.Vector3(x, elev(x, y) ?? zmid, -y))
+    }
+    for (const a of Object.values(scene.axes_plan || {})) for (const p of [a.p0, a.p1]) framePts.push(new THREE.Vector3(p[0], elev(p[0], p[1]) ?? zmid, -p[1]))
+    let uminx = Infinity, uminz = Infinity, umaxx = -Infinity, umaxz = -Infinity
+    for (const v of framePts) { uminx = Math.min(uminx, v.x); umaxx = Math.max(umaxx, v.x); uminz = Math.min(uminz, v.z); umaxz = Math.max(umaxz, v.z) }
+    const ctr = new THREE.Vector3((uminx + umaxx) / 2, zmid, (uminz + umaxz) / 2)
+    const corners = [[pminx, pminy], [pmaxx, pminy], [pmaxx, pmaxy], [pminx, pmaxy]].map(([x, y]) => new THREE.Vector3(x, zmid, -y))
+    let r = Math.max(umaxx - uminx, umaxz - uminz) * 0.8 + 3
     const cam = new THREE.OrthographicCamera(-r, r, r, -r, 0.1, 5000)
     const frustum = () => { const w = el.clientWidth || W, h = el.clientHeight || H, ar = w / h; cam.left = -r * ar; cam.right = r * ar; cam.top = r; cam.bottom = -r; cam.far = r * 50; cam.updateProjectionMatrix() }
     const place = () => {
       cam.position.set(ctr.x + r * 1.1, ctr.y + r * 1.25, ctr.z + r * 1.1); cam.lookAt(ctr); frustum()
-      for (let it = 0; it < 3; it++) {   // ajuste r pour viser 60 % de largeur
-        let u0 = Infinity, u1 = -Infinity
-        for (const c of corners) { const v = c.clone().project(cam); u0 = Math.min(u0, v.x); u1 = Math.max(u1, v.x) }
-        const frac = (u1 - u0) / 2; probe.pf = frac; if (!isFinite(frac) || frac <= 0) break
-        r *= frac / 0.6; cam.position.set(ctr.x + r * 1.1, ctr.y + r * 1.25, ctr.z + r * 1.1); cam.lookAt(ctr); frustum()
-        if (Math.abs(frac - 0.6) < 0.02) break
+      for (let it = 0; it < 6; it++) {   // ajuste r : le point le plus ÉLOIGNÉ du cadrage (contour + B/B′) atteint ±0,85
+        let reach = 0                     // (sur la coordonnée NDC max → tient dans la vue même décentré par la 3/4)
+        for (const c of framePts) { const p = c.clone().project(cam); reach = Math.max(reach, Math.abs(p.x), Math.abs(p.y)) }
+        if (!isFinite(reach) || reach <= 0) break
+        r *= reach / 0.85; cam.position.set(ctr.x + r * 1.1, ctr.y + r * 1.25, ctr.z + r * 1.1); cam.lookAt(ctr); frustum()
+        if (Math.abs(reach - 0.85) < 0.03) break
       }
-      // mesure finale de la largeur projetée
-      let u0 = Infinity, u1 = -Infinity
+      // sonde : largeur projetée de la PARCELLE (contour) + tout le cadrage dans la vue (pt 2)
+      let u0 = Infinity, u1 = -Infinity, dans = true
       for (const c of corners) { const v = c.clone().project(cam); u0 = Math.min(u0, v.x); u1 = Math.max(u1, v.x) }
-      probe.pf = (u1 - u0) / 2
+      for (const c of framePts) { const p = c.clone().project(cam); if (Math.abs(p.x) > 0.995 || Math.abs(p.y) > 0.995) { dans = false; break } }
+      probe.pf = (u1 - u0) / 2; probe.cadre = dans
     }
     place()
     const controls = new OrbitControls(cam, renderer.domElement); controls.target.copy(ctr); controls.update()
@@ -471,7 +480,9 @@ export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => 
   const sid = scene?.scene_id   // transmis au plan/coupes (parité : même version que le terrain et le PDF)
   const coupes = useMemo(() => (scene?.coupes || []).map((c) => String((c as { label?: string }).label ?? '')), [scene])
   const acq = scene?.meta?.acquisition_date ? String(scene.meta.acquisition_date) : '—'
+  const acqFr = acq.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$3/$2/$1')   // 2023-08-12 → 12/08/2023 (pt 6)
   const axeSel = coupes.includes(axe) ? axe : (coupes[0] as 'A' | 'B' | undefined) ?? null
+  const coupeTitre = useMemo(() => { const c = (scene?.coupes || []).find((c) => String((c as { label?: string }).label ?? '') === axeSel); return c ? String((c as { titre?: string }).titre ?? '') : '' }, [scene, axeSel])
 
   // survol de la coupe CALÉ sur le rectangle du tracé (data-plot-x0/x1 portés par le SVG) — B8
   const onCoupeHover = (ev: React.MouseEvent<HTMLImageElement>) => {
@@ -542,18 +553,26 @@ export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => 
               <p className="mt-1 text-[9px] leading-snug text-txt-ghost">Détails techniques — scène {scene.scene_id}</p>
             </div>
           </div>
-          {/* en bas : l'aperçu REMPLIT son bandeau (grandit avec l'écran, H = V, textes ≥ 11 px) + Agrandir */}
-          <div ref={coupeBand} data-gab3d-coupe-band className="relative flex min-h-[240px] flex-1 items-center justify-center overflow-hidden border-t border-line bg-[#0f1216] p-2">
-            {axeSel
-              ? <img key={axeSel} src={gabCoupeSvgUrl(idu, axeSel, 'sombre', sid, false, coupeDim.w || undefined, coupeDim.h || undefined)} alt={`Coupe ${axeSel}`}
-                     onLoad={onImgLoad} onMouseMove={onCoupeHover} onMouseLeave={() => markerApi.current?.(null)}
-                     className="h-full w-full cursor-crosshair rounded border border-line object-contain" />
-              : <p className="text-[12px] text-txt-mut">Aucune coupe disponible.</p>}
-            {axeSel && <button data-gab3d-agrandir onClick={() => setAgrandi(true)}
-              className="absolute right-3 top-2 rounded border border-line bg-black/50 px-2 py-1 text-[11px] text-txt-mut hover:text-txt">⤢ Agrandir la coupe</button>}
+          {/* en bas : en-tête (titre + datum + Agrandir, pt 1) puis l'aperçu qui REMPLIT son cadre (H = V, ≥ 11 px) */}
+          <div className="flex min-h-[300px] flex-1 flex-col overflow-hidden border-t border-line bg-[#0f1216]">
+            <div className="flex items-center justify-between gap-2 border-b border-line/60 px-3 py-1">
+              <div data-gab3d-coupe-titre className="truncate text-[12px] font-semibold text-txt">{coupeTitre}</div>
+              <div className="flex shrink-0 items-center gap-3">
+                <span data-gab3d-coupe-datum className="hidden text-[11px] text-txt-dim lg:inline">Altitudes en m · IGN 1989 · H = V</span>
+                {axeSel && <button data-gab3d-agrandir onClick={() => setAgrandi(true)}
+                  className="rounded border border-line bg-black/50 px-2 py-1 text-[11px] text-txt-mut hover:text-txt">⤢ Agrandir la coupe</button>}
+              </div>
+            </div>
+            <div ref={coupeBand} data-gab3d-coupe-band className="relative flex flex-1 items-center justify-center overflow-hidden p-2">
+              {axeSel
+                ? <img key={axeSel} src={gabCoupeSvgUrl(idu, axeSel, 'sombre', sid, false, coupeDim.w || undefined, coupeDim.h || undefined, false)} alt={`Coupe ${axeSel}`}
+                       onLoad={onImgLoad} onMouseMove={onCoupeHover} onMouseLeave={() => markerApi.current?.(null)}
+                       className="h-full w-full cursor-crosshair rounded border border-line object-contain" />
+                : <p className="text-[12px] text-txt-mut">Aucune coupe disponible.</p>}
+            </div>
           </div>
           <p className="border-t border-line px-3 py-1.5 text-[10px] text-txt-dim">
-            MNT LiDAR HD IGN · maille de 1 m · acquisition {acq} · cotes indicatives · courbes tous les mètres, trait fort tous les 5 m · H = V.
+            MNT LiDAR HD IGN · maille de 1 m · acquisition {acqFr} · cotes indicatives · courbes tous les mètres, trait fort tous les 5 m · H = V.
           </p>
         </div>
       )}

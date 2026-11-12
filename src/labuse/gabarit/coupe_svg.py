@@ -91,10 +91,11 @@ def _fleche(x0, y0, x1, y1, col, w=1.4):
             f'<polygon points="{x1:.1f},{y1:.1f} {xa:.1f},{ya:.1f} {xb:.1f},{yb:.1f}" fill="{col}"/>')
 
 
-def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=None, detail=False):
+def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=None, detail=False, header=True):
     """SVG d'une coupe. APERÇU (detail=False) : profil, limites, emprise, rupture, 2–3 cotes — ce qui
     reste lisible. DÉTAIL (detail=True) : toutes les cotes, bandes, les DEUX pentes de la coupe B.
-    None si le profil n'a aucun point valide."""
+    header=False : titre + datum RETIRÉS du SVG (la visionneuse les met dans un bandeau HTML, à côté du
+    bouton « Agrandir », pour qu'il ne recouvre plus le datum). None si le profil n'a aucun point valide."""
     T = _THEMES.get(theme, _THEMES["sombre"])
     profil = coupe.get("profil") or []
     valides = [p for p in profil if p["z"] is not None]
@@ -115,20 +116,21 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
 
     # 3 bis : les deux bandes (parcelle, zone) + la légende figurent dans l'APERÇU COMME dans le DÉTAIL
     # (mêmes bornes) ; la ligne d'indicateurs reste réservée au détail.
-    HEAD = 22
+    HEAD = 22 if header else 15   # sans titre/datum (header=False), on garde une voie d'étiquettes au-dessus du tracé
     PAD_L, PAD_R, PAD_T = 58, 16, HEAD + 8
-    BANDES_H, AX_H = 62, 20       # longueurs des bandes posées SOUS chaque bande (leur propre ligne)
+    BANDES_H, AX_H = 54, 20       # longueurs des bandes posées SOUS chaque bande (leur propre ligne)
     IND_H = 16 if detail else 0
+    CIEL = 28                     # ciel RÉSERVÉ au-dessus de la crête pour les étiquettes (jamais sur la courbe)
     plot_w = width - PAD_L - PAD_R
-    s = min(plot_w / max(L, 1e-6), (h_max - PAD_T - BANDES_H - IND_H - AX_H) / zspan)   # H = V, JAMAIS tronqué
+    s = min(plot_w / max(L, 1e-6), (h_max - PAD_T - CIEL - BANDES_H - IND_H - AX_H) / zspan)   # H = V, JAMAIS tronqué
     plot_w = s * L
-    plot_h = s * zspan
+    plot_h = CIEL + s * zspan     # ciel + relief
     off_x = PAD_L + (width - PAD_L - PAD_R - plot_w) / 2
     y_base = PAD_T + plot_h
     height = int(y_base + AX_H + BANDES_H + IND_H)
 
     def X(d): return off_x + d * s
-    def Y(z): return PAD_T + plot_h - (z - zmin) * s
+    def Y(z): return PAD_T + CIEL + (zmax - z) * s      # crête (zmax) à PAD_T+CIEL, zmin à y_base
 
     def z_terrain(d):
         for run in _runs(profil):
@@ -139,14 +141,26 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
                         return a["z"] + t * (b["z"] - a["z"])
         return None
 
+    def sky_top(xc, half):
+        """Y du TERRAIN le plus haut (min Y) dans la bande [xc−half, xc+half] → plafond pour poser une
+        étiquette AU-DESSUS de la courbe (jamais dessus). Échantillonne la bande (bords compris) ET les
+        points du profil : un segment raide qui entre par un bord compte aussi."""
+        ys = [Y(p["z"]) for p in profil if p["z"] is not None and xc - half <= X(p["d"]) <= xc + half]
+        for k in range(9):
+            zk = z_terrain((xc - half + 2 * half * k / 8 - off_x) / s)
+            if zk is not None:
+                ys.append(Y(zk))
+        return min(ys) if ys else PAD_T + CIEL
+
     # data-plot-x0/x1 : bornes px du RECTANGLE du tracé (cale le survol de la coupe en 3D — B8)
     out = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" '
            f'height="{height}" role="img" aria-label="{_esc(coupe.get("titre",""))}" {_FONT} '
            f'data-plot-x0="{off_x:.1f}" data-plot-x1="{off_x+plot_w:.1f}" '
            f'style="background:{T["bg"]}">']
-    # en-tête UNE LIGNE (2 quater) : titre à gauche, datum à droite
-    out.append(f'<text x="{PAD_L}" y="15" font-size="12" font-weight="600" fill="{T["txt"]}">{_esc(coupe.get("titre",""))}</text>')
-    out.append(f'<text x="{width-PAD_R}" y="15" text-anchor="end" font-size="9" fill="{T["txt_dim"]}">Altitudes en m · IGN 1989 · H = V</text>')
+    # en-tête UNE LIGNE (2 quater) : titre à gauche, datum à droite — RETIRÉ si header=False (bandeau HTML)
+    if header:
+        out.append(f'<text x="{PAD_L}" y="15" font-size="12" font-weight="600" fill="{T["txt"]}">{_esc(coupe.get("titre",""))}</text>')
+        out.append(f'<text x="{width-PAD_R}" y="15" text-anchor="end" font-size="9" fill="{T["txt_dim"]}">Altitudes en m · IGN 1989 · H = V</text>')
     out.append(f'<rect x="{off_x:.1f}" y="{PAD_T}" width="{plot_w:.1f}" height="{plot_h:.1f}" '
                f'fill="{T["plot"]}" stroke="{T["grid"]}" stroke-width="0.6"/>')
 
@@ -202,8 +216,7 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
         out.append(f'<line x1="{x0:.1f}" y1="{y_base:.1f}" x2="{x1:.1f}" y2="{y_base:.1f}" stroke="{T["bati"]}" stroke-width="3"/>')
         out.append(f'<line x1="{x0:.1f}" y1="{y_base-4:.1f}" x2="{x0:.1f}" y2="{y_base+4:.1f}" stroke="{T["bati"]}" stroke-width="1"/>')
         out.append(f'<line x1="{x1:.1f}" y1="{y_base-4:.1f}" x2="{x1:.1f}" y2="{y_base+4:.1f}" stroke="{T["bati"]}" stroke-width="1"/>')
-        # « emprise bâtie » AU-DESSUS de sa barre, DANS le tracé (fond opaque) → ne touche plus la graduation
-        prot.append(_label_box((x0 + x1) / 2, y_base - 8, "emprise bâtie", T["bati"], T["plot"]))
+        # « emprise bâtie » : plus d'étiquette SUR la courbe → la barre grise est expliquée dans la LÉGENDE.
         # repère de rupture (losange) sur la PORTION CONCERNÉE = plus forte pente autour du bâti (pas le 1ᵉʳ pied)
         drb = _rupture_d(profil, b["d0"], min(b["d1"] + 3.0, L))
         zr = z_terrain(drb) if drb is not None else None
@@ -211,12 +224,12 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
             out.append(f'<path d="M{X(drb):.1f},{Y(zr)-4:.1f} l4,4 l-4,4 l-4,-4 z" fill="none" stroke="{T["lacune"]}" stroke-width="1.4"/>')
             out.append(f'<circle cx="{X(drb):.1f}" cy="{Y(zr):.1f}" r="1.6" fill="{T["lacune"]}"/>')
             rupture = True
-            # « Rupture du terrain à vérifier » À CÔTÉ du losange (aperçu ET détail), AU-DESSUS pour dégager
-            # « emprise bâtie » posée sur la barre ; fond opaque, sans chevauchement.
-            a_end = drb > L / 2                                 # losange à droite → texte à sa gauche
-            lxr = X(drb) + (-8 if a_end else 8)
-            prot.append(_label_box(lxr, max(Y(zr) - 11, PAD_T + 10), "Rupture du terrain à vérifier",
-                                   T["lacune"], T["plot"], anchor=("end" if a_end else "start")))
+            # « Rupture du terrain à vérifier » posée dans la VOIE D'ÉTIQUETTES au-dessus du tracé (JAMAIS sur la
+            # courbe) + trait de rappel jusqu'au losange ; fond opaque (aucun trait au travers).
+            a_end = X(drb) > off_x + plot_w / 2                 # losange à droite → texte vers la gauche
+            out.append(f'<line x1="{X(drb):.1f}" y1="{Y(zr)-5:.1f}" x2="{X(drb):.1f}" y2="{PAD_T:.1f}" stroke="{T["lacune"]}" stroke-width="0.5" stroke-dasharray="2 2"/>')
+            prot.append(_label_box(X(drb) + (-6 if a_end else 6), PAD_T - 4, "Rupture du terrain à vérifier",
+                                   T["lacune"], T["bg"], anchor=("end" if a_end else "start")))
         if b.get("attribution") == "bdtopo" and b.get("hauteur_m"):
             faitages.append(f"Hauteur du bâtiment (BD TOPO) · {_fmt(b['hauteur_m'],1)} m")
 
@@ -234,15 +247,19 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
                 out.append(f'<line x1="{X(dd):.1f}" y1="{Y(zt):.1f}" x2="{X(dd):.1f}" y2="{Y(zt)-14:.1f}" stroke="{T["lacune"]}" stroke-width="1.2"/>')
         zc = z_terrain((pm["d0"] + pm["d1"]) / 2)
         if zc is not None:
-            # « pente max 5 m » : au-dessus de la crête, FOND OPAQUE (grille/limites occultées dessous)
-            ypm = max(Y(zc) - 17, PAD_T + 10)
-            prot.append(_label_box(X((pm["d0"] + pm["d1"]) / 2), ypm, "pente max 5 m", T["lacune"], T["plot"]))
+            # VALEUR MESURÉE : « pente max N % sur 5 m » (se lit comme une pente, pas des mètres) — fond opaque,
+            # posée AU-DESSUS du terrain LOCAL (jamais sur la courbe, pt 4).
+            xcp = X((pm["d0"] + pm["d1"]) / 2)
+            txt = f"pente max {_fmt(pm.get('pente_pct'), 0)} % sur 5 m" if pm.get("pente_pct") is not None else "pente max sur 5 m"
+            halfp = max(len(txt) * 9 * 0.56 / 2 + 3, 8.0)
+            ypm = max(sky_top(xcp, halfp) - 6, PAD_T + 9)
+            prot.append(_label_box(xcp, ypm, txt, T["lacune"], T["plot"]))
 
-    # cotes : APERÇU = voie/haut/bas (2–3) ; DÉTAIL = toutes. UNE par point, anti-collision.
+    # cotes : APERÇU = voie/haut/bas (2–3) ; DÉTAIL = toutes. Posées DANS LE CIEL, fond opaque (pt 3/4).
     pts = coupe.get("cotes_points", {}).get("points", [])
     if not detail:
         pts = [p for p in pts if p.get("role") in ("voie", "haut", "bas")]
-    out.append(_cotes(pts, X, Y, T))
+    out.append(_cotes(pts, X, Y, T, PAD_T, prot, sky_top))
 
     # VOIE nommée LÀ OÙ la coupe la traverse (C10, coupe B)
     voie = coupe.get("voie") or {}
@@ -263,14 +280,14 @@ def coupe_svg(coupe, *, theme="sombre", width=960, h_max=520, adresse=None, idu=
     # (leur propre ligne, +11) → jamais sur les graduations. Puis légende de la coupe.
     yb0 = y_base + AX_H
     out.append(_bande(coupe.get("limites_parcelle_d") or [], yb0, X, "parcelle", T))
-    yb1 = yb0 + 24
+    yb1 = yb0 + 21
     zspans = coupe.get("zone_implantation_d") or []
     if zspans:
         out.append(_bande(zspans, yb1, X, "zone d'implantation", T, col=T["zone"]))
     else:
         etat = "non traversée" if coupe.get("zone_presente") else "indisponible"
         out.append(f'<text x="8" y="{yb1+3:.1f}" font-size="9" fill="{T["txt_dim"]}">zone d\'implantation — {etat}</text>')
-    out.append(_legende_coupe(yb1 + 24, off_x, T, rupture, bool(batis)))
+    out.append(_legende_coupe(yb1 + 19, off_x, T, rupture, bool(batis)))
     # indicateurs (deux pentes, pente max 5 m, accès, bâti) : DÉTAIL seulement
     if detail:
         out.append(_indicateurs(coupe, faitages, rupture, y_base + AX_H + BANDES_H, PAD_L, width - PAD_R, T))
@@ -296,26 +313,26 @@ def _label_box(cx, y, text, color, bg, anchor="middle", fs=9):
             f'<text x="{cx:.1f}" y="{y:.1f}" text-anchor="{anchor}" font-size="{fs}" fill="{color}">{_esc(text)}</text>')
 
 
-def _cotes(points, X, Y, T):
-    """Cotes (décimètre, virgule), UNE par point, sans collision : rangées alternées + TRAIT DE RAPPEL
-    (C10) reliant le point à son étiquette quand elle est décalée."""
-    items = sorted(points, key=lambda p: p["d"])
-    rows = [[], []]       # occupation x par rangée (0 = au-dessus, 1 = en dessous)
+def _cotes(points, X, Y, T, ytop, prot, sky_top):
+    """Cotes (décimètre, virgule) posées AU-DESSUS du terrain LOCAL (jamais sur la courbe), à FOND OPAQUE
+    (aucun trait vertical au travers) + trait de rappel jusqu'au bord de l'étiquette (pt 3/4). Les étiquettes
+    partent dans `prot` → émises EN DERNIER ; seuls les points et traits de rappel reviennent pour le corps."""
+    items = sorted((p for p in points if p["z"] is not None), key=lambda p: p["d"])
+    rows = [[], [], []]       # rangées empilées vers le haut (occupation x)
     frag = []
     for p in items:
-        if p["z"] is None:
-            continue
         x, y = X(p["d"]), Y(p["z"])
+        half = len(f'{_fmt(p["z"],1)} m') * 9 * 0.56 / 2 + 3
         placed = None
-        for r in (0, 1):
-            if all(abs(x - xx) >= 24 for xx in rows[r]):
+        for r in range(3):
+            if all(abs(x - xx) >= 2 * half + 4 for xx in rows[r]):
                 rows[r].append(x); placed = r; break
         if placed is None:
             continue
-        yy = (y - 9) if placed == 0 else (y + 13)
+        yy = max(sky_top(x, half) - 6 - placed * 13, ytop + 9)   # au-dessus du terrain local, empilé vers le haut
         frag.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="1.8" fill="{T["txt"]}"/>')
-        frag.append(f'<line x1="{x:.1f}" y1="{y:.1f}" x2="{x:.1f}" y2="{yy+(2 if placed else -7):.1f}" stroke="{T["txt_dim"]}" stroke-width="0.5"/>')  # trait de rappel
-        frag.append(f'<text x="{x:.1f}" y="{yy:.1f}" text-anchor="middle" font-size="9" fill="{T["txt"]}">{_fmt(p["z"],1)} m</text>')
+        frag.append(f'<line x1="{x:.1f}" y1="{y-2:.1f}" x2="{x:.1f}" y2="{yy+4:.1f}" stroke="{T["txt_dim"]}" stroke-width="0.5"/>')  # rappel jusqu'au bord de l'étiquette
+        prot.append(_label_box(x, yy, f'{_fmt(p["z"],1)} m', T["txt"], T["plot"]))
     return "".join(frag)
 
 
@@ -356,7 +373,9 @@ def _legende_coupe(y, x, T, rupture, has_bati):
         cx += 22 + len(label) * 5.2 + 16
     ent("terrain", lambda c: f'<line x1="{c:.1f}" y1="{y:.1f}" x2="{c+16:.1f}" y2="{y:.1f}" stroke="{T["terrain"]}" stroke-width="2"/>', 16)
     if has_bati:
-        # le MNT bare-earth sous une emprise bâtie est INTERPOLÉ par l'IGN (pas de retour sol) → dit en légende
+        # barre grise = emprise bâtie (plus d'étiquette sur la courbe, pt 4) ; et profil sous le bâti INTERPOLÉ
+        # par l'IGN (MNT bare-earth sans retour sol).
+        ent("emprise bâtie", lambda c: f'<line x1="{c:.1f}" y1="{y:.1f}" x2="{c+16:.1f}" y2="{y:.1f}" stroke="{T["bati"]}" stroke-width="3"/>', 16)
         ent("profil sous le bâti (interpolé)", lambda c: f'<line x1="{c:.1f}" y1="{y:.1f}" x2="{c+16:.1f}" y2="{y:.1f}" stroke="{T["sous_bati"]}" stroke-width="2.2" stroke-dasharray="3 2.5"/>', 16)
     if rupture:
         ent("rupture du terrain à vérifier", lambda c: f'<path d="M{c+8:.1f},{y-4:.1f} l4,4 l-4,4 l-4,-4 z" fill="none" stroke="{T["lacune"]}" stroke-width="1.4"/>', 16)

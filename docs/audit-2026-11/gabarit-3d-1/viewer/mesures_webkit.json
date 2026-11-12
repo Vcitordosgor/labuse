@@ -1,43 +1,49 @@
 {
   "BZ1065": {
     "1280x720": {
-      "cadrage_parcelle_largeur_pct": 60,
+      "cadrage_parcelle_largeur_pct": 39.3,
       "coupes": {
         "A": {
           "apercu": {
             "contenu_px": [
               1262,
-              223
+              249
             ],
             "texte_min_px": 11.7,
             "n_cotes": 6,
             "chevauchements": 0,
-            "remplissage_pct": 99.9,
+            "remplissage_pct": 100,
             "libelles": {
-              "libelles_proteges": 1,
+              "libelles_proteges": 3,
               "traits_au_travers": 0
             },
             "labels": {
-              "boites": 1,
-              "chevauchements": 0
+              "boites": 3,
+              "chevauchements": 1
             },
             "bande_grad": {
               "graduations": 5,
               "longueurs": 3,
               "chevauchements": 0
-            }
+            },
+            "sur_courbe": {
+              "boites": 3,
+              "segments": 133,
+              "sur_courbe": 0
+            },
+            "datum_dans_svg": false
           },
           "detail": {
             "contenu_px": [
               1248,
-              455
+              481
             ],
             "texte_min_px": 11.7,
             "n_cotes": 8,
-            "chevauchements": 0,
+            "chevauchements": 1,
             "labels": {
-              "boites": 1,
-              "chevauchements": 0
+              "boites": 5,
+              "chevauchements": 1
             },
             "bande_grad": {
               "graduations": 5,
@@ -66,36 +72,42 @@
           "apercu": {
             "contenu_px": [
               1262,
-              223
+              249
             ],
             "texte_min_px": 11.7,
             "n_cotes": 9,
             "chevauchements": 0,
-            "remplissage_pct": 99.9,
+            "remplissage_pct": 100,
             "libelles": {
-              "libelles_proteges": 4,
+              "libelles_proteges": 6,
               "traits_au_travers": 0
             },
             "labels": {
-              "boites": 4,
+              "boites": 6,
               "chevauchements": 0
             },
             "bande_grad": {
               "graduations": 5,
               "longueurs": 5,
               "chevauchements": 0
-            }
+            },
+            "sur_courbe": {
+              "boites": 6,
+              "segments": 158,
+              "sur_courbe": 0
+            },
+            "datum_dans_svg": false
           },
           "detail": {
             "contenu_px": [
               1248,
-              269
+              295
             ],
             "texte_min_px": 11.7,
             "n_cotes": 15,
             "chevauchements": 0,
             "labels": {
-              "boites": 4,
+              "boites": 12,
               "chevauchements": 0
             },
             "bande_grad": {
@@ -127,9 +139,9 @@
       "contour_couverture_pct": 100,
       "zone": {
         "zone": true,
-        "inside_green_pct": 97.9,
-        "inside_tot": 2019,
-        "bati_exclu": 399,
+        "inside_green_pct": 96.6,
+        "inside_tot": 871,
+        "bati_exclu": 172,
         "outside_green": 0
       },
       "lettres_axe": [
@@ -142,64 +154,256 @@
           "dansLaVue": true
         }
       ],
+      "cadre_ouverture": true,
+      "cadre_recentrer": true,
+      "agrandir": {
+        "recouvre_titre": false,
+        "recouvre_datum": false
+      },
       "plan_texte_min_px": 11,
       "legende_px": 11,
       "survol": {
         "coupe": "B",
         "marqueur_pose": true,
-        "ecart_m": 0.01,
-        "alt_marqueur_3d_m": 404.08,
+        "ecart_m": 0.08,
+        "alt_marqueur_3d_m": 404.26,
         "alt_losange_coupe_m": 404.06,
-        "ecart_altitude_m": 0.02
+        "ecart_altitude_m": 0.19
       },
       "parite_sid": true,
       "rien_ne_depasse": true,
       "photo": {
         "etat": "ok",
-        "delai_ms": 345,
+        "delai_ms": 184,
+        "credit_ign": true,
+        "millesime": "2025",
+        "proxy_serveur": true
+      }
+    },
+    "1440x694": {
+      "cadrage_parcelle_largeur_pct": 31,
+      "coupes": {
+        "A": {
+          "apercu": {
+            "contenu_px": [
+              1422,
+              249
+            ],
+            "texte_min_px": 11.7,
+            "n_cotes": 6,
+            "chevauchements": 0,
+            "remplissage_pct": 100,
+            "libelles": {
+              "libelles_proteges": 3,
+              "traits_au_travers": 0
+            },
+            "labels": {
+              "boites": 3,
+              "chevauchements": 1
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 3,
+              "chevauchements": 0
+            },
+            "sur_courbe": {
+              "boites": 3,
+              "segments": 133,
+              "sur_courbe": 0
+            },
+            "datum_dans_svg": false
+          },
+          "detail": {
+            "contenu_px": [
+              1408,
+              543
+            ],
+            "texte_min_px": 13.2,
+            "n_cotes": 8,
+            "chevauchements": 1,
+            "labels": {
+              "boites": 5,
+              "chevauchements": 1
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 3,
+              "chevauchements": 0
+            }
+          },
+          "lettres": [
+            {
+              "t": "A",
+              "dansLaVue": true
+            },
+            {
+              "t": "A′",
+              "dansLaVue": true
+            }
+          ],
+          "bandes_apercu": [
+            "parcelle:4.43-47.49",
+            "zone:33.96-43.38",
+            "zone:9.02-28.54"
+          ],
+          "bandes_bornes_identiques": true
+        },
+        "B": {
+          "apercu": {
+            "contenu_px": [
+              1422,
+              249
+            ],
+            "texte_min_px": 11.7,
+            "n_cotes": 9,
+            "chevauchements": 0,
+            "remplissage_pct": 100,
+            "libelles": {
+              "libelles_proteges": 6,
+              "traits_au_travers": 0
+            },
+            "labels": {
+              "boites": 6,
+              "chevauchements": 0
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 5,
+              "chevauchements": 0
+            },
+            "sur_courbe": {
+              "boites": 6,
+              "segments": 158,
+              "sur_courbe": 0
+            },
+            "datum_dans_svg": false
+          },
+          "detail": {
+            "contenu_px": [
+              1408,
+              333
+            ],
+            "texte_min_px": 13.2,
+            "n_cotes": 15,
+            "chevauchements": 0,
+            "labels": {
+              "boites": 12,
+              "chevauchements": 0
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 5,
+              "chevauchements": 0
+            }
+          },
+          "lettres": [
+            {
+              "t": "B",
+              "dansLaVue": true
+            },
+            {
+              "t": "B′",
+              "dansLaVue": true
+            }
+          ],
+          "bandes_apercu": [
+            "parcelle:31.41-51.58",
+            "parcelle:61.20-94.56",
+            "zone:36.24-45.58",
+            "zone:65.03-68.43",
+            "zone:81.24-90.54"
+          ],
+          "bandes_bornes_identiques": true
+        }
+      },
+      "contour_couverture_pct": 100,
+      "zone": {
+        "zone": true,
+        "inside_green_pct": 96.7,
+        "inside_tot": 733,
+        "bati_exclu": 143,
+        "outside_green": 0
+      },
+      "lettres_axe": [
+        {
+          "t": "B",
+          "dansLaVue": true
+        },
+        {
+          "t": "B′",
+          "dansLaVue": true
+        }
+      ],
+      "cadre_ouverture": true,
+      "cadre_recentrer": true,
+      "agrandir": {
+        "recouvre_titre": false,
+        "recouvre_datum": false
+      },
+      "plan_texte_min_px": 11,
+      "legende_px": 11,
+      "survol": {
+        "coupe": "B",
+        "marqueur_pose": true,
+        "ecart_m": 0.08,
+        "alt_marqueur_3d_m": 404.26,
+        "alt_losange_coupe_m": 404.06,
+        "ecart_altitude_m": 0.19
+      },
+      "parite_sid": true,
+      "rien_ne_depasse": true,
+      "photo": {
+        "etat": "ok",
+        "delai_ms": 72,
         "credit_ign": true,
         "millesime": "2025",
         "proxy_serveur": true
       }
     },
     "1440x900": {
-      "cadrage_parcelle_largeur_pct": 60,
+      "cadrage_parcelle_largeur_pct": 52.2,
       "coupes": {
         "A": {
           "apercu": {
             "contenu_px": [
               1422,
-              223
+              249
             ],
             "texte_min_px": 11.7,
             "n_cotes": 6,
             "chevauchements": 0,
-            "remplissage_pct": 99.9,
+            "remplissage_pct": 100,
             "libelles": {
-              "libelles_proteges": 1,
+              "libelles_proteges": 3,
               "traits_au_travers": 0
             },
             "labels": {
-              "boites": 1,
-              "chevauchements": 0
+              "boites": 3,
+              "chevauchements": 1
             },
             "bande_grad": {
               "graduations": 5,
               "longueurs": 3,
               "chevauchements": 0
-            }
+            },
+            "sur_courbe": {
+              "boites": 3,
+              "segments": 133,
+              "sur_courbe": 0
+            },
+            "datum_dans_svg": false
           },
           "detail": {
             "contenu_px": [
               1408,
-              513
+              543
             ],
             "texte_min_px": 13.2,
             "n_cotes": 8,
-            "chevauchements": 0,
+            "chevauchements": 1,
             "labels": {
-              "boites": 1,
-              "chevauchements": 0
+              "boites": 5,
+              "chevauchements": 1
             },
             "bande_grad": {
               "graduations": 5,
@@ -228,36 +432,42 @@
           "apercu": {
             "contenu_px": [
               1422,
-              223
+              249
             ],
             "texte_min_px": 11.7,
             "n_cotes": 9,
             "chevauchements": 0,
-            "remplissage_pct": 99.9,
+            "remplissage_pct": 100,
             "libelles": {
-              "libelles_proteges": 4,
+              "libelles_proteges": 6,
               "traits_au_travers": 0
             },
             "labels": {
-              "boites": 4,
+              "boites": 6,
               "chevauchements": 0
             },
             "bande_grad": {
               "graduations": 5,
               "longueurs": 5,
               "chevauchements": 0
-            }
+            },
+            "sur_courbe": {
+              "boites": 6,
+              "segments": 158,
+              "sur_courbe": 0
+            },
+            "datum_dans_svg": false
           },
           "detail": {
             "contenu_px": [
               1408,
-              304
+              333
             ],
             "texte_min_px": 13.2,
             "n_cotes": 15,
             "chevauchements": 0,
             "labels": {
-              "boites": 4,
+              "boites": 12,
               "chevauchements": 0
             },
             "bande_grad": {
@@ -289,9 +499,9 @@
       "contour_couverture_pct": 100,
       "zone": {
         "zone": true,
-        "inside_green_pct": 97.8,
-        "inside_tot": 2761,
-        "bati_exclu": 538,
+        "inside_green_pct": 97.2,
+        "inside_tot": 2090,
+        "bati_exclu": 413,
         "outside_green": 0
       },
       "lettres_axe": [
@@ -304,64 +514,76 @@
           "dansLaVue": true
         }
       ],
+      "cadre_ouverture": true,
+      "cadre_recentrer": true,
+      "agrandir": {
+        "recouvre_titre": false,
+        "recouvre_datum": false
+      },
       "plan_texte_min_px": 11.3,
       "legende_px": 11,
       "survol": {
         "coupe": "B",
         "marqueur_pose": true,
-        "ecart_m": 0.01,
-        "alt_marqueur_3d_m": 404.08,
+        "ecart_m": 0.08,
+        "alt_marqueur_3d_m": 404.26,
         "alt_losange_coupe_m": 404.06,
-        "ecart_altitude_m": 0.02
+        "ecart_altitude_m": 0.19
       },
       "parite_sid": true,
       "rien_ne_depasse": true,
       "photo": {
         "etat": "ok",
-        "delai_ms": 105,
-        "credit_ign": false,
+        "delai_ms": 66,
+        "credit_ign": true,
         "millesime": "2025",
         "proxy_serveur": true
       }
     },
     "1920x1080": {
-      "cadrage_parcelle_largeur_pct": 60,
+      "cadrage_parcelle_largeur_pct": 49.6,
       "coupes": {
         "A": {
           "apercu": {
             "contenu_px": [
-              1904,
-              242
+              1903,
+              249
             ],
             "texte_min_px": 11.7,
             "n_cotes": 6,
             "chevauchements": 0,
             "remplissage_pct": 100,
             "libelles": {
-              "libelles_proteges": 1,
+              "libelles_proteges": 3,
               "traits_au_travers": 0
             },
             "labels": {
-              "boites": 1,
-              "chevauchements": 0
+              "boites": 3,
+              "chevauchements": 1
             },
             "bande_grad": {
               "graduations": 5,
               "longueurs": 3,
               "chevauchements": 0
-            }
+            },
+            "sur_courbe": {
+              "boites": 3,
+              "segments": 133,
+              "sur_courbe": 0
+            },
+            "datum_dans_svg": false
           },
           "detail": {
             "contenu_px": [
               1888,
-              688
+              728
             ],
             "texte_min_px": 17.7,
             "n_cotes": 8,
             "chevauchements": 0,
             "labels": {
-              "boites": 1,
-              "chevauchements": 0
+              "boites": 5,
+              "chevauchements": 1
             },
             "bande_grad": {
               "graduations": 5,
@@ -389,37 +611,43 @@
         "B": {
           "apercu": {
             "contenu_px": [
-              1904,
-              242
+              1903,
+              249
             ],
             "texte_min_px": 11.7,
             "n_cotes": 9,
             "chevauchements": 0,
             "remplissage_pct": 100,
             "libelles": {
-              "libelles_proteges": 4,
+              "libelles_proteges": 6,
               "traits_au_travers": 0
             },
             "labels": {
-              "boites": 4,
+              "boites": 6,
               "chevauchements": 0
             },
             "bande_grad": {
               "graduations": 5,
               "longueurs": 5,
               "chevauchements": 0
-            }
+            },
+            "sur_courbe": {
+              "boites": 6,
+              "segments": 158,
+              "sur_courbe": 0
+            },
+            "datum_dans_svg": false
           },
           "detail": {
             "contenu_px": [
               1888,
-              407
+              446
             ],
             "texte_min_px": 17.7,
             "n_cotes": 15,
             "chevauchements": 0,
             "labels": {
-              "boites": 4,
+              "boites": 12,
               "chevauchements": 0
             },
             "bande_grad": {
@@ -451,9 +679,9 @@
       "contour_couverture_pct": 100,
       "zone": {
         "zone": true,
-        "inside_green_pct": 98,
-        "inside_tot": 5635,
-        "bati_exclu": 1096,
+        "inside_green_pct": 97.5,
+        "inside_tot": 3860,
+        "bati_exclu": 745,
         "outside_green": 0
       },
       "lettres_axe": [
@@ -466,64 +694,76 @@
           "dansLaVue": true
         }
       ],
+      "cadre_ouverture": true,
+      "cadre_recentrer": true,
+      "agrandir": {
+        "recouvre_titre": false,
+        "recouvre_datum": false
+      },
       "plan_texte_min_px": 11.3,
       "legende_px": 11,
       "survol": {
         "coupe": "B",
         "marqueur_pose": true,
-        "ecart_m": 0.06,
-        "alt_marqueur_3d_m": 404.22,
+        "ecart_m": 0.08,
+        "alt_marqueur_3d_m": 404.26,
         "alt_losange_coupe_m": 404.06,
-        "ecart_altitude_m": 0.16
+        "ecart_altitude_m": 0.19
       },
       "parite_sid": true,
       "rien_ne_depasse": true,
       "photo": {
         "etat": "ok",
-        "delai_ms": 110,
+        "delai_ms": 66,
         "credit_ign": true,
         "millesime": "2025",
         "proxy_serveur": true
       }
     },
     "2560x1300": {
-      "cadrage_parcelle_largeur_pct": 60,
+      "cadrage_parcelle_largeur_pct": 46.6,
       "coupes": {
         "A": {
           "apercu": {
             "contenu_px": [
               2544,
-              296
+              251
             ],
             "texte_min_px": 11.7,
             "n_cotes": 6,
             "chevauchements": 0,
             "remplissage_pct": 100,
             "libelles": {
-              "libelles_proteges": 1,
+              "libelles_proteges": 3,
               "traits_au_travers": 0
             },
             "labels": {
-              "boites": 1,
-              "chevauchements": 0
+              "boites": 3,
+              "chevauchements": 1
             },
             "bande_grad": {
               "graduations": 5,
               "longueurs": 3,
               "chevauchements": 0
-            }
+            },
+            "sur_courbe": {
+              "boites": 3,
+              "segments": 133,
+              "sur_courbe": 0
+            },
+            "datum_dans_svg": false
           },
           "detail": {
             "contenu_px": [
               2528,
-              922
+              974
             ],
             "texte_min_px": 23.7,
             "n_cotes": 8,
             "chevauchements": 0,
             "labels": {
-              "boites": 1,
-              "chevauchements": 0
+              "boites": 5,
+              "chevauchements": 1
             },
             "bande_grad": {
               "graduations": 5,
@@ -552,36 +792,42 @@
           "apercu": {
             "contenu_px": [
               2544,
-              296
+              251
             ],
             "texte_min_px": 11.7,
             "n_cotes": 9,
             "chevauchements": 0,
             "remplissage_pct": 100,
             "libelles": {
-              "libelles_proteges": 4,
+              "libelles_proteges": 6,
               "traits_au_travers": 0
             },
             "labels": {
-              "boites": 4,
+              "boites": 6,
               "chevauchements": 0
             },
             "bande_grad": {
               "graduations": 5,
               "longueurs": 5,
               "chevauchements": 0
-            }
+            },
+            "sur_courbe": {
+              "boites": 6,
+              "segments": 158,
+              "sur_courbe": 0
+            },
+            "datum_dans_svg": false
           },
           "detail": {
             "contenu_px": [
               2528,
-              545
+              598
             ],
             "texte_min_px": 23.7,
             "n_cotes": 15,
             "chevauchements": 0,
             "labels": {
-              "boites": 4,
+              "boites": 12,
               "chevauchements": 0
             },
             "bande_grad": {
@@ -614,9 +860,9 @@
       "zone": {
         "zone": true,
         "inside_green_pct": 98.5,
-        "inside_tot": 11042,
-        "bati_exclu": 2158,
-        "outside_green": 0
+        "inside_tot": 6668,
+        "bati_exclu": 1301,
+        "outside_green": 1
       },
       "lettres_axe": [
         {
@@ -628,21 +874,27 @@
           "dansLaVue": true
         }
       ],
+      "cadre_ouverture": true,
+      "cadre_recentrer": true,
+      "agrandir": {
+        "recouvre_titre": false,
+        "recouvre_datum": false
+      },
       "plan_texte_min_px": 11.3,
       "legende_px": 11,
       "survol": {
         "coupe": "B",
         "marqueur_pose": true,
-        "ecart_m": 0.04,
-        "alt_marqueur_3d_m": 404.17,
+        "ecart_m": 0.03,
+        "alt_marqueur_3d_m": 404.15,
         "alt_losange_coupe_m": 404.06,
-        "ecart_altitude_m": 0.11
+        "ecart_altitude_m": 0.09
       },
       "parite_sid": true,
       "rien_ne_depasse": true,
       "photo": {
         "etat": "ok",
-        "delai_ms": 179,
+        "delai_ms": 85,
         "credit_ign": true,
         "millesime": "2025",
         "proxy_serveur": true
@@ -651,43 +903,49 @@
   },
   "CM1658": {
     "1280x720": {
-      "cadrage_parcelle_largeur_pct": 60,
+      "cadrage_parcelle_largeur_pct": 39.1,
       "coupes": {
         "A": {
           "apercu": {
             "contenu_px": [
               1262,
-              223
+              249
             ],
             "texte_min_px": 11.7,
             "n_cotes": 5,
             "chevauchements": 0,
-            "remplissage_pct": 99.9,
+            "remplissage_pct": 100,
             "libelles": {
-              "libelles_proteges": 3,
+              "libelles_proteges": 4,
               "traits_au_travers": 0
             },
             "labels": {
-              "boites": 3,
+              "boites": 4,
               "chevauchements": 1
             },
             "bande_grad": {
               "graduations": 5,
               "longueurs": 2,
               "chevauchements": 0
-            }
+            },
+            "sur_courbe": {
+              "boites": 4,
+              "segments": 58,
+              "sur_courbe": 0
+            },
+            "datum_dans_svg": false
           },
           "detail": {
             "contenu_px": [
               1248,
-              527
+              553
             ],
             "texte_min_px": 11.7,
             "n_cotes": 8,
             "chevauchements": 0,
             "labels": {
-              "boites": 3,
-              "chevauchements": 0
+              "boites": 7,
+              "chevauchements": 1
             },
             "bande_grad": {
               "graduations": 5,
@@ -715,19 +973,43 @@
           "apercu": {
             "contenu_px": [
               1264,
-              182
+              199
             ],
             "texte_min_px": 11.7,
             "n_cotes": 5,
             "chevauchements": 0,
             "remplissage_pct": 100,
             "libelles": {
-              "libelles_proteges": 1,
+              "libelles_proteges": 3,
               "traits_au_travers": 0
             },
             "labels": {
-              "boites": 1,
+              "boites": 3,
               "chevauchements": 0
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 2,
+              "chevauchements": 0
+            },
+            "sur_courbe": {
+              "boites": 3,
+              "segments": 103,
+              "sur_courbe": 0
+            },
+            "datum_dans_svg": false
+          },
+          "detail": {
+            "contenu_px": [
+              1248,
+              229
+            ],
+            "texte_min_px": 11.7,
+            "n_cotes": 7,
+            "chevauchements": 0,
+            "labels": {
+              "boites": 5,
+              "chevauchements": 2
             },
             "bande_grad": {
               "graduations": 5,
@@ -735,17 +1017,351 @@
               "chevauchements": 0
             }
           },
-          "detail": {
+          "lettres": [
+            {
+              "t": "B",
+              "dansLaVue": true
+            },
+            {
+              "t": "B′",
+              "dansLaVue": true
+            }
+          ],
+          "bandes_apercu": [
+            "parcelle:25.13-42.56",
+            "zone:28.13-39.55"
+          ],
+          "bandes_bornes_identiques": true
+        }
+      },
+      "contour_couverture_pct": 100,
+      "zone": {
+        "zone": true,
+        "inside_green_pct": 98.5,
+        "inside_tot": 408,
+        "bati_exclu": 866,
+        "outside_green": 0
+      },
+      "lettres_axe": [
+        {
+          "t": "B",
+          "dansLaVue": true
+        },
+        {
+          "t": "B′",
+          "dansLaVue": true
+        }
+      ],
+      "cadre_ouverture": true,
+      "cadre_recentrer": true,
+      "agrandir": {
+        "recouvre_titre": false,
+        "recouvre_datum": false
+      },
+      "plan_texte_min_px": 12.3,
+      "legende_px": 11,
+      "survol": {
+        "coupe": "A",
+        "marqueur_pose": true,
+        "ecart_m": 0.06,
+        "alt_marqueur_3d_m": 595.1,
+        "alt_losange_coupe_m": 595.08,
+        "ecart_altitude_m": 0.02
+      },
+      "parite_sid": true,
+      "rien_ne_depasse": true,
+      "photo": {
+        "etat": "ok",
+        "delai_ms": 64,
+        "credit_ign": true,
+        "millesime": "2025",
+        "proxy_serveur": true
+      }
+    },
+    "1440x694": {
+      "cadrage_parcelle_largeur_pct": 30.8,
+      "coupes": {
+        "A": {
+          "apercu": {
             "contenu_px": [
-              1248,
-              203
+              1422,
+              249
             ],
             "texte_min_px": 11.7,
+            "n_cotes": 5,
+            "chevauchements": 0,
+            "remplissage_pct": 100,
+            "libelles": {
+              "libelles_proteges": 4,
+              "traits_au_travers": 0
+            },
+            "labels": {
+              "boites": 4,
+              "chevauchements": 1
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 2,
+              "chevauchements": 0
+            },
+            "sur_courbe": {
+              "boites": 4,
+              "segments": 58,
+              "sur_courbe": 0
+            },
+            "datum_dans_svg": false
+          },
+          "detail": {
+            "contenu_px": [
+              1408,
+              623
+            ],
+            "texte_min_px": 13.2,
+            "n_cotes": 8,
+            "chevauchements": 0,
+            "labels": {
+              "boites": 7,
+              "chevauchements": 1
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 2,
+              "chevauchements": 0
+            }
+          },
+          "lettres": [
+            {
+              "t": "A",
+              "dansLaVue": true
+            },
+            {
+              "t": "A′",
+              "dansLaVue": true
+            }
+          ],
+          "bandes_apercu": [
+            "parcelle:1.12-22.92",
+            "zone:8.64-19.86"
+          ],
+          "bandes_bornes_identiques": true
+        },
+        "B": {
+          "apercu": {
+            "contenu_px": [
+              1424,
+              204
+            ],
+            "texte_min_px": 11.7,
+            "n_cotes": 5,
+            "chevauchements": 0,
+            "remplissage_pct": 100,
+            "libelles": {
+              "libelles_proteges": 3,
+              "traits_au_travers": 0
+            },
+            "labels": {
+              "boites": 3,
+              "chevauchements": 0
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 2,
+              "chevauchements": 0
+            },
+            "sur_courbe": {
+              "boites": 3,
+              "segments": 103,
+              "sur_courbe": 0
+            },
+            "datum_dans_svg": false
+          },
+          "detail": {
+            "contenu_px": [
+              1408,
+              258
+            ],
+            "texte_min_px": 13.2,
             "n_cotes": 7,
             "chevauchements": 0,
             "labels": {
-              "boites": 1,
+              "boites": 5,
+              "chevauchements": 2
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 2,
               "chevauchements": 0
+            }
+          },
+          "lettres": [
+            {
+              "t": "B",
+              "dansLaVue": true
+            },
+            {
+              "t": "B′",
+              "dansLaVue": true
+            }
+          ],
+          "bandes_apercu": [
+            "parcelle:25.13-42.56",
+            "zone:28.13-39.55"
+          ],
+          "bandes_bornes_identiques": true
+        }
+      },
+      "contour_couverture_pct": 100,
+      "zone": {
+        "zone": true,
+        "inside_green_pct": 97.7,
+        "inside_tot": 342,
+        "bati_exclu": 737,
+        "outside_green": 0
+      },
+      "lettres_axe": [
+        {
+          "t": "B",
+          "dansLaVue": true
+        },
+        {
+          "t": "B′",
+          "dansLaVue": true
+        }
+      ],
+      "cadre_ouverture": true,
+      "cadre_recentrer": true,
+      "agrandir": {
+        "recouvre_titre": false,
+        "recouvre_datum": false
+      },
+      "plan_texte_min_px": 12.3,
+      "legende_px": 11,
+      "survol": {
+        "coupe": "A",
+        "marqueur_pose": true,
+        "ecart_m": 0.06,
+        "alt_marqueur_3d_m": 595.1,
+        "alt_losange_coupe_m": 595.08,
+        "ecart_altitude_m": 0.02
+      },
+      "parite_sid": true,
+      "rien_ne_depasse": true,
+      "photo": {
+        "etat": "ok",
+        "delai_ms": 68,
+        "credit_ign": true,
+        "millesime": "2025",
+        "proxy_serveur": true
+      }
+    },
+    "1440x900": {
+      "cadrage_parcelle_largeur_pct": 51.9,
+      "coupes": {
+        "A": {
+          "apercu": {
+            "contenu_px": [
+              1422,
+              249
+            ],
+            "texte_min_px": 11.7,
+            "n_cotes": 5,
+            "chevauchements": 0,
+            "remplissage_pct": 100,
+            "libelles": {
+              "libelles_proteges": 4,
+              "traits_au_travers": 0
+            },
+            "labels": {
+              "boites": 4,
+              "chevauchements": 1
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 2,
+              "chevauchements": 0
+            },
+            "sur_courbe": {
+              "boites": 4,
+              "segments": 58,
+              "sur_courbe": 0
+            },
+            "datum_dans_svg": false
+          },
+          "detail": {
+            "contenu_px": [
+              1408,
+              623
+            ],
+            "texte_min_px": 13.2,
+            "n_cotes": 8,
+            "chevauchements": 0,
+            "labels": {
+              "boites": 7,
+              "chevauchements": 1
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 2,
+              "chevauchements": 0
+            }
+          },
+          "lettres": [
+            {
+              "t": "A",
+              "dansLaVue": true
+            },
+            {
+              "t": "A′",
+              "dansLaVue": true
+            }
+          ],
+          "bandes_apercu": [
+            "parcelle:1.12-22.92",
+            "zone:8.64-19.86"
+          ],
+          "bandes_bornes_identiques": true
+        },
+        "B": {
+          "apercu": {
+            "contenu_px": [
+              1424,
+              204
+            ],
+            "texte_min_px": 11.7,
+            "n_cotes": 5,
+            "chevauchements": 0,
+            "remplissage_pct": 100,
+            "libelles": {
+              "libelles_proteges": 3,
+              "traits_au_travers": 0
+            },
+            "labels": {
+              "boites": 3,
+              "chevauchements": 0
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 2,
+              "chevauchements": 0
+            },
+            "sur_courbe": {
+              "boites": 3,
+              "segments": 103,
+              "sur_courbe": 0
+            },
+            "datum_dans_svg": false
+          },
+          "detail": {
+            "contenu_px": [
+              1408,
+              258
+            ],
+            "texte_min_px": 13.2,
+            "n_cotes": 7,
+            "chevauchements": 0,
+            "labels": {
+              "boites": 5,
+              "chevauchements": 2
             },
             "bande_grad": {
               "graduations": 5,
@@ -774,8 +1390,8 @@
       "zone": {
         "zone": true,
         "inside_green_pct": 97.6,
-        "inside_tot": 958,
-        "bati_exclu": 2049,
+        "inside_tot": 975,
+        "bati_exclu": 2095,
         "outside_green": 0
       },
       "lettres_axe": [
@@ -788,15 +1404,21 @@
           "dansLaVue": true
         }
       ],
-      "plan_texte_min_px": 12.3,
+      "cadre_ouverture": true,
+      "cadre_recentrer": true,
+      "agrandir": {
+        "recouvre_titre": false,
+        "recouvre_datum": false
+      },
+      "plan_texte_min_px": 12.7,
       "legende_px": 11,
       "survol": {
         "coupe": "A",
         "marqueur_pose": true,
-        "ecart_m": 0.01,
+        "ecart_m": 0.06,
         "alt_marqueur_3d_m": 595.1,
-        "alt_losange_coupe_m": 595.09,
-        "ecart_altitude_m": 0.01
+        "alt_losange_coupe_m": 595.08,
+        "ecart_altitude_m": 0.02
       },
       "parite_sid": true,
       "rien_ne_depasse": true,
@@ -808,44 +1430,50 @@
         "proxy_serveur": true
       }
     },
-    "1440x900": {
-      "cadrage_parcelle_largeur_pct": 60,
+    "1920x1080": {
+      "cadrage_parcelle_largeur_pct": 49.3,
       "coupes": {
         "A": {
           "apercu": {
             "contenu_px": [
-              1422,
-              223
+              1903,
+              249
             ],
             "texte_min_px": 11.7,
             "n_cotes": 5,
             "chevauchements": 0,
-            "remplissage_pct": 99.9,
+            "remplissage_pct": 100,
             "libelles": {
-              "libelles_proteges": 3,
+              "libelles_proteges": 4,
               "traits_au_travers": 0
             },
             "labels": {
-              "boites": 3,
+              "boites": 4,
               "chevauchements": 1
             },
             "bande_grad": {
               "graduations": 5,
               "longueurs": 2,
               "chevauchements": 0
-            }
+            },
+            "sur_courbe": {
+              "boites": 4,
+              "segments": 58,
+              "sur_courbe": 0
+            },
+            "datum_dans_svg": false
           },
           "detail": {
             "contenu_px": [
-              1408,
-              594
+              1888,
+              836
             ],
-            "texte_min_px": 13.2,
+            "texte_min_px": 17.7,
             "n_cotes": 8,
             "chevauchements": 0,
             "labels": {
-              "boites": 3,
-              "chevauchements": 0
+              "boites": 7,
+              "chevauchements": 1
             },
             "bande_grad": {
               "graduations": 5,
@@ -872,38 +1500,44 @@
         "B": {
           "apercu": {
             "contenu_px": [
-              1424,
-              187
+              1904,
+              220
             ],
             "texte_min_px": 11.7,
             "n_cotes": 5,
             "chevauchements": 0,
             "remplissage_pct": 100,
             "libelles": {
-              "libelles_proteges": 1,
+              "libelles_proteges": 3,
               "traits_au_travers": 0
             },
             "labels": {
-              "boites": 1,
+              "boites": 3,
               "chevauchements": 0
             },
             "bande_grad": {
               "graduations": 5,
               "longueurs": 2,
               "chevauchements": 0
-            }
+            },
+            "sur_courbe": {
+              "boites": 3,
+              "segments": 103,
+              "sur_courbe": 0
+            },
+            "datum_dans_svg": false
           },
           "detail": {
             "contenu_px": [
-              1408,
-              229
+              1888,
+              346
             ],
-            "texte_min_px": 13.2,
+            "texte_min_px": 17.7,
             "n_cotes": 7,
             "chevauchements": 0,
             "labels": {
-              "boites": 1,
-              "chevauchements": 0
+              "boites": 5,
+              "chevauchements": 2
             },
             "bande_grad": {
               "graduations": 5,
@@ -931,9 +1565,9 @@
       "contour_couverture_pct": 100,
       "zone": {
         "zone": true,
-        "inside_green_pct": 97.9,
-        "inside_tot": 1306,
-        "bati_exclu": 2791,
+        "inside_green_pct": 98.3,
+        "inside_tot": 1788,
+        "bati_exclu": 3848,
         "outside_green": 0
       },
       "lettres_axe": [
@@ -946,170 +1580,18 @@
           "dansLaVue": true
         }
       ],
+      "cadre_ouverture": true,
+      "cadre_recentrer": true,
+      "agrandir": {
+        "recouvre_titre": false,
+        "recouvre_datum": false
+      },
       "plan_texte_min_px": 12.7,
       "legende_px": 11,
       "survol": {
         "coupe": "A",
         "marqueur_pose": true,
-        "ecart_m": 0.01,
-        "alt_marqueur_3d_m": 595.1,
-        "alt_losange_coupe_m": 595.09,
-        "ecart_altitude_m": 0.01
-      },
-      "parite_sid": true,
-      "rien_ne_depasse": true,
-      "photo": {
-        "etat": "ok",
-        "delai_ms": 210,
-        "credit_ign": true,
-        "millesime": "2025",
-        "proxy_serveur": true
-      }
-    },
-    "1920x1080": {
-      "cadrage_parcelle_largeur_pct": 60,
-      "coupes": {
-        "A": {
-          "apercu": {
-            "contenu_px": [
-              1904,
-              242
-            ],
-            "texte_min_px": 11.7,
-            "n_cotes": 5,
-            "chevauchements": 0,
-            "remplissage_pct": 100,
-            "libelles": {
-              "libelles_proteges": 3,
-              "traits_au_travers": 0
-            },
-            "labels": {
-              "boites": 3,
-              "chevauchements": 1
-            },
-            "bande_grad": {
-              "graduations": 5,
-              "longueurs": 2,
-              "chevauchements": 0
-            }
-          },
-          "detail": {
-            "contenu_px": [
-              1888,
-              797
-            ],
-            "texte_min_px": 17.7,
-            "n_cotes": 8,
-            "chevauchements": 0,
-            "labels": {
-              "boites": 3,
-              "chevauchements": 0
-            },
-            "bande_grad": {
-              "graduations": 5,
-              "longueurs": 2,
-              "chevauchements": 0
-            }
-          },
-          "lettres": [
-            {
-              "t": "A",
-              "dansLaVue": true
-            },
-            {
-              "t": "A′",
-              "dansLaVue": true
-            }
-          ],
-          "bandes_apercu": [
-            "parcelle:1.12-22.92",
-            "zone:8.64-19.86"
-          ],
-          "bandes_bornes_identiques": true
-        },
-        "B": {
-          "apercu": {
-            "contenu_px": [
-              1904,
-              203
-            ],
-            "texte_min_px": 11.7,
-            "n_cotes": 5,
-            "chevauchements": 0,
-            "remplissage_pct": 100,
-            "libelles": {
-              "libelles_proteges": 1,
-              "traits_au_travers": 0
-            },
-            "labels": {
-              "boites": 1,
-              "chevauchements": 0
-            },
-            "bande_grad": {
-              "graduations": 5,
-              "longueurs": 2,
-              "chevauchements": 0
-            }
-          },
-          "detail": {
-            "contenu_px": [
-              1888,
-              307
-            ],
-            "texte_min_px": 17.7,
-            "n_cotes": 7,
-            "chevauchements": 0,
-            "labels": {
-              "boites": 1,
-              "chevauchements": 0
-            },
-            "bande_grad": {
-              "graduations": 5,
-              "longueurs": 2,
-              "chevauchements": 0
-            }
-          },
-          "lettres": [
-            {
-              "t": "B",
-              "dansLaVue": true
-            },
-            {
-              "t": "B′",
-              "dansLaVue": true
-            }
-          ],
-          "bandes_apercu": [
-            "parcelle:25.13-42.56",
-            "zone:28.13-39.55"
-          ],
-          "bandes_bornes_identiques": true
-        }
-      },
-      "contour_couverture_pct": 100,
-      "zone": {
-        "zone": true,
-        "inside_green_pct": 98.9,
-        "inside_tot": 2652,
-        "bati_exclu": 5704,
-        "outside_green": 1
-      },
-      "lettres_axe": [
-        {
-          "t": "B",
-          "dansLaVue": true
-        },
-        {
-          "t": "B′",
-          "dansLaVue": true
-        }
-      ],
-      "plan_texte_min_px": 12.7,
-      "legende_px": 11,
-      "survol": {
-        "coupe": "A",
-        "marqueur_pose": true,
-        "ecart_m": 0.04,
+        "ecart_m": 0.06,
         "alt_marqueur_3d_m": 595.1,
         "alt_losange_coupe_m": 595.08,
         "ecart_altitude_m": 0.02
@@ -1118,50 +1600,56 @@
       "rien_ne_depasse": true,
       "photo": {
         "etat": "ok",
-        "delai_ms": 66,
+        "delai_ms": 65,
         "credit_ign": true,
         "millesime": "2025",
         "proxy_serveur": true
       }
     },
     "2560x1300": {
-      "cadrage_parcelle_largeur_pct": 60,
+      "cadrage_parcelle_largeur_pct": 46.4,
       "coupes": {
         "A": {
           "apercu": {
             "contenu_px": [
               2544,
-              296
+              251
             ],
             "texte_min_px": 11.7,
             "n_cotes": 5,
             "chevauchements": 0,
             "remplissage_pct": 100,
             "libelles": {
-              "libelles_proteges": 3,
+              "libelles_proteges": 4,
               "traits_au_travers": 0
             },
             "labels": {
-              "boites": 3,
+              "boites": 4,
               "chevauchements": 1
             },
             "bande_grad": {
               "graduations": 5,
               "longueurs": 2,
               "chevauchements": 0
-            }
+            },
+            "sur_courbe": {
+              "boites": 4,
+              "segments": 58,
+              "sur_courbe": 0
+            },
+            "datum_dans_svg": false
           },
           "detail": {
             "contenu_px": [
               2528,
-              1067
+              1119
             ],
             "texte_min_px": 23.7,
             "n_cotes": 8,
             "chevauchements": 0,
             "labels": {
-              "boites": 3,
-              "chevauchements": 0
+              "boites": 7,
+              "chevauchements": 1
             },
             "bande_grad": {
               "graduations": 5,
@@ -1189,37 +1677,43 @@
           "apercu": {
             "contenu_px": [
               2544,
-              222
+              239
             ],
             "texte_min_px": 11.7,
             "n_cotes": 5,
             "chevauchements": 0,
             "remplissage_pct": 100,
             "libelles": {
-              "libelles_proteges": 1,
+              "libelles_proteges": 3,
               "traits_au_travers": 0
             },
             "labels": {
-              "boites": 1,
+              "boites": 3,
               "chevauchements": 0
             },
             "bande_grad": {
               "graduations": 5,
               "longueurs": 2,
               "chevauchements": 0
-            }
+            },
+            "sur_courbe": {
+              "boites": 3,
+              "segments": 103,
+              "sur_courbe": 0
+            },
+            "datum_dans_svg": false
           },
           "detail": {
             "contenu_px": [
               2528,
-              411
+              463
             ],
             "texte_min_px": 23.7,
             "n_cotes": 7,
             "chevauchements": 0,
             "labels": {
-              "boites": 1,
-              "chevauchements": 0
+              "boites": 5,
+              "chevauchements": 2
             },
             "bande_grad": {
               "graduations": 5,
@@ -1247,10 +1741,10 @@
       "contour_couverture_pct": 100,
       "zone": {
         "zone": true,
-        "inside_green_pct": 98.4,
-        "inside_tot": 5221,
-        "bati_exclu": 11184,
-        "outside_green": 5
+        "inside_green_pct": 98.3,
+        "inside_tot": 3108,
+        "bati_exclu": 6688,
+        "outside_green": 2
       },
       "lettres_axe": [
         {
@@ -1262,21 +1756,27 @@
           "dansLaVue": true
         }
       ],
+      "cadre_ouverture": true,
+      "cadre_recentrer": true,
+      "agrandir": {
+        "recouvre_titre": false,
+        "recouvre_datum": false
+      },
       "plan_texte_min_px": 12.7,
       "legende_px": 11,
       "survol": {
         "coupe": "A",
         "marqueur_pose": true,
-        "ecart_m": 0.04,
+        "ecart_m": 0.03,
         "alt_marqueur_3d_m": 595.1,
-        "alt_losange_coupe_m": 595.1,
-        "ecart_altitude_m": 0
+        "alt_losange_coupe_m": 595.09,
+        "ecart_altitude_m": 0.01
       },
       "parite_sid": true,
       "rien_ne_depasse": true,
       "photo": {
         "etat": "ok",
-        "delai_ms": 83,
+        "delai_ms": 78,
         "credit_ign": true,
         "millesime": "2025",
         "proxy_serveur": true
