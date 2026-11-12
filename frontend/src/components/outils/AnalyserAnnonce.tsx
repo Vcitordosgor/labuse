@@ -119,11 +119,15 @@ function DerniereVente({ dv }: { dv: Estimer3Rapport['derniere_vente'] }) {
 
 // ── « Ce que LABUSE a mesuré » : en puces, UNIQUEMENT ce qui est connu ──
 function Mesures({ m, typeBien }: { m: Estimer3Mesures; typeBien: string }) {
+  const terrain = typeBien === 'terrain'
   const typeLabel = typeBien === 'maison' ? 'Maison' : typeBien === 'appartement' ? 'Appartement' : 'Terrain nu'
   const puces: string[] = [typeLabel]
   if (m.terrain_m2) puces.push(`Terrain ${fmtM2(m.terrain_m2)}`)
-  if (m.emprise_bati_m2) puces.push(`Bâti ${fmtM2(m.emprise_bati_m2)} au sol`)
-  if (m.niveaux) puces.push(`${m.niveaux} niveau${m.niveaux > 1 ? 'x' : ''}`)
+  // OUTILS-P0-2 (recette L2, point 3) — un « Terrain nu » ne porte PAS de constat « Bâti … au sol » ni
+  // de niveaux (ce serait contradictoire : on l'estime comme terrain, pas comme bâti). Ces mesures sont
+  // réservées au bâti (maison/appartement).
+  if (!terrain && m.emprise_bati_m2) puces.push(`Bâti ${fmtM2(m.emprise_bati_m2)} au sol`)
+  if (!terrain && m.niveaux) puces.push(`${m.niveaux} niveau${m.niveaux > 1 ? 'x' : ''}`)
   if (m.piscine?.presente) puces.push('Piscine')
   if (m.pente) puces.push(`Pente ${m.pente.pct} %`)
   return (
@@ -223,11 +227,16 @@ function ValeurEstimee({ e, typeBien, commune }: { e: Estimer3Rapport['estimatio
     )
   }
   if (e.valeur_eur == null) {
+    // OUTILS-P0-2 (recette L2, point 1) — dire la VRAIE raison : si des ventes comparables existent
+    // (un prix au m² est disponible) mais pas de total, c'est la SURFACE qui manque, pas les ventes.
+    const surfaceManque = e.eur_m2 != null
     return (
       <section className={SECTION} role="status" aria-live="polite">
         <p className={SECTION_TITRE}>Valeur estimée</p>
         <p className="mt-1 text-[12px] leading-snug text-txt-dim">
-          Indisponible — pas assez de ventes comparables dans le secteur pour un repère de prix.
+          {surfaceManque
+            ? 'Saisissez la surface habitable pour obtenir l’estimation.'
+            : 'Indisponible — pas assez de ventes comparables dans le secteur pour un repère de prix.'}
         </p>
       </section>
     )
@@ -262,9 +271,12 @@ function ValeurEstimee({ e, typeBien, commune }: { e: Estimer3Rapport['estimatio
               </div>
             ))}
           </div>
-          {/* OUTILS-P0-2 (P4) — d'où viennent les fourchettes (ventes passées de biens comparables). */}
+          {/* OUTILS-P0-2 (P4 + recette L2 point 6) — d'où viennent les fourchettes ; SINGULIER quand une
+              seule bande est affichée. */}
           <p className="mt-1.5 text-[11px] leading-snug text-txt-mut">
-            Fourchettes mesurées sur des ventes passées de biens comparables.
+            {bandes.length > 1
+              ? 'Fourchettes mesurées sur des ventes passées de biens comparables.'
+              : 'Fourchette mesurée sur des ventes passées de biens comparables.'}
           </p>
         </>
       )}
@@ -281,7 +293,11 @@ function VentesRetenues({ ventes, ecartees, onToggle, typeBien }: {
   // Une mutation peut arriver deux fois (plusieurs lots d'un même acte) : on ne garde qu'une ligne par
   // identifiant pour l'affichage (clé stable, pas de doublon à l'écran).
   const vues = new Set<string>()
-  const uniques = ventes.filter((v) => (vues.has(v.id) ? false : (vues.add(v.id), true)))
+  const dedup = ventes.filter((v) => (vues.has(v.id) ? false : (vues.add(v.id), true)))
+  // OUTILS-P0-2 (recette L2, point 6) — les ventes à distance INCONNUE (« — » : distance 0/absente) passent
+  // EN FIN de liste (une distance manquante ne doit pas se présenter comme « la plus proche »). Tri stable.
+  const dist = (v: Estimer3Vente) => (v.distance_m != null && v.distance_m > 0 ? v.distance_m : Infinity)
+  const uniques = dedup.map((v, i) => [v, i] as const).sort((a, b) => (dist(a[0]) - dist(b[0])) || (a[1] - b[1])).map(([v]) => v)
   return (
     <section>
       <div className="flex items-baseline justify-between gap-2">
@@ -406,7 +422,7 @@ function Question({ rapport, surfaceStr, onSurfaceChange, onSurfaceCommit, surfa
         <div className="mt-3">
           <p className="text-[11px] text-txt-dim">Nombre de pièces</p>
           <div className="mt-1 flex flex-wrap gap-1">
-            {(qPieces.options ?? [2, 3, 4, 5, '6+']).map((opt) => {
+            {(qPieces.options ?? [1, 2, 3, 4, 5, '6+']).map((opt) => {
               const n = typeof opt === 'number' ? opt : 6
               const actif = pieces === n
               return (
@@ -489,9 +505,14 @@ function Estimer3({ idu }: { idu: string }) {
       <ValeurEstimee e={r.estimation} typeBien={r.type_bien} commune={r.commune} />
       <VentesRetenues ventes={r.ventes_retenues} ecartees={ecartees} onToggle={toggle} typeBien={r.type_bien} />
       <RadarEnVente radar={r.radar} />
-      <p className="text-[11px] leading-snug text-txt-mut">
-        LABUSE ne connaît ni l’état du bien ni sa vue : ce prix est un repère de marché, pas une expertise.
-      </p>
+      {/* OUTILS-P0-2 (recette L2, point 4) — « ce prix est un repère… » n'a de sens QUE si un prix est
+          affiché. Terrain non constructible (ni €/m² ni total) → on retire la phrase. Le PDF reste proposé :
+          il n'est pas vide (zonage, foncier, risques, classement, plan de situation). */}
+      {(r.estimation.eur_m2 != null || r.estimation.valeur_eur != null) && (
+        <p className="text-[11px] leading-snug text-txt-mut">
+          LABUSE ne connaît ni l’état du bien ni sa vue : ce prix est un repère de marché, pas une expertise.
+        </p>
+      )}
       <ExportPdf url={pdfUrl} />
     </>
   )

@@ -1,7 +1,17 @@
 // FICHE-FIX-4 (Lot B) — le format partagé des 11 sections de la fiche : décimales à la virgule,
 // dates JJ/MM/AAAA, année SIRENE 1900 = « n.c. ». Verrou.
 import { describe, expect, it } from 'vitest'
-import { fmtDec, fmtInt, fmtDateNum, fmtDateSirene, anneeSirene, aCommune } from './format'
+import { fmtDec, fmtInt, fmtDateNum, fmtDateSirene, anneeSirene, aCommune, adresseInsecable } from './format'
+
+describe('OUTILS-P0-2 L2 — trait d’union insécable sur le nom de commune', () => {
+  it('« Saint-Denis » après le code postal passe en U+2011, la rue reste intacte', () => {
+    const out = adresseInsecable('75 Rue de la Clinique, 97490 Saint-Denis')
+    expect(out).toBe('75 Rue de la Clinique, 97490 Saint‑Denis')
+    expect(out).not.toMatch(/97490 Saint-Denis/)          // plus de trait d’union sécable sur la commune
+    expect(out).toContain('Rue de la Clinique')           // la rue n’est pas touchée
+    expect(adresseInsecable(null)).toBe('')
+  })
+})
 
 describe('OUTILS-P0-2 — « à {commune} » avec contraction de l’article', () => {
   it('au Tampon / au Port, aux Avirons, à La Possession, à Saint-Denis', () => {

@@ -24,6 +24,12 @@ export const fmtEur = (n: number | null | undefined, _chiffreId?: string): strin
 export const fmtM2 = (m2: number | null | undefined, _chiffreId?: string): string =>
   m2 == null ? '—' : m2 >= 10_000 ? `${fmtDec(m2 / 10_000, 2)} ha` : `${fmtInt(m2)} m²`
 
+/** OUTILS-P0-2 (recette L2, point 5) — trait d'union INSÉCABLE (U+2011) dans le nom de commune d'une
+ *  adresse (le segment qui SUIT le code postal à 5 chiffres), pour qu'« …97490 Saint-Denis » ne se coupe
+ *  jamais en « Saint- / Denis » en fin de ligne. N'affecte ni la rue ni le reste de l'adresse. */
+export const adresseInsecable = (adresse: string | null | undefined): string =>
+  !adresse ? '' : adresse.replace(/(\b\d{5}\b\s+)(.+)$/, (_m, cp: string, commune: string) => cp + commune.replace(/-/g, '‑'))
+
 /** OUTILS-P0-2 (recette) — « à {commune} » avec la contraction française de l'article :
  *  « Le Tampon » → « au Tampon », « Le Port » → « au Port », « Les Avirons » → « aux Avirons »,
  *  « La Possession » → « à La Possession », « Saint-Denis » → « à Saint-Denis ». Jamais « à Le Tampon ». */

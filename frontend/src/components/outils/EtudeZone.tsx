@@ -195,7 +195,7 @@ export function EtudeZone() {
         <div className="flex items-center gap-1.5">
           {rayonsServis.map((r) => (
             <button key={r} data-zone-rayon={r} aria-pressed={rayonKm === r} onClick={() => setRayonKm(r)}
-              className={`h-7 min-w-[3rem] rounded-md border px-2 font-mono text-[12px] transition-colors duration-quick ${rayonKm === r ? 'border-mint text-mint' : 'border-line-2 text-txt-hi hover:border-mint hover:text-mint'}`}>
+              className={`h-7 min-w-[3.5rem] whitespace-nowrap rounded-md border px-2 font-mono text-[12px] transition-colors duration-quick ${rayonKm === r ? 'border-mint text-mint' : 'border-line-2 text-txt-hi hover:border-mint hover:text-mint'}`}>
               {String(r).replace('.', ',')} km</button>
           ))}
         </div>
@@ -280,7 +280,7 @@ export function EtudeZone() {
 
           {/* 3 · IMMOBILIER */}
           <Section id="immobilier" titre="Immobilier" openSecs={openSecs} setOpenSecs={setOpenSecs}
-            source="DVF (DGFiP/Etalab, ventes 12–36 mois) · Sitadel (SDES) · annonces Radar (pige LABUSE, partielle)">
+            source="DVF (DGFiP/Etalab, ventes 12–36 mois) · Sitadel (SDES) · annonces suivies par LABUSE (couverture partielle)">
             {res.marche && (
               <>
                 {/* OUTILS-P0-2 (P3) — le PRIX DU CERCLE en tête : « Prix médian du bâti dans le cercle ·
@@ -359,7 +359,8 @@ export function EtudeZone() {
                 <SectionTitle>La zone de demain</SectionTitle>
                 <div className="mt-1 grid grid-cols-2 gap-2">
                   <Stat v={nb(res.zone_demain.logements_autorises_36m)} k="logements autorisés / 36 mois" />
-                  <Stat v={res.zone_demain.au_zones_n ? `${nb(res.zone_demain.au_zones_n)} · ${nb(res.zone_demain.au_zones_ha)} ha` : '—'} k="zones AU (à urbaniser)" />
+                  {/* OUTILS-P0-2 (recette L2, point 8) — « 2 · 17 ha » → « 2 zones AU · 17 ha » (lisible seul). */}
+                  <Stat v={res.zone_demain.au_zones_n ? `${nb(res.zone_demain.au_zones_n)} zone${res.zone_demain.au_zones_n > 1 ? 's' : ''} AU · ${nb(res.zone_demain.au_zones_ha)} ha` : '—'} k="à urbaniser (PLU)" />
                 </div>
                 <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">Signal daté (Sitadel · PLU) — une urbanisation programmée, jamais une projection de population.</p>
               </div>

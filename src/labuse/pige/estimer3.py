@@ -69,7 +69,11 @@ SEUIL_Q3_MASQUE = 50
 QUESTIONS = [
     {"cle": "surface_hab", "label": "Surface habitable", "type": "nombre", "unite": "m²",
      "types": ("maison", "appartement"), "gain": "fort (les deux types)"},
-    {"cle": "pieces", "label": "Nombre de pièces", "type": "choix", "options": [2, 3, 4, 5, "6+"],
+    # OUTILS-P0-2 (recette L2, point 2) — « 1 » ajouté : DVF Réunion PORTE le nombre de pièces
+    # (dvf_mutation_detail.nombre_pieces, 30 155 ventes renseignées dont 3 210 à 1 pièce) et il DÉPLACE le
+    # prix de l'appartement (pondération ressemblance, gain mesuré au banc) → les studios/T1 (ventes de
+    # 22-25 m²) ont leur option.
+    {"cle": "pieces", "label": "Nombre de pièces", "type": "choix", "options": [1, 2, 3, 4, 5, "6+"],
      "types": ("appartement",), "gain": "appartement : modeste ; maison : nul → non posée pour la maison"},
 ]
 #: caractéristiques NON posées, et pourquoi (servies au rapport et à l'écran « ce qu'on ne demande pas »)
