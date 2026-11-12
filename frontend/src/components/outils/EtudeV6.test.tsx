@@ -226,7 +226,8 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     const vp = document.querySelector('[data-recit="Votre programme"]')!
     expect(vp.textContent).toContain('demandés')
     expect(vp.textContent).toContain('tiennent')
-    expect(vp.textContent).toContain('maximum')
+    // ETUDE-FIABLE-1 (LOT C1) — « meilleure capacité trouvée », plus « maximum réglementaire ».
+    expect(vp.textContent).toContain('meilleure capacité trouvée')
     expect(document.querySelector('[data-recit="Ce qui limite"]')).toBeTruthy()
     // les anciens blocs séparés n'existent plus
     expect(document.querySelector('[data-recit="Ce que le terrain accueille"]')).toBeNull()
@@ -399,12 +400,13 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     await waitFor(() => screen.getByText('Combien de logements souhaitez-vous ?'))
     fireEvent.change(document.querySelector('[data-etude-count="T2"]') as HTMLInputElement, { target: { value: '12' } })
     fireEvent.click(screen.getByRole('button', { name: /Analyser mon projet/ }))
-    // V6-3 (item 8) — capacité maximale (28) FUSIONNÉE dans « Votre programme » : 12 demandés · max 28.
+    // V6-3 (item 8) — capacité (28) FUSIONNÉE dans « Votre programme » : 12 demandés · meilleure capacité 28.
+    // ETUDE-FIABLE-1 (LOT C1) — « meilleure capacité trouvée », plus « maximum réglementaire ».
     const cap = await waitFor(() => { const c = document.querySelector('[data-recit="Votre programme"]'); if (!c) throw new Error('no'); return c as HTMLElement })
-    expect(cap.textContent).toContain('maximum 28')
+    expect(cap.textContent).toContain('meilleure capacité trouvée : 28')
     expect(cap.textContent).toContain('12 demandés')
     expect(cap.textContent).toContain('Réserve')                     // 12 ≤ 28 → réserve 16
-    expect(cap.textContent).toContain('indépendant du nombre demandé')
+    expect(cap.textContent).toContain('indépendante du nombre demandé')
     // facteurs classés par impact, stationnement en tête, PROUVÉ par contrefactuel
     const lim = document.querySelector('[data-recit="Ce qui limite"]') as HTMLElement
     expect(lim.textContent).toContain('1. stationnement aérien')

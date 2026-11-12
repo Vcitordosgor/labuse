@@ -2552,6 +2552,16 @@ export interface EtudePayload {
   facteur_limitant?: string | null
   // ETUDE-V6-4 (item 10) — en sous-sol, pourquoi la hauteur plafonne (une phrase), écran = PDF.
   facteur_limitant_detail?: string | null
+  // ETUDE-FIABLE-1 (LOT B5) — état de la recherche déterministe (complete / partielle / non_aboutie).
+  // `note` : texte prêt à afficher (null si complète — rien à signaler), identique à l'écran et au PDF.
+  recherche?: {
+    etat: 'complete' | 'partielle' | 'non_aboutie'
+    candidats_prevus: number; candidats_examines: number
+    grille_simplifiee: boolean; garde_fou_temps: boolean
+    logements_dessines: number | null; note: string | null
+  }
+  // ETUDE-FIABLE-1 (LOT C2) — parcelle bâtie : l'étude suppose le terrain libéré (bâti existant démoli).
+  terrain_suppose_libere?: boolean
   confrontation?: {
     demande_logements: number; capacite_maximale_logements: number
     tient: boolean; reserve_logements: number

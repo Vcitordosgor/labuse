@@ -293,7 +293,8 @@ def test_pdf_decrit_le_programme_du_client(session_reelle):
     assert num in html
     # (9) le programme du client : type en toutes lettres + ses logements demandés.
     assert "logement social" in html                      # type en toutes lettres (jamais « collectif » nu)
-    assert "Votre projet" in html and "Maximum du terrain" in html
+    # ETUDE-FIABLE-1 (LOT C1) — « Meilleure capacité trouvée », plus « Maximum (réglementaire) du terrain ».
+    assert "Votre projet" in html and "Meilleure capacité trouvée" in html
     # plus de noms techniques de scénario.
     for interdit in ("scénario A", "scénario B", "votre_programme", "(retenu)", "· collectif ·"):
         assert interdit not in html, f"« {interdit} » ne doit pas figurer dans le PDF"

@@ -443,14 +443,15 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
                     "logements demandés tiennent sur ce terrain.")
         vclass = "verdict" if confr.get("tient") else "verdict warn"
     else:
-        # programme proposé par LABUSE (pas de demande saisie) : le maximum du terrain fait foi.
-        txt = (f"{type_lbl.capitalize()} — maximum du terrain estimé : {kmax} logements"
+        # ETUDE-FIABLE-1 (LOT C1) — programme proposé par LABUSE : la MEILLEURE CAPACITÉ TROUVÉE fait foi.
+        txt = (f"{type_lbl.capitalize()} — meilleure capacité trouvée : {kmax} logements"
                + (f" en {niv_lbl}" if niv_lbl else "") + f", stationnement {statio_lbl}.") if kmax else (
             payload.get("message") or "Aucun scénario exploitable sur ce terrain selon nos hypothèses.")
         vclass = "verdict" if kmax else "verdict warn"
-    # Le maximum du terrain, EN SECOND (jamais « ce terrain permet » ; indépendant de la demande).
+    # ETUDE-FIABLE-1 (LOT C1) — la meilleure capacité trouvée, EN SECOND (jamais « maximum réglementaire » :
+    # c'est le meilleur candidat de la recherche déterministe sous ces hypothèses, pas un plafond du PLU).
     if kmax is not None and n_dem is not None:
-        txt += f" Maximum réglementaire du terrain : {kmax} logements."
+        txt += f" Meilleure capacité trouvée avec ces hypothèses : {kmax} logements."
     cc = retenu["controles_compte"]
     # tuiles de synthèse (chaque nombre vient du payload : contrôles, règles, programme, terrain)
     emp = next((c for c in retenu["controles"] if c["nom"] == "Emprise au sol"), None)
@@ -486,7 +487,7 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
         f'<td><span class="st {stc}">{esc(_statut_court(retenu["statut_etude"]))}</span></td></tr>']
     if cmax.get("logements") is not None:
         rows.append(
-            f'<tr><td>Maximum du terrain</td>'
+            f'<tr><td>Meilleure capacité trouvée</td>'
             f'<td>{esc(str(cmax.get("forme", "")).replace("_", " "))}</td>'
             f'<td class="num">{cmax["logements"]}</td>'
             f'<td class="num">{esc(cmax.get("niveaux_label", ""))}</td>'
@@ -511,6 +512,9 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
         f'parcelles {esc(_refs_parcelles(payload))}</h1>'
         f'<p class="idu">{_m2(t.get("contenance_totale_m2"))} · zone {esc(e.get("zone") or "")} · '
         f'{esc(_type_projet_label(e.get("type_projet")))} · stationnement {esc(_stationnement_label(retenu, e))}</p>'
+        # ETUDE-FIABLE-1 (LOT C2) — parcelle bâtie : « Terrain supposé libéré », à côté du résultat.
+        + ('<p class="note"><b>Terrain supposé libéré</b> — la parcelle porte du bâti existant, supposé démoli pour cette étude.</p>'
+           if payload.get("terrain_suppose_libere") else '')
         + _au_html
         + f'<div class="{vclass}">{esc(txt)}</div>'
         # ETUDE-V6-4 (items 10/11/13) — LA phrase « ce qui limite », identique au bandeau de l'écran
@@ -520,14 +524,19 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
         # ETUDE-V6-4 (item 10) — en sous-sol, pourquoi la hauteur plafonne (même phrase qu'à l'écran).
         + (f'<p class="note">{esc(payload.get("facteur_limitant_detail") or "")}</p>'
            if payload.get("facteur_limitant_detail") else '')
+        # ETUDE-FIABLE-1 (LOT B5) — état de la recherche, MÊME texte qu'à l'écran : rien si complète,
+        # « Recherche partielle · N logements dessinés » si le garde-fou temps a coupé, « non aboutie » sinon.
+        + (f'<p class="note warn-note"><b>{"Recherche partielle" if (payload.get("recherche") or {}).get("etat") == "partielle" else "Recherche non aboutie"}</b> — '
+           f'{esc((payload.get("recherche") or {}).get("note") or "")}</p>'
+           if (payload.get("recherche") or {}).get("etat") in ("partielle", "non_aboutie") else '')
         + '<div class="ef-status">'
         f'<div><b>Contrôles automatisés de votre projet</b>'
         f'{cc["reussi"]} réussis · {cc["echoue"]} échoués · {cc["non_effectue"]} non effectués</div>'
         f'<div><b>Statut de l\'étude</b>{esc(_statut_court(retenu["statut_etude"]))} — '
         'à faire confirmer par un architecte</div></div>'
         + scn_table
-        + '<p class="note">« Votre projet » = le programme que vous avez étudié ; « maximum du terrain » = '
-          'le plus grand programme possible, indépendant de votre demande. Ce document n\'affirme aucune '
+        + '<p class="note">« Votre projet » = le programme que vous avez étudié ; « meilleure capacité trouvée » = '
+          'le meilleur programme que la recherche a trouvé avec ces hypothèses, indépendant de votre demande. Ce document n\'affirme aucune '
           'conformité réglementaire.</p>'
         + f'<div class="ef-synth">{tiles_html}</div>'
         + f'<div class="aside rose">{esc(_WARN)}</div>'

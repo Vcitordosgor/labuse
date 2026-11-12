@@ -283,7 +283,17 @@ export function EtudeV6({ initialIdus, onClose }: {
           <span className="text-[12px] text-txt-dim">Verdict de l'étude</span>
           <Badge ton={verdictTon(resultat.verdict ?? '')}>{resultat.verdict}</Badge>
           {limitePhrase && <span className="text-[11px] text-txt-mut">· ce qui limite : <b className="text-txt">{limitePhrase}</b></span>}
+          {/* ETUDE-FIABLE-1 (LOT C2) — parcelle bâtie : l'étude suppose le terrain libéré. */}
+          {resultat.terrain_suppose_libere && <span data-terrain-libere className="rounded border border-line-2 bg-surface-2 px-1.5 py-0.5 text-[10px] text-txt-dim">Terrain supposé libéré</span>}
         </div>
+
+        {/* ETUDE-FIABLE-1 (LOT B5) — état de la recherche : rien si complète, bandeau ambre si partielle /
+            non aboutie. Même texte qu'au PDF (champ serveur unique `recherche.note`). */}
+        {resultat.recherche && resultat.recherche.etat !== 'complete' && resultat.recherche.note && (
+          <div data-recherche-etat={resultat.recherche.etat} className="mx-4 mt-2 rounded-md border border-amber/50 bg-amber-bg px-3 py-2 text-[11px] text-amber">
+            <b>{resultat.recherche.etat === 'partielle' ? 'Recherche partielle' : 'Recherche non aboutie'}</b> — {resultat.recherche.note}
+          </div>
+        )}
 
         {resultat.depassement && <Depassement d={resultat.depassement} limite={limitePhrase} />}
 
@@ -341,14 +351,16 @@ export function EtudeV6({ initialIdus, onClose }: {
               {/* ETUDE-V6-3 (item 8) — bloc fusionné « Capacité maximale + Ce que le terrain accueille + L'écart » :
                   N demandés · M tiennent · maximum K. UNE seule réserve, cohérente partout. */}
               <Recit titre="Votre programme" ton={confr ? (confr.tient ? 'vert' : 'ambre') : verdictTon(active.verdict)}>
-                <p className="text-[12px] text-txt-hi">{fmtInt(nDem)} demandés · <b className={confr?.tient !== false ? 'text-mint' : 'text-amber'}>{fmtInt(mTiennent)} tiennent</b> · le terrain accueille au maximum <b>{fmtInt(kMax)}</b></p>
+                {/* ETUDE-FIABLE-1 (LOT C1) — « meilleure capacité trouvée avec ces hypothèses », jamais un
+                    « maximum réglementaire » (c'est le meilleur candidat de la recherche déterministe). */}
+                <p className="text-[12px] text-txt-hi">{fmtInt(nDem)} demandés · <b className={confr?.tient !== false ? 'text-mint' : 'text-amber'}>{fmtInt(mTiennent)} tiennent</b> · meilleure capacité trouvée : <b>{fmtInt(kMax)}</b></p>
                 {/* ETUDE-V6-7 (item 2) — on DÉCRIT le plan dessiné (la typologie tenue) + la surface tenue : une
                     seule vérité, jamais la surface de la demande. */}
                 <p className="mt-0.5 text-[10.5px] text-txt-dim">Dessiné : {Object.entries(parPlan).filter(([, n]) => n > 0).map(([t, n]) => `${n}×${t}`).join(' · ') || '—'} · {fmtDec(surfaceTenue)} m² de programme tenu</p>
                 {reserve != null && (reserve >= 0
-                  ? <p className="mt-1 text-[11px] text-txt">Réserve de <b className="text-mint">{fmtInt(reserve)}</b> logement(s) jusqu'au maximum du terrain.</p>
-                  : <p className="mt-1 text-[11px] text-txt">Dépassement de <b className="text-amber">{fmtInt(-reserve)}</b> logement(s) au-delà du maximum.</p>)}
-                <p className="mt-0.5 text-[9.5px] text-txt-dim">Maximum réglementaire du terrain (répartition {repLabel}) · {resultat.capacite_maximale?.niveaux_label} — indépendant du nombre demandé.</p>
+                  ? <p className="mt-1 text-[11px] text-txt">Réserve de <b className="text-mint">{fmtInt(reserve)}</b> logement(s) jusqu'à la meilleure capacité trouvée.</p>
+                  : <p className="mt-1 text-[11px] text-txt">Dépassement de <b className="text-amber">{fmtInt(-reserve)}</b> logement(s) au-delà de cette capacité.</p>)}
+                <p className="mt-0.5 text-[9.5px] text-txt-dim">Meilleure capacité trouvée avec ces hypothèses (répartition {repLabel}) · {resultat.capacite_maximale?.niveaux_label} — indépendante du nombre demandé.</p>
                 {divergence && (
                   <p data-divergence className="mt-1 text-[10.5px] text-amber">⚠ L'estimation de l'étape 3 (≈ {fmtInt(divergence.estime)} logements) et le calcul ({fmtInt(divergence.calcule)} logements) divergent de {divergence.pct} % : la jauge était {divergence.estime > divergence.calcule ? 'optimiste' : 'prudente'} — fiez-vous au calcul.</p>
                 )}
