@@ -175,3 +175,26 @@ def test_r4_etang_sale_compteur_27(session_reelle):
     dep = p.get("depassement") or {}
     assert dep.get("total_tiennent") == 27, f"attendu 27, obtenu {dep.get('total_tiennent')}"
     assert dep.get("total_tiennent") == sum((dep.get("tiennent") or {}).values())
+
+
+def test_point5_etude_revisions_est_table_client_jamais_poussee():
+    """Point 5 — etude_revisions porte des données CLIENT : elle est déclarée table client (prod fait
+    foi) et DISJOINTE des listes poussées par le Mac (fond + run sync) → un envoi de données ne peut
+    JAMAIS l'écraser en prod. Garde pure (sans base), tourne dans le hook."""
+    from pathlib import Path
+
+    from labuse.flux_sens import CLIENT_PROD, tables_client, tables_fond, tables_quotidiennes
+
+    assert "etude_revisions" in CLIENT_PROD
+    assert "etude_revisions" in tables_client()
+    # jamais dans une liste Mac→prod (fond) ni dans un flux quotidien ingéré ailleurs.
+    assert "etude_revisions" not in tables_fond()
+    assert "etude_revisions" not in tables_quotidiennes()
+    assert not (set(tables_client()) & set(tables_fond())), "client ∩ fond doit être vide (sens opposés)"
+    # et jamais dans le dump de synchronisation run (deploy/scripts/sync-run.sh pousse un WHITELIST).
+    sync = Path(__file__).resolve().parents[1] / "deploy" / "scripts" / "sync-run.sh"
+    if sync.exists():
+        txt = sync.read_text(encoding="utf-8")
+        for t in tables_client():
+            assert f"({t} " not in txt and f" {t})" not in txt and f" {t} " not in txt.replace("=(", "= ("), \
+                f"{t} (table client) ne doit pas figurer dans la whitelist de sync-run.sh"
