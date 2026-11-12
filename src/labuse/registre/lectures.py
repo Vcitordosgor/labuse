@@ -163,6 +163,8 @@ LECTURES: tuple[Lecture, ...] = (
       "ESTIMER-3 (fix/estimer-3) — Radar : biens SEMBLABLES actuellement en vente (statut actif) + écart moyen prix affiché/vendu (vendue_ecart_prix) servi SEULEMENT si mesurable sur un échantillon suffisant ; machinerie de l'outil Estimer, hors robinets de fiche."),
     L("pige_faits", "pige/estimer3.py", None, None,
       "ESTIMER-3 (fix/estimer-3) — Radar : faits des biens en vente (type, pièces, surface, prix affiché) servis en regard de l'estimation ; machinerie de l'outil Estimer, hors robinets de fiche."),
+    L("rnic_coproprietes", "pige/estimer3.py", None, None,
+      "OUTILS-P0-2 (recette) — immeuble à plusieurs logements : nombre de lots d'habitation (nb_lots_habitation > 1) pour décider que la dernière vente DVF n'est qu'un lot (champ surface vide, badge « connue » réservé au mono-logement) ; machinerie de l'outil Estimer, hors robinets de fiche."),
     L("dvf_mutations_parcelle", "pige/cycle.py", "ecart_demande_acte_pct", "outil_radar_marche",
       "matcher_dvf : mutation « Vente » 3-18 mois après publication → statut vendue + délai + écart prix affiché/acté enregistrés sur pige_biens (nourrit l'écart demandé/acté du Radar)."),
     L("dvf_mutations", "zone.py", "mutations_12m_n", "fiche_commune_prix",

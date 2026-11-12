@@ -2197,12 +2197,16 @@ def _worker_etude(data: dict, idus: list[str]) -> dict:
     (l'enfant repart d'un interpréteur neuf : aucun héritage du pool du parent). Retourne le MÊME payload
     qu'avant (mêmes chiffres) : seul le LIEU d'exécution change."""
     from ..db import session_scope
+    from ..implantation import revisions as revisions_mod
     from ..implantation.service import etudier_payload
     with session_scope() as s:
         out = etudier_payload(s, data)
         _attach_au_ouverture(s, out, idus)            # vérif #2 — caveat AU, comme Comparer
         _attach_contraintes_signalees(s, out, idus)   # A5 — mêmes contraintes que le Dossier §5
         _attach_zone_gabarit(s, out, idus)            # A3 — zone d'implantation lue du Gabarit
+        # ETUDE-FIABLE-1 (LOT B1) — on ENREGISTRE le résultat affiché (une révision) : le PDF et la
+        # réouverture le reliront sans rappeler le moteur. Best-effort (jamais bloquant pour l'étude).
+        revisions_mod.enregistrer(s, out)
     return out
 
 
@@ -2213,14 +2217,23 @@ def _worker_etude_pdf(data: dict, idus: list[str], scenario_ref: str | None, gen
     retenu pour l'archivage (fait côté parent, instantané). `ValueError` (aucun scénario) remonte telle
     quelle → 400 ; toute autre erreur de rendu → 500 technique, comme avant."""
     from ..db import session_scope
-    from ..implantation.service import etudier_payload
+    from ..implantation import revisions as revisions_mod
+    from ..implantation.service import _study_id, etudier_payload
     from ..exports import etude_faisabilite as ef
     from ..exports.rendu import render_pdf
+    # ETUDE-FIABLE-1 (LOT B3) — le PDF est rendu DEPUIS LA RÉVISION AFFICHÉE, sans rappeler le moteur :
+    # on relit le payload enregistré en fin d'analyse (clé = study_id de la configuration). Le verrou
+    # numérique compare ensuite le PDF à CETTE révision. On ne recalcule QUE si aucune révision n'existe
+    # (ex. PDF demandé sans analyse préalable) — chemin historique, best-effort.
+    study_id = _study_id(data)
     with session_scope() as s:
-        payload = etudier_payload(s, data)
-        _attach_au_ouverture(s, payload, idus)
-        _attach_contraintes_signalees(s, payload, idus)
-        _attach_zone_gabarit(s, payload, idus)
+        payload = revisions_mod.charger(s, study_id)
+        if payload is None:
+            payload = etudier_payload(s, data)        # chemin de repli : aucune révision stockée
+            _attach_au_ouverture(s, payload, idus)
+            _attach_contraintes_signalees(s, payload, idus)
+            _attach_zone_gabarit(s, payload, idus)
+            revisions_mod.enregistrer(s, payload)     # on l'enregistre pour les prochains exports
     # FIX-FINAL-1 (régression NU-E-055 / NU-D-001) — refus « hors périmètre » : document de refus honnête
     # (jamais un 500 technique ni un 400 muet), comme l'écran sert le verdict sans planter.
     if payload.get("hors_perimetre"):
@@ -2475,6 +2488,35 @@ def etude_implantation(body: EtudeIn, db: Session = Depends(get_db)) -> dict:
     except ValueError as exc:
         raise HTTPException(400, str(exc))
     return out
+
+
+@router.get("/etude/revision/{study_id}")
+def etude_revision(study_id: str, db: Session = Depends(get_db)) -> dict:
+    """ETUDE-FIABLE-1 (LOT B2) — ROUVRIR une étude depuis la bibliothèque : on RELIT la révision
+    enregistrée (study_id = EF-…), SANS recalcul (le moteur n'est pas appelé). « Relancer l'analyse »
+    côté client repasse par POST /etude (nouvelle révision). 404 si aucune révision n'existe."""
+    from ..implantation import revisions as revisions_mod
+    payload = revisions_mod.charger(db, study_id)
+    if payload is None:
+        raise HTTPException(404, detail={"erreur": "revision_absente",
+                                         "message": "Aucune étude enregistrée pour ce numéro — relancez l'analyse."})
+    return payload
+
+
+@router.post("/etude/revision-par-config")
+def etude_revision_par_config(body: EtudeIn, db: Session = Depends(get_db)) -> dict:
+    """ETUDE-FIABLE-1 (LOT B2, câblage front) — ROUVRIR une étude depuis sa CONFIGURATION (la recette
+    archivée avec le document), sans que le front n'ait à connaître le study_id : on calcule l'empreinte
+    `study_id` de la config (même règle que l'analyse et le PDF — `_study_id`), puis on RELIT la révision
+    enregistrée, SANS JAMAIS appeler le moteur. 404 si aucune révision (le front retombe sur « Relancer »)."""
+    from ..implantation import revisions as revisions_mod
+    from ..implantation.service import _study_id
+    study_id = _study_id(body.model_dump())
+    payload = revisions_mod.charger(db, study_id)
+    if payload is None:
+        raise HTTPException(404, detail={"erreur": "revision_absente", "study_id": study_id,
+                                         "message": "Aucune étude enregistrée pour cette configuration — relancez l'analyse."})
+    return payload
 
 
 class EtudePdfIn(EtudeIn):

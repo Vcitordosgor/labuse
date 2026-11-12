@@ -1,0 +1,30 @@
+
+== n sujets terrain mesurés : 951 ==
+
+— Écart médian par TRANCHE DE SURFACE ABSOLUE du sujet —
+          0-300 m² : écart médian   43.1 %  (n= 249)  ########
+        300-500 m² : écart médian   20.9 %  (n= 363)  ####
+        500-800 m² : écart médian   35.2 %  (n= 170)  #######
+       800-1200 m² : écart médian   57.8 %  (n=  73)  ###########
+      1200-2000 m² : écart médian   64.7 %  (n=  35)  ############
+      2000-3500 m² : écart médian   55.7 %  (n=  31)  ###########
+      3500-6000 m² : écart médian   67.0 %  (n=  15)  #############
+     6000-12000 m² : écart médian  124.2 %  (n=  10)  ########################
+        > 12000 m² : écart médian  195.2 %  (n=   5)  #######################################
+
+— Écart médian par RATIO surface_sujet / p90(surfaces de référence) —
+  ratio p90    ≤ 0,5 : écart médian   31.0 %  (n= 648)  ######
+  ratio p90  0,5-1,0 : écart médian   30.3 %  (n= 208)  ######
+  ratio p90  1,0-1,5 : écart médian   86.6 %  (n=  46)  #################
+  ratio p90  1,5-2,0 : écart médian   70.0 %  (n=  20)  ##############
+  ratio p90  2,0-3,0 : écart médian   60.8 %  (n=   6)  ############
+  ratio p90  3,0-5,0 : écart médian   89.0 %  (n=  13)  #################
+  ratio p90   5,0-10 : écart médian   82.3 %  (n=   7)  ################
+  ratio p90     > 10 : écart médian  155.9 %  (n=   3)  ###############################
+
+— Part des sujets AU-DESSUS de divers seuils de ratio p90 —
+  ratio p90 > 1.0 :   93 sujets hors (9.8 %), écart médian hors=85.5 % / dans la gamme=30.7 %
+  ratio p90 > 1.5 :   49 sujets hors (5.2 %), écart médian hors=80.1 % / dans la gamme=32.4 %
+  ratio p90 > 2.0 :   29 sujets hors (3.0 %), écart médian hors=84.8 % / dans la gamme=33.2 %
+  ratio p90 > 2.5 :   25 sujets hors (2.6 %), écart médian hors=84.8 % / dans la gamme=33.4 %
+  ratio p90 > 3.0 :   23 sujets hors (2.4 %), écart médian hors=89.0 % / dans la gamme=33.5 %

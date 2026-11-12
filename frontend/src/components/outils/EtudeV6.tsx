@@ -4,9 +4,9 @@
 // l'étape 1 est validée par POST /modules/etude/parcelles (faits + contiguïté + sources), et l'analyse
 // par POST /modules/etude. Remplace la config de M22 dans l'overlay EtudeEcran. Le RÉSULTAT détaillé
 // (« ce que le terrain accueille », variantes, facteurs limitants) est repris au Lot B ; ici, base servie.
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { postEtude, postEtudeParcelles, postEtudeStationnement, postEtudeJauge, ETUDE_PDF_URL, etudePdfInit, messageEtudeErreur } from '../../lib/api'
+import { postEtude, postEtudeParcelles, postEtudeStationnement, postEtudeJauge, getEtudeRevisionParConfig, ETUDE_PDF_URL, etudePdfInit, messageEtudeErreur } from '../../lib/api'
 import type { EtudeJaugeOut } from '../../lib/api'
 import type { EtudeParcelle, EtudeParcellesOut, EtudePayload, EtudeVariante, EtudeGrandeur, EtudeStationnementRegimes, EtudeLotissement, EtudeIn, EtudeRegle } from '../../lib/api'
 import { fmtInt, fmtDec } from '../../lib/format'
@@ -99,10 +99,13 @@ function etatTon(r: string): 'vert' | 'ambre' | 'rouge' | 'neutre' {
 
 // ETUDE-V6-3 (item 6) — plus de pont « Bilan de ce scénario » : onBilan n'est plus consommé (prop gardée
 // pour compat d'appel, ignorée). Un seul scénario affiché → plus d'état de variante active.
-export function EtudeV6({ initialIdus, onClose }: {
-  initialIdus?: string[]; onClose?: () => void; onBilan?: (prog: EtudeProgramme) => void
+export function EtudeV6({ initialIdus, rouvrir, onClose }: {
+  initialIdus?: string[]; rouvrir?: EtudeIn; onClose?: () => void; onBilan?: (prog: EtudeProgramme) => void
 }) {
   const [step, setStep] = useState<1 | 2 | 3>(1)
+  // ETUDE-FIABLE-1 (LOT B2) — ROUVRIR : on affiche la RÉVISION enregistrée (relue par config, sans
+  // recalcul) ; « Relancer l'analyse » crée une nouvelle révision. Désactivé dès qu'on modifie le programme.
+  const [rouvrirActif, setRouvrirActif] = useState(!!rouvrir)
   const [sel, setSel] = useState<string[]>(initialIdus ?? [])
   const [projet, setProjet] = useState<ProjetKey | null>(null)
   const [nb, setNb] = useState<Record<TypeKey, number>>({ T1: 0, T2: 0, T3: 0, T4: 0 })
@@ -141,12 +144,19 @@ export function EtudeV6({ initialIdus, onClose }: {
   // ETUDE-V6-4 (item 8) — jamais de PDF d'un état NON calculé : grisé tant qu'une hypothèse éditée n'est pas recalculée.
   const BoutonPdf = () => (
     <div className="flex flex-col gap-1">
-      <Bouton niveau="secondaire" onClick={() => pdf.ouvrir(ETUDE_PDF_URL, 'etude-pdf', etudePdfInit(corpsBody()))} disabled={!!pdf.enCours || dirty}>
+      {/* ETUDE-FIABLE-1 (LOT B2) — étude ROUVERTE : « Relancer l'analyse » crée une NOUVELLE révision. */}
+      {rouvrirActif && !analyse.data && (
+        <Bouton niveau="secondaire" data-etude-relancer onClick={relancerDepuisRevision} disabled={analyse.isPending}>
+          {analyse.isPending ? 'Analyse…' : '↻ Relancer l\'analyse'}
+        </Bouton>
+      )}
+      {/* le PDF part de la config qui a produit le résultat AFFICHÉ (révision rouverte ou formulaire). */}
+      <Bouton niveau="secondaire" onClick={() => pdf.ouvrir(ETUDE_PDF_URL, 'etude-pdf', etudePdfInit(configCourante()))} disabled={!!pdf.enCours || dirty}>
         {pdf.enCours ? <span className="inline-flex items-center gap-1.5">Génération<Chargement variant="inline" accent="courant" delai={0} /></span> : 'Générer le PDF ↓'}
       </Bouton>
       {dirty && <span data-pdf-perime className="text-[10px] text-amber">Recalculez pour mettre à jour l'étude.</span>}
       {/* ETUDE-V6-6 (item 10) — N° de document EF-<8> dérivé du study_id, identique au cartouche du PDF. */}
-      {analyse.data?.study_id && <span data-num-doc className="text-[9px] text-txt-dim">N° de document {numDoc(analyse.data.study_id)} — le PDF part de la même étude.</span>}
+      {resultat?.study_id && <span data-num-doc className="text-[9px] text-txt-dim">N° de document {numDoc(resultat.study_id)} — le PDF part de la même étude.</span>}
     </div>
   )
 
@@ -184,13 +194,32 @@ export function EtudeV6({ initialIdus, onClose }: {
                                 onSuccess: () => setDirty(false) })
   const recalculer = () => analyse.mutate(undefined)
   const marquerModifie = () => setDirty(true)
+  // ETUDE-FIABLE-1 (LOT B2) — ROUVRIR : on RELIT la révision enregistrée pour la config archivée, SANS
+  // recalcul (le moteur n'est pas appelé). Tant qu'on n'a pas « Relancé », le résultat AFFICHÉ est la révision.
+  const revQ = useQuery({
+    queryKey: ['etude-revision-config', JSON.stringify(rouvrir ?? null)],
+    queryFn: () => getEtudeRevisionParConfig(rouvrir as EtudeIn),
+    enabled: rouvrirActif && !!rouvrir, retry: false, staleTime: Infinity,
+  })
+  // « Relancer l'analyse » = une NOUVELLE révision depuis la config archivée (le moteur est déterministe).
+  const relancerDepuisRevision = () => analyse.mutate(rouvrir as EtudeIn)
+  // repli honnête : si AUCUNE révision n'est enregistrée pour cette config (404), on relance une fois
+  // (résultat identique, moteur déterministe) plutôt que d'afficher un écran vide.
+  useEffect(() => {
+    if (rouvrirActif && rouvrir && revQ.isError && !analyse.data && !analyse.isPending) analyse.mutate(rouvrir as EtudeIn)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rouvrirActif, revQ.isError])
+  // le résultat affiché = l'analyse si on a (re)calculé, SINON la révision relue (mode rouvrir).
+  const resultat: EtudePayload | undefined = analyse.data ?? (rouvrirActif ? revQ.data : undefined)
+  // la config qui a produit le RÉSULTAT affiché (PDF et relance) : la config archivée en mode rouvrir, sinon
+  // le formulaire. Garantit « PDF = écran » même sur une étude rouverte (le wizard n'est pas resaisi).
+  const configCourante = (): EtudeIn => (rouvrirActif && rouvrir && !analyse.data ? rouvrir : corpsBody())
   // ETUDE-V6-7 (item 3) — stationnement CHOISI dès l'étape 3 : AÉRIEN ou SOUS-SOL (1 niveau ; plus de 2
   // niveaux). Met juste à jour l'hypothèse (pas de recalcul ; le choix part avec le programme, la jauge suit).
   const setStatioEtape3 = (choix: 'aerien' | 'sous_sol') => setHyp((h) => ({
     ...h, stationnement: choix, niveauxSousSol: 1 }))
-  const resultat: EtudePayload | undefined = analyse.data
   // ETUDE-V6-3 (item 4) — animation de chargement de l'app (composant existant) pendant « Calcul en cours ».
-  const loadingOverlay = analyse.isPending ? (
+  const loadingOverlay = (analyse.isPending || (rouvrirActif && revQ.isLoading)) ? (
     <div data-etude-calcul className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-surface-0/75 backdrop-blur-sm">
       <Chargement variant="bloc" label="Calcul en cours, jusqu'à une minute" />
     </div>
@@ -212,10 +241,11 @@ export function EtudeV6({ initialIdus, onClose }: {
   const peutContinuer1 = contiguOk && !valide.isFetching
   const peutAnalyser = contiguOk && !!projet && totalLogts > 0
 
-  function reset() { setStep(1); setSel([]); setProjet(null); setNb({ T1: 0, T2: 0, T3: 0, T4: 0 }); resetHyp(); analyse.reset() }
+  function reset() { setStep(1); setSel([]); setProjet(null); setNb({ T1: 0, T2: 0, T3: 0, T4: 0 }); resetHyp(); analyse.reset(); setRouvrirActif(false) }
   function resetHyp() { setHyp({ surf: { T1: '', T2: '', T3: '', T4: '' }, varangue: { T1: '', T2: '', T3: '', T4: '' }, profondeur: '', coef: '', stationnement: 'aerien', niveauxSousSol: 1, lotCible: '', voirie: '' }) }
-  // « Modifier le programme » revient au formulaire ET réinitialise les hypothèses éditées (pas de fuite).
-  function modifierProgramme() { resetHyp(); analyse.reset() }
+  // « Modifier le programme » revient au formulaire ET réinitialise les hypothèses éditées (pas de fuite) ;
+  // on quitte aussi le mode « rouvrir » (révision) → le formulaire reprend la main.
+  function modifierProgramme() { resetHyp(); analyse.reset(); setRouvrirActif(false) }
   // ETUDE-V6-6 (item 3) — hypothèses du lotissement = taille de lot visée + largeur de voirie (pas T1–T4).
   const editeurLot = () => (
     <LotissementHypotheses hyp={hyp} setHyp={setHyp} onRecalculer={recalculer} enCours={analyse.isPending} onModifie={marquerModifie} />
@@ -283,7 +313,17 @@ export function EtudeV6({ initialIdus, onClose }: {
           <span className="text-[12px] text-txt-dim">Verdict de l'étude</span>
           <Badge ton={verdictTon(resultat.verdict ?? '')}>{resultat.verdict}</Badge>
           {limitePhrase && <span className="text-[11px] text-txt-mut">· ce qui limite : <b className="text-txt">{limitePhrase}</b></span>}
+          {/* ETUDE-FIABLE-1 (LOT C2) — parcelle bâtie : l'étude suppose le terrain libéré. */}
+          {resultat.terrain_suppose_libere && <span data-terrain-libere className="rounded border border-line-2 bg-surface-2 px-1.5 py-0.5 text-[10px] text-txt-dim">Terrain supposé libéré</span>}
         </div>
+
+        {/* ETUDE-FIABLE-1 (LOT B5) — état de la recherche : rien si complète, bandeau ambre si partielle /
+            non aboutie. Même texte qu'au PDF (champ serveur unique `recherche.note`). */}
+        {resultat.recherche && resultat.recherche.etat !== 'complete' && resultat.recherche.note && (
+          <div data-recherche-etat={resultat.recherche.etat} className="mx-4 mt-2 rounded-md border border-amber/50 bg-amber-bg px-3 py-2 text-[11px] text-amber">
+            <b>{resultat.recherche.etat === 'partielle' ? 'Recherche partielle' : 'Recherche non aboutie'}</b> — {resultat.recherche.note}
+          </div>
+        )}
 
         {resultat.depassement && <Depassement d={resultat.depassement} limite={limitePhrase} />}
 
@@ -341,14 +381,16 @@ export function EtudeV6({ initialIdus, onClose }: {
               {/* ETUDE-V6-3 (item 8) — bloc fusionné « Capacité maximale + Ce que le terrain accueille + L'écart » :
                   N demandés · M tiennent · maximum K. UNE seule réserve, cohérente partout. */}
               <Recit titre="Votre programme" ton={confr ? (confr.tient ? 'vert' : 'ambre') : verdictTon(active.verdict)}>
-                <p className="text-[12px] text-txt-hi">{fmtInt(nDem)} demandés · <b className={confr?.tient !== false ? 'text-mint' : 'text-amber'}>{fmtInt(mTiennent)} tiennent</b> · le terrain accueille au maximum <b>{fmtInt(kMax)}</b></p>
+                {/* ETUDE-FIABLE-1 (LOT C1) — « meilleure capacité trouvée avec ces hypothèses », jamais un
+                    « maximum réglementaire » (c'est le meilleur candidat de la recherche déterministe). */}
+                <p className="text-[12px] text-txt-hi">{fmtInt(nDem)} demandés · <b className={confr?.tient !== false ? 'text-mint' : 'text-amber'}>{fmtInt(mTiennent)} tiennent</b> · meilleure capacité trouvée : <b>{fmtInt(kMax)}</b></p>
                 {/* ETUDE-V6-7 (item 2) — on DÉCRIT le plan dessiné (la typologie tenue) + la surface tenue : une
                     seule vérité, jamais la surface de la demande. */}
                 <p className="mt-0.5 text-[10.5px] text-txt-dim">Dessiné : {Object.entries(parPlan).filter(([, n]) => n > 0).map(([t, n]) => `${n}×${t}`).join(' · ') || '—'} · {fmtDec(surfaceTenue)} m² de programme tenu</p>
                 {reserve != null && (reserve >= 0
-                  ? <p className="mt-1 text-[11px] text-txt">Réserve de <b className="text-mint">{fmtInt(reserve)}</b> logement(s) jusqu'au maximum du terrain.</p>
-                  : <p className="mt-1 text-[11px] text-txt">Dépassement de <b className="text-amber">{fmtInt(-reserve)}</b> logement(s) au-delà du maximum.</p>)}
-                <p className="mt-0.5 text-[9.5px] text-txt-dim">Maximum réglementaire du terrain (répartition {repLabel}) · {resultat.capacite_maximale?.niveaux_label} — indépendant du nombre demandé.</p>
+                  ? <p className="mt-1 text-[11px] text-txt">Réserve de <b className="text-mint">{fmtInt(reserve)}</b> logement(s) jusqu'à la meilleure capacité trouvée.</p>
+                  : <p className="mt-1 text-[11px] text-txt">Dépassement de <b className="text-amber">{fmtInt(-reserve)}</b> logement(s) au-delà de cette capacité.</p>)}
+                <p className="mt-0.5 text-[9.5px] text-txt-dim">Meilleure capacité trouvée avec ces hypothèses (répartition {repLabel}) · {resultat.capacite_maximale?.niveaux_label} — indépendante du nombre demandé.</p>
                 {divergence && (
                   <p data-divergence className="mt-1 text-[10.5px] text-amber">⚠ L'estimation de l'étape 3 (≈ {fmtInt(divergence.estime)} logements) et le calcul ({fmtInt(divergence.calcule)} logements) divergent de {divergence.pct} % : la jauge était {divergence.estime > divergence.calcule ? 'optimiste' : 'prudente'} — fiez-vous au calcul.</p>
                 )}

@@ -65,6 +65,13 @@ class Terrain:
     # bornée par le budget de temps (résultat rendu dans la borne au lieu d'un 503). Dit au client.
     grille_reduite: bool = False
     grille_budget_atteint: bool = False
+    # ETUDE-FIABLE-1 (LOT A) — état DÉTERMINISTE de la recherche (nombre de candidats examinés, prévu,
+    # complétude, déclenchement du filet temps). Alimente l'état « recherche complète / partielle / non
+    # aboutie » servi à l'écran et au PDF (identique sur toute machine à saisies égales).
+    grille_candidats_prevus: int = 0
+    grille_candidats_examines: int = 0
+    grille_complete: bool = False
+    grille_garde_fou_temps: bool = False
 
     @property
     def ecart_contenance_dessin_m2(self) -> float:
