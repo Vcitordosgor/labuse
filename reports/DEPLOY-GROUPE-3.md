@@ -374,3 +374,21 @@ corriger (exigu-fix, §E) avant promotion.**
 _Exécuté : A (déploiement + 4 incidents) ✅ · B (chaîne de nuit q_v23) ✅ · C (7 contrôles) ✅ + analyse §D
 + §E/§F préparées + §G déploiement 1 & scénarios V2.
 Reste : scénarios V2 (demain, après merge origin/main + foncier-public-1) + finalisation. Commit, pas de merge._
+
+---
+
+## §H — Journal disque (12/11, consignes Vic)
+
+Reprise 05:07 Réunion (hors fenêtre 01–05), déploiement 2 déjà live (`205d8ddf8`), servi seq 17 intact.
+
+| Étape | Disque libre | Note |
+|---|--:|---|
+| Avant déploiement 2 (12/11 00:13) | 9,1 Go | après purge Nov 10 (superseded, Nov 11 vérifiée, 2 nets) |
+| Après déploiement 2 (00:14) | 8,9 Go | code seul, readyz 25/25 |
+| **Après delta exigu (≈09h)** | **7,9 Go** | −1 Go (résiduel seq 18 réécrit + Score + constructibilité des 72 083) |
+| Garde sauvegarde 12:57 — avant | 7,9 Go | enrich NON lancé (décision A/B/C en attente Vic) ; hebdo Nov 8 vérifié lisible |
+| Garde sauvegarde 12:57 — après suppr. daily Nov 11 | **15 Go** | +6,3 Go ; reste hebdo Nov 8 (1 net) → +Nov 12 à 13:30 = 2 nets, pas de saturation |
+
+Plancher 3 Go respecté en continu. La daily Nov 11 était superseded par la Nov 12 imminente (Option C validée par Vic) ; hebdo Nov 8 `pg_restore -l` lisible avant suppression. Vérif Nov 12 programmée 14:05.
+
+**Gros objets (pour l'agrandissement disque)** : `dryrun_cascade_results` 21 Go (q_v18_s/q_v19_s/q_v21/q_v22/q_v23 ~3 Go ch.), `score_labuse` 7,2 Go, `parcel_p_score_v2` 5,3 Go, `spatial_layers` 3,3 Go, sauvegardes 6,2–6,3 Go/pièce. Purge q_v21/q_v22 (~8–10 Go) exige un VACUUM FULL (temp ≈ 21 Go) → à faire après agrandissement.
