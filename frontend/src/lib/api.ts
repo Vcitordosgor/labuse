@@ -2746,12 +2746,13 @@ export interface EtudeIn {
   programme?: { mode: 'propose' | 'saisi'; lignes?: Array<{ type: string; nombre: number; surface_m2?: number }> } | null
   hypotheses?: { profondeur_m?: number; coef_plancher_habitable?: number; surfaces?: Record<string, number>; varangues?: Record<string, number>; lot_cible_m2?: number; voirie_largeur_m?: number } | null
 }
-// ETUDE-V6-2 (Lot 3) — l'étude est bornée à 60 s côté serveur ; le fetch front abandonne au-delà
-// (aligné sur Caddy), simple garde-fou réseau : en pratique le serveur répond AVANT (résultat ou
-// message « Étude trop lourde »). Au-delà, l'abort remonte une erreur plutôt qu'un onglet figé.
-// CORRECTIFS-2 (Lot 2) — porté à 90 s pour laisser passer l'EXPORT PDF (rendu APRÈS la borne de
-// calcul) sur une assiette lourde ; sinon le navigateur abandonnait avant le proxy (désormais 90 s).
-export const ETUDE_FETCH_TIMEOUT_MS = 90_000
+// ETUDE-V6-2 (Lot 3) — l'étude est bornée côté serveur ; le fetch front abandonne au-delà (aligné sur
+// Caddy), simple garde-fou réseau : en pratique le serveur répond AVANT (résultat ou message « Étude
+// trop lourde »). Au-delà, l'abort remonte une erreur plutôt qu'un onglet figé.
+// ETUDE-PLAFOND-1 — la borne serveur passe de 60 à 120 s (prod ~1,7× plus lente, cf. config.py) : ce
+// garde-fou front est relevé à 150 s pour rester STRICTEMENT AU-DESSUS de la borne (sinon le navigateur
+// abandonnerait avant que le serveur ait rendu son 503 honnête). Aligné avec Caddy/nginx (150 s).
+export const ETUDE_FETCH_TIMEOUT_MS = 150_000
 export const postEtude = (body: EtudeIn) =>
   j<EtudePayload>('/modules/etude', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),

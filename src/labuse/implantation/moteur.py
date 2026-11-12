@@ -347,12 +347,17 @@ def _rechercher(terrain, regles, conv, objectif, *, repartition=None, stationnem
     return faisables, candidats
 
 
-# ENVELOPPE DE CALCUL GLOBALE (1ᵉʳ passage + repli), bornée bien SOUS le timeout API (etude_timeout_s=60) :
+# ENVELOPPE DE CALCUL GLOBALE (1ᵉʳ passage + repli), bornée bien SOUS le timeout API (etude_timeout_s=120) :
 # il reste ~20 s pour le chargement LiDAR, l'assemblage du payload et le rendu des planches. Sur un très gros
 # contour, une SEULE évaluation peut coûter ~10 s ; le repli ne démarre que s'il reste de la marge, et son
 # budget est plafonné par ce qui RESTE sous l'enveloppe — jamais un 2ᵉ budget plein qui empilerait les
 # dépassements et ferait franchir la borne (c'était la cause du 57,9 s mesuré).
-_ENVELOPPE_CALCUL_S = 40.0
+# ETUDE-PLAFOND-1 — enveloppe portée de 40 à 100 s en même temps que la borne (60→120) et le filet (57→100) :
+# à 40 s elle devenait une limite BASSE orpheline qui AFFAMAIT le 2ᵉ passage (repli de récupération) sur la
+# prod ~1,7× plus lente, alors que la borne autorise désormais 120 s. Le repli ne fait qu'AJOUTER des
+# faisables quand le 1ᵉʳ passage n'en a trouvé aucun → le résultat ne peut pas BAISSER. On garde ~20 s de
+# marge sous la borne (100 vs 120) pour le post-traitement, comme l'ancien ratio 40 vs 60.
+_ENVELOPPE_CALCUL_S = 100.0
 
 
 def _budget_repli(terrain, restant: float) -> float:
