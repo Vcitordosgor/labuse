@@ -201,7 +201,7 @@ export function TaxeAmenagement() {
           <span className="text-[11px] text-txt-mut">m² de surface taxable</span>
         </div>
         <p data-taxe-surface-exemple className="text-[10px] leading-snug text-txt-dim">
-          Surface close et couverte de plus de 1,80 m — garages et annexes INCLUS. Ex. : une maison de 100 m² + un garage de 20 m² = 120 m² de surface taxable.
+          Surface close et couverte, sous une hauteur de plafond de plus de 1,80 m — garages et annexes INCLUS. Ex. : une maison de 100 m² + un garage de 20 m² = 120 m² de surface taxable.
         </p>
 
         {/* Logement / Autre — segmented toggle. */}

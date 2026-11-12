@@ -252,6 +252,9 @@ def _capacite_union(session: Session, parcels: list) -> dict | None:
         # NU-G-007 — la part constructible servie à côté de la SDP (comme le `bilan_surfacique` de l'Étude).
         "surface_constructible_m2": round(surface_constructible),
         "pct_hors_zone": pct_hors_zone,
+        # OUTILS-P1-1 LOT3d (pt 1) — la PART constructible (ratio géométrique), pour que l'agrégat
+        # décompose le MÊME total affiché (surface cumulée) en « constructible » + « hors zone » = 100 %.
+        "part_constructible": part_constructible,
         "emprise_m2": round(emprise),
         "sdp_m2": round(float(fr.get("surface_plancher_m2") or 0.0)),
         "ca": (b.ca if (b and b.fiable) else None),
@@ -315,12 +318,23 @@ def aggregate_assiette(session: Session, parcels: list) -> dict:
     sdp_conserve = max(0, sdp_libere - sdp_existante_totale)
     cf = u["charge_fonciere"]
     cf_out = ({**cf, "par_m2_terrain": round(cf["central"] / surface)} if cf and surface else cf)
+    # OUTILS-P1-1 LOT3d (pt 1) — « dont N m² en zone constructible · X % hors zone » : les DEUX chiffres
+    # décomposent le MÊME total affiché (surface cumulée) via la part constructible → ils s'additionnent à
+    # 100 %. Avant, la surface constructible (union DESSINÉE × part) et le % (géométrie INSETÉE) sortaient
+    # de deux bases ≠ de la surface cumulée (contenance) : 1 689 / 2 630 ≠ 1 − 31 %.
+    part_c = u.get("part_constructible")
+    if part_c is not None and surface:
+        surf_constr_aff = round(surface * part_c)
+        pct_hz_aff = max(0, min(100, round(100.0 * (1.0 - part_c))))
+    else:
+        surf_constr_aff = u.get("surface_constructible_m2")
+        pct_hz_aff = u.get("pct_hors_zone")
     return {
         "surface_cumulee_m2": surface,
         # NU-G-007 — surface d'assiette EN ZONE CONSTRUCTIBLE + part hors zone (alignés sur l'Étude du
         # même assemblage) : la SDP cumulée est bornée à cette part, le % hors zone est DIT.
-        "surface_constructible_m2": u.get("surface_constructible_m2"),
-        "pct_hors_zone": u.get("pct_hors_zone"),
+        "surface_constructible_m2": surf_constr_aff,
+        "pct_hors_zone": pct_hz_aff,
         "sdp_m2": u["sdp_m2"],   # BRUTE de l'union (back-compat) = SDP terrain libéré
         # CHASSE-FIX-1 (B-2) — les deux grandeurs SDP-UNIQUE : conservé (défaut) et terrain libéré.
         "sdp_terrain_libere_m2": sdp_libere,

@@ -279,11 +279,13 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
               { v: fmt((d['n_rattachees'] ?? d['n_parcelles']) as number), lbl: 'Rattachées au cadastre' },
               { v: fmt((d['n_rattachees'] ?? d['n_parcelles']) as number), lbl: 'Visibles selon les filtres' },
               { v: fmtM2(d['surface_totale_m2'] as number | null), lbl: 'surface totale' },
-              { v: `${fmt(d['n_terrains_nus'] as number)} / ${fmt(d['n_terrains_batis'] as number)} / ${fmt(d['n_bati_non_renseigne'] as number)}`, lbl: 'nus / bâtis / bâti non renseigné' },
+              // OUTILS-P1-1 LOT3d (pt 3) — tuile composite (3 nombres) : plus petite + autorisée à passer
+              // à la ligne, pour TENIR dans la case quel que soit le propriétaire (gros comptes SIDR &c.).
+              { v: `${fmt(d['n_terrains_nus'] as number)} / ${fmt(d['n_terrains_batis'] as number)} / ${fmt(d['n_bati_non_renseigne'] as number)}`, lbl: 'nus / bâtis / bâti non renseigné', compo: true },
               { v: fmt(d['n_constructible_u_au'] as number), lbl: 'en zone U ou AU' },
             ].map((c) => (
               <div key={c.lbl} data-m02-kpi className="min-w-0 rounded-lg border border-line-2 bg-surface-3 px-2.5 py-2.5">
-                <div className="num-key whitespace-nowrap text-[16px] tabular-nums text-mint">{c.v}</div>
+                <div className={`num-key tabular-nums text-mint ${'compo' in c && c.compo ? 'text-[12.5px] leading-tight break-words' : 'whitespace-nowrap text-[16px]'}`}>{c.v}</div>
                 <div className="mt-0.5 text-[10px] leading-tight text-txt-mut">{c.lbl}</div>
               </div>
             ))}
@@ -814,7 +816,7 @@ export function M03() {
     ['tous', 'Tous', null, perimCounts.tous, 'dans les 200 m'],
   ] as const) : ([
     ['cours', 'Récents', 'recent', radarEntryTotal, 'autorisés, 90 derniers jours de la donnée'],
-    ['mort', 'Permis dormants', 'dormant', pmEntryTotal, 'autorisés depuis plus de 3 ans, sans achèvement déclaré (DAACT)'],
+    ['mort', 'Permis dormants', 'dormant', pmEntryTotal, 'autorisés depuis plus de 3 ans, sans achèvement déclaré (DAACT), terrain resté nu'],
     ['acheve', 'Achevés', 'acheve', acheveEntryTotal, 'travaux déclarés (DAACT)'],
     ['autre', 'Autres', 'autre', autreEntryTotal, 'ni récent, ni dormant, ni achevé'],
     ['tous', 'Tous', null, tousEntryTotal, 'toute la base'],
