@@ -90,6 +90,8 @@ export function Successions() {
             signal <b className="text-txt">RNE INPI</b>{commune ? ` — ${commune}` : ' — toute l’île'}
             {/* OUTILS-P1-1 (pt 1) — date de la donnée RNE rétablie (le nom et l'âge en viennent). */}
             {rne && <> · donnée RNE au <b className="text-txt">{rne}</b></>}
+            {/* OUTILS-P1-1 LOT3 (pt 5) — on DIT sur quoi la liste est triée (le grand chiffre à droite). */}
+            <div data-successions-tri className="mt-0.5 text-txt-dim">Triées par plancher restant estimé, du plus grand au plus petit.</div>
             {/* OUTILS-P1-1 (pt 1) — les âges ≥ 100 ans sont sortis de la liste ET comptés ici. */}
             {ageEcarte > 0 && (
               <div data-successions-age-ecarte className="mt-0.5 text-txt-dim">
@@ -119,10 +121,17 @@ function Carte({ it, onOpen }: { it: SuccessionItem; onOpen: () => void }) {
     <div data-successions-row
       className="hover-fill cursor-pointer rounded-lg border border-line-2 bg-surface-3 px-2.5 py-1.5"
       onClick={onOpen}>
-      <div className="flex items-center gap-2">
-        <span className="font-mono text-[11px] text-txt-hi">{it.idu}</span>
-        <span className="ml-auto tnum text-[11px] text-txt">{fmtM2(it.sdp_residuelle_m2)}</span>
-        <span className="rounded bg-amber-500/15 px-1 text-[8.5px] font-medium text-amber-500">Estimé</span>
+      <div className="flex items-start gap-2">
+        <span className="mt-0.5 font-mono text-[11px] text-txt-hi">{it.idu}</span>
+        {/* OUTILS-P1-1 LOT3 (pt 5) — le grand chiffre à droite est LIBELLÉ : « plancher restant » (SDP
+            résiduelle estimée), c'est aussi la clé de tri de la liste. */}
+        <span className="ml-auto flex flex-col items-end leading-none">
+          <span className="flex items-center gap-1">
+            <span className="tnum text-[11px] text-txt">{fmtM2(it.sdp_residuelle_m2)}</span>
+            <span className="rounded bg-amber-500/15 px-1 text-[8.5px] font-medium text-amber-500">Estimé</span>
+          </span>
+          <span className="mt-0.5 text-[8px] uppercase tracking-wide text-txt-dim">plancher restant</span>
+        </span>
       </div>
       <div className="mt-0.5 flex items-center gap-1.5 text-[10.5px]">
         <span className="shrink-0 text-txt-mut">{it.commune}</span>
@@ -154,9 +163,11 @@ function Motif({ it }: { it: SuccessionItem }) {
   const depotMuet = it.depot_comptes?.muet ?? false
   // OUTILS-P1-1 (pt 1) — libellé FACTUEL, sans pronostic : « Nom · N ans » quand le dirigeant est nommé
   // (nom ET âge du même millésime RNE), sinon « Dirigeant de N ans » (jamais « dirigeant · » orphelin).
+  // OUTILS-P1-1 LOT3 (pt 7) — « N ans » insécable (espace insécable  ) : le nombre et « ans » ne se
+  // coupent jamais en bout de ligne, même quand le motif passe à la ligne (break-words).
   const base = it.sci_dormante ? 'SCI dormante'
     : it.dirigeant_age != null
-      ? (it.dirigeant_nom ? `${it.dirigeant_nom} · ${it.dirigeant_age} ans` : `Dirigeant de ${it.dirigeant_age} ans`)
+      ? (it.dirigeant_nom ? `${it.dirigeant_nom} · ${it.dirigeant_age} ans` : `Dirigeant de ${it.dirigeant_age} ans`)
       : null
   if (!base && !depotMuet) return null
   // RECETTE-OUTILS-2 (R23) — plus de troncature (« aucun dépôt de compt… ») : le texte PEUT PASSER à la

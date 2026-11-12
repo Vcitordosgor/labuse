@@ -94,11 +94,11 @@ def test_w2_cinq_lignes_etat_avec_definitions_sur_les_lignes():
     for k in ("'tous'", "'cours'", "'mort'", "'acheve'", "'autre'"):
         assert k in MP, k
     # OUTILS-P1-1 (pt 5) — « Récent » → « Autorisés » (période dans la définition), « Dormant » → « Ancien permis ».
-    for label in ("'Autorisés'", "'Ancien permis'", "'Achevés'", "'Autres'"):
+    for label in ("'Récents'", "'Permis dormants'", "'Achevés'", "'Autres'"):
         assert label in MP, label
     # définitions courtes SUR les lignes (plus dans un paragraphe)
     assert "depuis 90 jours" in MP          # OUTILS-P1-1 (pt 5) — « Autorisés depuis 90 jours »
-    assert "ni récent, ni ancien, ni achevé" in MP
+    assert "ni récent, ni dormant, ni achevé" in MP
     # bloc total en tête + bandeau court
     assert "permis autorisés en base" in MP
     # FINITIONS-2 (title sweep, bb7d9281) a retiré l'attribut title « … l'instruction déposée n'y

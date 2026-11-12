@@ -123,7 +123,7 @@ describe('PERMIS — double entrée + densité', () => {
     // plus « Tous » (240 mois) qui chargeait toute la base à l'ouverture. Le résumé de la barre dit donc
     // l'état « Autorisés » + son compte (compteur radar-entry du mock).
     // OUTILS-P1-1 (pt 5) — « Récent » renommé « Autorisés » (la période est dans la définition : depuis 90 jours).
-    expect(barreEtat).toContain('Autorisés')
+    expect(barreEtat).toContain('Récents')
     expect(barreEtat).toMatch(/5\s*613/)   // espace fine insécable (fr-FR) : on ne fige pas le séparateur
   })
 

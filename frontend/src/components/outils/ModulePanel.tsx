@@ -206,6 +206,15 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
     getNextPageParam: (last, pages) => (last as Record<string, any>)['tronquee'] ? pages.length * M02_PAGE : undefined,
     enabled: !!siren,
   })
+  // OUTILS-P1-1 LOT3 (pt 10) — « voir plus » des blocs contigus : la page 0 sert les 12 premiers ; au clic
+  // on relève le plafond (`blocs_limit`) et un fetch LAZY (enabled seulement > 12) rapporte le reste.
+  const [blocsLimit, setBlocsLimit] = useState(12)
+  useEffect(() => { setBlocsLimit(12) }, [siren])   // nouveau propriétaire → replie
+  const blocsPlus = useQuery({
+    queryKey: ['m02-blocs', siren, blocsLimit],
+    queryFn: () => modPatrimoine(siren!, 1, 0, blocsLimit),
+    enabled: !!siren && blocsLimit > 12,
+  })
   const pages = (pat.data?.pages ?? []) as Record<string, any>[]
   const d = pages[0]  // page 0 = agrégats (nom, n_parcelles, n_actionnables, sdp…) + 1re tranche d'items
   const items = pages.flatMap((p) => (p['items'] ?? []) as Record<string, any>[])
@@ -258,7 +267,8 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
             <summary className="flex cursor-pointer list-none items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium text-txt-mut marker:hidden hover:text-mint">
               <span aria-hidden className="inline-block w-3 text-mint transition-transform duration-quick group-open:rotate-90">▸</span>
               Chiffres clés
-              <span className="ml-auto font-normal text-txt-dim">{fmt((d['n_recensees'] ?? d['n_parcelles']) as number)} recensées · {fmtM2(d['surface_totale_m2'] as number | null)}</span>
+              {/* OUTILS-P1-1 LOT3 (pt 8) — résumé replié : « N parcelles » (le détail Recensées/Rattachées/Visibles est dans le tableau dessous). */}
+              <span className="ml-auto font-normal text-txt-dim">{fmt((d['n_recensees'] ?? d['n_parcelles']) as number)} parcelles · {fmtM2(d['surface_totale_m2'] as number | null)}</span>
             </summary>
             {/* OUTILS-P1-1 (pt 7) — TROIS comptes sur des ensembles DISTINCTS : Recensées (fichiers
                 fonciers DGFiP) ≥ Rattachées au cadastre (ont une géométrie) ≥ Visibles selon les filtres
@@ -308,12 +318,13 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
               (même moteur que l'outil Blocs, table parcel_blocs). Ligne « Blocs contigus : N » + les
               groupes cliquables (→ fiche de leur parcelle représentative). */}
           {(() => {
-            const bc = d['blocs_contigus'] as { n: number; affiches?: number; items: { bloc_id: number; n_parcelles: number; surface_m2: number; communes: string[]; sdp_residuelle_m2: number; idu_repr: string | null }[] } | undefined
+            // OUTILS-P1-1 LOT3 (pt 10) — source = le fetch « voir plus » dès qu'on a relevé le plafond, sinon la page 0.
+            const bc = ((blocsLimit > 12 && blocsPlus.data ? (blocsPlus.data as Record<string, any>)['blocs_contigus'] : d['blocs_contigus'])) as { n: number; affiches?: number; items: { bloc_id: number; n_parcelles: number; surface_m2: number; communes: string[]; sdp_residuelle_m2: number; idu_repr: string | null }[] } | undefined
             if (!bc || bc.n === 0) return null
             // RECETTE-1 (H4, Vic) — le bloc « Blocs contigus » se REPLIE (disparaît) quand la liste des
             // parcelles s'ouvre (fusion ScanPatrimoine, bandeau replié) : il reprend sa place au retour.
             if (embedded && bandeauReplie) return null
-            // OUT-SCAN-006 — la liste des blocs est plafonnée (12) : on DIT « N affichés sur M » plutôt
+            // OUT-SCAN-006 — la liste des blocs est plafonnée : on DIT « N affichés sur M » plutôt
             // qu'une troncature silencieuse (`affiches` servi par le back).
             const bcAff = bc.affiches ?? bc.items.length
             return (
@@ -324,11 +335,19 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
                     <button key={bl.bloc_id} data-m02-bloc
                       onClick={() => bl.idu_repr && useApp.getState().focusParcelle(bl.idu_repr, { fiche: true })}
                       className="hover-fill flex items-baseline justify-between gap-2 rounded px-1.5 py-0.5 text-left text-[10.5px] text-txt-mut transition-colors duration-quick">
+                      {/* OUTILS-P1-1 LOT3 (pt 9) — surface du bloc en ha dès 1 ha (fmtM2), comme le total. */}
                       <span><b className="text-txt">{fmt(bl.n_parcelles)}</b> parcelles · {(bl.communes ?? []).join(', ')}</span>
-                      <span className="tnum shrink-0 text-txt-dim">{fmt(bl.surface_m2)} m²</span>
+                      <span className="tnum shrink-0 text-txt-dim">{fmtM2(bl.surface_m2)}</span>
                     </button>
                   ))}
                 </div>
+                {/* OUTILS-P1-1 LOT3 (pt 10) — « voir plus » sous la liste quand tous les blocs ne sont pas affichés. */}
+                {bcAff < bc.n && (
+                  <button data-m02-blocs-plus onClick={() => setBlocsLimit(Math.min(bc.n, 500))} disabled={blocsPlus.isFetching}
+                    className="mt-1 w-full rounded px-1.5 py-1 text-[10.5px] font-medium text-mint hover:bg-mint/10">
+                    {blocsPlus.isFetching ? 'Chargement…' : `Voir plus (${fmt(bc.n - bcAff)} de plus)`}
+                  </button>
+                )}
               </div>
             )
           })()}
@@ -783,16 +802,18 @@ export function M03() {
   // OUTILS-P1-1 (pt 5) — la PÉRIODE est écrite dans le libellé (« Autorisés depuis 90 jours ») ; le mot
   // jargon « Dormant » devient « Ancien permis sans achèvement déclaré ». Le libellé + sa définition se
   // lisent ensemble (« Autorisés — depuis 90 jours »). En périmètre, la fenêtre « récent » vaut 24 mois.
+  // OUTILS-P1-1 LOT3 (pt 2/3) — « Récents · autorisés depuis 90 jours » (la période reste dans la
+  // définition) ; l'état du cycle inactif reprend le mot du sous-titre : « Permis dormants ».
   const ETATS = (perim ? ([
-    ['cours', 'Autorisés', 'recent', perimCounts.recent, 'depuis 24 mois'],
+    ['cours', 'Récents', 'recent', perimCounts.recent, 'autorisés depuis 24 mois'],
     ['acheve', 'Achevés', 'acheve', perimCounts.acheve, 'travaux déclarés (DAACT)'],
     ['autre', 'Autres', 'autre', perimCounts.autre, 'ni récent, ni achevé'],
     ['tous', 'Tous', null, perimCounts.tous, 'dans les 200 m'],
   ] as const) : ([
-    ['cours', 'Autorisés', 'recent', radarEntryTotal, 'depuis 90 jours'],   // OUTILS-P1-1 (pt 5)
-    ['mort', 'Ancien permis', 'dormant', pmEntryTotal, 'sans achèvement déclaré (DAACT)'],
+    ['cours', 'Récents', 'recent', radarEntryTotal, 'autorisés depuis 90 jours'],
+    ['mort', 'Permis dormants', 'dormant', pmEntryTotal, 'sans achèvement déclaré (DAACT)'],
     ['acheve', 'Achevés', 'acheve', acheveEntryTotal, 'travaux déclarés (DAACT)'],
-    ['autre', 'Autres', 'autre', autreEntryTotal, 'ni récent, ni ancien, ni achevé'],
+    ['autre', 'Autres', 'autre', autreEntryTotal, 'ni récent, ni dormant, ni achevé'],
     ['tous', 'Tous', null, tousEntryTotal, 'toute la base'],
   ] as const))
   const actE = ETATS.find((e) => e[0] === seg) ?? ETATS[0]
@@ -922,6 +943,10 @@ export function M03() {
           <span className="tnum text-[24px] font-semibold leading-none text-txt-hi">{tousEntryTotal != null ? fmt(tousEntryTotal) : '…'}</span>
           <span className="text-[12px] text-txt-mut">permis autorisés en base</span>
         </div>
+        {/* OUTILS-P1-1 LOT3 (pt 4) — date de la donnée Sitadel (max(date) en base, servie `donnees_jusqu_au`). */}
+        {donneesJusquAu && (
+          <div data-permis-sitadel-date className="mt-0.5 text-[10px] leading-snug text-txt-dim">Donnée Sitadel au {donneesJusquAu}</div>
+        )}
       </div>
 
       {/* RETOURS-18 X1 — bandeau Sitadel PERMANENT. RETOURS-19 Y5 — tient sur UNE ligne (phrase resserrée
@@ -952,15 +977,17 @@ export function M03() {
               const nShown = actif && total != null ? total : n
           return (
             <button key={k} data-permis-seg={k} onClick={() => choisirSeg(k)} aria-pressed={actif}
-              className={`group flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors duration-quick ${
+              className={`group flex w-full items-start gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors duration-quick ${
                 actif ? 'bg-mint text-mint-ink' : 'border border-line-2 text-txt hover:bg-mint hover:text-mint-ink'}`}>
               {/* pastille = couleur de carte de l'état ; « Tous » n'a pas UNE couleur → anneau neutre. */}
               {etat
-                ? <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: etatColor(etat) }} />
-                : <span className="h-2 w-2 shrink-0 rounded-full border border-current opacity-50" />}
-              <span className="shrink-0 text-[12px] font-medium">{label}</span>
-              <span className={`min-w-0 flex-1 truncate text-[11px] ${actif ? 'text-mint-ink/70' : 'text-txt-mut group-hover:text-mint-ink/70'}`}>{def}</span>
-                  <span className="shrink-0 tnum text-[12px] font-medium">{nShown != null ? fmt(nShown) : '…'}</span>
+                ? <span className="mt-1 h-2 w-2 shrink-0 rounded-full" style={{ background: etatColor(etat) }} />
+                : <span className="mt-1 h-2 w-2 shrink-0 rounded-full border border-current opacity-50" />}
+              {/* OUTILS-P1-1 LOT3 (pt 1) — AUCUN libellé coupé par « … » : le nom ne rétrécit pas (shrink-0)
+                  et la définition PASSE À LA LIGNE au lieu d'être tronquée (plus de `truncate`). */}
+              <span className="shrink-0 text-[12px] font-medium leading-snug">{label}</span>
+              <span className={`min-w-0 flex-1 text-[11px] leading-snug ${actif ? 'text-mint-ink/70' : 'text-txt-mut group-hover:text-mint-ink/70'}`}>{def}</span>
+                  <span className="mt-px shrink-0 tnum text-[12px] font-medium">{nShown != null ? fmt(nShown) : '…'}</span>
                 </button>
               )
             })}
@@ -1020,7 +1047,7 @@ export function M03() {
               /* RECETTE-1 (H2.4) — en périmètre : le compte est celui des permis dans les 200 m. */
               ? <>{fmt(perimItems.length)} dans les 200 m de <span className="font-mono">{iduCourt(parcelIdu!)}</span></>
               : pointMort
-              ? <>{fmt(cartePm.length)} anciens permis sur la carte{total != null && loaded < total
+              ? <>{fmt(cartePm.length)} permis dormants sur la carte{total != null && loaded < total
                   ? <> · <span data-permis-plafond>les {fmt(loaded)} plus anciens chargés — zoomez pour affiner</span></> : ''}</>
               : <>{fmt(carteRadar.length)} sur la carte
                   {total != null && loaded < total ? <> · {fmt(loaded)} / {fmt(total)} chargés</> : null}</>}
@@ -1058,10 +1085,10 @@ export function M03() {
           // RETOURS-17 W3 — la pastille de la LIGNE = la couleur de son ÉTAT (source unique lib/permisEtats),
           // la MÊME que le point sur la carte : Récent vert · Dormant corail · Achevé/Autre gris.
           const et: PermisEtat = perim ? perimClasse(i) : pointMort ? 'dormant' : radarEtat(i)
-          const etTitre = { recent: 'Autorisé — permis accordé dans la fenêtre récente.',
-            dormant: 'Ancien permis sans achèvement déclaré — permis de construire de plus de 36 mois, sans déclaration d\'achèvement (DAACT) et parcelle toujours non bâtie.',
+          const etTitre = { recent: 'Récent — permis autorisé dans la fenêtre récente.',
+            dormant: 'Permis dormant — permis de construire de plus de 36 mois, sans déclaration d\'achèvement (DAACT) et parcelle toujours non bâtie.',
             acheve: 'Achevé — travaux déclarés terminés (DAACT).',
-            autre: 'Autre — ni récent, ni ancien sans achèvement, ni achevé (autre nature, permis non rattaché, ou période intermédiaire).' }[et]
+            autre: 'Autre — ni récent, ni dormant, ni achevé (autre nature, permis non rattaché, ou période intermédiaire).' }[et]
           return (
           <button key={k} data-permis-row data-geocode={i['geom'] ? '1' : '0'} data-point-mort={pointMort ? '1' : '0'} data-permis-row-etat={et}
             data-permis-actif={permisOuvert === (i['permit_id'] as string) ? '1' : undefined}
@@ -1558,7 +1585,7 @@ export function M09() {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       <Banner>Un <b>service d'envoi</b> : vous préparez vos courriers (destinataires + relecture), LABUSE
-        <b> les imprime, les affranchit et les poste</b>. Adressage générique (SPF/CERFA) — aucune identité
+        <b> les imprime, les affranchit et les poste</b>. Adressage générique — aucune identité
         de propriétaire particulier.
         {/* RETOURS-25 (pt 13) — prix et délai LUS DE LA CONFIG (/courrier/statut), jamais écrits en dur. */}
         {statut.data?.tarif_unitaire_eur != null && (
@@ -1587,8 +1614,10 @@ export function M09() {
       <div className="flex items-center gap-1 text-[10px]">
         {STEPS.map(([n, l], i) => (
           <div key={n} className={`flex items-center gap-1 ${step >= n ? 'text-mint' : 'text-txt-dim'}`}>
+            {/* OUTILS-P1-1 LOT3 (pt 11) — UN SEUL chiffre : la pastille porte le numéro (ou ✓), le texte ne
+                le répète plus (« ③ 3 · Envoi » → « ③ Envoi »). */}
             <span className={`flex h-4 w-4 items-center justify-center rounded-full border text-[9px] ${step >= n ? 'border-mint' : 'border-line-2'}`}>{step > n ? '✓' : n}</span>
-            {n} · {l}{i < 2 && <span className="text-txt-dim">›</span>}
+            {l}{i < 2 && <span className="text-txt-dim">›</span>}
           </div>
         ))}
       </div>
@@ -1714,6 +1743,15 @@ export function M09() {
                 <>{dest.length} courrier{dest.length > 1 ? 's' : ''} × {fmtEur2(statut.data.tarif_unitaire_eur)} = <b className="text-txt-mut">{fmtEur2(statut.data.tarif_unitaire_eur * dest.length)} TTC</b> — impression, mise sous pli, affranchissement, suivi.</>
               ) : 'Tarif communiqué sous 24 h ouvrées.'}
             </p>
+          )}
+          {/* OUTILS-P1-1 LOT3 (pt 12) — ligne « Total » (nombre de courriers × prix unitaire) JUSTE au-dessus
+              du bouton, dès que le prix est connu. Montant ESTIMÉ (le prestataire confirme avant envoi) —
+              distinct de la ligne détaillée ci-dessus, gated sur la disponibilité du service. */}
+          {!demande && statut.data?.tarif_unitaire_eur != null && (
+            <div data-courrier-total className="flex items-baseline justify-between gap-2 border-t border-line pt-1.5 text-[11.5px]">
+              <span className="font-medium text-txt">Total</span>
+              <span className="font-mono tabular-nums text-txt-hi">{dest.length} × {fmtEur2(statut.data.tarif_unitaire_eur)} = <b>{fmtEur2(statut.data.tarif_unitaire_eur * dest.length)}</b></span>
+            </div>
           )}
           {!demande ? (
             // OUTILS-P1-1 (pt 10) — le bouton dit ce qui se passe VRAIMENT : on DÉPOSE une demande d'envoi

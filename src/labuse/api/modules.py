@@ -290,6 +290,7 @@ def _dernier_depot_comptes(db: Session, siren: str) -> dict | None:
 @router.get("/patrimoine")
 def patrimoine(siren: str, fmt: str = "json",
                limit: int = Query(200, ge=1, le=2000), offset: int = Query(0, ge=0),
+               blocs_limit: int = Query(12, ge=1, le=500),   # OUTILS-P1-1 LOT3 (pt 10) — « voir plus » des blocs
                request: Request = None, db: Session = Depends(get_db)):
     """Inventaire du foncier d'une PERSONNE MORALE (SIREN) : ses parcelles, le TIER v2 servi de
     chacune (étage 0 du run prime), le résiduel, les signaux d'approche (BODACC procédure + INPI
@@ -308,6 +309,7 @@ def patrimoine(siren: str, fmt: str = "json",
     # tests) où les défauts `Query()` ne sont pas résolus : on retombe sur les valeurs par défaut.
     limit = limit if isinstance(limit, int) else 200
     offset = offset if isinstance(offset, int) else 0
+    blocs_limit = blocs_limit if isinstance(blocs_limit, int) else 12   # OUTILS-P1-1 LOT3 (pt 10) — appel direct
     rows = db.execute(text("""
         SELECT p.id, p.idu, p.commune, p.surface_m2, p.contenance_m2, z.zone_fam, r.sdp_residuelle_m2,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
@@ -462,12 +464,13 @@ def patrimoine(siren: str, fmt: str = "json",
                    (SELECT min(m.idu) FROM parcel_bloc_membres m WHERE m.bloc_id = b.id) AS idu_repr
             FROM parcel_blocs b WHERE b.siren = :s
             ORDER BY b.n_parcelles DESC, b.surface_totale_m2 DESC"""), {"s": siren}).mappings().all()
-        # OUT-SCAN-006 — la liste est plafonnée à 12 mais `n` = total réel (460…) : on sert `affiches`
-        # pour que l'écran dise « N affichés sur M » plutôt qu'une troncature silencieuse.
+        # OUT-SCAN-006 — la liste est plafonnée (12 par défaut) mais `n` = total réel (460…) : on sert
+        # `affiches` pour que l'écran dise « N affichés sur M ». OUTILS-P1-1 LOT3 (pt 10) — le plafond est
+        # relevable (`blocs_limit`) pour le bouton « voir plus » sous la liste.
         _items = [
             {"bloc_id": r["bloc_id"], "n_parcelles": r["n_parcelles"], "surface_m2": r["surface_totale_m2"],
              "communes": r["communes"], "sdp_residuelle_m2": r["sdp_residuelle_m2"], "idu_repr": r["idu_repr"]}
-            for r in brs[:12]]
+            for r in brs[:blocs_limit]]
         blocs_contigus = {"n": len(brs), "affiches": len(_items), "items": _items}
     # GB-017/018 — EXPORT CSV du portefeuille (raison sociale ENTIÈRE ; notice GB-016 si plafond).
     if fmt == "csv":

@@ -73,10 +73,10 @@ def test_v3_dormant_partout_plus_de_point_mort_visible():
     """Les chaînes VISIBLES disent « Dormant » ; la définition (ancien PC sans achèvement) vit
     désormais SUR la ligne de l'état (RETOURS-17 W2). « point mort » ne survit qu'en commentaire."""
     # OUTILS-P1-1 (pt 5) — « Dormant » devient « Ancien permis sans achèvement déclaré » (fin du jargon).
-    assert "'mort', 'Ancien permis'" in MP
+    assert "'mort', 'Permis dormants'" in MP
     assert "sans achèvement déclaré (DAACT)" in MP   # définition sur la LIGNE de l'état
     assert "'Au point mort'" not in MP and "au point mort ·" not in MP
-    assert "Ancien permis sans achèvement déclaré — permis de construire" in MP
+    assert "Permis dormant — permis de construire" in MP
     reg = (ROOT / "frontend/src/components/outils/registry.ts").read_text(encoding="utf-8")
     assert "permis dormants" in reg and "les permis au point mort" not in reg
     ctx = (ROOT / "frontend/src/components/contexte/ContextePanel.tsx").read_text(encoding="utf-8")
@@ -109,7 +109,7 @@ def test_v4_ligne_du_bas_nomme_ses_perimetres():
     assert "permis autorisés en base" in MP
     assert "toute la profondeur Sitadel" in MP
     assert "localisés sur la carte" in MP
-    assert "anciens permis sur la carte" in MP   # OUTILS-P1-1 (pt 5) — « dormants » → « anciens permis »
+    assert "permis dormants sur la carte" in MP   # OUTILS-P1-1 LOT3 (pt 3) — « Permis dormants »
     # chaque état porte sa DÉFINITION COURTE sur sa ligne
     assert "depuis 24 mois" in MP   # OUTILS-P1-1 (pt 5) — période dans la définition (périmètre)
     assert "travaux déclarés (DAACT)" in MP
