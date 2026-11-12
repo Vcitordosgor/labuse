@@ -120,7 +120,19 @@ export function O5Servitudes() {
                       ? <span className="rounded-full border border-red-500/40 bg-red-500/10 px-1.5 text-[8.5px] font-medium text-red-500">Inconstructible (partie rouge)</span>
                       : <span className="rounded-full border border-mint/40 bg-mint/10 px-1.5 text-[8.5px] font-medium text-mint">sourcé</span>}
                   </div>
-                  <p className="mt-1 text-[11px] leading-snug text-txt">{s.effets.join(' · ')}</p>
+                  {/* OUTILS-LOT-4 (pt 3) — une carte qui agrège plusieurs effets (ex. « Risque naturel » :
+                      PPR rouge + bleu + aléas) devenait trop longue. L'ESSENTIEL (le 1ᵉ effet, le plus
+                      fort) reste visible ; le reste passe dans un repli « Détail ». */}
+                  <p className="mt-1 text-[11px] leading-snug text-txt">{s.effets[0]}</p>
+                  {s.effets.length > 1 && (
+                    <details data-o5-detail className="group/d mt-0.5">
+                      <summary className="flex cursor-pointer list-none items-center gap-1 text-[10px] text-mint marker:hidden hover:underline">
+                        <span aria-hidden className="inline-block w-3 transition-transform duration-quick group-open/d:rotate-90">▸</span>
+                        Détail · {s.effets.length - 1} autre{s.effets.length - 1 > 1 ? 's' : ''}
+                      </summary>
+                      <p className="mt-1 text-[11px] leading-snug text-txt">{s.effets.slice(1).join(' · ')}</p>
+                    </details>
+                  )}
                   <p className="mt-0.5 text-[9.5px] text-txt-dim">{s.source}{s.date ? ` · ${s.date}` : ''}</p>
                 </div>
               ))}
