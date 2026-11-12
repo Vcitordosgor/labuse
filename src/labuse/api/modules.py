@@ -2477,7 +2477,7 @@ def etude_implantation(body: EtudeIn, db: Session = Depends(get_db)) -> dict:
     TIRE capacité, contrôles 4 états et statut ; le payload porte la géométrie en GeoJSON (WGS84)
     pour le plan masse de la carte, les hypothèses modifiables et les versions moteur + règles.
     ValueError → 400 (entrée invalide), jamais un faux chiffre. ETUDE-ASYNC-1 — le calcul tourne dans un
-    processus séparé TUABLE : au-delà de la borne (LABUSE_ETUDE_TIMEOUT_S, 60 s) → 503 honnête « relancez »
+    processus séparé TUABLE : au-delà de la borne (LABUSE_ETUDE_TIMEOUT_S, 120 s) → 503 honnête « relancez »
     et le processus est tué (plus jamais de thread fantôme qui affame les autres requêtes)."""
     for idu in (body.idus or []):
         idu = _check_idu(idu)

@@ -966,6 +966,24 @@ def _payload_hors_perimetre(session, idus: list[str], entree: dict, exc) -> dict
     }
 
 
+def _etat_recherche(*, garde_fou: bool, complete: bool, a_un_resultat: bool) -> str:
+    """ÉTAT de la recherche d'implantation, servi À L'IDENTIQUE à l'écran et au PDF. Décision SOURCE
+    UNIQUE (testable) — l'ordre des branches compte :
+      · « partielle » dès que la recherche a été INTERROMPUE (filet temps du 1ᵉʳ passage, OU 2ᵉ passage
+        de récupération SAUTÉ faute de temps sous l'enveloppe) : le résultat servi est un PLANCHER,
+        machine-dépendant — une machine plus rapide (ou le 2ᵉ passage non sauté) peut faire mieux. On
+        ne dit JAMAIS « complete » NI « non_aboutie » (= impossible établie) quand la recherche a été
+        coupée, même si rien n'a encore été trouvé (ETUDE-PLAFOND-1).
+      · « non_aboutie » UNIQUEMENT si la recherche s'est déroulée JUSQU'AU BOUT (grille complète, aucune
+        coupe) sans aucune implantation faisable → « impossible sur cette assiette » honnête.
+      · « complete » sinon (recherche entière + au moins un résultat)."""
+    if garde_fou or not complete:
+        return "partielle"
+    if not a_un_resultat:
+        return "non_aboutie"
+    return "complete"
+
+
 # ------------------------------------------------------------------ point d'entrée
 def etudier_payload(session, entree: dict) -> dict:
     """Payload d'étude servi par l'API. `entree` = {idus, type_projet, objectif, programme,
@@ -1155,22 +1173,17 @@ def etudier_payload(session, entree: dict) -> dict:
     else:
         statut_global = "simulation impossible"
 
-    # ETUDE-FIABLE-1 (LOT B5) — ÉTAT DE LA RECHERCHE, servi tel quel à l'écran et au PDF :
-    #   · complete : la grille déterministe a examiné tous ses candidats prévus → rien à signaler ;
-    #   · partielle : le FILET temps a coupé avant (assiette très lourde) → « Recherche partielle · N
-    #     logements dessinés » (le chiffre est alors un plancher, non reproductible d'une machine à l'autre) ;
-    #   · non_aboutie : aucun candidat faisable.
+    # ETUDE-FIABLE-1 (LOT B5) + ETUDE-PLAFOND-1 — ÉTAT DE LA RECHERCHE, servi tel quel à l'écran et au PDF.
+    # Décision dans `_etat_recherche` (SOURCE UNIQUE testable) : « partielle » DÈS QUE la recherche a été
+    # interrompue (filet temps OU 2ᵉ passage de récupération sauté faute de temps) — jamais « complete » ni
+    # « non_aboutie » dans ce cas, même sans résultat (le plancher est machine-dépendant).
     # FAISA-REGLES-1 (D-003/E-057) — `grille_note` conservée (compat) : grille simplifiée (grande assiette).
     _reduite = getattr(terrain, "grille_reduite", False)
     _garde_fou = getattr(terrain, "grille_garde_fou_temps", False)
     _complete = getattr(terrain, "grille_complete", False)
     _n_dessines = (capacite_maximale or {}).get("logements")
-    if not scenarios_pub and not any(not v.get("absente") for v in variantes_pub) and not _n_dessines:
-        _etat = "non_aboutie"
-    elif _garde_fou or not _complete:
-        _etat = "partielle"
-    else:
-        _etat = "complete"
+    _a_un_resultat = bool(scenarios_pub or any(not v.get("absente") for v in variantes_pub) or _n_dessines)
+    _etat = _etat_recherche(garde_fou=_garde_fou, complete=_complete, a_un_resultat=_a_un_resultat)
     recherche = {
         "etat": _etat,
         "candidats_prevus": getattr(terrain, "grille_candidats_prevus", 0),
@@ -1182,7 +1195,10 @@ def etudier_payload(session, entree: dict) -> dict:
         "note": (None if _etat == "complete"
                  else "Recherche non aboutie — aucune implantation trouvée sur cette assiette." if _etat == "non_aboutie"
                  else f"Recherche partielle · {_n_dessines} logements dessinés — calcul interrompu par le "
-                      "garde-fou de temps (assiette lourde) ; la capacité réelle peut être supérieure."),
+                      "garde-fou de temps (assiette lourde) ; la capacité réelle peut être supérieure."
+                 if _n_dessines else
+                 "Recherche partielle — calcul interrompu par le garde-fou de temps (assiette lourde) avant "
+                 "qu'une implantation ait été trouvée ; une recherche plus longue peut en trouver une."),
     }
     grille_note = None
     if _reduite:
