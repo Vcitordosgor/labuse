@@ -394,3 +394,68 @@ Plancher 3 Go respecté en continu. La daily Nov 11 était superseded par la Nov
 **Gros objets (pour l'agrandissement disque)** : `dryrun_cascade_results` 21 Go (q_v18_s/q_v19_s/q_v21/q_v22/q_v23 ~3 Go ch.), `score_labuse` 7,2 Go, `parcel_p_score_v2` 5,3 Go, `spatial_layers` 3,3 Go, sauvegardes 6,2–6,3 Go/pièce. Purge q_v21/q_v22 (~8–10 Go) exige un VACUUM FULL (temp ≈ 21 Go) → à faire après agrandissement.
 
 **Garde 14:05 — vérif sauvegarde Nov 12** : écrite (6,76 Go) et `pg_restore -l` **LISIBLE** ✓. 2 nets sains (hebdo Nov 8 + daily Nov 12). Disque après écriture **8,0 Go** (pas de saturation, plancher 3 Go respecté). Option C réussie de bout en bout.
+
+---
+
+## §I — 12/11 : recalcul partiel exigu + enrich scénarios V2 + contrôles
+
+Reprise 05:07 Réunion (hors fenêtre 01–05). Déploiement 2 live (`205d8ddf8`), servi seq 17 (q_v20) jamais touché, PROMEUT=0.
+
+### §I.1 — Delta exigu (cible `terrain_exigu`, prouvée COMPLÈTE)
+Code déployé vérifié actif (`exigu_fix_actif=True`) : témoins basculent comme attendu (AY0416 → 1 831 m² régain, DK0447 → 1 077 régain, AL0258 → `assiette_a_verifier`). **Cible = 72 083 parcelles `cause='terrain_exigu'` de seq 18** (= le set `emprise<SEUIL`, EXIGU-FIX-1 §1/§6). Recalcul : résiduel `--into-run 18` (4 shards) + cache `parcel_constructibilite` + Score q_v23.
+
+**Preuve de complétude (2 cohortes × 500, condition Vic)** : 500 hors-cible au hasard + 500 hors-cible à capacité quasi nulle (`sdp_max<5`) → **1 000 / 1 000 IDENTIQUES à seq 18** (`q23_exigu_proof.py`). Le fix ne change AUCUNE parcelle hors cible → recalcul partiel valide.
+
+**Résultat** — les 72 083 deviennent : **49 249 restent exigu (68 %, avec preuve géométrique)** · **14 215 régain capacité (20 %)** · **8 455 `assiette_a_verifier` (12 %, « à vérifier »)** · 146 `capacite_nulle` · 18 `redhibitoire`. seq 18 : total 433 229, `terrain_exigu` 72 083→49 249, `assiette_a_verifier` 0→8 455.
+
+### §I.2 — Enrich scénarios V2 : option A tentée, NON retenue → B (ta condition 3)
+Mesure : l'enrich live (`enrich=True`, `compute_residuel` 210 ms/parc) = **~28 h** sur l'île. Comme seq 18 persiste déjà la reconstruction (C=`sdp_max_m2`, E=`sdp_existante_m2`, D_net=`d_net_m2` ; 272 425 parcelles), j'ai écrit **option A** (`scripts/q23_scenarios_enrich_seq18.py`, commité) : substituer la sortie de `compute_residuel` par les colonnes de seq 18 (logique scénario inchangée, `zone_dominante` reste live 13 ms → île ~1,5 h).
+
+**Preuve d'équivalence (condition 3) : 1 écart sur 508 parcelles** → arrêt, passage en B. Parcelle `97412000BW2165` : R persisté arrondi **80 → bande C** ; R live précis **79,55 → bande D**. Le barème de bande utilise la **précision complète** (`_precis`), que seq 18 ne persiste pas (colonnes `integer` ; condition 5 — champ absent, non inventé). Pour toute parcelle dont R est au bord d'un seuil de bande, arrondi ≠ précis. **A ne peut pas être identique à l'unité → B**, comme tu l'avais tranché (« au moindre écart, B pas C »). Script + preuve restent commités (condition 1).
+
+**B appliqué** : batch scénarios V2 q_v23 rafraîchi en **mode rapide** (`enrich=False`), 433 229 parcelles, 866 458 lignes, ~28 min — reflète le delta (le batch de nuit était périmé pour les 72 083). La **fiche par parcelle enrichit déjà en live** côté client (reconstruction exacte à la demande) ; la « Reconstruction » reste « Calcul à compléter » dans la LISTE/effectifs (déférée). Le §D ci-dessous est calculé depuis les données autoritaires post-delta (`score_labuse` + reconstruction persistée seq 18).
+
+### §I.3 — 7 contrôles (`q23_gate.py`)
+| Contrôle | Résultat |
+|---|---|
+| Comptes parcelles | **433 229 = 433 229** (précédent) ✓ |
+| Copropriétés actionnables | **0** ✓ |
+| Rouge actionnables | **0** ✓ |
+| Paliers changés | 755 / 433 229 (**0,17 %**) ✓ |
+| Cohérence | 0 faux-client, achevée (voir §I.6) |
+| Manifeste candidat | présent ✓ |
+| Run complet (Score V2 + cascade) | ✓ |
+
+**Verdict `ok=False`** — échecs=[] ; le seul point rouge est la **FRAÎCHEUR du banc de cohérence** (voir §I.6).
+
+### §I.4 — §D : ce que q_v23 change (vs q_v20 servi)
+**Analyse V2 des 72 083** (scénario keep) : **39 078 « Hors de ce projet »** (exclusion dure de cascade — PAS « trop étroit ») · **29 879 « À vérifier »** · 3 107 « Aucun ajout » · 19 « À différer ». Cohérent avec EXIGU-FIX-1 P1 (la cascade pré-empte les grandes parcelles en zone dure).
+
+**Transition de bande q_v20 → q_v23 : 30 647 parcelles changent** de bande. Principales :
+| q_v20 → q_v23 | n | lecture |
+|---|--:|---|
+| 0 → NC | 8 448 | ex-`terrain_exigu` → « À vérifier » (fin du faux « trop étroit ») — **honnête** |
+| D → 0 | 7 302 | résiduel CLIPPÉ (q_v20 lisait non-clippé) — correction ALGO-FIX-1/RESIDUEL |
+| 0 → HC | 6 292 | hors champ |
+| C → D | 3 132 | descente d'une bande (clip) |
+| 0 → A/B/C/D | 1 608 | **régain de capacité via exigu** (0/NC/HC → A-D) |
+| C → 0 | 1 353 | clip |
+
+bande 0 q_v23 = 210 641 au total. Parcelles qui passent À bande 0 (hors exigu) concentrées : La Possession 2 514, Saint-Joseph 2 417, Saint-Denis 2 324, Bras-Panon 901.
+
+Grandes parcelles (> 1 000 m²) : la répartition autoritaire est celle d'EXIGU-FIX-1 §4.1 (9 933 → 59 % régain / 11 % exigu-preuve / 30 % à vérifier) ; côté seq 18 la surface n'est persistée que pour les constructibles, donc §D.4 local sous-compte (limite notée, pas un chiffre inventé).
+
+### §I.5 — Recommandation
+Le **blocage de Vic (faux positif `terrain_exigu`) est LEVÉ et prouvé** : la correction ne touche que la cible, les 1 000 témoins hors-cible sont identiques, les 5 témoins basculent correctement. Les changements de bande q_v23↔q_v20 sont (a) des **corrections honnêtes** (0→NC « à vérifier », 1 608 régains) et (b) les **corrections de clip résiduel déjà décidées** (ALGO-FIX-1 : q_v20 lisait un résiduel non clippé ; q_v23 = clippé, aligné sur la fiche). Ce ne sont pas des régressions.
+
+→ **q_v23 est recommandé à la promotion** du point de vue du moteur et des contrôles substantiels — **MAIS la promotion est BLOQUÉE tant que le contrôle de cohérence n'est pas au VERT** (§I.6). Promotion = John sur ton ordre ; je ne promeus pas.
+
+### §I.6 — Contrôle rouge (fraîcheur cohérence) : comment revenir au vert — PROMOTION BLOQUÉE JUSQU'AU VERT
+Le banc `coherence-banc` (île, ~15 min, vérifie le run SERVI q_v20) a tourné cette nuit (03:45–04:00, `job_runs` 12565 : **achevé, faux_client=0**, 849 règles banc2, 20/25 gardes chasse). Le gate le compte **`coherence_frais=false`** car l'horodatage (04:00) est périmé pour le cycle courant → `ok=False`. q_v20 n'a PAS été modifié par cette opération (delta + batch = candidat q_v23 seulement) ; le verdict de fond est donc inchangé (0 faux-client), seul l'horodatage manque.
+
+**Pour repasser au VERT, deux voies :** (1) **relancer le banc** `coherence-banc` **en tant qu'utilisateur `labuse`** (chemin exact du cron — flock OK) ; c'est fait à 16h (en cours), il produit un passage frais → gate vert ; (2) sinon, **attendre le passage de nuit** (cron 03:45 Réunion), qui le rafraîchit automatiquement. **PROMOTION BLOQUÉE JUSQU'AU VERT** : je ne propose pas de promouvoir sur un contrôle rouge, même expliqué.
+
+### §I.7 — Défaut OUVERT : le wrapper de job sort en SILENCE sous root
+**Observé** : `labuse jobs run coherence-banc` lancé **en root (`sudo bash`)** sort en **moins de 30 s sans rien faire** — aucun `job_runs`, aucun `coherence_runs`, stdout vide, process disparu. `sudo flock -n /var/lock/labuse-job-coherence-banc.lock echo` renvoie **« cannot open lock file: Permission denied »** (anormal pour root). En **utilisateur `labuse`** (propriétaire du verrou `labuse:labuse 0664`, chemin du cron), le même job **tourne normalement** (`jobs run` → `jobs exec`).
+**Ce que ça empêche** : relancer hors-cycle un job sous flock (`coherence-banc`, `coherence-robinets`, `backup-postgres`…) depuis un shell root ; le wrapper échoue **silencieusement** (ni erreur ni code non-nul remonté à l'opérateur) au lieu d'échouer bruyamment. Un opérateur en sudo croit avoir relancé le banc alors que rien n'a tourné.
+**Pas de contournement appliqué.** Correctif à faire (hors de cette opération) : le wrapper doit (a) détecter l'échec d'ouverture/acquisition du verrou et **sortir en erreur bruyante** (code ≠ 0 + message), (b) documenter que la relance manuelle se fait en `labuse`, pas en root.
