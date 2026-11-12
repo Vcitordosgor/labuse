@@ -1062,9 +1062,13 @@ def etudier_payload(session, entree: dict) -> dict:
             plan = _vp["programme"]["par_type"] or {}
             tiennent = {t: min(demande[t], plan.get(t, 0)) for t in demande if demande[t] > 0}
             manquent = {t: demande[t] - tiennent.get(t, 0) for t in demande if demande[t] - tiennent.get(t, 0) > 0}
+            # ETUDE-FIABLE-1 (LOT C3) — « logements tenus » = ce qui satisfait la DEMANDE, compté PAR TYPE
+            # demandé (plafonné à la demande de chaque type). L'ancien `sum(plan.values())` comptait aussi
+            # les logements dessinés AU-DELÀ de la demande d'un type (ex. L'Étang-Salé : plan 24 T2 + 4 T3,
+            # demande 23 T2 + 6 T3 → tenus = 23 + 4 = 27, pas 28). Vérité unique : la somme des « tiennent ».
             depassement = {"demande": {t: n for t, n in demande.items() if n > 0}, "tiennent": tiennent,
                            "manquent": manquent, "total_demande": sum(n for n in demande.values() if n > 0),
-                           "total_tiennent": sum(plan.values())}
+                           "total_tiennent": sum(tiennent.values())}
 
     # ETUDE-V6-2 (Lot 2/3) — CAPACITÉ MAXIMALE = le meilleur candidat FAISABLE de la MÊME recherche (via
     # etudier_complet, répartition de la demande) : donc ≥ toute variante dessinée, et stable (deux demandes
@@ -1084,8 +1088,11 @@ def etudier_payload(session, entree: dict) -> dict:
             "stationnement_mode": cmax.stationnement_mode,
             # ETUDE-V6-3 (item 11) — libellé propre (l'écran préfixe « répartition … », pas de doublon).
             "repartition": ("de votre demande" if demande else "équilibrée (proposée)"),
-            "note": ("Maximum de logements que le terrain accueille sous cette répartition — indépendant "
-                     "du NOMBRE demandé (deux demandes de même répartition donnent le même maximum). "
+            # ETUDE-FIABLE-1 (LOT C1) — ce n'est PAS un maximum réglementaire : c'est la MEILLEURE
+            # capacité que la recherche déterministe a TROUVÉE sous ces hypothèses (profondeur, étage,
+            # stationnement, répartition). Deux demandes de même répartition donnent la même valeur.
+            "note": ("Meilleure capacité trouvée avec ces hypothèses sous cette répartition — indépendante "
+                     "du NOMBRE demandé (deux demandes de même répartition donnent la même valeur). "
                      "La demande y est ensuite confrontée."),
         }
         facteurs_limitants = moteur_mod.facteurs_limitants(
@@ -1100,6 +1107,7 @@ def etudier_payload(session, entree: dict) -> dict:
     # DESSINÉ depuis la géométrie (contexte cadastre/bâti/voies + TN LiDAR chargé UNE fois pour l'assiette).
     # Robuste : toute panne de contexte/dessin laisse `planche_svg` vide (l'écran retombe sur le plan
     # schématique) — l'étude est toujours servie.
+    terrain_suppose_libere = False   # ETUDE-FIABLE-1 (LOT C2) — posé True si du bâti existant touche l'assiette
     paires = list(zip(scenarios_pub, scenarios)) + [(p, s) for p, (_r, s, _raison) in zip(variantes_pub, variantes) if s is not None]
     if paires:
         try:
@@ -1121,6 +1129,10 @@ def etudier_payload(session, entree: dict) -> dict:
                                                 voie_edges=t.voie_edges)
         except Exception:
             ctx = contexte_mod.Contexte()
+        # ETUDE-FIABLE-1 (LOT C2) — PARCELLE BÂTIE : l'étude raisonne « terrain supposé libéré » (le bâti
+        # existant est supposé démoli). Si du bâti touche l'assiette (BD TOPO), on le DIT à côté du résultat.
+        if terrain_mode == "libere" and len(getattr(ctx, "batis_assiette", []) or []) > 0:
+            terrain_suppose_libere = True
         for pub, scn in paires:
             # ETUDE-V6-3 (item 10) — jamais de nom technique de rôle (« votre_programme ») sur la planche :
             # un scénario Pareto garde A/B/C, une variante de rôle devient « retenu ».
@@ -1143,16 +1155,39 @@ def etudier_payload(session, entree: dict) -> dict:
     else:
         statut_global = "simulation impossible"
 
-    # FAISA-REGLES-1 (D-003/E-057) — grande assiette : la recherche a pu être réduite (grille grossière)
-    # et/ou bornée par le budget de temps, pour rendre un RÉSULTAT dans la borne au lieu d'un 503. On le DIT.
-    grille_note = None
+    # ETUDE-FIABLE-1 (LOT B5) — ÉTAT DE LA RECHERCHE, servi tel quel à l'écran et au PDF :
+    #   · complete : la grille déterministe a examiné tous ses candidats prévus → rien à signaler ;
+    #   · partielle : le FILET temps a coupé avant (assiette très lourde) → « Recherche partielle · N
+    #     logements dessinés » (le chiffre est alors un plancher, non reproductible d'une machine à l'autre) ;
+    #   · non_aboutie : aucun candidat faisable.
+    # FAISA-REGLES-1 (D-003/E-057) — `grille_note` conservée (compat) : grille simplifiée (grande assiette).
     _reduite = getattr(terrain, "grille_reduite", False)
-    _budget = getattr(terrain, "grille_budget_atteint", False)
-    if _reduite or _budget:
-        _parts = ([("grille simplifiée (grande assiette)")] if _reduite else []) \
-            + (["recherche bornée par le temps de calcul"] if _budget else [])
-        grille_note = ("Recherche réduite pour rendre un résultat dans le délai (" + " · ".join(_parts)
-                       + ") — le maximum servi est un plancher, la capacité réelle peut être légèrement supérieure.")
+    _garde_fou = getattr(terrain, "grille_garde_fou_temps", False)
+    _complete = getattr(terrain, "grille_complete", False)
+    _n_dessines = (capacite_maximale or {}).get("logements")
+    if not scenarios_pub and not any(not v.get("absente") for v in variantes_pub) and not _n_dessines:
+        _etat = "non_aboutie"
+    elif _garde_fou or not _complete:
+        _etat = "partielle"
+    else:
+        _etat = "complete"
+    recherche = {
+        "etat": _etat,
+        "candidats_prevus": getattr(terrain, "grille_candidats_prevus", 0),
+        "candidats_examines": getattr(terrain, "grille_candidats_examines", 0),
+        "grille_simplifiee": bool(_reduite),
+        "garde_fou_temps": bool(_garde_fou),
+        "logements_dessines": _n_dessines,
+        # libellé prêt à afficher (écran + PDF lisent le MÊME texte) ; None si complète (rien à signaler).
+        "note": (None if _etat == "complete"
+                 else "Recherche non aboutie — aucune implantation trouvée sur cette assiette." if _etat == "non_aboutie"
+                 else f"Recherche partielle · {_n_dessines} logements dessinés — calcul interrompu par le "
+                      "garde-fou de temps (assiette lourde) ; la capacité réelle peut être supérieure."),
+    }
+    grille_note = None
+    if _reduite:
+        grille_note = ("Recherche sur grille simplifiée (grande assiette) — le maximum servi est un plancher, "
+                       "la capacité réelle peut être légèrement supérieure.")
 
     # ETUDE-V6 (Lot B) — verdict GLOBAL de l'étude (3 libellés mandat) : sur la 1ʳᵉ variante PRÉSENTE
     # (votre programme en tête), sinon « impossible pour cause établie » si rien n'est faisable.
@@ -1267,8 +1302,13 @@ def etudier_payload(session, entree: dict) -> dict:
         "variantes": variantes_pub,
         "depassement": depassement,
         "capacite_maximale": capacite_maximale,
-        # FAISA-REGLES-1 (D-003/E-057) — note si la grille a été réduite / bornée (grande assiette) ; None sinon.
+        # FAISA-REGLES-1 (D-003/E-057) — note si la grille a été simplifiée (grande assiette) ; None sinon.
         "grille_note": grille_note,
+        # ETUDE-FIABLE-1 (LOT B5) — état de la recherche (complete / partielle / non_aboutie) + libellé.
+        "recherche": recherche,
+        # ETUDE-FIABLE-1 (LOT C2) — True si la parcelle est bâtie (bâti existant supposé démoli) : l'écran
+        # et le PDF affichent « Terrain supposé libéré » à côté du résultat.
+        "terrain_suppose_libere": terrain_suppose_libere,
         "facteurs_limitants": facteurs_limitants,
         # ETUDE-V6-4 (items 10/11/13) — LA phrase « ce qui limite », une seule fois : écran et PDF la lisent.
         "facteur_limitant": _facteur_limitant_phrase(

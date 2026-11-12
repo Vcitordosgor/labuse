@@ -64,6 +64,26 @@ class Settings(BaseSettings):
     # message honnête « étude trop lourde, relancez ». Réglable en prod par LABUSE_ETUDE_TIMEOUT_S ; une
     # valeur basse (recette) force un dépassement pour prouver la mise à mort.
     etude_timeout_s: float = 60.0
+    # ETUDE-FIABLE-1 (LOT A) — DÉTERMINISME de la recherche d'implantation. Le RÉSULTAT ne dépend plus de
+    # la vitesse de la machine : la grille examine un NOMBRE FIXE de candidats (constante de config), dans
+    # le même ordre partout → mêmes candidats, même meilleur, même chiffre. Le budget en SECONDES n'arbitre
+    # plus le résultat ; il reste un GARDE-FOU (filet) qui, s'il coupe avant d'avoir examiné les N candidats
+    # prévus, marque la recherche « partielle » (honnête) au lieu de rendre un chiffre non reproductible.
+    #   · etude_grille_max_candidats : nombre de candidats examinés (plafond déterministe). La grille pleine
+    #     vaut au plus 3 formes × 6 niveaux × 15 fractions = 270 (144 en grille grossière > 5000 m²).
+    #   · etude_grille_garde_fou_s : filet de sécurité temps, SOUS etude_timeout_s (60 s). S'il coupe → partielle.
+    # Valeur retenue = 150 (ETUDE-FIABLE-1 LOT A2/A3, décision Vic) : le résultat est IDENTIQUE de N=150 à
+    # 270 (le meilleur candidat tombe dans les 150 premiers → capmax 28/18/12), et 150 laisse PLUS de marge
+    # sous le filet de 45 s que 200 (Saint-André ~42,9 s à N=200 était trop près du filet). Durées à N=150
+    # (Mac 8 c, mesure propre) reportées dans reports/ETUDE-FIABLE-1.md (tableau A3). La grille complète (270)
+    # dépasse 60 s sur Saint-André (67,8 s → tuée) : on ne l'utilise pas. Le filet 45 s reste SOUS la borne
+    # API (60 s) avec marge pour planches/enrichissements.
+    # ETUDE-FIABLE-1 (R2) — le filet était à 45 s, mais la grille N=150 de Saint-André prend ~49 s À FROID
+    # (cache vide) : le filet la coupait → « partielle » non reproductible (R2 rouge sur un Mac lent/chargé).
+    # Le filet ne doit JAMAIS couper le N retenu sur les témoins : porté à 57 s — toujours SOUS la borne API
+    # dure (60 s), donc « partielle » reste signalée avant la coupe, mais la grille complète passe à froid.
+    etude_grille_max_candidats: int = 150      # LABUSE_ETUDE_GRILLE_MAX_CANDIDATS (déterministe)
+    etude_grille_garde_fou_s: float = 57.0     # LABUSE_ETUDE_GRILLE_GARDE_FOU_S (filet, pas le résultat)
     # FIX-NU3-3 (K-CHG-01/02/03, décision Vic) — SOUS CHARGE, deux goulots CPU/RAM écrasaient « fiche &
     # carte < 1 s » à 25 users (weasyprint à 26 s, 26 processus d'étude, swap saturé). On les met en FILE :
     #   · `pdf_rendu_max` : nb de rendus PDF (weasyprint) simultanés — les suivants ATTENDENT (deux à la fois) ;

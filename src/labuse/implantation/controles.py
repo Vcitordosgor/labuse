@@ -243,13 +243,19 @@ def _distance_requise(dc, cap: Capacite, conv: Conventions) -> tuple[float, str,
     return 1e-6, "contiguïté non autorisée (volumes disjoints)", ""
 
 
-def _ppr_bleue_touche_bati(scene: Scene, terrain) -> bool:
+def _ppr_bleue_touche_projet(scene: Scene, terrain) -> list[str]:
+    """ETUDE-FIABLE-1 (LOT C5) — quelle(s) PARTIE(S) du projet touche(nt) le PPR bleu : bâtiment, accès
+    OU sous-sol (plus seulement le bâti). La géométrie ne change pas ; on le SIGNALE dans les points à
+    instruire (« Prescriptions PPR à vérifier »). Renvoie la liste des parties concernées (vide = aucune)."""
     if terrain.ppr_bleue is None or terrain.ppr_bleue.is_empty:
-        return False
-    batis = [o.geom_world for o in scene.of("batiment_emprise")]
-    if not batis:
-        return False
-    return unary_union(batis).intersection(terrain.ppr_bleue).area > _TOL_AIRE
+        return []
+    parties: list[str] = []
+    for kind, libelle in (("batiment_emprise", "bâtiment"), ("acces", "accès"),
+                          ("sous_sol_emprise", "sous-sol")):
+        geoms = [o.geom_world for o in scene.of(kind) if o.geom_world is not None]
+        if geoms and unary_union(geoms).intersection(terrain.ppr_bleue).area > _TOL_AIRE:
+            parties.append(libelle)
+    return parties
 
 
 def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capacite,
@@ -323,15 +329,20 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
                 f"R+{cap.niveaux - 1}, relief sous bâti {relief_bati:.1f} m, {src} → {egout_plat:.1f} m aval",
                 REUSSI, he.citation))
         else:
+            # ETUDE-FIABLE-1 (LOT C4) — un volume DROIT à toiture plate dépasserait le plafond à l'égout côté
+            # AVAL ; LABUSE SUPPOSE des gradins (R+N conservé) mais c'est une HYPOTHÈSE d'architecte, pas un
+            # fait vérifié : le statut n'est donc plus « Réussi » mais « Implantation étagée à vérifier »
+            # (À confirmer). Le prospect, lui, reste « À confirmer » (ci-dessous).
             n_gradins = max(2, math.ceil(relief_bati / etage) + 1)
             out.append(ControleReg(
-                "Hauteur sur terrain en pente", f"≤ {he.valeur:.0f} m à l'égout — bâtiment EN GRADINS",
+                "Implantation étagée à vérifier", f"≤ {he.valeur:.0f} m à l'égout — supposerait un bâtiment EN GRADINS",
                 f"R+{cap.niveaux - 1} en {n_gradins} gradins — relief {relief_bati:.1f} m mesuré, {src}",
-                REUSSI, he.citation,
+                A_CONFIRMER, he.citation,
                 detail=(f"relief sous le bâti {relief_bati:.1f} m (pente moy. {pente.get('pente_moyenne_pct')} %) : "
-                        f"une toiture plate dépasserait de {egout_plat - he.valeur:.1f} m à l'égout aval → le bâtiment "
-                        f"est en {n_gradins} gradins (un décrochement d'étage chacun) pour tenir {he.valeur:.0f} m "
-                        f"partout. L'architecte a fait le même constat (partie aval R+{max(0, cap.niveaux - 2)}).")))
+                        f"un volume droit à toiture plate dépasserait de {egout_plat - he.valeur:.1f} m à l'égout aval → "
+                        f"il faudrait un bâtiment en {n_gradins} gradins (un décrochement d'étage chacun) pour tenir "
+                        f"{he.valeur:.0f} m partout. LABUSE le suppose (R+{cap.niveaux - 1} conservé) ; à CONFIRMER par "
+                        f"l'architecte (partie aval possiblement R+{max(0, cap.niveaux - 2)}).")))
 
     # Prospect / hauteur relative (ex. L ≥ h/2) : non chiffrable par le moteur -> Non effectué
     if regles.prospect is not None:
@@ -480,12 +491,21 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
         out.append(ControleReg("PPR zone rouge (interdiction)", "absente du terrain", "—", NON_APPLICABLE))
 
     # PPR bleue (prescription) : signalée, non interprétée → à confirmer (prescriptions à lire).
+    # ETUDE-FIABLE-1 (LOT C5) — si le bâtiment, l'accès OU le sous-sol tombe en PPR bleu : mention
+    # « Prescriptions PPR à vérifier » dans les points à instruire (la géométrie ne change pas).
     if terrain.contraintes.get("ppr_bleue"):
-        touche = _ppr_bleue_touche_bati(scene, terrain)
-        out.append(ControleReg("PPR zone bleue (prescription)", "signalée, non interprétée",
-                               ("touche le bâti proposé" if touche else "ne touche pas le bâti"),
-                               A_CONFIRMER, detail=("prescriptions à lire : tant qu'elles ne le sont pas, l'étude "
-                                                    "n'est pas exploitable" if touche else "signalée, prescriptions à lire")))
+        parties = _ppr_bleue_touche_projet(scene, terrain)
+        if parties:
+            out.append(ControleReg("Prescriptions PPR à vérifier",
+                                   "projet en zone bleue (prescription)",
+                                   "touche : " + ", ".join(parties),
+                                   A_CONFIRMER, detail=("le " + ", le ".join(parties) + " tombe(nt) en PPR zone bleue : "
+                                                        "prescriptions à lire (surélévation, vide sanitaire, interdiction de "
+                                                        "sous-sol…) — tant qu'elles ne le sont pas, l'étude n'est pas exploitable")))
+        else:
+            out.append(ControleReg("PPR zone bleue (prescription)", "signalée, non interprétée",
+                                   "ne touche pas le projet",
+                                   A_CONFIRMER, detail="signalée, prescriptions à lire"))
     else:
         out.append(ControleReg("PPR zone bleue (prescription)", "absente du terrain", "—", NON_APPLICABLE))
 
@@ -514,7 +534,7 @@ def statut_etude(controles: list[ControleReg], geo_ok: bool, *, scene: Scene, te
         dc_ctrl = next((c for c in controles if c.nom == "Distance entre constructions"), None)
         if dc_ctrl is None or dc_ctrl.resultat == NON_EFFECTUE:
             return "à compléter"
-    if _ppr_bleue_touche_bati(scene, terrain):
+    if _ppr_bleue_touche_projet(scene, terrain):   # ETUDE-FIABLE-1 (C5) — bâti/accès/sous-sol en PPR bleu
         return "à compléter"
     return "exploitable en pré-faisabilité"
 
@@ -529,6 +549,9 @@ VERDICT_IMPOSSIBLE = "Impossible pour cause établie"
 # contrôles dont l'état « À confirmer » est RÉDHIBITOIRE pour un verdict exploitable (mandat §4).
 _A_CONFIRMER_BLOQUANTS = frozenset({
     "PPR zone rouge (interdiction)", "PPR zone bleue (prescription)",
+    # ETUDE-FIABLE-1 (LOT C5) — PPR bleu touchant bâtiment/accès/sous-sol : bloque « Exploitable » (comme
+    # l'ancien contrôle « PPR zone bleue » qui, lorsqu'il touchait le bâti, rendait l'étude non exploitable).
+    "Prescriptions PPR à vérifier",
     "Stationnement", "Prospect (hauteur relative)", "ER / EBC / SUP / servitudes",
     "Accès (voie)",   # RECETTE-4 — accès hypothétique (aucune voie classée) → verdict non « Exploitable »
 })
