@@ -434,13 +434,15 @@ export function M16() {
               const pr = i.proprio as Record<string, any>
               return (
               <div key={i.idu} className="rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-[11px]">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-txt-hi">{i.idu.slice(8)}</span>
+                {/* OUTILS-P1-1 LOT3c (pt 10) — la ligne par parcelle N'EST PLUS TRONQUÉE : `items-baseline`
+                    + `min-w-0 break-words` → le détail passe à la ligne au lieu d'être coupé à droite. */}
+                <div className="flex items-baseline gap-2">
+                  <span className="shrink-0 font-mono text-txt-hi">{i.idu.slice(8)}</span>
                   {/* OUTILS-P1-1 (pt 2) — « surface · bâti conservé X m² · reconstruction Y m² ». Quand la
                       SDP du bâti conservé n'est pas estimée, on DIT « non estimé » plutôt que d'y recopier
                       la valeur de reconstruction (table rase) : la reconstruction n'est plus présentée SOUS
                       « bâti conservé ». */}
-                  <span className="text-txt-dim">{fmt(i.surface_m2)} m² · bâti conservé {i.sdp_residuelle_m2 != null ? `${fmt(i.sdp_residuelle_m2)} m²` : 'non estimé'} · reconstruction {fmt(i.sdp_m2)} m²</span>
+                  <span className="min-w-0 break-words text-txt-dim">{fmt(i.surface_m2)} m² · bâti conservé {i.sdp_residuelle_m2 != null ? `${fmt(i.sdp_residuelle_m2)} m²` : 'non estimé'} · reconstruction {fmt(i.sdp_m2)} m²</span>
                   {/* RECETTE-1 R8 — pastille de palier (scoring q_v14) retirée de l'Assemblage. */}
                 </div>
                 <div className="mt-0.5 flex items-center gap-2">

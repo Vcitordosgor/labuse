@@ -345,7 +345,7 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
                     « N / M affichées · Voir 200 de plus » (par paquets de PAGE_SIZE), au lieu d'un bouton
                     « Voir plus » ad hoc. Le plafond serveur `blocs_limit` grandit d'un paquet à chaque clic. */}
                 {bcAff < bc.n && (
-                  <ListPaginationFooter shown={bcAff} total={bc.n} step={PAGE_SIZE}
+                  <ListPaginationFooter shown={bcAff} total={bc.n} step={PAGE_SIZE} uniteAccord="affichés"
                     onMore={() => setBlocsLimit((l) => Math.min(l + PAGE_SIZE, 500))}>
                     {blocsPlus.isFetching && <span className="text-txt-dim">chargement…</span>}
                   </ListPaginationFooter>
@@ -814,7 +814,7 @@ export function M03() {
     ['tous', 'Tous', null, perimCounts.tous, 'dans les 200 m'],
   ] as const) : ([
     ['cours', 'Récents', 'recent', radarEntryTotal, 'autorisés, 90 derniers jours de la donnée'],
-    ['mort', 'Permis dormants', 'dormant', pmEntryTotal, 'sans achèvement déclaré (DAACT)'],
+    ['mort', 'Permis dormants', 'dormant', pmEntryTotal, 'autorisés depuis plus de 3 ans, sans achèvement déclaré (DAACT)'],
     ['acheve', 'Achevés', 'acheve', acheveEntryTotal, 'travaux déclarés (DAACT)'],
     ['autre', 'Autres', 'autre', autreEntryTotal, 'ni récent, ni dormant, ni achevé'],
     ['tous', 'Tous', null, tousEntryTotal, 'toute la base'],
@@ -979,20 +979,23 @@ export function M03() {
               // (`total`, servi par la requête active) : le compte affiché et la liste portent toujours
               // sur le même ensemble, même si la fenêtre d'« Affiner » est changée.
               const nShown = actif && total != null ? total : n
+          // OUTILS-P1-1 LOT3c (pt 3) — la définition passe SOUS le libellé, sur TOUTE la largeur (plus de
+          // « sans / achèvement / déclaré » sur 4 lignes coincé entre le nom et le compte) : 1ʳᵉ ligne =
+          // pastille · nom · compte à droite ; 2ᵉ ligne = définition pleine largeur.
           return (
             <button key={k} data-permis-seg={k} onClick={() => choisirSeg(k)} aria-pressed={actif}
-              className={`group flex w-full items-start gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors duration-quick ${
+              className={`group flex w-full flex-col gap-0.5 rounded-lg px-2.5 py-1.5 text-left transition-colors duration-quick ${
                 actif ? 'bg-mint text-mint-ink' : 'border border-line-2 text-txt hover:bg-mint hover:text-mint-ink'}`}>
-              {/* pastille = couleur de carte de l'état ; « Tous » n'a pas UNE couleur → anneau neutre. */}
-              {etat
-                ? <span className="mt-1 h-2 w-2 shrink-0 rounded-full" style={{ background: etatColor(etat) }} />
-                : <span className="mt-1 h-2 w-2 shrink-0 rounded-full border border-current opacity-50" />}
-              {/* OUTILS-P1-1 LOT3 (pt 1) — AUCUN libellé coupé par « … » : le nom ne rétrécit pas (shrink-0)
-                  et la définition PASSE À LA LIGNE au lieu d'être tronquée (plus de `truncate`). */}
-              <span className="shrink-0 text-[12px] font-medium leading-snug">{label}</span>
-              <span className={`min-w-0 flex-1 text-[11px] leading-snug ${actif ? 'text-mint-ink/70' : 'text-txt-mut group-hover:text-mint-ink/70'}`}>{def}</span>
-                  <span className="mt-px shrink-0 tnum text-[12px] font-medium">{nShown != null ? fmt(nShown) : '…'}</span>
-                </button>
+              <span className="flex w-full items-center gap-2">
+                {/* pastille = couleur de carte de l'état ; « Tous » n'a pas UNE couleur → anneau neutre. */}
+                {etat
+                  ? <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: etatColor(etat) }} />
+                  : <span className="h-2 w-2 shrink-0 rounded-full border border-current opacity-50" />}
+                <span className="text-[12px] font-medium leading-snug">{label}</span>
+                <span className="ml-auto shrink-0 tnum text-[12px] font-medium">{nShown != null ? fmt(nShown) : '…'}</span>
+              </span>
+              {def && <span className={`w-full pl-4 text-[11px] leading-snug ${actif ? 'text-mint-ink/70' : 'text-txt-mut group-hover:text-mint-ink/70'}`}>{def}</span>}
+            </button>
               )
             })}
           </div>
@@ -1429,6 +1432,9 @@ type Dest = { idu: string; commune: string; surface: number | null }
 
 // OUTILS-S2 Lot B — montant TTC avec les centimes (tarif courrier 4,04 € l'unité), virgule décimale FR.
 const fmtEur2 = (n: number) => `${n.toFixed(2).replace('.', ',')} €`
+// OUTILS-P1-1 LOT3c (pt 5) — trait d'union INSÉCABLE (U+2011) : « Saint-Denis » ne se coupe jamais en
+// bout de ligne au tiret (les espaces entre communes restent, eux, des points de césure normaux).
+const insecTiret = (s: string | null | undefined) => (s ?? '').replace(/-/g, '‑')
 // OUTILS-P1-1 (pt 10) — libellés CLIENT des statuts de demande (miroir de courrier.STATUT_LIBELLES côté
 // serveur) : l'écran affiche l'ÉTAT RÉEL de la demande, jamais « Posté » tant qu'elle n'est pas déposée.
 const COURRIER_STATUT_LIBELLE: Record<string, string> = {
@@ -1705,7 +1711,7 @@ export function M09() {
           {/* récap */}
           <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]">
             <div className="flex justify-between"><span className="text-txt-mut">Courriers</span><b className="tnum text-txt">{dest.length}</b></div>
-            <div className="flex justify-between gap-2"><span className="text-txt-mut">Communes</span><span className="text-right text-txt">{recapCommunes() || '—'}</span></div>
+            <div className="flex justify-between gap-2"><span className="text-txt-mut">Communes</span><span className="text-right text-txt">{recapCommunes() ? insecTiret(recapCommunes()) : '—'}</span></div>
           </div>
 
           {/* COURRIER-2 Lot 2 — ADRESSAGE par destinataire : Destinataire · Adresse d'envoi · Bien concerné.
@@ -1717,15 +1723,17 @@ export function M09() {
                 className={`rounded-lg border px-3 py-2 text-[11px] ${r.bloque ? 'border-st-ecartee/50 bg-st-ecartee/[0.06]' : 'border-line-2 bg-surface-2'}`}>
                 {r.bloque ? (
                   <div className="flex items-start justify-between gap-2">
-                    <span className="font-mono text-txt-mut">{r.bien.reference}{r.bien.commune ? ` · ${r.bien.commune}` : ''}</span>
+                    <span className="font-mono text-txt-mut">{r.bien.reference}{r.bien.commune ? ` · ${insecTiret(r.bien.commune)}` : ''}</span>
                     <span data-courrier-motif className="text-right text-st-ecartee">⛔ {r.motif}</span>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-0.5">
-                    <div className="flex justify-between gap-2"><span className="text-txt-mut">Destinataire</span><span className="text-right text-txt">{r.destinataire}</span></div>
-                    <div className="flex justify-between gap-2"><span className="text-txt-mut">Adresse d’envoi</span><span className="text-right text-txt">{r.adresse_envoi}</span></div>
-                    <div className="flex justify-between gap-2"><span className="text-txt-mut">Bien concerné</span><span className="text-right text-txt-dim">{r.bien.adresse ?? r.bien.reference} · {r.bien.reference}</span></div>
-                    {r.mention && <div className="text-[10px] text-txt-dim">{r.mention}</div>}
+                    <div className="flex justify-between gap-2"><span className="text-txt-mut">Destinataire</span><span className="text-right text-txt">{insecTiret(r.destinataire)}</span></div>
+                    <div className="flex justify-between gap-2"><span className="text-txt-mut">Adresse d’envoi</span><span className="text-right text-txt">{insecTiret(r.adresse_envoi)}</span></div>
+                    <div className="flex justify-between gap-2"><span className="text-txt-mut">Bien concerné</span><span className="text-right text-txt-dim">{insecTiret(r.bien.adresse ?? r.bien.reference)} · {r.bien.reference}</span></div>
+                    {/* OUTILS-P1-1 LOT3c (pt 5) — « au siège social déclaré » n'est PAS répété : la mention
+                        n'est affichée que si elle n'est pas DÉJÀ dans le libellé du destinataire. */}
+                    {r.mention && !String(r.destinataire ?? '').includes(r.mention) && <div className="text-[10px] text-txt-dim">{r.mention}</div>}
                   </div>
                 )}
               </div>

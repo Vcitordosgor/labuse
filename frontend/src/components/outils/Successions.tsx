@@ -91,7 +91,7 @@ export function Successions() {
             {/* OUTILS-P1-1 (pt 1) — date de la donnée RNE rétablie (le nom et l'âge en viennent). */}
             {rne && <> · donnée RNE au <b className="text-txt">{rne}</b></>}
             {/* OUTILS-P1-1 LOT3 (pt 5) — on DIT sur quoi la liste est triée (le grand chiffre à droite). */}
-            <div data-successions-tri className="mt-0.5 text-txt-dim">Triées par SDP restante estimée, du plus grand au plus petit.</div>
+            <div data-successions-tri className="mt-0.5 text-txt-dim">Triées par SDP restante estimée, de la plus grande à la plus petite.</div>
             {/* OUTILS-P1-1 (pt 1) — les âges ≥ 100 ans sont sortis de la liste ET comptés ici. */}
             {ageEcarte > 0 && (
               <div data-successions-age-ecarte className="mt-0.5 text-txt-dim">

@@ -310,10 +310,19 @@ def patrimoine(siren: str, fmt: str = "json",
     limit = limit if isinstance(limit, int) else 200
     offset = offset if isinstance(offset, int) else 0
     blocs_limit = blocs_limit if isinstance(blocs_limit, int) else 12   # OUTILS-P1-1 LOT3 (pt 10) — appel direct
-    rows = db.execute(text("""
+    # OUTILS-P1-1 LOT3c (pt 1) — ÉTAT BÂTI lu comme la FICHE (BD TOPO/CoSIA) : `p_model_bati` ne stocke QUE
+    # les parcelles bâties (emprise > 0) ; une parcelle ÉVALUÉE sans bâti n'a PAS de ligne → le « 0 »
+    # n'existe jamais. On lève l'ambiguïté avec `p_model_frame` (l'ensemble évalué) : bâti = ligne
+    # p_model_bati · NU = dans la frame SANS bâti · non renseigné = hors frame. La frame peut manquer sur
+    # une base partielle (test) → `dans_frame` NULL, et l'absence de bâti retombe en « non renseigné ».
+    has_frame = bool(db.execute(text("SELECT to_regclass('p_model_frame') IS NOT NULL")).scalar())
+    frame_join = "LEFT JOIN p_model_frame pf ON pf.idu = p.idu" if has_frame else ""
+    frame_expr = "(pf.idu IS NOT NULL)" if has_frame else "NULL::boolean"
+    rows = db.execute(text(f"""
         SELECT p.id, p.idu, p.commune, p.surface_m2, p.contenance_m2, z.zone_fam, r.sdp_residuelle_m2,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
-               pb.emprise_bati_m2 AS emprise_bati,   -- RETOURS-15 B5 : bâti / nu / NULL = bâti non renseigné (OUTILS-P1-1 pt 7)
+               pb.emprise_bati_m2 AS emprise_bati,
+               {frame_expr} AS dans_frame,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
         FROM parcelle_personne_morale pm
         JOIN parcels p ON p.idu = pm.idu
@@ -322,6 +331,7 @@ def patrimoine(siren: str, fmt: str = "json",
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
         LEFT JOIN parcel_zone_plu z ON z.idu = p.idu
         LEFT JOIN p_model_bati pb ON pb.idu = p.idu
+        {frame_join}
         WHERE pm.siren = :s ORDER BY s2.rang ASC NULLS LAST"""),
         {"s": siren, "run": runs.cascade(), "v2run": _score_v2_run_id(db)}).mappings().all()
     bodacc = db.execute(text(
@@ -390,12 +400,13 @@ def patrimoine(siren: str, fmt: str = "json",
     # de dessin géométrique : homogène avec la fiche / le prefill taxe / Comparer (CONTENANCE-1).
     surface_totale_m2 = round(sum((_surface.surface_terrain(r["surface_m2"], r["contenance_m2"]).valeur or 0)
                                   for r in rows))
-    # OUTILS-P1-1 (pt 7) — « bâti non renseigné » (p_model_bati absent → emprise NULL) DISTINCT de « nu »
-    # (emprise mesurée = 0). Avant, le COALESCE(…,0) fondait les deux en « nu » : un terrain dont le bâti
-    # n'est pas renseigné était compté comme sans bâti. Les trois classes font exactement len(rows).
+    # OUTILS-P1-1 LOT3c (pt 1) — ÉTAT BÂTI lu comme la FICHE (`p_model_frame` = ensemble évalué,
+    # `p_model_bati` = parcelles bâties, emprise > 0). Le « nu » est RÉEL : parcelle évaluée SANS bâti
+    # cartographié (≈ 103 000 à l'échelle de l'île) — pas un « 0 » fabriqué. Les trois classes partitionnent
+    # exactement len(rows) : bâti (ligne p_model_bati) · nu (dans la frame, sans bâti) · non renseigné (hors frame).
     n_terrains_batis = sum(1 for r in rows if (r["emprise_bati"] or 0) > 0)
-    n_terrains_nus = sum(1 for r in rows if r["emprise_bati"] is not None and r["emprise_bati"] == 0)
-    n_bati_non_renseigne = sum(1 for r in rows if r["emprise_bati"] is None)
+    n_terrains_nus = sum(1 for r in rows if (r["emprise_bati"] or 0) <= 0 and r["dans_frame"])
+    n_bati_non_renseigne = sum(1 for r in rows if (r["emprise_bati"] or 0) <= 0 and not r["dans_frame"])
     # OUTILS-P1-1 (pt 7) — TROIS comptes sur des ensembles DISTINCTS : RECENSÉES (toutes les parcelles du
     # SIREN aux fichiers fonciers DGFiP, y compris celles sans géométrie cadastrale), RATTACHÉES au cadastre
     # (jointes à `parcels` → une géométrie → `rows`). L'écart (ex. 1 871 vs 1 833) est ainsi ventilé, jamais

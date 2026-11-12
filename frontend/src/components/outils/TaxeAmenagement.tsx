@@ -176,7 +176,10 @@ export function TaxeAmenagement() {
       <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
         <div className="flex items-center gap-1.5">
           <p className="label-caps text-[9.5px] text-txt-dim">Votre projet</p>
-          <Tip garder side="bottom" tip={`Estimez la taxe d'aménagement avant le dépôt du permis. Valeurs ${c.meta.annee} (CGI art. 1635 quater A et s.) ; à La Réunion, c'est la valeur forfaitaire hors Île-de-France qui s'applique (${fmtEur(c.valeur_forfaitaire_m2.hors_idf)}/m²). La surface taxable = surface close et couverte > 1,80 m, garages et annexes INCLUS (≠ SDP). Le montant définitif est fixé par l'administration. Source : ${c.meta.source}.`}>
+          {/* OUTILS-P1-1 LOT3c (pt 10) — la DÉFINITION de la surface taxable (close+couverte > 1,80 m, garages
+              inclus) vit désormais en clair sous le champ (label + exemple) : on ne la répète plus dans le
+              « i », qui garde la MÉTHODE et les SOURCES (valeur forfaitaire, base légale, administration). */}
+          <Tip garder side="bottom" tip={`Estimez la taxe d'aménagement avant le dépôt du permis. Valeurs ${c.meta.annee} (CGI art. 1635 quater A et s.) ; à La Réunion, c'est la valeur forfaitaire hors Île-de-France qui s'applique (${fmtEur(c.valeur_forfaitaire_m2.hors_idf)}/m²). Le montant définitif est fixé par l'administration. Source : ${c.meta.source}.`}>
             <span role="button" tabIndex={0} aria-label="Méthode et sources"
               className="flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full border border-line-2 text-[9px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
           </Tip>
