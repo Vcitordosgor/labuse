@@ -1,160 +1,18 @@
 {
   "BZ1065": {
-    "1440x900": {
-      "cadrage_parcelle_largeur_pct": 60,
-      "coupes": {
-        "A": {
-          "apercu": {
-            "largeur_img_px": 565,
-            "texte_min_px": 5.3,
-            "n_cotes": 6,
-            "chevauchements": 0,
-            "libelles": {
-              "libelles_proteges": 1,
-              "traits_au_travers": 0
-            },
-            "labels": {
-              "boites": 1,
-              "chevauchements": 0
-            },
-            "bande_grad": {
-              "graduations": 5,
-              "longueurs": 3,
-              "chevauchements": 0
-            }
-          },
-          "detail": {
-            "largeur_img_px": 1408,
-            "texte_min_px": 13.2,
-            "n_cotes": 8,
-            "chevauchements": 0,
-            "labels": {
-              "boites": 1,
-              "chevauchements": 0
-            },
-            "bande_grad": {
-              "graduations": 5,
-              "longueurs": 3,
-              "chevauchements": 0
-            }
-          },
-          "lettres": [
-            {
-              "t": "A",
-              "dansLaVue": true
-            },
-            {
-              "t": "A′",
-              "dansLaVue": true
-            }
-          ],
-          "bandes_apercu": [
-            "parcelle:4.43-47.49",
-            "zone:33.96-43.38",
-            "zone:9.02-28.54"
-          ],
-          "bandes_bornes_identiques": true
-        },
-        "B": {
-          "apercu": {
-            "largeur_img_px": 961,
-            "texte_min_px": 9,
-            "n_cotes": 9,
-            "chevauchements": 0,
-            "libelles": {
-              "libelles_proteges": 4,
-              "traits_au_travers": 0
-            },
-            "labels": {
-              "boites": 4,
-              "chevauchements": 0
-            },
-            "bande_grad": {
-              "graduations": 5,
-              "longueurs": 5,
-              "chevauchements": 0
-            }
-          },
-          "detail": {
-            "largeur_img_px": 1408,
-            "texte_min_px": 13.2,
-            "n_cotes": 15,
-            "chevauchements": 0,
-            "labels": {
-              "boites": 4,
-              "chevauchements": 0
-            },
-            "bande_grad": {
-              "graduations": 5,
-              "longueurs": 5,
-              "chevauchements": 0
-            }
-          },
-          "lettres": [
-            {
-              "t": "B",
-              "dansLaVue": true
-            },
-            {
-              "t": "B′",
-              "dansLaVue": true
-            }
-          ],
-          "bandes_apercu": [
-            "parcelle:31.41-51.58",
-            "parcelle:61.20-94.56",
-            "zone:36.24-45.58",
-            "zone:65.03-68.43",
-            "zone:81.24-90.54"
-          ],
-          "bandes_bornes_identiques": true
-        }
-      },
-      "contour_couverture_pct": 100,
-      "zone": {
-        "zone": true,
-        "inside_green_pct": 98.1,
-        "inside_tot": 2751,
-        "bati_exclu": 539,
-        "outside_green": 0
-      },
-      "lettres_axe": [
-        {
-          "t": "B",
-          "dansLaVue": true
-        },
-        {
-          "t": "B′",
-          "dansLaVue": true
-        }
-      ],
-      "survol": {
-        "coupe": "B",
-        "marqueur_pose": true,
-        "ecart_m": 0.24,
-        "alt_marqueur_3d_m": 403.44,
-        "alt_losange_coupe_m": 404.06,
-        "ecart_altitude_m": 0.62
-      },
-      "parite_sid": true,
-      "rien_ne_depasse": true,
-      "photo": {
-        "etat": "ok",
-        "delai_ms": 698,
-        "credit_ign": false,
-        "millesime": "2025",
-        "proxy_serveur": true
-      }
-    },
     "1280x720": {
       "cadrage_parcelle_largeur_pct": 60,
       "coupes": {
         "A": {
           "apercu": {
-            "largeur_img_px": 435,
-            "texte_min_px": 4.1,
+            "contenu_px": [
+              1262,
+              223
+            ],
+            "texte_min_px": 11.7,
             "n_cotes": 6,
             "chevauchements": 0,
+            "remplissage_pct": 99.9,
             "libelles": {
               "libelles_proteges": 1,
               "traits_au_travers": 0
@@ -170,7 +28,10 @@
             }
           },
           "detail": {
-            "largeur_img_px": 1248,
+            "contenu_px": [
+              1248,
+              455
+            ],
             "texte_min_px": 11.7,
             "n_cotes": 8,
             "chevauchements": 0,
@@ -203,10 +64,14 @@
         },
         "B": {
           "apercu": {
-            "largeur_img_px": 760,
-            "texte_min_px": 7.1,
+            "contenu_px": [
+              1262,
+              223
+            ],
+            "texte_min_px": 11.7,
             "n_cotes": 9,
             "chevauchements": 0,
+            "remplissage_pct": 99.9,
             "libelles": {
               "libelles_proteges": 4,
               "traits_au_travers": 0
@@ -222,7 +87,10 @@
             }
           },
           "detail": {
-            "largeur_img_px": 1248,
+            "contenu_px": [
+              1248,
+              269
+            ],
             "texte_min_px": 11.7,
             "n_cotes": 15,
             "chevauchements": 0,
@@ -259,9 +127,9 @@
       "contour_couverture_pct": 100,
       "zone": {
         "zone": true,
-        "inside_green_pct": 98.1,
-        "inside_tot": 2024,
-        "bati_exclu": 397,
+        "inside_green_pct": 97.9,
+        "inside_tot": 2019,
+        "bati_exclu": 399,
         "outside_green": 0
       },
       "lettres_axe": [
@@ -274,39 +142,549 @@
           "dansLaVue": true
         }
       ],
+      "plan_texte_min_px": 11,
+      "legende_px": 11,
       "survol": {
         "coupe": "B",
         "marqueur_pose": true,
-        "ecart_m": 0.27,
-        "alt_marqueur_3d_m": 403.39,
+        "ecart_m": 0.01,
+        "alt_marqueur_3d_m": 404.08,
         "alt_losange_coupe_m": 404.06,
-        "ecart_altitude_m": 0.67
+        "ecart_altitude_m": 0.02
       },
       "parite_sid": true,
       "rien_ne_depasse": true,
       "photo": {
         "etat": "ok",
-        "delai_ms": 288,
+        "delai_ms": 345,
+        "credit_ign": true,
+        "millesime": "2025",
+        "proxy_serveur": true
+      }
+    },
+    "1440x900": {
+      "cadrage_parcelle_largeur_pct": 60,
+      "coupes": {
+        "A": {
+          "apercu": {
+            "contenu_px": [
+              1422,
+              223
+            ],
+            "texte_min_px": 11.7,
+            "n_cotes": 6,
+            "chevauchements": 0,
+            "remplissage_pct": 99.9,
+            "libelles": {
+              "libelles_proteges": 1,
+              "traits_au_travers": 0
+            },
+            "labels": {
+              "boites": 1,
+              "chevauchements": 0
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 3,
+              "chevauchements": 0
+            }
+          },
+          "detail": {
+            "contenu_px": [
+              1408,
+              513
+            ],
+            "texte_min_px": 13.2,
+            "n_cotes": 8,
+            "chevauchements": 0,
+            "labels": {
+              "boites": 1,
+              "chevauchements": 0
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 3,
+              "chevauchements": 0
+            }
+          },
+          "lettres": [
+            {
+              "t": "A",
+              "dansLaVue": true
+            },
+            {
+              "t": "A′",
+              "dansLaVue": true
+            }
+          ],
+          "bandes_apercu": [
+            "parcelle:4.43-47.49",
+            "zone:33.96-43.38",
+            "zone:9.02-28.54"
+          ],
+          "bandes_bornes_identiques": true
+        },
+        "B": {
+          "apercu": {
+            "contenu_px": [
+              1422,
+              223
+            ],
+            "texte_min_px": 11.7,
+            "n_cotes": 9,
+            "chevauchements": 0,
+            "remplissage_pct": 99.9,
+            "libelles": {
+              "libelles_proteges": 4,
+              "traits_au_travers": 0
+            },
+            "labels": {
+              "boites": 4,
+              "chevauchements": 0
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 5,
+              "chevauchements": 0
+            }
+          },
+          "detail": {
+            "contenu_px": [
+              1408,
+              304
+            ],
+            "texte_min_px": 13.2,
+            "n_cotes": 15,
+            "chevauchements": 0,
+            "labels": {
+              "boites": 4,
+              "chevauchements": 0
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 5,
+              "chevauchements": 0
+            }
+          },
+          "lettres": [
+            {
+              "t": "B",
+              "dansLaVue": true
+            },
+            {
+              "t": "B′",
+              "dansLaVue": true
+            }
+          ],
+          "bandes_apercu": [
+            "parcelle:31.41-51.58",
+            "parcelle:61.20-94.56",
+            "zone:36.24-45.58",
+            "zone:65.03-68.43",
+            "zone:81.24-90.54"
+          ],
+          "bandes_bornes_identiques": true
+        }
+      },
+      "contour_couverture_pct": 100,
+      "zone": {
+        "zone": true,
+        "inside_green_pct": 97.8,
+        "inside_tot": 2761,
+        "bati_exclu": 538,
+        "outside_green": 0
+      },
+      "lettres_axe": [
+        {
+          "t": "B",
+          "dansLaVue": true
+        },
+        {
+          "t": "B′",
+          "dansLaVue": true
+        }
+      ],
+      "plan_texte_min_px": 11.3,
+      "legende_px": 11,
+      "survol": {
+        "coupe": "B",
+        "marqueur_pose": true,
+        "ecart_m": 0.01,
+        "alt_marqueur_3d_m": 404.08,
+        "alt_losange_coupe_m": 404.06,
+        "ecart_altitude_m": 0.02
+      },
+      "parite_sid": true,
+      "rien_ne_depasse": true,
+      "photo": {
+        "etat": "ok",
+        "delai_ms": 105,
         "credit_ign": false,
+        "millesime": "2025",
+        "proxy_serveur": true
+      }
+    },
+    "1920x1080": {
+      "cadrage_parcelle_largeur_pct": 60,
+      "coupes": {
+        "A": {
+          "apercu": {
+            "contenu_px": [
+              1904,
+              242
+            ],
+            "texte_min_px": 11.7,
+            "n_cotes": 6,
+            "chevauchements": 0,
+            "remplissage_pct": 100,
+            "libelles": {
+              "libelles_proteges": 1,
+              "traits_au_travers": 0
+            },
+            "labels": {
+              "boites": 1,
+              "chevauchements": 0
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 3,
+              "chevauchements": 0
+            }
+          },
+          "detail": {
+            "contenu_px": [
+              1888,
+              688
+            ],
+            "texte_min_px": 17.7,
+            "n_cotes": 8,
+            "chevauchements": 0,
+            "labels": {
+              "boites": 1,
+              "chevauchements": 0
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 3,
+              "chevauchements": 0
+            }
+          },
+          "lettres": [
+            {
+              "t": "A",
+              "dansLaVue": true
+            },
+            {
+              "t": "A′",
+              "dansLaVue": true
+            }
+          ],
+          "bandes_apercu": [
+            "parcelle:4.43-47.49",
+            "zone:33.96-43.38",
+            "zone:9.02-28.54"
+          ],
+          "bandes_bornes_identiques": true
+        },
+        "B": {
+          "apercu": {
+            "contenu_px": [
+              1904,
+              242
+            ],
+            "texte_min_px": 11.7,
+            "n_cotes": 9,
+            "chevauchements": 0,
+            "remplissage_pct": 100,
+            "libelles": {
+              "libelles_proteges": 4,
+              "traits_au_travers": 0
+            },
+            "labels": {
+              "boites": 4,
+              "chevauchements": 0
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 5,
+              "chevauchements": 0
+            }
+          },
+          "detail": {
+            "contenu_px": [
+              1888,
+              407
+            ],
+            "texte_min_px": 17.7,
+            "n_cotes": 15,
+            "chevauchements": 0,
+            "labels": {
+              "boites": 4,
+              "chevauchements": 0
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 5,
+              "chevauchements": 0
+            }
+          },
+          "lettres": [
+            {
+              "t": "B",
+              "dansLaVue": true
+            },
+            {
+              "t": "B′",
+              "dansLaVue": true
+            }
+          ],
+          "bandes_apercu": [
+            "parcelle:31.41-51.58",
+            "parcelle:61.20-94.56",
+            "zone:36.24-45.58",
+            "zone:65.03-68.43",
+            "zone:81.24-90.54"
+          ],
+          "bandes_bornes_identiques": true
+        }
+      },
+      "contour_couverture_pct": 100,
+      "zone": {
+        "zone": true,
+        "inside_green_pct": 98,
+        "inside_tot": 5635,
+        "bati_exclu": 1096,
+        "outside_green": 0
+      },
+      "lettres_axe": [
+        {
+          "t": "B",
+          "dansLaVue": true
+        },
+        {
+          "t": "B′",
+          "dansLaVue": true
+        }
+      ],
+      "plan_texte_min_px": 11.3,
+      "legende_px": 11,
+      "survol": {
+        "coupe": "B",
+        "marqueur_pose": true,
+        "ecart_m": 0.06,
+        "alt_marqueur_3d_m": 404.22,
+        "alt_losange_coupe_m": 404.06,
+        "ecart_altitude_m": 0.16
+      },
+      "parite_sid": true,
+      "rien_ne_depasse": true,
+      "photo": {
+        "etat": "ok",
+        "delai_ms": 110,
+        "credit_ign": true,
+        "millesime": "2025",
+        "proxy_serveur": true
+      }
+    },
+    "2560x1300": {
+      "cadrage_parcelle_largeur_pct": 60,
+      "coupes": {
+        "A": {
+          "apercu": {
+            "contenu_px": [
+              2544,
+              296
+            ],
+            "texte_min_px": 11.7,
+            "n_cotes": 6,
+            "chevauchements": 0,
+            "remplissage_pct": 100,
+            "libelles": {
+              "libelles_proteges": 1,
+              "traits_au_travers": 0
+            },
+            "labels": {
+              "boites": 1,
+              "chevauchements": 0
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 3,
+              "chevauchements": 0
+            }
+          },
+          "detail": {
+            "contenu_px": [
+              2528,
+              922
+            ],
+            "texte_min_px": 23.7,
+            "n_cotes": 8,
+            "chevauchements": 0,
+            "labels": {
+              "boites": 1,
+              "chevauchements": 0
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 3,
+              "chevauchements": 0
+            }
+          },
+          "lettres": [
+            {
+              "t": "A",
+              "dansLaVue": true
+            },
+            {
+              "t": "A′",
+              "dansLaVue": true
+            }
+          ],
+          "bandes_apercu": [
+            "parcelle:4.43-47.49",
+            "zone:33.96-43.38",
+            "zone:9.02-28.54"
+          ],
+          "bandes_bornes_identiques": true
+        },
+        "B": {
+          "apercu": {
+            "contenu_px": [
+              2544,
+              296
+            ],
+            "texte_min_px": 11.7,
+            "n_cotes": 9,
+            "chevauchements": 0,
+            "remplissage_pct": 100,
+            "libelles": {
+              "libelles_proteges": 4,
+              "traits_au_travers": 0
+            },
+            "labels": {
+              "boites": 4,
+              "chevauchements": 0
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 5,
+              "chevauchements": 0
+            }
+          },
+          "detail": {
+            "contenu_px": [
+              2528,
+              545
+            ],
+            "texte_min_px": 23.7,
+            "n_cotes": 15,
+            "chevauchements": 0,
+            "labels": {
+              "boites": 4,
+              "chevauchements": 0
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 5,
+              "chevauchements": 0
+            }
+          },
+          "lettres": [
+            {
+              "t": "B",
+              "dansLaVue": true
+            },
+            {
+              "t": "B′",
+              "dansLaVue": true
+            }
+          ],
+          "bandes_apercu": [
+            "parcelle:31.41-51.58",
+            "parcelle:61.20-94.56",
+            "zone:36.24-45.58",
+            "zone:65.03-68.43",
+            "zone:81.24-90.54"
+          ],
+          "bandes_bornes_identiques": true
+        }
+      },
+      "contour_couverture_pct": 100,
+      "zone": {
+        "zone": true,
+        "inside_green_pct": 98.5,
+        "inside_tot": 11042,
+        "bati_exclu": 2158,
+        "outside_green": 0
+      },
+      "lettres_axe": [
+        {
+          "t": "B",
+          "dansLaVue": true
+        },
+        {
+          "t": "B′",
+          "dansLaVue": true
+        }
+      ],
+      "plan_texte_min_px": 11.3,
+      "legende_px": 11,
+      "survol": {
+        "coupe": "B",
+        "marqueur_pose": true,
+        "ecart_m": 0.04,
+        "alt_marqueur_3d_m": 404.17,
+        "alt_losange_coupe_m": 404.06,
+        "ecart_altitude_m": 0.11
+      },
+      "parite_sid": true,
+      "rien_ne_depasse": true,
+      "photo": {
+        "etat": "ok",
+        "delai_ms": 179,
+        "credit_ign": true,
         "millesime": "2025",
         "proxy_serveur": true
       }
     }
   },
   "CM1658": {
-    "1440x900": {
+    "1280x720": {
       "cadrage_parcelle_largeur_pct": 60,
       "coupes": {
         "A": {
           "apercu": {
-            "largeur_img_px": 485,
-            "texte_min_px": 4.5,
+            "contenu_px": [
+              1262,
+              223
+            ],
+            "texte_min_px": 11.7,
             "n_cotes": 5,
             "chevauchements": 0,
+            "remplissage_pct": 99.9,
             "libelles": {
               "libelles_proteges": 3,
               "traits_au_travers": 0
             },
+            "labels": {
+              "boites": 3,
+              "chevauchements": 1
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 2,
+              "chevauchements": 0
+            }
+          },
+          "detail": {
+            "contenu_px": [
+              1248,
+              527
+            ],
+            "texte_min_px": 11.7,
+            "n_cotes": 8,
+            "chevauchements": 0,
             "labels": {
               "boites": 3,
               "chevauchements": 0
@@ -317,8 +695,151 @@
               "chevauchements": 0
             }
           },
+          "lettres": [
+            {
+              "t": "A",
+              "dansLaVue": true
+            },
+            {
+              "t": "A′",
+              "dansLaVue": true
+            }
+          ],
+          "bandes_apercu": [
+            "parcelle:1.12-22.92",
+            "zone:8.64-19.86"
+          ],
+          "bandes_bornes_identiques": true
+        },
+        "B": {
+          "apercu": {
+            "contenu_px": [
+              1264,
+              182
+            ],
+            "texte_min_px": 11.7,
+            "n_cotes": 5,
+            "chevauchements": 0,
+            "remplissage_pct": 100,
+            "libelles": {
+              "libelles_proteges": 1,
+              "traits_au_travers": 0
+            },
+            "labels": {
+              "boites": 1,
+              "chevauchements": 0
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 2,
+              "chevauchements": 0
+            }
+          },
           "detail": {
-            "largeur_img_px": 1408,
+            "contenu_px": [
+              1248,
+              203
+            ],
+            "texte_min_px": 11.7,
+            "n_cotes": 7,
+            "chevauchements": 0,
+            "labels": {
+              "boites": 1,
+              "chevauchements": 0
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 2,
+              "chevauchements": 0
+            }
+          },
+          "lettres": [
+            {
+              "t": "B",
+              "dansLaVue": true
+            },
+            {
+              "t": "B′",
+              "dansLaVue": true
+            }
+          ],
+          "bandes_apercu": [
+            "parcelle:25.13-42.56",
+            "zone:28.13-39.55"
+          ],
+          "bandes_bornes_identiques": true
+        }
+      },
+      "contour_couverture_pct": 100,
+      "zone": {
+        "zone": true,
+        "inside_green_pct": 97.6,
+        "inside_tot": 958,
+        "bati_exclu": 2049,
+        "outside_green": 0
+      },
+      "lettres_axe": [
+        {
+          "t": "B",
+          "dansLaVue": true
+        },
+        {
+          "t": "B′",
+          "dansLaVue": true
+        }
+      ],
+      "plan_texte_min_px": 12.3,
+      "legende_px": 11,
+      "survol": {
+        "coupe": "A",
+        "marqueur_pose": true,
+        "ecart_m": 0.01,
+        "alt_marqueur_3d_m": 595.1,
+        "alt_losange_coupe_m": 595.09,
+        "ecart_altitude_m": 0.01
+      },
+      "parite_sid": true,
+      "rien_ne_depasse": true,
+      "photo": {
+        "etat": "ok",
+        "delai_ms": 67,
+        "credit_ign": true,
+        "millesime": "2025",
+        "proxy_serveur": true
+      }
+    },
+    "1440x900": {
+      "cadrage_parcelle_largeur_pct": 60,
+      "coupes": {
+        "A": {
+          "apercu": {
+            "contenu_px": [
+              1422,
+              223
+            ],
+            "texte_min_px": 11.7,
+            "n_cotes": 5,
+            "chevauchements": 0,
+            "remplissage_pct": 99.9,
+            "libelles": {
+              "libelles_proteges": 3,
+              "traits_au_travers": 0
+            },
+            "labels": {
+              "boites": 3,
+              "chevauchements": 1
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 2,
+              "chevauchements": 0
+            }
+          },
+          "detail": {
+            "contenu_px": [
+              1408,
+              594
+            ],
             "texte_min_px": 13.2,
             "n_cotes": 8,
             "chevauchements": 0,
@@ -350,10 +871,14 @@
         },
         "B": {
           "apercu": {
-            "largeur_img_px": 961,
-            "texte_min_px": 9,
+            "contenu_px": [
+              1424,
+              187
+            ],
+            "texte_min_px": 11.7,
             "n_cotes": 5,
             "chevauchements": 0,
+            "remplissage_pct": 100,
             "libelles": {
               "libelles_proteges": 1,
               "traits_au_travers": 0
@@ -369,7 +894,10 @@
             }
           },
           "detail": {
-            "largeur_img_px": 1408,
+            "contenu_px": [
+              1408,
+              229
+            ],
             "texte_min_px": 13.2,
             "n_cotes": 7,
             "chevauchements": 0,
@@ -405,7 +933,7 @@
         "zone": true,
         "inside_green_pct": 97.9,
         "inside_tot": 1306,
-        "bati_exclu": 2789,
+        "bati_exclu": 2791,
         "outside_green": 0
       },
       "lettres_axe": [
@@ -418,40 +946,46 @@
           "dansLaVue": true
         }
       ],
+      "plan_texte_min_px": 12.7,
+      "legende_px": 11,
       "survol": {
         "coupe": "A",
         "marqueur_pose": true,
-        "ecart_m": 0.1,
-        "alt_marqueur_3d_m": 595.11,
+        "ecart_m": 0.01,
+        "alt_marqueur_3d_m": 595.1,
         "alt_losange_coupe_m": 595.09,
-        "ecart_altitude_m": 0.02
+        "ecart_altitude_m": 0.01
       },
       "parite_sid": true,
       "rien_ne_depasse": true,
       "photo": {
         "etat": "ok",
-        "delai_ms": 218,
+        "delai_ms": 210,
         "credit_ign": true,
         "millesime": "2025",
         "proxy_serveur": true
       }
     },
-    "1280x720": {
+    "1920x1080": {
       "cadrage_parcelle_largeur_pct": 60,
       "coupes": {
         "A": {
           "apercu": {
-            "largeur_img_px": 374,
-            "texte_min_px": 3.5,
+            "contenu_px": [
+              1904,
+              242
+            ],
+            "texte_min_px": 11.7,
             "n_cotes": 5,
             "chevauchements": 0,
+            "remplissage_pct": 100,
             "libelles": {
               "libelles_proteges": 3,
               "traits_au_travers": 0
             },
             "labels": {
               "boites": 3,
-              "chevauchements": 0
+              "chevauchements": 1
             },
             "bande_grad": {
               "graduations": 5,
@@ -460,8 +994,11 @@
             }
           },
           "detail": {
-            "largeur_img_px": 1248,
-            "texte_min_px": 11.7,
+            "contenu_px": [
+              1888,
+              797
+            ],
+            "texte_min_px": 17.7,
             "n_cotes": 8,
             "chevauchements": 0,
             "labels": {
@@ -492,10 +1029,14 @@
         },
         "B": {
           "apercu": {
-            "largeur_img_px": 961,
-            "texte_min_px": 9,
+            "contenu_px": [
+              1904,
+              203
+            ],
+            "texte_min_px": 11.7,
             "n_cotes": 5,
             "chevauchements": 0,
+            "remplissage_pct": 100,
             "libelles": {
               "libelles_proteges": 1,
               "traits_au_travers": 0
@@ -511,8 +1052,11 @@
             }
           },
           "detail": {
-            "largeur_img_px": 1248,
-            "texte_min_px": 11.7,
+            "contenu_px": [
+              1888,
+              307
+            ],
+            "texte_min_px": 17.7,
             "n_cotes": 7,
             "chevauchements": 0,
             "labels": {
@@ -545,10 +1089,10 @@
       "contour_couverture_pct": 100,
       "zone": {
         "zone": true,
-        "inside_green_pct": 98.1,
-        "inside_tot": 959,
-        "bati_exclu": 2046,
-        "outside_green": 0
+        "inside_green_pct": 98.9,
+        "inside_tot": 2652,
+        "bati_exclu": 5704,
+        "outside_green": 1
       },
       "lettres_axe": [
         {
@@ -560,19 +1104,179 @@
           "dansLaVue": true
         }
       ],
+      "plan_texte_min_px": 12.7,
+      "legende_px": 11,
       "survol": {
         "coupe": "A",
         "marqueur_pose": true,
-        "ecart_m": 0.13,
-        "alt_marqueur_3d_m": 595.11,
-        "alt_losange_coupe_m": 595.09,
+        "ecart_m": 0.04,
+        "alt_marqueur_3d_m": 595.1,
+        "alt_losange_coupe_m": 595.08,
         "ecart_altitude_m": 0.02
       },
       "parite_sid": true,
       "rien_ne_depasse": true,
       "photo": {
         "etat": "ok",
-        "delai_ms": 105,
+        "delai_ms": 66,
+        "credit_ign": true,
+        "millesime": "2025",
+        "proxy_serveur": true
+      }
+    },
+    "2560x1300": {
+      "cadrage_parcelle_largeur_pct": 60,
+      "coupes": {
+        "A": {
+          "apercu": {
+            "contenu_px": [
+              2544,
+              296
+            ],
+            "texte_min_px": 11.7,
+            "n_cotes": 5,
+            "chevauchements": 0,
+            "remplissage_pct": 100,
+            "libelles": {
+              "libelles_proteges": 3,
+              "traits_au_travers": 0
+            },
+            "labels": {
+              "boites": 3,
+              "chevauchements": 1
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 2,
+              "chevauchements": 0
+            }
+          },
+          "detail": {
+            "contenu_px": [
+              2528,
+              1067
+            ],
+            "texte_min_px": 23.7,
+            "n_cotes": 8,
+            "chevauchements": 0,
+            "labels": {
+              "boites": 3,
+              "chevauchements": 0
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 2,
+              "chevauchements": 0
+            }
+          },
+          "lettres": [
+            {
+              "t": "A",
+              "dansLaVue": true
+            },
+            {
+              "t": "A′",
+              "dansLaVue": true
+            }
+          ],
+          "bandes_apercu": [
+            "parcelle:1.12-22.92",
+            "zone:8.64-19.86"
+          ],
+          "bandes_bornes_identiques": true
+        },
+        "B": {
+          "apercu": {
+            "contenu_px": [
+              2544,
+              222
+            ],
+            "texte_min_px": 11.7,
+            "n_cotes": 5,
+            "chevauchements": 0,
+            "remplissage_pct": 100,
+            "libelles": {
+              "libelles_proteges": 1,
+              "traits_au_travers": 0
+            },
+            "labels": {
+              "boites": 1,
+              "chevauchements": 0
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 2,
+              "chevauchements": 0
+            }
+          },
+          "detail": {
+            "contenu_px": [
+              2528,
+              411
+            ],
+            "texte_min_px": 23.7,
+            "n_cotes": 7,
+            "chevauchements": 0,
+            "labels": {
+              "boites": 1,
+              "chevauchements": 0
+            },
+            "bande_grad": {
+              "graduations": 5,
+              "longueurs": 2,
+              "chevauchements": 0
+            }
+          },
+          "lettres": [
+            {
+              "t": "B",
+              "dansLaVue": true
+            },
+            {
+              "t": "B′",
+              "dansLaVue": true
+            }
+          ],
+          "bandes_apercu": [
+            "parcelle:25.13-42.56",
+            "zone:28.13-39.55"
+          ],
+          "bandes_bornes_identiques": true
+        }
+      },
+      "contour_couverture_pct": 100,
+      "zone": {
+        "zone": true,
+        "inside_green_pct": 98.4,
+        "inside_tot": 5221,
+        "bati_exclu": 11184,
+        "outside_green": 5
+      },
+      "lettres_axe": [
+        {
+          "t": "B",
+          "dansLaVue": true
+        },
+        {
+          "t": "B′",
+          "dansLaVue": true
+        }
+      ],
+      "plan_texte_min_px": 12.7,
+      "legende_px": 11,
+      "survol": {
+        "coupe": "A",
+        "marqueur_pose": true,
+        "ecart_m": 0.04,
+        "alt_marqueur_3d_m": 595.1,
+        "alt_losange_coupe_m": 595.1,
+        "ecart_altitude_m": 0
+      },
+      "parite_sid": true,
+      "rien_ne_depasse": true,
+      "photo": {
+        "etat": "ok",
+        "delai_ms": 83,
         "credit_ign": true,
         "millesime": "2025",
         "proxy_serveur": true

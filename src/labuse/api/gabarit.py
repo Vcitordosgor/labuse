@@ -206,9 +206,12 @@ def _verif_sid(scene, sid: str | None):
 
 @router.get("/scene/{idu}/coupe/{axe}.svg")
 def gabarit_coupe_svg(idu: str, axe: str, request: Request, theme: str = "sombre", sid: str | None = None,
-                      detail: int = 0, db: Session = Depends(get_db)) -> Response:
+                      detail: int = 0, w: int = 960, h: int = 520,
+                      db: Session = Depends(get_db)) -> Response:
     """Coupe A (pente dominante) ou B (voie) en SVG serveur, servie pour l'identifiant `sid`.
-    detail=1 : vue détaillée (toutes les cotes, bandes, les deux pentes) ; sinon aperçu."""
+    detail=1 : vue détaillée (toutes les cotes, bandes, les deux pentes) ; sinon aperçu.
+    w/h : dimensions cibles (le front demande la taille de son bandeau ÷ zoom → l'aperçu remplit la place,
+    H = V, et les textes atteignent ≥ 11 px une fois affichés). Bornés pour rester sains."""
     _exiger_admin(request)
     from ..gabarit.coupe_svg import coupe_svg
     from ..gabarit.scene import build_scene
@@ -217,7 +220,10 @@ def gabarit_coupe_svg(idu: str, axe: str, request: Request, theme: str = "sombre
     coupe = next((c for c in scene.coupes if c["label"].upper() == axe.upper()), None)
     if coupe is None:
         raise HTTPException(404, f"Coupe « {axe} » indisponible pour {idu}.")
-    svg = coupe_svg(coupe, theme=theme, adresse=scene.adresse, idu=idu, detail=bool(detail))
+    width = max(360, min(int(w), 3000))
+    h_max = max(140, min(int(h), 1600))
+    svg = coupe_svg(coupe, theme=theme, adresse=scene.adresse, idu=idu, detail=bool(detail),
+                    width=width, h_max=h_max)
     if not svg:
         raise HTTPException(404, "Relief indisponible sur cette emprise (profil sans point valide).")
     return Response(svg, media_type="image/svg+xml")
@@ -249,14 +255,15 @@ def gabarit_ortho(idu: str, request: Request, sid: str | None = None,
 
 @router.get("/scene/{idu}/plan.svg")
 def gabarit_plan_cle_svg(idu: str, request: Request, theme: str = "sombre", sid: str | None = None,
-                         db: Session = Depends(get_db)) -> Response:
-    """Plan-clé (cadastre + zone + bâti + axes + nord), servi pour l'identifiant `sid`."""
+                         w: int = 380, h: int = 320, db: Session = Depends(get_db)) -> Response:
+    """Plan-clé (cadastre + zone + bâti + axes + nord), servi pour l'identifiant `sid`. w/h : le front en
+    demande un rendu plus petit que son cadre → affiché en `w-full`, il grandit (textes lisibles)."""
     _exiger_admin(request)
     from ..gabarit.coupe_svg import plan_cle_svg
     from ..gabarit.scene import build_scene
     scene = build_scene(db, idu)
     _verif_sid(scene, sid)
-    svg = plan_cle_svg(scene.to_dict(), theme=theme)
+    svg = plan_cle_svg(scene.to_dict(), theme=theme, width=max(160, min(int(w), 600)), height=max(140, min(int(h), 600)))
     if not svg:
         raise HTTPException(404, f"Plan-clé indisponible pour {idu}.")
     return Response(svg, media_type="image/svg+xml")

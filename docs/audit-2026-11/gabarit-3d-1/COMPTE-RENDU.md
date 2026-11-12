@@ -671,3 +671,42 @@ Sur `6046239cb`. Mesuré au harnais (BZ1065 et CM1658, 1440×900 et 1280×720, A
 **Hook complet vert sur toute la suite** : tsc **0** · build ✅ · vitest **326** · **pytest 3295 passed,
 0 failed** (49 skip) · secrets **0** · 0 faute hors cadre. Harnais WebKit vert (bouton 3D câblé au panneau
 de main). **Aucun critère non atteint.**
+
+## 20. Étape 3 quater — l'aperçu de la coupe remplit son bandeau (mise en page avant merge)
+
+Sur `d95a6f9ee`. Capture de Vic ~2560×1230 : l'aperçu restait petit (~⅓ de large) au milieu d'un bandeau
+vide, cotes illisibles. Harnais rejoué aux **quatre tailles** (1280×720, 1440×900, 1920×1080, 2560×1300)
+sur BZ1065 et CM1658, coupe A et B, relief et photo.
+
+### Tableau de mesures (aperçu coupe B · identique sur A)
+
+| Taille | Remplissage bandeau | Texte min (coupe) | Chevauch. | Plan-clé min | Légende | Survol |
+|---|---|---|---|---|---|---|
+| **1280×720**  | BZ **99,9 %** · CM **100 %** | **11,7 px** | 0 | **11–12,3 px** | **11 px** | 0,01 m |
+| **1440×900**  | BZ **99,9 %** · CM **100 %** | **11,7 px** | 0 | **11,3–12,7 px** | **11 px** | 0,01 m |
+| **1920×1080** | BZ **100 %** · CM **100 %** | **11,7 px** | 0 | **11,3–12,7 px** | **11 px** | 0,06 m |
+| **2560×1300** | BZ **100 %** · CM **100 %** | **11,7 px** | 0 | **11,3–12,7 px** | **11 px** | 0,04 m |
+
+Critères de la passe : **remplissage ≥ 80 %** (largeur ou hauteur du bandeau) → **99,9–100 %** partout ;
+**aucun texte < 11 px** en vue normale → **11,7 px** partout (coupe), **≥ 11 px** (plan-clé et légende).
+
+### Ce qui a changé
+1. **L'aperçu grandit avec l'écran, H = V.** La coupe est demandée au serveur à la **taille de son bandeau
+   ÷ 1,3** (`GET …/coupe/{axe}.svg?w=&h=`, le serveur calcule `s = min(...)` → H = V) et affichée en
+   **remplissant** (`w-full h-full object-contain`) ; le zoom ×1,3 porte les polices 9 px du SVG à **≥ 11 px
+   à l'écran, à toutes les tailles**. Le bandeau a un plancher `min-h-[240px]`. Re-mesuré au redimensionnement.
+2. **Lisible sans agrandir.** Cote de la voie, longueurs des bandes et « Rupture du terrain à vérifier » sont
+   à **11,7 px** en vue normale. **« Agrandir la coupe » reste** le mode détaillé.
+3. **Plan-clé et légende lisibles aux grandes tailles.** Le plan-clé est rendu plus petit (`w=210`) puis
+   affiché en `w-full` → ses textes passent à **≥ 11 px** ; la légende est à **11 px**.
+4. **Harnais : deux tailles ajoutées** (1920×1080, 2560×1300) avec les deux critères (remplissage ≥ 80 %,
+   texte ≥ 11 px) + contrôle du plan-clé et de la légende.
+
+### Bug corrigé en chemin (survol)
+`onImgLoad` lisait `ev.currentTarget` **après un `await`** (annulé par React) → le dataset `viewBox/plot`
+n'était **jamais posé** et le survol retombait sur une largeur par défaut (960) — invisible tant que la coupe
+faisait 960 de large, **faux dès qu'elle devient responsive**. Élément **capturé avant l'`await`** → survol
+**0,01–0,06 m** (encore meilleur que les 0,24 m précédents, car désormais calé sur la vraie largeur).
+
+**Hook complet vert** : tsc **0** · build ✅ · vitest **326** · **pytest 3295 passed, 0 failed** (49 skip) ·
+secrets **0**. **Aucun critère non atteint.**

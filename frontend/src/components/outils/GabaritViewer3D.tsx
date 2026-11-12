@@ -453,6 +453,21 @@ export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => 
   const [cote, setCote] = useState({ hi: 0, lo: 0, cur: null as number | null, cap: 0 })
   const markerApi = useRef<((f: number | null) => void) | null>(null)
   const dispo = scene?.disponible && !!scene.terrain?.faces_parcelle?.vertices?.length
+  // L'aperçu REMPLIT son bandeau : on demande le SVG à (taille du bandeau ÷ 1,3) et on l'affiche en
+  // remplissant (object-contain) → zoom ×1,3, donc les polices 9 px du SVG atteignent ≥ 11 px à l'écran,
+  // à toutes les tailles de fenêtre, en gardant H = V.
+  const coupeBand = useRef<HTMLDivElement>(null)
+  const [coupeDim, setCoupeDim] = useState<{ w: number; h: number }>({ w: 0, h: 0 })
+  useEffect(() => {
+    const el = coupeBand.current; if (!el) return
+    let raf = 0
+    const mesure = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => {
+      const aw = el.clientWidth - 16, ah = el.clientHeight - 16   // p-2 (8 px de chaque côté)
+      if (aw > 4 && ah > 4) setCoupeDim({ w: Math.round(aw / 1.3), h: Math.round(ah / 1.3) })
+    }) }
+    mesure(); const ro = new ResizeObserver(mesure); ro.observe(el)
+    return () => { cancelAnimationFrame(raf); ro.disconnect() }
+  }, [axe, dispo])
   const sid = scene?.scene_id   // transmis au plan/coupes (parité : même version que le terrain et le PDF)
   const coupes = useMemo(() => (scene?.coupes || []).map((c) => String((c as { label?: string }).label ?? '')), [scene])
   const acq = scene?.meta?.acquisition_date ? String(scene.meta.acquisition_date) : '—'
@@ -469,14 +484,17 @@ export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => 
     const sx = ((ev.clientX - r.left - offX) / drawnW) * nw
     markerApi.current?.(Math.min(1, Math.max(0, (sx - x0) / (x1 - x0))))
   }
-  // lit les bornes du tracé depuis le SVG chargé (pour caler le survol)
+  // lit les bornes du tracé depuis le SVG chargé (pour caler le survol). On CAPTURE l'élément AVANT l'await :
+  // `ev.currentTarget` est annulé par React après le premier await → sinon le dataset (viewBox/plot) n'est
+  // JAMAIS posé et le survol retombe sur une largeur par défaut (960) fausse dès que la coupe est responsive.
   const onImgLoad = async (ev: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = ev.currentTarget
     try {
-      const txt = await (await fetch(ev.currentTarget.src)).text()
+      const txt = await (await fetch(img.src)).text()
       const m0 = txt.match(/data-plot-x0="([\d.]+)"/), m1 = txt.match(/data-plot-x1="([\d.]+)"/)
       const vb = txt.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/)
-      if (m0) ev.currentTarget.dataset.plotX0 = m0[1]; if (m1) ev.currentTarget.dataset.plotX1 = m1[1]
-      if (vb) { ev.currentTarget.dataset.vbw = vb[1]; ev.currentTarget.dataset.vbh = vb[2] }
+      if (m0) img.dataset.plotX0 = m0[1]; if (m1) img.dataset.plotX1 = m1[1]
+      if (vb) { img.dataset.vbw = vb[1]; img.dataset.vbh = vb[2] }
     } catch { /* noop */ }
   }
 
@@ -515,8 +533,8 @@ export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => 
             {/* à droite : plan-clé COMPACT (un seul titre) + légende */}
             <div className="flex w-[320px] shrink-0 flex-col gap-2 overflow-y-auto bg-[#0f1216] p-3">
               <div className="text-[11px] text-txt-mut">Plan-clé <span className="text-txt-ghost">— nord en haut</span></div>
-              <img src={gabPlanSvgUrl(idu, 'sombre', sid)} alt="Plan-clé" className="w-full rounded border border-line" />
-              <div className="mt-1 flex flex-col gap-1 text-[10px] text-txt-mut">
+              <img data-gab3d-plan src={gabPlanSvgUrl(idu, 'sombre', sid, 210, 176)} alt="Plan-clé" className="w-full rounded border border-line" />
+              <div data-gab3d-legende className="mt-1 flex flex-col gap-1 text-[11px] text-txt-mut">
                 {LEG.map(([c, lab]) => (
                   <div key={lab} className="flex items-center gap-2"><span className="inline-block h-2 w-4 rounded-sm" style={{ background: c }} />{lab}</div>
                 ))}
@@ -524,12 +542,12 @@ export function GabaritViewer3D({ idu, onClose }: { idu: string; onClose: () => 
               <p className="mt-1 text-[9px] leading-snug text-txt-ghost">Détails techniques — scène {scene.scene_id}</p>
             </div>
           </div>
-          {/* en bas : la coupe active ajustée à sa case (jamais tronquée, H = V) + bouton Agrandir */}
-          <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden border-t border-line bg-[#0f1216] p-2">
+          {/* en bas : l'aperçu REMPLIT son bandeau (grandit avec l'écran, H = V, textes ≥ 11 px) + Agrandir */}
+          <div ref={coupeBand} data-gab3d-coupe-band className="relative flex min-h-[240px] flex-1 items-center justify-center overflow-hidden border-t border-line bg-[#0f1216] p-2">
             {axeSel
-              ? <img key={axeSel} src={gabCoupeSvgUrl(idu, axeSel, 'sombre', sid)} alt={`Coupe ${axeSel}`}
+              ? <img key={axeSel} src={gabCoupeSvgUrl(idu, axeSel, 'sombre', sid, false, coupeDim.w || undefined, coupeDim.h || undefined)} alt={`Coupe ${axeSel}`}
                      onLoad={onImgLoad} onMouseMove={onCoupeHover} onMouseLeave={() => markerApi.current?.(null)}
-                     className="max-h-full max-w-full cursor-crosshair rounded border border-line object-contain" />
+                     className="h-full w-full cursor-crosshair rounded border border-line object-contain" />
               : <p className="text-[12px] text-txt-mut">Aucune coupe disponible.</p>}
             {axeSel && <button data-gab3d-agrandir onClick={() => setAgrandi(true)}
               className="absolute right-3 top-2 rounded border border-line bg-black/50 px-2 py-1 text-[11px] text-txt-mut hover:text-txt">⤢ Agrandir la coupe</button>}

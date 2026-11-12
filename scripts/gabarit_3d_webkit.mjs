@@ -22,21 +22,38 @@ async function ouvrir(page, idu) {
   await page.waitForFunction(() => window.__gab3d?.probe?.pf > 0, { timeout: 20000 }).catch(() => {})
 }
 
-// taille de texte min à l'écran + chevauchement des cotes, pour un <img> de coupe
-async function mesureCoupe(page, sel) {
+// taille de texte min à l'écran (échelle object-contain RÉELLE) + chevauchement des cotes + remplissage du
+// bandeau. `bandSel` (facultatif) : conteneur dont on mesure le remplissage par le contenu de la coupe.
+async function mesureCoupe(page, sel, bandSel) {
   const img = await page.$(sel); if (!img) return null
   const b = await img.boundingBox()
   const url = await img.evaluate((e) => e.src)
   const svg = await (await fetch(url)).text()
   const fonts = [...svg.matchAll(/font-size="([\d.]+)"/g)].map((m) => +m[1])
-  const vb = +(svg.match(/viewBox="0 0 (\d+)/)?.[1] || 960)
-  const scale = b.width / vb
+  const vbm = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/); const vbW = +(vbm?.[1] || 960), vbH = +(vbm?.[2] || 520)
+  const scale = Math.min(b.width / vbW, b.height / vbH)                 // object-contain : la plus petite échelle
   const minPx = Math.min(...fonts) * scale
+  const contentW = vbW * scale, contentH = vbH * scale
   const cotes = [...svg.matchAll(/<text x="([\d.]+)" y="([\d.]+)"[^>]*>[\d,]+ m<\/text>/g)].map((m) => ({ x: +m[1] * scale, y: +m[2] * scale }))
   let overlaps = 0
   for (let i = 0; i < cotes.length; i++) for (let j = i + 1; j < cotes.length; j++)
     if (Math.abs(cotes[i].x - cotes[j].x) < 22 && Math.abs(cotes[i].y - cotes[j].y) < 11) overlaps++
-  return { largeur_img_px: Math.round(b.width), texte_min_px: Math.round(minPx * 10) / 10, n_cotes: cotes.length, chevauchements: overlaps }
+  const out = { contenu_px: [Math.round(contentW), Math.round(contentH)], texte_min_px: Math.round(minPx * 10) / 10, n_cotes: cotes.length, chevauchements: overlaps }
+  if (bandSel) {
+    const band = await page.$(bandSel)
+    if (band) { const bc = await band.boundingBox(); const bw = bc.width - 16, bh = bc.height - 16   // p-2
+      out.remplissage_pct = Math.round(Math.max(contentW / bw, contentH / bh) * 1000) / 10 }
+  }
+  return out
+}
+// lisibilité d'un <img> SVG (plan-clé, légende) : plus petit texte à l'écran (échelle object-contain)
+async function minTextePx(page, sel) {
+  const img = await page.$(sel); if (!img) return null
+  const b = await img.boundingBox(); if (!b) return null
+  const svg = await (await fetch(await img.evaluate((e) => e.src))).text()
+  const fonts = [...svg.matchAll(/font-size="([\d.]+)"/g)].map((m) => +m[1]); if (!fonts.length) return null
+  const vbm = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/); const vbW = +(vbm?.[1] || 380), vbH = +(vbm?.[2] || 320)
+  return Math.round(Math.min(...fonts) * Math.min(b.width / vbW, b.height / vbH) * 10) / 10
 }
 
 // lettres de l'axe (B/B′, A/A′) DANS la vue : centre du libellé à l'intérieur du cadre du canvas 3D
@@ -121,7 +138,7 @@ async function parSize(idu, w, h) {
     const lettres = await lettresAxe(page)   // lettres de l'axe de CETTE coupe (A/A′ ou B/B′), dans la vue
     const apImg = await page.$('[data-gab3d-overlay] img[alt^="Coupe"]')
     const apSvg = apImg ? await (await fetch(await apImg.evaluate((e) => e.src))).text() : ''
-    const apercu = await mesureCoupe(page, '[data-gab3d-overlay] img[alt^="Coupe"]')
+    const apercu = await mesureCoupe(page, '[data-gab3d-overlay] img[alt^="Coupe"]', '[data-gab3d-coupe-band]')
     if (apercu) { apercu.libelles = a2Control(apSvg); apercu.labels = labelsChevauchent(apSvg); apercu.bande_grad = bandeGradControl(apSvg) }
     await page.screenshot({ path: `${OUT}/mesure_${idu.slice(-6)}_${w}x${h}_coupe${ax}.png` })
     await page.click('[data-gab3d-agrandir]').catch(() => {}); await page.waitForTimeout(500)
@@ -134,6 +151,9 @@ async function parSize(idu, w, h) {
     const ba = bandeBornes(apSvg), bd = bandeBornes(detSvg)
     m.coupes[ax] = { apercu, detail, lettres, bandes_apercu: ba, bandes_bornes_identiques: ba.length > 0 && JSON.stringify(ba) === JSON.stringify(bd) }
   }
+  // plan-clé + légende lisibles à cette taille (plus petit texte à l'écran)
+  m.plan_texte_min_px = await minTextePx(page, '[data-gab3d-plan]')
+  m.legende_px = await page.evaluate(() => { const e = document.querySelector('[data-gab3d-legende]'); return e ? Math.round(parseFloat(getComputedStyle(e).fontSize) * 10) / 10 : null })
   // A3 — on PART du losange ◆ affiché sur la coupe (B si elle en porte un, sinon A) : survol à son x → le
   // repère tombe sur le terrain. Écart = |altitude du marqueur drapé (maillage 3D) − altitude du losange
   // (profil serveur)|, deux pipelines distincts au MÊME endroit → critère < 0,5 m.
@@ -191,10 +211,10 @@ async function parSize(idu, w, h) {
   return m
 }
 
+const TAILLES = [[1280, 720], [1440, 900], [1920, 1080], [2560, 1300]]
 for (const [court, idu] of IDUS) {
   mesures[court] = {}
-  mesures[court]['1440x900'] = await parSize(idu, 1440, 900)
-  mesures[court]['1280x720'] = await parSize(idu, 1280, 720)
+  for (const [w, h] of TAILLES) mesures[court][`${w}x${h}`] = await parSize(idu, w, h)
 }
 fs.writeFileSync(`${OUT}/mesures_webkit.json`, JSON.stringify(mesures, null, 2))
 console.log(JSON.stringify(mesures, null, 2))
