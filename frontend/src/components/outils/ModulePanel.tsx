@@ -12,7 +12,7 @@ import { AddressAutocomplete } from '../AddressAutocomplete'
 import { ParcelInput } from '../ParcelInput'
 import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECETTE-1 F2
 import { TEMPS_MILLESIMES } from '../map/basemaps'
-import { fmtInt, fmtM2 } from '../../lib/format'
+import { fmtInt, fmtM2, fmtDateNum } from '../../lib/format'
 import { iduComplet, iduCourt, estIdu } from '../../lib/format'
 import { pointInPolygon } from '../../lib/geo'
 import { TOKENS } from '../../lib/tokens'
@@ -341,12 +341,14 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
                     </button>
                   ))}
                 </div>
-                {/* OUTILS-P1-1 LOT3 (pt 10) — « voir plus » sous la liste quand tous les blocs ne sont pas affichés. */}
+                {/* OUTILS-P1-1 LOT3b (pt 6) — pied au FORMAT COMMUN de l'app (ListPaginationFooter) :
+                    « N / M affichées · Voir 200 de plus » (par paquets de PAGE_SIZE), au lieu d'un bouton
+                    « Voir plus » ad hoc. Le plafond serveur `blocs_limit` grandit d'un paquet à chaque clic. */}
                 {bcAff < bc.n && (
-                  <button data-m02-blocs-plus onClick={() => setBlocsLimit(Math.min(bc.n, 500))} disabled={blocsPlus.isFetching}
-                    className="mt-1 w-full rounded px-1.5 py-1 text-[10.5px] font-medium text-mint hover:bg-mint/10">
-                    {blocsPlus.isFetching ? 'Chargement…' : `Voir plus (${fmt(bc.n - bcAff)} de plus)`}
-                  </button>
+                  <ListPaginationFooter shown={bcAff} total={bc.n} step={PAGE_SIZE}
+                    onMore={() => setBlocsLimit((l) => Math.min(l + PAGE_SIZE, 500))}>
+                    {blocsPlus.isFetching && <span className="text-txt-dim">chargement…</span>}
+                  </ListPaginationFooter>
                 )}
               </div>
             )
@@ -490,8 +492,9 @@ function PermitFicheCorps({ permitId, onClose }: { permitId: string; onClose: ()
           <F label="Nombre de lots" value={d['nb_lots']} />
           <F label="Surface habitable" value={d['surface_hab_m2'] != null ? `${fmt(d['surface_hab_m2'])} m²` : null} />
           {d['geoloc_note'] && <p className="mt-1 text-[10px] leading-snug text-txt-dim">Position : {String(d['geoloc_note'])}.</p>}
-          <F label="Date de dépôt" value={d['date_depot']} />
-          <F label="Date d'autorisation" value={d['date_autorisation']} />
+          {/* OUTILS-P1-1 LOT3b (pt 1) — dates au format FR JJ/MM/AAAA (jamais AAAA-MM-JJ à l'écran). */}
+          <F label="Date de dépôt" value={d['date_depot'] ? fmtDateNum(d['date_depot'] as string) : null} />
+          <F label="Date d'autorisation" value={d['date_autorisation'] ? fmtDateNum(d['date_autorisation'] as string) : null} />
           {/* DONNEES-6/7 — dates JAMAIS réordonnées : dépôt après autorisation = incohérence du
               producteur SDES/Dido, qualifiée par l'écart (au-delà d'1 mois = modificatif/transféré
               probable). Le délai d'instruction reste non servi. Voir lib/permis.ts. */}
@@ -499,7 +502,7 @@ function PermitFicheCorps({ permitId, onClose }: { permitId: string; onClose: ()
             const note = (d['note_incoherence'] as string | null) ?? null   // FRONT-CHIFFRES-2 (F32) — servie
             return note ? <p className="mt-1 text-[10px] leading-snug text-st-ecartee">{note} — délai d'instruction non calculé.</p> : null
           })()}
-          <F label="Achèvement (DAACT)" value={d['date_achevement']} />
+          <F label="Achèvement (DAACT)" value={d['date_achevement'] ? fmtDateNum(d['date_achevement'] as string) : null} />
           {d['delai_instruction'] && (
             <F label="Délai d'instruction" value={<span className="font-semibold text-mint">{d['delai_instruction']['libelle']}</span>} />
           )}
@@ -810,7 +813,7 @@ export function M03() {
     ['autre', 'Autres', 'autre', perimCounts.autre, 'ni récent, ni achevé'],
     ['tous', 'Tous', null, perimCounts.tous, 'dans les 200 m'],
   ] as const) : ([
-    ['cours', 'Récents', 'recent', radarEntryTotal, 'autorisés depuis 90 jours'],
+    ['cours', 'Récents', 'recent', radarEntryTotal, 'autorisés, 90 derniers jours de la donnée'],
     ['mort', 'Permis dormants', 'dormant', pmEntryTotal, 'sans achèvement déclaré (DAACT)'],
     ['acheve', 'Achevés', 'acheve', acheveEntryTotal, 'travaux déclarés (DAACT)'],
     ['autre', 'Autres', 'autre', autreEntryTotal, 'ni récent, ni dormant, ni achevé'],
@@ -913,7 +916,7 @@ export function M03() {
                   /* OUT-PERMIS-011 — /modules/parcelle-permis n'est PAS fenêtré : il rend tous les permis
                      géolocalisés ≤ 200 m, sur TOUTE la profondeur Sitadel. L'ancien « 240 derniers mois »
                      (max(MONTHS_RADAR) = 20 ans) se lisait comme un faux fenêtrage. */
-                  ? <>sur toute la profondeur Sitadel servie{donneesJusquAu ? ` (Sitadel au ${donneesJusquAu})` : ''}.</>
+                  ? <>sur toute la profondeur Sitadel servie{donneesJusquAu ? ` (Sitadel au ${fmtDateNum(donneesJusquAu)})` : ''}.</>
                   : loc === 0
                     ? <>aucun point à afficher.</>
                     : <>cliquez les points sur la carte{nonLocTxt}.</>}
@@ -945,7 +948,8 @@ export function M03() {
         </div>
         {/* OUTILS-P1-1 LOT3 (pt 4) — date de la donnée Sitadel (max(date) en base, servie `donnees_jusqu_au`). */}
         {donneesJusquAu && (
-          <div data-permis-sitadel-date className="mt-0.5 text-[10px] leading-snug text-txt-dim">Donnée Sitadel au {donneesJusquAu}</div>
+          /* OUTILS-P1-1 LOT3b (pt 1) — date au format FR JJ/MM/AAAA (jamais AAAA-MM-JJ à l'écran). */
+          <div data-permis-sitadel-date className="mt-0.5 text-[10px] leading-snug text-txt-dim">Donnée Sitadel au {fmtDateNum(donneesJusquAu)}</div>
         )}
       </div>
 
@@ -1062,7 +1066,7 @@ export function M03() {
               <p data-permis-dossiers className="shrink-0 px-2 text-[10px] leading-snug text-txt-dim">
                 {total != null ? fmt(total) : '…'} dossier{(total ?? 0) > 1 ? 's' : ''}
                 {geocodesSel != null && <> · <span data-permis-geocodes>{fmt(geocodesSel)} géolocalisé{geocodesSel > 1 ? 's' : ''}</span></>}
-                {donneesJusquAu && <> · donnée Sitadel au {donneesJusquAu}</>}
+                {donneesJusquAu && <> · donnée Sitadel au {fmtDateNum(donneesJusquAu)}</>}
               </p>
             )
           })()}
@@ -1105,7 +1109,8 @@ export function M03() {
                 avec la pastille d'état à droite. */}
             <span className="shrink-0 rounded border border-line-2 px-1.5 py-0.5 font-mono text-[10px] text-txt-hi">{i['type'] as string}</span>
             {/* O17 (h) — DATE = date réelle d'autorisation du permis (par ligne), PAS la date du fichier. */}
-            <span className="shrink-0 font-mono text-txt-mut">{i['date'] as string}</span>
+            {/* OUTILS-P1-1 LOT3b (pt 1) — date d'autorisation du permis au format FR (plus de AAAA-MM-JJ). */}
+            <span className="shrink-0 font-mono text-txt-mut">{fmtDateNum(i['date'] as string)}</span>
             {i['nb_lgt'] != null && <b className="shrink-0 tnum text-txt">{String(i['nb_lgt'])} lgt{Number(i['nb_lgt']) > 1 ? 's' : ''}</b>}
             {pointMort && i['surface_m2'] != null && <span className="shrink-0 tnum text-txt-dim">{fmt(i['surface_m2'] as number)} m²</span>}
             {/* commune / parcelle en clair — tronquée pour laisser la place au badge. */}

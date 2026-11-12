@@ -1156,6 +1156,39 @@ def successions_liste(commune: str | None = None,
         cle, lambda: _calcul_successions(db, commune, sdp_min, limit, offset))
 
 
+def _successions_zones_a_cheval(db: Session, idus: list[str]) -> dict[str, str]:
+    """OUTILS-P1-1 LOT3b (pt 4) — pour des parcelles à zone dominante A/N, renvoie {idu: composition
+    bizone « A 65 % · Ua 35 % »} UNIQUEMENT pour celles À CHEVAL (aucune zone n'atteint 90 % de la
+    surface), AU FORMAT DE LA FICHE. Un seul passage géométrique (spatial_layers `plu_gpu_zone`, la MÊME
+    source que `faisabilite.zone_servie`). Quand la dominante résume la parcelle (≥ 90 %), rien n'est
+    servi (la ligne garde la zone dominante, comme la fiche). Table absente → {} (jamais un 500)."""
+    if not idus or not db.execute(
+            text("SELECT to_regclass('spatial_layers') IS NOT NULL")).scalar():
+        return {}
+    rows = db.execute(text("""
+        WITH page AS (SELECT idu, geom_2975 AS g FROM parcels WHERE idu = ANY(:idus))
+        SELECT page.idu AS idu,
+               COALESCE(NULLIF(rtrim(split_part(btrim(z.attrs->>'libelle'), ' ', 1), ':'), ''), z.subtype) AS zone,
+               round((100 * ST_Area(ST_Intersection(ST_MakeValid(z.geom_2975), page.g))
+                      / NULLIF(ST_Area(page.g), 0))::numeric, 1) AS pct
+          FROM page
+          JOIN spatial_layers z ON z.kind = 'plu_gpu_zone' AND ST_Intersects(z.geom_2975, page.g)
+         WHERE ST_Area(ST_Intersection(ST_MakeValid(z.geom_2975), page.g)) > 0
+    """), {"idus": idus}).mappings().all()
+    from collections import defaultdict
+    parts: dict[str, list[tuple[str, float]]] = defaultdict(list)
+    for r in rows:
+        parts[r["idu"]].append((r["zone"], float(r["pct"] or 0)))
+    out: dict[str, str] = {}
+    for idu, ps in parts.items():
+        ps.sort(key=lambda x: x[1], reverse=True)
+        if not ps or ps[0][1] >= 90:   # la dominante résume la parcelle → PAS « à cheval » (seuil fiche)
+            continue
+        # Format fiche : « Zone N % » (% arrondi à l'entier), parts ≥ 1 % (on tait le bruit sub-1 %).
+        out[idu] = " · ".join(f"{z} {round(pct)} %" for z, pct in ps if pct >= 1)
+    return out
+
+
 def _calcul_successions(db: Session, commune, sdp_min, limit, offset) -> dict:
     if not db.execute(text("SELECT to_regclass('parcel_veille_succession') IS NOT NULL")).scalar():
         raise HTTPException(503, "signal succession non calculé (table absente).")
@@ -1211,7 +1244,7 @@ def _calcul_successions(db: Session, commune, sdp_min, limit, offset) -> dict:
     rows = db.execute(text(f"""
         SELECT v.parcelle_id AS idu, p.commune AS commune,
                round(p.surface_m2)::int AS surface_m2,
-               coalesce(z.zone_lib, z.zone_fam) AS zone,
+               coalesce(z.zone_lib, z.zone_fam) AS zone, z.zone_fam AS zone_fam,
                {sdp_expr} AS sdp_residuelle_m2,
                {age_affiche} AS dirigeant_age, v.sci_dormante,
                dir.dirigeant_nom,
@@ -1222,10 +1255,19 @@ def _calcul_successions(db: Session, commune, sdp_min, limit, offset) -> dict:
         {**params, "lim": limit, "off": offset}).mappings().all()
     # DONNEES-1 lot 2.3 — dernier dépôt de comptes par SIREN de la page (batch, table bodacc_depots).
     depots = _depots_par_siren(db, [r["siren"] for r in rows if r["siren"]])
+    # OUTILS-P1-1 LOT3b (pt 4) — parcelle À CHEVAL : zone DOMINANTE A/N mais une partie en zone
+    # constructible (le résiduel vient de là). On sert alors la COMPOSITION bizone AU FORMAT DE LA FICHE
+    # (« A 65 % · Ua 35 % »), calculée en UN SEUL passage géométrique sur les seules lignes A/N de la page
+    # (spatial_layers plu_gpu_zone, MÊME source que la fiche `zone_dominante`). À cheval ssi aucune zone
+    # n'atteint SEUIL_A_CHEVAL_PCT (90 %) de la surface — sinon la dominante résume la parcelle (fiche).
+    parts_lib = _successions_zones_a_cheval(db, [r["idu"] for r in rows
+                                                 if (r["zone_fam"] or "") in ("A", "N")])
     items = []
     for r in rows:
         d_ = dict(r)
         d_["sci_dormante"] = bool(r["sci_dormante"])
+        d_["zone_parts_libelle"] = parts_lib.get(r["idu"])   # bizone « A 65 % · Ua 35 % » ou None
+        d_.pop("zone_fam", None)
         d_["proprio"] = _solaire_proprio(r)   # MÊME règle privacy que Solaire/Assemblage
         # Signal « dépôt de comptes » du propriétaire PM (public) : renforce le radar succession
         # (une SCI sans dépôt récent = en sommeil). None (pas de clé) = aucun dépôt publié.

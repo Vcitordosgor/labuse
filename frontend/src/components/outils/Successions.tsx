@@ -91,7 +91,7 @@ export function Successions() {
             {/* OUTILS-P1-1 (pt 1) — date de la donnée RNE rétablie (le nom et l'âge en viennent). */}
             {rne && <> · donnée RNE au <b className="text-txt">{rne}</b></>}
             {/* OUTILS-P1-1 LOT3 (pt 5) — on DIT sur quoi la liste est triée (le grand chiffre à droite). */}
-            <div data-successions-tri className="mt-0.5 text-txt-dim">Triées par plancher restant estimé, du plus grand au plus petit.</div>
+            <div data-successions-tri className="mt-0.5 text-txt-dim">Triées par SDP restante estimée, du plus grand au plus petit.</div>
             {/* OUTILS-P1-1 (pt 1) — les âges ≥ 100 ans sont sortis de la liste ET comptés ici. */}
             {ageEcarte > 0 && (
               <div data-successions-age-ecarte className="mt-0.5 text-txt-dim">
@@ -130,14 +130,19 @@ function Carte({ it, onOpen }: { it: SuccessionItem; onOpen: () => void }) {
             <span className="tnum text-[11px] text-txt">{fmtM2(it.sdp_residuelle_m2)}</span>
             <span className="rounded bg-amber-500/15 px-1 text-[8.5px] font-medium text-amber-500">Estimé</span>
           </span>
-          <span className="mt-0.5 text-[8px] uppercase tracking-wide text-txt-dim">plancher restant</span>
+          <span className="mt-0.5 text-[8px] uppercase tracking-wide text-txt-dim">SDP restante</span>
         </span>
       </div>
-      <div className="mt-0.5 flex items-center gap-1.5 text-[10.5px]">
+      {/* OUTILS-P1-1 LOT3b (pt 4) — parcelle À CHEVAL : la ligne de zone dit la COMPOSITION bizone au
+          format de la fiche (« A 65 % · Ua 35 % ») au lieu de la seule zone dominante (qui cachait la
+          part constructible d'où vient la SDP restante) ; sinon la zone dominante, comme avant. */}
+      <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[10.5px]">
         <span className="shrink-0 text-txt-mut">{it.commune}</span>
         <span className="text-txt-dim">·</span>
         <span className="shrink-0 text-txt-dim">{fmtM2(it.surface_m2)}</span>
-        {it.zone && <><span className="text-txt-dim">·</span><span className="shrink-0 text-txt-dim">{it.zone}</span></>}
+        {it.zone_parts_libelle
+          ? <><span className="text-txt-dim">·</span><span data-successions-bizone className="text-amber-500">{it.zone_parts_libelle}</span></>
+          : it.zone && <><span className="text-txt-dim">·</span><span className="shrink-0 text-txt-dim">{it.zone}</span></>}
       </div>
       <div className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-[10.5px]">
         {/* PM nommée par construction (SIREN confirmé exigé) ; le repli particulier reste en ceinture */}

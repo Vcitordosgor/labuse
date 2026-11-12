@@ -97,7 +97,7 @@ def test_w2_cinq_lignes_etat_avec_definitions_sur_les_lignes():
     for label in ("'Récents'", "'Permis dormants'", "'Achevés'", "'Autres'"):
         assert label in MP, label
     # définitions courtes SUR les lignes (plus dans un paragraphe)
-    assert "depuis 90 jours" in MP          # OUTILS-P1-1 (pt 5) — « Autorisés depuis 90 jours »
+    assert "90 derniers jours de la donnée" in MP   # OUTILS-P1-1 LOT3b (pt 2) — fenêtre ancrée sur la donnée
     assert "ni récent, ni dormant, ni achevé" in MP
     # bloc total en tête + bandeau court
     assert "permis autorisés en base" in MP
