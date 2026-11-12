@@ -117,7 +117,10 @@ export function O5Servitudes() {
                     {s.redhibitoire && <span aria-hidden className="text-red-500">●</span>}
                     <b className="text-[11.5px] text-txt-hi">{s.categorie}</b>
                     {s.redhibitoire
-                      ? <span className="rounded-full border border-red-500/40 bg-red-500/10 px-1.5 text-[8.5px] font-medium text-red-500">Inconstructible (partie rouge)</span>
+                      // OUTILS-LOT-4 bis (pt 2) — parcelle 100 % rouge (effet « parcelle entièrement
+                      // INCONSTRUCTIBLE », servi par le back) : étiquette « Inconstructible » SANS
+                      // « (partie rouge) » — ici il n'y a pas de partie constructible.
+                      ? <span className="rounded-full border border-red-500/40 bg-red-500/10 px-1.5 text-[8.5px] font-medium text-red-500">{s.effets.some((e) => /entièrement INCONSTRUCTIBLE/.test(e)) ? 'Inconstructible' : 'Inconstructible (partie rouge)'}</span>
                       : <span className="rounded-full border border-mint/40 bg-mint/10 px-1.5 text-[8.5px] font-medium text-mint">sourcé</span>}
                   </div>
                   {/* OUTILS-LOT-4 (pt 3) — une carte qui agrège plusieurs effets (ex. « Risque naturel » :

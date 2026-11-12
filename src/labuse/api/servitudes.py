@@ -359,8 +359,13 @@ def _ppr_ligne(couleur: str, risques: str, pct: int) -> dict:
         return {"nature": "PPR — zonage non classé", "niveau": "autre", "libelle": lib, "redhibitoire": True}
     # rouge RÉGLEMENTAIRE (INTERDICTION)
     hors = max(0, 100 - pct)
-    lib = (f"PPR {risques} — zone rouge sur {pct} % de la parcelle : partie INCONSTRUCTIBLE "
-           f"(interdiction, C. env. L562-1), quelle que soit la surface.")
+    # OUTILS-LOT-4 bis (pt 2) — 100 % rouge : « parcelle ENTIÈREMENT INCONSTRUCTIBLE » (il n'y a pas de
+    # « partie » constructible) ; en dessous de 100 %, « partie INCONSTRUCTIBLE » (inchangé).
+    inconstructible = "parcelle entièrement INCONSTRUCTIBLE" if pct >= 100 else "partie INCONSTRUCTIBLE"
+    # OUTILS-LOT-4 bis (pt 3) — trait d'union INSÉCABLE (U+2011) dans le numéro d'article : « L562‑1 »
+    # ne se coupe jamais en « L562- / 1 » en fin de ligne.
+    lib = (f"PPR {risques} — zone rouge sur {pct} % de la parcelle : {inconstructible} "
+           f"(interdiction, C. env. L562‑1), quelle que soit la surface.")
     # OUTILS-LOT-4 (pt 4) — quand TOUTE la parcelle est en zone rouge (pct = 100 → hors = 0), on ne
     # colle pas « Partie hors zone rouge (0 %) : constructible » : il n'y a pas de partie hors rouge.
     if hors > 0:

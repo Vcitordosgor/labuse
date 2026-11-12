@@ -62,6 +62,29 @@ describe('O5 — quatre états, plus de « vérifié » sans preuve', () => {
     expect(document.querySelector('[data-o5-verifie]')?.textContent).not.toContain('Procédure PLU')
   })
 
+  it('OUTILS-LOT-4 bis (pt 2) : parcelle 100 % rouge → badge « Inconstructible » SANS « (partie rouge) »', async () => {
+    mockFetch(servitudesPayload({ servitudes: [{
+      categorie: 'Risque naturel (PPR / aléa)',
+      effet: 'PPR inondation — zone rouge sur 100 % de la parcelle : parcelle entièrement INCONSTRUCTIBLE (interdiction, C. env. L562‑1), quelle que soit la surface.',
+      source: 'DEAL', date: 'au 01/01/2026', redhibitoire: true,
+    }] }))
+    renderO5()
+    await waitFor(() => expect(document.body.textContent).toContain('Risque naturel'))
+    expect(document.body.textContent).toContain('Inconstructible')
+    expect(document.body.textContent).not.toContain('(partie rouge)')
+  })
+
+  it('OUTILS-LOT-4 bis (pt 2) : rouge PARTIEL (< 100 %) → le badge garde « Inconstructible (partie rouge) »', async () => {
+    mockFetch(servitudesPayload({ servitudes: [{
+      categorie: 'Risque naturel (PPR / aléa)',
+      effet: 'PPR inondation — zone rouge sur 40 % de la parcelle : partie INCONSTRUCTIBLE (interdiction, C. env. L562‑1), quelle que soit la surface. Partie hors zone rouge (60 %) : constructible selon les règles de sa zone, à confirmer au règlement du PPR.',
+      source: 'DEAL', date: 'au 01/01/2026', redhibitoire: true,
+    }] }))
+    renderO5()
+    await waitFor(() => expect(document.body.textContent).toContain('Risque naturel'))
+    expect(document.body.textContent).toContain('Inconstructible (partie rouge)')
+  })
+
   it('zone blanche (tout inconnu) : pas de section « Aucune intersection détectée », une « Couverture inconnue »', async () => {
     const dix = ['Sols pollués', 'Bruit', 'Assainissement', 'ICPE', 'Monuments et sites', 'ER / EBC',
       'Préemption', 'Eau et zones humides', 'Espaces naturels', 'Risques naturels']

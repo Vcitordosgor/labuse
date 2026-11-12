@@ -360,7 +360,9 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
         {/* GB-001 : compte des outils VISIBLES (comme le tiroir Rail), dynamique. */}
         <AccEntry ton="mint" icone="outil" titre="Ouvrir un outil" sous={`${nOutils} outils fonciers`}
           onClick={() => { setAccueilVu(); toggleOutils() }} />
-        <AccEntry ton="mauve" icone="copilote" titre="Demander au Copilote" sous="« terrain 1 000 m² à Saint-Paul »"
+        {/* OUTILS-LOT-4 bis (pt 1) — trait d'union INSÉCABLE (U+2011) dans « Saint‑Paul » : l'exemple du
+            Copilote ne se coupe plus en « Saint- / Paul » en fin de ligne (comme adresseInsecable, lot 2). */}
+        <AccEntry ton="mauve" icone="copilote" titre="Demander au Copilote" sous="« terrain 1 000 m² à Saint‑Paul »"
           onClick={() => { setAccueilVu(); setView('copilote') }} />{/* seule surface IA → mauve */}
         {/* ECRANS-NOV-1 §3 — « Voir les données » ouvre la section Données (ex-lien de pied, devenu porte). */}
         <AccEntry ton="mint" icone="donnees" titre="Voir les données" sous={sousDonnees}
