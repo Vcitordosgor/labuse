@@ -81,7 +81,7 @@ ml = [
 # RETOURS-15 U5 — l'extra `lidar` (R31) est SUPPRIMÉ : rasterio/scipy sont des dépendances de
 # série (voir dependencies) — l'optionnel, que rien n'installait, rendait la toiture muette.
 # Outils de dev / CI (tests + lint).
-dev = ["pytest>=8.0", "ruff>=0.5", "freezegun>=1.5"]  # freezegun : banc horloge (scripts/chasse/horloge.py)
+dev = ["pytest>=8.0", "ruff>=0.5", "freezegun>=1.5", "CairoSVG>=2.7"]  # freezegun : banc horloge ; CairoSVG : témoins coupes GABARIT-3D (scripts/gabarit_3d_temoins.py)
 # CI-1 (Lot 3) — sous-ensemble ml « léger » que la sélection CI (unitaires + base de test) importe
 # vraiment (pandas/sklearn via scoring p_model/p_v2 ; openpyxl via Bilan xlsx) SANS torch ni
 # segmentation-models (ML lourd, jamais en CI — cf. [ml]). Installé en CI : `pip install -e .[dev,ci]`.

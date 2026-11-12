@@ -997,6 +997,33 @@ export interface GabFeatureCollection {
 export const getGabarit = (idu: string) =>
   j<GabaritResult>(`/outils/gabarit/${encodeURIComponent(idu)}`)
 
+// GABARIT-3D-1 (pilote, admin) — scène 3D servie (maillage, contours, bâti, coupes, métadonnées).
+// Lue par la visionneuse Three.js ; le PDF lit la MÊME scène côté serveur.
+export interface GabMesh { vertices: number[][]; triangles: number[][]; pas_m: number }
+export interface GabPoly { ext: number[][]; trous: number[][][] }
+export interface GabSceneBati { empreinte: GabPoly[]; pied_m: number | null; hauteur_m: number | null; attribution: string | null }
+export interface GabScene {
+  idu: string; scene_id: string; disponible: boolean; adresse?: string | null
+  etat: { gabarit: string; terrain_couverture: number; fond_disponible: boolean; coupes: Array<{ axe: string; disponible: boolean }> }
+  origine_2975: number[]
+  contour_cadastral: GabPoly[]; contour_gabarit: GabPoly[]; zone_implantation: GabPoly[]
+  reculs: GabPoly[]; exclusions: GabPoly[]; batiments: GabSceneBati[]
+  terrain: { faces_parcelle?: GabMesh; faces_voisinage?: GabMesh; couverture_parcelle?: number; cadre?: number[] }
+  coupes: Array<Record<string, unknown>>
+  axes_plan: Record<string, { label: string; p0: number[]; p1: number[]; sens: number[] }>
+  meta: Record<string, unknown>; message?: string | null
+}
+export const getGabaritScene = (idu: string) =>
+  j<GabScene>(`/outils/gabarit/scene/${encodeURIComponent(idu)}`)
+// sid = identifiant de scène TRANSMIS par la visionneuse (parité : même version terrain/plan/coupe/PDF).
+export const gabCoupeSvgUrl = (idu: string, axe: string, theme = 'sombre', sid?: string, detail = false, w?: number, h?: number, header = true) =>
+  `/outils/gabarit/scene/${encodeURIComponent(idu)}/coupe/${axe}.svg?theme=${theme}${sid ? `&sid=${sid}` : ''}${detail ? '&detail=1' : ''}${w ? `&w=${w}` : ''}${h ? `&h=${h}` : ''}${header ? '' : '&header=0'}`
+export const gabPlanSvgUrl = (idu: string, theme = 'sombre', sid?: string, w?: number, h?: number) =>
+  `/outils/gabarit/scene/${encodeURIComponent(idu)}/plan.svg?theme=${theme}${sid ? `&sid=${sid}` : ''}${w ? `&w=${w}` : ''}${h ? `&h=${h}` : ''}`
+// PHOTO aérienne (étape 3) : orthophoto IGN proxyée par le serveur, mise en cache par identifiant de scène.
+export const gabOrthoUrl = (idu: string, sid?: string) =>
+  `/outils/gabarit/scene/${encodeURIComponent(idu)}/ortho${sid ? `?sid=${sid}` : ''}`
+
 // SECTEUR-1 (S1) — outil « Mon secteur » : prix du secteur autour d'une parcelle (médiane locale par
 // type + tendance 12 mois + annonces Radar dans le rayon). Chaque chiffre porte son n/millésime.
 export interface DistribRepere { n: number; min: number | null; p25: number | null; median: number | null; p75: number | null; max: number | null }

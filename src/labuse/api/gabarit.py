@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import json
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -64,6 +64,10 @@ def _bati_existant(db: Session, idu: str) -> dict | None:
             "properties": {
                 "hauteur_m": round(hauteur, 1) if hauteur is not None else None,
                 "h_source": "lidar" if lidar_faitage is not None else ("bdtopo" if h_bdtopo is not None else None),
+                # GABARIT-3D-1 (étape 2 bis) — hauteur PROPRE au bâtiment (BD TOPO), indépendante du
+                # faîtage LiDAR (par parcelle) : la scène 3D l'utilise pour le volume (jamais la
+                # hauteur de parcelle recopiée). Additif : ne change aucun chiffre réglementaire servi.
+                "hauteur_bdtopo_m": round(h_bdtopo, 1) if h_bdtopo is not None else None,
             },
             "geometry": json.loads(r["gj"]),
         })
@@ -173,3 +177,93 @@ def gabarit_detail(idu: str, db: Session = Depends(get_db)) -> GabaritResult:
         res.terrainNote = ("Volume 3D indicatif — la hauteur réglementaire est mesurée depuis le terrain "
                            "naturel, mais le sommet est représenté à plat (il ne suit pas la pente du terrain).")
     return res
+
+
+# ── GABARIT-3D-1 (pilote) — SCÈNE + COUPES ────────────────────────────────────────────────────────
+# Réservé aux ADMINS (interrupteur du pilote) : la vue 3D par défaut et les chiffres servis ne
+# changent pas. La scène lit le MÊME GabaritResult que l'outil (chiffres identiques) + le fond
+# LiDAR 1 m local. Écran (étape 2) et PDF liront la même scène.
+
+def _exiger_admin(request: Request) -> None:
+    from . import auth
+    auth.exiger_admin(request)
+
+
+@router.get("/scene/{idu}")
+def gabarit_scene(idu: str, request: Request, db: Session = Depends(get_db)) -> dict:
+    """Scène 3D du Gabarit (terrain 1 m, limite, zone, bâtiments, règles, 2 coupes, métadonnées)."""
+    _exiger_admin(request)
+    from ..gabarit.scene import build_scene
+    return build_scene(db, idu).to_dict()
+
+
+def _verif_sid(scene, sid: str | None):
+    """Parité (A2) : la coupe/le plan sont servis POUR un identifiant de scène. Si `sid` est fourni et
+    ne correspond pas à la scène reconstruite (déterministe) → 409 (scène périmée)."""
+    if sid and sid != scene.scene_id:
+        raise HTTPException(409, f"Scène périmée (demandé {sid}, servi {scene.scene_id}).")
+
+
+@router.get("/scene/{idu}/coupe/{axe}.svg")
+def gabarit_coupe_svg(idu: str, axe: str, request: Request, theme: str = "sombre", sid: str | None = None,
+                      detail: int = 0, w: int = 960, h: int = 520, header: int = 1,
+                      db: Session = Depends(get_db)) -> Response:
+    """Coupe A (pente dominante) ou B (voie) en SVG serveur, servie pour l'identifiant `sid`.
+    detail=1 : vue détaillée (toutes les cotes, bandes, les deux pentes) ; sinon aperçu.
+    w/h : dimensions cibles (le front demande la taille de son bandeau ÷ zoom → l'aperçu remplit la place,
+    H = V, et les textes atteignent ≥ 11 px une fois affichés). Bornés pour rester sains."""
+    _exiger_admin(request)
+    from ..gabarit.coupe_svg import coupe_svg
+    from ..gabarit.scene import build_scene
+    scene = build_scene(db, idu)
+    _verif_sid(scene, sid)
+    coupe = next((c for c in scene.coupes if c["label"].upper() == axe.upper()), None)
+    if coupe is None:
+        raise HTTPException(404, f"Coupe « {axe} » indisponible pour {idu}.")
+    width = max(360, min(int(w), 3000))
+    h_max = max(140, min(int(h), 1600))
+    svg = coupe_svg(coupe, theme=theme, adresse=scene.adresse, idu=idu, detail=bool(detail),
+                    width=width, h_max=h_max, header=bool(header))
+    if not svg:
+        raise HTTPException(404, "Relief indisponible sur cette emprise (profil sans point valide).")
+    return Response(svg, media_type="image/svg+xml")
+
+
+@router.get("/scene/{idu}/ortho")
+def gabarit_ortho(idu: str, request: Request, sid: str | None = None,
+                  db: Session = Depends(get_db)) -> Response:
+    """PHOTO AÉRIENNE (étape 3) : orthophoto IGN tirée PAR LE SERVEUR pour le cadre de la scène, mise en
+    cache par identifiant de scène. Le navigateur ne contacte jamais l'IGN. Millésime en en-tête. 502 si
+    l'IGN est indisponible → la visionneuse reste en relief (jamais chargée à l'ouverture, bouton seulement)."""
+    _exiger_admin(request)
+    from ..gabarit.ortho import ortho_pour_scene
+    from ..gabarit.scene import build_scene
+    scene = build_scene(db, idu)
+    _verif_sid(scene, sid)
+    res = ortho_pour_scene(scene)
+    if not res:
+        raise HTTPException(502, "Orthophoto IGN indisponible pour cette emprise.")
+    headers = {
+        "X-Ortho-Millesime": str(res.get("millesime") or ""),
+        "X-Ortho-Date": str(res.get("date_vol") or ""),
+        "X-Ortho-Source": str(res.get("source") or "IGN"),
+        "Access-Control-Expose-Headers": "X-Ortho-Millesime,X-Ortho-Date,X-Ortho-Source",
+        "Cache-Control": "private, max-age=86400",
+    }
+    return Response(res["png"], media_type="image/png", headers=headers)
+
+
+@router.get("/scene/{idu}/plan.svg")
+def gabarit_plan_cle_svg(idu: str, request: Request, theme: str = "sombre", sid: str | None = None,
+                         w: int = 380, h: int = 320, db: Session = Depends(get_db)) -> Response:
+    """Plan-clé (cadastre + zone + bâti + axes + nord), servi pour l'identifiant `sid`. w/h : le front en
+    demande un rendu plus petit que son cadre → affiché en `w-full`, il grandit (textes lisibles)."""
+    _exiger_admin(request)
+    from ..gabarit.coupe_svg import plan_cle_svg
+    from ..gabarit.scene import build_scene
+    scene = build_scene(db, idu)
+    _verif_sid(scene, sid)
+    svg = plan_cle_svg(scene.to_dict(), theme=theme, width=max(160, min(int(w), 600)), height=max(140, min(int(h), 600)))
+    if not svg:
+        raise HTTPException(404, f"Plan-clé indisponible pour {idu}.")
+    return Response(svg, media_type="image/svg+xml")

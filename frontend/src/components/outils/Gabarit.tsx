@@ -1,7 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import * as maplibregl from 'maplibre-gl'   // RETOURS-26 (pt 4) — étiquettes de hauteur sur la vue 3D (Marker)
 import { useQuery } from '@tanstack/react-query'
-import { getGabarit, docGabaritUrl, type GabaritResult, type GabGeom } from '../../lib/api'
+import { getGabarit, docGabaritUrl, getMoi, type GabaritResult, type GabGeom } from '../../lib/api'
+
+// GABARIT-3D-1 (pilote, étape 2) — visionneuse Three.js chargée À LA DEMANDE (hors bundle principal),
+// réservée aux admins. N'affecte ni la vue par défaut, ni les chiffres servis.
+const GabaritViewer3D = lazy(() =>
+  import('./GabaritViewer3D').then((m) => ({ default: m.GabaritViewer3D })))
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'   // RECETTE-OUTILS-1 (34) — export = doc Gabarit
 import { fmtInt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
@@ -241,6 +246,10 @@ export function Gabarit() {
   const [source, setSource] = useState<SourceParcelle>(selectedIdu ? 'carte' : null)   // RECETTE-1 F2
   // OUTILS-REFONTE-1 (9b) — plus d'accordéons « Voir les règles »/« Non intégrées » (lignes + puces
   // toujours visibles), donc plus d'état d'ouverture.
+  // GABARIT-3D-1 (pilote) — interrupteur ADMIN de la visionneuse 3D (même garde que le Rail).
+  const moi = useQuery({ queryKey: ['moi'], queryFn: getMoi, staleTime: 3_600_000 })
+  const admin = moi.data?.role === 'admin' || (moi.data != null && moi.data.mode !== 'compte')
+  const [viewer3dOpen, setViewer3dOpen] = useState(false)
 
   // RECETTE-1 (F1) — une parcelle désignée SUR LA CARTE (selectedIdu) est adoptée (source carte) ;
   // fermer la fiche de cette parcelle (selectedIdu → null) VIDE l'outil. Un pick dans le champ reste
@@ -496,6 +505,20 @@ export function Gabarit() {
         </>
         )
       })()}
+      {/* GABARIT-3D-1 (pilote) — bouton ADMIN du terrain réel, quel que soit le statut du gabarit
+          (la scène dégrade proprement : terrain + contours restent utiles sur un calcul incomplet). */}
+      {admin && target && res && res.status !== 'inconstructible' && (
+        <Bouton niveau="secondaire" ton="vert" data-gabarit-viewer-3d
+          onClick={() => setViewer3dOpen(true)} className="w-full justify-center">
+          Vue 3D pilote (terrain réel · admin)
+        </Bouton>
+      )}
+      {/* Visionneuse 3D chargée à la demande (Three.js hors bundle principal). */}
+      {viewer3dOpen && target && (
+        <Suspense fallback={null}>
+          <GabaritViewer3D idu={target} onClose={() => setViewer3dOpen(false)} />
+        </Suspense>
+      )}
     </div>
   )
 }
