@@ -28,10 +28,15 @@ def session_reelle():
     url = os.environ.get("LABUSE_APP_DATABASE_URL")
     if not url:
         pytest.skip("LABUSE_APP_DATABASE_URL absent")
-    eng = make_engine(url=url)
-    s = sessionmaker(bind=eng, future=True)()
-    n = s.execute(text("SELECT count(*) FROM parcels WHERE idu = ANY(:i)"),
-                  {"i": _ETANG + _ANDRE}).scalar()
+    # Comme les autres tests `reel` : si la base est injoignable (ex. pré-push sans base applicative),
+    # on SKIP proprement au lieu d'ERROR.
+    try:
+        eng = make_engine(url=url)
+        s = sessionmaker(bind=eng, future=True)()
+        n = s.execute(text("SELECT count(*) FROM parcels WHERE idu = ANY(:i)"),
+                      {"i": _ETANG + _ANDRE}).scalar()
+    except Exception as exc:  # noqa: BLE001 — base indisponible → skip, pas error
+        pytest.skip(f"base applicative indisponible : {exc}")
     if n != 6:
         s.close()
         pytest.skip("parcelles témoins absentes")
