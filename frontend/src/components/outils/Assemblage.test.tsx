@@ -99,6 +99,28 @@ describe('ASSEMBLAGE (H5) — étapes, contiguïté, isolées, plus de Courrier'
     expect(document.body.textContent).not.toContain('(terrain libéré')
   })
 
+  it('OUTILS-LOT-4 (pt 7) : « fiabilité » écrit en entier dans le Bilan (plus de « fiab. »)', async () => {
+    renderM16(); await verifier('[data-asm-charge]')
+    const bilan = document.querySelector('[data-asm-bilan]')?.textContent ?? ''
+    expect(bilan).toContain('fiabilité moyenne')
+    expect(bilan).not.toContain('fiab.')
+  })
+
+  it('OUTILS-LOT-4 (pt 6) : note « * SDP bâti conservé estimée » seulement quand un astérisque est posé (conservé > 0)', async () => {
+    current = { ...STUDY_OK, sdp_conserve_estimation: true, sdp_bati_conserve_m2: 11065 }
+    renderM16(); await verifier('[data-asm-charge]')
+    expect(document.querySelector('[data-asm-sdp-conserve]')?.textContent).toContain('*')
+    expect(document.querySelector('[data-asm-sdp-estimation]')).toBeTruthy()
+  })
+
+  it('OUTILS-LOT-4 (pt 6) : « aucun ajout estimé » (conservé = 0) → ni astérisque ni note orpheline', async () => {
+    current = { ...STUDY_OK, sdp_conserve_estimation: true, sdp_bati_conserve_m2: 0 }
+    renderM16(); await verifier('[data-asm-charge]')
+    expect(document.querySelector('[data-asm-sdp-conserve]')?.textContent).toContain('aucun ajout estimé')
+    expect(document.querySelector('[data-asm-sdp-conserve]')?.textContent).not.toContain('*')
+    expect(document.querySelector('[data-asm-sdp-estimation]')).toBeFalsy()
+  })
+
   it('plus de bouton « Préparer les courriers » dans l\'Assemblage (H5)', async () => {
     renderM16(); await verifier('[data-asm-charge]')
     expect(document.querySelector('[data-asm-courrier]')).toBeFalsy()

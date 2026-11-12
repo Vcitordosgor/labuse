@@ -343,7 +343,11 @@ export function M16() {
                       (pont « Étude de faisabilité de cet assemblage » ci-dessous). */}
                   {/* RETOURS-25 (pt 1) — tuile « vs meilleure seule » RETIRÉE. */}
                 </div>
-                {d.sdp_conserve_estimation && (
+                {/* OUTILS-LOT-4 (pt 6) — la note en astérisque ne s'affiche QUE si un astérisque est
+                    réellement posé sur une ligne, c.-à-d. quand une SDP « bâti conservé » > 0 est montrée
+                    (ligne « Si conservé · +N m² estimés * »). Si « aucun ajout estimé » (conservé = 0),
+                    aucun astérisque n'est écrit → pas de note orpheline. */}
+                {d.sdp_conserve_estimation && d.sdp_bati_conserve_m2 > 0 && (
                   <p data-asm-sdp-estimation className="text-[9px] leading-tight text-txt-dim">* SDP bâti conservé estimée — le bâti existant déduit repose sur une hypothèse de niveaux (comme la fiche) quand la mesure manque.</p>
                 )}
                 {/* RECETTE-OUTILS-1 (point 15) — le bloc rouge « Charge foncière cumulée (estimée) » ET le
@@ -394,7 +398,8 @@ export function M16() {
                           <span className="text-txt-dim">Marché de la zone</span>
                           <span className="text-txt">{fmt(d.terrain_zone_eur_m2)} €/m²</span>
                         </div>
-                        <div className="text-right text-[9px] leading-tight text-txt-dim">DVF · fiab. {String(d.terrain_zone_fiabilite ?? '—')}</div>
+                        {/* OUTILS-LOT-4 (pt 7) — « fiab. » écrit en toutes lettres : « fiabilité ». */}
+                        <div className="text-right text-[9px] leading-tight text-txt-dim">DVF · fiabilité {String(d.terrain_zone_fiabilite ?? '—')}</div>
                       </div>
                     )}
                     {/* RETOURS-27 (pt 7) — « Prix connu pour 1 parcelle sur 4 » sur UNE SEULE ligne (phrase

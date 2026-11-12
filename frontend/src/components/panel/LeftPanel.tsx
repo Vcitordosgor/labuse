@@ -319,10 +319,12 @@ function AccEntry({ ton, icone, titre, sous, onClick }: {
       <span className="acc-tile">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">{ACC_ICONS[icone]}</svg>
       </span>
-      {/* RETOURS-4 S1.3 — titres ET descriptions sur UNE ligne (truncate = nowrap + ellipse) : tiennent à 360 px. */}
+      {/* OUTILS-LOT-4 (pt 8) — le sous-titre n'est PLUS tronqué (« couches, filtres, Analyse … », « Étude…
+          su… ») : il passe à la ligne s'il le faut (la carte fait 64 px, large de reste). Le titre, court,
+          tient sur une ligne. */}
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[14px] font-medium">{titre}</span>
-        <span className="acc-desc mt-0.5 block truncate text-[11.5px] text-txt-dim">{sous}</span>
+        <span className="acc-desc mt-0.5 block text-[11.5px] leading-tight text-txt-dim">{sous}</span>
       </span>
       <span className="acc-arrow">→</span>
     </button>
@@ -358,7 +360,9 @@ function AccueilPreuves({ onCommencer }: { onCommencer: () => void }) {
         {/* GB-001 : compte des outils VISIBLES (comme le tiroir Rail), dynamique. */}
         <AccEntry ton="mint" icone="outil" titre="Ouvrir un outil" sous={`${nOutils} outils fonciers`}
           onClick={() => { setAccueilVu(); toggleOutils() }} />
-        <AccEntry ton="mauve" icone="copilote" titre="Demander au Copilote" sous="« terrain 1 000 m² à Saint-Paul »"
+        {/* OUTILS-LOT-4 bis (pt 1) — trait d'union INSÉCABLE (U+2011) dans « Saint‑Paul » : l'exemple du
+            Copilote ne se coupe plus en « Saint- / Paul » en fin de ligne (comme adresseInsecable, lot 2). */}
+        <AccEntry ton="mauve" icone="copilote" titre="Demander au Copilote" sous="« terrain 1 000 m² à Saint‑Paul »"
           onClick={() => { setAccueilVu(); setView('copilote') }} />{/* seule surface IA → mauve */}
         {/* ECRANS-NOV-1 §3 — « Voir les données » ouvre la section Données (ex-lien de pied, devenu porte). */}
         <AccEntry ton="mint" icone="donnees" titre="Voir les données" sous={sousDonnees}

@@ -359,9 +359,18 @@ def _ppr_ligne(couleur: str, risques: str, pct: int) -> dict:
         return {"nature": "PPR — zonage non classé", "niveau": "autre", "libelle": lib, "redhibitoire": True}
     # rouge RÉGLEMENTAIRE (INTERDICTION)
     hors = max(0, 100 - pct)
-    lib = (f"PPR {risques} — zone rouge sur {pct} % de la parcelle : partie INCONSTRUCTIBLE "
-           f"(interdiction, C. env. L562-1), quelle que soit la surface. Partie hors zone rouge "
-           f"({hors} %) : constructible selon les règles de sa zone, à confirmer au règlement du PPR.")
+    # OUTILS-LOT-4 bis (pt 2) — 100 % rouge : « parcelle ENTIÈREMENT INCONSTRUCTIBLE » (il n'y a pas de
+    # « partie » constructible) ; en dessous de 100 %, « partie INCONSTRUCTIBLE » (inchangé).
+    inconstructible = "parcelle entièrement INCONSTRUCTIBLE" if pct >= 100 else "partie INCONSTRUCTIBLE"
+    # OUTILS-LOT-4 bis (pt 3) — trait d'union INSÉCABLE (U+2011) dans le numéro d'article : « L562‑1 »
+    # ne se coupe jamais en « L562- / 1 » en fin de ligne.
+    lib = (f"PPR {risques} — zone rouge sur {pct} % de la parcelle : {inconstructible} "
+           f"(interdiction, C. env. L562‑1), quelle que soit la surface.")
+    # OUTILS-LOT-4 (pt 4) — quand TOUTE la parcelle est en zone rouge (pct = 100 → hors = 0), on ne
+    # colle pas « Partie hors zone rouge (0 %) : constructible » : il n'y a pas de partie hors rouge.
+    if hors > 0:
+        lib += (f" Partie hors zone rouge ({hors} %) : constructible selon les règles de sa zone, "
+                f"à confirmer au règlement du PPR.")
     return {"nature": "PPR — zone rouge", "niveau": "rouge", "libelle": lib, "redhibitoire": True}
 
 
@@ -421,7 +430,7 @@ def aleas_parcelle(db: Session, idu: str) -> list[dict]:
         if pct <= 0:   # intersection au bord (aire arrondie à 0 %) → bruit, pas une contrainte
             continue
         # RETOUCHES-1 point 7 — libellé daté nommé selon sa provenance : « millésime <X> » si publié
-        # en amont (source_millesime), sinon « ingéré le JJ/MM/AAAA » (repli d'ingestion).
+        # en amont (source_millesime), sinon « au JJ/MM/AAAA » (repli d'ingestion, DOCS-1 : jamais « ingéré le »).
         mill = _date_source(r["source_millesime"], source_horizon_at=r["source_horizon_at"], ingere_le=r["ingere_le"])
         lig = _ppr_ligne(r["couleur"], _risque_fr(r["risques"]), pct)
         out.append({"nature": lig["nature"], "niveau": lig["niveau"], "part_pct": pct,
@@ -508,7 +517,7 @@ def contraintes_parcelle(db: Session, idu: str) -> list[dict]:
             continue
         seen.add(key)
         # RETOUCHES-1 point 7 — libellé daté nommé : « millésime <X> » si publié en amont
-        # (data_sources.source_millesime), sinon « ingéré le JJ/MM/AAAA » (repli d'ingestion).
+        # (data_sources.source_millesime), sinon « au JJ/MM/AAAA » (repli d'ingestion, DOCS-1 : jamais « ingéré le »).
         mill = _date_source(r["source_millesime"], source_horizon_at=r["source_horizon_at"],
                             ingere_le=r["date_source"])
         items.append({"categorie": _KINDS.get(r["kind"], r["kind"]), "effet": detail,

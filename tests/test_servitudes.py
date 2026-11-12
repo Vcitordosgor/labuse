@@ -92,8 +92,25 @@ def test_ppr_ligne_rouge_et_bleu():
     # bleu (PRESCRIPTION) → « zone bleue … sous prescriptions ».
     r = sv._ppr_ligne("rouge", "inondation", 40)
     assert "INCONSTRUCTIBLE" in r["libelle"] and r["redhibitoire"] is True and r["niveau"] == "rouge"
+    assert "partie INCONSTRUCTIBLE" in r["libelle"]       # < 100 % → « partie » (OUTILS-LOT-4 bis pt 2)
+    assert "entièrement" not in r["libelle"]
+    assert "hors zone rouge (60 %)" in r["libelle"]   # partie hors rouge existante → DITE
+    # OUTILS-LOT-4 bis (pt 3) — trait d'union INSÉCABLE (U+2011) dans le n° d'article : « L562‑1 ».
+    assert "L562‑1" in r["libelle"] and "L562-1" not in r["libelle"]
     b = sv._ppr_ligne("bleu", "inondation", 20)
     assert "zone bleue" in b["libelle"] and b["redhibitoire"] is False
+
+
+def test_ppr_ligne_rouge_total_pas_de_phrase_hors_rouge():
+    # OUTILS-LOT-4 (pt 4) — toute la parcelle en zone rouge (pct = 100) : pas de « Partie hors zone
+    # rouge (0 %) : constructible » (il n'y a aucune partie hors rouge).
+    r = sv._ppr_ligne("rouge", "inondation", 100)
+    assert "INCONSTRUCTIBLE" in r["libelle"] and r["redhibitoire"] is True
+    assert "hors zone rouge" not in r["libelle"].lower()
+    assert "(0 %)" not in r["libelle"]
+    # OUTILS-LOT-4 bis (pt 2) — 100 % rouge → « parcelle entièrement INCONSTRUCTIBLE » (plus « partie »).
+    assert "parcelle entièrement INCONSTRUCTIBLE" in r["libelle"]
+    assert "partie INCONSTRUCTIBLE" not in r["libelle"]
 
 
 def test_ppr_ligne_non_classe_ne_dit_plus_inconstructible():
@@ -190,9 +207,11 @@ def test_flux_sup_sourcee_datee_et_dedup(db_session):
     out = sv.servitudes_invisibles(idu, s)
     assert out["n"] == 1                                   # dédup : gen1+gen2 = 1 ligne
     it = out["servitudes"][0]
-    # RETOUCHES-1 point 7 — la source n'a pas de millésime amont publié → repli d'ingestion NOMMÉ
-    # « ingéré le JJ/MM/AAAA » (le mot « millésime » est réservé aux dates publiées par la source).
-    assert "Risques naturels" in it["effet"] and it["source"] == "SUP test" and it["date"] == "ingéré le 10/07/2026"
+    # RETOUCHES-1 point 7 + DOCS-1 (décision Vic) — la source n'a pas de millésime amont publié → repli
+    # d'ingestion DATÉ « au JJ/MM/AAAA ». OUTILS-LOT-4 (pt 10) : le test attendait encore l'ancien
+    # « ingéré le JJ/MM/AAAA » ; l'écran a raison — « ingéré le » est un mot de cuisine interne, banni des
+    # documents client (cf. millesime_source.libelle_date_source) — on accorde le test sur « au ».
+    assert "Risques naturels" in it["effet"] and it["source"] == "SUP test" and it["date"] == "au 10/07/2026"
     assert out["non_couvert"]                              # manques listés
 
 

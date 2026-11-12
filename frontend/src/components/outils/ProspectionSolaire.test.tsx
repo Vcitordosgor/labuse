@@ -43,8 +43,8 @@ const LIST = {
 const FICHE = {
   ok: true, idu: '97411000AP0000', commune: 'Saint-Paul', productible: 1598,
   prod_mensuel: [88, 84, 78, 64, 52, 46, 48, 56, 68, 78, 84, 90], mois_optimal: 12,
-  azimut: 12, azimut_confiance: 'basse', pente: 5, toit_m2: 140, piscine: true, piscine_m2: 32,
-  abf: false, ombrage: false, proba_occ: 60, classement: 'Neutre', millesime: 'PVGIS v5.3 SARAH3',
+  azimut: 12, azimut_confiance: 'basse', pente: 8.3, toit_m2: 140, piscine: true, piscine_m2: 32,
+  abf: false, ombrage: false, proba_occ: 60, classement: 'Écartée', millesime: 'PVGIS v5.3 SARAH3',
   // A6 — dimensionnement servi par le back ; A1 — inclinaison réelle du calcul PVGIS (config, 15°).
   kwc: 28, prod_annuel: 44744, kwc_par_m2: 0.2, inclinaison_deg: 15,
 }
@@ -119,7 +119,13 @@ describe('SOLAIRE — deux modes', () => {
     renderTool()
     await screen.findByText(/Profil mensuel/)
     expect(document.querySelectorAll('[data-solaire-bar]')).toHaveLength(12)          // profil mensuel
-    expect(document.querySelector('[data-solaire-fiche]')?.textContent).toContain('kWh/kWc/an')  // potentiel AVEC unité
+    const fiche = document.querySelector('[data-solaire-fiche]')!
+    expect(fiche.textContent).toContain('kWh/kWc/an')  // potentiel AVEC unité
+    // OUTILS-LOT-4 (pt 1) — décimales à la virgule : « 8,3° », jamais « 8.3° ».
+    expect(fiche.textContent).toContain('8,3°')
+    expect(fiche.textContent).not.toContain('8.3')
+    // OUTILS-LOT-4 (pt 2) — aucun classement/verdict LABUSE (« Écartée ») dans la prospection solaire.
+    expect(fiche.textContent).not.toContain('Écartée')
   })
 
   it('RECETTE-4 — les deux paragraphes sous le graphe mensuel sont RETIRÉS (plus de « Productible estimé… » ni « En clair… »)', async () => {
