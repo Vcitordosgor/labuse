@@ -280,19 +280,29 @@ def _rechercher(terrain, regles, conv, objectif, *, repartition=None, stationnem
             except Exception:  # noqa: BLE001 — la simplification ne doit jamais casser l'étude
                 pass
     frame = Frame.depuis(terrain.zone_implantation)
-    # budget par défaut 22 s : laisse une marge confortable sous la borne API (etude_timeout_s=60) pour le
-    # chargement (LiDAR), l'assemblage du payload, les planches SVG et les enrichissements du worker.
+    # ETUDE-FIABLE-1 (LOT A) — le RÉSULTAT est décidé par un NOMBRE de candidats (constante de config),
+    # pas par le temps : même machine lente ou rapide, on examine les MÊMES N premiers candidats de la
+    # grille ordonnée → même meilleur candidat → même chiffre. Le TEMPS (`garde_fou_s`) n'est qu'un FILET :
+    # s'il coupe AVANT d'avoir examiné les N prévus, on marque la recherche « partielle » (honnête).
+    from ..config import get_settings
+    _s = get_settings()
+    max_candidats = int(_s.etude_grille_max_candidats)
+    # Le 2ᵉ passage « faisable-probable » (repli) garde son early-stop à 3 faisables et un garde-fou temps
+    # ADAPTÉ (budget_override) : il ne sert qu'à PROUVER qu'une implantation tient sur une assiette que le
+    # 1ᵉʳ passage n'a pas su remplir — jamais à arbitrer un chiffre servi.
     if budget_override is not None:
-        budget_s = float(budget_override)
+        garde_fou_s = float(budget_override)
     else:
-        try:
-            budget_s = float(os.environ.get("LABUSE_ETUDE_GRILLE_BUDGET_S", "22"))
-        except (TypeError, ValueError):
-            budget_s = 22.0
+        garde_fou_s = float(_s.etude_grille_garde_fou_s)
+    # grille PLANIFIÉE : nb de candidats que la grille complète contient, borné par la constante de config.
+    total_grille = len(_FORMES) * len(_NIVEAUX) * len(fractions)
+    prevu = min(max_candidats, total_grille)
+    terrain.grille_candidats_prevus = prevu
     t0 = time.monotonic()
     candidats: list[Candidat] = []
     faisables: list = []
     coupe = False
+    garde_fou = False
     for forme in _FORMES:
         if coupe:
             break
@@ -300,6 +310,10 @@ def _rechercher(terrain, regles, conv, objectif, *, repartition=None, stationnem
             if coupe:
                 break
             for fraction in fractions:
+                # PLAFOND DÉTERMINISTE (décide du résultat) — on n'examine que les N premiers candidats.
+                if len(candidats) >= max_candidats:
+                    coupe = True
+                    break
                 paquet, cand = _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction,
                                         repartition=repartition, stationnement_mode=stationnement_mode,
                                         niveaux_sous_sol=niveaux_sous_sol)
@@ -314,13 +328,21 @@ def _rechercher(terrain, regles, conv, objectif, *, repartition=None, stationnem
                     if ordre == "faisable_probable" and len(faisables) >= 3:
                         coupe = True
                         break
-                # BUDGET DE TEMPS (garde-fou DUR) — on borne la recherche INCONDITIONNELLEMENT : passé le
-                # budget, on s'arrête et on rend le MEILLEUR candidat trouvé (ou « simulation impossible » si
-                # aucun). La recherche ne franchit JAMAIS la borne de l'API → plus de 503 (D-003/E-057).
-                if (time.monotonic() - t0) > budget_s:
+                # GARDE-FOU TEMPS (filet, PAS le résultat) — si le temps file avant d'avoir examiné les N
+                # candidats prévus (assiette très lourde), on s'arrête SOUS la borne API et on le DIT
+                # (« recherche partielle »). Sur les témoins, N est atteint bien avant ce filet.
+                if (time.monotonic() - t0) > garde_fou_s:
                     coupe = True
-                    terrain.grille_budget_atteint = True
+                    garde_fou = True
                     break
+    # état de recherche : complète = on a examiné tous les candidats PRÉVUS sans que le filet temps coupe.
+    examines = len(candidats)
+    terrain.grille_candidats_examines = examines
+    if garde_fou:
+        terrain.grille_garde_fou_temps = True          # filet déclenché → recherche partielle (non reproductible)
+        terrain.grille_budget_atteint = True           # compat repli (déclenche le 2ᵉ passage si rien trouvé)
+    if ordre == "objectif":
+        terrain.grille_complete = (examines >= prevu) and not garde_fou
     faisables.sort(key=lambda it: it[0], reverse=True)
     return faisables, candidats
 
