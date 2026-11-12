@@ -70,21 +70,43 @@ def _economie(z) -> str:
 def _immobilier(z) -> str:
     m = z.get("marche") or {}
     lignes = []
-    # DOCS-COHERENCE-1 (recette Vic) — « Prix médian du bâti » = le prix LU DANS LA FICHE (prix_ancien :
-    # médiane + nombre de ventes + rayon), IDENTIQUE au Comparatif (« 3 602 €/m² — 15 ventes à moins
-    # de 1 000 m »). « Ventes (12 mois) » reste une ligne À PART — elle ne qualifie pas le prix.
-    pa = m.get("prix_ancien") or {}
-    if pa.get("median"):
-        n, r = pa.get("n"), (pa.get("radius_m") or pa.get("rayon_m"))
-        suff = (f" — {_i(n)} ventes à moins de {_i(r)} m" if n and r
-                else (f" — {_i(n)} ventes" if n else ""))
-        lignes.append(_kv("Prix médian du bâti", f"{_i(pa['median'])} €/m²{suff}"))
-    elif m.get("prix_m2_median_bati") is not None:
-        lignes.append(_kv("Prix médian du bâti", f"{_i(m.get('prix_m2_median_bati'))} €/m²"))
+    # OUTILS-P0-2 (P3, revue Astra) — « Prix médian du bâti dans le cercle » = le prix calculé DANS LE
+    # PÉRIMÈTRE DESSINÉ (`prix_m2_median_bati`), avec son effectif et sa période. Le prix du secteur de
+    # la fiche (`prix_secteur_fiche`) est un AUTRE périmètre : servi À PART, avec son rayon réel. Même
+    # périmètre, même prix, même effectif que l'écran.
+    if m.get("prix_m2_median_bati") is not None:
+        # OUTILS-P0-2 (recette) — la période du cercle est la FENÊTRE DEMANDÉE (36 mois), pas les dates
+        # extrêmes des ventes trouvées.
+        n, fen = m.get("prix_m2_median_n"), m.get("prix_m2_median_fenetre_mois")
+        bouts = []
+        if n:
+            bouts.append(f"{_i(n)} ventes")
+        if fen:
+            bouts.append(f"{_i(fen)} mois")
+        suff = f" — {', '.join(bouts)}" if bouts else ""
+        lignes.append(_kv("Prix médian du bâti dans le cercle", f"{_i(m['prix_m2_median_bati'])} €/m²{suff}"))
     if m.get("ventes_12m") is not None:
         lignes.append(_kv("Ventes (12 mois)", f"{_i(m.get('ventes_12m'))}"))
+    # OUTILS-P0-2 (recette) — le SECTEUR de la fiche DIT ce qu'il mesure : type + fenêtre (années) +
+    # effectif ; AUTRE périmètre (rayon adaptatif de la fiche), affiché à part.
+    pa = m.get("prix_secteur_fiche") or {}
+    if pa.get("median"):
+        n, r = pa.get("n"), pa.get("radius_m")
+        tp = pa.get("type_prix")
+        type_lbl = ("maisons" if tp == "maison" else "appartements" if tp == "appartement"
+                    else "maisons et appartements" if (tp or "").startswith("mixte") else None)
+        per = pa.get("periode")
+        annees = (f"{per[0]}–{per[1]}" if (isinstance(per, (list, tuple)) and len(per) == 2 and per[0] and per[1] != per[0])
+                  else (f"{per[0]}" if (isinstance(per, (list, tuple)) and per and per[0]) else None))
+        cle = ", ".join(x for x in ("Secteur de la fiche", type_lbl, annees) if x)
+        if pa.get("commune_fallback"):
+            suff = f" — {_i(n)} ventes (commune entière)" if n else " (commune entière)"
+        else:
+            suff = (f" — {_i(n)} ventes à moins de {_i(r)} m" if n and r
+                    else (f" — {_i(n)} ventes" if n else ""))
+        lignes.append(_kv(cle, f"{_i(pa['median'])} €/m²{suff}"))
     if m.get("annonces_actives") is not None:
-        lignes.append(_kv("Annonces actives", f"{_i(m.get('annonces_actives'))}"))
+        lignes.append(_kv("Annonces suivies par LABUSE", f"{_i(m.get('annonces_actives'))}"))
     if m.get("permis_36m") is not None:
         lignes.append(_kv("Permis (36 mois)", f"{_i(m.get('permis_36m'))}"))
     return _sec("Immobilier", lignes)

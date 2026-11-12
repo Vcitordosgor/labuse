@@ -460,8 +460,18 @@ def marche_zone(session: Session, geom_geojson: dict) -> dict:
                   AND dm.date_mutation = date_trunc('day', dm.date_mutation)
                   AND ST_Contains({z}, ST_Transform(dm.geom, 2975))"""), p).scalar()
         from .dvf_mediane import mediane_bati
-        prix = mediane_bati(session, geom_geojson=geom_geojson)["median"]
-    if _existe("pige_biens") and _existe("parcels"):
+        # OUTILS-P0-2 (P3) — la médiane du CERCLE porte son effectif et sa période (les ventes
+        # RÉELLEMENT agrégées, fenêtre 36 mois) : l'en-tête dit « … · N ventes · période », mesuré
+        # dans le cercle dessiné, jamais le secteur de la fiche (périmètre différent).
+        med = mediane_bati(session, geom_geojson=geom_geojson)
+        prix, prix_n, prix_periode = med["median"], med["n"], med["periode"]
+    else:
+        prix_n = prix_periode = None
+    # OUTILS-P0-2 (recette) — la PÉRIODE affichée pour le cercle est la FENÊTRE DEMANDÉE (36 mois), pas
+    # les dates extrêmes des ventes trouvées (qui laisseraient croire à une couverture plus courte).
+    from .dvf_mediane import FENETRE_MOIS as _FEN_CERCLE
+    annonces_source = _existe("pige_biens") and _existe("parcels")
+    if annonces_source:
         annonces = session.execute(text(
             f"""SELECT count(*) FROM pige_biens b JOIN parcels p ON p.idu = b.idu
                 WHERE b.statut IN ('active','en_vente_longue')
@@ -476,9 +486,16 @@ def marche_zone(session: Session, geom_geojson: dict) -> dict:
     # comme MINIMUM avec sa réserve, jamais un total.
     return {"ventes_12m": int(ventes or 0),
             "prix_m2_median_bati": int(prix) if prix is not None else None,
-            "annonces_actives": int(annonces or 0),
-            "annonces_reserve": "annonces suivies par la pige LABUSE (collecte manuelle, "
-                                "couverture partielle) — un minimum, pas un total de marché",
+            # OUTILS-P0-2 (P3) — effectif de la médiane DU CERCLE + FENÊTRE DEMANDÉE (36 mois), affichée
+            # telle quelle (jamais les dates extrêmes des ventes). `periode` gardé pour info/PDF.
+            "prix_m2_median_n": int(prix_n) if prix_n is not None else None,
+            "prix_m2_median_fenetre_mois": _FEN_CERCLE,
+            "prix_m2_median_periode": prix_periode,
+            # OUTILS-P0-2 (P3) — « Annonces suivies par LABUSE » : une donnée INDISPONIBLE (source non
+            # ingérée) vaut None → l'écran affiche « — », jamais un 0 trompeur. Un 0 mesuré reste 0.
+            "annonces_actives": (int(annonces or 0) if annonces_source else None),
+            "annonces_reserve": "annonces suivies par LABUSE (collecte manuelle, couverture "
+                                "partielle) — un minimum, pas un total de marché",
             "permis_36m": int(permis or 0)}
 
 
@@ -716,9 +733,11 @@ def permis_par_type_zone(session: Session, geom_geojson: dict) -> dict:
                       "n": int(r["n_amng"]), "detail": None})
     return {"types": types,
             "n_annules": int(r["n_annules"] or 0),   # KELFONCIER-FIX-1 (Lot C) — annulés, hors des types
+            # OUTILS-P0-2 (recette L2, point 8) — note RÉÉCRITE pour un client (plus de « code destination
+            # SDES n'est pas décodé en base — non deviné », jargon interne).
             "note": "Type = famille Sitadel (logements / locaux d'activité) ; les permis ANNULÉS sont "
-                    "exclus des comptes et affichés à part. Le détail commerce vs activité (code "
-                    "destination SDES) n'est pas décodé en base — non deviné.",
+                    "exclus des comptes et affichés à part. Le détail commerce ou service n'est pas "
+                    "disponible dans cette source : il n'est pas estimé.",
             "millesime": "Sitadel (SDES) — autorisations 36 mois"}
 
 

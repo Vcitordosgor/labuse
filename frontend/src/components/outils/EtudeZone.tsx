@@ -42,6 +42,17 @@ const MINUTES_NEUTRE = 10, MODE_NEUTRE = 'voiture' as const
 function nb(n: number | null | undefined): string {
   return n == null ? '—' : n.toLocaleString('fr-FR')
 }
+// OUTILS-P0-2 (recette) — le libellé du secteur de la fiche DIT ce qu'il mesure : « Secteur de la fiche,
+// maisons, 2021–2025 » (type de bien + fenêtre réelle en années). Jamais un « 24 mois » que ce prix ne
+// mesure pas (le prix de secteur agrège un segment de 5 ans, pas 24 mois).
+function secteurLibelle(pa: { type_prix?: string | null; periode?: [number, number] | null }): string {
+  const t = pa.type_prix
+  const type = t === 'maison' ? 'maisons' : t === 'appartement' ? 'appartements'
+    : (t && t.startsWith('mixte')) ? 'maisons et appartements' : null
+  const p = pa.periode
+  const annees = p && p.length === 2 ? (p[1] !== p[0] ? `${p[0]}–${p[1]}` : `${p[0]}`) : null
+  return ['Secteur de la fiche', type, annees].filter(Boolean).join(', ')
+}
 // F2 (OUTILS-4) — date de dernier traitement SIRENE (YYYY-MM-DD) → « MM/YYYY » lisible.
 const majFr = (d: string | null | undefined): string | null => (d && d.length >= 7 ? `${d.slice(5, 7)}/${d.slice(0, 4)}` : null)
 
@@ -157,7 +168,8 @@ export function EtudeZone() {
   // suit l'idiome de l'outil (fermé ▸ pointe à droite, ouvert ▾).
   // RECETTE-OUTILS-1 (point 30) — TOUS les accordéons de lecture sont fermés par défaut (plus
   // d'ouverture d'office de Population/Économie).
-  const [openSecs, setOpenSecs] = useState<Set<string>>(() => new Set())
+  // OUTILS-P0-2 (recette) — la section « Immobilier » (le prix du cercle) est DÉPLIÉE à l'ouverture.
+  const [openSecs, setOpenSecs] = useState<Set<string>>(() => new Set(['immobilier']))
 
   // RECETTE-OUTILS-1 T5 — le « Réinitialiser » du haut (et son handler `resetEtude`) sont retirés :
   // l'outil garde son reset de zone via « Changer la zone » / Retour.
@@ -183,7 +195,7 @@ export function EtudeZone() {
         <div className="flex items-center gap-1.5">
           {rayonsServis.map((r) => (
             <button key={r} data-zone-rayon={r} aria-pressed={rayonKm === r} onClick={() => setRayonKm(r)}
-              className={`h-7 min-w-[3rem] rounded-md border px-2 font-mono text-[12px] transition-colors duration-quick ${rayonKm === r ? 'border-mint text-mint' : 'border-line-2 text-txt-hi hover:border-mint hover:text-mint'}`}>
+              className={`h-7 min-w-[3.5rem] whitespace-nowrap rounded-md border px-2 font-mono text-[12px] transition-colors duration-quick ${rayonKm === r ? 'border-mint text-mint' : 'border-line-2 text-txt-hi hover:border-mint hover:text-mint'}`}>
               {String(r).replace('.', ',')} km</button>
           ))}
         </div>
@@ -268,14 +280,46 @@ export function EtudeZone() {
 
           {/* 3 · IMMOBILIER */}
           <Section id="immobilier" titre="Immobilier" openSecs={openSecs} setOpenSecs={setOpenSecs}
-            source="DVF (DGFiP/Etalab, ventes 12–36 mois) · Sitadel (SDES) · annonces Radar (pige LABUSE, partielle)">
+            source="DVF (DGFiP/Etalab, ventes 12–36 mois) · Sitadel (SDES) · annonces suivies par LABUSE (couverture partielle)">
             {res.marche && (
-              <div className="grid grid-cols-2 gap-2">
-                <Stat v={nb(res.marche.ventes_12m)} k="ventes / 12 mois" />
-                <Stat v={res.marche.prix_m2_median_bati != null ? `${nb(res.marche.prix_m2_median_bati)} €` : '—'} k="médian €/m² bâti" />
-                <Stat v={nb(res.marche.annonces_actives)} k="annonces actives" />
-                <Stat v={nb(res.marche.permis_36m)} k="permis / 36 mois" />
-              </div>
+              <>
+                {/* OUTILS-P0-2 (P3) — le PRIX DU CERCLE en tête : « Prix médian du bâti dans le cercle ·
+                    N ventes · période », calculé dans le périmètre dessiné. Au-dessus, le périmètre réel. */}
+                <div data-zone-prix-cercle className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+                  {/* OUTILS-P0-2 (recette) — « 0,5 km » avec une virgule (jamais « 0.5 »). */}
+                  <div className="text-[10px] uppercase tracking-wide text-txt-mut">Dans un rayon de {String(rayonKm).replace('.', ',')} km à vol d’oiseau</div>
+                  {res.marche.prix_m2_median_bati != null ? (
+                    <>
+                      <div className="mt-0.5 text-[20px] font-semibold leading-none text-txt-hi">{nb(res.marche.prix_m2_median_bati)} €/m²</div>
+                      {/* OUTILS-P0-2 (recette) — la PÉRIODE du cercle est la FENÊTRE DEMANDÉE (36 mois),
+                          pas les dates extrêmes des ventes. */}
+                      <div className="mt-1 text-[11px] text-txt-dim">
+                        Prix médian du bâti dans le cercle
+                        {res.marche.prix_m2_median_n ? ` · ${nb(res.marche.prix_m2_median_n)} vente${res.marche.prix_m2_median_n > 1 ? 's' : ''}` : ''}
+                        {res.marche.prix_m2_median_fenetre_mois ? ` · ${nb(res.marche.prix_m2_median_fenetre_mois)} mois` : ''}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="mt-1 text-[11px] text-txt-dim">Prix médian du bâti dans le cercle — pas assez de ventes dans ce périmètre.</div>
+                  )}
+                  {/* OUTILS-P0-2 (recette) — le SECTEUR de la fiche DIT ce qu'il mesure : type + fenêtre
+                      (années) + effectif ; autre périmètre (rayon réel), affiché à part. */}
+                  {res.marche.prix_secteur_fiche?.median != null && (
+                    <div className="mt-2 border-t border-line-2 pt-2 text-[11px] text-txt-dim">
+                      {secteurLibelle(res.marche.prix_secteur_fiche)} : <span className="font-medium text-txt-hi">{nb(res.marche.prix_secteur_fiche.median)} €/m²</span>
+                      {res.marche.prix_secteur_fiche.n ? ` · ${nb(res.marche.prix_secteur_fiche.n)} ventes` : ''}
+                      {res.marche.prix_secteur_fiche.commune_fallback
+                        ? ' (commune entière)'
+                        : (res.marche.prix_secteur_fiche.radius_m ? ` à moins de ${nb(res.marche.prix_secteur_fiche.radius_m)} m` : '')}
+                    </div>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Stat v={nb(res.marche.ventes_12m)} k="ventes / 12 mois" />
+                  <Stat v={nb(res.marche.permis_36m)} k="permis / 36 mois" />
+                  <Stat v={nb(res.marche.annonces_actives)} k="annonces suivies par LABUSE" />
+                </div>
+              </>
             )}
             {/* B3 — prix médian €/m² par type (maison / appartement / terrain nu), 36 mois, via le
                 point de calcul du bloc Marché de la fiche. « — » sous 5 ventes (échantillon insuffisant). */}
@@ -315,7 +359,8 @@ export function EtudeZone() {
                 <SectionTitle>La zone de demain</SectionTitle>
                 <div className="mt-1 grid grid-cols-2 gap-2">
                   <Stat v={nb(res.zone_demain.logements_autorises_36m)} k="logements autorisés / 36 mois" />
-                  <Stat v={res.zone_demain.au_zones_n ? `${nb(res.zone_demain.au_zones_n)} · ${nb(res.zone_demain.au_zones_ha)} ha` : '—'} k="zones AU (à urbaniser)" />
+                  {/* OUTILS-P0-2 (recette L2, point 8) — « 2 · 17 ha » → « 2 zones AU · 17 ha » (lisible seul). */}
+                  <Stat v={res.zone_demain.au_zones_n ? `${nb(res.zone_demain.au_zones_n)} zone${res.zone_demain.au_zones_n > 1 ? 's' : ''} AU · ${nb(res.zone_demain.au_zones_ha)} ha` : '—'} k="à urbaniser (PLU)" />
                 </div>
                 <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">Signal daté (Sitadel · PLU) — une urbanisation programmée, jamais une projection de population.</p>
               </div>

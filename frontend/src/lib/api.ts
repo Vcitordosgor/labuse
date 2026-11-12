@@ -624,6 +624,17 @@ export interface Estimer3Estimation {
   radius_m?: number | null; commune_fallback?: boolean; periode?: number[] | null
   methode_prix: 'semblable' | 'secteur' | 'repli_secteur'
   repli_secteur?: boolean; repli_note?: string | null
+  // OUTILS-P0-2 (P2) — terrain nu sans total à bâtir : hors gamme (surface > p90 des ventes de
+  // référence) ou non constructible. La raison est servie ; le repère au m² et les ventes restent.
+  terrain_sans_total_raison?: string | null
+  terrain_hors_gamme?: boolean; terrain_non_constructible?: boolean
+  surface_gamme?: { min_m2: number; max_m2: number; mediane_m2: number; p90_m2: number; n: number } | null
+  // OUTILS-P0-2 (recette) — immeuble à plusieurs logements : champ surface vide + indication « immeuble ».
+  multi_logement?: boolean
+  immeuble_derniere_vente?: string | null
+  // OUTILS-P0-2 (recette) — les bandes sous leur vrai nom : deux (« 1 fois sur 2 » / « 3 fois sur 4 »)
+  // si mesurées distinctes, une seule (« Fourchette estimée ») si le banc n'en donne qu'une.
+  fourchettes?: { nom: string; basse: number; haute: number }[]
 }
 export interface Estimer3Vente {
   id: string; date: string | null
@@ -1576,9 +1587,17 @@ export const docEtudeZoneUrl = (idu: string, rayonKm: number, sousDestination?: 
 // ANNONCE-3 — « Analyse d'annonce » : adresse → rapport parcelle (/analyse-annonce/{idu}.pdf) ou lien
 // d'annonce → rapport commune (/analyse-annonce.pdf?url=…). Mêmes routes que le bouton « Exporter en PDF »
 // de l'outil : le PDF sorti de l'outil et celui sorti de Docs sont identiques.
-export const docAnalyseAnnonceUrl = (idu: string, surfaceHab?: number | null) =>
-  `/analyse-annonce/${encodeURIComponent(idu)}.pdf`
-  + (surfaceHab != null && surfaceHab > 0 ? `?surface_hab=${surfaceHab}` : '')
+// OUTILS-P0-2 (P1) — le PDF reprend le scénario EXACT de l'écran : surface + pièces saisies, ventes
+// décochées (ecartees). Avant, seule la surface voyageait → le document divergeait de l'écran.
+export const docAnalyseAnnonceUrl = (idu: string, surfaceHab?: number | null,
+                                     opts?: { pieces?: number | null; ecartees?: string[] }) => {
+  const qs = new URLSearchParams()
+  if (surfaceHab != null && surfaceHab > 0) qs.set('surface_hab', String(surfaceHab))
+  if (opts?.pieces != null && opts.pieces > 0) qs.set('pieces', String(opts.pieces))
+  for (const id of opts?.ecartees ?? []) qs.append('ecartees', id)
+  const s = qs.toString()
+  return `/analyse-annonce/${encodeURIComponent(idu)}.pdf` + (s ? `?${s}` : '')
+}
 export const docAnalyseAnnonceLienUrl = (url: string) => `/analyse-annonce.pdf?url=${encodeURIComponent(url)}`
 
 // DOCS-1 (Lot B) — la bibliothèque « Mes documents » (recette d'un document, jamais le PDF).

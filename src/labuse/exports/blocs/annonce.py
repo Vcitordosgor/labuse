@@ -223,6 +223,10 @@ def _estimation(est: dict) -> str:
     prec_txt = (f" Précision mesurée sur les ventes 2025 : ±{_int(prec)} %." if isinstance(prec, (int, float)) else "")
     if terrain:
         note = "Terrain nu — comparé aux ventes de terrain nu du secteur (repère €/m² de terrain)." + prec_txt
+        # OUTILS-P0-2 (P2) — hors gamme / non constructible : pas de total, la raison est dite (écran == PDF).
+        sans_total = est.get("terrain_sans_total_raison")
+        if sans_total:
+            note += " " + sans_total
     elif est.get("nature") == "copropriete":   # CHASSE-4-FIX (C4-003)
         pl = est.get("type_label_pluriel") or "appartements"
         note = (f"Copropriété — comparée aux ventes d'<b>{esc(pl)}</b> de la commune (repère €/m²). "
