@@ -2357,6 +2357,7 @@ def _risques_rows(fiche: dict, commune: str | None) -> list[dict]:
     # tuile « Aléas » de la fiche `aleas.n_hazards`) : `len(_risques_rows) == aleas.n_hazards`, garanti.
     hazards = distinct_hazards(liste)
     rows = []
+    _zone_part_affichee = False   # EXPORTS-FIX-3 LOT 3 (#3) — la zone PPR (rouge/bleue) est UNE, dite UNE fois
     for lab in hazards:
         it = intensite.get(lab) or {}
         niveau = it.get("niveau")
@@ -2364,14 +2365,15 @@ def _risques_rows(fiche: dict, commune: str | None) -> list[dict]:
             niveau = {"rouge": "Fort", "bleue": "Modéré"}.get(ppr_zone or "", "Signalé")
         part = it.get("part_pct") if it.get("part_pct") is not None else ppr_part
         zone_part = None
-        if ppr_zone:
+        if ppr_zone and not _zone_part_affichee:
             # EXPORTS-FIX-3 LOT 3b — la part d'une « Zone rouge/bleue » est celle du PPR (fiche :
             # 31 % sur BI0351), JAMAIS celle d'un aléa Géorisques de niveau faible (69 %) qui se
-            # superpose au même libellé : un aléa faible n'est pas « zone rouge · 69 % ». La part de
-            # l'aléa reste lisible par la colonne « niveau ».
+            # superpose. LOT 3 (#3) : la zone PPR couvre 31 % de la PARCELLE (une seule fois), pas
+            # « 31 % par aléa » — on ne la répète donc pas sur chaque ligne d'aléa.
             zp = ppr_part
             zone_part = f"Zone {ppr_zone}" + (f" · {int(zp)} %" if isinstance(zp, (int, float)) else "")
-        elif isinstance(part, (int, float)):
+            _zone_part_affichee = True
+        elif ppr_zone is None and isinstance(part, (int, float)):
             zone_part = f"{int(part)} %"
         rows.append({"alea": lab, "niveau": niveau, "zone_part": zone_part,
                      "implique": _implique(ppr_zone, ppr_doc)})

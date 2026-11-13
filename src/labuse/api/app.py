@@ -7406,6 +7406,13 @@ _FICHE_LOCK = threading.Lock()
 _FICHE_VER = {"v": "", "at": -1.0}
 _FICHE_VER_TTL_S = 60.0
 _FICHE_VER_LOCK = threading.Lock()
+# EXPORTS-FIX-3 LOT 3 — RÉVISION DE CODE du CONTENU de fiche : la clé du cache de fiche (`fiche_cache`
+# L1/L2) ne portait QUE la fraîcheur des données (data_sources + tuyau_rev), jamais le code. Un
+# correctif de LIBELLÉ porté par la DONNÉE de fiche (ex. le libellé PPR « hors zone rouge » produit par
+# `servitudes._ppr_ligne` et STOCKÉ dans `aleas.liste[].libelle`) restait donc servi depuis le cache,
+# périmé. Ce jeton est AJOUTÉ à la version : le bumper invalide tout le cache de fiche (il se recalcule
+# à la demande). À incrémenter à chaque correctif qui change le CONTENU stocké d'une fiche.
+_FICHE_CODE_REV = "2026-11-14-exports-fix-3"
 
 # ───────────────────────── VITESSE-2 (Lot 7) — CACHE DE FICHE PARTAGÉ (base) ─────────────────────────
 # Le `_FICHE_CACHE` ci-dessus est PAR WORKER : avec 5 workers, une fiche ouverte sur l'un reste froide
@@ -7530,7 +7537,7 @@ def _fiche_version(db: Session) -> str:
                 except Exception:  # noqa: BLE001 — mvt_meta pas encore créée (base neuve)
                     db.rollback()
                     rev = ""
-                _FICHE_VER["v"] = f"{ds}.{rev}"
+                _FICHE_VER["v"] = f"{ds}.{rev}.{_FICHE_CODE_REV}"
             except Exception:  # noqa: BLE001 — data_sources absente : pas de version, pas de cache
                 db.rollback()
                 _FICHE_VER["v"] = ""

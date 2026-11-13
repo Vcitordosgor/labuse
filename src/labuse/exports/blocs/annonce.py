@@ -309,10 +309,19 @@ def _lecture_fonciere_box(est: dict) -> str:
             f'<div class="lcsub">{esc(sub)}</div>{concl}</div>')
 
 
+#: EXPORTS-FIX-3 LOT 3 (#7) — le titre dit « les 8 ventes les plus proches » : on borne donc la table
+#: aux 8 PLUS PROCHES (tri par distance croissante, inconnus en dernier) — avant, le titre annonçait 8
+#: mais la table en affichait jusqu'à 12.
+_MAX_COMPARABLES = 8
+
+
 def _comparables(est: dict) -> str:
     comps = est.get("comparables") or []
     if not comps:
         return ""
+    comps = sorted(comps, key=lambda c: (c.get("distance_m") is None,
+                                         c.get("distance_m") if isinstance(c.get("distance_m"),
+                                                                           (int, float)) else 0))[:_MAX_COMPARABLES]
     head = ('<tr><th>Date</th><th>Type</th><th class="r">Surface</th><th class="r">Prix</th>'
             '<th class="r">€/m²</th><th class="r">Distance</th></tr>')
     rows = ""

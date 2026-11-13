@@ -291,10 +291,12 @@ ROBINETS: dict[str, Robinet] = {
  "fiche_parcelle_le_bien": _r("fiche", "Le bien", "fiche_parcelle",
     "/parcels/{idu}", "json_puis_js", chiffres=("emprise_batie_m2", "hauteur_bati_m", "n_batiments", "surface_libre_sol_m2", "nature_toit", "pente_toit_deg", "dpe_connu", "rnb_batiments_liste", "ban_plus_adresses_bati", "part_artificialisee_pct", "usage_sol_dominant", "cosia_detecte_m2", "part_impermeabilisee_cosia_pct", "part_vegetalisee_cosia_pct", "part_sol_nu_cosia_pct", "etablissements_parcelle_liste",)),
  # FICHE-RANGEMENT-1 Lot 3 — + endiguement_zone_protegee : la cascade risques sert le système
- # d'endiguement (orpheline du registre déclarée).
+ # d'endiguement (orpheline du registre déclarée). EXPORTS-FIX-3 LOT 3 (#e/#6) — + tri_zone_inondable :
+ # la cascade risques sert aussi la zone inondable TRI (couche tri_zone), portée au Dossier.
  "fiche_parcelle_risques": _r("fiche", "Risques et protections", "fiche_parcelle",
     "/parcels/{idu}", "json_puis_js", chiffres=("n_vigilances", "aleas_parcelle_liste",
-                                                "sar_divergence", "endiguement_zone_protegee",)),
+                                                "sar_divergence", "endiguement_zone_protegee",
+                                                "tri_zone_inondable",)),
  "fiche_parcelle_marche": _r("fiche", "Marché et secteur", "fiche_parcelle",
     "/parcels/{idu}", "json_puis_js", chiffres=("prix_terrain_secteur_eur_m2", "prix_sortie_bati_eur_m2", "ventes_100m_n", "ventes_retenues_n", "ventes_ecartees_n", "dvf_parcelle_liste", "parc_social_rpls_logements", "radar_annonces_liste",)),
  "fiche_parcelle_reseaux": _r("fiche", "Réseaux et accès", "fiche_parcelle",

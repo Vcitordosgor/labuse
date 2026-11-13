@@ -65,9 +65,10 @@ export const fmtPctConsomme = (n: number | null | undefined): string =>
 /** CHASSE-INVARIANTS-FIX-1 (Lot 1, E-01) — TAUX D'OCCUPATION DU GABARIT (emprise bâtie ÷ emprise
  *  constructible). Au-delà de 100 % on n'affiche JAMAIS le pourcentage brut (c'était le « 19 569 % »
  *  de l'export) : le message « Saturé … » unique, mirroir du Python `fmt_taux_emprise`. '—' si absent. */
-// EXPORTS-FIX-3 LOT 3g — occupation du GABARIT (emprise bâtie ÷ emprise constructible après reculs),
-// pas le plafond d'emprise au sol (CES) : au-delà de 100 % le bâti sature l'enveloppe constructible.
-export const TAUX_EMPRISE_SATURE = 'Saturé : le bâti existant occupe déjà toute l\'emprise constructible (gabarit après reculs)'
+// EXPORTS-FIX-3 LOT 3g (revue) — au-delà de 100 % le bâti sature le gabarit, mais le verrou est la
+// SURFACE DE PLANCHER (droits à bâtir), pas l'emprise (le Gabarit peut laisser quelques m²). Miroir
+// exact de residuel.TAUX_EMPRISE_SATURE.
+export const TAUX_EMPRISE_SATURE = 'Saturé : la surface de plancher autorisée est déjà consommée par le bâti existant'
 export const fmtTauxEmprise = (n: number | null | undefined): string => {
   if (n == null) return '—'
   const r = Math.round(n)              // on compare la valeur ARRONDIE (celle servie), comme le Python

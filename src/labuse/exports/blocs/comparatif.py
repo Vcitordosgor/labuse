@@ -269,10 +269,16 @@ def rendu(rows) -> str:
     note_bilan = ""
     _avec_charge = [r for r in rows if r.get("charge_fonciere_m2") is not None and r.get("bilan_hypotheses")]
     if _avec_charge:
-        hyps = _avec_charge[0].get("bilan_hypotheses") or []
-        lis = "".join(f"<li>{esc(str(h))}</li>" for h in hyps)
-        note_bilan = ('<p class="anote"><strong>Charge foncière</strong> = résultat du bilan '
-                      'promoteur rapporté au m² de terrain (indicatif). Hypothèses du bilan :</p>'
-                      f'<ul class="anote">{lis}</ul>')
+        # EXPORTS-FIX-3 LOT 2 (#5/#7) — CHAQUE bilan affiché donne SES hypothèses (une par colonne,
+        # étiquetée par l'IDU), jamais celles de la seule première parcelle.
+        blocs_h = ""
+        for r in _avec_charge:
+            hyps = r.get("bilan_hypotheses") or []
+            lis = "".join(f"<li>{esc(str(h))}</li>" for h in hyps)
+            blocs_h += (f'<p class="anote"><strong>{esc(r.get("idu",""))}</strong> — '
+                        f'charge foncière {_i(r.get("charge_fonciere_m2"))} €/m² de terrain. '
+                        f'Hypothèses :</p><ul class="anote">{lis}</ul>')
+        note_bilan = ('<p class="anote"><strong>Charge foncière</strong> = résultat du bilan promoteur '
+                      'rapporté au m² de terrain (indicatif).</p>' + blocs_h)
     bloc = f'<section class="cmp-bloc"><h2>Comparatif</h2>{corps}{note_bilan}</section>'
     return _virgule_sortie(bloc)

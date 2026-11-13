@@ -372,8 +372,9 @@ def _regles_et_pieces(db: Session, idu: str, scen: dict | None = None) -> bytes:
                       f"taxable du projet (surfaces closes et couvertes de plus de 1,80 m de hauteur, "
                       f"distincte de la surface de plancher ; chiffrée au Bilan)</td></tr>"
                       f"<tr><td>Redevance d'archéologie préventive</td><td>0,40 % de l'assiette de "
-                      f"la taxe d'aménagement pour les travaux soumis à permis (CGI, gestion DGFiP "
-                      f"depuis l'ordonnance 2022-883) — chiffrée sur la SDP du projet, au Bilan</td></tr></table>")
+                      f"la taxe d'aménagement (la surface TAXABLE, distincte de la surface de plancher) "
+                      f"pour les travaux soumis à permis (CGI, gestion DGFiP depuis l'ordonnance "
+                      f"2022-883) — chiffrée au Bilan</td></tr></table>")
     except Exception:  # noqa: BLE001 — enrichissement optionnel, ne casse pas la fiche
         pass
     # FAISABILITE-3 (Lot C) — le pré-dossier PC lit LE MÊME appel de faisabilité (faisabilite_scenario)
@@ -883,11 +884,23 @@ def _pcmi4(db: Session, idu: str, parcelle: dict, adr: dict | None = None,
                           "par le pétitionnaire).", "Base Adresse Nationale"))
     for it in (data.get("risques") or {}).get("couches", []):
         lab = (it.get("label") or "").lower()
-        if any(k in lab for k in ("ppr", "inond", "bleue", "mouvement")):
+        det = (it.get("detail") or "").lower()
+        # EXPORTS-FIX-3 LOT 3 (#6) — ne parler de PRESCRIPTIONS PPR que si la parcelle est en ZONE PPR
+        # (rouge/bleue). Un aléa Géorisques nu (ex. HT0538 : mvt de terrain faible, HORS zonage PPR) ne
+        # déclenche aucune prescription PPR opposable — c'est ce que dit l'Analyse ; la notice doit
+        # l'écrire pareil (faute : « prescriptions PPR » sur un aléa hors zonage).
+        est_ppr_zone = any(k in det or k in lab for k in ("zone rouge", "zone bleue", "zone rouge ppr"))
+        if est_ppr_zone:
             lignes.append(("Risque naturel (PPR)",
                            f"{it['label']} : {it.get('detail') or 'parcelle concernée'}. Les "
                            "prescriptions du règlement PPR (niveau de plancher, fondations) sont à "
                            "intégrer au projet.", "DEAL Réunion — PPR (Géorisques)"))
+        elif any(k in lab or k in det for k in ("inond", "mouvement", "aléa", "alea")):
+            lignes.append(("Aléa naturel (Géorisques)",
+                           f"{it['label']} : {it.get('detail') or 'parcelle concernée'}. Aléa "
+                           "cartographié HORS zonage PPR réglementaire sur la parcelle — aucune "
+                           "prescription PPR opposable ; une étude géotechnique reste recommandée.",
+                           "Géorisques — cartographie des aléas (DEAL)"))
         elif any(k in lab for k in ("bruit", "sonore")):
             lignes.append(("Bruit",
                            f"{it['label']} : {it.get('detail') or ''} Isolement acoustique minimal "

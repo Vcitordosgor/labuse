@@ -119,6 +119,9 @@ def verdict_potentiel(valeurs: dict[str, Valeur]) -> Verdict | None:
                 extra = f" ≈ {n}"
             else:
                 extra = f" — surface de plancher constructible restante (bâti conservé) ≈ {n}"
+            # EXPORTS-FIX-3 LOT 3 (#6) — la SDP est une surface de plancher ESTIMÉE : elle ne compte
+            # ni le stationnement ni la pleine terre (qui réduisent le bâtissable net). On le DIT.
+            extra += " (surface de plancher estimée, hors stationnement et pleine terre)"
         return (f"Potentiel de construction : {libelle}{extra}.", "", "")
     return None
 

@@ -209,7 +209,22 @@ def _c_ebc(db, idu, f):
 @extracteur("dpu_perimetre")
 def _c_dpu(db, idu, f):
     d = (f.get("dispositifs") or {}).get("dpu")
-    return d if isinstance(d, dict) and d.get("etat") == "servi" else None
+    if isinstance(d, dict) and d.get("etat") == "servi":
+        return d
+    # EXPORTS-FIX-3 LOT 3 (#1) — « Hors périmètre publié » (texte d'absence) AFFIRME que le périmètre
+    # DPU a été contrôlé et que la parcelle est dehors. C'est FAUX quand la commune n'a AUCUN périmètre
+    # DPU ingéré : on sert alors un fait « non vérifié » (jamais « rien à signaler »). Présence testée
+    # PAR COMMUNE (spatial_layers.commune = nom de commune), comme la garde cascade `kind_present_commune`.
+    try:
+        from sqlalchemy import text as _text
+        commune = f.get("commune")
+        if commune and not db.execute(_text(
+                "SELECT EXISTS(SELECT 1 FROM spatial_layers WHERE kind='dpu' AND commune=:c)"),
+                {"c": commune}).scalar():
+            return {"etat": "non_ingere", "commune": commune}
+    except Exception:  # noqa: BLE001 — jamais une 500 sur la fiche ; repli sur l'absence standard
+        pass
+    return None
 
 
 @extracteur("peb_zone")
@@ -604,6 +619,17 @@ def _c_casias(db, idu, f):
 def _c_endiguement(db, idu, f):
     ligne = next((l for l in (f.get("lines") or [])
                   if isinstance(l, dict) and l.get("layer") == "endiguement"
+                  and l.get("result") not in (None, "PASS")), None)
+    return ligne.get("detail") if ligne else None
+
+
+@extracteur("tri_zone_inondable")
+def _c_tri(db, idu, f):
+    # EXPORTS-FIX-3 LOT 3 (#e/#6) — un risque présent sur la fiche (zone inondable TRI, directive
+    # inondation) figure dans le Dossier : il passe par la cascade (`fiche.lines`, layer='tri_zone'),
+    # pas par aleas.liste — le Dossier l'OMETTAIT (HT0538 : inondation extrême 100 %).
+    ligne = next((l for l in (f.get("lines") or [])
+                  if isinstance(l, dict) and l.get("layer") == "tri_zone"
                   and l.get("result") not in (None, "PASS")), None)
     return ligne.get("detail") if ligne else None
 

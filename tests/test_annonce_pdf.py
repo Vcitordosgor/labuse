@@ -293,7 +293,10 @@ def test_risques_rows_une_ligne_par_alea_sans_doublon():
     noms = {r["alea"] for r in rows}
     assert noms == {"Inondation", "Mouvement de terrain"}
     assert all(r["niveau"] == "Fort" for r in rows)             # intensité Géorisques
-    assert all(r["zone_part"] == "Zone rouge · 23 %" for r in rows)   # zone PPR la plus contraignante + part
+    # EXPORTS-FIX-3 LOT 3 (#3) — la zone PPR (rouge, 23 % de la PARCELLE) est UNE : dite UNE SEULE fois
+    # (sur le 1ᵉʳ aléa), pas répétée « 23 % par aléa ».
+    assert rows[0]["zone_part"] == "Zone rouge · 23 %"
+    assert rows[1]["zone_part"] is None
     assert all("Zone rouge du PPR Saint-Leu (2015)" in r["implique"] for r in rows)
     assert _risques_rows({"aleas": {"n": 0, "liste": []}}, "X") == []
 
