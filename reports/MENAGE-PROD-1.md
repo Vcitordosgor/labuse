@@ -75,3 +75,36 @@ Espace récupérable en base (suppression des runs morts + `VACUUM FULL`) :
 **Honnêtement récupérable : ~14,7 Go en base** (une fois l'espace du VACUUM FULL dégagé) **+ 13 Go de dumps** (temporaire, reviennent en 2 nets) **+ jusqu'à ~5,9 Go de filets** (si non-hardlinkés — à vérifier). Verrou : `VACUUM FULL` prend un `ACCESS EXCLUSIVE` sur la table (la fiche qui la lit attend) → à faire hors heures de pointe, dryrun_cascade_results le plus lourd.
 
 **— ARRÊT. En attente de ta validation de la liste avant toute étape 2/3.**
+
+---
+
+## §A — LISTE FIGÉE (validée Vic 13/11), comptes exacts + requêtes
+
+Suppressions par **égalité stricte** uniquement. Tout run non listé est conservé (q_v20/q_v19/q_v19_sources/seq17 servi ; q_v18/q_v18_sources/seq15 précédent ; q_v23/seq18 candidat ; q_v8_* calibrages ; tous les instantanés ; ligne cache ia `q_v20+e77eb6f564`).
+
+**q_v10_m129** : présent UNIQUEMENT dans `score_snapshots` (1 ligne) → **on n'y touche pas**. **q_v14** : introuvable dans toute table run-scoped (score_labuse, dryrun_parcel_evaluations, dryrun_cascade_results, parcel_p_score_v2, score_snapshots, score_labuse_runs, p_score_v2_runs) → **on n'y touche pas**.
+
+### Données à supprimer
+| Ordre | Table | Runs (égalité stricte) | Lignes | Requête exacte |
+|---|---|---|--:|---|
+| 1 | **p_model_candidates** | (table morte) | 4 316 630 | `TRUNCATE p_model_candidates;` |
+| 1 | **p_model_dataset** | (table morte) | 2 166 145 | `TRUNCATE p_model_dataset;` |
+| 2 | **parcel_residuel_runs** | seq 1, 2, 13 | 3×431 663 = 1 294 989 | `DELETE FROM parcel_residuel_runs WHERE run_seq IN (1,2,13);` |
+| 3 | **dryrun_parcel_evaluations** | q_v11_m137, q_v13_sources1, q_v21, q_v22, q_v24 | 431 663+431 663+433 229+433 229+81 476 = 1 811 260 | `DELETE FROM dryrun_parcel_evaluations WHERE run_label IN ('q_v11_m137','q_v13_sources1','q_v21','q_v22','q_v24');` |
+| 4 | **score_labuse** | q_v16 | 431 663 | `DELETE FROM score_labuse WHERE run_label='q_v16';` |
+| 5 | **parcel_p_score_v2** | q_v11_m137, q_v16, q_v21, q_v22 | 431 663+431 663+431 663+433 229 = 1 728 218 | `DELETE FROM parcel_p_score_v2 WHERE run_id IN ('q_v11_m137','q_v16','q_v21','q_v22');` |
+| 6 (ARRÊT avant, §D) | **dryrun_cascade_results** | q_v21, q_v22, q_v24 | 21 094 673+21 094 673+3 981 033 = 46 170 379 | `DELETE FROM dryrun_cascade_results WHERE run_label IN ('q_v21','q_v22','q_v24');` |
+
+### En-têtes à retirer (pour qu'aucun candidat fantôme ne reste proposé)
+- `residuel_runs` : seq 1, 2, 13 (is_served=f) → `DELETE FROM residuel_runs WHERE run_seq IN (1,2,13);`
+- `score_labuse_runs` : q_v16 → `DELETE FROM score_labuse_runs WHERE run_label='q_v16';`
+- `p_score_v2_runs` : q_v11_m137, q_v16, q_v21, q_v22 → `DELETE FROM p_score_v2_runs WHERE run_id IN ('q_v11_m137','q_v16','q_v21','q_v22');`
+
+### Incident q_v21 à fermer
+`ops_incidents` id 81 (`calcul-nuit:q_v21`, « contrôles en échec ») + id 112 (`escalade:ancien:calcul-nuit:q_v21`), tous deux `resolu_at` NULL → résolus (motif : q_v21 purgé, jamais promu).
+
+### Contrôle des runs GARDÉS (invariant avant/après chaque table, doit rester constant)
+`score_labuse` q_v20=433 229, q_v18=433 229, q_v23=433 229 · `parcel_residuel_runs` seq 17=433 229, seq 15=433 229, seq 18=433 229 · `parcel_p_score_v2` q_v18/q_v20/q_v23=433 229 · `dryrun_cascade_results` q_v18_sources=21 157 172, q_v19_sources=21 097 100, q_v23=21 094 673 · `dryrun_parcel_evaluations` q_v18_sources/q_v19_sources/q_v23=433 229.
+
+### Place récupérée estimée
+TRUNCATE : ~1,6 Go (instantané). parcel_residuel_runs ~0,23 Go · dryrun_parcel_evaluations ~0,31 Go · score_labuse ~1,9 Go · parcel_p_score_v2 ~3,0 Go (via VACUUM FULL). dryrun_cascade_results (§D) ~9,3 Go. **Total ~16,3 Go.**
