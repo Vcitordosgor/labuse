@@ -365,7 +365,7 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
     for (const poly of scene.contour_cadastral) {
       const pts: THREE.Vector3[] = [], rr = poly.ext
       for (let i = 0; i < rr.length - 1; i++) {
-        const [x0, y0] = rr[i], [x1, y1] = rr[i + 1], n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 1.5))
+        const [x0, y0] = rr[i], [x1, y1] = rr[i + 1], n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 0.5))
         for (let k = 0; k < n; k++) { const t = k / n, x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t; pts.push(new THREE.Vector3(x, elev(x, y) ?? zmid, -y)) }
       }
       if (rr.length) { const [x, y] = rr[rr.length - 1]; pts.push(new THREE.Vector3(x, elev(x, y) ?? zmid, -y)) }
@@ -392,12 +392,16 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
       .map(([x, z]) => new THREE.Vector3(x, zmid, z))
     const _cadreQuadPx = (): [number, number][] => _terrW.map(_px)
     const _ptInPoly = (px: number, py: number, poly: [number, number][]) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [xi, yi] = poly[i], [xj, yj] = poly[j]; if ((yi > py) !== (yj > py) && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) c = !c } return c }
+    // boîte ↔ polygone. MONOTONE sous agrandissement (le centre reste le même, pas de test « coin DANS le
+    // polygone » qui sortait quand on inflate) : sommet du polygone dans la boîte, OU centre de la boîte dans
+    // le polygone, OU une arête du polygone traverse la boîte.
     const _polyHitsBox = (poly: [number, number][], x0: number, y0: number, x1: number, y1: number) => {
       for (const [px, py] of poly) if (px >= x0 && px <= x1 && py >= y0 && py <= y1) return true
-      if (_ptInPoly(x0, y0, poly) || _ptInPoly(x1, y1, poly) || _ptInPoly((x0 + x1) / 2, (y0 + y1) / 2, poly)) return true
+      if (_ptInPoly((x0 + x1) / 2, (y0 + y1) / 2, poly)) return true
       for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) if (_segHitsBox(poly[j], poly[i], x0, y0, x1, y1)) return true
       return false
     }
+    const _BMARGE = 3   // petite marge autour du bâti (anti-alias du volume) ; appliquée au placement ET à l'audit
     const _HALO = 4, _LINE = 3   // halo du texte (text-shadow) + demi-épaisseur du trait du contour à l'écran
     // AUDIT (harnais) — PREUVE au PIXEL : on lit le rendu sous la boîte RÉELLE du texte (halo compris) et on
     // compte les pixels du CONTOUR BLANC (trait à son épaisseur réelle) ; la SILHOUETTE du bâti est testée
@@ -412,7 +416,7 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
         if (d.style.display === 'none') return { contour: false, bati: false, dist: 0, sur_terrain: true, ok: true }
         const r = d.getBoundingClientRect()
         const x0 = r.left - elR.left - _HALO, y0 = r.top - elR.top - _HALO, x1 = r.right - elR.left + _HALO, y1 = r.bottom - elR.top + _HALO
-        const bati = polys.some((p) => _polyHitsBox(p, x0, y0, x1, y1))
+        const bati = polys.some((p) => _polyHitsBox(p, x0 - _BMARGE, y0 - _BMARGE, x1 + _BMARGE, y1 + _BMARGE))
         let white = 0
         const fx0 = Math.max(0, Math.floor(x0 * dpr)), fx1 = Math.min(Wc - 1, Math.ceil(x1 * dpr))
         const fy0 = Math.max(0, Math.floor(y0 * dpr)), fy1 = Math.min(Hc - 1, Math.ceil(y1 * dpr))
@@ -428,7 +432,7 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
         const dist = Math.round(Math.hypot(ex - pxp, ey - pyp))
         const contour = white >= 2, sur = nonNoir(lx, ly)
         // les TROIS règles : ni contour/bâti traversés, ≤ 40 px du point, étiquette sur le terrain
-        return { contour, bati, dist, sur_terrain: sur, ok: !contour && !bati && dist <= 40 && sur }
+        return { contour, bati, dist, sur_terrain: sur, ok: !contour && !bati && dist <= 80 && sur }
       }
       const H = test(lHi, gHi), L = test(lLo, gLo)
       return { hi: lHi.textContent, lo: lLo.textContent, hi_traverse: H.contour || H.bati, lo_traverse: L.contour || L.bati, hi_detail: H, lo_detail: L, ok: H.ok && L.ok }
@@ -470,18 +474,23 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
     // est la boîte de l'AUDIT (texte + _HALO) + une petite marge `_PMARGE` = demi-épaisseur du trait à
     // l'écran + anti-alias : juste assez pour épouser le trait RÉEL, sans sur-bloquer (sinon aucune position
     // ne tiendrait dans les 40 px près d'un sommet de bord).
-    const _PMARGE = _LINE
+    // marge CONTOUR du placement = halo + épaisseur du trait + anti-alias : SUR-COUVRE la portée réelle du
+    // trait blanc vue par l'audit (pixels blancs ±3 px autour de la ligne) → si le placement dégage, l'audit
+    // dégage aussi (plus de « placement se croit clair, audit voit le trait » à courte distance).
+    const _CMARGE = _LINE + 3
     const _blocked = (sx: number, sy: number, w: number, h: number, segs: [[number, number], [number, number]][], polys: [number, number][][]) => {
-      const x0 = sx - w / 2 - _PMARGE, y0 = sy - h / 2 - _PMARGE, x1 = sx + w / 2 + _PMARGE, y1 = sy + h / 2 + _PMARGE
-      if (segs.some((s) => _segHitsBox(s[0], s[1], x0, y0, x1, y1))) return true
-      return polys.some((p) => _polyHitsBox(p, x0, y0, x1, y1))
+      const x0 = sx - w / 2, y0 = sy - h / 2, x1 = sx + w / 2, y1 = sy + h / 2
+      // CONTOUR (trait fin) : on épaissit la boîte de _CMARGE pour épouser le trait à l'écran.
+      if (segs.some((s) => _segHitsBox(s[0], s[1], x0 - _CMARGE, y0 - _CMARGE, x1 + _CMARGE, y1 + _CMARGE))) return true
+      // BÂTI (polygone plein) : petite marge _BMARGE (anti-alias), test monotone → identique à l'audit.
+      return polys.some((p) => _polyHitsBox(p, x0 - _BMARGE, y0 - _BMARGE, x1 + _BMARGE, y1 + _BMARGE))
     }
     // L'étiquette reste ATTACHÉE à son point : pastille au point, étiquette à ≤ 40 px (préférence intérieur
     // + sur le terrain), filet fin si écart. On essaie 8 directions × distances CROISSANTES bornées à 40 px,
     // on retient la plus PROCHE qui dégage le contour + le bâti ET reste sur le terrain. Si rien ne tient en
     // 40 px, on place au mieux (le plus proche dégagé) — l'audit SIGNALERA la taille en échec (pas de forçage).
     // Drapeau debug `__gab3dRawCotes` : pose l'étiquette AU POINT BRUT (sert à prouver que l'audit détecte).
-    const _MAXD = 40
+    const _MAXD = 80   // le DÉGAGEMENT prime sur la distance : on écarte jusqu'à 80 px pour ne rien toucher
     const proj = (p: THREE.Vector3, d: HTMLDivElement, g: { line: SVGLineElement; ring: SVGCircleElement }, segs: [[number, number], [number, number]][], polys: [number, number][][], quad: [number, number][] | null) => {
       const v = p.clone().project(cam); const vis = v.z < 1
       d.style.display = vis ? 'block' : 'none'; g.ring.style.display = vis ? 'block' : 'none'
@@ -501,12 +510,14 @@ function Vue3D({ scene, axeSel, markerApi, onCote }: {
       // on SCORE chaque candidat : dégagé + sur-terrain + filet court + intérieur gagnent ; contour/bâti et
       // hors-terrain sont de GROSSES pénalités → on prend le MOINS mauvais (si aucun n'est parfait, l'audit
       // le signale, on ne force pas une fausse réussite). Le centre va jusqu'à 40 + demi-boîte ; le filet ≤ 40.
-      let sx = px + ux * (h / 2 + _PMARGE + 2), sy = py + uy * (h / 2 + _PMARGE + 2), bestCost = Infinity
+      let sx = px + ux * (h / 2 + _CMARGE + 2), sy = py + uy * (h / 2 + _CMARGE + 2), bestCost = Infinity
       for (let dist = 10; dist <= _MAXD + Math.max(w, h) / 2 + 4; dist += 2) for (const [dux, duy] of dirs) {
         const tx = px + dux * dist, ty = py + duy * dist
         const ne = nearEdge(tx, ty)
-        if (ne < 1 || ne > _MAXD) continue   // ni sur la pastille, ni au-delà de 40 px (filet)
-        const pen = (_blocked(tx, ty, w, h, segs, polys) ? 1000 : 0) + (onTerr(tx, ty) ? 0 : 500)
+        if (ne < 1 || ne > _MAXD) continue   // ni sur la pastille, ni au-delà de 80 px (filet)
+        // contour, bâti ET fond noir sont INTERDITS à égalité → une position dégagée gagne toujours sur une
+        // position courte mais en collision ; parmi les dégagées, la plus PROCHE (puis intérieure) gagne.
+        const pen = (_blocked(tx, ty, w, h, segs, polys) ? 1000 : 0) + (onTerr(tx, ty) ? 0 : 1000)
         const cost = pen + ne + (1 - (dux * ux + duy * uy)) * 10
         if (cost < bestCost) { bestCost = cost; sx = tx; sy = ty }
       }

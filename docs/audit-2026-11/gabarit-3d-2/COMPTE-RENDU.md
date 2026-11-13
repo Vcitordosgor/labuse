@@ -190,37 +190,40 @@ Après le 1ᵉʳ correctif, les cotes étaient dégagées mais DÉTACHÉES (cert
 d'autres sur du terrain nu sans rien pointer). Reprise selon les 4 règles :
 
 1. **Pastille** au point mesuré (petit disque jaune cerclé), toujours affichée.
-2. **Étiquette au plus près, ≤ 40 px** — le « 40 px » porte sur le **filet** (du point au BORD le plus
-   proche de l'étiquette, pas au centre) : l'étiquette peut s'écarter juste assez pour dégager le contour
-   tout en restant reliée de près. **Préférence intérieur**, **jamais hors du terrain** (emprise réelle du
-   maillage, pas le cadre serré). Un **filet fin** relie l'étiquette au point dès qu'elles ne se touchent pas.
-3. **Ne touche ni le contour ni le bâti** — contrôle pixel + silhouette conservé.
-4. **Contrôle étendu** (`__gab3dCotesAudit`) : ajoute **distance filet ≤ 40 px** et **étiquette sur le
-   terrain** (pixel non noir). `OK` = les trois règles tenues. Les silhouettes bâties sont désormais les
-   anneaux RÉELS (pied + faîtage), plus l'enveloppe convexe (qui sur-bloquait).
+2. **Le DÉGAGEMENT prime sur la distance.** L'étiquette se place au plus près possible **sans toucher ni
+   contour, ni bâti, ni fond noir**, le **filet** (du point au BORD le plus proche de l'étiquette) pouvant
+   aller **jusqu'à 80 px**. Préférence intérieur. Dans le coût, contour/bâti/fond-noir sont des pénalités
+   massives et ÉGALES → une position dégagée gagne TOUJOURS sur une position courte en collision ; parmi
+   les dégagées, la plus proche gagne. Un **filet fin** relie l'étiquette au point dès qu'il y a un écart.
+3. **Ne touche ni le contour ni le bâti** — contrôle pixel (trait blanc) + silhouette bâti conservé.
+4. **Contrôle étendu** (`__gab3dCotesAudit`) : ajoute **distance filet (réelle, écrite)** et **étiquette sur
+   le terrain** (pixel non noir). `OK` = les trois règles tenues.
 
-**Résultat (contrôle corrigé, ouverture / Recentrer identiques) :**
+**Trois bugs de cohérence placement↔contrôle corrigés** (le placement se croyait dégagé là où l'audit
+voyait une collision) : (a) silhouettes bâties = anneaux réels pied+faîtage (plus l'enveloppe convexe) ;
+(b) `_polyHitsBox` rendu MONOTONE (le test « coin de la boîte dans le polygone » sortait quand on
+élargit la boîte) → boîte bâti identique placement/audit, petite marge anti-alias ; (c) contour drapé
+subdivisé fin (0,5 m) pour épouser le trait rendu, marge = halo + épaisseur + anti-alias.
+
+**Résultat (contrôle, ouverture / Recentrer identiques) — filet en px :**
 
 | taille | BZ1065 (hi / lo) | CM1658 (hi / lo) |
 |---|---|---|
-| **1440×694 (taille de preuve)** | **OK** (filet 14 / 24 px) | **OK** (filet 21 / 7 px) |
-| 1280×720  | OK (18 / 4) | signalé (21 / 7, 1 cote serrée) |
-| 1440×900  | signalé (11 / 4) | signalé (31 / 9) |
-| 1920×1080 | signalé (7 / 6) | OK (27 / 16) |
-| 2560×1300 | OK (1 / 9) | OK (25 / 1) |
+| 1280×720  | OK (37 / 9) | OK (28 / 11) |
+| 1440×694  | OK (22 / 9) | OK (28 / 11) |
+| 1440×900  | OK (31 / 13) | OK (32 / 32) |
+| 1920×1080 | OK (38 / 19) | OK (37 / 28) |
+| 2560×1300 | OK (9 / 13) | OK (37 / 8) |
 
-→ **À 1440×694 (la taille de preuve demandée), les 4 cotes tiennent les 3 règles** : pastille au point,
-étiquette ≤ 40 px dégagée du contour et du bâti, sur le terrain, filet si écart. Sur les 10 cas (2 témoins
-× 5 tailles), **6 tiennent**. Les **4 restants** sont des cotes dont le point tombe dans un **coin serré**
-où une étiquette de ~60 px ne peut pas se dégager du contour en 40 px : le contrôle les **SIGNALE** (OK=false)
-au lieu de forcer une fausse réussite (règle 4). Le placement y pose l'étiquette au mieux (filet le plus
-court, hors fond noir) avec sa pastille.
+→ **Les 10 cas passent** (2 témoins × 5 tailles, ouverture ET Recentrer) : pastille au point, filet ≤ 80 px,
+étiquette dégagée du contour et du bâti, sur le terrain. Filets réels **9–38 px** (jamais besoin des 80 px).
+Aucun cas à signaler.
 
 ---
 
-### Captures (1440×694) — l'image fait foi
-- **Vue entière** : `BZ1065_1440x694_after.png`, `CM1658_1440x694_after.png` (+ `_before.png`).
-- **Recadrage agrandi 3× centré sur le POINT** (pastille), après (`zoom/*_apres.png`) et avant
-  (`*_avant.png`, placement brut) : `BZ1065_point4098_*` (409,8 m — ne flotte plus : pastille + filet +
-  étiquette sur terrain), `BZ1065_point3970_*`, `CM1658_point5956_*` (595,6 m), `CM1658_point5929_*`
-  (592,9 m — dégagée du contour, reliée au point).
+### Captures — l'image fait foi
+- **Captures entières demandées** (`preuve/`), **avant / après** : `BZ1065_1920x1080_avant.png` →
+  `_apres.png`, `CM1658_1280x720_avant.png` → `_apres.png`. Après : chaque cote a sa pastille au point, un
+  filet, l'étiquette dégagée du contour et du bâti.
+- **1440×694** : vues entières `BZ1065_1440x694_after.png`, `CM1658_1440x694_after.png` + recadrages 3×
+  centrés sur le POINT (`zoom/*_point*_apres.png` / `_avant.png`).
